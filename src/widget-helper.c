@@ -1173,6 +1173,9 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_maximum_size(LiVESWidget *w
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget *widget, boolean upd_children) {
+  if (!pthread_equal(capable->main_thread, pthread_self()) && !pthread_equal(capable->gui_thread, pthread_self()))
+    return FALSE;
+
 #ifdef GUI_GTK
   if (GTK_IS_WIDGET(widget)) {
     GdkWindow *window = lives_widget_get_xwindow(widget);
@@ -8790,6 +8793,11 @@ LiVESWidget *lives_standard_check_menu_item_new_with_label(const char *label, bo
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_menu_spinner_new(const char *text) {
+  return lives_standard_menu_item_new_with_label(text);
+}
+
+
 LiVESWidget *lives_standard_notebook_new(const LiVESWidgetColor *bg_color, const LiVESWidgetColor *act_color) {
   LiVESWidget *notebook = lives_notebook_new();
 
@@ -10464,7 +10472,7 @@ boolean widget_helper_init(void) {
     GdkPixbufFormat *form = (GdkPixbufFormat *)slist->data;
     char **ext = gdk_pixbuf_format_get_extensions(form);
     for (i = 0; ext[i] != NULL; i++) {
-      xlist = lives_list_append_unique(xlist, ext[i]);
+      xlist = lives_list_append_unique(xlist, lives_strdup(ext[i]));
     }
     lives_strfreev(ext);
     slist = slist->next;
@@ -11212,13 +11220,13 @@ boolean lives_widget_context_update(void) {
   int nulleventcount = 0, loops = 0;
   boolean noswitch = mainw->noswitch;
 
-  /* if (!pthread_equal(capable->main_thread, pthread_self() && !pthread_equal(capable->gui_thread, pthread_self()))) { */
-  /*   if (prefs->show_dev_opts) { */
-  /*     g_printerr("Bad thread, tried to wiggle our widgets !\n"); */
-  /*     break_me(); */
-  /*   } */
-  /*   return FALSE; */
-  /* } */
+  if (!pthread_equal(capable->main_thread, pthread_self()) && !pthread_equal(capable->gui_thread, pthread_self())) {
+    if (prefs->show_dev_opts) {
+      g_printerr("Bad thread, tried to wiggle our widgets\n");
+      break_me();
+    }
+    return FALSE;
+  }
 
   if (mainw->no_context_update) return FALSE;
 
@@ -11243,7 +11251,7 @@ boolean lives_widget_context_update(void) {
       }
     }
 #ifdef GUI_GTK
-    g_main_context_acquire(g_main_context_get_thread_default());
+    //g_main_context_acquire(g_main_context_get_thread_default());
     g_main_context_iteration(NULL, FALSE);
     while (!mainw->is_exiting && g_main_context_pending(NULL)) {
       if (mainw->gui_fooey) {
@@ -11296,7 +11304,7 @@ boolean lives_widget_context_update(void) {
     }
   }
 
-  g_main_context_release(g_main_context_get_thread_default());
+  //g_main_context_release(g_main_context_get_thread_default());
   if (!mainw->is_exiting && mt_needs_idlefunc) {
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }

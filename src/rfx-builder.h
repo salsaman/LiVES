@@ -56,6 +56,8 @@ void on_export_rfx_activate(LiVESMenuItem *, livespointer status);
 
 #define WINH_SAFETY
 
+#define RFX_LOADED (mainw->helper_procthreads[PT_LAZY_RFX] ?		\
+		    lives_proc_thread_check(mainw->helper_procthreads[PT_LAZY_RFX]) : TRUE)
 /// maximum decimal places allowed (should correspond to precision of a "float")
 #define RFXBUILD_MAX_DP 16
 typedef struct {
@@ -216,57 +218,13 @@ typedef struct {
   int plugin_version;
 } rfx_build_window_t;
 
-// builder window widgets/callbacks
-rfx_build_window_t *make_rfx_build_window(const char *in_script_name, lives_rfx_status_t in_status);
-void on_rfxbuilder_ok(LiVESButton *, livespointer);
-void on_rfxbuilder_cancel(LiVESButton *, livespointer);
-void rfxbuilder_destroy(rfx_build_window_t *);
-void on_list_table_clicked(LiVESButton *, livespointer rfxbuilder);
-void on_requirements_ok(LiVESButton *, livespointer rfxbuilder);
-void on_requirements_cancel(LiVESButton *, livespointer);
-void on_properties_clicked(LiVESButton *, livespointer rfxbuilder);
-void on_properties_ok(LiVESButton *, livespointer rfxbuilder);
-void on_params_ok(LiVESButton *, livespointer rfxbuilder);
-void on_params_cancel(LiVESButton *, livespointer);
-void on_param_window_ok(LiVESButton *, livespointer rfxbuilder);
-void on_param_window_cancel(LiVESButton *, livespointer);
-void on_code_clicked(LiVESButton *, livespointer rfxbuilder);
-void on_code_ok(LiVESButton *, livespointer rfxbuilder);
-void on_code_cancel(LiVESButton *, livespointer);
-void on_triggers_ok(LiVESButton *, livespointer rfxbuilder);
-void on_triggers_cancel(LiVESButton *, livespointer);
-
-////
-
-LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder);
-LiVESWidget *make_param_window_dialog(int hnum, rfx_build_window_t *rfxbuilder);
-LiVESWidget *make_trigger_dialog(int tnum, rfx_build_window_t *rfxbuilder);
-
-void on_table_add_row(LiVESButton *, livespointer rfxbuilder);
-void on_table_edit_row(LiVESButton *, livespointer rfxbuilder);
-void on_table_swap_row(LiVESButton *, livespointer rfxbuilder);
-void on_table_delete_row(LiVESButton *, livespointer rfxbuilder);
-
-void param_set_from_dialog(lives_param_t *copy_param, rfx_build_window_t *rfxbuilder);
-
-void after_param_dp_changed(LiVESSpinButton *, livespointer rfxbuilder);
-void after_param_min_changed(LiVESSpinButton *, livespointer rfxbuilder);
-void after_param_max_changed(LiVESSpinButton *, livespointer rfxbuilder);
-void after_param_def_changed(LiVESSpinButton *, livespointer rfxbuilder);
-void after_rfxbuilder_type_toggled(LiVESToggleButton *, livespointer rfxbuilder);
-void on_param_type_changed(LiVESCombo *, livespointer rfxbuilder);
-void on_paramw_kw_changed(LiVESCombo *, livespointer rfxbuilder);
-void on_paramw_sp_changed(LiVESCombo *, livespointer rfxbuilder);
-void on_paramw_spsub_changed(LiVESCombo *, livespointer rfxbuilder);
-void populate_script_combo(LiVESCombo *script_combo, lives_rfx_status_t status);
-void on_script_status_changed(LiVESCombo *status_combo, livespointer script_combo);
-
 // fileselectors
 void on_export_rfx_ok(LiVESButton *, char *script_name);
 void on_import_rfx_ok(LiVESButton *, livespointer status);
 
 /// add dynamic menu entries
 void add_rfx_effects(lives_rfx_status_t status);
+void add_rfx_effects2(lives_rfx_status_t status);
 void update_rfx_menus(void);
 
 // utility functions

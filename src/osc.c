@@ -16,7 +16,6 @@
 #include "htmsocket.h"
 #include "callbacks.h"
 #include "effects.h"
-#include "support.h"
 #include "rte_window.h"
 #include "resample.h"
 #include "paramwindow.h"

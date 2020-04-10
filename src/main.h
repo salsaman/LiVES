@@ -326,7 +326,7 @@ typedef int lives_pgid_t;
 
 #ifdef NEED_ENDIAN_TEST
 #undef NEED_ENDIAN_TEST
-static int32_t testint = 0x12345678;
+static const int32_t testint = 0x12345678;
 #define IS_BIG_ENDIAN (((char *)&testint)[0] == 0x12)  // runtime test only !
 #endif
 
@@ -392,10 +392,8 @@ weed_leaf_set_flags_f _weed_leaf_set_flags;
 weed_leaf_delete_f _weed_leaf_delete;
 
 #include "weed-effects-utils.h"
-
+#include "support.h"
 #include "widget-helper.h"
-
-#define USE_LIVES_MFUNCS
 #include "machinestate.h"
 
 boolean weed_threadsafe;

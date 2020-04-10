@@ -5,7 +5,6 @@
 // see file ../COPYING or www.gnu.org for licensing details
 
 #include "main.h"
-#include "support.h"
 #include "rte_window.h"
 #include "effects.h"
 #include "paramwindow.h"

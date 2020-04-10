@@ -10,7 +10,6 @@
 #include "callbacks.h"
 #include "interface.h"
 #include "effects.h"
-#include "support.h"
 #include "rfx-builder.h"
 #include "paramwindow.h"
 #include "resample.h"
@@ -85,10 +84,8 @@ void load_theme_images(void) {
       //resize
       width = lives_pixbuf_get_width(pixbuf);
       height = lives_pixbuf_get_height(pixbuf);
-
       if (width > IMSEP_MAX_WIDTH || height > IMSEP_MAX_HEIGHT) calc_maxspect(IMSEP_MAX_WIDTH, IMSEP_MAX_HEIGHT,
             &width, &height);
-
       if (prefs->screen_scale < 1.) {
         width *= prefs->screen_scale;
         height *= prefs->screen_scale;
@@ -1099,6 +1096,11 @@ void create_LiVES(void) {
   // the dynamic effects menu
   mainw->effects_menu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mainw->effects_menu);
+  if (1 || !RFX_LOADED) {
+    LiVESWidget *menuspin = lives_menu_spinner_new((tmp = _("Loading...")));
+    lives_free(tmp);
+    lives_container_add(LIVES_CONTAINER(mainw->effects_menu), menuspin);
+  }
 
   mainw->custom_effects_menu = NULL;
   mainw->custom_effects_separator = NULL;

@@ -180,8 +180,6 @@ typedef struct {
 
   boolean show_msg_area;
 
-  double loadchecktime;
-
   // values for trickplay - TODO: add to prefs dialog
   double blendchange_amount;
   int scratchfwd_amount, scratchback_amount;
@@ -224,14 +222,10 @@ typedef struct {
   int mt_undo_buf;
   boolean mt_enter_prompt;
 
-  int mt_def_width;
-  int mt_def_height;
+  int mt_def_width, mt_def_height;
   double mt_def_fps;
 
-  int mt_def_arate;
-  int mt_def_achans;
-  int mt_def_asamps;
-  int mt_def_signed_endian;
+  int mt_def_arate, mt_def_achans, mt_def_asamps, mt_def_signed_endian;
 
   boolean mt_exit_render;
   boolean render_prompt;
@@ -241,9 +235,8 @@ typedef struct {
 
   int mt_auto_back; ///< time diff to backup (-1 == never, 0 == after every change, > 0 == seconds)
 
-  boolean ar_clipset;
-  boolean ar_layout;
-
+  /// auto-reload
+  boolean ar_clipset, ar_layout;
   char ar_clipset_name[128]; ///< locale
   char ar_layout_name[PATH_MAX];  ///< locale
 
@@ -258,7 +251,7 @@ typedef struct {
   boolean concat_images;
 
   boolean render_audio;
-  boolean normalise_audio;
+  boolean normalise_audio;  ///< for future use
 
   boolean instant_open;
   boolean auto_deint;
@@ -273,6 +266,7 @@ typedef struct {
   boolean show_overlay_msgs;
   boolean render_overlay;
 
+  /// deprecated
   int midi_check_rate;
   int midi_rpt;
 
@@ -399,7 +393,6 @@ typedef struct {
   double screen_gamma;
 
   int max_messages;
-
   int msg_textsize;
 
   double screen_scale;
@@ -407,6 +400,7 @@ typedef struct {
   boolean load_rfx_builtin;
 
   boolean apply_gamma;
+  boolean btgamma; ///< allows clips to be *stored* with bt709 gamma - CAUTION not backwards compatible, untested
 
   boolean show_tooltips;
 
@@ -417,8 +411,6 @@ typedef struct {
   boolean allow_easing;
 
   boolean show_dev_opts;
-
-  boolean btgamma;
 
   boolean msgs_pbdis;
 
@@ -805,8 +797,6 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_LIB_DIR "lib_dir" // readonly
 
 #define PREF_AUDIO_PLAYER "audio_player"
-//#define PREF_AUDIO_PLAY_COMMAND "audio_play_command"
-
 #define PREF_AUDIO_SRC "audio_src"
 
 #define PREF_MONITORS "monitors"
@@ -918,7 +908,6 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 #define PREF_SCFWD_AMOUNT "trickplay_scratch_fwd"
 #define PREF_SCBACK_AMOUNT "trickplay_scratch_back"
-#define PREF_LOADCHECK_TIME "machine_load_check_secs"
 
 ////////// boolean values
 #define PREF_SHOW_RECENT_FILES "show_recent_files"

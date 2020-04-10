@@ -678,47 +678,54 @@ struct dlink_list {
 };
 
 EXPORTS dlink_list_t *add_to_list_sorted(dlink_list_t *list, weed_plant_t *filter, const char *name) {
-  dlink_list_t *entry = (dlink_list_t *)weed_malloc(sizeof(dlink_list_t));
+  // entries are added in sort order - this is not very efficient: O(2) at worst. A better solution would be to sort
+  // all the entries at the end using qsort or similar, however this is hard since we sort on name field but add using the filter field
+  // in the best case, the entries are already sorted and then this becomes just O(1) since last and first are checked first
+  dlink_list_t *lptr = list, *entry = (dlink_list_t *)weed_malloc(sizeof(dlink_list_t));
   if (!entry) return list;
+
   entry->filter = filter;
   entry->name = strdup(name);
-  entry->prev = NULL;
-  entry->next = list;
-  if (list) list->prev = entry;
-  return entry;
+  entry->next = entry->prev = NULL;
+  if (!list) return entry;
+
+  // prev from first entry points to end of list, we will check that first
+  lptr = list->prev;
+  if (lptr && (strncasecmp(lptr->name, name, 256) <= 0)) {
+    // end of list is before or equal, append to end
+    lptr->next = entry;
+    entry->prev = lptr;
+    list->prev = entry;
+    return list;
+  }
+
+  for (lptr = list; lptr; lptr = lptr->next) {
+    if (strncasecmp(lptr->name, name, 256) > 0) {
+      // lptr is after entry, insert entry before
+      if (lptr->prev) {
+        if (lptr != list) lptr->prev->next = entry;
+        entry->prev = lptr->prev;
+      }
+      else entry->prev = lptr; /// prev points to last
+      entry->next = lptr;
+      lptr->prev = entry;
+      if (lptr == list) list = entry;
+      return list;
+    }
+  }
+  // should never reach here
+  return list;
 }
 
 EXPORTS int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list) {
-  // convert list to array, then apply qsort
-  dlink_list_t *listprev;
-  size_t ptrsize = sizeof(weed_plant_t *), stlen;
-  register int count = 1;
-  dlink_list_t *listp = list;
-  char **carr;
-  if (!list) return 0;
-  for (; listp->next; listp = listp->next) count++;
-  carr = (char **)weed_malloc(count * sizeof(char *));
-  if (!carr) return 0;
-  for (; listp; listp = listprev) {
-    listprev = list->prev;
-    carr[--count] = weed_malloc(256 + ptrsize);
-    stlen = strlen((char *)listp->name);
-    if (stlen > 255) stlen = 255;
-    weed_memcpy(carr[count], listp->name, stlen + 1);
-    weed_memcpy((void *)&carr[count][256], (void *)&listp->filter, ptrsize);
-    free((void *)listp->name);
-    weed_free(listp);
+  int count;
+  for (count = 0; list != NULL; count++) {
+    dlink_list_t *listnext = list->next;
+    weed_plugin_info_add_filter_class(plugin_info, list->filter);
+    weed_free((void *)list->name);
+    weed_free(list);
+    list = listnext;
   }
-
-  qsort((void *)carr, count, 256 + ptrsize, (__compar_fn_t)strcasecmp); 
-
-  for (register int i = 0; i < count; i++) {
-    weed_plant_t *filter;
-    weed_memcpy((void *)&filter, (void *)(&carr[i][256]), ptrsize);
-    weed_plugin_info_add_filter_class(plugin_info, filter);
-    weed_free(carr[i]);
-  }
-  weed_free(carr);
   return count;
 }
 #endif

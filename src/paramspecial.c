@@ -10,7 +10,6 @@
 #include "main.h"
 #include "resample.h"
 #include "effects.h"
-#include "support.h"
 #include "paramwindow.h"
 #include "framedraw.h"
 #include "callbacks.h"

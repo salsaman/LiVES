@@ -26,35 +26,29 @@ typedef void *(*calloc_f)(size_t, size_t);
 typedef void *(*malloc_and_copy_f)(size_t, const void *);
 typedef void (*unmalloc_and_copy_f)(size_t, void *);
 
-#ifdef USE_LIVES_MFUNCS
-void *quick_malloc(size_t sz) GNU_MALLOC;;
-void quick_free(void *p);
-void *quick_calloc(size_t nm, size_t sz);
-void show_memstats(void);
+#define USE_RPMALLOC
+
+#ifdef USE_RPMALLOC
+#include "rpmalloc.h"
 #endif
+
+boolean init_memfuncs(void);
 
 void lives_free_check(void *p);
 
+#ifdef USE_RPMALLOC
+void *quick_calloc(size_t n, size_t s);
+void quick_free(void *p);
+#endif
+
 #ifndef lives_malloc
-#ifdef USE_LIVES_MFUNCS
-#define lives_malloc quick_malloc
-#else
 #define lives_malloc malloc
 #endif
-#endif
 #ifndef lives_realloc
-#ifdef USE_LIVES_MFUNCS
-#define lives_realloc proxy_realloc
-#else
 #define lives_realloc realloc
 #endif
-#endif
 #ifndef lives_free
-#ifdef USE_LIVES_MFUNCS
-#define lives_free quick_free
-#else
 #define lives_free free
-#endif
 #endif
 #ifndef lives_memcpy
 #define lives_memcpy memcpy
@@ -69,11 +63,7 @@ void lives_free_check(void *p);
 #define lives_memmove memmove
 #endif
 #ifndef lives_calloc
-#ifdef USE_LIVES_MFUNCS
-#define lives_calloc quick_calloc
-#else
 #define lives_calloc calloc
-#endif
 #endif
 
 #ifdef _lives_malloc
@@ -104,7 +94,6 @@ void lives_free_check(void *p);
 #undef _lives_calloc
 #endif
 
-//#define USE_STD_MEMFUNCS
 #ifndef USE_STD_MEMFUNCS
 // here we can define optimised mem ory functions to used by setting the symbols _lives_malloc, _lives_free, etc.
 // at the end of the header we check if the values have been set and update lives_malloc from _lives_malloc, etc.

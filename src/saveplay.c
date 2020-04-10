@@ -9,7 +9,6 @@
 
 #include "main.h"
 #include "callbacks.h"
-#include "support.h"
 #include "resample.h"
 #include "effects.h"
 #include "audio.h"
@@ -18,7 +17,6 @@
 #include "interface.h"
 
 #define AV_TRACK_MIN_DIFF 0.001 ///< ignore track time differences < this (seconds)
-
 
 boolean _start_playback(livespointer data) {
   int new_file, old_file;
@@ -2730,7 +2728,7 @@ void play_file(void) {
       }
 
       mainw->gui_fooey = TRUE;
-      
+
       if (!mainw->foreign && !mainw->multitrack)
         mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
       else

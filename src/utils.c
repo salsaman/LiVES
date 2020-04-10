@@ -12,7 +12,6 @@
 #include <libexplain/read.h>
 #endif
 #include "main.h"
-#include "support.h"
 #include "interface.h"
 #include "audio.h"
 #include "resample.h"

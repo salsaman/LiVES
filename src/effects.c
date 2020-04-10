@@ -15,7 +15,6 @@
 #include "effects-weed.h"
 #include "interface.h"
 #include "paramwindow.h"
-#include "support.h"
 #include "cvirtual.h"
 #include "resample.h"
 #include "ce_thumbs.h"

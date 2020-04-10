@@ -9,7 +9,6 @@
 #include "main.h"
 #include "paramwindow.h"
 #include "callbacks.h"
-#include "support.h"
 #include "resample.h"
 #include "effects.h"
 #include "rte_window.h"

@@ -15,7 +15,6 @@
 #include <string.h>
 
 #include "interface.h"
-#include "support.h"
 #include "cvirtual.h"
 #include "resample.h"
 #include "rte_window.h"
@@ -684,7 +683,7 @@ LIVES_GLOBAL_INLINE LiVESResponseType do_blocking_info_dialog(const char *text) 
 
 
 LIVES_GLOBAL_INLINE LiVESResponseType do_blocking_info_dialog_with_expander(const char *text,
-									    const char *exp_text, LiVESList *list) {
+    const char *exp_text, LiVESList *list) {
   // show info box - blocks until OK is pressed
   return _do_blocking_info_dialog(text, exp_text, list);
 }
@@ -3432,8 +3431,8 @@ LIVES_GLOBAL_INLINE void do_after_invalid_warning(void) {
 
 
 LIVES_GLOBAL_INLINE void do_rmem_max_error(int size) {
-  do_error_dialogf( _("Stream frame size is too large for your network buffers.\nYou should do the following as root:\n\n"
-		      "echo %d > /proc/sys/net/core/rmem_max\n"), size);
+  do_error_dialogf(_("Stream frame size is too large for your network buffers.\nYou should do the following as root:\n\n"
+                     "echo %d > /proc/sys/net/core/rmem_max\n"), size);
 }
 
 
@@ -3901,9 +3900,9 @@ LIVES_GLOBAL_INLINE void do_card_in_use_error(void) {
 
 LIVES_GLOBAL_INLINE void do_dev_busy_error(const char *devstr) {
   do_blocking_error_dialogf(_("\nThe device %s is in use or unavailable.\n- Check the device permissions\n"
-			      "- Check if this device is in use by another program.\n"
-			      "- Check if the device actually exists.\n"),
-			    devstr);
+                              "- Check if this device is in use by another program.\n"
+                              "- Check if the device actually exists.\n"),
+                            devstr);
 }
 
 
@@ -3978,7 +3977,7 @@ LIVES_GLOBAL_INLINE void do_locked_in_vdevs_error(void) {
 
 LIVES_GLOBAL_INLINE void do_do_not_close_d(void) {
   char *msg = lives_strdup(_("\n\nCLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\nDO NOT SHUT DOWN OR "
-			     "CLOSE LIVES !\n"));
+                             "CLOSE LIVES !\n"));
   create_info_error_dialog(LIVES_DIALOG_WARN, msg, NULL, 0, FALSE);
   lives_free(msg);
 }

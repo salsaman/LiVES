@@ -8,7 +8,6 @@
 
 #include "main.h"
 #include "resample.h"
-#include "support.h"
 #include "callbacks.h"
 #include "effects.h"
 #include "audio.h"

@@ -11,7 +11,6 @@
 #include "merge.h"
 #include "resample.h"
 #include "startup.h"
-#include "support.h"
 #include "omc-learn.h" // for OSC_NOTIFY mapping
 
 // functions called in multitrack.c
@@ -432,7 +431,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     }
 
     start = offset_end;
-    if (cfile->audio_waveform[0] == NULL) {
+    if (!cfile->audio_waveform[0]) {
       // re-read the audio
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "drawn", LIVES_INT_TO_POINTER(0)); // force redrawing
       cfile->audio_waveform[0] = (float *)lives_calloc((int)offset_end, sizeof(float));
@@ -444,7 +443,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
       cfile->audio_waveform[0] = (float *)lives_realloc(cfile->audio_waveform[0], (int)offset_end * sizeof(float));
     }
 
-    if (cfile->audio_waveform[0] != NULL) {
+    if (cfile->audio_waveform[0]) {
       if (start != offset_end) {
         cfile->aw_sizes[0] = offset_end;
         filename = lives_get_audio_file_name(mainw->current_file);
@@ -459,7 +458,6 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
           atime = (double)i / scalex;
           cfile->audio_waveform[0][i] = cfile->vol * get_float_audio_val_at_time(mainw->current_file, afd, atime, 0, cfile->achans) * 2.;
         }
-
         lives_close_buffered(afd);
       }
 
@@ -582,7 +580,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     if (!cfile->audio_waveform[1]) {
       // re-read the audio
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0)); // force redrawing
-      cfile->audio_waveform[1] = (float *)lives_calloc(offset_end, sizeof(float));
+      cfile->audio_waveform[1] = (float *)lives_calloc((int)offset_end, sizeof(float));
       start = cfile->aw_sizes[1] = 0;
     } else if (cfile->aw_sizes[1] != offset_end) {
       if (LIVES_IS_PLAYING)
@@ -593,22 +591,23 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     }
     cfile->aw_sizes[1] = offset_end;
 
-    if (!cfile->audio_waveform[1]) {
-      filename = lives_get_audio_file_name(mainw->current_file);
-      afd = lives_open_buffered_rdonly(filename);
-      lives_free(filename);
-
-      for (i = start; i < offset_end; i++) {
-        if (afd == -1) {
-          mainw->read_failed = -2;
-          return;
+    if (cfile->audio_waveform[1]) {
+      if (start != offset_end) {
+        cfile->aw_sizes[1] = offset_end;
+        filename = lives_get_audio_file_name(mainw->current_file);
+        afd = lives_open_buffered_rdonly(filename);
+        lives_free(filename);
+        for (i = start; i < offset_end; i++) {
+          if (afd == -1) {
+            mainw->read_failed = -2;
+            return;
+          }
+          atime = (double)i / scalex;
+          cfile->audio_waveform[1][i] = cfile->vol * get_float_audio_val_at_time(mainw->current_file, afd, atime, 1, cfile->achans) * 2.;
         }
-        atime = (double)i / scalex;
-        cfile->audio_waveform[1][i] = cfile->vol * get_float_audio_val_at_time(mainw->current_file, afd, atime, 1, cfile->achans) * 2.;
+        lives_close_buffered(afd);
+        afd = -1;
       }
-
-      lives_close_buffered(afd);
-      afd = -1;
 
       if (LIVES_IS_PLAYING) {
         offset_left = ROUND_I(((mainw->playing_sel && is_realtime_aplayer(prefs->audio_player)) ?
@@ -741,8 +740,6 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
         draw_little_bars(cfile->pointer_time, 1);
         draw_little_bars(cfile->real_pointer_time, 2);
         draw_little_bars(cfile->real_pointer_time, 3);
-
-
       }
       show_playbar_labels(mainw->current_file);
     } else {
@@ -3875,8 +3872,8 @@ void do_keys_window(void) {
                "ctrl-space, ctrl-enter, or switching clips clears)"));
   ADD_KEYDEF(_("ctrl-backspace"), _("freeze frame (forground and background)"));
   ADD_KEYDEF(_("ctrl-alt-backspace"), _("freeze frame (background clip only)"));
-  ADD_KEYDEF("a", _("audio lock ON: lock audio to the current foreground clip; ignore video clip switches"));
-  ADD_KEYDEF("A", _("audio lock OFF; audio follows the foreground video clip (unless overridden in Preferences)"));
+  ADD_KEYDEF("a", _("audio lock ON: lock audio to the current foreground clip;\nignore video clip switches"));
+  ADD_KEYDEF("A", _("audio lock OFF; audio follows the foreground video clip\n(unless overridden in Preferences)"));
   ADD_KEYDEF("n", _("nervous mode"));
   ADD_KEYDEF(_("ctrl-page-up"), _("previous clip"));
   ADD_KEYDEF(_("ctrl-page-down"), _("next clip"));
@@ -3890,7 +3887,7 @@ void do_keys_window(void) {
   ADD_KEYDEF(_("ctrl-equals"), _("toggle real-time effect 11 (unaffected by ctrl-0)"));
   ADD_KEYDEF("x", _("swap background / foreground clips"));
   ADD_KEYDEF("", "");
-  ADD_KEYDEF("k", _("grab keyboard for last activated effect key (affects m, M, t, tab and ctrl-alt-up, ctrl-alt-down keys)"));
+  ADD_KEYDEF("k", _("grab keyboard for last activated effect key\n(affects m, M, t, tab and ctrl-alt-up, ctrl-alt-down keys)"));
   ADD_KEYDEF("m", _("next effect mode (for whichever key has keyboard grab)"));
   ADD_KEYDEF("M", _("previous effect mode (for whichever key has keyboard grab)"));
   ADD_KEYDEF(_("ctrl-alt-1"), _("grab keyboard for effect key 1 (similar to k key)"));
@@ -3914,7 +3911,7 @@ void do_keys_window(void) {
   ADD_KEYDEF("b", _("blank / unblank the interface background (clip editor only)"));
   ADD_KEYDEF("o", _("activate / deactivate continuous looping"));
   ADD_KEYDEF("g", _("enable / disable ping pong looping"));
-  ADD_KEYDEF("l", _("enable / disable stop on audio end (ignored if continuous loop is active)"));
+  ADD_KEYDEF("l", _("enable / disable stop on audio end\n(ignored if continuous loop is active)"));
   ADD_KEYDEF("<", _("lower the volume of current audio clip"));
   ADD_KEYDEF(">", _("increase the volume of current audio clip"));
   ADD_KEYDEF("w", _("display a/v sync status (developer mode)"));

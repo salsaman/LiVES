@@ -5,11 +5,9 @@
 // see file ../COPYING for licensing details
 
 #include "main.h"
-#include "support.h"
 #include "ldvcallbacks.h"
 #include "ldvinterface.h"
 #include "callbacks.h"
-
 
 struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   LiVESWidget *hbuttonbox1;

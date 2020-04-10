@@ -10,7 +10,6 @@
 #include "paramwindow.h"
 #include "effects.h"
 #include "resample.h"
-#include "support.h"
 #include "callbacks.h"
 
 _merge_opts *merge_opts;

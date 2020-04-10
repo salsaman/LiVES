@@ -5,7 +5,6 @@
 // see file ../COPYING for licensing details
 
 #include "main.h"
-#include "support.h"
 #include "ldvcallbacks.h"
 #include "ldvinterface.h"
 

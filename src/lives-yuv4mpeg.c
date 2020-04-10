@@ -5,7 +5,6 @@
 // see file ../COPYING or www.gnu.org for licensing details
 
 #include "main.h"
-#include "support.h"
 #include "interface.h"
 #include "lives-yuv4mpeg.h"
 #include "effects-weed.h"

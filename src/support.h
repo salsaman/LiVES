@@ -20,7 +20,6 @@
 */
 #ifdef ENABLE_NLS
 
-char *trString;
 char *translate(const char *String);
 char *translate_with_plural(const char *String, const char *StringPlural, unsigned long int n);
 
@@ -44,7 +43,9 @@ char *translate_with_plural(const char *String, const char *StringPlural, unsign
 #  define _(String) (String)
 #  define N_(String) (String)
 #  define P_(String, StringPlural, n) (String)
-#endif
 
 #endif
+#endif
+
+
 

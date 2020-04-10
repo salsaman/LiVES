@@ -172,6 +172,7 @@ giw_CFLAGS = -DENABLE_GIW=1
 endif
 
 lives_exe_SOURCES = \
+	rpmalloc.c rpmalloc.h \
 	widget-helper.c widget-helper.h \
 	widget-helper-gtk.h widget-helper-qt.h \
 	main.c\

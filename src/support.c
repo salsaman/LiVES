@@ -5,35 +5,22 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
-#include <string.h>
-#include <stdlib.h>
+#ifndef IS_SOLARIS
+#define LIVES_INLINE static inline
+#define LIVES_GLOBAL_INLINE inline
+#else
+#define LIVES_INLINE static
+#define LIVES_GLOBAL_INLINE
+#define LIVES_LOCAL_INLINE
+#endif
 
 #include "support.h"
 
-#ifndef LIVES_INLINE
-#ifndef IS_SOLARIS
-#define LIVES_INLINE inline
-#else
-#define LIVES_INLINE
-#endif
-#endif
-
-#ifdef ENABLE_NLS
-LIVES_INLINE char *translate(const char *String) {
-  if (!String) return NULL;
-  if (trString != NULL) free(trString); // be very careful, as trString is free()d automatically here
-  if (strlen(String)) trString = lives_locale_to_utf8(dgettext(PACKAGE, String), -1, NULL, NULL, NULL);
-  else trString = strdup(String);
-  return trString;
+LIVES_GLOBAL_INLINE char *translate(const char *String) {
+  return lives_locale_to_utf8(dgettext(PACKAGE, String), -1, NULL, NULL, NULL);
 }
 
-
-LIVES_INLINE char *translate_with_plural(const char *String, const char *StringPlural, unsigned long int n) {
-  if (trString != NULL) free(trString); // be very careful, as trString is free()d automatically here
-  if (strlen(String)) trString = lives_locale_to_utf8(dngettext(PACKAGE, String, StringPlural, n), -1, NULL, NULL, NULL);
-  else trString = strdup(String);
-  return trString;
+LIVES_GLOBAL_INLINE char *translate_with_plural(const char *String, const char *StringPlural, unsigned long int n) {
+  return lives_locale_to_utf8(dngettext(PACKAGE, String, StringPlural, n), -1, NULL, NULL, NULL);
 }
-
-#endif
 

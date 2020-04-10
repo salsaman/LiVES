@@ -104,18 +104,25 @@
 // scaling limits
 #define SCREEN_SCALE_DEF_WIDTH 1600
 #define SCREEN_169_MIN_WIDTH 1440
-#define SCREEN_43S_LIMIT_WIDTH 1024
-#define SCREEN_43S_LIMIT_HEIGHT 720
 
 /// default size for frames
-#define DEF_FRAME_HSIZE_169_UNSCALED 1280
-#define DEF_FRAME_VSIZE_169_UNSCALED 720
+#define DEF_FRAME_HSIZE_4K_UNSCALED 3840.
+#define DEF_FRAME_VSIZE_4K_UNSCALED 2160.
 
-#define DEF_FRAME_HSIZE_43_UNSCALED 1024
-#define DEF_FRAME_VSIZE_43_UNSCALED 768
+#define DEF_FRAME_HSIZE_HDTV_UNSCALED 1920.
+#define DEF_FRAME_VSIZE_HDTV_UNSCALED 1080.
+
+#define DEF_FRAME_HSIZE_169_UNSCALED 1280.
+#define DEF_FRAME_VSIZE_169_UNSCALED 720.
+
+#define DEF_FRAME_HSIZE_43_UNSCALED 1024.
+#define DEF_FRAME_VSIZE_43_UNSCALED 768.
 
 #define DEF_FRAME_HSIZE_43S_UNSCALED 640.
 #define DEF_FRAME_VSIZE_43S_UNSCALED 480.
+
+#define SCREEN_43S_LIMIT_WIDTH DEF_FRAME_HSIZE_43_UNSCALED
+#define SCREEN_43S_LIMIT_HEIGHT DEF_FRAME_VSIZE_169_UNSCALED
 
 #define DEF_FRAME_HSIZE_GUI (((int)(DEF_FRAME_HSIZE_43S_UNSCALED * widget_opts.scale) >> 2) << 1)
 #define DEF_FRAME_VSIZE_GUI (((int)(DEF_FRAME_VSIZE_43S_UNSCALED * widget_opts.scale) >> 1) << 1)
@@ -148,8 +155,10 @@
 
 #define MAIN_SPIN_SPACER ((int)52. * widget_opts.scale) ///< pixel spacing for start/end spins for clip and multitrack editors
 
-#define ENC_DETAILS_WIN_H ((int)(DEF_FRAME_HSIZE_43S_UNSCALED * widget_opts.scale)) ///< horizontal size in pixels of the encoder output window
-#define ENC_DETAILS_WIN_V (((int)(DEF_FRAME_VSIZE_43S_UNSCALED * widget_opts.scale)) >> 1) ///< vertical size in pixels of the encoder output window
+///< horizontal size in pixels of the encoder output window
+#define ENC_DETAILS_WIN_H ((int)(DEF_FRAME_HSIZE_43S_UNSCALED * widget_opts.scale))
+///< vertical size in pixels of the encoder output window
+#define ENC_DETAILS_WIN_V (((int)(DEF_FRAME_VSIZE_43S_UNSCALED * widget_opts.scale)) >> 1)
 
 #define MIN_MSG_WIDTH_CHARS ((int)(40. * widget_opts.scale)) ///< min width of text on warning/error labels
 #define MAX_MSG_WIDTH_CHARS ((int)(200. * widget_opts.scale)) ///< max width of text on warning/error labels
@@ -165,6 +174,7 @@
 #define DEF_DIALOG_HEIGHT RFX_WINSIZE_V
 
 #define LIVES_MAIN_WINDOW_WIDGET (mainw->LiVES)
+#define LIVES_MAIN_WIDGET_WINDOW LIVES_MAIN_WINDOW_WIDGET ///< since I can never remember which way round it is !
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define ALL_USED -1
@@ -531,6 +541,9 @@ enum {
 #define PREV_MODE_CYCLE 24
 #define SET_VPP_PARAMETER_VALUE 25
 #define OSC_NOTIFY 26
+
+#define N_HLP_PROCTHREADS 128
+#define PT_LAZY_RFX 16
 
 typedef struct {
   double top;
@@ -1421,9 +1434,7 @@ typedef struct {
   volatile int abufs_to_fill;
 
   /// splash window
-  LiVESWidget *splash_window;
-  LiVESWidget *splash_label;
-  LiVESWidget *splash_progress;
+  LiVESWidget *splash_window, *splash_label, *splash_progress;
 
 #define SPLASH_LEVEL_BEGIN .0
 #define SPLASH_LEVEL_START_GUI .2
@@ -1622,6 +1633,8 @@ typedef struct {
   weed_layer_t *st_fcache, *en_fcache, *pr_fcache;
   /// these are freed when the clip is switched or closed, or when the source frame changes or is updated
   ////////////////////
+
+  lives_proc_thread_t helper_procthreads[N_HLP_PROCTHREADS];
 } mainwindow;
 
 /// interface colour settings

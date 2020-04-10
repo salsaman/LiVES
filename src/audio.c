@@ -10,7 +10,6 @@
 #include "callbacks.h"
 #include "effects.h"
 #include "resample.h"
-#include "support.h"
 
 static char *storedfnames[NSTOREDFDS];
 static int storedfds[NSTOREDFDS];

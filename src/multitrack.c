@@ -73,7 +73,6 @@
 #include "callbacks.h"
 #include "effects.h"
 #include "resample.h"
-#include "support.h"
 #include "paramwindow.h"
 #include "interface.h"
 #include "audio.h"

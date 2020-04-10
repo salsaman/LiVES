@@ -1,6 +1,6 @@
 // rfx-builder.c
 // LiVES
-// (c) G. Finch 2004 - 2018 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2020 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -8,10 +8,50 @@
 
 #include "main.h"
 #include "rfx-builder.h"
-#include "support.h"
 #include "interface.h"
 #include "paramwindow.h"
 #include "effects.h"
+
+static LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder);
+static LiVESWidget *make_param_window_dialog(int hnum, rfx_build_window_t *rfxbuilder);
+static LiVESWidget *make_trigger_dialog(int tnum, rfx_build_window_t *rfxbuilder);
+static void on_table_add_row(LiVESButton *, livespointer rfxbuilder);
+static void on_table_edit_row(LiVESButton *, livespointer rfxbuilder);
+static void on_table_swap_row(LiVESButton *, livespointer rfxbuilder);
+static void on_table_delete_row(LiVESButton *, livespointer rfxbuilder);
+
+static void param_set_from_dialog(lives_param_t *copy_param, rfx_build_window_t *rfxbuilder);
+
+static void after_param_dp_changed(LiVESSpinButton *, livespointer rfxbuilder);
+static void after_param_min_changed(LiVESSpinButton *, livespointer rfxbuilder);
+static void after_param_max_changed(LiVESSpinButton *, livespointer rfxbuilder);
+static void after_param_def_changed(LiVESSpinButton *, livespointer rfxbuilder);
+static void after_rfxbuilder_type_toggled(LiVESToggleButton *, livespointer rfxbuilder);
+static void on_param_type_changed(LiVESCombo *, livespointer rfxbuilder);
+static void on_paramw_kw_changed(LiVESCombo *, livespointer rfxbuilder);
+static void on_paramw_sp_changed(LiVESCombo *, livespointer rfxbuilder);
+static void on_paramw_spsub_changed(LiVESCombo *, livespointer rfxbuilder);
+static void populate_script_combo(LiVESCombo *script_combo, lives_rfx_status_t status);
+static void on_script_status_changed(LiVESCombo *status_combo, livespointer script_combo);
+
+// builder window widgets/callbacks
+static rfx_build_window_t *make_rfx_build_window(const char *in_script_name, lives_rfx_status_t in_status);
+static void on_rfxbuilder_ok(LiVESButton *, livespointer);
+static void on_rfxbuilder_cancel(LiVESButton *, livespointer);
+static void rfxbuilder_destroy(rfx_build_window_t *);
+static void on_list_table_clicked(LiVESButton *, livespointer rfxbuilder);
+static void on_requirements_ok(LiVESButton *, livespointer rfxbuilder);
+static void on_requirements_cancel(LiVESButton *, livespointer);
+static void on_properties_clicked(LiVESButton *, livespointer rfxbuilder);
+static void on_properties_ok(LiVESButton *, livespointer rfxbuilder);
+static void on_params_ok(LiVESButton *, livespointer rfxbuilder);
+static void on_params_cancel(LiVESButton *, livespointer);
+static void on_param_window_ok(LiVESButton *, livespointer rfxbuilder);
+static void on_param_window_cancel(LiVESButton *, livespointer);
+static void on_code_clicked(LiVESButton *, livespointer rfxbuilder);
+static void on_code_ok(LiVESButton *, livespointer rfxbuilder);
+static void on_triggers_ok(LiVESButton *, livespointer rfxbuilder);
+static void on_triggers_cancel(LiVESButton *, livespointer);
 
 static LiVESWidget *copy_script_okbutton;
 
@@ -229,13 +269,11 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
                                   LIVES_BOX(rfxbuilder->action_desc_hbox),
                                   (tmp2 = lives_strdup(_("Describe what the plugin is doing. E.g. \"Edge detecting\"")))
                                                           );
-
   rfxbuilder->spinbutton_min_frames = lives_standard_spin_button_new((tmp = lives_strdup(_("Minimum frames:"))),
                                       1., 1., 1000., 1., 1., 0,
                                       LIVES_BOX(top_vbox),
                                       (tmp2 = lives_strdup(_("Minimum number of frames this effect/tool can be applied to. Normally 1.")))
                                                                     );
-
   rfxbuilder->min_frames_label = widget_opts.last_label;
 
   // requirements
@@ -305,7 +343,8 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
   rfxbuilder->trigger_button = lives_standard_button_new_with_label(_("_Trigger code..."));
   lives_box_pack_start(LIVES_BOX(top_vbox), rfxbuilder->trigger_button, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text(rfxbuilder->trigger_button,
-                                (_("Set trigger code for when the parameter window is shown, or when a parameter is changed. Optional (except for Utilities).")));
+                                (_("Set trigger code for when the parameter window is shown, or when a parameter is changed. "
+                                   "Optional (except for Utilities).")));
 
   cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(rfxbuilder->dialog), LIVES_STOCK_CANCEL, NULL,
                  LIVES_RESPONSE_CANCEL);
@@ -471,7 +510,7 @@ void after_rfxbuilder_type_toggled(LiVESToggleButton *togglebutton, livespointer
 }
 
 
-void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
+static void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
   LiVESWidget *dialog;
   LiVESWidget *dialog_vbox;
   LiVESWidget *hbox;
@@ -679,7 +718,7 @@ void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
 }
 
 
-void on_requirements_ok(LiVESButton *button, livespointer user_data) {
+static void on_requirements_ok(LiVESButton *button, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
 
   int i;
@@ -693,7 +732,7 @@ void on_requirements_ok(LiVESButton *button, livespointer user_data) {
 }
 
 
-void on_requirements_cancel(LiVESButton *button, livespointer user_data) {
+static void on_requirements_cancel(LiVESButton *button, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
 
   rfxbuilder->num_reqs = rfxbuilder->onum_reqs;
@@ -701,7 +740,7 @@ void on_requirements_cancel(LiVESButton *button, livespointer user_data) {
 }
 
 
-void on_properties_ok(LiVESButton *button, livespointer user_data) {
+static void on_properties_ok(LiVESButton *button, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
 
   if (rfxbuilder->type != RFX_BUILD_TYPE_EFFECT0) {
@@ -721,7 +760,7 @@ void on_properties_ok(LiVESButton *button, livespointer user_data) {
 }
 
 
-void on_params_ok(LiVESButton *button, livespointer user_data) {
+static void on_params_ok(LiVESButton *button, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
 
   register int i;
@@ -755,12 +794,10 @@ void on_params_ok(LiVESButton *button, livespointer user_data) {
   lives_general_button_clicked(button, NULL);
 }
 
-
-void on_params_cancel(LiVESButton *button, livespointer user_data) {
+static void on_params_cancel(LiVESButton *button, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
 
-  int i;
-  for (i = 0; i < rfxbuilder->num_params; i++) {
+  for (register int i = 0; i < rfxbuilder->num_params; i++) {
     // this is the only place these should be freed
     lives_free(rfxbuilder->copy_params[i].name);
     lives_free(rfxbuilder->copy_params[i].label);
@@ -777,10 +814,10 @@ void on_params_cancel(LiVESButton *button, livespointer user_data) {
 }
 
 
-void on_param_window_ok(LiVESButton *button, livespointer user_data) {
+static void on_param_window_ok(LiVESButton *button, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
 
-  int i;
+  register int i;
 
   for (i = 0; i < rfxbuilder->onum_paramw_hints; i++) {
     lives_free(rfxbuilder->paramw_hints[i]);
@@ -793,7 +830,7 @@ void on_param_window_ok(LiVESButton *button, livespointer user_data) {
   lives_general_button_clicked(button, NULL);
 }
 
-void on_param_window_cancel(LiVESButton *button, livespointer user_data) {
+static void on_param_window_cancel(LiVESButton *button, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
 
   rfxbuilder->num_paramw_hints = rfxbuilder->onum_paramw_hints;
@@ -801,7 +838,7 @@ void on_param_window_cancel(LiVESButton *button, livespointer user_data) {
 }
 
 
-void on_code_ok(LiVESButton *button, livespointer user_data) {
+static void on_code_ok(LiVESButton *button, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
 
   switch (rfxbuilder->codetype) {
@@ -835,14 +872,13 @@ void on_code_ok(LiVESButton *button, livespointer user_data) {
     char *values = lives_text_view_get_text(LIVES_TEXT_VIEW(rfxbuilder->code_textview));
     int numlines = get_token_count(values, '\n');
     char **lines = lives_strsplit(values, "\n", numlines);
-    int i;
     int defindex = get_int_param(rfxbuilder->copy_params[rfxbuilder->edit_param].def);
 
     if (rfxbuilder->copy_params[rfxbuilder->edit_param].list != NULL) {
       lives_list_free(rfxbuilder->copy_params[rfxbuilder->edit_param].list);
       rfxbuilder->copy_params[rfxbuilder->edit_param].list = NULL;
     }
-    for (i = 0; i < numlines; i++) {
+    for (register int i = 0; i < numlines; i++) {
       if (i < numlines - 1 || strlen(lines[i])) {
         rfxbuilder->copy_params[rfxbuilder->edit_param].list = lives_list_append
             (rfxbuilder->copy_params[rfxbuilder->edit_param].list, lives_strdup(lines[i]));
@@ -859,16 +895,16 @@ void on_code_ok(LiVESButton *button, livespointer user_data) {
     }
     if (rfxbuilder->copy_params[rfxbuilder->edit_param].list != NULL) {
       lives_combo_set_active_string(LIVES_COMBO(rfxbuilder->param_def_combo),
-                                    (char *)lives_list_nth_data(rfxbuilder->copy_params[rfxbuilder->edit_param].list, defindex));
-    }
+                                      (char *)lives_list_nth_data(rfxbuilder->copy_params[rfxbuilder->edit_param].list, defindex));
+      // *INDENT-OFF*
+}}}
+  // *INDENT-ON*
 
-  }
-  }
   lives_general_button_clicked(button, NULL);
 }
 
 
-void on_triggers_ok(LiVESButton *button, livespointer user_data) {
+static void on_triggers_ok(LiVESButton * button, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
 
   int i;
@@ -891,7 +927,7 @@ void on_triggers_ok(LiVESButton *button, livespointer user_data) {
 }
 
 
-void on_triggers_cancel(LiVESButton *button, livespointer user_data) {
+static void on_triggers_cancel(LiVESButton * button, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
 
   uint8_t *valid_triggers = NULL;
@@ -938,7 +974,7 @@ void on_triggers_cancel(LiVESButton *button, livespointer user_data) {
 }
 
 
-void on_properties_clicked(LiVESButton *button, livespointer user_data) {
+static void on_properties_clicked(LiVESButton * button, livespointer user_data) {
   LiVESWidget *dialog;
   LiVESWidget *dialog_vbox;
   LiVESWidget *cancelbutton;
@@ -995,8 +1031,7 @@ void on_properties_clicked(LiVESButton *button, livespointer user_data) {
 
 
 static void table_select_row(rfx_build_window_t *rfxbuilder, int row) {
-  register int i;
-  for (i = 0; i < rfxbuilder->table_rows; i++) {
+  for (register int i = 0; i < rfxbuilder->table_rows; i++) {
     if (i == row) {
       lives_widget_set_sensitive(rfxbuilder->edit_entry_button, TRUE);
       lives_widget_set_sensitive(rfxbuilder->remove_entry_button, TRUE);
@@ -1028,12 +1063,11 @@ static void table_select_row(rfx_build_window_t *rfxbuilder, int row) {
 }
 
 
-static boolean on_entry_click(LiVESWidget *widget, LiVESXEventButton *event, livespointer user_data) {
+static boolean on_entry_click(LiVESWidget * widget, LiVESXEventButton * event, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
-  register int i;
 
   widget = lives_bin_get_child(LIVES_BIN(widget));
-  for (i = 0; i < rfxbuilder->table_rows; i++) {
+  for (register int i = 0; i < rfxbuilder->table_rows; i++) {
     if (widget == rfxbuilder->entry[i] || widget == rfxbuilder->entry2[i] || widget == rfxbuilder->entry3[i]) {
       table_select_row(rfxbuilder, i);
 
@@ -1048,7 +1082,7 @@ static boolean on_entry_click(LiVESWidget *widget, LiVESXEventButton *event, liv
 }
 
 
-void on_table_add_row(LiVESButton *button, livespointer user_data) {
+static void on_table_add_row(LiVESButton * button, livespointer user_data) {
   LiVESWidget *entry = NULL, *entry2 = NULL, *entry3 = NULL;
   LiVESWidget *param_dialog = NULL;
   LiVESWidget *param_window_dialog = NULL;
@@ -1271,8 +1305,8 @@ void on_table_add_row(LiVESButton *button, livespointer user_data) {
                        (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
                        (LiVESAttachOptions)(0), 0, 0);
 
-    if (param_window_dialog != NULL) lives_widget_destroy(param_window_dialog);
-    if (button == NULL) goto add_row_done;
+    if (param_window_dialog) lives_widget_destroy(param_window_dialog);
+    if (!button) goto add_row_done;
 
     lives_widget_queue_resize(lives_widget_get_parent(LIVES_WIDGET(rfxbuilder->table)));
     lives_widget_queue_resize(LIVES_WIDGET(rfxbuilder->table));
@@ -1281,7 +1315,7 @@ void on_table_add_row(LiVESButton *button, livespointer user_data) {
   case RFX_TABLE_TYPE_TRIGGERS:
     entry = rfxbuilder->entry[rfxbuilder->table_rows] = lives_entry_new();
 
-    if (button != NULL) {
+    if (button) {
       trigger_dialog = make_trigger_dialog(-1, rfxbuilder);
       if (lives_dialog_run(LIVES_DIALOG(trigger_dialog)) == LIVES_RESPONSE_CANCEL) {
         return;
@@ -1292,7 +1326,7 @@ void on_table_add_row(LiVESButton *button, livespointer user_data) {
       char *tmpx2 = NULL;
       lives_entry_set_text(LIVES_ENTRY(entry), rfxbuilder->triggers[rfxbuilder->table_rows].when ?
                            (tmpx2 = lives_strdup_printf("%d", rfxbuilder->triggers[rfxbuilder->table_rows].when - 1)) : "init");
-      if (tmpx2 != NULL) lives_free(tmpx2);
+      if (tmpx2) lives_free(tmpx2);
     }
 
     lives_entry_set_editable(LIVES_ENTRY(entry), FALSE);
@@ -1307,8 +1341,8 @@ void on_table_add_row(LiVESButton *button, livespointer user_data) {
                        (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
                        (LiVESAttachOptions)(0), 0, 0);
 
-    if (button == NULL) {
-      if (trigger_dialog != NULL) lives_widget_destroy(trigger_dialog);
+    if (!button) {
+      if (trigger_dialog) lives_widget_destroy(trigger_dialog);
       goto add_row_done;
     }
 
@@ -1330,7 +1364,7 @@ void on_table_add_row(LiVESButton *button, livespointer user_data) {
       rfxbuilder->params[rfxbuilder->copy_triggers[rfxbuilder->table_rows - 1].when - 1].onchange = TRUE;
     }
 
-    if (trigger_dialog != NULL) lives_widget_destroy(trigger_dialog);
+    if (trigger_dialog) lives_widget_destroy(trigger_dialog);
     lives_widget_queue_resize(lives_widget_get_parent(LIVES_WIDGET(rfxbuilder->table)));
     lives_widget_queue_resize(LIVES_WIDGET(rfxbuilder->table));
 
@@ -1359,7 +1393,7 @@ add_row_done:
     }
   }
 
-  if (entry2 != NULL) {
+  if (entry2) {
     lives_event_box_set_above_child(LIVES_EVENT_BOX(ebox2), TRUE);
 
     lives_signal_connect(LIVES_GUI_OBJECT(ebox2), LIVES_WIDGET_BUTTON_PRESS_EVENT,
@@ -1377,7 +1411,7 @@ add_row_done:
     }
   }
 
-  if (entry3 != NULL) {
+  if (entry3) {
     lives_event_box_set_above_child(LIVES_EVENT_BOX(ebox3), TRUE);
 
     lives_signal_connect(LIVES_GUI_OBJECT(ebox3), LIVES_WIDGET_BUTTON_PRESS_EVENT,
@@ -1395,7 +1429,7 @@ add_row_done:
     }
   }
 
-  if (button != NULL) {
+  if (button) {
     table_select_row(rfxbuilder, rfxbuilder->table_rows - 1);
 
     if (rfxbuilder->table_type == RFX_TABLE_TYPE_REQUIREMENTS) {
@@ -1405,7 +1439,7 @@ add_row_done:
 }
 
 
-void param_set_from_dialog(lives_param_t *copy_param, rfx_build_window_t *rfxbuilder) {
+static void param_set_from_dialog(lives_param_t *copy_param, rfx_build_window_t *rfxbuilder) {
   // set parameter values from param_dialog
   // this is called after adding a new copy_param or editing an existing one
   char *ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
@@ -1478,7 +1512,7 @@ void param_set_from_dialog(lives_param_t *copy_param, rfx_build_window_t *rfxbui
 }
 
 
-void on_table_edit_row(LiVESButton *button, livespointer user_data) {
+static void on_table_edit_row(LiVESButton * button, livespointer user_data) {
   LiVESWidget *param_dialog;
   LiVESWidget *paramw_dialog;
   LiVESWidget *trigger_dialog;
@@ -1593,15 +1627,12 @@ void on_table_edit_row(LiVESButton *button, livespointer user_data) {
 }
 
 
-void on_table_swap_row(LiVESButton *button, livespointer user_data) {
+static void on_table_swap_row(LiVESButton * button, livespointer user_data) {
   char *entry_text;
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
-
   int found = -1;
 
-  register int i;
-
-  for (i = 0; i < rfxbuilder->table_rows && found == -1; i++) {
+  for (register int i = 0; i < rfxbuilder->table_rows && found == -1; i++) {
     if (!(lives_widget_get_state(rfxbuilder->entry[i])&LIVES_WIDGET_STATE_INSENSITIVE)) {
       found = i;
       break;
@@ -1640,7 +1671,7 @@ void on_table_swap_row(LiVESButton *button, livespointer user_data) {
 }
 
 
-void on_table_delete_row(LiVESButton *button, livespointer user_data) {
+static void on_table_delete_row(LiVESButton * button, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
 
   LiVESWidget *ebox;
@@ -1665,9 +1696,7 @@ void on_table_delete_row(LiVESButton *button, livespointer user_data) {
         lives_widget_reparent(rfxbuilder->entry[i], ebox);
         ebox = ebox2;
 #endif
-
         rfxbuilder->entry[i - 1] = rfxbuilder->entry[i];
-
       } else if (!(lives_widget_get_state(rfxbuilder->entry[i])&LIVES_WIDGET_STATE_INSENSITIVE)) {
 #if LIVES_TABLE_IS_GRID
         lives_grid_remove_row(LIVES_GRID(rfxbuilder->table), i);
@@ -1680,7 +1709,6 @@ void on_table_delete_row(LiVESButton *button, livespointer user_data) {
 #endif
         move = i + 1;
       }
-
     }
     if (move == 0) return;
     rfxbuilder->table_rows--;
@@ -1752,7 +1780,7 @@ void on_table_delete_row(LiVESButton *button, livespointer user_data) {
     }
 
 #if LIVES_TABLE_IS_GRID
-    if (entry != NULL) lives_widget_destroy(entry);
+    if (entry) lives_widget_destroy(entry);
 #endif
 
     if (move == 0) return;
@@ -1802,7 +1830,7 @@ void on_table_delete_row(LiVESButton *button, livespointer user_data) {
         move = i + 1;
       }
     }
-    if (move == 0) return;
+    if (!move) return;
     rfxbuilder->table_rows--;
     rfxbuilder->num_paramw_hints--;
     break;
@@ -1840,7 +1868,7 @@ void on_table_delete_row(LiVESButton *button, livespointer user_data) {
         move = i + 1;
       }
     }
-    if (move == 0) return;
+    if (!move) return;
     rfxbuilder->table_rows--;
     rfxbuilder->num_triggers--;
 
@@ -1907,7 +1935,8 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
   rfxbuilder->param_label_entry = lives_standard_entry_new((tmp = lives_strdup(_("_Label:    "))),
                                   pnum >= 0 ? rfxbuilder->copy_params[pnum].label : NULL,
                                   60.*widget_opts.scale, -1, LIVES_BOX(dialog_vbox),
-                                  (tmp2 = lives_strdup(_("Label to be shown by the parameter. An underscore represents mnemonic accelerator."))));
+                                  (tmp2 = lives_strdup(_("Label to be shown by the parameter. "
+                                          "An underscore represents mnemonic accelerator."))));
   lives_free(tmp);
   lives_free(tmp2);
 
@@ -1930,31 +1959,23 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
   if (pnum >= 0) {
     switch (rfxbuilder->copy_params[pnum].type) {
     case LIVES_PARAM_NUM:
-      lives_combo_set_active_index(LIVES_COMBO(rfxbuilder->param_type_combo), 0);
-      break;
+      lives_combo_set_active_index(LIVES_COMBO(rfxbuilder->param_type_combo), 0); break;
     case LIVES_PARAM_BOOL:
-      lives_combo_set_active_index(LIVES_COMBO(rfxbuilder->param_type_combo), 1);
-      break;
+      lives_combo_set_active_index(LIVES_COMBO(rfxbuilder->param_type_combo), 1); break;
     case LIVES_PARAM_STRING:
-      lives_combo_set_active_index(LIVES_COMBO(rfxbuilder->param_type_combo), 2);
-      break;
+      lives_combo_set_active_index(LIVES_COMBO(rfxbuilder->param_type_combo), 2); break;
     case LIVES_PARAM_COLRGB24:
-      lives_combo_set_active_index(LIVES_COMBO(rfxbuilder->param_type_combo), 3);
-      break;
+      lives_combo_set_active_index(LIVES_COMBO(rfxbuilder->param_type_combo), 3); break;
     case LIVES_PARAM_STRING_LIST:
-      lives_combo_set_active_index(LIVES_COMBO(rfxbuilder->param_type_combo), 4);
-      break;
-    default:
-      break;
+      lives_combo_set_active_index(LIVES_COMBO(rfxbuilder->param_type_combo), 4); break;
+    default: break;
     }
   } else rfxbuilder->edit_param = rfxbuilder->num_params;
 
   // dp
 
   rfxbuilder->spinbutton_param_dp = lives_standard_spin_button_new(_("Decimal _places: "),
-                                    pnum >= 0 ? rfxbuilder->copy_params[pnum].dp : 0.,
-                                    0., 16., 1., 1., 0,
-                                    LIVES_BOX(dialog_vbox), NULL);
+                                    pnum >= 0 ? rfxbuilder->copy_params[pnum].dp : 0., 0., 16., 1., 1., 0, LIVES_BOX(dialog_vbox), NULL);
   rfxbuilder->param_dp_label = widget_opts.last_label;
 
   add_hsep_to_box(LIVES_BOX(dialog_vbox));
@@ -1962,9 +1983,7 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
   // default val
 
   rfxbuilder->spinbutton_param_def = lives_standard_spin_button_new(_("_Default value:    "), 0., -LIVES_MAXINT, LIVES_MAXINT, 1.,
-                                     1.,
-                                     0,
-                                     LIVES_BOX(dialog_vbox), NULL);
+                                     1., 0, LIVES_BOX(dialog_vbox), NULL);
   rfxbuilder->param_def_label = widget_opts.last_label;
 
   // extra bits for string/string_list
@@ -2013,39 +2032,31 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
   lives_box_pack_start(LIVES_BOX(dialog_vbox), rfxbuilder->hbox_bg, FALSE, FALSE, widget_opts.packing_height);
 
   rfxbuilder->spinbutton_param_group = lives_standard_spin_button_new((tmp = lives_strdup(_("Button _Group: "))), 0., 0., 16., 1.,
-                                       1.,
-                                       0,
-                                       LIVES_BOX(rfxbuilder->hbox_bg),
+                                       1., 0, LIVES_BOX(rfxbuilder->hbox_bg),
                                        (tmp2 = lives_strdup(_("A non-zero value can be used to group radio buttons."))));
 
   if (pnum >= 0) {
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_group), (double)rfxbuilder->copy_params[pnum].group);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_group),
+                                (double)rfxbuilder->copy_params[pnum].group);
   }
 
   // min
 
   rfxbuilder->spinbutton_param_min = lives_standard_spin_button_new(_("_Minimum value: "), 0., -LIVES_MAXINT, LIVES_MAXINT, 1.,
-                                     1., 0,
-                                     LIVES_BOX(dialog_vbox), NULL);
+                                     1., 0, LIVES_BOX(dialog_vbox), NULL);
   rfxbuilder->param_min_label = widget_opts.last_label;
 
   // max
 
   rfxbuilder->spinbutton_param_max = lives_standard_spin_button_new(_("Ma_ximum value: "), RFX_DEF_NUM_MAX, -LIVES_MAXINT,
-                                     LIVES_MAXINT,
-                                     1., 1., 0,
-                                     LIVES_BOX(dialog_vbox), NULL);
+                                     LIVES_MAXINT, 1., 1., 0, LIVES_BOX(dialog_vbox), NULL);
   rfxbuilder->param_max_label = widget_opts.last_label;
 
   // step size
 
   rfxbuilder->spinbutton_param_step = lives_standard_spin_button_new((tmp = lives_strdup(_("     _Step size:   "))), 1., 1.,
-                                      LIVES_MAXINT,
-                                      1., 1., 0,
-                                      LIVES_BOX(dialog_vbox),
-                                      (tmp2 = lives_strdup(_(
-                                          "How much the parameter is adjusted when the spinbutton arrows are pressed."
-                                          ))));
+                                      LIVES_MAXINT, 1., 1., 0, LIVES_BOX(dialog_vbox),
+                                      (tmp2 = lives_strdup(_("How much the parameter is adjusted when the spinbutton arrows are pressed."))));
   rfxbuilder->param_step_label = widget_opts.last_label;
   lives_free(tmp);
   lives_free(tmp2);
@@ -2063,31 +2074,25 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
   lives_free(tmp2);
 
   lives_signal_connect(LIVES_GUI_OBJECT(rfxbuilder->param_strdef_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_code_clicked),
-                       (livespointer)rfxbuilder);
+                       LIVES_GUI_CALLBACK(on_code_clicked), (livespointer)rfxbuilder);
 
   lives_signal_connect(LIVES_GUI_OBJECT(rfxbuilder->param_type_combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_param_type_changed),
-                       (livespointer)rfxbuilder);
+                       LIVES_GUI_CALLBACK(on_param_type_changed), (livespointer)rfxbuilder);
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(rfxbuilder->spinbutton_param_dp), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                             LIVES_GUI_CALLBACK(after_param_dp_changed),
-                             (livespointer)rfxbuilder);
+                             LIVES_GUI_CALLBACK(after_param_dp_changed), (livespointer)rfxbuilder);
 
   rfxbuilder->def_spin_f = lives_signal_connect_after(LIVES_GUI_OBJECT(rfxbuilder->spinbutton_param_def),
                            LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                           LIVES_GUI_CALLBACK(after_param_def_changed),
-                           (livespointer)rfxbuilder);
+                           LIVES_GUI_CALLBACK(after_param_def_changed), (livespointer)rfxbuilder);
 
   rfxbuilder->min_spin_f = lives_signal_connect_after(LIVES_GUI_OBJECT(rfxbuilder->spinbutton_param_min),
                            LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                           LIVES_GUI_CALLBACK(after_param_min_changed),
-                           (livespointer)rfxbuilder);
+                           LIVES_GUI_CALLBACK(after_param_min_changed), (livespointer)rfxbuilder);
 
   rfxbuilder->max_spin_f = lives_signal_connect_after(LIVES_GUI_OBJECT(rfxbuilder->spinbutton_param_max),
                            LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                           LIVES_GUI_CALLBACK(after_param_max_changed),
-                           (livespointer)rfxbuilder);
+                           LIVES_GUI_CALLBACK(after_param_max_changed), (livespointer)rfxbuilder);
 
   if (pnum >= 0) {
     switch (rfxbuilder->copy_params[pnum].type) {
@@ -2117,7 +2122,7 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
 }
 
 
-void after_param_dp_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
+static void after_param_dp_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
   char *ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
   int dp;
@@ -2165,7 +2170,7 @@ void after_param_dp_changed(LiVESSpinButton *spinbutton, livespointer user_data)
 }
 
 
-void after_param_min_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
+static void after_param_min_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
   int dp;
   char *ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
@@ -2207,7 +2212,6 @@ void after_param_min_changed(LiVESSpinButton *spinbutton, livespointer user_data
     lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_step), 1,
                                 lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_max)) -
                                 lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_min)));
-
   }
 
   lives_signal_handler_unblock(rfxbuilder->spinbutton_param_max, rfxbuilder->max_spin_f);
@@ -2215,7 +2219,7 @@ void after_param_min_changed(LiVESSpinButton *spinbutton, livespointer user_data
 }
 
 
-void after_param_max_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
+static void after_param_max_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
   int dp;
   char *ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
@@ -2243,7 +2247,6 @@ void after_param_max_changed(LiVESSpinButton *spinbutton, livespointer user_data
                                 1. / (double)lives_10pow(dp),
                                 lives_spin_button_get_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_max)) -
                                 lives_spin_button_get_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_min)));
-
   } else {
     if (lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_def)) >
         lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_max))) {
@@ -2256,7 +2259,6 @@ void after_param_max_changed(LiVESSpinButton *spinbutton, livespointer user_data
     lives_spin_button_set_range(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_step), 1,
                                 lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_max))
                                 - lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_min)));
-
   }
 
   lives_signal_handler_unblock(rfxbuilder->spinbutton_param_min, rfxbuilder->min_spin_f);
@@ -2264,7 +2266,7 @@ void after_param_max_changed(LiVESSpinButton *spinbutton, livespointer user_data
 }
 
 
-void after_param_def_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
+static void after_param_def_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
   char *ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
 
@@ -2293,7 +2295,7 @@ void after_param_def_changed(LiVESSpinButton *spinbutton, livespointer user_data
 }
 
 
-void on_param_type_changed(LiVESCombo *param_type_combo, livespointer user_data) {
+static void on_param_type_changed(LiVESCombo * param_type_combo, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
   int pnum = rfxbuilder->edit_param;
 
@@ -2556,7 +2558,7 @@ LiVESWidget *make_param_window_dialog(int pnum, rfx_build_window_t *rfxbuilder) 
 }
 
 
-void on_paramw_kw_changed(LiVESCombo *combo, livespointer user_data) {
+static void on_paramw_kw_changed(LiVESCombo * combo, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
   char *ctext = lives_combo_get_active_text(combo);
 
@@ -2575,15 +2577,14 @@ void on_paramw_kw_changed(LiVESCombo *combo, livespointer user_data) {
 }
 
 
-static void paramw_set_splabel(LiVESLabel *label, int npars) {
-  int i;
+static void paramw_set_splabel(LiVESLabel * label, int npars) {
   char *tmpx;
 
   if (npars == 1) {
     tmpx = lives_strdup(_("Linked parameter:    "));
   } else {
     char example[256] = "0";
-    for (i = 1; i < npars; i++) {
+    for (register int i = 1; i < npars; i++) {
       char *xnew = lives_strdup_printf("|%d", i);
       lives_strappend(example, 256, xnew);
       lives_free(xnew);
@@ -2595,7 +2596,7 @@ static void paramw_set_splabel(LiVESLabel *label, int npars) {
 }
 
 
-void on_paramw_sp_changed(LiVESCombo *combo, livespointer user_data) {
+static void on_paramw_sp_changed(LiVESCombo * combo, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
   int npars;
   char *ctext = lives_combo_get_active_text(combo);
@@ -2617,7 +2618,7 @@ void on_paramw_sp_changed(LiVESCombo *combo, livespointer user_data) {
 }
 
 
-void on_paramw_spsub_changed(LiVESCombo *combo, livespointer user_data) {
+static void on_paramw_spsub_changed(LiVESCombo * combo, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
   char *ctext = lives_combo_get_active_text(combo);
   int npars = 0;
@@ -2713,7 +2714,7 @@ LiVESWidget *make_trigger_dialog(int tnum, rfx_build_window_t *rfxbuilder) {
 }
 
 
-void on_code_clicked(LiVESButton *button, livespointer user_data) {
+static void on_code_clicked(LiVESButton * button, livespointer user_data) {
   LiVESWidget *dialog;
   LiVESWidget *dialog_vbox;
   LiVESWidget *cancelbutton;
@@ -2819,27 +2820,22 @@ void on_code_clicked(LiVESButton *button, livespointer user_data) {
     }
   }
 
-  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
-                 LIVES_RESPONSE_CANCEL);
+  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,  LIVES_RESPONSE_CANCEL);
 
-  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
-             LIVES_RESPONSE_OK);
+  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL, LIVES_RESPONSE_OK);
 
   lives_widget_set_can_default(okbutton, TRUE);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_code_ok),
-                       user_data);
+  lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_code_ok), user_data);
 
   lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(lives_general_button_clicked),
-                       NULL);
+                       LIVES_GUI_CALLBACK(lives_general_button_clicked), NULL);
 
   lives_widget_show_all(dialog);
 }
 
 
-void on_rfxbuilder_ok(LiVESButton *button, livespointer user_data) {
+static void on_rfxbuilder_ok(LiVESButton * button, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
 
   if (!perform_rfxbuilder_checks(rfxbuilder)) return;
@@ -2850,7 +2846,7 @@ void on_rfxbuilder_ok(LiVESButton *button, livespointer user_data) {
 }
 
 
-void on_rfxbuilder_cancel(LiVESButton *button, livespointer user_data) {
+static void on_rfxbuilder_cancel(LiVESButton * button, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
 
   lives_general_button_clicked(button, NULL);
@@ -2858,7 +2854,7 @@ void on_rfxbuilder_cancel(LiVESButton *button, livespointer user_data) {
 }
 
 
-void rfxbuilder_destroy(rfx_build_window_t *rfxbuilder) {
+static void rfxbuilder_destroy(rfx_build_window_t *rfxbuilder) {
   register int i;
 
   for (i = 0; i < rfxbuilder->num_reqs; i++) {
@@ -3661,7 +3657,7 @@ LiVESList *get_script_section(const char *section, const char *file, boolean str
 /* } */
 
 
-void on_rebuild_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_rebuild_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   char *com;
   lives_rfx_status_t status = (lives_rfx_status_t)LIVES_POINTER_TO_INT(user_data);
 
@@ -3729,7 +3725,7 @@ boolean check_builder_programs(void) {
 }
 
 
-void on_delete_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_delete_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_rfx_status_t status = (lives_rfx_status_t)LIVES_POINTER_TO_INT(user_data);
   int ret;
   char *rfx_script_file, *rfx_exec_dir, *rfx_script_dir;
@@ -3791,7 +3787,7 @@ void on_delete_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_promote_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_promote_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   char *rfx_script_from = NULL;
   char *rfx_script_to = NULL;
   char *rfx_dir_from = NULL;
@@ -3859,7 +3855,7 @@ void on_promote_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_export_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_export_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_rfx_status_t status = (lives_rfx_status_t)LIVES_POINTER_TO_INT(user_data);
 
   char *script_name = prompt_for_script_name(NULL, status);
@@ -3891,7 +3887,7 @@ void on_export_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_import_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_import_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_rfx_status_t status = (lives_rfx_status_t)LIVES_POINTER_TO_INT(user_data);
 
   char *rfx_script_to, *rfx_dir_to;
@@ -4062,23 +4058,19 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
     }
 
     name_entry = lives_standard_entry_new(copy_mode ? _("New name:") : rename_mode ? _("New script name:") : NULL,
-                                          sname, -1, 128,
-                                          LIVES_BOX(hbox), NULL);
+                                          sname, -1, 128, LIVES_BOX(hbox), NULL);
 
     if (copy_mode) {
       lives_signal_connect(LIVES_GUI_OBJECT(status_combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                           LIVES_GUI_CALLBACK(on_script_status_changed),
-                           (livespointer)script_combo);
+                           LIVES_GUI_CALLBACK(on_script_status_changed), (livespointer)script_combo);
     }
   }
   lives_widget_grab_focus(name_entry);
   lives_entry_set_activates_default(LIVES_ENTRY(name_entry), TRUE);
 
-  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
-                                     LIVES_RESPONSE_CANCEL);
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL, LIVES_RESPONSE_CANCEL);
 
-  copy_script_okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
-                         LIVES_RESPONSE_OK);
+  copy_script_okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL, LIVES_RESPONSE_OK);
 
   lives_button_grab_default_special(copy_script_okbutton);
 
@@ -4146,8 +4138,7 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
           if ((ret = rename(rfx_script_from, rfx_script_to))) {
             d_print_failed();
             do_error_dialog((tmp = lives_strdup_printf(_("\n\nFailed to move the plugin script from\n%s to\n%s\nReturn code was %d\n"),
-                                   rfx_script_from,
-                                   rfx_script_to, ret)));
+                                   rfx_script_from,  rfx_script_to, ret)));
             lives_free(tmp);
           } else {
             d_print_done();
@@ -4168,7 +4159,7 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
 }
 
 
-void populate_script_combo(LiVESCombo *script_combo, lives_rfx_status_t status) {
+static void populate_script_combo(LiVESCombo * script_combo, lives_rfx_status_t status) {
   LiVESList *list = NULL;
   lives_combo_populate(script_combo, (list = get_script_list(status)));
   if (list != NULL) {
@@ -4182,7 +4173,7 @@ void populate_script_combo(LiVESCombo *script_combo, lives_rfx_status_t status) 
 }
 
 
-void on_script_status_changed(LiVESCombo *status_combo, livespointer user_data) {
+static void on_script_status_changed(LiVESCombo * status_combo, livespointer user_data) {
   char *text = lives_combo_get_active_text(status_combo);
   LiVESWidget *script_combo = (LiVESWidget *)user_data;
 
@@ -4208,14 +4199,14 @@ LiVESList *get_script_list(lives_rfx_status_t status) {
 
   switch (status) {
   case RFX_STATUS_TEST:
-    script_list = get_plugin_list(PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS, TRUE, NULL, "script");
+    script_list = get_plugin_list(PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS, TRUE, NULL, LIVES_FILE_EXT_RFX_SCRIPT);
     break;
   case RFX_STATUS_CUSTOM:
-    script_list = get_plugin_list(PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS, TRUE, NULL, "script");
+    script_list = get_plugin_list(PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS, TRUE, NULL, LIVES_FILE_EXT_RFX_SCRIPT);
     break;
   case RFX_STATUS_BUILTIN:
   case RFX_STATUS_COPY:
-    script_list = get_plugin_list(PLUGIN_RENDERED_EFFECTS_BUILTIN_SCRIPTS, TRUE, NULL, "script");
+    script_list = get_plugin_list(PLUGIN_RENDERED_EFFECTS_BUILTIN_SCRIPTS, TRUE, NULL, LIVES_FILE_EXT_RFX_SCRIPT);
     break;
   default:
     break;
@@ -4223,36 +4214,29 @@ LiVESList *get_script_list(lives_rfx_status_t status) {
   return script_list;
 }
 
+static int rfx_slot_count = 0;
 
 void add_rfx_effects(lives_rfx_status_t status) {
   // scan render plugin directories, create a rfx array, and add each to the appropriate menu area
-  LiVESList *rfx_builtin_list = NULL;
-  LiVESList *rfx_custom_list = NULL;
-  LiVESList *rfx_test_list = NULL;
+  LiVESList *rfx_builtin_list = NULL, *rfx_custom_list = NULL, *rfx_test_list = NULL;
 
   lives_rfx_t *rfx = NULL;
   lives_rfx_t *rendered_fx;
-
-  char txt[64]; // menu text
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   LiVESWidget *rfx_image;
 #endif
   LiVESWidget *menuitem;
 
-  int i, plugin_idx, rfx_slot_count = 0;
+  int i, plugin_idx;
 
-  int tool_posn = RFX_TOOL_MENU_POSN;
   int rfx_builtin_list_length = mainw->num_rendered_effects_builtin;
   int rfx_custom_list_length = mainw->num_rendered_effects_custom;
   int rfx_test_list_length = mainw->num_rendered_effects_test;
   int rfx_list_length, old_list_length = rfx_builtin_list_length + rfx_custom_list_length + rfx_test_list_length;
 
   if (status != RFX_STATUS_TEST) {
-    mainw->has_custom_effects = FALSE;
-    mainw->has_custom_tools = FALSE;
-    mainw->has_custom_gens = FALSE;
-    mainw->has_custom_utilities = FALSE;
+    mainw->has_custom_effects = mainw->has_custom_tools = mainw->has_custom_gens = mainw->has_custom_utilities = FALSE;
   }
 
   if (status != RFX_STATUS_ANY) {
@@ -4282,27 +4266,13 @@ void add_rfx_effects(lives_rfx_status_t status) {
     if (mainw->custom_tools_menu != NULL) lives_widget_destroy(mainw->custom_tools_menu);
     if (mainw->utilities_menu != NULL) lives_widget_destroy(mainw->utilities_menu);
 
-    mainw->custom_effects_separator = NULL;
-    mainw->custom_effects_menu = NULL;
-    mainw->custom_effects_submenu = NULL;
-    mainw->custom_gens_menu = NULL;
-    mainw->custom_gens_submenu = NULL;
-    mainw->gens_menu = NULL;
-
-    mainw->custom_utilities_separator = NULL;
-    mainw->custom_utilities_menu = NULL;
-    mainw->custom_utilities_submenu = NULL;
-    mainw->custom_tools_menu = NULL;
-    mainw->utilities_menu = NULL;
+    mainw->custom_effects_separator = mainw->custom_effects_menu = mainw->custom_effects_submenu
+                                      = mainw->custom_gens_menu = mainw->custom_gens_submenu = mainw->gens_menu =
+                                            mainw->custom_utilities_separator = mainw->custom_utilities_menu = mainw->custom_utilities_submenu
+                                                = mainw->custom_tools_menu = mainw->utilities_menu = NULL;
   }
 
-  if (status == RFX_STATUS_TEST && mainw->run_test_rfx_menu != NULL) {
-    lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->run_test_rfx_submenu), NULL);
-    if (LIVES_IS_WIDGET(mainw->run_test_rfx_menu)) lives_widget_destroy(mainw->run_test_rfx_menu);
-  }
-
-  if (status != RFX_STATUS_ANY)
-    threaded_dialog_spin(0.);
+  if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
   // reset / reload values
   if (status == RFX_STATUS_ANY)
@@ -4312,8 +4282,7 @@ void add_rfx_effects(lives_rfx_status_t status) {
   if (status != RFX_STATUS_CUSTOM)
     mainw->num_rendered_effects_test = 0;
 
-  if (status != RFX_STATUS_TEST)
-    make_custom_submenus();
+  if (status != RFX_STATUS_TEST) make_custom_submenus();
 
   if (status != RFX_STATUS_CUSTOM) {
     mainw->run_test_rfx_menu = lives_standard_menu_new();
@@ -4322,12 +4291,6 @@ void add_rfx_effects(lives_rfx_status_t status) {
   }
 
   if (status != RFX_STATUS_TEST) {
-    mainw->custom_effects_menu = lives_standard_menu_new();
-    lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->custom_effects_submenu), mainw->custom_effects_menu);
-
-    mainw->custom_tools_menu = lives_standard_menu_new();
-    lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->custom_tools_submenu), mainw->custom_tools_menu);
-
     rfx_custom_list = get_plugin_list(PLUGIN_RENDERED_EFFECTS_CUSTOM, FALSE, NULL, NULL);
     rfx_custom_list_length = lives_list_length(rfx_custom_list);
   }
@@ -4344,8 +4307,7 @@ void add_rfx_effects(lives_rfx_status_t status) {
 
   rfx_list_length = rfx_builtin_list_length + rfx_custom_list_length + rfx_test_list_length;
 
-  if (status != RFX_STATUS_ANY)
-    threaded_dialog_spin(0.);
+  if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
   rendered_fx = (lives_rfx_t *)lives_malloc((rfx_list_length + 1) * sizeof(lives_rfx_t));
 
@@ -4397,13 +4359,13 @@ void add_rfx_effects(lives_rfx_status_t status) {
     int offset = 0;
 
     for (plugin_idx = 0; plugin_idx < rfx_list_length; plugin_idx++) {
-      threaded_dialog_spin(0.);
-      if (mainw->splash_window == NULL) {
-        lives_widget_context_update();
-      }
+      if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
+#ifndef BG_LOAD
+      if (!mainw->splash_window) lives_widget_context_update();
+#endif
       if (plugin_idx == rfx_builtin_list_length) {
         lives_free(type);
-        type = lives_strdup_printf(PLUGIN_RENDERED_EFFECTS_CUSTOM);
+        type = lives_strdup(PLUGIN_RENDERED_EFFECTS_CUSTOM);
         xstatus = RFX_STATUS_CUSTOM;
         rfx_list = rfx_custom_list;
         offset = rfx_builtin_list_length;
@@ -4420,10 +4382,12 @@ void add_rfx_effects(lives_rfx_status_t status) {
 
       plugin_name = lives_strdup((char *)lives_list_nth_data(rfx_list, plugin_idx - offset));
 
+#ifndef BG_LOAD
       if (mainw->splash_window != NULL) {
         splash_msg((tmp = lives_strdup_printf(_("Loading rendered effect %s..."), plugin_name)), SPLASH_LEVEL_LOAD_RFX);
         lives_free(tmp);
       }
+#endif
 
 #ifdef DEBUG_RENDER_FX
       g_print("Checking plugin %s\n", plugin_name);
@@ -4436,6 +4400,7 @@ void add_rfx_effects(lives_rfx_status_t status) {
         lives_free(plugin_name);
         continue;
       }
+
       def = lives_strdup((char *)lives_list_nth_data(define, 0));
       lives_list_free_all(&define);
 
@@ -4483,6 +4448,7 @@ void add_rfx_effects(lives_rfx_status_t status) {
         rfx->is_template = FALSE;
         if (!check_rfx_for_lives(rfx)) rfx_slot_count--;
       }
+
       lives_free(plugin_name);
       if (props != NULL) {
         lives_list_free_all(&props);
@@ -4495,15 +4461,10 @@ void add_rfx_effects(lives_rfx_status_t status) {
       lives_free(def);
     }
 
-    if (rfx_builtin_list != NULL) {
-      lives_list_free_all(&rfx_builtin_list);
-    }
-    if (rfx_custom_list != NULL) {
-      lives_list_free_all(&rfx_custom_list);
-    }
-    if (rfx_test_list != NULL) {
-      lives_list_free_all(&rfx_test_list);
-    }
+    if (rfx_builtin_list) lives_list_free_all(&rfx_builtin_list);
+    if (rfx_custom_list) lives_list_free_all(&rfx_custom_list);
+    if (rfx_test_list) lives_list_free_all(&rfx_test_list);
+
     lives_free(type);
   }
 
@@ -4511,34 +4472,31 @@ void add_rfx_effects(lives_rfx_status_t status) {
 
   rfx_slot_count--;
 
-  threaded_dialog_spin(0.);
+  if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
   // sort menu text by alpha order (apart from [0]) and create mainw->rendered_fx
   sort_rfx_array(rendered_fx, rfx_slot_count); // each rendered_fx is copied and free()d
   lives_free(rendered_fx);
 
-  threaded_dialog_spin(0.);
+  if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
+
+  //////////////////////////////////////////////////////
 
   if (status == RFX_STATUS_ANY) {
     // recreate effects menu
     menuitem = lives_standard_menu_item_new_with_label(mainw->rendered_fx[0].menu_text);
-    lives_container_add(LIVES_CONTAINER(mainw->effects_menu), menuitem);
 
     lives_widget_set_sensitive(menuitem, FALSE);
     lives_widget_set_tooltip_text(menuitem, _("See: VJ - show VJ keys. Set the realtime effects, and then apply them here."));
 
     lives_widget_add_accelerator(menuitem, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
-                                 LIVES_KEY_e, LIVES_CONTROL_MASK,
-                                 LIVES_ACCEL_VISIBLE);
+                                 LIVES_KEY_e, LIVES_CONTROL_MASK, LIVES_ACCEL_VISIBLE);
 
     lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_realfx_activate),
-                         &mainw->rendered_fx[0]);
+                         LIVES_GUI_CALLBACK(on_realfx_activate), &mainw->rendered_fx[0]);
 
     mainw->rendered_fx[0].menuitem = menuitem;
     mainw->rendered_fx[0].num_in_channels = 1;
-
-    mainw->rte_separator = lives_menu_add_separator(LIVES_MENU(mainw->effects_menu));
 
     if (!LIVES_IS_PLAYING && mainw->current_file > 0 &&
         ((has_video_filters(TRUE) && !has_video_filters(FALSE)) ||
@@ -4548,23 +4506,16 @@ void add_rfx_effects(lives_rfx_status_t status) {
     } else lives_widget_set_sensitive(menuitem, FALSE);
   }
 
-  if (status != RFX_STATUS_TEST) {
-    lives_menu_shell_insert(LIVES_MENU_SHELL(mainw->effects_menu), mainw->custom_effects_submenu, 2);
-    mainw->custom_effects_separator = lives_menu_item_new();
-    lives_widget_set_sensitive(mainw->custom_effects_separator, FALSE);
-    lives_menu_shell_insert(LIVES_MENU_SHELL(mainw->effects_menu), mainw->custom_effects_separator, 3);
-  }
-
-  threaded_dialog_spin(0.);
+  if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
   // now we need to add to the effects menu and set a callback
   for (rfx = &mainw->rendered_fx[(plugin_idx = 1)]; plugin_idx <= rfx_slot_count; rfx = &mainw->rendered_fx[++plugin_idx]) {
     if (status != RFX_STATUS_ANY && rfx->status != status) continue;
 
-    threaded_dialog_spin(0.);
+    if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
     render_fx_get_params(rfx, rfx->name, rfx->status);
-    threaded_dialog_spin(0.);
+    if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
     rfx->source = NULL;
     rfx->flags = 0;
     rfx->gui_strings = NULL;
@@ -4573,60 +4524,12 @@ void add_rfx_effects(lives_rfx_status_t status) {
 
     switch (rfx->status) {
     case RFX_STATUS_BUILTIN:
-      mainw->num_rendered_effects_builtin++;
-      break;
+      mainw->num_rendered_effects_builtin++; break;
     case RFX_STATUS_CUSTOM:
-      mainw->num_rendered_effects_custom++;
-      break;
+      mainw->num_rendered_effects_custom++; break;
     case RFX_STATUS_TEST:
-      mainw->num_rendered_effects_test++;
-      break;
-    default:
-      break;
-    }
-
-    if (!(rfx->props & RFX_PROPS_MAY_RESIZE) && rfx->min_frames >= 0 && rfx->num_in_channels == 1) {
-      // add resizing effects to tools menu later
-      lives_snprintf(txt, 61, "_%s", _(rfx->menu_text));
-      if (rfx->num_params) lives_strappend(txt, 64, "...");
-      menuitem = lives_standard_image_menu_item_new_with_label(txt);
-
-      switch (rfx->status) {
-      case RFX_STATUS_BUILTIN:
-        lives_container_add(LIVES_CONTAINER(mainw->effects_menu), menuitem);
-        break;
-      case RFX_STATUS_CUSTOM:
-        lives_container_add(LIVES_CONTAINER(mainw->custom_effects_menu), menuitem);
-        mainw->has_custom_effects = TRUE;
-        break;
-      case RFX_STATUS_TEST:
-        lives_container_add(LIVES_CONTAINER(mainw->run_test_rfx_menu), menuitem);
-        break;
-      default:
-        break;
-      }
-
-#if LIVES_HAS_IMAGE_MENU_ITEM
-      rfx_image = NULL;
-      if (rfx->props & RFX_PROPS_SLOW) {
-        rfx_image = lives_image_new_from_stock(LIVES_STOCK_NO, LIVES_ICON_SIZE_MENU);
-      } else {
-        rfx_image = lives_image_new_from_stock(LIVES_STOCK_YES, LIVES_ICON_SIZE_MENU);
-      }
-      lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(menuitem), rfx_image);
-#endif
-
-      if (rfx->params == NULL) {
-        lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                             LIVES_GUI_CALLBACK(on_render_fx_activate),
-                             (livespointer)rfx);
-      } else {
-        lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                             LIVES_GUI_CALLBACK(on_render_fx_pre_activate),
-                             (livespointer)rfx);
-      }
-      if (rfx->min_frames >= 0) lives_widget_set_sensitive(menuitem, FALSE);
-      rfx->menuitem = menuitem;
+      mainw->num_rendered_effects_test++; break;
+    default: break;
     }
   }
 
@@ -4636,12 +4539,44 @@ void add_rfx_effects(lives_rfx_status_t status) {
   } else {
     lives_widget_object_ref_sink(mainw->run_test_rfx_menu);
   }
+}
 
-  threaded_dialog_spin(0.);
+
+void add_rfx_effects_2(lives_rfx_status_t status) {
+  LiVESWidget *menuitem;
+  lives_rfx_t *rfx;
+  char txt[64]; // menu text
+  int plugin_idx, tool_posn = RFX_TOOL_MENU_POSN;
+
+  if (status == RFX_STATUS_TEST && mainw->run_test_rfx_menu != NULL) {
+    lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->run_test_rfx_submenu), NULL);
+    if (LIVES_IS_WIDGET(mainw->run_test_rfx_menu)) lives_widget_destroy(mainw->run_test_rfx_menu);
+  }
+
+  if (status != RFX_STATUS_TEST) {
+    mainw->custom_effects_menu = lives_standard_menu_new();
+    lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->custom_effects_submenu), mainw->custom_effects_menu);
+
+    mainw->custom_tools_menu = lives_standard_menu_new();
+    lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->custom_tools_submenu), mainw->custom_tools_menu);
+  }
+
+  if (status == RFX_STATUS_ANY) {
+    lives_container_add(LIVES_CONTAINER(mainw->effects_menu), mainw->rendered_fx[0].menuitem);
+    mainw->rte_separator = lives_menu_add_separator(LIVES_MENU(mainw->effects_menu));
+  }
+
+  if (status != RFX_STATUS_TEST) {
+    lives_menu_shell_insert(LIVES_MENU_SHELL(mainw->effects_menu), mainw->custom_effects_submenu, 2);
+    mainw->custom_effects_separator = lives_menu_item_new();
+    lives_widget_set_sensitive(mainw->custom_effects_separator, FALSE);
+    lives_menu_shell_insert(LIVES_MENU_SHELL(mainw->effects_menu), mainw->custom_effects_separator, 3);
+  }
+
+  if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
   if (status != RFX_STATUS_TEST) {
     // recreate menus for effects, utilities, generators
-
     mainw->utilities_menu = lives_standard_menu_new();
     lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->utilities_submenu), mainw->utilities_menu);
 
@@ -4658,11 +4593,9 @@ void add_rfx_effects(lives_rfx_status_t status) {
     lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->custom_gens_submenu), mainw->custom_gens_menu);
     lives_container_add(LIVES_CONTAINER(mainw->gens_menu), mainw->custom_gens_submenu);
 
-    threaded_dialog_spin(0.);
+    if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
-    if (mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate == -1) {
-      mainw->resize_menuitem = NULL;
-    }
+    if (mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate == -1) mainw->resize_menuitem = NULL;
   }
 
   if (rfx_slot_count) {
@@ -4671,14 +4604,15 @@ void add_rfx_effects(lives_rfx_status_t status) {
         if (status == RFX_STATUS_CUSTOM) continue;
       } else if (status == RFX_STATUS_TEST) continue;
 
-      threaded_dialog_spin(0.);
+      if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
+
+      lives_snprintf(txt, 61, "_%s", _(rfx->menu_text));
+      if (rfx->num_params) lives_strappend(txt, 64, "...");
+      menuitem = lives_standard_menu_item_new_with_label(txt);
+      rfx->menuitem = menuitem;
+
       if ((rfx->props & RFX_PROPS_MAY_RESIZE && rfx->num_in_channels == 1) || rfx->min_frames < 0) {
         // add resizing effects to tools menu
-
-        lives_snprintf(txt, 61, "_%s", _(rfx->menu_text));
-        if (rfx->num_params) lives_strappend(txt, 64, "...");
-        menuitem = lives_standard_menu_item_new_with_label(txt);
-
         if (!strcmp(rfx->name, "resize")) {
           if (mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate == -1) {
             mainw->resize_menuitem = menuitem;
@@ -4711,61 +4645,66 @@ void add_rfx_effects(lives_rfx_status_t status) {
         }
 
         if (menuitem != mainw->resize_menuitem) {
-          if (rfx->params == NULL) {
+          if (!rfx->params) {
             lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                                 LIVES_GUI_CALLBACK(on_render_fx_activate),
-                                 (livespointer)rfx);
+                                 LIVES_GUI_CALLBACK(on_render_fx_activate), (livespointer)rfx);
           } else {
             lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                                 LIVES_GUI_CALLBACK(on_render_fx_pre_activate),
-                                 (livespointer)rfx);
+                                 LIVES_GUI_CALLBACK(on_render_fx_pre_activate), (livespointer)rfx);
           }
         } else {
           mainw->fx_candidates[FX_CANDIDATE_RESIZER].func
             = lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                                   LIVES_GUI_CALLBACK(on_render_fx_pre_activate),
-                                   (livespointer)rfx);
+                                   LIVES_GUI_CALLBACK(on_render_fx_pre_activate), (livespointer)rfx);
         }
 
         if (rfx->min_frames >= 0) lives_widget_set_sensitive(menuitem, FALSE);
-        rfx->menuitem = menuitem;
-      }
-
-      else if (rfx->num_in_channels == 0) {
-        // non-realtime generator
-
-        lives_snprintf(txt, 61, "_%s", _(rfx->menu_text));
-        if (rfx->num_params) lives_strappend(txt, 64, "...");
-        menuitem = lives_standard_menu_item_new_with_label(txt);
-
-        switch (rfx->status) {
-        case RFX_STATUS_BUILTIN:
-          lives_container_add(LIVES_CONTAINER(mainw->gens_menu), menuitem);
-          break;
-        case RFX_STATUS_CUSTOM:
-          lives_container_add(LIVES_CONTAINER(mainw->custom_gens_menu), menuitem);
-          mainw->has_custom_gens = TRUE;
-          break;
-        case RFX_STATUS_TEST:
-          lives_container_add(LIVES_CONTAINER(mainw->run_test_rfx_menu), menuitem);
-          break;
-        default:
-          break;
-        }
-
-        lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                             LIVES_GUI_CALLBACK(on_render_fx_pre_activate),
-                             (livespointer)rfx);
-	// *INDENT-OFF*
-      }}}
+      } else {
+        if (rfx->num_in_channels == 0) {
+          // non-realtime generator
+          switch (rfx->status) {
+          case RFX_STATUS_BUILTIN:
+            lives_container_add(LIVES_CONTAINER(mainw->gens_menu), menuitem); break;
+          case RFX_STATUS_CUSTOM:
+            lives_container_add(LIVES_CONTAINER(mainw->custom_gens_menu), menuitem);
+            mainw->has_custom_gens = TRUE; break;
+          case RFX_STATUS_TEST:
+            lives_container_add(LIVES_CONTAINER(mainw->run_test_rfx_menu), menuitem); break;
+          default: break;
+          }
+          lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                               LIVES_GUI_CALLBACK(on_render_fx_pre_activate), (livespointer)rfx);
+        } else {
+#if LIVES_HAS_IMAGE_MENU_ITEM
+          rfx_image = NULL;
+          if (rfx->props & RFX_PROPS_SLOW) {
+            rfx_image = lives_image_new_from_stock(LIVES_STOCK_NO, LIVES_ICON_SIZE_MENU);
+          } else {
+            rfx_image = lives_image_new_from_stock(LIVES_STOCK_YES, LIVES_ICON_SIZE_MENU);
+          }
+          lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(menuitem), rfx_image);
+#endif
+          if (rfx->params == NULL) {
+            lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                                 LIVES_GUI_CALLBACK(on_render_fx_activate), (livespointer)rfx);
+          } else {
+            lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                                 LIVES_GUI_CALLBACK(on_render_fx_pre_activate), (livespointer)rfx);
+          }
+          if (rfx->min_frames >= 0) lives_widget_set_sensitive(menuitem, FALSE);
+	  // *INDENT-OFF*
+	}}}}
   // *INDENT-ON*
 
-  threaded_dialog_spin(0.);
-  update_rfx_menus();
-  threaded_dialog_spin(0.);
+  if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
-  if (mainw->current_file > 0 && !LIVES_IS_PLAYING) sensitize();
-  threaded_dialog_spin(0.);
+  update_rfx_menus();
+
+  if (status != RFX_STATUS_ANY) {
+    threaded_dialog_spin(0.);
+    if (CURRENT_CLIP_IS_VALID && !LIVES_IS_PLAYING) sensitize();
+    threaded_dialog_spin(0.);
+  }
 }
 
 

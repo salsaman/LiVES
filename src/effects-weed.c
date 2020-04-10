@@ -21,7 +21,6 @@ using namespace cv;
 ///////////////////////////////////
 
 #include "callbacks.h"
-#include "support.h"
 #include "rte_window.h"
 #include "resample.h"
 #include "audio.h"
@@ -2589,7 +2588,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     // free any existing pixel_data, we will replace it with the channel data
     weed_layer_pixel_data_free(layer);
 
-    if (weed_layer_copy(layer, channel) == NULL) {
+    if (!weed_layer_copy(layer, channel)) {
       retval = FILTER_ERROR_COPYING_FAILED;
       goto done_video;
     }
@@ -3808,14 +3807,10 @@ int num_in_params(weed_plant_t *plant, boolean skip_hidden, boolean skip_interna
 
 nip1:
 
-  num_params = 0;
-
   if (is_template) {
-    if ((params = weed_get_plantptr_array_counted(plant, WEED_LEAF_IN_PARAMETER_TEMPLATES, &num_params))
-        == NULL) return 0;
+    if (!(params = weed_get_plantptr_array_counted(plant, WEED_LEAF_IN_PARAMETER_TEMPLATES, &num_params))) return 0;
   } else {
-    if ((params = weed_get_plantptr_array_counted(plant, WEED_LEAF_IN_PARAMETERS, &num_params))
-        == NULL) goto nip1done;
+    if (!(params = weed_get_plantptr_array_counted(plant, WEED_LEAF_IN_PARAMETERS, &num_params))) goto nip1done;
   }
 
   if (!skip_hidden && !skip_internal) {
@@ -4451,16 +4446,24 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
   //  fprintf(stderr, "API versions %d %d / %d %d : %d %d\n", lib_weed_version, lib_filter_version,
   //pl_min_weed_api, pl_max_weed_api, pl_min_filter_api, pl_max_filter_api);
 
+#ifndef USE_STD_MEMFUNCS
   // let's override some plugin functions...
-  weed_set_funcptr_value(xhost_info, WEED_LEAF_MALLOC_FUNC, (weed_funcptr_t)lives_malloc);
-  weed_set_funcptr_value(xhost_info, WEED_LEAF_FREE_FUNC, (weed_funcptr_t)lives_free);
-  weed_set_funcptr_value(xhost_info, WEED_LEAF_REALLOC_FUNC, (weed_funcptr_t)lives_realloc);
-  weed_set_funcptr_value(xhost_info, WEED_LEAF_CALLOC_FUNC, (weed_funcptr_t)lives_calloc);
+  if (id == 100) {
+    weed_set_funcptr_value(xhost_info, WEED_LEAF_MALLOC_FUNC, (weed_funcptr_t)_ext_malloc);
+    weed_set_funcptr_value(xhost_info, WEED_LEAF_FREE_FUNC, (weed_funcptr_t)_ext_free);
+    weed_set_funcptr_value(xhost_info, WEED_LEAF_REALLOC_FUNC, (weed_funcptr_t)_ext_realloc);
+    weed_set_funcptr_value(xhost_info, WEED_LEAF_CALLOC_FUNC, (weed_funcptr_t)_ext_calloc);
+  } else {
+    weed_set_funcptr_value(xhost_info, WEED_LEAF_MALLOC_FUNC, (weed_funcptr_t)lives_malloc);
+    weed_set_funcptr_value(xhost_info, WEED_LEAF_FREE_FUNC, (weed_funcptr_t)lives_free);
+    weed_set_funcptr_value(xhost_info, WEED_LEAF_REALLOC_FUNC, (weed_funcptr_t)lives_realloc);
+    weed_set_funcptr_value(xhost_info, WEED_LEAF_CALLOC_FUNC, (weed_funcptr_t)lives_calloc);
+  }
   //weed_set_funcptr_value(xhost_info, WEED_LEAF_MEMCPY_FUNC, (weed_funcptr_t)lives_memcpy_monitor);
   weed_set_funcptr_value(xhost_info, WEED_LEAF_MEMCPY_FUNC, (weed_funcptr_t)lives_memcpy);
   weed_set_funcptr_value(xhost_info, WEED_LEAF_MEMSET_FUNC, (weed_funcptr_t)lives_memset);
   weed_set_funcptr_value(xhost_info, WEED_LEAF_MEMMOVE_FUNC, (weed_funcptr_t)lives_memmove);
-
+#endif
   //weed_set_funcptr_value(xhost_info, WEED_LEAF_MALLOC_FUNC, (weed_funcptr_t)monitor_malloc);
   //weed_set_funcptr_value(xhost_info, WEED_LEAF_FREE_FUNC, (weed_funcptr_t)monitor_free);
 
@@ -4535,6 +4538,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
 
   char cwd[PATH_MAX];
 
+  // filters which can cause a segfault
   const char *frei0r_blacklist[] = {"Timeout indicator", NULL};
   const char *ladspa_blacklist[] = {"Mag's Notch Filter", NULL};
 

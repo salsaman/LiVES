@@ -88,7 +88,7 @@ typedef uint8_t                           boolean;
 
 #ifdef GUI_GTK
 
-#include "support.h"
+//#include "support.h"
 
 /* #if GTK_CHECK_VERSION(2, 28, 0) */
 /* #define USE_MONOTONIC_TIME */

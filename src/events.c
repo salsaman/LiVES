@@ -9,7 +9,6 @@
 #include "main.h"
 
 #include "effects.h"
-#include "support.h"
 #include "interface.h"
 #include "callbacks.h"
 #include "resample.h"

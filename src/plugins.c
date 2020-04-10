@@ -9,7 +9,6 @@
 
 #include "main.h"
 #include "resample.h"
-#include "support.h"
 #include "effects.h"
 #include "interface.h"
 
@@ -2116,7 +2115,7 @@ static void set_cdata_memfuncs(lives_clip_data_t *cdata) {
   static memmove_f ext_memmove = (memmove_f) _ext_memmove;
   static realloc_f ext_realloc = (realloc_f) _ext_realloc;
   static calloc_f  ext_calloc  = (calloc_f)  _ext_calloc;
-  if (cdata == NULL) return;
+  if (!cdata) return;
   cdata->ext_malloc  = &ext_malloc;
   cdata->ext_free    = &ext_free;
   cdata->ext_memcpy  = &ext_memcpy;

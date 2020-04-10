@@ -21,7 +21,6 @@ int g_rx_channel = RX_CHANNEL;
 //////////////////////////////////////////////////////////////////////////
 
 #include "main.h"
-#include "support.h"
 #include "ldvinterface.h"
 #include "ldvcallbacks.h"
 

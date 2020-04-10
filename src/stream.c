@@ -9,7 +9,6 @@
 #include "main.h"
 #include "stream.h"
 #include "htmsocket.h"
-#include "support.h"
 #include "interface.h"
 #include "effects-weed.h"
 

@@ -7,7 +7,6 @@
 
 #include "main.h"
 #include "callbacks.h"
-#include "support.h"
 #include "interface.h"
 #include "effects.h"
 #include "cvirtual.h"

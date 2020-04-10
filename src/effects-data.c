@@ -10,7 +10,6 @@
 
 #include "main.h"
 #include "effects.h"
-#include "support.h"
 #include "ce_thumbs.h"
 #include "omc-learn.h"
 

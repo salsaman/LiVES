@@ -308,7 +308,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
   if (!cfile->audio_waveform && cfile->achans > 0) {
     cfile->audio_waveform = (float **)lives_calloc(cfile->achans, sizeof(float *));
-    cfile->aw_sizes = (size_t *)lives_calloc(cfile->achans, sizint);
+    cfile->aw_sizes = (size_t *)lives_calloc(cfile->achans, sizeof(size_t));
   }
 
   if (!LIVES_IS_PLAYING) {
@@ -4393,19 +4393,20 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(spinbutton_width), width_step);
   lives_spin_button_update(LIVES_SPIN_BUTTON(spinbutton_width));
 
-  spinbutton_height = lives_standard_spin_button_new(_("X        _Height"),
+  spinbutton_height = lives_standard_spin_button_new(_("X\t_Height"),
                       CURRENT_CLIP_HAS_VIDEO ? cfile->vsize : DEF_GEN_HEIGHT,
                       height_step, 100000., height_step, height_step, 0, LIVES_BOX(hbox), NULL);
   lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(spinbutton_height), height_step);
   lives_spin_button_update(LIVES_SPIN_BUTTON(spinbutton_height));
 
-  label = lives_standard_label_new(_("    pixels"));
+  label = lives_standard_label_new(_("\tpixels"));
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
 
   // add "aspectratio" widget
   if (CURRENT_CLIP_HAS_VIDEO) {
     aspect = add_aspect_ratio_button(LIVES_SPIN_BUTTON(spinbutton_width), LIVES_SPIN_BUTTON(spinbutton_height), LIVES_BOX(hbox));
-    lives_widget_set_no_show_all(lives_widget_get_parent(aspect->label), TRUE);
+    if (aspect && aspect->nwidgets == 2 && aspect->label)
+      lives_widget_set_no_show_all(lives_widget_get_parent(aspect->label), TRUE);
   } else aspect = NULL;
 
   hbox = lives_hbox_new(FALSE, 0);

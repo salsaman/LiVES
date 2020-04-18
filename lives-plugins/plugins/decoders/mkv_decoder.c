@@ -907,10 +907,7 @@ static int matroska_merge_packets(const lives_clip_data_t *cdata, AVPacket *out,
   if (!newdata)
     return AVERROR(ENOMEM);
   out->data = newdata;
-  if (cdata->ext_memcpy)
-    (*cdata->ext_memcpy)(out->data + out->size, in->data, in->size);
-  else
-    memcpy(out->data + out->size, in->data, in->size);
+  (*cdata->ext_memcpy)(out->data + out->size, in->data, in->size);
   out->size += in->size;
   av_packet_unref(in);
   av_free(in);
@@ -1696,7 +1693,7 @@ static index_container_t *idxc_for(lives_clip_data_t *cdata) {
         !strcmp(indices[i]->clients[0]->URI, cdata->URI)) {
       idxc = indices[i];
       // append cdata to clients
-      idxc->clients = (lives_clip_data_t **)(*cdata->ext_realloc)(idxc->clients, (idxc->nclients + 1) * sizeof(lives_clip_data_t *));
+      idxc->clients = (lives_clip_data_t **)realloc(idxc->clients, (idxc->nclients + 1) * sizeof(lives_clip_data_t *));
       idxc->clients[idxc->nclients] = cdata;
       idxc->nclients++;
       //
@@ -1705,16 +1702,16 @@ static index_container_t *idxc_for(lives_clip_data_t *cdata) {
     }
   }
 
-  indices = (index_container_t **)((*cdata->ext_realloc)(indices, (nidxc + 1) * sizeof(index_container_t *)));
+  indices = (index_container_t **)realloc(indices, (nidxc + 1) * sizeof(index_container_t *));
 
   // match not found, create a new index container
-  idxc = (index_container_t *)(*cdata->ext_malloc)(sizeof(index_container_t));
+  idxc = (index_container_t *)malloc(sizeof(index_container_t));
 
   idxc->idxhh = NULL;
   idxc->idxht = NULL;
 
   idxc->nclients = 1;
-  idxc->clients = (lives_clip_data_t **)(*cdata->ext_malloc)(sizeof(lives_clip_data_t *));
+  idxc->clients = (lives_clip_data_t **)malloc(sizeof(lives_clip_data_t *));
   idxc->clients[0] = cdata;
   pthread_mutex_init(&idxc->mutex, NULL);
 
@@ -1739,18 +1736,18 @@ static void idxc_release(lives_clip_data_t *cdata) {
   if (idxc->nclients == 1) {
     // remove this index
     index_free(idxc->idxhh);
-    (*cdata->ext_free)(idxc->clients);
+    free(idxc->clients);
     for (i = 0; i < nidxc; i++) {
       if (indices[i] == idxc) {
         nidxc--;
         for (j = i; j < nidxc; j++) {
           indices[j] = indices[j + 1];
         }
-        (*cdata->ext_free)(idxc);
+        free(idxc);
         if (nidxc == 0) {
-          (*cdata->ext_free)(indices);
+          free(indices);
           indices = NULL;
-        } else indices = (index_container_t **)(*cdata->ext_realloc)(indices, nidxc * sizeof(index_container_t *));
+        } else indices = (index_container_t **)realloc(indices, nidxc * sizeof(index_container_t *));
         break;
       }
     }
@@ -1763,7 +1760,7 @@ static void idxc_release(lives_clip_data_t *cdata) {
         for (j = i; j < idxc->nclients; j++) {
           idxc->clients[j] = idxc->clients[j + 1];
         }
-        idxc->clients = (lives_clip_data_t **)(*cdata->ext_realloc)(idxc->clients, idxc->nclients * sizeof(lives_clip_data_t *));
+        idxc->clients = (lives_clip_data_t **)realloc(idxc->clients, idxc->nclients * sizeof(lives_clip_data_t *));
         break;
       }
     }
@@ -2154,11 +2151,7 @@ const char *version(void) {
 
 
 static lives_clip_data_t *init_cdata(void) {
-  static malloc_f  ext_malloc  = (malloc_f)  malloc;
-  static memcpy_f  ext_memcpy  = (memcpy_f)  memcpy;
-  static realloc_f ext_realloc = (realloc_f) realloc;
-  static free_f ext_free = (free_f) free;
-
+  static memcpy_f  ext_memcpy  = (memcpy_f)memcpy;
   lives_mkv_priv_t *priv;
   lives_clip_data_t *cdata = (lives_clip_data_t *)calloc(1, sizeof(lives_clip_data_t));
 
@@ -2172,7 +2165,7 @@ static lives_clip_data_t *init_cdata(void) {
   priv->codec = NULL;
   priv->picture = NULL;
   priv->inited = FALSE;
-
+  priv->ext_memfuncs = FALSE;
   priv->expect_eof = FALSE;
 
   cdata->palettes = (int *)malloc(2 * sizeof(int));
@@ -2187,10 +2180,9 @@ static lives_clip_data_t *init_cdata(void) {
 
   cdata->video_start_time = 0.;
 
-  cdata->ext_malloc = &ext_malloc;
+  cdata->ext_calloc = NULL;
   cdata->ext_memcpy = &ext_memcpy;
-  cdata->ext_realloc = &ext_realloc;
-  cdata->ext_free = &ext_free;
+  cdata->ext_free = NULL;
 
   priv->idxc = NULL;
 
@@ -2266,6 +2258,7 @@ static lives_clip_data_t *mkv_clone(lives_clip_data_t *cdata) {
 
   dpriv->last_frame = -1;
   dpriv->expect_eof = FALSE;
+  dpriv->ext_memfuncs = FALSE;
 
   return clone;
 }
@@ -2366,10 +2359,7 @@ static int matroska_deliver_packet(const lives_clip_data_t *cdata, AVPacket *pkt
   MatroskaDemuxContext *matroska = &priv->matroska;
 
   if (matroska->num_packets > 0) {
-    if (cdata->ext_memcpy)
-      (*cdata->ext_memcpy)(pkt, matroska->packets[0], sizeof(AVPacket));
-    else
-      memcpy(pkt, matroska->packets[0], sizeof(AVPacket));
+    (*cdata->ext_memcpy)(pkt, matroska->packets[0], sizeof(AVPacket));
     free(matroska->packets[0]);
     if (matroska->num_packets > 1) {
       void *newpackets;
@@ -2571,22 +2561,29 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
           continue;
       }
 
-      pkt = calloc(sizeof(AVPacket), 1);
+      if (cdata->ext_calloc) {
+	pkt = (*cdata->ext_calloc)(sizeof(AVPacket), 1);
+	priv->ext_memfuncs = TRUE;
+      }
+      else pkt = calloc(sizeof(AVPacket), 1);
       /* XXX: prevent data copy... */
       if (av_new_packet(pkt, pkt_size + offset) < 0) {
-        free(pkt);
+	if (priv->ext_memfuncs)
+	  (*cdata->ext_free)(pkt);
+	else
+	  free(pkt);
         res = AVERROR(ENOMEM);
         break;
       }
       if (offset)
-        memcpy(pkt->data, encodings->compression.settings.data, offset);
+	(*cdata->ext_memcpy)(pkt->data, encodings->compression.settings.data, offset);
 
-      if (cdata->ext_memcpy)
-        (*cdata->ext_memcpy)(pkt->data + offset, pkt_data, pkt_size);
-      else
-        memcpy(pkt->data + offset, pkt_data, pkt_size);
+      (*cdata->ext_memcpy)(pkt->data + offset, pkt_data, pkt_size);
 
-      if (pkt_data != data)
+      if (pkt_data != data) {
+	if (priv->ext_memfuncs)
+	  (*cdata->ext_free)(pkt_data);
+	else
         free(pkt_data);
 
       if (n == 0)
@@ -2625,7 +2622,7 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
       size -= lace_size[n];
     }
   }
-
+  }
   free(lace_size);
   return res;
 }

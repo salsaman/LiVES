@@ -801,7 +801,7 @@ static lives_clip_data_t *init_cdata(void) {
   priv->astream = -1;
   priv->vstream = -1;
 
-  priv->inited = FALSE;
+  priv->inited = priv->pkt_inited = FALSE;
   priv->longer_seek = FALSE;
 
   cdata->seek_flag = LIVES_SEEK_FAST;
@@ -1082,7 +1082,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   int ret, loops = 0;
   int64_t jump_limit = cdata->jump_limit;
   int rowstride, xrowstride;
-
   register int p, i;
   // if pixel_data is NULL, just check if the frame exists
   if (tframe < 0 || ((tframe >= cdata->nframes || cdata->fps == 0.) && pixel_data != NULL)) {
@@ -1181,10 +1180,18 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     if (seek_target < -priv->ic->start_time) seek_target = 0;
 
     timex = -get_current_ticks();
+
     av_seek_frame(priv->ic, priv->vstream, seek_target,  AVSEEK_FLAG_BACKWARD);
 #ifdef DEBUG
     fprintf(stderr, "new seek: %d %ld %ld\n", priv->last_frame, seek_target, priv->ic->start_time);
 #endif
+    if (priv->pkt_inited) {
+      // seems to be necessary before flushing buffers, but after doing seek
+      if (priv->packet.data) av_packet_unref(&priv->packet);
+      priv->packet.data = NULL;
+      priv->packet.size = 0;
+    }
+
     avcodec_flush_buffers(cc);
 
     MyPts = -1;
@@ -1200,16 +1207,18 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   timex = -get_current_ticks();
   do {
     if (priv->needs_packet) {
+      if (!priv->pkt_inited) {
+	av_init_packet(&priv->packet);
+	priv->pkt_inited = TRUE;
+      }
+      //if (priv->packet.data) av_packet_unref(&priv->packet);
       do {
-        av_packet_unref(&priv->packet);
-        av_init_packet(&priv->packet);
         ret = av_read_frame(priv->ic, &priv->packet);
 
 #ifdef DEBUG
         fprintf(stderr, "ret was %d for tframe %ld\n", ret, tframe);
 #endif
         if (ret < 0) {
-          priv->needs_packet = TRUE;
           priv->last_frame = tframe;
           goto cleanup;
         }
@@ -1411,11 +1420,11 @@ framedone2:
   return TRUE;
 
 cleanup:
-  if (priv->packet.data != NULL) {
-    free(priv->packet.data);
-    priv->packet.data = NULL;
-    priv->packet.size = 0;
-  }
+  if (priv->packet.data != NULL)
+    if (priv->packet.data) av_packet_unref(&priv->packet);
+  priv->packet.data = NULL;
+  priv->packet.size = 0;
+  priv->needs_packet = TRUE;
   return FALSE;
 }
 

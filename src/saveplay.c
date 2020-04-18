@@ -2666,6 +2666,7 @@ void play_file(void) {
     do {
       mainw->cancelled = CANCEL_NONE;
       mainw->play_sequence++;
+      mainw->fps_measure = 0;
 
       if (mainw->event_list != NULL && !mainw->record) {
         if (pb_start_event == NULL) pb_start_event = get_first_event(mainw->event_list);
@@ -3023,7 +3024,10 @@ void play_file(void) {
     lives_freep((void **)&com2);
   }
 
+  mainw->repayment = 0.;
+  
   if (CURRENT_CLIP_IS_NORMAL) {
+    cfile->last_play_sequence = mainw->play_sequence;
     stfile = lives_build_filename(prefs->workdir, cfile->handle, LIVES_STATUS_FILE_NAME, NULL);
     lives_snprintf(cfile->info_file, PATH_MAX, "%s", stfile);
     lives_free(stfile);
@@ -3185,7 +3189,9 @@ void play_file(void) {
 
   if (prefs->show_player_stats) {
     if (mainw->fps_measure > 0.) {
-      d_print(_("Average FPS was %.4f\n"), mainw->fps_measure);
+      mainw->fps_measure /= (double)lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs) / TICKS_PER_SECOND_DBL;
+      d_print(_("Average FPS was %.4f (%f frames in clock time of %f)\n"), mainw->fps_measure, mainw->fps_measure, 
+	      (double)lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs) / TICKS_PER_SECOND_DBL);
     }
   }
   if (mainw->size_warn) {
@@ -3620,6 +3626,7 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->audio_waveform = NULL;
   cfile->md5sum[0] = 0;
   cfile->gamma_type = WEED_GAMMA_SRGB;
+  cfile->last_play_sequence = 0;
 
   if (!strcmp(prefs->image_ext, LIVES_FILE_EXT_JPG)) cfile->img_type = IMG_TYPE_JPEG;
   else cfile->img_type = IMG_TYPE_PNG;

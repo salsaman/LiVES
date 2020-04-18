@@ -1407,18 +1407,19 @@ void reset_playback_clock(void) {
 }
 
 
-ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, lives_time_source_t *time_source) {
+ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, lives_time_source_t *time_source) {
   // get the time using a variety of methods
   // time_source may be NULL or LIVES_TIME_SOURCE_NONE to set auto
   // or another value to force it (EXTERNAL cannot be forced)
   lives_time_source_t *tsource, xtsource = LIVES_TIME_SOURCE_NONE;
   ticks_t clock_ticks, current = -1;
+  static ticks_t lclock_ticks, interticks;
 
   if (time_source) tsource = time_source;
   else tsource = &xtsource;
 
-  clock_ticks = lives_get_relative_ticks(origsecs, origusecs);
-
+  clock_ticks = mainw->clock_ticks = lives_get_relative_ticks(origsecs, orignsecs);
+  
   if (*tsource == LIVES_TIME_SOURCE_EXTERNAL) *tsource = LIVES_TIME_SOURCE_NONE;
 
   if (mainw->foreign || prefs->force_system_clock || (prefs->vj_mode && (prefs->audio_src == AUDIO_SRC_EXT))) {
@@ -1439,8 +1440,8 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, li
 
   if (is_realtime_aplayer(prefs->audio_player) && (*tsource == LIVES_TIME_SOURCE_NONE ||
       *tsource == LIVES_TIME_SOURCE_SOUNDCARD)) {
-    if ((!mainw->is_rendering || (mainw->multitrack != NULL && !cfile->opening && !mainw->multitrack->is_rendering)) &&
-        (!(mainw->fixed_fpsd > 0. || (mainw->vpp != NULL && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback)))) {
+    if ((!mainw->is_rendering || (mainw->multitrack && !cfile->opening && !mainw->multitrack->is_rendering)) &&
+        (!(mainw->fixed_fpsd > 0. || (mainw->vpp && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback)))) {
       // get time from soundcard
       // this is done so as to synch video stream with the audio
       // we do this in two cases:
@@ -1495,7 +1496,6 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, li
   /// cadjticks and adjticks are only set when we switch from one source to another, i.e the virtual clock will run @ different rates
   /// depending on the source. This is fine as it enables sync with the clock source, provided the time doesn't jump when moving
   /// from one source to another.
-  /// Thus, at each call we calculate delta = (clock ticks - cadjticks) - (source ticks + adjticks)
   /// when the source changes we then alter either cadjticks or adjticks so that the initial timing matches
   /// e.g when switching to clock source, cadjticks and adjticks will have diverged. So we want to set new cadjtick s.t:
   /// clock ticks - cadjticks == source ticks + adjticks. i.e cadjticks = clock ticks - (source ticks + adjticks).
@@ -1508,30 +1508,30 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, li
 
   if (*tsource == LIVES_TIME_SOURCE_SYSTEM)  {
     if (lastt != LIVES_TIME_SOURCE_SYSTEM && lastt != LIVES_TIME_SOURCE_NONE) {
-      mainw->cadjticks += delta;
+      // current + adjt == clock_ticks - cadj /// interticks == lcurrent + adj
+      // current - ds + adjt == clock_ticks - dc - cadj /// interticks == lcurrent + adj
+
+      // cadj = clock_ticks - interticks + (current - lcurrent) - since we may not have current
+      // we have to approximate with clock_ticks - lclock_ticks
+      mainw->cadjticks = clock_ticks - interticks - (clock_ticks - lclock_ticks);
     }
-    current -= mainw->cadjticks;
+    interticks = clock_ticks - mainw->cadjticks;
   }
-
-  clock_ticks -= mainw->cadjticks;
-
-  delta = clock_ticks - current;
-
-  if (*tsource != LIVES_TIME_SOURCE_SYSTEM) {
-    current += mainw->adjticks;
-  }
-
-  if (*tsource != LIVES_TIME_SOURCE_SYSTEM) {
-    if (lastt == LIVES_TIME_SOURCE_SYSTEM) mainw->adjticks += delta;
+  else {
+    if (lastt == LIVES_TIME_SOURCE_SYSTEM) {
+      // current - ds + adjt == clock_ticks - dc - cadj /// iinterticks == lclock_ticks - cadj /// 
+      mainw->adjticks = interticks - current + (clock_ticks - lclock_ticks);
+    }
+    interticks = current + mainw->adjticks;
   }
 
   /* if (lastt != *tsource) { */
   /*   g_print("aft t1 = %ld, t2 = %ld cadj =%ld, adj = %ld del =%ld %ld %ld\n", clock_ticks, current, mainw->cadjticks, */
   /*           mainw->adjticks, delta, clock_ticks + mainw->cadjticks, current + mainw->adjticks); */
   /* } */
-
+  lclock_ticks = clock_ticks;
   lastt = *tsource;
-  return current;
+  return interticks;
 }
 
 
@@ -1668,9 +1668,8 @@ boolean lives_alarm_clear(lives_alarm_t alarm_handle) {
 
 /* convert to/from a big endian 32 bit float for internal use */
 LIVES_GLOBAL_INLINE float LEFloat_to_BEFloat(float f) {
-  float fl = f;
-  if (capable->byte_order == LIVES_LITTLE_ENDIAN) swab4(&f, &fl, 1);
-  return fl;
+  if (capable->byte_order == LIVES_LITTLE_ENDIAN) swab4(&f, &f, 1);
+  return f;
 }
 
 
@@ -1843,14 +1842,14 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
         else sfile->aseek_pos -= aseek_pos_delta;
         if (sfile->aseek_pos < 0 || sfile->aseek_pos > sfile->afilesize) {
           nloops = sfile->aseek_pos / sfile->afilesize;
-          if (mainw->ping_pong && (sfile->adirection == LIVES_DIRECTION_BACKWARD || clip_can_reverse(fileno))) {
+          if (mainw->ping_pong && (sfile->adirection == LIVES_DIRECTION_REVERSE || clip_can_reverse(fileno))) {
             sfile->adirection += nloops;
             sfile->adirection &= 1;
             if (sfile->adirection == LIVES_DIRECTION_BACKWARD && !clip_can_reverse(fileno))
-              sfile->adirection = LIVES_DIRECTION_FORWARD;
+              sfile->adirection = LIVES_DIRECTION_REVERSE;
           }
           sfile->aseek_pos -= nloops * sfile->afilesize;
-          if (sfile->adirection == LIVES_DIRECTION_BACKWARD) sfile->aseek_pos = sfile->afilesize - sfile->aseek_pos;
+          if (sfile->adirection == LIVES_DIRECTION_REVERSE) sfile->aseek_pos = sfile->afilesize - sfile->aseek_pos;
 	  // *INDENT-OFF*
 	}}}}
   // *INDENT-ON*
@@ -1872,12 +1871,16 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     return cframe;
   }
 
+  g_print("dtc in %ld @ %f\n", dtc, fps);
   // dtc is delta ticks, quantise this to the frame rate and round down
   dtc = q_gint64_floor(dtc, fps);
+  g_print("dtc out %ld @ %f\n", dtc, fps);
 
+  g_print("ntc in %ld\n", *ntc);
   // ntc is the time when the next frame should have been played; this is rounded down so if l.t. 1 frame nothing happens
   /// and the player does nothing
   *ntc = otc + dtc;
+  g_print("ntc out %ld\n", *ntc);
 
   // nframe is our new frame
   if (fps >= 0)

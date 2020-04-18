@@ -15,6 +15,7 @@
 #include "callbacks.h"
 
 static lives_special_aspect_t aspect;
+static lives_special_fontchooser_t fchooser;
 static lives_special_framedraw_rect_t framedraw;
 static LiVESList *fileread;
 static LiVESList *filewrite;
@@ -63,6 +64,9 @@ void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
   if (!strcmp(array[0], "aspect")) {
     aspect.width_param = &rfx->params[atoi(array[1])];
     aspect.height_param = &rfx->params[atoi(array[2])];
+  } else if (!strcmp(array[0], "fontchooser")) {
+    fchooser.font_param = &rfx->params[atoi(array[1])];
+    fchooser.size_param = &rfx->params[atoi(array[2])];
   } else if (!strcmp(array[0], "mergealign")) {
     mergealign.start_param = &rfx->params[atoi(array[1])];
     mergealign.end_param = &rfx->params[atoi(array[2])];
@@ -113,11 +117,9 @@ void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
                 rfx->params[pnum].hidden ^= HIDDEN_MULTI; // multivalues allowed
               } else {
                 rfx->params[pnum].hidden |= HIDDEN_MULTI; // multivalues hidden
-              }
-            }
-          }
-        }
-      }
+		// *INDENT-OFF*
+              }}}}}
+      // *INDENT-ON*
       if (i >= framedraw.stdwidgets) framedraw.extra_params[i - framedraw.stdwidgets] = pnum;
     }
 
@@ -265,6 +267,31 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
                            LIVES_GUI_CALLBACK(after_aspect_height_changed),
                            NULL);
       aspect.nwidgets++;
+    }
+
+    if (param == fchooser.font_param) {
+      box = lives_widget_get_parent(param->widgets[0]);
+
+      while (box != NULL && !LIVES_IS_HBOX(box)) {
+        box = lives_widget_get_parent(box);
+      }
+
+      if (box == NULL) return;
+
+      param->widgets[1] = buttond = lives_standard_font_chooser_new(FALSE, NULL);
+
+      if (!lives_widget_is_sensitive(param->widgets[0])) lives_widget_set_sensitive(buttond, FALSE);
+      lives_widget_set_show_hide_with(param->widgets[0], buttond);
+      lives_widget_set_sensitive_with(param->widgets[0], buttond);
+
+      if (LIVES_IS_ENTRY(param->widgets[0])) {
+        lives_entry_set_editable(LIVES_ENTRY(param->widgets[0]), FALSE);
+        if (param->widgets[1] != NULL &&
+            LIVES_IS_LABEL(param->widgets[1]) &&
+            lives_label_get_mnemonic_widget(LIVES_LABEL(param->widgets[1])) != NULL)
+          lives_label_set_mnemonic_widget(LIVES_LABEL(param->widgets[1]), buttond);
+        lives_entry_set_max_length(LIVES_ENTRY(param->widgets[0]), 128);
+      }
     }
 
     if ((param == aspect.width_param || param == aspect.height_param) && aspect.nwidgets == 2) {

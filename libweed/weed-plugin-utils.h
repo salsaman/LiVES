@@ -158,7 +158,7 @@ FN_DECL weed_plant_t *weed_out_param_integer_init(const char *name, int def, int
 FN_DECL void weed_filter_set_flags(weed_plant_t *filter, int flags);
 FN_DECL void weed_chantmpl_set_flags(weed_plant_t *chantmpl, int flags);
 FN_DECL void weed_paramtmpl_set_flags(weed_plant_t *paramtmpl, int flags);
-FN_DECL void weed_gui_set_flags(weed_plant_t *paramtmpl, int flags);
+FN_DECL void weed_gui_set_flags(weed_plant_t *gui, int flags);
 FN_DECL void weed_filter_set_name(weed_plant_t *filter, const char *name);
 FN_DECL void weed_chantmpl_set_name(weed_plant_t *chantmpl, const char *name);
 FN_DECL void weed_paramtmpl_set_name(weed_plant_t *paramtmpl, const char *name);
@@ -181,6 +181,7 @@ FN_DECL int weed_host_supports_premultiplied_alpha(weed_plant_t *host_info);
 
 // filter_class
 FN_DECL int weed_filter_get_flags(weed_plant_t *filter);
+FN_DECL int weed_filter_get_version(weed_plant_t *filter);
 FN_DECL weed_plant_t *weed_filter_get_gui(weed_plant_t *filter) ALLOW_UNUSED;
 
 // param_tmpl

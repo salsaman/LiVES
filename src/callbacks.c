@@ -5036,7 +5036,7 @@ boolean fps_reset_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
 
   if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
     resync_audio(((double)cfile->frameno));
-    /* + (double)(lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL) */
+    /* + (double)(lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL) */
     /* - mainw->startticks) / TICKS_PER_SECOND_DBL * cfile->pb_fps); */
   }
 
@@ -9715,7 +9715,7 @@ void on_effects_paused(LiVESButton * button, livespointer user_data) {
 
   if (mainw->iochan == NULL) {
     // pause during effects processing or opening
-    xticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
+    xticks = lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs);
     if (!mainw->effects_paused) {
       mainw->timeout_ticks -= xticks;
       com = lives_strdup_printf("%s pause \"%s\"", prefs->backend_sync, cfile->handle);
@@ -10093,7 +10093,7 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
     return;
   }
 
-  mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
+  mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
 
   if (new_fps != cfile->pb_fps && fabs(new_fps) > .001 && !cfile->play_paused) {
     /// we must scale the frame delta, since e.g if we were a halfway through the frame and the fps increased,
@@ -10110,7 +10110,7 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
 
   if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
     if (new_fps >= 0.) cfile->adirection = LIVES_DIRECTION_FORWARD;
-    else cfile->adirection = LIVES_DIRECTION_BACKWARD;
+    else cfile->adirection = LIVES_DIRECTION_REVERSE;
     // update our audio player
 #ifdef ENABLE_JACK
     if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
@@ -10786,7 +10786,7 @@ boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
   prefs->audio_opts = ((prefs->audio_opts | AUDIO_OPTS_FOLLOW_CLIPS) ^ AUDIO_OPTS_FOLLOW_CLIPS);
   if (switch_audio_clip(mainw->current_file, TRUE)) {
     if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
-      mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
+      mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
       resync_audio(cfile->frameno);
       changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), LIVES_INT_TO_POINTER(TRUE));
     }

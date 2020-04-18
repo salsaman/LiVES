@@ -1083,6 +1083,7 @@ typedef struct {
   int64_t last_frame; ///< last frame displayed
   index_container_t *idxc;
   boolean expect_eof;
+  boolean ext_memfuncs;
 } lives_mkv_priv_t;
 
 #define ERR_NOMEM         1

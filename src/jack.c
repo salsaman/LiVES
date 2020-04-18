@@ -308,8 +308,7 @@ void jack_get_rec_avals(jack_driver_t *jackd) {
   mainw->rec_aclip = jackd->playing_file;
   if (mainw->rec_aclip != -1) {
     mainw->rec_aseek = (double)fwd_seek_pos / (double)(afile->arps * afile->achans * afile->asampsize / 8);
-    mainw->rec_avel = (afile->adirection == LIVES_DIRECTION_FORWARD ? fabsf((double)jackd->sample_in_rate / (double)afile->arps)
-                       : -fabsf((double)jackd->sample_in_rate / (double)afile->arps));
+    mainw->rec_avel = fabs((double)jackd->sample_in_rate / (double)afile->arps) * afile->adirection;
   }
 }
 
@@ -563,7 +562,7 @@ static int audio_process(nframes_t nframes, void *arg) {
                                    (double)jackFramesAvailable + ((double)fastrand() / (double)LIVES_MAXUINT64))))
                  * jackd->num_input_channels * jackd->bytes_per_channel;
       push_cache_buffer(cache_buffer, jackd, in_bytes, nframes, shrink_factor);
-      mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
+      mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
       mainw->fps_mini_ticks = mainw->currticks;
       mainw->fps_mini_measure = 0;
 
@@ -636,7 +635,7 @@ static int audio_process(nframes_t nframes, void *arg) {
                 if (jackd->loop == AUDIO_LOOP_PINGPONG && ((jackd->playing_file != mainw->playing_file)
                     || clip_can_reverse(mainw->playing_file))) {
                   jackd->sample_in_rate = -jackd->sample_in_rate;
-                  afile->adirection = !afile->adirection;
+                  afile->adirection = -afile->adirection;
                   jackd->seek_pos -= (jackd->seek_pos - jackd->seek_end);
                 } else {
                   if (mainw->playing_sel) {
@@ -662,7 +661,7 @@ static int audio_process(nframes_t nframes, void *arg) {
                 if (jackd->loop == AUDIO_LOOP_PINGPONG && ((jackd->playing_file != mainw->playing_file)
                     || clip_can_reverse(mainw->playing_file))) {
                   jackd->sample_in_rate = -jackd->sample_in_rate;
-                  afile->adirection = !afile->adirection;
+                  afile->adirection = -afile->adirection;
                   shrink_factor = -shrink_factor;
                   jackd->seek_pos = (mainw->playing_sel ?
                                      (int64_t)((double)(mainw->play_start - 1.) / afile->fps * afile->arps)

@@ -8794,7 +8794,18 @@ LiVESWidget *lives_standard_check_menu_item_new_with_label(const char *label, bo
 
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_menu_spinner_new(const char *text) {
-  return lives_standard_menu_item_new_with_label(text);
+  LiVESWidget *menuitem = lives_standard_menu_item_new();
+  LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
+  LiVESWidget *label = lives_standard_label_new(_("Loading..."));
+  LiVESWidget *spinner = gtk_spinner_new();
+  //lives_box_pack_start(hbox, label, FALSE, FALSE, 0);
+  lives_widget_apply_theme2(hbox, LIVES_WIDGET_STATE_NORMAL, TRUE);
+  lives_widget_apply_theme2(spinner, LIVES_WIDGET_STATE_NORMAL, TRUE);
+  lives_box_pack_start(hbox, spinner, TRUE, TRUE, 0);
+  lives_container_add(menuitem, hbox);
+  gtk_spinner_start(spinner);
+  lives_widget_show_all(menuitem);
+  return menuitem;
 }
 
 
@@ -9740,6 +9751,12 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
     lives_window_set_modal(LIVES_WINDOW(dialog), TRUE);
 
   return dialog;
+}
+
+
+LiVESWidget *lives_standard_font_chooser_new() {
+  LiVESWidget *fchoo = gtk_font_button_new ();
+  return fchoo;
 }
 
 

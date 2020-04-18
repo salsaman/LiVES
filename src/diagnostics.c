@@ -48,11 +48,12 @@ char *get_stats_msg(boolean calc_only) {
     }
 #endif
     if (have_avsync) {
-      avsync -= ((double)mainw->files[mainw->pulsed->playing_file]->frameno - 1.) / mainw->files[mainw->pulsed->playing_file]->fps;
+      avsync -= ((double)mainw->files[mainw->pulsed->playing_file]->frameno - 1.) / mainw->files[mainw->pulsed->playing_file]->fps
+	+ (double)(currticks - mainw->startticks) / TICKS_PER_SECOND_DBL;
     }
   }
   //currticks = lives_get_current_ticks();
-  currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
+  currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
 
   if (mainw->play_sequence > last_play_sequence) {
     last_curr_tc = currticks;

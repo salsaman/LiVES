@@ -632,6 +632,7 @@ typedef enum {
   LIVES_DIRECTION_OUT,
 } lives_direction_t;
 
+#define LIVES_DIRECTION_FWD_OR_REV(dir) ((dir) == LIVES_DIRECTION_BACKWARD ? LIVES_DIRECTION_REVERSE : (dir))
 #define LIVES_DIRECTION_SIG(dir) ((lives_direction_t)sig(dir))  /// LIVES_DIRECTION_REVERSE or LIVES_DIRECTION_FORWARD
 #define LIVES_DIRECTION_PAR(dir) ((lives_direction_t)((dir) & 1)) /// LIVES_DIRECTION_BACKWARD or LIVES_DIRECTION_FORWARD
 #define LIVES_DIRECTION_OPPOSITE(dir1, dir2) (((dir1) == LIVES_DIR_BACKWARD || (dir1) == LIVES_DIR_REVERSED) \
@@ -777,8 +778,7 @@ typedef struct _lives_clip_t {
   double freeze_fps; ///< pb_fps for paused / frozen clips
   boolean play_paused;
 
-  lives_direction_t
-  adirection; ///< audio play directiion during playback. Normally eithr forwards or the same as pb_fps, but it may vary
+  lives_direction_t adirection; ///< audio play direction during playback, FORWARD or REVERSE.
 
   /// don't show preview/pause buttons on processing
   boolean nopreview;
@@ -840,6 +840,8 @@ typedef struct _lives_clip_t {
 
   float **audio_waveform; ///< values for drawing the audio wave
   size_t *aw_sizes; ///< size of each audio_waveform in units of floats (i.e 4 bytes)
+
+  int last_play_sequence;  ///< updated only when FINISHING playing a clip (either by switching or ending playback, better for a/vsync)
 } lives_clip_t;
 
 typedef enum {
@@ -1357,6 +1359,7 @@ void resize(double scale);
 boolean set_palette_colours(boolean force_reload);
 void set_main_title(const char *filename, int or_untitled_number);
 void set_record(void);
+void get_player_size(int *opwidth, int *opheight);
 
 //gui.c
 void  create_LiVES(void);
@@ -1728,7 +1731,7 @@ void break_me(void);
 
 #endif
 
-//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #define STD_STRINGFUNCS

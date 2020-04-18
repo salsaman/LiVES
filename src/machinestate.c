@@ -26,7 +26,6 @@ LIVES_GLOBAL_INLINE double fastrand_dbl(double range) {
 /// pick a pseudo random uint between 0 and range (inclusive)
 LIVES_GLOBAL_INLINE uint32_t fastrand_int(uint32_t range) {return (uint32_t)(fastrand_dbl((double)(++range)));}
 
-
 void init_random() {
   ssize_t randres = -1;
   uint64_t rseed = 32749;
@@ -384,38 +383,6 @@ uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val) {
 }
 
 
-////// memory funcs ////
-
-/// debug functions
-//LiVESList *mblocks = NULL;
-/// debug functions
-/* void *test_malloc(size_t size) { */
-/*   void *ptr = malloc(size); */
-/*   mblocks = lives_list_prepend(mblocks, ptr); */
-/*   return ptr; */
-/* } */
-
-/* void test_free(void *ptr) { */
-/*   LiVESList *list; */
-/*   for (list = mblocks; mblocks != NULL; mblocks = mblocks->next) { */
-/*     if ((void *)mblocks->data == ptr) { */
-/*       if (list->data == ptr) { */
-/*         if (list->prev) list->prev->next = list->next; */
-/*         else mblocks = list; */
-/*         if (list->next) list->next->prev = list->prev; */
-/*       } */
-/*     } */
-/*   } */
-/* } */
-
-/* void shoatend(void) { */
-/*   LiVESList *list; */
-/*   for (list = mblocks; mblocks != NULL; mblocks = mblocks->next) { */
-/*     g_print("%p in list\n", list->data); */
-/*   } */
-/* } */
-
-
 /// susbtitute memory functions. These must be real functions and not #defines since we need fn pointers
 #define OIL_MEMCPY_MAX_BYTES 12288 // this can be tuned to provide optimal performance
 
@@ -520,16 +487,7 @@ void _ext_free(void *p) {
 }
 
 
-void lives_free_check(void *p) {
-  if (mainw && p == mainw->debug_ptr) break_me();
-  free(p);
-}
-
-
-void *_ext_free_and_return(void *p) {
-  _ext_free(p);
-  return NULL;
-}
+void *_ext_free_and_return(void *p) {_ext_free(p); return NULL;}
 
 void *_ext_memcpy(void *dest, const void *src, size_t n) {return lives_memcpy(dest, src, n);}
 
@@ -557,10 +515,7 @@ void *_ext_calloc(size_t nmemb, size_t msize) {
 #endif
 }
 
-LIVES_GLOBAL_INLINE void *lives_free_and_return(void *p) {
-  lives_free(p);
-  return NULL;
-}
+LIVES_GLOBAL_INLINE void *lives_free_and_return(void *p) {lives_free(p);return NULL;}
 
 
 LIVES_GLOBAL_INLINE size_t get_max_align(size_t req_size, size_t align_max) {
@@ -591,14 +546,9 @@ LIVES_GLOBAL_INLINE void *lives_recalloc(void *p, size_t nmemb, size_t omemb, si
   return np;
 }
 
-void quick_free(void *p) {
-  //fprintf(stderr, "USz = %ld\n", rpmalloc_usable_size(p));
-  rpfree(p);
-}
+void quick_free(void *p) {rpfree(p);}
 
-void *quick_calloc(size_t n, size_t s) {
-  return rpaligned_calloc(DEF_ALIGN, n, s);
-}
+void *quick_calloc(size_t n, size_t s) {return rpaligned_calloc(DEF_ALIGN, n, s);}
 
 boolean init_memfuncs(void) {
 #ifdef USE_RPMALLOC
@@ -733,14 +683,14 @@ boolean  get_ds_used(uint64_t *bytes) {
 LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t orignsecs) {
 #if _POSIX_TIMERS
   struct timespec ts;
-  clock_gettime(CLOCK_REALTIME, &ts);
-  return (ts.tv_sec - origsecs) * TICKS_PER_SECOND + ts.tv_nsec / 10  - orignsecs / 10;
+  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts);
+  return ((ts.tv_sec * ONE_BILLION + ts.tv_nsec) - (origsecs * ONE_BILLION + orignsecs)) / 10;
 #else
 #ifdef USE_MONOTONIC_TIME
   return (lives_get_monotonic_time() - orignsecs) / 10;
 #else
   gettimeofday(&tv, NULL);
-  return TICKS_PER_SECOND * (tv.tv_sec - origsecs) + tv.tv_usec * USEC_TO_TICKS - orignsecs / 10;
+  return ((tv.tv_sec * ONE_MILLLION + tv.tv_usec) - (origsecs * ONE_MILLION + orignsecs / 1000)) * USEC_TO_TICKS;
 #endif
 #endif
 }
@@ -1567,7 +1517,6 @@ union split4 {
   uint32_t u32;
   uint16_t u16[2];
 };
-
 
 // gran(ularity) may be 1, or 2
 LIVES_GLOBAL_INLINE void swab2(const void *from, const void *to, size_t gran) {

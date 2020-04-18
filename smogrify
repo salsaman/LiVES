@@ -1587,7 +1587,6 @@ if (defined($ARGV[0])) {
 	    exit 0;
 	}
 
-
 	if ($command eq "open_test") {
 	    $mplay_command = $ARGV[2];
 	    shift(@ARGV);
@@ -1626,6 +1625,7 @@ if (defined($ARGV[0])) {
 			       "Please check the file name and try again.");
 		}
 	    }
+	    print STDERR "OK2 here\n";
 
 	    ## here we might set $mplay_command, $is_mpv
 	    &get_file_info($file, 1, 1);
@@ -4515,10 +4515,8 @@ if (defined($ARGV[0])) {
 
 	# final value would be 140003002
 
-	my $soxv = smog_system_direct("sox -h 2>&1 | grep -i sox:");
-
-	my @soxvvz = split(/\./, (split("SoX ", $soxv))[1]);
-	my $soxvv = $soxvvz[0];
+	my $soxv = &smog_system_direct("sox -h 2>&1 | grep -i sox:");
+	my $soxvv = (split("SoX ", $soxv))[1];
 
 	if (substr($soxvv, 0, 1) eq "v") {
 	    $soxvv = substr($soxvv, 1, length($soxvv));
@@ -6532,7 +6530,7 @@ if (defined($ARGV[0])) {
 		$nodither = "-D";
 	    }
 
-	    $smcom="sox $nodither -t .raw -r $arate $asigned -$sasamps -c $achans \"$audio_in\" -t .wav -r $nrate " .
+	    $smcom = "sox $nodither -t .raw -r $arate $asigned -$sasamps -c $achans \"$audio_in\" -t .wav -r $nrate " .
 		"-c $nchans $nsigned -$nnasamps \"$curworkdir/audiodump.wav\" >$nulfile 2>&1";
 	}
 

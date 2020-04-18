@@ -15,6 +15,8 @@ boolean do_audio_choice_dialog(short startup_phase);
 boolean do_startup_tests(boolean tshoot);
 void do_startup_interface_query(void);
 
+void run_lives_setup_wizard(int page);
+
 void on_troubleshoot_activate(LiVESMenuItem *, livespointer);
 void explain_missing_activate(LiVESMenuItem *menuitem, livespointer user_data);
 

@@ -1,6 +1,6 @@
 // paramspecial.h
 // LiVES
-// (c) G. Finch 2004 - 2019 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2020 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -41,10 +41,16 @@ typedef struct {
 } lives_special_aspect_t;
 
 typedef struct {
+  lives_param_t *font_param;
+  lives_param_t *size_param;
+} lives_special_fontchooser_t;
+
+typedef struct {
   lives_rfx_t *rfx;
   lives_param_t *start_param;
   lives_param_t *end_param;
 } lives_special_mergealign_t;
+
 ////////////////////////////////
 
 #define ASPECT_BUTTON_WIDTH 32

@@ -26,8 +26,8 @@ static int package_version = 1.1; // version of this package
 #include "weed-plugin-utils.c" // optional
 
 static int verbosity = WEED_VERBOSITY_ERROR;
-
-#define MAX_AUDLEN 2048
+#define WORKER_TIMEOUT_SEC 30 /// how long to wait for worker thread startup
+#define MAX_AUDLEN 2048 /// this is defined by projectM itself, increasing the value above 2048 will only result in jumps in the audio
 #define DEF_SENS 3.0 /// beat sensitivity 0. -> 5.  (lower is more sensitive)
 /////////////////////////////////////////////////////////////
 
@@ -95,8 +95,8 @@ typedef struct {
   pthread_mutex_t mutex;
   pthread_mutex_t pcm_mutex;
   pthread_t thread;
-  int audio_frames;
-  size_t audio_offs, abufsize;
+  size_t audio_frames, abufsize;
+  size_t audio_offs;
   int achans;
   float *audio;
   float fps, tfps;
@@ -248,10 +248,18 @@ static int init_display(_sdata *sd) {
 
 bool resize_buffer(_sdata *sd) {
   size_t align = 1;
-  if ((sd->rowstride & 0X01) == 0) align = 2;
-  if ((sd->rowstride & 0X03) == 0) align = 4;
-  if ((sd->rowstride & 0X07) == 0) align = 8;
-  if ((sd->rowstride & 0X0F) == 0) align = 16;
+  if ((sd->rowstride & 0X01) == 0) {
+    if ((sd->rowstride & 0X03) == 0) {
+      if ((sd->rowstride & 0X07) == 0) {
+	if ((sd->rowstride & 0X0F) == 0) {
+	  align = 16;
+	}
+	else align = 8;
+      }
+      else align = 4;
+    }
+    else align = 2;
+  }
   if (sd->fbuffer != NULL) weed_free(sd->fbuffer);
   sd->fbuffer = (GLubyte *)weed_calloc(sizeof(GLubyte) * sd->rowstride * sd->height / align, align);
   if (!sd->fbuffer) return FALSE;
@@ -310,15 +318,14 @@ static int render_frame(_sdata *sd) {
 
   glFlush();
 
-  glClear(GL_COLOR_BUFFER_BIT);
-  glClear(GL_DEPTH_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   //glEnable(GL_DEPTH_TEST);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_BLEND);
 
   glViewport(0, 0, sd->width, sd->height);
 
-  if (sd->needs_more) {
+  if (sd->needs_more || sd->audio_frames > sd->audio_offs) {
     size_t audlen = MAX_AUDLEN;
     pthread_mutex_lock(&sd->pcm_mutex);
     if (sd->audio_frames - sd->audio_offs < audlen)
@@ -383,6 +390,9 @@ static int render_frame(_sdata *sd) {
     sd->ncycs += sd->cycadj;
     if (sd->ncycs < 0.) sd->ncycs = 0.;
     if (sd->pidx == -1 && sd->check) {
+      /// check for blank frames: if the first and second from a new program are both blank, mark the program as "bad"
+      /// and pick another (not sure why the blank frames happen, but generally if the first two come back blank, so do all the
+      /// rest. Possibly we need an image texture to load, which we don't have; more investigation needed).
       register int i;
       ssize_t frmsize = sd->rowstride * sd->height;
       if (sd->psize == 4) {
@@ -463,6 +473,15 @@ static void *worker(void *data) {
   else
     settings.textureSize = sd->texsize = sd->height;
 
+  if (sd->failed) {
+    // can happen if the host is overloaded and the caller timed out
+    SDL_Quit();
+    pthread_mutex_lock(&cond_mutex);
+    pthread_cond_signal(&cond);
+    pthread_mutex_unlock(&cond_mutex);
+    return NULL;
+  }
+  
   // can fail here
   sd->globalPM = new projectM(settings, 0);
   sd->globalPM->setPresetLock(true);
@@ -481,6 +500,15 @@ static void *worker(void *data) {
     for (int i = 1; i < sd->nprs; i++) sd->prnames[i] = strdup((sd->globalPM->getPresetName(i - 1)).c_str());
   }
 
+if (sd->failed) {
+    // can happen if the host is overloaded and the caller timed out
+    SDL_Quit();
+    pthread_mutex_lock(&cond_mutex);
+    pthread_cond_signal(&cond);
+    pthread_mutex_unlock(&cond_mutex);
+    return NULL;
+  }
+  
   pthread_mutex_lock(&sd->mutex);
   sd->worker_ready = true;
 
@@ -569,6 +597,10 @@ static weed_error_t projectM_deinit(weed_plant_t *inst) {
     sd->rendering = false;
     pthread_mutex_lock(&sd->mutex);
     pthread_mutex_unlock(&sd->mutex);
+    if (sd->audio) {
+      weed_free(sd->audio);
+      sd->audio = NULL;
+    }
     if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
       sd->die = true;
       pthread_mutex_lock(&cond_mutex);
@@ -644,7 +676,7 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
       pthread_create(&sd->thread, NULL, worker, sd);
 
       clock_gettime(CLOCK_REALTIME, &ts);
-      ts.tv_sec += 30;
+      ts.tv_sec += WORKER_TIMEOUT_SEC;
 
       // wait for worker thread ready
       pthread_mutex_lock(&cond_mutex);
@@ -685,7 +717,7 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
       }
     }
 
-    sd->audio = (float *)weed_calloc(4096,  sizeof(float));
+    sd->audio = (float *)weed_calloc(MAX_AUDLEN * 2,  sizeof(float));
     if (!sd->audio) {
       projectM_deinit(inst);
       return WEED_ERROR_MEMORY_ALLOCATION;
@@ -912,7 +944,7 @@ WEED_SETUP_START(200, 200) {
                                projectM_process, projectM_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
   weed_plant_t *gui = weed_paramtmpl_get_gui(in_params[0]);
   weed_gui_set_flags(gui, WEED_GUI_CHOICES_SET_ON_INIT);
-  weed_set_int_value(in_chantmpls[0], WEED_LEAF_MAX_AUDIO_LENGTH, 2048);
+  //weed_set_int_value(in_chantmpls[0], WEED_LEAF_MAX_AUDIO_LENGTH, 2048); // we can accept more audio since now it is buffered
   weed_set_int_value(in_params[0], WEED_LEAF_MAX, INT_MAX);
   weed_set_double_value(filter_class, WEED_LEAF_PREFERRED_FPS, PREF_FPS); // set reasonable default fps
   weed_plugin_info_add_filter_class(plugin_info, filter_class);

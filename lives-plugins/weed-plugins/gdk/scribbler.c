@@ -1,4 +1,4 @@
-// scribbler.c
+ // scribbler.c
 // weed plugin
 // (c) A. Penkov (salsaman) 2010 - 2019
 // cloned and modified from livetext.c (author G. Finch aka salsaman)
@@ -224,6 +224,20 @@ static void fill_bckg(cairo_t *cr, double x, double y, double dx, double dy) {
   cairo_fill(cr);
 }
 
+static int font_compare(const void *p1, const void *p2) {
+  const char *s1 = (const char *)(*(char **)p1);
+  const char *s2 = (const char *)(*(char **)p2);
+  size_t sz1 = strlen(s1);
+  size_t sz2 = strlen(s2);
+  char *u1 = g_utf8_casefold(s1, -1);
+  char *u2 = g_utf8_casefold(s2, sz2 > sz1 ? sz1 : sz2);
+  int ret = strcmp(u1, u2);
+  g_free(u1);
+  g_free(u2);
+  return ret;
+}
+
+
 //
 //
 // now text is drawn with pixbuf/pango
@@ -231,45 +245,53 @@ static void fill_bckg(cairo_t *cr, double x, double y, double dx, double dy) {
 //
 
 static weed_error_t scribbler_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
-  weed_plant_t *in_channel = NULL;
-
+  weed_plant_t **in_params = weed_get_in_params(inst, NULL);
+  weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
+  weed_plant_t *in_channel = weed_get_in_channel(inst, 0); // maye be NULL
+  weed_plant_t *filter;
   rgb_t *fg, *bg;
-
   cairo_t *cairo;
 
-  double f_alpha, b_alpha;
-  double dwidth, dheight;
-  double font_size, top;
+  double f_alpha, b_alpha, dwidth, dheight, font_size, top;
 
-  char *text;
+  char *text, *fontstr;
 
   int cent, rise;
-  //int alpha_threshold = 0;
-  int fontnum;
+  int fontnum = 0;
   int mode;
+  int version;
+  int width = weed_channel_get_width(out_channel);
+  int height = weed_channel_get_height(out_channel);
+  register int i;
 
-  int width = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, NULL);
-  int height = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL);
+  text = weed_param_get_value_string(in_params[P_TEXT]);
+  mode = weed_param_get_value_int(in_params[P_MODE]);
+  filter = weed_instance_get_filter(inst);
+  version = weed_filter_get_version(filter);
 
-  if (weed_plant_has_leaf(inst, WEED_LEAF_IN_CHANNELS)) {
-    in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  if (version == 1) fontnum = weed_param_get_value_int(in_params[P_FONT]);
+  else {
+    fontstr = weed_param_get_value_string(in_params[P_FONT]);
+    for (i = 0; i < num_fonts_available; ++i) {
+      if (!font_compare(fonts_available[i], fontstr)) {
+	fontnum = i;
+	break;
+      }
+    }
+    weed_free(fontstr);
+    if (i == num_fonts_available) fontnum = 0;
   }
+  
+  fg = (rgb_t *)weed_param_get_array_int(in_params[P_FOREGROUND], NULL);
+  bg = (rgb_t *)weed_param_get_array_int(in_params[P_BACKGROUND], NULL);
 
-  text = weed_get_string_value(in_params[P_TEXT], WEED_LEAF_VALUE, NULL);
-  mode = weed_get_int_value(in_params[P_MODE], WEED_LEAF_VALUE, NULL);
-  fontnum = weed_get_int_value(in_params[P_FONT], WEED_LEAF_VALUE, NULL);
-  fg = (rgb_t *)weed_get_int_array(in_params[P_FOREGROUND], WEED_LEAF_VALUE, NULL);
-  bg = (rgb_t *)weed_get_int_array(in_params[P_BACKGROUND], WEED_LEAF_VALUE, NULL);
+  f_alpha = weed_param_get_value_double(in_params[P_FGALPHA]);
+  b_alpha = weed_param_get_value_double(in_params[P_BGALPHA]);
+  font_size = weed_param_get_value_double(in_params[P_FONTSIZE]);
 
-  f_alpha = weed_get_double_value(in_params[P_FGALPHA], WEED_LEAF_VALUE, NULL);
-  b_alpha = weed_get_double_value(in_params[P_BGALPHA], WEED_LEAF_VALUE, NULL);
-  font_size = weed_get_double_value(in_params[P_FONTSIZE], WEED_LEAF_VALUE, NULL);
-
-  cent = weed_get_boolean_value(in_params[P_CENTER], WEED_LEAF_VALUE, NULL);
-  rise = weed_get_boolean_value(in_params[P_RISE], WEED_LEAF_VALUE, NULL);
-  top = weed_get_double_value(in_params[P_TOP], WEED_LEAF_VALUE, NULL);
+  cent = weed_param_get_value_boolean(in_params[P_CENTER]);
+  rise = weed_param_get_value_boolean(in_params[P_RISE]);
+  top = weed_param_get_value_double(in_params[P_TOP]);
 
   weed_free(in_params); // must weed free because we got an array
 
@@ -280,7 +302,7 @@ static weed_error_t scribbler_process(weed_plant_t *inst, weed_timecode_t timest
     cairo = channel_to_cairo(in_channel);
 
   if (cairo) {
-    if (text && strlen(text)) {
+    if (text && *text) {
       // do cairo and pango things
       PangoLayout *layout = pango_cairo_create_layout(cairo);
       if (layout) {
@@ -289,7 +311,7 @@ static weed_error_t scribbler_process(weed_plant_t *inst, weed_timecode_t timest
         double x_text, y_text;
 
         font = pango_font_description_new();
-        if ((num_fonts_available) && (fontnum >= 0) && (fontnum < num_fonts_available) && (fonts_available[fontnum]))
+	if ((num_fonts_available) && (fontnum >= 0) && (fontnum < num_fonts_available) && (fonts_available[fontnum]))
           pango_font_description_set_family(font, fonts_available[fontnum]);
 
         pango_font_description_set_size(font, font_size * PANGO_SCALE);
@@ -298,8 +320,7 @@ static weed_error_t scribbler_process(weed_plant_t *inst, weed_timecode_t timest
         pango_layout_set_text(layout, text, -1);
         getxypos(layout, &x_pos, &y_pos, width, height, cent, &dwidth, &dheight);
 
-        if (!rise)
-          y_pos = y_text = height * top;
+        if (!rise) y_pos = y_text = height * top;
 
         x_text = x_pos;
         y_text = y_pos;
@@ -346,25 +367,12 @@ static weed_error_t scribbler_process(weed_plant_t *inst, weed_timecode_t timest
 }
 
 
-static int font_compare(const void *p1, const void *p2) {
-  const char *s1 = (const char *)(*(char **)p1);
-  const char *s2 = (const char *)(*(char **)p2);
-  char *u1 = g_utf8_casefold(s1, -1);
-  char *u2 = g_utf8_casefold(s2, -1);
-  int ret = strcmp(u1, u2);
-  g_free(u1);
-  g_free(u2);
-  return ret;
-}
-
-
 WEED_SETUP_START(200, 200) {
-  weed_plant_t **clone1, **clone2;
-
   const char *def_fonts[] = {"serif", NULL};
   const char *modes[] = {"foreground only", "foreground and background", "background only", NULL};
   // removed palettes with alpha channel
   int palette_list[2];
+  weed_plant_t **clone0, **clone1, **clone2;
   weed_plant_t *in_chantmpls[2];
   weed_plant_t *out_chantmpls[2];
   weed_plant_t *in_params[P_END + 1], *pgui;
@@ -374,11 +382,8 @@ WEED_SETUP_START(200, 200) {
   int filter_flags = weed_host_supports_premultiplied_alpha(host_info);
   int param_flags = 0;
 
-  if (is_big_endian())
-    palette_list[0] = WEED_PALETTE_ARGB32;
-  else
-    palette_list[0] = WEED_PALETTE_BGRA32;
-
+  if (is_big_endian()) palette_list[0] = WEED_PALETTE_ARGB32;
+  else palette_list[0] = WEED_PALETTE_BGRA32;
   palette_list[1] = WEED_PALETTE_END;
 
   in_chantmpls[0] = weed_channel_template_init("in channel 0", 0);
@@ -405,9 +410,8 @@ WEED_SETUP_START(200, 200) {
         // we should reserve num+1 for a final NULL pointer
         fonts_available = (const char **)weed_malloc((num + 1) * sizeof(char *));
         if (fonts_available) {
-          register int i;
           num_fonts_available = num;
-          for (i = 0; i < num; ++i) {
+          for (register int i = 0; i < num; ++i) {
             fonts_available[i] = strdup(pango_font_family_get_name(pff[i]));
           }
           // don't forget this thing
@@ -423,9 +427,9 @@ WEED_SETUP_START(200, 200) {
 
   in_params[P_TEXT] = weed_text_init("text", "_Text", "");
   in_params[P_MODE] = weed_string_list_init("mode", "Colour _mode", 0, modes);
-  param_flags = weed_get_int_value(in_params[P_MODE], WEED_LEAF_FLAGS, NULL);
+  param_flags = weed_paramtmpl_get_flags(in_params[P_MODE]);
   param_flags |= WEED_PARAMETER_REINIT_ON_VALUE_CHANGE;
-  weed_set_int_value(in_params[P_MODE], WEED_LEAF_FLAGS, param_flags);
+  weed_paramtmpl_set_flags(in_params[P_MODE], param_flags);
   gui = weed_paramtmpl_get_gui(in_params[P_MODE]);
   weed_gui_set_flags(gui, WEED_GUI_REINIT_ON_VALUE_CHANGE);
 
@@ -448,23 +452,44 @@ WEED_SETUP_START(200, 200) {
 
   weed_set_int_value(in_params[P_FGALPHA], WEED_LEAF_COPY_VALUE_TO, P_BGALPHA);
 
-  filter_class = weed_filter_class_init("scribbler", "Aleksej Penkov", 1, filter_flags, palette_list,
-                                        scribbler_init, scribbler_process, NULL,
-                                        in_chantmpls,
-                                        out_chantmpls,
-                                        in_params, NULL);
+  for (register int i = 1; i < 3; i++) {
+    if ( i == 0) {
+      filter_class = weed_filter_class_init("scribbler", "Aleksej Penkov", 1, filter_flags, palette_list,
+					    scribbler_init, scribbler_process, NULL,
+					    in_chantmpls,
+					    out_chantmpls,
+					    in_params, NULL);
+    }
+    else {
+      clone2 = weed_clone_plants(in_params);
+      weed_plant_free(clone2[P_FONT]);
+      clone2[P_FONT] = weed_text_init("font", "_Font",  "serif");
+      filter_class = weed_filter_class_init("scribbler", "Aleksej Penkov", 2, filter_flags, palette_list,
+					    scribbler_init, scribbler_process, NULL,
+					    (clone0 = weed_clone_plants(in_chantmpls)),
+					    (clone1 = weed_clone_plants(out_chantmpls)),
+					    clone2, NULL);
+      weed_free(clone0);
+      weed_free(clone1);
+      weed_free(clone2);
+    }
 
-  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+    weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  filter_class = weed_filter_class_init("scribbler_generator", "Aleksej Penkov", 1, filter_flags, palette_list,
-                                        scribbler_init, scribbler_process, NULL,
-                                        NULL,
-                                        (clone1 = weed_clone_plants(out_chantmpls)),
-                                        (clone2 = weed_clone_plants(in_params)), NULL);
-  weed_free(clone1);
-  weed_free(clone2);
+    clone2 = weed_clone_plants(in_params);
+    weed_plant_free(clone2[P_FONT]);
+    clone2[P_FONT] = weed_text_init("font", "_Font",  "serif");
 
-  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+    filter_class = weed_filter_class_init("scribbler_generator", "Aleksej Penkov", i, filter_flags, palette_list,
+					  scribbler_init, scribbler_process, NULL,
+					  NULL,
+					  (clone1 = weed_clone_plants(out_chantmpls)),
+					  clone2, NULL);
+    weed_free(clone1);
+    weed_free(clone2);
+
+    weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  }
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;

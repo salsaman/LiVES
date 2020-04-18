@@ -3537,8 +3537,6 @@ apply_inst3:
   // caller should free all layers, but here we will free all other pixel_data
 
   for (i = 0; layers[i] != NULL; i++) {
-    check_layer_ready(layers[i]);
-
     if (layers[i] == mainw->blend_layer) mainw->blend_layer = NULL;
 
     if ((mainw->multitrack != NULL && i == mainw->multitrack->preview_layer) || ((mainw->multitrack == NULL ||
@@ -3552,10 +3550,12 @@ apply_inst3:
                                     (mainw->multitrack->init_event, WEED_LEAF_DEINIT_EVENT, NULL)))))))) {
       if (output != -1 || weed_get_int_value(layers[i], WEED_LEAF_CLIP, NULL) == -1) {
         if (!weed_plant_has_leaf(layers[i], WEED_LEAF_PIXEL_DATA)) continue;
+	check_layer_ready(layers[i]);
         weed_layer_pixel_data_free(layers[i]);
       } else output = i;
     } else {
       if (!weed_plant_has_leaf(layers[i], WEED_LEAF_PIXEL_DATA)) continue;
+      check_layer_ready(layers[i]);
       weed_layer_pixel_data_free(layers[i]);
     }
   }
@@ -3569,7 +3569,8 @@ apply_inst3:
   clip = weed_get_int_value(layer, WEED_LEAF_CLIP, NULL);
 
   // frame is pulled uneffected here. TODO: Try to pull at target output palette
-  if (weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL) == NULL)
+  if (weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL) == NULL) {
+    check_layer_ready(layer);
     if (!pull_frame_at_size(layer, get_image_ext_for_type(mainw->files[clip]->img_type), tc, opwidth, opheight,
                             WEED_PALETTE_END)) {
       char *msg = lives_strdup_printf("weed_apply_effects created empty pixel_data at tc %ld, map was %p, clip = %d, frame = %d",
@@ -3578,7 +3579,7 @@ apply_inst3:
       lives_free(msg);
       create_blank_layer(layer, get_image_ext_for_type(mainw->files[clip]->img_type), opwidth, opheight, WEED_PALETTE_END);
     }
-
+  }
   return layer;
 }
 
@@ -6802,7 +6803,7 @@ deinit2:
   if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NORECORD)) weed_leaf_delete(inst, WEED_LEAF_HOST_NORECORD);
 
   if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS) && !is_gen) {
-    ticks_t actual_ticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
+    ticks_t actual_ticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
     uint64_t rteval, new_rte;
     pthread_mutex_lock(&mainw->event_list_mutex);
     event_list = append_filter_init_event(mainw->event_list, actual_ticks,
@@ -7160,7 +7161,7 @@ deinit3:
   if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && init_events[hotkey] != NULL &&
       (prefs->rec_opts & REC_EFFECTS) && num_in_chans > 0) {
     uint64_t rteval, new_rte;
-    ticks_t actual_ticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
+    ticks_t actual_ticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
     pthread_mutex_lock(&mainw->event_list_mutex);
     mainw->event_list = append_filter_deinit_event(mainw->event_list, actual_ticks, init_events[hotkey], pchains[hotkey]);
     init_events[hotkey] = NULL;
@@ -7375,59 +7376,10 @@ static boolean fill_audio_channel(weed_plant_t *filter, weed_plant_t *achan) {
 }
 
 
-/////////////////////
-// special handling for generators (sources)
-
-weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode_t tc, int clipno) {
-  weed_plant_t *channel, **out_channels;
-  weed_plant_t *filter;
-  weed_plant_t *chantmpl;
-  weed_plant_t *achan;
-  weed_process_f process_func;
-  int *palette_list;
-  int npals;
-  lives_filter_error_t retval;
-  weed_error_t ret;
-
-  int num_channels;
-  int palette;
-  int filter_flags = 0;
-  int num_in_alpha = 0;
-  int width, height;
-  int reinits = 0;
-
+int check_filter_chain_palettes(boolean is_bg, int *palette_list, int npals) {
   register int i;
+  int palette = WEED_PALETTE_END;
 
-  boolean did_thread = FALSE;
-  boolean needs_reinit = FALSE;
-  boolean is_bg = TRUE;
-  char *cwd;
-
-  if (inst == NULL) return NULL;
-
-  weed_instance_ref(inst);
-
-  out_channels = weed_get_plantptr_array_counted(inst, WEED_LEAF_OUT_CHANNELS, &num_channels);
-  if (num_channels  == 0) {
-    weed_instance_unref(inst);
-    return NULL;
-  }
-
-  if ((channel = get_enabled_channel(inst, 0, FALSE)) == NULL) {
-    lives_free(out_channels);
-    weed_instance_unref(inst);
-    return NULL;
-  }
-
-  filter = weed_instance_get_filter(inst, FALSE);
-  filter_flags = weed_filter_get_flags(filter);
-  chantmpl = weed_channel_get_template(channel);
-  palette_list = weed_chantmpl_get_palette_list(filter, chantmpl, &npals);
-  palette = WEED_PALETTE_END;
-
-  if (clipno == mainw->current_file) is_bg = FALSE;
-
-  /// if we have a choice of palettes, try to match with the first filter, if not, with the player
   if (mainw->rte) {
     for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
       if (palette != WEED_PALETTE_END) break;
@@ -7435,13 +7387,13 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
         weed_plant_t *instance;
         if (i == fg_generator_key) continue;
         if ((instance = weed_instance_obtain(i, key_modes[i])) != NULL) {
-          if (is_bg && enabled_in_channels(inst, FALSE) < 2) continue;
-          weed_plant_t *filter = weed_instance_get_filter(inst, TRUE);
-          weed_plant_t *channel = get_enabled_channel(inst, (is_bg ? 1 : 0), TRUE);
+          if (is_bg && enabled_in_channels(instance, FALSE) < 2) continue;
+          weed_plant_t *filter = weed_instance_get_filter(instance, TRUE);
+          weed_plant_t *channel = get_enabled_channel(instance, (is_bg ? 1 : 0), TRUE);
           if (channel != NULL) {
             int nvals;
             weed_plant_t *chantmpl = weed_channel_get_template(channel);
-            int *plist = weed_chantmpl_get_palette_list(filter, chantmpl, &nvals);
+	    int *plist = weed_chantmpl_get_palette_list(filter, chantmpl, &nvals);
             for (int j = 0; j < nvals; j++) {
               if (plist[j] == WEED_PALETTE_END) break;
               else for (int k = 0; k < npals; k++) {
@@ -7480,9 +7432,185 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
     }
   }
   if (palette == WEED_PALETTE_END) palette = palette_list[0];
+  return palette;
+}  
 
-  lives_free(palette_list);
-  weed_channel_set_palette(channel, palette);
+/////////////////////
+// special handling for generators (sources)
+
+weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode_t tc, int clipno) {
+  weed_plant_t *channel, **out_channels;
+  weed_plant_t *filter;
+  weed_plant_t *chantmpl;
+  weed_plant_t *achan;
+  weed_process_f process_func;
+  int *palette_list;
+  int *rowstrides;
+  lives_filter_error_t retval;
+  weed_error_t ret;
+  int npals;
+  int num_channels;
+  int npl, npl2;
+  int palette, opalette, cpalette;
+  int filter_flags = 0, channel_flags;
+  int num_in_alpha = 0;
+  int width, height, xwidth, xheight;
+  int reinits = 0;
+
+  register int i;
+
+  boolean did_thread = FALSE;
+  boolean needs_reinit = FALSE;
+  boolean can_change = FALSE;
+  boolean is_bg = TRUE;
+  char *cwd;
+
+  if (inst == NULL) return NULL;
+
+  weed_instance_ref(inst);
+
+  out_channels = weed_get_plantptr_array_counted(inst, WEED_LEAF_OUT_CHANNELS, &num_channels);
+  if (num_channels  == 0) {
+    weed_instance_unref(inst);
+    return NULL;
+  }
+
+  if ((channel = get_enabled_channel(inst, 0, FALSE)) == NULL) {
+    lives_free(out_channels);
+    weed_instance_unref(inst);
+    return NULL;
+  }
+
+  filter = weed_instance_get_filter(inst, FALSE);
+  filter_flags = weed_filter_get_flags(filter);
+  chantmpl = weed_channel_get_template(channel);
+  palette_list = weed_chantmpl_get_palette_list(filter, chantmpl, &npals);
+  palette = WEED_PALETTE_END;
+
+  if (clipno == mainw->current_file) is_bg = FALSE;
+
+  /*
+    - just as with normal filters,
+    - if the channel template flags have WEED_FILTER_REINIT_ON_PALETTE_CHANGE, then we want to minimise palette changes, 
+    in this case because reinit may disrupt the output flow from the generator, causing unnecessary visual changes.
+    thus unless forced to, we will leave the palette as is. However as with filters,
+    There are two points where we can voluntariily alter the palette:
+    when the instance has just been inited (since it would be reset anyway)
+    and if we are going to reinit anyway due to some other factor (e.g size change).
+
+    when setting the palette we will consider the following:
+    - if there are no filters active then look at the player palette. If the player can change palettes then find the best pair.
+    else
+    - if the gen. is fg,  check the filters to be applied, If 1st filter has reinit on pal. change then try to match its palette
+    - otherwise check the longest running palette, ie. intersection of gen. palette(s), filter_n  palettes, filter_n+1 pal. list untiil
+    either the intersection of our remaing palettes with filter palettes is the empty set. or we pass all palettes, 
+    then take intersection with player. Any filters with reinit on pal. change, we first try the current palette, if that doesnt work then 
+    we check its full palette list as we will be forced to reinit it.
+    - if it is bg we will use mainw->blend_palette
+    TODO: we should finde the transition where the gen. joins, and work backwards and forwards from there
+
+
+    IF the template has WEED_FILTER_REINIT_ON_ROWSTRIDES_CHANGE or WEED_FILTER_REINIT_ON_SIZE_CHANGE 
+    then similar rules apply for those values
+  */
+
+  /// if we have a choice of palettes, try to match with the first filter, if not, with the player
+  // unless it says reinit on palette change. Then as with normal filters we only change after an init / reinit
+
+ matchvals:
+
+  if (needs_reinit || weed_get_boolean_value(inst, WEED_LEAF_HOST_UNUSED, NULL) == WEED_TRUE)
+    can_change = TRUE;
+
+  needs_reinit = FALSE;
+
+  channel = get_enabled_channel(inst, 0, FALSE);
+  chantmpl = weed_channel_get_template(channel);
+  channel_flags = weed_chantmpl_get_flags(chantmpl);
+  opalette = weed_channel_get_palette(channel);
+  if (can_change || !((channel_flags & WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE))) {
+    palette = check_filter_chain_palettes(is_bg, palette_list, npals);
+    if (palette != WEED_PALETTE_END) {
+      if (palette != opalette && !((channel_flags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE) && pixel_size(palette)
+				   != pixel_size(opalette))) {
+	weed_channel_set_palette(channel, palette);
+      }
+    }
+  }
+
+  if (weed_plant_has_leaf(inst, WEED_LEAF_IN_CHANNELS)) {
+    int num_inc;
+    weed_plant_t **in_channels = weed_get_plantptr_array_counted(inst, WEED_LEAF_IN_CHANNELS, &num_inc);
+    for (i = 0; i < num_inc; i++) {
+      if (weed_palette_is_alpha(weed_channel_get_palette(in_channels[i])) &&
+          weed_get_boolean_value(in_channels[i], WEED_LEAF_DISABLED, NULL) == WEED_FALSE) {
+	num_in_alpha++;
+      }
+      lives_freep((void **)&in_channels);
+    }
+  }
+
+  if (num_in_alpha > 0) {
+    // if we have mandatory alpha ins, make sure they are filled
+    retval = check_cconx(inst, num_in_alpha, &needs_reinit);
+    if (retval != FILTER_SUCCESS) {
+      lives_free(out_channels);
+      weed_instance_unref(inst);
+      return channel;
+    }
+  }
+  
+  width = weed_channel_get_width(channel);
+  cpalette = weed_channel_get_palette(channel);
+  xwidth = width /= weed_palette_get_pixels_per_macropixel(cpalette); // convert width to channel macropixels
+  xheight = height = weed_channel_get_height(channel);
+
+  if (can_change || (!(channel_flags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE) && !(channel_flags
+										      & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE))) {
+    // if it's in the bg, and letterboxing, set size to the fg clip
+    // or if it's fg or bg and we are playing high quality
+    if (mainw->num_tr_applied > 0 && !num_in_alpha) {
+      if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file
+	  && mainw->files[mainw->blend_file]->ext_src == inst) {
+	boolean is_lbox = FALSE;
+	int lb_width = mainw->files[mainw->playing_file]->hsize;
+	int lb_height = mainw->files[mainw->playing_file]->vsize;
+	if ((mainw->multitrack != NULL && !mainw->multitrack->is_rendering && prefs->letterbox_mt)
+	    || (!mainw->multitrack && prefs->letterbox && (!mainw->is_rendering || mainw->preview_rendering))) {
+	  boolean can_resize = FALSE;
+	  int opwidth, opheight;
+	  get_player_size(&opwidth, &opheight);
+	  if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE) != 0) can_resize = TRUE;
+	  get_letterbox_sizes(&opwidth, &opheight, &lb_width, &lb_height, can_resize);
+	  is_lbox = TRUE;
+	}
+	if (is_lbox || (prefs->pb_quality == PB_QUALITY_HIGH && (lb_width > width || lb_height > height))) {
+	  xwidth = lb_width;
+	  xheight = lb_height;
+	}
+      }
+    } else {
+      if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file
+	  && prefs->pb_quality == PB_QUALITY_HIGH && (mainw->files[mainw->blend_file]->hsize > width
+						      || mainw->files[mainw->blend_file]->vsize > height)) {
+	xwidth = mainw->files[mainw->blend_file]->hsize;
+	xheight = mainw->files[mainw->blend_file]->vsize;
+      }
+    }
+  }
+
+  if (xwidth * xheight == 0) {
+    if (weed_plant_has_leaf(chantmpl, WEED_LEAF_HOST_WIDTH)) {
+      xwidth = weed_get_int_value(chantmpl, WEED_LEAF_HOST_WIDTH, NULL);
+    }
+    else xwidth = DEF_GEN_WIDTH;
+    if (weed_plant_has_leaf(chantmpl, WEED_LEAF_HOST_HEIGHT)) {
+      xheight = weed_get_int_value(chantmpl, WEED_LEAF_HOST_HEIGHT, NULL);
+    }
+    else xheight = DEF_GEN_HEIGHT;
+  }
+
+  rowstrides = weed_channel_get_rowstrides(channel, &npl);
 
   if (weed_plant_has_leaf(filter, WEED_LEAF_ALIGNMENT_HINT)) {
     int rowstride_alignment_hint = weed_get_int_value(filter, WEED_LEAF_ALIGNMENT_HINT, NULL);
@@ -7491,76 +7619,64 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
     }
   }
 
-  if (!create_empty_pixel_data(channel, TRUE, TRUE)) {
-    return NULL;
+    /// store original values (width / height)
+  for (i = 0; (channel = get_enabled_channel(inst, i, FALSE)); i++) {
+    if (xwidth != weed_channel_get_width(channel) ||
+	xheight != weed_channel_get_height(channel)) {
+      int nplanes;
+      void **pd = weed_channel_get_pixel_data_planar(channel, &nplanes);
+      for (register int i = 0; i < nplanes; i++) lives_free(pd[i]);
+      lives_free(pd);
+      weed_set_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, NULL);
+
+      set_channel_size(filter, channel, xwidth, xheight);
+    }
   }
+
+  channel = get_enabled_channel(inst, 0, FALSE);
+
+  if (!create_empty_pixel_data(channel, FALSE, TRUE)) return NULL;
+
+  /// store original values (width / height)
+  xwidth = width;
+  xheight = height;
+  width = weed_channel_get_width(channel);
+  cpalette = weed_channel_get_palette(channel);
+  width /= weed_palette_get_pixels_per_macropixel(cpalette); // convert width to channel macropixels
+  height = weed_channel_get_height(channel);
+
+  if (xwidth != width || xheight != height) {
+    if (channel_flags & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE) {
+      needs_reinit = TRUE;
+    }
+  }
+
+  if (!needs_reinit && (channel_flags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE)) {
+    int *rowstrides2 = weed_channel_get_rowstrides(channel, &npl2);
+    if (rowstrides_differ(npl, rowstrides, npl2, rowstrides2))
+      needs_reinit = TRUE;
+    lives_free(rowstrides2);
+  }
+  lives_free(rowstrides);
 
   if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
     weed_channel_set_gamma_type(channel, WEED_GAMMA_LINEAR);
   else
-    weed_channel_set_gamma_type(channel, WEED_GAMMA_SRGB);
+    weed_channel_set_gamma_type(channel, cfile->gamma_type);
 
-  if (weed_plant_has_leaf(inst, WEED_LEAF_IN_CHANNELS)) {
-    int num_inc;
-    weed_plant_t **in_channels = weed_get_plantptr_array_counted(inst, WEED_LEAF_IN_CHANNELS, &num_inc);
-    for (i = 0; i < num_inc; i++) {
-      if (weed_palette_is_alpha(weed_channel_get_palette(in_channels[i])) &&
-          !(weed_plant_has_leaf(in_channels[i], WEED_LEAF_DISABLED) &&
-            weed_get_boolean_value(in_channels[i], WEED_LEAF_DISABLED, NULL) == WEED_TRUE))
-        num_in_alpha++;
-    }
-    lives_freep((void **)&in_channels);
-  }
-
-  if (num_in_alpha > 0) {
-    // if we have mandatory alpha ins, make sure they are filled
-    retval = check_cconx(inst, num_in_alpha, &needs_reinit);
-
-    if (retval != FILTER_SUCCESS) {
+  if (needs_reinit) {
+    if ((retval = weed_reinit_effect(inst, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
       lives_free(out_channels);
       weed_instance_unref(inst);
-      return channel;
+      return NULL;
     }
-
-    if (needs_reinit) {
-      if ((retval = weed_reinit_effect(inst, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
-        lives_free(out_channels);
-        weed_instance_unref(inst);
-        return channel;
-      }
-    }
-
-    // check out channel sizes, they may be wrong now
-    channel = get_enabled_channel(inst, 0, TRUE);
-
-    width = weed_channel_get_width(channel);
-    height = weed_channel_get_height(channel);
-
-    for (i = 0; (channel = get_enabled_channel(inst, i, FALSE)) != NULL; i++) {
-      if (width != weed_channel_get_width(channel) ||
-          height != weed_channel_get_height(channel)) {
-        weed_layer_pixel_data_free(channel);
-        weed_channel_set_size(channel, width, height);
-        if (i == 0 && mainw->current_file == mainw->playing_file) {
-          cfile->hsize = width;
-          cfile->vsize = height;
-          set_main_title(cfile->file_name, 0);
-        }
-        if (weed_plant_has_leaf(filter, WEED_LEAF_ALIGNMENT_HINT)) {
-          int rowstride_alignment_hint = weed_get_int_value(filter, WEED_LEAF_ALIGNMENT_HINT, NULL);
-          if (rowstride_alignment_hint > ALIGN_DEF) {
-            mainw->rowstride_alignment_hint = rowstride_alignment_hint;
-          }
-        }
-        if (!create_empty_pixel_data(channel, FALSE, TRUE)) return NULL;
-        if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
-          weed_channel_set_gamma_type(channel, WEED_GAMMA_LINEAR);
-        else
-          weed_channel_set_gamma_type(channel, cfile->gamma_type);
-      }
-    }
-
-    channel = get_enabled_channel(inst, 0, FALSE);
+    goto matchvals;
+  }
+  
+  if (i == 0 && mainw->current_file == mainw->playing_file) {
+    cfile->hsize = width;
+    cfile->vsize = height;
+    set_main_title(cfile->file_name, 0);
   }
 
   // if we have an optional audio channel, we can push audio to it
@@ -7581,7 +7697,8 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
   if (CURRENT_CLIP_IS_VALID) weed_set_double_value(inst, WEED_LEAF_FPS, mainw->inst_fps);
 
   cwd = cd_to_plugin_dir(filter);
-procfunc1:
+
+ procfunc1:
   // cannot lock the filter here as we may be multithreading
   if (filter_flags & WEED_FILTER_HINT_MAY_THREAD) {
     retval = process_func_threaded(inst, out_channels, tc);
@@ -8734,7 +8851,7 @@ void rec_param_change(weed_plant_t *inst, int pnum) {
     return;
   }
 
-  actual_ticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
+  actual_ticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
 
   pthread_mutex_lock(&mainw->event_list_mutex);
   key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);

@@ -33,12 +33,10 @@
 
 // hardware related prefs
 
-/// fraction of a second quantisation for event timing
-///
-/// > 10**8 is not recommended, since we sometimes store seconds in a double
-#define TICKS_PER_SECOND_DBL ((double)MILLIONS(100))   ///< actually microseconds / 100.
-#define TICKS_PER_SECOND ((ticks_t)MILLIONS(100)) ///< ticks per second
-#define USEC_TO_TICKS (TICKS_PER_SECOND / ONE_MILLION) ///< how many TICKS in a microsecond [default 100]
+#define TICKS_PER_SECOND ((ticks_t)MILLIONS(100)) ///< ticks per second - GLOBAL TIMEBASE
+#define TICKS_PER_SECOND_DBL ((double)TICKS_PER_SECOND)   ///< actually microseconds / 100.
+#define USEC_TO_TICKS (TICKS_PER_SECOND / ONE_MILLION) ///< multiplying factor uSec -> ticks_t  (def. 100)
+#define TICKS_TO_NANOSEC (ONE_BILLION / TICKS_PER_SECOND) /// multiplying factor ticks_t -> nSec (def 10)
 
 #define LIVES_SHORTEST_TIMEOUT  (2. * TICKS_PER_SECOND_DBL) // 2 sec timeout
 #define LIVES_SHORT_TIMEOUT  (5. * TICKS_PER_SECOND_DBL) // 5 sec timeout
@@ -342,12 +340,9 @@ typedef struct {
 
 /// screen details
 typedef struct {
-  int x;
-  int y;
-  int width;
-  int height;
-  int phys_width;
-  int phys_height;
+  int x, y;
+  int width, height;
+  int phys_width, phys_height;
   LiVESXDevice *mouse_device; ///< unused for gtk+ < 3.0.0
   LiVESXDisplay *disp;
   LiVESXScreen *screen;
@@ -542,6 +537,7 @@ enum {
 #define SET_VPP_PARAMETER_VALUE 25
 #define OSC_NOTIFY 26
 
+/// helper ptoc_threads
 #define N_HLP_PROCTHREADS 128
 #define PT_LAZY_RFX 16
 
@@ -561,7 +557,7 @@ typedef struct {
 typedef struct {
   ticks_t tleft;
   volatile ticks_t lastcheck;
-}  lives_timeout_t;
+} lives_timeout_t;
 
 typedef int lives_alarm_t;
 
@@ -844,8 +840,9 @@ typedef struct {
   ticks_t last_startticks; ///< effective ticks when lasty frame was (should have been) displayed
   ticks_t timeout_ticks; ///< incremented if effect/rendering is paused/previewed
   ticks_t origsecs; ///< playback start seconds - subtracted from all other ticks to keep numbers smaller
-  ticks_t origusecs; ///< usecs at start of playback - ditto
+  ticks_t orignsecs; ///< usecs at start of playback - ditto
   ticks_t offsetticks; ///< offset for multitrack playback start
+  volatile ticks_t clock_ticks; ///< unadjusted system time since pb start, measured concurrently with currticks
   volatile ticks_t currticks; ///< current playback ticks (relative)
   ticks_t deltaticks; ///< deltaticks for scratching
   ticks_t adjticks; ///< used to equalise the timecode between alternate timer sources (souce -> clock adjustment)
@@ -855,6 +852,8 @@ typedef struct {
   ticks_t last_display_ticks; /// currticks when last display was shown (used for fixed fps)
   int play_sequence; ///< incremented for each playback
 
+  double repayment; ///< count of "borrowed" time
+  
   double audio_stretch; ///< for fixed fps modes, the value is used to speed up / slow down audio
 
   int size_warn; ///< warn the user that incorrectly sized frames were found (threshold count)

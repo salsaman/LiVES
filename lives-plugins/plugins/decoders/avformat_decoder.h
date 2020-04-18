@@ -26,6 +26,7 @@ typedef struct  {
   boolean inited;
   boolean longer_seek;
   boolean needs_packet;
+  boolean pkt_inited;
 
   int astream;
   int vstream;

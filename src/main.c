@@ -24,6 +24,7 @@
 //   initialise widget_helper
 // real_main() [parse startup opts]
 // real_main() -> lives_startup() [added as idle function]
+// lives_startup ->lives_init
 // real_main() -> gtk_main()
 
 // idlefuncion:
@@ -239,16 +240,16 @@ void defer_sigint(int signum) {
 #define QUICK_EXIT
 void catch_sigint(int signum) {
   // trap for ctrl-C and others
-#ifdef QUICK_EXITz
+  if (capable && !pthread_equal(capable->main_thread, pthread_self())) {
+    sleep(3600);
+    pthread_exit(NULL);
+  }
+#ifdef QUICK_EXIT
   /* shoatend(); */
   /* fprintf(stderr, "shoatt end"); */
   /* fflush(stderr); */
   exit(signum);
 #endif
-  if (capable && !pthread_equal(capable->main_thread, pthread_self())) {
-    sleep(3600);
-    pthread_exit(NULL);
-  }
   if (mainw != NULL) {
     if (LIVES_MAIN_WINDOW_WIDGET != NULL) {
       if (mainw->foreign) {
@@ -755,6 +756,7 @@ static boolean pre_init(void) {
 
   if (gerr != NULL) lives_error_free(gerr);
 #endif
+  mainw->first_free_file = 1;
 
   needs_update = FALSE;
 
@@ -987,7 +989,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   for (i = 0; i <= MAX_FILES; mainw->files[i++] = NULL);
   mainw->prefs_changed = FALSE;
-  mainw->first_free_file = 1;
   mainw->insert_after = TRUE;
   mainw->mute = FALSE;
   mainw->faded = FALSE;
@@ -1391,6 +1392,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->st_fcache = mainw->en_fcache = mainw->pr_fcache = NULL;
 
+  mainw->repayment = 0.;
+  
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);
@@ -2695,8 +2698,8 @@ capability *get_capabilities(void) {
     size_t dirlen = strlen(dir);
     boolean dir_valid = TRUE;
 
-    if (dirlen > 0) {
-      if (mainw->old_vhash == NULL || strlen(mainw->old_vhash) == 0 || !strcmp(mainw->old_vhash, "0")) {
+    if (dirlen > 0 && strncmp(dir, "(null)", 6)) {
+      if (mainw->old_vhash == NULL || !(*mainw->old_vhash) || !strcmp(mainw->old_vhash, "0")) {
         msg = lives_strdup_printf("The backend found a workdir (%s), but claimed old version was %s !", dir, old_vhash);
         LIVES_WARN(msg);
         lives_free(msg);
@@ -2733,7 +2736,7 @@ capability *get_capabilities(void) {
         needs_workdir = TRUE;
         prefs->startup_phase = -1;
       }
-    } else {
+      } else {
       if (prefs->startup_phase != -1) {
         msg = lives_strdup_printf("The backend found no workdir, but set startup_phase to %d !\n%s",
                                   prefs->startup_phase, prefs->workdir);
@@ -2997,7 +3000,7 @@ static boolean lives_startup(livespointer data) {
   if ((prefs->startup_phase == 1 || prefs->startup_phase == -1)) {
     needs_workdir = TRUE;
   }
-
+  
   if (needs_workdir) {
     // get initial workdir
     if (!do_workdir_query()) {
@@ -3112,9 +3115,7 @@ static boolean lives_startup(livespointer data) {
             _("\n\nThe theme you requested could not be located. Please make sure you have the themes installed in\n%s/%s.\n"
               "(Maybe you need to change the value of <prefix_dir> in your %s file)\n"),
             (tmp = lives_filename_to_utf8(prefs->prefix_dir, -1, NULL, NULL, NULL)), THEME_DIR,
-            (tmp2 = lives_filename_to_utf8(capable->rcfile, -1,
-                                           NULL, NULL,
-                                           NULL)));
+            (tmp2 = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
     lives_free(tmp2);
     lives_free(tmp);
     startup_message_nonfatal(msg);
@@ -4550,12 +4551,14 @@ void desensitize(void) {
     lives_widget_set_sensitive(mainw->playall, FALSE);
   }
   lives_widget_set_sensitive(mainw->rewind, FALSE);
-  if (!mainw->foreign) {
-    for (i = 0; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
-         mainw->num_rendered_effects_test; i++)
-      if (mainw->rendered_fx[i].menuitem != NULL && mainw->rendered_fx[i].menuitem != NULL &&
-          mainw->rendered_fx[i].min_frames >= 0)
-        lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem, FALSE);
+  if (0 && RFX_LOADED) {
+    if (!mainw->foreign) {
+      for (i = 0; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
+	     mainw->num_rendered_effects_test; i++)
+	if (mainw->rendered_fx[i].menuitem != NULL && mainw->rendered_fx[i].menuitem != NULL &&
+	    mainw->rendered_fx[i].min_frames >= 0)
+	  lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem, FALSE);
+    }
   }
 
   if (mainw->resize_menuitem != NULL) {
@@ -6837,7 +6840,7 @@ LIVES_GLOBAL_INLINE LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const ch
 }
 
 
-static void get_player_size(int *opwidth, int *opheight) {
+void get_player_size(int *opwidth, int *opheight) {
   // calc output size for display
 
   ///// external playback plugin
@@ -7038,44 +7041,48 @@ static void do_cleanup(weed_layer_t *layer, int success) {
 /*   } */
 /* } */
 
+#define USEC_WAIT_FOR_SYNC 500000
+
 static boolean avsync_check(void) {
-  int count = 5000, rc = 0;
+  register int count = USEC_WAIT_FOR_SYNC / 10, rc = 0;
   struct timespec ts;
 
   if (mainw->foreign || !LIVES_IS_PLAYING || prefs->audio_src == AUDIO_SRC_EXT
-      || (mainw->event_list != NULL && !(mainw->record || mainw->record_paused))) {
+      || (mainw->event_list && !(mainw->record || mainw->record_paused))) {
     mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
     return TRUE;
   }
 
   if (!mainw->video_seek_ready) {
 #ifdef ENABLE_JACK
-    if (!mainw->foreign && mainw->jackd != NULL && prefs->audio_player == AUD_PLAYER_JACK) {
+    if (!mainw->foreign && mainw->jackd && prefs->audio_player == AUD_PLAYER_JACK) {
       /// try to improve sync by delaying audio pb start
-      if (mainw->event_list != NULL && LIVES_IS_PLAYING && !mainw->record
-	  && !mainw->record_paused && mainw->jackd->is_paused) {
+      if (LIVES_UNLIKELY(mainw->event_list && LIVES_IS_PLAYING && !mainw->record
+			 && !mainw->record_paused && mainw->jackd->is_paused)) {
 	mainw->video_seek_ready = TRUE;
+	if (!mainw->switch_during_pb) mainw->force_show = TRUE;
 	return TRUE;
       }
     }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-    if (!mainw->foreign && mainw->pulsed != NULL && prefs->audio_player == AUD_PLAYER_PULSE) {
+    if (!mainw->foreign && mainw->pulsed && prefs->audio_player == AUD_PLAYER_PULSE) {
       /// try to improve sync by delaying audio pb start
-      if (LIVES_UNLIKELY(mainw->event_list != NULL && LIVES_IS_PLAYING && !mainw->record
+      if (LIVES_UNLIKELY(mainw->event_list && LIVES_IS_PLAYING && !mainw->record
 			 && !mainw->record_paused && mainw->pulsed->is_paused)) {
 	mainw->video_seek_ready = TRUE;
+	if (!mainw->switch_during_pb) mainw->force_show = TRUE;
 	return TRUE;
       }
     }
 #endif
   }
 
+  clock_gettime(CLOCK_REALTIME, &ts);
   pthread_mutex_lock(&mainw->avseek_mutex);
   mainw->video_seek_ready = TRUE;
-  clock_gettime(CLOCK_REALTIME, &ts);
   while (!mainw->audio_seek_ready && --count) {
-    ts.tv_nsec += 100000;
+    ts.tv_nsec += 10000;   // def. 10 usec (* 50000 = 0.5 sec)
     if (ts.tv_nsec >= ONE_BILLION) {
       ts.tv_sec++;
       ts.tv_nsec -= ONE_BILLION;
@@ -7083,12 +7090,11 @@ static boolean avsync_check(void) {
     rc = pthread_cond_timedwait(&mainw->avseek_cond, &mainw->avseek_mutex, &ts);
     mainw->video_seek_ready = TRUE;
   }
+  pthread_mutex_unlock(&mainw->avseek_mutex);
   if (rc == ETIMEDOUT) {
-    pthread_mutex_unlock(&mainw->avseek_mutex);
     mainw->cancelled = handle_audio_timeout();
     return FALSE;
   }
-  pthread_mutex_unlock(&mainw->avseek_mutex);
   return TRUE;
 }
 
@@ -7144,7 +7150,7 @@ void load_frame_image(int frame) {
       // add blank frame
       weed_plant_t *event = get_last_event(mainw->event_list);
       weed_plant_t *event_list = insert_blank_frame_event_at(mainw->event_list, lives_get_relative_ticks(mainw->origsecs,
-													 mainw->origusecs),
+													 mainw->orignsecs),
 							     &event);
       if (mainw->event_list == NULL) mainw->event_list = event_list;
       if (mainw->rec_aclip != -1 && (prefs->rec_opts & REC_AUDIO) && !mainw->record_starting) {
@@ -7218,7 +7224,7 @@ void load_frame_image(int frame) {
 	  bg_frame = 0;
 	}
 
-	actual_ticks = mainw->currticks;//lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
+	actual_ticks = mainw->currticks;//lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
 
 	if (mainw->record_starting) {
 	  // mark record start
@@ -7597,7 +7603,7 @@ void load_frame_image(int frame) {
                 goto lfi_done;
               }
               // ???
-              mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
+              mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
             }
 
             img_ext = NULL;
@@ -8981,7 +8987,7 @@ void load_frame_image(int frame) {
               else mainw->jackd->sample_in_rate = mainw->files[new_file]->arate * mainw->files[new_file]->freeze_fps /
                                                     mainw->files[new_file]->fps;
             } else mainw->jackd->sample_in_rate = mainw->files[new_file]->arate;
-            if (mainw->files[new_file]->adirection == LIVES_DIRECTION_BACKWARD)
+            if (mainw->files[new_file]->adirection == LIVES_DIRECTION_REVERSE)
               mainw->jackd->sample_in_rate = -abs(mainw->jackd->sample_in_rate);
             else
               mainw->jackd->sample_in_rate = abs(mainw->jackd->sample_in_rate);
@@ -9096,7 +9102,7 @@ void load_frame_image(int frame) {
                 else mainw->pulsed->in_arate = mainw->files[new_file]->arate * mainw->files[new_file]->freeze_fps /
                                                  mainw->files[new_file]->fps;
               } else mainw->pulsed->in_arate = mainw->files[new_file]->arate;
-              if (mainw->files[new_file]->adirection == LIVES_DIRECTION_BACKWARD)
+              if (mainw->files[new_file]->adirection == LIVES_DIRECTION_REVERSE)
                 mainw->pulsed->in_arate = -abs(mainw->pulsed->in_arate);
               else
                 mainw->pulsed->in_arate = abs(mainw->pulsed->in_arate);
@@ -9223,8 +9229,11 @@ void load_frame_image(int frame) {
 
         mainw->whentostop = NEVER_STOP;
 
+	// TODO - can these be combined ?
         mainw->switch_during_pb = TRUE;
         mainw->clip_switched = TRUE;
+
+	if (CURRENT_CLIP_IS_NORMAL) cfile->last_play_sequence = mainw->play_sequence;
 
         if (CURRENT_CLIP_IS_VALID) {
           //chill_decoder_plugin(mainw->current_file);

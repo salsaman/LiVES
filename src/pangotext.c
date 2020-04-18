@@ -528,9 +528,9 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
                                    double size, lives_text_mode_t mode, lives_colRGBA64_t *fg_col, lives_colRGBA64_t *bg_col,
                                    boolean center, boolean rising, double top) {
   // render text to layer and return a new layer, which may have a new "rowstrides", "width" and/or "current_palette"
-  // original layer is freed in the process and should not be used
+  // original layer pixel_data is freed in the process and should not be re-used
 
-  lives_painter_t *cr;
+  lives_painter_t *cr = NULL;
   LingoLayout *layout;
   weed_layer_t *test_layer, *layer_slice;
   uint8_t *src, *pd;
@@ -556,31 +556,34 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
     if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
     weed_layer_free(test_layer);
 
-    src = weed_layer_get_pixel_data_packed(layer);
-    weed_layer_set_pixel_data_packed(layer, src + (int)(top * height) * row);
-    weed_layer_set_height(layer, lheight);
-    layer_slice = weed_layer_copy(NULL, layer);
-    weed_layer_set_height(layer, height);
-    weed_layer_set_pixel_data_packed(layer, src);
+    /// if possible just render the slice which contains the text
+    if (top * height + lheight < height) {
+      src = weed_layer_get_pixel_data_packed(layer);
+      weed_layer_set_pixel_data_packed(layer, src + (int)(top * height) * row);
+      weed_layer_set_height(layer, lheight);
+      layer_slice = weed_layer_copy(NULL, layer);
+      weed_layer_set_height(layer, height);
+      weed_layer_set_pixel_data_packed(layer, src);
 
-    cr = layer_to_lives_painter(layer_slice);
-    layout = render_text_to_cr(NULL, cr, text, fontname, size, mode, fg_col, bg_col, center, FALSE, &ztop, &offsx, width, &height);
-    if (layout != NULL && LINGO_IS_LAYOUT(layout)) {
-      lingo_painter_show_layout(cr, layout);
-      lives_widget_object_unref(layout);
+      cr = layer_to_lives_painter(layer_slice);
+      layout = render_text_to_cr(NULL, cr, text, fontname, size, mode, fg_col, bg_col, center, FALSE, &ztop, &offsx, width, &height);
+      if (layout && LINGO_IS_LAYOUT(layout)) {
+	lingo_painter_show_layout(cr, layout);
+	lives_widget_object_unref(layout);
+      }
+      // frees pd
+      lives_painter_to_layer(cr, layer_slice);
+      convert_layer_palette(layer_slice, pal, 0);
+      pd = weed_layer_get_pixel_data_packed(layer_slice);
+      lives_memcpy(src + (int)(top * height) * row, pd, lheight * row);
+      weed_layer_free(layer_slice);
     }
-
-    // frees pd
-    lives_painter_to_layer(cr, layer_slice);
-    convert_layer_palette(layer_slice, pal, 0);
-    pd = weed_layer_get_pixel_data_packed(layer_slice);
-    lives_memcpy(src + (int)(top * height) * row, pd, lheight * row);
-    weed_layer_free(layer_slice);
-  } else {
+  }
+  if (!cr) {
     cr = layer_to_lives_painter(layer);
-    if (cr == NULL) return layer; ///< error occured
+    if (!cr) return layer; ///< error occured
     layout = render_text_to_cr(NULL, cr, text, fontname, size, mode, fg_col, bg_col, center, rising, &top, &offsx, width, &height);
-    if (layout != NULL && LINGO_IS_LAYOUT(layout)) {
+    if (layout && LINGO_IS_LAYOUT(layout)) {
       lingo_painter_show_layout(cr, layout);
       if (layout) lives_widget_object_unref(layout);
     }

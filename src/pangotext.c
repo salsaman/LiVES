@@ -568,8 +568,8 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
       cr = layer_to_lives_painter(layer_slice);
       layout = render_text_to_cr(NULL, cr, text, fontname, size, mode, fg_col, bg_col, center, FALSE, &ztop, &offsx, width, &height);
       if (layout && LINGO_IS_LAYOUT(layout)) {
-	lingo_painter_show_layout(cr, layout);
-	lives_widget_object_unref(layout);
+        lingo_painter_show_layout(cr, layout);
+        lives_widget_object_unref(layout);
       }
       // frees pd
       lives_painter_to_layer(cr, layer_slice);

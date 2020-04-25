@@ -515,7 +515,7 @@ void *_ext_calloc(size_t nmemb, size_t msize) {
 #endif
 }
 
-LIVES_GLOBAL_INLINE void *lives_free_and_return(void *p) {lives_free(p);return NULL;}
+LIVES_GLOBAL_INLINE void *lives_free_and_return(void *p) {lives_free(p); return NULL;}
 
 
 LIVES_GLOBAL_INLINE size_t get_max_align(size_t req_size, size_t align_max) {
@@ -683,8 +683,8 @@ boolean  get_ds_used(uint64_t *bytes) {
 LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t orignsecs) {
 #if _POSIX_TIMERS
   struct timespec ts;
-  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts);
-  return ((ts.tv_sec * ONE_BILLION + ts.tv_nsec) - (origsecs * ONE_BILLION + orignsecs)) / 10;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  return ((ts.tv_sec * ONE_BILLION + ts.tv_nsec) - (origsecs * ONE_BILLION + orignsecs)) / TICKS_TO_NANOSEC;
 #else
 #ifdef USE_MONOTONIC_TIME
   return (lives_get_monotonic_time() - orignsecs) / 10;
@@ -1460,6 +1460,7 @@ uint64_t lives_thread_join(lives_thread_t work, void **retval) {
     pthread_cond_signal(&tcond);
     pthread_mutex_unlock(&tcond_mutex);
     if (task->busy) break;
+    sched_yield();
     lives_nanosleep(1000);
   }
 

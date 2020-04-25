@@ -2635,6 +2635,11 @@ LIVES_GLOBAL_INLINE void avsync_force(void) {
     mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
     mainw->force_show = TRUE;
   }
+  mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
+
+#ifdef HAVE_PULSE_AUDIO
+  pa_time_reset(mainw->pulsed, mainw->currticks);
+#endif
   pthread_mutex_unlock(&mainw->avseek_mutex);
 #endif
 }

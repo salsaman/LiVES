@@ -618,7 +618,7 @@ typedef struct {
 
   int ptr_x, ptr_y;
 
-  double fps_measure; ///< show fps stats after playback
+  frames_t fps_measure; ///< show fps stats after playback
   frames_t fps_mini_measure; ///< show fps stats during playback
   ticks_t fps_mini_ticks;
   double inst_fps;
@@ -853,7 +853,7 @@ typedef struct {
   int play_sequence; ///< incremented for each playback
 
   double repayment; ///< count of "borrowed" time
-  
+
   double audio_stretch; ///< for fixed fps modes, the value is used to speed up / slow down audio
 
   int size_warn; ///< warn the user that incorrectly sized frames were found (threshold count)

@@ -2562,66 +2562,65 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
       }
 
       if (cdata->ext_calloc) {
-	pkt = (*cdata->ext_calloc)(sizeof(AVPacket), 1);
-	priv->ext_memfuncs = TRUE;
-      }
-      else pkt = calloc(sizeof(AVPacket), 1);
+        pkt = (*cdata->ext_calloc)(sizeof(AVPacket), 1);
+        priv->ext_memfuncs = TRUE;
+      } else pkt = calloc(sizeof(AVPacket), 1);
       /* XXX: prevent data copy... */
       if (av_new_packet(pkt, pkt_size + offset) < 0) {
-	if (priv->ext_memfuncs)
-	  (*cdata->ext_free)(pkt);
-	else
-	  free(pkt);
+        if (priv->ext_memfuncs)
+          (*cdata->ext_free)(pkt);
+        else
+          free(pkt);
         res = AVERROR(ENOMEM);
         break;
       }
       if (offset)
-	(*cdata->ext_memcpy)(pkt->data, encodings->compression.settings.data, offset);
+        (*cdata->ext_memcpy)(pkt->data, encodings->compression.settings.data, offset);
 
       (*cdata->ext_memcpy)(pkt->data + offset, pkt_data, pkt_size);
 
       if (pkt_data != data) {
-	if (priv->ext_memfuncs)
-	  (*cdata->ext_free)(pkt_data);
-	else
-        free(pkt_data);
+        if (priv->ext_memfuncs)
+          (*cdata->ext_free)(pkt_data);
+        else
+          free(pkt_data);
 
-      if (n == 0)
-        pkt->flags = is_keyframe;
-      pkt->stream_index = st->index;
+        if (n == 0)
+          pkt->flags = is_keyframe;
+        pkt->stream_index = st->index;
 
-      if (track->ms_compat)
-        pkt->dts = timecode;
-      else
-        pkt->pts = timecode;
-      pkt->pos = pos;
+        if (track->ms_compat)
+          pkt->dts = timecode;
+        else
+          pkt->pts = timecode;
+        pkt->pos = pos;
 
-      if (st->codec->codec_id == AV_CODEC_ID_TEXT)
-        pkt->convergence_duration = duration;
+        if (st->codec->codec_id == AV_CODEC_ID_TEXT)
+          pkt->convergence_duration = duration;
 
-      else if (track->type != MATROSKA_TRACK_TYPE_SUBTITLE)
-        pkt->duration = duration;
+        else if (track->type != MATROSKA_TRACK_TYPE_SUBTITLE)
+          pkt->duration = duration;
 
-      if (st->codec->codec_id == AV_CODEC_ID_SSA)
-        matroska_fix_ass_packet(matroska, pkt, duration);
+        if (st->codec->codec_id == AV_CODEC_ID_SSA)
+          matroska_fix_ass_packet(matroska, pkt, duration);
 
-      if (matroska->prev_pkt &&
-          timecode != AV_NOPTS_VALUE &&
-          matroska->prev_pkt->pts == timecode &&
-          matroska->prev_pkt->stream_index == st->index &&
-          st->codec->codec_id == AV_CODEC_ID_SSA)
-        matroska_merge_packets(cdata, matroska->prev_pkt, pkt);
-      else {
-        lives_dynarray_add(&matroska->packets, &matroska->num_packets, pkt);
-        matroska->prev_pkt = pkt;
+        if (matroska->prev_pkt &&
+            timecode != AV_NOPTS_VALUE &&
+            matroska->prev_pkt->pts == timecode &&
+            matroska->prev_pkt->stream_index == st->index &&
+            st->codec->codec_id == AV_CODEC_ID_SSA)
+          matroska_merge_packets(cdata, matroska->prev_pkt, pkt);
+        else {
+          lives_dynarray_add(&matroska->packets, &matroska->num_packets, pkt);
+          matroska->prev_pkt = pkt;
+        }
+
+        if (timecode != AV_NOPTS_VALUE)
+          timecode = duration ? timecode + duration : AV_NOPTS_VALUE;
+        data += lace_size[n];
+        size -= lace_size[n];
       }
-
-      if (timecode != AV_NOPTS_VALUE)
-        timecode = duration ? timecode + duration : AV_NOPTS_VALUE;
-      data += lace_size[n];
-      size -= lace_size[n];
     }
-  }
   }
   free(lace_size);
   return res;

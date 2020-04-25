@@ -33,8 +33,8 @@ LIVES_GLOBAL_INLINE ticks_t q_gint64(ticks_t in, double fps) {
 }
 
 LIVES_GLOBAL_INLINE ticks_t q_gint64_floor(ticks_t in, double fps) {
-  if (in != 0) return ((ticks_t)((double)in / (double)TICKS_PER_SECOND_DBL * fps) / fps) *
-                        TICKS_PER_SECOND; // quantise to frame timing
+  if (in != 0) return (double)((ticks_t)((double)in / TICKS_PER_SECOND_DBL * fps)) / fps *
+                        TICKS_PER_SECOND_DBL; // quantise to frame timing
   return 0;
 }
 
@@ -54,7 +54,7 @@ LIVES_GLOBAL_INLINE size_t quant_asamps(double seek, int arate) {
   return samps;
 }
 
-/// convert seek time to an integer number of samples
+/// convert seek time (secs) to an (almost) integer number of samples
 LIVES_GLOBAL_INLINE double quant_aseek(double seek, int arate) {
   if (arate <= 0) return 0.;
   else {
@@ -566,7 +566,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   ticks_t tl;
   double *xaseeks = NULL, *naseeks = NULL, *naccels = NULL;
   double old_fps;
-  char *what;
+  char *what, *didfind;
 
   boolean interpolate = TRUE;
   int *clips = NULL, *naclips = NULL, *nclips = NULL;
@@ -931,6 +931,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
         if (natracks > 0) {
           /// if there is still audio to be added, update the seek posn to out_tc
+          /// laud_tc is last frame in_tc
           double dt = (double)(out_tc + offset_tc - laud_tc) / TICKS_PER_SECOND_DBL;
           for (i = 0; i < natracks; i += 2) {
             double vel = naseeks[i + 1];
@@ -952,9 +953,10 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           ///
 
           prev_aframe = get_prev_frame_event(newframe);
+          didfind = (char *)lives_calloc(natracks, 1);
           for (i = 0; i < natracks; i += 2) {
             boolean gottrack = FALSE;
-            if (naseeks[i + 1] == 0.) continue; ///< audio was off, currently we don't store the seek point there (we should: TODO)
+            if (naseeks[i + 1] == 0.) continue; ///< audio was off, currently we don't store the seek point there (we SHOULD: TODO)
             for (k = 0; k < xatracks; k += 2) {
               if (xaclips[k] == naclips[i]) {
                 //. track is in xatracks, so there must be a prev audio frame for the track; if the clips match then we will find
@@ -1007,14 +1009,20 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
                           weed_set_double_array(newframe, WEED_LEAF_AUDIO_SEEKS, natracks, naseeks);
 			  // *INDENT-OFF*
 			}}}}
-                  break;
+                  //eak;
+		  continue; // backtrack to start
                 }}
 	      // *INDENT-ON*
 
+              lives_freep((void **)&didfind);
               lives_freep((void **)&paclips);
               lives_freep((void **)&paseeks);
-              /// if we failed to find the track at prev_aframe, we need to continue searching
-              if (j == patracks) prev_aframe = get_prev_audio_frame_event(prev_aframe);
+              /// continue the smoothing process back to the start
+              prev_aframe = get_prev_audio_frame_event(prev_aframe);
+              if (j == patracks)
+                /* if (didfind[i]) break; */
+                /* didfind[i] = 1; */
+                prev_aframe = get_prev_audio_frame_event(prev_aframe);
               else break;
             }
           }

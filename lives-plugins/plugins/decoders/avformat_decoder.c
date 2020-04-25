@@ -1208,8 +1208,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   do {
     if (priv->needs_packet) {
       if (!priv->pkt_inited) {
-	av_init_packet(&priv->packet);
-	priv->pkt_inited = TRUE;
+        av_init_packet(&priv->packet);
+        priv->pkt_inited = TRUE;
       }
       //if (priv->packet.data) av_packet_unref(&priv->packet);
       do {

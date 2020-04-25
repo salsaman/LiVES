@@ -176,12 +176,12 @@ void fd_connect_spinbutton(lives_rfx_t *rfx) {
 }
 
 
-static void passwd_toggle_vis(LiVESToggleButton *b, livespointer entry) {
+static void passwd_toggle_vis(LiVESToggleButton * b, livespointer entry) {
   lives_entry_set_visibility(LIVES_ENTRY(entry), lives_toggle_button_get_active(b));
 }
 
 
-static void reset_aspect(LiVESButton *button, livespointer user_data) {
+static void reset_aspect(LiVESButton * button, livespointer user_data) {
   if (lives_lock_button_get_locked(button)) {
     lives_special_aspect_t *aspect = (lives_special_aspect_t *)user_data;
     double width = lives_spin_button_get_value(LIVES_SPIN_BUTTON(aspect->width_param->widgets[0]));
@@ -191,7 +191,7 @@ static void reset_aspect(LiVESButton *button, livespointer user_data) {
 }
 
 
-void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
+void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) {
   LiVESWidget *checkbutton;
   LiVESWidget *hbox;
   LiVESWidget *box;
@@ -488,7 +488,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
 }
 
 
-void after_aspect_width_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
+void after_aspect_width_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
   if (lives_lock_button_get_locked(LIVES_BUTTON(aspect.lockbutton))) {
     int width = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     double height = (double)width / aspect.ratio;
@@ -504,7 +504,7 @@ void after_aspect_width_changed(LiVESSpinButton *spinbutton, livespointer user_d
 }
 
 
-void after_aspect_height_changed(LiVESToggleButton *spinbutton, livespointer user_data) {
+void after_aspect_height_changed(LiVESToggleButton * spinbutton, livespointer user_data) {
   if (lives_lock_button_get_locked(LIVES_BUTTON(aspect.lockbutton))) {
     int height = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     double width = (double)height * aspect.ratio;
@@ -641,7 +641,7 @@ void setmergealign(void) {
 }
 
 
-LiVESPixbuf *mt_framedraw(lives_mt *mt, weed_layer_t *layer) {
+LiVESPixbuf *mt_framedraw(lives_mt * mt, weed_layer_t *layer) {
   LiVESPixbuf *pixbuf = NULL;
 
   if (framedraw.added) {

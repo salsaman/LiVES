@@ -10338,8 +10338,9 @@ void on_hrule_value_changed(LiVESWidget * widget, livespointer user_data) {
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return;
 
   if (LIVES_IS_PLAYING) {
-    if (cfile->frames > 0) {
-      cfile->frameno = cfile->last_frameno = calc_frame_from_time(mainw->current_file,
+    lives_clip_t *pfile = mainw->files[mainw->playing_file];
+    if (pfile->frames > 0) {
+      pfile->frameno = pfile->last_frameno = calc_frame_from_time(mainw->playing_file,
                                              giw_timeline_get_value(GIW_TIMELINE(widget)));
       mainw->scratch = SCRATCH_JUMP;
     }

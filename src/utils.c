@@ -1418,8 +1418,9 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
   if (time_source) tsource = time_source;
   else tsource = &xtsource;
 
-  clock_ticks = mainw->clock_ticks = lives_get_relative_ticks(origsecs, orignsecs);
-  
+  clock_ticks = lives_get_relative_ticks(origsecs, orignsecs);
+  if (time_source) mainw->clock_ticks = clock_ticks;
+
   if (*tsource == LIVES_TIME_SOURCE_EXTERNAL) *tsource = LIVES_TIME_SOURCE_NONE;
 
   if (mainw->foreign || prefs->force_system_clock || (prefs->vj_mode && (prefs->audio_src == AUDIO_SRC_EXT))) {
@@ -1516,10 +1517,9 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
       mainw->cadjticks = clock_ticks - interticks - (clock_ticks - lclock_ticks);
     }
     interticks = clock_ticks - mainw->cadjticks;
-  }
-  else {
+  } else {
     if (lastt == LIVES_TIME_SOURCE_SYSTEM) {
-      // current - ds + adjt == clock_ticks - dc - cadj /// iinterticks == lclock_ticks - cadj /// 
+      // current - ds + adjt == clock_ticks - dc - cadj /// iinterticks == lclock_ticks - cadj ///
       mainw->adjticks = interticks - current + (clock_ticks - lclock_ticks);
     }
     interticks = current + mainw->adjticks;
@@ -1871,22 +1871,18 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     return cframe;
   }
 
-  g_print("dtc in %ld @ %f\n", dtc, fps);
-  // dtc is delta ticks, quantise this to the frame rate and round down
+  // dtc is delta ticks (last frame time - current time), quantise this to the frame rate and round down
   dtc = q_gint64_floor(dtc, fps);
-  g_print("dtc out %ld @ %f\n", dtc, fps);
 
-  g_print("ntc in %ld\n", *ntc);
-  // ntc is the time when the next frame should have been played; this is rounded down so if l.t. 1 frame nothing happens
-  /// and the player does nothing
+  // ntc is the time when the next frame should be / have been played, or if dtc is zero we just set it to otc - the last frame time
   *ntc = otc + dtc;
-  g_print("ntc out %ld\n", *ntc);
 
-  // nframe is our new frame
+  // nframe is our new frame; convert dtc to sencods, and multiply by the frame rate, then add or subtract from current frame number
+  // the small constant is just to account for rounding errors
   if (fps >= 0)
-    nframe = cframe + (int)((double)dtc / TICKS_PER_SECOND_DBL * fps + .00001);
+    nframe = cframe + (frames_t)((double)dtc / TICKS_PER_SECOND_DBL * fps + .00001);
   else
-    nframe = cframe + (int)((double)dtc / TICKS_PER_SECOND_DBL * fps - .00001);
+    nframe = cframe + (frames_t)((double)dtc / TICKS_PER_SECOND_DBL * fps - .00001);
 
   if (fileno == mainw->playing_file) {
     /// if we are scratching we do the following:

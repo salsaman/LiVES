@@ -9755,7 +9755,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
 
 LiVESWidget *lives_standard_font_chooser_new() {
-  LiVESWidget *fchoo = gtk_font_button_new ();
+  LiVESWidget *fchoo = gtk_font_button_new();
   return fchoo;
 }
 
@@ -11231,7 +11231,7 @@ boolean lives_tree_store_find_iter(LiVESTreeStore *tstore, int col, const char *
 #include "ce_thumbs.h"
 
 #define MAX_NULL_EVENTS 512
-#define LOOP_LIMIT 64
+#define LOOP_LIMIT 32
 boolean lives_widget_context_update(void) {
   boolean mt_needs_idlefunc = FALSE;
   int nulleventcount = 0, loops = 0;

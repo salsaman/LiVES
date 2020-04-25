@@ -28,7 +28,7 @@ static int package_version = 1.1; // version of this package
 static int verbosity = WEED_VERBOSITY_ERROR;
 #define WORKER_TIMEOUT_SEC 30 /// how long to wait for worker thread startup
 #define MAX_AUDLEN 2048 /// this is defined by projectM itself, increasing the value above 2048 will only result in jumps in the audio
-#define DEF_SENS 3.0 /// beat sensitivity 0. -> 5.  (lower is more sensitive)
+#define DEF_SENS 1.5 /// beat sensitivity 0. -> 5.  (lower is more sensitive); too high -> less dynamic, too low - nothing w. silence
 /////////////////////////////////////////////////////////////
 
 #define USE_DBLBUF 1
@@ -84,27 +84,23 @@ typedef struct {
   int rowstride;
   volatile bool worker_ready;
   volatile bool worker_active;
-  int pidx;
-  int opidx;
+  int pidx, opidx;
   int nprs;
-  char **prnames;  // volatile ptr to non-volatile strings !!
+  char **prnames;
   uint8_t *bad_programs;
   int program;
-  bool bad_prog;
-  bool check;
-  pthread_mutex_t mutex;
-  pthread_mutex_t pcm_mutex;
+  bool bad_prog, checkforblanks;
+  pthread_mutex_t mutex, pcm_mutex;
   pthread_t thread;
-  size_t audio_frames, abufsize;
-  size_t audio_offs;
+  size_t audio_frames, abufsize, audio_offs;
   int achans;
   float *audio;
   float fps, tfps;
   float ncycs;
+  int cycadj;
   volatile bool die;
   volatile bool failed;
-  bool update_size;
-  bool update_psize;
+  bool update_size, update_psize;
   volatile bool needs_more;
   volatile bool rendering;
   volatile bool needs_update;
@@ -114,10 +110,9 @@ typedef struct {
   SDL_Window *win;
   SDL_GLContext glCtx;
 #endif
-  int error;
+  weed_error_t error;
   double timer;
   weed_timecode_t timestamp;
-  int cycadj;
 } _sdata;
 
 static _sdata *statsd;
@@ -251,14 +246,11 @@ bool resize_buffer(_sdata *sd) {
   if ((sd->rowstride & 0X01) == 0) {
     if ((sd->rowstride & 0X03) == 0) {
       if ((sd->rowstride & 0X07) == 0) {
-	if ((sd->rowstride & 0X0F) == 0) {
-	  align = 16;
-	}
-	else align = 8;
-      }
-      else align = 4;
-    }
-    else align = 2;
+        if ((sd->rowstride & 0X0F) == 0) {
+          align = 16;
+        } else align = 8;
+      } else align = 4;
+    } else align = 2;
   }
   if (sd->fbuffer != NULL) weed_free(sd->fbuffer);
   sd->fbuffer = (GLubyte *)weed_calloc(sizeof(GLubyte) * sd->rowstride * sd->height / align, align);
@@ -389,7 +381,7 @@ static int render_frame(_sdata *sd) {
     if (sd->fps > 0.) sd->ncycs += sd->tfps / sd->fps - 1.;
     sd->ncycs += sd->cycadj;
     if (sd->ncycs < 0.) sd->ncycs = 0.;
-    if (sd->pidx == -1 && sd->check) {
+    if (sd->pidx == -1 && sd->checkforblanks) {
       /// check for blank frames: if the first and second from a new program are both blank, mark the program as "bad"
       /// and pick another (not sure why the blank frames happen, but generally if the first two come back blank, so do all the
       /// rest. Possibly we need an image texture to load, which we don't have; more investigation needed).
@@ -404,7 +396,7 @@ static int render_frame(_sdata *sd) {
       if (i >= frmsize) blanks++;
       else {
         blanks = 0;
-        sd->check = false;
+        //sd->check = false;
         sd->bad_programs[sd->program] = 2;
       }
       if (blanks > 1) sd->bad_prog = true;
@@ -481,13 +473,13 @@ static void *worker(void *data) {
     pthread_mutex_unlock(&cond_mutex);
     return NULL;
   }
-  
+
   // can fail here
   sd->globalPM = new projectM(settings, 0);
   sd->globalPM->setPresetLock(true);
   sd->textureHandle = sd->globalPM->initRenderToTexture();
   sd->nprs = sd->globalPM->getPlaylistSize() + 1;
-  sd->check = true;
+  sd->checkforblanks = true;
   sd->cycadj = 0;
 
   sd->prnames = (char **volatile)weed_malloc(sd->nprs * sizeof(char *));
@@ -500,7 +492,7 @@ static void *worker(void *data) {
     for (int i = 1; i < sd->nprs; i++) sd->prnames[i] = strdup((sd->globalPM->getPresetName(i - 1)).c_str());
   }
 
-if (sd->failed) {
+  if (sd->failed) {
     // can happen if the host is overloaded and the caller timed out
     SDL_Quit();
     pthread_mutex_lock(&cond_mutex);
@@ -508,7 +500,7 @@ if (sd->failed) {
     pthread_mutex_unlock(&cond_mutex);
     return NULL;
   }
-  
+
   pthread_mutex_lock(&sd->mutex);
   sd->worker_ready = true;
 
@@ -554,7 +546,7 @@ if (sd->failed) {
         rerand = false;
         sd->bad_prog = false;
         blanks = 0;
-        if (sd->bad_programs[sd->program] == 0) sd->check = true;
+        if (sd->bad_programs[sd->program] == 0) sd->checkforblanks = true;
       }
     } else if (sd->pidx != sd->opidx) {
       sd->globalPM->setPresetLock(true);

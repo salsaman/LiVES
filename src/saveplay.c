@@ -2171,22 +2171,22 @@ char *prep_audio_player(char *com2, char *com3, frames_t audio_end, int arate, i
 void play_file(void) {
   LiVESWidgetClosure *freeze_closure, *bg_freeze_closure;
   LiVESList *cliplist;
-  short audio_player = prefs->audio_player;
-
   weed_plant_t *pb_start_event = NULL;
 
 #ifdef GDK_WINDOWING_X11
   uint64_t awinid = -1;
 #endif
 
-  char *com;
-  char *com2 = lives_strdup(" ");
-  char *com3 = lives_strdup(" ");
+  char *com, *com2 = lives_strdup(" "), *com3 = lives_strdup(" ");
   char *stopcom = NULL;
   char *stfile;
 #ifdef GDK_WINDOWING_X11
   char *tmp;
 #endif
+
+  double fps_med = 0.;
+
+  short audio_player = prefs->audio_player;
 
   boolean mute;
   boolean needsadone = FALSE;
@@ -2201,7 +2201,6 @@ void play_file(void) {
   int asigned = !(cfile->signed_endian & AFORM_UNSIGNED);
   int aendian = !(cfile->signed_endian & AFORM_BIG_ENDIAN);
   int current_file = mainw->current_file;
-
   int audio_end = 0;
 
   /// from now on we can only switch at the designated SWITCH POINT
@@ -2380,8 +2379,6 @@ void play_file(void) {
 
   if (mainw->record) {
     if (mainw->event_list != NULL) event_list_free(mainw->event_list);
-    /* mainw->event_list = append_marker_event(mainw->event_list, 0, EVENT_MARKER_RECORD_START); */
-    /* add_filter_init_events(mainw->event_list, 0); */
     mainw->record_starting = TRUE;
   }
 
@@ -2841,7 +2838,12 @@ void play_file(void) {
   }
 
   // play completed
-
+  if (prefs->show_player_stats) {
+    if (mainw->fps_measure > 0) {
+      fps_med = (double)mainw->fps_measure / ((double)lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs)
+                                              / TICKS_PER_SECOND_DBL);
+    }
+  }
   mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
   mainw->osc_auto = 0;
 
@@ -3025,7 +3027,7 @@ void play_file(void) {
   }
 
   mainw->repayment = 0.;
-  
+
   if (CURRENT_CLIP_IS_NORMAL) {
     cfile->last_play_sequence = mainw->play_sequence;
     stfile = lives_build_filename(prefs->workdir, cfile->handle, LIVES_STATUS_FILE_NAME, NULL);
@@ -3187,13 +3189,6 @@ void play_file(void) {
   }
   mainw->frame_layer_preload = NULL;
 
-  if (prefs->show_player_stats) {
-    if (mainw->fps_measure > 0.) {
-      mainw->fps_measure /= (double)lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs) / TICKS_PER_SECOND_DBL;
-      d_print(_("Average FPS was %.4f (%f frames in clock time of %f)\n"), mainw->fps_measure, mainw->fps_measure, 
-	      (double)lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs) / TICKS_PER_SECOND_DBL);
-    }
-  }
   if (mainw->size_warn) {
     if (mainw->size_warn > 0 && mainw->files[mainw->size_warn] != NULL) {
       char *smsg = lives_strdup_printf(
@@ -3258,6 +3253,13 @@ void play_file(void) {
     }
   }
 #endif
+
+  if (prefs->show_player_stats) {
+    if (mainw->fps_measure > 0) {
+      d_print(_("Average FPS was %.4f (%d frames in clock time of %f)\n"), fps_med, mainw->fps_measure,
+              (double)lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs) / TICKS_PER_SECOND_DBL);
+    }
+  }
 
   if (mainw->bad_aud_file != NULL) {
     /// we got an error recording audio

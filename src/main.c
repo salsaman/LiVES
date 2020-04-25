@@ -1393,7 +1393,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->st_fcache = mainw->en_fcache = mainw->pr_fcache = NULL;
 
   mainw->repayment = 0.;
-  
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);
@@ -2736,7 +2736,7 @@ capability *get_capabilities(void) {
         needs_workdir = TRUE;
         prefs->startup_phase = -1;
       }
-      } else {
+    } else {
       if (prefs->startup_phase != -1) {
         msg = lives_strdup_printf("The backend found no workdir, but set startup_phase to %d !\n%s",
                                   prefs->startup_phase, prefs->workdir);
@@ -3000,7 +3000,7 @@ static boolean lives_startup(livespointer data) {
   if ((prefs->startup_phase == 1 || prefs->startup_phase == -1)) {
     needs_workdir = TRUE;
   }
-  
+
   if (needs_workdir) {
     // get initial workdir
     if (!do_workdir_query()) {
@@ -4554,10 +4554,10 @@ void desensitize(void) {
   if (0 && RFX_LOADED) {
     if (!mainw->foreign) {
       for (i = 0; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
-	     mainw->num_rendered_effects_test; i++)
-	if (mainw->rendered_fx[i].menuitem != NULL && mainw->rendered_fx[i].menuitem != NULL &&
-	    mainw->rendered_fx[i].min_frames >= 0)
-	  lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem, FALSE);
+           mainw->num_rendered_effects_test; i++)
+        if (mainw->rendered_fx[i].menuitem != NULL && mainw->rendered_fx[i].menuitem != NULL &&
+            mainw->rendered_fx[i].min_frames >= 0)
+          lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem, FALSE);
     }
   }
 
@@ -7087,11 +7087,12 @@ static boolean avsync_check(void) {
       ts.tv_sec++;
       ts.tv_nsec -= ONE_BILLION;
     }
+    sched_yield();
     rc = pthread_cond_timedwait(&mainw->avseek_cond, &mainw->avseek_mutex, &ts);
     mainw->video_seek_ready = TRUE;
   }
   pthread_mutex_unlock(&mainw->avseek_mutex);
-  if (rc == ETIMEDOUT) {
+  if (!mainw->audio_seek_ready && rc == ETIMEDOUT) {
     mainw->cancelled = handle_audio_timeout();
     return FALSE;
   }
@@ -7224,7 +7225,8 @@ void load_frame_image(int frame) {
 	  bg_frame = 0;
 	}
 
-	actual_ticks = mainw->currticks;//lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
+	//actual_ticks = mainw->clock_ticks;//mainw->currticks;
+	actual_ticks = mainw->startticks; ///< use the "thoretical" time
 
 	if (mainw->record_starting) {
 	  // mark record start
@@ -7683,10 +7685,6 @@ void load_frame_image(int frame) {
 
         if (was_preview) {
           lives_free(fname_next);
-        }
-
-        if (prefs->show_player_stats) {
-          mainw->fps_measure++;
         }
 
         // OK. Here is the deal now. We have a layer from the current file, current frame.
@@ -9229,11 +9227,11 @@ void load_frame_image(int frame) {
 
         mainw->whentostop = NEVER_STOP;
 
-	// TODO - can these be combined ?
+        // TODO - can these be combined ?
         mainw->switch_during_pb = TRUE;
         mainw->clip_switched = TRUE;
 
-	if (CURRENT_CLIP_IS_NORMAL) cfile->last_play_sequence = mainw->play_sequence;
+        if (CURRENT_CLIP_IS_NORMAL) cfile->last_play_sequence = mainw->play_sequence;
 
         if (CURRENT_CLIP_IS_VALID) {
           //chill_decoder_plugin(mainw->current_file);
@@ -9329,8 +9327,9 @@ void load_frame_image(int frame) {
           lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
         }
 
-        mainw->switch_during_pb = FALSE;
+        //mainw->switch_during_pb = FALSE;
         mainw->osc_block = osc_block;
+        lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
 
         if (!mainw->fs && !mainw->faded) {
           redraw_timer_bars(0., mainw->files[new_file]->laudio_time, 0);

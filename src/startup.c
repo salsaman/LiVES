@@ -177,7 +177,7 @@ LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog *dialog, bool
 
 boolean do_workdir_query(void) {
   LiVESResponseType response;
-  char *dirname = NULL;  
+  char *dirname = NULL;
   _entryw *wizard = create_rename_dialog(6);
   gtk_window_set_urgency_hint(LIVES_WINDOW(wizard->dialog), TRUE); // dont know if this actually does anything...
 
@@ -779,7 +779,7 @@ boolean do_startup_tests(boolean tshoot) {
     msg = lives_strdup_printf(_("Checking less rigorously"), mp_cmd);
     add_test(table, ++testcase, msg, TRUE);
     lives_free(msg);
-    
+
     res = 1;
 
     if (!strcmp(mp_cmd, "mpv")) lookfor = "image";
@@ -787,7 +787,7 @@ boolean do_startup_tests(boolean tshoot) {
 
 #ifndef IS_MINGW
     com = lives_strdup_printf("LANG=en LANGUAGE=en %s -vo help | grep -i \"%s\" >/dev/null 2>&1",
-				prefs->video_open_command, lookfor);
+                              prefs->video_open_command, lookfor);
 #else
     com = lives_strdup_printf("%s -vo help | grep -i \"%s\" >NUL 2>&1", prefs->video_open_command, lookfor);
 #endif
@@ -803,164 +803,57 @@ boolean do_startup_tests(boolean tshoot) {
   lives_free(rname);
 
   // try to open resource vidtest.avi
-    if (!success3 && success2 && success4) {
-      info_fd = -1;
+  if (!success3 && success2 && success4) {
+    info_fd = -1;
 
-      lives_rm(cfile->info_file);
+    lives_rm(cfile->info_file);
 
-      rname = get_resource(LIVES_TEST_VIDEO_NAME);
+    rname = get_resource(LIVES_TEST_VIDEO_NAME);
 
-      com = lives_strdup_printf("%s open_test \"%s\" %s \"%s\" 0 png", prefs->backend_sync, cfile->handle,
-				prefs->video_open_command,
-				(tmp = lives_filename_from_utf8(rname, -1, NULL, NULL, NULL)));
+    com = lives_strdup_printf("%s open_test \"%s\" %s \"%s\" 0 png", prefs->backend_sync, cfile->handle,
+                              prefs->video_open_command,
+                              (tmp = lives_filename_from_utf8(rname, -1, NULL, NULL, NULL)));
+    lives_free(tmp);
+    lives_free(rname);
+
+    mainw->com_failed = FALSE;
+    lives_system(com, TRUE);
+    if (mainw->com_failed) {
+      tmp = lives_strdup_printf(_("Command failed: %s"), com);
+      fail_test(table, testcase, tmp);
       lives_free(tmp);
-      lives_free(rname);
-
-      mainw->com_failed = FALSE;
-      lives_system(com, TRUE);
-      if (mainw->com_failed) {
-	tmp = lives_strdup_printf(_("Command failed: %s"), com);
-	fail_test(table, testcase, tmp);
-	lives_free(tmp);
-      }
-
-      lives_free(com);
-
-      while (mainw->cancelled == CANCEL_NONE && (info_fd = open(cfile->info_file, O_RDONLY)) == -1) {
-	lives_usleep(prefs->sleep_time);
-      }
-
-      if (info_fd != -1) {
-	close(info_fd);
-
-	lives_sync(1);
-
-	cfile->img_type = IMG_TYPE_PNG;
-	cfile->frames = get_frame_count(mainw->current_file, 1);
-
-	if (cfile->frames <= 0) {
-	  msg = lives_strdup_printf(_("You may wish to upgrade %s to a newer version"), mp_cmd);
-	  fail_test(table, testcase, msg);
-	  lives_free(msg);
-	}
-
-	else {
-	  pass_test(table, testcase);
-	  success3 = TRUE;
-	}
-      }
     }
 
-    if (mainw->cancelled != CANCEL_NONE) {
-      mainw->cancelled = CANCEL_NONE;
-      close_file(current_file, tshoot);
-      lives_widget_destroy(dialog);
-      mainw->suppress_dprint = FALSE;
+    lives_free(com);
 
-      if (mainw->multitrack != NULL) {
-	mt_sensitise(mainw->multitrack);
-	mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
+    while (mainw->cancelled == CANCEL_NONE && (info_fd = open(cfile->info_file, O_RDONLY)) == -1) {
+      lives_usleep(prefs->sleep_time);
+    }
+
+    if (info_fd != -1) {
+      close(info_fd);
+
+      lives_sync(1);
+
+      cfile->img_type = IMG_TYPE_PNG;
+      cfile->frames = get_frame_count(mainw->current_file, 1);
+
+      if (cfile->frames <= 0) {
+        msg = lives_strdup_printf(_("You may wish to upgrade %s to a newer version"), mp_cmd);
+        fail_test(table, testcase, msg);
+        lives_free(msg);
       }
 
-      return FALSE;
-    }
-
-    // check if mplayer can decode to jpeg
-
-    msg = lives_strdup_printf(_("Checking if %s can decode to jpeg"), mp_cmd);
-    add_test(table, ++testcase, msg, success2);
-    lives_free(msg);
-    res = 1;
-
-    if (!strcmp(mp_cmd, "mpv")) {
-      if (success2 && success3 && !success4) {
-	tmp = lives_strdup(_("Already checked"));
-	skip_test(table, testcase - 1, tmp);
-	lives_free(tmp);
-	goto jpgdone;
-      }
-      lookfor = "image";
-    }
-    else lookfor = "jpeg file";
-
-    if (success2) {
-#ifndef IS_MINGW
-      com = lives_strdup_printf("LANG=en LANGUAGE=en %s -vo help | grep -i \"%s\" >/dev/null 2>&1",
-				prefs->video_open_command, lookfor);
-      res = lives_system(com, TRUE);
-      lives_free(com);
-#else
-      com = lives_strdup_printf("%s -vo help | grep -i \"%s\" >NUL 2>&1", prefs->video_open_command, lookfor);
-      res = lives_system(com, TRUE);
-      lives_free(com);
-#endif
-    }
-
-    if (res == 0) {
-      pass_test(table, testcase);
-      if (!success3) {
-	if (!strcmp(prefs->image_ext, LIVES_FILE_EXT_PNG)) imgext_switched = TRUE;
-	set_string_pref(PREF_DEFAULT_IMAGE_FORMAT, LIVES_IMAGE_TYPE_JPEG);
-	lives_snprintf(prefs->image_ext, 16, "%s", LIVES_FILE_EXT_JPG);
-      }
-    } else {
-      if (!success3) {
-#ifdef ALLOW_PNG24
-	msg = lives_strdup_printf(_("You should install %s with either png or jpeg support"), mp_cmd);
-#else
-	msg = lives_strdup_printf(_("You should install %s with either png/alpha or jpeg support"), mp_cmd);
-#endif
-	fail_test(table, testcase, msg);
-	lives_free(msg);
-      } else {
-	msg = lives_strdup_printf(_("You may wish to add jpeg output support to %s"), mp_cmd);
-	fail_test(table, testcase, msg);
-	lives_free(msg);
+      else {
+        pass_test(table, testcase);
+        success3 = TRUE;
       }
     }
+  }
 
-    // TODO - check each enabled decoder plugin in turn
-
- jpgdone:
-    // check for convert
-
-    add_test(table, ++testcase, _("Checking for \"convert\" presence"), TRUE);
-
-    if (!capable->has_convert) {
-      success = fail_test(table, testcase, _("Install imageMagick to be able to use all of the rendered effects"));
-    } else {
-      success = pass_test(table, testcase);
-    }
-
+  if (mainw->cancelled != CANCEL_NONE) {
+    mainw->cancelled = CANCEL_NONE;
     close_file(current_file, tshoot);
-    mainw->current_file = current_file;
-
-    lives_widget_set_sensitive(okbutton, TRUE);
-    if (!tshoot) {
-      if (allpassed) {
-	gtk_widget_grab_focus(okbutton);
-      } else {
-	lives_widget_grab_focus(cancelbutton);
-      }
-    }
-    
-    if (tshoot) {
-      lives_widget_hide(cancelbutton);
-      if (imgext_switched) {
-	label = lives_standard_label_new(
-					 _("\n\n\tImage decoding type has been switched to jpeg. You can revert this in Preferences/Decoding.\t\n"));
-	lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
-      }
-      lives_widget_show(label);
-    } else {
-      label = lives_standard_label_new(
-				       _("\n\n\tClick Cancel to exit and install any missing components, or Next to continue\t\n"));
-      lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
-      lives_widget_show(label);
-    }
-
-    response = lives_dialog_run(LIVES_DIALOG(dialog));
-
     lives_widget_destroy(dialog);
     mainw->suppress_dprint = FALSE;
 
@@ -969,28 +862,134 @@ boolean do_startup_tests(boolean tshoot) {
       mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
     }
 
-    return (response == LIVES_RESPONSE_OK);
+    return FALSE;
   }
 
+  // check if mplayer can decode to jpeg
 
-  void do_startup_interface_query(void) {
-    // prompt for startup ce or startup mt
+  msg = lives_strdup_printf(_("Checking if %s can decode to jpeg"), mp_cmd);
+  add_test(table, ++testcase, msg, success2);
+  lives_free(msg);
+  res = 1;
 
-    LiVESWidget *dialog, *dialog_vbox, *radiobutton, *label;
-    LiVESWidget *okbutton;
-    LiVESWidget *hbox;
-    LiVESSList *radiobutton_group = NULL;
-    char *txt1, *txt2, *txt3, *msg;
+  if (!strcmp(mp_cmd, "mpv")) {
+    if (success2 && success3 && !success4) {
+      tmp = lives_strdup(_("Already checked"));
+      skip_test(table, testcase - 1, tmp);
+      lives_free(tmp);
+      goto jpgdone;
+    }
+    lookfor = "image";
+  } else lookfor = "jpeg file";
 
-    txt1 = lives_strdup(_("\n\nFinally, you can choose the default startup interface for LiVES.\n"));
-    txt2 = lives_strdup(_("\n\nLiVES has two main interfaces and you can start up with either of them.\n"));
-    txt3 = lives_strdup(_("\n\nThe default can always be changed later from Preferences.\n"));
+  if (success2) {
+#ifndef IS_MINGW
+    com = lives_strdup_printf("LANG=en LANGUAGE=en %s -vo help | grep -i \"%s\" >/dev/null 2>&1",
+                              prefs->video_open_command, lookfor);
+    res = lives_system(com, TRUE);
+    lives_free(com);
+#else
+    com = lives_strdup_printf("%s -vo help | grep -i \"%s\" >NUL 2>&1", prefs->video_open_command, lookfor);
+    res = lives_system(com, TRUE);
+    lives_free(com);
+#endif
+  }
 
-    msg = lives_strdup_printf("%s%s%s", txt1, txt2, txt3);
+  if (res == 0) {
+    pass_test(table, testcase);
+    if (!success3) {
+      if (!strcmp(prefs->image_ext, LIVES_FILE_EXT_PNG)) imgext_switched = TRUE;
+      set_string_pref(PREF_DEFAULT_IMAGE_FORMAT, LIVES_IMAGE_TYPE_JPEG);
+      lives_snprintf(prefs->image_ext, 16, "%s", LIVES_FILE_EXT_JPG);
+    }
+  } else {
+    if (!success3) {
+#ifdef ALLOW_PNG24
+      msg = lives_strdup_printf(_("You should install %s with either png or jpeg support"), mp_cmd);
+#else
+      msg = lives_strdup_printf(_("You should install %s with either png/alpha or jpeg support"), mp_cmd);
+#endif
+      fail_test(table, testcase, msg);
+      lives_free(msg);
+    } else {
+      msg = lives_strdup_printf(_("You may wish to add jpeg output support to %s"), mp_cmd);
+      fail_test(table, testcase, msg);
+      lives_free(msg);
+    }
+  }
 
-    lives_free(txt1);
-    lives_free(txt2);
-    lives_free(txt3);
+  // TODO - check each enabled decoder plugin in turn
+
+jpgdone:
+  // check for convert
+
+  add_test(table, ++testcase, _("Checking for \"convert\" presence"), TRUE);
+
+  if (!capable->has_convert) {
+    success = fail_test(table, testcase, _("Install imageMagick to be able to use all of the rendered effects"));
+  } else {
+    success = pass_test(table, testcase);
+  }
+
+  close_file(current_file, tshoot);
+  mainw->current_file = current_file;
+
+  lives_widget_set_sensitive(okbutton, TRUE);
+  if (!tshoot) {
+    if (allpassed) {
+      gtk_widget_grab_focus(okbutton);
+    } else {
+      lives_widget_grab_focus(cancelbutton);
+    }
+  }
+
+  if (tshoot) {
+    lives_widget_hide(cancelbutton);
+    if (imgext_switched) {
+      label = lives_standard_label_new(
+                _("\n\n\tImage decoding type has been switched to jpeg. You can revert this in Preferences/Decoding.\t\n"));
+      lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
+    }
+    lives_widget_show(label);
+  } else {
+    label = lives_standard_label_new(
+              _("\n\n\tClick Cancel to exit and install any missing components, or Next to continue\t\n"));
+    lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
+    lives_widget_show(label);
+  }
+
+  response = lives_dialog_run(LIVES_DIALOG(dialog));
+
+  lives_widget_destroy(dialog);
+  mainw->suppress_dprint = FALSE;
+
+  if (mainw->multitrack != NULL) {
+    mt_sensitise(mainw->multitrack);
+    mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
+  }
+
+  return (response == LIVES_RESPONSE_OK);
+}
+
+
+void do_startup_interface_query(void) {
+  // prompt for startup ce or startup mt
+
+  LiVESWidget *dialog, *dialog_vbox, *radiobutton, *label;
+  LiVESWidget *okbutton;
+  LiVESWidget *hbox;
+  LiVESSList *radiobutton_group = NULL;
+  char *txt1, *txt2, *txt3, *msg;
+
+  txt1 = lives_strdup(_("\n\nFinally, you can choose the default startup interface for LiVES.\n"));
+  txt2 = lives_strdup(_("\n\nLiVES has two main interfaces and you can start up with either of them.\n"));
+  txt3 = lives_strdup(_("\n\nThe default can always be changed later from Preferences.\n"));
+
+  msg = lives_strdup_printf("%s%s%s", txt1, txt2, txt3);
+
+  lives_free(txt1);
+  lives_free(txt2);
+  lives_free(txt3);
 
   dialog = lives_standard_dialog_new(_("Choose the Startup Interface"), FALSE, -1, -1);
 

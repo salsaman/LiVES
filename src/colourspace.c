@@ -2240,6 +2240,10 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, i
       yuv2rgb(y, u, v, &dest[j], &dest[j + 1], &dest[j + 2]);
       if (add_alpha) dest[j + 3] = 255;
 
+      dest[j - opsize] = cavgrgb[dest[j - opsize]][dest[j]];
+      dest[j - opsize + 1] = cavgrgb[dest[j - opsize + 1]][dest[j + 1]];
+      dest[j - opsize + 2] = cavgrgb[dest[j - opsize + 2]][dest[j + 2]];
+
       if (!is_422 && (i & 1) && (i ^ 1) && i + 1 < height) {
         // average two src rows
         jj += opsize;
@@ -2311,6 +2315,10 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **src, int width, int height, i
       yuv2bgr(y, u, v, &dest[j], &dest[j + 1], &dest[j + 2]);
       if (add_alpha) dest[j + 3] = 255;
 
+      dest[j - opsize] = cavgrgb[dest[j - opsize]][dest[j]];
+      dest[j - opsize + 1] = cavgrgb[dest[j - opsize + 1]][dest[j + 1]];
+      dest[j - opsize + 2] = cavgrgb[dest[j - opsize + 2]][dest[j + 2]];
+
       if (!is_422 && (i & 1) && (i ^ 1) && i + 1 < height) {
         // average two src rows
         jj += opsize;
@@ -2380,6 +2388,10 @@ static void convert_yuv420p_to_argb_frame(uint8_t **src, int width, int height, 
       y = *(s_y++);
       dest[j] = 255;
       yuv2rgb(y, u, v, &dest[j + 1], &dest[j + 2], &dest[j + 3]);
+
+      dest[j - opsize] = cavgrgb[dest[j - opsize]][dest[j]];
+      dest[j - opsize + 1] = cavgrgb[dest[j - opsize + 1]][dest[j + 1]];
+      dest[j - opsize + 2] = cavgrgb[dest[j - opsize + 2]][dest[j + 2]];
 
       if (!is_422 && (i & 1) && (i ^ 1) && i + 1 < height) {
         // average two src rows

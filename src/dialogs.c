@@ -1344,8 +1344,6 @@ int process_one(boolean visible) {
   }
 #endif
 
-  mainw->audio_stretch = 1.0;
-
   /// SWITCH POINT
 
   /// during playback this is the only place to update certain variables,
@@ -1379,7 +1377,7 @@ switch_point:
         /* 	sfile->fps * lives_pulse_get_pos(mainw->pulsed) + 1., (double)sfile->aseek_pos */
         /* 	/ (double)sfile->arps / 4. * sfile->fps + 1., */
         /* 	mainw->currticks, mainw->startticks, sfile->arps, sfile->fps); */
-        sfile->aseek_pos -= mainw->repayment * (double)(sfile->arps  * qnt);
+        sfile->aseek_pos += mainw->repayment * (double)(sfile->arps  * qnt);
       // g_print("REPAY is %f\n", mainw->repayment);
       mainw->repayment = 0.;
       sfile->frameno = sfile->last_frameno = last_req_frame + sig(sfile->pb_fps);
@@ -1423,9 +1421,9 @@ switch_point:
     if (prefs->pbq_adaptive) reset_effort();
     // TODO: add a few to bungle_frames in case of decoder unchilling
 
-    /// switch compensation allows us to five a brief impulse to the audio when switching
-    // this may be adjusted for accuracy | a larger number with slow audio down on switch
-#define SWITCH_COMPENSATION 1.0
+    /// switch compensation allows us to give a brief impulse to the audio when switching
+    // this may be adjusted for accuracy | a value > 1.0 will slow audio down on switch
+#define SWITCH_COMPENSATION 1.1
 
     mainw->audio_stretch = SWITCH_COMPENSATION;
     scratch = SCRATCH_JUMP_NORESYNC;
@@ -1819,11 +1817,11 @@ switch_point:
 
         // load and display the new frame
 #ifdef SHOW_CACHE_PREDICTIONS
-        g_print("playing frame %d / %d at %ld (%ld : %ld) %.2f %ld\n", sfile->frameno, requested_frame, mainw->currticks,
-                mainw->startticks, new_ticks, (mainw->pulsed->in_use && IS_VALID_CLIP(mainw->pulsed->playing_file)
-                                               && mainw->files[mainw->pulsed->playing_file]->arate != 0) ? (double)mainw->pulsed->seek_pos
-                / (double)mainw->files[mainw->pulsed->playing_file]->arate / 4. * sfile->fps + 1. : 0. * sfile->fps + 1,
-                lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs));
+        /* g_print("playing frame %d / %d at %ld (%ld : %ld) %.2f %ld\n", sfile->frameno, requested_frame, mainw->currticks, */
+        /*         mainw->startticks, new_ticks, (mainw->pulsed->in_use && IS_VALID_CLIP(mainw->pulsed->playing_file) */
+        /*                                        && mainw->files[mainw->pulsed->playing_file]->arate != 0) ? (double)mainw->pulsed->seek_pos */
+        /*         / (double)mainw->files[mainw->pulsed->playing_file]->arate / 4. * sfile->fps + 1. : 0. * sfile->fps + 1, */
+        /*         lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs)); */
 #endif
 
         load_frame_image(sfile->frameno);

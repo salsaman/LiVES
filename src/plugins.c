@@ -2298,6 +2298,7 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList * disabled, con
     }
   }
 
+  /// TODO: background thread so we can animate GUI
   dplug = try_decoder_plugins(fake_cdata == NULL ? sfile->file_name : NULL, xdisabled, fake_cdata);
 
   if (xdisabled != NULL) lives_list_free(xdisabled);

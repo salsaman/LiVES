@@ -1625,7 +1625,6 @@ if (defined($ARGV[0])) {
 			       "Please check the file name and try again.");
 		}
 	    }
-	    print STDERR "OK2 here\n";
 
 	    ## here we might set $mplay_command, $is_mpv
 	    &get_file_info($file, 1, 1);
@@ -1675,6 +1674,9 @@ if (defined($ARGV[0])) {
 		$achans = $ARGV[7];
 	    }
 
+	    my $alang;
+	    my @alanglist; ## TODO: get alanglist from get_file_details
+
 	    $extra_params = $ARGV[8];
 	    $band = "";
 
@@ -1688,6 +1690,15 @@ if (defined($ARGV[0])) {
 			$bandwidth = 10000000;
 		    }
 		    $band = "-bandwidth $bandwidth" . "000";
+		    $extra_params = "";
+		}
+		if ($extra_params =~ /^alang (.*)/) {
+		    if ($is_mpv) {
+			$alang = "--alang=$1";
+		    }
+		    else {
+			$alang = "-alang $1";
+		    }
 		    $extra_params = "";
 		}
 	    }
@@ -1867,7 +1878,7 @@ if (defined($ARGV[0])) {
 			if ($withsound != 0) {
 			    #audio only
 			    $syscoma = "$mplay_command -quiet -noconfig all  -novideo $threadopts -fps 1000000. $ss " .
-				"$stframes $audcom $aformnew $channs \"$file\" $extra_params <$nulfile";
+				"$stframes $alang $audcom $aformnew $channs \"$file\" $extra_params <$nulfile";
 			}
 		    } else {
 			if ($withsound == 0 || $withsound == 1) {
@@ -1876,7 +1887,7 @@ if (defined($ARGV[0])) {
 			}
 			if ($withsound != 0) {
 			    $syscoma = "$mplay_command --no-config --quiet --no-video $threadopts $ss $stframes " .
-				"$audcom $aformnew $channs \"$file\" $extra_params";
+				"$alang $audcom $aformnew $channs \"$file\" $extra_params";
 			}
 		    }
 
@@ -6152,7 +6163,7 @@ if (defined($ARGV[0])) {
 	# $type may be a video format ($id_vid_form) or "Audio" or an image format ("jpeg", "png", etc).
 	my ($file, $scantype, $VERBOSE) = @_; ## 0 = scan_all, 1 = scan_for_open, 2 = scan_audio, 3 = scan_remote, 4 = scan_img
 	my $is_remote = 0;
-	if ($scan_type == 3) {
+	if ($scantype == 3) {
 	    $is_remote = 1;
 	}
 	my $P_IMAGE = 1;
@@ -6198,7 +6209,7 @@ if (defined($ARGV[0])) {
 	    $ximg_ext = $img_ext;
 	}
 
-	if ($scan_type == 2) {
+	if ($scantype == 2) {
 	    $type = "Audio";
 	    $ptypes = $P_AUDIO;
 	}

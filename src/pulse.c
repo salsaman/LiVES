@@ -1801,7 +1801,7 @@ boolean pa_time_reset(pulse_driver_t *pulsed, ticks_t offset) {
 
   lives_pulse_get_time(NULL);
 
-  pulsed->usec_start = usec - offset;
+  pulsed->usec_start = usec - offset  / USEC_TO_TICKS;
   pulsed->frames_written = 0;
   pulsed->extrausec = 0;
   //pulsed->tscale = 1.;
@@ -1811,8 +1811,12 @@ boolean pa_time_reset(pulse_driver_t *pulsed, ticks_t offset) {
 
 
 static double tscaleu, tscalex;
+static int nsc;
+
 static void tscale_reset(pulse_driver_t *pulsed) {
   tscalex = tscaleu = 0.;
+  nsc = 0;
+  pulsed->tscale = 1.;
 }
 
 #define TSC_AVG_WINDOW 3
@@ -1840,7 +1844,6 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   static ticks_t borrowlim = -1.;
   static int64_t borrowusec = 0;
   static double repay = -1.;
-  static int nsc;
   static int borrowclip = -1;
 
   if (!pulsed) {
@@ -1888,8 +1891,11 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
 
   if (last_usec > 0 && (usec <= last_usec || err == -PA_ERR_NODATA)) {
     if (pulsed->extrausec == last_extra) {
-      if (sysclock != 0) paclock = lpaclock + (double)(mainw->clock_ticks - sysclock) / USEC_TO_TICKS /
-                                     (nsc < TSC_AVG_WINDOW ? 1. : pulsed->tscale);
+      if (lpaclock != 0) {
+        if (nsc >= TSC_AVG_WINDOW)
+          paclock = lpaclock + (double)(mainw->clock_ticks - sysclock) / USEC_TO_TICKS / pulsed->tscale;
+        else paclock = lpaclock;
+      }
       noupdl = TRUE;
     } else {
       sysclock = mainw->clock_ticks;
@@ -1977,7 +1983,7 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
                     /*         mainw->repayment, paclock, pabstart, borrowusec); */
                     noupdl = TRUE;
                     if (mainw->repayment <= 0.) {
-                      paclock -= mainw->repayment * ONE_MILLION;
+                      pulsed->extrausec -= mainw->repayment * ONE_MILLION;
                       mainw->repayment = 0.;
                       repay = -1.;
                       borrowclip = -1;

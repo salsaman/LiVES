@@ -7091,11 +7091,12 @@ static boolean avsync_check(void) {
     rc = pthread_cond_timedwait(&mainw->avseek_cond, &mainw->avseek_mutex, &ts);
     mainw->video_seek_ready = TRUE;
   }
-  pthread_mutex_unlock(&mainw->avseek_mutex);
   if (!mainw->audio_seek_ready && rc == ETIMEDOUT) {
+    pthread_mutex_unlock(&mainw->avseek_mutex);
     mainw->cancelled = handle_audio_timeout();
     return FALSE;
   }
+  pthread_mutex_unlock(&mainw->avseek_mutex);
   return TRUE;
 }
 

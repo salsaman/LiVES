@@ -521,7 +521,13 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
             d_print(_("Forcing audio channels to %d\n"), MAX_ACHANS);
           }
 
-          if (mainw->file_open_params == NULL) mainw->file_open_params = lives_strdup("");
+          if (mainw->file_open_params == NULL) {
+#if 1
+            mainw->file_open_params = lives_strdup("alang eng");
+#else
+            mainw->file_open_params = lives_strdup("");
+#endif
+          }
           com = lives_strdup_printf("%s open \"%s\" \"%s\" %d %s:%s %.2f %d %d \"%s\"", prefs->backend, cfile->handle,
                                     (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)), -1,
                                     prefs->image_ext, get_image_ext_for_type(IMG_TYPE_BEST), start, frames, probed_achans,

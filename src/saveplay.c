@@ -2101,9 +2101,9 @@ char *prep_audio_player(char *com2, char *com3, frames_t audio_end, int arate, i
   int loop = 0;
 
   if (cfile->achans > 0) {
-    cfile->aseek_pos = (off64_t)(cfile->real_pointer_time * cfile->arate) * cfile->achans * (cfile->asampsize / 8);
+    cfile->aseek_pos = (off64_t)(cfile->real_pointer_time * (double)cfile->arate) * cfile->achans * (cfile->asampsize / 8);
     if (mainw->playing_sel) {
-      off64_t apos = (off64_t)((double)(mainw->play_start - 1.) / cfile->fps * cfile->arate) * cfile->achans *
+      off64_t apos = (off64_t)((double)(mainw->play_start - 1.) / cfile->fps * (double)cfile->arate) * cfile->achans *
                      (cfile->asampsize / 8);
       if (apos > cfile->aseek_pos) cfile->aseek_pos = apos;
     }

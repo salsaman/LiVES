@@ -33,7 +33,7 @@ LIVES_GLOBAL_INLINE ticks_t q_gint64(ticks_t in, double fps) {
 }
 
 LIVES_GLOBAL_INLINE ticks_t q_gint64_floor(ticks_t in, double fps) {
-  if (in != 0) return (double)((ticks_t)((double)in / TICKS_PER_SECOND_DBL * fps)) / fps *
+  if (in != 0) return (double)((ticks_t)((double)in / TICKS_PER_SECOND_DBL * fps + .000001)) / fps *
                         TICKS_PER_SECOND_DBL; // quantise to frame timing
   return 0;
 }

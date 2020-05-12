@@ -12,6 +12,8 @@
 #include "paramwindow.h"
 #include "effects.h"
 
+#define BG_LOAD
+
 static LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder);
 static LiVESWidget *make_param_window_dialog(int hnum, rfx_build_window_t *rfxbuilder);
 static LiVESWidget *make_trigger_dialog(int tnum, rfx_build_window_t *rfxbuilder);
@@ -4353,7 +4355,6 @@ void add_rfx_effects(lives_rfx_status_t status) {
     char *type = lives_strdup(PLUGIN_RENDERED_EFFECTS_BUILTIN);
     char *plugin_name;
     char *def = NULL;
-    char *tmp;
     char delim[2];
 
     int offset = 0;
@@ -4542,7 +4543,7 @@ void add_rfx_effects(lives_rfx_status_t status) {
 }
 
 
-void add_rfx_effects_2(lives_rfx_status_t status) {
+void add_rfx_effects2(lives_rfx_status_t status) {
   LiVESWidget *menuitem;
   lives_rfx_t *rfx;
   char txt[64]; // menu text

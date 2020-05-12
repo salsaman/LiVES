@@ -322,6 +322,14 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
 }
 
 
+static void check_fx_menus(LiVESCheckMenuItem *menuitem, livespointer user_data) {
+  if (RFX_LOADED) {
+    add_rfx_effects2(RFX_STATUS_ANY);
+    lives_signal_handlers_disconnect_by_func(menuitem, check_fx_menus, user_data);
+  }
+}
+
+
 void create_LiVES(void) {
 #ifdef GUI_GTK
 #if !GTK_CHECK_VERSION(3, 0, 0)
@@ -1096,11 +1104,12 @@ void create_LiVES(void) {
   // the dynamic effects menu
   mainw->effects_menu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mainw->effects_menu);
-  if (1 || !RFX_LOADED) {
-    LiVESWidget *menuspin = lives_menu_spinner_new((tmp = _("Loading...")));
-    lives_free(tmp);
-    lives_container_add(LIVES_CONTAINER(mainw->effects_menu), menuspin);
-  }
+  if (!RFX_LOADED) {
+    menuitem = lives_standard_menu_item_new_with_label(_("Loading..."));
+    lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                         LIVES_GUI_CALLBACK(check_fx_menus), NULL);
+    lives_container_add(LIVES_CONTAINER(mainw->effects_menu), menuitem);
+  } else add_rfx_effects2(RFX_STATUS_ANY);
 
   mainw->custom_effects_menu = NULL;
   mainw->custom_effects_separator = NULL;
@@ -3945,8 +3954,9 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
     mainw->fx_candidates[i].rfx = NULL;
   }
 
-  add_rfx_effects(RFX_STATUS_ANY);
-  replace_with_delegates();
+  //mainw->helper_procthreads[PT_LAZY_RFX] = lives_proc_thread_create((lives_funcptr_t)add_rfx_effects, -1, "i", RFX_STATUS_ANY);
+  //add_rfx_effects(RFX_STATUS_ANY);
+  //replace_with_delegates();
 
   show_lives();
 

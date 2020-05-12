@@ -1423,7 +1423,7 @@ switch_point:
 
     /// switch compensation allows us to give a brief impulse to the audio when switching
     // this may be adjusted for accuracy | a value > 1.0 will slow audio down on switch
-#define SWITCH_COMPENSATION 1.1
+#define SWITCH_COMPENSATION 1.0
 
     mainw->audio_stretch = SWITCH_COMPENSATION;
     scratch = SCRATCH_JUMP_NORESYNC;
@@ -1741,8 +1741,6 @@ switch_point:
         }
       }
 
-      mainw->last_startticks = mainw->startticks;
-
       if (getahead < 0) {
         /// this is where we rebase the time for the next frame calculation
         /// if getahead >= 0 then we want to keep the base at the last "played" frame, and keep repeating getahead until we reach it
@@ -1750,7 +1748,10 @@ switch_point:
         sfile->last_frameno = requested_frame;
         // set
         if (new_ticks > mainw->startticks) mainw->startticks = new_ticks;
+        if (scratch != SCRATCH_NONE) mainw->startticks = mainw->currticks;
       }
+
+      mainw->last_startticks = mainw->startticks;
 
 #ifdef SHOW_CACHE_PREDICTIONS
       //g_print("dropped = %d, %d scyc = %ld %d %d\n", dropped, mainw->effort, spare_cycles, requested_frame, sfile->frameno);

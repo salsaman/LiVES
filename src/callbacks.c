@@ -4398,12 +4398,12 @@ void play_all(boolean from_menu) {
     play_file();
 
     if (CURRENT_CLIP_IS_VALID) {
-      if (cfile->play_paused) {
-        cfile->pointer_time = (cfile->last_frameno - 1.) / cfile->fps;
+      if (!cfile->play_paused) {
+        //cfile->pointer_time = (cfile->last_frameno - 1.) / cfile->fps;
         lives_ce_update_timeline(0, cfile->real_pointer_time);
       } else {
-        // TODO: non-functional yet, needs more.
-        cfile->play_paused = TRUE;
+        cfile->pointer_time = (cfile->last_frameno - 1.) / cfile->fps;
+        //cfile->play_paused = TRUE;
         mainw->cancelled = CANCEL_USER;
       }
     }

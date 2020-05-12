@@ -8793,22 +8793,6 @@ LiVESWidget *lives_standard_check_menu_item_new_with_label(const char *label, bo
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_menu_spinner_new(const char *text) {
-  LiVESWidget *menuitem = lives_standard_menu_item_new();
-  LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
-  LiVESWidget *label = lives_standard_label_new(_("Loading..."));
-  LiVESWidget *spinner = gtk_spinner_new();
-  //lives_box_pack_start(hbox, label, FALSE, FALSE, 0);
-  lives_widget_apply_theme2(hbox, LIVES_WIDGET_STATE_NORMAL, TRUE);
-  lives_widget_apply_theme2(spinner, LIVES_WIDGET_STATE_NORMAL, TRUE);
-  lives_box_pack_start(hbox, spinner, TRUE, TRUE, 0);
-  lives_container_add(menuitem, hbox);
-  gtk_spinner_start(spinner);
-  lives_widget_show_all(menuitem);
-  return menuitem;
-}
-
-
 LiVESWidget *lives_standard_notebook_new(const LiVESWidgetColor *bg_color, const LiVESWidgetColor *act_color) {
   LiVESWidget *notebook = lives_notebook_new();
 
@@ -11231,7 +11215,7 @@ boolean lives_tree_store_find_iter(LiVESTreeStore *tstore, int col, const char *
 #include "ce_thumbs.h"
 
 #define MAX_NULL_EVENTS 512
-#define LOOP_LIMIT 32
+#define LOOP_LIMIT 16
 boolean lives_widget_context_update(void) {
   boolean mt_needs_idlefunc = FALSE;
   int nulleventcount = 0, loops = 0;
@@ -11269,7 +11253,7 @@ boolean lives_widget_context_update(void) {
     }
 #ifdef GUI_GTK
     //g_main_context_acquire(g_main_context_get_thread_default());
-    g_main_context_iteration(NULL, FALSE);
+    //g_main_context_iteration(NULL, FALSE);
     while (!mainw->is_exiting && g_main_context_pending(NULL)) {
       if (mainw->gui_fooey) {
         g_main_context_iteration(NULL, FALSE);

@@ -87,7 +87,8 @@
 
 #define LIVES_TRACK_ANY -1000000
 
-#define AUD_DIFF_MIN 0.1  ///< ignore audio seek differences < than this (seconds)
+#define AUD_DIFF_MIN 0.05  ///< ignore audio seek differences < than this (seconds)
+#define AUD_DIFF_REVADJ 8. ///< allow longer seek differences when audio plauback direction reverses (multiplying factor)
 
 weed_plant_t *append_frame_event(weed_plant_t *event_list, ticks_t tc, int numframes,
                                  int *clips, int64_t *frames) WARN_UNUSED;

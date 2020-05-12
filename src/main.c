@@ -3093,6 +3093,8 @@ static boolean lives_startup(livespointer data) {
   splash_msg(_("Starting GUI..."), SPLASH_LEVEL_BEGIN);
   LIVES_MAIN_WINDOW_WIDGET = NULL;
 
+  mainw->helper_procthreads[PT_LAZY_RFX] = lives_proc_thread_create((lives_funcptr_t)add_rfx_effects, -1, "i", RFX_STATUS_ANY);
+
   create_LiVES();
 
   if (prefs->open_maximised && prefs->show_gui) {
@@ -4355,7 +4357,7 @@ void sensitize(void) {
     lives_widget_set_sensitive(mainw->ext_audio_checkbutton, TRUE);
   }
 
-  if (0 && RFX_LOADED) {
+  if (RFX_LOADED) {
     if (!mainw->foreign) {
       for (i = 1; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
            mainw->num_rendered_effects_test; i++)
@@ -4551,7 +4553,7 @@ void desensitize(void) {
     lives_widget_set_sensitive(mainw->playall, FALSE);
   }
   lives_widget_set_sensitive(mainw->rewind, FALSE);
-  if (0 && RFX_LOADED) {
+  if (RFX_LOADED) {
     if (!mainw->foreign) {
       for (i = 0; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
            mainw->num_rendered_effects_test; i++)
@@ -9025,7 +9027,6 @@ void load_frame_image(int frame) {
             mainw->rec_aseek = fabs((double)(mainw->files[new_file]->aseek_pos
                                              / (mainw->files[new_file]->achans * mainw->files[new_file]->asampsize / 8))
                                     / (double)mainw->files[new_file]->arps);
-
           } else {
             mainw->rec_aclip = mainw->playing_file;
             mainw->rec_avel = 0.;

@@ -1105,29 +1105,43 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
     default: CALL_VOID_0(); break;
     }
     break;
-
-  case FUNCSIG_INT: CALL_VOID_1(int); break;
-
+  case FUNCSIG_INT:
+    switch (ret_type) {
+    default: CALL_VOID_1(int); break;
+    }
+    break;
   case FUNCSIG_STRING:
     switch (ret_type) {
     case WEED_SEED_STRING: CALL_1(string, string); break;
     default: CALL_VOID_1(string); break;
     }
-
-  case FUNCSIG_INT_INT64: CALL_VOID_2(int, int64); break;
-
-  case FUNCSIG_VOIDP_VOIDP: CALL_VOID_2(voidptr, voidptr); break;
-
-  case FUNCSIG_PLANTP_BOOL: CALL_VOID_2(plantptr, boolean); break;
-
+    break;
+  case FUNCSIG_INT_INT64:
+    switch (ret_type) {
+    default: CALL_VOID_2(int, int64); break;
+    }
+    break;
+  case FUNCSIG_VOIDP_VOIDP:
+    switch (ret_type) {
+    default: CALL_VOID_2(voidptr, voidptr); break;
+    }
+    break;
+  case FUNCSIG_PLANTP_BOOL:
+    switch (ret_type) {
+    default: CALL_VOID_2(plantptr, boolean); break;
+    }
+    break;
   case FUNCSIG_PLANTP_VOIDP_INT64:
     switch (ret_type) {
     case WEED_SEED_BOOLEAN: CALL_3(boolean, plantptr, voidptr, int64); break;
     default: CALL_VOID_3(plantptr, voidptr, int64); break;
     }
     break;
-
-  case FUNCSIG_INT_INT_INT_BOOL_VOIDP: CALL_VOID_5(int, int, int, boolean, voidptr); break;
+  case FUNCSIG_INT_INT_INT_BOOL_VOIDP:
+    switch (ret_type) {
+    default: CALL_VOID_5(int, int, int, boolean, voidptr); break;
+    }
+    break;
   default: break;
   }
 

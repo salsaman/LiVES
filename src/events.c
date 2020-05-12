@@ -3911,12 +3911,11 @@ lives_render_error_t render_events(boolean reset) {
 
         for (i = 0; i < num_aclips; i += 2) {
           if (aclips[i + 1] > 0) { // clipnum
-            double mult = 0.1;
+            double mult = 1.0;
             mytrack = aclips[i] + nbtracks;
             if (mytrack < 0) mytrack = 0;
             //g_print("del was %f\n", xaseek[mytrack] - aseeks[i]);
             /// smooth out audio by ignoring tiny seek differences
-#define AUD_DIFF_REVADJ 8.
             if (xavel[mytrack] * aseeks[i + 1] < 0.) mult *= AUD_DIFF_REVADJ;
             if (xaclips[mytrack] != aclips[i + 1] || fabs(xaseek[mytrack] - aseeks[i]) > AUD_DIFF_MIN * mult)
               xaseek[mytrack] = aseeks[i];

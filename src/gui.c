@@ -3230,8 +3230,8 @@ void set_interactive(boolean interactive) {
         lives_widget_hide(mainw->multitrack->recent_menu);
       }
       if (!mainw->has_custom_gens) {
-        lives_widget_hide(mainw->custom_gens_menu);
-        lives_widget_hide(mainw->custom_gens_submenu);
+        if (mainw->custom_gens_menu) lives_widget_hide(mainw->custom_gens_menu);
+        if (mainw->custom_gens_submenu) lives_widget_hide(mainw->custom_gens_submenu);
       }
 
       lives_widget_hide(mainw->multitrack->aparam_separator); // no longer used

@@ -10202,7 +10202,7 @@ boolean on_mouse_scroll(LiVESWidget * widget, LiVESXEventScroll * event, livespo
   else if (lives_get_scroll_direction(event) == LIVES_SCROLL_DOWN) nextclip_callback(NULL, NULL, 0, (LiVESXModifierType)0,
         LIVES_INT_TO_POINTER(type));
 
-  return FALSE;
+  return TRUE;
 }
 
 

@@ -551,14 +551,18 @@ static boolean copy_with_check(weed_plant_t *event, weed_plant_t *out_list, weed
 */
 weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_gap) {
   weed_timecode_t out_tc = 0, offset_tc = 0, in_tc, laud_tc = 0, nx_tc;
-  weed_timecode_t end_tc, recst_tc = 0;
+  weed_timecode_t end_tc;
 
-  weed_plant_t *out_list, *last_out_frame = NULL;
-  weed_plant_t *naudio_event = NULL, *prev_aframe;
+  weed_plant_t *out_list;
+  weed_plant_t *naudio_event = NULL;
   weed_plant_t *frame_event = NULL, *nframe_event = NULL;
   weed_plant_t *last_frame_event;
   weed_plant_t *event, *newframe = NULL;
   weed_event_t *init_event, *filter_map = NULL, *deinit_event;
+#ifdef SMOOTH_AUD_VEL
+  weed_event_t *prev_aframe, *xprev_aframe, , , *last_out_frame = NULL;
+  weed_timecode_t recst_tc = 0;
+#endif
 
   LiVESResponseType response;
   LiVESList *init_events = NULL, *deinit_events = NULL, *list;
@@ -566,7 +570,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   ticks_t tl;
   double *xaseeks = NULL, *naseeks = NULL, *naccels = NULL;
   double old_fps;
-  char *what, *didfind;
+  char *what;
 
   boolean interpolate = TRUE;
   int *clips = NULL, *naclips = NULL, *nclips = NULL;
@@ -627,8 +631,6 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
     if (out_tc > end_tc) out_tc = end_tc;
 
     while (1) {
-      // if event_list started as a recording then this will have been set for previews, but we now need to discard it
-
       /// in this mode we walk the event_list until we pass the output time, keeping track of
       /// state - frame and clip numbers, audio positions, param values, then insert everything at the output slot
       /// - we also look at the next frame to decide how to proceed
@@ -655,6 +657,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           int marker_type = weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, NULL);
           if (marker_type == EVENT_MARKER_BLOCK_START || marker_type == EVENT_MARKER_BLOCK_UNORDERED
               || marker_type == EVENT_MARKER_RECORD_START) {
+            // if event_list started as a recording then this will have been set for previews, but we now need to discard it
             interpolate = FALSE;
             lives_freep((void **)&xaclips);
             lives_freep((void **)&xaseeks);
@@ -665,7 +668,9 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
             lives_list_free(deinit_events);
             init_events = deinit_events = NULL;
             filter_map = NULL;
+#ifdef SMOOTH_AUD_VEL
             recst_tc = get_event_timecode(event);
+#endif
           }
           if ((allow_gap && marker_type == EVENT_MARKER_RECORD_START)
               || marker_type == EVENT_MARKER_BLOCK_START || marker_type == EVENT_MARKER_BLOCK_UNORDERED) {
@@ -950,83 +955,73 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           /// the player seek pos will be slightly off.
           /// To remedy this we can very slightly adjust the velocity at the prior frame, so that the seek is correct when
           /// arriving at the current audio frame
-          ///
+          /// TODO: needs fixing, does not work as intended - not sure why
+#ifdef SMOOTH_AUD_VEL
+          *prev_aframe, *xprev_aframe;
+          prev_aframe = get_prev_audio_frame_event(newframe);
+          if (prev_aframe) {
+            for (i = 0; i < natracks; i += 2) {
+              // check each track in natracks (currently active) to see if it is also in xatracks (all active)
+              boolean gottrack = FALSE;
+              if (naseeks[i + 1] == 0.) continue; ///< audio was off, currently we don't store the seek point there (we SHOULD: TODO)
+              for (k = 0; k < xatracks; k += 2) {
+                if (xaclips[k] == naclips[i]) {
+                  //. track is in xatracks, so there must be a prev audio frame for the track; if the clips match then we will find
+                  // the audio frame event and maybe adjust the velocity
+                  if (xaclips[k + 1] == naclips[i + 1]) gottrack = TRUE;
+                  break;
+                }
+              }
+              if (!gottrack) continue;
 
-          prev_aframe = get_prev_frame_event(newframe);
-          didfind = (char *)lives_calloc(natracks, 1);
-          for (i = 0; i < natracks; i += 2) {
-            boolean gottrack = FALSE;
-            if (naseeks[i + 1] == 0.) continue; ///< audio was off, currently we don't store the seek point there (we SHOULD: TODO)
-            for (k = 0; k < xatracks; k += 2) {
-              if (xaclips[k] == naclips[i]) {
-                //. track is in xatracks, so there must be a prev audio frame for the track; if the clips match then we will find
-                // the audio frame event and maybe adjust the velocity
-                if (xaclips[k + 1] == naclips[i + 1]) gottrack = TRUE;
-                break;
+              /// find the prior audio frame for the track
+              xprev_aframe = prev_aframe;
+              while (xprev_aframe != NULL) {
+                weed_timecode_t ptc = get_event_timecode(xprev_aframe);
+                int *paclips;
+                double *paseeks;
+                int patracks;
+                if (ptc < recst_tc) break;
+
+                patracks = weed_frame_event_get_audio_tracks(xprev_aframe, &paclips, &paseeks);
+
+                for (j = 0; j < patracks; j += 2) {
+                  if (paclips[j] == naclips[i]) {
+                    if (paclips[j + 1] == naclips[i + 1]) {
+                      if (paseeks[j + 1] > 0.) {
+                        double dt = (double)(out_tc - ptc) / TICKS_PER_SECOND_DBL;
+                        double dtl = (double)(out_tc - get_event_timecode(last_out_frame)) / TICKS_PER_SECOND_DBL;
+                        /// what we will do here is insert an extra audio event at the previous out_frame.
+                        /// the seek will be calculated from old_val, and we will adjust the velocity so we hit the seek value at this frame
+                        // adjust velocity by seek_delta / frame_duration
+                        int in_arate = mainw->files[naclips[i + 1]]->arps;
+                        double seek = paseeks[j] + paseeks[j + 1] * (dt - dtl);
+                        double nvel = (naseeks[i] - seek) / dtl;
+
+                        /// velocity should be close to seek_time / clock_time, else this was a jump
+                        if ((paseeks[j + 1] < naseeks[i + 1] && nvel > paseeks[j + 1] * (1. - SKJUMP_THRESH_RATIO)
+                             && nvel <= naseeks[i + 1] * (1. + SKJUMP_THRESH_RATIO))
+                            || (paseeks[j + 1] > naseeks[i + 1] && nvel < paseeks[j + 1]
+                                * (1. + SKJUMP_THRESH_RATIO) && nvel >= naseeks[i + 1] * (1. - SKJUMP_THRESH_RATIO))) {
+                          insert_audio_event_at(last_out_frame, paclips[j], paclips[j + 1], seek, nvel);
+                        } else {
+                          // if velocity change is too great then we may adjust the seek a little instead
+                          if (fabs(naseeks[i] - (seek + paseeks[j + 1] * dtl)) < SKJUMP_THRESH_SECS) {
+                            naseeks[i] = quant_aseek(paseeks[j] + paseeks[j + 1] * dt, in_arate);
+                            weed_set_double_array(newframe, WEED_LEAF_AUDIO_SEEKS, natracks, naseeks);
+			    // *INDENT-OFF*
+			  }}}}
+		    else break; // different audio on track
+		  }}
+		// *INDENT-ON*
+                lives_freep((void **)&paclips);
+                lives_freep((void **)&paseeks);
+                if (j == patracks) xprev_aframe = get_prev_audio_frame_event(xprev_aframe);
+                else break;
               }
             }
-            if (!gottrack) continue;
-            gottrack = FALSE;
-
-            /// find the prior audio frame for the track
-            while (prev_aframe != NULL) {
-              weed_timecode_t ptc = get_event_timecode(prev_aframe);
-              int *paclips;
-              double *paseeks;
-              int patracks;
-              if (ptc < recst_tc) break;
-
-              patracks = weed_frame_event_get_audio_tracks(prev_aframe, &paclips, &paseeks);
-
-              for (j = 0; j < patracks; j += 2) {
-                if (naclips[i] == paclips[j]) {
-                  if (paclips[j + 1] == naclips[i + 1]) {
-                    if (prev_aframe == last_out_frame) {
-                      prev_aframe = NULL;
-                      break;
-                    }
-                    if (paseeks[j + 1] * naseeks[i + 1] > 0.) {
-                      double dt = (double)(out_tc - ptc) / TICKS_PER_SECOND_DBL;
-                      double dtl = (double)(tl) / TICKS_PER_SECOND_DBL;
-                      /// what we will do here is insert an extra audio event at the previous out_frame.
-                      /// the seek will be calculated from old_val, and we will adjust the velocity so we hit the seek value at this frame
-                      // adjust velocity by seek_delta / frame_duration
-                      int in_arate = mainw->files[naclips[i + 1]]->arps;
-
-                      double seek = quant_aseek(paseeks[j] + paseeks[j + 1] * dt, in_arate);
-                      double nvel = paseeks[j + 1] + (naseeks[i] - seek) / dtl;
-
-                      /// velocity should be close to seek_time / clock_time, else this was a jump
-                      if ((paseeks[j + 1] < naseeks[i + 1] && nvel > paseeks[j + 1] && nvel <= naseeks[i + 1])
-                          || (paseeks[j + 1] > naseeks[i + 1] && nvel < paseeks[j + 1] && nvel >= naseeks[i + 1])) {
-                        dt -= dtl;
-                        seek = quant_aseek(paseeks[j] + paseeks[j + 1] * dt, in_arate);
-                        insert_audio_event_at(last_out_frame, paclips[j], paclips[j + 1], seek, nvel);
-                      } else {
-                        // if velocity change is too great then we may adjust the seek a little instead
-                        if (fabs(naseeks[i] - seek) < SKJUMP_THRESH_SECS) {
-                          naseeks[i] = seek;
-                          weed_set_double_array(newframe, WEED_LEAF_AUDIO_SEEKS, natracks, naseeks);
-			  // *INDENT-OFF*
-			}}}}
-                  //eak;
-		  continue; // backtrack to start
-                }}
-	      // *INDENT-ON*
-
-              lives_freep((void **)&didfind);
-              lives_freep((void **)&paclips);
-              lives_freep((void **)&paseeks);
-              /// continue the smoothing process back to the start
-              prev_aframe = get_prev_audio_frame_event(prev_aframe);
-              if (j == patracks)
-                /* if (didfind[i]) break; */
-                /* didfind[i] = 1; */
-                prev_aframe = get_prev_audio_frame_event(prev_aframe);
-              else break;
-            }
           }
-
+#endif
           /// merge natracks with xatracks
           for (i = 0; i < natracks; i += 2) {
             for (j = 0; j < xatracks; j += 2) {
@@ -1055,7 +1050,9 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
         lives_freep((void **)&frames);
         lives_freep((void **)&clips);
+#ifdef SMOOTH_AUD_VEL
         last_out_frame = newframe;
+#endif
 
         /// frame insertion done
 
@@ -1121,7 +1118,8 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   }
 
   /// for completeness we should add closers for all active audio tracks,
-  /// however this will be done in event_list_rectify() when necessary
+  /// however this will be done in event_list_rectify() when necessary (or ideally, the player would add the closers and
+  /// record the offsets)
 
 q_done:
   lives_list_free(init_events);

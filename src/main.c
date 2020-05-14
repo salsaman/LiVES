@@ -6736,7 +6736,7 @@ static void *pft_thread(void *in) {
   lives_free(in);
 
   /// if loading the blend frame in clip editor, then we recall the palette details and size @ injection, and prepare it in this thread
-  if (0 && mainw->blend_file != -1 && mainw->blend_palette != WEED_PALETTE_END
+  if (mainw->blend_file != -1 && mainw->blend_palette != WEED_PALETTE_END
       && LIVES_IS_PLAYING && mainw->multitrack == NULL && mainw->blend_file != mainw->current_file
       && weed_get_int_value(layer, WEED_LEAF_CLIP, NULL) == mainw->blend_file) {
     int tgamma = WEED_GAMMA_UNKNOWN;
@@ -7311,9 +7311,11 @@ void load_frame_image(int frame) {
 
 	      }
 	      if (!mainw->mute) {
-		insert_audio_event_at(event, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel);
-		mainw->rec_aclip = -1;
+		weed_event_t *xevent = get_prev_frame_event(event);
+		if (!xevent) xevent = event;
+		insert_audio_event_at(xevent, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel);
 	      }
+	      mainw->rec_aclip = -1;
 	    }
 	  }
 	  pthread_mutex_unlock(&mainw->event_list_mutex);
@@ -8588,19 +8590,22 @@ void load_frame_image(int frame) {
 	      if (!LIVES_IS_PLAYING) {
 		switch_to_file((mainw->current_file = 0), file_to_switch_to);
 		d_print("");
-	      } else mainw->new_clip = file_to_switch_to;
+	      } else {
+		if (file_to_switch_to != mainw->playing_file) mainw->new_clip = file_to_switch_to;
+	      }
 	    } else if (old_file != mainw->multitrack->render_file) {
 	      mt_clip_select(mainw->multitrack, TRUE);
 	    }
 	    return;
 	  }
 	}
+	// file we were asked to switch to is invalid, thus we must find one
 
 	if (mainw->current_file == mainw->blend_file) {
 	  need_new_blend_file = TRUE;
 	  // set blend_file to -1. This in case the file is a generator - we need to distinguish between the cases where
 	  // the generator is the blend file and we switch because it was deinited, and when we switch fg <-> bg
-	  // un the former case the generator is killed off, in the latter it survives
+	  // in the former case the generator is killed off, in the latter it survives
 	  mainw->blend_file = -1;
 	}
 
@@ -9033,9 +9038,9 @@ void load_frame_image(int frame) {
             mainw->rec_aseek = 0.;
             mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
           }
-          event = get_last_frame_event(mainw->event_list);
-          insert_audio_event_at(event, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel);
-          mainw->rec_aclip = -1;
+          /* event = get_last_frame_event(mainw->event_list); */
+          /* insert_audio_event_at(event, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel); */
+          /* mainw->rec_aclip = -1; */
 #endif
         }
 

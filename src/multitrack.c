@@ -7564,10 +7564,11 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->gens_submenu = lives_standard_menu_item_new_with_label(_("_Generate"));
   lives_container_add(LIVES_CONTAINER(mt->tools_menu), mt->gens_submenu);
 
-  lives_widget_object_ref(mainw->gens_menu);
-  lives_menu_detach(LIVES_MENU(mainw->gens_menu));
-
-  lives_menu_item_set_submenu(LIVES_MENU_ITEM(mt->gens_submenu), mainw->gens_menu);
+  if (mainw->gens_menu) {
+    lives_widget_object_ref(mainw->gens_menu);
+    lives_menu_detach(LIVES_MENU(mainw->gens_menu));
+    lives_menu_item_set_submenu(LIVES_MENU_ITEM(mt->gens_submenu), mainw->gens_menu);
+  }
 
   mt->capture = lives_standard_menu_item_new_with_label(_("Capture _External Window... "));
   lives_container_add(LIVES_CONTAINER(mt->tools_menu), mt->capture);
@@ -9383,10 +9384,11 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->vol_toolitem), -1);
   lives_widget_object_unref(mainw->vol_toolitem);
 
-  lives_widget_object_ref(mainw->gens_menu);
-  lives_menu_detach(LIVES_MENU(mainw->gens_menu));
-
-  lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->gens_submenu), mainw->gens_menu);
+  if (mainw->gens_menu) {
+    lives_widget_object_ref(mainw->gens_menu);
+    lives_menu_detach(LIVES_MENU(mainw->gens_menu));
+    lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->gens_submenu), mainw->gens_menu);
+  }
 
   if (mt->mt_frame_preview) {
     if (mainw->plug != NULL) {

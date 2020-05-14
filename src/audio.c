@@ -1459,6 +1459,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         }
       }
 
+      fromtime[track] = (double)lives_buffered_offset(in_fd[track]) / (double)(in_asamps[track] * in_achans[track] * in_arate[track]);
+
       if (from_files[track] == mainw->ascrap_file) {
         // be forgiving with the ascrap file
         if (mainw->read_failed == in_fd[track] + 1) {
@@ -1466,7 +1468,11 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         }
       }
 
-      if (bytes_read < tbytes && bytes_read >= 0)  lives_memset(in_buff + bytes_read, 0, tbytes - bytes_read);
+      if (bytes_read < tbytes && bytes_read >= 0)  {
+        pad_with_silence(-1, in_buff, bytes_read, tbytes, in_asamps[track], mainw->files[from_files[track]]->signed_endian
+                         & AFORM_UNSIGNED, mainw->files[from_files[track]]->signed_endian & AFORM_BIG_ENDIAN);
+        //lives_memset(in_buff + bytes_read, 0, tbytes - bytes_read);
+      }
 
       nframes = (tbytes / (in_asamps[track]) / in_achans[track] / fabs(zavel) + .001);
 
@@ -2497,10 +2503,10 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
       // got next audio frame
       render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, tc, chvols, 1., 1., abuf);
 
-      for (i = 0; i < nfiles; i++) {
-        // increase seek values
-        aseeks[i] += avels[i] * (tc - last_tc) / TICKS_PER_SECOND_DBL;
-      }
+      /* for (i = 0; i < nfiles; i++) { */
+      /*   // increase seek values */
+      /*   aseeks[i] += avels[i] * (tc - last_tc) / TICKS_PER_SECOND_DBL; */
+      /* } */
 
       last_tc = tc;
       // process audio updates at this frame
@@ -2525,10 +2531,10 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   if (last_tc < fill_tc) {
     // fill the rest of the buffer
     render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, fill_tc, chvols, 1., 1., abuf);
-    for (i = 0; i < nfiles; i++) {
-      // increase seek values
-      aseeks[i] += avels[i] * (fill_tc - last_tc) / TICKS_PER_SECOND_DBL;
-    }
+    /* for (i = 0; i < nfiles; i++) { */
+    /*   // increase seek values */
+    /*   aseeks[i] += avels[i] * (fill_tc - last_tc) / TICKS_PER_SECOND_DBL; */
+    /* } */
   }
 
   if (mainw->read_failed > 0) {

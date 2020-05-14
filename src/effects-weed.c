@@ -8102,6 +8102,7 @@ void weed_generator_end(weed_plant_t *inst) {
   /// we switch back to the old (invalid) clip after this, while setting mainw->new_clip to the new one
   /// the player will detect the invalid clip and jump to the switch point to handle the changeover cleanly
   if (is_bg) {
+    mainw->pre_src_file = mainw->current_file;
     mainw->current_file = mainw->blend_file;
     mainw->rte ^= (GU641 << bg_generator_key);
     mainw->blend_file = mainw->new_blend_file;
@@ -8114,9 +8115,11 @@ void weed_generator_end(weed_plant_t *inst) {
     } else {
       cfile->ext_src = NULL;
       close_current_file(mainw->pre_src_file);
-      if (mainw->playing_file != mainw->pre_src_file) {
-        mainw->scratch = SCRATCH_JUMP;
-      }
+
+
+      /* if (mainw->playing_file != mainw->pre_src_file) { */
+      /*   mainw->scratch = SCRATCH_JUMP; */
+      /* } */
     }
     if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) ce_thumbs_update_current_clip();
   } else {

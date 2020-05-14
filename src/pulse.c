@@ -186,7 +186,8 @@ retry:
 void pulse_get_rec_avals(pulse_driver_t *pulsed) {
   mainw->rec_aclip = pulsed->playing_file;
   if (mainw->rec_aclip != -1) {
-    mainw->rec_aseek = fabs((double)(fwd_seek_pos / (afile->achans * afile->asampsize / 8)) / (double)afile->arps);
+    mainw->rec_aseek = fabs((double)(fwd_seek_pos / (afile->achans * afile->asampsize / 8)) / (double)afile->arps)
+                       + (mainw->startticks - mainw->currticks) / TICKS_PER_SECOND_DBL;
     mainw->rec_avel = fabs((double)pulsed->in_arate / (double)afile->arps) * afile->adirection;
     //g_print("RECSEEK is %f %ld\n", mainw->rec_aseek, pulsed->real_seek_pos);
   }

@@ -1051,7 +1051,7 @@ LIVES_GLOBAL_INLINE boolean weed_palette_has_alpha(int pal) {
   const weed_macropixel_t *mpx = get_advanced_palette(pal);
   if (mpx) {
     for (register int i = 0; i < MAXPPLANES && mpx->chantype[i]; i++)
-      if (mpx->chantype[0] == WEED_VCHAN_alpha) return TRUE;
+      if (mpx->chantype[i] == WEED_VCHAN_alpha) return TRUE;
   }
   return FALSE;
 }
@@ -1081,7 +1081,7 @@ LIVES_LOCAL_INLINE int _get_alpha(int pal) {
   const weed_macropixel_t *mpx = get_advanced_palette(pal);
   if (mpx) {
     for (register int i = 0; i < MAXPPLANES && mpx->chantype[i]; i++)
-      if (mpx->chantype[0] == WEED_VCHAN_alpha) return i;
+      if (mpx->chantype[i] == WEED_VCHAN_alpha) return i;
   }
   return -1;
 }
@@ -9163,7 +9163,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   width = weed_layer_get_width(layer);
   height = weed_layer_get_height(layer);
 
-  //   #define DEBUG_PCONV
+  //#define DEBUG_PCONV
 #ifdef DEBUG_PCONV
   g_print("converting %d X %d palette %s(%s) to %s(%s)\n", width, height, weed_palette_get_name(inpl),
           weed_yuv_clamping_get_name(iclamping),
@@ -11333,7 +11333,6 @@ void lives_layer_set_opaque(weed_layer_t *layer) {
 	  // *INDENT-OFF*
 	}}}}
   // *INDENT-ON*
-
 }
 
 
@@ -11475,7 +11474,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     lives_free(msg);
     return FALSE;
   }
-  //      #define DEBUG_RESIZE
+  //#define DEBUG_RESIZE
 #ifdef DEBUG_RESIZE
   g_print("resizing layer size %d X %d with palette %s to %d X %d, hinted %s\n", iwidth, iheight,
           weed_palette_get_name_full(palette,

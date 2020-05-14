@@ -3548,7 +3548,6 @@ lives_render_error_t render_events(boolean reset) {
 
   static double chvols[MAX_AUDIO_TRACKS];
   static double xaseek[MAX_AUDIO_TRACKS], xavel[MAX_AUDIO_TRACKS], atime;
-  double deltatime;
 
   static lives_render_error_t read_write_error;
 
@@ -3886,28 +3885,12 @@ lives_render_error_t render_events(boolean reset) {
       }
 
       if (mainw->flush_audio_tc != 0) {
-        double deltatime = (double)(q_gint64(mainw->flush_audio_tc - atc,  cfile->fps)) / TICKS_PER_SECOND_DBL;
-
-        for (i = 0; i < natracks; i++) {
-          if (xaclips[i] > 0) {
-            xaseek[i] += deltatime * xavel[i];
-          }
-        }
-
         if (read_write_error) return read_write_error;
         return LIVES_RENDER_COMPLETE;
       } else {
         int *aclips = NULL;
         double *aseeks = NULL;
         int num_aclips = weed_frame_event_get_audio_tracks(event, &aclips, &aseeks);
-
-        deltatime = (double)(q_gint64(dtc - atc, cfile->fps)) / TICKS_PER_SECOND_DBL;
-
-        for (i = 0; i < natracks; i++) {
-          if (xaclips[i] > 0) {
-            xaseek[i] += deltatime * xavel[i];
-          }
-        }
 
         for (i = 0; i < num_aclips; i += 2) {
           if (aclips[i + 1] > 0) { // clipnum

@@ -868,15 +868,7 @@ LiVESResponseType handle_backend_errors(boolean can_retry, LiVESWindow *transien
 
 boolean check_backend_return(lives_clip_t *sfile, LiVESWindow *transient) {
   // check return code after synchronous (foreground) backend commands
-
-  FILE *infofile;
-
-  (infofile = fopen(sfile->info_file, "r"));
-  if (!infofile) return FALSE;
-
-  mainw->read_failed = FALSE;
-  lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
-  fclose(infofile);
+  lives_fread_string(mainw->msg, MAINW_MSG_SIZE, sfile->info_file);
 
   // TODO: consider permitting retry here
   if (!strncmp(mainw->msg, "error", 5)) handle_backend_errors(FALSE, transient);
@@ -1464,7 +1456,9 @@ switch_point:
             mainw->multitrack->region_end) mainw->cancelled = CANCEL_EVENT_LIST_END;
         else {
           ticks_t ldt = mainw->last_display_ticks;
-          cfile->next_event = process_events(cfile->next_event, FALSE, mainw->currticks + mainw->offsetticks);
+          mainw->noswitch = FALSE;
+          cfile->next_event = process_events(cfile->next_event, FALSE, mainw->currticks);
+          mainw->noswitch = TRUE;
           if (cfile->next_event == NULL) mainw->cancelled = CANCEL_EVENT_LIST_END;
           else if (prefs->pbq_adaptive && mainw->last_display_ticks != ldt) {
             update_effort(spare_cycles + 1, FALSE);
@@ -2080,9 +2074,17 @@ static boolean reset_timebase(void) {
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
     boolean pa_reset = FALSE;
     if (prefs->audio_src == AUDIO_SRC_INT) {
-      if (mainw->pulsed != NULL && pa_time_reset(mainw->pulsed, 0)) pa_reset = TRUE;
+      if (mainw->pulsed != NULL && pa_time_reset(mainw->pulsed, 0)) {
+        pa_reset = TRUE;
+        pulse_tscale_reset(mainw->pulsed);
+        lives_pulse_get_time(NULL);
+      }
     } else {
-      if (mainw->pulsed_read != NULL && pa_time_reset(mainw->pulsed_read, 0)) pa_reset = TRUE;
+      if (mainw->pulsed_read != NULL && pa_time_reset(mainw->pulsed_read, 0)) {
+        pa_reset = TRUE;
+        pulse_tscale_reset(mainw->pulsed_read);
+        lives_pulse_get_time(NULL);
+      }
     }
     if (!pa_reset) {
       handle_audio_timeout();
@@ -2112,7 +2114,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   // visible is set for processing (progress dialog is visible)
   // or unset for video playback (progress dialog is not shown)
-  FILE *infofile = NULL;
   char *mytext = NULL;
   frames_t frames_done, frames;
   boolean got_err = FALSE;
@@ -2427,12 +2428,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
     if (!mainw->internal_messaging) {
       // background processing (e.g. rendered effects)
-      if ((infofile = fopen(cfile->info_file, "r"))) {
-        // OK, now we might have some frames
-        mainw->read_failed = FALSE;
-        lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
-        fclose(infofile);
-      }
+      lives_fread_string(mainw->msg, MAINW_MSG_SIZE, cfile->info_file);
       progbar_pulse_or_fraction(cfile, cfile->proc_ptr->frames_done);
     }
     // else call realtime effect pass
@@ -2460,7 +2456,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       } else lives_widget_context_update();
     }
 
-    //#define DEBUG
+    //    #define DEBUG
 #ifdef DEBUG
     if (*(mainw->msg)) g_print("%s msg %s\n", cfile->info_file, mainw->msg);
 #endif
@@ -2713,10 +2709,11 @@ boolean do_auto_dialog(const char *text, int type) {
   if (!mainw->cancelled) {
     if (infofile != NULL) {
       if (type == 0 || type == 2) {
+        size_t bread;
         mainw->read_failed = FALSE;
-        lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
+        bread = lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
         fclose(infofile);
-        infofile = NULL;
+        lives_memset(mainw->msg + bread, 0, 1);
         if (cfile->clip_type == CLIP_TYPE_DISK) lives_rm(cfile->info_file);
         if (alarm_handle > 0) {
           ticks_t tl;

@@ -1968,7 +1968,6 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
     save_clip_value(fileno, CLIP_DETAILS_ASAMPS, &outfile->asampsize);
     save_clip_value(fileno, CLIP_DETAILS_AENDIAN, &aendian);
     save_clip_value(fileno, CLIP_DETAILS_ASIGNED, &asigned);
-
   } else {
     int out_bendian = outfile->signed_endian & AFORM_BIG_ENDIAN;
 
@@ -2133,7 +2132,6 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
     save_clip_value(fileno, CLIP_DETAILS_ASAMPS, &outfile->asampsize);
     save_clip_value(fileno, CLIP_DETAILS_AENDIAN, &aendian);
     save_clip_value(fileno, CLIP_DETAILS_ASIGNED, &asigned);
-
   } else {
     int out_bendian = outfile->signed_endian & AFORM_BIG_ENDIAN;
 
@@ -2710,7 +2708,7 @@ boolean resync_audio(double frameno) {
       else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
     }
     mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
-    mainw->repayment = 0.;
+
     if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && prefs->audio_src == AUDIO_SRC_INT) {
       pulse_get_rec_avals(mainw->pulsed);
     }

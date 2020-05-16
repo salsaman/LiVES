@@ -456,8 +456,7 @@ void giw_timeline_set_max_size(GiwTimeline *timeline,  gdouble max_size) {
 gdouble giw_timeline_get_max_size(GiwTimeline *timeline) {
   GtkAdjustment *adjustment;
   g_return_val_if_fail(GIW_IS_TIMELINE(timeline), 0.0);
-  adjustment = gtk_range_get_adjustment(GTK_RANGE(timeline));
-  return gtk_adjustment_get_upper(adjustment);
+  return timeline->max_size;
 }
 
 
@@ -849,7 +848,7 @@ static void giw_timeline_draw_ticks(GiwTimeline *timeline) {
       cairo_stroke(cr);
 
       /* draw label */
-      if (i == 0) {
+      if (i < 2) {
         curi = (int)cur;
         if (timeline->unit == GIW_TIME_UNIT_SECONDS) {
           g_snprintf(unit_str, sizeof(unit_str), "%d", curi);

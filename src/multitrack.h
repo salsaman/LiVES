@@ -345,6 +345,7 @@ struct _mt {
   LiVESWidget *preview_eventbox;
   LiVESWidget *btoolbarx;
   LiVESWidget *btoolbary;
+  LiVESWidget *bleedthru;
   LiVESWidget *time_label;
   LiVESWidget *insa_label;
   LiVESWidget *overlap_label;

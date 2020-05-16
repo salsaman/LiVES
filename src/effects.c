@@ -411,10 +411,8 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     if (cfile->hsize == cfile->ohsize && cfile->vsize == cfile->ovsize) cfile->undo_action = UNDO_EFFECT;
     else {
       boolean bad_header = FALSE;
-      save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize);
-      if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-      save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize);
-      if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize)) bad_header = TRUE;
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize)) bad_header = TRUE;
       cfile->undo_action = UNDO_RESIZABLE;
       if (bad_header) do_header_write_error(mainw->current_file);
     }

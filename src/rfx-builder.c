@@ -4284,7 +4284,7 @@ void add_rfx_effects(lives_rfx_status_t status) {
   if (status != RFX_STATUS_CUSTOM)
     mainw->num_rendered_effects_test = 0;
 
-  if (status != RFX_STATUS_TEST) make_custom_submenus();
+  //if (status != RFX_STATUS_TEST) make_custom_submenus();
 
   if (status != RFX_STATUS_CUSTOM) {
     mainw->run_test_rfx_menu = lives_standard_menu_new();
@@ -4549,6 +4549,8 @@ void add_rfx_effects2(lives_rfx_status_t status) {
   char txt[64]; // menu text
   int plugin_idx, tool_posn = RFX_TOOL_MENU_POSN;
 
+  if (status != RFX_STATUS_TEST) make_custom_submenus();
+
   if (status == RFX_STATUS_TEST && mainw->run_test_rfx_menu != NULL) {
     lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->run_test_rfx_submenu), NULL);
     if (LIVES_IS_WIDGET(mainw->run_test_rfx_menu)) lives_widget_destroy(mainw->run_test_rfx_menu);
@@ -4685,6 +4687,9 @@ void add_rfx_effects2(lives_rfx_status_t status) {
           }
           lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(menuitem), rfx_image);
 #endif
+          if (rfx->num_in_channels == 1) {
+            lives_container_add(LIVES_CONTAINER(mainw->effects_menu), menuitem);
+          }
           if (rfx->params == NULL) {
             lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
                                  LIVES_GUI_CALLBACK(on_render_fx_activate), (livespointer)rfx);
@@ -4769,5 +4774,6 @@ void update_rfx_menus(void) {
     lives_widget_set_sensitive(mainw->rename_test_rfx, FALSE);
     lives_widget_set_sensitive(mainw->edit_test_rfx, FALSE);
   }
+  lives_widget_show_all(mainw->effects_menu);
 }
 

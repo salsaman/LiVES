@@ -608,7 +608,7 @@ static int audio_process(nframes_t nframes, void *arg) {
                    * jackd->num_input_channels * jackd->bytes_per_channel;
 
         // update looping mode
-        if (mainw->loop_cont || mainw->whentostop != STOP_ON_AUD_END) {
+        if ((mainw->loop_cont || mainw->whentostop != STOP_ON_AUD_END) && !mainw->preview) {
           if (mainw->ping_pong && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
               && ((prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) || mainw->current_file == jackd->playing_file)
               && (mainw->event_list == NULL || mainw->record || mainw->record_paused)
@@ -1866,7 +1866,7 @@ void jack_aud_pb_ready(int fileno) {
   if (mainw->jackd != NULL && mainw->aud_rec_fd == -1) {
     mainw->jackd->is_paused = FALSE;
     mainw->jackd->mute = mainw->mute;
-    if ((mainw->whentostop == NEVER_STOP) && !mainw->preview) {
+    if ((mainw->loop_cont || mainw->whentostop != STOP_ON_AUD_END) && !mainw->preview) {
       if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS && mainw->multitrack == NULL)
         mainw->jackd->loop = AUDIO_LOOP_PINGPONG;
       else mainw->jackd->loop = AUDIO_LOOP_FORWARD;

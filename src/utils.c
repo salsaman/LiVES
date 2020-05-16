@@ -321,7 +321,7 @@ int lives_fputs(const char *s, FILE *stream) {
   retval = fputs(s, stream);
 
   if (retval == EOF) {
-    mainw->write_failed = TRUE;
+    mainw->write_failed = fileno(stream) + 1;
   }
 
   return retval;
@@ -349,6 +349,17 @@ size_t lives_fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
   }
 
   return bytes_read;
+}
+
+
+size_t lives_fread_string(char *buff, size_t stlen, const char *fname) {
+  size_t bread = 0;
+  FILE *infofile = fopen(fname, "r");
+  if (!infofile) return 0;
+  bread = lives_fread(buff, 1, stlen - 1, infofile);
+  fclose(infofile);
+  lives_memset(buff + bread, 0, 1);
+  return bread;
 }
 
 
@@ -1748,6 +1759,7 @@ static boolean check_for_audio_stop(int fileno, int first_frame, int last_frame)
       }
     } else {
       if (!mainw->loop_cont) {
+        g_print("%f %f\n", mainw->aframeno, cfile->laudio_time);
         if (mainw->aframeno < 0.9999 ||
             calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.0001) >= cfile->laudio_time - 0.0001) {
           return FALSE;
@@ -4405,20 +4417,23 @@ int lives_list_strcmp_index(LiVESList * list, livesconstpointer data, boolean ca
 
 void add_to_recent(const char *filename, double start, frames_t frames, const char *extra_params) {
   const char *mtext;
-  char *file, *prefname;
+  char buff[PATH_MAX * 2];
+  char *file, *mfile, *prefname;
   register int i;
 
   if (frames > 0) {
-    if (!extra_params || (!(*extra_params))) file = lives_strdup_printf("%s|%.2f|%d", filename, start, frames);
-    else file = lives_strdup_printf("%s|%.2f|%d\n%s", filename, start, frames, extra_params);
+    mfile = lives_strdup_printf("%s|%.2f|%d", filename, start, frames);
+    if (!extra_params || (!(*extra_params))) file = lives_strdup(mfile);
+    else file = lives_strdup_printf("%s\n%s", mfile, extra_params);
   } else {
-    if (!extra_params || (!(*extra_params))) file = lives_strdup(filename);
-    else file = lives_strdup_printf("%s\n%s", filename, extra_params);
+    mfile = lives_strdup(filename);
+    if (!extra_params || (!(*extra_params))) file = lives_strdup(mfile);
+    else file = lives_strdup_printf("%s\n%s", mfile, extra_params);
   }
 
   for (i = 0; i < N_RECENT_FILES; i++) {
     mtext = lives_menu_item_get_text(mainw->recent[i]);
-    if (!lives_strcmp(file, mtext)) break;
+    if (!lives_strcmp(mfile, mtext)) break;
   }
 
   if (i == 0) return;
@@ -4429,13 +4444,18 @@ void add_to_recent(const char *filename, double start, frames_t frames, const ch
     mtext = lives_menu_item_get_text(mainw->recent[i - 1]);
     lives_menu_item_set_text(mainw->recent[i], mtext, FALSE);
     if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[i], mtext, FALSE);
+
+    prefname = lives_strdup_printf("%s%d", PREF_RECENT, i);
+    get_utf8_pref(prefname, buff, PATH_MAX * 2);
+    lives_free(prefname);
+
     prefname = lives_strdup_printf("%s%d", PREF_RECENT, i + 1);
-    set_utf8_pref(prefname, mtext);
+    set_utf8_pref(prefname, buff);
     lives_free(prefname);
   }
 
-  lives_menu_item_set_text(mainw->recent[0], file, FALSE);
-  if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[0], file, FALSE);
+  lives_menu_item_set_text(mainw->recent[0], mfile, FALSE);
+  if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[0], mfile, FALSE);
   prefname = lives_strdup_printf("%s%d", PREF_RECENT, 1);
   set_utf8_pref(prefname, file);
   lives_free(prefname);
@@ -4445,6 +4465,7 @@ void add_to_recent(const char *filename, double start, frames_t frames, const ch
     if (*mtext) lives_widget_show(mainw->recent[i]);
   }
 
+  lives_free(mfile);
   lives_free(file);
 }
 
@@ -4823,9 +4844,9 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     break;
   case CLIP_DETAILS_UNIQUE_ID:
     if (capable->cpu_bits == 32) {
-      *(int64_t *)retval = strtoll(val, NULL, 10);
+      *(int64_t *)retval = atoll(val);
     } else {
-      *(int64_t *)retval = strtol(val, NULL, 10);
+      *(int64_t *)retval = atol(val);
     }
     break;
   case CLIP_DETAILS_AENDIAN:
@@ -4861,7 +4882,8 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
 
   boolean needs_sigs = FALSE;
 
-  mainw->write_failed = mainw->com_failed = FALSE;
+  mainw->write_failed = 0;
+  mainw->com_failed = FALSE;
 
   if (which == 0 || which == mainw->scrap_file) return FALSE;
 
@@ -4964,7 +4986,7 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
 
   if (mainw->clip_header != NULL) {
     char *keystr_start = lives_strdup_printf("<%s>\n", key);
-    char *keystr_end = lives_strdup_printf("\n</%s>\n", key);
+    char *keystr_end = lives_strdup_printf("\n</%s>\n\n", key);
     lives_fputs(keystr_start, mainw->clip_header);
     lives_fputs(myval, mainw->clip_header);
     lives_fputs(keystr_end, mainw->clip_header);
@@ -4986,6 +5008,11 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
   lives_free(myval);
   lives_free(key);
 
+  if (mainw->clip_header && mainw->write_failed == fileno(mainw->clip_header) + 1) {
+    mainw->write_failed = 0;
+    return FALSE;
+  }
+  if (mainw->com_failed) return FALSE;
   return TRUE;
 }
 

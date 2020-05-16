@@ -2449,7 +2449,18 @@ void event_list_add_track(weed_plant_t *event_list, int layer) {
       lives_free(newframes);
       lives_free(clips);
       lives_free(frames);
+
+      if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
+        int *aclips;
+        int atracks = weed_frame_event_get_audio_tracks(event, &aclips, NULL);
+        for (i = 0; i < atracks; i += 2) {
+          if (aclips[i] >= 0) aclips[i]++;
+        }
+        weed_set_int_array(event, WEED_LEAF_AUDIO_CLIPS, atracks, aclips);
+        lives_free(aclips);
+      }
       break;
+
     case WEED_EVENT_HINT_FILTER_INIT:
       in_tracks = weed_get_int_array_counted(event, WEED_LEAF_IN_TRACKS, &num_in_tracks);
       if (num_in_tracks) {
@@ -3176,9 +3187,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
         }
         break;
       } else {
-        if (mainw->multitrack != NULL && new_file == mainw->multitrack->render_file) {
-          cfile->frameno = 0; // will force blank frame creation
-        } else cfile->frameno = mainw->frame_index[i - 1];
+        cfile->frameno = mainw->frame_index[i - 1];
         mainw->aframeno = (double)(aseek_tc / TICKS_PER_SECOND_DBL) * cfile->fps;
         mainw->pchains = pchains;
         load_frame_image(cfile->frameno);
@@ -4659,8 +4668,8 @@ boolean render_to_clip(boolean new_clip) {
       lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
     } else {
       // rendered to same clip - update number of frames
-      save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames);
-      if (mainw->com_failed || mainw->write_failed) do_header_write_error(mainw->current_file);
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames))
+        do_header_write_error(mainw->current_file);
     }
 
     if (cfile->clip_type == CLIP_TYPE_FILE) {
@@ -5120,8 +5129,10 @@ double *get_track_visibility_at_tc(weed_plant_t *event_list, int ntracks, int nb
             lives_free(in_params);
             for (j = 0; j < ntracks; j++) {
               /// TODO *** make selectable: linear or non-linear
-              matrix[in_tracks[1] + nbtracks][j] *= lives_vol_from_linear(trans);
-              matrix[in_tracks[0] + nbtracks][j] *= lives_vol_from_linear((1. - trans));
+              /* matrix[in_tracks[1] + nbtracks][j] *= lives_vol_from_linear(trans); */
+              /* matrix[in_tracks[0] + nbtracks][j] *= lives_vol_from_linear((1. - trans)); */
+              matrix[in_tracks[1] + nbtracks][j] *= trans;
+              matrix[in_tracks[0] + nbtracks][j] *= 1. - trans;
               matrix[out_tracks[0] + nbtracks][j] = matrix[in_tracks[0] + nbtracks][j] + matrix[in_tracks[1] + nbtracks][j];
             }
 

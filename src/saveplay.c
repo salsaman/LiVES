@@ -98,19 +98,19 @@ LIVES_GLOBAL_INLINE void start_playback_async(int type) {lives_timer_add(0, _sta
 LIVES_GLOBAL_INLINE boolean start_playback(int type) {return  _start_playback(LIVES_INT_TO_POINTER(type));}
 
 boolean save_clip_values(int which) {
+  lives_clip_t *sfile = mainw->files[which];
   char *lives_header_new;
-
-  int asigned;
-  int endian;
+  boolean all_ok = FALSE;
+  int asigned, endian;
   int retval;
 
   if (which == 0 || which == mainw->scrap_file || which == mainw->ascrap_file) return TRUE;
 
   set_signal_handlers((SignalHandlerPointer)defer_sigint); // ignore ctrl-c
 
-  asigned = !(mainw->files[which]->signed_endian & AFORM_UNSIGNED);
-  endian = mainw->files[which]->signed_endian & AFORM_BIG_ENDIAN;
-  lives_header_new = lives_build_filename(prefs->workdir, mainw->files[which]->handle, LIVES_CLIP_HEADER_NEW, NULL);
+  asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
+  endian = sfile->signed_endian & AFORM_BIG_ENDIAN;
+  lives_header_new = lives_build_filename(prefs->workdir, sfile->handle, LIVES_CLIP_HEADER_NEW, NULL);
 
   do {
     mainw->com_failed = mainw->write_failed = FALSE;
@@ -124,73 +124,54 @@ boolean save_clip_values(int which) {
         return FALSE;
       }
     } else {
-      mainw->files[which]->header_version = LIVES_CLIP_HEADER_VERSION;
+      sfile->header_version = LIVES_CLIP_HEADER_VERSION;
       do {
         retval = 0;
-        save_clip_value(which, CLIP_DETAILS_HEADER_VERSION, &mainw->files[which]->header_version);
-        // TODO: can we just check for FALSE ?
-        if (mainw->com_failed || mainw->write_failed) break;
-        save_clip_value(which, CLIP_DETAILS_BPP, &mainw->files[which]->bpp);
-        if (mainw->com_failed || mainw->write_failed) break;
-        save_clip_value(which, CLIP_DETAILS_FPS, &mainw->files[which]->fps);
-        if (mainw->com_failed || mainw->write_failed) break;
-        save_clip_value(which, CLIP_DETAILS_PB_FPS, &mainw->files[which]->pb_fps);
-        if (mainw->com_failed || mainw->write_failed) break;
-        save_clip_value(which, CLIP_DETAILS_WIDTH, &mainw->files[which]->hsize);
-        if (mainw->com_failed || mainw->write_failed) break;
-        save_clip_value(which, CLIP_DETAILS_HEIGHT, &mainw->files[which]->vsize);
-        if (mainw->com_failed || mainw->write_failed) break;
-        save_clip_value(which, CLIP_DETAILS_INTERLACE, &mainw->files[which]->interlace);
-        if (mainw->com_failed || mainw->write_failed) break;
-        save_clip_value(which, CLIP_DETAILS_UNIQUE_ID, &mainw->files[which]->unique_id);
-        if (mainw->com_failed || mainw->write_failed) break;
-        save_clip_value(which, CLIP_DETAILS_ARATE, &mainw->files[which]->arps);
-        if (mainw->com_failed || mainw->write_failed) break;
-        save_clip_value(which, CLIP_DETAILS_PB_ARATE, &mainw->files[which]->arate);
-        if (mainw->com_failed || mainw->write_failed) break;
-        save_clip_value(which, CLIP_DETAILS_ACHANS, &mainw->files[which]->achans);
-        if (mainw->com_failed || mainw->write_failed) break;
-        if (mainw->files[which]->achans > 0) {
-          save_clip_value(which, CLIP_DETAILS_ASIGNED, &asigned);
-          if (mainw->com_failed || mainw->write_failed) break;
+        if (!save_clip_value(which, CLIP_DETAILS_HEADER_VERSION, &sfile->header_version)) break;
+        if (!save_clip_value(which, CLIP_DETAILS_BPP, &sfile->bpp)) break;
+        if (sfile->clip_type == CLIP_TYPE_FILE && sfile->ext_src) {
+          lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->ext_src)->cdata;
+          double dfps = (double)cdata->fps;
+          if (!save_clip_value(which, CLIP_DETAILS_FPS, &dfps)) break;
+          if (!save_clip_value(which, CLIP_DETAILS_PB_FPS, &sfile->fps)) break;
+        } else {
+          if (!save_clip_value(which, CLIP_DETAILS_FPS, &sfile->fps)) break;
+          if (!save_clip_value(which, CLIP_DETAILS_PB_FPS, &sfile->pb_fps)) break;
         }
-        if (mainw->files[which]->achans > 0) {
-          save_clip_value(which, CLIP_DETAILS_AENDIAN, &endian);
-          if (mainw->com_failed || mainw->write_failed) break;
+        if (!save_clip_value(which, CLIP_DETAILS_WIDTH, &sfile->hsize)) break;
+        if (!save_clip_value(which, CLIP_DETAILS_HEIGHT, &sfile->vsize)) break;
+        if (!save_clip_value(which, CLIP_DETAILS_INTERLACE, &sfile->interlace)) break;
+        if (!save_clip_value(which, CLIP_DETAILS_UNIQUE_ID, &sfile->unique_id)) break;
+        if (!save_clip_value(which, CLIP_DETAILS_ARATE, &sfile->arps)) break;
+        if (!save_clip_value(which, CLIP_DETAILS_PB_ARATE, &sfile->arate)) break;
+        if (!save_clip_value(which, CLIP_DETAILS_ACHANS, &sfile->achans)) break;
+        if (sfile->achans > 0) {
+          if (!save_clip_value(which, CLIP_DETAILS_ASIGNED, &asigned)) break;
+          if (!save_clip_value(which, CLIP_DETAILS_AENDIAN, &endian)) break;
         }
-        save_clip_value(which, CLIP_DETAILS_ASAMPS, &mainw->files[which]->asampsize);
-        if (mainw->com_failed || mainw->write_failed) break;
-        save_clip_value(which, CLIP_DETAILS_FRAMES, &mainw->files[which]->frames);
-        if (mainw->com_failed || mainw->write_failed) break;
-        save_clip_value(which, CLIP_DETAILS_GAMMA_TYPE, &mainw->files[which]->gamma_type);
-        if (mainw->com_failed || mainw->write_failed) break;
-        save_clip_value(which, CLIP_DETAILS_TITLE, mainw->files[which]->title);
-        if (mainw->com_failed || mainw->write_failed) break;
-        save_clip_value(which, CLIP_DETAILS_AUTHOR, mainw->files[which]->author);
-        if (mainw->com_failed || mainw->write_failed) break;
-        save_clip_value(which, CLIP_DETAILS_COMMENT, mainw->files[which]->comment);
-        if (mainw->com_failed || mainw->write_failed) break;
-        save_clip_value(which, CLIP_DETAILS_PB_FRAMENO, &mainw->files[which]->frameno);
-        if (mainw->com_failed || mainw->write_failed) break;
-        save_clip_value(which, CLIP_DETAILS_CLIPNAME, mainw->files[which]->name);
-        if (mainw->com_failed || mainw->write_failed) break;
-        save_clip_value(which, CLIP_DETAILS_FILENAME, mainw->files[which]->file_name);
-        if (mainw->com_failed || mainw->write_failed) break;
-        save_clip_value(which, CLIP_DETAILS_KEYWORDS, mainw->files[which]->keywords);
-        if (mainw->com_failed || mainw->write_failed) break;
-        if (cfile->ext_src) {
-          lives_decoder_t *dplug = (lives_decoder_t *)cfile->ext_src;
-          save_clip_value(which, CLIP_DETAILS_DECODER_NAME, (void *)dplug->decoder->name);
-          if (mainw->com_failed || mainw->write_failed) break;
+        if (!save_clip_value(which, CLIP_DETAILS_ASAMPS, &sfile->asampsize)) break;
+        if (!save_clip_value(which, CLIP_DETAILS_FRAMES, &sfile->frames)) break;
+        if (!save_clip_value(which, CLIP_DETAILS_GAMMA_TYPE, &sfile->gamma_type)) break;
+        if (!save_clip_value(which, CLIP_DETAILS_TITLE, sfile->title)) break;
+        if (!save_clip_value(which, CLIP_DETAILS_AUTHOR, sfile->author)) break;
+        if (!save_clip_value(which, CLIP_DETAILS_COMMENT, sfile->comment)) break;
+        if (!save_clip_value(which, CLIP_DETAILS_PB_FRAMENO, &sfile->frameno)) break;
+        if (!save_clip_value(which, CLIP_DETAILS_CLIPNAME, sfile->name)) break;
+        if (!save_clip_value(which, CLIP_DETAILS_FILENAME, sfile->file_name)) break;
+        if (!save_clip_value(which, CLIP_DETAILS_KEYWORDS, sfile->keywords)) break;
+        if (sfile->clip_type == CLIP_TYPE_FILE && sfile->ext_src) {
+          lives_decoder_t *dplug = (lives_decoder_t *)sfile->ext_src;
+          if (!save_clip_value(which, CLIP_DETAILS_DECODER_NAME, (void *)dplug->decoder->name)) break;
         }
+        all_ok = TRUE;
       } while (FALSE);
 
       fclose(mainw->clip_header);
 
-      if (mainw->com_failed || mainw->write_failed) {
+      if (!all_ok) {
         retval = do_write_failed_error_s_with_retry(lives_header_new, NULL, NULL);
       } else {
-        char *lives_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle, LIVES_CLIP_HEADER, NULL);
+        char *lives_header = lives_build_filename(prefs->workdir, sfile->handle, LIVES_CLIP_HEADER, NULL);
         // TODO - check the sizes before and after
         lives_cp(lives_header_new, lives_header);
         lives_free(lives_header);
@@ -6001,6 +5982,7 @@ static lives_clip_t *_restore_binfmt(int clipno, boolean forensic) {
               cfile->needs_update = TRUE;
             }
           }
+	  if (cfile->header_version >= 102) cfile->fps = cfile->pb_fps;
         }
       } else {
         /// CLIP_TYPE_DISK
@@ -6031,6 +6013,7 @@ static lives_clip_t *_restore_binfmt(int clipno, boolean forensic) {
 
       if (mainw->current_file < 1) continue;
 
+      if (cfile->clip_type == CLIP_TYPE_FILE && cfile->header_version >= 102) cfile->fps = cfile->pb_fps;
       get_total_time(cfile);
 
       if (CLIP_TOTAL_TIME(mainw->current_file) == 0.) {

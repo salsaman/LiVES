@@ -1156,6 +1156,7 @@ static void draw_block(lives_mt * mt, lives_painter_t *cairo,
 
   if (!is_audio) filenum = get_frame_event_clip(block->start_event, track);
   else filenum = get_audio_frame_clip(block->start_event, track);
+  if (!IS_VALID_CLIP(filenum)) return;
 
   switch (block->state) {
   case BLOCK_UNSELECTED:
@@ -3545,6 +3546,9 @@ static void mt_zoom(lives_mt * mt, double scale) {
 
   if (mt->tl_min == mt->tl_max) mt->tl_max = mt->tl_min + 1. / mt->fps;
 
+#ifdef ENABLE_GIW
+  giw_timeline_set_max_size(GIW_TIMELINE(mt->timeline), mt->tl_max);
+#endif
   lives_ruler_set_upper(LIVES_RULER(mt->timeline), mt->tl_max);
   lives_ruler_set_lower(LIVES_RULER(mt->timeline), mt->tl_min);
 
@@ -4682,7 +4686,7 @@ static boolean on_clipbox_enter(LiVESWidget * widget, LiVESXEventCrossing * even
 
 void mt_init_start_end_spins(lives_mt * mt) {
   LiVESWidget *hbox;
-
+  char *tmp, *tmp2;
   int dpw = widget_opts.packing_width;
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -4714,6 +4718,12 @@ void mt_init_start_end_spins(lives_mt * mt) {
   lives_signal_connect(LIVES_GUI_OBJECT(mt->amixer_button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(amixer_show),
                        (livespointer)mt);
+
+  mt->bleedthru = lives_glowing_check_button_new((tmp = _("  Bleedthru  ")), LIVES_BOX(hbox),
+                  (tmp2 = _("When active, all layers will be audible regardless of visibility")),
+                  &mt->opts.audio_bleedthru);
+  lives_free(tmp);
+  lives_free(tmp2);
 
   widget_opts.packing_width = MAIN_SPIN_SPACER;
   mt->spinbutton_start = lives_standard_spin_button_new(NULL, 0., 0., 10000000., 1. / mt->fps, 1. / mt->fps, 3,
@@ -9704,7 +9714,6 @@ void mt_init_tracks(lives_mt * mt, boolean set_min_max) {
   mt->block_selected = NULL;
 
   if (mt->timeline_eb == NULL) {
-
 #ifdef ENABLE_GIW_3
     mt->timeline = giw_timeline_new_with_adjustment(LIVES_ORIENTATION_HORIZONTAL, 0., 0., 1000000., 1000000.);
     giw_timeline_set_unit(GIW_TIMELINE(mt->timeline), GIW_TIME_UNIT_SMH);
@@ -11253,6 +11262,8 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
   if (cfile->achans > 0 && !is_realtime_aplayer(prefs->audio_player)) {
     do_mt_no_jack_error(WARN_MASK_MT_NO_JACK);
   }
+
+  mt_zoom(multi, 1.);
 
   mainw->is_ready = TRUE;
 

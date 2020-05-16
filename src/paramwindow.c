@@ -648,6 +648,13 @@ static void add_genparams(LiVESWidget *vbox, lives_rfx_t *rfx) {
                                          &sp_frames, cfile->end, TRUE, NULL);
   lives_box_pack_start(LIVES_BOX(vbox), frame, FALSE, TRUE, 0);
 
+  lives_spin_button_update(LIVES_SPIN_BUTTON(sp_width));
+  lives_spin_button_update(LIVES_SPIN_BUTTON(sp_height));
+  if (sp_frames) lives_spin_button_update(LIVES_SPIN_BUTTON(sp_frames));
+  lives_spin_button_update(LIVES_SPIN_BUTTON(sp_fps));
+  cfile->ohsize = cfile->hsize = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(sp_width));
+  cfile->ovsize = cfile->vsize = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(sp_height));
+
   lives_signal_connect_after(LIVES_GUI_OBJECT(sp_width), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                              LIVES_GUI_CALLBACK(xspinw_changed), NULL);
   lives_signal_connect_after(LIVES_GUI_OBJECT(sp_height), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,

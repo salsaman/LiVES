@@ -9101,11 +9101,11 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
 }
 
 
-LiVESWidget *lives_glowing_check_button_new(const char *labeltext, LiVESBox *box,
-    const char *tooltip, boolean *togglevalue) {
+LiVESWidget *lives_glowing_check_button_new(const char *labeltext, LiVESBox *box, const char *tooltip, boolean *togglevalue) {
   boolean active = FALSE;
+  LiVESWidget *checkbutton;
   if (togglevalue != NULL) active = *togglevalue;
-  LiVESWidget *checkbutton = lives_standard_check_button_new(labeltext, active, box, tooltip);
+  checkbutton = lives_standard_check_button_new(labeltext, active, box, tooltip);
   lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                              LIVES_GUI_CALLBACK(lives_cool_toggled),
                              togglevalue);
@@ -9122,6 +9122,19 @@ LiVESWidget *lives_glowing_check_button_new(const char *labeltext, LiVESBox *box
     }
   }
   return checkbutton;
+}
+
+
+LiVESWidget *lives_glowing_tool_button_new(const char *labeltext, LiVESToolbar *tbar, const char *tooltip,
+    boolean *togglevalue) {
+  LiVESToolItem *titem = lives_tool_item_new();
+  LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
+  LiVESWidget *button = lives_glowing_check_button_new(labeltext, LIVES_BOX(hbox), tooltip, togglevalue);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  lives_container_add(LIVES_CONTAINER(titem), hbox);
+  if (tbar != NULL) lives_toolbar_insert(tbar, titem, -1);
+  return button;
 }
 
 
@@ -11215,7 +11228,7 @@ boolean lives_tree_store_find_iter(LiVESTreeStore *tstore, int col, const char *
 #include "ce_thumbs.h"
 
 #define MAX_NULL_EVENTS 512
-#define LOOP_LIMIT 16
+#define LOOP_LIMIT 32
 boolean lives_widget_context_update(void) {
   boolean mt_needs_idlefunc = FALSE;
   int nulleventcount = 0, loops = 0;

@@ -1,5 +1,5 @@
 /// LiVES - avformat plugin
-// (c) G. Finch 2010 - 2016 <salsaman+lives@gmail.com>
+// (c) G. Finch 2010 - 2020 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 //
@@ -1052,6 +1052,7 @@ boolean chill_out(const lives_clip_data_t *cdata) {
   }
   return TRUE;
 }
+
 
 //#define DEBUG
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {

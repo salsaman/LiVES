@@ -2953,6 +2953,14 @@ boolean resize_message_area(livespointer data) {
   static boolean isfirst = TRUE;
   int bx, by;
 
+  if (mainw->ldg_menuitem) {
+    if (RFX_LOADED) {
+      lives_widget_destroy(mainw->ldg_menuitem);
+      mainw->ldg_menuitem = NULL;
+      add_rfx_effects2(RFX_STATUS_ANY);
+    }
+  }
+
   if (!prefs->show_gui || LIVES_IS_PLAYING || mainw->is_processing || mainw->is_rendering || !prefs->show_msg_area) {
     mainw->assumed_height = mainw->assumed_width = -1;
     mainw->idlemax = 0;
@@ -7466,7 +7474,6 @@ void load_frame_image(int frame) {
 	  int oclip, nclip;
 	  register int i;
 	  weed_plant_t **layers = (weed_plant_t **)lives_calloc((mainw->num_tracks + 1), sizeof(weed_plant_t *));
-
 	  // get list of active tracks from mainw->filter map
 	  get_active_track_list(mainw->clip_index, mainw->num_tracks, mainw->filter_map);
 	  for (i = 0; i < mainw->num_tracks; i++) {

@@ -710,7 +710,7 @@ if (defined($ARGV[0])) {
 
 
 	if ($command eq "pause") {
-	    if (!&is_writeable("$workdir/$ARGV[1]/pause\"", 1)) {
+	    if (!&is_writeable("$workdir/$ARGV[1]/pause", 1)) {
 		&sig_write_error("$workdir/$ARGV[1]/pause");
 		exit 1;
 	    }
@@ -3974,7 +3974,6 @@ if (defined($ARGV[0])) {
 
 	if ($command eq "audioopen") {
 	    # TODO - allow front end to specify rate/channels, etc.
-
 	    $file = $ARGV[2];
 
 	    &smog_chdir($curworkdir);
@@ -3982,6 +3981,7 @@ if (defined($ARGV[0])) {
 	    $audio_in = "audiodump.wav";
 
 	    $ext = &get_ext($file);
+
 	    if ($ext eq ".mp3") {
 		&mp3_open;
 	    }
@@ -6672,8 +6672,7 @@ if (defined($ARGV[0])) {
     sub get_ext {
 	my $fname = shift;
 	my $ext = (split(/\./,$fname))[-1];
-
-	if ($ext = ~/(.*)\"$/) {
+	if ($ext =~ /(.*)\"$/) {
 	    $ext = $1;
 	}
 

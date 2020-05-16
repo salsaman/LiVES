@@ -199,7 +199,7 @@ double lives_ce_update_timeline(int frame, double x) {
   if (x > CLIP_TOTAL_TIME(mainw->current_file)) x = CLIP_TOTAL_TIME(mainw->current_file);
   cfile->real_pointer_time = x;
 
-  if (frame > cfile->frames) frame = cfile->frames;
+  if (cfile->frames > 0 && frame > cfile->frames) frame = cfile->frames;
   x = calc_time_from_frame(mainw->current_file, frame);
   cfile->pointer_time = x;
 
@@ -209,7 +209,6 @@ double lives_ce_update_timeline(int frame, double x) {
                                  (cfile->asampsize / 8));
     if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
   }
-
 
 #ifndef ENABLE_GIW_3
   lives_ruler_set_value(LIVES_RULER(mainw->hruler), x);
@@ -734,6 +733,9 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
           lives_widget_show(mainw->raudio_draw);
         }
 
+#ifdef ENABLE_GIW
+        giw_timeline_set_max_size(GIW_TIMELINE(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
+#endif
         lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
         lives_widget_queue_draw(mainw->hruler);
 

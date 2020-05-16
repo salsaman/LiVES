@@ -234,10 +234,8 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
         cfile->hsize = width;
         cfile->vsize = height;
 
-        save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize);
-        if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-        save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize);
-        if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+        if (!save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize)) bad_header = TRUE;
+        if (!save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize)) bad_header = TRUE;
         if (bad_header) do_header_write_error(mainw->current_file);
 
         cfile->undo1_dbl = fps;
@@ -288,10 +286,8 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
           on_undo_activate(NULL, NULL);
           return FALSE;
         }
-        save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize);
-        if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-        save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize);
-        if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+        if (!save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize)) bad_header = TRUE;
+        if (!save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize)) bad_header = TRUE;
         if (bad_header) do_header_write_error(mainw->current_file);
 
         video_resampled = TRUE;
@@ -427,10 +423,8 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
       mainw->resizing = FALSE;
       cfile->fx_frame_pump = 0;
 
-      save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize);
-      if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-      save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize);
-      if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize)) bad_header = TRUE;
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize)) bad_header = TRUE;
       if (bad_header) do_header_write_error(mainw->current_file);
 
       if (audio_resampled) cfile->undo_action = UNDO_ATOMIC_RESAMPLE_RESIZE;
@@ -1168,7 +1162,6 @@ static void on_reorder_activate(int rwidth, int rheight) {
   cfile->next_event = NULL;
 
   save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames);
-  if (mainw->com_failed || mainw->write_failed) do_header_write_error(mainw->current_file);
 
   switch_to_file(mainw->current_file, mainw->current_file);
   if (mainw->current_file > 0) {
@@ -1536,11 +1529,16 @@ void on_resample_vid_ok(LiVESButton * button, LiVESEntry * entry) {
   cfile->old_frames = old_frames;
 
   set_undoable(_("Resample"), TRUE);
+  if (cfile->clip_type == CLIP_TYPE_FILE && cfile->ext_src) {
+    lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
+    double dfps = (double)cdata->fps;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &dfps)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_FPS, &cfile->fps)) bad_header = TRUE;
+  } else {
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &cfile->fps)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_FPS, &cfile->pb_fps)) bad_header = TRUE;
+  }
 
-  save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &cfile->fps);
-  if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-  save_clip_value(mainw->current_file, CLIP_DETAILS_PB_FPS, &cfile->fps);
-  if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
   if (bad_header) do_header_write_error(mainw->current_file);
 
   switch_to_file(mainw->current_file, mainw->current_file);
@@ -2080,8 +2078,10 @@ void on_change_speed_ok_clicked(LiVESButton * button, livespointer user_data) {
   }
 
   char *tmp = lives_strdup(_("Changing the clip fps"));
-  uint32_t chk_mask = WARN_MASK_LAYOUT_DELETE_FRAMES | WARN_MASK_LAYOUT_SHIFT_FRAMES | WARN_MASK_LAYOUT_ALTER_FRAMES;
-  if (mainw->fx1_bool) chk_mask |= WARN_MASK_LAYOUT_DELETE_AUDIO | WARN_MASK_LAYOUT_SHIFT_AUDIO | WARN_MASK_LAYOUT_ALTER_AUDIO;
+  uint32_t chk_mask = WARN_MASK_LAYOUT_DELETE_FRAMES | WARN_MASK_LAYOUT_SHIFT_FRAMES
+                      | WARN_MASK_LAYOUT_ALTER_FRAMES;
+  if (mainw->fx1_bool) chk_mask |= WARN_MASK_LAYOUT_DELETE_AUDIO | WARN_MASK_LAYOUT_SHIFT_AUDIO
+                                     | WARN_MASK_LAYOUT_ALTER_AUDIO;
   if (!check_for_layout_errors(tmp, mainw->current_file, 1, new_frames, &chk_mask)) {
     lives_free(tmp);
     return;
@@ -2117,12 +2117,17 @@ void on_change_speed_ok_clicked(LiVESButton * button, livespointer user_data) {
 
   cfile->ratio_fps = FALSE;
 
-  save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &cfile->fps);
-  if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-  save_clip_value(mainw->current_file, CLIP_DETAILS_PB_FPS, &cfile->fps);
-  if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-  save_clip_value(mainw->current_file, CLIP_DETAILS_PB_ARATE, &cfile->arate);
-  if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+  if (cfile->clip_type == CLIP_TYPE_FILE && cfile->ext_src) {
+    lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
+    double dfps = (double)cdata->fps;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &dfps)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_FPS, &cfile->fps)) bad_header = TRUE;
+  } else {
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &cfile->fps)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_FPS, &cfile->pb_fps)) bad_header = TRUE;
+  }
+
+  if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_ARATE, &cfile->arate)) bad_header = TRUE;
   if (bad_header) do_header_write_error(mainw->current_file);
 
   switch_to_file(mainw->current_file, mainw->current_file);
@@ -2168,7 +2173,6 @@ int reorder_frames(int rwidth, int rheight) {
           do_lb_convert_error();
           return -cur_frames;
         }
-
       }
 
       com = lives_strdup_printf("%s reorder \"%s\" \"%s\" %d %d %d %d %d %d %d", prefs->backend, cfile->handle,

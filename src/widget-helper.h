@@ -1099,6 +1099,8 @@ LiVESWidget *lives_toolbar_insert_space(LiVESToolbar *);
 LiVESWidget *lives_toolbar_insert_label(LiVESToolbar *, const char *labeltext);
 LiVESWidget *lives_standard_tool_button_new(LiVESToolbar *, GtkWidget *icon_widget, const char *label, const char *tooltips);
 boolean lives_tool_button_set_border_colour(LiVESWidget *button, LiVESWidgetState state, LiVESWidgetColor *);
+LiVESWidget *lives_glowing_tool_button_new(const char *labeltext, LiVESToolbar *tbar, const char *tooltip,
+    boolean *togglevalue);
 
 boolean lives_accel_path_disconnect(LiVESAccelGroup *, const char *path);
 

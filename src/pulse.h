@@ -38,6 +38,7 @@ typedef struct {
   volatile pa_usec_t usec_start;
   volatile pa_usec_t extrausec;
   double tscale;
+  double cscale;
 
   int str_idx;
 
@@ -141,6 +142,7 @@ volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *); ///< pull last msg
 int64_t pulse_audio_seek_bytes(pulse_driver_t *, int64_t bytes, lives_clip_t *);
 
 boolean pa_time_reset(pulse_driver_t *, int64_t offset);
+void pulse_tscale_reset(pulse_driver_t *);
 
 ticks_t lives_pulse_get_time(pulse_driver_t *); ///< get time from pa, in 10^-8 seconds
 

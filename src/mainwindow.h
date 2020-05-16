@@ -1238,6 +1238,8 @@ typedef struct {
   LiVESWidget *vps_label;
   LiVESWidget *banner;
 
+  LiVESWidget *ldg_menuitem;
+
   // (sub)menus
   LiVESWidget *files_menu;
   LiVESWidget *edit_menu;

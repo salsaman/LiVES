@@ -2296,9 +2296,8 @@ void on_undo_activate(LiVESWidget *menuitem, livespointer user_data) {
       if (cfile->frame_index_back != NULL) {
         restore_frame_index_back(mainw->current_file);
       }
-      save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames);
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames)) bad_header = TRUE;
       showclipimgs();
-      if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
     }
     if (reset_achans > 0) {
       if (cfile->audio_waveform != NULL) {
@@ -2309,18 +2308,12 @@ void on_undo_activate(LiVESWidget *menuitem, livespointer user_data) {
       asigned = !(cfile->signed_endian & AFORM_UNSIGNED);
       aendian = cfile->signed_endian & AFORM_BIG_ENDIAN;
       cfile->achans = reset_achans;
-      save_clip_value(mainw->current_file, CLIP_DETAILS_ACHANS, &cfile->achans);
-      if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-      save_clip_value(mainw->current_file, CLIP_DETAILS_ARATE, &cfile->arps);
-      if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-      save_clip_value(mainw->current_file, CLIP_DETAILS_PB_ARATE, &cfile->arate);
-      if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-      save_clip_value(mainw->current_file, CLIP_DETAILS_ASAMPS, &cfile->asampsize);
-      if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-      save_clip_value(mainw->current_file, CLIP_DETAILS_AENDIAN, &aendian);
-      if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-      save_clip_value(mainw->current_file, CLIP_DETAILS_ASIGNED, &asigned);
-      if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ACHANS, &cfile->achans)) bad_header = TRUE;
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ARATE, &cfile->arps)) bad_header = TRUE;
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_ARATE, &cfile->arate)) bad_header = TRUE;
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ASAMPS, &cfile->asampsize)) bad_header = TRUE;
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_AENDIAN, &aendian)) bad_header = TRUE;
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ASIGNED, &asigned)) bad_header = TRUE;
     }
 
     reget_afilesize(mainw->current_file);
@@ -2426,16 +2419,17 @@ void on_undo_activate(LiVESWidget *menuitem, livespointer user_data) {
     cfile->frames = cfile->old_frames;
     cfile->hsize = cfile->ohsize;
     cfile->vsize = cfile->ovsize;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize)) bad_header = TRUE;
     cfile->fps = cfile->undo1_dbl;
-
-    save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &cfile->fps);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_PB_FPS, &cfile->fps);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+    if (cfile->clip_type == CLIP_TYPE_FILE && cfile->ext_src) {
+      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
+      double dfps = (double)cdata->fps;
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &dfps)) bad_header = TRUE;
+    } else {
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &cfile->fps)) bad_header = TRUE;
+    }
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_FPS, &cfile->fps)) bad_header = TRUE;
     cfile->redoable = FALSE;
     // force a resize in switch_to_file
     switch_file = 0;
@@ -2445,9 +2439,8 @@ void on_undo_activate(LiVESWidget *menuitem, livespointer user_data) {
 
   if (cfile->undo_action == UNDO_RENDER) {
     cfile->frames = cfile->old_frames;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames);
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames)) bad_header = TRUE;
     showclipimgs();
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
     if (bad_header) do_header_write_error(mainw->current_file);
   }
 
@@ -2491,9 +2484,8 @@ void on_undo_activate(LiVESWidget *menuitem, livespointer user_data) {
       cfile->insert_start = cfile->insert_end = 0;
     }
     mainw->ccpd_with_sound = ccpd_with_sound;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames);
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames)) bad_header = TRUE;
     showclipimgs();
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
     if (bad_header) do_header_write_error(mainw->current_file);
   }
 
@@ -2554,18 +2546,12 @@ void on_undo_activate(LiVESWidget *menuitem, livespointer user_data) {
     asigned = !(cfile->signed_endian & AFORM_UNSIGNED);
     aendian = cfile->signed_endian & AFORM_BIG_ENDIAN;
 
-    save_clip_value(mainw->current_file, CLIP_DETAILS_ARATE, &cfile->arps);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_PB_ARATE, &cfile->arate);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_ACHANS, &cfile->achans);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_ASAMPS, &cfile->asampsize);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_AENDIAN, &aendian);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_ASIGNED, &asigned);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ARATE, &cfile->arps)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_ARATE, &cfile->arate)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ACHANS, &cfile->achans)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ASAMPS, &cfile->asampsize)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_AENDIAN, &aendian)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ASIGNED, &asigned)) bad_header = TRUE;
 
     reget_afilesize(mainw->current_file);
 
@@ -2608,18 +2594,12 @@ void on_undo_activate(LiVESWidget *menuitem, livespointer user_data) {
     asigned = !(cfile->signed_endian & AFORM_UNSIGNED);
     aendian = cfile->signed_endian & AFORM_BIG_ENDIAN;
 
-    save_clip_value(mainw->current_file, CLIP_DETAILS_ARATE, &cfile->arps);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_PB_ARATE, &cfile->arate);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_ACHANS, &cfile->achans);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_ASAMPS, &cfile->asampsize);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_AENDIAN, &aendian);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_ASIGNED, &asigned);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ARATE, &cfile->arps)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_ARATE, &cfile->arate)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ACHANS, &cfile->achans)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ASAMPS, &cfile->asampsize)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_AENDIAN, &aendian)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ASIGNED, &asigned)) bad_header = TRUE;
 
     if (bad_header) do_header_write_error(mainw->current_file);
   }
@@ -2632,12 +2612,17 @@ void on_undo_activate(LiVESWidget *menuitem, livespointer user_data) {
     cfile->arate += cfile->undo1_int;
     cfile->undo1_int = cfile->arate - cfile->undo1_int;
     cfile->arate -= cfile->undo1_int;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &cfile->fps);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_PB_FPS, &cfile->fps);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_PB_ARATE, &cfile->arate);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+    /// DON'T ! we only save the pb_fps now, since otherwise we may lose the orig. clip fps
+    /* save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &cfile->fps); */
+    if (cfile->clip_type == CLIP_TYPE_FILE && cfile->ext_src) {
+      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
+      double dfps = (double)cdata->fps;
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &dfps)) bad_header = TRUE;
+    } else {
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &cfile->fps)) bad_header = TRUE;
+    }
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_FPS, &cfile->fps)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_ARATE, &cfile->arate)) bad_header = TRUE;
 
     if (bad_header) do_header_write_error(mainw->current_file);
   }
@@ -2663,12 +2648,15 @@ void on_undo_activate(LiVESWidget *menuitem, livespointer user_data) {
     // deorder the frames
     cfile->frames = deorder_frames(cfile->old_frames, mainw->current_file == 0 && !prefs->conserve_space);
 
-    save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &cfile->fps);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_PB_FPS, &cfile->fps);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames)) bad_header = TRUE;
+    if (cfile->clip_type == CLIP_TYPE_FILE && cfile->ext_src) {
+      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
+      double dfps = (double)cdata->fps;
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &dfps)) bad_header = TRUE;
+    } else {
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &cfile->fps)) bad_header = TRUE;
+    }
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_FPS, &cfile->fps)) bad_header = TRUE;
 
     if (bad_header) do_header_write_error(mainw->current_file);
 
@@ -2695,10 +2683,8 @@ void on_undo_activate(LiVESWidget *menuitem, livespointer user_data) {
     cfile->hsize += cfile->ohsize;
     cfile->ohsize = cfile->hsize - cfile->ohsize;
     cfile->hsize -= cfile->ohsize;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize)) bad_header = TRUE;
 
     // force a resize in switch_to_file
     switch_file = 0;
@@ -3552,18 +3538,12 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
     cfile->arps = cfile->arate = clipboard->arate;
     cfile->signed_endian = clipboard->signed_endian;
 
-    save_clip_value(mainw->current_file, CLIP_DETAILS_ARATE, &cfile->arps);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_PB_ARATE, &cfile->arate);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_ACHANS, &cfile->achans);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_ASIGNED, &asigned);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_AENDIAN, &endian);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_ASAMPS, &cfile->asampsize);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ARATE, &cfile->arps)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_ARATE, &cfile->arate)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ACHANS, &cfile->achans)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ASIGNED, &asigned)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_AENDIAN, &endian)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ASAMPS, &cfile->asampsize)) bad_header = TRUE;
 
     if (bad_header) do_header_write_error(mainw->current_file);
   }
@@ -3828,16 +3808,17 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
     cfile->vsize = clipboard->vsize;
     cfile->bpp = clipboard->bpp;
     cfile->fps = cfile->pb_fps = clipboard->fps;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_BPP, &cfile->bpp);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &cfile->fps);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_PB_FPS, &cfile->fps);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_BPP, &cfile->bpp)) bad_header = TRUE;
+    if (cfile->clip_type == CLIP_TYPE_FILE && cfile->ext_src) {
+      lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
+      double dfps = (double)cdata->fps;
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &dfps)) bad_header = TRUE;
+    } else {
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FPS, &cfile->fps)) bad_header = TRUE;
+    }
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_FPS, &cfile->fps)) bad_header = TRUE;
 
     if (bad_header) do_header_write_error(mainw->current_file);
   }
@@ -3882,8 +3863,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
     mainw->current_file = current_file;
   }
 
-  save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames);
-  if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+  if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames)) bad_header = TRUE;
 
   if (bad_header) do_header_write_error(mainw->current_file);
 
@@ -4183,10 +4163,8 @@ void on_delete_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     }
     lives_snprintf(cfile->type, 40, "Audio");
     cfile->hsize = cfile->vsize = 0;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize)) bad_header = TRUE;
 
     if (bad_header) do_header_write_error(mainw->current_file);
     cfile->orig_file_name = FALSE;
@@ -4224,8 +4202,7 @@ void on_delete_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // menuitem is NULL if we came here from undo_insert
   if (menuitem == NULL && !mainw->osc_auto) return;
 
-  save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames);
-  if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+  if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames)) bad_header = TRUE;
 
   showclipimgs();
 
@@ -5806,6 +5783,7 @@ boolean reload_set(const char *set_name) {
         If this is the frame we expected then we assume all is OK */
 
       if (!reload_clip(mainw->current_file, maxframe)) continue;
+      if (cfile->clip_type == CLIP_TYPE_FILE && cfile->header_version >= 102) cfile->fps = cfile->pb_fps;
 
       /** if the image type is still unkown it means either there were no decoded frames, or the final decoded frame was absent
         so we count the virtual frames. If all are virtual then we set img_type to prefs->img_type and assume all is OK
@@ -5857,6 +5835,7 @@ boolean reload_set(const char *set_name) {
 
     /// read the playback fps, play frame, and name
     open_set_file(clipnum); ///< must do before calling save_clip_values()
+    if (cfile->clip_type == CLIP_TYPE_FILE && cfile->header_version >= 102) cfile->fps = cfile->pb_fps;
 
     /// if this is set then it means we are auto reloading the clipset from the previous session, so restore full details
     if (future_prefs->ar_clipset) restore_clip_binfmt(mainw->current_file);
@@ -6234,10 +6213,9 @@ void on_vj_reset_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     mainw->files[i]->frameno = 1;
     mainw->files[i]->aseek_pos = 0;
 
-    save_clip_value(i, CLIP_DETAILS_PB_FPS, &mainw->files[i]->pb_fps);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(i, CLIP_DETAILS_PB_FRAMENO, &mainw->files[i]->frameno);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+    if (!save_clip_value(i, CLIP_DETAILS_PB_FPS, &mainw->files[i]->fps)) bad_header = TRUE;
+    if (!save_clip_value(i, CLIP_DETAILS_PB_FRAMENO, &mainw->files[i]->frameno)) bad_header = TRUE;
+
     threaded_dialog_spin((double)i / (double)mainw->clips_available);
 
     if (bad_header) {
@@ -7158,8 +7136,6 @@ void on_cancel_opensel_clicked(LiVESButton  * button, livespointer user_data) {
 
 void on_cancel_keep_button_clicked(LiVESButton * button, livespointer user_data) {
   // Cancel/Keep from progress dialog
-  FILE *infofile;
-
   char *com = NULL;
 
   uint32_t keep_frames = 0;
@@ -7222,12 +7198,7 @@ void on_cancel_keep_button_clicked(LiVESButton * button, livespointer user_data)
       // see if there was a message from backend
 
       if (mainw->cancel_type != CANCEL_SOFT) {
-        if ((infofile = fopen(cfile->info_file, "r")) != NULL) {
-          mainw->read_failed = FALSE;
-          lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
-          fclose(infofile);
-        }
-
+        lives_fread_string(mainw->msg, MAINW_MSG_SIZE, cfile->info_file);
         if (lives_strncmp(mainw->msg, "completed", 9)) {
           d_print_cancelled();
         } else {
@@ -8453,21 +8424,23 @@ void on_open_new_audio_clicked(LiVESFileChooser * chooser, livespointer user_dat
 
   cfile->opening_audio = cfile->opening = cfile->opening_only_audio = FALSE;
 
-  lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
-
   cfile->afilesize = 0;
+
   if (get_token_count(mainw->msg, '|') > 6) {
     array = lives_strsplit(mainw->msg, "|", 7);
     cfile->arate = atoi(array[1]);
     cfile->achans = atoi(array[2]);
     cfile->asampsize = atoi(array[3]);
     cfile->signed_endian = get_signed_endian(atoi(array[4]), atoi(array[5]));
-    cfile->afilesize = strtol(array[6], NULL, 10);
+    cfile->afilesize = atol(array[6]);
     lives_strfreev(array);
 
     if (cfile->undo_arate > 0) cfile->arps = cfile->undo_arps / cfile->undo_arate * cfile->arate;
     else cfile->arps = cfile->arate;
   }
+
+  /// not sure why, but this messes up mainw->msg...
+  lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
 
   if (cfile->afilesize == 0) {
     d_print_failed();
@@ -8556,18 +8529,12 @@ void on_open_new_audio_clicked(LiVESFileChooser * chooser, livespointer user_dat
   asigned = !(cfile->signed_endian & AFORM_UNSIGNED);
   aendian = cfile->signed_endian & AFORM_BIG_ENDIAN;
 
-  save_clip_value(mainw->current_file, CLIP_DETAILS_ARATE, &cfile->arps);
-  if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-  save_clip_value(mainw->current_file, CLIP_DETAILS_PB_ARATE, &cfile->arate);
-  if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-  save_clip_value(mainw->current_file, CLIP_DETAILS_ACHANS, &cfile->achans);
-  if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-  save_clip_value(mainw->current_file, CLIP_DETAILS_ASAMPS, &cfile->asampsize);
-  if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-  save_clip_value(mainw->current_file, CLIP_DETAILS_AENDIAN, &aendian);
-  if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-  save_clip_value(mainw->current_file, CLIP_DETAILS_ASIGNED, &asigned);
-  if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+  if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ARATE, &cfile->arps)) bad_header = TRUE;
+  if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_ARATE, &cfile->arate)) bad_header = TRUE;
+  if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ACHANS, &cfile->achans)) bad_header = TRUE;
+  if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ASAMPS, &cfile->asampsize)) bad_header = TRUE;
+  if (!save_clip_value(mainw->current_file, CLIP_DETAILS_AENDIAN, &aendian)) bad_header = TRUE;
+  if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ASIGNED, &asigned)) bad_header = TRUE;
 
   if (bad_header) do_header_write_error(mainw->current_file);
 
@@ -8832,18 +8799,12 @@ void on_load_cdtrack_ok_clicked(LiVESButton * button, livespointer user_data) {
     return;
   }
 
-  save_clip_value(mainw->current_file, CLIP_DETAILS_ARATE, &cfile->arps);
-  if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-  save_clip_value(mainw->current_file, CLIP_DETAILS_PB_ARATE, &cfile->arate);
-  if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-  save_clip_value(mainw->current_file, CLIP_DETAILS_ACHANS, &cfile->achans);
-  if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-  save_clip_value(mainw->current_file, CLIP_DETAILS_ASIGNED, &asigned);
-  if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-  save_clip_value(mainw->current_file, CLIP_DETAILS_AENDIAN, &endian);
-  if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-  save_clip_value(mainw->current_file, CLIP_DETAILS_ASAMPS, &cfile->asampsize);
-  if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+  if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ARATE, &cfile->arps)) bad_header = TRUE;
+  if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_ARATE, &cfile->arate)) bad_header = TRUE;
+  if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ACHANS, &cfile->achans)) bad_header = TRUE;
+  if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ASIGNED, &asigned)) bad_header = TRUE;
+  if (!save_clip_value(mainw->current_file, CLIP_DETAILS_AENDIAN, &endian)) bad_header = TRUE;
+  if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ASAMPS, &cfile->asampsize)) bad_header = TRUE;
 
   if (bad_header) do_header_write_error(mainw->current_file);
 
@@ -9095,8 +9056,7 @@ void on_rename_clip_name(LiVESButton * button, livespointer user_data) {
 
     lives_snprintf(cfile->name, 256, "%s", title);
 
-    save_clip_value(mainw->current_file, CLIP_DETAILS_CLIPNAME, cfile->name);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_CLIPNAME, cfile->name)) bad_header = TRUE;
 
     if (bad_header) do_header_write_error(mainw->current_file);
     cfile->was_renamed = TRUE;
@@ -11821,8 +11781,7 @@ boolean on_del_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
     }
     if (cfile->laudio_time == cfile->raudio_time) cfile->achans = 0;
     else cfile->achans = 1;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_ACHANS, &cfile->achans);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ACHANS, &cfile->achans)) bad_header = TRUE;
 
     if (bad_header) do_header_write_error(mainw->current_file);
   }
@@ -12315,14 +12274,10 @@ void on_ins_silence_details_clicked(LiVESButton * button, livespointer user_data
   if (cfile->arate <= 0) {
     do_audrate_error_dialog();
     cfile->achans = cfile->arate = cfile->arps = cfile->asampsize = 0;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_ARATE, &cfile->arps);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_PB_ARATE, &cfile->arate);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_ACHANS, &cfile->achans);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-    save_clip_value(mainw->current_file, CLIP_DETAILS_ASAMPS, &cfile->asampsize);
-    if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ARATE, &cfile->arps)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_ARATE, &cfile->arate)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ACHANS, &cfile->achans)) bad_header = TRUE;
+    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ASAMPS, &cfile->asampsize)) bad_header = TRUE;
 
     if (bad_header) do_header_write_error(mainw->current_file);
     mainw->error = TRUE;

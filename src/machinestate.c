@@ -783,14 +783,10 @@ void reget_afilesize(int fileno) {
     if (!sfile->opening && fileno != mainw->ascrap_file && fileno != mainw->scrap_file) {
       if (sfile->arate != 0 || sfile->achans != 0 || sfile->asampsize != 0 || sfile->arps != 0) {
         sfile->arate = sfile->achans = sfile->asampsize = sfile->arps = 0;
-        save_clip_value(fileno, CLIP_DETAILS_ACHANS, &sfile->achans);
-        if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-        save_clip_value(fileno, CLIP_DETAILS_ARATE, &sfile->arps);
-        if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-        save_clip_value(fileno, CLIP_DETAILS_PB_ARATE, &sfile->arate);
-        if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-        save_clip_value(fileno, CLIP_DETAILS_ASAMPS, &sfile->asampsize);
-        if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+        if (!save_clip_value(fileno, CLIP_DETAILS_ACHANS, &sfile->achans)) bad_header = TRUE;
+        if (!save_clip_value(fileno, CLIP_DETAILS_ARATE, &sfile->arps)) bad_header = TRUE;
+        if (!save_clip_value(fileno, CLIP_DETAILS_PB_ARATE, &sfile->arate)) bad_header = TRUE;
+        if (!save_clip_value(fileno, CLIP_DETAILS_ASAMPS, &sfile->asampsize)) bad_header = TRUE;
         if (bad_header) do_header_write_error(fileno);
       }
     }

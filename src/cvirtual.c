@@ -454,7 +454,6 @@ boolean check_if_non_virtual(int fileno, frames_t start, frames_t end) {
   register frames_t i;
   lives_clip_t *sfile = mainw->files[fileno];
   char *ppath, *cwd;
-  boolean bad_header = FALSE;
 
   if (sfile->clip_type != CLIP_TYPE_FILE) return TRUE;
 
@@ -484,9 +483,8 @@ boolean check_if_non_virtual(int fileno, frames_t start, frames_t end) {
     sfile->interlace = LIVES_INTERLACE_NONE; // all frames should have been deinterlaced
     sfile->deinterlace = FALSE;
     if (fileno > 0) {
-      save_clip_value(fileno, CLIP_DETAILS_INTERLACE, &sfile->interlace);
-      if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-      if (bad_header) do_header_write_error(fileno);
+      if (!save_clip_value(fileno, CLIP_DETAILS_INTERLACE, &sfile->interlace))
+        do_header_write_error(fileno);
     }
   }
 

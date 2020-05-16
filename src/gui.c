@@ -322,14 +322,6 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
 }
 
 
-static void check_fx_menus(LiVESCheckMenuItem *menuitem, livespointer user_data) {
-  if (RFX_LOADED) {
-    add_rfx_effects2(RFX_STATUS_ANY);
-    lives_signal_handlers_disconnect_by_func(menuitem, check_fx_menus, user_data);
-  }
-}
-
-
 void create_LiVES(void) {
 #ifdef GUI_GTK
 #if !GTK_CHECK_VERSION(3, 0, 0)
@@ -683,6 +675,12 @@ void create_LiVES(void) {
     char *prefname = lives_strdup_printf("%s%d", PREF_RECENT, i + 1);
     get_utf8_pref(prefname, buff, PATH_MAX * 2);
     lives_free(prefname);
+    for (register int j = 0; buff[j]; j++) {
+      if (buff[j] == '\n') {
+        buff[j] = 0;
+        break;
+      }
+    }
     mainw->recent[i] = lives_standard_menu_item_new_with_label(buff);
     lives_widget_set_no_show_all(mainw->recent[i], TRUE);
     lives_container_add(LIVES_CONTAINER(mainw->recent_submenu), mainw->recent[i]);
@@ -1104,13 +1102,14 @@ void create_LiVES(void) {
   // the dynamic effects menu
   mainw->effects_menu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mainw->effects_menu);
-  if (!RFX_LOADED) {
-    menuitem = lives_standard_menu_item_new_with_label(_("Loading..."));
-    lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                         LIVES_GUI_CALLBACK(check_fx_menus), NULL);
-    lives_container_add(LIVES_CONTAINER(mainw->effects_menu), menuitem);
-  } else add_rfx_effects2(RFX_STATUS_ANY);
 
+  if (!RFX_LOADED) {
+    mainw->ldg_menuitem = lives_standard_menu_item_new_with_label(_("Loading..."));
+    lives_container_add(LIVES_CONTAINER(mainw->effects_menu), mainw->ldg_menuitem);
+  } else {
+    mainw->ldg_menuitem = NULL;
+    add_rfx_effects2(RFX_STATUS_ANY);
+  }
   mainw->custom_effects_menu = NULL;
   mainw->custom_effects_separator = NULL;
 
@@ -4602,7 +4601,7 @@ char *get_menu_name(lives_clip_t *sfile, boolean add_setname) {
   char *extra, *menuname;
 
   if (sfile == NULL) return NULL;
-  if (sfile->was_in_set) {
+  if (add_setname && sfile->was_in_set) {
     char *shortened_set_name;
     if (strlen(mainw->set_name) > MAX_DISP_SETNAME_LEN) {
       char *tmp = lives_strndup(mainw->set_name, MAX_DISP_SETNAME_LEN);

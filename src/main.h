@@ -711,9 +711,10 @@ typedef struct _lives_clip_t {
 
   uint64_t op_ds_warn_level; ///< current disk space warning level for any output direcditory
 
-  // extended info (not saved)
   int header_version;
-#define LIVES_CLIP_HEADER_VERSION 101
+#define LIVES_CLIP_HEADER_VERSION 102
+
+  // extended info (not saved)
 
   //opening/restoring status
   boolean opening, opening_audio, opening_only_audio, opening_loc;
@@ -1474,6 +1475,7 @@ int lives_chdir(const char *path, boolean allow_fail);
 int lives_fputs(const char *s, FILE *stream);
 char *lives_fgets(char *s, int size, FILE *stream);
 size_t lives_fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
+size_t lives_fread_string(char *buff, size_t stlen, const char *fname);
 pid_t lives_getpid(void);
 int lives_getgid(void);
 int lives_getuid(void);

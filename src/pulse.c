@@ -35,8 +35,6 @@ static volatile int lock_count = 0;
 
 static off_t fwd_seek_pos = 0;
 
-static void tscale_reset(pulse_driver_t *pulsed);
-
 ///////////////////////////////////////////////////////////////////
 
 
@@ -87,6 +85,7 @@ static void stream_underflow_callback(pa_stream *s, void *userdata) {
                           / (double)(pulsed->out_achans * pulsed->out_asamps >> 3) + .5);
     pulsed->aPlayPtr->size = 0;
   }
+
   mainw->uflow_count++;
 }
 
@@ -578,7 +577,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           }
 
           // update looping mode
-          if (mainw->whentostop == NEVER_STOP) {
+          if (mainw->whentostop == NEVER_STOP || mainw->loop_cont) {
             if (mainw->ping_pong && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
                 && ((prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) || mainw->current_file == pulsed->playing_file)
                 && (!mainw->event_list || mainw->record || mainw->record_paused)
@@ -641,7 +640,13 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                                                 + pulsed->aPlayPtr->size, in_bytes - pulsed->aPlayPtr->size, TRUE);
                       pulsed->real_seek_pos = pulsed->seek_pos = lives_buffered_offset(pulsed->fd);
                     }
-                  } while (pulsed->aPlayPtr->size < in_bytes);
+                  } while (pulsed->aPlayPtr->size < in_bytes && !lives_read_buffered_eof(pulsed->fd));
+                  if (pulsed->aPlayPtr->size < in_bytes) {
+                    pad_bytes = in_bytes - pulsed->aPlayPtr->size;
+                    /// TODO: use pad_with_silence() for all padding
+                    lives_memset((void *)pulsed->aPlayPtr->data + in_bytes - pad_bytes, 0, pad_bytes);
+                    pulsed->aPlayPtr->size = in_bytes;
+                  }
                 }
               }
               pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos - qnt, qnt);
@@ -982,7 +987,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     // buffer is reused here, it's what we'll actually push to pulse
 
     if (sync_ready) {
-      tscale_reset(pulsed);
+      pulse_tscale_reset(pulsed);
       mainw->fps_mini_measure = 0;
       mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
       mainw->fps_mini_ticks = mainw->currticks;
@@ -1819,18 +1824,28 @@ boolean pa_time_reset(pulse_driver_t *pulsed, ticks_t offset) {
 static double tscaleu, tscalex;
 static int nsc;
 
-static void tscale_reset(pulse_driver_t *pulsed) {
+void pulse_tscale_reset(pulse_driver_t *pulsed) {
   tscalex = tscaleu = 0.;
-  nsc = 0;
+  nsc = 1;
   pulsed->tscale = 1.;
+  mainw->repayment = 0.;
 }
 
 #define TSC_AVG_WINDOW 3
 /**
    @brief calculate the playback time based on samples sent to the soundcard
-   This ensures that video is always in sync with audio, despite variations in the sound hardware
-   The Perfectime Algorithm (salsaman) was devised by trial and error
-   -
+   This ensures that video is always in sync with audio, despite variations due to the sound hardware
+   The Perfectime Algorithm (salsaman) was devised by trial and error, and includes several autocorrection and
+   interpolation methods
+
+   There are 3 levels of time keeping:
+   - a count of the number of samples sent to the pa server
+   :: since these have a granularity in the order of milli or tens of milli seconds, this is augmented by:
+   - timing updates from pa server
+   - between these, count from the rt system clock
+
+   most of the code here is dedicated to resolving differences and fluctuations between the 3 sources
+
 */
 ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   // get the time in ticks since either playback started
@@ -1854,7 +1869,6 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
 
   if (!pulsed) {
     lpaclock = paclock = last_usec = usec = xusec = last_extra = 0;
-    //nsc = 1;
     sysclock = 0;
     return -1;
   }
@@ -1873,12 +1887,12 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
 #ifdef ONLY_SAMPLES
   if (pulsed->extrausec == xusec) {
     xusec = pulsed->extrausec = pulsed->extrausec + (mainw->clock_ticks - sysclock) / USEC_TO_TICKS;
+    sysclock = mainw->clock_ticks;
     return xusec * USEC_TO_TICKS;
   }
   if (mainw->scratch == SCRATCH_NONE)
     pulsed->tscale = (double)(mainw->clock_ticks - sysclock) / ((double)pulsed->extrausec - xusec) / USEC_TO_TICKS;
   xusec = pulsed->extrausec;
-  sysclock = mainw->clock_ticks;
   return xusec * USEC_TO_TICKS;
 #endif
 
@@ -1893,14 +1907,10 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
           (usec - pulsed->usec_start) * USEC_TO_TICKS / 100000000.);
 #endif
 
-  //retusec = usec;
-
   if (last_usec > 0 && (usec <= last_usec || err == -PA_ERR_NODATA)) {
     if (pulsed->extrausec == last_extra) {
       if (lpaclock != 0) {
-        if (0 && nsc >= TSC_AVG_WINDOW)
-          paclock = lpaclock + (double)(mainw->clock_ticks - sysclock) / USEC_TO_TICKS / pulsed->tscale;
-        else paclock = lpaclock + (double)(mainw->clock_ticks - sysclock) / USEC_TO_TICKS;
+        paclock = lpaclock + (double)(mainw->clock_ticks - sysclock) / USEC_TO_TICKS;
       }
       noupdl = TRUE;
     } else {
@@ -1909,11 +1919,14 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
     }
   } else {
     //g_print("tscssssxx is %ld %ld %ld\n", last_extra, last_usec, pulsed->extrausec);
-    if (pulsed->extrausec != 0) {
+    if (pulsed->extrausec != 0 && mainw->scratch == SCRATCH_NONE) {
       if (last_usec > 0) {
         if (last_extra != pulsed->extrausec) {
           //retusec = usec + pulsed->extrausec;
-          tscaleu += (double)(usec - last_usec);
+          if (usec - last_usec < 100)
+            tscaleu += (double)(usec - last_usec) * 10000.;
+          else
+            tscaleu += (double)(usec - last_usec);
           tscalex += (double)(pulsed->extrausec - last_extra);
           //g_print("TSC1ss1 is %f %f %f\n", pulsed->tscale, tscaleu, tscalex);
           if (tscaleu > 100000. && tscalex > 100000.) {
@@ -1928,10 +1941,12 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
             tscaleu = tscalex = 0.;
           }
         }
+
+        /// not sure of the origin of the 1.01 constant, it would be good to eliminate it
         if (pulsed->extrausec == last_extra || nsc < TSC_AVG_WINDOW)
-          pulsed->extrausec -= (usec - last_usec);
+          pulsed->extrausec -= (usec - last_usec) / 1.01;
         else {
-          pulsed->extrausec -= (usec - last_usec) * pulsed->tscale;
+          pulsed->extrausec -= (usec - last_usec) / (pulsed->tscale > 1. ? pulsed->tscale : 1.01);
           //if (pulsed->extrausec < 0) pulsed->extrausec = 0;
         }
       } else if (usec > 0) {
@@ -1945,7 +1960,7 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
           borrowclip = pulsed->playing_file;
           pabstart = lpaclock;
         }
-        paclock = lpaclock + (mainw->clock_ticks - sysclock) / USEC_TO_TICKS;// / pulsed->tscale;
+        paclock = lpaclock + (mainw->clock_ticks - sysclock) / USEC_TO_TICKS;// * pulsed->tscale;
         noupdl = TRUE;
       } else {
         sysclock = mainw->clock_ticks;
@@ -1982,11 +1997,13 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
                   }
                 } else {
                   if (repay < 1.) {
-                    paclock = lpaclock + (paclock - lpaclock) * repay;
-                    mainw->repayment = ((double)(paclock - pabstart) - (double)borrowusec) / (double)ONE_MILLION;
-                    /* g_print("valsrep2 is %f %f %ld %ld %ld\n", (double)(paclock - pabstart - borrowusec), */
-                    /*         mainw->repayment, paclock, pabstart, borrowusec); */
-                    noupdl = TRUE;
+                    if (mainw->repayment > 0.) {
+                      paclock = lpaclock + (paclock - lpaclock) * repay;
+                      mainw->repayment = ((double)(paclock - pabstart) - (double)borrowusec) / (double)ONE_MILLION;
+                      /* g_print("valsrep2 is %f %f %ld %ld %ld\n", (double)(paclock - pabstart - borrowusec), */
+                      /*         mainw->repayment, paclock, pabstart, borrowusec); */
+                      noupdl = TRUE;
+                    }
                     if (mainw->repayment <= 0.) {
                       pulsed->extrausec -= mainw->repayment * ONE_MILLION;
                       mainw->repayment = 0.;
@@ -2036,12 +2053,15 @@ boolean pulse_audio_seek_frame(pulse_driver_t *pulsed, double frame) {
   // seek to frame "frame" in current audio file
   // position will be adjusted to (floor) nearest sample
   int64_t seekstart;
-  if (frame > afile->frames && afile->frames > 0) frame = afile->frames;
+  double fps;
 
-  seekstart = (int64_t)(((frame - 1.) / afile->fps
+  if (frame > afile->frames && afile->frames > 0) frame = afile->frames;
+  if (LIVES_IS_PLAYING) fps = afile->pb_fps;
+  else fps = afile->fps;
+
+  seekstart = (int64_t)(((frame - 1.) / fps
                          + (LIVES_IS_PLAYING ? (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL
-                            * (pulsed->in_arate >= 0. ? 1.0 : - 1.0) : 0.))
-                        * (double)afile->arps) * afile->achans * afile->asampsize / 8;
+                            * (pulsed->in_arate >= 0. ? 1.0 : -1.0) : 0.)) * (double)afile->arate) * afile->achans * afile->asampsize / 8;
 
   /* g_print("vals %ld and %ld %d\n", mainw->currticks, mainw->startticks, afile->arate); */
   /* g_print("bytes %f     %f       %d        %ld          %f\n", frame, afile->fps, LIVES_IS_PLAYING, seekstart, */
@@ -2158,7 +2178,7 @@ void pulse_aud_pb_ready(int fileno) {
   if (mainw->pulsed != NULL && mainw->aud_rec_fd == -1) {
     mainw->pulsed->is_paused = FALSE;
     mainw->pulsed->mute = mainw->mute;
-    if ((mainw->whentostop == NEVER_STOP) && !mainw->preview) {
+    if ((mainw->loop_cont || mainw->whentostop != STOP_ON_AUD_END) && !mainw->preview) {
       if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS && mainw->event_list == NULL)
         mainw->pulsed->loop = AUDIO_LOOP_PINGPONG;
       else mainw->pulsed->loop = AUDIO_LOOP_FORWARD;

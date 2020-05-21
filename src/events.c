@@ -53,6 +53,7 @@ LIVES_GLOBAL_INLINE int weed_frame_event_get_tracks(weed_event_t *event,  int **
 }
 
 LIVES_GLOBAL_INLINE int weed_frame_event_get_audio_tracks(weed_event_t *event,  int **clips, double **seeks) {
+  /// number of actual tracks is actually half of the returned value
   int ntracks = 0, xntracks = 0;
   if (event == NULL || !WEED_EVENT_IS_FRAME(event)) return -1;
   if (clips) *clips = weed_get_int_array_counted(event, WEED_LEAF_AUDIO_CLIPS, &ntracks);
@@ -86,9 +87,7 @@ LIVES_GLOBAL_INLINE weed_timecode_t weed_event_get_timecode(weed_event_t *event)
 }
 
 
-GNU_PURE void ** *get_event_pchains(void) {
-  return pchains;
-}
+GNU_PURE void ** *get_event_pchains(void) {return pchains;}
 
 #define _get_or_zero(a, b, c) (a ? weed_get_##b##_value(a, c, NULL) : 0)
 
@@ -1171,28 +1170,35 @@ void insert_audio_event_at(weed_plant_t *event, int track, int clipnum, double s
 
     for (i = 0; i < num_aclips; i += 2) {
       if (aclips[i] == track) {
-        if (clipnum <= 0 && num_aclips > 2) {
-          // ignore - remove track altogether
-          int *new_aclips = (int *)lives_malloc((num_aclips - 2) * sizint);
-          double *new_aseeks = (double *)lives_malloc((num_aclips - 2) * sizdbl);
-          int j, k = 0;
-          for (j = 0; j < num_aclips; j += 2) {
-            if (j != i) {
-              new_aclips[k] = aclips[j];
-              new_aclips[k + 1] = aclips[j + 1];
-              new_aseeks[k] = aseeks[j];
-              new_aseeks[k + 1] = aseeks[j + 1];
-              k += 2;
+        if (clipnum <= 0) {
+          if (num_aclips <= 2) {
+            weed_leaf_delete(event, WEED_LEAF_AUDIO_CLIPS);
+            weed_leaf_delete(event, WEED_LEAF_AUDIO_SEEKS);
+            lives_freep((void **)&aseeks);
+            lives_freep((void **)&aclips);
+            return;
+          } else {
+            int *new_aclips = (int *)lives_malloc((num_aclips - 2) * sizint);
+            double *new_aseeks = (double *)lives_malloc((num_aclips - 2) * sizdbl);
+            int j, k = 0;
+            for (j = 0; j < num_aclips; j += 2) {
+              if (j != i) {
+                new_aclips[k] = aclips[j];
+                new_aclips[k + 1] = aclips[j + 1];
+                new_aseeks[k] = aseeks[j];
+                new_aseeks[k + 1] = aseeks[j + 1];
+                k += 2;
+              }
             }
-          }
 
-          weed_set_int_array(event, WEED_LEAF_AUDIO_CLIPS, num_aclips - 2, new_aclips);
-          weed_set_double_array(event, WEED_LEAF_AUDIO_SEEKS, num_aclips - 2, new_aseeks);
-          lives_free(new_aclips);
-          lives_free(new_aseeks);
-          lives_freep((void **)&aseeks);
-          lives_freep((void **)&aclips);
-          return;
+            weed_set_int_array(event, WEED_LEAF_AUDIO_CLIPS, num_aclips - 2, new_aclips);
+            weed_set_double_array(event, WEED_LEAF_AUDIO_SEEKS, num_aclips - 2, new_aseeks);
+            lives_free(new_aclips);
+            lives_free(new_aseeks);
+            lives_freep((void **)&aseeks);
+            lives_freep((void **)&aclips);
+            return;
+          }
         }
 
         // update existing values
@@ -1278,7 +1284,6 @@ void remove_audio_for_track(weed_plant_t *event, int track) {
   } else {
     weed_set_int_array(event, WEED_LEAF_AUDIO_CLIPS, j, new_aclip_index);
     weed_set_double_array(event, WEED_LEAF_AUDIO_SEEKS, j, new_aseek_index);
-
   }
   lives_free(aclip_index);
   lives_free(aseek_index);
@@ -2948,16 +2953,22 @@ void get_active_track_list(int *clip_index, int num_tracks, weed_plant_t *filter
 
   char *filter_hash;
 
-  int *in_tracks;
-
-  int ninits, nintracks;
-  int idx, error;
+  int *in_tracks, *out_tracks;
+  int ninits, nintracks, nouttracks;
+  int idx;
   int front = -1;
 
   register int i, j;
 
+  /// if we are previewing a solo effect in multitrack, then we ignore the usual rules for the front frame, and instead
+  /// use the (first) output track from the filter instance
+  if (mainw->multitrack && mainw->multitrack->solo_inst && mainw->multitrack->init_event && !LIVES_IS_PLAYING) {
+    weed_event_t *ievent = mainw->multitrack->init_event;
+    front = weed_get_int_value(ievent, WEED_LEAF_OUT_TRACKS, NULL);
+  }
+
   for (i = 0; i < num_tracks; i++) {
-    if (front == -1 && clip_index[i] > 0) {
+    if ((front == -1 || front == i) && clip_index[i] > 0) {
       mainw->active_track_list[i] = clip_index[i];
       front = i;
     } else mainw->active_track_list[i] = 0;
@@ -2967,19 +2978,34 @@ void get_active_track_list(int *clip_index, int num_tracks, weed_plant_t *filter
   init_events = (weed_plant_t **)weed_get_voidptr_array_counted(filter_map, WEED_LEAF_INIT_EVENTS, &ninits);
   if (init_events == NULL) return;
 
-  for (i = 0; i < ninits; i++) {
-    // get the filter and make sure it has video chans in
-    if (!weed_plant_has_leaf(init_events[i], WEED_LEAF_IN_TRACKS)) continue;
-    filter_hash = weed_get_string_value(init_events[i], WEED_LEAF_FILTER, &error);
+  for (i = ninits - 1; i >= 0; i--) {
+    // get the filter and make sure it has video chans out, which feed to an active track
+    if (!weed_plant_has_leaf(init_events[i], WEED_LEAF_OUT_TRACKS)
+        || !weed_plant_has_leaf(init_events[i], WEED_LEAF_IN_TRACKS)) continue;
+    if (mainw->multitrack && mainw->multitrack->solo_inst && mainw->multitrack->init_event
+        && mainw->multitrack->init_event != init_events[i] && !LIVES_IS_PLAYING) continue;
+    filter_hash = weed_get_string_value(init_events[i], WEED_LEAF_FILTER, NULL);
     if ((idx = weed_get_idx_for_hashname(filter_hash, TRUE)) != -1) {
       filter = get_weed_filter(idx);
-      if (has_video_chans_in(filter, FALSE)) {
-        in_tracks = weed_get_int_array(init_events[i], WEED_LEAF_IN_TRACKS, &nintracks);
-        for (j = 0; j < nintracks; j++) {
-          if (j  >= mainw->num_tracks) break;
-          mainw->active_track_list[in_tracks[j]] = clip_index[in_tracks[j]];
+      if (has_video_chans_in(filter, FALSE) && has_video_chans_out(filter, FALSE)) {
+        boolean is_valid = FALSE;
+        out_tracks = weed_get_int_array_counted(init_events[i], WEED_LEAF_OUT_TRACKS, &nouttracks);
+        for (j = 0; j < nouttracks; j++) {
+          if (j >= mainw->num_tracks) break;
+          if (mainw->active_track_list[out_tracks[j]] != 0) {
+            is_valid = TRUE;
+            break;
+          }
         }
-        lives_free(in_tracks);
+        lives_free(out_tracks);
+        if (is_valid) {
+          in_tracks = weed_get_int_array_counted(init_events[i], WEED_LEAF_IN_TRACKS, &nintracks);
+          for (j = 0; j < nintracks; j++) {
+            if (j >= mainw->num_tracks) break;
+            mainw->active_track_list[in_tracks[j]] = clip_index[in_tracks[j]];
+          }
+          lives_free(in_tracks);
+        }
       }
     }
     lives_free(filter_hash);

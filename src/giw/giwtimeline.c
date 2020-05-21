@@ -454,7 +454,6 @@ void giw_timeline_set_max_size(GiwTimeline *timeline,  gdouble max_size) {
 
 
 gdouble giw_timeline_get_max_size(GiwTimeline *timeline) {
-  GtkAdjustment *adjustment;
   g_return_val_if_fail(GIW_IS_TIMELINE(timeline), 0.0);
   return timeline->max_size;
 }

@@ -324,7 +324,8 @@ boolean has_frame_event_at(weed_plant_t *event_list, ticks_t tc, weed_plant_t **
 #define WEED_PLANT_IS_EVENT_LIST(plant) ((plant != NULL && weed_get_plant_type(plant) == WEED_PLANT_EVENT_LIST) ? 1 : 0)
 
 #define WEED_EVENT_IS_FRAME(event) (get_event_hint(event) == WEED_EVENT_HINT_FRAME ? 1 : 0)
-#define WEED_EVENT_IS_AUDIO_FRAME(event) ((get_event_hint(event) == WEED_EVENT_HINT_FRAME && weed_plant_has_leaf(event, WEED_LEAF_AUDIO_CLIPS)) ? 1 : 0)
+#define WEED_EVENT_IS_AUDIO_FRAME(event) ((get_event_hint(event) == WEED_EVENT_HINT_FRAME \
+					   && weed_plant_has_leaf(event, WEED_LEAF_AUDIO_CLIPS)) ? 1 : 0)
 #define WEED_EVENT_IS_FILTER_INIT(event) (get_event_hint(event) == WEED_EVENT_HINT_FILTER_INIT ? 1 : 0)
 #define WEED_EVENT_IS_FILTER_DEINIT(event) (get_event_hint(event) == WEED_EVENT_HINT_FILTER_DEINIT ? 1 : 0)
 #define WEED_EVENT_IS_FILTER_MAP(event) (get_event_hint(event) == WEED_EVENT_HINT_FILTER_MAP ? 1 : 0)

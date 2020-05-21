@@ -1644,9 +1644,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
         param->widgets[++wcount] = scale;
       }
 #endif
-    }
 
-    if (add_scalers) {
       if (add_slider && !param->wrap) {
         spinbutton_adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(spinbutton));
         scale = lives_standard_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));

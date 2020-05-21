@@ -630,7 +630,6 @@ static boolean pre_init(void) {
   lives_threadpool_init();
 
   // get some prefs we need to set menu options
-  future_prefs->vj_mode = prefs->vj_mode = get_boolean_prefd(PREF_VJMODE, FALSE);
   prefs->gui_monitor = -1;
 
   if (prefs->vj_mode)
@@ -672,6 +671,11 @@ static boolean pre_init(void) {
 
   // rwlocks
   pthread_rwlock_init(&mainw->mallopt_lock, NULL);
+
+  if (prefs->vj_mode)
+    prefs->load_rfx_builtin = FALSE;
+  else
+    prefs->load_rfx_builtin = get_boolean_prefd(PREF_LOAD_RFX_BUILTIN, TRUE);
 
   for (i = 0; i < FX_KEYS_MAX; i++) {
     pthread_mutex_init(&mainw->fx_mutex[i], NULL);
@@ -1500,11 +1504,6 @@ static void lives_init(_ign_opts *ign_opts) {
   prefs->screen_gamma = get_double_prefd(PREF_SCREEN_GAMMA, DEF_SCREEN_GAMMA);
   prefs->apply_gamma = get_boolean_prefd(PREF_APPLY_GAMMA, TRUE);
   prefs->btgamma = FALSE;
-
-  if (prefs->vj_mode)
-    prefs->load_rfx_builtin = FALSE;
-  else
-    prefs->load_rfx_builtin = get_boolean_prefd(PREF_LOAD_RFX_BUILTIN, TRUE);
 
   prefs->msgs_pbdis = get_boolean_prefd(PREF_MSG_PBDIS, TRUE);
 
@@ -2953,7 +2952,7 @@ boolean resize_message_area(livespointer data) {
   static boolean isfirst = TRUE;
   int bx, by;
 
-  if (mainw->ldg_menuitem) {
+  if (!mainw->multitrack && mainw->ldg_menuitem) {
     if (RFX_LOADED) {
       lives_widget_destroy(mainw->ldg_menuitem);
       mainw->ldg_menuitem = NULL;

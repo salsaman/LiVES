@@ -1104,6 +1104,7 @@ void init_colour_engine(void) {
   init_YUV_to_YUV_tables();
   init_average();
   init_unal();
+  init_conversions(LIVES_INTENTION_PLAY);
 #ifdef WEED_ADVANCED_PALETTES
   init_advanced_palettes();
 #endif
@@ -8178,6 +8179,20 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
     weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, pixel_data);
     break;
 
+  case WEED_PALETTE_YUVA8888:
+    if (fixed_rs) rowstride = fixed_rs[0];
+    else {
+      rowstride = width * 4;
+      if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
+    }
+    framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE) + EXTRA_BYTES;
+    pixel_data = (uint8_t *)lives_calloc(framesize >> SHIFTVAL, ALIGN_SIZE);
+    if (pixel_data == NULL) return FALSE;
+    if (black_fill) fill_plane(pixel_data, 4, width, height, rowstride, yuv_black);
+    weed_set_int_value(layer, WEED_LEAF_ROWSTRIDES, rowstride);
+    weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, pixel_data);
+    break;
+
   case WEED_PALETTE_UYVY:
     if (fixed_rs) rowstride = fixed_rs[0];
     else {
@@ -8210,20 +8225,6 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       black[3] = yuv_black[1];
       fill_plane(pixel_data, 4, width, height, rowstride, yuv_black);
     }
-    weed_set_int_value(layer, WEED_LEAF_ROWSTRIDES, rowstride);
-    weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, pixel_data);
-    break;
-
-  case WEED_PALETTE_YUVA8888:
-    if (fixed_rs) rowstride = fixed_rs[0];
-    else {
-      rowstride = width * 4;
-      if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
-    }
-    framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE) + EXTRA_BYTES;
-    pixel_data = (uint8_t *)lives_calloc(framesize >> SHIFTVAL, ALIGN_SIZE);
-    if (pixel_data == NULL) return FALSE;
-    if (black_fill) fill_plane(pixel_data, 4, width, height, rowstride, yuv_black);
     weed_set_int_value(layer, WEED_LEAF_ROWSTRIDES, rowstride);
     weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, pixel_data);
     break;
@@ -10536,19 +10537,15 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data_packed(layer);
       orowstride = weed_layer_get_rowstride(layer);
-      convert_quad_chroma_packed(gusrc_array, width, height, istrides, orowstride,
-                                 gudest, FALSE, isampling, iclamping);
+      convert_quad_chroma_packed(gusrc_array, width, height, istrides, orowstride, gudest, FALSE, isampling, iclamping);
       break;
     case WEED_PALETTE_YUVA8888:
-      weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, outpl);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data_packed(layer);
       orowstride = weed_layer_get_rowstride(layer);
-      convert_quad_chroma_packed(gusrc_array, width, height, istrides, orowstride,
-                                 gudest, TRUE, isampling, iclamping);
+      convert_quad_chroma_packed(gusrc_array, width, height, istrides, orowstride, gudest, TRUE, isampling, iclamping);
       break;
     case WEED_PALETTE_YUV411:
-      weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, outpl);
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 2);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = weed_layer_get_pixel_data_packed(layer);

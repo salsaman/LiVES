@@ -211,6 +211,9 @@ static weed_error_t compositor_process(weed_plant_t *inst, weed_timecode_t timec
     if (weed_plant_has_leaf(in_channels[z], WEED_LEAF_DISABLED) &&
         weed_get_boolean_value(in_channels[z], WEED_LEAF_DISABLED, &error) == WEED_TRUE) continue;
 
+    src = weed_get_voidptr_value(in_channels[z], WEED_LEAF_PIXEL_DATA, &error);
+    if (!src) continue;
+
     if (z < numoffsx) myoffsx = (int)(offsx[z] * (double)owidth);
     else myoffsx = 0;
     if (z < numoffsy) myoffsy = (int)(offsy[z] * (double)oheight);
@@ -225,11 +228,11 @@ static weed_error_t compositor_process(weed_plant_t *inst, weed_timecode_t timec
     out_width = (owidth * myscalex + .5);
     out_height = (oheight * myscaley + .5);
 
-    if (out_width * out_height > 3) {
+    if (out_width * out_height > 15) {
       in_width = weed_get_int_value(in_channels[z], WEED_LEAF_WIDTH, &error);
       in_height = weed_get_int_value(in_channels[z], WEED_LEAF_HEIGHT, &error);
 
-      src = weed_get_voidptr_value(in_channels[z], WEED_LEAF_PIXEL_DATA, &error);
+      //src = weed_get_voidptr_value(in_channels[z], WEED_LEAF_PIXEL_DATA, &error);
       irowstride = weed_get_int_value(in_channels[z], WEED_LEAF_ROWSTRIDES, &error);
 
       // scale image to new size
@@ -275,7 +278,11 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
 
-  weed_plant_t *in_params[] = {weed_float_init("xoffs", "_X offset", 0., 0., 1.), weed_float_init("yoffs", "_Y offset", 0., 0., 1.), weed_float_init("scalex", "Scale _width", 1., 0., 1.), weed_float_init("scaley", "Scale _height", 1., 0., 1.), weed_float_init("alpha", "_Alpha", 1.0, 0.0, 1.0), weed_colRGBi_init("bgcol", "_Background color", 0, 0, 0), weed_switch_init("revz", "Invert _Z Index", WEED_FALSE), NULL};
+  weed_plant_t *in_params[] = {weed_float_init("xoffs", "_X offset", 0., 0., 1.), weed_float_init("yoffs", "_Y offset", 0., 0., 1.),
+                               weed_float_init("scalex", "Scale _width", 1., 0., 1.), weed_float_init("scaley", "Scale _height", 1., 0., 1.),
+                               weed_float_init("alpha", "_Alpha", 1.0, 0.0, 1.0), weed_colRGBi_init("bgcol", "_Background color", 0, 0, 0),
+                               weed_switch_init("revz", "Invert _Z Index", WEED_FALSE), NULL
+                              };
 
   weed_plant_t *filter_class, *gui;
   int filter_flags = WEED_FILTER_CHANNEL_SIZES_MAY_VARY;

@@ -294,7 +294,6 @@ static weed_error_t ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp
             invals[pinp] = (float)weed_param_get_value_double(in_params[pinp]);
           }
           ptmpl = weed_param_get_template(in_params[pinp]);
-          fprintf(stderr, "SR12 %d\n", rate);
           if (weed_get_boolean_value(ptmpl, "plugin_sample_rate", NULL) == WEED_TRUE) invals[pinp] *= (float)rate;
           (*lad_connect_port_func)(handle, i, (LADSPA_Data *)&invals[pinp++]);
         } else {
@@ -784,6 +783,7 @@ WEED_SETUP_START(200, 200) {
         if (out_params) weed_free(out_params);
         if (in_chantmpls) weed_free(in_chantmpls);
         if (out_chantmpls) weed_free(out_chantmpls);
+        in_params = out_params = in_chantmpls = out_chantmpls = NULL;
 
         weed_set_int_value(filter_class, "plugin_in_channels", oninchs);
         weed_set_int_value(filter_class, "plugin_out_channels", onoutchs);

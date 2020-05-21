@@ -492,13 +492,13 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
 
   case LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT:
   case LIVES_PARAM_SPECIAL_TYPE_SCALEDPOINT:
-    if (framedraw->type == LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT) {
+    if (framedraw->type == LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT) {
       if (framedraw->xstart_param->dp == 0) {
         xstartf = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
         xstartf = xstartf / (double)cfile->hsize * (double)width;
       } else {
         xstartf = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
-        xstartf = xstartf * (double)width;
+        xstartf *= (double)width;
       }
 
       if (framedraw->ystart_param->dp == 0) {
@@ -506,17 +506,40 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
         ystartf = ystartf / (double)cfile->vsize * (double)height;
       } else {
         ystartf = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]));
-        ystartf = ystartf * (double)height;
+        ystartf *= (double)height;
       }
     } else {
       if (b1_held) {
-        xstartf = xcurrent * width;
-        ystartf = ycurrent * height;
+        xstartf = xcurrent * (double)width;
+        ystartf = ycurrent * (double)height;
       } else {
-        xstartf = 0.5 * width;
-        ystartf = 0.5 * height;
+        double xpos, ypos;
+        double scale = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->scale_param->widgets[0]));
+        if (scale == 0.) break;
+
+        if (framedraw->xstart_param->dp > 0)
+          xpos = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
+        else
+          xpos = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]))
+                 / (double)cfile->hsize;
+        if (framedraw->ystart_param->dp > 0)
+          ypos = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]));
+        else
+          ypos = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]))
+                 / (double)cfile->vsize;
+
+        xstartf = 0.5;
+        ystartf = 0.5;
+
+        if (xpos - xstartf / scale < 0.) xstartf = xpos * scale;
+        else if (xpos + xstartf / scale > 1.) xstartf = 1. - (1. - xpos) * scale;
+        if (ypos - ystartf / scale < 0.) ystartf = ypos * scale;
+        else if (ypos + ystartf / scale > 1.) ystartf = 1. - (1. - ypos) * scale;
+        xstartf *= (double)width;
+        ystartf *= (double)height;
       }
     }
+
     // draw a crosshair
     lives_painter_set_source_rgb(cr, 1., 0., 0.); // TODO - make colour configurable
 
@@ -550,9 +573,7 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
 
     resize_layer(mainw->fd_layer, weed_layer_get_width(mainw->fd_layer_orig)
                  * weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->fd_layer_orig)),
-                 weed_layer_get_height(mainw->fd_layer_orig),
-                 LIVES_INTERP_BEST,
-                 palette, 0);
+                 weed_layer_get_height(mainw->fd_layer_orig), LIVES_INTERP_BEST, palette, 0);
     convert_layer_palette(mainw->fd_layer, palette, 0);
     pixbuf = layer_to_pixbuf(mainw->fd_layer, TRUE, TRUE);
     weed_layer_nullify_pixel_data(mainw->fd_layer);
@@ -859,28 +880,22 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
   noupdate = TRUE;
 
   switch (framedraw->type) {
-  case LIVES_PARAM_SPECIAL_TYPE_SCALEDPOINT:
+  case LIVES_PARAM_SPECIAL_TYPE_SCALEDPOINT: {
+    // current center is xinit, yinit
+    // ystart, xstart equal cursor (crosshair posn.)
+
     if (framedraw->xstart_param->dp > 0)
       xinit = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
     else
-      xinit = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
+      xinit = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]))
+              / (double)cfile->hsize;
     if (framedraw->ystart_param->dp > 0)
       yinit = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]));
     else
-      yinit = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]));
-    break;
-
-  case LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT:
-    if (framedraw->xstart_param->dp > 0)
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xstart);
-    else
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), (int)(xstart * (double)cfile->hsize + .5));
-    if (framedraw->xstart_param->dp > 0)
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), ystart);
-    else
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), (int)(ystart * (double)cfile->vsize + .5));
-    break;
-
+      yinit = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]))
+              / (double)cfile->vsize;
+  }
+  break;
 
   case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT:
     xend = yend = 0.;
@@ -1006,7 +1021,8 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
       if (framedraw->xend_param->dp > 0)
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), xcurrent);
       else
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), (int)(xcurrent * (double)cfile->hsize + .5));
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]),
+                                    (int)(xcurrent * (double)cfile->hsize + .5));
     } else {
       if (framedraw->xstart_param->dp > 0) {
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), xstart);
@@ -1022,7 +1038,8 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
       if (framedraw->yend_param->dp > 0)
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), ycurrent);
       else
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), (int)(ycurrent * (double)cfile->vsize + .5));
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]),
+                                    (int)(ycurrent * (double)cfile->vsize + .5));
     } else {
       if (framedraw->xstart_param->dp > 0) {
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), ystart);
@@ -1036,27 +1053,31 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
     break;
 
   case LIVES_PARAM_SPECIAL_TYPE_SCALEDPOINT: {
+    // current center is xinit, yinit
+    // ystart, xstart equal cursor (crosshair posn.)
     double offs_x, offs_y;
     double scale = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->scale_param->widgets[0]));
     if (scale == 0.) break;
+    offs_x = (xstart - xcurrent) / scale;
+    offs_y = (ystart - ycurrent) / scale;
 
-    offs_x = (xcurrent - xstart) / scale;
-    if (framedraw->xstart_param->dp > 0) {
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xinit - offs_x);
-    } else {
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),
-                                  (int)((xinit - offs_x) * (double)cfile->hsize + .5));
-    }
+    if (xinit + offs_x < .5 / scale) offs_x = .5 / scale - xinit;
+    if (xinit + offs_x > 1. - .5 / scale) offs_x = 1. - .5 / scale - xinit;
+    if (yinit + offs_y < .5 / scale) offs_y = .5 / scale - yinit;
+    if (yinit + offs_y > 1. - .5 / scale) offs_y = 1. - .5 / scale - yinit;
 
-    offs_y = (ycurrent - ystart) / scale;
-    if (framedraw->xstart_param->dp > 0) {
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), yinit - offs_y);
-    } else {
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),
-                                  (int)((yinit - offs_y) * (double)cfile->vsize + .5));
-    }
-    break;
+    if (framedraw->xstart_param->dp > 0)
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xinit + offs_x);
+    else
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), (int)((xinit + offs_x)
+                                  * (double)cfile->hsize + .5));
+    if (framedraw->xstart_param->dp > 0)
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), yinit + offs_y);
+    else
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), (int)((yinit + offs_y)
+                                  * (double)cfile->vsize + .5));
   }
+  break;
 
   default:
     break;
@@ -1082,6 +1103,9 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
 
 boolean on_framedraw_mouse_reset(LiVESWidget *widget, LiVESXEventButton *event, lives_special_framedraw_rect_t *framedraw) {
   // user released the mouse button in framedraw widget
+  int xcurrenti, ycurrenti;
+  int fd_width, fd_height, width, height;
+
   if (event->button != 1 || !b1_held) return FALSE;
 
   b1_held = FALSE;
@@ -1089,6 +1113,23 @@ boolean on_framedraw_mouse_reset(LiVESWidget *widget, LiVESXEventButton *event, 
   if (framedraw == NULL && mainw->multitrack != NULL) framedraw = mainw->multitrack->framedraw;
   if (framedraw == NULL) return FALSE;
   if (mainw->multitrack != NULL && mainw->multitrack->track_index == -1) return FALSE;
+
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+                           widget, &xcurrenti, &ycurrenti);
+
+  width = cfile->hsize;
+  height = cfile->vsize;
+
+  fd_width = lives_widget_get_allocation_width(widget);
+  fd_height = lives_widget_get_allocation_height(widget);
+
+  calc_maxspect(fd_width, fd_height, &width, &height);
+
+  xcurrent = (double)xcurrenti - (fd_width - width) / 2.;
+  ycurrent = (double)ycurrenti - (fd_height - height) / 2.;
+
+  xcurrent /= (double)(width - 1);
+  ycurrent /= (double)(height - 1);
 
   switch (framedraw->type) {
   case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT:
@@ -1101,30 +1142,61 @@ boolean on_framedraw_mouse_reset(LiVESWidget *widget, LiVESXEventButton *event, 
     break;
 
   case LIVES_PARAM_SPECIAL_TYPE_SCALEDPOINT: {
-    double offs_x, offs_y;
-    double scale = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->scale_param->widgets[0]));
+    double offs_x, offs_y, scale, xend, yend;
+    if (noupdate) break;
+
+    scale = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->scale_param->widgets[0]));
     if (scale == 0.) break;
 
-    if (xcurrent == xstart) {
-      offs_x = (xcurrent - 0.5) / scale;
-      if (framedraw->xstart_param->dp > 0) {
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xinit + offs_x);
-      } else {
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),
-                                    (int)((xinit + offs_x) * (double)cfile->hsize + .5));
-      }
+    if (framedraw->xstart_param->dp > 0)
+      xend = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
+    else
+      xend = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]))
+             / (double)cfile->hsize;
+    if (framedraw->ystart_param->dp > 0)
+      yend = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]));
+    else
+      yend = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]))
+             / (double)cfile->vsize;
+
+    if (xend == xinit && yend == yinit && xcurrent == xstart && ycurrent == ystart) {
+      /// the focus is at xend, yend, but the crosshair may be offcenter. We need its position, and then we can find the offset to
+      /// xcurrent, ycurrent. The offset is then added to the center.
+      xstart = 0.5;
+      ystart = 0.5;
+
+      if (xend - xstart / scale < 0.) xstart = xend * scale;
+      else if (xend + xstart / scale > 1.) xstart = 1. - (1. - xend) * scale;
+      if (yend - ystart / scale < 0.) ystart = yend * scale;
+      else if (yend + ystart / scale > 1.) ystart = 1. - (1. - yend) * scale;
+
+      offs_x = (xcurrent - xstart) / scale;
+      offs_y = (ycurrent - ystart) / scale;
+
+      if (framedraw->xstart_param->dp > 0)
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xend + offs_x);
+      else
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), (int)((xend + offs_x)
+                                    * (double)cfile->hsize + .5));
+      if (framedraw->xstart_param->dp > 0)
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), yend + offs_y);
+      else
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), (int)((yend + offs_y)
+                                    * cfile->vsize + .5));
     }
-    if (ycurrent == ystart) {
-      offs_y = (ycurrent - 0.5) / scale;
-      if (framedraw->xstart_param->dp > 0) {
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), yinit + offs_y);
-      } else {
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),
-                                    (int)((yinit + offs_y) * (double)cfile->vsize + .5));
-      }
-    }
-    break;
   }
+  break;
+
+  case LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT:
+    if (framedraw->xstart_param->dp > 0)
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xstart);
+    else
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), (int)(xstart * (double)cfile->hsize + .5));
+    if (framedraw->xstart_param->dp > 0)
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), ystart);
+    else
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), (int)(ystart * (double)cfile->vsize + .5));
+    break;
 
   default:
     break;

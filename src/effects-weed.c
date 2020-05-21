@@ -2237,8 +2237,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     // cpalette is layer palette here, opalette is now channel palette
     if (cpalette != opalette || (weed_palette_is_yuv(opalette) && weed_palette_is_yuv(cpalette)
-                                 && weed_get_int_value(layer, WEED_LEAF_YUV_CLAMPING, NULL)
-                                 != oclamping)) {
+                                 && weed_get_int_value(layer, WEED_LEAF_YUV_CLAMPING, NULL) != oclamping)) {
       if (all_out_alpha && (weed_palette_is_lower_quality(opalette, cpalette) ||
                             (weed_palette_is_rgb(inpalette) &&
                              !weed_palette_is_rgb(cpalette)) ||
@@ -2718,7 +2717,7 @@ lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc
   int filter_flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, NULL);
 #ifdef PLMEMCHECK
   int npl;
-  weed_plant_t *och = weed_instance_get_out - channels(instance, &npl);
+  weed_plant_t *och = weed_instance_get_out_channels(instance, &npl);
   if (och != NULL)
     weed_mem_chkreg(wee_channel_get_pdt, rs, ht, npl);
 #endif
@@ -3304,6 +3303,32 @@ static void weed_apply_filter_map(weed_plant_t **layers, weed_plant_t *filter_ma
             continue;
           }
         } else {
+          int idx;
+          char *filter_hash;
+          boolean is_valid = FALSE;
+          if (!weed_plant_has_leaf(init_events[i], WEED_LEAF_OUT_TRACKS)
+              || !weed_plant_has_leaf(init_events[i], WEED_LEAF_IN_TRACKS)) continue;
+          if (mainw->multitrack && mainw->multitrack->solo_inst && mainw->multitrack->init_event
+              && !LIVES_IS_PLAYING && mainw->multitrack->init_event != init_events[i]) continue;
+          filter_hash = weed_get_string_value(init_events[i], WEED_LEAF_FILTER, NULL);
+          if ((idx = weed_get_idx_for_hashname(filter_hash, TRUE)) != -1) {
+            weed_plant_t *filter = get_weed_filter(idx);
+            if (has_video_chans_in(filter, FALSE) && has_video_chans_out(filter, FALSE)) {
+              int nintracks, *in_tracks = weed_get_int_array_counted(init_events[i], WEED_LEAF_IN_TRACKS, &nintracks);
+              for (register int j = 0; j < nintracks; j++) {
+                if (j >= mainw->num_tracks) break;
+                if (mainw->active_track_list[in_tracks[j]] > 0) {
+                  is_valid = TRUE;
+                  break;
+                }
+              }
+              lives_free(in_tracks);
+            }
+          }
+          lives_free(filter_hash);
+          /// avoid applying to non-active tracks
+          if (!is_valid) continue;
+
           if (pchains != NULL && pchains[key] != NULL) {
             interpolate_params(instance, pchains[key], tc); // interpolate parameters during playback
           }

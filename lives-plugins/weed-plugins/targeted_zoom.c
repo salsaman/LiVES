@@ -117,11 +117,11 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *gui = weed_filter_get_gui(filter_class), *pgui;
 
   // define RFX layout
-  char *rfx_strings[] = {"layout|p0|", "layout|p1|p2|", "special|framedraw|scaledpoint|1|2|"};
+  char *rfx_strings[] = {"special|framedraw|scaledpoint|1|2|0|"};
 
   weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, "RFX");
   weed_set_string_value(gui, "layout_rfx_delim", "|");
-  weed_set_string_array(gui, "layout_rfx_strings", 3, rfx_strings);
+  weed_set_string_array(gui, "layout_rfx_strings", 1, rfx_strings);
 
   pgui = weed_paramtmpl_get_gui(in_params[0]);
   weed_set_double_value(pgui, WEED_LEAF_STEP_SIZE, 0.1);

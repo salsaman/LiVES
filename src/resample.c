@@ -495,8 +495,6 @@ static boolean copy_with_check(weed_plant_t *event, weed_plant_t *out_list, weed
 /* } */
 
 
-
-
 /**
    @brief quantise from event_list_t *in_list to *out_list at the new rate of qfps
 
@@ -548,15 +546,13 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   weed_timecode_t end_tc;
 
   weed_plant_t *out_list;
-  weed_plant_t *naudio_event = NULL;
-  weed_plant_t *frame_event = NULL, *nframe_event = NULL;
-  weed_plant_t *last_frame_event;
-  weed_plant_t *event, *newframe = NULL;
+  weed_event_t *naudio_event = NULL;
+  weed_event_t *frame_event = NULL, *nframe_event = NULL;
+  weed_event_t *last_frame_event;
+  weed_event_t *event, *newframe = NULL;
   weed_event_t *init_event, *filter_map = NULL, *deinit_event;
-#ifdef SMOOTH_AUD_VEL
-  weed_event_t *prev_aframe, *xprev_aframe, , , *last_out_frame = NULL;
+  weed_event_t *prev_aframe, *xprev_aframe, *last_out_frame = NULL;
   weed_timecode_t recst_tc = 0;
-#endif
 
   LiVESResponseType response;
   LiVESList *init_events = NULL, *deinit_events = NULL, *list;
@@ -802,7 +798,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           int nchanges;
           // insert filter_inits + init pchanges
           for (list = init_events; list != NULL; list = list->next) {
-            init_event = (weed_plant_t *)list->data;
+            init_event = (weed_event_t *)list->data;
             //g_print("ins init %p\n", init_event);
             if (!copy_with_check(init_event, out_list, out_tc, what, 0)) {
               event_list_free(out_list);
@@ -944,6 +940,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           weed_set_int_array(newframe, WEED_LEAF_AUDIO_CLIPS, natracks, naclips);
           weed_set_double_array(newframe, WEED_LEAF_AUDIO_SEEKS, natracks, naseeks);
 
+#define SMOOTH_AUD_VEL
           /// the timecode of each audio frame is adjusted to the quantised time, and we update the seek position accordingly
           /// however, when playing back, any velocity change will come slightly later than when recorded; thus
           /// the player seek pos will be slightly off.
@@ -951,7 +948,6 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           /// arriving at the current audio frame
           /// TODO: needs fixing, does not work as intended - not sure why
 #ifdef SMOOTH_AUD_VEL
-          *prev_aframe, *xprev_aframe;
           prev_aframe = get_prev_audio_frame_event(newframe);
           if (prev_aframe) {
             for (i = 0; i < natracks; i += 2) {

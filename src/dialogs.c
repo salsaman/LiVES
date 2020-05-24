@@ -1754,8 +1754,9 @@ switch_point:
         mainw->pred_frame = 0;
         cleanup_preload = TRUE;
         getahead = -1;
-        drop_off = FALSE;
       }
+
+      drop_off = FALSE;
       last_pwidth = mainw->pwidth;
       last_pheight = mainw->pheight;
       if (mainw->force_show || ((sfile->frameno != mainw->actual_frame || (sfile->frames == 1 && sfile->frameno == 1))
@@ -1811,12 +1812,12 @@ switch_point:
 #endif
 
         // load and display the new frame
-#ifdef SHOW_CACHE_PREDICTIONS
-        /* g_print("playing frame %d / %d at %ld (%ld : %ld) %.2f %ld\n", sfile->frameno, requested_frame, mainw->currticks, */
-        /*         mainw->startticks, new_ticks, (mainw->pulsed->in_use && IS_VALID_CLIP(mainw->pulsed->playing_file) */
-        /*                                        && mainw->files[mainw->pulsed->playing_file]->arate != 0) ? (double)mainw->pulsed->seek_pos */
-        /*         / (double)mainw->files[mainw->pulsed->playing_file]->arate / 4. * sfile->fps + 1. : 0. * sfile->fps + 1, */
-        /*         lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs)); */
+#ifndef SHOW_CACHE_PREDICTIONS
+        g_print("playing frame %d / %d at %ld (%ld : %ld) %.2f %ld\n", sfile->frameno, requested_frame, mainw->currticks,
+                mainw->startticks, new_ticks, (mainw->pulsed->in_use && IS_VALID_CLIP(mainw->pulsed->playing_file)
+                                               && mainw->files[mainw->pulsed->playing_file]->arate != 0) ? (double)mainw->pulsed->seek_pos
+                / (double)mainw->files[mainw->pulsed->playing_file]->arate / 4. * sfile->fps + 1. : 0. * sfile->fps + 1,
+                lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs));
 #endif
 
         load_frame_image(sfile->frameno);
@@ -4082,6 +4083,13 @@ LIVES_GLOBAL_INLINE boolean do_layout_recover_dialog(void) {
         _("\nLiVES has detected a multitrack layout from a previous session.\nWould you like to try and recover it ?\n"))) {
     recover_layout_cancelled(TRUE);
     return FALSE;
-  } else return recover_layout();
+  } else {
+    boolean ret;
+    lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
+    lives_widget_context_update();
+    ret = recover_layout();
+    lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+    return ret;
+  }
 }
 

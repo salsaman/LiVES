@@ -2769,6 +2769,8 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
   weed_layer_t *layer;
   weed_plant_t **in_channels = NULL, **out_channels = NULL, *channel, *chantmpl;
 
+  float **adata;
+
   lives_filter_error_t retval = FILTER_SUCCESS;
 
   int channel_flags;
@@ -2812,59 +2814,64 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
     if (weed_get_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE) continue;
 
     weed_set_int64_value(channel, WEED_LEAF_TIMECODE, tc);
-    weed_leaf_copy(channel, WEED_LEAF_AUDIO_DATA_LENGTH, layer, WEED_LEAF_AUDIO_DATA_LENGTH);
+    weed_leaf_dup(channel, layer, WEED_LEAF_AUDIO_DATA_LENGTH);
+    weed_leaf_dup(channel, layer, WEED_LEAF_AUDIO_RATE);
+    weed_leaf_dup(channel, layer, WEED_LEAF_AUDIO_CHANNELS);
 
     /* g_print("setting ad for channel %d from layer %d. val %p, eg %f \n", i, in_tracks[i] + nbtracks, weed_get_voidptr_value(layer, "audio_data", NULL), ((float *)(weed_get_voidptr_value(layer, "audio_data", NULL)))[0]); */
-    weed_leaf_copy(channel, WEED_LEAF_AUDIO_DATA, layer, WEED_LEAF_AUDIO_DATA);
+    weed_leaf_dup(channel, layer, WEED_LEAF_AUDIO_DATA);
     /* g_print("setting afterval %p, eg %f \n", weed_get_voidptr_value(channel, "audio_data", NULL), ((float *)(weed_get_voidptr_value(channel, "audio_data", NULL)))[0]); */
   }
 
   // set up our out channels
   for (i = 0; i < num_out_tracks; i++) {
+    weed_plant_t *inchan;
+
     if (out_tracks[i] != in_tracks[i]) {
       retval = FILTER_ERROR_INVALID_TRACK; // we dont do swapping around of audio tracks
       goto done_audio;
     }
 
     channel = get_enabled_channel(inst, i, FALSE);
+    inchan = get_enabled_channel(inst, i, TRUE);
     layer = layers[out_tracks[i] + nbtracks];
 
     weed_set_int64_value(channel, WEED_LEAF_TIMECODE, tc);
-    chantmpl = weed_get_plantptr_value(channel, WEED_LEAF_TEMPLATE, NULL);
-    channel_flags = weed_get_int_value(chantmpl, WEED_LEAF_FLAGS, NULL);
+    chantmpl = weed_channel_get_template(channel);
+    channel_flags = weed_chantmpl_get_flags(chantmpl);
 
     /// set up the audio data for each out channel. IF we can inplace then we use the audio_data from the corresponding in_channel
     /// otherwise we allocate it
-    if (channel_flags & WEED_CHANNEL_CAN_DO_INPLACE) {
-      weed_plant_t *inchan = get_enabled_channel(inst, i, TRUE);
-      if (weed_channel_get_audio_rate(channel) == weed_channel_get_audio_rate(inchan)
-          && weed_channel_get_naudchans(channel) == weed_channel_get_naudchans(inchan)) {
-        weed_set_boolean_value(layer, WEED_LEAF_HOST_INPLACE, WEED_TRUE);
-        weed_leaf_copy(channel, WEED_LEAF_AUDIO_DATA_LENGTH, inchan, WEED_LEAF_AUDIO_DATA_LENGTH);
-        weed_leaf_copy(channel, WEED_LEAF_AUDIO_DATA, inchan, WEED_LEAF_AUDIO_DATA);
-        /* g_print("setting dfff ad for channel %p from chan %p, eg %f \n", weed_get_voidptr_value(channel, "audio_data", NULL), weed_get_voidptr_value(inchan, "audio_data", NULL), ((float *)(weed_get_voidptr_value(layer, "audio_data", NULL)))[0]); */
-      } else {
-        float **abuf = (float **)(nchans * sizeof(float *));
-        nsamps = weed_layer_get_audio_length(layer);
-        for (i = 0; i < nchans; i++) {
-          abuf[i] = lives_calloc(nsamps, sizeof(float));
-          if (abuf[i] == NULL) {
-            for (--i; i > 0; i--) lives_free(abuf[i]);
-            lives_free(abuf);
-            retval = FILTER_ERROR_MEMORY_ERROR;
-            goto done_audio;
-          }
+    if ((channel_flags & WEED_CHANNEL_CAN_DO_INPLACE)
+        && weed_channel_get_audio_rate(channel) == weed_channel_get_audio_rate(inchan)
+        && weed_channel_get_naudchans(channel) == weed_channel_get_naudchans(inchan)) {
+      weed_set_boolean_value(layer, WEED_LEAF_HOST_INPLACE, WEED_TRUE);
+      weed_leaf_dup(channel, inchan, WEED_LEAF_AUDIO_DATA);
+      /* g_print("setting dfff ad for channel %p from chan %p, eg %f \n", weed_get_voidptr_value(channel, "audio_data", NULL), weed_get_voidptr_value(inchan, "audio_data", NULL), ((float *)(weed_get_voidptr_value(layer, "audio_data", NULL)))[0]); */
+    } else {
+      nchans = weed_layer_get_naudchans(layer);
+      adata = (float **)lives_malloc(nchans * sizeof(float *));
+      nsamps = weed_layer_get_audio_length(layer);
+      for (i = 0; i < nchans; i++) {
+        adata[i] = lives_calloc(nsamps, sizeof(float));
+        if (!adata[i]) {
+          for (--i; i > 0; i--) lives_free(adata[i]);
+          lives_free(adata);
+          retval = FILTER_ERROR_MEMORY_ERROR;
+          goto done_audio;
         }
-        weed_set_boolean_value(layer, WEED_LEAF_HOST_INPLACE, WEED_FALSE);
-        weed_set_int_value(channel, WEED_LEAF_AUDIO_DATA_LENGTH, nsamps);
-        weed_set_voidptr_array(channel, WEED_LEAF_AUDIO_DATA, nchans, (void **)abuf);
-        lives_free(abuf);
       }
+      weed_set_boolean_value(layer, WEED_LEAF_HOST_INPLACE, WEED_FALSE);
+      weed_set_voidptr_array(channel, WEED_LEAF_AUDIO_DATA, nchans, (void **)adata);
+      lives_free(adata);
     }
+
+    weed_leaf_dup(channel, layer, WEED_LEAF_AUDIO_DATA_LENGTH);
+    weed_leaf_dup(channel, layer, WEED_LEAF_AUDIO_RATE);
+    weed_leaf_dup(channel, layer, WEED_LEAF_AUDIO_CHANNELS);
   }
 
-  if (CURRENT_CLIP_IS_VALID)
-    weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
+  if (CURRENT_CLIP_IS_VALID) weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
 
   //...finally we are ready to apply the filter
   retval = run_process_func(inst, tc, key);
@@ -2883,11 +2890,9 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
     if (weed_plant_has_leaf(channel, WEED_LEAF_AUDIO_DATA)) {
       /// free any old audio data in the layer, unless it's INPLACE
       if (weed_get_boolean_value(layer, WEED_LEAF_HOST_INPLACE, NULL) == WEED_FALSE) {
-        float **audio_data = (float **)weed_get_voidptr_array_counted(layer, WEED_LEAF_AUDIO_DATA, &nchans);
-        for (j = 0; j < nchans; j++) {
-          lives_freep((void **)&audio_data[j]);
-        }
-        lives_freep((void **)&audio_data);
+        adata = (float **)weed_get_voidptr_array_counted(layer, WEED_LEAF_AUDIO_DATA, &nchans);
+        for (j = 0; j < nchans; j++) lives_freep((void **)&adata[j]);
+        lives_freep((void **)&adata);
       }
       weed_leaf_copy(layer, WEED_LEAF_AUDIO_DATA, channel, WEED_LEAF_AUDIO_DATA);
       /* g_print("setting 333dfff %d op layer for channel %p from chan %p, eg %f \n", in_tracks[i] + nbtracks, weed_get_voidptr_value(layer, "audio_data", NULL), weed_get_voidptr_value(channel, "audio_data", NULL), ((float *)(weed_get_voidptr_value(layer, "audio_data", NULL)))[0]); */

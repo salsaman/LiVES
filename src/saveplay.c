@@ -3046,6 +3046,7 @@ void play_file(void) {
   prefs->pb_quality = future_prefs->pb_quality;
   mainw->lockstats = FALSE;
   mainw->blend_palette = WEED_PALETTE_END;
+  mainw->audio_stretch = 1.;
 
   if (mainw->multitrack == NULL) {
     if (mainw->faded || mainw->fs) {

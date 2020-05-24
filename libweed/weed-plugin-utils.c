@@ -92,7 +92,7 @@ NOT_EXPORTED weed_plant_t *_weed_get_gui(weed_plant_t *p) {weed_plant_t *g = NUL
   gg(p, WEED_LEAF_GUI, 0, (void *)&g);
   if (!g) {g = weed_plant_new(WEED_PLANT_GUI); weed_leaf_set(p, WEED_LEAF_GUI, WEED_SEED_PLANTPTR, 1, &g);} return g;}
 NOT_EXPORTED double general_get_dbl(weed_plant_t *p, const char *w) {double v, *vp = (double *)gg(p, w, 0, &v); return vp ? v : 0;}
-#define gg_dbl(p,w) general_get_int((p),(w))
+#define gg_dbl(p,w) general_get_dbl((p),(w))
 EXPORTS int weed_get_api_version(weed_plant_t *pi) {weed_plant_t *h;
   wlg(pi, WEED_LEAF_HOST_INFO, 0, &h); return gg_i(h, WEED_LEAF_FILTER_API_VERSION);}
 NOT_EXPORTED void _weed_plant_set_flags(weed_plant_t *p, int f) {int t = weed_plant_get_type(p);

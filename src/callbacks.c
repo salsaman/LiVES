@@ -1658,7 +1658,6 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 
-
   // create a header.theme file in tmp, then zip it up with the images
 
   sepimg_ext = get_extension(mainw->sepimg_path);

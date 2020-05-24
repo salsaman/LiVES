@@ -79,7 +79,7 @@ LiVESList *do_onchange_init(lives_rfx_t *rfx) {
 }
 
 
-void on_paramwindow_button_clicked2(LiVESButton *button, lives_rfx_t *rfx) {
+static void on_paramwindow_button_clicked2(LiVESButton *button, lives_rfx_t *rfx) {
   // close from rte window
   on_paramwindow_button_clicked(button, rfx);
   lives_freep((void **)&fx_dialog[1]);

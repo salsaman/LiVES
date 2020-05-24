@@ -343,7 +343,7 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 // mandatory
 /// WEED_LEAF_NAME
 #define WEED_LEAF_DEFAULT "default"
-#define WEED_LEAF_MIN "min"  /// M for in chans, O for out
+#define WEED_LEAF_MIN "min"  /// Mand. for in chans, Opt. for out
 #define WEED_LEAF_MAX "max"  /// M for in chans, O for out
 #define WEED_LEAF_PARAM_TYPE "param_type"
 #define WEED_LEAF_HINT "hint"

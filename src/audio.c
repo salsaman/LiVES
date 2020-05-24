@@ -1418,7 +1418,6 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       }
 
       /// calculate tbytes for xsamples
-      /// TODO: when previewing / rendering in the clip editor, we should interpolate the velocities between frames
       zavel = avels[track] * (double)in_arate[track] / (double)out_arate;
 
       //g_print("zavel is %f\n", zavel);

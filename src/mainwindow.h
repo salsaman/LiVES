@@ -848,11 +848,10 @@ typedef struct {
   ticks_t adjticks; ///< used to equalise the timecode between alternate timer sources (souce -> clock adjustment)
   ticks_t cadjticks; ///< used to equalise the timecode between alternate timer sources (clock -> source adjustment)
   ticks_t firstticks; ///< ticks when audio started playing (for non-realtime audio plugins)
+  ticks_t syncticks; ///< adjustment to compensate for missed clock updates when switching time sources
   ticks_t stream_ticks;  ///< ticks since first frame sent to playback plugin
   ticks_t last_display_ticks; /// currticks when last display was shown (used for fixed fps)
   int play_sequence; ///< incremented for each playback
-
-  double repayment; ///< count of "borrowed" time
 
   double audio_stretch; ///< for fixed fps modes, the value is used to speed up / slow down audio
 

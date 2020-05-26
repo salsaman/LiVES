@@ -1217,6 +1217,7 @@ int process_one(boolean visible) {
   // INTERNAL PLAYER
   static frames_t last_req_frame = 0;
   static int last_pwidth = 0, last_pheight = 0;
+  static int64_t last_seek_pos = 0;
   lives_clip_t *sfile = cfile;
   _vid_playback_plugin *old_vpp;
   ticks_t new_ticks;
@@ -1369,10 +1370,8 @@ switch_point:
         /* 	sfile->fps * lives_pulse_get_pos(mainw->pulsed) + 1., (double)sfile->aseek_pos */
         /* 	/ (double)sfile->arps / 4. * sfile->fps + 1., */
         /* 	mainw->currticks, mainw->startticks, sfile->arps, sfile->fps); */
-        sfile->aseek_pos += mainw->repayment * (double)(sfile->arps  * qnt);
-      // g_print("REPAY is %f\n", mainw->repayment);
-      mainw->repayment = 0.;
-      sfile->frameno = sfile->last_frameno = last_req_frame + sig(sfile->pb_fps);
+
+        sfile->frameno = sfile->last_frameno = last_req_frame + sig(sfile->pb_fps);
 
       if (mainw->frame_layer_preload) {
         check_layer_ready(mainw->frame_layer_preload);
@@ -1515,6 +1514,13 @@ switch_point:
     sfile->frameno = requested_frame = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);
     if (mainw->scratch != SCRATCH_NONE) scratch  = mainw->scratch;
     mainw->scratch = SCRATCH_NONE;
+
+#ifdef HAVE_PULSE_AUDIO
+    if (new_ticks != mainw->startticks && mainw->pulsed->seek_pos == last_seek_pos) {
+      mainw->startticks = new_ticks;
+      sfile->frameno = mainw->actual_frame;
+    }
+#endif
 
 #ifdef ENABLE_PRECACHE
     if (scratch != SCRATCH_NONE) {
@@ -1812,12 +1818,13 @@ switch_point:
 #endif
 
         // load and display the new frame
-#ifndef SHOW_CACHE_PREDICTIONS
-        g_print("playing frame %d / %d at %ld (%ld : %ld) %.2f %ld\n", sfile->frameno, requested_frame, mainw->currticks,
+#ifdef SHOW_CACHE_PREDICTIONS
+        g_print("playing frame %d / %d at %ld (%ld : %ld) %.2f %ld %ld\n", sfile->frameno, requested_frame, mainw->currticks,
                 mainw->startticks, new_ticks, (mainw->pulsed->in_use && IS_VALID_CLIP(mainw->pulsed->playing_file)
                                                && mainw->files[mainw->pulsed->playing_file]->arate != 0) ? (double)mainw->pulsed->seek_pos
                 / (double)mainw->files[mainw->pulsed->playing_file]->arate / 4. * sfile->fps + 1. : 0. * sfile->fps + 1,
-                lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs));
+                lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs), mainw->pulsed->seek_pos);
+        last_seek_pos = mainw->pulsed->seek_pos;
 #endif
 
         load_frame_image(sfile->frameno);
@@ -2077,14 +2084,10 @@ static boolean reset_timebase(void) {
     if (prefs->audio_src == AUDIO_SRC_INT) {
       if (mainw->pulsed != NULL && pa_time_reset(mainw->pulsed, 0)) {
         pa_reset = TRUE;
-        pulse_tscale_reset(mainw->pulsed);
-        lives_pulse_get_time(NULL);
       }
     } else {
       if (mainw->pulsed_read != NULL && pa_time_reset(mainw->pulsed_read, 0)) {
         pa_reset = TRUE;
-        pulse_tscale_reset(mainw->pulsed_read);
-        lives_pulse_get_time(NULL);
       }
     }
     if (!pa_reset) {

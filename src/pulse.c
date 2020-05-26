@@ -85,11 +85,11 @@ static void stream_underflow_callback(pa_stream *s, void *userdata) {
   if (prefs->show_dev_opts) {
     fprintf(stderr, "PA Stream underrun.\n");
   }
-  if (mainw->video_seek_ready && mainw->audio_seek_ready) {
-    pulsed->extrausec += ((double)pulsed->aPlayPtr->size / (double)(pulsed->out_arate) * 1000000.
-                          / (double)(pulsed->out_achans * pulsed->out_asamps >> 3) + .5);
-    pulsed->aPlayPtr->size = 0;
-  }
+  /* if (mainw->video_seek_ready && mainw->audio_seek_ready) { */
+  /*   pulsed->extrausec += ((double)pulsed->aPlayPtr->size / (double)(pulsed->out_arate) * 1000000. */
+  /*                         / (double)(pulsed->out_achans * pulsed->out_asamps >> 3) + .5); */
+  /*   //pulsed->aPlayPtr->size = 0; */
+  /* } */
 
   mainw->uflow_count++;
 }
@@ -484,8 +484,9 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         sample_silence_pulse(pulsed, nsamples * pulsed->out_achans * pulsed->out_asamps >> 3, xbytes);
         //pulsed->seek_pos += xbytes;
         fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos;
+        pulsed->usec_start += (pulsed->extrausec - xusec);
         pulsed->extrausec = xusec;
-        mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
+        //mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
         return;
         /// adjustment is .5 (rounding factor) + (if we switched clips) 1 frame (because video advances 1) + 1 (????)
       }
@@ -495,16 +496,18 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       /*         ((double)pulsed->seek_pos / (double)afile->arps / 4. * afile->fps + 1.), mainw->currticks, mainw->startticks); */
       /* pulsed->seek_pos += afile->adirection * (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL */
       /*                     * (double)(afile->arps  * qnt); */
-      rnd_frame = (frames_t)((double)pulsed->seek_pos / (double)afile->arps / dqnt * afile->fps
-                             + (afile->last_play_sequence != mainw->play_sequence ? .000001 : 0.));
+      rnd_frame = (frames_t)((double)pulsed->seek_pos / (double)afile->arate / dqnt * afile->fps
+                             + (afile->last_play_sequence != mainw->play_sequence ? .000001 : .5));
+      //g_print("RND frame is %d\n", rnd_frame + 1);
       //g_print("VALXXX %d %d %d\n", mainw->play_sequence, afile->last_play_sequence, mainw->switch_during_pb);
-      //rnd_frame += afile->adirection * (mainw->switch_during_pb && afile->last_play_sequence == mainw->play_sequence ? 1 : 0);
+      rnd_frame += afile->adirection * (mainw->switch_during_pb && afile->last_play_sequence == mainw->play_sequence ? 1 : 0);
       mainw->switch_during_pb = FALSE;
-      rnd_samp = (int64_t)((double)(rnd_frame + .00001) / afile->fps * (double)afile->arps + .5);
+      rnd_samp = (int64_t)((double)(rnd_frame + .00001) / afile->fps * (double)afile->arate + .5);
       pulsed->seek_pos = (ssize_t)(rnd_samp * qnt);
-      // g_print("rndfr = %d rnt = %ld skpo = %ld\n", rnd_frame + 1, rnd_samp, pulsed->seek_pos);
+      //g_print("rndfr = %d rnt = %ld skpo = %ld\n", rnd_frame + 1, rnd_samp, pulsed->seek_pos);
       pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos, qnt);
       lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
+      //g_print("seek to %ld %ld\n", pulsed->seek_pos, (int64_t)((double)pulsed->seek_pos / 48000. / 4. * afile->fps) + 1);
       fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos;
 
       if (pulsed->playing_file == mainw->ascrap_file || afile->adirection == LIVES_DIRECTION_FORWARD) {
@@ -519,7 +522,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       // preload the buffer for first read
       in_bytes = (size_t)(in_framesd * pulsed->in_achans * (pulsed->in_asamps >> 3));
       lives_read_buffered(pulsed->fd, NULL, in_bytes * 8, TRUE);
-      mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
+      lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
+      //mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
 
       /* g_print("@ SYNC %d seek pos %ld = %f  ct %ld   st %ld\n", mainw->actual_frame, pulsed->seek_pos, */
       /*         ((double)pulsed->seek_pos / (double)afile->arps / 4. * afile->fps + 1.), mainw->currticks, mainw->startticks); */
@@ -535,7 +539,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         // this is used in multitrack
         from_memory = TRUE;
         numFramesToWrite = pulseFramesAvailable;
-        pulseFramesAvailable -= numFramesToWrite;
       } else {
         // from file or audio generator
         if (LIVES_LIKELY(pulsed->fd >= 0)) {
@@ -991,10 +994,13 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     // buffer is reused here, it's what we'll actually push to pulse
 
     if (sync_ready) {
-      //pulse_tscale_reset(pulsed);
-      thresh = THRESH_BASE;
+      if (nbytes >= 8192) {
+        mainw->syncticks += ((double)nbytes / (double)(pulsed->out_arate) * 1000000.
+                             / (double)(pulsed->out_achans * pulsed->out_asamps >> 3) + .5) * USEC_TO_TICKS;
+      } else {
+        mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
+      }
       mainw->fps_mini_measure = 0;
-      mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
       mainw->fps_mini_ticks = mainw->currticks;
       pthread_mutex_lock(&mainw->avseek_mutex);
       mainw->audio_seek_ready = TRUE;
@@ -1484,7 +1490,6 @@ int pulse_audio_init(void) {
   pulsed.playing_file = -1;
   pulsed.sound_buffer = NULL;
   pulsed.extrausec = 0;
-  pulsed.tscale = 1.;
   return 0;
 }
 
@@ -1518,7 +1523,6 @@ int pulse_audio_read_init(void) {
   pulsed_reader.pa_props = NULL;
   pulsed_reader.sound_buffer = NULL;
   pulsed_reader.extrausec = 0;
-  pulsed_reader.tscale = 1.;
   return 0;
 }
 
@@ -1812,45 +1816,17 @@ boolean pa_time_reset(pulse_driver_t *pulsed, ticks_t offset) {
   pa_operation_unref(pa_op);
   pa_mloop_unlock();
 
-  lives_pulse_get_time(NULL);
   do {
     err = pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec);
   }  while (err == -PA_ERR_NODATA);
-
   pulsed->usec_start = usec - offset  / USEC_TO_TICKS;
   pulsed->frames_written = 0;
-  pulsed->extrausec = 0;
-  pulsed->tscale = 1.;
   return TRUE;
 }
 
 
-static double tscaleu, tscalex;
-static int nsc;
-
-void pulse_tscale_reset(pulse_driver_t *pulsed) {
-  tscalex = tscaleu = 0.;
-  nsc = 1;
-  pulsed->tscale = 1.;
-  mainw->repayment = 0.;
-  thresh = THRESH_BASE;
-}
-
-#define TSC_AVG_WINDOW 15
 /**
    @brief calculate the playback time based on samples sent to the soundcard
-   This ensures that video is always in sync with audio, despite variations due to the sound hardware
-   The Perfectime Algorithm (salsaman) was devised by trial and error, and includes several autocorrection and
-   interpolation methods
-
-   There are 3 levels of time keeping:
-   - a count of the number of samples sent to the pa server
-   :: since these have a granularity in the order of milli or tens of milli seconds, this is augmented by:
-   - timing updates from pa server
-   - between these, count from the rt system clock
-
-   most of the code here is dedicated to resolving differences and fluctuations between the 3 sources
-
 */
 ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   // get the time in ticks since either playback started
@@ -1858,27 +1834,7 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   int64_t usec;
   ticks_t timeout;
   lives_alarm_t alarm_handle;
-  double tscalev;
-  boolean noupdl = FALSE, got_time = FALSE;
   int err;
-
-  static int64_t last_usec;
-  static int64_t paclock, lpaclock;
-  static int64_t last_extra, xusec = 0;
-  static ticks_t sysclock;
-  static ticks_t pabstart;
-  static ticks_t borrowlim = -1.;
-  static int64_t borrowusec = 0;
-  static double repay = -1., thresh = THRESH_BASE;
-  static int borrowclip = -1;
-
-  if (!pulsed) {
-    thresh = THRESH_BASE;
-    lpaclock = paclock = xusec = last_extra = 0;
-    last_usec = usec;
-    sysclock = 0;
-    return -1;
-  }
 
   msg = pulsed->msgq;
   if (msg && (msg->command == ASERVER_CMD_FILE_SEEK || msg->command == ASERVER_CMD_FILE_OPEN)) {
@@ -1890,159 +1846,8 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
     if (timeout == 0) return -1;
   }
 
-  //  #define ONLY_SAMPLES
-#ifdef ONLY_SAMPLES
-  if (pulsed->extrausec == xusec) {
-    xusec = pulsed->extrausec = pulsed->extrausec + (mainw->clock_ticks - sysclock) / USEC_TO_TICKS;
-    sysclock = mainw->clock_ticks;
-    return xusec * USEC_TO_TICKS;
-  }
-  if (mainw->scratch == SCRATCH_NONE)
-    pulsed->tscale = (double)(mainw->clock_ticks - sysclock) / ((double)pulsed->extrausec - xusec) / USEC_TO_TICKS;
-  xusec = pulsed->extrausec;
-  return xusec * USEC_TO_TICKS;
-#endif
-
-  if (borrowclip != -1 && (borrowlim > 0 || (repay > 0. && repay < 1.))) {
-    borrowusec += pulsed->extrausec - last_extra;
-  }
-
   err = pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec);
-
-#ifdef DEBUG_PA_TIME
-  g_print("gettime3 %d %ld %ld %ld %f\n", err, usec, pulsed->usec_start, (usec - pulsed->usec_start) * USEC_TO_TICKS,
-          (usec - pulsed->usec_start) * USEC_TO_TICKS / 100000000.);
-#endif
-
-  if (last_usec > 0 && (usec <= last_usec || err == -PA_ERR_NODATA)) {
-    if (pulsed->extrausec == last_extra) {
-      if (lpaclock != 0) {
-        paclock = lpaclock + (double)(mainw->clock_ticks - sysclock) / USEC_TO_TICKS * pulsed->tscale;
-      }
-      noupdl = TRUE;
-    } else {
-      sysclock = mainw->clock_ticks;
-      paclock = usec + pulsed->extrausec;
-    }
-    got_time = TRUE;
-  }
-
-  if (usec >= last_usec || pulsed->extrausec >= last_extra) {
-    //g_print("tscssssxx is %ld %ld %ld\n", last_extra, last_usec, pulsed->extrausec);
-    if (mainw->scratch == SCRATCH_NONE) {
-      //if (last_usec > 0) {
-      //if (last_extra != pulsed->extrausec) {
-      //retusec = usec + pulsed->extrausec;
-      if (usec > last_usec) {
-        tscaleu += (double)(usec - last_usec);
-      }
-    }
-    if (pulsed->extrausec > last_extra) {
-      tscalex += (double)(pulsed->extrausec - last_extra);
-    }
-    //g_print("TSC1ss1 is %f %f %f\n", pulsed->tscale, tscaleu, tscalex);
-    if (tscaleu > thresh && tscalex > thresh) {
-      if (nsc > 1) {
-        if (thresh < THRESH_MAX) thresh += THRESH_BASE;
-        tscalev = tscaleu / tscalex;
-        g_print("TSC11 is %f %f %f %d\n", pulsed->tscale, tscaleu, tscalex, nsc);
-        pulsed->tscale *= (double)nsc;
-        pulsed->tscale += tscalev;
-        g_print("txxxscssssxx is %f %f %d\n" , pulsed->tscale, tscalev, nsc);
-        pulsed->tscale /= (double)(nsc + 1.);
-      }
-      if (nsc < TSC_AVG_WINDOW - 1) nsc++;
-      //g_print("TSC is %f\n", pulsed->tscale);
-      pulsed->extrausec = last_extra + usec - last_usec;
-      tscaleu = tscalex = 0.;
-    }
-
-    if (usec > last_usec) {
-      pulsed->extrausec -= (double)(usec - last_usec);// / pulsed->tscale;
-    }
-
-    if (!got_time && usec + pulsed->extrausec == last_usec + last_extra) {
-      // occasionally we will get a patch where the time is updating but no samples are read
-      // in that case we will "borrow" some time from the system clock. If we don't catch up again after a certain limit,
-      // we will "repay" the time spread out over a few frames, in order to ensure precise a/v sync
-      if (0 && borrowclip == -1 && IS_NORMAL_CLIP(pulsed->playing_file) && pulsed->playing_file == mainw->playing_file) {
-        borrowclip = pulsed->playing_file;
-        pabstart = lpaclock;
-      }
-      paclock = lpaclock + (mainw->clock_ticks - sysclock) / USEC_TO_TICKS * pulsed->tscale;
-      noupdl = TRUE;
-    } else {
-      sysclock = mainw->clock_ticks;
-      paclock = usec + pulsed->extrausec;
-      if (borrowclip != -1) {
-        if (borrowclip == pulsed->playing_file) {
-          if (borrowlim == -1) {
-#define BORROW_LIM 4. // no. of frames to allow for corection before we start checking
-#define REPAY_FRAMES 10. // no of frame
-            borrowlim = sysclock + (ticks_t)(BORROW_LIM / fabs(afile->pb_fps) * TICKS_PER_SECOND_DBL);
-            borrowusec = pulsed->extrausec - last_extra;
-          } else {
-            if (sysclock >= borrowlim) {
-              if (repay < 0.) {
-                repay = ((double)borrowusec * USEC_TO_TICKS) / pulsed->tscale;
-                // if repay < 1,0 then we have not increased sample count enough to compensate the stoppage
-                // i.e we "borrowed" to much time.
-                // so we should apply the inverse to recover. IF the inverse is applied then it will take equal time to recover
-                // however we want do this over approx. REPAY_FRAMES, so the ratio needs scaling
-                if (repay < 1.0) {
-                  float scale = 1.;
-                  mainw->repayment = ((double)(paclock - pabstart) - (double)borrowusec) / (double)ONE_MILLION;
-                  do {
-                    repay = 1.0 - (1.0 - repay) * (double)(paclock - pabstart) / TICKS_PER_SECOND_DBL
-                            / (REPAY_FRAMES / fabs(afile->pb_fps)) / scale;
-                    scale *= 2.;
-                  } while (repay < .5);
-                } else {
-                  mainw->repayment = 0.;
-                  repay = -1.;
-                  borrowclip = -1;
-                  borrowlim = -1.;
-                  borrowusec = 0;
-                }
-              } else {
-                if (repay < 1.) {
-                  if (mainw->repayment > 0.) {
-                    paclock = lpaclock + (paclock - lpaclock) * repay;
-                    mainw->repayment = ((double)(paclock - pabstart) - (double)borrowusec) / (double)ONE_MILLION;
-                    /* g_print("valsrep2 is %f %f %ld %ld %ld\n", (double)(paclock - pabstart - borrowusec), */
-                    /*         mainw->repayment, paclock, pabstart, borrowusec); */
-                    noupdl = TRUE;
-                  }
-                  if (mainw->repayment <= 0.) {
-                    pulsed->extrausec -= mainw->repayment * ONE_MILLION;
-                    mainw->repayment = 0.;
-                    repay = -1.;
-                    borrowclip = -1;
-                    borrowlim = -1.;
-                    borrowusec = 0;
-                    noupdl = FALSE;
-		      // *INDENT-OFF*
-		    }}}}}}
-	  else {
-	    mainw->repayment = 0.;
-	    repay = -1.;
-	    borrowclip = -1;
-	    borrowlim = -1.;
-	    borrowusec = 0;
-	  }}}}
-    // *INDENT-ON*
-
-  //g_print("tscxx is %f, ret is %ld %ld and %ld ext is %ld\n", pulsed->tscale, paclock, usec, last_usec, pulsed->extrausec);
-  //retusec = pulsed->usec_start + (double)(usec - pulsed->usec_start) / pulsed->tscale;
-  if (usec > last_usec) last_usec = usec;
-
-  last_extra = pulsed->extrausec;
-  //g_print("time is %f, pos-time is %f\n", (double)(paclock - pulsed->usec_start) / 1000000., (double)pulsed->seek_pos / (double)pulsed->in_arate / 4.);
-  //g_print("tsc is %f, ret is %ld %ld and %ld ext is %ld\n", pulsed->tscale,  paclock, usec, last_usec, pulsed->extrausec);
-
-  //  if (paclock < lpaclock) paclock = lpaclock;
-  if (!noupdl) lpaclock = paclock;
-  return (ticks_t)((paclock - pulsed->usec_start) * USEC_TO_TICKS);
+  return (ticks_t)((usec - pulsed->usec_start) * USEC_TO_TICKS);
 }
 
 

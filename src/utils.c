@@ -828,7 +828,7 @@ static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, o
 off_t lives_lseek_buffered_rdonly(int fd, off_t offset) {
   // seek relative
   lives_file_buffer_t *fbuff;
-
+  g_print("lseek to %ld\n", offset);
   if ((fbuff = find_in_file_buffers(fd)) == NULL) {
     LIVES_DEBUG("lives_lseek_buffered_rdonly: no file buffer found");
     return lseek(fd, offset, SEEK_CUR);
@@ -1412,7 +1412,7 @@ static lives_time_source_t lastt = LIVES_TIME_SOURCE_NONE;
 static ticks_t delta = 0;
 
 void reset_playback_clock(void) {
-  mainw->cadjticks = mainw->adjticks = 0;
+  mainw->cadjticks = mainw->adjticks = mainw->syncticks = 0;
   lastt = LIVES_TIME_SOURCE_NONE;
   delta = 0;
 }
@@ -1518,6 +1518,13 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
   /// conversely, when switching from clock to source, adjticks_new = clock_ticks - cadjticks - source_ticks
   /// again, this just delta + adjticks; in this case we can use current delta since it is assumed that the system clock is always available
 
+  /// this scheme does, however introduce a small problem, which is that when the sources are switched, we assume that the
+  /// time on both clocks is equivalent. This can lead to a problem when switching clips, since temporarily we switch to system
+  /// time and then back to soundcard. However, this can cause some updates to the timer to be missed, i.e the audio is playing but the
+  /// samples are not counted, however we cannot simply add these to the soundcard timer, as they will be lost due to the resync.
+  /// hence we need mainw->syncticks --> a global adjustment which is independant of the clock source. This is similar to
+  /// mainw->deltaticks for the player, however, deltaticks is a temporary impulse, whereas syncticks is a permanent adjustment.
+
   if (*tsource == LIVES_TIME_SOURCE_SYSTEM)  {
     if (lastt != LIVES_TIME_SOURCE_SYSTEM && lastt != LIVES_TIME_SOURCE_NONE) {
       // current + adjt == clock_ticks - cadj /// interticks == lcurrent + adj
@@ -1542,7 +1549,7 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
   /* } */
   lclock_ticks = clock_ticks;
   lastt = *tsource;
-  return interticks;
+  return interticks + mainw->syncticks;
 }
 
 

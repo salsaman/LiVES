@@ -1396,8 +1396,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->st_fcache = mainw->en_fcache = mainw->pr_fcache = NULL;
 
-  mainw->repayment = 0.;
-
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);
@@ -6983,8 +6981,8 @@ static boolean check_for_overlay_text(weed_layer_t *layer) {
       if (mainw->overlay_msg) {
 	render_text_overlay(layer, mainw->overlay_msg);
 	if (prefs->render_overlay && mainw->record && !mainw->record_paused) {
-	  weed_plant_t *event = get_last_event(mainw->event_list);
-	  if (WEED_EVENT_IS_FRAME(event)) weed_set_string_value(event, WEED_LEAF_OVERLAY_TEXT, mainw->urgency_msg);
+	  weed_plant_t *event = get_last_frame_event(mainw->event_list);
+	  if (event) weed_set_string_value(event, WEED_LEAF_OVERLAY_TEXT, mainw->overlay_msg);
 	}
       }
       return TRUE;
@@ -8794,10 +8792,6 @@ void load_frame_image(int frame) {
 	    }}}}
       // *INDENT-ON*
 
-        if (!cfile->opening) {
-          sensitize();
-        }
-
         if (!LIVES_IS_PLAYING && mainw->play_window != NULL && cfile->is_loaded && orig_file != new_file) {
           // if the clip is loaded
           if (mainw->preview_box == NULL) {
@@ -8842,34 +8836,39 @@ void load_frame_image(int frame) {
         if (!mainw->switch_during_pb) {
           // switch on/off loop video if we have/don't have audio
           // TODO: can we just call sensitize() ?
-          if (!CURRENT_CLIP_HAS_AUDIO) {
-            mainw->loop = FALSE;
-          } else {
-            mainw->loop = lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video));
+
+          if (!cfile->opening) {
+            sensitize();
           }
 
-          lives_widget_set_sensitive(mainw->undo, cfile->undoable);
-          lives_widget_set_sensitive(mainw->redo, cfile->redoable);
-          lives_widget_set_sensitive(mainw->export_submenu, (CURRENT_CLIP_HAS_AUDIO));
-          lives_widget_set_sensitive(mainw->recaudio_submenu, TRUE);
-          lives_widget_set_sensitive(mainw->recaudio_sel, (CURRENT_CLIP_HAS_VIDEO));
-          lives_widget_set_sensitive(mainw->export_selaudio, (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO));
-          lives_widget_set_sensitive(mainw->export_allaudio, CURRENT_CLIP_HAS_AUDIO);
-          lives_widget_set_sensitive(mainw->append_audio, (CURRENT_CLIP_HAS_AUDIO));
-          lives_widget_set_sensitive(mainw->trim_submenu, (CURRENT_CLIP_HAS_AUDIO));
-          lives_widget_set_sensitive(mainw->trim_audio, (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO));
-          lives_widget_set_sensitive(mainw->trim_to_pstart, (CURRENT_CLIP_HAS_AUDIO && cfile->real_pointer_time > 0.));
-          lives_widget_set_sensitive(mainw->delaudio_submenu, (CURRENT_CLIP_HAS_AUDIO));
-          lives_widget_set_sensitive(mainw->delsel_audio, (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO));
-          lives_widget_set_sensitive(mainw->delall_audio, (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO));
-          lives_widget_set_sensitive(mainw->sa_button, CURRENT_CLIP_HAS_VIDEO && (cfile->start > 1 || cfile->end < cfile->frames));
-          lives_widget_set_sensitive(mainw->resample_audio, (CURRENT_CLIP_HAS_AUDIO && capable->has_sox_sox));
-          lives_widget_set_sensitive(mainw->voladj, CURRENT_CLIP_HAS_AUDIO);
-          lives_widget_set_sensitive(mainw->fade_aud_in, CURRENT_CLIP_HAS_AUDIO);
-          lives_widget_set_sensitive(mainw->fade_aud_out, CURRENT_CLIP_HAS_AUDIO);
-          lives_widget_set_sensitive(mainw->loop_video, (CURRENT_CLIP_HAS_AUDIO && CURRENT_CLIP_HAS_VIDEO));
-        }
+          /*   if (!CURRENT_CLIP_HAS_AUDIO) { */
+          /*     mainw->loop = FALSE; */
+          /*   } else { */
+          /*     mainw->loop = lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video)); */
+          /*   } */
 
+          /*   lives_widget_set_sensitive(mainw->undo, cfile->undoable); */
+          /*   lives_widget_set_sensitive(mainw->redo, cfile->redoable); */
+          /*   lives_widget_set_sensitive(mainw->export_submenu, (CURRENT_CLIP_HAS_AUDIO)); */
+          /*   lives_widget_set_sensitive(mainw->recaudio_submenu, TRUE); */
+          /*   lives_widget_set_sensitive(mainw->recaudio_sel, (CURRENT_CLIP_HAS_VIDEO)); */
+          /*   lives_widget_set_sensitive(mainw->export_selaudio, (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO)); */
+          /*   lives_widget_set_sensitive(mainw->export_allaudio, CURRENT_CLIP_HAS_AUDIO); */
+          /*   lives_widget_set_sensitive(mainw->append_audio, (CURRENT_CLIP_HAS_AUDIO)); */
+          /*   lives_widget_set_sensitive(mainw->trim_submenu, (CURRENT_CLIP_HAS_AUDIO)); */
+          /*   lives_widget_set_sensitive(mainw->trim_audio, (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO)); */
+          /*   lives_widget_set_sensitive(mainw->trim_to_pstart, (CURRENT_CLIP_HAS_AUDIO && cfile->real_pointer_time > 0.)); */
+          /*   lives_widget_set_sensitive(mainw->delaudio_submenu, (CURRENT_CLIP_HAS_AUDIO)); */
+          /*   lives_widget_set_sensitive(mainw->delsel_audio, (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO)); */
+          /*   lives_widget_set_sensitive(mainw->delall_audio, (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO)); */
+          /*   lives_widget_set_sensitive(mainw->sa_button, CURRENT_CLIP_HAS_VIDEO && (cfile->start > 1 || cfile->end < cfile->frames)); */
+          /*   lives_widget_set_sensitive(mainw->resample_audio, (CURRENT_CLIP_HAS_AUDIO && capable->has_sox_sox)); */
+          /*   lives_widget_set_sensitive(mainw->voladj, CURRENT_CLIP_HAS_AUDIO); */
+          /*   lives_widget_set_sensitive(mainw->fade_aud_in, CURRENT_CLIP_HAS_AUDIO); */
+          /*   lives_widget_set_sensitive(mainw->fade_aud_out, CURRENT_CLIP_HAS_AUDIO); */
+          /*   lives_widget_set_sensitive(mainw->loop_video, (CURRENT_CLIP_HAS_AUDIO && CURRENT_CLIP_HAS_VIDEO)); */
+          /* } */
+        }
         lives_menu_item_set_text(mainw->undo, cfile->undo_text, TRUE);
         lives_menu_item_set_text(mainw->redo, cfile->redo_text, TRUE);
 
@@ -8936,7 +8935,6 @@ void load_frame_image(int frame) {
       boolean  switch_audio_clip(int new_file, boolean activate) {
         ticks_t timeout;
         lives_alarm_t alarm_handle;
-        weed_plant_t *event;
 
         if (prefs->audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK

@@ -3013,8 +3013,6 @@ void play_file(void) {
     lives_freep((void **)&com2);
   }
 
-  mainw->repayment = 0.;
-
   if (CURRENT_CLIP_IS_NORMAL) {
     cfile->last_play_sequence = mainw->play_sequence;
     stfile = lives_build_filename(prefs->workdir, cfile->handle, LIVES_STATUS_FILE_NAME, NULL);

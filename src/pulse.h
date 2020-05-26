@@ -35,10 +35,8 @@ typedef struct {
   pa_stream *pstream;
   pa_proplist *pa_props;
 
-  volatile pa_usec_t usec_start;
-  volatile pa_usec_t extrausec;
-  double tscale;
-  double cscale;
+  volatile int64_t usec_start;
+  volatile int64_t extrausec;
 
   int str_idx;
 

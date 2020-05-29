@@ -609,13 +609,6 @@ AC_SUBST(GL_LIBS)
 
 AM_CONDITIONAL(HAVE_OPENGL, $HAVE_OPENGL)
 
-dnl check for GLU
-PKG_CHECK_MODULES(GLU,glu,HAVE_GLU=true,HAVE_GLU=false)
-AC_SUBST(GLU_CFLAGS)
-AC_SUBST(GLU_LIBS)
-
-AM_CONDITIONAL(HAVE_GLU,$HAVE_GLU)
-
 dnl check for mjpegtools
 HAVE_MJPEGTOOLS=false
 AC_ARG_ENABLE(mjpegtools, [  --disable-mjpegtools    Disable mjpegtools (yuv4mpeg) support.] , disable_mjpegtools=yes)

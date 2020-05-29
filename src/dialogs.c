@@ -1363,7 +1363,6 @@ switch_point:
     mainw->deltaticks = 0;
 
     if (IS_VALID_CLIP(mainw->playing_file)) {
-      int qnt = sfile->achans * sfile->asampsize / 8;
       if (sfile->arate)
         /* g_print("HIB %d %d %d %d %ld %f %f %ld %ld %d %f\n", sfile->frameno, last_req_frame, mainw->playing_file, */
         /* 	aplay_file, sfile->aseek_pos, */
@@ -1516,7 +1515,7 @@ switch_point:
     mainw->scratch = SCRATCH_NONE;
 
 #ifdef HAVE_PULSE_AUDIO
-    if (new_ticks != mainw->startticks && mainw->pulsed->seek_pos == last_seek_pos) {
+    if (new_ticks != mainw->startticks && mainw->pulsed->seek_pos == last_seek_pos && CLIP_HAS_AUDIO(mainw->pulsed->playing_file)) {
       mainw->startticks = new_ticks;
       sfile->frameno = mainw->actual_frame;
     }
@@ -3099,9 +3098,9 @@ boolean do_comments_dialog(int fileno, char *filename) {
 
   while (1) {
     if ((response = (lives_dialog_run(LIVES_DIALOG(commentsw->comments_dialog)) == LIVES_RESPONSE_OK))) {
-      lives_snprintf(sfile->title, 256, "%s", lives_entry_get_text(LIVES_ENTRY(commentsw->title_entry)));
-      lives_snprintf(sfile->author, 256, "%s", lives_entry_get_text(LIVES_ENTRY(commentsw->author_entry)));
-      lives_snprintf(sfile->comment, 256, "%s", lives_entry_get_text(LIVES_ENTRY(commentsw->comment_entry)));
+      lives_snprintf(sfile->title, 1024, "%s", lives_entry_get_text(LIVES_ENTRY(commentsw->title_entry)));
+      lives_snprintf(sfile->author, 1024, "%s", lives_entry_get_text(LIVES_ENTRY(commentsw->author_entry)));
+      lives_snprintf(sfile->comment, 1024, "%s", lives_entry_get_text(LIVES_ENTRY(commentsw->comment_entry)));
 
       save_clip_value(fileno, CLIP_DETAILS_TITLE, sfile->title);
       save_clip_value(fileno, CLIP_DETAILS_AUTHOR, sfile->author);
@@ -3444,6 +3443,9 @@ void threaded_dialog_spin(double fraction) {
   int progress;
 
   if (mainw->splash_window) return;
+  if (!mainw->threaded_dialog) return;
+  if (!pthread_equal(capable->main_thread, pthread_self()) && !pthread_equal(capable->gui_thread, pthread_self()))
+    return;
 
   if (!procw || !procw->is_ready || !prefs->show_gui) return;
 

@@ -193,7 +193,7 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
     if ((level & LIVES_LOG_LEVEL_MASK) == LIVES_LOG_LEVEL_CRITICAL)
       msg = lives_strdup_printf(_("%s Critical error: %s\n"), domain, message);
     else msg = lives_strdup_printf(_("%s Fatal error: %s\n"), domain, message);
-#define BREAK_ON_CRIT
+    //#define BREAK_ON_CRIT
 #ifdef BREAK_ON_CRIT
     if (prefs->show_dev_opts) raise(LIVES_SIGTRAP);
 #endif
@@ -754,7 +754,7 @@ static boolean pre_init(void) {
   if (needs_update) set_string_pref(PREF_PREFIX_DIR, prefs->prefix_dir);
 
 #ifdef GUI_GTK
-  icon = lives_build_filename(prefs->prefix_dir, DESKTOP_ICON_DIR, "lives" LIVES_FILE_EXT_PNG, NULL);
+  icon = lives_build_filename(prefs->prefix_dir, DESKTOP_ICON_DIR, "lives." LIVES_FILE_EXT_PNG, NULL);
   gtk_window_set_default_icon_from_file(icon, &gerr);
   lives_free(icon);
 
@@ -1254,8 +1254,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->last_display_ticks = 0;
 
-  mainw->jack_trans_poll = FALSE;
-
   mainw->alives_pgid = 0;
 
   mainw->aplayer_broken = FALSE;
@@ -1337,6 +1335,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
 #ifdef ENABLE_JACK
   mainw->jack_inited = FALSE;
+  mainw->jack_trans_poll = FALSE;
 #endif
 
   mainw->stop_emmission = NULL;
@@ -1520,10 +1519,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->mt_auto_back = get_int_prefd(PREF_MT_AUTO_BACK, 120);
 
-    /* if (!ign_opts->ign_aplayer) { */
-    /*   get_string_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command, PATH_MAX * 2); */
-    /* } */
-
     get_string_pref(PREF_VIDEO_OPEN_COMMAND, prefs->video_open_command, PATH_MAX * 2);
 
     if (strlen(prefs->video_open_command) == 0) {
@@ -1605,6 +1600,7 @@ static void lives_init(_ign_opts *ign_opts) {
     }
 
     lives_memset(prefs->encoder.of_name, 0, 1);
+    lives_memset(prefs->encoder.of_desc, 0, 1);
 
     if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_encoder_plugins && capable->has_python) {
       LiVESList *ofmt_all = NULL;
@@ -2216,6 +2212,16 @@ static void do_start_messages(void) {
 #undef SHOWDETx
 #undef SHOWDET
 
+static void set_toolkit_theme(int prefer) {
+  // parse XDG_DATA_DIRS
+  if (prefer & LIVES_THEME_DARK) {
+    g_object_set (gtk_settings_get_default (), "gtk-theme-name", "Materia", NULL);
+    g_object_set (gtk_settings_get_default (), "gtk-icon-theme-name", "elementaryXubuntu-dark", NULL);
+    g_object_set (gtk_settings_get_default (), "gtk-application-prefer-dark-theme", TRUE, NULL);
+  }
+}
+
+
 boolean set_palette_colours(boolean force_reload) {
   // force_reload should only be set when the theme changes in prefs.
   LiVESList *cache_backup = NULL;
@@ -2287,11 +2293,7 @@ boolean set_palette_colours(boolean force_reload) {
 
   palette->mt_evbox.red = palette->mt_evbox.green = palette->mt_evbox.blue = palette->mt_evbox.alpha = 65535;
 
-  if (palette->style & STYLE_3 || palette->style == STYLE_PLAIN) { // light style
-    palette->ce_unsel.red = palette->ce_unsel.green = palette->ce_unsel.blue = 0;
-  } else {
-    palette->ce_unsel.red = palette->ce_unsel.green = palette->ce_unsel.blue = 6554;
-  }
+  palette->ce_unsel.red = palette->ce_unsel.green = palette->ce_unsel.blue = 0;
   palette->ce_unsel.alpha = 65535;
 
   palette->ce_sel.red = palette->ce_sel.green = palette->ce_sel.blue = palette->ce_sel.alpha = 65535;
@@ -2307,8 +2309,14 @@ boolean set_palette_colours(boolean force_reload) {
     force_reload = TRUE;
   } else {
     // pull our colours from normal prefs
-    palette->style = lcol.red;
     if (lives_ascii_strcasecmp(future_prefs->theme, "none")) {
+      palette->style = lcol.red;
+      if (!(palette->style & STYLE_LIGHT)) {
+	palette->ce_unsel.red = palette->ce_unsel.green = palette->ce_unsel.blue = 6554;
+	set_toolkit_theme(LIVES_THEME_DARK | LIVES_THEME_COMPACT);
+      }
+      else set_toolkit_theme(LIVES_THEME_LIGHT | LIVES_THEME_COMPACT);
+
       get_string_pref(THEME_DETAIL_SEPWIN_IMAGE, mainw->sepimg_path, PATH_MAX);
       get_string_pref(THEME_DETAIL_FRAMEBLANK_IMAGE, mainw->frameblank_path, PATH_MAX);
 
@@ -2350,7 +2358,6 @@ boolean set_palette_colours(boolean force_reload) {
     get_colour_pref(THEME_DETAIL_FRAME_SURROUND, &palette->frame_surround);
 
     get_colour_pref(THEME_DETAIL_CE_SEL, &palette->ce_sel);
-
     get_colour_pref(THEME_DETAIL_CE_UNSEL, &palette->ce_unsel);
   }
 
@@ -2419,6 +2426,13 @@ boolean set_palette_colours(boolean force_reload) {
       is_OK = FALSE;
     } else {
       palette->style = atoi(pstyle);
+      if (!(palette->style & STYLE_LIGHT)) {
+	palette->ce_unsel.red = palette->ce_unsel.green = palette->ce_unsel.blue = 0;
+	set_toolkit_theme(LIVES_THEME_LIGHT | LIVES_THEME_COMPACT);
+      }
+      else {
+	set_toolkit_theme(LIVES_THEME_DARK | LIVES_THEME_COMPACT);
+      }
     }
 
     if (!is_OK || !get_theme_colour_pref(themefile, THEME_DETAIL_NORMAL_FORE, &lcol)) {
@@ -2887,10 +2901,10 @@ void print_opthelp(void) {
 #ifdef HAVE_PULSE_AUDIO
     fprintf(stderr, ", "); // comma after pulse
 #endif
-    fprintf(stderr, "%s or ", AUDIO_PLAYER_SOX);
+fprintf(stderr, _("%s or :"), AUDIO_PLAYER_SOX);
   }
 #ifdef HAVE_PULSE_AUDIO
-  else fprintf(stderr, _(" or ")); // no sox, 'or' after pulse
+  else fprintf(stderr, "%s", _(" or ")); // no sox, 'or' after pulse
 #endif
   fprintf(stderr, "%s\n", AUDIO_PLAYER_NONE);
 #endif
@@ -3030,7 +3044,7 @@ static boolean lives_startup(livespointer data) {
 
   if (strlen(buff) && strcmp(buff, "(null)") && strcmp(buff, "none")) {
     mainw->vpp = open_vid_playback_plugin(buff, TRUE);
-  } else {
+  } else if (prefs->startup_phase == 3) {
     mainw->vpp = open_vid_playback_plugin(DEFAULT_VPP, TRUE);
     if (mainw->vpp != NULL) {
       lives_snprintf(future_prefs->vpp_name, 64, "%s", mainw->vpp->name);
@@ -3528,6 +3542,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   }
 #ifndef USE_STD_MEMFUNCS
   weed_utils_set_custom_memfuncs(lives_malloc, lives_calloc, lives_memcpy, NULL, lives_free);
+
 #endif
 #endif
 
@@ -4364,16 +4379,18 @@ void sensitize(void) {
 
   if (RFX_LOADED) {
     if (!mainw->foreign) {
-      for (i = 1; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
-           mainw->num_rendered_effects_test; i++)
-        if (mainw->rendered_fx[i].menuitem != NULL && mainw->rendered_fx[i].min_frames >= 0)
-          lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+      if (mainw->rendered_fx) {
+	for (i = 1; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
+	       mainw->num_rendered_effects_test; i++)
+	  if (mainw->rendered_fx[i].menuitem != NULL && mainw->rendered_fx[i].min_frames >= 0)
+	    lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
 
-      if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && ((has_video_filters(FALSE) && !has_video_filters(TRUE)) ||
-          (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT
-           && has_audio_filters(AF_TYPE_ANY)) || mainw->agen_key != 0)) {
-        lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, TRUE);
-      } else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, FALSE);
+	if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && ((has_video_filters(FALSE) && !has_video_filters(TRUE)) ||
+								    (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT
+								     && has_audio_filters(AF_TYPE_ANY)) || mainw->agen_key != 0)) {
+	  lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, TRUE);
+	} else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, FALSE);
+      }
     }
 
     if (mainw->num_rendered_effects_test > 0) {
@@ -4823,7 +4840,6 @@ void load_start_image(int frame) {
   // TRY: g_clear_signal_handler(&expose_sim_func, mainw->start_image);
   lives_signal_handlers_block_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
   lives_signal_handlers_block_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
-  //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 #endif
 
   if (frame < 0) {
@@ -5137,7 +5153,6 @@ check_stcache:
 #if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_block_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
     lives_signal_handlers_block_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
-    // lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 #endif
 
     if (frame < 0) {
@@ -5368,7 +5383,7 @@ check_encache:
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
       lives_widget_queue_resize(mainw->end_image);
-      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+      lives_widget_process_upsdates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
       threaded_dialog_spin(0.);
     } while (rwidth != lives_widget_get_allocation_width(mainw->end_image) ||
              rheight != lives_widget_get_allocation_height(mainw->end_image));
@@ -5439,7 +5454,6 @@ void load_preview_image(boolean update_always) {
   int preview_frame;
 
   if (!prefs->show_gui) return;
-
   if (LIVES_IS_PLAYING) return;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -5689,12 +5703,15 @@ void load_preview_image(boolean update_always) {
 
 
 #ifdef USE_LIBPNG
+#ifdef PNG_ASSEMBLER_CODE_SUPPORTED
     static png_uint_32 png_flags;
+#endif
     static int png_flagstate = 0;
 
     static void png_init(png_structp png_ptr) {
       png_uint_32 mask = 0;
 #if defined(PNG_LIBPNG_VER) && (PNG_LIBPNG_VER >= 10200)
+#ifdef PNG_SELECT_READ
       int selection = PNG_SELECT_READ;// | PNG_SELECT_WRITE;
       int mmxsupport = png_mmx_support(); // -1 = not compiled, 0 = not on machine, 1 = OK
       mask = png_get_asm_flagmask(selection);
@@ -5710,6 +5727,7 @@ void load_preview_image(boolean update_always) {
         /*   g_printerr(" with MMX features\n"); */
         /* } */
       }
+#endif
 #endif
 
 #if defined(PNG_USE_PNGGCCRD) && defined(PNG_ASSEMBLER_CODE_SUPPORTED)	\
@@ -5728,14 +5746,16 @@ void load_preview_image(boolean update_always) {
 #endif
 
       if (prefs->show_dev_opts && mask != 0) {
-        g_printerr("enabling png opts %lu\n", mask);
+        g_printerr("enabling png opts %u\n", mask);
       }
 
       if (!mask) png_flagstate = -1;
       else {
-        png_flags = png_get_asm_flags(png_ptr);
+#ifdef PNG_ASSEMBLER_CODE_SUPPORTED
+	png_flags = png_get_asm_flags(png_ptr);
         png_flags |= mask;
         png_flagstate = 1;
+#endif
       }
     }
 
@@ -5819,7 +5839,9 @@ void load_preview_image(boolean update_always) {
 
 #if defined(PNG_LIBPNG_VER) && (PNG_LIBPNG_VER >= 10200)
       if (!png_flagstate) png_init(png_ptr);
+#if PNG_ASSEMBLER_CODE_SUPPORTED
       if (png_flagstate == 1) png_set_asm_flags(png_ptr, png_flags);
+#endif
 #endif
 
       info_ptr = png_create_info_struct(png_ptr);
@@ -6521,7 +6543,7 @@ fndone:
             lives_free(pixel_data);
             lives_free(rowstrides);
             if (res) {
-              if (prefs->apply_gamma && prefs->pb_quality == PB_QUALITY_HIGH) {
+              if (prefs->apply_gamma && prefs->pb_quality != PB_QUALITY_LOW) {
                 if (dplug->cdata->frame_gamma != WEED_GAMMA_UNKNOWN) {
                   weed_layer_set_gamma(layer, dplug->cdata->frame_gamma);
                 } else if (dplug->cdata->YUV_subspace == WEED_YUV_SUBSPACE_BT709) {
@@ -6535,7 +6557,7 @@ fndone:
                                            dplug->cdata->YUV_clamping,
                                            dplug->cdata->YUV_sampling,
                                            dplug->cdata->YUV_subspace);
-                if (prefs->apply_gamma && prefs->pb_quality == PB_QUALITY_HIGH) {
+                if (prefs->apply_gamma && prefs->pb_quality != PB_QUALITY_LOW) {
                   if (weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL) == WEED_GAMMA_BT709) {
                     weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, WEED_YUV_SUBSPACE_BT709);
                   }

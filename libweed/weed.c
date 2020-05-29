@@ -251,7 +251,7 @@ static inline uint32_t weed_hash(const char *string) {
 
 static inline void *weed_data_free(weed_data_t **data, weed_size_t num_valid_elems, weed_size_t num_elems, uint32_t seed_type) {
   int is_nonptr = !weed_seed_is_ptr(seed_type);
-  for (register int i = 0; i < num_valid_elems; i++) {
+  for (register weed_size_t i = 0; i < num_valid_elems; i++) {
     if (is_nonptr && data[i]->value.voidptr) weed_unmalloc_and_copy(data[i]->size, data[i]->value.voidptr);
     weed_unmalloc_sizeof(weed_data_t, data[i]);
   }

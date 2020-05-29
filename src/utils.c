@@ -1492,7 +1492,7 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
     }
   }
 
-  if (*tsource == LIVES_TIME_SOURCE_NONE) {
+  if (*tsource == LIVES_TIME_SOURCE_NONE || current == -1) {
     *tsource = LIVES_TIME_SOURCE_SYSTEM;
     current = clock_ticks;
   }
@@ -4335,7 +4335,11 @@ boolean check_dir_access(const char *dir) {
 void activate_url_inner(const char *link) {
 #if GTK_CHECK_VERSION(2, 14, 0)
   LiVESError *err = NULL;
+#if GTK_CHECK_VERSION(2, 14, 0)
+  gtk_show_uri_on_window(NULL, link, GDK_CURRENT_TIME, &err);
+#else
   gtk_show_uri(NULL, link, GDK_CURRENT_TIME, &err);
+#endif
 #else
   char *com = getenv("BROWSER");
   com = lives_strdup_printf("\"%s\" '%s' &", com ? com : "gnome-open", link);

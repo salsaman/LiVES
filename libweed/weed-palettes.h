@@ -131,4 +131,40 @@
 
 #define WEED_GAMMA_FIRST_CUSTOM 512
 
+#ifdef WEED_ADVANCED_PALETTES
+#define WEED_ADVANCED_PALETTES_VERSION 100
+
+#ifndef MAXPPLANES
+#define MAXPPLANES 8
+#endif
+
+#define WEED_VCHAN_red 		1
+#define WEED_VCHAN_green      	2
+#define WEED_VCHAN_blue	       	3
+
+#define WEED_VCHAN_Y			512
+#define WEED_VCHAN_U			513
+#define WEED_VCHAN_V			514
+
+#define WEED_VCHAN_alpha		1024
+
+#define WEED_VCHAN_FIRST_CUSTOM		16384
+
+#define WEED_VCHAN_DESC_PLANAR		(1 << 0) ///< planar type
+#define WEED_VCHAN_DESC_FP		(1 << 1) ///< floating point type
+
+#define WEED_VCHAN_DESC_FIRST_CUSTOM	(1 << 32) ///< floating point type
+
+typedef struct {
+  uint32_t ext_ref;  ///< link to an enumerated type
+  uint16_t chantype[MAXPPLANES]; ///  e.g. {WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_Y)
+  uint64_t flags; /// bitmap of flags, eg. WEED_VCHAN_DESC_FP | WEED_VCHAN_DESC_PLANAR
+  uint8_t  hsub[MAXPPLANES];  /// horiz. subsampling, 0 or 1 means no subsampling, 2 means halved etc. (planar only)
+  uint8_t  vsub[MAXPPLANES];  /// vert subsampling
+  uint32_t npixels; ///< npixels per macropixel: {0, 1} == 1
+  uint8_t bitsize[MAXPPLANES];
+  void *extended; ///< pointer to app defined data
+} weed_macropixel_t;
+#endif
+
 #endif

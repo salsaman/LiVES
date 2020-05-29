@@ -409,11 +409,11 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         }
         cfile->frames = cdata->nframes;
         if (strlen(cfile->author) == 0)
-          lives_snprintf(cfile->author, 256, "%s", cdata->author);
+          lives_snprintf(cfile->author, 1024, "%s", cdata->author);
         if (strlen(cfile->title) == 0)
-          lives_snprintf(cfile->title, 256, "%s", cdata->title);
+          lives_snprintf(cfile->title, 1024, "%s", cdata->title);
         if (strlen(cfile->comment) == 0)
-          lives_snprintf(cfile->comment, 256, "%s", cdata->comment);
+          lives_snprintf(cfile->comment, 1024, "%s", cdata->comment);
 
         if (frames > 0 && cfile->frames > frames) {
           cfile->frames = frames;
@@ -2487,16 +2487,12 @@ void play_file(void) {
 
     if (capable->has_gconftool_2) {
       char *xnew = lives_strdup(" gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled false 2>/dev/null ;");
-      tmp = lives_strconcat(com2, xnew, NULL);
-      lives_freep((void **)&com2);
-      lives_free(xnew);
+      tmp = lives_concat(com2, xnew);
       com2 = tmp;
     }
     if (capable->has_xdg_screensaver && awinid != -1) {
       char *xnew = lives_strdup_printf(" xdg-screensaver suspend %"PRIu64" 2>/dev/null ;", awinid);
-      tmp = lives_strconcat(com2, xnew, NULL);
-      lives_freep((void **)&com2);
-      lives_free(xnew);
+      tmp = lives_concat(com2, xnew);
       com2 = tmp;
     }
 #else
@@ -2531,7 +2527,7 @@ void play_file(void) {
                       mainw->sep_win) ||
        (mainw->vpp != NULL && mainw->sep_win && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) &&
       ((!mainw->preview && (cfile->frames > 0 || mainw->foreign)) || cfile->opening))) {
-    lives_widget_show(mainw->framebar);
+    //lives_widget_show(mainw->framebar);
   }
 
   cfile->play_paused = FALSE;
@@ -3112,7 +3108,7 @@ void play_file(void) {
           // create the preview box that shows frames
           make_preview_box();
         }
-        // and add it the play window
+        // and add it to the play window
         if (lives_widget_get_parent(mainw->preview_box) == NULL && CURRENT_CLIP_IS_NORMAL && !mainw->is_rendering) {
           lives_widget_queue_draw(mainw->play_window);
           lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
@@ -3121,7 +3117,10 @@ void play_file(void) {
           load_preview_image(FALSE);
         }
 
-        lives_widget_context_update();
+	block_expose();
+	lives_widget_context_update();
+	unblock_expose();
+
         if (mainw->play_window != NULL) {
           if (prefs->show_playwin) {
             lives_window_present(LIVES_WINDOW(mainw->play_window));
@@ -3288,9 +3287,11 @@ void play_file(void) {
     }
   }
 
-  if (!mainw->multitrack && cfile->achans > 0) {
-    update_timer_bars(0, 0, 0, 0, 2);
-    update_timer_bars(0, 0, 0, 0, 3);
+  if (CURRENT_CLIP_IS_VALID) {
+    if (!mainw->multitrack && cfile->achans > 0) {
+      update_timer_bars(0, 0, 0, 0, 2);
+      update_timer_bars(0, 0, 0, 0, 3);
+    }
   }
 
   if (prefs->show_gui && ((mainw->multitrack == NULL && mainw->double_size) ||
@@ -3826,13 +3827,13 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
       }
 
       if (!strlen(cfile->title) && npieces > 16 && array[16] != NULL) {
-        lives_snprintf(cfile->title, 256, "%s", lives_strstrip(array[16]));
+        lives_snprintf(cfile->title, 1024, "%s", lives_strstrip(array[16]));
       }
       if (!strlen(cfile->author) && npieces > 17 && array[17] != NULL) {
-        lives_snprintf(cfile->author, 256, "%s", lives_strstrip(array[17]));
+        lives_snprintf(cfile->author, 1024, "%s", lives_strstrip(array[17]));
       }
       if (!strlen(cfile->comment) && npieces > 18 && array[18] != NULL) {
-        lives_snprintf(cfile->comment, 256, "%s", lives_strstrip(array[18]));
+        lives_snprintf(cfile->comment, 1024, "%s", lives_strstrip(array[18]));
       }
 
       lives_strfreev(array);
@@ -4278,9 +4279,9 @@ boolean write_headers(lives_clip_t *file) {
       } else {
         mainw->write_failed = FALSE;
         lives_write_le(header_fd, &file->frames, 4, TRUE);
-        lives_write(header_fd, &file->title, 256, TRUE);
-        lives_write(header_fd, &file->author, 256, TRUE);
-        lives_write(header_fd, &file->comment, 256, TRUE);
+        lives_write(header_fd, &file->title, 1024, TRUE);
+        lives_write(header_fd, &file->author, 1024, TRUE);
+        lives_write(header_fd, &file->comment, 1024, TRUE);
         close(header_fd);
       }
       if (mainw->write_failed) retval = do_write_failed_error_s_with_retry(hdrfile, NULL, NULL);
@@ -4466,9 +4467,9 @@ get_avals:
           retval2 = do_header_read_error_with_retry(mainw->current_file);
         }
       } else {
-        get_clip_value(mainw->current_file, CLIP_DETAILS_TITLE, cfile->title, 256);
-        get_clip_value(mainw->current_file, CLIP_DETAILS_AUTHOR, cfile->author, 256);
-        get_clip_value(mainw->current_file, CLIP_DETAILS_COMMENT, cfile->comment, 256);
+        get_clip_value(mainw->current_file, CLIP_DETAILS_TITLE, cfile->title, 1024);
+        get_clip_value(mainw->current_file, CLIP_DETAILS_AUTHOR, cfile->author, 1024);
+        get_clip_value(mainw->current_file, CLIP_DETAILS_COMMENT, cfile->comment, 1024);
         get_clip_value(mainw->current_file, CLIP_DETAILS_KEYWORDS, cfile->keywords, 1024);
         get_clip_value(mainw->current_file, CLIP_DETAILS_INTERLACE, &cfile->interlace, 0);
         if (cfile->interlace != LIVES_INTERLACE_NONE) cfile->deinterlace = TRUE; // user must have forced this
@@ -4646,13 +4647,13 @@ old_check:
   cfile->bpp = (cfile->img_type == IMG_TYPE_JPEG) ? 24 : 32;
 
   if (pieces > 4 && array[5] != NULL) {
-    lives_snprintf(cfile->title, 256, "%s", lives_strstrip(array[4]));
+    lives_snprintf(cfile->title, 1024, "%s", lives_strstrip(array[4]));
   }
   if (pieces > 5 && array[6] != NULL) {
-    lives_snprintf(cfile->author, 256, "%s", lives_strstrip(array[5]));
+    lives_snprintf(cfile->author, 1024, "%s", lives_strstrip(array[5]));
   }
   if (pieces > 6 && array[7] != NULL) {
-    lives_snprintf(cfile->comment, 256, "%s", lives_strstrip(array[6]));
+    lives_snprintf(cfile->comment, 1024, "%s", lives_strstrip(array[6]));
   }
 
   lives_strfreev(array);

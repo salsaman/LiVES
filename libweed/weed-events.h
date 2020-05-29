@@ -55,11 +55,11 @@ extern "C"
 #define WEED_LEAF_LIVES_CREATED_VERSION "created_version"
 #define WEED_LEAF_LIVES_EDITED_VERSION "edited_version"
 
-#ifndef WEED_LEAF_FPS "fps"
+#ifndef WEED_LEAF_FPS
 #define WEED_LEAF_FPS "fps"
 #endif
 
-#ifndef WEED_LEAF_WIDTH "fps"
+#ifndef WEED_LEAF_WIDTH
 #define WEED_LEAF_WIDTH "width"
 #endif
 

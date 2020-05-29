@@ -30,9 +30,6 @@
 
 /* (C) G. Finch, 2005 - 2019 */
 
-#ifndef __WEED_COMPAT_H__
-#define __WEED_COMPAT_H__
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -921,5 +918,3 @@ enum AVColorTransferCharacteristic weed_gamma_to_avi_trc(int gamma_type) {
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
-
-#endif // #ifndef __WEED_COMPAT_H__

@@ -40,7 +40,6 @@ typedef struct {
 
 #define MAXNODES 128
 #define MAXSTRLEN 8192
-
 #define NGAUSS 4
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -49,12 +48,11 @@ static weed_error_t nnprog_init(weed_plant_t *inst) {
   register int i, j;
 
   _sdata *sdata = (_sdata *)weed_malloc(sizeof(_sdata));
-
-  if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
+  if (!sdata) return WEED_ERROR_MEMORY_ALLOCATION;
 
   sdata->vals = weed_malloc(MAXNODES * 2 * MAXNODES * sizeof(double));
 
-  if (sdata->vals == NULL) {
+  if (!sdata->vals) {
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
@@ -81,16 +79,15 @@ static weed_error_t nnprog_init(weed_plant_t *inst) {
 
 
 static weed_error_t nnprog_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
-  weed_plant_t **out_params = weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, NULL);
+  weed_plant_t **in_params = weed_get_in_params(inst, NULL);
+  weed_plant_t **out_params = weed_get_out_params(inst, NULL);
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
-  double fit = (1. - weed_get_double_value(in_params[0], WEED_LEAF_VALUE, NULL)) / (double)NGAUSS;
-  double rval;
+  double fit = (1. - weed_param_get_value_double(in_params[0])) / (double)NGAUSS, rval;
 
-  int innodes = weed_get_int_value(in_params[1], WEED_LEAF_VALUE, NULL);
-  int outnodes = weed_get_int_value(in_params[2], WEED_LEAF_VALUE, NULL);
-  int hnodes = weed_get_int_value(in_params[3], WEED_LEAF_VALUE, NULL);
+  int innodes = weed_param_get_value_int(in_params[1]);
+  int outnodes = weed_param_get_value_int(in_params[2]);
+  int hnodes = weed_param_get_value_int(in_params[3]);
 
   char *strings[256];
   char tmp[MAXSTRLEN];
@@ -179,9 +176,9 @@ static weed_error_t nnprog_process(weed_plant_t *inst, weed_timecode_t timestamp
 static weed_error_t nnprog_deinit(weed_plant_t *inst) {
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
-  if (sdata != NULL) {
-    if (sdata->constvals != NULL) weed_free(sdata->constvals);
-    if (sdata->vals != NULL) weed_free(sdata->vals);
+  if (sdata) {
+    if (sdata->constvals) weed_free(sdata->constvals);
+    if (sdata->vals) weed_free(sdata->vals);
     weed_free(sdata);
   }
   weed_set_voidptr_value(inst, "plugin_internal", NULL);
@@ -190,16 +187,14 @@ static weed_error_t nnprog_deinit(weed_plant_t *inst) {
 
 
 WEED_SETUP_START(200, 200) {
-  weed_plant_t *filter_class, *gui;
   char name[256];
-  char desc[512];
-
+  char desc[1024];
+  weed_plant_t *filter_class, *gui;
   weed_plant_t *in_params[] = {weed_float_init("fitness", "_Fitness", 0., 0., 1.),
                                weed_integer_init("innodes", "Number of _Input Nodes", 1, 1, 256),
                                weed_integer_init("outnodes", "Number of _Output Nodes", 1, 1, 128),
                                weed_integer_init("hnodes", "Number of _Hidden Nodes", 1, 1, 128),
-                               NULL
-                              };
+                               NULL};
 
   weed_plant_t *out_params[MAXNODES * 2 + 1];
 
@@ -219,9 +214,9 @@ WEED_SETUP_START(200, 200) {
   weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
 
   for (i = 1; i < 4; i++)
-    weed_set_int_value(in_params[i], WEED_LEAF_FLAGS, WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
+    weed_paramtmpl_set_flags(in_params[i], WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
 
-  snprintf(desc, 512, "%s", "Runs a neural net.\n"
+  snprintf(desc, 1024, "%s", "Runs a neural net.\n"
            "On each cycle, generates string equations for the output nodes,\n"
            "using input nodes and possibly hidden nodes as intermediaries.\n"
            "The resulting output strings may be fed in as equations to the data_processor plugin\n"

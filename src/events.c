@@ -2456,7 +2456,7 @@ void event_list_add_track(weed_plant_t *event_list, int layer) {
       lives_free(frames);
 
       if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
-        int *aclips;
+        int *aclips = NULL;
         int atracks = weed_frame_event_get_audio_tracks(event, &aclips, NULL);
         for (i = 0; i < atracks; i += 2) {
           if (aclips[i] >= 0) aclips[i]++;

@@ -262,6 +262,10 @@ enum {
   LIVES_DEVICE_FW_CARD, // 5
 };
 
+#define LIVES_THEME_DARK 	(1 << 0)
+#define LIVES_THEME_LIGHT 	(1 << 1)
+#define LIVES_THEME_COMPACT 	(1 << 2)
+
 #define THEME_DETAIL_NAME "theme_name"
 #define THEME_DETAIL_STYLE "theme_style"
 #define THEME_DETAIL_SEPWIN_IMAGE "sepwin_image"

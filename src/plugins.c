@@ -1085,7 +1085,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   int *palette_list;
   char *msg, *tmp;
   char *plugname;
-  int dlflags = RTLD_NOW | RTLD_GLOBAL;
+  int dlflags = RTLD_LAZY;
   boolean OK = TRUE;
 
   if (in_use && LIVES_IS_PLAYING && mainw->noswitch) {
@@ -1094,21 +1094,25 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   }
 
   plugname = lives_strdup_printf("%s%s%s" LIVES_DIR_SEP "%s." DLL_NAME, prefs->lib_dir, PLUGIN_EXEC_DIR,
-                                 PLUGIN_VID_PLAYBACK,
-                                 name);
+                                 PLUGIN_VID_PLAYBACK, name);
 
   handle = dlopen(plugname, dlflags);
 
   if (handle == NULL) {
-    char *msg = lives_strdup_printf(_("\n\nFailed to open playback plugin %s\nError was %s\n"), plugname, dlerror());
+    char *msg = lives_strdup_printf(_("\n\nFailed to open playback plugin %s\nError was %s\n"
+				      "Playback plugin will be disabled,\n"
+				      "it can be re-anabled in Prefrences / Playback.\n"), plugname, dlerror());
     if (prefs->startup_phase != 1 && prefs->startup_phase != -1) {
-      if (prefsw != NULL) do_error_dialog_with_check_transient(msg, TRUE, 0, prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) :
+      if (prefsw != NULL) do_error_dialog_with_check_transient(msg, TRUE, 0, prefsw != NULL
+							       ? LIVES_WINDOW(prefsw->prefs_dialog) :
             LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
       else do_error_dialog(msg);
     }
     LIVES_ERROR(msg);
     lives_free(msg);
     lives_free(plugname);
+    lives_snprintf(future_prefs->vpp_name, 64, "%s", mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
+    set_vpp(TRUE);
     return NULL;
   }
 
@@ -1299,10 +1303,10 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   }
 
   // get the play parameters (and alpha channels) if any and convert to weed params
-  if (vpp->get_play_params != NULL) {
-    weed_set_host_info_callback(host_info_cb, LIVES_INT_TO_POINTER(100));
-    vpp->play_paramtmpls = (*vpp->get_play_params)(weed_bootstrap);
-  }
+  /* if (vpp->get_play_params != NULL) { */
+  /*   weed_set_host_info_callback(host_info_cb, LIVES_INT_TO_POINTER(100)); */
+  /*   vpp->play_paramtmpls = (*vpp->get_play_params)(weed_bootstrap); */
+  /* } */
 
   // create vpp->play_params
   if (vpp->play_paramtmpls != NULL) {

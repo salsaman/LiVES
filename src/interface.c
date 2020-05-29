@@ -3092,19 +3092,19 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
                      (LiVESAttachOptions)(LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
 
-  commentsw->title_entry = lives_standard_entry_new(NULL, cfile->title, MEDIUM_ENTRY_WIDTH, -1, NULL, NULL);
+  commentsw->title_entry = lives_standard_entry_new(NULL, cfile->title, MEDIUM_ENTRY_WIDTH, 1023, NULL, NULL);
 
   lives_table_attach(LIVES_TABLE(table), commentsw->title_entry, 1, 2, 0, 1,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(LIVES_EXPAND), 0, 0);
 
-  commentsw->author_entry = lives_standard_entry_new(NULL, cfile->author, MEDIUM_ENTRY_WIDTH, -1, NULL, NULL);
+  commentsw->author_entry = lives_standard_entry_new(NULL, cfile->author, MEDIUM_ENTRY_WIDTH, 1023, NULL, NULL);
 
   lives_table_attach(LIVES_TABLE(table), commentsw->author_entry, 1, 2, 1, 2,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(LIVES_EXPAND), 0, 0);
 
-  commentsw->comment_entry = lives_standard_entry_new(NULL, cfile->comment, MEDIUM_ENTRY_WIDTH, 250, NULL, NULL);
+  commentsw->comment_entry = lives_standard_entry_new(NULL, cfile->comment, MEDIUM_ENTRY_WIDTH, 1023, NULL, NULL);
 
   lives_table_attach(LIVES_TABLE(table), commentsw->comment_entry, 1, 2, 3, 4,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),

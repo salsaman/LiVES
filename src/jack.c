@@ -1368,7 +1368,7 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
                             0);
 
     if (jackd->output_port[i] == NULL) {
-      lives_printerr("no more JACK output ports available\n");
+      lives_printerr("nay more JACK output ports available\n");
       return FALSE;
     }
     jackd->out_chans_available++;
@@ -1437,7 +1437,7 @@ boolean jack_create_client_reader(jack_driver_t *jackd) {
                            JackPortIsInput | JackPortIsTerminal,
                            0);
     if (jackd->input_port[i] == NULL) {
-      lives_printerr("no more JACK input ports available\n");
+      lives_printerr("ne more JACK input ports available\n");
       return FALSE;
     }
   }

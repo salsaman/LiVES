@@ -3796,6 +3796,12 @@ Such channels may also be used to hold other types of float data arrays, in whic
 
 Palette numbers >=8192 are reserved for custom palettes.
 
+=== Extending the palette list ===
+
+The default palette list can be supplemented with additional custom palette types.
+The section below, "WEED_ADVANCED_PALETTES" provides more details.
+
+
 
 ==== Gamma types (api 200 and above) ====
 
@@ -4147,7 +4153,7 @@ for (x = offs; x < width * psize; x += psize) {
 
     // process 3 bytes color
 
-   //  - BGR and BGRA have the red / blue channels swapped.
+    //  - BGR and BGRA have the red / blue channels swapped
 
     // skip 1 byte alpha
 }
@@ -4175,7 +4181,7 @@ and can be manipulated internally by the host.
 
 When calling the process_func() for a plugin, the relevant leaves can simply be copied to or from an in or out channel in the instance.
 
-
+libweed-layers will provide an API for the integrated layers architecture.
 
 
 
@@ -4258,6 +4264,230 @@ static int validate_values(weed_plant_t *param, int is_list, weed_size_t nvalues
 	return WEED_SUCCESS;
 }
 #endif
+
+
+=== WEED_ADVANCED_PALETTES ===
+
+(This is a somewhat experimental feature, so some details may change in the future.)
+
+Weed Advanced Palettes allows the existing default palettes to be defined in a more rigorous fashion,
+as well as allowing for custom palettes to be added in an organised manner.
+
+This feature may be enabled by defining the preprocessor symbol WEED_ADVANCED_PALETTES before
+including weed/weed-palettes.h. The following are then provided by the header:
+
+#ifdef WEED_ADVANCED_PALETTES
+#define WEED_ADVANCED_PALETTES_VERSION 100
+
+#ifndef MAXPPLANES
+#define MAXPPLANES 8
+#endif
+
+#define WEED_VCHAN_red 		1
+#define WEED_VCHAN_green      	2
+#define WEED_VCHAN_blue	       	3
+
+#define WEED_VCHAN_Y			512
+#define WEED_VCHAN_U			513
+#define WEED_VCHAN_V			514
+
+#define WEED_VCHAN_alpha		1024
+
+#define WEED_VCHAN_FIRST_CUSTOM		16384
+
+#define WEED_VCHAN_DESC_PLANAR		(1 << 0) ///< planar type
+#define WEED_VCHAN_DESC_FP		(1 << 1) ///< floating point type
+
+#define WEED_VCHAN_DESC_FIRST_CUSTOM	(1 << 32) ///< floating point type
+
+typedef struct {
+  uint32_t ext_ref;  ///< link to an enumerated type
+  uint16_t chantype[MAXPPLANES]; ///  e.g. {WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_Y)
+  uint64_t flags; /// bitmap of flags, eg. WEED_VCHAN_DESC_FP | WEED_VCHAN_DESC_PLANAR
+  uint8_t  hsub[MAXPPLANES];  /// horiz. subsampling, 0 or 1 means no subsampling, 2 means halved etc. (planar only)
+  uint8_t  vsub[MAXPPLANES];  /// vert subsampling
+  uint32_t npixels; ///< npixels per macropixel: {0, 1} == 1
+  uint8_t bitsize[MAXPPLANES];
+  void *extended; ///< pointer to app defined data
+} weed_macropixel_t;
+#endif
+
+
+Note that MAXPPLANES (the maximum number of pixel planes) can be pre-defined if desired,
+however the default value of 8 should ensure that weed_macropixel_t struct is exactly 64 bytes.
+
+The weed_macropixel_t struct may be used to define many different types of pixel format. It is
+intended to be integrated with other data fields, for example the struct may be supplemented
+by sampling locations for subsampled planes, colour conversion matrices and so on. It simply
+defines the structure of a single macropixel within some frame data.
+
+However such data can be included if desired by means of the (void *)extended field.
+The ext_ref field can be used to link the macropixel definition to a pixel format in another schema.
+
+All of the default palettes can be modelled using weed_macropixel_t, as follows:
+
+static weed_macropixel_t advp[256];
+
+void init_advanced_palettes(void) {
+  memset(advp, 0, 256 * sizeof(weed_macropixel_t));
+
+  advp[0] = (weed_macropixel_t) {WEED_PALETTE_RGB24,
+  {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue}};
+
+  advp[1] = (weed_macropixel_t) {WEED_PALETTE_BGR24,
+  {WEED_VCHAN_blue, WEED_VCHAN_green, WEED_VCHAN_red}};
+
+  advp[2] = (weed_macropixel_t) {
+    WEED_PALETTE_RGBA32, {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue,
+                          WEED_VCHAN_alpha}};
+
+  advp[3] = (weed_macropixel_t) {
+    WEED_PALETTE_BGRA32, {WEED_VCHAN_blue, WEED_VCHAN_green, WEED_VCHAN_red,
+                          WEED_VCHAN_alpha}};
+
+  advp[4] = (weed_macropixel_t) {
+    WEED_PALETTE_ARGB32, {WEED_VCHAN_alpha, WEED_VCHAN_red, WEED_VCHAN_green,
+                          WEED_VCHAN_blue}};
+
+  advp[5] = (weed_macropixel_t) {
+    WEED_PALETTE_RGBFLOAT, {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue},
+                           WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32, 32, 32}};
+
+  advp[6] = (weed_macropixel_t) {
+    WEED_PALETTE_RGBAFLOAT, {WEED_VCHAN_red, WEED_VCHAN_green,
+                             WEED_VCHAN_blue, WEED_VCHAN_alpha},
+			     WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32, 32, 32, 32}};
+
+/// yuv planar
+  advp[7] = (weed_macropixel_t) {
+    WEED_PALETTE_YUV420P, {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V},
+                          WEED_VCHAN_DESC_PLANAR, {1, 2, 2}, {1, 2, 2}};
+
+  advp[8] = (weed_macropixel_t) {
+    WEED_PALETTE_YVU420P, {WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_U},
+                          WEED_VCHAN_DESC_PLANAR, {1, 2, 2}, {1, 2, 2}};
+
+  advp[9] = (weed_macropixel_t) {
+    WEED_PALETTE_YUV422P, {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V},
+                          WEED_VCHAN_DESC_PLANAR, {1, 2, 2}, {1, 1, 1}};
+
+  advp[10] = (weed_macropixel_t) {
+    WEED_PALETTE_YUV444P, {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V},
+                          WEED_VCHAN_DESC_PLANAR};
+
+  advp[11] = (weed_macropixel_t) {
+    WEED_PALETTE_YUVA4444P, {WEED_VCHAN_Y, WEED_VCHAN_U,
+                             WEED_VCHAN_V, WEED_VCHAN_alpha},
+			     WEED_VCHAN_DESC_PLANAR};
+
+/// yuv packed
+  advp[12] = (weed_macropixel_t) {
+    WEED_PALETTE_UYVY, {WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_Y}, 0, {0}, {0}, 2};
+
+  advp[13] = (weed_macropixel_t) {
+    WEED_PALETTE_YUYV, {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_V}, 0, {0}, {0}, 2};
+
+  advp[14] = (weed_macropixel_t) {WEED_PALETTE_YUV888, {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V}};
+
+  advp[15] = (weed_macropixel_t) {
+    WEED_PALETTE_YUVA8888, {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V, WEED_VCHAN_alpha}};
+
+  advp[16] = (weed_macropixel_t) {
+    WEED_PALETTE_YUV411, {WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_Y,
+                          WEED_VCHAN_V, WEED_VCHAN_Y, WEED_VCHAN_Y}, 0, {0}, {0}, 4};
+
+  /// alpha
+  advp[17] = (weed_macropixel_t) {WEED_PALETTE_A8, {WEED_VCHAN_alpha}};
+
+  advp[18] = (weed_macropixel_t) {WEED_PALETTE_A1, {WEED_VCHAN_alpha}, 0, {0}, {0}, 1, {1}};
+
+  advp[19] = (weed_macropixel_t) {WEED_PALETTE_AFLOAT, {WEED_VCHAN_alpha}, WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32}};
+
+  advp[20] = (weed_macropixel_t) {WEED_PALETTE_END}; /// indicates the end of the default palettes
+
+
+Now for example one can do:
+
+const weed_macropixel_t *get_advanced_palette(int weed_palette) {
+  for (register int i = 0; advp[i].ext_ref != WEED_PALETTE_END; i++)
+    if (advp[i].ext_ref == weed_palette) return &advp[i];
+  return NULL;
+}
+
+boolean palette_has_alpha(int pal) {
+  const weed_macropixel_t *mpx = get_advanced_palette(pal);
+  if (mpx) {
+    for (register int i = 0; i < MAXPPLANES && mpx->chantype[i]; i++)
+      if (mpx->chantype[i] == WEED_VCHAN_alpha) return TRUE;
+  }
+  return FALSE;
+}
+
+
+In addition, it is a simple matter to extend the palette defintions. Here are some examples:
+
+yvu422 planar (u and v channels swapped, horizontal subsampling):
+
+ advp[21] = (weed_macropixel_t) {
+    CUST_PALETTE_YVU422P, {WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_U},
+    WEED_VCHAN_DESC_PLANAR, {1, 2, 2}, {1, 1, 1}};
+
+
+yuva420p (yuv420 planar with an added alpha plane):
+
+advp[22] = (weed_macropixel_t) {
+    CUST_PALETTE_YUVA420P, {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V, WEED_VCHAN_alpha},
+                            WEED_VCHAN_DESC_PLANAR, {1, 2, 2, 1}, {1, 2, 2, 1}};
+
+ayuv8888 (packed alpha, y, u, v, 8 bits per channel, no subsampling):
+
+advp[23] = (weed_macropixel_t) {
+    CUST_PALETTE_AYUV8888, {WEED_VCHAN_alpha, WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V}};
+
+
+yuv packed pixel 32 bit float per channel:
+
+advp[24] = (weed_macropixel_t) {
+    CUST_PALETTE_YUVFLOAT, {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V},
+                            WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32, 32, 32}};
+
+yuva packed pixel 32 bit float per channel:
+
+advp[25] = (weed_macropixel_t) {
+    CUST_PALETTE_YUVAFLOAT, {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V,
+                              WEED_VCHAN_alpha},
+			      WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32, 32, 32, 32}};
+
+rgb 16 bits per channel:
+
+advp[26] = (weed_macropixel_t) {
+    CUST_PALETTE_RGB48, {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue},
+                         0, {0}, {0}, 1, {16, 16, 16}};
+
+rgba 16 bits per channel:
+
+advp[27] = (weed_macropixel_t) {
+    CUST_PALETTE_RGBA64, {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue,
+                           WEED_VCHAN_alpha}, 0, {0}, {0}, 1, {16, 16, 16, 16}};
+
+
+yuv 12/10/10 packed, no subsampling:
+
+advp[28] = (weed_macropixel_t) {
+    CUST_PALETTE_YUV121010, {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V},
+                             0, {0}, {0}, 1, {12, 10, 10}};
+
+or we can get creative:
+
+32 bit y; 16 bit alpha; 16 bit v / 16 bit u subsampled horizontally / vertically (64 bits per pixel)
+
+advp[29] = (weed_macropixel_t) {
+    CUST_PALETTE_YAVUP_VARIANT, {WEED_VCHAN_Y, WEED_VCHAN_ALPHA, WEED_VCHAN_V, WEED_VCHAN_U},
+                             WEED_VCHAN_DESC_PLANAR, {1, 1, 2, 1}, {1, 1, 1, 2}, 1, {32, 16, 16, 16}};
+
+
+
+
 
 
 

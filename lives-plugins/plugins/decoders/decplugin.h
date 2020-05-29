@@ -82,8 +82,8 @@ typedef struct {
   int nclips; ///< number of clips (titles) in container
   char container_name[512]; ///< name of container, e.g. "ogg" or NULL
 
-  char title[256];
-  char author[256];
+  char title[1024];
+  char author[1024];
   char comment[1024];
 
   /// plugin should init this to 0 if URI changes
@@ -248,9 +248,9 @@ static lives_clip_data_t *clone_cdata(lives_clip_data_t *clone, const lives_clip
   clone->ext_realloc = cdata->ext_realloc;
   clone->ext_calloc  = cdata->ext_calloc;
 
-  snprintf(clone->author, 256, "%s", cdata->author);
-  snprintf(clone->title, 256, "%s", cdata->title);
-  snprintf(clone->comment, 256, "%s", cdata->comment);
+  snprintf(clone->author, 1024, "%s", cdata->author);
+  snprintf(clone->title, 1024, "%s", cdata->title);
+  snprintf(clone->comment, 1024, "%s", cdata->comment);
   return clone;
 }
 #endif

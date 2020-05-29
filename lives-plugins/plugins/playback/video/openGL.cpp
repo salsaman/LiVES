@@ -59,7 +59,7 @@ static boolean npot;
 
 #include "glad_glx.h"
 
-#include <GL/glu.h>
+//#include <GL/glu.h>
 
 typedef struct {
   unsigned long flags;
@@ -185,6 +185,14 @@ static int type;
 static int typesize;
 
 //////////////////////////////////////////////
+
+static void glPerspective(GLdouble fovY, GLdouble aspect, GLdouble zNear, GLdouble zFar) {
+  GLdouble fW, fH;
+  fH = tan(fovY / 360 * M_PI) * zNear;
+  fW = fH * aspect;
+
+  glFrustum(-fW, fW, -fH, fH, zNear, zFar);
+}
 
 static int get_real_tnum(int tnum, bool do_assert) {
   tnum = ctexture - 1 - tnum;
@@ -960,8 +968,9 @@ static int Upload(void) {
   int texID;
   int window_width, window_height;
 
-  float aspect, scalex, scaley, offs_x, offs_y;
+  float scalex, scaley, offs_x, offs_y;
   double x_stretch = (double)(imgWidth * typesize) / (double)texRow;
+  double aspect;
 
   // scaling for particles
   float partx, party = 2. / (float)imgHeight;
@@ -976,7 +985,7 @@ static int Upload(void) {
     //set_priorities();
   }
   pthread_mutex_unlock(&rthread_mutex);
-  aspect = (float)imgWidth / (float)imgHeight;
+  aspect = (double)imgWidth / (double)imgHeight;
   scalex = (float)(imgWidth * typesize) / (float)texRow;
   scaley = (float)imgHeight / (float)texHeight;
   partx = 2. / (float)imgWidth;
@@ -1109,7 +1118,7 @@ static int Upload(void) {
     // rotations
     glMatrixMode(GL_PROJECTION);                // Select The Projection Matrix
     glLoadIdentity();
-    gluPerspective(45.0f, (GLfloat)window_width / (GLfloat)window_height, 0.1f, 100.0f);
+    glPerspective(45.0f, (GLdouble)window_width / (GLdouble)window_height, 0.1f, 100.0f);
 
     glRotatef(rquad, 0.0f, 0.0f, 1.0f);         // Rotate The Quad On The Z axis
 
@@ -1164,7 +1173,7 @@ static int Upload(void) {
 
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, aspect, 0.01, 1135.0);
+    glPerspective(60.0, aspect, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -1260,7 +1269,7 @@ static int Upload(void) {
     // landscape:
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, aspect, 0.01, 1135.0);
+    glPerspective(60.0, aspect, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -1365,7 +1374,7 @@ static int Upload(void) {
     // insider:
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, aspect, 0.01, 1135.0);
+    glPerspective(60.0, aspect, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -1430,7 +1439,7 @@ static int Upload(void) {
 
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, aspect, 0.01, 1135.0);
+    glPerspective(60.0, aspect, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -1502,7 +1511,7 @@ static int Upload(void) {
     // turning:
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, aspect, 0.01, 1135.0);
+    glPerspective(60.0, aspect, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -1569,7 +1578,7 @@ static int Upload(void) {
 
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, aspect, 0.01, 1135.0);
+    glPerspective(60.0, aspect, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -1676,7 +1685,7 @@ static int Upload(void) {
 
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, aspect, 0.01, 1135.0);
+    glPerspective(60.0, aspect, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -1802,7 +1811,7 @@ static int Upload(void) {
 
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
-    gluPerspective(60.0, aspect, 0.01, 1135.0);
+    glPerspective(60.0, aspect, 0.01, 1135.0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();

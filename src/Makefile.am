@@ -132,6 +132,10 @@ libweed_CFLAGS = -DNEED_LOCAL_WEED=1
 endif
 endif
 
+if NEED_LOCAL_WEED_UTILS
+libweed_CFLAGS += -DNEED_LOCAL_WEED_UTILS=1
+endif
+
 if NEED_LOCAL_WEED_COMPAT
 libweed_compat_CFLAGS = -DNEED_LOCAL_WEED_COMPAT=1
 endif

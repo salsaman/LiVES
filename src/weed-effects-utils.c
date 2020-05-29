@@ -37,13 +37,8 @@
 #define WEED_LOCAL_INLINE static inline
 #endif
 
-#ifndef free_func
-// TODO
-#define free_func(ptr) free(ptr)
-#endif
-
 WEED_GLOBAL_INLINE int32_t weed_plant_get_type(weed_plant_t *plant) {
-  if (plant == NULL) return WEED_PLANT_UNKNOWN;
+  if (!plant) return WEED_PLANT_UNKNOWN;
   return weed_get_int_value(plant, WEED_LEAF_TYPE, NULL);
 }
 
@@ -68,27 +63,27 @@ WEED_GLOBAL_INLINE uint32_t weed_leaf_clear_flagbits(weed_plant_t *plant, const 
 void weed_add_plant_flags(weed_plant_t *plant, uint32_t flags, const char *ign_prefix) {
   size_t ign_prefix_len = 0;
   char **leaves = weed_plant_list_leaves(plant, NULL);
-  if (ign_prefix != NULL) ign_prefix_len = strlen(ign_prefix);
-  for (int i = 0; leaves[i] != NULL; i++) {
-    if (ign_prefix == NULL || strncmp(leaves[i], ign_prefix, ign_prefix_len)) {
+  if (ign_prefix) ign_prefix_len = strlen(ign_prefix);
+  for (register int i = 0; leaves[i]; i++) {
+    if (!ign_prefix || strncmp(leaves[i], ign_prefix, ign_prefix_len)) {
       weed_leaf_set_flagbits(plant, leaves[i], flags);
     }
     free(leaves[i]);
   }
-  if (leaves != NULL) free(leaves);
+  if (leaves) free(leaves);
 }
 
 void weed_clear_plant_flags(weed_plant_t *plant, uint32_t flags, const char *ign_prefix) {
   size_t ign_prefix_len = 0;
   char **leaves = weed_plant_list_leaves(plant, NULL);
-  if (ign_prefix != NULL) ign_prefix_len = strlen(ign_prefix);
-  for (int i = 0; leaves[i] != NULL; i++) {
-    if (ign_prefix == NULL || strncmp(leaves[i], ign_prefix, ign_prefix_len)) {
+  if (ign_prefix) ign_prefix_len = strlen(ign_prefix);
+  for (register int i = 0; leaves[i]; i++) {
+    if (!ign_prefix || strncmp(leaves[i], ign_prefix, ign_prefix_len)) {
       weed_leaf_clear_flagbits(plant, leaves[i], flags);
     }
     free(leaves[i]);
   }
-  if (leaves != NULL) free(leaves);
+  if (leaves) free(leaves);
 }
 
 WEED_LOCAL_INLINE weed_plant_t *_weed_get_gui(weed_plant_t *plant,  int create_if_not_exists) {
@@ -97,7 +92,7 @@ WEED_LOCAL_INLINE weed_plant_t *_weed_get_gui(weed_plant_t *plant,  int create_i
   if (type != WEED_PLANT_FILTER_CLASS && type != WEED_PLANT_PARAMETER_TEMPLATE
       && type != WEED_PLANT_PARAMETER) return NULL;
   gui = weed_get_plantptr_value(plant, WEED_LEAF_GUI, NULL);
-  if (gui == NULL && create_if_not_exists == WEED_TRUE) {
+  if (!gui && create_if_not_exists == WEED_TRUE) {
     gui = weed_plant_new(WEED_PLANT_GUI);
     weed_leaf_set(plant, WEED_LEAF_GUI, WEED_SEED_PLANTPTR, 1, &gui);
   }
@@ -117,6 +112,10 @@ WEED_GLOBAL_INLINE weed_plant_t *weed_filter_get_plugin_info(weed_plant_t *filte
   return weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, NULL);
 }
 
+WEED_GLOBAL_INLINE char *weed_filter_get_package_name(weed_plant_t *filter) {
+  return weed_plugin_info_get_package_name(weed_filter_get_plugin_info(filter));
+}
+
 WEED_GLOBAL_INLINE weed_plant_t *weed_paramtmpl_get_gui(weed_plant_t *paramt, int create_if_not_exists) {
   return _weed_get_gui(paramt, create_if_not_exists);
 }
@@ -127,7 +126,7 @@ WEED_GLOBAL_INLINE weed_plant_t *weed_param_get_gui(weed_plant_t *param, int cre
 
 WEED_GLOBAL_INLINE int weed_param_is_hidden(weed_plant_t *param) {
   weed_plant_t *gui = weed_param_get_gui(param, WEED_FALSE);
-  if (gui == NULL) return weed_paramtmpl_hints_hidden(weed_param_get_template(param));
+  if (!gui) return weed_paramtmpl_hints_hidden(weed_param_get_template(param));
   return weed_get_boolean_value(gui, WEED_LEAF_HIDDEN, NULL);
 }
 
@@ -238,7 +237,7 @@ WEED_GLOBAL_INLINE int weed_paramtmpl_has_value_perchannel(weed_plant_t *paramtm
 WEED_GLOBAL_INLINE int weed_paramtmpl_does_wrap(weed_plant_t *paramtmpl) {
   weed_plant_t *gui;
   if (!WEED_PLANT_IS_PARAMETER_TEMPLATE(paramtmpl)) return -1;
-  if ((gui = weed_paramtmpl_get_gui(paramtmpl, WEED_FALSE)) != NULL
+  if ((gui = weed_paramtmpl_get_gui(paramtmpl, WEED_FALSE))
       && weed_get_boolean_value(gui, WEED_LEAF_WRAP, NULL) == WEED_TRUE) return WEED_TRUE;
   return WEED_FALSE;
 }
@@ -246,7 +245,7 @@ WEED_GLOBAL_INLINE int weed_paramtmpl_does_wrap(weed_plant_t *paramtmpl) {
 WEED_GLOBAL_INLINE int weed_paramtmpl_hints_string_choice(weed_plant_t *paramtmpl) {
   weed_plant_t *gui;
   if (WEED_PLANT_IS_PARAMETER_TEMPLATE(paramtmpl)
-      && (gui = weed_paramtmpl_get_gui(weed_param_get_template(paramtmpl), WEED_FALSE)) != NULL
+      && (gui = weed_paramtmpl_get_gui(weed_param_get_template(paramtmpl), WEED_FALSE))
       && weed_plant_has_leaf(gui, WEED_LEAF_CHOICES))
     return WEED_TRUE;
   return WEED_FALSE;
@@ -255,7 +254,7 @@ WEED_GLOBAL_INLINE int weed_paramtmpl_hints_string_choice(weed_plant_t *paramtmp
 WEED_GLOBAL_INLINE int weed_paramtmpl_hints_hidden(weed_plant_t *paramtmpl) {
   weed_plant_t *gui;
   if (WEED_PLANT_IS_PARAMETER_TEMPLATE(paramtmpl)
-      && (gui = weed_paramtmpl_get_gui(weed_param_get_template(paramtmpl), WEED_FALSE)) != NULL
+      && (gui = weed_paramtmpl_get_gui(weed_param_get_template(paramtmpl), WEED_FALSE))
       && weed_get_boolean_value(gui, WEED_LEAF_HIDDEN, NULL) == WEED_TRUE)
     return WEED_TRUE;
   return WEED_FALSE;
@@ -289,7 +288,7 @@ WEED_GLOBAL_INLINE int *weed_chantmpl_get_palette_list(weed_plant_t *filter, wee
   if ((weed_filter_get_flags(filter) & WEED_FILTER_PALETTES_MAY_VARY)
       && weed_plant_has_leaf(chantmpl, WEED_LEAF_PALETTE_LIST)) {
     pals = weed_get_int_array_counted(chantmpl, WEED_LEAF_PALETTE_LIST, &npals);
-    for (int i = 0; i < npals; i++) {
+    for (register int i = 0; i < npals; i++) {
     }
   } else {
     if (!weed_plant_has_leaf(filter, WEED_LEAF_PALETTE_LIST)) return NULL;
@@ -454,7 +453,7 @@ WEED_GLOBAL_INLINE int weed_param_get_nchoices(weed_plant_t *param) {
   if (!WEED_PLANT_IS_PARAMETER(param)) return 0;
   if ((gui = weed_param_get_gui(param, WEED_FALSE)) != NULL && weed_plant_has_leaf(gui, WEED_LEAF_CHOICES))
     return weed_leaf_num_elements(gui, WEED_LEAF_CHOICES);
-  if ((gui = weed_paramtmpl_get_gui(weed_param_get_template(param), WEED_FALSE)) != NULL
+  if ((gui = weed_paramtmpl_get_gui(weed_param_get_template(param), WEED_FALSE))
       && weed_plant_has_leaf(gui, WEED_LEAF_CHOICES))
     return weed_leaf_num_elements(gui, WEED_LEAF_CHOICES);
   return 0;

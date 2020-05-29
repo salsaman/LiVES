@@ -1618,7 +1618,7 @@ void on_rte_info_clicked(LiVESButton * button, livespointer user_data) {
   plugin_name = rte_keymode_get_plugin_name(key + 1, mode);
   filter = rte_keymode_get_filter(key + 1, mode);
   filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &weed_error);
-  package_name = weed_get_package_name(filter);
+  package_name = weed_filter_get_package_name(filter);
   filter_author = weed_get_string_value(filter, WEED_LEAF_AUTHOR, &weed_error);
   if (weed_plant_has_leaf(filter, WEED_LEAF_EXTRA_AUTHORS)) filter_extra_authors = weed_get_string_value(filter,
         WEED_LEAF_EXTRA_AUTHORS,

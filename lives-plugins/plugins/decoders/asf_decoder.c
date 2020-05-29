@@ -2441,9 +2441,9 @@ static lives_clip_data_t *asf_clone(lives_clip_data_t *cdata) {
   clone->seek_flag = cdata->seek_flag;
   clone->sync_hint = cdata->sync_hint;
 
-  snprintf(clone->author, 256, "%s", cdata->author);
-  snprintf(clone->title, 256, "%s", cdata->title);
-  snprintf(clone->comment, 256, "%s", cdata->comment);
+  snprintf(clone->author, 1024, "%s", cdata->author);
+  snprintf(clone->title, 1024, "%s", cdata->title);
+  snprintf(clone->comment, 1024, "%s", cdata->comment);
 
   // create "priv" elements
   dpriv = clone->priv;

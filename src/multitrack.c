@@ -1765,9 +1765,9 @@ static int track_to_channel(weed_plant_t *ievent, int track) {
 
   register int i;
 
+  in_tracks = weed_get_int_array_counted(ievent, WEED_LEAF_IN_TRACKS, &ntracks);
   if (ntracks == 0) return -1;
 
-  in_tracks = weed_get_int_array_counted(ievent, WEED_LEAF_IN_TRACKS, &ntracks);
   carray = weed_get_int_array_counted(ievent, WEED_LEAF_IN_COUNT, &nc);
 
   for (i = 0; i < ntracks; i++) {
@@ -7191,7 +7191,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
       char *fxname = NULL;
 
       if (weed_filter_hints_unstable(filter) && !prefs->unstable_fx) continue;
-      pkg = weed_get_package_name(filter);
+      pkg = weed_filter_get_package_name(filter);
 
       if (enabled_in_channels(filter, TRUE) >= 1000000 && enabled_out_channels(filter, FALSE) == 1) {
         fxname = weed_filter_idx_get_name(sorted, TRUE, TRUE, TRUE);

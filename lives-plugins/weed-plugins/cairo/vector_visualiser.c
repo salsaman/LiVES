@@ -88,7 +88,6 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
   int irowstride, orowstride;
   int width, widthx;
   int height, pal;
-  int error;
 
   register int i;
 
@@ -100,9 +99,9 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
 
   void *pixel_data;
 
-  width = weed_get_int_value(channel, "width", &error);
+  width = weed_channel_get_width(channel);
 
-  pal = weed_get_int_value(channel, "current_palette", &error);
+  pal = weed_channel_get_palette(channel);
   if (pal == WEED_PALETTE_A8) {
     cform = CAIRO_FORMAT_A8;
     widthx = width;
@@ -114,16 +113,16 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
     widthx = width << 2;
   }
 
-  height = weed_get_int_value(channel, "height", &error);
+  height = weed_channel_get_height(channel);
 
-  irowstride = weed_get_int_value(channel, "rowstrides", &error);
+  irowstride = weed_channel_get_stride(channel);
 
   orowstride = cairo_format_stride_for_width(cform, width);
 
-  src = (guchar *)weed_get_voidptr_value(channel, "pixel_data", &error);
+  src = (guchar *)weed_channel_get_pixel_data(channel);
 
   dst = pixel_data = (guchar *)weed_malloc(height * orowstride);
-  if (pixel_data == NULL) return NULL;
+  if (!pixel_data) return NULL;
 
   if (irowstride == orowstride) {
     weed_memcpy(dst, src, height * irowstride);
@@ -169,16 +168,16 @@ static gboolean cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
   // flush to ensure all writing to the image was done
   cairo_surface_flush(surface);
 
-  dst = weed_get_voidptr_value(channel, "pixel_data", NULL);
-  if (dst == NULL) return FALSE;
+  dst = weed_channel_get_pixel_data(channel);
+  if (!dst) return FALSE;
 
   src = cairo_image_surface_get_data(surface);
   height = cairo_image_surface_get_height(surface);
   width = cairo_image_surface_get_width(surface);
   irowstride = cairo_image_surface_get_stride(surface);
 
-  orowstride = weed_get_int_value(channel, "rowstrides", NULL);
-  pal = weed_get_int_value(channel, "current_palette", NULL);
+  orowstride = weed_channel_get_stride(channel);
+  pal = weed_channel_get_palette(channel);
 
   if (irowstride == orowstride) {
     weed_memcpy(dst, src, height * orowstride);
@@ -229,21 +228,21 @@ static void draw_arrow(cairo_t *cr, int i, int j, float x, float y) {
 
 static weed_error_t vector_visualiser_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   cairo_t *cr;
-  weed_plant_t **in_channels = weed_get_plantptr_array(inst, "in_channels", NULL);
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
+  weed_plant_t **in_channels = weed_get_in_channels(inst, NULL);
+  weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
 
-  float *alpha0 = (float *)weed_get_voidptr_value(in_channels[1], "pixel_data", NULL);
-  float *alpha1 = (float *)weed_get_voidptr_value(in_channels[2], "pixel_data", NULL);
+  float *alpha0 = (float *)weed_channel_get_pixel_data(in_channels[1]);
+  float *alpha1 = (float *)weed_channel_get_pixel_data(in_channels[2]);
 
   float x, y, scale = 1.;
 
   int mode = MD_GRID;
 
-  int irow0 = weed_get_int_value(in_channels[1], "rowstrides", NULL) >> 2;
-  int irow1 = weed_get_int_value(in_channels[2], "rowstrides", NULL) >> 2;
+  int irow0 = weed_channel_get_stride(in_channels[1]) >> 2;
+  int irow1 = weed_channel_get_stride(in_channels[2]) >> 2;
 
-  int width = weed_get_int_value(out_channel, "width", NULL);
-  int height = weed_get_int_value(out_channel, "height", NULL);
+  int width = weed_channel_get_width(out_channel);
+  int height = weed_channel_get_height(out_channel);
   register int i, j;
 
   cr = channel_to_cairo(in_channels[0]);
@@ -302,7 +301,7 @@ static weed_error_t vector_visualiser_process(weed_plant_t *inst, weed_timecode_
 WEED_SETUP_START(200, 200) {
   int apalette_list[] = {WEED_PALETTE_AFLOAT, WEED_PALETTE_END};
   int vpalette_list[] = {WEED_PALETTE_BGRA32, WEED_PALETTE_END};
-  char desc[1024];
+  char desc[2048];
 
   weed_plant_t *in_chantmpls[] = {
     weed_channel_template_init("video in", 0),
@@ -328,7 +327,7 @@ WEED_SETUP_START(200, 200) {
     weed_set_int_value(out_chantmpls[0], WEED_LEAF_PALETTE_LIST, WEED_PALETTE_ARGB32);
   }
 
-  snprintf(desc, 1024,
+  snprintf(desc, 2048,
            "This plugin takes as input 1 video frame and two equally sized (width * height) float alpha frames.\n"
            "The plugin treats each alpha frame as a 2 dimensional float array, with the first frame containing x values"
            "and the second, corresponging y values\n\n"

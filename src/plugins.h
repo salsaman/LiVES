@@ -232,8 +232,8 @@ typedef struct {
   int nclips; ///< number of clips (titles) in container
   char container_name[512]; ///< name of container, e.g. "ogg" or NULL
 
-  char title[256];
-  char author[256];
+  char title[1024];
+  char author[1024];
   char comment[1024];
 
   /// plugin should init this to 0 if URI changes

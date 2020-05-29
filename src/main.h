@@ -688,7 +688,7 @@ typedef struct _lives_clip_t {
   boolean was_in_set;
 
   /////////////////
-  char title[256], author[256], comment[1024], keywords[1024];
+  char title[1024], author[1024], comment[1024], keywords[1024];
   ////////////////
 
   char name[CLIP_NAME_MAXLEN];  ///< the display name
@@ -1733,7 +1733,7 @@ void break_me(void);
 
 #endif
 
-//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #define STD_STRINGFUNCS

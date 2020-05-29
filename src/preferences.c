@@ -454,7 +454,7 @@ void set_palette_prefs(void) {
 void set_vpp(boolean set_in_prefs) {
   // Video Playback Plugin
 
-  if ((*future_prefs->vpp_name)) {
+  if (*future_prefs->vpp_name) {
     if (!lives_utf8_strcasecmp(future_prefs->vpp_name, mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
       if (mainw->vpp != NULL) {
         if (mainw->ext_playback) vid_playback_plugin_exit();
@@ -2585,7 +2585,7 @@ static void stream_audio_toggled(LiVESToggleButton *togglebutton, livespointer u
     _vid_playback_plugin *tmpvpp;
     uint32_t orig_acodec = AUDIO_CODEC_NONE;
 
-    if ((*future_prefs->vpp_name)) {
+    if (*future_prefs->vpp_name) {
       if ((tmpvpp = open_vid_playback_plugin(future_prefs->vpp_name, FALSE)) == NULL) return;
     } else {
       tmpvpp = mainw->vpp;

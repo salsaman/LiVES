@@ -17,7 +17,6 @@
 
 #define THRESH_BASE 10000.
 #define THRESH_MAX 50000.
-static double thresh;
 
 static pulse_driver_t pulsed;
 static pulse_driver_t pulsed_reader;
@@ -80,16 +79,10 @@ static void stream_underflow_callback(pa_stream *s, void *userdata) {
   // we should ignore these isolated cases, except in DEBUG mode.
   // otherwise - increase tlen and possibly maxlen ?
   // e.g. pa_stream_set_buffer_attr(s, battr, success_cb, NULL);
-  pulse_driver_t *pulsed = (pulse_driver_t *)userdata;
 
   if (prefs->show_dev_opts) {
     fprintf(stderr, "PA Stream underrun.\n");
   }
-  /* if (mainw->video_seek_ready && mainw->audio_seek_ready) { */
-  /*   pulsed->extrausec += ((double)pulsed->aPlayPtr->size / (double)(pulsed->out_arate) * 1000000. */
-  /*                         / (double)(pulsed->out_achans * pulsed->out_asamps >> 3) + .5); */
-  /*   //pulsed->aPlayPtr->size = 0; */
-  /* } */
 
   mainw->uflow_count++;
 }
@@ -1834,7 +1827,6 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   int64_t usec;
   ticks_t timeout;
   lives_alarm_t alarm_handle;
-  int err;
 
   msg = pulsed->msgq;
   if (msg && (msg->command == ASERVER_CMD_FILE_SEEK || msg->command == ASERVER_CMD_FILE_OPEN)) {
@@ -1845,8 +1837,8 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
     lives_alarm_clear(alarm_handle);
     if (timeout == 0) return -1;
   }
-
-  err = pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec);
+  if (!CLIP_HAS_AUDIO(pulsed->playing_file)) return -1;
+  pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec);
   return (ticks_t)((usec - pulsed->usec_start) * USEC_TO_TICKS);
 }
 

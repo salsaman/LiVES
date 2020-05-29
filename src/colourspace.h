@@ -55,8 +55,8 @@
 #define UV_CLAMP_MAX 240.
 #define UV_CLAMP_MAXI 240
 
-#define CLAMP_FACTOR_Y ((Y_CLAMP_MAX - YUV_CLAMP_MIN) / 255.) // unclamped -> clamped
-#define CLAMP_FACTOR_UV ((UV_CLAMP_MAX - YUV_CLAMP_MIN) / 255.) // unclamped -> clamped
+#define CLAMP_FACTOR_Y ((Y_CLAMP_MAX-YUV_CLAMP_MIN)/255.) // unclamped -> clamped
+#define CLAMP_FACTOR_UV ((UV_CLAMP_MAX-YUV_CLAMP_MIN)/255.) // unclamped -> clamped
 
 #define UV_BIAS 128.
 
@@ -131,46 +131,22 @@ typedef struct {
 #endif
 
 #ifdef WEED_ADVANCED_PALETTES
+#define LIVES_VCHAN_grey	       	2048
+#define LIVES_VCHAN_mono_b      	2049
+#define LIVES_VCHAN_mono_w      	2050
 
-/// intended for future use:
-#define MAXPPLANES 8
+#define LIVES_VCHAN_cc			3000
+#define LIVES_VCHAN_mm			3001
+#define LIVES_VCHAN_yy			3002
+#define LIVES_VCHAN_kk			3003
 
-#define WEED_VCHAN_red 		1
-#define WEED_VCHAN_green  		2
-#define WEED_VCHAN_blue	       	3
+#define LIVES_VCHAN_xxx  		4000
+#define LIVES_VCHAN_yyy  		4001
+#define LIVES_VCHAN_zzz		     	4002
 
-#define WEED_VCHAN_Y			512
-#define WEED_VCHAN_U			513
-#define WEED_VCHAN_V			514
-
-#define WEED_VCHAN_alpha		1024
-
-#define WEED_VCHAN_grey	       	2048
-#define WEED_VCHAN_mono_b      	2049
-#define WEED_VCHAN_mono_w      	2050
-
-#define WEED_VCHAN_c			3000
-#define WEED_VCHAN_y			3001
-#define WEED_VCHAN_m			3002
-#define WEED_VCHAN_k			3003
-
-#define WEED_VCHAN_xx  		4000
-#define WEED_VCHAN_yy  		4001
-#define WEED_VCHAN_zz			4002
-
-#define WEED_VCHAN_DESC_PLANAR	(1 << 0) ///< planar type
-#define WEED_VCHAN_DESC_FP		(1 << 1) ///< floating point typr
-
-typedef struct {
-  uint32_t ext_ref;  ///< link to an enumerated type
-  uint16_t chantype[MAXPPLANES]; ///  e.g. {WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_Y)
-  uint64_t flags; /// bitmap of flags, eg. WEED_VCHAN_FLAG_FP | WEED_VCHAN_FLAG_PLANAR
-  uint8_t  hsub[MAXPPLANES];  /// horiz. subsampling, 0 or 1 means no subsampling, 2 means halved etc. (planar only)
-  uint8_t  vsub[MAXPPLANES];  /// vert subsampling
-  int npixels; ///< npixels per macropixel: 0, 1 == 1
-  uint8_t bitsize[MAXPPLANES];
-  void *extended; ///< pointer to app defined data
-} weed_macropixel_t;
+#define LIVES_VCHAN_hh  		4000
+#define LIVES_VCHAN_ss  		4001
+#define LIVES_VCHAN_vv		     	4002
 
 /// for fun / testing
 #define LIVES_PALETTE_RGB48		9001
@@ -179,7 +155,7 @@ typedef struct {
 #define LIVES_PALETTE_YVU422P		9522
 #define LIVES_PALETTE_AYUV8888		9545
 #define LIVES_PALETTE_YUVFLOAT		9564
-#define LIVES_PALETTE_YUVAFLOAT	9565
+#define LIVES_PALETTE_YUVAFLOAT		9565
 #define LIVES_PALETTE_YUV121010		121010
 
 const weed_macropixel_t *get_advanced_palette(int weed_palette);
@@ -208,7 +184,6 @@ int32_t round_special(int32_t val);
 void init_conversions(int intent);
 
 /////////////////////////////////////// LAYERS ///////////////////////////////////////
-
 
 #define WEED_PLANT_LAYER 128
 

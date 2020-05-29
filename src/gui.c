@@ -2032,6 +2032,7 @@ void create_LiVES(void) {
 
   mainw->playarea = lives_hbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(mainw->pl_eventbox), mainw->playarea);
+  lives_widget_set_app_paintable(mainw->playarea, TRUE);
 
   lives_table_attach(LIVES_TABLE(mainw->pf_grid), mainw->playframe, 1, 2, 0, 1,
                      (LiVESAttachOptions)(0),
@@ -4117,13 +4118,13 @@ LIVES_GLOBAL_INLINE boolean get_play_screen_size(int *opwidth, int *opheight) {
       return TRUE;
     } else {
       // but we only have one...
-      *opwidth = mainw->mgeom[0].width;
-      *opheight = mainw->mgeom[0].height;
+      *opwidth = mainw->mgeom[0].phys_width;
+      *opheight = mainw->mgeom[0].phys_height;
     }
   } else {
     // single monitor
-    *opwidth = mainw->mgeom[prefs->play_monitor - 1].width;
-    *opheight = mainw->mgeom[prefs->play_monitor - 1].height;
+    *opwidth = mainw->mgeom[prefs->play_monitor - 1].phys_width;
+    *opheight = mainw->mgeom[prefs->play_monitor - 1].phys_height;
   }
   return FALSE;
 }
@@ -4190,20 +4191,23 @@ void resize_play_window(void) {
     }
   }
 
-  if (pmonitor == 0) {
-    if ((((mainw->double_size || mainw->multitrack != NULL) && (!mainw->fs || !LIVES_IS_PLAYING))) ||
-        (mainw->pwidth > scr_width - scr_width_safety ||
-         mainw->pheight > scr_height - scr_height_safety)) {
-      calc_maxspect(scr_width - scr_width_safety, scr_height - scr_height_safety, &mainw->pwidth, &mainw->pheight);
-      mainw->sepwin_scale = (float)mainw->pwidth / (float)cfile->hsize * 100.;
-    }
-  } else {
-    if ((((mainw->double_size || mainw->multitrack != NULL) && (!mainw->fs || !LIVES_IS_PLAYING))) ||
-        (mainw->pwidth > mainw->mgeom[pmonitor - 1].width - scr_width_safety ||
-         mainw->pheight > mainw->mgeom[pmonitor - 1].height - scr_height_safety)) {
-      calc_maxspect(mainw->mgeom[pmonitor - 1].width - scr_width_safety, mainw->mgeom[pmonitor - 1].height - scr_height_safety,
-                    &mainw->pwidth, &mainw->pheight);
-      mainw->sepwin_scale = (float)mainw->pwidth / (float)cfile->hsize * 100.;
+  if (!mainw->fs || !LIVES_IS_PLAYING) {
+    if (pmonitor == 0) {
+      if ((((mainw->double_size || mainw->multitrack != NULL) && (!mainw->fs || !LIVES_IS_PLAYING))) ||
+	  (mainw->pwidth > scr_width - scr_width_safety ||
+	   mainw->pheight > scr_height - scr_height_safety)) {
+	calc_maxspect(scr_width - scr_width_safety, scr_height - scr_height_safety, &mainw->pwidth, &mainw->pheight);
+	mainw->sepwin_scale = (float)mainw->pwidth / (float)cfile->hsize * 100.;
+      }
+    } else {
+      if ((((mainw->double_size || mainw->multitrack != NULL) && (!mainw->fs || !LIVES_IS_PLAYING))) ||
+	  (mainw->pwidth > mainw->mgeom[pmonitor - 1].width - scr_width_safety ||
+	   mainw->pheight > mainw->mgeom[pmonitor - 1].height - scr_height_safety)) {
+	calc_maxspect(mainw->mgeom[pmonitor - 1].width - scr_width_safety,
+		      mainw->mgeom[pmonitor - 1].height - scr_height_safety,
+		      &mainw->pwidth, &mainw->pheight);
+	mainw->sepwin_scale = (float)mainw->pwidth / (float)cfile->hsize * 100.;
+      }
     }
   }
 
@@ -4256,12 +4260,16 @@ void resize_play_window(void) {
       if (!(mainw->vpp != NULL && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
 #if GTK_CHECK_VERSION(99999, 0, 0) // TODO
         lives_window_fullscreen_on_monitor(LIVES_WINDOW(mainw->play_window), screen, monitor);
-        gdk_window_set_fullscreen_mode(GdkWindow * window, GDK_FULLSCREEN_ON_ALL_MONITORS)
+        gdk_window_set_fullscreen_mode(GdkWindow * window, GDK_FULLSCREEN_ON_ALL_MONITORS);
 #else
-        lives_widget_set_bg_color(mainw->play_window, LIVES_WIDGET_STATE_NORMAL, &palette->black);
+	lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
+	lives_widget_set_bg_color(mainw->play_window, LIVES_WIDGET_STATE_NORMAL, &palette->black);
         lives_window_fullscreen(LIVES_WINDOW(mainw->play_window));
 #endif
+	lives_window_center(LIVES_WINDOW(mainw->play_window));
         lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
+	lives_window_set_position(LIVES_WINDOW(mainw->play_window), LIVES_WIN_POS_NONE);
+        lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0);
         lives_widget_queue_resize(mainw->play_window);
       }
       sched_yield();
@@ -4436,45 +4444,47 @@ void resize_play_window(void) {
     mainw->opwx = mainw->opwy = -1;
   }
 
-  if (mainw->playing_file < 0 && (CURRENT_CLIP_IS_VALID && !cfile->opening)) {
+  if (!LIVES_IS_PLAYING && (CURRENT_CLIP_IS_VALID && !cfile->opening)) {
     nheight = mainw->sepwin_minheight;
     if (mainw->pheight < MIN_SEPWIN_HEIGHT) nheight += MIN_SEPWIN_HEIGHT - mainw->pheight;
   }
 
+  nwidth = mainw->pwidth;
   nheight += mainw->pheight;
 
-  if (!LIVES_IS_PLAYING && CURRENT_CLIP_HAS_VIDEO &&
-      CURRENT_CLIP_IS_NORMAL)
-    nwidth = MAX(mainw->pwidth, mainw->sepwin_minwidth);
-  else nwidth = mainw->pwidth;
+  if (!(LIVES_IS_PLAYING && mainw->fs)) {
+    if (!LIVES_IS_PLAYING && CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_IS_NORMAL)
+      nwidth = MAX(mainw->pwidth, mainw->sepwin_minwidth);
 
-  pmonitor = prefs->play_monitor;
-  if (pmonitor == 0 || !LIVES_IS_PLAYING) {
-    while (nwidth > GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY / 2 ||
-           nheight > GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY / 2) {
-      nheight = (nheight >> 2) << 1;
-      nwidth = (nwidth >> 2) << 1;
-      mainw->sepwin_scale /= 2.;
-    }
-  } else {
-    while (nwidth > mainw->mgeom[pmonitor - 1].width - SCR_WIDTH_SAFETY / 2 ||
-           nheight > mainw->mgeom[pmonitor - 1].height - SCR_HEIGHT_SAFETY / 2) {
-      nheight = (nheight >> 2) << 1;
-      nwidth = (nwidth >> 2) << 1;
-      mainw->sepwin_scale /= 2.;
+    pmonitor = prefs->play_monitor;
+    if (pmonitor == 0 || !LIVES_IS_PLAYING) {
+      while (nwidth > GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY / 2 ||
+	     nheight > GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY / 2) {
+	nheight = (nheight >> 2) << 1;
+	nwidth = (nwidth >> 2) << 1;
+	mainw->sepwin_scale /= 2.;
+      }
+    } else {
+      while (nwidth > mainw->mgeom[pmonitor - 1].width - SCR_WIDTH_SAFETY / 2 ||
+	     nheight > mainw->mgeom[pmonitor - 1].height - SCR_HEIGHT_SAFETY / 2) {
+	nheight = (nheight >> 2) << 1;
+	nwidth = (nwidth >> 2) << 1;
+	mainw->sepwin_scale /= 2.;
+      }
     }
   }
 
-  if (!mainw->fs) lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+  if (!LIVES_IS_PLAYING || !mainw->fs) {
+    lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+    lives_window_resize(LIVES_WINDOW(mainw->play_window), nwidth, nheight);
+  }
 
-  lives_window_resize(LIVES_WINDOW(mainw->play_window), nwidth, nheight);
-
-  if (width != -1 && (width != nwidth || height != nheight) && mainw->preview_spinbutton != NULL) {
-    if (!LIVES_IS_PLAYING) {
+  if (!LIVES_IS_PLAYING) {
+    if (width != -1 && (width != nwidth || height != nheight) && mainw->preview_spinbutton != NULL) {
       load_preview_image(FALSE);
     }
+    play_window_set_title();
   }
-  play_window_set_title();
 }
 
 
@@ -4570,7 +4580,7 @@ void add_to_playframe(void) {
   if (mainw->plug == NULL) {
     if (!mainw->foreign && (!mainw->sep_win || prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY)) {
       mainw->plug = lives_hbox_new(FALSE, 0);
-
+      lives_widget_set_app_paintable(mainw->plug, TRUE);
       lives_container_add(LIVES_CONTAINER(mainw->playarea), mainw->plug);
       if (palette->style & STYLE_1) {
         lives_widget_set_bg_color(mainw->plug, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);

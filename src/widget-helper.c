@@ -829,6 +829,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_unref(livespointer objec
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_ref_sink(livespointer object) {
   if (!LIVES_IS_WIDGET_OBJECT(object)) {
     LIVES_WARN("Ref_sink of non-object");
+    break_me();
     return FALSE;
   }
   g_object_ref_sink(object);
@@ -1193,18 +1194,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget *wi
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_process_all_updates(void) {
-#ifdef GUI_GTK
-  gdk_window_process_all_updates();
-  return TRUE;
-#endif
-#ifdef GUI_QT
-  QCoreApplication::processEvents();
-  return TRUE;
-#endif
-  return FALSE;
-}
-
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_get_origin(LiVESXWindow *xwin, int *posx, int *posy) {
 #ifdef GUI_GTK
@@ -1276,7 +1265,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_app_paintable(LiVESWidget *
 WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dialog) {
 #ifdef GUI_GTK
   LiVESResponseType ret;
-  mainw->gui_fooey = TRUE;
+  if (mainw->is_ready) mainw->gui_fooey = TRUE;
   lives_widget_context_update();
   ret = gtk_dialog_run(dialog);
   if (LIVES_IS_WINDOW(LIVES_MAIN_WINDOW_WIDGET)) {
@@ -1350,8 +1339,7 @@ static char *make_random_string(const char *prefix) {
 #if GTK_CHECK_VERSION(3, 16, 0)
 
 static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetState state, const char *selector,
-    const char *detail,
-    const char *value) {
+    const char *detail, const char *value) {
   GtkCssProvider *provider;
   GtkStyleContext *ctx;
 
@@ -1360,6 +1348,11 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
   char *state_str;
 
   if (widget == NULL || !LIVES_IS_WIDGET(widget)) return FALSE;
+
+#if GTK_CHECK_VERSION(3, 24, 0)
+  if (!(state & LIVES_WIDGET_STATE_BACKDROP))
+    set_css_value_for_state_flag(widget, state | LIVES_WIDGET_STATE_BACKDROP, selector, detail, value);
+#endif
 
   ctx = gtk_widget_get_style_context(widget);
   provider = gtk_css_provider_new();
@@ -8871,6 +8864,9 @@ LiVESWidget *lives_standard_label_new_with_mnemonic_widget(const char *text, LiV
 LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boolean invis) {
   LiVESWidget *frame = lives_frame_new(NULL);
   LiVESWidget *label = NULL;
+#if GTK_CHECK_VERSION(3, 24, 0)
+  char *colref;
+#endif
 
   if (LIVES_SHOULD_EXPAND)
     lives_container_set_border_width(LIVES_CONTAINER(frame), widget_opts.border_width);
@@ -8886,6 +8882,11 @@ LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boole
 
   lives_widget_apply_theme(frame, LIVES_WIDGET_STATE_NORMAL);
   lives_widget_set_text_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+
+#if GTK_CHECK_VERSION(3, 24, 0)
+  colref = gdk_rgba_to_string(&palette->menu_and_bars);
+  set_css_value_direct(frame, LIVES_WIDGET_STATE_NORMAL, "border", "border-color", colref);
+#endif
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
   lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
@@ -11227,8 +11228,8 @@ boolean lives_tree_store_find_iter(LiVESTreeStore *tstore, int col, const char *
 #include "rte_window.h"
 #include "ce_thumbs.h"
 
-#define MAX_NULL_EVENTS 512
-#define LOOP_LIMIT 32
+#define MAX_NULL_EVENTS 512 // general max, some events allow twice this
+#define LOOP_LIMIT 32 // max when playing and not in multitrack
 boolean lives_widget_context_update(void) {
   boolean mt_needs_idlefunc = FALSE;
   int nulleventcount = 0, loops = 0;
@@ -11284,7 +11285,7 @@ boolean lives_widget_context_update(void) {
         }
         if (!mainw->multitrack && loops > LOOP_LIMIT) break;
       }
-      if (loops > 1000 && !mainw->gui_fooey) {
+      if (loops >= MAX_NULL_EVENTS * 2 && !mainw->gui_fooey) {
         fprintf(stderr, "Looping on event type: evt is %p, %d %d %d\nPlease report this so I can fix it.",
                 ev, ev == NULL ? -1 : ev->type, nulleventcount, loops);
         break;

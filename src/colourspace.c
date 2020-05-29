@@ -29,18 +29,21 @@
 //      - RGB(A) float, YUV10, etc.
 
 #include <math.h>
+#include "main.h"
 
 #define USE_THREADS 1 ///< set to 0 to disable threading for pixbuf operations, 1 to enable. Other values are invalid.
 
 #ifdef USE_SWSCALE
 
-#include <libswscale/swscale.h>
-
-// for libweed-compat.h
+// for weed-compat.h
 #define HAVE_AVCODEC
 #define HAVE_AVUTIL
 
-#include "main.h"
+#if NEED_LOCAL_WEED_COMPAT
+#include "../libweed/weed-compat.h"
+#else
+#include <weed/weed-compat.h>
+#endif
 
 #if USE_THREADS
 #include <pthread.h>
@@ -845,122 +848,110 @@ static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int o
 static weed_macropixel_t advp[256];
 
 void init_advanced_palettes(void) {
-  advp[0] = (weed_macropixel_t) {WEED_PALETTE_RGB24, {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue}};
-  advp[1] = (weed_macropixel_t) {WEED_PALETTE_BGR24, {WEED_VCHAN_blue, WEED_VCHAN_green, WEED_VCHAN_red}};
-  advp[2] = (weed_macropixel_t) {
-    WEED_PALETTE_RGBA32, {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue,
-                          WEED_VCHAN_alpha
-                         }
-  };
-  advp[3] = (weed_macropixel_t) {
-    WEED_PALETTE_BGRA32, {WEED_VCHAN_blue, WEED_VCHAN_green, WEED_VCHAN_red,
-                          WEED_VCHAN_alpha
-                         }
-  };
-  advp[4] = (weed_macropixel_t) {
-    WEED_PALETTE_ARGB32, {WEED_VCHAN_alpha, WEED_VCHAN_red, WEED_VCHAN_green,
-                          WEED_VCHAN_blue
-                         }
-  };
-  advp[5] = (weed_macropixel_t) {
-    WEED_PALETTE_RGBFLOAT, {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue},
-                           WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32, 32, 32}
-  };
-  advp[6] = (weed_macropixel_t) {
-    WEED_PALETTE_RGBAFLOAT, {WEED_VCHAN_red, WEED_VCHAN_green,
-                             WEED_VCHAN_blue, WEED_VCHAN_alpha
-                            }, WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32, 32, 32, 32}
-  };
+  lives_memset(advp, 0, 256 * sizeof(weed_macropixel_t));
+
+  advp[0] = (weed_macropixel_t) {WEED_PALETTE_RGB24,
+				 {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue}};
+
+  advp[1] = (weed_macropixel_t) {WEED_PALETTE_BGR24,
+				 {WEED_VCHAN_blue, WEED_VCHAN_green, WEED_VCHAN_red}};
+
+  advp[2] = (weed_macropixel_t) {WEED_PALETTE_RGBA32,
+				 {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue,WEED_VCHAN_alpha}};
+
+  advp[3] = (weed_macropixel_t) {WEED_PALETTE_BGRA32,
+				 {WEED_VCHAN_blue, WEED_VCHAN_green, WEED_VCHAN_red,WEED_VCHAN_alpha}};
+
+  advp[4] = (weed_macropixel_t) {WEED_PALETTE_ARGB32,
+				 {WEED_VCHAN_alpha, WEED_VCHAN_red, WEED_VCHAN_green,WEED_VCHAN_blue}};
+
+  advp[5] = (weed_macropixel_t) {WEED_PALETTE_RGBFLOAT,
+				 {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue},
+				 WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32, 32, 32}};
+
+  advp[6] = (weed_macropixel_t) {WEED_PALETTE_RGBAFLOAT,
+				 {WEED_VCHAN_red, WEED_VCHAN_green,WEED_VCHAN_blue, WEED_VCHAN_alpha},
+				 WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32, 32, 32, 32}};
+
   /// yuv planar
-  advp[7] = (weed_macropixel_t) {
-    WEED_PALETTE_YUV420P, {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V},
-                          WEED_VCHAN_DESC_PLANAR, {0, 2, 2}, {0, 2, 2}
-  };
-  advp[8] = (weed_macropixel_t) {
-    WEED_PALETTE_YVU420P, {WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_U},
-                          WEED_VCHAN_DESC_PLANAR, {0,  2, 2}, {0, 2, 2}
-  };
-  advp[9] = (weed_macropixel_t) {
-    WEED_PALETTE_YUV422P, {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V},
-                          WEED_VCHAN_DESC_PLANAR, {0, 2, 2}, {0, 1, 1}
-  };
-  advp[10] = (weed_macropixel_t) {
-    WEED_PALETTE_YUV444P, {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V},
-                          WEED_VCHAN_DESC_PLANAR
-  };
-  advp[11] = (weed_macropixel_t) {
-    WEED_PALETTE_YUVA4444P, {WEED_VCHAN_Y, WEED_VCHAN_U,
-                             WEED_VCHAN_V, WEED_VCHAN_alpha
-                            }, WEED_VCHAN_DESC_PLANAR
-  };
+  advp[7] = (weed_macropixel_t) {WEED_PALETTE_YUV420P,
+				 {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V},
+				 WEED_VCHAN_DESC_PLANAR, {1, 2, 2}, {1, 2, 2}};
+
+  advp[8] = (weed_macropixel_t) {WEED_PALETTE_YVU420P,
+				 {WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_U},
+				 WEED_VCHAN_DESC_PLANAR, {1, 2, 2}, {1, 2, 2}};
+
+  advp[9] = (weed_macropixel_t) {WEED_PALETTE_YUV422P,
+				 {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V},
+				 WEED_VCHAN_DESC_PLANAR, {1, 2, 2}, {1, 1, 1}};
+
+  advp[10] = (weed_macropixel_t) {WEED_PALETTE_YUV444P,
+				  {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V}, WEED_VCHAN_DESC_PLANAR};
+
+  advp[11] = (weed_macropixel_t) {WEED_PALETTE_YUVA4444P,
+				  {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V, WEED_VCHAN_alpha},
+				  WEED_VCHAN_DESC_PLANAR};
+
   /// yuv packed
-  advp[12] = (weed_macropixel_t) {
-    WEED_PALETTE_UYVY, {WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_Y},
-                       0, {0}, {0}, 2
-  };
-  advp[13] = (weed_macropixel_t) {
-    WEED_PALETTE_YUYV, {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_V},
-                       0, {0}, {0}, 2
-  };
+  advp[12] = (weed_macropixel_t) {WEED_PALETTE_UYVY,
+				  {WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_Y},
+				  0, {0}, {0}, 2};
+
+  advp[13] = (weed_macropixel_t) {WEED_PALETTE_YUYV,
+				  {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_V},
+				  0, {0}, {0}, 2};
+
   advp[14] = (weed_macropixel_t) {WEED_PALETTE_YUV888, {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V}};
-  advp[15] = (weed_macropixel_t) {
-    WEED_PALETTE_YUVA8888, {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V,
-                            WEED_VCHAN_alpha
-                           }
-  };
-  advp[16] = (weed_macropixel_t) {
-    WEED_PALETTE_YUV411, {WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_Y,
-                          WEED_VCHAN_V, WEED_VCHAN_Y, WEED_VCHAN_Y
-                         }, 0, {0}, {0}, 4
-  };
+
+  advp[15] = (weed_macropixel_t) {WEED_PALETTE_YUVA8888,
+				  {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V,WEED_VCHAN_alpha}};
+
+  advp[16] = (weed_macropixel_t) {WEED_PALETTE_YUV411, {WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_Y,
+							WEED_VCHAN_V, WEED_VCHAN_Y, WEED_VCHAN_Y},
+				  0, {0}, {0}, 4};
 
   /// alpha
-  advp[17] = (weed_macropixel_t) {
-    WEED_PALETTE_A8, {WEED_VCHAN_alpha}
-  };
-  advp[18] = (weed_macropixel_t) {
-    WEED_PALETTE_A1, {WEED_VCHAN_alpha}, 0, {0}, {0}, 1, {1}
-  };
-  advp[19] = (weed_macropixel_t) {
-    WEED_PALETTE_AFLOAT, {WEED_VCHAN_alpha}, 0, {0}, {0}, 1, {32}
-  };
-  advp[20] = (weed_macropixel_t) {
-    WEED_PALETTE_END
-  };
+  advp[17] = (weed_macropixel_t) {WEED_PALETTE_A8, {WEED_VCHAN_alpha}};
+
+  advp[18] = (weed_macropixel_t) {WEED_PALETTE_A1, {WEED_VCHAN_alpha}, 0, {0}, {0}, 1, {1}};
+
+  advp[19] = (weed_macropixel_t) {WEED_PALETTE_AFLOAT, {WEED_VCHAN_alpha},
+				  WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32}};
+
+  advp[20] = (weed_macropixel_t) {WEED_PALETTE_END};
 
   // custom palettes (designed for future use or for testing)
-  advp[21] = (weed_macropixel_t) {
-    LIVES_PALETTE_YVU422P, {WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_U}, TRUE, {0, 2, 2}, {0, 1, 1}
-  };
-  advp[22] = (weed_macropixel_t) {
-    LIVES_PALETTE_YUVA420P, {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V, WEED_VCHAN_alpha},
-                            TRUE, {0, 2, 2, 0}, {0, 2, 2, 0}
-  };
-  advp[23] = (weed_macropixel_t) {
-    LIVES_PALETTE_AYUV8888, {WEED_VCHAN_alpha, WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V}
-  };
-  advp[24] = (weed_macropixel_t) {
-    LIVES_PALETTE_YUVFLOAT, {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V},
-                            WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32, 32, 32}
-  };
-  advp[25] = (weed_macropixel_t) {
-    LIVES_PALETTE_YUVAFLOAT, {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V,
-                              WEED_VCHAN_alpha
-                             }, WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32, 32, 32, 32}
-  };
-  advp[26] = (weed_macropixel_t) {
-    LIVES_PALETTE_RGB48, {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue},
-                         0, {0}, {0}, 1, {16, 16, 16}
-  };
-  advp[27] = (weed_macropixel_t) {
-    LIVES_PALETTE_RGBA64, {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue,
-                           WEED_VCHAN_alpha
-                          }, 0, {0}, {0}, 1, {16, 16, 16, 16}
-  };
-  advp[28] = (weed_macropixel_t) {
-    LIVES_PALETTE_YUV121010, {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V},
-                             0, {0}, {0}, 1, {12, 10, 10}
-  };
+  advp[21] = (weed_macropixel_t) {LIVES_PALETTE_YVU422P, {WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_U},
+				  WEED_VCHAN_DESC_PLANAR, {1, 2, 2}, {1, 1, 1}};
+
+  advp[22] = (weed_macropixel_t) {LIVES_PALETTE_YUVA420P,
+				  {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V, WEED_VCHAN_alpha},
+				  WEED_VCHAN_DESC_PLANAR, {1, 2, 2, 1}, {1, 2, 2, 1}};
+
+  advp[23] = (weed_macropixel_t) {LIVES_PALETTE_AYUV8888,
+				  {WEED_VCHAN_alpha, WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V}};
+
+  advp[24] = (weed_macropixel_t) {LIVES_PALETTE_YUVFLOAT,
+				  {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V},
+				  WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32, 32, 32}};
+
+  advp[25] = (weed_macropixel_t) {LIVES_PALETTE_YUVAFLOAT,
+				  {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V,WEED_VCHAN_alpha},
+				  WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32, 32, 32, 32}};
+
+  advp[26] = (weed_macropixel_t) {LIVES_PALETTE_RGB48,
+				  {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue},
+				  0, {0}, {0}, 1, {16, 16, 16}};
+
+  advp[27] = (weed_macropixel_t) {LIVES_PALETTE_RGBA64,
+				  {WEED_VCHAN_red, WEED_VCHAN_green,
+				   WEED_VCHAN_blue, WEED_VCHAN_alpha},
+				  0, {0}, {0}, 1, {16, 16, 16, 16}};
+
+  advp[28] = (weed_macropixel_t) {LIVES_PALETTE_YUV121010,
+				  {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V},
+				  0, {0}, {0}, 1, {12, 10, 10}};
 }
 
 
@@ -993,7 +984,8 @@ LIVES_GLOBAL_INLINE size_t pixel_size(int pal) {
   if (!mpx) return 0;
   else {
     size_t psize = 0;
-    for (register int i = 0; i < MAXPPLANES && mpx->chantype[i]; i++) psize += mpx->bitsize[i] == 0 ? 1 : mpx->bitsize[i] / 8;
+    for (register int i = 0; i < MAXPPLANES && mpx->chantype[i]; i++)
+      psize += mpx->bitsize[i] == 0 ? 1 : mpx->bitsize[i] / 8;
     return psize;
   }
 }
@@ -1021,7 +1013,6 @@ LIVES_GLOBAL_INLINE int weed_palette_get_nplanes(int pal) {
   }
   return i;
 }
-
 
 LIVES_GLOBAL_INLINE boolean weed_palette_is_alpha(int pal) {
   const weed_macropixel_t *mpx = get_advanced_palette(pal);
@@ -1058,7 +1049,7 @@ LIVES_GLOBAL_INLINE boolean weed_palette_has_alpha(int pal) {
 
 LIVES_GLOBAL_INLINE boolean weed_palette_is_float(int pal) {
   const weed_macropixel_t *mpx = get_advanced_palette(pal);
-  return (mpx && (mpx->flags & WEED_VCHAN_DESC_FP)) ? TRUE : FALSE;
+  return (mpx && (mpx->flags & WEED_VCHAN_DESC_FP));
 }
 
 LIVES_GLOBAL_INLINE double weed_palette_get_plane_ratio_horizontal(int pal, int plane) {
@@ -11408,6 +11399,7 @@ boolean compact_rowstrides(weed_layer_t *layer) {
 }
 
 
+#ifdef USE_SWSCALE
 #if USE_THREADS
 static void *swscale_threadfunc(void *arg) {
   lives_sw_params *swparams = (lives_sw_params *)arg;
@@ -11420,6 +11412,7 @@ static void *swscale_threadfunc(void *arg) {
                             0, swparams->iheight, (uint8_t *const *)swparams->opd, swparams->orw);
   return NULL;
 }
+#endif
 #endif
 
 /**

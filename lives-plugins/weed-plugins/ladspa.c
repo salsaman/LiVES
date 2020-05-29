@@ -436,7 +436,7 @@ WEED_SETUP_START(200, 200) {
 
   char label[LABSIZE];
   char vdir[PATH_MAX];
-  char plugin_name[PATH_MAX], weed_name[PATH_MAX], plug1[PATH_MAX];
+  char plugin_name[PATH_MAX], weed_name[PATH_MAX], plug1[PATH_MAX * 2];
   DIR *curvdir = NULL;
 
   void *handle = NULL;
@@ -481,7 +481,7 @@ WEED_SETUP_START(200, 200) {
       if (!strncmp(vdirent->d_name, "..", strlen(vdirent->d_name))) continue;
 
       snprintf(plugin_name, PATH_MAX, "%s", vdirent->d_name);
-      snprintf(plug1, PATH_MAX, "%s/%s", vdir, plugin_name);
+      snprintf(plug1, PATH_MAX * 2, "%s/%s", vdir, plugin_name);
 
       if (verbosity == WEED_VERBOSITY_DEBUG)
         fprintf(stderr, "checking %s\n", plug1);

@@ -741,9 +741,9 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
         // deal with string
         if (key != NULL) {
-          if (!strcmp(key, "comment")) snprintf(cdata->comment, 256, "%s", buffer);
-          if (!strcmp(key, "author")) snprintf(cdata->author, 256, "%s", buffer);
-          if (!strcmp(key, "title")) snprintf(cdata->title, 256, "%s", buffer);
+          if (!strcmp(key, "comment")) snprintf(cdata->comment, 1024, "%s", buffer);
+          if (!strcmp(key, "author")) snprintf(cdata->author, 1024, "%s", buffer);
+          if (!strcmp(key, "title")) snprintf(cdata->title, 1024, "%s", buffer);
           free(key);
           key = NULL;
 #ifdef DEBUG
@@ -1377,9 +1377,9 @@ static lives_clip_data_t *flv_clone(lives_clip_data_t *cdata) {
   clone->seek_flag = cdata->seek_flag;
   clone->sync_hint = cdata->sync_hint;
 
-  snprintf(clone->author, 256, "%s", cdata->author);
-  snprintf(clone->title, 256, "%s", cdata->title);
-  snprintf(clone->comment, 256, "%s", cdata->comment);
+  snprintf(clone->author, 1024, "%s", cdata->author);
+  snprintf(clone->title, 1024, "%s", cdata->title);
+  snprintf(clone->comment, 1024, "%s", cdata->comment);
 
   // create "priv" elements
   dpriv = clone->priv;

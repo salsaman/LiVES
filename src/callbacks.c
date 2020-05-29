@@ -7520,7 +7520,8 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     mainw->multitrack->redraw_block = FALSE;
   }
 
-  sep_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_SEPWIN, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
+  sep_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_SEPWIN,
+				       lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
   sep_img2 = lives_image_new_from_stock(LIVES_LIVES_STOCK_SEPWIN,
                                         lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
 

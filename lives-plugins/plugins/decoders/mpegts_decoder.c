@@ -3345,9 +3345,9 @@ static lives_clip_data_t *mpegts_clone(lives_clip_data_t *cdata) {
   clone->YUV_sampling = cdata->YUV_sampling;
   clone->YUV_clamping = cdata->YUV_clamping;
 
-  snprintf(clone->author, 256, "%s", cdata->author);
-  snprintf(clone->title, 256, "%s", cdata->title);
-  snprintf(clone->comment, 256, "%s", cdata->comment);
+  snprintf(clone->author, 1024, "%s", cdata->author);
+  snprintf(clone->title, 1024, "%s", cdata->title);
+  snprintf(clone->comment, 1024, "%s", cdata->comment);
 
   if (spriv != NULL) dpriv->inited = TRUE;
 

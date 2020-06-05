@@ -82,38 +82,49 @@ NOT_EXPORTED int general_get_int(weed_plant_t *p, const char *w) {int v, *vp = (
 #define general_get_boolean(p,w) gg_i((p),(w))
 #define gg_b(p,w) general_get_boolean((p),(w))
 NOT_EXPORTED weed_plant_t *general_get_plantptr(weed_plant_t *p, const char *w, int i) {
-  weed_plant_t *v, **vp = (weed_plant_t **)gg(p, w, i, &v); return vp ? v : 0;}
+  weed_plant_t *v, **vp = (weed_plant_t **)gg(p, w, i, &v); return vp ? v : 0;
+}
 #define gg_p(p,w,z) general_get_plantptr((p),(w),(z))
 NOT_EXPORTED int64_t general_get_i64(weed_plant_t *p, const char *w) {int64_t v, *vp = (int64_t *)gg(p, w, 0, &v); return vp ? v : 0;}
 #define gg_i64(p,w) general_get_i64((p),(w))
 EXPORTS int weed_plant_get_type(weed_plant_t *p) {return gg_i(p, WEED_LEAF_TYPE);}
-NOT_EXPORTED weed_plant_t *_weed_get_gui(weed_plant_t *p) {weed_plant_t *g = NULL; int t = weed_plant_get_type(p);
+NOT_EXPORTED weed_plant_t *_weed_get_gui(weed_plant_t *p) {
+  weed_plant_t *g = NULL; int t = weed_plant_get_type(p);
   if (t != WEED_PLANT_FILTER_CLASS && t != WEED_PLANT_PARAMETER_TEMPLATE && t != WEED_PLANT_PARAMETER) return NULL;
   gg(p, WEED_LEAF_GUI, 0, (void *)&g);
-  if (!g) {g = weed_plant_new(WEED_PLANT_GUI); weed_leaf_set(p, WEED_LEAF_GUI, WEED_SEED_PLANTPTR, 1, &g);} return g;}
+  if (!g) {g = weed_plant_new(WEED_PLANT_GUI); weed_leaf_set(p, WEED_LEAF_GUI, WEED_SEED_PLANTPTR, 1, &g);} return g;
+}
 NOT_EXPORTED double general_get_dbl(weed_plant_t *p, const char *w) {double v, *vp = (double *)gg(p, w, 0, &v); return vp ? v : 0;}
 #define gg_dbl(p,w) general_get_dbl((p),(w))
-EXPORTS int weed_get_api_version(weed_plant_t *pi) {weed_plant_t *h;
-  wlg(pi, WEED_LEAF_HOST_INFO, 0, &h); return gg_i(h, WEED_LEAF_FILTER_API_VERSION);}
-NOT_EXPORTED void _weed_plant_set_flags(weed_plant_t *p, int f) {int t = weed_plant_get_type(p);
+EXPORTS int weed_get_api_version(weed_plant_t *pi) {
+  weed_plant_t *h;
+  wlg(pi, WEED_LEAF_HOST_INFO, 0, &h); return gg_i(h, WEED_LEAF_FILTER_API_VERSION);
+}
+NOT_EXPORTED void _weed_plant_set_flags(weed_plant_t *p, int f) {
+  int t = weed_plant_get_type(p);
   if (t == WEED_PLANT_FILTER_CLASS || t == WEED_PLANT_PARAMETER_TEMPLATE
       || t == WEED_PLANT_CHANNEL_TEMPLATE || t == WEED_PLANT_GUI)
-    weed_leaf_set(p, WEED_LEAF_FLAGS, WEED_SEED_INT, 1, &f);}
+    weed_leaf_set(p, WEED_LEAF_FLAGS, WEED_SEED_INT, 1, &f);
+}
 EXPORTS void weed_filter_set_flags(weed_plant_t *f, int fl) {_weed_plant_set_flags(f, fl);}
 EXPORTS void weed_chantmpl_set_flags(weed_plant_t *c, int f) {_weed_plant_set_flags(c, f);}
 EXPORTS void weed_paramtmpl_set_flags(weed_plant_t *p, int f) {_weed_plant_set_flags(p, f);}
 EXPORTS void weed_gui_set_flags(weed_plant_t *g, int f) {_weed_plant_set_flags(g, f);}
-NOT_EXPORTED void _weed_plant_set_name(weed_plant_t *p, const char *n) {int t = weed_plant_get_type(p);
+NOT_EXPORTED void _weed_plant_set_name(weed_plant_t *p, const char *n) {
+  int t = weed_plant_get_type(p);
   if (t == WEED_PLANT_FILTER_CLASS || t == WEED_PLANT_PARAMETER_TEMPLATE
-      || t == WEED_PLANT_CHANNEL_TEMPLATE) weed_leaf_set(p, WEED_LEAF_NAME, WEED_SEED_STRING, 1, &n);}
+      || t == WEED_PLANT_CHANNEL_TEMPLATE) weed_leaf_set(p, WEED_LEAF_NAME, WEED_SEED_STRING, 1, &n);
+}
 EXPORTS void weed_filter_set_name(weed_plant_t *f, const char *n) {_weed_plant_set_name(f, n);}
 EXPORTS void weed_chantmpl_set_name(weed_plant_t *c, const char *n) { _weed_plant_set_name(c, n);}
 EXPORTS void weed_paramtmpl_set_name(weed_plant_t *p, const char *n) { _weed_plant_set_name(p, n);}
 EXPORTS weed_plant_t *weed_filter_get_gui(weed_plant_t *f) {return _weed_get_gui(f);}
 EXPORTS weed_plant_t *weed_param_get_gui(weed_plant_t *p) {return _weed_get_gui(p);}
 EXPORTS weed_plant_t *weed_paramtmpl_get_gui(weed_plant_t *pt) {return _weed_get_gui(pt);}
-EXPORTS weed_plant_t *weed_get_host_info(weed_plant_t *pi) {weed_plant_t *hi;
-  return *((weed_plant_t **)(gg(pi, WEED_LEAF_HOST_INFO, 0, (void *)&hi)));}
+EXPORTS weed_plant_t *weed_get_host_info(weed_plant_t *pi) {
+  weed_plant_t *hi;
+  return *((weed_plant_t **)(gg(pi, WEED_LEAF_HOST_INFO, 0, (void *)&hi)));
+}
 EXPORTS int weed_get_host_verbosity(weed_plant_t *host_info) {return gg_i(host_info, WEED_LEAF_VERBOSITY);}
 NOT_EXPORTED int _weed_plant_get_flags(weed_plant_t *p) {return gg_i(p, WEED_LEAF_FLAGS);}
 EXPORTS int weed_host_get_flags(weed_plant_t *h) {return _weed_plant_get_flags(h);}
@@ -123,28 +134,35 @@ EXPORTS int weed_chantmpl_get_flags(weed_plant_t *c) {return _weed_plant_get_fla
 EXPORTS int weed_paramtmpl_get_flags(weed_plant_t *p) {return _weed_plant_get_flags(p);}
 EXPORTS int weed_instance_get_flags(weed_plant_t *i) {return _weed_plant_get_flags(i);}
 EXPORTS int weed_host_supports_linear_gamma(weed_plant_t *h) {
-  return (weed_host_get_flags(h)&WEED_HOST_SUPPORTS_LINEAR_GAMMA);}
+  return (weed_host_get_flags(h)&WEED_HOST_SUPPORTS_LINEAR_GAMMA);
+}
 EXPORTS int weed_host_supports_premultiplied_alpha(weed_plant_t *h) {
-  return (weed_host_get_flags(h)&WEED_HOST_SUPPORTS_PREMULTIPLIED_ALPHA);}
+  return (weed_host_get_flags(h)&WEED_HOST_SUPPORTS_PREMULTIPLIED_ALPHA);
+}
 EXPORTS weed_plant_t *weed_instance_get_filter(weed_plant_t *i) {
-  weed_plant_t *f; return *((weed_plant_t **)gg(i, WEED_LEAF_FILTER_CLASS, 0, (void *)&f));}
+  weed_plant_t *f; return *((weed_plant_t **)gg(i, WEED_LEAF_FILTER_CLASS, 0, (void *)&f));
+}
 EXPORTS weed_plant_t *weed_get_in_channel(weed_plant_t *i, int x) {return gg_p(i, WEED_LEAF_IN_CHANNELS, x);}
 EXPORTS weed_plant_t *weed_get_out_channel(weed_plant_t *i, int x) {return gg_p(i, WEED_LEAF_OUT_CHANNELS, x);}
 EXPORTS weed_plant_t *weed_get_in_param(weed_plant_t *i, int x) {return gg_p(i, WEED_LEAF_IN_PARAMETERS, x);}
 EXPORTS weed_plant_t *weed_get_out_param(weed_plant_t *i, int x) {return gg_p(i, WEED_LEAF_OUT_PARAMETERS, x);}
 EXPORTS void *weed_channel_get_pixel_data(weed_plant_t *c) {
-  void *pd; return *((void **)(gg(c, WEED_LEAF_PIXEL_DATA, 0, (void *)&pd)));}
+  void *pd; return *((void **)(gg(c, WEED_LEAF_PIXEL_DATA, 0, (void *)&pd)));
+}
 EXPORTS int weed_channel_get_width(weed_plant_t *c) {return gg_i(c, WEED_LEAF_WIDTH);}
 EXPORTS int weed_channel_get_height(weed_plant_t *c) {return gg_i(c, WEED_LEAF_HEIGHT);}
 EXPORTS int weed_channel_get_palette(weed_plant_t *c) {return gg_i(c, WEED_LEAF_CURRENT_PALETTE);}
 EXPORTS int weed_channel_get_yuv_clamping(weed_plant_t *c) {return gg_i(c, WEED_LEAF_YUV_CLAMPING);}
 EXPORTS int weed_channel_get_stride(weed_plant_t *c) {return gg_i(c, WEED_LEAF_ROWSTRIDES);}
 EXPORTS int weed_channel_get_offset(weed_plant_t *c) {return gg_i(c, WEED_LEAF_OFFSET);}
-EXPORTS int weed_channel_get_true_height(weed_plant_t *c) {int h;
-  return *((int *)(gg(c, WEED_LEAF_HEIGHT, wlne(c, WEED_LEAF_HEIGHT) - 1, &h)));}
+EXPORTS int weed_channel_get_true_height(weed_plant_t *c) {
+  int h;
+  return *((int *)(gg(c, WEED_LEAF_HEIGHT, wlne(c, WEED_LEAF_HEIGHT) - 1, &h)));
+}
 EXPORTS int weed_channel_is_disabled(weed_plant_t *c) {return gg_b(c, WEED_LEAF_DISABLED);}
 EXPORTS weed_plant_t *weed_param_get_template(weed_plant_t *p) {
-  weed_plant_t *pt; return *((weed_plant_t **)(gg(p, WEED_LEAF_TEMPLATE, 0, (void *)&pt)));}
+  weed_plant_t *pt; return *((weed_plant_t **)(gg(p, WEED_LEAF_TEMPLATE, 0, (void *)&pt)));
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -698,7 +716,8 @@ EXPORTS dlink_list_t *add_to_list_sorted(dlink_list_t *list, weed_plant_t *filte
 static int dlink_list_cmp(const void *p1, const void *p2) {
   dlink_list_t *l1 = *((dlink_list_t **)p1);
   dlink_list_t *l2 = *((dlink_list_t **)p2);
-  return strcmp(l1->name, l2->name);}
+  return strcmp(l1->name, l2->name);
+}
 
 EXPORTS int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list) {
   register int count = 0, ocount;
@@ -706,7 +725,7 @@ EXPORTS int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list)
   // map list to flat array so we can qsort it. The original list was prepended, so adding in reverse restores original order.
   for (xlist = list; xlist; xlist = xlist->next) count++;
   fprintf(stderr, "alloc elems %d\n", count);
-  dll = (dlink_list_t **)weed_malloc((ocount = count) * sizeof(dlink_list_t * ));
+  dll = (dlink_list_t **)weed_malloc((ocount = count) * sizeof(dlink_list_t *));
   for (xlist = list; xlist; xlist = xlist->next) {
     dll[--count] = xlist;
   }

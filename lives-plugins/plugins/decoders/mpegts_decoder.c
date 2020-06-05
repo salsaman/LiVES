@@ -2398,9 +2398,9 @@ static boolean lives_mpegts_probe(const lives_clip_data_t *cdata, unsigned char 
 
   if (check_count < CHECK_COUNT) return FALSE;
 
-  score      = analyze(p, TS_PACKET_SIZE     * check_count, TS_PACKET_SIZE     , NULL) * CHECK_COUNT / check_count;
+  score      = analyze(p, TS_PACKET_SIZE     * check_count, TS_PACKET_SIZE, NULL) * CHECK_COUNT / check_count;
   dvhs_score = analyze(p, TS_DVHS_PACKET_SIZE * check_count, TS_DVHS_PACKET_SIZE, NULL) * CHECK_COUNT / check_count;
-  fec_score  = analyze(p, TS_FEC_PACKET_SIZE * check_count, TS_FEC_PACKET_SIZE , NULL) * CHECK_COUNT / check_count;
+  fec_score  = analyze(p, TS_FEC_PACKET_SIZE * check_count, TS_FEC_PACKET_SIZE, NULL) * CHECK_COUNT / check_count;
 
   if (score > fec_score && score > dvhs_score && score > 6) return TRUE;
   else if (dvhs_score > score && dvhs_score > fec_score && dvhs_score > 6) return TRUE;

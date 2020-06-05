@@ -73,7 +73,7 @@ weed_plant_t **weed_filter_get_in_paramtmpls(weed_plant_t *filter, int *ntmpls);
 weed_plant_t **weed_filter_get_out_paramtmpls(weed_plant_t *filter, int *ntmpls);
 weed_plant_t *weed_filter_get_gui(weed_plant_t *filter, int create_if_not_exists);
 weed_plant_t *weed_filter_get_plugin_info(weed_plant_t *filter);
-  char *weed_filter_get_package_name(weed_plant_t *filter);
+char *weed_filter_get_package_name(weed_plant_t *filter);
 int weed_filter_hints_unstable(weed_plant_t *filter);
 
 

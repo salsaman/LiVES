@@ -685,7 +685,7 @@ static void detach_stream(lives_clip_data_t *cdata) {
 static boolean check_header(char *buf) {
   int i;
   for (i = 0; avi_headers[i][0]; i++)
-    if (!memcmp(buf  , avi_headers[i]  , 4) &&
+    if (!memcmp(buf, avi_headers[i], 4) &&
         !memcmp(buf + 8, avi_headers[i] + 4, 4))
       return TRUE;
   return FALSE;

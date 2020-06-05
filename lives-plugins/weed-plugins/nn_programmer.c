@@ -194,7 +194,8 @@ WEED_SETUP_START(200, 200) {
                                weed_integer_init("innodes", "Number of _Input Nodes", 1, 1, 256),
                                weed_integer_init("outnodes", "Number of _Output Nodes", 1, 1, 128),
                                weed_integer_init("hnodes", "Number of _Hidden Nodes", 1, 1, 128),
-                               NULL};
+                               NULL
+                              };
 
   weed_plant_t *out_params[MAXNODES * 2 + 1];
 

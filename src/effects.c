@@ -212,7 +212,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     // start decoding frames for the rendered effect plugins to start processing
     cfile->fx_frame_pump = cfile->start;
     if (!cfile->pumper) {
-      cfile->pumper = lives_proc_thread_create((lives_funcptr_t)virtual_to_images, -1, "iiibV", mainw->current_file,
+      cfile->pumper = lives_proc_thread_create(NULL, (lives_funcptr_t)virtual_to_images, -1, "iiibV", mainw->current_file,
                       cfile->undo_start, cfile->undo_end, FALSE, NULL);
     }
   } else cfile->fx_frame_pump = 0;

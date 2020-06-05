@@ -1100,11 +1100,11 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
 
   if (handle == NULL) {
     char *msg = lives_strdup_printf(_("\n\nFailed to open playback plugin %s\nError was %s\n"
-				      "Playback plugin will be disabled,\n"
-				      "it can be re-anabled in Prefrences / Playback.\n"), plugname, dlerror());
+                                      "Playback plugin will be disabled,\n"
+                                      "it can be re-anabled in Prefrences / Playback.\n"), plugname, dlerror());
     if (prefs->startup_phase != 1 && prefs->startup_phase != -1) {
       if (prefsw != NULL) do_error_dialog_with_check_transient(msg, TRUE, 0, prefsw != NULL
-							       ? LIVES_WINDOW(prefsw->prefs_dialog) :
+            ? LIVES_WINDOW(prefsw->prefs_dialog) :
             LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
       else do_error_dialog(msg);
     }

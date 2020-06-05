@@ -38,7 +38,7 @@ static int resample(weed_plant_t *inst, float **inbuf, float **outbuf, int nsamp
   register int i, j;
   register double scale;
 
-  double rem , endv;
+  double rem, endv;
 
   scale = (double)irate / (double)orate;
 

@@ -7521,7 +7521,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   }
 
   sep_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_SEPWIN,
-				       lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
+                                       lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
   sep_img2 = lives_image_new_from_stock(LIVES_LIVES_STOCK_SEPWIN,
                                         lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
 
@@ -7550,6 +7550,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     } else {
       kill_play_window();
     }
+    lives_widget_context_update();
     sched_yield();
     /* if (mainw->multitrack != NULL && !LIVES_IS_PLAYING) { */
     /*   activate_mt_preview(mainw->multitrack); // show frame preview */

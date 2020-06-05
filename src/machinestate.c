@@ -672,7 +672,7 @@ boolean  get_ds_used(uint64_t *bytes) {
   boolean ret = TRUE;
   static uint64_t _bytes = 0;
   static lives_proc_thread_t running = NULL;
-  if (!running) running = lives_proc_thread_create((lives_funcptr_t)_get_usage, WEED_SEED_INT64, "");
+  if (!running) running = lives_proc_thread_create(NULL, (lives_funcptr_t)_get_usage, WEED_SEED_INT64, "");
   if (!lives_proc_thread_check(running)) ret = FALSE;
   else _bytes = lives_proc_thread_join_int64(running);
   if (bytes) *bytes = _bytes;
@@ -995,6 +995,7 @@ LIVES_GLOBAL_INLINE uint32_t string_hash(const char *st) {
 }
 
 LIVES_GLOBAL_INLINE char *lives_strstop(char *st, const char term) {
+  /// trumcate st, replacing sterm with \0
   if (st && term) for (char *p = (char *)st; *p; p++) if (*p == term) {*p = 0; return st;}
   return st;
 }
@@ -1025,10 +1026,12 @@ typedef weed_plantptr_t lives_proc_thread_t;
    task and return a copy of the actual return value of the func
    alternatively, if return_type is non-zero, then the returned value from this function may be reutlised by passing it as the parameter
    to run_as_thread(). */
-lives_proc_thread_t lives_proc_thread_create(lives_funcptr_t func, int return_type, const char *args_fmt, ...) {
+lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t *attr, lives_funcptr_t func,
+    int return_type, const char *args_fmt, ...) {
   va_list xargs;
   int p = 0;
   const char *c;
+  lives_thread_t *thread;
   weed_plant_t *thread_info = lives_plant_new(LIVES_WEED_SUBTYPE_PROC_THREAD);
   if (!thread_info) return NULL;
   weed_set_funcptr_value(thread_info, WEED_LEAF_THREADFUNC, func);
@@ -1056,7 +1059,7 @@ lives_proc_thread_t lives_proc_thread_create(lives_funcptr_t func, int return_ty
   }
 
   va_end(xargs);
-  resubmit_thread(thread_info);
+  resubmit_proc_thread(thread_info, attr);
   if (!return_type) return NULL;
   return thread_info;
 }
@@ -1071,14 +1074,16 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
 
   thefunc->func = weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL);
 
-#define FUNCSIG_VOID								0X00000000
-#define FUNCSIG_INT 								0X00000001
+#define FUNCSIG_VOID				       			0X00000000
+#define FUNCSIG_INT 			       				0X00000001
 #define FUNCSIG_STRING 				       			0X00000004
-#define FUNCSIG_INT_INT64 							0X00000015
+#define FUNCSIG_VOIDP 				       			0X0000000D
+#define FUNCSIG_INT_INT64 			       			0X00000015
 #define FUNCSIG_VOIDP_VOIDP 				       		0X000000DD
 #define FUNCSIG_PLANTP_BOOL 				       		0X000000E3
+#define FUNCSIG_VOIDP_VOIDP_VOIDP 		        		0X00000DDD
 #define FUNCSIG_PLANTP_VOIDP_INT64 		        		0X00000ED5
-#define FUNCSIG_INT_INT_INT_BOOL_VOIDP				0X0001113D
+#define FUNCSIG_INT_INT_INT_BOOL_VOIDP					0X0001113D
 
   // Note: C compilers don't care about the type / number of function args., (else it would be impossible to alias any function pointer)
   // just the type / number must be correct at runtime;
@@ -1112,6 +1117,12 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
     default: CALL_VOID_1(string); break;
     }
     break;
+  case FUNCSIG_VOIDP:
+    switch (ret_type) {
+    case WEED_SEED_BOOLEAN: CALL_1(boolean, voidptr); break;
+    default: CALL_VOID_1(voidptr); break;
+    }
+    break;
   case FUNCSIG_INT_INT64:
     switch (ret_type) {
     default: CALL_VOID_2(int, int64); break;
@@ -1125,6 +1136,12 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
   case FUNCSIG_PLANTP_BOOL:
     switch (ret_type) {
     default: CALL_VOID_2(plantptr, boolean); break;
+    }
+    break;
+  case FUNCSIG_VOIDP_VOIDP_VOIDP:
+    switch (ret_type) {
+    case WEED_SEED_BOOLEAN: CALL_3(boolean, voidptr, voidptr, voidptr); break;
+    default: CALL_VOID_3(voidptr, voidptr, voidptr); break;
     }
     break;
   case FUNCSIG_PLANTP_VOIDP_INT64:
@@ -1144,6 +1161,10 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
   lives_free(thefunc);
 }
 
+LIVES_GLOBAL_INLINE void lives_proc_thread_sync_ready(lives_proc_thread_t tinfo) {
+  volatile boolean *sync_ready = (volatile boolean *)weed_get_voidptr_value(tinfo, "sync_ready", NULL);
+  if (sync_ready) *sync_ready = TRUE;
+}
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_check(lives_proc_thread_t tinfo) {
   /// returns FALSE while the thread is running, TRUE once it has finished
@@ -1227,13 +1248,34 @@ static void *_plant_thread_func(void *args) {
 /// (re)submission point, the function call is added to the threadpool tasklist
 /// if we have sufficient threads the task will be run at once, if all threads are busy then MINPOOLTHREADS new threads will be created
 /// and added to the pool
-boolean resubmit_thread(lives_proc_thread_t thread_info) {
+void resubmit_proc_thread(lives_proc_thread_t thread_info, lives_thread_attr_t *attr) {
   /// run any function as a lives_thread
   lives_thread_t *thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
+  lives_thread_attr_t zattr;
+  thrd_work_t *work;
+
   /// tell the thread to clean up after itself [but it won't delete thread_info]
-  lives_thread_attr_t attr = LIVES_THRDATTR_AUTODELETE;
-  lives_thread_create(thread, &attr, _plant_thread_func, (void *)thread_info);
-  return TRUE;
+  if (!attr) zattr = 0;
+  else zattr = *attr;
+  zattr |= LIVES_THRDATTR_AUTODELETE;
+  lives_thread_create(thread, &zattr, _plant_thread_func, (void *)thread_info);
+  work = (thrd_work_t *)thread->data;
+  if (zattr & LIVES_THRDATTR_WAIT_SYNC) {
+    weed_set_voidptr_value(thread_info, "sync_ready", (void *) & (work->sync_ready));
+  }
+  if (zattr & LIVES_THRDATTR_NEW_CTX) {
+    work->flags |= LIVES_THRDFLAG_NEW_CTX;
+  }
+}
+
+
+static LiVESList *mainloops = NULL;
+GMainLoop *get_loop_for_context(GMainContext *ctx) {
+  LiVESList *list = mainloops;
+  for (; list; list = list->next) {
+    if (g_main_loop_get_context((GMainLoop *)list->data) == ctx) return list->data;
+  }
+  return NULL;
 }
 
 
@@ -1242,7 +1284,7 @@ boolean resubmit_thread(lives_proc_thread_t thread_info) {
 ///////// thread pool ////////////////////////
 #ifndef VALGRIND_ON
 #define TUNE_MALLOPT 1
-#define MINPOOLTHREADS 4
+#define MINPOOLTHREADS 8
 #else
 #define MINPOOLTHREADS 2
 #endif
@@ -1267,6 +1309,8 @@ static pthread_mutex_t tuner_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 boolean do_something_useful(uint64_t myidx) {
   /// yes, why don't you lend a hand instead of just lying around nanosleeping...
+  GMainContext *ctx = NULL;
+  GMainLoop *loop;
   LiVESList *list;
   thrd_work_t *mywork;
   uint64_t myflags = 0;
@@ -1285,23 +1329,46 @@ boolean do_something_useful(uint64_t myidx) {
   mywork = (thrd_work_t *)list->data;
   mywork->busy = myidx + 1;
   myflags = mywork->flags;
-#ifdef TUNE_MALLOPT
-  if (!pthread_mutex_trylock(&tuner_mutex)) {
-    if (mtuner) {
-      myflags |= LIVES_THRDFLAG_TUNING;
-      autotune_u64(mtuner, 1, npoolthreads * 4, 128, (16. + (double)narenas * 2.
-                   + (double)(mainw->effort > 0 ? mainw->effort : 0) / 16));
-    }
-  }
-#endif
 
-  (*mywork->func)(mywork->arg);
+  if (myflags & LIVES_THRDFLAG_NEW_CTX) {
+    // create a new g_context and attach it to this thread
+    ctx = g_main_context_new();
+    loop = g_main_loop_new(ctx, TRUE);
+    mainloops = lives_list_prepend(mainloops, loop);
+    g_main_context_push_thread_default(ctx);
+  }
+
+  if (myflags & LIVES_THRDFLAG_WAIT_SYNC) {
+    lives_nanosleep_until_nonzero(mywork->sync_ready);
+  } else {
+#ifdef TUNE_MALLOPT
+    if (!pthread_mutex_trylock(&tuner_mutex)) {
+      if (mtuner) {
+        myflags |= LIVES_THRDFLAG_TUNING;
+        autotune_u64(mtuner, 1, npoolthreads * 4, 128, (16. + (double)narenas * 2.
+                     + (double)(mainw->effort > 0 ? mainw->effort : 0) / 16));
+      }
+    }
+#endif
+  }
+
+  if (ctx)
+    g_main_context_invoke(ctx, mywork->func, mywork->arg);
+  else
+    (*mywork->func)(mywork->arg);
 
   if (myflags & LIVES_THRDFLAG_AUTODELETE) {
     lives_free(mywork);
     lives_free(list);
   } else {
     mywork->done = myidx + 1;
+  }
+
+  if (myflags & LIVES_THRDFLAG_NEW_CTX) {
+    mainloops = lives_list_remove(mainloops, loop);
+    g_main_loop_unref(loop);
+    g_main_context_pop_thread_default(ctx);
+    g_main_context_unref(ctx);
   }
 
 #ifdef TUNE_MALLOPT
@@ -1378,6 +1445,7 @@ void lives_threadpool_init(void) {
   }
 }
 
+
 void lives_threadpool_finish(void) {
   threads_die = TRUE;
   pthread_mutex_lock(&tcond_mutex);
@@ -1409,6 +1477,13 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives
   work->arg = arg;
 
   if (!thread || (attr && (*attr & LIVES_THRDATTR_AUTODELETE))) work->flags |= LIVES_THRDFLAG_AUTODELETE;
+  if (attr && (*attr & LIVES_THRDATTR_WAIT_SYNC)) {
+    work->flags |= LIVES_THRDFLAG_WAIT_SYNC;
+    work->sync_ready = FALSE;
+  }
+  if (attr && (*attr & LIVES_THRDATTR_NEW_CTX)) {
+    work->flags |= LIVES_THRDFLAG_NEW_CTX;
+  }
 
   pthread_mutex_lock(&twork_mutex);
   if (twork_first == NULL) {

@@ -10993,6 +10993,7 @@ static void set_audio_mixer_vols(lives_mt * mt, weed_plant_t *elist) {
 
 
 boolean mt_idle_show_current_frame(livespointer mt) {
+  if (!mainw->multitrack) return FALSE;
   mt_show_current_frame((lives_mt *)mt, FALSE);
   return FALSE;
 }
@@ -14148,11 +14149,11 @@ void animate_multitrack(lives_mt * mt) {
   int offset, offset_old;
 
   int ebwidth = lives_widget_get_allocation_width(mt->timeline);
-
   update_timecodes(mt, currtime);
 
   offset = (currtime - mt->tl_min) / (mt->tl_max - mt->tl_min) * (double)ebwidth;
-  offset_old = (lives_ruler_get_value(LIVES_RULER(mt->timeline)) - mt->tl_min) / (mt->tl_max - mt->tl_min) * (double)ebwidth;
+  offset_old = (lives_ruler_get_value(LIVES_RULER(mt->timeline)) - mt->tl_min)
+               / (mt->tl_max - mt->tl_min) * (double)ebwidth;
 
   mt->ptr_time = lives_ruler_set_value(LIVES_RULER(mt->timeline), currtime);
 

@@ -4887,7 +4887,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
   // crash recovery -> backup the event list
   if (prefs->crash_recovery) {
     /// pretty simple now to run any function in a thread !
-    info = lives_proc_thread_create((lives_funcptr_t)backup_recording, -1, "vv", &esave_file, &asave_file);
+    info = lives_proc_thread_create(NULL, (lives_funcptr_t)backup_recording, -1, "vv", &esave_file, &asave_file);
   }
 
   do {
@@ -6249,7 +6249,7 @@ render_details *create_render_details(int type) {
     dwidth = lives_widget_get_allocation_width(rdet->dialog);
 
     lives_widget_destroy(spillover); // remove extra height
-    //lives_widget_process_updates(rdet->dialog, TRUE);
+    lives_widget_process_updates(rdet->dialog, TRUE);
     lives_widget_context_update();
 
     if (height > 0) lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(scrollw), height);

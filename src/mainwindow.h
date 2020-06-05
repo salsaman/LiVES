@@ -896,6 +896,7 @@ typedef struct {
 
   uint32_t kb_timer;
 
+  volatile boolean clutch;
   /// (GUI) function pointers
   ulong config_func;
   ulong pb_fps_func;
@@ -1580,6 +1581,7 @@ typedef struct {
   volatile LiVESWidget *stop_emmission; /// handling for GUI exposure signals
 
   boolean no_context_update; ///< may be set temporarily to block wodget context updates
+  boolean no_expose;
 
   weed_plant_t *msg_list;
   int n_messages;

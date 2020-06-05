@@ -283,7 +283,6 @@ uint64_t get_file_size(int fd);
 uint64_t sget_file_size(const char *name);
 
 void reget_afilesize(int fileno);
-
 uint64_t reget_afilesize_inner(int fileno);
 
 #ifdef PRODUCE_LOG
@@ -309,6 +308,7 @@ typedef struct {
   volatile uint64_t busy;
   volatile uint64_t done;
   void *ret;
+  volatile boolean sync_ready;
 } thrd_work_t;
 
 #define WEED_LEAF_NOTIFY "notify"
@@ -327,12 +327,16 @@ typedef struct {
 
 #define LIVES_THRDFLAG_AUTODELETE (1 << 0)
 #define LIVES_THRDFLAG_TUNING (1 << 1)
+#define LIVES_THRDFLAG_WAIT_SYNC (1 << 2)
+#define LIVES_THRDFLAG_NEW_CTX (1 << 3)
 
 typedef LiVESList lives_thread_t;
 typedef uint64_t lives_thread_attr_t;
 
 #define LIVES_THRDATTR_AUTODELETE (1 << 0)
 #define LIVES_THRDATTR_PRIORITY (1 << 1)
+#define LIVES_THRDATTR_WAIT_SYNC (1 << 2)
+#define LIVES_THRDATTR_NEW_CTX (1 << 3)
 
 void lives_threadpool_init(void);
 void lives_threadpool_finish(void);
@@ -408,13 +412,16 @@ typedef union {
   funcptr_plantptr_t funcplantptr;
 } allfunc_t;
 
-lives_proc_thread_t lives_proc_thread_create(lives_funcptr_t, int return_type, const char *args_fmt, ...);
+lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t *, lives_funcptr_t, int return_type, const char *args_fmt,
+    ...);
 boolean lives_proc_thread_check(lives_proc_thread_t);
 
 void lives_proc_thread_set_cancellable(lives_proc_thread_t);
 boolean lives_proc_thread_get_cancellable(lives_proc_thread_t);
 boolean lives_proc_thread_cancel(lives_proc_thread_t);
 boolean lives_proc_thread_cancelled(lives_proc_thread_t);
+
+void lives_proc_thread_sync_ready(lives_proc_thread_t);
 
 void lives_proc_thread_join(lives_proc_thread_t);
 int lives_proc_thread_join_int(lives_proc_thread_t);
@@ -426,6 +433,8 @@ void *lives_proc_thread_join_voidptr(lives_proc_thread_t);
 weed_plantptr_t lives_proc_thread_join_plantptr(lives_proc_thread_t) ;
 int64_t lives_proc_thread_join_int64(lives_proc_thread_t);
 
-boolean resubmit_thread(lives_proc_thread_t thread_info);
+void resubmit_proc_thread(lives_proc_thread_t, lives_thread_attr_t *);
+
+GMainLoop *get_loop_for_context(GMainContext *);
 
 #endif

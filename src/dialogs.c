@@ -62,6 +62,16 @@ static lives_time_source_t last_time_source;
 static int cache_hits = 0, cache_misses = 0;
 static double jitter = 0.;
 
+static boolean anim_mt_idle(livespointer data) {
+  if (mainw->multitrack == NULL &&
+      !mainw->faded && (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor && prefs->play_monitor != 0 &&
+                                       capable->nmonitors > 1)) &&
+      mainw->current_file != mainw->scrap_file) get_play_times();
+  if (mainw->multitrack != NULL && !cfile->opening) animate_multitrack(mainw->multitrack);
+  g_print("ANIM\n");
+  return FALSE;
+}
+
 const char *get_cache_stats(void) {
   static char buff[1024];
   lives_snprintf(buff, 1024, "preload caches = %d, hits = %d "
@@ -2003,7 +2013,9 @@ refresh:
     // a segfault here can indicate memory corruption in an FX plugin
 
     //if (mainw->currticks - last_anim_ticks > ANIM_LIMIT)
-    lives_widget_context_update();  // animate GUI, allow kb timer to run
+
+    lives_widget_context_update();
+
     //last_anim_ticks = mainw->currticks;
     //if (show_frame) g_print("lwcu end @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
@@ -3548,8 +3560,8 @@ void end_threaded_dialog(void) {
     }
   }
 
-  if (mainw->is_ready && prefs->show_gui)
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  /* if (mainw->is_ready && prefs->show_gui) */
+  /*   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
 }
 
 

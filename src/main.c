@@ -83,9 +83,7 @@
 #include <mach/processor_info.h>
 #include <mach/mach_host.h>
 #endif
-
 #ifdef USE_LIBPNG
-#define PNG_NO_CONSOLE_IO
 #include <png.h>
 #include <setjmp.h>
 #endif
@@ -2215,9 +2213,9 @@ static void do_start_messages(void) {
 static void set_toolkit_theme(int prefer) {
   // parse XDG_DATA_DIRS
   if (prefer & LIVES_THEME_DARK) {
-    g_object_set (gtk_settings_get_default (), "gtk-theme-name", "Materia", NULL);
-    g_object_set (gtk_settings_get_default (), "gtk-icon-theme-name", "elementaryXubuntu-dark", NULL);
-    g_object_set (gtk_settings_get_default (), "gtk-application-prefer-dark-theme", TRUE, NULL);
+    g_object_set(gtk_settings_get_default(), "gtk-theme-name", "Materia", NULL);
+    g_object_set(gtk_settings_get_default(), "gtk-icon-theme-name", "elementaryXubuntu-dark", NULL);
+    g_object_set(gtk_settings_get_default(), "gtk-application-prefer-dark-theme", TRUE, NULL);
   }
 }
 
@@ -2312,10 +2310,9 @@ boolean set_palette_colours(boolean force_reload) {
     if (lives_ascii_strcasecmp(future_prefs->theme, "none")) {
       palette->style = lcol.red;
       if (!(palette->style & STYLE_LIGHT)) {
-	palette->ce_unsel.red = palette->ce_unsel.green = palette->ce_unsel.blue = 6554;
-	set_toolkit_theme(LIVES_THEME_DARK | LIVES_THEME_COMPACT);
-      }
-      else set_toolkit_theme(LIVES_THEME_LIGHT | LIVES_THEME_COMPACT);
+        palette->ce_unsel.red = palette->ce_unsel.green = palette->ce_unsel.blue = 6554;
+        set_toolkit_theme(LIVES_THEME_DARK | LIVES_THEME_COMPACT);
+      } else set_toolkit_theme(LIVES_THEME_LIGHT | LIVES_THEME_COMPACT);
 
       get_string_pref(THEME_DETAIL_SEPWIN_IMAGE, mainw->sepimg_path, PATH_MAX);
       get_string_pref(THEME_DETAIL_FRAMEBLANK_IMAGE, mainw->frameblank_path, PATH_MAX);
@@ -2427,11 +2424,10 @@ boolean set_palette_colours(boolean force_reload) {
     } else {
       palette->style = atoi(pstyle);
       if (!(palette->style & STYLE_LIGHT)) {
-	palette->ce_unsel.red = palette->ce_unsel.green = palette->ce_unsel.blue = 0;
-	set_toolkit_theme(LIVES_THEME_LIGHT | LIVES_THEME_COMPACT);
-      }
-      else {
-	set_toolkit_theme(LIVES_THEME_DARK | LIVES_THEME_COMPACT);
+        palette->ce_unsel.red = palette->ce_unsel.green = palette->ce_unsel.blue = 0;
+        set_toolkit_theme(LIVES_THEME_LIGHT | LIVES_THEME_COMPACT);
+      } else {
+        set_toolkit_theme(LIVES_THEME_DARK | LIVES_THEME_COMPACT);
       }
     }
 
@@ -2901,7 +2897,7 @@ void print_opthelp(void) {
 #ifdef HAVE_PULSE_AUDIO
     fprintf(stderr, ", "); // comma after pulse
 #endif
-fprintf(stderr, _("%s or :"), AUDIO_PLAYER_SOX);
+    fprintf(stderr, _("%s or :"), AUDIO_PLAYER_SOX);
   }
 #ifdef HAVE_PULSE_AUDIO
   else fprintf(stderr, "%s", _(" or ")); // no sox, 'or' after pulse
@@ -2971,7 +2967,7 @@ boolean resize_message_area(livespointer data) {
       add_rfx_effects2(RFX_STATUS_ANY);
     }
   }
-
+  return FALSE;
   if (!prefs->show_gui || LIVES_IS_PLAYING || mainw->is_processing || mainw->is_rendering || !prefs->show_msg_area) {
     mainw->assumed_height = mainw->assumed_width = -1;
     mainw->idlemax = 0;
@@ -2981,6 +2977,7 @@ boolean resize_message_area(livespointer data) {
   if (mainw->idlemax-- == DEF_IDLE_MAX) mainw->msg_area_configed = FALSE;
 
   get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+
   if (mainw->idlemax == DEF_IDLE_MAX / 2 && prefs->open_maximised && (by > 0 || bx > 0)) {
     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     mainw->assumed_height = mainw->assumed_width = -1;
@@ -2995,7 +2992,7 @@ boolean resize_message_area(livespointer data) {
 
   mainw->idlemax = 0;
   mainw->assumed_height = mainw->assumed_width = -1;
-  msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
+  //msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
 #if !GTK_CHECK_VERSION(3, 0, 0)
   expose_msg_area(mainw->msg_area, NULL, NULL);
 #endif
@@ -3112,7 +3109,8 @@ static boolean lives_startup(livespointer data) {
   splash_msg(_("Starting GUI..."), SPLASH_LEVEL_BEGIN);
   LIVES_MAIN_WINDOW_WIDGET = NULL;
 
-  mainw->helper_procthreads[PT_LAZY_RFX] = lives_proc_thread_create((lives_funcptr_t)add_rfx_effects, -1, "i", RFX_STATUS_ANY);
+  mainw->helper_procthreads[PT_LAZY_RFX] = lives_proc_thread_create(NULL, (lives_funcptr_t)add_rfx_effects, -1, "i",
+      RFX_STATUS_ANY);
 
   create_LiVES();
 
@@ -3326,10 +3324,6 @@ static boolean lives_startup(livespointer data) {
     if (mainw->multitrack) multitrack_delete(mainw->multitrack, FALSE);
   }
 
-  // timer to poll for external commands: MIDI, joystick, jack transport, osc, etc.
-  mainw->kb_timer_end = FALSE;
-  mainw->kb_timer = lives_timer_add(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
-
 #ifdef HAVE_YUV4MPEG
   if (strlen(prefs->yuvin) > 0) lives_idle_add(open_yuv4m_startup, NULL);
 #endif
@@ -3364,7 +3358,7 @@ static boolean lives_startup(livespointer data) {
         // the message area must fit exactly to the screen size, so we update it in an idle function
         // due to the fact that the window manager may resize the window asynchronously
         if (mainw->idlemax == 0)
-          lives_idle_add(resize_message_area, NULL);
+          g_idle_add(resize_message_area, NULL);
         mainw->idlemax = DEF_IDLE_MAX;
       }
       draw_little_bars(0., 0);
@@ -3395,6 +3389,10 @@ static boolean lives_startup(livespointer data) {
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
   else
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_MT);
+
+  // timer to poll for external commands: MIDI, joystick, jack transport, osc, etc.
+  mainw->kb_timer_end = FALSE;
+  mainw->kb_timer = lives_timer_add(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
 
   return FALSE;
 } // end lives_startup()
@@ -3559,6 +3557,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   _weed_leaf_get_flags = weed_leaf_get_flags;
   _weed_leaf_set_flags = weed_leaf_set_flags;
 
+  g_print("macrst is %ld\n", sizeof(weed_macropixel_t));
 #ifdef ENABLE_DIAGNOSTICS
   run_weed_startup_tests();
   test_palette_conversions();
@@ -3627,6 +3626,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   mainw->ce_thumbs = FALSE;
   mainw->LiVES = NULL;
   mainw->suppress_dprint = FALSE;
+  mainw->clutch = TRUE;
 
   pthread_mutexattr_init(&mattr);
   pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
@@ -4380,16 +4380,16 @@ void sensitize(void) {
   if (RFX_LOADED) {
     if (!mainw->foreign) {
       if (mainw->rendered_fx) {
-	for (i = 1; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
-	       mainw->num_rendered_effects_test; i++)
-	  if (mainw->rendered_fx[i].menuitem != NULL && mainw->rendered_fx[i].min_frames >= 0)
-	    lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+        for (i = 1; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
+             mainw->num_rendered_effects_test; i++)
+          if (mainw->rendered_fx[i].menuitem != NULL && mainw->rendered_fx[i].min_frames >= 0)
+            lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
 
-	if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && ((has_video_filters(FALSE) && !has_video_filters(TRUE)) ||
-								    (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT
-								     && has_audio_filters(AF_TYPE_ANY)) || mainw->agen_key != 0)) {
-	  lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, TRUE);
-	} else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, FALSE);
+        if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && ((has_video_filters(FALSE) && !has_video_filters(TRUE)) ||
+            (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT
+             && has_audio_filters(AF_TYPE_ANY)) || mainw->agen_key != 0)) {
+          lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, TRUE);
+        } else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, FALSE);
       }
     }
 
@@ -4847,7 +4847,7 @@ void load_start_image(int frame) {
     expose = TRUE;
   }
 
-  threaded_dialog_spin(0.);
+  //threaded_dialog_spin(0.);
   if (!CURRENT_CLIP_IS_NORMAL || frame < 1 || frame > cfile->frames) {
     int bx, by, hsize, vsize;
     int scr_width = GUI_SCREEN_WIDTH;
@@ -4890,7 +4890,7 @@ void load_start_image(int frame) {
     if (mainw->stop_emmission == mainw->start_image)
       lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
-    threaded_dialog_spin(0.);
+    //threaded_dialog_spin(0.);
     return;
   }
 
@@ -4906,7 +4906,7 @@ void load_start_image(int frame) {
     if (mainw->stop_emmission == mainw->start_image)
       lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
-    threaded_dialog_spin(0.);
+    //threaded_dialog_spin(0.);
     return;
   }
 
@@ -4996,20 +4996,20 @@ check_stcache:
       }}
     // *INDENT-ON*
 
-    threaded_dialog_spin(0.);
+    //threaded_dialog_spin(0.);
 #if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
     lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
     if (mainw->stop_emmission == mainw->start_image)
       lives_signal_stop_emission_by_name(mainw->start_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
-    threaded_dialog_spin(0.);
+    //threaded_dialog_spin(0.);
     if (xmd5sum) lives_free(xmd5sum);
     return;
   }
 
   do {
-    threaded_dialog_spin(0.);
+    //threaded_dialog_spin(0.);
     width = cfile->hsize;
     height = cfile->vsize;
 
@@ -5087,7 +5087,7 @@ check_stcache:
   }
   while (FALSE);
 #endif
-    threaded_dialog_spin(0.);
+    //threaded_dialog_spin(0.);
 
     if (start_pixbuf != orig_pixbuf && LIVES_IS_PIXBUF(start_pixbuf)) {
       lives_widget_object_unref(start_pixbuf);
@@ -5160,7 +5160,7 @@ check_stcache:
       expose = TRUE;
     }
 
-    threaded_dialog_spin(0.);
+    //threaded_dialog_spin(0.);
     if (!CURRENT_CLIP_IS_NORMAL || frame < 1 || frame > cfile->frames) {
       int bx, by, hsize, vsize;
       int scr_width = GUI_SCREEN_WIDTH;
@@ -5203,7 +5203,7 @@ check_stcache:
       if (mainw->stop_emmission == mainw->end_image)
         lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
-      threaded_dialog_spin(0.);
+      //threaded_dialog_spin(0.);
       return;
     }
 
@@ -5219,7 +5219,7 @@ check_stcache:
       if (mainw->stop_emmission == mainw->end_image)
         lives_signal_stop_emission_by_name(mainw->end_image, LIVES_WIDGET_EXPOSE_EVENT);
 #endif
-      threaded_dialog_spin(0.);
+      //threaded_dialog_spin(0.);
       return;
     }
 
@@ -5307,7 +5307,7 @@ check_encache:
       }}
     // *INDENT-ON*
 
-      threaded_dialog_spin(0.);
+      //threaded_dialog_spin(0.);
 #if GTK_CHECK_VERSION(3, 0, 0)
       lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
       lives_signal_handlers_unblock_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
@@ -5318,7 +5318,7 @@ check_encache:
     }
 
     do {
-      threaded_dialog_spin(0.);
+      //threaded_dialog_spin(0.);
       width = cfile->hsize;
       height = cfile->vsize;
 
@@ -5384,7 +5384,7 @@ check_encache:
 #if !GTK_CHECK_VERSION(3, 0, 0)
       lives_widget_queue_resize(mainw->end_image);
       lives_widget_process_upsdates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-      threaded_dialog_spin(0.);
+      //threaded_dialog_spin(0.);
     } while (rwidth != lives_widget_get_allocation_width(mainw->end_image) ||
              rheight != lives_widget_get_allocation_height(mainw->end_image));
 #if 0
@@ -5393,7 +5393,7 @@ check_encache:
 #else
     } while (FALSE);
 #endif
-      threaded_dialog_spin(0.);
+      //threaded_dialog_spin(0.);
 
       if (end_pixbuf != orig_pixbuf && LIVES_IS_PIXBUF(end_pixbuf)) {
         lives_widget_object_unref(end_pixbuf);
@@ -5752,7 +5752,7 @@ void load_preview_image(boolean update_always) {
       if (!mask) png_flagstate = -1;
       else {
 #ifdef PNG_ASSEMBLER_CODE_SUPPORTED
-	png_flags = png_get_asm_flags(png_ptr);
+        png_flags = png_get_asm_flags(png_ptr);
         png_flags |= mask;
         png_flagstate = 1;
 #endif
@@ -6852,11 +6852,11 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
   if (pixbuf != NULL && ((width != 0 && lives_pixbuf_get_width(pixbuf) != width)
 			 || (height != 0 && lives_pixbuf_get_height(pixbuf) != height))) {
     LiVESPixbuf *pixbuf2;
-    threaded_dialog_spin(0.);
+    //threaded_dialog_spin(0.);
     // TODO - could use resize plugin here
     pixbuf2 = lives_pixbuf_scale_simple(pixbuf, width, height, interp);
     if (pixbuf != NULL) lives_widget_object_unref(pixbuf);
-    threaded_dialog_spin(0.);
+    //threaded_dialog_spin(0.);
     pixbuf = pixbuf2;
   }
 
@@ -8402,9 +8402,9 @@ void load_frame_image(int frame) {
       lives_freep((void **)&framecount);
       if (success) {
 	if (mainw->multitrack == NULL &&
-	    !mainw->faded && (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor && prefs->play_monitor != 0 &&
-					     capable->nmonitors > 1)) &&
-	    mainw->current_file != mainw->scrap_file) get_play_times();
+	    !mainw->faded && (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor
+					     && prefs->play_monitor != 0 && capable->nmonitors > 1))
+	    && mainw->current_file != mainw->scrap_file) get_play_times();
 	if (mainw->multitrack != NULL && !cfile->opening) animate_multitrack(mainw->multitrack);
       }
     }
@@ -8734,7 +8734,7 @@ void load_frame_image(int frame) {
           load_end_image(0);
           if (prefs->show_msg_area && !mainw->only_close) {
             if (mainw->idlemax == 0) {
-              lives_idle_add(resize_message_area, NULL);
+              g_idle_add(resize_message_area, NULL);
             }
             mainw->idlemax = DEF_IDLE_MAX;
           }
@@ -8946,7 +8946,7 @@ void load_frame_image(int frame) {
           if (prefs->show_msg_area && !mainw->only_close) {
             reset_message_area(); // necessary
             if (mainw->idlemax == 0) {
-              lives_idle_add(resize_message_area, NULL);
+              g_idle_add(resize_message_area, NULL);
             }
             mainw->idlemax = DEF_IDLE_MAX;
           }
@@ -9389,7 +9389,11 @@ void load_frame_image(int frame) {
         if (!prefs->show_gui || mainw->multitrack != NULL) return;
         hspace = get_hspace();
 
-        get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+        //get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+
+        bx = mainw->mgeom[widget_opts.monitor].phys_width - scr_width;
+        by = mainw->mgeom[widget_opts.monitor].phys_height - scr_height;
+
         w = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
         h = lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET);
 

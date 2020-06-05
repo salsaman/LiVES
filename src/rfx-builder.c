@@ -4538,7 +4538,7 @@ void add_rfx_effects(lives_rfx_status_t status) {
     lives_widget_set_sensitive(mainw->run_test_rfx_submenu, TRUE);
     lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->run_test_rfx_submenu), mainw->run_test_rfx_menu);
   } else {
-    lives_widget_object_ref_sink(mainw->run_test_rfx_menu);
+    //lives_widget_object_ref_sink(mainw->run_test_rfx_menu);
   }
 }
 

@@ -172,11 +172,13 @@ boolean expose_pim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
   int current_file = mainw->current_file;
   if (mainw->is_generating) return TRUE;
   if (CURRENT_CLIP_IS_VALID && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
+  g_object_freeze_notify(LIVES_WIDGET_OBJECT(widget));
   if (!mainw->draw_blocked) {
     if (mainw->stop_emmission == NULL) mainw->stop_emmission = widget;
     load_preview_image(FALSE);
     if (mainw->stop_emmission == widget) mainw->stop_emmission = NULL;
   }
+  g_object_thaw_notify(LIVES_WIDGET_OBJECT(widget));
   mainw->current_file = current_file;
   return TRUE;
 }
@@ -407,9 +409,9 @@ void create_LiVES(void) {
     lives_container_set_border_width(LIVES_CONTAINER(LIVES_MAIN_WINDOW_WIDGET), 0);
     if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), widget_opts.screen);
 
-    mainw->config_func = lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_CONFIGURE_EVENT,
-                         LIVES_GUI_CALLBACK(config_event),
-                         NULL);
+    mainw->config_func = g_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_CONFIGURE_EVENT,
+                                          LIVES_GUI_CALLBACK(config_event),
+                                          NULL);
   }
   ////////////////////////////////////
 
@@ -1735,15 +1737,15 @@ void create_LiVES(void) {
   // insert audio src buttons
   if (prefs->lamp_buttons) {
 
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->ext_audio_checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
-                         LIVES_GUI_CALLBACK(draw_cool_toggle),
-                         NULL);
+    g_signal_connect(LIVES_GUI_OBJECT(mainw->ext_audio_checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
+                     LIVES_GUI_CALLBACK(draw_cool_toggle),
+                     NULL);
     lives_widget_set_bg_color(mainw->ext_audio_checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
     lives_widget_set_bg_color(mainw->ext_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
 
-    lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->ext_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                               LIVES_GUI_CALLBACK(lives_cool_toggled),
-                               NULL);
+    g_signal_connect_after(LIVES_GUI_OBJECT(mainw->ext_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                           LIVES_GUI_CALLBACK(lives_cool_toggled),
+                           NULL);
     lives_cool_toggled(mainw->ext_audio_checkbutton, NULL);
   }
 #endif
@@ -1778,15 +1780,15 @@ void create_LiVES(void) {
       mainw->vol_checkbuttons[i][0] = lives_toggle_tool_button_new();
       lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->vol_checkbuttons[i][0]), -1);
 
-      lives_signal_connect(LIVES_GUI_OBJECT(mainw->vol_checkbuttons[i][0]), LIVES_WIDGET_EXPOSE_EVENT,
-                           LIVES_GUI_CALLBACK(draw_cool_toggle),
-                           NULL);
+      g_signal_connect(LIVES_GUI_OBJECT(mainw->vol_checkbuttons[i][0]), LIVES_WIDGET_EXPOSE_EVENT,
+                       LIVES_GUI_CALLBACK(draw_cool_toggle),
+                       NULL);
       lives_widget_set_bg_color(mainw->vol_checkbuttons[i][0], LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
       lives_widget_set_bg_color(mainw->vol_checkbuttons[i][0], LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
 
-      lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->vol_checkbuttons[i][0]), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                 LIVES_GUI_CALLBACK(lives_cool_toggled),
-                                 NULL);
+      g_signal_connect_after(LIVES_GUI_OBJECT(mainw->vol_checkbuttons[i][0]), LIVES_WIDGET_TOGGLED_SIGNAL,
+                             LIVES_GUI_CALLBACK(lives_cool_toggled),
+                             NULL);
       lives_cool_toggled(mainw->vol_checkbuttons[i][0], NULL);
     }
   }
@@ -1942,9 +1944,9 @@ void create_LiVES(void) {
   lives_box_pack_start(LIVES_BOX(vbox99), vbox4, FALSE, TRUE, 0);
   lives_widget_set_vexpand(vbox4, FALSE);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox), LIVES_WIDGET_SCROLL_EVENT,
-                       LIVES_GUI_CALLBACK(on_mouse_scroll),
-                       NULL);
+  g_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox), LIVES_WIDGET_SCROLL_EVENT,
+                   LIVES_GUI_CALLBACK(on_mouse_scroll),
+                   NULL);
 
   mainw->framebar = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox4), mainw->framebar, FALSE, FALSE, 0.);
@@ -1980,6 +1982,7 @@ void create_LiVES(void) {
   add_fill_to_box(LIVES_BOX(mainw->framebar));
 
   mainw->pf_grid = lives_table_new(1, 3, TRUE);
+  lives_widget_set_app_paintable(mainw->pf_grid, TRUE);
 
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -2272,12 +2275,11 @@ void create_LiVES(void) {
   else lives_widget_object_ref_sink(mainw->message_box);
 
   mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_msg_area), &mainw->sw_func);
-  //lives_signal_handler_block(mainw->msg_area, mainw->sw_func);
 
   if (prefs->show_msg_area) {
-    lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->msg_area), LIVES_WIDGET_CONFIGURE_EVENT,
-                               LIVES_GUI_CALLBACK(config_event2),
-                               NULL);
+    g_signal_connect_after(LIVES_GUI_OBJECT(mainw->msg_area), LIVES_WIDGET_CONFIGURE_EVENT,
+                           LIVES_GUI_CALLBACK(config_event2),
+                           NULL);
     lives_widget_add_events(mainw->msg_area, LIVES_SMOOTH_SCROLL_MASK | LIVES_SCROLL_MASK);
   }
   lives_widget_set_vexpand(mainw->msg_area, TRUE);
@@ -2292,14 +2294,14 @@ void create_LiVES(void) {
   mainw->msg_adj = lives_range_get_adjustment(LIVES_RANGE(mainw->msg_scrollbar));
 
   if (prefs->show_msg_area) {
-    lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->msg_adj),
-                               LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                               LIVES_GUI_CALLBACK(msg_area_scroll),
-                               (livespointer)mainw->msg_area);
+    g_signal_connect_after(LIVES_GUI_OBJECT(mainw->msg_adj),
+                           LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                           LIVES_GUI_CALLBACK(msg_area_scroll),
+                           (livespointer)mainw->msg_area);
 
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->msg_area), LIVES_WIDGET_SCROLL_EVENT,
-                         LIVES_GUI_CALLBACK(on_msg_area_scroll),
-                         (livespointer)mainw->msg_adj);
+    g_signal_connect(LIVES_GUI_OBJECT(mainw->msg_area), LIVES_WIDGET_SCROLL_EVENT,
+                     LIVES_GUI_CALLBACK(on_msg_area_scroll),
+                     (livespointer)mainw->msg_adj);
   }
 
   // accel keys
@@ -2557,7 +2559,7 @@ void create_LiVES(void) {
                          LIVES_GUI_CALLBACK(key_press_or_release),
                          NULL);
   }
-  mainw->config_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->video_draw), LIVES_WIDGET_CONFIGURE_EVENT,
+  mainw->config_func = g_signal_connect_after(LIVES_GUI_OBJECT(mainw->video_draw), LIVES_WIDGET_CONFIGURE_EVENT,
                        LIVES_GUI_CALLBACK(config_event),
                        NULL);
   mainw->pb_fps_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->spinbutton_pb_fps),
@@ -3298,6 +3300,7 @@ void fade_background(void) {
   if (palette->style == STYLE_PLAIN) {
     lives_label_set_text(LIVES_LABEL(mainw->banner), "            = <  L i V E S > =              ");
   }
+  lives_frame_set_label(LIVES_FRAME(mainw->playframe), NULL);
   if (mainw->foreign) {
     lives_label_set_text(LIVES_LABEL(mainw->banner), _("    Press 'q' to stop recording.  DO NOT COVER THE PLAY WINDOW !   "));
     lives_widget_set_fg_color(mainw->banner, LIVES_WIDGET_STATE_NORMAL, &palette->banner_fade_text);
@@ -3308,15 +3311,14 @@ void fade_background(void) {
     }
   }
 
-  lives_frame_set_label(LIVES_FRAME(mainw->playframe), "");
 
   if (palette->style & STYLE_1) {
     set_colours(&palette->normal_fore, &palette->fade_colour, &palette->menu_and_bars_fore, &palette->menu_and_bars,
                 &palette->info_base, &palette->info_text);
   }
 
-  lives_frame_set_label(LIVES_FRAME(mainw->frame1), "");
-  lives_frame_set_label(LIVES_FRAME(mainw->frame2), "");
+  lives_frame_set_label(LIVES_FRAME(mainw->frame1), NULL);
+  lives_frame_set_label(LIVES_FRAME(mainw->frame2), NULL);
 
   if (mainw->toy_type != LIVES_TOY_MAD_FRAMES || mainw->foreign) {
     lives_widget_hide(mainw->frame1);
@@ -4103,6 +4105,8 @@ void make_play_window(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_KEY_RELEASE_EVENT,
                        LIVES_GUI_CALLBACK(key_press_or_release),
                        NULL);
+
+  lives_widget_context_update();
 }
 
 
@@ -4194,19 +4198,19 @@ void resize_play_window(void) {
   if (!mainw->fs || !LIVES_IS_PLAYING) {
     if (pmonitor == 0) {
       if ((((mainw->double_size || mainw->multitrack != NULL) && (!mainw->fs || !LIVES_IS_PLAYING))) ||
-	  (mainw->pwidth > scr_width - scr_width_safety ||
-	   mainw->pheight > scr_height - scr_height_safety)) {
-	calc_maxspect(scr_width - scr_width_safety, scr_height - scr_height_safety, &mainw->pwidth, &mainw->pheight);
-	mainw->sepwin_scale = (float)mainw->pwidth / (float)cfile->hsize * 100.;
+          (mainw->pwidth > scr_width - scr_width_safety ||
+           mainw->pheight > scr_height - scr_height_safety)) {
+        calc_maxspect(scr_width - scr_width_safety, scr_height - scr_height_safety, &mainw->pwidth, &mainw->pheight);
+        mainw->sepwin_scale = (float)mainw->pwidth / (float)cfile->hsize * 100.;
       }
     } else {
       if ((((mainw->double_size || mainw->multitrack != NULL) && (!mainw->fs || !LIVES_IS_PLAYING))) ||
-	  (mainw->pwidth > mainw->mgeom[pmonitor - 1].width - scr_width_safety ||
-	   mainw->pheight > mainw->mgeom[pmonitor - 1].height - scr_height_safety)) {
-	calc_maxspect(mainw->mgeom[pmonitor - 1].width - scr_width_safety,
-		      mainw->mgeom[pmonitor - 1].height - scr_height_safety,
-		      &mainw->pwidth, &mainw->pheight);
-	mainw->sepwin_scale = (float)mainw->pwidth / (float)cfile->hsize * 100.;
+          (mainw->pwidth > mainw->mgeom[pmonitor - 1].width - scr_width_safety ||
+           mainw->pheight > mainw->mgeom[pmonitor - 1].height - scr_height_safety)) {
+        calc_maxspect(mainw->mgeom[pmonitor - 1].width - scr_width_safety,
+                      mainw->mgeom[pmonitor - 1].height - scr_height_safety,
+                      &mainw->pwidth, &mainw->pheight);
+        mainw->sepwin_scale = (float)mainw->pwidth / (float)cfile->hsize * 100.;
       }
     }
   }
@@ -4262,13 +4266,13 @@ void resize_play_window(void) {
         lives_window_fullscreen_on_monitor(LIVES_WINDOW(mainw->play_window), screen, monitor);
         gdk_window_set_fullscreen_mode(GdkWindow * window, GDK_FULLSCREEN_ON_ALL_MONITORS);
 #else
-	lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
-	lives_widget_set_bg_color(mainw->play_window, LIVES_WIDGET_STATE_NORMAL, &palette->black);
+        lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
+        lives_widget_set_bg_color(mainw->play_window, LIVES_WIDGET_STATE_NORMAL, &palette->black);
         lives_window_fullscreen(LIVES_WINDOW(mainw->play_window));
 #endif
-	lives_window_center(LIVES_WINDOW(mainw->play_window));
+        lives_window_center(LIVES_WINDOW(mainw->play_window));
         lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
-	lives_window_set_position(LIVES_WINDOW(mainw->play_window), LIVES_WIN_POS_NONE);
+        lives_window_set_position(LIVES_WINDOW(mainw->play_window), LIVES_WIN_POS_NONE);
         lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0);
         lives_widget_queue_resize(mainw->play_window);
       }
@@ -4459,17 +4463,17 @@ void resize_play_window(void) {
     pmonitor = prefs->play_monitor;
     if (pmonitor == 0 || !LIVES_IS_PLAYING) {
       while (nwidth > GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY / 2 ||
-	     nheight > GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY / 2) {
-	nheight = (nheight >> 2) << 1;
-	nwidth = (nwidth >> 2) << 1;
-	mainw->sepwin_scale /= 2.;
+             nheight > GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY / 2) {
+        nheight = (nheight >> 2) << 1;
+        nwidth = (nwidth >> 2) << 1;
+        mainw->sepwin_scale /= 2.;
       }
     } else {
       while (nwidth > mainw->mgeom[pmonitor - 1].width - SCR_WIDTH_SAFETY / 2 ||
-	     nheight > mainw->mgeom[pmonitor - 1].height - SCR_HEIGHT_SAFETY / 2) {
-	nheight = (nheight >> 2) << 1;
-	nwidth = (nwidth >> 2) << 1;
-	mainw->sepwin_scale /= 2.;
+             nheight > mainw->mgeom[pmonitor - 1].height - SCR_HEIGHT_SAFETY / 2) {
+        nheight = (nheight >> 2) << 1;
+        nwidth = (nwidth >> 2) << 1;
+        mainw->sepwin_scale /= 2.;
       }
     }
   }
@@ -4796,7 +4800,7 @@ void splash_init(void) {
     if (mainw && LIVES_MAIN_WINDOW_WIDGET && prefs && prefs->startup_phase != 0)
       lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
 
-    lives_widget_context_update();
+    //lives_widget_context_update();
     lives_set_cursor_style(LIVES_CURSOR_BUSY, mainw->splash_window);
   } else {
     lives_widget_destroy(mainw->splash_window);

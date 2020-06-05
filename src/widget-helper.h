@@ -244,12 +244,30 @@ boolean lives_pixbuf_saturate_and_pixelate(const LiVESPixbuf *src, LiVESPixbuf *
 
 #ifdef GUI_GTK
 
-#define lives_signal_connect(instance, detailed_signal, c_handler, data) g_signal_connect(instance, detailed_signal, c_handler, data)
-#define lives_signal_connect_swapped(instance, detailed_signal, c_handler, data) g_signal_connect_swapped(instance, detailed_signal, c_handler, data)
-#define lives_signal_connect_after(instance, detailed_signal, c_handler, data) g_signal_connect_after(instance, detailed_signal, c_handler, data)
-#define lives_signal_handlers_disconnect_by_func(instance, func, data) g_signal_handlers_disconnect_by_func(instance, func, data)
-#define lives_signal_handlers_block_by_func(instance, func, data) g_signal_handlers_block_by_func(instance, func, data)
-#define lives_signal_handlers_unblock_by_func(instance, func, data) g_signal_handlers_unblock_by_func(instance, func, data)
+typedef GConnectFlags LiVESConnectFlags;
+
+#define LIVES_CONNECT_AFTER G_CONNECT_AFTER
+#define LIVES_CONNECT_SWAPPED G_CONNECT_SWAPPED
+
+unsigned long lives_signal_connect_sync(livespointer instance, const char *detailed_signal, LiVESGuiCallback c_handler,
+                                        livespointer data,
+                                        LiVESConnectFlags flags);
+
+unsigned long lives_signal_connect_async(livespointer instance, const char *detailed_signal, LiVESGuiCallback c_handler,
+    livespointer data,
+    LiVESConnectFlags flags);
+
+#define lives_signal_connect(instance, detailed_signal, c_handler, data) lives_signal_connect_async(instance, detailed_signal, c_handler, data, 0)
+#define lives_signal_connect_after(instance, detailed_signal, c_handler, data) lives_signal_connect_async(instance, detailed_signal, c_handler, data, \
+													  LIVES_CONNECT_AFTER)
+#define lives_signal_connect_swapped(instance, detailed_signal, c_handler, data) lives_signal_connect_async(instance, detailed_signal, c_handler, data, \
+													     LIVES_CONNECT_SWAPPED)
+
+boolean lives_signal_handlers_disconnect_by_func(livespointer instance, LiVESWidgetClosure *func, livespointer data);
+boolean lives_signal_handlers_block_by_func(livespointer instance, LiVESWidgetClosure *func, livespointer data);
+boolean lives_signal_handlers_unblock_by_func(livespointer instance, LiVESWidgetClosure *func, livespointer data);
+
+
 #else
 ulong lives_signal_connect(LiVESWidget *, const char *signal_name, ulong funcptr, livespointer data);
 boolean lives_signal_handlers_block_by_func(livespointer instance, livespointer func, livespointer data);
@@ -850,6 +868,7 @@ boolean lives_xwindow_set_cursor(LiVESXWindow *, LiVESXCursor *);
 
 uint32_t lives_timer_add(uint32_t interval, LiVESWidgetSourceFunc function, livespointer data);
 boolean lives_timer_remove(uint32_t timer);
+uint32_t lives_idle_add(LiVESWidgetSourceFunc function, livespointer data);
 
 boolean lives_source_remove(uint32_t handle);
 

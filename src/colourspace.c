@@ -850,108 +850,160 @@ static weed_macropixel_t advp[256];
 void init_advanced_palettes(void) {
   lives_memset(advp, 0, 256 * sizeof(weed_macropixel_t));
 
-  advp[0] = (weed_macropixel_t) {WEED_PALETTE_RGB24,
-				 {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue}};
+  advp[0] = (weed_macropixel_t) {
+    WEED_PALETTE_RGB24,
+    {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue}
+  };
 
-  advp[1] = (weed_macropixel_t) {WEED_PALETTE_BGR24,
-				 {WEED_VCHAN_blue, WEED_VCHAN_green, WEED_VCHAN_red}};
+  advp[1] = (weed_macropixel_t) {
+    WEED_PALETTE_BGR24,
+    {WEED_VCHAN_blue, WEED_VCHAN_green, WEED_VCHAN_red}
+  };
 
-  advp[2] = (weed_macropixel_t) {WEED_PALETTE_RGBA32,
-				 {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue,WEED_VCHAN_alpha}};
+  advp[2] = (weed_macropixel_t) {
+    WEED_PALETTE_RGBA32,
+    {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue, WEED_VCHAN_alpha}
+  };
 
-  advp[3] = (weed_macropixel_t) {WEED_PALETTE_BGRA32,
-				 {WEED_VCHAN_blue, WEED_VCHAN_green, WEED_VCHAN_red,WEED_VCHAN_alpha}};
+  advp[3] = (weed_macropixel_t) {
+    WEED_PALETTE_BGRA32,
+    {WEED_VCHAN_blue, WEED_VCHAN_green, WEED_VCHAN_red, WEED_VCHAN_alpha}
+  };
 
-  advp[4] = (weed_macropixel_t) {WEED_PALETTE_ARGB32,
-				 {WEED_VCHAN_alpha, WEED_VCHAN_red, WEED_VCHAN_green,WEED_VCHAN_blue}};
+  advp[4] = (weed_macropixel_t) {
+    WEED_PALETTE_ARGB32,
+    {WEED_VCHAN_alpha, WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue}
+  };
 
-  advp[5] = (weed_macropixel_t) {WEED_PALETTE_RGBFLOAT,
-				 {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue},
-				 WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32, 32, 32}};
+  advp[5] = (weed_macropixel_t) {
+    WEED_PALETTE_RGBFLOAT,
+    {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue},
+    WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32, 32, 32}
+  };
 
-  advp[6] = (weed_macropixel_t) {WEED_PALETTE_RGBAFLOAT,
-				 {WEED_VCHAN_red, WEED_VCHAN_green,WEED_VCHAN_blue, WEED_VCHAN_alpha},
-				 WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32, 32, 32, 32}};
+  advp[6] = (weed_macropixel_t) {
+    WEED_PALETTE_RGBAFLOAT,
+    {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue, WEED_VCHAN_alpha},
+    WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32, 32, 32, 32}
+  };
 
   /// yuv planar
-  advp[7] = (weed_macropixel_t) {WEED_PALETTE_YUV420P,
-				 {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V},
-				 WEED_VCHAN_DESC_PLANAR, {1, 2, 2}, {1, 2, 2}};
+  advp[7] = (weed_macropixel_t) {
+    WEED_PALETTE_YUV420P,
+    {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V},
+    WEED_VCHAN_DESC_PLANAR, {1, 2, 2}, {1, 2, 2}
+  };
 
-  advp[8] = (weed_macropixel_t) {WEED_PALETTE_YVU420P,
-				 {WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_U},
-				 WEED_VCHAN_DESC_PLANAR, {1, 2, 2}, {1, 2, 2}};
+  advp[8] = (weed_macropixel_t) {
+    WEED_PALETTE_YVU420P,
+    {WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_U},
+    WEED_VCHAN_DESC_PLANAR, {1, 2, 2}, {1, 2, 2}
+  };
 
-  advp[9] = (weed_macropixel_t) {WEED_PALETTE_YUV422P,
-				 {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V},
-				 WEED_VCHAN_DESC_PLANAR, {1, 2, 2}, {1, 1, 1}};
+  advp[9] = (weed_macropixel_t) {
+    WEED_PALETTE_YUV422P,
+    {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V},
+    WEED_VCHAN_DESC_PLANAR, {1, 2, 2}, {1, 1, 1}
+  };
 
-  advp[10] = (weed_macropixel_t) {WEED_PALETTE_YUV444P,
-				  {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V}, WEED_VCHAN_DESC_PLANAR};
+  advp[10] = (weed_macropixel_t) {
+    WEED_PALETTE_YUV444P,
+    {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V}, WEED_VCHAN_DESC_PLANAR
+  };
 
-  advp[11] = (weed_macropixel_t) {WEED_PALETTE_YUVA4444P,
-				  {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V, WEED_VCHAN_alpha},
-				  WEED_VCHAN_DESC_PLANAR};
+  advp[11] = (weed_macropixel_t) {
+    WEED_PALETTE_YUVA4444P,
+    {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V, WEED_VCHAN_alpha},
+    WEED_VCHAN_DESC_PLANAR
+  };
 
   /// yuv packed
-  advp[12] = (weed_macropixel_t) {WEED_PALETTE_UYVY,
-				  {WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_Y},
-				  0, {0}, {0}, 2};
+  advp[12] = (weed_macropixel_t) {
+    WEED_PALETTE_UYVY,
+    {WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_Y},
+    0, {0}, {0}, 2
+  };
 
-  advp[13] = (weed_macropixel_t) {WEED_PALETTE_YUYV,
-				  {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_V},
-				  0, {0}, {0}, 2};
+  advp[13] = (weed_macropixel_t) {
+    WEED_PALETTE_YUYV,
+    {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_V},
+    0, {0}, {0}, 2
+  };
 
   advp[14] = (weed_macropixel_t) {WEED_PALETTE_YUV888, {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V}};
 
-  advp[15] = (weed_macropixel_t) {WEED_PALETTE_YUVA8888,
-				  {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V,WEED_VCHAN_alpha}};
+  advp[15] = (weed_macropixel_t) {
+    WEED_PALETTE_YUVA8888,
+    {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V, WEED_VCHAN_alpha}
+  };
 
-  advp[16] = (weed_macropixel_t) {WEED_PALETTE_YUV411, {WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_Y,
-							WEED_VCHAN_V, WEED_VCHAN_Y, WEED_VCHAN_Y},
-				  0, {0}, {0}, 4};
+  advp[16] = (weed_macropixel_t) {
+    WEED_PALETTE_YUV411, {WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_Y,
+                          WEED_VCHAN_V, WEED_VCHAN_Y, WEED_VCHAN_Y
+                         },
+                         0, {0}, {0}, 4
+  };
 
   /// alpha
   advp[17] = (weed_macropixel_t) {WEED_PALETTE_A8, {WEED_VCHAN_alpha}};
 
   advp[18] = (weed_macropixel_t) {WEED_PALETTE_A1, {WEED_VCHAN_alpha}, 0, {0}, {0}, 1, {1}};
 
-  advp[19] = (weed_macropixel_t) {WEED_PALETTE_AFLOAT, {WEED_VCHAN_alpha},
-				  WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32}};
+  advp[19] = (weed_macropixel_t) {
+    WEED_PALETTE_AFLOAT, {WEED_VCHAN_alpha},
+                         WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32}
+  };
 
   advp[20] = (weed_macropixel_t) {WEED_PALETTE_END};
 
   // custom palettes (designed for future use or for testing)
-  advp[21] = (weed_macropixel_t) {LIVES_PALETTE_YVU422P, {WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_U},
-				  WEED_VCHAN_DESC_PLANAR, {1, 2, 2}, {1, 1, 1}};
+  advp[21] = (weed_macropixel_t) {
+    LIVES_PALETTE_YVU422P, {WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_U},
+                           WEED_VCHAN_DESC_PLANAR, {1, 2, 2}, {1, 1, 1}
+  };
 
-  advp[22] = (weed_macropixel_t) {LIVES_PALETTE_YUVA420P,
-				  {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V, WEED_VCHAN_alpha},
-				  WEED_VCHAN_DESC_PLANAR, {1, 2, 2, 1}, {1, 2, 2, 1}};
+  advp[22] = (weed_macropixel_t) {
+    LIVES_PALETTE_YUVA420P,
+    {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V, WEED_VCHAN_alpha},
+    WEED_VCHAN_DESC_PLANAR, {1, 2, 2, 1}, {1, 2, 2, 1}
+  };
 
-  advp[23] = (weed_macropixel_t) {LIVES_PALETTE_AYUV8888,
-				  {WEED_VCHAN_alpha, WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V}};
+  advp[23] = (weed_macropixel_t) {
+    LIVES_PALETTE_AYUV8888,
+    {WEED_VCHAN_alpha, WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V}
+  };
 
-  advp[24] = (weed_macropixel_t) {LIVES_PALETTE_YUVFLOAT,
-				  {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V},
-				  WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32, 32, 32}};
+  advp[24] = (weed_macropixel_t) {
+    LIVES_PALETTE_YUVFLOAT,
+    {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V},
+    WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32, 32, 32}
+  };
 
-  advp[25] = (weed_macropixel_t) {LIVES_PALETTE_YUVAFLOAT,
-				  {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V,WEED_VCHAN_alpha},
-				  WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32, 32, 32, 32}};
+  advp[25] = (weed_macropixel_t) {
+    LIVES_PALETTE_YUVAFLOAT,
+    {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V, WEED_VCHAN_alpha},
+    WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32, 32, 32, 32}
+  };
 
-  advp[26] = (weed_macropixel_t) {LIVES_PALETTE_RGB48,
-				  {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue},
-				  0, {0}, {0}, 1, {16, 16, 16}};
+  advp[26] = (weed_macropixel_t) {
+    LIVES_PALETTE_RGB48,
+    {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue},
+    0, {0}, {0}, 1, {16, 16, 16}
+  };
 
-  advp[27] = (weed_macropixel_t) {LIVES_PALETTE_RGBA64,
-				  {WEED_VCHAN_red, WEED_VCHAN_green,
-				   WEED_VCHAN_blue, WEED_VCHAN_alpha},
-				  0, {0}, {0}, 1, {16, 16, 16, 16}};
+  advp[27] = (weed_macropixel_t) {
+    LIVES_PALETTE_RGBA64, {
+      WEED_VCHAN_red, WEED_VCHAN_green,
+      WEED_VCHAN_blue, WEED_VCHAN_alpha
+    },
+    0, {0}, {0}, 1, {16, 16, 16, 16}
+  };
 
-  advp[28] = (weed_macropixel_t) {LIVES_PALETTE_YUV121010,
-				  {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V},
-				  0, {0}, {0}, 1, {12, 10, 10}};
+  advp[28] = (weed_macropixel_t) {
+    LIVES_PALETTE_YUV121010,
+    {WEED_VCHAN_Y, WEED_VCHAN_U, WEED_VCHAN_V},
+    0, {0}, {0}, 1, {12, 10, 10}
+  };
 }
 
 
@@ -11736,7 +11788,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     g_print("iht is %d, height = %d\n", iheight, height);
     swscale = sws_getCachedContext(swscale, iwidth, iheight, ipixfmt, width, height, opixfmt, flags, NULL, NULL, NULL);
     sws_setColorspaceDetails(swscale, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
-                             ? SWS_CS_ITU709 : SWS_CS_ITU601) , iclamping, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
+                             ? SWS_CS_ITU709 : SWS_CS_ITU601), iclamping, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
                                  ? SWS_CS_ITU709 : SWS_CS_ITU601), oclamp_hint,  0, 1 << 16, 1 << 16);
 
     if (swscale == NULL) {
@@ -11767,7 +11819,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
         if (progscan) swparams[sl].layer = layer;
         else swparams[sl].layer = NULL;
         sws_setColorspaceDetails(swparams[sl].swscale, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
-                                 ? SWS_CS_ITU709 : SWS_CS_ITU601) , iclamping,
+                                 ? SWS_CS_ITU709 : SWS_CS_ITU601), iclamping,
                                  sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
                                      ? SWS_CS_ITU709 : SWS_CS_ITU601), oclamp_hint,  0, 65536, 65536);
         for (i = 0; i < 4; i++) {

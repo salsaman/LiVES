@@ -710,7 +710,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     }
   }
 
-  av_dump_format(fmtctx, 0, uri , 1);
+  av_dump_format(fmtctx, 0, uri, 1);
 
   // container
 

@@ -482,8 +482,7 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
     SDL_DestroyWindow(window);
   }
 #else
-  }
-  else if (overlay != NULL) {
+  } else if (overlay != NULL) {
     SDL_FreeYUVOverlay(overlay);
     overlay = NULL;
   }

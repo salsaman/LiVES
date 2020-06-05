@@ -257,7 +257,7 @@ static weed_error_t textfun_process(weed_plant_t *inst, weed_timecode_t timestam
         if (font_tables[fontnum].width == 16) {
           for (l = 0; l < 16; l++)
             if ((numones += onescount[(uint16_t)(((uint16_t)lb[l] << 8) + (uint16_t)lb2[l])^font_tables[fontnum].fonttable[k +
-                                      (m++)]]) >= minones) break;
+                                                                  (m++)]]) >= minones) break;
         } else {
           for (l = 0; l < 16; l++) if ((numones += onescount[(lb[l] ^ (uint8_t)(font_tables[fontnum].fonttable[k + (m++)]))])
                                          >= minones) break;

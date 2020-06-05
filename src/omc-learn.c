@@ -1269,7 +1269,7 @@ static void show_existing(omclearn_w *omclw) {
 
       type = midi_msg_type(array[1]);
       if (get_token_count(srch, ' ') > (prefs->midi_rcv_channel == -1 ? 3 : 2)) idx = atoi(array[prefs->midi_rcv_channel == -1 ? 3 :
-            2]);
+                                    2]);
       else idx = -1;
       srch = lives_strdup(mnode->srch);
       if (prefs->midi_rcv_channel == MIDI_OMNI) {

@@ -1751,9 +1751,7 @@ void preview_audio(void) {
 #endif
 
     while (mainw->cancelled == CANCEL_NONE) {
-      int count = 0;
       mainw->video_seek_ready = TRUE;
-      if ((count++ & 0XFF) == 0) lives_widget_context_update();
       lives_nanosleep(1000);
     }
     mainw->playing_file = -1;
@@ -2585,7 +2583,7 @@ void init_pulse_audio_buffers(int achans, int arate, boolean exact) {
     mainw->pulsed->abufs[i]->start_sample = 0;
     mainw->pulsed->abufs[i]->samp_space = XSAMPLES / prefs->num_rtaudiobufs; // samp_space here is in stereo samples
     mainw->pulsed->abufs[i]->buffer16 = (short **)lives_calloc(1, sizeof(short *));
-    mainw->pulsed->abufs[i]->buffer16[0] = (short *)lives_calloc_safety(XSAMPLES / prefs->num_rtaudiobufs , achans * sizeof(short));
+    mainw->pulsed->abufs[i]->buffer16[0] = (short *)lives_calloc_safety(XSAMPLES / prefs->num_rtaudiobufs, achans * sizeof(short));
   }
 #endif
 }

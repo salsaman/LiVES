@@ -96,7 +96,7 @@ GType giw_led_get_type() {
       (GtkClassInitFunc) NULL,
     };
 
-    led_type = gtk_type_unique(gtk_widget_get_type() , &led_info);
+    led_type = gtk_type_unique(gtk_widget_get_type(), &led_info);
   }
 
   return led_type;

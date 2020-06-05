@@ -138,8 +138,8 @@ int lives_system(const char *com, boolean allow_error) {
        (mainw->multitrack != NULL && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL))) {
     cnorm = TRUE;
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-    if (!mainw->go_away)
-      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    /* if (!mainw->go_away) */
+    /*   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
   }
 
   do {
@@ -197,7 +197,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
        (mainw->multitrack != NULL && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL))) {
     cnorm = TRUE;
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
   }
 
   lives_memset(buff, 0, 1);
@@ -630,7 +630,7 @@ void lives_buffered_rdonly_slurp(int fd, off_t skip) {
   if (!fbuff || fbuff->slurping) return;
   fbuff->slurping = TRUE;
   fbuff->bytes = fbuff->offset = 0;
-  lives_proc_thread_create((lives_funcptr_t)_lives_buffered_rdonly_slurp, 0, "iI", fd, skip);
+  lives_proc_thread_create(NULL, (lives_funcptr_t)_lives_buffered_rdonly_slurp, 0, "iI", fd, skip);
   lives_nanosleep_until_nonzero(fbuff->offset | fbuff->eof);
 }
 
@@ -2451,7 +2451,7 @@ void d_print(const char *fmt, ...) {
   add_messages_to_list(text);
   lives_free(text);
 
-  if (prefs->show_gui && mainw->msg_area != NULL && mainw->msg_adj != NULL) {
+  if (!mainw->go_away && prefs->show_gui && mainw->msg_area != NULL && mainw->msg_adj != NULL) {
     msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
     lives_widget_queue_draw_if_visible(mainw->msg_area);
   }

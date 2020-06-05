@@ -778,7 +778,7 @@ weed.h defines the following leaf keys:
 WEED_LEAF_TYPE "type"  : Mandatory leaf for all plants
 
 WEED_LEAF_WEED_API_VERSION  : "weed_api_version"
-WEED_LEAF_WEED_ABI_VERSION  : "weed_api_version"
+WEED_LEAF_WEED_ABI_VERSION  : WEED_LEAF_API_VERSION
 
 Provided for convenience for use by any plant type
 
@@ -4271,10 +4271,23 @@ static int validate_values(weed_plant_t *param, int is_list, weed_size_t nvalues
 (This is a somewhat experimental feature, so some details may change in the future.)
 
 Weed Advanced Palettes allows the existing default palettes to be defined in a more rigorous fashion,
-as well as allowing for custom palettes to be added in an organised manner.
+as well as enabling custom palettes to be added in an organised manner.
 
 This feature may be enabled by defining the preprocessor symbol WEED_ADVANCED_PALETTES before
-including weed/weed-palettes.h. The following are then provided by the header:
+including weed/weed-palettes.h. The definitions below are then provided by the header.
+
+The weed_macropixel_t struct may be used to define many different types of pixel format.
+The fields of the struct are intended to be defined statically
+and remain constant for the application lifetime
+
+By design there is no provision here for gamma transfer functions, component ranges, sampling locations,
+transformation matrices and the like.
+
+These should be handled outside this struct. If desired, the extended pointer may be used
+to reference another struct which contains these other details.
+
+
+Definitions:
 
 #ifdef WEED_ADVANCED_PALETTES
 #define WEED_ADVANCED_PALETTES_VERSION 100
@@ -4282,6 +4295,14 @@ including weed/weed-palettes.h. The following are then provided by the header:
 #ifndef MAXPPLANES
 #define MAXPPLANES 8
 #endif
+
+// built-in component types, these may be added to in the future if there is a need.
+// however the range 1 - 511 is reserved for RGB types (colour primaries)
+// 512 - 1024 for YUV types
+// and 1024 - 2047 for alpha / monochrome types
+// 2048 - 4091 for non-display types
+
+#define WEED_VCHAN_end 		0
 
 #define WEED_VCHAN_red 		1
 #define WEED_VCHAN_green      	2
@@ -4293,38 +4314,39 @@ including weed/weed-palettes.h. The following are then provided by the header:
 
 #define WEED_VCHAN_alpha		1024
 
-#define WEED_VCHAN_FIRST_CUSTOM		16384
+#define WEED_VCHAN_FIRST_CUSTOM		8192  ///< channel types >= 8192 are free for custom use
 
 #define WEED_VCHAN_DESC_PLANAR		(1 << 0) ///< planar type
 #define WEED_VCHAN_DESC_FP		(1 << 1) ///< floating point type
+#define WEED_VCHAN_DESC_BE		(1 << 2) ///< pixel data is big endian (within each component)
 
-#define WEED_VCHAN_DESC_FIRST_CUSTOM	(1 << 32) ///< floating point type
+#define WEED_VCHAN_DESC_FIRST_CUSTOM	(1 << 16) ///< bits 16 - 31 are free for custom use
+
 
 typedef struct {
   uint32_t ext_ref;  ///< link to an enumerated type
   uint16_t chantype[MAXPPLANES]; ///  e.g. {WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_Y)
-  uint64_t flags; /// bitmap of flags, eg. WEED_VCHAN_DESC_FP | WEED_VCHAN_DESC_PLANAR
-  uint8_t  hsub[MAXPPLANES];  /// horiz. subsampling, 0 or 1 means no subsampling, 2 means halved etc. (planar only)
-  uint8_t  vsub[MAXPPLANES];  /// vert subsampling
-  uint32_t npixels; ///< npixels per macropixel: {0, 1} == 1
-  uint8_t bitsize[MAXPPLANES];
+  uint32_t flags; /// bitmap of flags, eg. WEED_VCHAN_DESC_FP | WEED_VCHAN_DESC_PLANAR
+  uint8_t  hsub[MAXPPLANES];  /// horiz. subsampling, 1 means no subsampling, 2 means halved etc.
+  uint8_t  vsub[MAXPPLANES];  /// vert subsampling, a value of (0) means no subsampling
+  uint8_t npixels; ///< npixels per macropixel: if undefined (0), a value of 1 is assumed
+  uint8_t bitsize[MAXPPLANES]; /// number of bits per component. IF (0), a value of 8 bits is assumed
   void *extended; ///< pointer to app defined data
 } weed_macropixel_t;
 #endif
 
 
-Note that MAXPPLANES (the maximum number of pixel planes) can be pre-defined if desired,
-however the default value of 8 should ensure that weed_macropixel_t struct is exactly 64 bytes.
+Note that MAXPPLANES (the maximum number of pixel planes / components) can be pre-defined if desired,
+however the default value of 8 should ensure that weed_macropixel_t struct is exactly 64 bytes,
+which is generally considered to be an optimal size for performance considerations.
 
-The weed_macropixel_t struct may be used to define many different types of pixel format. It is
-intended to be integrated with other data fields, for example the struct may be supplemented
-by sampling locations for subsampled planes, colour conversion matrices and so on. It simply
-defines the structure of a single macropixel within some frame data.
+The number of USABLE planes / components is actually 1 less than MAXPPLANES, since the last entry
+in chantype must be 0 (WEED_VCHAN_end).
 
-However such data can be included if desired by means of the (void *)extended field.
-The ext_ref field can be used to link the macropixel definition to a pixel format in another schema.
+For the array fields, the ordering is equivalent to the order in which they would be read from memory
+The WEED_VCHAN_DESC_BE flag only describes the byte arrangement within each component.
 
-All of the default palettes can be modelled using weed_macropixel_t, as follows:
+All of the default WEED palettes can be easily modelled using weed_macropixel_t, i.e:
 
 static weed_macropixel_t advp[256];
 
@@ -4406,7 +4428,7 @@ void init_advanced_palettes(void) {
   advp[20] = (weed_macropixel_t) {WEED_PALETTE_END}; /// indicates the end of the default palettes
 
 
-Now for example one can do:
+The palettes can then be manipulated programmatically, for example:
 
 const weed_macropixel_t *get_advanced_palette(int weed_palette) {
   for (register int i = 0; advp[i].ext_ref != WEED_PALETTE_END; i++)
@@ -4458,17 +4480,17 @@ advp[25] = (weed_macropixel_t) {
                               WEED_VCHAN_alpha},
 			      WEED_VCHAN_DESC_FP, {0}, {0}, 1, {32, 32, 32, 32}};
 
-rgb 16 bits per channel:
+rgb 16 bits per channel, big endian:
 
 advp[26] = (weed_macropixel_t) {
     CUST_PALETTE_RGB48, {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue},
-                         0, {0}, {0}, 1, {16, 16, 16}};
+                         WEED_VCHAN_DESC_BE, {0}, {0}, 1, {16, 16, 16}};
 
-rgba 16 bits per channel:
+rgba 16 bits per channel, big endian:
 
 advp[27] = (weed_macropixel_t) {
     CUST_PALETTE_RGBA64, {WEED_VCHAN_red, WEED_VCHAN_green, WEED_VCHAN_blue,
-                           WEED_VCHAN_alpha}, 0, {0}, {0}, 1, {16, 16, 16, 16}};
+                           WEED_VCHAN_alpha}, WEED_VCHAN_BE, {0}, {0}, 1, {16, 16, 16, 16}};
 
 
 yuv 12/10/10 packed, no subsampling:
@@ -4479,7 +4501,8 @@ advp[28] = (weed_macropixel_t) {
 
 or we can get creative:
 
-32 bit y; 16 bit alpha; 16 bit v / 16 bit u subsampled horizontally / vertically (64 bits per pixel)
+32 bit y; 16 bit alpha; 16 bit v / 16 bit u subsampled horizontally / vertically, planar
+(64 bits per pixel)
 
 advp[29] = (weed_macropixel_t) {
     CUST_PALETTE_YAVUP_VARIANT, {WEED_VCHAN_Y, WEED_VCHAN_ALPHA, WEED_VCHAN_V, WEED_VCHAN_U},

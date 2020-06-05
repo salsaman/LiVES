@@ -1825,7 +1825,7 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   // get the time in ticks since either playback started
   volatile aserver_message_t *msg;
   int64_t usec;
-  ticks_t timeout;
+  ticks_t timeout, retval;
   lives_alarm_t alarm_handle;
 
   msg = pulsed->msgq;
@@ -1837,9 +1837,13 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
     lives_alarm_clear(alarm_handle);
     if (timeout == 0) return -1;
   }
-  if (!CLIP_HAS_AUDIO(pulsed->playing_file)) return -1;
+  if (!CLIP_HAS_AUDIO(pulsed->playing_file) && !(LIVES_IS_PLAYING && pulsed->read_abuf > -1)) {
+    return -1;
+  }
   pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec);
-  return (ticks_t)((usec - pulsed->usec_start) * USEC_TO_TICKS);
+  retval = (ticks_t)((usec - pulsed->usec_start) * USEC_TO_TICKS);
+  if (retval == -1) retval = 0;
+  return retval;
 }
 
 

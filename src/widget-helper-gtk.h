@@ -248,9 +248,6 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 
 #define lives_find_program_in_path(a) g_find_program_in_path(a)
 
-#define lives_idle_add(a, b) g_idle_add(a, b)
-#define lives_idle_add_full(a, b, c, d) g_idle_add_full(a, b, c, d)
-
 #define lives_set_application_name(a) g_set_application_name(a)
 #define lives_get_application_name() g_get_application_name()
 

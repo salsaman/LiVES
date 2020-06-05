@@ -1784,9 +1784,9 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
 
     if (param->desc != NULL) lives_widget_set_tooltip_text(label, param->desc);
 
-    lives_signal_connect_after(LIVES_WIDGET_OBJECT(hbox), LIVES_WIDGET_SET_FOCUS_CHILD_SIGNAL,
-                               LIVES_GUI_CALLBACK(after_param_text_focus_changed),
-                               (livespointer) rfx);
+    g_signal_connect_after(LIVES_WIDGET_OBJECT(hbox), LIVES_WIDGET_SET_FOCUS_CHILD_SIGNAL,
+                           LIVES_GUI_CALLBACK(after_param_text_focus_changed),
+                           (livespointer) rfx);
 
     if (use_mnemonic) lives_label_set_mnemonic_widget(LIVES_LABEL(label), param->widgets[0]);
 

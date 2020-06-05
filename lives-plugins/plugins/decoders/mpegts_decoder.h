@@ -266,37 +266,37 @@ static inline void skip_bits_long(GetBitContext *s, int n) {
 /* http://www.mp4ra.org */
 /* ordered by muxing preference */
 const AVCodecTag ff_mp4_obj_type[] = {
-  { AV_CODEC_ID_MOV_TEXT  , 0x08 },
-  { AV_CODEC_ID_MPEG4     , 0x20 },
-  { AV_CODEC_ID_H264      , 0x21 },
-  { AV_CODEC_ID_AAC       , 0x40 },
-  { AV_CODEC_ID_MP4ALS    , 0x40 }, /* 14496-3 ALS */
+  { AV_CODEC_ID_MOV_TEXT, 0x08 },
+  { AV_CODEC_ID_MPEG4, 0x20 },
+  { AV_CODEC_ID_H264, 0x21 },
+  { AV_CODEC_ID_AAC, 0x40 },
+  { AV_CODEC_ID_MP4ALS, 0x40 },     /* 14496-3 ALS */
   { AV_CODEC_ID_MPEG2VIDEO, 0x61 }, /* MPEG2 Main */
   { AV_CODEC_ID_MPEG2VIDEO, 0x60 }, /* MPEG2 Simple */
   { AV_CODEC_ID_MPEG2VIDEO, 0x62 }, /* MPEG2 SNR */
   { AV_CODEC_ID_MPEG2VIDEO, 0x63 }, /* MPEG2 Spatial */
   { AV_CODEC_ID_MPEG2VIDEO, 0x64 }, /* MPEG2 High */
   { AV_CODEC_ID_MPEG2VIDEO, 0x65 }, /* MPEG2 422 */
-  { AV_CODEC_ID_AAC       , 0x66 }, /* MPEG2 AAC Main */
-  { AV_CODEC_ID_AAC       , 0x67 }, /* MPEG2 AAC Low */
-  { AV_CODEC_ID_AAC       , 0x68 }, /* MPEG2 AAC SSR */
-  { AV_CODEC_ID_MP3       , 0x69 }, /* 13818-3 */
-  { AV_CODEC_ID_MP2       , 0x69 }, /* 11172-3 */
+  { AV_CODEC_ID_AAC, 0x66 },        /* MPEG2 AAC Main */
+  { AV_CODEC_ID_AAC, 0x67 },        /* MPEG2 AAC Low */
+  { AV_CODEC_ID_AAC, 0x68 },        /* MPEG2 AAC SSR */
+  { AV_CODEC_ID_MP3, 0x69 },        /* 13818-3 */
+  { AV_CODEC_ID_MP2, 0x69 },        /* 11172-3 */
   { AV_CODEC_ID_MPEG1VIDEO, 0x6A }, /* 11172-2 */
-  { AV_CODEC_ID_MP3       , 0x6B }, /* 11172-3 */
-  { AV_CODEC_ID_MJPEG     , 0x6C }, /* 10918-1 */
-  { AV_CODEC_ID_PNG       , 0x6D },
-  { AV_CODEC_ID_JPEG2000  , 0x6E }, /* 15444-1 */
-  { AV_CODEC_ID_VC1       , 0xA3 },
-  { AV_CODEC_ID_DIRAC     , 0xA4 },
-  { AV_CODEC_ID_AC3       , 0xA5 },
-  { AV_CODEC_ID_DTS       , 0xA9 }, /* mp4ra.org */
-  { AV_CODEC_ID_VORBIS    , 0xDD }, /* non standard, gpac uses it */
+  { AV_CODEC_ID_MP3, 0x6B },        /* 11172-3 */
+  { AV_CODEC_ID_MJPEG, 0x6C },      /* 10918-1 */
+  { AV_CODEC_ID_PNG, 0x6D },
+  { AV_CODEC_ID_JPEG2000, 0x6E },   /* 15444-1 */
+  { AV_CODEC_ID_VC1, 0xA3 },
+  { AV_CODEC_ID_DIRAC, 0xA4 },
+  { AV_CODEC_ID_AC3, 0xA5 },
+  { AV_CODEC_ID_DTS, 0xA9 },        /* mp4ra.org */
+  { AV_CODEC_ID_VORBIS, 0xDD },     /* non standard, gpac uses it */
   { AV_CODEC_ID_DVD_SUBTITLE, 0xE0 }, /* non standard, see unsupported-embedded-subs-2.mp4 */
-  { AV_CODEC_ID_QCELP     , 0xE1 },
+  { AV_CODEC_ID_QCELP, 0xE1 },
   { AV_CODEC_ID_MPEG4SYSTEMS, 0x01 },
   { AV_CODEC_ID_MPEG4SYSTEMS, 0x02 },
-  { AV_CODEC_ID_NONE      ,    0 },
+  { AV_CODEC_ID_NONE,    0 },
 };
 
 #define AV_CODEC_ID_FIRST_AUDIO 0x10000

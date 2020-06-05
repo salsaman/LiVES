@@ -92,10 +92,10 @@ boolean _start_playback(livespointer data) {
   return FALSE;
 }
 
-
-LIVES_GLOBAL_INLINE void start_playback_async(int type) {lives_timer_add(0, _start_playback, LIVES_INT_TO_POINTER(type));}
-
 LIVES_GLOBAL_INLINE boolean start_playback(int type) {return  _start_playback(LIVES_INT_TO_POINTER(type));}
+
+LIVES_GLOBAL_INLINE void start_playback_async(int type) {_start_playback(LIVES_INT_TO_POINTER(type));}
+
 
 boolean save_clip_values(int which) {
   lives_clip_t *sfile = mainw->files[which];
@@ -2641,7 +2641,7 @@ void play_file(void) {
 #endif
 
     mainw->abufs_to_fill = 0;
-    //lives_widget_context_update();
+    lives_widget_context_update();
     //play until stopped or a stream finishes
     do {
       mainw->cancelled = CANCEL_NONE;
@@ -3117,9 +3117,9 @@ void play_file(void) {
           load_preview_image(FALSE);
         }
 
-	block_expose();
-	lives_widget_context_update();
-	unblock_expose();
+        block_expose();
+        lives_widget_context_update();
+        unblock_expose();
 
         if (mainw->play_window != NULL) {
           if (prefs->show_playwin) {
@@ -3307,7 +3307,7 @@ void play_file(void) {
     if (prefs->open_maximised)
       lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
-    lives_widget_context_update();
+    //lives_widget_context_update();
   }
 
   if (!mainw->preview && (mainw->current_file == -1 || (CURRENT_CLIP_IS_VALID && !cfile->opening))) {
@@ -3355,7 +3355,7 @@ void play_file(void) {
   }
   if (prefs->show_msg_area && mainw->multitrack == NULL) {
     if (mainw->idlemax == 0) {
-      lives_idle_add(resize_message_area, NULL);
+      g_idle_add(resize_message_area, NULL);
     }
     mainw->idlemax = DEF_IDLE_MAX;
   }
@@ -4832,7 +4832,7 @@ ulong restore_file(const char *file_name) {
   }
 
   // get img_type, check frame count and size
-  if (!check_clip_integrity(mainw->current_file, NULL , cfile->frames)) {
+  if (!check_clip_integrity(mainw->current_file, NULL, cfile->frames)) {
     if (cfile->afilesize == 0) {
       reget_afilesize_inner(mainw->current_file);
     }

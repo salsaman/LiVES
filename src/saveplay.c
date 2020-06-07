@@ -2641,7 +2641,7 @@ void play_file(void) {
 #endif
 
     mainw->abufs_to_fill = 0;
-    lives_widget_context_update();
+    //lives_widget_context_update();
     //play until stopped or a stream finishes
     do {
       mainw->cancelled = CANCEL_NONE;
@@ -3052,7 +3052,7 @@ void play_file(void) {
     if (CURRENT_CLIP_HAS_VIDEO) {
       resize(1.);
       lives_widget_show_all(mainw->playframe);
-      lives_frame_set_label(LIVES_FRAME(mainw->playframe), "");
+      lives_frame_set_label(LIVES_FRAME(mainw->playframe), NULL);
     }
 
     if (palette->style & STYLE_1) {
@@ -3117,9 +3117,9 @@ void play_file(void) {
           load_preview_image(FALSE);
         }
 
-        block_expose();
-        lives_widget_context_update();
-        unblock_expose();
+        /* block_expose(); */
+        /* lives_widget_context_update(); */
+        /* unblock_expose(); */
 
         if (mainw->play_window != NULL) {
           if (prefs->show_playwin) {
@@ -3327,16 +3327,16 @@ void play_file(void) {
 
   lives_widget_set_sensitive(mainw->spinbutton_pb_fps, FALSE);
 
-  if (mainw->multitrack == NULL) {
+  if (!mainw->multitrack) {
     /// update screen for internal players
     if (prefs->hfbwnp) {
       lives_widget_hide(mainw->framebar);
     }
     lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), "");
-    lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->play_image), NULL);
+    set_drawing_area_from_pixbuf(mainw->play_image, NULL, NULL);
   }
 
-  if (mainw->multitrack == NULL) mainw->osc_block = FALSE;
+  if (!mainw->multitrack) mainw->osc_block = FALSE;
 
   reset_clipmenu();
 

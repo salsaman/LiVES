@@ -26,9 +26,9 @@ void add_suffix_check(LiVESBox *box, const char *ext) {
   else ltext = lives_strdup_printf(_("Let LiVES set the _file extension (.%s)"), ext);
   checkbutton = lives_standard_check_button_new(ltext, mainw->fx1_bool, box, NULL);
   lives_free(ltext);
-  g_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_boolean_toggled),
-                         &mainw->fx1_bool);
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(on_boolean_toggled),
+                                  &mainw->fx1_bool);
 }
 
 
@@ -48,9 +48,9 @@ static LiVESWidget *add_deinterlace_checkbox(LiVESBox *for_deint) {
     if (filler != NULL) lives_box_reorder_child(for_deint, filler, 1);
   } else lives_box_pack_start(for_deint, hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  g_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_boolean_toggled),
-                         &mainw->open_deint);
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(on_boolean_toggled),
+                                  &mainw->open_deint);
 
   lives_widget_show_all(LIVES_WIDGET(for_deint));
 
@@ -59,9 +59,10 @@ static LiVESWidget *add_deinterlace_checkbox(LiVESBox *for_deint) {
 
 
 static void pv_sel_changed(LiVESFileChooser *chooser, livespointer user_data) {
-  LiVESSList *slist = lives_file_chooser_get_filenames(chooser);
+  LiVESSList *slist;
   LiVESWidget *pbutton = (LiVESWidget *)user_data;
-
+  if (!LIVES_IS_FILE_CHOOSER(chooser)) return;
+  slist = lives_file_chooser_get_filenames(chooser);
   end_fs_preview();
 
   if (slist == NULL || lives_slist_nth_data(slist, 0) == NULL || lives_slist_length(slist) > 1 ||
@@ -310,9 +311,9 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     cfile->aw_sizes = (size_t *)lives_calloc(cfile->achans, sizeof(size_t));
   }
 
-  /* if (!LIVES_IS_PLAYING) { */
-  /*   lives_widget_context_update(); */
-  /* } */
+  if (!LIVES_IS_PLAYING) {
+    lives_widget_context_update();
+  }
 
   // empirically we need to draw wider
   posx -= OVERDRAW_MARGIN;
@@ -799,11 +800,9 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     }
   }
   mainw->current_file = current_file;
-  if (!mainw->draw_blocked) {
-    if (which == 0 || which == 1) lives_widget_queue_draw_if_visible(mainw->video_draw);
-    if (which == 0 || which == 2) lives_widget_queue_draw_if_visible(mainw->laudio_draw);
-    if (which == 0 || which == 3) lives_widget_queue_draw_if_visible(mainw->raudio_draw);
-  }
+  if (which == 0 || which == 1) lives_widget_queue_draw_if_visible(mainw->video_draw);
+  if (which == 0 || which == 2) lives_widget_queue_draw_if_visible(mainw->laudio_draw);
+  if (which == 0 || which == 3) lives_widget_queue_draw_if_visible(mainw->raudio_draw);
 }
 
 
@@ -1031,7 +1030,7 @@ void widget_add_preview(LiVESWidget * widget, LiVESBox * for_preview, LiVESBox *
     mainw->fs_playframe = lives_standard_frame_new(_("Preview"), 0.5, FALSE);
     mainw->fs_playalign = lives_alignment_new(0.5, 0.5, 1., 1.);
 
-    mainw->fs_playimg = lives_image_new_from_pixbuf(NULL);
+    mainw->fs_playimg = lives_drawing_area_new();
     lives_widget_set_no_show_all(mainw->fs_playimg, TRUE);
     lives_widget_set_app_paintable(mainw->fs_playimg, TRUE);
 
@@ -1182,9 +1181,9 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean * td_ha
                                   LIVES_RESPONSE_CANCEL);
       lives_widget_set_can_default(enoughbutton, TRUE);
 
-      g_signal_connect(LIVES_GUI_OBJECT(enoughbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_dth_cancel_clicked),
-                       LIVES_INT_TO_POINTER(1));
+      lives_signal_sync_connect(LIVES_GUI_OBJECT(enoughbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                LIVES_GUI_CALLBACK(on_dth_cancel_clicked),
+                                LIVES_INT_TO_POINTER(1));
 
       lives_widget_add_accelerator(enoughbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                    LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
@@ -1196,9 +1195,9 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean * td_ha
       lives_widget_add_accelerator(procw->cancel_button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                    LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-      g_signal_connect(LIVES_GUI_OBJECT(procw->cancel_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_dth_cancel_clicked),
-                       LIVES_INT_TO_POINTER(0));
+      lives_signal_sync_connect(LIVES_GUI_OBJECT(procw->cancel_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                                LIVES_GUI_CALLBACK(on_dth_cancel_clicked),
+                                LIVES_INT_TO_POINTER(0));
     }
   }
 
@@ -1606,9 +1605,9 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
              LIVES_RESPONSE_OK);
   lives_button_grab_default_special(okbutton);
 
-  g_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                   LIVES_GUI_CALLBACK(lives_general_button_clicked),
-                   filew);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(lives_general_button_clicked),
+                            filew);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(filew->dialog), accel_group);
@@ -1660,9 +1659,9 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
 
     lives_free(labeltext);
 
-    g_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                           LIVES_GUI_CALLBACK(on_boolean_toggled),
-                           &mainw->fx1_bool);
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(on_boolean_toggled),
+                                    &mainw->fx1_bool);
   } else if (text2 == NULL) mainw->fx1_bool = TRUE;
 
   if (text2 != NULL && (mainw->fx1_bool || opt_resize)) {
@@ -1680,14 +1679,14 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
       lives_widget_set_sensitive(checkbutton2, FALSE);
     } else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton2), prefs->enc_letterbox);
 
-    g_signal_connect_after(LIVES_GUI_OBJECT(checkbutton2), LIVES_WIDGET_TOGGLED_SIGNAL,
-                           LIVES_GUI_CALLBACK(on_boolean_toggled),
-                           &prefs->enc_letterbox);
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton2), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(on_boolean_toggled),
+                                    &prefs->enc_letterbox);
 
     if (opt_resize)
-      g_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                             LIVES_GUI_CALLBACK(on_resizecb_toggled),
-                             checkbutton2);
+      lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                      LIVES_GUI_CALLBACK(on_resizecb_toggled),
+                                      checkbutton2);
   }
 
   if (text2 != NULL) {
@@ -1788,9 +1787,9 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
 
     lives_button_grab_default_special(okbutton);
 
-    g_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                     LIVES_GUI_CALLBACK(lives_general_button_clicked),
-                     textwindow);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                              LIVES_GUI_CALLBACK(lives_general_button_clicked),
+                              textwindow);
 
     lives_widget_add_accelerator(okbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                  LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
@@ -2343,15 +2342,15 @@ _entryw *create_rename_dialog(int type) {
   lives_button_grab_default_special(okbutton);
 
   if (type != 3 && cancelbutton != NULL) {
-    g_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                     LIVES_GUI_CALLBACK(lives_general_button_clicked),
-                     renamew);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                              LIVES_GUI_CALLBACK(lives_general_button_clicked),
+                              renamew);
   }
 
   if (type == 1) {
-    g_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                     LIVES_GUI_CALLBACK(on_rename_clip_name),
-                     NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                              LIVES_GUI_CALLBACK(on_rename_clip_name),
+                              NULL);
   }
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
@@ -3319,7 +3318,7 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
     lives_window_set_transient_for(LIVES_WINDOW(chooser), get_transient_full());
   }
 
-  g_signal_connect(chooser, LIVES_WIDGET_CURRENT_FOLDER_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(chooser_check_dir), NULL);
+  lives_signal_sync_connect(chooser, LIVES_WIDGET_CURRENT_FOLDER_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(chooser_check_dir), NULL);
 
   lives_widget_grab_focus(chooser);
 
@@ -3333,7 +3332,7 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 
   // set this so we know when button is pressed, even if waiting for preview to finish
   mainw->fc_buttonresponse = LIVES_RESPONSE_NONE;
-  //g_signal_connect(chooser, LIVES_WIDGET_RESPONSE_SIGNAL, LIVES_GUI_CALLBACK(chooser_response), NULL);
+  //lives_signal_sync_connect(chooser, LIVES_WIDGET_RESPONSE_SIGNAL, LIVES_GUI_CALLBACK(chooser_response), NULL);
 
   if (extra_widget == LIVES_MAIN_WINDOW_WIDGET && LIVES_MAIN_WINDOW_WIDGET != NULL) {
     return (char *)chooser; // kludge to allow custom adding of extra widgets
@@ -3549,9 +3548,9 @@ _entryw *create_cds_dialog(int type) {
 
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(checkbutton), "cdsw", (livespointer)cdsw);
 
-    g_signal_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                     LIVES_GUI_CALLBACK(toggle_sets_pref),
-                     (livespointer)PREF_AR_CLIPSET);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                              LIVES_GUI_CALLBACK(toggle_sets_pref),
+                              (livespointer)PREF_AR_CLIPSET);
   }
 
   if (type == 0 && !(prefs->warning_mask & WARN_MASK_EXIT_MT)) {
@@ -3636,9 +3635,9 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   lives_free(tmp);
   lives_free(tmp2);
 
-  g_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                         LIVES_GUI_CALLBACK(flip_cdisk_bit),
-                         LIVES_INT_TO_POINTER(LIVES_CDISK_REMOVE_ORPHAN_CLIPS));
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(flip_cdisk_bit),
+                                  LIVES_INT_TO_POINTER(LIVES_CDISK_REMOVE_ORPHAN_CLIPS));
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
@@ -3650,9 +3649,9 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   lives_free(tmp);
   lives_free(tmp2);
 
-  g_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                         LIVES_GUI_CALLBACK(flip_cdisk_bit),
-                         LIVES_INT_TO_POINTER(LIVES_CDISK_LEAVE_ORPHAN_SETS));
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(flip_cdisk_bit),
+                                  LIVES_INT_TO_POINTER(LIVES_CDISK_LEAVE_ORPHAN_SETS));
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
@@ -3660,9 +3659,9 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   checkbutton = lives_standard_check_button_new(_("Clear _Backup Files from Closed Clips"),
                 !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_BFILES), LIVES_BOX(hbox), NULL);
 
-  g_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                         LIVES_GUI_CALLBACK(flip_cdisk_bit),
-                         LIVES_INT_TO_POINTER(LIVES_CDISK_LEAVE_BFILES));
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(flip_cdisk_bit),
+                                  LIVES_INT_TO_POINTER(LIVES_CDISK_LEAVE_BFILES));
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
@@ -3670,9 +3669,9 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   checkbutton = lives_standard_check_button_new(_("Remove Sets which have _Layouts but no Clips"),
                 (prefs->clear_disk_opts & LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS), LIVES_BOX(hbox), NULL);
 
-  g_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                         LIVES_GUI_CALLBACK(flip_cdisk_bit),
-                         LIVES_INT_TO_POINTER(LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS));
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(flip_cdisk_bit),
+                                  LIVES_INT_TO_POINTER(LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS));
 
   // resetbutton
   lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH, _("_Reset to Defaults"),
@@ -3740,9 +3739,9 @@ LiVESTextView *create_output_textview(void) {
   LiVESWidget *textview = lives_standard_text_view_new(NULL, NULL);
 
 #ifdef GTK_TEXT_VIEW_DRAW_BUG
-  expt = g_signal_connect(LIVES_GUI_OBJECT(textview), LIVES_WIDGET_EXPOSE_EVENT,
-                          LIVES_GUI_CALLBACK(exposetview),
-                          NULL);
+  expt = lives_signal_sync_connect(LIVES_GUI_OBJECT(textview), LIVES_WIDGET_EXPOSE_EVENT,
+                                   LIVES_GUI_CALLBACK(exposetview),
+                                   NULL);
 #endif
 
   lives_widget_object_ref(textview);
@@ -4089,9 +4088,9 @@ const lives_special_aspect_t *add_aspect_ratio_button(LiVESSpinButton * sp_width
   check_for_special(NULL, &aspect_width, box);
   check_for_special(NULL, &aspect_height, box);
 
-  g_signal_connect(LIVES_GUI_OBJECT(sp_width), LIVES_WIDGET_DESTROY_SIGNAL,
-                   LIVES_GUI_CALLBACK(special_cleanup_cb),
-                   NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(sp_width), LIVES_WIDGET_DESTROY_SIGNAL,
+                            LIVES_GUI_CALLBACK(special_cleanup_cb),
+                            NULL);
 
   return paramspecial_get_aspect();
 }
@@ -4308,8 +4307,8 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
                                         SHORT_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
 
   lives_box_pack_start(LIVES_BOX(hbox), ext_label, FALSE, FALSE, 0);
-  g_signal_connect(LIVES_GUI_OBJECT(url_entry), LIVES_WIDGET_CHANGED_SIGNAL,
-                   LIVES_GUI_CALLBACK(dl_url_changed), name_entry);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(url_entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(dl_url_changed), name_entry);
 
 #ifdef ALLOW_NONFREE_CODECS
   //
@@ -4330,9 +4329,9 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   lives_free(tmp);
   lives_free(tmp2);
 
-  g_signal_connect(LIVES_GUI_OBJECT(radiobutton_nonfree), LIVES_WIDGET_TOGGLED_SIGNAL,
-                   LIVES_GUI_CALLBACK(on_freedom_toggled),
-                   (livespointer)ext_label);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton_nonfree), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_freedom_toggled),
+                            (livespointer)ext_label);
 
 #endif
 
@@ -4361,9 +4360,9 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   lives_free(tmp);
   lives_free(tmp2);
 
-  g_signal_connect(LIVES_GUI_OBJECT(radiobutton_approx), LIVES_WIDGET_TOGGLED_SIGNAL,
-                   LIVES_GUI_CALLBACK(utsense),
-                   LIVES_INT_TO_POINTER(TRUE));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton_approx), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(utsense),
+                            LIVES_INT_TO_POINTER(TRUE));
 
   radiobutton_atleast = lives_standard_radio_button_new((tmp = lives_strdup(_("- At _least"))), &radiobutton_group2,
                         LIVES_BOX(hbox),
@@ -4371,9 +4370,9 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   lives_free(tmp);
   lives_free(tmp2);
 
-  g_signal_connect(LIVES_GUI_OBJECT(radiobutton_atleast), LIVES_WIDGET_TOGGLED_SIGNAL,
-                   LIVES_GUI_CALLBACK(utsense),
-                   LIVES_INT_TO_POINTER(TRUE));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton_atleast), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(utsense),
+                            LIVES_INT_TO_POINTER(TRUE));
 
   radiobutton_atmost = lives_standard_radio_button_new((tmp = lives_strdup(_("- At _most:"))), &radiobutton_group2,
                        LIVES_BOX(hbox),
@@ -4383,9 +4382,9 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 
   add_param_label_to_box(LIVES_BOX(hbox), FALSE, "------>");
 
-  g_signal_connect(LIVES_GUI_OBJECT(radiobutton_atmost), LIVES_WIDGET_TOGGLED_SIGNAL,
-                   LIVES_GUI_CALLBACK(utsense),
-                   LIVES_INT_TO_POINTER(TRUE));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton_atmost), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(utsense),
+                            LIVES_INT_TO_POINTER(TRUE));
 
   add_fill_to_box(LIVES_BOX(hbox));
 
@@ -4426,9 +4425,9 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   lives_free(tmp);
   lives_free(tmp2);
 
-  g_signal_connect(LIVES_GUI_OBJECT(radiobutton_smallest), LIVES_WIDGET_TOGGLED_SIGNAL,
-                   LIVES_GUI_CALLBACK(utsense),
-                   LIVES_INT_TO_POINTER(FALSE));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton_smallest), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(utsense),
+                            LIVES_INT_TO_POINTER(FALSE));
 
   radiobutton_largest = lives_standard_radio_button_new((tmp = lives_strdup(_("- The _largest"))), &radiobutton_group2,
                         LIVES_BOX(hbox),
@@ -4437,9 +4436,9 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   lives_free(tmp);
   lives_free(tmp2);
 
-  g_signal_connect(LIVES_GUI_OBJECT(radiobutton_largest), LIVES_WIDGET_TOGGLED_SIGNAL,
-                   LIVES_GUI_CALLBACK(utsense),
-                   LIVES_INT_TO_POINTER(FALSE));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton_largest), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(utsense),
+                            LIVES_INT_TO_POINTER(FALSE));
 
   add_fill_to_box(LIVES_BOX(hbox));
   add_fill_to_box(LIVES_BOX(hbox));
@@ -4452,9 +4451,9 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   lives_free(tmp);
   lives_free(tmp2);
 
-  g_signal_connect(LIVES_GUI_OBJECT(radiobutton_choose), LIVES_WIDGET_TOGGLED_SIGNAL,
-                   LIVES_GUI_CALLBACK(utsense),
-                   LIVES_INT_TO_POINTER(FALSE));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton_choose), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(utsense),
+                            LIVES_INT_TO_POINTER(FALSE));
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_choose), TRUE);
 
@@ -4626,9 +4625,9 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
   cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
                  LIVES_RESPONSE_CANCEL);
 
-  g_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                   LIVES_GUI_CALLBACK(lives_general_button_clicked),
-                   NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(lives_general_button_clicked),
+                            NULL);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
@@ -4696,9 +4695,9 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
         eventbox = lives_event_box_new();
         lives_container_add(LIVES_CONTAINER(eventbox), label);
         lives_event_box_set_above_child(LIVES_EVENT_BOX(eventbox), TRUE);
-        g_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                         LIVES_GUI_CALLBACK(on_ebox_click),
-                         LIVES_INT_TO_POINTER(row - 1));
+        lives_signal_sync_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+                                  LIVES_GUI_CALLBACK(on_ebox_click),
+                                  LIVES_INT_TO_POINTER(row - 1));
         lives_table_attach(LIVES_TABLE(table), eventbox, 0, 1, row, row + 1,
                            (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                            (LiVESAttachOptions)(0), 0, 0);
@@ -4717,9 +4716,9 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
         eventbox = lives_event_box_new();
         lives_container_add(LIVES_CONTAINER(eventbox), label);
         lives_event_box_set_above_child(LIVES_EVENT_BOX(eventbox), TRUE);
-        g_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                         LIVES_GUI_CALLBACK(on_ebox_click),
-                         LIVES_INT_TO_POINTER(row - 1));
+        lives_signal_sync_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+                                  LIVES_GUI_CALLBACK(on_ebox_click),
+                                  LIVES_INT_TO_POINTER(row - 1));
         lives_table_attach(LIVES_TABLE(table), eventbox, 1, 2, row, row + 1,
                            (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                            (LiVESAttachOptions)(0), 0, 0);
@@ -4737,9 +4736,9 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
         eventbox = lives_event_box_new();
         lives_container_add(LIVES_CONTAINER(eventbox), label);
         lives_event_box_set_above_child(LIVES_EVENT_BOX(eventbox), TRUE);
-        g_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                         LIVES_GUI_CALLBACK(on_ebox_click),
-                         LIVES_INT_TO_POINTER(row - 1));
+        lives_signal_sync_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+                                  LIVES_GUI_CALLBACK(on_ebox_click),
+                                  LIVES_INT_TO_POINTER(row - 1));
         lives_table_attach(LIVES_TABLE(table), eventbox, 2, 3, row, row + 1,
                            (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                            (LiVESAttachOptions)(0), 0, 0);
@@ -4763,9 +4762,9 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
     eventbox = lives_event_box_new();
     lives_container_add(LIVES_CONTAINER(eventbox), label);
     lives_event_box_set_above_child(LIVES_EVENT_BOX(eventbox), TRUE);
-    g_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                     LIVES_GUI_CALLBACK(on_ebox_click),
-                     LIVES_INT_TO_POINTER(row - 1));
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+                              LIVES_GUI_CALLBACK(on_ebox_click),
+                              LIVES_INT_TO_POINTER(row - 1));
     lives_table_attach(LIVES_TABLE(table), eventbox, 3, 4, row, row + 1,
                        (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                        (LiVESAttachOptions)(0), 0, 0);
@@ -4908,7 +4907,7 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
   static int gui_posy = 1000000;
 
   LingoLayout *layout;
-  return FALSE;
+
   if (!mainw->is_ready) return FALSE;
   if (!prefs->show_msg_area) return FALSE;
   if (LIVES_IS_PLAYING && prefs->msgs_pbdis) return FALSE;
@@ -5085,7 +5084,7 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
       }
 
       if (height > 0 && width > 0) {
-        //g_print("NEW SIZE %d\n", height - 4);
+        g_print("NEW SIZE %d\n", height - 4);
         lives_widget_set_size_request(widget, width, height);
         reqheight = height;
         reqwidth = width;

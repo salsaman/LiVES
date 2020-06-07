@@ -68,6 +68,7 @@
 #  define GNU_NORETURN __attribute__((noreturn))
 #  define GNU_FLATTEN  __attribute__((flatten)) // inline all function calls
 #  define GNU_HOT  __attribute__((hot))
+#  define GNU_RETURNS_TWICE  __attribute__((returns_twice))
 #else
 #  define WARN_UNUSED
 #  define GNU_PURE
@@ -81,6 +82,7 @@
 #  define GNU_NORETURN
 #  define GNU_FLATTEN
 #  define GNU_HOT
+#  define GNU_RETURNS_TWICE
 #endif
 
 #include <sys/types.h>
@@ -1306,7 +1308,7 @@ boolean startup_message_nonfatal_dismissable(const char *msg, uint64_t warning_m
 capability *get_capabilities(void);
 void get_monitors(boolean reset);
 void replace_with_delegates(void);
-void set_ce_frame_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf, lives_painter_t *);
+void set_drawing_area_from_pixbuf(LiVESWidget *darea, LiVESPixbuf *pixbuf, lives_painter_t *);
 void load_start_image(int frame);
 void load_end_image(int frame);
 void showclipimgs(void);
@@ -1733,7 +1735,7 @@ void break_me(void);
 
 #endif
 
-#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #define STD_STRINGFUNCS

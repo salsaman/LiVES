@@ -258,16 +258,16 @@ unsigned long lives_signal_connect_async(livespointer instance, const char *deta
     LiVESConnectFlags flags);
 
 #define lives_signal_connect(instance, detailed_signal, c_handler, data) lives_signal_connect_async(instance, detailed_signal, c_handler, data, 0)
-#define lives_signal_connect_after(instance, detailed_signal, c_handler, data) lives_signal_connect_async(instance, detailed_signal, c_handler, data, \
-													  LIVES_CONNECT_AFTER)
-#define lives_signal_connect_swapped(instance, detailed_signal, c_handler, data) lives_signal_connect_async(instance, detailed_signal, c_handler, data, \
-													     LIVES_CONNECT_SWAPPED)
+#define lives_signal_connect_after(instance, detailed_signal, c_handler, data) lives_signal_connect_async(instance, detailed_signal, c_handler, data, LIVES_CONNECT_AFTER)
+#define lives_signal_connect_swapped(instance, detailed_signal, c_handler, data) lives_signal_connect_async(instance, detailed_signal, c_handler, data, LIVES_CONNECT_SWAPPED)
+
+#define lives_signal_sync_connect(instance, detailed_signal, c_handler, data) lives_signal_connect_sync(instance, detailed_signal, c_handler, data, 0)
+#define lives_signal_sync_connect_after(instance, detailed_signal, c_handler, data) lives_signal_connect_sync(instance, detailed_signal, c_handler, data, LIVES_CONNECT_AFTER)
+#define lives_signal_sync_connect_swapped(instance, detailed_signal, c_handler, data) lives_signal_connect_sync(instance, detailed_signal, c_handler, data, LIVES_CONNECT_SWAPPED)
 
 boolean lives_signal_handlers_disconnect_by_func(livespointer instance, LiVESWidgetClosure *func, livespointer data);
 boolean lives_signal_handlers_block_by_func(livespointer instance, LiVESWidgetClosure *func, livespointer data);
 boolean lives_signal_handlers_unblock_by_func(livespointer instance, LiVESWidgetClosure *func, livespointer data);
-
-
 #else
 ulong lives_signal_connect(LiVESWidget *, const char *signal_name, ulong funcptr, livespointer data);
 boolean lives_signal_handlers_block_by_func(livespointer instance, livespointer func, livespointer data);
@@ -411,6 +411,9 @@ boolean lives_window_set_screen(LiVESWindow *, LiVESXScreen *);
 boolean lives_widget_get_position(LiVESWidget *, int *x, int *y);
 
 LiVESWidget *lives_window_get_focus(LiVESWindow *);
+
+boolean lives_window_get_modal(LiVESWindow *);
+boolean lives_window_set_modal(LiVESWindow *, boolean modal);
 
 boolean lives_window_move(LiVESWindow *, int x, int y);
 boolean lives_window_get_position(LiVESWindow *, int *x, int *y);
@@ -852,6 +855,7 @@ LiVESXDisplay *lives_widget_get_display(LiVESWidget *);
 lives_display_t lives_widget_get_display_type(LiVESWidget *);
 
 uint64_t lives_widget_get_xwinid(LiVESWidget *, const char *failure_msg);
+LiVESWindow *lives_widget_get_window(LiVESWidget *);
 
 LiVESWidget *lives_scrolled_window_new(LiVESAdjustment *hadj, LiVESAdjustment *vadj);
 LiVESAdjustment *lives_scrolled_window_get_hadjustment(LiVESScrolledWindow *);

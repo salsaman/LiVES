@@ -332,7 +332,9 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
 
   mainw->framedraw_scale = lives_standard_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
   lives_box_pack_start(LIVES_BOX(hbox), mainw->framedraw_scale, TRUE, TRUE, widget_opts.border_width);
-
+  gtk_range_set_show_fill_level(GTK_RANGE(mainw->framedraw_scale), TRUE);
+  gtk_range_set_restrict_to_fill_level(GTK_RANGE(mainw->framedraw_scale), TRUE);
+  gtk_range_set_fill_level(GTK_RANGE(mainw->framedraw_scale), (double)start);
   lives_widget_set_sensitive(mainw->framedraw_spinbutton, FALSE);
   lives_widget_set_sensitive(mainw->framedraw_scale, FALSE);
   lives_signal_connect(mainw->framedraw_preview, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(start_preview), rfx);
@@ -587,7 +589,7 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
       // set frame_pixbuf, this gets painted in in expose_event
       mainw->multitrack->frame_pixbuf = pixbuf;
 #else
-      set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image), pixbuf, NULL);
+      set_drawing_area_from_pixbuf(mainw->play_image, pixbuf, NULL);
 #endif
       lives_widget_queue_draw(mainw->multitrack->play_box);
     }
@@ -697,6 +699,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
       cfile->frames = tot_frames;
     }
 
+    gtk_range_set_fill_level(GTK_RANGE(mainw->framedraw_scale), (double)mainw->fd_max_frame);
     if (mainw->framedraw_frame > mainw->fd_max_frame) {
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), mainw->fd_max_frame);
       lives_range_set_value(LIVES_RANGE(mainw->framedraw_scale), mainw->fd_max_frame);

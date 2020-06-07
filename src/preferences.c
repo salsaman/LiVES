@@ -33,7 +33,7 @@ static uint32_t prefs_current_page;
 
 static void select_pref_list_row(uint32_t selected_idx, _prefsw *prefsw);
 
-#define ACTIVE(widget, signal) lives_signal_connect(LIVES_GUI_OBJECT(prefsw->widget), LIVES_WIDGET_ ##signal## \
+#define ACTIVE(widget, signal) lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->widget), LIVES_WIDGET_ ##signal## \
 						    _SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL)
 
 
@@ -3165,9 +3165,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
     lives_widget_set_sensitive(prefsw->spinbutton_pmoni, FALSE);
   }
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->forcesmon), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_forcesmon_toggled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->forcesmon), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_forcesmon_toggled),
+                            NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
@@ -3196,8 +3196,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                            prefs->max_messages < 0, LIVES_BOX(hbox), NULL);
 
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->msgs_unlimited), prefsw->nmessages_spin, TRUE);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->nmessages_spin), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(widget_inact_toggle), prefsw->msgs_unlimited);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->nmessages_spin), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(widget_inact_toggle), prefsw->msgs_unlimited);
   ACTIVE(msgs_unlimited, TOGGLED);
 
   textsizes_list = get_textsizes_list();
@@ -3318,9 +3318,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   prefsw->mt_autoback_never = lives_standard_radio_button_new(_("_Never"), &autoback_group, LIVES_BOX(hbox), NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->mt_autoback_every), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_mtbackevery_toggled),
-                       prefsw);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->mt_autoback_every), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_mtbackevery_toggled),
+                            prefsw);
 
   if (prefs->mt_auto_back == 0) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->mt_autoback_always), TRUE);
@@ -3609,8 +3609,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   prefsw_set_astream_settings(mainw->vpp, prefsw);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_stream_audio), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(stream_audio_toggled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_stream_audio), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(stream_audio_toggled), NULL);
 
   prefsw->checkbutton_rec_after_pb =
     lives_standard_check_button_new((tmp = lives_strdup(_("Record player output"))),
@@ -4541,9 +4541,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                          &sp_green,
                          &sp_blue, NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_fore), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_fore), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   widget_color_to_lives_rgba(&rgba, &palette->normal_back);
@@ -4551,9 +4551,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                          &sp_green,
                          &sp_blue, NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_back), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_back), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   widget_color_to_lives_rgba(&rgba, &palette->menu_and_bars_fore);
@@ -4561,9 +4561,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                          &sp_green,
                          &sp_blue, NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_mabf), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_mabf), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   widget_color_to_lives_rgba(&rgba, &palette->menu_and_bars);
@@ -4571,9 +4571,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                         &sp_green,
                         &sp_blue, NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_mab), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_mab), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   widget_color_to_lives_rgba(&rgba, &palette->info_text);
@@ -4581,9 +4581,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                           &sp_green, &sp_blue,
                           NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_infot), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_infot), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   widget_color_to_lives_rgba(&rgba, &palette->info_base);
@@ -4591,9 +4591,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                           &sp_green, &sp_blue,
                           NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_infob), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_infob), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
@@ -4665,68 +4665,68 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                           (tmp = lives_strdup(_("Selected frames/audio (clip editor)"))),
                           FALSE, &palette->ce_sel, &sp_red, &sp_green, &sp_blue, NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_cesel), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_cesel), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->cbutton_ceunsel = lives_standard_color_button_new(LIVES_BOX(hbox),
                             (tmp = lives_strdup(_("Unselected frames/audio (clip editor)"))),
                             FALSE, &palette->ce_unsel, &sp_red, &sp_green, &sp_blue, NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_ceunsel), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_ceunsel), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->cbutton_evbox = lives_standard_color_button_new(LIVES_BOX(hbox),
                           (tmp = lives_strdup(_("Track background (multitrack)"))),
                           FALSE, &palette->mt_evbox, &sp_red, &sp_green, &sp_blue, NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_evbox), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_evbox), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->cbutton_vidcol = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = lives_strdup(_("Video block (multitrack)"))),
                            FALSE, &palette->vidcol, &sp_red, &sp_green, &sp_blue, NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_vidcol), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_vidcol), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->cbutton_audcol = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = lives_strdup(_("Audio block (multitrack)"))),
                            FALSE, &palette->audcol, &sp_red, &sp_green, &sp_blue, NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_audcol), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_audcol), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->cbutton_fxcol = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = lives_strdup(_("Effects block (multitrack)"))),
                           FALSE, &palette->fxcol, &sp_red, &sp_green, &sp_blue, NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_fxcol), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_fxcol), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->cbutton_mtmark = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = lives_strdup(_("Timeline mark (multitrack)"))),
                            FALSE, &palette->mt_mark, &sp_red, &sp_green, &sp_blue, NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_mtmark), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_mtmark), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->cbutton_tlreg = lives_standard_color_button_new(LIVES_BOX(hbox),
                           (tmp = lives_strdup(_("Timeline selection (multitrack)"))),
                           FALSE, &palette->mt_timeline_reg, &sp_red, &sp_green, &sp_blue, NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_tlreg), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_tlreg), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   widget_color_to_lives_rgba(&rgba, &palette->mt_timecode_bg);
@@ -4734,9 +4734,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                          (tmp = lives_strdup(_("Timecode background (multitrack)"))),
                          FALSE, &rgba, &sp_red, &sp_green, &sp_blue, NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_tcbg), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_tcbg), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   widget_color_to_lives_rgba(&rgba, &palette->mt_timecode_fg);
@@ -4744,22 +4744,22 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                          (tmp = lives_strdup(_("Timecode foreground (multitrack)"))),
                          FALSE, &rgba, &sp_red, &sp_green, &sp_blue, NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_tcfg), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_tcfg), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->cbutton_fsur = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = lives_strdup(_("Frame surround"))),
                          FALSE, &palette->frame_surround, &sp_red, &sp_green, &sp_blue, NULL);
   lives_free(tmp);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_fsur), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_fsur), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 
   // change in value of theme combo should set other widgets sensitive / insensitive
-  lives_signal_connect_after(LIVES_GUI_OBJECT(prefsw->theme_combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                             LIVES_GUI_CALLBACK(theme_widgets_set_sensitive), (livespointer)prefsw);
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(prefsw->theme_combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(theme_widgets_set_sensitive), (livespointer)prefsw);
   lives_combo_set_active_string(LIVES_COMBO(prefsw->theme_combo), theme);
   lives_free(theme);
 
@@ -5178,96 +5178,96 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_widget_set_sensitive(prefsw->applybutton, FALSE);
 
   // Connect signals for 'Apply' button activity handling
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_fore), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_back), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_mabf), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_mab), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_infot), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_infob), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_mtmark), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_evbox), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_tlreg), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_fsur), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_tcbg), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_tcfg), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_cesel), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_ceunsel), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_vidcol), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_audcol), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cbutton_fxcol), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_fore), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_back), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_mabf), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_mab), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_infot), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_infob), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_mtmark), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_evbox), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_tlreg), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_fsur), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_tcbg), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_tcfg), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_cesel), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_ceunsel), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_vidcol), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_audcol), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_fxcol), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
   if (prefsw->theme_style2 != NULL)
-    lives_signal_connect(LIVES_GUI_OBJECT(prefsw->theme_style2), LIVES_WIDGET_TOGGLED_SIGNAL,
-                         LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->theme_style3), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->theme_style4), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->theme_style2), LIVES_WIDGET_TOGGLED_SIGNAL,
+                              LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->theme_style3), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->theme_style4), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->wpp_entry), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->frei0r_entry), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->ladspa_entry), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->fs_max_check), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->wpp_entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->frei0r_entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->ladspa_entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->fs_max_check), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
   ACTIVE(recent_check, TOGGLED);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->stop_screensaver_check), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->open_maximised_check), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->show_tool), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->mouse_scroll), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_ce_maxspect), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->ce_thumbs), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_button_icons), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_hfbwnp), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_show_asrc), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->stop_screensaver_check), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->open_maximised_check), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->show_tool), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->mouse_scroll), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_ce_maxspect), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->ce_thumbs), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_button_icons), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_hfbwnp), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_show_asrc), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   if (prefsw->checkbutton_show_ttips != NULL)
     lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_show_ttips), LIVES_WIDGET_TOGGLED_SIGNAL,
                          LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
@@ -5275,104 +5275,104 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   ACTIVE(rb_startup_mt, TOGGLED);
   ACTIVE(rb_startup_ce, TOGGLED);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_crit_ds), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(spinbutton_crit_ds_value_changed), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_crit_ds), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_crit_ds), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(spinbutton_crit_ds_value_changed), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_crit_ds), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_gmoni), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_pmoni), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_gmoni), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_pmoni), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_gmoni), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(pmoni_gmoni_changed),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_pmoni), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(pmoni_gmoni_changed),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_gmoni), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(pmoni_gmoni_changed),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_pmoni), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(pmoni_gmoni_changed),
+                            NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->forcesmon), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_stream_audio), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_rec_after_pb), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_warn_ds), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->mt_enter_prompt), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mt_enter_defs), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_render_prompt), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_mt_def_width), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_mt_def_height), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_mt_def_fps), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->backaudio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->pertrack_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_mt_undo_buf), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_mt_exit_render), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_mt_ab_time), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_max_disp_vtracks), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->mt_autoback_always), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->mt_autoback_never), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->mt_autoback_every), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->video_open_entry), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->frameblank_entry), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->sepimg_entry), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_ocp), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->jpeg), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(png), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_instant_open), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_auto_deint), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_auto_trim), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_nobord), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_concat_images), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->forcesmon), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_stream_audio), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_rec_after_pb), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_warn_ds), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->mt_enter_prompt), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt_enter_defs), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_render_prompt), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_mt_def_width), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_mt_def_height), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_mt_def_fps), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->backaudio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->pertrack_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_mt_undo_buf), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_mt_exit_render), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_mt_ab_time), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_max_disp_vtracks), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->mt_autoback_always), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->mt_autoback_never), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->mt_autoback_every), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->video_open_entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->frameblank_entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->sepimg_entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_ocp), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->jpeg), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(png), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_instant_open), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_auto_deint), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_auto_trim), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_nobord), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_concat_images), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 
   ACTIVE(checkbutton_lb, TOGGLED);
   ACTIVE(checkbutton_lbmt, TOGGLED);
@@ -5380,151 +5380,151 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   ACTIVE(spinbutton_gamma, VALUE_CHANGED);
   ACTIVE(pbq_adaptive, TOGGLED);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->pbq_combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_show_stats), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(pp_combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->audp_combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  /* lives_signal_connect(LIVES_GUI_OBJECT(prefsw->audio_command_entry), LIVES_WIDGET_CHANGED_SIGNAL, */
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->pbq_combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_show_stats), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(pp_combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->audp_combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  /* lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->audio_command_entry), LIVES_WIDGET_CHANGED_SIGNAL, */
   /*                      LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL); */
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_afollow), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_aclips), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->rdesk_audio), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->rframes), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->rfps), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->reffects), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->rclips), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->raudio), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->pa_gens), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->rextaudio), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_ext_aud_thresh), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_rec_gb), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->encoder_combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_afollow), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_aclips), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->rdesk_audio), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->rframes), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->rfps), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->reffects), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->rclips), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->raudio), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->pa_gens), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->rextaudio), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_ext_aud_thresh), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_rec_gb), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->encoder_combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
   if (capable->has_encoder_plugins) {
-    lives_signal_connect(LIVES_GUI_OBJECT(prefsw->ofmt_combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                         LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->ofmt_combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                              LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
 
     if (prefsw->acodec_combo != NULL)
-      lives_signal_connect(LIVES_GUI_OBJECT(prefsw->acodec_combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                           LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                           NULL);
+      lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->acodec_combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                                LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                                NULL);
   }
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_antialias), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_load_rfx), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_apply_gamma), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_rte_keys), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_threads), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_nfx_threads), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->vid_load_dir_entry), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->vid_save_dir_entry), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->audio_dir_entry), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->image_dir_entry), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->proj_dir_entry), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->workdir_entry), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_fps), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_fsize), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_warn_fsize), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_save_set), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_mplayer), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_rendered_fx), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_encoders), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_dup_set), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_clips), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_close), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_delete), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_shift), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_alter), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_adel), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_ashift), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_aalt), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_popup), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_discard_layout), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_mt_achans), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_mt_no_jack), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_antialias), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_load_rfx), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_apply_gamma), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_rte_keys), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_threads), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_nfx_threads), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->vid_load_dir_entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->vid_save_dir_entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->audio_dir_entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->image_dir_entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->proj_dir_entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->workdir_entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_fps), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_fsize), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_warn_fsize), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_save_set), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_mplayer), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_rendered_fx), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_encoders), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_dup_set), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_clips), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_close), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_delete), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_shift), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_alter), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_adel), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_ashift), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_aalt), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_popup), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_discard_layout), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_mt_achans), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_mt_no_jack), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 #ifdef HAVE_LDVGRAB
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_after_dvgrab), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_after_dvgrab), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 #endif
 #ifdef HAVE_YUV4MPEG
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_yuv4m_open), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_yuv4m_open), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 #endif
   ACTIVE(checkbutton_warn_layout_gamma, TOGGLED);
   ACTIVE(checkbutton_warn_layout_wipe, TOGGLED);
@@ -5533,93 +5533,94 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   ACTIVE(checkbutton_warn_mt_backup_space, TOGGLED);
   ACTIVE(checkbutton_warn_vjmode_enter, TOGGLED);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->check_midi), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->midichan_combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->ins_speed), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(ins_resample), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->cdplay_entry), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_def_fps), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->theme_combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_bwidth), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->check_midi), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->midichan_combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->ins_speed), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(ins_resample), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cdplay_entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_def_fps), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->theme_combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_bwidth), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
 #ifdef ENABLE_OSC
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_osc_udp), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->enable_OSC_start), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->enable_OSC), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_osc_udp), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->enable_OSC_start), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->enable_OSC), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
 #endif
 
 #ifdef ENABLE_JACK_TRANSPORT
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->jack_tserver_entry), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_start_tjack), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_master), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_client), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_tb_start), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_tb_client), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->jack_tserver_entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_start_tjack), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_master), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_client), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_tb_start), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_tb_client), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 #endif
 
 #ifdef ENABLE_JACK
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->jack_aserver_entry), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_start_ajack), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_pwp), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_read_autocon), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->jack_aserver_entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_start_ajack), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_pwp), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_read_autocon), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
 #endif
 
 #ifdef ENABLE_OSC
 #ifdef OMC_JS_IMPL
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_omc_js), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->omc_js_entry), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_omc_js), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->omc_js_entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 #endif
 #ifdef OMC_MIDI_IMPL
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_omc_midi), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_omc_midi), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
 #ifdef ALSA_MIDI
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->alsa_midi), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->alsa_midi_dummy), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->alsa_midi), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->alsa_midi_dummy), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 #endif
-  lives_signal_connect(LIVES_GUI_OBJECT(raw_midi_button), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->omc_midi_entry), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_midicr), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_midirpt), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(raw_midi_button), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->omc_midi_entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_midicr), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_midirpt), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
+                            NULL);
 #endif
 #endif
 
@@ -5688,7 +5689,6 @@ void on_preferences_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     mt_desensitise(mainw->multitrack);
   }
 
-
   if (menuitem != NULL) prefs_current_page = -1;
 
   if (prefsw != NULL && prefsw->prefs_dialog != NULL) {
@@ -5698,11 +5698,15 @@ void on_preferences_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   future_prefs->disabled_decoders = lives_list_copy_strings(prefs->disabled_decoders);
+  lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
+  lives_widget_context_update();
 
   prefsw = create_prefs_dialog(saved_dialog);
   lives_widget_show(prefsw->prefs_dialog);
   lives_window_set_position(LIVES_WINDOW(prefsw->prefs_dialog), LIVES_WIN_POS_CENTER_ALWAYS);
   lives_widget_queue_draw(prefsw->prefs_dialog);
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL, prefsw->prefs_dialog);
 }
 
 

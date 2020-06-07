@@ -4580,7 +4580,8 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
   // filters which can cause a segfault
   const char *frei0r_blacklist[] = {"Timeout indicator", NULL};
   const char *ladspa_blacklist[] = {"Mag's Notch Filter", "Identity (Control)", "Signal Branch (IC)",
-                                    "Signal Product (ICIC)", "Signal Difference (ICMC)", "Signal Sum (ICIC)",
+                                    "Signal Product (ICIC)", "Signal Difference (ICMC)",
+                                    "Signal Sum (ICIC)", "Signal Ratio (NCDC)",
                                     NULL
                                    };
 
@@ -4599,7 +4600,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
   mainw->chdir_failed = FALSE;
 
   // walk list and create fx structures
-#define DEBUG_WEED
+  //#define DEBUG_WEED
 #ifdef DEBUG_WEED
   lives_printerr("Checking plugin %s\n", plugin_path);
 #endif

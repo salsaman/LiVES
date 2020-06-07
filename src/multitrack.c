@@ -3172,7 +3172,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
         mt->frame_pixbuf = mainw->imframe;
       }
 #else
-      set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image), mainw->imframe, NULL);
+      set_drawing_area_from_pixbuf(mainw->play_image, mainw->imframe, NULL);
 #endif
     } else {
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -3181,7 +3181,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
         mt->frame_pixbuf = NULL;
       }
 #else
-      set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image), NULL, NULL);
+      set_drawing_area_from_pixbuf(mainw->play_image, NULL, NULL);
 #endif
     }
     lives_widget_queue_draw(mt->play_box);
@@ -3344,7 +3344,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
       // set frame_pixbuf, this gets painted in in expose_event
       mt->frame_pixbuf = pixbuf;
 #else
-      set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image), pixbuf, NULL);
+      set_drawing_area_from_pixbuf(mainw->play_image, pixbuf, NULL);
 #endif
       lives_widget_queue_draw(mt->play_box);
       weed_plant_free(mainw->frame_layer);
@@ -3355,7 +3355,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
     // set frame_pixbuf, this gets painted in in expose_event
     mt->frame_pixbuf = mainw->imframe;
 #else
-    set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image), mainw->imframe, NULL);
+    set_drawing_area_from_pixbuf(mainw->play_image, mainw->imframe, NULL);
 #endif
     lives_widget_queue_draw(mt->play_box);
   }
@@ -5973,7 +5973,7 @@ static boolean expose_pb(LiVESWidget * widget, lives_painter_t *cr, livespointer
   if (mt->no_expose || mt->no_expose_frame) return TRUE;
   if (LIVES_IS_PLAYING) return TRUE;
   //lives_widget_set_size_request(mainw->play_image, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.);
-  set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image), mt->frame_pixbuf, cr);
+  set_drawing_area_from_pixbuf(mainw->play_image, mt->frame_pixbuf, cr);
   return TRUE;
 }
 #endif
@@ -17313,7 +17313,7 @@ void multitrack_playall(lives_mt * mt) {
   }
 
   if (needs_clear) {
-    set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image), NULL, NULL);
+    set_drawing_area_from_pixbuf(mainw->play_image, NULL, NULL);
     needs_clear = FALSE;
   }
 

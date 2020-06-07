@@ -306,7 +306,7 @@ static inline uint8_t *create_gamma_lut(double fileg, int gamma_from, int gamma_
         // sRGB gamma
         switch (gamma_from) {
         case WEED_GAMMA_BT709:
-          a = (a < 0.081) ? a / 4.5 : 1.099 * powf((a + 0.099) / 1.099, GAMMA_CONSTB);
+          a = (a < 0.081) ? a / 4.5 : powf((a + 0.099) / 1.099, GAMMA_CONSTB);
         case WEED_GAMMA_LINEAR:
           // a + 1 = 1.055, b = 0.0031308, c = 12.92, d = 0.04045, G = 2.4
           // x <= b ? c * x : a * powf(x, 1 / G) - (a - 1)
@@ -938,10 +938,11 @@ void init_advanced_palettes(void) {
   };
 
   advp[16] = (weed_macropixel_t) {
-    WEED_PALETTE_YUV411, {WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_Y,
-                          WEED_VCHAN_V, WEED_VCHAN_Y, WEED_VCHAN_Y
-                         },
-                         0, {0}, {0}, 4
+    WEED_PALETTE_YUV411, {
+      WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_Y,
+      WEED_VCHAN_V, WEED_VCHAN_Y, WEED_VCHAN_Y
+    },
+    0, {0}, {0}, 4
   };
 
   /// alpha
@@ -958,8 +959,9 @@ void init_advanced_palettes(void) {
 
   // custom palettes (designed for future use or for testing)
   advp[21] = (weed_macropixel_t) {
-    LIVES_PALETTE_YVU422P, {WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_U},
-                           WEED_VCHAN_DESC_PLANAR, {1, 2, 2}, {1, 1, 1}
+    LIVES_PALETTE_YVU422P,
+    {WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_U},
+    WEED_VCHAN_DESC_PLANAR, {1, 2, 2}, {1, 1, 1}
   };
 
   advp[22] = (weed_macropixel_t) {

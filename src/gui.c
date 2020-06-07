@@ -140,12 +140,10 @@ boolean expose_sim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
                                         (!mainw->ext_playback ||
                                          (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
   if (CURRENT_CLIP_IS_VALID && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
-  //if (mainw->stop_emmission == NULL) mainw->stop_emmission = widget;
   if (CURRENT_CLIP_IS_VALID) {
     load_start_image(-cfile->start);
   } else load_start_image(0);
   mainw->current_file = current_file;
-  if (mainw->stop_emmission == widget) mainw->stop_emmission = NULL;
   return TRUE;
 }
 
@@ -158,11 +156,9 @@ boolean expose_eim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
                                         (!mainw->ext_playback ||
                                          (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
   if (CURRENT_CLIP_IS_VALID && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
-  //if (mainw->stop_emmission == NULL) mainw->stop_emmission = widget;
   if (CURRENT_CLIP_IS_VALID) {
     load_end_image(-cfile->end);
   } else load_end_image(0);
-  if (mainw->stop_emmission == widget) mainw->stop_emmission = NULL;
   mainw->current_file = current_file;
   return TRUE;
 }
@@ -172,13 +168,7 @@ boolean expose_pim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
   int current_file = mainw->current_file;
   if (mainw->is_generating) return TRUE;
   if (CURRENT_CLIP_IS_VALID && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
-  g_object_freeze_notify(LIVES_WIDGET_OBJECT(widget));
-  if (!mainw->draw_blocked) {
-    if (mainw->stop_emmission == NULL) mainw->stop_emmission = widget;
-    load_preview_image(FALSE);
-    if (mainw->stop_emmission == widget) mainw->stop_emmission = NULL;
-  }
-  g_object_thaw_notify(LIVES_WIDGET_OBJECT(widget));
+  load_preview_image(FALSE);
   mainw->current_file = current_file;
   return TRUE;
 }
@@ -409,9 +399,9 @@ void create_LiVES(void) {
     lives_container_set_border_width(LIVES_CONTAINER(LIVES_MAIN_WINDOW_WIDGET), 0);
     if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), widget_opts.screen);
 
-    mainw->config_func = g_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_CONFIGURE_EVENT,
-                                          LIVES_GUI_CALLBACK(config_event),
-                                          NULL);
+    mainw->config_func = lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_CONFIGURE_EVENT,
+                         LIVES_GUI_CALLBACK(config_event),
+                         NULL);
   }
   ////////////////////////////////////
 
@@ -423,8 +413,8 @@ void create_LiVES(void) {
   mainw->preview_image = NULL;
 
   mainw->sep_image = lives_image_new_from_pixbuf(NULL);
-  mainw->start_image = lives_image_new_from_pixbuf(NULL);
-  mainw->end_image = lives_image_new_from_pixbuf(NULL);
+  mainw->start_image = lives_drawing_area_new();
+  mainw->end_image = lives_drawing_area_new();
   mainw->imframe = mainw->imsep = NULL;
 
   lives_widget_show(mainw->start_image);  // needed to get size
@@ -453,18 +443,18 @@ void create_LiVES(void) {
   }
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->start_image), LIVES_WIDGET_EXPOSE_EVENT,
-                       LIVES_GUI_CALLBACK(expose_sim),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->start_image), LIVES_WIDGET_EXPOSE_EVENT,
+                            LIVES_GUI_CALLBACK(expose_sim),
+                            NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->end_image), LIVES_WIDGET_EXPOSE_EVENT,
-                       LIVES_GUI_CALLBACK(expose_eim),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->end_image), LIVES_WIDGET_EXPOSE_EVENT,
+                            LIVES_GUI_CALLBACK(expose_eim),
+                            NULL);
 #else
 
   if (mainw->imframe != NULL) {
-    lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->start_image), mainw->imframe);
-    lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->end_image), mainw->imframe);
+    set_drawing_area_from_pixbuf(mainw->start_image, mainw->imframe, NULL);
+    set_drawing_area_from_pixbuf(mainw->end_image, mainw->imframe, NULL);
   }
 
 #endif
@@ -1540,7 +1530,7 @@ void create_LiVES(void) {
 
   mainw->vj_mode = lives_standard_check_menu_item_new_with_label(_("Restart in _VJ Mode"), future_prefs->vj_mode);
   lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->vj_mode);
-  mainw->vj_mode_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->vj_mode), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  mainw->vj_mode_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->vj_mode), LIVES_WIDGET_ACTIVATE_SIGNAL,
                         LIVES_GUI_CALLBACK(vj_mode_toggled),
                         NULL);
 
@@ -1599,9 +1589,9 @@ void create_LiVES(void) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->show_devopts),  prefs->show_dev_opts);
 
   lives_container_add(LIVES_CONTAINER(mainw->help_menu), mainw->show_devopts);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->show_devopts), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(toggle_sets_pref),
-                       (livespointer)PREF_SHOW_DEVOPTS);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->show_devopts), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(toggle_sets_pref),
+                            (livespointer)PREF_SHOW_DEVOPTS);
 
   lives_menu_add_separator(LIVES_MENU(mainw->help_menu));
 
@@ -1702,15 +1692,15 @@ void create_LiVES(void) {
 #if GTK_CHECK_VERSION(3, 0, 0)
   // insert audio src buttons
   if (prefs->lamp_buttons) {
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->int_audio_checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
-                         LIVES_GUI_CALLBACK(draw_cool_toggle),
-                         NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->int_audio_checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
+                              LIVES_GUI_CALLBACK(draw_cool_toggle),
+                              NULL);
     lives_widget_set_bg_color(mainw->int_audio_checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
     lives_widget_set_bg_color(mainw->int_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
 
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->int_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                         LIVES_GUI_CALLBACK(lives_cool_toggled),
-                         NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->int_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                              LIVES_GUI_CALLBACK(lives_cool_toggled),
+                              NULL);
     lives_cool_toggled(mainw->int_audio_checkbutton, NULL);
   }
 #endif
@@ -1737,15 +1727,15 @@ void create_LiVES(void) {
   // insert audio src buttons
   if (prefs->lamp_buttons) {
 
-    g_signal_connect(LIVES_GUI_OBJECT(mainw->ext_audio_checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
-                     LIVES_GUI_CALLBACK(draw_cool_toggle),
-                     NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->ext_audio_checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
+                              LIVES_GUI_CALLBACK(draw_cool_toggle),
+                              NULL);
     lives_widget_set_bg_color(mainw->ext_audio_checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
     lives_widget_set_bg_color(mainw->ext_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
 
-    g_signal_connect_after(LIVES_GUI_OBJECT(mainw->ext_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                           LIVES_GUI_CALLBACK(lives_cool_toggled),
-                           NULL);
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->ext_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(lives_cool_toggled),
+                                    NULL);
     lives_cool_toggled(mainw->ext_audio_checkbutton, NULL);
   }
 #endif
@@ -1780,15 +1770,15 @@ void create_LiVES(void) {
       mainw->vol_checkbuttons[i][0] = lives_toggle_tool_button_new();
       lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->vol_checkbuttons[i][0]), -1);
 
-      g_signal_connect(LIVES_GUI_OBJECT(mainw->vol_checkbuttons[i][0]), LIVES_WIDGET_EXPOSE_EVENT,
-                       LIVES_GUI_CALLBACK(draw_cool_toggle),
-                       NULL);
+      lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->vol_checkbuttons[i][0]), LIVES_WIDGET_EXPOSE_EVENT,
+                                LIVES_GUI_CALLBACK(draw_cool_toggle),
+                                NULL);
       lives_widget_set_bg_color(mainw->vol_checkbuttons[i][0], LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
       lives_widget_set_bg_color(mainw->vol_checkbuttons[i][0], LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
 
-      g_signal_connect_after(LIVES_GUI_OBJECT(mainw->vol_checkbuttons[i][0]), LIVES_WIDGET_TOGGLED_SIGNAL,
-                             LIVES_GUI_CALLBACK(lives_cool_toggled),
-                             NULL);
+      lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->vol_checkbuttons[i][0]), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                      LIVES_GUI_CALLBACK(lives_cool_toggled),
+                                      NULL);
       lives_cool_toggled(mainw->vol_checkbuttons[i][0], NULL);
     }
   }
@@ -1821,9 +1811,9 @@ void create_LiVES(void) {
 
   lives_widget_set_tooltip_text(mainw->vol_toolitem, _("Audio volume (1.00)"));
 
-  lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->volume_scale), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                             LIVES_GUI_CALLBACK(on_volume_slider_value_changed),
-                             NULL);
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->volume_scale), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(on_volume_slider_value_changed),
+                                  NULL);
 
   mainw->play_window = NULL;
 
@@ -1944,9 +1934,9 @@ void create_LiVES(void) {
   lives_box_pack_start(LIVES_BOX(vbox99), vbox4, FALSE, TRUE, 0);
   lives_widget_set_vexpand(vbox4, FALSE);
 
-  g_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox), LIVES_WIDGET_SCROLL_EVENT,
-                   LIVES_GUI_CALLBACK(on_mouse_scroll),
-                   NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->eventbox), LIVES_WIDGET_SCROLL_EVENT,
+                            LIVES_GUI_CALLBACK(on_mouse_scroll),
+                            NULL);
 
   mainw->framebar = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox4), mainw->framebar, FALSE, FALSE, 0.);
@@ -2005,7 +1995,7 @@ void create_LiVES(void) {
                      (LiVESAttachOptions)(0),
                      (LiVESAttachOptions)(0), 0, 0);
   lives_widget_set_halign(mainw->eventbox3, LIVES_ALIGN_START);
-  // lives_widget_set_app_paintable(mainw->eventbox3, TRUE);
+  lives_widget_set_app_paintable(mainw->eventbox3, TRUE);
 
   // IMPORTANT: need to set a default size here (the actual size will be set later)
   lives_widget_set_size_request(mainw->eventbox3, DEF_FRAME_HSIZE_GUI, DEF_FRAME_VSIZE_GUI);
@@ -2070,7 +2060,7 @@ void create_LiVES(void) {
   }
 
   // the actual playback image for the internal player
-  mainw->play_image = lives_image_new_from_pixbuf(NULL);
+  mainw->play_image = lives_drawing_area_new();
   lives_widget_set_app_paintable(mainw->play_image, TRUE);
 
   lives_widget_show(mainw->play_image); // needed to get size
@@ -2277,9 +2267,9 @@ void create_LiVES(void) {
   mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_msg_area), &mainw->sw_func);
 
   if (prefs->show_msg_area) {
-    g_signal_connect_after(LIVES_GUI_OBJECT(mainw->msg_area), LIVES_WIDGET_CONFIGURE_EVENT,
-                           LIVES_GUI_CALLBACK(config_event2),
-                           NULL);
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->msg_area), LIVES_WIDGET_CONFIGURE_EVENT,
+                                    LIVES_GUI_CALLBACK(config_event2),
+                                    NULL);
     lives_widget_add_events(mainw->msg_area, LIVES_SMOOTH_SCROLL_MASK | LIVES_SCROLL_MASK);
   }
   lives_widget_set_vexpand(mainw->msg_area, TRUE);
@@ -2294,14 +2284,14 @@ void create_LiVES(void) {
   mainw->msg_adj = lives_range_get_adjustment(LIVES_RANGE(mainw->msg_scrollbar));
 
   if (prefs->show_msg_area) {
-    g_signal_connect_after(LIVES_GUI_OBJECT(mainw->msg_adj),
-                           LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                           LIVES_GUI_CALLBACK(msg_area_scroll),
-                           (livespointer)mainw->msg_area);
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->msg_adj),
+                                    LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(msg_area_scroll),
+                                    (livespointer)mainw->msg_area);
 
-    g_signal_connect(LIVES_GUI_OBJECT(mainw->msg_area), LIVES_WIDGET_SCROLL_EVENT,
-                     LIVES_GUI_CALLBACK(on_msg_area_scroll),
-                     (livespointer)mainw->msg_adj);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->msg_area), LIVES_WIDGET_SCROLL_EVENT,
+                              LIVES_GUI_CALLBACK(on_msg_area_scroll),
+                              (livespointer)mainw->msg_adj);
   }
 
   // accel keys
@@ -2559,7 +2549,7 @@ void create_LiVES(void) {
                          LIVES_GUI_CALLBACK(key_press_or_release),
                          NULL);
   }
-  mainw->config_func = g_signal_connect_after(LIVES_GUI_OBJECT(mainw->video_draw), LIVES_WIDGET_CONFIGURE_EVENT,
+  mainw->config_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->video_draw), LIVES_WIDGET_CONFIGURE_EVENT,
                        LIVES_GUI_CALLBACK(config_event),
                        NULL);
   mainw->pb_fps_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->spinbutton_pb_fps),
@@ -3105,6 +3095,7 @@ void show_lives(void) {
   int i;
 
   lives_widget_show_all(mainw->top_vbox);
+  gtk_window_set_position(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), GTK_WIN_POS_CENTER_ALWAYS);
 
   if (!prefs->show_gui && prefs->startup_interface == STARTUP_CE) {
     lives_widget_show_now(LIVES_MAIN_WINDOW_WIDGET); //this calls the config_event()
@@ -3586,7 +3577,7 @@ void fullscreen_internal(void) {
     mainw->ce_frame_height = height;
 
     if (!LIVES_IS_PLAYING) {
-      lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->play_image), NULL);
+      set_drawing_area_from_pixbuf(mainw->play_image, NULL, NULL);
     }
 
     // visible contents of pf_grid
@@ -3608,9 +3599,9 @@ void block_expose(void) {
   // otherwise we get into a loop of expose events
   // symptoms - strace shows the app looping on poll() and it is otherwise
   // unresponsive
-  mainw->draw_blocked = TRUE;
+  /// THIS WAS FIXED: gtkdrawingarea must be used instead of gtkimage !
+  //mainw->draw_blocked = TRUE;
 #if !GTK_CHECK_VERSION(3, 0, 0)
-  //lives_signal_handler_block(mainw->video_draw, mainw->config_func);
   lives_signal_handler_block(mainw->video_draw, mainw->vidbar_func);
   lives_signal_handler_block(mainw->laudio_draw, mainw->laudbar_func);
   lives_signal_handler_block(mainw->raudio_draw, mainw->raudbar_func);
@@ -3621,7 +3612,6 @@ void block_expose(void) {
 
 void unblock_expose(void) {
   // unblock expose/config events
-  mainw->draw_blocked = FALSE;
 #if !GTK_CHECK_VERSION(3, 0, 0)
   //lives_signal_handler_unblock(mainw->video_draw, mainw->config_func);
   lives_signal_handler_unblock(mainw->video_draw, mainw->vidbar_func);
@@ -3669,28 +3659,26 @@ void make_preview_box(void) {
                        LIVES_GUI_CALLBACK(on_mouse_scroll),
                        NULL);
 
-#if GTK_CHECK_VERSION(3, 0, 0)
-  lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_EXPOSE_EVENT,
-                       LIVES_GUI_CALLBACK(expose_pim),
-                       NULL);
-#endif
-
   lives_box_pack_start(LIVES_BOX(mainw->preview_box), eventbox, TRUE, TRUE, 0);
 
   lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
                        LIVES_GUI_CALLBACK(frame_context),
                        LIVES_INT_TO_POINTER(3));
 
-  mainw->preview_image = lives_image_new_from_pixbuf(NULL);
+  mainw->preview_image = lives_drawing_area_new();
+#if GTK_CHECK_VERSION(3, 0, 0)
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->preview_image), LIVES_WIDGET_EXPOSE_EVENT,
+                       LIVES_GUI_CALLBACK(expose_pim),
+                       LIVES_INT_TO_POINTER(FALSE));
+#endif
   lives_container_add(LIVES_CONTAINER(eventbox), mainw->preview_image);
-  lives_widget_set_app_paintable(eventbox, TRUE);
+  lives_widget_set_app_paintable(mainw->preview_image, TRUE);
 
   if (mainw->play_window != NULL) {
     if (!CURRENT_CLIP_HAS_VIDEO) {
       if (mainw->imframe != NULL) {
         lives_widget_set_size_request(mainw->preview_image, lives_pixbuf_get_width(mainw->imframe),
                                       lives_pixbuf_get_height(mainw->imframe));
-
       }
     } else
       lives_widget_set_size_request(mainw->preview_image, MAX(mainw->pwidth, mainw->sepwin_minwidth), mainw->pheight);
@@ -4020,8 +4008,6 @@ void make_play_window(void) {
     unhide_cursor(lives_widget_get_xwindow(mainw->playarea));
   }
 
-  lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->play_image), NULL);
-
   if (mainw->play_window != NULL) {
     // this shouldn't ever happen
     kill_play_window();
@@ -4031,7 +4017,6 @@ void make_play_window(void) {
   if (mainw->multitrack != NULL) lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
   gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), TRUE);
   gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), TRUE);
-  lives_widget_set_app_paintable(mainw->play_window, TRUE);
 
   if (prefs->show_gui) {
     lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), get_transient_full());
@@ -4800,7 +4785,7 @@ void splash_init(void) {
     if (mainw && LIVES_MAIN_WINDOW_WIDGET && prefs && prefs->startup_phase != 0)
       lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
 
-    //lives_widget_context_update();
+    lives_widget_context_update();
     lives_set_cursor_style(LIVES_CURSOR_BUSY, mainw->splash_window);
   } else {
     lives_widget_destroy(mainw->splash_window);

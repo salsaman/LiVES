@@ -1511,10 +1511,6 @@ typedef struct {
   boolean has_session_workdir;
   boolean startup_error;
 
-  boolean kb_timer_end;
-
-  boolean draw_blocked; // block drawing of timeline bars : prevents an infinite loop
-
   int ce_frame_width, ce_frame_height;
 
   /// TODO: need to be per-thread
@@ -1577,8 +1573,6 @@ typedef struct {
   int crash_possible; // TODO - check this
 
   LiVESPixbuf *scrap_pixbuf; ///< cached image for speeding up rendering
-
-  volatile LiVESWidget *stop_emmission; /// handling for GUI exposure signals
 
   boolean no_context_update; ///< may be set temporarily to block wodget context updates
   boolean no_expose;

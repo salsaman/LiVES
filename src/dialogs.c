@@ -62,15 +62,6 @@ static lives_time_source_t last_time_source;
 static int cache_hits = 0, cache_misses = 0;
 static double jitter = 0.;
 
-static boolean anim_mt_idle(livespointer data) {
-  if (mainw->multitrack == NULL &&
-      !mainw->faded && (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor && prefs->play_monitor != 0 &&
-                                       capable->nmonitors > 1)) &&
-      mainw->current_file != mainw->scrap_file) get_play_times();
-  if (mainw->multitrack != NULL && !cfile->opening) animate_multitrack(mainw->multitrack);
-  g_print("ANIM\n");
-  return FALSE;
-}
 
 const char *get_cache_stats(void) {
   static char buff[1024];
@@ -347,9 +338,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
     lives_widget_grab_focus(okbutton);
   }
 
-  lives_window_center(LIVES_WINDOW(dialog));
   lives_widget_show_all(dialog);
-  lives_widget_context_update();
   lives_window_center(LIVES_WINDOW(dialog));
 
   if (is_blocking)
@@ -1167,7 +1156,7 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
       if (!mainw->is_rendering)  progress_speed = 2.;
     }
   }
-  lives_widget_context_update();
+  //lives_widget_context_update();
 }
 
 
@@ -2678,7 +2667,7 @@ boolean do_auto_dialog(const char *text, int type) {
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
   lives_set_cursor_style(LIVES_CURSOR_BUSY, proc_ptr->processing);
 
-  lives_widget_context_update();
+  //lives_widget_context_update();
 
   if (type == 0 || type == 2) {
     clear_mainw_msg();
@@ -3464,9 +3453,9 @@ void threaded_dialog_spin(double fraction) {
   if (fraction > 0.) {
     timesofar = (double)(lives_get_current_ticks() - sttime) / TICKS_PER_SECOND_DBL;
     disp_fraction(fraction, timesofar, procw);
-    lives_widget_context_update();
+    /* lives_widget_context_update(); */
     lives_widget_process_updates(procw->processing, TRUE);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    /* lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
   } else {
     if (!CURRENT_CLIP_IS_VALID || !cfile->progress_start || !cfile->progress_end ||
         *(mainw->msg) || !(progress = atoi(mainw->msg))) {
@@ -3475,9 +3464,9 @@ void threaded_dialog_spin(double fraction) {
 #ifndef GDB
       if (LIVES_IS_PROGRESS_BAR(procw->progressbar)) {
 #if GTK_CHECK_VERSION(3, 0, 0)
-        lives_widget_context_update();
+        //lives_widget_context_update();
         lives_widget_process_updates(procw->processing, TRUE);
-        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+        //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 #endif
         lives_progress_bar_pulse(LIVES_PROGRESS_BAR(procw->progressbar));
       }
@@ -4103,7 +4092,7 @@ LIVES_GLOBAL_INLINE boolean do_layout_recover_dialog(void) {
   } else {
     boolean ret;
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-    lives_widget_context_update();
+    //lives_widget_context_update();
     ret = recover_layout();
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
     return ret;

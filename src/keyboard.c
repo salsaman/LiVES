@@ -104,14 +104,6 @@ boolean ext_triggers_poll(livespointer data) {
   }
 #endif
 
-  if (mainw->kb_timer_end) {
-    mainw->kb_timer_end = FALSE;
-#if GTK_CHECK_VERSION(3, 0, 0)
-    // below 3, 0, 0 the timer is removed by a function
-    return FALSE;
-#endif
-  }
-
 #ifdef USE_GLIB
   if (needs_check) {
     if (priority != G_PRIORITY_DEFAULT) {
@@ -120,7 +112,7 @@ boolean ext_triggers_poll(livespointer data) {
     return TRUE;
   } else {
     if (priority != G_PRIORITY_DEFAULT_IDLE) {
-      g_source_set_priority(g_main_context_find_source_by_id(NULL, mainw->kb_timer), (priority = G_PRIORITY_DEFAULT_IDLE));
+      g_source_set_priority(g_main_context_find_source_by_id(NULL, mainw->kb_timer), (priority = G_PRIORITY_LOW));
     }
   }
 #endif

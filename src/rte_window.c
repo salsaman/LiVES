@@ -2468,7 +2468,7 @@ rte_window_ready:
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, irte_window);
-  mainw->no_context_update = FALSE;
+  //mainw->no_context_update = FALSE;
   return irte_window;
 }
 

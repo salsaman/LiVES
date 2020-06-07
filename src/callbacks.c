@@ -519,12 +519,6 @@ void lives_exit(int signum) {
 
     // stop valgrind from complaining
 #ifdef KEEP_VALGRIND_HAPPY
-    if (mainw->preview_image != NULL && LIVES_IS_IMAGE(mainw->preview_image))
-      lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->preview_image), NULL);
-
-    if (mainw->start_image != NULL) lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->start_image), NULL);
-    if (mainw->end_image != NULL) lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->end_image), NULL);
-
     if (mainw->frame_layer != NULL) {
       check_layer_ready(mainw->frame_layer);
       weed_layer_free(mainw->frame_layer);
@@ -6039,7 +6033,6 @@ remall:
 
   if (retval != LIVES_RESPONSE_CANCEL) {
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-    lives_widget_context_update();
 
     // get space before
     fspace = get_fs_free(prefs->workdir);
@@ -6535,7 +6528,7 @@ void donate_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 EXPOSE_FN_DECL(expose_fsplayimg_event, widget, user_data) {
   LiVESPixbuf *pixbuf = (LiVESPixbuf *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "pixbuf");
-  set_ce_frame_from_pixbuf(LIVES_IMAGE(widget), pixbuf, cairo);
+  set_drawing_area_from_pixbuf(widget, pixbuf, cairo);
   return TRUE;
 }
 EXPOSE_FN_END
@@ -7642,8 +7635,8 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
         sched_yield();
 
         if (!mainw->fs && mainw->multitrack == NULL) {
-          //mainw->pwidth = DEFAULT_FRAME_HSIZE - H_RESIZE_ADJUST;
-          //mainw->pheight = DEFAULT_FRAME_VSIZE - V_RESIZE_ADJUST;
+          /* mainw->pwidth = DEF_FRAME_HSIZE_GUI; */
+          /* mainw->pheight = DEF_FRAME_VSIZE_GUI; */
 
           lives_widget_show(mainw->t_bckground);
           lives_widget_show(mainw->t_double);
@@ -8246,7 +8239,6 @@ void on_load_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   if (resp != LIVES_RESPONSE_ACCEPT) on_filechooser_cancel_clicked(chooser);
   else on_open_new_audio_clicked(LIVES_FILE_CHOOSER(chooser), NULL);
-
 }
 
 
@@ -9160,8 +9152,7 @@ void on_preview_spinbutton_changed(LiVESSpinButton * spinbutton, livespointer us
   // prevent multiple updates from interfering
   updated = TRUE;
   lives_signal_handler_block(mainw->preview_spinbutton, mainw->preview_spin_func);
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-
+  //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
   mainw->preview_frame = preview_frame;
   load_preview_image(TRUE);
   lives_signal_handler_unblock(mainw->preview_spinbutton, mainw->preview_spin_func);
@@ -9380,8 +9371,6 @@ EXPOSE_FN_DECL(expose_vid_event, widget, user_data) {
 
   if (mainw->recoverable_layout) return FALSE;
 
-  if (mainw->draw_blocked) return TRUE;
-
   if (!prefs->show_gui || mainw->multitrack != NULL ||
       (mainw->fs && ((prefs->play_monitor == prefs->gui_monitor || capable->nmonitors == 1) ||
                      prefs->play_monitor == 0) && LIVES_IS_PLAYING &&
@@ -9531,8 +9520,6 @@ EXPOSE_FN_DECL(expose_laud_event, widget, user_data) {
 
   if (mainw->recoverable_layout) return FALSE;
 
-  if (mainw->draw_blocked) return TRUE;
-
   if (!prefs->show_gui || mainw->multitrack != NULL ||
       (mainw->fs && (prefs->play_monitor == prefs->gui_monitor || capable->nmonitors == 1 ||
                      prefs->play_monitor == 0) && LIVES_IS_PLAYING &&
@@ -9570,8 +9557,6 @@ EXPOSE_FN_DECL(expose_raud_event, widget, user_data) {
   int ex, ey, ew, eh;
 
   if (mainw->recoverable_layout) return FALSE;
-
-  if (mainw->draw_blocked) return TRUE;
 
   if (!prefs->show_gui || mainw->multitrack != NULL ||
       (mainw->fs && (prefs->play_monitor == prefs->gui_monitor || capable->nmonitors == 1 ||

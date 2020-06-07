@@ -2852,6 +2852,22 @@ static void theme_widgets_set_sensitive(LiVESCombo *combo, livespointer xprefsw)
 }
 
 
+static boolean check_txtsize(LiVESWidget *combo) {
+  LiVESList *list = get_textsizes_list();
+  char *msgtextsize = lives_combo_get_active_text(LIVES_COMBO(combo));
+  int idx = lives_list_strcmp_index(list, (livesconstpointer)msgtextsize, TRUE);
+  lives_list_free_all(&list);
+  lives_free(msgtextsize);
+
+  if (idx > mainw->max_textsize) {
+    show_warn_image(combo, _("Text size may be too large for the screen size"));
+    return TRUE;
+  }
+  show_warn_image(combo, NULL);
+  return FALSE;
+}
+
+
 /*
    Function creates preferences dialog
 */
@@ -2965,6 +2981,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   } else prefsw->prefs_dialog = saved_dialog;
 
   prefsw->ignore_apply = FALSE;
+  //prefs->cb_is_switch = TRUE; // TODO: intervept TOGGLED handler
 
   // Get dialog's vbox and show it
   dialog_vbox_main = lives_dialog_get_content_area(LIVES_DIALOG(prefsw->prefs_dialog));
@@ -3207,6 +3224,10 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                                LIVES_BOX(hbox), NULL);
 
   lives_combo_set_active_index(LIVES_COMBO(prefsw->msg_textsize_combo), prefs->msg_textsize);
+
+  check_txtsize(prefsw->msg_textsize_combo);
+  lives_signal_connect_after(LIVES_WIDGET_OBJECT(prefsw->msg_textsize_combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                             LIVES_GUI_CALLBACK(check_txtsize), NULL);
 
   lives_list_free_all(&textsizes_list);
 
@@ -5168,6 +5189,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
     lives_widget_set_sensitive(prefsw->closebutton, TRUE);
   }
   lives_button_grab_default_special(prefsw->closebutton);
+
+  prefs->cb_is_switch = FALSE;
+
 
   lives_widget_add_accelerator(prefsw->closebutton, LIVES_WIDGET_CLICKED_SIGNAL, prefsw->accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);

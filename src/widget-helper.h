@@ -20,6 +20,7 @@
 #endif
 
 #define LIVES_HAS_GRID_WIDGET 0
+#define LIVES_HAS_SWITCH_WIDGET 0
 #define LIVES_HAS_IMAGE_MENU_ITEM 0
 #define LIVES_HAS_DEVICE_MANAGER 0
 
@@ -920,6 +921,8 @@ boolean lives_button_grab_default_special(LiVESWidget *);
 
 #define LOCK_BUTTON_WIDTH 24 ///< sizes for the lock button
 #define LOCK_BUTTON_HEIGHT 24
+
+boolean show_warn_image(LiVESWidget *, const char *text);
 
 LiVESWidget *lives_standard_button_new(void);
 LiVESWidget *lives_standard_button_new_with_label(const char *labeltext);

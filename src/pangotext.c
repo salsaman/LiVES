@@ -125,7 +125,6 @@ static char *rewrap_text(char *text) {
 }
 
 
-#ifdef MUST_FIT
 static char *remove_first_line(char *text) {
   int i;
   size_t tlen = lives_strlen(text);
@@ -134,7 +133,6 @@ static char *remove_first_line(char *text) {
   }
   return NULL;
 }
-#endif
 
 
 void layout_to_lives_painter(LingoLayout *layout, lives_painter_t *cr, lives_text_mode_t mode, lives_colRGBA64_t *fg,
@@ -181,6 +179,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
   char *readytext, *testtext = NULL, *newtext = NULL, *tmp, *xx;
   size_t ll;
   weed_error_t error;
+
   int w = 0, h = 0, pw;
   int totlines = 0;
   int whint = 0;
@@ -189,7 +188,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
   boolean heightdone = FALSE;
   boolean needs_newline = FALSE;
 
-  if (width < 32 || height < 32) return NULL;
+  if (width < 32 || height < MIN_MSGBAR_HEIGHT) return NULL;
 
   ctx = lives_widget_create_lingo_context(widget);
   if (ctx == NULL || !LINGO_IS_CONTEXT(ctx)) return NULL;
@@ -204,26 +203,46 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
   readytext = lives_strdup("");
 
   msg = get_nth_info_message(n);
+  if (!msg) return NULL;
+  newtext = weed_get_string_value(msg, WEED_LEAF_LIVES_MESSAGE_STRING, &error);
+  if (error != WEED_SUCCESS) return NULL;
+  if (!newtext) return NULL;
+  slen = (int)lives_strlen(newtext);
+  if (newtext[slen - 1] == '\n') {
+    newtext[--slen] = 0;
+  }
+  totlines = get_token_count(newtext, '\n') + 1;
+#ifdef DEBUG_MSGS
+  g_print("Got msg:%s\ntotal is now %d lines\n", newtext, totlines);
+#endif
+  if (msg == mainw->msg_list) msg = NULL;
+  else {
+    msg = weed_get_plantptr_value(msg, WEED_LEAF_PREVIOUS, &error);
+    if (error != WEED_SUCCESS) return NULL;
+  }
 
 #ifdef DEBUG_MSGS
   g_print("Want msg number %d at bottom\n%s", n, weed_get_string_value(msg, WEED_LEAF_LIVES_MESSAGE_STRING, &error));
 #endif
 
   while (1) {
-    if (newtext == NULL) {
-      if (msg == NULL) break;
+    if (!newtext) {
+      if (!msg) break;
       newtext = weed_get_string_value(msg, WEED_LEAF_LIVES_MESSAGE_STRING, &error);
       if (error != WEED_SUCCESS) break;
-      if (newtext == NULL) break;
+      if (!newtext) break;
       totlines += get_token_count(newtext, '\n');
 #ifdef DEBUG_MSGS
       g_print("Got msg:%s\ntotal is now %d lines\n", newtext, totlines);
 #endif
       if (msg == mainw->msg_list) msg = NULL;
-      else msg = weed_get_plantptr_value(msg, WEED_LEAF_PREVIOUS, &error);
+      else {
+        msg = weed_get_plantptr_value(msg, WEED_LEAF_PREVIOUS, &error);
+        if (error != WEED_SUCCESS) break;
+      }
     }
 
-    if (testtext != NULL) lives_free(testtext);
+    if (testtext) lives_free(testtext);
     testtext = lives_strdup_printf("%s%s%s", newtext, needs_newline ? "\n" : "", readytext);
     needs_newline = TRUE;
     lingo_layout_set_text(layout, "", -1);
@@ -244,14 +263,14 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
       g_print("Too high !\n");
 #endif
 
-#ifdef MUST_FIT
+      //#ifdef MUST_FIT
       while (h > height) {
         // text was too high, start removing lines from the top until it fits
         tmp = remove_first_line(newtext);
         lives_free(newtext);
         newtext = tmp;
         totlines--;
-        if (newtext == NULL) break; // no more to remove, we are done !
+        if (!newtext) break; // no more to remove, we are done !
         //#ifdef DEBUG_MSGS
         g_print("Retry with (%d) |%s|\n", totlines, newtext);
         //#endif
@@ -268,7 +287,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
         lingo_layout_get_size(layout, NULL, &h);
         h /= LINGO_SCALE;
       }
-#endif
+      //#endif
       heightdone = TRUE;
     }
 
@@ -330,7 +349,8 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
       lives_free(newtext);
       newtext = tmp;
       totlines += get_token_count(newtext, '\n');
-      continue; // width is OK again, need to recheck height
+      // width is OK again, need to recheck height
+      heightdone = FALSE;
     }
 
     lives_free(newtext);
@@ -342,6 +362,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
     g_print("|%s| passed size tests\n", readytext);
 #endif
     if (heightdone) break;
+    /// height too small; prepend more text
   }
 
   // result is now in readytext

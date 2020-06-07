@@ -1972,7 +1972,7 @@ void create_LiVES(void) {
   add_fill_to_box(LIVES_BOX(mainw->framebar));
 
   mainw->pf_grid = lives_table_new(1, 3, TRUE);
-  lives_widget_set_app_paintable(mainw->pf_grid, TRUE);
+  //lives_widget_set_app_paintable(mainw->pf_grid, TRUE);
 
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -2258,7 +2258,7 @@ void create_LiVES(void) {
   lives_widget_set_margin_bottom(mainw->raudio_draw, widget_opts.packing_height * 4);
 
   mainw->message_box = lives_hbox_new(FALSE, 0);
-  lives_widget_set_app_paintable(mainw->message_box, TRUE);
+  //lives_widget_set_app_paintable(mainw->message_box, TRUE);
   lives_widget_set_vexpand(mainw->message_box, TRUE);
   if (prefs->show_msg_area)
     lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->message_box, TRUE, TRUE, 0);
@@ -2273,7 +2273,7 @@ void create_LiVES(void) {
     lives_widget_add_events(mainw->msg_area, LIVES_SMOOTH_SCROLL_MASK | LIVES_SCROLL_MASK);
   }
   lives_widget_set_vexpand(mainw->msg_area, TRUE);
-  lives_widget_set_app_paintable(mainw->msg_area, TRUE);
+  //lives_widget_set_app_paintable(mainw->msg_area, TRUE);
   lives_container_set_border_width(LIVES_CONTAINER(mainw->message_box), 0);
   lives_widget_apply_theme3(mainw->msg_area, LIVES_WIDGET_STATE_NORMAL);
   lives_box_pack_start(LIVES_BOX(mainw->message_box), mainw->msg_area, TRUE, TRUE, 0);

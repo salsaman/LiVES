@@ -4808,7 +4808,7 @@ boolean get_screen_usable_size(int *w, int *h) {
   return FALSE;
 }
 
-//static pthread_mutex_t msgar = PTHREAD_MUTEX_INITIALIZER;
+
 
 static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recompute, LiVESAdjustment * adj) {
   // "scroll" the message area so that the last message appears at the bottom
@@ -4820,7 +4820,7 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
   int nlines;
 
   static int last_height = -1;
-  return FALSE;
+
   if (!prefs->show_msg_area) return FALSE;
   if (mainw->n_messages <= 0) return FALSE;
 
@@ -4844,14 +4844,11 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
   if (msgno < 0) msgno = 0;
   if (msgno >= mainw->n_messages) msgno = mainw->n_messages - 1;
 
-  //pthread_mutex_lock(&msgar);
   // redraw the layout ///////////////////////
   lives_widget_set_font_size(widget, LIVES_WIDGET_STATE_NORMAL, lives_textsize_to_string(prefs->msg_textsize));
 
   layout = layout_nth_message_at_bottom(msgno, width, height, LIVES_WIDGET(widget), &nlines);
-  //g_print("GET  LINGO\n");
   if (!LINGO_IS_LAYOUT(layout) || layout == NULL) {
-    //pthread_mutex_unlock(&msgar);
     return FALSE;
   }
 
@@ -4868,7 +4865,7 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
       //g_print("VALS3 lh = %d, nlines = %d, lsize = %f, height = %d, ps = %f\n", lh, nlines, linesize, height, page_size);
       lives_widget_object_freeze_notify(LIVES_WIDGET_OBJECT(adj));
       lives_adjustment_set_lower(adj, page_size - 2);
-      lives_adjustment_set_upper(adj, (double)(mainw->n_messages + page_size - 1));
+      lives_adjustment_set_upper(adj, (double)(mainw->n_messages + page_size - 2));
       lives_adjustment_set_page_size(adj, page_size);
       lives_adjustment_set_value(adj, (double)msgno);
       lives_widget_object_thaw_notify(LIVES_WIDGET_OBJECT(adj));
@@ -4883,7 +4880,6 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout_height", LIVES_INT_TO_POINTER(lh + .5));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout_lines", LIVES_INT_TO_POINTER(nlines));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout_last", LIVES_INT_TO_POINTER(msgno));
-  //pthread_mutex_unlock(&msgar);
   return TRUE;
 }
 
@@ -5039,6 +5035,11 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
       width -= overflowx;
       height -= overflowy;
 
+      if (height <= 0) {
+        height = MIN_MSGBAR_HEIGHT;
+        mainw->mbar_res = height;
+      }
+
       if (width < 0 || height < 0) return FALSE;
 
       w -= overflowx;
@@ -5084,7 +5085,7 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
       }
 
       if (height > 0 && width > 0) {
-        g_print("NEW SIZE %d\n", height - 4);
+        //g_print("NEW SIZE %d\n", height - 4);
         lives_widget_set_size_request(widget, width, height);
         reqheight = height;
         reqwidth = width;
@@ -5128,6 +5129,13 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
   llines = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout_lines"));
   lineheight = CEIL(lheight / llines, 1);
 
+  if (height / lineheight < MIN_MSGBOX_LLINES) {
+    /// try a smaller font size if we can
+    if (prefs->msg_textsize > 1) prefs->msg_textsize--;
+    else if (height < lineheight) return FALSE;
+    mainw->max_textsize = prefs->msg_textsize;
+  }
+
   if (lheight < height - wiggle_room || prefs->msg_textsize != last_textsize) {
 #ifdef DEBUG_OVERFLOW
     g_print("VALS2 %d %d %d : %d %d\n", height / lineheight, llines + 1, llast, prefs->msg_textsize, last_textsize);
@@ -5156,7 +5164,7 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
     else cr = cairo;
     height = FLOOR(height, lineheight);
     layout_to_lives_painter(layout, cr, LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND, &fg, &bg, width, height,
-                            0., 0., 0., height - lheight);
+                            0., 0., 0., height - lheight - 4);
     lingo_painter_show_layout(cr, layout);
     if (cr != cairo) lives_painter_destroy(cr);
   }
@@ -5166,7 +5174,7 @@ EXPOSE_FN_END
 
 
 LIVES_GLOBAL_INLINE void msg_area_scroll_to_end(LiVESWidget * widget, LiVESAdjustment * adj) {
-  msg_area_scroll_to(widget, mainw->n_messages - 1, TRUE, adj);
+  msg_area_scroll_to(widget, mainw->n_messages - 2, TRUE, adj);
   // expose_msg_area(widget, NULL, NULL);
 }
 

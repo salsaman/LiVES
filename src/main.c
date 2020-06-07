@@ -191,7 +191,7 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
     if ((level & LIVES_LOG_LEVEL_MASK) == LIVES_LOG_LEVEL_CRITICAL)
       msg = lives_strdup_printf(_("%s Critical error: %s\n"), domain, message);
     else msg = lives_strdup_printf(_("%s Fatal error: %s\n"), domain, message);
-#define BREAK_ON_CRIT
+    //#define BREAK_ON_CRIT
 #ifdef BREAK_ON_CRIT
     if (prefs->show_dev_opts) raise(LIVES_SIGTRAP);
 #endif
@@ -1498,6 +1498,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   prefs->msgs_pbdis = get_boolean_prefd(PREF_MSG_PBDIS, TRUE);
 
+  prefs->cb_is_switch = FALSE;
+
   //////////////////////////////////////////////////////////////////
 
   if (!mainw->foreign) {
@@ -2028,7 +2030,7 @@ static void do_start_messages(void) {
   char *tmp, *endian, *fname, *phase = NULL;
 
   if (prefs->vj_mode) {
-    d_print(_("Starting in VJ MODE\nSkipping startup dependency checks\n"));
+    d_print(_("Starting in VJ MODE: Skipping startup dependency checks\n"));
     return;
   }
 
@@ -2992,8 +2994,12 @@ boolean resize_message_area(livespointer data) {
 #if !GTK_CHECK_VERSION(3, 0, 0)
   expose_msg_area(mainw->msg_area, NULL, NULL);
 #endif
-  if (isfirst && mainw->current_file == -1) d_print("");
-  isfirst = FALSE;
+  if (isfirst) {
+    if (mainw->current_file == -1) d_print("");
+    msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
+    lives_widget_queue_draw_if_visible(mainw->msg_area);
+    isfirst = FALSE;
+  }
   return FALSE;
 }
 
@@ -3342,7 +3348,7 @@ static boolean lives_startup(livespointer data) {
   if (devmap != NULL)
     on_devicemap_load_activate(NULL, devmap);
 
-  d_print(_("Welcome to LiVES version %s.\n\n"), LiVES_VERSION);
+  d_print(_("Welcome to LiVES version %s.\n"), LiVES_VERSION);
 
   mainw->no_switch_dprint = FALSE;
   d_print("");
@@ -3552,7 +3558,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   _weed_leaf_get_flags = weed_leaf_get_flags;
   _weed_leaf_set_flags = weed_leaf_set_flags;
 
-  g_print("macrst is %ld\n", sizeof(weed_macropixel_t));
 #ifdef ENABLE_DIAGNOSTICS
   run_weed_startup_tests();
   test_palette_conversions();
@@ -3622,6 +3627,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   mainw->LiVES = NULL;
   mainw->suppress_dprint = FALSE;
   mainw->clutch = TRUE;
+  mainw->mbar_res = 0;
+  mainw->max_textsize = N_FONT_SIZES;
 
   pthread_mutexattr_init(&mattr);
   pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
@@ -4735,9 +4742,25 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf, li
   lives_painter_t *cr;
   int cx, cy;
   int rwidth, rheight, width, height, owidth, oheight;
+  GdkDrawingContext *xctx;
+  GdkWindow *win = NULL;
 
-  if (!cairo) cr = lives_painter_create_from_widget(widget);
-  else cr = cairo;
+  if (!cairo) {
+    cairo_rectangle_int_t crect;
+    cairo_region_t *creg;
+    //cr = lives_painter_create_from_widget(widget);
+    win = lives_widget_get_xwindow(widget);
+    if (!GDK_IS_WINDOW(win)) return;
+    rwidth = lives_widget_get_allocation_width(widget);
+    rheight = lives_widget_get_allocation_height(widget);
+    if (rwidth * rheight == 0)return;
+    crect.x = crect.y = 0;
+    crect.width = rwidth;
+    crect.height = rheight;
+    creg = cairo_region_create_rectangle(&crect);
+    xctx = gdk_window_begin_draw_frame(win, creg);
+    cr = gdk_drawing_context_get_cairo_context(xctx);
+  } else cr = cairo;
   if (!cr) return;
 
   rwidth = lives_widget_get_allocation_width(widget);
@@ -4778,7 +4801,8 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf, li
     lives_painter_render_background(widget, cr, 0, 0, rwidth, rheight);
   }
   lives_painter_fill(cr);
-  if (cairo == NULL) lives_painter_destroy(cr);
+  if (win) gdk_window_end_draw_frame(win, xctx);
+  else if (!cairo) lives_painter_destroy(cr);
 }
 
 
@@ -4826,7 +4850,7 @@ void load_start_image(int frame) {
     int hspace = get_hspace();
     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
     hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
-    vsize = (scr_height - (CE_TIMELINE_HSPACE + hspace + by));
+    vsize = scr_height - (CE_TIMELINE_HSPACE + hspace + by + mainw->mbar_res);
     if (LIVES_IS_PLAYING && mainw->double_size) {
       // NB:
       /* mainw->ce_frame_width = hsize / scale + H_RESIZE_ADJUST; */
@@ -5101,7 +5125,7 @@ check_stcache:
       int hspace = get_hspace();
       get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
       hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
-      vsize = (scr_height - (CE_TIMELINE_HSPACE + hspace + by));
+      vsize = scr_height - (CE_TIMELINE_HSPACE + hspace + by + mainw->mbar_res);
       if (LIVES_IS_PLAYING && mainw->double_size) {
         // NB:
         /* mainw->ce_frame_width = hsize / scale + H_RESIZE_ADJUST; */
@@ -9292,7 +9316,7 @@ void load_frame_image(int frame) {
         if (mainw->play_window != NULL) return;
 
         hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
-        vsize = (scr_height - (CE_TIMELINE_HSPACE + hspace + by));
+        vsize = scr_height - (CE_TIMELINE_HSPACE + hspace + by + mainw->mbar_res);
 
         if (scale < 0.) {
           // foreign capture

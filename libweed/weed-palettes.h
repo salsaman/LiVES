@@ -159,7 +159,7 @@
 #define WEED_VCHAN_DESC_FIRST_CUSTOM	(1 << 16) ///< floating point type
 
 typedef struct {
-  uint32_t ext_ref;  ///< link to an enumerated type
+  uint16_t ext_ref;  ///< link to an enumerated type
   uint16_t chantype[MAXPPLANES]; ///  e.g. {WEED_VCHAN_U, WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_Y)
   uint32_t flags; /// bitmap of flags, eg. WEED_VCHAN_DESC_FP | WEED_VCHAN_DESC_PLANAR
   uint8_t  hsub[MAXPPLANES];  /// horiz. subsampling, 0 or 1 means no subsampling, 2 means halved etc. (planar only)

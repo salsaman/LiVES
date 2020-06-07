@@ -406,6 +406,7 @@ typedef GdkFilterReturn LiVESFilterReturn;
 #define LIVES_FONT_SIZE_X_LARGE "x-large"    // 5
 #define LIVES_FONT_SIZE_XX_LARGE "xx-large"   // 6
 #define LIVES_FONT_SIZE_NORMAL LIVES_FONT_SIZE_MEDIUM
+#define N_FONT_SIZES 7
 
 // events
 #define LIVES_WIDGET_EVENT "event"
@@ -462,7 +463,6 @@ typedef GtkComboBox                       LiVESCombo;
 typedef GtkComboBox                       LiVESComboBox;
 typedef GtkButton                         LiVESButton;
 typedef GtkButtonBox                      LiVESButtonBox;
-typedef GtkToggleButton                   LiVESToggleButton;
 
 typedef GtkTextView                       LiVESTextView;
 typedef GtkTextBuffer                     LiVESTextBuffer;
@@ -548,6 +548,16 @@ typedef LiVESWidget                       LiVESGrid;
 typedef GtkGrid                           LiVESTable;
 #else
 typedef GtkTable                          LiVESTable;
+#endif
+
+#if GTK_CHECK_VERSION(3, 0, 0)
+typedef GtkSwitch                         LiVESSwitch;
+typedef GtkWidget                         LiVESToggleButton;
+#undef LIVES_HAS_SWITCH_WIDGET
+#define LIVES_HAS_SWITCH_WIDGET 1
+#else
+typedef LiVESWidget                       LiVESSwitch;
+typedef GtkToggleButton                   LiVESToggleButton;
 #endif
 
 #define LiVESLayout LiVESTable
@@ -772,6 +782,7 @@ typedef GtkScale                          LiVESRuler;
 typedef GtkBox                            LiVESVBox;
 typedef GtkBox                            LiVESHBox;
 #else
+typedef GtkWidget                         LiVESSwitch;
 typedef GtkRuler                          LiVESRuler;
 typedef GtkVBox                           LiVESVBox;
 typedef GtkHBox                           LiVESHBox;
@@ -856,7 +867,6 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_SCALE_BUTTON(widget) GTK_RANGE(widget)
 #endif
 
-#define LIVES_TOGGLE_BUTTON(widget) GTK_TOGGLE_BUTTON(widget)
 #define LIVES_TOGGLE_TOOL_BUTTON(widget) GTK_TOGGLE_TOOL_BUTTON(widget)
 #define LIVES_TEXT_VIEW(widget) GTK_TEXT_VIEW(widget)
 #define LIVES_TEXT_BUFFER(widget) GTK_TEXT_BUFFER(widget)
@@ -877,6 +887,14 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_RULER(widget) GTK_RULER(widget)
 #define LIVES_VBOX(widget) GTK_VBOX(widget)
 #define LIVES_HBOX(widget) GTK_HBOX(widget)
+#endif
+
+#if LIVES_HAS_SWITCH_WIDGET
+#define LIVES_SWITCH(widget) GTK_SWITCH(widget)
+#define LIVES_TOGGLE_BUTTON(widget) GTK_WIDGET(widget)
+#else
+#define LIVES_SWITCH(widget) GTK_WIDGET(widget)
+#define LIVES_TOGGLE_BUTTON(widget) GTK_TOGGLE_BUTTON(widget)
 #endif
 
 #if GTK_CHECK_VERSION(3, 2, 0)
@@ -926,6 +944,12 @@ typedef GdkInterpType                     LiVESInterpType;
 #else
 #define LIVES_IS_HBOX(widget) GTK_IS_HBOX(widget)
 #define LIVES_IS_VBOX(widget) GTK_IS_VBOX(widget)
+#endif
+
+#ifdef LIVES_HAS_SWITCH_WIDGET
+#define LIVES_IS_SWITCH(widget) GTK_IS_SWITCH(widget)
+#else
+#define LIVES_IS_SWITCH(widget) 0
 #endif
 
 #define LIVES_IS_BOX(widget) (LIVES_IS_HBOX(widget) || LIVES_IS_VBOX(widget))
@@ -989,6 +1013,7 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_STOCK_MEDIA_PAUSE "media-pause"
 #define LIVES_STOCK_PREFERENCES "preferences-system"
 #define LIVES_STOCK_DIALOG_INFO "dialog-information"
+#define LIVES_STOCK_DIALOG_WARNING "dialog-warning"
 #define LIVES_STOCK_MISSING_IMAGE "image-missing"
 
 // these are set up in widget_helper_init()
@@ -1040,6 +1065,7 @@ char LIVES_STOCK_LABEL_MEDIA_RECORD[32];
 #define LIVES_STOCK_SELECT_ALL GTK_STOCK_SELECT_ALL
 #define LIVES_STOCK_PREFERENCES GTK_STOCK_PREFERENCES
 #define LIVES_STOCK_DIALOG_INFO GTK_STOCK_DIALOG_INFO
+#define LIVES_STOCK_DIALOG_WARNING GTK_STOCK_DIALOG_WARNING
 #define LIVES_STOCK_MISSING_IMAGE GTK_STOCK_MISSING_IMAGE
 
 #define LIVES_STOCK_LABEL_CANCEL GTK_STOCK_CANCEL

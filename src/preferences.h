@@ -418,6 +418,8 @@ typedef struct {
 
   char pa_start_opts[255];
   boolean pa_restart;
+
+  boolean cb_is_switch;
 } _prefs;
 
 enum {

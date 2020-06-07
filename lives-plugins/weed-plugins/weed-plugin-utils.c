@@ -724,7 +724,6 @@ EXPORTS int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list)
   dlink_list_t **dll, *xlist;
   // map list to flat array so we can qsort it. The original list was prepended, so adding in reverse restores original order.
   for (xlist = list; xlist; xlist = xlist->next) count++;
-  fprintf(stderr, "alloc elems %d\n", count);
   dll = (dlink_list_t **)weed_malloc((ocount = count) * sizeof(dlink_list_t *));
   for (xlist = list; xlist; xlist = xlist->next) {
     dll[--count] = xlist;

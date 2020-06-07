@@ -11038,6 +11038,8 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
       return FALSE;
     }
 
+    lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
+
     if (resaudw != NULL) {
       xarate = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_arate)));
       xachans = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_achans)));
@@ -11114,6 +11116,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
       lives_freep((void **)&rdet);
       lives_freep((void **)&resaudw);
     }
+    lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
     return FALSE; // show dialog again
   }
 
@@ -11142,6 +11145,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
         lives_freep((void **)&rdet);
         lives_freep((void **)&resaudw);
       }
+      lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
       return FALSE; // memory error
     }
     event_list_replace_events(event_list, qevent_list);
@@ -11171,6 +11175,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
       mainw->msg_adj = mainw_msg_adj;
       mainw->msg_scrollbar = mainw_msg_scrollbar;
       if (prefs->show_gui) unblock_expose();
+      lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
       return FALSE;
     }
     remove_markers(multi->event_list);
@@ -11191,6 +11196,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
     mainw->msg_adj = mainw_msg_adj;
     mainw->msg_scrollbar = mainw->msg_scrollbar;
     if (prefs->show_gui) unblock_expose();
+    lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
     return FALSE;
   }
 
@@ -11336,6 +11342,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
   }
 
   mt_show_current_frame(multi, FALSE);
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
   lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_MT);
 

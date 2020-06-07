@@ -23,6 +23,7 @@ static boolean governor_loop(livespointer data) GNU_RETURNS_TWICE;
 /// internal data keys
 #define STD_KEY "_wh_is_standard"
 #define TTIPS_KEY "_wh_lives_tooltips"
+#define TTIPS_OVERRIDE_KEY "_wh_lives_tooltips_override"
 #define ROWS_KEY "_wh_rows"
 #define COLS_KEY "_wh_cols"
 #define CDEF_KEY "_wh_current_default"
@@ -44,6 +45,7 @@ static boolean governor_loop(livespointer data) GNU_RETURNS_TWICE;
 #define SPGREEN_KEY "_wh_sp_green"
 #define SPBLUE_KEY "_wh_sp_blue"
 #define SPALPHA_KEY "_wh_sp_alpha"
+#define WARN_IMAGE_KEY "_wh_warn_image"
 
 
 #if 0
@@ -317,7 +319,12 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_t *lives_painter_create_from_widget(Li
 #ifdef GUI_GTK
   LiVESXWindow *window = lives_widget_get_xwindow(widget);
   if (window != NULL) {
+    /* #if GTK_CHECK_VERSION(3, 22, 0) */
+    /*     GdkDrawingContext *xctx = gdk_window_begin_draw_frame(lives_widget_get_xwindow(widget)); */
+    /*     cr = gdk_drawing_context_get_cairo_context(xctx); */
+    /* #else */
     cr = gdk_cairo_create(window);
+    //#endif
   }
 #endif
 #endif
@@ -979,7 +986,6 @@ static void sigdata_free(livespointer data, LiVESWidgetClosure *cl) {
 
 
 static boolean governor_loop(livespointer data) {
-  LiVESList *list;
   lives_sigdata_t *sigdata = (lives_sigdata_t *)data;
   /// this loop runs in the main thread while callbacks are being run in bg.
 
@@ -990,7 +996,6 @@ static boolean governor_loop(livespointer data) {
     g_idle_add(governor_loop, data);
     return FALSE;
   }
-reloop:
 
   mainw->clutch = TRUE;
 
@@ -1133,7 +1138,6 @@ unsigned long lives_signal_connect_async(livespointer instance, const char *deta
     livespointer data, LiVESConnectFlags flags) {
   static size_t notilen = -1;
   lives_sigdata_t *sigdata;
-  boolean is_event = FALSE;
   uint32_t nvals;
   GSignalQuery sigq;
 
@@ -1461,7 +1465,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget *wi
   boolean was_modal = TRUE;
   if (!ctx || ctx == g_main_context_default()) return TRUE;
 
-  if (LIVES_IS_WINDOW(widget)) win = widget;
+  if (LIVES_IS_WINDOW(widget)) win = (LiVESWindow *)widget;
   else win = lives_widget_get_window(widget);
   if (win && LIVES_IS_WINDOW(win)) {
     was_modal = lives_window_get_modal(win);
@@ -4671,10 +4675,10 @@ WIDGET_HELPER_GLOBAL_INLINE int lives_event_get_time(LiVESXEvent *event) {
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_toggle_button_get_active(LiVESToggleButton *button) {
 #ifdef GUI_GTK
-  return gtk_toggle_button_get_active(button);
+#if LIVES_HAS_SWITCH_WIDGET
+  if (LIVES_IS_SWITCH(button)) return gtk_switch_get_active(LIVES_SWITCH(button));
 #endif
-#ifdef GUI_QT
-  return (static_cast<QCheckBox *>(button))->isChecked();
+  return gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(button));
 #endif
   return FALSE;
 }
@@ -4682,11 +4686,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_toggle_button_get_active(LiVESToggleBu
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_toggle_button_set_active(LiVESToggleButton *button, boolean active) {
 #ifdef GUI_GTK
-  gtk_toggle_button_set_active(button, active);
-  return TRUE;
+#if LIVES_HAS_SWITCH_WIDGET
+  if (LIVES_IS_SWITCH(button)) gtk_switch_set_active(LIVES_SWITCH(button), active);
+  else
 #endif
-#ifdef GUI_QT
-  button->setChecked(active);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), active);
   return TRUE;
 #endif
   return FALSE;
@@ -4695,11 +4699,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_toggle_button_set_active(LiVESToggleBu
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_toggle_button_set_mode(LiVESToggleButton *button, boolean drawind) {
 #ifdef GUI_GTK
-  gtk_toggle_button_set_mode(button, drawind);
-  return TRUE;
+#if LIVES_HAS_SWITCH_WIDGET
+  if (!LIVES_IS_SWITCH(button))
 #endif
-#ifdef GUI_QT
-  //button->setChecked(active);
+    gtk_toggle_button_set_mode(GTK_TOGGLE_BUTTON(button), drawind);
   return TRUE;
 #endif
   return FALSE;
@@ -4787,7 +4790,9 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_check_button_new_with_label(const
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_tooltip_text(LiVESWidget *widget, const char *tip_text) {
-  if (!prefs->show_tooltips) {
+  boolean ttips_override = FALSE;
+  if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_OVERRIDE_KEY)) ttips_override = TRUE;
+  if (!prefs->show_tooltips && !ttips_override) {
     if (tip_text != NULL)
       lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY, (livespointer)(lives_strdup(tip_text)));
     else
@@ -9016,6 +9021,26 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_add_separator(LiVESLayout 
 
 ////////////////////////////////////////////////////////////////////
 
+static void add_warn_image(LiVESWidget *widget, LiVESWidget *hbox) {
+  LiVESWidget *warn_image = lives_image_new_from_stock(LIVES_STOCK_DIALOG_WARNING, LIVES_ICON_SIZE_LARGE_TOOLBAR);
+  lives_box_pack_start(LIVES_BOX(hbox), warn_image, FALSE, FALSE, 0);
+  lives_widget_set_no_show_all(warn_image, TRUE);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(warn_image), TTIPS_OVERRIDE_KEY, warn_image);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), WARN_IMAGE_KEY, warn_image);
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean show_warn_image(LiVESWidget *widget, const char *text) {
+  LiVESWidget *warn_image;
+  if (!(warn_image = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), WARN_IMAGE_KEY))) return FALSE;
+  if (text) {
+    lives_widget_set_tooltip_text(warn_image, text);
+    lives_widget_show(warn_image);
+  } else lives_widget_hide(warn_image);
+  return TRUE;
+}
+
+
 LiVESWidget *lives_standard_button_new(void) {
   return prettify_button(lives_button_new());
 }
@@ -9381,7 +9406,12 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
 
   widget_opts.last_label = NULL;
 
-  checkbutton = lives_check_button_new();
+#if LIVES_HAS_SWITCH_WIDGET
+  // TODO: need to intercept TOGGLED handler, and replace with "notify:active"
+  if (prefs->cb_is_switch) checkbutton = gtk_switch_new();
+  else
+#endif
+    checkbutton = lives_check_button_new();
 
   lives_widget_set_tooltip_text(checkbutton, tooltip);
 
@@ -9758,6 +9788,8 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
       lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, packing_width);
     }
     lives_widget_set_show_hide_parent(combo);
+
+    add_warn_image(combo, hbox);
   }
 
   if (list != NULL) {
@@ -11261,6 +11293,8 @@ static void _set_tooltips_state(LiVESWidget *widget, livespointer state) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2, 12, 0)
   char *ttip;
+  if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_OVERRIDE_KEY)) return;
+
   if (LIVES_POINTER_TO_INT(state)) {
     // enable
     ttip = (char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY);

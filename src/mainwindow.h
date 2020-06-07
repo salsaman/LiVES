@@ -126,7 +126,9 @@
 #define DEF_FRAME_VSIZE_GUI (((int)(DEF_FRAME_VSIZE_43S_UNSCALED * widget_opts.scale) >> 1) << 1)
 
 // min screen height to show the message area
-#define MIN_MSG_AREA_SCRNHEIGHT (DEF_FRAME_HSIZE_GUI + CE_TIMELINE_HSPACE)
+#define MIN_MSGBAR_HEIGHT (widget_opts.scale >= 1. ? ((int)32. * widget_opts.scale) : 32)
+#define MIN_MSG_AREA_SCRNHEIGHT (DEF_FRAME_HSIZE_GUI + CE_TIMELINE_HSPACE - MIN_MSGBAR_HEIGHT)
+#define MIN_MSGBOX_LLINES 2
 
 #define DEF_FRAME_HSIZE_UNSCALED ((GUI_SCREEN_WIDTH >= SCREEN_169_MIN_WIDTH) ? DEF_FRAME_HSIZE_169_UNSCALED : \
 				  (GUI_SCREEN_WIDTH >= SCREEN_43S_LIMIT_WIDTH && GUI_SCREEN_HEIGHT >= SCREEN_43S_LIMIT_HEIGHT) ? \
@@ -1581,6 +1583,7 @@ typedef struct {
   int n_messages;
   weed_plant_t *ref_message; // weak ref
   int ref_message_n;
+  int mbar_res; /// reserved space for mbar
 
   ticks_t flush_audio_tc; ///< when rendering, we can use this to force audio to be rendered up to tc; designed for previews
 
@@ -1635,6 +1638,8 @@ typedef struct {
   ////////////////////
 
   lives_proc_thread_t helper_procthreads[N_HLP_PROCTHREADS];
+
+  int max_textsize;
 } mainwindow;
 
 /// interface colour settings

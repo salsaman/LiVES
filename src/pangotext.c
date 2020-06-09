@@ -208,7 +208,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
   if (error != WEED_SUCCESS) return NULL;
   if (!newtext) return NULL;
   slen = (int)lives_strlen(newtext);
-  if (newtext[slen - 1] == '\n') {
+  if (slen > 0 && newtext[slen - 1] == '\n') {
     newtext[--slen] = 0;
   }
   totlines = get_token_count(newtext, '\n') + 1;
@@ -299,9 +299,9 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 #ifdef DEBUG_MSGS
       g_print("Too wide !!!\n");
 #endif
-      totlines -= get_token_count(newtext, '\n');
-      slen = (int)lives_strlen(newtext);
       while (1) {
+	totlines -= get_token_count(newtext, '\n');
+	slen = (int)lives_strlen(newtext);
         // for now we just truncate and elipsise lines
         tjump = dirn * jumpval;
         /* if (tjump >= slen && dirn == -1) { */

@@ -1364,7 +1364,6 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->blend_palette = WEED_PALETTE_END;
   mainw->blend_width = mainw->blend_height = 0;
 
-  mainw->gui_fooey = FALSE;
   mainw->force_show = FALSE;
 
   mainw->effort = 0;
@@ -1405,7 +1404,9 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->ext_playback = mainw->ext_audio = FALSE;
 
   get_string_prefd(PREF_DEFAULT_IMAGE_FORMAT, prefs->image_ext, 16, LIVES_FILE_EXT_PNG);
-
+  lives_snprintf(prefs->image_ext, 16, "%s",
+		 get_image_ext_for_type(lives_image_type_to_image_type(prefs->image_ext)));
+  
   prefs->loop_recording = TRUE;
   prefs->no_bandwidth = FALSE;
   prefs->ocp = get_int_prefd(PREF_OPEN_COMPRESSION_PERCENT, 15);
@@ -3111,8 +3112,8 @@ static boolean lives_startup(livespointer data) {
   splash_msg(_("Starting GUI..."), SPLASH_LEVEL_BEGIN);
   LIVES_MAIN_WINDOW_WIDGET = NULL;
 
-  mainw->helper_procthreads[PT_LAZY_RFX] = lives_proc_thread_create(NULL, (lives_funcptr_t)add_rfx_effects, -1, "i",
-      RFX_STATUS_ANY);
+  /* mainw->helper_procthreads[PT_LAZY_RFX] = lives_proc_thread_create(NULL, (lives_funcptr_t)add_rfx_effects, -1, "i", */
+  /*     RFX_STATUS_ANY); */
 
   create_LiVES();
 
@@ -3426,6 +3427,14 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
   }
 }
 
+
+void freez(void *p) {
+  g_print("OOOOh\n\n\n\n");
+  free(p);
+}
+
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(char, freez)
 
 int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   weed_error_t werr;
@@ -4865,7 +4874,7 @@ void load_start_image(int frame) {
     lives_widget_set_hexpand(mainw->frame1, FALSE);
     lives_widget_set_vexpand(mainw->frame1, FALSE);
 
-    lives_widget_set_hexpand(mainw->eventbox3, TRUE);
+    lives_widget_set_hexpand(mainw->eventbox3, FALSE);
   }
 
   if (CURRENT_CLIP_IS_VALID && (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV)) {
@@ -4975,6 +4984,7 @@ check_stcache:
 	    // *INDENT-OFF*
 	  }}
         lives_layer_set_frame(layer, xpf);
+	lives_layer_set_clip(layer, mainw->current_file);
       }}
     // *INDENT-ON*
     if (xmd5sum) lives_free(xmd5sum);
@@ -5085,6 +5095,7 @@ check_stcache:
 	    // *INDENT-OFF*
 	  }}
       lives_layer_set_frame(layer, xpf);
+      lives_layer_set_clip(layer, mainw->current_file);
     }}
   // *INDENT-ON*
     if (xmd5sum) lives_free(xmd5sum);
@@ -5248,6 +5259,7 @@ check_encache:
 	      // *INDENT-OFF*
 	    }}
 	  lives_layer_set_frame(layer, xpf);
+	  lives_layer_set_clip(layer, mainw->current_file);
 	}}
       // *INDENT-ON*
       return;
@@ -5354,6 +5366,7 @@ check_encache:
 	      // *INDENT-OFF*
 	    }}
 	  lives_layer_set_frame(layer, xpf);
+	  lives_layer_set_clip(layer, mainw->current_file);
 	}}
       // *INDENT-OFF*
   if (xmd5sum) lives_free(xmd5sum);
@@ -5541,6 +5554,7 @@ void load_preview_image(boolean update_always) {
 	      // *INDENT-OFF*
 	    }}
 	    lives_layer_set_frame(layer, xpf);
+	    lives_layer_set_clip(layer, mainw->current_file);
 	  }}}
       // *INDENT-ON*
 
@@ -5672,7 +5686,6 @@ void load_preview_image(boolean update_always) {
     static void png_read_func(png_structp png_ptr, png_bytep data, png_size_t length) {
       int fd = LIVES_POINTER_TO_INT(png_get_io_ptr(png_ptr));
       //lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
-      if (mainw->gui_fooey) sched_yield();
       if (lives_read_buffered(fd, data, length, TRUE) < length) {
         png_error(png_ptr, "read_fn error");
       }
@@ -5805,6 +5818,13 @@ void load_preview_image(boolean update_always) {
       bit_depth = png_get_bit_depth(png_ptr, info_ptr);
       gval = png_get_gAMA(png_ptr, info_ptr, &file_gamma);
 
+      if (!gval) {
+      	// b > a, brighter
+      	//png_set_gamma(png_ptr, 1.0, .45455); /// default, seemingly
+      	//png_set_gamma(png_ptr, 1. / .45455, 1.0); /// too bright
+      	png_set_gamma(png_ptr, 1.0, 1.0);
+      }
+
       // want to convert everything (greyscale, RGB, RGBA64 etc.) to RGBA32 (or RGB24)
       if (color_type == PNG_COLOR_TYPE_PALETTE)
         png_set_palette_to_rgb(png_ptr);
@@ -5913,20 +5933,16 @@ void load_preview_image(boolean update_always) {
         }
       }
 
-      if (mainw->gui_fooey || ((weed_threadsafe && twidth * theight != 0 && (twidth != width || theight != height)) &&
-                               !png_get_interlace_type(png_ptr, info_ptr))) {
-        if (!mainw->gui_fooey) {
-          weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 1);
-          reslayer_thread(layer, twidth, theight, get_interp_value(prefs->pb_quality), tpalette, weed_layer_get_yuv_clamping(layer));
-        }
-        for (int j = 0; j < height; j++) {
-          png_read_row(png_ptr, row_ptrs[j], NULL);
-          if (!mainw->gui_fooey) {
-            weed_set_int_value(layer, WEED_LEAF_PROGSCAN, j + 2);
-          }
-        }
-        if (!mainw->gui_fooey)
-          weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 0);
+      if (weed_threadsafe && twidth * theight != 0 && (twidth != width || theight != height) &&
+	  !png_get_interlace_type(png_ptr, info_ptr)) {
+	weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 1);
+	reslayer_thread(layer, twidth, theight, get_interp_value(prefs->pb_quality),
+			tpalette, weed_layer_get_yuv_clamping(layer));
+	for (int j = 0; j < height; j++) {
+	  png_read_row(png_ptr, row_ptrs[j], NULL);
+	  weed_set_int_value(layer, WEED_LEAF_PROGSCAN, j + 2);
+	}
+	weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 0);
       } else {
         png_read_image(png_ptr, row_ptrs);
       }
@@ -5938,17 +5954,23 @@ void load_preview_image(boolean update_always) {
 
       png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 
+      /// it seems that if no gAMA is set then libpng (rather wastefully) always tries to convert to linear
+      /// assuming a file gamma of approx. 1.2* (this is not accurate since sRGB -> linear doesnt use a power law)
+      /// if gAMA is set, then we (correctly) need to convert to linear using the file gamma
+      /// *I think this comes from 0.5 (approx linear to sRGB) * 2,4 (guessed display gamma)
+
       if (gval == PNG_INFO_gAMA) {
         /// img needs gamma converting
+	/// TODO: can we do this using png_set_gamma ?
         if ((resl_thrd = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL)) != NULL) {
           lives_thread_join(*resl_thrd, NULL);
           weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL);
           lives_free(resl_thrd);
         }
         gamma_convert_layer_variant(1. / file_gamma, layer);
-        weed_layer_set_gamma(layer, WEED_GAMMA_LINEAR);
-        gamma_convert_layer(WEED_GAMMA_SRGB, layer);
+	weed_layer_set_gamma(layer, WEED_GAMMA_LINEAR);
       }
+      else weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
 
 
       if (is16bit) {
@@ -6501,7 +6523,7 @@ fndone:
             lives_free(fname);
 
             // yes, since we created the images ourselves they should actually be in the gamma of the clip
-            weed_layer_set_gamma(layer, sfile->gamma_type);
+            //weed_layer_set_gamma(layer, sfile->gamma_type);
 
             mainw->osc_block = FALSE;
             if (!ret) {
@@ -9295,10 +9317,10 @@ void load_frame_image(int frame) {
         if (!prefs->show_gui || mainw->multitrack != NULL) return;
         hspace = get_hspace();
 
-        //get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+        get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
 
-        bx = mainw->mgeom[widget_opts.monitor].phys_width - scr_width;
-        by = mainw->mgeom[widget_opts.monitor].phys_height - scr_height;
+        /* bx = mainw->mgeom[widget_opts.monitor].phys_width - scr_width; */
+        /* by = mainw->mgeom[widget_opts.monitor].phys_height - scr_height; */
 
         w = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
         h = lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET);

@@ -204,7 +204,7 @@ boolean read_file_details(const char *file_name, boolean is_audio, boolean is_im
 
   char *tmp, *com = lives_strdup_printf("%s get_details \"%s\" \"%s\" \"%s\" %d", prefs->backend_sync, cfile->handle,
                                         (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)),
-                                        get_image_ext_for_type(cfile->img_type), mainw->opening_loc ? 3 : is_audio ? 2 : is_img ? 4 : 0);
+                                        get_image_ext_for_type(IMG_TYPE_BEST), mainw->opening_loc ? 3 : is_audio ? 2 : is_img ? 4 : 0);
   lives_free(tmp);
   lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
   lives_free(com);
@@ -1260,12 +1260,12 @@ void save_file(int clip, int start, int end, const char *filename) {
   uint64_t fsize;
 
   LiVESWidget *hbox;
+  frames_t res;
 
   boolean safe_symlinks = prefs->safe_symlinks;
   boolean not_cancelled = FALSE;
   boolean output_exists = FALSE;
   boolean save_all = FALSE;
-  boolean resb;
   boolean debug_mode = FALSE;
 
   if (!check_storage_space(mainw->current_file, FALSE)) return;
@@ -1476,13 +1476,13 @@ void save_file(int clip, int start, int end, const char *filename) {
       cfile->progress_start = 1;
       cfile->progress_end = count_virtual_frames(sfile->frame_index, start, end);
       do_threaded_dialog(_("Pulling frames from clip..."), TRUE);
-      resb = virtual_to_images(clip, start, end, TRUE, NULL);
+      res = virtual_to_images(clip, start, end, TRUE, NULL);
       end_threaded_dialog();
 
-      if (mainw->cancelled != CANCEL_NONE || !resb) {
+      if (mainw->cancelled != CANCEL_NONE || res < 0) {
         mainw->cancelled = CANCEL_USER;
         lives_freep((void **)&mainw->subt_save_file);
-        if (!resb) d_print_file_error_failed();
+        if (res <= 0) d_print_file_error_failed();
         return;
       }
     }
@@ -1600,13 +1600,13 @@ void save_file(int clip, int start, int end, const char *filename) {
       cfile->progress_start = 1;
       cfile->progress_end = count_virtual_frames(sfile->frame_index, start, end);
       do_threaded_dialog(_("Pulling frames from clip..."), TRUE);
-      resb = virtual_to_images(clip, start, end, TRUE, NULL);
+      res = virtual_to_images(clip, start, end, TRUE, NULL);
       end_threaded_dialog();
 
-      if (mainw->cancelled != CANCEL_NONE || !resb) {
-        mainw->cancelled = CANCEL_USER;
+      if (mainw->cancelled != CANCEL_NONE || res <= 0) {
+        if (mainw->cancelled != CANCEL_NONE) mainw->cancelled = CANCEL_USER;
         lives_freep((void **)&mainw->subt_save_file);
-        if (!resb) d_print_file_error_failed();
+        if (res <= 0) d_print_file_error_failed();
         return;
       }
     }
@@ -1674,11 +1674,12 @@ void save_file(int clip, int start, int end, const char *filename) {
 
   if (save_all) {
     if (sfile->clip_type == CLIP_TYPE_FILE) {
+      frames_t ret;
       char *msg = lives_strdup(_("Pulling frames from clip..."));
-      if (!realize_all_frames(clip, msg, FALSE)) {
+      if ((ret = realize_all_frames(clip, msg, FALSE)) < sfile->frames) {
         lives_free(msg);
         lives_freep((void **)&mainw->subt_save_file);
-        if (!resb) d_print_cancelled();
+        if (ret > 0) d_print_cancelled();
         if (mainw->multitrack == NULL) {
           switch_to_file(mainw->current_file, current_file);
         }
@@ -4038,8 +4039,8 @@ boolean save_frame_inner(int clip, int frame, const char *file_name, int width, 
     d_print(_("Saving frame %d as %s..."), frame, full_file_name);
 
     if (sfile->clip_type == CLIP_TYPE_FILE) {
-      boolean resb = virtual_to_images(clip, frame, frame, FALSE, NULL);
-      if (!resb) {
+      frames_t res = virtual_to_images(clip, frame, frame, FALSE, NULL);
+      if (res <= 0) {
         d_print_file_error_failed();
         return FALSE;
       }
@@ -4143,11 +4144,12 @@ void backup_file(int clip, int start, int end, const char *file_name) {
   cfile->progress_end = sfile->frames;
 
   if (sfile->clip_type == CLIP_TYPE_FILE) {
+    frames_t ret;
     char *msg = lives_strdup(_("Pulling frames from clip..."));
-    if (!realize_all_frames(clip, msg, FALSE)) {
+    if ((ret = realize_all_frames(clip, msg, FALSE)) < cfile->frames) {
       lives_free(msg);
       cfile->nopreview = FALSE;
-      d_print_cancelled();
+      if (ret > 0) d_print_cancelled();
       return;
     }
     lives_free(msg);
@@ -5724,7 +5726,7 @@ static lives_clip_t *_restore_binfmt(int clipno, boolean forensic) {
   boolean load_from_set = TRUE;
   boolean rec_cleanup = FALSE;
 
-  splash_end();
+  //splash_end();
 
   // setting is_ready allows us to get the correct transient window for dialogs
   // otherwise the dialogs will appear behind the main interface
@@ -6044,14 +6046,12 @@ static lives_clip_t *_restore_binfmt(int clipno, boolean forensic) {
       if (cfile->frameno > cfile->frames) cfile->frameno = cfile->last_frameno = 1;
 
       if (mainw->multitrack == NULL) {
-        resize(1);
         lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
         lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
         lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
         lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
-        showclipimgs();
       } else {
         int current_file = mainw->current_file;
         lives_mt *multi = mainw->multitrack;
@@ -6088,6 +6088,8 @@ static lives_clip_t *_restore_binfmt(int clipno, boolean forensic) {
       if (mainw->current_file != -1)
         if (strlen(mainw->set_name) > 0) recover_layout_map(mainw->current_file);
 
+      if (!mainw->multitrack) resize(1);
+      
       lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
     }
   }

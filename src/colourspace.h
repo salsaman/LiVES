@@ -67,6 +67,10 @@ typedef weed_plant_t weed_layer_t;
 /////////////////////////////////////////////
 
 typedef struct {
+  float offs, lin, thresh, pf;
+} gamma_const_t;
+
+typedef struct {
   uint8_t u0;
   uint8_t y0;
   uint8_t v0;
@@ -149,6 +153,7 @@ typedef struct {
 #define LIVES_VCHAN_vv		     	4002
 
 /// for fun / testing
+#define LIVES_PALETTE_YUV121010		8211
 #define LIVES_PALETTE_RGB48		9001
 #define LIVES_PALETTE_RGBA64		9003
 #define LIVES_PALETTE_YUVA420P		9512
@@ -156,7 +161,6 @@ typedef struct {
 #define LIVES_PALETTE_AYUV8888		9545
 #define LIVES_PALETTE_YUVFLOAT		9564
 #define LIVES_PALETTE_YUVAFLOAT		9565
-#define LIVES_PALETTE_YUV121010		121010
 
 const weed_macropixel_t *get_advanced_palette(int weed_palette);
 boolean weed_palette_is_valid(int pal);
@@ -220,8 +224,11 @@ void pixel_data_planar_from_membuf(void **pixel_data, void *data, size_t size, i
 void weed_layer_pixel_data_free(weed_layer_t *);
 
 #define WEED_GAMMA_MONITOR 1024
+#define WEED_GAMMA_FILE 1025
 #define WEED_GAMMA_VARIANT 2048
 #define WEED_LAYER_ALPHA_PREMULT 1
+
+#define DEF_FILE_GAMMA 1.22
 
 // layer transformation functions
 void alpha_unpremult(weed_layer_t *, boolean un);

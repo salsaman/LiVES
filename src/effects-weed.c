@@ -4600,7 +4600,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
   mainw->chdir_failed = FALSE;
 
   // walk list and create fx structures
-  //#define DEBUG_WEED
+  #define DEBUG_WEED
 #ifdef DEBUG_WEED
   lives_printerr("Checking plugin %s\n", plugin_path);
 #endif

@@ -829,7 +829,7 @@ LiVESSList *lives_file_chooser_get_filenames(LiVESFileChooser *);
 boolean lives_widget_grab_focus(LiVESWidget *);
 boolean lives_widget_grab_default(LiVESWidget *);
 
-boolean lives_widget_set_tooltip_text(LiVESWidget *, const char *text);
+LiVESWidget *lives_widget_set_tooltip_text(LiVESWidget *, const char *text);
 
 boolean lives_widget_process_updates(LiVESWidget *, boolean upd_children);
 boolean lives_xwindow_process_all_updates(void);
@@ -944,6 +944,8 @@ LiVESWidget *lives_standard_notebook_new(const LiVESWidgetColor *bg_color, const
 
 LiVESWidget *lives_standard_label_new(const char *labeltext);
 LiVESWidget *lives_standard_label_new_with_mnemonic_widget(const char *text, LiVESWidget *mnemonic_widget);
+LiVESWidget *lives_standard_label_new_with_tooltips(const char *text, LiVESBox *box,
+						    const char *tips);
 
 LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, ulong *ret_fn);
 

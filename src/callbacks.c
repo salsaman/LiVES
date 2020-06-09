@@ -3078,7 +3078,7 @@ void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   msg = lives_strdup(_("Pulling frames from clipboard..."));
 
-  if (!realize_all_frames(0, msg, TRUE)) {
+  if (realize_all_frames(0, msg, TRUE) <= 0) {
     int lframe = first_virtual_frame(0, 1, clipboard->frames);
     if (lframe < clipboard->frames && lframe != 0 && !paste_enough_dlg(lframe - 1)) {
       lives_free(msg);
@@ -3488,7 +3488,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
 
   if (!virtual_ins) {
     char *msg = lives_strdup(_("Pulling frames from clipboard..."));
-    if (!realize_all_frames(0, msg, FALSE)) {
+    if (realize_all_frames(0, msg, FALSE) <= 0) {
       lives_free(msg);
       sensitize();
       unbuffer_lmap_errors(FALSE);
@@ -6174,15 +6174,17 @@ void on_show_keys_activate(LiVESMenuItem * menuitem, livespointer user_data) {do
 
 
 void on_vj_realize_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  frames_t ret;
   char *msg = lives_strdup(_("Pre-decoding all frames in this clip..."));
   d_print(msg);
 
   desensitize();
 
-  if (!realize_all_frames(mainw->current_file, msg, TRUE)) {
-    d_print_cancelled();
-  } else d_print_done();
+  ret = realize_all_frames(mainw->current_file, msg, TRUE);
   lives_free(msg);
+  if (ret <= 0) d_print_failed();
+  else if (ret < cfile->frames) d_print_enough(ret);
+  else d_print_done();
 
   sensitize();
 }
@@ -7544,7 +7546,6 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       kill_play_window();
     }
     lives_widget_context_update();
-    sched_yield();
     /* if (mainw->multitrack != NULL && !LIVES_IS_PLAYING) { */
     /*   activate_mt_preview(mainw->multitrack); // show frame preview */
     /* } */
@@ -7590,7 +7591,6 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 	// *INDENT-ON*
 
         make_play_window();
-        sched_yield();
 
         mainw->pw_scroll_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_SCROLL_EVENT,
                                 LIVES_GUI_CALLBACK(on_mouse_scroll),
@@ -7610,7 +7610,6 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
           }
           resize(1.);
           resize_play_window();
-          sched_yield();
         }
 
         if (mainw->play_window != NULL && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
@@ -7622,9 +7621,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
         if (mainw->ext_playback) {
 #ifndef IS_MINGW
           vid_playback_plugin_exit();
-          sched_yield();
           lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
-          sched_yield();
 #else
           lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
           vid_playback_plugin_exit();
@@ -7632,7 +7629,6 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
         }
 
         kill_play_window();
-        sched_yield();
 
         if (!mainw->fs && mainw->multitrack == NULL) {
           /* mainw->pwidth = DEF_FRAME_HSIZE_GUI; */
@@ -8033,7 +8029,7 @@ void on_rev_clipboard_activate(LiVESMenuItem * menuitem, livespointer user_data)
     lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
     char *msg = lives_strdup(_("Pulling frames from clipboard..."));
     if (!(cdata->seek_flag & LIVES_SEEK_FAST)) {
-      if (!realize_all_frames(0, msg, FALSE)) {
+      if (realize_all_frames(0, msg, FALSE) <= 0) {
         mainw->current_file = current_file;
         lives_free(msg);
         sensitize();

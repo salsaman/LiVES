@@ -16,7 +16,7 @@ boolean save_frame_index(int fileno);
 frames_t load_frame_index(int fileno) WARN_UNUSED;
 boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_t maxframe);
 
-boolean virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolean update_progress, LiVESPixbuf **pbr);
+frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolean update_progress, LiVESPixbuf **pbr);
 void delete_frames_from_virtual(int sfileno, frames_t start, frames_t end);
 void insert_images_in_virtual(int sfileno, frames_t where, frames_t frames, frames_t *frame_index, frames_t start);
 void del_frame_index(lives_clip_t *);

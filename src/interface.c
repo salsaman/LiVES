@@ -4834,7 +4834,7 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
 
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
   if (layout != NULL) {
-    lingo_layout_set_text(layout, "", -1);
+    if (LINGO_IS_LAYOUT(layout)) lingo_layout_set_text(layout, "", -1);
     lives_widget_object_unref(layout);
   }
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout", NULL);
@@ -4865,7 +4865,7 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
       //g_print("VALS3 lh = %d, nlines = %d, lsize = %f, height = %d, ps = %f\n", lh, nlines, linesize, height, page_size);
       lives_widget_object_freeze_notify(LIVES_WIDGET_OBJECT(adj));
       lives_adjustment_set_lower(adj, page_size - 2);
-      lives_adjustment_set_upper(adj, (double)(mainw->n_messages + page_size - 2));
+      lives_adjustment_set_upper(adj, (double)(mainw->n_messages + page_size - 1));
       lives_adjustment_set_page_size(adj, page_size);
       lives_adjustment_set_value(adj, (double)msgno);
       lives_widget_object_thaw_notify(LIVES_WIDGET_OBJECT(adj));
@@ -4922,7 +4922,7 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
 
   // the expose event for the message area is a good opportunity to recheck the window size
 
-  if (width < LAYOUT_SIZE_MIN || height < LAYOUT_SIZE_MIN) return FALSE;
+  //if (width < LAYOUT_SIZE_MIN || height < LAYOUT_SIZE_MIN) return FALSE;
 
   llast = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout_last"));
 
@@ -5035,7 +5035,7 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
       width -= overflowx;
       height -= overflowy;
 
-      if (height <= 0) {
+      if (height <= MIN_MSGBAR_HEIGHT) {
         height = MIN_MSGBAR_HEIGHT;
         mainw->mbar_res = height;
       }
@@ -5093,12 +5093,12 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
 
       lives_widget_show_all(mainw->message_box);
 
-      lives_widget_context_update();
-      lives_widget_process_updates(mainw->message_box, TRUE);
+      //lives_widget_context_update();
+      //lives_widget_process_updates(mainw->message_box, TRUE);
 
       if (!prefs->open_maximised)
         lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), posx, posy);
-      return FALSE;
+      //return FALSE;
     }
   }
 
@@ -5174,7 +5174,7 @@ EXPOSE_FN_END
 
 
 LIVES_GLOBAL_INLINE void msg_area_scroll_to_end(LiVESWidget * widget, LiVESAdjustment * adj) {
-  msg_area_scroll_to(widget, mainw->n_messages - 2, TRUE, adj);
+  msg_area_scroll_to(widget, mainw->n_messages - 1, TRUE, adj);
   // expose_msg_area(widget, NULL, NULL);
 }
 

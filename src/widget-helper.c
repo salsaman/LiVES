@@ -24,6 +24,7 @@ static boolean governor_loop(livespointer data) GNU_RETURNS_TWICE;
 #define STD_KEY "_wh_is_standard"
 #define TTIPS_KEY "_wh_lives_tooltips"
 #define TTIPS_OVERRIDE_KEY "_wh_lives_tooltips_override"
+#define TTIPS_HIDE_KEY "_wh_lives_tooltips_hide"
 #define ROWS_KEY "_wh_rows"
 #define COLS_KEY "_wh_cols"
 #define CDEF_KEY "_wh_current_default"
@@ -46,6 +47,7 @@ static boolean governor_loop(livespointer data) GNU_RETURNS_TWICE;
 #define SPBLUE_KEY "_wh_sp_blue"
 #define SPALPHA_KEY "_wh_sp_alpha"
 #define WARN_IMAGE_KEY "_wh_warn_image"
+#define TTIPS_IMAGE_KEY "_wh_warn_image"
 
 
 #if 0
@@ -3343,30 +3345,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_box_pack_start(LiVESBox *box, LiVESWid
   gtk_box_pack_start(box, child, expand, fill, padding);
   return TRUE;
 #endif
-#ifdef GUI_QT
-  if (LIVES_IS_HBOX(box)) {
-    QHBoxLayout *qbox = dynamic_cast<QHBoxLayout *>(box);
-    QBoxLayout::Direction dir = qbox->direction();
-    if (dir == QBoxLayout::LeftToRight) {
-      qbox->setDirection(QBoxLayout::RightToLeft);
-    } else if (dir == QBoxLayout::RightToLeft) {
-      qbox->setDirection(QBoxLayout::LeftToRight);
-    }
-    if (fill) child->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
-    qbox->insertWidget(0, child, expand ? 100 : 0, fill ? (Qt::Alignment)0 : Qt::AlignHCenter);
-    qbox->setDirection(dir);
-  } else {
-    QVBoxLayout *qbox = dynamic_cast<QVBoxLayout *>(box);
-    QBoxLayout::Direction dir = qbox->direction();
-    if (dir == QBoxLayout::TopToBottom) qbox->setDirection(QBoxLayout::BottomToTop);
-    else qbox->setDirection(QBoxLayout::TopToBottom);
-    if (fill) child->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::MinimumExpanding);
-    qbox->insertWidget(0, child, expand ? 100 : 0, fill ? (Qt::Alignment)0 : Qt::AlignVCenter);
-    qbox->setDirection(dir);
-  }
-  box->add_child(child);
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -4789,15 +4767,33 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_check_button_new_with_label(const
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_tooltip_text(LiVESWidget *widget, const char *tip_text) {
+static LiVESWidget *make_ttips_image(const char *text) {
+  LiVESWidget *ttips_image = lives_image_new_from_stock(LIVES_STOCK_DIALOG_QUESTION,
+							LIVES_ICON_SIZE_SMALL_TOOLBAR);
+  lives_widget_set_bg_color(ttips_image, LIVES_WIDGET_STATE_NORMAL, &palette->dark_orange);
+  lives_widget_set_no_show_all(ttips_image, TRUE);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ttips_image), TTIPS_IMAGE_KEY, ttips_image);
+  lives_widget_set_tooltip_text(ttips_image, text);
+  return ttips_image;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_widget_set_tooltip_text(LiVESWidget *widget, const char *tip_text) {
+  LiVESWidget *img_tips = NULL;
   boolean ttips_override = FALSE;
-  if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_OVERRIDE_KEY)) ttips_override = TRUE;
-  if (!prefs->show_tooltips && !ttips_override) {
-    if (tip_text != NULL)
-      lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY, (livespointer)(lives_strdup(tip_text)));
-    else
-      lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY, (livespointer)(lives_strdup(tip_text)));
-    return TRUE;
+
+  if (tip_text && *tip_text == '#' && !lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_IMAGE_KEY)) {
+    widget = img_tips = make_ttips_image(tip_text + 1);
+  }
+  else {
+    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_OVERRIDE_KEY)) ttips_override = TRUE;
+    if (!prefs->show_tooltips && !ttips_override) {
+      if (tip_text != NULL)
+	lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY, (livespointer)(lives_strdup(tip_text)));
+      else
+	lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY, (livespointer)(lives_strdup(tip_text)));
+      return NULL;
+    }
   }
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2, 12, 0)
@@ -4807,14 +4803,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_tooltip_text(LiVESWidget *w
   tips = gtk_tooltips_new();
   gtk_tooltips_set_tip(tips, widget, tip_text, NULL);
 #endif
-  return TRUE;
 #endif
-#ifdef GUI_QT
-  QString qs = QString::fromUtf8(tip_text);
-  widget->setToolTip(qs);
-  return TRUE;
-#endif
-  return FALSE;
+  return img_tips;
 }
 
 
@@ -9027,6 +9017,7 @@ static void add_warn_image(LiVESWidget *widget, LiVESWidget *hbox) {
   lives_widget_set_no_show_all(warn_image, TRUE);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(warn_image), TTIPS_OVERRIDE_KEY, warn_image);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), WARN_IMAGE_KEY, warn_image);
+  lives_widget_set_sensitive_with(widget, warn_image);
 }
 
 
@@ -9174,6 +9165,46 @@ LiVESWidget *lives_standard_label_new(const char *text) {
 }
 
 
+static LiVESWidget *make_inner_hbox(LiVESBox *box) {
+  LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
+  LiVESWidget *vbox = lives_vbox_new(FALSE, 0);
+
+  lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
+  if (LIVES_IS_HBOX(box)) {
+    lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, LIVES_SHOULD_EXPAND_FOR(box) ? widget_opts.packing_width : 0);
+    lives_widget_set_valign(hbox, LIVES_ALIGN_CENTER);
+  } else {
+    lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, LIVES_SHOULD_EXPAND_FOR(box) ? widget_opts.packing_height : 0);
+    box = LIVES_BOX(hbox);
+    hbox = lives_hbox_new(FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, LIVES_SHOULD_EXPAND_FOR(box) ? widget_opts.packing_width : 0);
+  }
+
+  lives_box_pack_start(LIVES_BOX(hbox), vbox, FALSE, FALSE, 0);
+  lives_widget_set_show_hide_parent(vbox);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  if (!LIVES_SHOULD_EXPAND_EXTRA_FOR(vbox)) lives_widget_set_valign(hbox, LIVES_ALIGN_CENTER);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, LIVES_SHOULD_EXPAND_FOR(vbox) ? widget_opts.packing_height / 2 : 0);
+  lives_widget_set_show_hide_parent(hbox);
+  return hbox;
+}
+
+
+LiVESWidget *lives_standard_label_new_with_tooltips(const char *text, LiVESBox *box,
+						    const char *tips) {
+  LiVESWidget *img_tips = make_ttips_image(tips);
+  LiVESWidget *label = lives_standard_label_new(text);
+  LiVESWidget *hbox = make_inner_hbox(LIVES_BOX(box));
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+  lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, 0);
+  lives_widget_set_show_hide_parent(label);
+  lives_widget_set_sensitive_with(label, img_tips);
+  if (prefs->show_tooltips) lives_widget_show(img_tips);
+  return label;
+}
+
+
 LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, ulong *ret_fn) {
   LiVESWidget *darea = NULL;
   ulong ret;
@@ -9244,32 +9275,6 @@ LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boole
   if (xalign >= 0.) lives_frame_set_label_align(LIVES_FRAME(frame), xalign, 0.5);
 
   return frame;
-}
-
-
-static LiVESWidget *make_inner_hbox(LiVESBox *box) {
-  LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
-  LiVESWidget *vbox = lives_vbox_new(FALSE, 0);
-
-  lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
-  if (LIVES_IS_HBOX(box)) {
-    lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, LIVES_SHOULD_EXPAND_FOR(box) ? widget_opts.packing_width : 0);
-    lives_widget_set_valign(hbox, LIVES_ALIGN_CENTER);
-  } else {
-    lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, LIVES_SHOULD_EXPAND_FOR(box) ? widget_opts.packing_height : 0);
-    box = LIVES_BOX(hbox);
-    hbox = lives_hbox_new(FALSE, 0);
-    lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, LIVES_SHOULD_EXPAND_FOR(box) ? widget_opts.packing_width : 0);
-  }
-
-  lives_box_pack_start(LIVES_BOX(hbox), vbox, FALSE, FALSE, 0);
-  lives_widget_set_show_hide_parent(vbox);
-
-  hbox = lives_hbox_new(FALSE, 0);
-  if (!LIVES_SHOULD_EXPAND_EXTRA_FOR(vbox)) lives_widget_set_valign(hbox, LIVES_ALIGN_CENTER);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, LIVES_SHOULD_EXPAND_FOR(vbox) ? widget_opts.packing_height / 2 : 0);
-  lives_widget_set_show_hide_parent(hbox);
-  return hbox;
 }
 
 
@@ -9539,6 +9544,7 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList *
   // pack a themed check button into box
 
   LiVESWidget *eventbox = NULL;
+  LiVESWidget *img_tips = NULL;
   LiVESWidget *hbox;
 
   boolean expand;
@@ -9549,7 +9555,7 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList *
 
   *rbgroup = lives_radio_button_get_group(LIVES_RADIO_BUTTON(radiobutton));
 
-  if (tooltip != NULL) lives_widget_set_tooltip_text(radiobutton, tooltip);
+  if (tooltip) img_tips = lives_widget_set_tooltip_text(radiobutton, tooltip);
 
   if (box != NULL) {
     int packing_width = 0;
@@ -9577,6 +9583,10 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList *
       lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, packing_width);
 
     lives_widget_set_show_hide_parent(radiobutton);
+
+    if (img_tips) {
+      lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, 0);
+    }
   }
 
   if (widget_opts.apply_theme) {
@@ -11297,12 +11307,20 @@ static void _set_tooltips_state(LiVESWidget *widget, livespointer state) {
 
   if (LIVES_POINTER_TO_INT(state)) {
     // enable
+    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_HIDE_KEY)) {
+      lives_widget_show(widget);
+      return;
+    }
     ttip = (char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY);
     if (ttip != NULL) {
       lives_widget_set_tooltip_text(widget, ttip);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY, NULL);
     }
   } else {
+    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_HIDE_KEY)) {
+      lives_widget_hide(widget);
+      return;
+    }
     ttip = gtk_widget_get_tooltip_text(widget);
     lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY, ttip);
     lives_widget_set_tooltip_text(widget, NULL);
@@ -11664,17 +11682,17 @@ boolean lives_widget_context_update(void) {
   if (mainw->no_context_update) return FALSE;
   else {
     GMainContext *ctx = g_main_context_get_thread_default();
-    do_some_things();
     if (ctx != NULL && ctx != g_main_context_default() && gov_running) {
+      do_some_things();
       mainw->clutch = FALSE;
       while (!mainw->clutch && !mainw->is_exiting) {
         lives_nanosleep(NSLEEP_TIME);
         sched_yield();
       }
+      do_more_stuff();
     } else {
-      //while (g_main_context_iteration(NULL, FALSE))     g_print("CTX1133444\n");
+      while (g_main_context_iteration(NULL, FALSE));
     }
-    do_more_stuff();
   }
   return TRUE;
 }

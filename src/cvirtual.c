@@ -526,7 +526,7 @@ static boolean save_decoded(int fileno, frames_t i, LiVESPixbuf * pixbuf, boolea
 }
 
 
-boolean virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolean update_progress, LiVESPixbuf **pbr) {
+frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolean update_progress, LiVESPixbuf **pbr) {
   // pull frames from a clip to images
   // from sframe to eframe inclusive (first frame is 1)
 
@@ -560,14 +560,13 @@ boolean virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolean
     }
 
     if (sfile->frame_index[i - 1] >= 0) {
-      if (pbr != NULL && pixbuf != NULL) lives_widget_object_unref(pixbuf);
+      if (pbr && pixbuf) lives_widget_object_unref(pixbuf);
 
       pixbuf = pull_lives_pixbuf_at_size(sfileno, i, get_image_ext_for_type(sfile->img_type),
                                          q_gint64((i - 1.) / sfile->fps, sfile->fps), sfile->hsize, sfile->vsize, LIVES_INTERP_BEST, FALSE);
 
-      if (pixbuf == NULL) return FALSE;
-
-      if (!save_decoded(sfileno, i, pixbuf, pbr != NULL, progress)) return FALSE;
+      if (!pixbuf) return -i;
+      if (!save_decoded(sfileno, i, pixbuf, pbr != NULL, progress)) return -i;
 
       if (pbr == NULL) {
         if (pixbuf != NULL) lives_widget_object_unref(pixbuf);
@@ -588,16 +587,14 @@ boolean virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolean
       if (mainw->cancelled != CANCEL_NONE) {
         if (!check_if_non_virtual(sfileno, 1, sfile->frames)) save_frame_index(sfileno);
         if (pbr != NULL) *pbr = pixbuf;
-        return TRUE;
+        return i;
       }
     }
   }
 
-  if (pbr != NULL) *pbr = pixbuf;
-
-  if (!check_if_non_virtual(sfileno, 1, sfile->frames)) if (!save_frame_index(sfileno)) return FALSE;
-
-  return TRUE;
+  if (pbr) *pbr = pixbuf;
+  if (!check_if_non_virtual(sfileno, 1, sfile->frames) && !save_frame_index(sfileno)) return -i;
+  return i;
 }
 
 
@@ -652,20 +649,21 @@ static void restore_gamma_cb(int gamma_type) {
 }
 
 
-boolean realize_all_frames(int clipno, const char *msg, boolean enough) {
+frames_t realize_all_frames(int clipno, const char *msg, boolean enough) {
   // if enough is set, we show Enough button instead of Cancel.
+  frames_t ret;
   int current_file = mainw->current_file;
   mainw->cancelled = CANCEL_NONE;
-  if (!IS_VALID_CLIP(clipno)) return FALSE;
-
+  if (!IS_VALID_CLIP(clipno)) return 0;
+  
   // if its the clipboard and we have exotic gamma types we need to do a special thing
   // - fix the gamma_type of the clipboard existing frames before inserting in cfile
-  if (clipno == 0 && prefs->btgamma && CURRENT_CLIP_HAS_VIDEO && cfile->gamma_type != clipboard->gamma_type) {
+  if (clipno == 0 && prefs->btgamma && CURRENT_CLIP_HAS_VIDEO && cfile->gamma_type
+      != clipboard->gamma_type) {
     restore_gamma_cb(cfile->gamma_type);
   }
 
   if (!check_if_non_virtual(clipno, 1, mainw->files[clipno]->frames)) {
-    boolean retb;
     mainw->current_file = clipno;
     cfile->progress_start = 1;
     cfile->progress_end = count_virtual_frames(cfile->frame_index, 1, cfile->frames);
@@ -673,16 +671,17 @@ boolean realize_all_frames(int clipno, const char *msg, boolean enough) {
     do_threaded_dialog((char *)msg, TRUE);
     lives_widget_show_all(mainw->files[clipno]->proc_ptr->processing);
     mainw->cancel_type = CANCEL_KILL;
-    retb = virtual_to_images(mainw->current_file, 1, cfile->frames, TRUE, NULL);
+    ret = virtual_to_images(mainw->current_file, 1, cfile->frames, TRUE, NULL);
     end_threaded_dialog();
     mainw->current_file = current_file;
 
-    if (mainw->cancelled != CANCEL_NONE || !retb) {
+    if (mainw->cancelled != CANCEL_NONE) {
       mainw->cancelled = CANCEL_USER;
-      return FALSE;
+      return ret;
     }
+    if (ret <= 0) return ret;
   }
-  return TRUE;
+  return mainw->files[clipno]->frames;
 }
 
 
@@ -949,7 +948,7 @@ void insert_blank_frames(int sfileno, frames_t nframes, frames_t after, int pale
 
 boolean pull_frame_idle(livespointer data) {
   if (cfile->fx_frame_pump >= cfile->end) return FALSE;
-  if (!virtual_to_images(mainw->current_file, cfile->fx_frame_pump, cfile->fx_frame_pump, FALSE, NULL)) {
+  if (virtual_to_images(mainw->current_file, cfile->fx_frame_pump, cfile->fx_frame_pump, FALSE, NULL) <= 0) {
     return FALSE;
   }
   cfile->fx_frame_pump++;

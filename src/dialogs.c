@@ -1530,7 +1530,7 @@ switch_point:
     }
 #endif
 
-    if (new_ticks != mainw->startticks && new_ticks != mainw->last_startticks && requested_frame != last_req_frame) {
+    if (new_ticks != mainw->startticks && new_ticks != mainw->last_startticks && (requested_frame != last_req_frame || sfile->frames == 1)) {
       //g_print("%ld %ld %ld %d %d %d\n", mainw->currticks, mainw->startticks, new_ticks,
       //sfile->last_frameno, requested_frame, last_req_frame);
       if (mainw->fixed_fpsd <= 0. && (mainw->vpp == NULL ||
@@ -1971,7 +1971,7 @@ proc_dialog:
     frames_done = cfile->proc_ptr->frames_done;
 
     if (cfile->clip_type == CLIP_TYPE_FILE && cfile->fx_frame_pump > 0) {
-      if (virtual_to_images(mainw->current_file, cfile->fx_frame_pump, cfile->fx_frame_pump, FALSE, NULL)) {
+      if (virtual_to_images(mainw->current_file, cfile->fx_frame_pump, cfile->fx_frame_pump, FALSE, NULL) > 0) {
         cfile->fx_frame_pump++;
       } else mainw->cancelled = CANCEL_ERROR;
       if (cfile->fx_frame_pump >= cfile->end) cfile->fx_frame_pump = 0; // all frames were realised
@@ -3445,8 +3445,6 @@ void threaded_dialog_spin(double fraction) {
 
   if (mainw->splash_window) return;
   if (!mainw->threaded_dialog) return;
-  if (!pthread_equal(capable->main_thread, pthread_self()) && !pthread_equal(capable->gui_thread, pthread_self()))
-    return;
 
   if (!procw || !procw->is_ready || !prefs->show_gui) return;
 

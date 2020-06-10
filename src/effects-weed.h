@@ -106,7 +106,7 @@ typedef enum {
 #define WEED_LEAF_HOST_CHANNEL_CONNECTION "host_channel_connection" // special value for text widgets
 
 // custom leaf flags, may evolve
-#define LIVES_FLAG_MANTAIN_VALUE (1 << 16)
+#define LIVES_FLAG_MAINTAIN_VALUE (1 << 16) ///< soft flag, like immutable / deletable for host
 
 weed_plant_t *get_weed_filter(int filter_idx); // TODO: make const
 char *weed_filter_idx_get_package_name(int filter_idx) WARN_UNUSED;
@@ -359,8 +359,6 @@ weed_plant_t *weed_instance_obtain(int key, int mode);
 #endif
 
 #define WEED_ERROR_NOSUCH_PLANT 65536
-
-#define LIVES_FLAG_MAINTAIN_VALUE (1 << 16)
 
 weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data);
 

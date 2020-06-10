@@ -786,13 +786,13 @@ WEED_SETUP_START(200, 200) {
           }
         } else weed_set_boolean_value(filter_class, "plugin_dual", WEED_FALSE);
 
-	for (wnum = 0; wnum < ninps + stcount2 + stcount - 2; wnum++) {
-	  weed_free(rfx_strings[wnum]);
-	}
-	weed_free(rfx_strings);
-	rfx_strings = NULL;
+        for (wnum = 0; wnum < ninps + stcount2 + stcount - 2; wnum++) {
+          weed_free(rfx_strings[wnum]);
+        }
+        weed_free(rfx_strings);
+        rfx_strings = NULL;
 
-	if (in_params) weed_free(in_params);
+        if (in_params) weed_free(in_params);
         if (out_params) weed_free(out_params);
         if (in_chantmpls) weed_free(in_chantmpls);
         if (out_chantmpls) weed_free(out_chantmpls);

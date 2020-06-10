@@ -33,9 +33,9 @@ LiVESList *get_plugin_result(const char *command, const char *delim, boolean all
 
   if (mainw->com_failed) return NULL;
 
-  threaded_dialog_spin(0.);
+  //threaded_dialog_spin(0.);
   list = buff_to_list(buffer, delim, allow_blanks, strip);
-  threaded_dialog_spin(0.);
+  //threaded_dialog_spin(0.);
   return list;
 }
 
@@ -100,7 +100,7 @@ LiVESList *plugin_request_common(const char *plugin_type, const char *plugin_nam
   list_plugins = FALSE;
   reslist = get_plugin_result(com, delim, allow_blanks, TRUE);
   lives_free(com);
-  threaded_dialog_spin(0.);
+  //threaded_dialog_spin(0.);
   return reslist;
 }
 

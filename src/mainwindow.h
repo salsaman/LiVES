@@ -83,6 +83,8 @@
 #define MIN_SEPWIN_WIDTH 600
 #define MIN_SEPWIN_HEIGHT 36
 
+#define MENU_HIDE_LIM 24
+
 /// sepwin/screen size safety margins in pixels
 #define SCR_WIDTH_SAFETY ((int)(100. * widget_opts.scale))
 #define SCR_HEIGHT_SAFETY ((int)(200. * widget_opts.scale))

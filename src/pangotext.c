@@ -300,8 +300,8 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
       g_print("Too wide !!!\n");
 #endif
       while (1) {
-	totlines -= get_token_count(newtext, '\n');
-	slen = (int)lives_strlen(newtext);
+        totlines -= get_token_count(newtext, '\n');
+        slen = (int)lives_strlen(newtext);
         // for now we just truncate and elipsise lines
         tjump = dirn * jumpval;
         /* if (tjump >= slen && dirn == -1) { */
@@ -594,7 +594,11 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
       }
       // frees pd
       lives_painter_to_layer(cr, layer_slice);
+      /// make sure our slice isnt freed, since it is actually part of the image
+      /// which we will overwrite
+      weed_leaf_set_flagbits(layer_slice, WEED_LEAF_PIXEL_DATA, LIVES_FLAG_MAINTAIN_VALUE);
       convert_layer_palette(layer_slice, pal, 0);
+      weed_leaf_clear_flagbits(layer_slice, WEED_LEAF_PIXEL_DATA, LIVES_FLAG_MAINTAIN_VALUE);
       pd = weed_layer_get_pixel_data_packed(layer_slice);
       lives_memcpy(src + (int)(top * height) * row, pd, lheight * row);
       weed_layer_free(layer_slice);

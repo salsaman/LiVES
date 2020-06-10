@@ -3408,8 +3408,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   label = lives_standard_label_new_with_tooltips(_("Fallback image format"), LIVES_BOX(hbox),
-						 _("The image format to be used when opening clips\n"
-						   "for which there is no instant decoder candidate."));
+          _("The image format to be used when opening clips\n"
+            "for which there is no instant decoder candidate."));
 
   add_fill_to_box(LIVES_BOX(hbox));
 

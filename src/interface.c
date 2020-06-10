@@ -1008,7 +1008,7 @@ void draw_little_bars(double ptrtime, int which) {
       }
     }
     lives_painter_stroke(creb);
-    lives_painter_destroy(creb);
+    if (!lives_painter_remerge(creb)) lives_painter_destroy(creb);
 
     //threaded_dialog_spin(0.);
   }
@@ -5093,12 +5093,10 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
 
       lives_widget_show_all(mainw->message_box);
 
-      //lives_widget_context_update();
-      //lives_widget_process_updates(mainw->message_box, TRUE);
-
       if (!prefs->open_maximised)
         lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), posx, posy);
-      //return FALSE;
+      else
+        lives_window_maximize(LIVES_MAIN_WINDOW_WIDGET);
     }
   }
 
@@ -5112,6 +5110,7 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
 
   if (!prefs->open_maximised && mainw->multitrack == NULL && gui_posx < 1000000)
     lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), gui_posx, gui_posy);
+
 
   gui_posx = gui_posy = 1000000;
 
@@ -5166,7 +5165,9 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
     layout_to_lives_painter(layout, cr, LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND, &fg, &bg, width, height,
                             0., 0., 0., height - lheight - 4);
     lingo_painter_show_layout(cr, layout);
-    if (cr != cairo) lives_painter_destroy(cr);
+    if (cr != cairo) {
+      if (!lives_painter_remerge(cr)) lives_painter_destroy(cr);
+    }
   }
   return FALSE;
 }

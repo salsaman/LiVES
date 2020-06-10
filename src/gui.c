@@ -4076,7 +4076,7 @@ void make_play_window(void) {
     lives_painter_t *cr = lives_painter_create_from_widget(mainw->play_window);
     lives_painter_set_source_pixbuf(cr, mainw->imframe, (LiVESXModifierType)0, 0);
     lives_painter_paint(cr);
-    lives_painter_destroy(cr);
+    if (!lives_painter_remerge(cr)) lives_painter_destroy(cr);
   }
 
   lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Hide Play Window"));

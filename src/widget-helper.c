@@ -22,6 +22,8 @@ static boolean governor_loop(livespointer data) GNU_RETURNS_TWICE;
 
 /// internal data keys
 #define STD_KEY "_wh_is_standard"
+#define CAIRO_CTX_KEY "_wh_cairo_ctx"
+#define CAIRO_WIN_KEY "_wh_cairo_win"
 #define TTIPS_KEY "_wh_lives_tooltips"
 #define TTIPS_OVERRIDE_KEY "_wh_lives_tooltips_override"
 #define TTIPS_HIDE_KEY "_wh_lives_tooltips_hide"
@@ -320,21 +322,51 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_t *lives_painter_create_from_widget(Li
 #ifdef LIVES_PAINTER_IS_CAIRO
 #ifdef GUI_GTK
   LiVESXWindow *window = lives_widget_get_xwindow(widget);
-  if (window != NULL) {
-    /* #if GTK_CHECK_VERSION(3, 22, 0) */
-    /*     GdkDrawingContext *xctx = gdk_window_begin_draw_frame(lives_widget_get_xwindow(widget)); */
-    /*     cr = gdk_drawing_context_get_cairo_context(xctx); */
-    /* #else */
+  if (window && LIVES_IS_XWINDOW(window)) {
+#if GTK_CHECK_VERSION(3, 22, 0)
+    /// TODO: MUST exit if already in draw_frame, fn is non-recursive
+    cairo_rectangle_int_t crect;
+    cairo_region_t *creg;
+    GdkDrawingContext *xctx;
+    int rwidth = lives_widget_get_allocation_width(widget);
+    int rheight = lives_widget_get_allocation_height(widget);
+    if (rwidth * rheight == 0)return NULL;
+    creg = gdk_window_get_update_area(window);
+    if (!creg) {
+      crect.x = crect.y = 0;
+      crect.width = rwidth;
+      crect.height = rheight;
+      creg = cairo_region_create_rectangle(&crect);
+    }
+    xctx = gdk_window_begin_draw_frame(window, creg);
+    cairo_region_destroy(creg);
+
+    if (!GDK_IS_DRAWING_CONTEXT(xctx)) return NULL;
+    cr = gdk_drawing_context_get_cairo_context(xctx);
+    cairo_set_user_data(cr, CAIRO_CTX_KEY, xctx, NULL);
+    cairo_set_user_data(cr, CAIRO_WIN_KEY, window, NULL);
+#else
     cr = gdk_cairo_create(window);
-    //#endif
+#endif
   }
 #endif
 #endif
-#ifdef PAINTER_QPAINTER
-  QWidget *widg = static_cast<QWidget *>(widget);
-  if (widg != NULL) cr = new lives_painter_t(widg);
-#endif
   return cr;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_remerge(lives_painter_t *cr) {
+#if GTK_CHECK_VERSION(3, 22, 0)
+  if (cr) {
+    GdkDrawingContext *xctx = (GdkDrawingContext *)cairo_get_user_data(cr, CAIRO_CTX_KEY);
+    LiVESXWindow *win = (LiVESXWindow *)cairo_get_user_data(cr, CAIRO_WIN_KEY);
+    if (win && xctx) {
+      gdk_window_end_draw_frame(win, xctx);
+      return TRUE;
+    }
+  }
+#endif
+  return FALSE;
 }
 
 
@@ -2856,6 +2888,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_unfullscreen(LiVESWindow *windo
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_maximize(LiVESWindow *window) {
 #ifdef GUI_GTK
   gtk_window_maximize(window);
+  lives_widget_set_size_request(LIVES_WIDGET(window), GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT
+                                - (mainw ? mainw->mbar_res : 0));
   return TRUE;
 #endif
 #ifdef GUI_QT
@@ -4769,8 +4803,9 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_check_button_new_with_label(const
 
 static LiVESWidget *make_ttips_image(const char *text) {
   LiVESWidget *ttips_image = lives_image_new_from_stock(LIVES_STOCK_DIALOG_QUESTION,
-							LIVES_ICON_SIZE_SMALL_TOOLBAR);
-  lives_widget_set_bg_color(ttips_image, LIVES_WIDGET_STATE_NORMAL, &palette->dark_orange);
+                             LIVES_ICON_SIZE_SMALL_TOOLBAR);
+  /// dont work...
+  //lives_widget_set_bg_color(ttips_image, LIVES_WIDGET_STATE_NORMAL, &palette->dark_orange);
   lives_widget_set_no_show_all(ttips_image, TRUE);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ttips_image), TTIPS_IMAGE_KEY, ttips_image);
   lives_widget_set_tooltip_text(ttips_image, text);
@@ -4784,14 +4819,13 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_widget_set_tooltip_text(LiVESWidg
 
   if (tip_text && *tip_text == '#' && !lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_IMAGE_KEY)) {
     widget = img_tips = make_ttips_image(tip_text + 1);
-  }
-  else {
+  } else {
     if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_OVERRIDE_KEY)) ttips_override = TRUE;
     if (!prefs->show_tooltips && !ttips_override) {
       if (tip_text != NULL)
-	lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY, (livespointer)(lives_strdup(tip_text)));
+        lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY, (livespointer)(lives_strdup(tip_text)));
       else
-	lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY, (livespointer)(lives_strdup(tip_text)));
+        lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY, (livespointer)(lives_strdup(tip_text)));
       return NULL;
     }
   }
@@ -9192,7 +9226,7 @@ static LiVESWidget *make_inner_hbox(LiVESBox *box) {
 
 
 LiVESWidget *lives_standard_label_new_with_tooltips(const char *text, LiVESBox *box,
-						    const char *tips) {
+    const char *tips) {
   LiVESWidget *img_tips = make_ttips_image(tips);
   LiVESWidget *label = lives_standard_label_new(text);
   LiVESWidget *hbox = make_inner_hbox(LIVES_BOX(box));
@@ -11035,7 +11069,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean clear_widget_bg(LiVESWidget *widget) {
       int rwidth = lives_widget_get_allocation_width(LIVES_WIDGET(widget));
       int rheight = lives_widget_get_allocation_height(LIVES_WIDGET(widget));
       lives_painter_render_background(widget, cr, 0., 0., rwidth, rheight);
-      lives_painter_destroy(cr);
+      if (!lives_painter_remerge(cr)) lives_painter_destroy(cr);
     }
   }
   return TRUE;
@@ -12063,7 +12097,7 @@ EXPOSE_FN_DECL(draw_cool_toggle, widget, user_data) {
     lives_painter_line_to(cr, rwidth / 4.*3., rwidth / 4.);
     lives_painter_stroke(cr);
   }
-  if (cr != cairo) lives_painter_destroy(cr);
+  if (cr != cairo) if (!lives_painter_remerge(cr)) lives_painter_destroy(cr);
   return TRUE;
 }
 EXPOSE_FN_END

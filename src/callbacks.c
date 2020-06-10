@@ -9424,9 +9424,7 @@ EXPOSE_FN_DECL(expose_vid_event, widget, user_data) {
   lives_painter_rectangle(cairo, ex, ey, ew, eh);
   lives_painter_fill(cairo);
 
-  if (event != NULL) {
-    lives_painter_destroy(cairo);
-  }
+  if (!lives_painter_remerge(cairo) && event) lives_painter_destroy(cairo);
 
   if (!LIVES_IS_PLAYING && CURRENT_CLIP_IS_VALID) draw_little_bars(cfile->pointer_time, 1);
 
@@ -9539,8 +9537,7 @@ EXPOSE_FN_DECL(expose_laud_event, widget, user_data) {
   }
 
   redraw_laudio(cairo, ex, ey, ew, eh);
-
-  if (event != NULL) lives_painter_destroy(cairo);
+  if (!lives_painter_remerge(cairo) && event) lives_painter_destroy(cairo);
 
   if (!LIVES_IS_PLAYING && CURRENT_CLIP_IS_VALID) draw_little_bars(cfile->pointer_time, 2);
 
@@ -9577,7 +9574,7 @@ EXPOSE_FN_DECL(expose_raud_event, widget, user_data) {
 
   redraw_raudio(cairo, ex, ey, ew, eh);
 
-  if (event != NULL) lives_painter_destroy(cairo);
+  if (!lives_painter_remerge(cairo) && event) lives_painter_destroy(cairo);
 
   if (!LIVES_IS_PLAYING && CURRENT_CLIP_IS_VALID) draw_little_bars(cfile->pointer_time, 3);
 

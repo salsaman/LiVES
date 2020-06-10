@@ -1405,8 +1405,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   get_string_prefd(PREF_DEFAULT_IMAGE_FORMAT, prefs->image_ext, 16, LIVES_FILE_EXT_PNG);
   lives_snprintf(prefs->image_ext, 16, "%s",
-		 get_image_ext_for_type(lives_image_type_to_image_type(prefs->image_ext)));
-  
+                 get_image_ext_for_type(lives_image_type_to_image_type(prefs->image_ext)));
+
   prefs->loop_recording = TRUE;
   prefs->no_bandwidth = FALSE;
   prefs->ocp = get_int_prefd(PREF_OPEN_COMPRESSION_PERCENT, 15);
@@ -3005,13 +3005,13 @@ boolean resize_message_area(livespointer data) {
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
+static boolean got_files = FALSE;
+static boolean lives_startup2(livespointer data);
 
 static boolean lives_startup(livespointer data) {
   // this is run in an idlefunc
 
   char *tmp, *tmp2, *msg;
-  boolean got_files = FALSE;
-  boolean layout_recovered = FALSE;
 
   capable->gui_thread = pthread_self();
 
@@ -3111,9 +3111,6 @@ static boolean lives_startup(livespointer data) {
 
   splash_msg(_("Starting GUI..."), SPLASH_LEVEL_BEGIN);
   LIVES_MAIN_WINDOW_WIDGET = NULL;
-
-  /* mainw->helper_procthreads[PT_LAZY_RFX] = lives_proc_thread_create(NULL, (lives_funcptr_t)add_rfx_effects, -1, "i", */
-  /*     RFX_STATUS_ANY); */
 
   create_LiVES();
 
@@ -3294,6 +3291,18 @@ static boolean lives_startup(livespointer data) {
     // still experimental
     switch_aud_to_none(FALSE);
   }
+
+  mainw->helper_procthreads[PT_LAZY_RFX] = lives_proc_thread_create(NULL, (lives_funcptr_t)add_rfx_effects, -1, "i",
+      RFX_STATUS_ANY);
+
+  lives_idle_add(lives_startup2, NULL);
+  return FALSE;
+}
+
+
+static boolean lives_startup2(livespointer data) {
+  boolean layout_recovered = FALSE;
+  char *tmp;
 
   if (prefs->crash_recovery && !no_recover) got_files = check_for_recovery_files(auto_recover);
 
@@ -4751,24 +4760,9 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf, li
   lives_painter_t *cr;
   int cx, cy;
   int rwidth, rheight, width, height, owidth, oheight;
-  GdkDrawingContext *xctx;
-  GdkWindow *win = NULL;
 
   if (!cairo) {
-    cairo_rectangle_int_t crect;
-    cairo_region_t *creg;
-    //cr = lives_painter_create_from_widget(widget);
-    win = lives_widget_get_xwindow(widget);
-    if (!GDK_IS_WINDOW(win)) return;
-    rwidth = lives_widget_get_allocation_width(widget);
-    rheight = lives_widget_get_allocation_height(widget);
-    if (rwidth * rheight == 0)return;
-    crect.x = crect.y = 0;
-    crect.width = rwidth;
-    crect.height = rheight;
-    creg = cairo_region_create_rectangle(&crect);
-    xctx = gdk_window_begin_draw_frame(win, creg);
-    cr = gdk_drawing_context_get_cairo_context(xctx);
+    cr = lives_painter_create_from_widget(widget);
   } else cr = cairo;
   if (!cr) return;
 
@@ -4810,8 +4804,7 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf, li
     lives_painter_render_background(widget, cr, 0, 0, rwidth, rheight);
   }
   lives_painter_fill(cr);
-  if (win) gdk_window_end_draw_frame(win, xctx);
-  else if (!cairo) lives_painter_destroy(cr);
+  if (!lives_painter_remerge(cr) && !cairo) lives_painter_destroy(cr);
 }
 
 
@@ -5819,10 +5812,10 @@ void load_preview_image(boolean update_always) {
       gval = png_get_gAMA(png_ptr, info_ptr, &file_gamma);
 
       if (!gval) {
-      	// b > a, brighter
-      	//png_set_gamma(png_ptr, 1.0, .45455); /// default, seemingly
-      	//png_set_gamma(png_ptr, 1. / .45455, 1.0); /// too bright
-      	png_set_gamma(png_ptr, 1.0, 1.0);
+        // b > a, brighter
+        //png_set_gamma(png_ptr, 1.0, .45455); /// default, seemingly
+        //png_set_gamma(png_ptr, 1. / .45455, 1.0); /// too bright
+        png_set_gamma(png_ptr, 1.0, 1.0);
       }
 
       // want to convert everything (greyscale, RGB, RGBA64 etc.) to RGBA32 (or RGB24)
@@ -5934,15 +5927,15 @@ void load_preview_image(boolean update_always) {
       }
 
       if (weed_threadsafe && twidth * theight != 0 && (twidth != width || theight != height) &&
-	  !png_get_interlace_type(png_ptr, info_ptr)) {
-	weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 1);
-	reslayer_thread(layer, twidth, theight, get_interp_value(prefs->pb_quality),
-			tpalette, weed_layer_get_yuv_clamping(layer));
-	for (int j = 0; j < height; j++) {
-	  png_read_row(png_ptr, row_ptrs[j], NULL);
-	  weed_set_int_value(layer, WEED_LEAF_PROGSCAN, j + 2);
-	}
-	weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 0);
+          !png_get_interlace_type(png_ptr, info_ptr)) {
+        weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 1);
+        reslayer_thread(layer, twidth, theight, get_interp_value(prefs->pb_quality),
+                        tpalette, weed_layer_get_yuv_clamping(layer));
+        for (int j = 0; j < height; j++) {
+          png_read_row(png_ptr, row_ptrs[j], NULL);
+          weed_set_int_value(layer, WEED_LEAF_PROGSCAN, j + 2);
+        }
+        weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 0);
       } else {
         png_read_image(png_ptr, row_ptrs);
       }
@@ -5961,16 +5954,15 @@ void load_preview_image(boolean update_always) {
 
       if (gval == PNG_INFO_gAMA) {
         /// img needs gamma converting
-	/// TODO: can we do this using png_set_gamma ?
+        /// TODO: can we do this using png_set_gamma ?
         if ((resl_thrd = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL)) != NULL) {
           lives_thread_join(*resl_thrd, NULL);
           weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL);
           lives_free(resl_thrd);
         }
         gamma_convert_layer_variant(1. / file_gamma, layer);
-	weed_layer_set_gamma(layer, WEED_GAMMA_LINEAR);
-      }
-      else weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
+        weed_layer_set_gamma(layer, WEED_GAMMA_LINEAR);
+      } else weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
 
 
       if (is16bit) {
@@ -8227,8 +8219,7 @@ void load_frame_image(int frame) {
                               lives_widget_get_allocation_height(mainw->play_window));
       lives_painter_paint(cr);
 
-      lives_painter_destroy(cr);
-
+      if (!lives_painter_remerge(cr)) lives_painter_destroy(cr);
       unblock_expose();
     } else {
       pwidth = lives_widget_get_allocation_width(mainw->play_image);
@@ -8299,7 +8290,7 @@ void load_frame_image(int frame) {
 
 	  lives_painter_set_source_pixbuf(cr, pixbuf, 0, 0);
 	  lives_painter_paint(cr);
-	  lives_painter_destroy(cr);
+	  if (!lives_painter_remerge(cr)) lives_painter_destroy(cr);
 
 	  if (pixbuf != NULL) lives_widget_object_unref(pixbuf);
 	  cfile->frames = frame;
@@ -8783,42 +8774,8 @@ void load_frame_image(int frame) {
           reset_clipmenu();
         }
 
-        if (!mainw->switch_during_pb) {
-          // switch on/off loop video if we have/don't have audio
-          // TODO: can we just call sensitize() ?
+        if (!mainw->switch_during_pb && !cfile->opening) sensitize();
 
-          if (!cfile->opening) {
-            sensitize();
-          }
-
-          /*   if (!CURRENT_CLIP_HAS_AUDIO) { */
-          /*     mainw->loop = FALSE; */
-          /*   } else { */
-          /*     mainw->loop = lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video)); */
-          /*   } */
-
-          /*   lives_widget_set_sensitive(mainw->undo, cfile->undoable); */
-          /*   lives_widget_set_sensitive(mainw->redo, cfile->redoable); */
-          /*   lives_widget_set_sensitive(mainw->export_submenu, (CURRENT_CLIP_HAS_AUDIO)); */
-          /*   lives_widget_set_sensitive(mainw->recaudio_submenu, TRUE); */
-          /*   lives_widget_set_sensitive(mainw->recaudio_sel, (CURRENT_CLIP_HAS_VIDEO)); */
-          /*   lives_widget_set_sensitive(mainw->export_selaudio, (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO)); */
-          /*   lives_widget_set_sensitive(mainw->export_allaudio, CURRENT_CLIP_HAS_AUDIO); */
-          /*   lives_widget_set_sensitive(mainw->append_audio, (CURRENT_CLIP_HAS_AUDIO)); */
-          /*   lives_widget_set_sensitive(mainw->trim_submenu, (CURRENT_CLIP_HAS_AUDIO)); */
-          /*   lives_widget_set_sensitive(mainw->trim_audio, (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO)); */
-          /*   lives_widget_set_sensitive(mainw->trim_to_pstart, (CURRENT_CLIP_HAS_AUDIO && cfile->real_pointer_time > 0.)); */
-          /*   lives_widget_set_sensitive(mainw->delaudio_submenu, (CURRENT_CLIP_HAS_AUDIO)); */
-          /*   lives_widget_set_sensitive(mainw->delsel_audio, (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO)); */
-          /*   lives_widget_set_sensitive(mainw->delall_audio, (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO)); */
-          /*   lives_widget_set_sensitive(mainw->sa_button, CURRENT_CLIP_HAS_VIDEO && (cfile->start > 1 || cfile->end < cfile->frames)); */
-          /*   lives_widget_set_sensitive(mainw->resample_audio, (CURRENT_CLIP_HAS_AUDIO && capable->has_sox_sox)); */
-          /*   lives_widget_set_sensitive(mainw->voladj, CURRENT_CLIP_HAS_AUDIO); */
-          /*   lives_widget_set_sensitive(mainw->fade_aud_in, CURRENT_CLIP_HAS_AUDIO); */
-          /*   lives_widget_set_sensitive(mainw->fade_aud_out, CURRENT_CLIP_HAS_AUDIO); */
-          /*   lives_widget_set_sensitive(mainw->loop_video, (CURRENT_CLIP_HAS_AUDIO && CURRENT_CLIP_HAS_VIDEO)); */
-          /* } */
-        }
         lives_menu_item_set_text(mainw->undo, cfile->undo_text, TRUE);
         lives_menu_item_set_text(mainw->redo, cfile->redo_text, TRUE);
 
@@ -9319,6 +9276,9 @@ void load_frame_image(int frame) {
 
         get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
 
+        if (prefs->open_maximised && by > MENU_HIDE_LIM)
+          lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+
         /* bx = mainw->mgeom[widget_opts.monitor].phys_width - scr_width; */
         /* by = mainw->mgeom[widget_opts.monitor].phys_height - scr_height; */
 
@@ -9330,7 +9290,7 @@ void load_frame_image(int frame) {
           lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
         else if (w > scr_width - bx || h > scr_height - by) {
           w = scr_width - bx;
-          h = scr_height - by;
+          h = scr_height - by - mainw->mbar_res;
           lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
           lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
         }

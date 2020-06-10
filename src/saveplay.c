@@ -6089,7 +6089,7 @@ static lives_clip_t *_restore_binfmt(int clipno, boolean forensic) {
         if (strlen(mainw->set_name) > 0) recover_layout_map(mainw->current_file);
 
       if (!mainw->multitrack) resize(1);
-      
+
       lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
     }
   }

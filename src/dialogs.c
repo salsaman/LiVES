@@ -1530,7 +1530,8 @@ switch_point:
     }
 #endif
 
-    if (new_ticks != mainw->startticks && new_ticks != mainw->last_startticks && (requested_frame != last_req_frame || sfile->frames == 1)) {
+    if (new_ticks != mainw->startticks && new_ticks != mainw->last_startticks && (requested_frame != last_req_frame ||
+        sfile->frames == 1)) {
       //g_print("%ld %ld %ld %d %d %d\n", mainw->currticks, mainw->startticks, new_ticks,
       //sfile->last_frameno, requested_frame, last_req_frame);
       if (mainw->fixed_fpsd <= 0. && (mainw->vpp == NULL ||

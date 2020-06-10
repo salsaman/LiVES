@@ -655,7 +655,7 @@ frames_t realize_all_frames(int clipno, const char *msg, boolean enough) {
   int current_file = mainw->current_file;
   mainw->cancelled = CANCEL_NONE;
   if (!IS_VALID_CLIP(clipno)) return 0;
-  
+
   // if its the clipboard and we have exotic gamma types we need to do a special thing
   // - fix the gamma_type of the clipboard existing frames before inserting in cfile
   if (clipno == 0 && prefs->btgamma && CURRENT_CLIP_HAS_VIDEO && cfile->gamma_type

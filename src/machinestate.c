@@ -560,7 +560,7 @@ boolean init_memfuncs(void) {
 
 boolean init_thread_memfuncs(void) {
 #ifdef USE_RPMALLOC
-  rpmalloc_initialize();
+  rpmalloc_thread_initialize();
 #endif
   return TRUE;
 }
@@ -1338,12 +1338,13 @@ boolean do_something_useful(uint64_t myidx) {
   mywork->busy = myidx + 1;
   myflags = mywork->flags;
 
+#if 0
   boolean rpma = FALSE;
   if (!rpmalloc_is_thread_initialized()) {
     rpmalloc_thread_initialize();
     rpma = TRUE;
   }
-
+#endif
   if (myflags & LIVES_THRDFLAG_NEW_CTX) {
     // create a new g_context and attach it to this thread
     ctx = g_main_context_new();
@@ -1407,8 +1408,10 @@ boolean do_something_useful(uint64_t myidx) {
   }
 #endif
 
+#if 0
   if (rpma) rpmalloc_thread_finalize();
-  
+#endif
+
   pthread_mutex_lock(&twork_count_mutex);
   ntasks--;
   pthread_mutex_unlock(&twork_count_mutex);

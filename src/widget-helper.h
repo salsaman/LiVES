@@ -134,6 +134,8 @@ typedef cairo_fill_rule_t lives_painter_fill_rule_t;
 
 lives_painter_t *lives_painter_create_from_surface(lives_painter_surface_t *target);
 lives_painter_t *lives_painter_create_from_widget(LiVESWidget *);
+boolean lives_painter_remerge(lives_painter_t *); /// call after lives_painter_create_from_widget done
+
 boolean lives_painter_set_source_pixbuf(lives_painter_t *, const LiVESPixbuf *, double pixbuf_x, double pixbuf_y);
 boolean lives_painter_set_source_surface(lives_painter_t *, lives_painter_surface_t *, double x, double y);
 lives_painter_surface_t *lives_painter_image_surface_create(lives_painter_format_t format, int width, int height);
@@ -945,7 +947,7 @@ LiVESWidget *lives_standard_notebook_new(const LiVESWidgetColor *bg_color, const
 LiVESWidget *lives_standard_label_new(const char *labeltext);
 LiVESWidget *lives_standard_label_new_with_mnemonic_widget(const char *text, LiVESWidget *mnemonic_widget);
 LiVESWidget *lives_standard_label_new_with_tooltips(const char *text, LiVESBox *box,
-						    const char *tips);
+    const char *tips);
 
 LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, ulong *ret_fn);
 

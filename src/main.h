@@ -1308,7 +1308,7 @@ boolean startup_message_nonfatal_dismissable(const char *msg, uint64_t warning_m
 capability *get_capabilities(void);
 void get_monitors(boolean reset);
 void replace_with_delegates(void);
-void set_drawing_area_from_pixbuf(LiVESWidget *darea, LiVESPixbuf *pixbuf, lives_painter_t *);
+void set_drawing_area_from_pixbuf(LiVESWidget *darea, LiVESPixbuf *pixbuf, lives_painter_surface_t *);
 void load_start_image(int frame);
 void load_end_image(int frame);
 void showclipimgs(void);

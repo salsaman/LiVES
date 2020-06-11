@@ -31,8 +31,11 @@ void show_playbar_labels(int clipno);
 void msg_area_scroll(LiVESAdjustment *, livespointer userdata);
 void msg_area_scroll_to_end(LiVESWidget *, LiVESAdjustment *);
 boolean on_msg_area_scroll(LiVESWidget *, LiVESXEventScroll *, livespointer user_data);
+boolean expose_msg_area(LiVESWidget *, lives_painter_t *, livespointer user_data);
+boolean msg_area_config(LiVESWidget *, LiVESXEventConfigure *event, livespointer user_data);
+void reshow_msg_area(LiVESWidget *);
 
-EXPOSE_FN_PROTOTYPE(expose_msg_area);
+
 boolean get_screen_usable_size(int *w, int *h);
 
 LiVESWidget *create_info_error_dialog(lives_dialog_t info_type, const char *text, LiVESWindow *transient, int mask,

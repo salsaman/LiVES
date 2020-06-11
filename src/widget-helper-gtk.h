@@ -133,6 +133,8 @@ typedef uint8_t                           boolean;
 /* #define _lives_calloc g_try_malloc0_n */
 /* #endif */
 
+typedef GMainContext		  	  LiVESMainContext;
+
 typedef GError                            LiVESError;
 
 typedef GList                             LiVESList;

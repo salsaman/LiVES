@@ -800,6 +800,8 @@ typedef struct {
   LiVESWidget *play_window;
   weed_plant_t *frame_layer;
 
+  lives_painter_surface_t *play_surface;
+
   /// predictive caching apparatus
   weed_plant_t *frame_layer_preload;
   frames64_t pred_frame;
@@ -921,6 +923,8 @@ typedef struct {
   ulong fsp_func; ///< fileselector preview expose (for image thumbnails)
   ulong sw_func; ///< scrolledwindow expose func
   ulong vj_mode_func;
+
+  lives_painter_surface_t *fsp_surface;
 
   lives_funcptr_t abort_hook_func; ///< can be set to point to a function to be run before abort, for critical functions
 
@@ -1118,12 +1122,9 @@ typedef struct {
   LiVESWidget *hbox3;  ///< hbox with start / end spins and selection label (C.E.)
 
   // bars here -> actually text above bars
-  LiVESWidget *vidbar;
-  LiVESWidget *laudbar;
-  LiVESWidget *raudbar;
+  LiVESWidget *vidbar, *laudbar, *raudbar;
 
-  LiVESWidget *spinbutton_end;
-  LiVESWidget *spinbutton_start;
+  LiVESWidget *spinbutton_end, *spinbutton_start;
 
   LiVESWidget *sa_button;
   LiVESWidget *sa_hbox;
@@ -1154,14 +1155,17 @@ typedef struct {
 #define PRV_PTR 3
 #define PRV_DEFAULT PRV_PTR
 
-  LiVESWidget *start_image;
-  LiVESWidget *end_image;
+  lives_painter_surface_t *si_surface, *ei_surface, *pi_surface;
+
+  LiVESWidget *start_image, *end_image;
   LiVESWidget *playarea;
   LiVESWidget *hseparator;
   LiVESWidget *message_box;
   LiVESWidget *msg_area;
   LiVESWidget *msg_scrollbar;
   LiVESAdjustment *msg_adj;
+
+  lives_painter_surface_t *msg_surface;
 
   LiVESWidget *clipsmenu;
   LiVESWidget *eventbox;
@@ -1194,11 +1198,9 @@ typedef struct {
   LiVESWidget *l2_tb;
   LiVESWidget *l3_tb;
 
-  LiVESWidget *int_audio_checkbutton;
-  LiVESWidget *ext_audio_checkbutton;
+  LiVESWidget *int_audio_checkbutton, *ext_audio_checkbutton;
 
-  ulong int_audio_func;
-  ulong ext_audio_func;
+  ulong int_audio_func, ext_audio_func;
 
   LiVESWidget *volume_scale;
   LiVESWidget *vol_toolitem;
@@ -1206,13 +1208,8 @@ typedef struct {
 
   // menubar buttons
   LiVESWidget *btoolbar; ///< button toolbar - clip editor
-  LiVESWidget *m_sepwinbutton;
-  LiVESWidget *m_playbutton;
-  LiVESWidget *m_stopbutton;
-  LiVESWidget *m_playselbutton;
-  LiVESWidget *m_rewindbutton;
-  LiVESWidget *m_loopbutton;
-  LiVESWidget *m_mutebutton;
+  LiVESWidget *m_sepwinbutton, *m_playbutton, *m_stopbutton, *m_playselbutton, *m_rewindbutton,
+    *m_loopbutton, *m_mutebutton;
   LiVESWidget *menu_hbox;
   LiVESWidget *menubar;
 
@@ -1221,23 +1218,14 @@ typedef struct {
 
   // sepwin buttons
   LiVESWidget *preview_controls;
-  LiVESWidget *p_playbutton;
-  LiVESWidget *p_playselbutton;
-  LiVESWidget *p_rewindbutton;
-  LiVESWidget *p_loopbutton;
-  LiVESWidget *p_mutebutton;
+  LiVESWidget *p_playbutton, *p_playselbutton, *p_rewindbutton, *p_loopbutton, *p_mutebutton;
   LiVESWidget *p_mute_img;
 
   // timer bars
-  LiVESWidget *video_draw;
-  LiVESWidget *laudio_draw;
-  LiVESWidget *raudio_draw;
+  LiVESWidget *video_draw, *laudio_draw, *raudio_draw;
 
-  lives_painter_surface_t *video_drawable;
-  lives_painter_surface_t *laudio_drawable;
-  lives_painter_surface_t *raudio_drawable;
-  lives_painter_surface_t *blank_laudio_drawable;
-  lives_painter_surface_t *blank_raudio_drawable;
+  lives_painter_surface_t *video_drawable, *laudio_drawable, *raudio_drawable;
+  lives_painter_surface_t *blank_laudio_drawable, *blank_raudio_drawable;
 
   // framecounter
   LiVESWidget *framebar;
@@ -1377,10 +1365,7 @@ typedef struct {
   int64_t rec_samples;
   double rec_fps;
   frames_t rec_vid_frames;
-  int rec_arate;
-  int rec_achans;
-  int rec_asamps;
-  int rec_signed_endian;
+  int rec_arate, rec_achans, rec_asamps, rec_signed_endian;
 
   /// message output settings
   int last_dprint_file;

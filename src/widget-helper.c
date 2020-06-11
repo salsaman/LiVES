@@ -321,34 +321,8 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_t *lives_painter_create_from_widget(Li
   lives_painter_t *cr = NULL;
 #ifdef LIVES_PAINTER_IS_CAIRO
 #ifdef GUI_GTK
-  LiVESXWindow *window = lives_widget_get_xwindow(widget);
-  if (window && LIVES_IS_XWINDOW(window)) {
-#if GTK_CHECK_VERSION(3, 22, 0)
-    /// TODO: MUST exit if already in draw_frame, fn is non-recursive
-    cairo_rectangle_int_t crect;
-    cairo_region_t *creg;
-    GdkDrawingContext *xctx;
-    int rwidth = lives_widget_get_allocation_width(widget);
-    int rheight = lives_widget_get_allocation_height(widget);
-    if (rwidth * rheight == 0)return NULL;
-    creg = gdk_window_get_update_area(window);
-    if (!creg) {
-      crect.x = crect.y = 0;
-      crect.width = rwidth;
-      crect.height = rheight;
-      creg = cairo_region_create_rectangle(&crect);
-    }
-    xctx = gdk_window_begin_draw_frame(window, creg);
-    cairo_region_destroy(creg);
-
-    if (!GDK_IS_DRAWING_CONTEXT(xctx)) return NULL;
-    cr = gdk_drawing_context_get_cairo_context(xctx);
-    cairo_set_user_data(cr, CAIRO_CTX_KEY, xctx, NULL);
-    cairo_set_user_data(cr, CAIRO_WIN_KEY, window, NULL);
-#else
-    cr = gdk_cairo_create(window);
-#endif
-  }
+  LiVESXWindow *window = lives_widget_get_window(widget);
+  cr = gdk_cairo_create(window);
 #endif
 #endif
   return cr;
@@ -357,14 +331,6 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_t *lives_painter_create_from_widget(Li
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_remerge(lives_painter_t *cr) {
 #if GTK_CHECK_VERSION(3, 22, 0)
-  if (cr) {
-    GdkDrawingContext *xctx = (GdkDrawingContext *)cairo_get_user_data(cr, CAIRO_CTX_KEY);
-    LiVESXWindow *win = (LiVESXWindow *)cairo_get_user_data(cr, CAIRO_WIN_KEY);
-    if (win && xctx) {
-      gdk_window_end_draw_frame(win, xctx);
-      return TRUE;
-    }
-  }
 #endif
   return FALSE;
 }
@@ -739,6 +705,18 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_image_surface
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_widget_create_painter_surface
+(LiVESWidget *widget) {
+#ifdef GUI_GTK
+  if (widget)
+    return gdk_window_create_similar_surface(lives_widget_get_xwindow (widget),
+    					     LIVES_PAINTER_CONTENT_COLOR,
+    					     lives_widget_get_allocation_width(widget),
+    					     lives_widget_get_allocation_height(widget));
+#endif
+  return NULL;
+}
+
 ////////////////////////// painter info funcs
 
 WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_get_target(lives_painter_t *cr) {
@@ -775,6 +753,7 @@ WIDGET_HELPER_GLOBAL_INLINE uint8_t *lives_painter_image_surface_get_data(lives_
 #endif
   return data;
 }
+
 
 WIDGET_HELPER_GLOBAL_INLINE int lives_painter_image_surface_get_width(lives_painter_surface_t *surf) {
   int width = 0;
@@ -994,11 +973,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_stop_emission_by_name(livespoin
   g_signal_stop_emission_by_name(instance, detailed_signal);
   return TRUE;
 #endif
-#ifdef GUI_QT
-  LiVESWidget *widget = static_cast<LiVESWidget *>(instance);
-  if (!strcmp(detailed_signal, LIVES_WIDGET_EXPOSE_EVENT)) widget->add_onetime_event_block(LIVES_EXPOSURE_MASK);
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -1032,6 +1006,7 @@ static boolean governor_loop(livespointer data) {
   }
 
   mainw->clutch = TRUE;
+  g_main_context_wakeup(NULL);
 
   if (!lives_proc_thread_check(sigdata->proc)) {
     // signal bg that it can start now...
@@ -1138,13 +1113,8 @@ static boolean async_timer_handler(livespointer data) {
     /// run the main loop, since we we were asked to by a thread, but we cannot return yet
     /// as we need the (boolean) result from the idle / timer running in the background
     while (!mainw->clutch && !mainw->is_exiting) {
-      while (!mainw->is_exiting && g_main_context_iteration(NULL, FALSE)) {
-        lives_nanosleep(NSLEEP_TIME * 100);
-        sched_yield();
-      }
+      g_main_context_iteration(NULL, TRUE);
       if (mainw->is_exiting) return FALSE;
-      lives_nanosleep(NSLEEP_TIME);
-      sched_yield();
     }
 
     if (mainw->is_exiting) return FALSE;
@@ -1631,6 +1601,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dial
     if (!was_modal) lives_window_set_modal(LIVES_WINDOW(dialog), TRUE);
     dlgtorun = dialog;
     mainw->clutch = FALSE;
+
+    /// needs to run in the def. ctx (?)
     dlgloop = g_main_loop_new(NULL, FALSE);
     g_main_loop_run(dlgloop);
     if (!dlgtorun) was_dest = TRUE;
@@ -12124,8 +12096,12 @@ boolean get_border_size(LiVESWidget *win, int *bx, int *by) {
   gint wx, wy;
   GdkWindow *xwin = lives_widget_get_xwindow(win);
   if (xwin == NULL) {
-    gtk_widget_realize(win);
+    lives_thread_data_t *tdata = get_thread_data();
+    LiVESMainContext *ctx = tdata->ctx;
+    g_main_context_pop_thread_default(ctx);
+    //gtk_widget_realize(win);
     lives_widget_context_update();
+    g_main_context_push_thread_default(ctx);
     xwin = lives_widget_get_xwindow(win);
     if (xwin == NULL) {
       if (bx != NULL) *bx = 0;

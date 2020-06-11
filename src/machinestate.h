@@ -302,6 +302,19 @@ void reset_effort(void);
 typedef void *(*lives_funcptr_t)(void *);
 
 typedef struct {
+  lives_painter_t *paint;
+  LiVESXWindow *xwin;
+} lives_paintwin_t;
+
+typedef struct {
+  LiVESMainContext *ctx;
+  uint64_t idx;
+  LiVESXWindow *exp_window;
+  lives_painter_t *painter;
+  void *storage;
+} lives_thread_data_t;
+
+typedef struct {
   lives_funcptr_t func;
   void *arg;
   uint64_t flags;
@@ -416,6 +429,8 @@ lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t *, lives_funcpt
     ...);
 boolean lives_proc_thread_check(lives_proc_thread_t);
 
+lives_thread_data_t *get_thread_data(void);
+
 void lives_proc_thread_set_cancellable(lives_proc_thread_t);
 boolean lives_proc_thread_get_cancellable(lives_proc_thread_t);
 boolean lives_proc_thread_cancel(lives_proc_thread_t);
@@ -436,5 +451,9 @@ int64_t lives_proc_thread_join_int64(lives_proc_thread_t);
 void resubmit_proc_thread(lives_proc_thread_t, lives_thread_attr_t *);
 
 GMainLoop *get_loop_for_context(GMainContext *);
+
+boolean add_drawpaint(lives_painter_t *);
+boolean add_normpaint(lives_painter_t *);
+boolean check_endpaint(lives_painter_t *);
 
 #endif

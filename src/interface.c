@@ -412,6 +412,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
       lives_painter_fill(cr);
     }
+    lives_painter_paint(cr);
     lives_painter_destroy(cr);
   }
 
@@ -1008,7 +1009,7 @@ void draw_little_bars(double ptrtime, int which) {
       }
     }
     lives_painter_stroke(creb);
-    if (!lives_painter_remerge(creb)) lives_painter_destroy(creb);
+    lives_painter_destroy(creb);
 
     //threaded_dialog_spin(0.);
   }
@@ -4810,7 +4811,7 @@ boolean get_screen_usable_size(int *w, int *h) {
 
 
 
-static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recompute, LiVESAdjustment * adj) {
+static boolean msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recompute, LiVESAdjustment *adj) {
   // "scroll" the message area so that the last message appears at the bottom
   LingoLayout *layout;
   lives_colRGBA64_t fg, bg;
@@ -4884,11 +4885,16 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
 }
 
 
-EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
-  lives_painter_t *cr;
-  int lheight, llines, llast, lineheight;
-  int width, height;
+boolean expose_msg_area(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
+  lives_painter_set_source_surface(cr, mainw->msg_surface, 0., 0.);
+  lives_painter_paint(cr);
+  return TRUE;
+}
 
+
+static int height, lineheight, lheight;
+
+boolean msg_area_config(LiVESWidget *widget, LiVESXEventConfigure *event, livespointer user_data) {
   static int wiggle_room = 0;
   static int last_height = -1;
   static int last_textsize = -1;
@@ -4903,6 +4909,8 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
   static int gui_posy = 1000000;
 
   LingoLayout *layout;
+  int width;
+  int lineheight, llines, llast;
 
   if (!mainw->is_ready) return FALSE;
   if (!prefs->show_msg_area) return FALSE;
@@ -5040,7 +5048,7 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
         mainw->mbar_res = height;
       }
 
-      if (width < 0 || height < 0) return FALSE;
+      if (width < 0 || height < 0) return;
 
       w -= overflowx;
       h -= overflowy;
@@ -5104,7 +5112,7 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
     // this can happen e.g if we open the app. with no clips
     msg_area_scroll_to_end(widget, mainw->msg_adj);
     if (layout == NULL || !LINGO_IS_LAYOUT(layout)) {
-      return FALSE;
+      return;
     }
   }
 
@@ -5116,7 +5124,7 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
 
   // check if we could request more
   lheight = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout_height"));
-  if (lheight == 0) return FALSE;
+  if (lheight == 0) return;
 
   if (height != last_height) wiggle_room = 0;
   last_height = height;
@@ -5131,7 +5139,7 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
   if (height / lineheight < MIN_MSGBOX_LLINES) {
     /// try a smaller font size if we can
     if (prefs->msg_textsize > 1) prefs->msg_textsize--;
-    else if (height < lineheight) return FALSE;
+    else if (height < lineheight) return;
     mainw->max_textsize = prefs->msg_textsize;
   }
 
@@ -5148,30 +5156,37 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
       msg_area_scroll_to(widget, llast, TRUE, mainw->msg_adj); // window grew, re-get layout
       layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
       if (layout == NULL || !LINGO_IS_LAYOUT(layout)) {
-        return FALSE;
+        return;
       }
-      lheight = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout_height"));
+      lheight = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
+								  "layout_height"));
       wiggle_room = height - lheight;
     }
   }
+  all_config(widget, NULL, &mainw->msg_surface);
+}
+
+
+void reshow_msg_area(LiVESWidget *widget) { 
+  lives_painter_t *cr;
+  LingoLayout *layout;
+  int width;
+
+  layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
 
   if (layout != NULL && LINGO_IS_LAYOUT(layout)) {
     lives_colRGBA64_t fg, bg;
     widget_color_to_lives_rgba(&fg, &palette->info_text);
     widget_color_to_lives_rgba(&bg, &palette->info_base);
-    if (cairo == NULL) cr = lives_painter_create_from_widget(widget);
-    else cr = cairo;
+    
+    cr = lives_painter_create_from_surface(mainw->msg_surface);
     height = FLOOR(height, lineheight);
     layout_to_lives_painter(layout, cr, LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND, &fg, &bg, width, height,
                             0., 0., 0., height - lheight - 4);
     lingo_painter_show_layout(cr, layout);
-    if (cr != cairo) {
-      if (!lives_painter_remerge(cr)) lives_painter_destroy(cr);
-    }
+    lives_painter_destroy(cr);
   }
-  return FALSE;
 }
-EXPOSE_FN_END
 
 
 LIVES_GLOBAL_INLINE void msg_area_scroll_to_end(LiVESWidget * widget, LiVESAdjustment * adj) {
@@ -5186,7 +5201,7 @@ void msg_area_scroll(LiVESAdjustment * adj, livespointer userdata) {
   double val = lives_adjustment_get_value(adj);
   //g_print("val is %f rnd %d\n", val, (int)(val + .5));
   if (msg_area_scroll_to(widget, (int)(val + .5), FALSE, adj))
-    expose_msg_area(widget, NULL, NULL);
+    reshow_msg_area(widget);
 }
 
 

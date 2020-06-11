@@ -133,14 +133,17 @@ typedef cairo_fill_rule_t lives_painter_fill_rule_t;
 // lives_painter_functions
 
 lives_painter_t *lives_painter_create_from_surface(lives_painter_surface_t *target);
+
 lives_painter_t *lives_painter_create_from_widget(LiVESWidget *);
-boolean lives_painter_remerge(lives_painter_t *); /// call after lives_painter_create_from_widget done
 
 boolean lives_painter_set_source_pixbuf(lives_painter_t *, const LiVESPixbuf *, double pixbuf_x, double pixbuf_y);
 boolean lives_painter_set_source_surface(lives_painter_t *, lives_painter_surface_t *, double x, double y);
+
+lives_painter_surface_t *lives_widget_create_painter_surface(LiVESWidget *);
 lives_painter_surface_t *lives_painter_image_surface_create(lives_painter_format_t format, int width, int height);
 lives_painter_surface_t *lives_painter_image_surface_create_for_data(uint8_t *data, lives_painter_format_t,
     int width, int height, int stride);
+
 boolean lives_painter_surface_flush(lives_painter_surface_t *);
 
 boolean lives_painter_destroy(lives_painter_t *);
@@ -148,6 +151,7 @@ boolean lives_painter_destroy(lives_painter_t *);
 boolean lives_painter_new_path(lives_painter_t *);
 
 boolean lives_painter_paint(lives_painter_t *);
+
 boolean lives_painter_fill(lives_painter_t *);
 boolean lives_painter_stroke(lives_painter_t *);
 boolean lives_painter_clip(lives_painter_t *);

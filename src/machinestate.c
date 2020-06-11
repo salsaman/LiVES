@@ -1039,7 +1039,6 @@ lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t *attr, lives_fu
   va_list xargs;
   int p = 0;
   const char *c;
-  lives_thread_t *thread;
   weed_plant_t *thread_info = lives_plant_new(LIVES_WEED_SUBTYPE_PROC_THREAD);
   if (!thread_info) return NULL;
   weed_set_funcptr_value(thread_info, WEED_LEAF_THREADFUNC, func);
@@ -1278,6 +1277,8 @@ void resubmit_proc_thread(lives_proc_thread_t thread_info, lives_thread_attr_t *
 
 
 static LiVESList *mainloops = NULL;
+static LiVESList *contexts = NULL;
+
 GMainLoop *get_loop_for_context(GMainContext *ctx) {
   LiVESList *list = mainloops;
   for (; list; list = list->next) {
@@ -1314,10 +1315,30 @@ static pthread_mutex_t tuner_mutex = PTHREAD_MUTEX_INITIALIZER;
 #define MALLOPT_WAIT_MAX 30
 #endif
 
+static LiVESList *allctxs = NULL;
 
-boolean do_something_useful(uint64_t myidx) {
+lives_thread_data_t *get_thread_data(void) {
+  LiVESMainContext *ctx = g_main_context_get_thread_default();
+  LiVESList *list = allctxs;
+  for (; list; list = list->next) {
+    if (((lives_thread_data_t *)list->data)->ctx == ctx) return list->data;
+  }
+  return NULL;
+}
+
+
+static lives_thread_data_t *get_thread_data_by_id(uint64_t idx) {
+  LiVESMainContext *ctx = g_main_context_get_thread_default();
+  LiVESList *list = allctxs;
+  for (; list; list = list->next) {
+    if (((lives_thread_data_t *)list->data)->idx == idx) return list->data;
+  }
+  return NULL;
+}
+
+
+boolean do_something_useful(lives_thread_data_t *tdata) {
   /// yes, why don't you lend a hand instead of just lying around nanosleeping...
-  GMainContext *ctx = NULL;
   GMainLoop *loop;
   LiVESList *list;
   thrd_work_t *mywork;
@@ -1335,7 +1356,7 @@ boolean do_something_useful(uint64_t myidx) {
   pthread_mutex_unlock(&twork_mutex);
 
   mywork = (thrd_work_t *)list->data;
-  mywork->busy = myidx + 1;
+  mywork->busy = tdata->idx;
   myflags = mywork->flags;
 
 #if 0
@@ -1345,13 +1366,6 @@ boolean do_something_useful(uint64_t myidx) {
     rpma = TRUE;
   }
 #endif
-  if (myflags & LIVES_THRDFLAG_NEW_CTX) {
-    // create a new g_context and attach it to this thread
-    ctx = g_main_context_new();
-    loop = g_main_loop_new(ctx, TRUE);
-    mainloops = lives_list_prepend(mainloops, loop);
-    g_main_context_push_thread_default(ctx);
-  }
 
   if (myflags & LIVES_THRDFLAG_WAIT_SYNC) {
     lives_nanosleep_until_nonzero(mywork->sync_ready);
@@ -1367,23 +1381,14 @@ boolean do_something_useful(uint64_t myidx) {
 #endif
   }
 
-  if (ctx)
-    g_main_context_invoke(ctx, mywork->func, mywork->arg);
-  else
-    (*mywork->func)(mywork->arg);
+  //lives_main_context_invoke(tdata->ctx, mywork->func, mywork->arg);
+  g_main_context_invoke(tdata->ctx, mywork->func, mywork->arg);
 
   if (myflags & LIVES_THRDFLAG_AUTODELETE) {
     lives_free(mywork);
     lives_free(list);
   } else {
-    mywork->done = myidx + 1;
-  }
-
-  if (myflags & LIVES_THRDFLAG_NEW_CTX) {
-    mainloops = lives_list_remove(mainloops, loop);
-    g_main_loop_unref(loop);
-    g_main_context_pop_thread_default(ctx);
-    g_main_context_unref(ctx);
+    mywork->done = tdata->idx;
   }
 
 #ifdef TUNE_MALLOPT
@@ -1420,13 +1425,16 @@ boolean do_something_useful(uint64_t myidx) {
 
 
 static void *thrdpool(void *arg) {
-  int myidx = LIVES_POINTER_TO_INT(arg);
+  lives_thread_data_t *tdata = (lives_thread_data_t *)arg;
+
+  g_main_context_push_thread_default(tdata->ctx);
+
   while (!threads_die) {
     pthread_mutex_lock(&tcond_mutex);
     pthread_cond_wait(&tcond, &tcond_mutex);
     pthread_mutex_unlock(&tcond_mutex);
     if (threads_die) break;
-    do_something_useful((uint64_t)myidx);
+    do_something_useful(tdata);
   }
   return NULL;
 }
@@ -1446,6 +1454,16 @@ LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new_with_index(int subtype, int64_
 }
 
 
+static lives_thread_data_t *lives_thread_data_create(uint64_t idx) {
+  lives_thread_data_t *tdata = (lives_thread_data_t *)lives_calloc(1, sizeof(lives_thread_data_t));
+  //tdata->ctx = lives_main_context_new();
+  tdata->ctx = g_main_context_new();
+  tdata->idx = idx;
+  allctxs = lives_list_prepend(allctxs, (livespointer)tdata);
+  return tdata;
+}
+
+
 void lives_threadpool_init(void) {
   npoolthreads = MINPOOLTHREADS;
   if (prefs->nfx_threads > npoolthreads) npoolthreads = prefs->nfx_threads;
@@ -1459,8 +1477,9 @@ void lives_threadpool_init(void) {
   twork_first = twork_last = NULL;
   ntasks = 0;
   for (int i = 0; i < npoolthreads; i++) {
+    lives_thread_data_t *tdata = lives_thread_data_create(i + 1);
     poolthrds[i] = (pthread_t *)lives_malloc(sizeof(pthread_t));
-    pthread_create(poolthrds[i], NULL, thrdpool, LIVES_INT_TO_POINTER(i));
+    pthread_create(poolthrds[i], NULL, thrdpool, tdata);
   }
 }
 
@@ -1471,10 +1490,12 @@ void lives_threadpool_finish(void) {
   pthread_cond_broadcast(&tcond);
   pthread_mutex_unlock(&tcond_mutex);
   for (int i = 0; i < npoolthreads; i++) {
-    pthread_mutex_lock(&tcond_mutex);
+    lives_thread_data_t *tdata = get_thread_data_by_id(i + 1);
     pthread_cond_broadcast(&tcond);
     pthread_mutex_unlock(&tcond_mutex);
     pthread_join(*(poolthrds[i]), NULL);
+    g_main_context_unref(tdata->ctx);
+    lives_free(tdata);
     lives_free(poolthrds[i]);
   }
   lives_free(poolthrds);
@@ -1532,8 +1553,9 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives
     pthread_mutex_unlock(&tcond_mutex);
     poolthrds = (pthread_t **)lives_realloc(poolthrds, (npoolthreads + MINPOOLTHREADS) * sizeof(pthread_t *));
     for (int i = npoolthreads; i < npoolthreads + MINPOOLTHREADS; i++) {
+      lives_thread_data_t *tdata = lives_thread_data_create(i);
       poolthrds[i] = (pthread_t *)lives_malloc(sizeof(pthread_t));
-      pthread_create(poolthrds[i], NULL, thrdpool, LIVES_INT_TO_POINTER(i));
+      pthread_create(poolthrds[i], NULL, thrdpool, tdata);
       pthread_mutex_lock(&tcond_mutex);
       pthread_cond_signal(&tcond);
       pthread_mutex_unlock(&tcond_mutex);

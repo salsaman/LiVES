@@ -26,7 +26,7 @@ LiVESList *get_plugin_result(const char *command, const char *delim, boolean all
   LiVESList *list = NULL;
   char buffer[65536];
 
-  threaded_dialog_spin(0.);
+  //threaded_dialog_spin(0.);
 
   mainw->com_failed = FALSE;
   lives_popen(command, !mainw->is_ready && !list_plugins, buffer, 65535);
@@ -162,7 +162,7 @@ LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const c
 
   pluglist = get_plugin_result(com, "|", FALSE, TRUE);
   lives_free(com);
-  threaded_dialog_spin(0.);
+  //threaded_dialog_spin(0.);
   pluglist = lives_list_sort_alpha(pluglist, TRUE);
   return pluglist;
 }
@@ -2679,7 +2679,7 @@ void render_fx_get_params(lives_rfx_t *rfx, const char *plugin_name, short statu
     return;
   }
 
-  threaded_dialog_spin(0.);
+  //threaded_dialog_spin(0.);
   rfx->num_params = lives_list_length(parameter_list);
   rfx->params = (lives_param_t *)lives_malloc(rfx->num_params * sizeof(lives_param_t));
   list = parameter_list;
@@ -2818,7 +2818,7 @@ void render_fx_get_params(lives_rfx_t *rfx, const char *plugin_name, short statu
     lives_strfreev(param_array);
   }
   lives_list_free_all(&parameter_list);
-  threaded_dialog_spin(0.);
+  //threaded_dialog_spin(0.);
 }
 
 

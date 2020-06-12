@@ -9366,25 +9366,25 @@ void on_spinbutton_end_value_changed(LiVESSpinButton *spinbutton, livespointer u
 }
 
 
-boolean expose_vid_event(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
-  lives_painter_set_source_surface(mainw->video_draw, mainw->video_drawable, 0., 0.);
-  lives_painter_paint(cr);
+boolean all_expose(LiVESWidget *widget, lives_painter_t *cr, livespointer psurf) {
+  lives_painter_surface_t **surf = (lives_painter_surface_t **)psurf;
+  if (surf && *surf) {
+    lives_painter_set_source_surface(cr, *surf, 0., 0.);
+    lives_painter_paint(cr);
+  }
   return TRUE;
 }
 
-
-boolean expose_laud_event(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
-  lives_painter_set_source_surface(mainw->laudio_draw, mainw->laudio_drawable, 0., 0.);
-  lives_painter_paint(cr);
+boolean all_expose_pb(LiVESWidget *widget, lives_painter_t *cr, livespointer psurf) {
+  if (LIVES_IS_PLAYING) all_expose(widget, cr, psurf);
   return TRUE;
 }
 
-
-boolean expose_raud_event(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
-  lives_painter_set_source_surface(mainw->raudio_draw, mainw->raudio_drawable, 0., 0.);
-  lives_painter_paint(cr);
+boolean all_expose_nopb(LiVESWidget *widget, lives_painter_t *cr, livespointer psurf) {
+  if (!LIVES_IS_PLAYING) all_expose(widget, cr, mainw->sy_syrface);
   return TRUE;
 }
+
 
 static void redraw_video(void) {
   update_timer_bars(0, 0, 0, 0, 1);
@@ -9405,12 +9405,12 @@ boolean config_event2(LiVESWidget *widget, LiVESXEventConfigure *event, livespoi
 }
 
 /// genric func. to create surfaces
-boolean all_config(LiVESWidget *widget, LiVESXEventConfigure *event, livespointer user_data) {
-  lives_painter_surface_t **psurf = (lives_painter_surface_t **)user_data;
-  if (psurf) {
-    if (*psurf) lives_painter_surface_destroy (*psurf);
-    *psurf = lives_widget_create_painter_surface(widget);
-  }
+boolean all_config(LiVESWidget *widget, LiVESXEventConfigure *event, livespointer ppsurf) {
+  lives_painter_surface_t **psurf = (lives_painter_surface_t **)ppsurf;
+  if (!psurf) return FALSE;
+  if (*psurf) lives_painter_surface_destroy (*psurf);
+  *psurf = lives_widget_create_painter_surface(widget);
+
   if (widget == mainw->start_image)
     load_start_image(CURRENT_CLIP_IS_VALID ? cfile->start : 0);
   else if (widget == mainw->end_image)
@@ -9423,6 +9423,8 @@ boolean all_config(LiVESWidget *widget, LiVESXEventConfigure *event, livespointe
     redraw_laudio();
   else if (widget == mainw->raudio_draw)
     redraw_raudio();
+  else if (widget == mainw->msg_area)
+    msg_area_config(widget);
   return FALSE;
 }
 

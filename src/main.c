@@ -4871,7 +4871,8 @@ void load_start_image(int frame) {
       hsize /= 2;
       vsize /= 2;
     }
-    lives_widget_set_size_request(mainw->start_image, hsize, vsize);
+    //lives_widget_set_size_request(mainw->start_image, hsize, vsize);
+    lives_widget_set_size_request(mainw->stort_image, hsize, vsize);
     lives_widget_set_size_request(mainw->frame1, hsize, vsize);
     lives_widget_set_size_request(mainw->eventbox3, hsize, vsize);
 
@@ -8224,13 +8225,16 @@ void load_frame_image(int frame) {
     } else {
       pwidth = lives_widget_get_allocation_width(mainw->play_image);
       pheight = lives_widget_get_allocation_height(mainw->play_image);
-      if (pwidth < old_pwidth || pheight < old_pheight)
-        clear_widget_bg(mainw->play_image);
+      /* if (pwidth < old_pwidth || pheight < old_pheight) */
+      /*   clear_widget_bg(mainw->play_image); */
       old_pwidth = pwidth;
       old_pheight = pheight;
     }
+
+
     //cr = lives_painter_create_from_surface(surface);
     set_drawing_area_from_pixbuf(mainw->play_image, pixbuf, mainw->play_surface);
+
     if (pixbuf != NULL) lives_widget_object_unref(pixbuf);
     success = TRUE;
     lives_widget_queue_draw(mainw->play_image);
@@ -9200,11 +9204,11 @@ void load_frame_image(int frame) {
         cfile->next_event = NULL;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-        if (LIVES_IS_PLAYING && mainw->play_window == NULL && (!IS_VALID_CLIP(old_file)
-            || !CURRENT_CLIP_IS_VALID || cfile->hsize != mainw->files[old_file]->hsize
-            || cfile->vsize != mainw->files[old_file]->vsize)) {
-          clear_widget_bg(mainw->play_image);
-        }
+        /* if (LIVES_IS_PLAYING && mainw->play_window == NULL && (!IS_VALID_CLIP(old_file) */
+        /*     || !CURRENT_CLIP_IS_VALID || cfile->hsize != mainw->files[old_file]->hsize */
+        /*     || cfile->vsize != mainw->files[old_file]->vsize)) { */
+        /*   clear_widget_bg(mainw->play_image); */
+        /* } */
 #endif
 
         if (CURRENT_CLIP_HAS_VIDEO) {
@@ -9357,7 +9361,8 @@ void load_frame_image(int frame) {
           lives_widget_set_size_request(mainw->frame2, mainw->ce_frame_width, mainw->ce_frame_height);
           lives_widget_set_size_request(mainw->eventbox4, mainw->ce_frame_width, mainw->ce_frame_height);
 
-          lives_widget_set_size_request(mainw->start_image, mainw->ce_frame_width, mainw->ce_frame_height);
+          //lives_widget_set_size_request(mainw->start_image, mainw->ce_frame_width, mainw->ce_frame_height);
+          lives_widget_set_size_request(mainw->stort_image, mainw->ce_frame_width, mainw->ce_frame_height);
           lives_widget_set_size_request(mainw->end_image, mainw->ce_frame_width, mainw->ce_frame_height);
 
           // use unscaled size in dblsize
@@ -9370,11 +9375,11 @@ void load_frame_image(int frame) {
           lives_widget_set_size_request(mainw->playarea, hsize, vsize);
 
           // IMPORTANT (or the entire image will not be shown)
-          lives_widget_set_size_request(mainw->play_image, hsize, vsize);
-	  if (mainw->play_surface) lives_painter_surface_destroy (mainw->play_surface);
-	  mainw->play_surface = gdk_window_create_similar_surface(lives_widget_get_xwindow (mainw->play_image),
-	  							  LIVES_PAINTER_CONTENT_COLOR,
-	  							  hsize, vsize);
+          /* lives_widget_set_size_request(mainw->play_image, hsize, vsize); */
+	  /* if (mainw->play_surface) lives_painter_surface_destroy (mainw->play_surface); */
+	  /* mainw->play_surface = gdk_window_create_similar_surface(lives_widget_get_xwindow (mainw->play_image), */
+	  /* 							  LIVES_PAINTER_CONTENT_COLOR, */
+	  /* 							  hsize, vsize); */
         } else {
           // capture window size
           xsize = (scr_width - hsize * -oscale - H_RESIZE_ADJUST) / 2;

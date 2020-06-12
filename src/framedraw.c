@@ -589,7 +589,7 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
       // set frame_pixbuf, this gets painted in in expose_event
       mainw->multitrack->frame_pixbuf = pixbuf;
 #else
-      set_drawing_area_from_pixbuf(mainw->play_image, pixbuf, NULL);
+      set_drawing_area_from_pixbuf(mainw->play_image, pixbuf, mainw->pi_surface);
 #endif
       lives_widget_queue_draw(mainw->multitrack->play_box);
     }

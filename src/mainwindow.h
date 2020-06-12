@@ -797,10 +797,13 @@ typedef struct {
 
   // for the internal player
   LiVESWidget *play_image;
+  LiVESWidget *ploy_image;
   LiVESWidget *play_window;
   weed_plant_t *frame_layer;
 
   lives_painter_surface_t *play_surface;
+  lives_painter_surface_t *ploy_surface;
+  lives_painter_surface_t *pwin_surface;
 
   /// predictive caching apparatus
   weed_plant_t *frame_layer_preload;
@@ -909,9 +912,6 @@ typedef struct {
   ulong spin_start_func;
   ulong spin_end_func;
   ulong record_perf_func;
-  ulong vidbar_func;
-  ulong laudbar_func;
-  ulong raudbar_func;
   ulong toy_func_none;
   ulong toy_func_random_frames;
   ulong toy_func_lives_tv;
@@ -921,7 +921,6 @@ typedef struct {
   ulong fullscreen_cb_func;
   ulong sepwin_cb_func;
   ulong fsp_func; ///< fileselector preview expose (for image thumbnails)
-  ulong sw_func; ///< scrolledwindow expose func
   ulong vj_mode_func;
 
   lives_painter_surface_t *fsp_surface;
@@ -1155,9 +1154,9 @@ typedef struct {
 #define PRV_PTR 3
 #define PRV_DEFAULT PRV_PTR
 
-  lives_painter_surface_t *si_surface, *ei_surface, *pi_surface;
+  lives_painter_surface_t *si_surface, *sy_syrface, *ei_surface, *pi_surface;
 
-  LiVESWidget *start_image, *end_image;
+  LiVESWidget *start_image, *stort_image, *end_image;
   LiVESWidget *playarea;
   LiVESWidget *hseparator;
   LiVESWidget *message_box;

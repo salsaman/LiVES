@@ -953,7 +953,7 @@ LiVESWidget *lives_standard_label_new_with_mnemonic_widget(const char *text, LiV
 LiVESWidget *lives_standard_label_new_with_tooltips(const char *text, LiVESBox *box,
     const char *tips);
 
-LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, ulong *ret_fn);
+LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback, lives_painter_surface_t **);
 
 LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boolean invisible_outline);
 

@@ -472,8 +472,10 @@ struct _mt {
 
   ulong tc_func;
 
-  ulong sw_func;
+  //ulong sw_func;
 
+  lives_painter_surface_t *pbox_surface;
+  
   weed_plant_t *event_list;
 
   weed_plant_t *init_event;   ///< current editable values

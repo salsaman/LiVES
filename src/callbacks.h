@@ -220,7 +220,9 @@ EXPOSE_FN_PROTOTYPE(expose_raud_event);
 void on_preview_clicked(LiVESButton *, livespointer);
 
 void on_recent_activate(LiVESMenuItem *, livespointer);
-boolean all_config(LiVESWidget *, LiVESXEventConfigure *, livespointer psurf);
+
+boolean all_expose_pb(LiVESWidget *, lives_painter_t *, livespointer psurf);
+boolean all_expose_nopb(LiVESWidget *, lives_painter_t *, livespointer psurf);
 
 boolean config_event(LiVESWidget *, LiVESXEventConfigure *, livespointer);
 boolean config_event2(LiVESWidget *, LiVESXEventConfigure *, livespointer);

@@ -9211,25 +9211,26 @@ LiVESWidget *lives_standard_label_new_with_tooltips(const char *text, LiVESBox *
 }
 
 
-LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, ulong *ret_fn) {
+LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, lives_painter_surface_t **ppsurf) {
   LiVESWidget *darea = NULL;
-  ulong ret;
 #ifdef GUI_GTK
   darea = gtk_drawing_area_new();
-  if (callback == NULL) {
-    if (ret_fn != NULL)
-      *ret_fn = 0;
-    return darea;
-  }
+  lives_widget_set_app_paintable(darea, TRUE);
+  if (ppsurf) {
+    if (callback)
 #if GTK_CHECK_VERSION(4, 0, 0)
-  gtk_drawing_area_set_draw_func(darea, callback, NULL, NULL);
-  *ret_fn = 0; // TODO
+      gtk_drawing_area_set_draw_func(darea, callback, (livespointer)surf, NULL);
 #else
-  ret = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(darea), LIVES_WIDGET_EXPOSE_EVENT,
-                                        LIVES_GUI_CALLBACK(callback),
-                                        NULL);
-  if (ret_fn != NULL) *ret_fn = ret;
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(darea), LIVES_WIDGET_EXPOSE_EVENT,
+			      LIVES_GUI_CALLBACK(callback),
+			      (livespointer)ppsurf);
 #endif
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(darea), LIVES_WIDGET_CONFIGURE_EVENT,
+			      LIVES_GUI_CALLBACK(all_config),
+			      (livespointer)ppsurf);
+  }
+  lives_widget_apply_theme(darea, LIVES_WIDGET_STATE_NORMAL);
+
 #endif
   return darea;
 }

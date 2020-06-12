@@ -153,7 +153,7 @@ static LiVESWidget *mainw_message_box;
 static LiVESWidget *mainw_msg_area;
 static LiVESWidget *mainw_msg_scrollbar;
 static LiVESAdjustment *mainw_msg_adj;
-static ulong mainw_sw_func;
+//static ulong mainw_sw_func;
 
 ////////////////////////////
 
@@ -3172,7 +3172,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
         mt->frame_pixbuf = mainw->imframe;
       }
 #else
-      set_drawing_area_from_pixbuf(mainw->play_image, mainw->imframe, NULL);
+      set_drawing_area_from_pixbuf(mainw->play_image, mainw->imframe, mainw->play_surface);
 #endif
     } else {
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -3181,7 +3181,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
         mt->frame_pixbuf = NULL;
       }
 #else
-      set_drawing_area_from_pixbuf(mainw->play_image, NULL, NULL);
+      set_drawing_area_from_pixbuf(mainw->play_image, NULL, mainw->play_surface);
 #endif
     }
     lives_widget_queue_draw(mt->play_box);
@@ -3344,7 +3344,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
       // set frame_pixbuf, this gets painted in in expose_event
       mt->frame_pixbuf = pixbuf;
 #else
-      set_drawing_area_from_pixbuf(mainw->play_image, pixbuf, NULL);
+      set_drawing_area_from_pixbuf(mainw->play_image, pixbuf, mainw->play_surface);
 #endif
       lives_widget_queue_draw(mt->play_box);
       weed_plant_free(mainw->frame_layer);
@@ -3355,7 +3355,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
     // set frame_pixbuf, this gets painted in in expose_event
     mt->frame_pixbuf = mainw->imframe;
 #else
-    set_drawing_area_from_pixbuf(mainw->play_image, mainw->imframe, NULL);
+    set_drawing_area_from_pixbuf(mainw->play_image, mainw->imframe, mainw->play_surface);
 #endif
     lives_widget_queue_draw(mt->play_box);
   }
@@ -5967,17 +5967,6 @@ static void after_timecode_changed(LiVESWidget * entry, LiVESXEventFocus * dir, 
   }
 }
 
-#if GTK_CHECK_VERSION(3, 0, 0)
-static boolean expose_pb(LiVESWidget * widget, lives_painter_t *cr, livespointer user_data) {
-  lives_mt *mt = (lives_mt *)user_data;
-  if (mt->no_expose || mt->no_expose_frame) return TRUE;
-  if (LIVES_IS_PLAYING) return TRUE;
-  //lives_widget_set_size_request(mainw->play_image, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.);
-  set_drawing_area_from_pixbuf(mainw->play_image, mt->frame_pixbuf, cr);
-  return TRUE;
-}
-#endif
-
 
 static char *get_tab_name(uint32_t tab) {
   switch (tab) {
@@ -6354,7 +6343,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   register int i;
 
-  lives_mt *mt = (lives_mt *)lives_malloc(sizeof(lives_mt));
+  lives_mt *mt = (lives_mt *)lives_calloc(1, sizeof(lives_mt));
 
   if (rte_window != NULL) {
     on_rtew_delete_event(NULL, NULL, NULL);
@@ -8330,8 +8319,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_queue_resize(mt->preview_eventbox);
 
   lives_widget_set_size_request(mt->preview_eventbox, scr_width / 3.5, scr_height / 3.);
-  mt->play_box = lives_vbox_new(FALSE, 0);
-  lives_widget_set_app_paintable(mt->preview_eventbox, TRUE);
+  //mt->play_box = lives_event_box_new();
+  mt->play_box = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose_nopb), &mt->pbox_surface);
 
   lives_widget_set_hexpand(mt->preview_frame, FALSE);
   lives_widget_set_vexpand(mt->preview_frame, FALSE);
@@ -8347,12 +8336,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   msg = set_values_from_defs(mt, !prefs->mt_enter_prompt || (mainw->recoverable_layout &&
                              prefs->startup_interface == STARTUP_CE));
   lives_freep((void **)&msg);
-
-#if GTK_CHECK_VERSION(3, 0, 0)
-  lives_signal_connect(LIVES_GUI_OBJECT(mt->play_box), LIVES_WIDGET_EXPOSE_EVENT,
-                       LIVES_GUI_CALLBACK(expose_pb),
-                       (livespointer)mt);
-#endif
 
   lives_container_add(LIVES_CONTAINER(mt->preview_frame), mt->preview_eventbox);
   lives_container_add(LIVES_CONTAINER(mt->preview_eventbox), mt->play_box);
@@ -8923,19 +8906,19 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mainw_msg_area = mainw->msg_area;
   mainw_msg_adj = mainw->msg_adj;
   mainw_msg_scrollbar = mainw->msg_scrollbar;
-  mainw_sw_func = mainw->sw_func;
+  //mainw_sw_func = mainw->sw_func;
 
   mt->message_box = mainw->message_box = lives_hbox_new(FALSE, 0);
 
   // msg_area NOT showing for gtk+2.x
   if (prefs->show_msg_area) {
-    mt->msg_area = mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_msg_area), &mt->sw_func);
-    mainw->sw_func = mt->sw_func;
-    lives_signal_handler_block(mt->msg_area, mt->sw_func);
+    mt->msg_area = mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), &mainw->msg_surface);
+
+    /* mainw->sw_func = mt->sw_func; */
+    /* lives_signal_handler_block(mt->msg_area, mt->sw_func); */
 
     lives_widget_set_events(mt->msg_area, LIVES_SMOOTH_SCROLL_MASK | LIVES_SCROLL_MASK);
 
-    lives_widget_set_app_paintable(mt->msg_area, TRUE);
     lives_container_set_border_width(LIVES_CONTAINER(mt->message_box), 0);
     lives_box_pack_start(LIVES_BOX(mt->message_box), mt->msg_area, TRUE, TRUE, 0);
     mt->msg_scrollbar = mainw->msg_scrollbar = lives_vscrollbar_new(NULL);
@@ -9462,7 +9445,7 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
       lives_widget_unparent(mt->top_vbox);
       lives_container_add(LIVES_CONTAINER(LIVES_MAIN_WINDOW_WIDGET), mainw->top_vbox);
       lives_widget_object_unref(mainw->top_vbox);
-      mainw->sw_func = mainw_sw_func;
+      //mainw->sw_func = mainw_sw_func;
       mainw->message_box = mainw_message_box;
       mainw->msg_area = mainw_msg_area;
       mainw->msg_adj = mainw_msg_adj;
@@ -11169,7 +11152,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
     if (multi->event_list == NULL) {
       multi->clip_selected = mt_clip_from_file(multi, orig_file);
       multi->file_selected = orig_file;
-      mainw->sw_func = mainw_sw_func;
+      //mainw->sw_func = mainw_sw_func;
       mainw->message_box = mainw_message_box;
       mainw->msg_area = mainw_msg_area;
       mainw->msg_adj = mainw_msg_adj;
@@ -11190,7 +11173,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
     // failed to load recovery layout
     multi->clip_selected = mt_clip_from_file(multi, orig_file);
     multi->file_selected = orig_file;
-    mainw->sw_func = mainw_sw_func;
+    //mainw->sw_func = mainw_sw_func;
     mainw->message_box = mainw_message_box;
     mainw->msg_area = mainw_msg_area;
     mainw->msg_adj = mainw_msg_adj;
@@ -11289,7 +11272,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
   }
   lives_toggle_button_toggle(LIVES_TOGGLE_BUTTON(multi->snapo_checkbutton));
 
-  if (multi->msg_area != NULL) lives_signal_handler_unblock(multi->msg_area, multi->sw_func);
+  //if (multi->msg_area != NULL) lives_signal_handler_unblock(multi->msg_area, multi->sw_func);
 
   lives_widget_context_update();
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
@@ -17320,7 +17303,7 @@ void multitrack_playall(lives_mt * mt) {
   }
 
   if (needs_clear) {
-    set_drawing_area_from_pixbuf(mainw->play_image, NULL, NULL);
+    set_drawing_area_from_pixbuf(mainw->play_image, NULL, mainw->play_surface);
     needs_clear = FALSE;
   }
 

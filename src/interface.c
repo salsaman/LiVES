@@ -4885,16 +4885,9 @@ static boolean msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recomp
 }
 
 
-boolean expose_msg_area(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
-  lives_painter_set_source_surface(cr, mainw->msg_surface, 0., 0.);
-  lives_painter_paint(cr);
-  return TRUE;
-}
-
-
 static int height, lineheight, lheight;
 
-boolean msg_area_config(LiVESWidget *widget, LiVESXEventConfigure *event, livespointer user_data) {
+boolean msg_area_config(LiVESWidget *widget) {
   static int wiggle_room = 0;
   static int last_height = -1;
   static int last_textsize = -1;
@@ -5066,10 +5059,6 @@ boolean msg_area_config(LiVESWidget *widget, LiVESXEventConfigure *event, livesp
         mainw->assumed_height = rect.height - overflowy - by;
       }
 
-      /* reset_message_area(); */
-      /* lives_widget_hide(widget); */
-      /* lives_widget_hide(mainw->message_box); */
-
       if (!prefs->open_maximised) {
         if (overflowx > 0) posx -= overflowx;
         else posx = -overflowx;
@@ -5079,9 +5068,6 @@ boolean msg_area_config(LiVESWidget *widget, LiVESXEventConfigure *event, livesp
 
         if (posx > gui_posx) posx = gui_posx;
         if (posy > gui_posy) posy = gui_posy;
-
-        //posx = -bx;
-        //posy = - by;
 
 #ifdef DEBUG_OVERFLOW
         g_print("MOVE to %d X %d\n", posx, posy);
@@ -5163,7 +5149,6 @@ boolean msg_area_config(LiVESWidget *widget, LiVESXEventConfigure *event, livesp
       wiggle_room = height - lheight;
     }
   }
-  all_config(widget, NULL, &mainw->msg_surface);
 }
 
 

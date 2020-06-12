@@ -3334,7 +3334,7 @@ void play_file(void) {
       lives_widget_hide(mainw->framebar);
     }
     lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), "");
-    set_drawing_area_from_pixbuf(mainw->play_image, NULL, NULL);
+    set_drawing_area_from_pixbuf(mainw->play_image, NULL, mainw->play_surface);
   }
 
   if (!mainw->multitrack) mainw->osc_block = FALSE;

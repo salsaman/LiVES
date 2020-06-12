@@ -1057,6 +1057,10 @@ typedef enum {
 
 // some useful functions
 
+// callbacks.c
+boolean all_config(LiVESWidget *, LiVESXEventConfigure *, livespointer ppsurf);
+boolean all_expose(LiVESWidget *, lives_painter_t *, livespointer psurf);
+
 // dialogs.c
 boolean do_progress_dialog(boolean visible, boolean cancellable, const char *text);
 boolean do_warning_dialog(const char *text);

@@ -161,11 +161,6 @@ boolean expose_pim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
   return FALSE;
 }
 
-boolean expose_playarea(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
-  lives_painter_set_source_surface(cr, mainw->play_surface, 0., 0.);
-  lives_painter_paint(cr);
-  return FALSE;
-}
 #endif
 
 
@@ -226,7 +221,9 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_apply_theme(mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL);
   lives_widget_apply_theme(mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL);
   lives_widget_apply_theme(mainw->frame1, LIVES_WIDGET_STATE_NORMAL);
+
   lives_widget_apply_theme(mainw->start_image, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_apply_theme(mainw->end_image, LIVES_WIDGET_STATE_NORMAL);
 
   lives_widget_set_base_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)), LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_text_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)), LIVES_WIDGET_STATE_NORMAL, colf);
@@ -237,12 +234,9 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_set_bg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_fg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, colb);
 
+  lives_widget_apply_theme(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL);
   lives_widget_apply_theme(mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL);
-  lives_widget_set_fg_color(mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_apply_theme(mainw->frame2, LIVES_WIDGET_STATE_NORMAL);
-  lives_widget_set_fg_color(mainw->frame2, LIVES_WIDGET_STATE_NORMAL, colb);
-  lives_widget_apply_theme(mainw->end_image, LIVES_WIDGET_STATE_NORMAL);
-  lives_widget_set_fg_color(mainw->end_image, LIVES_WIDGET_STATE_NORMAL, colb);
 
   lives_widget_apply_theme(mainw->eventbox2, LIVES_WIDGET_STATE_NORMAL);
   if (mainw->eventbox5 != NULL) lives_widget_set_bg_color(mainw->eventbox5, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -405,17 +399,16 @@ void create_LiVES(void) {
   mainw->current_file = -1;
 
   mainw->preview_image = NULL;
-
   mainw->sep_image = lives_image_new_from_pixbuf(NULL);
-  mainw->start_image = lives_drawing_area_new();
-  mainw->end_image = lives_drawing_area_new();
   mainw->imframe = mainw->imsep = NULL;
+
+  mainw->start_image = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_sim), &mainw->si_surface);
+  mainw->end_image = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_eim), &mainw->ei_surface);
+  mainw->play_image = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), &mainw->play_surface);
 
   lives_widget_show(mainw->start_image);  // needed to get size
   lives_widget_show(mainw->end_image);  // needed to get size
-
-  /* lives_widget_set_app_paintable(mainw->start_image, TRUE); */
-  /* lives_widget_set_app_paintable(mainw->end_image, TRUE); */
+  lives_widget_show(mainw->play_image);  // needed to get size
 
   if (palette->style & STYLE_1) {
     load_theme_images();
@@ -435,22 +428,6 @@ void create_LiVES(void) {
     lives_widget_get_fg_color(LIVES_MAIN_WINDOW_WIDGET, &normal);
     lives_widget_color_copy((LiVESWidgetColor *)(&palette->normal_fore), &normal);
   }
-
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->start_image), LIVES_WIDGET_EXPOSE_EVENT,
-                            LIVES_GUI_CALLBACK(expose_sim),
-                            NULL);
-
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->end_image), LIVES_WIDGET_EXPOSE_EVENT,
-                            LIVES_GUI_CALLBACK(expose_eim),
-                            NULL);
-
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->start_image), LIVES_WIDGET_CONFIGURE_EVENT,
-                            LIVES_GUI_CALLBACK(all_config),
-                            &mainw->si_surface);
-
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->end_image), LIVES_WIDGET_CONFIGURE_EVENT,
-                            LIVES_GUI_CALLBACK(all_config),
-                            &mainw->ei_surface);
 
   if (!new_lives) {
     lives_window_remove_accel_group(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->accel_group);
@@ -2010,14 +1987,14 @@ void create_LiVES(void) {
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   mainw->pl_eventbox = lives_event_box_new();
-  lives_widget_set_app_paintable(mainw->pl_eventbox, TRUE);
+  //lives_widget_set_app_paintable(mainw->pl_eventbox, TRUE);
   lives_container_add(LIVES_CONTAINER(mainw->playframe), mainw->pl_eventbox);
   lives_widget_set_size_request(mainw->playframe, DEF_FRAME_HSIZE_GUI, DEF_FRAME_VSIZE_GUI);
-  lives_widget_set_hexpand(mainw->pl_eventbox, FALSE);
-  lives_widget_set_vexpand(mainw->pl_eventbox, TRUE);
+  /* lives_widget_set_hexpand(mainw->pl_eventbox, FALSE); */
+  /* lives_widget_set_vexpand(mainw->pl_eventbox, TRUE); */
 
   mainw->playarea = lives_event_box_new();
-  lives_container_add(LIVES_CONTAINER(mainw->pl_eventbox), mainw->playarea);
+  //lives_container_add(LIVES_CONTAINER(mainw->pl_eventbox), mainw->playarea);
   lives_widget_set_app_paintable(mainw->playarea, TRUE);
 
   lives_table_attach(LIVES_TABLE(mainw->pf_grid), mainw->playframe, 1, 2, 0, 1,
@@ -2053,21 +2030,17 @@ void create_LiVES(void) {
   }
 
   // the actual playback image for the internal player
-  mainw->play_image = lives_drawing_area_new();
-  lives_widget_set_app_paintable(mainw->play_image, TRUE);
-
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->play_image), LIVES_WIDGET_EXPOSE_EVENT,
-                            LIVES_GUI_CALLBACK(expose_playarea),
-                            NULL);
-
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->play_image), LIVES_WIDGET_CONFIGURE_EVENT,
-                            LIVES_GUI_CALLBACK(all_config),
-                            &mainw->play_surface);
-
+  mainw->play_image = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), &mainw->play_surface);
   lives_widget_show(mainw->play_image); // needed to get size
 
-  lives_widget_object_ref(mainw->play_image);
-  lives_widget_object_ref_sink(mainw->play_image);
+  lives_container_add(mainw->pl_eventbox, mainw->play_image);
+
+  /* lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->play_image), LIVES_WIDGET_EXPOSE_EVENT, */
+  /* 			    LIVES_GUI_CALLBACK(all_expose), */
+  /* 			    (livespointer)mainw->play_surface); */
+
+  /* lives_widget_object_ref(mainw->play_image); */
+  /* lives_widget_object_ref_sink(mainw->play_image); */
 
   mainw->hbox3 = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox4), mainw->hbox3, FALSE, FALSE, 0);
@@ -2202,20 +2175,9 @@ void create_LiVES(void) {
                        widget_opts.packing_height)) * widget_opts.packing_height);
   lives_widget_set_margin_bottom(mainw->vidbar, widget_opts.packing_height / 2);
 
-  mainw->video_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_vid_event), &mainw->vidbar_func);
-  lives_widget_set_app_paintable(mainw->video_draw, TRUE);
-
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->video_draw), LIVES_WIDGET_EXPOSE_EVENT,
-                            LIVES_GUI_CALLBACK(expose_vid_event),
-                            NULL);
-
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->video_draw), LIVES_WIDGET_CONFIGURE_EVENT,
-                            LIVES_GUI_CALLBACK(all_config),
-                            &mainw->video_drawable);
-
-  // need to set this even if theme is none
-  lives_widget_set_bg_color(mainw->video_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_fg_color(mainw->video_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  widget_opts.apply_theme = TRUE;
+  mainw->video_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), &mainw->video_drawable);
+  widget_opts.apply_theme = woat;
 
   lives_widget_set_size_request(mainw->video_draw, -1, CE_VIDBAR_HEIGHT);
   lives_widget_set_hexpand(mainw->video_draw, TRUE);
@@ -2231,20 +2193,9 @@ void create_LiVES(void) {
                        widget_opts.packing_height)) * widget_opts.packing_height);
   lives_widget_set_margin_bottom(mainw->laudbar, widget_opts.packing_height / 2);
 
-  mainw->laudio_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_laud_event), &mainw->laudbar_func);
-  lives_widget_set_app_paintable(mainw->laudio_draw, TRUE);
-
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->laudio_draw), LIVES_WIDGET_EXPOSE_EVENT,
-                            LIVES_GUI_CALLBACK(expose_laud_event),
-                            NULL);
-
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->laudio_draw), LIVES_WIDGET_CONFIGURE_EVENT,
-                            LIVES_GUI_CALLBACK(all_config),
-                            &mainw->laudio_drawable);
-  
-  // need to set this even if theme is none
-  lives_widget_set_bg_color(mainw->laudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_fg_color(mainw->laudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  widget_opts.apply_theme = TRUE;
+  mainw->laudio_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), &mainw->laudio_drawable);
+  widget_opts.apply_theme = woat;
 
   lives_widget_set_size_request(mainw->laudio_draw, -1, CE_AUDBAR_HEIGHT);
   lives_widget_set_hexpand(mainw->laudio_draw, TRUE);
@@ -2260,20 +2211,9 @@ void create_LiVES(void) {
                        widget_opts.packing_height)) * widget_opts.packing_height);
   lives_widget_set_margin_bottom(mainw->raudbar, widget_opts.packing_height / 2);
 
-  mainw->raudio_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_raud_event), &mainw->raudbar_func);
-  lives_widget_set_app_paintable(mainw->raudio_draw, TRUE);
-
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->raudio_draw), LIVES_WIDGET_EXPOSE_EVENT,
-                            LIVES_GUI_CALLBACK(expose_raud_event),
-                            NULL);
-
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->raudio_draw), LIVES_WIDGET_CONFIGURE_EVENT,
-                            LIVES_GUI_CALLBACK(all_config),
-                            &mainw->raudio_drawable);
-
-  // need to set this even if theme is none
-  lives_widget_set_bg_color(mainw->raudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_fg_color(mainw->raudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  widget_opts.apply_theme = TRUE;
+  mainw->raudio_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), &mainw->raudio_drawable);
+  widget_opts.apply_theme = woat;
 
   lives_widget_set_size_request(mainw->raudio_draw, -1, CE_AUDBAR_HEIGHT);
   lives_widget_set_hexpand(mainw->raudio_draw, TRUE);
@@ -2289,16 +2229,13 @@ void create_LiVES(void) {
     lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->message_box, TRUE, TRUE, 0);
   else lives_widget_object_ref_sink(mainw->message_box);
 
-  mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_msg_area), &mainw->sw_func);
+  mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), &mainw->msg_surface);
 
   if (prefs->show_msg_area) {
-    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->msg_area), LIVES_WIDGET_CONFIGURE_EVENT,
-                                    LIVES_GUI_CALLBACK(msg_area_config),
-                                    NULL);
     lives_widget_add_events(mainw->msg_area, LIVES_SMOOTH_SCROLL_MASK | LIVES_SCROLL_MASK);
   }
+
   lives_widget_set_vexpand(mainw->msg_area, TRUE);
-  lives_widget_set_app_paintable(mainw->msg_area, TRUE);
   lives_container_set_border_width(LIVES_CONTAINER(mainw->message_box), 0);
   lives_widget_apply_theme3(mainw->msg_area, LIVES_WIDGET_STATE_NORMAL);
   lives_box_pack_start(LIVES_BOX(mainw->message_box), mainw->msg_area, TRUE, TRUE, 0);
@@ -3627,10 +3564,10 @@ void block_expose(void) {
   /// THIS WAS FIXED: gtkdrawingarea must be used instead of gtkimage !
   //mainw->draw_blocked = TRUE;
 #if !GTK_CHECK_VERSION(3, 0, 0)
-  lives_signal_handler_block(mainw->video_draw, mainw->vidbar_func);
-  lives_signal_handler_block(mainw->laudio_draw, mainw->laudbar_func);
-  lives_signal_handler_block(mainw->raudio_draw, mainw->raudbar_func);
-  if (mainw->msg_area != NULL) lives_signal_handler_block(mainw->msg_area, mainw->sw_func);
+  /* lives_signal_handler_block(mainw->video_draw, mainw->vidbar_func);
+  /* lives_signal_handler_block(mainw->laudio_draw, mainw->laudbar_func); */
+  /* lives_signal_handler_block(mainw->raudio_draw, mainw->raudbar_func); */
+  /* if (mainw->msg_area != NULL) lives_signal_handler_block(mainw->msg_area, mainw->sw_func); */
 #endif
 }
 
@@ -3639,10 +3576,10 @@ void unblock_expose(void) {
   // unblock expose/config events
 #if !GTK_CHECK_VERSION(3, 0, 0)
   //lives_signal_handler_unblock(mainw->video_draw, mainw->config_func);
-  lives_signal_handler_unblock(mainw->video_draw, mainw->vidbar_func);
-  lives_signal_handler_unblock(mainw->laudio_draw, mainw->laudbar_func);
-  lives_signal_handler_unblock(mainw->raudio_draw, mainw->raudbar_func);
-  if (mainw->msg_area != NULL) lives_signal_handler_unblock(mainw->msg_area, mainw->sw_func);
+  /* lives_signal_handler_unblock(mainw->video_draw, mainw->vidbar_func); */
+  /* lives_signal_handler_unblock(mainw->laudio_draw, mainw->laudbar_func); */
+  /* lives_signal_handler_unblock(mainw->raudio_draw, mainw->raudbar_func); */
+  /* if (mainw->msg_area != NULL) lives_signal_handler_unblock(mainw->msg_area, mainw->sw_func); */
 #endif
 }
 
@@ -3690,15 +3627,7 @@ void make_preview_box(void) {
                        LIVES_GUI_CALLBACK(frame_context),
                        LIVES_INT_TO_POINTER(3));
 
-  mainw->preview_image = lives_drawing_area_new();
-
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->preview_image), LIVES_WIDGET_EXPOSE_EVENT,
-                       LIVES_GUI_CALLBACK(expose_pim),
-                       LIVES_INT_TO_POINTER(FALSE));
-
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->preview_image), LIVES_WIDGET_CONFIGURE_EVENT,
-                            LIVES_GUI_CALLBACK(all_config),
-                            &mainw->pi_surface);
+  mainw->preview_image = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_pim), &mainw->pi_surface);
 
   lives_container_add(LIVES_CONTAINER(eventbox), mainw->preview_image);
   //lives_widget_set_app_paintable(mainw->preview_image, TRUE);
@@ -4052,6 +3981,14 @@ void make_play_window(void) {
   }
   lives_widget_set_events(mainw->play_window, LIVES_SCROLL_MASK | LIVES_SMOOTH_SCROLL_MASK);
 
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_EXPOSE_EVENT,
+                            LIVES_GUI_CALLBACK(all_expose_pb),
+                            NULL);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_CONFIGURE_EVENT,
+                            LIVES_GUI_CALLBACK(all_config),
+                            &mainw->pwin_surface);
+  
   // cannot do this or it forces showing on the GUI monitor
   //gtk_window_set_position(LIVES_WINDOW(mainw->play_window),GTK_WIN_POS_CENTER_ALWAYS);
 
@@ -4100,13 +4037,13 @@ void make_play_window(void) {
     }
   }
 
-  if ((!CURRENT_CLIP_IS_VALID || (!cfile->is_loaded && !mainw->preview) ||
-       (cfile->frames == 0 && (mainw->multitrack == NULL || !LIVES_IS_PLAYING))) && mainw->imframe != NULL) {
-    lives_painter_t *cr = lives_painter_create_from_surface(mainw->play_surface);
-    lives_painter_set_source_pixbuf(cr, mainw->imframe, (LiVESXModifierType)0, 0);
-    lives_painter_paint(cr);
-    lives_painter_destroy(cr);
-  }
+  /* if ((!CURRENT_CLIP_IS_VALID || (!cfile->is_loaded && !mainw->preview) || */
+  /*      (cfile->frames == 0 && (mainw->multitrack == NULL || !LIVES_IS_PLAYING))) && mainw->imframe != NULL) { */
+  /*   lives_painter_t *cr = lives_painter_create_from_surface(mainw->play_surface); */
+  /*   lives_painter_set_source_pixbuf(cr, mainw->imframe, (LiVESXModifierType)0, 0); */
+  /*   lives_painter_paint(cr); */
+  /*   lives_painter_destroy(cr); */
+  /* } */
 
   lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Hide Play Window"));
 
@@ -4594,17 +4531,20 @@ void get_letterbox_sizes(int *pwidth, int *pheight, int *lb_width, int *lb_heigh
 
 
 void add_to_playframe(void) {
-  if (LIVES_IS_PLAYING) lives_widget_show(mainw->playarea);
+  resize(1);
+  if (LIVES_IS_PLAYING) lives_widget_show(mainw->playframe);
+  return;
+
   if (mainw->plug == NULL) {
     if (!mainw->foreign && (!mainw->sep_win || prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY)) {
-      mainw->plug = lives_event_box_new();
-      lives_widget_set_app_paintable(mainw->plug, TRUE);
-      lives_container_add(LIVES_CONTAINER(mainw->playarea), mainw->plug);
-      if (palette->style & STYLE_1) {
-        lives_widget_set_bg_color(mainw->plug, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-      }
-      lives_widget_show(mainw->plug);
-      lives_container_add(LIVES_CONTAINER(mainw->plug), mainw->play_image);
+      /* mainw->plug = lives_event_box_new(); */
+      /* lives_widget_set_app_paintable(mainw->plug, TRUE); */
+      /* lives_container_add(LIVES_CONTAINER(mainw->playarea), mainw->plug); */
+      /* if (palette->style & STYLE_1) { */
+      /*   lives_widget_set_bg_color(mainw->plug, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back); */
+      /* } */
+      /* lives_widget_show(mainw->plug); */
+      lives_container_add(LIVES_CONTAINER(mainw->playarea), mainw->play_image);
       if (mainw->multitrack != NULL) {
 	lives_widget_set_vexpand(mainw->play_image, TRUE); // centers it in mt
       } else {

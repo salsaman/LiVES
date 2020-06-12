@@ -404,11 +404,9 @@ void create_LiVES(void) {
 
   mainw->start_image = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_sim), &mainw->si_surface);
   mainw->end_image = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_eim), &mainw->ei_surface);
-  mainw->play_image = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), &mainw->play_surface);
 
   lives_widget_show(mainw->start_image);  // needed to get size
   lives_widget_show(mainw->end_image);  // needed to get size
-  lives_widget_show(mainw->play_image);  // needed to get size
 
   if (palette->style & STYLE_1) {
     load_theme_images();

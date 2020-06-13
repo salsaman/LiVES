@@ -1943,7 +1943,6 @@ void create_LiVES(void) {
   add_fill_to_box(LIVES_BOX(mainw->framebar));
 
   mainw->pf_grid = lives_table_new(1, 3, TRUE);
-  //lives_widget_set_app_paintable(mainw->pf_grid, TRUE);
 
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -1966,7 +1965,6 @@ void create_LiVES(void) {
                      (LiVESAttachOptions)(0),
                      (LiVESAttachOptions)(0), 0, 0);
   lives_widget_set_halign(mainw->eventbox3, LIVES_ALIGN_START);
-  //lives_widget_set_app_paintable(mainw->eventbox3, TRUE);
 
   // IMPORTANT: need to set a default size here (the actual size will be set later)
   lives_widget_set_size_request(mainw->eventbox3, DEF_FRAME_HSIZE_GUI, DEF_FRAME_VSIZE_GUI);
@@ -1992,7 +1990,7 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(mainw->playframe), mainw->pl_eventbox);
   lives_widget_set_size_request(mainw->playframe, DEF_FRAME_HSIZE_GUI, DEF_FRAME_VSIZE_GUI);
   lives_widget_set_hexpand(mainw->pl_eventbox, FALSE);
-  lives_widget_set_vexpand(mainw->pl_eventbox, TRUE);
+  //lives_widget_set_vexpand(mainw->pl_eventbox, TRUE);
 
   mainw->playarea = lives_event_box_new();
   lives_container_add(LIVES_CONTAINER(mainw->pl_eventbox), mainw->playarea);
@@ -2168,11 +2166,7 @@ void create_LiVES(void) {
 
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->eventbox2), LIVES_WIDGET_EXPOSE_EVENT,
   			    LIVES_GUI_CALLBACK(all_expose_overlay),
-  			    (livespointer)&mainw->eb2_surface);
-
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->eventbox2), LIVES_WIDGET_CONFIGURE_EVENT,
-  			    LIVES_GUI_CALLBACK(all_config),
-  			    (livespointer)&mainw->eb2_surface);
+  			    NULL);
   
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   mainw->vidbar = lives_standard_label_new(_("Video"));
@@ -2236,7 +2230,7 @@ void create_LiVES(void) {
     lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->message_box, TRUE, TRUE, 0);
   else lives_widget_object_ref_sink(mainw->message_box);
 
-  mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), &mainw->msg_surface);
+  mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(reshow_msg_area), &mainw->msg_surface);
 
   if (prefs->show_msg_area) {
     lives_widget_add_events(mainw->msg_area, LIVES_SMOOTH_SCROLL_MASK | LIVES_SCROLL_MASK);

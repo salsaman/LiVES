@@ -1061,7 +1061,7 @@ static void async_sig_handler(livespointer instance, livespointer data) {
   if (sigdata->instance != instance) return;
 
   ctx = g_main_context_get_thread_default();
-  if (!ctx || ctx == g_main_context_default()) {
+  if (!gov_running && !ctx || ctx == g_main_context_default()) {
     lives_thread_attr_t attr = LIVES_THRDATTR_NEW_CTX | LIVES_THRDATTR_WAIT_SYNC;
     mainw->clutch = TRUE;
     if (sigdata->swapped) {
@@ -1083,7 +1083,7 @@ static void async_sig_handler3(livespointer instance, livespointer extra, livesp
   if (!sigdata->detsig) break_me();
 
   ctx = g_main_context_get_thread_default();
-  if (!ctx || ctx == g_main_context_default()) {
+  if (!gov_running && !ctx || ctx == g_main_context_default()) {
     lives_thread_attr_t attr = LIVES_THRDATTR_NEW_CTX | LIVES_THRDATTR_WAIT_SYNC;
     sigdata->proc = lives_proc_thread_create(&attr, sigdata->callback, -1, "vvv", instance, extra,
                     sigdata->user_data);
@@ -2855,8 +2855,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_unfullscreen(LiVESWindow *windo
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_maximize(LiVESWindow *window) {
 #ifdef GUI_GTK
   gtk_window_maximize(window);
-  lives_widget_set_size_request(LIVES_WIDGET(window), GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT
-                                - (mainw ? mainw->mbar_res : 0));
   return TRUE;
 #endif
 #ifdef GUI_QT

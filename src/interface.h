@@ -33,7 +33,7 @@ void msg_area_scroll_to_end(LiVESWidget *, LiVESAdjustment *);
 boolean on_msg_area_scroll(LiVESWidget *, LiVESXEventScroll *, livespointer user_data);
 boolean expose_msg_area(LiVESWidget *, lives_painter_t *, livespointer user_data);
 boolean msg_area_config(LiVESWidget *);
-void reshow_msg_area(LiVESWidget *);
+boolean reshow_msg_area(LiVESWidget *, lives_painter_t *, livespointer user_data);
 
 
 boolean get_screen_usable_size(int *w, int *h);

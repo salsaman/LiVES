@@ -9527,10 +9527,6 @@ boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespoin
   }
   if (widget == LIVES_MAIN_WINDOW_WIDGET) {
     int scr_width, scr_height;
-    if (mainw->ignore_screen_size) return FALSE;
-    if (owidth == event->width && oheight == event->height) return FALSE;
-    owidth = event->width;
-    oheight = event->height;
     scr_width = GUI_SCREEN_WIDTH;
     scr_height = GUI_SCREEN_HEIGHT;
     get_monitors(FALSE);

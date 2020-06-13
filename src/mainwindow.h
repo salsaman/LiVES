@@ -1171,8 +1171,6 @@ typedef struct {
   LiVESWidget *eventbox4;
   LiVESWidget *eventbox5;
 
-  lives_painter_surface_t *eb2_surface;
-
   // toolbar buttons
   LiVESWidget *t_stopbutton;
   LiVESWidget *t_bckground;

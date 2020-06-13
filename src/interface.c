@@ -4790,7 +4790,6 @@ boolean get_screen_usable_size(int *w, int *h) {
 }
 
 
-
 static boolean msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recompute, LiVESAdjustment *adj) {
   // "scroll" the message area so that the last message appears at the bottom
   LingoLayout *layout;
@@ -4861,6 +4860,8 @@ static boolean msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recomp
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout_height", LIVES_INT_TO_POINTER(lh + .5));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout_lines", LIVES_INT_TO_POINTER(nlines));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout_last", LIVES_INT_TO_POINTER(msgno));
+
+  
   return TRUE;
 }
 
@@ -5085,7 +5086,6 @@ boolean msg_area_config(LiVESWidget *widget) {
   if (!prefs->open_maximised && mainw->multitrack == NULL && gui_posx < 1000000)
     lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), gui_posx, gui_posy);
 
-
   gui_posx = gui_posy = 1000000;
 
   // check if we could request more
@@ -5132,8 +5132,8 @@ boolean msg_area_config(LiVESWidget *widget) {
 }
 
 
-void reshow_msg_area(LiVESWidget *widget) { 
-  lives_painter_t *cr;
+boolean reshow_msg_area(LiVESWidget *widget, lives_painter_t *cr, livespointer psurf) {
+  lives_painter_t *cr2;
   LingoLayout *layout;
   int width;
 
@@ -5141,16 +5141,25 @@ void reshow_msg_area(LiVESWidget *widget) {
 
   if (layout != NULL && LINGO_IS_LAYOUT(layout)) {
     lives_colRGBA64_t fg, bg;
+    int rwidth = lives_widget_get_allocation_width(widget);
+    int rheight = lives_widget_get_allocation_height(widget);
+
     widget_color_to_lives_rgba(&fg, &palette->info_text);
     widget_color_to_lives_rgba(&bg, &palette->info_base);
     
-    cr = lives_painter_create_from_surface(mainw->msg_surface);
-    height = FLOOR(height, lineheight);
-    layout_to_lives_painter(layout, cr, LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND, &fg, &bg, width, height,
+    cr2 = lives_painter_create_from_surface(mainw->msg_surface);
+    lives_painter_render_background(widget, cr2, 0., 0., rwidth, rheight);
+
+    height = lives_widget_get_allocation_height(widget);
+
+    layout_to_lives_painter(layout, cr2, LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND, &fg, &bg, width, height,
                             0., 0., 0., height - lheight - 4);
-    lingo_painter_show_layout(cr, layout);
-    lives_painter_destroy(cr);
+    lingo_painter_show_layout(cr2, layout);
+    lives_painter_destroy(cr2);
   }
+  lives_painter_set_source_surface(cr, mainw->msg_surface, 0., 0.);
+  lives_painter_paint(cr);
+  return FALSE;
 }
 
 
@@ -5166,7 +5175,8 @@ void msg_area_scroll(LiVESAdjustment * adj, livespointer userdata) {
   double val = lives_adjustment_get_value(adj);
   //g_print("val is %f rnd %d\n", val, (int)(val + .5));
   if (msg_area_scroll_to(widget, (int)(val + .5), FALSE, adj))
-    reshow_msg_area(widget);
+    lives_widget_queue_draw(widget);
+    //reshow_msg_area(widget);
 }
 
 

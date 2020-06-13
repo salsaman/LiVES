@@ -4387,7 +4387,7 @@ void play_all(boolean from_menu) {
 
 void on_playall_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (menuitem != NULL && mainw->go_away) return;
-  start_playback_async(menuitem ? 8 : 0);
+  start_playback(menuitem ? 8 : 0);
 }
 
 
@@ -4432,7 +4432,7 @@ void on_playsel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (LIVES_POINTER_TO_INT(user_data))
     play_file();
   else
-    start_playback_async(1);
+    start_playback(1);
 }
 
 
@@ -4458,7 +4458,7 @@ void on_playclip_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   lives_rm(cfile->info_file);
 
-  start_playback_async(5);
+  start_playback(5);
 }
 
 
@@ -7687,11 +7687,11 @@ void on_showfct_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 void on_sticky_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // type is SEPWIN_TYPE_STICKY (shown even when not playing)
   // or SEPWIN_TYPE_NON_STICKY (shown only when playing)
-
-  if (future_prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY) {
-    pref_factory_int(PREF_SEPWIN_TYPE, SEPWIN_TYPE_STICKY, TRUE);
+  boolean make_perm = (prefs->sepwin_type == future_prefs->sepwin_type);
+  if (prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY) {
+    pref_factory_int(PREF_SEPWIN_TYPE, SEPWIN_TYPE_STICKY, make_perm);
   } else {
-    pref_factory_int(PREF_SEPWIN_TYPE, SEPWIN_TYPE_NON_STICKY, TRUE);
+    pref_factory_int(PREF_SEPWIN_TYPE, SEPWIN_TYPE_NON_STICKY, make_perm);
   }
 }
 
@@ -9375,13 +9375,100 @@ boolean all_expose(LiVESWidget *widget, lives_painter_t *cr, livespointer psurf)
   return TRUE;
 }
 
+
+boolean all_expose_overlay(LiVESWidget *widget, lives_painter_t *creb, livespointer psurf) {
+  /// quick and dirty copy / paste
+  if (mainw->go_away) return FALSE;
+  if (LIVES_IS_PLAYING && mainw->faded) return FALSE;
+  else {
+    int bar_height;
+    int allocy;
+    double allocwidth = (double)lives_widget_get_allocation_width(mainw->video_draw), allocheight;
+    double offset;
+    double ptrtime = mainw->ptrtime;
+    frames_t frame;
+    int which = 0;
+
+    offset = ptrtime / CURRENT_CLIP_TOTAL_TIME * allocwidth;
+
+    lives_painter_set_line_width(creb, 1.);
+
+    if (palette->style & STYLE_LIGHT) {
+      lives_painter_set_source_rgb_from_lives_widget_color(creb, &palette->black);
+    } else {
+      lives_painter_set_source_rgb_from_lives_widget_color(creb, &palette->white);
+    }
+
+    if (!(frame = calc_frame_from_time(mainw->current_file, ptrtime)))
+      frame = cfile->frames;
+
+    if (cfile->frames > 0 && (which == 0 || which == 1)) {
+      if (mainw->video_drawable != NULL) {
+	bar_height = CE_VIDBAR_HEIGHT;
+
+	allocheight = (double)lives_widget_get_allocation_height(mainw->vidbar) + bar_height + widget_opts.packing_height * 2.5;
+	allocy = lives_widget_get_allocation_y(mainw->vidbar) - widget_opts.packing_height;
+
+	lives_painter_move_to(creb, offset, allocy);
+	lives_painter_line_to(creb, offset, allocy + allocheight);
+	lives_painter_stroke(creb);
+      }
+    }
+
+    if (LIVES_IS_PLAYING) {
+      if (which == 0) lives_ruler_set_value(LIVES_RULER(mainw->hruler), ptrtime);
+      if (cfile->achans > 0 && cfile->is_loaded && prefs->audio_src != AUDIO_SRC_EXT) {
+	if (is_realtime_aplayer(prefs->audio_player) && (mainw->event_list == NULL || !mainw->preview)) {
+#ifdef ENABLE_JACK
+	  if (mainw->jackd != NULL && prefs->audio_player == AUD_PLAYER_JACK) {
+	    offset = allocwidth * ((double)mainw->jackd->seek_pos / cfile->arate / cfile->achans /
+				   cfile->asampsize * 8) / CURRENT_CLIP_TOTAL_TIME;
+	  }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+	  if (mainw->pulsed != NULL && prefs->audio_player == AUD_PLAYER_PULSE) {
+	    offset = allocwidth * ((double)mainw->pulsed->seek_pos / cfile->arate / cfile->achans /
+				   cfile->asampsize * 8) / CURRENT_CLIP_TOTAL_TIME;
+	  }
+#endif
+	} else offset = allocwidth * (mainw->aframeno - .5) / cfile->fps / CURRENT_CLIP_TOTAL_TIME;
+      }
+    }
+
+    if (cfile->achans > 0) {
+      bar_height = CE_AUDBAR_HEIGHT;
+      if (mainw->laudio_drawable != NULL && (which == 0 || which == 2)) {
+	allocheight = (double)lives_widget_get_allocation_height(mainw->laudbar) + bar_height + widget_opts.packing_height * 2.5;
+	allocy = lives_widget_get_allocation_y(mainw->laudbar) - widget_opts.packing_height;
+
+	lives_painter_move_to(creb, offset, allocy);
+	lives_painter_line_to(creb, offset, allocy + allocheight);
+      }
+
+      if (cfile->achans > 1 && (which == 0 || which == 3)) {
+	if (mainw->raudio_drawable != NULL) {
+	  allocheight = (double)lives_widget_get_allocation_height(mainw->raudbar) + bar_height + widget_opts.packing_height * 2.5;
+	  allocy = lives_widget_get_allocation_y(mainw->raudbar) - widget_opts.packing_height;
+
+	  lives_painter_move_to(creb, offset, allocy);
+	  lives_painter_line_to(creb, offset, allocy + allocheight);
+	}
+      }
+    }
+    
+    lives_painter_stroke(creb);
+    return TRUE;
+  }
+}
+
+
 boolean all_expose_pb(LiVESWidget *widget, lives_painter_t *cr, livespointer psurf) {
   if (LIVES_IS_PLAYING) all_expose(widget, cr, psurf);
   return TRUE;
 }
 
 boolean all_expose_nopb(LiVESWidget *widget, lives_painter_t *cr, livespointer psurf) {
-  if (!LIVES_IS_PLAYING) all_expose(widget, cr, mainw->sy_syrface);
+  if (!LIVES_IS_PLAYING) all_expose(widget, cr, psurf);
   return TRUE;
 }
 
@@ -9403,6 +9490,7 @@ boolean config_event2(LiVESWidget *widget, LiVESXEventConfigure *event, livespoi
   mainw->msg_area_configed = TRUE;
   return TRUE;
 }
+
 
 /// genric func. to create surfaces
 boolean all_config(LiVESWidget *widget, LiVESXEventConfigure *event, livespointer ppsurf) {

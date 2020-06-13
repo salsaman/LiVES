@@ -838,6 +838,7 @@ void redraw_timer_bars(double oldx, double newx, int which) {
 
 void draw_little_bars(double ptrtime, int which) {
   //draw the vertical player bars
+  lives_painter_t *cr;
   int bar_height;
   int allocy;
   double allocwidth = (double)lives_widget_get_allocation_width(mainw->video_draw), allocheight;
@@ -855,7 +856,7 @@ void draw_little_bars(double ptrtime, int which) {
   if (!prefs->show_gui) return;
 
   if (!CURRENT_CLIP_IS_VALID) return;
-
+  mainw->ptrtime = ptrtime;
   offset = ptrtime / CURRENT_CLIP_TOTAL_TIME * allocwidth;
 #ifdef TEST_VOL_LIGHTS
   if (which == 0) {
@@ -880,16 +881,8 @@ void draw_little_bars(double ptrtime, int which) {
     }
   }
 #endif
+
   if (CURRENT_CLIP_TOTAL_TIME > 0.) {
-    lives_painter_t *creb = lives_painter_create_from_widget(mainw->eventbox2), *cr;
-    lives_painter_set_line_width(creb, 1.);
-
-    if (palette->style & STYLE_LIGHT) {
-      lives_painter_set_source_rgb_from_lives_widget_color(creb, &palette->black);
-    } else {
-      lives_painter_set_source_rgb_from_lives_widget_color(creb, &palette->white);
-    }
-
     if (!(frame = calc_frame_from_time(mainw->current_file, ptrtime)))
       frame = cfile->frames;
 
@@ -908,9 +901,6 @@ void draw_little_bars(double ptrtime, int which) {
             lives_widget_queue_draw_area(mainw->eventbox2, offset + 1, allocy, allocwidth - offset - 1., allocheight + .5);
           }
         }
-
-        lives_painter_move_to(creb, offset, allocy);
-        lives_painter_line_to(creb, offset, allocy + allocheight);
 
         cr = lives_painter_create_from_surface(mainw->video_drawable);
         lives_painter_set_line_width(cr, 1.);
@@ -961,9 +951,6 @@ void draw_little_bars(double ptrtime, int which) {
           }
         }
 
-        lives_painter_move_to(creb, offset, allocy);
-        lives_painter_line_to(creb, offset, allocy + allocheight);
-
         cr = lives_painter_create_from_surface(mainw->laudio_drawable);
         lives_painter_set_line_width(cr, 1.);
         if (palette->style & STYLE_LIGHT) {
@@ -991,9 +978,6 @@ void draw_little_bars(double ptrtime, int which) {
             }
           }
 
-          lives_painter_move_to(creb, offset, allocy);
-          lives_painter_line_to(creb, offset, allocy + allocheight);
-
           cr = lives_painter_create_from_surface(mainw->raudio_drawable);
           lives_painter_set_line_width(cr, 1.);
           if (palette->style & STYLE_LIGHT) {
@@ -1008,10 +992,6 @@ void draw_little_bars(double ptrtime, int which) {
         }
       }
     }
-    lives_painter_stroke(creb);
-    lives_painter_destroy(creb);
-
-    //threaded_dialog_spin(0.);
   }
 }
 

@@ -746,7 +746,7 @@ typedef struct {
 
   /// default sizes for when no file is loaded
   int def_width, def_height;
-
+  double ptrtime;
   /////////////////////////////////////////////////
 
   // end of static-ish info
@@ -797,12 +797,10 @@ typedef struct {
 
   // for the internal player
   LiVESWidget *play_image;
-  LiVESWidget *ploy_image;
   LiVESWidget *play_window;
   weed_plant_t *frame_layer;
 
   lives_painter_surface_t *play_surface;
-  lives_painter_surface_t *ploy_surface;
   lives_painter_surface_t *pwin_surface;
 
   /// predictive caching apparatus
@@ -1154,9 +1152,9 @@ typedef struct {
 #define PRV_PTR 3
 #define PRV_DEFAULT PRV_PTR
 
-  lives_painter_surface_t *si_surface, *sy_syrface, *ei_surface, *pi_surface;
+  lives_painter_surface_t *si_surface, *ei_surface, *pi_surface;
 
-  LiVESWidget *start_image, *stort_image, *end_image;
+  LiVESWidget *start_image, *end_image;
   LiVESWidget *playarea;
   LiVESWidget *hseparator;
   LiVESWidget *message_box;
@@ -1172,6 +1170,8 @@ typedef struct {
   LiVESWidget *eventbox3;
   LiVESWidget *eventbox4;
   LiVESWidget *eventbox5;
+
+  lives_painter_surface_t *eb2_surface;
 
   // toolbar buttons
   LiVESWidget *t_stopbutton;

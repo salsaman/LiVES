@@ -222,6 +222,7 @@ void on_preview_clicked(LiVESButton *, livespointer);
 void on_recent_activate(LiVESMenuItem *, livespointer);
 
 boolean all_expose_pb(LiVESWidget *, lives_painter_t *, livespointer psurf);
+boolean all_expose_overlay(LiVESWidget *, lives_painter_t *, livespointer psurf);
 boolean all_expose_nopb(LiVESWidget *, lives_painter_t *, livespointer psurf);
 
 boolean config_event(LiVESWidget *, LiVESXEventConfigure *, livespointer);

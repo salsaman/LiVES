@@ -191,7 +191,7 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
     if ((level & LIVES_LOG_LEVEL_MASK) == LIVES_LOG_LEVEL_CRITICAL)
       msg = lives_strdup_printf(_("%s Critical error: %s\n"), domain, message);
     else msg = lives_strdup_printf(_("%s Fatal error: %s\n"), domain, message);
-    //#define BREAK_ON_CRIT
+    #define BREAK_ON_CRIT
 #ifdef BREAK_ON_CRIT
     if (prefs->show_dev_opts) raise(LIVES_SIGTRAP);
 #endif
@@ -1388,6 +1388,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->st_fcache = mainw->en_fcache = mainw->pr_fcache = NULL;
 
+  mainw->ptrtime = 0.;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);
@@ -4758,13 +4759,15 @@ void procw_desensitize(void) {
 
 void set_drawing_area_from_pixbuf(LiVESWidget *widget, LiVESPixbuf *pixbuf,
 				  lives_painter_surface_t *surface) {
-  GdkRectangle update_rect;
+  LiVESXWindow *xwin;
+  LiVESRectangle update_rect;
   lives_painter_t *cr;
   int cx, cy;
   int rwidth, rheight, width, height, owidth, oheight;
 
-  if (!LIVES_IS_XWINDOW(lives_widget_get_xwindow(widget))) return;
-  if (!surface) return;
+  if (!surface || !widget) return;
+  xwin = lives_widget_get_xwindow(widget);
+  if (!LIVES_IS_XWINDOW(xwin)) return;
   
   cr = lives_painter_create_from_surface(surface);
 
@@ -4810,11 +4813,14 @@ void set_drawing_area_from_pixbuf(LiVESWidget *widget, LiVESPixbuf *pixbuf,
   }
   lives_painter_paint(cr);
   lives_painter_destroy(cr);
+
+  if (widget == mainw->play_window && rheight > mainw->pheight) rheight = mainw->pheight;
   
   update_rect.x = update_rect.y = 0;
   update_rect.width = rwidth;
   update_rect.height = rheight;
 
+  if (!LIVES_IS_XWINDOW(xwin)) return;
   gdk_window_invalidate_rect (lives_widget_get_window (widget), &update_rect, FALSE);
 }
 
@@ -4871,8 +4877,7 @@ void load_start_image(int frame) {
       hsize /= 2;
       vsize /= 2;
     }
-    //lives_widget_set_size_request(mainw->start_image, hsize, vsize);
-    lives_widget_set_size_request(mainw->stort_image, hsize, vsize);
+    lives_widget_set_size_request(mainw->start_image, hsize, vsize);
     lives_widget_set_size_request(mainw->frame1, hsize, vsize);
     lives_widget_set_size_request(mainw->eventbox3, hsize, vsize);
 
@@ -8221,7 +8226,8 @@ void load_frame_image(int frame) {
     // internal player, double size or fullscreen, or multitrack
 
     if (mainw->play_window != NULL && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
-
+      set_drawing_area_from_pixbuf(mainw->preview_image, pixbuf, mainw->pi_surface);
+      lives_widget_queue_draw(mainw->preview_image);
     } else {
       pwidth = lives_widget_get_allocation_width(mainw->play_image);
       pheight = lives_widget_get_allocation_height(mainw->play_image);
@@ -8229,15 +8235,12 @@ void load_frame_image(int frame) {
         clear_widget_bg(mainw->play_image);
       old_pwidth = pwidth;
       old_pheight = pheight;
+      set_drawing_area_from_pixbuf(mainw->play_image, pixbuf, mainw->play_surface);
+      lives_widget_queue_draw(mainw->play_image);
     }
-
-
-    //cr = lives_painter_create_from_surface(surface);
-    set_drawing_area_from_pixbuf(mainw->play_image, pixbuf, mainw->play_surface);
 
     if (pixbuf != NULL) lives_widget_object_unref(pixbuf);
     success = TRUE;
-    lives_widget_queue_draw(mainw->play_image);
     //g_print("paint @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     goto lfi_done;
   }
@@ -9264,6 +9267,7 @@ void load_frame_image(int frame) {
       void resize(double scale) {
         // resize the frame widgets
         // set scale < 0. to _force_ the playback frame to expand (for external capture)
+	LiVESXWindow *xwin;
         double oscale = scale;
 
         int xsize, hspace;
@@ -9361,8 +9365,7 @@ void load_frame_image(int frame) {
           lives_widget_set_size_request(mainw->frame2, mainw->ce_frame_width, mainw->ce_frame_height);
           lives_widget_set_size_request(mainw->eventbox4, mainw->ce_frame_width, mainw->ce_frame_height);
 
-          //lives_widget_set_size_request(mainw->start_image, mainw->ce_frame_width, mainw->ce_frame_height);
-          lives_widget_set_size_request(mainw->stort_image, mainw->ce_frame_width, mainw->ce_frame_height);
+          lives_widget_set_size_request(mainw->start_image, mainw->ce_frame_width, mainw->ce_frame_height);
           lives_widget_set_size_request(mainw->end_image, mainw->ce_frame_width, mainw->ce_frame_height);
 
           // use unscaled size in dblsize
@@ -9376,11 +9379,14 @@ void load_frame_image(int frame) {
 
           // IMPORTANT (or the entire image will not be shown)
           lives_widget_set_size_request(mainw->play_image, hsize, vsize);
-	  if (mainw->play_surface) lives_painter_surface_destroy (mainw->play_surface);
-	  mainw->play_surface = gdk_window_create_similar_surface(lives_widget_get_xwindow (mainw->play_image),
-	  							  LIVES_PAINTER_CONTENT_COLOR,
-	  							  hsize, vsize);
-        } else {
+	  xwin = lives_widget_get_xwindow (mainw->play_image);
+	  if (LIVES_IS_XWINDOW(xwin)) {
+	    if (mainw->play_surface) lives_painter_surface_destroy (mainw->play_surface);
+	    mainw->play_surface = gdk_window_create_similar_surface(lives_widget_get_xwindow (mainw->play_image),
+								    LIVES_PAINTER_CONTENT_COLOR,
+								    hsize, vsize);
+	  }
+	} else {
           // capture window size
           xsize = (scr_width - hsize * -oscale - H_RESIZE_ADJUST) / 2;
           if (xsize > 0) {
@@ -9400,8 +9406,8 @@ void load_frame_image(int frame) {
 
         if (!mainw->foreign && CURRENT_CLIP_IS_VALID && (!cfile->opening
 							 || cfile->clip_type == CLIP_TYPE_FILE)) {
-          load_end_image(cfile->end);
-          load_start_image(cfile->start);
+          /* load_end_image(cfile->end); */
+          /* load_start_image(cfile->start); */
         }
 
         if (!mainw->foreign && mainw->current_file == -1) {

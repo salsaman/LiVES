@@ -705,8 +705,7 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_image_surface
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_widget_create_painter_surface
-(LiVESWidget *widget) {
+WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_widget_create_painter_surface(LiVESWidget *widget) {
 #ifdef GUI_GTK
   if (widget)
     return gdk_window_create_similar_surface(lives_widget_get_xwindow (widget),
@@ -999,34 +998,43 @@ static boolean governor_loop(livespointer data) {
 
   if (mainw->is_exiting) return FALSE;
   if (!sigdata->proc) return FALSE;
-
+  
   if (dlgtorun) {
+    if (sigdata->is_timer) return TRUE;
     g_idle_add(governor_loop, data);
     return FALSE;
   }
 
   mainw->clutch = TRUE;
-  g_main_context_wakeup(NULL);
 
+ reloop:
+  
   if (!lives_proc_thread_check(sigdata->proc)) {
     // signal bg that it can start now...
-    lives_proc_thread_sync_ready(sigdata->proc);
     gov_running = TRUE;
+    lives_proc_thread_sync_ready(sigdata->proc);
     while (mainw->clutch && !mainw->is_exiting && !lives_proc_thread_check(sigdata->proc)) {
+      // while any signal handler is running in the bg, we just loop here until either:
+      // the task completes, the task wants to run a main loop cycle, or the app exits
       lives_nanosleep(NSLEEP_TIME);
       sched_yield();
     }
   }
 
-  if (mainw->is_exiting) return FALSE;
+  if (mainw->is_exiting) return FALSE; // app exit
 
   if (!mainw->clutch) {
+    // run mainloop
+    if (sigdata->is_timer) return TRUE;
     g_idle_add(governor_loop, data);
     return FALSE;
   }
 
+  /// something else might have removed the clutch, so check again
+  if (!lives_proc_thread_check(sigdata->proc)) goto reloop;
+  
+  // bg handler finished
   gov_running = FALSE;
-
   // if a timer, set sigdata->swapped
   if (sigdata->is_timer) {
     sigdata->swapped = TRUE;
@@ -1098,43 +1106,30 @@ static boolean async_timer_handler(livespointer data) {
     ctx = g_main_context_get_thread_default();
     if (!ctx || ctx == g_main_context_default()) {
       lives_thread_attr_t attr = LIVES_THRDATTR_NEW_CTX | LIVES_THRDATTR_WAIT_SYNC;
-      mainw->clutch = TRUE;
+      mainw->clutch = FALSE;
       sigdata->swapped = FALSE;
       sigdata->proc = lives_proc_thread_create(&attr, (lives_funcptr_t)sigdata->callback, WEED_SEED_BOOLEAN,
-                      "v", sigdata->user_data);
+					       "v", sigdata->user_data);
       sigdata->added = TRUE;
-      governor_loop((livespointer)sigdata);
+      //governor_loop((livespointer)sigdata);
     } else {
       return (*((LiVESWidgetSourceFunc)sigdata->callback))(sigdata->user_data);
     }
   }
 
   while (1) {
-    /// run the main loop, since we we were asked to by a thread, but we cannot return yet
-    /// as we need the (boolean) result from the idle / timer running in the background
-    while (!mainw->clutch && !mainw->is_exiting) {
-      g_main_context_iteration(NULL, TRUE);
-      if (mainw->is_exiting) return FALSE;
+    if (!governor_loop((livespointer)sigdata)) break;
+    if (sigdata->swapped) {
+      // get bool result and return
+      boolean res = lives_proc_thread_join_boolean(sigdata->proc);
+      weed_plant_free(sigdata->proc);
+      sigdata->proc = NULL;
+      sigdata->swapped = sigdata->added = FALSE;
+      if (!res) sigdata_free(sigdata, NULL);
+      return res;
     }
-
-    if (mainw->is_exiting) return FALSE;
-
-    while (mainw->clutch && !mainw->is_exiting) {
-      if (sigdata->swapped) {
-        // get bool result and return
-        boolean res = lives_proc_thread_join_boolean(sigdata->proc);
-        weed_plant_free(sigdata->proc);
-        sigdata->proc = NULL;
-        sigdata->swapped = sigdata->added = FALSE;
-        if (!res) sigdata_free(sigdata, NULL);
-        return res;
-      }
-      lives_nanosleep(NSLEEP_TIME);
-      sched_yield();
-    }
-    if (mainw->is_exiting) return FALSE;
+    while (g_main_context_iteration(NULL, FALSE)); // process until no more events
   }
-  return TRUE;
 }
 
 
@@ -1169,11 +1164,11 @@ unsigned long lives_signal_connect_async(livespointer instance, const char *deta
   sigdata->detsig = lives_strdup(detailed_signal);
 
   if (nvals == 2) {
-    sigdata->funcid =  g_signal_connect_data(instance, detailed_signal, LIVES_GUI_CALLBACK(async_sig_handler),
-                       sigdata, sigdata_free, (flags & LIVES_CONNECT_AFTER));
+    sigdata->funcid = g_signal_connect_data(instance, detailed_signal, LIVES_GUI_CALLBACK(async_sig_handler),
+					    sigdata, sigdata_free, (flags & LIVES_CONNECT_AFTER));
   } else {
-    sigdata->funcid =  g_signal_connect_data(instance, detailed_signal, LIVES_GUI_CALLBACK(async_sig_handler3),
-                       sigdata, sigdata_free, (flags & LIVES_CONNECT_AFTER));
+    sigdata->funcid = g_signal_connect_data(instance, detailed_signal, LIVES_GUI_CALLBACK(async_sig_handler3),
+					    sigdata, sigdata_free, (flags & LIVES_CONNECT_AFTER));
   }
   active_sigdets = lives_list_prepend(active_sigdets, (livespointer)sigdata);
   return sigdata->funcid;
@@ -11686,9 +11681,13 @@ static void do_more_stuff(void) {
 /* #define MAX_NULL_EVENTS 512 // general max, some events allow twice this */
 /* #define LOOP_LIMIT 32 // max when playing and not in multitrack */
 boolean lives_widget_context_update(void) {
+  static boolean norecurse = FALSE;
+
   if (mainw->no_context_update) return FALSE;
+  if (norecurse) return FALSE;
   else {
     GMainContext *ctx = g_main_context_get_thread_default();
+    norecurse = TRUE;
     if (ctx != NULL && ctx != g_main_context_default() && gov_running) {
       do_some_things();
       mainw->clutch = FALSE;
@@ -11701,6 +11700,7 @@ boolean lives_widget_context_update(void) {
       while (g_main_context_iteration(NULL, FALSE));
     }
   }
+  norecurse = FALSE;
   return TRUE;
 }
 

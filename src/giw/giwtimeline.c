@@ -930,12 +930,29 @@ static void giw_timeline_draw_pos(GiwTimeline *timeline) {
   }
 
   if ((bs_width > 0) && (bs_height > 0)) {
-    cairo_t *cr = gdk_cairo_create(gtk_widget_get_window(widget));
+    cairo_t *cr;
     gdouble  lower;
     gdouble  upper;
     gdouble  position;
     gdouble  increment;
 
+#if !GTK_CHECK_VERSION(3, 22, 0)
+    cr = gdk_cairo_create(gtk_widget_get_window(widget));
+#else
+    cairo_region_t *reg;
+    GdkWindow *window;
+    GdkDrawingContext *xctx;
+    cairo_rectangle_int_t rect;
+    rect.x = allocation.x;
+    rect.y = allocation.y;
+    rect.width = allocation.width;
+    rect.height = allocation.height;
+
+    reg = cairo_region_create_rectangle (&rect);
+    window = gtk_widget_get_window(widget);
+    xctx = gdk_window_begin_draw_frame(window, reg);
+    cr = gdk_drawing_context_get_cairo_context(xctx);
+#endif
     cairo_rectangle(cr,
                     allocation.x, allocation.y,
                     allocation.width, allocation.height);
@@ -985,7 +1002,11 @@ static void giw_timeline_draw_pos(GiwTimeline *timeline) {
 
     cairo_fill(cr);
 
+#if GTK_CHECK_VERSION(3, 22, 0)
+    gdk_window_end_draw_frame(window, xctx);
+#else
     cairo_destroy(cr);
+#endif
 
     timeline->xsrc = x;
     timeline->ysrc = y;

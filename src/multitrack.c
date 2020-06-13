@@ -1530,8 +1530,8 @@ static EXPOSE_FN_DECL(expose_track_event, eventbox, user_data) {
 
 draw1:
 
-  if (cairo == NULL) cr = lives_painter_create_from_widget(eventbox);
-  else cr = cairo;
+  //if (cairo == NULL) cr = lives_painter_create_from_widget(eventbox);
+  //else cr = cairo;
 
   if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "drawn"))) {
     if (bgimage != NULL && lives_painter_image_surface_get_width(bgimage) > 0) {
@@ -13460,7 +13460,7 @@ static void mouse_select_move(LiVESWidget * widget, LiVESXEventMotion * event, l
   if (start_x < 0) start_x = 0;
   if (start_y < 0) start_y = 0;
 
-  cr = lives_painter_create_from_widget(mt->tl_eventbox);
+  //cr = lives_painter_create_from_widget(mt->tl_eventbox);
   lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
 
   lives_painter_rectangle(cr, start_x, start_y, width, height);
@@ -14093,7 +14093,7 @@ static void paint_line(lives_mt * mt, LiVESWidget * eventbox, int offset, double
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "has_line", LIVES_INT_TO_POINTER(offset));
 
-  cr = lives_painter_create_from_widget(eventbox);
+  //cr = lives_painter_create_from_widget(eventbox);
 
   if (lives_painter_set_operator(cr, LIVES_PAINTER_OPERATOR_DIFFERENCE))
     lives_painter_set_source_rgb(cr, 1., 1., 1.);
@@ -18060,7 +18060,7 @@ void draw_region(lives_mt * mt) {
 
   double start, end;
   if (mt->region_start == mt->region_end) {
-    cr = lives_painter_create_from_widget(mt->timeline_reg);
+    //cr = lives_painter_create_from_widget(mt->timeline_reg);
 
     if (palette->style & STYLE_3) {
       lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->menu_and_bars);
@@ -18091,7 +18091,7 @@ void draw_region(lives_mt * mt) {
     lives_widget_set_sensitive(mt->re_to_tc, TRUE);
   }
 
-  cr = lives_painter_create_from_widget(mt->timeline_reg);
+  //cr = lives_painter_create_from_widget(mt->timeline_reg);
 
   if (palette->style & STYLE_3) {
     lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->menu_and_bars);
@@ -18128,7 +18128,7 @@ static EXPOSE_FN_DECL(expose_timeline_reg_event, timeline, user_data) {
   if (LIVES_IS_PLAYING || mt->is_rendering) return FALSE;
   draw_region(mt);
 
-  if (event != NULL) cairo = lives_painter_create_from_widget(timeline);
+  //if (event != NULL) cairo = lives_painter_create_from_widget(timeline);
 
   lives_painter_set_source_rgb_from_lives_rgba(cairo, &palette->mt_mark);
 
@@ -18153,7 +18153,7 @@ static EXPOSE_FN_DECL(expose_timeline_reg_event, timeline, user_data) {
 EXPOSE_FN_END
 
 
-static void draw_soundwave(LiVESWidget * ebox, lives_painter_surface_t *surf, int chnum, lives_mt * mt) {
+static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int chnum, lives_mt *mt) {
   weed_plant_t *event;
   weed_timecode_t tc;
 
@@ -18300,7 +18300,7 @@ static EXPOSE_FN_DECL(mt_expose_audtrack_event, ebox, user_data) {
 
   if (width > lives_widget_get_allocation_width(ebox) - startx) width = lives_widget_get_allocation_width(ebox) - startx;
 
-  if (event != NULL) cairo = lives_painter_create_from_widget(ebox);
+  //if (event != NULL) cairo = lives_painter_create_from_widget(ebox);
   bgimage = (lives_painter_surface_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(ebox), "bgimg");
 
   if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(ebox), "drawn"))) {
@@ -18771,7 +18771,7 @@ static void add_mark_at(lives_mt * mt, double time) {
   mt->tl_marks = lives_list_append(mt->tl_marks, tstring);
   offset = (time - mt->tl_min) / (mt->tl_max - mt->tl_min) * (double)lives_widget_get_allocation_width(mt->timeline);
 
-  cr = lives_painter_create_from_widget(mt->timeline_reg);
+  //cr = lives_painter_create_from_widget(mt->timeline_reg);
 
   lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->mt_mark);
 

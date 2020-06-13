@@ -569,12 +569,15 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
 
     lheight = height;
     weed_layer_set_height(layer, 4);
+
     test_layer = weed_layer_copy(NULL, layer);
+
     weed_layer_set_height(layer, height);
     cr = layer_to_lives_painter(test_layer);
     layout = render_text_to_cr(NULL, cr, text, fontname, size, LIVES_TEXT_MODE_PRECALCULATE,
                                fg_col, bg_col, center, rising, &top, &offsx, width, &lheight);
     if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
+
     weed_layer_free(test_layer);
 
     /// if possible just render the slice which contains the text

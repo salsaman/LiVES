@@ -2385,6 +2385,8 @@ void play_file(void) {
     }
   }
 
+  if (!mainw->double_size) lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
+
   lives_widget_set_sensitive(mainw->m_playselbutton, FALSE);
   lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
   lives_widget_set_sensitive(mainw->m_mutebutton, is_realtime_aplayer(audio_player) || mainw->multitrack != NULL);
@@ -2398,6 +2400,7 @@ void play_file(void) {
 
   if (cfile->frames == 0 && mainw->multitrack == NULL) {
     if (mainw->preview_box != NULL && lives_widget_get_parent(mainw->preview_box) != NULL) {
+
       lives_container_remove(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
 
       mainw->pw_scroll_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_SCROLL_EVENT,
@@ -2414,12 +2417,11 @@ void play_file(void) {
         unblock_expose();
       } else {
         if (mainw->multitrack == NULL) {
-          if (mainw->preview_box != NULL && lives_widget_get_parent(mainw->preview_box) != NULL) {
-            lives_container_remove(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
-
-            mainw->pw_scroll_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_SCROLL_EVENT,
-                                    LIVES_GUI_CALLBACK(on_mouse_scroll),
-                                    NULL);
+          if (mainw->preview_controls) {
+	    lives_widget_hide(mainw->preview_controls);
+            /* mainw->pw_scroll_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_SCROLL_EVENT, */
+            /*                         LIVES_GUI_CALLBACK(on_mouse_scroll), */
+            /*                         NULL); */
           }
         }
 
@@ -3087,10 +3089,14 @@ void play_file(void) {
       /// or resize it back to single size
       if (mainw->current_file > -1 && cfile->is_loaded && cfile->frames > 0 && !mainw->is_rendering &&
           (cfile->clip_type != CLIP_TYPE_GENERATOR)) {
-        if (mainw->preview_box == NULL) {
+        if (mainw->preview_controls) {
           /// create the preview in the sepwin
-          lives_signal_handler_disconnect(mainw->play_window, mainw->pw_scroll_func);
-          make_preview_box();
+	  if (CURRENT_CLIP_IS_VALID && cfile->is_loaded && prefs->show_gui) {
+	    lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
+	    lives_widget_show_all(mainw->preview_controls);
+	    lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
+	    //lives_widget_grab_focus(mainw->preview_spinbutton);
+	  }
         }
         if (mainw->current_file != current_file) {
           // now we have to guess how to center the play window

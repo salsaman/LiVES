@@ -11214,11 +11214,8 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
         if (fordisplay && !prefs->gamma_srgb)
           gamma_convert_layer(WEED_GAMMA_MONITOR, layer);
         else {
-          //gamma_convert_layer(WEED_GAMMA_LINEAR, layer);
           gamma_convert_layer(WEED_GAMMA_SRGB, layer);
         }
-        /* #define DEF_FILE_GAMMAx 0.785 // larger == darker .785 too bright, .7925 too dark */
-        /* 	    gamma_convert_layer_variant(DEF_FILE_GAMMAx, layer); */
       }
     }
     switch (xpalette) {
@@ -11787,9 +11784,9 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     // TODO - can we set the gamma ?
     g_print("iht is %d, height = %d\n", iheight, height);
     swscale = sws_getCachedContext(swscale, iwidth, iheight, ipixfmt, width, height, opixfmt, flags, NULL, NULL, NULL);
-    sws_setColorspaceDetails(swscale, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
-                             ? SWS_CS_ITU709 : SWS_CS_ITU601), iclamping, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
-                                 ? SWS_CS_ITU709 : SWS_CS_ITU601), oclamp_hint,  0, 1 << 16, 1 << 16);
+    /* sws_setColorspaceDetails(swscale, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709) */
+    /*                          ? SWS_CS_ITU709 : SWS_CS_ITU601), iclamping, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709) */
+    /*                              ? SWS_CS_ITU709 : SWS_CS_ITU601), oclamp_hint,  0, 1 << 16, 1 << 16); */
 
     if (swscale == NULL) {
       LIVES_DEBUG("swscale is NULL !!");
@@ -11818,10 +11815,10 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
       } else {
         if (progscan) swparams[sl].layer = layer;
         else swparams[sl].layer = NULL;
-        sws_setColorspaceDetails(swparams[sl].swscale, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
-                                 ? SWS_CS_ITU709 : SWS_CS_ITU601), iclamping,
-                                 sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
-                                     ? SWS_CS_ITU709 : SWS_CS_ITU601), oclamp_hint,  0, 65536, 65536);
+        /* sws_setColorspaceDetails(swparams[sl].swscale, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709) */
+        /*                          ? SWS_CS_ITU709 : SWS_CS_ITU601), iclamping, */
+        /*                          sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709) */
+        /*                              ? SWS_CS_ITU709 : SWS_CS_ITU601), oclamp_hint,  0, 65536, 65536); */
         for (i = 0; i < 4; i++) {
           if (i < inplanes)
             swparams[sl].ipd[i] = ipd[i] + (size_t)(sl * irw[i] * iheight  * weed_palette_get_plane_ratio_vertical(palette, i));

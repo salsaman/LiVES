@@ -1276,18 +1276,6 @@ void resubmit_proc_thread(lives_proc_thread_t thread_info, lives_thread_attr_t *
 }
 
 
-static LiVESList *mainloops = NULL;
-static LiVESList *contexts = NULL;
-
-GMainLoop *get_loop_for_context(GMainContext *ctx) {
-  LiVESList *list = mainloops;
-  for (; list; list = list->next) {
-    if (g_main_loop_get_context((GMainLoop *)list->data) == ctx) return list->data;
-  }
-  return NULL;
-}
-
-
 //////// worker thread pool //////////////////////////////////////////
 
 ///////// thread pool ////////////////////////
@@ -1318,7 +1306,7 @@ static pthread_mutex_t tuner_mutex = PTHREAD_MUTEX_INITIALIZER;
 static LiVESList *allctxs = NULL;
 
 lives_thread_data_t *get_thread_data(void) {
-  LiVESMainContext *ctx = g_main_context_get_thread_default();
+  LiVESWidgetContext *ctx = g_main_context_get_thread_default();
   LiVESList *list = allctxs;
   for (; list; list = list->next) {
     if (((lives_thread_data_t *)list->data)->ctx == ctx) return list->data;
@@ -1328,7 +1316,6 @@ lives_thread_data_t *get_thread_data(void) {
 
 
 static lives_thread_data_t *get_thread_data_by_id(uint64_t idx) {
-  LiVESMainContext *ctx = g_main_context_get_thread_default();
   LiVESList *list = allctxs;
   for (; list; list = list->next) {
     if (((lives_thread_data_t *)list->data)->idx == idx) return list->data;
@@ -1339,7 +1326,6 @@ static lives_thread_data_t *get_thread_data_by_id(uint64_t idx) {
 
 boolean do_something_useful(lives_thread_data_t *tdata) {
   /// yes, why don't you lend a hand instead of just lying around nanosleeping...
-  GMainLoop *loop;
   LiVESList *list;
   thrd_work_t *mywork;
   uint64_t myflags = 0;
@@ -1381,8 +1367,7 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
 #endif
   }
 
-  //lives_main_context_invoke(tdata->ctx, mywork->func, mywork->arg);
-  g_main_context_invoke(tdata->ctx, mywork->func, mywork->arg);
+  lives_widget_context_invoke(tdata->ctx, mywork->func, mywork->arg);
 
   if (myflags & LIVES_THRDFLAG_AUTODELETE) {
     lives_free(mywork);
@@ -1427,7 +1412,7 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
 static void *thrdpool(void *arg) {
   lives_thread_data_t *tdata = (lives_thread_data_t *)arg;
 
-  g_main_context_push_thread_default(tdata->ctx);
+  lives_widget_context_push_thread_default(tdata->ctx);
 
   while (!threads_die) {
     pthread_mutex_lock(&tcond_mutex);

@@ -80,7 +80,8 @@ void create_merge_dialog(void) {
   height = GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY;
 
   merge_opts->merge_dialog = lives_standard_dialog_new(_("Merge"), FALSE, width, height);
-  lives_signal_handlers_disconnect_by_func(merge_opts->merge_dialog, return_true, NULL);
+  lives_signal_handlers_disconnect_by_func(merge_opts->merge_dialog, LIVES_GUI_CALLBACK(return_true),
+					   NULL);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(merge_opts->merge_dialog), accel_group);

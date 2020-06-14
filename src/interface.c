@@ -1405,7 +1405,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
   filew->dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
   lives_free(title);
 
-  lives_signal_handlers_disconnect_by_func(filew->dialog, return_true, NULL);
+  lives_signal_handlers_disconnect_by_func(filew->dialog, LIVES_GUI_CALLBACK(return_true), NULL);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(filew->dialog), accel_group);
@@ -1804,7 +1804,8 @@ _insertw *create_insert_dialog(void) {
   _insertw *insertw = (_insertw *)(lives_malloc(sizeof(_insertw)));
 
   insertw->insert_dialog = lives_standard_dialog_new(_("Insert"), FALSE, -1, -1);
-  lives_signal_handlers_disconnect_by_func(insertw->insert_dialog, return_true, NULL);
+  lives_signal_handlers_disconnect_by_func(insertw->insert_dialog, LIVES_GUI_CALLBACK(return_true),
+					   NULL);
 
   lives_window_add_accel_group(LIVES_WINDOW(insertw->insert_dialog), accel_group);
 
@@ -2094,7 +2095,7 @@ _entryw *create_location_dialog(void) {
   title = lives_strdup(_("Open Location"));
 
   locw->dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
-  lives_signal_handlers_disconnect_by_func(locw->dialog, return_true, NULL);
+  lives_signal_handlers_disconnect_by_func(locw->dialog, LIVES_GUI_CALLBACK(return_true), NULL);
 
   lives_free(title);
 
@@ -2205,7 +2206,7 @@ _entryw *create_rename_dialog(int type) {
   renamew->dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
   lives_free(title);
 
-  lives_signal_handlers_disconnect_by_func(renamew->dialog, return_true, NULL);
+  lives_signal_handlers_disconnect_by_func(renamew->dialog, LIVES_GUI_CALLBACK(return_true), NULL);
 
   lives_window_add_accel_group(LIVES_WINDOW(renamew->dialog), accel_group);
 
@@ -2481,7 +2482,7 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
 
   cd_dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
   lives_free(title);
-  lives_signal_handlers_disconnect_by_func(cd_dialog, return_true, NULL);
+  lives_signal_handlers_disconnect_by_func(cd_dialog, LIVES_GUI_CALLBACK(return_true), NULL);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(cd_dialog));
 
@@ -2766,7 +2767,7 @@ void create_new_pb_speed(short type) {
   }
 
   new_pb_speed = lives_standard_dialog_new(title, FALSE, -1, -1);
-  lives_signal_handlers_disconnect_by_func(new_pb_speed, return_true, NULL);
+  lives_signal_handlers_disconnect_by_func(new_pb_speed, LIVES_GUI_CALLBACK(return_true), NULL);
   lives_free(title);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
@@ -2955,7 +2956,7 @@ aud_dialog_t *create_audfade_dialog(int type) {
   }
 
   audd->dialog = lives_standard_dialog_new(title, TRUE, -1, -1);
-  lives_signal_handlers_disconnect_by_func(audd->dialog, return_true, NULL);
+  lives_signal_handlers_disconnect_by_func(audd->dialog, LIVES_GUI_CALLBACK(return_true), NULL);
   lives_free(title);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(audd->dialog));
@@ -3035,7 +3036,7 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
   commentsw->comments_dialog = lives_standard_dialog_new(title, TRUE, -1, -1);
   lives_free(title);
   lives_free(extrabit);
-  lives_signal_handlers_disconnect_by_func(commentsw->comments_dialog, return_true, NULL);
+  lives_signal_handlers_disconnect_by_func(commentsw->comments_dialog, LIVES_GUI_CALLBACK(return_true), NULL);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(commentsw->comments_dialog));
 
@@ -4213,7 +4214,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   title = lives_strdup(_("Open Online Clip"));
 
   dialog = lives_standard_dialog_new(title, TRUE, -1, -1);
-  lives_signal_handlers_disconnect_by_func(dialog, return_true, NULL);
+  lives_signal_handlers_disconnect_by_func(dialog, LIVES_GUI_CALLBACK(return_true), NULL);
 
   lives_free(title);
 
@@ -4866,7 +4867,7 @@ static boolean msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recomp
 }
 
 
-static int height, lineheight, lheight;
+static int height, lheight;
 
 boolean msg_area_config(LiVESWidget *widget) {
   static int wiggle_room = 0;
@@ -4909,7 +4910,7 @@ boolean msg_area_config(LiVESWidget *widget) {
   llast = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout_last"));
 
   if (mainw->multitrack == NULL) {
-    LiVESRectangle rect;
+    lives_rect_t rect;
     int scr_width = GUI_SCREEN_WIDTH;
     int scr_height = GUI_SCREEN_HEIGHT;
     int bx, by, w = -1, h = -1, posx, posy;
@@ -5022,7 +5023,7 @@ boolean msg_area_config(LiVESWidget *widget) {
         mainw->mbar_res = height;
       }
 
-      if (width < 0 || height < 0) return;
+      if (width < 0 || height < 0) return FALSE;
 
       w -= overflowx;
       h -= overflowy;
@@ -5071,7 +5072,8 @@ boolean msg_area_config(LiVESWidget *widget) {
       if (!prefs->open_maximised)
         lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), posx, posy);
       else
-        lives_window_maximize(LIVES_MAIN_WINDOW_WIDGET);
+        lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET))
+	  ;
     }
   }
 
@@ -5079,7 +5081,7 @@ boolean msg_area_config(LiVESWidget *widget) {
     // this can happen e.g if we open the app. with no clips
     msg_area_scroll_to_end(widget, mainw->msg_adj);
     if (layout == NULL || !LINGO_IS_LAYOUT(layout)) {
-      return;
+      return FALSE;
     }
   }
 
@@ -5090,7 +5092,7 @@ boolean msg_area_config(LiVESWidget *widget) {
 
   // check if we could request more
   lheight = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout_height"));
-  if (lheight == 0) return;
+  if (lheight == 0) return FALSE;
 
   if (height != last_height) wiggle_room = 0;
   last_height = height;
@@ -5105,7 +5107,7 @@ boolean msg_area_config(LiVESWidget *widget) {
   if (height / lineheight < MIN_MSGBOX_LLINES) {
     /// try a smaller font size if we can
     if (prefs->msg_textsize > 1) prefs->msg_textsize--;
-    else if (height < lineheight) return;
+    else if (height < lineheight) return FALSE;
     mainw->max_textsize = prefs->msg_textsize;
   }
 
@@ -5122,20 +5124,20 @@ boolean msg_area_config(LiVESWidget *widget) {
       msg_area_scroll_to(widget, llast, TRUE, mainw->msg_adj); // window grew, re-get layout
       layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
       if (layout == NULL || !LINGO_IS_LAYOUT(layout)) {
-        return;
+        return FALSE;
       }
       lheight = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
 								  "layout_height"));
       wiggle_room = height - lheight;
     }
   }
+  return FALSE;
 }
 
 
 boolean reshow_msg_area(LiVESWidget *widget, lives_painter_t *cr, livespointer psurf) {
   lives_painter_t *cr2;
   LingoLayout *layout;
-  int width;
 
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
 
@@ -5152,7 +5154,7 @@ boolean reshow_msg_area(LiVESWidget *widget, lives_painter_t *cr, livespointer p
 
     height = lives_widget_get_allocation_height(widget);
 
-    layout_to_lives_painter(layout, cr2, LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND, &fg, &bg, width, height,
+    layout_to_lives_painter(layout, cr2, LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND, &fg, &bg, rwidth, rheight,
                             0., 0., 0., height - lheight - 4);
     lingo_painter_show_layout(cr2, layout);
     lives_painter_destroy(cr2);

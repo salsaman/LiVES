@@ -937,7 +937,7 @@ jpgdone:
   lives_widget_set_sensitive(okbutton, TRUE);
   if (!tshoot) {
     if (allpassed) {
-      gtk_widget_grab_focus(okbutton);
+      lives_widget_grab_focus(okbutton);
     } else {
       lives_widget_grab_focus(cancelbutton);
     }

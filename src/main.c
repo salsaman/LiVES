@@ -3293,8 +3293,8 @@ static boolean lives_startup(livespointer data) {
     switch_aud_to_none(FALSE);
   }
 
-  mainw->helper_procthreads[PT_LAZY_RFX] = lives_proc_thread_create(NULL, (lives_funcptr_t)add_rfx_effects, -1, "i",
-								    RFX_STATUS_ANY);
+  /* mainw->helper_procthreads[PT_LAZY_RFX] = lives_proc_thread_create(NULL, (lives_funcptr_t)add_rfx_effects, -1, "i", */
+  /* 								    RFX_STATUS_ANY); */
 
   lives_idle_add(lives_startup2, NULL);
   return FALSE;
@@ -4760,7 +4760,7 @@ void procw_desensitize(void) {
 void set_drawing_area_from_pixbuf(LiVESWidget *widget, LiVESPixbuf *pixbuf,
 				  lives_painter_surface_t *surface) {
   LiVESXWindow *xwin;
-  LiVESRectangle update_rect;
+  lives_rect_t update_rect;
   lives_painter_t *cr;
   int cx, cy;
   int rwidth, rheight, width, height, owidth, oheight;
@@ -4821,7 +4821,7 @@ void set_drawing_area_from_pixbuf(LiVESWidget *widget, LiVESPixbuf *pixbuf,
   update_rect.height = rheight;
 
   if (!LIVES_IS_XWINDOW(xwin)) return;
-  gdk_window_invalidate_rect (lives_widget_get_window (widget), &update_rect, FALSE);
+  lives_xwindow_invalidate_rect(lives_widget_get_xwindow (widget), &update_rect, FALSE);
 }
 
 
@@ -8193,10 +8193,11 @@ void load_frame_image(int frame) {
                                     prefs->gamma_srgb ? WEED_GAMMA_SRGB : WEED_GAMMA_MONITOR)) goto lfi_done;
 
     //g_print("clp end @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-
-    if (!check_for_overlay_text(mainw->frame_layer)) {
-      if (mainw->multitrack != NULL && mainw->multitrack->opts.overlay_timecode) {
-        mainw->frame_layer = render_text_overlay(mainw->frame_layer, mainw->multitrack->timestring);
+    if (LIVES_IS_PLAYING) {
+      if (!check_for_overlay_text(mainw->frame_layer)) {
+	if (mainw->multitrack != NULL && mainw->multitrack->opts.overlay_timecode) {
+	  mainw->frame_layer = render_text_overlay(mainw->frame_layer, mainw->multitrack->timestring);
+	}
       }
     }
 
@@ -9381,9 +9382,10 @@ void load_frame_image(int frame) {
 	xwin = lives_widget_get_xwindow (mainw->play_image);
 	if (LIVES_IS_XWINDOW(xwin)) {
 	  if (mainw->play_surface) lives_painter_surface_destroy (mainw->play_surface);
-	  mainw->play_surface = gdk_window_create_similar_surface(lives_widget_get_xwindow (mainw->play_image),
-								  LIVES_PAINTER_CONTENT_COLOR,
-								  hsize, vsize);
+	  mainw->play_surface =
+	    lives_xwindow_create_similar_surface(lives_widget_get_xwindow(mainw->play_image),
+						 LIVES_PAINTER_CONTENT_COLOR,
+						 hsize, vsize);
 	}
       } else {
 	// capture window size

@@ -1529,9 +1529,12 @@ static EXPOSE_FN_DECL(expose_track_event, eventbox, user_data) {
   bgimage = (lives_painter_surface_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "bgimg");
 
 draw1:
-
-  //if (cairo == NULL) cr = lives_painter_create_from_widget(eventbox);
-  //else cr = cairo;
+#if !GTK_CHECK_VERSION(3, 22, 0)
+  if (cairo == NULL) cr = lives_painter_create_from_surface(ebox_surf);
+  else cr = cairo;
+#else
+  cr = cairo;
+#endif
 
   if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "drawn"))) {
     if (bgimage != NULL && lives_painter_image_surface_get_width(bgimage) > 0) {
@@ -3140,10 +3143,10 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
       boolean sep_win = mainw->sep_win;
       mt->mt_frame_preview = TRUE;
 
-      if (lives_widget_get_parent(mt->play_blank) != NULL) {
-        lives_widget_object_ref(mt->play_blank);
-        lives_container_remove(LIVES_CONTAINER(mt->play_box), mt->play_blank);
-      }
+      /* if (lives_widget_get_parent(mt->play_blank) != NULL) { */
+      /*   lives_widget_object_ref(mt->play_blank); */
+      /*   lives_container_remove(LIVES_CONTAINER(mt->play_box), mt->play_blank); */
+      /* } */
 
       if (mainw->plug != NULL) {
         lives_container_remove(LIVES_CONTAINER(mainw->plug), mainw->play_image);
@@ -3340,12 +3343,12 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
       if (pixbuf == NULL) {
         pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE, TRUE);
       }
-#if GTK_CHECK_VERSION(3, 0, 0)
-      // set frame_pixbuf, this gets painted in in expose_event
-      mt->frame_pixbuf = pixbuf;
-#else
+/* #if GTK_CHECK_VERSION(3, 0, 0) */
+/*       // set frame_pixbuf, this gets painted in in expose_event */
+/*       mt->frame_pixbuf = pixbuf; */
+/* #else */
       set_drawing_area_from_pixbuf(mainw->play_image, pixbuf, mainw->play_surface);
-#endif
+      //#endif
       lives_widget_queue_draw(mt->play_box);
       weed_plant_free(mainw->frame_layer);
     }
@@ -5370,6 +5373,7 @@ static char *mt_set_vals_string(void) {
 
 
 void set_mt_play_sizes(lives_mt * mt, int width, int height, boolean reset) {
+  LiVESXWindow *xwin;
   int rwidth, rheight;
 
   if (reset) {
@@ -5404,6 +5408,15 @@ void set_mt_play_sizes(lives_mt * mt, int width, int height, boolean reset) {
 
   mt->play_width = width;
   mt->play_height = height;
+
+  xwin = lives_widget_get_xwindow (mainw->play_image);
+  if (LIVES_IS_XWINDOW(xwin)) {
+    //if (mainw->play_surface) lives_painter_surface_destroy (mainw->play_surface);
+    mainw->play_surface =
+      lives_xwindow_create_similar_surface(lives_widget_get_xwindow(mainw->play_image),
+					   LIVES_PAINTER_CONTENT_COLOR,
+					   width, height);
+  }
 }
 
 
@@ -6261,6 +6274,19 @@ static void multitrack_clear_marks(LiVESMenuItem * menuitem, livespointer user_d
 }
 
 
+static boolean mt_tl_exp(LiVESWidget *widget, lives_painter_t *cr, livespointer ppsurf) {
+  return FALSE;
+  lives_painter_surface_t **psurf = (lives_painter_surface_t **)ppsurf;
+  if (!*psurf) {
+    *psurf = lives_widget_create_painter_surface(widget);
+    return FALSE;
+  }
+  lives_painter_set_source_surface(cr, *psurf, 0., 0.);
+  lives_painter_paint(cr);
+  return FALSE;
+}
+
+
 lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   LiVESWidget *hseparator;
   LiVESWidget *menuitem;
@@ -6409,6 +6435,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->dumlabel1 = mt->dumlabel2 = mt->tl_label = mt->timeline = mt->timeline_eb = mt->timeline_reg = NULL;
 
+  mt->tl_surf = mt->tl_ev_surf = mt->tl_reg_surf = NULL;
+  
   mt->play_width = mt->play_height = 0;
 
   if (mainw->multi_opts.set) {
@@ -8319,8 +8347,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_queue_resize(mt->preview_eventbox);
 
   lives_widget_set_size_request(mt->preview_eventbox, scr_width / 3.5, scr_height / 3.);
-  //mt->play_box = lives_event_box_new();
-  mt->play_box = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose_nopb), &mt->pbox_surface);
+  mt->play_box = lives_event_box_new();
 
   lives_widget_set_hexpand(mt->preview_frame, FALSE);
   lives_widget_set_vexpand(mt->preview_frame, FALSE);
@@ -8340,7 +8367,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add(LIVES_CONTAINER(mt->preview_frame), mt->preview_eventbox);
   lives_container_add(LIVES_CONTAINER(mt->preview_eventbox), mt->play_box);
 
-  lives_container_add(LIVES_CONTAINER(mt->play_box), mt->play_blank);
+  //lives_container_add(LIVES_CONTAINER(mt->play_box), mt->play_blank);
 
   lives_widget_add_events(mt->preview_eventbox, LIVES_BUTTON1_MOTION_MASK | LIVES_BUTTON_RELEASE_MASK
                           | LIVES_BUTTON_PRESS_MASK | LIVES_ENTER_NOTIFY_MASK | LIVES_SMOOTH_SCROLL_MASK | LIVES_SCROLL_MASK);
@@ -8833,6 +8860,10 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->tl_eventbox = lives_event_box_new();
   lives_box_pack_start(LIVES_BOX(mt->tl_hbox), mt->tl_eventbox, TRUE, TRUE, 0);
 
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mt->tl_eventbox), LIVES_WIDGET_EXPOSE_EVENT,
+				  LIVES_GUI_CALLBACK(mt_tl_exp),
+				  &mt->tl_ev_surf);
+  
   lives_signal_connect(LIVES_GUI_OBJECT(mt->tl_eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
                        LIVES_GUI_CALLBACK(on_track_between_click),
                        (livespointer)mt);
@@ -8906,16 +8937,12 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mainw_msg_area = mainw->msg_area;
   mainw_msg_adj = mainw->msg_adj;
   mainw_msg_scrollbar = mainw->msg_scrollbar;
-  //mainw_sw_func = mainw->sw_func;
 
   mt->message_box = mainw->message_box = lives_hbox_new(FALSE, 0);
 
   // msg_area NOT showing for gtk+2.x
   if (prefs->show_msg_area) {
-    mt->msg_area = mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), &mainw->msg_surface);
-
-    /* mainw->sw_func = mt->sw_func; */
-    /* lives_signal_handler_block(mt->msg_area, mt->sw_func); */
+    mt->msg_area = mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(reshow_msg_area), &mainw->msg_surface);
 
     lives_widget_set_events(mt->msg_area, LIVES_SMOOTH_SCROLL_MASK | LIVES_SCROLL_MASK);
 
@@ -9704,9 +9731,18 @@ void mt_init_tracks(lives_mt * mt, boolean set_min_max) {
 #else
     mt->timeline = lives_standard_hruler_new();
 #endif
+
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mt->timeline), LIVES_WIDGET_EXPOSE_EVENT,
+				    LIVES_GUI_CALLBACK(mt_tl_exp),
+				    &mt->tl_surf);
+
     mt->timeline_reg = lives_event_box_new();
     label = lives_standard_label_new(""); // dummy label
     lives_container_add(LIVES_CONTAINER(mt->timeline_reg), label);
+
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mt->timeline_reg), LIVES_WIDGET_EXPOSE_EVENT,
+				    LIVES_GUI_CALLBACK(mt_tl_exp),
+				    &mt->tl_reg_surf);
 
     mt->timeline_eb = lives_event_box_new();
 
@@ -13460,7 +13496,7 @@ static void mouse_select_move(LiVESWidget * widget, LiVESXEventMotion * event, l
   if (start_x < 0) start_x = 0;
   if (start_y < 0) start_y = 0;
 
-  //cr = lives_painter_create_from_widget(mt->tl_eventbox);
+  cr = lives_painter_create_from_surface(mt->tl_ev_surf);
   lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
 
   lives_painter_rectangle(cr, start_x, start_y, width, height);
@@ -14074,14 +14110,14 @@ void unpaint_line(lives_mt * mt, LiVESWidget * eventbox) {
 }
 
 
-void unpaint_lines(lives_mt * mt) {
+void unpaint_lines(lives_mt *mt) {
   if (!mt->is_ready) return;
   unpaint_line(mt, mt->timeline_table);
   return;
 }
 
 
-static void paint_line(lives_mt * mt, LiVESWidget * eventbox, int offset, double currtime) {
+static void paint_line(lives_mt *mt, LiVESWidget *eventbox, int offset, double currtime) {
   lives_painter_t *cr;
 
   /* if (!LIVES_IS_PLAYING) { */
@@ -14093,7 +14129,7 @@ static void paint_line(lives_mt * mt, LiVESWidget * eventbox, int offset, double
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "has_line", LIVES_INT_TO_POINTER(offset));
 
-  //cr = lives_painter_create_from_widget(eventbox);
+  cr = lives_painter_create_from_widget(eventbox);
 
   if (lives_painter_set_operator(cr, LIVES_PAINTER_OPERATOR_DIFFERENCE))
     lives_painter_set_source_rgb(cr, 1., 1., 1.);
@@ -14105,7 +14141,7 @@ static void paint_line(lives_mt * mt, LiVESWidget * eventbox, int offset, double
   lives_painter_rectangle(cr, offset, 0., 1., lives_widget_get_allocation_height(eventbox));
 
   lives_painter_fill(cr);
-  lives_painter_destroy(cr);
+  if (!lives_painter_remerge(cr)) lives_painter_destroy(cr);
 }
 
 
@@ -17191,8 +17227,8 @@ void mt_prepare_for_playback(lives_mt * mt) {
       if (mt->framedraw != NULL) lives_widget_set_bg_color(mt->fd_frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     }
   } else {
-    lives_widget_object_ref(mt->play_blank);
-    lives_container_remove(LIVES_CONTAINER(mt->play_box), mt->play_blank);
+    /* lives_widget_object_ref(mt->play_blank); */
+    /* lives_container_remove(LIVES_CONTAINER(mt->play_box), mt->play_blank); */
   }
 
   lives_widget_set_sensitive(mt->stop, TRUE);
@@ -18060,7 +18096,7 @@ void draw_region(lives_mt * mt) {
 
   double start, end;
   if (mt->region_start == mt->region_end) {
-    //cr = lives_painter_create_from_widget(mt->timeline_reg);
+    cr = lives_painter_create_from_surface(mt->tl_reg_surf);
 
     if (palette->style & STYLE_3) {
       lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->menu_and_bars);
@@ -18091,7 +18127,7 @@ void draw_region(lives_mt * mt) {
     lives_widget_set_sensitive(mt->re_to_tc, TRUE);
   }
 
-  //cr = lives_painter_create_from_widget(mt->timeline_reg);
+  cr = lives_painter_create_from_surface(mt->tl_reg_surf);
 
   if (palette->style & STYLE_3) {
     lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->menu_and_bars);
@@ -18128,7 +18164,7 @@ static EXPOSE_FN_DECL(expose_timeline_reg_event, timeline, user_data) {
   if (LIVES_IS_PLAYING || mt->is_rendering) return FALSE;
   draw_region(mt);
 
-  //if (event != NULL) cairo = lives_painter_create_from_widget(timeline);
+  if (event != NULL) cairo = lives_painter_create_from_surface(mt->tl_surf);
 
   lives_painter_set_source_rgb_from_lives_rgba(cairo, &palette->mt_mark);
 
@@ -18300,7 +18336,10 @@ static EXPOSE_FN_DECL(mt_expose_audtrack_event, ebox, user_data) {
 
   if (width > lives_widget_get_allocation_width(ebox) - startx) width = lives_widget_get_allocation_width(ebox) - startx;
 
-  //if (event != NULL) cairo = lives_painter_create_from_widget(ebox);
+#if !GTK_CHECK_VERSION(3, 22, 0)
+  if (event != NULL) cairo = lives_painter_create_from_widget(ebox);
+#endif
+
   bgimage = (lives_painter_surface_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(ebox), "bgimg");
 
   if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(ebox), "drawn"))) {
@@ -18771,7 +18810,7 @@ static void add_mark_at(lives_mt * mt, double time) {
   mt->tl_marks = lives_list_append(mt->tl_marks, tstring);
   offset = (time - mt->tl_min) / (mt->tl_max - mt->tl_min) * (double)lives_widget_get_allocation_width(mt->timeline);
 
-  //cr = lives_painter_create_from_widget(mt->timeline_reg);
+  cr = lives_painter_create_from_surface(mt->tl_reg_surf);
 
   lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->mt_mark);
 

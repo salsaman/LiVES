@@ -475,6 +475,10 @@ struct _mt {
   //ulong sw_func;
 
   lives_painter_surface_t *pbox_surface;
+
+  lives_painter_surface_t *tl_ev_surf;
+  lives_painter_surface_t *tl_reg_surf;
+  lives_painter_surface_t *tl_surf;
   
   weed_plant_t *event_list;
 

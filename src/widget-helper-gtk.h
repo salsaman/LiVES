@@ -133,7 +133,8 @@ typedef uint8_t                           boolean;
 /* #define _lives_calloc g_try_malloc0_n */
 /* #endif */
 
-typedef GMainContext		  	  LiVESMainContext;
+typedef GMainContext		  	  LiVESWidgetContext;
+typedef GMainLoop		  	  LiVESWidgetLoop;
 
 typedef GError                            LiVESError;
 
@@ -144,6 +145,7 @@ typedef gpointer                          livespointer;
 typedef gconstpointer                     livesconstpointer;
 
 typedef GClosure                          LiVESWidgetClosure;
+typedef GCClosure                         LiVESWidgetCClosure;
 
 //typedef GObject LiVESWidgetObject;
 typedef GObject LiVESWidgetObject;
@@ -186,6 +188,11 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define LIVES_IS_RTL (gtk_widget_get_default_direction() == GTK_TEXT_DIR_RTL)
 
 #define LIVES_GUI_CALLBACK(f) ((LiVESGuiCallback) (f))
+
+#define lives_widget_context_get_thread_default() g_main_context_get_thread_default()
+#define lives_widget_context_default() g_main_context_default()
+#define lives_widget_context_push_thread_default(ctx) g_main_context_push_thread_default(ctx)
+#define lives_widget_context_invoke(ctx, func, arg) g_main_context_invoke(ctx, func, arg)
 
 #define lives_printerr(...) g_printerr(__VA_ARGS__)
 #define lives_strdup_printf(...) g_strdup_printf(__VA_ARGS__)

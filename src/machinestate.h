@@ -307,7 +307,7 @@ typedef struct {
 } lives_paintwin_t;
 
 typedef struct {
-  LiVESMainContext *ctx;
+  LiVESWidgetContext *ctx;
   uint64_t idx;
   LiVESXWindow *exp_window;
   lives_painter_t *painter;
@@ -450,10 +450,6 @@ int64_t lives_proc_thread_join_int64(lives_proc_thread_t);
 
 void resubmit_proc_thread(lives_proc_thread_t, lives_thread_attr_t *);
 
-GMainLoop *get_loop_for_context(GMainContext *);
-
-boolean add_drawpaint(lives_painter_t *);
-boolean add_normpaint(lives_painter_t *);
-boolean check_endpaint(lives_painter_t *);
+LiVESWidgetLoop *get_widget_loop_for_context(LiVESWidgetContext *);
 
 #endif

@@ -1,6 +1,7 @@
 Version 3.2.0
 ------------------
-Rewrite inital startup, optimising it and making it more robust.
+Rewrote inital startup, optimising it and making it more robust.
+Updated gtk+ support to 3.24, fixing numerous interface threading issues.
 Configuration directory can now be specified from the commandline (-configdir)
 Implement a thread pool with generic worker threads, eliminating time consumed by thread thread startup / shutdown.
 Implement auto gamma correction, (sRGB, Linear, bt.709). Conversion is done via the threadpool.
@@ -70,7 +71,10 @@ Remove mutex deadlocks on shutdown (was blocking pulseaudio player on a crash) a
 Separate velocity adjustment (ctrl-up / ctrl-down) from fx parameter adjustment (ctrl-alt-up / ctrl-alt-down)
 Prevent audio rate from changing erroneously when the audio player is not playing the same clip as the video player.
 Optimise combo boxes with long lists; categorise filter types in rte window.
-Master audio volume is now maintained between sessions, and the value is calculated using a power function rather than llinear.
+	Master audio volume is now maintained between sessions, and the value is calculated using a power function rather than linear.
+	Added "audio bleedthru" mode in multitrack.
+	Added warning mini-icons for gui widgets.
+	Added tooltips mini-icons for gui widgets.
 Volume level of previews in file open dialog is now set depending on master volume.
 Fix label layouts for RFX windows.
 Add more preferences to the prefs window.

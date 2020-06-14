@@ -556,7 +556,7 @@ static void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
   }
 
   dialog = lives_standard_dialog_new(title, FALSE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
-  lives_signal_handlers_disconnect_by_func(dialog, return_true, NULL);
+  lives_signal_handlers_disconnect_by_func(dialog, LIVES_GUI_CALLBACK(return_true), NULL);
 
   if (title != NULL) lives_free(title);
 

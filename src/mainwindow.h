@@ -550,13 +550,6 @@ enum {
 #define PT_LAZY_RFX 16
 
 typedef struct {
-  double top;
-  double left;
-  double width;
-  double height;
-} lives_rect_t;
-
-typedef struct {
   char *name;
   lives_rect_t *rects; // for future use
   int z_index; // for future use

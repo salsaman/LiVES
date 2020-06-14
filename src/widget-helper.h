@@ -40,7 +40,7 @@ typedef enum {
 typedef struct {
   int x, y;
   int width, height;
-} LiVESRectangle;
+} lives_rect_t;
 
 // values below are multiplied by scale
 #define W_PACKING_WIDTH  10 // packing width for widgets with labels
@@ -135,10 +135,14 @@ typedef cairo_fill_rule_t lives_painter_fill_rule_t;
 lives_painter_t *lives_painter_create_from_surface(lives_painter_surface_t *target);
 
 lives_painter_t *lives_painter_create_from_widget(LiVESWidget *);
+boolean lives_painter_remerge(lives_painter_t *);
 
 boolean lives_painter_set_source_pixbuf(lives_painter_t *, const LiVESPixbuf *, double pixbuf_x, double pixbuf_y);
 boolean lives_painter_set_source_surface(lives_painter_t *, lives_painter_surface_t *, double x, double y);
 
+lives_painter_surface_t *lives_xwindow_create_similar_surface(LiVESXWindow *window,
+							      lives_painter_content_t cont,
+							      int width, int height);
 lives_painter_surface_t *lives_widget_create_painter_surface(LiVESWidget *);
 lives_painter_surface_t *lives_painter_image_surface_create(lives_painter_format_t format, int width, int height);
 lives_painter_surface_t *lives_painter_image_surface_create_for_data(uint8_t *data, lives_painter_format_t,
@@ -272,13 +276,17 @@ unsigned long lives_signal_connect_async(livespointer instance, const char *deta
 #define lives_signal_sync_connect_after(instance, detailed_signal, c_handler, data) lives_signal_connect_sync(instance, detailed_signal, c_handler, data, LIVES_CONNECT_AFTER)
 #define lives_signal_sync_connect_swapped(instance, detailed_signal, c_handler, data) lives_signal_connect_sync(instance, detailed_signal, c_handler, data, LIVES_CONNECT_SWAPPED)
 
-boolean lives_signal_handlers_disconnect_by_func(livespointer instance, LiVESWidgetClosure *func, livespointer data);
-boolean lives_signal_handlers_block_by_func(livespointer instance, LiVESWidgetClosure *func, livespointer data);
-boolean lives_signal_handlers_unblock_by_func(livespointer instance, LiVESWidgetClosure *func, livespointer data);
+boolean lives_signal_handlers_disconnect_by_func(livespointer instance,
+						 LiVESGuiCallback func,
+						 livespointer data);
+boolean lives_signal_handlers_block_by_func(livespointer instance,
+					    LiVESGuiCallback func,
+					    livespointer data);
+boolean lives_signal_handlers_unblock_by_func(livespointer instance,
+					      LiVESGuiCallback func,
+					      livespointer data);
 #else
 ulong lives_signal_connect(LiVESWidget *, const char *signal_name, ulong funcptr, livespointer data);
-boolean lives_signal_handlers_block_by_func(livespointer instance, livespointer func, livespointer data);
-boolean lives_signal_handlers_unblock_by_func(livespointer instance, livespointer func, livespointer data);
 #endif
 
 boolean lives_signal_handler_block(livespointer instance, unsigned long handler_id);
@@ -615,6 +623,7 @@ LiVESWidget *lives_widget_get_toplevel(LiVESWidget *);
 
 LiVESXWindow *lives_widget_get_xwindow(LiVESWidget *);
 boolean lives_xwindow_set_keep_above(LiVESXWindow *, boolean setting);
+boolean lives_xwindow_invalidate_rect(LiVESXWindow *, lives_rect_t *, boolean inv_childs);
 
 boolean lives_widget_set_can_focus(LiVESWidget *, boolean state);
 boolean lives_widget_set_can_default(LiVESWidget *, boolean state);
@@ -841,7 +850,7 @@ boolean lives_widget_process_updates(LiVESWidget *, boolean upd_children);
 boolean lives_xwindow_process_all_updates(void);
 
 boolean lives_xwindow_get_origin(LiVESXWindow *, int *posx, int *posy);
-boolean lives_xwindow_get_frame_extents(LiVESXWindow *, LiVESRectangle *);
+boolean lives_xwindow_get_frame_extents(LiVESXWindow *, lives_rect_t *);
 
 LiVESAccelGroup *lives_accel_group_new(void);
 boolean lives_accel_group_connect(LiVESAccelGroup *, uint32_t key, LiVESXModifierType mod, LiVESAccelFlags flags,

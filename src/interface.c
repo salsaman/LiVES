@@ -1805,7 +1805,7 @@ _insertw *create_insert_dialog(void) {
 
   insertw->insert_dialog = lives_standard_dialog_new(_("Insert"), FALSE, -1, -1);
   lives_signal_handlers_disconnect_by_func(insertw->insert_dialog, LIVES_GUI_CALLBACK(return_true),
-					   NULL);
+      NULL);
 
   lives_window_add_accel_group(LIVES_WINDOW(insertw->insert_dialog), accel_group);
 
@@ -4791,7 +4791,7 @@ boolean get_screen_usable_size(int *w, int *h) {
 }
 
 
-static boolean msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recompute, LiVESAdjustment *adj) {
+static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recompute, LiVESAdjustment * adj) {
   // "scroll" the message area so that the last message appears at the bottom
   LingoLayout *layout;
   lives_colRGBA64_t fg, bg;
@@ -4862,14 +4862,14 @@ static boolean msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recomp
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout_lines", LIVES_INT_TO_POINTER(nlines));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout_last", LIVES_INT_TO_POINTER(msgno));
 
-  
+
   return TRUE;
 }
 
 
 static int height, lheight;
 
-boolean msg_area_config(LiVESWidget *widget) {
+boolean msg_area_config(LiVESWidget * widget) {
   static int wiggle_room = 0;
   static int last_height = -1;
   static int last_textsize = -1;
@@ -5073,7 +5073,7 @@ boolean msg_area_config(LiVESWidget *widget) {
         lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), posx, posy);
       else
         lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET))
-	  ;
+        ;
     }
   }
 
@@ -5127,7 +5127,7 @@ boolean msg_area_config(LiVESWidget *widget) {
         return FALSE;
       }
       lheight = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
-								  "layout_height"));
+                                     "layout_height"));
       wiggle_room = height - lheight;
     }
   }
@@ -5135,7 +5135,7 @@ boolean msg_area_config(LiVESWidget *widget) {
 }
 
 
-boolean reshow_msg_area(LiVESWidget *widget, lives_painter_t *cr, livespointer psurf) {
+boolean reshow_msg_area(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf) {
   lives_painter_t *cr2;
   LingoLayout *layout;
 
@@ -5148,7 +5148,7 @@ boolean reshow_msg_area(LiVESWidget *widget, lives_painter_t *cr, livespointer p
 
     widget_color_to_lives_rgba(&fg, &palette->info_text);
     widget_color_to_lives_rgba(&bg, &palette->info_base);
-    
+
     cr2 = lives_painter_create_from_surface(mainw->msg_surface);
     lives_painter_render_background(widget, cr2, 0., 0., rwidth, rheight);
 
@@ -5178,7 +5178,7 @@ void msg_area_scroll(LiVESAdjustment * adj, livespointer userdata) {
   //g_print("val is %f rnd %d\n", val, (int)(val + .5));
   if (msg_area_scroll_to(widget, (int)(val + .5), FALSE, adj))
     lives_widget_queue_draw(widget);
-    //reshow_msg_area(widget);
+  //reshow_msg_area(widget);
 }
 
 

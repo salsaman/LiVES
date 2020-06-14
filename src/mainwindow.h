@@ -1199,7 +1199,7 @@ typedef struct {
   // menubar buttons
   LiVESWidget *btoolbar; ///< button toolbar - clip editor
   LiVESWidget *m_sepwinbutton, *m_playbutton, *m_stopbutton, *m_playselbutton, *m_rewindbutton,
-    *m_loopbutton, *m_mutebutton;
+              *m_loopbutton, *m_mutebutton;
   LiVESWidget *menu_hbox;
   LiVESWidget *menubar;
 

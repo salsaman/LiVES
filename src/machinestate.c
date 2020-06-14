@@ -1324,6 +1324,13 @@ static lives_thread_data_t *get_thread_data_by_id(uint64_t idx) {
 }
 
 
+static boolean gsrc_wrapper(livespointer data) {
+  thrd_work_t *mywork = (thrd_work_t *)data;
+  (*mywork->func)(mywork->arg);
+  return FALSE;
+}
+
+
 boolean do_something_useful(lives_thread_data_t *tdata) {
   /// yes, why don't you lend a hand instead of just lying around nanosleeping...
   LiVESList *list;
@@ -1367,7 +1374,7 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
 #endif
   }
 
-  lives_widget_context_invoke(tdata->ctx, mywork->func, mywork->arg);
+  lives_widget_context_invoke(tdata->ctx, gsrc_wrapper, mywork);
 
   if (myflags & LIVES_THRDFLAG_AUTODELETE) {
     lives_free(mywork);

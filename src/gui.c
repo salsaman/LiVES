@@ -2035,8 +2035,8 @@ void create_LiVES(void) {
   //lives_container_add(mainw->pl_eventbox, mainw->play_image);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->play_image), LIVES_WIDGET_EXPOSE_EVENT,
-  			    LIVES_GUI_CALLBACK(all_expose),
-  			    (livespointer)&mainw->play_surface);
+                            LIVES_GUI_CALLBACK(all_expose),
+                            (livespointer)&mainw->play_surface);
 
   lives_widget_object_ref(mainw->play_image);
   lives_widget_object_ref_sink(mainw->play_image);
@@ -2159,15 +2159,15 @@ void create_LiVES(void) {
   lives_widget_set_size_request(mainw->hruler, -1, CE_HRULE_HEIGHT);
 
   mainw->eventbox2 = lives_event_box_new();
-  
+
   vbox2 = lives_vbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(mainw->eventbox2), vbox2);
   lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->eventbox2, FALSE, TRUE, 0);
 
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->eventbox2), LIVES_WIDGET_EXPOSE_EVENT,
-  			    LIVES_GUI_CALLBACK(all_expose_overlay),
-  			    NULL);
-  
+                                  LIVES_GUI_CALLBACK(all_expose_overlay),
+                                  NULL);
+
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   mainw->vidbar = lives_standard_label_new(_("Video"));
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
@@ -3824,7 +3824,7 @@ void calibrate_sepwin_size(void) {
   lives_widget_object_ref(mainw->preview_image);
   if (mainw->pi_surface) {
     /// invalid the preview windo surface (IMPORTANT !)
-    lives_painter_surface_destroy (mainw->pi_surface);
+    lives_painter_surface_destroy(mainw->pi_surface);
     mainw->pi_surface = NULL;
   }
   lives_container_remove(LIVES_CONTAINER(mainw->preview_box), mainw->preview_image);
@@ -4001,7 +4001,7 @@ void make_play_window(void) {
     lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), get_transient_full());
   }
   lives_widget_set_events(mainw->play_window, LIVES_SCROLL_MASK | LIVES_SMOOTH_SCROLL_MASK);
-  
+
   // cannot do this or it forces showing on the GUI monitor
   //gtk_window_set_position(LIVES_WINDOW(mainw->play_window),GTK_WIN_POS_CENTER_ALWAYS);
 
@@ -4470,9 +4470,9 @@ void kill_play_window(void) {
     if (mainw->preview_box != NULL && lives_widget_get_parent(mainw->preview_box) != NULL) {
       // preview_box is refed, so it will survive
       if (mainw->pi_surface) {
-	/// invalid the preview windo surface (IMPORTANT !)
-	lives_painter_surface_destroy (mainw->pi_surface);
-	mainw->pi_surface = NULL;
+        /// invalid the preview windo surface (IMPORTANT !)
+        lives_painter_surface_destroy(mainw->pi_surface);
+        mainw->pi_surface = NULL;
       }
       /// ref all the things and remove before destroying the window
       lives_widget_object_ref(mainw->preview_box);
@@ -4569,9 +4569,9 @@ void add_to_playframe(void) {
       lives_widget_set_halign(mainw->plug, LIVES_ALIGN_CENTER);
       lives_widget_set_halign(mainw->play_image, LIVES_ALIGN_CENTER);
       if (mainw->multitrack != NULL) {
-	lives_widget_set_vexpand(mainw->play_image, TRUE); // centers it in mt
+        lives_widget_set_vexpand(mainw->play_image, TRUE); // centers it in mt
       } else {
-	lives_widget_set_vexpand(mainw->play_image, FALSE);
+        lives_widget_set_vexpand(mainw->play_image, FALSE);
       }
     }
   }

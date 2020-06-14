@@ -2418,7 +2418,7 @@ void play_file(void) {
       } else {
         if (mainw->multitrack == NULL) {
           if (mainw->preview_controls) {
-	    lives_widget_hide(mainw->preview_controls);
+            lives_widget_hide(mainw->preview_controls);
             /* mainw->pw_scroll_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_SCROLL_EVENT, */
             /*                         LIVES_GUI_CALLBACK(on_mouse_scroll), */
             /*                         NULL); */
@@ -3091,12 +3091,12 @@ void play_file(void) {
           (cfile->clip_type != CLIP_TYPE_GENERATOR)) {
         if (mainw->preview_controls) {
           /// create the preview in the sepwin
-	  if (CURRENT_CLIP_IS_VALID && cfile->is_loaded && prefs->show_gui) {
-	    lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
-	    lives_widget_show_all(mainw->preview_controls);
-	    lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
-	    //lives_widget_grab_focus(mainw->preview_spinbutton);
-	  }
+          if (CURRENT_CLIP_IS_VALID && cfile->is_loaded && prefs->show_gui) {
+            lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
+            lives_widget_show_all(mainw->preview_controls);
+            lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
+            //lives_widget_grab_focus(mainw->preview_spinbutton);
+          }
         }
         if (mainw->current_file != current_file) {
           // now we have to guess how to center the play window

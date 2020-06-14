@@ -333,7 +333,7 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_t *lives_painter_create_from_widget(Li
   rect.width = lives_widget_get_allocation_width(widget);
   rect.height = lives_widget_get_allocation_height(widget);
 
-  reg = cairo_region_create_rectangle (&rect);
+  reg = cairo_region_create_rectangle(&rect);
   window = gtk_widget_get_window(widget);
   xctx = gdk_window_begin_draw_frame(window, reg);
   cr = gdk_drawing_context_get_cairo_context(xctx);
@@ -728,17 +728,17 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_image_surface
 
 WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t
 *lives_xwindow_create_similar_surface(LiVESXWindow *window, lives_painter_content_t cont,
-				      int width, int height) {
+                                      int width, int height) {
   return gdk_window_create_similar_surface(window, cont, width, height);
 }
 
 
 WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_widget_create_painter_surface(LiVESWidget *widget) {
   if (widget)
-    return lives_xwindow_create_similar_surface(lives_widget_get_xwindow (widget),
-						LIVES_PAINTER_CONTENT_COLOR,
-						lives_widget_get_allocation_width(widget),
-						lives_widget_get_allocation_height(widget));
+    return lives_xwindow_create_similar_surface(lives_widget_get_xwindow(widget),
+           LIVES_PAINTER_CONTENT_COLOR,
+           lives_widget_get_allocation_width(widget),
+           lives_widget_get_allocation_height(widget));
   return NULL;
 }
 
@@ -1001,7 +1001,7 @@ static boolean governor_loop(livespointer data) {
 
   if (mainw->is_exiting) return FALSE;
   if (!sigdata->proc) return FALSE;
-  
+
   if (dlgtorun) {
     if (sigdata->is_timer) return TRUE;
     g_idle_add(governor_loop, data);
@@ -1010,8 +1010,8 @@ static boolean governor_loop(livespointer data) {
 
   mainw->clutch = TRUE;
 
- reloop:
-  
+reloop:
+
   if (!lives_proc_thread_check(sigdata->proc)) {
     // signal bg that it can start now...
     gov_running = TRUE;
@@ -1035,7 +1035,7 @@ static boolean governor_loop(livespointer data) {
 
   /// something else might have removed the clutch, so check again
   if (!lives_proc_thread_check(sigdata->proc)) goto reloop;
-  
+
   // bg handler finished
   gov_running = FALSE;
   // if a timer, set sigdata->swapped
@@ -1112,7 +1112,7 @@ static boolean async_timer_handler(livespointer data) {
       mainw->clutch = FALSE;
       sigdata->swapped = FALSE;
       sigdata->proc = lives_proc_thread_create(&attr, (lives_funcptr_t)sigdata->callback, WEED_SEED_BOOLEAN,
-					       "v", sigdata->user_data);
+                      "v", sigdata->user_data);
       sigdata->added = TRUE;
       //governor_loop((livespointer)sigdata);
     } else {
@@ -1170,10 +1170,10 @@ unsigned long lives_signal_connect_async(livespointer instance, const char *deta
 
   if (nvals == 2) {
     sigdata->funcid = g_signal_connect_data(instance, detailed_signal, LIVES_GUI_CALLBACK(async_sig_handler),
-					    sigdata, sigdata_free, (flags & LIVES_CONNECT_AFTER));
+                                            sigdata, sigdata_free, (flags & LIVES_CONNECT_AFTER));
   } else {
     sigdata->funcid = g_signal_connect_data(instance, detailed_signal, LIVES_GUI_CALLBACK(async_sig_handler3),
-					    sigdata, sigdata_free, (flags & LIVES_CONNECT_AFTER));
+                                            sigdata, sigdata_free, (flags & LIVES_CONNECT_AFTER));
   }
   active_sigdets = lives_list_prepend(active_sigdets, (livespointer)sigdata);
   return sigdata->funcid;
@@ -1185,7 +1185,7 @@ static lives_sigdata_t *find_sigdata(livespointer instance, LiVESGuiCallback fun
   for (; list; list = list->next) {
     lives_sigdata_t *sigdata = (lives_sigdata_t *)list->data;
     if (sigdata->instance == instance && sigdata->callback == (lives_funcptr_t)func
-	&& sigdata->user_data == data)
+        && sigdata->user_data == data)
       return sigdata;
   }
   return NULL;
@@ -1193,8 +1193,8 @@ static lives_sigdata_t *find_sigdata(livespointer instance, LiVESGuiCallback fun
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handlers_disconnect_by_func(livespointer instance,
-									     LiVESGuiCallback func,
-									     livespointer data) {
+    LiVESGuiCallback func,
+    livespointer data) {
   /// assume there is only one connection for each .inst / func / data
   lives_sigdata_t *sigdata = find_sigdata(instance, LIVES_GUI_CALLBACK(func), data);
   if (sigdata) {
@@ -1210,8 +1210,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handlers_disconnect_by_func(liv
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handlers_block_by_func(livespointer instance,
-									LiVESGuiCallback func,
-									livespointer data) {
+    LiVESGuiCallback func,
+    livespointer data) {
   /// assume there is only one connection for each .inst / func / data
   lives_sigdata_t *sigdata = find_sigdata(instance, LIVES_GUI_CALLBACK(func), data);
   if (sigdata) {
@@ -1227,8 +1227,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handlers_block_by_func(livespoi
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handlers_unblock_by_func(livespointer instance,
-									  LiVESGuiCallback func,
-									  livespointer data) {
+    LiVESGuiCallback func,
+    livespointer data) {
   /// assume there is only one connection for each .inst / func / data
   lives_sigdata_t *sigdata = find_sigdata(instance, LIVES_GUI_CALLBACK(func), data);
   if (sigdata) {
@@ -1504,8 +1504,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_get_frame_extents(LiVESXWindow
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_invalidate_rect(LiVESXWindow *window,
-								  lives_rect_t *rect,
-								  boolean inv_childs) {
+    lives_rect_t *rect,
+    boolean inv_childs) {
 #ifdef GUI_GTK
   gdk_window_invalidate_rect(window, rect, inv_childs);
   return TRUE;
@@ -1564,7 +1564,7 @@ WIDGET_HELPER_LOCAL_INLINE void lives_widget_loop_unref(volatile LiVESWidgetLoop
   g_main_loop_unref((LiVESWidgetLoop *)loop);
 }
 WIDGET_HELPER_LOCAL_INLINE volatile LiVESWidgetLoop *lives_widget_loop_new(LiVESWidgetContext *ctx,
-									   boolean running) {
+    boolean running) {
   return g_main_loop_new(ctx, running);
 }
 
@@ -9238,13 +9238,13 @@ LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, lives_pa
 #if GTK_CHECK_VERSION(4, 0, 0)
       gtk_drawing_area_set_draw_func(darea, callback, (livespointer)surf, NULL);
 #else
-    lives_signal_sync_connect(LIVES_GUI_OBJECT(darea), LIVES_WIDGET_EXPOSE_EVENT,
-			      LIVES_GUI_CALLBACK(callback),
-			      (livespointer)ppsurf);
+      lives_signal_sync_connect(LIVES_GUI_OBJECT(darea), LIVES_WIDGET_EXPOSE_EVENT,
+                                LIVES_GUI_CALLBACK(callback),
+                                (livespointer)ppsurf);
 #endif
     lives_signal_sync_connect(LIVES_GUI_OBJECT(darea), LIVES_WIDGET_CONFIGURE_EVENT,
-			      LIVES_GUI_CALLBACK(all_config),
-			      (livespointer)ppsurf);
+                              LIVES_GUI_CALLBACK(all_config),
+                              (livespointer)ppsurf);
   }
   lives_widget_apply_theme(darea, LIVES_WIDGET_STATE_NORMAL);
 

@@ -3343,10 +3343,10 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
       if (pixbuf == NULL) {
         pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE, TRUE);
       }
-/* #if GTK_CHECK_VERSION(3, 0, 0) */
-/*       // set frame_pixbuf, this gets painted in in expose_event */
-/*       mt->frame_pixbuf = pixbuf; */
-/* #else */
+      /* #if GTK_CHECK_VERSION(3, 0, 0) */
+      /*       // set frame_pixbuf, this gets painted in in expose_event */
+      /*       mt->frame_pixbuf = pixbuf; */
+      /* #else */
       set_drawing_area_from_pixbuf(mainw->play_image, pixbuf, mainw->play_surface);
       //#endif
       lives_widget_queue_draw(mt->play_box);
@@ -5409,13 +5409,13 @@ void set_mt_play_sizes(lives_mt * mt, int width, int height, boolean reset) {
   mt->play_width = width;
   mt->play_height = height;
 
-  xwin = lives_widget_get_xwindow (mainw->play_image);
+  xwin = lives_widget_get_xwindow(mainw->play_image);
   if (LIVES_IS_XWINDOW(xwin)) {
     //if (mainw->play_surface) lives_painter_surface_destroy (mainw->play_surface);
     mainw->play_surface =
       lives_xwindow_create_similar_surface(lives_widget_get_xwindow(mainw->play_image),
-					   LIVES_PAINTER_CONTENT_COLOR,
-					   width, height);
+                                           LIVES_PAINTER_CONTENT_COLOR,
+                                           width, height);
   }
 }
 
@@ -6274,7 +6274,7 @@ static void multitrack_clear_marks(LiVESMenuItem * menuitem, livespointer user_d
 }
 
 
-static boolean mt_tl_exp(LiVESWidget *widget, lives_painter_t *cr, livespointer ppsurf) {
+static boolean mt_tl_exp(LiVESWidget * widget, lives_painter_t *cr, livespointer ppsurf) {
   return FALSE;
   lives_painter_surface_t **psurf = (lives_painter_surface_t **)ppsurf;
   if (!*psurf) {
@@ -6436,7 +6436,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->dumlabel1 = mt->dumlabel2 = mt->tl_label = mt->timeline = mt->timeline_eb = mt->timeline_reg = NULL;
 
   mt->tl_surf = mt->tl_ev_surf = mt->tl_reg_surf = NULL;
-  
+
   mt->play_width = mt->play_height = 0;
 
   if (mainw->multi_opts.set) {
@@ -8861,9 +8861,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_box_pack_start(LIVES_BOX(mt->tl_hbox), mt->tl_eventbox, TRUE, TRUE, 0);
 
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mt->tl_eventbox), LIVES_WIDGET_EXPOSE_EVENT,
-				  LIVES_GUI_CALLBACK(mt_tl_exp),
-				  &mt->tl_ev_surf);
-  
+                                  LIVES_GUI_CALLBACK(mt_tl_exp),
+                                  &mt->tl_ev_surf);
+
   lives_signal_connect(LIVES_GUI_OBJECT(mt->tl_eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
                        LIVES_GUI_CALLBACK(on_track_between_click),
                        (livespointer)mt);
@@ -9733,16 +9733,16 @@ void mt_init_tracks(lives_mt * mt, boolean set_min_max) {
 #endif
 
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mt->timeline), LIVES_WIDGET_EXPOSE_EVENT,
-				    LIVES_GUI_CALLBACK(mt_tl_exp),
-				    &mt->tl_surf);
+                                    LIVES_GUI_CALLBACK(mt_tl_exp),
+                                    &mt->tl_surf);
 
     mt->timeline_reg = lives_event_box_new();
     label = lives_standard_label_new(""); // dummy label
     lives_container_add(LIVES_CONTAINER(mt->timeline_reg), label);
 
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mt->timeline_reg), LIVES_WIDGET_EXPOSE_EVENT,
-				    LIVES_GUI_CALLBACK(mt_tl_exp),
-				    &mt->tl_reg_surf);
+                                    LIVES_GUI_CALLBACK(mt_tl_exp),
+                                    &mt->tl_reg_surf);
 
     mt->timeline_eb = lives_event_box_new();
 
@@ -14110,14 +14110,14 @@ void unpaint_line(lives_mt * mt, LiVESWidget * eventbox) {
 }
 
 
-void unpaint_lines(lives_mt *mt) {
+void unpaint_lines(lives_mt * mt) {
   if (!mt->is_ready) return;
   unpaint_line(mt, mt->timeline_table);
   return;
 }
 
 
-static void paint_line(lives_mt *mt, LiVESWidget *eventbox, int offset, double currtime) {
+static void paint_line(lives_mt * mt, LiVESWidget * eventbox, int offset, double currtime) {
   lives_painter_t *cr;
 
   /* if (!LIVES_IS_PLAYING) { */
@@ -18189,7 +18189,7 @@ static EXPOSE_FN_DECL(expose_timeline_reg_event, timeline, user_data) {
 EXPOSE_FN_END
 
 
-static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int chnum, lives_mt *mt) {
+static void draw_soundwave(LiVESWidget * ebox, lives_painter_surface_t *surf, int chnum, lives_mt * mt) {
   weed_plant_t *event;
   weed_timecode_t tc;
 

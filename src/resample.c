@@ -1646,7 +1646,7 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
     }
 
     resaudw->dialog = lives_standard_dialog_new(title, FALSE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
-    lives_signal_handlers_disconnect_by_func(resaudw->dialog, return_true, NULL);
+    lives_signal_handlers_disconnect_by_func(resaudw->dialog, LIVES_GUI_CALLBACK(return_true), NULL);
     lives_free(title);
 
     accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());

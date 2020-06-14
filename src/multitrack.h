@@ -479,7 +479,7 @@ struct _mt {
   lives_painter_surface_t *tl_ev_surf;
   lives_painter_surface_t *tl_reg_surf;
   lives_painter_surface_t *tl_surf;
-  
+
   weed_plant_t *event_list;
 
   weed_plant_t *init_event;   ///< current editable values

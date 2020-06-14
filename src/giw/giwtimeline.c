@@ -948,7 +948,7 @@ static void giw_timeline_draw_pos(GiwTimeline *timeline) {
     rect.width = allocation.width;
     rect.height = allocation.height;
 
-    reg = cairo_region_create_rectangle (&rect);
+    reg = cairo_region_create_rectangle(&rect);
     window = gtk_widget_get_window(widget);
     xctx = gdk_window_begin_draw_frame(window, reg);
     cr = gdk_drawing_context_get_cairo_context(xctx);

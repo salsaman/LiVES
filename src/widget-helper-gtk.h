@@ -189,10 +189,22 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 
 #define LIVES_GUI_CALLBACK(f) ((LiVESGuiCallback) (f))
 
+#define lives_widget_context_new() g_main_context_new()
+#define lives_widget_context_unref(ctx) g_main_context_unref(ctx)
 #define lives_widget_context_get_thread_default() g_main_context_get_thread_default()
 #define lives_widget_context_default() g_main_context_default()
 #define lives_widget_context_push_thread_default(ctx) g_main_context_push_thread_default(ctx)
+#define lives_widget_context_pop_thread_default(ctx) g_main_context_pop_thread_default(ctx)
 #define lives_widget_context_invoke(ctx, func, arg) g_main_context_invoke(ctx, func, arg)
+#define lives_widget_context_iteration(ctx, block) g_main_context_iteration(ctx, block)
+
+#define lives_idle_add_simple(func, data) g_idle_add(func, data)
+#if GTK_CHECK_VERSION(3, 0, 0)
+#define lives_timer_add_simple(interval, func, data) (interval < 1000 ? g_timeout_add(interval, func, data) \
+						      : g_timeout_add_seconds(interval / 1000., func, data))
+#else
+#define lives_timer_add_simple(interval, func, data) g_timeout_add(interval, func, data)
+#endif
 
 #define lives_printerr(...) g_printerr(__VA_ARGS__)
 #define lives_strdup_printf(...) g_strdup_printf(__VA_ARGS__)

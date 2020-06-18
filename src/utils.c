@@ -430,7 +430,7 @@ ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less) {
                                 (uint64_t)count, ffile);
       LIVES_DEBUG(msg);
       lives_free(ffile);
-      g_free(msg);
+      lives_free(msg);
     }
 #endif
   }
@@ -2894,6 +2894,13 @@ LIVES_GLOBAL_INLINE const char *get_image_ext_for_type(lives_image_type_t imgtyp
 LIVES_GLOBAL_INLINE lives_image_type_t lives_image_ext_to_type(const char *img_ext) {
   if (!strcmp(img_ext, LIVES_FILE_EXT_PNG)) return IMG_TYPE_PNG;
   if (!strcmp(img_ext, LIVES_FILE_EXT_JPG)) return IMG_TYPE_JPEG;
+  return IMG_TYPE_UNKNOWN;
+}
+
+
+LIVES_GLOBAL_INLINE const char *image_ext_to_image_type(const char *img_ext) {
+  if (!strcmp(img_ext, LIVES_FILE_EXT_PNG)) return LIVES_IMAGE_TYPE_PNG;
+  if (!strcmp(img_ext, LIVES_FILE_EXT_JPG)) return LIVES_IMAGE_TYPE_JPEG;
   return IMG_TYPE_UNKNOWN;
 }
 

@@ -158,7 +158,6 @@ void lives_exit(int signum) {
 
   if (!mainw->only_close) {
     mainw->is_exiting = TRUE;
-    g_main_context_wakeup(NULL);
 
     // unlock all mutexes to prevent deadlocks
 #ifdef HAVE_PULSE_AUDIO
@@ -2047,7 +2046,6 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // do not popup layout errors if the set name changes
   if (!mainw->only_close) {
     mainw->is_exiting = TRUE;
-    g_main_context_wakeup(NULL);
   }
 
   if (mainw->clips_available > 0) {
@@ -6532,12 +6530,38 @@ void donate_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-EXPOSE_FN_DECL(expose_fsplayimg_event, widget, user_data) {
-  LiVESPixbuf *pixbuf = (LiVESPixbuf *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "pixbuf");
-  set_drawing_area_from_pixbuf(widget, pixbuf, mainw->fsp_surface);
-  return TRUE;
+static char *fsp_ltext;
+static char *fsp_info_file;
+static char *file_open_params;
+
+static boolean fs_preview_idle(void *data) {
+  LiVESWidget *widget = (LiVESWidget *)data;
+  FILE *ifile;
+
+  if ((!(ifile = fopen(fsp_info_file, "r"))) && mainw->in_fs_preview && mainw->fc_buttonresponse == LIVES_RESPONSE_NONE) {
+    return TRUE;
+  }
+
+  widget_opts.expand = LIVES_EXPAND_NONE;
+
+  if (LIVES_IS_BUTTON(widget))
+    lives_button_set_label(LIVES_BUTTON(widget), fsp_ltext);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  lives_free(fsp_ltext);
+
+  if (ifile != NULL) {
+    fclose(ifile);
+  }
+
+  end_fs_preview();
+  lives_free(fsp_info_file);
+
+  lives_freep((void **)&file_open_params);
+  if (LIVES_IS_WIDGET(widget))
+    lives_widget_set_sensitive(widget, TRUE);
+  return FALSE;
 }
-EXPOSE_FN_END
+
 
 
 void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
@@ -6546,31 +6570,29 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
 
   uint64_t xwin = 0;
 
-  FILE *ifile = NULL;
-
   char **array;
 
   int preview_frames = 0;
   int preview_type = LIVES_POINTER_TO_INT(user_data);
-
   int height = 0, width = 0;
   int fwidth = -1, fheight = -1;
   int owidth, oheight, npieces, border = 0;
 
   pid_t pid = capable->mainpid;
 
-  char *info_file = NULL, *thm_dir;
-  char *file_open_params = NULL;
+  char *thm_dir;
   char *tmp, *tmp2;
   char *com;
   char *dfile;
-  char *ltext = NULL;
   char *type;
+
+  file_open_params = NULL;
 
   if (mainw->in_fs_preview) {
     end_fs_preview();
     return;
   }
+  fsp_ltext = NULL;
 
   /* if (mainw->in_fs_preview) { */
   /*   dfile = lives_strdup_printf("thm%d", pid); */
@@ -6591,7 +6613,6 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
                           -1, NULL, NULL, NULL)));
     lives_free(tmp);
     lives_free(tmp2);
-
   }
 
   // get file detaisl
@@ -6611,7 +6632,7 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
   }
   lives_strfreev(array);
 
-  if ((!strcmp(type, "image") || !strcmp(type, prefs->image_ext)) && strcmp(type, "Audio")) {
+  if ((!strcmp(type, "image") || !strcmp(type, image_ext_to_image_type(prefs->image_ext))) && strcmp(type, "Audio")) {
     /* info_file = lives_strdup_printf("%s/thm%d/%s", prefs->workdir, capable->mainpid, LIVES_STATUS_FILE_NAME); */
     /* lives_rm(info_file); */
 
@@ -6651,6 +6672,7 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
 
       if (height > 0 && width > 0) {
         // draw image
+        LiVESXWindow *xwin;
         LiVESError *error = NULL;
         char *thumb = lives_strdup_printf("%s/thm%d/%08d.%s", prefs->workdir, pid, 1, prefs->image_ext);
         LiVESPixbuf *pixbuf = lives_pixbuf_new_from_file((tmp = lives_filename_from_utf8(thumb, -1, NULL, NULL, NULL)), &error);
@@ -6682,11 +6704,19 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
           lives_container_set_border_width(LIVES_CONTAINER(mainw->fs_playarea), border >> 1);
           lives_widget_show(mainw->fs_playimg);
           lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-          expose_fsplayimg_event(mainw->fs_playimg, NULL, NULL);
-          if (mainw->fsp_func == 0)
-            mainw->fsp_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->fs_playimg), LIVES_WIDGET_EXPOSE_EVENT,
-                                                   LIVES_GUI_CALLBACK(expose_fsplayimg_event),
-                                                   NULL);
+          xwin = lives_widget_get_xwindow(mainw->fs_playimg);
+          if (LIVES_IS_XWINDOW(xwin)) {
+            if (mainw->fsp_surface) lives_painter_surface_destroy(mainw->fsp_surface);
+            mainw->fsp_surface =
+              lives_xwindow_create_similar_surface(xwin,
+                                                   LIVES_PAINTER_CONTENT_COLOR,
+                                                   width, height);
+            if (mainw->fsp_func == 0)
+              mainw->fsp_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->fs_playimg), LIVES_WIDGET_EXPOSE_EVENT,
+                                                     LIVES_GUI_CALLBACK(all_expose),
+                                                     &mainw->fsp_surface);
+          }
+          set_drawing_area_from_pixbuf(mainw->fs_playimg, pixbuf, mainw->fsp_surface);
         } else {
           lives_error_free(error);
         }
@@ -6724,7 +6754,7 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
     return;
   }
 
-  info_file = lives_strdup_printf("%s%s", dfile, LIVES_STATUS_FILE_NAME);
+  fsp_info_file = lives_strdup_printf("%s%s", dfile, LIVES_STATUS_FILE_NAME);
   lives_free(dfile);
 
   mainw->in_fs_preview = TRUE;
@@ -6796,7 +6826,7 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
     xwin = lives_widget_get_xwinid(mainw->fs_playarea, "Unsupported display type for preview.");
     if (xwin == -1) {
       end_fs_preview();
-      lives_free(info_file);
+      lives_free(fsp_info_file);
       lives_widget_set_sensitive(widget, TRUE);
       return;
     }
@@ -6814,25 +6844,22 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
   }
 
   lives_free(tmp);
-
   mainw->com_failed = FALSE;
-
   mainw->in_fs_preview = TRUE;
-
-  lives_rm(info_file);
+  lives_rm(fsp_info_file);
   lives_system(com, FALSE);
   lives_free(com);
 
   if (mainw->com_failed) {
     mainw->com_failed = FALSE;
     end_fs_preview();
-    lives_free(info_file);
+    lives_free(fsp_info_file);
     lives_widget_set_sensitive(widget, TRUE);
     return;
   }
 
   tmp = lives_strdup(_("\nStop Preview\n"));
-  ltext = lives_strdup(lives_button_get_label(LIVES_BUTTON(widget)));
+  fsp_ltext = lives_strdup(lives_button_get_label(LIVES_BUTTON(widget)));
   widget_opts.expand = LIVES_EXPAND_NONE;
   lives_button_set_label(LIVES_BUTTON(widget), tmp);
   if (preview_type == LIVES_PREVIEW_TYPE_RANGE) {
@@ -6841,27 +6868,7 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
   lives_free(tmp);
 
   // loop here until preview has finished, or the user presses OK or Cancel
-
-  while ((!(ifile = fopen(info_file, "r"))) && mainw->in_fs_preview && mainw->fc_buttonresponse == LIVES_RESPONSE_NONE) {
-    lives_widget_context_update();
-    sched_yield();
-    lives_usleep(prefs->sleep_time);
-  }
-
-  widget_opts.expand = LIVES_EXPAND_NONE;
-  lives_button_set_label(LIVES_BUTTON(widget), ltext);
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
-  lives_free(ltext);
-
-  if (ifile != NULL) {
-    fclose(ifile);
-  }
-
-  end_fs_preview();
-  lives_free(info_file);
-
-  lives_freep((void **)&file_open_params);
-  lives_widget_set_sensitive(widget, TRUE);
+  lives_idle_add_simple(fs_preview_idle, (livespointer)widget);
 }
 
 
@@ -7031,6 +7038,10 @@ void end_fs_preview(void) {
     if (mainw->fsp_func != 0) {
       lives_signal_handler_disconnect(mainw->fs_playimg, mainw->fsp_func);
       mainw->fsp_func = 0;
+    }
+    if (mainw->fsp_surface) {
+      lives_painter_surface_destroy(mainw->fsp_surface);
+      mainw->fsp_surface = NULL;
     }
     lives_widget_hide(mainw->fs_playimg);
   }
@@ -9380,6 +9391,7 @@ boolean all_expose_overlay(LiVESWidget * widget, lives_painter_t *creb, livespoi
   /// quick and dirty copy / paste
   if (mainw->go_away) return FALSE;
   if (LIVES_IS_PLAYING && mainw->faded) return FALSE;
+  if (!CURRENT_CLIP_IS_VALID) return FALSE;
   else {
     int bar_height;
     int allocy;

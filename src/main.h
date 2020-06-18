@@ -1537,6 +1537,8 @@ char *get_val_from_cached_list(const char *key, size_t maxlen);
 void get_location(const char *exe, char *val, int maxlen);
 boolean has_executable(const char *exe);
 
+const char *image_ext_to_image_type(const char *img_ext);
+
 char *make_image_file_name(lives_clip_t *clip, int frame, const char *img_ext);
 const char *get_image_ext_for_type(lives_image_type_t imgtype);
 lives_image_type_t lives_image_ext_to_type(const char *img_ext);

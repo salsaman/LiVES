@@ -637,7 +637,7 @@ typedef struct {
   boolean clip_switched; ///< for recording - did we switch clips ?
   volatile boolean record;
 
-  boolean in_fs_preview;
+  volatile boolean in_fs_preview;
   volatile lives_cancel_t cancelled;
   lives_cancel_type_t cancel_type;
 

@@ -1306,7 +1306,7 @@ static pthread_mutex_t tuner_mutex = PTHREAD_MUTEX_INITIALIZER;
 static LiVESList *allctxs = NULL;
 
 lives_thread_data_t *get_thread_data(void) {
-  LiVESWidgetContext *ctx = g_main_context_get_thread_default();
+  LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
   LiVESList *list = allctxs;
   for (; list; list = list->next) {
     if (((lives_thread_data_t *)list->data)->ctx == ctx) return list->data;
@@ -1449,7 +1449,7 @@ LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new_with_index(int subtype, int64_
 static lives_thread_data_t *lives_thread_data_create(uint64_t idx) {
   lives_thread_data_t *tdata = (lives_thread_data_t *)lives_calloc(1, sizeof(lives_thread_data_t));
   //tdata->ctx = lives_main_context_new();
-  tdata->ctx = g_main_context_new();
+  tdata->ctx = lives_widget_context_new();
   tdata->idx = idx;
   allctxs = lives_list_prepend(allctxs, (livespointer)tdata);
   return tdata;
@@ -1486,7 +1486,7 @@ void lives_threadpool_finish(void) {
     pthread_cond_broadcast(&tcond);
     pthread_mutex_unlock(&tcond_mutex);
     pthread_join(*(poolthrds[i]), NULL);
-    g_main_context_unref(tdata->ctx);
+    lives_widget_context_unref(tdata->ctx);
     lives_free(tdata);
     lives_free(poolthrds[i]);
   }

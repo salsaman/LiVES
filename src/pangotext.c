@@ -246,7 +246,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
     testtext = lives_strdup_printf("%s%s%s", newtext, needs_newline ? "\n" : "", readytext);
     needs_newline = TRUE;
     lingo_layout_set_text(layout, "", -1);
-    g_object_unref(layout);
+    lives_widget_object_unref(layout);
     layout = lingo_layout_new(ctx);
     lingo_layout_set_text(layout, testtext, -1);
     lingo_layout_get_size(layout, &w, &h);
@@ -280,7 +280,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
         g_print("Testing with:%s:\n", testtext);
 #endif
         lingo_layout_set_text(layout, "", -1);
-        g_object_unref(layout);
+        lives_widget_object_unref(layout);
         layout = lingo_layout_new(ctx);
         lingo_layout_set_width(layout, width * LINGO_SCALE);
         lingo_layout_set_text(layout, testtext, -1);
@@ -322,7 +322,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
         if (tmp == NULL) break;
         // check width again, just looking at new part
         lingo_layout_set_text(layout, "", -1);
-        g_object_unref(layout);
+        lives_widget_object_unref(layout);
         layout = lingo_layout_new(ctx);
         lives_widget_object_ref_sink(layout);
         lingo_layout_set_text(layout, tmp, -1);
@@ -421,18 +421,16 @@ char **get_font_list(void) {
 }
 
 
-#ifdef GUI_GTK
 static int font_cmp(const void *p1, const void *p2) {
   const char *s1 = (const char *)(*(char **)p1);
   const char *s2 = (const char *)(*(char **)p2);
-  char *u1 = g_utf8_casefold(s1, -1);
-  char *u2 = g_utf8_casefold(s2, -1);
+  char *u1 = lives_utf8_casefold(s1, -1);
+  char *u2 = lives_utf8_casefold(s2, -1);
   int ret = lives_strcmp_ordered(u1, u2);
   lives_free(u1);
   lives_free(u2);
   return ret;
 }
-#endif
 
 
 LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const char *text, const char *fontname,

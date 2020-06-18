@@ -2213,9 +2213,9 @@ static void do_start_messages(void) {
 static void set_toolkit_theme(int prefer) {
   // parse XDG_DATA_DIRS
   if (prefer & LIVES_THEME_DARK) {
-    g_object_set(gtk_settings_get_default(), "gtk-theme-name", "Materia", NULL);
-    g_object_set(gtk_settings_get_default(), "gtk-icon-theme-name", "elementaryXubuntu-dark", NULL);
-    g_object_set(gtk_settings_get_default(), "gtk-application-prefer-dark-theme", TRUE, NULL);
+    lives_widget_object_set(gtk_settings_get_default(), "gtk-theme-name", "Materia");
+    lives_widget_object_set(gtk_settings_get_default(), "gtk-icon-theme-name", "elementaryXubuntu-dark");
+    lives_widget_object_set(gtk_settings_get_default(), "gtk-application-prefer-dark-theme", TRUE);
   }
 }
 
@@ -3371,7 +3371,7 @@ static boolean lives_startup2(livespointer data) {
         // the message area must fit exactly to the screen size, so we update it in an idle function
         // due to the fact that the window manager may resize the window asynchronously
         if (mainw->idlemax == 0)
-          g_idle_add(resize_message_area, NULL);
+          lives_idle_add_simple(resize_message_area, NULL);
         mainw->idlemax = DEF_IDLE_MAX;
       }
       draw_little_bars(0., 0);
@@ -3404,7 +3404,7 @@ static boolean lives_startup2(livespointer data) {
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_MT);
 
   // timer to poll for external commands: MIDI, joystick, jack transport, osc, etc.
-  mainw->kb_timer = g_timeout_add(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
+  mainw->kb_timer = lives_timer_add_simple(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
 
   return FALSE;
 } // end lives_startup()
@@ -8662,7 +8662,7 @@ void load_frame_image(int frame) {
           load_end_image(0);
           if (prefs->show_msg_area && !mainw->only_close) {
             if (mainw->idlemax == 0) {
-              g_idle_add(resize_message_area, NULL);
+              lives_idle_add_simple(resize_message_area, NULL);
             }
             mainw->idlemax = DEF_IDLE_MAX;
           }
@@ -8840,7 +8840,7 @@ void load_frame_image(int frame) {
           if (prefs->show_msg_area && !mainw->only_close) {
             reset_message_area(); // necessary
             if (mainw->idlemax == 0) {
-              g_idle_add(resize_message_area, NULL);
+              lives_idle_add_simple(resize_message_area, NULL);
             }
             mainw->idlemax = DEF_IDLE_MAX;
           }
@@ -9383,7 +9383,7 @@ void load_frame_image(int frame) {
           if (LIVES_IS_XWINDOW(xwin)) {
             if (mainw->play_surface) lives_painter_surface_destroy(mainw->play_surface);
             mainw->play_surface =
-              lives_xwindow_create_similar_surface(lives_widget_get_xwindow(mainw->play_image),
+              lives_xwindow_create_similar_surface(xwin,
                                                    LIVES_PAINTER_CONTENT_COLOR,
                                                    hsize, vsize);
           }

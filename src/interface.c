@@ -3243,16 +3243,13 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
                                           NULL);
   }
 
+  lives_widget_show_all(chooser);
+
   if (prefs->fileselmax) {
     lives_window_maximize(LIVES_WINDOW(chooser));
   }
 
   gtk_file_chooser_set_local_only(LIVES_FILE_CHOOSER(chooser), TRUE);
-
-  if (dir != NULL) {
-    gtk_file_chooser_set_current_folder(LIVES_FILE_CHOOSER(chooser), dir);
-    gtk_file_chooser_add_shortcut_folder(LIVES_FILE_CHOOSER(chooser), dir, NULL);
-  }
 
   if (filt != NULL) {
     GtkFileFilter *filter = gtk_file_filter_new();
@@ -3318,6 +3315,11 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 
   if (extra_widget == LIVES_MAIN_WINDOW_WIDGET && LIVES_MAIN_WINDOW_WIDGET != NULL) {
     return (char *)chooser; // kludge to allow custom adding of extra widgets
+  }
+
+  if (dir != NULL) {
+    gtk_file_chooser_set_current_folder(LIVES_FILE_CHOOSER(chooser), dir);
+    gtk_file_chooser_add_shortcut_folder(LIVES_FILE_CHOOSER(chooser), dir, NULL);
   }
 
 rundlg:
@@ -3401,7 +3403,7 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
 
     lives_widget_show_all(chooser);
     lives_widget_process_updates(chooser, TRUE);
-    lives_widget_context_update();
+    //lives_widget_context_update();
 
     get_border_size(chooser, &bx, &by);
     w = lives_widget_get_allocation_width(chooser);
@@ -3422,23 +3424,23 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
         if (overflowy > 0) myheight -= overflowy;
 
         lives_widget_process_updates(chooser, TRUE);
-        lives_widget_context_update();
+        //lives_widget_context_update();
 
         if (overflowx > 0 || overflowy > 0) {
           lives_widget_set_size_request(chooser, mywidth, myheight);
         }
         lives_widget_process_updates(chooser, TRUE);
-        lives_widget_context_update();
+        //lives_widget_context_update();
 
         w = scr_width - bx;
         h = scr_height - by;
 
         lives_window_unmaximize(LIVES_WINDOW(chooser));
         lives_widget_process_updates(chooser, TRUE);
-        lives_widget_context_update();
+        //lives_widget_context_update();
         lives_window_resize(LIVES_WINDOW(chooser), w, h);
         lives_widget_process_updates(chooser, TRUE);
-        lives_widget_context_update();
+        //lives_widget_context_update();
 
         if (prefs->open_maximised) {
           lives_window_maximize(LIVES_WINDOW(chooser));
@@ -3448,7 +3450,7 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
       lives_window_maximize(LIVES_WINDOW(chooser));
     }
     lives_widget_process_updates(chooser, TRUE);
-    lives_widget_context_update();
+    //lives_widget_context_update();
   }
   return chooser;
 }

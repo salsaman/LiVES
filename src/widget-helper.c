@@ -51,6 +51,7 @@ static cairo_user_data_key_t CAIRO_WIN_KEY;
 #define WARN_IMAGE_KEY "_wh_warn_image"
 #define TTIPS_IMAGE_KEY "_wh_warn_image"
 
+static LiVESWindow *modalw = NULL;
 
 #if 0
 weed_plant_t *LiVESWidgetObject_to_weed_plant(LiVESWidgetObject *o) {
@@ -1053,7 +1054,7 @@ typedef void (*bifunc)(livespointer, livespointer);
 typedef boolean(*trifunc)(livespointer, livespointer, livespointer);
 
 static void async_sig_handler(livespointer instance, livespointer data) {
-  GMainContext *ctx;
+  LiVESWidgetContext *ctx;
   lives_sigdata_t *sigdata = (lives_sigdata_t *)data;
 
   // possible values: [gtk+] gdk_frame_clock_paint_idle
@@ -1063,8 +1064,8 @@ static void async_sig_handler(livespointer instance, livespointer data) {
   // g_print("SOURCE is %s\n", g_source_get_name(g_main_current_source()));
   if (sigdata->instance != instance) return;
 
-  ctx = g_main_context_get_thread_default();
-  if (!gov_running && (!ctx || ctx == g_main_context_default())) {
+  ctx = lives_widget_context_get_thread_default();
+  if (!gov_running && (!ctx || ctx == lives_widget_context_default())) {
     lives_thread_attr_t attr = LIVES_THRDATTR_NEW_CTX | LIVES_THRDATTR_WAIT_SYNC;
     mainw->clutch = TRUE;
     if (sigdata->swapped) {
@@ -1080,13 +1081,13 @@ static void async_sig_handler(livespointer instance, livespointer data) {
 
 
 static void async_sig_handler3(livespointer instance, livespointer extra, livespointer data) {
-  GMainContext *ctx;
+  LiVESWidgetContext *ctx;
   lives_sigdata_t *sigdata = (lives_sigdata_t *)data;
   if (sigdata->instance != instance) return;
   if (!sigdata->detsig) break_me();
 
-  ctx = g_main_context_get_thread_default();
-  if (!gov_running && (!ctx || ctx == g_main_context_default())) {
+  ctx = lives_widget_context_get_thread_default();
+  if (!gov_running && (!ctx || ctx == lives_widget_context_default())) {
     lives_thread_attr_t attr = LIVES_THRDATTR_NEW_CTX | LIVES_THRDATTR_WAIT_SYNC;
     sigdata->proc = lives_proc_thread_create(&attr, sigdata->callback, -1, "vvv", instance, extra,
                     sigdata->user_data);
@@ -1098,7 +1099,7 @@ static void async_sig_handler3(livespointer instance, livespointer extra, livesp
 
 
 static boolean async_timer_handler(livespointer data) {
-  GMainContext *ctx;
+  LiVESWidgetContext *ctx;
   lives_sigdata_t *sigdata = (lives_sigdata_t *)data;
   //g_print("SOURCE is %s\n", g_source_get_name(g_main_current_source())); // NULL for timer, GIdleSource for idle
   //g_print("hndling %p %s %p\n", sigdata, sigdata->detsig, (void *)sigdata->detsig);
@@ -1106,8 +1107,8 @@ static boolean async_timer_handler(livespointer data) {
   if (mainw->is_exiting) return FALSE;
 
   if (!sigdata->added) {
-    ctx = g_main_context_get_thread_default();
-    if (!ctx || ctx == g_main_context_default()) {
+    ctx = lives_widget_context_get_thread_default();
+    if (!ctx || ctx == lives_widget_context_default()) {
       lives_thread_attr_t attr = LIVES_THRDATTR_NEW_CTX | LIVES_THRDATTR_WAIT_SYNC;
       mainw->clutch = FALSE;
       sigdata->swapped = FALSE;
@@ -1131,7 +1132,7 @@ static boolean async_timer_handler(livespointer data) {
       if (!res) sigdata_free(sigdata, NULL);
       return res;
     }
-    while (g_main_context_iteration(NULL, FALSE)); // process until no more events
+    while (lives_widget_context_iteration(NULL, FALSE)); // process until no more events
   }
   // should never reach here
   return FALSE;
@@ -1458,10 +1459,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_maximum_size(LiVESWidget *w
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget *widget, boolean upd_children) {
 #ifdef GUI_GTK
-  GMainContext *ctx = g_main_context_get_thread_default();
-  LiVESWindow *win;
+  LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
+  LiVESWindow *win, *modalold = modalw;
   boolean was_modal = TRUE;
-  if (!ctx || ctx == g_main_context_default()) return TRUE;
+  if (!ctx || ctx == lives_widget_context_default()) return TRUE;
 
   if (LIVES_IS_WINDOW(widget)) win = (LiVESWindow *)widget;
   else win = lives_widget_get_window(widget);
@@ -1478,7 +1479,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget *wi
     }
   }
 
-  if (!was_modal) lives_window_set_modal(win, FALSE);
+  if (!was_modal) {
+    lives_window_set_modal(win, FALSE);
+    if (modalold) lives_window_set_modal(modalold, TRUE);
+  }
   return TRUE;
 #endif
   return FALSE;
@@ -1595,7 +1599,7 @@ static boolean dlgdelete(LiVESDialog *dialog, LiVESXEvent *event, livespointer d
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dialog) {
 #ifdef GUI_GTK
-  GMainContext *ctx = lives_widget_context_get_thread_default();
+  LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
 
   lives_widget_show_all(LIVES_WIDGET(dialog));
 
@@ -2550,7 +2554,20 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_transient_for(LiVESWindow *
 }
 
 
+static void modunmap(LiVESWindow *win, livespointer data) {if (win == modalw) modalw = NULL;}
+static void moddest(LiVESWindow *win, livespointer data) {if (win == modalw) modalw = NULL;}
+static boolean moddelete(LiVESWindow *win, LiVESXEvent *event, livespointer data) {if (win == modalw) modalw = NULL;}
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_modal(LiVESWindow *window, boolean modal) {
+  if (modal) {
+    unsigned long delfunc = lives_signal_sync_connect(window, LIVES_WIDGET_DELETE_EVENT,
+                            LIVES_GUI_CALLBACK(moddelete), NULL);
+    unsigned long destfunc = lives_signal_sync_connect(window, LIVES_WIDGET_DESTROY_SIGNAL,
+                             LIVES_GUI_CALLBACK(moddest), NULL);
+    unsigned long unmapfunc = lives_signal_sync_connect(window, LIVES_WIDGET_UNMAP_SIGNAL,
+                              LIVES_GUI_CALLBACK(modunmap), NULL);
+    modalw = window;
+  } else if (window == modalw) modalw = NULL;
 #ifdef GUI_GTK
   gtk_window_set_modal(window, modal);
   return TRUE;
@@ -9430,6 +9447,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
 
   LiVESWidget *eventbox = NULL;
   LiVESWidget *hbox;
+  LiVESWidget *img_tips = NULL;
 
   boolean expand;
 
@@ -9442,7 +9460,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
 #endif
     checkbutton = lives_check_button_new();
 
-  lives_widget_set_tooltip_text(checkbutton, tooltip);
+  if (tooltip) img_tips = lives_widget_set_tooltip_text(checkbutton, tooltip);
 
   if (box != NULL) {
     int packing_width = 0;
@@ -9472,6 +9490,13 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
 
     if (!widget_opts.swap_label && eventbox != NULL)
       lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, packing_width);
+
+    add_warn_image(checkbutton, hbox);
+
+    if (img_tips) {
+      lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, 0);
+      lives_widget_set_show_hide_with(checkbutton, img_tips);
+    }
   }
 
   if (widget_opts.apply_theme) {
@@ -9490,6 +9515,7 @@ LiVESWidget *lives_glowing_check_button_new(const char *labeltext, LiVESBox *box
   boolean active = FALSE;
   LiVESWidget *checkbutton;
   if (togglevalue != NULL) active = *togglevalue;
+
   checkbutton = lives_standard_check_button_new(labeltext, active, box, tooltip);
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                                   LIVES_GUI_CALLBACK(lives_cool_toggled),
@@ -9607,6 +9633,8 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList *
       lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, packing_width);
 
     lives_widget_set_show_hide_parent(radiobutton);
+
+    add_warn_image(radiobutton, hbox);
 
     if (img_tips) {
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, 0);
@@ -9753,6 +9781,7 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
 
   LiVESWidget *eventbox = NULL;
   LiVESWidget *hbox;
+  LiVESWidget *img_tips = NULL;
   LiVESEntry *entry;
 
   boolean expand;
@@ -9761,7 +9790,7 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
 
   combo = lives_combo_new();
 
-  if (tooltip != NULL) lives_widget_set_tooltip_text(combo, tooltip);
+  if (tooltip != NULL) img_tips = lives_widget_set_tooltip_text(combo, tooltip);
 
   entry = (LiVESEntry *)lives_combo_get_entry(LIVES_COMBO(combo));
 
@@ -9824,6 +9853,10 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
     lives_widget_set_show_hide_parent(combo);
 
     add_warn_image(combo, hbox);
+
+    if (img_tips) {
+      lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, 0);
+    }
   }
 
   if (list != NULL) {
@@ -11708,9 +11741,9 @@ boolean lives_widget_context_update(void) {
   if (mainw->no_context_update) return FALSE;
   if (norecurse) return FALSE;
   else {
-    GMainContext *ctx = g_main_context_get_thread_default();
+    LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
     norecurse = TRUE;
-    if (ctx != NULL && ctx != g_main_context_default() && gov_running) {
+    if (ctx != NULL && ctx != lives_widget_context_default() && gov_running) {
       do_some_things();
       mainw->clutch = FALSE;
       while (!mainw->clutch && !mainw->is_exiting) {
@@ -11719,7 +11752,7 @@ boolean lives_widget_context_update(void) {
       }
       do_more_stuff();
     } else {
-      while (g_main_context_iteration(NULL, FALSE));
+      while (lives_widget_context_iteration(NULL, FALSE));
     }
   }
   norecurse = FALSE;
@@ -12121,10 +12154,10 @@ boolean get_border_size(LiVESWidget *win, int *bx, int *by) {
   if (xwin == NULL) {
     lives_thread_data_t *tdata = get_thread_data();
     LiVESWidgetContext *ctx = tdata->ctx;
-    g_main_context_pop_thread_default(ctx);
+    lives_widget_context_pop_thread_default(ctx);
     //gtk_widget_realize(win);
     lives_widget_context_update();
-    g_main_context_push_thread_default(ctx);
+    lives_widget_context_push_thread_default(ctx);
     xwin = lives_widget_get_xwindow(win);
     if (xwin == NULL) {
       if (bx != NULL) *bx = 0;

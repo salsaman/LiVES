@@ -2691,8 +2691,8 @@ boolean do_auto_dialog(const char *text, int type) {
 
   while (mainw->cancelled == CANCEL_NONE && !(infofile = fopen(cfile->info_file, "r"))) {
     lives_progress_bar_pulse(LIVES_PROGRESS_BAR(proc_ptr->progressbar));
-    lives_widget_context_update();
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    /* lives_widget_context_update(); */
+    /* lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
     lives_widget_process_updates(proc_ptr->processing, TRUE);
     lives_usleep(prefs->sleep_time);
     if (type == 1 && mainw->rec_end_time != -1.) {
@@ -2724,7 +2724,8 @@ boolean do_auto_dialog(const char *text, int type) {
           ticks_t tl;
           while ((tl = lives_alarm_check(alarm_handle)) > 0 && !mainw->cancelled) {
             lives_progress_bar_pulse(LIVES_PROGRESS_BAR(proc_ptr->progressbar));
-            lives_widget_context_update();
+            lives_widget_process_updates(proc_ptr->processing, TRUE);
+            //lives_widget_context_update();
             lives_usleep(prefs->sleep_time);
           }
           lives_alarm_clear(alarm_handle);
@@ -3452,9 +3453,6 @@ void threaded_dialog_spin(double fraction) {
   if (fraction > 0.) {
     timesofar = (double)(lives_get_current_ticks() - sttime) / TICKS_PER_SECOND_DBL;
     disp_fraction(fraction, timesofar, procw);
-    /* lives_widget_context_update(); */
-    lives_widget_process_updates(procw->processing, TRUE);
-    /* lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
   } else {
     if (!CURRENT_CLIP_IS_VALID || !cfile->progress_start || !cfile->progress_end ||
         *(mainw->msg) || !(progress = atoi(mainw->msg))) {
@@ -3462,11 +3460,6 @@ void threaded_dialog_spin(double fraction) {
       //#define GDB
 #ifndef GDB
       if (LIVES_IS_PROGRESS_BAR(procw->progressbar)) {
-#if GTK_CHECK_VERSION(3, 0, 0)
-        //lives_widget_context_update();
-        lives_widget_process_updates(procw->processing, TRUE);
-        //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-#endif
         lives_progress_bar_pulse(LIVES_PROGRESS_BAR(procw->progressbar));
       }
 #endif
@@ -3478,16 +3471,7 @@ void threaded_dialog_spin(double fraction) {
     }
   }
 
-  if (!td_had_focus && lives_has_toplevel_focus(LIVES_MAIN_WINDOW_WIDGET)) {
-    if (LIVES_IS_WIDGET(procw->processing)) {
-#if GTK_CHECK_VERSION(3, 0, 0)
-      lives_widget_context_update();
-      lives_widget_show_all(procw->processing);
-      lives_widget_queue_draw(procw->processing);
-#endif
-    }
-    td_had_focus = TRUE;
-  }
+  lives_widget_process_updates(procw->processing, TRUE);
 }
 
 
@@ -3515,7 +3499,7 @@ void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
   procw = create_threaded_dialog(copy_text, has_cancel, &td_had_focus);
   lives_free(copy_text);
 
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  lives_widget_process_updates(procw->processing, TRUE);
 
   if (CURRENT_CLIP_IS_VALID) cfile->proc_ptr = procw;
 }
@@ -3547,9 +3531,6 @@ void end_threaded_dialog(void) {
       gtk_window_set_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->msg_area);
     }
   }
-
-  /* if (mainw->is_ready && prefs->show_gui) */
-  /*   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
 }
 
 

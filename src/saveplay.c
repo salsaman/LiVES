@@ -3362,7 +3362,7 @@ void play_file(void) {
   }
   if (prefs->show_msg_area && mainw->multitrack == NULL) {
     if (mainw->idlemax == 0) {
-      g_idle_add(resize_message_area, NULL);
+      lives_idle_add_simple(resize_message_area, NULL);
     }
     mainw->idlemax = DEF_IDLE_MAX;
   }

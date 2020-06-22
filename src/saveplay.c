@@ -2526,7 +2526,7 @@ void play_file(void) {
 
   // show the framebar
   if (mainw->multitrack == NULL && !mainw->faded && (!prefs->hide_framebar &&
-      (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor && prefs->play_monitor != 0 && capable->nmonitors > 1 &&
+      (!mainw->fs || (widget_opts.monitor + 1 != prefs->play_monitor && prefs->play_monitor != 0 && capable->nmonitors > 1 &&
                       mainw->sep_win) ||
        (mainw->vpp != NULL && mainw->sep_win && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) &&
       ((!mainw->preview && (cfile->frames > 0 || mainw->foreign)) || cfile->opening))) {
@@ -5271,7 +5271,7 @@ int save_to_scrap_file(weed_layer_t *layer) {
       }}}
   // *INDENT-OM*
 
-  if ((!mainw->fs || (prefs->play_monitor != prefs->gui_monitor && capable->nmonitors > 1)) && !prefs->hide_framebar &&
+  if ((!mainw->fs || (prefs->play_monitor != widget_opts.monitor + 1 && capable->nmonitors > 1)) && !prefs->hide_framebar &&
       !mainw->faded) {
     double scrap_mb = (double)scrapfile->f_size / 1000000.;
     if ((scrap_mb + ascrap_mb) < (double)free_mb * .75) {

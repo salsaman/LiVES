@@ -1070,13 +1070,13 @@ reading it.
 
 
 == THREADSAFE VERSION ==
-A  fully threadsafe version of libweed is currently being tested.
+A fully threadsafe version of libweed is now available.
 This version requires compilation with libpthread. It utilizes the leaf "private data" to point to an allocted pthread rwlock.
 
 The implementation details are as follows:
 
 - any read operations first obtain a read lock on the plant
-(when referring to 'plant' here, it should be understood to mean the manfatory "type" leaf; 'leaf' in this context means
+(when referring to 'plant' here, it should be understood to mean the mandatory "type" leaf; 'leaf' in this context means
 any of the other leaves)
 
 - once a leaf is located, either a read or write lock on the leaf is obtained and the plant read lock is subsequently released

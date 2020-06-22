@@ -272,13 +272,14 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
     if (param == fchooser.font_param) {
       box = lives_widget_get_parent(param->widgets[0]);
 
-      while (box != NULL && !LIVES_IS_HBOX(box)) {
+      while (box && !LIVES_IS_HBOX(box)) {
         box = lives_widget_get_parent(box);
       }
 
-      if (box == NULL) return;
+      if (!box) return;
 
-      param->widgets[1] = buttond = lives_standard_font_chooser_new(FALSE, NULL);
+      param->widgets[1] = buttond = lives_standard_font_chooser_new();
+      lives_box_pack_start(LIVES_BOX(box), buttond, FALSE, FALSE, widget_opts.packing_width);
 
       if (!lives_widget_is_sensitive(param->widgets[0])) lives_widget_set_sensitive(buttond, FALSE);
       lives_widget_set_show_hide_with(param->widgets[0], buttond);
@@ -357,26 +358,26 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
   }
 
   slist = fileread;
-  while (slist != NULL) {
+  while (slist) {
     if (param == (lives_param_t *)(slist->data)) {
       char *def_dir;
 
       param->special_type = LIVES_PARAM_SPECIAL_TYPE_FILEREAD;
 
-      if (param->widgets[0] == NULL) continue;
+      if (!param->widgets[0]) continue;
 
       box = lives_widget_get_parent(param->widgets[0]);
 
-      while (box != NULL && !LIVES_IS_HBOX(box)) {
+      while (box && !LIVES_IS_HBOX(box)) {
         box = lives_widget_get_parent(box);
       }
 
-      if (box == NULL) return;
+      if (!box) return;
 
       def_dir = lives_get_current_dir();
 
       if (LIVES_IS_ENTRY(param->widgets[0])) {
-        if (strlen(lives_entry_get_text(LIVES_ENTRY(param->widgets[0])))) {
+        if (*(lives_entry_get_text(LIVES_ENTRY(param->widgets[0])))) {
           char dirnamex[PATH_MAX];
           lives_snprintf(dirnamex, PATH_MAX, "%s", lives_entry_get_text(LIVES_ENTRY(param->widgets[0])));
           get_dirname(dirnamex);
@@ -387,7 +388,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
 
       //epos = get_box_child_index(LIVES_BOX(box), param->widgets[0]);
 
-      param->widgets[1] = buttond = lives_standard_file_button_new(FALSE, def_dir);
+      param->widgets[2] = buttond = lives_standard_file_button_new(FALSE, def_dir);
       lives_free(def_dir);
       lives_box_pack_start(LIVES_BOX(box), buttond, FALSE, FALSE, widget_opts.packing_width);
       //lives_box_reorder_child(LIVES_BOX(box), buttond, epos); // insert after label, before textbox
@@ -426,7 +427,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
 
       if (box == NULL) return;
 
-      param->widgets[1] = buttond = lives_standard_file_button_new(FALSE, NULL);
+      param->widgets[2] = buttond = lives_standard_file_button_new(FALSE, NULL);
 
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(buttond), "filesel_type", (livespointer)LIVES_FILE_SELECTION_SAVE);
       lives_box_pack_start(LIVES_BOX(box), buttond, FALSE, FALSE, widget_opts.packing_width);
@@ -453,23 +454,28 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
   // password fields
 
   slist = passwd_widgets;
-  while (slist != NULL) {
+  while (slist) {
     if (param == (lives_param_t *)(slist->data)) {
-      if (param->widgets[0] == NULL) continue;
+      if (!param->widgets[0]) continue;
+
+      lives_entry_set_visibility(LIVES_ENTRY(param->widgets[0]), FALSE);
 
       box = lives_widget_get_parent(param->widgets[0]);
 
       param->special_type = LIVES_PARAM_SPECIAL_TYPE_PASSWORD;
 
-      while (!LIVES_IS_VBOX(box)) {
+      while (box && !LIVES_IS_BOX(box)) {
         box = lives_widget_get_parent(box);
-        if (box == NULL) continue;
       }
 
-      hbox = lives_hbox_new(FALSE, 0);
-      lives_box_pack_start(LIVES_BOX(LIVES_WIDGET(box)), hbox, FALSE, FALSE, widget_opts.packing_height);
+      if (!box) continue;
 
-      checkbutton = lives_standard_check_button_new(_("Display Password"), FALSE, LIVES_BOX(hbox), NULL);
+      if (!LIVES_IS_HBOX(box)) {
+        hbox = lives_hbox_new(FALSE, 0);
+        lives_box_pack_start(LIVES_BOX(LIVES_WIDGET(box)), hbox, FALSE, FALSE, widget_opts.packing_height);
+      } else hbox = box;
+
+      param->widgets[2] = checkbutton = lives_standard_check_button_new(_("Display Password"), FALSE, LIVES_BOX(hbox), NULL);
 
       lives_button_set_focus_on_click(LIVES_BUTTON(checkbutton), FALSE);
 
@@ -479,8 +485,6 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                                  LIVES_GUI_CALLBACK(passwd_toggle_vis),
                                  (livespointer)param->widgets[0]);
-
-      lives_entry_set_visibility(LIVES_ENTRY(param->widgets[0]), FALSE);
 
     }
     slist = slist->next;

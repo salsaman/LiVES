@@ -66,7 +66,7 @@ void ce_thumbs_set_interactive(boolean interactive) {
 static boolean switch_clip_cb(LiVESWidget *eventbox, LiVESXEventButton *event, livespointer user_data) {
   int i = LIVES_POINTER_TO_INT(user_data);
   if (!LIVES_IS_PLAYING) return FALSE;
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
   switch_clip(0, i, FALSE);
   return FALSE;
 }

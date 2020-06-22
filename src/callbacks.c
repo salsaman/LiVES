@@ -89,7 +89,7 @@ LIVES_GLOBAL_INLINE void lives_notify_int(int msgnumber, int msgint) {
 
 
 boolean on_LiVES_delete_event(LiVESWidget *widget, LiVESXEventDelete *event, livespointer user_data) {
-  if (!mainw->interactive) return TRUE;
+  if (!LIVES_IS_INTERACTIVE) return TRUE;
   on_quit_activate(NULL, NULL);
   return TRUE;
 }
@@ -5043,7 +5043,7 @@ boolean prevclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
   // type = 1 fg only
   // type = 2 bg only
 
-  if (!mainw->interactive) return TRUE;
+  if (!LIVES_IS_INTERACTIVE) return TRUE;
   if (mainw->go_away) return TRUE;
 
   if (!CURRENT_CLIP_IS_VALID || mainw->preview || (mainw->is_processing && cfile->is_loaded) ||
@@ -5088,7 +5088,7 @@ boolean nextclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 
   int type = 0; ///< auto (switch bg if a transition is active, otherwise foreground)
 
-  if (!mainw->interactive) return TRUE;
+  if (!LIVES_IS_INTERACTIVE) return TRUE;
   if (mainw->go_away) return TRUE;
   // next clip
   // if the effect is a transition, this will change the background clip
@@ -7576,7 +7576,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
                cfile->opening))) {
             lives_widget_show(mainw->framebar);
           }
-          if ((!mainw->faded && mainw->fs && ((prefs->play_monitor != prefs->gui_monitor && prefs->play_monitor > 0 &&
+          if ((!mainw->faded && mainw->fs && ((prefs->play_monitor != widget_opts.monitor && prefs->play_monitor > 0 &&
                                                capable->nmonitors > 1))) ||
               (mainw->fs && mainw->vpp != NULL &&
                !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
@@ -7683,7 +7683,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 void on_showfct_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   prefs->hide_framebar = !prefs->hide_framebar;
-  if (!mainw->fs || (prefs->play_monitor != prefs->gui_monitor && mainw->play_window != NULL && capable->nmonitors > 1)) {
+  if (!mainw->fs || (prefs->play_monitor != widget_opts.monitor && mainw->play_window != NULL && capable->nmonitors > 1)) {
     if (!prefs->hide_framebar) {
       lives_widget_show(mainw->framebar);
     } else {
@@ -7709,7 +7709,7 @@ void on_sticky_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 void on_fade_pressed(LiVESButton * button, livespointer user_data) {
   // toolbar button (unblank background)
-  if (mainw->fs && (mainw->play_window == NULL || (prefs->play_monitor == prefs->gui_monitor || capable->nmonitors == 1)))
+  if (mainw->fs && (mainw->play_window == NULL || (prefs->play_monitor == widget_opts.monitor || capable->nmonitors == 1)))
     return;
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->fade), !mainw->faded);
 }
@@ -7717,7 +7717,7 @@ void on_fade_pressed(LiVESButton * button, livespointer user_data) {
 
 void on_fade_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   mainw->faded = !mainw->faded;
-  if (LIVES_IS_PLAYING && (!mainw->fs || (prefs->play_monitor != prefs->gui_monitor && mainw->play_window != NULL &&
+  if (LIVES_IS_PLAYING && (!mainw->fs || (prefs->play_monitor != widget_opts.monitor && mainw->play_window != NULL &&
                                           capable->nmonitors > 1))) {
     if (mainw->faded) {
       lives_widget_hide(mainw->framebar);
@@ -7754,7 +7754,7 @@ void on_boolean_toggled(LiVESWidgetObject * obj, livespointer user_data) {
 
 
 void on_audio_toggled(LiVESWidget * tbutton, livespointer user_data) {
-  if (!mainw->interactive) return;
+  if (!LIVES_IS_INTERACTIVE) return;
   if (!lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(tbutton))) {
     lives_signal_handlers_block_by_func(tbutton, (livespointer)on_audio_toggled, NULL);
     lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(tbutton), TRUE);
@@ -10038,7 +10038,7 @@ boolean on_mouse_scroll(LiVESWidget * widget, LiVESXEventScroll * event, livespo
   LiVESXModifierType kstate = (LiVESXModifierType)event->state;
   uint32_t type = 1;
 
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
   if (mt != NULL) {
     // multitrack mode
     if ((kstate & LIVES_DEFAULT_MOD_MASK) == LIVES_CONTROL_MASK) {
@@ -10082,7 +10082,7 @@ boolean on_mouse_scroll(LiVESWidget * widget, LiVESXEventScroll * event, livespo
 
 // next few functions are for the timer bars
 boolean on_mouse_sel_update(LiVESWidget * widget, LiVESXEventMotion * event, livespointer user_data) {
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
 
   if (CURRENT_CLIP_IS_VALID && mainw->sel_start > 0) {
     int x, sel_current;
@@ -10115,7 +10115,7 @@ boolean on_mouse_sel_update(LiVESWidget * widget, LiVESXEventMotion * event, liv
 
 
 boolean on_mouse_sel_reset(LiVESWidget * widget, LiVESXEventButton * event, livespointer user_data) {
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
 
   if (mainw->current_file <= 0) return FALSE;
   mainw->sel_start = 0;
@@ -10130,7 +10130,7 @@ boolean on_mouse_sel_reset(LiVESWidget * widget, LiVESXEventButton * event, live
 boolean on_mouse_sel_start(LiVESWidget * widget, LiVESXEventButton * event, livespointer user_data) {
   int x;
 
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
 
   if (mainw->current_file <= 0) return FALSE;
 
@@ -10208,7 +10208,7 @@ boolean on_mouse_sel_start(LiVESWidget * widget, LiVESXEventButton * event, live
 
 #ifdef ENABLE_GIW_3
 void on_hrule_value_changed(LiVESWidget * widget, livespointer user_data) {
-  if (!mainw->interactive) return;
+  if (!LIVES_IS_INTERACTIVE) return;
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return;
 
   if (LIVES_IS_PLAYING) {
@@ -10248,7 +10248,7 @@ boolean on_hrule_update(LiVESWidget * widget, LiVESXEventMotion * event, livespo
   LiVESXDevice *device;
   int x;
   if (LIVES_IS_PLAYING) return TRUE;
-  if (!mainw->interactive) return TRUE;
+  if (!LIVES_IS_INTERACTIVE) return TRUE;
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return TRUE;
 
   device = (LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device;
@@ -10270,7 +10270,7 @@ boolean on_hrule_reset(LiVESWidget * widget, LiVESXEventButton  * event, livespo
   int x;
 
   if (LIVES_IS_PLAYING) return FALSE;
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return FALSE;
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
@@ -10304,7 +10304,7 @@ boolean on_hrule_set(LiVESWidget * widget, LiVESXEventButton * event, livespoint
   // button press
   int x;
 
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return TRUE;
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
@@ -10329,7 +10329,7 @@ boolean frame_context(LiVESWidget * widget, LiVESXEventButton * event, livespoin
 
   int frame = 0;
 
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return FALSE;
 
   if (mainw->multitrack != NULL && mainw->multitrack->event_list == NULL) return FALSE;
@@ -10744,7 +10744,7 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
   int clip = LIVES_POINTER_TO_INT(clip_number) - 1;
   register int i;
 
-  if (!mainw->interactive) return TRUE;
+  if (!LIVES_IS_INTERACTIVE) return TRUE;
 
   if (!CURRENT_CLIP_IS_VALID || mainw->preview || (LIVES_IS_PLAYING && mainw->event_list != NULL && !mainw->record)
       || (mainw->is_processing && cfile->is_loaded) ||

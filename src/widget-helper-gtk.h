@@ -335,6 +335,7 @@ typedef GdkEventKey                       	LiVESXEventKey;
 typedef GdkEvent                          		LiVESXEventDelete;
 typedef GdkDisplay                        		LiVESXDisplay;
 typedef GdkScreen                         		LiVESXScreen;
+typedef GdkMonitor                         		LiVESXMonitor;
 typedef GdkDevice                         		LiVESXDevice;
 
 #define LIVES_KEY_RELEASE GDK_KEY_RELEASE

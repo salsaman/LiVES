@@ -3739,7 +3739,9 @@ void switch_aud_to_none(boolean set_in_prefs) {
     lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
     lives_widget_set_sensitive(mainw->mute_audio, FALSE);
     lives_widget_set_sensitive(mainw->m_mutebutton, FALSE);
-    lives_widget_set_sensitive(mainw->p_mutebutton, FALSE);
+    if (mainw->preview_box) {
+      lives_widget_set_sensitive(mainw->p_mutebutton, FALSE);
+    }
   }
 
 #ifdef ENABLE_JACK
@@ -3837,13 +3839,13 @@ boolean prepare_to_play_foreign(void) {
 
 #ifdef GDK_WINDOWING_X11
   mainw->foreign_window = gdk_x11_window_foreign_new_for_display
-                          (mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].disp,
+                          (mainw->mgeom[widget_opts.monitor].disp,
                            mainw->foreign_id);
 #else
 #ifdef GDK_WINDOWING_WIN32
   if (mainw->foreign_window == NULL)
     mainw->foreign_window = gdk_win32_window_foreign_new_for_display
-                            (mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].disp,
+                            (mainw->mgeom[widget_opts.monitor].disp,
                              mainw->foreign_id);
 #endif
 

@@ -191,7 +191,7 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
     if ((level & LIVES_LOG_LEVEL_MASK) == LIVES_LOG_LEVEL_CRITICAL)
       msg = lives_strdup_printf(_("%s Critical error: %s\n"), domain, message);
     else msg = lives_strdup_printf(_("%s Fatal error: %s\n"), domain, message);
-#define BREAK_ON_CRIT
+    //#define BREAK_ON_CRIT
 #ifdef BREAK_ON_CRIT
     if (prefs->show_dev_opts) raise(LIVES_SIGTRAP);
 #endif
@@ -304,28 +304,47 @@ void catch_sigint(int signum) {
 }
 
 
+#ifdef GUI_GTK
+static double get_screen_scale(GdkScreen *screen, double *pdpi) {
+  double scale = 1.0;
+  double dpi = gdk_screen_get_resolution(screen);
+  if (dpi == 120.) scale = 1.25;
+  else if (dpi == 144.) scale = 1.5;
+  else if (dpi == 192.) scale = 2.0;
+  if (pdpi) *pdpi = dpi;
+  return scale;
+}
+#endif
+
+
 void get_monitors(boolean reset) {
 #ifdef GUI_GTK
-  GSList *dlist, *dislist;
   GdkDisplay *disp;
   GdkScreen *screen;
+  GdkMonitor *moni;
+  GdkRectangle rect;
+  GdkDevice *device;
+  double scale, dpi;
+  int play_moni = 1;
+#if !GTK_CHECK_VERSION(3, 22, 0)
+  GSList *dlist, *dislist;
+  int nscreens, nmonitors;
 #if LIVES_HAS_DEVICE_MANAGER
   GdkDeviceManager *devman;
   LiVESList *devlist;
   register int k;
 #endif
-
-  double scale, dpi;
-  int nscreens, nmonitors;
-  register int i, j, idx = 0;
+  register int i, j;
+#endif
+  register int idx = 0;
 
   if (mainw->ignore_screen_size) return;
 
   lives_freep((void **)&mainw->mgeom);
-
-  dlist = dislist = gdk_display_manager_list_displays(gdk_display_manager_get());
-
   capable->nmonitors = 0;
+
+#if !GTK_CHECK_VERSION(3, 22, 0)
+  dlist = dislist = gdk_display_manager_list_displays(gdk_display_manager_get());
 
   // for each display get list of screens
 
@@ -340,9 +359,15 @@ void get_monitors(boolean reset) {
     }
     dlist = dlist->next;
   }
+#else
+  disp = gdk_display_get_default();
+  capable->nmonitors += gdk_display_get_n_monitors(disp);
+#endif
 
-  mainw->mgeom = (lives_mgeometry_t *)lives_malloc(capable->nmonitors * sizeof(lives_mgeometry_t));
+  mainw->mgeom = (lives_mgeometry_t *)lives_calloc(capable->nmonitors, sizeof(lives_mgeometry_t));
 
+
+#if !GTK_CHECK_VERSION(3, 22, 0)
   dlist = dislist;
 
   while (dlist != NULL) {
@@ -356,14 +381,9 @@ void get_monitors(boolean reset) {
     nscreens = lives_display_get_n_screens(disp);
     for (i = 0; i < nscreens; i++) {
       screen = gdk_display_get_screen(disp, i);
-      scale = 1.0;
-      dpi = gdk_screen_get_resolution(screen);
-      if (dpi == 120.) scale = 1.25;
-      else if (dpi == 144.) scale = 1.5;
-      else if (dpi == 192.) scale = 2.0;
+      scale = get_screen_scale(screen, &dpi);
       nmonitors = gdk_screen_get_n_monitors(screen);
       for (j = 0; j < nmonitors; j++) {
-        GdkRectangle rect;
         gdk_screen_get_monitor_geometry(screen, j, &(rect));
         mainw->mgeom[idx].x = rect.x;
         mainw->mgeom[idx].y = rect.y;
@@ -380,7 +400,7 @@ void get_monitors(boolean reset) {
 #if LIVES_HAS_DEVICE_MANAGER
         // get (virtual) mouse device for this screen
         for (k = 0; k < lives_list_length(devlist); k++) {
-          GdkDevice *device = (GdkDevice *)lives_list_nth_data(devlist, k);
+          device = (GdkDevice *)lives_list_nth_data(devlist, k);
           if (gdk_device_get_display(device) == disp &&
               gdk_device_get_source(device) == GDK_SOURCE_MOUSE) {
             mainw->mgeom[idx].mouse_device = device;
@@ -401,26 +421,31 @@ void get_monitors(boolean reset) {
   }
 
   lives_slist_free(dislist);
-#endif
-
-#ifdef GUI_QT
-  mainw->mgeom = (lives_mgeometry_t *)lives_malloc(capable->nmonitors * sizeof(lives_mgeometry_t));
-
-  capable->nmonitors = lives_display_get_n_screens(NULL);
-
-  QList<QScreen *>screens = QApplication::screens();
-
-  for (int i = 0; i < capable->nmonitors; i++) {
-    QRect qr = QApplication::desktop()->screenGeometry(i);
-    mainw->mgeom[i].x = qr.x();
-    mainw->mgeom[i].y = qr.y();
-    mainw->mgeom[i].width = qr.width();
-    mainw->mgeom[i].height = qr.height();
-
-    mainw->mgeom[i].mouse_device = NULL;
-    mainw->mgeom[i].disp = mainw->mgeom[i].screen = screens.at(i);
+#else
+  screen = gdk_display_get_default_screen(disp);
+  scale = get_screen_scale(screen, &dpi);
+  device = gdk_seat_get_pointer(gdk_display_get_default_seat(disp));
+  for (idx = 0; idx < capable->nmonitors; idx++) {
+    mainw->mgeom[idx].disp = disp;
+    mainw->mgeom[idx].monitor = moni = gdk_display_get_monitor(disp, idx);
+    mainw->mgeom[idx].screen = screen;
+    gdk_monitor_get_geometry(moni, (GdkRectangle *)&rect);
+    mainw->mgeom[idx].x = rect.x;
+    mainw->mgeom[idx].y = rect.y;
+    mainw->mgeom[idx].phys_width = rect.width;
+    mainw->mgeom[idx].phys_height = rect.height;
+    mainw->mgeom[idx].mouse_device = device;
+    mainw->mgeom[idx].dpi = dpi;
+    mainw->mgeom[idx].scale = scale;
+    gdk_monitor_get_workarea(moni, &(rect));
+    mainw->mgeom[idx].width = rect.width;
+    mainw->mgeom[idx].height = rect.height;
+    if (gdk_monitor_is_primary(moni)) {
+      capable->primary_monitor = idx;
+      mainw->mgeom[idx].primary = TRUE;
+    } else if (play_moni == 1) play_moni = idx + 1;
   }
-
+#endif
 #endif
 
   if (prefs->force_single_monitor) capable->nmonitors = 1; // force for clone mode
@@ -428,15 +453,12 @@ void get_monitors(boolean reset) {
   if (!reset) return;
 
   prefs->gui_monitor = 0;
-  prefs->play_monitor = 1;
+  prefs->play_monitor = play_moni;
 
   if (capable->nmonitors > 1) {
     get_string_pref(PREF_MONITORS, buff, 256);
 
-    if (strlen(buff) == 0 || get_token_count(buff, ',') == 1) {
-      prefs->gui_monitor = 1;
-      prefs->play_monitor = 2;
-    } else {
+    if (*buff && get_token_count(buff, ',') > 1) {
       char **array = lives_strsplit(buff, ",", 2);
       prefs->gui_monitor = atoi(array[0]);
       prefs->play_monitor = atoi(array[1]);
@@ -449,7 +471,7 @@ void get_monitors(boolean reset) {
     if (prefs->play_monitor > capable->nmonitors) prefs->play_monitor = capable->nmonitors;
   }
 
-  widget_opts.monitor = prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0;
+  widget_opts.monitor = prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : capable->primary_monitor;
   widget_opts.screen = mainw->mgeom[widget_opts.monitor].screen;
 
   mainw->old_scr_width = GUI_SCREEN_WIDTH;
@@ -637,6 +659,8 @@ static boolean pre_init(void) {
 
   prefs->force_single_monitor = get_boolean_pref(PREF_FORCE_SINGLE_MONITOR);
   mainw->ignore_screen_size = FALSE;
+
+  capable->primary_monitor = 0;
 
   // sets prefs->screen_scale, capable->nmonitors, mainw->mgeom, prefs->play_monitor, prefs->gui_monitor
   // prefs->show_msg_area, mainw->old_screen_height, mainw->old_screen_width
@@ -2955,18 +2979,22 @@ static boolean render_choice_idle(livespointer data) {
 }
 
 
+static boolean lazy_startup_checks(void *data) {
+  if (mainw->ldg_menuitem) {
+    if (!RFX_LOADED) return TRUE;
+    lives_widget_destroy(mainw->ldg_menuitem);
+    mainw->ldg_menuitem = NULL;
+    add_rfx_effects2(RFX_STATUS_ANY);
+    if (LIVES_IS_SENSITIZED) sensitize(); // call fn again to sens. new menu entries
+  }
+  return FALSE;
+}
+
+
 boolean resize_message_area(livespointer data) {
   // workaround because the window manager will resize the window asynchronously
   static boolean isfirst = TRUE;
   int bx, by;
-
-  if (!mainw->multitrack && mainw->ldg_menuitem) {
-    if (RFX_LOADED) {
-      lives_widget_destroy(mainw->ldg_menuitem);
-      mainw->ldg_menuitem = NULL;
-      add_rfx_effects2(RFX_STATUS_ANY);
-    }
-  }
 
   if (!prefs->show_gui || LIVES_IS_PLAYING || mainw->is_processing || mainw->is_rendering || !prefs->show_msg_area) {
     mainw->assumed_height = mainw->assumed_width = -1;
@@ -3119,7 +3147,7 @@ static boolean lives_startup(livespointer data) {
     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
 
-  set_interactive(mainw->interactive);
+  set_interactive(LIVES_IS_INTERACTIVE);
 
   // needed to avoid priv->pulse2 > priv->pulse1 gtk error
   lives_widget_context_update();
@@ -3293,8 +3321,8 @@ static boolean lives_startup(livespointer data) {
     switch_aud_to_none(FALSE);
   }
 
-  /* mainw->helper_procthreads[PT_LAZY_RFX] = lives_proc_thread_create(NULL, (lives_funcptr_t)add_rfx_effects, -1, "i", */
-  /* 								    RFX_STATUS_ANY); */
+  mainw->helper_procthreads[PT_LAZY_RFX] = lives_proc_thread_create(NULL, (lives_funcptr_t)add_rfx_effects, -1, "i",
+      RFX_STATUS_ANY);
 
   lives_idle_add(lives_startup2, NULL);
   return FALSE;
@@ -3405,9 +3433,10 @@ static boolean lives_startup2(livespointer data) {
 
   // timer to poll for external commands: MIDI, joystick, jack transport, osc, etc.
   mainw->kb_timer = lives_timer_add_simple(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
+  lives_idle_add_simple(lazy_startup_checks, NULL);
 
   return FALSE;
-} // end lives_startup()
+} // end lives_startup2()
 
 
 void set_signal_handlers(SignalHandlerPointer sigfunc) {
@@ -3662,7 +3691,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   mainw->debug = FALSE;
 
-  mainw->interactive = TRUE;
+  mainw->sense_state = LIVES_SENSE_STATE_INTERACTIVE;
 
   prefs->max_modes_per_key = atoi(DEF_FX_KEYMODES);
 
@@ -4086,7 +4115,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
         if (!strcmp(charopt, "noninteractive")) {
           // disable menu/toolbar interactivity
-          mainw->interactive = FALSE;
+          mainw->sense_state &= ~LIVES_SENSE_STATE_INTERACTIVE;
           continue;
         }
 
@@ -4335,6 +4364,8 @@ void sensitize(void) {
     return;
   }
 
+  mainw->sense_state &= LIVES_SENSE_STATE_INTERACTIVE;
+  mainw->sense_state |= LIVES_SENSE_STATE_SENSITIZED;
   lives_widget_set_sensitive(mainw->open, TRUE);
   lives_widget_set_sensitive(mainw->open_sel, TRUE);
   lives_widget_set_sensitive(mainw->open_vcd_menu, TRUE);
@@ -4372,7 +4403,7 @@ void sensitize(void) {
                              cfile->real_pointer_time > 0.);
   lives_widget_set_sensitive(mainw->m_loopbutton, TRUE);
   lives_widget_set_sensitive(mainw->m_mutebutton, TRUE);
-  if (mainw->preview_box != NULL) {
+  if (mainw->preview_box) {
     lives_widget_set_sensitive(mainw->p_playbutton, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
     lives_widget_set_sensitive(mainw->p_playselbutton, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
     lives_widget_set_sensitive(mainw->p_rewindbutton, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID &&
@@ -4523,7 +4554,7 @@ void sensitize(void) {
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
     lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
 
-    if (mainw->interactive) {
+    if (LIVES_IS_INTERACTIVE) {
       lives_widget_set_sensitive(mainw->spinbutton_start, TRUE);
       lives_widget_set_sensitive(mainw->spinbutton_end, TRUE);
     }
@@ -4554,6 +4585,9 @@ void desensitize(void) {
     mt_desensitise(mainw->multitrack);
     return;
   }
+
+  mainw->sense_state &= LIVES_SENSE_STATE_INTERACTIVE;
+  mainw->sense_state |= LIVES_SENSE_STATE_INSENSITIZED;
 
   //lives_widget_set_sensitive (mainw->open, mainw->playing_file>-1);
   lives_widget_set_sensitive(mainw->open, FALSE);
@@ -4683,6 +4717,9 @@ void procw_desensitize(void) {
   int current_file;
 
   if (mainw->multitrack != NULL) return;
+
+  mainw->sense_state &= LIVES_SENSE_STATE_INTERACTIVE;
+  mainw->sense_state |= LIVES_SENSE_STATE_PROC_INSENSITIZED | LIVES_SENSE_STATE_INSENSITIZED;
 
   lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
   lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
@@ -7012,8 +7049,13 @@ static boolean avsync_check(void) {
   register int count = USEC_WAIT_FOR_SYNC / 10, rc = 0;
   struct timespec ts;
 
-  if (mainw->foreign || !LIVES_IS_PLAYING || prefs->audio_src == AUDIO_SRC_EXT
-      || (mainw->event_list && !(mainw->record || mainw->record_paused))) {
+#ifdef VALGRIND_ON
+  count *= 10;
+#endif
+
+  if (mainw->foreign || !LIVES_IS_PLAYING || prefs->audio_src == AUDIO_SRC_EXT || prefs->force_system_clock
+      || (mainw->event_list && !(mainw->record || mainw->record_paused)) || prefs->audio_player == AUD_PLAYER_NONE
+      || !is_realtime_aplayer(prefs->audio_player)) {
     mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
     return TRUE;
   }
@@ -7315,7 +7357,7 @@ void load_frame_image(int frame) {
 	}
       }
 
-      if ((!mainw->fs || (prefs->play_monitor != prefs->gui_monitor && capable->nmonitors > 1) ||
+      if ((!mainw->fs || (prefs->play_monitor != widget_opts.monitor && capable->nmonitors > 1) ||
 	   (mainw->ext_playback && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)))
 	  && !prefs->hide_framebar) {
 	lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount);

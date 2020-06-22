@@ -2182,7 +2182,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       lives_widget_hide(cfile->proc_ptr->cancel_button);
     }
 
-    if (!mainw->interactive) {
+    if (!LIVES_IS_INTERACTIVE) {
       lives_widget_set_sensitive(cfile->proc_ptr->cancel_button, FALSE);
       if (cfile->proc_ptr->stop_button != NULL)
         lives_widget_set_sensitive(cfile->proc_ptr->stop_button, FALSE);

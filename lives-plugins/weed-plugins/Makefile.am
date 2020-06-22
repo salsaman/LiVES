@@ -180,6 +180,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	mirrors.la \
 	multi_blends.la \
 	multi_transitions.la \
+	alpha_to_grey.la \
 	negate.la \
 	nn_programmer.la \
 	noise.la \

@@ -13,6 +13,8 @@
 #define USE_EXTEND
 #endif
 
+//#define WEED_ADVANCED_PALETTES
+
 #define WEED_LEAF_CLIP "clip"
 #define WEED_LEAF_FRAME "frame"
 #define WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS "host_contiguous"

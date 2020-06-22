@@ -354,8 +354,10 @@ typedef struct {
   LiVESXDevice *mouse_device; ///< unused for gtk+ < 3.0.0
   LiVESXDisplay *disp;
   LiVESXScreen *screen;
+  LiVESXMonitor *monitor;
   double dpi;
   double scale;
+  boolean primary;
 } lives_mgeometry_t;
 
 /// constant strings
@@ -1540,7 +1542,15 @@ typedef struct {
 
   pthread_t *libthread;  /// GUI thread for liblives
 
-  boolean interactive; /// if set to FALSE then interaction via the GUI (mouse / keypresses) should be disabled. Mainly for liblives.
+#define LIVES_SENSE_STATE_INSENSITIZED (1 << 0)
+#define LIVES_SENSE_STATE_PROC_INSENSITIZED (1 << 1)
+#define LIVES_SENSE_STATE_SENSITIZED (1 << 16)
+#define LIVES_SENSE_STATE_INTERACTIVE (1 << 31)
+
+#define LIVES_IS_INTERACTIVE ((mainw->sense_state & LIVES_SENSE_STATE_INTERACTIVE) ? TRUE : FALSE)
+#define LIVES_IS_SENSITIZED ((mainw->sense_state & LIVES_SENSE_STATE_SENSITIZED) ? TRUE : FALSE)
+
+  uint32_t sense_state;
 
   int fc_buttonresponse; /// ???
 

@@ -143,7 +143,6 @@ static weed_error_t rotozoom_process(weed_plant_t *inst, weed_timecode_t timesta
 
 
 WEED_SETUP_START(200, 200) {
-  int i;
   int palette_list[] = ALL_PACKED_PALETTES_PLUS;
 
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
@@ -159,7 +158,7 @@ WEED_SETUP_START(200, 200) {
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 
   // static data for all instances
-  for (i = 0; i < 256; i++) {
+  for (register int i = 0; i < 256; i++) {
     float rad = (float)i * 1.41176 * 0.0174532;
     float c = sin(rad);
     roto[i] = (c + 0.8) * 4096.0;

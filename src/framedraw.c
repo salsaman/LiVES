@@ -853,7 +853,7 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
 
   b1_held = TRUE;
 
-  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                            widget, &xstarti, &ystarti);
 
   if ((framedraw->type == LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT ||
@@ -957,7 +957,7 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
   if (framedraw == NULL) return FALSE;
   if (mainw->multitrack != NULL && mainw->multitrack->track_index == -1) return FALSE;
 
-  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                            widget, &xcurrenti, &ycurrenti);
 
   width = cfile->hsize;
@@ -1117,7 +1117,7 @@ boolean on_framedraw_mouse_reset(LiVESWidget *widget, LiVESXEventButton *event, 
   if (framedraw == NULL) return FALSE;
   if (mainw->multitrack != NULL && mainw->multitrack->track_index == -1) return FALSE;
 
-  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                            widget, &xcurrenti, &ycurrenti);
 
   width = cfile->hsize;

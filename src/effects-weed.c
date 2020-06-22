@@ -1344,19 +1344,20 @@ static void *thread_process_func(void *arg) {
 
 #define SLICE_ALIGN 2
 
-static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant_t **out_channels, weed_timecode_t tc) {
+static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timecode_t tc) {
   // split output(s) into horizontal slices
   struct _procvals *procvals;
   lives_thread_t *dthreads = NULL;
   weed_plant_t **xinst = NULL;
-  weed_plant_t **xchannels;
+  weed_plant_t **xchannels, *xchan;
   weed_plant_t *filter = weed_instance_get_filter(inst, FALSE);
   weed_error_t error;
   weed_error_t retval;
-  int nchannels = weed_leaf_num_elements(inst, WEED_LEAF_OUT_CHANNELS);
+  int nchannels;
   int pal;
   double vrt;
 
+  weed_plant_t **out_channels = weed_get_plantptr_array_counted(inst, WEED_LEAF_OUT_CHANNELS, &nchannels);
   boolean plugin_invalid = FALSE;
   boolean filter_invalid = FALSE;
   boolean needs_reinit = FALSE;
@@ -1402,10 +1403,10 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
   procvals = (struct _procvals *)lives_calloc(to_use, sizeof(struct _procvals));
   procvals->ret = WEED_SUCCESS;
   xinst = (weed_plant_t **)lives_calloc(to_use, sizeof(weed_plant_t *));
-  dthreads = (lives_thread_t *)lives_calloc(to_use, sizeof(lives_thread_t));
+  dthreads = (lives_thread_t *)lives_calloc(to_use - 1, sizeof(lives_thread_t));
 
   for (i = 0; i < nchannels; i++) {
-    heights[1] = height = weed_get_int_value(out_channels[i], WEED_LEAF_HEIGHT, &error);
+    heights[1] = height = weed_get_int_value(out_channels[i], WEED_LEAF_HEIGHT, NULL);
     slices = height / vstep;
     slices_per_thread = CEIL((double)slices / (double)to_use, 1.);
     dheight = slices_per_thread * vstep;
@@ -1418,26 +1419,35 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
     // each thread needs its own copy of the output channels, so it can have its own WEED_LEAF_OFFSET and WEED_LEAF_HEIGHT
     // therefore it also needs its own copy of inst
     // but note that WEED_LEAF_PIXEL_DATA always points to the same memory buffer(s)
-
-    pthread_mutex_lock(&mainw->instance_ref_mutex);
-    xinst[j] = weed_plant_copy(inst);
-    pthread_mutex_unlock(&mainw->instance_ref_mutex);
-    xchannels = (weed_plant_t **)lives_malloc(nchannels * sizeof(weed_plant_t *));
+    // this is good also because it avoids concurrency problems with updating inst leaves
+    // one of the threads (in this case the last one) will get the original inst so it can update values
+    if (j < to_use - 1) {
+      pthread_mutex_lock(&mainw->instance_ref_mutex);
+      xinst[j] = weed_plant_copy(inst);
+      pthread_mutex_unlock(&mainw->instance_ref_mutex);
+      xchannels = (weed_plant_t **)lives_malloc(nchannels * sizeof(weed_plant_t *));
+    } else xinst[j] = inst;
 
     for (i = 0; i < nchannels; i++) {
-      xchannels[i] = weed_plant_copy(out_channels[i]);
+      if (j < to_use - 1) {
+        xchan = xchannels[i] = weed_plant_copy(out_channels[i]);
+      } else {
+        xchan = out_channels[i];
+      }
       xheights = weed_get_int_array(out_channels[i], WEED_LEAF_HEIGHT, NULL);
       height = xheights[1];
       dheight = xheights[0];
       offset = dheight * j;
       if ((height - offset) < dheight) dheight = height - offset;
       xheights[0] = dheight;
-      weed_set_int_value(xchannels[i], WEED_LEAF_OFFSET, offset);
-      weed_set_int_array(xchannels[i], WEED_LEAF_HEIGHT, 2, xheights);
+      weed_set_int_value(xchan, WEED_LEAF_OFFSET, offset);
+      weed_set_int_array(xchan, WEED_LEAF_HEIGHT, 2, xheights);
       lives_free(xheights);
     }
 
-    weed_set_plantptr_array(xinst[j], WEED_LEAF_OUT_CHANNELS, nchannels, xchannels);
+    if (j < to_use - 1) {
+      weed_set_plantptr_array(xinst[j], WEED_LEAF_OUT_CHANNELS, nchannels, xchannels);
+    }
     lives_freep((void **)&xchannels);
 
     procvals[j].procfunc = process_func;
@@ -1466,7 +1476,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
     if (retval == WEED_ERROR_FILTER_INVALID) filter_invalid = TRUE;
     if (retval == WEED_ERROR_REINIT_NEEDED) needs_reinit = TRUE;
 
-    xchannels = weed_get_plantptr_array(xinst[j], WEED_LEAF_OUT_CHANNELS, &error);
+    xchannels = weed_get_plantptr_array(xinst[j], WEED_LEAF_OUT_CHANNELS, NULL);
     for (i = 0; i < nchannels; i++) {
       weed_plant_free(xchannels[i]);
     }
@@ -1898,7 +1908,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     layer = layers[in_tracks[i]];
     clip = weed_get_int_value(layer, WEED_LEAF_CLIP, NULL);
 
-    // check_layer_ready() should have done this, but let's check again
     if (!weed_layer_get_pixel_data_packed(layer)) {
       //check_layer_ready(layer);
       /* /// wait for thread to pull layer pixel_data */
@@ -2493,9 +2502,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
           weed_channel_set_gamma_type(channel, cfile->gamma_type);
       }
 
-      weed_layer_set_gamma(layer, weed_channel_get_gamma_type(channel));
       weed_set_boolean_value(channel, WEED_LEAF_HOST_INPLACE, WEED_FALSE);
-
       // end of (!inplace)
     }
 
@@ -2582,7 +2589,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     }
 
     layer = layers[out_tracks[i]];
-    check_layer_ready(layer);
+    //check_layer_ready(layer);
 
     // free any existing pixel_data, we will replace it with the channel data
     weed_layer_pixel_data_free(layer);
@@ -2591,7 +2598,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       retval = FILTER_ERROR_COPYING_FAILED;
       goto done_video;
     }
-
     i++;
   }
 
@@ -2727,7 +2733,7 @@ lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc
       filter_flags & WEED_FILTER_HINT_MAY_THREAD) {
     weed_plant_t **out_channels = weed_instance_get_out_channels(instance, NULL);
     if (key == -1 || !filter_mutex_trylock(key)) {
-      retval = process_func_threaded(instance, out_channels, tc);
+      retval = process_func_threaded(instance, tc);
       if (key != -1) filter_mutex_unlock(key);
     } else retval = FILTER_ERROR_INVALID_PLUGIN;
     lives_free(out_channels);
@@ -4091,7 +4097,7 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
                                     "as it requires at least %d input audio channels\n",
                                     filtname, pkstr, naudins);
           lives_free(filtname); lives_free(pkstr); lives_free(pkgstring);
-          LIVES_WARN(msg);
+          LIVES_INFO(msg);
           lives_free(msg);
           return 7;
         }
@@ -4124,7 +4130,22 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
   // *INDENT-ON*
 
   if (num_elements > 0) lives_freep((void **)&array);
-  if (chans_in_mand > 2) return 8; // we dont handle mixers yet...
+  if (chans_in_mand > 2) {
+    // currently we only handle mono and stereo audio filters
+    char *filtname = weed_filter_get_name(filter);
+    char *pkgstring = weed_filter_get_package_name(filter);
+    char *msg, *pkstr;
+    lives_freep((void **)&array);
+    if (pkgstring) pkstr = lives_strdup_printf(" from package %s ", pkgstring);
+    else pkstr = lives_strdup("");
+    msg = lives_strdup_printf("Cannot use filter %s%s\n"
+                              "as it requires at least %d input video channels\n",
+                              filtname, pkstr, chans_in_mand);
+    lives_free(filtname); lives_free(pkstr); lives_free(pkgstring);
+    LIVES_INFO(msg);
+    lives_free(msg);
+    return 8; // we dont handle mixers yet...
+  }
   if (achans_in_mand > 0 && chans_in_mand > 0) return 13; // can't yet handle effects that need both audio and video
 
   // count number of mandatory and optional out_channels
@@ -7735,7 +7756,7 @@ matchvals:
 procfunc1:
   // cannot lock the filter here as we may be multithreading
   if (filter_flags & WEED_FILTER_HINT_MAY_THREAD) {
-    retval = process_func_threaded(inst, out_channels, tc);
+    retval = process_func_threaded(inst, tc);
     if (retval != FILTER_ERROR_DONT_THREAD) did_thread = TRUE;
   }
   if (!did_thread) {
@@ -12157,7 +12178,7 @@ boolean read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
   weed_plant_t **key_defs;
   weed_timecode_t tc;
 
-  boolean ret = FALSE;
+  int ret = 0;
 
   if (key >= 0) {
     idx = key_to_fx[key][mode];
@@ -12183,6 +12204,7 @@ boolean read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
       if (bytes < 4) {
         goto err123;
       }
+      if (!nvals) return TRUE;
       bytes = lives_read_le_buffered(fd, &tc, 8, TRUE);
       if (bytes < sizeof(weed_timecode_t)) {
         goto err123;
@@ -12287,7 +12309,7 @@ void write_key_defaults(int fd, int key, int mode) {
 
   weed_plant_t *filter;
   weed_plant_t **key_defs;
-  int nparams;
+  int nparams = 0;
 
   if ((key_defs = key_defaults[key][mode]) == NULL) {
     lives_write_le_buffered(fd, &nparams, 4, TRUE);

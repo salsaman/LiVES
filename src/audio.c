@@ -2631,6 +2631,13 @@ void free_pulse_audio_buffers(void) {
 LIVES_GLOBAL_INLINE void avsync_force(void) {
 #ifdef RESEEK_ENABLE
   /// force realignment of video and audio at current file->frameno / player->seek_pos
+  if (mainw->foreign || !LIVES_IS_PLAYING || prefs->audio_src == AUDIO_SRC_EXT || prefs->force_system_clock
+      || (mainw->event_list && !(mainw->record || mainw->record_paused)) || prefs->audio_player == AUD_PLAYER_NONE
+      || !is_realtime_aplayer(prefs->audio_player)) {
+    mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+    return;
+  }
+
   if (!pthread_mutex_trylock(&mainw->avseek_mutex)) {
     if (mainw->audio_seek_ready && mainw->video_seek_ready) {
       mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;

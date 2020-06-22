@@ -136,7 +136,7 @@ void make_custom_submenus(void) {
 #if GTK_CHECK_VERSION(3, 0, 0)
 boolean expose_sim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   if (mainw->is_generating) return TRUE;
-  if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((prefs->gui_monitor == prefs->play_monitor ||
+  if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((widget_opts.monitor == prefs->play_monitor ||
                                         capable->nmonitors == 1) &&
                                         (!mainw->ext_playback ||
                                          (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
@@ -147,7 +147,7 @@ boolean expose_sim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
 
 boolean expose_eim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   if (mainw->is_generating) return TRUE;
-  if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((prefs->gui_monitor == prefs->play_monitor ||
+  if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((widget_opts.monitor == prefs->play_monitor ||
                                         capable->nmonitors == 1)  &&
                                         (!mainw->ext_playback ||
                                          (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
@@ -3121,6 +3121,7 @@ void set_interactive(boolean interactive) {
   LiVESList *list;
 
   if (!interactive) {
+    mainw->sense_state &= ~LIVES_SENSE_STATE_INTERACTIVE;
     lives_widget_object_ref(mainw->menubar);
     lives_widget_unparent(mainw->menubar);
     lives_widget_hide(mainw->btoolbar);
@@ -3164,6 +3165,7 @@ void set_interactive(boolean interactive) {
       lives_widget_set_sensitive(cfile->proc_ptr->preview_button, FALSE);
     }
   } else {
+    mainw->sense_state |= LIVES_SENSE_STATE_INTERACTIVE;
     if (lives_widget_get_parent(mainw->menubar) == NULL) {
       //lives_box_pack_start(LIVES_BOX(mainw->menu_hbox), mainw->menubar, FALSE, FALSE, 0);
       //lives_widget_object_unref(mainw->menubar);
@@ -3936,7 +3938,7 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
     list = list->next;
   }
 
-  set_interactive(mainw->interactive);
+  set_interactive(LIVES_IS_INTERACTIVE);
 
   mainw->is_ready = TRUE;
   mainw->go_away = FALSE;
@@ -4036,7 +4038,7 @@ void make_play_window(void) {
     lives_widget_set_tooltip_text(mainw->p_playbutton, _("Preview"));
 
   if (LIVES_IS_PLAYING) {
-    //lives_widget_hide(mainw->preview_controls);
+    lives_widget_hide(mainw->preview_controls);
   } else {
     if (mainw->is_processing && (mainw->prv_link == PRV_START || mainw->prv_link == PRV_END)) {
       // block spinbutton in play window
@@ -4083,8 +4085,17 @@ LIVES_GLOBAL_INLINE boolean get_play_screen_size(int *opwidth, int *opheight) {
   if (prefs->play_monitor == 0) {
     if (capable->nmonitors > 1) {
       // spread over all monitors
+#if !GTK_CHECK_VERSION(3, 22, 0)
       *opwidth = lives_screen_get_width(mainw->mgeom[0].screen);
       *opheight = lives_screen_get_height(mainw->mgeom[0].screen);
+#else
+      /// TODO: no doubt this is wrong and should be done taking into account vertical monitor layouts as well
+      *opheight = mainw->mgeom[0].height;
+      *opwidth = 0;
+      for (register int i = 0; i < capable->nmonitors; i++) {
+        *opwidth += mainw->mgeom[i].width;
+      }
+#endif
       return TRUE;
     } else {
       // but we only have one...
@@ -4356,7 +4367,7 @@ void resize_play_window(void) {
       }
 
 #define TEST_CE_THUMBS 0
-      if (TEST_CE_THUMBS || (prefs->show_gui && prefs->ce_thumb_mode && prefs->play_monitor != prefs->gui_monitor &&
+      if (TEST_CE_THUMBS || (prefs->show_gui && prefs->ce_thumb_mode && prefs->play_monitor != widget_opts.monitor &&
                              prefs->play_monitor != 0 &&
                              capable->nmonitors > 1 && mainw->multitrack == NULL)) {
         start_ce_thumb_mode();

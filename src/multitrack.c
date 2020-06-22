@@ -2106,7 +2106,7 @@ static void show_track_info(lives_mt * mt, LiVESWidget * eventbox, int track, do
 static boolean atrack_ebox_pressed(LiVESWidget * labelbox, LiVESXEventButton * event, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   int current_track = mt->current_track;
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
   mt->current_track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(labelbox), "layer_number"));
   if (current_track != mt->current_track) mt->fm_edit_event = NULL;
   mt->aud_track_selected = TRUE;
@@ -2120,7 +2120,7 @@ static boolean atrack_ebox_pressed(LiVESWidget * labelbox, LiVESXEventButton * e
 static boolean track_ebox_pressed(LiVESWidget * labelbox, LiVESXEventButton * event, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   int current_track = mt->current_track;
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
   mt->current_track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(labelbox), "layer_number"));
   if (current_track != mt->current_track) mt->fm_edit_event = NULL;
   mt->aud_track_selected = FALSE;
@@ -2713,7 +2713,7 @@ boolean track_arrow_pressed(LiVESWidget * ebox, LiVESXEventButton * event, lives
   lives_mt *mt = (lives_mt *)user_data;
   boolean expanded = !(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "expanded"));
 
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
 
   if (mt->audio_draws == NULL || (!mt->opts.pertrack_audio && (mt->opts.back_audio_tracks == 0 ||
                                   eventbox != mt->audio_draws->data))) {
@@ -3000,7 +3000,7 @@ void mt_clip_select(lives_mt * mt, boolean scroll) {
 boolean mt_prevclip(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                     livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
-  if (!mainw->interactive) return TRUE;
+  if (!LIVES_IS_INTERACTIVE) return TRUE;
   mt->clip_selected--;
   polymorph(mt, POLY_CLIPS);
   mt_clip_select(mt, TRUE);
@@ -3011,7 +3011,7 @@ boolean mt_prevclip(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t k
 boolean mt_nextclip(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                     livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
-  if (!mainw->interactive) return TRUE;
+  if (!LIVES_IS_INTERACTIVE) return TRUE;
   mt->clip_selected++;
   polymorph(mt, POLY_CLIPS);
   mt_clip_select(mt, TRUE);
@@ -3471,7 +3471,7 @@ LIVES_INLINE void mt_tl_move_relative(lives_mt * mt, double pos_rel) {
 boolean mt_tlfor(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                  livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
-  if (!mainw->interactive) return TRUE;
+  if (!LIVES_IS_INTERACTIVE) return TRUE;
   mt->fm_edit_event = NULL;
   mt_tl_move_relative(mt, 1.);
   return TRUE;
@@ -3481,7 +3481,7 @@ boolean mt_tlfor(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyv
 boolean mt_tlfor_frame(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                        livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
-  if (!mainw->interactive) return TRUE;
+  if (!LIVES_IS_INTERACTIVE) return TRUE;
   mt->fm_edit_event = NULL;
   mt_tl_move_relative(mt, 1. / mt->fps);
   return TRUE;
@@ -3491,7 +3491,7 @@ boolean mt_tlfor_frame(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_
 boolean mt_tlback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                   livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
-  if (!mainw->interactive) return TRUE;
+  if (!LIVES_IS_INTERACTIVE) return TRUE;
   mt->fm_edit_event = NULL;
   mt_tl_move_relative(mt, -1.);
   return TRUE;
@@ -3500,7 +3500,7 @@ boolean mt_tlback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t key
 boolean mt_tlback_frame(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                         livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
-  if (!mainw->interactive) return TRUE;
+  if (!LIVES_IS_INTERACTIVE) return TRUE;
   mt->fm_edit_event = NULL;
   mt_tl_move_relative(mt, -1. / mt->fps);
   return TRUE;
@@ -3577,7 +3577,7 @@ static void scroll_time_by_scrollbar(LiVESHScrollbar * sbar, livespointer user_d
 boolean mt_trdown(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                   livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
-  if (!mainw->interactive) return TRUE;
+  if (!LIVES_IS_INTERACTIVE) return TRUE;
 
   if (mt->current_track >= 0 && mt->opts.pertrack_audio && !mt->aud_track_selected) {
     LiVESWidget *eventbox = (LiVESWidget *)lives_list_nth_data(mt->video_draws, mt->current_track);
@@ -3616,7 +3616,7 @@ boolean mt_trup(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyva
                 livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   if (mt->current_track == -1 || (mt->current_track == 0 && !mt->aud_track_selected && !mt->opts.show_audio)) return TRUE;
-  if (!mainw->interactive) return TRUE;
+  if (!LIVES_IS_INTERACTIVE) return TRUE;
 
   if (mt->aud_track_selected) mt->aud_track_selected = FALSE;
   else {
@@ -3973,7 +3973,7 @@ static boolean on_drag_filter_end(LiVESWidget * widget, LiVESXEventButton * even
       labelbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "labelbox");
       if (lives_widget_get_xwindow(eventbox) == window || lives_widget_get_xwindow(labelbox) == window) {
         if (lives_widget_get_xwindow(labelbox) != window) {
-          lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+          lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                                    mt->timeline, &mt->sel_x, &mt->sel_y);
           timesecs = get_time_from_x(mt, mt->sel_x);
         }
@@ -3996,7 +3996,7 @@ static boolean on_drag_filter_end(LiVESWidget * widget, LiVESXEventButton * even
       if (lives_widget_get_xwindow(eventbox) == window || lives_widget_get_xwindow(labelbox) == window ||
           lives_widget_get_xwindow(ahbox) == window) {
         if (lives_widget_get_xwindow(labelbox) != window) {
-          lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+          lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                                    mt->timeline, &mt->sel_x, &mt->sel_y);
           timesecs = get_time_from_x(mt, mt->sel_x);
         }
@@ -4304,7 +4304,7 @@ void mt_spin_start_value_changed(LiVESSpinButton * spinbutton, livespointer user
   lives_mt *mt = (lives_mt *)user_data;
   boolean has_region = (mt->region_start != mt->region_end);
 
-  if (!mainw->interactive) return;
+  if (!LIVES_IS_INTERACTIVE) return;
 
   lives_signal_handler_block(mt->spinbutton_start, mt->spin_start_func);
   mt->region_start = q_dbl(lives_spin_button_get_value(spinbutton), mt->fps) / TICKS_PER_SECOND_DBL;
@@ -4359,7 +4359,7 @@ void mt_spin_end_value_changed(LiVESSpinButton * spinbutton, livespointer user_d
   lives_mt *mt = (lives_mt *)user_data;
   boolean has_region = (mt->region_start != mt->region_end);
 
-  if (!mainw->interactive) return;
+  if (!LIVES_IS_INTERACTIVE) return;
 
   lives_signal_handler_block(mt->spinbutton_end, mt->spin_end_func);
   mt->region_end = q_dbl(lives_spin_button_get_value(spinbutton), mt->fps) / TICKS_PER_SECOND_DBL;
@@ -4420,7 +4420,7 @@ static boolean in_out_ebox_pressed(LiVESWidget * eventbox, LiVESXEventButton * e
   int file;
   lives_mt *mt = (lives_mt *)user_data;
 
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
 
   if (mt->block_selected != NULL) return FALSE;
 
@@ -4461,7 +4461,7 @@ static void do_clip_context(lives_mt * mt, LiVESXEventButton * event, lives_clip
   LiVESWidget *edit_start_end, *edit_clipedit, *close_clip, *show_clipinfo;
   LiVESWidget *menu = lives_menu_new();
 
-  if (!mainw->interactive) return;
+  if (!LIVES_IS_INTERACTIVE) return;
 
   lives_menu_set_title(LIVES_MENU(menu), _("Selected Clip"));
 
@@ -4516,7 +4516,7 @@ static boolean clip_ebox_pressed(LiVESWidget * eventbox, LiVESXEventButton * eve
 
   if (!mt->is_ready) return FALSE;
 
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
 
   if (event->type != LIVES_BUTTON_PRESS && !mt->is_rendering) {
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
@@ -4534,7 +4534,7 @@ static boolean clip_ebox_pressed(LiVESWidget * eventbox, LiVESXEventButton * eve
 
   if (event->button == 3) {
     double timesecs;
-    lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+    lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                              mt->timeline, &mt->sel_x, &mt->sel_y);
     timesecs = get_time_from_x(mt, mt->sel_x);
     lives_ruler_set_value(LIVES_RULER(mt->timeline), timesecs);
@@ -4580,7 +4580,7 @@ static boolean on_drag_clip_end(LiVESWidget * widget, LiVESXEventButton * event,
 
   int win_x, win_y;
 
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
 
   if (mt->is_rendering) return FALSE;
 
@@ -4605,7 +4605,7 @@ static boolean on_drag_clip_end(LiVESWidget * widget, LiVESXEventButton * event,
       // insert in backing audio
       if (lives_widget_get_xwindow(labelbox) == window || lives_widget_get_xwindow(ahbox) == window) timesecs = 0.;
       else {
-        lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+        lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                                  mt->timeline, &mt->sel_x, &mt->sel_y);
         timesecs = get_time_from_x(mt, mt->sel_x);
       }
@@ -4646,7 +4646,7 @@ static boolean on_drag_clip_end(LiVESWidget * widget, LiVESXEventButton * event,
         lives_widget_get_xwindow(ahbox) == window) {
       if (lives_widget_get_xwindow(labelbox) == window || lives_widget_get_xwindow(ahbox) == window) timesecs = 0.;
       else {
-        lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+        lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                                  mt->timeline, &mt->sel_x, &mt->sel_y);
         timesecs = get_time_from_x(mt, mt->sel_x);
       }
@@ -4802,7 +4802,6 @@ void mouse_mode_context(lives_mt * mt) {
 
 void update_insert_mode(lives_mt * mt) {
   const char *mtext = NULL;
-
   if (mt->opts.insert_mode == INSERT_MODE_NORMAL) {
     mtext = lives_menu_item_get_text(mt->ins_normal);
   }
@@ -4824,7 +4823,7 @@ void update_insert_mode(lives_mt * mt) {
 static void on_insert_mode_changed(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
 
-  if (!mainw->interactive) return;
+  if (!LIVES_IS_INTERACTIVE) return;
 
   if (menuitem == (LiVESMenuItem *)mt->ins_normal) {
     mt->opts.insert_mode = INSERT_MODE_NORMAL;
@@ -4837,7 +4836,7 @@ static void on_mouse_mode_changed(LiVESMenuItem * menuitem, livespointer user_da
   lives_mt *mt = (lives_mt *)user_data;
   const char *text;
 
-  if (!mainw->interactive) return;
+  if (!LIVES_IS_INTERACTIVE) return;
 
   if (menuitem == (LiVESMenuItem *)mt->mm_move) {
     mt->opts.mouse_mode = MOUSE_MODE_MOVE;
@@ -4905,7 +4904,7 @@ void update_grav_mode(lives_mt * mt) {
 static void on_grav_mode_changed(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
 
-  if (!mainw->interactive) return;
+  if (!LIVES_IS_INTERACTIVE) return;
 
   if (menuitem == (LiVESMenuItem *)mt->grav_normal) {
     mt->opts.grav_mode = GRAV_MODE_NORMAL;
@@ -6352,15 +6351,13 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   LiVESWidgetObject *vadjustment;
   LiVESAdjustment *spinbutton_adj;
 
-  char buff[32768];
-  const char *mtext;
-
   boolean in_menubar = TRUE;
   boolean woat = widget_opts.apply_theme;
 
   char *cname, *tname, *msg;
   char *tmp, *tmp2;
   char *pkg, *xpkgv = NULL, *xpkga = NULL;
+  const char *mtext = NULL;
 
   int dph;
   int num_filters;
@@ -6726,36 +6723,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   recent_submenu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mt->recent_menu), recent_submenu);
 
-  lives_memset(buff, 0, 1);
-  widget_opts.mnemonic_label = FALSE;
-
   for (i = 0; i < N_RECENT_FILES; i++) {
-    char *prefname = lives_strdup_printf("%s%d", PREF_RECENT, i + 1);
-    get_utf8_pref(prefname, buff, PATH_MAX * 2);
-    lives_free(prefname);
-    mt->recent[i] = lives_standard_menu_item_new_with_label(buff);
-    lives_container_add(LIVES_CONTAINER(mainw->recent_submenu), mainw->recent[i]);
+    lives_widget_reparent(mainw->recent[i], recent_submenu);
   }
-
-  widget_opts.mnemonic_label = TRUE;
-
-  lives_container_add(LIVES_CONTAINER(recent_submenu), mt->recent[0]);
-  lives_container_add(LIVES_CONTAINER(recent_submenu), mt->recent[1]);
-  lives_container_add(LIVES_CONTAINER(recent_submenu), mt->recent[2]);
-  lives_container_add(LIVES_CONTAINER(recent_submenu), mt->recent[3]);
-
-  lives_signal_connect(LIVES_GUI_OBJECT(mt->recent[0]), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_recent_activate),
-                       LIVES_INT_TO_POINTER(1));
-  lives_signal_connect(LIVES_GUI_OBJECT(mt->recent[1]), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_recent_activate),
-                       LIVES_INT_TO_POINTER(2));
-  lives_signal_connect(LIVES_GUI_OBJECT(mt->recent[2]), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_recent_activate),
-                       LIVES_INT_TO_POINTER(3));
-  lives_signal_connect(LIVES_GUI_OBJECT(mt->recent[3]), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_recent_activate),
-                       LIVES_INT_TO_POINTER(4));
 
   lives_menu_add_separator(LIVES_MENU(mt->files_menu));
 
@@ -7361,8 +7331,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_sensitive(mt->fx_block, FALSE);
   lives_widget_set_sensitive(mt->fx_region, FALSE);
 
-  // Tracks
 
+  // Tracks
   menuitem = lives_standard_menu_item_new_with_label(_("_Tracks"));
   lives_container_add(LIVES_CONTAINER(mt->menubar), menuitem);
 
@@ -8213,7 +8183,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_widget_show_all(mt->grav_submenu); // needed
 
-  if (mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].width > MENUBAR_MIN) in_menubar = FALSE;
+  if (mainw->mgeom[widget_opts.monitor].width > MENUBAR_MIN) in_menubar = FALSE;
 
   if (in_menubar) {
     menuitemsep = lives_standard_menu_item_new_with_label("|");
@@ -9464,6 +9434,10 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
       }
       mainw->files[i]->event_list = NULL;
     }
+  }
+
+  for (i = 0; i < N_RECENT_FILES; i++) {
+    lives_widget_reparent(mainw->recent[i], mainw->recent_submenu);
   }
 
   if (prefs->show_gui) {
@@ -11021,11 +10995,7 @@ boolean mt_idle_show_current_frame(livespointer mt) {
 boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_list) {
   //returns TRUE if we go into mt mode
   lives_mt *multi;
-
-  const char *mtext;
-
   boolean response;
-
   int orig_file;
 
   xachans = xarate = xasamps = xse = 0;
@@ -11234,15 +11204,6 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
       lives_widget_hide(multi->poly_box);
       lives_widget_queue_resize(multi->nb_label);
     }
-
-    mtext = lives_menu_item_get_text(multi->recent[0]);
-    if (!strlen(mtext)) lives_widget_hide(multi->recent[0]);
-    mtext = lives_menu_item_get_text(multi->recent[1]);
-    if (!strlen(mtext)) lives_widget_hide(multi->recent[1]);
-    mtext = lives_menu_item_get_text(multi->recent[2]);
-    if (!strlen(mtext)) lives_widget_hide(multi->recent[2]);
-    mtext = lives_menu_item_get_text(multi->recent[3]);
-    if (!strlen(mtext)) lives_widget_hide(multi->recent[3]);
   }
 
   if (cfile->achans == 0) {
@@ -11349,7 +11310,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
   set_mt_play_sizes(multi, cfile->hsize, cfile->vsize, FALSE);
   lives_idle_add(mt_idle_show_current_frame, (livespointer)multi);
 
-  set_interactive(mainw->interactive);
+  set_interactive(LIVES_IS_INTERACTIVE);
   if (mainw->reconfig) return FALSE;
 
   d_print(_("====== Switched to Multitrack mode ======\n"));
@@ -11891,7 +11852,7 @@ void in_out_start_changed(LiVESWidget * widget, livespointer user_data) {
   int filenum;
   int aclip = 0;
 
-  if (!mainw->interactive) return;
+  if (!LIVES_IS_INTERACTIVE) return;
 
   if (mt->idlefunc > 0) {
     needs_idlefunc = TRUE;
@@ -12163,7 +12124,7 @@ void in_out_end_changed(LiVESWidget * widget, livespointer user_data) {
   int filenum;
   int aclip = 0;
 
-  if (!mainw->interactive) return;
+  if (!LIVES_IS_INTERACTIVE) return;
 
   if (mt->idlefunc > 0) {
     needs_idlefunc = TRUE;
@@ -12521,7 +12482,7 @@ void avel_spin_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
   double orig_end_val, orig_start_val;
   boolean was_adjusted = FALSE;
 
-  if (!mainw->interactive) return;
+  if (!LIVES_IS_INTERACTIVE) return;
 
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mt->checkbutton_avel_reverse))) new_avel = -new_avel;
 
@@ -12650,7 +12611,7 @@ void in_anchor_toggled(LiVESToggleButton * togglebutton, livespointer user_data)
   weed_timecode_t offset_end;
   double avel = 1.;
 
-  if (!mainw->interactive) return;
+  if (!LIVES_IS_INTERACTIVE) return;
 
   if (mt->current_track < 0) {
     avel = get_audio_frame_vel(block->start_event, mt->current_track);
@@ -12696,7 +12657,7 @@ void out_anchor_toggled(LiVESToggleButton * togglebutton, livespointer user_data
   weed_timecode_t offset_end;
   double avel = 1.;
 
-  if (!mainw->interactive) return;
+  if (!LIVES_IS_INTERACTIVE) return;
 
   if (mt->current_track < 0) {
     avel = get_audio_frame_vel(block->start_event, mt->current_track);
@@ -13409,7 +13370,7 @@ static void mouse_select_start(LiVESWidget * widget, LiVESXEventButton * event, 
   double timesecs;
   int min_x;
 
-  if (!mainw->interactive || mt->sel_locked) return;
+  if (!LIVES_IS_INTERACTIVE || mt->sel_locked) return;
 
   lives_widget_set_sensitive(mt->mm_menuitem, FALSE);
   lives_widget_set_sensitive(mt->view_sel_events, FALSE);
@@ -13438,10 +13399,10 @@ static void mouse_select_start(LiVESWidget * widget, LiVESXEventButton * event, 
 
 
 static void mouse_select_end(LiVESWidget * widget, LiVESXEventButton * event, lives_mt * mt) {
-  if (!mainw->interactive) return;
+  if (!LIVES_IS_INTERACTIVE) return;
 
   mt->tl_selecting = FALSE;
-  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                            mt->timeline, &mt->sel_x, &mt->sel_y);
   lives_widget_set_sensitive(mt->mm_menuitem, TRUE);
   lives_widget_queue_draw(mt->tl_eventbox);
@@ -13464,11 +13425,11 @@ static void mouse_select_move(LiVESWidget * widget, LiVESXEventMotion * event, l
 
   register int i;
 
-  if (!mainw->interactive) return;
+  if (!LIVES_IS_INTERACTIVE) return;
 
   if (mt->block_selected != NULL) unselect_all(mt);
 
-  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                            mt->tl_eventbox, &x, &y);
   lives_widget_get_position(mt->timeline_eb, &min_x, NULL);
 
@@ -13591,7 +13552,7 @@ void do_block_context(lives_mt * mt, LiVESXEventButton * event, track_rect * blo
   double block_start_time, block_end_time;
 
   //mouse_select_end(NULL,mt);
-  if (!mainw->interactive) return;
+  if (!LIVES_IS_INTERACTIVE) return;
 
   lives_menu_set_title(LIVES_MENU(menu), _("Selected Block/Frame"));
 
@@ -13669,7 +13630,7 @@ void do_track_context(lives_mt * mt, LiVESXEventButton * event, double timesecs,
   boolean needs_idlefunc = FALSE;
   boolean did_backup = mt->did_backup;
 
-  if (!mainw->interactive) return;
+  if (!LIVES_IS_INTERACTIVE) return;
 
   if (mt->idlefunc > 0) {
     lives_source_remove(mt->idlefunc);
@@ -13761,7 +13722,7 @@ boolean on_track_release(LiVESWidget * eventbox, LiVESXEventButton * event, live
 
   register int i;
 
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
 
   if (mt->idlefunc > 0) {
     lives_source_remove(mt->idlefunc);
@@ -13861,7 +13822,7 @@ boolean on_track_release(LiVESWidget * eventbox, LiVESXEventButton * event, live
         move_block(mt, mt->putative_block, timesecs, old_track, track);
         mt->putative_block = NULL;
 
-        lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+        lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                                  eventbox, &x, &y);
         timesecs = get_time_from_x(mt, x);
 
@@ -13889,7 +13850,7 @@ track_rel_done:
 
 boolean on_track_header_click(LiVESWidget * widget, LiVESXEventButton * event, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
   if (mt->opts.mouse_mode == MOUSE_MODE_SELECT) {
     mouse_select_start(widget, event, mt);
     lives_signal_handler_unblock(widget, mt->mouse_mot1);
@@ -13900,7 +13861,7 @@ boolean on_track_header_click(LiVESWidget * widget, LiVESXEventButton * event, l
 
 boolean on_track_header_release(LiVESWidget * widget, LiVESXEventButton * event, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
   if (mt->opts.mouse_mode == MOUSE_MODE_SELECT) {
     mouse_select_end(widget, event, mt);
     lives_signal_handler_block(widget, mt->mouse_mot1);
@@ -13911,7 +13872,7 @@ boolean on_track_header_release(LiVESWidget * widget, LiVESXEventButton * event,
 
 boolean on_track_between_click(LiVESWidget * widget, LiVESXEventButton * event, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
   if (mt->opts.mouse_mode == MOUSE_MODE_SELECT) {
     mouse_select_start(widget, event, mt);
     lives_signal_handler_unblock(mt->tl_eventbox, mt->mouse_mot2);
@@ -13922,7 +13883,7 @@ boolean on_track_between_click(LiVESWidget * widget, LiVESXEventButton * event, 
 
 boolean on_track_between_release(LiVESWidget * widget, LiVESXEventButton * event, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
   if (mt->opts.mouse_mode == MOUSE_MODE_SELECT) {
     mouse_select_end(widget, event, mt);
     lives_signal_handler_block(mt->tl_eventbox, mt->mouse_mot2);
@@ -13944,13 +13905,13 @@ boolean on_track_click(LiVESWidget * eventbox, LiVESXEventButton * event, livesp
 
   //doubleclick=FALSE;
 
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
 
   mt->aud_track_selected = is_audio_eventbox(eventbox);
 
   lives_widget_set_sensitive(mt->mm_menuitem, FALSE);
 
-  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                            eventbox, &x, &y);
 
   timesecs = get_time_from_x(mt, x + mt->hotspot_x);
@@ -14024,9 +13985,9 @@ boolean on_track_click(LiVESWidget * eventbox, LiVESXEventButton * event, livesp
 
               mt->hotspot_x = x - (int)((ebwidth * ((double)start_secs - mt->tl_min) / (mt->tl_max - mt->tl_min)) + .5);
               mt->hotspot_y = y;
-              lives_display_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+              lives_display_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                                         mt->display, &screen, &abs_x, &abs_y, NULL);
-              lives_display_warp_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+              lives_display_warp_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor].mouse_device,
                                          mt->display, screen, abs_x - mt->hotspot_x, abs_y - y + height / 2);
               if (track >= 0 && !mt->aud_track_selected) {
                 if (mainw->files[filenum]->clip_type == CLIP_TYPE_FILE) {
@@ -14075,7 +14036,7 @@ boolean on_track_click(LiVESWidget * eventbox, LiVESXEventButton * event, livesp
 boolean on_track_move(LiVESWidget * widget, LiVESXEventMotion * event, livespointer user_data) {
   // used for mouse mode SELECT
   lives_mt *mt = (lives_mt *)user_data;
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
   if (mt->opts.mouse_mode == MOUSE_MODE_SELECT) mouse_select_move(widget, event, mt);
   return TRUE;
 }
@@ -14084,7 +14045,7 @@ boolean on_track_move(LiVESWidget * widget, LiVESXEventMotion * event, livespoin
 boolean on_track_header_move(LiVESWidget * widget, LiVESXEventMotion * event, livespointer user_data) {
   // used for mouse mode SELECT
   lives_mt *mt = (lives_mt *)user_data;
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
   if (mt->opts.mouse_mode == MOUSE_MODE_SELECT) mouse_select_move(widget, event, mt);
   return TRUE;
 }
@@ -16946,7 +16907,7 @@ void on_seltrack_toggled(LiVESWidget * checkbutton, livespointer user_data) {
   int track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(checkbutton), "layer_number"));
   lives_mt *mt = (lives_mt *)user_data;
 
-  if (!mainw->interactive) return;
+  if (!LIVES_IS_INTERACTIVE) return;
 
   mt->current_track = track;
 
@@ -18402,7 +18363,7 @@ boolean on_timeline_update(LiVESWidget * widget, LiVESXEventMotion * event, live
 
   if (LIVES_IS_PLAYING) return TRUE;
 
-  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                            widget, &x, NULL);
   pos = get_time_from_x(mt, x);
 
@@ -18561,7 +18522,7 @@ boolean on_timeline_release(LiVESWidget * eventbox, LiVESXEventButton * event, l
 
   lives_mt_poly_state_t statep;
 
-  if (!mainw->interactive || mt->sel_locked) return FALSE;
+  if (!LIVES_IS_INTERACTIVE || mt->sel_locked) return FALSE;
 
   if (LIVES_IS_PLAYING) return FALSE;
 
@@ -18681,7 +18642,7 @@ boolean on_timeline_press(LiVESWidget * widget, LiVESXEventButton * event, lives
 
   int x;
 
-  if (!mainw->interactive) return FALSE;
+  if (!LIVES_IS_INTERACTIVE) return FALSE;
 
   if (LIVES_IS_PLAYING) return FALSE;
 
@@ -20015,7 +19976,7 @@ boolean on_save_event_list_activate(LiVESMenuItem * menuitem, livespointer user_
     weed_set_string_value(event_list, WEED_LEAF_NEEDS_SET, (tmp = F2U8(mainw->set_name)));
     lives_free(tmp);
   } else if (mt != NULL) {
-    if (mainw->interactive) {
+    if (LIVES_IS_INTERACTIVE) {
       if (!set_new_set_name(mt)) {
         if (needs_idlefunc) {
           mt->idlefunc = mt_idle_add(mt);
@@ -21989,7 +21950,7 @@ boolean on_load_event_list_activate(LiVESMenuItem * menuitem, livespointer user_
   lives_mt *mt = (lives_mt *)user_data;
   weed_plant_t *new_event_list;
 
-  if (mainw->interactive)
+  if (LIVES_IS_INTERACTIVE)
     if (!check_for_layout_del(mt, FALSE)) return FALSE;
 
   if (mt->idlefunc > 0) {
@@ -22406,7 +22367,7 @@ void mt_change_vals_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     mt->audio_vols = NULL;
   }
 
-  set_interactive(mainw->interactive);
+  set_interactive(LIVES_IS_INTERACTIVE);
 
   scroll_tracks(mt, mt->top_track, FALSE);
 }
@@ -22465,7 +22426,7 @@ void on_amixer_close_clicked(LiVESButton * button, lives_mt * mt) {
   int i;
   double val;
 
-  if (!mainw->interactive) return;
+  if (!LIVES_IS_INTERACTIVE) return;
 
   mt->opts.gang_audio = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(amixer->gang_checkbutton));
 
@@ -22500,7 +22461,7 @@ static void on_amixer_reset_clicked(LiVESButton * button, lives_mt * mt) {
   lives_amixer_t *amixer = mt->amixer;
   int i;
 
-  if (!mainw->interactive) return;
+  if (!LIVES_IS_INTERACTIVE) return;
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(amixer->inv_checkbutton), FALSE);
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(amixer->gang_checkbutton), mt->opts.gang_audio);
@@ -22706,7 +22667,7 @@ void amixer_show(LiVESButton * button, livespointer user_data) {
 
   lives_amixer_t *amixer;
 
-  if (!mainw->interactive) return;
+  if (!LIVES_IS_INTERACTIVE) return;
 
   if (nachans == 0) return;
 

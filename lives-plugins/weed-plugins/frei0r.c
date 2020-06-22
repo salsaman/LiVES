@@ -64,6 +64,9 @@ typedef void (*f0r_get_param_value_f)(f0r_instance_t *instance, f0r_param_t *par
 #endif
 #endif
 
+#define HPATH_MAX (PATH_MAX >> 1)
+#define HHPATH_MAX (PATH_MAX >> 2)
+#define QPATH_MAX (HHPATH_MAX * 3)
 
 static int getenv_piece(char *target, size_t tlen, char *envvar, int num) {
   // get num piece from envvar path and set in target
@@ -264,18 +267,18 @@ WEED_SETUP_START(200, 200) {
   int finished = 0;
   int pnum, wnum, num_weed_params;
 
-  char vdir1[PATH_MAX] = "/usr/lib/frei0r-1/";
-  char vdir2[PATH_MAX] = "/usr/local/lib/frei0r-1/";
-  char vdir3[PATH_MAX];
+  char vdir1[HPATH_MAX] = "/usr/lib/frei0r-1/";
+  char vdir2[HPATH_MAX] = "/usr/local/lib/frei0r-1/";
+  char vdir3[HPATH_MAX];
 
-  char dir1[PATH_MAX], dir2[PATH_MAX], dir3[PATH_MAX];
+  char dir1[QPATH_MAX], dir2[QPATH_MAX], dir3[QPATH_MAX];
   char plug1[PATH_MAX], plug2[PATH_MAX], plug3[PATH_MAX];
 
   struct dirent *vdirent = NULL, *dirent;
 
-  char homedir[PATH_MAX];
+  char homedir[HPATH_MAX - 10];
 
-  char vendor_name[PATH_MAX], plugin_name[PATH_MAX], weed_name[PATH_MAX];
+  char vendor_name[HHPATH_MAX], plugin_name[HHPATH_MAX], weed_name[PATH_MAX];
 
   DIR *curvdir = NULL, *curdir = NULL;
 
@@ -323,8 +326,8 @@ WEED_SETUP_START(200, 200) {
   if (fpp != NULL) {
     vdirval = 10;
   } else {
-    snprintf(homedir, PATH_MAX, "%s", getenv("HOME"));
-    snprintf(vdir3, PATH_MAX, "%s/frei0r-1/", homedir);
+    snprintf(homedir, HPATH_MAX - 10, "%s", getenv("HOME"));
+    snprintf(vdir3, HPATH_MAX, "%s/frei0r-1/", homedir);
   }
 
   while (vdirval < 6 || vdirval > 9) {
@@ -357,7 +360,7 @@ WEED_SETUP_START(200, 200) {
 
     if (vdirval > 9) {
       char *fpp_copy = strdup(fpp);
-      if (!getenv_piece(vdir1, PATH_MAX, fpp_copy, vdirval - 10)) {
+      if (!getenv_piece(vdir1, HPATH_MAX, fpp_copy, vdirval - 10)) {
         free(fpp_copy);
         vdirval = 6;
         break;
@@ -382,18 +385,18 @@ WEED_SETUP_START(200, 200) {
       if (curdir != NULL) closedir(curdir);
       curdir = NULL;
 
-      snprintf(dir1, PATH_MAX, "%s/%s", vdir1, vendor_name);
+      snprintf(dir1, QPATH_MAX, "%s/%s", vdir1, vendor_name);
 
       if (vdirval < 10) {
-        snprintf(dir2, PATH_MAX, "%s/%s", vdir2, vendor_name);
-        snprintf(dir3, PATH_MAX, "%s/%s", vdir3, vendor_name);
+        snprintf(dir2, QPATH_MAX, "%s/%s", vdir2, vendor_name);
+        snprintf(dir3, QPATH_MAX, "%s/%s", vdir3, vendor_name);
       }
 
       vdirent = readdir(curvdir);
 
       if (vdirent != NULL) {
         if (!strncmp(vdirent->d_name, "..", strlen(vdirent->d_name))) continue;
-        snprintf(vendor_name, PATH_MAX, "%s", vdirent->d_name);
+        snprintf(vendor_name, HHPATH_MAX, "%s", vdirent->d_name);
       }
 
       if (vdirval == 1) {
@@ -429,7 +432,7 @@ WEED_SETUP_START(200, 200) {
 
         if (!strncmp(dirent->d_name, "..", strlen(dirent->d_name))) continue;
 
-        snprintf(plugin_name, PATH_MAX, "%s", dirent->d_name);
+        snprintf(plugin_name, HHPATH_MAX, "%s", dirent->d_name);
 
         snprintf(plug1, PATH_MAX, "%s/%s", dir1, plugin_name);
 

@@ -3,14 +3,6 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#define NEED_FOURCC_COMPAT
-
-#ifdef NEED_LOCAL_WEED_COMPAT
-#include "../libweed/weed-compat.h"
-#else
-#include <weed/weed-compat.h>
-#endif
-
 #include "main.h"
 
 #ifdef HAVE_UNICAP
@@ -22,7 +14,6 @@
 #include "effects-weed.h"
 
 #include <unicap/unicap.h>
-
 
 static boolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t **buff, double timeout) {
   // wait for USER type buffer
@@ -357,6 +348,11 @@ static boolean open_vdev_inner(unicap_device_t *device) {
     lives_free(ldev);
     return FALSE;
   }
+
+
+  g_print("ALLX %ld %d %d %d %d\n", format->buffer_size, format->size.width, format->size.height,
+          weed_palette_get_bits_per_macropixel(
+            ldev->current_palette), weed_palette_get_pixels_per_macropixel(ldev->current_palette));
 
   if (format->buffer_size != format->size.width * format->size.height * weed_palette_get_bits_per_macropixel(
         ldev->current_palette) /

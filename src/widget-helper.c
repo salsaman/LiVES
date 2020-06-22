@@ -4,6 +4,17 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
+// gdk_screen_get_monitor_geometry’ -> gdk_monitor_get_geometry
+// gdk_screen_get_monitor_workarea’ -> gdk_monitor_get_workarea
+//  gdk_display_get_screen’ ->
+// gdk_screen_get_n_monitors  -> gdk_display_get_n_monitors
+//  gdk_display_get_device_manager -> gdk_display_get_default_seat
+// gdk_device_manager_list_devices’ ->
+//  gd_screen_get_width / height ->
+
+
+// gdk_display_get_default ()
+
 #include "main.h"
 
 // The idea here is to replace toolkit specific functions with generic ones
@@ -1507,11 +1518,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_get_frame_extents(LiVESXWindow
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_invalidate_rect(LiVESXWindow *window,
-    lives_rect_t *rect,
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_invalidate_rect(LiVESXWindow *window, lives_rect_t *rect,
     boolean inv_childs) {
 #ifdef GUI_GTK
-  gdk_window_invalidate_rect(window, rect, inv_childs);
+  gdk_window_invalidate_rect(window, (const GdkRectangle *)rect, inv_childs);
   return TRUE;
 #endif
   return FALSE;
@@ -2556,18 +2566,27 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_transient_for(LiVESWindow *
 
 static void modunmap(LiVESWindow *win, livespointer data) {if (win == modalw) modalw = NULL;}
 static void moddest(LiVESWindow *win, livespointer data) {if (win == modalw) modalw = NULL;}
-static boolean moddelete(LiVESWindow *win, LiVESXEvent *event, livespointer data) {if (win == modalw) modalw = NULL;}
+static boolean moddelete(LiVESWindow *win, LiVESXEvent *event, livespointer data) {
+  if (win == modalw) modalw = NULL;
+  return TRUE;
+}
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_modal(LiVESWindow *window, boolean modal) {
+  if (window == modalw) {
+    lives_signal_sync_handler_disconnect_by_func(LIVES_GUI_OBJECT(modalw), moddest, NULL);
+    lives_signal_sync_handler_disconnect_by_func(LIVES_GUI_OBJECT(modalw), moddelete, NULL);
+    lives_signal_sync_handler_disconnect_by_func(LIVES_GUI_OBJECT(modalw), modunmap, NULL);
+    modalw = NULL;
+  }
   if (modal) {
-    unsigned long delfunc = lives_signal_sync_connect(window, LIVES_WIDGET_DELETE_EVENT,
-                            LIVES_GUI_CALLBACK(moddelete), NULL);
-    unsigned long destfunc = lives_signal_sync_connect(window, LIVES_WIDGET_DESTROY_SIGNAL,
-                             LIVES_GUI_CALLBACK(moddest), NULL);
-    unsigned long unmapfunc = lives_signal_sync_connect(window, LIVES_WIDGET_UNMAP_SIGNAL,
+    lives_signal_sync_connect(window, LIVES_WIDGET_DELETE_EVENT,
+                              LIVES_GUI_CALLBACK(moddelete), NULL);
+    lives_signal_sync_connect(window, LIVES_WIDGET_DESTROY_SIGNAL,
+                              LIVES_GUI_CALLBACK(moddest), NULL);
+    lives_signal_sync_connect(window, LIVES_WIDGET_UNMAP_SIGNAL,
                               LIVES_GUI_CALLBACK(modunmap), NULL);
     modalw = window;
-  } else if (window == modalw) modalw = NULL;
+  }
 #ifdef GUI_GTK
   gtk_window_set_modal(window, modal);
   return TRUE;
@@ -4813,6 +4832,7 @@ static LiVESWidget *make_ttips_image(const char *text) {
   //lives_widget_set_bg_color(ttips_image, LIVES_WIDGET_STATE_NORMAL, &palette->dark_orange);
   lives_widget_set_no_show_all(ttips_image, TRUE);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ttips_image), TTIPS_IMAGE_KEY, ttips_image);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ttips_image), TTIPS_HIDE_KEY, ttips_image);
   lives_widget_set_tooltip_text(ttips_image, text);
   return ttips_image;
 }
@@ -8617,7 +8637,9 @@ WIDGET_HELPER_GLOBAL_INLINE uint32_t lives_accelerator_get_default_mod_mask(void
 
 WIDGET_HELPER_GLOBAL_INLINE int lives_screen_get_width(LiVESXScreen *screen) {
 #ifdef GUI_GTK
+#if !GTK_CHECK_VERSION(3, 22, 0)
   return gdk_screen_get_width(screen);
+#endif
 #endif
 #ifdef GUI_QT
   return screen->size().width();
@@ -8628,7 +8650,9 @@ WIDGET_HELPER_GLOBAL_INLINE int lives_screen_get_width(LiVESXScreen *screen) {
 
 WIDGET_HELPER_GLOBAL_INLINE int lives_screen_get_height(LiVESXScreen *screen) {
 #ifdef GUI_GTK
+#if !GTK_CHECK_VERSION(3, 22, 0)
   return gdk_screen_get_height(screen);
+#endif
 #endif
 #ifdef GUI_QT
   return screen->size().height();
@@ -9240,6 +9264,7 @@ LiVESWidget *lives_standard_label_new_with_tooltips(const char *text, LiVESBox *
   lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, 0);
   lives_widget_set_show_hide_parent(label);
   lives_widget_set_sensitive_with(label, img_tips);
+  lives_widget_set_show_hide_with(label, img_tips);
   if (prefs->show_tooltips) lives_widget_show(img_tips);
   return label;
 }
@@ -9403,6 +9428,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_sensitive_with(LiVESWidget 
 
 static void lives_widget_show_all_cb(LiVESWidget *widget, livespointer user_data) {
   LiVESWidget *parent = (LiVESWidget *)user_data;
+  if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_HIDE_KEY)) {
+    if (prefs->show_tooltips) lives_widget_show(widget);
+    return;
+  }
   if (!lives_widget_is_visible(parent))
     lives_widget_show_all(parent);
 }
@@ -9495,7 +9524,9 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
 
     if (img_tips) {
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, 0);
+      if (prefs->show_tooltips) lives_widget_show(img_tips);
       lives_widget_set_show_hide_with(checkbutton, img_tips);
+      lives_widget_set_sensitive_with(checkbutton, img_tips);
     }
   }
 
@@ -9638,6 +9669,9 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList *
 
     if (img_tips) {
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, 0);
+      if (prefs->show_tooltips) lives_widget_show(img_tips);
+      lives_widget_set_show_hide_with(radiobutton, img_tips);
+      lives_widget_set_sensitive_with(radiobutton, img_tips);
     }
   }
 
@@ -9856,6 +9890,9 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
 
     if (img_tips) {
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, 0);
+      if (prefs->show_tooltips) lives_widget_show(img_tips);
+      lives_widget_set_show_hide_with(combo, img_tips);
+      lives_widget_set_sensitive_with(combo, img_tips);
     }
   }
 
@@ -10171,8 +10208,11 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 }
 
 
-LiVESWidget *lives_standard_font_chooser_new() {
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_font_chooser_new(void) {
   LiVESWidget *fchoo = gtk_font_button_new();
+#ifdef GUI_GTK
+  fchoo = gtk_font_button_new();
+#endif
   return fchoo;
 }
 
@@ -11736,7 +11776,7 @@ static void do_more_stuff(void) {
 /* #define MAX_NULL_EVENTS 512 // general max, some events allow twice this */
 /* #define LOOP_LIMIT 32 // max when playing and not in multitrack */
 boolean lives_widget_context_update(void) {
-  static boolean norecurse = FALSE;
+  static volatile boolean norecurse = FALSE;
 
   if (mainw->no_context_update) return FALSE;
   if (norecurse) return FALSE;
@@ -11989,7 +12029,7 @@ void lives_cool_toggled(LiVESWidget *tbutton, livespointer user_data) {
 #if GTK_CHECK_VERSION(3, 0, 0)
   // connect toggled event to this
   boolean *ret = (boolean *)user_data, active;
-  if (!mainw->interactive) return;
+  if (!LIVES_IS_INTERACTIVE) return;
   active = ((LIVES_IS_TOGGLE_BUTTON(tbutton) && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(tbutton))) ||
             (LIVES_IS_TOGGLE_TOOL_BUTTON(tbutton) && lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(tbutton))));
   if (prefs->lamp_buttons) {

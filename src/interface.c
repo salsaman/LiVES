@@ -1215,7 +1215,7 @@ xprocess *create_processing(const char *text) {
   lives_window_set_decorated(LIVES_WINDOW(procw->processing), FALSE);
 
   if (prefs->gui_monitor != 0) {
-    lives_window_set_screen(LIVES_WINDOW(procw->processing), mainw->mgeom[prefs->gui_monitor - 1].screen);
+    lives_window_set_screen(LIVES_WINDOW(procw->processing), mainw->mgeom[widget_opts.monitor].screen);
   }
 
   lives_window_add_accel_group(LIVES_WINDOW(procw->processing), accel_group);
@@ -2308,7 +2308,7 @@ _entryw *create_rename_dialog(int type) {
 
   lives_entry_set_width_chars(LIVES_ENTRY(renamew->entry), MEDIUM_ENTRY_WIDTH);
 
-  if (!(type == 4 && !mainw->interactive)) {
+  if (!(type == 4 && !LIVES_IS_INTERACTIVE)) {
     cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(renamew->dialog), LIVES_STOCK_CANCEL, NULL,
                    LIVES_RESPONSE_CANCEL);
     lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
@@ -3227,7 +3227,7 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 #ifdef GUI_GTK
 
   if (act != LIVES_FILE_CHOOSER_ACTION_SAVE) {
-    if (mainw->interactive)
+    if (LIVES_IS_INTERACTIVE)
       chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
                                             LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
                                             LIVES_STOCK_LABEL_OPEN, LIVES_RESPONSE_ACCEPT,
@@ -3571,7 +3571,7 @@ _entryw *create_cds_dialog(int type) {
     lives_widget_grab_focus(cdsw->entry);
   }
 
-  if (!mainw->interactive) lives_widget_set_sensitive(cancelbutton, FALSE);
+  if (!LIVES_IS_INTERACTIVE) lives_widget_set_sensitive(cancelbutton, FALSE);
 
   return cdsw;
 }

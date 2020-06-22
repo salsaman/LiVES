@@ -375,7 +375,15 @@ typedef struct {
 #include <weed/weed-utils.h>
 #endif
 
-#if NEED_LOCAL_WEED_COMPAT
+#ifdef USE_SWSCALE
+// for weed-compat.h
+#define HAVE_AVCODEC
+#define HAVE_AVUTIL
+#endif
+
+#define NEED_FOURCC_COMPAT
+
+#ifdef NEED_LOCAL_WEED_COMPAT
 #include "../libweed/weed-compat.h"
 #else
 #include <weed/weed-compat.h>
@@ -961,6 +969,8 @@ typedef struct {
   pthread_t main_thread;
   pthread_t gui_thread;
   mode_t umask;
+
+  int primary_monitor;
 } capability;
 
 /// some shared structures
@@ -1741,7 +1751,7 @@ void break_me(void);
 
 #endif
 
-//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #define STD_STRINGFUNCS

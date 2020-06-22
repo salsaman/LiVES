@@ -972,7 +972,7 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
   uint64_t new_rte;
 
   if (mainw->go_away) return TRUE;
-  if (!mainw->interactive && group != NULL) return TRUE;
+  if (!LIVES_IS_INTERACTIVE && group != NULL) return TRUE;
 
   mainw->fx_is_auto = FALSE;
 

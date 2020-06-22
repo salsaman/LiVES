@@ -719,7 +719,7 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     prefs->show_recent = newval;
     if (newval) {
       lives_widget_show(mainw->recent_menu);
-      if (mainw->multitrack != NULL) lives_widget_show(mainw->multitrack->recent_menu);
+      if (mainw->multitrack) lives_widget_show(mainw->multitrack->recent_menu);
     } else {
       lives_widget_hide(mainw->recent_menu);
       if (mainw->multitrack != NULL) lives_widget_hide(mainw->multitrack->recent_menu);
@@ -1842,7 +1842,7 @@ boolean apply_prefs(boolean skip_warn) {
       set_string_pref(PREF_MONITORS, str);
       prefs->gui_monitor = gui_monitor;
       prefs->play_monitor = play_monitor;
-      widget_opts.monitor = prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0;
+      widget_opts.monitor = prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : capable->primary_monitor;
       widget_opts.screen = mainw->mgeom[widget_opts.monitor].screen;
       resize_widgets_for_monitor(TRUE);
     }

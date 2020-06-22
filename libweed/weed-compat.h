@@ -30,6 +30,9 @@
 
 /* (C) G. Finch, 2005 - 2019 */
 
+#ifndef __WEED_COMPAT_H__
+#define __WEED_COMPAT_H__
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -47,14 +50,14 @@ extern "C"
 #else
 #include <weed/weed-palettes.h>
 #endif
-#endif
+#endif // WEED_PALETTES_H
 
 #ifndef WEED_FOURCC_COMPAT
 #define WEED_FOURCC_COMPAT
 #endif
 
-int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *sampling,
-                     int *sspace, int *clamping) {
+static int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *sampling,
+			    int *sspace, int *clamping) {
   // inputs are fourcc and bpp
   // returns int weed_palette
 
@@ -171,7 +174,7 @@ int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *samplin
   return WEED_PALETTE_END;
 }
 
-#endif
+#endif // NEED_FOURCC
 
 #ifdef HAVE_AVCODEC
 #ifdef HAVE_AVUTIL
@@ -354,9 +357,9 @@ typedef struct AVCodecTag {
 #define AV_CODEC_ID_DPX CODEC_ID_DPX
 #define AV_CODEC_ID_PRORES CODEC_ID_PRORES
 
-#endif
+#endif // AVCODEC_VERSION
 
-const AVCodecTag codec_bmp_tags[] = {
+static const AVCodecTag codec_bmp_tags[] = {
   { AV_CODEC_ID_H264,         MKTAG('H', '2', '6', '4') },
   { AV_CODEC_ID_H264,         MKTAG('h', '2', '6', '4') },
   { AV_CODEC_ID_H264,         MKTAG('X', '2', '6', '4') },
@@ -573,7 +576,7 @@ const AVCodecTag codec_bmp_tags[] = {
 
 #if defined FF_API_PIX_FMT ||  defined AVUTIL_PIXFMT_H
 
-int avi_color_range_to_weed_clamping(enum AVColorRange range) {
+static int avi_color_range_to_weed_clamping(enum AVColorRange range) {
   switch (range) {
   case AVCOL_RANGE_MPEG:
     return WEED_YUV_CLAMPING_CLAMPED;
@@ -585,7 +588,7 @@ int avi_color_range_to_weed_clamping(enum AVColorRange range) {
   return WEED_YUV_CLAMPING_CLAMPED;
 }
 
-enum AVColorRange weed_clamping_to_avi_color_range(int clamping) {
+static enum AVColorRange weed_clamping_to_avi_color_range(int clamping) {
   switch (clamping) {
   case WEED_YUV_CLAMPING_CLAMPED:
         return AVCOL_RANGE_MPEG;
@@ -597,7 +600,7 @@ enum AVColorRange weed_clamping_to_avi_color_range(int clamping) {
 
 #ifndef AVUTIL_PIXFMT_H
 
-  int avi_pix_fmt_to_weed_palette(enum PixelFormat pix_fmt, int *clamped) {
+static int avi_pix_fmt_to_weed_palette(enum PixelFormat pix_fmt, int *clamped) {
   // clamped may be set to NULL if you are not interested in the value
   switch (pix_fmt) {
   case PIX_FMT_RGB24:
@@ -647,7 +650,7 @@ enum AVColorRange weed_clamping_to_avi_color_range(int clamping) {
   }
 }
 
-enum PixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
+static enum PixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
   switch (pal) {
   case WEED_PALETTE_RGB24:
         return PIX_FMT_RGB24;
@@ -694,7 +697,7 @@ enum PixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
 
 #else
 
-  int avi_pix_fmt_to_weed_palette(enum AVPixelFormat pix_fmt, int *clamped) {
+static int avi_pix_fmt_to_weed_palette(enum AVPixelFormat pix_fmt, int *clamped) {
   // clamped may be set to NULL if you are not interested in the value
   switch (pix_fmt) {
   case AV_PIX_FMT_RGB24:
@@ -740,7 +743,8 @@ enum PixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
     return WEED_PALETTE_END;
   }
 }
-enum AVPixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
+
+static enum AVPixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
   switch (pal) {
   case WEED_PALETTE_RGB24:
         return AV_PIX_FMT_RGB24;
@@ -782,9 +786,10 @@ enum AVPixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
       return AV_PIX_FMT_NONE;
     }
   }
-#endif
+#endif // avutil
+#endif // pix fmts
 
-  int avi_trc_to_weed_gamma(enum AVColorTransferCharacteristic trc) {
+static int avi_trc_to_weed_gamma(enum AVColorTransferCharacteristic trc) {
   switch (trc) {
   case AVCOL_TRC_BT709:
     return WEED_GAMMA_BT709;
@@ -798,7 +803,7 @@ enum AVPixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
   return WEED_GAMMA_UNKNOWN;
 }
 
-enum AVColorTransferCharacteristic weed_gamma_to_avi_trc(int gamma_type) {
+static enum AVColorTransferCharacteristic weed_gamma_to_avi_trc(int gamma_type) {
   switch (gamma_type) {
   case WEED_GAMMA_BT709:
         return AVCOL_TRC_BT709;
@@ -811,8 +816,6 @@ enum AVColorTransferCharacteristic weed_gamma_to_avi_trc(int gamma_type) {
     }
     return AVCOL_TRC_UNSPECIFIED;
   }
-
-#endif
 
 #endif // HAVE_AVUTIL
 #endif // HAVE_AVCODEC
@@ -910,11 +913,13 @@ enum AVColorTransferCharacteristic weed_gamma_to_avi_trc(int gamma_type) {
 #endif
 
 #define WEED_CHANNEL_LAYOUT_TYPE "avutil"
+#endif /// WEED_CHANNEL_LAYOUT_H
 
-#endif
-#endif
-#endif
+#endif //avchan
+#endif //avchan
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
+
+#endif // __WEED_COMPAT_H__

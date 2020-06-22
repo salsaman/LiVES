@@ -276,6 +276,8 @@ unsigned long lives_signal_connect_async(livespointer instance, const char *deta
 #define lives_signal_sync_connect_after(instance, detailed_signal, c_handler, data) lives_signal_connect_sync(instance, detailed_signal, c_handler, data, LIVES_CONNECT_AFTER)
 #define lives_signal_sync_connect_swapped(instance, detailed_signal, c_handler, data) lives_signal_connect_sync(instance, detailed_signal, c_handler, data, LIVES_CONNECT_SWAPPED)
 
+#define lives_signal_sync_handler_disconnect_by_func(obj, func, data) g_signal_handlers_disconnect_by_func(obj, func, data)
+
 boolean lives_signal_handlers_disconnect_by_func(livespointer instance,
     LiVESGuiCallback func,
     livespointer data);
@@ -986,6 +988,8 @@ LiVESWidget *lives_standard_direntry_new(const char *labeltext, const char *txt,
 LiVESWidget *lives_standard_fileentry_new(const char *labeltext, const char *txt, const char *defdir, int dispwidth,
     int maxchars,
     LiVESBox *box, const char *tooltip);
+
+LiVESWidget *lives_standard_font_chooser_new(void);
 
 LiVESToolItem *lives_menu_tool_button_new(LiVESWidget *icon, const char *label);
 

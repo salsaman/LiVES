@@ -1388,7 +1388,6 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
       }
     } else {
       // newer style
-
       // file format is: (4 bytes int)key(4 bytes int)hlen(hlen bytes)hashname
 
       //read key and hashname
@@ -1413,6 +1412,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
 
       bytes = lives_read_buffered(kfd, hashname, hlen, TRUE);
       if (bytes < hlen) {
+        g_print("keyl %d wanted %d got %ld\n", i, hlen, bytes);
         eof = TRUE;
         lives_free(hashname);
         break;
@@ -1910,7 +1910,7 @@ boolean on_rtew_delete_event(LiVESWidget * widget, LiVESXEventDelete * event, li
   lives_widget_set_sensitive(mainw->rte_defs_menu, TRUE);
   if (user_data == NULL) {
     // first time around we come here, and just hide the window
-    if (mainw->play_window != NULL && !mainw->fs && (prefs->play_monitor == prefs->gui_monitor || capable->nmonitors == 1)) {
+    if (mainw->play_window != NULL && !mainw->fs && (prefs->play_monitor == widget_opts.monitor + 1 || capable->nmonitors == 1)) {
       lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), get_transient_full());
     }
     lives_widget_hide(rte_window);
@@ -2468,7 +2468,7 @@ rte_window_ready:
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, irte_window);
-  //mainw->no_context_update = FALSE;
+  mainw->no_context_update = FALSE;
   return irte_window;
 }
 
@@ -2481,7 +2481,7 @@ LiVESWidget *refresh_rte_window(void) {
     on_rtew_delete_event(NULL, NULL, NULL);
     lives_widget_destroy(rte_window);
     rte_window = create_rte_window();
-    rte_window_set_interactive(mainw->interactive);
+    rte_window_set_interactive(LIVES_IS_INTERACTIVE);
   }
   return rte_window;
 }
@@ -2492,9 +2492,9 @@ void on_assign_rte_keys_activate(LiVESMenuItem * menuitem, livespointer user_dat
     on_rtew_delete_event(NULL, NULL, NULL);
   } else {
     rte_window = create_rte_window();
-    rte_window_set_interactive(mainw->interactive);
+    rte_window_set_interactive(LIVES_IS_INTERACTIVE);
     lives_widget_show(rte_window);
-    if (mainw->play_window != NULL && !mainw->fs && (prefs->play_monitor == prefs->gui_monitor || capable->nmonitors == 1)) {
+    if (mainw->play_window != NULL && !mainw->fs && (prefs->play_monitor == widget_opts.monitor + 1 || capable->nmonitors == 1)) {
       lives_widget_hide(mainw->play_window);
       lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), LIVES_WINDOW(rte_window));
       lives_widget_show(mainw->play_window);

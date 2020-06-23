@@ -65,8 +65,10 @@ void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
     aspect.width_param = &rfx->params[atoi(array[1])];
     aspect.height_param = &rfx->params[atoi(array[2])];
   } else if (!strcmp(array[0], "fontchooser")) {
+#if GTK_CHECK_VERSION(3, 2, 0)
     fchooser.font_param = &rfx->params[atoi(array[1])];
     fchooser.size_param = &rfx->params[atoi(array[2])];
+#endif
   } else if (!strcmp(array[0], "mergealign")) {
     mergealign.start_param = &rfx->params[atoi(array[1])];
     mergealign.end_param = &rfx->params[atoi(array[2])];
@@ -191,8 +193,81 @@ static void reset_aspect(LiVESButton * button, livespointer user_data) {
 }
 
 
+void check_for_special_type(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) {
+  LiVESList *slist;
+
+  // check if this parameter is part of a special window
+  // as we are drawing the paramwindow
+
+  if (param == framedraw.xstart_param) {
+    param->special_type = framedraw.type;
+    param->special_type_index = 0;
+  }
+  if (param == framedraw.ystart_param) {
+    param->special_type = framedraw.type;
+    param->special_type_index = 1;
+  }
+  if (mainw->current_file > -1) {
+    if (param == framedraw.xend_param) {
+      param->special_type = framedraw.type;
+      param->special_type_index = 2;
+    }
+    if (param == framedraw.yend_param) {
+      param->special_type = framedraw.type;
+      param->special_type_index = 3;
+    }
+
+    if (param == aspect.width_param) {
+      param->special_type = LIVES_PARAM_SPECIAL_TYPE_ASPECT_RATIO;
+      param->special_type_index = 0;
+    }
+
+    if (param == aspect.height_param) {
+      param->special_type = LIVES_PARAM_SPECIAL_TYPE_ASPECT_RATIO;
+      param->special_type_index = 1;
+    }
+
+    if (param == fchooser.font_param) {
+      param->special_type = LIVES_PARAM_SPECIAL_TYPE_FONT_CHOOSER;
+      param->special_type_index = 0;
+    }
+    if (param == fchooser.size_param) {
+      param->special_type = LIVES_PARAM_SPECIAL_TYPE_FONT_CHOOSER;
+      param->special_type_index = 1;
+    }
+  }
+
+  slist = fileread;
+  while (slist) {
+    if (param == (lives_param_t *)(slist->data)) {
+      param->special_type = LIVES_PARAM_SPECIAL_TYPE_FILEREAD;
+    }
+    slist = slist->next;
+  }
+
+  slist = filewrite;
+  while (slist != NULL) {
+    if (param == (lives_param_t *)(slist->data)) {
+      param->special_type = LIVES_PARAM_SPECIAL_TYPE_FILEWRITE;
+      slist = slist->next;
+    }
+  }
+
+  // password fields
+  slist = passwd_widgets;
+  while (slist) {
+    if (param == (lives_param_t *)(slist->data)) {
+      param->special_type = LIVES_PARAM_SPECIAL_TYPE_PASSWORD;
+      slist = slist->next;
+    }
+  }
+}
+
+
+
 void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) {
   LiVESWidget *checkbutton;
+  LiVESWidget *widget = param->widgets[0];
   LiVESWidget *hbox;
   LiVESWidget *box;
   LiVESWidget *buttond;
@@ -205,16 +280,16 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
     param->special_type = framedraw.type;
     param->special_type_index = 0;
     if (framedraw.type == LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), 0.);
-    lives_signal_connect_after(LIVES_GUI_OBJECT(param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), 0.);
+    lives_signal_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                                LIVES_GUI_CALLBACK(after_framedraw_widget_changed), &framedraw);
   }
   if (param == framedraw.ystart_param) {
     param->special_type = framedraw.type;
     param->special_type_index = 1;
     if (framedraw.type == LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), 0.);
-    lives_signal_connect_after(LIVES_GUI_OBJECT(param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), 0.);
+    lives_signal_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                                LIVES_GUI_CALLBACK(after_framedraw_widget_changed), &framedraw);
   }
   if (mainw->current_file > -1) {
@@ -222,16 +297,16 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       param->special_type = framedraw.type;
       param->special_type_index = 2;
       if (framedraw.type == LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), (double)cfile->hsize);
-      lives_signal_connect_after(LIVES_GUI_OBJECT(param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), (double)cfile->hsize);
+      lives_signal_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                                  LIVES_GUI_CALLBACK(after_framedraw_widget_changed), &framedraw);
     }
     if (param == framedraw.yend_param) {
       param->special_type = framedraw.type;
       param->special_type_index = 3;
       if (framedraw.type == LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), (double)cfile->vsize);
-      lives_signal_connect_after(LIVES_GUI_OBJECT(param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), (double)cfile->vsize);
+      lives_signal_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                                  LIVES_GUI_CALLBACK(after_framedraw_widget_changed), &framedraw);
     }
 
@@ -254,45 +329,52 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
     }
 
     if (param == aspect.width_param) {
-      if (CURRENT_CLIP_HAS_VIDEO) lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), cfile->hsize);
-      aspect.width_func = lives_signal_connect_after(LIVES_GUI_OBJECT(param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+      if (CURRENT_CLIP_HAS_VIDEO) lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), cfile->hsize);
+      aspect.width_func = lives_signal_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                           LIVES_GUI_CALLBACK(after_aspect_width_changed),
                           NULL);
       aspect.nwidgets++;
     }
 
     if (param == aspect.height_param) {
-      if (CURRENT_CLIP_HAS_VIDEO) lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), cfile->vsize);
-      aspect.height_func = lives_signal_connect_after(LIVES_GUI_OBJECT(param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+      if (CURRENT_CLIP_HAS_VIDEO) lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), cfile->vsize);
+      aspect.height_func = lives_signal_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                            LIVES_GUI_CALLBACK(after_aspect_height_changed),
                            NULL);
       aspect.nwidgets++;
     }
 
     if (param == fchooser.font_param) {
-      box = lives_widget_get_parent(param->widgets[0]);
-
-      while (box && !LIVES_IS_HBOX(box)) {
+      LiVESWidget *tbox = widget;
+      int idx;
+      box = lives_widget_get_parent(widget);
+      while (box != NULL && !LIVES_IS_HBOX(box)) {
+        tbox = box;
         box = lives_widget_get_parent(box);
       }
-
       if (!box) return;
-
+      idx = get_box_child_index(LIVES_BOX(box), tbox);
       param->widgets[1] = buttond = lives_standard_font_chooser_new();
-      lives_box_pack_start(LIVES_BOX(box), buttond, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start(LIVES_BOX(box), buttond, TRUE, TRUE, 0);
+      lives_box_reorder_child(LIVES_BOX(box), buttond, idx);
+      if (lives_widget_is_visible(widget)) lives_widget_show(buttond);
 
-      if (!lives_widget_is_sensitive(param->widgets[0])) lives_widget_set_sensitive(buttond, FALSE);
-      lives_widget_set_show_hide_with(param->widgets[0], buttond);
-      lives_widget_set_sensitive_with(param->widgets[0], buttond);
+      lives_widget_object_ref(tbox);
+      lives_widget_unparent(tbox);
 
-      if (LIVES_IS_ENTRY(param->widgets[0])) {
-        lives_entry_set_editable(LIVES_ENTRY(param->widgets[0]), FALSE);
-        if (param->widgets[1] != NULL &&
-            LIVES_IS_LABEL(param->widgets[1]) &&
-            lives_label_get_mnemonic_widget(LIVES_LABEL(param->widgets[1])) != NULL)
-          lives_label_set_mnemonic_widget(LIVES_LABEL(param->widgets[1]), buttond);
-        lives_entry_set_max_length(LIVES_ENTRY(param->widgets[0]), 128);
-      }
+      if (!lives_widget_is_sensitive(widget)) lives_widget_set_sensitive(buttond, FALSE);
+      lives_widget_set_show_hide_with(widget, buttond);
+      lives_widget_set_sensitive_with(widget, buttond);
+
+      lives_widget_destroy_with(buttond, tbox);
+    }
+
+    if (param == fchooser.size_param) {
+      // needs callback doing:
+
+      //pfd = gtk_font_chooser_get_font_desc(fchoo);
+      //pango_font_description_set_size(pfd, size * PANGO_SCALE);
+      // gtk_font_chooser_set_font_desc(fchoo, pfd);
     }
 
     if ((param == aspect.width_param || param == aspect.height_param) && aspect.nwidgets == 2) {
@@ -361,12 +443,9 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
   while (slist) {
     if (param == (lives_param_t *)(slist->data)) {
       char *def_dir;
+      if (!widget) continue;
 
-      param->special_type = LIVES_PARAM_SPECIAL_TYPE_FILEREAD;
-
-      if (!param->widgets[0]) continue;
-
-      box = lives_widget_get_parent(param->widgets[0]);
+      box = lives_widget_get_parent(widget);
 
       while (box && !LIVES_IS_HBOX(box)) {
         box = lives_widget_get_parent(box);
@@ -376,36 +455,36 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
 
       def_dir = lives_get_current_dir();
 
-      if (LIVES_IS_ENTRY(param->widgets[0])) {
-        if (*(lives_entry_get_text(LIVES_ENTRY(param->widgets[0])))) {
+      if (LIVES_IS_ENTRY(widget)) {
+        if (*(lives_entry_get_text(LIVES_ENTRY(widget)))) {
           char dirnamex[PATH_MAX];
-          lives_snprintf(dirnamex, PATH_MAX, "%s", lives_entry_get_text(LIVES_ENTRY(param->widgets[0])));
+          lives_snprintf(dirnamex, PATH_MAX, "%s", lives_entry_get_text(LIVES_ENTRY(widget)));
           get_dirname(dirnamex);
           lives_free(def_dir);
           def_dir = lives_strdup(dirnamex);
         }
       }
 
-      //epos = get_box_child_index(LIVES_BOX(box), param->widgets[0]);
+      //epos = get_box_child_index(LIVES_BOX(box), widget);
 
       param->widgets[2] = buttond = lives_standard_file_button_new(FALSE, def_dir);
       lives_free(def_dir);
       lives_box_pack_start(LIVES_BOX(box), buttond, FALSE, FALSE, widget_opts.packing_width);
       //lives_box_reorder_child(LIVES_BOX(box), buttond, epos); // insert after label, before textbox
       lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
-                           (livespointer)param->widgets[0]);
+                           (livespointer)widget);
 
-      if (!lives_widget_is_sensitive(param->widgets[0])) lives_widget_set_sensitive(buttond, FALSE);
-      lives_widget_set_show_hide_with(param->widgets[0], buttond);
-      lives_widget_set_sensitive_with(param->widgets[0], buttond);
+      if (!lives_widget_is_sensitive(widget)) lives_widget_set_sensitive(buttond, FALSE);
+      lives_widget_set_show_hide_with(widget, buttond);
+      lives_widget_set_sensitive_with(widget, buttond);
 
-      if (LIVES_IS_ENTRY(param->widgets[0])) {
-        lives_entry_set_editable(LIVES_ENTRY(param->widgets[0]), FALSE);
+      if (LIVES_IS_ENTRY(widget)) {
+        lives_entry_set_editable(LIVES_ENTRY(widget), FALSE);
         if (param->widgets[1] != NULL &&
             LIVES_IS_LABEL(param->widgets[1]) &&
             lives_label_get_mnemonic_widget(LIVES_LABEL(param->widgets[1])) != NULL)
           lives_label_set_mnemonic_widget(LIVES_LABEL(param->widgets[1]), buttond);
-        lives_entry_set_max_length(LIVES_ENTRY(param->widgets[0]), PATH_MAX);
+        lives_entry_set_max_length(LIVES_ENTRY(widget), PATH_MAX);
       }
     }
 
@@ -415,11 +494,10 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
   slist = filewrite;
   while (slist != NULL) {
     if (param == (lives_param_t *)(slist->data)) {
-      param->special_type = LIVES_PARAM_SPECIAL_TYPE_FILEWRITE;
 
-      if (param->widgets[0] == NULL) continue;
+      if (widget == NULL) continue;
 
-      box = lives_widget_get_parent(param->widgets[0]);
+      box = lives_widget_get_parent(widget);
 
       while (box != NULL && !LIVES_IS_HBOX(box)) {
         box = lives_widget_get_parent(box);
@@ -432,19 +510,19 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(buttond), "filesel_type", (livespointer)LIVES_FILE_SELECTION_SAVE);
       lives_box_pack_start(LIVES_BOX(box), buttond, FALSE, FALSE, widget_opts.packing_width);
       lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
-                           (livespointer)param->widgets[0]);
+                           (livespointer)widget);
 
-      if (!lives_widget_is_sensitive(param->widgets[0])) lives_widget_set_sensitive(buttond, FALSE);
-      lives_widget_set_show_hide_with(param->widgets[0], buttond);
-      lives_widget_set_sensitive_with(param->widgets[0], buttond);
+      if (!lives_widget_is_sensitive(widget)) lives_widget_set_sensitive(buttond, FALSE);
+      lives_widget_set_show_hide_with(widget, buttond);
+      lives_widget_set_sensitive_with(widget, buttond);
 
-      if (LIVES_IS_ENTRY(param->widgets[0])) {
-        lives_entry_set_editable(LIVES_ENTRY(param->widgets[0]), TRUE);
+      if (LIVES_IS_ENTRY(widget)) {
+        lives_entry_set_editable(LIVES_ENTRY(widget), TRUE);
         if (param->widgets[1] != NULL &&
             LIVES_IS_LABEL(param->widgets[1]) &&
             lives_label_get_mnemonic_widget(LIVES_LABEL(param->widgets[1])) != NULL)
           lives_label_set_mnemonic_widget(LIVES_LABEL(param->widgets[1]), buttond);
-        lives_entry_set_max_length(LIVES_ENTRY(param->widgets[0]), PATH_MAX);
+        lives_entry_set_max_length(LIVES_ENTRY(widget), PATH_MAX);
       }
     }
 
@@ -456,13 +534,11 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
   slist = passwd_widgets;
   while (slist) {
     if (param == (lives_param_t *)(slist->data)) {
-      if (!param->widgets[0]) continue;
+      if (!widget) continue;
 
-      lives_entry_set_visibility(LIVES_ENTRY(param->widgets[0]), FALSE);
+      lives_entry_set_visibility(LIVES_ENTRY(widget), FALSE);
 
-      box = lives_widget_get_parent(param->widgets[0]);
-
-      param->special_type = LIVES_PARAM_SPECIAL_TYPE_PASSWORD;
+      box = lives_widget_get_parent(widget);
 
       while (box && !LIVES_IS_BOX(box)) {
         box = lives_widget_get_parent(box);
@@ -479,12 +555,12 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
 
       lives_button_set_focus_on_click(LIVES_BUTTON(checkbutton), FALSE);
 
-      if (!lives_widget_is_sensitive(param->widgets[0])) lives_widget_set_sensitive(checkbutton, FALSE);
+      if (!lives_widget_is_sensitive(widget)) lives_widget_set_sensitive(checkbutton, FALSE);
       lives_widget_show_all(hbox);
 
       lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                                  LIVES_GUI_CALLBACK(passwd_toggle_vis),
-                                 (livespointer)param->widgets[0]);
+                                 (livespointer)widget);
 
     }
     slist = slist->next;

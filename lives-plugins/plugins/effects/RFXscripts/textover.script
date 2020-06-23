@@ -31,10 +31,13 @@ yoffs|_Y offset|num0|0|0|10000|
 fcol|_Fill colour|colRGB24|0|0|0|
 scol|_Stroke colour|colRGB24|0|0|0|
 psize|_Point size|num0|32|10|120|
+font|_Font|string||128|
 </params>
 
 <param_window>
-layout|p1|p2|p5|
+layout|p1|p2|
+layout|p6|p5|
+special|fontchooser|6|5|
 </param_window>
 
 <properties>

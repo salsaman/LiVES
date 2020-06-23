@@ -10209,11 +10209,20 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_font_chooser_new(void) {
-  LiVESWidget *fchoo = gtk_font_button_new();
+  LiVESWidget *font_choo = NULL;
 #ifdef GUI_GTK
-  fchoo = gtk_font_button_new();
+#if GTK_CHECK_VERSION(3, 2, 0)
+  char *ttl;
+  font_choo = gtk_font_button_new();
+  gtk_font_button_set_show_size(GTK_FONT_BUTTON(font_choo), FALSE);
+  gtk_font_chooser_set_show_preview_entry(GTK_FONT_CHOOSER(font_choo), TRUE);
+  gtk_font_chooser_set_preview_text(GTK_FONT_CHOOSER(font_choo), "LiVES");
+  ttl = lives_strdup_printf("%s%s", widget_opts.title_prefix, _("Choose a Font..."));
+  gtk_font_button_set_title(GTK_FONT_BUTTON(font_choo), ttl);
+  lives_free(ttl);
 #endif
-  return fchoo;
+#endif
+  return font_choo;
 }
 
 
@@ -10749,6 +10758,7 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
   LiVESWidget *cbutton, *labelcname = NULL;
   LiVESWidget *hbox = NULL;
   LiVESWidget *layout;
+  LiVESWidget *frame = lives_standard_frame_new(NULL, 0., FALSE);
   LiVESWidget *spinbutton_red = NULL, *spinbutton_green = NULL, *spinbutton_blue = NULL, *spinbutton_alpha = NULL;
   LiVESWidget *parent = NULL;
   char *tmp, *tmp2;
@@ -10759,6 +10769,8 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
   boolean expand = FALSE;
 
   widget_opts.last_label = NULL;
+
+  lives_container_set_border_width(LIVES_CONTAINER(frame), 0);
 
   if (box != NULL) {
     parent = lives_widget_get_parent(LIVES_WIDGET(box));
@@ -10789,6 +10801,7 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
   lives_color_button_set_color(LIVES_COLOR_BUTTON(cbutton), &colr);
   lives_widget_apply_theme(cbutton, LIVES_WIDGET_STATE_NORMAL);
   lives_widget_apply_theme2(cbutton, LIVES_WIDGET_STATE_PRELIGHT, TRUE);
+  lives_widget_set_border_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
 #if !LIVES_WIDGET_COLOR_HAS_ALPHA
   if (use_alpha)
@@ -10903,7 +10916,9 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
       widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
       hbox = make_inner_hbox(LIVES_BOX(hbox));
     }
-    lives_box_pack_start(LIVES_BOX(hbox), cbutton, TRUE, FALSE, packing_width * 2.);
+
+    lives_container_add(LIVES_CONTAINER(frame), cbutton);
+    lives_box_pack_start(LIVES_BOX(hbox), frame, TRUE, FALSE, packing_width * 2.);
 
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cbutton), SPRED_KEY, spinbutton_red);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cbutton), SPGREEN_KEY, spinbutton_green);

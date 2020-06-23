@@ -1540,6 +1540,12 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
     lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, widget_opts.packing_height);
   }
 
+  // see if there were any 'special' hints
+  if (!layout)
+    check_for_special_type(rfx, param, LIVES_BOX(lives_widget_get_parent(LIVES_WIDGET(box))));
+  else
+    check_for_special_type(rfx, param, LIVES_BOX(lives_widget_get_parent(layout)));
+
   switch (param->type) {
   case LIVES_PARAM_BOOL:
     if (!param->group) {
@@ -1723,6 +1729,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
 
     if (((int)param->max > RFX_TEXT_MAGIC || param->max == 0.) &&
         param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEREAD
+        && param->special_type != LIVES_PARAM_SPECIAL_TYPE_FONT_CHOOSER
         && param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEWRITE) {
       LiVESWidget *vbox = lives_vbox_new(FALSE, 0);
       boolean woat = widget_opts.apply_theme;
@@ -1827,7 +1834,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
   }
 
   // see if there were any 'special' hints
-  if (layout == NULL)
+  if (!layout)
     check_for_special(rfx, param, LIVES_BOX(lives_widget_get_parent(LIVES_WIDGET(box))));
   else
     check_for_special(rfx, param, LIVES_BOX(lives_widget_get_parent(layout)));

@@ -148,7 +148,7 @@ int lives_system(const char *com, boolean allow_error) {
 
     if (retval) {
       char *msg = NULL;
-      mainw->com_failed = TRUE;
+      THREADVAR(com_failed) = TRUE;
       if (!allow_error) {
         msg = lives_strdup_printf("lives_system failed with code %d: %s\n%s", retval, com,
 #ifdef HAVE_LIBEXPLAIN
@@ -179,7 +179,7 @@ int lives_system(const char *com, boolean allow_error) {
 ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buflen) {
   // runs com, fills buff with a NUL terminated string (total length <= buflen)
   // returns number of bytes read. If an error occurs during popen or fread
-  // then mainw->com_failed is set, and if allow_error is FALSE then an an error dialog is displayed to the user
+  // then THREADVAR(com_failed) is set, and if allow_error is FALSE then an an error dialog is displayed to the user
 
   // on error we return err as a -ve number
 
@@ -222,7 +222,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
 
     if (err != 0) {
       char *msg = NULL;
-      mainw->com_failed = TRUE;
+      THREADVAR(com_failed) = TRUE;
       if (!allow_error) {
         msg = lives_strdup_printf("lives_popen failed after %ld bytes with code %d: %s", strg == NULL ? 0 : lives_strlen(strg), err,
                                   com);
@@ -275,14 +275,14 @@ ssize_t lives_write(int fd, const void *buf, size_t count, boolean allow_fail) {
   if (retval < (ssize_t)count) {
     char *msg = NULL;
     /// TODO ****: this needs to be threadsafe
-    mainw->write_failed = fd + 1;
-    mainw->write_failed_file = filename_from_fd(mainw->write_failed_file, fd);
+    THREADVAR(write_failed) = fd + 1;
+    THREADVAR(write_failed_file) = filename_from_fd(THREADVAR(write_failed_file), fd);
     if (retval >= 0)
       msg = lives_strdup_printf("Write failed %"PRIu64" of %"PRIu64" in: %s", (uint64_t)retval,
-                                (uint64_t)count, mainw->write_failed_file);
+                                (uint64_t)count, THREADVAR(write_failed_file));
     else
       msg = lives_strdup_printf("Write failed with error %"PRIu64" in: %s", (uint64_t)retval,
-                                mainw->write_failed_file);
+                                THREADVAR(write_failed_file));
 
     if (!allow_fail) {
       LIVES_ERROR(msg);
@@ -296,7 +296,7 @@ ssize_t lives_write(int fd, const void *buf, size_t count, boolean allow_fail) {
                                   (uint64_t)count, ffile);
       else
         msg = lives_strdup_printf("Write failed with error %"PRIu64" in: %s (allowed)", (uint64_t)retval,
-                                  mainw->write_failed_file);
+                                  THREADVAR(write_failed_file));
       LIVES_DEBUG(msg);
       lives_free(ffile);
     }
@@ -321,7 +321,7 @@ int lives_fputs(const char *s, FILE *stream) {
   retval = fputs(s, stream);
 
   if (retval == EOF) {
-    mainw->write_failed = fileno(stream) + 1;
+    THREADVAR(write_failed) = fileno(stream) + 1;
   }
 
   return retval;
@@ -334,7 +334,7 @@ char *lives_fgets(char *s, int size, FILE *stream) {
   retval = fgets(s, size, stream);
 
   if (retval == NULL && ferror(stream)) {
-    mainw->read_failed = fileno(stream) + 1;
+    THREADVAR(read_failed) = fileno(stream) + 1;
   }
 
   return retval;
@@ -345,7 +345,7 @@ size_t lives_fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
   size_t bytes_read = fread(ptr, size, nmemb, stream);
 
   if (ferror(stream)) {
-    mainw->read_failed = fileno(stream) + 1;
+    THREADVAR(read_failed) = fileno(stream) + 1;
   }
 
   return bytes_read;
@@ -393,15 +393,15 @@ lives_file_buffer_t *find_in_file_buffers_by_pathname(const char *pathname) {
 
 static void do_file_read_error(int fd, ssize_t errval, void *buff, size_t count) {
   char *msg = NULL;
-  mainw->read_failed = fd + 1;
-  mainw->read_failed_file = filename_from_fd(mainw->read_failed_file, fd);
+  THREADVAR(read_failed) = fd + 1;
+  THREADVAR(read_failed_file) = filename_from_fd(THREADVAR(read_failed_file), fd);
 
   if (errval >= 0)
     msg = lives_strdup_printf("Read failed %"PRId64" of %"PRIu64" in: %s", (int64_t)errval,
-                              (uint64_t)count, mainw->read_failed_file);
+                              (uint64_t)count, THREADVAR(read_failed_file));
   else {
     msg = lives_strdup_printf("Read failed with error %"PRId64" in: %s (%s)", (int64_t)errval,
-                              mainw->read_failed_file,
+                              THREADVAR(read_failed_file),
 #ifdef HAVE_LIBEXPLAIN
                               buff != NULL ? explain_read(fd, buff, count) : ""
 #else
@@ -1335,7 +1335,7 @@ int lives_chdir(const char *path, boolean allow_fail) {
 
   if (retval) {
     char *msg = lives_strdup_printf("Chdir failed to: %s", path);
-    mainw->chdir_failed = TRUE;
+    THREADVAR(chdir_failed) = TRUE;
     if (!allow_fail) {
       LIVES_ERROR(msg);
       do_chdir_failed_error(path);
@@ -2153,13 +2153,13 @@ void init_clipboard(void) {
         cfile->clip_type = CLIP_TYPE_DISK;
       }
 
-      mainw->com_failed = FALSE;
+      THREADVAR(com_failed) = FALSE;
       com = lives_strdup_printf("%s clear_clipboard \"%s\"", prefs->backend, clipboard->handle);
       lives_rm(clipboard->info_file);
       lives_system(com, FALSE);
       lives_free(com);
 
-      if (mainw->com_failed) {
+      if (THREADVAR(com_failed)) {
         mainw->current_file = current_file;
         return;
       }
@@ -2767,12 +2767,12 @@ boolean check_for_lock_file(const char *set_name, int type) {
   clear_mainw_msg();
 
   threaded_dialog_spin(0.);
-  mainw->com_failed = FALSE;
+  THREADVAR(com_failed) = FALSE;
   lives_popen(com, TRUE, mainw->msg, MAINW_MSG_SIZE);
   threaded_dialog_spin(0.);
   lives_free(com);
 
-  if (mainw->com_failed) return FALSE;
+  if (THREADVAR(com_failed)) return FALSE;
 
   if (*(mainw->msg)) {
     if (type == 0) {
@@ -2964,11 +2964,11 @@ int get_frame_count(int idx, int start) {
   char *com = lives_strdup_printf("%s count_frames \"%s\" %s %d", prefs->backend_sync, mainw->files[idx]->handle,
                                   get_image_ext_for_type(mainw->files[idx]->img_type), start);
 
-  mainw->com_failed = FALSE;
+  THREADVAR(com_failed) = FALSE;
   bytes = lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
   lives_free(com);
 
-  if (mainw->com_failed) return 0;
+  if (THREADVAR(com_failed)) return 0;
 
   if (bytes > 0) return atoi(mainw->msg);
   return 0;
@@ -3203,8 +3203,8 @@ uint64_t get_version_hash(const char *exe, const char *sep, int piece) {
   int ntok;
 
   lives_popen(exe, TRUE, buff, 128);
-  if (mainw->com_failed) {
-    mainw->com_failed = FALSE;
+  if (THREADVAR(com_failed)) {
+    THREADVAR(com_failed) = FALSE;
     return -2;
   }
   ntok = get_token_count(buff, sep[0]);
@@ -3329,11 +3329,11 @@ void remove_layout_files(LiVESList * map) {
 
           char *protect_file = lives_build_filename(prefs->workdir, "noremove", NULL);
 
-          mainw->com_failed = FALSE;
+          THREADVAR(com_failed) = FALSE;
           // touch a file in tpmdir, so we cannot remove workdir itself
           lives_touch(protect_file);
 
-          if (!mainw->com_failed) {
+          if (!THREADVAR(com_failed)) {
             // ok, the "touch" worked
             // now we call rmdir -p : remove directory + any empty parents
             fdir = lives_path_get_dirname(fname);
@@ -3964,13 +3964,13 @@ boolean after_foreign_play(void) {
                                     cfile->achans, cfile->asampsize, !(cfile->signed_endian & AFORM_UNSIGNED),
                                     !(cfile->signed_endian & AFORM_BIG_ENDIAN));
           lives_rm(cfile->info_file);
-          mainw->com_failed = FALSE;
+          THREADVAR(com_failed) = FALSE;
           lives_system(com, FALSE);
 
           cfile->nopreview = TRUE;
           cfile->keep_without_preview = TRUE;
           mainw->cancel_type = CANCEL_SOFT;
-          if (mainw->com_failed || !do_progress_dialog(TRUE, TRUE, _("Cleaning up clip"))) {
+          if (THREADVAR(com_failed) || !do_progress_dialog(TRUE, TRUE, _("Cleaning up clip"))) {
             if (mainw->cancelled == CANCEL_KEEP) {
               mainw->cancelled = CANCEL_NONE;
               d_print_enough(new_frames);
@@ -4902,8 +4902,8 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
 
   boolean needs_sigs = FALSE;
 
-  mainw->write_failed = 0;
-  mainw->com_failed = FALSE;
+  THREADVAR(write_failed) = 0;
+  THREADVAR(com_failed) = FALSE;
 
   if (which == 0 || which == mainw->scrap_file) return FALSE;
 
@@ -5028,11 +5028,11 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
   lives_free(myval);
   lives_free(key);
 
-  if (mainw->clip_header && mainw->write_failed == fileno(mainw->clip_header) + 1) {
-    mainw->write_failed = 0;
+  if (mainw->clip_header && THREADVAR(write_failed) == fileno(mainw->clip_header) + 1) {
+    THREADVAR(write_failed) = 0;
     return FALSE;
   }
-  if (mainw->com_failed) return FALSE;
+  if (THREADVAR(com_failed)) return FALSE;
   return TRUE;
 }
 
@@ -5465,7 +5465,7 @@ boolean lives_make_writeable_dir(const char *newdir) {
       LIVES_ERROR("Could not write to directory");
     } else LIVES_ERROR("Could not create directory");
     LIVES_ERROR(newdir);
-    mainw->com_failed = FALSE;
+    THREADVAR(com_failed) = FALSE;
     return FALSE;
   } else {
     if (ret != -1) {

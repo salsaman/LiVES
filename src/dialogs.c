@@ -818,8 +818,8 @@ LiVESResponseType handle_backend_errors(boolean can_retry, LiVESWindow *transien
     if (mainw->current_file == -1 || cfile == NULL || !cfile->no_proc_read_errors)
       do_read_failed_error_s(array[2], addinfo);
     pxstart = 3;
-    mainw->read_failed = TRUE;
-    mainw->read_failed_file = lives_strdup(array[2]);
+    THREADVAR(read_failed) = TRUE;
+    THREADVAR(read_failed_file) = lives_strdup(array[2]);
     mainw->cancelled = CANCEL_ERROR;
     response = LIVES_RESPONSE_CANCEL;
   }
@@ -831,8 +831,8 @@ LiVESResponseType handle_backend_errors(boolean can_retry, LiVESWindow *transien
     if (mainw->current_file == -1 || cfile == NULL || !cfile->no_proc_write_errors)
       do_write_failed_error_s(array[2], addinfo);
     pxstart = 3;
-    mainw->write_failed = TRUE;
-    mainw->write_failed_file = lives_strdup(array[2]);
+    THREADVAR(write_failed) = TRUE;
+    THREADVAR(write_failed_file) = lives_strdup(array[2]);
     mainw->cancelled = CANCEL_ERROR;
     response = LIVES_RESPONSE_CANCEL;
   }
@@ -2715,7 +2715,7 @@ boolean do_auto_dialog(const char *text, int type) {
     if (infofile != NULL) {
       if (type == 0 || type == 2) {
         size_t bread;
-        mainw->read_failed = FALSE;
+        THREADVAR(read_failed) = FALSE;
         bread = lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
         fclose(infofile);
         lives_memset(mainw->msg + bread, 0, 1);
@@ -3729,7 +3729,7 @@ LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const ch
   lives_free(msg);
   lives_free(sutf);
 
-  mainw->write_failed = FALSE; // reset this
+  THREADVAR(write_failed) = FALSE; // reset this
 
   return ret;
 }
@@ -3760,7 +3760,7 @@ LiVESResponseType do_read_failed_error_s_with_retry(const char *fname, const cha
   lives_free(msg);
   lives_free(sutf);
 
-  mainw->read_failed = FALSE; // reset this
+  THREADVAR(read_failed) = FALSE; // reset this
 
   return ret;
 }

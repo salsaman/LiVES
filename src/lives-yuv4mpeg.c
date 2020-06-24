@@ -649,12 +649,12 @@ void on_live_tvcard_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_widget_destroy(card_dialog);
   lives_free(tvcardw);
 
-  mainw->com_failed = FALSE;
+  THREADVAR(com_failed) = FALSE;
   lives_system(com, FALSE);
   lives_free(com);
 
-  if (mainw->com_failed) {
-    mainw->com_failed = FALSE;
+  if (THREADVAR(com_failed)) {
+    THREADVAR(com_failed) = FALSE;
     lives_free(fname);
     lives_free(chanstr);
     lives_free(fifofile);
@@ -733,12 +733,12 @@ void on_live_fw_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mkfifo(fifofile, S_IRUSR | S_IWUSR);
 
   com = lives_strdup_printf("%s open_fw_card \"%s\" %d %d \"%s\"", prefs->backend, cfile->handle, cardno, cache, fifofile);
-  mainw->com_failed = FALSE;
+  THREADVAR(com_failed) = FALSE;
   lives_system(com, FALSE);
   lives_free(com);
 
-  if (mainw->com_failed) {
-    mainw->com_failed = FALSE;
+  if (THREADVAR(com_failed)) {
+    THREADVAR(com_failed) = FALSE;
     lives_free(fname);
     lives_free(fifofile);
     return;

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LiVES\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2020-06-23 01:22-0300\n"
+"POT-Creation-Date: 2020-06-23 20:15-0300\n"
 "PO-Revision-Date: 2019-09-27 15:42+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: pixel <vjpixel@gmail.com>\n"
@@ -8011,15 +8011,15 @@ msgstr "cor"
 msgid "_Frame"
 msgstr "Quadro [_F]"
 
-#: src/paramspecial.c:306
+#: src/paramspecial.c:407
 msgid "    Maintain _Aspect Ratio    "
 msgstr "    Manter Relação de _Aspecto    "
 
-#: src/paramspecial.c:312
+#: src/paramspecial.c:413
 msgid "Maintain aspect ratio"
 msgstr "Manter relação de aspecto"
 
-#: src/paramspecial.c:484
+#: src/paramspecial.c:579
 msgid "Display Password"
 msgstr "Exibir Senha"
 

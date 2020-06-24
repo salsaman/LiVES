@@ -27,18 +27,14 @@ void init_special(void) {
   if (special_inited) return;
 
   special_inited = TRUE;
-
-  framedraw.type = LIVES_PARAM_SPECIAL_TYPE_NONE;
-
-  aspect.width_param = aspect.height_param = NULL;
-  aspect.lockbutton = NULL;
-  aspect.nwidgets = 0;
+  fchooser.nwidgets = 0;
 
   framedraw.xstart_param = framedraw.ystart_param = framedraw.xend_param = framedraw.yend_param = NULL;
   framedraw.stdwidgets = 0;
   framedraw.extra_params = NULL;
   framedraw.num_extra = 0;
   framedraw.added = FALSE;
+  framedraw.type = LIVES_PARAM_SPECIAL_TYPE_NONE;
   mergealign.start_param = mergealign.end_param = NULL;
   passwd_widgets = NULL;
   fileread = NULL;
@@ -46,9 +42,7 @@ void init_special(void) {
 }
 
 
-const lives_special_aspect_t *paramspecial_get_aspect() {
-  return &aspect;
-}
+const lives_special_aspect_t *paramspecial_get_aspect() {return &aspect;}
 
 
 void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
@@ -182,7 +176,6 @@ static void passwd_toggle_vis(LiVESToggleButton * b, livespointer entry) {
   lives_entry_set_visibility(LIVES_ENTRY(entry), lives_toggle_button_get_active(b));
 }
 
-
 static void reset_aspect(LiVESButton * button, livespointer user_data) {
   if (lives_lock_button_get_locked(button)) {
     lives_special_aspect_t *aspect = (lives_special_aspect_t *)user_data;
@@ -192,10 +185,43 @@ static void reset_aspect(LiVESButton * button, livespointer user_data) {
   }
 }
 
+#if GTK_CHECK_VERSION(3, 2, 0)
+static void font_set_cb(LiVESFontButton * button, livespointer data) {
+  lives_rfx_t *rfx = (lives_rfx_t *)data;
+  char *fname = lives_font_chooser_get_font(LIVES_FONT_CHOOSER(button));
+  LingoFontDescription *lfd = lives_font_chooser_get_font_desc(LIVES_FONT_CHOOSER(button));
+  int size = lingo_font_description_get_size(lfd);
+  lives_signal_handler_block(fchooser.font_param->widgets[0], fchooser.entry_func);
+  lives_entry_set_text(LIVES_ENTRY(fchooser.font_param->widgets[0]), fname);
+  after_param_text_changed(fchooser.font_param->widgets[0], rfx);
+  lives_signal_handler_unblock(fchooser.font_param->widgets[0], fchooser.entry_func);
+  lives_signal_handler_block(fchooser.size_param->widgets[0], fchooser.size_paramfunc);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(fchooser.size_param->widgets[0]), size / LINGO_SCALE);
+  lives_signal_handler_unblock(fchooser.size_param->widgets[0], fchooser.size_paramfunc);
+  lives_free(fname);
+  lingo_font_description_free(lfd);
+}
+
+static void font_size_cb(LiVESSpinButton * button, livespointer data) {
+  int sval = lives_spin_button_get_value_as_int(button);
+  LingoFontDescription *lfd =
+    lives_font_chooser_get_font_desc(LIVES_FONT_CHOOSER(fchooser.font_param->widgets[1]));
+  lingo_font_description_set_size(lfd, sval * LINGO_SCALE);
+  lives_font_chooser_set_font_desc(LIVES_FONT_CHOOSER(fchooser.font_param->widgets[1]), lfd);
+  lingo_font_description_free(lfd);
+}
+
+static void font_entry_cb(LiVESEntry * entry, livespointer data) {
+  LiVESFontButton *button = (LiVESFontButton *)fchooser.font_param->widgets[1];
+  lives_font_chooser_set_font(LIVES_FONT_CHOOSER(button), lives_entry_get_text(entry));
+  font_size_cb(LIVES_SPIN_BUTTON(fchooser.size_param->widgets[0]), data);
+  font_set_cb(button, data);
+}
+#endif
+
 
 void check_for_special_type(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) {
   LiVESList *slist;
-
   // check if this parameter is part of a special window
   // as we are drawing the paramwindow
 
@@ -264,7 +290,6 @@ void check_for_special_type(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * p
 }
 
 
-
 void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) {
   LiVESWidget *checkbutton;
   LiVESWidget *widget = param->widgets[0];
@@ -281,16 +306,16 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
     param->special_type_index = 0;
     if (framedraw.type == LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), 0.);
-    lives_signal_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                               LIVES_GUI_CALLBACK(after_framedraw_widget_changed), &framedraw);
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(after_framedraw_widget_changed), &framedraw);
   }
   if (param == framedraw.ystart_param) {
     param->special_type = framedraw.type;
     param->special_type_index = 1;
     if (framedraw.type == LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), 0.);
-    lives_signal_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                               LIVES_GUI_CALLBACK(after_framedraw_widget_changed), &framedraw);
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(after_framedraw_widget_changed), &framedraw);
   }
   if (mainw->current_file > -1) {
     if (param == framedraw.xend_param) {
@@ -298,16 +323,16 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       param->special_type_index = 2;
       if (framedraw.type == LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), (double)cfile->hsize);
-      lives_signal_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                                 LIVES_GUI_CALLBACK(after_framedraw_widget_changed), &framedraw);
+      lives_signal_sync_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                      LIVES_GUI_CALLBACK(after_framedraw_widget_changed), &framedraw);
     }
     if (param == framedraw.yend_param) {
       param->special_type = framedraw.type;
       param->special_type_index = 3;
       if (framedraw.type == LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), (double)cfile->vsize);
-      lives_signal_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                                 LIVES_GUI_CALLBACK(after_framedraw_widget_changed), &framedraw);
+      lives_signal_sync_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                      LIVES_GUI_CALLBACK(after_framedraw_widget_changed), &framedraw);
     }
 
     if (framedraw.stdwidgets > 0 && !framedraw.added) {
@@ -330,7 +355,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
 
     if (param == aspect.width_param) {
       if (CURRENT_CLIP_HAS_VIDEO) lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), cfile->hsize);
-      aspect.width_func = lives_signal_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+      aspect.width_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                           LIVES_GUI_CALLBACK(after_aspect_width_changed),
                           NULL);
       aspect.nwidgets++;
@@ -338,12 +363,13 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
 
     if (param == aspect.height_param) {
       if (CURRENT_CLIP_HAS_VIDEO) lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), cfile->vsize);
-      aspect.height_func = lives_signal_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+      aspect.height_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                            LIVES_GUI_CALLBACK(after_aspect_height_changed),
                            NULL);
       aspect.nwidgets++;
     }
 
+#if GTK_CHECK_VERSION(3, 2, 0)
     if (param == fchooser.font_param) {
       LiVESWidget *tbox = widget;
       int idx;
@@ -367,15 +393,31 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       lives_widget_set_sensitive_with(widget, buttond);
 
       lives_widget_destroy_with(buttond, tbox);
+
+      lives_signal_sync_connect(LIVES_GUI_OBJECT(param->widgets[1]), LIVES_WIDGET_FONT_SET_SIGNAL,
+                                LIVES_GUI_CALLBACK(font_set_cb),
+                                (livespointer)rfx);
+      fchooser.entry_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(widget),
+                            LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(font_entry_cb),
+                            (livespointer)rfx);
+      if (fchooser.nwidgets == 1) {
+        font_entry_cb(LIVES_ENTRY(param->widgets[0]), (livespointer)rfx);
+      }
+      fchooser.nwidgets++;
     }
 
     if (param == fchooser.size_param) {
-      // needs callback doing:
-
-      //pfd = gtk_font_chooser_get_font_desc(fchoo);
-      //pango_font_description_set_size(pfd, size * PANGO_SCALE);
-      // gtk_font_chooser_set_font_desc(fchoo, pfd);
+      fchooser.size_paramfunc = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(widget),
+                                LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                LIVES_GUI_CALLBACK(font_size_cb),
+                                (livespointer)rfx);
+      if (fchooser.nwidgets == 1) {
+        font_entry_cb(LIVES_ENTRY(param->widgets[0]), (livespointer)rfx);
+      }
+      fchooser.nwidgets++;
     }
+#endif
 
     if ((param == aspect.width_param || param == aspect.height_param) && aspect.nwidgets == 2) {
       boolean expand = widget_opts.expand == LIVES_EXPAND_EXTRA;
@@ -386,8 +428,8 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
 
       aspect.lockbutton = lives_standard_lock_button_new(TRUE, ASPECT_BUTTON_WIDTH,
                           ASPECT_BUTTON_HEIGHT, _("Maintain aspect ratio"));
-      lives_signal_connect(aspect.lockbutton, LIVES_WIDGET_CLICKED_SIGNAL,
-                           LIVES_GUI_CALLBACK(reset_aspect), (livespointer)&aspect);
+      lives_signal_sync_connect(aspect.lockbutton, LIVES_WIDGET_CLICKED_SIGNAL,
+                                LIVES_GUI_CALLBACK(reset_aspect), (livespointer)&aspect);
 
       reset_aspect(LIVES_BUTTON(aspect.lockbutton), &aspect);
 
@@ -400,9 +442,9 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
 
       lives_container_add(LIVES_CONTAINER(eventbox), aspect.label);
 
-      lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                           LIVES_GUI_CALLBACK(label_act_lockbutton),
-                           aspect.lockbutton);
+      lives_signal_sync_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+                                LIVES_GUI_CALLBACK(label_act_lockbutton),
+                                aspect.lockbutton);
 
       lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);
 
@@ -471,8 +513,8 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       lives_free(def_dir);
       lives_box_pack_start(LIVES_BOX(box), buttond, FALSE, FALSE, widget_opts.packing_width);
       //lives_box_reorder_child(LIVES_BOX(box), buttond, epos); // insert after label, before textbox
-      lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
-                           (livespointer)widget);
+      lives_signal_sync_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
+                                (livespointer)widget);
 
       if (!lives_widget_is_sensitive(widget)) lives_widget_set_sensitive(buttond, FALSE);
       lives_widget_set_show_hide_with(widget, buttond);
@@ -509,8 +551,8 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
 
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(buttond), "filesel_type", (livespointer)LIVES_FILE_SELECTION_SAVE);
       lives_box_pack_start(LIVES_BOX(box), buttond, FALSE, FALSE, widget_opts.packing_width);
-      lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
-                           (livespointer)widget);
+      lives_signal_sync_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
+                                (livespointer)widget);
 
       if (!lives_widget_is_sensitive(widget)) lives_widget_set_sensitive(buttond, FALSE);
       lives_widget_set_show_hide_with(widget, buttond);
@@ -558,9 +600,9 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       if (!lives_widget_is_sensitive(widget)) lives_widget_set_sensitive(checkbutton, FALSE);
       lives_widget_show_all(hbox);
 
-      lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                 LIVES_GUI_CALLBACK(passwd_toggle_vis),
-                                 (livespointer)widget);
+      lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                      LIVES_GUI_CALLBACK(passwd_toggle_vis),
+                                      (livespointer)widget);
 
     }
     slist = slist->next;
@@ -645,6 +687,8 @@ boolean special_cleanup(boolean is_ok) {
     if (framedraw.extra_params != NULL) lives_free(framedraw.extra_params);
     framedraw.extra_params = NULL;
 
+    framedraw.type = LIVES_PARAM_SPECIAL_TYPE_NONE;
+
     if (fileread != NULL) lives_list_free(fileread);
     fileread = NULL;
 
@@ -653,6 +697,8 @@ boolean special_cleanup(boolean is_ok) {
 
     if (passwd_widgets != NULL) lives_list_free(passwd_widgets);
     passwd_widgets = NULL;
+
+    fchooser.nwidgets = 0;
 
     framedraw.added = FALSE;
     special_inited = FALSE;

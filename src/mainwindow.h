@@ -1103,6 +1103,8 @@ typedef struct {
   LiVESWidget *framedraw_cbutton; ///< colour for mask
   LiVESWidget *fd_frame; ///< surrounding frame widget
 
+  lives_painter_surface_t *fd_surface;
+
   weed_plant_t *fd_layer_orig; ///< original layer uneffected
   weed_plant_t *fd_layer; ///< framedraw preview layer
 
@@ -1479,12 +1481,6 @@ typedef struct {
 
   boolean aplayer_broken;
 
-  /// TODO ***: these all need to be per thread
-  boolean com_failed;
-  int write_failed, read_failed;
-  boolean chdir_failed;
-  ///
-
   boolean add_clear_ds_button;
   boolean add_clear_ds_adv;
   boolean tried_ds_recover;
@@ -1494,19 +1490,12 @@ typedef struct {
 
   int ce_frame_width, ce_frame_height;
 
-  /// TODO: need to be per-thread
-  char *read_failed_file, *write_failed_file, *bad_aud_file;
-
   lives_render_error_t render_error;
 
   uint64_t next_ds_warn_level; ///< current disk space warning level for the tempdir
 
   lives_pconnect_t *pconx; ///< list of out -> in param connections
   lives_cconnect_t *cconx; ///< list of out -> in alpha channel connections
-
-  /// TOD: need to be per thread
-  int rowstride_alignment;   // used to align the rowstride bytesize in create_empty_pixel_data
-  int rowstride_alignment_hint;
 
   int sepwin_minwidth, sepwin_minheight;
   float sepwin_scale;

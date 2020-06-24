@@ -1694,7 +1694,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
           if (weed_plant_has_leaf(filter, WEED_LEAF_ALIGNMENT_HINT)) {
             int rowstride_alignment_hint = weed_get_int_value(filter, WEED_LEAF_ALIGNMENT_HINT, NULL);
             if (rowstride_alignment_hint  > ALIGN_DEF)
-              mainw->rowstride_alignment_hint = rowstride_alignment_hint;
+              THREADVAR(rowstride_alignment_hint) = rowstride_alignment_hint;
           }
 
           // this will look at width, height, current_palette, and create an empty pixel_data and set rowstrides
@@ -2485,7 +2485,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       if (weed_plant_has_leaf(filter, WEED_LEAF_ALIGNMENT_HINT)) {
         int rowstride_alignment_hint = weed_get_int_value(filter, WEED_LEAF_ALIGNMENT_HINT, NULL);
         if (rowstride_alignment_hint > ALIGN_DEF) {
-          mainw->rowstride_alignment_hint = rowstride_alignment_hint;
+          THREADVAR(rowstride_alignment_hint) = rowstride_alignment_hint;
         }
       }
 
@@ -4618,7 +4618,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
 #endif
 
   pwd = getcwd(cwd, PATH_MAX);
-  mainw->chdir_failed = FALSE;
+  THREADVAR(chdir_failed) = FALSE;
 
   // walk list and create fx structures
 #define DEBUG_WEED
@@ -4893,7 +4893,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
 
   lives_freep((void **)&filters);
   lives_free(package_name);
-  if (mainw->chdir_failed) {
+  if (THREADVAR(chdir_failed)) {
     char *dirs = lives_strdup(_("Some plugin directories"));
     do_chdir_failed_error(dirs);
     lives_free(dirs);
@@ -5881,7 +5881,7 @@ void weed_unload_all(void) {
     lives_free(key_defaults[i]);
   }
 
-  mainw->chdir_failed = FALSE;
+  THREADVAR(chdir_failed) = FALSE;
 
   for (i = 0; i < num_weed_filters; i++) {
     filter = weed_filters[i];
@@ -5955,7 +5955,7 @@ void weed_unload_all(void) {
 
   threaded_dialog_spin(0.);
 
-  if (mainw->chdir_failed) {
+  if (THREADVAR(chdir_failed)) {
     char *dirs = lives_strdup(_("Some plugin directories"));
     do_chdir_failed_error(dirs);
     lives_free(dirs);
@@ -7670,7 +7670,7 @@ matchvals:
   if (weed_plant_has_leaf(filter, WEED_LEAF_ALIGNMENT_HINT)) {
     int rowstride_alignment_hint = weed_get_int_value(filter, WEED_LEAF_ALIGNMENT_HINT, NULL);
     if (rowstride_alignment_hint > ALIGN_DEF) {
-      mainw->rowstride_alignment_hint = rowstride_alignment_hint;
+      THREADVAR(rowstride_alignment_hint) = rowstride_alignment_hint;
     }
   }
 
@@ -11713,7 +11713,7 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
 
 realign:
 
-  // caller should clear and check mainw->read_failed
+  // caller should clear and check THREADVAR(read_failed)
   if (mem == NULL) {
     if (fd == bugfd) {
       if (plant == NULL) {
@@ -11843,8 +11843,8 @@ boolean write_filter_defaults(int fd, int idx) {
 
   lives_freep((void **)&ptmpls);
 
-  if (mainw->write_failed == fd + 1) {
-    mainw->write_failed = 0;
+  if (THREADVAR(write_failed) == fd + 1) {
+    THREADVAR(write_failed) = 0;
     return FALSE;
   }
   return TRUE;
@@ -11954,13 +11954,13 @@ boolean read_filter_defaults(int fd) {
     lives_read_buffered(fd, buf, strlen("\n"), TRUE);
     lives_free(buf);
     if (ptmpls != NULL) lives_free(ptmpls);
-    if (mainw->read_failed == fd + 1) {
+    if (THREADVAR(read_failed) == fd + 1) {
       break;
     }
   }
 
-  if (mainw->read_failed == fd + 1) {
-    mainw->read_failed = 0;
+  if (THREADVAR(read_failed) == fd + 1) {
+    THREADVAR(read_failed) = 0;
     return FALSE;
   }
 
@@ -12015,8 +12015,8 @@ boolean write_generator_sizes(int fd, int idx) {
   }
   if (wrote_hashname) lives_write_buffered(fd, "\n", 1, TRUE);
 
-  if (mainw->write_failed == fd + 1) {
-    mainw->write_failed = 0;
+  if (THREADVAR(write_failed) == fd + 1) {
+    THREADVAR(write_failed) = 0;
     return FALSE;
   }
   return TRUE;
@@ -12130,20 +12130,20 @@ boolean read_generator_sizes(int fd) {
 
     lives_freep((void **)&ctmpls);
 
-    if (mainw->read_failed == fd + 1) {
+    if (THREADVAR(read_failed) == fd + 1) {
       break;
     }
     buf = (char *)lives_malloc(strlen("\n"));
     lives_read_buffered(fd, buf, strlen("\n"), TRUE);
     lives_free(buf);
 
-    if (mainw->read_failed == fd + 1) {
+    if (THREADVAR(read_failed) == fd + 1) {
       break;
     }
   }
 
-  if (mainw->read_failed == fd + 1) {
-    mainw->read_failed = 0;
+  if (THREADVAR(read_failed) == fd + 1) {
+    THREADVAR(read_failed) = 0;
     return FALSE;
   }
   return TRUE;
@@ -12267,8 +12267,8 @@ err123:
     lives_free(key_defs);
   }
 
-  if (ret < 0 || mainw->read_failed == fd + 1) {
-    mainw->read_failed = 0;
+  if (ret < 0 || THREADVAR(read_failed) == fd + 1) {
+    THREADVAR(read_failed) = 0;
     return FALSE;
   }
 
@@ -12321,8 +12321,8 @@ void write_key_defaults(int fd, int key, int mode) {
   lives_write_le_buffered(fd, &nparams, 4, TRUE);
 
   for (int i = 0; i < nparams; i++) {
-    if (mainw->write_failed == fd + 1) {
-      mainw->write_failed = 0;
+    if (THREADVAR(write_failed) == fd + 1) {
+      THREADVAR(write_failed) = 0;
       break;
     }
     weed_leaf_serialise(fd, key_defs[i], WEED_LEAF_VALUE, FALSE, NULL);

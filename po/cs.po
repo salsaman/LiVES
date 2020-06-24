@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LiVEScz\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2020-06-23 01:22-0300\n"
+"POT-Creation-Date: 2020-06-23 20:15-0300\n"
 "PO-Revision-Date: 2018-07-23 13:17+0000\n"
 "Last-Translator: Pavel Borecki <Unknown>\n"
 "Language-Team: <martin@svobodicz.com, ales@mur.at>\n"
@@ -7362,17 +7362,17 @@ msgstr "Změna velikosti"
 msgid "_Frame"
 msgstr ""
 
-#: src/paramspecial.c:306
+#: src/paramspecial.c:407
 #, fuzzy
 msgid "    Maintain _Aspect Ratio    "
 msgstr "Oprava ukazatele hlediska"
 
-#: src/paramspecial.c:312
+#: src/paramspecial.c:413
 #, fuzzy
 msgid "Maintain aspect ratio"
 msgstr "Oprava ukazatele hlediska"
 
-#: src/paramspecial.c:484
+#: src/paramspecial.c:579
 msgid "Display Password"
 msgstr ""
 

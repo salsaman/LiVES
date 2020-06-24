@@ -32,7 +32,7 @@ fcol|_Fill colour|colRGB24|255|255|255|
 scol|_Stroke colour|colRGB24|255|255|255|
 psize|_Point size|num0|64|10|240|
 bgcol|_Background colour|colRGB24|0|0|0|
-font|_Font|string_list|0|Default|AvantGarde-Book|AvantGarde-BookOblique|AvantGarde-Demi|AvantGarde-DemiOblique|Bookman-Demi|Bookman-DemiItalic|Bookman-Light|Bookman-LightItalic|Courier|Courier-Bold|Courier-Oblique|Courier-BoldOblique|Helvetica|Helvetica-Bold|Helvetica-BoldOblique|Helvetica-Narrow|Helvetica-Narrow-Oblique|Helvetica-Narrow-Bold|Helvetica-Narrow-BoldOblique|NewCenturySchlbk-Roman|NewCenturySchlbk-Italic|NewCenturySchlbk-Bold|NewCenturySchlbk-BoldItalic|Palatino-Roman|Palatino-Italic|Palatino-Bold|Palatino-BoldItalic|Times-Roman|Times-Bold|Times-Italic|Times-BoldItalic|Symbol||
+font|_Font|string||128|
 </params>
 
 <param_window>
@@ -54,91 +54,17 @@ layout|p7|p5|
 
 <pre>
 $cstring0 = &RGB24_to_string($p6_red, $p6_green, $p6_blue);
-
 system("$convert_command -size $width!x$height! xc:$cstring0 $out_prefix" . "temp$out_ext");
-
-$p7--;
-
-if ($p7==-1) {
-	$font="";
- } elsif ($p7==0) {
-   $fo="AvantGarde-Book";
- } elsif ($p7==1) {
-  $fo="AvantGarde-BookOblique";
- } elsif ($p7==2) {
-   $fo="AvantGarde-Demi";
- } elsif ($p7==3) {
-   $fo="AvantGarde-DemiOblique";
- } elsif ($p7==4) {
-   $fo="Bookman-Demi";
- } elsif ($p7==5) {
-   $fo="Bookman-DemiItalic";
- } elsif ($p7==6) {
-   $fo="Bookman-Light";
- } elsif ($p7==7) {
-   $fo="Bookman-LightItalic";
- } elsif ($p7==8) {
-   $fo="Courier";
- } elsif ($p7==9) {
-   $fo="Courier-Bold";
- } elsif ($p7==10) {
-   $fo="Courier-Oblique";
- } elsif ($p7==11) {
-   $fo="Courier-BoldOblique";
- } elsif ($p7==12) {
-   $fo="Helvetica";
- } elsif ($p7==13) {
-   $fo="Helvetica-Bold";
- } elsif ($p7==14) {
-   $fo="Helvetica-BoldOblique";
- } elsif ($p7==15) {
-   $fo="Helvetica-Narrow";
- } elsif ($p7==16) {
-   $fo="Helvetica-Narrow-Oblique";
- } elsif ($p7==17) {
-   $fo="Helvetica-Narrow-Bold";
- } elsif ($p7==18) {
-   $fo="Helvetica-Narrow-BoldOblique";
- } elsif ($p7==19) {
-   $fo="NewCenturySchlbk-Roman";
- } elsif ($p7==20) {
-   $fo="NewCenturySchlbk-Italic";
- } elsif ($p7==21) {
-   $fo="NewCenturySchlbk-Bold  ";
- } elsif ($p7==22) {
-   $fo="NewCenturySchlbk-BoldItalic";
- } elsif ($p7==23) {
-   $fo="Palatino-Roman";
- } elsif ($p7==24) {
-   $fo="Palatino-Italic";
- } elsif ($p7==25) {
-   $fo="Palatino-Bold  "; 
- } elsif ($p7==26) {
-   $fo="Palatino-BoldItalic";
- } elsif ($p7==27) {
-   $fo="Times-Roman";
- } elsif ($p7==28) {
-   $fo="Times-Bold ";
- } elsif ($p7==29) {
-   $fo="Times-Italic";
- } elsif ($p7==30) {
-   $fo="Times-BoldItalic";
- } elsif ($p7==31) {
-   $fo="Symbol";
- }
-
-if ($p7 >= 0) {
-  $font = "-font $fo";
-}
 $cstring1 = &RGB24_to_string($p3_red, $p3_green, $p3_blue);
 $cstring2 = &RGB24_to_string($p4_red, $p4_green, $p4_blue);
 $rdyfile = "";
+($fam, $stretch, $style, $weight) = &parse_font_string($p7);
 </pre>
 
 <loop>
 if ($rdyfile eq "") {
-  system("$convert_command $out_prefix" . "temp$out_ext -gravity Center -fill $cstring1 -stroke $cstring2 $font -pointsize $p5 " .
-			 "-draw \"text $p1 $p2 '$p0' gravity Center\" $out_prefix$out");
+  system("$convert_command $out_prefix" . "temp$out_ext -fill $cstring1 -stroke $cstring2 -pointsize $p5 -family $fam -stretch $stretch -style $style -weight $weight" .
+			 "-draw \"gravity Center text $p1 $p2 '$p0'\" $out_prefix$out");
   $rdyfile = $out;
 }
 else {

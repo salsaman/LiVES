@@ -453,7 +453,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
         for (i = start; i < offset_end; i++) {
           if (afd == -1) {
-            mainw->read_failed = -2;
+            THREADVAR(read_failed) = -2;
             return;
           }
           atime = (double)i / scalex;
@@ -600,7 +600,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
         lives_free(filename);
         for (i = start; i < offset_end; i++) {
           if (afd == -1) {
-            mainw->read_failed = -2;
+            THREADVAR(read_failed) = -2;
             return;
           }
           atime = (double)i / scalex;

@@ -1198,7 +1198,7 @@ size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, 
     mainw->rec_samples -= frames_out;
   }
 
-  if (mainw->bad_aud_file == NULL) {
+  if (THREADVAR(bad_aud_file) == NULL) {
     size_t target = frames_out * (ofile->asampsize / 8) * ofile->achans, bytes;
     // use write not lives_write - because of potential threading issues
     bytes = write(mainw->aud_rec_fd, holding_buff, target);
@@ -1212,7 +1212,7 @@ size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, 
         check_for_disk_space();
       }
     }
-    if (bytes < target) mainw->bad_aud_file = filename_from_fd(NULL, mainw->aud_rec_fd);
+    if (bytes < target) THREADVAR(bad_aud_file) = filename_from_fd(NULL, mainw->aud_rec_fd);
   }
 
   lives_free(holding_buff);

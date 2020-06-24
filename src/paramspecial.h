@@ -43,6 +43,9 @@ typedef struct {
 typedef struct {
   lives_param_t *font_param;
   lives_param_t *size_param;
+  ulong size_paramfunc;
+  ulong entry_func;
+  int nwidgets;
 } lives_special_fontchooser_t;
 
 typedef struct {

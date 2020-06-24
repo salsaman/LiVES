@@ -571,11 +571,11 @@ char *get_md5sum(const char *filename) {
   char **array;
   char *md5;
   char *com = lives_strdup_printf("%s \"%s\"", EXEC_MD5SUM, filename);
-  mainw->com_failed = FALSE;
+  THREADVAR(com_failed) = FALSE;
   lives_popen(com, TRUE, mainw->msg, MAINW_MSG_SIZE);
   lives_free(com);
-  if (mainw->com_failed) {
-    mainw->com_failed = FALSE;
+  if (THREADVAR(com_failed)) {
+    THREADVAR(com_failed) = FALSE;
     return NULL;
   }
   array = lives_strsplit(mainw->msg, " ", 2);
@@ -662,10 +662,10 @@ getfserr:
 size_t _get_usage(void) {
   char buff[256];
   char *com = lives_strdup_printf("%s -sb \"%s\"", EXEC_DU, prefs->workdir);
-  mainw->com_failed = FALSE;
+  THREADVAR(com_failed) = FALSE;
   lives_popen(com, 256, buff, TRUE);
-  if (mainw->com_failed) {
-    mainw->com_failed = FALSE;
+  if (THREADVAR(com_failed)) {
+    THREADVAR(com_failed) = FALSE;
     return 0;
   }
   return atoll(buff);
@@ -1270,9 +1270,6 @@ void resubmit_proc_thread(lives_proc_thread_t thread_info, lives_thread_attr_t *
   if (zattr & LIVES_THRDATTR_WAIT_SYNC) {
     weed_set_voidptr_value(thread_info, "sync_ready", (void *) & (work->sync_ready));
   }
-  if (zattr & LIVES_THRDATTR_NEW_CTX) {
-    work->flags |= LIVES_THRDFLAG_NEW_CTX;
-  }
 }
 
 
@@ -1308,12 +1305,16 @@ static LiVESList *allctxs = NULL;
 lives_thread_data_t *get_thread_data(void) {
   LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
   LiVESList *list = allctxs;
+  if (!ctx) ctx = lives_widget_context_default();
   for (; list; list = list->next) {
     if (((lives_thread_data_t *)list->data)->ctx == ctx) return list->data;
   }
   return NULL;
 }
 
+LIVES_GLOBAL_INLINE lives_threadvars_t *get_threadvars(void) {
+  return &get_thread_data()->vars;
+}
 
 static lives_thread_data_t *get_thread_data_by_id(uint64_t idx) {
   LiVESList *list = allctxs;
@@ -1321,6 +1322,16 @@ static lives_thread_data_t *get_thread_data_by_id(uint64_t idx) {
     if (((lives_thread_data_t *)list->data)->idx == idx) return list->data;
   }
   return NULL;
+}
+
+lives_thread_data_t *lives_thread_data_create(uint64_t idx) {
+  lives_thread_data_t *tdata = (lives_thread_data_t *)lives_calloc(1, sizeof(lives_thread_data_t));
+  if (idx != 0) tdata->ctx = lives_widget_context_new();
+  else tdata->ctx = lives_widget_context_default();
+  tdata->idx = idx;
+  tdata->vars.var_rowstride_alignment = ALIGN_DEF;
+  allctxs = lives_list_prepend(allctxs, (livespointer)tdata);
+  return tdata;
 }
 
 
@@ -1446,16 +1457,6 @@ LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new_with_index(int subtype, int64_
 }
 
 
-static lives_thread_data_t *lives_thread_data_create(uint64_t idx) {
-  lives_thread_data_t *tdata = (lives_thread_data_t *)lives_calloc(1, sizeof(lives_thread_data_t));
-  //tdata->ctx = lives_main_context_new();
-  tdata->ctx = lives_widget_context_new();
-  tdata->idx = idx;
-  allctxs = lives_list_prepend(allctxs, (livespointer)tdata);
-  return tdata;
-}
-
-
 void lives_threadpool_init(void) {
   npoolthreads = MINPOOLTHREADS;
   if (prefs->nfx_threads > npoolthreads) npoolthreads = prefs->nfx_threads;
@@ -1513,9 +1514,6 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives
     work->flags |= LIVES_THRDFLAG_WAIT_SYNC;
     work->sync_ready = FALSE;
   }
-  if (attr && (*attr & LIVES_THRDATTR_NEW_CTX)) {
-    work->flags |= LIVES_THRDFLAG_NEW_CTX;
-  }
 
   pthread_mutex_lock(&twork_mutex);
   if (twork_first == NULL) {
@@ -1545,7 +1543,7 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives
     pthread_mutex_unlock(&tcond_mutex);
     poolthrds = (pthread_t **)lives_realloc(poolthrds, (npoolthreads + MINPOOLTHREADS) * sizeof(pthread_t *));
     for (int i = npoolthreads; i < npoolthreads + MINPOOLTHREADS; i++) {
-      lives_thread_data_t *tdata = lives_thread_data_create(i);
+      lives_thread_data_t *tdata = lives_thread_data_create(i + 1);
       poolthrds[i] = (pthread_t *)lives_malloc(sizeof(pthread_t));
       pthread_create(poolthrds[i], NULL, thrdpool, tdata);
       pthread_mutex_lock(&tcond_mutex);

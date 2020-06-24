@@ -26,8 +26,8 @@ convert
 
 <params>
 text|_Text|string|LiVES|1024|
-xoffs|_X offset|num0|0|0|10000|
-yoffs|_Y offset|num0|0|0|10000|
+xoffs|_X offset|num0|0|-10000|10000|
+yoffs|_Y offset|num0|0|-10000|10000|
 fcol|_Fill colour|colRGB24|0|0|0|
 scol|_Stroke colour|colRGB24|0|0|0|
 psize|_Point size|num0|32|10|120|
@@ -49,19 +49,20 @@ special|fontchooser|6|5|
 </language_code>
 
 <pre>
+$cstring1=&RGB24_to_string($p3_red,$p3_green,$p3_blue);
+$cstring2=&RGB24_to_string($p4_red,$p4_green,$p4_blue);
+($fam, $stretch, $style, $weight) = &parse_font_string($p6);
 </pre>
 
 <loop>
-$cstring1=&RGB24_to_string($p3_red,$p3_green,$p3_blue);
-$cstring2=&RGB24_to_string($p4_red,$p4_green,$p4_blue);
-system("$convert_command $img_prefix$in -fill $cstring1 -stroke $cstring2 -pointsize $p5 -draw \"text $p1 $p2 '$p0'\" $out_prefix$out");
+system("$convert_command $img_prefix$in -fill $cstring1 -stroke $cstring2 -pointsize $p5 -family $fam -stretch $stretch -style $style -weight $weight -draw \"gravity Center text $p1 $p2 '$p0'\" $out_prefix$out");
 </loop>
 
 <post>
 </post>
 
 <onchange>
-init|$p1_max=$width; $p2_max=$height;
+init|$p1_max=$width; $p1_min=-$width; $p2_max=$height; $p2_min=-$height;
 3|$p4_red=$p3_red;$p4_green=$p3_green;$p4_blue=$p3_blue;
 </onchange>
 

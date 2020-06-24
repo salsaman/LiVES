@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2020-06-23 01:22-0300\n"
+"POT-Creation-Date: 2020-06-23 20:15-0300\n"
 "PO-Revision-Date: 2019-07-22 18:27+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -8091,15 +8091,15 @@ msgstr "колір"
 msgid "_Frame"
 msgstr "_Кадр"
 
-#: src/paramspecial.c:306
+#: src/paramspecial.c:407
 msgid "    Maintain _Aspect Ratio    "
 msgstr "    Зберігати співвідно_шення розмірів    "
 
-#: src/paramspecial.c:312
+#: src/paramspecial.c:413
 msgid "Maintain aspect ratio"
 msgstr "Зберігати співвідношення розмірів"
 
-#: src/paramspecial.c:484
+#: src/paramspecial.c:579
 msgid "Display Password"
 msgstr "Показувати пароль"
 

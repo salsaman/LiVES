@@ -3100,7 +3100,10 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
         lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[0]), atoi(tmp));
       }
     } else set_bool_param(param->def, (atoi(tmp)));
-    set_bool_param(param->value, (atoi(tmp)));
+    if (upd && param->widgets[0] && LIVES_IS_TOGGLE_BUTTON(param->widgets[0])) {
+      set_bool_param(param->value,
+                     lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(param->widgets[0])));
+    } else set_bool_param(param->value, (atoi(tmp)));
     lives_free(tmp);
     break;
   case LIVES_PARAM_NUM:
@@ -3137,7 +3140,10 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
           lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
         }
       } else set_double_param(param->def, double_val);
-      set_double_param(param->value, double_val);
+      if (upd && param->widgets[0] && LIVES_IS_SPIN_BUTTON(param->widgets[0])) {
+        set_double_param(param->value,
+                         lives_spin_button_get_value(LIVES_SPIN_BUTTON(param->widgets[0])));
+      } else set_double_param(param->value, double_val);
     } else {
       int int_value;
       int int_min, int_max;
@@ -3176,7 +3182,10 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
           lives_signal_handlers_unblock_by_func(param->widgets[0], (livespointer)after_param_value_changed, (livespointer)rfx);
         }
       } else set_int_param(param->def, int_value);
-      set_int_param(param->value, int_value);
+      if (upd && param->widgets[0] && LIVES_IS_SPIN_BUTTON(param->widgets[0])) {
+        set_int_param(param->value,
+                      lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(param->widgets[0])));
+      } else set_int_param(param->value, int_value);
     }
     break;
   case LIVES_PARAM_COLRGB24:
@@ -3203,7 +3212,14 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[2]), (double)blue);
       }
     } else set_colRGB24_param(param->def, red, green, blue);
-    set_colRGB24_param(param->value, red, green, blue);
+    if (upd && param->widgets[0] && LIVES_IS_SPIN_BUTTON(param->widgets[0])
+        && param->widgets[1] && LIVES_IS_SPIN_BUTTON(param->widgets[1])
+        && param->widgets[2] && LIVES_IS_SPIN_BUTTON(param->widgets[2])) {
+      set_colRGB24_param(param->value,
+                         lives_spin_button_get_value(LIVES_SPIN_BUTTON(param->widgets[0])),
+                         lives_spin_button_get_value(LIVES_SPIN_BUTTON(param->widgets[1])),
+                         lives_spin_button_get_value(LIVES_SPIN_BUTTON(param->widgets[2])));
+    } else set_colRGB24_param(param->value, red, green, blue);
     break;
   case LIVES_PARAM_STRING:
     strval = reconstruct_string(plist, pnum, &offs);
@@ -3213,11 +3229,12 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
       break;
     }
     if (upd) {
-      if (param->widgets[0] != NULL) {
+      if (param->widgets[0]) {
         if (LIVES_IS_TEXT_VIEW(param->widgets[0])) {
           lives_text_view_set_text(LIVES_TEXT_VIEW(param->widgets[0]), strval, -1);
         } else {
           lives_entry_set_text(LIVES_ENTRY(param->widgets[0]), strval);
+
         }
       }
     } else {
@@ -3225,7 +3242,19 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
       param->def = (void *)lives_strdup(strval);
     }
     if (param->value != NULL) lives_free(param->value);
-    param->value = strval;
+
+    /// read value back from widget in case some callback changed the value
+    if (upd && param->widgets[0] && (LIVES_IS_TEXT_VIEW(param->widgets[0])
+                                     || LIVES_IS_ENTRY(param->widgets[0]))) {
+      lives_free(strval);
+      if (LIVES_IS_TEXT_VIEW(param->widgets[0])) {
+        param->value = lives_strdup(lives_text_view_get_text(LIVES_TEXT_VIEW(param->widgets[0])));
+      } else {
+        param->value = lives_strdup(lives_entry_get_text(LIVES_ENTRY(param->widgets[0])));
+      }
+    } else {
+      param->value = strval;
+    }
     break;
   case LIVES_PARAM_STRING_LIST: {
     int int_value;
@@ -3233,10 +3262,14 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
     int_value = atoi(tmp);
     lives_free(tmp);
     if (param->change_blocked) break;
-    if (upd && param->widgets[0] != NULL && LIVES_IS_COMBO(param->widgets[0]) && int_value < lives_list_length(param->list))
+    if (upd && param->widgets[0] && LIVES_IS_COMBO(param->widgets[0]) && int_value < lives_list_length(param->list))
       lives_combo_set_active_string(LIVES_COMBO(param->widgets[0]), (char *)lives_list_nth_data(param->list, int_value));
     if (!upd) set_int_param(param->def, int_value);
-    set_int_param(param->value, int_value);
+    if (upd && param->widgets[0] && LIVES_IS_COMBO(param->widgets[0])) {
+      char *txt = lives_combo_get_active_text(LIVES_COMBO(param->widgets[0]));
+      int new_index = lives_list_strcmp_index(param->list, txt, TRUE);
+      set_int_param(param->value, new_index);
+    } else set_int_param(param->value, int_value);
     break;
   }
   default:

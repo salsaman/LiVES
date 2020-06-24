@@ -302,16 +302,18 @@ void reset_effort(void);
 typedef void *(*lives_funcptr_t)(void *);
 
 typedef struct {
-  lives_painter_t *paint;
-  LiVESXWindow *xwin;
-} lives_paintwin_t;
+  boolean var_com_failed;
+  int var_write_failed, var_read_failed;
+  boolean var_chdir_failed;
+  char *var_read_failed_file, *var_write_failed_file, *var_bad_aud_file;
+  int var_rowstride_alignment;   // used to align the rowstride bytesize in create_empty_pixel_data
+  int var_rowstride_alignment_hint;
+} lives_threadvars_t;
 
 typedef struct {
   LiVESWidgetContext *ctx;
-  uint64_t idx;
-  LiVESXWindow *exp_window;
-  lives_painter_t *painter;
-  void *storage;
+  int64_t idx;
+  lives_threadvars_t vars;
 } lives_thread_data_t;
 
 typedef struct {
@@ -341,7 +343,6 @@ typedef struct {
 #define LIVES_THRDFLAG_AUTODELETE (1 << 0)
 #define LIVES_THRDFLAG_TUNING (1 << 1)
 #define LIVES_THRDFLAG_WAIT_SYNC (1 << 2)
-#define LIVES_THRDFLAG_NEW_CTX (1 << 3)
 
 typedef LiVESList lives_thread_t;
 typedef uint64_t lives_thread_attr_t;
@@ -349,7 +350,6 @@ typedef uint64_t lives_thread_attr_t;
 #define LIVES_THRDATTR_AUTODELETE (1 << 0)
 #define LIVES_THRDATTR_PRIORITY (1 << 1)
 #define LIVES_THRDATTR_WAIT_SYNC (1 << 2)
-#define LIVES_THRDATTR_NEW_CTX (1 << 3)
 
 void lives_threadpool_init(void);
 void lives_threadpool_finish(void);
@@ -430,6 +430,10 @@ lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t *, lives_funcpt
 boolean lives_proc_thread_check(lives_proc_thread_t);
 
 lives_thread_data_t *get_thread_data(void);
+lives_threadvars_t *get_threadvars(void);
+lives_thread_data_t *lives_thread_data_create(uint64_t idx);
+
+#define THREADVAR(var) get_threadvars()->var_##var
 
 void lives_proc_thread_set_cancellable(lives_proc_thread_t);
 boolean lives_proc_thread_get_cancellable(lives_proc_thread_t);

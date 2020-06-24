@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives 3.2.0-pre\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2020-06-23 01:22-0300\n"
+"POT-Creation-Date: 2020-06-23 20:15-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -6908,15 +6908,15 @@ msgstr ""
 msgid "_Frame"
 msgstr ""
 
-#: src/paramspecial.c:306
+#: src/paramspecial.c:407
 msgid "    Maintain _Aspect Ratio    "
 msgstr ""
 
-#: src/paramspecial.c:312
+#: src/paramspecial.c:413
 msgid "Maintain aspect ratio"
 msgstr ""
 
-#: src/paramspecial.c:484
+#: src/paramspecial.c:579
 msgid "Display Password"
 msgstr ""
 

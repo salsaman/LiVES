@@ -634,7 +634,7 @@ lives_render_error_t realfx_progress(boolean reset) {
 
   if (has_video_filters(FALSE) || resize_instance != NULL) {
     frameticks = (i - cfile->start + 1.) / cfile->fps * TICKS_PER_SECOND;
-    mainw->rowstride_alignment_hint = 4;
+    THREADVAR(rowstride_alignment_hint) = 4;
     layer = lives_layer_new_for_frame(mainw->current_file, i);
     if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), frameticks)) {
       // do_read_failed_error_s() cannot be used here as we dont know the filename
@@ -775,7 +775,7 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
       if (has_new_audio) cfile->achans = cfile->asampsize = cfile->arate = cfile->arps = 0;
       else {
         char *com = lives_strdup_printf("%s undo_audio %s", prefs->backend_sync, cfile->handle);
-        mainw->com_failed = FALSE;
+        THREADVAR(com_failed) = FALSE;
         lives_rm(cfile->info_file);
         lives_system(com, FALSE);
         lives_free(com);

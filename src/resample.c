@@ -186,11 +186,11 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
           cfile->progress_end = cfile->frames;
 
           lives_rm(cfile->info_file);
-          mainw->com_failed = FALSE;
+          THREADVAR(com_failed) = FALSE;
           lives_system(com, FALSE);
           lives_free(com);
 
-          if (mainw->com_failed) return FALSE;
+          if (THREADVAR(com_failed)) return FALSE;
 
           mainw->resizing = TRUE;
           rs_builtin = TRUE;
@@ -378,11 +378,11 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
         cfile->undo1_dbl = cfile->fps;
 
         lives_rm(cfile->info_file);
-        mainw->com_failed = FALSE;
+        THREADVAR(com_failed) = FALSE;
         lives_system(com, FALSE);
         lives_free(com);
 
-        if (mainw->com_failed) return FALSE;
+        if (THREADVAR(com_failed)) return FALSE;
 
         mainw->resizing = TRUE;
       } else {
@@ -1251,9 +1251,9 @@ void on_resaudio_ok_clicked(LiVESButton * button, LiVESEntry * entry) {
                                 cfile->handle, cfile->arps,
                                 cfile->achans, cfile->asampsize, cur_signed, cur_endian, arps, cfile->achans, cfile->asampsize,
                                 cur_signed, cur_endian, audio_stretch);
-      mainw->com_failed = FALSE;
+      THREADVAR(com_failed) = FALSE;
       lives_system(com, FALSE);
-      if (mainw->com_failed) {
+      if (THREADVAR(com_failed)) {
         unbuffer_lmap_errors(FALSE);
         return;
       }
@@ -1265,13 +1265,13 @@ void on_resaudio_ok_clicked(LiVESButton * button, LiVESEntry * entry) {
       com = lives_strdup_printf("%s resample_audio \"%s\" %d %d %d %d %d %d %d %d %d %d", prefs->backend,
                                 cfile->handle, cfile->arps,
                                 cfile->achans, cfile->asampsize, cur_signed, cur_endian, arps, achans, asampsize, asigned, aendian);
-      mainw->com_failed = FALSE;
+      THREADVAR(com_failed) = FALSE;
       mainw->cancelled = CANCEL_NONE;
       mainw->error = FALSE;
       lives_rm(cfile->info_file);
       lives_system(com, FALSE);
       check_backend_return(cfile, NULL);
-      if (mainw->com_failed) {
+      if (THREADVAR(com_failed)) {
         unbuffer_lmap_errors(FALSE);
         return;
       }
@@ -2195,9 +2195,9 @@ int reorder_frames(int rwidth, int rheight) {
 
   lives_rm(cfile->info_file);
   mainw->error = FALSE;
-  mainw->com_failed = FALSE;
+  THREADVAR(com_failed) = FALSE;
   lives_system(com, FALSE);
-  if (mainw->com_failed) return -cur_frames;
+  if (THREADVAR(com_failed)) return -cur_frames;
 
   if (cfile->undo_action == UNDO_RESAMPLE) {
     if (mainw->current_file > 0) {
@@ -2262,9 +2262,9 @@ int deorder_frames(int old_frames, boolean leave_bak) {
                             get_image_ext_for_type(cfile->img_type), leave_bak);
 
   lives_rm(cfile->info_file);
-  mainw->com_failed = FALSE;
+  THREADVAR(com_failed) = FALSE;
   lives_system(com, TRUE);
-  if (mainw->com_failed) return cfile->frames;
+  if (THREADVAR(com_failed)) return cfile->frames;
 
   do_progress_dialog(TRUE, FALSE, _("Deordering frames"));
   lives_free(com);
@@ -2308,10 +2308,10 @@ boolean resample_clipboard(double new_fps) {
     com = lives_strdup_printf("%s redo \"%s\" %d %d \"%s\"", prefs->backend, cfile->handle, 1, new_frames,
                               get_image_ext_for_type(cfile->img_type));
     lives_rm(cfile->info_file);
-    mainw->com_failed = FALSE;
+    THREADVAR(com_failed) = FALSE;
     lives_system(com, FALSE);
 
-    if (mainw->com_failed) {
+    if (THREADVAR(com_failed)) {
       mainw->no_switch_dprint = FALSE;
       d_print_failed();
       return FALSE;

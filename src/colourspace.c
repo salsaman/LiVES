@@ -8132,8 +8132,8 @@ LIVES_INLINE void fill_plane(uint8_t *ptr, int psize, int width, int height, int
 
    width, height, and current_palette must be pre-set in layer; width is in (macro) pixels of the palette
    width and height may be adjusted (rounded) in the function
-   rowstrides will be set, and each plane will be aligned depending on mainw->rowstride_alignment
-   if mainw->rowstride_alignment_hint is non 0 it will set mainw->rowstride_alignment, which must be a power of 2
+   rowstrides will be set, and each plane will be aligned depending on THREADVAR(rowstride_alignment)
+   if THREADVAR(rowstride_alignment_hint) is non 0 it will set THREADVAR(rowstride_alignment), which must be a power of 2
    the special value -1 for the hint will create compact frames (rowstride = width * pixel_size)
 
    if black_fill is set, fill with opaque black in the specified palette: for yuv palettes, YUV_clamping may be pre-set
@@ -8176,19 +8176,19 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
     /// force use of fixed rowstrides, eg. decoder plugin
     fixed_rs = weed_layer_get_rowstrides(layer, NULL);
   } else {
-    if (mainw->rowstride_alignment < ALIGN_DEF) mainw->rowstride_alignment = ALIGN_DEF;
-    rowstride_alignment = mainw->rowstride_alignment;
+    if (THREADVAR(rowstride_alignment) < ALIGN_DEF) THREADVAR(rowstride_alignment) = ALIGN_DEF;
+    rowstride_alignment = THREADVAR(rowstride_alignment);
 
-    if (mainw->rowstride_alignment_hint > 0) {
-      r = rowstride_alignment = mainw->rowstride_alignment_hint;
+    if (THREADVAR(rowstride_alignment_hint) > 0) {
+      r = rowstride_alignment = THREADVAR(rowstride_alignment_hint);
       for (al = 1 << sbits; (al > ALIGN_MIN && !(al & r)); al >>= 1) sbits--;
       rowstride_alignment = al;
     }
-    if (mainw->rowstride_alignment_hint < 0 || (weed_palette_is_alpha(palette) && mainw->rowstride_alignment_hint == 0)) {
+    if (THREADVAR(rowstride_alignment_hint) < 0 || (weed_palette_is_alpha(palette) && THREADVAR(rowstride_alignment_hint) == 0)) {
       compact = TRUE;
       rowstride_alignment = 1;
     }
-    mainw->rowstride_alignment_hint = 0;
+    THREADVAR(rowstride_alignment_hint) = 0;
 
     for (sbits = 7; (1 << sbits) > rowstride_alignment; sbits--);
   }
@@ -8936,7 +8936,7 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
 
   weed_layer_nullify_pixel_data(layer);
 
-  if (alignment != 0) mainw->rowstride_alignment_hint = alignment;
+  if (alignment != 0) THREADVAR(rowstride_alignment_hint) = alignment;
 
   if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
     if (newdata) {
@@ -11351,7 +11351,7 @@ boolean compact_rowstrides(weed_layer_t *layer) {
   if (old_layer == NULL) return FALSE;
   if (!weed_layer_copy(old_layer, layer)) return FALSE;
 
-  mainw->rowstride_alignment_hint = -1;
+  THREADVAR(rowstride_alignment_hint) = -1;
   weed_layer_nullify_pixel_data(layer);
 
   if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
@@ -11643,7 +11643,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 
     av_log_set_level(AV_LOG_FATAL);
 
-    mainw->rowstride_alignment_hint = 16;
+    THREADVAR(rowstride_alignment_hint) = 16;
 
     if (interp == LIVES_INTERP_BEST) {
       if (width > iwidth || height > iheight)

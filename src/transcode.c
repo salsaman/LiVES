@@ -215,7 +215,7 @@ boolean transcode(int start, int end) {
   /// plugin ready
 
   //av_log_set_level(AV_LOG_FATAL);
-  mainw->rowstride_alignment_hint = 16;
+  THREADVAR(rowstride_alignment_hint) = 16;
 
   // create a frame layer,
   frame_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
@@ -273,9 +273,9 @@ boolean transcode(int start, int end) {
 
     if (audio) {
       // - read 1 frame worth of audio, to float, send
-      mainw->read_failed = FALSE;
+      THREADVAR(read_failed) = FALSE;
       in_bytes = lives_read_buffered(fd, abuff, (size_t)spf * cfile->achans * (cfile->asampsize >> 3), TRUE);
-      if (mainw->read_failed || in_bytes < 0) {
+      if (THREADVAR(read_failed) || in_bytes < 0) {
         error = TRUE;
         goto tr_err;
       }

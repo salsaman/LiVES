@@ -60,6 +60,7 @@ typedef struct {
 // pango stuff. I suppose it should be here on the offchance that it might one day be used with a non-gtk+ toolkit
 typedef PangoLayout LingoLayout;
 typedef PangoContext LingoContext;
+typedef PangoFontDescription LingoFontDescription;
 #define lingo_layout_set_alignment(a, b) pango_layout_set_alignment(a, b)
 
 #define LINGO_ALIGN_LEFT PANGO_ALIGN_LEFT
@@ -79,6 +80,10 @@ typedef PangoContext LingoContext;
 #define lingo_layout_set_markup(a, b, c) pango_layout_set_markup(a, b, c)
 #define lingo_layout_set_height(a, b) pango_layout_set_height(a, b)
 #define lingo_layout_set_width(a, b) pango_layout_set_height(a, b)
+
+#define lingo_font_description_get_size(a) pango_font_description_get_size(a)
+#define lingo_font_description_set_size(a, b) pango_font_description_set_size(a, b)
+#define lingo_font_description_free(a) pango_font_description_free(a)
 
 #define LINGO_IS_LAYOUT(a) PANGO_IS_LAYOUT(a)
 #define LINGO_IS_CONTEXT(a) PANGO_IS_CONTEXT(a)
@@ -780,6 +785,13 @@ boolean lives_grid_attach_next_to(LiVESGrid *, LiVESWidget *child, LiVESWidget *
 
 boolean lives_grid_insert_row(LiVESGrid *, int posn);
 boolean lives_grid_remove_row(LiVESGrid *, int posn);
+#endif
+
+#if GTK_CHECK_VERSION(3,2,0)
+char *lives_font_chooser_get_font(LiVESFontChooser *);
+boolean lives_font_chooser_set_font(LiVESFontChooser *, const char *fontname);
+LingoFontDescription *lives_font_chooser_get_font_desc(LiVESFontChooser *);
+boolean lives_font_chooser_set_font_desc(LiVESFontChooser *, LingoFontDescription *lfd);
 #endif
 
 LiVESWidget *lives_frame_new(const char *label);

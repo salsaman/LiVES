@@ -605,10 +605,10 @@ boolean do_startup_tests(boolean tshoot) {
     afile = lives_get_audio_file_name(mainw->current_file);
     out_fd = lives_open3(afile, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
 
-    if (out_fd < 0) mainw->write_failed = TRUE;
-    else mainw->write_failed = FALSE;
+    if (out_fd < 0) THREADVAR(write_failed) = TRUE;
+    else THREADVAR(write_failed) = FALSE;
 
-    if (!mainw->write_failed) {
+    if (!THREADVAR(write_failed)) {
       int bytes = 44100 * 4;
       abuff = (uint8_t *)lives_calloc(44100, 4);
       if (!abuff) {
@@ -622,7 +622,7 @@ boolean do_startup_tests(boolean tshoot) {
       }
     }
 
-    if (mainw->write_failed) {
+    if (THREADVAR(write_failed)) {
       tmp = lives_strdup_printf(_("Unable to write to: %s"), afile);
       fail_test(table, testcase, tmp);
       lives_free(tmp);
@@ -630,13 +630,13 @@ boolean do_startup_tests(boolean tshoot) {
 
     lives_free(afile);
 
-    if (!mainw->write_failed) {
+    if (!THREADVAR(write_failed)) {
       afile = lives_build_filename(prefs->workdir, cfile->handle, "testout.wav", NULL);
 
-      mainw->com_failed = FALSE;
+      THREADVAR(com_failed) = FALSE;
       com = lives_strdup_printf("%s export_audio \"%s\" 0. 0. 44100 2 16 1 22050 \"%s\"", prefs->backend_sync, cfile->handle, afile);
       lives_system(com, TRUE);
-      if (mainw->com_failed) {
+      if (THREADVAR(com_failed)) {
         tmp = lives_strdup_printf(_("Command failed: %s"), com);
         fail_test(table, testcase, tmp);
         lives_free(tmp);
@@ -816,9 +816,9 @@ boolean do_startup_tests(boolean tshoot) {
     lives_free(tmp);
     lives_free(rname);
 
-    mainw->com_failed = FALSE;
+    THREADVAR(com_failed) = FALSE;
     lives_system(com, TRUE);
-    if (mainw->com_failed) {
+    if (THREADVAR(com_failed)) {
       tmp = lives_strdup_printf(_("Command failed: %s"), com);
       fail_test(table, testcase, tmp);
       lives_free(tmp);

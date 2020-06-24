@@ -45,9 +45,6 @@ void framedraw_add_label(LiVESVBox *box);
 void load_framedraw_image(LiVESPixbuf *);
 void load_rfx_preview(lives_rfx_t *rfx); ///< rfx preview
 
-/// just redraw the frame
-void redraw_framedraw_image(weed_layer_t *layer);
-
 // reset preview when any param changes
 void reset_framedraw_preview(void);
 

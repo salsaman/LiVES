@@ -465,6 +465,7 @@ typedef GdkFilterReturn LiVESFilterReturn;
 #define LIVES_WIDGET_SET_FOCUS_CHILD_SIGNAL "set-focus-child"
 #define LIVES_WIDGET_SHOW_SIGNAL "show"
 #define LIVES_WIDGET_HIDE_SIGNAL "hide"
+#define LIVES_WIDGET_FONT_SET_SIGNAL "font-set"
 
 #if GTK_CHECK_VERSION(3, 0, 0)
 #define LIVES_WIDGET_STATE_CHANGED_SIGNAL "state-flags-changed"
@@ -500,6 +501,10 @@ typedef GtkToolButton                     LiVESToolButton;
 typedef GtkLabel                          LiVESLabel;
 typedef GtkImage                          LiVESImage;
 typedef GtkFileChooser                    LiVESFileChooser;
+#if GTK_CHECK_VERSION(3,2,0)
+typedef GtkFontChooser                    LiVESFontChooser;
+typedef GtkFontButton                     LiVESFontButton;
+#endif
 typedef GtkAlignment                      LiVESAlignment;
 typedef GtkAllocation                     LiVESAllocation;
 typedef GtkMenu                           LiVESMenu;
@@ -858,6 +863,10 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_LABEL(widget) GTK_LABEL(widget)
 #define LIVES_ALIGNMENT(widget) GTK_ALIGNMENT(widget)
 #define LIVES_FILES_CHOOSER(widget) GTK_FILE_CHOOSER(widget)
+#if GTK_CHECK_VERSION(3, 2, 0)
+#define LIVES_FONT_CHOOSER(widget) GTK_FONT_CHOOSER(widget)
+#define LIVES_FONT_BUTTON(widget) GTK_FONT_BUTTON(widget)
+#endif
 #define LIVES_RADIO_BUTTON(widget) GTK_RADIO_BUTTON(widget)
 #define LIVES_SPIN_BUTTON(widget) GTK_SPIN_BUTTON(widget)
 #define LIVES_COLOR_BUTTON(widget) GTK_COLOR_BUTTON(widget)

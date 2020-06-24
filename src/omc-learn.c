@@ -2437,7 +2437,7 @@ void on_devicemap_save_activate(LiVESMenuItem *menuitem, livespointer user_data)
         return;
       }
     } else {
-      mainw->write_failed = FALSE;
+      THREADVAR(write_failed) = FALSE;
 
       lives_write(fd, OMC_FILE_VSTRING, strlen(OMC_FILE_VSTRING), TRUE);
 
@@ -2450,7 +2450,7 @@ void on_devicemap_save_activate(LiVESMenuItem *menuitem, livespointer user_data)
       lives_write_le(fd, &nnodes, 4, TRUE);
 
       while (slist != NULL) {
-        if (mainw->write_failed) break;
+        if (THREADVAR(write_failed)) break;
         mnode = (lives_omc_match_node_t *)slist->data;
         srchlen = strlen(mnode->srch);
 
@@ -2461,7 +2461,7 @@ void on_devicemap_save_activate(LiVESMenuItem *menuitem, livespointer user_data)
         lives_write_le(fd, &mnode->nvars, 4, TRUE);
 
         for (i = 0; i < mnode->nvars; i++) {
-          if (mainw->write_failed) break;
+          if (THREADVAR(write_failed)) break;
           lives_write_le(fd, &mnode->offs0[i], 4, TRUE);
           lives_write_le(fd, &mnode->scale[i], 8, TRUE);
           lives_write_le(fd, &mnode->offs1[i], 4, TRUE);
@@ -2476,7 +2476,7 @@ void on_devicemap_save_activate(LiVESMenuItem *menuitem, livespointer user_data)
         omacro = omc_macros[mnode->macro];
 
         for (i = 0; i < omacro.nparams; i++) {
-          if (mainw->write_failed) break;
+          if (THREADVAR(write_failed)) break;
           lives_write_le(fd, &mnode->map[i], 4, TRUE);
           lives_write_le(fd, &mnode->fvali[i], 4, TRUE);
           lives_write_le(fd, &mnode->fvald[i], 8, TRUE);
@@ -2486,7 +2486,7 @@ void on_devicemap_save_activate(LiVESMenuItem *menuitem, livespointer user_data)
 
       close(fd);
 
-      if (mainw->write_failed) {
+      if (THREADVAR(write_failed)) {
         retval = do_write_failed_error_s_with_retry(save_file, NULL, NULL);
         if (retval == LIVES_RESPONSE_CANCEL) d_print_file_error_failed();
       }

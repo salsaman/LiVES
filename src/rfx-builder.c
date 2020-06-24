@@ -3011,7 +3011,7 @@ boolean rfxbuilder_to_script(rfx_build_window_t *rfxbuilder) {
     script_name = new_name;
   }
 
-  mainw->com_failed = FALSE;
+  THREADVAR(com_failed) = FALSE;
 
   script_file_dir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS, NULL);
 
@@ -3044,7 +3044,7 @@ boolean rfxbuilder_to_script(rfx_build_window_t *rfxbuilder) {
         return FALSE;
       }
     } else {
-      mainw->write_failed = FALSE;
+      THREADVAR(write_failed) = FALSE;
 
       lives_fputs("Script file generated from LiVES\n\n", sfile);
       lives_fputs("<define>\n", sfile);
@@ -3285,8 +3285,8 @@ boolean rfxbuilder_to_script(rfx_build_window_t *rfxbuilder) {
       lives_fputs("</onchange>\n\n", sfile);
       fclose(sfile);
 
-      if (mainw->write_failed) {
-        mainw->write_failed = FALSE;
+      if (THREADVAR(write_failed)) {
+        THREADVAR(write_failed) = FALSE;
         retval = do_write_failed_error_s_with_retry(script_file, NULL, LIVES_WINDOW(rfxbuilder->dialog));
         if (retval == LIVES_RESPONSE_CANCEL) d_print_file_error_failed();
       }
@@ -3875,11 +3875,11 @@ void on_export_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   d_print(_("Copying %s to %s..."), rfx_script_from, filename);
 
-  mainw->com_failed = FALSE;
+  THREADVAR(com_failed) = FALSE;
   lives_cp((tmp = lives_filename_from_utf8(rfx_script_from, -1, NULL, NULL, NULL)),
            (tmp2 = lives_filename_from_utf8(filename, -1, NULL, NULL, NULL)));
 
-  if (mainw->com_failed) d_print_failed();
+  if (THREADVAR(com_failed)) d_print_failed();
   else d_print_done();
   lives_free(tmp);
   lives_free(tmp2);
@@ -3903,7 +3903,7 @@ void on_import_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_snprintf(basename, PATH_MAX, "%s", filename);
   get_basename(basename);
 
-  mainw->com_failed = FALSE;
+  THREADVAR(com_failed) = FALSE;
 
   switch (status) {
   case RFX_STATUS_TEST:
@@ -3930,7 +3930,7 @@ void on_import_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     break;
   }
 
-  if (mainw->com_failed) {
+  if (THREADVAR(com_failed)) {
     lives_free(rfx_script_to);
     lives_free(filename);
     return;
@@ -3949,13 +3949,13 @@ void on_import_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   d_print(_("Copying %s to %s..."), filename, rfx_script_to);
 
-  mainw->com_failed = FALSE;
+  THREADVAR(com_failed) = FALSE;
   lives_cp((tmp = lives_filename_from_utf8(filename, -1, NULL, NULL, NULL)),
            (tmp2 = lives_filename_from_utf8(rfx_script_to, -1, NULL, NULL, NULL)));
 
   lives_free(tmp);
   lives_free(tmp2);
-  if (mainw->com_failed) d_print_failed();
+  if (THREADVAR(com_failed)) d_print_failed();
   else {
     d_print_done();
     on_rebuild_rfx_activate(NULL, LIVES_INT_TO_POINTER(status));

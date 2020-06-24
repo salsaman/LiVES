@@ -1067,7 +1067,7 @@ size_t jack_flush_read_data(size_t rbytes, void *data) {
 
   jrb = 0;
 
-  if (mainw->bad_aud_file == NULL) {
+  if (THREADVAR(bad_aud_file) == NULL) {
     // use write not lives_write - because of potential threading issues
     bytes = write(mainw->aud_rec_fd, data, rbytes);
     if (bytes > 0) {
@@ -1080,7 +1080,7 @@ size_t jack_flush_read_data(size_t rbytes, void *data) {
         check_for_disk_space();
       }
     }
-    if (bytes < rbytes) mainw->bad_aud_file = filename_from_fd(NULL, mainw->aud_rec_fd);
+    if (bytes < rbytes) THREADVAR(bad_aud_file) = filename_from_fd(NULL, mainw->aud_rec_fd);
   }
   return bytes;
 }

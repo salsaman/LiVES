@@ -182,11 +182,11 @@ static boolean save_keymap2_file(char *kfname) {
     } else {
       lives_write_le_buffered(kfd, &version, 4, TRUE);
       for (i = 1; i <= prefs->rte_keys_virtual; i++) {
-        if (mainw->write_failed == kfd + 1) break;
+        if (THREADVAR(write_failed) == kfd + 1) break;
         for (j = 0; j < modes; j++) {
           if (rte_keymode_valid(i, j, TRUE)) {
             lives_write_le_buffered(kfd, &i, 4, TRUE);
-            if (mainw->write_failed == kfd + 1) break;
+            if (THREADVAR(write_failed) == kfd + 1) break;
             // TODO: use newer version with separator
             hashname = lives_strdup_printf("Weed%s",
                                            (tmp = make_weed_hashname(rte_keymode_get_filter_idx(i, j), TRUE, FALSE, 0, FALSE)));
@@ -202,8 +202,8 @@ static boolean save_keymap2_file(char *kfname) {
 
       lives_close_buffered(kfd);
 
-      if (mainw->write_failed == kfd + 1) {
-        mainw->write_failed = 0;
+      if (THREADVAR(write_failed) == kfd + 1) {
+        THREADVAR(write_failed) = 0;
         retval = do_write_failed_error_s_with_retry(kfname, NULL, LIVES_WINDOW(rte_window));
       }
     }
@@ -234,7 +234,7 @@ static boolean save_keymap3_file(char *kfname) {
     if (kfd == -1) {
       retval = do_write_failed_error_s_with_retry(kfname, lives_strerror(errno), LIVES_WINDOW(rte_window));
     } else {
-      mainw->write_failed = FALSE;
+      THREADVAR(write_failed) = FALSE;
 
       lives_write_le_buffered(kfd, &version, 4, TRUE);
 
@@ -248,7 +248,7 @@ static boolean save_keymap3_file(char *kfname) {
         }
 
         lives_write_le_buffered(kfd, &count, 4, TRUE);
-        if (mainw->write_failed) goto write_failed1;
+        if (THREADVAR(write_failed)) goto write_failed1;
 
         cconx = mainw->cconx;
         while (cconx != NULL) {
@@ -256,10 +256,10 @@ static boolean save_keymap3_file(char *kfname) {
           j = 0;
 
           lives_write_le_buffered(kfd, &cconx->okey, 4, TRUE);
-          if (mainw->write_failed) goto write_failed1;
+          if (THREADVAR(write_failed)) goto write_failed1;
 
           lives_write_le_buffered(kfd, &cconx->omode, 4, TRUE);
-          if (mainw->write_failed) goto write_failed1;
+          if (THREADVAR(write_failed)) goto write_failed1;
 
           // TODO: use newer version with separator
           hashname = make_weed_hashname(rte_keymode_get_filter_idx(cconx->okey + 1, cconx->omode), TRUE, FALSE, 0, FALSE);
@@ -270,24 +270,24 @@ static boolean save_keymap3_file(char *kfname) {
 
           nchans = cconx->nchans;
           lives_write_le_buffered(kfd, &nchans, 4, TRUE);
-          if (mainw->write_failed) goto write_failed1;
+          if (THREADVAR(write_failed)) goto write_failed1;
 
           for (i = 0; i < nchans; i++) {
             lives_write_le_buffered(kfd, &cconx->chans[i], 4, TRUE);
-            if (mainw->write_failed) goto write_failed1;
+            if (THREADVAR(write_failed)) goto write_failed1;
 
             nconns = cconx->nconns[i];
             lives_write_le_buffered(kfd, &nconns, 4, TRUE);
-            if (mainw->write_failed) goto write_failed1;
+            if (THREADVAR(write_failed)) goto write_failed1;
 
             totcons += nconns;
 
             while (j < totcons) {
               lives_write_le_buffered(kfd, &cconx->ikey[j], 4, TRUE);
-              if (mainw->write_failed) goto write_failed1;
+              if (THREADVAR(write_failed)) goto write_failed1;
 
               lives_write_le_buffered(kfd, &cconx->imode[j], 4, TRUE);
-              if (mainw->write_failed) goto write_failed1;
+              if (THREADVAR(write_failed)) goto write_failed1;
 
               // TODO: use newer version with separator
               hashname =
@@ -298,7 +298,7 @@ static boolean save_keymap3_file(char *kfname) {
               lives_free(hashname);
 
               lives_write_le_buffered(kfd, &cconx->icnum[j], 4, TRUE);
-              if (mainw->write_failed) goto write_failed1;
+              if (THREADVAR(write_failed)) goto write_failed1;
 
               j++;
             }
@@ -308,7 +308,7 @@ static boolean save_keymap3_file(char *kfname) {
         }
       } else {
         lives_write_le_buffered(kfd, &count, 4, TRUE);
-        if (mainw->write_failed) goto write_failed1;
+        if (THREADVAR(write_failed)) goto write_failed1;
       }
 
       if (mainw->pconx != NULL) {
@@ -324,7 +324,7 @@ static boolean save_keymap3_file(char *kfname) {
         }
 
         lives_write_le_buffered(kfd, &count, 4, TRUE);
-        if (mainw->write_failed == kfd + 1) goto write_failed1;
+        if (THREADVAR(write_failed) == kfd + 1) goto write_failed1;
 
         pconx = mainw->pconx;
         while (pconx != NULL) {
@@ -332,10 +332,10 @@ static boolean save_keymap3_file(char *kfname) {
           j = 0;
 
           lives_write_le_buffered(kfd, &pconx->okey, 4, TRUE);
-          if (mainw->write_failed == kfd + 1) goto write_failed1;
+          if (THREADVAR(write_failed) == kfd + 1) goto write_failed1;
 
           lives_write_le_buffered(kfd, &pconx->omode, 4, TRUE);
-          if (mainw->write_failed == kfd + 1) goto write_failed1;
+          if (THREADVAR(write_failed) == kfd + 1) goto write_failed1;
 
           // TODO: use newer version with separator
           hashname =
@@ -347,24 +347,24 @@ static boolean save_keymap3_file(char *kfname) {
 
           nparams = pconx->nparams;
           lives_write_le_buffered(kfd, &nparams, 4, TRUE);
-          if (mainw->write_failed == kfd + 1) goto write_failed1;
+          if (THREADVAR(write_failed) == kfd + 1) goto write_failed1;
 
           for (i = 0; i < nparams; i++) {
             lives_write_le_buffered(kfd, &pconx->params[i], 4, TRUE);
-            if (mainw->write_failed == kfd + 1) goto write_failed1;
+            if (THREADVAR(write_failed) == kfd + 1) goto write_failed1;
 
             nconns = pconx->nconns[i];
             lives_write_le_buffered(kfd, &nconns, 4, TRUE);
-            if (mainw->write_failed == kfd + 1) goto write_failed1;
+            if (THREADVAR(write_failed) == kfd + 1) goto write_failed1;
 
             totcons += nconns;
 
             while (j < totcons) {
               lives_write_le_buffered(kfd, &pconx->ikey[j], 4, TRUE);
-              if (mainw->write_failed) goto write_failed1;
+              if (THREADVAR(write_failed)) goto write_failed1;
 
               lives_write_le_buffered(kfd, &pconx->imode[j], 4, TRUE);
-              if (mainw->write_failed == kfd + 1) goto write_failed1;
+              if (THREADVAR(write_failed) == kfd + 1) goto write_failed1;
 
               // TODO: use newer version with separator
               hashname =
@@ -375,10 +375,10 @@ static boolean save_keymap3_file(char *kfname) {
               lives_free(hashname);
 
               lives_write_le_buffered(kfd, &pconx->ipnum[j], 4, TRUE);
-              if (mainw->write_failed == kfd + 1) goto write_failed1;
+              if (THREADVAR(write_failed) == kfd + 1) goto write_failed1;
 
               lives_write_le_buffered(kfd, &pconx->autoscale[j], 4, TRUE);
-              if (mainw->write_failed == kfd + 1) goto write_failed1;
+              if (THREADVAR(write_failed) == kfd + 1) goto write_failed1;
 
               j++;
             }
@@ -388,14 +388,14 @@ static boolean save_keymap3_file(char *kfname) {
         }
       } else {
         lives_write_le_buffered(kfd, &count, 4, TRUE);
-        if (mainw->write_failed == kfd + 1) goto write_failed1;
+        if (THREADVAR(write_failed) == kfd + 1) goto write_failed1;
       }
 
 write_failed1:
       lives_close_buffered(kfd);
 
-      if (mainw->write_failed == kfd + 1) {
-        mainw->write_failed = 0;
+      if (THREADVAR(write_failed) == kfd + 1) {
+        THREADVAR(write_failed) = 0;
         retval = do_write_failed_error_s_with_retry(kfname, NULL, LIVES_WINDOW(rte_window));
       }
     }
@@ -479,7 +479,7 @@ static boolean on_save_keymap_clicked(LiVESButton *button, livespointer user_dat
       fclose(kfile);
     }
 
-    if (mainw->write_failed) {
+    if (THREADVAR(write_failed)) {
       retval = do_write_failed_error_s_with_retry(keymap_file, NULL, LIVES_WINDOW(rte_window));
     }
   } while (retval == LIVES_RESPONSE_RETRY);
@@ -545,8 +545,8 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
       lives_write_buffered(fd, msg, lives_strlen(msg), TRUE);
       lives_free(msg);
 
-      if (mainw->write_failed == fd + 1) {
-        mainw->write_failed = 0;
+      if (THREADVAR(write_failed) == fd + 1) {
+        THREADVAR(write_failed) = 0;
         end_threaded_dialog();
         retval = do_write_failed_error_s_with_retry(prefs->fxdefsfile, NULL, LIVES_WINDOW(rte_window));
       } else {
@@ -580,8 +580,8 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
       msg = lives_strdup_printf("%s\n", FX_SIZES_VERSIONSTRING_2);
       lives_write_buffered(fd, msg, lives_strlen(msg), TRUE);
       lives_free(msg);
-      if (mainw->write_failed == fd + 1) {
-        mainw->write_failed = 0;
+      if (THREADVAR(write_failed) == fd + 1) {
+        THREADVAR(write_failed) = 0;
         end_threaded_dialog();
         retval = do_write_failed_error_s_with_retry(prefs->fxsizesfile, NULL, LIVES_WINDOW(rte_window));
       } else {
@@ -627,7 +627,7 @@ void load_rte_defs(void) {
       if ((fd = lives_open_buffered_rdonly(prefs->fxdefsfile)) == -1) {
         retval = do_read_failed_error_s_with_retry(prefs->fxdefsfile, lives_strerror(errno), NULL);
       } else {
-        mainw->read_failed = FALSE;
+        THREADVAR(read_failed) = FALSE;
         d_print(_("Loading real time effect defaults from %s..."), prefs->fxdefsfile);
 
         msg = lives_strdup_printf("%s\n", FX_DEFS_VERSIONSTRING_1_1);
@@ -768,7 +768,7 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
     if ((kfd = lives_open_buffered_rdonly(fname)) == -1) {
       retval = do_read_failed_error_s_with_retry(fname, lives_strerror(errno), NULL);
     } else {
-      mainw->read_failed = FALSE;
+      THREADVAR(read_failed) = FALSE;
 
       bytes = lives_read_le_buffered(kfd, &version, 4, TRUE);
       if (bytes < 4) {

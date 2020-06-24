@@ -74,8 +74,8 @@ boolean save_frame_index(int fileno) {
     } else {
       for (i = 0; i < sfile->frames; i++) {
         lives_write_le_buffered(fd, &sfile->frame_index[i], sizeof(frames_t), TRUE);
-        if (mainw->write_failed == fd + 1) {
-          mainw->write_failed = 0;
+        if (THREADVAR(write_failed) == fd + 1) {
+          THREADVAR(write_failed) = 0;
           break;
         }
       }
@@ -84,14 +84,14 @@ boolean save_frame_index(int fileno) {
 
       if (mainw->is_exiting) return TRUE;
 
-      if (mainw->write_failed == fd + 1) {
-        mainw->write_failed = 0;
+      if (THREADVAR(write_failed) == fd + 1) {
+        THREADVAR(write_failed) = 0;
         retval = do_write_failed_error_s_with_retry(fname, NULL, NULL);
       } else {
         if (sget_file_size(fname) != (size_t)sfile->frames * sizeof(frames_t)) {
           retval = do_write_failed_error_s_with_retry(fname, NULL, NULL);
         } else {
-          mainw->com_failed = FALSE;
+          THREADVAR(com_failed) = FALSE;
           lives_cp(fname, fname_new);
           if (sget_file_size(fname_new) != (size_t)sfile->frames * sizeof(frames_t)) {
             retval = do_write_failed_error_s_with_retry(fname, NULL, NULL);
@@ -175,15 +175,15 @@ frames_t load_frame_index(int fileno) {
 
       for (i = 0; i < sfile->frames; i++) {
         lives_read_le_buffered(fd, &sfile->frame_index[i], sizeof(frames_t), FALSE);
-        if (mainw->read_failed == fd + 1) break;
+        if (THREADVAR(read_failed) == fd + 1) break;
         if (sfile->frame_index[i] > maxframe) {
           maxframe = sfile->frame_index[i];
         }
       }
       lives_close_buffered(fd);
 
-      if (mainw->read_failed == fd + 1) {
-        mainw->read_failed = 0;
+      if (THREADVAR(read_failed) == fd + 1) {
+        THREADVAR(read_failed) = 0;
         retval = do_read_failed_error_s_with_retry(fname, NULL, NULL);
       }
     }
@@ -906,9 +906,9 @@ void insert_blank_frames(int sfileno, frames_t nframes, frames_t after, int pale
           tmp = make_image_file_name(sfile, i + nframes, get_image_ext_for_type(sfile->img_type));
           lives_snprintf(nname, PATH_MAX, "%s", tmp);
           lives_free(tmp);
-          mainw->com_failed = FALSE;
+          THREADVAR(com_failed) = FALSE;
           lives_mv(oname, nname);
-          if (mainw->com_failed) {
+          if (THREADVAR(com_failed)) {
             return;
 	    // *INDENT-OFF*
           }}}}}

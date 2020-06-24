@@ -516,6 +516,9 @@ static boolean pre_init(void) {
 
   register int i;
 
+  /// create context data for main thread; must be called before get_capabilities()
+  lives_thread_data_create(0);
+
   // pre-checked conditions. We will check for these agian
   if (capable->has_perl && capable->can_write_to_workdir && capable->can_write_to_config &&
       capable->can_write_to_config_backup && capable->can_write_to_config_new && capable->can_read_from_config &&
@@ -647,6 +650,8 @@ static boolean pre_init(void) {
 #ifndef VALGRIND_ON
   prefs->nfx_threads = 2;
 #endif
+
+  /// kick off the thread pool
   lives_threadpool_init();
 
   // get some prefs we need to set menu options
@@ -1280,13 +1285,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->aplayer_broken = FALSE;
 
-  mainw->com_failed = mainw->chdir_failed = FALSE;
-
-  mainw->read_failed = mainw->write_failed = 0;
-  mainw->read_failed_file = mainw->write_failed_file = NULL;
-
-  mainw->bad_aud_file = NULL;
-
   mainw->render_error = LIVES_RENDER_ERROR_NONE;
 
   mainw->add_clear_ds_button = FALSE;
@@ -1307,9 +1305,6 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->ce_frame_height = mainw->ce_frame_width = -1;
 
   mainw->cursor_style = LIVES_CURSOR_NORMAL;
-
-  mainw->rowstride_alignment = ALIGN_DEF;
-  mainw->rowstride_alignment_hint = 0;
 
   mainw->sepwin_minwidth = MIN_SEPWIN_WIDTH;
   mainw->sepwin_minheight = PREVIEW_BOX_HT;
@@ -2626,7 +2621,7 @@ capability *get_capabilities(void) {
 
   lives_popen(command, TRUE, buffer, PATH_MAX * 4);
 
-  if (mainw->com_failed) {
+  if (THREADVAR(com_failed)) {
     return capable;
   }
 
@@ -2661,7 +2656,7 @@ capability *get_capabilities(void) {
 
   capable->has_smogrify = FALSE;
   lives_popen(command, TRUE, buffer, PATH_MAX * 4);
-  if (mainw->com_failed || strlen(buffer) < 6) return capable;
+  if (THREADVAR(com_failed) || strlen(buffer) < 6) return capable;
   capable->has_smogrify = PRESENT;
 
   numtok = get_token_count(buffer, '|');
@@ -3661,7 +3656,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   mainw->mgeom = NULL;
   mainw->cached_list = NULL;
   mainw->msg[0] = '\0';
-  mainw->com_failed = FALSE;
   mainw->error = FALSE;
   mainw->is_exiting = FALSE;
   mainw->multitrack = NULL;
@@ -6396,7 +6390,7 @@ fndone:
             sfile->vsize = weed_layer_get_height(layer);
           }
           // realign
-          copy_pixel_data(layer, NULL, mainw->rowstride_alignment);
+          copy_pixel_data(layer, NULL, THREADVAR(rowstride_alignment));
           mainw->osc_block = FALSE;
           return TRUE;
         } else {
@@ -7258,6 +7252,10 @@ void load_frame_image(int frame) {
 	      lives_usleep(prefs->sleep_time);
 	    }
 	    lives_alarm_clear(alarm_handle);
+	    if (audio_timed_out == 0) {
+	      mainw->cancelled = handle_audio_timeout();
+	      goto lfi_done;
+	    }
 	    jack_get_rec_avals(mainw->jackd);
 	  }
 #endif
@@ -7641,8 +7639,8 @@ void load_frame_image(int frame) {
                 do {
                   retval = 0;
                   lives_fgets(mainw->msg, MAINW_MSG_SIZE, fp);
-                  if (mainw->read_failed && mainw->read_failed == fileno(fp) + 1) {
-                    mainw->read_failed = 0;
+                  if (THREADVAR(read_failed) && THREADVAR(read_failed) == fileno(fp) + 1) {
+                    THREADVAR(read_failed) = 0;
                     retval = do_read_failed_error_s_with_retry(info_file, NULL, NULL);
                   }
                 } while (retval == LIVES_RESPONSE_RETRY);
@@ -7791,7 +7789,7 @@ void load_frame_image(int frame) {
                (weed_palette_is_lower_quality(mainw->vpp->palette, layer_palette)))) {
             // mainw->frame_layer is RGB and so is our screen, but plugin is YUV
             // so copy layer and convert, retaining original
-            if (!player_v2) mainw->rowstride_alignment_hint = -1;
+            if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
             frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
           } else frame_layer = mainw->frame_layer;
 
@@ -7816,7 +7814,7 @@ void load_frame_image(int frame) {
             }
           }
 
-          if (!player_v2) mainw->rowstride_alignment_hint = -1;
+          if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
           if (!convert_layer_palette_full(frame_layer, mainw->vpp->palette, mainw->vpp->YUV_clamping,
                                           mainw->vpp->YUV_sampling, mainw->vpp->YUV_subspace, tgamma)) {
             goto lfi_done;
@@ -7848,7 +7846,7 @@ void load_frame_image(int frame) {
             }
 
             // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
-            if (!player_v2) mainw->rowstride_alignment_hint = -1;
+            if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
             if (create_empty_pixel_data(return_layer, FALSE, TRUE))
               retdata = weed_layer_get_pixel_data(return_layer, NULL);
             else return_layer = NULL;
@@ -7973,7 +7971,7 @@ void load_frame_image(int frame) {
               ((mainw->vpp->fwidth  < mainw->pwidth || mainw->vpp->fheight < mainw->pheight))) {
             // mainw->frame_layer will be downsized for the plugin but upsized for screen
             // so copy layer and convert, retaining original
-            if (!player_v2) mainw->rowstride_alignment_hint = -1;
+            if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
             frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
           } else frame_layer = mainw->frame_layer;
 
@@ -7983,7 +7981,7 @@ void load_frame_image(int frame) {
                (weed_palette_is_lower_quality(mainw->vpp->palette, layer_palette)))) {
             // mainw->frame_layer is RGB and so is our screen, but plugin is YUV
             // so copy layer and convert, retaining original
-            if (!player_v2) mainw->rowstride_alignment_hint = -1;
+            if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
             frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
           }
           //g_print("copied  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
@@ -8005,7 +8003,7 @@ void load_frame_image(int frame) {
                   if (layer_palette != mainw->vpp->palette && (pwidth > lb_width || pheight > lb_height)) {
                     g_print("RS is %p\n", weed_get_int_array(mainw->frame_layer, WEED_LEAF_ROWSTRIDES, NULL));
                     frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
-                    if (!player_v2) mainw->rowstride_alignment_hint = -1;
+                    if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
                     if (!convert_layer_palette_full(frame_layer, mainw->vpp->palette, mainw->vpp->YUV_clamping,
                                                     mainw->vpp->YUV_sampling, mainw->vpp->YUV_subspace, tgamma)) {
                       goto lfi_done;
@@ -8015,7 +8013,7 @@ void load_frame_image(int frame) {
                     weed_layer_copy(frame_layer, mainw->frame_layer);
                   }
                 }
-                if (!player_v2) mainw->rowstride_alignment_hint = -1;
+                if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
                 if (!letterbox_layer(frame_layer, pwidth, pheight, lb_width, lb_height, interp,
                                      mainw->vpp->palette, mainw->vpp->YUV_clamping)) goto lfi_done;
                 was_letterboxed = TRUE;
@@ -8034,7 +8032,7 @@ void load_frame_image(int frame) {
       if ((((weed_layer_get_width(frame_layer) *
              weed_palette_get_pixels_per_macropixel(layer_palette)) ^ pwidth) >> 2) ||
           ((weed_layer_get_height(frame_layer) ^ pheight) >> 1)) {
-	if (!player_v2) mainw->rowstride_alignment_hint = -1;
+	if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
 	if (!needs_lb  || was_letterboxed) {
 	  lb_width = pwidth;
 	  lb_height = pheight;
@@ -8052,7 +8050,7 @@ void load_frame_image(int frame) {
            (weed_palette_is_lower_quality(mainw->vpp->palette, layer_palette)))) {
         // mainw->frame_layer is RGB and so is our screen, but plugin is YUV
         // so copy layer and convert, retaining original
-	if (!player_v2) mainw->rowstride_alignment_hint = -1;
+	if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
         frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
       }
 
@@ -8082,7 +8080,7 @@ void load_frame_image(int frame) {
       }
       //g_print("clp start %d %d   %d %d @\n", weed_layer_get_palette(frame_layer),
       //mainw->vpp->palette, weed_layer_get_gamma(frame_layer), tgamma);
-      if (!player_v2) mainw->rowstride_alignment_hint = -1;
+      if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
       if (!convert_layer_palette_full(frame_layer, mainw->vpp->palette, mainw->vpp->YUV_clamping,
                                       mainw->vpp->YUV_sampling, mainw->vpp->YUV_subspace, tgamma)) {
         goto lfi_done;
@@ -8102,7 +8100,7 @@ void load_frame_image(int frame) {
         int retwidth = mainw->vpp->fwidth;
         int retheight = mainw->vpp->fheight;
 
-	if (!player_v2) mainw->rowstride_alignment_hint = -1;
+	if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
         return_layer = weed_layer_create(retwidth, retheight, NULL, ovpppalette);
 
         if (weed_palette_is_yuv(mainw->vpp->palette)) {
@@ -8111,7 +8109,7 @@ void load_frame_image(int frame) {
           weed_layer_set_yuv_subspace(return_layer, mainw->vpp->YUV_subspace);
         }
 
-	if (!player_v2) mainw->rowstride_alignment_hint = -1 ; /// special value to compact the rowstrides
+	if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1 ; /// special value to compact the rowstrides
         if (create_empty_pixel_data(return_layer, FALSE, TRUE)) {
           retdata = weed_layer_get_pixel_data(return_layer, NULL);
         } else return_layer = NULL;
@@ -8195,7 +8193,7 @@ void load_frame_image(int frame) {
       goto lfi_done;
     }
 
-    if (!player_v2) mainw->rowstride_alignment_hint = -1 ; /// special value to compact the rowstrides
+    if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1 ; /// special value to compact the rowstrides
     layer_palette = weed_layer_get_palette(mainw->frame_layer);
     if (!weed_palette_is_valid(layer_palette) || !CURRENT_CLIP_IS_VALID) goto lfi_done;
 
@@ -8368,7 +8366,7 @@ void load_frame_image(int frame) {
 
       do_cleanup(mainw->frame_layer, success);
       mainw->frame_layer = NULL;
-      mainw->rowstride_alignment_hint = 0;
+      THREADVAR(rowstride_alignment_hint) = 0;
       lives_freep((void **)&framecount);
       if (success) {
 	if (mainw->multitrack == NULL &&

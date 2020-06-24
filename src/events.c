@@ -3885,7 +3885,7 @@ lives_render_error_t render_events(boolean reset) {
 
         blabel = set_proc_label(cfile->proc_ptr, nlabel, TRUE);
 
-        lives_freep((void **)&mainw->read_failed_file);
+        lives_freep((void **)&THREADVAR(read_failed_file));
 
         if (mainw->flush_audio_tc != 0) dtc = mainw->flush_audio_tc;
         else dtc = q_gint64(tc + rec_delta_tc, cfile->fps);
@@ -3902,7 +3902,7 @@ lives_render_error_t render_events(boolean reset) {
 
         atc = dtc;
 
-        if (mainw->write_failed) {
+        if (THREADVAR(write_failed)) {
           int outfile = (mainw->multitrack != NULL ? mainw->multitrack->render_file : mainw->current_file);
           char *outfilename = lives_get_audio_file_name(outfile);
           do_write_failed_error_s(outfilename, NULL);
@@ -3910,8 +3910,8 @@ lives_render_error_t render_events(boolean reset) {
           read_write_error = LIVES_RENDER_ERROR_WRITE_AUDIO;
         }
 
-        if (mainw->read_failed) {
-          do_read_failed_error_s(mainw->read_failed_file, NULL);
+        if (THREADVAR(read_failed)) {
+          do_read_failed_error_s(THREADVAR(read_failed_file), NULL);
           read_write_error = LIVES_RENDER_ERROR_READ_AUDIO;
         }
 
@@ -4290,14 +4290,14 @@ filterinit2:
                                 cfile->undo_end, get_image_ext_for_type(cfile->img_type));
       lives_rm(cfile->info_file);
       mainw->error = FALSE;
-      mainw->com_failed = FALSE;
+      THREADVAR(com_failed) = FALSE;
       mainw->cancelled = CANCEL_NONE;
 
       lives_system(com, FALSE);
       lives_free(com);
       mainw->is_rendering = mainw->internal_messaging = FALSE;
 
-      if (mainw->com_failed) {
+      if (THREADVAR(com_failed)) {
         read_write_error = LIVES_RENDER_ERROR_WRITE_FRAME;
         // cfile->may_be_damaged = TRUE;
       }
@@ -4612,13 +4612,13 @@ boolean render_to_clip(boolean new_clip) {
     if (prefs->rec_opts & REC_AUDIO) {
       do_threaded_dialog(_("Backing up audio..."), FALSE);
       com = lives_strdup_printf("%s backup_audio \"%s\"", prefs->backend_sync, cfile->handle);
-      mainw->com_failed = FALSE;
+      THREADVAR(com_failed) = FALSE;
       mainw->error = FALSE;
       mainw->cancelled = CANCEL_NONE;
       lives_rm(cfile->info_file);
       lives_system(com, FALSE);
       lives_free(com);
-      if (mainw->com_failed) return FALSE;
+      if (THREADVAR(com_failed)) return FALSE;
     } else {
       do_threaded_dialog(_("Clearing up clip..."), FALSE);
       com = lives_strdup_printf("%s clear_tmp_files \"%s\"", prefs->backend_sync, cfile->handle);
@@ -4778,15 +4778,15 @@ boolean backup_recording(char **esave_file, char **asave_file) {
 
   *esave_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, lives_getuid(), lives_getgid(),
                                     capable->mainpid, LIVES_FILE_EXT_LAYOUT);
-  mainw->write_failed = FALSE;
+  THREADVAR(write_failed) = FALSE;
   fd = lives_create_buffered(*esave_file, DEF_FILE_PERMS);
   if (fd >= 0) {
     save_event_list_inner(NULL, fd, mainw->event_list, NULL);
     lives_close_buffered(fd);
   }
-  if (fd < 0 || mainw->write_failed) {
+  if (fd < 0 || THREADVAR(write_failed)) {
     if (mainw->is_exiting) return FALSE;
-    mainw->write_failed = FALSE;
+    THREADVAR(write_failed) = FALSE;
     lives_freep((void **)esave_file);
     *asave_file = NULL;
     return FALSE;
@@ -4798,7 +4798,7 @@ boolean backup_recording(char **esave_file, char **asave_file) {
 
   fd = lives_create_buffered(*asave_file, DEF_FILE_PERMS);
   if (fd >= 0) {
-    while (!mainw->write_failed && clist != NULL) {
+    while (!THREADVAR(write_failed) && clist != NULL) {
       i = LIVES_POINTER_TO_INT(clist->data);
       if (IS_NORMAL_CLIP(i)) {
         lives_write_le_buffered(fd, &i, 4, TRUE);
@@ -4812,9 +4812,9 @@ boolean backup_recording(char **esave_file, char **asave_file) {
     lives_close_buffered(fd);
   }
 
-  if (fd < 0 || mainw->write_failed) {
+  if (fd < 0 || THREADVAR(write_failed)) {
     if (mainw->is_exiting) return FALSE;
-    mainw->write_failed = FALSE;
+    THREADVAR(write_failed) = FALSE;
     lives_rm(*esave_file);
     if (fd >= 0) lives_rm(*asave_file);
     lives_freep((void **)esave_file);

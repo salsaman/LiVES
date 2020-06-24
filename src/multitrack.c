@@ -349,10 +349,10 @@ boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, un
 
   threaded_dialog_spin(0.);
 
-  mainw->write_failed = FALSE;
+  THREADVAR(write_failed) = FALSE;
   weed_plant_serialise(fd, event_list, mem);
 
-  while (!mainw->write_failed && event != NULL) {
+  while (!THREADVAR(write_failed) && event != NULL) {
     next = weed_get_voidptr_value(event, WEED_LEAF_NEXT, &error);
     weed_leaf_delete(event, WEED_LEAF_NEXT);
 
@@ -400,7 +400,7 @@ boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, un
       threaded_dialog_spin(0.);
     }
   }
-  if (mainw->write_failed) return FALSE;
+  if (THREADVAR(write_failed)) return FALSE;
   return TRUE;
 }
 
@@ -666,10 +666,10 @@ boolean write_backup_layout_numbering(lives_mt *mt) {
   fd = lives_create_buffered(asave_file, DEF_FILE_PERMS);
   lives_free(asave_file);
 
-  mainw->write_failed = FALSE;
+  THREADVAR(write_failed) = FALSE;
 
   if (fd != -1) {
-    for (clist = mainw->cliplist; !mainw->write_failed && clist != NULL; clist = clist->next) {
+    for (clist = mainw->cliplist; !THREADVAR(write_failed) && clist != NULL; clist = clist->next) {
       i = LIVES_POINTER_TO_INT(clist->data);
       if (i < 1 || !IS_NORMAL_CLIP(i)) continue;
       sfile = mainw->files[i];
@@ -685,7 +685,7 @@ boolean write_backup_layout_numbering(lives_mt *mt) {
     lives_close_buffered(fd);
   }
 
-  if (mainw->write_failed) return FALSE;
+  if (THREADVAR(write_failed)) return FALSE;
   return TRUE;
 }
 
@@ -792,7 +792,7 @@ static void save_mt_autoback(lives_mt *mt) {
 
   do {
     retval2 = 0;
-    mainw->write_failed = FALSE;
+    THREADVAR(write_failed) = FALSE;
 
     fd = lives_create_buffered(asave_file, DEF_FILE_PERMS);
     if (fd >= 0) {
@@ -813,12 +813,12 @@ static void save_mt_autoback(lives_mt *mt) {
 
       remove_markers(mt->event_list);
       lives_close_buffered(fd);
-    } else mainw->write_failed = TRUE;
+    } else THREADVAR(write_failed) = TRUE;
 
     mt_sensitise(mt);
 
-    if (!retval || mainw->write_failed) {
-      mainw->write_failed = FALSE;
+    if (!retval || THREADVAR(write_failed)) {
+      THREADVAR(write_failed) = FALSE;
       retval2 = do_write_failed_error_s_with_retry(asave_file, NULL, NULL);
     }
   } while (retval2 == LIVES_RESPONSE_RETRY);
@@ -975,9 +975,9 @@ boolean mt_load_recovery_layout(lives_mt *mt) {
     if (!capable->has_gzip) capable->has_gzip = has_executable(EXEC_GZIP);
     if (capable->has_gzip) {
       char *cwd = lives_get_current_dir();
-      mainw->chdir_failed = FALSE;
+      THREADVAR(chdir_failed) = FALSE;
       lives_chdir(uldir, TRUE);
-      if (mainw->chdir_failed) mainw->chdir_failed = FALSE;
+      if (THREADVAR(chdir_failed)) THREADVAR(chdir_failed) = FALSE;
       else {
         char *com = lives_strdup_printf("%s * 2>%s", EXEC_GZIP, LIVES_DEVNULL);
         lives_system(com, TRUE);
@@ -2854,7 +2854,7 @@ static void renumber_clips(void) {
                                         IS_NORMAL_CLIP(cclip)) && mainw->files[cclip]->unique_id == 0l) {
       mainw->files[cclip]->unique_id = lives_random();
       save_clip_value(cclip, CLIP_DETAILS_UNIQUE_ID, &mainw->files[cclip]->unique_id);
-      if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+      if (THREADVAR(com_failed) || THREADVAR(write_failed)) bad_header = TRUE;
 
       if (bad_header) do_header_write_error(cclip);
     }
@@ -18179,7 +18179,7 @@ static void draw_soundwave(LiVESWidget * ebox, lives_painter_surface_t *surf, in
   aofile = -1;
   afd = -1;
 
-  mainw->read_failed = FALSE;
+  THREADVAR(read_failed) = FALSE;
 
   while (block != NULL) {
     event = block->start_event;
@@ -18239,7 +18239,7 @@ static void draw_soundwave(LiVESWidget * ebox, lives_painter_surface_t *surf, in
 
       // seek and read
       if (afd == -1) {
-        mainw->read_failed = -2;
+        THREADVAR(read_failed) = -2;
         return;
       }
       ypos = get_float_audio_val_at_time(fnum, afd, secs, chnum, cfile->achans) * .5;
@@ -18250,7 +18250,7 @@ static void draw_soundwave(LiVESWidget * ebox, lives_painter_surface_t *surf, in
     }
     block = block->next;
 
-    if (mainw->read_failed) {
+    if (THREADVAR(read_failed)) {
       filename = lives_get_audio_file_name(fnum);
       do_read_failed_error_s(filename, NULL);
       lives_free(filename);
@@ -19690,7 +19690,7 @@ void save_layout_map(int *lmap, double * lmap_audio, const char *file, const cha
     if (fd == -1) {
       retval = do_write_failed_error_s_with_retry(map_name, lives_strerror(errno), NULL);
     } else {
-      mainw->write_failed = FALSE;
+      THREADVAR(write_failed) = FALSE;
 
       for (i = 1; i <= MAX_FILES; i++) {
         // add or update
@@ -19748,11 +19748,11 @@ void save_layout_map(int *lmap, double * lmap_audio, const char *file, const cha
             }
           }
         }
-        if (mainw->write_failed) break;
+        if (THREADVAR(write_failed)) break;
       }
-      if (mainw->write_failed) {
+      if (THREADVAR(write_failed)) {
         retval = do_write_failed_error_s_with_retry(map_name, NULL, NULL);
-        mainw->write_failed = FALSE;
+        THREADVAR(write_failed) = FALSE;
       }
 
     }
@@ -21541,7 +21541,7 @@ char *get_eload_filename(lives_mt * mt, boolean allow_auto_reload) {
 
   eload_dir = lives_build_path(prefs->workdir, mainw->set_name, LAYOUTS_DIRNAME, NULL);
 
-  mainw->com_failed = FALSE;
+  THREADVAR(com_failed) = FALSE;
   lives_mkdir_with_parents(eload_dir, capable->umask);
 
   if (!mainw->recoverable_layout && !lives_file_test(eload_dir, LIVES_FILE_TEST_IS_DIR)) {
@@ -21668,10 +21668,10 @@ weed_plant_t *load_event_list(lives_mt * mt, char *eload_file) {
     if ((event_list = load_event_list_inner(mt, fd, mt != NULL, &num_events, NULL, NULL)) == NULL) {
       lives_close_buffered(fd);
 
-      if (mainw->read_failed == fd + 1) {
-        mainw->read_failed = 0;
+      if (THREADVAR(read_failed) == fd + 1) {
+        THREADVAR(read_failed) = 0;
         if (mt != NULL) retval = do_read_failed_error_s_with_retry(eload_name, NULL, NULL);
-        mainw->read_failed = FALSE;
+        THREADVAR(read_failed) = FALSE;
       }
 
       if (mt != NULL && retval != LIVES_RESPONSE_RETRY) {

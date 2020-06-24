@@ -260,7 +260,7 @@ boolean audiofile_is_silent(int fnum, double start, double end) {
   while (atime <= end) {
     for (c = 0; c < afile->achans; c++) {
       if (afd == -1) {
-        mainw->read_failed = -2;
+        THREADVAR(read_failed) = -2;
         return TRUE;
       }
       if ((xx = get_float_audio_val_at_time(fnum, afd, atime, c, afile->achans)) != 0.) {
@@ -1087,8 +1087,8 @@ boolean pad_with_silence(int out_fd, void *buff, off64_t oins_size, int64_t ins_
       if (sbytes - i < SILENCE_BLOCK_SIZE) sblocksize = sbytes - i;
       if (out_fd >= 0) {
         lives_write_buffered(out_fd, (const char *)zero_buff, sblocksize, TRUE);
-        if (mainw->write_failed == out_fd + 1) {
-          mainw->write_failed = 0;
+        if (THREADVAR(write_failed) == out_fd + 1) {
+          THREADVAR(write_failed) = 0;
           retval = FALSE;
         }
       } else {
@@ -1230,9 +1230,9 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
     lives_free(outfilename);
 
     if (out_fd < 0) {
-      lives_freep((void **)&mainw->write_failed_file);
-      mainw->write_failed_file = lives_strdup(outfilename);
-      mainw->write_failed = -2;
+      lives_freep((void **)&THREADVAR(write_failed_file));
+      THREADVAR(write_failed_file) = lives_strdup(outfilename);
+      THREADVAR(write_failed) = -2;
       return 0l;
     }
 
@@ -1313,9 +1313,9 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         if (track < NSTOREDFDS && storedfds[track] > -1) lives_close_buffered(storedfds[track]);
         in_fd[track] = lives_open_buffered_rdonly(infilename);
         if (in_fd[track] < 0) {
-          lives_freep((void **)&mainw->read_failed_file);
-          mainw->read_failed_file = lives_strdup(infilename);
-          mainw->read_failed = -2;
+          lives_freep((void **)&THREADVAR(read_failed_file));
+          THREADVAR(read_failed_file) = lives_strdup(infilename);
+          THREADVAR(read_failed) = -2;
         } else {
           if (track < NSTOREDFDS) {
             storedfds[track] = in_fd[track];
@@ -1462,8 +1462,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
       if (from_files[track] == mainw->ascrap_file) {
         // be forgiving with the ascrap file
-        if (mainw->read_failed == in_fd[track] + 1) {
-          mainw->read_failed = 0;
+        if (THREADVAR(read_failed) == in_fd[track] + 1) {
+          THREADVAR(read_failed) = 0;
         }
       }
 
@@ -1672,16 +1672,16 @@ void aud_fade(int fileno, double startt, double endt, double startv, double endv
   render_audio_segment(1, &fileno, fileno, &vel, &startt, (weed_timecode_t)(startt * TICKS_PER_SECOND_DBL),
                        (weed_timecode_t)(endt * TICKS_PER_SECOND_DBL), &vol, startv, endv, NULL);
 
-  if (mainw->write_failed) {
+  if (THREADVAR(write_failed)) {
     char *outfilename = lives_get_audio_file_name(fileno);
-    mainw->write_failed = 0;
+    THREADVAR(write_failed) = 0;
     do_write_failed_error_s(outfilename, NULL);
     lives_free(outfilename);
   }
 
-  if (mainw->read_failed) {
+  if (THREADVAR(read_failed)) {
     char *infilename = lives_get_audio_file_name(fileno);
-    mainw->read_failed = 0;
+    THREADVAR(read_failed) = 0;
     do_read_failed_error_s(infilename, NULL);
     lives_free(infilename);
   }
@@ -1858,11 +1858,11 @@ boolean adjust_clip_volume(int fileno, float newvol, boolean make_backup) {
   double dvol = (double)newvol;
   if (make_backup) {
     char *com = lives_strdup_printf("%s backup_audio \"%s\"", prefs->backend_sync, cfile->handle);
-    mainw->com_failed = FALSE;
+    THREADVAR(com_failed) = FALSE;
     lives_system(com, FALSE);
     lives_free(com);
-    if (mainw->com_failed) {
-      mainw->com_failed = FALSE;
+    if (THREADVAR(com_failed)) {
+      THREADVAR(com_failed) = FALSE;
       return FALSE;
     }
   }
@@ -2532,9 +2532,9 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     /* } */
   }
 
-  if (mainw->read_failed > 0) {
-    mainw->read_failed = 0;
-    do_read_failed_error_s(mainw->read_failed_file, NULL);
+  if (THREADVAR(read_failed) > 0) {
+    THREADVAR(read_failed) = 0;
+    do_read_failed_error_s(THREADVAR(read_failed_file), NULL);
   }
 
   mainw->write_abuf++;
@@ -3303,12 +3303,12 @@ boolean apply_rte_audio_init(void) {
   char *com;
 
   if (!prefs->conserve_space) {
-    mainw->com_failed = FALSE;
+    THREADVAR(com_failed) = FALSE;
     com = lives_strdup_printf("%s backup_audio %s", prefs->backend_sync, cfile->handle);
     lives_system(com, FALSE);
     lives_free(com);
 
-    if (mainw->com_failed) {
+    if (THREADVAR(com_failed)) {
       d_print_failed();
       return FALSE;
     }
@@ -3393,10 +3393,10 @@ boolean apply_rte_audio(int64_t nframes) {
 
     tbytes = lives_read_buffered(audio_fd, in_buff, tbytes, FALSE);
 
-    if (mainw->read_failed == audio_fd + 1) {
-      mainw->read_failed = 0;
+    if (THREADVAR(read_failed) == audio_fd + 1) {
+      THREADVAR(read_failed) = 0;
       do_read_failed_error_s(audio_file, NULL);
-      lives_freep((void **)&mainw->read_failed_file);
+      lives_freep((void **)&THREADVAR(read_failed_file));
       lives_free(fltbuf);
       lives_free(in_buff);
       lives_freep((void **)&shortbuf);
@@ -3490,8 +3490,8 @@ boolean apply_rte_audio(int64_t nframes) {
   if (shortbuf != (short *)in_buff) lives_free(shortbuf);
   lives_free(in_buff);
 
-  if (mainw->write_failed == audio_fd + 1) {
-    mainw->write_failed = 0;
+  if (THREADVAR(write_failed) == audio_fd + 1) {
+    THREADVAR(write_failed) = 0;
     do_write_failed_error_s(audio_file, NULL);
     return FALSE;
   }

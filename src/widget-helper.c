@@ -1077,7 +1077,7 @@ static void async_sig_handler(livespointer instance, livespointer data) {
 
   ctx = lives_widget_context_get_thread_default();
   if (!gov_running && (!ctx || ctx == lives_widget_context_default())) {
-    lives_thread_attr_t attr = LIVES_THRDATTR_NEW_CTX | LIVES_THRDATTR_WAIT_SYNC;
+    lives_thread_attr_t attr = LIVES_THRDATTR_WAIT_SYNC;
     mainw->clutch = TRUE;
     if (sigdata->swapped) {
       sigdata->proc = lives_proc_thread_create(&attr, (lives_funcptr_t)sigdata->callback, -1, "vv", sigdata->user_data, instance);
@@ -1099,7 +1099,7 @@ static void async_sig_handler3(livespointer instance, livespointer extra, livesp
 
   ctx = lives_widget_context_get_thread_default();
   if (!gov_running && (!ctx || ctx == lives_widget_context_default())) {
-    lives_thread_attr_t attr = LIVES_THRDATTR_NEW_CTX | LIVES_THRDATTR_WAIT_SYNC;
+    lives_thread_attr_t attr = LIVES_THRDATTR_WAIT_SYNC;
     sigdata->proc = lives_proc_thread_create(&attr, sigdata->callback, -1, "vvv", instance, extra,
                     sigdata->user_data);
     governor_loop((livespointer)sigdata);
@@ -1120,7 +1120,7 @@ static boolean async_timer_handler(livespointer data) {
   if (!sigdata->added) {
     ctx = lives_widget_context_get_thread_default();
     if (!ctx || ctx == lives_widget_context_default()) {
-      lives_thread_attr_t attr = LIVES_THRDATTR_NEW_CTX | LIVES_THRDATTR_WAIT_SYNC;
+      lives_thread_attr_t attr = LIVES_THRDATTR_WAIT_SYNC;
       mainw->clutch = FALSE;
       sigdata->swapped = FALSE;
       sigdata->proc = lives_proc_thread_create(&attr, (lives_funcptr_t)sigdata->callback, WEED_SEED_BOOLEAN,
@@ -7886,6 +7886,30 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESSList *lives_file_chooser_get_filenames(LiVESFi
 #endif
   return fnlist;
 }
+
+
+#if GTK_CHECK_VERSION(3,2,0)
+WIDGET_HELPER_GLOBAL_INLINE char *lives_font_chooser_get_font(LiVESFontChooser *fc) {
+  return gtk_font_chooser_get_font(fc);
+}
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_font_chooser_set_font(LiVESFontChooser *fc,
+    const char *fontname) {
+  gtk_font_chooser_set_font(fc, fontname);
+  return TRUE;
+}
+
+WIDGET_HELPER_GLOBAL_INLINE LingoFontDescription *lives_font_chooser_get_font_desc(LiVESFontChooser *fc) {
+  return gtk_font_chooser_get_font_desc(fc);
+}
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_font_chooser_set_font_desc(LiVESFontChooser *fc,
+    LingoFontDescription *lfd) {
+  gtk_font_chooser_set_font_desc(fc, lfd);
+  return TRUE;
+}
+#endif
+
 
 #ifdef GUI_GTK
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_grid_new(void) {

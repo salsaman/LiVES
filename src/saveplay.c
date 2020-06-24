@@ -113,7 +113,7 @@ boolean save_clip_values(int which) {
   lives_header_new = lives_build_filename(prefs->workdir, sfile->handle, LIVES_CLIP_HEADER_NEW, NULL);
 
   do {
-    mainw->com_failed = mainw->write_failed = FALSE;
+    THREADVAR(com_failed) = THREADVAR(write_failed) = FALSE;
     mainw->clip_header = fopen(lives_header_new, "w");
     if (mainw->clip_header == NULL) {
       retval = do_write_failed_error_s_with_retry(lives_header_new, lives_strerror(errno), NULL);
@@ -175,7 +175,7 @@ boolean save_clip_values(int which) {
         // TODO - check the sizes before and after
         lives_cp(lives_header_new, lives_header);
         lives_free(lives_header);
-        if (mainw->com_failed || mainw->write_failed) {
+        if (THREADVAR(com_failed) || THREADVAR(write_failed)) {
           retval = do_write_failed_error_s_with_retry(lives_header_new, NULL, NULL);
         } else lives_rm(lives_header_new);
       }
@@ -208,8 +208,8 @@ boolean read_file_details(const char *file_name, boolean is_audio, boolean is_im
   lives_free(tmp);
   lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
   lives_free(com);
-  if (mainw->com_failed) {
-    mainw->com_failed = FALSE;
+  if (THREADVAR(com_failed)) {
+    THREADVAR(com_failed) = FALSE;
     return FALSE;
   }
   return TRUE;
@@ -342,7 +342,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     /// probe the file to see what it might be...
     read_file_details(file_name, FALSE, FALSE);
     lives_rm(cfile->info_file);
-    if (mainw->com_failed) return 0;
+    if (THREADVAR(com_failed)) return 0;
 
     if (strlen(mainw->msg) > 0) add_file_info(cfile->handle, FALSE);
 
@@ -495,7 +495,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
         if (cfile->achans == 0 && probed_achans > 0 && withsound == 1) {
           // plugin returned no audio, try with mplayer / mpv
-          mainw->com_failed = FALSE;
+          THREADVAR(com_failed) = FALSE;
 
           if (probed_achans > MAX_ACHANS) {
             probed_achans = MAX_ACHANS;
@@ -658,7 +658,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         cfile->deinterlace = TRUE;
         cfile->interlace = LIVES_INTERLACE_TOP_FIRST; // guessing
         save_clip_value(mainw->current_file, CLIP_DETAILS_INTERLACE, &cfile->interlace);
-        if (mainw->com_failed || mainw->write_failed) do_header_write_error(mainw->current_file);
+        if (THREADVAR(com_failed) || THREADVAR(write_failed)) do_header_write_error(mainw->current_file);
       }
     } else {
       // be careful, here we switch from mainw->opening_loc to cfile->opening_loc
@@ -882,9 +882,9 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         }
       }
       if (subtype != SUBTITLE_TYPE_NONE) {
-        mainw->com_failed = FALSE;
+        THREADVAR(com_failed) = FALSE;
         lives_cp(isubfname, subfname);
-        if (!mainw->com_failed)
+        if (!THREADVAR(com_failed))
           subtitles_init(cfile, subfname, subtype);
         lives_free(subfname);
       } else {
@@ -1031,7 +1031,7 @@ img_load:
 
       mainw->cancelled = CANCEL_NONE;
       mainw->error = FALSE;
-      mainw->com_failed = FALSE;
+      THREADVAR(com_failed) = FALSE;
 
       lives_system(com, FALSE);
       lives_free(com);
@@ -1443,7 +1443,7 @@ void save_file(int clip, int start, int end, const char *filename) {
     lives_popen(com, TRUE, buff, 65536);
     lives_free(com);
 
-    if (!mainw->com_failed) {
+    if (!THREADVAR(com_failed)) {
       extra_params = plugin_run_param_window(buff, NULL, NULL);
     }
     if (extra_params == NULL) {
@@ -1507,14 +1507,14 @@ void save_file(int clip, int start, int end, const char *filename) {
                               !(nfile->signed_endian & AFORM_UNSIGNED), !(nfile->signed_endian & AFORM_BIG_ENDIAN), sfile->handle);
 
     lives_rm(nfile->info_file);
-    mainw->com_failed = FALSE;
+    THREADVAR(com_failed) = FALSE;
     lives_system(com, FALSE);
     lives_free(com);
 
     // TODO - eliminate this
     mainw->current_file = new_file;
 
-    if (mainw->com_failed) {
+    if (THREADVAR(com_failed)) {
 #ifdef IS_MINGW
       // kill any active processes: for other OSes the backend does this
       lives_kill_subprocesses(cfile->handle, TRUE);
@@ -1616,7 +1616,7 @@ void save_file(int clip, int start, int end, const char *filename) {
                               !(sfile->signed_endian & AFORM_UNSIGNED), !(sfile->signed_endian & AFORM_BIG_ENDIAN));
 
     lives_rm(sfile->info_file);
-    mainw->com_failed = FALSE;
+    THREADVAR(com_failed) = FALSE;
     lives_system(com, FALSE);
     lives_free(com);
 
@@ -1628,7 +1628,7 @@ void save_file(int clip, int start, int end, const char *filename) {
     xasamps = sfile->asampsize;
     xasigned_endian = sfile->signed_endian;
 
-    if (mainw->com_failed) {
+    if (THREADVAR(com_failed)) {
       com = lives_strdup_printf("%s clear_symlinks \"%s\"", prefs->backend_sync, cfile->handle);
       lives_system(com, TRUE);
       lives_free(com);
@@ -1798,10 +1798,10 @@ void save_file(int clip, int start, int end, const char *filename) {
   cfile->nokeep = TRUE;
 
   lives_rm(cfile->info_file);
-  mainw->write_failed = FALSE;
+  THREADVAR(write_failed) = FALSE;
   save_file_comments(current_file);
 
-  mainw->com_failed = FALSE;
+  THREADVAR(com_failed) = FALSE;
 
   if (debug_mode) {
     fprintf(stderr, "Running command: %s\n", com);
@@ -1811,7 +1811,7 @@ void save_file(int clip, int start, int end, const char *filename) {
   lives_free(com);
   mainw->error = FALSE;
 
-  if (mainw->com_failed || mainw->write_failed) {
+  if (THREADVAR(com_failed) || THREADVAR(write_failed)) {
     mainw->error = TRUE;
   }
 
@@ -1991,9 +1991,9 @@ void save_file(int clip, int start, int end, const char *filename) {
         sfile->vsize = iheight;
 
         save_clip_value(clip, CLIP_DETAILS_WIDTH, &sfile->hsize);
-        if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+        if (THREADVAR(com_failed) || THREADVAR(write_failed)) bad_header = TRUE;
         save_clip_value(clip, CLIP_DETAILS_HEIGHT, &sfile->vsize);
-        if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+        if (THREADVAR(com_failed) || THREADVAR(write_failed)) bad_header = TRUE;
         if (bad_header) do_header_write_error(mainw->current_file);
       }
 
@@ -3253,10 +3253,10 @@ void play_file(void) {
     }
   }
 
-  if (mainw->bad_aud_file != NULL) {
+  if (THREADVAR(bad_aud_file) != NULL) {
     /// we got an error recording audio
-    do_write_failed_error_s(mainw->bad_aud_file, NULL);
-    lives_freep((void **)&mainw->bad_aud_file);
+    do_write_failed_error_s(THREADVAR(bad_aud_file), NULL);
+    lives_freep((void **)&THREADVAR(bad_aud_file));
   }
 
   if (mainw->new_vpp) {
@@ -3961,10 +3961,10 @@ boolean save_file_comments(int fileno) {
     retval = 0;
     comment_fd = creat(comment_file, S_IRUSR | S_IWUSR);
     if (comment_fd < 0) {
-      mainw->write_failed = TRUE;
+      THREADVAR(write_failed) = TRUE;
       retval = do_write_failed_error_s_with_retry(comment_file, lives_strerror(errno), NULL);
     } else {
-      mainw->write_failed = FALSE;
+      THREADVAR(write_failed) = FALSE;
       lives_write(comment_fd, sfile->title, strlen(sfile->title), TRUE);
       lives_write(comment_fd, "||%", 3, TRUE);
       lives_write(comment_fd, sfile->author, strlen(sfile->author), TRUE);
@@ -3973,7 +3973,7 @@ boolean save_file_comments(int fileno) {
 
       close(comment_fd);
 
-      if (mainw->write_failed) {
+      if (THREADVAR(write_failed)) {
         retval = do_write_failed_error_s_with_retry(comment_file, NULL, NULL);
       }
     }
@@ -3981,7 +3981,7 @@ boolean save_file_comments(int fileno) {
 
   lives_free(comment_file);
 
-  if (mainw->write_failed) return FALSE;
+  if (THREADVAR(write_failed)) return FALSE;
 
   return TRUE;
 }
@@ -4170,12 +4170,12 @@ void backup_file(int clip, int start, int end, const char *file_name) {
 
   lives_rm(cfile->info_file);
   cfile->nopreview = TRUE;
-  mainw->com_failed = FALSE;
+  THREADVAR(com_failed) = FALSE;
   lives_system(com, FALSE);
   lives_free(com);
 
-  if (mainw->com_failed) {
-    mainw->com_failed = FALSE;
+  if (THREADVAR(com_failed)) {
+    THREADVAR(com_failed) = FALSE;
     mainw->current_file = current_file;
     return;
   }
@@ -4252,7 +4252,7 @@ boolean write_headers(lives_clip_t *file) {
     if (header_fd < 0) {
       retval = do_write_failed_error_s_with_retry(hdrfile, lives_strerror(errno), NULL);
     } else {
-      mainw->write_failed = FALSE;
+      THREADVAR(write_failed) = FALSE;
 
       lives_write_le(header_fd, &cfile->bpp, 4, TRUE);
       lives_write_le(header_fd, &cfile->fps, 8, TRUE);
@@ -4268,7 +4268,7 @@ boolean write_headers(lives_clip_t *file) {
       lives_write(header_fd, LiVES_VERSION, strlen(LiVES_VERSION), TRUE);
       close(header_fd);
 
-      if (mainw->write_failed) retval = do_write_failed_error_s_with_retry(hdrfile, NULL, NULL);
+      if (THREADVAR(write_failed)) retval = do_write_failed_error_s_with_retry(hdrfile, NULL, NULL);
     }
   } while (retval == LIVES_RESPONSE_RETRY);
 
@@ -4285,21 +4285,21 @@ boolean write_headers(lives_clip_t *file) {
       if (header_fd < 0) {
         retval = do_write_failed_error_s_with_retry(hdrfile, lives_strerror(errno), NULL);
       } else {
-        mainw->write_failed = FALSE;
+        THREADVAR(write_failed) = FALSE;
         lives_write_le(header_fd, &file->frames, 4, TRUE);
         lives_write(header_fd, &file->title, 1024, TRUE);
         lives_write(header_fd, &file->author, 1024, TRUE);
         lives_write(header_fd, &file->comment, 1024, TRUE);
         close(header_fd);
       }
-      if (mainw->write_failed) retval = do_write_failed_error_s_with_retry(hdrfile, NULL, NULL);
+      if (THREADVAR(write_failed)) retval = do_write_failed_error_s_with_retry(hdrfile, NULL, NULL);
     } while (retval == LIVES_RESPONSE_RETRY);
 
     lives_free(hdrfile);
   }
 
   if (retval == LIVES_RESPONSE_CANCEL) {
-    mainw->write_failed = FALSE;
+    THREADVAR(write_failed) = FALSE;
     return FALSE;
   }
   return TRUE;
@@ -4524,8 +4524,8 @@ old_check:
       lives_free(com);
       lives_free(tmp);
 
-      if (mainw->com_failed) {
-        mainw->com_failed = FALSE;
+      if (THREADVAR(com_failed)) {
+        THREADVAR(com_failed) = FALSE;
         lives_free(old_hdrfile);
         return FALSE;
       }
@@ -4554,7 +4554,7 @@ old_check:
   do {
     // old style headers (pre 0.9.6)
     retval = LIVES_RESPONSE_OK;
-    mainw->read_failed = FALSE;
+    THREADVAR(read_failed) = FALSE;
     lives_memset(version, 0, 32);
     lives_memset(buff, 0, 1024);
 
@@ -4563,7 +4563,7 @@ old_check:
     if (header_fd < 0) {
       retval = do_read_failed_error_s_with_retry(old_hdrfile, lives_strerror(errno), NULL);
     } else {
-      mainw->read_failed = FALSE;
+      THREADVAR(read_failed) = FALSE;
       header_size = get_file_size(header_fd);
 
       if (header_size < sizhead) {
@@ -4571,34 +4571,34 @@ old_check:
         close(header_fd);
         return FALSE;
       } else {
-        mainw->read_failed = FALSE;
+        THREADVAR(read_failed) = FALSE;
         lives_read_le(header_fd, &cfile->bpp, 4, FALSE);
-        if (!mainw->read_failed)
+        if (!THREADVAR(read_failed))
           lives_read_le(header_fd, &cfile->fps, 8, FALSE);
-        if (!mainw->read_failed)
+        if (!THREADVAR(read_failed))
           lives_read_le(header_fd, &cfile->hsize, 4, FALSE);
-        if (!mainw->read_failed)
+        if (!THREADVAR(read_failed))
           lives_read_le(header_fd, &cfile->vsize, 4, FALSE);
-        if (!mainw->read_failed)
+        if (!THREADVAR(read_failed))
           lives_read_le(header_fd, &cfile->arps, 4, FALSE);
-        if (!mainw->read_failed)
+        if (!THREADVAR(read_failed))
           lives_read_le(header_fd, &cfile->signed_endian, 4, FALSE);
-        if (!mainw->read_failed)
+        if (!THREADVAR(read_failed))
           lives_read_le(header_fd, &cfile->arate, 4, FALSE);
-        if (!mainw->read_failed)
+        if (!THREADVAR(read_failed))
           lives_read_le(header_fd, &cfile->unique_id, 8, FALSE);
-        if (!mainw->read_failed)
+        if (!THREADVAR(read_failed))
           lives_read_le(header_fd, &cfile->achans, 4, FALSE);
-        if (!mainw->read_failed)
+        if (!THREADVAR(read_failed))
           lives_read_le(header_fd, &cfile->asampsize, 4, FALSE);
 
         if (header_size > sizhead) {
           if (header_size - sizhead > 31) {
-            if (!mainw->read_failed)
+            if (!THREADVAR(read_failed))
               lives_read(header_fd, &version, 31, FALSE);
             version[31] = '\0';
           } else {
-            if (!mainw->read_failed)
+            if (!THREADVAR(read_failed))
               lives_read(header_fd, &version, header_size - sizhead, FALSE);
             version[header_size - sizhead] = '\0';
           }
@@ -4608,7 +4608,7 @@ old_check:
       close(header_fd);
     }
 
-    if (mainw->read_failed) {
+    if (THREADVAR(read_failed)) {
       retval = do_read_failed_error_s_with_retry(old_hdrfile, NULL, NULL);
       if (retval == LIVES_RESPONSE_CANCEL) {
         lives_free(old_hdrfile);
@@ -4635,8 +4635,8 @@ old_check:
   lives_free(com);
   lives_free(tmp);
 
-  if (mainw->com_failed) {
-    mainw->com_failed = FALSE;
+  if (THREADVAR(com_failed)) {
+    THREADVAR(com_failed) = FALSE;
     return FALSE;
   }
 
@@ -4797,7 +4797,7 @@ ulong restore_file(const char *file_name) {
   com = lives_strdup_printf("%s restore %s %s", prefs->backend, cfile->handle,
                             (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)));
 
-  mainw->com_failed = FALSE;
+  THREADVAR(com_failed) = FALSE;
   lives_rm(cfile->info_file);
 
   lives_system(com, FALSE);
@@ -4805,8 +4805,8 @@ ulong restore_file(const char *file_name) {
   lives_free(tmp);
   lives_free(com);
 
-  if (mainw->com_failed) {
-    mainw->com_failed = FALSE;
+  if (THREADVAR(com_failed)) {
+    THREADVAR(com_failed) = FALSE;
     close_current_file(old_file);
     return 0;
   }
@@ -4989,18 +4989,18 @@ int save_event_frames(void) {
       // use machine endian.
       // When we call "smogrify reorder", we will pass the endianness as 3rd parameter
 
-      mainw->write_failed = FALSE;
+      THREADVAR(write_failed) = FALSE;
       lives_write(header_fd, &perf_start, 4, FALSE);
 
       if (!(cfile->resample_events == NULL)) {
         for (i = 0; i <= perf_end - perf_start; i++) {
-          if (mainw->write_failed) break;
+          if (THREADVAR(write_failed)) break;
           lives_write(header_fd, &((cfile->resample_events + i)->value), 4, TRUE);
         }
         lives_freep((void **)&cfile->resample_events);
       }
 
-      if (mainw->write_failed) {
+      if (THREADVAR(write_failed)) {
         retval = do_write_failed_error_s_with_retry(hdrfile, NULL, NULL);
       }
 
@@ -5573,7 +5573,7 @@ manual_locate:
       sfile->fps = orig_fps;
       if (!check_clip_integrity(fileno, cdata, maxframe)) {
         // get correct img_type, fps, etc.
-        if (mainw->com_failed || mainw->write_failed) do_header_write_error(fileno);
+        if (THREADVAR(com_failed) || THREADVAR(write_failed)) do_header_write_error(fileno);
         goto manual_locate;
       }
       sfile->needs_silent_update = TRUE; // force filename update in header
@@ -5621,14 +5621,14 @@ manual_locate:
     boolean correct = TRUE;
     if (!was_renamed) correct = check_clip_integrity(fileno, cdata, maxframe); // get correct img_type, fps, etc.
     if (!correct) {
-      if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+      if (THREADVAR(com_failed) || THREADVAR(write_failed)) bad_header = TRUE;
     } else {
       lives_decoder_t *dplug = (lives_decoder_t *)sfile->ext_src;
       if (dplug != NULL) {
         lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->decoder;
         if (dpsys != NULL && strlen(dpsys->name) > 0 && strcmp(dpsys->name, decoder_name)) {
           save_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, (void *)dpsys->name);
-          if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+          if (THREADVAR(com_failed) || THREADVAR(write_failed)) bad_header = TRUE;
         }
       }
     }
@@ -5669,9 +5669,9 @@ static lives_clip_t *_restore_binfmt(int clipno, boolean forensic) {
 	   return FALSE;
        }
 
-       mainw->com_failed = FALSE;
-       if (mainw->read_failed == fd + 1) {
-	 mainw->read_failed = 0;
+       THREADVAR(com_failed) = FALSE;
+       if (THREADVAR(read_failed) == fd + 1) {
+	 THREADVAR(read_failed) = 0;
 	 lives_free(loaded);
 	 return NULL;
        }
@@ -5794,14 +5794,14 @@ static lives_clip_t *_restore_binfmt(int clipno, boolean forensic) {
 
     lives_list_free_all(&mainw->cached_list);
 
-    mainw->read_failed = FALSE;
+    THREADVAR(read_failed) = FALSE;
 
     if (recovery_file) {
       if (lives_fgets(buff, 256, rfile) == NULL) {
         reset_clipmenu();
         threaded_dialog_spin(0.);
         mainw->suppress_dprint = FALSE;
-        if (mainw->read_failed) {
+        if (THREADVAR(read_failed)) {
           d_print_failed();
           do_read_failed_error_s(recovery_file, NULL);
         } else d_print_done();
@@ -6166,11 +6166,11 @@ recovery_done:
 
 
 void add_to_recovery_file(const char *handle) {
-  mainw->com_failed = FALSE;
+  THREADVAR(com_failed) = FALSE;
   lives_echo(handle, mainw->recovery_file, TRUE);
 
-  if (mainw->com_failed) {
-    mainw->com_failed = FALSE;
+  if (THREADVAR(com_failed)) {
+    THREADVAR(com_failed) = FALSE;
     return;
   }
 
@@ -6203,7 +6203,7 @@ boolean rewrite_recovery_file(void) {
 
   do {
     retval = LIVES_RESPONSE_INVALID;
-    mainw->write_failed = FALSE;
+    THREADVAR(write_failed) = FALSE;
     opened = FALSE;
     recovery_fd = -1;
 
@@ -6232,11 +6232,11 @@ boolean rewrite_recovery_file(void) {
         else {
           opened = TRUE;
           lives_write(recovery_fd, recovery_entry, strlen(recovery_entry), TRUE);
-          if (mainw->write_failed) retval = do_write_failed_error_s_with_retry(temp_recovery_file, NULL, NULL);
+          if (THREADVAR(write_failed)) retval = do_write_failed_error_s_with_retry(temp_recovery_file, NULL, NULL);
         }
         lives_free(recovery_entry);
       }
-      if (mainw->write_failed) break;
+      if (THREADVAR(write_failed)) break;
       clist = clist->next;
     }
   } while (retval == LIVES_RESPONSE_RETRY);
@@ -6246,9 +6246,9 @@ boolean rewrite_recovery_file(void) {
     close(recovery_fd);
     retval = LIVES_RESPONSE_INVALID;
     do {
-      mainw->com_failed = FALSE;
+      THREADVAR(com_failed) = FALSE;
       lives_mv(temp_recovery_file, mainw->recovery_file);
-      if (mainw->com_failed) {
+      if (THREADVAR(com_failed)) {
         retval = do_write_failed_error_s_with_retry(temp_recovery_file, NULL, NULL);
       }
     } while (retval == LIVES_RESPONSE_RETRY);
@@ -6281,12 +6281,12 @@ boolean check_for_recovery_files(boolean auto_recover) {
   com = lives_strdup_printf("%s get_recovery_file %d %d %s recovery %d", prefs->backend_sync, luid, lgid,
                             capable->myname, capable->mainpid);
 
-  mainw->com_failed = FALSE;
+  THREADVAR(com_failed) = FALSE;
   lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
   lives_free(com);
 
-  if (mainw->com_failed) {
-    mainw->com_failed = FALSE;
+  if (THREADVAR(com_failed)) {
+    THREADVAR(com_failed) = FALSE;
     return FALSE;
   }
 
@@ -6314,7 +6314,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
   }
 #endif
 
-  mainw->com_failed = FALSE;
+  THREADVAR(com_failed) = FALSE;
 
   /// CRITICAL: make sure this gets called even on system failure and abort
   if (prefs->crash_recovery) mainw->abort_hook_func = (lives_funcptr_t)rewrite_recovery_file;
@@ -6379,7 +6379,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
   lives_free(recording_file);
   lives_free(recording_numbering_file);
 
-  if (mainw->com_failed && prefs->crash_recovery) {
+  if (THREADVAR(com_failed) && prefs->crash_recovery) {
     rewrite_recovery_file();
     return FALSE;
   }

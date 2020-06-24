@@ -28,10 +28,10 @@ LiVESList *get_plugin_result(const char *command, const char *delim, boolean all
 
   //threaded_dialog_spin(0.);
 
-  mainw->com_failed = FALSE;
+  THREADVAR(com_failed) = FALSE;
   lives_popen(command, !mainw->is_ready && !list_plugins, buffer, 65535);
 
-  if (mainw->com_failed) return NULL;
+  if (THREADVAR(com_failed)) return NULL;
 
   //threaded_dialog_spin(0.);
   list = buff_to_list(buffer, delim, allow_blanks, strip);
@@ -287,13 +287,13 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
       do {
         // only do this loop once, so we can use break to escape it
 
-        mainw->read_failed = FALSE;
+        THREADVAR(read_failed) = FALSE;
         msg = lives_strdup("LiVES vpp defaults file version 2\n");
         len = lives_read(fd, buf, strlen(msg), FALSE);
         if (len < 0) len = 0;
         lives_memset(buf + len, 0, 1);
 
-        if (mainw->read_failed) break;
+        if (THREADVAR(read_failed)) break;
 
         // identifier string
         if (strcmp(msg, buf)) {
@@ -306,11 +306,11 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
 
         // plugin name
         lives_read_le(fd, &len, 4, FALSE);
-        if (mainw->read_failed) break;
+        if (THREADVAR(read_failed)) break;
         lives_read(fd, buf, len, FALSE);
         lives_memset(buf + len, 0, 1);
 
-        if (mainw->read_failed) break;
+        if (THREADVAR(read_failed)) break;
 
         if (strcmp(buf, vpp->name)) {
           d_print_file_error_failed();
@@ -321,10 +321,10 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
         // version string
         version = (*vpp->version)();
         lives_read_le(fd, &len, 4, FALSE);
-        if (mainw->read_failed) break;
+        if (THREADVAR(read_failed)) break;
         lives_read(fd, buf, len, FALSE);
 
-        if (mainw->read_failed) break;
+        if (THREADVAR(read_failed)) break;
 
         lives_memset(buf + len, 0, 1);
 
@@ -351,11 +351,11 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
         lives_read_le(fd, &(vpp->fixed_fps_numer), 4, FALSE);
         lives_read_le(fd, &(vpp->fixed_fps_denom), 4, FALSE);
 
-        if (mainw->read_failed) break;
+        if (THREADVAR(read_failed)) break;
 
         lives_read_le(fd, &(vpp->extra_argc), 4, FALSE);
 
-        if (mainw->read_failed) break;
+        if (THREADVAR(read_failed)) break;
 
         if (vpp->extra_argv != NULL) {
           for (i = 0; vpp->extra_argv[i] != NULL; i++) {
@@ -368,10 +368,10 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
 
         for (i = 0; i < vpp->extra_argc; i++) {
           lives_read_le(fd, &len, 4, FALSE);
-          if (mainw->read_failed) break;
+          if (THREADVAR(read_failed)) break;
           vpp->extra_argv[i] = (char *)lives_malloc(len + 1);
           lives_read(fd, vpp->extra_argv[i], len, FALSE);
-          if (mainw->read_failed) break;
+          if (THREADVAR(read_failed)) break;
           lives_memset((vpp->extra_argv[i]) + len, 0, 1);
         }
 
@@ -380,11 +380,11 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
         close(fd);
       } while (FALSE);
 
-      if (mainw->read_failed) {
+      if (THREADVAR(read_failed)) {
         close(fd);
         retval = do_read_failed_error_s_with_retry(vpp_file, NULL, NULL);
         if (retval == LIVES_RESPONSE_CANCEL) {
-          mainw->read_failed = FALSE;
+          THREADVAR(read_failed) = FALSE;
           vpp = NULL;
           d_print_file_error_failed();
           return;
@@ -1450,11 +1450,11 @@ int64_t get_best_audio(_vid_playback_plugin * vpp) {
       if (int_array_contains_value(sfmts, nfmts, fmts[i])) {
 
         com = lives_strdup_printf("\"%s\" check %d", astreamer, fmts[i]);
-        mainw->com_failed = FALSE;
+        THREADVAR(com_failed) = FALSE;
         lives_popen(com, FALSE, buf, 1024);
         lives_free(com);
 
-        if (mainw->com_failed) {
+        if (THREADVAR(com_failed)) {
           lives_free(astreamer);
           lives_free(com);
           lives_free(sfmts);
@@ -3683,7 +3683,7 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox * vbox, lives_rf
         return NULL;
       }
     } else {
-      mainw->write_failed = FALSE;
+      THREADVAR(write_failed) = FALSE;
       lives_fputs(string, sfile);
       if (scrap_text != NULL) {
         char *data = subst(scrap_text, "\\n", "\n");
@@ -3692,7 +3692,7 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox * vbox, lives_rf
       }
       fclose(sfile);
       lives_free(string);
-      if (mainw->write_failed) {
+      if (THREADVAR(write_failed)) {
         retval = do_write_failed_error_s_with_retry(rfxfile, NULL, NULL);
         if (retval == LIVES_RESPONSE_CANCEL) {
           return NULL;
@@ -3733,15 +3733,15 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox * vbox, lives_rf
 
     fnamex = lives_build_filename(prefs->workdir, rfx_scrapname, NULL);
     com = lives_strdup_printf("\"%s\" get_define", fnamex);
-    mainw->com_failed = FALSE;
+    THREADVAR(com_failed) = FALSE;
 
     if (!lives_popen(com, TRUE, buff, 32)) {
-      mainw->com_failed = TRUE;
+      THREADVAR(com_failed) = TRUE;
     }
     lives_free(com);
 
     // command to get_define failed
-    if (mainw->com_failed) {
+    if (THREADVAR(com_failed)) {
       lives_rm(fnamex);
       lives_free(fnamex);
       return NULL;

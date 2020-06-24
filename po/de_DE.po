@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Lives 0.9.5\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2020-06-23 01:22-0300\n"
+"POT-Creation-Date: 2020-06-23 20:15-0300\n"
 "PO-Revision-Date: 2015-04-05 16:14+0000\n"
 "Last-Translator: Michael Kohl <rolf.michael.kohl@googlemail.com>\n"
 "Language-Team: Herbert U. Hübner <herbert.u.huebner@friendglow.net>\n"
@@ -7033,15 +7033,15 @@ msgstr "Skalieren"
 msgid "_Frame"
 msgstr ""
 
-#: src/paramspecial.c:306
+#: src/paramspecial.c:407
 msgid "    Maintain _Aspect Ratio    "
 msgstr ""
 
-#: src/paramspecial.c:312
+#: src/paramspecial.c:413
 msgid "Maintain aspect ratio"
 msgstr ""
 
-#: src/paramspecial.c:484
+#: src/paramspecial.c:579
 msgid "Display Password"
 msgstr ""
 

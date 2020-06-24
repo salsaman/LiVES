@@ -141,7 +141,7 @@ LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog *dialog, bool
   if (fullcheck) {
     if (lives_file_test(*pdirname, LIVES_FILE_TEST_IS_DIR)) {
       if (is_writeable_dir(*pdirname)) {
-        freesp = get_fs_free(*pdirname);
+        freesp = get_ds_free(*pdirname);
         if (!prompt_existing_dir(*pdirname, freesp, TRUE, LIVES_WINDOW(dialog))) {
           return LIVES_RESPONSE_RETRY;
         }
@@ -152,7 +152,7 @@ LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog *dialog, bool
       }
     } else {
       if (is_writeable_dir(*pdirname)) {
-        freesp = get_fs_free(*pdirname);
+        freesp = get_ds_free(*pdirname);
         if (!prompt_new_dir(*pdirname, freesp, TRUE)) {
           lives_rmdir(*pdirname, FALSE);
           return LIVES_RESPONSE_RETRY;

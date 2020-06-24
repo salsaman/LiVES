@@ -182,6 +182,7 @@ typedef enum {
   LIVES_STORAGE_STATUS_NORMAL,
   LIVES_STORAGE_STATUS_WARNING,
   LIVES_STORAGE_STATUS_CRITICAL,
+  LIVES_STORAGE_STATUS_OVER_QUOTA,
   LIVES_STORAGE_STATUS_OFFLINE
 } lives_storage_status_t;
 
@@ -264,8 +265,8 @@ char *get_md5sum(const char *filename);
 
 char *lives_format_storage_space_string(uint64_t space);
 lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, uint64_t *dsval);
-uint64_t get_fs_free(const char *dir);
-boolean get_ds_used(uint64_t *bytes);
+uint64_t get_ds_free(const char *dir);
+boolean get_ds_used(int64_t *bytes);
 
 ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t orignsecs);
 ticks_t lives_get_current_ticks(void);

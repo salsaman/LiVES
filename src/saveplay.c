@@ -5058,7 +5058,7 @@ boolean open_scrap_file(void) {
 
   dir = lives_build_filename(prefs->workdir, cfile->handle, NULL);
   lives_mkdir_with_parents(dir, capable->umask);
-  free_mb = (double)get_fs_free(dir) / 1000000.;
+  free_mb = (double)get_ds_free(dir) / (double)ONE_MILLION;
   lives_free(dir);
 
   mainw->current_file = current_file;
@@ -5127,7 +5127,7 @@ boolean open_ascrap_file(void) {
 
   dir = lives_build_filename(prefs->workdir, cfile->handle, NULL);
   lives_mkdir_with_parents(dir, capable->umask);
-  free_mb = (double)get_fs_free(dir) / 1000000.;
+  free_mb = (double)get_ds_free(dir) / (double)ONE_MILLION;
   lives_free(dir);
 
   mainw->current_file = current_file;
@@ -5173,30 +5173,87 @@ boolean load_from_scrap_file(weed_layer_t *layer, int frame) {
 }
 
 
-boolean check_for_disk_space(void) {
-  boolean wrtable = TRUE;
+static void ds_warn(boolean freelow, uint64_t bytes) {
+  char *reason, *aorb;
+  char *amount = lives_format_storage_space_string(bytes);
+  if (freelow) {
+    reason = (_("FREE DISK SPACE"));
+    aorb = (_("BELOW"));
+  } else {
+    reason = (_("DISK SPACE USED"));
+    aorb = (_("ABOVE"));
+  }
+  d_print(_("\nRECORDING was PAUSED because %s in %s IS %s %s !\n"
+            "Diskspace limits can be set in Preferences / Misc.\n"),
+          reason, prefs->workdir, aorb, amount);
+  on_record_perf_activate(NULL, NULL);
+  d_print_urgency(URGENCY_MSG_TIMEOUT, _("RECORDING WAS PAUSED DUE TO DISKSPACE LIMITS\n"));
+  lives_free(reason);
+  lives_free(aorb);
+}
+
+
+boolean check_for_disk_space(boolean fullcheck) {
+  /// fullcheck == FALSE, we MAY check ds used, and we WILL check free ds using cached value
+  /// fullcheck == TRUE, we WILL update free ds
+  static int64_t free_ds = -1;
+  static double xscrap_mb = -1., xascrap_mb = -1.;
+  static double xxscrap_mb = -1., xxascrap_mb = -1.;
+  static int64_t ds_used = -1;
+  static boolean wrtable = FALSE;
+
   double scrap_mb = 0.;
 
+  if (prefs->disk_quota == 0 && prefs->rec_stop_gb < 0.) return TRUE;
+
+  if (fullcheck) ds_used = -1;
+
   if (IS_VALID_CLIP(mainw->scrap_file)) {
-    scrap_mb = (double)mainw->files[mainw->scrap_file]->f_size / 1000000.;
+    scrap_mb = (double)mainw->files[mainw->scrap_file]->f_size / (double)ONE_MILLION;
+  }
+
+  if (prefs->disk_quota > 0) {
+    int64_t xds_used = -1;
+
+    if (get_ds_used(&ds_used)) {
+      xds_used = ds_used;
+      xxscrap_mb = scrap_mb;
+      xxascrap_mb = ascrap_mb;
+    } else {
+      if (xxscrap_mb == -1. || xxscrap_mb > scrap_mb) xxscrap_mb = scrap_mb;
+      if (xxascrap_mb == -1. || xxascrap_mb > ascrap_mb) xxascrap_mb = ascrap_mb;
+      if (ds_used > -1) xds_used = ds_used
+                                     + (int64_t)(scrap_mb + ascrap_mb - xxscrap_mb - xxascrap_mb)
+                                     * ONE_MILLION;
+    }
+    if (xds_used > -1) {
+      /// value is in BYTES
+      if ((uint64_t)xds_used >= prefs->disk_quota * ONE_BILLION) {
+        if (mainw->record && !mainw->record_paused) {
+          ds_warn(FALSE, (uint64_t)ds_used);
+        }
+        return FALSE;
+      }
+    }
   }
 
   // check if we have enough free space left on the volume (return FALSE if not)
-  if ((int64_t)(((double)free_mb - (scrap_mb + ascrap_mb)) / 1000.) < prefs->rec_stop_gb) {
+  if (prefs->rec_stop_gb > -1.) {
     // check free space again
-
-    free_mb = (double)get_fs_free(prefs->workdir) / 1000000.;
-    if (free_mb == 0) wrtable = is_writeable_dir(prefs->workdir);
-    else wrtable = TRUE;
-
+    if (fullcheck || free_ds == -1 || xscrap_mb == -1 || xascrap_mb == -1
+        || scrap_mb < xscrap_mb || ascrap_mb < xascrap_mb) {
+      free_ds = (int64_t)get_ds_free(prefs->workdir);
+      xscrap_mb = scrap_mb;
+      xascrap_mb = ascrap_mb;
+      if (free_ds == 0) wrtable = is_writeable_dir(prefs->workdir);
+      else wrtable = TRUE;
+    }
     if (wrtable) {
-      if ((int64_t)(((double)free_mb - (scrap_mb + ascrap_mb)) / 1000.) < prefs->rec_stop_gb) {
+      double free_mb = (double)free_ds / (double)ONE_MILLION;
+      double freesp = free_mb - (scrap_mb + ascrap_mb - xscrap_mb - xascrap_mb);
+      if ((double)freesp / 1000. < prefs->rec_stop_gb) {
         if (mainw->record && !mainw->record_paused) {
-          d_print(_("\nRECORDING WAS PAUSED BECAUSE FREE DISK SPACE in %s IS BELOW %.2f GB !\n"
-                    "Record stop level can be set in Preferences / Recording.\n"),
-                  prefs->workdir, prefs->rec_stop_gb);
-          on_record_perf_activate(NULL, NULL);
-          d_print_urgency(URGENCY_MSG_TIMEOUT, _("RECORDING WAS PAUSED DUE TO LOW DISKSPACE\n"));
+          ds_warn(TRUE, freesp * ONE_MILLION);
         }
         return FALSE;
       }
@@ -5256,20 +5313,10 @@ int save_to_scrap_file(weed_layer_t *layer) {
   // check free space every 256 frames or every 10 MB of audio (TODO ****)
   if ((scrapfile->frames & 0xFF) == 0) {
     char *dir = lives_build_filename(prefs->workdir, scrapfile->handle, NULL);
-    free_mb = (double)get_fs_free(dir) / 1000000.;
+    free_mb = (double)get_ds_free(dir) / 1000000.;
     if (free_mb == 0) writeable = is_writeable_dir(dir);
     lives_free(dir);
   }
-  if (prefs->disk_quota > -1) {
-    /// check every 64 frames for quota overrun, because its a background task
-    if ((scrapfile->frames & 0x3F) == 0) {
-      g_print("ptaa12\n");
-      size_t ds_used;
-      if (get_ds_used(&ds_used)) {
-        g_print("FS used is %ld\n", ds_used);
-	// *INDENT-OFF*
-      }}}
-  // *INDENT-OM*
 
   if ((!mainw->fs || (prefs->play_monitor != widget_opts.monitor + 1 && capable->nmonitors > 1)) && !prefs->hide_framebar &&
       !mainw->faded) {
@@ -5290,7 +5337,8 @@ int save_to_scrap_file(weed_layer_t *layer) {
     lives_free(framecount);
   }
 
-  check_for_disk_space();
+  /// check every 64 frames for quota overrun, because its a background task
+  check_for_disk_space((scrapfile->frames & 0x3F) ? TRUE : FALSE);
   return scrapfile->frames;
 }
 
@@ -5647,71 +5695,74 @@ manual_locate:
 #define _RELOAD_STRING(field, len) lives_snprintf(sfile->field, len, "%s", loaded->field)
 
 static lives_clip_t *_restore_binfmt(int clipno, boolean forensic) {
-   if (IS_NORMAL_CLIP(clipno)) {
-     lives_clip_t *sfile = mainw->files[clipno];
-     char *fname = lives_build_filename(prefs->workdir, sfile->handle, TOTALSAVE_NAME, NULL);
-     if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
-       size_t fsize, dsize;
-       int fd;
-       boolean badsize = FALSE;
-       lives_clip_t *loaded = (lives_clip_t *)lives_malloc(sizeof(lives_clip_t));
-       dsize = (size_t)((void *)&loaded->binfmt_end - (void *)loaded);
-       fd = lives_open_buffered_rdonly(fname);
-       fsize = lives_buffered_orig_size(fd);
-       if (fsize < dsize) badsize = TRUE;
-       else lives_read_buffered(fd, loaded, sizeof(lives_clip_t), TRUE);
-       lives_close_buffered(fd);
-       if (!forensic) lives_rm(fname);
-       lives_free(fname);
+  if (IS_NORMAL_CLIP(clipno)) {
+    lives_clip_t *sfile = mainw->files[clipno];
+    char *fname = lives_build_filename(prefs->workdir, sfile->handle, TOTALSAVE_NAME, NULL);
+    if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+      size_t fsize, dsize;
+      int fd;
+      boolean badsize = FALSE;
+      lives_clip_t *loaded = (lives_clip_t *)lives_malloc(sizeof(lives_clip_t));
+      dsize = (size_t)((void *)&loaded->binfmt_end - (void *)loaded);
+      fd = lives_open_buffered_rdonly(fname);
+      fsize = lives_buffered_orig_size(fd);
+      if (fsize < dsize) badsize = TRUE;
+      else lives_read_buffered(fd, loaded, sizeof(lives_clip_t), TRUE);
+      lives_close_buffered(fd);
+      if (!forensic) lives_rm(fname);
+      lives_free(fname);
 
-       if (badsize) {
-	   lives_free(loaded);
-	   return FALSE;
-       }
+      if (badsize) {
+        lives_free(loaded);
+        return FALSE;
+      }
 
-       THREADVAR(com_failed) = FALSE;
-       if (THREADVAR(read_failed) == fd + 1) {
-	 THREADVAR(read_failed) = 0;
-	 lives_free(loaded);
-	 return NULL;
-       }
+      THREADVAR(com_failed) = FALSE;
+      if (THREADVAR(read_failed) == fd + 1) {
+        THREADVAR(read_failed) = 0;
+        lives_free(loaded);
+        return NULL;
+      }
 
-       if (!lives_memcmp(loaded->binfmt_check.chars, CLIP_BINFMT_CHECK, 8)) {
-	 uint64_t ver = loaded->binfmt_version.num;
-	 if (ver <= (uint64_t)atoll(mainw->version_hash)) {
-	   if (dsize == loaded->binfmt_bytes.size) {
-	     if (forensic) return loaded;
-	     _RELOAD_STRING(save_file_name, PATH_MAX);  _RELOAD(start); _RELOAD(end); _RELOAD(is_untitled); _RELOAD(was_in_set);
-	     _RELOAD(ratio_fps); _RELOAD_STRING(mime_type, 256);
-	     _RELOAD(changed); _RELOAD(deinterlace); _RELOAD(op_ds_warn_level); _RELOAD(vol);
-	     if (sfile->start < 1) sfile->start = 1;
-	     if (sfile->end > sfile->frames) sfile->end = sfile->frames;
-	     if (sfile->start > sfile->end) sfile->start = sfile->end;
-	     if (lives_strlen(sfile->save_file_name) > PATH_MAX) lives_memset(sfile->save_file_name, 0, PATH_MAX);
-	     if (sfile->pointer_time > sfile->video_time) sfile->pointer_time = 0.;
-	     if (sfile->real_pointer_time > CLIP_TOTAL_TIME(clipno)) sfile->real_pointer_time = sfile->pointer_time;
-	     return loaded;
-	   }}}}
-     lives_free(fname);
-   }
-   return NULL;
+      if (!lives_memcmp(loaded->binfmt_check.chars, CLIP_BINFMT_CHECK, 8)) {
+        uint64_t ver = loaded->binfmt_version.num;
+        if (ver <= (uint64_t)atoll(mainw->version_hash)) {
+          if (dsize == loaded->binfmt_bytes.size) {
+            if (forensic) return loaded;
+            _RELOAD_STRING(save_file_name, PATH_MAX);  _RELOAD(start); _RELOAD(end); _RELOAD(is_untitled); _RELOAD(was_in_set);
+            _RELOAD(ratio_fps); _RELOAD_STRING(mime_type, 256);
+            _RELOAD(changed); _RELOAD(deinterlace); _RELOAD(op_ds_warn_level); _RELOAD(vol);
+            if (sfile->start < 1) sfile->start = 1;
+            if (sfile->end > sfile->frames) sfile->end = sfile->frames;
+            if (sfile->start > sfile->end) sfile->start = sfile->end;
+            if (lives_strlen(sfile->save_file_name) > PATH_MAX) lives_memset(sfile->save_file_name, 0, PATH_MAX);
+            if (sfile->pointer_time > sfile->video_time) sfile->pointer_time = 0.;
+            if (sfile->real_pointer_time > CLIP_TOTAL_TIME(clipno)) sfile->real_pointer_time = sfile->pointer_time;
+            return loaded;
+          }
+        }
+      }
+    }
+    lives_free(fname);
+  }
+  return NULL;
 }
 
 #undef _RELOAD
 #undef _RELOAD_STRING
 
- boolean restore_clip_binfmt(int clipno) {
-   lives_clip_t *recov = _restore_binfmt(clipno, FALSE);
-   if (!recov) return FALSE;
-   lives_free(recov);
-   return TRUE;
- }
+boolean restore_clip_binfmt(int clipno) {
+  lives_clip_t *recov = _restore_binfmt(clipno, FALSE);
+  if (!recov) return FALSE;
+  lives_free(recov);
+  return TRUE;
+}
 
- lives_clip_t *clip_forensic(int clipno) {
-   return  _restore_binfmt(clipno, TRUE);
- }
+lives_clip_t *clip_forensic(int clipno) {
+  return  _restore_binfmt(clipno, TRUE);
+}
 
- boolean recover_files(char *recovery_file, boolean auto_recover) {
+boolean recover_files(char *recovery_file, boolean auto_recover) {
   FILE *rfile = NULL;
 
   char buff[256], *buffptr;
@@ -5990,7 +6041,7 @@ static lives_clip_t *_restore_binfmt(int clipno, boolean forensic) {
               cfile->needs_update = TRUE;
             }
           }
-	  if (cfile->header_version >= 102) cfile->fps = cfile->pb_fps;
+          if (cfile->header_version >= 102) cfile->fps = cfile->pb_fps;
         }
       } else {
         /// CLIP_TYPE_DISK

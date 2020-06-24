@@ -656,13 +656,12 @@ boolean check_filewrite_overwrites(void) {
           if (strlen(lives_entry_get_text(LIVES_ENTRY(param->widgets[0])))) {
             if (!check_file(lives_entry_get_text(LIVES_ENTRY(param->widgets[0])), TRUE)) {
               return FALSE;
-            }
-          }
-        }
-      }
+	      // *INDENT-OFF*
+            }}}}
       slist = slist->next;
-    }
-  }
+    }}
+  // *INDENT-ON*
+
   return TRUE;
 }
 

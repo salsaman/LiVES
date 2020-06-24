@@ -368,6 +368,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     bar_height = CE_VIDBAR_HEIGHT;
     allocwidth = lives_widget_get_allocation_width(mainw->video_draw);
     scalex = (double)allocwidth / CURRENT_CLIP_TOTAL_TIME;
+
     offset_left = ROUND_I((double)(cfile->start - 1.) / cfile->fps * scalex);
     offset_right = ROUND_I((double)(cfile->end) / cfile->fps * scalex);
 
@@ -412,7 +413,6 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
       lives_painter_fill(cr);
     }
-    lives_painter_paint(cr);
     lives_painter_destroy(cr);
   }
 
@@ -716,7 +716,6 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 	  // *INDENT-OFF*
         }}}}
   // *INDENT-ON*
-
   if (which == 0) {
     // playback cursors
     if (!LIVES_IS_PLAYING || (mainw->switch_during_pb && !mainw->faded)) {

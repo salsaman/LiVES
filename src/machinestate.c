@@ -617,16 +617,61 @@ char *lives_format_storage_space_string(uint64_t space) {
 lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, uint64_t *dsval) {
   // WARNING: this will actually create the directory (since we dont know if its parents are needed)
   uint64_t ds;
-  if (!is_writeable_dir(dir)) return LIVES_STORAGE_STATUS_UNKNOWN;
-  ds = get_fs_free(dir);
+  lives_storage_status_t storage = LIVES_STORAGE_STATUS_UNKNOWN;
+  if (dsval && prefs->disk_quota > 0 && *dsval > prefs->disk_quota)
+    storage = LIVES_STORAGE_STATUS_OVER_QUOTA;
+  if (!is_writeable_dir(dir)) return storage;
+  ds = get_ds_free(dir);
   if (dsval != NULL) *dsval = ds;
   if (ds < prefs->ds_crit_level) return LIVES_STORAGE_STATUS_CRITICAL;
+  if (storage != LIVES_STORAGE_STATUS_UNKNOWN) return storage;
   if (ds < warn_level) return LIVES_STORAGE_STATUS_WARNING;
   return LIVES_STORAGE_STATUS_NORMAL;
 }
 
 
-uint64_t get_fs_free(const char *dir) {
+static size_t _get_usage(void) {
+  int fd;
+  ssize_t bytes;
+  char buff[256];
+  char *dufile = lives_strdup_printf("%s/diskuse", prefs->workdir);
+  char *com = lives_strdup_printf("%s -sb0 \"%s\" > \"%s\"", EXEC_DU, prefs->workdir, dufile);
+  THREADVAR(com_failed) = FALSE;
+  lives_system(com, TRUE);
+  lives_free(com);
+  if (THREADVAR(com_failed)) {
+    THREADVAR(com_failed) = FALSE;
+    return 0;
+  }
+  fd = lives_open2(dufile, O_RDONLY);
+  if (fd < 0) return 0;
+  bytes = read(fd, buff, 256);
+  close(fd);
+  (void)bytes;
+  lives_rm(dufile);
+  lives_free(dufile);
+  return atoll(buff);
+}
+
+boolean get_ds_used(int64_t *bytes) {
+  /// returns bytes used for the workdir
+  /// because this may take some time on some OS, a background thread is run and  FALSE is returned along with the last
+  /// read value in bytes
+  /// once a new value is obtained TRUE is returned and bytes will reflect the updated val
+  boolean ret = TRUE;
+  static uint64_t _bytes = 0;
+  static lives_proc_thread_t running = NULL;
+  if (!running) running = lives_proc_thread_create(NULL, (lives_funcptr_t)_get_usage, WEED_SEED_INT64, "");
+  if (!lives_proc_thread_check(running)) ret = FALSE;
+  else {
+    _bytes = lives_proc_thread_join_int64(running);
+    running = FALSE;
+  }
+  if (bytes) *bytes = _bytes;
+  return ret;
+}
+
+uint64_t get_ds_free(const char *dir) {
   // get free space in bytes for volume containing directory dir
   // return 0 if we cannot create/write to dir
 
@@ -635,7 +680,7 @@ uint64_t get_fs_free(const char *dir) {
 
   // dir should be in locale encoding
 
-  // WARNING: this will actually create the directory (since we dont know if its parents are needed)
+  // WARNING: this may temporarily create the directory (since we dont know if its parents are needed)
 
   struct statvfs sbuf;
 
@@ -656,35 +701,6 @@ getfserr:
   if (must_delete) lives_rmdir(dir, FALSE);
 
   return bytes;
-}
-
-
-size_t _get_usage(void) {
-  char buff[256];
-  char *com = lives_strdup_printf("%s -sb \"%s\"", EXEC_DU, prefs->workdir);
-  THREADVAR(com_failed) = FALSE;
-  lives_popen(com, 256, buff, TRUE);
-  if (THREADVAR(com_failed)) {
-    THREADVAR(com_failed) = FALSE;
-    return 0;
-  }
-  return atoll(buff);
-}
-
-
-boolean  get_ds_used(uint64_t *bytes) {
-  /// returns bytes used for the workdir
-  /// because this may take some time on some OS, a background thread is run and  FALSE is returned along with the last
-  /// read value in bytes
-  /// once a new value is obtained TRUE is returned and bytes will reflect the updated val
-  boolean ret = TRUE;
-  static uint64_t _bytes = 0;
-  static lives_proc_thread_t running = NULL;
-  if (!running) running = lives_proc_thread_create(NULL, (lives_funcptr_t)_get_usage, WEED_SEED_INT64, "");
-  if (!lives_proc_thread_check(running)) ret = FALSE;
-  else _bytes = lives_proc_thread_join_int64(running);
-  if (bytes) *bytes = _bytes;
-  return ret;
 }
 
 

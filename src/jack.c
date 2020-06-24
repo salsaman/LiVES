@@ -1067,18 +1067,16 @@ size_t jack_flush_read_data(size_t rbytes, void *data) {
 
   jrb = 0;
 
-  if (THREADVAR(bad_aud_file) == NULL) {
-    // use write not lives_write - because of potential threading issues
+  if (!THREADVAR(bad_aud_file)) {
+    // use write not use lives_write - because of potential threading issues
     bytes = write(mainw->aud_rec_fd, data, rbytes);
     if (bytes > 0) {
+      uint64_t chk = (mainw->aud_data_written & AUD_WRITE_CHECK);
       mainw->aud_data_written += bytes;
       if (mainw->ascrap_file != -1 && mainw->files[mainw->ascrap_file] != NULL &&
           mainw->aud_rec_fd == mainw->files[mainw->ascrap_file]->cb_src)
         add_to_ascrap_mb(bytes);
-      if (mainw->aud_data_written > AUD_WRITTEN_CHECK) {
-        mainw->aud_data_written = 0;
-        check_for_disk_space();
-      }
+      check_for_disk_space((mainw->aud_data_written & AUD_WRITE_CHECK) != chk);
     }
     if (bytes < rbytes) THREADVAR(bad_aud_file) = filename_from_fd(NULL, mainw->aud_rec_fd);
   }

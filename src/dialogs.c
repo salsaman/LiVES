@@ -943,7 +943,7 @@ void pump_io_chan(LiVESIOChannel *iochan) {
 
 boolean check_storage_space(int clipno, boolean is_processing) {
   // check storage space in prefs->workdir, and if sfile!=NULL, in sfile->op_dir
-  uint64_t dsval;
+  uint64_t dsval = 0;
   lives_clip_t *sfile = NULL;
   int retval;
   boolean did_pause = FALSE;
@@ -956,6 +956,7 @@ boolean check_storage_space(int clipno, boolean is_processing) {
   if (IS_VALID_CLIP(clipno)) sfile = mainw->files[clipno];
 
   do {
+    /// TODO: set dsval with ds used
     ds = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval);
     if (ds == LIVES_STORAGE_STATUS_WARNING) {
       uint64_t curr_ds_warn = mainw->next_ds_warn_level;
@@ -1014,6 +1015,7 @@ boolean check_storage_space(int clipno, boolean is_processing) {
 
   if (sfile != NULL && sfile->op_dir != NULL && strcmp(sfile->op_dir, prefs->workdir)) {
     do {
+      dsval = 0;
       ds = get_storage_status(sfile->op_dir, sfile->op_ds_warn_level, &dsval);
       if (ds == LIVES_STORAGE_STATUS_WARNING) {
         uint64_t curr_ds_warn = sfile->op_ds_warn_level;
@@ -3555,7 +3557,7 @@ LiVESResponseType do_system_failed_error(const char *com, int retval, const char
   char *dsmsg1 = lives_strdup("");
   char *dsmsg2 = lives_strdup("");
 
-  uint64_t dsval1, dsval2;
+  uint64_t dsval1 = 0, dsval2 = 0;
 
   lives_storage_status_t ds1 = get_storage_status(prefs->workdir, prefs->ds_crit_level, &dsval1), ds2;
   LiVESResponseType response = LIVES_RESPONSE_NONE;
@@ -3623,7 +3625,7 @@ void do_write_failed_error_s(const char *s, const char *addinfo) {
 
   boolean exists;
 
-  uint64_t dsval;
+  uint64_t dsval = 0;
 
   lives_storage_status_t ds;
 
@@ -3695,7 +3697,7 @@ LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const ch
 
   boolean exists;
 
-  uint64_t dsval;
+  uint64_t dsval = 0;
 
   lives_storage_status_t ds;
 

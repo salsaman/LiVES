@@ -1306,7 +1306,7 @@ void close_ascrap_file(boolean remove);
 void close_scrap_file(boolean remove);
 void add_to_ascrap_mb(uint64_t bytes);
 
-boolean check_for_disk_space(void);
+boolean check_for_disk_space(boolean fullcheck);
 
 // main.c
 typedef void (*SignalHandlerPointer)(int);

@@ -6037,7 +6037,7 @@ remall:
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
 
     // get space before
-    fspace = get_fs_free(prefs->workdir);
+    fspace = get_ds_free(prefs->workdir);
 
     THREADVAR(com_failed) = FALSE;
     lives_rm(cfile->info_file);
@@ -6131,7 +6131,7 @@ remall:
     }
   }
 
-  bytes = get_fs_free(prefs->workdir) - fspace;
+  bytes = get_ds_free(prefs->workdir) - fspace;
 
   if (bytes < 0) bytes = 0;
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);

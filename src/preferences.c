@@ -519,7 +519,7 @@ static void set_workdir_label_text(LiVESLabel *label, const char *dir) {
   if (!is_writeable_dir(dir)) {
     tmpx2 = lives_strdup(_("\n\n\n(Free space = UNKNOWN)"));
   } else {
-    free_ds = lives_format_storage_space_string(get_fs_free(dir));
+    free_ds = lives_format_storage_space_string(get_ds_free(dir));
     tmpx2 = lives_strdup_printf(_("\n\n\n(Free space = %s)"), free_ds);
     lives_free(free_ds);
   }

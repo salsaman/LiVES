@@ -79,37 +79,37 @@ typedef struct {
 #define DEF_WARNING_MASK 0x000C2C04
 
   // if these bits are set, we do not show the warning
-#define WARN_MASK_FPS 							(1<<0)
-#define WARN_MASK_FSIZE 							(1<<1)
-#define WARN_MASK_UNUSED1 						(1<<2)  ///< was "save_quality"
-#define WARN_MASK_SAVE_SET 						(1<<3)
-#define WARN_MASK_NO_MPLAYER 						(1<<4)
+#define WARN_MASK_FPS 	       					(1<<0)
+#define WARN_MASK_FSIZE 	       				(1<<1)
+#define WARN_MASK_UNUSED1 	       				(1<<2)  ///< was "save_quality"
+#define WARN_MASK_SAVE_SET 		       			(1<<3)
+#define WARN_MASK_NO_MPLAYER 			       		(1<<4)
 #define WARN_MASK_RENDERED_FX 					(1<<5)
 #define WARN_MASK_NO_ENCODERS 					(1<<6)
-#define WARN_MASK_LAYOUT_MISSING_CLIPS 			(1<<7)
+#define WARN_MASK_LAYOUT_MISSING_CLIPS 				(1<<7)
 #define WARN_MASK_LAYOUT_CLOSE_FILE 				(1<<8)
-#define WARN_MASK_LAYOUT_DELETE_FRAMES 			(1<<9)
+#define WARN_MASK_LAYOUT_DELETE_FRAMES 				(1<<9)
 
   /** off by default on a fresh install */
 #define WARN_MASK_LAYOUT_SHIFT_FRAMES 				(1<<10)
 
   /** off by default on a fresh install */
-#define WARN_MASK_LAYOUT_ALTER_FRAMES 			(1<<11)
-#define WARN_MASK_DUPLICATE_SET 					(1<<12)
+#define WARN_MASK_LAYOUT_ALTER_FRAMES 				(1<<11)
+#define WARN_MASK_DUPLICATE_SET        				(1<<12)
 
   /** off by default on a fresh install */
-#define WARN_MASK_EXIT_MT 						(1<<13)
+#define WARN_MASK_EXIT_MT 		       			(1<<13)
 #define WARN_MASK_DISCARD_SET 					(1<<14)
 #define WARN_MASK_AFTER_DVGRAB 					(1<<15)
-#define WARN_MASK_MT_ACHANS 						(1<<16)
-#define WARN_MASK_LAYOUT_DELETE_AUDIO 			(1<<17)
+#define WARN_MASK_MT_ACHANS 			       		(1<<16)
+#define WARN_MASK_LAYOUT_DELETE_AUDIO 				(1<<17)
 
   /** off by default on a fresh install */
 #define WARN_MASK_LAYOUT_SHIFT_AUDIO 				(1<<18)
 
   /** off by default on a fresh install */
 #define WARN_MASK_LAYOUT_ALTER_AUDIO 				(1<<19)
-#define WARN_MASK_MT_NO_JACK 						(1<<20)
+#define WARN_MASK_MT_NO_JACK 			       		(1<<20)
 #define WARN_MASK_OPEN_YUV4M 					(1<<21)
 #define WARN_MASK_MT_BACKUP_SPACE 				(1<<22)
 #define WARN_MASK_LAYOUT_POPUP 					(1<<23)
@@ -118,7 +118,7 @@ typedef struct {
 #define WARN_MASK_LAYOUT_WIPE 					(1<<26)
 #define WARN_MASK_LAYOUT_GAMMA 					(1<<27)
 #define WARN_MASK_VJMODE_ENTER 					(1<<28)
-#define WARN_MASK_CLEAN_INVALID 					(1<<29)
+#define WARN_MASK_CLEAN_INVALID 		       		(1<<29)
 
   char cmd_log[PATH_MAX];
   char effect_command[PATH_MAX * 2];
@@ -334,8 +334,8 @@ typedef struct {
 #define DEF_DS_CRIT_LEVEL 250000000 // 250MB
   uint64_t ds_crit_level; ///< diskspace critical level bytes
 
-#define DEF_DISK_QUOTA (50 * 1024 * 1024)
-  int64_t disk_quota; /// max space we can use for all our files ( means not set, -1 means unlimited (up to ds_crti))
+#define DEF_DISK_QUOTA 50  /// def 50 GiB
+  uint64_t disk_quota; /// max space we can use for all our files (0 means unlimited (up to ds_crtical))
 
 #define DEF_MSG_TEXTSIZE 4 // LIVES_FONTSIZE_LARGE (via lives_textsize_to_string())
 #define DEF_MAX_MSGS 10000

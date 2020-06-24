@@ -125,6 +125,7 @@ static char *old_vhash = NULL;
 static int initial_startup_phase = 0;
 static boolean needs_workdir = FALSE;
 static boolean user_configdir = FALSE;
+static boolean needs_disk_quota = FALSE;
 
 ////////////////////
 
@@ -594,21 +595,21 @@ static boolean pre_init(void) {
   sizshrt = sizeof(short);
 
   // TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
-  mainw->string_constants[LIVES_STRING_CONSTANT_ANY] = lives_strdup(_("Any"));
+  mainw->string_constants[LIVES_STRING_CONSTANT_ANY] = (_("Any"));
   // TRANSLATORS: text saying "None", for playback plugin name (as in "none specified")
-  mainw->string_constants[LIVES_STRING_CONSTANT_NONE] = lives_strdup(_("None"));
+  mainw->string_constants[LIVES_STRING_CONSTANT_NONE] = (_("None"));
   // TRANSLATORS: text saying "recommended", for plugin names, etc.
-  mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED] = lives_strdup(_("recommended"));
+  mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED] = (_("recommended"));
   // TRANSLATORS: text saying "disabled", (as in "not enabled")
-  mainw->string_constants[LIVES_STRING_CONSTANT_DISABLED] = lives_strdup(_("disabled !"));
+  mainw->string_constants[LIVES_STRING_CONSTANT_DISABLED] = (_("disabled !"));
   // TRANSLATORS: text saying "**The current layout**", to warn users that the current layout is affected
-  mainw->string_constants[LIVES_STRING_CONSTANT_CL] = lives_strdup(_("**The current layout**"));
+  mainw->string_constants[LIVES_STRING_CONSTANT_CL] = (_("**The current layout**"));
   // TRANSLATORS: adjective for "Built in" type effects
-  mainw->string_constants[LIVES_STRING_CONSTANT_BUILTIN] = lives_strdup(_("Builtin"));
+  mainw->string_constants[LIVES_STRING_CONSTANT_BUILTIN] = (_("Builtin"));
   // TRANSLATORS: adjective for "Custom" type effects
-  mainw->string_constants[LIVES_STRING_CONSTANT_CUSTOM] = lives_strdup(_("Custom"));
+  mainw->string_constants[LIVES_STRING_CONSTANT_CUSTOM] = (_("Custom"));
   // TRANSLATORS: adjective for "Test" type effects
-  mainw->string_constants[LIVES_STRING_CONSTANT_TEST] = lives_strdup(_("Test"));
+  mainw->string_constants[LIVES_STRING_CONSTANT_TEST] = (_("Test"));
 
   // now we can use PREFS properly
   cache_file_contents(capable->rcfile);
@@ -622,6 +623,7 @@ static boolean pre_init(void) {
 
   if (mainw->next_ds_warn_level > 0) {
     if (!prefs->vj_mode) {
+      mainw->dsval = 0; /// TODO: kick off task to get used ds
       mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &mainw->dsval);
       if (mainw->ds_status == LIVES_STORAGE_STATUS_CRITICAL) {
         tmp = ds_critical_msg(prefs->workdir, mainw->dsval);
@@ -633,9 +635,11 @@ static boolean pre_init(void) {
     }
   } else mainw->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
 
-  prefs->disk_quota = get_int64_prefd(PREF_DISK_QUOTA, 0);
+  if (!has_pref(PREF_DISK_QUOTA)) needs_disk_quota = TRUE;
+  else prefs->disk_quota = get_int64_prefd(PREF_DISK_QUOTA, 0);
 
   if (mainw->next_ds_warn_level > 0) {
+    mainw->dsval = 0; /// TODO: kick off task to get used ds
     mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &mainw->dsval);
     if (mainw->ds_status == LIVES_STORAGE_STATUS_CRITICAL) {
       tmp = ds_critical_msg(prefs->workdir, mainw->dsval);
@@ -964,14 +968,14 @@ void replace_with_delegates(void) {
     rfx->props |= RFX_PROPS_MAY_RESIZE;
 
     lives_free(rfx->action_desc);
-    rfx->action_desc = lives_strdup(_("Resizing"));
+    rfx->action_desc = (_("Resizing"));
 
     rfx->min_frames = 1;
 
     lives_free(rfx->menu_text);
 
     if (mainw->resize_menuitem == NULL) {
-      rfx->menu_text = lives_strdup(_("_Resize All Frames..."));
+      rfx->menu_text = (_("_Resize All Frames..."));
       mainw->resize_menuitem = lives_standard_menu_item_new_with_label(rfx->menu_text);
       lives_widget_show(mainw->resize_menuitem);
       lives_menu_shell_insert(LIVES_MENU_SHELL(mainw->tools_menu), mainw->resize_menuitem, RFX_TOOL_MENU_POSN);
@@ -1314,8 +1318,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->n_screen_areas = SCREEN_AREA_USER_DEFINED1;
   mainw->screen_areas = (lives_screen_area_t *)lives_malloc(mainw->n_screen_areas * sizeof(lives_screen_area_t));
-  mainw->screen_areas[SCREEN_AREA_FOREGROUND].name = lives_strdup(_("Foreground"));
-  mainw->screen_areas[SCREEN_AREA_BACKGROUND].name = lives_strdup(_("Background"));
+  mainw->screen_areas[SCREEN_AREA_FOREGROUND].name = (_("Foreground"));
+  mainw->screen_areas[SCREEN_AREA_BACKGROUND].name = (_("Background"));
 
   mainw->active_sa_clips = mainw->active_sa_fx = SCREEN_AREA_FOREGROUND;
 
@@ -2109,8 +2113,8 @@ static void do_start_messages(void) {
 
   d_print(_("Number of CPUs detected: %d "), capable->ncpus);
 
-  if (capable->byte_order == LIVES_LITTLE_ENDIAN) endian = lives_strdup(_("little endian"));
-  else endian = lives_strdup(_("big endian"));
+  if (capable->byte_order == LIVES_LITTLE_ENDIAN) endian = (_("little endian"));
+  else endian = (_("big endian"));
   d_print(_("(%d bits, %s)\n"), capable->cpu_bits, endian);
   lives_free(endian);
 
@@ -2162,9 +2166,9 @@ static void do_start_messages(void) {
   }
 
   if (user_configdir) {
-    tmp = lives_strdup(_("set via -configdir commandline option"));
+    tmp = (_("set via -configdir commandline option"));
   } else {
-    tmp = lives_strdup(_("default value"));
+    tmp = (_("default value"));
   }
   d_print(_("\nConfig directory is %s (%s)\n"), prefs->configdir, tmp);
   lives_free(tmp);
@@ -2186,7 +2190,7 @@ static void do_start_messages(void) {
 
   if (initial_startup_phase == 0) {
     if (strlen(mainw->old_vhash) == 0 || !strcmp(mainw->old_vhash, "0")) {
-      phase = lives_strdup(_("STARTUP ERROR OCCURRED - FORCED REINSTALL"));
+      phase = (_("STARTUP ERROR OCCURRED - FORCED REINSTALL"));
     } else {
       if (atoi(mainw->old_vhash) < atoi(mainw->version_hash)) {
         phase = lives_strdup_printf(_("upgrade from version %s. Welcome !"), mainw->old_vhash);
@@ -2196,7 +2200,7 @@ static void do_start_messages(void) {
     }
   } else if (initial_startup_phase == -1) {
     if (!strcmp(mainw->old_vhash, "0")) {
-      phase = lives_strdup(_("REINSTALL AFTER FAILED RECOVERY"));
+      phase = (_("REINSTALL AFTER FAILED RECOVERY"));
       fname = lives_strdup_printf("%s.damaged", capable->rcfile);
       if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
         tmp = lives_strdup_printf(_("%s; check %s for possible errors before re-running LiVES"), phase, fname);
@@ -2206,12 +2210,12 @@ static void do_start_messages(void) {
       lives_free(fname);
       d_print("\n");
     } else {
-      phase = lives_strdup(_("fresh install. Welcome !"));
+      phase = (_("fresh install. Welcome !"));
     }
   } else {
     phase = lives_strdup_printf(_("continue with installation"), initial_startup_phase);
   }
-  if (phase == NULL)  phase = lives_strdup(_("normal startup"));
+  if (phase == NULL)  phase = (_("normal startup"));
   d_print(_("Initial startup phase was %d: (%s)\n"), initial_startup_phase, phase);
   lives_free(phase);
   lives_free(old_vhash);
@@ -2735,7 +2739,7 @@ capability *get_capabilities(void) {
         ensure_isdir(dir);
 
         if (dirlen >= PATH_MAX - MAX_SET_NAME_LEN * 2) {
-          dir_toolong_error(dir, (tmp = lives_strdup(_("working directory"))), PATH_MAX - MAX_SET_NAME_LEN * 2, TRUE);
+          dir_toolong_error(dir, (tmp = (_("working directory"))), PATH_MAX - MAX_SET_NAME_LEN * 2, TRUE);
           lives_free(tmp);
           dir_valid = FALSE;
         }
@@ -3052,7 +3056,6 @@ static boolean lives_startup(livespointer data) {
     prefs->startup_phase = 2;
     set_int_pref(PREF_STARTUP_PHASE, 2);
   }
-
   if (prefs->startup_phase > 0 && prefs->startup_phase < 3) {
     if (!do_startup_tests(FALSE)) {
       lives_exit(0);
@@ -3817,7 +3820,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
             }
           }
           if (toolong) {
-            dir_toolong_error(optarg, (tmp = lives_strdup(_("working directory"))), PATH_MAX - MAX_SET_NAME_LEN * 2, TRUE);
+            dir_toolong_error(optarg, (tmp = (_("working directory"))), PATH_MAX - MAX_SET_NAME_LEN * 2, TRUE);
             lives_free(tmp);
             capable->can_write_to_workdir = FALSE;
             break;
@@ -3904,7 +3907,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           lives_free(tmp);
           lives_free(dir);
 #else
-          msg = lives_strdup(_("Must have mjpegtools installed for -yuvin to work"));
+          msg = (_("Must have mjpegtools installed for -yuvin to work"));
           do_abort_ok_dialog(msg, NULL);
           lives_free(msg);
 #endif
@@ -3931,7 +3934,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
             continue;
           }
           if (!is_legal_set_name(optarg, TRUE)) {
-            msg = lives_strdup(_("Abort and retry or continue ?"));
+            msg = (_("Abort and retry or continue ?"));
             do_abort_ok_dialog(msg, NULL);
             lives_free(msg);
           }
@@ -4336,7 +4339,7 @@ void set_main_title(const char *file, int untitled) {
       lives_free(tmp);
     }
   } else {
-    title = lives_strdup(_("<No File>"));
+    title = (_("<No File>"));
   }
 
   lives_window_set_title(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), title);

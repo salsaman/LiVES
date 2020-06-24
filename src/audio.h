@@ -46,7 +46,7 @@
 /// used when we have an event_list (i.e multitrack or previewing a recording in CE)
 #define XSAMPLES 393216
 
-#define AUD_WRITTEN_CHECK MILLIONS(100) ///< after recording this many bytes we check disk space (default 100MB)
+#define AUD_WRITE_CHECK 0xFFFFFFFFF4000000 ///< after recording this many bytes we check disk space (default 128MB)
 
 /////////////////////////////////////
 /// asynch msging

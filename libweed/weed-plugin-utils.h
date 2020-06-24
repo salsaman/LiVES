@@ -53,12 +53,10 @@ extern "C"
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
-#include <weed/weed-utils.h>
 #else
 #include "weed.h"
 #include "weed-palettes.h"
 #include "weed-effects.h"
-#include "weed-utils.h"
 #endif
 #endif
 

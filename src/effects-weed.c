@@ -185,7 +185,7 @@ static boolean all_outs_alpha(weed_plant_t *filt, boolean ign_opt) {
   // check (mandatory) output chans, see if any are non-alpha
   int nouts;
   register int i;
-  weed_plant_t **ctmpls = weed_get_plantptr_array_counted(filt, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &nouts);
+  weed_plant_t **ctmpls = weed_filter_get_out_chantmpls(filt, &nouts);
   if (nouts == 0) return FALSE;
   if (ctmpls[0] == NULL) {
     lives_freep((void **)&ctmpls);
@@ -212,7 +212,7 @@ static boolean all_ins_alpha(weed_plant_t *filt, boolean ign_opt) {
   boolean has_mandatory_in = FALSE;
   register int i;
   int nins;
-  weed_plant_t **ctmpls = weed_get_plantptr_array_counted(filt, WEED_LEAF_IN_CHANNEL_TEMPLATES, &nins);
+  weed_plant_t **ctmpls = weed_filter_get_in_chantmpls(filt, &nins);
   if (nins == 0) return FALSE;
   if (ctmpls[0] == NULL) {
     lives_free(ctmpls);
@@ -326,16 +326,15 @@ int num_alpha_channels(weed_plant_t *filter, boolean out) {
   register int i;
 
   if (out) {
-    if (!weed_plant_has_leaf(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES)) return FALSE;
-    ctmpls = weed_get_plantptr_array_counted(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &nchans);
-    if (nchans == 0) return FALSE;
+    ctmpls = weed_filter_get_out_chantmpls(filter, &nchans);
+    if (!nchans) return FALSE;
     for (i = 0; i < nchans; i++) {
       if (has_non_alpha_palette(ctmpls[i], filter)) continue;
       count++;
     }
   } else {
-    ctmpls = weed_get_plantptr_array_counted(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, &nchans);
-    if (nchans == 0) return FALSE;
+    ctmpls = weed_filter_get_in_chantmpls(filter, &nchans);
+    if (!nchans) return FALSE;
     for (i = 0; i < nchans; i++) {
       if (has_non_alpha_palette(ctmpls[i], filter)) continue;
       count++;
@@ -510,17 +509,17 @@ static weed_plant_t *get_enabled_channel_inner(weed_plant_t *inst, int which, bo
   if (!WEED_PLANT_IS_FILTER_INSTANCE(inst)) return NULL;
 
   if (is_in) {
-    channels = weed_get_plantptr_array_counted(inst, WEED_LEAF_IN_CHANNELS, &nchans);
+    channels = weed_instance_get_in_channels(inst, &nchans);
   } else {
-    channels = weed_get_plantptr_array_counted(inst, WEED_LEAF_OUT_CHANNELS, &nchans);
+    channels = weed_instance_get_out_channels(inst, &nchans);
   }
 
-  if (channels == NULL || nchans == 0) return NULL;
+  if (!nchans) return NULL;
 
   while (1) {
     if (weed_get_boolean_value(channels[i], WEED_LEAF_DISABLED, &error) == WEED_FALSE) {
       if (audio_only) ctmpl = weed_channel_get_template(channels[i]);
-      if (!audio_only || (audio_only && weed_get_boolean_value(ctmpl, WEED_LEAF_IS_AUDIO, &error) == WEED_TRUE)) {
+      if (!audio_only || (audio_only && weed_chantmpl_is_audio(ctmpl) == WEED_TRUE)) {
         which--;
       }
     }
@@ -551,16 +550,16 @@ weed_plant_t *get_enabled_audio_channel(weed_plant_t *inst, int which, boolean i
 weed_plant_t *get_mandatory_channel(weed_plant_t *filter, int which, boolean is_in) {
   // plant is a filter_class
   // "which" starts at 0
-  int i = 0, error;
   weed_plant_t **ctmpls;
   weed_plant_t *retval;
+  register int i = 0;
 
   if (!WEED_PLANT_IS_FILTER_CLASS(filter)) return NULL;
 
-  if (is_in) ctmpls = weed_get_plantptr_array(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, &error);
-  else ctmpls = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &error);
+  if (is_in) ctmpls = weed_filter_get_in_chantmpls(filter, NULL);
+  else ctmpls = weed_filter_get_out_chantmpls(filter, NULL);
 
-  if (ctmpls == NULL) return NULL;
+  if (!ctmpls) return NULL;
   while (which > -1) {
     if (!weed_chantmpl_is_optional(ctmpls[i])) which--;
     i++;
@@ -578,38 +577,35 @@ LIVES_GLOBAL_INLINE boolean weed_instance_is_resizer(weed_plant_t *inst) {
 
 
 boolean is_audio_channel_in(weed_plant_t *inst, int chnum) {
-  int error, nchans = weed_leaf_num_elements(inst, WEED_LEAF_IN_CHANNELS);
+  int nchans = 0;
   weed_plant_t **in_chans;
   weed_plant_t *ctmpl;
 
-  if (nchans <= chnum) return FALSE;
+  in_chans = weed_instance_get_in_channels(inst, &nchans);
+  if (nchans <= chnum) {
+    lives_freep((void **)&in_chans);
+    return FALSE;
+  }
 
-  in_chans = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, &error);
-  ctmpl = weed_get_plantptr_value(in_chans[chnum], WEED_LEAF_TEMPLATE, &error);
+  ctmpl = weed_channel_get_template(in_chans[chnum]);
   lives_free(in_chans);
 
-  if (weed_get_boolean_value(ctmpl, WEED_LEAF_IS_AUDIO, &error) == WEED_TRUE) {
-    return TRUE;
-  }
-  return FALSE;
+  return (weed_chantmpl_is_audio(ctmpl) == WEED_TRUE);
 }
 
 
 weed_plant_t *get_audio_channel_in(weed_plant_t *inst, int achnum) {
   // get nth audio channel in (not counting video channels)
-  int error, nchans = weed_leaf_num_elements(inst, WEED_LEAF_IN_CHANNELS);
+  int nchans = 0;
   weed_plant_t **in_chans;
   weed_plant_t *ctmpl, *achan;
 
-  register int i;
+  in_chans = weed_instance_get_in_channels(inst, &nchans);
+  if (!nchans) return NULL;
 
-  if (nchans == 0) return NULL;
-
-  in_chans = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, &error);
-
-  for (i = 0; i < nchans; i++) {
-    ctmpl = weed_get_plantptr_value(in_chans[i], WEED_LEAF_TEMPLATE, &error);
-    if (weed_get_boolean_value(ctmpl, WEED_LEAF_IS_AUDIO, &error) == WEED_TRUE) {
+  for (register int i = 0; i < nchans; i++) {
+    ctmpl = weed_channel_get_template(in_chans[i]);
+    if (weed_chantmpl_is_audio(ctmpl)) {
       if (achnum-- == 0) {
         achan = in_chans[i];
         lives_free(in_chans);
@@ -625,17 +621,15 @@ weed_plant_t *get_audio_channel_in(weed_plant_t *inst, int achnum) {
 
 boolean has_video_chans_in(weed_plant_t *filter, boolean count_opt) {
   // TODO: we should probably distinguish between enabled and disabled optional channels
-  int error, nchans = weed_leaf_num_elements(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES);
+  int nchans = 0;
   weed_plant_t **in_ctmpls;
-  int i;
 
-  if (nchans == 0) return FALSE;
+  in_ctmpls = weed_filter_get_in_chantmpls(filter, &nchans);
+  if (!nchans) return FALSE;
 
-  in_ctmpls = weed_get_plantptr_array(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, &error);
-  for (i = 0; i < nchans; i++) {
+  for (register int i = 0; i < nchans; i++) {
     if (!count_opt && weed_chantmpl_is_optional(in_ctmpls[i])) continue;
-    if (weed_get_boolean_value(in_ctmpls[i], WEED_LEAF_IS_AUDIO, &error) == WEED_TRUE)
-      continue;
+    if (weed_chantmpl_is_audio(in_ctmpls[i])) continue;
     lives_free(in_ctmpls);
     return TRUE;
   }
@@ -646,12 +640,12 @@ boolean has_video_chans_in(weed_plant_t *filter, boolean count_opt) {
 
 
 boolean has_audio_chans_in(weed_plant_t *filter, boolean count_opt) {
-  int nchans;
+  int nchans = 0;
   weed_plant_t **in_ctmpls = weed_filter_get_in_chantmpls(filter, &nchans);
-  if (nchans == 0) return FALSE;
-  for (int i = 0; i < nchans; i++) {
+  if (!nchans) return FALSE;
+  for (register int i = 0; i < nchans; i++) {
     if (!count_opt && weed_chantmpl_is_optional(in_ctmpls[i])) continue;
-    if (weed_get_boolean_value(in_ctmpls[i], WEED_LEAF_IS_AUDIO, NULL) == WEED_TRUE) {
+    if (weed_chantmpl_is_audio(in_ctmpls[i])) {
       lives_free(in_ctmpls);
       return TRUE;
     }
@@ -662,17 +656,19 @@ boolean has_audio_chans_in(weed_plant_t *filter, boolean count_opt) {
 
 
 boolean is_audio_channel_out(weed_plant_t *inst, int chnum) {
-  int error, nchans = weed_leaf_num_elements(inst, WEED_LEAF_OUT_CHANNELS);
   weed_plant_t **out_chans;
   weed_plant_t *ctmpl;
+  int nchans = 0;
 
-  if (nchans <= chnum) return FALSE;
-
-  out_chans = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, &error);
-  ctmpl = weed_get_plantptr_value(out_chans[chnum], WEED_LEAF_TEMPLATE, &error);
+  out_chans = weed_instance_get_in_channels(inst, &nchans);
+  if (nchans <= chnum) {
+    lives_freep((void **)&out_chans);
+    return FALSE;
+  }
+  ctmpl = weed_channel_get_template(out_chans[chnum]);
   lives_free(out_chans);
 
-  if (weed_get_boolean_value(ctmpl, WEED_LEAF_IS_AUDIO, &error) == WEED_TRUE) {
+  if (weed_chantmpl_is_audio(ctmpl) == WEED_TRUE) {
     return TRUE;
   }
   return FALSE;
@@ -680,17 +676,15 @@ boolean is_audio_channel_out(weed_plant_t *inst, int chnum) {
 
 
 boolean has_video_chans_out(weed_plant_t *filter, boolean count_opt) {
-  int error, nchans = weed_leaf_num_elements(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES);
   weed_plant_t **out_ctmpls;
-  int i;
+  int nchans = 0;
 
-  if (nchans == 0) return FALSE;
+  out_ctmpls = weed_filter_get_out_chantmpls(filter, &nchans);
+  if (!nchans) return FALSE;
 
-  out_ctmpls = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &error);
-  for (i = 0; i < nchans; i++) {
+  for (register int i = 0; i < nchans; i++) {
     if (!count_opt && weed_chantmpl_is_optional(out_ctmpls[i])) continue;
-    if (weed_plant_has_leaf(out_ctmpls[i], WEED_LEAF_IS_AUDIO) &&
-        weed_get_boolean_value(out_ctmpls[i], WEED_LEAF_IS_AUDIO, &error) == WEED_TRUE) continue;
+    if (weed_chantmpl_is_audio(out_ctmpls[i]) == WEED_TRUE) continue;
     lives_free(out_ctmpls);
     return TRUE;
   }
@@ -701,17 +695,15 @@ boolean has_video_chans_out(weed_plant_t *filter, boolean count_opt) {
 
 
 boolean has_audio_chans_out(weed_plant_t *filter, boolean count_opt) {
-  int error, nchans = weed_leaf_num_elements(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES);
   weed_plant_t **out_ctmpls;
-  int i;
+  int nchans = 0;
 
-  if (nchans == 0) return FALSE;
+  out_ctmpls = weed_filter_get_out_chantmpls(filter, &nchans);
+  if (!nchans) return FALSE;
 
-  out_ctmpls = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &error);
-  for (i = 0; i < nchans; i++) {
+  for (register int i = 0; i < nchans; i++) {
     if (!count_opt && weed_chantmpl_is_optional(out_ctmpls[i])) continue;
-    if (!weed_plant_has_leaf(out_ctmpls[i], WEED_LEAF_IS_AUDIO) ||
-        weed_get_boolean_value(out_ctmpls[i], WEED_LEAF_IS_AUDIO, &error) == WEED_FALSE) continue;
+    if (weed_chantmpl_is_audio(out_ctmpls[i]) == WEED_FALSE) continue;
     lives_free(out_ctmpls);
     return TRUE;
   }
@@ -1940,7 +1932,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (filter_flags & WEED_FILTER_IS_CONVERTER) is_converter = TRUE;
 
     if (pb_quality != PB_QUALITY_LOW) {
-      if (maxinheight == 4 && inheight > 4) maxinheight = inheight;
+      if (maxinwidth == 4 && inwidth > 4) maxinwidth = inwidth;
       if (maxinheight == 4 && inheight > 4) maxinheight = inheight;
 
       if (!svary) {
@@ -2589,7 +2581,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     }
 
     layer = layers[out_tracks[i]];
-    //check_layer_ready(layer);
 
     // free any existing pixel_data, we will replace it with the channel data
     weed_layer_pixel_data_free(layer);
@@ -3924,7 +3915,7 @@ int enabled_in_channels(weed_plant_t *plant, boolean count_repeats) {
   for (i = 0; i < num_channels; i++) {
     if (!is_template) {
       weed_plant_t *ctmpl = weed_get_plantptr_value(channels[i], WEED_LEAF_TEMPLATE, NULL);
-      if (weed_get_boolean_value(ctmpl, WEED_LEAF_IS_AUDIO, NULL) == WEED_TRUE) {
+      if (weed_chantmpl_is_audio(ctmpl) == WEED_TRUE) {
         if (weed_chantmpl_is_optional(ctmpl)) continue;
       }
       if (weed_get_boolean_value(channels[i], WEED_LEAF_DISABLED, NULL) == WEED_FALSE) enabled++;
@@ -4074,7 +4065,7 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
       return 6;
     }
 
-    if (weed_get_boolean_value(array[i], WEED_LEAF_IS_AUDIO, NULL) == WEED_TRUE) {
+    if (weed_chantmpl_is_audio(array[i]) == WEED_TRUE) {
       /// filter has audio channels
       if (filter_achans == 0) {
         filter_achans = min_audio_chans(filter);
@@ -4149,7 +4140,7 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
   if (achans_in_mand > 0 && chans_in_mand > 0) return 13; // can't yet handle effects that need both audio and video
 
   // count number of mandatory and optional out_channels
-  array = weed_get_plantptr_array_counted(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &num_elements);
+  array = weed_filter_get_out_chantmpls(filter, &num_elements);
 
   for (i = 0; i < num_elements; i++) {
     if (!weed_plant_has_leaf(array[i], WEED_LEAF_NAME)) {
@@ -4157,7 +4148,7 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
       return 6;
     }
 
-    if (weed_get_boolean_value(array[i], WEED_LEAF_IS_AUDIO, NULL) == WEED_TRUE) {
+    if (weed_chantmpl_is_audio(array[i]) == WEED_TRUE) {
       if (!weed_chantmpl_is_optional(array[i])) {
         if (!cvary && (ctachans = min_audio_chans(array[i])) > 0)
           naudouts += ctachans;
@@ -4621,7 +4612,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
   THREADVAR(chdir_failed) = FALSE;
 
   // walk list and create fx structures
-#define DEBUG_WEED
+  //#define DEBUG_WEED
 #ifdef DEBUG_WEED
   lives_printerr("Checking plugin %s\n", plugin_path);
 #endif
@@ -6181,7 +6172,7 @@ static weed_plant_t **weed_channels_create(weed_plant_t *filter, boolean in) {
       /// set some reasonable defaults for when we call init_func()
       channels[ccount] = weed_plant_new(WEED_PLANT_CHANNEL);
       weed_set_plantptr_value(channels[ccount], WEED_LEAF_TEMPLATE, chantmpls[i]);
-      if (weed_get_boolean_value(chantmpls[i], WEED_LEAF_IS_AUDIO, NULL) == WEED_FALSE) {
+      if (weed_chantmpl_is_audio(chantmpls[i]) == WEED_FALSE) {
         int rah = ALIGN_DEF, nplanes, width, n, pal;
         int rs[4];
         weed_set_voidptr_value(channels[ccount], WEED_LEAF_PIXEL_DATA, NULL);
@@ -6263,8 +6254,7 @@ static void set_default_channel_sizes(weed_plant_t *filter, weed_plant_t **in_ch
          weed_get_boolean_value(in_channels[i], WEED_LEAF_DISABLED, NULL) == WEED_TRUE); i++) {
     channel = in_channels[i];
     chantmpl = weed_get_plantptr_value(channel, WEED_LEAF_TEMPLATE, NULL);
-    if (!weed_plant_has_leaf(chantmpl, WEED_LEAF_IS_AUDIO)
-        || weed_get_boolean_value(chantmpl, WEED_LEAF_IS_AUDIO, NULL) == WEED_FALSE) {
+    if (weed_chantmpl_is_audio(chantmpl) == WEED_FALSE) {
       set_channel_size(filter, channel, 320, 240);
     } else {
       if (mainw->current_file == -1) {
@@ -6282,9 +6272,8 @@ static void set_default_channel_sizes(weed_plant_t *filter, weed_plant_t **in_ch
 
   for (i = 0; out_channels != NULL && out_channels[i] != NULL; i++) {
     channel = out_channels[i];
-    chantmpl = weed_get_plantptr_value(channel, WEED_LEAF_TEMPLATE, NULL);
-    if (!weed_plant_has_leaf(chantmpl, WEED_LEAF_IS_AUDIO)
-        || weed_get_boolean_value(chantmpl, WEED_LEAF_IS_AUDIO, NULL) == WEED_FALSE) {
+    chantmpl = weed_channel_get_template(channel);
+    if (weed_chantmpl_is_audio(chantmpl) == WEED_FALSE) {
       width = DEF_FRAME_HSIZE_UNSCALED;
       height = DEF_FRAME_VSIZE_UNSCALED;
       set_channel_size(filter, channel, width, height);

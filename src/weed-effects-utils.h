@@ -89,6 +89,7 @@ void weed_instance_set_flags(weed_plant_t *instance, int flags);
 char *weed_chantmpl_get_name(weed_plant_t *chantmpl);
 int weed_chantmpl_get_flags(weed_plant_t *chantmpl);
 int weed_chantmpl_is_optional(weed_plant_t *chantmpl);
+int weed_chantmpl_is_audio(weed_plant_t *chantmpl);
 int *weed_chantmpl_get_palette_list(weed_plant_t *filter, weed_plant_t *chantmpl, int *nvals);
 
 // audio

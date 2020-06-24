@@ -281,6 +281,11 @@ WEED_GLOBAL_INLINE int weed_chantmpl_get_max_repeats(weed_plant_t *chantmpl) {
   return 1;
 }
 
+WEED_GLOBAL_INLINE int weed_chantmpl_is_audio(weed_plant_t *chantmpl) {
+  if (!WEED_PLANT_IS_CHANNEL_TEMPLATE(chantmpl)) return WEED_TRUE;
+  return weed_get_boolean_value(chantmpl, WEED_LEAF_IS_AUDIO, NULL);
+}
+
 WEED_GLOBAL_INLINE int *weed_chantmpl_get_palette_list(weed_plant_t *filter, weed_plant_t *chantmpl, int *nvals) {
   int *pals, npals;
   if (nvals) *nvals = 0;

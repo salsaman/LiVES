@@ -63,7 +63,7 @@
 #include "../../libweed/weed.h"
 #include "../../libweed/weed-effects.h"
 #include "../../libweed/weed-palettes.h"
-#include "../../libweed/weed-utils.h"
+#include "../../libweed/weed-plugin-utils.h"
 #endif
 #endif
 

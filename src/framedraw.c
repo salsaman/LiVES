@@ -333,8 +333,7 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   }
 
   //mainw->framedraw = lives_event_box_new();
-  mainw->framedraw = lives_standard_drawing_area_new(mainw->multitrack ? NULL
-                     : LIVES_GUI_CALLBACK(expose_fd_event),
+  mainw->framedraw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_fd_event),
                      &mainw->fd_surface);
   lives_widget_set_size_request(mainw->framedraw, width, height);
 
@@ -640,15 +639,12 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
     weed_layer_free(mainw->fd_layer);
     mainw->fd_layer = NULL;
     if (pixbuf != NULL) {
-#if GTK_CHECK_VERSION(3, 0, 0)
       if (mainw->multitrack->frame_pixbuf != mainw->imframe) {
         if (mainw->multitrack->frame_pixbuf != NULL) lives_widget_object_unref(mainw->multitrack->frame_pixbuf);
       }
       // set frame_pixbuf, this gets painted in in expose_event
       mainw->multitrack->frame_pixbuf = pixbuf;
-#else
-      set_drawing_area_from_pixbuf(mainw->play_image, pixbuf, mainw->pi_surface);
-#endif
+      set_drawing_area_from_pixbuf(mainw->play_image, pixbuf, mainw->play_surface);
       lives_widget_queue_draw(mainw->multitrack->play_box);
     }
   }

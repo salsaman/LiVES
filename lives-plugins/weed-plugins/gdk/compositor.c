@@ -5,11 +5,17 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+#define NEED_PALETTE_UTILS
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
+#include <weed/weed.h>
+#include <weed/weed-utils.h>
 #include <weed/weed-plugin-utils.h>
 #else
 #include "../../../libweed/weed-plugin.h"
+#include "../../../libweed/weed.h"
+#include "../../../libweed/weed-utils.h"
 #include "../../../libweed/weed-plugin-utils.h"
 #endif
 
@@ -44,17 +50,19 @@ static void plugin_free_buffer(guchar *pixels, gpointer data) {
 }
 
 
-static GdkPixbuf *pl_gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alpha, int bits_per_sample, int width, int height,
+static GdkPixbuf *pl_gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alpha,
+                                      int bits_per_sample, int width, int height,
                                       guchar *buf) {
   // we can cheat if our buffer is correctly sized
   int channels = has_alpha ? 4 : 3;
   int rowstride = pl_gdk_rowstride_value(width * channels);
-  return gdk_pixbuf_new_from_data(buf, colorspace, has_alpha, bits_per_sample, width, height, rowstride, plugin_free_buffer,
-                                  NULL);
+  return gdk_pixbuf_new_from_data(buf, colorspace, has_alpha, bits_per_sample, width, height,
+                                  rowstride, plugin_free_buffer, NULL);
 }
 
 
-static GdkPixbuf *pl_data_to_pixbuf(int palette, int width, int height, int irowstride, guchar *pixel_data) {
+static GdkPixbuf *pl_data_to_pixbuf(int palette, int width, int height, int irowstride,
+                                    guchar *pixel_data) {
   GdkPixbuf *pixbuf;
   int rowstride, orowstride;
   gboolean cheat = FALSE;
@@ -72,7 +80,6 @@ static GdkPixbuf *pl_data_to_pixbuf(int palette, int width, int height, int irow
     break;
   case WEED_PALETTE_RGBA32:
   case WEED_PALETTE_BGRA32:
-  case WEED_PALETTE_ARGB32: // TODO - change to RGBA ??
     if (irowstride == pl_gdk_rowstride_value(width * 4)) {
       pixbuf = pl_gdk_pixbuf_cheat(GDK_COLORSPACE_RGB, TRUE, 8, width, height, pixel_data);
       cheat = TRUE;
@@ -116,80 +123,60 @@ static void paint_pixel(unsigned char *dst, int dof, unsigned char *src, int sof
 
 
 static weed_error_t compositor_process(weed_plant_t *inst, weed_timecode_t timecode) {
-  int error;
+  GdkPixbuf *in_pixbuf, *out_pixbuf;
   weed_plant_t **in_channels = NULL;
-  int num_in_channels = 0;
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
+  weed_plant_t **in_params;
+  weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
+
+  double *offsx, *offsy, *scalex, *scaley, *alpha;
 
   unsigned char *src;
-  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error), *dst2;
+  unsigned char *dst = weed_channel_get_pixel_data(out_channel), *dst2;
+  unsigned char *end;
 
-  int owidth = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, &error), owidth3 = owidth * 3;
-  int oheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
-
-  int in_width, in_height, out_width, out_height;
-
-  int irowstride;
-  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
-  //int palette=weed_get_int_value(out_channel,WEED_LEAF_CURRENT_PALETTE,&error);
-
-  weed_plant_t **in_params;
-
-  int numscalex, numscaley, numoffsx, numoffsy, numalpha;
   int *bgcol;
-  double *offsx, *offsy, *scalex, *scaley, *alpha;
 
   double myoffsx, myoffsy, myscalex, myscaley, myalpha;
 
-  unsigned char *end;
-
-  register int x, y, z;
-
-  GdkPixbuf *in_pixbuf, *out_pixbuf;
-
-  int up_interp = GDK_INTERP_HYPER;
-  int down_interp = GDK_INTERP_BILINEAR;
-
   gboolean revz;
 
+  int owidth = weed_channel_get_width(out_channel), owidthx;
+  int oheight = weed_channel_get_height(out_channel);
+  int pal = weed_channel_get_palette(out_channel);
+  int in_width, in_height, out_width, out_height;
+  int num_in_channels = 0;
+  int irowstride, orowstride = weed_channel_get_stride(out_channel);
+  int numscalex = 0, numscaley = 0, numoffsx = 0, numoffsy = 0, numalpha = 0;
   int starti, endi, stepi;
+  int up_interp = GDK_INTERP_HYPER;
+  int down_interp = GDK_INTERP_BILINEAR;
+  int r = 0, b = 2;
+  int psize = pixel_size(pal);
+  register int x, y, z;
 
-  if (weed_plant_has_leaf(inst, WEED_LEAF_IN_CHANNELS)) {
-    num_in_channels = weed_leaf_num_elements(inst, WEED_LEAF_IN_CHANNELS);
-    in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, &error);
-  }
-
-  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
-
-  numoffsx = weed_leaf_num_elements(in_params[0], WEED_LEAF_VALUE);
-  offsx = weed_get_double_array(in_params[0], WEED_LEAF_VALUE, &error);
-
-  numoffsy = weed_leaf_num_elements(in_params[1], WEED_LEAF_VALUE);
-  offsy = weed_get_double_array(in_params[1], WEED_LEAF_VALUE, &error);
-
-  numscalex = weed_leaf_num_elements(in_params[2], WEED_LEAF_VALUE);
-  scalex = weed_get_double_array(in_params[2], WEED_LEAF_VALUE, &error);
-
-  numscaley = weed_leaf_num_elements(in_params[3], WEED_LEAF_VALUE);
-  scaley = weed_get_double_array(in_params[3], WEED_LEAF_VALUE, &error);
-
-  numalpha = weed_leaf_num_elements(in_params[4], WEED_LEAF_VALUE);
-  alpha = weed_get_double_array(in_params[4], WEED_LEAF_VALUE, &error);
-
-  bgcol = weed_get_int_array(in_params[5], WEED_LEAF_VALUE, &error);
-
-  revz = weed_get_boolean_value(in_params[6], WEED_LEAF_VALUE, &error);
-
+  in_channels = weed_get_in_channels(inst, &num_in_channels);
+  in_params = weed_get_in_params(inst, NULL);
+  offsx = weed_param_get_array_double(in_params[0], &numoffsx);
+  offsy = weed_param_get_array_double(in_params[1], &numoffsy);
+  scalex = weed_param_get_array_double(in_params[2], &numscalex);
+  scaley = weed_param_get_array_double(in_params[3], &numscaley);
+  alpha = weed_param_get_array_double(in_params[4], &numalpha);
+  bgcol = weed_param_get_array_int(in_params[5], NULL);
+  revz = weed_param_get_value_boolean(in_params[6]);
   weed_free(in_params);
 
   // set out frame to bgcol
-
+  if (pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_BGRA32) {
+    r = 2; b = 0;
+  }
+  owidthx = owidth * psize;
   end = dst + oheight * orowstride;
   for (dst2 = dst; dst2 < end; dst2 += orowstride) {
-    for (x = 0; x < owidth3; x += 3) {
-      dst2[x] = bgcol[0];
+    for (x = 0; x < owidthx; x += psize) {
+      dst2[x] = bgcol[r];
       dst2[x + 1] = bgcol[1];
-      dst2[x + 2] = bgcol[2];
+      dst2[x + 2] = bgcol[b];
+      if (psize == 4) dst2[3] = 0xFF;
     }
   }
 
@@ -208,10 +195,9 @@ static weed_error_t compositor_process(weed_plant_t *inst, weed_timecode_t timec
 
   for (z = starti; z != endi; z += stepi) {
     // check if host disabled this channel : this is allowed as we have set WEED_LEAF_MAX_REPEATS
-    if (weed_plant_has_leaf(in_channels[z], WEED_LEAF_DISABLED) &&
-        weed_get_boolean_value(in_channels[z], WEED_LEAF_DISABLED, &error) == WEED_TRUE) continue;
+    if (weed_channel_is_disabled(in_channels[z])) continue;
 
-    src = weed_get_voidptr_value(in_channels[z], WEED_LEAF_PIXEL_DATA, &error);
+    src = weed_channel_get_pixel_data(in_channels[z]);
     if (!src) continue;
 
     if (z < numoffsx) myoffsx = (int)(offsx[z] * (double)owidth);
@@ -225,19 +211,17 @@ static weed_error_t compositor_process(weed_plant_t *inst, weed_timecode_t timec
     if (z < numalpha) myalpha = alpha[z];
     else myalpha = 1.;
 
-    out_width = (owidth * myscalex + .5);
-    out_height = (oheight * myscaley + .5);
+    out_width = (((int)(owidth * myscalex + 1.)) >> 1) << 1;
+    out_height = (((int)(oheight * myscaley + 1.)) >> 1) << 1;
 
-    if (out_width * out_height > 15) {
-      in_width = weed_get_int_value(in_channels[z], WEED_LEAF_WIDTH, &error);
-      in_height = weed_get_int_value(in_channels[z], WEED_LEAF_HEIGHT, &error);
-
-      //src = weed_get_voidptr_value(in_channels[z], WEED_LEAF_PIXEL_DATA, &error);
-      irowstride = weed_get_int_value(in_channels[z], WEED_LEAF_ROWSTRIDES, &error);
+    if (out_width * out_height >= 16) {
+      in_width = weed_channel_get_width(in_channels[z]);
+      in_height = weed_channel_get_height(in_channels[z]);
+      irowstride = weed_channel_get_stride(in_channels[z]);
 
       // scale image to new size
 
-      in_pixbuf = pl_data_to_pixbuf(WEED_PALETTE_RGB24, in_width, in_height, irowstride, (guchar *)src);
+      in_pixbuf = pl_data_to_pixbuf(pal, in_width, in_height, irowstride, (guchar *)src);
 
       if (out_width > in_width || out_height > in_height) {
         out_pixbuf = gdk_pixbuf_scale_simple(in_pixbuf, out_width, out_height, up_interp);
@@ -255,7 +239,8 @@ static weed_error_t compositor_process(weed_plant_t *inst, weed_timecode_t timec
 
       for (y = myoffsy; y < oheight && y < myoffsy + out_height; y++) {
         for (x = myoffsx; x < owidth && x < myoffsx + out_width; x++) {
-          paint_pixel(dst, y * orowstride + x * 3, src, (y - myoffsy)*irowstride + (x - myoffsx) * 3, myalpha);
+          paint_pixel(dst, y * orowstride + x * psize, src, (y - myoffsy) * irowstride
+                      + (x - myoffsx) * psize, myalpha);
         }
       }
       g_object_unref(out_pixbuf);
@@ -274,7 +259,9 @@ static weed_error_t compositor_process(weed_plant_t *inst, weed_timecode_t timec
 
 
 WEED_SETUP_START(200, 200) {
-  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_END};
+  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32,
+                        WEED_PALETTE_RGBA32, WEED_PALETTE_END
+                       };
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
 
@@ -284,22 +271,26 @@ WEED_SETUP_START(200, 200) {
                                weed_switch_init("revz", "Invert _Z Index", WEED_FALSE), NULL
                               };
 
-  weed_plant_t *filter_class, *gui;
   int filter_flags = WEED_FILTER_CHANNEL_SIZES_MAY_VARY;
 
   // define RFX layout
-  char *rfx_strings[] = {"layout|p6|", "layout|p0|p1|", "layout|p2|p3|", "layout|p4|", "layout|hseparator|", "layout|p5|",
+  char *rfx_strings[] = {"layout|p6|",
+                         "layout|p0|p1|",
+                         "layout|p2|p3|",
+                         "layout|p4|",
+                         "layout|hseparator|",
+                         "layout|p5|",
                          "special|framedraw|multirect|0|1|2|3|4|"
                         };
 
   //if (api_used >= 133) filter_flags |= WEED_FILTER_HINT_SRGB;
 
-  filter_class = weed_filter_class_init("compositor", "salsaman", 1, filter_flags, palette_list,
-                                        NULL, compositor_process, NULL, in_chantmpls,
-                                        out_chantmpls,
-                                        in_params, NULL);
+  weed_plant_t *filter_class = weed_filter_class_init("compositor", "salsaman", 1,
+                               filter_flags, palette_list,
+                               NULL, compositor_process, NULL,
+                               in_chantmpls, out_chantmpls, in_params, NULL);
 
-  gui = weed_filter_get_gui(filter_class);
+  weed_plant_t *gui = weed_filter_get_gui(filter_class);
 
   // set to 0 to allow infinite repeats
   weed_set_int_value(in_chantmpls[0], WEED_LEAF_MAX_REPEATS, 0);

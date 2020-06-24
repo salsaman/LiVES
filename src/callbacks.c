@@ -9379,9 +9379,14 @@ void on_spinbutton_end_value_changed(LiVESSpinButton * spinbutton, livespointer 
 
 boolean all_expose(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf) {
   lives_painter_surface_t **surf = (lives_painter_surface_t **)psurf;
-  if (surf && *surf) {
-    lives_painter_set_source_surface(cr, *surf, 0., 0.);
-    lives_painter_paint(cr);
+  if (surf) {
+    if (*surf) {
+      lives_painter_set_source_surface(cr, *surf, 0., 0.);
+      lives_painter_paint(cr);
+    } else {
+      *surf = lives_widget_create_painter_surface(widget);
+      return FALSE;
+    }
   }
   return TRUE;
 }
@@ -9525,6 +9530,10 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
     redraw_raudio();
   else if (widget == mainw->msg_area)
     msg_area_config(widget);
+  else if (mainw->multitrack) {
+    if (widget == mainw->multitrack->timeline_reg)
+      draw_region(mainw->multitrack);
+  }
   return FALSE;
 }
 

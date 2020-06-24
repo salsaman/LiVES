@@ -618,8 +618,8 @@ void lives2lives_read_stream(const char *host, int port) {
 
   lives_snprintf(cfile->type, 40, "LiVES to LiVES stream in");
 
-  if (!strcmp(host, "INADDR_ANY")) hostname = lives_strdup(_("any host"));
-  else hostname = lives_strdup(_("host %d"));
+  if (!strcmp(host, "INADDR_ANY")) hostname = (_("any host"));
+  else hostname = (_("host %d"));
 
   d_print(_("Opened LiVES to LiVES stream from %s on port %d"), hostname, port);
   lives_free(hostname);
@@ -1094,10 +1094,10 @@ lives_pandh_w *create_pandh_dialog(int type) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  pandhw->rb_anyhost = lives_standard_radio_button_new((tmp = lives_strdup(_("Accept LiVES streams from _any host"))),
+  pandhw->rb_anyhost = lives_standard_radio_button_new((tmp = (_("Accept LiVES streams from _any host"))),
                        &radiobutton_group,
                        LIVES_BOX(hbox),
-                       (tmp2 = lives_strdup(_("Accept incoming LiVES streams from any connected host."))));
+                       (tmp2 = (_("Accept incoming LiVES streams from any connected host."))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -1109,10 +1109,10 @@ lives_pandh_w *create_pandh_dialog(int type) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  lives_standard_radio_button_new((tmp = lives_strdup(_("Accept LiVES streams only from the _specified host:"))),
+  lives_standard_radio_button_new((tmp = (_("Accept LiVES streams only from the _specified host:"))),
                                   &radiobutton_group,
                                   LIVES_BOX(hbox),
-                                  (tmp2 = lives_strdup(_("Accept LiVES streams from the specified host only."))));
+                                  (tmp2 = (_("Accept LiVES streams from the specified host only."))));
 
   lives_free(tmp);
   lives_free(tmp2);

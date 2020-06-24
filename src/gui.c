@@ -1388,7 +1388,7 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), mainw->send_lives2lives);
   lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), mainw->open_lives2lives);
 
-  mainw->open_yuv4m = lives_standard_menu_item_new_with_label((tmp = lives_strdup(_("Open _yuv4mpeg stream..."))));
+  mainw->open_yuv4m = lives_standard_menu_item_new_with_label((tmp = (_("Open _yuv4mpeg stream..."))));
   lives_free(tmp);
 #ifdef HAVE_YUV4MPEG
   lives_menu_add_separator(LIVES_MENU(mainw->advanced_menu));
@@ -2102,7 +2102,7 @@ void create_LiVES(void) {
   lives_box_pack_start(LIVES_BOX(mainw->sa_hbox), mainw->sa_toolbar, FALSE, TRUE, 0);
   lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->sa_toolbar));
   mainw->sa_button = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->sa_toolbar), NULL, _(" Select All Frames  "),
-                     (tmp = lives_strdup(_("Select all frames in this clip"))));
+                     (tmp = (_("Select all frames in this clip"))));
   lives_free(tmp);
   lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->sa_toolbar));
   add_fill_to_box(LIVES_BOX(mainw->sa_hbox));
@@ -3675,31 +3675,31 @@ void make_preview_box(void) {
 
   lives_entry_set_width_chars(LIVES_ENTRY(mainw->preview_spinbutton), PREVSBWIDTHCHARS);
 
-  radiobutton_free = lives_standard_radio_button_new((tmp = lives_strdup(_("_Free"))), &radiobutton_group,
+  radiobutton_free = lives_standard_radio_button_new((tmp = (_("_Free"))), &radiobutton_group,
                      LIVES_BOX(mainw->preview_hbox),
-                     (tmp2 = lives_strdup(_("Free choice of frame number"))));
+                     (tmp2 = (_("Free choice of frame number"))));
   lives_free(tmp);
   lives_free(tmp2);
 
-  radiobutton_start = lives_standard_radio_button_new((tmp = lives_strdup(_("_Start"))), &radiobutton_group,
+  radiobutton_start = lives_standard_radio_button_new((tmp = (_("_Start"))), &radiobutton_group,
                       LIVES_BOX(mainw->preview_hbox),
-                      (tmp2 = lives_strdup(_("Frame number is linked to start frame"))));
+                      (tmp2 = (_("Frame number is linked to start frame"))));
   lives_free(tmp);
   lives_free(tmp2);
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_start), mainw->prv_link == PRV_START);
 
-  radiobutton_end = lives_standard_radio_button_new((tmp = lives_strdup(_("_End"))), &radiobutton_group,
+  radiobutton_end = lives_standard_radio_button_new((tmp = (_("_End"))), &radiobutton_group,
                     LIVES_BOX(mainw->preview_hbox),
-                    (tmp2 = lives_strdup(_("Frame number is linked to end frame"))));
+                    (tmp2 = (_("Frame number is linked to end frame"))));
   lives_free(tmp);
   lives_free(tmp2);
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_end), mainw->prv_link == PRV_END);
 
-  radiobutton_ptr = lives_standard_radio_button_new((tmp = lives_strdup(_("_Pointer"))), &radiobutton_group,
+  radiobutton_ptr = lives_standard_radio_button_new((tmp = (_("_Pointer"))), &radiobutton_group,
                     LIVES_BOX(mainw->preview_hbox),
-                    (tmp2 = lives_strdup(_("Frame number is linked to playback pointer"))));
+                    (tmp2 = (_("Frame number is linked to playback pointer"))));
   lives_free(tmp);
   lives_free(tmp2);
 

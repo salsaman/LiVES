@@ -26,10 +26,10 @@ static void audio_reset_stored_fnames(void) {
 
 
 LIVES_GLOBAL_INLINE char *get_achannel_name(int totchans, int idx) {
-  if (totchans == 1) return lives_strdup(_("Mono"));
+  if (totchans == 1) return (_("Mono"));
   if (totchans == 2) {
-    if (idx == 0) return lives_strdup(_("Left channel"));
-    if (idx == 1) return lives_strdup(_("Right channel"));
+    if (idx == 0) return (_("Left channel"));
+    if (idx == 1) return (_("Right channel"));
   }
   return lives_strdup_printf(_("Audio channel %d"), idx);
 }

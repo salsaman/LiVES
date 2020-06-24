@@ -3694,8 +3694,8 @@ static void dpp_changed(LiVESWidget * combo, livespointer user_data) {
   }
 
   if (iparam == active_dummy) {
-    if (key == FX_DATA_KEY_OMC_MACRO) paramname = lives_strdup(_("TRIGGER"));
-    else paramname = lives_strdup(_("ACTIVATE"));
+    if (key == FX_DATA_KEY_OMC_MACRO) paramname = (_("TRIGGER"));
+    else paramname = (_("ACTIVATE"));
   } else paramname = get_param_name(iparam, idx - EXTRA_PARAMS_IN, TRUE);
 
   lives_signal_handler_block(combo, conxwp->dpp_func[ours]);
@@ -4023,7 +4023,7 @@ static LiVESTreeModel *inparam_fx_model(boolean is_chans, int key) {
 
   if (!is_chans) {
     // add OMC Macros
-    keystr = lives_strdup(_("OMC Macros"));
+    keystr = (_("OMC Macros"));
     lives_tree_store_append(tstore, &iter1, NULL);   /* Acquire an iterator */
     lives_tree_store_set(tstore, &iter1, KEY_COLUMN, keystr, NAME_COLUMN, keystr, KEYVAL_COLUMN, 0, MODEVAL_COLUMN, 0, -1);
 
@@ -4356,7 +4356,7 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
 
   for (i = 0; i < totchans + totparams; i++) conxwp->ikeys[i] = conxwp->imodes[i] = conxwp->idx[i] = 0;
 
-  lctext = lives_strdup(_("Connected to -->"));
+  lctext = (_("Connected to -->"));
 
   top_vbox = lives_vbox_new(FALSE, 0);
 
@@ -4489,7 +4489,7 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
 
         if (isfirst) {
           /* TRANSLATORS - as in "Effect ACTIVATED" */
-          pname = lives_strdup(_("ACTIVATED"));
+          pname = (_("ACTIVATED"));
           ptype = weed_seed_type_to_text(WEED_SEED_BOOLEAN);
 
           text = lives_strdup_printf("%s (%s)", pname, ptype);
@@ -5003,7 +5003,7 @@ static void do_param_connected_error(lives_conx_w * conxwp, int key, int mode, i
   if (pnum >= 0) {
     ptmpl = weed_filter_out_paramtmpl(filter, pnum);
     pname = get_param_name(ptmpl, pnum, TRUE);
-  } else pname = lives_strdup(_("ACTIVATED"));
+  } else pname = (_("ACTIVATED"));
   msg = lives_strdup_printf(_("Input parameter is already connected from (%d,%d) %s"), key + 1, mode + 1, pname);
   do_error_dialog_with_check_transient(msg, TRUE, 0, LIVES_WINDOW(conxwp->conx_dialog));
   lives_free(msg);

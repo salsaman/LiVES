@@ -370,9 +370,9 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
   radiobutton_dummy = lives_standard_radio_button_new(NULL, &radiobutton_group, LIVES_BOX(hbox), NULL);
   lives_widget_set_no_show_all(radiobutton_dummy, TRUE);
 
-  radiobutton_in = lives_standard_radio_button_new((tmp = lives_strdup(_("Transition _In"))),
+  radiobutton_in = lives_standard_radio_button_new((tmp = (_("Transition _In"))),
                    &radiobutton_group, LIVES_BOX(hbox),
-                   (tmp2 = lives_strdup(_("Click to set the transition parameter to show only the front frame"))));
+                   (tmp2 = (_("Click to set the transition parameter to show only the front frame"))));
   lives_free(tmp);
   lives_free(tmp2);
 
@@ -390,7 +390,7 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
     if (has_video_chans_in(filter, FALSE))
       lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
 
-    checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("_Crossfade audio"))),
+    checkbutton = lives_standard_check_button_new((tmp = (_("_Crossfade audio"))),
                   weed_plant_has_leaf(mainw->multitrack->init_event, WEED_LEAF_HOST_AUDIO_TRANSITION) &&
                   weed_get_boolean_value(mainw->multitrack->init_event, WEED_LEAF_HOST_AUDIO_TRANSITION, &error) == WEED_TRUE,
                   LIVES_BOX(hbox2), (tmp2 = lives_strdup(
@@ -409,9 +409,9 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
   }
 
   widget_opts.pack_end = TRUE;
-  radiobutton_out = lives_standard_radio_button_new((tmp = lives_strdup(_("Transition _Out"))),
+  radiobutton_out = lives_standard_radio_button_new((tmp = (_("Transition _Out"))),
                     &radiobutton_group, LIVES_BOX(hbox),
-                    (tmp2 = lives_strdup(_("Click to set the transition parameter to show only the rear frame"))));
+                    (tmp2 = (_("Click to set the transition parameter to show only the rear frame"))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -514,7 +514,7 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
       ltxt = lives_strdup_printf(_("%s : size"), cname);
       lives_free(cname);
     } else {
-      ltxt = lives_strdup(_("New size (pixels)"));
+      ltxt = (_("New size (pixels)"));
     }
 
     label = lives_standard_label_new(ltxt);
@@ -599,17 +599,17 @@ static void add_gen_to(LiVESBox *vbox, lives_rfx_t *rfx) {
 
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  radiobutton = lives_standard_radio_button_new((tmp = lives_strdup(_("Generate to _Clipboard"))),
+  radiobutton = lives_standard_radio_button_new((tmp = (_("Generate to _Clipboard"))),
                 &radiobutton_group, LIVES_BOX(hbox),
-                (tmp2 = lives_strdup(_("Generate frames to the clipboard"))));
+                (tmp2 = (_("Generate frames to the clipboard"))));
 
   lives_free(tmp);
   lives_free(tmp2);
 
   widget_opts.pack_end = TRUE;
-  radiobutton = lives_standard_radio_button_new((tmp = lives_strdup(_("Generate to _New Clip"))),
+  radiobutton = lives_standard_radio_button_new((tmp = (_("Generate to _New Clip"))),
                 &radiobutton_group, LIVES_BOX(hbox),
-                (tmp2 = lives_strdup(_("Generate frames to a new clip"))));
+                (tmp2 = (_("Generate frames to a new clip"))));
   widget_opts.pack_end = FALSE;
 
   lives_free(tmp);
@@ -800,7 +800,7 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
     fx_dialog[didx]->okbutton = fx_dialog[didx]->cancelbutton = fx_dialog[didx]->resetbutton = NULL;
     fx_dialog[didx]->rfx = NULL;
     fx_dialog[didx]->key = fx_dialog[didx]->mode = -1;
-    if (is_defaults) defstr = lives_strdup(_("Defaults for "));
+    if (is_defaults) defstr = (_("Defaults for "));
     else defstr = lives_strdup("");
     title = lives_strdup_printf("%s%s", defstr, _(rfx->menu_text[0] == '_' ? rfx->menu_text + 1 : rfx->menu_text));
     fx_dialog[didx]->dialog = lives_standard_dialog_new(title, FALSE, scrw, RFX_WINSIZE_V);

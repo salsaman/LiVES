@@ -4894,7 +4894,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
   lives_freep((void **)&filters);
   lives_free(package_name);
   if (THREADVAR(chdir_failed)) {
-    char *dirs = lives_strdup(_("Some plugin directories"));
+    char *dirs = (_("Some plugin directories"));
     do_chdir_failed_error(dirs);
     lives_free(dirs);
   }
@@ -5956,7 +5956,7 @@ void weed_unload_all(void) {
   threaded_dialog_spin(0.);
 
   if (THREADVAR(chdir_failed)) {
-    char *dirs = lives_strdup(_("Some plugin directories"));
+    char *dirs = (_("Some plugin directories"));
     do_chdir_failed_error(dirs);
     lives_free(dirs);
   }

@@ -362,7 +362,7 @@ void on_open_yuv4m_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (menuitem && !do_yuv4m_open_warning()) return;
 
-  fname = lives_strdup(_("yuv4mpeg stream"));
+  fname = (_("yuv4mpeg stream"));
 
   if (!get_new_handle(new_file, fname)) {
     lives_free(fname);

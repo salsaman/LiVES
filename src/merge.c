@@ -64,7 +64,7 @@ void create_merge_dialog(void) {
       } else if (rfx->status == RFX_STATUS_TEST) {
         merge_opts->trans_list = lives_list_append(merge_opts->trans_list, lives_strconcat(_(rfx->menu_text), " (test)", NULL));
       } else {
-        merge_opts->trans_list = lives_list_append(merge_opts->trans_list, lives_strdup(_(rfx->menu_text)));
+        merge_opts->trans_list = lives_list_append(merge_opts->trans_list, (_(rfx->menu_text)));
       }
     }
   }

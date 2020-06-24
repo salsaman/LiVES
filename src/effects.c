@@ -42,82 +42,82 @@ char *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) {
   switch (cat) {
   // main categories
   case LIVES_FX_CAT_VIDEO_GENERATOR:
-    if (!plural) return (lives_strdup(_("generator")));
-    else return (lives_strdup(_("Generators")));
+    if (!plural) return ((_("generator")));
+    else return ((_("Generators")));
   case LIVES_FX_CAT_AUDIO_GENERATOR:
-    if (!plural) return (lives_strdup(_("audio generator")));
-    else return (lives_strdup(_("Audio Generators")));
+    if (!plural) return ((_("audio generator")));
+    else return ((_("Audio Generators")));
   case LIVES_FX_CAT_AV_GENERATOR:
-    if (!plural) return (lives_strdup(_("audio/video generator")));
-    else return (lives_strdup(_("Audio/Video Generators")));
+    if (!plural) return ((_("audio/video generator")));
+    else return ((_("Audio/Video Generators")));
   case LIVES_FX_CAT_DATA_GENERATOR:
-    if (!plural) return (lives_strdup(_("data generator")));
-    else return (lives_strdup(_("Data Generators")));
+    if (!plural) return ((_("data generator")));
+    else return ((_("Data Generators")));
   case LIVES_FX_CAT_DATA_VISUALISER:
-    if (!plural) return (lives_strdup(_("data visualiser")));
-    else return (lives_strdup(_("Data Visualisers")));
+    if (!plural) return ((_("data visualiser")));
+    else return ((_("Data Visualisers")));
   case LIVES_FX_CAT_DATA_PROCESSOR:
-    if (!plural) return (lives_strdup(_("data processor")));
-    else return (lives_strdup(_("Data Processors")));
+    if (!plural) return ((_("data processor")));
+    else return ((_("Data Processors")));
   case LIVES_FX_CAT_DATA_SOURCE:
-    if (!plural) return (lives_strdup(_("data source")));
-    else return (lives_strdup(_("Data Sources")));
+    if (!plural) return ((_("data source")));
+    else return ((_("Data Sources")));
   case LIVES_FX_CAT_TRANSITION:
-    if (!plural) return (lives_strdup(_("transition")));
-    else return (lives_strdup(_("Transitions")));
+    if (!plural) return ((_("transition")));
+    else return ((_("Transitions")));
   case LIVES_FX_CAT_EFFECT:
-    if (!plural) return (lives_strdup(_("effect")));
-    else return (lives_strdup(_("Effects")));
+    if (!plural) return ((_("effect")));
+    else return ((_("Effects")));
   case LIVES_FX_CAT_UTILITY:
-    if (!plural) return (lives_strdup(_("utility")));
-    else return (lives_strdup(_("Utilities")));
+    if (!plural) return ((_("utility")));
+    else return ((_("Utilities")));
   case LIVES_FX_CAT_COMPOSITOR:
-    if (!plural) return (lives_strdup(_("compositor")));
-    else return (lives_strdup(_("Compositors")));
+    if (!plural) return ((_("compositor")));
+    else return ((_("Compositors")));
   case LIVES_FX_CAT_TAP:
-    if (!plural) return (lives_strdup(_("tap")));
-    else return (lives_strdup(_("Taps")));
+    if (!plural) return ((_("tap")));
+    else return ((_("Taps")));
   case LIVES_FX_CAT_SPLITTER:
-    if (!plural) return (lives_strdup(_("splitter")));
-    else return (lives_strdup(_("Splitters")));
+    if (!plural) return ((_("splitter")));
+    else return ((_("Splitters")));
   case LIVES_FX_CAT_CONVERTER:
-    if (!plural) return (lives_strdup(_("converter")));
-    else return (lives_strdup(_("Converters")));
+    if (!plural) return ((_("converter")));
+    else return ((_("Converters")));
   case LIVES_FX_CAT_ANALYSER:
-    if (!plural) return (lives_strdup(_("analyser")));
-    else return (lives_strdup(_("Analysers")));
+    if (!plural) return ((_("analyser")));
+    else return ((_("Analysers")));
 
   // subcategories
   case LIVES_FX_CAT_AV_TRANSITION:
-    if (!plural) return (lives_strdup(_("audio/video")));
-    else return (lives_strdup(_("Audio/Video Transitions")));
+    if (!plural) return ((_("audio/video")));
+    else return ((_("Audio/Video Transitions")));
   case LIVES_FX_CAT_VIDEO_TRANSITION:
-    if (!plural) return (lives_strdup(_("video only")));
-    else return (lives_strdup(_("Video only Transitions")));
+    if (!plural) return ((_("video only")));
+    else return ((_("Video only Transitions")));
   case LIVES_FX_CAT_AUDIO_TRANSITION:
-    if (!plural) return (lives_strdup(_("audio only")));
-    else return (lives_strdup(_("Audio only Transitions")));
+    if (!plural) return ((_("audio only")));
+    else return ((_("Audio only Transitions")));
   case LIVES_FX_CAT_AUDIO_MIXER:
-    if (!plural) return (lives_strdup(_("audio")));
-    else return (lives_strdup(_("Audio Mixers")));
+    if (!plural) return ((_("audio")));
+    else return ((_("Audio Mixers")));
   case LIVES_FX_CAT_AUDIO_EFFECT:
-    if (!plural) return (lives_strdup(_("audio")));
-    else return (lives_strdup(_("Audio Effects")));
+    if (!plural) return ((_("audio")));
+    else return ((_("Audio Effects")));
   case LIVES_FX_CAT_VIDEO_EFFECT:
-    if (!plural) return (lives_strdup(_("video")));
-    else return (lives_strdup(_("Video Effects")));
+    if (!plural) return ((_("video")));
+    else return ((_("Video Effects")));
   case LIVES_FX_CAT_AUDIO_VOL:
-    if (!plural) return (lives_strdup(_("audio volume controller")));
-    else return (lives_strdup(_("Audio Volume Controllers")));
+    if (!plural) return ((_("audio volume controller")));
+    else return ((_("Audio Volume Controllers")));
   case LIVES_FX_CAT_VIDEO_ANALYSER:
-    if (!plural) return (lives_strdup(_("video analyser")));
-    else return (lives_strdup(_("Video Analysers")));
+    if (!plural) return ((_("video analyser")));
+    else return ((_("Video Analysers")));
   case LIVES_FX_CAT_AUDIO_ANALYSER:
-    if (!plural) return (lives_strdup(_("audio analyser")));
-    else return (lives_strdup(_("Audio Analysers")));
+    if (!plural) return ((_("audio analyser")));
+    else return ((_("Audio Analysers")));
 
   default:
-    return (lives_strdup(_("unknown")));
+    return ((_("unknown")));
   }
 }
 
@@ -225,24 +225,24 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   }
 
   if (rfx->props & RFX_PROPS_MAY_RESIZE) {
-    tmp = lives_strdup(_("%s all frames..."));
+    tmp = (_("%s all frames..."));
     text = lives_strdup_printf(tmp, _(rfx->action_desc));
   } else {
     if (rfx->num_in_channels == 2) {
-      tmp = lives_strdup(_("%s clipboard into frames %d to %d..."));
+      tmp = (_("%s clipboard into frames %d to %d..."));
       text = lives_strdup_printf(tmp, _(rfx->action_desc), cfile->progress_start, cfile->progress_end);
     } else {
       if (rfx->num_in_channels == 0) {
         mainw->no_switch_dprint = TRUE;
         if (mainw->gen_to_clipboard) {
-          tmp = lives_strdup(_("%s to clipboard..."));
+          tmp = (_("%s to clipboard..."));
           text = lives_strdup_printf(tmp, _(rfx->action_desc));
         } else {
-          tmp = lives_strdup(_("%s to new clip..."));
+          tmp = (_("%s to new clip..."));
           text = lives_strdup_printf(tmp, _(rfx->action_desc));
         }
       } else {
-        tmp = lives_strdup(_("%s frames %d to %d..."));
+        tmp = (_("%s frames %d to %d..."));
         text = lives_strdup_printf(tmp, _(rfx->action_desc), cfile->start, cfile->end);
       }
     }
@@ -273,18 +273,18 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   cfile->pb_fps = 1000000.;
 
   if (rfx->num_in_channels == 2) {
-    tmp = lives_strdup(_("%s clipboard with selection"));
+    tmp = (_("%s clipboard with selection"));
     lives_snprintf(effectstring, 128, tmp, _(rfx->action_desc));
   } else if (rfx->num_in_channels == 0) {
     if (mainw->gen_to_clipboard) {
-      tmp = lives_strdup(_("%s to clipboard"));
+      tmp = (_("%s to clipboard"));
       lives_snprintf(effectstring, 128, tmp, _(rfx->action_desc));
     } else {
-      tmp = lives_strdup(_("%s to new clip"));
+      tmp = (_("%s to new clip"));
       lives_snprintf(effectstring, 128, tmp, _(rfx->action_desc));
     }
   } else {
-    tmp = lives_strdup(_("%s frames %d to %d"));
+    tmp = (_("%s frames %d to %d"));
     lives_snprintf(effectstring, 128, tmp, _(rfx->action_desc), cfile->undo_start, cfile->undo_end);
   }
   lives_free(tmp);

@@ -2559,7 +2559,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
 
   switch (lerror) {
   case LMAP_INFO_SETNAME_CHANGED:
-    if (!(*name)) name2 = lives_strdup(_("(blank)"));
+    if (!(*name)) name2 = (_("(blank)"));
     else name2 = lives_strdup(name);
     text = lives_strdup_printf
            (_("The set name has been changed from %s to %s. Affected layouts have been updated accordingly\n"),
@@ -4588,8 +4588,8 @@ void set_sel_label(LiVESWidget * sel_label) {
 
     // TRANSLATORS: - try to keep the text of the middle part the same length, by deleting "-" if necessary
     lives_label_set_text(LIVES_LABEL(sel_label),
-                         (tmp = lives_strconcat("---------- [ ", tstr, (sy = (lives_strdup(_(" sec ] ----------Selection---------- [ ")))),
-                                frstr, (sz = lives_strdup(_(" frames ] ----------"))), NULL)));
+                         (tmp = lives_strconcat("---------- [ ", tstr, (sy = ((_(" sec ] ----------Selection---------- [ ")))),
+                                frstr, (sz = (_(" frames ] ----------"))), NULL)));
     lives_free(sy);
     lives_free(sz);
 

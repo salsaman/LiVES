@@ -1031,7 +1031,7 @@ void **mt_get_pchain(void) {
 char *get_track_name(lives_mt *mt, int track_num, boolean is_audio) {
   // not const return because of translation issues
   LiVESWidget *xeventbox;
-  if (track_num < 0) return lives_strdup(_("Backing audio"));
+  if (track_num < 0) return (_("Backing audio"));
   if (!is_audio) xeventbox = (LiVESWidget *)lives_list_nth_data(mt->video_draws, track_num);
   else xeventbox = (LiVESWidget *)lives_list_nth_data(mt->audio_draws, track_num + mt->opts.back_audio_tracks);
   return lives_strdup((char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "track_name"));
@@ -2085,7 +2085,7 @@ static void show_track_info(lives_mt * mt, LiVESWidget * eventbox, int track, do
                  lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),
                      "track_name"), track)));
   else {
-    if (track == -1) add_context_label(mt, (tmp = lives_strdup(_("Current track: Backing audio\n"))));
+    if (track == -1) add_context_label(mt, (tmp = (_("Current track: Backing audio\n"))));
     else add_context_label(mt, (tmp = lives_strdup_printf(_("Current track: Layer %d audio\n"), track)));
   }
   lives_free(tmp);
@@ -3855,7 +3855,7 @@ static void select_block(lives_mt * mt) {
     if (cfile->achans == 0 || mt->audio_draws == NULL || (mt->opts.back_audio_tracks == 0 || eventbox != mt->audio_draws->data))
       add_context_label(mt, (tmp2 = lives_strdup_printf(_("Current track: %s (layer %d)\n"),
                                     lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "track_name"), track)));
-    else add_context_label(mt, (tmp2 = lives_strdup(_("Current track: Backing audio\n"))));
+    else add_context_label(mt, (tmp2 = (_("Current track: Backing audio\n"))));
     lives_free(tmp2);
 
     add_context_label(mt, (tmp2 = lives_strdup_printf(_("%.2f sec. to %.2f sec.\n"),
@@ -4937,19 +4937,19 @@ static char *get_undo_text(int action, void *extra) {
 
   switch (action) {
   case MT_UNDO_REMOVE_GAPS:
-    return lives_strdup(_("Close gaps"));
+    return (_("Close gaps"));
   case MT_UNDO_MOVE_BLOCK:
-    return lives_strdup(_("Move block"));
+    return (_("Move block"));
   case MT_UNDO_MOVE_AUDIO_BLOCK:
-    return lives_strdup(_("Move audio block"));
+    return (_("Move audio block"));
   case MT_UNDO_DELETE_BLOCK:
-    return lives_strdup(_("Delete block"));
+    return (_("Delete block"));
   case MT_UNDO_DELETE_AUDIO_BLOCK:
-    return lives_strdup(_("Delete audio block"));
+    return (_("Delete audio block"));
   case MT_UNDO_SPLIT_MULTI:
-    return lives_strdup(_("Split tracks"));
+    return (_("Split tracks"));
   case MT_UNDO_SPLIT:
-    return lives_strdup(_("Split block"));
+    return (_("Split block"));
   case MT_UNDO_APPLY_FILTER:
     filtname = weed_get_string_value((weed_plant_t *)extra, WEED_LEAF_NAME, &error);
     ret = lives_strdup_printf(_("Apply %s"), filtname);
@@ -4961,13 +4961,13 @@ static char *get_undo_text(int action, void *extra) {
     lives_free(filtname);
     return ret;
   case MT_UNDO_INSERT_BLOCK:
-    return lives_strdup(_("Insert block"));
+    return (_("Insert block"));
   case MT_UNDO_INSERT_GAP:
-    return lives_strdup(_("Insert gap"));
+    return (_("Insert gap"));
   case MT_UNDO_INSERT_AUDIO_BLOCK:
-    return lives_strdup(_("Insert audio block"));
+    return (_("Insert audio block"));
   case MT_UNDO_FILTER_MAP_CHANGE:
-    return lives_strdup(_("Effect order change"));
+    return (_("Effect order change"));
   }
   return lives_strdup("");
 }
@@ -5618,12 +5618,12 @@ static weed_plant_t *load_event_list_inner(lives_mt * mt, int fd, boolean show_e
     err = NULL;
     if (weed_get_boolean_value(event_list, WEED_LEAF_GAMMA_ENABLED, &error) == WEED_TRUE) {
       if (!prefs->apply_gamma) {
-        err = lives_strdup(_("This layout was created using automatic gamma correction.\nFor compatibility, you may wish to"
-                             "enable this feature in Tools -> Preferences -> Effects, whilst editing and rendering the layout."));
+        err = (_("This layout was created using automatic gamma correction.\nFor compatibility, you may wish to"
+                 "enable this feature in Tools -> Preferences -> Effects, whilst editing and rendering the layout."));
       }
     } else if (prefs->apply_gamma) {
-      err = lives_strdup(_("This layout was created without automatic gamma correction.\nFor compatibility, you may wish to"
-                           "disable this feature in Tools -> Preferences -> Effects, whilst editing and rendering the layout."));
+      err = (_("This layout was created without automatic gamma correction.\nFor compatibility, you may wish to"
+               "disable this feature in Tools -> Preferences -> Effects, whilst editing and rendering the layout."));
     }
     if (err != NULL) {
       do_error_dialog_with_check_transient(err, TRUE, WARN_MASK_LAYOUT_GAMMA, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
@@ -5983,11 +5983,11 @@ static void after_timecode_changed(LiVESWidget * entry, LiVESXEventFocus * dir, 
 static char *get_tab_name(uint32_t tab) {
   switch (tab) {
   case POLY_CLIPS:
-    return lives_strdup(_("Clips"));
+    return (_("Clips"));
   case POLY_IN_OUT:
-    return lives_strdup(_("In/out"));
+    return (_("In/out"));
   case POLY_FX_STACK:
-    return lives_strdup(_("FX stack"));
+    return (_("FX stack"));
   case POLY_EFFECTS:
     return lives_fx_cat_to_text(LIVES_FX_CAT_EFFECT, TRUE); // effects
   case POLY_TRANS:
@@ -5995,7 +5995,7 @@ static char *get_tab_name(uint32_t tab) {
   case POLY_COMP:
     return lives_fx_cat_to_text(LIVES_FX_CAT_COMPOSITOR, TRUE); // compositors
   case POLY_PARAMS:
-    return lives_strdup(_("Params."));
+    return (_("Params."));
   default:
     break;
   }
@@ -8089,8 +8089,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
 
-  mt->insa_checkbutton = lives_glowing_check_button_new((tmp = lives_strdup(_("  Insert with _Audio  "))), LIVES_BOX(hbox),
-                         (tmp2 = lives_strdup(_("Select whether video clips are inserted and moved with their audio or not"))),
+  mt->insa_checkbutton = lives_glowing_check_button_new((tmp = (_("  Insert with _Audio  "))), LIVES_BOX(hbox),
+                         (tmp2 = (_("Select whether video clips are inserted and moved with their audio or not"))),
                          &mt->opts.insert_audio);
   lives_free(tmp);
   lives_free(tmp2);
@@ -8103,8 +8103,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
 
-  mt->snapo_checkbutton = lives_glowing_check_button_new((tmp = lives_strdup(_("  Select _Overlap  "))), LIVES_BOX(hbox),
-                          (tmp2 = lives_strdup(_("Select whether timeline selection snaps to overlap between selected tracks or not"))),
+  mt->snapo_checkbutton = lives_glowing_check_button_new((tmp = (_("  Select _Overlap  "))), LIVES_BOX(hbox),
+                          (tmp2 = (_("Select whether timeline selection snaps to overlap between selected tracks or not"))),
                           &mt->opts.snap_over);
   lives_free(tmp);
   lives_free(tmp2);
@@ -8497,7 +8497,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_box_pack_end(LIVES_BOX(mt->fx_contents_box), hbox, FALSE, FALSE, 0);
 
   mt->solo_check = lives_standard_check_button_new(_("Preview _Solo"), TRUE, LIVES_BOX(hbox),
-                   (tmp = lives_strdup(_("Preview only the selected effect"))));
+                   (tmp = (_("Preview only the selected effect"))));
   lives_free(tmp);
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(mt->solo_check), LIVES_WIDGET_TOGGLED_SIGNAL,
@@ -8665,9 +8665,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                       LIVES_BOX(mt->in_hbox), NULL);
   lives_spin_button_set_snap_to_ticks(LIVES_SPIN_BUTTON(mt->spinbutton_in), TRUE);
 
-  mt->checkbutton_start_anchored = lives_standard_check_button_new((tmp = lives_strdup(_("Anchor _start"))), FALSE,
+  mt->checkbutton_start_anchored = lives_standard_check_button_new((tmp = (_("Anchor _start"))), FALSE,
                                    LIVES_BOX(mt->in_hbox),
-                                   (tmp2 = lives_strdup(_("Anchor the start point to the timeline"))));
+                                   (tmp2 = (_("Anchor the start point to the timeline"))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -8715,9 +8715,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_BOX(mt->out_hbox), NULL);
   lives_spin_button_set_snap_to_ticks(LIVES_SPIN_BUTTON(mt->spinbutton_out), TRUE);
 
-  mt->checkbutton_end_anchored = lives_standard_check_button_new((tmp = lives_strdup(_("Anchor _end"))), FALSE,
+  mt->checkbutton_end_anchored = lives_standard_check_button_new((tmp = (_("Anchor _end"))), FALSE,
                                  LIVES_BOX(mt->out_hbox),
-                                 (tmp2 = lives_strdup(_("Anchor the end point to the timeline"))));
+                                 (tmp2 = (_("Anchor the end point to the timeline"))));
 
 
   add_spring_to_box(LIVES_BOX(mt->out_hbox), 0);
@@ -13195,7 +13195,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
                 yeventbox = (LiVESWidget *)lives_list_nth_data(mt->video_draws, def_out_track);
                 olayer = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(yeventbox), "layer_number"));
                 otrackname = lives_strdup_printf(_("layer %d"), olayer);
-              } else otrackname = lives_strdup(_("audio track"));
+              } else otrackname = (_("audio track"));
               txt = lives_strdup_printf(_("%s to %s"), fname, otrackname);
               lives_free(otrackname);
             } else if (num_in_tracks == 2 && num_out_tracks > 0) {
@@ -13203,7 +13203,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
                 yeventbox = (LiVESWidget *)lives_list_nth_data(mt->video_draws, fromtrack);
                 olayer = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(yeventbox), "layer_number"));
                 otrackname = lives_strdup_printf(_("layer %d"), olayer);
-              } else otrackname = lives_strdup(_("audio track"));
+              } else otrackname = (_("audio track"));
               txt = lives_strdup_printf(_("%s from %s"), fname, otrackname);
               lives_free(otrackname);
             } else {
@@ -15699,7 +15699,7 @@ void mt_add_region_effect(LiVESMenuItem * menuitem, livespointer user_data) {
     break;
   default:
     tname = lives_fx_cat_to_text(LIVES_FX_CAT_COMPOSITOR, FALSE); // compositor
-    track_desc = lives_strdup(_("selected tracks"));
+    track_desc = (_("selected tracks"));
     break;
   }
   lives_free(tracks);
@@ -15850,7 +15850,7 @@ void on_mt_delfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     break;
   default:
     tname = lives_fx_cat_to_text(LIVES_FX_CAT_COMPOSITOR, FALSE); // compositor
-    track_desc = lives_strdup(_("selected tracks"));
+    track_desc = (_("selected tracks"));
     break;
   }
 
@@ -19448,13 +19448,13 @@ void on_set_pvals_clicked(LiVESWidget * button, livespointer user_data) {
     if (has_multi) {
       track_desc = lives_strdup_printf(_("track %s"), (tmp = get_track_name(mt, mt->current_track, mt->aud_track_selected)));
       lives_free(tmp);
-    } else track_desc = lives_strdup(_("selected tracks"));
+    } else track_desc = (_("selected tracks"));
     break;
   }
   lives_free(tracks);
   if (mt->current_fx == mt->avol_fx) {
     lives_free(tname);
-    tname = lives_strdup(_("audio"));
+    tname = (_("audio"));
   }
 
   d_print(_("Set parameter values for %s %s on %s at time %s\n"), tname, filter_name, track_desc, mt->timestring);
@@ -21487,12 +21487,12 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
   transient = LIVES_MAIN_WINDOW_WIDGET;
 
   if (missing_clips && missing_frames) {
-    bit2 = lives_strdup(_("clips and frames"));
+    bit2 = (_("clips and frames"));
   } else {
     if (missing_clips) {
-      bit2 = lives_strdup(_("clips"));
+      bit2 = (_("clips"));
     } else if (missing_frames) {
-      bit2 = lives_strdup(_("frames"));
+      bit2 = (_("frames"));
     }
   }
 
@@ -21502,7 +21502,7 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
     if (mt != NULL && mt->auto_reloading) {
       lives_free(bit1);
       lives_free(bit3);
-      bit1 = lives_strdup(_("\nAuto reload layout.\n"));
+      bit1 = (_("\nAuto reload layout.\n"));
       bit3 = lives_strdup_printf("\n%s", prefs->ar_layout_name);
     }
     msg = lives_strdup_printf(_("%s\nSome %s are missing from the layout%s\nTherefore it could not be loaded properly.\n"),
@@ -21632,7 +21632,7 @@ weed_plant_t *load_event_list(lives_mt * mt, char *eload_file) {
   prefs->ar_layout = orig_ar_layout;
 
   if (!mainw->recoverable_layout) eload_name = lives_strdup(eload_file);
-  else eload_name = lives_strdup(_("auto backup"));
+  else eload_name = (_("auto backup"));
 
   if ((fd = lives_open_buffered_rdonly(eload_file)) < 0) {
     if (mt != NULL) {

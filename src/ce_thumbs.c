@@ -512,8 +512,8 @@ void ce_thumbs_add_param_box(int key, boolean remove) {
   add_fill_to_box(LIVES_BOX(hbox));
 
   /* TRANSLATORS - "pin" as in "pinned to window" */
-  pin_check = lives_standard_check_button_new((tmp = lives_strdup(_("_Pin"))), FALSE, LIVES_BOX(hbox),
-              (tmp2 = lives_strdup(_("Pin the parameter box to the window"))));
+  pin_check = lives_standard_check_button_new((tmp = (_("_Pin"))), FALSE, LIVES_BOX(hbox),
+              (tmp2 = (_("Pin the parameter box to the window"))));
   lives_free(tmp);
   lives_free(tmp2);
 

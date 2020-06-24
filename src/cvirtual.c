@@ -160,7 +160,7 @@ frames_t load_frame_index(int fileno) {
       }
     } else {
       LiVESResponseType response;
-      char *what = lives_strdup(_("creating the frame index for the clip"));
+      char *what = (_("creating the frame index for the clip"));
       do {
         response = LIVES_RESPONSE_OK;
         create_frame_index(fileno, FALSE, 0, sfile->frames);
@@ -701,7 +701,7 @@ void insert_images_in_virtual(int sfileno, frames_t where, frames_t frames, fram
 
   if (sfile->frame_index == NULL) return;
 
-  what = lives_strdup(_("creating the new frame index for the clip"));
+  what = (_("creating the new frame index for the clip"));
   lives_freep((void **)&sfile->frame_index_back);
 
   sfile->frame_index_back = sfile->frame_index;
@@ -748,7 +748,7 @@ void delete_frames_from_virtual(int sfileno, frames_t start, frames_t end) {
   lives_clip_t *sfile = mainw->files[sfileno];
   LiVESResponseType response;
 
-  char *what = lives_strdup(_("creating the new frame index for the clip"));
+  char *what = (_("creating the new frame index for the clip"));
   frames_t nframes = sfile->frames, frames = end - start + 1;
 
   lives_freep((void **)&sfile->frame_index_back);

@@ -2262,7 +2262,7 @@ boolean event_list_to_block(weed_plant_t *event_list, int num_events) {
   int i = 0;
 
   if (event_list == NULL) return TRUE;
-  what = lives_strdup(_("memory for the reordering operation"));
+  what = (_("memory for the reordering operation"));
   // then we create event_frames
   do {
     response = LIVES_RESPONSE_OK;
@@ -4705,7 +4705,7 @@ boolean render_to_clip(boolean new_clip) {
         cfile->frame_index_back = cfile->frame_index;  // save for undo :: TODO
         del_frame_index(cfile);
       } else {
-        char *what = lives_strdup(_("a new file index"));
+        char *what = (_("a new file index"));
         LiVESResponseType response;
         register int i;
         lives_freep((void **)&cfile->frame_index_back);
@@ -5446,8 +5446,8 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
                   strval = lives_strdup_printf("%.4f", doubval[j]);
                   break;
                 case WEED_SEED_BOOLEAN:
-                  if (intval[j] == WEED_TRUE) strval = lives_strdup(_("TRUE"));
-                  else strval = lives_strdup(_("FALSE"));
+                  if (intval[j] == WEED_TRUE) strval = (_("TRUE"));
+                  else strval = (_("FALSE"));
                   break;
                 case WEED_SEED_STRING:
                   if (hint == WEED_EVENT_HINT_FILTER_INIT && (!strcmp(propnames[i], WEED_LEAF_FILTER))) {
@@ -5896,9 +5896,9 @@ render_details *create_render_details(int type) {
   rdet->enc_changed = FALSE;
 
   if (type == 3 || type == 4) {
-    title = lives_strdup(_("Multitrack Details"));
-  } else if (type == 1) title = lives_strdup(_("Encoding Details"));
-  else title = lives_strdup(_("New Clip Details"));
+    title = (_("Multitrack Details"));
+  } else if (type == 1) title = (_("Encoding Details"));
+  else title = (_("New Clip Details"));
 
   width = scrw - SCR_WIDTH_SAFETY;
   height = scrh - SCR_HEIGHT_SAFETY;
@@ -5932,7 +5932,7 @@ render_details *create_render_details(int type) {
 
   rdet->always_hbox = lives_hbox_new(TRUE, widget_opts.packing_width * 2);
   if (type == 1 || type == 2) gtk_widget_set_no_show_all(rdet->always_hbox, TRUE);
-  rdet->always_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("_Always use these values"))), FALSE,
+  rdet->always_checkbutton = lives_standard_check_button_new((tmp = (_("_Always use these values"))), FALSE,
                              LIVES_BOX(rdet->always_hbox),
                              (tmp2 = lives_strdup(
                                        _("Check this button to always use these values when entering multitrack mode. "
@@ -5963,10 +5963,10 @@ render_details *create_render_details(int type) {
       lives_widget_set_sensitive(rdet->spinbutton_fps, FALSE);
 
     // add clip name entry
-    rdet->clipname_entry = lives_standard_entry_new((tmp = lives_strdup(_("New clip name"))),
+    rdet->clipname_entry = lives_standard_entry_new((tmp = (_("New clip name"))),
                            (tmp2 = get_untitled_name(mainw->untitled_number)),
                            MEDIUM_ENTRY_WIDTH, 256, LIVES_BOX(top_vbox),
-                           (tmp3 = lives_strdup(_("The name to give the clip in the Clips menu"))));
+                           (tmp3 = (_("The name to give the clip in the Clips menu"))));
     lives_free(tmp);
     lives_free(tmp2);
     lives_free(tmp3);
@@ -6176,10 +6176,10 @@ render_details *create_render_details(int type) {
     //add_spring_to_box(LIVES_BOX(hbox), 0);
 
 
-    rdet->debug = lives_standard_check_button_new((tmp = lives_strdup(_("Debug Mode"))), FALSE,
+    rdet->debug = lives_standard_check_button_new((tmp = (_("Debug Mode"))), FALSE,
                   LIVES_BOX(hbox),
-                  (tmp2 = lives_strdup(_("Output diagnostic information to STDERR "
-                                         "instead of to the GUI."))));
+                  (tmp2 = (_("Output diagnostic information to STDERR "
+                             "instead of to the GUI."))));
     lives_free(tmp);
     lives_free(tmp2);
 

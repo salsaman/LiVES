@@ -164,7 +164,7 @@ retry:
         fprintf(stderr, "Giving up.\n");
         switch_aud_to_none(TRUE);
       } else {
-        msg = lives_strdup(_("\nUnable to connect to the pulseaudio server.\n"));
+        msg = (_("\nUnable to connect to the pulseaudio server.\n"));
         if (startup_phase != 2) {
           do_blocking_error_dialog(msg);
           mainw->aplayer_broken = TRUE;

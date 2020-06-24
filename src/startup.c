@@ -254,7 +254,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   LiVESResponseType response;
 
   if (startup_phase == 2) {
-    txt0 = lives_strdup(_("LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n\n"));
+    txt0 = (_("LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n\n"));
   } else {
     prefs->audio_player = -1;
     txt0 = lives_strdup("");
@@ -264,7 +264,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
            _("Before starting LiVES, you need to choose an audio player.\n\nPULSE AUDIO is recommended for most users"));
 
 #ifndef HAVE_PULSE_AUDIO
-  txt2 = lives_strdup(_(", but this version of LiVES was not compiled with pulse audio support.\n\n"));
+  txt2 = (_(", but this version of LiVES was not compiled with pulse audio support.\n\n"));
 #else
   if (!capable->has_pulse_audio) {
     txt2 = lives_strdup(
@@ -272,13 +272,13 @@ boolean do_audio_choice_dialog(short startup_phase) {
   } else txt2 = lives_strdup(".\n\n");
 #endif
 
-  txt3 = lives_strdup(_("JACK audio is recommended for pro users"));
+  txt3 = (_("JACK audio is recommended for pro users"));
 
 #ifndef ENABLE_JACK
-  txt4 = lives_strdup(_(", but this version of LiVES was not compiled with jack audio support.\n\n"));
+  txt4 = (_(", but this version of LiVES was not compiled with jack audio support.\n\n"));
 #else
   if (!capable->has_jackd) {
-    txt4 = lives_strdup(_(", but you do not have jackd installed. You may wish to install jackd first before running LiVES.\n\n"));
+    txt4 = (_(", but you do not have jackd installed. You may wish to install jackd first before running LiVES.\n\n"));
   } else {
     txt4 = lives_strdup(
              _(", but may prevent LiVES from starting on some systems.\nIf LiVES will not start with jack,"
@@ -286,12 +286,12 @@ boolean do_audio_choice_dialog(short startup_phase) {
   }
 #endif
 
-  txt5 = lives_strdup(_("SOX may be used if neither of the preceding players work, "));
+  txt5 = (_("SOX may be used if neither of the preceding players work, "));
 
   if (capable->has_sox_play) {
-    txt6 = lives_strdup(_("but many audio features will be disabled.\n\n"));
+    txt6 = (_("but many audio features will be disabled.\n\n"));
   } else {
-    txt6 = lives_strdup(_("but you do not have sox installed.\nYou are advised to install it before running LiVES.\n\n"));
+    txt6 = (_("but you do not have sox installed.\nYou are advised to install it before running LiVES.\n\n"));
   }
 
   msg = lives_strdup_printf("%s%s%s%s%s%s%s", txt0, txt1, txt2, txt3, txt4, txt5, txt6);
@@ -536,9 +536,9 @@ boolean do_startup_tests(boolean tshoot) {
   }
 
   if (!tshoot) {
-    title = lives_strdup(_("Testing Configuration"));
+    title = (_("Testing Configuration"));
   } else {
-    title = lives_strdup(_("Troubleshoot"));
+    title = (_("Troubleshoot"));
   }
 
   dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
@@ -874,7 +874,7 @@ boolean do_startup_tests(boolean tshoot) {
 
   if (!strcmp(mp_cmd, "mpv")) {
     if (success2 && success3 && !success4) {
-      tmp = lives_strdup(_("Already checked"));
+      tmp = (_("Already checked"));
       skip_test(table, testcase - 1, tmp);
       lives_free(tmp);
       goto jpgdone;
@@ -981,9 +981,9 @@ void do_startup_interface_query(void) {
   LiVESSList *radiobutton_group = NULL;
   char *txt1, *txt2, *txt3, *msg;
 
-  txt1 = lives_strdup(_("\n\nFinally, you can choose the default startup interface for LiVES.\n"));
-  txt2 = lives_strdup(_("\n\nLiVES has two main interfaces and you can start up with either of them.\n"));
-  txt3 = lives_strdup(_("\n\nThe default can always be changed later from Preferences.\n"));
+  txt1 = (_("\n\nFinally, you can choose the default startup interface for LiVES.\n"));
+  txt2 = (_("\n\nLiVES has two main interfaces and you can start up with either of them.\n"));
+  txt3 = (_("\n\nThe default can always be changed later from Preferences.\n"));
 
   msg = lives_strdup_printf("%s%s%s", txt1, txt2, txt3);
 
@@ -1047,21 +1047,21 @@ void on_troubleshoot_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 static char *explain_missing(const char *exe) {
   char *pt2, *pt1 = lives_strdup_printf(_("\t'%s' was not found on your system.\n"
                                           "Installation is recommended as it provides the following features\n\t- "), exe);
-  if (!lives_strcmp(exe, EXEC_FILE)) pt2 = lives_strdup(_("Enables easier identification of file types,\n\n"));
-  else if (!lives_strcmp(exe, EXEC_GZIP)) pt2 = lives_strdup(_("Enables reduction in file size for some files,\n\n"));
-  else if (!lives_strcmp(exe, EXEC_DU)) pt2 = lives_strdup(_("Enables measuring of disk space used,\n\n"));
-  else if (!lives_strcmp(exe, EXEC_FFPROBE)) pt2 = lives_strdup(_("Assists in the identification of video clips\n\n"));
-  else if (!lives_strcmp(exe, EXEC_IDENTIFY)) pt2 = lives_strdup(_("Assists in the identification of image files\n\n"));
-  else if (!lives_strcmp(exe, EXEC_CONVERT)) pt2 = lives_strdup(_("Required for many rendered effects in the clip editor.\n\n"));
-  else if (!lives_strcmp(exe, EXEC_COMPOSITE)) pt2 = lives_strdup(_("Enables clip mergeing in the clip editor.\n\n"));
-  else if (!lives_strcmp(exe, EXEC_PYTHON)) pt2 = lives_strdup(_("Allows use of some additional encoder plugins\n\n"));
-  else if (!lives_strcmp(exe, EXEC_MD5SUM)) pt2 = lives_strdup(_("Allows checking for file changes, "
+  if (!lives_strcmp(exe, EXEC_FILE)) pt2 = (_("Enables easier identification of file types,\n\n"));
+  else if (!lives_strcmp(exe, EXEC_GZIP)) pt2 = (_("Enables reduction in file size for some files,\n\n"));
+  else if (!lives_strcmp(exe, EXEC_DU)) pt2 = (_("Enables measuring of disk space used,\n\n"));
+  else if (!lives_strcmp(exe, EXEC_FFPROBE)) pt2 = (_("Assists in the identification of video clips\n\n"));
+  else if (!lives_strcmp(exe, EXEC_IDENTIFY)) pt2 = (_("Assists in the identification of image files\n\n"));
+  else if (!lives_strcmp(exe, EXEC_CONVERT)) pt2 = (_("Required for many rendered effects in the clip editor.\n\n"));
+  else if (!lives_strcmp(exe, EXEC_COMPOSITE)) pt2 = (_("Enables clip mergeing in the clip editor.\n\n"));
+  else if (!lives_strcmp(exe, EXEC_PYTHON)) pt2 = (_("Allows use of some additional encoder plugins\n\n"));
+  else if (!lives_strcmp(exe, EXEC_MD5SUM)) pt2 = (_("Allows checking for file changes, "
         "enabing additional files to be cached in memory.\n\n"));
-  else if (!lives_strcmp(exe, EXEC_YOUTUBE_DL)) pt2 = lives_strdup(_("Enables download and import of files from "
+  else if (!lives_strcmp(exe, EXEC_YOUTUBE_DL)) pt2 = (_("Enables download and import of files from "
         "Youtube and other sites.\n\n"));
-  else if (!lives_strcmp(exe, EXEC_SSH_ASKPASS)) pt2 = lives_strdup(_("Required for secure password entry when "
+  else if (!lives_strcmp(exe, EXEC_SSH_ASKPASS)) pt2 = (_("Required for secure password entry when "
         "needed to update youtube-dl.\n\n"));
-  else if (!lives_strcmp(exe, EXEC_XWININFO)) pt2 = lives_strdup(_("Enables identification of external windows "
+  else if (!lives_strcmp(exe, EXEC_XWININFO)) pt2 = (_("Enables identification of external windows "
         "so that they can be recorded.\n\n"));
   else return lives_strdup_free(pt1, "");
   return lives_concat(pt1, pt2);
@@ -1073,7 +1073,7 @@ static char *explain_missing(const char *exe) {
 }
 
 void explain_missing_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-  char *title = lives_strdup(_("What is missing ?")), *text = lives_strdup("");
+  char *title = (_("What is missing ?")), *text = lives_strdup("");
 
   if (capable->has_file == UNCHECKED) capable->has_file = has_executable(EXEC_FILE);
 
@@ -1095,8 +1095,8 @@ void explain_missing_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     do_info_dialog(_("All optional components located\n"));
     return;
   }
-  text = lives_concat(text, lives_strdup(_("\n\nIf you DO have any of these missing components, please ensure they are "
-                                         "located in your $PATH before restarting LiVES")));
+  text = lives_concat(text, (_("\n\nIf you DO have any of these missing components, please ensure they are "
+                               "located in your $PATH before restarting LiVES")));
   widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
   create_text_window(title, text, NULL);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;;

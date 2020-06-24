@@ -10859,8 +10859,8 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
     if (sb_red != NULL) {
       layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY, NULL);
-      spinbutton_red = lives_standard_spin_button_new((tmp = lives_strdup(_("_Red"))), rgba->red / 255., 0., 255., 1., 1., 0,
-                       (LiVESBox *)hbox, (tmp2 = lives_strdup(_("The red value (0 - 255)"))));
+      spinbutton_red = lives_standard_spin_button_new((tmp = (_("_Red"))), rgba->red / 255., 0., 255., 1., 1., 0,
+                       (LiVESBox *)hbox, (tmp2 = (_("The red value (0 - 255)"))));
       lives_free(tmp);
       lives_free(tmp2);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY, layout);
@@ -10879,8 +10879,8 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
     if (sb_green != NULL) {
       layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY, NULL);
-      spinbutton_green = lives_standard_spin_button_new((tmp = lives_strdup(_("_Green"))), rgba->green / 255., 0., 255., 1., 1., 0,
-                         (LiVESBox *)hbox, (tmp2 = lives_strdup(_("The green value (0 - 255)"))));
+      spinbutton_green = lives_standard_spin_button_new((tmp = (_("_Green"))), rgba->green / 255., 0., 255., 1., 1., 0,
+                         (LiVESBox *)hbox, (tmp2 = (_("The green value (0 - 255)"))));
       lives_free(tmp);
       lives_free(tmp2);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY, layout);
@@ -10899,8 +10899,8 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
     if (sb_blue != NULL) {
       layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY, NULL);
-      spinbutton_blue = lives_standard_spin_button_new((tmp = lives_strdup(_("_Blue"))), rgba->blue / 255., 0., 255., 1., 1., 0,
-                        (LiVESBox *)hbox, (tmp2 = lives_strdup(_("The blue value (0 - 255)"))));
+      spinbutton_blue = lives_standard_spin_button_new((tmp = (_("_Blue"))), rgba->blue / 255., 0., 255., 1., 1., 0,
+                        (LiVESBox *)hbox, (tmp2 = (_("The blue value (0 - 255)"))));
       lives_free(tmp);
       lives_free(tmp2);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY, layout);
@@ -10919,8 +10919,8 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
     if (use_alpha && sb_alpha != NULL) {
       layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY, NULL);
-      spinbutton_alpha = lives_standard_spin_button_new((tmp = lives_strdup(_("_Alpha"))), rgba->alpha / 255., 0., 255., 1., 1., 0,
-                         (LiVESBox *)hbox, (tmp2 = lives_strdup(_("The alpha value (0 - 255)"))));
+      spinbutton_alpha = lives_standard_spin_button_new((tmp = (_("_Alpha"))), rgba->alpha / 255., 0., 255., 1., 1., 0,
+                         (LiVESBox *)hbox, (tmp2 = (_("The alpha value (0 - 255)"))));
       lives_free(tmp);
       lives_free(tmp2);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY, layout);
@@ -12530,13 +12530,13 @@ WIDGET_HELPER_GLOBAL_INLINE lives_colRGBA64_t *lives_rgba_copy(lives_colRGBA64_t
 LiVESList *get_textsizes_list(void) {
   LiVESList *textsize_list = NULL;
 #ifdef GUI_GTK
-  textsize_list = lives_list_append(textsize_list, lives_strdup(_("Extra extra small")));
-  textsize_list = lives_list_append(textsize_list, lives_strdup(_("Extra small")));
-  textsize_list = lives_list_append(textsize_list, lives_strdup(_("Small")));
-  textsize_list = lives_list_append(textsize_list, lives_strdup(_("Medium")));
-  textsize_list = lives_list_append(textsize_list, lives_strdup(_("Large")));
-  textsize_list = lives_list_append(textsize_list, lives_strdup(_("Extra large")));
-  textsize_list = lives_list_append(textsize_list, lives_strdup(_("Extra extra large")));
+  textsize_list = lives_list_append(textsize_list, (_("Extra extra small")));
+  textsize_list = lives_list_append(textsize_list, (_("Extra small")));
+  textsize_list = lives_list_append(textsize_list, (_("Small")));
+  textsize_list = lives_list_append(textsize_list, (_("Medium")));
+  textsize_list = lives_list_append(textsize_list, (_("Large")));
+  textsize_list = lives_list_append(textsize_list, (_("Extra large")));
+  textsize_list = lives_list_append(textsize_list, (_("Extra extra large")));
 #endif
   return textsize_list;
 }

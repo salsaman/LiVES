@@ -2254,9 +2254,9 @@ LiVESWidget *create_rte_window(void) {
     else  {
       switch (i) {
       case 9:
-        labelt = lives_strdup(_("minus")); break;
+        labelt = (_("minus")); break;
       case 10:
-        labelt = lives_strdup(_("equals")); break;
+        labelt = (_("equals")); break;
       default:
         labelt = lives_strdup("????");
         break;
@@ -2285,8 +2285,8 @@ LiVESWidget *create_rte_window(void) {
     hbox2 = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
 
-    key_grabs[i] = lives_standard_radio_button_new((tmp = lives_strdup(_("Key grab"))), &grab_group, LIVES_BOX(hbox2),
-                   (tmp2 = lives_strdup(_("Grab keyboard for this effect key"))));
+    key_grabs[i] = lives_standard_radio_button_new((tmp = (_("Key grab"))), &grab_group, LIVES_BOX(hbox2),
+                   (tmp2 = (_("Grab keyboard for this effect key"))));
     lives_free(tmp);
     lives_free(tmp2);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_grabs[i]), mainw->rte_keys == i);

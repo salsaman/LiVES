@@ -92,7 +92,7 @@ void on_warn_mask_toggled(LiVESToggleButton *togglebutton, livespointer user_dat
 
 
 static void add_xlays_widget(LiVESBox *box) {
-  char *tmp = lives_strdup(_("Show affected _layouts"));
+  char *tmp = (_("Show affected _layouts"));
   add_list_expander(box, tmp, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V, mainw->xlays);
   lives_free(tmp);
 }
@@ -951,7 +951,7 @@ boolean check_storage_space(int clipno, boolean is_processing) {
   lives_storage_status_t ds;
 
   char *msg, *tmp;
-  char *pausstr = lives_strdup(_("Processing has been paused."));
+  char *pausstr = (_("Processing has been paused."));
 
   if (IS_VALID_CLIP(clipno)) sfile = mainw->files[clipno];
 
@@ -2872,19 +2872,19 @@ boolean rdet_suggest_values(int width, int height, double fps, int fps_num, int 
       (!anr && (rdet->width != width || rdet->height != height) && height * width > 0) ||
       (arate != rdet->arate && arate > 0)) {
     lives_free(msg2);
-    msg2 = lives_strdup(_("LiVES recommends the following settings:\n\n"));
+    msg2 = (_("LiVES recommends the following settings:\n\n"));
     if (swap_endian || (asigned == 1 && rdet->aendian == AFORM_UNSIGNED) || (asigned == 2 && rdet->aendian == AFORM_SIGNED)
         || (arate > 0 && arate != rdet->arate)) {
       char *sstring;
       char *estring;
 
-      if (asigned == 1 && rdet->aendian == AFORM_UNSIGNED) sstring = lives_strdup(_(", signed"));
-      else if (asigned == 2 && rdet->aendian == AFORM_SIGNED) sstring = lives_strdup(_(", unsigned"));
+      if (asigned == 1 && rdet->aendian == AFORM_UNSIGNED) sstring = (_(", signed"));
+      else if (asigned == 2 && rdet->aendian == AFORM_SIGNED) sstring = (_(", unsigned"));
       else sstring = lives_strdup("");
 
       if (swap_endian) {
-        if (mainw->endian != AFORM_BIG_ENDIAN) estring = lives_strdup(_(", little-endian"));
-        else estring = lives_strdup(_(", big-endian"));
+        if (mainw->endian != AFORM_BIG_ENDIAN) estring = (_(", little-endian"));
+        else estring = (_(", big-endian"));
       } else estring = lives_strdup("");
 
       ochange = TRUE;
@@ -2913,14 +2913,14 @@ boolean rdet_suggest_values(int width, int height, double fps, int fps_num, int 
     if (arate < 1 || ((rdet->width != width || rdet->height != height) && height * width > 0)) {
       lives_free(msg6);
       if (!ochange) anr = FALSE;
-      msg6 = lives_strdup(_("\nYou may wish to:\n"));
+      msg6 = (_("\nYou may wish to:\n"));
       if ((rdet->width != width || rdet->height != height) && height * width > 0) {
         lives_free(msg7);
         msg7 = lives_strdup_printf(_("resize video to %d x %d pixels\n"), width, height);
       } else anr = FALSE;
       if (arate < 1) {
         lives_free(msg8);
-        msg8 = lives_strdup(_("disable audio, since the target encoder cannot encode audio\n"));
+        msg8 = (_("disable audio, since the target encoder cannot encode audio\n"));
       }
     } else anr = FALSE;
   }
@@ -2976,17 +2976,17 @@ boolean do_encoder_restrict_dialog(int width, int height, double fps, int fps_nu
       (fps_denom > 0 && (fps_num * 1.) / (fps_denom * 1.) != cfps) || (!anr &&
           (chsize != width || cvsize != height) && height * width > 0)) {
     lives_free(msg2);
-    msg2 = lives_strdup(_("LiVES must:\n"));
+    msg2 = (_("LiVES must:\n"));
     if (swap_endian || asigned != 0 || (arate > 0 && arate != carate)) {
       char *sstring;
       char *estring;
-      if (asigned == 1) sstring = lives_strdup(_(", signed"));
-      else if (asigned == 2) sstring = lives_strdup(_(", unsigned"));
+      if (asigned == 1) sstring = (_(", signed"));
+      else if (asigned == 2) sstring = (_(", unsigned"));
       else sstring = lives_strdup("");
 
       if (swap_endian) {
-        if (cfile->signed_endian & AFORM_BIG_ENDIAN) estring = lives_strdup(_(", little-endian"));
-        else estring = lives_strdup(_(", big-endian"));
+        if (cfile->signed_endian & AFORM_BIG_ENDIAN) estring = (_(", little-endian"));
+        else estring = (_(", big-endian"));
       } else estring = lives_strdup("");
 
       lives_free(msg3);
@@ -3012,7 +3012,7 @@ boolean do_encoder_restrict_dialog(int width, int height, double fps, int fps_nu
     if ((chsize != width || cvsize != height) && height * width > 0) {
       lives_free(msg6);
       lives_free(msg7);
-      msg6 = lives_strdup(_("\nYou may wish to:\n"));
+      msg6 = (_("\nYou may wish to:\n"));
       msg7 = lives_strdup_printf(_("Set video size to %d x %d pixels\n"), width, height);
     } else anr = FALSE;
   }
@@ -3021,7 +3021,7 @@ boolean do_encoder_restrict_dialog(int width, int height, double fps, int fps_nu
     msg_b = lives_strdup(
               _("\nYou will be able to undo these changes afterwards.\n\nClick `OK` to proceed, `Cancel` to abort.\n\n"));
   } else {
-    msg_b = lives_strdup(_("\nChanges applied to the selection will not be permanent.\n\n"));
+    msg_b = (_("\nChanges applied to the selection will not be permanent.\n\n"));
   }
   lives_free(msg1);
   lives_free(msg2);
@@ -3172,7 +3172,7 @@ LIVES_GLOBAL_INLINE void do_rendered_fx_dialog(void) {
 
 
 void do_audio_import_error(void) {
-  char *msg = lives_strdup(_("Sorry, unknown audio type.\n\n (Filenames must end in"));
+  char *msg = (_("Sorry, unknown audio type.\n\n (Filenames must end in"));
   char *tmp;
 
   char *filt[] = LIVES_AUDIO_LOAD_FILTER;
@@ -3900,7 +3900,7 @@ LIVES_GLOBAL_INLINE boolean do_existing_subs_warning(void) {
 
 
 void do_invalid_subs_error(void) {
-  char *msg = lives_strdup(_("\nLiVES currently only supports subtitles of type"));
+  char *msg = (_("\nLiVES currently only supports subtitles of type"));
   char *tmp;
 
   char *filt[] = LIVES_SUBS_FILTER;
@@ -3964,8 +3964,8 @@ LIVES_GLOBAL_INLINE void do_locked_in_vdevs_error(void) {
 
 
 LIVES_GLOBAL_INLINE void do_do_not_close_d(void) {
-  char *msg = lives_strdup(_("\n\nCLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\nDO NOT SHUT DOWN OR "
-                             "CLOSE LIVES !\n"));
+  char *msg = (_("\n\nCLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\nDO NOT SHUT DOWN OR "
+                 "CLOSE LIVES !\n"));
   create_info_error_dialog(LIVES_DIALOG_WARN, msg, NULL, 0, FALSE);
   lives_free(msg);
 }

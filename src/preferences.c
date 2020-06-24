@@ -517,7 +517,7 @@ static void set_workdir_label_text(LiVESLabel *label, const char *dir) {
   // use lives_strdup* since the translation string is auto-freed()
 
   if (!is_writeable_dir(dir)) {
-    tmpx2 = lives_strdup(_("\n\n\n(Free space = UNKNOWN)"));
+    tmpx2 = (_("\n\n\n(Free space = UNKNOWN)"));
   } else {
     free_ds = lives_format_storage_space_string(get_ds_free(dir));
     tmpx2 = lives_strdup_printf(_("\n\n\n(Free space = %s)"), free_ds);
@@ -2371,7 +2371,7 @@ void set_acodec_list_from_allowed(_prefsw *prefsw, render_details *rdet) {
   for (idx = 0; strlen(anames[idx]); idx++) {
     if (future_prefs->encoder.of_allowed_acodecs & (1 << idx)) {
       if (idx == AUDIO_CODEC_PCM) prefs->acodec_list = lives_list_append(prefs->acodec_list,
-            lives_strdup(_("PCM (highest quality; largest files)")));
+            (_("PCM (highest quality; largest files)")));
       else prefs->acodec_list = lives_list_append(prefs->acodec_list, lives_strdup(anames[idx]));
       prefs->acodec_list_to_format[count++] = idx;
       if (future_prefs->encoder.audio_codec == idx) is_allowed = TRUE;
@@ -3170,10 +3170,10 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   prefsw->forcesmon_hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
-  prefsw->forcesmon = lives_standard_check_button_new((tmp = lives_strdup(_("Force single monitor"))),
+  prefsw->forcesmon = lives_standard_check_button_new((tmp = (_("Force single monitor"))),
                       prefs->force_single_monitor,
                       LIVES_BOX(prefsw->forcesmon_hbox),
-                      (tmp2 = lives_strdup(_("Ignore all except the first monitor."))));
+                      (tmp2 = (_("Ignore all except the first monitor."))));
   lives_free(tmp);
   lives_free(tmp2);
 
@@ -3377,10 +3377,10 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->checkbutton_instant_open = lives_standard_check_button_new((tmp = lives_strdup(_("Use instant opening when possible"))),
+  prefsw->checkbutton_instant_open = lives_standard_check_button_new((tmp = (_("Use instant opening when possible"))),
                                      prefs->instant_open,
                                      LIVES_BOX(hbox),
-                                     (tmp2 = lives_strdup(_("Enable instant opening of some file types using decoder plugins"))));
+                                     (tmp2 = (_("Enable instant opening of some file types using decoder plugins"))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -3459,7 +3459,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                                      _("Enable automatic deinterlacing when possible"))),
                                    prefs->auto_deint,
                                    LIVES_BOX(hbox),
-                                   (tmp2 = lives_strdup(_("Automatically deinterlace frames when a plugin suggests it"))));
+                                   (tmp2 = (_("Automatically deinterlace frames when a plugin suggests it"))));
   lives_free(tmp);
   lives_free(tmp2);
 
@@ -3470,7 +3470,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                                     _("Automatic trimming / padding of audio when possible"))),
                                   prefs->auto_trim_audio,
                                   LIVES_BOX(hbox),
-                                  (tmp2 = lives_strdup(_("Automatically trim or pad audio when a plugin suggests it"))));
+                                  (tmp2 = (_("Automatically trim or pad audio when a plugin suggests it"))));
   lives_free(tmp);
   lives_free(tmp2);
 
@@ -3478,9 +3478,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->checkbutton_nobord = lives_standard_check_button_new((tmp = lives_strdup(_("Ignore blank borders when possible"))),
+  prefsw->checkbutton_nobord = lives_standard_check_button_new((tmp = (_("Ignore blank borders when possible"))),
                                prefs->auto_nobord, LIVES_BOX(hbox),
-                               (tmp2 = lives_strdup(_("Clip any blank borders from frames where possible"))));
+                               (tmp2 = (_("Clip any blank borders from frames where possible"))));
   lives_free(tmp);
   lives_free(tmp2);
 
@@ -3525,22 +3525,22 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
       (tmp = lives_strdup_printf(_("_Enable adaptive quality (%s)"),
                                  mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED])),
       prefs->pbq_adaptive, LIVES_BOX(hbox),
-      (tmp2 = lives_strdup(_(
-                             "Allows the quality to be adjusted automatically, prioritising smooth playback"))));
+      (tmp2 = (_(
+                 "Allows the quality to be adjusted automatically, prioritising smooth playback"))));
   lives_free(tmp);
   lives_free(tmp2);
 
   prefsw->pbq_list = NULL;
   // TRANSLATORS: video quality, max len 50
-  prefsw->pbq_list = lives_list_append(prefsw->pbq_list, lives_strdup(_("Low - can improve performance on slower machines")));
+  prefsw->pbq_list = lives_list_append(prefsw->pbq_list, (_("Low - can improve performance on slower machines")));
   // TRANSLATORS: video quality, max len 50
-  prefsw->pbq_list = lives_list_append(prefsw->pbq_list, lives_strdup(_("Normal - recommended for most users")));
+  prefsw->pbq_list = lives_list_append(prefsw->pbq_list, (_("Normal - recommended for most users")));
   // TRANSLATORS: video quality, max len 50
-  prefsw->pbq_list = lives_list_append(prefsw->pbq_list, lives_strdup(_("High - can improve quality on very fast machines")));
+  prefsw->pbq_list = lives_list_append(prefsw->pbq_list, (_("High - can improve quality on very fast machines")));
 
   widget_opts.expand = LIVES_EXPAND_EXTRA;
-  prefsw->pbq_combo = lives_standard_combo_new((tmp = lives_strdup(_("Preview _quality"))), prefsw->pbq_list, LIVES_BOX(hbox),
-                      (tmp2 = lives_strdup(_("The preview quality for video playback - affects resizing"))));
+  prefsw->pbq_combo = lives_standard_combo_new((tmp = (_("Preview _quality"))), prefsw->pbq_list, LIVES_BOX(hbox),
+                      (tmp2 = (_("The preview quality for video playback - affects resizing"))));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   lives_free(tmp);
@@ -3621,7 +3621,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                              LIVES_GUI_CALLBACK(after_vpp_changed), (livespointer) advbutton);
 
   prefsw->checkbutton_stream_audio =
-    lives_standard_check_button_new((tmp = lives_strdup(_("Stream audio"))),
+    lives_standard_check_button_new((tmp = (_("Stream audio"))),
                                     prefs->stream_audio_out, LIVES_BOX(vbox),
                                     (tmp2 = lives_strdup
                                         (_("Stream audio to playback plugin"))));
@@ -3634,7 +3634,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                             LIVES_GUI_CALLBACK(stream_audio_toggled), NULL);
 
   prefsw->checkbutton_rec_after_pb =
-    lives_standard_check_button_new((tmp = lives_strdup(_("Record player output"))),
+    lives_standard_check_button_new((tmp = (_("Record player output"))),
                                     (prefs->rec_opts & REC_AFTER_PB), LIVES_BOX(vbox),
                                     (tmp2 = lives_strdup
                                         (_("Record output from player instead of input to player"))));
@@ -3726,9 +3726,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->checkbutton_parestart = lives_standard_check_button_new((tmp = lives_strdup(_("Restart pulseaudio on LiVES startup"))),
+  prefsw->checkbutton_parestart = lives_standard_check_button_new((tmp = (_("Restart pulseaudio on LiVES startup"))),
                                   prefs->pa_restart, LIVES_BOX(hbox),
-                                  (tmp2 = lives_strdup(_("Recommended, but may interfere with other running "
+                                  (tmp2 = (_("Recommended, but may interfere with other running "
                                           "audio applications"))));
   lives_free(tmp);
   lives_free(tmp2);
@@ -4032,14 +4032,14 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->checkbutton_apply_gamma = lives_standard_check_button_new(_("Automatic gamma correction (requires restart)"),
-                                    prefs->apply_gamma, LIVES_BOX(hbox), (tmp = lives_strdup(_("Also affects the monitor gamma !! (for now...)"))));
+                                    prefs->apply_gamma, LIVES_BOX(hbox), (tmp = (_("Also affects the monitor gamma !! (for now...)"))));
   lives_free(tmp);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->spinbutton_rte_keys = lives_standard_spin_button_new
-                                ((tmp = lives_strdup(_("Number of _real time effect keys"))), prefs->rte_keys_virtual, FX_KEYS_PHYSICAL,
+                                ((tmp = (_("Number of _real time effect keys"))), prefs->rte_keys_virtual, FX_KEYS_PHYSICAL,
                                  FX_KEYS_MAX_VIRTUAL, 1., 1., 0, LIVES_BOX(hbox),
                                  (tmp2 = lives_strdup(
                                      _("The number of \"virtual\" real time effect keys. "
@@ -4216,7 +4216,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   prefsw->workdir_entry = lives_standard_direntry_new("",
                           (tmp = lives_filename_to_utf8(strlen(future_prefs->workdir) > 0 ? future_prefs->workdir : prefs->workdir, -1, NULL, NULL,
                                  NULL)),
-                          LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), (tmp2 = lives_strdup(_("LiVES working directory."))));
+                          LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), (tmp2 = (_("LiVES working directory."))));
 
   lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), hbox, 1, 2, 3, 4,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
@@ -4494,10 +4494,10 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   prefsw->cdda_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_misc), prefsw->cdda_hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->cdplay_entry = lives_standard_fileentry_new((tmp = lives_strdup(_("CD device           "))),
+  prefsw->cdplay_entry = lives_standard_fileentry_new((tmp = (_("CD device           "))),
                          (tmp2 = lives_filename_to_utf8(prefs->cdplay_device, -1, NULL, NULL, NULL)),
                          LIVES_DEVICE_DIR, MEDIUM_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(prefsw->cdda_hbox),
-                         (tmp3 = lives_strdup(_("LiVES can load audio tracks from this CD"))));
+                         (tmp3 = (_("LiVES can load audio tracks from this CD"))));
   lives_free(tmp);
   lives_free(tmp2);
   lives_free(tmp3);
@@ -4505,10 +4505,10 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_misc), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->spinbutton_def_fps = lives_standard_spin_button_new((tmp = lives_strdup(_("Default FPS        "))),
+  prefsw->spinbutton_def_fps = lives_standard_spin_button_new((tmp = (_("Default FPS        "))),
                                prefs->default_fps, 1., FPS_MAX, 1., 1., 3,
                                LIVES_BOX(hbox),
-                               (tmp2 = lives_strdup(_("Frames per second to use when none is specified"))));
+                               (tmp2 = (_("Frames per second to use when none is specified"))));
   lives_free(tmp);
   lives_free(tmp2);
 
@@ -4618,9 +4618,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
-  prefsw->theme_style3 = lives_standard_check_button_new((tmp = lives_strdup(_("Theme is _light"))), (palette->style & STYLE_3),
+  prefsw->theme_style3 = lives_standard_check_button_new((tmp = (_("Theme is _light"))), (palette->style & STYLE_3),
                          LIVES_BOX(hbox),
-                         (tmp2 = lives_strdup(_("Affects some contrast details of the timeline"))));
+                         (tmp2 = (_("Affects some contrast details of the timeline"))));
   lives_free(tmp);
   lives_free(tmp2);
 
@@ -4646,7 +4646,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   prefsw->frameblank_entry = lives_standard_fileentry_new(" ", mainw->frameblank_path,
                              prefs->def_image_dir, MEDIUM_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
-                             (tmp2 = lives_strdup(_("The frame image which is shown when there is no clip loaded."))));
+                             (tmp2 = (_("The frame image which is shown when there is no clip loaded."))));
   lives_free(tmp2);
 
   prefsw->fb_filebutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
@@ -4661,7 +4661,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   prefsw->sepimg_entry = lives_standard_fileentry_new(" ", mainw->sepimg_path,
                          prefs->def_image_dir, MEDIUM_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
-                         (tmp2 = lives_strdup(_("The image shown in the center of the interface."))));
+                         (tmp2 = (_("The image shown in the center of the interface."))));
   lives_free(tmp2);
 
   prefsw->se_filebutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
@@ -4683,7 +4683,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   layout = lives_layout_new(LIVES_BOX(vbox));
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   prefsw->cbutton_cesel = lives_standard_color_button_new(LIVES_BOX(hbox),
-                          (tmp = lives_strdup(_("Selected frames/audio (clip editor)"))),
+                          (tmp = (_("Selected frames/audio (clip editor)"))),
                           FALSE, &palette->ce_sel, &sp_red, &sp_green, &sp_blue, NULL);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_cesel), LIVES_WIDGET_COLOR_SET_SIGNAL,
@@ -4692,7 +4692,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->cbutton_ceunsel = lives_standard_color_button_new(LIVES_BOX(hbox),
-                            (tmp = lives_strdup(_("Unselected frames/audio (clip editor)"))),
+                            (tmp = (_("Unselected frames/audio (clip editor)"))),
                             FALSE, &palette->ce_unsel, &sp_red, &sp_green, &sp_blue, NULL);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_ceunsel), LIVES_WIDGET_COLOR_SET_SIGNAL,
@@ -4701,7 +4701,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->cbutton_evbox = lives_standard_color_button_new(LIVES_BOX(hbox),
-                          (tmp = lives_strdup(_("Track background (multitrack)"))),
+                          (tmp = (_("Track background (multitrack)"))),
                           FALSE, &palette->mt_evbox, &sp_red, &sp_green, &sp_blue, NULL);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_evbox), LIVES_WIDGET_COLOR_SET_SIGNAL,
@@ -4709,7 +4709,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                             NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  prefsw->cbutton_vidcol = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = lives_strdup(_("Video block (multitrack)"))),
+  prefsw->cbutton_vidcol = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = (_("Video block (multitrack)"))),
                            FALSE, &palette->vidcol, &sp_red, &sp_green, &sp_blue, NULL);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_vidcol), LIVES_WIDGET_COLOR_SET_SIGNAL,
@@ -4717,7 +4717,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                             NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  prefsw->cbutton_audcol = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = lives_strdup(_("Audio block (multitrack)"))),
+  prefsw->cbutton_audcol = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = (_("Audio block (multitrack)"))),
                            FALSE, &palette->audcol, &sp_red, &sp_green, &sp_blue, NULL);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_audcol), LIVES_WIDGET_COLOR_SET_SIGNAL,
@@ -4725,7 +4725,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                             NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  prefsw->cbutton_fxcol = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = lives_strdup(_("Effects block (multitrack)"))),
+  prefsw->cbutton_fxcol = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = (_("Effects block (multitrack)"))),
                           FALSE, &palette->fxcol, &sp_red, &sp_green, &sp_blue, NULL);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_fxcol), LIVES_WIDGET_COLOR_SET_SIGNAL,
@@ -4733,7 +4733,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                             NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  prefsw->cbutton_mtmark = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = lives_strdup(_("Timeline mark (multitrack)"))),
+  prefsw->cbutton_mtmark = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = (_("Timeline mark (multitrack)"))),
                            FALSE, &palette->mt_mark, &sp_red, &sp_green, &sp_blue, NULL);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_mtmark), LIVES_WIDGET_COLOR_SET_SIGNAL,
@@ -4742,7 +4742,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->cbutton_tlreg = lives_standard_color_button_new(LIVES_BOX(hbox),
-                          (tmp = lives_strdup(_("Timeline selection (multitrack)"))),
+                          (tmp = (_("Timeline selection (multitrack)"))),
                           FALSE, &palette->mt_timeline_reg, &sp_red, &sp_green, &sp_blue, NULL);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_tlreg), LIVES_WIDGET_COLOR_SET_SIGNAL,
@@ -4752,7 +4752,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   widget_color_to_lives_rgba(&rgba, &palette->mt_timecode_bg);
   prefsw->cbutton_tcbg = lives_standard_color_button_new(LIVES_BOX(hbox),
-                         (tmp = lives_strdup(_("Timecode background (multitrack)"))),
+                         (tmp = (_("Timecode background (multitrack)"))),
                          FALSE, &rgba, &sp_red, &sp_green, &sp_blue, NULL);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_tcbg), LIVES_WIDGET_COLOR_SET_SIGNAL,
@@ -4762,7 +4762,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   widget_color_to_lives_rgba(&rgba, &palette->mt_timecode_fg);
   prefsw->cbutton_tcfg = lives_standard_color_button_new(LIVES_BOX(hbox),
-                         (tmp = lives_strdup(_("Timecode foreground (multitrack)"))),
+                         (tmp = (_("Timecode foreground (multitrack)"))),
                          FALSE, &rgba, &sp_red, &sp_green, &sp_blue, NULL);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->cbutton_tcfg), LIVES_WIDGET_COLOR_SET_SIGNAL,
@@ -4770,7 +4770,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                             NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  prefsw->cbutton_fsur = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = lives_strdup(_("Frame surround"))),
+  prefsw->cbutton_fsur = lives_standard_color_button_new(LIVES_BOX(hbox), (tmp = (_("Frame surround"))),
                          FALSE, &palette->frame_surround, &sp_red, &sp_green, &sp_blue, NULL);
   lives_free(tmp);
 
@@ -5010,9 +5010,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->omc_js_entry = lives_standard_fileentry_new((tmp = lives_strdup(_("_Joystick device")))
+  prefsw->omc_js_entry = lives_standard_fileentry_new((tmp = (_("_Joystick device")))
                          , prefs->omc_js_fname, LIVES_DEVICE_DIR, LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
-                         (tmp2 = lives_strdup(_("The joystick device, e.g. /dev/input/js0"))));
+                         (tmp2 = (_("The joystick device, e.g. /dev/input/js0"))));
   lives_free(tmp);
   lives_free(tmp2);
 
@@ -5032,7 +5032,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   add_fill_to_box(LIVES_BOX(hbox));
 
   if (!(mainw->midi_channel_lock &&
-        prefs->midi_rcv_channel > -1)) mchanlist = lives_list_append(mchanlist, lives_strdup(_("All channels")));
+        prefs->midi_rcv_channel > -1)) mchanlist = lives_list_append(mchanlist, (_("All channels")));
   for (i = 0; i < 16; i++) {
     midichan = lives_strdup_printf("%d", i);
     mchanlist = lives_list_append(mchanlist, midichan);
@@ -5058,17 +5058,17 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_midi), prefsw->midi_hbox, FALSE, FALSE, widget_opts.packing_height);
 
 #ifdef ALSA_MIDI
-  prefsw->alsa_midi = lives_standard_radio_button_new((tmp = lives_strdup(_("Use _ALSA MIDI (recommended)"))), &alsa_midi_group,
+  prefsw->alsa_midi = lives_standard_radio_button_new((tmp = (_("Use _ALSA MIDI (recommended)"))), &alsa_midi_group,
                       LIVES_BOX(prefsw->midi_hbox),
-                      (tmp2 = lives_strdup(_("Create an ALSA MIDI port which other MIDI devices can be connected to"))));
+                      (tmp2 = (_("Create an ALSA MIDI port which other MIDI devices can be connected to"))));
 
   lives_free(tmp);
   lives_free(tmp2);
 
-  prefsw->alsa_midi_dummy = lives_standard_check_button_new((tmp = lives_strdup(_("Create dummy MIDI output"))),
+  prefsw->alsa_midi_dummy = lives_standard_check_button_new((tmp = (_("Create dummy MIDI output"))),
                             prefs->alsa_midi_dummy,
                             LIVES_BOX(prefsw->midi_hbox),
-                            (tmp2 = lives_strdup(_("Create a dummy ALSA MIDI output port."))));
+                            (tmp2 = (_("Create a dummy ALSA MIDI output port."))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -5078,9 +5078,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   hbox = lives_hbox_new(FALSE, 0);
 
-  raw_midi_button = lives_standard_radio_button_new((tmp = lives_strdup(_("Use _raw MIDI"))), &alsa_midi_group,
+  raw_midi_button = lives_standard_radio_button_new((tmp = (_("Use _raw MIDI"))), &alsa_midi_group,
                     LIVES_BOX(hbox),
-                    (tmp2 = lives_strdup(_("Read directly from the MIDI device"))));
+                    (tmp2 = (_("Read directly from the MIDI device"))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -5093,9 +5093,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
-  prefsw->omc_midi_entry = lives_standard_fileentry_new((tmp = lives_strdup(_("_MIDI device"))), prefs->omc_midi_fname,
+  prefsw->omc_midi_entry = lives_standard_fileentry_new((tmp = (_("_MIDI device"))), prefs->omc_midi_fname,
                            LIVES_DEVICE_DIR, LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
-                           (tmp2 = lives_strdup(_("The MIDI device, e.g. /dev/input/midi0"))));
+                           (tmp2 = (_("The MIDI device, e.g. /dev/input/midi0"))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -5108,7 +5108,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->spinbutton_midicr = lives_standard_spin_button_new((tmp = lives_strdup(_("MIDI check _rate"))),
+  prefsw->spinbutton_midicr = lives_standard_spin_button_new((tmp = (_("MIDI check _rate"))),
                               prefs->midi_check_rate, 1., 2000., 1., 10., 0,
                               LIVES_BOX(hbox),
                               (tmp2 = lives_strdup(
@@ -5120,10 +5120,10 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  prefsw->spinbutton_midirpt = lives_standard_spin_button_new((tmp = lives_strdup(_("MIDI repeat"))),
+  prefsw->spinbutton_midirpt = lives_standard_spin_button_new((tmp = (_("MIDI repeat"))),
                                prefs->midi_rpt, 1., 10000., 10., 100., 0,
                                LIVES_BOX(hbox),
-                               (tmp2 = lives_strdup(_("Number of non-reads allowed between succesive reads."))));
+                               (tmp2 = (_("Number of non-reads allowed between succesive reads."))));
   lives_free(tmp);
   lives_free(tmp2);
 

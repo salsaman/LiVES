@@ -22,7 +22,7 @@ void add_suffix_check(LiVESBox *box, const char *ext) {
 
   LiVESWidget *checkbutton;
 
-  if (ext == NULL) ltext = lives_strdup(_("Let LiVES set the _file extension"));
+  if (ext == NULL) ltext = (_("Let LiVES set the _file extension"));
   else ltext = lives_strdup_printf(_("Let LiVES set the _file extension (.%s)"), ext);
   checkbutton = lives_standard_check_button_new(ltext, mainw->fx1_bool, box, NULL);
   lives_free(ltext);
@@ -35,9 +35,9 @@ void add_suffix_check(LiVESBox *box, const char *ext) {
 static LiVESWidget *add_deinterlace_checkbox(LiVESBox *for_deint) {
   char *tmp, *tmp2;
   LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
-  LiVESWidget *checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Apply _Deinterlace"))), mainw->open_deint,
+  LiVESWidget *checkbutton = lives_standard_check_button_new((tmp = (_("Apply _Deinterlace"))), mainw->open_deint,
                              LIVES_BOX(hbox),
-                             (tmp2 = lives_strdup(_("If this is set, frames will be deinterlaced as they are imported."))));
+                             (tmp2 = (_("If this is set, frames will be deinterlaced as they are imported."))));
   lives_free(tmp);
   lives_free(tmp2);
 
@@ -77,7 +77,7 @@ static void pv_sel_changed(LiVESFileChooser *chooser, livespointer user_data) {
 void show_playbar_labels(int clipno) {
   lives_clip_t *sfile = mainw->files[clipno];
   char *tmp, *tmpch;
-  char *str_video = lives_strdup(_("Video")), *str_opening;
+  char *str_video = (_("Video")), *str_opening;
 
   lives_label_set_text(LIVES_LABEL(mainw->vidbar), str_video);
   tmp = get_achannel_name(2, 0);
@@ -104,7 +104,7 @@ void show_playbar_labels(int clipno) {
     return;
   }
 
-  str_opening = lives_strdup(_("[opening...]"));
+  str_opening = (_("[opening...]"));
 
   if (CLIP_HAS_VIDEO(clipno)) {
     if (sfile->opening_loc || (sfile->frames == 123456789 && sfile->opening)) {
@@ -117,9 +117,9 @@ void show_playbar_labels(int clipno) {
         tmp = lives_strdup_printf(_("%s [%.2f sec]"), str_video, sfile->video_time);
       } else {
         if (sfile->video_time <= 0. && sfile->frames > 0) {
-          tmp = lives_strdup(_("(Undefined)"));
+          tmp = (_("(Undefined)"));
         } else {
-          tmp = lives_strdup(_("(No video)"));
+          tmp = (_("(No video)"));
         }
       }
     }
@@ -133,7 +133,7 @@ void show_playbar_labels(int clipno) {
   lives_free(str_video);
 
   if (!CLIP_HAS_AUDIO(clipno)) {
-    tmp = lives_strdup(_("(No audio)"));
+    tmp = (_("(No audio)"));
   } else {
     lives_widget_show(mainw->hruler);
 
@@ -1398,7 +1398,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
     title = get_menu_name(cfile, TRUE);
   else {
     offset = 2;
-    title = lives_strdup(_("Multitrack Details"));
+    title = (_("Multitrack Details"));
   }
 
   filew->dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
@@ -1489,7 +1489,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
 
   if (audio_channels > 0) {
     if (audio_channels > 1) tmp = get_achannel_name(2, 0);
-    else tmp = lives_strdup(_("Audio"));
+    else tmp = (_("Audio"));
 
     laudframe = lives_standard_frame_new(tmp, 0., FALSE);
     lives_free(tmp);
@@ -1629,8 +1629,8 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   if (opt_resize) {
-    if (text2 != NULL) labeltext = lives_strdup(_("<------------- (Check the box to re_size as suggested)"));
-    else labeltext = lives_strdup(_("<------------- (Check the box to use the _size recommendation)"));
+    if (text2 != NULL) labeltext = (_("<------------- (Check the box to re_size as suggested)"));
+    else labeltext = (_("<------------- (Check the box to use the _size recommendation)"));
 
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_width);
@@ -1649,8 +1649,8 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     checkbutton2 = lives_standard_check_button_new
-                   ((tmp = lives_strdup(_("Use _letterboxing to maintain aspect ratio (optional)"))), FALSE, LIVES_BOX(hbox),
-                    (tmp2 = lives_strdup(_("Draw black rectangles either above or to the sides of the image, to prevent it from stretching."))));
+                   ((tmp = (_("Use _letterboxing to maintain aspect ratio (optional)"))), FALSE, LIVES_BOX(hbox),
+                    (tmp2 = (_("Draw black rectangles either above or to the sides of the image, to prevent it from stretching."))));
 
     lives_free(tmp);
     lives_free(tmp2);
@@ -1843,9 +1843,9 @@ _insertw *create_insert_dialog(void) {
 
   hbox = lives_hbox_new(FALSE, 0);
 
-  radiobutton = lives_standard_radio_button_new((tmp = lives_strdup(_("Insert _before selection"))),
+  radiobutton = lives_standard_radio_button_new((tmp = (_("Insert _before selection"))),
                 &radiobutton1_group, LIVES_BOX(hbox),
-                (tmp2 = lives_strdup(_("Insert clipboard before selected frames"))));
+                (tmp2 = (_("Insert clipboard before selected frames"))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -1860,9 +1860,9 @@ _insertw *create_insert_dialog(void) {
 
   hbox = lives_hbox_new(FALSE, 0);
 
-  radiobutton = lives_standard_radio_button_new((tmp = lives_strdup(_("Insert _after selection"))),
+  radiobutton = lives_standard_radio_button_new((tmp = (_("Insert _after selection"))),
                 &radiobutton1_group, LIVES_BOX(hbox),
-                (tmp2 = lives_strdup(_("Insert clipboard after selected frames"))));
+                (tmp2 = (_("Insert clipboard after selected frames"))));
 
   lives_table_attach(LIVES_TABLE(table), hbox, 0, 1, 1, 2,
                      (LiVESAttachOptions)(LIVES_FILL),
@@ -2091,7 +2091,7 @@ _entryw *create_location_dialog(void) {
 
   char *title, *tmp, *tmp2;
 
-  title = lives_strdup(_("Open Location"));
+  title = (_("Open Location"));
 
   locw->dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
   lives_signal_handlers_disconnect_by_func(locw->dialog, LIVES_GUI_CALLBACK(return_true), NULL);
@@ -2120,9 +2120,9 @@ _entryw *create_location_dialog(void) {
   add_fill_to_box(LIVES_BOX(hbox));
 
   hbox = lives_hbox_new(FALSE, 0);
-  checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Do not send bandwidth information"))),
+  checkbutton = lives_standard_check_button_new((tmp = (_("Do not send bandwidth information"))),
                 prefs->no_bandwidth, LIVES_BOX(hbox),
-                (tmp2 = lives_strdup(_("Try this setting if you are having problems getting a stream"))));
+                (tmp2 = (_("Try this setting if you are having problems getting a stream"))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -2189,17 +2189,17 @@ _entryw *create_rename_dialog(int type) {
   renamew->setlist = NULL;
 
   if (type == 1) {
-    title = lives_strdup(_("Rename Clip"));
+    title = (_("Rename Clip"));
   } else if (type == 2 || type == 4 || type == 5) {
-    title = lives_strdup(_("Enter Set Name to Save as"));
+    title = (_("Enter Set Name to Save as"));
   } else if (type == 3) {
-    title = lives_strdup(_("Enter a Set Name to Reload"));
+    title = (_("Enter a Set Name to Reload"));
   } else if (type == 6) {
-    title = lives_strdup(_("Choose a Working Directory"));
+    title = (_("Choose a Working Directory"));
   } else if (type == 7) {
-    title = lives_strdup(_("Rename Current Track"));
+    title = (_("Rename Current Track"));
   } else if (type == 8) {
-    title = lives_strdup(_("Enter a Name for Your Theme"));
+    title = (_("Enter a Name for Your Theme"));
   }
 
   renamew->dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
@@ -2280,7 +2280,7 @@ _entryw *create_rename_dialog(int type) {
       else workdir = lives_build_path(capable->home_dir, LIVES_DEF_WORK_NAME, NULL);
       renamew->entry = lives_standard_direntry_new("", (tmp = F2U8(workdir)),
                        LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
-                       (tmp2 = lives_strdup(_("LiVES working directory."))));
+                       (tmp2 = (_("LiVES working directory."))));
       lives_free(tmp);
       lives_free(workdir);
     } else {
@@ -2401,7 +2401,7 @@ LiVESWidget *create_combo_dialog(int type, LiVESList * list) {
   char *label_text = NULL, *title = NULL;
 
   if (type == 1) {
-    title = lives_strdup(_("Select input device"));
+    title = (_("Select input device"));
   }
 
   combo_dialog = lives_standard_dialog_new(title, TRUE, -1, -1);
@@ -2410,7 +2410,7 @@ LiVESWidget *create_combo_dialog(int type, LiVESList * list) {
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(combo_dialog));
 
   if (type == 1) {
-    label_text = lives_strdup(_("Select input device:"));
+    label_text = (_("Select input device:"));
   }
 
   label = lives_standard_label_new(label_text);
@@ -2468,15 +2468,15 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
   int ph_mult = 4;
 
   if (type == LIVES_DEVICE_CD) {
-    title = lives_strdup(_("Load CD Track"));
+    title = (_("Load CD Track"));
   } else if (type == LIVES_DEVICE_DVD) {
-    title = lives_strdup(_("Select DVD Title/Chapter"));
+    title = (_("Select DVD Title/Chapter"));
   } else if (type == LIVES_DEVICE_VCD) {
-    title = lives_strdup(_("Select VCD Title"));
+    title = (_("Select VCD Title"));
   } else if (type == LIVES_DEVICE_INTERNAL) {
-    title = lives_strdup(_("Change Maximum Visible Tracks"));
+    title = (_("Change Maximum Visible Tracks"));
   } else {
-    title = lives_strdup(_("Device details"));
+    title = (_("Device details"));
   }
 
   cd_dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
@@ -2493,15 +2493,15 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
   if (type == LIVES_DEVICE_CD) {
     label_text = lives_strdup_printf(_("Track to load (from %s)"), prefs->cdplay_device);
   } else if (type == LIVES_DEVICE_DVD) {
-    label_text = lives_strdup(_("DVD Title"));
+    label_text = (_("DVD Title"));
   } else if (type == LIVES_DEVICE_VCD) {
-    label_text = lives_strdup(_("VCD Title"));
+    label_text = (_("VCD Title"));
   } else if (type == LIVES_DEVICE_INTERNAL) {
-    label_text = lives_strdup(_("Maximum number of tracks to display"));
+    label_text = (_("Maximum number of tracks to display"));
   } else if (type == LIVES_DEVICE_TV_CARD) {
-    label_text = lives_strdup(_("Device:        /dev/video"));
+    label_text = (_("Device:        /dev/video"));
   } else if (type == LIVES_DEVICE_FW_CARD) {
-    label_text = lives_strdup(_("Device:        fw:"));
+    label_text = (_("Device:        fw:"));
   }
 
   widget_opts.mnemonic_label = FALSE;
@@ -2703,7 +2703,7 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
 static void on_avolch_ok(LiVESButton * button, livespointer data) {
   if (fabs(cfile->vol - mainw->fx1_val) > .005) {
     uint32_t chk_mask = WARN_MASK_LAYOUT_ALTER_AUDIO;
-    char *tmp = lives_strdup(_("Changing the audio volume"));
+    char *tmp = (_("Changing the audio volume"));
     lives_general_button_clicked(button, NULL);
     if (check_for_layout_errors(tmp, mainw->current_file, 1,
                                 calc_frame_from_time4(mainw->current_file, CLIP_AUDIO_TIME(mainw->current_file)), &chk_mask)) {
@@ -2758,11 +2758,11 @@ void create_new_pb_speed(short type) {
   char *title = NULL;
 
   if (type == 1) {
-    title = lives_strdup(_("Change Playback Speed"));
+    title = (_("Change Playback Speed"));
   } else if (type == 2) {
-    title = lives_strdup(_("Resample Video"));
+    title = (_("Resample Video"));
   } else {
-    title = lives_strdup(_("Adjust Clip Volume"));
+    title = (_("Adjust Clip Volume"));
   }
 
   new_pb_speed = lives_standard_dialog_new(title, FALSE, -1, -1);
@@ -2862,8 +2862,8 @@ void create_new_pb_speed(short type) {
   /*   LiVESWidget *playbutt = lives_dialog_add_button_from_stock(LIVES_DIALOG(new_pb_speed), */
   /*                           LIVES_STOCK_MEDIA_PLAY, */
   /*                           (tmp = (cfile->real_pointer_time > 0. || (cfile->start == 1 && cfile->end == cfile->frames) ? */
-  /*                                   lives_strdup(_("Preview audio")) : */
-  /*                                   lives_strdup(_("Preview audio in selected range")))), */
+  /*                                   (_("Preview audio")) : */
+  /*                                   (_("Preview audio in selected range")))), */
   /*                           LIVES_RESPONSE_CANCEL); */
   /*   lives_free(tmp); */
   /*   lives_signal_connect(LIVES_GUI_OBJECT(playbutt), LIVES_WIDGET_CLICKED_SIGNAL, */
@@ -2949,9 +2949,9 @@ aud_dialog_t *create_audfade_dialog(int type) {
   aud_dialog_t *audd = (aud_dialog_t *)lives_malloc(sizeof(aud_dialog_t));
 
   if (type == 0) {
-    title = lives_strdup(_("Fade Audio In"));
+    title = (_("Fade Audio In"));
   } else {
-    title = lives_strdup(_("Fade Audio Out"));
+    title = (_("Fade Audio Out"));
   }
 
   audd->dialog = lives_standard_dialog_new(title, TRUE, -1, -1);
@@ -2964,11 +2964,11 @@ aud_dialog_t *create_audfade_dialog(int type) {
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
   if (type == 0) {
-    label_text = lives_strdup(_("Fade in over  "));
-    label_text2 = lives_strdup(_("first"));
+    label_text = (_("Fade in over  "));
+    label_text2 = (_("first"));
   } else if (type == 1) {
-    label_text = lives_strdup(_("Fade out over  "));
-    label_text2 = lives_strdup(_("last"));
+    label_text = (_("Fade out over  "));
+    label_text2 = (_("last"));
   }
 
   label = lives_standard_label_new(label_text);
@@ -3027,7 +3027,7 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
 
   _commentsw *commentsw = (_commentsw *)(lives_malloc(sizeof(_commentsw)));
 
-  if (filename != NULL) extrabit = lives_strdup(_(" (Optional)"));
+  if (filename != NULL) extrabit = (_(" (Optional)"));
   else extrabit = lives_strdup("");
 
   title = lives_strdup_printf(_("File Comments%s"), extrabit);
@@ -3494,11 +3494,11 @@ _entryw *create_cds_dialog(int type) {
   } else if (type == 1) {
     if (!mainw->only_close) labeltext = lives_strdup(
                                             _("You are about to exit LiVES.\nThe current clip set can be saved.\nWhat would you like to do ?\n"));
-    else labeltext = lives_strdup(_("The current clip set has not been saved.\nWhat would you like to do ?\n"));
+    else labeltext = (_("The current clip set has not been saved.\nWhat would you like to do ?\n"));
   } else if (type == 2 || type == 3) {
     if ((mainw->multitrack != NULL && mainw->multitrack->changed) || (mainw->stored_event_list != NULL &&
         mainw->stored_event_list_changed)) {
-      labeltext = lives_strdup(_("The current layout has not been saved.\nWhat would you like to do ?\n"));
+      labeltext = (_("The current layout has not been saved.\nWhat would you like to do ?\n"));
     } else {
       labeltext = lives_strdup(
                     _("The current layout has *NOT BEEN CHANGED* since it was last saved.\nWhat would you like to do ?\n"));
@@ -3611,9 +3611,9 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
 
-  checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Check for lost clips"))),
+  checkbutton = lives_standard_check_button_new((tmp = (_("Check for lost clips"))),
                 !(prefs->clear_disk_opts & LIVES_CDISK_REMOVE_ORPHAN_CLIPS), LIVES_BOX(hbox),
-                (tmp2 = lives_strdup(_("Allow attempted recovery of potential lost clips before deleting them."))));
+                (tmp2 = (_("Allow attempted recovery of potential lost clips before deleting them."))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -3625,9 +3625,9 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
 
-  checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Delete _Orphaned Clips"))),
+  checkbutton = lives_standard_check_button_new((tmp = (_("Delete _Orphaned Clips"))),
                 !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_ORPHAN_SETS), LIVES_BOX(hbox),
-                (tmp2 = lives_strdup(_("Delete any clips which are not currently loaded or part of a set"))));
+                (tmp2 = (_("Delete any clips which are not currently loaded or part of a set"))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -3824,7 +3824,7 @@ static void pair_add(LiVESWidget * table, const char *key, const char *meaning) 
   lives_free(tmp); lives_free(tmp2)
 
 void do_keys_window(void) {
-  char *tmp = lives_strdup(_("Show Keys")), *tmp2;
+  char *tmp = (_("Show Keys")), *tmp2;
   text_window *textwindow;
 
   widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
@@ -3904,7 +3904,7 @@ void do_keys_window(void) {
 
 void do_mt_keys_window(void) {
   text_window *textwindow;
-  char *tmp = lives_strdup(_("Multitrack Keys")), *tmp2;
+  char *tmp = (_("Multitrack Keys")), *tmp2;
 
   widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
   textwindow = create_text_window(tmp, NULL, NULL);
@@ -3971,9 +3971,9 @@ autolives_window *autolives_pre_dialog(void) {
 
   hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
-  alwindow->atrigger_button = lives_standard_radio_button_new((tmp = lives_strdup(_("Timed:"))),
+  alwindow->atrigger_button = lives_standard_radio_button_new((tmp = (_("Timed:"))),
                               &radiobutton1_group, LIVES_BOX(hbox),
-                              (tmp2 = lives_strdup(_("Trigger a change based on time"))));
+                              (tmp2 = (_("Trigger a change based on time"))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -3983,9 +3983,9 @@ autolives_window *autolives_pre_dialog(void) {
 
   hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
-  radiobutton = lives_standard_radio_button_new((tmp = lives_strdup(_("OMC"))),
+  radiobutton = lives_standard_radio_button_new((tmp = (_("OMC"))),
                 &radiobutton1_group, LIVES_BOX(hbox),
-                (tmp2 = lives_strdup(_("Trigger a change based on receiving an OSC message"))));
+                (tmp2 = (_("Trigger a change based on receiving an OSC message"))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -4007,16 +4007,16 @@ autolives_window *autolives_pre_dialog(void) {
 
   hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
-  alwindow->apb_button = lives_standard_radio_button_new((tmp = lives_strdup(_("Automatic"))),
+  alwindow->apb_button = lives_standard_radio_button_new((tmp = (_("Automatic"))),
                          &radiobutton2_group, LIVES_BOX(hbox),
-                         (tmp2 = lives_strdup(_("Start playback automatically"))));
+                         (tmp2 = (_("Start playback automatically"))));
 
   lives_free(tmp);
   lives_free(tmp2);
 
-  radiobutton = lives_standard_radio_button_new((tmp = lives_strdup(_("Manual"))),
+  radiobutton = lives_standard_radio_button_new((tmp = (_("Manual"))),
                 &radiobutton2_group, LIVES_BOX(hbox),
-                (tmp2 = lives_strdup(_("Wait for the user to start playback"))));
+                (tmp2 = (_("Wait for the user to start playback"))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -4025,8 +4025,8 @@ autolives_window *autolives_pre_dialog(void) {
   lives_box_pack_start(LIVES_BOX(vbox), hbox, TRUE, TRUE, widget_opts.packing_height * 2);
 
   alwindow->mute_button = lives_standard_check_button_new
-                          ((tmp = lives_strdup(_("Mute internal audio during playback"))), FALSE, LIVES_BOX(hbox),
-                           (tmp2 = lives_strdup(_("Mute the audio in LiVES during playback by setting the audio source to external."))));
+                          ((tmp = (_("Mute internal audio during playback"))), FALSE, LIVES_BOX(hbox),
+                           (tmp2 = (_("Mute the audio in LiVES during playback by setting the audio source to external."))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -4039,8 +4039,8 @@ autolives_window *autolives_pre_dialog(void) {
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   alwindow->debug_button = lives_standard_check_button_new
-                           ((tmp = lives_strdup(_("Debug mode"))), FALSE, LIVES_BOX(hbox),
-                            (tmp2 = lives_strdup(_("Show debug output on stderr."))));
+                           ((tmp = (_("Debug mode"))), FALSE, LIVES_BOX(hbox),
+                            (tmp2 = (_("Show debug output on stderr."))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -4212,7 +4212,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   if (req) only_free = !req->allownf;
 #endif
 
-  title = lives_strdup(_("Open Online Clip"));
+  title = (_("Open Online Clip"));
 
   dialog = lives_standard_dialog_new(title, TRUE, -1, -1);
   lives_signal_handlers_disconnect_by_func(dialog, LIVES_GUI_CALLBACK(return_true), NULL);
@@ -4276,9 +4276,9 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
-  radiobutton_free = lives_standard_radio_button_new((tmp = lives_strdup(_("_Free (eg. vp9 / opus / webm)"))), &radiobutton_group,
+  radiobutton_free = lives_standard_radio_button_new((tmp = (_("_Free (eg. vp9 / opus / webm)"))), &radiobutton_group,
                      LIVES_BOX(hbox),
-                     (tmp2 = lives_strdup(_("Download clip using Free codecs and support the community"))));
+                     (tmp2 = (_("Download clip using Free codecs and support the community"))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -4302,10 +4302,10 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   lives_box_pack_start(LIVES_BOX(dialog_vbox), align_horizontal_with(hbox, radiobutton_free), TRUE, FALSE,
                        widget_opts.packing_height);
 
-  radiobutton_nonfree = lives_standard_radio_button_new((tmp = lives_strdup(_("_Non-free (eg. h264 / aac / mp4)"))),
+  radiobutton_nonfree = lives_standard_radio_button_new((tmp = (_("_Non-free (eg. h264 / aac / mp4)"))),
                         &radiobutton_group,
                         LIVES_BOX(hbox),
-                        (tmp2 = lives_strdup(_("Download clip using non-free codecs and support commercial interests"))));
+                        (tmp2 = (_("Download clip using non-free codecs and support commercial interests"))));
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_nonfree), !only_free);
 
@@ -4336,9 +4336,9 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
 
-  radiobutton_approx = lives_standard_radio_button_new((tmp = lives_strdup(_("- Approximately:"))), &radiobutton_group2,
+  radiobutton_approx = lives_standard_radio_button_new((tmp = (_("- Approximately:"))), &radiobutton_group2,
                        LIVES_BOX(hbox),
-                       (tmp2 = lives_strdup(_("Download the closest to this size"))));
+                       (tmp2 = (_("Download the closest to this size"))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -4347,9 +4347,9 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
                             LIVES_GUI_CALLBACK(utsense),
                             LIVES_INT_TO_POINTER(TRUE));
 
-  radiobutton_atleast = lives_standard_radio_button_new((tmp = lives_strdup(_("- At _least"))), &radiobutton_group2,
+  radiobutton_atleast = lives_standard_radio_button_new((tmp = (_("- At _least"))), &radiobutton_group2,
                         LIVES_BOX(hbox),
-                        (tmp2 = lives_strdup(_("Frame size should be at least this size"))));
+                        (tmp2 = (_("Frame size should be at least this size"))));
   lives_free(tmp);
   lives_free(tmp2);
 
@@ -4357,9 +4357,9 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
                             LIVES_GUI_CALLBACK(utsense),
                             LIVES_INT_TO_POINTER(TRUE));
 
-  radiobutton_atmost = lives_standard_radio_button_new((tmp = lives_strdup(_("- At _most:"))), &radiobutton_group2,
+  radiobutton_atmost = lives_standard_radio_button_new((tmp = (_("- At _most:"))), &radiobutton_group2,
                        LIVES_BOX(hbox),
-                       (tmp2 = lives_strdup(_("Frame size should be at most this size"))));
+                       (tmp2 = (_("Frame size should be at most this size"))));
   lives_free(tmp);
   lives_free(tmp2);
 
@@ -4401,9 +4401,9 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
 
-  radiobutton_smallest = lives_standard_radio_button_new((tmp = lives_strdup(_("- The _smallest"))), &radiobutton_group2,
+  radiobutton_smallest = lives_standard_radio_button_new((tmp = (_("- The _smallest"))), &radiobutton_group2,
                          LIVES_BOX(hbox),
-                         (tmp2 = lives_strdup(_("Download the lowest resolution available"))));
+                         (tmp2 = (_("Download the lowest resolution available"))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -4412,9 +4412,9 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
                             LIVES_GUI_CALLBACK(utsense),
                             LIVES_INT_TO_POINTER(FALSE));
 
-  radiobutton_largest = lives_standard_radio_button_new((tmp = lives_strdup(_("- The _largest"))), &radiobutton_group2,
+  radiobutton_largest = lives_standard_radio_button_new((tmp = (_("- The _largest"))), &radiobutton_group2,
                         LIVES_BOX(hbox),
-                        (tmp2 = lives_strdup(_("Download the highest resolution available"))));
+                        (tmp2 = (_("Download the highest resolution available"))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -4426,10 +4426,10 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   add_fill_to_box(LIVES_BOX(hbox));
   add_fill_to_box(LIVES_BOX(hbox));
 
-  radiobutton_choose = lives_standard_radio_button_new((tmp = lives_strdup(_("- Let me choose..."))),
+  radiobutton_choose = lives_standard_radio_button_new((tmp = (_("- Let me choose..."))),
                        &radiobutton_group2,
                        LIVES_BOX(hbox),
-                       (tmp2 = lives_strdup(_("Choose the resolution from a list (opens in new window)"))));
+                       (tmp2 = (_("Choose the resolution from a list (opens in new window)"))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -4593,7 +4593,7 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
   width = scrw - SCR_WIDTH_SAFETY;
   height = (scrh - SCR_HEIGHT_SAFETY) / 2;
 
-  title = lives_strdup(_("Select Video Format to Download"));
+  title = (_("Select Video Format to Download"));
   dialog = lives_standard_dialog_new(title, FALSE, 8, 8);
   lives_free(title);
 

@@ -775,7 +775,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   if (intention == LIVES_INTENTION_PLAY)
     title = lives_strdup_printf("%s", pversion);
   else
-    title = lives_strdup(_("Quick Transcoding"));
+    title = (_("Quick Transcoding"));
 
   vppa->dialog = lives_standard_dialog_new(title, FALSE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
   lives_free(title);
@@ -814,8 +814,8 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
     if (intention == LIVES_INTENTION_PLAY) {
       // fps
-      combo = lives_standard_combo_new((tmp = lives_strdup(_("_FPS"))), fps_list_strings,
-                                       LIVES_BOX(dialog_vbox), (tmp2 = lives_strdup(_("Fixed framerate for plugin.\n"))));
+      combo = lives_standard_combo_new((tmp = (_("_FPS"))), fps_list_strings,
+                                       LIVES_BOX(dialog_vbox), (tmp2 = (_("Fixed framerate for plugin.\n"))));
 
       lives_free(tmp);
       lives_free(tmp2);
@@ -889,8 +889,8 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
         }
       }
 
-      combo = lives_standard_combo_new((tmp = lives_strdup(_("_Colourspace"))), pal_list_strings,
-                                       LIVES_BOX(dialog_vbox), tmp2 = lives_strdup(_("Colourspace input to the plugin.\n")));
+      combo = lives_standard_combo_new((tmp = (_("_Colourspace"))), pal_list_strings,
+                                       LIVES_BOX(dialog_vbox), tmp2 = (_("Colourspace input to the plugin.\n")));
       lives_free(tmp);
       lives_free(tmp2);
       vppa->pal_entry = lives_combo_get_entry(LIVES_COMBO(combo));
@@ -2768,8 +2768,8 @@ void render_fx_get_params(lives_rfx_t *rfx, const char *plugin_name, short statu
       set_colRGB24_param(cparam->value, red, green, blue);
     } else if (cparam->type == LIVES_PARAM_STRING) {
       if (len < 4) continue;
-      cparam->value = lives_strdup(_(param_array[3]));
-      cparam->def = lives_strdup(_(param_array[3]));
+      cparam->value = (_(param_array[3]));
+      cparam->def = (_(param_array[3]));
       if (len > 4) cparam->max = (double)atoi(param_array[4]);
       if (cparam->max == 0. || cparam->max > RFX_MAXSTRINGLEN) cparam->max = RFX_MAXSTRINGLEN;
     } else if (cparam->type == LIVES_PARAM_STRING_LIST) {

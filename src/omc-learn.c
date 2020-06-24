@@ -602,16 +602,16 @@ static char *omc_learn_get_pname(int type, int idx) {
   switch (type) {
   case OMC_MIDI_CONTROLLER:
   case OMC_MIDI_PGM_CHANGE:
-    return lives_strdup(_("data"));
+    return (_("data"));
   case OMC_MIDI_NOTE:
   case OMC_MIDI_NOTE_OFF:
-    if (idx == 1) return lives_strdup(_("velocity"));
-    return lives_strdup(_("note"));
+    if (idx == 1) return (_("velocity"));
+    return (_("note"));
   case OMC_JS_AXIS:
   case OMC_MIDI_PITCH_BEND:
-    return lives_strdup(_("value"));
+    return (_("value"));
   default:
-    return lives_strdup(_("state"));
+    return (_("state"));
   }
 }
 
@@ -722,7 +722,7 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
 
     adj = NULL;
 
-    if ((mfrom = mnode->map[i]) != -1) strval = lives_strdup(_("variable"));
+    if ((mfrom = mnode->map[i]) != -1) strval = (_("variable"));
     else {
       switch (macro.ptypes[i]) {
       case OMC_PARAM_INT:
@@ -1416,110 +1416,110 @@ static void init_omc_macros(void) {
   }
 
   omc_macros[START_PLAYBACK].msg = lives_strdup("/video/play");
-  omc_macros[START_PLAYBACK].macro_text = lives_strdup(_("Start video playback"));
+  omc_macros[START_PLAYBACK].macro_text = (_("Start video playback"));
 
   omc_macros[STOP_PLAYBACK].msg = lives_strdup("/video/stop");
-  omc_macros[STOP_PLAYBACK].macro_text = lives_strdup(_("Stop video playback"));
+  omc_macros[STOP_PLAYBACK].macro_text = (_("Stop video playback"));
 
   omc_macros[CLIP_SELECT].msg = lives_strdup("/clip/foreground/select");
-  omc_macros[CLIP_SELECT].macro_text = lives_strdup(_("Clip select <clipnum>"));
-  omc_macros[CLIP_SELECT].info_text = lives_strdup(_("Switch foreground clip to the nth valid clip"));
+  omc_macros[CLIP_SELECT].macro_text = (_("Clip select <clipnum>"));
+  omc_macros[CLIP_SELECT].info_text = (_("Switch foreground clip to the nth valid clip"));
   omc_macros[CLIP_SELECT].nparams = 1;
 
   omc_macros[PLAY_FORWARDS].msg = lives_strdup("/video/play/forwards");
-  omc_macros[PLAY_FORWARDS].macro_text = lives_strdup(_("Play forwards"));
-  omc_macros[PLAY_FORWARDS].info_text = lives_strdup(_("Play video in a forwards direction"));
+  omc_macros[PLAY_FORWARDS].macro_text = (_("Play forwards"));
+  omc_macros[PLAY_FORWARDS].info_text = (_("Play video in a forwards direction"));
 
   omc_macros[PLAY_BACKWARDS].msg = lives_strdup("/video/play/backwards");
-  omc_macros[PLAY_BACKWARDS].macro_text = lives_strdup(_("Play backwards"));
-  omc_macros[PLAY_BACKWARDS].info_text = lives_strdup(_("Play video in a backwards direction"));
+  omc_macros[PLAY_BACKWARDS].macro_text = (_("Play backwards"));
+  omc_macros[PLAY_BACKWARDS].info_text = (_("Play video in a backwards direction"));
 
   omc_macros[REVERSE_PLAYBACK].msg = lives_strdup("/video/play/reverse");
-  omc_macros[REVERSE_PLAYBACK].macro_text = lives_strdup(_("Reverse playback direction"));
-  omc_macros[REVERSE_PLAYBACK].info_text = lives_strdup(_("Reverse direction of video playback"));
+  omc_macros[REVERSE_PLAYBACK].macro_text = (_("Reverse playback direction"));
+  omc_macros[REVERSE_PLAYBACK].info_text = (_("Reverse direction of video playback"));
 
   omc_macros[PLAY_FASTER].msg = lives_strdup("/video/play/faster");
-  omc_macros[PLAY_FASTER].macro_text = lives_strdup(_("Play video faster"));
-  omc_macros[PLAY_FASTER].info_text = lives_strdup(_("Play video at a slightly faster rate"));
+  omc_macros[PLAY_FASTER].macro_text = (_("Play video faster"));
+  omc_macros[PLAY_FASTER].info_text = (_("Play video at a slightly faster rate"));
 
   omc_macros[PLAY_SLOWER].msg = lives_strdup("/video/play/slower");
-  omc_macros[PLAY_SLOWER].macro_text = lives_strdup(_("Play video slower"));
-  omc_macros[PLAY_SLOWER].info_text = lives_strdup(_("Play video at a slightly slower rate"));
+  omc_macros[PLAY_SLOWER].macro_text = (_("Play video slower"));
+  omc_macros[PLAY_SLOWER].info_text = (_("Play video at a slightly slower rate"));
 
   omc_macros[TOGGLE_FREEZE].msg = lives_strdup("/video/freeze/toggle");
-  omc_macros[TOGGLE_FREEZE].macro_text = lives_strdup(_("Toggle video freeze"));
-  omc_macros[TOGGLE_FREEZE].info_text = lives_strdup(_("Freeze video, or if already frozen, unfreeze it"));
+  omc_macros[TOGGLE_FREEZE].macro_text = (_("Toggle video freeze"));
+  omc_macros[TOGGLE_FREEZE].info_text = (_("Freeze video, or if already frozen, unfreeze it"));
 
   omc_macros[SET_FRAMERATE].msg = lives_strdup("/video/fps/set");
-  omc_macros[SET_FRAMERATE].macro_text = lives_strdup(_("Set video framerate to <fps>"));
-  omc_macros[SET_FRAMERATE].info_text = lives_strdup(_("Set the framerate of foreground clip to <(float) fps>"));
+  omc_macros[SET_FRAMERATE].macro_text = (_("Set video framerate to <fps>"));
+  omc_macros[SET_FRAMERATE].info_text = (_("Set the framerate of foreground clip to <(float) fps>"));
   omc_macros[SET_FRAMERATE].nparams = 1;
 
   omc_macros[START_RECORDING].msg = lives_strdup("/record/enable");
-  omc_macros[START_RECORDING].macro_text = lives_strdup(_("Start recording"));
+  omc_macros[START_RECORDING].macro_text = (_("Start recording"));
 
   omc_macros[STOP_RECORDING].msg = lives_strdup("/record/disable");
-  omc_macros[STOP_RECORDING].macro_text = lives_strdup(_("Stop recording"));
+  omc_macros[STOP_RECORDING].macro_text = (_("Stop recording"));
 
   omc_macros[TOGGLE_RECORDING].msg = lives_strdup("/record/toggle");
-  omc_macros[TOGGLE_RECORDING].macro_text = lives_strdup(_("Toggle recording state"));
+  omc_macros[TOGGLE_RECORDING].macro_text = (_("Toggle recording state"));
 
   omc_macros[SWAP_FOREGROUND_BACKGROUND].msg = lives_strdup("/clip/foreground/background/swap");
-  omc_macros[SWAP_FOREGROUND_BACKGROUND].macro_text = lives_strdup(_("Swap foreground and background clips"));
+  omc_macros[SWAP_FOREGROUND_BACKGROUND].macro_text = (_("Swap foreground and background clips"));
 
   omc_macros[RESET_EFFECT_KEYS].msg = lives_strdup("/effect_key/reset");
-  omc_macros[RESET_EFFECT_KEYS].macro_text = lives_strdup(_("Reset effect keys"));
-  omc_macros[RESET_EFFECT_KEYS].info_text = lives_strdup(_("Switch all effects off."));
+  omc_macros[RESET_EFFECT_KEYS].macro_text = (_("Reset effect keys"));
+  omc_macros[RESET_EFFECT_KEYS].info_text = (_("Switch all effects off."));
 
   omc_macros[ENABLE_EFFECT_KEY].msg = lives_strdup("/effect_key/enable");
-  omc_macros[ENABLE_EFFECT_KEY].macro_text = lives_strdup(_("Enable effect key <key>"));
+  omc_macros[ENABLE_EFFECT_KEY].macro_text = (_("Enable effect key <key>"));
   omc_macros[ENABLE_EFFECT_KEY].nparams = 1;
 
   omc_macros[DISABLE_EFFECT_KEY].msg = lives_strdup("/effect_key/disable");
-  omc_macros[DISABLE_EFFECT_KEY].macro_text = lives_strdup(_("Disable effect key <key>"));
+  omc_macros[DISABLE_EFFECT_KEY].macro_text = (_("Disable effect key <key>"));
   omc_macros[DISABLE_EFFECT_KEY].nparams = 1;
 
   omc_macros[TOGGLE_EFFECT_KEY].msg = lives_strdup("/effect_key/toggle");
-  omc_macros[TOGGLE_EFFECT_KEY].macro_text = lives_strdup(_("Toggle effect key <key>"));
+  omc_macros[TOGGLE_EFFECT_KEY].macro_text = (_("Toggle effect key <key>"));
   omc_macros[TOGGLE_EFFECT_KEY].nparams = 1;
 
   omc_macros[SET_PARAMETER_VALUE].msg = lives_strdup("/effect_key/nparameter/value/set");
-  omc_macros[SET_PARAMETER_VALUE].macro_text = lives_strdup(_("Set parameter value <key> <pnum> = <value>"));
-  omc_macros[SET_PARAMETER_VALUE].info_text = lives_strdup(_("Set <value> of pth (numerical) parameter for effect key <key>."));
+  omc_macros[SET_PARAMETER_VALUE].macro_text = (_("Set parameter value <key> <pnum> = <value>"));
+  omc_macros[SET_PARAMETER_VALUE].info_text = (_("Set <value> of pth (numerical) parameter for effect key <key>."));
   omc_macros[SET_PARAMETER_VALUE].nparams = 3;
 
   omc_macros[NEXT_CLIP_SELECT].msg = lives_strdup("/clip/select/next");
-  omc_macros[NEXT_CLIP_SELECT].macro_text = lives_strdup(_("Switch foreground to next clip"));
+  omc_macros[NEXT_CLIP_SELECT].macro_text = (_("Switch foreground to next clip"));
 
   omc_macros[PREV_CLIP_SELECT].msg = lives_strdup("/clip/select/previous");
-  omc_macros[PREV_CLIP_SELECT].macro_text = lives_strdup(_("Switch foreground to previous clip"));
+  omc_macros[PREV_CLIP_SELECT].macro_text = (_("Switch foreground to previous clip"));
 
   omc_macros[SET_FPS_RATIO].msg = lives_strdup("/video/fps/ratio/set");
-  omc_macros[SET_FPS_RATIO].macro_text = lives_strdup(_("Set video framerate to ratio <fps__ratio>"));
-  omc_macros[SET_FPS_RATIO].info_text = lives_strdup(_("Set the framerate ratio of the foreground clip to <(float) fps__ratio>"));
+  omc_macros[SET_FPS_RATIO].macro_text = (_("Set video framerate to ratio <fps__ratio>"));
+  omc_macros[SET_FPS_RATIO].info_text = (_("Set the framerate ratio of the foreground clip to <(float) fps__ratio>"));
   omc_macros[SET_FPS_RATIO].nparams = 1;
 
   omc_macros[RETRIGGER_CLIP].msg = lives_strdup("/clip/foreground/retrigger");
-  omc_macros[RETRIGGER_CLIP].macro_text = lives_strdup(_("Retrigger clip <clipnum>"));
+  omc_macros[RETRIGGER_CLIP].macro_text = (_("Retrigger clip <clipnum>"));
   omc_macros[RETRIGGER_CLIP].info_text = lives_strdup(
       _("Switch foreground clip to the nth valid clip, and reset the frame number"));
   omc_macros[RETRIGGER_CLIP].nparams = 1;
 
   omc_macros[NEXT_MODE_CYCLE].msg = lives_strdup("/effect_key/mode/next");
-  omc_macros[NEXT_MODE_CYCLE].macro_text = lives_strdup(_("Cycle to next mode for effect key <key>"));
+  omc_macros[NEXT_MODE_CYCLE].macro_text = (_("Cycle to next mode for effect key <key>"));
   omc_macros[NEXT_MODE_CYCLE].nparams = 1;
 
   omc_macros[PREV_MODE_CYCLE].msg = lives_strdup("/effect_key/mode/previous");
-  omc_macros[PREV_MODE_CYCLE].macro_text = lives_strdup(_("Cycle to previous mode for effect key <key>"));
+  omc_macros[PREV_MODE_CYCLE].macro_text = (_("Cycle to previous mode for effect key <key>"));
   omc_macros[PREV_MODE_CYCLE].nparams = 1;
 
   omc_macros[SET_VPP_PARAMETER_VALUE].msg = lives_strdup("/video/play/parameter/value/set");
-  omc_macros[SET_VPP_PARAMETER_VALUE].macro_text = lives_strdup(_("Set playback plugin parameter value <pnum> = <value>"));
-  omc_macros[SET_VPP_PARAMETER_VALUE].info_text = lives_strdup(_("Set <value> of pth parameter for the playback plugin."));
+  omc_macros[SET_VPP_PARAMETER_VALUE].macro_text = (_("Set playback plugin parameter value <pnum> = <value>"));
+  omc_macros[SET_VPP_PARAMETER_VALUE].info_text = (_("Set <value> of pth parameter for the playback plugin."));
   omc_macros[SET_VPP_PARAMETER_VALUE].nparams = 2;
 
   omc_macros[OSC_NOTIFY].msg = lives_strdup("internal"); // handled internally
-  omc_macros[OSC_NOTIFY].macro_text = lives_strdup(_("Send OSC notification message"));
+  omc_macros[OSC_NOTIFY].macro_text = (_("Send OSC notification message"));
   omc_macros[OSC_NOTIFY].info_text = lives_strdup(
                                        _("Send LIVES_OSC_NOTIFY_USER1 notification to all listeners, with variable <value>."));
   omc_macros[OSC_NOTIFY].nparams = 2;
@@ -1546,7 +1546,7 @@ static void init_omc_macros(void) {
   omc_macros[CLIP_SELECT].mini[0] = omc_macros[CLIP_SELECT].vali[0] = 1;
   omc_macros[CLIP_SELECT].maxi[0] = MAX_FILES;
   // TRANSLATORS: short form of "clip number"
-  omc_macros[CLIP_SELECT].pname[0] = lives_strdup(_("clipnum"));
+  omc_macros[CLIP_SELECT].pname[0] = (_("clipnum"));
 
   // set fps (will be handled to avoid 0.)
   omc_macros[SET_FRAMERATE].ptypes[0] = OMC_PARAM_DOUBLE;
@@ -1554,7 +1554,7 @@ static void init_omc_macros(void) {
   omc_macros[SET_FRAMERATE].vald[0] = prefs->default_fps;
   omc_macros[SET_FRAMERATE].maxd[0] = FPS_MAX;
   // TRANSLATORS: short form of "frames per second"
-  omc_macros[SET_FRAMERATE].pname[0] = lives_strdup(_("fps"));
+  omc_macros[SET_FRAMERATE].pname[0] = (_("fps"));
 
   // effect_key enable,disable, toggle
   omc_macros[ENABLE_EFFECT_KEY].ptypes[0] = OMC_PARAM_INT;
@@ -1562,21 +1562,21 @@ static void init_omc_macros(void) {
   omc_macros[ENABLE_EFFECT_KEY].vali[0] = 1;
   omc_macros[ENABLE_EFFECT_KEY].maxi[0] = prefs->rte_keys_virtual;
   // TRANSLATORS: as in keyboard key
-  omc_macros[ENABLE_EFFECT_KEY].pname[0] = lives_strdup(_("key"));
+  omc_macros[ENABLE_EFFECT_KEY].pname[0] = (_("key"));
 
   omc_macros[DISABLE_EFFECT_KEY].ptypes[0] = OMC_PARAM_INT;
   omc_macros[DISABLE_EFFECT_KEY].mini[0] = 1;
   omc_macros[DISABLE_EFFECT_KEY].vali[0] = 1;
   omc_macros[DISABLE_EFFECT_KEY].maxi[0] = prefs->rte_keys_virtual;
   // TRANSLATORS: as in keyboard key
-  omc_macros[DISABLE_EFFECT_KEY].pname[0] = lives_strdup(_("key"));
+  omc_macros[DISABLE_EFFECT_KEY].pname[0] = (_("key"));
 
   omc_macros[TOGGLE_EFFECT_KEY].ptypes[0] = OMC_PARAM_INT;
   omc_macros[TOGGLE_EFFECT_KEY].mini[0] = 1;
   omc_macros[TOGGLE_EFFECT_KEY].vali[0] = 1;
   omc_macros[TOGGLE_EFFECT_KEY].maxi[0] = prefs->rte_keys_virtual;
   // TRANSLATORS: as in keyboard key
-  omc_macros[TOGGLE_EFFECT_KEY].pname[0] = lives_strdup(_("key"));
+  omc_macros[TOGGLE_EFFECT_KEY].pname[0] = (_("key"));
 
   // key
   omc_macros[SET_PARAMETER_VALUE].ptypes[0] = OMC_PARAM_INT;
@@ -1584,7 +1584,7 @@ static void init_omc_macros(void) {
   omc_macros[SET_PARAMETER_VALUE].vali[0] = 1;
   omc_macros[SET_PARAMETER_VALUE].maxi[0] = prefs->rte_keys_virtual;
   // TRANSLATORS: as in keyboard key
-  omc_macros[SET_PARAMETER_VALUE].pname[0] = lives_strdup(_("key"));
+  omc_macros[SET_PARAMETER_VALUE].pname[0] = (_("key"));
 
   // param (this will be matched with numeric params)
   omc_macros[SET_PARAMETER_VALUE].ptypes[1] = OMC_PARAM_INT;
@@ -1592,7 +1592,7 @@ static void init_omc_macros(void) {
   omc_macros[SET_PARAMETER_VALUE].maxi[1] = 65536;
   omc_macros[SET_PARAMETER_VALUE].vali[1] = 0;
   // TRANSLATORS: short form of "parameter number"
-  omc_macros[SET_PARAMETER_VALUE].pname[1] = lives_strdup(_("pnum"));
+  omc_macros[SET_PARAMETER_VALUE].pname[1] = (_("pnum"));
 
   // value (this will get special handling)
   // type conversion and auto offset/scaling will be done
@@ -1600,7 +1600,7 @@ static void init_omc_macros(void) {
   omc_macros[SET_PARAMETER_VALUE].mind[2] = 0.;
   omc_macros[SET_PARAMETER_VALUE].maxd[2] = 0.;
   omc_macros[SET_PARAMETER_VALUE].vald[2] = 0.;
-  omc_macros[SET_PARAMETER_VALUE].pname[2] = lives_strdup(_("value"));
+  omc_macros[SET_PARAMETER_VALUE].pname[2] = (_("value"));
 
   // set ratio fps (will be handled to avoid 0.)
   omc_macros[SET_FPS_RATIO].ptypes[0] = OMC_PARAM_DOUBLE;
@@ -1608,14 +1608,14 @@ static void init_omc_macros(void) {
   omc_macros[SET_FPS_RATIO].vald[0] = 1.;
   omc_macros[SET_FPS_RATIO].maxd[0] = 10.;
   // TRANSLATORS: short form of "frames per second"
-  omc_macros[SET_FPS_RATIO].pname[0] = lives_strdup(_("fps__ratio"));
+  omc_macros[SET_FPS_RATIO].pname[0] = (_("fps__ratio"));
 
   // clip retrigger
   omc_macros[RETRIGGER_CLIP].ptypes[0] = OMC_PARAM_INT;
   omc_macros[RETRIGGER_CLIP].mini[0] = omc_macros[RETRIGGER_CLIP].vali[0] = 1;
   omc_macros[RETRIGGER_CLIP].maxi[0] = MAX_FILES;
   // TRANSLATORS: short form of "clip number"
-  omc_macros[RETRIGGER_CLIP].pname[0] = lives_strdup(_("clipnum"));
+  omc_macros[RETRIGGER_CLIP].pname[0] = (_("clipnum"));
 
   // key
   omc_macros[NEXT_MODE_CYCLE].ptypes[0] = OMC_PARAM_INT;
@@ -1623,7 +1623,7 @@ static void init_omc_macros(void) {
   omc_macros[NEXT_MODE_CYCLE].vali[0] = 1;
   omc_macros[NEXT_MODE_CYCLE].maxi[0] = prefs->rte_keys_virtual;
   // TRANSLATORS: as in keyboard key
-  omc_macros[NEXT_MODE_CYCLE].pname[0] = lives_strdup(_("key"));
+  omc_macros[NEXT_MODE_CYCLE].pname[0] = (_("key"));
 
   // key
   omc_macros[PREV_MODE_CYCLE].ptypes[0] = OMC_PARAM_INT;
@@ -1631,7 +1631,7 @@ static void init_omc_macros(void) {
   omc_macros[PREV_MODE_CYCLE].vali[0] = 1;
   omc_macros[PREV_MODE_CYCLE].maxi[0] = prefs->rte_keys_virtual;
   // TRANSLATORS: as in keyboard key
-  omc_macros[PREV_MODE_CYCLE].pname[0] = lives_strdup(_("key"));
+  omc_macros[PREV_MODE_CYCLE].pname[0] = (_("key"));
 
   // param
   omc_macros[SET_VPP_PARAMETER_VALUE].ptypes[0] = OMC_PARAM_INT;
@@ -1639,7 +1639,7 @@ static void init_omc_macros(void) {
   omc_macros[SET_VPP_PARAMETER_VALUE].maxi[0] = 128;
   omc_macros[SET_VPP_PARAMETER_VALUE].vali[0] = 0;
   // TRANSLATORS: short form of "parameter number"
-  omc_macros[SET_VPP_PARAMETER_VALUE].pname[0] = lives_strdup(_("pnum"));
+  omc_macros[SET_VPP_PARAMETER_VALUE].pname[0] = (_("pnum"));
 
   // value (this will get special handling)
   // type conversion and auto offset/scaling will be done
@@ -1647,20 +1647,20 @@ static void init_omc_macros(void) {
   omc_macros[SET_VPP_PARAMETER_VALUE].mind[1] = 0.;
   omc_macros[SET_VPP_PARAMETER_VALUE].maxd[1] = 0.;
   omc_macros[SET_VPP_PARAMETER_VALUE].vald[1] = 0.;
-  omc_macros[SET_VPP_PARAMETER_VALUE].pname[1] = lives_strdup(_("value"));
+  omc_macros[SET_VPP_PARAMETER_VALUE].pname[1] = (_("value"));
 
   // variables for LIVES_OSC_NOTIFY_USER1
   omc_macros[OSC_NOTIFY].ptypes[0] = OMC_PARAM_INT;
   omc_macros[OSC_NOTIFY].mini[0] = 0;
   omc_macros[OSC_NOTIFY].vali[0] = 0;
   omc_macros[OSC_NOTIFY].maxi[0] = 100000;
-  omc_macros[OSC_NOTIFY].pname[0] = lives_strdup(_("discrimination"));
+  omc_macros[OSC_NOTIFY].pname[0] = (_("discrimination"));
 
   omc_macros[OSC_NOTIFY].ptypes[1] = OMC_PARAM_DOUBLE;
   omc_macros[OSC_NOTIFY].mini[1] = -1000000.;
   omc_macros[OSC_NOTIFY].vali[1] = 0.;
   omc_macros[OSC_NOTIFY].maxi[1] = 1000000.;
-  omc_macros[OSC_NOTIFY].pname[1] = lives_strdup(_("data"));
+  omc_macros[OSC_NOTIFY].pname[1] = (_("data"));
 }
 
 
@@ -1723,13 +1723,13 @@ static lives_omc_match_node_t *omc_match_sig(int type, int index, const char *si
 
   switch (type) {
   case OMC_JS_AXIS:
-    msg=lives_strdup(_("\n\nNow move the stick to the opposite position and click OK\n\n"));
+    msg=(_("\n\nNow move the stick to the opposite position and click OK\n\n"));
     break;
   case OMC_MIDI_CONTROLLER:
-    msg=lives_strdup(_("\n\nPlease set the control to its minimum value and click OK\n\n"));
+    msg=(_("\n\nPlease set the control to its minimum value and click OK\n\n"));
     break;
   case OMC_MIDI_NOTE:
-    msg=lives_strdup(_("\n\nPlease release the note\n\n"));
+    msg=(_("\n\nPlease release the note\n\n"));
     break;
   }
 
@@ -2758,7 +2758,7 @@ void on_devicemap_load_activate(LiVESMenuItem *menuitem, livespointer user_data)
 
   if (new_midi_rcv_channel != prefs->midi_rcv_channel) {
     char *dpr;
-    if (new_midi_rcv_channel == MIDI_OMNI) dpr = lives_strdup(_("MIDI receive channel was set to ALL CHANNELS\n"));
+    if (new_midi_rcv_channel == MIDI_OMNI) dpr = (_("MIDI receive channel was set to ALL CHANNELS\n"));
     else dpr = lives_strdup_printf(_("MIDI receive channel was set to channel %d\n"), new_midi_rcv_channel);
     prefs->midi_rcv_channel = new_midi_rcv_channel;
     d_print(dpr);

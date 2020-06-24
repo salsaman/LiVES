@@ -423,7 +423,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         cfile->start = 1;
         cfile->end = cfile->frames;
 
-        what = lives_strdup(_("creating the frame index for the clip"));
+        what = (_("creating the frame index for the clip"));
 
         do {
           response = LIVES_RESPONSE_OK;
@@ -1171,7 +1171,7 @@ void save_frame(LiVESMenuItem * menuitem, livespointer user_data) {
     ttl = lives_strdup_printf(_("Save Frame %d"), frame);
 
   else
-    ttl = lives_strdup(_("Save Frame"));
+    ttl = (_("Save Frame"));
 
   defname = lives_strdup_printf("frame%08d.%s", frame, get_image_ext_for_type(cfile->img_type));
 
@@ -1343,7 +1343,7 @@ void save_file(int clip, int start, int end, const char *filename) {
   }
 
   if (filename == NULL) {
-    char *ttl = lives_strdup(_("Save Clip"));
+    char *ttl = (_("Save Clip"));
     do {
       lives_freep((void **)&n_file_name);
       n_file_name = choose_file(mainw->vid_save_dir, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_SAVE, ttl, hbox);
@@ -1466,7 +1466,7 @@ void save_file(int clip, int start, int end, const char *filename) {
     }
 
     // create new clip
-    if (!get_new_handle(new_file, lives_strdup(_("selection")))) {
+    if (!get_new_handle(new_file, (_("selection")))) {
       lives_freep((void **)&mainw->subt_save_file);
       return;
     }
@@ -1675,7 +1675,7 @@ void save_file(int clip, int start, int end, const char *filename) {
   if (save_all) {
     if (sfile->clip_type == CLIP_TYPE_FILE) {
       frames_t ret;
-      char *msg = lives_strdup(_("Pulling frames from clip..."));
+      char *msg = (_("Pulling frames from clip..."));
       if ((ret = realize_all_frames(clip, msg, FALSE)) < sfile->frames) {
         lives_free(msg);
         lives_freep((void **)&mainw->subt_save_file);
@@ -1690,7 +1690,7 @@ void save_file(int clip, int start, int end, const char *filename) {
   }
 
   if (!mainw->save_with_sound || prefs->encoder.of_allowed_acodecs == 0) {
-    bit = lives_strdup(_(" (with no sound)\n"));
+    bit = (_(" (with no sound)\n"));
   } else {
     bit = lives_strdup("\n");
   }
@@ -3786,7 +3786,7 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
         if (npieces >= 3) {
           mesg = lives_strdup_printf(_("\nAn error occurred doing\n%s\n"), array[2]);
           LIVES_ERROR(array[2]);
-        } else mesg = lives_strdup(_("\nAn error occurred opening the file\n"));
+        } else mesg = (_("\nAn error occurred opening the file\n"));
         do_error_dialog(mesg);
         lives_free(mesg);
         lives_strfreev(array);
@@ -3908,7 +3908,7 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
   if (cfile->opening) return TRUE;
 
   if ((!strcmp(cfile->type, LIVES_IMAGE_TYPE_JPEG) || !strcmp(cfile->type, LIVES_IMAGE_TYPE_PNG))) {
-    mesg = lives_strdup(_("Image format detected"));
+    mesg = (_("Image format detected"));
     d_print(mesg);
     lives_free(mesg);
     return TRUE;
@@ -4151,7 +4151,7 @@ void backup_file(int clip, int start, int end, const char *file_name) {
 
   if (sfile->clip_type == CLIP_TYPE_FILE) {
     frames_t ret;
-    char *msg = lives_strdup(_("Pulling frames from clip..."));
+    char *msg = (_("Pulling frames from clip..."));
     if ((ret = realize_all_frames(clip, msg, FALSE)) < cfile->frames) {
       lives_free(msg);
       cfile->nopreview = FALSE;
@@ -4951,7 +4951,7 @@ int save_event_frames(void) {
   if (cfile->frame_index != NULL) {
     LiVESResponseType response;
     int xframes = cfile->frames;
-    char *what = lives_strdup(_("creating the frame index for resampling "));
+    char *what = (_("creating the frame index for resampling "));
 
     if (cfile->frame_index_back != NULL) lives_free(cfile->frame_index_back);
     cfile->frame_index_back = cfile->frame_index;
@@ -5331,7 +5331,7 @@ int save_to_scrap_file(weed_layer_t *layer) {
         framecount = lives_strdup_printf(_("!rec %.2f MB"), scrap_mb + ascrap_mb);
       else
         // TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-        framecount = lives_strdup(_("rec ?? MB"));
+        framecount = (_("rec ?? MB"));
     }
     lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount);
     lives_free(framecount);

@@ -579,7 +579,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   if (old_fps == qfps) return in_list;
 
   tl = (TICKS_PER_SECOND_DBL / qfps + .499999);
-  what = lives_strdup(_("quantising the event list"));
+  what = (_("quantising the event list"));
 
   do {
     response = LIVES_RESPONSE_OK;
@@ -1434,7 +1434,7 @@ void on_resample_vid_ok(LiVESButton * button, LiVESEntry * entry) {
   if (mainw->fx1_val == cfile->fps && cfile->event_list == NULL) return;
 
   real_back_list = cfile->event_list;
-  what = lives_strdup(_("creating the event list for resampling"));
+  what = (_("creating the event list for resampling"));
 
   if (cfile->event_list == NULL) {
     for (int64_t i64 = 1; i64 <= (int64_t)cfile->frames; i64++) {
@@ -1636,13 +1636,13 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
     char *title = NULL;
 
     if (type == 1) {
-      title = lives_strdup(_("Resample Audio"));
+      title = (_("Resample Audio"));
     } else if (type == 2) {
-      title = lives_strdup(_("Insert Silence"));
+      title = (_("Insert Silence"));
     } else if (type == 5 || type == 11 || type == 6 || type == 7) {
-      title = lives_strdup(_("New Clip Audio"));
+      title = (_("New Clip Audio"));
     } else if (type == 9 || type == 8) {
-      title = lives_strdup(_("External Clip Settings"));
+      title = (_("External Clip Settings"));
     }
 
     resaudw->dialog = lives_standard_dialog_new(title, FALSE, DEF_DIALOG_WIDTH, DEF_DIALOG_HEIGHT);
@@ -1747,9 +1747,9 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
   resaudw->aud_checkbutton = NULL;
 
   if (type < 9 || type == 11) {
-    if (type >= 3 && type != 11) tmp = lives_strdup(_("Audio"));
-    else if (type == 2) tmp = lives_strdup(_("New Audio Details"));
-    else tmp = lives_strdup(_("New"));
+    if (type >= 3 && type != 11) tmp = (_("Audio"));
+    else if (type == 2) tmp = (_("New Audio Details"));
+    else tmp = (_("New"));
 
     frame = lives_standard_frame_new(tmp, 0., FALSE);
     lives_free(tmp);
@@ -2073,7 +2073,7 @@ void on_change_speed_ok_clicked(LiVESButton * button, livespointer user_data) {
     if (mainw->fx1_val > FPS_MAX) mainw->fx1_val = FPS_MAX;
   }
 
-  char *tmp = lives_strdup(_("Changing the clip fps"));
+  char *tmp = (_("Changing the clip fps"));
   uint32_t chk_mask = WARN_MASK_LAYOUT_DELETE_FRAMES | WARN_MASK_LAYOUT_SHIFT_FRAMES
                       | WARN_MASK_LAYOUT_ALTER_FRAMES;
   if (mainw->fx1_bool) chk_mask |= WARN_MASK_LAYOUT_DELETE_AUDIO | WARN_MASK_LAYOUT_SHIFT_AUDIO

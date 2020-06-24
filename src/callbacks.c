@@ -1363,9 +1363,9 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       char *title = get_menu_name(cfile, FALSE);
       if (strlen(title) > 128) {
         lives_free(title);
-        title = lives_strdup(_("This file"));
+        title = (_("This file"));
       }
-      if (acurrent) extra = lives_strdup(_(",\n - including the current layout - "));
+      if (acurrent) extra = (_(",\n - including the current layout - "));
       else extra = lives_strdup("");
       if (!only_current) warn = lives_strdup_printf(_("\n%s\nis used in some multitrack layouts%s.\n\nReally close it ?"),
                                   title, extra);
@@ -1385,7 +1385,7 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
   if (!lmap_errors) {
     if (cfile->changed) {
-      warn = lives_strdup(_("Changes made to this clip have not been saved or backed up.\n\nReally close it ?"));
+      warn = (_("Changes made to this clip have not been saved or backed up.\n\nReally close it ?"));
       if (!do_warning_dialog(warn)) {
         lives_free(warn);
         goto close_done;
@@ -3021,7 +3021,7 @@ void on_cut_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   int current_file = mainw->current_file;
 
   if (menuitem != NULL) {
-    char *tmp = lives_strdup(_("Cutting"));
+    char *tmp = (_("Cutting"));
     chk_mask = WARN_MASK_LAYOUT_DELETE_FRAMES | WARN_MASK_LAYOUT_SHIFT_FRAMES | WARN_MASK_LAYOUT_ALTER_FRAMES;
     if (mainw->ccpd_with_sound) chk_mask |= WARN_MASK_LAYOUT_DELETE_AUDIO | WARN_MASK_LAYOUT_SHIFT_AUDIO |
                                               WARN_MASK_LAYOUT_ALTER_AUDIO;
@@ -3078,7 +3078,7 @@ void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mainw->fx1_val = 1;
   mainw->fx1_bool = FALSE;
 
-  msg = lives_strdup(_("Pulling frames from clipboard..."));
+  msg = (_("Pulling frames from clipboard..."));
 
   if (realize_all_frames(0, msg, TRUE) <= 0) {
     int lframe = first_virtual_frame(0, 1, clipboard->frames);
@@ -3310,7 +3310,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
   else insert_start = cfile->start;
 
   if (button != NULL) {
-    char *tmp = lives_strdup(_("Insertion"));
+    char *tmp = (_("Insertion"));
     chk_mask = WARN_MASK_LAYOUT_SHIFT_FRAMES | WARN_MASK_LAYOUT_ALTER_FRAMES;
     if (with_sound) chk_mask |= WARN_MASK_LAYOUT_SHIFT_AUDIO | WARN_MASK_LAYOUT_ALTER_AUDIO;
     if (!check_for_layout_errors(tmp, mainw->current_file, insert_start, 0, &chk_mask)) {
@@ -3489,7 +3489,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
 	  // *INDENT-ON*
 
   if (!virtual_ins) {
-    char *msg = lives_strdup(_("Pulling frames from clipboard..."));
+    char *msg = (_("Pulling frames from clipboard..."));
     if (realize_all_frames(0, msg, FALSE) <= 0) {
       lives_free(msg);
       sensitize();
@@ -4088,7 +4088,7 @@ void on_delete_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   }
 
   if (menuitem != NULL) {
-    char *tmp = lives_strdup(_("Deletion"));
+    char *tmp = (_("Deletion"));
     chk_mask = WARN_MASK_LAYOUT_DELETE_FRAMES | WARN_MASK_LAYOUT_SHIFT_FRAMES | WARN_MASK_LAYOUT_ALTER_FRAMES;
     if (mainw->ccpd_with_sound) chk_mask |= WARN_MASK_LAYOUT_DELETE_AUDIO | WARN_MASK_LAYOUT_SHIFT_AUDIO |
                                               WARN_MASK_LAYOUT_ALTER_AUDIO;
@@ -5960,8 +5960,8 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   mainw->add_clear_ds_adv = TRUE; ///< auto reset by do_warning_dialog()
   if (!(prefs->clear_disk_opts & LIVES_CDISK_REMOVE_ORPHAN_CLIPS)) {
     lives_free(extra);
-    extra = lives_strdup(_("\n\nIf potential missing clips are detected, provide the option to try to recover them\n"
-                           "before they are removed permanently from the disk.\n"));
+    extra = (_("\n\nIf potential missing clips are detected, provide the option to try to recover them\n"
+               "before they are removed permanently from the disk.\n"));
   }
 
   if (!do_warning_dialogf(
@@ -6084,7 +6084,7 @@ remall:
           }
           if (!recvlist) {
             lives_free(left_list->data);
-            left_list->data = lives_strdup(_("The following directories may be removed manually if not required:\n"));
+            left_list->data = (_("The following directories may be removed manually if not required:\n"));
             for (list = left_list->next; list != NULL; list = list->next) {
               tmp = (char *)list->data;
               list->data = lives_build_path(prefs->workdir, tmp, NULL);
@@ -6141,7 +6141,7 @@ remall:
     msg = lives_strdup_printf(_("%s of disk space was recovered.\n"),
                               lives_format_storage_space_string((uint64_t)bytes));
     do_blocking_info_dialog_with_expander(msg,
-                                          (tmp = lives_strdup(_("Some directories may be removed manually if desired.\nClick for details:\n"))),
+                                          (tmp = (_("Some directories may be removed manually if desired.\nClick for details:\n"))),
                                           left_list);
     if (user_data != NULL) lives_widget_set_sensitive(lives_widget_get_toplevel(LIVES_WIDGET(user_data)), FALSE);
   } else d_print_failed();
@@ -6177,7 +6177,7 @@ void on_show_keys_activate(LiVESMenuItem * menuitem, livespointer user_data) {do
 
 void on_vj_realize_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   frames_t ret;
-  char *msg = lives_strdup(_("Pre-decoding all frames in this clip..."));
+  char *msg = (_("Pre-decoding all frames in this clip..."));
   d_print(msg);
 
   desensitize();
@@ -6303,11 +6303,11 @@ void on_show_file_info_activate(LiVESMenuItem * menuitem, livespointer user_data
     }
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_ltime), buff, -1);
 
-    if (cfile->signed_endian & AFORM_UNSIGNED) sigs = lives_strdup(_("unsigned"));
-    else sigs = lives_strdup(_("signed"));
+    if (cfile->signed_endian & AFORM_UNSIGNED) sigs = (_("unsigned"));
+    else sigs = (_("signed"));
 
-    if (cfile->signed_endian & AFORM_BIG_ENDIAN) ends = lives_strdup(_("big-endian"));
-    else ends = lives_strdup(_("little-endian"));
+    if (cfile->signed_endian & AFORM_BIG_ENDIAN) ends = (_("big-endian"));
+    else ends = (_("little-endian"));
 
     lives_snprintf(buff, 512, _("\n  %d Hz %d bit\n%s %s"), cfile->arate, cfile->asampsize, sigs, ends);
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_lrate), buff, -1);
@@ -6317,11 +6317,11 @@ void on_show_file_info_activate(LiVESMenuItem * menuitem, livespointer user_data
   }
 
   if (cfile->achans > 1) {
-    if (cfile->signed_endian & AFORM_UNSIGNED) sigs = lives_strdup(_("unsigned"));
-    else sigs = lives_strdup(_("signed"));
+    if (cfile->signed_endian & AFORM_UNSIGNED) sigs = (_("unsigned"));
+    else sigs = (_("signed"));
 
-    if (cfile->signed_endian & AFORM_BIG_ENDIAN) ends = lives_strdup(_("big-endian"));
-    else ends = lives_strdup(_("little-endian"));
+    if (cfile->signed_endian & AFORM_BIG_ENDIAN) ends = (_("big-endian"));
+    else ends = (_("little-endian"));
 
     lives_snprintf(buff, 512, _("\n  %d Hz %d bit\n%s %s"), cfile->arate, cfile->asampsize, sigs, ends);
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_rrate), buff, -1);
@@ -6433,25 +6433,25 @@ void on_about_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2, 14, 0)
-  char *license = lives_strdup(_(
-                                 "This program is free software; you can redistribute it and/or modify\n"
-                                 "it under the terms of the GNU General Public License as published by\n"
-                                 "the Free Software Foundation; either version 3 of the License, or\n"
-                                 "(at your option) any later version.\n"
-                                 "\n"
-                                 "This program is distributed in the hope that it will be useful,\n"
-                                 "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-                                 "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-                                 "GNU General Public License for more details.\n"
-                                 "\n"
-                                 "You should have received a copy of the GNU General Public License\n"
-                                 "along with this program; if not, write to the Free Software\n"
-                                 "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA.\n"));
+  char *license = (_(
+                     "This program is free software; you can redistribute it and/or modify\n"
+                     "it under the terms of the GNU General Public License as published by\n"
+                     "the Free Software Foundation; either version 3 of the License, or\n"
+                     "(at your option) any later version.\n"
+                     "\n"
+                     "This program is distributed in the hope that it will be useful,\n"
+                     "but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+                     "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+                     "GNU General Public License for more details.\n"
+                     "\n"
+                     "You should have received a copy of the GNU General Public License\n"
+                     "along with this program; if not, write to the Free Software\n"
+                     "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA.\n"));
 
-  char *comments = lives_strdup(_("A video editor and VJ program."));
-  char *title = lives_strdup(_("About LiVES"));
+  char *comments = (_("A video editor and VJ program."));
+  char *title = (_("About LiVES"));
 
-  char *translator_credits = lives_strdup(_("translator_credits"));
+  char *translator_credits = (_("translator_credits"));
 
 #if GTK_CHECK_VERSION(3, 0, 0)
   char *authors[2] = {LIVES_AUTHOR_EMAIL, NULL};
@@ -6736,9 +6736,9 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
   if (!HAS_EXTERNAL_PLAYER) {
     char *msg;
     if (capable->has_identify) {
-      msg = lives_strdup(_("\n\nYou need to install mplayer, mplayer2 or mpv to be able to preview this file.\n"));
+      msg = (_("\n\nYou need to install mplayer, mplayer2 or mpv to be able to preview this file.\n"));
     } else {
-      msg = lives_strdup(_("\n\nYou need to install mplayer, mplayer2, mpv or imageMagick to be able to preview this file.\n"));
+      msg = (_("\n\nYou need to install mplayer, mplayer2, mpv or imageMagick to be able to preview this file.\n"));
     }
     do_blocking_error_dialog(msg);
     lives_free(msg);
@@ -6858,7 +6858,7 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
     return;
   }
 
-  tmp = lives_strdup(_("\nStop Preview\n"));
+  tmp = (_("\nStop Preview\n"));
   fsp_ltext = lives_strdup(lives_button_get_label(LIVES_BUTTON(widget)));
   widget_opts.expand = LIVES_EXPAND_NONE;
   lives_button_set_label(LIVES_BUTTON(widget), tmp);
@@ -8044,7 +8044,7 @@ void on_rev_clipboard_activate(LiVESMenuItem * menuitem, livespointer user_data)
 
   if (!check_if_non_virtual(0, 1, cfile->frames)) {
     lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
-    char *msg = lives_strdup(_("Pulling frames from clipboard..."));
+    char *msg = (_("Pulling frames from clipboard..."));
     if (!(cdata->seek_flag & LIVES_SEEK_FAST)) {
       if (realize_all_frames(0, msg, FALSE) <= 0) {
         mainw->current_file = current_file;
@@ -8101,7 +8101,7 @@ void on_load_subs_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // try to repaint the screen, as it may take a few seconds to get a directory listing
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 
-  ttl = lives_strdup(_("Load Subtitles"));
+  ttl = (_("Load Subtitles"));
 
   if (*mainw->vid_load_dir) {
     subfile = choose_file(mainw->vid_load_dir, NULL, filt, LIVES_FILE_CHOOSER_ACTION_OPEN, ttl, NULL);
@@ -8278,7 +8278,7 @@ void on_open_new_audio_clicked(LiVESFileChooser * chooser, livespointer user_dat
 
   if (!CURRENT_CLIP_IS_VALID) return;
 
-  tmp = lives_strdup(_("Loading new audio"));
+  tmp = (_("Loading new audio"));
   chk_mask = WARN_MASK_LAYOUT_DELETE_AUDIO | WARN_MASK_LAYOUT_ALTER_AUDIO;
   if (!check_for_layout_errors(tmp, mainw->current_file, 1, 0, &chk_mask)) {
     lives_free(tmp);
@@ -8610,7 +8610,7 @@ void on_load_cdtrack_ok_clicked(LiVESButton * button, livespointer user_data) {
   mt_needs_idlefunc = needs_idlefunc;
 
   if (CURRENT_CLIP_IS_VALID) {
-    char *tmp = lives_strdup(_("Loading new audio"));
+    char *tmp = (_("Loading new audio"));
     chk_mask = WARN_MASK_LAYOUT_DELETE_AUDIO | WARN_MASK_LAYOUT_ALTER_AUDIO;
     if (!check_for_layout_errors(tmp, mainw->current_file, 1, 0, &chk_mask)) {
       lives_free(tmp);
@@ -9599,9 +9599,9 @@ void on_effects_paused(LiVESButton * button, livespointer user_data) {
           char *tmp, *ltext;
 
           if (!cfile->opening) {
-            ltext = lives_strdup(_("Keep"));
+            ltext = (_("Keep"));
           } else {
-            ltext = lives_strdup(_("Enough"));
+            ltext = (_("Enough"));
           }
           lives_button_set_label(LIVES_BUTTON(cfile->proc_ptr->cancel_button), ltext);
           lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label2),
@@ -11409,7 +11409,7 @@ boolean on_trim_audio_activate(LiVESMenuItem * menuitem, livespointer user_data)
     end = cfile->pointer_time;
   }
 
-  tmp = lives_strdup(_("Deletion"));
+  tmp = (_("Deletion"));
   if (!check_for_layout_errors(tmp, mainw->current_file, calc_frame_from_time(mainw->current_file, start),
                                calc_frame_from_time(mainw->current_file, end), &chk_mask)) {
     lives_free(tmp);
@@ -11520,13 +11520,13 @@ void on_fade_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (type == 0) {
     startv = 0.;
     endv = 1.;
-    msg2 = lives_strdup(_("Fading audio in"));
-    utxt = lives_strdup(_("Fade audio in"));
+    msg2 = (_("Fading audio in"));
+    utxt = (_("Fade audio in"));
   } else {
     startv = 1.;
     endv = 0.;
-    msg2 = lives_strdup(_("Fading audio out"));
-    utxt = lives_strdup(_("Fade audio out"));
+    msg2 = (_("Fading audio out"));
+    utxt = (_("Fade audio out"));
   }
 
   if (menuitem != NULL) {
@@ -11612,7 +11612,7 @@ boolean on_del_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
     end = cfile->undo2_dbl;
   } else {
     if (LIVES_POINTER_TO_INT(user_data)) {
-      tmp = lives_strdup(_("Deleting all audio"));
+      tmp = (_("Deleting all audio"));
       chk_mask = WARN_MASK_LAYOUT_DELETE_AUDIO | WARN_MASK_LAYOUT_ALTER_AUDIO;
       if (!check_for_layout_errors(tmp, mainw->current_file, 1, 0, &chk_mask)) {
         lives_free(tmp);
@@ -11625,7 +11625,7 @@ boolean on_del_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
         unbuffer_lmap_errors(FALSE);
         return FALSE;
       }
-      msg = lives_strdup(_("Deleting all audio..."));
+      msg = (_("Deleting all audio..."));
       start = end = 0.;
     } else {
       start = calc_time_from_frame(mainw->current_file, cfile->start);
@@ -11634,7 +11634,7 @@ boolean on_del_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
       start *= (double)cfile->arate / (double)cfile->arps;
       end *= (double)cfile->arate / (double)cfile->arps;
 
-      tmp = lives_strdup(_("Deleting audio"));
+      tmp = (_("Deleting audio"));
       chk_mask = WARN_MASK_LAYOUT_DELETE_AUDIO | WARN_MASK_LAYOUT_ALTER_AUDIO;
       if (!check_for_layout_errors(tmp, mainw->current_file, 1, 0, &chk_mask)) {
         lives_free(tmp);
@@ -12083,7 +12083,7 @@ boolean on_ins_silence_activate(LiVESMenuItem * menuitem, livespointer user_data
   }
 
   if (menuitem != NULL) {
-    char *tmp = lives_strdup(_("Inserting silence"));
+    char *tmp = (_("Inserting silence"));
     chk_mask = WARN_MASK_LAYOUT_SHIFT_AUDIO |  WARN_MASK_LAYOUT_ALTER_AUDIO;
 
     start = calc_time_from_frame(mainw->current_file, cfile->start);

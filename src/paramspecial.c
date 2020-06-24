@@ -421,7 +421,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
 
     if ((param == aspect.width_param || param == aspect.height_param) && aspect.nwidgets == 2) {
       boolean expand = widget_opts.expand == LIVES_EXPAND_EXTRA;
-      char *labeltext = lives_strdup(_("    Maintain _Aspect Ratio    "));
+      char *labeltext = (_("    Maintain _Aspect Ratio    "));
       LiVESWidget *eventbox = lives_event_box_new();
 
       aspect.no_reset = TRUE;

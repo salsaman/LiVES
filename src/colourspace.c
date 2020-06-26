@@ -983,6 +983,11 @@ void init_advanced_palettes(void) {
 
   // custom palettes (designed for future use or for testing)
   advp[21] = (weed_macropixel_t) {
+    LIVES_PALETTE_ABGR32,
+    {WEED_VCHAN_alpha, WEED_VCHAN_blue, WEED_VCHAN_green, WEED_VCHAN_red}
+  };
+
+  advp[21] = (weed_macropixel_t) {
     LIVES_PALETTE_YVU422P,
     {WEED_VCHAN_Y, WEED_VCHAN_V, WEED_VCHAN_U},
     WEED_VCHAN_DESC_PLANAR, {1, 2, 2}, {1, 1, 1}
@@ -1098,6 +1103,21 @@ LIVES_GLOBAL_INLINE boolean weed_palette_is_alpha(int pal) {
   return FALSE;
 }
 
+LIVES_GLOBAL_INLINE boolean weed_palette_red_first(int pal) {
+  const weed_macropixel_t *mpx = get_advanced_palette(pal);
+  if (mpx) {
+    for (register int i = 0; i < MAXPPLANES && mpx->chantype[i]; i++) {
+      if (mpx->chantype[i] == WEED_VCHAN_red) return TRUE;
+      if (mpx->chantype[i] == WEED_VCHAN_blue) return FALSE;
+    }
+  }
+  return FALSE;
+}
+
+LIVES_GLOBAL_INLINE boolean weed_palettes_rbswapped(int pal0, int pal1) {
+  return weed_palette_red_first(pal0) != weed_palette_red_first(pal1);
+}
+
 LIVES_GLOBAL_INLINE boolean weed_palette_is_rgb(int pal) {
   const weed_macropixel_t *mpx = get_advanced_palette(pal);
   if (mpx) {
@@ -1155,14 +1175,150 @@ LIVES_LOCAL_INLINE int _get_alpha(int pal) {
   return -1;
 }
 
-LIVES_GLOBAL_INLINE boolean weed_palette_get_alpha_plane(int pal) {
+LIVES_GLOBAL_INLINE int weed_palette_get_alpha_plane(int pal) {
   if (weed_palette_is_planar(pal)) return _get_alpha(pal);
   return -1;
 }
 
-LIVES_GLOBAL_INLINE boolean weed_palette_get_alpha_offset(int pal) {
+LIVES_GLOBAL_INLINE int weed_palette_get_alpha_offset(int pal) {
   if (!weed_palette_is_planar(pal)) return _get_alpha(pal);
   return -1;
+}
+
+LIVES_GLOBAL_INLINE boolean weed_palette_has_alpha_first(int pal) {
+  return _get_alpha(pal) == 0;
+}
+
+LIVES_GLOBAL_INLINE boolean weed_palette_has_alpha_last(int pal) {
+  return _get_alpha(pal) == 3;
+}
+
+LIVES_GLOBAL_INLINE boolean weed_palette_is_sane(int pal) {
+  // first cpt must be alpha, red, blue, y, u, or v
+  //
+  // if first was alpha, 2nd must be NULL, red, blue or y, u, v
+  // if first was red or blue, 2nd must be green
+  // if first was y, 2nd must be y, u or v
+  //
+  // if second was green, 3rd must be blue or red, but != 1st
+  // if second was y, u, or v, third must be y, u or v
+  // if second was red or blue, 3rd must be green
+  //
+  // if third was red or blue, fourth may be alpha or NULL
+  // if third was green, fourth must be red or blue but != 2nd
+  // if third was y, u, or v, fourth may be y, u, v or alpha
+  //
+  // if fourth was red, blue or alpha, fifth must be NULL
+  // if fourth was y, u, or v, fifth must be y, u, v or alpha
+  //
+  // if fifth was alpha, sixth must be NULL
+  // if fifth was y, u, or v, sixth must be y, u, v or alpha
+  //
+  // etc. for 7 and 8
+
+  // there must be some symmetry between u and v, e.g. yyuyyv is allowed but not yyuyv or yuy
+  // 0, 1, or 2 y before / after a u or v, y numbers must match and u / v numbers too
+
+  // future directions: allow single plane / cpt r, g, b or y
+  boolean red = FALSE, blue = FALSE, alpha = FALSE;
+  int nseqy = 0, nseqyu = 0, nseqyv = 0, nu = 0, nv = 0;
+  const weed_macropixel_t *mpx = get_advanced_palette(pal);
+  if (!mpx) return FALSE;
+  for (register int i = 0; i < MAXPPLANES && mpx->chantype[i]; i++) {
+    uint16_t ctype = mpx->chantype[i];
+    if (i > 3 && alpha) return FALSE;
+    switch (ctype) {
+    case WEED_VCHAN_Y:
+      if (red || blue) return FALSE;
+      if (++nseqy > 2) return FALSE;
+      break;
+    case WEED_VCHAN_U:
+      if (red || blue) return FALSE;
+      if (nseqyv && nseqy && nseqy != nseqyv) return FALSE;
+      nu++;
+      nseqyu = nseqy;
+      nseqy = nseqyv = 0;
+      break;
+    case WEED_VCHAN_V:
+      if (red || blue) return FALSE;
+      if (nseqyu && nseqy && nseqy != nseqyu) return FALSE;
+      nv++;
+      nseqyv = nseqy;
+      nseqy = nseqyu = 0;
+      break;
+    default:
+      switch (i) {
+      case 0:
+        switch (ctype) {
+        case WEED_VCHAN_alpha: alpha = TRUE; break;
+        case WEED_VCHAN_red: red = TRUE; break;
+        case WEED_VCHAN_blue: blue = TRUE; break;
+        default: return FALSE;
+        }
+        break;
+      case 1:
+        if (nu || nv || nseqy) return FALSE;
+        switch (ctype) {
+        case WEED_VCHAN_alpha: return FALSE;
+        case WEED_VCHAN_green:
+          if (!red && !blue) return FALSE;
+          break;
+        case WEED_VCHAN_red:
+          if (!alpha) return FALSE;
+          red = TRUE;
+          break;
+        case WEED_VCHAN_blue:
+          if (!alpha) return FALSE;
+          blue = TRUE;
+          break;
+        default: return FALSE;
+        }
+        break;
+      case 2:
+        if (nu || nv || nseqy) return FALSE;
+        switch (ctype) {
+        case WEED_VCHAN_alpha: return FALSE;
+        case WEED_VCHAN_green:
+          if (!red && !blue) return FALSE;
+          break;
+        case WEED_VCHAN_red:
+          if (!blue) return FALSE;
+          red = TRUE;
+          break;
+        case WEED_VCHAN_blue:
+          if (!red) return FALSE;
+          blue = TRUE;
+          break;
+        default: return FALSE;
+        }
+        break;
+      case 3:
+        switch (ctype) {
+        case WEED_VCHAN_alpha:
+          if (alpha) return FALSE;
+          alpha = TRUE;
+          break;
+        case WEED_VCHAN_red:
+          if (!blue) return FALSE;
+          red = TRUE;
+          break;
+        case WEED_VCHAN_blue:
+          if (!red) return FALSE;
+          blue = TRUE;
+          break;
+        default: return FALSE;
+        }
+        break;
+      default:
+        if (ctype != WEED_VCHAN_alpha) return FALSE;
+        alpha = TRUE;
+        break;
+      }
+      break;
+    }
+  }
+  if (red != blue || nv != nu || (nseqy != nseqyu && nseqy != nseqyv)) return FALSE;
+  return TRUE;
 }
 #endif
 
@@ -1230,6 +1386,9 @@ static void *convert_addpost_frame_thread(void *cc_params);
 static void *convert_delpre_frame_thread(void *cc_params);
 static void *convert_delpost_frame_thread(void *cc_params);
 static void *convert_swap3postalpha_frame_thread(void *cc_params);
+#ifdef WEED_ADVANCED_PALETTES
+static void *convert_swap3prealpha_frame_thread(void *cc_params);
+#endif
 static void *convert_swapprepost_frame_thread(void *cc_params);
 
 static void *convert_swab_frame_thread(void *cc_params);
@@ -6896,17 +7055,15 @@ static void convert_swap3postalpha_frame(uint8_t *src, int width, int height, in
 
   irowstride -= width << 2;
   orowstride -= width << 2;
-
   for (; src < end; src += irowstride) {
     for (i = 0; i < width; i++) {
-      swab2(src++, dest++, 1); // 1 0 --  */
-      if (src != dest) lives_memcpy(dest + 1, ++src, 2); // 1 0 2 3
-      else src++;
-      swab2(dest, dest, 1); // 1 2 0 3
-      --dest;
-      swab2(dest, dest, 1); // 2 1 0 3
-      dest += 4;
+      swab4(src++, dest++, 2); // 1 0 3 2
+      swab2(src--, dest--, 1); // 1 3 0 2
+      swab2(src++, dest++, 1); // 3 1 0 2
+      swab2(src++, dest--, 1); // 3 0 1 2
+      swab4(dest, dest, 1); // 2 1 0 3
       src += 2;
+      dest += 4;
     }
     dest += orowstride;
   }
@@ -6920,6 +7077,78 @@ static void *convert_swap3postalpha_frame_thread(void *data) {
   return NULL;
 }
 
+#ifdef WEED_ADVANCED_PALETTES
+static void convert_swap3prealpha_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
+                                        uint8_t *dest, int thread_id) {
+  // swap 3 bytes, leave alpha
+  uint8_t *end = src + height * irowstride;
+  register int i;
+
+  if (thread_id == -1 && prefs->nfx_threads > 1) {
+    lives_thread_t threads[prefs->nfx_threads];
+    int nthreads = 1;
+    int dheight, xdheight;
+    lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
+
+    xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
+    for (i = prefs->nfx_threads - 1; i >= 0; i--) {
+      dheight = xdheight;
+
+      if ((src + dheight * i * irowstride) < end) {
+        ccparams[i].src = src + dheight * i * irowstride;
+        ccparams[i].hsize = width;
+        ccparams[i].dest = dest + dheight * i * orowstride;
+
+        if (dheight * (i + 1) > (height - 4)) {
+          dheight = height - (dheight * i);
+        }
+
+        ccparams[i].vsize = dheight;
+
+        ccparams[i].irowstrides[0] = irowstride;
+        ccparams[i].orowstrides[0] = orowstride;
+        ccparams[i].thread_id = i;
+
+        if (i == 0) convert_swap3prealpha_frame_thread(&ccparams[i]);
+        else {
+          lives_thread_create(&threads[i], NULL, convert_swap3prealpha_frame_thread, &ccparams[i]);
+          nthreads++;
+        }
+      }
+    }
+
+    for (i = 1; i < nthreads; i++) {
+      lives_thread_join(threads[i], NULL);
+    }
+    lives_free(ccparams);
+    return;
+  }
+
+  irowstride -= width << 2;
+  orowstride -= width << 2;
+
+  for (; src < end; src += irowstride) {
+    for (i = 0; i < width; i++) {
+      swab4(src++, dest++, 2); // 1 0 3 2
+      swab2(src++, dest++, 1); // 1 3 0 2
+      swab2(src--, dest--, 1); // 1 3 2 0
+      swab2(src++, dest--, 1); // 1 2 3 0
+      swab4(dest, dest, 1); // 0 3 2 1
+      src += 2;
+      dest += 4;
+    }
+    dest += orowstride;
+  }
+}
+
+
+static void *convert_swap3prealpha_frame_thread(void *data) {
+  lives_cc_params *ccparams = (lives_cc_params *)data;
+  convert_swap3prealpha_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
+                              ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->thread_id);
+  return NULL;
+}
+#endif
 
 static void convert_addpost_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
                                   uint8_t *dest, uint8_t *gamma_lut, int thread_id) {
@@ -9287,8 +9516,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
 #endif
     if (!weed_palette_is_yuv(inpl) || (isampling == osampling &&
                                        (isubspace == osubspace || (osubspace != WEED_YUV_SUBSPACE_BT709)))) {
-      lives_free(istrides);
-      return TRUE;
       if (inpl == WEED_PALETTE_YUV420P && ((isampling == WEED_YUV_SAMPLING_JPEG
                                             && osampling == WEED_YUV_SAMPLING_MPEG) ||
                                            (isampling == WEED_YUV_SAMPLING_MPEG && osampling == WEED_YUV_SAMPLING_JPEG))) {
@@ -9364,6 +9591,11 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
 
   /// if V plane is before U, swap the pointers
 #ifdef WEED_ADVANCED_PALETTES
+  if (!weed_palette_is_sane(inpl) || !weed_palette_is_sane(outpl)) {
+    if (!weed_palette_is_sane(outpl)) g_print("BAD pal %d\n", outpl);
+    if (!weed_palette_is_sane(inpl)) g_print("BAD pal %d\n", inpl);
+    return FALSE;
+  }
   if (get_advanced_palette(inpl)->chantype[1] == WEED_VCHAN_V) swap_chroma_planes(layer);
 #else
   if (inpl == WEED_PALETTE_YVU420P) swap_chroma_planes(layer);
@@ -9371,6 +9603,112 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
 
   orig_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
   weed_layer_copy(orig_layer, layer);
+
+#ifdef WEED_ADVANCED_PALETTES
+  if (weed_palette_is_rgb(inpl) && weed_palette_is_rgb(outpl)) {
+    gusrc = weed_layer_get_pixel_data_packed(layer);
+    if (!weed_palette_has_alpha_first(inpl)) {
+      if (!weed_palette_has_alpha_last(inpl)) {
+        if (!weed_palette_has_alpha_first(outpl)) {
+          if (!weed_palette_has_alpha_last(outpl)) {
+            convert_swap3_frame(gusrc, width, height, irowstride, irowstride, gusrc,
+                                create_gamma_lut(1.0, weed_layer_get_gamma(layer), new_gamma_type), -USE_THREADS);
+            weed_layer_nullify_pixel_data(orig_layer);
+          } else {
+            // add post
+            if (weed_palettes_rbswapped(inpl, outpl)) {
+              if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+              orowstride = weed_layer_get_rowstride(layer);
+              gudest = weed_layer_get_pixel_data_packed(layer);
+              convert_swap3addpost_frame(gusrc, width, height, irowstride, orowstride, gudest, -USE_THREADS);
+            } else {
+              if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+              orowstride = weed_layer_get_rowstride(layer);
+              gudest = weed_layer_get_pixel_data_packed(layer);
+              convert_addpost_frame(gusrc, width, height, irowstride, orowstride, gudest,
+                                    create_gamma_lut(1.0, weed_layer_get_gamma(layer), new_gamma_type), -USE_THREADS);
+            }
+          }
+        } else {
+          /// add pre
+          if (weed_palettes_rbswapped(inpl, outpl)) {
+            if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+            orowstride = weed_layer_get_rowstride(layer);
+            gudest = weed_layer_get_pixel_data_packed(layer);
+            convert_swap3addpre_frame(gusrc, width, height, irowstride, orowstride, gudest, -USE_THREADS);
+          } else {
+            if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+            orowstride = weed_layer_get_rowstride(layer);
+            gudest = weed_layer_get_pixel_data_packed(layer);
+            convert_addpre_frame(gusrc, width, height, irowstride, orowstride, gudest, -USE_THREADS);
+          }
+        }
+      } else {
+        /// inpl has post
+        if (!weed_palette_has_alpha_first(outpl)) {
+          if (!weed_palette_has_alpha_last(outpl)) {
+            if (weed_palettes_rbswapped(inpl, outpl)) {
+              if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+              orowstride = weed_layer_get_rowstride(layer);
+              gudest = weed_layer_get_pixel_data_packed(layer);
+              convert_swap3delpost_frame(gusrc, width, height, irowstride, orowstride, gudest, -USE_THREADS);
+            } else {
+              if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+              orowstride = weed_layer_get_rowstride(layer);
+              gudest = weed_layer_get_pixel_data_packed(layer);
+              convert_delpost_frame(gusrc, width, height, irowstride, orowstride, gudest,
+                                    create_gamma_lut(1.0, weed_layer_get_gamma(layer), new_gamma_type), -USE_THREADS);
+            }
+          } else {
+            /// outpl has post
+            convert_swap3postalpha_frame(gusrc, width, height, irowstride, irowstride, gusrc, -USE_THREADS);
+            weed_layer_nullify_pixel_data(orig_layer);
+          }
+        } else {
+          /// outpl has pre
+          if (weed_palettes_rbswapped(inpl, outpl)) {
+            convert_swap4_frame(gusrc, width, height, irowstride, irowstride, gusrc, -USE_THREADS);
+            weed_layer_nullify_pixel_data(orig_layer);
+          } else {
+            convert_swapprepost_frame(gusrc, width, height, irowstride, irowstride, gusrc, -USE_THREADS);
+            weed_layer_nullify_pixel_data(orig_layer);
+          }
+        }
+      }
+    } else {
+      // inpl has pre
+      if (!weed_palette_has_alpha_first(outpl)) {
+        if (!weed_palette_has_alpha_last(outpl)) {
+          if (weed_palettes_rbswapped(inpl, outpl)) {
+            if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+            orowstride = weed_layer_get_rowstride(layer);
+            gudest = weed_layer_get_pixel_data_packed(layer);
+            convert_swap3delpre_frame(gusrc, width, height, irowstride, orowstride, gudest, -USE_THREADS);
+          } else {
+            if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+            orowstride = weed_layer_get_rowstride(layer);
+            gudest = weed_layer_get_pixel_data_packed(layer);
+            convert_delpre_frame(gusrc, width, height, irowstride, orowstride, gudest, -USE_THREADS);
+          }
+        } else {
+          /// outpl has post
+          if (weed_palettes_rbswapped(inpl, outpl)) {
+            convert_swap4_frame(gusrc, width, height, irowstride, irowstride, gusrc, -USE_THREADS);
+            weed_layer_nullify_pixel_data(orig_layer);
+          } else {
+            convert_swapprepost_frame(gusrc, width, height, irowstride, irowstride, gusrc, -USE_THREADS);
+            weed_layer_nullify_pixel_data(orig_layer);
+          }
+        }
+      } else {
+        /// outpl has pre
+        convert_swap3prealpha_frame(gusrc, width, height, irowstride, irowstride, gusrc, -USE_THREADS);
+        weed_layer_nullify_pixel_data(orig_layer);
+      }
+    }
+    goto conv_done;
+  }
+#endif
 
   switch (inpl) {
   case WEED_PALETTE_BGR24:
@@ -10789,6 +11127,10 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                    weed_palette_get_name(outpl));
     goto memfail;
   }
+
+#ifdef WEED_ADVANCED_PALETTES
+conv_done:
+#endif
 
   lives_freep((void **)&ostrides);
   lives_freep((void **)&gusrc_array);
@@ -12270,6 +12612,62 @@ boolean pixbuf_to_layer(weed_layer_t *layer, LiVESPixbuf * pixbuf) {
 
   return FALSE;
 }
+
+
+LIVES_LOCAL_INLINE int swap_red_blue(int pal) {
+  if (pal == WEED_PALETTE_RGB24) return WEED_PALETTE_BGR24;
+  if (pal == WEED_PALETTE_RGBA32) return WEED_PALETTE_BGRA32;
+  if (pal == WEED_PALETTE_BGR24) return WEED_PALETTE_RGB24;
+  if (pal == WEED_PALETTE_BGRA32) return WEED_PALETTE_RGBA32;
+  return WEED_PALETTE_END;
+}
+
+/**
+   @brief look for shortcuts in palette conversions
+   instead of converting e.g RGB -> BGRA, we may be able to pretend that the
+   input palette is BGR and thus the conversion to BGRA is slightly cheaper
+   we can do this provided the caller can take into account that the red / blue
+   components are now swapped.
+   If this is possible, then either inpal or outpal mau ne altered, and TRUE is returned
+*/
+boolean consider_swapping(int *inpal, int *outpal) {
+  if (*inpal == *outpal) return FALSE;
+  if (!weed_palette_is_rgb(*inpal) || !weed_palette_is_rgb(*outpal)) return FALSE;
+  switch (*inpal) {
+  case WEED_PALETTE_RGB24:
+  case WEED_PALETTE_RGBA32:
+    switch (*outpal) {
+    case WEED_PALETTE_BGR24:
+    case WEED_PALETTE_BGRA32:
+      *inpal = swap_red_blue(*inpal);
+      return TRUE;
+    default: return FALSE;
+    }
+  case WEED_PALETTE_BGR24:
+  case WEED_PALETTE_BGRA32:
+    switch (*outpal) {
+    case WEED_PALETTE_RGB24:
+    case WEED_PALETTE_RGBA32:
+    case WEED_PALETTE_ARGB32:
+      *inpal = swap_red_blue(*inpal);
+      return TRUE;
+    default: return FALSE;
+    }
+  case WEED_PALETTE_ARGB32:
+    /// since we dont have ABGR, we can switch the out palette instead
+    switch (*outpal) {
+    case WEED_PALETTE_BGR24:
+    case WEED_PALETTE_BGRA32:
+      *outpal = swap_red_blue(*outpal);
+      return TRUE;
+    default: return FALSE;
+    }
+  default:
+    break;
+  }
+  return FALSE;
+}
+
 
 
 #ifdef GUI_GTK

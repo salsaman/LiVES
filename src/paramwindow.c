@@ -223,7 +223,7 @@ void on_render_fx_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
 
   if (menuitem != NULL && rfx->num_in_channels > 0) {
     chk_mask = WARN_MASK_LAYOUT_ALTER_FRAMES;
-    if (!check_for_layout_errors(NULL, mainw->current_file, 1, 0, &chk_mask)) {
+    if (!check_for_layout_errors(NULL, mainw->current_file, cfile->start, cfile->end, &chk_mask)) {
       return;
     }
   }
@@ -670,12 +670,20 @@ LIVES_GLOBAL_INLINE void on_render_fx_pre_activate(LiVESMenuItem *menuitem, live
   _fx_dialog *fxdialog;
   uint32_t chk_mask;
   LiVESResponseType resp;
+  int start, end;
 
   if (!check_storage_space(mainw->current_file, FALSE)) return;
+  if ((rfx->props & RFX_PROPS_MAY_RESIZE && rfx->num_in_channels == 1) || rfx->min_frames < 0) {
+    start = 1;
+    end = 0;
+  } else {
+    start = cfile->start;
+    end = cfile->end;
+  }
 
   if (rfx->num_in_channels > 0) {
     chk_mask = WARN_MASK_LAYOUT_ALTER_FRAMES;
-    if (!check_for_layout_errors(NULL, mainw->current_file, 1, 0, &chk_mask)) {
+    if (!check_for_layout_errors(NULL, mainw->current_file, start, end, &chk_mask)) {
       return;
     }
   }

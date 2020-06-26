@@ -15,9 +15,11 @@ static int package_version = 1; // version of this package
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
+#include <weed/weed-utils.h> // optional
 #include <weed/weed-plugin-utils.h> // optional
 #else
 #include "../../libweed/weed-plugin.h"
+#include "../../../libweed/weed-utils.h" // optional
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
 #include "weed-plugin-utils.c" // optional

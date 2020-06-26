@@ -81,7 +81,7 @@ if HAVE_AVFORMAT
 if HAVE_AVCODEC
 if HAVE_AVUTIL
 
-libav_cflags = -DHAVE_LIBAV_LIBS=1
+libav_cflags = -DHAVE_LIBAV_LIBS=1 -Wno-unused-function
 
 if HAVE_AVCODEC_OPEN2
 libav_cflags += -DHAVE_AVCODEC_OPEN2=1

@@ -1992,6 +1992,19 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   opwidth = (opwidth >> 1) << 1;
   opheight = (opheight >> 1) << 1;
 
+
+  if (mainw->multitrack) {
+    int mtwidth = mainw->files[mainw->multitrack->render_file]->hsize;
+    int mtheight = mainw->files[mainw->multitrack->render_file]->vsize;
+    if (!prefs->letterbox_mt) {
+      if (opwidth > mtwidth)opwidth = mtwidth;
+      if (opheight > mtheight) opheight = mtheight;
+    } else {
+      if (opwidth > mtwidth || opheight > mtheight)
+        calc_maxspect(mtwidth, mtheight, &opwidth, &opheight);
+    }
+  }
+
   /// pass 1, we try to set channel sizes to opwidth X opheight
   /// channel may have restrictions (e.g fixed size or step values) so we will set it as near as we can
   /// we won't resize next as we will try to palette convert and resize in one go

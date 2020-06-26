@@ -38,6 +38,12 @@ extern "C"
 {
 #endif /* __cplusplus */
 
+#ifndef NEED_LOCAL_WEED
+#include <weed/weed.h>
+#else
+#include "weed.h"
+#endif
+  
 /* some nice macros, e.g
   double x = WEED_LEAF_GET(myplant, "mykey", double);
 */

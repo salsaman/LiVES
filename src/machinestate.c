@@ -1365,14 +1365,17 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
   uint64_t myflags = 0;
 
   pthread_mutex_lock(&twork_mutex);
-  if ((list = twork_last) == NULL) {
+  list = twork_last;
+  if (LIVES_UNLIKELY(!list)) {
     pthread_mutex_unlock(&twork_mutex);
     return FALSE;
   }
 
-  if (twork_first == list) twork_first = NULL;
-  twork_last = list->prev;
-  if (twork_last != NULL) twork_last->next = NULL;
+  if (twork_first == list) twork_last = twork_first = NULL;
+  else {
+    twork_last = list->prev;
+    twork_last->next = NULL;
+  }
   pthread_mutex_unlock(&twork_mutex);
 
   mywork = (thrd_work_t *)list->data;
@@ -1452,7 +1455,7 @@ static void *thrdpool(void *arg) {
     pthread_mutex_lock(&tcond_mutex);
     pthread_cond_wait(&tcond, &tcond_mutex);
     pthread_mutex_unlock(&tcond_mutex);
-    if (threads_die) break;
+    if (LIVES_UNLIKELY(threads_die)) break;
     do_something_useful(tdata);
   }
   return NULL;

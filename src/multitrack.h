@@ -935,6 +935,8 @@ boolean set_new_set_name(lives_mt *);
 
 LiVESPixbuf *make_thumb(lives_mt *mt, int file, int width, int height, int frame, LiVESInterpType interp, boolean noblanks);
 
+void free_thumb_cache(int fnum, frames_t fromframe);
+
 // event_list utilities
 boolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2,
                             int ctrack); ///< ctrack can be -1 to compare all events, else we cf for ctrack

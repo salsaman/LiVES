@@ -34,10 +34,8 @@
 #error This header is intended only for Weed plugins
 #endif
 
-#ifndef __LIBWEED_PLUGIN_UTILS__
 #ifndef __WEED_PLUGIN__
 #error weed-plugin.h should be included first
-#endif
 #endif
 
 #ifndef __WEED_PLUGIN_UTILS_H__
@@ -48,7 +46,6 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-#ifdef __WEED_PLUGIN__
 #ifndef NEED_LOCAL_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
@@ -57,7 +54,6 @@ extern "C"
 #include "weed.h"
 #include "weed-palettes.h"
 #include "weed-effects.h"
-#endif
 #endif
 
 /* Define EXPORTED for any platform */
@@ -87,30 +83,8 @@ extern "C"
 #endif
 #endif
 
-#ifndef __LIBWEED_PLUGIN_UTILS__
-
-#ifndef NEED_LOCAL_WEED
-#include <weed/weed.h>
-#else
-#include "weed.h"
-#endif
-
 #define ALLOW_UNUSED
 #define FN_DECL static
-
-#else // __LIBWEED_PLUGIN_UTILS__
-
-#ifndef ALLOW_UNUSED
-#ifdef __GNUC__
-#  define ALLOW_UNUSED  __attribute__((unused))
-#else
-#  define ALLOW_UNUSED
-#endif
-#endif
-
-#define FN_DECL EXPORTED
-
-#endif
 
 // functions for weed_setup()
 
@@ -205,7 +179,7 @@ FN_DECL int weed_channel_get_palette(weed_plant_t *channel);
 FN_DECL int weed_channel_get_yuv_clamping(weed_plant_t *channel);
 FN_DECL int weed_channel_get_stride(weed_plant_t *channel);
 
-#if defined(NEED_AUDIO) || defined(__LIBWEED_PLUGIN_UTILS__)
+#ifdef NEED_AUDIO
 FN_DECL int weed_channel_get_audio_rate(weed_plant_t *channel);
 FN_DECL int weed_channel_get_naudchans(weed_plant_t *channel);
 FN_DECL int weed_channel_get_audio_length(weed_plant_t *channel);
@@ -243,34 +217,30 @@ FN_DECL int *weed_channel_get_rowstrides(weed_plant_t *channel, int *nplanes);
 /* Threading */
 FN_DECL int weed_is_threading(weed_plant_t *inst);
 FN_DECL int weed_channel_get_offset(weed_plant_t *channel);
-FN_DECL int weed_channel_get_true_height(weed_plant_t *channel);
-
-#define IS_THREAD_MASTER(inst) (weed_is_threading(inst) && weed_channel_get_offset(weed_get_out_channel(inst)) == 0 \
-				? WEED_TRUE : WEED_FALSE)
+FN_DECL int weed_channel_get_real_height(weed_plant_t *channel);
 
 // general utils
 FN_DECL int is_big_endian(void);
 
 #ifndef ABS
-#define ABS(a)           (((a) < 0) ? -(a) : (a))
+#define ABS(a) (((a) < 0) ? -(a) : (a))
 #endif
 
 // functions for process_func()
 
-#if defined(NEED_RANDOM) || defined(__LIBWEED_PLUGIN_UTILS__)
+#ifdef NEED_RANDOM
 FN_DECL uint64_t fastrand(uint64_t notused);
 FN_DECL double fastrand_dbl(double range);
 FN_DECL uint32_t fastrand_int(uint32_t range);
 #endif
 
-#if defined (NEED_ALPHA_SORT) || defined(__LIBWEED_PLUGIN_UTILS__) // for wrappers, use this to sort filters alphabetically
+#ifdef NEED_ALPHA_SORT // for wrappers, use this to sort filters alphabetically
 typedef struct dlink_list dlink_list_t;
 FN_DECL dlink_list_t *add_to_list_sorted(dlink_list_t *list, weed_plant_t *filter, const char *name);
 FN_DECL int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list);
 #endif
 
-#if defined(NEED_PALETTE_UTILS) || defined(__LIBWEED_PLUGIN_UTILS__)
-
+#ifdef NEED_PALETTE_UTILS
 #define ALL_RGB_PALETTES {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, \
       WEED_PALETTE_ARGB32, WEED_PALETTE_END}
 
@@ -332,7 +302,7 @@ FN_DECL void blank_row(uint8_t **pdst, int width, int pal, int yuv_clamping, int
 FN_DECL void blank_frame(void **pdata, int width, int height, int *rowstrides, int pal, int yuv_clamping);
 #endif
 
-#if defined(NEED_PALETTE_CONVERSIONS) || defined(__LIBWEED_PLUGIN_UTILS__)
+#ifdef NEED_PALETTE_CONVERSIONS
 /* palette conversions use lookup tables for efficiency */
 // calculate a (rough) luma valu for a pixel; works for any palette (for WEED_PALETTE_UYVY add 1 to *pixel)
 FN_DECL uint8_t calc_luma(uint8_t *pixel, int palette, int yuv_clamping);

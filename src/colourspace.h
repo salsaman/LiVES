@@ -155,6 +155,7 @@ typedef struct {
 #define LIVES_VCHAN_vv		     	4002
 
 /// for fun / testing
+#define LIVES_PALETTE_ABGR32		6
 #define LIVES_PALETTE_YUV121010		8211
 #define LIVES_PALETTE_RGB48		9001
 #define LIVES_PALETTE_RGBA64		9003
@@ -179,8 +180,12 @@ boolean weed_palette_is_float(int pal);
 double weed_palette_get_plane_ratio_horizontal(int pal, int plane);
 double weed_palette_get_plane_ratio_vertical(int pal, int plane);
 
-boolean weed_palette_get_alpha_plane(int pal);
-boolean weed_palette_get_alpha_offset(int pal);
+int weed_palette_get_alpha_plane(int pal);
+int weed_palette_get_alpha_offset(int pal);
+boolean weed_palette_red_first(int pal);
+boolean weed_palettes_rbswapped(int pal0, int pal1);
+boolean weed_palette_has_alpha_first(int pal);
+boolean weed_palette_has_alpha_last(int pal);
 #endif
 
 void init_colour_engine(void);
@@ -242,6 +247,8 @@ boolean convert_layer_palette(weed_layer_t *, int outpl, int op_clamping);
 boolean convert_layer_palette_with_sampling(weed_layer_t *, int outpl, int out_sampling);
 boolean convert_layer_palette_full(weed_layer_t *, int outpl, int oclamping, int osampling, int osubspace, int tgamma);
 void lives_layer_set_opaque(weed_layer_t *);
+boolean consider_swapping(int *inpal, int *outpal);
+
 
 /// widths in PIXELS
 boolean resize_layer(weed_layer_t *, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint);

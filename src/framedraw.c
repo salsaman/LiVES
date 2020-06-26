@@ -67,7 +67,7 @@ static void start_preview(LiVESButton *button, lives_rfx_t *rfx) {
     return;
   }
 
-  clear_widget_bg(LIVES_WIDGET(mainw->framedraw));
+  clear_widget_bg(LIVES_WIDGET(mainw->framedraw), mainw->fd_surface);
   lives_widget_set_sensitive(mainw->framedraw_preview, FALSE);
 
   if (mainw->did_rfx_preview) {
@@ -234,11 +234,6 @@ static void redraw_framedraw_image(weed_layer_t *layer) {
 
   fd_width = lives_widget_get_allocation_width(mainw->framedraw);
   fd_height = lives_widget_get_allocation_height(mainw->framedraw);
-
-  /* cr2 = xcr; */
-  /* if (!cr2) */
-  /*   cr2 = lives_painter_create_from_widget(LIVES_WIDGET(mainw->framedraw)); */
-  /* if (!cr2) return; */
 
   width = cfile->hsize;
   height = cfile->vsize;

@@ -131,8 +131,26 @@
 
 #define WEED_GAMMA_FIRST_CUSTOM 512
 
+/// advanced palettes extension (experimental)
+
 #ifdef WEED_ADVANCED_PALETTES
 #define WEED_ADVANCED_PALETTES_VERSION 100
+
+// if desired, the "palette_list" for a filter or channel_template may include WEED_PALETTE_ADVANCED.
+// In this case, an additional filter_class leaf "adv_pal_list",
+// an array of type WEED_SEED_VOIDPTR should be set for the filter_class or channel_template
+// the values should point to statically allocated weed_macropixel_t structs.
+// the usual rules about channel_templates overriding filter_class, and palette matching / conversion
+// still apply.
+//
+// in response, the host may set the "current_palette" for a channel to WEED_PALETTE_ADVANCED,
+// and set the additional leaf "adv_palette" with type WEED_SEED_VOIDPTR to point to the
+// weed_macropixel_t struct selected.
+
+#define WEED_PALETTE_ADVANCED 8191
+
+#define WEED_LEAF_ADVANCED_PALETTE_LIST "adv_pal_list"
+#define WEED_LEAF_ADVANCED_PALETTE "adv_palette"
 
 #ifndef MAXPPLANES
 #define MAXPPLANES 8

@@ -3208,7 +3208,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
           mainw->pchains = pchains;
           load_frame_image(cfile->frameno);
           mainw->pchains = NULL;
-          if (LIVES_IS_PLAYING) lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+          //if (LIVES_IS_PLAYING) lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
           mainw->current_file = current_file;
         }
         break;
@@ -3220,7 +3220,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
         mainw->pchains = NULL;
       }
     }
-    if (LIVES_IS_PLAYING && mainw->multitrack == NULL) lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    /* if (LIVES_IS_PLAYING && mainw->multitrack == NULL) lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
     cfile->next_event = get_next_event(next_event);
     break;
   case WEED_EVENT_HINT_FILTER_INIT:
@@ -4895,10 +4895,8 @@ boolean deal_with_render_choice(boolean add_deinit) {
     lives_widget_show_all(e_rec_dialog);
     lives_dialog_run(LIVES_DIALOG(e_rec_dialog));
     lives_widget_destroy(e_rec_dialog);
-    mainw->gui_fooey = TRUE;
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     lives_widget_context_update();
-    mainw->gui_fooey = FALSE;
     switch (render_choice) {
     case RENDER_CHOICE_DISCARD:
       if (CURRENT_CLIP_IS_VALID) cfile->redoable = FALSE;
@@ -5006,13 +5004,12 @@ boolean deal_with_render_choice(boolean add_deinit) {
         if (!do_event_list_warning()) {
           render_choice = RENDER_CHOICE_PREVIEW;
           break;
-        } else  mainw->gui_fooey = TRUE;
+        }
       }
       elist_dialog = create_event_list_dialog(mainw->event_list, 0, 0);
       lives_dialog_run(LIVES_DIALOG(elist_dialog));
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
       lives_widget_context_update();
-      mainw->gui_fooey = FALSE;
       render_choice = RENDER_CHOICE_PREVIEW;
       break;
     }

@@ -7,39 +7,25 @@
   (c) 2005, project authors
 */
 
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#include <weed/weed-plugin.h>
-#else
-#include "../../../libweed/weed.h"
-#include "../../../libweed/weed-palettes.h"
-#include "../../../libweed/weed-effects.h"
-#include "../../../libweed/weed-plugin.h"
-#endif
-
 ///////////////////////////////////////////////////////////////////
-
-static int num_versions = 1; // number of different weed api versions supported
-static int api_versions[] = {131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#ifdef HAVE_SYSTEM_WEED
+#ifndef NEED_LOCAL_WEED_PLUGIN
+#include <weed/weed-plugin.h>
+#include <weed/weed-utils.h> // optional
 #include <weed/weed-plugin-utils.h> // optional
 #else
+#include "../../../libweed/weed-plugin.h"
+#include "../../../libweed/weed-utils.h" // optional
 #include "../../../libweed/weed-plugin-utils.h" // optional
 #endif
 
-#include "../weed-utils-code.c" // optional
 #include "../weed-plugin-utils.c" // optional
 
-
 /////////////////////////////////////////////////////////////
-
 
 #include <stdio.h>
 #include <string.h>
@@ -52,7 +38,6 @@ static int package_version = 1; // version of this package
 /////////////////////////////////////////////////////////////
 // gdk stuff for resizing
 
-
 #include <gdk/gdk.h>
 
 inline G_GNUC_CONST int pl_gdk_rowstride_value(int rowstride) {
@@ -61,29 +46,31 @@ inline G_GNUC_CONST int pl_gdk_rowstride_value(int rowstride) {
   return (rowstride + 3) & ~3;
 }
 
+
 inline int G_GNUC_CONST pl_gdk_last_rowstride_value(int width, int nchans) {
   // from gdk pixbuf docs
   return width * (((nchans << 3) + 7) >> 3);
 }
 
-static void plugin_free_buffer(guchar *pixels, gpointer data) {
-  return;
-}
+
+static void plugin_free_buffer(guchar *pixels, gpointer data) {return;}
 
 
-static inline GdkPixbuf *pl_gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alpha, int bits_per_sample, int width,
+static inline GdkPixbuf *pl_gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alpha,
+					     int bits_per_sample, int width,
     int height,
     guchar *buf) {
   // we can cheat if our buffer is correctly sized
   int channels = has_alpha ? 4 : 3;
   int rowstride = pl_gdk_rowstride_value(width * channels);
-  return gdk_pixbuf_new_from_data(buf, colorspace, has_alpha, bits_per_sample, width, height, rowstride, plugin_free_buffer,
+  return gdk_pixbuf_new_from_data(buf, colorspace, has_alpha, bits_per_sample, width,
+				  height, rowstride, plugin_free_buffer,
                                   NULL);
 }
 
 
-
-static GdkPixbuf *pl_data_to_pixbuf(int palette, int width, int height, int irowstride, guchar *pixel_data) {
+static GdkPixbuf *pl_data_to_pixbuf(int palette, int width, int height, int irowstride,
+				    guchar *pixel_data) {
   GdkPixbuf *pixbuf;
   int rowstride, orowstride;
   gboolean cheat = FALSE;
@@ -134,18 +121,15 @@ static GdkPixbuf *pl_data_to_pixbuf(int palette, int width, int height, int irow
 }
 
 
-
 static gboolean pl_pixbuf_to_channel(weed_plant_t *channel, GdkPixbuf *pixbuf) {
   // return TRUE if we can use the original pixbuf pixels
-
-  int error;
   int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
   int width = gdk_pixbuf_get_width(pixbuf);
   int height = gdk_pixbuf_get_height(pixbuf);
   int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
   guchar *in_pixel_data = (guchar *)gdk_pixbuf_get_pixels(pixbuf);
-  int out_rowstride = weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, &error);
-  guchar *dst = weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, &error);
+  int out_rowstride = weed_channel_get_stride(channel);
+  guchar *dst = weed_channel_get_pixel_data(channel);
 
   register int i;
 
@@ -164,7 +148,6 @@ static gboolean pl_pixbuf_to_channel(weed_plant_t *channel, GdkPixbuf *pixbuf) {
   return FALSE;
 }
 
-
 ///////////////////////////////////////////////////////
 
 static int instances;
@@ -180,8 +163,7 @@ typedef struct {
 } sdata;
 
 
-
-int server_process(jack_nframes_t nframes, void *arg) {
+static int server_process(jack_nframes_t nframes, void *arg) {
   // this is called by jack when a frame is received
   sdata *sd = (sdata *)arg;
   unsigned int width = jack_video_get_width(sd->client, sd->input_port);
@@ -204,38 +186,34 @@ int server_process(jack_nframes_t nframes, void *arg) {
 }
 
 
-
-
 /* declare our init function */
-int vjack_rcv_init(weed_plant_t *inst) {
-  weed_plant_t *out_channel;
-  int error;
-  unsigned int out_frame_size;
+static weed_error_t vjack_rcv_init(weed_plant_t *inst) {
   const char *assigned_client_name;
-  char *server_name, *conffile;
   jack_options_t options = JackServerName;
   jack_status_t status;
   weed_plant_t **in_params;
+  weed_plant_t *out_channel;
   sdata *sd;
+  char *server_name, *conffile;
   char *client_name = "Weed-receiver";
+  unsigned int out_frame_size;
   unsigned int out_height, out_width;
-  //char com[512];
   double jack_sample_rate;
 
   sd = weed_malloc(sizeof(sdata));
-  if (sd == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
+  if (!sd) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
-  server_name = weed_get_string_value(in_params[0], WEED_LEAF_VALUE, &error);
-  conffile = weed_get_string_value(in_params[1], WEED_LEAF_VALUE, &error);
+  in_params = weed_get_in_params(inst);
+  server_name = weed_param_get_value_string(in_params[0]);
+  conffile = weed_param_get_value_string(in_params[1]);
   weed_free(in_params);
 
   instances++;
 
-  out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
+  out_channel = weed_get_out_channel(inst, 0);
 
-  out_height = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
-  out_width = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, &error);
+  out_height = weed_channel_get_height(out_channel);
+  out_width = weed_channel_get_width(out_channel);
 
   out_frame_size = out_width * out_height * 4;
 
@@ -282,8 +260,6 @@ int vjack_rcv_init(weed_plant_t *inst) {
   fprintf(stderr, "engine sample rate: %" PRIu32 "\n",
           jack_get_sample_rate(sd->client));
 
-
-
   sd->input_port = jack_port_register(sd->client,
                                       "video_in",
                                       JACK_DEFAULT_VIDEO_TYPE,
@@ -324,14 +300,13 @@ int vjack_rcv_init(weed_plant_t *inst) {
 }
 
 
-int vjack_rcv_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t vjack_rcv_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   // TODO check for server shutdown
-  int error;
   unsigned int frame_size;
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
-  int out_width = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, &error);
-  int out_height = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
+  weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
+  unsigned char *dst = weed_channel_get_pixel_data(out_channel);
+  int out_width = weed_channel_get_width(out_channel);
+  int out_height = weed_channel_get_height(out_channel);
   int wrote = 0;
   sdata *sd = (sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
 
@@ -381,7 +356,8 @@ int vjack_rcv_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     return WEED_SUCCESS;
   }
 
-  in_pixbuf = pl_data_to_pixbuf(WEED_PALETTE_RGBA32, in_width, in_height, in_width * 4, (guchar *)tmpbuff);
+  in_pixbuf = pl_data_to_pixbuf(WEED_PALETTE_RGBA32, in_width, in_height, in_width * 4,
+				(guchar *)tmpbuff);
 
   if (out_width > in_width || out_height > in_height) {
     out_pixbuf = gdk_pixbuf_scale_simple(in_pixbuf, out_width, out_height, up_interp);
@@ -394,7 +370,6 @@ int vjack_rcv_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   weed_free(tmpbuff);
 
   pl_pixbuf_to_channel(out_channel, out_pixbuf);
-
   g_object_unref(out_pixbuf);
 
 #ifdef SMOOTH
@@ -405,56 +380,42 @@ int vjack_rcv_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-
-
-int vjack_rcv_deinit(weed_plant_t *inst) {
-  int error;
-  sdata *sd = (sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
-
+static weed_error_t vjack_rcv_deinit(weed_plant_t *inst) {
+  sdata *sd = (sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
   jack_deactivate(sd->client);
   jack_client_close(sd->client);
   if (--instances < 0) instances = 0;
-
+  if (sd) {
 #ifdef SMOOTH
-  weed_free(sd->bgbuf);
+    weed_free(sd->bgbuf);
 #endif
-
-  if (sd->rb != NULL) jack_ringbuffer_free(sd->rb);
-
-  weed_free(sd);
-
+    if (sd->rb) jack_ringbuffer_free(sd->rb);
+    weed_set_voidptr_value(inst, "plugin_internal", NULL);
+    weed_free(sd);
+  }
   return WEED_SUCCESS; // success
 }
 
 
+WEED_SETUP_START(200, 200) {
+  int palette_list[] = {WEED_PALETTE_RGBA32, WEED_PALETTE_END};
+  weed_plant_t *out_chantmpls[] =
+    {weed_channel_template_init("out channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE), NULL};
+  weed_plant_t *in_params[] = {weed_text_init("servername", "_Server name", "default"),
+			       weed_text_init("conffile", "_Config file", "~/.jackdrc.vjack"), NULL};
+  weed_plant_t *filter_class = weed_filter_class_init("vjack_rcv", "martin/salsaman", 1, 0,
+						      palette_list,
+						      &vjack_rcv_init, &vjack_rcv_process,
+						      &vjack_rcv_deinit,
+						      NULL, out_chantmpls, in_params, NULL);
 
+  weed_plant_t *gui = weed_paramtmpl_get_gui(in_params[0]);
+  weed_set_int_value(gui, WEED_LEAF_MAXCHARS, 32);
 
+  gui = weed_paramtmpl_get_gui(in_params[1]);
+  weed_set_int_value(gui, WEED_LEAF_MAXCHARS, 128);
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
-  if (plugin_info != NULL) {
-    int palette_list[] = {WEED_PALETTE_RGBA32, WEED_PALETTE_END};
-
-    weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, palette_list), NULL};
-
-    weed_plant_t *in_params[] = {weed_text_init("servername", "_Server name", "default"), weed_text_init("conffile", "_Config file", "~/.jackdrc.vjack"), NULL};
-
-    weed_plant_t *filter_class = weed_filter_class_init("vjack_rcv", "martin/salsaman", 1, 0, &vjack_rcv_init, &vjack_rcv_process,
-                                 &vjack_rcv_deinit,
-                                 NULL, out_chantmpls, in_params, NULL);
-
-    weed_plant_t *gui = weed_paramtmpl_get_gui(in_params[0]);
-    weed_set_int_value(gui, WEED_LEAF_MAXCHARS, 32);
-
-    gui = weed_paramtmpl_get_gui(in_params[1]);
-    weed_set_int_value(gui, WEED_LEAF_MAXCHARS, 128);
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-    weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
-  }
-  return plugin_info;
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
-
-
-
+WEED_SETUP_END;

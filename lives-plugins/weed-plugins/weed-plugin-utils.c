@@ -544,7 +544,7 @@ EXPORTS  float **weed_channel_get_audio_data(weed_plant_t *channel, int *naudcha
 EXPORTS int weed_is_threading(weed_plant_t *inst) {
   if (inst) {
     weed_plant_t *ochan = weed_get_out_channel(inst, 0);
-    return (ochan && weed_plant_has_leaf(ochan, WEED_LEAF_OFFSET)) ? WEED_TRUE : WEED_FALSE;
+    return (ochan && _leaf_has_value(ochan, WEED_LEAF_OFFSET)) ? WEED_TRUE : WEED_FALSE;
   } return WEED_FALSE;
 }
 

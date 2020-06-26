@@ -3934,6 +3934,8 @@ boolean check_for_layout_errors(const char *operation, int fileno, int start, in
 
   if (mask & WARN_MASK_LAYOUT_DELETE_FRAMES) {
     if ((xlays = layout_frame_is_affected(fileno, start, end, NULL)) != NULL) {
+      if (sfile->tcache_dubious_from > 0) free_thumb_cache(fileno, sfile->tcache_dubious_from);
+      sfile->tcache_dubious_from = start;
       ret_mask |= WARN_MASK_LAYOUT_DELETE_FRAMES | (mask & WARN_MASK_LAYOUT_SHIFT_FRAMES) | (mask & WARN_MASK_LAYOUT_ALTER_FRAMES);
       if ((prefs->warning_mask & WARN_MASK_LAYOUT_DELETE_FRAMES) == 0) {
         mainw->xlays = xlays;
@@ -3977,6 +3979,8 @@ boolean check_for_layout_errors(const char *operation, int fileno, int start, in
   if ((ret_mask & WARN_MASK_LAYOUT_DELETE_FRAMES) == 0) {
     if (mask & WARN_MASK_LAYOUT_SHIFT_FRAMES) {
       if ((xlays = layout_frame_is_affected(fileno, start, 0, NULL)) != NULL) {
+        if (sfile->tcache_dubious_from > 0) free_thumb_cache(fileno, sfile->tcache_dubious_from);
+        sfile->tcache_dubious_from = start;
         ret_mask |= WARN_MASK_LAYOUT_SHIFT_FRAMES | (mask & WARN_MASK_LAYOUT_ALTER_FRAMES);
         if ((prefs->warning_mask & WARN_MASK_LAYOUT_SHIFT_FRAMES) == 0) {
           mainw->xlays = xlays;
@@ -4019,7 +4023,9 @@ boolean check_for_layout_errors(const char *operation, int fileno, int start, in
 
   if ((ret_mask & (WARN_MASK_LAYOUT_DELETE_FRAMES | WARN_MASK_LAYOUT_SHIFT_FRAMES)) == 0) {
     if (mask & WARN_MASK_LAYOUT_ALTER_FRAMES) {
-      if ((xlays = layout_frame_is_affected(fileno, 1, 0, NULL)) != NULL) {
+      if ((xlays = layout_frame_is_affected(fileno, start, end, NULL)) != NULL) {
+        if (sfile->tcache_dubious_from > 0) free_thumb_cache(fileno, sfile->tcache_dubious_from);
+        sfile->tcache_dubious_from = start;
         ret_mask |= WARN_MASK_LAYOUT_ALTER_FRAMES;
         if ((prefs->warning_mask & WARN_MASK_LAYOUT_ALTER_FRAMES) == 0) {
           mainw->xlays = xlays;

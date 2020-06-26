@@ -651,7 +651,8 @@ static boolean pre_init(void) {
   } else mainw->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
 
   future_prefs->nfx_threads = prefs->nfx_threads = get_int_prefd(PREF_NFX_THREADS, capable->ncpus);
-#ifndef VALGRIND_ON
+
+#ifdef VALGRIND_ON
   prefs->nfx_threads = 2;
 #endif
 
@@ -4834,12 +4835,16 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
   if (pixbuf != NULL) {
     cx = (rwidth - width) / 2;
     cy = (rheight - height) / 2;
-    if (prefs->funky_widgets) {
-      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->frame_surround);
-      lives_painter_rectangle(cr, cx - 1, cy - 1, width + 2, height + 2);
-      // frame
-      lives_painter_stroke(cr);
+
+    if (!(widget == mainw->play_image && mainw->multitrack)) {
+      if (prefs->funky_widgets) {
+        lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->frame_surround);
+        lives_painter_rectangle(cr, cx - 1, cy - 1, width + 2, height + 2);
+        // frame
+        lives_painter_stroke(cr);
+      }
     }
+
     lives_painter_set_source_pixbuf(cr, pixbuf, cx, cy);
     lives_painter_rectangle(cr, cx, cy, width, height);
   } else {
@@ -8275,7 +8280,7 @@ void load_frame_image(int frame) {
       pwidth = lives_widget_get_allocation_width(mainw->play_image);
       pheight = lives_widget_get_allocation_height(mainw->play_image);
       if (pwidth < old_pwidth || pheight < old_pheight)
-        clear_widget_bg(mainw->play_image);
+        clear_widget_bg(mainw->play_image, mainw->play_surface);
       old_pwidth = pwidth;
       old_pheight = pheight;
       set_drawing_area_from_pixbuf(mainw->play_image, pixbuf, mainw->play_surface);
@@ -8293,7 +8298,7 @@ void load_frame_image(int frame) {
     char fname[PATH_MAX];
     int xwidth, xheight;
     LiVESError *gerror = NULL;
-    lives_painter_t *cr = lives_painter_create_from_widget(mainw->playarea);
+    lives_painter_t *cr = lives_painter_create_from_surface(mainw->play_surface);
 
     if (cr == NULL) return;
 
@@ -8526,6 +8531,7 @@ void load_frame_image(int frame) {
 	  lives_free(cwd);
 	}
 
+	free_thumb_cache(mainw->current_file, 0);
 	lives_freep((void **)&cfile->frame_index);
 	lives_freep((void **)&cfile->frame_index_back);
 
@@ -9253,7 +9259,7 @@ void load_frame_image(int frame) {
         if (LIVES_IS_PLAYING && mainw->play_window == NULL && (!IS_VALID_CLIP(old_file)
             || !CURRENT_CLIP_IS_VALID || cfile->hsize != mainw->files[old_file]->hsize
             || cfile->vsize != mainw->files[old_file]->vsize)) {
-          clear_widget_bg(mainw->play_image);
+          clear_widget_bg(mainw->play_image, mainw->play_surface);
         }
 #endif
 

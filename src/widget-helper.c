@@ -11162,17 +11162,15 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidgetColor *lives_painter_set_source_rgb_from_
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean clear_widget_bg(LiVESWidget *widget) {
-  if (!LIVES_IS_WIDGET(widget)) return FALSE;
+WIDGET_HELPER_GLOBAL_INLINE boolean clear_widget_bg(LiVESWidget *widget, lives_painter_surface_t *s) {
+  lives_painter_t *cr;
+  if (!s) return FALSE;
+  if (!(cr = lives_painter_create_from_surface(s))) return FALSE;
   else {
-    lives_painter_t *cr = lives_painter_create_from_widget(widget);
-    if (cr == NULL) return FALSE;
-    else {
-      int rwidth = lives_widget_get_allocation_width(LIVES_WIDGET(widget));
-      int rheight = lives_widget_get_allocation_height(LIVES_WIDGET(widget));
-      lives_painter_render_background(widget, cr, 0., 0., rwidth, rheight);
-      if (!lives_painter_remerge(cr)) lives_painter_destroy(cr);
-    }
+    int rwidth = lives_widget_get_allocation_width(LIVES_WIDGET(widget));
+    int rheight = lives_widget_get_allocation_height(LIVES_WIDGET(widget));
+    lives_painter_render_background(widget, cr, 0., 0., rwidth, rheight);
+    lives_painter_destroy(cr);
   }
   return TRUE;
 }
@@ -12081,9 +12079,8 @@ void lives_cool_toggled(LiVESWidget *tbutton, livespointer user_data) {
 }
 
 
-EXPOSE_FN_DECL(draw_cool_toggle, widget, user_data) {
+boolean draw_cool_toggle(LiVESWidget *widget, lives_painter_t *cr, livespointer data) {
   // connect expose event to this
-  lives_painter_t *cr;
   double rwidth = (double)lives_widget_get_allocation_width(LIVES_WIDGET(widget));
   double rheight = (double)lives_widget_get_allocation_height(LIVES_WIDGET(widget));
 
@@ -12091,13 +12088,9 @@ EXPOSE_FN_DECL(draw_cool_toggle, widget, user_data) {
 
   double scalex = 1.;
   double scaley = .8;
-
   boolean active = ((LIVES_IS_TOGGLE_BUTTON(widget) && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget))) ||
                     (LIVES_IS_TOGGLE_TOOL_BUTTON(widget)
                      && lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(widget))));
-
-  if (cairo == NULL) cr = lives_painter_create_from_widget(widget);
-  else cr = cairo;
 
   lives_painter_translate(cr, rwidth * (1. - scalex) / 2., rheight * (1. - scaley) / 2.);
 
@@ -12204,10 +12197,9 @@ EXPOSE_FN_DECL(draw_cool_toggle, widget, user_data) {
     lives_painter_line_to(cr, rwidth / 4.*3., rwidth / 4.);
     lives_painter_stroke(cr);
   }
-  if (cr != cairo) if (!lives_painter_remerge(cr)) lives_painter_destroy(cr);
   return TRUE;
 }
-EXPOSE_FN_END
+
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_get_inner_size(LiVESWindow *win, int *x, int *y) {

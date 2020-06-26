@@ -2524,6 +2524,7 @@ void unbuffer_lmap_errors(boolean add) {
   while (list != NULL) {
     lmap_error *err = (lmap_error *)list->data;
     if (add) add_lmap_error(err->type, err->name, err->data, err->clipno, err->frameno, err->atime, err->current);
+    else mainw->files[err->clipno]->tcache_dubious_from = 0;
     if (err->name != NULL) lives_free(err->name);
     lives_free(err);
     list = list->next;

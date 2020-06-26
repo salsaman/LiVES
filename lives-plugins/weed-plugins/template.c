@@ -12,6 +12,7 @@ static int package_version = 1; // version of this package
 
 // include header files
 #include <weed/weed-plugin.h>
+#include <weed/weed-utils.h> // optional
 #include <weed/weed-plugin-utils.h> // optional
 
 #include "weed-plugin-utils.c"

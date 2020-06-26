@@ -555,13 +555,16 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
   uint8_t *src, *pd;
   int row = weed_layer_get_rowstride(layer);
   double ztop = 0.;
-  int pal = weed_layer_get_palette(layer);
+  int pal = weed_layer_get_palette(layer), opal = pal;
   int width = weed_layer_get_width(layer);
   int height = weed_layer_get_height(layer);
   int lheight = height;
   int gamma = WEED_GAMMA_UNKNOWN, offsx = 0;
 
   if (weed_palette_is_rgb(pal)) {
+    int ppal = LIVES_PAINTER_COLOR_PALETTE(capable->byte_order), oppal = ppal;
+    int ipsize = pixel_size(pal);
+    int opsize = pixel_size(ppal);
     // test first to get the layout coords
     gamma = weed_layer_get_gamma(layer);
 
@@ -569,6 +572,17 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
     weed_layer_set_height(layer, 4);
 
     test_layer = weed_layer_copy(NULL, layer);
+
+    if (ipsize == opsize) {
+      weed_layer_set_palette(test_layer, ppal);
+    } else {
+      if (consider_swapping(&pal, &ppal)) {
+        if (ppal == oppal) {
+          weed_layer_set_palette(test_layer, pal);
+        } else ppal = oppal;
+        pal = opal;
+      }
+    }
 
     weed_layer_set_height(layer, height);
     cr = layer_to_lives_painter(test_layer);
@@ -580,12 +594,28 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
 
     /// if possible just render the slice which contains the text
     if (top * height + lheight < height) {
+      boolean rbswapped = FALSE;
       src = weed_layer_get_pixel_data_packed(layer);
       weed_layer_set_pixel_data_packed(layer, src + (int)(top * height) * row);
       weed_layer_set_height(layer, lheight);
+
       layer_slice = weed_layer_copy(NULL, layer);
       weed_layer_set_height(layer, height);
       weed_layer_set_pixel_data_packed(layer, src);
+
+      if (consider_swapping(&pal, &ppal)) {
+        if (ppal == oppal) {
+          lives_colRGBA64_t col;
+          rbswapped = TRUE;
+          weed_layer_set_palette(layer_slice, pal);
+          col.red = fg_col->red;
+          fg_col->red = fg_col->blue;
+          fg_col->blue = col.red;
+          col.red = bg_col->red;
+          bg_col->red = bg_col->blue;
+          bg_col->blue = col.red;
+        }
+      }
 
       cr = layer_to_lives_painter(layer_slice);
       layout = render_text_to_cr(NULL, cr, text, fontname, size, mode, fg_col, bg_col, center, FALSE, &ztop, &offsx, width, &height);
@@ -603,6 +633,15 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
       pd = weed_layer_get_pixel_data_packed(layer_slice);
       lives_memcpy(src + (int)(top * height) * row, pd, lheight * row);
       weed_layer_free(layer_slice);
+      if (rbswapped) {
+        lives_colRGBA64_t col;
+        col.red = fg_col->red;
+        fg_col->red = fg_col->blue;
+        fg_col->blue = col.red;
+        col.red = bg_col->red;
+        bg_col->red = bg_col->blue;
+        bg_col->blue = col.red;
+      }
     }
   }
   if (!cr) {

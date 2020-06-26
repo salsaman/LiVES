@@ -790,12 +790,14 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
 }
 
 
-void on_realfx_activate(LiVESMenuItem *menuitem, livespointer rfx) {
+void on_realfx_activate(LiVESMenuItem *menuitem, livespointer xrfx) {
+  lives_rfx_t *rfx = (lives_rfx_t *)rfx;
   uint32_t chk_mask = 0;
   int type = 1;
 
   // type can be 0 - apply current realtime effects
   // 1 - resize (using weed filter) [menuitem == NULL]
+
 
   if (menuitem != NULL) {
     int i;
@@ -810,14 +812,14 @@ void on_realfx_activate(LiVESMenuItem *menuitem, livespointer rfx) {
       }
     }
     if (chk_mask > 0) {
-      if (!check_for_layout_errors(NULL, mainw->current_file, 1, 0, &chk_mask)) {
+      if (!check_for_layout_errors(NULL, mainw->current_file, cfile->start, cfile->end, &chk_mask)) {
         return;
       }
     }
     type = 0;
   }
 
-  if (!on_realfx_activate_inner(type, (lives_rfx_t *)rfx)) {
+  if (!on_realfx_activate_inner(type, rfx)) {
     unbuffer_lmap_errors(FALSE);
     return;
   }

@@ -58,7 +58,7 @@ if HAVE_AVFORMAT
 if HAVE_AVCODEC
 if HAVE_AVUTIL
 
-libav_cflags = -DHAVE_LIBAV_LIBS=1
+libav_cflags = -DHAVE_LIBAV_LIBS=1 -Wno-unused-function
 
 if HAVE_AVCODEC_OPEN2
 libav_cflags += -DHAVE_AVCODEC_OPEN2=1
@@ -117,7 +117,7 @@ flv_decoder_la_LDFLAGS = $(shared_ldflags) $(FLVDEC_LIBS)
 
 asf_libs = asf_decoder.la
 ASFDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@
-ASFDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ -Wno-deprecated-declarations
+ASFDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ -Wno-deprecated-declarations -Wno-switch-unreachable
 asf_decoder_la_SOURCES = asf_decoder.c asf_decoder.h dec_helper.c
 asf_decoder_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(weed_cflags) $(ASFDEC_CFLAGS)
 asf_decoder_la_LDFLAGS = $(shared_ldflags) $(ASFDEC_LIBS)

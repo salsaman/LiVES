@@ -3623,6 +3623,8 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->md5sum[0] = 0;
   cfile->gamma_type = WEED_GAMMA_SRGB;
   cfile->last_play_sequence = 0;
+  cfile->tcache_height = 0;
+  cfile->tcache = NULL;
 
   if (!strcmp(prefs->image_ext, LIVES_FILE_EXT_JPG)) cfile->img_type = IMG_TYPE_JPEG;
   else cfile->img_type = IMG_TYPE_PNG;

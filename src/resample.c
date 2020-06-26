@@ -2060,7 +2060,7 @@ void on_change_speed_ok_clicked(LiVESButton * button, livespointer user_data) {
   double arate = cfile->arate / cfile->fps;
   char *msg;
   boolean bad_header = FALSE;
-  int new_frames = count_resampled_frames(cfile->frames, mainw->fx1_val, cfile->fps);
+  //int new_frames = count_resampled_frames(cfile->frames, mainw->fx1_val, cfile->fps);
 
   // change playback rate
   if (button != NULL) {
@@ -2078,7 +2078,7 @@ void on_change_speed_ok_clicked(LiVESButton * button, livespointer user_data) {
                       | WARN_MASK_LAYOUT_ALTER_FRAMES;
   if (mainw->fx1_bool) chk_mask |= WARN_MASK_LAYOUT_DELETE_AUDIO | WARN_MASK_LAYOUT_SHIFT_AUDIO
                                      | WARN_MASK_LAYOUT_ALTER_AUDIO;
-  if (!check_for_layout_errors(tmp, mainw->current_file, 1, new_frames, &chk_mask)) {
+  if (!check_for_layout_errors(tmp, mainw->current_file, 1, 0, &chk_mask)) {
     lives_free(tmp);
     return;
   }

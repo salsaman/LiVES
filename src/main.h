@@ -853,7 +853,16 @@ typedef struct _lives_clip_t {
   size_t *aw_sizes; ///< size of each audio_waveform in units of floats (i.e 4 bytes)
 
   int last_play_sequence;  ///< updated only when FINISHING playing a clip (either by switching or ending playback, better for a/vsync)
+
+  boolean tcache_dubious_from;
+  int tcache_height; /// height for thumbnail cache
+  LiVESList *tcache; /// thumbnail cache
 } lives_clip_t;
+
+typedef struct {
+  frames_t frame;
+  LiVESPixbuf *pixbuf;
+} lives_tcache_entry_t;
 
 typedef enum {
   MISSING = -1,

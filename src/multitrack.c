@@ -28,11 +28,6 @@
 // (mt->hbox -> preview_frame -> preview_eventbox -> (playarea -> plug -> play_image)
 // for gtk+ 3.x the frame_pixbuf is drawn into play_image in expose_pb when not playing
 
-// TODO: see if we can simplify, e.g
-// hbox -> preview_eventbox -> play_image
-// (removing play_box, playarea and plug)
-
-
 // MAP:
 
 // top_vbox
@@ -47,7 +42,6 @@
 //                    - mt_hbox
 //                             - preview_frame
 //                                     - preview_eventbox
-//                                     - play_box
 //                                              - mainw->playarea
 //                                                      - plug
 //                                                             - play_image
@@ -3207,7 +3201,7 @@ static weed_timecode_t set_play_position(lives_mt * mt) {
 
 
 void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
-  // show preview of current frame in play_box and/or play_
+  // show preview of current frame in preview_eventbox and/or play_
   // or, if return_layer is TRUE, we just set mainw->frame_layer (used when we want to save the frame, e.g right click context)
 
   weed_timecode_t curr_tc;
@@ -3240,11 +3234,6 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
       boolean sep_win = mainw->sep_win;
       mt->mt_frame_preview = TRUE;
 
-      /* if (lives_widget_get_parent(mt->play_blank) != NULL) { */
-      /*   lives_widget_object_ref(mt->play_blank); */
-      /*   lives_container_remove(LIVES_CONTAINER(mt->play_box), mt->play_blank); */
-      /* } */
-
       if (mainw->plug) {
         lives_container_remove(LIVES_CONTAINER(mainw->plug), mainw->play_image);
         lives_widget_destroy(mainw->plug);
@@ -3254,7 +3243,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
       if (LIVES_IS_WIDGET(mainw->playarea)) lives_widget_destroy(mainw->playarea);
 
       mainw->playarea = lives_hbox_new(FALSE, 0);
-      lives_container_add(LIVES_CONTAINER(mt->play_box), mainw->playarea);
+      lives_container_add(LIVES_CONTAINER(mt->preview_eventbox), mainw->playarea);
       mainw->sep_win = FALSE;
       add_to_playframe();
       set_mt_play_sizes(mt, cfile->hsize, cfile->vsize, TRUE);
@@ -3286,7 +3275,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
       set_drawing_area_from_pixbuf(mainw->play_image, NULL, mainw->play_surface);
 #endif
     }
-    lives_widget_queue_draw(mt->play_box);
+    lives_widget_queue_draw(mt->preview_eventbox);
     if (needs_idlefunc || (!did_backup && mt->auto_changed)) {
       mt->idlefunc = mt_idle_add(mt);
     }
@@ -3411,7 +3400,8 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
   if (mt->frame_pixbuf && mt->frame_pixbuf == mainw->imframe) {
     // size_request, reset play frame size
     // try to expand / shrink
-    lives_widget_set_size_request(mt->preview_eventbox, GUI_SCREEN_WIDTH / 3, GUI_SCREEN_HEIGHT / 3);
+    lives_widget_set_size_request(mt->preview_eventbox, GUI_SCREEN_WIDTH / PEB_WRATIO,
+				  GUI_SCREEN_HEIGHT / PEB_HRATIO);
   }
 
   if (mainw->frame_layer) {
@@ -3447,7 +3437,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
       mt->frame_pixbuf = pixbuf;
       set_drawing_area_from_pixbuf(mainw->play_image, mt->frame_pixbuf, mainw->play_surface);
 #endif
-      lives_widget_queue_draw(mt->play_box);
+      lives_widget_queue_draw(mt->preview_eventbox);
       weed_plant_free(mainw->frame_layer);
     }
   } else {
@@ -3459,7 +3449,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
 #else
     set_drawing_area_from_pixbuf(mainw->play_image, mainw->imframe, mainw->play_surface);
 #endif
-    lives_widget_queue_draw(mt->play_box);
+    lives_widget_queue_draw(mt->preview_eventbox);
   }
 
   /// restore original mainw->frame_layer
@@ -5499,9 +5489,10 @@ void set_mt_play_sizes(lives_mt * mt, int width, int height, boolean reset) {
       mt->idlefunc = 0;
     }
 
-    lives_widget_set_size_request(mainw->play_image, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.);
-    lives_widget_set_size_request(mt->preview_eventbox, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.);
-    lives_widget_set_size_request(mt->play_box, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.);
+    lives_widget_set_size_request(mainw->play_image, GUI_SCREEN_WIDTH / PEB_WRATIO,
+				  GUI_SCREEN_HEIGHT / PEB_HRATIO);
+    lives_widget_set_size_request(mt->preview_eventbox, GUI_SCREEN_WIDTH / PEB_WRATIO,
+				  GUI_SCREEN_HEIGHT / PEB_HRATIO);
 
     if (!LIVES_IS_PLAYING) {
       lives_widget_context_update();
@@ -5513,8 +5504,8 @@ void set_mt_play_sizes(lives_mt * mt, int width, int height, boolean reset) {
   rheight = lives_widget_get_allocation_height(mainw->play_image);
 
   if (rwidth * rheight < 64) {
-    rwidth = GUI_SCREEN_WIDTH / 3.;
-    rheight = GUI_SCREEN_HEIGHT / 3.;
+    rwidth = GUI_SCREEN_WIDTH / PEB_WRATIO;
+    rheight = GUI_SCREEN_HEIGHT / PEB_HRATIO;
   }
 
   calc_maxspect(rwidth, rheight, &width, &height);
@@ -8424,17 +8415,11 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_queue_resize(mt->preview_eventbox);
 
   lives_widget_set_size_request(mt->preview_eventbox, scr_width / PEB_WRATIO, scr_height / PEB_HRATIO);
-  mt->play_box = lives_event_box_new();
 
   lives_widget_set_hexpand(mt->preview_frame, FALSE);
   lives_widget_set_vexpand(mt->preview_frame, FALSE);
 
-  //lives_widget_set_hexpand(mt->preview_eventbox, TRUE); /// throws a warning...
   lives_widget_set_vexpand(mt->preview_eventbox, TRUE);
-
-  // does nothing
-  //lives_widget_set_valign(mt->preview_eventbox, LIVES_ALIGN_CENTER);
-  //lives_widget_set_halign(mt->preview_eventbox, LIVES_ALIGN_CENTER);
 
   // must do this here to set cfile->hsize, cfile->vsize; and we must have created aparam_submenu and insa_eventbox and insa_checkbutton
   msg = set_values_from_defs(mt, !prefs->mt_enter_prompt || (mainw->recoverable_layout &&
@@ -8442,9 +8427,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_freep((void **)&msg);
 
   lives_container_add(LIVES_CONTAINER(mt->preview_frame), mt->preview_eventbox);
-  lives_container_add(LIVES_CONTAINER(mt->preview_eventbox), mt->play_box);
-
-  //lives_container_add(LIVES_CONTAINER(mt->play_box), mt->play_blank);
 
   lives_widget_add_events(mt->preview_eventbox, LIVES_BUTTON1_MOTION_MASK | LIVES_BUTTON_RELEASE_MASK
                           | LIVES_BUTTON_PRESS_MASK | LIVES_ENTER_NOTIFY_MASK | LIVES_SMOOTH_SCROLL_MASK | LIVES_SCROLL_MASK);
@@ -17289,9 +17271,6 @@ void mt_prepare_for_playback(lives_mt * mt) {
     if (palette->style & STYLE_1) {
       if (mt->framedraw != NULL) lives_widget_set_bg_color(mt->fd_frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     }
-  } else {
-    /* lives_widget_object_ref(mt->play_blank); */
-    /* lives_container_remove(LIVES_CONTAINER(mt->play_box), mt->play_blank); */
   }
 
   lives_widget_set_sensitive(mt->stop, TRUE);
@@ -22766,14 +22745,12 @@ void amixer_show(LiVESButton * button, livespointer user_data) {
   LiVESWidget *reset_button;
   LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
 
+  lives_amixer_t *amixer;
+
   int nachans = lives_list_length(mt->audio_draws);
 
-  int winsize_h = GUI_SCREEN_WIDTH * 2. / 3.;
-  int winsize_v = GUI_SCREEN_HEIGHT * 2. / 3.;
-
-  int i;
-
-  lives_amixer_t *amixer;
+  int winsize_h = GUI_SCREEN_WIDTH * AMIXER_WRATIO;
+  int winsize_v = GUI_SCREEN_HEIGHT * AMIXER_HRATIO;
 
   if (!LIVES_IS_INTERACTIVE) return;
 
@@ -22937,7 +22914,7 @@ void amixer_show(LiVESButton * button, livespointer user_data) {
 
   add_fill_to_box(LIVES_BOX(vbox2));
 
-  for (i = 0; i < nachans - mt->opts.back_audio_tracks; i++) {
+  for (register int i = 0; i < nachans - mt->opts.back_audio_tracks; i++) {
     vbox = amixer_add_channel_slider(mt, i);
     lives_box_pack_start(LIVES_BOX(amixer->main_hbox), vbox, FALSE, FALSE, widget_opts.packing_width);
   }

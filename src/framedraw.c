@@ -640,7 +640,7 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
       // set frame_pixbuf, this gets painted in in expose_event
       mainw->multitrack->frame_pixbuf = pixbuf;
       set_drawing_area_from_pixbuf(mainw->play_image, pixbuf, mainw->play_surface);
-      lives_widget_queue_draw(mainw->multitrack->play_box);
+      lives_widget_queue_draw(mainw->multitrack->preview_eventbox);
     }
   }
   // update the widget
@@ -796,7 +796,7 @@ boolean on_framedraw_enter(LiVESWidget *widget, LiVESXEventCrossing *event, live
   if (framedraw == NULL && mainw->multitrack != NULL) {
     framedraw = mainw->multitrack->framedraw;
     if (framedraw == NULL && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL)
-      lives_set_cursor_style(LIVES_CURSOR_NORMAL, mainw->multitrack->play_box);
+      lives_set_cursor_style(LIVES_CURSOR_NORMAL, mainw->multitrack->preview_eventbox);
   }
 
   if (framedraw == NULL) return FALSE;
@@ -809,7 +809,7 @@ boolean on_framedraw_enter(LiVESWidget *widget, LiVESXEventCrossing *event, live
     if (mainw->multitrack == NULL) {
       lives_set_cursor_style(LIVES_CURSOR_TOP_LEFT_CORNER, mainw->framedraw);
     } else {
-      lives_set_cursor_style(LIVES_CURSOR_TOP_LEFT_CORNER, mainw->multitrack->play_box);
+      lives_set_cursor_style(LIVES_CURSOR_TOP_LEFT_CORNER, mainw->multitrack->preview_eventbox);
     }
     break;
 
@@ -818,7 +818,7 @@ boolean on_framedraw_enter(LiVESWidget *widget, LiVESXEventCrossing *event, live
     if (mainw->multitrack == NULL) {
       lives_set_cursor_style(LIVES_CURSOR_CROSSHAIR, mainw->framedraw);
     } else {
-      lives_set_cursor_style(LIVES_CURSOR_CROSSHAIR, mainw->multitrack->play_box);
+      lives_set_cursor_style(LIVES_CURSOR_CROSSHAIR, mainw->multitrack->preview_eventbox);
     }
     break;
 
@@ -874,7 +874,7 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
     if (mainw->multitrack == NULL) {
       lives_set_cursor_style(LIVES_CURSOR_BOTTOM_RIGHT_CORNER, widget);
     } else {
-      lives_set_cursor_style(LIVES_CURSOR_BOTTOM_RIGHT_CORNER, mainw->multitrack->play_box);
+      lives_set_cursor_style(LIVES_CURSOR_BOTTOM_RIGHT_CORNER, mainw->multitrack->preview_eventbox);
     }
   }
 
@@ -1152,7 +1152,7 @@ boolean on_framedraw_mouse_reset(LiVESWidget *widget, LiVESXEventButton *event, 
     if (mainw->multitrack == NULL) {
       lives_set_cursor_style(LIVES_CURSOR_TOP_LEFT_CORNER, widget);
     } else if (mainw->multitrack->cursor_style == 0) {
-      lives_set_cursor_style(LIVES_CURSOR_TOP_LEFT_CORNER, mainw->multitrack->play_box);
+      lives_set_cursor_style(LIVES_CURSOR_TOP_LEFT_CORNER, mainw->multitrack->preview_eventbox);
     }
     break;
 

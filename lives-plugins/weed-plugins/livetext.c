@@ -5,6 +5,7 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+// THIS PLUGIN IS NO LONGER MAINTAINED:- use 'scribbler' instead
 
 ///////////////////////////////////////////////////////////////////
 
@@ -338,11 +339,13 @@ WEED_SETUP_START(200, 200) {
   filter_class = weed_filter_class_init("livetext_generator", "salsaman", 1, 0, palette_list,
                                         NULL, livetext_process, NULL, NULL,
                                         (clone1 = weed_clone_plants(out_chantmpls)), (clone2 = weed_clone_plants(in_params)), NULL);
-  //weed_free(clone1);
-  //weed_free(clone2);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_set_double_value(filter_class, WEED_LEAF_PREFERRED_FPS, 25.); // set reasonable default fps
+
+  // hide this, since it is no longer maintained: - use scribbler instead
+  gui = weed_filter_get_gui(filter_class);
+  weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
 
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }

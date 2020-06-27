@@ -229,6 +229,7 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_OUT_CHANNEL_TEMPLATES "out_chan_tmpls"
 #define WEED_LEAF_GUI "gui"
 #define WEED_LEAF_EXTRA_AUTHORS "extra_authors"
+#define WEED_LEAF_MICRO_VERSION "micro_version"
 #define WEED_LEAF_ICON "icon"
 #define WEED_LEAF_LICENSE "license"
 #define WEED_LEAF_COPYRIGHT "copyright"

@@ -10645,44 +10645,46 @@ boolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t t
 
   return value should be freed after use
 
-  make hashname from filter_idx: if use_extra_authors is set we use WEED_LEAF_EXTRA_AUTHORS instead of "authors"
-  (for reverse compatibility)
+  make hashname from filter_idx
 
   if fullname is FALSE, return filename, filtername concatenated
   if fullname is TRUE, return filename, filtername, author, version concatenated
 
   if sep is not 0, we ignore the booleans and return filename, sep, filtername, sep, author concatenated
   (suitable to be fed into weed_filter_highest_version() later)
+
+  use_extra_authors is only for backwards compatibility
+
 */
 char *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_authors, char sep, boolean subs) {
   weed_plant_t *filter, *plugin_info;
 
   char plugin_fname[PATH_MAX];
-
-  char *plugin_name, *filter_name, *filter_author, *filter_version, *hashname, *filename, *xsep;
+  char *plugin_name, *filter_name, *filter_author, *filter_version, *hashname, *filename;
+  char xsep[2];
+  boolean use_micro = FALSE;
   int version;
   int type = 0;
 
   if (filter_idx < 0 || filter_idx >= num_weed_filters) return lives_strdup("");
-
+  
   if (!fullname) type += 2;
   if (use_extra_authors) type++;
 
   if (sep != 0) {
     fullname = TRUE;
     use_extra_authors = FALSE;
-    xsep = lives_strdup(" ");
     xsep[0] = sep;
+    xsep[1] = 0;
   } else {
+    xsep[0] = xsep[1] = 0;
     if (hashnames[filter_idx][type].string != NULL)
       return lives_strdup(hashnames[filter_idx][type].string);
-    xsep = lives_strdup("");
   }
 
   filter = weed_filters[filter_idx];
 
   if (sep == 0 && hashnames[filter_idx][type].string != NULL) {
-    lives_free(xsep);
     return lives_strdup(hashnames[filter_idx][type].string);
   }
   if (weed_plant_has_leaf(filter, WEED_LEAF_PLUGIN_INFO)) {
@@ -10698,7 +10700,6 @@ char *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_aut
       filename = F2U8(plugin_fname);
     }
   } else {
-    lives_free(xsep);
     return lives_strdup("");
   }
   filter_name = weed_filter_get_name(filter);
@@ -10710,17 +10711,22 @@ char *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_aut
       filter_author = weed_get_string_value(filter, WEED_LEAF_EXTRA_AUTHORS, NULL);
 
     version = weed_get_int_value(filter, WEED_LEAF_VERSION, NULL);
-    filter_version = lives_strdup_printf("%d", version);
 
-    if (strlen(xsep)) {
+    if (*xsep) {
       hashname = lives_strconcat(filename, xsep, filter_name, xsep, filter_author, NULL);
-    } else
+    } else {
+      if (use_micro) {
+	int micro_version = weed_get_int_value(filter, WEED_LEAF_MICRO_VERSION, NULL);
+	filter_version = lives_strdup_printf("%d.%d", version, micro_version);
+      }
+      else {
+	filter_version = lives_strdup_printf("%d", version);
+      }
       hashname = lives_strconcat(filename, filter_name, filter_author, filter_version, NULL);
-    lives_free(xsep);
+    }
     lives_free(filter_author);
     lives_free(filter_version);
   } else {
-    lives_free(xsep);
     hashname = lives_strconcat(filename, filter_name, NULL);
   }
   lives_free(filter_name);
@@ -10810,24 +10816,22 @@ int weed_get_idx_for_hashname(const char *hashname, boolean fullname) {
 
 static boolean check_match(weed_plant_t *filter, const char *pkg, const char *fxname, const char *auth, int version) {
   // perform template matching for a filter, see weed_get_indices_from_template()
-
   weed_plant_t *plugin_info;
 
   char plugin_fname[PATH_MAX];
   char *plugin_name, *filter_name, *filter_author;
 
   int filter_version;
-  int error;
 
   if (pkg != NULL && *pkg) {
     char *filename;
 
     if (weed_plant_has_leaf(filter, WEED_LEAF_PLUGIN_INFO)) {
-      plugin_info = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, &error);
+      plugin_info = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, NULL);
       if (weed_plant_has_leaf(plugin_info, WEED_LEAF_PACKAGE_NAME)) {
-        filename = weed_get_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_NAME, &error);
+        filename = weed_get_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_NAME, NULL);
       } else {
-        plugin_name = weed_get_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_NAME, &error);
+        plugin_name = weed_get_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_NAME, NULL);
         lives_snprintf(plugin_fname, PATH_MAX, "%s", plugin_name);
         lives_freep((void **)&plugin_name);
         get_filename(plugin_fname, TRUE);
@@ -10845,7 +10849,7 @@ static boolean check_match(weed_plant_t *filter, const char *pkg, const char *fx
   }
 
   if (fxname != NULL && *fxname) {
-    filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
+    filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, NULL);
     if (lives_utf8_strcasecmp(fxname, filter_name)) {
       lives_freep((void **)&filter_name);
       return FALSE;
@@ -10854,25 +10858,16 @@ static boolean check_match(weed_plant_t *filter, const char *pkg, const char *fx
   }
 
   if (auth != NULL && *auth) {
-    filter_author = weed_get_string_value(filter, WEED_LEAF_AUTHOR, &error);
+    filter_author = weed_get_string_value(filter, WEED_LEAF_AUTHOR, NULL);
     if (lives_utf8_strcasecmp(auth, filter_author)) {
-      if (weed_plant_has_leaf(filter, WEED_LEAF_EXTRA_AUTHORS)) {
-        lives_freep((void **)&filter_author);
-        filter_author = weed_get_string_value(filter, WEED_LEAF_EXTRA_AUTHORS, &error);
-        if (lives_utf8_strcasecmp(auth, filter_author)) {
-          lives_freep((void **)&filter_author);
-          return FALSE;
-        }
-      } else {
-        lives_freep((void **)&filter_author);
-        return FALSE;
-      }
+      lives_freep((void **)&filter_author);
+      return FALSE;
     }
     lives_freep((void **)&filter_author);
   }
 
   if (version > 0) {
-    filter_version = weed_get_int_value(filter, WEED_LEAF_VERSION, &error);
+    filter_version = weed_get_int_value(filter, WEED_LEAF_VERSION, NULL);
     if (version != filter_version) return FALSE;
   }
 

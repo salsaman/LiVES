@@ -30,6 +30,8 @@ char *get_stats_msg(boolean calc_only) {
   char *tmp, *tmp2;
 
   if (!LIVES_IS_PLAYING) return NULL;
+  //currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
+  currticks = mainw->clock_ticks;
 
   if (CURRENT_CLIP_HAS_AUDIO) {
 #ifdef ENABLE_JACK
@@ -47,7 +49,6 @@ char *get_stats_msg(boolean calc_only) {
       have_avsync = TRUE;
     }
 #endif
-    currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
     if (have_avsync) {
       avsync -= ((double)mainw->files[mainw->pulsed->playing_file]->frameno - 1.) / mainw->files[mainw->pulsed->playing_file]->fps
                 + (double)(currticks - mainw->startticks) / TICKS_PER_SECOND_DBL;
@@ -61,6 +62,7 @@ char *get_stats_msg(boolean calc_only) {
     inst_fps = cfile->pb_fps;
     return NULL;
   }
+
   if (currticks > last_curr_tc + STATS_TC) {
     if (mainw->fps_mini_ticks == last_mini_ticks) {
       inst_fps = (double)(mainw->fps_mini_measure - last_mm

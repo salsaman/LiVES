@@ -340,7 +340,7 @@ Weed provides the following 'fundamental' types:
  * WEED_SEED_BOOLEAN [3] : signed /unsigned 32 bit integer, acceptable values are WEED_FALSE or WEED_TRUE. size = 4 bytes 
 
  * WEED_SEED_STRING  [4] : 0 terminated array of char (max length is uint32_max). (char *)NULL is treated as a zero length string.
-   		     	   size = strlen(value)
+   		     	   size = strlen(value). Unless otherwise note, the character set is utf-8.
 
  * WEED_SEED_INT64   [5] : signed /unsigned 64 bit integer . size = 8 bytes
 
@@ -1754,8 +1754,11 @@ versions of the spec.
 
 
  * "package_name" : WEED_SEED_STRING : for wrapper filters, the name of the package which is wrapped
+ Package names are case insensitive and may consist only of alphanumeric characters plus '_'.
+ Some package names are reserved and should not be used generally (see below, "hasnames" for examples).
 
- * "maintainer"	  : WEED_SEED_STRING : maintainer of plugin package
+
+ * "maintainer"	  : WEED_SEED_STRING : maintainer(s) of plugin package
 
  * "url"	  : WEED_SEED_STRING : URL of plugin package
 
@@ -1812,36 +1815,62 @@ but plugin and host may add private leaves with keys prefixed "plugin_" and "hos
 
 '''Mandatory leaves''':[[BR]]
 
- * "name"         : WEED_SEED_STRING : the filter name; MUST be unique in the plugin, 
+ * "name"         : WEED_SEED_STRING : the filter name; should be unique in the plugin.
+   		    Technically, the name need not be unique, provided each version has a different
+		    'author' (see hashnames, below).
+		    However, to avoid confusion, it is recommended to use unique filter names
+		    whenever possible.
 
- * "author"       : WEED_SEED_STRING : the filter author(s) - DO NOT change this unless a new "version" of the plugin is made -
-   		    instead add to the "extra_authors" leaf (see below)
+ * "author"       : WEED_SEED_STRING : the filter author(s) - CHANGING THIS WILL CREATE A DIFFERENT
+   		    FILTER; instead update the "extra_authors" leaf (see below). For wrapper type
+		    plugins, this may be set to e.g. "<package_name> Authors", and the
+		    "extra_authors" leaf may be used to set individual filter author names.
 
-* "version"      : WEED_SEED_INT : filter version. Adding (appending) more parameters (in or out) or appending extra optional channels
+ * "version"      : WEED_SEED_INT : filter version.
+
+  		   Adding (appending) more parameters (in or out) or appending extra optional channels
    		    		    does not require a version update.
 
 
 		    However, removing parameters, changing 
-   		    their order or type, adding mandatory channels or removing channel templates does require an update.
-		    Prior versions of the filter must be exported by the plugin, If a parameter is removed, then the flag bit
-		    WEED_PARAMETER_VALUE_IRRELEVANT may be set in the parameter template in prior filter versions, so that the
-		    host can avoid wasting resources by recording / setting the value of the unused parameter, and
-		    additionally "hidden" may be set to WEED_TRUE in the template GUI plant(s) to hint to the host not to display
+   		    their order or type, adding mandatory channels or removing channel templates does
+		    require an update.
+
+		    Prior versions of the filter may still be exported by the plugin,
+
+		    If a parameter is removed, then the flag bit
+		    WEED_PARAMETER_VALUE_IRRELEVANT may be set in the parameter template in prior
+		    filter versions, so that the
+		    host can avoid wasting resources by recording / setting the value of the unused
+		    parameter, and
+		    additionally "hidden" may be set to WEED_TRUE in the template GUI plant(s) to
+		    hint to the host not to display
 		    the unused parameter in interaces.
 
-		    In the case of multiple versions of the same filter, the plugin should retrieve the value of the "filter_class"
-		    leaf of the instance and from that it can obtain the "version" which the host selected. To avoid repeatedly checking,
-		    the plugin may set this value in a private leaf for the instance, e.g. "plugin_version".
+		    In the case of multiple versions of the same filter, the plugin should
+		    retrieve the value of the "filter_class"
+		    leaf of the instance and from that it can obtain the "version" which the host
+		    selected.
 
 		    Changes which do not require a new version:
 		    	    - appending parameters (in or out)
-			    - appending optional channels 
+			    - appending optional channels (including increasing MAX_REPEATS)
 			    - adding extra palettes to a channel template "palette_list"
-			    - changes to *_REINIT_ON_* flags
-			    - setting WEED_PARAMETER_VALUE_IRRELEVANT, WEED_PARAMETER_VARIABLE_SIZE
-			    - settting / unsetting WEED_CHANNEL_CAN_DO_INPLACE, WEED_FILTER_HINT_STATELESS,
-			    WEED_FILTER_HINT_MAY_THREAD, WEED_FILTER_PREF_PREMULTIPLIED_ALPHA , WEED_FILTER_PREF_LINEAR_GAMMA,
-			    WEED_GUI_REINIT_ON_VALUE_CHANGE, 
+			    - changes to *_REINIT_ON_* flags (but note, this may cause visual
+			      changes within the host)
+			    - setting (but not unsetting) WEED_PARAMETER_VALUE_IRRELEVANT,
+			      WEED_PARAMETER_VARIABLE_SIZE
+			    - changing the 'default' or 'new_default' of a parameter
+			    - extending the range of 'min', 'max'
+			    - settting / unsetting WEED_CHANNEL_CAN_DO_INPLACE,
+			    WEED_FILTER_HINT_STATELESS,
+			    WEED_FILTER_HINT_MAY_THREAD, WEED_FILTER_PREF_PREMULTIPLIED_ALPHA,
+			    WEED_FILTER_PREF_LINEAR_GAMMA
+
+
+			    In these cases, the plugin developers may choose to update the filter
+			    "version" or not. Otherwise, the "micro_version" leaf should be
+			    increased instead.
 
 
 
@@ -1880,8 +1909,13 @@ Mandatory for filters with video channels
 
 
 
+ * "micro_version" : WEED_SEED_INT : an optional value which may be increased to denote minor
+   		     		     updates which do not break backwards compatibility.
+				     May be reset to 1 or 0 when a new "version" is released.
+				     If not present, a value of 0 is assumed.
 
- * "extra_authors": WEED_SEED_STRING : list of extra authors which can be altered without changing the plugin "version"
+ * "extra_authors": WEED_SEED_STRING : list of extra authors which can be altered without
+   		    		       creating a new filter.
 
  * "description"  : WEED_SEED_STRING : filter description, free text
 	       			       	    	 	    May contain multiple elements, in which case each value may be prefixed by an IETF language
@@ -1894,8 +1928,9 @@ Mandatory for filters with video channels
  * "license"      : WEED_SEED_STRING : license of filter, free text
 
  * "preferred_fps"   : WEED_SEED_DOUBLE : plugin may hint to the host the preferred display rate for the
-                                       host to run the plugin; for example if the plugin is designed to run best at 25 fps, then the value 25.0
-				       may be set. Note that this is only a hint to the host
+                                       host to run the filter; for example if the filter is designed to run best at 25 fps, then the value 25.0
+				       may be set. Note that this is only a hint to the host, there is
+				       no guarantee that the host will comply with this.
 
  * "gui" : WEED_SEED_PLANTPTR : pointer to a plant
            type GUI [see below - GUI plants]. The plugin may optionally create and populate one GUI plant per filter in weed_setup().
@@ -3197,6 +3232,61 @@ This may seem complex, but it provides several advantages:
   can call weed_leaf_delete, (unlocked) weed_plant_free and weed_leaf_set_flags
 
 
+== Filter Easing ==
+
+THIS IS AN EXPERIMENTAL ADDITION, AND SOME DETAILS MAY CHANGE.
+
+For some filters, it may be visually pleasing for the filter instance to "ease out", rather than being
+deinited and switching off right away.
+
+In this case, the plugin may set a special optional value in the instance during its process_func:
+
+"plugin_easing" : WEED_SEED_INT
+
+this value may be set by the plugin to a number representing the number of processing cycles for the
+filter to reach a "neutral" state, i.e. when this value reaches 0, the output will look indentical
+to the input. The value may be updated during each process_func() call.
+
+The host can request "easing out" by setting a second leaf in the instance:
+
+"ease_out" : WEED_SEED_BOOLEAN
+
+If this value is set to WEED_TRUE then for that process_func() call, the filter should take 1 step
+towards returning the output channel to the neutral state, and additionally it should reduce the
+value of "plugin_easing" by 1.
+
+Once "plugin_easing" reaches zero, the process_func() in the filter may optionally
+do nothing and return WEED_ERROR_REINIT_NEEDED, even on succesful operation, or else it may simply copy
+input to output and return WEED_SUCCESS.
+
+If "ease_out" is absent or set to WEED_FALSE, then the filter may resume normal operation. In case
+this is not possible (i.e the plugin has commited to easing out), the plugin should ease down to
+zero as normal and then return WEED_ERROR_REINIT_NEEDED, or else this may be returned straight away.
+
+In case for some reason it is not possible for the filter to continue easing out, then
+the value of "plugin_easing" should not be decreased. The host should note this and abort the easing
+operation. Thus it is essential that the plugin reduce the value by 1 during successful easing.
+
+The value of "plugin_easing" may be reduced by more than 1, however this is undesirable behaviour
+and should be avoided if at all possible.
+
+
+"ease_in" : WEED_SEED_INT
+This is an optional leaf which the host may set in the filter instance. The value may be set to
+a number of processing cycles which the host desires for the filter to reach its "full" value.
+The value is only valid during the init_func() for the filter, and the plugin is free to ignore it,
+thus the value should be considered a hint only. Setting "ease_in" to zero allows the filter to
+ease in on its own schedule, should the filter support this.
+
+
+
+
+
+
+
+
+
+
 
 == WEED FLAGS AND TYPES ==
 
@@ -3522,8 +3612,6 @@ Flag bits >= 30 are free to use for custom flags.
  
 
  * WEED_PARAMETER_VARIABLE_SIZE
-
- TODO: fix ambiguities.
 
    plugin can set this to inform the host that the number of values in the parameter "value" leaf can vary.
    If not set, then the number of values in "value" is fixed; it must always match the number of values in "default".
@@ -4013,42 +4101,36 @@ let weed hashname be a concatenation of the following:
 where:
 <package_name> is the value of the "package_name" leaf set in the plugin_info of the plugin.
 
-if the package name is not defined the the plugin name (binary name minus directory minus file extension) may be used instead.
+if the package name is not defined then the plugin name (library name without directory or file extension) should be used instead.
 
 <filter_name> : the string value defined in the "name" leaf of the filter_class.
 
 <author> : the string value defined in the "author" leaf of the filter_class.
 
-This combination should be constant for all versions of the filter.
 
+Let weed version hashname be:
 
-The version hashname takes the following form:
-
-<package_name>|<filter_name>|<extra_authors>|<veresion>
+<package_name>|<filter_name>|<author>|<version>.<micro_version>
 
 where:
+<version> is the value of the "version" leaf in the filter_class (not the plugin_info leaf !)
 
-<extra_authors> is the value set in the optional leaf "extra_authors" in the filter_class.
-This value may be added to between version updates. If absent then "author" should be used instead.
+<micro_version> is the value of the optional "micro_version" leaf in the filter_class.
+The value may be omitted, and then assumed to be 0. Otherwise, a host may use a higher micro_version
+provided it can handle non-breaking changes (e.g. extra parameters / values / optional channels)
 
-<version> is the value of the "version" leaf in the filter_class (not the plugin_info leaf, ewhich defines the version of the plugin as
-	  whole - for plugins which export multiple filters this may not be updated when one particular filter is updated)
+If micro_version is 0 or undefined then this may be shortened to:
 
-(Rationale for using "extra_authors" leaf: in earlier versions of the spec, there was no "extra_authors" leaf in the filter class, and
-<package_name>|<filter_name>|<author>|<version> was suggested  as the version hashname, However, it occured that
-this author decided to attribute others in a plugin, which at the time necesitated changing the "author" leaf.
-This caused the version scheme
-to break, since the actual code had not been changed, but the version hashname was different. Thus the idea of the "extra_authors"
-leaf was arrived at. The "author" could remain constant, and additional contributors could added in the "extra_authors" leaf.
-Hence in the version hashname, the <author> was replaced by <extra_authors>
-which may be of use if a new author makes alterations to a filter and adds themselves to "extra_authors" but neglects to update
-the fiilter version number...
+<package_name>|<filter_name>|<author>|<version>
 
 
 
-Some package names are reserved and should not be used generally. Examples of reserved names are:
+Package names are case insneitive and may consist only of alphanumeric characters plus '_'.
+Some package names are reserved and should not be used generally.
 
-"weed", "Weed" or any similar variation : reserved for reference filters.
+Examples of reserved names are:
+
+"weed" : reserved for reference filters.
 
 "frei0r" : reserved for the frei0r project (there is a reference Weed filter which wraps frei0r plugins for Weed)
 
@@ -4057,8 +4139,12 @@ Some package names are reserved and should not be used generally. Examples of re
 "libvisual" : reserved for the libvisual project (there is a reference Weed filter which wraps frei0r plugins for Weed)
 
 
-"data", "icons" : reserved for general data directories and icon directories. Names such as "doc", "docs", "lib", "shared", "AppData"
-		  	       etc. which are names of commonly known subdirectories should also be avoided since creating package
+"data", "icons" : reserved for package data directories and icon directories.
+
+
+Names such as "doc", "docs", "Documents", "lib", "shared", "AppData"
+		  	       etc. which are names of commonly known subdirectories should also be
+			       avoided since creating package
 			       subdirectories with these names could cause confusion.
 
 

@@ -1430,7 +1430,7 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
   else tsource = &xtsource;
 
   clock_ticks = lives_get_relative_ticks(origsecs, orignsecs);
-  if (time_source) mainw->clock_ticks = clock_ticks;
+  mainw->clock_ticks = clock_ticks;
 
   if (*tsource == LIVES_TIME_SOURCE_EXTERNAL) *tsource = LIVES_TIME_SOURCE_NONE;
 

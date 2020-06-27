@@ -38,8 +38,11 @@
 
 #define MENUBAR_MIN 1024
 
-#define PEB_WRATIO 3.5 ///< preview eventbox width ratio (fraction of screen width)
+#define PEB_WRATIO 3. ///< preview eventbox width ratio (fraction of screen width)
 #define PEB_HRATIO 3. ///< preview eventbox height ratio (fraction of screen height)
+
+#define AMIXER_WRATIO 2. / 3. ///< audio mixer width ratio (fraction of screen width)
+#define AMIXER_HRATIO 2. / 3. ///< audio mixer height ratio (fraction of screen height)
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -179,7 +182,6 @@ struct _mt {
   LiVESWidget *xtravbox;
   LiVESWidget *hbox;
   LiVESWidget *play_blank;
-  LiVESWidget *play_box;
   LiVESWidget *poly_box;
   LiVESWidget *clip_scroll;
   LiVESWidget *clip_inner_box;

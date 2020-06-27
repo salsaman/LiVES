@@ -4529,23 +4529,21 @@ void get_letterbox_sizes(int *pwidth, int *pheight, int *lb_width, int *lb_heigh
 void add_to_playframe(void) {
   if (LIVES_IS_PLAYING) lives_widget_show(mainw->playframe);
 
-  if (mainw->plug == NULL) {
-    if (!mainw->foreign && (!mainw->sep_win || prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY)) {
-      mainw->plug = lives_event_box_new();
-      lives_widget_set_app_paintable(mainw->plug, TRUE);
-      lives_container_add(LIVES_CONTAINER(mainw->playarea), mainw->plug);
-      if (palette->style & STYLE_1) {
-        lives_widget_set_bg_color(mainw->plug, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-      }
-      lives_widget_show(mainw->plug);
-      lives_container_add(LIVES_CONTAINER(mainw->plug), mainw->play_image);
-      lives_widget_set_halign(mainw->plug, LIVES_ALIGN_CENTER);
-      lives_widget_set_halign(mainw->play_image, LIVES_ALIGN_CENTER);
-      if (mainw->multitrack != NULL) {
-        lives_widget_set_vexpand(mainw->play_image, TRUE); // centers it in mt
-      } else {
-        lives_widget_set_vexpand(mainw->play_image, FALSE);
-      }
+  if (!mainw->plug && !mainw->foreign) {
+    mainw->plug = lives_event_box_new();
+    lives_widget_set_app_paintable(mainw->plug, TRUE);
+    lives_container_add(LIVES_CONTAINER(mainw->playarea), mainw->plug);
+    if (palette->style & STYLE_1) {
+      lives_widget_set_bg_color(mainw->plug, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    }
+    lives_widget_show(mainw->plug);
+    lives_container_add(LIVES_CONTAINER(mainw->plug), mainw->play_image);
+    lives_widget_set_halign(mainw->plug, LIVES_ALIGN_CENTER);
+    lives_widget_set_halign(mainw->play_image, LIVES_ALIGN_CENTER);
+    if (mainw->multitrack) {
+      lives_widget_set_vexpand(mainw->play_image, TRUE); // centers it in mt
+    } else {
+      lives_widget_set_vexpand(mainw->play_image, FALSE);
     }
   }
   resize(1);

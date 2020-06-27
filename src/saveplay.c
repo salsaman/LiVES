@@ -2304,6 +2304,7 @@ void play_file(void) {
                                 LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     }
 
+
     if (mainw->foreign) {
       lives_widget_show_all(mainw->top_vbox);
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);

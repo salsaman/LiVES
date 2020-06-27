@@ -1146,7 +1146,7 @@ boolean get_handle_from_info_file(int index) {
   }
 
   if (mainw->files[index] == NULL) {
-    mainw->files[index] = (lives_clip_t *)(lives_malloc(sizeof(lives_clip_t)));
+    mainw->files[index] = (lives_clip_t *)(lives_calloc(1, sizeof(lives_clip_t)));
     mainw->files[index]->clip_type = CLIP_TYPE_DISK; // the default
   }
   lives_snprintf(mainw->files[index]->handle, 256, "%s", mainw->msg);
@@ -3550,7 +3550,7 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
       sfile = mainw->files[new_file];
     } else {
       // else just create the in-memory part and set the handle
-      sfile = mainw->files[new_file] = (lives_clip_t *)(lives_malloc(sizeof(lives_clip_t)));
+      sfile = mainw->files[new_file] = (lives_clip_t *)(lives_calloc(1, sizeof(lives_clip_t)));
       if (sfile == NULL) return NULL;
       lives_snprintf(sfile->handle, 256, "%s", handle);
     }
@@ -3623,6 +3623,7 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->md5sum[0] = 0;
   cfile->gamma_type = WEED_GAMMA_SRGB;
   cfile->last_play_sequence = 0;
+  cfile->tcache_dubious_from = 0;
   cfile->tcache_height = 0;
   cfile->tcache = NULL;
 
@@ -5704,7 +5705,7 @@ static lives_clip_t *_restore_binfmt(int clipno, boolean forensic) {
       size_t fsize, dsize;
       int fd;
       boolean badsize = FALSE;
-      lives_clip_t *loaded = (lives_clip_t *)lives_malloc(sizeof(lives_clip_t));
+      lives_clip_t *loaded = (lives_clip_t *)lives_calloc(1, sizeof(lives_clip_t));
       dsize = (size_t)((void *)&loaded->binfmt_end - (void *)loaded);
       fd = lives_open_buffered_rdonly(fname);
       fsize = lives_buffered_orig_size(fd);

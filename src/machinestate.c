@@ -1555,7 +1555,7 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives
   pthread_mutex_lock(&tcond_mutex);
   pthread_cond_signal(&tcond);
   pthread_mutex_unlock(&tcond_mutex);
-#ifndef VALGRIND_ON
+#ifndef VALGRIND_ONxxx
   if (ntasks > npoolthreads) {
     pthread_mutex_lock(&tcond_mutex);
     pthread_cond_broadcast(&tcond);

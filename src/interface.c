@@ -312,7 +312,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
   }
 
   if (!LIVES_IS_PLAYING) {
-    lives_widget_context_update();
+    //lives_widget_context_update();
   }
 
   // empirically we need to draw wider
@@ -1214,7 +1214,7 @@ xprocess *create_processing(const char *text) {
   lives_window_set_decorated(LIVES_WINDOW(procw->processing), FALSE);
 
   if (prefs->gui_monitor != 0) {
-    lives_window_set_screen(LIVES_WINDOW(procw->processing), mainw->mgeom[widget_opts.monitor].screen);
+    lives_window_set_monitor(LIVES_WINDOW(procw->processing), widget_opts.monitor);
   }
 
   lives_window_add_accel_group(LIVES_WINDOW(procw->processing), accel_group);

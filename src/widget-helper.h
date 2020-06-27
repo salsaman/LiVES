@@ -428,7 +428,7 @@ boolean lives_window_set_decorated(LiVESWindow *, boolean decorated);
 
 boolean lives_window_set_default_size(LiVESWindow *, int width, int height);
 
-boolean lives_window_set_screen(LiVESWindow *, LiVESXScreen *);
+boolean lives_window_set_monitor(LiVESWindow *window, int monnum);
 
 boolean lives_widget_get_position(LiVESWidget *, int *x, int *y);
 
@@ -1089,6 +1089,7 @@ boolean lives_widget_get_fg_color(LiVESWidget *, LiVESWidgetColor *);
 boolean lives_widget_set_show_hide_parent(LiVESWidget *);
 
 boolean lives_window_center(LiVESWindow *);
+boolean lives_window_uncenter(LiVESWindow *);
 
 boolean lives_entry_set_completion_from_list(LiVESEntry *, LiVESList *);
 
@@ -1268,7 +1269,6 @@ typedef struct {
   char **image_filter; ///</ NULL or NULL terminated list of image extensions which can be loaded
   char *title_prefix; ///< Text which is prepended to window titles, etc.
   int monitor; ///< monitor we are displaying on
-  LiVESXScreen *screen; ///< screen we are displaying on
   boolean show_button_images; ///< whether to show small images in buttons or not
 } widget_opts_t;
 
@@ -1298,7 +1298,6 @@ const widget_opts_t def_widget_opts = {
   NULL, ///< image_filter
   "", ///< title_prefix
   0, ///< monitor
-  NULL, ///< screen
   FALSE ///< show button images
 };
 

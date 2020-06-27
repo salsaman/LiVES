@@ -1843,7 +1843,6 @@ boolean apply_prefs(boolean skip_warn) {
       prefs->gui_monitor = gui_monitor;
       prefs->play_monitor = play_monitor;
       widget_opts.monitor = prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : capable->primary_monitor;
-      widget_opts.screen = mainw->mgeom[widget_opts.monitor].screen;
       resize_widgets_for_monitor(TRUE);
     }
   }

@@ -57,20 +57,20 @@ static void plugin_free_buffer(guchar *pixels, gpointer data) {return;}
 
 
 static inline GdkPixbuf *pl_gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alpha,
-					     int bits_per_sample, int width,
+    int bits_per_sample, int width,
     int height,
     guchar *buf) {
   // we can cheat if our buffer is correctly sized
   int channels = has_alpha ? 4 : 3;
   int rowstride = pl_gdk_rowstride_value(width * channels);
   return gdk_pixbuf_new_from_data(buf, colorspace, has_alpha, bits_per_sample, width,
-				  height, rowstride, plugin_free_buffer,
+                                  height, rowstride, plugin_free_buffer,
                                   NULL);
 }
 
 
 static GdkPixbuf *pl_data_to_pixbuf(int palette, int width, int height, int irowstride,
-				    guchar *pixel_data) {
+                                    guchar *pixel_data) {
   GdkPixbuf *pixbuf;
   int rowstride, orowstride;
   gboolean cheat = FALSE;
@@ -357,7 +357,7 @@ static weed_error_t vjack_rcv_process(weed_plant_t *inst, weed_timecode_t timest
   }
 
   in_pixbuf = pl_data_to_pixbuf(WEED_PALETTE_RGBA32, in_width, in_height, in_width * 4,
-				(guchar *)tmpbuff);
+                                (guchar *)tmpbuff);
 
   if (out_width > in_width || out_height > in_height) {
     out_pixbuf = gdk_pixbuf_scale_simple(in_pixbuf, out_width, out_height, up_interp);
@@ -400,14 +400,15 @@ static weed_error_t vjack_rcv_deinit(weed_plant_t *inst) {
 WEED_SETUP_START(200, 200) {
   int palette_list[] = {WEED_PALETTE_RGBA32, WEED_PALETTE_END};
   weed_plant_t *out_chantmpls[] =
-    {weed_channel_template_init("out channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE), NULL};
+  {weed_channel_template_init("out channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE), NULL};
   weed_plant_t *in_params[] = {weed_text_init("servername", "_Server name", "default"),
-			       weed_text_init("conffile", "_Config file", "~/.jackdrc.vjack"), NULL};
+                               weed_text_init("conffile", "_Config file", "~/.jackdrc.vjack"), NULL
+                              };
   weed_plant_t *filter_class = weed_filter_class_init("vjack_rcv", "martin/salsaman", 1, 0,
-						      palette_list,
-						      &vjack_rcv_init, &vjack_rcv_process,
-						      &vjack_rcv_deinit,
-						      NULL, out_chantmpls, in_params, NULL);
+                               palette_list,
+                               &vjack_rcv_init, &vjack_rcv_process,
+                               &vjack_rcv_deinit,
+                               NULL, out_chantmpls, in_params, NULL);
 
   weed_plant_t *gui = weed_paramtmpl_get_gui(in_params[0]);
   weed_set_int_value(gui, WEED_LEAF_MAXCHARS, 32);

@@ -546,9 +546,9 @@ static weed_error_t haar_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 
 //
 #define VLIMIT 4096
- 
+
 WEED_SETUP_START(200, 200) {
- int palette_list[] = {WEED_PALETTE_YUVA8888, WEED_PALETTE_YUV888, WEED_PALETTE_END};
+  int palette_list[] = {WEED_PALETTE_YUVA8888, WEED_PALETTE_YUV888, WEED_PALETTE_END};
   weed_plant_t *out_params[] = {weed_out_param_integer_init("Y maxima", 0, -VLIMIT, VLIMIT),
                                 weed_out_param_integer_init("U maxima", 0, -VLIMIT, VLIMIT),
                                 weed_out_param_integer_init("V maxima", 0, -VLIMIT, VLIMIT),

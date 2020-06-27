@@ -38,6 +38,9 @@
 
 #define MENUBAR_MIN 1024
 
+#define PEB_WRATIO 3.5 ///< preview eventbox width ratio (fraction of screen width)
+#define PEB_HRATIO 3. ///< preview eventbox height ratio (fraction of screen height)
+
 ////////////////////////////////////////////////////////////////////////////////
 
 #define MT_INOUT_TIME 10000 ///< min milliseconds to save autobackup when changing in / out spins
@@ -165,6 +168,7 @@ struct _mt_opts {
   boolean overlay_timecode;
   int hpaned_pos;
   int vpaned_pos;
+  double ptr_time;
   LiVESList *aparam_view_list;
 };
 

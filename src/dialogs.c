@@ -259,7 +259,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   lives_window_set_resizable(LIVES_WINDOW(dialog), FALSE);
 
   if (mainw != NULL) {
-    if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(dialog), widget_opts.screen);
+    lives_window_set_monitor(LIVES_WINDOW(dialog), widget_opts.monitor);
 
     if (widget_opts.apply_theme && (palette->style & STYLE_1)) {
       lives_dialog_set_has_separator(LIVES_DIALOG(dialog), FALSE);
@@ -338,7 +338,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
     lives_widget_grab_focus(okbutton);
   }
 
-  lives_widget_show_all(dialog);
+  gdk_window_show_unraised(lives_widget_get_xwindow(dialog));
+  //lives_widget_show_all(dialog);
   lives_window_center(LIVES_WINDOW(dialog));
 
   if (is_blocking)
@@ -487,6 +488,7 @@ boolean do_yesno_dialog(const char *text) {
   int response;
 
   warning = create_message_dialog(LIVES_DIALOG_YESNO, text, transient, 0, TRUE);
+  lives_widget_show_all(warning);
   response = lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
@@ -3473,7 +3475,7 @@ void threaded_dialog_spin(double fraction) {
     }
   }
 
-  lives_widget_process_updates(procw->processing, TRUE);
+  //lives_widget_process_updates(procw->processing, TRUE);
 }
 
 

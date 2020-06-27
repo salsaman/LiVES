@@ -473,7 +473,6 @@ void get_monitors(boolean reset) {
   }
 
   widget_opts.monitor = prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : capable->primary_monitor;
-  widget_opts.screen = mainw->mgeom[widget_opts.monitor].screen;
 
   mainw->old_scr_width = GUI_SCREEN_WIDTH;
   mainw->old_scr_height = GUI_SCREEN_HEIGHT;
@@ -621,6 +620,10 @@ static boolean pre_init(void) {
 
   prefs->ds_crit_level = (uint64_t)get_int64_prefd(PREF_DS_CRIT_LEVEL, DEF_DS_CRIT_LEVEL);
 
+  prefs->disk_quota = 0;
+  if (!has_pref(PREF_DISK_QUOTA)) needs_disk_quota = TRUE;
+  else prefs->disk_quota = get_int64_prefd(PREF_DISK_QUOTA, 0);
+
   if (mainw->next_ds_warn_level > 0) {
     if (!prefs->vj_mode) {
       mainw->dsval = 0; /// TODO: kick off task to get used ds
@@ -634,9 +637,6 @@ static boolean pre_init(void) {
       }
     }
   } else mainw->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
-
-  if (!has_pref(PREF_DISK_QUOTA)) needs_disk_quota = TRUE;
-  else prefs->disk_quota = get_int64_prefd(PREF_DISK_QUOTA, 0);
 
   if (mainw->next_ds_warn_level > 0) {
     mainw->dsval = 0; /// TODO: kick off task to get used ds
@@ -3320,9 +3320,6 @@ static boolean lives_startup(livespointer data) {
     switch_aud_to_none(FALSE);
   }
 
-  mainw->helper_procthreads[PT_LAZY_RFX] = lives_proc_thread_create(NULL, (lives_funcptr_t)add_rfx_effects, -1, "i",
-      RFX_STATUS_ANY);
-
   lives_idle_add(lives_startup2, NULL);
   return FALSE;
 }
@@ -3366,12 +3363,6 @@ static boolean lives_startup2(livespointer data) {
 
 #ifdef HAVE_YUV4MPEG
   if (strlen(prefs->yuvin) > 0) lives_idle_add(open_yuv4m_startup, NULL);
-#endif
-
-#if GTK_CHECK_VERSION(3, 0, 0)
-  if (!mainw->foreign && prefs->show_gui) {
-    calibrate_sepwin_size();
-  }
 #endif
 
   mainw->no_switch_dprint = TRUE;
@@ -3429,6 +3420,9 @@ static boolean lives_startup2(livespointer data) {
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
   else
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_MT);
+
+  mainw->helper_procthreads[PT_LAZY_RFX] =
+    lives_proc_thread_create(NULL, (lives_funcptr_t)add_rfx_effects, -1, "i", RFX_STATUS_ANY);
 
   // timer to poll for external commands: MIDI, joystick, jack transport, osc, etc.
   mainw->kb_timer = lives_timer_add_simple(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
@@ -7711,6 +7705,7 @@ void load_frame_image(int frame) {
         // and we are in full screen mode).
 
         if ((mainw->current_file != mainw->scrap_file || mainw->multitrack != NULL)
+            && mainw->pwidth > 0 && mainw->pheight > 0
             && !(mainw->is_rendering && !(cfile->proc_ptr != NULL && mainw->preview))
             && !cfile->opening && !mainw->resizing && CURRENT_CLIP_IS_NORMAL
             && !is_virtual_frame(mainw->current_file, mainw->actual_frame)

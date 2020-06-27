@@ -1041,12 +1041,18 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_STOCK_MEDIA_REWIND "media-seek-backward"
 #define LIVES_STOCK_MEDIA_FORWARD "media-seek-forward"
 #define LIVES_STOCK_MEDIA_RECORD "media-record"
-#define LIVES_STOCK_MEDIA_PAUSE "media-pause"
+
+#define LIVES_STOCK_MEDIA_PAUSE "media-playback-pause"
+#define LIVES_STOCK_MEDIA_PAUSE2 "media-pause"
+
 #define LIVES_STOCK_PREFERENCES "preferences-system"
 #define LIVES_STOCK_DIALOG_INFO "dialog-information"
 #define LIVES_STOCK_DIALOG_WARNING "dialog-warning"
 #define LIVES_STOCK_DIALOG_QUESTION "dialog-question"
 #define LIVES_STOCK_MISSING_IMAGE "image-missing"
+
+#define LIVES_STOCK_ALTS(a, b) (lives_has_icon(LIVES_STOCK_##a, b) ? LIVES_STOCK_##a \
+				: LIVES_STOCK_##a##2)
 
 // these are set up in widget_helper_init()
 char LIVES_STOCK_LABEL_CANCEL[32];

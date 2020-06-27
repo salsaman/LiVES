@@ -4,17 +4,6 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
-// gdk_screen_get_monitor_geometry’ -> gdk_monitor_get_geometry
-// gdk_screen_get_monitor_workarea’ -> gdk_monitor_get_workarea
-//  gdk_display_get_screen’ ->
-// gdk_screen_get_n_monitors  -> gdk_display_get_n_monitors
-//  gdk_display_get_device_manager -> gdk_display_get_default_seat
-// gdk_device_manager_list_devices’ ->
-//  gd_screen_get_width / height ->
-
-
-// gdk_display_get_default ()
-
 #include "main.h"
 
 // The idea here is to replace toolkit specific functions with generic ones
@@ -2725,19 +2714,29 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_auto_startup_notification(b
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_screen(LiVESWindow *window, LiVESXScreen *screen) {
-  if (LIVES_IS_WINDOW(window)) {
+/* WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_screen(LiVESWindow *window, LiVESXScreen *screen) { */
+/*   if (LIVES_IS_WINDOW(window)) { */
+/* #ifdef GUI_GTK */
+/*     gtk_window_set_screen(window, screen); */
+/*     return TRUE; */
+/* #endif */
+/*   } */
+/*   return FALSE; */
+/* } */
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_monitor(LiVESWindow *window, int monnum) {
 #ifdef GUI_GTK
-    gtk_window_set_screen(window, screen);
-    return TRUE;
+  if (LIVES_IS_WINDOW(window)) {
+#if !GTK_CHECK_VERSION(3, 20, 0)
+    gtk_window_set_screen(window, mainw->mgeom[monnum].screen);
+#else
+    gtk_window_fullscreen_on_monitor(window, mainw->mgeom[monnum].screen, monnum);
+    gtk_window_unfullscreen(window);
 #endif
-#ifdef GUI_QT
-    window->winId();
-    QWindow *qwindow = window->windowHandle();
-    qwindow->setScreen(screen);
     return TRUE;
-#endif
   }
+#endif
   return FALSE;
 }
 
@@ -2880,15 +2879,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_fullscreen(LiVESWindow *window)
   gtk_window_fullscreen(window);
   return TRUE;
 #endif
-#ifdef GUI_QT
-  if (LIVES_IS_WINDOW(window)) {
-    window->winId();
-    QWindow *qwindow = window->windowHandle();
-    qwindow->setWindowState(Qt::WindowFullScreen);
-    qwindow->setFlags(Qt::Widget | Qt::Window | Qt::CustomizeWindowHint | Qt::FramelessWindowHint);
-  }
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -2896,15 +2886,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_fullscreen(LiVESWindow *window)
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_unfullscreen(LiVESWindow *window) {
 #ifdef GUI_GTK
   gtk_window_unfullscreen(window);
-  return TRUE;
-#endif
-#ifdef GUI_QT
-  if (LIVES_IS_WINDOW(window)) {
-    window->winId();
-    QWindow *qwindow = window->windowHandle();
-    qwindow->setWindowState(Qt::WindowNoState);
-    qwindow->setFlags(Qt::Widget | Qt::Window);
-  }
   return TRUE;
 #endif
   return FALSE;
@@ -4885,14 +4866,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_grab_default(LiVESWidget *widge
   gtk_widget_grab_default(widget);
   return TRUE;
 #endif
-#ifdef GUI_QT
-  if (LIVES_IS_PUSH_BUTTON(widget)) {
-    QPushButton *button = dynamic_cast<QPushButton *>(widget);
-    if (button != NULL)
-      button->setDefault(true);
-  }
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -5702,7 +5675,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_message_dialog_new(LiVESWindow *p
 #ifdef GUI_GTK
   mdial = gtk_message_dialog_new(parent, flags | GTK_DIALOG_DESTROY_WITH_PARENT, type, buttons, msg_fmt, NULL);
 #endif
-  if (mdial != NULL && widget_opts.screen != NULL) lives_window_set_screen(parent, widget_opts.screen);
+  if (mdial) lives_window_set_monitor(LIVES_WINDOW(mdial), widget_opts.monitor);
   return mdial;
 }
 
@@ -10153,7 +10126,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   }
 #endif
 
-  if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(dialog), widget_opts.screen);
+  lives_window_set_monitor(LIVES_WINDOW(dialog), widget_opts.monitor);
 
   if (title != NULL)
     lives_window_set_title(LIVES_WINDOW(dialog), title);
@@ -11294,7 +11267,7 @@ boolean lives_window_center(LiVESWindow *window) {
     int width, height;
     int bx, by;
 
-    if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(window), widget_opts.screen);
+    lives_window_set_monitor(LIVES_WINDOW(window), widget_opts.monitor);
 
     if (mainw->mgeom == NULL) {
       lives_widget_show(LIVES_WIDGET(window));
@@ -11317,6 +11290,12 @@ boolean lives_window_center(LiVESWindow *window) {
     ycen = mainw->mgeom[widget_opts.monitor].y + ((mainw->mgeom[widget_opts.monitor].height - height) >> 1);
     lives_window_move(LIVES_WINDOW(window), xcen, ycen);
   }
+  return TRUE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_uncenter(LiVESWindow *window) {
+  lives_window_set_position(LIVES_WINDOW(window), LIVES_WIN_POS_NONE);
   return TRUE;
 }
 

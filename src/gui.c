@@ -388,9 +388,9 @@ void create_LiVES(void) {
     new_lives = TRUE;
     LIVES_MAIN_WINDOW_WIDGET = lives_window_new(LIVES_WINDOW_TOPLEVEL);
     lives_container_set_border_width(LIVES_CONTAINER(LIVES_MAIN_WINDOW_WIDGET), 0);
-    if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), widget_opts.screen);
-
-    mainw->config_func = lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_CONFIGURE_EVENT,
+    lives_window_set_monitor(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), widget_opts.monitor);
+    mainw->config_func = lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET),
+                         LIVES_WIDGET_CONFIGURE_EVENT,
                          LIVES_GUI_CALLBACK(config_event),
                          NULL);
   }
@@ -3807,34 +3807,6 @@ void make_preview_box(void) {
   lives_widget_show_all(mainw->preview_box);
 }
 
-#if GTK_CHECK_VERSION(3, 0, 0)
-
-void calibrate_sepwin_size(void) {
-  // get size of preview box in sepwin
-  LiVESRequisition req;
-  if (mainw->preview_box) {
-    lives_widget_object_ref(mainw->preview_image);
-    lives_container_remove(LIVES_CONTAINER(mainw->preview_box), mainw->preview_image);
-    lives_widget_object_unref(mainw->preview_box);
-    lives_widget_destroy(mainw->preview_box);
-  }
-  make_preview_box();
-  lives_widget_show_all(mainw->preview_controls);
-  lives_widget_get_preferred_size(mainw->preview_controls, NULL, &req);
-  mainw->sepwin_minwidth = req.width;
-  mainw->sepwin_minheight = req.height;
-  lives_widget_object_ref(mainw->preview_image);
-  if (mainw->pi_surface) {
-    /// invalid the preview windo surface (IMPORTANT !)
-    lives_painter_surface_destroy(mainw->pi_surface);
-    mainw->pi_surface = NULL;
-  }
-  lives_container_remove(LIVES_CONTAINER(mainw->preview_box), mainw->preview_image);
-  lives_widget_destroy(mainw->preview_box);
-  mainw->preview_box = NULL;
-}
-
-#endif
 
 void enable_record(void) {
   lives_menu_item_set_text(mainw->record_perf, _("Start _recording"), TRUE);
@@ -3942,11 +3914,6 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
 
   mainw->is_ready = TRUE;
   mainw->go_away = FALSE;
-#if GTK_CHECK_VERSION(3, 0, 0)
-  if (!mainw->foreign) {
-    calibrate_sepwin_size();
-  }
-#endif
 
   if (!need_mt) {
     lives_widget_context_update();
@@ -4112,7 +4079,7 @@ LIVES_GLOBAL_INLINE boolean get_play_screen_size(int *opwidth, int *opheight) {
 
 
 void resize_play_window(void) {
-  int opwx, opwy, pmonitor = prefs->play_monitor, gmonitor = widget_opts.monitor;
+  int opwx, opwy, pmonitor = prefs->play_monitor;
 
   boolean fullscreen = TRUE;
   boolean ext_audio = FALSE;
@@ -4132,6 +4099,9 @@ void resize_play_window(void) {
 #endif
 
   if (mainw->play_window == NULL) return;
+
+  if (!LIVES_IS_PLAYING && !mainw->multitrack)
+    lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), TRUE);
 
   mainw->ignore_screen_size = mainw->fs;
 
@@ -4228,7 +4198,7 @@ void resize_play_window(void) {
                             (scr_height - mainw->vpp->fheight) / 2);
         } else lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0);
       } else {
-        lives_window_set_screen(LIVES_WINDOW(mainw->play_window), mainw->mgeom[pmonitor - 1].screen);
+        lives_window_set_monitor(LIVES_WINDOW(mainw->play_window), pmonitor - 1);
         if (mainw->vpp != NULL && mainw->vpp->fwidth > 0) {
           lives_window_move(LIVES_WINDOW(mainw->play_window), mainw->mgeom[pmonitor - 1].x +
                             (mainw->mgeom[pmonitor - 1].width - mainw->vpp->fwidth) / 2,
@@ -4239,9 +4209,16 @@ void resize_play_window(void) {
       sched_yield();
       // leave this alone * !
       if (!(mainw->vpp != NULL && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
-#if GTK_CHECK_VERSION(99999, 0, 0) // TODO
-        lives_window_fullscreen_on_monitor(LIVES_WINDOW(mainw->play_window), screen, monitor);
-        gdk_window_set_fullscreen_mode(GdkWindow * window, GDK_FULLSCREEN_ON_ALL_MONITORS);
+#if GTK_CHECK_VERSION(3, 20, 0)
+        LiVESXWindow *xwin = lives_widget_get_xwindow(mainw->play_window);
+        if (pmonitor == 0)
+          gdk_window_set_fullscreen_mode(xwin, GDK_FULLSCREEN_ON_ALL_MONITORS);
+        else
+          gdk_window_set_fullscreen_mode(xwin, GDK_FULLSCREEN_ON_CURRENT_MONITOR);
+
+        gtk_window_fullscreen_on_monitor(LIVES_WINDOW(mainw->play_window),
+                                         mainw->mgeom[pmonitor - 1].screen,
+                                         pmonitor - 1);
 #else
         lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
         lives_widget_set_bg_color(mainw->play_window, LIVES_WIDGET_STATE_NORMAL, &palette->black);
@@ -4377,15 +4354,9 @@ void resize_play_window(void) {
       if (mainw->ce_thumbs) {
         end_ce_thumb_mode();
       }
-
-      if (pmonitor == 0) lives_window_move(LIVES_WINDOW(mainw->play_window), (scr_width - mainw->pwidth) / 2,
-                                             (scr_height - mainw->pheight) / 2);
-      else {
-        int xcen = mainw->mgeom[pmonitor - 1].x + (mainw->mgeom[pmonitor - 1].width - mainw->pwidth) / 2;
-        int ycen = mainw->mgeom[pmonitor - 1].y + (mainw->mgeom[pmonitor - 1].height - mainw->pheight) / 2;
-        lives_window_set_screen(LIVES_WINDOW(mainw->play_window), mainw->mgeom[pmonitor - 1].screen);
-        lives_window_move(LIVES_WINDOW(mainw->play_window), xcen, ycen);
-      }
+      if (pmonitor > 0 && pmonitor != widget_opts.monitor + 1)
+        lives_window_set_monitor(LIVES_WINDOW(mainw->play_window), pmonitor - 1);
+      lives_window_center(LIVES_WINDOW(mainw->play_window));
     }
     if (prefs->show_playwin) {
       lives_window_present(LIVES_WINDOW(mainw->play_window));
@@ -4397,30 +4368,21 @@ void resize_play_window(void) {
       if (mainw->ce_thumbs) {
         end_ce_thumb_mode();
       }
-
       if (mainw->opwx >= 0 && mainw->opwy >= 0) {
         // move window back to its old position after play
-        if (pmonitor > 0) lives_window_set_screen(LIVES_WINDOW(mainw->play_window), mainw->mgeom[pmonitor - 1].screen);
+        if (pmonitor > 0) lives_window_set_monitor(LIVES_WINDOW(mainw->play_window),
+              pmonitor - 1);
+        lives_window_uncenter(LIVES_WINDOW(mainw->play_window));
         lives_window_move(LIVES_WINDOW(mainw->play_window), mainw->opwx, mainw->opwy);
       } else {
-        if (pmonitor == 0) lives_window_move(LIVES_WINDOW(mainw->play_window), (scr_width - mainw->pwidth) / 2,
-                                               (scr_height - mainw->pheight - mainw->sepwin_minheight * 2) / 2);
-        else {
-          int xcen = mainw->mgeom[pmonitor - 1].x + (mainw->mgeom[pmonitor - 1].width - mainw->pwidth) / 2;
-          lives_window_set_screen(LIVES_WINDOW(mainw->play_window), mainw->mgeom[pmonitor - 1].screen);
-          lives_window_move(LIVES_WINDOW(mainw->play_window), xcen,
-                            (mainw->mgeom[pmonitor - 1].height - mainw->pheight - mainw->sepwin_minheight * 2) / 2);
-        }
+        if (pmonitor > 0) lives_window_set_monitor(LIVES_WINDOW(mainw->play_window),
+              pmonitor - 1);
+        lives_window_center(LIVES_WINDOW(mainw->play_window));
       }
     } else {
-      if (gmonitor == 0) lives_window_move(LIVES_WINDOW(mainw->play_window), (scr_width - mainw->pwidth) / 2,
-                                             (scr_height - mainw->pheight - mainw->sepwin_minheight * 2) / 2);
-      else {
-        int xcen = mainw->mgeom[gmonitor].x + (mainw->mgeom[gmonitor].width - mainw->pwidth) / 2;
-        if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(mainw->play_window), widget_opts.screen);
-        lives_window_move(LIVES_WINDOW(mainw->play_window), xcen,
-                          (mainw->mgeom[gmonitor].height - mainw->pheight - mainw->sepwin_minheight * 2) / 2);
-      }
+      if (pmonitor > 0) lives_window_set_monitor(LIVES_WINDOW(mainw->play_window),
+            pmonitor - 1);
+      lives_window_center(LIVES_WINDOW(mainw->play_window));
     }
     mainw->opwx = mainw->opwy = -1;
   }
@@ -4781,7 +4743,7 @@ void splash_init(void) {
 
     lives_widget_show_all(mainw->splash_window);
 
-    if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(mainw->splash_window), widget_opts.screen);
+    lives_window_set_monitor(LIVES_WINDOW(mainw->splash_window), widget_opts.monitor);
 
     lives_window_center(LIVES_WINDOW(mainw->splash_window));
     lives_window_present(LIVES_WINDOW(mainw->splash_window));

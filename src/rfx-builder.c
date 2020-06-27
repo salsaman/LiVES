@@ -4232,10 +4232,22 @@ void add_rfx_effects(lives_rfx_status_t status) {
 
   int i, plugin_idx;
 
-  int rfx_builtin_list_length = mainw->num_rendered_effects_builtin;
-  int rfx_custom_list_length = mainw->num_rendered_effects_custom;
-  int rfx_test_list_length = mainw->num_rendered_effects_test;
-  int rfx_list_length, old_list_length = rfx_builtin_list_length + rfx_custom_list_length + rfx_test_list_length;
+  int rfx_builtin_list_length, rfx_custom_list_length, rfx_test_list_length;
+  int rfx_list_length, old_list_length;
+
+  // reset / reload values
+  if (status == RFX_STATUS_ANY)
+    mainw->num_rendered_effects_builtin = 0;
+  if (status != RFX_STATUS_TEST)
+    mainw->num_rendered_effects_custom = 0;
+  if (status != RFX_STATUS_CUSTOM)
+    mainw->num_rendered_effects_test = 0;
+
+  rfx_builtin_list_length = mainw->num_rendered_effects_builtin;
+  rfx_custom_list_length = mainw->num_rendered_effects_custom;
+  rfx_test_list_length = mainw->num_rendered_effects_test;
+
+  old_list_length = rfx_builtin_list_length + rfx_custom_list_length + rfx_test_list_length;
 
   if (status != RFX_STATUS_TEST) {
     mainw->has_custom_effects = mainw->has_custom_tools = mainw->has_custom_gens = mainw->has_custom_utilities = FALSE;

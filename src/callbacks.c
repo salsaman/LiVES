@@ -7656,6 +7656,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
         if (!mainw->fs && mainw->multitrack == NULL) {
           /* mainw->pwidth = DEF_FRAME_HSIZE_GUI; */
           /* mainw->pheight = DEF_FRAME_VSIZE_GUI; */
+          lives_widget_show_all(mainw->playframe);
 
           lives_widget_show(mainw->t_bckground);
           lives_widget_show(mainw->t_double);
@@ -9539,6 +9540,8 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
   else if (mainw->multitrack) {
     if (widget == mainw->multitrack->timeline_reg)
       draw_region(mainw->multitrack);
+    if (widget == mainw->play_image)
+      mt_show_current_frame(mainw->multitrack, FALSE);
   }
   return FALSE;
 }

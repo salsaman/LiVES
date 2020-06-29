@@ -302,7 +302,7 @@ WEED_SETUP_START(200, 200) {
                        };
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
-  weed_plant_t *in_params[8], *pgui;
+  weed_plant_t *in_params[8], *pgui, *gui;
   weed_plant_t *filter_class;
 
   const char *fonts[NFONTMAPS + 1];
@@ -333,6 +333,9 @@ WEED_SETUP_START(200, 200) {
                                         NULL, livetext_process, NULL, in_chantmpls, out_chantmpls,
                                         in_params,
                                         NULL);
+  // hide this, since it is no longer maintained: - use scribbler instead
+  gui = weed_filter_get_gui(filter_class);
+  weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

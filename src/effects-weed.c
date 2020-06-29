@@ -4220,8 +4220,9 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
   if (weed_plant_has_leaf(filter, WEED_LEAF_GUI)) {
     weed_plant_t *gui = weed_get_plantptr_value(filter, WEED_LEAF_GUI, NULL);
     weed_add_plant_flags(gui, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE, "plugin_");
-    if (weed_get_boolean_value(gui, WEED_LEAF_HIDDEN, NULL) == WEED_TRUE)
+    if (weed_get_boolean_value(gui, WEED_LEAF_HIDDEN, NULL) == WEED_TRUE) {
       hidden = TRUE;
+    }
   }
 
   if (hidden || (flags & WEED_FILTER_IS_CONVERTER)) {
@@ -4807,6 +4808,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
     }
 
     filter_name = lives_strdup_printf("%s%s:", package_name, filtname);
+    lives_free(filtname);
 
     // add value returned in host_info_cb
     if (host_info != NULL) weed_set_plantptr_value(filter, WEED_LEAF_HOST_INFO, host_info);
@@ -10667,7 +10669,7 @@ char *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_aut
   int type = 0;
 
   if (filter_idx < 0 || filter_idx >= num_weed_filters) return lives_strdup("");
-  
+
   if (!fullname) type += 2;
   if (use_extra_authors) type++;
 
@@ -10716,16 +10718,15 @@ char *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_aut
       hashname = lives_strconcat(filename, xsep, filter_name, xsep, filter_author, NULL);
     } else {
       if (use_micro) {
-	int micro_version = weed_get_int_value(filter, WEED_LEAF_MICRO_VERSION, NULL);
-	filter_version = lives_strdup_printf("%d.%d", version, micro_version);
-      }
-      else {
-	filter_version = lives_strdup_printf("%d", version);
+        int micro_version = weed_get_int_value(filter, WEED_LEAF_MICRO_VERSION, NULL);
+        filter_version = lives_strdup_printf("%d.%d", version, micro_version);
+      } else {
+        filter_version = lives_strdup_printf("%d", version);
       }
       hashname = lives_strconcat(filename, filter_name, filter_author, filter_version, NULL);
+      lives_free(filter_version);
     }
     lives_free(filter_author);
-    lives_free(filter_version);
   } else {
     hashname = lives_strconcat(filename, filter_name, NULL);
   }
@@ -11178,7 +11179,7 @@ size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) {
     // *INDENT-ON*
 
     totsize += weed_leaf_serialise(fd, plant, prop, TRUE, mem);
-    lives_freep((void **)&prop);
+    lives_free(prop);
   }
   lives_freep((void **)&proplist);
   return totsize;

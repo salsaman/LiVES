@@ -3122,15 +3122,22 @@ void set_interactive(boolean interactive) {
 
   if (!interactive) {
     mainw->sense_state &= ~LIVES_SENSE_STATE_INTERACTIVE;
-    lives_widget_object_ref(mainw->menubar);
-    lives_widget_unparent(mainw->menubar);
-    lives_widget_hide(mainw->btoolbar);
-    lives_widget_set_sensitive(mainw->menubar, FALSE);
-    lives_widget_set_sensitive(mainw->btoolbar, FALSE);
-    lives_set_cursor_style(LIVES_CURSOR_NORMAL, mainw->hruler);
-    if (mainw->multitrack != NULL) {
-      lives_widget_object_ref(mainw->multitrack->menubar);
-      lives_widget_unparent(mainw->multitrack->menubar);
+    if (!mainw->multitrack) {
+      LiVESWidget *parent = lives_widget_get_parent(mainw->menubar);
+      if (parent && LIVES_IS_CONTAINER(parent)) {
+        lives_widget_object_ref(mainw->menubar);
+        lives_widget_unparent(mainw->menubar);
+      }
+      lives_widget_hide(mainw->btoolbar);
+      lives_widget_set_sensitive(mainw->menubar, FALSE);
+      lives_widget_set_sensitive(mainw->btoolbar, FALSE);
+      lives_set_cursor_style(LIVES_CURSOR_NORMAL, mainw->hruler);
+    } else {
+      LiVESWidget *parent = lives_widget_get_parent(mainw->multitrack->menubar);
+      if (parent && LIVES_IS_CONTAINER(parent)) {
+        lives_widget_object_ref(mainw->multitrack->menubar);
+        lives_widget_unparent(mainw->multitrack->menubar);
+      }
       lives_set_cursor_style(LIVES_CURSOR_NORMAL, mainw->multitrack->timeline);
       lives_widget_set_sensitive(mainw->multitrack->menubar, FALSE);
       lives_widget_set_sensitive(mainw->multitrack->spinbutton_start, FALSE);
@@ -3143,7 +3150,7 @@ void set_interactive(boolean interactive) {
       lives_widget_set_sensitive(mainw->multitrack->btoolbar, FALSE);
       lives_widget_set_sensitive(mainw->multitrack->btoolbar2, FALSE);
       lives_widget_set_sensitive(mainw->multitrack->btoolbar3, FALSE);
-      lives_widget_set_sensitive(mainw->multitrack->insa_checkbutton, FALSE);
+      //lives_widget_set_sensitive(mainw->multitrack->insa_checkbutton, FALSE);
       lives_widget_set_sensitive(mainw->multitrack->snapo_checkbutton, FALSE);
       list = mainw->multitrack->cb_list;
       while (list != NULL) {
@@ -3166,10 +3173,6 @@ void set_interactive(boolean interactive) {
     }
   } else {
     mainw->sense_state |= LIVES_SENSE_STATE_INTERACTIVE;
-    if (lives_widget_get_parent(mainw->menubar) == NULL) {
-      //lives_box_pack_start(LIVES_BOX(mainw->menu_hbox), mainw->menubar, FALSE, FALSE, 0);
-      //lives_widget_object_unref(mainw->menubar);
-    }
     lives_widget_show(mainw->btoolbar);
     lives_widget_set_sensitive(mainw->menubar, TRUE);
     lives_widget_set_sensitive(mainw->btoolbar, TRUE);
@@ -3179,6 +3182,7 @@ void set_interactive(boolean interactive) {
     if (mainw->multitrack != NULL) {
       lives_set_cursor_style(LIVES_CURSOR_CENTER_PTR, mainw->multitrack->timeline);
       if (lives_widget_get_parent(mainw->multitrack->menubar) == NULL) {
+        g_print("OKOKOK\n\n\n");
         lives_box_pack_start(LIVES_BOX(mainw->multitrack->menu_hbox), mainw->multitrack->menubar, FALSE, FALSE, 0);
         lives_widget_object_unref(mainw->multitrack->menubar);
       }
@@ -3249,6 +3253,14 @@ void set_interactive(boolean interactive) {
 
   if (mainw->ce_thumbs) ce_thumbs_set_interactive(interactive);
   if (rte_window != NULL) rte_window_set_interactive(interactive);
+
+  if (mainw->sense_state & LIVES_SENSE_STATE_INSENSITIZED) {
+    if (!mainw->multitrack) desensitize();
+    else mt_desensitise(mainw->multitrack);
+  }
+  if (mainw->sense_state & LIVES_SENSE_STATE_PROC_INSENSITIZED) {
+    procw_desensitize();
+  }
 }
 
 
@@ -3910,7 +3922,7 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
     list = list->next;
   }
 
-  set_interactive(LIVES_IS_INTERACTIVE);
+  set_interactive(prefs->interactive);
 
   mainw->is_ready = TRUE;
   mainw->go_away = FALSE;

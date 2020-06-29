@@ -1531,6 +1531,7 @@ typedef struct {
 
   pthread_t *libthread;  /// GUI thread for liblives
 
+#define LIVES_SENSE_STATE_UNKNOWN 0
 #define LIVES_SENSE_STATE_INSENSITIZED (1 << 0)
 #define LIVES_SENSE_STATE_PROC_INSENSITIZED (1 << 1)
 #define LIVES_SENSE_STATE_SENSITIZED (1 << 16)

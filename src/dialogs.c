@@ -338,8 +338,9 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
     lives_widget_grab_focus(okbutton);
   }
 
+  lives_widget_show_all(dialog);
   gdk_window_show_unraised(lives_widget_get_xwindow(dialog));
-  //lives_widget_show_all(dialog);
+
   lives_window_center(LIVES_WINDOW(dialog));
 
   if (is_blocking)

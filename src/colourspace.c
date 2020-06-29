@@ -7007,10 +7007,10 @@ static void *convert_swap3addpre_frame_thread(void *data) {
 }
 
 
-static void convert_swap3postalpha_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
-    uint8_t *dest, int thread_id) {
+static void convert_swap3postalpha_frame(uint8_t *src, int width, int height, int rowstride,
+    int thread_id) {
   // swap 3 bytes, leave alpha
-  uint8_t *end = src + height * irowstride;
+  uint8_t *end = src + height * rowstride, tmp;
   register int i;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
@@ -7023,10 +7023,9 @@ static void convert_swap3postalpha_frame(uint8_t *src, int width, int height, in
     for (i = prefs->nfx_threads - 1; i >= 0; i--) {
       dheight = xdheight;
 
-      if ((src + dheight * i * irowstride) < end) {
-        ccparams[i].src = src + dheight * i * irowstride;
+      if ((src + dheight * i * rowstride) < end) {
+        ccparams[i].src = src + dheight * i * rowstride;
         ccparams[i].hsize = width;
-        ccparams[i].dest = dest + dheight * i * orowstride;
 
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
@@ -7034,8 +7033,7 @@ static void convert_swap3postalpha_frame(uint8_t *src, int width, int height, in
 
         ccparams[i].vsize = dheight;
 
-        ccparams[i].irowstrides[0] = irowstride;
-        ccparams[i].orowstrides[0] = orowstride;
+        ccparams[i].irowstrides[0] = rowstride;
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_swap3postalpha_frame_thread(&ccparams[i]);
@@ -7053,19 +7051,14 @@ static void convert_swap3postalpha_frame(uint8_t *src, int width, int height, in
     return;
   }
 
-  irowstride -= width << 2;
-  orowstride -= width << 2;
-  for (; src < end; src += irowstride) {
+  rowstride -= width << 2;
+  for (; src < end; src += rowstride) {
     for (i = 0; i < width; i++) {
-      swab4(src++, dest++, 2); // 1 0 3 2
-      swab2(src--, dest--, 1); // 1 3 0 2
-      swab2(src++, dest++, 1); // 3 1 0 2
-      swab2(src++, dest--, 1); // 3 0 1 2
-      swab4(dest, dest, 1); // 2 1 0 3
-      src += 2;
-      dest += 4;
+      tmp = src[0];
+      src[0] = src[2];
+      src[2] = tmp;
+      src += 4;
     }
-    dest += orowstride;
   }
 }
 
@@ -7073,15 +7066,15 @@ static void convert_swap3postalpha_frame(uint8_t *src, int width, int height, in
 static void *convert_swap3postalpha_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_swap3postalpha_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
-                               ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->thread_id);
+                               ccparams->thread_id);
   return NULL;
 }
 
 #ifdef WEED_ADVANCED_PALETTES
-static void convert_swap3prealpha_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
-                                        uint8_t *dest, int thread_id) {
+static void convert_swap3prealpha_frame(uint8_t *src, int width, int height, int rowstride,
+                                        int thread_id) {
   // swap 3 bytes, leave alpha
-  uint8_t *end = src + height * irowstride;
+  uint8_t *end = src + height * rowstride, tmp;
   register int i;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
@@ -7094,10 +7087,9 @@ static void convert_swap3prealpha_frame(uint8_t *src, int width, int height, int
     for (i = prefs->nfx_threads - 1; i >= 0; i--) {
       dheight = xdheight;
 
-      if ((src + dheight * i * irowstride) < end) {
-        ccparams[i].src = src + dheight * i * irowstride;
+      if ((src + dheight * i * rowstride) < end) {
+        ccparams[i].src = src + dheight * i * rowstride;
         ccparams[i].hsize = width;
-        ccparams[i].dest = dest + dheight * i * orowstride;
 
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
@@ -7105,8 +7097,7 @@ static void convert_swap3prealpha_frame(uint8_t *src, int width, int height, int
 
         ccparams[i].vsize = dheight;
 
-        ccparams[i].irowstrides[0] = irowstride;
-        ccparams[i].orowstrides[0] = orowstride;
+        ccparams[i].irowstrides[0] = rowstride;
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_swap3prealpha_frame_thread(&ccparams[i]);
@@ -7124,28 +7115,23 @@ static void convert_swap3prealpha_frame(uint8_t *src, int width, int height, int
     return;
   }
 
-  irowstride -= width << 2;
-  orowstride -= width << 2;
+  rowstride -= width << 2;
 
-  for (; src < end; src += irowstride) {
+  for (; src < end; src += rowstride) {
     for (i = 0; i < width; i++) {
-      swab4(src++, dest++, 2); // 1 0 3 2
-      swab2(src++, dest++, 1); // 1 3 0 2
-      swab2(src--, dest--, 1); // 1 3 2 0
-      swab2(src++, dest--, 1); // 1 2 3 0
-      swab4(dest, dest, 1); // 0 3 2 1
-      src += 2;
-      dest += 4;
+      tmp = src[1];
+      src[1] = src[3];
+      src[3] = tmp;
+      src += 4;
     }
-    dest += orowstride;
   }
 }
 
 
 static void *convert_swap3prealpha_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
-  convert_swap3prealpha_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
-                              ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->thread_id);
+  convert_swap3prealpha_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize,
+                              ccparams->irowstrides[0], ccparams->thread_id);
   return NULL;
 }
 #endif
@@ -9661,7 +9647,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
             }
           } else {
             /// outpl has post
-            convert_swap3postalpha_frame(gusrc, width, height, irowstride, irowstride, gusrc, -USE_THREADS);
+            convert_swap3postalpha_frame(gusrc, width, height, irowstride, -USE_THREADS);
             weed_layer_nullify_pixel_data(orig_layer);
           }
         } else {
@@ -9702,7 +9688,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
         }
       } else {
         /// outpl has pre
-        convert_swap3prealpha_frame(gusrc, width, height, irowstride, irowstride, gusrc, -USE_THREADS);
+        convert_swap3prealpha_frame(gusrc, width, height, irowstride, -USE_THREADS);
         weed_layer_nullify_pixel_data(orig_layer);
       }
     }
@@ -9823,7 +9809,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
                             create_gamma_lut(1.0, weed_layer_get_gamma(layer), new_gamma_type), -USE_THREADS);
       break;
     case WEED_PALETTE_BGRA32:
-      convert_swap3postalpha_frame(gusrc, width, height, irowstride, irowstride, gusrc, -USE_THREADS);
+      convert_swap3postalpha_frame(gusrc, width, height, irowstride, -USE_THREADS);
       weed_layer_nullify_pixel_data(orig_layer);
       break;
     case WEED_PALETTE_ARGB32:
@@ -10011,7 +9997,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       convert_swap3delpost_frame(gusrc, width, height, irowstride, orowstride, gudest, -USE_THREADS);
       break;
     case WEED_PALETTE_RGBA32:
-      convert_swap3postalpha_frame(gusrc, width, height, irowstride, irowstride, gusrc, -USE_THREADS);
+      convert_swap3postalpha_frame(gusrc, width, height, irowstride, -USE_THREADS);
       weed_layer_nullify_pixel_data(orig_layer);
       break;
     case WEED_PALETTE_ARGB32:
@@ -12700,7 +12686,8 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
       cform = LIVES_PAINTER_FORMAT_A1;
       widthx = width >> 3;
     } else {
-      convert_layer_palette(layer, LIVES_PAINTER_COLOR_PALETTE(capable->byte_order), 0);
+      cform = LIVES_PAINTER_COLOR_PALETTE(capable->byte_order);
+      convert_layer_palette(layer, cform, 0);
       cform = LIVES_PAINTER_FORMAT_ARGB32;
       widthx = width << 2;
     }
@@ -12714,7 +12701,7 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
         !weed_plant_has_leaf(layer, WEED_LEAF_HOST_ORIG_PDATA)) {
       pixel_data = src;
     } else {
-      dst = pixel_data = (uint8_t *)lives_calloc(height * orowstride, 1);
+      dst = pixel_data = (uint8_t *)lives_calloc(1, height * orowstride);
       if (pixel_data == NULL) return NULL;
       for (i = 0; i < height; i++) {
         lives_memcpy(dst, src, widthx);
@@ -12728,7 +12715,8 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
 
     if (weed_palette_has_alpha(pal)) {
       int flags = 0;
-      if (weed_plant_has_leaf(layer, WEED_LEAF_FLAGS)) flags = weed_get_int_value(layer, WEED_LEAF_FLAGS, NULL);
+      if (weed_plant_has_leaf(layer, WEED_LEAF_FLAGS))
+        flags = weed_get_int_value(layer, WEED_LEAF_FLAGS, NULL);
       if (!(flags & WEED_LAYER_ALPHA_PREMULT)) {
         // if we have post-multiplied alpha, pre multiply
         alpha_unpremult(layer, FALSE);

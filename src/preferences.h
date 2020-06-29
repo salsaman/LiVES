@@ -420,6 +420,8 @@ typedef struct {
   boolean pa_restart;
 
   boolean cb_is_switch;
+
+  boolean interactive;
 } _prefs;
 
 enum {

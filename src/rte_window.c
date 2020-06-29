@@ -2481,7 +2481,7 @@ LiVESWidget *refresh_rte_window(void) {
     on_rtew_delete_event(NULL, NULL, NULL);
     lives_widget_destroy(rte_window);
     rte_window = create_rte_window();
-    rte_window_set_interactive(LIVES_IS_INTERACTIVE);
+    rte_window_set_interactive(prefs->interactive);
   }
   return rte_window;
 }
@@ -2492,7 +2492,7 @@ void on_assign_rte_keys_activate(LiVESMenuItem * menuitem, livespointer user_dat
     on_rtew_delete_event(NULL, NULL, NULL);
   } else {
     rte_window = create_rte_window();
-    rte_window_set_interactive(LIVES_IS_INTERACTIVE);
+    rte_window_set_interactive(prefs->interactive);
     lives_widget_show(rte_window);
     if (mainw->play_window != NULL && !mainw->fs && (prefs->play_monitor == widget_opts.monitor + 1 || capable->nmonitors == 1)) {
       lives_widget_hide(mainw->play_window);

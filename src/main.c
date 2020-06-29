@@ -192,7 +192,7 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
     if ((level & LIVES_LOG_LEVEL_MASK) == LIVES_LOG_LEVEL_CRITICAL)
       msg = lives_strdup_printf(_("%s Critical error: %s\n"), domain, message);
     else msg = lives_strdup_printf(_("%s Fatal error: %s\n"), domain, message);
-    //#define BREAK_ON_CRIT
+#define BREAK_ON_CRIT
 #ifdef BREAK_ON_CRIT
     if (prefs->show_dev_opts) raise(LIVES_SIGTRAP);
 #endif
@@ -3146,8 +3146,6 @@ static boolean lives_startup(livespointer data) {
     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
 
-  set_interactive(LIVES_IS_INTERACTIVE);
-
   // needed to avoid priv->pulse2 > priv->pulse1 gtk error
   lives_widget_context_update();
 
@@ -3428,6 +3426,8 @@ static boolean lives_startup2(livespointer data) {
   mainw->kb_timer = lives_timer_add_simple(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
   lives_idle_add_simple(lazy_startup_checks, NULL);
 
+  if (prefs->interactive && !mainw->multitrack) set_interactive(TRUE);
+
   return FALSE;
 } // end lives_startup2()
 
@@ -3642,6 +3642,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   prefs->show_splash = FALSE;
   prefs->show_playwin = TRUE;
   prefs->show_dev_opts = FALSE;
+  prefs->interactive = TRUE;
 
   lives_snprintf(prefs->cmd_log, PATH_MAX, LIVES_DEVNULL);
 
@@ -3683,7 +3684,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   mainw->debug = FALSE;
 
-  mainw->sense_state = LIVES_SENSE_STATE_INTERACTIVE;
+  mainw->sense_state = LIVES_SENSE_STATE_INSENSITIZED;
 
   prefs->max_modes_per_key = atoi(DEF_FX_KEYMODES);
 
@@ -4107,7 +4108,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
         if (!strcmp(charopt, "noninteractive")) {
           // disable menu/toolbar interactivity
-          mainw->sense_state &= ~LIVES_SENSE_STATE_INTERACTIVE;
+          prefs->interactive = FALSE;
           continue;
         }
 
@@ -4830,6 +4831,8 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
     cx = (rwidth - width) / 2;
     cy = (rheight - height) / 2;
 
+    cx += widget_opts.border_width;
+
     if (!(widget == mainw->play_image && mainw->multitrack)) {
       if (prefs->funky_widgets) {
         lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->frame_surround);
@@ -4840,7 +4843,7 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
     }
 
     lives_painter_set_source_pixbuf(cr, pixbuf, cx, cy);
-    lives_painter_rectangle(cr, cx, cy, width, height);
+    lives_painter_rectangle(cr, 0, 0, width, height);
   } else {
     lives_painter_render_background(widget, cr, 0, 0, rwidth, rheight);
   }
@@ -8727,8 +8730,7 @@ void load_frame_image(int frame) {
           }
         }
         if (!LIVES_IS_PLAYING && !mainw->is_processing && !mainw->preview) {
-          // TODO *****: check this is valid for all calls
-          if (mainw->multitrack != NULL) mt_sensitise(mainw->multitrack);
+          if (mainw->multitrack) mt_sensitise(mainw->multitrack);
           else sensitize();
         }
       }

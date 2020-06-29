@@ -55,6 +55,8 @@ boolean on_framedraw_mouse_start(LiVESWidget *, LiVESXEventButton *, lives_speci
 boolean on_framedraw_mouse_update(LiVESWidget *, LiVESXEventMotion *, lives_special_framedraw_rect_t *);
 boolean on_framedraw_mouse_reset(LiVESWidget *, LiVESXEventButton *, lives_special_framedraw_rect_t *);
 
+boolean on_framedraw_scroll(LiVESWidget *, LiVESXEventScroll *, lives_special_framedraw_rect_t *);
+
 boolean on_framedraw_leave(LiVESWidget *, LiVESXEventCrossing *, lives_special_framedraw_rect_t *);
 boolean on_framedraw_enter(LiVESWidget *, LiVESXEventCrossing *, lives_special_framedraw_rect_t *);
 

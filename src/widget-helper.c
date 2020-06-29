@@ -50,6 +50,7 @@ static cairo_user_data_key_t CAIRO_WIN_KEY;
 #define SPALPHA_KEY "_wh_sp_alpha"
 #define WARN_IMAGE_KEY "_wh_warn_image"
 #define TTIPS_IMAGE_KEY "_wh_warn_image"
+#define ALT_THEME_KEY "_wh_alt_theme"
 
 static LiVESWindow *modalw = NULL;
 
@@ -134,7 +135,7 @@ WIDGET_HELPER_LOCAL_INLINE boolean is_standard_widget(LiVESWidget *widget) {
 WIDGET_HELPER_LOCAL_INLINE void set_standard_widget(LiVESWidget *widget, boolean is) {
   if (is) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), STD_KEY, LIVES_INT_TO_POINTER(TRUE));
   else {
-    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), STD_KEY) != NULL)
+    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), STD_KEY))
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), STD_KEY, LIVES_INT_TO_POINTER(FALSE));
   }
 }
@@ -235,9 +236,15 @@ static void widget_state_cb(LiVESWidgetObject *object, livespointer pspec, lives
   }
   if (LIVES_IS_LABEL(widget)) {
     // other widgets get dimmed text
-    if (!lives_widget_is_sensitive(widget)) {
-      set_child_dimmed_colour(widget, BUTTON_DIM_VAL); // insens, themecols 1, child only
-    } else set_child_colour(widget, TRUE);
+    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), ALT_THEME_KEY)) {
+      if (!lives_widget_is_sensitive(widget)) {
+        set_child_dimmed_colour2(widget, BUTTON_DIM_VAL); // insens, themecols 1, child only
+      } else set_child_alt_colour(widget, TRUE);
+    } else {
+      if (!lives_widget_is_sensitive(widget)) {
+        set_child_dimmed_colour(widget, BUTTON_DIM_VAL); // insens, themecols 1, child only
+      } else set_child_colour(widget, TRUE);
+    }
   }
   if (LIVES_IS_ENTRY(widget) || LIVES_IS_COMBO(widget)) {
     // other widgets get dimmed text
@@ -1132,7 +1139,10 @@ static boolean async_timer_handler(livespointer data) {
       if (!res) sigdata_free(sigdata, NULL);
       return res;
     }
-    while (lives_widget_context_iteration(NULL, FALSE)); // process until no more events
+    while (lives_widget_context_iteration(NULL, FALSE)) {
+      lives_nanosleep(NSLEEP_TIME);
+      sched_yield();
+    }
   }
   // should never reach here
   return FALSE;
@@ -9548,6 +9558,8 @@ LiVESWidget *lives_glowing_check_button_new(const char *labeltext, LiVESBox *box
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                                   LIVES_GUI_CALLBACK(lives_cool_toggled),
                                   togglevalue);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget_opts.last_label),
+                               ALT_THEME_KEY, checkbutton);
 
   if (prefs->lamp_buttons) {
     lives_toggle_button_set_mode(LIVES_TOGGLE_BUTTON(checkbutton), FALSE);
@@ -12054,6 +12066,7 @@ void lives_cool_toggled(LiVESWidget *tbutton, livespointer user_data) {
     else lives_widget_set_bg_color(tbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
   }
   if (ret != NULL) *ret = active;
+  lives_widget_queue_draw(tbutton);
 #endif
 }
 

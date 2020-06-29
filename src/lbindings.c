@@ -514,8 +514,8 @@ static boolean call_reload_set(livespointer data) {
 static boolean call_set_interactive(livespointer data) {
   sintdata *sint = (sintdata *)data;
   if (mainw != NULL && !mainw->go_away) {
-    LIVES_IS_INTERACTIVE = sint->setting;
-    set_interactive(LIVES_IS_INTERACTIVE);
+    prefs->interactive = sint->setting;
+    set_interactive(prefs->interactive);
     ext_caller_return_int(sint->id, TRUE);
   } else ext_caller_return_int(sint->id, FALSE);
   lives_free(data);
@@ -538,7 +538,6 @@ static boolean call_set_sepwin(livespointer data) {
 static boolean call_set_fullscreen(livespointer data) {
   sintdata *sint = (sintdata *)data;
   if (mainw != NULL && !mainw->go_away) {
-    LIVES_IS_INTERACTIVE = sint->setting;
     if (mainw->fs != sint->setting)
       on_full_screen_pressed(NULL, NULL);
     ext_caller_return_int(sint->id, TRUE);
@@ -551,7 +550,6 @@ static boolean call_set_fullscreen(livespointer data) {
 static boolean call_set_fullscreen_sepwin(livespointer data) {
   sintdata *sint = (sintdata *)data;
   if (mainw != NULL && !mainw->go_away) {
-    LIVES_IS_INTERACTIVE = sint->setting;
     if (mainw->sep_win != sint->setting)
       on_sepwin_pressed(NULL, NULL);
     if (mainw->fs != sint->setting)

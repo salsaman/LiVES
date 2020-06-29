@@ -241,8 +241,8 @@ static void redraw_framedraw_image(weed_layer_t *layer) {
   calc_maxspect(fd_width, fd_height, &width, &height);
 
   // resize to correct size
-  resize_layer(layer, width, height, LIVES_INTERP_BEST, capable->byte_order == LIVES_BIG_ENDIAN ? WEED_PALETTE_ARGB32 :
-               WEED_PALETTE_BGRA32, 0);
+  resize_layer(layer, width, height, LIVES_INTERP_BEST,
+               LIVES_PAINTER_COLOR_PALETTE(capable->byte_order), 0);
 
   cr2 = lives_painter_create_from_surface(mainw->fd_surface);
 
@@ -479,8 +479,7 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
 
   // resize to correct size
   resize_layer(mainw->fd_layer, width, height, LIVES_INTERP_BEST,
-               capable->byte_order == LIVES_BIG_ENDIAN ? WEED_PALETTE_ARGB32 :
-               WEED_PALETTE_BGRA32, 0);
+               LIVES_PAINTER_COLOR_PALETTE(capable->byte_order), 0);
 
   cr = layer_to_lives_painter(mainw->fd_layer);
 
@@ -628,6 +627,7 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
     resize_layer(mainw->fd_layer, weed_layer_get_width(mainw->fd_layer_orig)
                  * weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->fd_layer_orig)),
                  weed_layer_get_height(mainw->fd_layer_orig), LIVES_INTERP_BEST, palette, 0);
+
     convert_layer_palette(mainw->fd_layer, palette, 0);
     pixbuf = layer_to_pixbuf(mainw->fd_layer, TRUE, TRUE);
     weed_layer_nullify_pixel_data(mainw->fd_layer);
@@ -641,6 +641,8 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
       mainw->multitrack->frame_pixbuf = pixbuf;
       set_drawing_area_from_pixbuf(mainw->play_image, pixbuf, mainw->play_surface);
       lives_widget_queue_draw(mainw->multitrack->preview_eventbox);
+      lives_widget_object_unref(mainw->multitrack->frame_pixbuf);
+      mainw->multitrack->frame_pixbuf = NULL;
     }
   }
   // update the widget
@@ -828,7 +830,6 @@ boolean on_framedraw_enter(LiVESWidget *widget, LiVESXEventCrossing *event, live
   return FALSE;
 }
 
-
 boolean on_framedraw_leave(LiVESWidget *widget, LiVESXEventCrossing *event, lives_special_framedraw_rect_t *framedraw) {
   if (framedraw == NULL) return FALSE;
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, mainw->framedraw);
@@ -867,6 +868,7 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                            widget, &xstarti, &ystarti);
+  xstarti -= widget_opts.border_width;
 
   if ((framedraw->type == LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT ||
        framedraw->type == LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK) &&
@@ -954,7 +956,6 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
   return FALSE;
 }
 
-
 boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event, lives_special_framedraw_rect_t *framedraw) {
   // pointer moved in the framedraw widget
   int xcurrenti, ycurrenti;
@@ -971,6 +972,7 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                            widget, &xcurrenti, &ycurrenti);
+  xcurrenti -= widget_opts.border_width;
 
   width = cfile->hsize;
   height = cfile->vsize;
@@ -1115,7 +1117,6 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
   return FALSE;
 }
 
-
 boolean on_framedraw_mouse_reset(LiVESWidget *widget, LiVESXEventButton *event, lives_special_framedraw_rect_t *framedraw) {
   // user released the mouse button in framedraw widget
   int xcurrenti, ycurrenti;
@@ -1131,6 +1132,7 @@ boolean on_framedraw_mouse_reset(LiVESWidget *widget, LiVESXEventButton *event, 
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                            widget, &xcurrenti, &ycurrenti);
+  xcurrenti -= widget_opts.border_width;
 
   width = cfile->hsize;
   height = cfile->vsize;
@@ -1217,6 +1219,24 @@ boolean on_framedraw_mouse_reset(LiVESWidget *widget, LiVESXEventButton *event, 
     break;
   }
   framedraw_redraw(framedraw, mainw->fd_layer_orig);
+  return FALSE;
+}
+
+boolean on_framedraw_scroll(LiVESWidget *widget, LiVESXEventScroll *event,
+                            lives_special_framedraw_rect_t *framedraw) {
+  if (framedraw == NULL && mainw->multitrack != NULL) framedraw = mainw->multitrack->framedraw;
+  if (framedraw == NULL) return FALSE;
+  if (mainw->multitrack != NULL && mainw->multitrack->track_index == -1) return FALSE;
+
+  if (framedraw->type == LIVES_PARAM_SPECIAL_TYPE_SCALEDPOINT) {
+    LiVESSpinButton *spb = (LiVESSpinButton *)framedraw->scale_param->widgets[0];
+    LiVESAdjustment *adj = lives_spin_button_get_adjustment(spb);
+    double step = lives_adjustment_get_step_increment(adj);
+    double scale = lives_spin_button_get_value(spb);
+    if (lives_get_scroll_direction(event) == LIVES_SCROLL_UP) scale += step;
+    if (lives_get_scroll_direction(event) == LIVES_SCROLL_DOWN) scale -= step;
+    lives_spin_button_set_value(spb, scale);
+  }
   return FALSE;
 }
 

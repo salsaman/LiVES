@@ -493,7 +493,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
           bgimage = NULL;
         }
         if (bgimage == NULL) {
-          bgimage = lives_painter_image_surface_create(LIVES_PAINTER_FORMAT_ARGB32,
+          bgimage = lives_painter_image_surface_create(LIVES_PAINTER_COLOR_PALETTE(capable->byte_order),
                     allocwidth,
                     allocheight);
         }
@@ -641,7 +641,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
           bgimage = NULL;
         }
         if (bgimage == NULL) {
-          bgimage = lives_painter_image_surface_create(LIVES_PAINTER_FORMAT_ARGB32,
+          bgimage = lives_painter_image_surface_create(LIVES_PAINTER_COLOR_PALETTE(capable->byte_order),
                     allocwidth,
                     allocheight);
         }
@@ -2727,7 +2727,7 @@ static void on_avolch_ok(LiVESButton * button, livespointer data) {
   }
 }
 
-//static void preview_aud_vol_cb(LiVESButton * button, livespointer data) {preview_aud_vol();}
+//static void preview_aud_vol_cb(LiVESButton *button, livespointer data) {preview_aud_vol();}
 
 void create_new_pb_speed(short type) {
   // type 1 = change speed
@@ -3193,7 +3193,7 @@ static void chooser_check_dir(LiVESFileChooser * chooser, livespointer user_data
 }
 
 
-/* LIVES_INLINE void chooser_response(LiVESWidget * widget, int response, livespointer udata) { */
+/* LIVES_INLINE void chooser_response(LiVESWidget *widget, int response, livespointer udata) { */
 /*   mainw->fc_buttonresponse = response; */
 /* } */
 

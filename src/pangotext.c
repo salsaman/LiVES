@@ -447,10 +447,7 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
   // xpos:
   // aligned to left (offs_x), unless "center" is TRUE
 
-#ifdef GUI_GTK
-  PangoFontDescription *font = NULL;
-#endif
-
+  LingoFontDescription *font = NULL;
   LingoLayout *layout;
 
   int x_pos = 0, y_pos = 0;
@@ -480,6 +477,9 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
   layout = new LingoLayout(text, fontname, size);
 #endif
 
+  if (center) lingo_layout_set_alignment(layout, LINGO_ALIGN_CENTER);
+  else lingo_layout_set_alignment(layout, LINGO_ALIGN_LEFT);
+
 #ifndef GUI_QT
   if (rising || center || mode == LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND)
 #endif
@@ -495,9 +495,6 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
   /*  lives_painter_new_path(cr);
     lives_painter_rectangle(cr,offs_x,0,width,height);
     lives_painter_clip(cr);*/
-
-  if (center) lingo_layout_set_alignment(layout, LINGO_ALIGN_CENTER);
-  else lingo_layout_set_alignment(layout, LINGO_ALIGN_LEFT);
 
 #ifdef GUI_GTK
   if (font != NULL) {

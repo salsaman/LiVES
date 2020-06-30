@@ -3385,10 +3385,10 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_free(tmp2);
 
   // advanced instant opening
-  widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
+  //widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
   advbutton = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("_Advanced"));
   lives_box_pack_start(LIVES_BOX(hbox), advbutton, FALSE, FALSE, widget_opts.packing_width * 4);
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  //iwidget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   lives_signal_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_decplug_advanced_clicked),

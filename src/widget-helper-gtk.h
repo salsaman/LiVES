@@ -439,6 +439,7 @@ typedef GdkFilterReturn LiVESFilterReturn;
 #define LIVES_WIDGET_BUTTON_RELEASE_EVENT "button-release-event"
 #define LIVES_WIDGET_MOTION_NOTIFY_EVENT "motion-notify-event"
 #define LIVES_WIDGET_LEAVE_NOTIFY_EVENT "leave-notify-event"
+#define LIVES_WIDGET_FOCUS_IN_EVENT "focus-in-event"
 #define LIVES_WIDGET_FOCUS_OUT_EVENT "focus-out-event"
 #define LIVES_WIDGET_DELETE_EVENT "delete-event"
 #define LIVES_WIDGET_KEY_PRESS_EVENT "key-press-event"
@@ -839,6 +840,7 @@ typedef GtkPaned                          LiVESPaned;
 typedef GtkScale                          LiVESScale;
 
 typedef GdkPixbufDestroyNotify            LiVESPixbufDestroyNotify;
+typedef GDestroyNotify            	  LiVESDestroyNotify;
 
 typedef GdkInterpType                     LiVESInterpType;
 

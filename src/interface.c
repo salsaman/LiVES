@@ -4222,8 +4222,8 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  msg = lives_strdup_printf(_("To open a clip from Youtube or another video site, LiVES will first download it with %s.\n"
-                              "PLEASE MAKE SURE YOU HAVE THE MOST RECENT VERSION OF THAT TOOL INSTALLED !"), EXEC_YOUTUBE_DL);
+  msg = lives_strdup_printf(_("To open a clip from Youtube or another video site, LiVES will first download it with %s.\n"),
+                            EXEC_YOUTUBE_DL);
   label = lives_standard_label_new(msg);
   lives_free(msg);
 
@@ -4772,6 +4772,151 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
   lives_snprintf(req->vidchoice, 512, "%s", (char *)lives_list_nth_data(allids, response));
   lives_list_free_all(&allids);
   return TRUE;
+}
+
+
+void run_diskspace_dialog(void) {
+  LiVESWidget *dialog, *dialog_vbox;
+  LiVESWidget *layout, *layout2;
+  LiVESWidget *label;
+  LiVESWidget *entry;
+  LiVESWidget *button;
+  LiVESWidget *checkbutton;
+  LiVESWidget *hbox;
+  LiVESWidget *vbox;
+  LiVESWidget *okbutton;
+  LiVESWidget *cancelbutton;
+
+  LiVESWidget *dsu_label;
+
+  //LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
+
+  int64_t free_ds = -1;
+  int64_t ds_used = -1;
+  boolean wrtable = FALSE;
+  boolean has_dsused = FALSE;
+  char *title, *tmp;
+
+  free_ds = (int64_t)get_ds_free(prefs->workdir);
+  if (get_ds_used(&ds_used)) has_dsused = TRUE;
+
+  title = (_("Diskspace Limits and Quotas"));
+
+  dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
+  lives_signal_handlers_disconnect_by_func(dialog, LIVES_GUI_CALLBACK(return_true), NULL);
+
+  lives_free(title);
+
+  //lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
+
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+  layout = lives_layout_new(LIVES_BOX(dialog_vbox));
+
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
+  lives_layout_add_label(LIVES_LAYOUT(layout),
+                         _("LiVES can limit the amount of diskspace reserved for projects (sets)."),
+                         FALSE);
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  entry = lives_standard_entry_new(_("Current working directory"), prefs->workdir, -1, PATH_MAX,
+                                   LIVES_BOX(hbox),
+                                   _("#The directory where LiVES will save projects (sets)"));
+
+  lives_entry_set_editable(LIVES_ENTRY(entry), FALSE);
+
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  button = lives_special_button_new_with_label(_("Change"), 200, 28);
+  //button = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("_Change"));
+
+  lives_box_pack_start(LIVES_BOX(hbox), button, FALSE, TRUE, widget_opts.packing_width * 4);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_decplug_advanced_clicked),
+                       NULL);
+
+  add_hsep_to_box(LIVES_BOX(dialog_vbox));
+
+  layout = lives_layout_new(LIVES_BOX(dialog_vbox));
+
+  lives_layout_add_label(LIVES_LAYOUT(layout), (_("Amount used by LiVES")), TRUE);
+  lives_layout_add_label(LIVES_LAYOUT(layout), (_("Calculating...")), TRUE);
+  dsu_label = widget_opts.last_label;
+
+  lives_layout_add_row(LIVES_LAYOUT(layout));
+  lives_layout_add_label(LIVES_LAYOUT(layout), (_("Quota")), TRUE);
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  checkbutton =
+    lives_standard_check_button_new((tmp = (_("Unlimited"))),
+                                    prefs->disk_quota == 0,
+                                    LIVES_BOX(hbox), NULL);
+
+  label = lives_layout_add_label(LIVES_LAYOUT(layout), (_("Value")), TRUE);
+  add_fill_to_box(LIVES_BOX(lives_widget_get_parent(label)));
+  add_fill_to_box(LIVES_BOX(lives_widget_get_parent(label)));
+  add_fill_to_box(LIVES_BOX(lives_widget_get_parent(label)));
+  add_fill_to_box(LIVES_BOX(lives_widget_get_parent(label)));
+
+  /// add slider here
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
+  button = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("_Change"));
+  lives_box_pack_start(LIVES_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width * 4);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+
+  //lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  vbox = lives_vbox_new(FALSE, 0);
+  layout2 = lives_layout_new(LIVES_BOX(vbox));
+
+  lives_standard_expander_new(_("Show Details"), LIVES_BOX(hbox), vbox);
+
+  lives_layout_add_separator(LIVES_LAYOUT(layout), TRUE);
+
+  layout = lives_layout_new(LIVES_BOX(dialog_vbox));
+
+  lives_layout_add_label(LIVES_LAYOUT(layout),
+                         _("Diskspace Recovery options"),
+                         FALSE);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
+  button = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("Clean Diskspace"));
+  lives_box_pack_start(LIVES_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width * 4);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
+  button = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("Manage Clip Sets"));
+  lives_box_pack_start(LIVES_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width * 4);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+
+  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, _("Remind me next time"),
+                 LIVES_RESPONSE_CANCEL);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(lives_general_button_clicked),
+                            NULL);
+
+  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CLOSE, _("OK"),
+             LIVES_RESPONSE_OK);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(lives_general_button_clicked),
+                            NULL);
+
+  lives_button_grab_default_special(okbutton);
+
+  lives_widget_show_all(dialog);
 }
 
 

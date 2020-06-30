@@ -9391,7 +9391,7 @@ boolean all_expose(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf
       lives_painter_set_source_surface(cr, *surf, 0., 0.);
       lives_painter_paint(cr);
     } else {
-      *surf = lives_widget_create_painter_surface(widget);
+      //*surf = lives_widget_create_painter_surface(widget);
       return FALSE;
     }
   }
@@ -9520,7 +9520,9 @@ boolean config_event2(LiVESWidget * widget, LiVESXEventConfigure * event, livesp
 boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer ppsurf) {
   lives_painter_surface_t **psurf = (lives_painter_surface_t **)ppsurf;
   if (!psurf) return FALSE;
-  if (*psurf) lives_painter_surface_destroy(*psurf);
+  if (*psurf) {
+    lives_painter_surface_destroy(*psurf);
+  }
   *psurf = lives_widget_create_painter_surface(widget);
 
   if (widget == mainw->start_image)

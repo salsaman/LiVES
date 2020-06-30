@@ -2986,6 +2986,7 @@ static boolean lazy_startup_checks(void *data) {
     mainw->ldg_menuitem = NULL;
     add_rfx_effects2(RFX_STATUS_ANY);
     if (LIVES_IS_SENSITIZED) sensitize(); // call fn again to sens. new menu entries
+    run_diskspace_dialog();
   }
   return FALSE;
 }

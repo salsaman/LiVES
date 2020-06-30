@@ -239,4 +239,6 @@ typedef struct {
 lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req);
 boolean youtube_select_format(lives_remote_clip_request_t *);
 
+void run_diskspace_dialog(void);
+
 #endif

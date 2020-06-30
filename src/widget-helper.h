@@ -353,7 +353,7 @@ boolean lives_label_set_selectable(LiVESLabel *, boolean setting);
 //////////
 
 LiVESWidget *lives_button_new(void);
-LiVESWidget *lives_button_new_from_stock(const char *stock_id, const char *label);
+LiVESWidget *lives_button_new_from_stock(const char *stock_id, const char *label, boolean is_std);
 LiVESWidget *lives_button_new_with_label(const char *label);
 
 boolean lives_button_set_label(LiVESButton *, const char *label);
@@ -956,6 +956,22 @@ boolean show_warn_image(LiVESWidget *, const char *text);
 LiVESWidget *lives_standard_button_new(void);
 LiVESWidget *lives_standard_button_new_with_label(const char *labeltext);
 LiVESWidget *lives_standard_button_new_from_stock(const char *stock_id, const char *labeltext);
+
+#define USE_SPECIAL_BUTTONS
+#ifdef USE_SPECIAL_BUTTONS
+typedef LiVESButton LiVESSpecialButton;
+#define LIVES_SPECIAL_BUTTON(a) LIVES_BUTTON(a)
+
+LiVESWidget *lives_special_button_new(int width, int height);
+LiVESWidget *lives_special_button_new_with_label(const char *labeltext, int width, int height);
+boolean lives_special_button_set_label(LiVESSpecialButton *, const char *label);
+const char *lives_special_button_get_label(LiVESSpecialButton *);
+
+/* boolean lives_button_clicked(LiVESButton *); */
+/* boolean lives_button_set_relief(LiVESButton *, LiVESReliefStyle); */
+/* boolean lives_button_set_image(LiVESButton *, LiVESWidget *image); */
+/* boolean lives_button_set_focus_on_click(LiVESButton *, boolean focus); */
+#endif
 
 LiVESWidget *lives_standard_menu_new(void);
 

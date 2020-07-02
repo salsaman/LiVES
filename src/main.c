@@ -613,7 +613,8 @@ static boolean pre_init(void) {
   // now we can use PREFS properly
   cache_file_contents(capable->rcfile);
 
-  future_prefs->vj_mode = prefs->vj_mode = get_boolean_prefd(PREF_VJMODE, FALSE);
+  future_prefs->vj_mode = get_boolean_prefd(PREF_VJMODE, FALSE);
+  if (!ign_opts.ign_vjmode) prefs->vj_mode = future_prefs->vj_mode;
 
   prefs->ds_warn_level = (uint64_t)get_int64_prefd(PREF_DS_WARN_LEVEL, DEF_DS_WARN_LEVEL);
   mainw->next_ds_warn_level = prefs->ds_warn_level;
@@ -2891,6 +2892,7 @@ void print_opthelp(void) {
           _("-noninteractive             : disable menu interactivity [intended for scripting applications, e.g liblives]\n"));
   fprintf(stderr, "%s", _("-startup-ce                 : start in clip editor mode\n"));
   fprintf(stderr, "%s", _("-startup-mt                 : start in multitrack mode\n"));
+  fprintf(stderr, "%s", _("-vjmode                     : start in VJ mode\n"));
   fprintf(stderr, "%s",
           _("-fxmodesmax <n>             : allow <n> modes per effect key; overrides any value set in preferences [minimum is 1, default is "
             DEF_FX_KEYMODES "]\n"));
@@ -2991,6 +2993,10 @@ static boolean render_choice_idle(livespointer data) {
 
 
 static boolean lazy_startup_checks(void *data) {
+  if (prefs->vj_mode) {
+    resize(1.);
+    return FALSE;
+  }
   if (needs_disk_quota) {
     run_diskspace_dialog();
     needs_disk_quota = FALSE;
@@ -3357,7 +3363,7 @@ static boolean lives_startup2(livespointer data) {
   if (prefs->osc_start) prefs->osc_udp_started = lives_osc_init(prefs->osc_udp_port);
 #endif
 
-  if (mainw->recoverable_layout) layout_recovered = do_layout_recover_dialog();
+  if (mainw->recoverable_layout && !prefs->vj_mode) layout_recovered = do_layout_recover_dialog();
 
   if (!mainw->recording_recovered) {
     if (mainw->ascrap_file != -1) {
@@ -3437,8 +3443,8 @@ static boolean lives_startup2(livespointer data) {
   if (!prefs->vj_mode) {
     mainw->helper_procthreads[PT_LAZY_RFX] =
       lives_proc_thread_create(NULL, (lives_funcptr_t)add_rfx_effects, -1, "i", RFX_STATUS_ANY);
-    lives_idle_add_simple(lazy_startup_checks, NULL);
   }
+  lives_idle_add_simple(lazy_startup_checks, NULL);
 
   // timer to poll for external commands: MIDI, joystick, jack transport, osc, etc.
   mainw->kb_timer = lives_timer_add_simple(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
@@ -3509,8 +3515,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   set_signal_handlers((SignalHandlerPointer)catch_sigint);
 
-  ign_opts.ign_clipset = ign_opts.ign_layout = ign_opts.ign_osc = ign_opts.ign_aplayer = ign_opts.ign_asource =
-                           ign_opts.ign_stmode = ign_opts.ign_vppdefs = ign_opts.ign_jackopts = FALSE;
+  lives_memset(&ign_opts, 0, sizeof(ign_opts));
 
 #ifdef ENABLE_OIL
   oil_init();
@@ -3782,6 +3787,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         {"noninteractive", 0, 0, 0},
         {"startup-ce", 0, 0, 0},
         {"startup-mt", 0, 0, 0},
+        {"vjmode", 0, 0, 0},
         {"fxmodesmax", 1, 0, 0},
         {"yuvin", 1, 0, 0},
         {"debug", 0, 0, 0},
@@ -4217,6 +4223,13 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
             prefs->startup_interface = STARTUP_MT;
             ign_opts.ign_stmode = TRUE;
           }
+          continue;
+        }
+
+        if (!strcmp(charopt, "vjmode")) {
+          // force start in multitrack mode
+          prefs->vj_mode = TRUE;
+          ign_opts.ign_vjmode = TRUE;
           continue;
         }
       }

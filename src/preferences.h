@@ -695,6 +695,7 @@ typedef struct {
   boolean ign_asource;
   boolean ign_stmode;
   boolean ign_vppdefs;
+  boolean ign_vjmode;
 } _ign_opts;
 
 typedef struct {

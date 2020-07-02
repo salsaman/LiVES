@@ -1505,7 +1505,8 @@ static void lives_init(_ign_opts *ign_opts) {
   prefs->ce_thumb_mode = FALSE;
 #endif
 
-  widget_opts.show_button_images = get_boolean_prefd(PREF_SHOW_BUTTON_ICONS, FALSE);
+  prefs->show_button_images = widget_opts.show_button_images =
+                                get_boolean_prefd(PREF_SHOW_BUTTON_ICONS, FALSE);
 
   prefs->push_audio_to_gens = get_boolean_prefd(PREF_PUSH_AUDIO_TO_GENS, TRUE);
 
@@ -2146,8 +2147,13 @@ static void do_start_messages(void) {
 #endif
 
 #ifdef LIVES_PAINTER_IS_CAIRO
-  d_print(_(", with cairo support"));
+  d_print(_(", with cairo support\n"));
+#else
+  d_print(_("\n"));
 #endif
+
+  d_print("GUI theme set to %s, icon theme set to %s\n", capable->gui_theme_name,
+          capable->icon_theme_name);
 
 #ifndef RT_AUDIO
   d_print(_("WARNING - this version of LiVES was compiled without either\njack or pulseaudio support.\n"
@@ -2240,6 +2246,11 @@ static void set_toolkit_theme(int prefer) {
     lives_widget_object_set(gtk_settings_get_default(), "gtk-theme-name", "Materia");
     lives_widget_object_set(gtk_settings_get_default(), "gtk-icon-theme-name", "elementaryXubuntu-dark");
     lives_widget_object_set(gtk_settings_get_default(), "gtk-application-prefer-dark-theme", TRUE);
+
+    lives_widget_object_get(gtk_settings_get_default(), "gtk-icon-theme-name", &capable->icon_theme_name);
+    lives_widget_object_get(gtk_settings_get_default(), "gtk-theme-name", &capable->gui_theme_name);
+    widget_opts.icon_theme = gtk_icon_theme_new();
+    gtk_icon_theme_set_custom_theme((LiVESIconTheme *)widget_opts.icon_theme, capable->icon_theme_name);
   }
 }
 
@@ -2980,13 +2991,16 @@ static boolean render_choice_idle(livespointer data) {
 
 
 static boolean lazy_startup_checks(void *data) {
+  if (needs_disk_quota) {
+    run_diskspace_dialog();
+    needs_disk_quota = FALSE;
+  }
   if (mainw->ldg_menuitem) {
     if (!RFX_LOADED) return TRUE;
     lives_widget_destroy(mainw->ldg_menuitem);
     mainw->ldg_menuitem = NULL;
     add_rfx_effects2(RFX_STATUS_ANY);
     if (LIVES_IS_SENSITIZED) sensitize(); // call fn again to sens. new menu entries
-    run_diskspace_dialog();
   }
   return FALSE;
 }
@@ -3420,13 +3434,16 @@ static boolean lives_startup2(livespointer data) {
   else
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_MT);
 
-  mainw->helper_procthreads[PT_LAZY_RFX] =
-    lives_proc_thread_create(NULL, (lives_funcptr_t)add_rfx_effects, -1, "i", RFX_STATUS_ANY);
+  if (!prefs->vj_mode) {
+    mainw->helper_procthreads[PT_LAZY_RFX] =
+      lives_proc_thread_create(NULL, (lives_funcptr_t)add_rfx_effects, -1, "i", RFX_STATUS_ANY);
+    lives_idle_add_simple(lazy_startup_checks, NULL);
+  }
 
   // timer to poll for external commands: MIDI, joystick, jack transport, osc, etc.
   mainw->kb_timer = lives_timer_add_simple(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
-  lives_idle_add_simple(lazy_startup_checks, NULL);
 
+  resize(1.);
   if (prefs->interactive && !mainw->multitrack) set_interactive(TRUE);
 
   return FALSE;
@@ -4832,7 +4849,10 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
     cx = (rwidth - width) / 2;
     cy = (rheight - height) / 2;
 
-    cx += widget_opts.border_width;
+    if (mainw->multitrack && !mainw->play_window) {
+      cx += widget_opts.border_width;
+      cy += widget_opts.border_width;
+    }
 
     if (!(widget == mainw->play_image && mainw->multitrack)) {
       if (prefs->funky_widgets) {
@@ -4844,11 +4864,12 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
     }
 
     lives_painter_set_source_pixbuf(cr, pixbuf, cx, cy);
-    lives_painter_rectangle(cr, 0, 0, width, height);
+    lives_painter_rectangle(cr, cx, cy, width, height);
+
   } else {
     lives_painter_render_background(widget, cr, 0, 0, rwidth, rheight);
   }
-  lives_painter_paint(cr);
+  lives_painter_fill(cr);
   lives_painter_destroy(cr);
 
   if (widget == mainw->play_window && rheight > mainw->pheight) rheight = mainw->pheight;

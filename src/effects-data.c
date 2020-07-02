@@ -38,6 +38,8 @@ static LiVESTreeModel *cmodel;
 
 static char *lctext;
 
+#define BW (40. * widget_opts.scale)
+#define BH (40. * widget_opts.scale)
 
 #ifdef DEBUG_PCONX
 static void dump_connections(void) {
@@ -3227,7 +3229,7 @@ static void cdel_clicked(LiVESWidget * button, livespointer user_data) {
 
 
 static void dfxc_changed(LiVESWidget * combo, livespointer user_data) {
-  lives_conx_w *conxwp = (lives_conx_w *)user_data;
+  lives_conx_w *conxw = (lives_conx_w *)user_data;
 
   LiVESTreeIter iter;
   LiVESTreeModel *model;
@@ -3252,10 +3254,10 @@ static void dfxc_changed(LiVESWidget * combo, livespointer user_data) {
   lives_tree_model_get(model, &iter, KEYVAL_COLUMN, &key, MODEVAL_COLUMN, &mode, -1);
   fidx = rte_keymode_get_filter_idx(key, mode);
 
-  nchans = cconx_get_numcons(conxwp, FX_DATA_WILDCARD);
+  nchans = cconx_get_numcons(conxw, FX_DATA_WILDCARD);
 
   for (i = 0; i < nchans; i++) {
-    if (conxwp->cfxcombo[i] == combo) {
+    if (conxw->cfxcombo[i] == combo) {
       ours = i;
       break;
     }
@@ -3265,10 +3267,11 @@ static void dfxc_changed(LiVESWidget * combo, livespointer user_data) {
 
   if (fidx == -1) {
     lives_combo_set_active_index(LIVES_COMBO(combo), 0);
-    lives_combo_populate(LIVES_COMBO(conxwp->ccombo[ours]), NULL);
-    lives_combo_set_active_string(LIVES_COMBO(conxwp->ccombo[ours]), "");
-    if (cconx_get_nconns(conxwp->cconx, 0) == 0 && cidx == 0) lives_widget_set_sensitive(conxwp->acbutton, FALSE);
-    lives_widget_set_sensitive(conxwp->ccombo[ours], FALSE);
+    lives_combo_populate(LIVES_COMBO(conxw->ccombo[ours]), NULL);
+    lives_combo_set_active_string(LIVES_COMBO(conxw->ccombo[ours]), "");
+    if (conxw->acbutton && cconx_get_nconns(conxw->cconx, 0) == 0 && cidx == 0)
+      lives_widget_set_sensitive(conxw->acbutton, FALSE);
+    lives_widget_set_sensitive(conxw->ccombo[ours], FALSE);
     return;
   }
 
@@ -3290,11 +3293,11 @@ static void dfxc_changed(LiVESWidget * combo, livespointer user_data) {
 
   lives_free(ichans);
 
-  lives_combo_populate(LIVES_COMBO(conxwp->ccombo[ours]), clist);
-  lives_combo_set_active_string(LIVES_COMBO(conxwp->ccombo[ours]), "");
+  lives_combo_populate(LIVES_COMBO(conxw->ccombo[ours]), clist);
+  lives_combo_set_active_string(LIVES_COMBO(conxw->ccombo[ours]), "");
 
-  if (cidx == 0) if (conxwp->acbutton != NULL) lives_widget_set_sensitive(conxwp->acbutton, TRUE);
-  lives_widget_set_sensitive(conxwp->ccombo[ours], TRUE);
+  if (cidx == 0) if (conxw->acbutton) lives_widget_set_sensitive(conxw->acbutton, TRUE);
+  lives_widget_set_sensitive(conxw->ccombo[ours], TRUE);
 
   lives_list_free_all(&clist);
 }
@@ -3396,7 +3399,8 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
       lives_combo_populate(LIVES_COMBO(conxwp->pcombo[ours]), NULL);
       lives_combo_set_active_string(LIVES_COMBO(conxwp->pcombo[ours]), "");
 
-      if (pconx_get_nconns(conxwp->pconx, 0) == 0 && pidx == 0) lives_widget_set_sensitive(conxwp->apbutton, FALSE);
+      if (conxwp->apbutton && pconx_get_nconns(conxwp->pconx, 0) == 0 && pidx == 0)
+        lives_widget_set_sensitive(conxwp->apbutton, FALSE);
 
       lives_widget_set_sensitive(conxwp->pcombo[ours], FALSE);
 
@@ -3465,7 +3469,7 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
   lives_combo_populate(LIVES_COMBO(conxwp->pcombo[ours]), plist);
   lives_combo_set_active_string(LIVES_COMBO(conxwp->pcombo[ours]), "");
 
-  if (pidx == 0) if (conxwp->apbutton != NULL) lives_widget_set_sensitive(conxwp->apbutton, TRUE);
+  if (pidx == 0) if (conxwp->apbutton) lives_widget_set_sensitive(conxwp->apbutton, TRUE);
 
   lives_widget_set_sensitive(conxwp->pcombo[ours], TRUE);
 
@@ -4233,7 +4237,7 @@ static void ptable_row_add_standard_widgets(lives_conx_w * conxwp, int idx) {
   conxwp->clabel[idx] = lives_standard_label_new(lctext);
   lives_box_pack_start(LIVES_BOX(hbox), conxwp->clabel[idx], FALSE, FALSE, widget_opts.packing_width);
 
-  conxwp->add_button[idx] = lives_standard_button_new_from_stock(LIVES_STOCK_ADD, NULL);
+  conxwp->add_button[idx] = lives_standard_button_new_from_stock(LIVES_STOCK_ADD, NULL, BW, BH);
   lives_widget_set_tooltip_text(conxwp->add_button[idx], _("Add another connection for this output parameter"));
 
   lives_table_attach(LIVES_TABLE(conxwp->tablep), conxwp->add_button[idx], 6, 7, conxwp->trowsp - 1, conxwp->trowsp,
@@ -4244,7 +4248,7 @@ static void ptable_row_add_standard_widgets(lives_conx_w * conxwp, int idx) {
                        LIVES_GUI_CALLBACK(padd_clicked),
                        (livespointer)conxwp);
 
-  conxwp->del_button[idx] = lives_standard_button_new_from_stock(LIVES_STOCK_REMOVE, NULL);
+  conxwp->del_button[idx] = lives_standard_button_new_from_stock(LIVES_STOCK_REMOVE, NULL, BW, BH);
   lives_widget_set_tooltip_text(conxwp->del_button[idx], _("Delete this connection"));
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -4275,7 +4279,7 @@ static void ctable_row_add_standard_widgets(lives_conx_w * conxwp, int idx) {
   conxwp->clabel[idx] = lives_standard_label_new(lctext);
   lives_box_pack_start(LIVES_BOX(hbox), conxwp->clabel[idx], FALSE, FALSE, widget_opts.packing_width);
 
-  conxwp->add_button[idx] = lives_standard_button_new_from_stock(LIVES_STOCK_ADD, NULL);
+  conxwp->add_button[idx] = lives_standard_button_new_from_stock(LIVES_STOCK_ADD, NULL, BW, BH);
   lives_widget_set_tooltip_text(conxwp->add_button[idx], _("Add another connection for this output channel"));
 
   lives_table_attach(LIVES_TABLE(conxwp->tablec), conxwp->add_button[idx], 5, 6, conxwp->trowsc - 1, conxwp->trowsc,
@@ -4286,7 +4290,7 @@ static void ctable_row_add_standard_widgets(lives_conx_w * conxwp, int idx) {
                        LIVES_GUI_CALLBACK(cadd_clicked),
                        (livespointer)conxwp);
 
-  conxwp->del_button[idx] = lives_standard_button_new_from_stock(LIVES_STOCK_REMOVE, NULL);
+  conxwp->del_button[idx] = lives_standard_button_new_from_stock(LIVES_STOCK_REMOVE, NULL, BW, BH);
   lives_widget_set_tooltip_text(conxwp->del_button[idx], _("Delete this connection"));
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -4909,7 +4913,6 @@ LiVESWidget *make_datacon_window(int key, int mode) {
     lives_signal_connect(LIVES_GUI_OBJECT(conxw.acbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(acbutton_clicked),
                          (livespointer)&conxw);
-
   }
 
   if (conxw.num_params > EXTRA_PARAMS_OUT) {
@@ -4921,7 +4924,6 @@ LiVESWidget *make_datacon_window(int key, int mode) {
     lives_signal_connect(LIVES_GUI_OBJECT(conxw.apbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(apbutton_clicked),
                          (livespointer)&conxw);
-
   }
 
   conxw.disconbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(conxw.conx_dialog), NULL, _("_Disconnect All"),
@@ -4944,10 +4946,12 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   lives_box_pack_start(LIVES_BOX(cbox), scrolledwindow, TRUE, TRUE, 0);
 
   if (conxw.num_params > EXTRA_PARAMS_OUT) {
-    if (pconx_get_nconns(conxw.pconx, 0) > 0) lives_widget_set_sensitive(conxw.apbutton, TRUE);
+    if (conxw.apbutton && pconx_get_nconns(conxw.pconx, 0) > 0)
+      lives_widget_set_sensitive(conxw.apbutton, TRUE);
   }
   if (conxw.num_alpha > 0) {
-    if (cconx_get_nconns(conxw.cconx, 0) > 0) lives_widget_set_sensitive(conxw.acbutton, TRUE);
+    if (conxw.acbutton && cconx_get_nconns(conxw.cconx, 0) > 0)
+      lives_widget_set_sensitive(conxw.acbutton, TRUE);
   }
 
   cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(conxw.conx_dialog), LIVES_STOCK_CANCEL, NULL,

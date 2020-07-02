@@ -170,7 +170,11 @@
 			     DEF_FRAME_HSIZE_43S_UNSCALED))
 #define RFX_WINSIZE_V ((int)(DEF_FRAME_VSIZE_43S_UNSCALED * widget_opts.scale))
 
-#define DEF_BUTTON_WIDTH ((int)(80. * widget_opts.scale))
+#define DLG_BUTTON_WIDTH ((int)(160. * widget_opts.scale))
+#define DLG_BUTTON_HEIGHT ((int)(60. * widget_opts.scale))
+
+#define DEF_BUTTON_WIDTH ((int)(200. * widget_opts.scale))
+#define DEF_BUTTON_HEIGHT ((int)(40. * widget_opts.scale))
 
 #define DEF_DIALOG_WIDTH RFX_WINSIZE_H
 #define DEF_DIALOG_HEIGHT RFX_WINSIZE_V

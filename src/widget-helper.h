@@ -57,7 +57,7 @@ typedef struct {
 // basic functions (wrappers for Toolkit functions)
 
 #ifdef LIVES_LINGO_IS_PANGO
-// pango stuff. I suppose it should be here on the offchance that it might one day be used with a non-gtk+ toolkit
+// pango stuff. I suppose it should be here on the offchance that it might one day be used with a non-gtk+ toolkit...
 typedef PangoLayout LingoLayout;
 typedef PangoContext LingoContext;
 typedef PangoFontDescription LingoFontDescription;
@@ -68,8 +68,11 @@ typedef PangoFontDescription LingoFontDescription;
 #define LINGO_ALIGN_CENTER PANGO_ALIGN_CENTER
 
 #define lingo_layout_set_text(a, b, c) pango_layout_set_text(a, b, c)
+#define lingo_layout_set_markup_with_accel(a, b, c, d, e) \
+  pango_layout_set_markup_with_accel(a, b, c, d, e)
 #ifdef LIVES_PAINTER_IS_CAIRO
-#define LIVES_PAINTER_COLOR_PALETTE(endian) (endian == LIVES_BIG_ENDIAN ? WEED_PALETTE_ARGB32 : WEED_PALETTE_BGRA32)
+#define LIVES_PAINTER_COLOR_PALETTE(endian) (endian == LIVES_BIG_ENDIAN ? WEED_PALETTE_ARGB32 \
+					     : WEED_PALETTE_BGRA32)
 #define lingo_painter_show_layout(a, b) pango_cairo_show_layout(a, b)
 #endif
 #ifdef GUI_GTK
@@ -92,7 +95,7 @@ typedef PangoFontDescription LingoFontDescription;
 #endif
 
 #ifdef LIVES_PAINTER_IS_CAIRO
-// likewise with cairo
+// ...likewise with cairo
 #ifndef GUI_GTK
 #include <cairo/cairo.h>
 #endif
@@ -240,6 +243,7 @@ int lives_pixbuf_get_n_channels(const LiVESPixbuf *);
 unsigned char *lives_pixbuf_get_pixels(const LiVESPixbuf *);
 const unsigned char *lives_pixbuf_get_pixels_readonly(const LiVESPixbuf *);
 LiVESPixbuf *lives_pixbuf_new(boolean has_alpha, int width, int height);
+LiVESPixbuf *lives_pixbuf_copy(LiVESPixbuf *);
 LiVESPixbuf *lives_pixbuf_new_from_data(const unsigned char *buf, boolean has_alpha, int width, int height,
                                         int rowstride, LiVESPixbufDestroyNotify lives_free_buffer_fn,
                                         livespointer destroy_fn_data);
@@ -305,6 +309,11 @@ boolean lives_signal_stop_emission_by_name(livespointer instance, const char *de
 boolean lives_grab_add(LiVESWidget *);
 boolean lives_grab_remove(LiVESWidget *);
 
+#ifdef GUI_GTK
+boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *selector,
+                             const char *detail, const char *value);
+#endif
+
 boolean lives_widget_set_sensitive(LiVESWidget *, boolean state);
 boolean lives_widget_get_sensitive(LiVESWidget *);
 
@@ -326,8 +335,10 @@ boolean lives_widget_reparent(LiVESWidget *, LiVESWidget *new_parent);
 boolean lives_widget_is_ancestor(LiVESWidget *, LiVESWidget *ancestor);
 
 boolean lives_widget_set_app_paintable(LiVESWidget *, boolean paintable);
+boolean lives_widget_set_opacity(LiVESWidget *widget, double opacity);
 
 boolean lives_widget_has_focus(LiVESWidget *);
+boolean lives_widget_is_focus(LiVESWidget *);
 boolean lives_widget_has_default(LiVESWidget *);
 
 boolean lives_widget_set_halign(LiVESWidget *, LiVESAlign align);
@@ -353,7 +364,7 @@ boolean lives_label_set_selectable(LiVESLabel *, boolean setting);
 //////////
 
 LiVESWidget *lives_button_new(void);
-LiVESWidget *lives_button_new_from_stock(const char *stock_id, const char *label, boolean is_std);
+LiVESWidget *lives_button_new_from_stock(const char *stock_id, const char *label, int width, int height);
 LiVESWidget *lives_button_new_with_label(const char *label);
 
 boolean lives_button_set_label(LiVESButton *, const char *label);
@@ -955,22 +966,22 @@ boolean show_warn_image(LiVESWidget *, const char *text);
 
 LiVESWidget *lives_standard_button_new(void);
 LiVESWidget *lives_standard_button_new_with_label(const char *labeltext);
-LiVESWidget *lives_standard_button_new_from_stock(const char *stock_id, const char *labeltext);
+LiVESWidget *lives_standard_button_new_from_stock(const char *stock_id, const char *labeltext, int width, int height);
+
+boolean is_special_widget(LiVESWidget *widget);
 
 #define USE_SPECIAL_BUTTONS
 #ifdef USE_SPECIAL_BUTTONS
 typedef LiVESButton LiVESSpecialButton;
 #define LIVES_SPECIAL_BUTTON(a) LIVES_BUTTON(a)
 
+void sbutt_render(LiVESWidget *, LiVESWidgetState state, livespointer user_data);
+
 LiVESWidget *lives_special_button_new(int width, int height);
 LiVESWidget *lives_special_button_new_with_label(const char *labeltext, int width, int height);
 boolean lives_special_button_set_label(LiVESSpecialButton *, const char *label);
 const char *lives_special_button_get_label(LiVESSpecialButton *);
-
-/* boolean lives_button_clicked(LiVESButton *); */
-/* boolean lives_button_set_relief(LiVESButton *, LiVESReliefStyle); */
-/* boolean lives_button_set_image(LiVESButton *, LiVESWidget *image); */
-/* boolean lives_button_set_focus_on_click(LiVESButton *, boolean focus); */
+boolean lives_special_button_set_image(LiVESButton *, LiVESWidget *image);
 #endif
 
 LiVESWidget *lives_standard_menu_new(void);
@@ -1286,6 +1297,7 @@ typedef struct {
   char *title_prefix; ///< Text which is prepended to window titles, etc.
   int monitor; ///< monitor we are displaying on
   boolean show_button_images; ///< whether to show small images in buttons or not
+  void *icon_theme; /// pointer to opaque "icon_theme"
 } widget_opts_t;
 
 widget_opts_t widget_opts;
@@ -1314,12 +1326,15 @@ const widget_opts_t def_widget_opts = {
   NULL, ///< image_filter
   "", ///< title_prefix
   0, ///< monitor
-  FALSE ///< show button images
+  FALSE, ///< show button images
+  NULL ///< icon theme
 };
 
 #else
 
 extern const widget_opts_t def_widget_opts;
+
+#define WH_LAYOUT_KEY "_wh_layout"
 
 #endif
 

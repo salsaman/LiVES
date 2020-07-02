@@ -2316,10 +2316,14 @@ LiVESWidget *create_rte_window(void) {
 
       type_labels[idx] = lives_standard_label_new("");
 
-      info_buttons[idx] = lives_standard_button_new_with_label(_("Info"));
-      param_buttons[idx] = lives_standard_button_new_with_label(_("Set Parameters"));
-      conx_buttons[idx] = lives_standard_button_new_with_label(_("Set Connections"));
-      clear_buttons[idx] = lives_standard_button_new_with_label(_("Clear"));
+      info_buttons[idx] = lives_special_button_new_with_label(_("Info"),
+                          DEF_BUTTON_WIDTH / 3, DEF_BUTTON_HEIGHT);
+      param_buttons[idx] = lives_special_button_new_with_label(_("Set Parameters"),
+                           DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+      conx_buttons[idx] = lives_special_button_new_with_label(_("Set Connections"),
+                          DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+      clear_buttons[idx] = lives_special_button_new_with_label(_("Clear"),
+                           DEF_BUTTON_WIDTH / 3, DEF_BUTTON_HEIGHT);
 
       vbox = lives_vbox_new(FALSE, 0);
       lives_box_pack_start(LIVES_BOX(hbox), vbox, FALSE, FALSE, widget_opts.packing_width);
@@ -2366,8 +2370,8 @@ LiVESWidget *create_rte_window(void) {
                            LIVES_GUI_CALLBACK(on_datacon_clicked), LIVES_INT_TO_POINTER(idx));
 
       lives_box_pack_start(LIVES_BOX(hbox), type_labels[idx], FALSE, FALSE, widget_opts.packing_width);
-      lives_box_pack_end(LIVES_BOX(hbox), conx_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
-      lives_box_pack_end(LIVES_BOX(hbox), param_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start(LIVES_BOX(hbox), conx_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start(LIVES_BOX(hbox), param_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
 
       // set parameters button sensitive/insensitive
       set_param_and_con_buttons(i, j);
@@ -2384,13 +2388,10 @@ LiVESWidget *create_rte_window(void) {
   lives_container_add(LIVES_CONTAINER(irte_window), top_vbox);
 
   hbuttonbox = lives_hbutton_box_new();
-  label = add_fill_to_box(LIVES_BOX(hbuttonbox));
+  lives_box_pack_start(LIVES_BOX(top_vbox), hbuttonbox, TRUE, TRUE, 0);
 
-  if (palette->style & STYLE_1) {
-    lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  }
-
-  lives_box_pack_start(LIVES_BOX(top_vbox), hbuttonbox, FALSE, TRUE, widget_opts.packing_height * 2);
+  add_fill_to_box(LIVES_BOX(hbuttonbox));
+  lives_widget_apply_theme(hbuttonbox, LIVES_WIDGET_STATE_NORMAL);
 
   clear_all_button = lives_dialog_add_button_from_stock(NULL, LIVES_STOCK_CLEAR, _("_Clear all effects"),
                      LIVES_RESPONSE_RESET);
@@ -2412,11 +2413,7 @@ LiVESWidget *create_rte_window(void) {
 
   lives_container_add(LIVES_CONTAINER(hbuttonbox), ok_button);
 
-  label = add_fill_to_box(LIVES_BOX(hbuttonbox));
-
-  if (palette->style & STYLE_1) {
-    lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  }
+  add_fill_to_box(LIVES_BOX(hbuttonbox));
 
   lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), clear_all_button, DEF_BUTTON_WIDTH);
   lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), save_keymap_button, DEF_BUTTON_WIDTH);

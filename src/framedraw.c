@@ -200,7 +200,8 @@ void framedraw_add_reset(LiVESVBox *box, lives_special_framedraw_rect_t *framedr
 
   framedraw_add_label(box);
 
-  mainw->framedraw_reset = lives_standard_button_new_from_stock(LIVES_STOCK_REFRESH, NULL);
+  mainw->framedraw_reset = lives_standard_button_new_from_stock(LIVES_STOCK_REFRESH, NULL,
+                           DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
   hbox_rst = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(box), hbox_rst, FALSE, FALSE, 4. * widget_opts.scale);
 
@@ -375,7 +376,9 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
 
   spinbutton_adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton));
 
-  mainw->framedraw_preview = lives_standard_button_new_from_stock(LIVES_STOCK_REFRESH, _("_Preview"));
+  mainw->framedraw_preview = lives_standard_button_new_from_stock(LIVES_STOCK_REFRESH, _("Preview"),
+                             DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+
   lives_box_pack_start(LIVES_BOX(hbox), mainw->framedraw_preview, TRUE, FALSE, 0);
   lives_widget_set_no_show_all(mainw->framedraw_preview, TRUE);
 

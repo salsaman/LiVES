@@ -2889,7 +2889,7 @@ static void update_timecodes(lives_mt * mt, double dtime) {
 
 static void set_fxlist_label(lives_mt * mt) {
   char *tname = get_track_name(mt, mt->current_track, mt->aud_track_selected);
-  char *text = lives_strdup_printf(_("\nEffects stack for %s at time %s\n"), tname, mt->timestring);
+  char *text = lives_strdup_printf(_("Effects stack for %s at time %s"), tname, mt->timestring);
   lives_label_set_text(LIVES_LABEL(mt->fx_list_label), text);
   lives_free(tname);
   lives_free(text);
@@ -8546,6 +8546,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   tname = get_tab_name(POLY_PARAMS);
   mt->nb_label7 = lives_label_new(tname);
   lives_free(tname);
+  lives_widget_set_hexpand(mt->nb_label7, TRUE);
+  lives_widget_set_halign(mt->nb_label7, LIVES_ALIGN_CENTER);
+  lives_widget_apply_theme(mt->nb_label7, LIVES_WIDGET_STATE_NORMAL);
 
   hbox = lives_hbox_new(FALSE, 0);
 
@@ -8619,18 +8622,17 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                              LIVES_GUI_CALLBACK(on_solo_check_toggled),
                              (livespointer)mt);
 
-  widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
-  mt->resetp_button = lives_standard_button_new_with_label(_("_Reset  To Defaults"));
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  mt->resetp_button = lives_special_button_new_with_label(_("_Reset  To Defaults"),
+                      DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT / 2.);
   lives_box_pack_start(LIVES_BOX(hbox), mt->resetp_button, FALSE, FALSE, 0);
 
   lives_signal_connect(LIVES_GUI_OBJECT(mt->resetp_button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_resetp_clicked),
                        (livespointer)mt);
 
-  widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
-  mt->del_node_button = lives_standard_button_new_with_label(_("_Del. node"));
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  mt->del_node_button = lives_special_button_new_with_label(_("_Del. node"),
+                        DEF_BUTTON_WIDTH / 2.,
+                        DEF_BUTTON_HEIGHT / 2.);
   lives_box_pack_end(LIVES_BOX(hbox), mt->del_node_button, FALSE, FALSE, 0);
   lives_widget_set_sensitive(mt->del_node_button, FALSE);
 
@@ -8638,9 +8640,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(on_del_node_clicked),
                        (livespointer)mt);
 
-  widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
-  mt->next_node_button = lives_standard_button_new_with_label(_("_Next node"));
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  mt->next_node_button = lives_special_button_new_with_label(_("_Next node"),
+                         DEF_BUTTON_WIDTH / 2.,
+                         DEF_BUTTON_HEIGHT / 2.);
   lives_box_pack_end(LIVES_BOX(hbox), mt->next_node_button, FALSE, FALSE, 0);
   lives_widget_set_sensitive(mt->next_node_button, FALSE);
 
@@ -8648,9 +8650,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(on_next_node_clicked),
                        (livespointer)mt);
 
-  widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
-  mt->prev_node_button = lives_standard_button_new_with_label(_("_Prev node"));
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  mt->prev_node_button = lives_special_button_new_with_label(_("_Prev node"),
+                         DEF_BUTTON_WIDTH / 2.,
+                         DEF_BUTTON_HEIGHT / 2.);
   lives_box_pack_end(LIVES_BOX(hbox), mt->prev_node_button, FALSE, FALSE, 0);
   lives_widget_set_sensitive(mt->prev_node_button, FALSE);
 
@@ -8675,7 +8677,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   hbox = lives_hbox_new(FALSE, 0);
 
   lives_container_add(LIVES_CONTAINER(mt->nb), hbox);
-  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb), lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 4), mt->nb_label4);
+  lives_notebook_set_tab_label(LIVES_NOTEBOOK(mt->nb),
+                               lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), 4), mt->nb_label4);
 
   // add a dummy hbox to nb
 
@@ -13248,6 +13251,9 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
     mt->fx_list_box = lives_vbox_new(FALSE, 0);
     lives_widget_apply_theme(mt->fx_list_box, LIVES_WIDGET_STATE_NORMAL);
     mt->fx_list_label = lives_label_new("");
+    // TODO ***: make function
+    set_css_value_direct(mt->fx_list_label, LIVES_WIDGET_STATE_NORMAL, "", "padding-top", "10px");
+    set_css_value_direct(mt->fx_list_label, LIVES_WIDGET_STATE_NORMAL, "", "padding-bottom", "10px");
     lives_widget_apply_theme2(mt->fx_list_label, LIVES_WIDGET_STATE_NORMAL, TRUE);
     lives_box_pack_start(LIVES_BOX(mt->fx_list_box), mt->fx_list_label, FALSE, TRUE, widget_opts.packing_height);
 
@@ -13367,7 +13373,9 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
     lives_container_set_border_width(LIVES_CONTAINER(mt->fx_list_box), widget_opts.border_width);
 
     widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
-    mt->prev_fm_button = lives_standard_button_new_with_label(_("_Prev filter map"));  // Note to translators: previous filter map
+    mt->prev_fm_button
+      = lives_special_button_new_with_label(_("_Prev filter map"),
+                                            DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);  // Note to translators: previous filter map
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
     lives_box_pack_start(LIVES_BOX(bbox), mt->prev_fm_button, FALSE, FALSE, 0);
 
@@ -13379,9 +13387,8 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
                          (livespointer)mt);
 
     if (fxcount > 1) {
-      widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
-      mt->fx_ibefore_button = lives_standard_button_new_with_label(_("Insert _before"));
-      widget_opts.expand = LIVES_EXPAND_DEFAULT;
+      mt->fx_ibefore_button = lives_special_button_new_with_label(_("Insert _before"),
+                              DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
       lives_box_pack_start(LIVES_BOX(bbox), mt->fx_ibefore_button, FALSE, FALSE, 0);
       lives_widget_set_sensitive(mt->fx_ibefore_button, mt->fx_order == FX_ORD_NONE &&
                                  get_event_timecode(mt->fm_edit_event) == get_event_timecode(frame_event) &&
@@ -13391,9 +13398,9 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
                            LIVES_GUI_CALLBACK(on_fx_insb_clicked),
                            (livespointer)mt);
 
-      widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
-      mt->fx_iafter_button = lives_standard_button_new_with_label(_("Insert _after"));
-      widget_opts.expand = LIVES_EXPAND_DEFAULT;
+      mt->fx_iafter_button = lives_special_button_new_with_label(_("Insert _after"),
+                             DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+
       lives_box_pack_start(LIVES_BOX(bbox), mt->fx_iafter_button, FALSE, FALSE, 0);
       lives_widget_set_sensitive(mt->fx_iafter_button, mt->fx_order == FX_ORD_NONE &&
                                  get_event_timecode(mt->fm_edit_event) == get_event_timecode(frame_event) &&
@@ -13407,9 +13414,9 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
       mt->fx_ibefore_button = mt->fx_iafter_button = NULL;
     }
 
-    widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
-    mt->next_fm_button = lives_standard_button_new_with_label(_("_Next filter map"));
-    widget_opts.expand = LIVES_EXPAND_DEFAULT;
+    mt->next_fm_button = lives_special_button_new_with_label(_("_Next filter map"),
+                         DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+
     lives_box_pack_end(LIVES_BOX(bbox), mt->next_fm_button, FALSE, FALSE, 0);
 
     lives_widget_set_sensitive(mt->next_fm_button, (next_fm_event = get_next_fm(mt, mt->current_track, frame_event)) != NULL &&
@@ -18624,7 +18631,7 @@ void do_fx_list_context(lives_mt * mt, int fxcount) {
   add_context_label(mt, (_("Single click on an effect\nto select it.")));
   add_context_label(mt, (_("Double click on an effect\nto edit it.")));
   add_context_label(mt, (_("Right click on an effect\nfor context menu.\n")));
-  add_context_label(mt, (_("\n\nEffects are apllied in order from top to bottom.\n")));
+  add_context_label(mt, (_("\n\nEffects are applied in order from top to bottom.\n")));
   if (fxcount > 1) {
     add_context_label(mt, (_("Effect order can be changed at\nFILTER MAPS")));
   }

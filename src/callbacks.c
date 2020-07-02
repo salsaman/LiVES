@@ -7812,6 +7812,24 @@ void on_loop_cont_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->current_file > -1) find_when_to_stop();
   else mainw->whentostop = NEVER_STOP;
 
+  if (mainw->preview_box) {
+    loop_img = lives_image_new_from_stock(LIVES_STOCK_LOOP, LIVES_ICON_SIZE_LARGE_TOOLBAR);
+    if (!loop_img) loop_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_LOOP,
+                                LIVES_ICON_SIZE_LARGE_TOOLBAR);
+    if (LIVES_IS_IMAGE(loop_img)) {
+      LiVESPixbuf *pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(loop_img));
+      if (pixbuf) {
+        LiVESPixbuf *pixbuf2 = lives_pixbuf_copy(pixbuf);
+        if (!mainw->loop_cont) {
+          lives_pixbuf_saturate_and_pixelate(pixbuf2, pixbuf2, 0.2, FALSE);
+        }
+        lives_image_set_from_pixbuf(LIVES_IMAGE(loop_img), pixbuf2);
+        lives_special_button_set_image(LIVES_BUTTON(mainw->p_loopbutton), loop_img);
+        lives_widget_object_unref(pixbuf);
+      }
+    }
+  }
+
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK) {
     if (mainw->jackd != NULL && (mainw->loop_cont || mainw->whentostop == NEVER_STOP)) {
@@ -9525,6 +9543,14 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
   }
   *psurf = lives_widget_create_painter_surface(widget);
 
+  if (LIVES_IS_DRAWING_AREA(widget)) {
+    LiVESWidget *parent = lives_widget_get_parent(widget);
+    if (parent && is_special_widget(parent)) {
+      sbutt_render(parent, 0, NULL);
+      return FALSE;
+    }
+  }
+
   if (widget == mainw->start_image)
     load_start_image(CURRENT_CLIP_IS_VALID ? cfile->start : 0);
   else if (widget == mainw->end_image)
@@ -10228,6 +10254,8 @@ boolean on_mouse_sel_start(LiVESWidget * widget, LiVESXEventButton * event, live
 
 #ifdef ENABLE_GIW_3
 void on_hrule_value_changed(LiVESWidget * widget, livespointer user_data) {
+  g_print("VALZ %p and %p %p\n", widget, user_data, mainw->hruler);
+
   if (!LIVES_IS_INTERACTIVE) return;
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return;
 

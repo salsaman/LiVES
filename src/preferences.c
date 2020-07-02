@@ -713,6 +713,14 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
 
   if (prefsw != NULL) prefsw->ignore_apply = TRUE;
 
+  if (!lives_strcmp(prefidx, PREF_SHOW_BUTTON_ICONS)) {
+    if (prefs->show_button_images == newval) goto fail2;
+    prefs->show_button_images = widget_opts.show_button_images = newval;
+    lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
+    if (prefsw != NULL) lives_widget_queue_draw(prefsw->prefs_dialog);
+    goto success2;
+  }
+
   // show recent
   if (!lives_strcmp(prefidx, PREF_SHOW_RECENT_FILES)) {
     if (prefs->show_recent == newval) goto fail2;
@@ -1684,10 +1692,7 @@ boolean apply_prefs(boolean skip_warn) {
 
   pref_factory_bool(PREF_PUSH_AUDIO_TO_GENS, pa_gens, TRUE);
 
-  if (show_button_icons != (widget_opts.show_button_images)) {
-    widget_opts.show_button_images = show_button_icons;
-    set_boolean_pref(PREF_SHOW_BUTTON_ICONS, show_button_icons);
-  }
+  pref_factory_bool(PREF_SHOW_BUTTON_ICONS, show_button_icons, TRUE);
 
 #ifdef HAVE_PULSE_AUDIO
   pref_factory_bool(PREF_PARESTART, lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_parestart)),
@@ -3386,7 +3391,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   // advanced instant opening
   //widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
-  advbutton = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("_Advanced"));
+  advbutton = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("_Advanced"),
+              DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
   lives_box_pack_start(LIVES_BOX(hbox), advbutton, FALSE, FALSE, widget_opts.packing_width * 4);
   //iwidget_opts.expand = LIVES_EXPAND_DEFAULT;
 
@@ -3600,9 +3606,10 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
-  advbutton = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("_Advanced"));
+  advbutton = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("_Advanced"),
+              DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
-  lives_box_pack_start(LIVES_BOX(hbox), advbutton, FALSE, FALSE, 40);
+  lives_box_pack_start(LIVES_BOX(hbox), advbutton, FALSE, FALSE, widget_opts.packing_width * 4.);
 
   lives_signal_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_vpp_advanced_clicked),
@@ -5195,7 +5202,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_widget_add_accelerator(prefsw->closebutton, LIVES_WIDGET_CLICKED_SIGNAL, prefsw->accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  // Set 'Close' button as inactive since there are no changes yet
+  // Set 'Revert' button as inactive since there are no changes yet
   lives_widget_set_sensitive(prefsw->revertbutton, FALSE);
   // Set 'Apply' button as inactive since there are no changes yet
   lives_widget_set_sensitive(prefsw->applybutton, FALSE);
@@ -5271,30 +5278,18 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->fs_max_check), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(apply_button_set_enabled),
                             NULL);
-  ACTIVE(recent_check, TOGGLED);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->stop_screensaver_check), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->open_maximised_check), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->show_tool), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->mouse_scroll), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                            NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_ce_maxspect), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->ce_thumbs), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_button_icons), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_hfbwnp), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_show_asrc), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  if (prefsw->checkbutton_show_ttips != NULL)
-    lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_show_ttips), LIVES_WIDGET_TOGGLED_SIGNAL,
-                         LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
 
+  ACTIVE(recent_check, TOGGLED);
+  ACTIVE(stop_screensaver_check, TOGGLED);
+  ACTIVE(open_maximised_check, TOGGLED);
+  ACTIVE(show_tool, TOGGLED);
+  ACTIVE(mouse_scroll, TOGGLED);
+  ACTIVE(checkbutton_ce_maxspect, TOGGLED);
+  ACTIVE(ce_thumbs, TOGGLED);
+  ACTIVE(checkbutton_button_icons, TOGGLED);
+  ACTIVE(checkbutton_hfbwnp, TOGGLED);
+  ACTIVE(checkbutton_show_asrc, TOGGLED);
+  ACTIVE(checkbutton_show_ttips, TOGGLED);
   ACTIVE(rb_startup_mt, TOGGLED);
   ACTIVE(rb_startup_ce, TOGGLED);
 
@@ -5814,9 +5809,6 @@ void pref_change_colours(void) {
 }
 
 
-/*!
-
-*/
 void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
   boolean needs_restart = FALSE;
 

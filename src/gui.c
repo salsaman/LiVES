@@ -169,12 +169,10 @@ boolean expose_pim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
 
 void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColor *colf2,
                  LiVESWidgetColor *colb2, LiVESWidgetColor *coli, LiVESWidgetColor *colt) {
-  lives_widget_set_bg_color(LIVES_MAIN_WINDOW_WIDGET, LIVES_WIDGET_STATE_NORMAL, colb);
-  lives_widget_set_fg_color(LIVES_MAIN_WINDOW_WIDGET, LIVES_WIDGET_STATE_NORMAL, colf);
-  lives_widget_set_bg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, colb2);
-  lives_widget_set_fg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, colf2);
-  lives_widget_set_bg_color(mainw->menu_hbox, LIVES_WIDGET_STATE_NORMAL, colb2);
-  lives_widget_set_fg_color(mainw->menu_hbox, LIVES_WIDGET_STATE_NORMAL, colf2);
+  lives_widget_apply_theme(LIVES_MAIN_WINDOW_WIDGET, LIVES_WIDGET_STATE_NORMAL);
+
+  lives_widget_apply_theme2(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, FALSE);
+  lives_widget_apply_theme2(mainw->menu_hbox, LIVES_WIDGET_STATE_NORMAL, FALSE);
 
   lives_widget_set_bg_color(mainw->sa_hbox, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->sa_toolbar, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -191,32 +189,19 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_set_bg_color(mainw->raudbar, LIVES_WIDGET_STATE_NORMAL, colb);
 
   set_submenu_colours(LIVES_MENU(mainw->files_menu), colf2, colb2);
-
   set_submenu_colours(LIVES_MENU(mainw->edit_menu), colf2, colb2);
-
   set_submenu_colours(LIVES_MENU(mainw->play_menu), colf2, colb2);
-
   set_submenu_colours(LIVES_MENU(mainw->effects_menu), colf2, colb2);
-
   set_submenu_colours(LIVES_MENU(mainw->tools_menu), colf2, colb2);
-
   set_submenu_colours(LIVES_MENU(mainw->audio_menu), colf2, colb2);
-
   set_submenu_colours(LIVES_MENU(mainw->info_menu), colf2, colb2);
-
   set_submenu_colours(LIVES_MENU(mainw->clipsmenu), colf2, colb2);
-
   set_submenu_colours(LIVES_MENU(mainw->advanced_menu), colf2, colb2);
-
   set_submenu_colours(LIVES_MENU(mainw->vj_menu), colf2, colb2);
-
   set_submenu_colours(LIVES_MENU(mainw->toys_menu), colf2, colb2);
-
   set_submenu_colours(LIVES_MENU(mainw->help_menu), colf2, colb2);
 
-  lives_widget_set_bg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, colb2);
-  lives_widget_set_fg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, colf2);
-  set_child_alt_colour(mainw->btoolbar, TRUE);
+  lives_widget_apply_theme2(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, TRUE);
 
   lives_widget_set_bg_color(mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->top_vbox, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -3724,54 +3709,59 @@ void make_preview_box(void) {
   lives_box_pack_start(LIVES_BOX(mainw->preview_controls), hbox_buttons, TRUE, TRUE, 0);
 
   rewind_img = lives_image_new_from_stock(LIVES_STOCK_MEDIA_REWIND, LIVES_ICON_SIZE_LARGE_TOOLBAR);
-  mainw->p_rewindbutton = lives_standard_button_new();
-  lives_widget_set_bg_color(mainw->p_rewindbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  lives_button_set_relief(LIVES_BUTTON(mainw->p_rewindbutton), LIVES_RELIEF_NONE);
-  lives_container_add(LIVES_CONTAINER(mainw->p_rewindbutton), rewind_img);
+  mainw->p_rewindbutton = lives_special_button_new(DEF_BUTTON_WIDTH / 2, DEF_BUTTON_HEIGHT);
+  lives_special_button_set_image(LIVES_BUTTON(mainw->p_rewindbutton), rewind_img);
   lives_box_pack_start(LIVES_BOX(hbox_buttons), mainw->p_rewindbutton, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text(mainw->p_rewindbutton, _("Rewind"));
   lives_widget_set_sensitive(mainw->p_rewindbutton, CURRENT_CLIP_IS_VALID && cfile->pointer_time > 0.);
   lives_widget_set_focus_on_click(mainw->p_rewindbutton, FALSE);
 
   play_img = lives_image_new_from_stock(LIVES_STOCK_MEDIA_PLAY, LIVES_ICON_SIZE_LARGE_TOOLBAR);
-  mainw->p_playbutton = lives_standard_button_new();
-  lives_widget_set_bg_color(mainw->p_playbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  lives_button_set_relief(LIVES_BUTTON(mainw->p_playbutton), LIVES_RELIEF_NONE);
-  lives_container_add(LIVES_CONTAINER(mainw->p_playbutton), play_img);
+  mainw->p_playbutton = lives_special_button_new(DEF_BUTTON_WIDTH / 2, DEF_BUTTON_HEIGHT);
+  lives_special_button_set_image(LIVES_BUTTON(mainw->p_playbutton), play_img);
   lives_box_pack_start(LIVES_BOX(hbox_buttons), mainw->p_playbutton, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text(mainw->p_playbutton, _("Play all"));
   lives_widget_set_focus_on_click(mainw->p_playbutton, FALSE);
 
-  playsel_img = lives_image_new_from_stock_at_size(LIVES_LIVES_STOCK_PLAY_SEL, LIVES_ICON_SIZE_CUSTOM, 24, 24);
-  mainw->p_playselbutton = lives_standard_button_new();
-  lives_widget_set_bg_color(mainw->p_playselbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  lives_button_set_relief(LIVES_BUTTON(mainw->p_playselbutton), LIVES_RELIEF_NONE);
-  lives_container_add(LIVES_CONTAINER(mainw->p_playselbutton), playsel_img);
+  playsel_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_PLAY_SEL, LIVES_ICON_SIZE_LARGE_TOOLBAR);
+  mainw->p_playselbutton = lives_special_button_new(DEF_BUTTON_WIDTH / 2, DEF_BUTTON_HEIGHT);
+  lives_special_button_set_image(LIVES_BUTTON(mainw->p_playselbutton), playsel_img);
   lives_box_pack_start(LIVES_BOX(hbox_buttons), mainw->p_playselbutton, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text(mainw->p_playselbutton, _("Play Selection"));
   lives_widget_set_sensitive(mainw->p_playselbutton, CURRENT_CLIP_IS_VALID && cfile->frames > 0);
   lives_widget_set_focus_on_click(mainw->p_playselbutton, FALSE);
 
-  loop_img = lives_image_new_from_stock_at_size(LIVES_LIVES_STOCK_LOOP, LIVES_ICON_SIZE_CUSTOM, 24, 24);
-  mainw->p_loopbutton = lives_standard_button_new();
-  lives_widget_set_bg_color(mainw->p_loopbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  lives_button_set_relief(LIVES_BUTTON(mainw->p_loopbutton), LIVES_RELIEF_NONE);
-  lives_button_set_image(LIVES_BUTTON(mainw->p_loopbutton), loop_img);
+  loop_img = lives_image_new_from_stock(LIVES_STOCK_LOOP, LIVES_ICON_SIZE_LARGE_TOOLBAR);
+  if (!loop_img) loop_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_LOOP,
+                              LIVES_ICON_SIZE_LARGE_TOOLBAR);
+  mainw->p_loopbutton = lives_special_button_new(DEF_BUTTON_WIDTH / 2, DEF_BUTTON_HEIGHT);
   lives_box_pack_start(LIVES_BOX(hbox_buttons), mainw->p_loopbutton, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text(mainw->p_loopbutton, _("Loop On/Off"));
   lives_widget_set_sensitive(mainw->p_loopbutton, TRUE);
   lives_widget_set_focus_on_click(mainw->p_loopbutton, FALSE);
+  if (LIVES_IS_IMAGE(loop_img)) {
+    LiVESPixbuf *pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(loop_img));
+    if (pixbuf) {
+      LiVESPixbuf *pixbuf2 = lives_pixbuf_copy(pixbuf);
+      if (!mainw->loop_cont) {
+        lives_pixbuf_saturate_and_pixelate(pixbuf2, pixbuf2, 0.2, FALSE);
+      }
+      lives_image_set_from_pixbuf(LIVES_IMAGE(loop_img), pixbuf2);
+      lives_widget_object_unref(pixbuf);
+    }
+  }
 
-  mainw->p_mute_img = lives_image_new_from_stock_at_size(LIVES_LIVES_STOCK_VOLUME_MUTE, LIVES_ICON_SIZE_CUSTOM, 24, 24);
+  lives_special_button_set_image(LIVES_BUTTON(mainw->p_loopbutton), loop_img);
+
+  mainw->p_mute_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_VOLUME_MUTE,
+                      LIVES_ICON_SIZE_LARGE_TOOLBAR);
   if (LIVES_IS_IMAGE(mainw->p_mute_img) && !mainw->mute) {
     LiVESPixbuf *pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(mainw->p_mute_img));
     lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
   }
 
-  mainw->p_mutebutton = lives_standard_button_new();
-  lives_widget_set_bg_color(mainw->p_mutebutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
-  lives_button_set_relief(LIVES_BUTTON(mainw->p_mutebutton), LIVES_RELIEF_NONE);
-  lives_container_add(LIVES_CONTAINER(mainw->p_mutebutton), mainw->p_mute_img);
+  mainw->p_mutebutton = lives_special_button_new(DEF_BUTTON_WIDTH / 2, DEF_BUTTON_HEIGHT);
+  lives_special_button_set_image(LIVES_BUTTON(mainw->p_mutebutton), mainw->p_mute_img);
   lives_box_pack_start(LIVES_BOX(hbox_buttons), mainw->p_mutebutton, TRUE, TRUE, 0);
   lives_widget_set_focus_on_click(mainw->p_mutebutton, FALSE);
 
@@ -4003,7 +3993,7 @@ void make_play_window(void) {
 
   if (!mainw->play_window) return;
 
-  if (mainw->preview_box == NULL) {
+  if (!mainw->preview_box) {
     // create the preview box that shows frames
     make_preview_box();
   }

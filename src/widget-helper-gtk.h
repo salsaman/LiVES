@@ -419,6 +419,8 @@ typedef GdkFilterReturn LiVESFilterReturn;
 #define LIVES_FILTER_REMOVE GDK_FILTER_REMOVE
 #define LIVES_FILTER_CONTINUE GDK_FILTER_CONTINUE
 
+typedef GtkIconTheme			  LiVESIconTheme;
+
 // font sizes
 #define LIVES_FONT_SIZE_XX_SMALL "xx-small" // 0
 #define LIVES_FONT_SIZE_X_SMALL "x-small"  // 1
@@ -994,6 +996,7 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_IS_DIALOG(widget) GTK_IS_DIALOG(widget)
 #define LIVES_IS_LABEL(widget) GTK_IS_LABEL(widget)
 #define LIVES_IS_BUTTON(widget) GTK_IS_BUTTON(widget)
+#define LIVES_IS_DRAWING_AREA(widget) GTK_IS_DRAWING_AREA(widget)
 #define LIVES_IS_SPIN_BUTTON(widget) GTK_IS_SPIN_BUTTON(widget)
 #define LIVES_IS_TOGGLE_BUTTON(widget) GTK_IS_TOGGLE_BUTTON(widget)
 #define LIVES_IS_TOGGLE_TOOL_BUTTON(widget) GTK_IS_TOGGLE_TOOL_BUTTON(widget)
@@ -1043,6 +1046,7 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_STOCK_MEDIA_REWIND "media-seek-backward"
 #define LIVES_STOCK_MEDIA_FORWARD "media-seek-forward"
 #define LIVES_STOCK_MEDIA_RECORD "media-record"
+#define LIVES_STOCK_LOOP "system-reboot"
 
 #define LIVES_STOCK_MEDIA_PAUSE "media-playback-pause"
 #define LIVES_STOCK_MEDIA_PAUSE2 "media-pause"
@@ -1175,8 +1179,6 @@ char LIVES_STOCK_LABEL_MEDIA_RECORD[32];
 #define LIVES_LIVES_STOCK_LOCKED "locked"
 #define LIVES_LIVES_STOCK_UNLOCKED "unlocked"
 #endif
-
-#define LIVES_LIVES_STOCK_LOOP "lives-loop"
 
 #define LIVES_DEFAULT_MOD_MASK (gtk_accelerator_get_default_mod_mask ())
 

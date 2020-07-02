@@ -1500,7 +1500,8 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
   //LiVESWidget *dlabel = NULL;
   LiVESWidget *textview = NULL;
   LiVESWidget *scrolledwindow;
-  LiVESWidget *layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(box), "layout");
+  LiVESWidget *layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(box),
+                        WH_LAYOUT_KEY);
 
   LiVESAdjustment *spinbutton_adj;
 
@@ -1691,7 +1692,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
     cbutton = lives_standard_color_button_new(LIVES_BOX(hbox), _(name), FALSE, &rgba, &spinbutton_red, &spinbutton_green,
               &spinbutton_blue, NULL);
     widget_opts.mnemonic_label = TRUE;
-    lives_widget_set_size_request(cbutton, DEF_BUTTON_WIDTH * 2., -1);
+    lives_widget_set_size_request(cbutton, DEF_BUTTON_WIDTH / 2, -1);
 
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cbutton), "param_number", LIVES_INT_TO_POINTER(pnum));
     if (param->desc != NULL) lives_widget_set_tooltip_text(cbutton, param->desc);
@@ -1842,11 +1843,11 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
   }
 
   // see if there were any 'special' hints
-  if (!layout)
+  if (!layout) {
     check_for_special(rfx, param, LIVES_BOX(lives_widget_get_parent(LIVES_WIDGET(box))));
-  else
+  } else {
     check_for_special(rfx, param, LIVES_BOX(lives_widget_get_parent(layout)));
-
+  }
   lives_free(name);
   return was_num;
 }

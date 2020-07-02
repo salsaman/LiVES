@@ -3709,23 +3709,23 @@ void make_preview_box(void) {
   lives_box_pack_start(LIVES_BOX(mainw->preview_controls), hbox_buttons, TRUE, TRUE, 0);
 
   rewind_img = lives_image_new_from_stock(LIVES_STOCK_MEDIA_REWIND, LIVES_ICON_SIZE_LARGE_TOOLBAR);
-  mainw->p_rewindbutton = lives_special_button_new(DEF_BUTTON_WIDTH / 2, DEF_BUTTON_HEIGHT);
-  lives_special_button_set_image(LIVES_BUTTON(mainw->p_rewindbutton), rewind_img);
+  mainw->p_rewindbutton = lives_standard_button_new(DEF_BUTTON_WIDTH / 2, DEF_BUTTON_HEIGHT);
+  lives_standard_button_set_image(LIVES_BUTTON(mainw->p_rewindbutton), rewind_img);
   lives_box_pack_start(LIVES_BOX(hbox_buttons), mainw->p_rewindbutton, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text(mainw->p_rewindbutton, _("Rewind"));
   lives_widget_set_sensitive(mainw->p_rewindbutton, CURRENT_CLIP_IS_VALID && cfile->pointer_time > 0.);
   lives_widget_set_focus_on_click(mainw->p_rewindbutton, FALSE);
 
   play_img = lives_image_new_from_stock(LIVES_STOCK_MEDIA_PLAY, LIVES_ICON_SIZE_LARGE_TOOLBAR);
-  mainw->p_playbutton = lives_special_button_new(DEF_BUTTON_WIDTH / 2, DEF_BUTTON_HEIGHT);
-  lives_special_button_set_image(LIVES_BUTTON(mainw->p_playbutton), play_img);
+  mainw->p_playbutton = lives_standard_button_new(DEF_BUTTON_WIDTH / 2, DEF_BUTTON_HEIGHT);
+  lives_standard_button_set_image(LIVES_BUTTON(mainw->p_playbutton), play_img);
   lives_box_pack_start(LIVES_BOX(hbox_buttons), mainw->p_playbutton, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text(mainw->p_playbutton, _("Play all"));
   lives_widget_set_focus_on_click(mainw->p_playbutton, FALSE);
 
   playsel_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_PLAY_SEL, LIVES_ICON_SIZE_LARGE_TOOLBAR);
-  mainw->p_playselbutton = lives_special_button_new(DEF_BUTTON_WIDTH / 2, DEF_BUTTON_HEIGHT);
-  lives_special_button_set_image(LIVES_BUTTON(mainw->p_playselbutton), playsel_img);
+  mainw->p_playselbutton = lives_standard_button_new(DEF_BUTTON_WIDTH / 2, DEF_BUTTON_HEIGHT);
+  lives_standard_button_set_image(LIVES_BUTTON(mainw->p_playselbutton), playsel_img);
   lives_box_pack_start(LIVES_BOX(hbox_buttons), mainw->p_playselbutton, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text(mainw->p_playselbutton, _("Play Selection"));
   lives_widget_set_sensitive(mainw->p_playselbutton, CURRENT_CLIP_IS_VALID && cfile->frames > 0);
@@ -3734,7 +3734,7 @@ void make_preview_box(void) {
   loop_img = lives_image_new_from_stock(LIVES_STOCK_LOOP, LIVES_ICON_SIZE_LARGE_TOOLBAR);
   if (!loop_img) loop_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_LOOP,
                               LIVES_ICON_SIZE_LARGE_TOOLBAR);
-  mainw->p_loopbutton = lives_special_button_new(DEF_BUTTON_WIDTH / 2, DEF_BUTTON_HEIGHT);
+  mainw->p_loopbutton = lives_standard_button_new(DEF_BUTTON_WIDTH / 2, DEF_BUTTON_HEIGHT);
   lives_box_pack_start(LIVES_BOX(hbox_buttons), mainw->p_loopbutton, TRUE, TRUE, 0);
   lives_widget_set_tooltip_text(mainw->p_loopbutton, _("Loop On/Off"));
   lives_widget_set_sensitive(mainw->p_loopbutton, TRUE);
@@ -3751,7 +3751,7 @@ void make_preview_box(void) {
     }
   }
 
-  lives_special_button_set_image(LIVES_BUTTON(mainw->p_loopbutton), loop_img);
+  lives_standard_button_set_image(LIVES_BUTTON(mainw->p_loopbutton), loop_img);
 
   mainw->p_mute_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_VOLUME_MUTE,
                       LIVES_ICON_SIZE_LARGE_TOOLBAR);
@@ -3760,8 +3760,8 @@ void make_preview_box(void) {
     lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
   }
 
-  mainw->p_mutebutton = lives_special_button_new(DEF_BUTTON_WIDTH / 2, DEF_BUTTON_HEIGHT);
-  lives_special_button_set_image(LIVES_BUTTON(mainw->p_mutebutton), mainw->p_mute_img);
+  mainw->p_mutebutton = lives_standard_button_new(DEF_BUTTON_WIDTH / 2, DEF_BUTTON_HEIGHT);
+  lives_standard_button_set_image(LIVES_BUTTON(mainw->p_mutebutton), mainw->p_mute_img);
   lives_box_pack_start(LIVES_BOX(hbox_buttons), mainw->p_mutebutton, TRUE, TRUE, 0);
   lives_widget_set_focus_on_click(mainw->p_mutebutton, FALSE);
 

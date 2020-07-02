@@ -121,7 +121,7 @@ static void add_clear_ds_button(LiVESDialog *dialog) {
 
 static void add_clear_ds_adv(LiVESBox *box) {
   // add a button which opens up  Recover/Repair widget
-  LiVESWidget *button = lives_special_button_new_with_label(_(" _Advanced Settings >>"),
+  LiVESWidget *button = lives_standard_button_new_with_label(_(" _Advanced Settings >>"),
                         DEF_BUTTON_WIDTH * 2,
                         DEF_BUTTON_HEIGHT);
   LiVESWidget *hbox = lives_hbox_new(FALSE, 0);

@@ -26,6 +26,7 @@
 
 // a bug where setting a menuitem insensitive fails if it has a submenu
 // workaround: (?) unparent submenu, change its state, reparent it
+// not a bug, was setting menu instead of menuitem (or vice-versa ?)
 #define GTK_SUBMENU_SENS_BUG
 
 // a bug where textview crashes if too much text in it (maybe not a bug, was missing expose function ?)
@@ -36,9 +37,8 @@
 #define GTK_TEXT_VIEW_CSS_BUG
 #endif
 
-#if GTK_CHECK_VERSION(3, 0, 0)
-// a bug where CSS selectors (e.g. "entry" or ":insensitive") do nothing
-#define GTK_CSS_SELECTORS_BUG
+#if GTK_CHECK_VERSION(3, 16, 0)
+#define USE_SPECIAL_BUTTONS
 #endif
 
 #define COMBO_LIST_LIMIT 256 // if we get a combo longer than this, we use a tree store
@@ -205,6 +205,9 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #else
 #define lives_timer_add_simple(interval, func, data) g_timeout_add(interval, func, data)
 #endif
+
+#define lives_markup_escape_text(a, b) g_markup_escape_text(a, b)
+#define lives_markup_printf_escaped(...) g_markup_printf_escaped(__VA_ARGS__)
 
 #define lives_printerr(...) g_printerr(__VA_ARGS__)
 #define lives_strdup_printf(...) g_strdup_printf(__VA_ARGS__)

@@ -282,7 +282,7 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->requirements_button = lives_special_button_new_with_label(_("_Requirements..."),
+  rfxbuilder->requirements_button = lives_standard_button_new_with_label(_("_Requirements..."),
                                     DEF_BUTTON_WIDTH,
                                     DEF_BUTTON_HEIGHT);
 
@@ -292,7 +292,7 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->properties_button = lives_special_button_new_with_label(_("_Properties..."),
+  rfxbuilder->properties_button = lives_standard_button_new_with_label(_("_Properties..."),
                                   DEF_BUTTON_WIDTH,
                                   DEF_BUTTON_HEIGHT);
 
@@ -302,7 +302,7 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->params_button = lives_special_button_new_with_label(_("_Parameters..."),
+  rfxbuilder->params_button = lives_standard_button_new_with_label(_("_Parameters..."),
                               DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
 
   lives_box_pack_start(LIVES_BOX(top_vbox), rfxbuilder->params_button, TRUE, TRUE, 0);
@@ -311,7 +311,7 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->param_window_button = lives_special_button_new_with_label(_("Parameter _Window Hints..."),
+  rfxbuilder->param_window_button = lives_standard_button_new_with_label(_("Parameter _Window Hints..."),
                                     DEF_BUTTON_WIDTH,
                                     DEF_BUTTON_HEIGHT);
 
@@ -332,7 +332,7 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->pre_button = lives_special_button_new_with_label(_("_Pre loop code..."),
+  rfxbuilder->pre_button = lives_standard_button_new_with_label(_("_Pre loop code..."),
                            DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
 
   lives_box_pack_start(LIVES_BOX(top_vbox), rfxbuilder->pre_button, TRUE, TRUE, 0);
@@ -341,7 +341,7 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->loop_button = lives_special_button_new_with_label(_("_Loop code..."),
+  rfxbuilder->loop_button = lives_standard_button_new_with_label(_("_Loop code..."),
                             DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
 
   lives_box_pack_start(LIVES_BOX(top_vbox), rfxbuilder->loop_button, TRUE, TRUE, 0);
@@ -350,7 +350,7 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->post_button = lives_special_button_new_with_label(_("_Post loop code..."),
+  rfxbuilder->post_button = lives_standard_button_new_with_label(_("_Post loop code..."),
                             DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
 
   lives_box_pack_start(LIVES_BOX(top_vbox), rfxbuilder->post_button, TRUE, TRUE, 0);
@@ -359,7 +359,7 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
 
   add_hsep_to_box(LIVES_BOX(top_vbox));
 
-  rfxbuilder->trigger_button = lives_special_button_new_with_label(_("_Trigger code..."),
+  rfxbuilder->trigger_button = lives_standard_button_new_with_label(_("_Trigger code..."),
                                DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
 
   lives_box_pack_start(LIVES_BOX(top_vbox), rfxbuilder->trigger_button, TRUE, TRUE, 0);
@@ -631,21 +631,21 @@ static void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
 
   lives_box_pack_start(LIVES_BOX(hbox), button_box, FALSE, FALSE, 0);
 
-  rfxbuilder->new_entry_button = lives_special_button_new_with_label(_("_New Entry"),
+  rfxbuilder->new_entry_button = lives_standard_button_new_with_label(_("_New Entry"),
                                  DEF_BUTTON_WIDTH,
                                  DEF_BUTTON_HEIGHT);
 
   lives_box_pack_start(LIVES_BOX(button_box), rfxbuilder->new_entry_button, FALSE, FALSE, widget_opts.packing_height);
   lives_container_set_border_width(LIVES_CONTAINER(rfxbuilder->new_entry_button), widget_opts.border_width);
 
-  rfxbuilder->edit_entry_button = lives_special_button_new_with_label(_("_Edit Entry"),
+  rfxbuilder->edit_entry_button = lives_standard_button_new_with_label(_("_Edit Entry"),
                                   DEF_BUTTON_WIDTH,
                                   DEF_BUTTON_HEIGHT);
 
   lives_box_pack_start(LIVES_BOX(button_box), rfxbuilder->edit_entry_button, FALSE, FALSE, widget_opts.packing_height);
   lives_container_set_border_width(LIVES_CONTAINER(rfxbuilder->edit_entry_button), widget_opts.border_width);
 
-  rfxbuilder->remove_entry_button = lives_special_button_new_with_label(_("_Remove Entry"),
+  rfxbuilder->remove_entry_button = lives_standard_button_new_with_label(_("_Remove Entry"),
                                     DEF_BUTTON_WIDTH,
                                     DEF_BUTTON_HEIGHT);
 
@@ -653,14 +653,14 @@ static void on_list_table_clicked(LiVESButton *button, livespointer user_data) {
   lives_container_set_border_width(LIVES_CONTAINER(rfxbuilder->remove_entry_button), widget_opts.border_width);
 
   if (rfxbuilder->table_type == RFX_TABLE_TYPE_PARAM_WINDOW) {
-    rfxbuilder->move_up_button = lives_special_button_new_with_label(_("Move _Up"),
+    rfxbuilder->move_up_button = lives_standard_button_new_with_label(_("Move _Up"),
                                  DEF_BUTTON_WIDTH,
                                  DEF_BUTTON_HEIGHT);
 
     lives_box_pack_start(LIVES_BOX(button_box), rfxbuilder->move_up_button, FALSE, FALSE, widget_opts.packing_height);
     lives_container_set_border_width(LIVES_CONTAINER(rfxbuilder->move_up_button), widget_opts.border_width);
 
-    rfxbuilder->move_down_button = lives_special_button_new_with_label(_("Move _Down"),
+    rfxbuilder->move_down_button = lives_standard_button_new_with_label(_("Move _Down"),
                                    DEF_BUTTON_WIDTH,
                                    DEF_BUTTON_HEIGHT);
 
@@ -2027,7 +2027,7 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
   rfxbuilder->param_strdef_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), rfxbuilder->param_strdef_hbox, TRUE, TRUE, widget_opts.packing_height);
 
-  rfxbuilder->param_strdef_button = lives_special_button_new(DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+  rfxbuilder->param_strdef_button = lives_standard_button_new(DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
 
   lives_box_pack_start(LIVES_BOX(rfxbuilder->param_strdef_hbox), rfxbuilder->param_strdef_button, TRUE, TRUE,
                        widget_opts.packing_width);

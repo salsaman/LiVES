@@ -32,7 +32,6 @@ typedef struct {
   lives_param_t *height_param;
   lives_param_t *width_param;
   LiVESWidget *lockbutton;
-  LiVESWidget *label;
   ulong width_func;
   ulong height_func;
   double ratio;
@@ -56,8 +55,8 @@ typedef struct {
 
 ////////////////////////////////
 
-#define ASPECT_BUTTON_WIDTH 32
-#define ASPECT_BUTTON_HEIGHT 32
+#define ASPECT_BUTTON_WIDTH ((int)(250. * widget_opts.scale))
+#define ASPECT_BUTTON_HEIGHT DEF_BUTTON_HEIGHT
 
 #include "multitrack.h"
 

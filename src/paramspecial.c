@@ -421,63 +421,30 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
 
     if ((param == aspect.width_param || param == aspect.height_param) && aspect.nwidgets == 2) {
       boolean expand = widget_opts.expand == LIVES_EXPAND_EXTRA;
-      char *labeltext = (_("    Maintain _Aspect Ratio    "));
-      LiVESWidget *eventbox = lives_event_box_new();
-
+      char *labeltext = (_("Maintain _Aspect Ratio"));
       aspect.no_reset = TRUE;
-
       aspect.lockbutton = lives_standard_lock_button_new(TRUE, ASPECT_BUTTON_WIDTH,
-                          ASPECT_BUTTON_HEIGHT, _("Maintain aspect ratio"));
+                          ASPECT_BUTTON_HEIGHT, labeltext, NULL);
       lives_signal_sync_connect(aspect.lockbutton, LIVES_WIDGET_CLICKED_SIGNAL,
                                 LIVES_GUI_CALLBACK(reset_aspect), (livespointer)&aspect);
-
       reset_aspect(LIVES_BUTTON(aspect.lockbutton), &aspect);
-
-      if (widget_opts.mnemonic_label) {
-        aspect.label = lives_standard_label_new_with_mnemonic_widget(labeltext, aspect.lockbutton);
-      } else aspect.label = lives_standard_label_new(labeltext);
       lives_free(labeltext);
 
-      lives_tooltips_copy(eventbox, aspect.lockbutton);
-
-      lives_container_add(LIVES_CONTAINER(eventbox), aspect.label);
-
-      lives_signal_sync_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                                LIVES_GUI_CALLBACK(label_act_lockbutton),
-                                aspect.lockbutton);
-
-      lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);
-
       hbox = lives_hbox_new(FALSE, 0);
-      lives_box_set_homogeneous(LIVES_BOX(hbox), FALSE);
       lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
 
       if (!LIVES_IS_HBOX(pbox)) {
-        add_fill_to_box(LIVES_BOX(hbox));
-        add_fill_to_box(LIVES_BOX(hbox));
+        hbox = lives_hbox_new(FALSE, 0);
+        lives_widget_show(hbox);
         lives_box_pack_start(LIVES_BOX(LIVES_WIDGET(pbox)), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
+        lives_box_pack_end(LIVES_BOX(hbox), aspect.lockbutton, expand, FALSE, 0);
       } else {
         lives_box_pack_start(LIVES_BOX(LIVES_WIDGET(pbox)), hbox, FALSE, FALSE, widget_opts.packing_width * 1.5);
+        lives_box_pack_start(LIVES_BOX(hbox), aspect.lockbutton, expand, FALSE, 0);
       }
 
-      if (widget_opts.swap_label)
-        lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, 0);
 
       if (expand) add_fill_to_box(LIVES_BOX(hbox));
-
-      lives_box_pack_start(LIVES_BOX(hbox), aspect.lockbutton, expand, FALSE, 0);
-
-      if (expand) add_fill_to_box(LIVES_BOX(hbox));
-
-      if (!widget_opts.swap_label)
-        lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, 0);
-
-      lives_widget_set_show_hide_parent(aspect.label);
-      lives_widget_set_show_hide_parent(aspect.lockbutton);
-
-      if (!LIVES_IS_HBOX(pbox)) {
-        add_spring_to_box(LIVES_BOX(hbox), 0);
-      }
     }
   }
 

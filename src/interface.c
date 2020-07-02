@@ -1049,25 +1049,24 @@ void widget_add_preview(LiVESWidget * widget, LiVESBox * for_preview, LiVESBox *
 
   if (preview_type == LIVES_PREVIEW_TYPE_VIDEO_AUDIO) {
     preview_button =
-      lives_special_button_new_with_label(_("Click here to _Preview the Selected Video, "
-                                            "Image or Audio File"),
-                                          DEF_BUTTON_WIDTH * 4, DEF_BUTTON_HEIGHT);
+      lives_standard_button_new_with_label(_("Click here to _Preview the Selected Video, "
+                                           "Image or Audio File"),
+                                           DEF_BUTTON_WIDTH * 4, DEF_BUTTON_HEIGHT);
   } else if (preview_type == LIVES_PREVIEW_TYPE_AUDIO_ONLY) {
-    preview_button = lives_special_button_new_with_label(_("Click here to _Preview the Selected "
+    preview_button = lives_standard_button_new_with_label(_("Click here to _Preview the Selected "
                      "Audio File"),
                      DEF_BUTTON_WIDTH * 4, DEF_BUTTON_HEIGHT);
   } else if (preview_type == LIVES_PREVIEW_TYPE_RANGE) {
     widget_opts.expand = LIVES_EXPAND_NONE;
-    preview_button = lives_special_button_new_with_label(_("\nClick here to _Preview the Selection\n"),
+    preview_button = lives_standard_button_new_with_label(_("\nClick here to _Preview the Selection\n"),
                      DEF_BUTTON_WIDTH * 4, DEF_BUTTON_HEIGHT);
     lives_widget_set_hexpand(mainw->fs_playframe, TRUE);
     lives_widget_set_vexpand(mainw->fs_playframe, TRUE);
     lives_widget_set_halign(preview_button, LIVES_ALIGN_CENTER);
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
   } else {
-    preview_button = lives_special_button_new_with_label(_("Click here to _Preview the file"),
+    preview_button = lives_standard_button_new_with_label(_("Click here to _Preview the file"),
                      DEF_BUTTON_WIDTH * 4, DEF_BUTTON_HEIGHT);
-
   }
 
   if (preview_type == LIVES_PREVIEW_TYPE_VIDEO_AUDIO || preview_type == LIVES_PREVIEW_TYPE_RANGE ||
@@ -3123,7 +3122,7 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
 
     commentsw->subt_entry = lives_standard_entry_new(_("Subtitle file"), NULL, SHORT_ENTRY_WIDTH, -1, LIVES_BOX(hbox), NULL);
 
-    buttond = lives_special_button_new_with_label(_("Browse..."), DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+    buttond = lives_standard_button_new_with_label(_("Browse..."), DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
 
     lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_save_subs_activate),
                          (livespointer)commentsw->subt_entry);
@@ -4401,8 +4400,6 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   // add "aspectratio" widget
   if (CURRENT_CLIP_HAS_VIDEO) {
     aspect = add_aspect_ratio_button(LIVES_SPIN_BUTTON(spinbutton_width), LIVES_SPIN_BUTTON(spinbutton_height), LIVES_BOX(hbox));
-    if (aspect && aspect->nwidgets == 2 && aspect->label)
-      lives_widget_set_no_show_all(lives_widget_get_parent(aspect->label), TRUE);
   } else aspect = NULL;
 
   hbox = lives_hbox_new(FALSE, 0);

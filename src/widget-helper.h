@@ -364,7 +364,6 @@ boolean lives_label_set_selectable(LiVESLabel *, boolean setting);
 //////////
 
 LiVESWidget *lives_button_new(void);
-LiVESWidget *lives_button_new_from_stock(const char *stock_id, const char *label, int width, int height);
 LiVESWidget *lives_button_new_with_label(const char *label);
 
 boolean lives_button_set_label(LiVESButton *, const char *label);
@@ -625,10 +624,6 @@ boolean lives_toggle_tool_button_set_active(LiVESToggleToolButton *, boolean act
 
 int lives_utf8_strcmpfunc(livesconstpointer, livesconstpointer, livespointer fwd);
 
-/// additional data keys for the following function
-#define HIDDEN_KEY "hidden"
-#define SECLIST_KEY "secondary_list"
-#define SECLIST_VAL_KEY "secondary_list_value"
 LiVESList *add_sorted_list_to_menu(LiVESMenu *, LiVESList *);
 
 boolean lives_has_icon(const char *stock_id, LiVESIconSize size);
@@ -964,26 +959,26 @@ boolean lives_button_grab_default_special(LiVESWidget *);
 
 boolean show_warn_image(LiVESWidget *, const char *text);
 
-LiVESWidget *lives_standard_button_new(void);
-LiVESWidget *lives_standard_button_new_with_label(const char *labeltext);
-LiVESWidget *lives_standard_button_new_from_stock(const char *stock_id, const char *labeltext, int width, int height);
+boolean is_standard_widget(LiVESWidget *widget);
 
-boolean is_special_widget(LiVESWidget *widget);
-
-#define USE_SPECIAL_BUTTONS
 #ifdef USE_SPECIAL_BUTTONS
-typedef LiVESButton LiVESSpecialButton;
-#define LIVES_SPECIAL_BUTTON(a) LIVES_BUTTON(a)
-
 void sbutt_render(LiVESWidget *, LiVESWidgetState state, livespointer user_data);
 
-LiVESWidget *lives_special_button_new(int width, int height);
-LiVESWidget *lives_special_button_new_with_label(const char *labeltext, int width, int height);
-boolean lives_special_button_set_label(LiVESSpecialButton *, const char *label);
-const char *lives_special_button_get_label(LiVESSpecialButton *);
-boolean lives_special_button_set_image(LiVESButton *, LiVESWidget *image);
+LiVESWidget *lives_standard_button_new(int width, int height);
+LiVESWidget *lives_standard_button_new_with_label(const char *labeltext, int width, int height);
+boolean lives_standard_button_set_label(LiVESButton *, const char *label);
+const char *lives_standard_button_get_label(LiVESButton *);
+boolean lives_standard_button_set_image(LiVESButton *, LiVESWidget *image);
+#else
+#define lives_standard_button_new(w, h) lives_button_new()
+#define lives_standard_button_new_with_label(l, w, h) lives_button_new_with_label(l)
+#define lives_standard_button_set_label(b, l); lives_button_set_label(b, l)
+#define lives_standard_button_get_label(b) lives_button_get_label(b)
+#define lives_standard_button_set_image(b, i) lives_button_set_image(b, i)
 #endif
 
+LiVESWidget *lives_standard_button_new_from_stock(const char *stock_id, const char *label,
+    int width, int height);
 LiVESWidget *lives_standard_menu_new(void);
 
 LiVESWidget *lives_standard_menu_item_new(void);
@@ -1032,7 +1027,8 @@ LiVESWidget *lives_standard_font_chooser_new(void);
 
 LiVESToolItem *lives_menu_tool_button_new(LiVESWidget *icon, const char *label);
 
-LiVESWidget *lives_standard_lock_button_new(boolean is_locked, int width, int height, const char *tooltip);
+LiVESWidget *lives_standard_lock_button_new(boolean is_locked, int width, int height,
+    const char *label, const char *tooltip);
 
 boolean lives_lock_button_get_locked(LiVESButton *lockbutton);
 
@@ -1048,9 +1044,6 @@ LiVESWidget *lives_standard_expander_new(const char *labeltext, LiVESBox *parent
 
 LiVESWidget *lives_volume_button_new(LiVESOrientation orientation, LiVESAdjustment *, double volume);
 
-/// additional data elements which can be read
-#define ISDIR_KEY "is_dir"
-#define DEFDIR_KEY "def_dir"
 LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir);
 
 LiVESWidget *lives_standard_color_button_new(LiVESBox *parent, const char *name, boolean use_alpha, lives_colRGBA64_t *rgba,
@@ -1334,6 +1327,13 @@ const widget_opts_t def_widget_opts = {
 
 extern const widget_opts_t def_widget_opts;
 
+// object data keys
+#define HIDDEN_KEY "hidden"
+#define SECLIST_KEY "secondary_list"
+#define SECLIST_VAL_KEY "secondary_list_value"
+#define ISDIR_KEY "is_dir"
+#define DEFDIR_KEY "def_dir"
+#define PARAM_NUMBER_KEY "param_number"
 #define WH_LAYOUT_KEY "_wh_layout"
 
 #endif

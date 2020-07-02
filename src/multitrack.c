@@ -1073,7 +1073,7 @@ static int get_track_height(lives_mt * mt) {
 
   while (list) {
     eventbox = (LiVESWidget *)list->data;
-    if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "hidden")) == 0)
+    if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), HIDDEN_KEY)) == 0)
       return lives_widget_get_allocation_height(eventbox);
     list = list->next;
   }
@@ -1181,7 +1181,7 @@ static void draw_block(lives_mt * mt, lives_painter_t *cairo,
   int offset_start, offset_end;
   int filenum, track;
   int width = BLOCK_THUMB_WIDTH;
-  int hidden = (int)LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "hidden"));
+  int hidden = (int)LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), HIDDEN_KEY));
 
   register int i;
 
@@ -1601,7 +1601,7 @@ static EXPOSE_FN_DECL(expose_track_event, eventbox, user_data) {
 
   if (width == 0) return FALSE;
 
-  hidden = (int)LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "hidden"));
+  hidden = (int)LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), HIDDEN_KEY));
   if (hidden != 0) {
     LiVESWidget *label = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "label");
     lives_widget_hide(eventbox);
@@ -1984,7 +1984,7 @@ void track_select(lives_mt * mt) {
         eventbox = (LiVESWidget *)list->data;
         if ((oeventbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "owner")))
           hidden = !LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(oeventbox), "expanded"));
-        if (hidden == 0) hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "hidden"));
+        if (hidden == 0) hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), HIDDEN_KEY));
         if (hidden == 0) {
           labelbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "labelbox");
           label = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "label");
@@ -2032,7 +2032,7 @@ void track_select(lives_mt * mt) {
   i = 0;
   for (list = mt->video_draws; list; list = list->next, i++) {
     eventbox = (LiVESWidget *)list->data;
-    hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "hidden"));
+    hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), HIDDEN_KEY));
     if (hidden == 0) {
       labelbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "labelbox");
       label = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "label");
@@ -2171,13 +2171,14 @@ static void show_track_info(lives_mt * mt, LiVESWidget * eventbox, int track, do
 
   clear_context(mt);
   if (!is_audio_eventbox(eventbox)) add_context_label
-    (mt, (tmp = lives_strdup_printf
+    (mt, (tmp = lives_markup_printf_escaped
                 (_("Current track: %s (layer %d)\n"),
                  lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),
                      "track_name"), track)));
   else {
     if (track == -1) add_context_label(mt, (tmp = (_("Current track: Backing audio\n"))));
-    else add_context_label(mt, (tmp = lives_strdup_printf(_("Current track: Layer %d audio\n"), track)));
+    else add_context_label(mt, (tmp =
+                                    lives_markup_printf_escaped(_("Current track: Layer %d audio\n"), track)));
   }
   lives_free(tmp);
   add_context_label(mt, (tmp = lives_strdup_printf(_("%.2f sec.\n"), timesecs)));
@@ -2185,7 +2186,8 @@ static void show_track_info(lives_mt * mt, LiVESWidget * eventbox, int track, do
   if (block) {
     if (!is_audio_eventbox(eventbox)) filenum = get_frame_event_clip(block->start_event, track);
     else filenum = get_audio_frame_clip(block->start_event, track);
-    add_context_label(mt, (tmp = lives_strdup_printf(_("Source: %s"), (tmp1 = get_menu_name(mainw->files[filenum], FALSE)))));
+    add_context_label(mt, (tmp = lives_markup_printf_escaped(_("Source: %s"),
+                                 (tmp1 = get_menu_name(mainw->files[filenum], FALSE)))));
     lives_free(tmp);
     lives_free(tmp1);
     add_context_label(mt, (_("Right click for context menu.\n")));
@@ -2257,7 +2259,7 @@ static int get_top_track_for(lives_mt * mt, int track) {
   if (mt->opts.back_audio_tracks > 0 && mt->audio_draws == NULL) mt->opts.back_audio_tracks = 0;
   if (cfile->achans > 0 && mt->opts.back_audio_tracks > 0) {
     eventbox = (LiVESWidget *)mt->audio_draws->data;
-    hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "hidden"));
+    hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), HIDDEN_KEY));
     if (!hidden) {
       extras--;
       expanded = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "expanded"));
@@ -2287,7 +2289,7 @@ static int get_top_track_for(lives_mt * mt, int track) {
 
   while (vdraw) {
     eventbox = (LiVESWidget *)vdraw->data;
-    hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "hidden"))&TRACK_I_HIDDEN_USER;
+    hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), HIDDEN_KEY))&TRACK_I_HIDDEN_USER;
     expanded = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "expanded"));
     extras--;
     if (expanded) {
@@ -2327,10 +2329,33 @@ static void redraw_all_event_boxes(lives_mt * mt) {
 
 
 static boolean expose_paintlines(LiVESWidget * widget, lives_painter_t *cr, livespointer data) {
-  lives_mt *mt = (lives_mt *)data;
-  paint_lines(mt, mt->ptr_time, FALSE, cr);
+  int offset = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
+                                    "has_line"));
+
+  /* if (!cr) { */
+  /*   grabbed_cr = TRUE; */
+  /*   cr = lives_painter_create_from_widget(eventbox); */
+  /* } */
+
+  if (lives_painter_set_operator(cr, LIVES_PAINTER_OPERATOR_DIFFERENCE))
+    lives_painter_set_source_rgb(cr, 1., 1., 1.);
+  else
+    lives_painter_set_source_rgb(cr, 0., 0., 0.);
+
+  lives_painter_set_line_width(cr, 1.);
+
+  lives_painter_rectangle(cr, offset, 0., 1., lives_widget_get_allocation_height(widget));
+
+  lives_painter_fill(cr);
+
   return FALSE;
 }
+
+/* static boolean expose_paintlines(LiVESWidget * widget, lives_painter_t *cr, livespointer data) { */
+/*   lives_mt *mt = (lives_mt *)data; */
+/*   paint_lines(mt, mt->ptr_time, FALSE, cr); */
+/*   return FALSE; */
+/* } */
 
 
 void scroll_tracks(lives_mt * mt, int top_track, boolean set_value) {
@@ -2372,31 +2397,31 @@ void scroll_tracks(lives_mt * mt, int top_track, boolean set_value) {
   // first set all tracks to hidden
   while (vdraws) {
     eventbox = (LiVESWidget *)vdraws->data;
-    hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "hidden"));
+    hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), HIDDEN_KEY));
     hidden |= TRACK_I_HIDDEN_SCROLLED;
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "hidden", LIVES_INT_TO_POINTER(hidden));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), HIDDEN_KEY, LIVES_INT_TO_POINTER(hidden));
 
     aeventbox = LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "atrack"));
 
     if (aeventbox) {
-      hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox), "hidden"));
+      hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox), HIDDEN_KEY));
       hidden |= TRACK_I_HIDDEN_SCROLLED;
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(aeventbox), "hidden", LIVES_INT_TO_POINTER(hidden));
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(aeventbox), HIDDEN_KEY, LIVES_INT_TO_POINTER(hidden));
 
       xeventbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox), "achan0");
 
       if (xeventbox) {
-        hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "hidden"));
+        hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), HIDDEN_KEY));
         hidden |= TRACK_I_HIDDEN_SCROLLED;
-        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), "hidden", LIVES_INT_TO_POINTER(hidden));
+        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), HIDDEN_KEY, LIVES_INT_TO_POINTER(hidden));
       }
 
       xeventbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox), "achan1");
 
       if (xeventbox) {
-        hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "hidden"));
+        hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), HIDDEN_KEY));
         hidden |= TRACK_I_HIDDEN_SCROLLED;
-        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), "hidden", LIVES_INT_TO_POINTER(hidden));
+        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), HIDDEN_KEY, LIVES_INT_TO_POINTER(hidden));
       }
     }
 
@@ -2429,7 +2454,7 @@ void scroll_tracks(lives_mt * mt, int top_track, boolean set_value) {
 
   if (cfile->achans > 0 && mt->opts.back_audio_tracks > 0) {
     // show our float audio
-    if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data), "hidden")) == 0) {
+    if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data), HIDDEN_KEY)) == 0) {
       aud_tracks++;
 
       expanded = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data), "expanded"));
@@ -2542,8 +2567,8 @@ void scroll_tracks(lives_mt * mt, int top_track, boolean set_value) {
   while (vdraws && rows < prefs->max_disp_vtracks) {
     eventbox = (LiVESWidget *)vdraws->data;
 
-    hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "hidden"))&TRACK_I_HIDDEN_USER;
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "hidden", LIVES_INT_TO_POINTER(hidden));
+    hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), HIDDEN_KEY))&TRACK_I_HIDDEN_USER;
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), HIDDEN_KEY, LIVES_INT_TO_POINTER(hidden));
 
     if (hidden == 0) {
       label = (LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "label")));
@@ -2627,8 +2652,8 @@ void scroll_tracks(lives_mt * mt, int top_track, boolean set_value) {
 
         aeventbox = LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "atrack"));
 
-        hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox), "hidden"))&TRACK_I_HIDDEN_USER;
-        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(aeventbox), "hidden", LIVES_INT_TO_POINTER(hidden));
+        hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox), HIDDEN_KEY))&TRACK_I_HIDDEN_USER;
+        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(aeventbox), HIDDEN_KEY, LIVES_INT_TO_POINTER(hidden));
 
         if (hidden == 0) {
           lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->vadjustment),
@@ -2695,8 +2720,8 @@ void scroll_tracks(lives_mt * mt, int top_track, boolean set_value) {
 
           if (expanded) {
             xeventbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox), "achan0");
-            hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "hidden")) & TRACK_I_HIDDEN_USER;
-            lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), "hidden", LIVES_INT_TO_POINTER(hidden));
+            hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), HIDDEN_KEY)) & TRACK_I_HIDDEN_USER;
+            lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), HIDDEN_KEY, LIVES_INT_TO_POINTER(hidden));
 
             if (hidden == 0) {
               label = (LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "label")));
@@ -2731,8 +2756,8 @@ void scroll_tracks(lives_mt * mt, int top_track, boolean set_value) {
 
             if (cfile->achans > 1) {
               xeventbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(aeventbox), "achan1");
-              hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "hidden")) & TRACK_I_HIDDEN_USER;
-              lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), "hidden", LIVES_INT_TO_POINTER(hidden));
+              hidden = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), HIDDEN_KEY)) & TRACK_I_HIDDEN_USER;
+              lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), HIDDEN_KEY, LIVES_INT_TO_POINTER(hidden));
 
               if (hidden == 0) {
                 label = (LIVES_WIDGET(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "label")));
@@ -3697,7 +3722,7 @@ boolean mt_trdown(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t key
       int i = 0;
       LiVESList *llist = mt->video_draws;
       while (llist) {
-        if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(llist->data), "hidden")) == 0) {
+        if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(llist->data), HIDDEN_KEY)) == 0) {
           mt->current_track = i;
           break;
         }
@@ -3956,7 +3981,7 @@ static void select_block(lives_mt * mt) {
     clear_context(mt);
 
     if (cfile->achans == 0 || mt->audio_draws == NULL || (mt->opts.back_audio_tracks == 0 || eventbox != mt->audio_draws->data))
-      add_context_label(mt, (tmp2 = lives_strdup_printf(_("Current track: %s (layer %d)\n"),
+      add_context_label(mt, (tmp2 = lives_markup_printf_escaped(_("Current track: %s (layer %d)\n"),
                                     lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "track_name"), track)));
     else add_context_label(mt, (tmp2 = (_("Current track: Backing audio\n"))));
     lives_free(tmp2);
@@ -3965,7 +3990,8 @@ static void select_block(lives_mt * mt) {
                                   get_event_timecode(block->start_event) / TICKS_PER_SECOND_DBL,
                                   get_event_timecode(block->end_event) / TICKS_PER_SECOND_DBL + 1. / mt->fps)));
     lives_free(tmp2);
-    add_context_label(mt, (tmp2 = lives_strdup_printf(_("Source: %s"), (tmp = get_menu_name(mainw->files[filenum], FALSE)))));
+    add_context_label(mt, (tmp2 = lives_markup_printf_escaped(_("Source: %s"),
+                                  (tmp = get_menu_name(mainw->files[filenum], FALSE)))));
     lives_free(tmp);
     lives_free(tmp2);
     add_context_label(mt, (_("Right click for context menu.\n")));
@@ -4072,7 +4098,7 @@ static boolean on_drag_filter_end(LiVESWidget * widget, LiVESXEventButton * even
   if (cfile->achans > 0 && enabled_in_channels(get_weed_filter(mt->selected_filter), TRUE) == 1) {
     for (list = mt->audio_draws; list; list = list->next) {
       eventbox = (LiVESWidget *)list->data;
-      if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "hidden")) != 0) continue;
+      if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), HIDDEN_KEY)) != 0) continue;
       labelbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "labelbox");
       if (lives_widget_get_xwindow(eventbox) == window || lives_widget_get_xwindow(labelbox) == window) {
         if (lives_widget_get_xwindow(labelbox) != window) {
@@ -4093,7 +4119,7 @@ static boolean on_drag_filter_end(LiVESWidget * widget, LiVESXEventButton * even
   if (!ok) {
     for (list = mt->video_draws; list; list = list->next) {
       eventbox = (LiVESWidget *)list->data;
-      if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "hidden")) != 0) continue;
+      if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), HIDDEN_KEY)) != 0) continue;
       labelbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "labelbox");
       ahbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "ahbox");
       if (lives_widget_get_xwindow(eventbox) == window || lives_widget_get_xwindow(labelbox) == window ||
@@ -4714,7 +4740,7 @@ static boolean on_drag_clip_end(LiVESWidget * widget, LiVESXEventButton * event,
             mt->display, &win_x, &win_y);
 
   if (cfile->achans > 0 && mt->opts.back_audio_tracks > 0 &&
-      LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data), "hidden")) == 0) {
+      LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data), HIDDEN_KEY)) == 0) {
     labelbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data), "labelbox");
     ahbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data), "ahbox");
 
@@ -4758,7 +4784,7 @@ static boolean on_drag_clip_end(LiVESWidget * widget, LiVESXEventButton * event,
 
   for (LiVESList *list = mt->video_draws; list != NULL; list = list->next) {
     eventbox = (LiVESWidget *)list->data;
-    if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "hidden")) != 0) continue;
+    if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), HIDDEN_KEY)) != 0) continue;
     labelbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "labelbox");
     ahbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "ahbox");
     if (lives_widget_get_xwindow(eventbox) == window || lives_widget_get_xwindow(labelbox) == window ||
@@ -4891,7 +4917,7 @@ void mt_init_start_end_spins(lives_mt * mt) {
 
 
 void mouse_mode_context(lives_mt * mt) {
-  char *fname, *text;
+  char *fname, *text, *tmp;
   clear_context(mt);
 
   if (mt->opts.mouse_mode == MOUSE_MODE_MOVE) {
@@ -4912,8 +4938,9 @@ void mouse_mode_context(lives_mt * mt) {
   if (prefs->atrans_fx != -1) fname = weed_filter_idx_get_name(prefs->atrans_fx, FALSE, FALSE, FALSE);
   else fname = lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
   add_context_label(mt, (_("\nAutotransition effect is:")));
-  text = lives_strdup_printf("<b>%s</b>", fname);
+  text = lives_strdup_printf("<b>%s</b>", (tmp = lives_markup_escape_text(fname, -1)));
   add_context_label(mt, (text));
+  lives_free(tmp);
   lives_free(text);
   lives_free(fname);
 }
@@ -8622,7 +8649,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                              LIVES_GUI_CALLBACK(on_solo_check_toggled),
                              (livespointer)mt);
 
-  mt->resetp_button = lives_special_button_new_with_label(_("_Reset  To Defaults"),
+  mt->resetp_button = lives_standard_button_new_with_label(_("_Reset  To Defaults"),
                       DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT / 2.);
   lives_box_pack_start(LIVES_BOX(hbox), mt->resetp_button, FALSE, FALSE, 0);
 
@@ -8630,7 +8657,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(on_resetp_clicked),
                        (livespointer)mt);
 
-  mt->del_node_button = lives_special_button_new_with_label(_("_Del. node"),
+  mt->del_node_button = lives_standard_button_new_with_label(_("_Del. node"),
                         DEF_BUTTON_WIDTH / 2.,
                         DEF_BUTTON_HEIGHT / 2.);
   lives_box_pack_end(LIVES_BOX(hbox), mt->del_node_button, FALSE, FALSE, 0);
@@ -8640,7 +8667,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(on_del_node_clicked),
                        (livespointer)mt);
 
-  mt->next_node_button = lives_special_button_new_with_label(_("_Next node"),
+  mt->next_node_button = lives_standard_button_new_with_label(_("_Next node"),
                          DEF_BUTTON_WIDTH / 2.,
                          DEF_BUTTON_HEIGHT / 2.);
   lives_box_pack_end(LIVES_BOX(hbox), mt->next_node_button, FALSE, FALSE, 0);
@@ -8650,7 +8677,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(on_next_node_clicked),
                        (livespointer)mt);
 
-  mt->prev_node_button = lives_special_button_new_with_label(_("_Prev node"),
+  mt->prev_node_button = lives_standard_button_new_with_label(_("_Prev node"),
                          DEF_BUTTON_WIDTH / 2.,
                          DEF_BUTTON_HEIGHT / 2.);
   lives_box_pack_end(LIVES_BOX(hbox), mt->prev_node_button, FALSE, FALSE, 0);
@@ -9126,7 +9153,7 @@ void delete_audio_track(lives_mt * mt, LiVESWidget * eventbox, boolean full) {
   arrow = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "arrow");
   lives_widget_destroy(label);
   lives_widget_destroy(arrow);
-  if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "hidden")) == 0) {
+  if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), HIDDEN_KEY)) == 0) {
     labelbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "labelbox");
     ahbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "ahbox");
     if (labelbox != NULL) lives_widget_destroy(labelbox);
@@ -9137,7 +9164,7 @@ void delete_audio_track(lives_mt * mt, LiVESWidget * eventbox, boolean full) {
   if (xeventbox != NULL) {
     label = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "label");
     lives_widget_destroy(label);
-    if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "hidden")) == 0) {
+    if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), HIDDEN_KEY)) == 0) {
       labelbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "labelbox");
       if (labelbox != NULL) lives_widget_destroy(labelbox);
     }
@@ -9152,7 +9179,7 @@ void delete_audio_track(lives_mt * mt, LiVESWidget * eventbox, boolean full) {
     if (xeventbox != NULL) {
       label = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "label");
       lives_widget_destroy(label);
-      if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "hidden")) == 0) {
+      if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), HIDDEN_KEY)) == 0) {
         labelbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "labelbox");
         if (labelbox != NULL) lives_widget_destroy(labelbox);
       }
@@ -10235,7 +10262,7 @@ void delete_video_track(lives_mt * mt, int layer, boolean full) {
   lives_widget_destroy(checkbutton);
   lives_widget_destroy(label);
   lives_widget_destroy(arrow);
-  if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "hidden")) == 0) {
+  if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), HIDDEN_KEY)) == 0) {
     labelbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "labelbox");
     ahbox = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "ahbox");
     if (labelbox != NULL) lives_widget_destroy(labelbox);
@@ -10267,7 +10294,7 @@ LiVESWidget *add_audio_track(lives_mt * mt, int track, boolean behind) {
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(audio_draw), "blocks", (livespointer)NULL);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(audio_draw), "block_last", (livespointer)NULL);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(audio_draw), "hidden", LIVES_INT_TO_POINTER(0));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(audio_draw), HIDDEN_KEY, LIVES_INT_TO_POINTER(0));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(audio_draw), "expanded", LIVES_INT_TO_POINTER(FALSE));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(audio_draw), "bgimg", NULL);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(audio_draw), "is_audio", LIVES_INT_TO_POINTER(TRUE));
@@ -10326,7 +10353,7 @@ LiVESWidget *add_audio_track(lives_mt * mt, int track, boolean behind) {
 
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "owner", audio_draw);
     lives_widget_object_set_data_widget_object(LIVES_WIDGET_OBJECT(eventbox), "label", label);
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "hidden", LIVES_INT_TO_POINTER(0));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), HIDDEN_KEY, LIVES_INT_TO_POINTER(0));
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "bgimg", NULL);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "channel", LIVES_INT_TO_POINTER(i));
   }
@@ -10470,7 +10497,7 @@ static int add_video_track(lives_mt * mt, boolean behind) {
   char *tmp;
 
   if (mt->audio_draws != NULL && mt->audio_draws->data != NULL && mt->opts.back_audio_tracks > 0 &&
-      LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data), "hidden")) == 0) {
+      LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data), HIDDEN_KEY)) == 0) {
     max_disp_vtracks--;
     if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data),
                              "expanded"))) max_disp_vtracks -= cfile->achans;
@@ -10511,7 +10538,7 @@ static int add_video_track(lives_mt * mt, boolean behind) {
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "blocks", (livespointer)NULL);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "block_last", (livespointer)NULL);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "hidden", LIVES_INT_TO_POINTER(0));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), HIDDEN_KEY, LIVES_INT_TO_POINTER(0));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "bgimg", NULL);
 
   lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->vadjustment), (double)(max_disp_vtracks > mt->num_video_tracks ?
@@ -13374,8 +13401,8 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
 
     widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
     mt->prev_fm_button
-      = lives_special_button_new_with_label(_("_Prev filter map"),
-                                            DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);  // Note to translators: previous filter map
+      = lives_standard_button_new_with_label(_("_Prev filter map"),
+          DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);  // Note to translators: previous filter map
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
     lives_box_pack_start(LIVES_BOX(bbox), mt->prev_fm_button, FALSE, FALSE, 0);
 
@@ -13387,7 +13414,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
                          (livespointer)mt);
 
     if (fxcount > 1) {
-      mt->fx_ibefore_button = lives_special_button_new_with_label(_("Insert _before"),
+      mt->fx_ibefore_button = lives_standard_button_new_with_label(_("Insert _before"),
                               DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
       lives_box_pack_start(LIVES_BOX(bbox), mt->fx_ibefore_button, FALSE, FALSE, 0);
       lives_widget_set_sensitive(mt->fx_ibefore_button, mt->fx_order == FX_ORD_NONE &&
@@ -13398,7 +13425,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
                            LIVES_GUI_CALLBACK(on_fx_insb_clicked),
                            (livespointer)mt);
 
-      mt->fx_iafter_button = lives_special_button_new_with_label(_("Insert _after"),
+      mt->fx_iafter_button = lives_standard_button_new_with_label(_("Insert _after"),
                              DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
 
       lives_box_pack_start(LIVES_BOX(bbox), mt->fx_iafter_button, FALSE, FALSE, 0);
@@ -13414,7 +13441,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
       mt->fx_ibefore_button = mt->fx_iafter_button = NULL;
     }
 
-    mt->next_fm_button = lives_special_button_new_with_label(_("_Next filter map"),
+    mt->next_fm_button = lives_standard_button_new_with_label(_("_Next filter map"),
                          DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
 
     lives_box_pack_end(LIVES_BOX(bbox), mt->next_fm_button, FALSE, FALSE, 0);
@@ -13587,7 +13614,7 @@ static void mouse_select_move(LiVESWidget * widget, LiVESXEventMotion * event, l
 
   for (i = 0; i < mt->num_video_tracks; i++) {
     xeventbox = (LiVESWidget *)lives_list_nth_data(mt->video_draws, i);
-    if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "hidden")) == 0) {
+    if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), HIDDEN_KEY)) == 0) {
       xheight = lives_widget_get_allocation_height(xeventbox);
       checkbutton = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xeventbox), "checkbutton");
       lives_widget_get_position(xeventbox, &rel_x, &rel_y);
@@ -14203,25 +14230,8 @@ void unpaint_lines(lives_mt * mt) {
 
 static void paint_line(lives_mt * mt, LiVESWidget * eventbox, int offset, double currtime,
                        lives_painter_t *cr) {
-  boolean grabbed_cr = FALSE;
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "has_line", LIVES_INT_TO_POINTER(offset));
-
-  if (!cr) {
-    grabbed_cr = TRUE;
-    cr = lives_painter_create_from_widget(eventbox);
-  }
-
-  if (lives_painter_set_operator(cr, LIVES_PAINTER_OPERATOR_DIFFERENCE))
-    lives_painter_set_source_rgb(cr, 1., 1., 1.);
-  else
-    lives_painter_set_source_rgb(cr, 0., 0., 0.);
-
-  lives_painter_set_line_width(cr, 1.);
-
-  lives_painter_rectangle(cr, offset, 0., 1., lives_widget_get_allocation_height(eventbox));
-
-  lives_painter_fill(cr);
-  if (grabbed_cr && !lives_painter_remerge(cr)) lives_painter_destroy(cr);
+  lives_widget_queue_draw(eventbox);
 }
 
 
@@ -14514,9 +14524,9 @@ static void mt_view_audio_toggled(LiVESMenuItem * menuitem, livespointer user_da
   lives_mt *mt = (lives_mt *)user_data;
   mt->opts.show_audio = lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(menuitem));
 
-  if (!mt->opts.show_audio) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data), "hidden",
+  if (!mt->opts.show_audio) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data), HIDDEN_KEY,
         LIVES_INT_TO_POINTER(TRACK_I_HIDDEN_USER));
-  else lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data), "hidden", LIVES_INT_TO_POINTER(0));
+  else lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mt->audio_draws->data), HIDDEN_KEY, LIVES_INT_TO_POINTER(0));
 
   scroll_tracks(mt, mt->top_track, FALSE);
   track_select(mt);
@@ -16079,6 +16089,7 @@ static void mt_jumpto_mark(lives_mt * mt, lives_direction_t dir) {
   while (tl_marks != NULL) {
     time = q_dbl(strtod((char *)tl_marks->data, NULL), mt->fps) / TICKS_PER_SECOND_DBL;
     if (time > ptr_time) break;
+    if (marktime == time) continue;
     marktime = time;
     tl_marks = tl_marks->next;
   }
@@ -18421,7 +18432,7 @@ static EXPOSE_FN_DECL(mt_expose_audtrack_event, ebox, user_data) {
 
   if (width == 0) return FALSE;
 
-  hidden = (int)LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(ebox), "hidden"));
+  hidden = (int)LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(ebox), HIDDEN_KEY));
   if (hidden != 0) {
     return FALSE;
   }
@@ -18619,7 +18630,11 @@ void do_sel_context(lives_mt * mt) {
   lives_free(msg);
   if (mt->selected_tracks == NULL) {
     msg = lives_strdup_printf(_("select one or more tracks\nto create a region.\n"), lives_list_length(mt->selected_tracks));
-  } else msg = lives_strdup_printf(_("%d video tracks selected.\n"), lives_list_length(mt->selected_tracks));
+  } else {
+    int llen = lives_list_length(mt->selected_tracks);
+    msg = lives_strdup_printf(P_("%d video track selected.\n", "%d video tracks selected.\n", llen),
+                              llen);
+  }
   add_context_label(mt, msg);
   add_context_label(mt, _("Double click on timeline\nto deselect time region."));
   lives_free(msg);

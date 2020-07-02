@@ -2316,13 +2316,13 @@ LiVESWidget *create_rte_window(void) {
 
       type_labels[idx] = lives_standard_label_new("");
 
-      info_buttons[idx] = lives_special_button_new_with_label(_("Info"),
+      info_buttons[idx] = lives_standard_button_new_with_label(_("Info"),
                           DEF_BUTTON_WIDTH / 3, DEF_BUTTON_HEIGHT);
-      param_buttons[idx] = lives_special_button_new_with_label(_("Set Parameters"),
+      param_buttons[idx] = lives_standard_button_new_with_label(_("Set Parameters"),
                            DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
-      conx_buttons[idx] = lives_special_button_new_with_label(_("Set Connections"),
+      conx_buttons[idx] = lives_standard_button_new_with_label(_("Set Connections"),
                           DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
-      clear_buttons[idx] = lives_special_button_new_with_label(_("Clear"),
+      clear_buttons[idx] = lives_standard_button_new_with_label(_("Clear"),
                            DEF_BUTTON_WIDTH / 3, DEF_BUTTON_HEIGHT);
 
       vbox = lives_vbox_new(FALSE, 0);

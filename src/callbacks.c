@@ -7824,7 +7824,7 @@ void on_loop_cont_activate(LiVESMenuItem * menuitem, livespointer user_data) {
           lives_pixbuf_saturate_and_pixelate(pixbuf2, pixbuf2, 0.2, FALSE);
         }
         lives_image_set_from_pixbuf(LIVES_IMAGE(loop_img), pixbuf2);
-        lives_special_button_set_image(LIVES_BUTTON(mainw->p_loopbutton), loop_img);
+        lives_standard_button_set_image(LIVES_BUTTON(mainw->p_loopbutton), loop_img);
         lives_widget_object_unref(pixbuf);
       }
     }
@@ -9543,13 +9543,15 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
   }
   *psurf = lives_widget_create_painter_surface(widget);
 
+#ifdef USE_SPECIAL_BUTTONS
   if (LIVES_IS_DRAWING_AREA(widget)) {
     LiVESWidget *parent = lives_widget_get_parent(widget);
-    if (parent && is_special_widget(parent)) {
+    if (parent && is_standard_widget(parent)) {
       sbutt_render(parent, 0, NULL);
       return FALSE;
     }
   }
+#endif
 
   if (widget == mainw->start_image)
     load_start_image(CURRENT_CLIP_IS_VALID ? cfile->start : 0);

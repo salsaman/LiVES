@@ -63,7 +63,8 @@ LiVESList *do_onchange_init(lives_rfx_t *rfx) {
         // onchange is init
         // create dummy object with data
         LiVESWidget *dummy_widget = lives_label_new(NULL);
-        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dummy_widget), "param_number", LIVES_INT_TO_POINTER(-1));
+        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dummy_widget), PARAM_NUMBER_KEY,
+                                     LIVES_INT_TO_POINTER(-1));
         retvals = do_onchange(LIVES_WIDGET_OBJECT(dummy_widget), rfx);
         lives_widget_destroy(dummy_widget);
         lives_strfreev(array);
@@ -1566,7 +1567,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       widget_opts.mnemonic_label = TRUE;
 
       // store parameter so we know whose trigger to use
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(checkbutton), "param_number", LIVES_INT_TO_POINTER(pnum));
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(checkbutton), PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));
       param->widgets[0] = checkbutton;
     } else {
       group = get_group(rfx, param);
@@ -1606,7 +1607,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
                                  (livespointer)rfx);
 
       // store parameter so we know whose trigger to use
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(radiobutton), "param_number", LIVES_INT_TO_POINTER(pnum));
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(radiobutton), PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));
       param->widgets[0] = radiobutton;
     }
     param->widgets[1] = widget_opts.last_label;
@@ -1634,7 +1635,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
                                (livespointer)rfx);
 
     // store parameter so we know whose trigger to use
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton), "param_number", LIVES_INT_TO_POINTER(pnum));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton), PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));
     param->widgets[0] = spinbutton;
     param->widgets[++wcount] = widget_opts.last_label;
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(param->widgets[0]), "rfx", rfx);
@@ -1694,7 +1695,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
     widget_opts.mnemonic_label = TRUE;
     lives_widget_set_size_request(cbutton, DEF_BUTTON_WIDTH / 2, -1);
 
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cbutton), "param_number", LIVES_INT_TO_POINTER(pnum));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cbutton), PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));
     if (param->desc != NULL) lives_widget_set_tooltip_text(cbutton, param->desc);
 
     lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton_red), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -1712,9 +1713,9 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
                                (livespointer)rfx);
 
     // store parameter so we know whose trigger to use
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton_red), "param_number", LIVES_INT_TO_POINTER(pnum));
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton_green), "param_number", LIVES_INT_TO_POINTER(pnum));
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton_blue), "param_number", LIVES_INT_TO_POINTER(pnum));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton_red), PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton_green), PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton_blue), PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));
 
     param->widgets[0] = spinbutton_red;
     param->widgets[1] = spinbutton_green;
@@ -1809,7 +1810,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
     lives_free(txt);
 
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), "textwidget", (livespointer)param->widgets[0]);
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(param->widgets[0]), "param_number", LIVES_INT_TO_POINTER(pnum));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(param->widgets[0]), PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(param->widgets[0]), "rfx", rfx);
 
     param->widgets[1] = label;
@@ -1833,7 +1834,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
                                LIVES_GUI_CALLBACK(after_string_list_changed), (livespointer) rfx);
 
     // store parameter so we know whose trigger to use
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo), "param_number", LIVES_INT_TO_POINTER(pnum));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo), PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));
     param->widgets[0] = combo;
     param->widgets[1] = widget_opts.last_label;
     break;
@@ -2045,7 +2046,7 @@ static void after_any_changed_2(lives_rfx_t *rfx, lives_param_t *param, boolean 
 
 
 void after_boolean_param_toggled(LiVESToggleButton *togglebutton, lives_rfx_t *rfx) {
-  int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(togglebutton), "param_number"));
+  int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(togglebutton), PARAM_NUMBER_KEY));
   LiVESList *retvals = NULL;
   weed_plant_t *inst = NULL;
   lives_param_t *param = &rfx->params[param_number];
@@ -2113,7 +2114,7 @@ void after_boolean_param_toggled(LiVESToggleButton *togglebutton, lives_rfx_t *r
 
 
 void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
-  int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), "param_number"));
+  int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), PARAM_NUMBER_KEY));
   LiVESList *retvals = NULL;
   lives_param_t *param = &rfx->params[param_number];
   double new_double = 0., old_double = 0.;
@@ -2388,7 +2389,7 @@ void update_weed_color_value(weed_plant_t *plant, int pnum, int c1, int c2, int 
 void after_param_red_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   LiVESList *retvals = NULL;
   lives_colRGB48_t old_value;
-  int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), "param_number"));
+  int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), PARAM_NUMBER_KEY));
   int new_red;
   boolean needs_update = FALSE;
   int copyto = -1;
@@ -2455,7 +2456,7 @@ void after_param_green_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   int new_green;
   int copyto = -1;
   boolean needs_update = FALSE;
-  int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), "param_number"));
+  int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), PARAM_NUMBER_KEY));
   lives_param_t *param = &rfx->params[param_number];
 
   get_colRGB24_param(param->value, &old_value);
@@ -2519,7 +2520,7 @@ void after_param_blue_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   int new_blue;
   int copyto = -1;
   boolean needs_update = FALSE;
-  int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), "param_number"));
+  int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), PARAM_NUMBER_KEY));
   lives_param_t *param = &rfx->params[param_number];
 
   get_colRGB24_param(param->value, &old_value);
@@ -2578,7 +2579,7 @@ void after_param_blue_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 
 void after_param_alpha_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   // not used yet
-  int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), "param_number"));
+  int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), PARAM_NUMBER_KEY));
   LiVESList *retvals = NULL;
   lives_param_t *param = &rfx->params[param_number];
   lives_colRGBA64_t old_value;
@@ -2668,7 +2669,7 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
   if (rfx == NULL || rfx->params == NULL || textwidget == NULL) return;
 
 
-  param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(textwidget), "param_number"));
+  param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(textwidget), PARAM_NUMBER_KEY));
   param = &rfx->params[param_number];
   old_text = (char *)param->value;
 
@@ -2747,7 +2748,7 @@ static void after_param_text_buffer_changed(LiVESTextBuffer *textbuffer, lives_r
 
 void after_string_list_changed(LiVESWidget *entry, lives_rfx_t *rfx) {
   LiVESList *retvals = NULL;
-  int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(entry), "param_number"));
+  int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(entry), PARAM_NUMBER_KEY));
   LiVESCombo *combo = (LiVESCombo *)(rfx->params[param_number].widgets[0]);
   lives_param_t *param = &rfx->params[param_number];
   char *txt = lives_combo_get_active_text(combo);
@@ -3291,7 +3292,7 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
 LiVESList *do_onchange(LiVESWidgetObject *object, lives_rfx_t *rfx) {
   LiVESList *retvals;
 
-  int which = LIVES_POINTER_TO_INT(lives_widget_object_get_data(object, "param_number"));
+  int which = LIVES_POINTER_TO_INT(lives_widget_object_get_data(object, PARAM_NUMBER_KEY));
   int width = 0, height = 0;
 
   const char *handle = "";
@@ -3364,7 +3365,7 @@ LiVESList *do_onchange(LiVESWidgetObject *object, lives_rfx_t *rfx) {
 void on_pwcolsel(LiVESButton *button, lives_rfx_t *rfx) {
   LiVESWidgetColor selected;
 
-  int pnum = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "param_number"));
+  int pnum = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), PARAM_NUMBER_KEY));
   int r, g, b;
 
   lives_param_t *param = &rfx->params[pnum];

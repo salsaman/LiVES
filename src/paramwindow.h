@@ -73,5 +73,4 @@ void update_visual_params(lives_rfx_t *, boolean update_hidden);
 /// show / hide widgets set by plugin in init_func()
 boolean update_widget_vis(lives_rfx_t *, int key, int mode);
 
-
 #endif

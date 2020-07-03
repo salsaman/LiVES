@@ -3819,6 +3819,7 @@ static void notebook_error(LiVESNotebook * nb, uint32_t tab, lives_mt_nb_error_t
 
   // hide the poly box
   lives_widget_hide(mt->poly_box);
+  lives_widget_set_no_show_all(mt->poly_box, TRUE);
 
   lives_widget_queue_resize(mt->nb_label);
 }
@@ -3880,7 +3881,8 @@ static boolean notebook_page(LiVESWidget * nb, LiVESWidget * nbp, uint32_t tab, 
   if (mt->nb_label) lives_widget_destroy(mt->nb_label);
   mt->nb_label = NULL;
 
-  lives_widget_show(mt->poly_box);
+  lives_widget_show_all(mt->poly_box);
+  lives_widget_set_no_show_all(mt->poly_box, TRUE);
   lives_widget_show(lives_notebook_get_nth_page(LIVES_NOTEBOOK(mt->nb), page));
 
   // we reparent the poly_box in the current tab
@@ -3943,8 +3945,11 @@ static boolean notebook_page(LiVESWidget * nb, LiVESWidget * nbp, uint32_t tab, 
       polymorph(mt, POLY_PARAMS);
     }
     break;
+  default:
+    break;
   }
-
+  lives_widget_set_no_show_all(mt->poly_box, FALSE);
+  lives_widget_show_all(mt->poly_box);
   return TRUE;
 }
 
@@ -9118,6 +9123,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   else if (mt->opts.grav_mode == GRAV_MODE_RIGHT) on_grav_mode_changed(LIVES_MENU_ITEM(mt->grav_right), (livespointer)mt);
 
   set_mt_colours(mt);
+  lives_widget_show_all(mt->poly_box);
+  lives_widget_set_no_show_all(mt->poly_box, TRUE);
 
   mt_sensitise(mt);
   mt->is_ready = TRUE;
@@ -10914,16 +10921,18 @@ void mt_delete_clips(lives_mt * mt, int file) {
 
   for (; list != NULL; i++) {
     list_next = list->next;
+
+    // each clip has 2 labels
     clist_nnext = clist->next->next;
     if (clips_to_files[i] == file) {
       removed = TRUE;
 
       lives_widget_destroy((LiVESWidget *)list->data);
 
-      if (clist_nnext->next != NULL) clist_nnext->next->prev = clist->prev;
-      if (clist->prev != NULL) clist->prev->next = clist_nnext->next;
-      else mt->clip_labels = clist_nnext->next;
-      clist->prev = clist_nnext->next = NULL;
+      if (clist_nnext) clist_nnext->prev = clist->prev;
+      if (clist->prev != NULL) clist->prev->next = clist_nnext;
+      else mt->clip_labels = clist_nnext;
+      clist->prev = clist->next->next = NULL;
       lives_list_free(clist);
 
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
@@ -10933,6 +10942,9 @@ void mt_delete_clips(lives_mt * mt, int file) {
     clips_to_files[i] = clips_to_files[i + neg];
     list = list_next;
     clist = clist_nnext;
+    if (mt->file_selected == file) {
+      mt_prevclip(NULL, NULL, 0, 0, mt);
+    }
   }
 
   if (olist != NULL) lives_list_free(olist);
@@ -11076,6 +11088,7 @@ void mt_init_clips(lives_mt * mt, int orig_file, boolean add) {
                            (livespointer)mt);
 
       if (add) {
+        lives_widget_set_no_show_all(mt->poly_box, FALSE);
         lives_widget_show_all(eventbox);
         break;
       }
@@ -11153,6 +11166,13 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
     // WARNING:
     rdet = create_render_details(3); // WARNING !! - rdet is global in events.h
     rdet->enc_changed = FALSE;
+    if (prefs->startup_interface == STARTUP_MT && !mainw->is_ready) {
+      if (prefs->show_gui) {
+        lives_widget_show_now(rdet->dialog);
+        lives_window_present(LIVES_WINDOW(rdet->dialog));
+        lives_widget_grab_focus(rdet->okbutton);
+      }
+    }
     do {
       rdet->suggestion_followed = FALSE;
       if ((response = lives_dialog_run(LIVES_DIALOG(rdet->dialog))) == LIVES_RESPONSE_OK) {
@@ -11341,6 +11361,10 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
 
   if (prefs->show_gui) {
     lives_widget_show_all(multi->top_vbox);
+    if (multi->clip_labels) {
+      lives_widget_set_no_show_all(multi->poly_box, FALSE);
+      lives_widget_show_all(multi->poly_box);
+    }
     show_lives();
     scroll_track_on_screen(multi, 0);
     if (multi->nb_label != NULL) {
@@ -20871,7 +20895,7 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
       continue;
     }
     if (tc < last_tc) {
-      break_me();
+      break_me("oo event in event_list_rectify");
       ebuf = rec_error_add(ebuf, "Out of order event", -1, tc);
       delete_event(event_list, event);
       event = event_next;

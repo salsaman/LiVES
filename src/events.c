@@ -3073,6 +3073,9 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
         update_effort(dframes, TRUE);
         dframes = 0;
         load_frame_image(cfile->last_frameno >= 1 ? cfile->last_frameno : cfile->start);
+        if (prefs->show_player_stats) {
+          mainw->fps_measure++;
+        }
         if (mainw->last_display_ticks == 0) mainw->last_display_ticks = curr_tc;
         else {
           if (mainw->vpp != NULL && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.)
@@ -3150,6 +3153,9 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
         mainw->pchains = pchains;
         update_effort(dframes, TRUE);
         load_frame_image(cfile->frameno);
+        if (prefs->show_player_stats) {
+          mainw->fps_measure++;
+        }
         if (mainw->last_display_ticks == 0) mainw->last_display_ticks = curr_tc;
         else {
           if (mainw->vpp != NULL && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.)
@@ -3200,6 +3206,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
           cfile->next_event = return_event;
           return_event = NULL;
         } else {
+          /// load a frame from the scrap file
           mainw->files[new_file]->hsize = cfile->hsize; // set size of scrap file
           mainw->files[new_file]->vsize = cfile->vsize;
           current_file = mainw->current_file;
@@ -3207,8 +3214,10 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
           mainw->aframeno = (double)(aseek_tc / TICKS_PER_SECOND_DBL) * cfile->fps;
           mainw->pchains = pchains;
           load_frame_image(cfile->frameno);
+          if (prefs->show_player_stats) {
+            mainw->fps_measure++;
+          }
           mainw->pchains = NULL;
-          //if (LIVES_IS_PLAYING) lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
           mainw->current_file = current_file;
         }
         break;
@@ -3220,7 +3229,6 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
         mainw->pchains = NULL;
       }
     }
-    /* if (LIVES_IS_PLAYING && mainw->multitrack == NULL) lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
     cfile->next_event = get_next_event(next_event);
     break;
   case WEED_EVENT_HINT_FILTER_INIT:
@@ -5853,7 +5861,7 @@ render_details *create_render_details(int type) {
 
   boolean needs_new_encoder = FALSE;
 
-  int width, height, dwidth, dheight, spht;
+  int width, height, dwidth, dheight, spht, maxwidth, maxheight;
 
   int scrw = GUI_SCREEN_WIDTH;
   int scrh = GUI_SCREEN_HEIGHT;
@@ -5896,15 +5904,17 @@ render_details *create_render_details(int type) {
   } else if (type == 1) title = (_("Encoding Details"));
   else title = (_("New Clip Details"));
 
-  width = scrw - SCR_WIDTH_SAFETY;
-  height = scrh - SCR_HEIGHT_SAFETY;
+  maxwidth = width = scrw - SCR_WIDTH_SAFETY;
+  maxheight = height = scrh - SCR_HEIGHT_SAFETY;
 
   if (type == 1) {
     width /= 2;
     height /= 2;
   }
 
+  widget_opts.expand = LIVES_EXPAND_NONE;
   rdet->dialog = lives_standard_dialog_new(title, FALSE, 8., 8.);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   lives_free(title);
 
@@ -6207,12 +6217,14 @@ render_details *create_render_details(int type) {
     }
   }
 
+  widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
   if (type != 1) {
     rdet->okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(rdet->dialog), LIVES_STOCK_OK, NULL, LIVES_RESPONSE_OK);
   } else  {
     rdet->okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(rdet->dialog), LIVES_STOCK_GO_FORWARD, _("_Next"),
                      LIVES_RESPONSE_OK);
   }
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   lives_button_grab_default_special(rdet->okbutton);
 
@@ -6244,15 +6256,27 @@ render_details *create_render_details(int type) {
     dheight = lives_widget_get_allocation_height(rdet->dialog) - spht;
     dwidth = lives_widget_get_allocation_width(rdet->dialog);
 
+    if (dwidth > maxwidth) dwidth = maxwidth;
+    if (dheight > maxheight) dheight = maxheight;
+
+    if (width > dwidth) width = dwidth;
+    if (height > dheight) height = dheight;
+
     lives_widget_destroy(spillover); // remove extra height
     lives_widget_process_updates(rdet->dialog, TRUE);
     lives_widget_context_update();
 
-    if (height > 0) lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(scrollw), height);
     if (width > 0) lives_scrolled_window_set_min_content_width(LIVES_SCROLLED_WINDOW(scrollw), width);
-    lives_widget_set_size_request(scrollw, width, height);
+    if (height > 0) lives_scrolled_window_set_min_content_height(LIVES_SCROLLED_WINDOW(scrollw), height);
+
+    //lives_widget_set_size_request(scrollw, width, height);
+    lives_widget_set_maximum_size(scrollw, width, height);
+
+    if (dwidth < width + 6. * widget_opts.border_width) dwidth = width + 6. * widget_opts.border_width;
+    if (dheight < height + 6. * widget_opts.border_width) dheight = height + 6. * widget_opts.border_width;
 
     lives_widget_set_size_request(rdet->dialog, dwidth, dheight);
+    lives_widget_set_maximum_size(rdet->dialog, dwidth, dheight);
 
     // for expander, need to make it resizable
     lives_window_set_resizable(LIVES_WINDOW(rdet->dialog), TRUE);

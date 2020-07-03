@@ -192,9 +192,12 @@ boolean do_workdir_query(void) {
 
   lives_widget_destroy(wizard->dialog);
   lives_freep((void **)&wizard);
+  if (mainw->is_ready) {
+    lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", dirname);
+    return TRUE;
+  }
 
   lives_snprintf(prefs->workdir, PATH_MAX, "%s", dirname);
-
   lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGDIR=\"%s\" --", EXEC_PERL,
                  capable->backend_path,
                  prefs->workdir, prefs->configdir);

@@ -4031,6 +4031,21 @@ LIVES_GLOBAL_INLINE void do_bad_theme_import_error(const char *theme_file) {
 }
 
 
+LIVES_GLOBAL_INLINE char *workdir_ch_warning(void) {
+  return lives_strdup(
+           _("You have chosen to change the working directory.\nPlease make sure you have no other copies of LiVES open.\n\n"
+             "If you do have other copies of LiVES open, please close them now, *before* pressing OK.\n\n"
+             "Alternatively, press Cancel to restore the working directory to its original setting."));
+}
+
+
+LIVES_GLOBAL_INLINE void do_shutdown_msg(void) {
+  do_blocking_info_dialog(
+    _("\nLiVES will now shut down. You need to restart it for the new "
+      "preferences to take effect.\nClick OK to continue.\n"));
+}
+
+
 LIVES_GLOBAL_INLINE boolean do_theme_exists_warn(const char *themename) {
   return do_yesno_dialogf(_("\nA custom theme with the name\n%s\nalready exists. Would you like to overwrite it ?\n"), themename);
 }

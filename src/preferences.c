@@ -1756,11 +1756,7 @@ boolean apply_prefs(boolean skip_warn) {
   if (lives_strcmp(prefworkdir, workdir)) {
     char *xworkdir = lives_strdup(workdir);
     if (check_workdir_valid(&xworkdir, LIVES_DIALOG(prefsw->prefs_dialog), FALSE) == LIVES_RESPONSE_OK) {
-      char *msg = lives_strdup(
-                    _("You have chosen to change the working directory.\nPlease make sure you have no other copies of LiVES open.\n\n"
-                      "If you do have other copies of LiVES open, please close them now, *before* pressing OK.\n\n"
-                      "Alternatively, press Cancel to restore the working directory to its original setting."));
-
+      char *msg = workdir_ch_warning();
       lives_snprintf(workdir, PATH_MAX, "%s", xworkdir);
       set_workdir_label_text(LIVES_LABEL(prefsw->workdir_label), xworkdir);
       lives_free(xworkdir);
@@ -5745,9 +5741,7 @@ void on_prefs_close_clicked(LiVESButton *button, livespointer user_data) {
   prefsw = NULL;
 
   if (mainw->prefs_need_restart) {
-    do_blocking_info_dialog(
-      //_("\nLiVES will now shut down. You need to restart it for the directory change to take effect.\nClick OK to continue.\n"));
-      _("\nLiVES will now shut down. You need to restart it for the new preferences to take effect.\nClick OK to continue.\n"));
+    do_shutdown_msg();
     on_quit_activate(NULL, NULL);
   }
   if (mainw->multitrack != NULL) {

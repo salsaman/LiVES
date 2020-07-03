@@ -148,9 +148,9 @@ void tr_msg(void) {
 #endif
 
 
-void break_me(void) {
+void break_me(const char *brkstr) {
   if (prefs && prefs->show_dev_opts)
-    g_print("BANG !\n");
+    g_print("BANG ! hiy breakpoint %s\n", brkstr ? brkstr : "???");
   // breakpoint for gdb
 }
 
@@ -6606,7 +6606,7 @@ fndone:
 
             mainw->osc_block = FALSE;
             if (!ret) {
-              break_me();
+              break_me("bad frame load from file");
               create_blank_layer(layer, image_ext, width, height, target_palette);
               return FALSE;
             }

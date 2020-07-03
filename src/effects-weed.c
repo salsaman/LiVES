@@ -4310,7 +4310,7 @@ static void upd_statsplant(const char *key) {
 void *lives_monitor_malloc(size_t size) {
   void *p = malloc(size);
   fprintf(stderr, "plugin mallocing %ld bytes, got ptr %p\n", size, p);
-  if (size == 1024) break_me();
+  if (size == 1024) break_me("monitor_malloc");
   return NULL;
 }
 
@@ -6072,7 +6072,7 @@ LIVES_GLOBAL_INLINE int _weed_instance_unref(weed_plant_t *inst) {
     char *msg = lives_strdup_printf("unref of filter instance (%p) with nrefs == %d\n", inst, nrefs);
     pthread_mutex_unlock(&mainw->instance_ref_mutex);
     LIVES_ERROR(msg);
-    break_me();
+    break_me("invalid filt inst unref");
     return nrefs;
   }
   nrefs--;
@@ -8170,7 +8170,7 @@ void weed_generator_end(weed_plant_t *inst) {
     mainw->new_blend_file = -1;
     // close generator file and switch to original file if possible
     if (cfile == NULL || cfile->clip_type != CLIP_TYPE_GENERATOR) {
-      break_me();
+      break_me("close non-gen file");
       LIVES_WARN("Close non-generator file");
       mainw->current_file = mainw->pre_src_file;
     } else {
@@ -11350,7 +11350,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
                   st != WEED_SEED_STRING && st != WEED_SEED_VOIDPTR && st != WEED_SEED_PLANTPTR)) {
     if (prefs->show_dev_opts) {
       g_printerr("unknown seed type %d %s\n", st, mykey);
-      break_me();
+      break_me("ink. seed type in w.l. deser");
     }
     type = -6;
     goto done;

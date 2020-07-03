@@ -1146,6 +1146,9 @@ void workdir_warning(void);
 void do_audio_import_error(void);
 void do_mt_backup_space_error(lives_mt *, int memreq_mb);
 
+char *workdir_ch_warning(void);
+void do_shutdown_msg(void);
+
 boolean do_save_clipset_warn(void);
 boolean do_clipboard_fps_warning(void);
 void perf_mem_warning(void);
@@ -1675,7 +1678,7 @@ int hextodec(const char *string);
 
 const char *dummychar;
 
-void break_me(void);
+void break_me(const char *dtl);
 
 #define LIVES_NO_DEBUG
 #ifndef LIVES_DEBUG
@@ -1704,7 +1707,7 @@ void break_me(void);
 
 #ifndef LIVES_ERROR
 #ifndef LIVES_NO_ERROR
-#define LIVES_ERROR(x)      {fprintf(stderr, "LiVES ERROR: %s\n", x); break_me();}
+#define LIVES_ERROR(x)      {fprintf(stderr, "LiVES ERROR: %s\n", x); break_me(x);}
 #else // LIVES_NO_ERROR
 #define LIVES_ERROR(x)      dummychar = x
 #endif // LIVES_NO_ERROR
@@ -1712,7 +1715,7 @@ void break_me(void);
 
 #ifndef LIVES_CRITICAL
 #ifndef LIVES_NO_CRITICAL
-#define LIVES_CRITICAL(x)      {fprintf(stderr, "LiVES CRITICAL: %s\n", x); break_me(); raise (LIVES_SIGSEGV);}
+#define LIVES_CRITICAL(x)      {fprintf(stderr, "LiVES CRITICAL: %s\n", x); break_me(x); raise (LIVES_SIGSEGV);}
 #else // LIVES_NO_CRITICAL
 #define LIVES_CRITICAL(x)      dummychar = x
 #endif // LIVES_NO_CRITICAL
@@ -1720,7 +1723,7 @@ void break_me(void);
 
 #ifndef LIVES_FATAL
 #ifndef LIVES_NO_FATAL
-#define LIVES_FATAL(x)      {fprintf(stderr, "LiVES FATAL: %s\n", x); lives_notify(LIVES_OSC_NOTIFY_QUIT, x), break_me(); _exit (1);}
+#define LIVES_FATAL(x)      {fprintf(stderr, "LiVES FATAL: %s\n", x); lives_notify(LIVES_OSC_NOTIFY_QUIT, x), break_me(x); _exit (1);}
 #else // LIVES_NO_FATAL
 #define LIVES_FATAL(x)      dummychar = x
 #endif // LIVES_NO_FATAL

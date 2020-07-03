@@ -777,7 +777,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_ref(livespointer object)
   if (LIVES_IS_WIDGET_OBJECT(object)) g_object_ref(object);
   else {
     LIVES_WARN("Ref of non-object");
-    break_me();
+    break_me("ref of nomobj");
     return FALSE;
   }
   return TRUE;
@@ -795,6 +795,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_unref(livespointer objec
   if (LIVES_IS_WIDGET_OBJECT(object)) g_object_unref(object);
   else {
     LIVES_WARN("Unref of non-object");
+    break_me("unref of nonobj");
     return FALSE;
   }
   return TRUE;
@@ -812,7 +813,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_unref(livespointer objec
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_object_ref_sink(livespointer object) {
   if (!LIVES_IS_WIDGET_OBJECT(object)) {
     LIVES_WARN("Ref_sink of non-object");
-    break_me();
+    break_me("ref sink of nonobj");
     return FALSE;
   }
   g_object_ref_sink(object);
@@ -931,11 +932,9 @@ static volatile boolean was_dest = FALSE;
 static void sigdata_free(livespointer data, LiVESWidgetClosure *cl) {
   lives_sigdata_t *sigdata = (lives_sigdata_t *)data;
   if (cl) active_sigdets = lives_list_remove(active_sigdets, sigdata);
-
-  if (sigdata->detsig) {
-    lives_free(sigdata->detsig);
-  }
-  if (sigdata) lives_free(sigdata);
+  if (sigdata->proc) weed_plant_free(sigdata->proc);
+  if (sigdata->detsig) lives_free(sigdata->detsig);
+  lives_free(sigdata);
 }
 
 
@@ -985,9 +984,9 @@ reloop:
   // if a timer, set sigdata->swapped
   if (sigdata->is_timer) {
     sigdata->swapped = TRUE;
+    /// timer handler will free sigdata
   } else {
-    weed_plant_free(sigdata->proc);
-    sigdata->proc = NULL;
+    sigdata_free(sigdata, NULL);
   }
   return FALSE;
 }
@@ -998,7 +997,9 @@ typedef boolean(*trifunc)(livespointer, livespointer, livespointer);
 
 static void async_sig_handler(livespointer instance, livespointer data) {
   LiVESWidgetContext *ctx;
-  lives_sigdata_t *sigdata = (lives_sigdata_t *)data;
+  lives_sigdata_t *sigdata = lives_calloc(1, sizeof(lives_sigdata_t));
+  lives_memcpy(sigdata, data, sizeof(lives_sigdata_t));
+  sigdata->detsig = NULL;
 
   // possible values: [gtk+] gdk_frame_clock_paint_idle
   // GDK X11 Event source (:0.0)
@@ -1016,21 +1017,22 @@ static void async_sig_handler(livespointer instance, livespointer data) {
     } else {
       sigdata->proc = lives_proc_thread_create(&attr, (lives_funcptr_t)sigdata->callback, -1, "vv", instance, sigdata->user_data);
     }
-    governor_loop(data);
+    governor_loop(sigdata);
   } else {
     if (!sigdata->swapped)
       (*((bifunc)sigdata->callback))(instance, sigdata->user_data);
     else
       (*((bifunc)sigdata->callback))(sigdata->user_data, instance);
+    sigdata_free(sigdata, NULL);
   }
 }
 
 
 static void async_sig_handler3(livespointer instance, livespointer extra, livespointer data) {
   LiVESWidgetContext *ctx;
-  lives_sigdata_t *sigdata = (lives_sigdata_t *)data;
-  if (sigdata->instance != instance) return;
-  if (!sigdata->detsig) break_me();
+  lives_sigdata_t *sigdata = lives_calloc(1, sizeof(lives_sigdata_t));
+  lives_memcpy(sigdata, data, sizeof(lives_sigdata_t));
+  sigdata->detsig = NULL;
 
   ctx = lives_widget_context_get_thread_default();
   if (!gov_running && (!ctx || ctx == lives_widget_context_default())) {
@@ -1047,47 +1049,50 @@ static void async_sig_handler3(livespointer instance, livespointer extra, livesp
       (*((trifunc)sigdata->callback))(sigdata->user_data, extra, instance);
     else
       (*((trifunc)sigdata->callback))(instance, extra, sigdata->user_data);
+    sigdata_free(sigdata, NULL);
   }
 }
 
 
 static boolean async_timer_handler(livespointer data) {
-  LiVESWidgetContext *ctx;
-  lives_sigdata_t *sigdata = (lives_sigdata_t *)data;
-  //g_print("SOURCE is %s\n", g_source_get_name(g_main_current_source())); // NULL for timer, GIdleSource for idle
-  //g_print("hndling %p %s %p\n", sigdata, sigdata->detsig, (void *)sigdata->detsig);
-
   if (mainw->is_exiting) return FALSE;
+  else {
+    LiVESWidgetContext *ctx;
+    lives_sigdata_t *sigdata = lives_calloc(1, sizeof(lives_sigdata_t));
+    lives_memcpy(sigdata, data, sizeof(lives_sigdata_t));
+    sigdata->detsig = NULL;
+    //g_print("SOURCE is %s\n", g_source_get_name(g_main_current_source())); // NULL for timer, GIdleSource for idle
+    //g_print("hndling %p %s %p\n", sigdata, sigdata->detsig, (void *)sigdata->detsig);
 
-  if (!sigdata->added) {
-    ctx = lives_widget_context_get_thread_default();
-    if (!ctx || ctx == lives_widget_context_default()) {
-      lives_thread_attr_t attr = LIVES_THRDATTR_WAIT_SYNC;
-      mainw->clutch = FALSE;
-      sigdata->swapped = FALSE;
-      sigdata->proc = lives_proc_thread_create(&attr, (lives_funcptr_t)sigdata->callback, WEED_SEED_BOOLEAN,
-                      "v", sigdata->user_data);
-      sigdata->added = TRUE;
-      //governor_loop((livespointer)sigdata);
-    } else {
-      return (*((LiVESWidgetSourceFunc)sigdata->callback))(sigdata->user_data);
-    }
-  }
 
-  while (1) {
-    if (!governor_loop((livespointer)sigdata)) break;
-    if (sigdata->swapped) {
-      // get bool result and return
-      boolean res = lives_proc_thread_join_boolean(sigdata->proc);
-      weed_plant_free(sigdata->proc);
-      sigdata->proc = NULL;
-      sigdata->swapped = sigdata->added = FALSE;
-      if (!res) sigdata_free(sigdata, NULL);
-      return res;
+    if (!sigdata->added) {
+      ctx = lives_widget_context_get_thread_default();
+      if (!ctx || ctx == lives_widget_context_default()) {
+        lives_thread_attr_t attr = LIVES_THRDATTR_WAIT_SYNC;
+        mainw->clutch = FALSE;
+        sigdata->swapped = FALSE;
+        sigdata->proc = lives_proc_thread_create(&attr, (lives_funcptr_t)sigdata->callback, WEED_SEED_BOOLEAN,
+                        "v", sigdata->user_data);
+        sigdata->added = TRUE;
+        //governor_loop((livespointer)sigdata);
+      } else {
+        return (*((LiVESWidgetSourceFunc)sigdata->callback))(sigdata->user_data);
+      }
     }
-    while (lives_widget_context_iteration(NULL, FALSE)) {
-      lives_nanosleep(NSLEEP_TIME);
-      sched_yield();
+
+    while (1) {
+      if (!governor_loop((livespointer)sigdata)) break;
+      if (sigdata->swapped) {
+        // task finished
+        // get bool result and return
+        boolean res = lives_proc_thread_join_boolean(sigdata->proc);
+        sigdata_free(sigdata, NULL);
+        return res;
+      }
+      while (lives_widget_context_iteration(NULL, FALSE)) {
+        lives_nanosleep(NSLEEP_TIME);
+        sched_yield();
+      }
     }
   }
   // should never reach here
@@ -1662,6 +1667,7 @@ static char *make_random_string(const char *prefix) {
 
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 16, 0)
+#define ORD_NAMES
 
 static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetState state, const char *selector,
     const char *detail, const char *value) {
@@ -1670,7 +1676,10 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
   char *widget_name, *wname;
   char *css_string;
   char *state_str;
-
+#ifdef ORD_NAMES
+  static int widnum = 1;
+  int brk_widnum = 3128;
+#endif
   if (widget == NULL || !LIVES_IS_WIDGET(widget)) return FALSE;
 
   ctx = gtk_widget_get_style_context(widget);
@@ -1682,8 +1691,15 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
 
   if (widget_name == NULL || (strncmp(widget_name, RND_STR_PREFIX, strlen(RND_STR_PREFIX)))) {
     lives_freep((void **)&widget_name);
+#ifdef ORD_NAMES
+    widget_name = lives_strdup_printf("%s-%d", RND_STR_PREFIX, ++widnum);
+#else
     widget_name = make_random_string(RND_STR_PREFIX);
+#endif
     gtk_widget_set_name(widget, widget_name);
+#ifdef ORD_NAMES
+    if (widnum == brk_widnum) break_me("widnum");
+#endif
   }
 
 #ifdef GTK_TEXT_VIEW_CSS_BUG
@@ -10194,7 +10210,6 @@ LiVESWidget *lives_dialog_add_button_from_stock(LiVESDialog *dialog, const char 
   LiVESWidget *first_button;
 
   if (dialog != NULL) lives_dialog_add_action_widget(dialog, button, response_id);
-
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), NWIDTH_KEY, LIVES_INT_TO_POINTER(bwidth));
 
   if (dialog != NULL) {
@@ -10286,8 +10301,8 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   if (!widget_opts.non_modal)
     lives_window_set_resizable(LIVES_WINDOW(dialog), FALSE);
 
-  lives_widget_set_hexpand(dialog, TRUE);
-  lives_widget_set_vexpand(dialog, TRUE);
+  if (LIVES_SHOULD_EXPAND_WIDTH) lives_widget_set_hexpand(dialog, TRUE);
+  if (LIVES_SHOULD_EXPAND_HEIGHT) lives_widget_set_vexpand(dialog, TRUE);
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
   lives_dialog_set_has_separator(LIVES_DIALOG(dialog), FALSE);
@@ -11924,21 +11939,25 @@ boolean lives_widget_context_update(void) {
   if (norecurse) return FALSE;
   else {
     LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
+    do_some_things();
     norecurse = TRUE;
-    if (ctx != NULL && ctx != lives_widget_context_default() && gov_running) {
-      do_some_things();
+    if (ctx != NULL && ctx != lives_widget_context_default()) {
       mainw->clutch = FALSE;
       while (!mainw->clutch && !mainw->is_exiting) {
         lives_nanosleep(NSLEEP_TIME);
         sched_yield();
       }
-      do_more_stuff();
     } else {
       while (lives_widget_context_iteration(NULL, FALSE));
     }
+    do_more_stuff();
   }
   norecurse = FALSE;
   return TRUE;
+}
+
+
+void lives_widget_context_super_update(void) {
 }
 
 
@@ -12503,7 +12522,9 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_box_set_button_width(LiVESButto
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_center(LiVESWidget *button) {
-  lives_widget_set_size_request(button, DEF_BUTTON_WIDTH * 4, DLG_BUTTON_HEIGHT);
+  if (LIVES_SHOULD_EXPAND_WIDTH)
+    lives_widget_set_size_request(button, DEF_BUTTON_WIDTH * 4, DLG_BUTTON_HEIGHT);
+
 #if !GTK_CHECK_VERSION(3, 0, 0)
   lives_button_box_set_layout(LIVES_BUTTON_BOX(lives_widget_get_parent(button)),
                               LIVES_BUTTONBOX_CENTER);
@@ -12515,7 +12536,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_center(LiVESWidget *button) {
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_uncenter(LiVESWidget *button, int normal_width) {
-  lives_widget_set_size_request(button, normal_width, DEF_BUTTON_HEIGHT);
+  lives_widget_set_size_request(button, normal_width, DLG_BUTTON_HEIGHT);
 #if !GTK_CHECK_VERSION(3, 0, 0)
   lives_button_box_set_layout(LIVES_BUTTON_BOX(lives_widget_get_parent(button)), LIVES_BUTTONBOX_END);
 #else

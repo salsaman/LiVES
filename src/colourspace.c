@@ -8885,7 +8885,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
 
   default:
     lives_printerr("Warning: asked to create empty pixel_data for palette %d !\n", palette);
-    break_me();
+    break_me("create_empty_pixel_data w. unknown pal");
   }
   return TRUE;
 }
@@ -11235,7 +11235,7 @@ int weed_layer_get_gamma(weed_layer_t *layer) {
       gamma_type = weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, &error);
     }
     if (gamma_type == WEED_GAMMA_UNKNOWN) {
-      break_me();
+      break_me("weed_layer_get_gamma with unk. gamma");
       LIVES_WARN("Layer with unknown gamma !!");
       gamma_type = WEED_GAMMA_SRGB;
     }
@@ -12184,7 +12184,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     break;
   default:
     lives_printerr("Warning: resizing unknown palette %d\n", palette);
-    break_me();
+    break_me("resize_layer with unk. pal");
     retval = FALSE;
   }
 

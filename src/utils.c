@@ -555,7 +555,7 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
       char *msg = lives_strdup_printf("Duplicate fd (%d) in file buffers !\n%s was not removed, and\n%s will be added.", fd,
                                       xbuff->pathname,
                                       fbuff->pathname);
-      break_me();
+      break_me("dupe fd in fbuffs");
       LIVES_ERROR(msg);
       lives_free(msg);
       lives_close_buffered(fd);
@@ -1559,7 +1559,7 @@ LIVES_GLOBAL_INLINE lives_alarm_t lives_alarm_reset(lives_alarm_t alarm_handle, 
   lives_timeout_t *alarm;
   if (alarm_handle <= 0 || alarm_handle > LIVES_MAX_ALARMS) {
     LIVES_WARN("Invalid alarm handle");
-    break_me();
+    break_me("inv alarm handle in lives_alarm_reset");
     return -1;
   }
 
@@ -1629,7 +1629,7 @@ ticks_t lives_alarm_check(lives_alarm_t alarm_handle) {
   // invalid alarm number
   if (alarm_handle <= 0 || alarm_handle > LIVES_MAX_ALARMS) {
     LIVES_WARN("Invalid alarm handle");
-    break_me();
+    break_me("inv alarm handle in lives_alarm_check");
     return -1;
   }
 

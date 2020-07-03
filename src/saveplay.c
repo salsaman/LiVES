@@ -1073,7 +1073,7 @@ img_load:
   if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
 
 load_done:
-  if (mainw->multitrack == NULL) {
+  if (!mainw->multitrack) {
     // update widgets
     switch_to_file((mainw->current_file = 0), current_file);
     lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);

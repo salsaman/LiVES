@@ -252,7 +252,6 @@ void save_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
   }
 
   close(fd);
-
 }
 
 

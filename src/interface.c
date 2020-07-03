@@ -2177,7 +2177,7 @@ _entryw *create_rename_dialog(int type) {
   // type 4 = save clip set from mt
   // type 5 = save clip set for project export
 
-  // type 6 = initial workdir
+  // type 6 = initial workdir / change workdir
 
   // type 7 = rename track in mt
 
@@ -2235,7 +2235,7 @@ _entryw *create_rename_dialog(int type) {
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, 0);
   }
 
-  if (type == 6) {
+  if (type == 6 && !mainw->is_ready) {
     widget_opts.justify = LIVES_JUSTIFY_CENTER;
     label = lives_standard_label_new
             (_("Welcome to LiVES !"));
@@ -2325,7 +2325,7 @@ _entryw *create_rename_dialog(int type) {
                                  LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
   }
 
-  if (type == 6) {
+  if (type == 6 && !mainw->is_ready) {
     okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(renamew->dialog), LIVES_STOCK_GO_FORWARD, _("_Next"),
                LIVES_RESPONSE_OK);
   } else okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(renamew->dialog), LIVES_STOCK_OK,
@@ -4787,6 +4787,31 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
 }
 
 
+static void workdir_query_cb(LiVESWidget * w, livespointer data) {
+  lives_general_button_clicked(LIVES_BUTTON(w), NULL);
+  if (do_workdir_query()) {
+    if (lives_strcmp(prefs->workdir, future_prefs->workdir)) {
+      char *msg = workdir_ch_warning();
+      if (do_warning_dialog(msg)) {
+        lives_free(msg);
+        do_shutdown_msg();
+        on_quit_activate(NULL, NULL);
+      }
+    } else {
+      do_blocking_info_dialog(_("\nDirectory was not changed\n"));
+    }
+    *future_prefs->workdir = 0;
+  }
+  run_diskspace_dialog();
+}
+
+static void cleards_cb(LiVESWidget * w, livespointer data) {
+  lives_general_button_clicked(LIVES_BUTTON(w), NULL);
+  on_cleardisk_activate(NULL, NULL);
+  run_diskspace_dialog();
+}
+
+
 void run_diskspace_dialog(void) {
   LiVESWidget *dialog, *dialog_vbox;
   LiVESWidget *layout, *layout2;
@@ -4844,7 +4869,7 @@ void run_diskspace_dialog(void) {
   lives_box_pack_start(LIVES_BOX(hbox), button, FALSE, TRUE, widget_opts.packing_width * 4);
 
   lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_decplug_advanced_clicked),
+                       LIVES_GUI_CALLBACK(workdir_query_cb),
                        NULL);
 
   add_hsep_to_box(LIVES_BOX(dialog_vbox));
@@ -4898,6 +4923,10 @@ void run_diskspace_dialog(void) {
   button = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("Clean Up Diskspace"),
            DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
   lives_box_pack_start(LIVES_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width * 4);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(cleards_cb),
+                       NULL);
 
   lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));

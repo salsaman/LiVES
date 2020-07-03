@@ -3167,7 +3167,6 @@ void set_interactive(boolean interactive) {
     if (mainw->multitrack != NULL) {
       lives_set_cursor_style(LIVES_CURSOR_CENTER_PTR, mainw->multitrack->timeline);
       if (lives_widget_get_parent(mainw->multitrack->menubar) == NULL) {
-        g_print("OKOKOK\n\n\n");
         lives_box_pack_start(LIVES_BOX(mainw->multitrack->menu_hbox), mainw->multitrack->menubar, FALSE, FALSE, 0);
         lives_widget_object_unref(mainw->multitrack->menubar);
       }

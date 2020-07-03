@@ -461,6 +461,7 @@ void lives_exit(int signum) {
       if (mainw->only_close) {
         mainw->suppress_dprint = TRUE;
         mainw->close_keep_frames = TRUE;
+        mainw->is_processing = TRUE; ///< stop multitrack from sensitizing too soon
         for (i = 1; i <= MAX_FILES; i++) {
           if (IS_NORMAL_CLIP(i) && (mainw->multitrack == NULL || i != mainw->multitrack->render_file)) {
             mainw->current_file = i;
@@ -509,6 +510,7 @@ void lives_exit(int signum) {
             mainw->idlemax = DEF_IDLE_MAX;
           }
         }
+        mainw->is_processing = FALSE; ///< mt may now sensitize...
         return;
       }
 

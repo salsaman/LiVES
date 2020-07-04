@@ -1091,8 +1091,12 @@ boolean pref_factory_string_choice(const char *prefidx, LiVESList *list, const c
   if (!lives_strcmp(prefidx, PREF_MSG_TEXTSIZE)) {
     if (idx == prefs->msg_textsize) goto fail4;
     prefs->msg_textsize = idx;
+    if (permanent) future_prefs->msg_textsize = prefs->msg_textsize;
     if (prefs->show_msg_area) {
-      msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
+      if (mainw->multitrack)
+        msg_area_scroll(LIVES_ADJUSTMENT(mainw->multitrack->msg_adj), mainw->multitrack->msg_area);
+      else
+        msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
     }
     goto success4;
   }
@@ -3157,16 +3161,17 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
-  prefsw->spinbutton_pmoni = lives_standard_spin_button_new(_("Monitor number for playback"), prefs->play_monitor, 0,
-                             nmons == 1 ? 0 : nmons,
-                             1., 1., 0, LIVES_BOX(hbox), NULL);
-
+  prefsw->spinbutton_pmoni =
+    lives_standard_spin_button_new(_("Monitor number for playback"),
+                                   prefs->play_monitor, 0,
+                                   nmons == 1 ? 0 : nmons, 1., 1., 0, LIVES_BOX(hbox),
+                                   (tmp = lives_strdup(_("#A setting of 0 means use all available "
+                                          "monitors (only works with some playback "
+                                          "plugins)."))));
+  lives_free(tmp);
   prefs->force_single_monitor = pfsm;
 
   add_fill_to_box(LIVES_BOX(hbox));
-  label = lives_standard_label_new(_("A setting of 0 means use all available monitors (only works with some playback plugins)."));
-
-  lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, TRUE, 0);
 
   prefsw->forcesmon_hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
@@ -3386,11 +3391,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_free(tmp2);
 
   // advanced instant opening
-  //widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
-  advbutton = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("_Advanced"),
-              DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
-  lives_box_pack_start(LIVES_BOX(hbox), advbutton, FALSE, FALSE, widget_opts.packing_width * 4);
-  //iwidget_opts.expand = LIVES_EXPAND_DEFAULT;
+  advbutton = lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES, _("_Advanced"),
+              DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT,
+              LIVES_BOX(hbox), TRUE, NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_decplug_advanced_clicked),
@@ -3601,11 +3604,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   pp_combo = lives_standard_combo_new(_("_Plugin"), vid_playback_plugins, LIVES_BOX(hbox), NULL);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
-  widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
-  advbutton = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("_Advanced"),
-              DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
-  lives_box_pack_start(LIVES_BOX(hbox), advbutton, FALSE, FALSE, widget_opts.packing_width * 4.);
+  advbutton = lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES, _("_Advanced"),
+              DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT,
+              LIVES_BOX(hbox), TRUE, NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_vpp_advanced_clicked),
@@ -3924,21 +3925,18 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   prefsw->scrollw_right_encoding = lives_standard_scrolled_window_new(0, 0, prefsw->vbox_right_encoding);
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_encoding), hbox, FALSE, FALSE, widget_opts.packing_height);
+  widget_opts.packing_height <<= 2;
+  layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_encoding));
 
-  label = lives_standard_label_new(_("You can also change these values when encoding a clip"));
-
-  lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, TRUE, 0);
+  lives_layout_add_label(LIVES_LAYOUT(layout),
+                         _("You can also change these values when encoding a clip"), FALSE);
 
   if (capable->has_encoder_plugins) {
     // scan for encoder plugins
     encoders = get_plugin_list(PLUGIN_ENCODERS, TRUE, NULL, NULL);
   }
 
-  widget_opts.packing_height <<= 2;
-  layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_encoding));
-  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   label = lives_standard_label_new(_("Encoder"));
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);

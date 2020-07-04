@@ -28,6 +28,7 @@ void init_special(void) {
 
   special_inited = TRUE;
   fchooser.nwidgets = 0;
+  aspect.nwidgets = 0;
 
   framedraw.xstart_param = framedraw.ystart_param = framedraw.xend_param = framedraw.yend_param = NULL;
   framedraw.stdwidgets = 0;

@@ -1287,12 +1287,12 @@ void on_stop_clicked(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (CURRENT_CLIP_IS_VALID) {
     lives_kill_subprocesses(cfile->handle, FALSE);
-    if (cfile->proc_ptr != NULL) {
-      if (cfile->proc_ptr->stop_button != NULL)
-        lives_widget_set_sensitive(cfile->proc_ptr->stop_button, FALSE);
-      lives_widget_set_sensitive(cfile->proc_ptr->pause_button, FALSE);
-      lives_widget_set_sensitive(cfile->proc_ptr->preview_button, FALSE);
-      lives_widget_set_sensitive(cfile->proc_ptr->cancel_button, FALSE);
+    if (mainw->proc_ptr != NULL) {
+      if (mainw->proc_ptr->stop_button != NULL)
+        lives_widget_set_sensitive(mainw->proc_ptr->stop_button, FALSE);
+      lives_widget_set_sensitive(mainw->proc_ptr->pause_button, FALSE);
+      lives_widget_set_sensitive(mainw->proc_ptr->preview_button, FALSE);
+      lives_widget_set_sensitive(mainw->proc_ptr->cancel_button, FALSE);
     }
   }
 
@@ -4356,8 +4356,8 @@ void play_all(boolean from_menu) {
   }
 
   if (!LIVES_IS_PLAYING) {
-    if (cfile->proc_ptr != NULL && from_menu) {
-      on_preview_clicked(LIVES_BUTTON(cfile->proc_ptr->preview_button), NULL);
+    if (mainw->proc_ptr != NULL && from_menu) {
+      on_preview_clicked(LIVES_BUTTON(mainw->proc_ptr->preview_button), NULL);
       return;
     }
 
@@ -4431,8 +4431,8 @@ void on_playsel_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // play part of a clip (in clip editor)
   if (!CURRENT_CLIP_IS_VALID || CURRENT_CLIP_IS_CLIPBOARD) return;
 
-  if (cfile->proc_ptr != NULL && menuitem != NULL) {
-    on_preview_clicked(LIVES_BUTTON(cfile->proc_ptr->preview_button), NULL);
+  if (mainw->proc_ptr != NULL && menuitem != NULL) {
+    on_preview_clicked(LIVES_BUTTON(mainw->proc_ptr->preview_button), NULL);
     return;
   }
   if (LIVES_POINTER_TO_INT(user_data))
@@ -5921,7 +5921,8 @@ static void recover_lost_clips(LiVESList * reclist) {
   // save set
   if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID) {
     on_quit_activate(NULL, LIVES_INT_TO_POINTER(1));
-    if (mainw->current_file != -1) return;
+    if (mainw->current_file != -1 && (!mainw->multitrack
+                                      || mainw->current_file != mainw->multitrack->render_file)) return;
   }
 
   // recover files
@@ -7168,12 +7169,12 @@ void on_cancel_keep_button_clicked(LiVESButton * button, livespointer user_data)
 
   clear_mainw_msg();
 
-  if (CURRENT_CLIP_IS_VALID && cfile->proc_ptr != NULL) {
-    lives_widget_set_sensitive(cfile->proc_ptr->cancel_button, FALSE);
-    lives_widget_set_sensitive(cfile->proc_ptr->pause_button, FALSE);
-    if (cfile->proc_ptr->stop_button != NULL)
-      lives_widget_set_sensitive(cfile->proc_ptr->stop_button, FALSE);
-    lives_widget_set_sensitive(cfile->proc_ptr->preview_button, FALSE);
+  if (CURRENT_CLIP_IS_VALID && mainw->proc_ptr != NULL) {
+    lives_widget_set_sensitive(mainw->proc_ptr->cancel_button, FALSE);
+    lives_widget_set_sensitive(mainw->proc_ptr->pause_button, FALSE);
+    if (mainw->proc_ptr->stop_button != NULL)
+      lives_widget_set_sensitive(mainw->proc_ptr->stop_button, FALSE);
+    lives_widget_set_sensitive(mainw->proc_ptr->preview_button, FALSE);
   }
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 
@@ -7233,8 +7234,9 @@ void on_cancel_keep_button_clicked(LiVESButton * button, livespointer user_data)
       return;
     }
     if (!mainw->is_rendering) {
-      keep_frames = cfile->proc_ptr->frames_done - cfile->progress_start + cfile->start - 1 + mainw->internal_messaging * 2;
-      if (mainw->internal_messaging && atoi(mainw->msg) > cfile->proc_ptr->frames_done)
+      keep_frames = mainw->proc_ptr->frames_done - cfile->progress_start
+                    + cfile->start - 1 + mainw->internal_messaging * 2;
+      if (mainw->internal_messaging && atoi(mainw->msg) > mainw->proc_ptr->frames_done)
         keep_frames = atoi(mainw->msg) - cfile->progress_start + cfile->start - 1 + 2;
     } else keep_frames = cfile->frames + 1;
     if (keep_frames > mainw->internal_messaging) {
@@ -7337,6 +7339,7 @@ void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       }
       if (mainw->sep_win) {
         resize_play_window();
+        lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
       }
       if (cfile->frames == 1 || cfile->play_paused) {
         lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
@@ -7375,8 +7378,7 @@ void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
         if (mainw->multitrack == NULL && mainw->opwx > -1) {
           //opwx and opwy were stored when we first switched to full screen
           lives_window_move(LIVES_WINDOW(mainw->play_window), mainw->opwx, mainw->opwy);
-          mainw->opwx = -1;
-          mainw->opwy = -1;
+          mainw->opwx = mainw->opwy = -1;
         } else {
           if (mainw->play_window != NULL) {
             lives_window_center(LIVES_WINDOW(mainw->play_window));
@@ -7384,40 +7386,43 @@ void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
             lives_widget_set_app_paintable(mainw->play_window, TRUE);
           }
         }
-        if (mainw->multitrack == NULL && (cfile->frames == 1 || cfile->play_paused)) {
-          lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-        }
-      } else {
-        // switch FROM fullscreen during pb
-        // in frame window
-        if (mainw->multitrack == NULL) {
-          if (!mainw->faded) {
-            lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
-            if (mainw->double_size) {
-              lives_widget_hide(mainw->sep_image);
-              lives_widget_hide(mainw->message_box);
-            }
-            unfade_background();
-          } else {
-            lives_widget_hide(mainw->frame1);
-            lives_widget_hide(mainw->frame2);
-            lives_widget_show(mainw->eventbox3);
-            lives_widget_show(mainw->eventbox4);
-            fade_background();
-            if (mainw->double_size) {
-              lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
-              resize(2.);
-            } else {
-              lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
-              resize(1.);
-            }
+        if (!mainw->multitrack) {
+          lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), TRUE);
+          if (cfile->frames == 1 || cfile->play_paused) {
+            lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
           }
+        } else {
+          // switch FROM fullscreen during pb
+          // in frame window
+          if (mainw->multitrack == NULL) {
+            if (!mainw->faded) {
+              lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
+              if (mainw->double_size) {
+                lives_widget_hide(mainw->sep_image);
+                lives_widget_hide(mainw->message_box);
+              }
+              unfade_background();
+            } else {
+              lives_widget_hide(mainw->frame1);
+              lives_widget_hide(mainw->frame2);
+              lives_widget_show(mainw->eventbox3);
+              lives_widget_show(mainw->eventbox4);
+              fade_background();
+              if (mainw->double_size) {
+                lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
+                resize(2.);
+              } else {
+                lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
+                resize(1.);
+              }
+            }
 
-          lives_widget_set_sensitive(mainw->fade, TRUE);
-          lives_widget_set_sensitive(mainw->dsize, TRUE);
+            lives_widget_set_sensitive(mainw->fade, TRUE);
+            lives_widget_set_sensitive(mainw->dsize, TRUE);
 
-          lives_widget_show(mainw->t_bckground);
-          lives_widget_show(mainw->t_double);
+            lives_widget_show(mainw->t_bckground);
+            lives_widget_show(mainw->t_double);
+          }
         }
       }
     }
@@ -9574,6 +9579,8 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
       draw_region(mainw->multitrack);
     if (widget == mainw->play_image)
       mt_show_current_frame(mainw->multitrack, FALSE);
+    if (widget == mainw->multitrack->msg_area)
+      msg_area_config(widget);
   }
   return FALSE;
 }
@@ -9623,7 +9630,7 @@ void on_effects_paused(LiVESButton * button, livespointer user_data) {
 
       if (!cfile->opening) {
         lives_button_set_label(LIVES_BUTTON(button), _("Resume"));
-        lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label2), _("\nPaused\n(click Resume to continue processing)"));
+        lives_label_set_text(LIVES_LABEL(mainw->proc_ptr->label2), _("\nPaused\n(click Resume to continue processing)"));
         d_print(_("paused..."));
       }
     } else {
@@ -9631,7 +9638,7 @@ void on_effects_paused(LiVESButton * button, livespointer user_data) {
 
       if (!cfile->opening) {
         lives_button_set_label(LIVES_BUTTON(button), _("Paus_e"));
-        lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label2), _("\nPlease Wait"));
+        lives_label_set_text(LIVES_LABEL(mainw->proc_ptr->label2), _("\nPlease Wait"));
         d_print(_("resumed..."));
       }
     }
@@ -9653,8 +9660,8 @@ void on_effects_paused(LiVESButton * button, livespointer user_data) {
           } else {
             ltext = (_("Enough"));
           }
-          lives_button_set_label(LIVES_BUTTON(cfile->proc_ptr->cancel_button), ltext);
-          lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label2),
+          lives_button_set_label(LIVES_BUTTON(mainw->proc_ptr->cancel_button), ltext);
+          lives_label_set_text(LIVES_LABEL(mainw->proc_ptr->label2),
                                (tmp = lives_strdup_printf
                                       (_("\nPaused\n(click %s to keep what you have and stop)\n(click Resume to continue processing)"),
                                        ltext)));
@@ -9677,13 +9684,13 @@ void on_effects_paused(LiVESButton * button, livespointer user_data) {
       }
 #ifdef ENABLE_JACK
       if (mainw->jackd != NULL && mainw->jackd_read != NULL && mainw->jackd_read->in_use)
-        if (cfile->proc_ptr->stop_button != NULL)
-          lives_widget_hide(cfile->proc_ptr->stop_button);
+        if (mainw->proc_ptr->stop_button != NULL)
+          lives_widget_hide(mainw->proc_ptr->stop_button);
 #endif
 #ifdef HAVE_PULSE_AUDIO
       if (mainw->pulsed != NULL && mainw->pulsed_read != NULL && mainw->pulsed_read->in_use)
-        if (cfile->proc_ptr->stop_button != NULL)
-          lives_widget_hide(cfile->proc_ptr->stop_button);
+        if (mainw->proc_ptr->stop_button != NULL)
+          lives_widget_hide(mainw->proc_ptr->stop_button);
 #endif
     } else {
       mainw->timeout_ticks += xticks;
@@ -9691,19 +9698,19 @@ void on_effects_paused(LiVESButton * button, livespointer user_data) {
       if (!mainw->preview) {
         if (cfile->opening || !cfile->nokeep) lives_button_set_label(LIVES_BUTTON(button), _("Pause/_Enough"));
         else lives_button_set_label(LIVES_BUTTON(button), _("Paus_e"));
-        lives_button_set_label(LIVES_BUTTON(cfile->proc_ptr->cancel_button), _("Cancel"));
-        lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label2), _("\nPlease Wait"));
+        lives_button_set_label(LIVES_BUTTON(mainw->proc_ptr->cancel_button), _("Cancel"));
+        lives_label_set_text(LIVES_LABEL(mainw->proc_ptr->label2), _("\nPlease Wait"));
         d_print(_("resumed..."));
       }
 #ifdef ENABLE_JACK
       if (mainw->jackd != NULL && mainw->jackd_read != NULL && mainw->jackd_read->in_use)
-        if (cfile->proc_ptr->stop_button != NULL)
-          lives_widget_show(cfile->proc_ptr->stop_button);
+        if (mainw->proc_ptr->stop_button != NULL)
+          lives_widget_show(mainw->proc_ptr->stop_button);
 #endif
 #ifdef HAVE_PULSE_AUDIO
       if (mainw->pulsed != NULL && mainw->pulsed_read != NULL && mainw->pulsed_read->in_use)
-        if (cfile->proc_ptr->stop_button != NULL)
-          lives_widget_show(cfile->proc_ptr->stop_button);
+        if (mainw->proc_ptr->stop_button != NULL)
+          lives_widget_show(mainw->proc_ptr->stop_button);
 #endif
     }
 
@@ -9839,16 +9846,16 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
       // stop effects processing (if preferred)
       if (prefs->pause_effect_during_preview) {
         if (!(mainw->effects_paused)) {
-          on_effects_paused(LIVES_BUTTON(cfile->proc_ptr->pause_button), NULL);
+          on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
           resume_after = TRUE;
         }
       }
     }
 
     if (button != NULL) lives_button_set_label(LIVES_BUTTON(button), _("Stop"));
-    if (cfile->proc_ptr != NULL) {
-      lives_widget_set_sensitive(cfile->proc_ptr->pause_button, FALSE);
-      lives_widget_set_sensitive(cfile->proc_ptr->cancel_button, FALSE);
+    if (mainw->proc_ptr != NULL) {
+      lives_widget_set_sensitive(mainw->proc_ptr->pause_button, FALSE);
+      lives_widget_set_sensitive(mainw->proc_ptr->cancel_button, FALSE);
     }
     if (!cfile->opening) {
       lives_widget_set_sensitive(mainw->showfct, FALSE);
@@ -9857,7 +9864,7 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
     desensitize();
 
     if (cfile->opening || cfile->opening_only_audio) {
-      lives_widget_hide(cfile->proc_ptr->processing);
+      lives_widget_hide(mainw->proc_ptr->processing);
       if (mainw->multitrack == NULL && !cfile->opening_audio) {
         showclipimgs();
       }
@@ -9874,17 +9881,13 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
     on_playsel_activate(NULL, LIVES_INT_TO_POINTER(TRUE));
 
     if (current_file != mainw->current_file) {
-      if (cfile->proc_ptr != NULL) {
-        mainw->files[current_file]->proc_ptr = cfile->proc_ptr;
-        cfile->proc_ptr = NULL;
-      }
       if (mainw->is_rendering) {
         mainw->files[current_file]->next_event = cfile->next_event;
         cfile->next_event = NULL;
         mainw->current_file = current_file;
         init_conversions(LIVES_INTENTION_RENDER);
         mainw->effort = -EFFORT_RANGE_MAX;
-      } else if (mainw->multitrack == NULL) {
+      } else if (!mainw->multitrack) {
         switch_to_file((mainw->current_file = 0), current_file);
       }
     }
@@ -9892,7 +9895,7 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
     if (cfile->opening) mainw->effects_paused = FALSE;
     else {
       // restart effects processing (if necessary)
-      if (resume_after) on_effects_paused(LIVES_BUTTON(cfile->proc_ptr->pause_button), NULL);
+      if (resume_after) on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
     }
     // user_data is non-NULL if called from multitrack. We want to preserve the value of cancelled.
     if (user_data == NULL) mainw->cancelled = CANCEL_NONE;
@@ -9903,12 +9906,12 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
     mainw->toy_type = (lives_toy_t)toy_type;
     lives_widget_set_sensitive(mainw->toys_menu, TRUE);
 
-    if (cfile->proc_ptr != NULL) {
+    if (mainw->proc_ptr != NULL) {
       // proc_ptr can be NULL if we finished loading with a bg generator running
-      lives_widget_show(cfile->proc_ptr->processing);
+      lives_widget_show(mainw->proc_ptr->processing);
       lives_button_set_label(LIVES_BUTTON(button), _("Preview"));
-      lives_widget_set_sensitive(cfile->proc_ptr->pause_button, TRUE);
-      lives_widget_set_sensitive(cfile->proc_ptr->cancel_button, TRUE);
+      lives_widget_set_sensitive(mainw->proc_ptr->pause_button, TRUE);
+      lives_widget_set_sensitive(mainw->proc_ptr->cancel_button, TRUE);
     }
     mainw->preview = FALSE;
     desensitize();

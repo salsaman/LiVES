@@ -3422,7 +3422,7 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
 
   register int i;
 
-  if (mainw->is_rendering && !(cfile->proc_ptr != NULL && mainw->preview)) {
+  if (mainw->is_rendering && !(mainw->proc_ptr != NULL && mainw->preview)) {
     // rendering from multitrack
     if (filter_map != NULL && layers[0] != NULL) {
       weed_apply_filter_map(layers, filter_map, tc, pchains);
@@ -7925,7 +7925,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   else cfile->bpp = 24;
 
   cfile->opening = FALSE;
-  cfile->proc_ptr = NULL;
+  mainw->proc_ptr = NULL;
 
   // if the generator has an optional audio in channel, enable it: TODO - make this configurable
   if ((achan = get_audio_channel_in(inst, 0)) != NULL) {

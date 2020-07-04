@@ -226,9 +226,7 @@ static void fill_bckg(cairo_t *cr, double x, double y, double dx, double dy) {
   cairo_fill(cr);
 }
 
-static int font_compare(const void *p1, const void *p2) {
-  const char *s1 = (const char *)(*(char **)p1);
-  const char *s2 = (const char *)(*(char **)p2);
+static int font_compare(void *s1, void *s2) {
   size_t sz1 = strlen(s1);
   size_t sz2 = strlen(s2);
   char *u1 = g_utf8_casefold(s1, -1);
@@ -275,7 +273,7 @@ static weed_error_t scribbler_process(weed_plant_t *inst, weed_timecode_t timest
   else {
     fontstr = weed_param_get_value_string(in_params[P_FONT]);
     for (i = 0; i < num_fonts_available; ++i) {
-      if (!font_compare(fonts_available[i], fontstr)) {
+      if (!font_compare(fonts_available[i], (const char *)fontstr)) {
         fontnum = i;
         break;
       }

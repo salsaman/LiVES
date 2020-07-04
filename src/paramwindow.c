@@ -782,7 +782,8 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
     }
     if (cfile->end - cfile->start + 1 < rfx->min_frames) {
       lives_list_free_all(&retvals);
-      txt = lives_strdup_printf(_("\nYou must select at least %d frames to use this effect.\n\n"), rfx->min_frames);
+      txt = lives_strdup_printf(_("\nYou must select at least %d frames to use this effect.\n\n"),
+                                rfx->min_frames);
       do_blocking_error_dialog(txt);
       lives_free(txt);
       return NULL;
@@ -802,7 +803,7 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
   if (pbox == NULL) {
     char *title, *defstr;
     if (rfx->status == RFX_STATUS_WEED || no_process || (rfx->num_in_channels == 0 &&
-        rfx->props & RFX_PROPS_BATCHG)) scrw = RFX_WINSIZE_H * 1.5 * widget_opts.scale;
+        rfx->props & RFX_PROPS_BATCHG)) scrw = RFX_WINSIZE_H * 2. * widget_opts.scale;
     else scrw = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
 
     fx_dialog[didx] = (_fx_dialog *)lives_malloc(sizeof(_fx_dialog));
@@ -812,6 +813,8 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
     if (is_defaults) defstr = (_("Defaults for "));
     else defstr = lives_strdup("");
     title = lives_strdup_printf("%s%s", defstr, _(rfx->menu_text[0] == '_' ? rfx->menu_text + 1 : rfx->menu_text));
+    g_print("SCRW is %d\n", scrw);
+
     fx_dialog[didx]->dialog = lives_standard_dialog_new(title, FALSE, scrw, RFX_WINSIZE_V);
     lives_free(defstr);
     lives_free(title);
@@ -1063,7 +1066,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
 
   char fmt_strings[MAX_FMT_STRINGS][FMT_STRING_SIZE];
 
-  size_t fmtlen, ll;
+  size_t fmtlen, ll, llx;
 
   boolean used[rfx->num_params];
   boolean has_box = FALSE;
@@ -1073,6 +1076,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   boolean chk_params = FALSE;
   boolean needs_sizes = FALSE;
   boolean layout_mode = FALSE;
+  boolean keepsmall;
 
   int pnum;
   int length;
@@ -1086,6 +1090,12 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   int woph = widget_opts.packing_height;
 
   register int i, j, k;
+
+  char sepnpnum[1024];
+  size_t sepnpnumlen;
+
+  lives_snprintf(sepnpnum, 1024, "s%s", rfx->delim);
+  sepnpnumlen = strlen(sepnpnum);
 
   if (top_vbox == NULL) {
     // just check how many non-hidden params without displaying
@@ -1381,23 +1391,32 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
             widget_opts.filler_len = wofl;
           }
 
-          lives_snprintf(label_text, 256, "%s", array[j] + 1);
-          while (lives_strcmp(array[j] + strlen(array[j]) - 1, "\"") && j < num_tok - 1) {
+          ll = 0;
+          llx = lives_snprintf(label_text, 256, "%s", array[j] + 1);
+          if (llx > 256) llx = 256;
+          llx--;
+
+          while (j < num_tok - 1 && array[j][llx - 1] == '"') {
             // handle separators within label text
-            lives_strappend(label_text, 256, array[++j]);
+            ll += llx;
+            llx = lives_strappend(label_text, 256, array[++j]);
+          }
+          ll += llx;
+
+          keepsmall = TRUE;
+          if (!last_label && !has_param) {
+            if (j == num_tok - 1 || strncmp(array[j + 1], sepnpnum, sepnpnumlen)) keepsmall = TRUE;
           }
 
-          if ((ll = strlen(label_text)) > 1) {
-            if (!strcmp(label_text + ll - 1, "\"")) {
-              lives_memset(label_text + ll - 1, 0, 1);
-            }
+          if (ll) {
+            if (label_text[ll - 1] == '"') label_text[ll - 1] = 0;
 
-            if (last_label == NULL && !has_param) widget_opts.justify = LIVES_JUSTIFY_CENTER;
+            if (!keepsmall) widget_opts.justify = LIVES_JUSTIFY_CENTER;
             else if (last_label != NULL) lives_widget_set_halign(last_label, LIVES_ALIGN_START);
 
-            if (layoutx != NULL) {
-              last_label = lives_layout_add_label(LIVES_LAYOUT(layoutx), label_text, TRUE);
-            } else last_label = add_param_label_to_box(LIVES_BOX(hbox), TRUE, label_text);
+            if (layoutx) {
+              last_label = lives_layout_add_label(LIVES_LAYOUT(layoutx), label_text, keepsmall);
+            } else last_label = add_param_label_to_box(LIVES_BOX(hbox), !keepsmall, label_text);
             widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
           }
         }

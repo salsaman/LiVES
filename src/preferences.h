@@ -736,6 +736,8 @@ typedef struct {
   volatile float volume; ///< audio volume level (for jack and pulse)
   boolean vj_mode;
   boolean ar_clipset;
+
+  int msg_textsize;
 } _future_prefs;
 
 _prefs *prefs;

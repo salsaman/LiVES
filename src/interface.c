@@ -3435,7 +3435,6 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
         if (overflowy > 0) myheight -= overflowy;
 
         lives_widget_process_updates(chooser, TRUE);
-        //lives_widget_context_update();
 
         if (overflowx > 0 || overflowy > 0) {
           lives_widget_set_size_request(chooser, mywidth, myheight);
@@ -5052,11 +5051,10 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout_lines", LIVES_INT_TO_POINTER(nlines));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout_last", LIVES_INT_TO_POINTER(msgno));
 
-
   return TRUE;
 }
 
-
+//#define DEBUG_OVERFLOW
 static int height, lheight;
 
 boolean msg_area_config(LiVESWidget * widget) {
@@ -5074,12 +5072,25 @@ boolean msg_area_config(LiVESWidget * widget) {
   static int gui_posy = 1000000;
 
   LingoLayout *layout;
+  lives_rect_t rect;
+
+  boolean mustret = FALSE;
+
   int width;
   int lineheight, llines, llast;
+  int scr_width = GUI_SCREEN_WIDTH;
+  int scr_height = GUI_SCREEN_HEIGHT;
+  int bx, by, w = -1, h = -1, posx, posy;
+  int overflowx = 0, overflowy = 0, xoverflowx, xoverflowy;
+  int ww, hh;
+  int paisize = 0, opaisize;
 
   if (!mainw->is_ready) return FALSE;
   if (!prefs->show_msg_area) return FALSE;
   if (LIVES_IS_PLAYING && prefs->msgs_pbdis) return FALSE;
+
+  if (mainw->multitrack && lives_widget_get_allocation_height(mainw->multitrack->top_vbox) < 32)
+    return FALSE;
 
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
 
@@ -5088,189 +5099,189 @@ boolean msg_area_config(LiVESWidget * widget) {
   width = lives_widget_get_allocation_width(widget);
   height = lives_widget_get_allocation_height(widget);
 
-  if (reqheight != -1) height = reqheight;
-  reqheight = -1;
   if (reqwidth != -1) width = reqwidth;
   reqwidth = -1;
+  if (reqheight != -1) height = reqheight;
+  reqheight = -1;
 
   // the expose event for the message area is a good opportunity to recheck the window size
 
   //if (width < LAYOUT_SIZE_MIN || height < LAYOUT_SIZE_MIN) return FALSE;
 
-  llast = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout_last"));
+  llast = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
+                               "layout_last"));
 
-  if (mainw->multitrack == NULL) {
-    lives_rect_t rect;
-    int scr_width = GUI_SCREEN_WIDTH;
-    int scr_height = GUI_SCREEN_HEIGHT;
-    int bx, by, w = -1, h = -1, posx, posy;
-    int overflowx = 0, overflowy = 0, xoverflowx, xoverflowy;
-    int ww, hh;
-    boolean mustret = FALSE;
+  if (mainw->is_ready && (scr_width != old_scr_width || scr_height != old_scr_height)) {
+    vmin = -10000000;
+    hmin = -10000000;
+    reqheight = -1; // presumed height of msg_area
+    reqwidth = -1; // presumed width of msg_area
+    wiggle_room = 0;
+    last_height = -1;
+    last_textsize = -1;
 
-    if (mainw->is_ready && (scr_width != old_scr_width || scr_height != old_scr_height)) {
-      vmin = -10000000;
-      hmin = -10000000;
-      reqheight = -1; // presumed height of msg_area
-      reqwidth = -1; // presumed width of msg_area
-      wiggle_room = 0;
-      last_height = -1;
-      last_textsize = -1;
+    last_overflowy = 10000000;
+    last_overflowx = 10000000;
 
-      last_overflowy = 10000000;
-      last_overflowx = 10000000;
+    old_scr_height = scr_height;
+    old_scr_width = scr_width;
+    gui_posx = gui_posy = 1000000;
+  }
 
-      old_scr_height = scr_height;
-      old_scr_width = scr_width;
-      gui_posx = gui_posy = 1000000;
-    }
+  lives_xwindow_get_frame_extents(lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET), &rect);
 
-    lives_xwindow_get_frame_extents(lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET), &rect);
+  get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
 
-    //get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-    bx = mainw->mgeom[widget_opts.monitor].phys_width - scr_width;
-    by = mainw->mgeom[widget_opts.monitor].phys_height - scr_height;
+  ww = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
+  w = mainw->assumed_width;
+  if (w == -1) w = ww;
+  hh = lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET);
+  h = mainw->assumed_height;
+  if (h == -1) h = hh;
 
-    ww = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
-    w = mainw->assumed_width;
-    if (w == -1) w = ww;
-    hh = lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET);
-    h = mainw->assumed_height;
-    if (h == -1) h = hh;
-
-    overflowx = ww - (scr_width - bx);
-    overflowy = hh - (scr_height - by);
+  overflowx = ww - (scr_width - bx);
+  overflowy = hh - (scr_height - by);
 #ifdef DEBUG_OVERFLOW
-    g_print("ADJ A %d = %d - (%d - %d) + (%d - %d) %d %d\n", overflowy, h, scr_height, by, hh, mainw->assumed_height,
-            ABS(overflowy), vmin);
+  //g_print("ADJ A %d = %d - (%d - %d) + (%d - %d) %d %d\n", overflowy, h, scr_height, by, hh, mainw->assumed_height, ABS(overflowy), vmin);
 #endif
-    if (overflowx >= 0 && mainw->assumed_width != -1) {
-      xoverflowx = ww - w;
-      if (xoverflowx > overflowx) {
+  if (overflowx >= 0 && mainw->assumed_width != -1) {
+    xoverflowx = ww - w;
+    if (xoverflowx > overflowx) {
 #ifdef DEBUG_OVERFLOW
-        g_print("ADJ B %d = %d - %d - %d\n", xoverflowx, rect.width, w, bx);
+      g_print("ADJ B %d = %d - %d - %d\n", xoverflowx, rect.width, w, bx);
 #endif
-        overflowx = xoverflowx;
-      }
-    }
-
-    if (overflowy >= 0 && mainw->assumed_height != -1) {
-      xoverflowy = hh - h;
-      if (xoverflowy > overflowy) {
-#ifdef DEBUG_OVERFLOW
-        g_print("ADJ B %d = %d - %d - %d\n", xoverflowy, rect.height, h, by);
-#endif
-        overflowy = xoverflowy;
-      }
-    }
-
-    if (ABS(overflowx) <= hmin) overflowx = 0;
-    if (ABS(overflowy) <= vmin) overflowy = 0;
-
-#ifdef DEBUG_OVERFLOW
-    g_print("overflow2 is %d : %d %d %d X %d : %d %d %d [%d %d %d]\n", overflowx, w, scr_width, bx, overflowy, h, scr_height, by, h,
-            rect.height, lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET));
-#endif
-
-    if (overflowx != 0 && w < scr_width && ww <= scr_width && overflowx == last_overflowx) {
-      int xhmin = ABS(overflowx);
-      if (xhmin < ABS(hmin)) {
-        hmin = xhmin;
-        mustret = TRUE;
-      }
-    }
-    last_overflowx = overflowx;
-
-#ifdef DEBUG_OVERFLOW
-    g_print("NOW %d %d %d %d %d\n", overflowy, h, scr_height, hh, last_overflowy);
-#endif
-    if (overflowy != 0 && h <= scr_height && hh <= scr_height && overflowy == last_overflowy) {
-      int xvmin = ABS(overflowy);
-      if (xvmin < ABS(vmin)) {
-        vmin = xvmin;
-        mustret = TRUE;
-      }
-    }
-    last_overflowy = overflowy;
-
-#ifdef DEBUG_OVERFLOW
-    g_print("WIDG SIZE %d X %d, %d,%d and %d %d %d\n", width, height, hmin, vmin, bx, by, mustret);
-#endif
-    if (mustret) {
-      lives_widget_queue_draw(mainw->msg_area);
-      return FALSE;
-    }
-
-    if (overflowx != 0 || overflowy != 0) {
-#ifdef DEBUG_OVERFLOW
-      g_print("overflow is %d X %d : %d %d\n", overflowx, overflowy, width, height);
-#endif
-      width -= overflowx;
-      height -= overflowy;
-
-      if (height <= MIN_MSGBAR_HEIGHT) {
-        height = MIN_MSGBAR_HEIGHT;
-        mainw->mbar_res = height;
-      }
-
-      if (width < 0 || height < 0) return FALSE;
-
-      w -= overflowx;
-      h -= overflowy;
-
-      if (!prefs->open_maximised) {
-        mainw->assumed_width = w;
-        mainw->assumed_height = h;
-        lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
-        lives_xwindow_get_origin(lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET), &posx, &posy);
-#ifdef DEBUG_OVERFLOW
-        g_print("2MOVE to %d X %d\n", posx, posy);
-#endif
-      } else {
-        mainw->assumed_width = rect.width - overflowx - bx;
-        mainw->assumed_height = rect.height - overflowy - by;
-      }
-
-      if (!prefs->open_maximised) {
-        if (overflowx > 0) posx -= overflowx;
-        else posx = -overflowx;
-        if (posx < 0) posx = 0;
-        if (overflowy > 0) posy = overflowy - posy;
-        if (posy < 0) posy = 0;
-
-        if (posx > gui_posx) posx = gui_posx;
-        if (posy > gui_posy) posy = gui_posy;
-
-#ifdef DEBUG_OVERFLOW
-        g_print("MOVE to %d X %d\n", posx, posy);
-#endif
-        lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), posx, posy);
-
-        gui_posx = posx;
-        gui_posy = posy;
-      }
-
-      if (height > 0 && width > 0) {
-        //g_print("NEW SIZE %d\n", height - 4);
-        lives_widget_set_size_request(widget, width, height);
-        reqheight = height;
-        reqwidth = width;
-      }
-
-      lives_widget_show_all(mainw->message_box);
-
-      if (!prefs->open_maximised)
-        lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), posx, posy);
-      else
-        lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET))
-        ;
+      overflowx = xoverflowx;
     }
   }
 
-  if (layout == NULL || !LINGO_IS_LAYOUT(layout)) {
+  if (overflowy >= 0 && mainw->assumed_height != -1) {
+    xoverflowy = hh - h;
+    if (xoverflowy > overflowy) {
+#ifdef DEBUG_OVERFLOW
+      g_print("ADJ B %d = %d - %d - %d\n", xoverflowy, rect.height, h, by);
+#endif
+      overflowy = xoverflowy;
+    }
+  }
+
+  if (ABS(overflowx) <= hmin) overflowx = 0;
+  if (ABS(overflowy) <= vmin) overflowy = 0;
+
+#ifdef DEBUG_OVERFLOW
+  g_print("overflow2 is %d : %d %d %d X %d : %d %d %d [%d %d %d]\n", overflowx, w, scr_width, bx, overflowy, h, scr_height, by, h,
+          rect.height, lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET));
+#endif
+
+  if (overflowx != 0 && w < scr_width && ww <= scr_width && overflowx == last_overflowx) {
+    int xhmin = ABS(overflowx);
+    if (xhmin < ABS(hmin)) {
+      hmin = xhmin;
+      mustret = TRUE;
+    }
+  }
+  last_overflowx = overflowx;
+
+#ifdef DEBUG_OVERFLOW
+  g_print("NOW %d %d %d %d %d\n", overflowy, h, scr_height, hh, last_overflowy);
+#endif
+  if (overflowy != 0 && h <= scr_height && hh <= scr_height && overflowy == last_overflowy) {
+    int xvmin = ABS(overflowy);
+    if (xvmin < ABS(vmin)) {
+      vmin = xvmin;
+      mustret = TRUE;
+    }
+  }
+  last_overflowy = overflowy;
+
+#ifdef DEBUG_OVERFLOW
+  g_print("WIDG SIZE %d X %d, %d,%d and %d %d %d\n", width, height, hmin, vmin, bx, by, mustret);
+#endif
+  if (mustret) {
+    lives_widget_queue_draw(mainw->msg_area);
+    return FALSE;
+  }
+
+  if (overflowx != 0 || overflowy != 0) {
+#ifdef DEBUG_OVERFLOW
+    g_print("overflow is %d X %d : %d %d\n", overflowx, overflowy, width, height);
+#endif
+    width -= overflowx;
+    height -= overflowy;
+
+    if (height <= MIN_MSGBAR_HEIGHT) {
+      height = MIN_MSGBAR_HEIGHT;
+      mainw->mbar_res = height;
+    }
+
+    if (width < 0 || height < 0) return FALSE;
+
+    w -= overflowx;
+    h -= overflowy;
+
+    if (!prefs->open_maximised) {
+      mainw->assumed_width = w;
+      mainw->assumed_height = h;
+      lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
+      lives_xwindow_get_origin(lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET), &posx, &posy);
+#ifdef DEBUG_OVERFLOW
+      g_print("2MOVE to %d X %d\n", posx, posy);
+#endif
+    } else {
+      mainw->assumed_width = rect.width - overflowx - bx;
+      mainw->assumed_height = rect.height - overflowy - by;
+    }
+
+    if (!prefs->open_maximised) {
+      if (overflowx > 0) posx -= overflowx;
+      else posx = -overflowx;
+      if (posx < 0) posx = 0;
+      if (overflowy > 0) posy = overflowy - posy;
+      if (posy < 0) posy = 0;
+
+      if (posx > gui_posx) posx = gui_posx;
+      if (posy > gui_posy) posy = gui_posy;
+
+#ifdef DEBUG_OVERFLOW
+      g_print("MOVE to %d X %d\n", posx, posy);
+#endif
+      lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), posx, posy);
+
+      gui_posx = posx;
+      gui_posy = posy;
+    }
+
+    if (height > 0 && width > 0) {
+      //g_print("NEW SIZE %d\n", height - 4);
+      if (mainw->multitrack) {
+        /// in multitrack what we resize is the vpaned, and the msg area just occupies the lower part
+        /// of that
+        int tvh = lives_widget_get_allocation_height(mainw->multitrack->top_vbox);
+        int xtra = hh - tvh;
+        width = lives_widget_get_allocation_width(LIVES_WIDGET(widget));
+        height = lives_widget_get_allocation_height(LIVES_WIDGET(widget));
+        height += xtra - SCRN_BRDR;
+      }
+
+      lives_widget_set_size_request(widget, width, height);
+      reqwidth = width;
+      reqheight = height;
+    }
+
+    lives_widget_show_all(mainw->message_box);
+
+    if (!prefs->open_maximised)
+      lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), posx, posy);
+    else
+      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+  }
+
+  opaisize = paisize;
+  paisize = lives_widget_get_allocation_width(lives_widget_get_parent(widget));
+
+  if (!layout || !LINGO_IS_LAYOUT(layout) || paisize != opaisize) {
     // this can happen e.g if we open the app. with no clips
     msg_area_scroll_to_end(widget, mainw->msg_adj);
-    if (layout == NULL || !LINGO_IS_LAYOUT(layout)) {
+    if (!layout || !LINGO_IS_LAYOUT(layout)) {
       return FALSE;
     }
   }

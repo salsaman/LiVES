@@ -32,6 +32,8 @@
 
 #include "main.h"
 
+boolean weed_palette_is_sane(int pal);
+
 #define USE_THREADS 1 ///< set to 0 to disable threading for pixbuf operations, 1 to enable. Other values are invalid.
 
 #ifdef USE_SWSCALE

@@ -575,6 +575,24 @@ typedef int lives_alarm_t;
 #define MAINW_MSG_SIZE 8192
 
 typedef struct {
+  // processing / busy dialog (TODO - move into dialogs.h / or prog_dialogs.h)
+  LiVESWidget *processing;
+  LiVESWidget *progressbar;
+  LiVESWidget *label;
+  LiVESWidget *label2;
+  LiVESWidget *label3;
+  LiVESWidget *stop_button;
+  LiVESWidget *pause_button;
+  LiVESWidget *preview_button;
+  LiVESWidget *cancel_button;
+  LiVESWidget *scrolledwindow;
+  frames_t progress_start, progress_end;
+  frames_t frames_done;
+  boolean is_ready;
+  int owner;
+} xprocess;
+
+typedef struct {
   char msg[MAINW_MSG_SIZE];
 
   // files
@@ -930,6 +948,8 @@ typedef struct {
 
   lives_mt *multitrack; ///< holds a pointer to the entire multitrack environment; NULL in Clip Edit mode
 
+  xprocess *proc_ptr; // progress dialog
+
   /// WIDGETS
   LiVESWidget *LiVES; ///< toplevel window
   LiVESWidget *frame1;
@@ -1126,7 +1146,6 @@ typedef struct {
 
   LiVESWidget *sa_button;
   LiVESWidget *sa_hbox;
-  LiVESWidget *sa_toolbar;
 
   LiVESWidget *arrow1;
   LiVESWidget *arrow2;

@@ -2,8 +2,11 @@ Version 3.2.0
 ------------------
 Rewrote inital startup, optimising it and making it more robust.
 Updated gtk+ support to 3.24, fixing numerous interface threading issues.
-Configuration directory can now be specified from the commandline (-configdir)
-Implement a thread pool with generic worker threads, eliminating time consumed by thread thread startup / shutdown.
+Interface element updates, including a total rewrite of buttons, a new font chooser element based on gtkfontchooser. Interface buttons can now be properly resized and alter their background colours.
+	Configuration directory can now be specified from the commandline (-configdir)
+	Implement a thread pool with generic worker threads, eliminating time consumed by thread thread startup / shutdown. The threadpool size is increased dynamically to ensure that there always suffcient thread resources available.
+	Introduced the idea of lives_proc_threads. Literally any function can now run as a background thread, with monitoring, cancellation points, and collection of typesafe return results.
+Code from rpmalloc is now included, enabling optimised memory handling in some specific cases.
 Implement auto gamma correction, (sRGB, Linear, bt.709). Conversion is done via the threadpool.
 Implement threading for swscale; also using the threadpool.
 Added a predictive caching mechanism to the player,

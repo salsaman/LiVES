@@ -419,27 +419,10 @@ typedef struct {
 } resample_event;
 
 typedef struct {
-  // processing / busy dialog
-  LiVESWidget *processing;
-  LiVESWidget *progressbar;
-  LiVESWidget *label;
-  LiVESWidget *label2;
-  LiVESWidget *label3;
-  LiVESWidget *stop_button;
-  LiVESWidget *pause_button;
-  LiVESWidget *preview_button;
-  LiVESWidget *cancel_button;
-  LiVESWidget *scrolledwindow;
-  frames_t frames_done;
-  boolean is_ready;
-} xprocess;
-
-typedef struct {
   int afile;
   double seek;
   double vel;
 } lives_audio_track_state_t;
-
 
 #ifdef IS_LIBLIVES
 #include "liblives.hpp"
@@ -732,6 +715,8 @@ typedef struct _lives_clip_t {
   boolean restoring;
   boolean is_loaded;  ///< should we continue loading if we come back to this clip
 
+  frames_t progress_start, progress_end;
+
   ///undo
   lives_undo_t undo_action;
 
@@ -779,11 +764,6 @@ typedef struct _lives_clip_t {
 
   char *op_dir;
 
-  /// the processing window
-  xprocess *proc_ptr;
-
-  frames_t progress_start;
-  frames_t progress_end;
   LiVESWidget *menuentry;
   ulong menuentry_func;
   double freeze_fps; ///< pb_fps for paused / frozen clips
@@ -1644,8 +1624,6 @@ void set_sel_label(LiVESWidget *label);
 void clear_mainw_msg(void);
 size_t get_token_count(const char *string, int delim);
 LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette);
-const char *lives_strappend(const char *string, int len, const char *newbit);
-const char *lives_strappendf(const char *string, int len, const char *fmt, ...);
 void find_when_to_stop(void);
 int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc);
 void calc_aframeno(int fileno);
@@ -1666,6 +1644,8 @@ char *subst(const char *string, const char *from, const char *to);
 char *insert_newlines(const char *text, int maxwidth);
 
 int hextodec(const char *string);
+
+boolean get_screen_usable_size(int *w, int *h);
 
 #include "osc_notify.h"
 
@@ -1766,7 +1746,7 @@ void break_me(const char *dtl);
 
 #endif
 
-//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #define STD_STRINGFUNCS

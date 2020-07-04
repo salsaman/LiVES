@@ -886,11 +886,12 @@ LIVES_GLOBAL_INLINE char *lives_concat(char *st, char *x) {
   return tmp;
 }
 
-LIVES_GLOBAL_INLINE const char *lives_strappend(const char *string, int len, const char *xnew) {
+LIVES_GLOBAL_INLINE int lives_strappend(const char *string, int len, const char *xnew) {
   /// see also: lives_concat()
   size_t sz = lives_strlen(string);
-  lives_snprintf((char *)(string + sz), len - sz, "%s", xnew);
-  return string;
+  int newln = lives_snprintf((char *)(string + sz), len - sz, "%s", xnew);
+  if (newln > len) newln = len;
+  return --newln - sz; // returns strlen(xnew)
 }
 
 LIVES_GLOBAL_INLINE const char *lives_strappendf(const char *string, int len, const char *fmt, ...) {

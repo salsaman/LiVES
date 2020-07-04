@@ -55,7 +55,7 @@ $cstring2=&RGB24_to_string($p4_red,$p4_green,$p4_blue);
 </pre>
 
 <loop>
-system("$convert_command $img_prefix$in -fill $cstring1 -stroke $cstring2 -pointsize $p5 -family $fam -stretch $stretch -style $style -weight $weight -draw \"gravity Center text $p1 $p2 '$p0'\" $out_prefix$out");
+system("$convert_command $img_prefix$in -fill $cstring1 -stroke $cstring2 -pointsize $p5 -family \"$fam\" -stretch $stretch -style $style -weight $weight -draw \"gravity Center text $p1 $p2 '$p0'\" $out_prefix$out");
 </loop>
 
 <post>

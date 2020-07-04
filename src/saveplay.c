@@ -2712,8 +2712,6 @@ void play_file(void) {
         }
       }
 
-      mainw->gui_fooey = TRUE;
-
       if (!mainw->foreign && !mainw->multitrack)
         mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
       else
@@ -3595,7 +3593,6 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->freeze_fps = 0.;
   cfile->last_vframe_played = 0;
   cfile->frameno = cfile->last_frameno = cfile->saved_frameno = 1;
-  cfile->proc_ptr = NULL;
   cfile->progress_start = cfile->progress_end = 0;
   cfile->play_paused = cfile->nokeep = FALSE;
   cfile->undo_start = cfile->undo_end = 0;
@@ -4870,8 +4867,6 @@ ulong restore_file(const char *file_name) {
   cfile->arps = cfile->arate;
   cfile->pb_fps = cfile->fps;
   cfile->opening = FALSE;
-  cfile->proc_ptr = NULL;
-
   cfile->changed = FALSE;
 
   if (prefs->autoload_subs) {
@@ -6100,7 +6095,8 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       cfile->is_loaded = TRUE;
       cfile->changed = TRUE;
       lives_rm(cfile->info_file);
-      set_main_title(cfile->name, 0);
+      if (!mainw->multitrack)
+        set_main_title(cfile->name, 0);
 
       restore_clip_binfmt(mainw->current_file);
 

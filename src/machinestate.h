@@ -229,7 +229,7 @@ boolean lives_strncmp(const char *, const char *, size_t) GNU_HOT GNU_PURE;
 int lives_strcmp_ordered(const char *, const char *) GNU_HOT GNU_PURE;
 char *lives_concat(char *, char *) GNU_HOT;
 char *lives_strstop(char *, const char term) GNU_HOT;
-const char *lives_strappend(const char *string, int len, const char *xnew);
+int lives_strappend(const char *string, int len, const char *xnew);
 const char *lives_strappendf(const char *string, int len, const char *fmt, ...);
 
 void swab2(const void *from, const void *to, size_t granularity) 	GNU_HOT;

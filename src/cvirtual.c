@@ -667,7 +667,7 @@ frames_t realize_all_frames(int clipno, const char *msg, boolean enough) {
     cfile->progress_end = count_virtual_frames(cfile->frame_index, 1, cfile->frames);
     if (enough) mainw->cancel_type = CANCEL_SOFT; // force "Enough" button to be shown
     do_threaded_dialog((char *)msg, TRUE);
-    lives_widget_show_all(mainw->files[clipno]->proc_ptr->processing);
+    lives_widget_show_all(mainw->proc_ptr->processing);
     mainw->cancel_type = CANCEL_KILL;
     ret = virtual_to_images(mainw->current_file, 1, cfile->frames, TRUE, NULL);
     end_threaded_dialog();

@@ -813,7 +813,7 @@ static boolean pre_init(void) {
   mainw->imsep = mainw->imframe = NULL;
 
   prefs->max_messages = get_int_prefd(PREF_MAX_MSGS, DEF_MAX_MSGS);
-  prefs->msg_textsize = get_int_prefd(PREF_MSG_TEXTSIZE, DEF_MSG_TEXTSIZE);
+  future_prefs->msg_textsize = prefs->msg_textsize = get_int_prefd(PREF_MSG_TEXTSIZE, DEF_MSG_TEXTSIZE);
 
   mainw->msg_list = NULL;
   mainw->n_messages = 0;
@@ -1414,6 +1414,9 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->st_fcache = mainw->en_fcache = mainw->pr_fcache = NULL;
 
   mainw->ptrtime = 0.;
+
+  mainw->proc_ptr = NULL;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);
@@ -2995,6 +2998,13 @@ static boolean render_choice_idle(livespointer data) {
 static boolean lazy_startup_checks(void *data) {
   if (prefs->vj_mode) {
     resize(1.);
+    if (prefs->open_maximised) {
+      int bx, by;
+      get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+      if (by > MENU_HIDE_LIM)
+        lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
+      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    }
     return FALSE;
   }
   if (needs_disk_quota) {
@@ -3028,6 +3038,8 @@ boolean resize_message_area(livespointer data) {
   get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
 
   if (mainw->idlemax == DEF_IDLE_MAX / 2 && prefs->open_maximised && (by > 0 || bx > 0)) {
+    if (by > MENU_HIDE_LIM)
+      lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     mainw->assumed_height = mainw->assumed_width = -1;
     return TRUE;
@@ -3164,6 +3176,10 @@ static boolean lives_startup(livespointer data) {
   create_LiVES();
 
   if (prefs->open_maximised && prefs->show_gui) {
+    int bx, by;
+    get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+    if (by > MENU_HIDE_LIM)
+      lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
 
@@ -3450,7 +3466,7 @@ static boolean lives_startup2(livespointer data) {
   mainw->kb_timer = lives_timer_add_simple(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
 
   resize(1.);
-  if (prefs->interactive && !mainw->multitrack) set_interactive(TRUE);
+  if (prefs->interactive) set_interactive(TRUE);
 
   return FALSE;
 } // end lives_startup2()
@@ -4864,7 +4880,6 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
 
     if (mainw->multitrack && !mainw->play_window) {
       cx += widget_opts.border_width;
-      cy += widget_opts.border_width;
     }
 
     if (!(widget == mainw->play_image && mainw->multitrack)) {
@@ -4939,12 +4954,11 @@ void load_start_image(int frame) {
     int scr_height = GUI_SCREEN_HEIGHT;
     int hspace = get_hspace();
     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+    if (by > MENU_HIDE_LIM)
+      lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
     hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
     vsize = scr_height - (CE_TIMELINE_HSPACE + hspace + by + mainw->mbar_res);
     if (LIVES_IS_PLAYING && mainw->double_size) {
-      // NB:
-      /* mainw->ce_frame_width = hsize / scale + H_RESIZE_ADJUST; */
-      /* mainw->ce_frame_height = vsize / scale + V_RESIZE_ADJUST; */
       hsize /= 2;
       vsize /= 2;
     }
@@ -5216,12 +5230,11 @@ check_stcache:
       int scr_height = GUI_SCREEN_HEIGHT;
       int hspace = get_hspace();
       get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+      if (by > MENU_HIDE_LIM)
+        lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
       hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
       vsize = scr_height - (CE_TIMELINE_HSPACE + hspace + by + mainw->mbar_res);
       if (LIVES_IS_PLAYING && mainw->double_size) {
-        // NB:
-        /* mainw->ce_frame_width = hsize / scale + H_RESIZE_ADJUST; */
-        /* mainw->ce_frame_height = vsize / scale + V_RESIZE_ADJUST; */
         hsize /= 2;
         vsize /= 2;
       }
@@ -7406,20 +7419,20 @@ void load_frame_image(int frame) {
 
     if (was_preview) {
       // preview
-      if (cfile->proc_ptr != NULL && cfile->proc_ptr->frames_done > 0 &&
-	  frame >= (cfile->proc_ptr->frames_done - cfile->progress_start + cfile->start)) {
+      if (mainw->proc_ptr != NULL && mainw->proc_ptr->frames_done > 0 &&
+	  frame >= (mainw->proc_ptr->frames_done - cfile->progress_start + cfile->start)) {
 	if (cfile->opening) {
-	  cfile->proc_ptr->frames_done = cfile->opening_frames = get_frame_count(mainw->current_file, cfile->opening_frames);
+	  mainw->proc_ptr->frames_done = cfile->opening_frames = get_frame_count(mainw->current_file, cfile->opening_frames);
 	}
       }
-      if (cfile->proc_ptr != NULL && cfile->proc_ptr->frames_done > 0 &&
-	  frame >= (cfile->proc_ptr->frames_done - cfile->progress_start + cfile->start)) {
+      if (mainw->proc_ptr != NULL && mainw->proc_ptr->frames_done > 0 &&
+	  frame >= (mainw->proc_ptr->frames_done - cfile->progress_start + cfile->start)) {
 	mainw->cancelled = CANCEL_PREVIEW_FINISHED;
 	goto lfi_done;
       }
 
       // play preview
-      if (cfile->opening || (cfile->next_event != NULL && cfile->proc_ptr == NULL)) {
+      if (cfile->opening || (cfile->next_event != NULL && mainw->proc_ptr == NULL)) {
 	fname_next = make_image_file_name(cfile, frame + 1, get_image_ext_for_type(cfile->img_type));
 	if (!mainw->fs && !prefs->hide_framebar && !mainw->is_rendering) {
 	  lives_freep((void **)&framecount);
@@ -7490,7 +7503,7 @@ void load_frame_image(int frame) {
 	mainw->frame_layer = NULL;
       }
 
-      if (mainw->is_rendering && !(cfile->proc_ptr != NULL && mainw->preview)) {
+      if (mainw->is_rendering && !(mainw->proc_ptr != NULL && mainw->preview)) {
 	// here if we are rendering from multitrack, previewing a recording, or applying realtime effects to a selection
 	weed_timecode_t tc = mainw->cevent_tc;
 	if (mainw->scrap_file != -1 && mainw->clip_index[0] == mainw->scrap_file && mainw->num_tracks == 1) {
@@ -7703,7 +7716,7 @@ void load_frame_image(int frame) {
               }
 
               // or we reached the end of the preview
-              if ((!cfile->opening && frame >= (cfile->proc_ptr->frames_done - cfile->progress_start + cfile->start)) ||
+              if ((!cfile->opening && frame >= (mainw->proc_ptr->frames_done - cfile->progress_start + cfile->start)) ||
                   (cfile->opening && (mainw->toy_type == LIVES_TOY_TV || !mainw->preview || mainw->effects_paused))) {
                 if (mainw->toy_type == LIVES_TOY_TV) {
                   // force a loop (set mainw->cancelled to CANCEL_KEEP_LOOPING to play selection again)
@@ -7744,7 +7757,7 @@ void load_frame_image(int frame) {
 
         if ((mainw->current_file != mainw->scrap_file || mainw->multitrack != NULL)
             && mainw->pwidth > 0 && mainw->pheight > 0
-            && !(mainw->is_rendering && !(cfile->proc_ptr != NULL && mainw->preview))
+            && !(mainw->is_rendering && !(mainw->proc_ptr != NULL && mainw->preview))
             && !cfile->opening && !mainw->resizing && CURRENT_CLIP_IS_NORMAL
             && !is_virtual_frame(mainw->current_file, mainw->actual_frame)
             && is_layer_ready(mainw->frame_layer)) {
@@ -8816,9 +8829,9 @@ void load_frame_image(int frame) {
             }
             if (new_file * old_file > 0 && mainw->files[old_file] != NULL && mainw->files[old_file]->opening) {
               // switch while opening - come out of processing dialog
-              if (mainw->files[old_file]->proc_ptr != NULL) {
-                lives_widget_destroy(mainw->files[old_file]->proc_ptr->processing);
-                lives_freep((void **)&mainw->files[old_file]->proc_ptr);
+              if (mainw->proc_ptr != NULL) {
+                lives_widget_destroy(mainw->proc_ptr->processing);
+                lives_freep((void **)&mainw->proc_ptr);
 	      // *INDENT-OFF*
 	    }}}}
       // *INDENT-ON*
@@ -9369,9 +9382,6 @@ void load_frame_image(int frame) {
 
         if (prefs->open_maximised && by > MENU_HIDE_LIM)
           lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
-
-        /* bx = mainw->mgeom[widget_opts.monitor].phys_width - scr_width; */
-        /* by = mainw->mgeom[widget_opts.monitor].phys_height - scr_height; */
 
         w = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
         h = lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET);

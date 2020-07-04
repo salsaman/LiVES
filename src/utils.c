@@ -2451,9 +2451,17 @@ void d_print(const char *fmt, ...) {
   add_messages_to_list(text);
   lives_free(text);
 
-  if (!mainw->go_away && prefs->show_gui && mainw->msg_area != NULL && mainw->msg_adj != NULL) {
-    msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
-    lives_widget_queue_draw_if_visible(mainw->msg_area);
+  if (!mainw->go_away && prefs->show_gui && ((!mainw->multitrack && mainw->msg_area != NULL
+      && mainw->msg_adj != NULL)
+      || (!mainw->multitrack && mainw->multitrack->msg_area != NULL
+          && mainw->multitrack->msg_adj != NULL))) {
+    if (mainw->multitrack) {
+      msg_area_scroll_to_end(mainw->multitrack->msg_area, mainw->multitrack->msg_adj);
+      lives_widget_queue_draw_if_visible(mainw->multitrack->msg_area);
+    } else {
+      msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
+      lives_widget_queue_draw_if_visible(mainw->msg_area);
+    }
   }
 
   if ((mainw->current_file == -1 || (cfile != NULL && cfile->clip_type != CLIP_TYPE_GENERATOR)) &&

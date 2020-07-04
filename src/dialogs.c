@@ -55,8 +55,6 @@ static volatile boolean display_ready;
 
 static int64_t sttime;
 
-static xprocess *procw = NULL;
-
 static lives_time_source_t last_time_source;
 
 static int cache_hits = 0, cache_misses = 0;
@@ -903,10 +901,10 @@ void pump_io_chan(LiVESIOChannel *iochan) {
 #endif
   // check each line of str_return, if it contains ptext, (whitespace), then number get the number and set percentage
 
-  if (retlen > 0 && cfile->proc_ptr != NULL) {
+  if (retlen > 0 && mainw->proc_ptr != NULL) {
     double max;
     LiVESAdjustment *adj = lives_scrolled_window_get_vadjustment(LIVES_SCROLLED_WINDOW(((xprocess *)(
-                             cfile->proc_ptr))->scrolledwindow));
+                             mainw->proc_ptr))->scrolledwindow));
     lives_text_buffer_insert_at_end(optextbuf, str_return);
     max = lives_adjustment_get_upper(adj);
     lives_adjustment_set_value(adj, max);
@@ -932,15 +930,18 @@ void pump_io_chan(LiVESIOChannel *iochan) {
             cptr++;
           }
           if (!linebrk) {
-            if (ispct) cfile->proc_ptr->frames_done = (int)(strtod(cptr, NULL) * (cfile->progress_end - cfile->progress_start + 1.) / 100.);
-            else cfile->proc_ptr->frames_done = atoi(cptr);
+            if (ispct) mainw->proc_ptr->frames_done =
+                (int)(strtod(cptr, NULL)
+                      * (mainw->proc_ptr->progress_end
+                         - mainw->proc_ptr->progress_start + 1.) / 100.);
+            else mainw->proc_ptr->frames_done = atoi(cptr);
           }
           break;
         }
         cptr++;
-      }
-    }
-  }
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
 
   lives_freep((void **)&str_return);
 }
@@ -968,9 +969,9 @@ boolean check_storage_space(int clipno, boolean is_processing) {
       mainw->next_ds_warn_level >>= 1;
       if (mainw->next_ds_warn_level > (dsval >> 1)) mainw->next_ds_warn_level = dsval >> 1;
       if (mainw->next_ds_warn_level < prefs->ds_crit_level) mainw->next_ds_warn_level = prefs->ds_crit_level;
-      if (is_processing && sfile != NULL && sfile->proc_ptr != NULL && !mainw->effects_paused &&
-          lives_widget_is_visible(sfile->proc_ptr->pause_button)) {
-        on_effects_paused(LIVES_BUTTON(sfile->proc_ptr->pause_button), NULL);
+      if (is_processing && sfile != NULL && mainw->proc_ptr != NULL && !mainw->effects_paused &&
+          lives_widget_is_visible(mainw->proc_ptr->pause_button)) {
+        on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
         did_pause = TRUE;
       }
 
@@ -993,9 +994,9 @@ boolean check_storage_space(int clipno, boolean is_processing) {
       }
       lives_free(msg);
     } else if (ds == LIVES_STORAGE_STATUS_CRITICAL) {
-      if (is_processing && sfile != NULL && sfile->proc_ptr != NULL && !mainw->effects_paused &&
-          lives_widget_is_visible(sfile->proc_ptr->pause_button)) {
-        on_effects_paused(LIVES_BUTTON(sfile->proc_ptr->pause_button), NULL);
+      if (is_processing && sfile != NULL && mainw->proc_ptr != NULL && !mainw->effects_paused &&
+          lives_widget_is_visible(mainw->proc_ptr->pause_button)) {
+        on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
         did_pause = TRUE;
       }
       tmp = ds_critical_msg(prefs->workdir, dsval);
@@ -1027,9 +1028,9 @@ boolean check_storage_space(int clipno, boolean is_processing) {
         sfile->op_ds_warn_level >>= 1;
         if (sfile->op_ds_warn_level > (dsval >> 1)) sfile->op_ds_warn_level = dsval >> 1;
         if (sfile->op_ds_warn_level < prefs->ds_crit_level) sfile->op_ds_warn_level = prefs->ds_crit_level;
-        if (is_processing && sfile != NULL && sfile->proc_ptr != NULL && !mainw->effects_paused &&
-            lives_widget_is_visible(sfile->proc_ptr->pause_button)) {
-          on_effects_paused(LIVES_BUTTON(sfile->proc_ptr->pause_button), NULL);
+        if (is_processing && sfile != NULL && mainw->proc_ptr != NULL && !mainw->effects_paused &&
+            lives_widget_is_visible(mainw->proc_ptr->pause_button)) {
+          on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
           did_pause = TRUE;
         }
         tmp = ds_warning_msg(sfile->op_dir, dsval, curr_ds_warn, sfile->op_ds_warn_level);
@@ -1052,9 +1053,9 @@ boolean check_storage_space(int clipno, boolean is_processing) {
         }
         lives_free(msg);
       } else if (ds == LIVES_STORAGE_STATUS_CRITICAL) {
-        if (is_processing && sfile != NULL && sfile->proc_ptr != NULL && !mainw->effects_paused &&
-            lives_widget_is_visible(sfile->proc_ptr->pause_button)) {
-          on_effects_paused(LIVES_BUTTON(sfile->proc_ptr->pause_button), NULL);
+        if (is_processing && sfile != NULL && mainw->proc_ptr != NULL && !mainw->effects_paused &&
+            lives_widget_is_visible(mainw->proc_ptr->pause_button)) {
+          on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
           did_pause = TRUE;
         }
         tmp = ds_critical_msg(sfile->op_dir, dsval);
@@ -1080,7 +1081,7 @@ boolean check_storage_space(int clipno, boolean is_processing) {
   }
 
   if (did_pause && mainw->effects_paused) {
-    on_effects_paused(LIVES_BUTTON(sfile->proc_ptr->pause_button), NULL);
+    on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
   }
 
   lives_free(pausstr);
@@ -1094,15 +1095,15 @@ static void cancel_process(boolean visible) {
     if (mainw->preview_box != NULL && !mainw->preview) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Play all"));
     if (accelerators_swapped) {
       if (!mainw->preview) lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play all"));
-      lives_widget_remove_accelerator(cfile->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
+      lives_widget_remove_accelerator(mainw->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
       lives_widget_add_accelerator(mainw->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, LIVES_KEY_p,
                                    (LiVESXModifierType)0,
                                    LIVES_ACCEL_VISIBLE);
     }
-    if (cfile->proc_ptr != NULL) {
-      lives_widget_destroy(LIVES_WIDGET(cfile->proc_ptr->processing));
-      lives_free(cfile->proc_ptr);
-      cfile->proc_ptr = NULL;
+    if (mainw->proc_ptr != NULL) {
+      lives_widget_destroy(LIVES_WIDGET(mainw->proc_ptr->processing));
+      lives_free(mainw->proc_ptr);
+      mainw->proc_ptr = NULL;
     }
     mainw->is_processing = FALSE;
     if (!(cfile->menuentry == NULL)) {
@@ -1119,7 +1120,7 @@ static void cancel_process(boolean visible) {
 }
 
 
-static void disp_fraction(double fraction_done, double timesofar, xprocess *proc) {
+static void disp_fraction(double fraction_done, double timesofar, xprocess * proc) {
   // display fraction done and estimated time remaining
   char *prog_label;
   double est_time;
@@ -1150,15 +1151,16 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
   double timesofar, fraction_done;
 
   if ((progress_count++ * progress_speed) >= PROG_LOOP_VAL) {
-    if (frames_done <= sfile->progress_end && sfile->progress_end > 0 && !mainw->effects_paused &&
+    if (frames_done <= mainw->proc_ptr->progress_end && mainw->proc_ptr->progress_end > 0 && !mainw->effects_paused &&
         frames_done > 0) {
       timesofar = (lives_get_current_ticks() - proc_start_ticks - mainw->timeout_ticks) / TICKS_PER_SECOND_DBL;
-      fraction_done = (double)(frames_done - sfile->progress_start) / (double)(sfile->progress_end - sfile->progress_start + 1.);
-      disp_fraction(fraction_done, timesofar, sfile->proc_ptr);
+      fraction_done = (double)(frames_done - mainw->proc_ptr->progress_start)
+                      / (double)(mainw->proc_ptr->progress_end - mainw->proc_ptr->progress_start + 1.);
+      disp_fraction(fraction_done, timesofar, mainw->proc_ptr);
       progress_count = 0;
       progress_speed = 4.;
     } else {
-      lives_progress_bar_pulse(LIVES_PROGRESS_BAR(sfile->proc_ptr->progressbar));
+      lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
       progress_count = 0;
       if (!mainw->is_rendering)  progress_speed = 2.;
     }
@@ -1179,7 +1181,7 @@ void update_progress(boolean visible) {
     if ((currticks - last_open_check_ticks) > OPEN_CHECK_TICKS *
         ((apxl = get_approx_ln((uint32_t)cfile->opening_frames)) < 50 ? apxl : 50) ||
         (mainw->effects_paused && !shown_paused_frames)) {
-      cfile->proc_ptr->frames_done = cfile->end = cfile->opening_frames = get_frame_count(mainw->current_file,
+      mainw->proc_ptr->frames_done = cfile->end = cfile->opening_frames = get_frame_count(mainw->current_file,
                                      cfile->opening_frames > 1 ? cfile->opening_frames : 1);
       last_open_check_ticks = currticks;
       if (cfile->opening_frames > 1) {
@@ -1190,15 +1192,15 @@ void update_progress(boolean visible) {
             timesofar = (currticks - proc_start_ticks - mainw->timeout_ticks) / TICKS_PER_SECOND_DBL;
             est_time = timesofar / fraction_done - timesofar;
           }
-          lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(cfile->proc_ptr->progressbar), fraction_done);
+          lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar), fraction_done);
           if (est_time != -1.) prog_label = lives_strdup_printf(_("\n%d/%d frames opened. Time remaining %u sec.\n"),
                                               cfile->opening_frames - 1, cfile->frames, (uint32_t)(est_time + .5));
           else prog_label = lives_strdup_printf(_("\n%d/%d frames opened.\n"), cfile->opening_frames - 1, cfile->frames);
         } else {
-          lives_progress_bar_pulse(LIVES_PROGRESS_BAR(cfile->proc_ptr->progressbar));
+          lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
           prog_label = lives_strdup_printf(_("\n%d frames opened.\n"), cfile->opening_frames - 1);
         }
-        lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label3), prog_label);
+        lives_label_set_text(LIVES_LABEL(mainw->proc_ptr->label3), prog_label);
         lives_free(prog_label);
         cfile->start = cfile->end > 0 ? 1 : 0;
         showclipimgs();
@@ -1206,10 +1208,10 @@ void update_progress(boolean visible) {
     }
     shown_paused_frames = mainw->effects_paused;
   } else {
-    if (visible && cfile->proc_ptr->frames_done >= cfile->progress_start) {
+    if (visible && mainw->proc_ptr->frames_done >= mainw->proc_ptr->progress_start) {
       if (progress_count == 0) check_storage_space(mainw->current_file, TRUE);
       // display progress fraction or pulse bar
-      progbar_pulse_or_fraction(cfile, cfile->proc_ptr->frames_done);
+      progbar_pulse_or_fraction(cfile, mainw->proc_ptr->frames_done);
       //sched_yield();
       lives_usleep(prefs->sleep_time);
     }
@@ -1441,7 +1443,7 @@ switch_point:
 
   // playing back an event_list
   // here we need to add mainw->offsetticks, to get the correct position whe playing back in multitrack
-  if (cfile->proc_ptr == NULL && cfile->next_event != NULL) {
+  if (mainw->proc_ptr == NULL && cfile->next_event != NULL) {
     // playing an event_list
     if (mainw->scratch != SCRATCH_NONE && mainw->multitrack != NULL) {
 #ifdef ENABLE_JACK_TRANSPORT
@@ -1966,17 +1968,18 @@ switch_point:
 proc_dialog:
 
   if (visible) {
-    if (cfile->proc_ptr == NULL) {
+    if (!mainw->proc_ptr) {
       // fixes a problem with opening preview with bg generator
       if (mainw->cancelled == CANCEL_NONE) mainw->cancelled = CANCEL_NO_PROPOGATE;
     } else {
       if (LIVES_IS_SPIN_BUTTON(mainw->framedraw_spinbutton))
-        lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), 1, cfile->proc_ptr->frames_done);
+        lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), 1,
+                                    mainw->proc_ptr->frames_done);
       // set the progress bar %
       update_progress(visible);
     }
 
-    frames_done = cfile->proc_ptr->frames_done;
+    frames_done = mainw->proc_ptr->frames_done;
 
     if (cfile->clip_type == CLIP_TYPE_FILE && cfile->fx_frame_pump > 0) {
       if (virtual_to_images(mainw->current_file, cfile->fx_frame_pump, cfile->fx_frame_pump, FALSE, NULL) > 0) {
@@ -2178,23 +2181,32 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     procw_desensitize();
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
 
-    cfile->proc_ptr = create_processing(mytext);
+    mainw->proc_ptr = create_processing(mytext);
+    mainw->proc_ptr->owner = mainw->current_file;
+
+    if (CURRENT_CLIP_IS_VALID) {
+      mainw->proc_ptr->progress_start = cfile->progress_start;
+      mainw->proc_ptr->progress_end = cfile->progress_end;
+    } else {
+      mainw->proc_ptr->progress_start = mainw->proc_ptr->progress_end = 0;
+    }
+
     lives_freep((void **)&mytext);
 
-    lives_progress_bar_set_pulse_step(LIVES_PROGRESS_BAR(cfile->proc_ptr->progressbar), .01);
+    lives_progress_bar_set_pulse_step(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar), .01);
 
-    cfile->proc_ptr->frames_done = 0;
+    mainw->proc_ptr->frames_done = 0;
 
     if (!cancellable) {
-      lives_widget_hide(cfile->proc_ptr->cancel_button);
+      lives_widget_hide(mainw->proc_ptr->cancel_button);
     }
 
     if (!LIVES_IS_INTERACTIVE) {
-      lives_widget_set_sensitive(cfile->proc_ptr->cancel_button, FALSE);
-      if (cfile->proc_ptr->stop_button != NULL)
-        lives_widget_set_sensitive(cfile->proc_ptr->stop_button, FALSE);
-      lives_widget_set_sensitive(cfile->proc_ptr->pause_button, FALSE);
-      lives_widget_set_sensitive(cfile->proc_ptr->preview_button, FALSE);
+      lives_widget_set_sensitive(mainw->proc_ptr->cancel_button, FALSE);
+      if (mainw->proc_ptr->stop_button != NULL)
+        lives_widget_set_sensitive(mainw->proc_ptr->stop_button, FALSE);
+      lives_widget_set_sensitive(mainw->proc_ptr->pause_button, FALSE);
+      lives_widget_set_sensitive(mainw->proc_ptr->preview_button, FALSE);
     }
 
     if (cfile->opening && (capable->has_sox_play || (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) ||
@@ -2202,7 +2214,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       if (mainw->preview_box != NULL) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Preview"));
       lives_widget_set_tooltip_text(mainw->m_playbutton, _("Preview"));
       lives_widget_remove_accelerator(mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
-      lives_widget_add_accelerator(cfile->proc_ptr->preview_button, LIVES_WIDGET_CLICKED_SIGNAL, mainw->accel_group, LIVES_KEY_p,
+      lives_widget_add_accelerator(mainw->proc_ptr->preview_button, LIVES_WIDGET_CLICKED_SIGNAL, mainw->accel_group, LIVES_KEY_p,
                                    (LiVESXModifierType)0, (LiVESAccelFlags)0);
       accelerators_swapped = TRUE;
     }
@@ -2236,6 +2248,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       lives_widget_context_update();
     }
     end_threaded_dialog();
+    mainw->proc_ptr = NULL;
     if (mainw->cancelled != CANCEL_NONE) return FALSE;
   }
 
@@ -2261,7 +2274,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 #endif
   last_kbd_ticks = 0;
   mainw->scratch = SCRATCH_NONE;
-  if (mainw->iochan != NULL) lives_widget_show(cfile->proc_ptr->pause_button);
+  if (mainw->iochan != NULL) lives_widget_show(mainw->proc_ptr->pause_button);
   display_ready = TRUE;
 
   last_time_source = LIVES_TIME_SOURCE_NONE;
@@ -2386,7 +2399,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   if (mainw->record) mainw->record_paused = FALSE;
 
-  if (cfile->proc_ptr == NULL && cfile->next_event != NULL) {
+  if (mainw->proc_ptr == NULL && cfile->next_event != NULL) {
     /// reset dropped frame count etc
     process_events(NULL, FALSE, 0);
   }
@@ -2441,7 +2454,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     if (!mainw->internal_messaging) {
       // background processing (e.g. rendered effects)
       lives_fread_string(mainw->msg, MAINW_MSG_SIZE, cfile->info_file);
-      progbar_pulse_or_fraction(cfile, cfile->proc_ptr->frames_done);
+      progbar_pulse_or_fraction(cfile, mainw->proc_ptr->frames_done);
     }
     // else call realtime effect pass
     else {
@@ -2455,16 +2468,16 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
       // display progress fraction or pulse bar
       if (*(mainw->msg) && (frames_done = atoi(mainw->msg)) > 0)
-        cfile->proc_ptr->frames_done = atoi(mainw->msg);
+        mainw->proc_ptr->frames_done = atoi(mainw->msg);
       else
-        cfile->proc_ptr->frames_done = 0;
+        mainw->proc_ptr->frames_done = 0;
 
       if (!mainw->effects_paused) {
         if (prog_fs_check-- <= 0) {
           check_storage_space(mainw->current_file, TRUE);
           prog_fs_check = PROG_LOOP_VAL;
         }
-        progbar_pulse_or_fraction(cfile, cfile->proc_ptr->frames_done);
+        progbar_pulse_or_fraction(cfile, mainw->proc_ptr->frames_done);
       } else lives_widget_context_update();
     }
 
@@ -2477,26 +2490,26 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
     if (visible && (!accelerators_swapped || cfile->opening) && cancellable && (!cfile->nopreview || cfile->keep_without_preview)) {
       if (!cfile->nopreview && !(cfile->opening && mainw->multitrack != NULL)) {
-        lives_widget_show(cfile->proc_ptr->preview_button);
+        lives_widget_show(mainw->proc_ptr->preview_button);
       }
 
       // show buttons
       if (cfile->opening_loc) {
-        lives_widget_hide(cfile->proc_ptr->pause_button);
-        if (cfile->proc_ptr->stop_button != NULL)
-          lives_widget_show(cfile->proc_ptr->stop_button);
+        lives_widget_hide(mainw->proc_ptr->pause_button);
+        if (mainw->proc_ptr->stop_button != NULL)
+          lives_widget_show(mainw->proc_ptr->stop_button);
       } else {
-        lives_widget_show(cfile->proc_ptr->pause_button);
-        if (cfile->proc_ptr->stop_button != NULL)
-          lives_widget_hide(cfile->proc_ptr->stop_button);
+        lives_widget_show(mainw->proc_ptr->pause_button);
+        if (mainw->proc_ptr->stop_button != NULL)
+          lives_widget_hide(mainw->proc_ptr->stop_button);
       }
 
       if (!cfile->opening && !cfile->nopreview) {
-        lives_button_grab_default_special(cfile->proc_ptr->preview_button);
+        lives_button_grab_default_special(mainw->proc_ptr->preview_button);
         if (mainw->preview_box != NULL) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Preview"));
         lives_widget_set_tooltip_text(mainw->m_playbutton, _("Preview"));
         lives_widget_remove_accelerator(mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
-        lives_widget_add_accelerator(cfile->proc_ptr->preview_button, LIVES_WIDGET_CLICKED_SIGNAL,
+        lives_widget_add_accelerator(mainw->proc_ptr->preview_button, LIVES_WIDGET_CLICKED_SIGNAL,
                                      mainw->accel_group, LIVES_KEY_p,
                                      (LiVESXModifierType)0, (LiVESAccelFlags)0);
         accelerators_swapped = TRUE;
@@ -2517,7 +2530,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         // get progress count from backend
         if (numtok > 1) {
           char **array = lives_strsplit(mainw->msg, "|", numtok);
-          cfile->proc_ptr->frames_done = atoi(array[0]);
+          mainw->proc_ptr->frames_done = atoi(array[0]);
           if (numtok == 2 && *(array[1])) cfile->progress_end = atoi(array[1]);
           else if (numtok == 5 && *(array[4])) {
             // rendered generators
@@ -2530,7 +2543,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
             cfile->progress_end = atoi(array[4]);
           }
           lives_strfreev(array);
-        } else cfile->proc_ptr->frames_done = atoi(mainw->msg);
+        } else mainw->proc_ptr->frames_done = atoi(mainw->msg);
       }
 
       // do a processing pass
@@ -2580,18 +2593,18 @@ finish:
           _("Play all"));
     if (accelerators_swapped) {
       if (!mainw->preview) lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play all"));
-      lives_widget_remove_accelerator(cfile->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
+      lives_widget_remove_accelerator(mainw->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
       lives_widget_add_accelerator(mainw->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, LIVES_KEY_p,
                                    (LiVESXModifierType)0,
                                    LIVES_ACCEL_VISIBLE);
       accelerators_swapped = FALSE;
     }
-    if (cfile->proc_ptr != NULL) {
+    if (mainw->proc_ptr != NULL) {
       const char *btext = NULL;
       if (mainw->iochan != NULL) btext = lives_text_view_get_text(mainw->optextview);
-      if (cfile->proc_ptr->processing != NULL) lives_widget_destroy(cfile->proc_ptr->processing);
-      lives_free(cfile->proc_ptr);
-      cfile->proc_ptr = NULL;
+      if (mainw->proc_ptr->processing != NULL) lives_widget_destroy(mainw->proc_ptr->processing);
+      lives_free(mainw->proc_ptr);
+      mainw->proc_ptr = NULL;
       if (btext != NULL) {
         lives_text_view_set_text(mainw->optextview, btext, -1);
         lives_free((char *)btext);
@@ -2641,8 +2654,6 @@ boolean do_auto_dialog(const char *text, int type) {
 
   uint64_t time = 0, stime = 0;
 
-  xprocess *proc_ptr;
-
   char *label_text;
   char *mytext = lives_strdup(text);
 
@@ -2655,25 +2666,25 @@ boolean do_auto_dialog(const char *text, int type) {
 
   mainw->error = FALSE;
 
-  proc_ptr = create_processing(mytext);
+  mainw->proc_ptr = create_processing(mytext);
 
   lives_freep((void **)&mytext);
-  if (proc_ptr->stop_button != NULL)
-    lives_widget_hide(proc_ptr->stop_button);
+  if (mainw->proc_ptr->stop_button != NULL)
+    lives_widget_hide(mainw->proc_ptr->stop_button);
 
   if (type == 2) {
-    lives_widget_show(proc_ptr->cancel_button);
-    lives_widget_hide(proc_ptr->pause_button);
+    lives_widget_show(mainw->proc_ptr->cancel_button);
+    lives_widget_hide(mainw->proc_ptr->pause_button);
     mainw->cancel_type = CANCEL_SOFT;
   }
   if (type == 0) {
-    lives_widget_hide(proc_ptr->cancel_button);
+    lives_widget_hide(mainw->proc_ptr->cancel_button);
   }
 
-  lives_progress_bar_set_pulse_step(LIVES_PROGRESS_BAR(proc_ptr->progressbar), .01);
+  lives_progress_bar_set_pulse_step(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar), .01);
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-  lives_set_cursor_style(LIVES_CURSOR_BUSY, proc_ptr->processing);
+  lives_set_cursor_style(LIVES_CURSOR_BUSY, mainw->proc_ptr->processing);
 
   //lives_widget_context_update();
 
@@ -2682,9 +2693,9 @@ boolean do_auto_dialog(const char *text, int type) {
     alarm_handle = lives_alarm_set(MIN_FLASH_TIME); // don't want to flash too fast...
   } else if (type == 1) {
     // show buttons
-    if (cfile->proc_ptr->stop_button != NULL)
-      lives_widget_show(proc_ptr->stop_button);
-    lives_widget_show(proc_ptr->cancel_button);
+    if (mainw->proc_ptr->stop_button != NULL)
+      lives_widget_show(mainw->proc_ptr->stop_button);
+    lives_widget_show(mainw->proc_ptr->cancel_button);
 #ifdef HAVE_PULSE_AUDIO
     if (mainw->pulsed_read != NULL) {
       pulse_driver_uncork(mainw->pulsed_read);
@@ -2697,10 +2708,10 @@ boolean do_auto_dialog(const char *text, int type) {
   }
 
   while (mainw->cancelled == CANCEL_NONE && !(infofile = fopen(cfile->info_file, "r"))) {
-    lives_progress_bar_pulse(LIVES_PROGRESS_BAR(proc_ptr->progressbar));
+    lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
     /* lives_widget_context_update(); */
     /* lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
-    lives_widget_process_updates(proc_ptr->processing, TRUE);
+    lives_widget_process_updates(mainw->proc_ptr->processing, TRUE);
     lives_usleep(prefs->sleep_time);
     if (type == 1 && mainw->rec_end_time != -1.) {
       time = lives_get_current_ticks();
@@ -2711,7 +2722,7 @@ boolean do_auto_dialog(const char *text, int type) {
       time_rem = (int)(mainw->rec_end_time - (double)time / TICKS_PER_SECOND_DBL + .5);
       if (time_rem >= 0 && time_rem < last_time_rem) {
         label_text = lives_strdup_printf(_("\nTime remaining: %d sec"), time_rem);
-        lives_label_set_text(LIVES_LABEL(proc_ptr->label2), label_text);
+        lives_label_set_text(LIVES_LABEL(mainw->proc_ptr->label2), label_text);
         lives_free(label_text);
         last_time_rem = time_rem;
       } else if (time_rem < 0) break;
@@ -2730,8 +2741,8 @@ boolean do_auto_dialog(const char *text, int type) {
         if (alarm_handle > 0) {
           ticks_t tl;
           while ((tl = lives_alarm_check(alarm_handle)) > 0 && !mainw->cancelled) {
-            lives_progress_bar_pulse(LIVES_PROGRESS_BAR(proc_ptr->progressbar));
-            lives_widget_process_updates(proc_ptr->processing, TRUE);
+            lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
+            lives_widget_process_updates(mainw->proc_ptr->processing, TRUE);
             //lives_widget_context_update();
             lives_usleep(prefs->sleep_time);
           }
@@ -2741,9 +2752,9 @@ boolean do_auto_dialog(const char *text, int type) {
     }
   }
 
-  if (proc_ptr != NULL) {
-    lives_widget_destroy(proc_ptr->processing);
-    lives_free(proc_ptr);
+  if (mainw->proc_ptr != NULL) {
+    lives_widget_destroy(mainw->proc_ptr->processing);
+    lives_free(mainw->proc_ptr);
   }
 
   if (type == 2) mainw->cancel_type = CANCEL_KILL;
@@ -3455,26 +3466,27 @@ void threaded_dialog_spin(double fraction) {
   if (mainw->splash_window) return;
   if (!mainw->threaded_dialog) return;
 
-  if (!procw || !procw->is_ready || !prefs->show_gui) return;
+  if (!mainw->proc_ptr || !mainw->is_ready || !prefs->show_gui) return;
 
   if (fraction > 0.) {
     timesofar = (double)(lives_get_current_ticks() - sttime) / TICKS_PER_SECOND_DBL;
-    disp_fraction(fraction, timesofar, procw);
+    disp_fraction(fraction, timesofar, mainw->proc_ptr);
   } else {
-    if (!CURRENT_CLIP_IS_VALID || !cfile->progress_start || !cfile->progress_end ||
+    if (!CURRENT_CLIP_IS_VALID || !mainw->proc_ptr->progress_start || !mainw->proc_ptr->progress_end ||
         *(mainw->msg) || !(progress = atoi(mainw->msg))) {
       // pulse the progress bar
       //#define GDB
 #ifndef GDB
-      if (LIVES_IS_PROGRESS_BAR(procw->progressbar)) {
-        lives_progress_bar_pulse(LIVES_PROGRESS_BAR(procw->progressbar));
+      if (LIVES_IS_PROGRESS_BAR(mainw->proc_ptr->progressbar)) {
+        lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
       }
 #endif
     } else {
       // show fraction
-      double fraction_done = (double)(progress - cfile->progress_start) / (double)(cfile->progress_end - cfile->progress_start + 1.);
+      double fraction_done = (double)(progress - mainw->proc_ptr->progress_start)
+                             / (double)(mainw->proc_ptr->progress_end - mainw->proc_ptr->progress_start + 1.);
       timesofar = (double)(lives_get_current_ticks() - sttime) / TICKS_PER_SECOND_DBL;
-      disp_fraction(fraction_done, timesofar, procw);
+      disp_fraction(fraction_done, timesofar, mainw->proc_ptr);
     }
   }
 
@@ -3503,29 +3515,26 @@ void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
   mainw->threaded_dialog = TRUE;
   clear_mainw_msg();
 
-  procw = create_threaded_dialog(copy_text, has_cancel, &td_had_focus);
+  mainw->proc_ptr = create_threaded_dialog(copy_text, has_cancel, &td_had_focus);
   lives_free(copy_text);
 
-  lives_widget_process_updates(procw->processing, TRUE);
-
-  if (CURRENT_CLIP_IS_VALID) cfile->proc_ptr = procw;
+  lives_widget_process_updates(mainw->proc_ptr->processing, TRUE);
 }
 
 
 void end_threaded_dialog(void) {
   mainw->cancel_type = CANCEL_KILL;
 
-  if (procw != NULL) {
-    if (procw->processing != NULL) lives_widget_destroy(procw->processing);
+  if (mainw->proc_ptr != NULL) {
+    if (mainw->proc_ptr->processing != NULL) lives_widget_destroy(mainw->proc_ptr->processing);
   }
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
 
-  if (procw != NULL) {
-    lives_free(procw);
-    procw = NULL;
-    if (CURRENT_CLIP_IS_VALID) cfile->proc_ptr = NULL;
+  if (mainw->proc_ptr) {
+    lives_free(mainw->proc_ptr);
+    mainw->proc_ptr = NULL;
   }
 
   mainw->threaded_dialog = FALSE;

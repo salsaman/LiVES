@@ -22,6 +22,8 @@
 #define MSG_AREA_VMARGIN 0
 #define LAYOUT_SIZE_MIN 0
 
+#define SCRN_BRDR 2.
+
 void draw_little_bars(double ptrtime, int which);
 double lives_ce_update_timeline(int frame, double x);  ///< pointer position in timeline
 void update_timer_bars(int posx, int posy, int width, int height, int which); ///< draw the timer bars
@@ -34,9 +36,6 @@ boolean on_msg_area_scroll(LiVESWidget *, LiVESXEventScroll *, livespointer user
 boolean expose_msg_area(LiVESWidget *, lives_painter_t *, livespointer user_data);
 boolean msg_area_config(LiVESWidget *);
 boolean reshow_msg_area(LiVESWidget *, lives_painter_t *, livespointer user_data);
-
-
-boolean get_screen_usable_size(int *w, int *h);
 
 LiVESWidget *create_info_error_dialog(lives_dialog_t info_type, const char *text, LiVESWindow *transient, int mask,
                                       boolean is_blocking);

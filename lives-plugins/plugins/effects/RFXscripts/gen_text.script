@@ -64,7 +64,7 @@ $rdyfile = "";
 
 <loop>
 if ($rdyfile eq "") {
-  system("$convert_command $out_prefix" . "temp$out_ext -fill $cstring1 -stroke $cstring2 -pointsize $p5 -family $fam -stretch $stretch -style $style -weight $weight" .
+  system("$convert_command $out_prefix" . "temp$out_ext -fill $cstring1 -stroke $cstring2 -pointsize $p5 -family '$fam' -stretch $stretch -style $style -weight $weight " .
 			 "-draw \"gravity Center text $p1 $p2 '$p0'\" $out_prefix$out");
   $rdyfile = $out;
 }

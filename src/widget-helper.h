@@ -969,6 +969,12 @@ LiVESWidget *lives_standard_button_new_with_label(const char *labeltext, int wid
 boolean lives_standard_button_set_label(LiVESButton *, const char *label);
 const char *lives_standard_button_get_label(LiVESButton *);
 boolean lives_standard_button_set_image(LiVESButton *, LiVESWidget *image);
+
+LiVESWidget *lives_standard_button_new_full(const char *label, int width, int height, LiVESBox *,
+    boolean fake_default, const char *ttips);
+LiVESWidget *lives_standard_button_new_from_stock_full(const char *stock_id, const char *label,
+    int width, int height, LiVESBox *,
+    boolean fake_default, const char *ttips);
 #else
 #define lives_standard_button_new(w, h) lives_button_new()
 #define lives_standard_button_new_with_label(l, w, h) lives_button_new_with_label(l)

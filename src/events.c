@@ -1,6 +1,6 @@
 // events.c
 // LiVES
-// (c) G. Finch 2005 - 2019 <salsaman+lives@gmail.com>
+// (c) G. Finch 2005 - 2020 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -3392,9 +3392,8 @@ filterinit1:
               weed_set_int_value(event, WEED_LEAF_EASE_OUT, easing);
               weed_set_plantptr_value(event, WEED_LEAF_PLUGIN_EASING, inst);
             }
-          }
-        }
-      }
+	    // *INDENT-OFF*
+          }}}
 
       if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE)) {
         // handle compound fx
@@ -3531,7 +3530,7 @@ static char *set_proc_label(xprocess * proc, const char *label, boolean copy_old
 
    LIVES_RENDER_COMPLETE - the final event in the list was reached
 
-   LIVES_RENDER_ERROR_WRITE_FRAME - the output frame could not be written, and the user declined to retry
+   LIVES_RENDER_ERROR_WRITE_FRAME - the output frame could not be written, and the user declined to retr
 
    LIVES_RENDER_ERROR_WRITE_AUDIO
    LIVES_RENDER_ERROR_READ_AUDIO
@@ -3891,7 +3890,7 @@ lives_render_error_t render_events(boolean reset) {
         cfile->arps = cfile->undo_arps;
         cfile->asampsize = cfile->undo_asampsize;
 
-        blabel = set_proc_label(cfile->proc_ptr, nlabel, TRUE);
+        blabel = set_proc_label(mainw->proc_ptr, nlabel, TRUE);
 
         lives_freep((void **)&THREADVAR(read_failed_file));
 
@@ -3923,7 +3922,7 @@ lives_render_error_t render_events(boolean reset) {
           read_write_error = LIVES_RENDER_ERROR_READ_AUDIO;
         }
 
-        set_proc_label(cfile->proc_ptr, blabel, FALSE);
+        set_proc_label(mainw->proc_ptr, blabel, FALSE);
         lives_freep((void **)&blabel);
       }
 
@@ -6199,6 +6198,7 @@ render_details *create_render_details(int type) {
     add_fill_to_box(LIVES_BOX(daa));
   }
 
+  add_fill_to_box(LIVES_BOX(dialog_vbox));
   cancelbutton = NULL;
 
   if (!(prefs->startup_interface == STARTUP_MT && !mainw->is_ready)) {

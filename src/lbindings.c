@@ -1182,8 +1182,8 @@ static boolean call_resync_fps(livespointer data) {
 
 static boolean call_cancel_proc(livespointer data) {
   iipref *idata = (iipref *)data;
-  if (mainw == NULL || mainw->current_file == -1 || cfile == NULL || cfile->proc_ptr == NULL ||
-      !lives_widget_is_visible(cfile->proc_ptr->cancel_button)) {
+  if (mainw == NULL || mainw->current_file == -1 || cfile == NULL || mainw->proc_ptr == NULL ||
+      !lives_widget_is_visible(mainw->proc_ptr->cancel_button)) {
     ext_caller_return_int(idata->id, (int)FALSE);
   } else {
     on_cancel_keep_button_clicked(NULL, NULL);
@@ -1927,8 +1927,8 @@ boolean idle_resync_fps(ulong id) {
 boolean idle_cancel_proc(ulong id) {
   iipref *data;
 
-  if (mainw == NULL || mainw->current_file == -1 || cfile == NULL || cfile->proc_ptr == NULL ||
-      !lives_widget_is_visible(cfile->proc_ptr->cancel_button)) return FALSE;
+  if (mainw == NULL || mainw->current_file == -1 || cfile == NULL || mainw->proc_ptr == NULL ||
+      !lives_widget_is_visible(mainw->proc_ptr->cancel_button)) return FALSE;
 
   data = (iipref *)lives_malloc(sizeof(iipref));
   data->id = id;

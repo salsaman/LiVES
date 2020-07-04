@@ -361,7 +361,6 @@ struct _mt {
   LiVESWidget *dumlabel2;
   LiVESWidget *top_eventbox;
   LiVESWidget *tlx_eventbox;
-  LiVESWidget *amixb_eventbox;
 
   LiVESWidget *grav_submenu;
   LiVESWidget *ins_submenu;
@@ -382,7 +381,6 @@ struct _mt {
   LiVESToolItem *sep3;
   LiVESWidget *sep4;
 
-  LiVESWidget *btoolbar;
   LiVESWidget *btoolbar2;
   LiVESWidget *btoolbar3;
 
@@ -453,6 +451,8 @@ struct _mt {
   LiVESPixbuf *frame_pixbuf;
 
   LiVESList *cb_list;
+
+  lives_painter_surface_t *insurface, *outsurface;
 
   ulong spin_in_func;
   ulong spin_out_func;

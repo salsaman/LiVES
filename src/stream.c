@@ -607,7 +607,7 @@ void lives2lives_read_stream(const char *host, int port) {
   mainw->fixed_fpsd = cfile->pb_fps = cfile->fps;
 
   cfile->opening = FALSE;
-  cfile->proc_ptr = NULL;
+  mainw->proc_ptr = NULL;
 
   cfile->changed = FALSE;
 

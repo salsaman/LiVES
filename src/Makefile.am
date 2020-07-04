@@ -142,7 +142,7 @@ endif
 
 if HAVE_PULSE_AUDIO
 pulse_LDADD = @PULSE_LIBS@
-pulse_CFLAGS = @PULSE_LIBS@ -DHAVE_PULSE_AUDIO=1
+pulse_CFLAGS = @PULSE_CFLAGS@ -DHAVE_PULSE_AUDIO=1
 pulse_SOURCES = pulse.c pulse.h
 if HAVE_PA_STREAM_BEGIN_WRITE
 pulse_CFLAGS += -DHAVE_PA_STREAM_BEGIN_WRITE=1
@@ -231,7 +231,7 @@ lives_exe_LDADD = @X11_LIBS@ $(wayland_LDADD) @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(j
 	$(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) $(pthread_LDADD) $(libweed_LDADD) \
 	 $(giw_LDADD) $(v4l1_LDADD) @UNICAP_LIBS@ $(libexplain_LDADD)
 
-AM_CFLAGS = -Wstrict-aliasing=0 -Wall $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) \
+AM_CFLAGS = -fPIE -Wstrict-aliasing=0 -Wall $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) \
 	$(oil_CFLAGS) $(wayland_CFLAGS) $(transcode_CFLAGS) \
 	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
 	$(jack_CFLAGS) $(pulse_CFLAGS) $(libexplain_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) $(libweed_compat_CFLAGS) \

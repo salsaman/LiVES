@@ -97,6 +97,7 @@ void load_theme_images(void) {
     }
 
     lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->sep_image), mainw->imsep);
+    lives_widget_set_opacity(mainw->sep_image, 0.4);
     lives_widget_queue_draw(mainw->sep_image);
 
     // imframe
@@ -175,7 +176,6 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_apply_theme2(mainw->menu_hbox, LIVES_WIDGET_STATE_NORMAL, FALSE);
 
   lives_widget_set_bg_color(mainw->sa_hbox, LIVES_WIDGET_STATE_NORMAL, colb);
-  lives_widget_set_bg_color(mainw->sa_toolbar, LIVES_WIDGET_STATE_NORMAL, colb);
 
   lives_widget_apply_theme2(mainw->vol_toolitem, LIVES_WIDGET_STATE_NORMAL, FALSE);
   lives_widget_apply_theme2(mainw->volume_scale, LIVES_WIDGET_STATE_NORMAL, FALSE);
@@ -482,7 +482,6 @@ void create_LiVES(void) {
   //                                      - sel_label
   //                                      - arrow2
   //                                 - sa_hbox
-  //                                      - sa_toolbar (to get text colour)
   //                                            - sa_button
   //                          - end_spinbutton
   //                  - sepimg / hseparator
@@ -2078,22 +2077,16 @@ void create_LiVES(void) {
   mainw->arrow2 = lives_arrow_new(LIVES_ARROW_RIGHT, LIVES_SHADOW_OUT);
   lives_box_pack_start(LIVES_BOX(hbox), mainw->arrow2, FALSE, FALSE, 0);
 
-  // sa_button will be a toolbutton, so that we can adjust the text colour in realtime
-  // thus it also needs its own mini toolbar to contain it
   mainw->sa_hbox = lives_hbox_new(TRUE, 0);
-  mainw->sa_toolbar = lives_toolbar_new();
   add_fill_to_box(LIVES_BOX(mainw->sa_hbox));
   lives_box_pack_start(LIVES_BOX(vbox), mainw->sa_hbox, FALSE, FALSE, !(lives_widget_set_margin_top(mainw->sa_hbox, 4)) * 4);
-  lives_box_pack_start(LIVES_BOX(mainw->sa_hbox), mainw->sa_toolbar, FALSE, TRUE, 0);
-  lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->sa_toolbar));
-  mainw->sa_button = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->sa_toolbar), NULL, _(" Select All Frames  "),
+
+  mainw->sa_button = lives_standard_button_new_full(_("Select all Frames"), DEF_BUTTON_WIDTH,
+                     DEF_BUTTON_HEIGHT, LIVES_BOX(mainw->sa_hbox), TRUE,
                      (tmp = (_("Select all frames in this clip"))));
   lives_free(tmp);
-  lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->sa_toolbar));
   add_fill_to_box(LIVES_BOX(mainw->sa_hbox));
-
   lives_widget_set_halign(mainw->sa_button, LIVES_ALIGN_CENTER);
-  lives_widget_set_halign(mainw->sa_toolbar, LIVES_ALIGN_CENTER);
 
   add_spring_to_box(LIVES_BOX(mainw->hbox3), 0);
 
@@ -3067,7 +3060,7 @@ void show_lives(void) {
     lives_widget_hide(mainw->framebar);
   }
 
-  //lives_widget_hide(mainw->playframe);
+  lives_widget_hide(mainw->playframe);
 
   if (prefs->show_recent) {
     lives_widget_show(mainw->recent_menu);
@@ -3132,7 +3125,6 @@ void set_interactive(boolean interactive) {
       lives_widget_set_sensitive(mainw->m_loopbutton, FALSE);
       lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
       lives_widget_set_sensitive(mainw->m_sepwinbutton, FALSE);
-      lives_widget_set_sensitive(mainw->multitrack->btoolbar, FALSE);
       lives_widget_set_sensitive(mainw->multitrack->btoolbar2, FALSE);
       lives_widget_set_sensitive(mainw->multitrack->btoolbar3, FALSE);
       //lives_widget_set_sensitive(mainw->multitrack->insa_checkbutton, FALSE);
@@ -3149,12 +3141,12 @@ void set_interactive(boolean interactive) {
     lives_widget_set_sensitive(mainw->spinbutton_end, FALSE);
     lives_widget_set_sensitive(mainw->sa_button, FALSE);
 
-    if (CURRENT_CLIP_IS_VALID && cfile->proc_ptr != NULL) {
-      lives_widget_set_sensitive(cfile->proc_ptr->cancel_button, FALSE);
-      if (cfile->proc_ptr->stop_button != NULL)
-        lives_widget_set_sensitive(cfile->proc_ptr->stop_button, FALSE);
-      lives_widget_set_sensitive(cfile->proc_ptr->pause_button, FALSE);
-      lives_widget_set_sensitive(cfile->proc_ptr->preview_button, FALSE);
+    if (CURRENT_CLIP_IS_VALID && mainw->proc_ptr != NULL) {
+      lives_widget_set_sensitive(mainw->proc_ptr->cancel_button, FALSE);
+      if (mainw->proc_ptr->stop_button != NULL)
+        lives_widget_set_sensitive(mainw->proc_ptr->stop_button, FALSE);
+      lives_widget_set_sensitive(mainw->proc_ptr->pause_button, FALSE);
+      lives_widget_set_sensitive(mainw->proc_ptr->preview_button, FALSE);
     }
   } else {
     mainw->sense_state |= LIVES_SENSE_STATE_INTERACTIVE;
@@ -3206,7 +3198,6 @@ void set_interactive(boolean interactive) {
       lives_widget_set_sensitive(mainw->m_playbutton, TRUE);
       lives_widget_set_sensitive(mainw->m_loopbutton, TRUE);
       lives_widget_set_sensitive(mainw->m_sepwinbutton, TRUE);
-      lives_widget_set_sensitive(mainw->multitrack->btoolbar, TRUE);
       lives_widget_set_sensitive(mainw->multitrack->btoolbar2, TRUE);
       lives_widget_set_sensitive(mainw->multitrack->btoolbar3, TRUE);
       lives_widget_set_sensitive(mainw->multitrack->insa_checkbutton, TRUE);
@@ -3226,12 +3217,12 @@ void set_interactive(boolean interactive) {
     lives_widget_set_sensitive(mainw->spinbutton_end, TRUE);
     lives_widget_set_sensitive(mainw->sa_button, CURRENT_CLIP_HAS_VIDEO && (cfile->start > 1 || cfile->end < cfile->frames));
 
-    if (CURRENT_CLIP_IS_VALID && cfile->proc_ptr != NULL) {
-      lives_widget_set_sensitive(cfile->proc_ptr->cancel_button, TRUE);
-      if (cfile->proc_ptr->stop_button != NULL)
-        lives_widget_set_sensitive(cfile->proc_ptr->stop_button, TRUE);
-      lives_widget_set_sensitive(cfile->proc_ptr->pause_button, TRUE);
-      lives_widget_set_sensitive(cfile->proc_ptr->preview_button, TRUE);
+    if (CURRENT_CLIP_IS_VALID && mainw->proc_ptr != NULL) {
+      lives_widget_set_sensitive(mainw->proc_ptr->cancel_button, TRUE);
+      if (mainw->proc_ptr->stop_button != NULL)
+        lives_widget_set_sensitive(mainw->proc_ptr->stop_button, TRUE);
+      lives_widget_set_sensitive(mainw->proc_ptr->pause_button, TRUE);
+      lives_widget_set_sensitive(mainw->proc_ptr->preview_button, TRUE);
     }
   }
 
@@ -3524,7 +3515,7 @@ void fullscreen_internal(void) {
 
     // try to get exact inner size of the main window
     lives_window_get_inner_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), &width, &height);
-    height -= 2; // necessary, or screen expands too much (!?)
+    height -= SCRN_BRDR; // necessary, or screen expands too much (!?)
 
     // expand the inner box to fit this
     lives_widget_set_size_request(mainw->top_vbox, width, height);
@@ -4221,10 +4212,10 @@ void resize_play_window(void) {
                                          mainw->mgeom[pmonitor - 1].screen,
                                          pmonitor - 1);
 #else
-        lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
         lives_widget_set_bg_color(mainw->play_window, LIVES_WIDGET_STATE_NORMAL, &palette->black);
         lives_window_fullscreen(LIVES_WINDOW(mainw->play_window));
 #endif
+        lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
         lives_window_center(LIVES_WINDOW(mainw->play_window));
         lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
         lives_window_set_position(LIVES_WINDOW(mainw->play_window), LIVES_WIN_POS_NONE);

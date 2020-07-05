@@ -8898,7 +8898,11 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   } else {
     lives_box_pack_start(LIVES_BOX(mt->xtravbox), mt->hseparator, FALSE, FALSE, 0);
     mt->sep_image = lives_image_new_from_pixbuf(mainw->imsep);
-    lives_widget_set_opacity(mt->sep_image, 0.4);
+    if (!palette || !(palette->style & STYLE_LIGHT)) {
+      lives_widget_set_opacity(mt->sep_image, 0.4);
+    } else {
+      lives_widget_set_opacity(mt->sep_image, 0.4);
+    }
     lives_box_pack_start(LIVES_BOX(mt->xtravbox), mt->sep_image, FALSE, FALSE, 0);
     mt->hseparator2 = lives_hseparator_new();
     lives_box_pack_start(LIVES_BOX(mt->xtravbox), mt->hseparator2, FALSE, FALSE, 0);

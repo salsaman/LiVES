@@ -39,7 +39,15 @@ static double calc_fd_scale(int width, int height) {
 }
 
 
-void reset_framedraw_preview(void) {
+void invalidate_preview(lives_special_framedraw_rect_t *frame_draw) {
+  /// this is called when a parameter in a rendered effect is changed
+  /// the current preview is invalid and we must reset back to the start frame
+  ///
+  /// the exception is for effects which can resize, since we can only show
+  /// an approximate preview anyway
+
+  if (frame_draw->rfx->props & RFX_PROPS_MAY_RESIZE) return;
+
   lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
   lives_signal_handler_block(mainw->framedraw_spinbutton, mainw->fd_spin_func);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), cfile->start);
@@ -386,12 +394,17 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   mainw->framedraw_scale = lives_standard_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
+  if (palette->style & STYLE_1) {
+    lives_widget_set_fg_color(mainw->framedraw_scale, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  }
   lives_box_pack_start(LIVES_BOX(hbox), mainw->framedraw_scale, TRUE, TRUE, widget_opts.border_width);
-  gtk_range_set_show_fill_level(GTK_RANGE(mainw->framedraw_scale), TRUE);
-  gtk_range_set_restrict_to_fill_level(GTK_RANGE(mainw->framedraw_scale), TRUE);
-  gtk_range_set_fill_level(GTK_RANGE(mainw->framedraw_scale), (double)start);
-  lives_widget_set_sensitive(mainw->framedraw_spinbutton, FALSE);
-  lives_widget_set_sensitive(mainw->framedraw_scale, FALSE);
+  if (!(rfx->props & RFX_PROPS_MAY_RESIZE)) {
+    gtk_range_set_show_fill_level(GTK_RANGE(mainw->framedraw_scale), TRUE);
+    gtk_range_set_restrict_to_fill_level(GTK_RANGE(mainw->framedraw_scale), TRUE);
+    gtk_range_set_fill_level(GTK_RANGE(mainw->framedraw_scale), (double)start);
+    lives_widget_set_sensitive(mainw->framedraw_spinbutton, FALSE);
+    lives_widget_set_sensitive(mainw->framedraw_scale, FALSE);
+  }
   lives_signal_connect(mainw->framedraw_preview, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(start_preview), rfx);
 
   lives_widget_show_all(vbox);
@@ -754,27 +767,30 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     tot_frames = mainw->fd_max_frame = cfile->end;
   }
 
-  lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+  if (!(rfx->props & RFX_PROPS_MAY_RESIZE)) {
+    lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
-  if (mainw->fd_max_frame > 0) {
-    int maxlen = calc_spin_button_width(1., (double)tot_frames, 0);
-    lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), cfile->start, tot_frames);
-    lives_entry_set_width_chars(LIVES_ENTRY(mainw->framedraw_spinbutton), maxlen);
-    lives_widget_queue_draw(mainw->framedraw_spinbutton);
-    lives_widget_queue_draw(mainw->framedraw_scale);
-    if (rfx->num_in_channels == 0) {
-      cfile->frames = tot_frames;
-    }
+    if (mainw->fd_max_frame > 0) {
+      int maxlen = calc_spin_button_width(1., (double)tot_frames, 0);
+      lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), cfile->start, tot_frames);
+      lives_entry_set_width_chars(LIVES_ENTRY(mainw->framedraw_spinbutton), maxlen);
+      lives_widget_queue_draw(mainw->framedraw_spinbutton);
+      lives_widget_queue_draw(mainw->framedraw_scale);
+      if (rfx->num_in_channels == 0) {
+        cfile->frames = tot_frames;
+      }
 
-    gtk_range_set_fill_level(GTK_RANGE(mainw->framedraw_scale), (double)mainw->fd_max_frame);
-    if (mainw->framedraw_frame > mainw->fd_max_frame) {
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), mainw->fd_max_frame);
-      lives_range_set_value(LIVES_RANGE(mainw->framedraw_scale), mainw->fd_max_frame);
-      mainw->current_file = current_file;
-      return;
+      if (!(rfx->props & RFX_PROPS_MAY_RESIZE)) {
+        gtk_range_set_fill_level(GTK_RANGE(mainw->framedraw_scale), (double)mainw->fd_max_frame);
+        if (mainw->framedraw_frame > mainw->fd_max_frame) {
+          lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), mainw->fd_max_frame);
+          lives_range_set_value(LIVES_RANGE(mainw->framedraw_scale), mainw->fd_max_frame);
+          mainw->current_file = current_file;
+          return;
+        }
+      }
     }
   }
-
   layer = lives_layer_new_for_frame(mainw->current_file, mainw->framedraw_frame);
   if (rfx->num_in_channels > 0 && !(rfx->props & RFX_PROPS_MAY_RESIZE)) {
     img_ext = LIVES_FILE_EXT_PRE;
@@ -844,7 +860,6 @@ boolean on_framedraw_leave(LiVESWidget *widget, LiVESXEventCrossing *event, live
 
 boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, lives_special_framedraw_rect_t *framedraw) {
   // user clicked in the framedraw widget (or multitrack playback widget)
-
   double xend, yend;
 
   int fd_height;

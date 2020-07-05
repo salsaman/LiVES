@@ -145,7 +145,6 @@ int lives_system(const char *com, boolean allow_error) {
   do {
     response = LIVES_RESPONSE_NONE;
     retval = system(com);
-
     if (retval) {
       char *msg = NULL;
       THREADVAR(com_failed) = TRUE;
@@ -2901,16 +2900,14 @@ LIVES_GLOBAL_INLINE const char *get_image_ext_for_type(lives_image_type_t imgtyp
 
 
 LIVES_GLOBAL_INLINE lives_image_type_t lives_image_ext_to_type(const char *img_ext) {
-  if (!strcmp(img_ext, LIVES_FILE_EXT_PNG)) return IMG_TYPE_PNG;
-  if (!strcmp(img_ext, LIVES_FILE_EXT_JPG)) return IMG_TYPE_JPEG;
-  return IMG_TYPE_UNKNOWN;
+  return lives_image_type_to_image_type(image_ext_to_image_type(img_ext));
 }
 
 
 LIVES_GLOBAL_INLINE const char *image_ext_to_image_type(const char *img_ext) {
   if (!strcmp(img_ext, LIVES_FILE_EXT_PNG)) return LIVES_IMAGE_TYPE_PNG;
   if (!strcmp(img_ext, LIVES_FILE_EXT_JPG)) return LIVES_IMAGE_TYPE_JPEG;
-  return IMG_TYPE_UNKNOWN;
+  return LIVES_IMAGE_TYPE_UNKNOWN;
 }
 
 

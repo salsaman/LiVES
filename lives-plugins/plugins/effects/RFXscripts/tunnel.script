@@ -19,7 +19,7 @@ Salsaman|
 
 # Menu entry|Action description|min_frames|num_channels|
 <description>
-Tunnel|Tunneling|1|1|
+Tunnel|Tunneling|2|1|
 </description>
 
 # requirements (list)

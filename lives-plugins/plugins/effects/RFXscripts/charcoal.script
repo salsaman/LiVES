@@ -19,7 +19,7 @@ Salsaman|
 
 # Menu entry|Action description|min_frames|num_channels|
 <description>
-Charcoal|Applying charcoal to|1|1|
+Charcoal|Applying charcoal to|0|1|
 </description>
 
 # requirements (list)

@@ -672,7 +672,12 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_image_surface
 WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t
 *lives_xwindow_create_similar_surface(LiVESXWindow *window, lives_painter_content_t cont,
                                       int width, int height) {
-  return gdk_window_create_similar_surface(window, cont, width, height);
+  lives_painter_surface_t *surf = gdk_window_create_similar_surface(window, cont, width, height);
+  lives_painter_t *cr = lives_painter_create_from_surface(surf);
+  lives_painter_set_source_rgb(cr, 0., 0., 0.);
+  lives_painter_paint(cr);
+  lives_painter_destroy(cr);
+  return surf;
 }
 
 

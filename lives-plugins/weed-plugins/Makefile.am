@@ -58,7 +58,7 @@ endif
 
 AM_LDFLAGS = $(shared_ldflags)
 
-weed_CFLAGS =
+weed_CFLAGS = -Wno-unused-function
 
 if NEED_LOCAL_WEED
 weed_CFLAGS += -DNEED_LOCAL_WEED

@@ -1,6 +1,6 @@
 // effects.c
 // LiVES (lives-exe)
-// (c) G. Finch <salsaman+lives@gmail.com> 2003 - 2018
+// (c) G. Finch <salsaman+lives@gmail.com> 2003 - 2020
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -791,7 +791,7 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
 
 
 void on_realfx_activate(LiVESMenuItem *menuitem, livespointer xrfx) {
-  lives_rfx_t *rfx = (lives_rfx_t *)rfx;
+  lives_rfx_t *rfx = (lives_rfx_t *)xrfx;
   uint32_t chk_mask = 0;
   int type = 1;
 

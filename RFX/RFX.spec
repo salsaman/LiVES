@@ -12,8 +12,8 @@ for a variety of plugins. The protocol described is not directed specifically to
 ---------------------------------
 
 Author: salsaman+lives@gmail.com
-Last edit date: 10 April 2020
-API Version: 1.8.4 GPL
+Last edit date: 06 June 2020
+API Version: 1.8.4 GNU FDL
 
 Changes
 1.0 First version salsaman@xs4all.nl
@@ -55,6 +55,9 @@ d1.6 Added string_list parameter type
 
 1.8.4 Add special|fontchooser
 
+- clarified the meaning of "min frames"
+
+
 
 TODO: 	- split into RFX layout and RFX plugin components (?)
 
@@ -63,7 +66,7 @@ TODO: 	- split into RFX layout and RFX plugin components (?)
 Note:
 This license documents a standard. The license of this document is the GNU FDL (GNU Free Documentation License)
 version 1.3 or higher. 
-The standard itself is released under the LGPL v3 or higher.
+The reference implementations are released under the LGPL v3 or higher.
 
 See: http://www.gnu.org/copyleft/fdl.html
 https://www.gnu.org/licenses/lgpl-3.0.en.html
@@ -86,6 +89,13 @@ An addendum to the generic RFX standard may be used to provide the following:
 
 Note: The first 3 parts are generic for any type of plugin;
 the final part is application specific and not neccesary for general usage.
+
+
+The system described year has been in use succesfully in the LiVES application
+for over 10 years with only very minor changes needed (clarifications and a handful
+of "special" type additions). It has succesfully been employed for a wide range
+of plugin types: video effects, audio effects, video decoders, encoders
+
 
 
 
@@ -298,9 +308,31 @@ e.g.
 Edge Detect|Edge detecting|1|1
 </description>
 
-minimum frames is the minimum block length for frames that the plugin will 
-accept. A value of 0 indicates a minimum of 1 frame (i.e. 0 is equivalent to 1).
- If num_channels is 0 (a generator), this value is ignored, (unless it is -1, see below).
+minimum frames is defined as follows:
+a value of -1 indicates a plugin which does not deal with video at all
+This type of plugin is designated a 'utility', an example being the frame_calculator
+
+a value of 0 denotes a plugin that is "stateless", i.e each frame is processed in
+the exact same way, regardless of its order in the sequence
+
+a value of 1 indiocates that the plugin updates some internal variables
+for each frame in a sequence
+
+		  a va;ue of 2 or higher
+		  denotes a plugin which  makes use of the pixel data from
+		  prior or evren future  frames"
+
+For generators a value of 0 for min frames indicates that all generated images
+    are identical copies of each other.
+
+    a value of 1 indicates that the output frames vary and
+
+    a value of 2 or higher
+    indicates a "batch" generetar which simply produces a number of frames without
+    providing anny indication as to its progress.
+
+
+
 
 num_channels indicates the number of input channels. (LiVES currently will only 
 accept 0,1, or 2 input channels).
@@ -488,17 +520,26 @@ layout
 special
 
 
-layout is hint to the host about how to lay out the parameter window. It is 
-abstracted from any particular widget set. 
+layout is hint to the host about how to present a parameter interface to a human
+user. It is abstracted from any particular widget set.
 
 It is up to the host how each layout line in this section is actually 
-interpreted.
+interpreted. The design is kept as simple as possible to allow for the actual
+visual appearance to be liberally interpreted.
  
-The standard way to imagine this is to assume each layout line describes a horizontal 
+However,
+the suggested way to picture this is to imagine that each layout line
+describes a horizontal
 box, with the boxes arranged in order from top to bottom within an interface window.
-Any remaining parameters would then be appended one per line below this, within the same window.
+Any remaining parameters would then be appended below this, within the same window.
 
-Other layout models may be used if so desired.
+Other interpetations may be used if so desired, or the hints may be ignored
+altogether.
+
+IT IS, HOWEVER, HIGHLY recommended that the "password" hint is acted upon since
+it may be desirable to obscure the text, keep it secure, etc.
+
+
 
 
 === LAYOUT ===
@@ -515,7 +556,9 @@ or they may defined elsewhere.
 
 
 fill == fill with blank space. Multple "fill"s may be used sequentially, or the fill keyword may be immediately followed by an integer
-		number, e.g fill4 would indicate 4 fills.
+number, e.g fill4 would indicate 4 fills. The actual fill size is
+determined by the host. However for a visually pleasing effect it is recommended
+that the size is chosen so that parameters are aligned vertically in sequential rows.
 
 "label" == a label
 
@@ -525,7 +568,7 @@ hseparator == horizontal line separator
 Example:
 
 <param_window>
-layout|p0|"this is a label"|
+layout|p0|"This is a label"|
 layout|p5|
 layout|p1|fill|p2|
 layout|hseparator|
@@ -534,7 +577,7 @@ layout|p4|fill|
 </param_window>
 
 This can be interpreted as:
-layout row 0:  parameter 0 followed by a label with text "Thisi is a label"
+layout row 0:  parameter 0 followed by a label with text "This is a label"
 layout row 1:  paramter 5
 layout row 2: paramter 1, blank space, parameter 2
 layout row 3: horizontal separator
@@ -548,19 +591,36 @@ rather than expanding fill it all.
 === SPECIAL ===
 
 A second keyword which can be used in the param_window section is "special".
-This indicates that the host can OPTIONALLY add a widget to the window which 
-links together some of the parameters in a special way, or has some variant functionality.
+This indicates to the host some information about the role of a parameter or
+set of parameters. The host may then use this information to better present that
+role to the user.
 
-"special" is then followed by the type of the special widget, and for some types this must be followed by a subtype.
-After this the indices of the "linked" parameters appear. The amount (or amounts) of linked parameters is determined
-by the special type and subtype as denoted below. In some cases the linked parameters may take multiple values,
-then it is up to the developers how to chose which set of values are "current" at any one time. 
+"special" is then followed by the TYPE of the special widget, and for some types this must be followed by a SUBTYPE. The list of TYPES and SUBTYPES is deliberately kept
+small.
 
+After the type and subtype the indices of the "linked" parameters appear. The amount (or amounts) of linked parameters is determined
+by the special type and subtype as defined below. In some cases the linked parameters may take multiple values,
+then it is up to the developers to determine which if any subset of values are
+     "current"
+     i.e. represented in the user interface at any one time.
+
+
+Example:
 
 special|framedraw|rectdemask|1|2|3|4
 
-There is up to developers exactly  how they visually interpret the special keyword.
-It is however, STRONGLY recommended to use at most ONE of each special type per interface window.
+this line would provide a hint that a special role with TYPE framedraw, and SUBTYPE
+rectdemask (rectangular demask) may be linked to parameters 1, 2, 3, and 4
+Note it does not provide any POSITIONAL information regarding the link parameters.
+That role is reserved only for "layout" lines.
+
+In view of this fact,  only the parameter numeration (starting from 0)
+is used here, as opposed to p0, p1, p2 etc used in the layout lines
+(thus the p prefix can be thought of as POSITION).
+
+It is up to developers exactly how they visually interpret the special keyword.
+It is however, STRONGLY recommended to use at most ONE of each special type per
+interface window, since not all hosts may support multiple instances of a type.
 
 Below are the suggested interpretations for each type / subtype.
 
@@ -610,7 +670,7 @@ Special type "filewrite" - 1 string parameter : the linked string parameter shou
 write / create permissions. In this case the maximum string length may be ignored as with fileread.
 The host may confirm with the user in the case that the file already exists as the existing file may be overwritten.
 
-Special type "password" - 1 string parameter : the host may hide/obscure the input to this string
+Special type "password" - 1 string parameter : the host may hide/obscure the input to this string. IT IS RECOMMENDED NOT TO IGNORE THIS HINT, FOR SECURITY CONSIDERATIONS.
 
 Special type "fontchooser" - 1 string parameter, one numerical.  The first parameter may be set to a font name, the second to a font (point) size.
 
@@ -630,6 +690,7 @@ some bits are defined already
 0x0001 == slow (hint to host)
 0x0002 == may resize
 0x0004 == batch mode generator
+ [NB. this is equivalent to a min frames | channels setting of 2|0 (see above)]
 
 If the "may resize" bit is set, _all_ frames in the processing block may be 
 resized to a new width and height. The host should take measures to determine the new width / height of the output using its

@@ -132,6 +132,40 @@ static void add_clear_ds_adv(LiVESBox *box) {
 }
 
 
+static void add_perminfo(LiVESWidget *dialog) {
+  LiVESWidget *dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+  LiVESWidget *hbox = lives_hbox_new(FALSE, 0), *vbox;
+  LiVESWidget *label;
+  char *txt;
+
+  lives_box_pack_end(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, 0);
+  vbox = lives_vbox_new(FALSE, 0);
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
+  lives_standard_expander_new(_("_Show complete details"), LIVES_BOX(hbox), vbox);
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+  lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_apply_theme(vbox, LIVES_WIDGET_STATE_NORMAL);
+
+  if (mainw->permmgr->cmdlist) {
+    txt = lives_strdup_printf(_("Should you agree, the following commands will be run:\n%s"),
+                              mainw->permmgr->cmdlist);
+    label = lives_standard_label_new(txt);
+    lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, TRUE, widget_opts.packing_height);
+    add_fill_to_box(LIVES_BOX(vbox));
+
+    lives_free(txt);
+  }
+
+  if (mainw->permmgr->futures) {
+    txt = lives_strdup_printf(_("After this you will need to update using:\n%s\n\n"
+                                "Please make a note of this.\n"),
+                              mainw->permmgr->futures);
+    label = lives_standard_label_new(txt);
+    lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, TRUE, widget_opts.packing_height);
+    lives_free(txt);
+  }
+}
+
 //Warning or yes/no dialog
 
 // the type of message box here is with 2 or more buttons (e.g. OK/CANCEL, YES/NO, ABORT/CANCEL/RETRY)
@@ -298,8 +332,11 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   lives_box_pack_start(LIVES_BOX(dialog_vbox), label, TRUE, TRUE, 0);
   lives_label_set_selectable(LIVES_LABEL(label), TRUE);
 
+  if (mainw->permmgr && (mainw->permmgr->cmdlist || mainw->permmgr->futures))
+    add_perminfo(dialog);
+
   if (mainw != NULL) {
-    if (mainw != NULL && mainw->add_clear_ds_adv) {
+    if (mainw->add_clear_ds_adv) {
       mainw->add_clear_ds_adv = FALSE;
       add_clear_ds_adv(LIVES_BOX(dialog_vbox));
     }
@@ -321,6 +358,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
                            NULL);
     }
   }
+
 
   if (okbutton != NULL || cancelbutton != NULL) {
     accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
@@ -845,8 +883,22 @@ LiVESResponseType handle_backend_errors(boolean can_retry, LiVESWindow *transien
     if (numtok > 4 && *(array[4])) addinfo = array[4];
     else addinfo = NULL;
     if (!CURRENT_CLIP_IS_VALID || !cfile->no_proc_sys_errors) {
-      response = do_system_failed_error(array[2], atoi(array[3]), addinfo, can_retry, transient);
-      if (response == LIVES_RESPONSE_RETRY) return response;
+      if (numtok > 5 && !strcmp(addinfo, "_ASKPERM_")) {
+        /// sys error is possibly recoverabel, but requires user PERMS
+        /// ask for them and then return either LIVES_RESPONSE_CANCEL
+        /// or LIVES_RESPONSE_ACCEPT, as well as setting mainw->perm_idx and mainw->perm_key
+        if (lives_ask_permission(array, numtok, 5)) response = LIVES_RESPONSE_ACCEPT;
+        else {
+          mainw->permmgr->idx = -1;
+          lives_freep((void **)&mainw->permmgr->key);
+          response = LIVES_RESPONSE_CANCEL;
+          mainw->permmgr->cmdlist = mainw->permmgr->futures = NULL;
+        }
+        goto handled;
+      } else {
+        response = do_system_failed_error(array[2], atoi(array[3]), addinfo, can_retry, transient);
+        if (response == LIVES_RESPONSE_RETRY) return response;
+      }
     }
     pxstart = 3;
     mainw->cancelled = CANCEL_ERROR;
@@ -861,6 +913,8 @@ LiVESResponseType handle_backend_errors(boolean can_retry, LiVESWindow *transien
     lives_strappend(mainw->msg, MAINW_MSG_SIZE, _(array[i]));
     lives_strappend(mainw->msg, MAINW_MSG_SIZE, "\n");
   }
+
+handled:
   lives_strfreev(array);
 
   mainw->error = TRUE;
@@ -1626,7 +1680,7 @@ switch_point:
         if (scratch != SCRATCH_NONE || getahead > -1 || drop_off) dropped = 0;
         else {
           if (mainw->frame_layer_preload && !cleanup_preload && mainw->pred_clip == mainw->playing_file
-              && mainw->pred_frame != 0 && (abs(mainw->pred_frame) - mainw->actual_frame) * sig(sfile->pb_fps) > 0
+              && mainw->pred_frame != 0 && (labs(mainw->pred_frame) - mainw->actual_frame) * sig(sfile->pb_fps) > 0
               && is_layer_ready(mainw->frame_layer_preload))
             dropped = ABS(requested_frame - mainw->pred_frame) - 1;
           else
@@ -1711,7 +1765,7 @@ switch_point:
 
         if (mainw->frame_layer_preload && !cleanup_preload) {
           if (mainw->pred_clip == mainw->current_file) {
-            frames_t pframe = abs(mainw->pred_frame);
+            frames_t pframe = labs(mainw->pred_frame);
             if (((sfile->pb_fps > 0. && pframe >= mainw->actual_frame &&
                   (pframe <= requested_frame || is_virtual_frame(mainw->playing_file, sfile->frameno))) ||
                  (sfile->pb_fps < 0. && pframe <= mainw->actual_frame &&
@@ -1853,7 +1907,7 @@ switch_point:
 #ifdef ENABLE_PRECACHE
       if (mainw->frame_layer_preload) {
         if (mainw->pred_clip != -1) {
-          frames_t pframe = abs(mainw->pred_frame);
+          frames_t pframe = labs(mainw->pred_frame);
           if (mainw->pred_clip != mainw->current_file
               || (sfile->pb_fps >= 0. && (pframe <= requested_frame || pframe < sfile->frameno))
               || (sfile->pb_fps < 0. && (pframe >= requested_frame || pframe > sfile->frameno))) {
@@ -2743,7 +2797,6 @@ boolean do_auto_dialog(const char *text, int type) {
           while ((tl = lives_alarm_check(alarm_handle)) > 0 && !mainw->cancelled) {
             lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
             lives_widget_process_updates(mainw->proc_ptr->processing, TRUE);
-            //lives_widget_context_update();
             lives_usleep(prefs->sleep_time);
           }
           lives_alarm_clear(alarm_handle);
@@ -2752,9 +2805,10 @@ boolean do_auto_dialog(const char *text, int type) {
     }
   }
 
-  if (mainw->proc_ptr != NULL) {
+  if (mainw->proc_ptr) {
     lives_widget_destroy(mainw->proc_ptr->processing);
     lives_free(mainw->proc_ptr);
+    mainw->proc_ptr = NULL;
   }
 
   if (type == 2) mainw->cancel_type = CANCEL_KILL;
@@ -2766,7 +2820,7 @@ boolean do_auto_dialog(const char *text, int type) {
     handle_backend_errors(FALSE, NULL);
     if (mainw->cancelled || mainw->error) return FALSE;
   } else {
-    if (mainw->current_file > -1 && cfile != NULL)
+    if (CURRENT_CLIP_IS_VALID)
       if (!check_storage_space(mainw->current_file, FALSE)) return FALSE;
   }
   return TRUE;
@@ -3615,7 +3669,7 @@ LiVESResponseType do_system_failed_error(const char *com, int retval, const char
       norecurse = FALSE;
     }
   } else {
-    do_error_dialog(msgx);
+    do_blocking_error_dialog(msgx);
   }
   lives_free(msgx);
   lives_free(msg);
@@ -4087,6 +4141,30 @@ boolean ask_permission_dialog(int what) {
              _("\nLiVES would like to open a local network connection (UDP port %d),\nto let other applications connect to it.\n"
                "Do you wish to allow this (for this session only) ?\n"),
              prefs->osc_udp_port);
+  default:
+    break;
+  }
+
+  return FALSE;
+}
+
+
+boolean ask_permission_dialog_complex(int what, char **argv, int argc, int offs) {
+  if (!prefs->show_gui) return FALSE;
+  int nrem = argc - offs;
+  switch (what) {
+  case LIVES_PERM_DOWNLOAD_LOCAL:
+    // argv should have: name_of_package_bin, grant_idx, grant_key, error msg, cmds to run, future updates.
+    if (nrem < 4) return FALSE; /// badly formed request, ignore it
+    mainw->permmgr = (lives_permmgr_t *)lives_calloc(1, sizeof(lives_permmgr_t));
+    mainw->permmgr->idx = atoi(argv[offs + 1]);
+    mainw->permmgr->key = lives_strdup(argv[offs + 2]);
+    if (nrem >= 5) mainw->permmgr->cmdlist = argv[offs + 4];
+    if (nrem >= 6) mainw->permmgr->futures = argv[offs + 5];
+    return do_yesno_dialogf(
+             _("The following error occured:\n%s\n\nIt may be possible to work around this, "
+               "by downloading a personal copy of\n%s\n"
+               "Please consider carefully, and then click 'Yes' to proceed, or 'No' to cancel.\n"), argv[offs + 3], argv[offs]);
   default:
     break;
   }

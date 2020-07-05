@@ -51,13 +51,14 @@ static weed_plantptr_t statsplant = NULL;
 static int load_compound_fx(void);
 
 
+#if 0
 LIVES_LOCAL_INLINE int weed_inst_refs_count(weed_plant_t *inst) {
   int error;
   if (inst == NULL) return -1;
   if (!weed_plant_has_leaf(inst, WEED_LEAF_HOST_REFS)) return 0;
   return weed_get_int_value(inst, WEED_LEAF_HOST_REFS, &error);
 }
-
+#endif
 ////////////////////////////////////////////////////////////////////////////
 
 LIVES_GLOBAL_INLINE weed_error_t weed_leaf_copy_or_delete(weed_layer_t *dlayer, const char *key, weed_layer_t *slayer) {

@@ -19,7 +19,7 @@ Salsaman|
 
 # Menu entry|Action description|min_frames|num_channels|
 <description>
-Skip forward|Applying forward skip to|1|1|
+Skip forward|Applying forward skip to|2|1|
 </description>
 
 # requirements (list)

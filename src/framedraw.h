@@ -46,7 +46,7 @@ void load_framedraw_image(LiVESPixbuf *);
 void load_rfx_preview(lives_rfx_t *rfx); ///< rfx preview
 
 // reset preview when any param changes
-void reset_framedraw_preview(void);
+void invalidate_preview(lives_special_framedraw_rect_t *);
 
 /// reset button
 void on_framedraw_reset_clicked(LiVESButton *, lives_special_framedraw_rect_t *);

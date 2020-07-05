@@ -1325,7 +1325,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       }
       seek = lives_buffered_offset(in_fd[track]);
       seekstart[track] = quant_abytes(fromtime[track], in_arps[track], in_achans[track], in_asamps[track]);
-      if (fabs(seekstart[track] - seek) > AUD_DIFF_MIN) {
+      if (labs(seekstart[track] - seek) > AUD_DIFF_MIN) {
         lives_lseek_buffered_rdonly_absolute(in_fd[track], seekstart[track]);
       }
       lives_free(infilename);

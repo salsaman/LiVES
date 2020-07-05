@@ -97,7 +97,11 @@ void load_theme_images(void) {
     }
 
     lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->sep_image), mainw->imsep);
-    lives_widget_set_opacity(mainw->sep_image, 0.4);
+    if (!palette || !(palette->style & STYLE_LIGHT)) {
+      lives_widget_set_opacity(mainw->sep_image, 0.4);
+    } else {
+      lives_widget_set_opacity(mainw->sep_image, 0.8);
+    }
     lives_widget_queue_draw(mainw->sep_image);
 
     // imframe
@@ -4250,7 +4254,7 @@ void resize_play_window(void) {
             mainw->vpp->fwidth = DEF_VPP_HSIZE;
             mainw->vpp->fheight = DEF_VPP_VSIZE;
           }
-          if (!mainw->vpp->capabilities & VPP_CAN_RESIZE) {
+          if (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)) {
             mainw->pwidth = mainw->vpp->fwidth;
             mainw->pheight = mainw->vpp->fheight;
 
@@ -4481,7 +4485,7 @@ void get_letterbox_sizes(int *pwidth, int *pheight, int *lb_width, int *lb_heigh
   }
   frame_aspect = (float) * lb_width / (float) * lb_height;
   player_aspect = (float) * pwidth / (float) * pheight;
-  if (fabsf(1. - frame_aspect / player_aspect) < ASPECT_DIFF_LMT) {
+  if (fabs(1. - frame_aspect / player_aspect) < ASPECT_DIFF_LMT) {
     if (*lb_width > *pwidth) *lb_width = *pwidth;
     if (*lb_height > *pheight) *lb_height = *pheight;
     if (*pwidth > *lb_width) *pwidth = *lb_width;

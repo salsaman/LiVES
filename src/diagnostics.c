@@ -78,7 +78,7 @@ char *get_stats_msg(boolean calc_only) {
   if (calc_only) return NULL;
   if (have_avsync) {
     audmsg = lives_strdup_printf(_("Audio is %s video by %.4f secs.\n"),
-                                 tmp = lives_strdup(avsync >= 0. ? _("ahead of") : _("behind")), fabsf(avsync));
+                                 tmp = lives_strdup(avsync >= 0. ? _("ahead of") : _("behind")), fabs(avsync));
     lives_free(tmp);
   } else {
     if (prefs->audio_src == AUDIO_SRC_INT) audmsg = (_("Clip has no audio.\n"));

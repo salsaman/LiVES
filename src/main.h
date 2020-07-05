@@ -910,7 +910,6 @@ typedef struct {
   lives_checkstatus_t has_gconftool_2;
   lives_checkstatus_t has_xdg_screensaver;
   lives_checkstatus_t has_wmctrl;
-  lives_checkstatus_t has_ssh_askpass;
   lives_checkstatus_t has_youtube_dl;
   lives_checkstatus_t has_du;
   lives_checkstatus_t has_md5sum;
@@ -1118,6 +1117,7 @@ boolean check_storage_space(int clipno, boolean is_processing);
 char *get_upd_msg(void);
 
 boolean ask_permission_dialog(int what);
+boolean ask_permission_dialog_complex(int what, char **argv, int argc, int offs);
 boolean do_abort_check(void);
 void add_warn_check(LiVESBox *box, int warn_mask_number);
 LiVESResponseType do_memory_error_dialog(char *op, size_t bytes);
@@ -1745,8 +1745,7 @@ void break_me(const char *dtl);
 #endif
 
 #endif
-
-#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #define STD_STRINGFUNCS

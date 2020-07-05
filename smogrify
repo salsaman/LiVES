@@ -1301,9 +1301,9 @@ if (defined($ARGV[0])) {
 	    ## args are 1: file to unpack, 2 dir to unpack in
 	    ## TODO: make bg
 	    $com = "/bin/mkdir -p \"$ARGV[2]\"";
-	    my $smerr = smog_system($com);
+	    my $smerr = &smog_system($com);
 	    if ($smerr) {
-		sig_system_error("Creating directory \"$ARGV[2]\"", $smerr);
+		&sig_system_error("Creating directory \"$ARGV[2]\"", $smerr);
 		exit 1;
 	    }
 	    chdir $ARGV[2];
@@ -3679,12 +3679,116 @@ if (defined($ARGV[0])) {
 	    my $do_update = int($ARGV[11]);
 	    my $debug = $ARGV[12];
 
-	    ## first of all deal with update
-	    my $sshaskpass = &location("ssh-askpass");
-	    if ($do_update) {
-		&smog_system("export SUDO_ASKPASS=$sshaskpass; sudo -A youtube-dl -U");
+	    ##print STDERR "DO UPDATE is $do_update\n";
+
+	    my $youtube_dl = "youtube-dl";
+	    my $lives_config_bindir = "$configdir" . ".lives-dir/bin";
+	    my $prog = "";
+	    my $islocal = 0;
+	    my $com;
+	    my $smerr;
+
+	    if ($ARGV[13] eq "forceddownload") {
+		$prog = "$lives_config_bindir/$youtube_dl";
+		$islocal = 1;
+		if (! -d $lives_config_bindir) {
+		    $com = "/bin/mkdir -p \"$lives_config_bindir\"";
+		    $smerr = &smog_system($com);
+		    if ($smerr || ! -d $lives_config_bindir) {
+			&sig_system_error("Creating directory $lives_config_bindir",
+					  $smerr);
+			exit 1;
+		    }
+		}
+		#print STDERR "commencing download\n";
+		$com = "wget https://yt-dl.org/downloads/latest/youtube-dl -O '$prog'";
+		$smerr = &smog_system($com);
+		#print STDERR "download done, result was $smerr\n";
+		if ($smerr || ! -f $prog) {
+		    &sig_system_error("Downloading $youtube_dl to $lives_config_bindir",
+				      $smerr);
+		    exit 1;
+		}
+		$com = "chmod u+x '$prog'";
+		$smerr = &smog_system($com);
+		if ($smerr || ! -x $prog) {
+		    &sig_system_error("Changing permissions for $prog", $smerr);
+		    exit 1;
+		}
+		$com = "hash -d $youtube_dl";
+		&smog_system($com);
+	    }
+	    else {
+		## if there is a local copy of ytdl we try to use that
+		if ($configdir) {
+		    if (-x "$lives_config_bindir/$youtube_dl"
+			&& ! -z "$lives_config_bindir/$youtube_dl") {
+			#print STDERR "found local\n";
+			$prog = "$lives_config_bindir/$youtube_dl";
+			$islocal = 1;
+		    }
+		}
+		if ($prog eq "") {
+		    $prog = &location($youtube_dl);
+		}
+		if ($prog eq "") {
+		    $com = "$youtube_dl";
+		    open (my $fh, "$com 2>&1 |");
+		    my $line = <$fh>;
+		    &sig_system_error(
+			$com, "", "_ASKPERM_|DOWNLOADLOCAL|youtube-dl|" .
+			"13|forceddownload|$line|" .
+			"wget https://yt-dl.org/downloads/latest/youtube-dl " .
+			"-O '$lives_config_bindir/$youtube_dl'\nchmod u+x " .
+			"'$lives_config_bindir/$youtube_dl'"
+			);
+		    exit 1;
+		}
 	    }
 
+	    ## first of all deal with update
+
+	    if ($do_update) {
+		$com = "'$prog' -U";
+		#print STDERR "UPDATING WITH $com\n";
+		open (my $fh, "$com 2>&1 |");
+		while (defined(my $line = <$fh>)) {
+		    #print STDERR "got line $line\n";
+		    if (!$islocal && $line =~ /^youtube-dl:(.*)error:(.*)/) {
+			#print STDERR "ret ERROR\n";
+			&sig_system_error(
+			$com, "", "_ASKPERM_|DOWNLOADLOCAL|youtube-dl|" .
+			"13|forceddownload|$2|" .
+			"wget https://yt-dl.org/downloads/latest/youtube-dl " .
+			"-O '$lives_config_bindir/$youtube_dl'\nchmod u+x " .
+			"'$lives_config_bindir/$youtube_dl'"
+			);
+			exit 1;
+		    }
+		}
+		close $fh;
+		#print STDERR "Update of $prog complete, result was $?\n";
+		if ($? >> 8) {
+		    #print STDERR "WAS ERROR\n";
+		    if (!$islocal) {
+			#print STDERR "RET ERROR\n";
+			&sig_system_error(
+			     $com, "", "_ASKPERM_|DOWNLOADLOCAL|youtube-dl|" .
+			     "13|forceddownload|Unknown error|" .
+			     "wget https://yt-dl.org/downloads/latest/youtube-dl " .
+			     "-O '$lives_config_bindir/$youtube_dl'\nchmod u+x " .
+			     "'$lives_config_bindir/$youtube_dl'"
+			    );
+			exit 1;
+		    }
+		    else {
+			#print STDERR "RET2 ERROR\n";
+			&sig_error("Unknown error");
+			exit 1;
+		    }
+		}
+	    }
+	    #print STDERR "Listing files\n";
 	    my $tdiag = sqrt($deswidth * $deswidth + $desheight * $desheight);
 	    if ($vidchoice ne "") {
 		$bestvideo = $vidchoice;
@@ -3709,10 +3813,10 @@ if (defined($ARGV[0])) {
 		my $count = 0;
 
 		if ($debug) {
-		    print STDERR "DOING .youtube-dl --no-playlist -F '$url'\n";
+		    print STDERR "DOING .'$prog' --no-playlist -F '$url'\n";
 		}
 
-		open (my $fh, "youtube-dl --no-playlist -F '$url' |");
+		open (my $fh, "'$prog' --no-playlist -F '$url' |");
 		while (defined(my $line = <$fh>)) {
 		    if ($debug) {
 			print STDERR "WE GOT $line.";
@@ -3905,12 +4009,12 @@ if (defined($ARGV[0])) {
 	    if ($formreq eq "mp4") {
 		#$extra = "--merge-output-format mp4";
 		$extra = "";
-		$com = "youtube-dl --no-playlist -o \"$xdfile\" $extra --no-part --no-cache-dir -f '$bestvideo$xbestaudio' \"$url\"";
+		$com = "'$prog' --no-playlist -o \"$xdfile\" $extra --no-part --no-cache-dir -f '$bestvideo$xbestaudio' \"$url\"";
 	    } elsif ($formreq eq "webm") {
 		if ($bestaudio eq "") {
 		    $dfile = $xdfile;
 		}
-		$com = "youtube-dl --no-playlist -o \"$dfile\" --no-part --no-cache-dir -f '$bestvideo$xbestaudio' \"$url\"";
+		$com = "'$prog' --no-playlist -o \"$dfile\" --no-part --no-cache-dir -f '$bestvideo$xbestaudio' \"$url\"";
 	    }
 
 	    if ($debug) {
@@ -7903,8 +8007,7 @@ if (defined($ARGV[0])) {
 
 
     sub sig_error {
-	# WARNING: error strings MUST NOT contain newlines, instead you can pass up to 4 lines of text as params
-
+	# WARNING: error strings MUST NOT contain newlines, instead you can pass up to 3 lines of text as params
 	# write to backend -> frontend $statusfile
 
 	return if (! -d $curworkdir);

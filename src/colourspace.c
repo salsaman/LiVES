@@ -1396,19 +1396,26 @@ static void *convert_swapprepost_frame_thread(void *cc_params);
 static void *convert_swab_frame_thread(void *cc_params);
 
 static void rgb2yuv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v) GNU_HOT;
+#if 0
 static void rgb2yuv_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v, uint8_t *lut) GNU_HOT;
+#endif
 static void rgb2uyvy(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
                      uyvy_macropixel *uyvy) GNU_FLATTEN GNU_HOT;
 static void rgb2uyvy_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
                                 uyvy_macropixel *uyvy, uint8_t *lut) GNU_FLATTEN GNU_HOT;
 static void rgb16_2uyvy(uint16_t r0, uint16_t g0, uint16_t b0, uint16_t r1, uint16_t g1, uint16_t b1,
                         uyvy_macropixel *uyvy) GNU_FLATTEN GNU_HOT;
+#if 0
 static void rgb16_2uyvy_with_gamma(uint16_t r0, uint16_t g0, uint16_t b0, uint16_t r1, uint16_t g1, uint16_t b1,
                                    uyvy_macropixel *uyvy, uint8_t *lut) GNU_FLATTEN GNU_HOT;
+#endif
+
 static void rgb2yuyv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
                      yuyv_macropixel *yuyv) GNU_FLATTEN GNU_HOT;
+#if 0
 static void rgb2yuyv_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
                                 yuyv_macropixel *yuyv, uint8_t *lut) GNU_FLATTEN GNU_HOT;
+#endif
 static void rgb2_411(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
                      uint8_t r2, uint8_t g2, uint8_t b2, uint8_t r3, uint8_t g3, uint8_t b3, yuv411_macropixel *yuv) GNU_HOT;
 static void yuv2rgb(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) GNU_HOT;
@@ -1460,6 +1467,7 @@ LIVES_INLINE void rgb2yuv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_
 
 #define bgr2yuv(b0, g0, r0, y, u, v) rgb2yuv(r0, g0, b0, y, u, v)
 
+#if 0
 LIVES_INLINE void rgb2yuv_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v, uint8_t *lut) {
   register short a;
   if ((a = spc_rnd(Y_R[(r0 = lut[r0])] + Y_G[(g0 = lut[g0])] + Y_B[(b0 = lut[b0])])) > max_Y) a = max_Y;
@@ -1469,6 +1477,7 @@ LIVES_INLINE void rgb2yuv_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t
   if ((a = spc_rnd(Cr_R[r0] + Cr_G[g0] + Cr_B[b0])) > max_UV) a = max_UV;
   *v = a < min_UV ? min_UV : a;
 }
+#endif
 
 #define bgr2yuv_with_gamma(b0, g0, r0, y, u, v) rgb2yuv(r0, g0, b0, y, u, v, lut)
 
@@ -1512,6 +1521,7 @@ LIVES_INLINE void rgb2yuyv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8
   yuyv->v0 = avg_chroma_1_3f(Cr_R[r0] + Cr_G[g0] + Cr_B[b0], Cr_R[r1] + Cr_G[g1] + Cr_B[b1]);
 }
 
+#if 0
 LIVES_INLINE void rgb2yuyv_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
                                       yuyv_macropixel *yuyv,
                                       uint8_t *lut) {
@@ -1523,6 +1533,7 @@ LIVES_INLINE void rgb2yuyv_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_
   yuyv->u0 = avg_chroma_3_1f(Cb_R[r0] + Cb_G[g0] + Cb_B[b0], Cb_R[r1] + Cb_G[g1] + Cb_B[b1]);
   yuyv->v0 = avg_chroma_1_3f(Cr_R[r0] + Cr_G[g0] + Cr_B[b0], Cr_R[r1] + Cr_G[g1] + Cr_B[b1]);
 }
+#endif
 
 LIVES_INLINE void rgb16_2uyvy(uint16_t r0, uint16_t g0, uint16_t b0, uint16_t r1, uint16_t g1, uint16_t b1,
                               uyvy_macropixel *uyvy) {
@@ -1579,6 +1590,7 @@ LIVES_INLINE void rgb16_2uyvy(uint16_t r0, uint16_t g0, uint16_t b0, uint16_t r1
   uyvy->v0 = avg_chroma_1_3f(rr0 + gg0 + bb0, rr1 + gg1 + bb1);
 }
 
+#if 0
 LIVES_INLINE void rgb16_2uyvy_with_gamma(uint16_t r0, uint16_t g0, uint16_t b0, uint16_t r1, uint16_t g1, uint16_t b1,
     uyvy_macropixel *uyvy, uint8_t *lut) {
   register short a;
@@ -1633,7 +1645,7 @@ LIVES_INLINE void rgb16_2uyvy_with_gamma(uint16_t r0, uint16_t g0, uint16_t b0, 
 
   uyvy->v0 = avg_chroma_1_3f(rr0 + gg0 + bb0, rr1 + gg1 + bb1);
 }
-
+#endif
 
 LIVES_INLINE void rgb2_411(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
                            uint8_t r2, uint8_t g2, uint8_t b2, uint8_t r3, uint8_t g3, uint8_t b3, yuv411_macropixel *yuv) {

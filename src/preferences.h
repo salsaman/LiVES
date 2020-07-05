@@ -1024,8 +1024,9 @@ void toggle_sets_pref(LiVESWidget *widget, livespointer prefidx);
 
 // permissions
 
+#define LIVES_PERM_INVALID 0
 #define LIVES_PERM_OSC_PORTS 1
+#define LIVES_PERM_DOWNLOAD_LOCAL 2
 
-boolean lives_ask_permission(int what);
-
+boolean lives_ask_permission(char **argv, int argc, int offs);
 #endif

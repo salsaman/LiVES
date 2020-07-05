@@ -150,7 +150,7 @@ void tr_msg(void) {
 
 void break_me(const char *brkstr) {
   if (prefs && prefs->show_dev_opts)
-    g_print("BANG ! hiy breakpoint %s\n", brkstr ? brkstr : "???");
+    g_print("BANG ! hit breakpoint %s\n", brkstr ? brkstr : "???");
   // breakpoint for gdb
 }
 
@@ -1417,6 +1417,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->proc_ptr = NULL;
 
+  mainw->permmgr = NULL;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);
@@ -1587,7 +1588,7 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->mt_def_achans = get_int_prefd(PREF_MT_DEF_ACHANS, DEFAULT_AUDIO_CHANS);
     prefs->mt_def_asamps = get_int_prefd(PREF_MT_DEF_ASAMPS, DEFAULT_AUDIO_SAMPS);
     prefs->mt_def_signed_endian = get_int_prefd(PREF_MT_DEF_SIGNED_ENDIAN, (capable->byte_order == LIVES_BIG_ENDIAN)
-                                  ? 2 : 0 + (prefs->mt_def_asamps == 8) ? 1 : 0);
+                                  ? 2 : 0 + ((prefs->mt_def_asamps == 8) ? 1 : 0));
 
     prefs->mt_exit_render = get_boolean_prefd(PREF_MT_EXIT_RENDER, TRUE);
     prefs->render_prompt = get_boolean_prefd(PREF_RENDER_PROMPT, TRUE);
@@ -2085,8 +2086,6 @@ static void do_start_messages(void) {
   SHOWDET(gzip);
   SHOWDET(md5sum);
   SHOWDETx(youtube_dl, EXEC_YOUTUBE_DL);
-  if (capable->has_youtube_dl)
-    SHOWDETx(ssh_askpass, EXEC_SSH_ASKPASS);
 
   d_print(_("\n\nChecking OPTIONAL dependencies: "));
   SHOWDET(jackd);
@@ -2247,15 +2246,14 @@ static void do_start_messages(void) {
 static void set_toolkit_theme(int prefer) {
   // parse XDG_DATA_DIRS
   if (prefer & LIVES_THEME_DARK) {
-    lives_widget_object_set(gtk_settings_get_default(), "gtk-theme-name", "Materia");
-    lives_widget_object_set(gtk_settings_get_default(), "gtk-icon-theme-name", "elementaryXubuntu-dark");
     lives_widget_object_set(gtk_settings_get_default(), "gtk-application-prefer-dark-theme", TRUE);
-
-    lives_widget_object_get(gtk_settings_get_default(), "gtk-icon-theme-name", &capable->icon_theme_name);
-    lives_widget_object_get(gtk_settings_get_default(), "gtk-theme-name", &capable->gui_theme_name);
-    widget_opts.icon_theme = gtk_icon_theme_new();
-    gtk_icon_theme_set_custom_theme((LiVESIconTheme *)widget_opts.icon_theme, capable->icon_theme_name);
   }
+  lives_widget_object_set(gtk_settings_get_default(), "gtk-theme-name", "Materia");
+  lives_widget_object_get(gtk_settings_get_default(), "gtk-theme-name", &capable->gui_theme_name);
+  lives_widget_object_set(gtk_settings_get_default(), "gtk-icon-theme-name", "elementaryXubuntu");
+  lives_widget_object_get(gtk_settings_get_default(), "gtk-icon-theme-name", &capable->icon_theme_name);
+  widget_opts.icon_theme = gtk_icon_theme_new();
+  gtk_icon_theme_set_custom_theme((LiVESIconTheme *)widget_opts.icon_theme, capable->icon_theme_name);
 }
 
 
@@ -2349,10 +2347,16 @@ boolean set_palette_colours(boolean force_reload) {
     if (lives_ascii_strcasecmp(future_prefs->theme, "none")) {
       palette->style = lcol.red;
       if (!(palette->style & STYLE_LIGHT)) {
+        if (mainw->sep_image) lives_widget_set_opacity(mainw->sep_image, 0.4);
+        if (mainw->multitrack && mainw->multitrack->sep_image) lives_widget_set_opacity(mainw->multitrack->sep_image, 0.4);
         palette->ce_unsel.red = palette->ce_unsel.green = palette->ce_unsel.blue = 6554;
         set_toolkit_theme(LIVES_THEME_DARK | LIVES_THEME_COMPACT);
-      } else set_toolkit_theme(LIVES_THEME_LIGHT | LIVES_THEME_COMPACT);
-
+      } else {
+        set_toolkit_theme(LIVES_THEME_LIGHT | LIVES_THEME_COMPACT);
+        palette->ce_unsel.red = palette->ce_unsel.green = palette->ce_unsel.blue = 0;
+        if (mainw->sep_image) lives_widget_set_opacity(mainw->sep_image, 0.4);
+        if (mainw->multitrack && mainw->multitrack->sep_image) lives_widget_set_opacity(mainw->multitrack->sep_image, 0.4);
+      }
       get_string_pref(THEME_DETAIL_SEPWIN_IMAGE, mainw->sepimg_path, PATH_MAX);
       get_string_pref(THEME_DETAIL_FRAMEBLANK_IMAGE, mainw->frameblank_path, PATH_MAX);
 
@@ -2463,10 +2467,15 @@ boolean set_palette_colours(boolean force_reload) {
     } else {
       palette->style = atoi(pstyle);
       if (!(palette->style & STYLE_LIGHT)) {
-        palette->ce_unsel.red = palette->ce_unsel.green = palette->ce_unsel.blue = 0;
-        set_toolkit_theme(LIVES_THEME_LIGHT | LIVES_THEME_COMPACT);
-      } else {
+        palette->ce_unsel.red = palette->ce_unsel.green = palette->ce_unsel.blue = 6554;
+        if (mainw->sep_image) lives_widget_set_opacity(mainw->sep_image, 0.8);
+        if (mainw->multitrack && mainw->multitrack->sep_image) lives_widget_set_opacity(mainw->multitrack->sep_image, 0.8);
         set_toolkit_theme(LIVES_THEME_DARK | LIVES_THEME_COMPACT);
+      } else {
+        if (mainw->sep_image) lives_widget_set_opacity(mainw->sep_image, 0.4);
+        if (mainw->multitrack && mainw->multitrack->sep_image) lives_widget_set_opacity(mainw->multitrack->sep_image, 0.4);
+        set_toolkit_theme(LIVES_THEME_LIGHT | LIVES_THEME_COMPACT);
+        palette->ce_unsel.red = palette->ce_unsel.green = palette->ce_unsel.blue = 0;
       }
     }
 
@@ -2601,7 +2610,6 @@ capability *get_capabilities(void) {
   capable->has_autolives = UNCHECKED;
   capable->has_jackd = UNCHECKED;
   capable->has_gdb = UNCHECKED;
-  capable->has_ssh_askpass = UNCHECKED;
   capable->has_pulse_audio = UNCHECKED;
   capable->has_xwininfo = UNCHECKED;
   capable->has_midistartstop = UNCHECKED;
@@ -2832,7 +2840,6 @@ capability *get_capabilities(void) {
   }
   capable->has_jackd = has_executable(EXEC_JACKD);
   capable->has_gdb = has_executable(EXEC_GDB);
-  capable->has_ssh_askpass = has_executable(EXEC_SSH_ASKPASS);
   capable->has_pulse_audio = has_executable(EXEC_PULSEAUDIO);
   if ((capable->has_python = has_executable(EXEC_PYTHON))) {
     capable->python_version = get_version_hash(EXEC_PYTHON " -V 2>&1", " ", 1);
@@ -3409,8 +3416,7 @@ static boolean lives_startup2(livespointer data) {
   // anything that d_prints messages should go here:
   do_start_messages();
 
-  if (devmap != NULL)
-    on_devicemap_load_activate(NULL, devmap);
+  if (*devmap) on_devicemap_load_activate(NULL, devmap);
 
   d_print(_("Welcome to LiVES version %s.\n"), LiVES_VERSION);
 
@@ -3727,6 +3733,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   prefs->max_modes_per_key = atoi(DEF_FX_KEYMODES);
 
+  devmap[0] = '\0';
   capable->startup_msg[0] = '\0';
   capable->has_perl = TRUE;
   capable->has_smogrify = TRUE;
@@ -6970,9 +6977,15 @@ void get_player_size(int *opwidth, int *opheight) {
     int rwidth = lives_widget_get_allocation_width(mainw->playframe) - H_RESIZE_ADJUST;
     int rheight = lives_widget_get_allocation_height(mainw->play_image) - V_RESIZE_ADJUST;
 #endif
-    *opwidth = cfile->hsize;
-    *opheight = cfile->vsize;
-    calc_maxspect(rwidth, rheight, opwidth, opheight);
+    if (prefs->letterbox) {
+      *opwidth = cfile->hsize;
+      *opheight = cfile->vsize;
+      calc_maxspect(rwidth, rheight, opwidth, opheight);
+    }
+    else {
+      *opwidth = rwidth;
+      *opheight = rheight;
+    }
   } else {
     // try to get exact inner size of the main window
     lives_window_get_inner_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), opwidth, opheight);
@@ -6983,6 +6996,8 @@ void get_player_size(int *opwidth, int *opheight) {
  align:
   *opwidth = (*opwidth >> 2) << 2;
   *opheight = (*opheight >> 2) << 2;
+  mainw->pwidth = *opwidth;
+  mainw->pheight = *opheight;
 }
 
 
@@ -7622,7 +7637,7 @@ void load_frame_image(int frame) {
                 boolean got_preload = FALSE;
                 if (mainw->frame_layer_preload && mainw->pred_clip == mainw->playing_file
                     && mainw->pred_frame != 0 && is_layer_ready(mainw->frame_layer_preload)) {
-                  frames_t delta = (abs(mainw->pred_frame) - mainw->actual_frame) * sig(cfile->pb_fps);
+                  frames_t delta = (labs(mainw->pred_frame) - mainw->actual_frame) * sig(cfile->pb_fps);
                   /* g_print("THANKS for %p,! %d %ld should be %d, right  --  %d", mainw->frame_layer_preload, mainw->pred_clip, */
                   /*         mainw->pred_frame, mainw->actual_frame, delta); */
                   if (delta <= 0 || (mainw->pred_frame < 0 && delta > 0)) {
@@ -7640,8 +7655,8 @@ void load_frame_image(int frame) {
                     }
                   }
                   if (prefs->show_dev_opts) {
-                    if (delta < 0) g_printerr("cached frame    TOO LATE, got %d, wanted %d !!!\n",
-                                                abs(mainw->pred_frame), mainw->actual_frame);
+                    if (delta < 0) g_printerr("cached frame    TOO LATE, got %ld, wanted %d !!!\n",
+                                                labs(mainw->pred_frame), mainw->actual_frame);
                   }
                   //if (delta > 0) g_print("    waiting...\n");
                 }

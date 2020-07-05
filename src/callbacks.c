@@ -965,7 +965,7 @@ void on_open_utube_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         mt_sensitise(mainw->multitrack);
         maybe_add_mt_idlefunc();
       }
-      return;
+      goto final123;
     }
     req2 = on_utube_select(req);
 #ifndef ALLOW_NONFREE_CODECS
@@ -977,6 +977,13 @@ void on_open_utube_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       req = NULL;
     }
   } while (mainw->cancelled == CANCEL_RETRY);
+
+final123:
+  if (mainw->permmgr) {
+    lives_freep((void **)&mainw->permmgr->key);
+    lives_free(mainw->permmgr);
+    mainw->permmgr = NULL;
+  }
 }
 
 
@@ -1057,7 +1064,8 @@ void on_location_select(LiVESButton *button, livespointer user_data) {
 
 //ret updated req if fmt sel. needs change
 lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req) {
-  char *com, *dfile, *full_dfile;
+  char *com, *dfile, *full_dfile, *tmp;
+  char *overrdkey = NULL;
   lives_remote_clip_request_t *reqout = NULL;
   boolean hasnone = FALSE, hasalts = FALSE;
   int current_file = mainw->current_file;
@@ -1076,14 +1084,31 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req) {
   mainw->error = FALSE;
 
   while (1) {
+retry:
     lives_rm(cfile->info_file);
 
-    com = lives_strdup_printf("%s download_clip \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %f \"%s\" \"%s\" %d %d", prefs->backend,
+    if (mainw->permmgr && mainw->permmgr->key) {
+      overrdkey = mainw->permmgr->key;
+    }
+
+    com = lives_strdup_printf("%s download_clip \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %f \"%s\" \"%s\" %d %d%s",
+                              prefs->backend,
                               cfile->handle,
                               req->URI,
-                              dfile, req->format, req->desired_width, req->desired_height, req->matchsize, req->desired_fps,
+                              dfile, req->format, req->desired_width, req->desired_height,
+                              req->matchsize, req->desired_fps,
                               req->vidchoice, req->audchoice,
-                              req->do_update, prefs->show_dev_opts);
+                              req->do_update, prefs->show_dev_opts,
+                              overrdkey ? (tmp = lives_strdup_printf(" %s", overrdkey))
+                              : (tmp = lives_strdup("")));
+    lives_free(tmp);
+
+    if (mainw->permmgr) {
+      lives_freep((void **)&mainw->permmgr->key);
+      lives_free(mainw->permmgr);
+      overrdkey = NULL;
+      mainw->permmgr = NULL;
+    }
 
     THREADVAR(com_failed) = FALSE;
     mainw->error = FALSE;
@@ -1104,22 +1129,36 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req) {
       return NULL;
     }
 
-    if (strlen(req->vidchoice)) break;
+    if (*(req->vidchoice)) break;
 
     req->do_update = FALSE;
 
     // we expect to get back a list of available formats
     // or the selected format
     if (!do_auto_dialog(_("Getting format list"), 2)) {
-      lives_free(dfile);
       if (!IS_VALID_CLIP(current_file)) {
         close_temp_handle(-1);
       }
       if (mainw->cancelled) d_print_cancelled();
       else if (mainw->error) {
         d_print_failed();
-        do_blocking_error_dialogf(_("Unable to download media from the requested URL:\n%s\n\n"
-                                    "NB: Obtaining the address by right clicking on the target itself can sometimes work better\n"), req->URI);
+        /* /// need to check here if backend returned a specific reason */
+        /* LiVESResponseType resp = handle_backend_errors(FALSE, NULL); */
+        if (mainw->permmgr)  {
+          if (mainw->permmgr->key && *mainw->permmgr->key) {
+            req->do_update = TRUE;
+            mainw->error = FALSE;
+            mainw->cancelled = CANCEL_NONE;
+            goto retry;
+          } else {
+            lives_free(mainw->permmgr);
+            mainw->permmgr = NULL;
+          }
+        } else {
+          do_blocking_error_dialogf(_("Unable to download media from the requested URL:\n%s\n\n"
+                                      "NB: Obtaining the address by right clicking on the target itself "
+                                      "can sometimes work better\n"), req->URI);
+        }
       }
       mainw->error = FALSE;
       mainw->cancelled = CANCEL_RETRY;
@@ -1128,6 +1167,7 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req) {
         mt_sensitise(mainw->multitrack);
         maybe_add_mt_idlefunc();
       }
+      lives_free(dfile);
       return NULL;
     }
 
@@ -9011,7 +9051,10 @@ void autolives_toggle(LiVESMenuItem * menuitem, livespointer user_data) {
 
   // check if osc is started; if not ask permission
   if (!prefs->osc_udp_started) {
-    if (!lives_ask_permission(LIVES_PERM_OSC_PORTS)) {
+    char typep[32];
+    char *inst = (char *)typep;
+    lives_snprintf(typep, 32, "%d", LIVES_PERM_OSC_PORTS);
+    if (!lives_ask_permission((char **)&inst, 1, 0)) {
       // permission not given
       goto autolives_fail;
     }

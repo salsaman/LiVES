@@ -19,7 +19,7 @@ Salsaman|
 
 # Menu entry|Action description|min_frames|num_channels|
 <description>
-Monochrome|Making monochrome|1|1|
+Monochrome|Making monochrome|0|1|
 </description>
 
 # requirements (list)

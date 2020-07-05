@@ -19,7 +19,7 @@ Salsaman|
 
 # Menu entry|Action description|min_frames|num_channels|
 <description>
-Colour replace|Replacing colours in|1|1|
+Colour replace|Replacing colours in|0|1|
 </description>
 
 # requirements (list)

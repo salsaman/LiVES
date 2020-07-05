@@ -1062,8 +1062,6 @@ static char *explain_missing(const char *exe) {
         "enabing additional files to be cached in memory.\n\n"));
   else if (!lives_strcmp(exe, EXEC_YOUTUBE_DL)) pt2 = (_("Enables download and import of files from "
         "Youtube and other sites.\n\n"));
-  else if (!lives_strcmp(exe, EXEC_SSH_ASKPASS)) pt2 = (_("Required for secure password entry when "
-        "needed to update youtube-dl.\n\n"));
   else if (!lives_strcmp(exe, EXEC_XWININFO)) pt2 = (_("Enables identification of external windows "
         "so that they can be recorded.\n\n"));
   else return lives_strdup_free(pt1, "");
@@ -1090,8 +1088,6 @@ void explain_missing_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   ADD_TO_TEXT(python, EXEC_PYTHON);
   ADD_TO_TEXT(gzip, EXEC_GZIP);
   ADD_TO_TEXT(youtube_dl, EXEC_YOUTUBE_DL);
-  if (capable->has_youtube_dl)
-    ADD_TO_TEXT(ssh_askpass, EXEC_SSH_ASKPASS);
   ADD_TO_TEXT(xwininfo, EXEC_XWININFO);
   if (!(*text)) {
     lives_free(title); lives_free(text);

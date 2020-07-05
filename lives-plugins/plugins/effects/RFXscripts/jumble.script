@@ -19,7 +19,7 @@ Salsaman|
 
 # Menu entry|Action description|min_frames|num_channels|
 <description>
-Jumble|Jumbling|1|1|
+Jumble|Jumbling|2|1|
 </description>
 
 # requirements (list)

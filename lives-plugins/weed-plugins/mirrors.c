@@ -81,7 +81,7 @@ static weed_error_t mirrory_process(weed_plant_t *inst, weed_timecode_t timestam
   uint8_t *src = (uint8_t *)weed_channel_get_pixel_data(in_channel);
   uint8_t *dst = (uint8_t *)weed_channel_get_pixel_data(out_channel);
   int psize = pixel_size(palette);
-  int inplace;
+  int inplace = (dst == src);
   unsigned char *end = dst + height * orowstride / 2, *oend = dst + (height - 1) * orowstride;
 
   width *= psize;
@@ -96,7 +96,7 @@ static weed_error_t mirrory_process(weed_plant_t *inst, weed_timecode_t timestam
     dst += offset * orowstride;
   }
 
-  if (weed_plant_has_leaf(inst, "plugin_combined") && weed_get_boolean_value(inst, "plugin_combined", NULL) == WEED_TRUE) {
+  if (weed_get_boolean_value(inst, "plugin_combined", NULL) == WEED_TRUE) {
     inplace = WEED_TRUE;
     src = dst;
     irowstride = orowstride;

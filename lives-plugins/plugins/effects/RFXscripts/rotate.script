@@ -20,7 +20,7 @@ Salsaman|
 
 # Menu entry|Action description|min_frames|num_channels|
 <description>
-Rotate Clip|Rotating|1|1|
+Rotate Clip|Rotating|0|1|
 </description>
 
 # requirements (list)

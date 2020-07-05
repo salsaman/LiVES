@@ -3312,7 +3312,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   prefsw->spinbutton_mt_undo_buf = lives_standard_spin_button_new(_("_Undo buffer size (MB)"),
-                                   prefs->mt_undo_buf, 0., LIVES_MAXSIZE / (1024.*1024.), 1., 1., 0,
+                                   prefs->mt_undo_buf, 0., ONE_MILLION, 1., 1., 0,
                                    LIVES_BOX(hbox), NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
@@ -5933,12 +5933,28 @@ void on_prefs_revert_clicked(LiVESButton *button, livespointer user_data) {
 }
 
 
-boolean lives_ask_permission(int what) {
+static int text_to_lives_perm(const char *text) {
+  if (!text || !*text) return LIVES_PERM_INVALID;
+  if (!strcmp(text, "DOWNLOADLOCAL")) return LIVES_PERM_DOWNLOAD_LOCAL;
+  return LIVES_PERM_INVALID;
+}
+
+boolean lives_ask_permission(char **argv, int argc, int offs) {
+  char *msg;
+  int what = atoi(argv[offs]);
+  if (what == LIVES_PERM_INVALID && *argv[offs]) {
+    what = text_to_lives_perm(argv[offs]);
+  }
+
   switch (what) {
   case LIVES_PERM_OSC_PORTS:
     return ask_permission_dialog(what);
+  case LIVES_PERM_DOWNLOAD_LOCAL:
+    return ask_permission_dialog_complex(what, argv, argc, ++offs);
   default:
-    LIVES_WARN("Unknown permission requested");
+    msg = lives_strdup_printf("Unknown permission (%d) requested", what);
+    LIVES_WARN(msg);
+    lives_free(msg);
   }
   return FALSE;
 }

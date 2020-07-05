@@ -408,7 +408,6 @@ enum {
 #define EXEC_CDDA2WAV "cdda2wav"
 #define EXEC_ICEDAX "icedax"
 #define EXEC_GDB "gdb"
-#define EXEC_SSH_ASKPASS "ssh-askpass" ///< recommended if (have_youtube_dl)
 #define EXEC_XWININFO "xwininfo"
 #define EXEC_GCONFTOOL_2 "gconftool-2"
 #define EXEC_XDG_SCREENSAVER "xdg-screensaver"
@@ -416,6 +415,7 @@ enum {
 #define EXEC_PLAY "play"
 
 // image types (string)
+#define LIVES_IMAGE_TYPE_UNKNOWN ""
 #define LIVES_IMAGE_TYPE_JPEG "jpeg"
 #define LIVES_IMAGE_TYPE_PNG "png"
 
@@ -550,6 +550,13 @@ enum {
 #define PREV_MODE_CYCLE 24
 #define SET_VPP_PARAMETER_VALUE 25
 #define OSC_NOTIFY 26
+
+typedef struct {
+  int idx;
+  char *key;
+  char *cmdlist;
+  char *futures;
+} lives_permmgr_t;
 
 /// helper ptoc_threads
 #define N_HLP_PROCTHREADS 128
@@ -1640,6 +1647,8 @@ typedef struct {
   lives_proc_thread_t helper_procthreads[N_HLP_PROCTHREADS];
 
   int max_textsize;
+
+  lives_permmgr_t *permmgr;
 } mainwindow;
 
 /// interface colour settings

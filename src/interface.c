@@ -4245,22 +4245,10 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 
   add_spring_to_box(LIVES_BOX(hbox), 0);
 
-  msg = lives_strdup_printf(_("<--- Auto update %s ? (will require authorization.)"), EXEC_YOUTUBE_DL);
+  msg = lives_strdup_printf(_("<--- Auto update %s ?"), EXEC_YOUTUBE_DL);
   checkbutton_update = lives_standard_check_button_new(msg, firsttime, LIVES_BOX(hbox), NULL);
   lives_free(msg);
 
-  if (!capable->has_ssh_askpass) {
-    get_location(EXEC_SSH_ASKPASS, string, 256);
-    if (strlen(string)) capable->has_ssh_askpass = TRUE;
-    if (!capable->has_ssh_askpass) {
-      char *text = lives_strdup_printf(_(" (REQUIRES %s )."), (tmp = lives_ascii_strup(EXEC_SSH_ASKPASS, -1)));
-      lives_widget_set_sensitive(checkbutton_update, FALSE);
-      lives_free(tmp);
-      label = lives_standard_label_new(text);
-      lives_free(text);
-      lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
-    }
-  }
 
   add_spring_to_box(LIVES_BOX(hbox), 0);
 

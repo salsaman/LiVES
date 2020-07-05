@@ -67,6 +67,8 @@ void add_to_special(const char *special_string, lives_rfx_t *);
 void check_for_special(lives_rfx_t *, lives_param_t *param, LiVESBox *);
 void check_for_special_type(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox);
 
+void reset_framedraw_preview(void);
+
 void fd_connect_spinbutton(lives_rfx_t *);
 
 void fd_tweak(lives_rfx_t *);

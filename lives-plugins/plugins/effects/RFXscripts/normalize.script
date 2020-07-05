@@ -19,7 +19,7 @@ Salsaman|
 
 # Menu entry|Action description|min_frames|num_channels|
 <description>
-Normalize|Normalizing|1|1|
+Normalize|Normalizing|0|1|
 </description>
 
 # requirements (list)

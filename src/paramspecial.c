@@ -23,6 +23,12 @@ static LiVESList *passwd_widgets;
 
 static boolean special_inited = FALSE;
 
+
+void reset_framedraw_preview(void) {
+  invalidate_preview(&framedraw);
+}
+
+
 void init_special(void) {
   if (special_inited) return;
 

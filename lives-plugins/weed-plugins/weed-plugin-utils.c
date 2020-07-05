@@ -70,12 +70,14 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+static weed_plant_t *weed_audio_channel_template_init(const char *name, int flags);
+
 ///////////////////////////////////////////////////////////
 static int wtrue = WEED_TRUE;
 #define wlne(p,k) weed_leaf_num_elements((p),(k))
 #define wlg(p,w,i,v) weed_leaf_get((p),(w),(i),(v))
 #define _leaf_has_value(p,k) ((wlne(p,k)>0)?1:0)
-#define gg(p,w,i,v) (p?(wlg((p),(w),(i),(v))==WEED_SUCCESS)?v:0:0)
+#define gg(p,w,i,v) (p?((wlg((p),(w),(i),(v))==WEED_SUCCESS)?v:0):0)
 static inline int gg_i(weed_plant_t *p, const char *w) {
   int v, *vp = (int *)gg(p, w, 0, &v); return vp ? v : 0;
 }
@@ -261,7 +263,7 @@ static weed_plant_t *weed_filter_class_init(const char *name, const char *author
     weed_init_f init_func, weed_process_f process_func, weed_deinit_f deinit_func,
     weed_plant_t **in_chantmpls, weed_plant_t **out_chantmpls,
     weed_plant_t **in_paramtmpls, weed_plant_t **out_paramtmpls) {
-  register int i;
+  int i;
   weed_plant_t *filter_class = NULL;
   if (name) filter_class = weed_plant_new(WEED_PLANT_FILTER_CLASS);
   if (!filter_class) return NULL;
@@ -714,7 +716,7 @@ static int dlink_list_cmp(const void *p1, const void *p2) {
 }
 
 static int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list) {
-  register int count = 0, ocount;
+  int count = 0, ocount;
   dlink_list_t **dll, *xlist;
   // map list to flat array so we can qsort it. The original list was prepended, so adding in reverse restores original order.
   for (xlist = list; xlist; xlist = xlist->next) count++;
@@ -877,7 +879,7 @@ static void blank_row(uint8_t **pdst, int width, int pal, int yuv_clamping, int 
 static void blank_frame(void **pdata, int width, int height, int *rs, int pal, int yuv_clamping) {
   uint8_t *pd2[4];
   int nplanes = weed_palette_get_nplanes(pal), odd, is_420 = (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P);
-  register int i, j;
+  int i, j;
   for (j = 0; j < nplanes; j++) pd2[j] = (uint8_t *)pdata[j];
   for (i = 0; i < height; i++) {
     blank_row(pd2, width, pal, yuv_clamping, !(odd = i ^ 1), NULL);
@@ -897,15 +899,15 @@ static int unal[256][256], al[256][256];
 
 static INLINE void init_unal(void) {
   // premult to postmult and vice-versa
-  for (register int i = 0; i < 256; i++)
-    for (register int j = 0; j < 256; j++) {
+  for (int i = 0; i < 256; i++)
+    for (int j = 0; j < 256; j++) {
       unal[i][j] = (float)j * 255. / (float)i; al[i][j] = (float)j * (float)i / 255.;
     }
 }
 
 static void alpha_premult(unsigned char *ptr, int width, int height, int rowstride, int pal, int un) {
   int aoffs = 3, coffs = 0, psizel = 3, alpha, psize = 4;
-  register int i, j, p;
+  int i, j, p;
   switch (pal) {
   case WEED_PALETTE_BGRA32: break;
   case WEED_PALETTE_ARGB32: psizel = 4; coffs = 1; aoffs = 0; break;
@@ -922,7 +924,8 @@ static void alpha_premult(unsigned char *ptr, int width, int height, int rowstri
     for (i = 0; i < height; i++) for (j = 0; j < width; j += psize) {
         alpha = ptr[j + aoffs];
         for (p = coffs; p < psizel; p++) ptr[j + p] = al[alpha][ptr[j + p]];
-      } ptr += rowstride;
+      }
+    ptr += rowstride;
   }
 }
 
@@ -945,7 +948,7 @@ static void init_RGB_to_YCbCr_tables(void) {
 }
 
 // unclamped values
-#define RGB_2_YIQ(a, b, c) do {register short x; for (int i = 0; i < NUM_PIXELS_SQUARED; i++) {	\
+#define RGB_2_YIQ(a, b, c) do {short x; for (int i = 0; i < NUM_PIXELS_SQUARED; i++) {	\
       Unit Y, I, Q;							\
       if ((x = ((Y_Ru[(int)a[i]] + Y_Gu[(int)b[i]] + Y_Bu[(int)(int)c[i]]) >> FP_BITS)) > 255) x = 255; \
       Y = x < 0 ? 0 : x;							\
@@ -956,7 +959,7 @@ static void init_RGB_to_YCbCr_tables(void) {
     }} while(0)
 
 static void init_Y_to_Y_tables(void) {
-  register int i;
+  int i;
   for (i = 0; i < 17; i++) {UVCL_UVUCL[i] = YCL_YUCL[i] = 0; YUCL_YCL[i] = (uint8_t)((float)i / 255. * 219. + .5)  + 16;}
   for (; i < 235; i++) {
     YCL_YUCL[i] = (int)((float)(i - 16.) / 219. * 255. + .5); UVCL_UVUCL[i] = (int)((float)(i - 16.) / 224. * 255. + .5);

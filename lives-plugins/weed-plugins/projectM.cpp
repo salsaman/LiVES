@@ -7,7 +7,7 @@
 
 ///////////////////////////////////////////////////////////////////
 
-static int package_version = 1.1; // version of this package
+static int package_version = 2; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
@@ -451,7 +451,7 @@ static void *worker(void *data) {
   settings.meshX = sd->width / 64;
   settings.meshY = settings.meshX * hwratio;
   settings.fps = sd->fps;
-  settings.smoothPresetDuration = .5;
+  settings.smoothPresetDuration = 2.;
   settings.presetDuration = 60;
   settings.beatSensitivity = DEF_SENS;
   settings.aspectCorrection = 1;

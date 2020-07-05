@@ -689,7 +689,7 @@ LIVES_GLOBAL_INLINE void on_render_fx_pre_activate(LiVESMenuItem *menuitem, live
     }
   }
   fxdialog = on_fx_pre_activate(rfx, FALSE, NULL);
-  if (fx_dialog != NULL) {
+  if (fxdialog != NULL) {
     if (menuitem == LIVES_MENU_ITEM(mainw->resize_menuitem)) add_resnn_label(LIVES_DIALOG(fxdialog->dialog));
     do {
       resp = lives_dialog_run(LIVES_DIALOG(fxdialog->dialog));
@@ -813,7 +813,6 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
     if (is_defaults) defstr = (_("Defaults for "));
     else defstr = lives_strdup("");
     title = lives_strdup_printf("%s%s", defstr, _(rfx->menu_text[0] == '_' ? rfx->menu_text + 1 : rfx->menu_text));
-    g_print("SCRW is %d\n", scrw);
 
     fx_dialog[didx]->dialog = lives_standard_dialog_new(title, FALSE, scrw, RFX_WINSIZE_V);
     lives_free(defstr);
@@ -2160,7 +2159,7 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 
   ireinit++;
 
-  if (mainw->framedraw_preview != NULL) reset_framedraw_preview();
+  if (mainw->framedraw_preview) reset_framedraw_preview();
 
   if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING &&
       (prefs->rec_opts & REC_EFFECTS)) {

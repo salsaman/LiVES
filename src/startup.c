@@ -594,8 +594,9 @@ boolean do_startup_tests(boolean tshoot) {
   // test if sox can convert raw 44100 -> wav 22050
   add_test(table, ++testcase, _("Checking if sox can convert audio"), success);
 
-  if (!tshoot) set_string_pref(PREF_DEFAULT_IMAGE_FORMAT, LIVES_IMAGE_TYPE_PNG);
+  if (!tshoot) set_string_pref(PREF_DEFAULT_IMAGE_TYPE, LIVES_IMAGE_TYPE_PNG);
   lives_snprintf(prefs->image_ext, 16, "%s", LIVES_FILE_EXT_PNG);
+  lives_snprintf(prefs->image_type, 16, "%s", LIVES_IMAGE_TYPE_PNG);
 
   get_temp_handle(-1);
 
@@ -668,7 +669,10 @@ boolean do_startup_tests(boolean tshoot) {
     }
   }
 
-  if (tshoot) lives_snprintf(prefs->image_ext, 16, "%s", image_ext);
+  if (tshoot) {
+    lives_snprintf(prefs->image_ext, 16, "%s", image_ext);
+    lives_snprintf(prefs->image_type, 16, "%s", image_ext_to_lives_image_type(prefs->image_ext));
+  }
 
   if (mainw->cancelled != CANCEL_NONE) {
     mainw->cancelled = CANCEL_NONE;
@@ -902,8 +906,9 @@ boolean do_startup_tests(boolean tshoot) {
     pass_test(table, testcase);
     if (!success3) {
       if (!strcmp(prefs->image_ext, LIVES_FILE_EXT_PNG)) imgext_switched = TRUE;
-      set_string_pref(PREF_DEFAULT_IMAGE_FORMAT, LIVES_IMAGE_TYPE_JPEG);
+      set_string_pref(PREF_DEFAULT_IMAGE_TYPE, LIVES_IMAGE_TYPE_JPEG);
       lives_snprintf(prefs->image_ext, 16, "%s", LIVES_FILE_EXT_JPG);
+      lives_snprintf(prefs->image_type, 16, "%s", LIVES_IMAGE_TYPE_JPEG);
     }
   } else {
     if (!success3) {

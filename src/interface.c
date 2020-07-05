@@ -4210,14 +4210,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   boolean only_free = TRUE;
   static boolean firsttime = TRUE;
 
-  if (!capable->has_youtube_dl) {
-    get_location(EXEC_YOUTUBE_DL, string, 256);
-    if (strlen(string)) capable->has_youtube_dl = TRUE;
-    if (!capable->has_youtube_dl) {
-      do_program_not_found_error(EXEC_YOUTUBE_DL);
-      return NULL;
-    }
-  }
+  if (!check_for_executable(&capable->has_youtube_dl, EXEC_YOUTUBE_DL)) return NULL;
 
 #ifdef ALLOW_NONFREE_CODECS
   if (req) only_free = !req->allownf;

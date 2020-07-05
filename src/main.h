@@ -549,7 +549,7 @@ typedef enum {
   IMG_TYPE_UNKNOWN = 0,
   IMG_TYPE_JPEG,
   IMG_TYPE_PNG
-} lives_image_type_t;
+} lives_img_type_t;
 
 #define IMG_TYPE_BEST IMG_TYPE_PNG
 
@@ -649,7 +649,7 @@ typedef struct _lives_clip_t {
   char type[64];
 
   lives_clip_type_t clip_type;
-  lives_image_type_t img_type;
+  lives_img_type_t img_type;
 
   // basic info (saved during backup)
   frames_t frames;  ///< number of video frames
@@ -746,6 +746,7 @@ typedef struct _lives_clip_t {
   // used only for insert_silence, holds pre-padding length for undo
   double old_laudio_time, old_raudio_time;
 
+  /// binfmt is just a file dump of the struct up to the end of binfmt_end
   char binfmt_rsvd[4096];
   uint64_t binfmt_end; ///< marks the end of anything "interesring" we may want to save via binfmt extension
 
@@ -760,7 +761,7 @@ typedef struct _lives_clip_t {
 
   double pb_fps;  ///< current playback rate, may vary from fps, can be 0. or negative
 
-  char info_file[PATH_MAX];
+  char info_file[PATH_MAX]; ///< used for asynch communication with externals
 
   char *op_dir;
 
@@ -804,10 +805,10 @@ typedef struct _lives_clip_t {
 
   // decoder data
 
-  frames_t last_vframe_played;
+  frames_t last_vframe_played; /// experimental for player
 
   /// layout map for the current layout
-  frames_t stored_layout_frame;
+  frames_t stored_layout_frame; ///M highest value used
   int stored_layout_idx;
   double stored_layout_audio;
   double stored_layout_fps;
@@ -822,7 +823,7 @@ typedef struct _lives_clip_t {
 
   lives_painter_surface_t *laudio_drawable, *raudio_drawable;
 
-  int cb_src; ///< source clip for clipboard
+  int cb_src; ///< source clip for clipboard; for other clips, may be used to hold some temporary linkage
 
   boolean needs_update; ///< loaded values were incorrect, update header
   boolean needs_silent_update; ///< needs internal update, we shouldn't concern the user
@@ -834,19 +835,22 @@ typedef struct _lives_clip_t {
 
   int last_play_sequence;  ///< updated only when FINISHING playing a clip (either by switching or ending playback, better for a/vsync)
 
-  boolean tcache_dubious_from;
-  int tcache_height; /// height for thumbnail cache
-  LiVESList *tcache; /// thumbnail cache
+  frames_t tcache_dubious_from; /// set by clip alterations, frames from here onwards should be freed
+  int tcache_height; /// height for thumbnail cache (width is fixed, but if this changes, invalidate)
+  LiVESList *tcache; /// thumbnail cache, list of lives_tcache_entry_t
 } lives_clip_t;
 
 typedef struct {
+  /// list of entries in clip thumbnail cache (for multitrack timeline)
   frames_t frame;
   LiVESPixbuf *pixbuf;
 } lives_tcache_entry_t;
 
 typedef enum {
-  MISSING = -1,
-  UNCHECKED,
+#ifdef HAS_MISSING_PRESENCE
+  MISSING = -1, ///< not yet implemented (TODO)
+#endif
+  UNCHECKED = 0,
   PRESENT
 } lives_presence_t;
 
@@ -855,7 +859,8 @@ typedef enum {
   CONFLICTING = -1,
   MANDATORY,
   RECOMMENDED,
-  OPTIONAL
+  OPTIONAL,
+  NECESSARY
 } lives_importance_t;
 
 typedef struct {
@@ -863,14 +868,20 @@ typedef struct {
   lives_importance_t import;
 } lives_checkstatus_t;
 
-#define XCAPABLE(foo, EXE_FOO) ((!capable->has_##foo->present ? ((capable->has_##foo->present = \
+#define XCAPABLE(foo, EXE_FOO) ((capable->has_##foo->present == UNCHECKED \
+				 ? ((capable->has_##foo->present =	\
 							 (has_executable(EXE_FOO) ? PRESENT : MISSING))) : capable->has_##foo->present) == PRESENT)
 #define GET_EXE(foo) QUOTEME(foo)
-#define PRESENT(foo) XCAPABLE(foo, GET_EXE(foo))
+#define PRESENT(foo) (XCAPABLE(foo, GET_EXE(foo)) == PRESENT)
+#define MISSING(foo) (XCAPABLE(foo, GET_EXE(foo)) == MISSING)
 //TODO:
 // #define GET_EXE(mplayer) EXEC_MPLAYER
 // etc.
 // then: if (capable->has_mplayer) => if (PRESENT(mplayer)) etc.
+// and even:
+
+//#define IS_SHOW_STOPPER(foo) ((MISSING(foo) && MANDATORY(foo)))
+
 #else
 typedef lives_presence_t lives_checkstatus_t;
 #endif
@@ -942,24 +953,22 @@ typedef struct {
   lives_checkstatus_t has_python;
   uint64_t python_version;
 
+  int ncpus;
   short cpu_bits;
+  int byte_order;
 
   char *myname_full;
   char *myname;
 
   int xstdout;
   int nmonitors;
-
-  int ncpus;
-
-  int byte_order;
+  int primary_monitor;
 
   pid_t mainpid;
   pthread_t main_thread;
   pthread_t gui_thread;
-  mode_t umask;
 
-  int primary_monitor;
+  mode_t umask;
 
   char *gui_theme_name;
   char *icon_theme_name;
@@ -1337,14 +1346,14 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
                                        int width, int height, LiVESInterpType interp, boolean fordisp);
 LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const char *image_ext, ticks_t tc);
 
-boolean lives_pixbuf_save(LiVESPixbuf *pixbuf, char *fname, lives_image_type_t imgtype, int quality,
+boolean lives_pixbuf_save(LiVESPixbuf *pixbuf, char *fname, lives_img_type_t imgtype, int quality,
                           int width, int height, LiVESError **gerrorptr);
 
 typedef struct {
   LiVESPixbuf *pixbuf;
   LiVESError *error;
   char *fname;
-  int img_type;
+  lives_img_type_t img_type;
   int compression;
   int width, height;
 } savethread_priv_t;
@@ -1534,21 +1543,26 @@ char *get_dir(const char *filename);
 void get_basename(char *filename);
 void get_filename(char *filename, boolean strip_dir);
 char *get_extension(const char *filename);
+
 uint64_t get_version_hash(const char *exe, const char *sep, int piece);
 uint64_t make_version_hash(const char *ver);
+
 void init_clipboard(void);
+
 boolean cache_file_contents(const char *filename);
 char *get_val_from_cached_list(const char *key, size_t maxlen);
 
 void get_location(const char *exe, char *val, int maxlen);
-boolean has_executable(const char *exe);
+lives_presence_t has_executable(const char *exe);
+boolean check_for_executable(lives_checkstatus_t *cap, const char *exec);
+void do_please_install(const char *exec);
 
-const char *image_ext_to_image_type(const char *img_ext);
-
+/// lives_image_type can be a string, lives_img_type_t is an enumeration
 char *make_image_file_name(lives_clip_t *clip, int frame, const char *img_ext);
-const char *get_image_ext_for_type(lives_image_type_t imgtype);
-lives_image_type_t lives_image_ext_to_type(const char *img_ext);
-lives_image_type_t lives_image_type_to_image_type(const char *lives_img_type);
+const char *get_image_ext_for_type(lives_img_type_t imgtype);
+lives_img_type_t lives_image_ext_to_img_type(const char *img_ext);
+lives_img_type_t lives_image_type_to_img_type(const char *lives_image_type);
+const char *image_ext_to_lives_image_type(const char *img_ext);
 
 void reset_clipmenu(void);
 

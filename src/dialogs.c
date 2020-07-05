@@ -3470,10 +3470,9 @@ LIVES_GLOBAL_INLINE void do_ra_convert_error(void) {
 }
 
 
-LIVES_GLOBAL_INLINE boolean do_please_install(const char *exec) {
-  return do_warning_dialogf(_("'%s'\nis required to complete this operation succesfully\n"
-                              "Please install it before continuing, "
-                              "or click 'Cancel' otherwise."), exec);
+LIVES_GLOBAL_INLINE void do_please_install(const char *exec) {
+  do_blocking_info_dialogf(_("'%s'\nis necessary for this feature to work.\n"
+                             "If possible, kindly install it before continuing."), exec);
 }
 
 
@@ -4268,10 +4267,14 @@ try_again:
       lives_widget_destroy(dlg);
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
       if (ret == LIVES_RESPONSE_YES) {
-        capable->has_wget = has_executable(EXEC_WGET);
-        if (capable->has_wget) return TRUE;
-        if (do_please_install(EXEC_WGET)) return TRUE;
-        retry = TRUE;
+        if (capable->has_wget != PRESENT) {
+          capable->has_wget = has_executable(EXEC_WGET);
+          if (capable->has_wget == PRESENT) return TRUE;
+          do_please_install(EXEC_WGET);
+          capable->has_wget = has_executable(EXEC_WGET);
+          if (capable->has_wget == PRESENT) retry = TRUE;
+          else do_program_not_found_error(EXEC_WGET);
+        }
       }
       lives_free((void **)&mainw->permmgr->key);
       lives_free(mainw->permmgr);

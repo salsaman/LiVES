@@ -71,6 +71,7 @@ typedef struct {
   char prefix_dir[PATH_MAX];
   char lib_dir[PATH_MAX];
 
+  char image_type[16];
   char image_ext[16];
 
   uint64_t warning_mask;
@@ -814,7 +815,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 #define PREF_VID_PLAYBACK_PLUGIN "vid_playback_plugin"
 
-#define PREF_DEFAULT_IMAGE_FORMAT "default_image_format"
+#define PREF_DEFAULT_IMAGE_TYPE "default_image_format"
 
 #define PREF_VIDEO_OPEN_COMMAND "video_open_command"
 

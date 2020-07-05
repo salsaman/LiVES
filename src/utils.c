@@ -2887,7 +2887,7 @@ boolean is_legal_set_name(const char *set_name, boolean allow_dupes) {
 }
 
 
-LIVES_GLOBAL_INLINE const char *get_image_ext_for_type(lives_image_type_t imgtype) {
+LIVES_GLOBAL_INLINE const char *get_image_ext_for_type(lives_img_type_t imgtype) {
   switch (imgtype) {
   case IMG_TYPE_JPEG:
     return LIVES_FILE_EXT_JPG; // "jpg"
@@ -2899,19 +2899,19 @@ LIVES_GLOBAL_INLINE const char *get_image_ext_for_type(lives_image_type_t imgtyp
 }
 
 
-LIVES_GLOBAL_INLINE lives_image_type_t lives_image_ext_to_type(const char *img_ext) {
-  return lives_image_type_to_image_type(image_ext_to_image_type(img_ext));
+LIVES_GLOBAL_INLINE lives_img_type_t lives_image_ext_to_img_type(const char *img_ext) {
+  return lives_image_type_to_img_type(image_ext_to_lives_image_type(img_ext));
 }
 
 
-LIVES_GLOBAL_INLINE const char *image_ext_to_image_type(const char *img_ext) {
+LIVES_GLOBAL_INLINE const char *image_ext_to_lives_image_type(const char *img_ext) {
   if (!strcmp(img_ext, LIVES_FILE_EXT_PNG)) return LIVES_IMAGE_TYPE_PNG;
   if (!strcmp(img_ext, LIVES_FILE_EXT_JPG)) return LIVES_IMAGE_TYPE_JPEG;
   return LIVES_IMAGE_TYPE_UNKNOWN;
 }
 
 
-LIVES_GLOBAL_INLINE lives_image_type_t lives_image_type_to_image_type(const char *lives_img_type) {
+LIVES_GLOBAL_INLINE lives_img_type_t lives_image_type_to_img_type(const char *lives_img_type) {
   if (!strcmp(lives_img_type, LIVES_IMAGE_TYPE_PNG)) return IMG_TYPE_PNG;
   if (!strcmp(lives_img_type, LIVES_IMAGE_TYPE_JPEG)) return IMG_TYPE_JPEG;
   return IMG_TYPE_UNKNOWN;
@@ -3199,6 +3199,29 @@ LIVES_GLOBAL_INLINE lives_presence_t has_executable(const char *exe) {
   return FALSE;
 }
 
+
+// check if executable is present, missing or unchecked
+// if unchecked, check for it, and if not found ask the user politely to install it
+boolean check_for_executable(lives_checkstatus_t *cap, const char *exec) {
+  if (!cap || *cap == UNCHECKED) {
+    if (has_executable(exec)) {
+      if (cap) *cap = PRESENT;
+      return TRUE;
+    } else {
+      do_please_install(exec);
+      if (has_executable(exec) != PRESENT) {
+#ifdef HAS_MISSING_PRESENCE
+        if (cap) *cap = MISSING;
+#endif
+        do_program_not_found_error(exec);
+        return FALSE;
+      }
+      if (cap) *cap = PRESENT;
+      return TRUE;
+    }
+  }
+  return (*cap == PRESENT);
+}
 
 
 uint64_t get_version_hash(const char *exe, const char *sep, int piece) {

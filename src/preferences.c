@@ -1878,11 +1878,13 @@ boolean apply_prefs(boolean skip_warn) {
 
   // jpeg/png
   if (strcmp(prefs->image_ext, LIVES_FILE_EXT_JPG) && ext_jpeg) {
-    set_string_pref(PREF_DEFAULT_IMAGE_FORMAT, LIVES_IMAGE_TYPE_JPEG);
+    set_string_pref(PREF_DEFAULT_IMAGE_TYPE, LIVES_IMAGE_TYPE_JPEG);
     lives_snprintf(prefs->image_ext, 16, LIVES_FILE_EXT_JPG);
+    lives_snprintf(prefs->image_type, 16, "%s", LIVES_IMAGE_TYPE_JPEG);
   } else if (!strcmp(prefs->image_ext, LIVES_FILE_EXT_JPG) && !ext_jpeg) {
-    set_string_pref(PREF_DEFAULT_IMAGE_FORMAT, LIVES_IMAGE_TYPE_PNG);
+    set_string_pref(PREF_DEFAULT_IMAGE_TYPE, LIVES_IMAGE_TYPE_PNG);
     lives_snprintf(prefs->image_ext, 16, LIVES_FILE_EXT_PNG);
+    lives_snprintf(prefs->image_type, 16, "%s", LIVES_IMAGE_TYPE_PNG);
   }
 
   // instant open

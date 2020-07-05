@@ -354,7 +354,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       mainw->multitrack->has_audio_file = TRUE;
     }
 
-    cfile->img_type = lives_image_ext_to_type(prefs->image_ext);
+    cfile->img_type = lives_image_ext_to_img_type(prefs->image_ext);
     if ((!strcmp(cfile->type, LIVES_IMAGE_TYPE_JPEG) || !strcmp(cfile->type, LIVES_IMAGE_TYPE_PNG))) {
       read_file_details(file_name, FALSE, TRUE);
       add_file_info(cfile->handle, FALSE);
@@ -1007,7 +1007,7 @@ img_load:
 
   if ((!strcmp(cfile->type, LIVES_IMAGE_TYPE_JPEG) || !strcmp(cfile->type, LIVES_IMAGE_TYPE_PNG))) {
     if (mainw->img_concat_clip == -1) {
-      cfile->img_type = lives_image_type_to_image_type(cfile->type);
+      cfile->img_type = lives_image_type_to_img_type(cfile->type);
       mainw->img_concat_clip = mainw->current_file;
       add_to_clipmenu();
       set_main_title(cfile->file_name, 0);

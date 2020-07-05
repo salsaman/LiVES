@@ -773,7 +773,8 @@ static boolean read_file_details_generic(char *fname) {
   }
 
   // check details
-  com = lives_strdup_printf("%s get_details fsp%d \"%s\" \"%s\" %d", prefs->backend_sync, capable->mainpid,
+  com = lives_strdup_printf("%s get_details fsp%d \"%s\" \"%s\" %d", prefs->backend_sync,
+                            capable->mainpid,
                             fname,
                             prefs->image_ext, 0);
 
@@ -6682,7 +6683,7 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
   }
   lives_strfreev(array);
 
-  if ((!strcmp(type, "image") || !strcmp(type, image_ext_to_image_type(prefs->image_ext))) && strcmp(type, "Audio")) {
+  if (!strcmp(type, "image") || !strcmp(type, prefs->image_type)) {
     /* info_file = lives_strdup_printf("%s/thm%d/%s", prefs->workdir, capable->mainpid, LIVES_STATUS_FILE_NAME); */
     /* lives_rm(info_file); */
 

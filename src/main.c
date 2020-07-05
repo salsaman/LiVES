@@ -1433,9 +1433,9 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->ext_playback = mainw->ext_audio = FALSE;
 
-  get_string_prefd(PREF_DEFAULT_IMAGE_FORMAT, prefs->image_ext, 16, LIVES_FILE_EXT_PNG);
+  get_string_prefd(PREF_DEFAULT_IMAGE_TYPE, prefs->image_type, 16, LIVES_IMAGE_TYPE_PNG);
   lives_snprintf(prefs->image_ext, 16, "%s",
-                 get_image_ext_for_type(lives_image_type_to_image_type(prefs->image_ext)));
+                 get_image_ext_for_type(lives_image_type_to_img_type(prefs->image_type)));
 
   prefs->loop_recording = TRUE;
   prefs->no_bandwidth = FALSE;
@@ -3287,6 +3287,7 @@ static boolean lives_startup(livespointer data) {
     mainw->foreign_width = atoi(zargv[4]);
     mainw->foreign_height = atoi(zargv[5]);
     lives_snprintf(prefs->image_ext, 16, "%s", zargv[6]);
+    lives_snprintf(prefs->image_type, 16, "%s", image_ext_to_lives_image_type(prefs->image_ext));
     mainw->foreign_bpp = atoi(zargv[7]);
     mainw->rec_vid_frames = atoi(zargv[8]);
     mainw->rec_fps = strtod(zargv[9], NULL);
@@ -8450,7 +8451,7 @@ void load_frame_image(int frame) {
     /**
        @brief Save a pixbuf to a file using the specified imgtype and the specified quality/compression value
     */
-    boolean lives_pixbuf_save(LiVESPixbuf * pixbuf, char *fname, lives_image_type_t imgtype, int quality, int width, int height,
+    boolean lives_pixbuf_save(LiVESPixbuf * pixbuf, char *fname, lives_img_type_t imgtype, int quality, int width, int height,
 			      LiVESError **gerrorptr) {
       ticks_t timeout;
       lives_alarm_t alarm_handle;

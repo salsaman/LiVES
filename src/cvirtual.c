@@ -239,7 +239,7 @@ static frames_t scan_frames(lives_clip_t *sfile, frames_t vframes, frames_t last
 boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_t maxframe) {
   lives_clip_t *sfile = mainw->files[fileno], *binf = NULL;
 
-  lives_image_type_t empirical_img_type = sfile->img_type;
+  lives_img_type_t empirical_img_type = sfile->img_type;
 
   frames_t last_real_frame = sfile->frames;
 

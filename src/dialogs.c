@@ -245,7 +245,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
     break;
 
   case LIVES_DIALOG_QUESTION:
-    dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_QUESTION, LIVES_BUTTONS_NONE, NULL);
+    dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_QUESTION,
+                                      LIVES_BUTTONS_NONE, NULL);
     // caller will set title and buttons
     break;
 
@@ -448,13 +449,12 @@ boolean do_warning_dialog_with_check_transient(const char *text, uint64_t warn_m
 
   mytext = lives_strdup(text); // must copy this because of translation issues
 
-  do {
-    warning = create_message_dialog(LIVES_DIALOG_WARN_WITH_CANCEL, mytext, (transient != NULL &&
-                                    lives_widget_is_visible(LIVES_WIDGET(transient))) ? transient : NULL,
-                                    warn_mask_number, TRUE);
-    response = lives_dialog_run(LIVES_DIALOG(warning));
-    lives_widget_destroy(warning);
-  } while (response == LIVES_RESPONSE_RETRY);
+  warning = create_message_dialog(LIVES_DIALOG_WARN_WITH_CANCEL, mytext,
+                                  (transient  && lives_widget_is_visible(LIVES_WIDGET(transient)))
+                                  ? transient : NULL,
+                                  warn_mask_number, TRUE);
+  response = lives_dialog_run(LIVES_DIALOG(warning));
+  lives_widget_destroy(warning);
 
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
   lives_freep((void **)&mytext);
@@ -883,20 +883,18 @@ LiVESResponseType handle_backend_errors(boolean can_retry, LiVESWindow *transien
     if (numtok > 4 && *(array[4])) addinfo = array[4];
     else addinfo = NULL;
     if (!CURRENT_CLIP_IS_VALID || !cfile->no_proc_sys_errors) {
-      if (numtok > 5 && !strcmp(addinfo, "_ASKPERM_")) {
-        /// sys error is possibly recoverabel, but requires user PERMS
+      if (numtok > 5 && strstr(addinfo, "_ASKPERM_")) {
+        /// sys error is possibly recoverable, but requires user PERMS
         /// ask for them and then return either LIVES_RESPONSE_CANCEL
         /// or LIVES_RESPONSE_ACCEPT, as well as setting mainw->perm_idx and mainw->perm_key
         if (lives_ask_permission(array, numtok, 5)) response = LIVES_RESPONSE_ACCEPT;
-        else {
-          mainw->permmgr->idx = -1;
-          lives_freep((void **)&mainw->permmgr->key);
-          response = LIVES_RESPONSE_CANCEL;
-          mainw->permmgr->cmdlist = mainw->permmgr->futures = NULL;
-        }
+        else response = LIVES_RESPONSE_CANCEL;
         goto handled;
       } else {
-        response = do_system_failed_error(array[2], atoi(array[3]), addinfo, can_retry, transient);
+        boolean trysudo = FALSE;
+        if (addinfo && strstr(addinfo, "_TRY_SUDO_")) trysudo = TRUE;
+        response = do_system_failed_error(array[2], atoi(array[3]), addinfo,
+                                          can_retry, transient, trysudo);
         if (response == LIVES_RESPONSE_RETRY) return response;
       }
     }
@@ -3123,7 +3121,8 @@ boolean do_clipboard_fps_warning(void) {
   return do_warning_dialog_with_check(
            _("The playback speed (fps), or the audio rate\n of the clipboard does not match\n"
              "the playback speed or audio rate of the clip you are inserting into.\n\n"
-             "The insertion will be adjusted to fit into the clip.\n\nPlease press Cancel to abort the insert, or OK to continue."),
+             "The insertion will be adjusted to fit into the clip.\n\n"
+             "Please press Cancel to abort the insert, or OK to continue."),
            WARN_MASK_FPS);
 }
 
@@ -3270,13 +3269,15 @@ void do_audio_import_error(void) {
 
 LIVES_GLOBAL_INLINE boolean prompt_remove_layout_files(void) {
   return (do_yesno_dialog(
-            _("\nDo you wish to remove the layout files associated with this set ?\n(They will not be usable without the set).\n")));
+            _("\nDo you wish to remove the layout files associated with this set ?\n"
+              "(They will not be usable without the set).\n")));
 }
 
 
 boolean do_set_duplicate_warning(const char *new_set) {
   char *msg = lives_strdup_printf(
-                _("\nA set entitled %s already exists.\nClick OK to add the current clips and layouts to the existing set.\n"
+                _("\nA set entitled %s already exists.\n"
+                  "Click OK to add the current clips and layouts to the existing set.\n"
                   "Click Cancel to pick a new name.\n"),
                 new_set);
   boolean retcode = do_warning_dialog_with_check(msg, WARN_MASK_DUPLICATE_SET);
@@ -3287,19 +3288,22 @@ boolean do_set_duplicate_warning(const char *new_set) {
 
 LIVES_GLOBAL_INLINE boolean do_layout_alter_frames_warning(void) {
   return do_warning_dialog(
-           _("\nFrames from this clip are used in some multitrack layouts.\nAre you sure you wish to continue ?\n."));
+           _("\nFrames from this clip are used in some multitrack layouts.\n"
+             "Are you sure you wish to continue ?\n."));
 }
 
 
 LIVES_GLOBAL_INLINE boolean do_layout_alter_audio_warning(void) {
   return do_warning_dialog(
-           _("\nAudio from this clip is used in some multitrack layouts.\nAre you sure you wish to continue ?\n."));
+           _("\nAudio from this clip is used in some multitrack layouts.\n"
+             "Are you sure you wish to continue ?\n."));
 }
 
 
 LiVESResponseType do_original_lost_warning(const char *fname) {
   char *msg = lives_strdup_printf(
-                _("\nThe original file\n%s\ncould not be found.\nClick Retry to try again, or Browse to browse to the new location.\n"
+                _("\nThe original file\n%s\ncould not be found.\n"
+                  "Click Retry to try again, or Browse to browse to the new location.\n"
                   "Otherwise click Cancel to skip loading this file.\n"),
                 fname);
   LiVESWidget *warning = create_message_dialog(LIVES_DIALOG_CANCEL_RETRY_BROWSE, msg,
@@ -3314,7 +3318,8 @@ LiVESResponseType do_original_lost_warning(const char *fname) {
 
 LIVES_GLOBAL_INLINE void do_no_decoder_error(const char *fname) {
   do_blocking_error_dialogf(
-    _("\n\nLiVES could not find a required decoder plugin for the clip\n%s\nThe clip could not be loaded.\n"), fname);
+    _("\n\nLiVES could not find a required decoder plugin for the clip\n%s\n"
+      "The clip could not be loaded.\n"), fname);
 }
 
 
@@ -3325,14 +3330,17 @@ LIVES_GLOBAL_INLINE void do_no_loadfile_error(const char *fname) {
 
 #ifdef ENABLE_JACK
 LIVES_GLOBAL_INLINE void do_jack_noopen_warn(void) {
-  do_blocking_error_dialogf(_("\nUnable to start up jack. Please ensure that %s is set up correctly on your machine\n"
-                              "and also that the soundcard is not in use by another program\nAutomatic jack startup will be disabled now.\n"),
+  do_blocking_error_dialogf(_("\nUnable to start up jack. "
+                              "Please ensure that %s is set up correctly on your machine\n"
+                              "and also that the soundcard is not in use by another program\n"
+                              "Automatic jack startup will be disabled now.\n"),
                             JACK_DRIVER_NAME);
 }
 
 
 LIVES_GLOBAL_INLINE void do_jack_noopen_warn3(void) {
-  do_blocking_error_dialog(_("\nUnable to connect to jack server. Please start jack before starting LiVES\n"));
+  do_blocking_error_dialog(_("\nUnable to connect to jack server. "
+                             "Please start jack before starting LiVES\n"));
 }
 
 
@@ -3342,7 +3350,8 @@ LIVES_GLOBAL_INLINE void do_jack_noopen_warn4(void) {
 #else
   const char *otherbit = "\"lives -aplayer sox\"";
 #endif
-  do_blocking_info_dialogf(_("\nAlternatively, try to start lives with either:\n\n\"lives -jackopts 16\", or\n\n%s\n"), otherbit);
+  do_blocking_info_dialogf(_("\nAlternatively, try to start lives with either:\n\n"
+                             "\"lives -jackopts 16\", or\n\n%s\n"), otherbit);
 }
 
 
@@ -3353,17 +3362,20 @@ LIVES_GLOBAL_INLINE void do_jack_noopen_warn2(void) {
 
 LIVES_GLOBAL_INLINE void do_mt_backup_space_error(lives_mt * mt, int memreq_mb) {
   char *msg = lives_strdup_printf(
-                _("\n\nLiVES needs more backup space for this layout.\nYou can increase the value in Preferences/Multitrack.\n"
+                _("\n\nLiVES needs more backup space for this layout.\nYou can increase "
+                  "the value in Preferences/Multitrack.\n"
                   "It is recommended to increase it to at least %d MB"),
                 memreq_mb);
-  do_error_dialog_with_check_transient(msg, TRUE, WARN_MASK_MT_BACKUP_SPACE, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+  do_error_dialog_with_check_transient(msg, TRUE, WARN_MASK_MT_BACKUP_SPACE,
+                                       LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   lives_free(msg);
 }
 
 
 LIVES_GLOBAL_INLINE boolean do_set_rename_old_layouts_warning(const char *new_set) {
   return do_yesno_dialogf(
-           _("\nSome old layouts for the set %s already exist.\nIt is recommended that you delete them.\nDo you wish to delete them ?\n"),
+           _("\nSome old layouts for the set %s already exist.\n"
+             "It is recommended that you delete them.\nDo you wish to delete them ?\n"),
            new_set);
 }
 
@@ -3400,7 +3412,8 @@ LIVES_GLOBAL_INLINE void do_mt_set_mem_error(boolean has_mt, boolean trans) {
 
 LIVES_GLOBAL_INLINE void do_mt_audchan_error(int warn_mask) {
   do_error_dialog_with_check_transient(
-    _("Multitrack is set to 0 audio channels, but this layout has audio.\nYou should adjust the audio settings from the Tools menu.\n"),
+    _("Multitrack is set to 0 audio channels, but this layout has audio.\n"
+      "You should adjust the audio settings from the Tools menu.\n"),
     warn_mask, FALSE, NULL);
 }
 
@@ -3438,19 +3451,29 @@ LIVES_GLOBAL_INLINE void do_program_not_found_error(const char *progname) {
 
 LIVES_GLOBAL_INLINE void do_lb_composite_error(void) {
   do_blocking_error_dialog(
-    _("LiVES currently requires composite from ImageMagick to do letterboxing.\nPlease install 'imagemagick' and try again."));
+    _("LiVES currently requires composite from ImageMagick to do letterboxing.\n"
+      "Please install 'imagemagick' and try again."));
 }
 
 
 LIVES_GLOBAL_INLINE void do_lb_convert_error(void) {
   do_blocking_error_dialog(
-    _("LiVES currently requires convert from ImageMagick to do letterboxing.\nPlease install 'imagemagick' and try again."));
+    _("LiVES currently requires convert from ImageMagick to do letterboxing.\n"
+      "Please install 'imagemagick' and try again."));
 }
 
 
 LIVES_GLOBAL_INLINE void do_ra_convert_error(void) {
   do_blocking_error_dialog(
-    _("LiVES currently requires convert from ImageMagick resize frames.\nPlease install 'imagemagick' and try again."));
+    _("LiVES currently requires convert from ImageMagick resize frames.\n"
+      "Please install 'imagemagick' and try again."));
+}
+
+
+LIVES_GLOBAL_INLINE boolean do_please_install(const char *exec) {
+  return do_warning_dialogf(_("'%s'\nis required to complete this operation succesfully\n"
+                              "Please install it before continuing, "
+                              "or click 'Cancel' otherwise."), exec);
 }
 
 
@@ -3461,7 +3484,8 @@ LIVES_GLOBAL_INLINE void do_audrate_error_dialog(void) {
 
 LIVES_GLOBAL_INLINE boolean do_event_list_warning(void) {
   return do_yesno_dialog(
-           _("\nEvent list will be very large\nand may take a long time to display.\nAre you sure you wish to view it ?\n"));
+           _("\nEvent list will be very large\nand may take a long time to display.\n"
+             "Are you sure you wish to view it ?\n"));
 }
 
 
@@ -3472,7 +3496,8 @@ LIVES_GLOBAL_INLINE void do_dvgrab_error(void) {
 
 LIVES_GLOBAL_INLINE void do_nojack_rec_error(void) {
   do_error_dialog(
-    _("\n\nAudio recording can only be done using either\nthe \"jack\" or the \"pulseaudio\" audio player.\n"
+    _("\n\nAudio recording can only be done using either\nthe \"jack\" "
+      "or the \"pulseaudio\" audio player.\n"
       "You may need to select one of these in Tools/Preferences/Playback.\n"));
 }
 
@@ -3609,8 +3634,9 @@ void response_ok(LiVESButton * button, livespointer user_data) {
 }
 
 
-LiVESResponseType do_system_failed_error(const char *com, int retval, const char *addinfo, boolean can_retry,
-    LiVESWindow * transient) {
+LiVESResponseType do_system_failed_error(const char *com, int retval, const char *addinfo,
+    boolean can_retry,
+    LiVESWindow * transient, boolean trysudo) {
   // if can_retry is set, we can return LIVES_RESPONSE_RETRY
   // in all other cases we abort (exit) here.
   // if abort_hook_func() fails with a syserror, we don't show the abort / retry dialog, and we return LIVES_RESPONSE_NONE
@@ -3624,6 +3650,7 @@ LiVESResponseType do_system_failed_error(const char *com, int retval, const char
   char *addbit;
   char *dsmsg1 = lives_strdup("");
   char *dsmsg2 = lives_strdup("");
+  char *sudomsg = lives_strdup("");
 
   uint64_t dsval1 = 0, dsval2 = 0;
 
@@ -3653,8 +3680,19 @@ LiVESResponseType do_system_failed_error(const char *com, int retval, const char
   if (retval > 0) bit = lives_strdup_printf(_("The error value was %d%s\n"), retval, bit2);
   else bit = lives_strdup("");
 
-  msg = lives_strdup_printf(_("\nLiVES failed doing the following:\n%s\nPlease check your system for errors.\n%s%s%s"),
-                            com, bit, addbit, dsmsg1, dsmsg2);
+  if (trysudo) {
+    char *retryop;
+    if (can_retry) retryop = (_("before clicking 'Retry'"));
+    else retryop = (_("before retrying the operation"));
+    lives_free(sudomsg);
+    sudomsg = lives_strdup_printf(_("\n\nYou may be able to fix this by running:\n  %s %s\n"
+                                    "from the commandline %s"), EXEC_SUDO, com, retryop);
+    lives_free(retryop);
+  }
+
+  msg = lives_strdup_printf(_("\nLiVES failed doing the following:\n%s\nPlease check your system for "
+                              "errors.\n%s%s%s%s"),
+                            com, bit, addbit, dsmsg1, dsmsg2, sudomsg);
 
   emsg = lives_strdup_printf("Command failed doing\n%s\n%s%s", com, bit, addbit);
   LIVES_ERROR(emsg);
@@ -3673,6 +3711,7 @@ LiVESResponseType do_system_failed_error(const char *com, int retval, const char
   }
   lives_free(msgx);
   lives_free(msg);
+  lives_free(sudomsg);
   lives_free(dsmsg1);
   lives_free(dsmsg2);
   lives_free(bit);
@@ -3713,7 +3752,8 @@ void do_write_failed_error_s(const char *s, const char *addinfo) {
   if (addinfo != NULL) addbit = lives_strdup_printf(_("Additional info: %s\n"), addinfo);
   else addbit = lives_strdup("");
 
-  msg = lives_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nPlease check for possible error causes.\n%s"),
+  msg = lives_strdup_printf(_("\nLiVES was unable to write to the file\n%s\n"
+                              "Please check for possible error causes.\n%s"),
                             sutf, addbit, dsmsg);
   emsg = lives_strdup_printf("Unable to write to file\n%s\n%s", s, addbit);
 
@@ -3737,7 +3777,8 @@ void do_read_failed_error_s(const char *s, const char *addinfo) {
   if (addinfo != NULL) addbit = lives_strdup_printf(_("Additional info: %s\n"), addinfo);
   else addbit = lives_strdup("");
 
-  msg = lives_strdup_printf(_("\nLiVES was unable to read from the file\n%s\nPlease check for possible error causes.\n%s"),
+  msg = lives_strdup_printf(_("\nLiVES was unable to read from the file\n%s\n"
+                              "Please check for possible error causes.\n%s"),
                             sutf, addbit);
   emsg = lives_strdup_printf("Unable to read from the file\n%s\n%s", s, addbit);
 
@@ -3784,10 +3825,12 @@ LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const ch
 
   if (errtext == NULL) {
     emsg = lives_strdup_printf("Unable to write to file %s", fname);
-    msg = lives_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nPlease check for possible error causes.\n"), sutf);
+    msg = lives_strdup_printf(_("\nLiVES was unable to write to the file\n%s\n"
+                                "Please check for possible error causes.\n"), sutf);
   } else {
     emsg = lives_strdup_printf("Unable to write to file %s, error was %s", fname, errtext);
-    msg = lives_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nThe error was\n%s.\n"), sutf, errtext);
+    msg = lives_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nThe error was\n%s.\n"),
+                              sutf, errtext);
   }
 
   LIVES_ERROR(emsg);
@@ -3816,10 +3859,12 @@ LiVESResponseType do_read_failed_error_s_with_retry(const char *fname, const cha
 
   if (errtext == NULL) {
     emsg = lives_strdup_printf("Unable to read from file %s", fname);
-    msg = lives_strdup_printf(_("\nLiVES was unable to read from the file\n%s\nPlease check for possible error causes.\n"), sutf);
+    msg = lives_strdup_printf(_("\nLiVES was unable to read from the file\n%s\n"
+                                "Please check for possible error causes.\n"), sutf);
   } else {
     emsg = lives_strdup_printf("Unable to read from file %s, error was %s", fname, errtext);
-    msg = lives_strdup_printf(_("\nLiVES was unable to read from the file\n%s\nThe error was\n%s.\n"), sutf, errtext);
+    msg = lives_strdup_printf(_("\nLiVES was unable to read from the file\n%s\nThe error was\n%s.\n"),
+                              sutf, errtext);
   }
 
   LIVES_ERROR(emsg);
@@ -3901,7 +3946,8 @@ void do_chdir_failed_error(const char *dir) {
   LIVES_ERROR(emsg);
   lives_free(emsg);
   dutf = lives_filename_to_utf8(dir, -1, NULL, NULL, NULL);
-  msg = lives_strdup_printf(_("\nLiVES failed to change directory to\n%s\nPlease check your system for errors.\n"), dutf);
+  msg = lives_strdup_printf(_("\nLiVES failed to change directory to\n%s\n"
+                              "Please check your system for errors.\n"), dutf);
   do_error_dialog(msg);
   lives_free(msg);
   lives_free(dutf);
@@ -3910,7 +3956,8 @@ void do_chdir_failed_error(const char *dir) {
 
 void do_file_perm_error(const char *file_name) {
   char *msg = lives_strdup_printf(
-                _("\nLiVES was unable to write to the file:\n%s\nPlease check the file permissions and try again."),
+                _("\nLiVES was unable to write to the file:\n%s\n"
+                  "Please check the file permissions and try again."),
                 file_name);
   do_blocking_error_dialog(msg);
   lives_free(msg);
@@ -3919,7 +3966,8 @@ void do_file_perm_error(const char *file_name) {
 
 void do_dir_perm_error(const char *dir_name) {
   char *msg = lives_strdup_printf(
-                _("\nLiVES was unable to either create or write to the directory:\n%s\nPlease check the directory permissions and try again."),
+                _("\nLiVES was unable to either create or write to the directory:\n%s\n"
+                  "Please check the directory permissions and try again."),
                 dir_name);
   do_blocking_error_dialog(msg);
   lives_free(msg);
@@ -3940,7 +3988,8 @@ boolean do_abort_check(void) {
 
 void do_encoder_img_fmt_error(render_details * rdet) {
   char *msg = lives_strdup_printf(
-                _("\nThe %s cannot encode clips with image type %s.\nPlease select another encoder from the list.\n"),
+                _("\nThe %s cannot encode clips with image type %s.\n"
+                  "Please select another encoder from the list.\n"),
                 prefs->encoder.name, get_image_ext_for_type(cfile->img_type));
 
   do_error_dialog_with_check_transient(msg, TRUE, 0, LIVES_WINDOW(rdet->dialog));
@@ -3955,7 +4004,8 @@ LIVES_GLOBAL_INLINE void do_card_in_use_error(void) {
 
 
 LIVES_GLOBAL_INLINE void do_dev_busy_error(const char *devstr) {
-  do_blocking_error_dialogf(_("\nThe device %s is in use or unavailable.\n- Check the device permissions\n"
+  do_blocking_error_dialogf(_("\nThe device %s is in use or unavailable.\n"
+                              "- Check the device permissions\n"
                               "- Check if this device is in use by another program.\n"
                               "- Check if the device actually exists.\n"),
                             devstr);
@@ -3963,7 +4013,8 @@ LIVES_GLOBAL_INLINE void do_dev_busy_error(const char *devstr) {
 
 
 LIVES_GLOBAL_INLINE boolean do_existing_subs_warning(void) {
-  return do_yesno_dialog(_("\nThis file already has subtitles loaded.\nDo you wish to overwrite the existing subtitles ?\n"));
+  return do_yesno_dialog(_("\nThis file already has subtitles loaded.\n"
+                           "Do you wish to overwrite the existing subtitles ?\n"));
 }
 
 
@@ -4001,7 +4052,8 @@ LIVES_GLOBAL_INLINE boolean do_erase_subs_warning(void) {
 boolean do_sub_type_warning(const char *ext, const char *type_ext) {
   boolean ret;
   char *msg = lives_strdup_printf(
-                _("\nLiVES does not recognise the subtitle file type \"%s\".\nClick Cancel to set another file name\nor OK to continue and save as type \"%s\"\n"),
+                _("\nLiVES does not recognise the subtitle file type \"%s\".\n"
+                  "Click Cancel to set another file name\nor OK to continue and save as type \"%s\"\n"),
                 ext, type_ext);
   ret = do_warning_dialogf(msg);
   lives_free(msg);
@@ -4010,13 +4062,16 @@ boolean do_sub_type_warning(const char *ext, const char *type_ext) {
 
 
 LIVES_GLOBAL_INLINE boolean do_move_workdir_dialog(void) {
-  return do_yesno_dialog(_("\nDo you wish to move the current clip sets to the new directory ?\n(If unsure, click Yes)\n"));
+  return do_yesno_dialog(_("\nDo you wish to move the current clip sets to the new directory ?\n("
+                           "If unsure, click Yes)\n"));
 }
 
 
 LIVES_GLOBAL_INLINE boolean do_set_locked_warning(const char *setname) {
   return do_yesno_dialogf(
-           _("\nWarning - the set %s\nis in use by another copy of LiVES.\nYou are strongly advised to close the other copy before clicking Yes to continue\n.\nClick No to cancel loading the set.\n"),
+           _("\nWarning - the set %s\nis in use by another copy of LiVES.\n"
+             "You are strongly advised to close the other copy before clicking Yes to continue\n.\n"
+             "Click No to cancel loading the set.\n"),
            setname);
 }
 
@@ -4040,13 +4095,15 @@ LIVES_GLOBAL_INLINE void do_do_not_close_d(void) {
 
 
 LIVES_GLOBAL_INLINE void do_bad_theme_error(const char *themefile) {
-  do_error_dialogf(_("\nThe theme file %s has missing elements.\nThe theme could not be loaded correctly.\n"), themefile);
+  do_error_dialogf(_("\nThe theme file %s has missing elements.\n"
+                     "The theme could not be loaded correctly.\n"), themefile);
 }
 
 
 LIVES_GLOBAL_INLINE void do_set_noclips_error(const char *setname) {
   char *msg = lives_strdup_printf(
-                _("No clips were recovered for set (%s).\nPlease check the spelling of the set name and try again.\n"),
+                _("No clips were recovered for set (%s).\n"
+                  "Please check the spelling of the set name and try again.\n"),
                 setname);
   d_print(msg);
   lives_free(msg);
@@ -4056,14 +4113,16 @@ LIVES_GLOBAL_INLINE void do_set_noclips_error(const char *setname) {
 LIVES_GLOBAL_INLINE char *get_upd_msg(void) {
   LIVES_DEBUG("upd msg !");
   // TRANSLATORS: make sure the menu text matches what is in gui.c
-  char *msg = lives_strdup_printf(_("\nWelcome to LiVES version %s\n\nAfter upgrading, you are advised to run:"
+  char *msg = lives_strdup_printf(_("\nWelcome to LiVES version %s\n\n"
+                                    "After upgrading, you are advised to run:"
                                     "\n\nFile -> Clean up Diskspace\n"), LiVES_VERSION);
   return msg;
 }
 
 
 LIVES_GLOBAL_INLINE void do_no_autolives_error(void) {
-  do_error_dialogf(_("\nYou must have %s installed and in your path to use this toy.\nConsult your package distributor.\n"),
+  do_error_dialogf(_("\nYou must have %s installed and in your path to use this toy.\n"
+                     "Consult your package distributor.\n"),
                    EXEC_AUTOLIVES_PL);
 }
 
@@ -4074,13 +4133,15 @@ LIVES_GLOBAL_INLINE void do_autolives_needs_clips_error(void) {
 
 
 LIVES_GLOBAL_INLINE void do_jack_lost_conn_error(void) {
-  do_error_dialog(_("\nLiVES lost its connection to jack and was unable to reconnect.\nRestarting LiVES is recommended.\n"));
+  do_error_dialog(_("\nLiVES lost its connection to jack and was unable to reconnect.\n"
+                    "Restarting LiVES is recommended.\n"));
 }
 
 
 LIVES_GLOBAL_INLINE void do_pulse_lost_conn_error(void) {
   do_error_dialog(
-    _("\nLiVES lost its connection to pulseaudio and was unable to reconnect.\nRestarting LiVES is recommended.\n"));
+    _("\nLiVES lost its connection to pulseaudio and was unable to reconnect.\n"
+      "Restarting LiVES is recommended.\n"));
 }
 
 
@@ -4090,14 +4151,17 @@ LIVES_GLOBAL_INLINE void do_cd_error_dialog(void) {
 
 
 LIVES_GLOBAL_INLINE void do_bad_theme_import_error(const char *theme_file) {
-  do_error_dialogf(_("\nLiVES was unable to import the theme file\n%s\n(Theme name not found).\n"), theme_file);
+  do_error_dialogf(_("\nLiVES was unable to import the theme file\n%s\n(Theme name not found).\n"),
+                   theme_file);
 }
 
 
 LIVES_GLOBAL_INLINE char *workdir_ch_warning(void) {
   return lives_strdup(
-           _("You have chosen to change the working directory.\nPlease make sure you have no other copies of LiVES open.\n\n"
-             "If you do have other copies of LiVES open, please close them now, *before* pressing OK.\n\n"
+           _("You have chosen to change the working directory.\n"
+             "Please make sure you have no other copies of LiVES open.\n\n"
+             "If you do have other copies of LiVES open, please close them now, "
+             "*before* pressing OK.\n\n"
              "Alternatively, press Cancel to restore the working directory to its original setting."));
 }
 
@@ -4110,7 +4174,8 @@ LIVES_GLOBAL_INLINE void do_shutdown_msg(void) {
 
 
 LIVES_GLOBAL_INLINE boolean do_theme_exists_warn(const char *themename) {
-  return do_yesno_dialogf(_("\nA custom theme with the name\n%s\nalready exists. Would you like to overwrite it ?\n"), themename);
+  return do_yesno_dialogf(_("\nA custom theme with the name\n%s\nalready exists. "
+                            "Would you like to overwrite it ?\n"), themename);
 }
 
 
@@ -4122,9 +4187,11 @@ void add_resnn_label(LiVESDialog * dialog) {
   lives_widget_show(hsep);
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   label = lives_standard_label_new(_(
-                                     "\n\nResizing of clips is no longer necessary, as LiVES will internally adjust frame sizes as "
+                                     "\n\nResizing of clips is no longer necessary, "
+                                     "as LiVES will internally adjust frame sizes as "
                                      "needed at the appropriate moments.\n\n"
-                                     "However, physicallly reducing the frame size may in some cases lead to improved playback \n"
+                                     "However, physicallly reducing the frame size may in some cases "
+                                     "lead to improved playback \n"
                                      "and processing rates.\n\n"));
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_box_pack_first(LIVES_BOX(dialog_vbox), label, FALSE, TRUE, 0);
@@ -4138,7 +4205,8 @@ boolean ask_permission_dialog(int what) {
   switch (what) {
   case LIVES_PERM_OSC_PORTS:
     return do_yesno_dialogf(
-             _("\nLiVES would like to open a local network connection (UDP port %d),\nto let other applications connect to it.\n"
+             _("\nLiVES would like to open a local network connection (UDP port %d),\n"
+               "to let other applications connect to it.\n"
                "Do you wish to allow this (for this session only) ?\n"),
              prefs->osc_udp_port);
   default:
@@ -4149,33 +4217,79 @@ boolean ask_permission_dialog(int what) {
 }
 
 
-boolean ask_permission_dialog_complex(int what, char **argv, int argc, int offs) {
-  if (!prefs->show_gui) return FALSE;
-  int nrem = argc - offs;
-  switch (what) {
-  case LIVES_PERM_DOWNLOAD_LOCAL:
-    // argv should have: name_of_package_bin, grant_idx, grant_key, error msg, cmds to run, future updates.
-    if (nrem < 4) return FALSE; /// badly formed request, ignore it
-    mainw->permmgr = (lives_permmgr_t *)lives_calloc(1, sizeof(lives_permmgr_t));
-    mainw->permmgr->idx = atoi(argv[offs + 1]);
-    mainw->permmgr->key = lives_strdup(argv[offs + 2]);
-    if (nrem >= 5) mainw->permmgr->cmdlist = argv[offs + 4];
-    if (nrem >= 6) mainw->permmgr->futures = argv[offs + 5];
-    return do_yesno_dialogf(
-             _("The following error occured:\n%s\n\nIt may be possible to work around this, "
-               "by downloading a personal copy of\n%s\n"
-               "Please consider carefully, and then click 'Yes' to proceed, or 'No' to cancel.\n"), argv[offs + 3], argv[offs]);
-  default:
-    break;
-  }
+boolean ask_permission_dialog_complex(int what, char **argv, int argc, int offs, const char *sudocom) {
+  if (prefs->show_gui) {
+    LiVESWidget *dlg;
+    LiVESResponseType ret;
+    char *sudotext, *text, *title;
+    int nrem = argc - offs;
+    boolean retry;
 
+try_again:
+    retry = FALSE;
+    switch (what) {
+    case LIVES_PERM_DOWNLOAD_LOCAL:
+      // argv (starting at offs) should have: name_of_package_bin, grant_idx, grant_key,
+      // cmds to run, future consequences.
+      if (nrem < 4) return FALSE; /// badly formed request, ignore it
+
+      mainw->permmgr = (lives_permmgr_t *)lives_calloc(1, sizeof(lives_permmgr_t));
+      mainw->permmgr->idx = atoi(argv[offs + 1]);
+      mainw->permmgr->key = lives_strdup(argv[offs + 2]);
+      if (nrem >= 5) mainw->permmgr->cmdlist = argv[offs + 4];
+      if (nrem >= 6) mainw->permmgr->futures = argv[offs + 5];
+
+      if (sudocom) {
+        sudotext = lives_strdup_printf(_("It may be possible to fix this by running\n"
+                                         "  %s %s\n from the commandline.\nAlternately, "),
+                                       EXEC_SUDO, sudocom);
+      } else sudotext = lives_strdup("");
+      text = lives_strdup_printf(_("The following error occured:\n%s\nwhen running %s\n\n%s"
+                                   "It may be possible to work around this problem, "
+                                   "by downloading an individual copy of\n%s\n"
+                                   "Please consider the options carefully, "
+                                   "and then click one of the buttons below."),
+                                 argv[3], argv[offs], sudotext, argv[offs]);
+      lives_free(sudotext);
+      title = (_("Problem Detected"));
+      dlg = create_question_dialog(text, title, NULL);
+      widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+      lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_ADD,
+                                         _("Proeceed with download"),
+                                         LIVES_RESPONSE_YES);
+
+      lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_GO_FORWARD,
+                                         _("Continue using current version"),
+                                         LIVES_RESPONSE_NO);
+
+      widget_opts.expand = LIVES_EXPAND_DEFAULT;
+      lives_free(title);
+      ret = lives_dialog_run(LIVES_DIALOG(dlg));
+      lives_widget_destroy(dlg);
+      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+      if (ret == LIVES_RESPONSE_YES) {
+        capable->has_wget = has_executable(EXEC_WGET);
+        if (capable->has_wget) return TRUE;
+        if (do_please_install(EXEC_WGET)) return TRUE;
+        retry = TRUE;
+      }
+      lives_free((void **)&mainw->permmgr->key);
+      lives_free(mainw->permmgr);
+      mainw->permmgr = NULL;
+      if (retry) goto try_again;
+      return FALSE;
+    default:
+      break;
+    }
+  }
   return FALSE;
 }
 
 
 LIVES_GLOBAL_INLINE boolean do_layout_recover_dialog(void) {
   if (!do_yesno_dialog(
-        _("\nLiVES has detected a multitrack layout from a previous session.\nWould you like to try and recover it ?\n"))) {
+        _("\nLiVES has detected a multitrack layout from a previous session.\n"
+          "Would you like to try and recover it ?\n"))) {
     recover_layout_cancelled(TRUE);
     return FALSE;
   } else {

@@ -10253,7 +10253,8 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
 
 LiVESWidget *lives_dialog_add_button_from_stock(LiVESDialog *dialog, const char *stock_id, const char *label, int response_id) {
   int bwidth = LIVES_SHOULD_EXPAND_EXTRA_WIDTH ? DLG_BUTTON_WIDTH * 2 : DLG_BUTTON_WIDTH;
-  LiVESWidget *button = lives_standard_button_new_from_stock(stock_id, label, bwidth, DLG_BUTTON_HEIGHT);
+  LiVESWidget *button = lives_standard_button_new_from_stock(stock_id, label, bwidth,
+                        DLG_BUTTON_HEIGHT);
   LiVESWidget *first_button;
 
   if (dialog != NULL) lives_dialog_add_action_widget(dialog, button, response_id);

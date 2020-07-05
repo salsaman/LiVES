@@ -913,6 +913,7 @@ typedef struct {
   lives_checkstatus_t has_youtube_dl;
   lives_checkstatus_t has_du;
   lives_checkstatus_t has_md5sum;
+  lives_checkstatus_t has_wget;
 
   /// home directory - default location for config file - locale encoding
   char home_dir[PATH_MAX];
@@ -1095,7 +1096,7 @@ void do_abortblank_error(const char *what);
 void do_optarg_blank_err(const char *what);
 void do_clip_divergence_error(int fileno);
 LiVESResponseType do_system_failed_error(const char *com, int retval, const char *addinfo, boolean can_retry,
-    LiVESWindow *transient);
+    LiVESWindow *transient, boolean try_sudo);
 LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const char *errtext,
     LiVESWindow *transient) WARN_UNUSED;
 void do_write_failed_error_s(const char *filename, const char *addinfo);
@@ -1117,7 +1118,7 @@ boolean check_storage_space(int clipno, boolean is_processing);
 char *get_upd_msg(void);
 
 boolean ask_permission_dialog(int what);
-boolean ask_permission_dialog_complex(int what, char **argv, int argc, int offs);
+boolean ask_permission_dialog_complex(int what, char **argv, int argc, int offs, const char *sudocom);
 boolean do_abort_check(void);
 void add_warn_check(LiVESBox *box, int warn_mask_number);
 LiVESResponseType do_memory_error_dialog(char *op, size_t bytes);

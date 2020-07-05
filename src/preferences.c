@@ -5940,7 +5940,9 @@ static int text_to_lives_perm(const char *text) {
 }
 
 boolean lives_ask_permission(char **argv, int argc, int offs) {
+  const char *sudocom = NULL;
   char *msg;
+  boolean ret;
   int what = atoi(argv[offs]);
   if (what == LIVES_PERM_INVALID && *argv[offs]) {
     what = text_to_lives_perm(argv[offs]);
@@ -5950,7 +5952,9 @@ boolean lives_ask_permission(char **argv, int argc, int offs) {
   case LIVES_PERM_OSC_PORTS:
     return ask_permission_dialog(what);
   case LIVES_PERM_DOWNLOAD_LOCAL:
-    return ask_permission_dialog_complex(what, argv, argc, ++offs);
+    if (argc >= 5 && strstr(argv[4], "_TRY_SUDO_")) sudocom = (const char *)argv[2];
+    ret = ask_permission_dialog_complex(what, argv, argc, ++offs, sudocom);
+    return ret;
   default:
     msg = lives_strdup_printf("Unknown permission (%d) requested", what);
     LIVES_WARN(msg);

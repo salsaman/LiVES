@@ -157,7 +157,7 @@ int lives_system(const char *com, boolean allow_error) {
 #endif
                                  );
         LIVES_ERROR(msg);
-        response = do_system_failed_error(com, retval, NULL, TRUE, NULL);
+        response = do_system_failed_error(com, retval, NULL, TRUE, NULL, FALSE);
       }
 #ifndef LIVES_NO_DEBUG
       else {
@@ -226,7 +226,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
         msg = lives_strdup_printf("lives_popen failed after %ld bytes with code %d: %s", strg == NULL ? 0 : lives_strlen(strg), err,
                                   com);
         LIVES_ERROR(msg);
-        response = do_system_failed_error(com, err, NULL, TRUE, NULL);
+        response = do_system_failed_error(com, err, NULL, TRUE, NULL, FALSE);
       }
 #ifndef LIVES_NO_DEBUG
       else {

@@ -1091,7 +1091,8 @@ retry:
       overrdkey = mainw->permmgr->key;
     }
 
-    com = lives_strdup_printf("%s download_clip \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %f \"%s\" \"%s\" %d %d%s",
+    com = lives_strdup_printf("%s download_clip \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %f \"%s\""
+                              "\"%s\" %d %d%s",
                               prefs->backend,
                               cfile->handle,
                               req->URI,

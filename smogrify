@@ -3736,8 +3736,8 @@ if (defined($ARGV[0])) {
 		    open (my $fh, "$com 2>&1 |");
 		    my $line = <$fh>;
 		    &sig_system_error(
-			$com, "", "_ASKPERM_|DOWNLOADLOCAL|youtube-dl|" .
-			"13|forceddownload|$line|" .
+			$com, $line, "_ASKPERM_|DOWNLOADLOCAL|youtube-dl|" .
+			"13|forceddownload|" .
 			"wget https://yt-dl.org/downloads/latest/youtube-dl " .
 			"-O '$lives_config_bindir/$youtube_dl'\nchmod u+x " .
 			"'$lives_config_bindir/$youtube_dl'"
@@ -3757,8 +3757,8 @@ if (defined($ARGV[0])) {
 		    if (!$islocal && $line =~ /^youtube-dl:(.*)error:(.*)/) {
 			#print STDERR "ret ERROR\n";
 			&sig_system_error(
-			$com, "", "_ASKPERM_|DOWNLOADLOCAL|youtube-dl|" .
-			"13|forceddownload|$2|" .
+			$com, $2, "_ASKPERM_|DOWNLOADLOCAL|youtube-dl|" .
+			"13|forceddownload|" .
 			"wget https://yt-dl.org/downloads/latest/youtube-dl " .
 			"-O '$lives_config_bindir/$youtube_dl'\nchmod u+x " .
 			"'$lives_config_bindir/$youtube_dl'"
@@ -3768,13 +3768,14 @@ if (defined($ARGV[0])) {
 		}
 		close $fh;
 		#print STDERR "Update of $prog complete, result was $?\n";
-		if ($? >> 8) {
+		my $errnum = ($? >> 8);
+		if ($errnum) {
 		    #print STDERR "WAS ERROR\n";
 		    if (!$islocal) {
 			#print STDERR "RET ERROR\n";
 			&sig_system_error(
-			     $com, "", "_ASKPERM_|DOWNLOADLOCAL|youtube-dl|" .
-			     "13|forceddownload|Unknown error|" .
+			     $com, $errnum, "_TRY_SUDO_, _ASKPERM_|DOWNLOADLOCAL|youtube-dl|" .
+			     "13|forceddownload|" .
 			     "wget https://yt-dl.org/downloads/latest/youtube-dl " .
 			     "-O '$lives_config_bindir/$youtube_dl'\nchmod u+x " .
 			     "'$lives_config_bindir/$youtube_dl'"

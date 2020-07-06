@@ -566,16 +566,16 @@ Types >= 1024 are reserved for custom use. Custom seeds MUST be pointer types.
    Im this case WEED_SUCCESS is returned.
    
    If leaves other than the type leaf remain (because they were undeletable), the "type" leaf is not freed, and
-   WEED_ERROR_UNDELETABLE is returned. In this case it will be necesssary to clear the WEED_FLAG_UNDELETABLE
+   WEED_ERROR_UNDELETABLE is returned. In this case it may be necesssary to clear the WEED_FLAG_UNDELETABLE
    flag bit from the remaining leaves (e.g with weed_plant_list_leaves() and weed_leaf_set_flags()),
-   before calling weed_plant_Free() a second time.
+   before calling weed_plant_free() a second time.
 
    To recap:
 
    If the "type" leaf has the WEED_FLAG_UNDELETABLE bit set, no leaves will be deleted, and WEED_ERROR_UNDELETABLE is returned.
 
-   If any of the other leaves have the flag bit set, neither they nor the "type" leaf will be deleted and
-   WEED_ERROR_UNDELETABLE is returned.
+   Otherwise, if any of the other leaves have the flag bit set, neither they nor the "type" leaf will be deleted and
+   WEED_ERROR_UNDELETABLE is returned. Leaves without the flag bit set WILL be deleted.
 
    if none of the leaves have the WEED_FLAG_UNDELETABLE flag bit set, all the leaves will be deleted and WEED_SUCCESS returned.
 

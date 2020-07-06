@@ -181,14 +181,18 @@ Removed WEED_LEAF_READONLY_PLUGIN, WEED_LEAF_READONLY_HOST and WEED_ERROR_LEAF_R
 
 
 
-(C) Gabriel "Salsaman" Finch 2005 - 2019
+(C) Gabriel "Salsaman" Finch 2005 - 2020
 
 With contributions by: Niels Elburg, Dennis "Jaromil" Rojo, Andraz
 Tori, and Oyvind "Pippin" Kolas.
 
+This document describes an open standard (Weed / libweed).
+The license of this document is the GNU FDL (GNU Free Documentation License) version 1.3 or higher. 
+
 Weed is an object system developed for video/audio processing. Weed
-currently has modules for video/audio effects (weed-effects), and for
-timeline style events (weed-events).
+currently has modules for video/audio effects (weed-effects), and further modules are being
+developed for handling audio and video data (weed layers) as well as timelines (weed events).
+
 
 
 

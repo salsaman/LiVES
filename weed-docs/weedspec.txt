@@ -366,7 +366,8 @@ Types >= 1024 are reserved for custom use. Custom seeds MUST be pointer types.
 == WEED CORE FUNCTIONS ==
 
  * weed_plant_t *weed_plant_new (int32_t plant_type) : allocates and returns a new Weed plant
-   with a single leaf, "type" with a single elemnt of WEED_SEED_INT, value set to plant_type.
+   with a single leaf, "type" with a single element of type WEED_SEED_INT, whose value defines
+   the type of the plant.
    In case of memory error, the plant will not be created and NULL shall be returned.
 
 
@@ -388,10 +389,10 @@ Types >= 1024 are reserved for custom use. Custom seeds MUST be pointer types.
     
     values should be an array of the appropriate type and size, cast to a void *
 
-    for WEED_SEED_INT, values should be (void *)(int32_t[num_elems]) or (void *)(unt32_t[num_elems])
+    for WEED_SEED_INT, values should be (void *)(int32_t[num_elems]) or (void *)(uint32_t[num_elems])
     for WEED_SEED_DOUBLE, values should be (void *)(double[num_elems])
     for WEED_SEED_BOOLEAN, values should be (void *)(int32_t[num_elems])
-    for WEED_SEED_INT64, values should be (void *)(int64_t[num_elems])
+    for WEED_SEED_INT64, values should be (void *)(int64_t[num_elems]) or (void *)(uint32_t[num_elems])
     for WEED_SEED_STRING, it should be (void *)(char *[num_elems]),
     for WEED_SEED_FUNCPTR, (void *)(weed_funcptr_t[num_elems])
     for WEED_SEED_VOIDPTR, (void *)(weed_voidptr_t[num_elems])

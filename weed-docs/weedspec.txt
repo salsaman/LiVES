@@ -1,12 +1,6 @@
 = Technical Specification =
 
-TODO: - plugin parameter interpolation
-      - plugin easing
-      - change "choices" to "display_values" ?
-
-      - should YUV422 be YVU422 i.e YV16 ?
-      - should YUVA8888 be AYUV8888 i.e 0x56555941
-
+TBD: - plugin parameter interpolation
       - zero copy for generators - host supplies buffer to be filled between process_func() calls
 
 

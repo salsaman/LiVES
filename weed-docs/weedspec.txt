@@ -587,7 +587,7 @@ Types >= 1024 are reserved for custom use. Custom seeds MUST be pointer types.
    returns a (char *)[] array of leaf keys, with the final element set to NULL. If nleaves is not NULL, its value is set to
    the number of leaves (i.e number of strings returned EXCLUDING the final NULL element).
 
-   In case of memory error, NULL is returned, nleaves is set to zero and the array is not created.
+   In case of memory error, NULL is returned, nleaves (if non NULL) is set to zero and the array is not created.
 
    The caller should free any non-NULL elements + the array itself when no longer required.
 
@@ -599,7 +599,7 @@ Types >= 1024 are reserved for custom use. Custom seeds MUST be pointer types.
 
 
 
-A Weed host has access to additional functions which are not defined for plugins:
+A Weed host has access to additional functions which are not defined for or intended to be passed to plugins:
 
  * weed_error_t weed_leaf_set_flags(weed_plant_t *plant, const char *key, int32_t flags)
 
@@ -633,6 +633,8 @@ A Weed host has access to additional functions which are not defined for plugins
 		 The default value is NULL if not set.
 
 
+** Note that the threadsafe version of libweed requires exclusive use of the private data,
+and trying to set it with that version of the library will return an error.
 
 
 == LEAF FLAGS ==
@@ -651,11 +653,15 @@ When creating a new plant, libweed automatically will set the WEED_LEAF_IMMUTABL
 Thus if you want to change the plant type, you must first clear the WEED_LEAF_IMMUTABLE flag bit, e.g.
 
 int32_t flags = weed_leaf_get_flags(plant, WEED_LEAF_TYPE);
-weed_error_t error = weed_leaf_set_flags(plant, WEED_LEAF_TYPE, flags ^ (flags & WEED_FLAG_IMMUTABLE));
+weed_error_t error = weed_leaf_set_flags(plant, WEED_LEAF_TYPE, flags & ~WEED_FLAG_IMMUTABLE);
 if (error == WEED_SUCCESS) {
 ...
 // now you can change the "type" of the plant
 
+}
+
+/// don't forget to set it back after !
+error = weed_leaf_set_flags(plant, WEED_LEAF_TYPE, flags | WEED_FLAG_IMMUTABLE);
 
 
 
@@ -1582,6 +1588,11 @@ which takes as input an array of plants and produces a copy, including producing
 
 There now follows a description of the various plant types for weed effects, 
 and their mandatory and optional leaves.
+
+Note that whilst the "raw" values of the leaves are given, all of them have a more "user-freindly"
+version, e.g. WEED_LEAF_NAME can be used in code instead of "name".
+
+(TODO - document the equivalent names)
 
 
 

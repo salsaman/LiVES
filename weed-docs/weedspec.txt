@@ -799,12 +799,21 @@ Provided for convenience for use by any plant type
 There now follows a description of the Weed reference library (libweed).
 
 Currently this library is offered in two versions,
-one using the standard memory functions, and a second using glib's slice allocator for higher performance (libweed-gslice)
+one using the standard memory functions, and a second using glib's slice allocator for slighlty
+higher performance (libweed-gslice).
+In addition a threadsafe version of either may be compiled.
+Currently this adds a dependency on libpthread, but is highly recommended when using the library
+with multiple threads.
 
-Both libraries are written with performance in mind, for example a hash function is used to locate leaf keys.
+The reference is written with performance in mind, for example a hash function is used to locate
+leaf keys.
 
-The libray and header are relatively compact - the stripped libweed.so is around 14K in size on an average linux system
-and the header contains around 240 lines (include whitespace and comments).
+Rough benchmarking with plants of up to one million randomly created leaves
+has not shown any considerable performance issues.
+
+The libray and header are relatively compact - the stripped libweed.so is around 20Kb in size
+on an average linux system and the weed.h header contains roughly 250 lines
+(including whitespace, comments and preamble).
 
 
 

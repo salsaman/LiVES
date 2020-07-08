@@ -70,32 +70,40 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+static weed_plant_t *weed_audio_channel_template_init(const char *name, int flags);
+
 ///////////////////////////////////////////////////////////
 static int wtrue = WEED_TRUE;
 #define wlne(p,k) weed_leaf_num_elements((p),(k))
 #define wlg(p,w,i,v) weed_leaf_get((p),(w),(i),(v))
 #define _leaf_has_value(p,k) ((wlne(p,k)>0)?1:0)
-#define gg(p,w,i,v) (p?(wlg((p),(w),(i),(v))==WEED_SUCCESS)?v:0:0)
+#define gg(p,w,i,v) (p?((wlg((p),(w),(i),(v))==WEED_SUCCESS)?v:0):0)
 static inline int gg_i(weed_plant_t *p, const char *w) {
-  int v, *vp = (int *)gg(p, w, 0, &v); return vp ? v : 0;}
+  int v, *vp = (int *)gg(p, w, 0, &v); return vp ? v : 0;
+}
 static inline weed_plant_t *gg_p(weed_plant_t *p, const char *w, int i) {
-  weed_plant_t *v, **vp = (weed_plant_t **)gg(p, w, i, &v); return vp ? v : 0;}
+  weed_plant_t *v, **vp = (weed_plant_t **)gg(p, w, i, &v); return vp ? v : 0;
+}
 static inline int64_t gg_i64(weed_plant_t *p, const char *w) {
-  int64_t v, *vp = (int64_t *)gg(p, w, 0, &v); return vp ? v : 0;}
+  int64_t v, *vp = (int64_t *)gg(p, w, 0, &v); return vp ? v : 0;
+}
 static inline int weed_plant_get_type(weed_plant_t *p) {return gg_i(p, WEED_LEAF_TYPE);}
 static inline weed_plant_t *_weed_get_gui(weed_plant_t *p) {
   weed_plant_t *g = NULL; int t = weed_plant_get_type(p);
   if (t != WEED_PLANT_FILTER_CLASS && t != WEED_PLANT_PARAMETER_TEMPLATE && t != WEED_PLANT_PARAMETER) return NULL;
   gg(p, WEED_LEAF_GUI, 0, (void *)&g);
-  if (!g) {g = weed_plant_new(WEED_PLANT_GUI); weed_leaf_set(p, WEED_LEAF_GUI, WEED_SEED_PLANTPTR, 1, &g);} return g;}
+  if (!g) {g = weed_plant_new(WEED_PLANT_GUI); weed_leaf_set(p, WEED_LEAF_GUI, WEED_SEED_PLANTPTR, 1, &g);} return g;
+}
 static inline double gg_dbl(weed_plant_t *p, const char *w) {double v, *vp = (double *)gg(p, w, 0, &v); return vp ? v : 0;}
 static inline int weed_get_api_version(weed_plant_t *pi) {
-  weed_plant_t *h;wlg(pi, WEED_LEAF_HOST_INFO, 0, &h); return gg_i(h, WEED_LEAF_FILTER_API_VERSION);}
+  weed_plant_t *h; wlg(pi, WEED_LEAF_HOST_INFO, 0, &h); return gg_i(h, WEED_LEAF_FILTER_API_VERSION);
+}
 static inline void _weed_plant_set_flags(weed_plant_t *p, int f) {
   int t = weed_plant_get_type(p);
   if (t == WEED_PLANT_FILTER_CLASS || t == WEED_PLANT_PARAMETER_TEMPLATE
       || t == WEED_PLANT_CHANNEL_TEMPLATE || t == WEED_PLANT_GUI)
-    weed_leaf_set(p, WEED_LEAF_FLAGS, WEED_SEED_INT, 1, &f);}
+    weed_leaf_set(p, WEED_LEAF_FLAGS, WEED_SEED_INT, 1, &f);
+}
 static inline void weed_filter_set_flags(weed_plant_t *f, int fl) {_weed_plant_set_flags(f, fl);}
 static inline void weed_chantmpl_set_flags(weed_plant_t *c, int f) {_weed_plant_set_flags(c, f);}
 static inline void weed_paramtmpl_set_flags(weed_plant_t *p, int f) {_weed_plant_set_flags(p, f);}
@@ -103,7 +111,8 @@ static inline void weed_gui_set_flags(weed_plant_t *g, int f) {_weed_plant_set_f
 NOT_EXPORTED void _weed_plant_set_name(weed_plant_t *p, const char *n) {
   int t = weed_plant_get_type(p);
   if (t == WEED_PLANT_FILTER_CLASS || t == WEED_PLANT_PARAMETER_TEMPLATE
-      || t == WEED_PLANT_CHANNEL_TEMPLATE) weed_leaf_set(p, WEED_LEAF_NAME, WEED_SEED_STRING, 1, &n);}
+      || t == WEED_PLANT_CHANNEL_TEMPLATE) weed_leaf_set(p, WEED_LEAF_NAME, WEED_SEED_STRING, 1, &n);
+}
 static inline void weed_filter_set_name(weed_plant_t *f, const char *n) {_weed_plant_set_name(f, n);}
 static inline void weed_chantmpl_set_name(weed_plant_t *c, const char *n) { _weed_plant_set_name(c, n);}
 static inline void weed_paramtmpl_set_name(weed_plant_t *p, const char *n) { _weed_plant_set_name(p, n);}
@@ -111,7 +120,8 @@ static inline weed_plant_t *weed_filter_get_gui(weed_plant_t *f) {return _weed_g
 static inline weed_plant_t *weed_param_get_gui(weed_plant_t *p) {return _weed_get_gui(p);}
 static inline weed_plant_t *weed_paramtmpl_get_gui(weed_plant_t *pt) {return _weed_get_gui(pt);}
 static inline weed_plant_t *weed_get_host_info(weed_plant_t *pi) {
-  weed_plant_t *hi;return *((weed_plant_t **)(gg(pi, WEED_LEAF_HOST_INFO, 0, (void *)&hi)));}
+  weed_plant_t *hi; return *((weed_plant_t **)(gg(pi, WEED_LEAF_HOST_INFO, 0, (void *)&hi)));
+}
 static inline int weed_get_host_verbosity(weed_plant_t *hi) {return gg_i(hi, WEED_LEAF_VERBOSITY);}
 NOT_EXPORTED int _weed_plant_get_flags(weed_plant_t *p) {return gg_i(p, WEED_LEAF_FLAGS);}
 static inline int weed_host_get_flags(weed_plant_t *h) {return _weed_plant_get_flags(h);}
@@ -121,17 +131,21 @@ static inline int weed_chantmpl_get_flags(weed_plant_t *c) {return _weed_plant_g
 static inline int weed_paramtmpl_get_flags(weed_plant_t *p) {return _weed_plant_get_flags(p);}
 static inline int weed_instance_get_flags(weed_plant_t *i) {return _weed_plant_get_flags(i);}
 static inline int weed_host_supports_linear_gamma(weed_plant_t *h) {
-  return (weed_host_get_flags(h) & WEED_HOST_SUPPORTS_LINEAR_GAMMA);}
+  return (weed_host_get_flags(h) & WEED_HOST_SUPPORTS_LINEAR_GAMMA);
+}
 static inline int weed_host_supports_premultiplied_alpha(weed_plant_t *h) {
-  return (weed_host_get_flags(h) & WEED_HOST_SUPPORTS_PREMULTIPLIED_ALPHA);}
+  return (weed_host_get_flags(h) & WEED_HOST_SUPPORTS_PREMULTIPLIED_ALPHA);
+}
 static inline weed_plant_t *weed_instance_get_filter(weed_plant_t *i) {
-  weed_plant_t *f; return *((weed_plant_t **)gg(i, WEED_LEAF_FILTER_CLASS, 0, (void *)&f));}
+  weed_plant_t *f; return *((weed_plant_t **)gg(i, WEED_LEAF_FILTER_CLASS, 0, (void *)&f));
+}
 static inline weed_plant_t *weed_get_in_channel(weed_plant_t *i, int x) {return gg_p(i, WEED_LEAF_IN_CHANNELS, x);}
 static inline weed_plant_t *weed_get_out_channel(weed_plant_t *i, int x) {return gg_p(i, WEED_LEAF_OUT_CHANNELS, x);}
 static inline weed_plant_t *weed_get_in_param(weed_plant_t *i, int x) {return gg_p(i, WEED_LEAF_IN_PARAMETERS, x);}
 static inline weed_plant_t *weed_get_out_param(weed_plant_t *i, int x) {return gg_p(i, WEED_LEAF_OUT_PARAMETERS, x);}
 static inline void *weed_channel_get_pixel_data(weed_plant_t *c) {
-  void *pd; return *((void **)(gg(c, WEED_LEAF_PIXEL_DATA, 0, (void *)&pd)));}
+  void *pd; return *((void **)(gg(c, WEED_LEAF_PIXEL_DATA, 0, (void *)&pd)));
+}
 static inline int weed_channel_get_width(weed_plant_t *c) {return gg_i(c, WEED_LEAF_WIDTH);}
 static inline int weed_channel_get_height(weed_plant_t *c) {return gg_i(c, WEED_LEAF_HEIGHT);}
 static inline int weed_channel_get_palette(weed_plant_t *c) {return gg_i(c, WEED_LEAF_CURRENT_PALETTE);}
@@ -139,10 +153,12 @@ static inline int weed_channel_get_yuv_clamping(weed_plant_t *c) {return gg_i(c,
 static inline int weed_channel_get_stride(weed_plant_t *c) {return gg_i(c, WEED_LEAF_ROWSTRIDES);}
 static inline int weed_channel_get_offset(weed_plant_t *c) {return gg_i(c, WEED_LEAF_OFFSET);}
 static inline int weed_channel_get_real_height(weed_plant_t *c) {
-  int h; return *((int *)(gg(c, WEED_LEAF_HEIGHT, wlne(c, WEED_LEAF_HEIGHT) - 1, &h)));}
+  int h; return *((int *)(gg(c, WEED_LEAF_HEIGHT, wlne(c, WEED_LEAF_HEIGHT) - 1, &h)));
+}
 static inline int weed_channel_is_disabled(weed_plant_t *c) {return gg_i(c, WEED_LEAF_DISABLED);}
 static inline weed_plant_t *weed_param_get_template(weed_plant_t *p) {
-  weed_plant_t *pt; return *((weed_plant_t **)(gg(p, WEED_LEAF_TEMPLATE, 0, (void *)&pt)));}
+  weed_plant_t *pt; return *((weed_plant_t **)(gg(p, WEED_LEAF_TEMPLATE, 0, (void *)&pt)));
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -247,7 +263,7 @@ static weed_plant_t *weed_filter_class_init(const char *name, const char *author
     weed_init_f init_func, weed_process_f process_func, weed_deinit_f deinit_func,
     weed_plant_t **in_chantmpls, weed_plant_t **out_chantmpls,
     weed_plant_t **in_paramtmpls, weed_plant_t **out_paramtmpls) {
-  register int i;
+  int i;
   weed_plant_t *filter_class = NULL;
   if (name) filter_class = weed_plant_new(WEED_PLANT_FILTER_CLASS);
   if (!filter_class) return NULL;
@@ -700,7 +716,7 @@ static int dlink_list_cmp(const void *p1, const void *p2) {
 }
 
 static int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list) {
-  register int count = 0, ocount;
+  int count = 0, ocount;
   dlink_list_t **dll, *xlist;
   // map list to flat array so we can qsort it. The original list was prepended, so adding in reverse restores original order.
   for (xlist = list; xlist; xlist = xlist->next) count++;
@@ -863,7 +879,7 @@ static void blank_row(uint8_t **pdst, int width, int pal, int yuv_clamping, int 
 static void blank_frame(void **pdata, int width, int height, int *rs, int pal, int yuv_clamping) {
   uint8_t *pd2[4];
   int nplanes = weed_palette_get_nplanes(pal), odd, is_420 = (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P);
-  register int i, j;
+  int i, j;
   for (j = 0; j < nplanes; j++) pd2[j] = (uint8_t *)pdata[j];
   for (i = 0; i < height; i++) {
     blank_row(pd2, width, pal, yuv_clamping, !(odd = i ^ 1), NULL);
@@ -883,15 +899,15 @@ static int unal[256][256], al[256][256];
 
 static INLINE void init_unal(void) {
   // premult to postmult and vice-versa
-  for (register int i = 0; i < 256; i++)
-    for (register int j = 0; j < 256; j++) {
+  for (int i = 0; i < 256; i++)
+    for (int j = 0; j < 256; j++) {
       unal[i][j] = (float)j * 255. / (float)i; al[i][j] = (float)j * (float)i / 255.;
     }
 }
 
 static void alpha_premult(unsigned char *ptr, int width, int height, int rowstride, int pal, int un) {
   int aoffs = 3, coffs = 0, psizel = 3, alpha, psize = 4;
-  register int i, j, p;
+  int i, j, p;
   switch (pal) {
   case WEED_PALETTE_BGRA32: break;
   case WEED_PALETTE_ARGB32: psizel = 4; coffs = 1; aoffs = 0; break;
@@ -908,7 +924,8 @@ static void alpha_premult(unsigned char *ptr, int width, int height, int rowstri
     for (i = 0; i < height; i++) for (j = 0; j < width; j += psize) {
         alpha = ptr[j + aoffs];
         for (p = coffs; p < psizel; p++) ptr[j + p] = al[alpha][ptr[j + p]];
-      } ptr += rowstride;
+      }
+    ptr += rowstride;
   }
 }
 
@@ -931,7 +948,7 @@ static void init_RGB_to_YCbCr_tables(void) {
 }
 
 // unclamped values
-#define RGB_2_YIQ(a, b, c) do {register short x; for (int i = 0; i < NUM_PIXELS_SQUARED; i++) {	\
+#define RGB_2_YIQ(a, b, c) do {short x; for (int i = 0; i < NUM_PIXELS_SQUARED; i++) {	\
       Unit Y, I, Q;							\
       if ((x = ((Y_Ru[(int)a[i]] + Y_Gu[(int)b[i]] + Y_Bu[(int)(int)c[i]]) >> FP_BITS)) > 255) x = 255; \
       Y = x < 0 ? 0 : x;							\
@@ -942,7 +959,7 @@ static void init_RGB_to_YCbCr_tables(void) {
     }} while(0)
 
 static void init_Y_to_Y_tables(void) {
-  register int i;
+  int i;
   for (i = 0; i < 17; i++) {UVCL_UVUCL[i] = YCL_YUCL[i] = 0; YUCL_YCL[i] = (uint8_t)((float)i / 255. * 219. + .5)  + 16;}
   for (; i < 235; i++) {
     YCL_YUCL[i] = (int)((float)(i - 16.) / 219. * 255. + .5); UVCL_UVUCL[i] = (int)((float)(i - 16.) / 224. * 255. + .5);

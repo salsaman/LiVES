@@ -1003,6 +1003,9 @@ LiVESWidget *lives_standard_label_new(const char *labeltext);
 LiVESWidget *lives_standard_label_new_with_mnemonic_widget(const char *text, LiVESWidget *mnemonic_widget);
 LiVESWidget *lives_standard_label_new_with_tooltips(const char *text, LiVESBox *box,
     const char *tips);
+LiVESWidget *lives_standard_formatted_label_new(const char *text);
+
+void lives_label_chomp(LiVESLabel *);
 
 LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback, lives_painter_surface_t **);
 
@@ -1272,6 +1275,17 @@ const char *lives_textsize_to_string(int val);
 #define LIVES_LIVES_STOCK_PREF_RECORD "lives-pref_record"
 #define LIVES_LIVES_STOCK_PREF_THEMES "lives-pref_themes"
 #define LIVES_LIVES_STOCK_PREF_WARNING "lives-pref_warning"
+
+// font sizes
+#define LIVES_FONT_SIZE_XX_SMALL "xx-small" // 0
+#define LIVES_FONT_SIZE_X_SMALL "x-small"  // 1
+#define LIVES_FONT_SIZE_SMALL "small"      // 2
+#define LIVES_FONT_SIZE_MEDIUM "medium"   // 3
+#define LIVES_FONT_SIZE_LARGE "large"      // 4
+#define LIVES_FONT_SIZE_X_LARGE "x-large"    // 5
+#define LIVES_FONT_SIZE_XX_LARGE "xx-large"   // 6
+#define LIVES_FONT_SIZE_NORMAL LIVES_FONT_SIZE_MEDIUM
+#define N_FONT_SIZES 7
 
 typedef struct {
   boolean no_gui; ///< show nothing !

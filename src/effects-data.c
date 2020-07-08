@@ -4238,9 +4238,11 @@ static void ptable_row_add_standard_widgets(lives_conx_w * conxwp, int idx) {
   lives_box_pack_start(LIVES_BOX(hbox), conxwp->clabel[idx], FALSE, FALSE, widget_opts.packing_width);
 
   conxwp->add_button[idx] = lives_standard_button_new_from_stock(LIVES_STOCK_ADD, NULL, BW, BH);
-  lives_widget_set_tooltip_text(conxwp->add_button[idx], _("Add another connection for this output parameter"));
+  lives_widget_set_tooltip_text(conxwp->add_button[idx],
+                                _("Add another connection for this output parameter"));
 
-  lives_table_attach(LIVES_TABLE(conxwp->tablep), conxwp->add_button[idx], 6, 7, conxwp->trowsp - 1, conxwp->trowsp,
+  lives_table_attach(LIVES_TABLE(conxwp->tablep), conxwp->add_button[idx], 6, 7, conxwp->trowsp - 1,
+                     conxwp->trowsp,
                      (LiVESAttachOptions)(0),
                      (LiVESAttachOptions)(0), 0, 0);
 

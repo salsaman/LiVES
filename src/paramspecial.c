@@ -282,8 +282,8 @@ void check_for_special_type(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * p
   while (slist != NULL) {
     if (param == (lives_param_t *)(slist->data)) {
       param->special_type = LIVES_PARAM_SPECIAL_TYPE_FILEWRITE;
-      slist = slist->next;
     }
+    slist = slist->next;
   }
 
   // password fields
@@ -291,8 +291,8 @@ void check_for_special_type(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * p
   while (slist) {
     if (param == (lives_param_t *)(slist->data)) {
       param->special_type = LIVES_PARAM_SPECIAL_TYPE_PASSWORD;
-      slist = slist->next;
     }
+    slist = slist->next;
   }
 }
 

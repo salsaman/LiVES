@@ -217,8 +217,10 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_apply_theme(mainw->start_image, LIVES_WIDGET_STATE_NORMAL);
   lives_widget_apply_theme(mainw->end_image, LIVES_WIDGET_STATE_NORMAL);
 
-  lives_widget_set_base_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)), LIVES_WIDGET_STATE_NORMAL, colb);
-  lives_widget_set_text_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)), LIVES_WIDGET_STATE_NORMAL, colf);
+  lives_widget_set_base_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)),
+                              LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_text_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)),
+                              LIVES_WIDGET_STATE_NORMAL, colf);
 
   lives_widget_set_bg_color(mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->play_image, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -231,7 +233,8 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_apply_theme(mainw->frame2, LIVES_WIDGET_STATE_NORMAL);
 
   lives_widget_apply_theme(mainw->eventbox2, LIVES_WIDGET_STATE_NORMAL);
-  if (mainw->eventbox5 != NULL) lives_widget_set_bg_color(mainw->eventbox5, LIVES_WIDGET_STATE_NORMAL, colb);
+  if (mainw->eventbox5 != NULL) lives_widget_set_bg_color(mainw->eventbox5,
+        LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_apply_theme(mainw->hruler, LIVES_WIDGET_STATE_NORMAL);
 
   lives_widget_set_fg_color(mainw->vidbar, LIVES_WIDGET_STATE_NORMAL, colf);
@@ -2516,11 +2519,10 @@ void create_LiVES(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->open_loc), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_open_loc_activate),
                        NULL);
-#ifdef HAVE_WEBM
+  //#ifdef HAVE_WEBM
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->open_utube), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_open_utube_activate),
                        NULL);
-#endif
 
 #ifdef HAVE_LDVGRAB
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->open_firewire), LIVES_WIDGET_ACTIVATE_SIGNAL,

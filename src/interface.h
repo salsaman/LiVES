@@ -83,7 +83,6 @@ typedef struct {
   LiVESWidget *dir_entry;
   LiVESWidget *name_entry;
   LiVESWidget *warn_checkbutton;
-  LiVESList *setlist;
 } _entryw;
 
 _entryw *create_rename_dialog(int type);
@@ -117,6 +116,7 @@ typedef struct {
   LiVESWidget *delete_button;
   LiVESWidget *textview;
   LiVESWidget *table;
+  LiVESWidget *button;
 } text_window;
 
 text_window *create_text_window(const char *title_part, const char *text, LiVESTextBuffer *);
@@ -239,5 +239,6 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 boolean youtube_select_format(lives_remote_clip_request_t *);
 
 void run_diskspace_dialog(void);
+void run_diskspace_dialog_cb(LiVESWidget *w, livespointer data);
 
 #endif

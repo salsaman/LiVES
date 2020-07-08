@@ -14,7 +14,10 @@
 static uint64_t fastrand_val = 0;
 
 LIVES_GLOBAL_INLINE uint64_t fastrand(void) {
-  fastrand_val ^= fastrand_val << 13; fastrand_val ^= fastrand_val >> 7; return (fastrand_val ^= fastrand_val << 17);
+  fastrand_val ^= (fastrand_val << 13); fastrand_val ^= (fastrand_val >> 7);
+  fastrand_val = ((fastrand_val & 0xFFFFFFFF00000000) >> 32) | ((fastrand_val & 0xFFFFFFFF) << 32);
+  fastrand_val ^= (fastrand_val << 17);
+  return fastrand_val;
 }
 
 LIVES_GLOBAL_INLINE void fastrand_add(uint64_t entropy) {fastrand_val += entropy;}
@@ -25,6 +28,8 @@ LIVES_GLOBAL_INLINE double fastrand_dbl(double range) {
 
 /// pick a pseudo random uint between 0 and range (inclusive)
 LIVES_GLOBAL_INLINE uint32_t fastrand_int(uint32_t range) {return (uint32_t)(fastrand_dbl((double)(++range)));}
+
+//#define BIGPRIME 0x3FFFFFFFFFFFFFC7
 
 void init_random() {
   ssize_t randres = -1;
@@ -40,22 +45,11 @@ void init_random() {
     close(randfd);
   }
 
-  rseed ^= lives_get_current_ticks();
+  rseed ^= (lives_get_current_ticks() << 27);
+  fastrand_val = rseed;
+  rseed = fastrand();
 
   lives_srandom((uint32_t)((rseed >> 13) & 0xFFFFFFFF));
-
-  randfd = lives_open2("/dev/urandom", O_RDONLY);
-
-  if (randfd > -1) {
-    randres = read(randfd, &rseed, 8);
-    close(randfd);
-  }
-
-  rseed ^= lives_get_current_ticks();
-
-  do {
-    fastrand_val += rseed + 1073741789;
-  } while (fastrand_val == 0);
 }
 
 
@@ -1014,8 +1008,9 @@ LIVES_GLOBAL_INLINE boolean lives_strncmp(const char *st1, const char *st2, size
 }
 
 #define HASHROOT 5381
-LIVES_GLOBAL_INLINE uint32_t string_hash(const char *st) {
-  if (st) for (register uint32_t hash = HASHROOT;; hash += (hash << 5) + * (st++)) if (!(*st)) return hash;
+LIVES_GLOBAL_INLINE uint32_t lives_string_hash(const char *st) {
+  if (st) for (register uint32_t hash = HASHROOT;; hash += (hash << 5)
+                 + * (st++)) if (!(*st)) return hash;
   return 0;
 }
 
@@ -1023,6 +1018,12 @@ LIVES_GLOBAL_INLINE char *lives_strstop(char *st, const char term) {
   /// trumcate st, replacing sterm with \0
   if (st && term) for (char *p = (char *)st; *p; p++) if (*p == term) {*p = 0; return st;}
   return st;
+}
+
+LIVES_GLOBAL_INLINE size_t lives_chomp(char *buff) {
+  size_t xs = lives_strlen(buff);
+  if (xs && buff[xs - 1] == '\n') buff[--xs] = '\0'; // remove trailing newline
+  return xs;
 }
 
 

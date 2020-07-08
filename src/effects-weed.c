@@ -4562,29 +4562,29 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
 static void gen_hashnames(int i, int j) {
   hashnames[i][0].string = 	NULL;
   hashnames[i][0].string = 	make_weed_hashname(j, TRUE, FALSE, 0, FALSE); // full dupes
-  hashnames[i][0].hash =  	string_hash(hashnames[i][0].string);
+  hashnames[i][0].hash =  	lives_string_hash(hashnames[i][0].string);
   hashnames[i][1].string = 	NULL;
   hashnames[i][1].string = 	make_weed_hashname(j, TRUE, TRUE, 0, FALSE);
-  hashnames[i][1].hash =  	string_hash(hashnames[i][1].string);
+  hashnames[i][1].hash =  	lives_string_hash(hashnames[i][1].string);
   hashnames[i][2].string = 	NULL;
   hashnames[i][2].string = 	make_weed_hashname(j, FALSE, FALSE, 0, FALSE); // pdupes
-  hashnames[i][2].hash =  	string_hash(hashnames[i][2].string);
+  hashnames[i][2].hash =  	lives_string_hash(hashnames[i][2].string);
   hashnames[i][3].string = 	NULL;
   hashnames[i][3].string =	make_weed_hashname(j, FALSE, TRUE, 0, FALSE);
-  hashnames[i][3].hash =  	string_hash(hashnames[i][3].string);
+  hashnames[i][3].hash =  	lives_string_hash(hashnames[i][3].string);
 
   hashnames[i][4].string = 	NULL;
   hashnames[i][4].string = 	make_weed_hashname(j, TRUE, FALSE, 0, TRUE); // full dupes
-  hashnames[i][4].hash =  	string_hash(hashnames[i][4].string);
+  hashnames[i][4].hash =  	lives_string_hash(hashnames[i][4].string);
   hashnames[i][5].string = 	NULL;
   hashnames[i][5].string = 	make_weed_hashname(j, TRUE, TRUE, 0, TRUE);
-  hashnames[i][5].hash =  	string_hash(hashnames[i][5].string);
+  hashnames[i][5].hash =  	lives_string_hash(hashnames[i][5].string);
   hashnames[i][6].string = 	NULL;
   hashnames[i][6].string = 	make_weed_hashname(j, FALSE, FALSE, 0, TRUE); // pdupes
-  hashnames[i][6].hash =  	string_hash(hashnames[i][6].string);
+  hashnames[i][6].hash =  	lives_string_hash(hashnames[i][6].string);
   hashnames[i][7].string = 	NULL;
   hashnames[i][7].string =	make_weed_hashname(j, FALSE, TRUE, 0, TRUE);
-  hashnames[i][7].hash =  	string_hash(hashnames[i][7].string);
+  hashnames[i][7].hash =  	lives_string_hash(hashnames[i][7].string);
 }
 
 
@@ -10777,7 +10777,7 @@ int weed_get_idx_for_hashname(const char *hashname, boolean fullname) {
 
   if (!fullname) type = 2;
 
-  numhash = string_hash(xhashname);
+  numhash = lives_string_hash(xhashname);
 
   for (i = 0; i < num_weed_filters; i++) {
     if (numhash == hashnames[i][type].hash) {

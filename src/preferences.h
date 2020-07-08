@@ -170,7 +170,6 @@ typedef struct {
 
   /// 0 = normal , -1 or 1: fresh install, 2: workdir set, 3: startup tests passed, 4: aud pl chosen, 5: pre interface seln., 100 setup complete
   short startup_phase;
-  char *wm; ///<window manager name
   int ocp; ///< open_compression_percent : get/set in prefs
 
   boolean antialias;
@@ -423,6 +422,7 @@ typedef struct {
   boolean cb_is_switch;
 
   boolean interactive;
+  boolean extra_colours;
 } _prefs;
 
 enum {
@@ -669,6 +669,7 @@ typedef struct {
   LiVESWidget *jack_int_label;
   LiVESWidget *checkbutton_ce_maxspect;
   LiVESWidget *checkbutton_button_icons;
+  LiVESWidget *checkbutton_extra_colours;
   LiVESWidget *workdir_label;
   LiVESWidget *checkbutton_stream_audio;
   LiVESWidget *checkbutton_rec_after_pb;
@@ -961,6 +962,9 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_LETTERBOXMT "letterbox_mt"
 #define PREF_PARESTART "pa_restart"
 #define PREF_PBQ_ADAPTIVE "pb_quality_adaptive"
+#define PREF_EXTRA_COLOURS "extra_colours" /// add to prefs window
+#define PREF_SHOW_SUBS "show_subtitles" /// add to prefs window
+#define PREF_AUTOLOAD_SUBS "autoload_subtitles" /// add to prefs window
 
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"

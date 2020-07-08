@@ -39,8 +39,11 @@
 #define SCALE_FACTOR (1 << FP_BITS)
 #endif
 
-#define KR_YCBCR 0.299
+#define KR_YCBCR 0.2989
 #define KB_YCBCR 0.114
+
+#define KR_I240 0.212
+#define KB_I240 0.087
 
 #define KR_BT709 0.2126
 #define KB_BT709 0.0722
@@ -136,6 +139,13 @@ typedef struct {
 
 #endif
 
+void rgb2hsv(uint8_t r, uint8_t g, uint8_t b, double *h, double *s, double *v);
+void hsv2rgb(double h, double s, double v, uint8_t *r, uint8_t *g, uint8_t *b);
+boolean pick_nice_colour(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *r1, uint8_t *g1, uint8_t *b1,
+                         double max, double lmin, double lmax);
+
+double cdist94(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1);
+
 #ifdef WEED_ADVANCED_PALETTES
 #define LIVES_VCHAN_grey	       	2048
 #define LIVES_VCHAN_mono_b      	2049
@@ -188,11 +198,11 @@ boolean weed_palette_has_alpha_first(int pal);
 boolean weed_palette_has_alpha_last(int pal);
 #endif
 
-void init_colour_engine(void);
-
 int32_t round_special(int32_t val);
 
 void init_conversions(int intent);
+
+void init_colour_engine(void);
 
 /////////////////////////////////////// LAYERS ///////////////////////////////////////
 
@@ -248,7 +258,6 @@ boolean convert_layer_palette_with_sampling(weed_layer_t *, int outpl, int out_s
 boolean convert_layer_palette_full(weed_layer_t *, int outpl, int oclamping, int osampling, int osubspace, int tgamma);
 void lives_layer_set_opaque(weed_layer_t *);
 boolean consider_swapping(int *inpal, int *outpal);
-
 
 /// widths in PIXELS
 boolean resize_layer(weed_layer_t *, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint);

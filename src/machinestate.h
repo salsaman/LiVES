@@ -273,10 +273,10 @@ ticks_t lives_get_current_ticks(void);
 char *lives_datetime(struct timeval *tv);
 
 #define lives_nanosleep(nanosec) {struct timespec ts; ts.tv_sec = (uint64_t)nanosec / ONE_BILLION; \
-    ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (nanosleep(&ts, &ts) == -1 && errno != ETIMEDOUT);}
+    ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (nanosleep(&ts, &ts) == -1 && \
+								     errno != ETIMEDOUT);}
 
-#define lives_nanosleep_until_nonzero(var) {struct timespec ts; ts.tv_sec =0; \
-    ts.tv_nsec = 100; while (!(var)) nanosleep(&ts, &ts);}
+#define lives_nanosleep_until_nonzero(var) {while (!(var)) lives_nanosleep(1000);}
 
 int check_dev_busy(char *devstr);
 
@@ -291,7 +291,8 @@ uint64_t reget_afilesize_inner(int fileno);
 void lives_log(const char *what);
 #endif
 
-uint32_t string_hash(const char *string) GNU_PURE GNU_HOT;
+uint32_t lives_string_hash(const char *string) GNU_PURE GNU_HOT;
+size_t lives_chomp(char *string);
 
 int check_for_bad_ffmpeg(void);
 

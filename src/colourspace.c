@@ -19,7 +19,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA.
+  QQQQQQQQQQQQQQQQQQQQ Franklin Street, Fifth Floor, Boston, MA.
 */
 
 // *
@@ -268,14 +268,28 @@ static boolean conv_YY_inited = FALSE;
 
 static gamma_const_t gamma_tx[3];
 
+static uint8_t *gamma_s2l = NULL;
+static uint8_t *gamma_l2s = NULL;
+static uint8_t *gamma_b2l = NULL;
+static uint8_t *gamma_l2b = NULL;
+static uint8_t *gamma_s2b = NULL;
+static uint8_t *gamma_b2s = NULL;
+
 static inline uint8_t *create_gamma_lut(double fileg, int gamma_from, int gamma_to) {
   uint8_t *gamma_lut;
   float inv_gamma = 0.;
   float a, x = 0.;
   register int i;
 
-  if (fileg == 1.0)
+  if (fileg == 1.0) {
     if (gamma_to == WEED_GAMMA_UNKNOWN || gamma_from == WEED_GAMMA_UNKNOWN) return NULL;
+    if (gamma_from == WEED_GAMMA_LINEAR && gamma_to == WEED_GAMMA_SRGB && gamma_l2s) return gamma_l2s;
+    if (gamma_from == WEED_GAMMA_LINEAR && gamma_to == WEED_GAMMA_BT709 && gamma_l2b) return gamma_l2b;
+    if (gamma_from == WEED_GAMMA_SRGB && gamma_to == WEED_GAMMA_LINEAR && gamma_s2l) return gamma_s2l;
+    if (gamma_from == WEED_GAMMA_SRGB && gamma_to == WEED_GAMMA_BT709 && gamma_s2b) return gamma_s2b;
+    if (gamma_from == WEED_GAMMA_BT709 && gamma_to == WEED_GAMMA_LINEAR && gamma_b2l) return gamma_b2l;
+    if (gamma_from == WEED_GAMMA_BT709 && gamma_to == WEED_GAMMA_SRGB && gamma_b2s) return gamma_b2s;
+  }
 
   gamma_lut = lives_calloc(4, 64);
   if (!gamma_lut) return NULL;
@@ -371,7 +385,24 @@ static inline uint8_t *create_gamma_lut(double fileg, int gamma_from, int gamma_
     }
     gamma_lut[i] = CLAMP0255((int32_t)(255. * x + .5));
   }
+  if (gamma_from == WEED_GAMMA_LINEAR && gamma_to == WEED_GAMMA_SRGB && gamma_l2s)
+    gamma_l2s = gamma_lut;
+  if (gamma_from == WEED_GAMMA_LINEAR && gamma_to == WEED_GAMMA_BT709 && gamma_l2b)
+    gamma_l2b = gamma_lut;
+  if (gamma_from == WEED_GAMMA_SRGB && gamma_to == WEED_GAMMA_LINEAR && gamma_s2l)
+    gamma_s2l = gamma_lut;
+  if (gamma_from == WEED_GAMMA_SRGB && gamma_to == WEED_GAMMA_BT709 && gamma_s2b)
+    gamma_s2b = gamma_lut;
+  if (gamma_from == WEED_GAMMA_BT709 && gamma_to == WEED_GAMMA_LINEAR && gamma_b2l)
+    gamma_b2l = gamma_lut;
+  if (gamma_from == WEED_GAMMA_BT709 && gamma_to == WEED_GAMMA_SRGB && gamma_b2s)
+    gamma_b2s = gamma_lut;
   return gamma_lut;
+}
+
+static inline void lives_gamma_lut_free(uint8_t *lut) {
+  if (lut && lut != gamma_l2s && lut != gamma_l2b && lut != gamma_s2l && lut != gamma_s2b
+      && lut != gamma_b2s && lut != gamma_b2l) lives_free(lut);
 }
 
 
@@ -866,6 +897,192 @@ static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int o
   }
   if (errmsg != NULL) lives_free(errmsg);
 }
+
+
+void rgb2xyz(uint8_t r, uint8_t g, uint8_t b, double *x, double *y, double *z) {
+  double rr = (double)r / 2.55, gg = (double)g / 2.55, bb = (double)b / 2.55;
+  *x = rr * 0.4124 + gg * 0.3576 + bb * 0.1805;
+  *y = rr * 0.2126 + gg * 0.7152 + bb * 0.0722;
+  *z = rr * 0.0193 + gg * 0.1192 + bb * 0.9505;
+}
+
+// xyz and lab, thanks to
+// https://www.emanueleferonato.com/2009/09/08/color-difference-algorithm-part-2
+#define LAB0 0.008856
+#define LAB1 0.33333333333
+#define LAB2 7.787
+#define LAB3 0.13793103448 // 16. / 116.
+LIVES_LOCAL_INLINE double lab_conv(double a) {return a > LAB0 ? pow(a, LAB1) : a * LAB2 + LAB3;}
+
+void xyz2lab(double x, double y, double z, double *l, double *a, double *b) {
+  x = lab_conv(x); y = lab_conv(y); z = lab_conv(z);
+  if (l) {*l = 116. * y - 16.;} if (a) {*a = 500. * (x - y);} if (b) {*b = 200. * (y - z);}
+}
+
+#define KL 1.0 // 2.0 for textiles
+#define KC 1.0 // default
+#define KH 1.0 // default
+#define K1 0.045 // graphics arts, 0.048 textiles
+#define K2 0.015 // graphics arts, 0.014 textiles
+#define RNDFAC 0.0000000001
+static double cdist94lab(double l0, double a0, double b0, double l1, double a1, double b1) {
+  // CIE94
+  double dl = l0 - l1;
+  double c0 = sqrt(a0 * a0 + b0 * b0), c1 = sqrt(a1 * a1 + b1 * b1);
+  double dc = c0 - c1, da = a0 - a1, db = b0 - b1;
+  double dh = sqrt(da * da + db * db - dc * dc + RNDFAC);
+  //dl /= KL;  // 1.0 default, 2.0 textiles
+  dc /= (1. + K1 * c0);
+  //dc /= KC;  // 1.0 default
+  dh /= (1. + K2 * c1);
+  //dh /= KH;  // 1.0 default
+  return sqrt(dl * dl + dc * dc + dh * dh);
+}
+
+
+static uint8_t get_maxmin_diff(uint8_t a, uint8_t b, uint8_t c, uint8_t *max, uint8_t *min) {
+  uint8_t lmax = a;
+  uint8_t lmin = a;
+  if (a > b) {
+    if (b > c) lmin = c;
+    else {
+      lmin = b;
+      if (c > a) lmax = c;
+    }
+  } else {
+    if (b < c) lmax = c;
+    else {
+      lmax = b;
+      if (c < a) lmin = c;
+    }
+  }
+  if (max) *max = lmax;
+  if (min) *min = lmin;
+  return lmax - lmin;
+}
+
+double cdist94(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1) {
+  double dist;
+  double x0 = 0., y0 = 0., z0 = 0.;
+  double x1 = 0., y1 = 0., z1 = 0.;
+  double L0 = 0., A0 = 0., B0 = 0.;
+  double L1 = 0., A1 = 0., B1 = 0.;
+  rgb2xyz(r0, g0, b0, &x0, &y0, &z0);
+  rgb2xyz(r1, g1, b1, &x1, &y1, &z1);
+  xyz2lab(x0, y0, z0, &L0, &A0, &B0);
+  xyz2lab(x1, y1, z1, &L1, &A1, &B1);
+  dist =  cdist94lab(L0, A0, B0, L1, A1, B1);
+  return dist;
+}
+
+
+void rgb2hsv(uint8_t r, uint8_t g, uint8_t b, double *h, double *s, double *v) {
+  // h, s, v = hue, saturation, value
+  uint8_t cmax = 0, cmin = 0;
+  uint8_t diff = get_maxmin_diff(r, g, b, &cmax, &cmin);
+  double ddiff = (double)diff, dcmax = (double)cmax;
+  if (h) {*h = 0.;} if (s) {*s = 0.;} if (v) {*v = 0.;}
+  if (h && cmax != cmin) {
+    if (cmax == r) *h = ((double)g - (double)b) / ddiff;
+    else if (cmax == g) *h = 2. + ((double)b - (double)r) / ddiff;
+    else *h = 4. + ((double)r - (double)g) / ddiff;
+    *h = 60. * (*h < 0. ? (*h + 6.) : *h >= 6. ? (*h - 6.) : *h);
+  }
+  if (s && cmax) *s = (ddiff / dcmax) * 100.;
+  if (v) *v = dcmax / 2.55;
+
+#if CALC_HSL
+  register short a;
+  if ((a = spc_rnd(Y_Ru[r] + Y_Gu[g] + Y_Bu[b])) > 255) a = 255;
+  if (v) *v = (double)(a < 0 ? 0 : a) / 255.;
+#endif
+
+}
+
+void hsv2rgb(double h, double s, double v, uint8_t *r, uint8_t *g, uint8_t *b) {
+  if (s < 0.000001) {
+    *r = *g = *b = (v * 255. + .5);
+    return;
+  } else {
+    int i = (int)h;
+    double f = h - (double)i;
+    double p = v * (1. - s);
+    double dr, dg, db;
+    if (i & 1) {
+      double q = v * (1. - (s * f));
+      switch (i) {
+      case 1: dr = q; dg = v; db = p; break;
+      case 3: dr = p; dg = q; db = v; break;
+      default: dr = v; dg = p; db = q; break;
+      }
+    } else {
+      double t = v * (1. - (s * (1. - f)));
+      switch (i) {
+      case 0: dr = v; dg = t; db = p; break;
+      case 2: dr = p; dg = v; db = t; break;
+      default: dr = t; dg = p; db = v; break;
+      }
+    }
+    *r = (uint8_t)(dr * 255. + .5); *g = (uint8_t)(dg * 255. + .5); *b = (uint8_t)(db * 255. + .5);
+  }
+}
+
+
+boolean pick_nice_colour(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *r1, uint8_t *g1, uint8_t *b1,
+                         double max, double lmin, double lmax) {
+  // given 2 colours a and b, calculate the cie94 distance (d) between them, then find a third colour
+  // first calc the avg, calc d(a, b) with threshold > 1.
+  // pick a random colour, the dist from avg must be approx. d(a, b) * max
+  // da / db must be > ,9 and db / da also
+  // finally luma should be between lmin and lmax
+  // restrictions are gradually loosened
+
+#define DIST_THRESH 10.
+#define RAT_START .99
+#define RAT_TIO  .9999999
+#define RAT_MIN .2
+
+  double gmm = 1. + lmax * 2., gmn = 1. + lmin;
+  uint8_t xr, xb, xg, ar, ag, ab;
+  uint8_t rmin = MIN(r0, *r1) / 1.5, gmin = MIN(g0, *g1) / gmm, bmin = MIN(b0, *b1) / 1.5;
+  uint8_t rmax = MAX(r0, *r1), gmax = MAX(g0, *g1), bmax = MAX(b0, *b1);
+  double da, db, z, rat = RAT_START, d = cdist94(r0, g0, b0, *r1, *g1, *b1);
+  if (d < DIST_THRESH) d = DIST_THRESH;
+  max *= d;
+
+  ar = (double)(r0 + *r1) / 2.;
+  ag = (double)(g0 + *g1) / 2.;
+  ab = (double)(b0 + *b1) / 2.;
+
+  rmax = (rmax < 128 ? rmax >> 1 : 255) - rmin;
+  gmax = (gmax < 255 / gmn ? gmax *gmn : 255) - gmin;
+  bmax = (bmax < 128 ? bmax >> 1 : 255) - bmin;
+
+  while ((z = rat * RAT_TIO) > RAT_MIN) {
+    rat = z;
+    /// pick a random col
+    xr = fastrand_int(bmax) + bmin;
+    xg = fastrand_int(gmax) + gmin;
+    xb = fastrand_int(bmax) + bmin;
+
+    da = cdist94(ar, ag, ab, xr, xg, xb);
+    if (max * rat > da) continue;
+    da = cdist94(r0, g0, b0, xr, xg, xb);
+    db = cdist94(*r1, *g1, *b1, xr, xg, xb);
+    if (da * rat > db || db * rat > da) continue;
+    else {
+      double l;
+      register short a;
+      if ((a = spc_rnd(Y_Ru[xr] + Y_Gu[xg] + Y_Bu[xb])) > 255) a = 255;
+      l = (double)(a < 0 ? 0 : a) / 255.;
+      if (l < lmin || l > lmax) continue;
+      *r1 = xr; *g1 = xg; *b1 = xb;
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
 
 //////////////////////////
 // pixel conversions
@@ -2393,7 +2610,7 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, i
   if (LIVES_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
   set_conversion_arrays(clamping, subspace);
 
-  if (tgamma) gamma_lut =  create_gamma_lut(1.0, gamma, tgamma);
+  if (tgamma) gamma_lut = create_gamma_lut(1.0, gamma, tgamma);
 
   for (i = 0; i < height; i++) {
     uv_offs = 0;
@@ -2447,7 +2664,7 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, i
     s_y += irow;
     dest += orowstride;
   }
-  if (gamma_lut) lives_free(gamma_lut);
+  if (gamma_lut) lives_gamma_lut_free(gamma_lut);
 }
 
 
@@ -2467,7 +2684,7 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **src, int width, int height, i
 
   if (LIVES_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
   set_conversion_arrays(clamping, subspace);
-  if (tgamma) gamma_lut =  create_gamma_lut(1.0, gamma, tgamma);
+  if (tgamma) gamma_lut = create_gamma_lut(1.0, gamma, tgamma);
 
   for (i = 0; i < height; i++) {
     uv_offs = 0;
@@ -2522,7 +2739,7 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **src, int width, int height, i
     s_y += irow;
     dest += orowstride;
   }
-  if (gamma_lut) lives_free(gamma_lut);
+  if (gamma_lut) lives_gamma_lut_free(gamma_lut);
 }
 
 
@@ -2541,7 +2758,7 @@ static void convert_yuv420p_to_argb_frame(uint8_t **src, int width, int height, 
 
   if (LIVES_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
   set_conversion_arrays(clamping, subspace);
-  if (tgamma) gamma_lut =  create_gamma_lut(1.0, gamma, tgamma);
+  if (tgamma) gamma_lut = create_gamma_lut(1.0, gamma, tgamma);
 
   for (i = 0; i < height; i++) {
     uv_offs = 0;
@@ -2596,7 +2813,7 @@ static void convert_yuv420p_to_argb_frame(uint8_t **src, int width, int height, 
     s_y += irow;
     dest += orowstride;
   }
-  if (gamma_lut) lives_free(gamma_lut);
+  if (gamma_lut) lives_gamma_lut_free(gamma_lut);
 }
 
 
@@ -2657,7 +2874,7 @@ static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
       lives_thread_join(threads[i], NULL);
     }
     lives_free(ccparams);
-    if (gamma_lut) lives_free(gamma_lut);
+    if (gamma_lut) lives_gamma_lut_free(gamma_lut);
     return;
   }
 
@@ -6697,7 +6914,7 @@ static void convert_swap3_frame(uint8_t *src, int width, int height, int irowstr
       lives_thread_join(threads[i], NULL);
     }
     lives_free(ccparams);
-    if (gamma_lut) lives_free(gamma_lut);
+    if (gamma_lut) lives_gamma_lut_free(gamma_lut);
     return;
   }
 
@@ -7194,7 +7411,7 @@ static void convert_addpost_frame(uint8_t *src, int width, int height, int irows
       lives_thread_join(threads[i], NULL);
     }
     lives_free(ccparams);
-    if (gamma_lut) lives_free(gamma_lut);
+    if (gamma_lut) lives_gamma_lut_free(gamma_lut);
     return;
   }
 
@@ -7442,7 +7659,7 @@ static void convert_delpost_frame(uint8_t *src, int width, int height, int irows
       lives_thread_join(threads[i], NULL);
     }
     lives_free(ccparams);
-    if (gamma_lut) lives_free(gamma_lut);
+    if (gamma_lut) lives_gamma_lut_free(gamma_lut);
     return;
   }
 
@@ -11294,8 +11511,8 @@ void gamma_conv_params(int gamma_type, weed_layer_t *inst, boolean is_in) {
       }
 
       if (ogamma_type != oogamma_type && gamma_type != ogamma_type) {
-        if (gamma_lut) lives_free(gamma_lut);
-        gamma_lut =  create_gamma_lut(1.0, ogamma_type, gamma_type);
+        if (gamma_lut) lives_gamma_lut_free(gamma_lut);
+        gamma_lut = create_gamma_lut(1.0, ogamma_type, gamma_type);
         if (!gamma_lut) break;
         oogamma_type = ogamma_type;
       }
@@ -11317,7 +11534,7 @@ void gamma_conv_params(int gamma_type, weed_layer_t *inst, boolean is_in) {
             ivals[j + k] = gamma_lut[ivals[j + k]];
           }
         }
-        lives_free(gamma_lut);
+        lives_gamma_lut_free(gamma_lut);
         weed_set_int_array(param, WEED_LEAF_VALUE, nvals, ivals);
         lives_free(ivals);
         weed_set_int_value(param, WEED_LEAF_GAMMA_TYPE, gamma_type);
@@ -11326,7 +11543,7 @@ void gamma_conv_params(int gamma_type, weed_layer_t *inst, boolean is_in) {
       }
     }
     lives_free(params);
-    if (gamma_lut) lives_free(gamma_lut);
+    if (gamma_lut) lives_gamma_lut_free(gamma_lut);
   }
 }
 
@@ -11389,9 +11606,9 @@ boolean gamma_convert_sub_layer(int gamma_type, double fileg, weed_layer_t *laye
         pixels += y * orowstride;
 
         if (gamma_type == WEED_GAMMA_VARIANT)
-          gamma_lut =  create_gamma_lut(fileg, lgamma_type, gamma_type);
+          gamma_lut = create_gamma_lut(fileg, lgamma_type, gamma_type);
         else
-          gamma_lut =  create_gamma_lut(1.0, lgamma_type, gamma_type);
+          gamma_lut = create_gamma_lut(1.0, lgamma_type, gamma_type);
 
         //for (int i = nfx_threads - 1; i >= 0; i--) {
         for (int i = nfx_threads - 1; i >= 0; i--) {
@@ -11422,7 +11639,7 @@ boolean gamma_convert_sub_layer(int gamma_type, double fileg, weed_layer_t *laye
           lives_thread_join(threads[i], NULL);
         }
         lives_free(ccparams);
-        lives_free(gamma_lut);
+        lives_gamma_lut_free(gamma_lut);
         if (gamma_type != WEED_GAMMA_VARIANT)
           weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, gamma_type);
         return TRUE;

@@ -972,6 +972,8 @@ typedef struct {
 
   char *gui_theme_name;
   char *icon_theme_name;
+
+  char *wm; ///<window manager name
 } capability;
 
 /// some shared structures
@@ -1223,6 +1225,7 @@ void do_bad_theme_error(const char *themefile);
 void do_bad_theme_import_error(const char *theme_file);
 boolean do_theme_exists_warn(const char *themename);
 boolean do_layout_recover_dialog(void);
+void do_no_sets_dialog(const char *dir);
 void add_resnn_label(LiVESDialog *dialog);
 
 int process_one(boolean visible);

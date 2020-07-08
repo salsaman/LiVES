@@ -718,7 +718,6 @@ static boolean pre_init(void) {
 
   mainw->kb_timer = -1;
 
-  prefs->wm = NULL;
   prefs->sleep_time = 1000;
 
   prefs->present = FALSE;
@@ -744,8 +743,8 @@ static boolean pre_init(void) {
   prefs->lamp_buttons = FALSE;
 #endif
 
-  prefs->autoload_subs = TRUE;
-  prefs->show_subtitles = TRUE;
+  prefs->autoload_subs = get_boolean_prefd(PREF_AUTOLOAD_SUBS, TRUE);
+  prefs->show_subtitles = get_boolean_prefd(PREF_SHOW_SUBS, TRUE);
 
   prefs->pa_restart = get_boolean_prefd(PREF_PARESTART, FALSE);
   get_string_prefd(PREF_PASTARTOPTS, prefs->pa_start_opts, 255, "-k --high-priority");
@@ -831,8 +830,9 @@ static boolean pre_init(void) {
   if (!set_palette_colours(FALSE)) {
     lives_snprintf(prefs->theme, 64, "none");
     set_palette_colours(FALSE);
-  } else if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
-
+  } else if (palette->style & STYLE_1) {
+    widget_opts.apply_theme = TRUE;
+  }
   if (!mainw->foreign && prefs->startup_phase == 0) {
     if (prefs->show_splash) splash_init();
     print_notice();
@@ -1418,6 +1418,10 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->proc_ptr = NULL;
 
   mainw->permmgr = NULL;
+
+  mainw->set_list = NULL;
+  mainw->num_sets = -1;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);
@@ -1510,8 +1514,10 @@ static void lives_init(_ign_opts *ign_opts) {
   prefs->ce_thumb_mode = FALSE;
 #endif
 
+  /// eye candy
+  prefs->extra_colours = get_boolean_prefd(PREF_EXTRA_COLOURS, TRUE);
   prefs->show_button_images = widget_opts.show_button_images =
-                                get_boolean_prefd(PREF_SHOW_BUTTON_ICONS, FALSE);
+                                get_boolean_prefd(PREF_SHOW_BUTTON_ICONS, TRUE);
 
   prefs->push_audio_to_gens = get_boolean_prefd(PREF_PUSH_AUDIO_TO_GENS, TRUE);
 
@@ -2099,20 +2105,18 @@ static void do_start_messages(void) {
   if (prefs->vj_mode)
     SHOWDET(wmctrl);
 
-  prefs->wm = NULL;
-
 #ifdef GDK_WINDOWING_WAYLAND
   if (GDK_IS_WAYLAND_DISPLAY(mainw->mgeom[0].disp))
-    prefs->wm = lives_strdup("Wayland");
+    capable->wm = lives_strdup("Wayland");
 #endif
 #ifdef GDK_WINDOWING_X11
   if (GDK_IS_X11_DISPLAY(mainw->mgeom[0].disp))
-    prefs->wm = lives_strdup(gdk_x11_screen_get_window_manager_name(gdk_screen_get_default()));
+    capable->wm = lives_strdup(gdk_x11_screen_get_window_manager_name(gdk_screen_get_default()));
 #endif
-  if (prefs->wm == NULL)
-    prefs->wm = lives_strdup((_("UNKNOWN - please patch me !")));
+  if (capable->wm == NULL)
+    capable->wm = lives_strdup((_("UNKNOWN - please patch me !")));
 
-  d_print(_("\n\nWindow manager reports as \"%s\"; "), prefs->wm);
+  d_print(_("\n\nWindow manager reports as \"%s\"; "), capable->wm);
 
   d_print(_("number of monitors detected: %d\n"), capable->nmonitors);
 
@@ -2261,12 +2265,15 @@ boolean set_palette_colours(boolean force_reload) {
   // force_reload should only be set when the theme changes in prefs.
   LiVESList *cache_backup = NULL;
   lives_colRGBA64_t lcol;
+  double lmin, lmax;
 
   char *themedir, *themefile, *othemefile, *fname, *tmp;
   char pstyle[8];
 
   boolean is_OK = TRUE;
   boolean cached = FALSE;
+
+  uint8_t ncr, ncg, ncb;
 
   lcol.alpha = 65535;
 
@@ -2348,14 +2355,16 @@ boolean set_palette_colours(boolean force_reload) {
       palette->style = lcol.red;
       if (!(palette->style & STYLE_LIGHT)) {
         if (mainw->sep_image) lives_widget_set_opacity(mainw->sep_image, 0.4);
-        if (mainw->multitrack && mainw->multitrack->sep_image) lives_widget_set_opacity(mainw->multitrack->sep_image, 0.4);
+        if (mainw->multitrack && mainw->multitrack->sep_image)
+          lives_widget_set_opacity(mainw->multitrack->sep_image, 0.4);
         palette->ce_unsel.red = palette->ce_unsel.green = palette->ce_unsel.blue = 6554;
         set_toolkit_theme(LIVES_THEME_DARK | LIVES_THEME_COMPACT);
       } else {
         set_toolkit_theme(LIVES_THEME_LIGHT | LIVES_THEME_COMPACT);
         palette->ce_unsel.red = palette->ce_unsel.green = palette->ce_unsel.blue = 0;
         if (mainw->sep_image) lives_widget_set_opacity(mainw->sep_image, 0.4);
-        if (mainw->multitrack && mainw->multitrack->sep_image) lives_widget_set_opacity(mainw->multitrack->sep_image, 0.4);
+        if (mainw->multitrack && mainw->multitrack->sep_image)
+          lives_widget_set_opacity(mainw->multitrack->sep_image, 0.4);
       }
       get_string_pref(THEME_DETAIL_SEPWIN_IMAGE, mainw->sepimg_path, PATH_MAX);
       get_string_pref(THEME_DETAIL_FRAMEBLANK_IMAGE, mainw->frameblank_path, PATH_MAX);
@@ -2403,7 +2412,8 @@ boolean set_palette_colours(boolean force_reload) {
 
   if (force_reload) {
     // check if theme is custom:
-    themedir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, PLUGIN_THEMES, prefs->theme, NULL);
+    themedir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, PLUGIN_THEMES,
+                                    prefs->theme, NULL);
 
     if (!lives_file_test(themedir, LIVES_FILE_TEST_IS_DIR)) {
       lives_free(themedir);
@@ -2469,11 +2479,13 @@ boolean set_palette_colours(boolean force_reload) {
       if (!(palette->style & STYLE_LIGHT)) {
         palette->ce_unsel.red = palette->ce_unsel.green = palette->ce_unsel.blue = 6554;
         if (mainw->sep_image) lives_widget_set_opacity(mainw->sep_image, 0.8);
-        if (mainw->multitrack && mainw->multitrack->sep_image) lives_widget_set_opacity(mainw->multitrack->sep_image, 0.8);
+        if (mainw->multitrack && mainw->multitrack->sep_image)
+          lives_widget_set_opacity(mainw->multitrack->sep_image, 0.8);
         set_toolkit_theme(LIVES_THEME_DARK | LIVES_THEME_COMPACT);
       } else {
         if (mainw->sep_image) lives_widget_set_opacity(mainw->sep_image, 0.4);
-        if (mainw->multitrack && mainw->multitrack->sep_image) lives_widget_set_opacity(mainw->multitrack->sep_image, 0.4);
+        if (mainw->multitrack && mainw->multitrack->sep_image)
+          lives_widget_set_opacity(mainw->multitrack->sep_image, 0.4);
         set_toolkit_theme(LIVES_THEME_LIGHT | LIVES_THEME_COMPACT);
         palette->ce_unsel.red = palette->ce_unsel.green = palette->ce_unsel.blue = 0;
       }
@@ -2547,6 +2559,38 @@ boolean set_palette_colours(boolean force_reload) {
     // set details in prefs
     set_palette_prefs();
   }
+
+  /// generate some complementary colours
+  if (!(palette->style & STYLE_LIGHT)) {
+    lmin = .05;
+    lmax = .4;
+  } else {
+    lmin = .6;
+    lmax = .8;
+  }
+  ncr = palette->menu_and_bars.red * 255.;
+  ncg = palette->menu_and_bars.green * 255.;
+  ncb = palette->menu_and_bars.blue * 255.;
+  if (pick_nice_colour(palette->normal_back.red * 255., palette->normal_back.green * 255.,
+                       palette->normal_back.blue * 255., &ncr, &ncg, &ncb, 1.5, .25, .75)) {
+    palette->nice1.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
+    palette->nice1.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
+    palette->nice1.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
+    palette->nice1.alpha = 1.;
+
+    ncr = palette->menu_and_bars.red * 255.;
+    ncg = palette->menu_and_bars.green * 255.;
+    ncb = palette->menu_and_bars.blue * 255.;
+
+    if (pick_nice_colour(palette->nice1.red * 255., palette->nice1.green * 255.,
+                         palette->nice1.blue * 255., &ncr, &ncg, &ncb, 1., lmin, lmax)) {
+      palette->nice2.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
+      palette->nice2.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
+      palette->nice2.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
+      palette->nice2.alpha = 1.;
+      mainw->pretty_colours = TRUE;
+    }
+  }
   return TRUE;
 }
 
@@ -2594,6 +2638,7 @@ capability *get_capabilities(void) {
   get_location("eject", capable->eject_cmd, PATH_MAX);
 
   capable->rcfile = lives_build_filename(prefs->configdir, LIVES_RC_FILENAME, NULL);
+  capable->wm = NULL;
 
   // optional
   capable->has_mplayer = UNCHECKED;
@@ -3065,7 +3110,9 @@ boolean resize_message_area(livespointer data) {
   msg_area_config(mainw->msg_area);
   //#endif
   if (isfirst) {
-    if (mainw->current_file == -1) d_print("");
+    if (!CURRENT_CLIP_IS_VALID) {
+      d_print("");
+    }
     msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
     lives_widget_queue_draw_if_visible(mainw->msg_area);
     isfirst = FALSE;
@@ -3411,7 +3458,6 @@ static boolean lives_startup2(livespointer data) {
   mainw->no_switch_dprint = TRUE;
   if (mainw->current_file > -1 && mainw->multitrack == NULL) {
     switch_clip(1, mainw->current_file, TRUE);
-    sensitize();
   }
 
   // anything that d_prints messages should go here:
@@ -3443,7 +3489,7 @@ static boolean lives_startup2(livespointer data) {
     }
   }
   mainw->go_away = FALSE;
-  if (mainw->current_file > -1 && mainw->multitrack == NULL) {
+  if (mainw->multitrack == NULL) {
     sensitize();
   }
   if (prefs->vj_mode && capable->has_wmctrl) {
@@ -4414,6 +4460,7 @@ void sensitize(void) {
 
   mainw->sense_state &= LIVES_SENSE_STATE_INTERACTIVE;
   mainw->sense_state |= LIVES_SENSE_STATE_SENSITIZED;
+
   lives_widget_set_sensitive(mainw->open, TRUE);
   lives_widget_set_sensitive(mainw->open_sel, TRUE);
   lives_widget_set_sensitive(mainw->open_vcd_menu, TRUE);
@@ -5666,7 +5713,8 @@ void load_preview_image(boolean update_always) {
         case PRV_PTR:
           //cf. hrule_reset
           cfile->pointer_time = lives_ce_update_timeline(mainw->preview_frame, 0.);
-          if (cfile->frames > 0) cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
+          if (cfile->frames > 0) cfile->frameno = calc_frame_from_time(mainw->current_file,
+                                                    cfile->pointer_time);
           if (cfile->pointer_time > 0.) {
             lives_widget_set_sensitive(mainw->rewind, TRUE);
             lives_widget_set_sensitive(mainw->trim_to_pstart, CURRENT_CLIP_HAS_AUDIO);

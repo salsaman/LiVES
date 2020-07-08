@@ -424,17 +424,6 @@ typedef GdkFilterReturn LiVESFilterReturn;
 
 typedef GtkIconTheme			  LiVESIconTheme;
 
-// font sizes
-#define LIVES_FONT_SIZE_XX_SMALL "xx-small" // 0
-#define LIVES_FONT_SIZE_X_SMALL "x-small"  // 1
-#define LIVES_FONT_SIZE_SMALL "small"      // 2
-#define LIVES_FONT_SIZE_MEDIUM "medium"   // 3
-#define LIVES_FONT_SIZE_LARGE "large"      // 4
-#define LIVES_FONT_SIZE_X_LARGE "x-large"    // 5
-#define LIVES_FONT_SIZE_XX_LARGE "xx-large"   // 6
-#define LIVES_FONT_SIZE_NORMAL LIVES_FONT_SIZE_MEDIUM
-#define N_FONT_SIZES 7
-
 // events
 #define LIVES_WIDGET_EVENT "event"
 #define LIVES_WIDGET_SCROLL_EVENT "scroll-event"
@@ -1020,6 +1009,7 @@ typedef GdkInterpType                     LiVESInterpType;
 
 #if GTK_CHECK_VERSION(3, 10, 0)
 #define LIVES_STOCK_YES "gtk-yes"             // non-standard image ?
+#define LIVES_STOCK_NO "gtk-no"             // non-standard image ?
 #define LIVES_STOCK_APPLY "gtk-apply"      // non-standard image ?
 #define LIVES_STOCK_CANCEL "gtk-cancel"    // non-standard image ?
 #define LIVES_STOCK_OK "gtk-ok"    // non-standard image ?
@@ -1028,7 +1018,7 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_STOCK_REDO "edit-redo"
 #define LIVES_STOCK_ADD "list-add"
 #define LIVES_STOCK_REMOVE "list-remove"
-#define LIVES_STOCK_NO "media-record"
+#define LIVES_STOCK_NO2 "media-record"
 #define LIVES_STOCK_QUIT "application-exit"
 #define LIVES_STOCK_OPEN "document-open"
 #define LIVES_STOCK_CLOSE "window-close"

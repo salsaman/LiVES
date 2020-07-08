@@ -4674,7 +4674,6 @@ char *get_val_from_cached_list(const char *key, size_t maxlen) {
   char *keystr_end = lives_strdup_printf("</%s>", key);
   size_t kslen = lives_strlen(keystr_start);
   size_t kelen = lives_strlen(keystr_end);
-  size_t xs;
 
   boolean gotit = FALSE;
   char buff[maxlen];
@@ -4704,9 +4703,7 @@ char *get_val_from_cached_list(const char *key, size_t maxlen) {
 
   if (!gotit) return NULL;
 
-  xs = lives_strlen(buff);
-  if (xs > 0 && buff[xs - 1] == '\n') buff[xs - 1] = '\0'; // remove trailing newline
-
+  lives_chomp(buff);
   return lives_strdup(buff);
 }
 
@@ -5075,11 +5072,11 @@ LiVESList *get_set_list(const char *dir, boolean utf8) {
   struct dirent *tdirent, *subdirent;
   char *subdirname;
 
-  if (dir == NULL) return NULL;
+  if (!dir) return NULL;
 
   tldir = opendir(dir);
 
-  if (tldir == NULL) return NULL;
+  if (!tldir) return NULL;
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
@@ -5087,7 +5084,7 @@ LiVESList *get_set_list(const char *dir, boolean utf8) {
   while (1) {
     tdirent = readdir(tldir);
 
-    if (tdirent == NULL) {
+    if (!tdirent) {
       closedir(tldir);
       lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
       return setlist;
@@ -5096,7 +5093,6 @@ LiVESList *get_set_list(const char *dir, boolean utf8) {
     if (!strncmp(tdirent->d_name, "..", strlen(tdirent->d_name))) continue;
 
     subdirname = lives_build_filename(dir, tdirent->d_name, NULL);
-
     subdir = opendir(subdirname);
 
     if (subdir == NULL) {
@@ -5106,10 +5102,7 @@ LiVESList *get_set_list(const char *dir, boolean utf8) {
 
     while (1) {
       subdirent = readdir(subdir);
-
-      if (subdirent == NULL) {
-        break;
-      }
+      if (!subdirent) break;
 
       if (!strcmp(subdirent->d_name, "order")) {
         if (!utf8)
@@ -5239,6 +5232,8 @@ LIVES_GLOBAL_INLINE int lives_utf8_strcmp(const char *s1, const char *s2) {
 
 
 LIVES_GLOBAL_INLINE LiVESList *lives_list_sort_alpha(LiVESList * list, boolean fwd) {
+  /// stable sort, so input list should NOT be freed
+  /// handles utf-8 strings
   return lives_list_sort_with_data(list, lives_utf8_strcmpfunc, LIVES_INT_TO_POINTER(fwd));
 }
 

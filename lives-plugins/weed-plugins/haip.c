@@ -17,14 +17,10 @@ static int package_version = 1; // version of this package
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-utils.h> // optional
-#include <weed/weed.h>
-#include <weed/weed-utils.h>
 #include <weed/weed-plugin-utils.h> // optional
 #else
 #include "../../libweed/weed-plugin.h"
 #include "../../../libweed/weed-utils.h" // optional
-#include "../../libweed/weed.h"
-#include "../../libweed/weed-utils.h"
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
 
@@ -197,7 +193,8 @@ static inline void white_fill(unsigned char *new_data, int row) {
 }
 
 
-static void proc_pt(unsigned char *dest, unsigned char *src, int x, int y, int orows, int irows, int wt) {
+static void proc_pt(unsigned char *dest, unsigned char *src, int x, int y, int orows,
+                    int irows, int wt) {
   size_t offs;
   switch (wt) {
   case 0:
@@ -217,20 +214,20 @@ static void proc_pt(unsigned char *dest, unsigned char *src, int x, int y, int o
 static weed_error_t haip_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   _sdata *sdata;
 
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL),
-                *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  weed_plant_t *in_channel = weed_get_in_channel(inst, 0),
+                *out_channel = weed_get_out_channel(inst, 0);
 
-  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  unsigned char *src = weed_channel_get_pixel_data(in_channel);
+  unsigned char *dst = weed_channel_get_pixel_data(out_channel);
   weed_plant_t **in_params = weed_get_in_params(inst, NULL);
   int num_wurms = weed_param_get_value_int(in_params[0]);
   unsigned char *pt;
 
-  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL), width3 = width * 3;
-  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
-  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
-  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
-  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
+  int width = weed_channel_get_width(in_channel);
+  int height = weed_channel_get_width(in_channel);
+  int irowstride = weed_channel_get_stride(in_channel);
+  int orowstride = weed_channel_get_stride(out_channel);
+  int palette = weed_channel_get_palette(in_channel);
 
   int count;
   int luma, adj;
@@ -309,11 +306,10 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
   weed_plant_t *filter_class = weed_filter_class_init("haip", "salsaman", 1, 0, palette_list,
-                               haip_init, haip_process, haip_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
-
-  weed_set_int_value(in_params[0], WEED_LEAF_FLAGS, WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
+                               haip_init, haip_process, haip_deinit,
+                               in_chantmpls, out_chantmpls, in_params, NULL);
+  weed_paramtmpl_set_flags(in_params[0], WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;

@@ -907,14 +907,15 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     }
   }
   if (intention == LIVES_INTENTION_TRANSCODE) {
-    vppa->apply_fx = lives_standard_check_button_new(_("Apply current realtime effects"), FALSE, LIVES_BOX(dialog_vbox), NULL);
+    vppa->apply_fx = lives_standard_check_button_new(_("Apply current realtime effects"),
+                     FALSE, LIVES_BOX(dialog_vbox), NULL);
   }
 
   // extra params
   if (tmpvpp->get_init_rfx != NULL) {
     LiVESWidget *vbox = lives_vbox_new(FALSE, 0);
-    LiVESWidget *scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V / 2, vbox);
-    lives_box_pack_start(LIVES_BOX(dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
+    /* LiVESWidget *scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V / 2, vbox); */
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), vbox, TRUE, TRUE, 0);
     plugin_run_param_window((*tmpvpp->get_init_rfx)(intention), LIVES_VBOX(vbox), &(vppa->rfx));
     if (intention != LIVES_INTENTION_TRANSCODE) {
       char *fnamex = lives_build_filename(prefs->workdir, vppa->rfx->name, NULL);

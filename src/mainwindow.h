@@ -337,6 +337,9 @@ typedef struct {
   LiVESWidgetColor mt_timecode_bg;
   LiVESWidgetColor mt_timecode_fg;
 
+  LiVESWidgetColor nice1;
+  LiVESWidgetColor nice2;
+
   lives_colRGBA64_t audcol;
   lives_colRGBA64_t vidcol;
   lives_colRGBA64_t fxcol;
@@ -630,6 +633,10 @@ typedef struct {
   /// sets
 #define MAX_SET_NAME_LEN 128
   char set_name[256];   // actually 128 is the (soft) limit now, filesystem encoding
+  boolean was_set;
+  boolean leave_files;  ///< TRUE to leave clip files on disk even when closing (default FALSE)
+  int num_sets; /// number of sets in workdir (minus the current set), -1 if not checked
+  LiVESList *set_list; /// list of set names in current workdir, mau be NULL
 
   // playback state
   boolean playing_sel;
@@ -779,9 +786,6 @@ typedef struct {
 
   // end of static-ish info
   int old_scr_width, old_scr_height;
-
-  boolean leave_files;  ///< TRUE to leave clip files on disk even when closing (default FALSE)
-  boolean was_set;
 
   /// extra parameters for opening special files
   char *file_open_params;
@@ -1653,6 +1657,8 @@ typedef struct {
   int max_textsize;
 
   lives_permmgr_t *permmgr;
+
+  boolean pretty_colours;
 } mainwindow;
 
 /// interface colour settings

@@ -572,7 +572,7 @@ void lives_exit(int signum) {
 
   lives_freep((void **)&prefs->fxdefsfile);
   lives_freep((void **)&prefs->fxsizesfile);
-  lives_freep((void **)&prefs->wm);
+  lives_freep((void **)&capable->wm);
   lives_freep((void **)&mainw->recovery_file);
 
   for (i = 0; i < NUM_LIVES_STRING_CONSTANTS; i++) lives_freep((void **)&mainw->string_constants[i]);
@@ -5332,7 +5332,8 @@ boolean on_save_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       lives_widget_show_all(renamew->dialog);
       response = lives_dialog_run(LIVES_DIALOG(renamew->dialog));
       if (response == LIVES_RESPONSE_CANCEL) return FALSE;
-      lives_snprintf(new_set_name, MAX_SET_NAME_LEN, "%s", (tmp = U82F(lives_entry_get_text(LIVES_ENTRY(renamew->entry)))));
+      lives_snprintf(new_set_name, MAX_SET_NAME_LEN, "%s",
+                     (tmp = U82F(lives_entry_get_text(LIVES_ENTRY(renamew->entry)))));
       lives_free(tmp);
       lives_widget_destroy(renamew->dialog);
       lives_free(renamew);
@@ -5363,7 +5364,8 @@ boolean on_save_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       is_append = TRUE;
     } else {
       lives_free(new_clips_dir);
-      layout_map_file = lives_build_filename(prefs->workdir, mainw->set_name, LAYOUTS_DIRNAME, LAYOUT_MAP_FILENAME, NULL);
+      layout_map_file = lives_build_filename(prefs->workdir, mainw->set_name, LAYOUTS_DIRNAME,
+                                             LAYOUT_MAP_FILENAME, NULL);
       // if target has layouts dir but no clips, it means we have old layouts !
       if (lives_file_test(layout_map_file, LIVES_FILE_TEST_EXISTS)) {
         if (do_set_rename_old_layouts_warning(mainw->set_name)) {
@@ -5387,7 +5389,8 @@ boolean on_save_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   THREADVAR(com_failed) = FALSE;
 
   current_clips_dir = lives_build_filename(prefs->workdir, old_set, CLIPS_DIRNAME "/", NULL);
-  if (strlen(old_set) && strcmp(mainw->set_name, old_set) && lives_file_test(current_clips_dir, LIVES_FILE_TEST_IS_DIR)) {
+  if (strlen(old_set) && strcmp(mainw->set_name, old_set)
+      && lives_file_test(current_clips_dir, LIVES_FILE_TEST_IS_DIR)) {
     // set name was changed for an existing set
 
     if (!is_append) {
@@ -5432,9 +5435,11 @@ boolean on_save_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     return FALSE;
   }
 
+  if (mainw->num_sets > -1) mainw->num_sets++;
+
   if (got_new_handle && !strlen(old_set)) migrate_layouts(NULL, mainw->set_name);
 
-  if (strlen(old_set) && strcmp(old_set, mainw->set_name)) {
+  if (*old_set && strcmp(old_set, mainw->set_name)) {
     layout_map_dir = lives_build_filename(prefs->workdir, old_set, LAYOUTS_DIRNAME, LIVES_DIR_SEP, NULL);
     layout_map_file = lives_build_filename(layout_map_dir, LAYOUT_MAP_FILENAME, NULL);
     // update details for layouts - needs_set, current_layout_map and affected_layout_map
@@ -5535,6 +5540,7 @@ char *on_load_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   }
 
   renamew = create_rename_dialog(3);
+  if (!renamew) return NULL; ///< no sets available
 
   resp = lives_dialog_run(LIVES_DIALOG(renamew->dialog));
 
@@ -5552,10 +5558,11 @@ char *on_load_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       lives_freep((void **)&set_name);
     } else {
       if (user_data == NULL) {
-        if (mainw->cliplist != NULL)
+        if (mainw->cliplist)
           if (!do_reload_set_query()) return NULL;
         reload_set(set_name);
         lives_free(set_name);
+        if (mainw->num_sets > -1) mainw->num_sets--;
         return NULL;
       }
     }
@@ -9646,6 +9653,9 @@ boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespo
     if (scr_width != GUI_SCREEN_WIDTH || scr_height != GUI_SCREEN_HEIGHT) {
       g_print("RESIZE %d %d -> %d %d\n", scr_width, scr_height, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
       resize_widgets_for_monitor(FALSE);
+    }
+    if (!CURRENT_CLIP_IS_VALID) {
+      lives_ce_update_timeline(0, 0.);
     }
     return FALSE;
   } else if (widget == mainw->video_draw) {

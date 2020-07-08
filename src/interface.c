@@ -167,6 +167,61 @@ void show_playbar_labels(int clipno) {
 }
 
 
+static void clear_tbar_bgs(int posx, int posy, int width, int height, int which) {
+  double allocwidth;
+  double allocheight;
+  lives_painter_t *cr = NULL;
+
+  // empirically we need to draw wider
+  posx -= OVERDRAW_MARGIN;
+  if (width > 0) width += OVERDRAW_MARGIN;
+
+  if (posx < 0) posx = 0;
+  if (posy < 0) posy = 0;
+
+  if (which == 0 || which == 2) {
+    if (mainw->laudio_drawable != NULL) {
+      allocwidth = lives_widget_get_allocation_width(mainw->laudio_draw);
+      allocheight = lives_widget_get_allocation_height(mainw->laudio_draw);
+      cr = lives_painter_create_from_surface(mainw->laudio_drawable);
+      lives_painter_render_background(mainw->laudio_draw, cr, posx, posy,
+                                      UTIL_CLAMP(width, allocwidth),
+                                      UTIL_CLAMP(height, allocheight));
+      lives_painter_destroy(cr);
+    }
+  }
+
+  if (which == 0 || which == 3) {
+    if (mainw->raudio_drawable != NULL) {
+      allocwidth = lives_widget_get_allocation_width(mainw->raudio_draw);
+      allocheight = lives_widget_get_allocation_height(mainw->raudio_draw);
+
+      cr = lives_painter_create_from_surface(mainw->raudio_drawable);
+
+      lives_painter_render_background(mainw->raudio_draw, cr, posx, posy,
+                                      UTIL_CLAMP(width, allocwidth),
+                                      UTIL_CLAMP(height, allocheight));
+      lives_painter_destroy(cr);
+    }
+  }
+
+  if (which == 0 || which == 1) {
+    if (mainw->video_drawable != NULL) {
+      allocwidth = lives_widget_get_allocation_width(mainw->video_draw);
+      allocheight = lives_widget_get_allocation_height(mainw->video_draw);
+
+      cr = lives_painter_create_from_surface(mainw->video_drawable);
+
+      lives_painter_render_background(mainw->video_draw, cr, posx, posy,
+                                      UTIL_CLAMP(width, allocwidth),
+                                      UTIL_CLAMP(height, allocheight));
+      lives_painter_destroy(cr);
+    }
+  }
+}
+
+
+
 double lives_ce_update_timeline(int frame, double x) {
   // update clip editor timeline
   // sets real_pointer_time and pointer_time
@@ -189,6 +244,7 @@ double lives_ce_update_timeline(int frame, double x) {
       lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), "");
       lives_widget_queue_draw_if_visible(mainw->framecounter);
     }
+    clear_tbar_bgs(0, 0, 0, 0, 0);
     return -1.;
   }
 
@@ -287,7 +343,8 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
   if (CURRENT_CLIP_IS_VALID && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
 
-  if (!CURRENT_CLIP_IS_VALID || mainw->foreign || mainw->multitrack != NULL || mainw->recoverable_layout) {
+  if (!CURRENT_CLIP_IS_VALID || mainw->foreign || mainw->multitrack != NULL
+      || mainw->recoverable_layout) {
     mainw->current_file = current_file;
     return;
   }
@@ -311,9 +368,9 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     cfile->aw_sizes = (size_t *)lives_calloc(cfile->achans, sizeof(size_t));
   }
 
-  if (!LIVES_IS_PLAYING) {
-    //lives_widget_context_update();
-  }
+  // draw timer bars
+  // first the background
+  clear_tbar_bgs(posx, posy, width, height, which);
 
   // empirically we need to draw wider
   posx -= OVERDRAW_MARGIN;
@@ -321,48 +378,6 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
   if (posx < 0) posx = 0;
   if (posy < 0) posy = 0;
-
-  // draw timer bars
-  // first the background
-  if (which == 0 || which == 2) {
-    if (mainw->laudio_drawable != NULL) {
-      allocwidth = lives_widget_get_allocation_width(mainw->laudio_draw);
-      allocheight = lives_widget_get_allocation_height(mainw->laudio_draw);
-      cr = lives_painter_create_from_surface(mainw->laudio_drawable);
-      lives_painter_render_background(mainw->laudio_draw, cr, posx, posy,
-                                      UTIL_CLAMP(width, allocwidth),
-                                      UTIL_CLAMP(height, allocheight));
-      lives_painter_destroy(cr);
-    }
-  }
-
-  if (which == 0 || which == 3) {
-    if (mainw->raudio_drawable != NULL) {
-      allocwidth = lives_widget_get_allocation_width(mainw->raudio_draw);
-      allocheight = lives_widget_get_allocation_height(mainw->raudio_draw);
-
-      cr = lives_painter_create_from_surface(mainw->raudio_drawable);
-
-      lives_painter_render_background(mainw->raudio_draw, cr, posx, posy,
-                                      UTIL_CLAMP(width, allocwidth),
-                                      UTIL_CLAMP(height, allocheight));
-      lives_painter_destroy(cr);
-    }
-  }
-
-  if (which == 0 || which == 1) {
-    if (mainw->video_drawable != NULL) {
-      allocwidth = lives_widget_get_allocation_width(mainw->video_draw);
-      allocheight = lives_widget_get_allocation_height(mainw->video_draw);
-
-      cr = lives_painter_create_from_surface(mainw->video_drawable);
-
-      lives_painter_render_background(mainw->video_draw, cr, posx, posy,
-                                      UTIL_CLAMP(width, allocwidth),
-                                      UTIL_CLAMP(height, allocheight));
-      lives_painter_destroy(cr);
-    }
-  }
 
   if (cfile->frames > 0 && mainw->video_drawable != NULL && (which == 0 || which == 1)) {
     bar_height = CE_VIDBAR_HEIGHT;
@@ -988,10 +1003,9 @@ void draw_little_bars(double ptrtime, int which) {
           lives_painter_line_to(cr, offset, bar_height);
           lives_painter_stroke(cr);
           lives_painter_destroy(cr);
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-OFF*
 }
 
 
@@ -1722,7 +1736,6 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
   // general text window
   LiVESWidget *dialog_vbox;
   LiVESWidget *scrolledwindow;
-  LiVESWidget *okbutton;
   LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
 
   boolean woat;
@@ -1740,7 +1753,8 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
 
   textwindow->textview = textwindow->table = NULL;
 
-  if (textbuffer != NULL || text != NULL) textwindow->textview = lives_standard_text_view_new(text, textbuffer);
+  if (textbuffer != NULL || text != NULL) textwindow->textview =
+					    lives_standard_text_view_new(text, textbuffer);
 
   woat = widget_opts.apply_theme;
   widget_opts.apply_theme = FALSE;
@@ -1750,7 +1764,8 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
     scrolledwindow = lives_standard_scrolled_window_new(window_width, RFX_WINSIZE_V, textwindow->textview);
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
     if (palette->style & STYLE_1) {
-      lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
+      lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)),
+				LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
     }
   } else {
     widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH;
@@ -1773,16 +1788,16 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
                            textwindow->textview);
     }
 
-    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_CLOSE, _("_Close Window"),
-               LIVES_RESPONSE_CANCEL);
+    textwindow->button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_CLOSE, _("_Close Window"),
+							    LIVES_RESPONSE_CANCEL);
 
-    lives_button_grab_default_special(okbutton);
+    lives_button_grab_default_special(textwindow->button);
 
-    lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(textwindow->button), LIVES_WIDGET_CLICKED_SIGNAL,
                               LIVES_GUI_CALLBACK(lives_general_button_clicked),
                               textwindow);
 
-    lives_widget_add_accelerator(okbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+    lives_widget_add_accelerator(textwindow->button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                  LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
   }
 
@@ -2197,8 +2212,6 @@ _entryw *create_rename_dialog(int type) {
 
   _entryw *renamew = (_entryw *)(lives_malloc(sizeof(_entryw)));
 
-  renamew->setlist = NULL;
-
   if (type == 1) {
     title = (_("Rename Clip"));
   } else if (type == 2 || type == 4 || type == 5) {
@@ -2231,7 +2244,8 @@ _entryw *create_rename_dialog(int type) {
 
   if (type == 5) {
     label = lives_standard_label_new
-            (_("In order to export this project, you must enter a name for this clip set.\nThis will also be used for the project name.\n"));
+            (_("In order to export this project, you must enter a name for this clip set.\n"
+	       "This will also be used for the project name.\n"));
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, 0);
   }
 
@@ -2243,7 +2257,8 @@ _entryw *create_rename_dialog(int type) {
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
     label = lives_standard_label_new
-            (_("This startup wizard will guide you through the\ninitial install so that you can get the most from this application."));
+            (_("This startup wizard will guide you through the\n"
+	       "initial install so that you can get the most from this application."));
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
     label = lives_standard_label_new
@@ -2274,8 +2289,20 @@ _entryw *create_rename_dialog(int type) {
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width * 4);
 
   if (type == 3) {
-    renamew->setlist = lives_list_sort_alpha(get_set_list(prefs->workdir, TRUE), TRUE);
-    set_combo = lives_standard_combo_new(NULL, renamew->setlist, LIVES_BOX(hbox), NULL);
+    if (mainw->num_sets == -1) {
+      mainw->set_list = get_set_list(prefs->workdir, TRUE);
+      if (mainw->set_list) {
+	mainw->num_sets = lives_list_length(mainw->set_list);
+	if (mainw->was_set) mainw->num_sets--;
+      }
+      else mainw->num_sets = 0;
+      if (!mainw->num_sets) {
+	do_no_sets_dialog(prefs->workdir);
+	return NULL;
+      }
+    }
+    mainw->set_list = lives_list_sort_alpha(mainw->set_list, TRUE);
+    set_combo = lives_standard_combo_new(NULL, mainw->set_list, LIVES_BOX(hbox), NULL);
     renamew->entry = lives_combo_get_entry(LIVES_COMBO(set_combo));
     lives_entry_set_editable(LIVES_ENTRY(renamew->entry), TRUE);
     lives_entry_set_max_length(LIVES_ENTRY(renamew->entry), MAX_SET_NAME_LEN);
@@ -2284,7 +2311,7 @@ _entryw *create_rename_dialog(int type) {
       // set default to our auto-reload clipset
       lives_entry_set_text(LIVES_ENTRY(renamew->entry), prefs->ar_clipset_name);
     }
-    lives_entry_set_completion_from_list(LIVES_ENTRY(renamew->entry), renamew->setlist);
+    lives_entry_set_completion_from_list(LIVES_ENTRY(renamew->entry), mainw->set_list);
   } else {
     if (type == 6) {
       if (strlen(prefs->workdir) > 0) workdir = lives_strdup(prefs->workdir);
@@ -2296,7 +2323,8 @@ _entryw *create_rename_dialog(int type) {
       lives_free(workdir);
     } else {
       renamew->entry = lives_standard_entry_new(NULL, NULL, -1, -1, LIVES_BOX(hbox), NULL);
-      lives_entry_set_max_length(LIVES_ENTRY(renamew->entry), type == 6 ? PATH_MAX : type == 7 ? 16 : 128);
+      lives_entry_set_max_length(LIVES_ENTRY(renamew->entry), type == 6 ? PATH_MAX
+				 : type == 7 ? 16 : 128);
       if (type == 2 && strlen(mainw->set_name)) {
         lives_entry_set_text(LIVES_ENTRY(renamew->entry), (tmp = F2U8(mainw->set_name)));
         lives_free(tmp);
@@ -2792,16 +2820,20 @@ void create_new_pb_speed(short type) {
 
   if (type == 1) {
     lives_snprintf(label_text, 256,
-                   _("Current playback speed is %.3f frames per second.\n\nPlease enter the desired playback speed\nin _frames per second"),
+                   _("Current playback speed is %.3f frames per second.\n\n"
+		     "Please enter the desired playback speed\nin _frames per second"),
                    cfile->fps);
   } else if (type == 2) {
     lives_snprintf(label_text, 256,
-                   _("Current playback speed is %.3f frames per second.\n\nPlease enter the _resampled rate\nin frames per second"),
+                   _("Current playback speed is %.3f frames per second.\n\n"
+		     "Please enter the _resampled rate\nin frames per second"),
                    cfile->fps);
   } else if (type == 3) {
     lives_snprintf(label_text, 256,
-                   _("Current volume level for this clip is %.2f.\n\nYou may select a new  _volume level here.\n\n"
-                     "Please note that the volume can also be varied during playback\nusing the %s and %s keys.\nChanging it here will make "
+                   _("Current volume level for this clip is %.2f.\n\n"
+		     "You may select a new  _volume level here.\n\n"
+                     "Please note that the volume can also be varied during playback\n"
+		     "using the %s and %s keys.\nChanging it here will make "
                      "the adjustment permanent.\n"), "'<'", "'>'", cfile->vol);
   }
 
@@ -3497,14 +3529,19 @@ _entryw *create_cds_dialog(int type) {
   if (type == 0) {
     if (strlen(mainw->multitrack->layout_name) == 0) {
       labeltext = lives_strdup(
-                    _("You are about to leave multitrack mode.\nThe current layout has not been saved.\nWhat would you like to do ?\n"));
+                    _("You are about to leave multitrack mode.\n"
+		      "The current layout has not been saved.\nWhat would you like to do ?\n"));
     } else {
       labeltext = lives_strdup(
-                    _("You are about to leave multitrack mode.\nThe current layout has been changed since the last save.\nWhat would you like to do ?\n"));
+                    _("You are about to leave multitrack mode.\n"
+		      "The current layout has been changed since the last save.\n"
+		      "What would you like to do ?\n"));
     }
   } else if (type == 1) {
     if (!mainw->only_close) labeltext = lives_strdup(
-                                            _("You are about to exit LiVES.\nThe current clip set can be saved.\nWhat would you like to do ?\n"));
+                                            _("You are about to exit LiVES.\n"
+					      "The current clip set can be saved.\n"
+					      "What would you like to do ?\n"));
     else labeltext = (_("The current clip set has not been saved.\nWhat would you like to do ?\n"));
   } else if (type == 2 || type == 3) {
     if ((mainw->multitrack != NULL && mainw->multitrack->changed) || (mainw->stored_event_list != NULL &&
@@ -3512,11 +3549,14 @@ _entryw *create_cds_dialog(int type) {
       labeltext = (_("The current layout has not been saved.\nWhat would you like to do ?\n"));
     } else {
       labeltext = lives_strdup(
-                    _("The current layout has *NOT BEEN CHANGED* since it was last saved.\nWhat would you like to do ?\n"));
+                    _("The current layout has *NOT BEEN CHANGED* since it was last saved.\n"
+		      "What would you like to do ?\n"));
     }
   } else if (type == 4) {
     labeltext = lives_strdup(
-                  _("You are about to leave multitrack mode.\nThe current layout contains generated frames and cannot be retained.\nWhat do you wish to do ?"));
+                  _("You are about to leave multitrack mode.\n"
+		    "The current layout contains generated frames and cannot be retained.\n"
+		    "What do you wish to do ?"));
   }
 
   cdsw->dialog = create_question_dialog(_("Cancel/Discard/Save"), labeltext,
@@ -3531,7 +3571,8 @@ _entryw *create_cds_dialog(int type) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    cdsw->entry = lives_standard_entry_new(_("Clip set _name"), strlen(mainw->set_name) ? mainw->set_name : "",
+    cdsw->entry = lives_standard_entry_new(_("Clip set _name"), strlen(mainw->set_name)
+					   ? mainw->set_name : "",
                                            SHORT_ENTRY_WIDTH, 128, LIVES_BOX(hbox), NULL);
 
     hbox = lives_hbox_new(FALSE, 0);
@@ -4200,13 +4241,11 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   LiVESSList *radiobutton_group2 = NULL;
 
   char *title, *tmp, *tmp2, *msg;
-
   char *dfile = NULL, *url = NULL;
 
   char dirname[PATH_MAX];
-  char string[256];
 
-  int response;
+  LiVESResponseType response;
   boolean only_free = TRUE;
   static boolean firsttime = TRUE;
 
@@ -4242,10 +4281,10 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   checkbutton_update = lives_standard_check_button_new(msg, firsttime, LIVES_BOX(hbox), NULL);
   lives_free(msg);
 
-
   add_spring_to_box(LIVES_BOX(hbox), 0);
 
-  label = lives_standard_label_new(_("Enter the URL of the clip below.\nE.g: http://www.youtube.com/watch?v=WCR6f6WzjP8"));
+  label = lives_standard_label_new(_("Enter the URL of the clip below.\n"
+                                     "E.g: http://www.youtube.com/watch?v=WCR6f6WzjP8"));
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, 0);
@@ -4253,7 +4292,8 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
-  url_entry = lives_standard_entry_new(_("Clip URL : "), req ? req->URI : "", LONG_ENTRY_WIDTH, URL_MAX, LIVES_BOX(hbox), NULL);
+  url_entry = lives_standard_entry_new(_("Clip URL : "), req ? req->URI : "",
+                                       LONG_ENTRY_WIDTH, URL_MAX, LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
@@ -4268,9 +4308,10 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
-  radiobutton_free = lives_standard_radio_button_new((tmp = (_("_Free (eg. vp9 / opus / webm)"))), &radiobutton_group,
-                     LIVES_BOX(hbox),
-                     (tmp2 = (_("Download clip using Free codecs and support the community"))));
+  radiobutton_free =
+    lives_standard_radio_button_new((tmp = (_("_Free (eg. vp9 / opus / webm)"))), &radiobutton_group,
+                                    LIVES_BOX(hbox),
+                                    (tmp2 = (_("Download clip using Free codecs and support the community"))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -4291,8 +4332,8 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 
   lives_widget_show_all(dialog);
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-  lives_box_pack_start(LIVES_BOX(dialog_vbox), align_horizontal_with(hbox, radiobutton_free), TRUE, FALSE,
-                       widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), align_horizontal_with(hbox, radiobutton_free),
+                       TRUE, FALSE, widget_opts.packing_height);
 
   radiobutton_nonfree = lives_standard_radio_button_new((tmp = (_("_Non-free (eg. h264 / aac / mp4)"))),
                         &radiobutton_group,
@@ -4315,7 +4356,8 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height * 3);
 
-  dir_entry = lives_standard_direntry_new(_("_Directory to save to: "), req ? req->save_dir : mainw->vid_dl_dir,
+  dir_entry = lives_standard_direntry_new(_("_Directory to save to: "),
+                                          req ? req->save_dir : mainw->vid_dl_dir,
                                           LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
   add_hsep_to_box(LIVES_BOX(dialog_vbox));
 
@@ -4328,7 +4370,8 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
 
-  radiobutton_approx = lives_standard_radio_button_new((tmp = (_("- Approximately:"))), &radiobutton_group2,
+  radiobutton_approx = lives_standard_radio_button_new((tmp = (_("- Approximately:"))),
+                       &radiobutton_group2,
                        LIVES_BOX(hbox),
                        (tmp2 = (_("Download the closest to this size"))));
 
@@ -4363,7 +4406,9 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  spinbutton_width = lives_standard_spin_button_new(_("_Width"), CURRENT_CLIP_HAS_VIDEO ? cfile->hsize : DEF_GEN_WIDTH,
+  spinbutton_width = lives_standard_spin_button_new(_("_Width"),
+                     CURRENT_CLIP_HAS_VIDEO ? cfile->hsize
+                     : DEF_GEN_WIDTH,
                      width_step, 100000., width_step, width_step, 0, LIVES_BOX(hbox), NULL);
   lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(spinbutton_width), width_step);
   lives_spin_button_update(LIVES_SPIN_BUTTON(spinbutton_width));
@@ -4379,7 +4424,8 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 
   // add "aspectratio" widget
   if (CURRENT_CLIP_HAS_VIDEO) {
-    aspect = add_aspect_ratio_button(LIVES_SPIN_BUTTON(spinbutton_width), LIVES_SPIN_BUTTON(spinbutton_height), LIVES_BOX(hbox));
+    aspect = add_aspect_ratio_button(LIVES_SPIN_BUTTON(spinbutton_width),
+                                     LIVES_SPIN_BUTTON(spinbutton_height), LIVES_BOX(hbox));
   } else aspect = NULL;
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -4391,7 +4437,8 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
 
-  radiobutton_smallest = lives_standard_radio_button_new((tmp = (_("- The _smallest"))), &radiobutton_group2,
+  radiobutton_smallest = lives_standard_radio_button_new((tmp = (_("- The _smallest"))),
+                         &radiobutton_group2,
                          LIVES_BOX(hbox),
                          (tmp2 = (_("Download the lowest resolution available"))));
 
@@ -4402,7 +4449,8 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
                             LIVES_GUI_CALLBACK(utsense),
                             LIVES_INT_TO_POINTER(FALSE));
 
-  radiobutton_largest = lives_standard_radio_button_new((tmp = (_("- The _largest"))), &radiobutton_group2,
+  radiobutton_largest = lives_standard_radio_button_new((tmp = (_("- The _largest"))),
+                        &radiobutton_group2,
                         LIVES_BOX(hbox),
                         (tmp2 = (_("Download the highest resolution available"))));
 
@@ -4517,12 +4565,18 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   req->desired_width = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton_width));
   req->desired_height = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton_height));
   req->desired_fps = 0.;
-  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton_approx))) req->matchsize = LIVES_MATCH_NEAREST;
-  else if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton_atleast))) req->matchsize = LIVES_MATCH_AT_LEAST;
-  else if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton_atmost))) req->matchsize = LIVES_MATCH_AT_MOST;
-  else if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton_smallest))) req->matchsize = LIVES_MATCH_HIGHEST;
-  else if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton_largest))) req->matchsize = LIVES_MATCH_LOWEST;
-  else if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton_choose))) req->matchsize = LIVES_MATCH_CHOICE;
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton_approx)))
+    req->matchsize = LIVES_MATCH_NEAREST;
+  else if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton_atleast)))
+    req->matchsize = LIVES_MATCH_AT_LEAST;
+  else if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton_atmost)))
+    req->matchsize = LIVES_MATCH_AT_MOST;
+  else if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton_smallest)))
+    req->matchsize = LIVES_MATCH_HIGHEST;
+  else if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton_largest)))
+    req->matchsize = LIVES_MATCH_LOWEST;
+  else if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton_choose)))
+    req->matchsize = LIVES_MATCH_CHOICE;
   if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(checkbutton_update))) req->do_update = FALSE;
   else req->do_update = TRUE;
 
@@ -4767,6 +4821,14 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
 }
 
 
+/// disk quota window
+
+static void lives_show_after(LiVESWidget * button, livespointer data) {
+  LiVESWidget *showme = (LiVESWidget *)data;
+  lives_general_button_clicked(LIVES_BUTTON(button), NULL);
+  if (showme) lives_widget_show(showme);
+}
+
 static void workdir_query_cb(LiVESWidget * w, livespointer data) {
   lives_general_button_clicked(LIVES_BUTTON(w), NULL);
   if (do_workdir_query()) {
@@ -4791,6 +4853,54 @@ static void cleards_cb(LiVESWidget * w, livespointer data) {
   run_diskspace_dialog();
 }
 
+void run_diskspace_dialog_cb(LiVESWidget * w, livespointer data) {
+  run_diskspace_dialog();
+}
+
+static void manclips_ok(LiVESWidget * button, livespointer data) {
+  LiVESWidget *dialog = (LiVESWidget *)data;
+  lives_widget_destroy(dialog);
+  if (mainw->cliplist)
+    on_save_set_activate(NULL, NULL);
+}
+
+static void manclips_cb(LiVESWidget * w, livespointer data) {
+  LiVESWidget *dialog = (LiVESWidget *)data;
+  LiVESWidget *button;
+  char *text, *extra;
+
+  lives_widget_hide(dialog);
+
+  if (mainw->cliplist) {
+    extra = (_("In order to proceed, the current clips must first be saved or deleted\n"));
+  } else extra = lives_strdup("");
+
+  text = lives_strdup_printf(_("The current working directory contains %d Clip Sets\n"
+                               "You may be able to free up some disk space by deleting "
+                               "unwanted ones.\n"
+                               "After selecting an existing Set, "
+                               "you will be presented with the options to "
+                               "erase it from the disk\n"
+                               "or to reload it first to inspect the contents\n\n%s\n"
+                               "Please select an option below\n"), mainw->num_sets
+                             + (mainw->was_set ? 1 : 0), extra);
+  lives_free(extra);
+
+  dialog = create_question_dialog(_("Manage Clipsets"), text, NULL);
+  lives_free(text);
+
+  button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK,
+           _("Go back"), LIVES_RESPONSE_CANCEL);
+  lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(lives_show_after), data);
+
+  button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,
+           _("Continue"), LIVES_RESPONSE_OK);
+  lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(manclips_ok), NULL);
+  lives_widget_show_all(dialog);
+}
+
 
 void run_diskspace_dialog(void) {
   LiVESWidget *dialog, *dialog_vbox;
@@ -4802,15 +4912,18 @@ void run_diskspace_dialog(void) {
   LiVESWidget *hbox;
   LiVESWidget *vbox;
   LiVESWidget *okbutton;
-  LiVESWidget *cancelbutton;
+  LiVESWidget *rembutton;
 
   LiVESWidget *dsu_label;
+  LiVESBox *aar;
 
   int64_t free_ds = -1;
   int64_t ds_used = -1;
   boolean wrtable = FALSE;
   boolean has_dsused = FALSE;
   char *title, *tmp;
+
+  if (prefsw) lives_widget_hide(prefsw->prefs_dialog);
 
   free_ds = (int64_t)get_ds_free(prefs->workdir);
   if (get_ds_used(&ds_used)) has_dsused = TRUE;
@@ -4825,11 +4938,15 @@ void run_diskspace_dialog(void) {
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
   layout = lives_layout_new(LIVES_BOX(dialog_vbox));
 
+  widget_opts.font_size = LIVES_FONT_SIZE_LARGE;
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   lives_layout_add_label(LIVES_LAYOUT(layout),
                          _("LiVES can limit the amount of diskspace reserved for projects (sets)."),
                          FALSE);
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+  widget_opts.font_size = LIVES_FONT_SIZE_NORMAL;
+
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
@@ -4860,6 +4977,7 @@ void run_diskspace_dialog(void) {
   lives_layout_add_label(LIVES_LAYOUT(layout), (_("Calculating...")), TRUE);
   dsu_label = widget_opts.last_label;
 
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
   lives_layout_add_row(LIVES_LAYOUT(layout));
   lives_layout_add_label(LIVES_LAYOUT(layout), (_("Quota")), TRUE);
 
@@ -4887,10 +5005,33 @@ void run_diskspace_dialog(void) {
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
+  //// expander section ////
   vbox = lives_vbox_new(FALSE, 0);
   layout2 = lives_layout_new(LIVES_BOX(vbox));
 
+  /* prefsw->spinbutton_warn_ds = lives_standard_spin_button_new(_("Warn if available diskspace falls below: "), */
+  /*                              (double)prefs->ds_warn_level / 1000000., */
+  /*                              (double)prefs->ds_crit_level / 1000000., */
+  /*                              DS_WARN_CRIT_MAX, 1., 10., 0, */
+  /*                              LIVES_BOX(hbox), NULL); */
+
+  /* hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout)); */
+  /* label = lives_standard_label_new(_("MB [set to 0 to disable]")); */
+  /* lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width >> 1); */
+
+  /* hbox = lives_layout_row_new(LIVES_LAYOUT(layout)); */
+  /* prefsw->spinbutton_crit_ds = lives_standard_spin_button_new(_("Diskspace critical level: "), */
+  /*                              (double)prefs->ds_crit_level / 1000000., 0., */
+  /*                              DS_WARN_CRIT_MAX, 1., 10., 0, */
+  /*                              LIVES_BOX(hbox), NULL); */
+
+  /* hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout)); */
+  /* label = lives_standard_label_new(_("MB [set to 0 to disable]")); */
+  /* lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width >> 1); */
+
   lives_standard_expander_new(_("Show Details"), LIVES_BOX(hbox), vbox);
+
+  ///////
 
   lives_layout_add_separator(LIVES_LAYOUT(layout), TRUE);
 
@@ -4905,8 +5046,7 @@ void run_diskspace_dialog(void) {
   lives_box_pack_start(LIVES_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width * 4);
 
   lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(cleards_cb),
-                       NULL);
+                       LIVES_GUI_CALLBACK(cleards_cb), NULL);
 
   lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
@@ -4916,25 +5056,42 @@ void run_diskspace_dialog(void) {
 
   lives_box_pack_start(LIVES_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width * 4);
 
+  lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(manclips_cb),  dialog);
+
+  if (mainw->num_sets == -1) {
+    mainw->set_list = get_set_list(prefs->workdir, TRUE);
+    if (mainw->set_list) {
+      mainw->num_sets = lives_list_length(mainw->set_list);
+      if (mainw->was_set) mainw->num_sets--;
+    } else mainw->num_sets = 0;
+  }
+
+  if (mainw->num_sets <= 0) lives_widget_set_sensitive(button, FALSE);
+
   add_fill_to_box(LIVES_BOX(dialog_vbox));
 
-  /// allow for longer button text
-  widget_opts.expand |= LIVES_EXPAND_EXTRA_WIDTH;
+  aar = LIVES_BOX(lives_dialog_get_action_area(LIVES_DIALOG(dialog)));
+  lives_box_set_homogeneous(aar, FALSE);
 
-  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL,
-                 _("Remind me on next startup"),
-                 LIVES_RESPONSE_CANCEL);
+  rembutton =
+    lives_standard_check_button_new(_("Show this dialog on startup"), TRUE, aar,
+                                    (tmp = lives_strdup(_("#These settings can also be changed "
+                                        "in Preferences / Warnings"))));
 
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(lives_general_button_clicked),
-                            NULL);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
+  add_fill_to_box(aar);
 
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK,
-             _("Continue with current values"),
-             LIVES_RESPONSE_OK);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(lives_general_button_clicked),
-                            NULL);
+             _("Continue with current values"), LIVES_RESPONSE_OK);
+
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  lives_widget_set_size_request(okbutton, DLG_BUTTON_WIDTH * 2., DLG_BUTTON_HEIGHT);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(lives_show_after),
+                       prefsw ? prefsw->prefs_dialog : NULL);
+
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   lives_button_grab_default_special(okbutton);

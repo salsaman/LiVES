@@ -27,6 +27,8 @@ extern void reset_frame_and_clip_index(void);
 
 #define ANIM_LIMIT 0
 
+static int extra_cb_key = 0;
+
 // processing
 static uint64_t event_start;
 static double audio_start;
@@ -166,6 +168,74 @@ static void add_perminfo(LiVESWidget *dialog) {
   }
 }
 
+
+static void scan_for_sets(LiVESWidget *button, livespointer data) {
+  LiVESWidget *entry = (LiVESWidget *)data;
+  LiVESWidget *label =
+    (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "disp_label");
+  LiVESList *list;
+  char *txt;
+  const char *dir = lives_entry_get_text(LIVES_ENTRY(entry));
+  if (dir) list = get_set_list(dir, TRUE);
+  txt = lives_strdup_printf("%d", lives_list_length(list));
+  if (list) lives_list_free_all(&list);
+  lives_label_set_text(LIVES_LABEL(label), txt);
+  lives_free(txt);
+}
+
+
+static void extra_cb(LiVESWidget *dialog, int key) {
+  LiVESWidget *dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+  LiVESWidget *layout, *button, *entry, *hbox, *label;
+  char *tmp;
+  switch (key) {
+  case 1:
+    /// no sets found
+    lives_label_chomp(LIVES_LABEL(widget_opts.last_label));
+
+    hbox = lives_hbox_new(FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, TRUE, 0);
+    button =
+      lives_standard_button_new_from_stock_full(LIVES_STOCK_REFRESH,
+          _("Scan other directory"), DEF_BUTTON_WIDTH,
+          DEF_BUTTON_HEIGHT, LIVES_BOX(hbox), TRUE,
+          (tmp = lives_strdup(_("#Scan other directories for "
+                                "LiVES Clip Sets. May be slow "
+                                "for some directories."))));
+    lives_free(tmp);
+    entry = lives_standard_direntry_new(NULL, prefs->workdir, MEDIUM_ENTRY_WIDTH, PATH_MAX,
+                                        LIVES_BOX(hbox), NULL);
+
+    layout = lives_layout_new(LIVES_BOX(dialog_vbox));
+    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+    lives_layout_add_label(LIVES_LAYOUT(layout), _("Sets detected: "), TRUE);
+    lives_layout_add_label(LIVES_LAYOUT(layout), _("0"), TRUE);
+    label = widget_opts.last_label;
+    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), "disp_label", label);
+
+    lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
+                         LIVES_GUI_CALLBACK(scan_for_sets), entry);
+
+    layout = lives_layout_new(LIVES_BOX(dialog_vbox));
+    widget_opts.justify = LIVES_JUSTIFY_CENTER;
+    widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
+    lives_layout_add_label(LIVES_LAYOUT(layout), _("If you believe there should be clips in the "
+                           "current directory,\n"
+                           "you can try to recover them by launching\n"
+                           " 'Clean up Diskspace / Recover Missing Clips' "
+                           "from the File menu.\n"), FALSE);
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
+    widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+    lives_label_set_selectable(LIVES_LABEL(widget_opts.last_label), TRUE);
+    break;
+  default:
+    break;
+  }
+}
+
+
 //Warning or yes/no dialog
 
 // the type of message box here is with 2 or more buttons (e.g. OK/CANCEL, YES/NO, ABORT/CANCEL/RETRY)
@@ -183,9 +253,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 
   LiVESAccelGroup *accel_group = NULL;
 
-  char *textx, *form_text, *pad, *mytext;
-
-  mytext = lives_strdup(text); // because of translation issues
+  int cb_key = extra_cb_key;
+  extra_cb_key = 0;
 
   switch (diat) {
   case LIVES_DIALOG_WARN:
@@ -307,29 +376,10 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
     }
   }
 
-  textx = insert_newlines(mytext, MAX_MSG_WIDTH_CHARS);
-  lives_free(mytext);
-
-  pad = lives_strdup("");
-  if (lives_strlen(textx) < MIN_MSG_WIDTH_CHARS) {
-    lives_free(pad);
-    pad = lives_strndup("                                  ", (MIN_MSG_WIDTH_CHARS - lives_strlen(textx)) / 2);
-  }
-  form_text = lives_strdup_printf("\n%s%s%s\n", pad, textx, pad);
-
-  widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  widget_opts.mnemonic_label = FALSE;
-  label = lives_standard_label_new(form_text);
-  widget_opts.mnemonic_label = TRUE;
-  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
-
-  lives_free(form_text);
-  lives_free(textx);
-  lives_free(pad);
+  label = lives_standard_formatted_label_new(text);
+  widget_opts.last_label = label;
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
-  //lives_container_set_border_width(LIVES_CONTAINER(dialog_vbox), widget_opts.border_width * 2);
-
   lives_box_pack_start(LIVES_BOX(dialog_vbox), label, TRUE, TRUE, 0);
   lives_label_set_selectable(LIVES_LABEL(label), TRUE);
 
@@ -391,13 +441,13 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   }
 
   if (transient == NULL) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
-
+  if (cb_key) extra_cb(dialog, cb_key);
   return dialog;
 }
 
 
-LIVES_GLOBAL_INLINE LiVESWidget *create_question_dialog(const char *title, const char *text, LiVESWindow *parent) {
-  LiVESWidget *dialog = create_message_dialog(LIVES_DIALOG_QUESTION, text, parent, 0, TRUE);
+LIVES_GLOBAL_INLINE LiVESWidget *create_question_dialog(const char *title, const char *text, LiVESWindow *transient) {
+  LiVESWidget *dialog = create_message_dialog(LIVES_DIALOG_QUESTION, text, transient, 0, TRUE);
   lives_window_set_title(LIVES_WINDOW(dialog), title);
   return dialog;
 }
@@ -4072,6 +4122,16 @@ LIVES_GLOBAL_INLINE boolean do_set_locked_warning(const char *setname) {
              "You are strongly advised to close the other copy before clicking Yes to continue\n.\n"
              "Click No to cancel loading the set.\n"),
            setname);
+}
+
+
+LIVES_GLOBAL_INLINE void do_no_sets_dialog(const char *dir) {
+  extra_cb_key = 1;
+  do_blocking_info_dialogf(_("No Sets could be found in the directory\n%s\n\n"
+                             "If you have Sets in another directory, you can either:\n"
+                             " - change the working directory in Preferences, or\n"
+                             " - restart lives with the -workdir switch to set it temporarily"),
+                           dir);
 }
 
 

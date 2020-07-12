@@ -61,20 +61,19 @@ static weed_error_t negate_process(weed_plant_t *inst, weed_timecode_t timestamp
   if (psize == 4) {
     for (; src < end; src += irowstride) {
       for (i = start; i < width; i += 4) {
-	dst[i] = 0xFF - src[i];
-	dst[i + 1] = 0xFF - src[i + 1];
-	dst[i + 2] = 0xFF - src[i + 2];
-	dst[i + 3] = src[i + 3];
+        dst[i] = 0xFF - src[i];
+        dst[i + 1] = 0xFF - src[i + 1];
+        dst[i + 2] = 0xFF - src[i + 2];
+        dst[i + 3] = src[i + 3];
       }
       dst += orowstride;
     }
-  }
-  else {
+  } else {
     for (; src < end; src += irowstride) {
       for (i = start; i < width; i += 3) {
-	dst[i] = 0xFF - src[i];
-	dst[i + 1] = 0xFF - src[i + 1];
-	dst[i + 2] = 0xFF - src[i + 2];
+        dst[i] = 0xFF - src[i];
+        dst[i + 1] = 0xFF - src[i + 1];
+        dst[i + 2] = 0xFF - src[i + 2];
       }
       dst += orowstride;
     }

@@ -112,8 +112,7 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
       if (offset == 0) {
         make_blend_table(sdata, blend_factor, blendneg);
         sdata->obf = blend_factor;
-      }
-      else while (sdata->obf != blend_factor) usleep(10);
+      } else while (sdata->obf != blend_factor) usleep(10);
     }
   }
 
@@ -130,13 +129,13 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
         // avg luma overlay
         if (j > start && j < width - 1 && row > 0 && row < height - 1) {
           uint8_t av_luma = (calc_luma(&src1[j], pal, 0) + calc_luma(&src1[j - 1], pal, 0)
-			     + calc_luma(&src1[j + 1], pal, 0)
-			     + calc_luma(&src1[j - irowstride1], pal, 0)
-			     + calc_luma(&src1[j - 1 - irowstride1], pal, 0)
-			     + calc_luma(&src1[j + 1 - irowstride1], pal, 0)
-			     + calc_luma(&src1[j + irowstride1], pal, 0)
-			     + calc_luma(&src1[j - 1 + irowstride1], pal, 0)
-			     + calc_luma(&src1[j + 1 + irowstride1], pal, 0)) / 9;
+                             + calc_luma(&src1[j + 1], pal, 0)
+                             + calc_luma(&src1[j - irowstride1], pal, 0)
+                             + calc_luma(&src1[j - 1 - irowstride1], pal, 0)
+                             + calc_luma(&src1[j + 1 - irowstride1], pal, 0)
+                             + calc_luma(&src1[j + irowstride1], pal, 0)
+                             + calc_luma(&src1[j - 1 + irowstride1], pal, 0)
+                             + calc_luma(&src1[j + 1 + irowstride1], pal, 0)) / 9;
           if (av_luma < (blend_factor)) weed_memcpy(&dst[j], &src2[j], 3);
           else if (!inplace) weed_memcpy(&dst[j], &src1[j], 3);
           row++;
@@ -192,17 +191,19 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t **clone1, **clone2, **clone3;
   int palette_list[] = ALL_RGB_PALETTES;
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0),
-                                  weed_channel_template_init("in channel 1", 0), NULL};
+                                  weed_channel_template_init("in channel 1", 0), NULL
+                                 };
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0",
-							      WEED_CHANNEL_CAN_DO_INPLACE), NULL};
+                                   WEED_CHANNEL_CAN_DO_INPLACE), NULL
+                                  };
   weed_plant_t *in_params1[] = {weed_integer_init("amount", "Blend _amount", 128, 0, 255), NULL};
   weed_plant_t *in_params2[] = {weed_integer_init("threshold", "luma _threshold", 64, 0, 255), NULL};
 
   weed_plant_t *filter_class
     = weed_filter_class_init("chroma blend", "salsaman", 1,
-			     WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_PREF_LINEAR_GAMMA, palette_list,
-			     chroma_init, chroma_process, chroma_deinit,
-			     in_chantmpls, out_chantmpls, in_params1, NULL);
+                             WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_PREF_LINEAR_GAMMA, palette_list,
+                             chroma_init, chroma_process, chroma_deinit,
+                             in_chantmpls, out_chantmpls, in_params1, NULL);
 
   weed_declare_transition(in_params1[0]);
   weed_declare_transition(in_params2[0]);
@@ -235,7 +236,7 @@ WEED_SETUP_START(200, 200) {
   filter_class = weed_filter_class_init("negative luma overlay", "salsaman", 1,
                                         WEED_FILTER_HINT_MAY_THREAD, palette_list,
                                         NULL, nlumo_process, NULL,
-					(clone1 = weed_clone_plants(in_chantmpls)),
+                                        (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)),
                                         (clone3 = weed_clone_plants(in_params2)), NULL);
 
@@ -245,9 +246,9 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone3);
 
   filter_class = weed_filter_class_init("averaged luma overlay", "salsaman", 1,
-					WEED_FILTER_PREF_LINEAR_GAMMA, palette_list,
+                                        WEED_FILTER_PREF_LINEAR_GAMMA, palette_list,
                                         NULL, &avlumo_process, NULL,
-					(clone1 = weed_clone_plants(in_chantmpls)),
+                                        (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)),
                                         (clone3 = weed_clone_plants(in_params2)), NULL);
 

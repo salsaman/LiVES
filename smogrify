@@ -1007,10 +1007,6 @@ if (defined($ARGV[0])) {
 	    my @left = &weed($opts, $trashdir);
 	    ## we must write the list via sig_complete, even thoough we are in fg
 
-	    print STDERR "heire i si\n";
-	    print STDERR join(" ", @Left);
-	    print STDERR "heire isasadd si\n";
-	    
 	    &sig_complete(@left);
 	    exit 0;
 	}
@@ -9634,6 +9630,21 @@ if (defined($ARGV[0])) {
 	    unless ($file eq "." || $file eq ".." || $file eq ".$DEFTRASH") {
 		if (-d "$workdir/$file") {
 		    print STDERR "is a directory...";
+		    my $ignfile = "$file/.ignore";
+		    if (-f $ignfile && -s $ignfile) {
+			if (defined(open IN, "<", $ignfile)) {
+			    my $chval;
+			    read IN, $chval, 256;
+			    close IN;
+			    if ("$workdir/$chval" eq $trashdir) {
+				print STDERR "smogrify: $file is in use, not touching\n";
+			    }
+			    else {
+				print STDERR "smogrify: $file has old ignval, hmmm...\n";
+			    }
+			    next;
+			}
+		    }
 		    # remove a set unlesss it has clips OR (layouts AND NOT (opts & 0x04))
 		    if (&is_non_empty_dir("$workdir/$file/clips")
 			|| (&is_non_empty_dir("$workdir/$file/layouts") && !($opts & 0x04))) {

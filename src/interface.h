@@ -120,7 +120,7 @@ typedef struct {
 } text_window;
 
 text_window *create_text_window(const char *title_part, const char *text, LiVESTextBuffer *,
-				boolean add_buttons);
+                                boolean add_buttons);
 
 typedef struct {
   LiVESWidget *dialog;
@@ -244,4 +244,5 @@ void run_diskspace_dialog_cb(LiVESWidget *w, livespointer data);
 
 void filter_cleanup(const char *trashdir);
 
+LiVESWidget *trash_rb(LiVESBox *parent);
 #endif

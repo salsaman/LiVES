@@ -1142,6 +1142,7 @@ void do_mt_backup_space_error(lives_mt *, int memreq_mb);
 char *workdir_ch_warning(void);
 void do_shutdown_msg(void);
 
+boolean do_close_changed_warn(void);
 boolean do_save_clipset_warn(void);
 boolean do_clipboard_fps_warning(void);
 void perf_mem_warning(void);

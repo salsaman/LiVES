@@ -1540,6 +1540,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   prefs->autoclean = get_boolean_prefd(PREF_AUTOCLEAN_TRASH, TRUE);
 
+  prefs->pref_trash = get_boolean_prefd(PREF_PREF_TRASH, TRUE);
+
   //////////////////////////////////////////////////////////////////
 
   if (!mainw->foreign) {
@@ -3076,7 +3078,7 @@ static boolean lazy_startup_checks(void *data) {
     }
     checked_trash = TRUE;
   }
-  
+
   if (mainw->ldg_menuitem) {
     if (!RFX_LOADED) return TRUE;
     lives_widget_destroy(mainw->ldg_menuitem);
@@ -5348,9 +5350,9 @@ check_stcache:
         set_drawing_area_from_pixbuf(mainw->end_image, NULL, mainw->ei_surface);
       }
       if (!palette || !(palette->style & STYLE_LIGHT)) {
-	lives_widget_set_opacity(mainw->end_image, 0.8);
+        lives_widget_set_opacity(mainw->end_image, 0.8);
       } else {
-	lives_widget_set_opacity(mainw->end_image, 0.4);
+        lives_widget_set_opacity(mainw->end_image, 0.4);
       }
       return;
     }
@@ -6128,7 +6130,7 @@ void load_preview_image(boolean update_always) {
         weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 1);
         reslayer_thread(layer, twidth, theight, get_interp_value(prefs->pb_quality),
                         tpalette, weed_layer_get_yuv_clamping(layer),
-			gval == PNG_INFO_gAMA ? file_gamma : 1.);
+                        gval == PNG_INFO_gAMA ? file_gamma : 1.);
         for (int j = 0; j < height; j++) {
           png_read_row(png_ptr, row_ptrs[j], NULL);
           weed_set_int_value(layer, WEED_LEAF_PROGSCAN, j + 2);
@@ -6208,8 +6210,8 @@ void load_preview_image(boolean update_always) {
 
       if (!info_ptr) {
         png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
-	fclose(fp);
-	return FALSE;
+        fclose(fp);
+        return FALSE;
       }
 
       if (setjmp(png_jmpbuf(png_ptr))) {

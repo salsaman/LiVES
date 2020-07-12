@@ -1765,6 +1765,7 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
     scrolledwindow = lives_standard_scrolled_window_new(window_width, RFX_WINSIZE_V,
 							textwindow->textview);
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
+    lives_container_set_border_width(LIVES_CONTAINER(scrolledwindow), widget_opts.border_width);
     if (palette->style & STYLE_1) {
       lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)),
 				LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
@@ -1983,6 +1984,53 @@ _insertw *create_insert_dialog(void) {
 }
 
 
+LiVESWidget *trash_rb(LiVESBox *parent) {
+  LiVESWidget *rb = NULL;
+
+  if (check_for_executable(&capable->has_gio, EXEC_GIO)) {
+    LiVESSList *rb_group = NULL;
+    LiVESWidget *layout, *hbox, *rb2;
+    const char *wofs = widget_opts.font_size;
+    char *tmp, *tmp2;
+
+    widget_opts.font_size = LIVES_FONT_SIZE_X_LARGE;
+    layout = lives_layout_new(LIVES_BOX(parent));
+    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+    hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+    rb = lives_standard_radio_button_new((tmp = (_("Send to Trash"))), &rb_group,
+					 LIVES_BOX(hbox),
+					 (tmp2 = (_("#Send deleted items to Trash instead of erasing "
+						    "them permanently"))));
+    lives_free(tmp); lives_free(tmp2);
+    lives_widget_set_size_request(rb, -1, DEF_BUTTON_HEIGHT * 2);
+    widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
+    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
+
+    hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+    rb2 = lives_standard_radio_button_new((tmp = (_("Delete"))), &rb_group,
+					  LIVES_BOX(hbox),
+					  (tmp2 = (_("#Permanently erase items from the disk"))));
+
+    lives_free(tmp); lives_free(tmp2);
+    lives_widget_set_size_request(rb2, -1, DEF_BUTTON_HEIGHT * 2);
+    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+    widget_opts.font_size = wofs;
+
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(rb), prefs->pref_trash);
+
+    lives_signal_connect(LIVES_GUI_OBJECT(rb), LIVES_WIDGET_ACTIVATE_SIGNAL,
+			 LIVES_GUI_CALLBACK(toggle_sets_pref),
+			 PREF_PREF_TRASH);
+
+
+  }
+  return rb;
+}
+
+
 void filter_cleanup(const char *trashdir) {
   //LiVESTreeStore *treestore;
   //LiVESTreeIter iter1, iter2, iter3;
@@ -1994,6 +2042,8 @@ void filter_cleanup(const char *trashdir) {
   //LiVESWidget *label;
   LiVESWidget *hbox;
   LiVESWidget *cb;
+  LiVESWidget *scrolledwindow;
+  LiVESResponseType resp;
 
   /* LiVESCellRenderer *renderer; */
   /* LiVESTreeViewColumn *column; */
@@ -2005,72 +2055,91 @@ void filter_cleanup(const char *trashdir) {
 
   dialog = lives_standard_dialog_new(_("Disk Cleanup"), FALSE, winsize_h, winsize_v);
 
-  accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
-  lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
-
   top_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   layout = lives_layout_new(NULL);
 
-  //widget_opts.apply_theme = FALSE;
+  widget_opts.apply_theme = FALSE;
   scrolledwindow = lives_standard_scrolled_window_new(winsize_h, winsize_v, layout);
   widget_opts.apply_theme = woat;
-  //lives_box_pack_start(LIVES_BOX(top_vbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_height);
+
+  lives_box_pack_start(LIVES_BOX(top_vbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_height);
 
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Possibly Recoverable Clips"), FALSE);
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL);
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Check / Uncheck all"), TRUE);
+  lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
 
   do {
     // put from r subdir
     hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
     cb = lives_standard_check_button_new(NULL, TRUE, LIVES_BOX(hbox), NULL);
     lives_layout_add_label(LIVES_LAYOUT(layout), "foo", TRUE);
+    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
     lives_layout_add_label(LIVES_LAYOUT(layout), "item size", TRUE);
+    widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
     lives_layout_add_label(LIVES_LAYOUT(layout), "clip details here", TRUE);
   } while (FALSE);
 
 
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
   lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
 
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Items for Manual Removal"), FALSE);
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL);
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Check / Uncheck all"), TRUE);
+  lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
 
   do {
     // put from l subdir
     hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
     cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL);
     lives_layout_add_label(LIVES_LAYOUT(layout), "foo", TRUE);
+    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
     lives_layout_add_label(LIVES_LAYOUT(layout), "item size", TRUE);
+    widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
     lives_layout_add_label(LIVES_LAYOUT(layout), "File or directory", TRUE);
   } while (FALSE);
 
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
   lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Items to be Removed"), FALSE);
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL);
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Check / Uncheck all"), TRUE);
+  lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
 
   do {
     // put from l subdir
     hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
     cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL);
     lives_layout_add_label(LIVES_LAYOUT(layout), "foo", TRUE);
+    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
     lives_layout_add_label(LIVES_LAYOUT(layout), "item size", TRUE);
+    widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
     lives_layout_add_label(LIVES_LAYOUT(layout), " - Unrecoverable - ", TRUE);
   } while (FALSE);
 
 
   lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-				     LIVES_STOCK_RESET, _("_Reset"),
+				     LIVES_STOCK_UNDO, _("_Reset"),
 				     LIVES_RESPONSE_RESET);
 
+  widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
   lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
 				     LIVES_STOCK_APPLY, _("_Accept and Continue"),
 				     LIVES_RESPONSE_ACCEPT);
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
   do {
-    resp = lives_dialog_run(dialog);
+    resp = lives_dialog_run(LIVES_DIALOG(dialog));
     //if (resp == LIVES_RESPONSE_RESET) reset_vals;
   } while (resp != LIVES_RESPONSE_ACCEPT);
   lives_widget_destroy(dialog);

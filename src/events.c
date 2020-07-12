@@ -3860,7 +3860,7 @@ lives_render_error_t render_events(boolean reset) {
               gamma_convert_layer(cfile->gamma_type, layer);
             else
               gamma_convert_sub_layer(cfile->gamma_type, 1.0, layer, (cfile->hsize - width) / 2,
-				      (cfile->vsize - height) / 2,
+                                      (cfile->vsize - height) / 2,
                                       width, height, TRUE);
 
             if (weed_plant_has_leaf(event, WEED_LEAF_OVERLAY_TEXT)) {
@@ -4896,7 +4896,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
   if (prefs->crash_recovery) {
     /// pretty simple now to run any function in a thread !
     info = lives_proc_thread_create(NULL, (lives_funcptr_t)backup_recording, -1, "vv",
-				    &esave_file, &asave_file);
+                                    &esave_file, &asave_file);
   }
 
   do {

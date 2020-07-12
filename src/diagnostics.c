@@ -139,7 +139,7 @@ void check_random(void) {
   lives_memset(last, 0, 256);
   lives_memset(buckets, 0, 1024);
   lives_memset(dist, 0, 8192);
-  
+
   for (x = 0; x < NITERS; x++) {
     uint64_t uu = 1;
     tt = fastrand();
@@ -149,20 +149,19 @@ void check_random(void) {
       bval <<= 1;
       r = tt & uu;
       if (!r) {
-	if (x && !(x & 1)) buckets[d][last[d] << 1]++;
-	counter[d]--;
-	last[d] = 0;
-      }
-      else {
-	if (x && !(x & 1)) buckets[d][(last[d] << 1) + 1]++;
-	counter[d]++;
-	last[d] = 1;
-	bval++;
+        if (x && !(x & 1)) buckets[d][last[d] << 1]++;
+        counter[d]--;
+        last[d] = 0;
+      } else {
+        if (x && !(x & 1)) buckets[d][(last[d] << 1) + 1]++;
+        counter[d]++;
+        last[d] = 1;
+        bval++;
       }
       uu <<= 1;
       if ((d & 7) == 7) {
-	dist[dval++][bval]++;
-	bval = 0;
+        dist[dval++][bval]++;
+        bval = 0;
       }
     }
   }
@@ -175,11 +174,11 @@ void check_random(void) {
   }
   fprintf(stderr, "\n");
 
-  
+
   /// results:
   for (d = 0; d < 64; d++) {
     fprintf(stderr, "digit %d: score %d (%.2f%% 1s)\n", d, counter[d],
-	    ((double)counter[d] + (double)NITERS) / (double)NITERS * 50.);
+            ((double)counter[d] + (double)NITERS) / (double)NITERS * 50.);
     fprintf(stderr, "buckets:  ");
     for (x = 0; x < 4; x++) fprintf(stderr, "[%d]: %d    ", x, buckets[d][x]);
     fprintf(stderr, "\n");
@@ -187,7 +186,7 @@ void check_random(void) {
   for (d = 0; d < 8; d++) {
     fprintf(stderr, "segment %d:  ", d);
     for (x = 0; x < 256; x++) {
-      dval = dist[d][x]; 
+      dval = dist[d][x];
       if (dval >= DTHRESH) fprintf(stderr, "val %d / %d hit %d times  ", d, x, dist[d][x]);
     }
     fprintf(stderr, "\n");
@@ -249,7 +248,7 @@ int run_weed_startup_tests(void) {
   }
   free(keys);
 
-  
+
   fprintf(stderr, "check NULL plant\n");
   type = weed_get_int_value(NULL, WEED_LEAF_TYPE, &werr);
 
@@ -282,10 +281,10 @@ int run_weed_startup_tests(void) {
   ne = weed_leaf_num_elements(plant, NULL);
   fprintf(stderr, "ne was %d\n", ne);
 
-   st = weed_leaf_seed_type(plant, NULL);
+  st = weed_leaf_seed_type(plant, NULL);
   fprintf(stderr, "seedtype is %d\n", st);
 
-   flags = weed_leaf_get_flags(plant, NULL);
+  flags = weed_leaf_get_flags(plant, NULL);
   fprintf(stderr, "flags is %d\n", flags);
 
   fprintf(stderr, "Check zero key \n");

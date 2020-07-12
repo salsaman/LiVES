@@ -426,7 +426,7 @@ ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less) {
       char *msg = NULL;
       char *ffile = filename_from_fd(NULL, fd);
       msg = lives_strdup_printf("Read got %"PRIu64" of %"PRIu64" in: %s (not an error)",
-				(uint64_t)retval,
+                                (uint64_t)retval,
                                 (uint64_t)count, ffile);
       LIVES_DEBUG(msg);
       lives_free(ffile);
@@ -4323,7 +4323,7 @@ boolean check_dir_access(const char *dir, boolean leaveit) {
   }
 
   if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) return FALSE;
-  
+
   testfile = lives_build_filename(dir, "livestst-XXXXXX", NULL);
   fp = g_mkstemp(testfile);
   if (fp == -1) {

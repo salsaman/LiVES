@@ -713,6 +713,12 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
 
   if (prefsw != NULL) prefsw->ignore_apply = TRUE;
 
+  if (!lives_strcmp(prefidx, PREF_PREF_TRASH)) {
+    if (prefs->pref_trash == newval) goto fail2;
+    prefs->pref_trash = newval;
+    goto success2;
+  }
+
   if (!lives_strcmp(prefidx, PREF_SHOW_BUTTON_ICONS)) {
     if (prefs->show_button_images == newval) goto fail2;
     prefs->show_button_images = widget_opts.show_button_images = newval;
@@ -1711,7 +1717,7 @@ boolean apply_prefs(boolean skip_warn) {
 
 #ifdef HAVE_PULSE_AUDIO
   pref_factory_bool(PREF_PARESTART,
-		    lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_parestart)),
+                    lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_parestart)),
                     TRUE);
   if (prefs->pa_restart)
     pref_factory_string(PREF_PASTARTOPTS, lives_entry_get_text(LIVES_ENTRY(prefsw->audio_command_entry)), TRUE);
@@ -4554,12 +4560,12 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_misc), hbox, FALSE, FALSE,
-		       widget_opts.packing_height);
+                       widget_opts.packing_height);
 
   /* prefsw->checkbutton_autoclean = lives_standard_check_button_new */
   /*   (_(""), */
   /*    !(prefs->warning_mask & WARN_MASK_LAYOUT_GAMMA), LIVES_BOX(hbox), NULL); */
-  
+
   // -----------,
   // Themes     |
   // -----------'

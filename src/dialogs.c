@@ -28,6 +28,7 @@ extern void reset_frame_and_clip_index(void);
 #define ANIM_LIMIT 0
 
 static int extra_cb_key = 0;
+static int del_cb_key = 0;
 
 // processing
 static uint64_t event_start;
@@ -230,11 +231,20 @@ static void extra_cb(LiVESWidget *dialog, int key) {
     widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
     lives_label_set_selectable(LIVES_LABEL(widget_opts.last_label), TRUE);
     break;
-  default:
+  case 2:
+    trash_rb(LIVES_BOX(dialog_vbox));
     break;
+  default: break;
   }
 }
 
+
+static void del_event_cb(LiVESWidget *dialog, livespointer data) {
+  int key = LIVES_POINTER_TO_INT(data);
+  switch (key) {
+  default: break;
+  }
+}
 
 //Warning or yes/no dialog
 
@@ -254,7 +264,9 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   LiVESAccelGroup *accel_group = NULL;
 
   int cb_key = extra_cb_key;
+  int del_key = del_cb_key;
   extra_cb_key = 0;
+  del_cb_key = 0;
 
   switch (diat) {
   case LIVES_DIALOG_WARN:
@@ -297,7 +309,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 
   case LIVES_DIALOG_WARN_WITH_CANCEL:
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_WARNING,
-				      LIVES_BUTTONS_NONE, NULL);
+                                      LIVES_BUTTONS_NONE, NULL);
     lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_orange);
     if (mainw != NULL && mainw->add_clear_ds_button) {
       mainw->add_clear_ds_button = FALSE;
@@ -314,7 +326,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 
   case LIVES_DIALOG_YESNO:
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_QUESTION,
-				      LIVES_BUTTONS_NONE, NULL);
+                                      LIVES_BUTTONS_NONE, NULL);
     lives_window_set_title(LIVES_WINDOW(dialog), _("Question"));
     lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->light_red);
     cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_NO, NULL,
@@ -334,10 +346,10 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   case LIVES_DIALOG_ABORT_RETRY:
   case LIVES_DIALOG_ABORT_OK:
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0,
-				      LIVES_MESSAGE_ERROR, LIVES_BUTTONS_NONE, NULL);
+                                      LIVES_MESSAGE_ERROR, LIVES_BUTTONS_NONE, NULL);
     abortbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-						     LIVES_STOCK_QUIT, _("_Abort"),
-						     LIVES_RESPONSE_ABORT);
+                  LIVES_STOCK_QUIT, _("_Abort"),
+                  LIVES_RESPONSE_ABORT);
     if (diat == LIVES_DIALOG_ABORT_CANCEL_RETRY) {
       lives_window_set_title(LIVES_WINDOW(dialog), _("File Error"));
       cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
@@ -348,7 +360,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
                  LIVES_RESPONSE_OK);
     } else {
       okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH,
-						    _("_Retry"),
+                 _("_Retry"),
                  LIVES_RESPONSE_RETRY);
     }
     lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
@@ -356,15 +368,15 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 
   case LIVES_DIALOG_CANCEL_RETRY_BROWSE:
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_ERROR,
-				      LIVES_BUTTONS_NONE, NULL);
+                                      LIVES_BUTTONS_NONE, NULL);
     lives_window_set_title(LIVES_WINDOW(dialog), _("Missing file"));
     cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
                    LIVES_RESPONSE_CANCEL);
     okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH,
-						  _("_Retry"),
+               _("_Retry"),
                LIVES_RESPONSE_RETRY);
     abortbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_QUIT,
-						     _("_Browse"),
+                  _("_Browse"),
                   LIVES_RESPONSE_BROWSE);
     lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
     break;
@@ -374,6 +386,11 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
     return NULL;
     break;
   }
+
+  if (del_key)
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(dialog), LIVES_WIDGET_DESTROY_SIGNAL,
+                              LIVES_GUI_CALLBACK(del_event_cb),
+                              LIVES_INT_TO_POINTER(del_key));
 
   lives_window_set_default_size(LIVES_WINDOW(dialog), MIN_MSGBOX_WIDTH, -1);
   lives_widget_set_minimum_size(dialog, MIN_MSGBOX_WIDTH, -1);
@@ -4157,7 +4174,7 @@ LIVES_GLOBAL_INLINE void do_no_sets_dialog(const char *dir) {
 
 boolean do_foundclips_query(void) {
   char *text = (_("Possible lost clips were detected within the LiVES working directory. "
-		  "What would you like me to do with them ?\n"));
+                  "What would you like me to do with them ?\n"));
   char *title = (_("Missing Clips Detected"));
   LiVESWidget *dlg = create_question_dialog(title, text, NULL);
   LiVESResponseType ret;
@@ -4165,11 +4182,11 @@ boolean do_foundclips_query(void) {
   lives_free(title);
   widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
   lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_CLEAR,
-				     _("Ignore and Dslete them"),
-				     LIVES_RESPONSE_NO);
+                                     _("Ignore and Dslete them"),
+                                     LIVES_RESPONSE_NO);
   lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_REMOVE,
-				     _("Try to recover them"),
-				     LIVES_RESPONSE_YES);
+                                     _("Try to recover them"),
+                                     LIVES_RESPONSE_YES);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   ret = lives_dialog_run(LIVES_DIALOG(dlg));
   lives_widget_destroy(dlg);
@@ -4255,6 +4272,14 @@ LIVES_GLOBAL_INLINE void do_cd_error_dialog(void) {
 LIVES_GLOBAL_INLINE void do_bad_theme_import_error(const char *theme_file) {
   do_error_dialogf(_("\nLiVES was unable to import the theme file\n%s\n(Theme name not found).\n"),
                    theme_file);
+}
+
+
+boolean do_close_changed_warn(void) {
+  extra_cb_key = 2;
+  del_cb_key = 2;
+  return do_warning_dialog(_("Changes made to this clip have not been saved or backed up.\n\n"
+                             "Really close it ?"));
 }
 
 

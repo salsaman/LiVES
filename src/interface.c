@@ -1780,7 +1780,7 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
 
   lives_box_pack_start(LIVES_BOX(dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
 
-  if (add_buttons && text != NULL || mainw->iochan != NULL || textwindow->table != NULL) {
+  if (add_buttons && (text != NULL || mainw->iochan != NULL || textwindow->table != NULL)) {
     if (textwindow->table == NULL) {
       LiVESWidget *savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
 								   LIVES_STOCK_SAVE,
@@ -1981,6 +1981,101 @@ _insertw *create_insert_dialog(void) {
 
   return insertw;
 }
+
+
+void filter_cleanup(const char *trashdir) {
+  //LiVESTreeStore *treestore;
+  //LiVESTreeIter iter1, iter2, iter3;
+
+  LiVESWidget *dialog;
+  //LiVESWidget *tree;
+  LiVESWidget *layout;
+  LiVESWidget *top_vbox;
+  //LiVESWidget *label;
+  LiVESWidget *hbox;
+  LiVESWidget *cb;
+
+  /* LiVESCellRenderer *renderer; */
+  /* LiVESTreeViewColumn *column; */
+
+  int winsize_h = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
+  int winsize_v = GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY;
+
+  boolean woat = widget_opts.apply_theme;
+
+  dialog = lives_standard_dialog_new(_("Disk Cleanup"), FALSE, winsize_h, winsize_v);
+
+  accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
+  lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
+
+  top_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+
+  layout = lives_layout_new(NULL);
+
+  //widget_opts.apply_theme = FALSE;
+  scrolledwindow = lives_standard_scrolled_window_new(winsize_h, winsize_v, layout);
+  widget_opts.apply_theme = woat;
+  //lives_box_pack_start(LIVES_BOX(top_vbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_height);
+
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Possibly Recoverable Clips"), FALSE);
+  cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL);
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Check / Uncheck all"), TRUE);
+
+  do {
+    // put from r subdir
+    hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+    cb = lives_standard_check_button_new(NULL, TRUE, LIVES_BOX(hbox), NULL);
+    lives_layout_add_label(LIVES_LAYOUT(layout), "foo", TRUE);
+    lives_layout_add_label(LIVES_LAYOUT(layout), "item size", TRUE);
+    lives_layout_add_label(LIVES_LAYOUT(layout), "clip details here", TRUE);
+  } while (FALSE);
+
+
+  lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
+
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Items for Manual Removal"), FALSE);
+  cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL);
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Check / Uncheck all"), TRUE);
+
+  do {
+    // put from l subdir
+    hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+    cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL);
+    lives_layout_add_label(LIVES_LAYOUT(layout), "foo", TRUE);
+    lives_layout_add_label(LIVES_LAYOUT(layout), "item size", TRUE);
+    lives_layout_add_label(LIVES_LAYOUT(layout), "File or directory", TRUE);
+  } while (FALSE);
+
+  lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Items to be Removed"), FALSE);
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL);
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Check / Uncheck all"), TRUE);
+
+  do {
+    // put from l subdir
+    hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+    cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL);
+    lives_layout_add_label(LIVES_LAYOUT(layout), "foo", TRUE);
+    lives_layout_add_label(LIVES_LAYOUT(layout), "item size", TRUE);
+    lives_layout_add_label(LIVES_LAYOUT(layout), " - Unrecoverable - ", TRUE);
+  } while (FALSE);
+
+
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
+				     LIVES_STOCK_RESET, _("_Reset"),
+				     LIVES_RESPONSE_RESET);
+
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
+				     LIVES_STOCK_APPLY, _("_Accept and Continue"),
+				     LIVES_RESPONSE_ACCEPT);
+  do {
+    resp = lives_dialog_run(dialog);
+    //if (resp == LIVES_RESPONSE_RESET) reset_vals;
+  } while (resp != LIVES_RESPONSE_ACCEPT);
+  lives_widget_destroy(dialog);
+}
+
 
 
 LiVESWidget *create_opensel_dialog(int frames, double fps) {

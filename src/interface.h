@@ -242,4 +242,6 @@ boolean youtube_select_format(lives_remote_clip_request_t *);
 void run_diskspace_dialog(void);
 void run_diskspace_dialog_cb(LiVESWidget *w, livespointer data);
 
+void filter_cleanup(const char *trashdir);
+
 #endif

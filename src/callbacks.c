@@ -6145,11 +6145,8 @@ remall:
 
     lives_proc_thread_join(tinfo);
     weed_plant_free(tinfo);
-
-    g_print("ok here\n");
     
     if (THREADVAR(com_failed)) {
-    g_print("ok here\n");
       THREADVAR(com_failed) = FALSE;
       lives_free(trashdir);
       lives_free(full_trashdir);
@@ -6157,7 +6154,6 @@ remall:
       goto cleanup;
     }
     else {
-    g_print("ok here\3n");
       LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
       LiVESTextBuffer *tbuff = lives_text_buffer_new();
       LiVESWidget *button;
@@ -6183,19 +6179,22 @@ remall:
 
       widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
       lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
+					 LIVES_STOCK_APPLY, _("_Filter Results"),
+					 LIVES_RESPONSE_BROWSE);
+      widget_opts.expand = LIVES_EXPAND_DEFAULT;
+
+      widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
+      lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
 					 LIVES_STOCK_APPLY, _("_Accept and Continue"),
 					 LIVES_RESPONSE_ACCEPT);
       widget_opts.expand = LIVES_EXPAND_DEFAULT;
-    g_print("ok here2222\n");
 
       retval = lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
       lives_widget_destroy(textwindow->dialog);
       lives_free(textwindow);
 
-    g_print("ok he6666re\n");
       if (retval == LIVES_RESPONSE_CANCEL) {
 	com = lives_strdup_printf("%s restore_trash %s", prefs->backend, trashdir);
-    g_print("ok here7777\n");
 	lives_system(com, FALSE);
 	lives_free(com);
 	lives_free(trashdir);
@@ -6203,7 +6202,14 @@ remall:
 	rejected = TRUE;
 	goto cleanup;
       }
-    g_print("ok here 1111\n");
+
+      if (retval == LIVES_RESPONSE_BROWSE) {
+	filter_cleanup(full_trashdir);
+      }
+      
+      // scan the r subdir to get recoverables
+
+      // scan the l subdir to get leftovers
 
       left_list = buff_to_list(mainw->msg, "|", FALSE, TRUE);
 
@@ -6218,8 +6224,8 @@ remall:
       lives_free(full_trashdir);
       do_auto_dialog(_("Cleaning up Disk"), 0);
       lives_rm(cfile->info_file);
-    g_print("ok her34234342e\n");
 
+      
       if (left_list != NULL) {
         if (strcmp((char *)left_list->data, "completed")) {
           lives_list_free_all(&left_list);
@@ -8012,7 +8018,8 @@ void on_loop_cont_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK) {
     if (mainw->jackd != NULL && (mainw->loop_cont || mainw->whentostop == NEVER_STOP)) {
-      if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) mainw->jackd->loop = AUDIO_LOOP_PINGPONG;
+      if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
+	mainw->jackd->loop = AUDIO_LOOP_PINGPONG;
       else mainw->jackd->loop = AUDIO_LOOP_FORWARD;
     } else if (mainw->jackd != NULL) mainw->jackd->loop = AUDIO_LOOP_NONE;
   }

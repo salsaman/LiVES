@@ -1710,7 +1710,8 @@ boolean apply_prefs(boolean skip_warn) {
   pref_factory_bool(PREF_EXTRA_COLOURS, extra_colours, TRUE);
 
 #ifdef HAVE_PULSE_AUDIO
-  pref_factory_bool(PREF_PARESTART, lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_parestart)),
+  pref_factory_bool(PREF_PARESTART,
+		    lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_parestart)),
                     TRUE);
   if (prefs->pa_restart)
     pref_factory_string(PREF_PASTARTOPTS, lives_entry_get_text(LIVES_ENTRY(prefsw->audio_command_entry)), TRUE);
@@ -2998,7 +2999,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   } else prefsw->prefs_dialog = saved_dialog;
 
   prefsw->ignore_apply = FALSE;
-  //prefs->cb_is_switch = TRUE; // TODO: intervept TOGGLED handler
+  //prefs->cb_is_switch = TRUE; // TODO: intercept TOGGLED handler
 
   // Get dialog's vbox and show it
   dialog_vbox_main = lives_dialog_get_content_area(LIVES_DIALOG(prefsw->prefs_dialog));
@@ -4549,6 +4550,16 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
     lives_widget_hide(prefsw->cdda_hbox);
   }
 
+  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_misc));
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_misc), hbox, FALSE, FALSE,
+		       widget_opts.packing_height);
+
+  /* prefsw->checkbutton_autoclean = lives_standard_check_button_new */
+  /*   (_(""), */
+  /*    !(prefs->warning_mask & WARN_MASK_LAYOUT_GAMMA), LIVES_BOX(hbox), NULL); */
+  
   // -----------,
   // Themes     |
   // -----------'

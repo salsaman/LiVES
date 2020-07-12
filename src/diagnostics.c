@@ -120,6 +120,80 @@ char *get_stats_msg(boolean calc_only) {
   return msg;
 }
 
+#define NITERS 1024
+#define DTHRESH 8
+#define PMISS 0.99609375
+void check_random(void) {
+  int counter[64];
+  int last[64];
+  int buckets[64][4];
+  int dist[8][256];
+  int bval, dval;
+  double prob;
+  register int d, x;
+  uint64_t tt, r;
+  /// check quality of random function
+  /// - check 1: each binary digit should habe approx. equal 1s and 0s
+
+  lives_memset(counter, 0, 256);
+  lives_memset(last, 0, 256);
+  lives_memset(buckets, 0, 1024);
+  lives_memset(dist, 0, 8192);
+  
+  for (x = 0; x < NITERS; x++) {
+    uint64_t uu = 1;
+    tt = fastrand();
+    bval = 0;
+    dval = 0;
+    for (d = 0; d < 64; d++) {
+      bval <<= 1;
+      r = tt & uu;
+      if (!r) {
+	if (x && !(x & 1)) buckets[d][last[d] << 1]++;
+	counter[d]--;
+	last[d] = 0;
+      }
+      else {
+	if (x && !(x & 1)) buckets[d][(last[d] << 1) + 1]++;
+	counter[d]++;
+	last[d] = 1;
+	bval++;
+      }
+      uu <<= 1;
+      if ((d & 7) == 7) {
+	dist[dval++][bval]++;
+	bval = 0;
+      }
+    }
+  }
+
+  prob = PMISS;
+  fprintf(stderr, "Checking statistical probabilities\n");
+  for (x = 0; x < NITERS; x++) {
+    fprintf(stderr, "%d %.4f  ", x, 1. - prob);
+    prob *= prob;
+  }
+  fprintf(stderr, "\n");
+
+  
+  /// results:
+  for (d = 0; d < 64; d++) {
+    fprintf(stderr, "digit %d: score %d (%.2f%% 1s)\n", d, counter[d],
+	    ((double)counter[d] + (double)NITERS) / (double)NITERS * 50.);
+    fprintf(stderr, "buckets:  ");
+    for (x = 0; x < 4; x++) fprintf(stderr, "[%d]: %d    ", x, buckets[d][x]);
+    fprintf(stderr, "\n");
+  }
+  for (d = 0; d < 8; d++) {
+    fprintf(stderr, "segment %d:  ", d);
+    for (x = 0; x < 256; x++) {
+      dval = dist[d][x]; 
+      if (dval >= DTHRESH) fprintf(stderr, "val %d / %d hit %d times  ", d, x, dist[d][x]);
+    }
+    fprintf(stderr, "\n");
+  }
+}
+
 
 #ifdef WEED_STARTUP_TESTS
 
@@ -130,6 +204,7 @@ static void show_timer_info(void) {
           ((double)lives_get_current_ticks() - (double)timerinfo) / TICKS_PER_SECOND_DBL);
   timerinfo = lives_get_current_ticks();
 }
+
 
 int run_weed_startup_tests(void) {
   weed_plant_t *plant;
@@ -174,7 +249,7 @@ int run_weed_startup_tests(void) {
   }
   free(keys);
 
-  //
+  
   fprintf(stderr, "check NULL plant\n");
   type = weed_get_int_value(NULL, WEED_LEAF_TYPE, &werr);
 
@@ -207,10 +282,10 @@ int run_weed_startup_tests(void) {
   ne = weed_leaf_num_elements(plant, NULL);
   fprintf(stderr, "ne was %d\n", ne);
 
-  st = weed_leaf_seed_type(plant, NULL);
+   st = weed_leaf_seed_type(plant, NULL);
   fprintf(stderr, "seedtype is %d\n", st);
 
-  flags = weed_leaf_get_flags(plant, NULL);
+   flags = weed_leaf_get_flags(plant, NULL);
   fprintf(stderr, "flags is %d\n", flags);
 
   fprintf(stderr, "Check zero key \n");
@@ -480,8 +555,9 @@ int run_weed_startup_tests(void) {
   ptr = weed_get_voidptr_value(plant, "nullbasic", &werr);
   fprintf(stderr, "get null basic voidptr 0 returned (%p) %d\n", ptr, werr);
 
-  werr = weed_leaf_set(plant, "nullbasic", WEED_SEED_VOIDPTR, 1, NULL);
-  fprintf(stderr, "set null string returned %d\n", werr);
+  /// WILL segfault, programmer error
+  /* werr = weed_leaf_set(plant, "nullbasic", WEED_SEED_VOIDPTR, 1, NULL); */
+  /* fprintf(stderr, "set null string returned %d\n", werr); */
 
   ptr = weed_get_voidptr_value(plant, "nullbasic", &werr);
   fprintf(stderr, "get null string returned (%p) %d\n", ptr, werr);
@@ -636,7 +712,7 @@ int run_weed_startup_tests(void) {
   }
   weed_plant_free(plant);
 
-  g_print
+  //g_print
 
   return 0;
 }

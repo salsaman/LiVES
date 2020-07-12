@@ -119,7 +119,8 @@ typedef struct {
   LiVESWidget *button;
 } text_window;
 
-text_window *create_text_window(const char *title_part, const char *text, LiVESTextBuffer *);
+text_window *create_text_window(const char *title_part, const char *text, LiVESTextBuffer *,
+				boolean add_buttons);
 
 typedef struct {
   LiVESWidget *dialog;

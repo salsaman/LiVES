@@ -27,9 +27,14 @@ my $USE_WARNINGS = 1;
 if ($USE_WARNINGS) {
     use warnings;
 }
+
+
 use File::Copy;
 use File::Find;
-#use feature say;
+#use File::Touch;  y// would be nice
+use File::Path 'make_path';
+use File::Path 'remove_tree';
+
 
 ##################################################################
 use POSIX qw(locale_h);
@@ -112,7 +117,7 @@ my $statusfile;
 my $configdir = "";
 my $mplay_command = "";
 
-my $TRASH = "._trash";
+my $DEFTRASH = "_Trash";
 
 ###################################################################
 
@@ -310,7 +315,7 @@ if (defined($ARGV[0])) {
 			my $xsize = -s $rcfile;
 			&smog_rename($rcfile, $rcfile_damaged);
 			unlink($rcfile);
-			if (-e $rcfile) {
+			if (0 + -e $rcfile) {
 			    $bad_rcfile = 1;
 			    &startup_error(5, "report", "remove_noversion0", "$rcfile:\@:");
 			}
@@ -331,7 +336,7 @@ if (defined($ARGV[0])) {
 				    # still no joy
 				    &smog_rename($rcfile, $rcfile_damaged);
 				    unlink ($rcfile);
-				    if (-e $rcfile) {
+				    if (0 + -e $rcfile) {
 					$bad_rcfile = 1;
 					&startup_error(5, "report", "remove_noversion1", "$rcfile:\@:");
 				    }
@@ -347,9 +352,10 @@ if (defined($ARGV[0])) {
 				    if ($workdir eq "") {
 					&smog_rename($rcfile, $rcfile_damaged);
 					unlink ($rcfile);
-					if (-e $rcfile) {
+					if (0 + -e $rcfile) {
 					    $bad_rcfile = 1;
-					    &startup_error(5, "report", "remove_noworkdir0", "$rcfile:\@:");
+					    &startup_error(5, "report", "remove_noworkdir0",
+							   "$rcfile:\@:");
 					}
 					$old_version = "";
 					$old_version_hash = "0";
@@ -377,7 +383,7 @@ if (defined($ARGV[0])) {
 		}
 		else {
 		    unlink $recovery_file;
-		    if (-e $recovery_file) {
+		    if (0 + -e $recovery_file) {
 			&startup_error(5, "report", "remove_recovery0", "$recovery_file:\@:");
 		    }
 		}
@@ -409,7 +415,7 @@ if (defined($ARGV[0])) {
 	    if (!$has_rcfile) {
 		if ($upd) {
 		    unlink $rcfile;
-		    if (-e $rcfile) {
+		    if (0 + -e $rcfile) {
 			&startup_error(5, "report", "remove_badrcfile0", "$rcfile:\@:");
 		    }
 		    # set comment at start of file
@@ -467,6 +473,7 @@ if (defined($ARGV[0])) {
 		}
 	    }
 
+
 	    if ($has_rcfile) {
 		my $convert_old_version = &rc_get("convert_version");
 		my $convert_version = &get_convert_version;
@@ -497,7 +504,7 @@ if (defined($ARGV[0])) {
 	    }
 	    else {
 		# only for backwards compatibility with older LiVES.
-		if (! -e $gui_bootstrap_file) {
+		if (! (0 + -e $gui_bootstrap_file)) {
 		    open OUT, ">", "$gui_bootstrap_file" or exit 5;
 		    print OUT "$version|";
 		    close OUT;
@@ -559,10 +566,11 @@ if (defined($ARGV[0])) {
 		}
 
 		else {
-		    print "Attempting to stop process ".$target_pid." with $command\n";
+		    print "Attempting to stop process " . $target_pid . " with $command\n";
 		    if ($sig eq "KILL") {
-			&smog_system("kill -$sig $target_pid >/dev/null 2>&1");
+			kill $sig, $target_pid;
 		    } else {
+			## kill child processes of $target_pid
 			&smog_system("pkill -$sig -P $target_pid");
 			# must not ! >/dev/null 2>&1");
 		    }
@@ -725,21 +733,11 @@ if (defined($ARGV[0])) {
 
 
 	if ($command eq "clear_tmp_files") {
-	    $handle = $ARGV[1];
-	    if (defined $ARGV[2]) {
-		$TRASH = $ARGV[2];
-	    }
+	    my $handle = $ARGV[1];
+	    $movetotrash = $ARGV[2];
 	    #clear old backups (e.g. when saving a set)
 	    $curworkdir = "$workdir/$handle";
-	    my $trashdir = "$workdir/$TRASH";
-	    if (! -d $trashdir) {
-		$com = "/bin/mkdir -p \"$trashdir\"";
-		my $smerr = &smog_system($com);
-		if ($smerr) {
-		    $trashdir = "";
-		}
-	    }
-	    &clean_old($trashdir);
+	    &clean_old($handle, $movetotrash);
 	    exit 0;
 	}
 
@@ -919,7 +917,7 @@ if (defined($ARGV[0])) {
 
 		foreach my $plugname (@files) {
 		    unless ($plugname =~ /^\./) {
-			if (-f $plugname || ($allow_subdirs == 1 && -d $plugname)) {
+			if (-f $plugname || ($allow_subdirs == 1 && -d "plugindir/$plugname")) {
 			    unless ($allow_nonex) {
 				next if ! -x "$plugindir/$plugname";
 			    }
@@ -956,7 +954,6 @@ if (defined($ARGV[0])) {
 
 
 	if ($command eq "make_thumb") {
-
 	    ## TODO: make bg
 	    $handle = $ARGV[1];
 	    $curworkdir = "$workdir/$handle";
@@ -997,6 +994,24 @@ if (defined($ARGV[0])) {
 			    "x$vsize\\! $img_prefix\"$curworkdir/$name$img_ext\" > $nulfile 2>&1");
 	    }
 	    &sig_complete_stdout($hsize, $vsize);
+	    exit 0;
+	}
+
+	if ($command eq "fg_weed") {
+	    $handle = $ARGV[1];
+	    $curworkdir = "$workdir/$handle";
+	    $statusfile = "$curworkdir/.status";
+
+	    my $opts = $ARGV[2];
+	    my $trashdir = $ARGV[3];
+	    my @left = &weed($opts, $trashdir);
+	    ## we must write the list via sig_complete, even thoough we are in fg
+
+	    print STDERR "heire i si\n";
+	    print STDERR join(" ", @Left);
+	    print STDERR "heire isasadd si\n";
+	    
+	    &sig_complete(@left);
 	    exit 0;
 	}
 
@@ -1195,23 +1210,22 @@ if (defined($ARGV[0])) {
 
 
 	if ($command eq "weed") {
-	    ## TODO: make bg
-	    &smog_chdir($workdir);
-
-	    print "Cleaning up working directory for $GUI_NAME.\n";
+	    ## TODO: make bg, change cmd name
 	    $new_work = $ARGV[1];
 	    unless ($new_work eq "") {
 		# here is where we create a new work directory
 		unless (-d $new_work || (mkdir $new_work)) {
-		    print "Smogrify: Unable to create new directory $new_work!\n";
+		    print STDERR "Smogrify: Unable to create new directory\n$new_work!\n";
 		    exit 1;
 		}
-		print "Smogrify: moving sets from $workdir to $new_work\n";
+		&smog_chdir($workdir);
+		print STDERR "Smogrify: moving sets from:\n$workdir\nto\n$new_work\n";
 	    }
 	    else {
-		print "Smogrify: Leaving sets intact.\n";
+		print STDERR "Smogrify: ERROR - no destination directory given !\n";
+		exit 1;
 	    }
-	    &weed(0);
+	    &weed(0, "", $new_work);
 	    exit 0;
 	}
 
@@ -1234,12 +1248,47 @@ if (defined($ARGV[0])) {
 	    exit 0;
 	}
 
+
 	if ($command eq "count_frames") {
 	    my $img_ext = "." . $ARGV[2];
 	    my $start = $ARGV[3];
 	    print &count_frames($start, $img_ext);;
 	    exit 0;
 	}
+
+
+	if ($command eq "check_for_trash") {
+	    exit 1 if (!defined $ARGV[1]);
+	    my $pat1 = $ARGV[1];
+	    my $pat2 = $ARGV[2];
+	    my $trashwild = $pat1 . ".*" . $pat2;
+	    opendir DIR, $workdir;
+	    while ($file = readdir(DIR)) {
+		unless ($file eq "." || $file eq "..") {
+		    if (-d "$workdir/$file") {
+			my $is_trash = 0;
+			if ($file =~ m/$trashwild/) {
+			    if (! (0 + -e "$file/.ignore")) {
+				print $file;
+				closedir DIR;
+				exit 0;
+			    }}}}}
+
+	    closedir DIR;
+	    exit 0;
+	}
+
+	
+	if ($command eq "restore_trash") {
+	    exit 1 if (!defined $ARGV[1]);
+	    $trashdir = "$workdir/$ARGV[1]";
+	    exit 2 if &is_dangerous($trashdir);
+	    if (-d $trashdir) {
+		remove_tree($trashdir);
+	    }
+	    exit 0;
+	}
+
 
 	if ($command eq "get_proj_set") {
 	    ## TODO: make bg
@@ -1300,19 +1349,15 @@ if (defined($ARGV[0])) {
 	if ($command eq "import_package") {
 	    ## args are 1: file to unpack, 2 dir to unpack in
 	    ## TODO: make bg
-	    $com = "/bin/mkdir -p \"$ARGV[2]\"";
-	    my $smerr = &smog_system($com);
-	    if ($smerr) {
-		&sig_system_error("Creating directory \"$ARGV[2]\"", $smerr);
-		exit 1;
-	    }
+
+	    make_path $ARGV[2];
 	    chdir $ARGV[2];
 
 	    $com = "tar xzf \"$ARGV[1]\" .";
 
-	    $smerr = smog_system($com);
+	    $smerr = &smog_system($com);
 	    if ($smerr) {
-		sig_system_error("$com", $smerr);
+		&sig_system_error($com, $smerr);
 		exit 1;
 	    }
 
@@ -1351,7 +1396,8 @@ if (defined($ARGV[0])) {
 		$count = $frames;
 	    }
 
-	    &sig_complete_stdout($handle, $count, $type, $hsize, $vsize, $bpp, $fps, $f_size, $arate, $achans, $asamps, $signed, 
+	    &sig_complete_stdout($handle, $count, $type, $hsize, $vsize, $bpp, $fps,
+				 $f_size, $arate, $achans, $asamps, $signed, 
 				 $endian, $af_size, $gamma_type, $title, $author, $comment);
 
 	    exit 0;
@@ -1365,37 +1411,7 @@ if (defined($ARGV[0])) {
 	    }
 	}
 	####################################################################
-
-	if ($command eq "empty_trash") {
-	    if (defined $ARGV[1]) {
-		$TRASH = $ARGV[1];
-	    }
-	    my $trashdir = "$workdir/$TRASH";
-	    my $trashdir_del = $trashdir . "_del";
-	    if (-d $trashdir_del) {
-		&smog_system("/bin/rm -rf \"$trashdir_del\"");
-	    }
-	    exit 0 if ! -e $trashdir;
-	    unless (-d $trashdir && -w $trashdir) {
-		exit 1;
-	    }
-	    unless (-d $trashdir_del) {
-		&smog_rename($trashdir, $trashdir_del);
-		if (-d $trashdir_del) {
-		    &smog_system("/bin/rm -rf \"$trashdir_del\"");
-		}
-	    }
-	    elsif (-d $trashdir) {
-		&smog_chdir($trashdir);
-		&smog_system("/bin/rm -rf * .*");
-	    }
-	    unless (-d $trashdir) {
-		$com = "/bin/mkdir -p \"$trashdir\"";
-		&smog_system($com);
-	    }
-	    exit 0;
-	}
-
+	
 	if (!caller && (!defined($ARGV[1]) || $ARGV[1] eq "")) {
 	    &usage;
 	    exit 1;
@@ -1416,6 +1432,102 @@ if (defined($ARGV[0])) {
 	}
 
 
+	if ($command eq "empty_trash") {
+	    &smog_chdir($workdir);
+	    my $op = $ARGV[2];  ### "general", "giotrash" or "delete"
+	    if ($op eq "general") {
+		if (defined($ARGV[3])) {
+		    $pat = $ARGV[3];  ### pattern for trashdirs
+		    if (&is_dangerous($pat)) {
+			print STDERR "smogrify: trash directory pattern $pat points to " .
+			    "dangerous location\nABORTING\n";
+			if ($handle ne ".") {
+			    &sig_error("bad trash pattern $pat");
+			}
+			unlink $pidfile;
+			exit 1;
+		    }
+		    opendir DIR, $workdir;
+		    while ($file = readdir(DIR)) {
+			next if $file eq "." || $file eq "..";
+			if ($file =~ /^$pat/) {
+			    if (-d "$workdir/$file") {
+				remove_tree($file);
+			    }
+			}
+		    }
+		    closedir DIR;
+		}
+		if (&is_dangerous($DEFTRASH)) {
+		    print STDERR "smogrify: default trash directory $DEFTRASH points to " .
+			"dangerous location\nCheck $DEFTRASH setting in $MYNAME. ABORTING\n";
+		    if ($handle ne ".") {
+			&sig_error("bad deftrash $DEFTRASH");
+		    }
+		    unlink $pidfile;
+		    exit 1;
+		}
+		my $deftrashdir = "$workdir/.$DEFTRASH";
+		if (! -d $deftrashdir) {
+		    make_path $deftrashdir, {mode => 1777};
+		}
+		remove_tree($deftrashdir, {keep_root => 1});
+		if ($handle ne ".") {
+		    &sig_complete;
+		}
+		else {
+		    unlink $pidfile;
+		}
+		exit 0;
+	    }
+	    ## non-general
+	    if (!defined($ARGV[3]) || ($op ne "giotrash" && $op ne "delete")) {
+		if ($handle ne ".") {
+		    &sig_error("Invalid value passed to empty_trash");
+		}
+		unlink $pidfile;
+		exit 1;
+	    }
+	    $trashdir = "$workdir/$ARGV[3]";
+	    if (&is_dangerous($trashdir)) {
+		if ($handle ne ".") {
+		    &sig_error("bad trashdir $ARGV[3]");
+		}
+		unlink $pidfile;
+		exit 1;
+	    }
+	    if (-d $trashdir) {
+		opendir DIR, $trashdir;
+		while ($file = readdir(DIR)) {
+		    next if $file eq "." || $file eq "..";
+		    my $origfile = "$workdir/$file";
+		    if (-d $origfile) {
+			if ($op eq "giotrash") {
+			    &smog_system("gio trash $origfile");
+			}
+			else {
+			    remove_tree($origfile);
+			}
+		    }
+		    else {
+			if (-f $origfile) {
+			    unlink $origfile;
+			}
+		    }
+		}
+		closedir DIR;
+		remove_tree($trashdir);
+	    }
+	    if ($handle ne ".") {
+		&sig_complete;
+	    }
+	    else {
+		unlink $pidfile;
+	    }
+	    exit 0;
+	}
+
+	
 	if ($command eq "play_opening_preview") {
 	    # play_opening_preview is exactly like play
 	    # except our audio filename is different
@@ -1566,7 +1678,8 @@ if (defined($ARGV[0])) {
 	    my $showed_err = 0;
 
 	    do {
-		if (! -d "$curworkdir" || -f "$curworkdir/.stoploop" || -f "$curworkdir/stoploop" || ! -f $audiofile) {
+		if (! -d "$curworkdir" || -f "$curworkdir/.stoploop"
+		    || -f "$curworkdir/stoploop" || ! -f $audiofile) {
 		    $loop = 0;
 		} else {
 		    $syscom3 = $syscom2 . ">$nulfile 2>&1";
@@ -1756,7 +1869,7 @@ if (defined($ARGV[0])) {
 	    }
 	    print STDERR "opentest 15\n";
 
-	    $threads = smog_system_direct("/bin/grep processor /proc/cpuinfo | wc -l");
+	    $threads = &smog_system_direct("/bin/grep processor /proc/cpuinfo | wc -l");
 	    $threads = int($threads);
 	    if ($threads == 0) {
 		$threads = 1;
@@ -2048,7 +2161,8 @@ if (defined($ARGV[0])) {
 		}
 		print STDERR "opentest asas1\n";
 		if ($af_size > 0 || $count > 0) {
-		    &sig_complete($handle, $count, $type, $hsize, $vsize, $bpp, $fps, $f_size, $arate, $achans, $asamps,
+		    &sig_complete($handle, $count, $type, $hsize, $vsize, $bpp, $fps, $f_size, $arate,
+				  $achans, $asamps,
 				  $signed, $endian, $af_size, $gamma_type, $title, $author, $comment);
 		    exit 0;
 		}
@@ -2184,8 +2298,13 @@ if (defined($ARGV[0])) {
 	}
 
 	if ($command eq "close") {
-	    if (! -d $curworkdir || (! -f "$curworkdir/header.lives" && !&is_specialdir($handle))) {
+	    if (! -d $curworkdir || (! -f "$curworkdir/header.lives"
+				     && !&is_specialdir($handle))) {
 		exit 1;
+	    }
+	    my $method = "delete";
+	    if (defined($ARGV[2])) {
+		$method = $ARGV[2];
 	    }
 	    if (defined(open IN, "<", $pidfile)) {
 		read IN, $target_pid, 8;
@@ -2196,11 +2315,15 @@ if (defined($ARGV[0])) {
 		    &kill_child_pids($target_pid, $sig);
 		}
 	    }
-
-	    if (&smog_chdir($curworkdir)) {
-		unlink glob "* .* *.*";
-		&smog_chdir($workdir);
-		rmdir $curworkdir;
+	    &smog_chdir($workdir);
+	    if ($method eq "delete") {
+		remove_tree($curworkdir);
+	    }
+	    elsif ($method eq "giotrash") {
+		&smog_system("gio trash $curworkdir");
+	    }
+	    else {
+		exit 1;
 	    }
 	    exit 0;
 	}
@@ -2327,7 +2450,8 @@ if (defined($ARGV[0])) {
 
 			#pad to end with silence
 			my $desired_length = $aud_length * $arate * $achans * $asamps / 8;
-			&append_silence(0, $desired_length, $asamps, $achans, $signed, $aendian, $audiofile);
+			&append_silence(0, $desired_length, $asamps, $achans, $signed, $aendian,
+					$audiofile);
 			if ($panic) {
 			    unlink $pidfile;
 			    exit 1;
@@ -2438,15 +2562,10 @@ if (defined($ARGV[0])) {
 		$linksdir = "$curworkdir/lives-symlinks/";
 
 		if (-d $linksdir) {
-		    &smog_system("/bin/rm -rf \"$linksdir\"");
+		    remove_tree($linksdir);
 		}
 
-		$com = "/bin/mkdir -p \"$linksdir\"";
-		$smerr = &smog_system($com);
-		if ($smerr) {
-		    &sig_system_error("Creating directory \"$linksdir\"", $smerr);
-		    exit 1;
-		}
+		make_path $linksdir;
 	    }
 	    else {
 		$linksdir = $curworkdir;
@@ -2497,9 +2616,11 @@ if (defined($ARGV[0])) {
 			}
 		    }
 		    else {
-			$smerr =  &smog_system ("/bin/ln \"$curworkdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
+			$smerr =  &smog_system ("/bin/ln \"$curworkdir/$from$img_ext\" " .
+						"\"$linksdir/$name$img_ext\"");
 			if ($smerr) {
-			    &sig_system_error("Linking \"$curworkdir/$from$img_ext\" to \"$linksdir/$name$img_ext\"", $smerr);
+			    &sig_system_error("Linking \"$curworkdir/$from$img_ext\" to " .
+					      "\"$linksdir/$name$img_ext\"", $smerr);
 			    exit 1;
 			}}}
 		&sig_progress($i);
@@ -2541,7 +2662,7 @@ if (defined($ARGV[0])) {
 		$out_ext = $img_ext;
 	    }
 
-	    &clean_old;
+	    &clean_old($handle);
 
 	    if ($letterbox) {
 		# make a background frame
@@ -2567,9 +2688,11 @@ if (defined($ARGV[0])) {
 			unlink $blankname;
 		    }
 		    if ($DEBUG_SMOGRIFY) {
-			print STDERR "smogrify debug - rename failed ($!): \"$curworkdir/$name$img_ext\",\"$curworkdir/$name.bak\"\n";
+			print STDERR "smogrify debug - rename failed ($!): " .
+			    "\"$curworkdir/$name$img_ext\",\"$curworkdir/$name.bak\"\n";
 		    }
-		    &sig_system_error("Renaming \"$curworkdir/$name$img_ext\" to \"$curworkdir/$name.bak\"");
+		    &sig_system_error("Renaming \"$curworkdir/$name$img_ext\" to " .
+				      "\"$curworkdir/$name.bak\"");
 		    exit 1;
 		}
 
@@ -2643,7 +2766,8 @@ if (defined($ARGV[0])) {
 	    }
 
 	    unlink glob "*.tar";
-	    $com="tar --ignore-failed-read -cf header.tar \"$audio\" header* extended* event.* subs.* file* 2>$nulfile";
+	    $com="tar --ignore-failed-read -cf header.tar \"$audio\" header* extended* event.* " .
+		"subs.* file* 2>$nulfile";
 	    &smog_system ($com);
 	    if ($smerr) {
 		&sig_system_error($com, $smerr);
@@ -2677,7 +2801,7 @@ if (defined($ARGV[0])) {
 
 	    unlink "temp.tar";
 
-	    &smog_rename("temp.tar.lv1", "$nfile");
+	    move ("temp.tar.lv1", "$nfile") or die $!;
 
 	    unlink <header.tar 0*.tar>;
 	    if (-f ".tar_err") {
@@ -2712,14 +2836,14 @@ if (defined($ARGV[0])) {
 		&sig_error("This does not appear to be a valid backup file","$GUI_NAME was unable to open it.");
 	    }
 
-	    opendir DIR,  $curworkdir;
+	    opendir DIR, $curworkdir;
 	    while ($file = readdir(DIR)) {
 		if ($file =~ /.tar$/) {
 		    &smog_system("tar -xf $file 2>$nulfile");
 		    unlink $file;
 		}
 	    }
-	    close DIR;
+	    closedir DIR;
 
 	    &sig_complete;
 	    exit 0;
@@ -2772,7 +2896,7 @@ if (defined($ARGV[0])) {
 	    &smog_chdir($curworkdir);
 
 	    unless ($leave_bak == 1) {
-		&clean_old;
+		&clean_old($handle);
 	    }
 
 	    $blankname = "blank.jpg";
@@ -2822,7 +2946,8 @@ if (defined($ARGV[0])) {
 					&try_to_recover($start,$i);
 					unlink $blankname;
 				    }
-				    &sig_system_error("Renaming \"$curworkdir/$from$resize_ext\" to \"$curworkdir/$to.mgk\"", $!);
+				    &sig_system_error("Renaming \"$curworkdir/$from$resize_ext\" " .
+						      "to \"$curworkdir/$to.mgk\"", $!);
 				    exit 1;
 				}
 			    }
@@ -2841,7 +2966,8 @@ if (defined($ARGV[0])) {
 				if ($leave_bak) {
 				    #letterboxing was done with resize
 				    unless ($from eq $to) {
-					&smog_copy("$curworkdir/$from$img_ext", "$curworkdir/$to$img_ext.2");
+					&smog_copy("$curworkdir/$from$img_ext",
+						   "$curworkdir/$to$img_ext.2");
 					if ($panic) {
 					    &try_to_recover($start, $i);
 					    unlink $pidfile;
@@ -2864,7 +2990,8 @@ if (defined($ARGV[0])) {
 					exit 1;
 				    }
 				    # make $to.mgk $to.img_ext
-				    &letterbox_frame($to, abs($newwidth), abs($newheight), $owidth, $oheight);
+				    &letterbox_frame($to, abs($newwidth), abs($newheight),
+						     $owidth, $oheight);
 
 				    if ($panic) {
 					&try_to_recover($start, $i - 1);
@@ -2919,12 +3046,14 @@ if (defined($ARGV[0])) {
 		    if (-f "$curworkdir/$name.mgk.2") {
 			if (-f "$curworkdir/$name$img_ext.2") {
 			    unlink "$curworkdir/$name$img_ext";
-			    $smerr = &smog_rename("$curworkdir/$name$img_ext.2", "$curworkdir/$name$img_ext");
+			    $smerr = &smog_rename("$curworkdir/$name$img_ext.2",
+						  "$curworkdir/$name$img_ext");
 			    if (!$smerr) {
 				if ($letterbox) {
 				    &try_to_recover($start, $end);
 				}
-				&sig_system_error("Renaming \"$curworkdir/$name$img_ext.2\" to \"$curworkdir/$name$img_ext\"", $!);
+				&sig_system_error("Renaming \"$curworkdir/$name$img_ext.2\" to " .
+						  "\"$curworkdir/$name$img_ext\"", $!);
 				exit 1;
 			    }
 			}
@@ -2935,7 +3064,8 @@ if (defined($ARGV[0])) {
 			    if ($letterbox) {
 				&try_to_recover($start, $end);
 			    }
-			    &sig_system_error("Renaming \"$curworkdir/$name.mgk.2\" to \"$curworkdir/$name.mgk\"", $!);
+			    &sig_system_error("Renaming \"$curworkdir/$name.mgk.2\" to " .
+					      "\"$curworkdir/$name.mgk\"", $!);
 			    exit 1;
 			}}}}
 
@@ -3005,7 +3135,7 @@ if (defined($ARGV[0])) {
 
 	    if (!$leave_bak) {
 		#remove .mgk files from undo
-		&clean_old;
+		&clean_old($handle);
 	    }
 
 	    &sig_complete;
@@ -3015,7 +3145,7 @@ if (defined($ARGV[0])) {
 
 	if ($command eq "cut") {
 	    unlink "$curworkdir/pause";
-	    &clean_old;
+	    &clean_old($handle);
 
 	    $start = $ARGV[2];
 	    $end = $ARGV[3];
@@ -3050,7 +3180,7 @@ if (defined($ARGV[0])) {
 		&sig_complete;
 		exit 1;
 	    }
-	    unlink glob "$curworkdir/*.png $curworkdir/*.jpg audio";
+	    unlink glob "$curworkdir/*.png $curworkdir/*.jpg $curworkdir/audio";
 
 	    if ($GUI_NAME eq "LiVES") {
 		# LiVES needs this to stop the progress dialog from flickering
@@ -3212,7 +3342,7 @@ if (defined($ARGV[0])) {
 		unlink $audio_in;
 	    }
 
-	    &smog_rename($audio_out, $nfile);
+	    move($audio_out, $nfile) or die $!;
 	    &sig_complete;
 	    exit 0;
 	}
@@ -3682,7 +3812,7 @@ if (defined($ARGV[0])) {
 	    ##print STDERR "DO UPDATE is $do_update\n";
 
 	    my $youtube_dl = "youtube-dl";
-	    my $lives_config_bindir = "$configdir" . ".lives-dir/bin";
+	    my $lives_config_bindir = "$configdir/.lives-dir/bin";
 	    my $prog = "";
 	    my $islocal = 0;
 	    my $com;
@@ -3692,13 +3822,7 @@ if (defined($ARGV[0])) {
 		$prog = "$lives_config_bindir/$youtube_dl";
 		$islocal = 1;
 		if (! -d $lives_config_bindir) {
-		    $com = "/bin/mkdir -p \"$lives_config_bindir\"";
-		    $smerr = &smog_system($com);
-		    if ($smerr || ! -d $lives_config_bindir) {
-			&sig_system_error("Creating directory $lives_config_bindir",
-					  $smerr);
-			exit 1;
-		    }
+		    make_path $lives_config_bindir;
 		}
 		#print STDERR "commencing download\n";
 		$com = "wget https://yt-dl.org/downloads/latest/youtube-dl -O '$prog'";
@@ -3757,12 +3881,12 @@ if (defined($ARGV[0])) {
 		    if (!$islocal && $line =~ /^youtube-dl:(.*)error:(.*)/) {
 			#print STDERR "ret ERROR\n";
 			&sig_system_error(
-			$com, $2, "_ASKPERM_|DOWNLOADLOCAL|youtube-dl|" .
-			"13|forceddownload|" .
-			"wget https://yt-dl.org/downloads/latest/youtube-dl " .
-			"-O '$lives_config_bindir/$youtube_dl'\nchmod u+x " .
-			"'$lives_config_bindir/$youtube_dl'"
-			);
+			     $com, $2, "_ASKPERM_|DOWNLOADLOCAL|youtube-dl|" .
+			     "13|forceddownload|" .
+			     "wget https://yt-dl.org/downloads/latest/youtube-dl " .
+			     "-O '$lives_config_bindir/$youtube_dl'\nchmod u+x " .
+			     "'$lives_config_bindir/$youtube_dl'"
+			    );
 			exit 1;
 		    }
 		}
@@ -4071,7 +4195,8 @@ if (defined($ARGV[0])) {
 		unlink $audiofile;
 	    }
 
-	    $com = "\"$cdda2wav_command\" -q -x -D \"$cdplay_device\" -t $track \"$audiofile\"| >$nulfile 2>&1";
+	    $com = "\"$cdda2wav_command\" -q -x -D \"$cdplay_device\" -t $track \"$audiofile\"| " .
+		">$nulfile 2>&1";
 	    $smerr = &smog_system($com);
 	    if ($smerr) {
 		&sig_system_error($com, $smerr);
@@ -4171,7 +4296,7 @@ if (defined($ARGV[0])) {
 		    $new_frames = $num_frames + $end - $start + 1;
 		} else {
 		    if ($start >= 0) {
-			&clean_old;
+			&clean_old($handle);
 			if ($with_audio) {
 			    if (-f "audio") {
 				## back this up here for undo
@@ -4258,7 +4383,7 @@ if (defined($ARGV[0])) {
 	    }
 
 	    if ($undo_cut) {
-		&clean_old;
+		&clean_old($handle);
 	    }
 
 	    &sig_complete;
@@ -4281,7 +4406,7 @@ if (defined($ARGV[0])) {
 		&undo_audio;
 	    }
 	    # will abort on failure
-	    &clean_old;
+	    &clean_old($handle);
 	    &sig_complete;
 	    exit 0;
 	}
@@ -4328,7 +4453,7 @@ if (defined($ARGV[0])) {
 	    unless (defined($fx_prev)) {
 		$out_ext = ".mgk";
 		$out_prefix = $img_prefix;
-		&clean_old;
+		&clean_old($handle);
 	    }
 	    if ($status == 0) {
 		$plugin_name = $command;
@@ -4423,14 +4548,17 @@ if (defined($ARGV[0])) {
 		my $err;
 
 		if ($num_in_channels == 2) {
-		    $err = &smog_system("\"$plugin_name\" process \"$curworkdir\" $img_prefix2 $img_prefix $out_prefix $out_ext " .
+		    $err = &smog_system("\"$plugin_name\" process \"$curworkdir\" $img_prefix2 " .
+					"$img_prefix $out_prefix $out_ext " .
 					"@ARGV > \"$res_file\"");
 		}
 		elsif ($num_in_channels == 1) {
-		    $err = &smog_system("\"$plugin_name\" process \"$curworkdir\" $img_prefix $out_prefix $out_ext @ARGV > \"$res_file\"");
+		    $err = &smog_system("\"$plugin_name\" process \"$curworkdir\" $img_prefix " .
+					"$out_prefix $out_ext @ARGV > \"$res_file\"");
 		}
 		else {
-		    $err = &smog_system("\"$plugin_name\" process \"$curworkdir\" $out_prefix $out_ext @ARGV > \"$res_file\"");
+		    $err = &smog_system("\"$plugin_name\" process \"$curworkdir\" $out_prefix " .
+					"$out_ext @ARGV > \"$res_file\"");
 		}
 		## TODO - use pipe
 		if (!$err) {
@@ -4482,7 +4610,8 @@ if (defined($ARGV[0])) {
 	    my $set = $ARGV[2];
 	    my $proj_file = $ARGV[3];
 	    &smog_chdir($workdir);
-	    $com = "tar --exclude=*.bak --exclude=.pid* --exclude .status* --exclude=lock.* --exclude=*.mgk " .
+	    $com = "tar --exclude=*.bak --exclude=.pid* --exclude .status* --exclude=lock.* " .
+		"--exclude=*.mgk " .
 		"--exclude=*.tmp --exclude=audioclip* -czf \"$proj_file\" $set";
 	    my $smerr = &smog_system($com);
 	    if ($smerr) {
@@ -4494,15 +4623,9 @@ if (defined($ARGV[0])) {
 	    exit 0;
 	}
 
-	if ($command eq "bg_weed") {
-	    my $opts = $ARGV[2];
-	    my @left = &weed(0);
-	    &sig_complete(@left);
-	    exit 0;
-	}
-
 	if (!caller) {
-	    print STDERR "smogrify for $GUI_NAME v$version: unrecognised command $command. Exiting with code 100.\n";
+	    print STDERR "smogrify for $GUI_NAME v$version: unrecognised command $command. " .
+		"Exiting with code 100.\n";
 	    print STDERR "smogrify for $GUI_NAME v$version: \@ARGV = " . join(" ", @ARGV) . "\n";
 	}
 	unlink "$pidfile";
@@ -4530,7 +4653,11 @@ if (defined($ARGV[0])) {
 	sprintf("%08d", shift);
     }
 
-
+    sub perl_supports {
+	my $thing = shift;
+	return !system("perl -e 'use $thing;' 2>/dev/null");
+    }
+    
     sub check_for_pause {
 	if (-f "$curworkdir/pause") {
 	    &smog_system_sync();
@@ -4566,18 +4693,30 @@ if (defined($ARGV[0])) {
     }
 
 
+    sub is_dangerous {
+	my $pathname = shift;
+	if (index($pathname, ".") != -1) {
+	    return 1;
+	}
+	return 0;
+    }
+
+
+    
     sub is_writeable {
 	# see if is writable or creatable
+	## if the file does not exist and $leave is nonzero the the file will be created
+	## with mode 644, modified by umask
 	my ($file, $leave) = @_;
 	return 1 if -f $file && -w $file;
-	return 0 if -e $file;
-	my $ret = &smog_system("touch \"$file\"");
-	if ($ret) {
+	return 0 if (0 + -e $file);
+	my $err = &smog_system("/bin/touch \"$file\"");
+	if ($err) {
 	    unlink $file;
 	    return 0;
 	}
 	chmod 0644, $file;
-	$ret = -w $file;
+	my $ret = -w $file;
 	if (!$leave) {
 	    unlink $file;
 	}
@@ -4629,7 +4768,7 @@ if (defined($ARGV[0])) {
 	}
 	for ($i = $smstart; $i <= $smend; $i++) {
 	    $name = &mkname($i);
-	    smog_rename("$name.bak", "$name$img_ext");
+	    &smog_rename("$name.bak", "$name$img_ext");
 	}
 	if ($DEBUG_SMOGRIFY) {
 	    print STDERR "Clip recovery process succeeded for $curworkdir\n";
@@ -4735,7 +4874,7 @@ if (defined($ARGV[0])) {
 
 	unless(!defined($pidfile) || $pidfile eq "") {
 	    # don't want to get killed in this stage...
-	    unlink "$pidfile";
+	    unlink $pidfile;
 	}
 
 	for ($i = $start; $i <= $end; $i++) {
@@ -4746,9 +4885,9 @@ if (defined($ARGV[0])) {
 			unlink "$curworkdir/$name$img_ext";
 		    }
 		    else {
-			$smres = smog_rename("$curworkdir/$name$img_ext", "$curworkdir/$name.bak");
+			$smres = &smog_rename("$curworkdir/$name$img_ext", "$curworkdir/$name.bak");
 			if (!$smres) {
-			    try_to_recover($start, $i - 1);
+			    &try_to_recover($start, $i - 1);
 			    if ($DEBUG_SMOGRIFY) {
 				print STDERR "smogrify debug - rename failed ($!): \"$curworkdir/$name$img_ext\",\"$curworkdir/$name.bak\"\n";
 			    }
@@ -4790,26 +4929,30 @@ if (defined($ARGV[0])) {
 
 	for ($i = $start; $i <= $end; $i++) {
 	    $name = &mkname($i);
-	    if (-f "$curworkdir/$name.pre") {
-		if (-f "$curworkdir/$name$img_ext") {
-		    unlink "$curworkdir/$name.bak";
-		    $smerr = &smog_rename("$curworkdir/$name$img_ext", "$curworkdir/$name.bak");
+	    if (-f "$name.pre") {
+		if (-f "$name$img_ext") {
+		    unlink "$name.bak";
+		    $smerr = &smog_rename("$name$img_ext", "$name.bak");
 		    if (!$smerr) {
 			&try_to_recover($start, $i - 1);
 			if ($DEBUG_SMOGRIFY) {
-			    print STDERR "smogrify debug - rename failed ($!): \"$curworkdir/$name$img_ext\",\"$curworkdir/$name.bak\"\n";
+			    print STDERR "smogrify debug - rename failed ($!): " .
+				"\"$curworkdir/$name$img_ext\",\"$curworkdir/$name.bak\"\n";
 			}
-			&sig_system_error("Renaming \"$curworkdir/$name$img_ext\" to \"$curworkdir/$name.bak\"");
+			&sig_system_error("Renaming \"$curworkdir/$name$img_ext\" to " .
+					  "\"$curworkdir/$name.bak\"");
 			exit 1;
 		    }
 		}
-		$smerr = rename "$curworkdir/$name.pre", "$curworkdir/$name$img_ext";
+		$smerr = rename "$name.pre", "$name$img_ext";
 		if (!$smerr) {
 		    &try_to_recover($start, $i);
 		    if ($DEBUG_SMOGRIFY) {
-			print STDERR "smogrify debug - rename failed ($!): \"$curworkdir/$name.pre\",\"$curworkdir/$name$img_ext\"\n";
+			print STDERR "smogrify debug - rename failed ($!): " .
+			    "\"$curworkdir/$name.pre\",\"$curworkdir/$name$img_ext\"\n";
 		    }
-		    &sig_system_error("Renaming \"$curworkdir/$name.pre\" to \"$curworkdir/$name$img_ext\"");
+		    &sig_system_error("Renaming \"$curworkdir/$name.pre\" to " .
+				      "\"$curworkdir/$name$img_ext\"");
 		    exit 1;
 		}
 	    }
@@ -4891,7 +5034,7 @@ if (defined($ARGV[0])) {
 	    &smog_rename($audio, $audio_bak);
 	}
 	else {
-	    &clean_old;
+	    &clean_old($handle);
 	    &smog_copy($audio, $audio_bak);
 	    return if $panic;
 	}
@@ -5028,7 +5171,7 @@ if (defined($ARGV[0])) {
 
     sub smog_rename {
 	# CAUTION: return value of 0 is error here
-
+	# move should be used if there is the possibilty of traversing filesystems
 	my ($smfrom, $smto) = @_;
 	my $smcomret = rename $smfrom, $smto;
 
@@ -5047,6 +5190,10 @@ if (defined($ARGV[0])) {
     sub smog_copy {
 	my ($smfrom, $smto) = @_;
 	my $smcomret;
+	## cp -f, --force
+        ##      if  an  existing destination file cannot be opened, remove it and try again
+	## -b baclup dest files
+	## -n no clobber 
 
 	$smcomret = system("/bin/cp -f \"$smfrom\" \"$smto\"");
 
@@ -5408,7 +5555,8 @@ if (defined($ARGV[0])) {
 		$bgcolour = "#000000";
 	    }
 
-	    $com = "$smog_convert_command -size $size" . "x$size\\! xc:$bgcolour $input_prefix"."blank$input_ext >$nulfile 2>&1";
+	    $com = "$smog_convert_command -size $size" . "x$size\\! xc:$bgcolour $input_prefix" .
+		"blank$input_ext >$nulfile 2>&1";
 
 	    $smerror = &smog_system($com);
 
@@ -5418,13 +5566,15 @@ if (defined($ARGV[0])) {
 		return;
 	    }
 
-	    $com = "$smog_composite_command -compose plus -dissolve 100 -geometry $hsize" . "x$vsize\\!+$xstart\\!+$ystart\\! "
-		."$input_prefix\"$name$input_ext\" $input_prefix"."blank$input_ext $input_prefix\"$name$input_ext\" >$nulfile 2>&1";
+	    $com = "$smog_composite_command -compose plus -dissolve 100 -geometry $hsize" .
+		"x$vsize\\!+$xstart\\!+$ystart\\! "
+		."$input_prefix\"$name$input_ext\" $input_prefix".
+		"blank$input_ext $input_prefix\"$name$input_ext\" >$nulfile 2>&1";
 
 	    $smerror = &smog_system($com);
 
 	    if ($smerror) {
-		&sig_system_error("$com", $smerror);
+		&sig_system_error($com, $smerror);
 		$panic = 1;
 		return;
 	    }
@@ -5529,7 +5679,8 @@ if (defined($ARGV[0])) {
 
 		if ($length eq "0" && !(defined($is_remote) && ($is_remote > 0)) && !$retried) {
 		    close $fh;
-		    $com = "$mplay_command -noconfig all -nocache -demuxer lavf -identify -vo null -ao null -frames 0 \"$file\" " .
+		    $com =
+			"$mplay_command -noconfig all -nocache -demuxer lavf -identify -vo null -ao null -frames 0 \"$file\" " .
 			"<$nulfile";
 		    open ($fh, "$com |");
 		    $retried = 1;
@@ -5935,7 +6086,8 @@ if (defined($ARGV[0])) {
 		    $is_video = $is_audio = $is_format = 0;
 		    if ($1 eq "video") {
 			if ($id_vid_form) {
-			    print STDERR "Warning, found multiple video streams in container. Only the first will be imported.\n";
+			    print STDERR "Warning, found multiple video streams in container. " .
+				"Only the first will be imported.\n";
 			    next;
 			}
 			$id_vid_form = $codec;
@@ -7922,29 +8074,44 @@ if (defined($ARGV[0])) {
 
     sub clean_old {
 	# clear away any old backup files, etc.
-	my $trashdir = shift;
+	my ($handle, $movetotrash, $log) = @_;
+	if ($movetotrash && &is_dangerous($DEFTRASH)) {
+	    exit 1;
+	}
 	return if (! -d "$workdir/$handle" || ! -f "$workdir/$handle/header.lives");
 	&smog_chdir("$workdir/$handle");
-	if ($notify) {
-	    print STDERR "smogrify: removing *.mgk    *.bak    *.pre    *.tmp    pause    audio.*    audiodump*   audioclip\n";
+	if ($log) {
+	    print "smogrify: removing *.mgk *.bak *.pre *.tmp" .
+		" pause audio audiodump* audioclip\n";
+	    print "smogrify: from directory $workdir/$handle\n";
+
+	    print STDERR  "smogrify: removing *.mgk *.bak *.pre *.tmp" .
+		" pause audio audiodump* audioclip\n";
 	    print STDERR "smogrify: from directory $workdir/$handle\n";
 	}
-	my @files = glob "*.mgk *.bak *.pre *.tmp pause audio.* audiodump* audioclip";
+
 	my $use_trash = 0;
-	if ($trashdir && -d $trashdir && -w $trashdir) {
-	    $use_trash = 1;
+	my @files = glob ("*.mgk *.bak *.pre *.tmp pause audio audiodump* audioclip");
+	if ($movetotrash) {
+	    my $deftrashdir = "$workdir/.$DEFTRASH";
+	    if (! -d $deftrashdir) {
+		make_path $deftrashdir, {mode => 1777};
+	    }
+	    if (-d $deftrashdir && -w $deftrashdir) {
+		$use_trash = 1;
+	    }
 	}
 	foreach my $xfile (@files) {
 	    if ($use_trash) {
-		move ($xfile, "$trashdir/$xfile");
+		## concat $handle and $file without dirsep, just so we have a unique filename
+		&smog_rename($xfile, "$deftrashdir/$handle$file");
 	    }
 	    else {
 		unlink $xfile;
 	    }
 	}
-	&smog_system_sync();
+	&smog_chdir($workdir);
     }
-
 
 
     sub sig_complete {
@@ -7994,7 +8161,7 @@ if (defined($ARGV[0])) {
 	my $status = "audio_ended|" . join("|", @_);
 
 	open OUT, ">", "$statusfile.play";
-	# autoflush output
+	# autoflush out0put
 	select((select(OUT), $| = 1)[0]);
 	print OUT $status;
 	close OUT;
@@ -8008,7 +8175,8 @@ if (defined($ARGV[0])) {
 
 
     sub sig_error {
-	# WARNING: error strings MUST NOT contain newlines, instead you can pass up to 3 lines of text as params
+	# WARNING: error strings MUST NOT contain newlines,
+	#instead you can pass up to 3 lines of text as params
 	# write to backend -> frontend $statusfile
 
 	return if (! -d $curworkdir);
@@ -8437,7 +8605,7 @@ if (defined($ARGV[0])) {
 	}
 
 	unlink($newrcfile);
-	if (-e $newrcfile) {
+	if (0 + -e $newrcfile) {
 	    &startup_error(4, "rc_set_new", "remove_new0", "$newrcfile:\@:");
 	}
 	if (!defined(open OUT, ">", $newrcfile)) {
@@ -8510,7 +8678,7 @@ if (defined($ARGV[0])) {
 	}
 	else {
 	    if ($orcsize) {
-		if (!defined(open IN, "<", $xrcfile) && -e $xrcfile) {
+		if (!defined(open IN, "<", $xrcfile) && (0 + -e $xrcfile)) {
 		    close OUT;
 		    unlink $newrcfile;
 		    &startup_error(3, "rc_get", "rc_set_open_file", "$xrcfile:\@:");
@@ -8643,7 +8811,7 @@ if (defined($ARGV[0])) {
 				close IN;
 				close OUT;
 				unlink "$newrcfile";
-				if (-e $newrcfile) {
+				if (0 + -e $newrcfile) {
 				    close OUT;
 				    &startup_error(4, "rc_set_new", "remove_new1", "$newrcfile:\@:");
 				}
@@ -8734,7 +8902,7 @@ if (defined($ARGV[0])) {
 	if ($xrcfile eq $rcfile) {
 	    # attempt to backup $rcfile before replacement
 	    unlink $recrcfile;
-	    if (-e $recrcfile) {
+	    if (0 + -e $recrcfile) {
 		&startup_error(4, "rc_set_rec", "remove_recovery1", "$recrcfile:\@:");
 	    }
 	    if (-s $rcfile) {
@@ -8778,7 +8946,7 @@ if (defined($ARGV[0])) {
 	$delpref = $noreplace = 0;
 
 	unlink $newrcfile;
-	if (-e $newrcfile) {
+	if (0 + -e $newrcfile) {
 	    &startup_error(4, "rc_set_new", "remove_new2", "$newrcfile:\@:");
 	}
 
@@ -8808,7 +8976,7 @@ if (defined($ARGV[0])) {
 		print STDERR "smogrify: $rcfile is damaged and could not be removed.\n";
 		print STDERR "smogrify: File MUST contain at least a <version> key.\n";
 	    }
-	    if (! -e $rcfile) {
+	    if (! (0 + -e $rcfile)) {
 		print STDERR "smogrify: $rcfile not present.\n";
 		if (-s $recrcfile) {
 		    print STDERR "smogrify: Recovery may be possible from $recrcfile\n";
@@ -8843,7 +9011,7 @@ if (defined($ARGV[0])) {
 	## attempt a one-time recovery of $rcfile from $rcfile.recovery
 	#inputs: $rcfile, $recrcfile, $recrcfile_tried
 
-	return "" if (-e $rcfile);
+	return "" if (0 + -e $rcfile);
 
 	my $xrecrcfile = $recrcfile;
 	if (! -s $recrcfile) {
@@ -8861,12 +9029,12 @@ if (defined($ARGV[0])) {
 	}
 
 	# try to back up the recovery file if we can
-	if (-e $recrcfile_tried) {
+	if (0 + -e $recrcfile_tried) {
 	    unlink $recrcfile_tried;
 	}
 
 	$panic = 0;
-	if (! -e $recrcfile_tried) {
+	if (! (0 + -e $recrcfile_tried)) {
 	    &smog_copy($xrecrcfile, $recrcfile_tried);
 	    if (!$panic && -s $recrcfile_tried == $size) {
 		# $recrcfile succesfully renamed as $recrcfile_tried
@@ -9167,40 +9335,41 @@ if (defined($ARGV[0])) {
 
     sub fndset {
 	# check if a directory is in a set (old style)
-	# but useful for frontend marking the currently opened clips, so we do not prune them by accident
+	# but useful for frontend marking the currently opened clips,
+	# so we do not prune them by accident
 
-	/^set\./ or return;
+	/^set\./ or return; ###/ fix formatting for EMACS...
 	$in_set = 1;
-		    }
+    }
 
 
-	# get default values
+    # get default values
 
-	sub rc_get_default {
+    sub rc_get_default {
 	# return a value from our .rc file
 	my $key = shift;
 	my $ret = "";
 
 	if ($key eq "mplayer_play_video_command") {
-        $ret = "\"" . &get_mplayer_location . "\"";
-        if (!($ret eq "")) {
-	$ret .= " -double";
-        }
+	    $ret = "\"" . &get_mplayer_location . "\"";
+	    if (!($ret eq "")) {
+		$ret .= " -double";
+	    }
 	}
 
 	elsif ($key eq "sox_command") {
-        $ret = "\"" . &location("play") . "\"";
+	    $ret = "\"" . &location("play") . "\"";
 	}
 
 	elsif ($key eq "mplayer_audio_command") {
-        $ret = "\"". &get_mplayer_location . "\"";
+	    $ret = "\"". &get_mplayer_location . "\"";
 	}
 
 	$ret;
-		    }
+    }
 
 
-	sub get_fs_type {
+    sub get_fs_type {
 	my $dir = shift;
 	my @res = split /\n/, &smog_system_direct("df -T");
 
@@ -9359,7 +9528,8 @@ if (defined($ARGV[0])) {
 		next;
 	    }
 	    if ($word eq "Condensed" || $word eq "Expanded" || $word eq "ExtraCondensed"
-		|| $word eq "ExtraExpanded" || $word eq "SemiCondensed" || $word eq "SemiExpanded" || $word eq "UltraCondensed"
+		|| $word eq "ExtraExpanded" || $word eq "SemiCondensed" || $word eq "SemiExpanded"
+		|| $word eq "UltraCondensed"
 		|| $word eq "UltraExpanded") {
 		$stretch = $word;
 		$fontpart = 0;
@@ -9404,7 +9574,8 @@ if (defined($ARGV[0])) {
 	my $dirname = shift;
 
 	if (-d "$workdir/$dirname"
-	    && ($dirname =~ /^scrap[0-9]+$/ || $dirname =~ /^ascrap[0-9]+$/ || $dirname =~ /^fsp[0-9]+$/)) {
+	    && ($dirname =~ /^scrap[0-9]+$/ || $dirname =~ /^ascrap[0-9]+$/|| $dirname =~ /^thm[0-9]+$/
+		|| $dirname =~ /^fsp[0-9]+$/)) {
 	    return 1;
 	}
 	return 0;
@@ -9413,19 +9584,31 @@ if (defined($ARGV[0])) {
 
     sub weed {
 	# here is where we clear up diskspace
+	### - actual deletion is no longer done. Instead this is a kind of dry run.
+	### a zero length file of the same name is created in the trash dir
+	### and the user can choose whether to delete the originals or cancel
+	### a commentary is produced both on STDERR and STDOUT. The latter would be picked up
+	### using popen from the front end.
 
-	my $opts = shift;
+	my ($opts, $trashdir, $new_work) = @_;
 
-	# opts: - if unset bit 0 (1)  delete clips not in any set and not marked as "in-use" (protected with set.* file)
-	#      - if unset bit 1 (2)  prune (clean up) any non "in-use" clips (remove backup files etc.) (prot. w. noprune)
-	#	   - if set   bit 2 (4)  remove any sets (directories) with layouts but no clips (subdirectories)
+	&smog_chdir($workdir);
+	
+	# opts: - if unset bit 0 (1)  delete clips not in any set and not marked as "in-use"
+	# (protected with set.* file)
+	#      - if unset bit 1 (2)  prune (clean up) any non "in-use" clips (remove backup
+	# files etc.) (prot. w. noprune)
+	#	   - if set   bit 2 (4)  remove any sets (directories) with layouts but no
+	# clips (subdirectories)
 	#      - if unset bit 3 (8)  remove marker files
 	#      - if unset bit 4 (16) remove misc. files
+	# bit 15 : remove trash (wildacard) - if only bit set only remove trash wildcard
 
 	my $file;
 	my @left; ## list of diirs for manual removal
-	&smog_chdir($workdir);
 
+	my $tchk = 0;
+	
 	# get initial diskspace
 	if ($USE_WARNINGS) {
 	    no warnings 'numeric';
@@ -9434,41 +9617,51 @@ if (defined($ARGV[0])) {
 	if ($USE_WARNINGS) {
 	    use warnings 'numeric';
 	}
-	if (!defined($new_work) || $new_work eq "") {
-	    print STDERR "\n\n\n\nsmogrify: running diskspace cleanup in $workdir\n";
+	if (!$new_work) {
+	    print "\n\n\n\nsmogrify: running diskspace analysis in $workdir\n\n";
 	}
 	else {
 	    print STDERR "\n\n\n\nsmogrify: migrating contents of $workdir to $new_work\n";
+	    make_path $new_work;
 	}
+
+	$trashdir = "$workdir/$trashdir";
+
 	#print STDERR "smogrify: size of directory at start is $start_total bytes\n";
 	opendir DIR, $workdir;
 	while ($file = readdir(DIR)) {
-	    unless ($file =~ /^\./) {
+	    print STDERR "\nFile entry: $file:\n";
+	    unless ($file eq "." || $file eq ".." || $file eq ".$DEFTRASH") {
 		if (-d "$workdir/$file") {
-		    print STDERR "\n\nchecking subdir $workdir/$file\n";
+		    print STDERR "is a directory...";
 		    # remove a set unlesss it has clips OR (layouts AND NOT (opts & 0x04))
-		    if (&is_non_empty_dir("$workdir/$file/clips") || (&is_non_empty_dir("$workdir/$file/layouts") && !($opts & 0x04))) {
-			# new style sets, check clips and optionally layouts
-			unless (!defined($new_work) || $new_work eq "") {
-			    print STDERR "smogrify: moving $workdir/$file to $new_work/$file\n";
+		    if (&is_non_empty_dir("$workdir/$file/clips")
+			|| (&is_non_empty_dir("$workdir/$file/layouts") && !($opts & 0x04))) {
+			# new style sets, check clips anyd optionally layouts
+			if ($new_work) {
+			    print STDERR "smogrify: moving $workdir/$file\nto\n$new_work/$file\n";
 			    # we are to move this set
 			    if (-d "$new_work/$file") {
-				print STDERR "smogrify: backing up $new_work/$file to $new_work/$file.bak first\n";
-				&smog_rename( "$new_work/$file","$new_work/$file.bak");
+				print STDERR "smogrify: backing up $new_work/$file to " .
+				    "$new_work/$file.bak first\n";
+				&smog_rename("$new_work/$file", "$new_work/$file.bak");
 			    }
 			    unless ($opts & 0x02) {
-				unless (-f "$workdir/$file/noprune") {
-				    print STDERR "smogrify: removing unnecessary files from $workdir/$file\n";
+				unless (-f "$file/noprune") {
+				    print STDERR "smogrify: removing unnecessary files from " .
+					"$workdir/$file\n";
 				    print STDERR "\nsmogrify: (can be overriden with option 0x02)\n";
-				    &smog_chdir("$workdir/$file");
-				    &prune;
-				    print STDERR "smogrify: removing lock.* files from $workdir/$file\n";
+				    &prune($file, 0);
+				    print STDERR "smogrify: removing lock.* files from " .
+					"$workdir/$file\n";
 				    print STDERR "\nsmogrify: (can be overriden with option 0x02)\n";
-				    unlink glob "$workdir/$file/lock.*";
-				    &smog_chdir($workdir);
+				    print "removing lock.* files from " .
+					"$workdir/$file\n";
+				    print "(can be overriden with option 0x02)\n";
+				    unlink glob "$file/lock.*";
 				}
 			    }
-			    &smog_rename("$workdir/$file", "$new_work/$file");
+			    move($file, $new_work) or die $!;
 			    print STDERR "smogrify: moved $workdir/$file to $new_work/$file\n";
 			}
 			else {
@@ -9476,134 +9669,184 @@ if (defined($ARGV[0])) {
 			}
 		    }
 		    else {
+			print STDERR "with no clips...";
 			$in_set = 0;
-			find(\&fndset, "$workdir/$file/");
+			find(\&fndset, $file);
 			print STDERR "smogrify: checking $workdir/$file\n";
 			if (!$in_set) {
-			    print STDERR "smogrify: file does not contain set.* file, assuming it is not in a set\n";
+			    print STDERR "smogrify: file does not contain set.* file, " .
+				"assuming it is not in a set\n";
 			    if (!($opts & 0x01)) {
 				print STDERR "\nsmogrify: option 0x01 is not set, so\n";
 				print STDERR "considering $workdir/$file for removal\n";
 				my $has_hdrs = 0;
 				unless ($opts & 0x20) {
-				    @files = glob("$workdir/$file/header*");
+				    &smog_chdir("$workdir/$file");
+				    @files = glob("header*");
 				    if (@files) {
 					$has_hdrs = 1;
 				    }
+				    &smog_chdir("$workdir");
 				}
-				if (!$has_hdrs && (-f "$workdir/$file/order" || (int($file) > 65535 && $file =~ /^[0-9]{5,}$/)
+				if (!$has_hdrs && (-f "$file/order"
+						   || (int($file) > 65535 && $file =~ /^[0-9]{5,}$/)
 						   || &is_specialdir($file))) {
-				    print STDERR "removing it\n";
-				    &smog_system("/bin/rm -rf \"$workdir/$file\"");
+				    print STDERR "Will remove $workdir/$file\n";
+				    print "Will remove $workdir/$file\n";
+				    if (! $tchk && ! -d $trashdir) {
+					make_path $trashdir;
+					$tchk = 1;
+				    }
+				    &smog_system("/bin/touch $trashdir/$file");
 				}
 				else {
 				    print STDERR "leaving it because: \n";
 				    if ($has_hdrs) {
-					print STDERR "    - $workdir/$file/ contains header* and we need to check first\n";
+					print STDERR "   - $workdir/$file/ contains header* and we " .
+					    "need to check with the user first\n";
 				    }
 				    else {
 					if (! -f "$workdir/$file/order") {
-					    print STDERR "    - $workdir/$file/order does not exist\n";
+					    print STDERR "   - $workdir/$file/order does not exist\n";
 					}
 					unless (int($file) > 65535 && $file =~ /^[0-9]{5,}$/) {
 					    unless (int($file > 0)) {
-						print STDERR "     - directory name contains non digit\n";
+						print STDERR "   - directory name contains non digit\n";
 					    }
 					    else {
 						unless ($file =~ /^[0-9]{5,}$/) {
-						    print STDERR "     - directory name $file contains fewer than 5 digits\n";
+						    print STDERR "   - directory name $file contains " .
+							"fewer than 5 digits\n";
 						}
 						else {
 						    unless (int($file) > 65535) {
-							print STDERR "     - directory name < 65536\n";
+							print STDERR "   - directory name < 65536\n";
 						    }
 						    else {
-							print STDERR "     - unspecified reason ???!!?\n";
+							print STDERR "   - unspecified reason ???!!?\n";
 						    }}}}}
 
 				    unless (&is_specialdir($file)) {
-					print STDERR "     - directory name does not begin with scrap, ascrap or fsp followed by digits.\n";
+					print STDERR "   - directory name does not begin with scrap, " .
+					    "ascrap or fsp followed by digits.\n";
 				    }
-				    print STDERR "smogrify: manual cleanup may be required if this directory is no longer needed\n";
+				    print STDERR "smogrify: manual cleanup may be required if this " .
+					"directory is no longer needed\n";
 				    push (@left, $file);
 				}}}
-
 			else {
 			    unless ($opts & 0x02) {
-				print STDERR "smogrify: $file contains set.* file, assuming it is in a set\n";
-				unless (-f "$workdir/$file/noprune") {
-				    print STDERR "smogrify: removing unnecessary files from directory\n";
+				print STDERR "smogrify: $file contains set.* file, " .
+				    "assuming it is in a set\n";
+				unless (-f "$file/noprune") {
+				    print STDERR "smogrify: removing unnecessary files " .
+					"from directory\n";
 				    print STDERR "\nsmogrify: (can be overriden with option 0x02)\n";
-				    &smog_chdir("$workdir/$file");
-				    &prune;
-				    &smog_chdir($workdir);
+				    #print "removing unnecessary files " .
+				#	"from directory\n";
+				 #   print "(can be overriden with option 0x02)\n";
+				    &prune($file, 0);
 				}
 			    }
-			    unless (!defined($new_work) || $new_work eq "") {
-				# workdir was changed, so we move all sets (subdirs) from old workdir to new
+			    if ($new_work) {
+				# workdir was changed, so we move all sets (subdirs)
+				# from old workdir to new
 				# [TODO - check for set name collision !]
 				if (-d "$workdir/$file") {
 				    print STDERR "smogrify: moving $workdir/$file to $new_work/$file\n";
 				    if (-d "$new_work/$file") {
-					print STDERR "smogrify: first I will backup $new_work/$file to $new_work/$file.bak\n";
+					print STDERR "smogrify: first I will backup " .
+					    "$new_work/$file to $new_work/$file.bak\n";
 					&smog_rename("$new_work/$file", "$new_work/$file.bak");
 				    }
-				    &smog_rename("$workdir/$file", "$new_work/$file");
+				    move($file, $new_work) or die $!;
 				    print STDERR "smogrify: moved $workdir/$file to $new_work/$file\n";
 				}}}}
 
 		    unless ($opts & 0x08) {
-			if (-d "$workdir/$file") {
-			    print STDERR "smogrify: removing temporary marker files set. and noprune from $workdir/$file\n";
-			    print STDERR "\nsmogrify: (can be overriden with option 0x08)\n";
-			    unlink "$workdir/$file/set.";
-			    unlink "$workdir/$file/noprune";
-			}
+			print STDERR "smogrify: removing temporary marker files set. " .
+			    "and noprune from $workdir/$file\n";
+			print STDERR "\nsmogrify: (can be overriden with option 0x08)\n";
+			unlink "$workdir/$file/set.";
+			unlink "$workdir/$file/noprune";
 		    }
 		}
 		else {
+		    print STDERR "is a file...";
 		    # move crash recovery files
-		    unless (!defined($new_work) || $new_work eq "") {
+		    if ($new_work) {
 			if ($file =~ /^recovery/ || $file =~ /^layout/) {
-			    print STDERR "smogrify: moving recovery files recovery* and layout* from $workdir to $new_work\n";
-			    &smog_rename("$workdir/$file", "$new_work/$file");
-			}}}}}
+			    print STDERR "smogrify: moving recovery files recovery* and layout* " .
+				"from $workdir to $new_work\n";
+			    move($file, $new_work) or die $!;
+			}}}}
+	    print STDERR "analysed.\n";
+	}
 
 	closedir DIR;
-
+	
 	unless ($opts & 0x10) {
 	    # clean up a few extra remnants
-	    &smog_chdir($workdir);
-	    print STDERR "\nsmogrify: removing rfx.* .smogplugin.* .smogval.* .rfx.* .info.* and keep_layout* from $workdir\n";
+	    if (&is_dangerous($DEFTRASH)) {
+		if ($log) {
+		    print "default trash directory $DEFTRASH points to dangerous location\n" .
+			"Check $DEFTRASH setting in $MYNAME. ABORTING\n";
+		    print STDERR "smogrify: default trash directory $DEFTRASH points to " .
+			"dangerous location\nCheck $DEFTRASH setting in $MYNAME. ABORTING\n";
+		}
+		&sig_error("Bad default trashdir");
+	    }
+	    ##print "\nRemoving rfx.* .smogplugin.* .smogval.* .rfx.* .info.*" .
+	    ##	"and keep_layout*\nfrom $workdir";
+	    ##print "\n(can be overriden with option 0x10)\n";
+	    print STDERR "\nsmogrify: removing rfx.* .smogplugin.* .smogval.* .rfx.* .info.*" .
+		"and keep_layout* from $workdir";
 	    print STDERR "\nsmogrify: (can be overriden with option 0x10)\n";
-	    unlink glob "rfx.* .smogplugin.* .smogval.* keep_layout* .rfx* .info.*";
 
-	    print STDERR "\nsmogrify: removing rfx.* .smogplugin.* .smogval.* .rfx.* .info.* and keep_layout* from $workdir\n";
-	    print STDERR "\nsmogrify: (can be overriden with option 0x10)\n";
-	    unlink glob "rfx.* .smogplugin.* .smogval.* keep_layout* .rfx* .info.*";
-	    unless (!defined($new_work) || $new_work eq "") {
+	    my $deftrashdir = "$workdir/.$DEFTRASH";
+	    if (! -d $deftrashdir) {
+		make_path $deftrashdir, {mode => 1777};
+	    }
+	    for $filerem(glob "rfx.* .smogplugin.* .smogval.* keep_layout* .rfx* .info.*") {
+		&smog_rename($filerem, $deftrashdir);
+	    }
+	    if ($new_work) {
+		print "Removing firew* encoder_log_* and stream.* from $workdir\n";
 		print STDERR "smogrify: removing firew* encoder_log_* and stream.* from $workdir\n";
-		unlink glob "firew.* encoder_log_* stream.*";
+		for $filerem(glob "firew.* encoder_log_* stream.*") {
+		    &smog_rename($filerem, $deftrashdir);
+		}
 	    }
 	}
 	unless ($opts & 0x40) {
+	    if (&is_dangerous($DEFTRASH)) {
+		if ($log) {
+		    print "default trash directory $DEFTRASH points to dangerous location\n" .
+			"Check $DEFTRASH setting in $MYNAME. ABORTING\n";
+		    print STDERR "smogrify: default trash directory $DEFTRASH points to " .
+			"dangerous location\nCheck $DEFTRASH setting in $MYNAME. ABORTING\n";
+		}
+		&sig_error("Bad default trashdir");
+	    }
+	    ##print "\nremoving stale recovery files recorded-layout*\nfrom $workdir";
+	    ##print "\n(can be overriden with option 0x40)\n";
 	    print STDERR "\nsmogrify: removing stale recovery files recorded-layout* from $workdir\n";
 	    print STDERR "\nsmogrify: (can be overriden with option 0x40)\n";
-	    unlink glob "recorded-layout*";
+	    my $deftrashdir = "$workdir/.$DEFTRASH";
+	    if (! -d $deftrashdir) {
+		make_path $deftrashdir, {mode => 1777};
+	    }
+	    for $filerem(glob "recorded-layout*") {
+		&smog_rename($filerem, $deftrashdir);
+	    }
 	}
-	# total disk space at end
 
-	#my $end_total = (split / /, (smog_system_direct("du -sb .")))[0];
-	#print STDERR "smogrify: size of directory at end is $end_total bytes\n";
-	#print STDERR "smogrify: recovered " . ($start_total - $end_total) . " bytes\n";
-
-	# return disk space recovered
-	#return $start_total - $end_total;
 	if (@left) {
 	    print STDERR "leaving the following files for manual removal\n";
 	    print STDERR join("\n", @left);
 	    print "\n";
 	}
+	print STDERR "\n";
 	return @left;
     }
 
@@ -9611,13 +9854,8 @@ if (defined($ARGV[0])) {
     sub prune {
 	# clean up old backup images etc in $workdir/$file
 	# part of the diskspace recovery process
-
-	my $old_handle = $handle;
-	$handle = $file;
-	$notify = 1;
-	&clean_old;
-	$notify = 0;
-	$handle = $old_handle;
+	my ($file, $log) = @_;
+	&clean_old($file, 0, $log);
     }
 
 
@@ -9631,16 +9869,17 @@ if (defined($ARGV[0])) {
 
 	my $curworkdir = "$workdir/$handle";
 	my $linksdir = "$curworkdir/lives-symlinks/";
+	exit 1 if (&is_dangerous($linksdir));
 
 	&smog_chdir($curworkdir);
 
 	if (-d $linksdir) {
 	    # remove directory + contents
-	    &smog_system("/bin/rm -rf \"$linksdir\"");
+	    remove_tree($linksdir);
 	}
 
 	#create dir so next step works
-	&smog_system("/bin/mkdir -p \"$linksdir\"");
+	make_path $linksdir;
 
 	# remove dir + any empty parents
 	&smog_system("/bin/rmdir -p \"$linksdir\" 2>$nulfile");
@@ -9649,24 +9888,9 @@ if (defined($ARGV[0])) {
 
     sub is_non_empty_dir {
 	#return 1 if "the parameter" is the name of a directory containing at least one non-dotted file
-
-	#uses opendir and readdir
-
 	my $dirname = shift;
-	my $xfile;
-
-	return 0 if ! -d $dirname;
-
-	opendir TDIR, $dirname;
-	while ($xfile = readdir(TDIR)) {
-	    unless ($xfile =~ /^\./) {
-		closedir TDIR;
-		return 1;
-	    }
-	}
-
-	closedir TDIR;
-	return 0;
+	opendir (my $dh, $dirname) or return 0;
+	return scalar(grep { $_ ne "." && $_ ne ".." } readdir($dh)) == 0;
     }
 
     1; # for require (really !)

@@ -2977,7 +2977,7 @@ static void renumber_clips(void) {
 
     if (mainw->files[cclip] && (cclip == mainw->scrap_file || cclip == mainw->ascrap_file ||
                                 IS_NORMAL_CLIP(cclip)) && mainw->files[cclip]->unique_id == 0l) {
-      mainw->files[cclip]->unique_id = lives_random();
+      mainw->files[cclip]->unique_id = gen_unique_id();
       save_clip_value(cclip, CLIP_DETAILS_UNIQUE_ID, &mainw->files[cclip]->unique_id);
       if (THREADVAR(com_failed) || THREADVAR(write_failed)) bad_header = TRUE;
 

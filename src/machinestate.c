@@ -29,27 +29,29 @@ LIVES_GLOBAL_INLINE double fastrand_dbl(double range) {
 /// pick a pseudo random uint between 0 and range (inclusive)
 LIVES_GLOBAL_INLINE uint32_t fastrand_int(uint32_t range) {return (uint32_t)(fastrand_dbl((double)(++range)));}
 
-//#define BIGPRIME 0x3FFFFFFFFFFFFFC7
+LIVES_GLOBAL_INLINE void lives_srandom(unsigned int seed) {srandom(seed);}
+
+LIVES_GLOBAL_INLINE uint64_t lives_random(void) {return random();}
+
+
+uint64_t gen_unique_id(void) {
+  uint64_t rnum;
+  int randres = getentropy(&rnum, 8);
+  if (randres) {
+    fastrand_val = lives_random();
+    fastrand();
+    fastrand_val ^= lives_get_current_ticks();
+    rnum = fastrand();
+  }
+  return rnum;
+}
+
 
 void init_random() {
-  ssize_t randres = -1;
-  uint64_t rseed = 32749;
-  int randfd;
-
-  // try to get randomness from /dev/urandom
-  randfd = lives_open2("/dev/urandom", O_RDONLY);
-
-  if (randfd > -1) {
-    randres = read(randfd, &rseed, 8);
-    (void)randres;
-    close(randfd);
-  }
-
-  rseed ^= (lives_get_current_ticks() << 27);
-  fastrand_val = rseed;
-  rseed = fastrand();
-
-  lives_srandom((uint32_t)((rseed >> 13) & 0xFFFFFFFF));
+  uint32_t rseed;
+  if (getentropy(&rseed, 4)) rseed = (gen_unique_id() & 0xFFFFFFFF);
+  lives_srandom(rseed);
+  fastrand_val = gen_unique_id();
 }
 
 
@@ -1104,6 +1106,7 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
 #define FUNCSIG_STRING 				       			0X00000004
 #define FUNCSIG_VOIDP 				       			0X0000000D
 #define FUNCSIG_INT_INT64 			       			0X00000015
+#define FUNCSIG_STRING_INT 			      			0X00000041
 #define FUNCSIG_VOIDP_VOIDP 				       		0X000000DD
 #define FUNCSIG_PLANTP_BOOL 				       		0X000000E3
 #define FUNCSIG_VOIDP_VOIDP_VOIDP 		        		0X00000DDD
@@ -1151,6 +1154,11 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
   case FUNCSIG_INT_INT64:
     switch (ret_type) {
     default: CALL_VOID_2(int, int64); break;
+    }
+    break;
+  case FUNCSIG_STRING_INT:
+    switch (ret_type) {
+    default: CALL_VOID_2(string, int); break;
     }
     break;
   case FUNCSIG_VOIDP_VOIDP:
@@ -1609,13 +1617,6 @@ uint64_t lives_thread_join(lives_thread_t work, void **retval) {
   return nthrd;
 }
 
-LIVES_GLOBAL_INLINE void lives_srandom(unsigned int seed) {
-  srandom(seed);
-}
-
-LIVES_GLOBAL_INLINE uint64_t lives_random(void) {
-  return random();
-}
 
 LIVES_GLOBAL_INLINE pid_t lives_getpid(void) {
 #ifdef IS_MINGW

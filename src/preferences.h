@@ -350,6 +350,8 @@ typedef struct {
 #define LIVES_CDISK_REMOVE_LOCK_FILES (1<<16) ///< not yet implemented - TODO
 #define LIVES_CDISK_REBUILD_ORDER_FILES (1<<17) ///< not yet implemented - TODO
 
+#define LIVES_CDISK_SEND_TO_TRASH (1<<31)
+  
   uint32_t clear_disk_opts;
 
 #ifdef HAVE_YUV4MPEG
@@ -423,6 +425,8 @@ typedef struct {
 
   boolean interactive;
   boolean extra_colours;
+
+  boolean autoclean; ///< remove temp files on shutdown / startup
 } _prefs;
 
 enum {
@@ -965,6 +969,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_EXTRA_COLOURS "extra_colours" /// add to prefs window
 #define PREF_SHOW_SUBS "show_subtitles" /// add to prefs window
 #define PREF_AUTOLOAD_SUBS "autoload_subtitles" /// add to prefs window
+#define PREF_AUTOCLEAN_TRASH "autoclean_trash" ///< remove unneeded files on shutdown / startup
 
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"

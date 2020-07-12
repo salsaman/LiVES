@@ -1538,6 +1538,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   prefs->cb_is_switch = FALSE;
 
+  prefs->autoclean = get_boolean_prefd(PREF_AUTOCLEAN_TRASH, TRUE);
+
   //////////////////////////////////////////////////////////////////
 
   if (!mainw->foreign) {
@@ -2252,7 +2254,7 @@ static void set_toolkit_theme(int prefer) {
   if (prefer & LIVES_THEME_DARK) {
     lives_widget_object_set(gtk_settings_get_default(), "gtk-application-prefer-dark-theme", TRUE);
   }
-  lives_widget_object_set(gtk_settings_get_default(), "gtk-theme-name", "Materia");
+  lives_widget_object_set(gtk_settings_get_default(), "gtk-theme-name", "");
   lives_widget_object_get(gtk_settings_get_default(), "gtk-theme-name", &capable->gui_theme_name);
   lives_widget_object_set(gtk_settings_get_default(), "gtk-icon-theme-name", "elementaryXubuntu");
   lives_widget_object_get(gtk_settings_get_default(), "gtk-icon-theme-name", &capable->icon_theme_name);
@@ -2354,9 +2356,9 @@ boolean set_palette_colours(boolean force_reload) {
     if (lives_ascii_strcasecmp(future_prefs->theme, "none")) {
       palette->style = lcol.red;
       if (!(palette->style & STYLE_LIGHT)) {
-        if (mainw->sep_image) lives_widget_set_opacity(mainw->sep_image, 0.4);
+        if (mainw->sep_image) lives_widget_set_opacity(mainw->sep_image, 0.8);
         if (mainw->multitrack && mainw->multitrack->sep_image)
-          lives_widget_set_opacity(mainw->multitrack->sep_image, 0.4);
+          lives_widget_set_opacity(mainw->multitrack->sep_image, 0.8);
         palette->ce_unsel.red = palette->ce_unsel.green = palette->ce_unsel.blue = 6554;
         set_toolkit_theme(LIVES_THEME_DARK | LIVES_THEME_COMPACT);
       } else {
@@ -2666,6 +2668,7 @@ capability *get_capabilities(void) {
   capable->has_xdg_screensaver = UNCHECKED;
   capable->has_file = UNCHECKED;
   capable->has_md5sum = UNCHECKED;
+  capable->has_gio = UNCHECKED;
 
   // not checked at startup
   capable->has_gzip = UNCHECKED;
@@ -3048,6 +3051,7 @@ static boolean render_choice_idle(livespointer data) {
 
 
 static boolean lazy_startup_checks(void *data) {
+  static boolean checked_trash = FALSE;
   if (prefs->vj_mode) {
     resize(1.);
     if (prefs->open_maximised) {
@@ -3062,7 +3066,17 @@ static boolean lazy_startup_checks(void *data) {
   if (needs_disk_quota) {
     run_diskspace_dialog();
     needs_disk_quota = FALSE;
+    return TRUE;
   }
+  if (!checked_trash) {
+    if (prefs->autoclean) {
+      char *com = lives_strdup_printf("%s empty_trash . general %s", prefs->backend, TRASH_NAME);
+      lives_system(com, FALSE);
+      lives_free(com);
+    }
+    checked_trash = TRUE;
+  }
+  
   if (mainw->ldg_menuitem) {
     if (!RFX_LOADED) return TRUE;
     lives_widget_destroy(mainw->ldg_menuitem);
@@ -3767,6 +3781,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
 
   init_random();
+  //check_random();
 
   mainw->has_session_workdir = FALSE;
   mainw->old_vhash = NULL;
@@ -5003,6 +5018,8 @@ void load_start_image(int frame) {
     expose = TRUE;
   }
 
+  lives_widget_set_opacity(mainw->start_image, 1.);
+
   if (!CURRENT_CLIP_IS_NORMAL || frame < 1 || frame > cfile->frames) {
     int bx, by, hsize, vsize;
     int scr_width = GUI_SCREEN_WIDTH;
@@ -5046,6 +5063,11 @@ void load_start_image(int frame) {
       set_drawing_area_from_pixbuf(mainw->start_image, mainw->imframe, mainw->si_surface);
     } else {
       set_drawing_area_from_pixbuf(mainw->start_image, NULL, mainw->si_surface);
+    }
+    if (!palette || !(palette->style & STYLE_LIGHT)) {
+      lives_widget_set_opacity(mainw->start_image, 0.8);
+    } else {
+      lives_widget_set_opacity(mainw->start_image, 0.4);
     }
     return;
   }
@@ -5279,6 +5301,8 @@ check_stcache:
       expose = TRUE;
     }
 
+    lives_widget_set_opacity(mainw->end_image, 1.);
+
     if (!CURRENT_CLIP_IS_NORMAL || frame < 1 || frame > cfile->frames) {
       int bx, by, hsize, vsize;
       int scr_width = GUI_SCREEN_WIDTH;
@@ -5322,6 +5346,11 @@ check_stcache:
         set_drawing_area_from_pixbuf(mainw->end_image, mainw->imframe, mainw->ei_surface);
       } else {
         set_drawing_area_from_pixbuf(mainw->end_image, NULL, mainw->ei_surface);
+      }
+      if (!palette || !(palette->style & STYLE_LIGHT)) {
+	lives_widget_set_opacity(mainw->end_image, 0.8);
+      } else {
+	lives_widget_set_opacity(mainw->end_image, 0.4);
       }
       return;
     }
@@ -5544,6 +5573,7 @@ void load_preview_image(boolean update_always) {
 
   if (!prefs->show_gui) return;
   if (LIVES_IS_PLAYING) return;
+  lives_widget_set_opacity(mainw->preview_image, 1.);
 
   if (CURRENT_CLIP_IS_VALID && (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe == NULL) {
@@ -5576,6 +5606,11 @@ void load_preview_image(boolean update_always) {
 				    lives_pixbuf_get_height(mainw->imframe));
       set_drawing_area_from_pixbuf(mainw->preview_image, mainw->imframe, mainw->pi_surface);
     } else set_drawing_area_from_pixbuf(mainw->preview_image, NULL, mainw->pi_surface);
+    if (!palette || !(palette->style & STYLE_LIGHT)) {
+      lives_widget_set_opacity(mainw->preview_image, 0.8);
+    } else {
+      lives_widget_set_opacity(mainw->preview_image, 0.4);
+    }
     return;
   }
 
@@ -5608,6 +5643,11 @@ void load_preview_image(boolean update_always) {
 
   if (mainw->preview_frame < 1 || mainw->preview_frame > cfile->frames) {
     pixbuf = lives_pixbuf_scale_simple(mainw->imframe, cfile->hsize, cfile->vsize, LIVES_INTERP_BEST);
+    if (!palette || !(palette->style & STYLE_LIGHT)) {
+      lives_widget_set_opacity(mainw->preview_image, 0.4);
+    } else {
+      lives_widget_set_opacity(mainw->preview_image, 0.8);
+    }
   } else {
     weed_timecode_t tc;
     xpf = get_indexed_frame(mainw->current_file, mainw->preview_frame);
@@ -5860,9 +5900,10 @@ void load_preview_image(boolean update_always) {
 
 
     static void reslayer_thread(weed_layer_t *layer, int twidth, int theight, LiVESInterpType interp,
-                                int tpalette, int clamp) {
+                                int tpalette, int clamp, double file_gamma) {
       resl_priv_data *priv = (resl_priv_data *)lives_malloc(sizeof(resl_priv_data));
       lives_thread_t *res_thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
+      weed_set_double_value(layer, "file_gamma", file_gamma);
       weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, res_thread);
       priv->layer = layer;
       priv->width = twidth;
@@ -5879,7 +5920,6 @@ void load_preview_image(boolean update_always) {
       png_infop info_ptr;
       double file_gamma;
       int gval;
-      lives_thread_t *resl_thrd;
 #ifndef PNG_BIO
       FILE *fp = fdopen(fd, "rb");
       size_t bsize = fread(ibuff, 1, 8, fp);
@@ -6087,12 +6127,13 @@ void load_preview_image(boolean update_always) {
           !png_get_interlace_type(png_ptr, info_ptr)) {
         weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 1);
         reslayer_thread(layer, twidth, theight, get_interp_value(prefs->pb_quality),
-                        tpalette, weed_layer_get_yuv_clamping(layer));
+                        tpalette, weed_layer_get_yuv_clamping(layer),
+			gval == PNG_INFO_gAMA ? file_gamma : 1.);
         for (int j = 0; j < height; j++) {
           png_read_row(png_ptr, row_ptrs[j], NULL);
           weed_set_int_value(layer, WEED_LEAF_PROGSCAN, j + 2);
         }
-        weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 0);
+        weed_set_int_value(layer, WEED_LEAF_PROGSCAN, -1);
       } else {
         png_read_image(png_ptr, row_ptrs);
       }
@@ -6112,12 +6153,6 @@ void load_preview_image(boolean update_always) {
       if (gval == PNG_INFO_gAMA) {
         /// img needs gamma converting
         /// TODO: can we do this using png_set_gamma ?
-        if ((resl_thrd = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL)) != NULL) {
-          lives_thread_join(*resl_thrd, NULL);
-          weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL);
-          lives_free(resl_thrd);
-        }
-        gamma_convert_layer_variant(1. / file_gamma, layer);
         weed_layer_set_gamma(layer, WEED_GAMMA_LINEAR);
       } else weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
 
@@ -6173,10 +6208,8 @@ void load_preview_image(boolean update_always) {
 
       if (!info_ptr) {
         png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
-        {
-          fclose(fp);
-          return FALSE;
-        }
+	fclose(fp);
+	return FALSE;
       }
 
       if (setjmp(png_jmpbuf(png_ptr))) {
@@ -8247,7 +8280,7 @@ void load_frame_image(int frame) {
           gamma_convert_layer(tgamma, frame_layer);
         } else {
           gamma_convert_sub_layer(tgamma, 1.0, frame_layer, (pwidth - lb_width) / 2, (pheight - lb_height) / 2,
-                                  lb_width, lb_height);
+                                  lb_width, lb_height, TRUE);
         }
 
         if (return_layer != NULL) weed_layer_set_gamma(return_layer, weed_layer_get_gamma(frame_layer));

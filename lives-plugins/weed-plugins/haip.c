@@ -223,7 +223,7 @@ static weed_error_t haip_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   int num_wurms = weed_param_get_value_int(in_params[0]);
   unsigned char *pt;
 
-  int width = weed_channel_get_width(in_channel);
+  int width = weed_channel_get_width(in_channel), width3 = width * 3;
   int height = weed_channel_get_width(in_channel);
   int irowstride = weed_channel_get_stride(in_channel);
   int orowstride = weed_channel_get_stride(out_channel);

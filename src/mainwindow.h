@@ -417,6 +417,7 @@ enum {
 #define EXEC_XDG_SCREENSAVER "xdg-screensaver"
 #define EXEC_WMCTRL "wmctrl"
 #define EXEC_PLAY "play"
+#define EXEC_GIO "gio"
 
 /// other executables
 #define EXEC_SUDO "sudo"
@@ -507,6 +508,8 @@ enum {
 #define IMPORTS_DIRNAME "imports"
 
 // special files / dirs
+
+#define TRASH_NAME "__TRASH-"
 
 #define SET_LOCK_FILE(set_name, lockfile) lives_build_filename(prefs->workdir, set_name, lockfile, NULL);
 #define SET_LOCK_FILES(set_name) SET_LOCK_FILE(set_name, SET_LOCK_FILENAME);

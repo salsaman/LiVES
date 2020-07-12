@@ -583,7 +583,7 @@ TURBO_CFLAGS=""
 AC_ARG_ENABLE(turbo, [  --enable-turbo     Most optimised compile. Do NOT use if making binaries for general distribution.] , TURBO=true, TURBO=false)
 
 if test "$TURBO" = "true" ; then
-TURBO_CFLAGS="-Ofast -O3 -march=native -mtune=native"
+TURBO_CFLAGS="-Ofast -O3 -march=native -mtune=native -ffast-math -fno-math-errno -ftree-vectorizer-verbose=y"
 echo "Turbo enabled"
 echo TURBO_CFLAGS set to $TURBO_CFLAGS
 fi

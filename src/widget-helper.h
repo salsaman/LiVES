@@ -372,6 +372,7 @@ boolean lives_button_clicked(LiVESButton *);
 
 boolean lives_button_set_relief(LiVESButton *, LiVESReliefStyle);
 boolean lives_button_set_image(LiVESButton *, LiVESWidget *image);
+boolean lives_button_set_image_from_stock(LiVESButton *, const char *stock_id);
 boolean lives_button_set_focus_on_click(LiVESButton *, boolean focus);
 boolean lives_widget_set_focus_on_click(LiVESWidget *, boolean focus);
 
@@ -951,6 +952,7 @@ LiVESWidget *lives_layout_add_fill(LiVESLayout *, boolean horizontal);
 LiVESWidget *lives_layout_add_separator(LiVESLayout *, boolean horizontal);
 
 boolean lives_button_grab_default_special(LiVESWidget *);
+boolean lives_button_ungrab_default_special(LiVESWidget *);
 
 #define BUTTON_DIM_VAL (0.4 * 65535.) // fg / bg ratio for dimmed buttons (BUTTON_DIM_VAL/65535) (lower is dimmer)
 

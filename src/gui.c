@@ -86,7 +86,8 @@ void load_theme_images(void) {
       //resize
       width = lives_pixbuf_get_width(pixbuf);
       height = lives_pixbuf_get_height(pixbuf);
-      if (width > IMSEP_MAX_WIDTH || height > IMSEP_MAX_HEIGHT) calc_maxspect(IMSEP_MAX_WIDTH, IMSEP_MAX_HEIGHT,
+      if (width > IMSEP_MAX_WIDTH || height > IMSEP_MAX_HEIGHT)
+	calc_maxspect(IMSEP_MAX_WIDTH, IMSEP_MAX_HEIGHT,
             &width, &height);
       if (prefs->screen_scale < 1.) {
         width *= prefs->screen_scale;

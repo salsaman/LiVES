@@ -246,10 +246,12 @@ void init_random(void);
 void lives_srandom(unsigned int seed);
 uint64_t lives_random(void);
 
-uint64_t fastrand(void) GNU_PURE GNU_HOT;
+uint64_t fastrand(void) GNU_HOT;
 void fastrand_add(uint64_t entropy);
 double fastrand_dbl(double range);
 uint32_t fastrand_int(uint32_t range);
+
+uint64_t gen_unique_id(void);
 
 #ifdef ENABLE_ORC
 void *lives_orc_memcpy(void *dest, const void *src, size_t n);

@@ -2364,7 +2364,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (tgamma != WEED_GAMMA_UNKNOWN) {
       if (letterboxed)
         gamma_convert_sub_layer(tgamma, 1.0, layer, (cpixwidth - xwidth) / 2, (height - xheight) / 2,
-                                xwidth, xheight);
+                                xwidth, xheight, TRUE);
       else
         gamma_convert_layer(tgamma, layer);
     }

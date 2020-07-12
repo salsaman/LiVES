@@ -288,7 +288,7 @@ static inline weed_data_t **weed_data_new(uint32_t seed_type, weed_size_t num_el
 
 static inline weed_leaf_t *weed_find_leaf(weed_plant_t *leaf, const char *key, uint32_t *hash_ret) {
   uint32_t hash = WEED_MAGIC_HASH;
-  if (*key)
+  if (key && *key)
     for (hash = weed_hash(key); leaf && (hash != leaf->key_hash || weed_strcmp((char *)leaf->key, (char *)key)); leaf = leaf->next);
   if (hash_ret) *hash_ret = hash;
   return leaf;

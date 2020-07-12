@@ -133,7 +133,7 @@ LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog *dialog, bool
     }
   }
 
-  if (!check_dir_access(*pdirname)) {
+  if (!check_dir_access(*pdirname, FALSE)) {
     do_dir_perm_error(*pdirname);
     return LIVES_RESPONSE_RETRY;
   }
@@ -1102,7 +1102,7 @@ void explain_missing_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   text = lives_concat(text, (_("\n\nIf you DO have any of these missing components, please ensure they are "
                                "located in your $PATH before restarting LiVES")));
   widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
-  create_text_window(title, text, NULL);
+  create_text_window(title, text, NULL, TRUE);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;;
   lives_free(title);
   lives_free(text);

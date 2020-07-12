@@ -1732,7 +1732,8 @@ LiVESWidget *create_info_error_dialog(lives_dialog_t info_type, const char *text
 }
 
 
-text_window *create_text_window(const char *title, const char *text, LiVESTextBuffer * textbuffer) {
+text_window *create_text_window(const char *title, const char *text, LiVESTextBuffer *textbuffer,
+				boolean add_buttons) {
   // general text window
   LiVESWidget *dialog_vbox;
   LiVESWidget *scrolledwindow;
@@ -1753,15 +1754,16 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
 
   textwindow->textview = textwindow->table = NULL;
 
-  if (textbuffer != NULL || text != NULL) textwindow->textview =
-					    lives_standard_text_view_new(text, textbuffer);
+  if (textbuffer || text) textwindow->textview =
+			    lives_standard_text_view_new(text, textbuffer);
 
   woat = widget_opts.apply_theme;
   widget_opts.apply_theme = FALSE;
 
-  if (textwindow->textview != NULL) {
+  if (textwindow->textview) {
     widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
-    scrolledwindow = lives_standard_scrolled_window_new(window_width, RFX_WINSIZE_V, textwindow->textview);
+    scrolledwindow = lives_standard_scrolled_window_new(window_width, RFX_WINSIZE_V,
+							textwindow->textview);
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
     if (palette->style & STYLE_1) {
       lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)),
@@ -1778,9 +1780,10 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
 
   lives_box_pack_start(LIVES_BOX(dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
 
-  if (text != NULL || mainw->iochan != NULL || textwindow->table != NULL) {
+  if (add_buttons && text != NULL || mainw->iochan != NULL || textwindow->table != NULL) {
     if (textwindow->table == NULL) {
-      LiVESWidget *savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_SAVE,
+      LiVESWidget *savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
+								   LIVES_STOCK_SAVE,
                                 _("_Save to file"),
                                 LIVES_RESPONSE_YES);
       lives_signal_connect(LIVES_GUI_OBJECT(savebutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -1788,7 +1791,8 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
                            textwindow->textview);
     }
 
-    textwindow->button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_CLOSE, _("_Close Window"),
+    textwindow->button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
+							    LIVES_STOCK_CLOSE, _("_Close Window"),
 							    LIVES_RESPONSE_CANCEL);
 
     lives_button_grab_default_special(textwindow->button);
@@ -1797,6 +1801,8 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
                               LIVES_GUI_CALLBACK(lives_general_button_clicked),
                               textwindow);
 
+    lives_widget_add_accelerator(textwindow->button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+                                 LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
     lives_widget_add_accelerator(textwindow->button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                  LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
   }
@@ -3880,7 +3886,7 @@ void do_keys_window(void) {
   text_window *textwindow;
 
   widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
-  textwindow = create_text_window(tmp, NULL, NULL);
+  textwindow = create_text_window(tmp, NULL, NULL, TRUE);
   lives_free(tmp);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;;
 
@@ -3959,7 +3965,7 @@ void do_mt_keys_window(void) {
   char *tmp = (_("Multitrack Keys")), *tmp2;
 
   widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
-  textwindow = create_text_window(tmp, NULL, NULL);
+  textwindow = create_text_window(tmp, NULL, NULL, TRUE);
   lives_free(tmp);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;;
 
@@ -5135,7 +5141,7 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
   if (!LIVES_IS_WIDGET(widget)) return FALSE;
 
   height = lives_widget_get_allocation_height(LIVES_WIDGET(widget));
-  if (reqheight != -1) height = reqheight;
+  //if (reqheight != -1) height = reqheight;
   width = lives_widget_get_allocation_width(LIVES_WIDGET(widget));
   if (reqwidth != -1) width = reqwidth;
   //g_print("GET  LINGO xx %d %d\n", width, height);

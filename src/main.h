@@ -54,6 +54,7 @@
 #ifdef __cplusplus
 #undef HAVE_UNICAP
 #endif
+#define WEED_STARTUP_TESTS
 
 #ifdef __GNUC__
 #  define WARN_UNUSED  __attribute__((warn_unused_result))
@@ -212,7 +213,6 @@ typedef int lives_pgid_t;
 #define LIVES_DEVICEMAP_DIR "devicemaps"
 #define LIVES_DEF_WORK_NAME "livesprojects"
 #define LIVES_RESOURCES_DIR "resources"
-#define LIVES_TRASH_DIR "._Trash"
 
 #define LIVES_DEVICE_DIR "/dev/"
 
@@ -924,6 +924,7 @@ typedef struct {
   lives_checkstatus_t has_youtube_dl;
   lives_checkstatus_t has_du;
   lives_checkstatus_t has_md5sum;
+  lives_checkstatus_t has_gio;
   lives_checkstatus_t has_wget;
 
   /// home directory - default location for config file - locale encoding
@@ -1216,6 +1217,7 @@ void do_no_in_vdevs_error(void);
 void do_locked_in_vdevs_error(void);
 void do_do_not_close_d(void);
 void do_set_noclips_error(const char *setname);
+boolean do_foundclips_query(void);
 void do_no_autolives_error(void);
 void do_autolives_needs_clips_error(void);
 void do_pulse_lost_conn_error(void);
@@ -1584,7 +1586,7 @@ boolean switch_aud_to_pulse(boolean set_pref);
 boolean prepare_to_play_foreign(void);
 boolean after_foreign_play(void);
 boolean check_file(const char *file_name, boolean check_exists);  ///< check if file exists
-boolean check_dir_access(const char *dir);
+boolean check_dir_access(const char *dir, boolean leaveit);
 boolean lives_make_writeable_dir(const char *newdir);
 boolean is_writeable_dir(const char *dir);
 boolean ensure_isdir(char *fname);

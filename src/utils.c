@@ -205,7 +205,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
     char *strg = NULL;
     response = LIVES_RESPONSE_NONE;
     fp = popen(com, "r");
-    if (fp == NULL) {
+    if (!fp) {
       err = errno;
     } else {
       while (1) {
@@ -425,7 +425,8 @@ ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less) {
     else {
       char *msg = NULL;
       char *ffile = filename_from_fd(NULL, fd);
-      msg = lives_strdup_printf("Read got %"PRIu64" of %"PRIu64" in: %s (not an error)", (uint64_t)retval,
+      msg = lives_strdup_printf("Read got %"PRIu64" of %"PRIu64" in: %s (not an error)",
+				(uint64_t)retval,
                                 (uint64_t)count, ffile);
       LIVES_DEBUG(msg);
       lives_free(ffile);
@@ -613,8 +614,8 @@ boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
       if (res > fsize) res = fsize;
       fbuff->offset += res;
       fsize -= res;
-      if (fsize >= bigbytes) bufsize = bigbytes;
-      else if (fsize >= medbytes) bufsize = medbytes;
+      if (fsize >= bigbytes && bufsize >= medbytes) bufsize = bigbytes;
+      else if (fsize >= medbytes && bufsize >= smedbytes) bufsize = medbytes;
       else if (fsize >= smedbytes) bufsize = smedbytes;
       //g_printerr("slurp %d oof %ld %ld remain %lu  \n", fd, fbuff->offset, fsize, ofsize);
     }
@@ -4302,7 +4303,7 @@ void lives_suspend_resume_process(const char *dirname, boolean suspend) {
 }
 
 
-boolean check_dir_access(const char *dir) {
+boolean check_dir_access(const char *dir, boolean leaveit) {
   // if a directory exists, make sure it is readable and writable
   // otherwise create it and then check
 
@@ -4322,7 +4323,7 @@ boolean check_dir_access(const char *dir) {
   }
 
   if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) return FALSE;
-
+  
   testfile = lives_build_filename(dir, "livestst-XXXXXX", NULL);
   fp = g_mkstemp(testfile);
   if (fp == -1) {
@@ -4362,7 +4363,7 @@ boolean check_dir_access(const char *dir) {
   }
   close(fp);
   lives_rm(testfile);
-  if (!exists) {
+  if (!exists && !leaveit) {
     lives_rmdir(dir, FALSE);
   }
   lives_free(testfile);
@@ -5483,7 +5484,7 @@ boolean is_writeable_dir(const char *dir) {
 boolean lives_make_writeable_dir(const char *newdir) {
   int ret = lives_mkdir_with_parents(newdir, capable->umask);
   int myerrno = errno;
-  if (!check_dir_access(newdir)) {
+  if (!check_dir_access(newdir, TRUE)) {
     // abort if we cannot create the new subdir
     if (myerrno == EINVAL) {
       LIVES_ERROR("Could not write to directory");

@@ -141,8 +141,7 @@ static void cleanup_set_dir(const char *set_name) {
   }
 }
 
-//#define KEEP_VALGRIND_HAPPY
-#ifndef KEEP_VALGRIND_HAPPY
+#ifndef VALGRIND_ON
 #ifdef _lives_free
 #undef  lives_free
 #define lives_free(a) (mainw->is_exiting ? a : _lives_free(a))
@@ -151,10 +150,9 @@ static void cleanup_set_dir(const char *set_name) {
 
 void lives_exit(int signum) {
   char *cwd, *tmp, *com;
-  boolean empty_trash = FALSE;
-  register int i;
+  int i;
 
-  if (mainw == NULL) _exit(0);
+  if (!mainw) _exit(0);
 
   if (!mainw->only_close) {
     mainw->is_exiting = TRUE;
@@ -222,7 +220,7 @@ void lives_exit(int signum) {
       autolives_toggle(NULL, NULL);
     }
 
-#ifdef KEEP_VALGRIND_HAPPY
+#ifdef VALGRIND_ON
     if (mainw->stored_event_list != NULL || mainw->sl_undo_mem != NULL) {
       stored_event_list_free_all(FALSE);
     }
@@ -236,7 +234,7 @@ void lives_exit(int signum) {
     }
 #endif
 
-#ifdef KEEP_VALGRIND_HAPPY
+#ifdef VALGRIND_ON
     if (LIVES_IS_PLAYING) {
       lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
       if (mainw->ext_playback) {
@@ -400,13 +398,16 @@ void lives_exit(int signum) {
               // or just clean them up -
               // remove the following: "*.mgk *.bak *.pre *.tmp pause audio.* audiodump* audioclip";
               if (!prefs->vj_mode) {
-                empty_trash = TRUE;
-                com = lives_strdup_printf("%s clear_tmp_files \"%s\" %s", prefs->backend_sync, mainw->files[i]->handle, LIVES_TRASH_DIR);
-                lives_system(com, FALSE);
-                threaded_dialog_spin(0.);
-                lives_free(com);
-                if (IS_NORMAL_CLIP(i)) {
-                  char *fname = lives_build_filename(prefs->workdir, mainw->files[i]->handle, TOTALSAVE_NAME, NULL);
+		if (prefs->autoclean) {
+		  com = lives_strdup_printf("%s clear_tmp_files \"%s\"",
+					    prefs->backend_sync, mainw->files[i]->handle);
+		  lives_system(com, FALSE);
+		  threaded_dialog_spin(0.);
+		  lives_free(com);
+		}
+		if (IS_NORMAL_CLIP(i)) {
+                  char *fname = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
+						     TOTALSAVE_NAME, NULL);
                   int fd = lives_create_buffered(fname, DEF_FILE_PERMS);
                   lives_write_buffered(fd, (const char *)mainw->files[i], sizeof(lives_clip_t), TRUE);
                   lives_close_buffered(fd);
@@ -419,8 +420,8 @@ void lives_exit(int signum) {
             }
           }
         }
-        if (empty_trash) {
-          com = lives_strdup_printf("%s empty_trash \"%s\"", prefs->backend, LIVES_TRASH_DIR);
+        if (prefs->autoclean) {
+          com = lives_strdup_printf("%s empty_trash . general", prefs->backend);
           lives_system(com, FALSE);
           lives_free(com);
         }
@@ -429,7 +430,8 @@ void lives_exit(int signum) {
       }
 
       if (!mainw->leave_files && (*mainw->set_name) && !mainw->leave_recovery) {
-        char *set_layout_dir = lives_build_filename(prefs->workdir, mainw->set_name, LAYOUTS_DIRNAME, NULL);
+        char *set_layout_dir = lives_build_filename(prefs->workdir, mainw->set_name,
+						    LAYOUTS_DIRNAME, NULL);
         if (!lives_file_test(set_layout_dir, LIVES_FILE_TEST_IS_DIR)) {
           char *sdname = lives_build_filename(prefs->workdir, mainw->set_name, NULL);
 
@@ -520,7 +522,7 @@ void lives_exit(int signum) {
     unlock_set_file(mainw->set_name);
 
     // stop valgrind from complaining
-#ifdef KEEP_VALGRIND_HAPPY
+#ifdef VALGRIND_ON
     if (mainw->frame_layer != NULL) {
       check_layer_ready(mainw->frame_layer);
       weed_layer_free(mainw->frame_layer);
@@ -537,7 +539,7 @@ void lives_exit(int signum) {
 
   weed_unload_all();
 
-#ifdef KEEP_VALGRIND_HAPPY
+#ifdef VALGRIND_ON
   lives_list_free_all(&mainw->current_layouts_map);
 
   if (capable->has_encoder_plugins) {
@@ -554,7 +556,7 @@ void lives_exit(int signum) {
 #endif
   mainw->is_ready = FALSE;
 
-#ifdef KEEP_VALGRIND_HAPPY
+#ifdef VALGRIND_ON
   pconx_delete_all();
   cconx_delete_all();
 
@@ -614,7 +616,7 @@ void lives_exit(int signum) {
   exit(0);
 }
 
-#ifndef KEEP_VALGRIND_HAPPY
+#ifndef VALGRIND_ON
 #ifdef _lives_free
 #undef  lives_free
 #define lives_free _lives_free
@@ -1504,6 +1506,7 @@ void on_import_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_free(com);
 
   if (THREADVAR(com_failed)) {
+    THREADVAR(com_failed) = FALSE;
     lives_free(proj_file);
     return;
   }
@@ -5961,11 +5964,9 @@ boolean reload_set(const char *set_name) {
 
 
 static void recover_lost_clips(LiVESList * reclist) {
-  if (!do_yesno_dialog(_("Possible lost clips were detected. Do you wish to try to recover them ?\n"
-                         "Click 'Yes' to attempt recovery (any current clips will be saved first).\n"
-                         "Click No' to discard the lost clips permanently\n"))) return;
-
-  d_print_cancelled();
+  if (!do_foundclips_query()) return;
+  
+  //d_print_cancelled();
 
   // save set
   if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID) {
@@ -5987,6 +5988,8 @@ static void recover_lost_clips(LiVESList * reclist) {
     }
     switch_to_file(-1, start_file);
   }
+  do_blocking_info_dialogf(P_("$d clip was recovered", "%d clips were recovered\n",
+			      mainw->clips_available), mainw->clips_available);
 }
 
 
@@ -6002,7 +6005,10 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
 
   int current_file = mainw->current_file;
   int marker_fd;
-  int retval = 0;
+  LiVESResponseType retval = LIVES_RESPONSE_NONE;
+
+  boolean rejected = FALSE;
+
   uint32_t orig_opts = prefs->clear_disk_opts;
 
   register int i;
@@ -6011,7 +6017,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
 
   mainw->next_ds_warn_level = 0; /// < avoid nested warnings
 
-  if (user_data != NULL) lives_widget_hide(lives_widget_get_toplevel(LIVES_WIDGET(user_data)));
+  if (user_data) lives_widget_hide(lives_widget_get_toplevel(LIVES_WIDGET(user_data)));
 
   mainw->tried_ds_recover = TRUE; ///< indicates we tried ds recovery already
 
@@ -6036,18 +6042,20 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
 
   if (CURRENT_CLIP_IS_VALID) cfile->cb_src = current_file;
 
+    lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
 remall:
 
   d_print(_("Cleaning up disk space..."));
   // get a temporary clip for receiving data from backend
   if (!get_temp_handle(-1)) {
+    lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
     d_print_failed();
     mainw->next_ds_warn_level = ds_warn_level;
     prefs->clear_disk_opts = orig_opts;
     return;
   }
 
-  if (mainw->multitrack != NULL) {
+  if (mainw->multitrack) {
     if (mainw->multitrack->idlefunc > 0) {
       lives_source_remove(mainw->multitrack->idlefunc);
       mainw->multitrack->idlefunc = 0;
@@ -6062,9 +6070,8 @@ remall:
 
     if ((i == mainw->current_file) || IS_NORMAL_CLIP(i)) {
       markerfile = lives_build_filename(prefs->workdir, mainw->files[i]->handle, "set.", NULL);
-
       do {
-        retval = 0;
+        retval = LIVES_RESPONSE_NONE;
         marker_fd = creat(markerfile, S_IRUSR | S_IWUSR);
         if (marker_fd < 0) {
           retval = do_write_failed_error_s_with_retry(markerfile, lives_strerror(errno), NULL);
@@ -6076,13 +6083,13 @@ remall:
       if (mainw->files[i]->undo_action != UNDO_NONE) {
         markerfile = lives_build_filename(prefs->workdir, mainw->files[i]->handle, "noprune", NULL);
         do {
-          retval = 0;
+          retval = LIVES_RESPONSE_NONE;
           marker_fd = creat(markerfile, S_IRUSR | S_IWUSR);
           if (marker_fd < 0) {
             retval = do_write_failed_error_s_with_retry(markerfile, lives_strerror(errno), NULL);
           }
         } while (retval == LIVES_RESPONSE_RETRY);
-        close(marker_fd);
+        if (marker_fd >= 0) close(marker_fd);
         lives_free(markerfile);
       }
     }
@@ -6092,21 +6099,127 @@ remall:
   // its parameters are the handle of a temp file, and opts mask
 
   if (retval != LIVES_RESPONSE_CANCEL) {
-    lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
+    lives_proc_thread_t tinfo;
+    char log[65536];
+    uint64_t ukey = gen_unique_id();
+    char *uidgid = lives_strdup_printf("-%d-%d", lives_getuid(), lives_getgid());
+    char *trashdir = lives_strdup_printf("%s%lu%s", TRASH_NAME, ukey, uidgid);
+    char *logfile = lives_strdup_printf("trashlog-%lu%s", ukey, uidgid);
+    char *full_trashdir = lives_build_path(prefs->workdir, trashdir, NULL);
+    char *tmp;
 
-    // get space before
-    fspace = get_ds_free(prefs->workdir);
+    if (!check_dir_access(full_trashdir, TRUE)) {
+      lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+      lives_free(trashdir);
+      lives_free(logfile);
+      do_dir_perm_error(full_trashdir);
+      lives_free(full_trashdir);
+      rejected = TRUE;
+      goto cleanup;
+    }
+
+    if (prefs->autoclean) {
+    // clearup old
+      com = lives_strdup_printf("%s empty_trash %s general %s", prefs->backend, cfile->handle,
+				TRASH_NAME);
+      lives_rm(cfile->info_file);
+      THREADVAR(com_failed) = FALSE;
+      lives_system(com, FALSE);
+      lives_free(com);
+      do_auto_dialog(_("Removing general trash"), 0);
+      lives_rm(cfile->info_file);
+    }
 
     THREADVAR(com_failed) = FALSE;
-    lives_rm(cfile->info_file);
-    com = lives_strdup_printf("%s bg_weed \"%s\" %d", prefs->backend, cfile->handle, prefs->clear_disk_opts);
-    lives_system(com, FALSE);
+
+    if (CURRENT_CLIP_IS_VALID) lives_rm(cfile->info_file);
+
+    tinfo = lives_proc_thread_create(NULL, (lives_funcptr_t)do_auto_dialog, -1,
+				     "si", _("Analysing Disk"), 0);
+    
+    com = lives_strdup_printf("%s fg_weed %s %u %s", prefs->backend, cfile->handle,
+			      prefs->clear_disk_opts, trashdir);
+    lives_free(uidgid);
+    lives_popen(com, TRUE, log, 65536);
     lives_free(com);
 
-    if (!THREADVAR(com_failed)) {
-      // show a progress dialog, not cancellable
-      do_progress_dialog(TRUE, FALSE, _("Recovering disk space"));
+    lives_proc_thread_join(tinfo);
+    weed_plant_free(tinfo);
+
+    g_print("ok here\n");
+    
+    if (THREADVAR(com_failed)) {
+    g_print("ok here\n");
+      THREADVAR(com_failed) = FALSE;
+      lives_free(trashdir);
+      lives_free(full_trashdir);
+      rejected = TRUE;
+      goto cleanup;
+    }
+    else {
+    g_print("ok here\3n");
+      LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
+      LiVESTextBuffer *tbuff = lives_text_buffer_new();
+      LiVESWidget *button;
+      LiVESTextIter end_iter;
+      char *full_logfile = lives_build_filename(prefs->workdir, logfile, NULL);
+      char *op;
+
+      lives_text_buffer_get_end_iter(LIVES_TEXT_BUFFER(tbuff), &end_iter);
+      lives_text_buffer_insert(LIVES_TEXT_BUFFER(tbuff), &end_iter, log, -1);
+
+      lives_rm(full_logfile);
+      lives_free(full_logfile);
+
+      textwindow = create_text_window(_("Disk Analysis Log"), log, NULL, FALSE);
+      lives_window_add_accel_group(LIVES_WINDOW(textwindow->dialog), accel_group);
+
+      button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
+						  LIVES_STOCK_CANCEL, NULL,
+						  LIVES_RESPONSE_CANCEL);
+
+      lives_widget_add_accelerator(button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+                                 LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+
+      widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
+      lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
+					 LIVES_STOCK_APPLY, _("_Accept and Continue"),
+					 LIVES_RESPONSE_ACCEPT);
+      widget_opts.expand = LIVES_EXPAND_DEFAULT;
+    g_print("ok here2222\n");
+
+      retval = lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
+      lives_widget_destroy(textwindow->dialog);
+      lives_free(textwindow);
+
+    g_print("ok he6666re\n");
+      if (retval == LIVES_RESPONSE_CANCEL) {
+	com = lives_strdup_printf("%s restore_trash %s", prefs->backend, trashdir);
+    g_print("ok here7777\n");
+	lives_system(com, FALSE);
+	lives_free(com);
+	lives_free(trashdir);
+	lives_free(full_trashdir);
+	rejected = TRUE;
+	goto cleanup;
+      }
+    g_print("ok here 1111\n");
+
       left_list = buff_to_list(mainw->msg, "|", FALSE, TRUE);
+
+      /// user accepted
+      op = lives_strdup("delete");
+
+      com = lives_strdup_printf("%s empty_trash %s %s %s", prefs->backend, cfile->handle, op, trashdir);
+      lives_system(com, FALSE);
+      lives_free(com);
+      lives_free(op);
+      lives_rm(full_trashdir);
+      lives_free(full_trashdir);
+      do_auto_dialog(_("Cleaning up Disk"), 0);
+      lives_rm(cfile->info_file);
+    g_print("ok her34234342e\n");
+
       if (left_list != NULL) {
         if (strcmp((char *)left_list->data, "completed")) {
           lives_list_free_all(&left_list);
@@ -6118,7 +6231,7 @@ remall:
             for (list = left_list->next; list != NULL; list = list->next) {
               char *handle = (char *)list->data;
               int numh = atoi(handle);
-              if (numh > 65535) {
+	      if (numh > 65535) {
                 lives_freep((void **)&snumh);
                 snumh = lives_strdup_printf("%d", numh);
                 if (!strcmp(snumh, handle)) {
@@ -6129,7 +6242,8 @@ remall:
                     snumh = NULL;
                   } else {
                     lives_freep((void **)&lives_header);
-                    lives_header = lives_build_filename(prefs->workdir, handle, LIVES_CLIP_HEADER_OLD, NULL);
+                    lives_header = lives_build_filename(prefs->workdir, handle, LIVES_CLIP_HEADER_OLD,
+							NULL);
                     if (lives_file_test(lives_header, LIVES_FILE_TEST_EXISTS)) {
                       recvlist = lives_list_prepend(recvlist, snumh);
                       snumh = NULL;
@@ -6142,7 +6256,8 @@ remall:
           }
           if (!recvlist) {
             lives_free(left_list->data);
-            left_list->data = (_("The following directories may be removed manually if not required:\n"));
+            left_list->data = (_("The following directories may be removed manually "
+				 "if not required:\n"));
             for (list = left_list->next; list != NULL; list = list->next) {
               tmp = (char *)list->data;
               list->data = lives_build_path(prefs->workdir, tmp, NULL);
@@ -6151,6 +6266,7 @@ remall:
 	    }}}}}}
   // *INDENT-ON*
 
+ cleanup:
   // close the temporary clip
   close_temp_handle(current_file);
   prefs->clear_disk_opts = orig_opts;
@@ -6175,7 +6291,7 @@ remall:
     lives_list_free_all(&recvlist);
     prefs->clear_disk_opts |= LIVES_CDISK_REMOVE_ORPHAN_CLIPS;
     current_file = mainw->current_file;
-    goto remall;
+    if (!rejected) goto remall;
   }
 
   if (mainw->multitrack == NULL && !mainw->is_processing && !LIVES_IS_PLAYING) {
@@ -6199,10 +6315,16 @@ remall:
     msg = lives_strdup_printf(_("%s of disk space was recovered.\n"),
                               lives_format_storage_space_string((uint64_t)bytes));
     do_blocking_info_dialog_with_expander(msg,
-                                          (tmp = (_("Some directories may be removed manually if desired.\nClick for details:\n"))),
+                                          (tmp = (_("Some directories may be removed manually "
+						    "if desired.\nClick for details:\n"))),
                                           left_list);
-    if (user_data != NULL) lives_widget_set_sensitive(lives_widget_get_toplevel(LIVES_WIDGET(user_data)), FALSE);
-  } else d_print_failed();
+    if (user_data != NULL)
+      lives_widget_set_sensitive(lives_widget_get_toplevel(LIVES_WIDGET(user_data)), FALSE);
+
+  } else {
+    if (retval != LIVES_RESPONSE_CANCEL) d_print_failed();
+    else d_print_cancelled();
+  }
 
   if (left_list != NULL) lives_list_free_all(&left_list);
 
@@ -7339,7 +7461,8 @@ void on_cancel_keep_button_clicked(LiVESButton * button, livespointer user_data)
 void on_details_button_clicked(void) {
   text_window *textwindow;
   widget_opts.expand = LIVES_EXPAND_EXTRA;
-  textwindow = create_text_window(_("Encoder Debug Output"), lives_text_view_get_text(mainw->optextview), NULL);
+  textwindow = create_text_window(_("Encoder Debug Output"),
+				  lives_text_view_get_text(mainw->optextview), NULL, TRUE);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   lives_widget_show_all(textwindow->dialog);
 }
@@ -8951,7 +9074,7 @@ void popup_lmap_errors(LiVESMenuItem * menuitem, livespointer user_data) {
   }
 
   widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
-  textwindow = create_text_window(_("Layout Errors"), NULL, mainw->layout_textbuffer);
+  textwindow = create_text_window(_("Layout Errors"), NULL, mainw->layout_textbuffer, FALSE);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   vbox = lives_dialog_get_content_area(LIVES_DIALOG(textwindow->dialog));

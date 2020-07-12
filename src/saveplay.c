@@ -3507,7 +3507,7 @@ boolean get_temp_handle(int index) {
    -- get_new_handle() will set name and fliename and switch back to original clip.
 
    default values are then set for the clip
-   - a "unique_id" is assigned via lives_random()
+   - a "unique_id" is assigned via uuidgen or lives_random()
    - type is set to CLIP_TYPE_DISK
    - img_type is set depending on prefs->image_type
    - frames is set to 0
@@ -3600,7 +3600,7 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->clip_type = CLIP_TYPE_DISK;
   cfile->ratio_fps = FALSE;
   cfile->aseek_pos = 0;
-  cfile->unique_id = lives_random(); // TODO: use libuuid
+  cfile->unique_id = gen_unique_id();
   cfile->layout_map = NULL;
   cfile->frame_index = cfile->frame_index_back = NULL;
   cfile->fx_frame_pump = 0;
@@ -4699,7 +4699,7 @@ void open_set_file(int clipnum) {
     }
     retval = get_clip_value(mainw->current_file, CLIP_DETAILS_UNIQUE_ID, &cfile->unique_id, 0);
     if (!retval) {
-      cfile->unique_id = lives_random();
+      cfile->unique_id = gen_unique_id();
       cfile->needs_silent_update = TRUE;
     }
     retval = get_clip_value(mainw->current_file, CLIP_DETAILS_INTERLACE, &cfile->interlace, 0);

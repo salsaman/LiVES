@@ -18,4 +18,5 @@ int run_weed_startup_tests(void);
 int test_palette_conversions(void);
 #endif
 
+void check_random(void);
 #endif

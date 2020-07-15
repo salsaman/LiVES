@@ -5169,3 +5169,520 @@ inf main(void) {
   weed_plant_free = weed_plant_free_host;
   return 0;
 }
+
+
+
+
+
+WRITING A MINIMAL HOST
+
+
+INITIALIZING LIBWEED
+
+simple version:
+	if (weed_init(WEED_ABI_VERSION, 0) != WEED_SUCCESS) return;
+
+
+
+complete version:
+	// if the library weed api is too high, we can lower it
+	// this ensures we can use all versions, past and future
+	int weed_abi_version = weed_get_abi_version();
+	if (weed_abi_version > WEED_ABI_VERSION) weed_abi_version = WEED_ABI_VERSION;
+
+	int flags = 0;
+
+	// if want standard stringfuncs, we can set that; can be useful when debugging with valgrind
+	flags |= WEED_INIT_STD_STRINGFUNCS;
+
+	// if we want all possible backported bugfixes, we can allow that, aknowledging the
+	// possibility that this will break anything which relied on the buggy behaviour
+	flags |= WEED_INIT_ALLBUFIXES;
+
+ 	weed_error_t werr = weed_init(weed_abi_version, flags);
+	if (werr == WEED_ERROR_BADVERSION) return;
+
+
+
+For libweed-utils, we can optionally do:
+
+	// any value can be NULL to use default functions (malloc, free, etc)
+  	weed_utils_set_custom_memfuncs(mymalloc, mycalloc, mymemcpy, mymemcp, myfree);
+
+
+
+
+===== OVERLOADING FUNCTIONS FOR THE HOST ====
+the following may be useful:
+
+#define WEED_ERROR_NOSUCH_PLANT 65536
+
+== free even 'undeletable' plants ==
+
+static void clear_plant_flags(weed_plant_t *plant) {
+  char **leaves = weed_plant_list_leaves(plant, NULL);
+  for (int i = 0; leaves[i]; i++) {
+    weed_set_int_value(plant, leaves[i], 0);
+    free(leaves[i]);
+  }
+  if (leaves) free(leaves);
+}
+
+
+weed_error_t weed_plant_free_host(weed_plant_t *plant) {
+  weed_error_t err;
+  if (!plant) return WEED_ERROR_NOSUCH_PLANT;
+  err = _weed_plant_free(plant);
+  if (err == WEED_ERROR_UNDELETABLE) {
+  	clear_plant_flags(plant);
+  	return _weed_plant_free(plant);
+  }
+  return err;
+}
+
+then:
+weed_plant_free_f _weed_plant_free = weed_plant_free;
+weed_plant_free = weed_plant_free_host;
+
+/// the original weed_plant_free should be provided to plugins, e.g. in a host_info_callback (see below)
+// weed_set_funcptr_value(host_info, WEED_PLANT_FREE_FUNC, (weed_funcptr_t)_weed_plant_free);
+
+
+
+== Delete even 'undeletable' leaves ==
+
+weed_error_t weed_leaf_delete_host(weed_plant_t *plant, const char *key) {
+  weed_error_t err;
+  if (!plant) return WEED_ERROR_NOSUCH_PLANT;
+  err = _weed_leaf_delete(plant, key);
+  if (err == WEED_ERROR_UNDELETABLE) {
+  	uint32_t flags = weed_leaf_get_flags(plant, key);
+  	flags ^= WEED_FLAG_UNDELETABLE;
+  	weed_leaf_set_flags(plant, key, flags);
+  	err = _weed_leaf_delete(plant, key);
+  }
+  return err;
+}
+
+then:
+weed_leaf_delete_f _weed_leaf_delete = weed_leaf_delete;
+weed_leaf_delete = weed_leaf_delete_host;
+
+/// the original weed_leaf_delete should be provide to plugins, e.g. in a host_info_callback (see below)
+// weed_set_funcptr_value(host_info, WEED_LEAF_DELETE_FUNC, (weed_funcptr_t)_weed_leaf_delete);
+
+
+
+
+== Change even immutable leaves ==
+
+weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, uint32_t seed_type,
+	weed_size_t num_elems, void *values) {
+  weed_error_t err;
+  if (!plant) return WEED_ERROR_NOSUCH_PLANT;
+  err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
+  if (err == WEED_ERROR_IMMUTABLE) {
+    int32_t flags = weed_leaf_get_flags(plant, key);
+    flags ^= WEED_FLAG_IMMUTABLE;
+    weed_leaf_set_flags(plant, key, flags);
+    err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
+
+    // restore original value of flags
+    flags |= WEED_FLAG_IMMUTABLE;
+    weed_leaf_set_flags(plant, key, flags);
+  }
+  return err;
+}
+
+
+then:
+weed_leaf_set_f _weed_leaf_set = weed_leaf_set;
+weed_leaf_set = weed_leaf_set_host;
+
+/// the original weed_leaf_set should be provide to plugins, e.g. in a host_info_callback (see below)
+// weed_set_funcptr_value(host_info, WEED_LEAF_SET_FUNC, (weed_funcptr_t)_weed_leaf_set);
+
+
+
+
+
+
+
+LODAING PLUGINS AND FILTERS:
+{
+	weed_setup_f setup_fn;
+	int dlflags = 0; // set with preferred values
+	void *handle;
+
+	if ((handle = dlopen(plugin_path, dlflags))) {
+		dlerror(); // clear existing errors
+	}
+	else {
+		// handle errors.
+	}
+
+	if ((setup_fn = (weed_setup_f)dlsym(handle, "weed_setup")) == NULL) {
+		// handle error...
+	}
+
+	// optional
+	void *data;
+	weed_set_host_info_callback(host_info_cb, data);
+
+	// if using libweed_utils, we can pass weed_bootstrap, and host_info_cb will be called
+	weed_plant_t *plugin_info = (*setup_fn)(weed_bootstrap);
+
+	// now can parse plugin_info
+
+	int nfilters;
+	weed_plant_t **filters;
+	filters = weed_get_plantptr_array_counted(plugin_info, WEED_LEAF_FILTERS, &nfilters);
+	[libweed-host-utils: filters = weed_get_filters(plugin_info, &nfilters);]
+
+	char *package_name = weed_get_string_value(plugin_info, WEED_LEAF_PACKAGE_NAME, NULL);
+	[libweed-host-utils: char *package_name = weed_get_package_name(plugin_info);]
+
+
+	...
+
+	...
+
+	free(package_name);
+	free(filters);
+}
+
+
+HOST_INFO CALLBACK FROM WEED_SETUP (optional, only called if using the default weed_bootstrap):
+
+simple version:
+
+weed_plant_t *host_info_cb(weed_plant_t *host_info, void *data) {
+	// any weed functions which were overloaded in the host should be set back
+	// to original versions for the plugin:
+	weed_set_funcptr_value(host_info, WEED_PLANT_FREE_FUNC, (weed_funcptr_t)_weed_plant_free);
+
+
+	// the remainder is all optional code, apart from the final return
+
+	weed_set_string_value(host_info, WEED_LEAF_HOST_NAME, "myapp");
+	weed_set_string_value(host_info, WEED_LEAF_HOST_VERSION, "myversion");
+	weed_set_string_value(host_info, WEED_LEAF_LAYOUT_SCHEMES, "rfx");
+
+	if (DEBUG) weed_set_int_value(host_info, WEED_LEAF_VERBOSITY, WEED_VERBOSITY_DEBUG);
+	if (DEBUG) weed_set_int_value(host_info, WEED_LEAF_VERBOSITY, WEED_VERBOSITY_WARN);
+
+	// set as applicable
+	weed_set_int_value(host_info, WEED_LEAF_FLAGS, WEED_HOST_SUPPORTS_LINEAR_GAMMA
+		     | WEED_HOST_SUPPORTS_PREMULTIPLIED_ALPHA);
+
+
+	// set any custom values, keys starting with "host_"
+	weed_set_string_value(host_info, "host_audio_player", "pulseaudio");
+
+	return host_info;
+}
+
+
+
+complete version:
+
+weed_plant_t *host_info_cb(weed_plant_t *host_info, void *data) {
+	// we can use the host_info created by libweed-utils, or provide our own:
+#ifdef USE_OWN_HOST_INFO
+	weed_plant_t *our_host_info = weed_plant_new(WEED_PLANT_HOST_INFO);
+
+	// we can use the plugin info created by libweed-utils, or provide our own
+	weed_plant_t *plugin_info;
+#ifdef USE_SUPPLIED_PINFO
+	plugin_info = weed_get_plantptr_value(host_info, WEED_LEAF_PLUGIN_INFO, NULL);
+	if (plugin_info) {
+		// prevent it from being freed, and reparent it
+		weed_set_plantptr_value(host_info, WEED_LEAF_PLUGIN_INFO, NULL);
+		weed_set_plantptr_value(our_host_info, WEED_LEAF_PLUGIN_INFO, plugin_info);
+	}
+#else
+	plugin_info = weed_plant_new(WEED_PLANT_PLUGIN_INFO);
+	if (!plugin_info) return;
+#endif
+	weed_set_plantptr_value(our_host_info, WEED_LEAF_PLUGIN_INFO, plugin_info);
+	// set mandatory fields for host_info
+	...
+
+	...
+	// the lib should do this, but it is good practice
+	weed_set_plantptr_value(plugin_info, WEED_LEAF_HOST_INFO, our_host_info);
+
+	// set mandatory fields for host_info
+	...
+
+	...
+
+	// lib will free original host_info
+#endif	
+
+
+
+	// version discovery
+	// versions used by libweed_utils
+	int libweed_version = weed_get_int_value(host_info, WEED_LEAF_WEED_ABI_VERSION, NULL);
+	int filter_version = weed_get_int_value(host_info, WEED_LEAF_FILTER_API_VERSION, NULL);
+
+	// versions used by plugin (do NOT change these)
+	int plugin_min_weed_version = weed_get_int_value(plugin_info,
+		WEED_LEAF_MIN_WEED_ABI_VERSION, NULL);
+	int plugin_max_weed_version = weed_get_int_value(plugin_info,
+		WEED_LEAF_MIN_WEED_ABI_VERSION, NULL);
+	int plugin_min_filter_version = weed_get_int_value(plugin_info,
+		WEED_LEAF_MIN_FILTER_API_VERSION, NULL);
+	int plugin_max_filter_version = weed_get_int_value(plugin_info,
+		WEED_LEAF_MAX_FILTER_API_VERSION, NULL);
+
+	// we can adjust our versions as desired, or to suit the plugin
+	weed_set_int_value(host_info, WEED_LEAF_WEED_ABI_VERSION, weed_version);
+	weed_set_int_value(host_info, WEED_LEAF_FILTER_API_VERSION, filter_version);
+
+	// on return, the weed-utils library will make sure weed and filter versions are
+	// compatible, and set the host version levels in plugin_info to inform the plugin
+	// if the versions are incompatible, the plugin will get a NULL plugin info and
+	// must exit
+
+	/// overload functions as desired (OPTIONAL)
+	weed_set_funcptr_value(host_info, WEED_LEAF_MALLOC_FUNC, (weed_funcptr_t)_ext_malloc);
+	weed_set_funcptr_value(host_info, WEED_LEAF_FREE_FUNC, (weed_funcptr_t)_ext_free);
+	weed_set_funcptr_value(host_info, WEED_LEAF_REALLOC_FUNC, (weed_funcptr_t)_ext_realloc);
+	weed_set_funcptr_value(host_info, WEED_LEAF_CALLOC_FUNC, (weed_funcptr_t)_ext_calloc);
+  	weed_set_funcptr_value(host_info, WEED_LEAF_MEMCPY_FUNC, (weed_funcptr_t)_ext_memcmp);
+  	weed_set_funcptr_value(host_info, WEED_LEAF_MEMCPY_FUNC, (weed_funcptr_t)_ext_memcpy);
+  	weed_set_funcptr_value(host_info, WEED_LEAF_MEMSET_FUNC, (weed_funcptr_t)_ext_memset);
+  	weed_set_funcptr_value(host_info, WEED_LEAF_MEMMOVE_FUNC, (weed_funcptr_t)_ext_memmove);
+
+	weed_set_funcptr_value(host_info, WEED_LEAF_SET_FUNC, (weed_funcptr_t)_weed_leaf_set);
+	weed_set_funcptr_value(host_info, WEED_LEAF_DELETE_FUNC, (weed_funcptr_t)_weed_leaf_delete);
+	weed_set_funcptr_value(host_info, WEED_PLANT_FREE_FUNC, (weed_funcptr_t)_weed_plant_free);
+
+	weed_set_string_value(host_info, WEED_LEAF_HOST_NAME, "myapp");
+	weed_set_string_value(host_info, WEED_LEAF_HOST_VERSION, "myversion");
+	weed_set_string_value(host_info, WEED_LEAF_LAYOUT_SCHEMES, "rfx");
+
+	if (DEBUG) weed_set_int_value(host_info, WEED_LEAF_VERBOSITY, WEED_VERBOSITY_DEBUG);
+	if (DEBUG) weed_set_int_value(host_info, WEED_LEAF_VERBOSITY, WEED_VERBOSITY_WARN);
+
+
+	// set as applicable
+	weed_set_int_value(host_info, WEED_LEAF_FLAGS, WEED_HOST_SUPPORTS_LINEAR_GAMMA
+		     | WEED_HOST_SUPPORTS_PREMULTIPLIED_ALPHA);
+
+
+	// set any custom values, keys starting with "host_"
+	weed_set_string_value(host_info, "host_audio_player", "pulseaudio");
+
+
+	// specific values can be set for a particular plugin using data:
+
+	if (!strcmp(data, "foo")) {
+		weed_set_int_value(host_info, WEED_LEAF_VERBOSITY, WEED_VERBOSITY_DEBUG);
+	}
+
+	return host_info;
+}
+
+
+
+
+
+
+CREATING AN INSTANCE FROM A FILTER
+
+weed_plant_t *inst_from_filter(weed_plant_t *filter) {
+	int nvals;
+	weed_plant_t **in_channels, **out_channels;
+	weed_plant_t **in_params, **out_params;
+
+	weed_plant_t *inst = weed_plant_new(WEED_PLANT_FILTER_INSTANCE);
+	weed_set_plantptr_value(inst, WEED_LEAF_FILTER_CLASS, filter);
+
+	// RECOMMENDED: to prevent accidental changes by the plugin set all leaves with the flags:
+	// WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE;
+
+	in_channels = weed_channels_create(filter, 1);
+	if (in_channels) {
+		weed_set_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, in_channels);
+		free(in_channels);
+	}
+
+	out_channels = weed_channels_create(filter, 0, &nvals);
+	if (out_channels) {
+		weed_set_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, nvals, out_channels);
+		free(out_channels);
+	}
+
+	in_params = weed_params_create(filter, 1, &nvals);
+	if (in_params) {
+		weed_set_plantptr_array(inst, WEED_LEAF_IN_PARAMS, nvals, in_params);
+		free(in_params);
+	}
+
+	out_params = weed_params_create(filter, 0, &nvals);
+	if (out_params) {
+		weed_set_plantptr_array(inst, WEED_LEAF_OUT_PARAMS, nvals, out_params);
+		free(out_params);
+	}
+
+	return inst;
+}
+
+[libweed-host-utils: weed_plant_t *inst = weed_instance_new_from_filter(filter);]
+
+
+
+
+CREATING CHANNELS
+
+
+weed_plant_t **weed_channels_create(weed_plant_t *filter, int in, int *nvals) {
+	// set in to 1 to create in_channels, 0 for out_channels
+
+	weed_plant_t **chantmpls, **channels;
+	int num_channels, num_repeats, ccount = 0;
+	int i, j;
+
+	if (in) chantmpls = weed_get_plantptr_array_counted(filter,
+		WEED_LEAF_IN_CHANNEL_TEMPLATES, &num_channels);
+	else chantmpls = weed_get_plantptr_array_counted(filter,
+		WEED_LEAF_OUT_CHANNEL_TEMPLATES, &num_channels);
+
+[libweed-host-utils:
+	if (in) chantmpls = weed_filter_get_in_chantmpls(filter, &num_channels);
+	else chantmpls = weed_filter_get_out_chantmpls(filter, &num_channels);
+]
+
+	for (i = 0; i < num_channels; i++) {
+		if (weed_plant_has_leaf(chantmpls[i], WEED_LEAF_HOST_REPEATS))
+		ccount += weed_get_int_value(chantmpls[i], WEED_LEAF_HOST_REPEATS, NULL);
+		else ccount += 1;
+	}
+
+[libweed-host-utils:
+	for (i = 0; i < num_channels; i++) {
+		ccount += weed_chantmpl_get_max_repeats(chantmpls[i]);
+	}
+]
+
+	// create a channel for each template, including repeats
+	channels = (weed_plant_t **)calloc((ccount + 1), sizeof(weed_plant_t *));
+
+	ccount = 0;
+
+	for (i = 0; i < num_channels; i++) {
+		num_repeats = weed_get_int_value(chantmpls[i], WEED_LEAF_HOST_REPEATS, NULL);
+    		if (!num_repeats) num_repeats = 1;
+[libweed-host-utils:
+		num_repeats = weed_chantmpl_get_max_repeats(chantmpls[i]);
+]
+    		for (j = 0; j < num_repeats; j++) {
+      			channels[ccount] = weed_plant_new(WEED_PLANT_CHANNEL);
+      			weed_set_plantptr_value(channels[ccount], WEED_LEAF_TEMPLATE,
+					chantmpls[i]);
+
+			/// set defaults if desired....
+			if (!weed_get_boolean_value(chantmpls[i], WEED_LEAF_IS_AUDIO, NULL)) {
+[libweed-host-utils:
+			if (!weed_chantmpl_is_audio(chantmpls[i])) {
+]
+				// set defaults for video
+			}
+			else {
+				// set defaults for audio
+			}
+		ccount++;
+		}
+	}
+
+  	free(chantmpls);
+	if (nvals) *nvals = ccount;
+  	return channels;
+}
+
+
+CREATING PARAMETERS
+
+TODO
+
+
+
+CONFIGURING AN INSTANCE
+
+Before calling init_func or process_func, the instance needs to be configured for the filter.
+
+This can be done in steps:
+
+- enable / disable optional channels
+
+- set sizes / palettes for enabled channels
+
+- set in_parameter values
+
+this may require a reinit of the instance, so we need to check for this.
+
+We can then call the init_func or the process_func as reqired.
+
+
+TODO
+
+
+
+CALLING INIT_FUNC
+Once an instance configured we can call the init_func for the filter. If such a function
+exists, it needs to be done exactly once* before we can call the process_func
+
+(*An exception exists for a special kind of init called a GUI init, this will be explained below).
+
+
+Any errors returned from the init_func need to be handled by the host.
+
+
+TODO
+
+
+
+
+CALLING PROCESS_FUNC
+Once the instance is configured, and the init_func called, the process_func may then be called as
+often as required.
+
+Some configuration changes require a re-init before calling the process_func.
+
+After the process_func returns, we need to handle any errors returned.
+
+
+We can then make use of the out_channels and out_parameters set by the filter.
+
+
+TODO
+
+
+
+CALLING DEINIT_FUNC
+The deinit_func should be called if the instance needs resetting, if a reinit is required due to
+error conditions or configuration changes in the instance, or
+before unloading the plugin. If the plugin has an init_func, then that function must have been
+called on the instance, before deinit_func can be called.
+
+If the filter has an init_func, then fter calling deinit_func, the init_func must be called again
+before the process_func can be used, or before deinit_func can be called again.
+
+
+TODO
+
+
+
+UNLOADING A PLUGIN
+
+
+TODO
+
+
+
+
+OPTIONAL ADVANCED FEATURES
+

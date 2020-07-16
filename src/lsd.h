@@ -202,7 +202,7 @@ static void gen_copy(void *dst, void *src, const char *strct_type, const char *f
       IGN_RET(getentropy(dst_fld_ptr, 8));
     } else if (!strcmp(field_name, "top")) {
       *(void **)dst_fld_ptr = dst;
-    } else if (!strcmp(field_name, "special_fialds") || !strcmp(field_name, "self_fields")) {
+    } else if (!strcmp(field_name, "special_fields") || !strcmp(field_name, "self_fields")) {
       off_t offset;
       lives_special_field_t **dspf = *((lives_special_field_t ***)dst_fld_ptr);
       lives_special_field_t **sspf = *((lives_special_field_t ***)src_fld_ptr);

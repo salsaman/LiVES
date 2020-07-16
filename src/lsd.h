@@ -213,8 +213,7 @@ static void gen_copy(void *dst, void *src, const char *strct_type, const char *f
         offset = (char *)sspf[i]->ptr_to_field - (char *)src;
         dspf[i]->ptr_to_field = (char *)dst + offset;
 	  // *INDENT-OFF*
-	}
-      }}
+      }}}
     // *INDENT-ON*
 }
 

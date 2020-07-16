@@ -120,7 +120,7 @@ static void (*free_func)(void *ptr) = free;
 
 typedef struct _lives_struct_def lives_struct_def_t;
 
-// callback functions
+// CALLBACK FUNCTION TYPEDEFS
 
 typedef void (*lives_field_copy_f)(void *dst_struct, void *src_struct, const char *strct_type,
                                    const char *field_name, void *ptr_to_dst_field,
@@ -182,7 +182,7 @@ typedef struct _lives_struct_def {
 #define IGN_RET(a) ((void)((a) + 1))
 #endif
 
-// builtin delete_c
+// builtin delete callback
 static void gen_delete(void *strct, const char *strct_type, const char *field_name,
                        void *ptr_to_field) {
   if (!strcmp(strct_type, SELF_STRUCT_TYPE)) {
@@ -394,7 +394,7 @@ recurse_copy:
               if ((*((char **)spcf->ptr_to_field))) {
                 *cptr = strdup(*((char **)spcf->ptr_to_field));
                 debug_print("did a strdup from src to dest\n");
-#if defined(DEBUG) && defined(SHOW_TEXT)
+#ifdef SHOW_TEXT
                 debug_print("%s", *cptr);
 #endif
               } else {

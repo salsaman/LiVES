@@ -23,7 +23,11 @@ extern "C"
 #define debug_print(a)
 #endif
 
+#if defined _GNU_SOURCE
 #define ALLOW_UNUSED __attribute__((unused))
+#else
+#define ALLOW_UNUSED
+#endif
 
 #define TEXTLEN 64
 #define MAX_ALLOC 100000000ul
@@ -35,10 +39,10 @@ extern "C"
 #include <unistd.h>
 
 #ifndef OVERRIDE_MEMFUNCS
-static void *(*calloc_func)(size_t nmemb, size_t size) = calloc;
-static void *(*memcpy_func)(void *dest, const void *src, size_t n) = memcpy;
-static void *(*memset_func)(void *s, int c, size_t n) = memset;
-static void (*free_func)(void *ptr) = free;
+static void *(*_lsd_calloc)(size_t nmemb, size_t size) = calloc;
+static void *(*_lsd_memcpy)(void *dest, const void *src, size_t n) = memcpy;
+static void *(*_lsd_memset)(void *s, int c, size_t n) = memset;
+static void (*_lsd_free)(void *ptr) = free;
 #endif
 
 /// copy flags
@@ -191,8 +195,8 @@ static void gen_delete(void *strct, const char *strct_type, const char *field_na
   if (!strcmp(strct_type, SELF_STRUCT_TYPE)) {
     if (!strcmp(field_name, "self_fields")) {
       lives_special_field_t **spfields = *((lives_special_field_t ***)ptr_to_field);
-      for (int i = 0; spfields[i]; i++)(*free_func)(spfields[i]);
-      (*free_func)(spfields);
+      for (int i = 0; spfields[i]; i++)(*_lsd_free)(spfields[i]);
+      (*_lsd_free)(spfields);
     }
   }
 }
@@ -209,12 +213,13 @@ static void gen_copy(void *dst, void *src, const char *strct_type, const char *f
       off_t offset;
       lives_special_field_t **dspf = *((lives_special_field_t ***)dst_fld_ptr);
       lives_special_field_t **sspf = *((lives_special_field_t ***)src_fld_ptr);
-      for (int i = 0; sspf[i]; i++) {
-        offset = (char *)sspf[i]->ptr_to_field - (char *)src;
-        dspf[i]->ptr_to_field = (char *)dst + offset;
+      if (sspf) {
+	for (int i = 0; sspf[i]; i++) {
+	  offset = (char *)sspf[i]->ptr_to_field - (char *)src;
+	  dspf[i]->ptr_to_field = (char *)dst + offset;
 	  // *INDENT-OFF*
-      }}}
-    // *INDENT-ON*
+	}}}}
+  // *INDENT-ON*
 }
 
 //// API FUNCTIONS /////////
@@ -226,7 +231,7 @@ static lives_special_field_t *make_special_field(uint64_t flags, void *ptr_to_fi
     lives_field_delete_f delete_func,
     lives_field_update_f update_func) {
   lives_special_field_t *specf =
-    (lives_special_field_t *)(*calloc_func)(1, sizeof(lives_special_field_t));
+    (lives_special_field_t *)(*_lsd_calloc)(1, sizeof(lives_special_field_t));
   if (specf) {
     specf->flags = flags;
     specf->ptr_to_field = ptr_to_field;
@@ -274,12 +279,12 @@ recurse_free:
       if (flags & LIVES_FIELD_FLAG_FREE_ALL_ON_DELETE) {
         void **vptr = *((void ***)ptr);
         if (vptr) {
-          for (int j = 0; vptr[j]; j++) if (vptr[j])(*free_func)(vptr[j]);
+          for (int j = 0; vptr[j]; j++) if (vptr[j])(*_lsd_free)(vptr[j]);
         }
       }
       if (flags & LIVES_FIELD_FLAG_FREE_ON_DELETE) {
         void *vptr = *((void **)ptr);
-        if (vptr)(*free_func)(vptr);
+        if (vptr)(*_lsd_free)(vptr);
       }
     }
     for (int i = 0; spfields[i]; i++) {
@@ -294,7 +299,7 @@ recurse_free:
   }
 
   if (alldone) {
-    (*free_func)(thestruct);
+    (*_lsd_free)(thestruct);
     return;
   }
 
@@ -310,13 +315,13 @@ static void *lives_struct_copy(lives_struct_def_t *lsd) {
   lives_special_field_t **spfields;
   off_t offset = 0;
   void *dst_field;
-  void *new_struct = (*calloc_func)(1, lsd->structsize);
+  void *new_struct = (*_lsd_calloc)(1, lsd->structsize);
   int j;
   if (!new_struct) return NULL;
   debug_print("copying struct of type: %s, %p -> %p, with size %lu\n", lsd->structtype,
               lsd->top, new_struct,
               lsd->structsize);
-  (*memcpy_func)(new_struct, lsd->top, lsd->structsize);
+  (*_lsd_memcpy)(new_struct, lsd->top, lsd->structsize);
 
   // copy self_fields first:
   spfields = lsd->self_fields;
@@ -370,7 +375,7 @@ recurse_copy:
               void **vptr = (void **)dst_field;
               debug_print("allocating %lu bytes...", bsize);
               if (spcf->flags & LIVES_FIELD_FLAG_ZERO_ON_COPY) {
-                *vptr = (*calloc_func)(1, bsize);
+                *vptr = (*_lsd_calloc)(1, bsize);
                 debug_print("and set to zero.\n");
                 continue;
               } else {
@@ -378,8 +383,8 @@ recurse_copy:
                   debug_print("value is NULL, not copying\n");
                 } else {
                   debug_print("and copying from src to dest.\n");
-                  *vptr = (*calloc_func)(1, bsize);
-                  (*memcpy_func)(dst_field, spcf->ptr_to_field, bsize);
+                  *vptr = (*_lsd_calloc)(1, bsize);
+                  (*_lsd_memcpy)(dst_field, spcf->ptr_to_field, bsize);
                 }
               }
             }
@@ -415,7 +420,7 @@ recurse_copy:
         // non-alloc
         if (spcf->flags & LIVES_FIELD_FLAG_ZERO_ON_COPY) {
           if (bsize) {
-            (*memset_func)(dst_field, 0, bsize);
+            (*_lsd_memset)(dst_field, 0, bsize);
             debug_print("zeroed %lu bytes\n", bsize);
           } else {
             *((char **)dst_field) = NULL;
@@ -446,7 +451,7 @@ recurse_copy:
           char **cptr = (*(char ***)spcf->ptr_to_field);
           if (cptr) {
             while (cptr[count]) count++;
-            dptr = (char **)(*calloc_func)(count + 1, sizeof(char *));
+            dptr = (char **)(*_lsd_calloc)(count + 1, sizeof(char *));
             for (int j = 0; j < count; j++) {
               // flags tells us what to with each element
               if (spcf->flags & LIVES_FIELD_FLAG_ZERO_ON_COPY) {
@@ -497,14 +502,14 @@ recurse_copy:
             if (vptr) {
               count = 0;
               while (vptr[count]) count++;
-              dptr = (void **)(*calloc_func)(count + 1, sizeof(void *));
+              dptr = (void **)(*_lsd_calloc)(count + 1, sizeof(void *));
               for (j = 0; j < count; j++) {
                 // flags tells us what to with each element
                 if (spcf->flags & LIVES_FIELD_FLAG_ZERO_ON_COPY) {
-                  dptr[j] = (*calloc_func)(1, bsize);
+                  dptr[j] = (*_lsd_calloc)(1, bsize);
                 } else {
-                  dptr[j] = (*calloc_func)(1, bsize);
-                  (*memcpy_func)(dptr[j], vptr[j], bsize);
+                  dptr[j] = (*_lsd_calloc)(1, bsize);
+                  (*_lsd_memcpy)(dptr[j], vptr[j], bsize);
                 }
               }
               dptr[j] = NULL; /// final element must always be NULL
@@ -540,8 +545,8 @@ recurse_copy:
                 ptr += bsize;
               }
               count++;
-              newarea = (*calloc_func)(count, bsize);
-              (*memcpy_func)(newarea, spcf->ptr_to_field, count * bsize);
+              newarea = (*_lsd_calloc)(count, bsize);
+              (*_lsd_memcpy)(newarea, spcf->ptr_to_field, count * bsize);
               *((char **)dst_field) = (char *)newarea;
             }
             if (!ptr) {
@@ -616,11 +621,11 @@ static lives_special_field_t **make_structdef(void *mystruct, lives_struct_def_t
     snprintf(lsd->last_field, TEXTLEN, "%s", last_field);
   if (nspecial > 0) {
     lsd->special_fields =
-      (lives_special_field_t **)(*calloc_func)(nspecial + 1, sizeof(lives_special_field_t *));
+      (lives_special_field_t **)(*_lsd_calloc)(nspecial + 1, sizeof(lives_special_field_t *));
     lsd->special_fields[nspecial] = NULL;
   } else lsd->special_fields = NULL;
   xspecf = lsd->self_fields =
-             (lives_special_field_t **)(*calloc_func)(6, sizeof(lives_special_field_t *));
+             (lives_special_field_t **)(*_lsd_calloc)(6, sizeof(lives_special_field_t *));
 
   // set a new random value on copy
   xspecf[0] = make_special_field(0, &lsd->unique_id, "unique_id", 0, gen_copy, NULL, NULL);
@@ -679,7 +684,7 @@ static lives_special_field_t *make_special_field(uint64_t flags, void *ptr_to_fi
 // allocates and returns a copy of strct, calls copy_funcs, fills in lives_sttuct_def for copy
 static void *lives_struct_copy(lives_struct_def_t *lsd) ALLOW_UNUSED;
 
-// calls free_funcs, then frees strct
+// calls delete_funcs, then frees strct
 static void lives_struct_free(lives_struct_def_t *lsd) ALLOW_UNUSED;
 
 /////////////////////////////////////////////////////////////////////////////////////////////

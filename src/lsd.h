@@ -395,7 +395,7 @@ recurse_copy:
                 *cptr = strdup(*((char **)spcf->ptr_to_field));
                 debug_print("did a strdup from src to dest\n");
 #ifdef SHOW_TEXT
-                debug_print("%s", *cptr);
+                debug_print("%s\n", *cptr);
 #endif
               } else {
                 debug_print("value is NULL, not copying\n");

@@ -28,6 +28,8 @@ extern "C"
 #define MAX_ALLOC 100000000ul
 #define LIVES_STRUCT_ID 0x4C7C56332D2D3035  /// 1st 8 bytes - L|V3--05 (be) or 50--3V|L (le)
 
+#include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 

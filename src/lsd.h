@@ -237,7 +237,7 @@ typedef struct _lives_special_field {
 typedef struct _lives_struct_def {
   uint64_t identifier;  /// default: LIVES_STRUCT_ID
   uint64_t unique_id; /// randomly generted id, unique to each instance
-  int refcount; ///< refcount, set to 1 on creation, free unrefs and only frees when 0.
+  int32_t refcount; ///< refcount, set to 1 on creation, free unrefs and only frees when 0.
 
   void *top; ///< ptr to the start of parent struct itself, typecast to a void *
 
@@ -257,10 +257,11 @@ typedef struct _lives_struct_def {
   lives_special_field_t **special_fields;  /// may be NULL, else is pointer to NULL terminated array
   lives_special_field_t **self_fields;  /// fields in the struct_def_t struct itself
 
-  int generation; ///< initialized as 1 and incremented on each copy
+  uint32_t generation; ///< initialized as 1 and incremented on each copy
 
   void *class_data; /// user_data, value maintained across clones
   void *user_data; /// user_data for instances of struct, reset on copy
+  uint64_t end_id;  /// end marker. == identifier ^ 0xFFFFFFFFFFFFFFFF
 } lives_struct_def_t;
 
 // it is also possible to create a static struct_def, in which case the following is true
@@ -360,7 +361,7 @@ static int _lsd_generation_check_gt(lives_struct_def_t *lsd, int gen, int show_e
   if (lsd) {
     if (lsd->generation > gen) return 1;
     if (show_error)
-      baderr_print("Function was called with a statc lsd, but we wanted lsd-in-strucy\n");
+      baderr_print("Function was called with a static lsd, but we wanted lsd-in-struct\n");
   }
   return 0;
 }
@@ -864,8 +865,23 @@ static void _lsd_lsd_free(lives_struct_def_t *lsd) {
 static int lives_struct_get_generation(lives_struct_def_t *lsd) {
   return !lsd ? -1 : lsd->generation;
 }
+static uint64_t lives_struct_get_uid(lives_struct_def_t *lsd) {
+  return !lsd ? 0 : lsd->unique_id;
+}
+static const char *lives_struct_get_type(lives_struct_def_t *lsd) {
+  return !lsd ? NULL : lsd->structtype;
+}
+static const char *lives_struct_get_last_field(lives_struct_def_t *lsd) {
+  return !lsd ? NULL : lsd->last_field;
+}
+static uint64_t lives_struct_get_identifier(lives_struct_def_t *lsd) {
+  return !lsd ? 0ul : lsd->identifier;
+}
 static void *lives_struct_get_user_data(lives_struct_def_t *lsd) {
   return !lsd ? NULL : lsd->user_data;
+}
+static size_t lives_struct_get_size(lives_struct_def_t *lsd) {
+  return !lsd ? 0 : lsd->structsize;
 }
 static void lives_struct_set_user_data(lives_struct_def_t *lsd, void *data) {
   if (lsd) lsd->user_data = data;
@@ -925,15 +941,18 @@ static void *lives_struct_copy(lives_struct_def_t *lsd) {
 
 static void lives_struct_init(const lives_struct_def_t *lsd, void *thestruct,
                               lives_struct_def_t *lsd_in_struct) {
+  if (!lsd || !thestruct || !lsd_in_struct) return;
   if (!_lsd_generation_check_lt((lives_struct_def_t *)lsd, 1, 0)) return;
-  if (lsd_in_struct->refcount) _lsd_generation_check_gt((lives_struct_def_t *)lsd, 0, 1);
+  if (lsd_in_struct->structsize &&
+      !_lsd_generation_check_gt((lives_struct_def_t *)lsd_in_struct, 0, 1)) return;
   else {
     lives_special_field_t **spfields = lsd->self_fields;
     off_t offset = (char *)lsd_in_struct - (char *)thestruct;
     spfields[0]->offset_to_field = offset;
-
+#ifdef CREATE_ON_INIT
     (*_lsd_memcpy)(lsd_in_struct, lsd, sizeof(lives_struct_def_t));
     _lsd_struct_copy((lives_struct_def_t *)lsd, thestruct);
+#endif
   }
 }
 
@@ -1074,6 +1093,7 @@ static const lives_struct_def_t *lsd_create(const char *struct_type, size_t stru
                                       &lsd->self_fields, "self_fields",
                                       sizeof(lives_special_field_t),
                                       NULL, NULL, NULL);
+  // set on init
   xspecf[9] = NULL;
 
   return lsd;
@@ -1152,6 +1172,17 @@ static void *lives_struct_get_user_data(lives_struct_def_t *) ALLOW_UNUSED;
 // returns generation number, 0 for a template, 1 for instance created via lives_struct_new,
 // 2 for copy of instance, 3 for copy of copy, etc
 static int lives_struct_get_generation(lives_struct_def_t *) ALLOW_UNUSED;
+
+static uint64_t lives_struct_get_uid(lives_struct_def_t *) ALLOW_UNUSED;
+
+static const char *lives_struct_get_type(lives_struct_def_t *) ALLOW_UNUSED;
+
+static const char *lives_struct_get_last_field(lives_struct_def_t *) ALLOW_UNUSED;
+
+static uint64_t lives_struct_get_identifier(lives_struct_def_t *) ALLOW_UNUSED;
+
+static size_t lives_struct_get_size(lives_struct_def_t *) ALLOW_UNUSED;
+
 
 /*
   // set init_callback for a struct or instance, passed on to copies

@@ -510,6 +510,9 @@ enum {
 // special files / dirs
 
 #define TRASH_NAME "__TRASH-"
+#define TRASH_REMOVE 	"remove"
+#define TRASH_RECOVER 	"recover"
+#define TRASH_LEAVE 	"leave"
 
 #define SET_LOCK_FILE(set_name, lockfile) lives_build_filename(prefs->workdir, set_name, lockfile, NULL);
 #define SET_LOCK_FILES(set_name) SET_LOCK_FILE(set_name, SET_LOCK_FILENAME);
@@ -965,6 +968,7 @@ typedef struct {
   boolean mouse_blocked;
 
   lives_mt *multitrack; ///< holds a pointer to the entire multitrack environment; NULL in Clip Edit mode
+  boolean mt_needs_idlefunc; ///< set if we need to re-add the idlefunc for autobackup
 
   xprocess *proc_ptr; // progress dialog
 
@@ -1598,8 +1602,8 @@ typedef struct {
   boolean no_expose;
 
   weed_plant_t *msg_list;
-  int n_messages;
   weed_plant_t *ref_message; // weak ref
+  int n_messages;
   int ref_message_n;
   int mbar_res; /// reserved space for mbar
 
@@ -1655,13 +1659,11 @@ typedef struct {
   /// these are freed when the clip is switched or closed, or when the source frame changes or is updated
   ////////////////////
 
-  lives_proc_thread_t helper_procthreads[N_HLP_PROCTHREADS];
-
   int max_textsize;
-
   lives_permmgr_t *permmgr;
-
   boolean pretty_colours;
+
+  lives_proc_thread_t helper_procthreads[N_HLP_PROCTHREADS];
 } mainwindow;
 
 /// interface colour settings

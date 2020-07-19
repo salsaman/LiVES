@@ -16,6 +16,11 @@
 static void set_child_colour_internal(LiVESWidget *, livespointer set_allx);
 static void set_child_alt_colour_internal(LiVESWidget *, livespointer set_allx);
 static boolean governor_loop(livespointer data) GNU_RETURNS_TWICE;
+static void async_sig_handler(livespointer instance, livespointer data);
+
+typedef void (*bifunc)(livespointer, livespointer);
+typedef boolean(*trifunc)(livespointer, livespointer, livespointer);
+static void sigdata_free(livespointer, LiVESWidgetClosure *);
 
 static boolean show_css = FALSE;
 
@@ -862,10 +867,47 @@ typedef struct {
 
 static LiVESList *active_sigdets = NULL;
 
-unsigned long lives_signal_connect_sync(livespointer instance, const char *detailed_signal, LiVESGuiCallback c_handler,
+static void async_notify_redirect_handler(LiVESWidgetObject *object, livespointer pspec,
+    livespointer user_data) {
+  /// async shim to convert "notify::xxx" to some other signal
+  async_sig_handler(object, user_data);
+}
+
+static void notify_redirect_handler(LiVESWidgetObject *object, livespointer pspec,
+                                    livespointer user_data) {
+  /// shim to convert "notify::xxx" to some other signal
+  lives_sigdata_t *sigdata = (lives_sigdata_t *)user_data;
+  LiVESWidget *widget = (LiVESWidget *)object;
+  if (!sigdata->swapped)
+    (*((bifunc)sigdata->callback))(widget, sigdata->user_data);
+  else
+    (*((bifunc)sigdata->callback))(sigdata->user_data, widget);
+}
+
+unsigned long lives_signal_connect_sync(livespointer instance, const char *detailed_signal,
+                                        LiVESGuiCallback c_handler,
                                         livespointer data,
                                         LiVESConnectFlags flags) {
   unsigned long func_id;
+#if LIVES_HAS_SWITCH_WIDGET
+  if (LIVES_IS_SWITCH(LIVES_WIDGET(instance))
+      && !strcmp(detailed_signal, LIVES_WIDGET_TOGGLED_SIGNAL)) {
+    /// to make switch and checkbutton interchangeable,
+    /// we substitue the "toggled" signal for a switch with "notify::active"
+    /// and then redirect it back to the desired callback
+    lives_sigdata_t *sigdata = lives_calloc(1, sizeof(lives_sigdata_t));
+    sigdata->instance = instance;
+    sigdata->callback = (lives_funcptr_t)c_handler;
+    sigdata->user_data = data;
+    sigdata->swapped = (flags & LIVES_CONNECT_SWAPPED) ? TRUE : FALSE;
+    sigdata->detsig = lives_strdup(LIVES_WIDGET_TOGGLED_SIGNAL);
+    sigdata->funcid = g_signal_connect_data(instance, LIVES_WIDGET_NOTIFY_SIGNAL "active",
+                                            LIVES_GUI_CALLBACK(notify_redirect_handler),
+                                            sigdata, sigdata_free, (flags & LIVES_CONNECT_AFTER));
+    active_sigdets = lives_list_prepend(active_sigdets, (livespointer)sigdata);
+    return sigdata->funcid;
+  }
+#endif
   if (!flags)
     func_id = g_signal_connect(instance, detailed_signal, c_handler, data);
   else {
@@ -996,9 +1038,6 @@ reloop:
 }
 
 
-typedef void (*bifunc)(livespointer, livespointer);
-typedef boolean(*trifunc)(livespointer, livespointer, livespointer);
-
 static void async_sig_handler(livespointer instance, livespointer data) {
   LiVESWidgetContext *ctx;
   lives_sigdata_t *sigdata = lives_calloc(1, sizeof(lives_sigdata_t));
@@ -1068,7 +1107,6 @@ static boolean async_timer_handler(livespointer data) {
     //g_print("SOURCE is %s\n", g_source_get_name(g_main_current_source())); // NULL for timer, GIdleSource for idle
     //g_print("hndling %p %s %p\n", sigdata, sigdata->detsig, (void *)sigdata->detsig);
 
-
     if (!sigdata->added) {
       ctx = lives_widget_context_get_thread_default();
       if (!ctx || ctx == lives_widget_context_default()) {
@@ -1132,16 +1170,34 @@ unsigned long lives_signal_connect_async(livespointer instance, const char *deta
   sigdata->callback = (lives_funcptr_t)c_handler;
   sigdata->user_data = data;
   sigdata->swapped = (flags & LIVES_CONNECT_SWAPPED) ? TRUE : FALSE;
+  active_sigdets = lives_list_prepend(active_sigdets, (livespointer)sigdata);
+
+#if LIVES_HAS_SWITCH_WIDGET
+  if (LIVES_IS_SWITCH(LIVES_WIDGET(instance))
+      && !strcmp(detailed_signal, LIVES_WIDGET_TOGGLED_SIGNAL)) {
+    /// to make switch and checkbutton interchangeable,
+    /// we substitue the "toggled" signal for a switch with "notify::active"
+    /// and then redirect it back to the desired callback
+    sigdata->detsig = lives_strdup(LIVES_WIDGET_TOGGLED_SIGNAL);
+    sigdata->funcid = g_signal_connect_data(instance, LIVES_WIDGET_NOTIFY_SIGNAL "active",
+                                            LIVES_GUI_CALLBACK(async_notify_redirect_handler),
+                                            sigdata, sigdata_free, (flags & LIVES_CONNECT_AFTER));
+    return sigdata->funcid;
+  }
+
+#endif
+
   sigdata->detsig = lives_strdup(detailed_signal);
 
   if (nvals == 2) {
-    sigdata->funcid = g_signal_connect_data(instance, detailed_signal, LIVES_GUI_CALLBACK(async_sig_handler),
+    sigdata->funcid = g_signal_connect_data(instance, detailed_signal,
+                                            LIVES_GUI_CALLBACK(async_sig_handler),
                                             sigdata, sigdata_free, (flags & LIVES_CONNECT_AFTER));
   } else {
-    sigdata->funcid = g_signal_connect_data(instance, detailed_signal, LIVES_GUI_CALLBACK(async_sig_handler3),
+    sigdata->funcid = g_signal_connect_data(instance, detailed_signal,
+                                            LIVES_GUI_CALLBACK(async_sig_handler3),
                                             sigdata, sigdata_free, (flags & LIVES_CONNECT_AFTER));
   }
-  active_sigdets = lives_list_prepend(active_sigdets, (livespointer)sigdata);
   return sigdata->funcid;
 }
 
@@ -1241,7 +1297,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_sensitive(LiVESWidget *widg
   if (GTK_IS_MENU_ITEM(widget)) {
     LiVESWidget *sub = lives_menu_item_get_submenu(LIVES_MENU_ITEM(widget));
     if (sub != NULL) {
-      lives_container_foreach(LIVES_CONTAINER(sub), _lives_widget_set_sensitive_cb, LIVES_INT_TO_POINTER(state));
+      lives_container_foreach(LIVES_CONTAINER(sub), _lives_widget_set_sensitive_cb,
+                              LIVES_INT_TO_POINTER(state));
       gtk_widget_set_sensitive(sub, state);
     }
   }
@@ -1306,7 +1363,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget *widget) {
   gtk_widget_show_all(widget);
 
   // recommended to center the window again after adding all its widgets
-  if (LIVES_IS_DIALOG(widget)) lives_window_center(LIVES_WINDOW(widget));
+  if (LIVES_IS_DIALOG(widget) && mainw->mgeom) lives_window_center(LIVES_WINDOW(widget));
 
   return TRUE;
 #endif
@@ -4134,6 +4191,14 @@ WIDGET_HELPER_GLOBAL_INLINE char *lives_text_buffer_get_text(LiVESTextBuffer *tb
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE char *lives_text_buffer_get_all_text(LiVESTextBuffer *tbuff) {
+  LiVESTextIter s, e;
+  lives_text_buffer_get_start_iter(tbuff, &s);
+  lives_text_buffer_get_end_iter(tbuff, &e);
+  return lives_text_buffer_get_text(tbuff, &s, &e, FALSE);
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_buffer_get_start_iter(LiVESTextBuffer *tbuff, LiVESTextIter *iter) {
 #ifdef GUI_GTK
   gtk_text_buffer_get_start_iter(tbuff, iter);
@@ -5555,7 +5620,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_message_dialog_new(LiVESWindow *p
 #ifdef GUI_GTK
   mdial = gtk_message_dialog_new(parent, flags | GTK_DIALOG_DESTROY_WITH_PARENT, type, buttons, msg_fmt, NULL);
 #endif
-  if (mdial) lives_window_set_monitor(LIVES_WINDOW(mdial), widget_opts.monitor);
+  if (mdial && mainw && mainw->mgeom) lives_window_set_monitor(LIVES_WINDOW(mdial),
+        widget_opts.monitor);
   return mdial;
 }
 
@@ -9712,7 +9778,12 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
   widget_opts.last_label = NULL;
 
 #if LIVES_HAS_SWITCH_WIDGET
-  // TODO: need to intercept TOGGLED handler, and replace with "notify:active"
+  // TODO: need to intercept TOGGLED handler, and replace with "notify::active"
+  // since notify takes 3 params, we must remove the pspec param and call the real handler
+  // also, switch cannot be cast to a TOGGLE_BUTTON
+  /// gtk_toggle_button_get_active -> gtk_switch_get_state
+  /// gtk_toggle_button_set_active -> gtk_switch_set_state
+
   if (prefs->cb_is_switch) checkbutton = gtk_switch_new();
   else
 #endif
@@ -10839,7 +10910,7 @@ LiVESWidget *lives_standard_table_new(uint32_t rows, uint32_t cols, boolean homo
 LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer *tbuff) {
   LiVESWidget *textview;
 
-  if (tbuff)
+  if (!tbuff)
     textview = lives_text_view_new();
   else
     textview = lives_text_view_new_with_buffer(tbuff);
@@ -11671,11 +11742,13 @@ WIDGET_HELPER_GLOBAL_INLINE boolean toggle_sets_sensitive_cond(LiVESToggleButton
   }
 
   if (!invert) {
-    lives_signal_sync_connect(LIVES_GUI_OBJECT(tb), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(toggle_set_sensitive),
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(tb), LIVES_WIDGET_TOGGLED_SIGNAL,
+                              LIVES_GUI_CALLBACK(toggle_set_sensitive),
                               (livespointer)widget);
     toggle_set_sensitive(LIVES_WIDGET(tb), (livespointer)widget);
   } else {
-    lives_signal_sync_connect(LIVES_GUI_OBJECT(tb), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(toggle_set_insensitive),
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(tb), LIVES_WIDGET_TOGGLED_SIGNAL,
+                              LIVES_GUI_CALLBACK(toggle_set_insensitive),
                               (livespointer)widget);
     toggle_set_insensitive(LIVES_WIDGET(tb), (livespointer)widget);
   }
@@ -11683,7 +11756,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean toggle_sets_sensitive_cond(LiVESToggleButton
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean toggle_sets_sensitive(LiVESToggleButton *tb, LiVESWidget *widget, boolean invert) {
+WIDGET_HELPER_GLOBAL_INLINE boolean toggle_sets_sensitive(LiVESToggleButton *tb, LiVESWidget *widget,
+    boolean invert) {
   return toggle_sets_sensitive_cond(tb, widget, NULL, NULL, invert);
 }
 
@@ -12063,57 +12137,58 @@ boolean lives_tree_store_find_iter(LiVESTreeStore *tstore, int col, const char *
 #include "ce_thumbs.h"
 
 static boolean noswitch = FALSE;
-static boolean mt_needs_idlefunc = FALSE;
+static boolean re_add_idlefunc = FALSE;
 
 static void do_some_things(void) {
   // som old junk that may or may not be relevant now
-  //
+
   /// clip switching is not permitted during these "artificial" context updates
   noswitch = mainw->noswitch;
-  /// except under very specific conditions, e.g.
+
+  /// except under very specific conditions:
   mainw->noswitch = mainw->cs_is_permitted;
 
   if (mainw->multitrack != NULL && mainw->multitrack->idlefunc > 0) {
+    /// remove th multitrack timer; we don't want to trigger an autosave right now
     lives_timer_remove(mainw->multitrack->idlefunc);
     mainw->multitrack->idlefunc = 0;
-    mt_needs_idlefunc = TRUE;
+    if (!mainw->mt_needs_idlefunc) {
+      re_add_idlefunc = mainw->mt_needs_idlefunc = TRUE;
+    }
   }
 
   if (!mainw->is_exiting) {
-    if (rte_window != NULL) rtew_set_key_check_state();
+    /// update the state of some widgets caused by OOB changes
+    if (rte_window) rtew_set_key_check_state();
     if (mainw->ce_thumbs) {
       ce_thumbs_set_key_check_state();
       ce_thumbs_apply_liberation();
       if (mainw->ce_upd_clip) {
         ce_thumbs_highlight_current_clip();
         mainw->ce_upd_clip = FALSE;
-      }
-    }
-  }
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
 }
 
 
 static void do_more_stuff(void) {
-  if (!mainw->is_exiting && mt_needs_idlefunc && mainw->multitrack) {
-    mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
-  }
-  /// re-enable clip switching. It should be possible during "natural" context updates (i.e outside of callbacks)
-  /// (unless we are playing, in which case noswitch is always FALSE)
+  /// re-enable the multitrack autosave timer if removed it, otherwise caller can do it
+  if (re_add_idlefunc) maybe_add_mt_idlefunc();
+
+  /// restore the prior state, in case it was reset by cs_is_permitted
   mainw->noswitch = noswitch;
 }
 
 
-/* #define MAX_NULL_EVENTS 512 // general max, some events allow twice this */
-/* #define LOOP_LIMIT 32 // max when playing and not in multitrack */
 boolean lives_widget_context_update(void) {
-  static volatile boolean norecurse = FALSE;
-
+  static pthread_mutex_t ctx_mutex = PTHREAD_MUTEX_INITIALIZER;
   if (mainw->no_context_update) return FALSE;
-  if (norecurse) return FALSE;
+  if (pthread_mutex_trylock(&ctx_mutex)) return FALSE;
   else {
     LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
     do_some_things();
-    norecurse = TRUE;
+    //norecurse = TRUE;
     if (ctx != NULL && ctx != lives_widget_context_default() && gov_running) {
       mainw->clutch = FALSE;
       while (!mainw->clutch && !mainw->is_exiting) {
@@ -12125,16 +12200,12 @@ boolean lives_widget_context_update(void) {
     }
     do_more_stuff();
   }
-  norecurse = FALSE;
+  pthread_mutex_unlock(&ctx_mutex);
   return TRUE;
 }
 
 
-void lives_widget_context_super_update(void) {
-}
-
-
-LiVESWidget *lives_menu_add_separator(LiVESMenu *menu) {
+LiVESWidget *lives_menu_add_separator(LiVESMenu * menu) {
   LiVESWidget *separatormenuitem = lives_menu_item_new();
   if (separatormenuitem != NULL) {
     lives_container_add(LIVES_CONTAINER(menu), separatormenuitem);
@@ -12144,7 +12215,7 @@ LiVESWidget *lives_menu_add_separator(LiVESMenu *menu) {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE void lives_menu_item_set_text(LiVESWidget *menuitem, const char *text, boolean use_mnemonic) {
+WIDGET_HELPER_GLOBAL_INLINE void lives_menu_item_set_text(LiVESWidget * menuitem, const char *text, boolean use_mnemonic) {
   LiVESWidget *label;
   if (LIVES_IS_MENU_ITEM(menuitem)) {
     label = lives_bin_get_child(LIVES_BIN(menuitem));
@@ -12155,14 +12226,14 @@ WIDGET_HELPER_GLOBAL_INLINE void lives_menu_item_set_text(LiVESWidget *menuitem,
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE const char *lives_menu_item_get_text(LiVESWidget *menuitem) {
+WIDGET_HELPER_GLOBAL_INLINE const char *lives_menu_item_get_text(LiVESWidget * menuitem) {
   // text MUST be at least 255 chars long
   LiVESWidget *label = lives_bin_get_child(LIVES_BIN(menuitem));
   return lives_label_get_text(LIVES_LABEL(label));
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE int lives_display_get_n_screens(LiVESXDisplay *disp) {
+WIDGET_HELPER_GLOBAL_INLINE int lives_display_get_n_screens(LiVESXDisplay * disp) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 10, 0)
   return 1;
@@ -12177,7 +12248,7 @@ WIDGET_HELPER_GLOBAL_INLINE int lives_display_get_n_screens(LiVESXDisplay *disp)
 }
 
 
-void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *widget) {
+void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget * widget) {
 #ifdef GUI_GTK
   LiVESXWindow *window;
   GdkCursor *cursor = NULL;
@@ -12281,7 +12352,7 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *widget) {
 }
 
 
-void hide_cursor(LiVESXWindow *window) {
+void hide_cursor(LiVESXWindow * window) {
   //make the cursor invisible in playback windows
 #ifdef GUI_GTK
 
@@ -12324,13 +12395,13 @@ void hide_cursor(LiVESXWindow *window) {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean unhide_cursor(LiVESXWindow *window) {
+WIDGET_HELPER_GLOBAL_INLINE boolean unhide_cursor(LiVESXWindow * window) {
   if (LIVES_IS_XWINDOW(window)) return lives_xwindow_set_cursor(window, NULL);
   return FALSE;
 }
 
 
-void funkify_dialog(LiVESWidget *dialog) {
+void funkify_dialog(LiVESWidget * dialog) {
   if (prefs->funky_widgets) {
     LiVESWidget *frame = lives_standard_frame_new(NULL, 0., FALSE);
     LiVESWidget *box = lives_vbox_new(FALSE, 0);
@@ -12359,7 +12430,7 @@ void funkify_dialog(LiVESWidget *dialog) {
 }
 
 
-void lives_cool_toggled(LiVESWidget *tbutton, livespointer user_data) {
+void lives_cool_toggled(LiVESWidget * tbutton, livespointer user_data) {
 #if GTK_CHECK_VERSION(3, 0, 0)
   // connect toggled event to this
   boolean *ret = (boolean *)user_data, active;
@@ -12377,7 +12448,7 @@ void lives_cool_toggled(LiVESWidget *tbutton, livespointer user_data) {
 }
 
 
-boolean draw_cool_toggle(LiVESWidget *widget, lives_painter_t *cr, livespointer data) {
+boolean draw_cool_toggle(LiVESWidget * widget, lives_painter_t *cr, livespointer data) {
   // connect expose event to this
   double rwidth = (double)lives_widget_get_allocation_width(LIVES_WIDGET(widget));
   double rheight = (double)lives_widget_get_allocation_height(LIVES_WIDGET(widget));
@@ -12500,7 +12571,7 @@ boolean draw_cool_toggle(LiVESWidget *widget, lives_painter_t *cr, livespointer 
 
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_get_inner_size(LiVESWindow *win, int *x, int *y) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_get_inner_size(LiVESWindow * win, int *x, int *y) {
   // get size request for child to fill window "win" (assuming win is maximised and moved maximum top / left)
 #ifdef GUI_GTK
   GdkRectangle rect;
@@ -12515,7 +12586,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_get_inner_size(LiVESWindow *win
 }
 
 
-boolean get_border_size(LiVESWidget *win, int *bx, int *by) {
+boolean get_border_size(LiVESWidget * win, int *bx, int *by) {
 #ifdef GUI_GTK
   if (win == LIVES_MAIN_WINDOW_WIDGET) {
     int eww, ewh;
@@ -12553,30 +12624,32 @@ boolean get_border_size(LiVESWidget *win, int *bx, int *by) {
 /*
    Set active string to the combo box
 */
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_set_active_string(LiVESCombo *combo, const char *active_str) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_set_active_string(LiVESCombo * combo, const char *active_str) {
   return lives_entry_set_text(LIVES_ENTRY(lives_bin_get_child(LIVES_BIN(combo))), active_str);
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_combo_get_entry(LiVESCombo *widget) {
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_combo_get_entry(LiVESCombo * widget) {
   return lives_bin_get_child(LIVES_BIN(widget));
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_can_focus_and_default(LiVESWidget *widget) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_can_focus_and_default(LiVESWidget * widget) {
   if (!lives_widget_set_can_focus(widget, TRUE)) return FALSE;
   return lives_widget_set_can_default(widget, TRUE);
 }
 
 
-void lives_general_button_clicked(LiVESButton *button, livespointer data_to_free) {
+void lives_general_button_clicked(LiVESButton * button, livespointer data_to_free) {
   // destroy the button top-level and free data
   if (LIVES_IS_WIDGET(lives_widget_get_toplevel(LIVES_WIDGET(button)))) {
     lives_widget_destroy(lives_widget_get_toplevel(LIVES_WIDGET(button)));
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
   }
   lives_freep((void **)&data_to_free);
-  maybe_add_mt_idlefunc();
+
+  /// TODO: this is BAD. Need to check that mainw->mt_needs_idlefunc is set conistently
+  maybe_add_mt_idlefunc(); ///< add idlefunc iff mainw->mt_needs_idlefunc is set
 }
 
 
@@ -12592,7 +12665,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_hseparator_new(void) {
 }
 
 
-LiVESWidget *add_hsep_to_box(LiVESBox *box) {
+LiVESWidget *add_hsep_to_box(LiVESBox * box) {
   LiVESWidget *hseparator = lives_standard_hseparator_new();
   int packing_height = widget_opts.packing_height;
   if (LIVES_IS_HBOX(box)) packing_height = 0;
@@ -12602,7 +12675,7 @@ LiVESWidget *add_hsep_to_box(LiVESBox *box) {
 }
 
 
-LiVESWidget *add_vsep_to_box(LiVESBox *box) {
+LiVESWidget *add_vsep_to_box(LiVESBox * box) {
   LiVESWidget *vseparator = lives_vseparator_new();
   int packing_width = widget_opts.packing_width >> 1;
   if (LIVES_SHOULD_EXPAND_EXTRA_FOR(box)) packing_width *= 2;
@@ -12614,7 +12687,7 @@ LiVESWidget *add_vsep_to_box(LiVESBox *box) {
 
 
 //#define SHOW_FILL
-LiVESWidget *add_fill_to_box(LiVESBox *box) {
+LiVESWidget *add_fill_to_box(LiVESBox * box) {
 #ifdef SHOW_FILL
   LiVESWidget *widget = lives_label_new("fill");
 #else
@@ -12634,7 +12707,7 @@ LiVESWidget *add_fill_to_box(LiVESBox *box) {
 }
 
 
-LiVESWidget *add_spring_to_box(LiVESBox *box, int min) {
+LiVESWidget *add_spring_to_box(LiVESBox * box, int min) {
   LiVESWidget *widget;
   int filler_len = widget_opts.filler_len;
   int woe = widget_opts.expand;
@@ -12647,7 +12720,7 @@ LiVESWidget *add_spring_to_box(LiVESBox *box, int min) {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_toolbar_insert_space(LiVESToolbar *bar) {
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_toolbar_insert_space(LiVESToolbar * bar) {
   LiVESWidget *spacer = NULL;
 #ifdef GUI_GTK
   spacer = LIVES_WIDGET(lives_separator_tool_item_new());
@@ -12660,7 +12733,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_toolbar_insert_space(LiVESToolbar
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_toolbar_insert_label(LiVESToolbar *bar, const char *text) {
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_toolbar_insert_label(LiVESToolbar * bar, const char *text) {
   LiVESWidget *item = NULL;
   widget_opts.last_label = NULL;
 #ifdef GUI_GTK
@@ -12673,7 +12746,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_toolbar_insert_label(LiVESToolbar
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_box_set_button_width(LiVESButtonBox *bbox, LiVESWidget *button,
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_box_set_button_width(LiVESButtonBox * bbox, LiVESWidget * button,
     int min_width) {
   lives_button_box_set_layout(bbox, LIVES_BUTTONBOX_SPREAD);
 #ifdef GUI_GTK
@@ -12688,7 +12761,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_box_set_button_width(LiVESButto
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_center(LiVESWidget *button) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_center(LiVESWidget * button) {
   if (LIVES_SHOULD_EXPAND_WIDTH)
     lives_widget_set_size_request(button, DEF_BUTTON_WIDTH * 4, DLG_BUTTON_HEIGHT);
 
@@ -12702,7 +12775,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_center(LiVESWidget *button) {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_uncenter(LiVESWidget *button, int normal_width) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_uncenter(LiVESWidget * button, int normal_width) {
   lives_widget_set_size_request(button, normal_width, DLG_BUTTON_HEIGHT);
 #if !GTK_CHECK_VERSION(3, 0, 0)
   lives_button_box_set_layout(LIVES_BUTTON_BOX(lives_widget_get_parent(button)), LIVES_BUTTONBOX_END);
@@ -12713,7 +12786,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_uncenter(LiVESWidget *button, i
 }
 
 
-boolean lives_tool_button_set_border_colour(LiVESWidget *button, LiVESWidgetState state, LiVESWidgetColor *colour) {
+boolean lives_tool_button_set_border_colour(LiVESWidget * button, LiVESWidgetState state, LiVESWidgetColor * colour) {
   if (LIVES_IS_TOOL_BUTTON(button)) {
     LiVESWidget *widget, *parent;
     widget = lives_tool_button_get_icon_widget(LIVES_TOOL_BUTTON(button));
@@ -12730,7 +12803,7 @@ boolean lives_tool_button_set_border_colour(LiVESWidget *button, LiVESWidgetStat
 }
 
 
-LiVESWidget *lives_standard_tool_button_new(LiVESToolbar *bar, GtkWidget *icon_widget, const char *label,
+LiVESWidget *lives_standard_tool_button_new(LiVESToolbar * bar, GtkWidget * icon_widget, const char *label,
     const char *tooltips) {
   LiVESToolItem *tbutton;
   widget_opts.last_label = NULL;
@@ -12755,7 +12828,7 @@ LiVESWidget *lives_standard_tool_button_new(LiVESToolbar *bar, GtkWidget *icon_w
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_accel_path_disconnect(LiVESAccelGroup *group, const char *path) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_accel_path_disconnect(LiVESAccelGroup * group, const char *path) {
 #ifdef GUI_GTK
   GtkAccelKey key;
   gtk_accel_map_lookup_entry(path, &key);
@@ -12772,7 +12845,7 @@ WIDGET_HELPER_GLOBAL_INLINE lives_colRGBA64_t lives_rgba_col_new(int red, int gr
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE lives_colRGBA64_t *widget_color_to_lives_rgba(lives_colRGBA64_t *lcolor, LiVESWidgetColor *color) {
+WIDGET_HELPER_GLOBAL_INLINE lives_colRGBA64_t *widget_color_to_lives_rgba(lives_colRGBA64_t *lcolor, LiVESWidgetColor * color) {
   lcolor->red = LIVES_WIDGET_COLOR_STRETCH(color->red);
   lcolor->green = LIVES_WIDGET_COLOR_STRETCH(color->green);
   lcolor->blue = LIVES_WIDGET_COLOR_STRETCH(color->blue);
@@ -12785,7 +12858,7 @@ WIDGET_HELPER_GLOBAL_INLINE lives_colRGBA64_t *widget_color_to_lives_rgba(lives_
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidgetColor *lives_rgba_to_widget_color(LiVESWidgetColor *color, lives_colRGBA64_t *lcolor) {
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidgetColor *lives_rgba_to_widget_color(LiVESWidgetColor * color, lives_colRGBA64_t *lcolor) {
   color->red = LIVES_WIDGET_COLOR_SCALE_65535(lcolor->red);
   color->green = LIVES_WIDGET_COLOR_SCALE_65535(lcolor->green);
   color->blue = LIVES_WIDGET_COLOR_SCALE_65535(lcolor->blue);

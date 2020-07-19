@@ -200,6 +200,13 @@ static void mt_ac_audio_toggled(LiVESMenuItem *, livespointer mt);
 
 #define LIVES_AVOL_SCALE ((double)1000000.)
 
+void maybe_add_mt_idlefunc(void) {
+  if (mainw->multitrack && mainw->mt_needs_idlefunc) {
+    if (!mainw->is_exiting)  mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
+    mainw->mt_needs_idlefunc = FALSE;
+  }
+}
+
 
 LIVES_INLINE int mt_file_from_clip(lives_mt *mt, int clip) {
   return clips_to_files[clip];

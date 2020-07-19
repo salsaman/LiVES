@@ -1689,7 +1689,6 @@ void create_LiVES(void) {
 #if GTK_CHECK_VERSION(3, 0, 0)
   // insert audio src buttons
   if (prefs->lamp_buttons) {
-
     lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->ext_audio_checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
                               LIVES_GUI_CALLBACK(draw_cool_toggle),
                               NULL);

@@ -401,10 +401,18 @@ weed_plant_free_f _weed_plant_free;
 weed_leaf_set_flags_f _weed_leaf_set_flags;
 weed_leaf_delete_f _weed_leaf_delete;
 
+#ifndef IGN_RET
+#define IGN_RET(a) ((void)((a) + 1))
+#endif
+
+#define EXPECTED(x) __builtin_expect((x), 1)
+#define UNEXPECTED(x) __builtin_expect((x), 0)
+
 #include "weed-effects-utils.h"
 #include "support.h"
 #include "widget-helper.h"
 #include "machinestate.h"
+#include "lsd-tab.h"
 
 boolean weed_threadsafe;
 int weed_abi_version;
@@ -1478,6 +1486,8 @@ typedef struct {
 lives_file_buffer_t *find_in_file_buffers(int fd);
 lives_file_buffer_t *find_in_file_buffers_by_pathname(const char *pathname);
 
+size_t get_read_buff_size(int sztype);
+
 int lives_open_buffered_rdonly(const char *pathname);
 int lives_open_buffered_writer(const char *pathname, int mode, boolean append);
 int lives_create_buffered(const char *pathname, int mode);
@@ -1658,6 +1668,8 @@ boolean string_lists_differ(LiVESList *, LiVESList *);
 LiVESList *lives_list_append_unique(LiVESList *xlist, const char *add);
 LiVESList *buff_to_list(const char *buffer, const char *delim, boolean allow_blanks, boolean strip);
 int lives_list_strcmp_index(LiVESList *list, livesconstpointer data, boolean case_sensitive);
+
+LiVESList *dir_to_list(const char *dir, char *tsubdir);
 
 LiVESList *get_set_list(const char *dir, boolean utf8);
 

@@ -182,13 +182,26 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
 
   // on error we return err as a -ve number
 
+  // id buflen is 0, then buff os cast from a textbuff, and the output will be appended to it
+
   FILE *fp;
-  char xbuff[buflen];
+  char *xbuff;
   LiVESResponseType response;
+  ssize_t totlen = 0, xtotlen = 0;
+  size_t slen;
+  LiVESTextBuffer *tbuff = NULL;
+  LiVESTextIter end_iter;
   boolean cnorm = FALSE;
-  ssize_t totlen = 0;
   int err = 0;
 
+  if (!buflen) {
+    tbuff = (LiVESTextBuffer *)buff;
+    buflen = get_read_buff_size(BUFF_SIZE_READ_LARGE);
+    xbuff = (char *)lives_calloc(1, buflen);
+  } else {
+    xbuff = buff;
+    lives_memset(xbuff, 0, 1);
+  }
   //g_print("doing: %s\n",com);
 
   if (mainw->is_ready && !mainw->is_exiting &&
@@ -199,7 +212,6 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
     //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
   }
 
-  lives_memset(buff, 0, 1);
 
   do {
     char *strg = NULL;
@@ -209,22 +221,35 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
       err = errno;
     } else {
       while (1) {
-        strg = fgets(xbuff, buflen - totlen, fp);
+        strg = fgets(xbuff + totlen, tbuff ? buflen : buflen - totlen, fp);
         err = ferror(fp);
         if (err != 0 || !strg || !(*strg)) break;
-        lives_snprintf(buff + totlen, buflen - totlen, "%s", xbuff);
-        totlen += lives_strlen(xbuff);
-        if (totlen >= buflen - 1) break;
+        slen = lives_strlen(xbuff);
+        if (tbuff) {
+          lives_text_buffer_get_end_iter(LIVES_TEXT_BUFFER(tbuff), &end_iter);
+          lives_text_buffer_insert(LIVES_TEXT_BUFFER(tbuff), &end_iter, xbuff, slen);
+          xtotlen += slen;
+        } else {
+          //lives_snprintf(buff + totlen, buflen - totlen, "%s", xbuff);
+          totlen = slen;
+          if (slen >= buflen - 1) break;
+        }
       }
       fclose(fp);
+    }
+
+    if (tbuff) {
+      lives_free(xbuff);
+      totlen = xtotlen;
+      g_print("it all is %s\n", lives_text_buffer_get_all_text(tbuff));
     }
 
     if (err != 0) {
       char *msg = NULL;
       THREADVAR(com_failed) = TRUE;
       if (!allow_error) {
-        msg = lives_strdup_printf("lives_popen failed after %ld bytes with code %d: %s", strg == NULL ? 0 : lives_strlen(strg), err,
-                                  com);
+        msg = lives_strdup_printf("lives_popen failed after %ld bytes with code %d: %s",
+                                  strg == NULL ? 0 : lives_strlen(strg), err, com);
         LIVES_ERROR(msg);
         response = do_system_failed_error(com, err, NULL, TRUE, NULL, FALSE);
       }
@@ -255,11 +280,9 @@ lives_pgid_t lives_fork(const char *com) {
   pid_t ret;
 
   if (!(ret = fork())) {
-    int res;
     setsid(); // create new session id
     setpgid(capable->mainpid, 0); // create new pgid
-    res = system(com);
-    (void)res; // stop compiler complaining
+    IGN_RET(system(com));
     _exit(0);
   }
 
@@ -660,7 +683,7 @@ int lives_open_buffered_writer(const char *pathname, int mode, boolean append) {
 int lives_close_buffered(int fd) {
   lives_file_buffer_t *fbuff;
   boolean should_close = TRUE;
-  int ret = 0, dummy;
+  int ret = 0;
 
   if (IS_VALID_CLIP(mainw->scrap_file) && mainw->files[mainw->scrap_file]->ext_src &&
       fd == LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src))
@@ -688,8 +711,7 @@ int lives_close_buffered(int fd) {
       if (!allow_fail && ret < bytes) return ret; // this is correct, as flush will have called close again with should_close=FALSE;
     }
 #ifdef HAVE_POSIX_FALLOCATE
-    dummy = ftruncate(fbuff->fd, MAX(fbuff->offset, fbuff->orig_size));
-    (void)dummy;
+    IGN_RET(ftruncate(fbuff->fd, MAX(fbuff->offset, fbuff->orig_size)));
     /* //g_print("truncated  at %ld bytes in %d\n", MAX(fbuff->offset, fbuff->orig_size), fbuff->fd); */
 #endif
   }
@@ -711,21 +733,30 @@ int lives_close_buffered(int fd) {
   return ret;
 }
 
+
+size_t get_read_buff_size(int sztype) {
+  switch (sztype) {
+  case BUFF_SIZE_READ_SMALLMED: return smedbytes;
+  case BUFF_SIZE_READ_MED: return medbytes;
+  case BUFF_SIZE_READ_LARGE: return bigbytes;
+  default: break;
+  }
+  return smbytes;
+}
+
+
 static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, size_t min) {
   ssize_t res;
   ssize_t delta = 0;
-  size_t bufsize = smbytes;
+  size_t bufsize;
 
-  if (fbuff->bufsztype == BUFF_SIZE_READ_SMALLMED) bufsize = smedbytes;
-  else if (fbuff->bufsztype == BUFF_SIZE_READ_MED) bufsize = medbytes;
-  else if (fbuff->bufsztype == BUFF_SIZE_READ_LARGE) bufsize = bigbytes;
-  else if (fbuff->bufsztype == BUFF_SIZE_READ_CUSTOM) {
+  if (fbuff->bufsztype == BUFF_SIZE_READ_CUSTOM) {
     if (fbuff->buffer) bufsize = fbuff->ptr - fbuff->buffer + fbuff->bytes;
     else {
       bufsize = fbuff->bytes;
       fbuff->bytes = 0;
     }
-  }
+  } else bufsize = get_read_buff_size(fbuff->bufsztype);
 
   if (fbuff->reversed) delta = (bufsize >> 2) * 3;
   if (delta > fbuff->offset) delta = fbuff->offset;
@@ -5064,6 +5095,54 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
 }
 
 
+/**
+   @brief create a kist from a (sub)directory
+   '.' and '..' are ignored
+   subdir can be NULL
+*/
+LiVESList *dir_to_list(const char *dir, char *tsubdir) {
+  LiVESList *list = NULL;
+  DIR *tldir, *subdir;
+  struct dirent *tdirent, *subdirent;
+  char *subdirname;
+
+  if (!dir) return NULL;
+  tldir = opendir(dir);
+  if (!tldir) return NULL;
+
+  while (1) {
+    tdirent = readdir(tldir);
+    if (!tdirent) {
+      closedir(tldir);
+      return list;
+    }
+
+    if (!strncmp(tdirent->d_name, "..", strlen(tdirent->d_name))) continue;
+
+    if (tsubdir) {
+      if (!lives_strcmp(tdirent->d_name, tsubdir)) {
+        closedir(tldir);
+        subdirname = lives_build_filename(dir, tdirent->d_name, NULL);
+        subdir = opendir(subdirname);
+        lives_free(subdirname);
+        if (!subdir) return list;
+        while (1) {
+          subdirent = readdir(subdir);
+          if (!subdirent) {
+            closedir(subdir);
+            return list;
+          }
+          if (!strncmp(subdirent->d_name, "..", strlen(subdirent->d_name))) continue;
+          list = lives_list_prepend(list, subdirent->d_name);
+        }
+      }
+      continue;
+    }
+    list = lives_list_prepend(list, tdirent->d_name);
+  }
+}
+
+
 LiVESList *get_set_list(const char *dir, boolean utf8) {
   // get list of sets in top level dir
   // values will be in filename encoding
@@ -5096,7 +5175,7 @@ LiVESList *get_set_list(const char *dir, boolean utf8) {
     subdirname = lives_build_filename(dir, tdirent->d_name, NULL);
     subdir = opendir(subdirname);
 
-    if (subdir == NULL) {
+    if (!subdir) {
       lives_free(subdirname);
       continue;
     }

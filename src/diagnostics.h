@@ -19,4 +19,7 @@ int test_palette_conversions(void);
 #endif
 
 void check_random(void);
+
+void lives_struct_test(void);
+
 #endif

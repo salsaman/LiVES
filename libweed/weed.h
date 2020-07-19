@@ -148,6 +148,7 @@ __WEED_FN_DEF__ weed_leaf_set_flags_f weed_leaf_set_flags;
 __WEED_FN_DEF__ weed_leaf_set_private_data_f weed_leaf_set_private_data;
 __WEED_FN_DEF__ weed_leaf_get_private_data_f weed_leaf_get_private_data;
 
+#if defined(__WEED_HOST__) || defined(__LIBWEED__)
 /// flagbit may be set during development to avoid spurious error warnings in valgrind etc.
 /// may have a minor detrimental affect on performance
 #define WEED_INIT_STD_STRINGFUNCS		(1<<0)
@@ -155,10 +156,15 @@ __WEED_FN_DEF__ weed_leaf_get_private_data_f weed_leaf_get_private_data;
 /// set this flagbit to enable potential backported bugfixes which may theoretically impact existing behaviour
 #define WEED_INIT_ALLBUGFIXES			(1<<1)
 
-int32_t weed_get_abi_version(void);
+  /// set this to expose extra debug functions
+#define WEED_INIT_DEBUGMODE			(1<<2)
 
-#ifndef __LIBWEED__
+int32_t weed_get_abi_version(void);
+#endif
+
+#ifdef __WEED_HOST__
 weed_error_t weed_init(int32_t abi, uint64_t init_flags);
+
 #endif
 #endif
 

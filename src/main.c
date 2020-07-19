@@ -722,6 +722,11 @@ static boolean pre_init(void) {
 
   prefs->present = FALSE;
 
+  /// eye candy
+  prefs->extra_colours = get_boolean_prefd(PREF_EXTRA_COLOURS, TRUE);
+  prefs->show_button_images = widget_opts.show_button_images =
+                                get_boolean_prefd(PREF_SHOW_BUTTON_ICONS, TRUE);
+
   mainw->threaded_dialog = FALSE;
   clear_mainw_msg();
 
@@ -1422,6 +1427,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->set_list = NULL;
   mainw->num_sets = -1;
 
+  mainw->mt_needs_idlefunc = FALSE;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);
@@ -1514,11 +1521,6 @@ static void lives_init(_ign_opts *ign_opts) {
   prefs->ce_thumb_mode = FALSE;
 #endif
 
-  /// eye candy
-  prefs->extra_colours = get_boolean_prefd(PREF_EXTRA_COLOURS, TRUE);
-  prefs->show_button_images = widget_opts.show_button_images =
-                                get_boolean_prefd(PREF_SHOW_BUTTON_ICONS, TRUE);
-
   prefs->push_audio_to_gens = get_boolean_prefd(PREF_PUSH_AUDIO_TO_GENS, TRUE);
 
   prefs->perm_audio_reader = TRUE;
@@ -1540,7 +1542,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   prefs->autoclean = get_boolean_prefd(PREF_AUTOCLEAN_TRASH, TRUE);
 
-  prefs->pref_trash = get_boolean_prefd(PREF_PREF_TRASH, TRUE);
+  future_prefs->pref_trash = prefs->pref_trash = get_boolean_prefd(PREF_PREF_TRASH, FALSE);
 
   //////////////////////////////////////////////////////////////////
 
@@ -1865,7 +1867,6 @@ static void lives_init(_ign_opts *ign_opts) {
     }
     lives_snprintf(prefs->ladspa_path, PATH_MAX, "%s", ladspa_path);
     if (needs_free) lives_free(ladspa_path);
-
     splash_msg(_("Loading realtime effect plugins..."), SPLASH_LEVEL_LOAD_RTE);
     weed_load_all();
 
@@ -2269,7 +2270,6 @@ boolean set_palette_colours(boolean force_reload) {
   // force_reload should only be set when the theme changes in prefs.
   LiVESList *cache_backup = NULL;
   lives_colRGBA64_t lcol;
-  double lmin, lmax;
 
   char *themedir, *themefile, *othemefile, *fname, *tmp;
   char pstyle[8];
@@ -2277,7 +2277,10 @@ boolean set_palette_colours(boolean force_reload) {
   boolean is_OK = TRUE;
   boolean cached = FALSE;
 
+#ifndef VALGRIND_ON
+  double lmin, lmax;
   uint8_t ncr, ncg, ncb;
+#endif
 
   lcol.alpha = 65535;
 
@@ -2564,6 +2567,7 @@ boolean set_palette_colours(boolean force_reload) {
     set_palette_prefs();
   }
 
+#ifndef VALGRIND_ON
   /// generate some complementary colours
   if (!(palette->style & STYLE_LIGHT)) {
     lmin = .05;
@@ -2575,6 +2579,7 @@ boolean set_palette_colours(boolean force_reload) {
   ncr = palette->menu_and_bars.red * 255.;
   ncg = palette->menu_and_bars.green * 255.;
   ncb = palette->menu_and_bars.blue * 255.;
+  prefs->pb_quality = PB_QUALITY_HIGH;
   if (pick_nice_colour(palette->normal_back.red * 255., palette->normal_back.green * 255.,
                        palette->normal_back.blue * 255., &ncr, &ncg, &ncb, 1.5, .25, .75)) {
     palette->nice1.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
@@ -2595,6 +2600,7 @@ boolean set_palette_colours(boolean force_reload) {
       mainw->pretty_colours = TRUE;
     }
   }
+#endif
   return TRUE;
 }
 
@@ -3678,7 +3684,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   weed_abi_version = weed_get_abi_version();
   if (weed_abi_version > WEED_ABI_VERSION) weed_abi_version = WEED_ABI_VERSION;
 #ifdef STD_STRINGFUNCS
-  werr = weed_init(weed_abi_version, WEED_INIT_STD_STRINGFUNCS);
+  werr = weed_init(weed_abi_version, WEED_INIT_STD_STRINGFUNCS | WEED_INIT_DEBUGMODE);
 #else
   werr = weed_init(weed_abi_version, 0);
 #endif
@@ -3690,7 +3696,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   }
 #ifndef USE_STD_MEMFUNCS
   weed_utils_set_custom_memfuncs(lives_malloc, lives_calloc, lives_memcpy, NULL, lives_free);
-
 #endif
 #endif
 
@@ -3709,8 +3714,10 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
 #ifdef ENABLE_DIAGNOSTICS
   run_weed_startup_tests();
+  lives_struct_test();
   test_palette_conversions();
 #endif
+  //abort();
 
   // allow us to set immutable values (plugins can't)
   weed_leaf_set = weed_leaf_set_host;
@@ -6826,7 +6833,7 @@ fndone:
       lives_clip_t *sfile;
       lives_thread_t *thrd;
 
-      if (layer == NULL) return FALSE;
+      if (!layer) return FALSE;
 
       thrd = (lives_thread_t *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PTHREAD, NULL);
       if (thrd) {
@@ -7171,7 +7178,7 @@ static void do_cleanup(weed_layer_t *layer, int success) {
     lives_free(tmp);
   }
 
-  if (layer != NULL) {
+  if (layer) {
     check_layer_ready(layer);
     ///mainw->frame_layer_postload = mainw->frame_layer;
     weed_layer_free(layer);

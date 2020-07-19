@@ -360,7 +360,8 @@ uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val) {
         }
         val = bestval;
         if (prefs->show_dev_opts)
-          g_printerr("value of %s tuned to %lu\n", get_tunert(weed_get_int64_value(*tuner, WEED_LEAF_INDEX, NULL)), val);
+          g_printerr("value of %s tuned to %lu\n",
+                     get_tunert(weed_get_int64_value(*tuner, WEED_LEAF_INDEX, NULL)), val);
         // TODO: store value so we can recalibrate again later
         //tuned = (struct tuna *)lives_malloc(sizeof(tuna));
         //tuna->wptpp = tuner;
@@ -1374,6 +1375,8 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
   thrd_work_t *mywork;
   uint64_t myflags = 0;
 
+  if (!tdata->idx) abort();
+
   pthread_mutex_lock(&twork_mutex);
   list = twork_last;
   if (LIVES_UNLIKELY(!list)) {
@@ -1458,7 +1461,9 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
 
 static void *thrdpool(void *arg) {
   lives_thread_data_t *tdata = (lives_thread_data_t *)arg;
-
+  if (!rpmalloc_is_thread_initialized()) {
+    rpmalloc_thread_initialize();
+  }
   lives_widget_context_push_thread_default(tdata->ctx);
 
   while (!threads_die) {
@@ -1467,6 +1472,12 @@ static void *thrdpool(void *arg) {
     pthread_mutex_unlock(&tcond_mutex);
     if (LIVES_UNLIKELY(threads_die)) break;
     do_something_useful(tdata);
+    if (rpmalloc_is_thread_initialized()) {
+      rpmalloc_thread_collect();
+    }
+  }
+  if (rpmalloc_is_thread_initialized()) {
+    rpmalloc_thread_finalize();
   }
   return NULL;
 }
@@ -1538,7 +1549,8 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives
   work->func = func;
   work->arg = arg;
 
-  if (!thread || (attr && (*attr & LIVES_THRDATTR_AUTODELETE))) work->flags |= LIVES_THRDFLAG_AUTODELETE;
+  if (!thread || (attr && (*attr & LIVES_THRDATTR_AUTODELETE)))
+    work->flags |= LIVES_THRDFLAG_AUTODELETE;
   if (attr && (*attr & LIVES_THRDATTR_WAIT_SYNC)) {
     work->flags |= LIVES_THRDFLAG_WAIT_SYNC;
     work->sync_ready = FALSE;
@@ -1607,6 +1619,12 @@ uint64_t lives_thread_join(lives_thread_t work, void **retval) {
     if (task->busy) break;
     sched_yield();
     lives_nanosleep(1000);
+  }
+
+  if (!task->done) {
+    pthread_mutex_lock(&tcond_mutex);
+    pthread_cond_signal(&tcond);
+    pthread_mutex_unlock(&tcond_mutex);
   }
 
   lives_nanosleep_until_nonzero(task->done);

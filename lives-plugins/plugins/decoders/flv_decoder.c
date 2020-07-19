@@ -1347,7 +1347,7 @@ static lives_clip_data_t *flv_clone(lives_clip_data_t *cdata) {
   lives_flv_priv_t *dpriv, *spriv;
 
   // copy from cdata to clone, with a new context for clone
-  clone->URI = strdup(cdata->URI);
+  if (cdata->URI) clone->URI = strdup(cdata->URI);
   clone->nclips = cdata->nclips;
   snprintf(clone->container_name, 512, "%s", cdata->container_name);
   clone->current_clip = cdata->current_clip;

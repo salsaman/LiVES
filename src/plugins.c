@@ -1,6 +1,6 @@
 // plugins.c
 // LiVES
-// (c) G. Finch 2003 - 2019 <salsaman+lives@gmail.com>
+// (c) G. Finch 2003 - 2020 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -2210,6 +2210,7 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList * disable
     g_print("trying decoder %s\n", dpsys->name);
 #endif
 
+    g_print("HERE %s\n", fake_cdata->URI);
     dplug->cdata = (dpsys->get_clip_data)(file_name, fake_cdata);
 
     if (dplug->cdata != NULL) {

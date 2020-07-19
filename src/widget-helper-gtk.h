@@ -573,10 +573,10 @@ typedef GtkTable                          LiVESTable;
 #endif
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-typedef GtkSwitch                         LiVESSwitch;
-typedef GtkWidget                         LiVESToggleButton;
 #undef LIVES_HAS_SWITCH_WIDGET
 #define LIVES_HAS_SWITCH_WIDGET 1
+typedef GtkSwitch                         LiVESSwitch;
+typedef GtkWidget                         LiVESToggleButton;
 #else
 typedef LiVESWidget                       LiVESSwitch;
 typedef GtkToggleButton                   LiVESToggleButton;
@@ -918,7 +918,7 @@ typedef GdkInterpType                     LiVESInterpType;
 
 #if LIVES_HAS_SWITCH_WIDGET
 #define LIVES_SWITCH(widget) GTK_SWITCH(widget)
-#define LIVES_TOGGLE_BUTTON(widget) GTK_WIDGET(widget)
+#define LIVES_TOGGLE_BUTTON(widget) widget
 #else
 #define LIVES_SWITCH(widget) GTK_WIDGET(widget)
 #define LIVES_TOGGLE_BUTTON(widget) GTK_TOGGLE_BUTTON(widget)
@@ -990,7 +990,11 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_IS_BUTTON(widget) GTK_IS_BUTTON(widget)
 #define LIVES_IS_DRAWING_AREA(widget) GTK_IS_DRAWING_AREA(widget)
 #define LIVES_IS_SPIN_BUTTON(widget) GTK_IS_SPIN_BUTTON(widget)
+#if LIVES_HAS_SWITCH_WIDGET
+#define LIVES_IS_TOGGLE_BUTTON(widget) (GTK_IS_SWITCH(widget) ? 1 : GTK_IS_TOGGLE_BUTTON(widget))
+#else
 #define LIVES_IS_TOGGLE_BUTTON(widget) GTK_IS_TOGGLE_BUTTON(widget)
+#endif
 #define LIVES_IS_TOGGLE_TOOL_BUTTON(widget) GTK_IS_TOGGLE_TOOL_BUTTON(widget)
 #define LIVES_IS_IMAGE(widget) GTK_IS_IMAGE(widget)
 #define LIVES_IS_ENTRY(widget) GTK_IS_ENTRY(widget)

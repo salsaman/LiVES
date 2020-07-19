@@ -215,7 +215,13 @@ void *_ext_memmove(void *, const void *, size_t);
 void *_ext_realloc(void *, size_t) GNU_MALLOC_SIZE(2);
 void *_ext_calloc(size_t, size_t) GNU_MALLOC_SIZE2(1, 2) GNU_ALIGN(2);
 
-void make_memtree(void);
+#define OVERRIDE_MEMFUNCS
+static void *(*_lsd_calloc)(size_t nmemb, size_t size) = _ext_calloc;
+static void *(*_lsd_memcpy)(void *dest, const void *src, size_t n) = _ext_memcpy;
+static void *(*_lsd_memset)(void *s, int c, size_t n) = _ext_memset;
+static void (*_lsd_free)(void *ptr) = _ext_free;
+#include "lsd.h"
+#undef OVERRIDE_MEMFUNCS
 
 #if defined _GNU_SOURCE
 #define LIVES_GNU

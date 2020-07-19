@@ -32,6 +32,7 @@
 #include <libavutil/mem.h>
 
 #define NEED_CLONEFUNC
+
 #include "decplugin.h"
 
 ///////////////////////////////////////////////////////
@@ -469,7 +470,6 @@ skip_init:
       break;
 
     case AVMEDIA_TYPE_VIDEO:
-
       if (!isclone && priv->vstream != -1) {
         fprintf(stderr, "Warning - got multiple video streams\n");
         break;
@@ -784,15 +784,16 @@ const char *version(void) {
 }
 
 
-static lives_clip_data_t *init_cdata(void) {
+static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
   lives_av_priv_t *priv;
-  lives_clip_data_t *cdata = (lives_clip_data_t *)malloc(sizeof(lives_clip_data_t));
+  lives_clip_data_t *cdata;
+
+  if (!data) cdata = cdata_new(NULL);//(lives_clip_data_t *)malloc(sizeof(lives_clip_data_t));
+  else cdata = data;
 
   cdata->palettes = malloc(2 * sizeof(int));
 
   cdata->palettes[1] = WEED_PALETTE_END;
-
-  cdata->URI = NULL;
 
   cdata->priv = priv = malloc(sizeof(lives_av_priv_t));
 
@@ -826,22 +827,22 @@ static lives_clip_data_t *init_cdata(void) {
 
 
 static lives_clip_data_t *avf_clone(lives_clip_data_t *cdata) {
-  lives_clip_data_t *clone = init_cdata();
+  lives_clip_data_t *clone = clone = clone_cdata(NULL, cdata);
   lives_av_priv_t *dpriv, *spriv;
 
-  // copy from cdata to clone, with a new context for clone
-  clone_cdata(clone, cdata);
-
   // create "priv" elements
-  dpriv = clone->priv;
   spriv = cdata->priv;
 
   if (spriv != NULL) {
+    clone->priv = dpriv = malloc(sizeof(lives_av_priv_t));
     dpriv->vstream = spriv->vstream;
     dpriv->astream = spriv->astream;
     dpriv->fps_avg = spriv->fps_avg;
     dpriv->fmt = spriv->fmt;
     dpriv->inited = TRUE;
+  } else {
+    clone = init_cdata(clone);
+    dpriv = clone->priv;
   }
 
   if (!attach_stream(clone, TRUE)) {
@@ -852,7 +853,7 @@ static lives_clip_data_t *avf_clone(lives_clip_data_t *cdata) {
   }
 
   if (spriv == NULL) {
-    clone->current_palette = clone->palettes[0];
+    if (clone->palettes) clone->current_palette = clone->palettes[0];
     clone->current_clip = 0;
     dpriv->last_frame = 1000000000;
   }
@@ -870,13 +871,13 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   // if the host wants a different URI or a different current_clip, this must be called again with the same
   // cdata as the second parameter
   int64_t real_frames;
-
   lives_av_priv_t *priv;
 
-  if (URI == NULL && cdata != NULL) {
-    // create a clone of cdata - we also need to be able to handle a "fake" clone with only URI, nframes and fps set (priv == NULL)
+  if (!URI && cdata) {
+    // create a clone of cdata - we also need to be able to handle a "fake" clone
+    // with only URI, nframes and fps set (priv == NULL_
     cdata = avf_clone(cdata);
-    if (cdata == NULL) return NULL;
+    if (!cdata) return NULL;
     priv = cdata->priv;
     if (priv->longer_seek) goto rescan;
     return cdata;
@@ -884,13 +885,12 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   if (cdata != NULL && cdata->current_clip > 0) {
     // currently we only support one clip per container
-
     clip_data_free(cdata);
     return NULL;
   }
 
-  if (cdata == NULL) {
-    cdata = init_cdata();
+  if (!cdata) {
+    cdata = init_cdata(NULL);
   }
 
   if (cdata->URI == NULL || strcmp(URI, cdata->URI)) {
@@ -1431,16 +1431,7 @@ cleanup:
 
 
 void clip_data_free(lives_clip_data_t *cdata) {
-  if (cdata->palettes != NULL) free(cdata->palettes);
-  cdata->palettes = NULL;
-
-  if (cdata->URI != NULL) {
-    detach_stream(cdata);
-    free(cdata->URI);
-  }
-
-  free(cdata->priv);
-  free(cdata);
+  lives_struct_free(&cdata->lsd);
 }
 
 

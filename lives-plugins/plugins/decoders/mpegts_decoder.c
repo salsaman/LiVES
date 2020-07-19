@@ -3080,7 +3080,7 @@ seek_skip:
 
   //#define DEBUG
 #ifdef DEBUG
-  fprintf(stderr, "video type is %f %s %d x %d (%d x %d +%d +%d)\n", duration, cdata->video_name,
+  fprintf(stderr, "video type is %s %d x %d (%d x %d +%d +%d)\n", cdata->video_name,
           cdata->width, cdata->height, cdata->frame_width, cdata->frame_height, cdata->offs_x, cdata->offs_y);
 #endif
 
@@ -3320,7 +3320,7 @@ static lives_clip_data_t *mpegts_clone(lives_clip_data_t *cdata) {
   lives_mpegts_priv_t *dpriv, *spriv;
 
   // copy from cdata to clone, with a new context for clone
-  clone->URI = strdup(cdata->URI);
+  if (cdata->URI) clone->URI = strdup(cdata->URI);
 
   // create "priv" elements
   dpriv = clone->priv;

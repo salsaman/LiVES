@@ -5507,6 +5507,8 @@ boolean reload_clip(int fileno, int maxframe) {
   boolean was_renamed = FALSE, retb = FALSE;
   int current_file;
 
+  fake_cdata = (lives_clip_data_t *)struct_from_template(LIVES_STRUCT_CLIP_DATA_T);
+
   if (!mainw->decoders_loaded) {
     mainw->decoder_list = load_decoders();
     mainw->decoders_loaded = TRUE;
@@ -5649,8 +5651,9 @@ manual_locate:
     }
 
     threaded_dialog_spin(0.);
-    lives_freep((void **)&fake_cdata->URI);
-    lives_free(fake_cdata);
+    //lives_freep((void **)&fake_cdata->URI);
+    unref_struct(&fake_cdata->lsd);
+    //lives_free(fake_cdata);
     break;
   }
 

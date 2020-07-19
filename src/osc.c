@@ -201,8 +201,6 @@ LIVES_INLINE const char *get_value_of(const int what) {
 
 
 static const char *get_omc_const(const char *cname) {
-  boolean dummy;
-
   // looping modes
   if (!strcmp(cname, "LIVES_LOOP_MODE_NONE")) return "0";
   if (!strcmp(cname, "LIVES_LOOP_MODE_CONTINUOUS")) return "1";
@@ -304,7 +302,7 @@ static const char *get_omc_const(const char *cname) {
   if (!strcmp(cname, "LIVES_DEFAULT_OVERRIDDEN"))
     return "2";
 
-  (void)(dummy = lives_osc_notify_failure());
+  IGN_RET(lives_osc_notify_failure());
 
   return "";
 }
@@ -7099,10 +7097,7 @@ lives_osc *lives_osc_allocate(int port_id) {
 }
 
 
-void lives_osc_dump(void) {
-  OSCPrintWholeAddressSpace();
-}
-
+void lives_osc_dump(void) {OSCPrintWholeAddressSpace();}
 
 // CALL THIS PERIODICALLY, will read all queued messages and call callbacks
 

@@ -547,7 +547,9 @@ boolean lives_text_view_set_wrap_mode(LiVESTextView *, LiVESWrapMode wrapmode);
 boolean lives_text_view_set_justification(LiVESTextView *, LiVESJustification justify);
 
 LiVESTextBuffer *lives_text_buffer_new(void);
-char *lives_text_buffer_get_text(LiVESTextBuffer *tbuff, LiVESTextIter *start, LiVESTextIter *end, boolean inc_hidden_chars);
+char *lives_text_buffer_get_text(LiVESTextBuffer *tbuff, LiVESTextIter *start,
+                                 LiVESTextIter *end, boolean inc_hidden_chars);
+char *lives_text_buffer_get_all_text(LiVESTextBuffer *);
 boolean lives_text_buffer_set_text(LiVESTextBuffer *, const char *, int len);
 
 boolean lives_text_buffer_insert(LiVESTextBuffer *, LiVESTextIter *, const char *, int len);

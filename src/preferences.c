@@ -2332,6 +2332,10 @@ void save_future_prefs(void) {
     }
   }
 
+  if (prefs->pref_trash != future_prefs->pref_trash) {
+    set_boolean_pref(PREF_PREF_TRASH, prefs->pref_trash);
+  }
+
   if ((*future_prefs->workdir)) {
     set_string_pref_priority(PREF_WORKING_DIR, future_prefs->workdir);
     set_string_pref(PREF_WORKING_DIR_OLD, future_prefs->workdir);

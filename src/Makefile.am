@@ -182,7 +182,7 @@ lives_exe_SOURCES = \
 	main.c\
 	support.c support.h \
 	effects.c\
-	lsd.h \
+	lsd.h lsd-tab.c lsd-tab.h \
 	plugins.c plugins.h\
 	effects-weed.c effects-weed.h\
 	effects-data.c effects-data.h \

@@ -1,6 +1,6 @@
 // plugins.h
 // LiVES
-// (c) G. Finch 2003-2017 <salsaman+lives@gmail.com>
+// (c) G. Finch 2003-2020 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -18,7 +18,8 @@
 
 // generic plugins
 
-LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const char *plugdir, const char *filter_ext);
+LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex,
+                           const char *plugdir, const char *filter_ext);
 #define PLUGIN_ENCODERS "encoders"
 #define PLUGIN_DECODERS "decoders"
 #define PLUGIN_VID_PLAYBACK "playback/video"
@@ -34,12 +35,17 @@ LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const c
 #define PLUGIN_EFFECTS_WEED "weed"
 #define PLUGIN_WEED_FX_BUILTIN "effects/realtime/weed"
 
-LiVESList *get_plugin_result(const char *command, const char *delim, boolean allow_blanks, boolean strip);
+LiVESList *get_plugin_result(const char *command, const char *delim,
+                             boolean allow_blanks, boolean strip);
 LiVESList *plugin_request(const char *plugin_type, const char *plugin_name, const char *request);
-LiVESList *plugin_request_with_blanks(const char *plugin_type, const char *plugin_name, const char *request);
-LiVESList *plugin_request_by_line(const char *plugin_type, const char *plugin_name, const char *request);
-LiVESList *plugin_request_by_space(const char *plugin_type, const char *plugin_name, const char *request);
-LiVESList *plugin_request_common(const char *plugin_type, const char *plugin_name, const char *request, const char *delim,
+LiVESList *plugin_request_with_blanks(const char *plugin_type, const char *plugin_name,
+                                      const char *request);
+LiVESList *plugin_request_by_line(const char *plugin_type, const char *plugin_name,
+                                  const char *request);
+LiVESList *plugin_request_by_space(const char *plugin_type, const char *plugin_name,
+                                   const char *request);
+LiVESList *plugin_request_common(const char *plugin_type, const char *plugin_name,
+                                 const char *request, const char *delim,
                                  boolean allow_blanks);
 
 /// video playback plugins
@@ -65,7 +71,8 @@ typedef struct {
   boolean(*play_frame)(weed_layer_t *frame, ticks_t tc, weed_layer_t *ret);
 
   // optional
-  boolean(*init_screen)(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv);
+  boolean(*init_screen)(int width, int height, boolean fullscreen,
+                        uint64_t window_id, int argc, char **argv);
   void (*exit_screen)(uint16_t mouse_x, uint16_t mouse_y);
   void (*module_unload)(void);
   const char *(*get_fps_list)(int palette);
@@ -203,6 +210,38 @@ typedef struct {
 }
 _encoder;
 
+typedef struct {
+  /// a ctiming_ratio of 0. indicates that none of the other values are set.
+  // a value > 0. indicates some values are set. Unset values may be left as 0., or
+  /// A value < 0. means that the value is known to be non-zero, but cannot be accurately measured.
+  /// In this case, calculations involving this quantity should be avoided, as the result cannot be determined.
+
+  double ctiming_ratio; // dynamic multiplier for timing info, depends on machine load and other factors.
+  double idecode_time; /// avg time to decode inter frame
+  double kdecode_time; /// avg time to decode keyframe
+  double buffer_flush_time; /// time to flush buffers after a seek
+  double kframe_nseek_time; /// avg time to seek to following keyframe (const)
+  double kframe_delay_time; /// avg extra time per iframe to arrive at following kframe
+
+  double kframe_kframe_time; /// avg time to seek from keyframe to keyframe (const) :: default == 0. (use kframe_nseek_time)
+  double kframe_inter_time; /// extra time to seek from kframe to kframe per iframe between them :: default == kframe_delay_time
+  double kframe_extra_time; /// extra time to seek from kframe to kframe per kframe between them :: default == kframe_inter_time
+
+  // examples:
+  // iframe to next kframe with decode: kframe_nseek_time + n * kframe_delay_time + buffer_flush_tome + kdecode_time
+  // where n is the number of iframes skipped over
+
+  // seek from iframe to another iframe, passing over several kframes, decoding frames from final kframe to target
+
+  /// kframe_nseek_time + A * kframe_delay_time + kframe_kframe_time + B * kframe_inter_time * C * kframe_extra_time +
+  /// kdecode_time + D * idecode_time
+  /// where A == nframes between origin and next kframe, B == iframes between kframse, C == kframes between kframes,
+  /// D = iframes after target kframe
+  /// this can approximated as: kframe_nseek_time + (A + B + C) * kframe_delay_time + kdecode_time + D * idecode_time
+
+  double xvals[64];  /// extra values which may be
+} adv_timing_t;
+
 // defined in plugins.c for the whole app
 extern const char *const anames[AUDIO_CODEC_MAX];
 
@@ -218,6 +257,16 @@ extern const char *const anames[AUDIO_CODEC_MAX];
 #define LIVES_SEEK_QUALITY_LOSS (1<<2)
 
 typedef struct {
+  char type[16];  ///< e.g. "decoder"
+  int api_version_major;
+  int api_version_minor;
+} lives_plugin_id_t;
+
+typedef struct _lives_clip_data {
+  // fixed part
+  lives_struct_def_t lsd;
+  lives_plugin_id_t plugin_id;
+
   malloc_f  *ext_malloc;
   free_f    *ext_free;
   memcpy_f  *ext_memcpy;
@@ -226,7 +275,8 @@ typedef struct {
   realloc_f *ext_realloc;
   calloc_f  *ext_calloc;
 
-  // TODO use fix sized array so we can just memcpy
+  void *priv;
+
   char *URI; ///< the URI of this cdata
 
   int nclips; ///< number of clips (titles) in container
@@ -240,38 +290,45 @@ typedef struct {
   int current_clip; ///< current clip number in container (starts at 0, MUST be <= nclips) [rw host]
 
   // video data
-  int width; // width and height of picture in frame
+  int width;
   int height;
   int64_t nframes;
   lives_interlace_t interlace;
-  int *rec_rowstrides; ///< if non-NULL, plugin can set recommended vals
+  int *rec_rowstrides; ///< if non-NULL, plugin can set recommended vals, pointer to single value set by host
 
   /// x and y offsets of picture within frame
   /// for primary pixel plane
   int offs_x;
   int offs_y;
-  int frame_width;   ///< frame is the surrounding part, including any black border (>=width)
+  int frame_width;  ///< frame is the surrounding part, including any black border (>=width)
   int frame_height;
 
-  float par;  ///< pixel aspect ratio (sample width / sample height)
+  float par; ///< pixel aspect ratio (sample width / sample height)
 
   float video_start_time;
 
   float fps;
+
+  /// optional info ////////////////
   float max_decode_fps; ///< theoretical value with no memcpy
   int64_t fwd_seek_time;
-  int64_t jump_limit; ///< for plugin internal use
+  int64_t jump_limit; ///< for internal use
 
-  // TODO use fix sized array
+  int64_t kframe_start; /// frame number of first keyframe (usually 0)
+  int64_t kframe_dist; /// number forames from one keyframe to the next, 0 if unknown
+  //////////////////////////////////
+
   int *palettes; ///< list of palettes which the format supports, terminated with WEED_PALETTE_END
 
   /// plugin should init this to palettes[0] if URI changes
   int current_palette;  ///< current palette [rw host]; must be contained in palettes
 
+  /// plugin can change per frame
   int YUV_sampling;
   int YUV_clamping;
   int YUV_subspace;
   int frame_gamma; ///< values WEED_GAMMA_UNKNOWN (0), WEED_GAMMA_SRGB (1), WEED_GAMMA_LINEAR (2)
+
   char video_name[512]; ///< name of video codec, e.g. "theora" or NULL
 
   /* audio data */
@@ -282,6 +339,7 @@ typedef struct {
   boolean ainterleaf;
   char audio_name[512]; ///< name of audio codec, e.g. "vorbis" or NULL
 
+  /// plugin can change per frame
   int seek_flag; ///< bitmap of seek properties
 
 #define SYNC_HINT_AUDIO_TRIM_START (1<<0)
@@ -294,8 +352,8 @@ typedef struct {
 
   int sync_hint;
 
-  void *priv; ///< private data for demuxer/decoder - host should not touch this
 } lives_clip_data_t;
+
 
 typedef struct {
   // playback

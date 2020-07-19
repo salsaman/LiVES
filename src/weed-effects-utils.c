@@ -61,29 +61,39 @@ WEED_GLOBAL_INLINE uint32_t weed_leaf_clear_flagbits(weed_plant_t *plant, const 
 }
 
 void weed_add_plant_flags(weed_plant_t *plant, uint32_t flags, const char *ign_prefix) {
-  size_t ign_prefix_len = 0;
-  char **leaves = weed_plant_list_leaves(plant, NULL);
-  if (ign_prefix) ign_prefix_len = strlen(ign_prefix);
-  for (register int i = 0; leaves[i]; i++) {
-    if (!ign_prefix || strncmp(leaves[i], ign_prefix, ign_prefix_len)) {
-      weed_leaf_set_flagbits(plant, leaves[i], flags);
+  if (!plant) return;
+  else {
+    size_t ign_prefix_len = 0;
+    char **leaves = weed_plant_list_leaves(plant, NULL);
+    if (leaves) {
+      if (ign_prefix) ign_prefix_len = strlen(ign_prefix);
+      for (register int i = 0; leaves[i]; i++) {
+        if (!ign_prefix || strncmp(leaves[i], ign_prefix, ign_prefix_len)) {
+          weed_leaf_set_flagbits(plant, leaves[i], flags);
+        }
+        free(leaves[i]);
+      }
+      free(leaves);
     }
-    free(leaves[i]);
   }
-  if (leaves) free(leaves);
 }
 
 void weed_clear_plant_flags(weed_plant_t *plant, uint32_t flags, const char *ign_prefix) {
-  size_t ign_prefix_len = 0;
-  char **leaves = weed_plant_list_leaves(plant, NULL);
-  if (ign_prefix) ign_prefix_len = strlen(ign_prefix);
-  for (register int i = 0; leaves[i]; i++) {
-    if (!ign_prefix || strncmp(leaves[i], ign_prefix, ign_prefix_len)) {
-      weed_leaf_clear_flagbits(plant, leaves[i], flags);
+  if (!plant) return;
+  else {
+    size_t ign_prefix_len = 0;
+    char **leaves = weed_plant_list_leaves(plant, NULL);
+    if (leaves) {
+      if (ign_prefix) ign_prefix_len = strlen(ign_prefix);
+      for (register int i = 0; leaves[i]; i++) {
+        if (!ign_prefix || strncmp(leaves[i], ign_prefix, ign_prefix_len)) {
+          weed_leaf_clear_flagbits(plant, leaves[i], flags);
+        }
+        free(leaves[i]);
+      }
+      free(leaves);
     }
-    free(leaves[i]);
   }
-  if (leaves) free(leaves);
 }
 
 WEED_LOCAL_INLINE weed_plant_t *_weed_get_gui(weed_plant_t *plant,  int create_if_not_exists) {
@@ -269,7 +279,7 @@ WEED_GLOBAL_INLINE int weed_paramtmpl_value_irrelevant(weed_plant_t *paramtmpl) 
 
 WEED_GLOBAL_INLINE int weed_chantmpl_is_optional(weed_plant_t *chantmpl) {
   if (!WEED_PLANT_IS_CHANNEL_TEMPLATE(chantmpl)) return WEED_TRUE;
-  if (weed_chantmpl_get_flags(chantmpl)  & WEED_CHANNEL_OPTIONAL) return WEED_TRUE;
+  if (weed_chantmpl_get_flags(chantmpl) & WEED_CHANNEL_OPTIONAL) return WEED_TRUE;
   return WEED_FALSE;
 }
 

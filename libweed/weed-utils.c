@@ -1113,7 +1113,7 @@ weed_plant_t *weed_bootstrap(weed_default_getter_f * value,
       host_set_host_info = WEED_TRUE;
     }
 
-    if (weed_plant_has_leaf(host_host_info, WEED_LEAF_WEED_ABI_VERSION)) {
+    if (weed_plant_has_leaf(host_info, WEED_LEAF_WEED_ABI_VERSION)) {
       host_weed_abi_version = weed_get_int_value(host_host_info, WEED_LEAF_WEED_ABI_VERSION, &err);
       if (err != WEED_SUCCESS) {
         if (plugin_info) weed_plant_free(plugin_info);
@@ -1121,7 +1121,7 @@ weed_plant_t *weed_bootstrap(weed_default_getter_f * value,
         return NULL;
       }
     }
-    if (weed_plant_has_leaf(host_host_info, WEED_LEAF_FILTER_API_VERSION)) {
+    if (weed_plant_has_leaf(host_info, WEED_LEAF_FILTER_API_VERSION)) {
       host_filter_api_version = weed_get_int_value(host_host_info, WEED_LEAF_FILTER_API_VERSION, &err);
       if (err != WEED_SUCCESS) {
         if (plugin_info) weed_plant_free(plugin_info);

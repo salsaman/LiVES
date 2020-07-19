@@ -285,7 +285,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   case LIVES_DIALOG_ERROR:
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0,
                                       LIVES_MESSAGE_ERROR, LIVES_BUTTONS_NONE, NULL);
-    lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
+    if (palette)
+      lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
     lives_window_set_title(LIVES_WINDOW(dialog), _("Error !"));
     widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
     okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
@@ -398,8 +399,9 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   lives_window_set_deletable(LIVES_WINDOW(dialog), FALSE);
   lives_window_set_resizable(LIVES_WINDOW(dialog), FALSE);
 
-  if (mainw != NULL) {
-    lives_window_set_monitor(LIVES_WINDOW(dialog), widget_opts.monitor);
+  if (mainw != NULL && palette) {
+    if (mainw->mgeom)
+      lives_window_set_monitor(LIVES_WINDOW(dialog), widget_opts.monitor);
 
     if (widget_opts.apply_theme && (palette->style & STYLE_1)) {
       lives_dialog_set_has_separator(LIVES_DIALOG(dialog), FALSE);
@@ -466,7 +468,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   lives_widget_show_all(dialog);
   gdk_window_show_unraised(lives_widget_get_xwindow(dialog));
 
-  lives_window_center(LIVES_WINDOW(dialog));
+  if (mainw->mgeom)
+    lives_window_center(LIVES_WINDOW(dialog));
 
   if (is_blocking)
     lives_window_set_modal(LIVES_WINDOW(dialog), TRUE);
@@ -1691,15 +1694,23 @@ switch_point:
       if (test_getahead > 0) {
         if (recalc_bungle_frames) {
           /// we want to avoid the condition where we are constantly seeking ahead and because the seek may take a while
-          /// to happen, we immediately need to seek again. This will cause the video stream to 'judder'. So to try to avoid this
-          /// we will do an an extra jump forwads which hopefully will five the player a chance to catch up
-          /// - in this mode, instead of showing the reqiested frame we will do the following:
-          /// - if we have a cached frame,. we will show that; otherwise we will advance the frame by 1 from the last frame.
-          /// - following this we will cache the "getahead" frame. The player will the render the getahead frame and keep reshowing u
-          /// - until the time catches up. A future update will implement a more flexible caching system which will allow the possibility
-          /// of caching further frames..'bungle frames' is a rough estimate of how far ahead we need to jump so that we land exaclty
+          /// to happen, we immediately need to seek again. This will cause the video stream to stutter. So to try to avoid this
+          /// we will do an an EXTRA jump forwads which ideally will give the player a chance to catch up
+          /// - in this condition, instead of showing the reqiested frame we will do the following:
+          /// - if we have a cached frame, we will show that; otherwise we will advance the frame by 1 from the last frame.
+          ///   and show that, since we can decode it quickly.
+          /// - following this we will cache the "getahead" frame. The player will then render the getahead frame
+          //     and keep reshowing it until the time catches up.
+          /// (A future update will implement a more flexible caching system which will enable the possibility
+          /// of caching further frames while we waut)
+          /// - if we did not advance enough, we show the getahead frame and then do a larger jump.
+          // ..'bungle frames' is a rough estimate of how far ahead we need to jump so that we land exaclty
           /// on the player's frame. 'getahead' is the target frame.
-          /// 'test_getahead' is used so that we can sometime recalibrate withour actually jumping the frame
+          /// after a jump, we adjust bungle_frames to try to jump more acurately the next tine
+          /// however, it is impossible to get it right 100% of the time, as the actual value can vary unpredictably
+          /// 'test_getahead' is used so that we can sometimes recalibrate without actually jumping the frame
+          /// in future, we could also get a more accurate estimate by integrating statistics from the decoder.
+          /// - useful values would be the frame decode time, keyframe positions, seek time to keyframe,  keyframe decode time.
           int dir = sig(sfile->pb_fps);
           delta = (test_getahead - requested_frame) * dir;
 #ifdef SHOW_CACHE_PREDICTIONS
@@ -3404,6 +3415,7 @@ LiVESResponseType do_original_lost_warning(const char *fname) {
 
 
 LIVES_GLOBAL_INLINE void do_no_decoder_error(const char *fname) {
+  lives_widget_context_update();
   do_blocking_error_dialogf(
     _("\n\nLiVES could not find a required decoder plugin for the clip\n%s\n"
       "The clip could not be loaded.\n"), fname);

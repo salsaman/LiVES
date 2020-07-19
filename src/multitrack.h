@@ -981,6 +981,7 @@ void stored_event_list_free_undos(void);
 void remove_current_from_affected_layouts(lives_mt *);
 
 // auto backup
+void maybe_add_mt_idlefunc(void);
 uint32_t mt_idle_add(lives_mt *);
 boolean recover_layout(void);
 void recover_layout_cancelled(boolean is_startup);

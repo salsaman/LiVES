@@ -245,6 +245,8 @@ __WEED_FN_DEF__ weed_memmove_f weed_memmove;
 #define WEED_FLAG_RESERVED_2	 	(1 << 13) // reserved for future use by Weed
 #define WEED_FLAG_RESERVED_1	 	(1 << 14) // reserved for future use by Weed
 #define WEED_FLAG_RESERVED_0	 	(1 << 15) // reserved for future use by Weed
+#define WEED_FLAGBITS_RESERVED (WEED_FLAG_FIRST_CUSTOM - 1 \
+				- WEED_FLAG_UNDELETABLE - WEED_FLAG_IMMUTABLE)
 #define WEED_FLAG_FIRST_CUSTOM	(1 << 16) // bits 16 - 31 left for custom use
 
 /* mandatory leaf for all WEED_PLANTs, WEED_SEED_INT */

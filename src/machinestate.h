@@ -232,6 +232,7 @@ static void (*_lsd_free)(void *ptr) = _ext_free;
 size_t lives_strlen(const char *) GNU_HOT GNU_PURE;
 boolean lives_strcmp(const char *, const char *) GNU_HOT GNU_PURE;
 boolean lives_strncmp(const char *, const char *, size_t) GNU_HOT GNU_PURE;
+char *lives_strdup_quick(const char *s);
 int lives_strcmp_ordered(const char *, const char *) GNU_HOT GNU_PURE;
 char *lives_concat(char *, char *) GNU_HOT;
 char *lives_strstop(char *, const char term) GNU_HOT;

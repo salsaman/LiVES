@@ -907,8 +907,6 @@ LIVES_GLOBAL_INLINE const char *lives_strappendf(const char *string, int len, co
 /// each byte B can be thought of as a signed char, subtracting 1 sets bit 7 if B was <= 0, then AND with ~B clears bit 7 if it
 /// was already set (i.e B was < 0), thus bit 7 only remains set if the byte started as 0.
 #define hasNulByte(x) (((x) - 0x0101010101010101) & ~(x) & 0x8080808080808080)
-
-/// here we simply use a binary if / then to locate the 0x80 byte, the order we check ensures we go from 0 -> 7
 #define getnulpos(nulmask) ((nulmask & 2155905152ul)	? ((nulmask & 32896ul) ? ((nulmask & 128ul) ? 0 : 1) : \
 							   ((nulmask & 8388608ul) ? 2 : 3)) : (nulmask & 141287244169216ul) ? \
 			    ((nulmask & 549755813888ul) ? 4 : 5) : ((nulmask & 36028797018963968ul) ? 6 : 7))
@@ -918,18 +916,36 @@ LIVES_GLOBAL_INLINE const char *lives_strappendf(const char *string, int len, co
 			       : (nulmask & 2155872256ul) ? ((nulmask & 2147483648ul) ? 4 : 5) : ((nulmask & 32768ul) ? 6 : 7))
 
 LIVES_GLOBAL_INLINE size_t lives_strlen(const char *s) {
+  uint64_t *pi = (uint64_t *)s, nulmask;
   if (!s) return 0;
-  else {
 #ifndef STD_STRINGFUNCS
-    uint64_t *pi = (uint64_t *)s, nulmask;
-    if ((void *)pi == (void *)s) {
-      while (!(nulmask = hasNulByte(*pi))) pi++;
-      return (char *)pi - s + (capable->byte_order == LIVES_LITTLE_ENDIAN ? getnulpos(nulmask) : getnulpos_be(nulmask));
-    }
-#endif
-    return strlen(s);
+  if ((void *)pi == (void *)s) {
+    while (!(nulmask = hasNulByte(*pi))) pi++;
+    return (char *)pi - s + (capable->byte_order == LIVES_LITTLE_ENDIAN ? getnulpos(nulmask)
+                             : getnulpos_be(nulmask));
   }
+#endif
+  return strlen(s);
 }
+
+
+LIVES_GLOBAL_INLINE char *lives_strdup_quick(const char *s) {
+  uint64_t *pi = (uint64_t *)s, nulmask, stlen;
+  if (!s) return NULL;
+#ifndef STD_STRINGFUNCS
+  if ((void *)pi == (void *)s) {
+    while (!(nulmask = hasNulByte(*pi))) pi++;
+    stlen = (char *)pi - s + 1
+            + (capable->byte_order == LIVES_LITTLE_ENDIAN)
+            ? getnulpos(nulmask) : getnulpos_be(nulmask);
+    return lives_memcpy(lives_malloc(stlen), s, stlen);
+  }
+#endif
+  return lives_strdup(s);
+}
+
+
+
 
 /// returns FALSE if strings match
 LIVES_GLOBAL_INLINE boolean lives_strcmp(const char *st1, const char *st2) {

@@ -3712,6 +3712,9 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   _weed_leaf_get_flags = weed_leaf_get_flags;
   _weed_leaf_set_flags = weed_leaf_set_flags;
 
+  init_random();
+  //check_random();
+
 #ifdef ENABLE_DIAGNOSTICS
   run_weed_startup_tests();
   lives_struct_test();
@@ -3788,9 +3791,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   pthread_mutexattr_init(&mattr);
   pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
-
-  init_random();
-  //check_random();
 
   mainw->has_session_workdir = FALSE;
   mainw->old_vhash = NULL;
@@ -6140,7 +6140,9 @@ void load_preview_image(boolean update_always) {
                         gval == PNG_INFO_gAMA ? file_gamma : 1.);
         for (int j = 0; j < height; j++) {
           png_read_row(png_ptr, row_ptrs[j], NULL);
+
           weed_set_int_value(layer, WEED_LEAF_PROGSCAN, j + 2);
+
         }
         weed_set_int_value(layer, WEED_LEAF_PROGSCAN, -1);
       } else {

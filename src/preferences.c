@@ -511,35 +511,23 @@ void set_vpp(boolean set_in_prefs) {
 
 static void set_workdir_label_text(LiVESLabel *label, const char *dir) {
   char *free_ds;
-  char *tmpx1, *tmpx2;
-  char *markup;
-
-  // use lives_strdup* since the translation string is auto-freed()
+  char *tmp, *txt;
 
   if (!is_writeable_dir(dir)) {
-    tmpx2 = (_("\n\n\n(Free space = UNKNOWN)"));
+    tmp = (_("Free space = UNKNOWN)"));
   } else {
     free_ds = lives_format_storage_space_string(get_ds_free(dir));
-    tmpx2 = lives_strdup_printf(_("\n\n\n(Free space = %s)"), free_ds);
+    tmp = lives_strdup_printf(_("Free space = %s)"), free_ds);
     lives_free(free_ds);
   }
 
-  tmpx1 = lives_strdup(
-            _("The work directory is LiVES working directory where opened clips and sets are stored.\n"
-              "It should be in a partition with plenty of free disk space.\n"));
-
-#ifdef GUI_GTK
-  markup = g_markup_printf_escaped("<span background=\"white\" foreground=\"red\"><big><b>%s</b></big></span>%s", tmpx1, tmpx2);
-#endif
-#ifdef GUI_QT
-  QString qs = QString("<span background=\"white\" foreground=\"red\"><b>%s</b></span>%s").arg(tmpx1).arg(tmpx2);
-  markup = strdup((const char *)qs.toHtmlEscaped().constData());
-#endif
-
-  lives_label_set_markup(LIVES_LABEL(label), markup);
-  lives_free(markup);
-  lives_free(tmpx1);
-  lives_free(tmpx2);
+  txt = lives_strdup_printf(_("The work directory is LiVES working directory where opened clips "
+                              "and sets are stored.\n"
+                              "It should be in a partition with plenty of free disk space.\n\n%s"),
+                            tmp);
+  lives_free(tmp);
+  lives_layout_label_set_text(label, txt);
+  lives_free(txt);
 }
 
 
@@ -712,6 +700,12 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
   // can also be called from other places
 
   if (prefsw != NULL) prefsw->ignore_apply = TRUE;
+
+  if (!lives_strcmp(prefidx, PREF_MT_SHOW_CTX)) {
+    if (prefs->mt_show_ctx == newval) goto fail2;
+    prefs->mt_show_ctx = newval;
+    goto success2;
+  }
 
   if (!lives_strcmp(prefidx, PREF_PREF_TRASH)) {
     if (prefs->pref_trash == newval) goto fail2;
@@ -3137,35 +3131,11 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   prefsw->checkbutton_show_asrc =
     lives_standard_check_button_new(_("Show audio source in toolbar"), prefs->show_asrc, LIVES_BOX(hbox), NULL);
 
-  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-
-  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_gui));
-
-  layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_gui));
-  lives_layout_add_label(LIVES_LAYOUT(layout), _("Eye Candy"), FALSE);
-
-  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-
-  prefsw->checkbutton_button_icons =
-    lives_standard_check_button_new(_("Show icons in buttons"), widget_opts.show_button_images,
-                                    LIVES_BOX(hbox), NULL);
-
-  widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
-  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
-
-  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-
-  prefsw->checkbutton_extra_colours =
-    lives_standard_check_button_new(_("Invent interface colours"),
-                                    prefs->extra_colours, LIVES_BOX(hbox),
-                                    (tmp = lives_strdup("#Make the interface more interesting "
-                                        "by adding harmonious colours")));
-  lives_free(tmp);
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_gui));
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
+  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_gui));
 
   label = lives_standard_label_new(_("Startup mode:"));
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, TRUE, 0);
@@ -3194,8 +3164,6 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   prefs->force_single_monitor = FALSE;
   get_monitors(FALSE);
   nmons = capable->nmonitors;
-
-  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_gui));
 
   label = lives_standard_label_new(_("Multi-head support"));
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_gui), label, FALSE, FALSE, widget_opts.packing_height);
@@ -3250,7 +3218,6 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   pmoni_gmoni_changed(NULL, (livespointer)prefsw);
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_gui));
-  add_fill_to_box(LIVES_BOX(prefsw->vbox_right_gui));
 
   layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_gui));
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
@@ -3482,26 +3449,27 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  label = lives_standard_label_new(_("Open/render compression"));
+  label = lives_standard_label_new(_("Image compression"));
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
   widget_opts.swap_label = TRUE;
   widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
-  prefsw->spinbutton_ocp = lives_standard_spin_button_new(("  %  "), prefs->ocp, 0., 100., 1., 5., 0,
-                           LIVES_BOX(hbox), NULL);
+  prefsw->spinbutton_ocp =
+    lives_standard_spin_button_new(("  %  "), prefs->ocp, 0., 60., 1., 5., 0,
+                                   LIVES_BOX(hbox),
+                                   (tmp = _("#A higher value will require less disk space\n"
+                                          "but may slow down the application.\n"
+                                          "For jpeg, a higher value may lead to\n"
+                                          "loss of image quality\n"
+                                          "The default value of 15 is recommended")));
+  lives_free(tmp);
   widget_opts.swap_label = FALSE;
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
-
-  add_fill_to_box(LIVES_BOX(hbox));
-
-  label = lives_standard_label_new(_("( lower = slower, larger files; for jpeg, higher quality )"));
-  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
   add_fill_to_box(LIVES_BOX(hbox));
   add_fill_to_box(LIVES_BOX(hbox));
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_decoding));
-  add_fill_to_box(LIVES_BOX(prefsw->vbox_right_decoding));
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -3537,7 +3505,6 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_decoding));
-  add_fill_to_box(LIVES_BOX(prefsw->vbox_right_decoding));
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -3605,7 +3572,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
     lives_combo_set_active_index(LIVES_COMBO(prefsw->pbq_combo), 1);
   }
 
-  prefsw->checkbutton_show_stats = lives_standard_check_button_new(_("_Show FPS statistics"), prefs->show_player_stats,
+  prefsw->checkbutton_show_stats = lives_standard_check_button_new(_("_Show FPS statistics"),
+                                   prefs->show_player_stats,
                                    LIVES_BOX(vbox),
                                    NULL);
 
@@ -3804,9 +3772,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   prefsw->checkbutton_aclips = lives_standard_check_button_new(_("Audio follows _clip switches"),
                                (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) ? TRUE : FALSE, LIVES_BOX(hbox), NULL);
 
-  add_fill_to_box(LIVES_BOX(vbox));
   add_hsep_to_box(LIVES_BOX(vbox));
-  add_fill_to_box(LIVES_BOX(vbox));
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
@@ -3930,7 +3896,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_recording));
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height * 4);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE,
+                       widget_opts.packing_height * 4);
 
   prefsw->spinbutton_rec_gb = lives_standard_spin_button_new(_("Pause recording if free disk space falls below"),
                               prefs->rec_stop_gb, 0., 1024., 1., 10., 0,
@@ -3943,7 +3910,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_recording));
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height * 4);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE,
+                       widget_opts.packing_height * 4);
 
   label = lives_standard_label_new(_("External Audio Source"));
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
@@ -4076,7 +4044,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_effects));
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE,
+                       widget_opts.packing_height);
 
   prefsw->checkbutton_apply_gamma = lives_standard_check_button_new(_("Automatic gamma correction (requires restart)"),
                                     prefs->apply_gamma, LIVES_BOX(hbox), (tmp = (_("Also affects the monitor gamma !! (for now...)"))));
@@ -4126,7 +4095,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_effects));
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE,
+                       widget_opts.packing_height);
 
   label = lives_standard_label_new(_("Restart is required if any of the following paths are changed:"));
 
@@ -4171,6 +4141,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   // -------------------'
 
   prefsw->table_right_directories = lives_table_new(10, 3, FALSE);
+
   lives_container_set_border_width(LIVES_CONTAINER(prefsw->table_right_directories), widget_opts.border_width * 2);
   lives_table_set_col_spacings(LIVES_TABLE(prefsw->table_right_directories), widget_opts.packing_width * 2);
   lives_table_set_row_spacings(LIVES_TABLE(prefsw->table_right_directories), widget_opts.packing_height * 4);
@@ -4217,15 +4188,15 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_entry_set_editable(LIVES_ENTRY(prefsw->vid_load_dir_entry), FALSE);
 
   // workdir warning label
-  widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  label = lives_standard_label_new("");
-  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
-  set_workdir_label_text(LIVES_LABEL(label), prefs->workdir);
-  lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), label, 0, 3, 0, 2,
+
+  layout = lives_layout_new(NULL);
+  lives_layout_add_label(LIVES_LAYOUT(layout), tmp, FALSE);
+  prefsw->workdir_label = widget_opts.last_label;
+  set_workdir_label_text(LIVES_LABEL(prefsw->workdir_label), prefs->workdir);
+
+  lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), layout, 0, 3, 0, 2,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
-
-  prefsw->workdir_label = label;
 
   prefsw->vid_save_dir_entry = lives_standard_entry_new(NULL, prefs->def_vid_save_dir, -1, PATH_MAX,
                                NULL, _("The default directory for saving encoded clips to"));
@@ -4354,7 +4325,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   //hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_warn_fps = lives_standard_check_button_new(
-                                   _("Warn on Insert / Merge if _frame rate of clipboard does not match frame rate of selection"),
+                                   _("Warn on Insert / Merge if _frame rate of clipboard does "
+                                     "not match frame rate of selection"),
                                    !(prefs->warning_mask & WARN_MASK_FPS), LIVES_BOX(hbox), NULL);
 
 
@@ -4567,8 +4539,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                        widget_opts.packing_height);
 
   /* prefsw->checkbutton_autoclean = lives_standard_check_button_new */
-  /*   (_(""), */
-  /*    !(prefs->warning_mask & WARN_MASK_LAYOUT_GAMMA), LIVES_BOX(hbox), NULL); */
+  /*   (_("_Remove Unwanted Backup Files on Startup and Shutdown"), */
+  /*    prefs->autoclean, LIVES_BOX(hbox), _("#Save disk space by "
+    "allowing LiVES to remove\ntemporary preview and backup files"); */
 
   // -----------,
   // Themes     |
@@ -4594,6 +4567,30 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   } else theme = lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
 
   lives_list_free_all(&themes);
+
+  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_themes));
+
+  layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_themes));
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Eye Candy"), FALSE);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  prefsw->checkbutton_button_icons =
+    lives_standard_check_button_new(_("Show icons in buttons"), widget_opts.show_button_images,
+                                    LIVES_BOX(hbox), NULL);
+
+  widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  prefsw->checkbutton_extra_colours =
+    lives_standard_check_button_new(_("Invent interface colours"),
+                                    prefs->extra_colours, LIVES_BOX(hbox),
+                                    (tmp = lives_strdup("#Make the interface more interesting "
+                                        "by adding harmonious colours")));
+  lives_free(tmp);
 
   frame = lives_standard_frame_new(_("Main Theme Details"), 0., FALSE);
 

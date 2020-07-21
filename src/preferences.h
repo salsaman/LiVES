@@ -229,7 +229,7 @@ typedef struct {
 
   boolean mt_exit_render;
   boolean render_prompt;
-
+  boolean mt_show_ctx;
   boolean mt_pertrack_audio;
   int mt_backaudio;
 
@@ -345,8 +345,9 @@ typedef struct {
 #define LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS (1<<2)
 #define LIVES_CDISK_LEAVE_MARKER_FILES (1<<3)
 #define LIVES_CDISK_LEAVE_MISC_FILES (1<<4)
-#define LIVES_CDISK_REMOVE_ORPHAN_CLIPS (1<<5)
+#define LIVES_CDISK_REMOVE_ORPHAN_CLIPS (1<<5) /// ! == recover
 #define LIVES_CDISK_REMOVE_STALE_RECOVERY (1<<6)
+#define LIVES_CDISK_LEAVE_EMPTY_DIRS (1<<7)
 
 #define LIVES_CDISK_REMOVE_LOCK_FILES (1<<16) ///< not yet implemented - TODO
 #define LIVES_CDISK_REBUILD_ORDER_FILES (1<<17) ///< not yet implemented - TODO
@@ -916,7 +917,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_MT_UNDO_BUF "mt_undo_buf"
 
 #define PREF_MT_BACKAUDIO "mt_backaudio"
-
+#define PREF_MT_SHOW_CTX "mt_show_ctx"
 #define PREF_WARN_FILE_SIZE "warn_file_size"
 
 #define PREF_DL_BANDWIDTH_K "dl_bandwidth_K"

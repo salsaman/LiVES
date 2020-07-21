@@ -6125,7 +6125,6 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
     lives_free(com);
 
     lives_proc_thread_join(tinfo);
-    weed_plant_free(tinfo);
 
     if (THREADVAR(com_failed)) {
       THREADVAR(com_failed) = FALSE;
@@ -6134,17 +6133,18 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       goto cleanup;
     } else {
       LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
-      LiVESWidget *button, *rb = NULL;
+      LiVESWidget *button, *rb = NULL, *accb;
       LiVESWidget *layout, *hbox;
       LiVESWidget *top_vbox;
       char *tmp, *tmp2;
       char *op;
 
+      widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH;
       textwindow = create_text_window(_("Disk Analysis Log"), NULL, tbuff, FALSE);
+      widget_opts.expand = LIVES_EXPAND_DEFAULT;;
       lives_window_add_accel_group(LIVES_WINDOW(textwindow->dialog), accel_group);
 
       top_vbox = lives_dialog_get_content_area(LIVES_DIALOG(textwindow->dialog));
-      trash_rb(LIVES_BOX(top_vbox));
 
       lives_widget_object_ref(textwindow->vbox);
       lives_widget_unparent(textwindow->vbox);
@@ -6155,6 +6155,12 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
       lives_widget_object_unref(textwindow->vbox);
 
+
+      /// TODO - check if all dirs are empty /////
+
+
+      trash_rb(LIVES_BOX(top_vbox));
+
       button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
                LIVES_STOCK_CANCEL, NULL,
                LIVES_RESPONSE_CANCEL);
@@ -6163,41 +6169,47 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
                                    LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
       widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
-      lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
-                                         LIVES_STOCK_APPLY, _("_Filter Results"),
-                                         LIVES_RESPONSE_BROWSE);
+      accb = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
+             LIVES_STOCK_EDIT, _("_Check and Filter Results"),
+             LIVES_RESPONSE_BROWSE);
       widget_opts.expand = LIVES_EXPAND_DEFAULT;
+      lives_button_grab_default_special(accb);
 
       widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
-      lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
-                                         LIVES_STOCK_APPLY, _("_Accept and Continue"),
-                                         LIVES_RESPONSE_ACCEPT);
+      accb = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
+             LIVES_STOCK_APPLY, _("_Accept and Continue"),
+             LIVES_RESPONSE_ACCEPT);
       widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
+      lives_widget_set_sensitive(accb, FALSE);
+
+rerun:
+
       retval = lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
+
+      if (retval != LIVES_RESPONSE_CANCEL) {
+        lives_widget_hide(textwindow->dialog);
+
+        // TODO - create lists in filter_cleanup
+        // dont need rem_list here
+        rec_list = dir_to_list(full_trashdir, TRASH_RECOVER);
+        rem_list = dir_to_list(full_trashdir, TRASH_REMOVE);
+        left_list = dir_to_list(full_trashdir, TRASH_LEAVE);
+
+        if (retval == LIVES_RESPONSE_BROWSE) {
+          retval = filter_cleanup(full_trashdir, rec_list, rem_list, left_list);
+          if (retval != LIVES_RESPONSE_CANCEL) {
+            lives_widget_set_sensitive(accb, TRUE);
+            lives_button_grab_default_special(accb);
+            goto rerun;
+          }
+        }
+      }
+
       lives_widget_destroy(textwindow->dialog);
       lives_free(textwindow);
 
-      if (retval == LIVES_RESPONSE_CANCEL) {
-        com = lives_strdup_printf("%s restore_trash %s", prefs->backend, trashdir);
-        lives_system(com, FALSE);
-        lives_free(com);
-        lives_free(trashdir);
-        lives_free(full_trashdir);
-        goto cleanup;
-      }
-
-      rec_list = dir_to_list(full_trashdir, TRASH_RECOVER);
-      rem_list = dir_to_list(full_trashdir, TRASH_REMOVE);
-      left_list = dir_to_list(full_trashdir, TRASH_LEAVE);
-
-      if (retval == LIVES_RESPONSE_BROWSE) {
-        retval = filter_cleanup(full_trashdir, rec_list, rem_list, left_list);
-        // may change rec_list
-        // TODO - check for cancel
-      }
-
-      lives_list_free_all(&rem_list);
+      //lives_list_free_all(&rem_list);  /// keep rec_list for recover and leav_list to show info
 
       if (retval == LIVES_RESPONSE_CANCEL) {
         lives_list_free_all(&rec_list);
@@ -6231,10 +6243,8 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       do_auto_dialog(_("Cleaning up Disk"), 0);
       lives_rm(cfile->info_file);
 
-      /* left_list->data = (_("The following directories may be removed manually " */
-      /* 			   "if not required:\n")); */
+      // TODO: recover clips
 
-      //if (!(prefs->clear_disk_opts & LIVES_CDISK_REMOVE_ORPHAN_CLIPS)) {
     }
   }
 
@@ -6284,7 +6294,6 @@ cleanup:
                                           left_list);
     if (user_data != NULL)
       lives_widget_set_sensitive(lives_widget_get_toplevel(LIVES_WIDGET(user_data)), FALSE);
-
   } else {
     if (retval != LIVES_RESPONSE_CANCEL) d_print_failed();
     else d_print_cancelled();
@@ -9712,15 +9721,16 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
     redraw_laudio();
   else if (widget == mainw->raudio_draw)
     redraw_raudio();
-  else if (widget == mainw->msg_area)
+  else if (widget == mainw->msg_area && !mainw->multitrack)
     msg_area_config(widget);
   else if (mainw->multitrack) {
     if (widget == mainw->multitrack->timeline_reg)
       draw_region(mainw->multitrack);
-    if (widget == mainw->play_image)
+    else if (widget == mainw->play_image)
       mt_show_current_frame(mainw->multitrack, FALSE);
-    if (widget == mainw->multitrack->msg_area)
+    else if (widget == mainw->multitrack->msg_area) {
       msg_area_config(widget);
+    }
   }
   return FALSE;
 }

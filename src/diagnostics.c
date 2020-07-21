@@ -120,6 +120,9 @@ char *get_stats_msg(boolean calc_only) {
   return msg;
 }
 
+
+#ifdef WEED_STARTUP_TESTS
+
 #define NITERS 1024
 #define DTHRESH 8
 #define PMISS 0.99609375
@@ -193,8 +196,6 @@ void check_random(void) {
   }
 }
 
-
-#ifdef WEED_STARTUP_TESTS
 
 ticks_t timerinfo;
 

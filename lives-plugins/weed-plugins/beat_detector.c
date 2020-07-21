@@ -91,8 +91,7 @@ static int twopow(int i) {
 
 
 static int create_plans(void) {
-  register int i, nsamps;
-
+  int i, nsamps;
   for (i = 0; i < MAXPLANS; i++) {
     // create fftw plan
     nsamps = twopow(i);

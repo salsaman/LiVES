@@ -727,6 +727,8 @@ static boolean pre_init(void) {
   prefs->show_button_images = widget_opts.show_button_images =
                                 get_boolean_prefd(PREF_SHOW_BUTTON_ICONS, TRUE);
 
+  prefs->mt_show_ctx = get_boolean_prefd(PREF_MT_SHOW_CTX, TRUE);
+
   mainw->threaded_dialog = FALSE;
   clear_mainw_msg();
 
@@ -2570,11 +2572,9 @@ boolean set_palette_colours(boolean force_reload) {
 #ifndef VALGRIND_ON
   /// generate some complementary colours
   if (!(palette->style & STYLE_LIGHT)) {
-    lmin = .05;
-    lmax = .4;
+    lmin = .05; lmax = .4;
   } else {
-    lmin = .6;
-    lmax = .8;
+    lmin = .6; lmax = .8;
   }
   ncr = palette->menu_and_bars.red * 255.;
   ncg = palette->menu_and_bars.green * 255.;
@@ -2598,6 +2598,18 @@ boolean set_palette_colours(boolean force_reload) {
       palette->nice2.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
       palette->nice2.alpha = 1.;
       mainw->pretty_colours = TRUE;
+
+      if (!(palette->style & STYLE_LIGHT)) {
+        lmin = .7; lmax = .9;
+      } else {
+        lmin = .1; lmax = .3;
+      }
+      pick_nice_colour(palette->normal_fore.red * 255., palette->normal_fore.green * 255.,
+                       palette->normal_fore.blue * 255., &ncr, &ncg, &ncb, 1., lmin, lmax);
+      palette->nice3.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
+      palette->nice3.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
+      palette->nice3.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
+      palette->nice3.alpha = 1.;
     }
   }
 #endif
@@ -6713,10 +6725,6 @@ fndone:
               }
             }
             lives_free(fname);
-
-            // yes, since we created the images ourselves they should actually be in the gamma of the clip
-            //weed_layer_set_gamma(layer, sfile->gamma_type);
-
             mainw->osc_block = FALSE;
             if (!ret) {
               break_me("bad frame load from file");

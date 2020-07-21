@@ -18,8 +18,82 @@
 
 // generic plugins
 
+#define PLUGIN_SUBTYPE_DLL 		"dll"
+#define PLUGIN_SUBTYPE_BINARY 		"exe"
+#define PLUGIN_SUBTYPE_SCRIPT 		"script"
+
+#define PLUGIN_TYPE_DECODER			"decoder"
+#define PLUGIN_TYPE_ENCODER			"encoder"
+#define PLUGIN_TYPE_FILTER			"filter"
+#define PLUGIN_TYPE_SOURCE			"source"
+#define PLUGIN_TYPE_PLAYER 			"player"
+
+#define PLUGIN_CHANNEL_NONE	0ul
+#define PLUGIN_CHANNEL_VIDEO	(1<<0)ul
+#define PLUGIN_CHANNEL_AUDIO	(1<<1)ul
+#define PLUGIN_CHANNEL_TEXT	(1<<2)ul
+
+#define PLUGIN_CHANNEL_DATA    		(1<<32)ul
+#define PLUGIN_CHANNEL_STREAM    	(1<<33)ul
+#define PLUGIN_CHANNEL_TTY    		(1<<34)ul
+#define PLUGIN_CHANNEL_FILE    		(1<<35)ul
+
+typedef enum {
+  LIVES_INTENTION_UNKNOWN,
+
+  // video players
+  LIVES_INTENTION_PLAY,
+  LIVES_INTENTION_STREAM,
+  LIVES_INTENTION_TRANSCODE,  // encode / data in
+  LIVES_INTENTION_RENDER,
+
+  //LIVES_INTENTION_ENCODE, // encode / file in
+  LIVES_INTENTION_BACKUP,
+  LIVES_INTENTION_RESTORE,
+  LIVES_INTENTION_DOWNLOAD,
+  LIVES_INTENTION_UPLOAD,
+  LIVES_INTENTION_EFFECT,
+  LIVES_INTENTION_EFFECT_REALTIME, // or make cap ?
+  LIVES_INTENTION_ANALYSE,
+  LIVES_INTENTION_CONVERT,
+  LIVES_INTENTION_MIX,
+  LIVES_INTENTION_SPLIT,
+  LIVES_INTENTION_DUPLICATE,
+  LIVES_INTENTION_OTHER = 65536
+} lives_intention_t;
+
+/// type sepcific caps
+// vpp
+#define VPP_CAN_RESIZE    (1<<0)
+#define VPP_CAN_RETURN    (1<<1)
+#define VPP_LOCAL_DISPLAY (1<<2)
+#define VPP_LINEAR_GAMMA  (1<<3)
+#define VPP_CAN_RESIZE_WINDOW          (1<<4)   /// can resize the image to fit the play window
+#define VPP_CAN_LETTERBOX                  (1<<5)
+
+typedef struct {
+  uint64_t intent;
+  uint64_t in_chan_types; ///< channel types accepted
+  uint64_t out_chan_types; ///< channel types produced
+  uint64_t intents; ///<
+  uint64_t capabilities; ///< type specific capabilities
+} lives_intentcaps_t;
+
+typedef struct {
+  char type[16];  ///< e.g. "decoder"
+  char subtype[16];  ///< e.g. "dll"
+  int api_version_major; ///< version of interface API
+  int api_version_minor;
+  char name[64];  ///< e.g. "mkv_decoder"
+  int pl_version_major; ///< version of plugin
+  int pl_version_minor;
+  lives_intentcaps_t *capabilities;  ///< for future use
+} lives_plugin_id_t;
+
 LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex,
                            const char *plugdir, const char *filter_ext);
+
+// directory locations
 #define PLUGIN_ENCODERS "encoders"
 #define PLUGIN_DECODERS "decoders"
 #define PLUGIN_VID_PLAYBACK "playback/video"
@@ -78,12 +152,6 @@ typedef struct {
   const char *(*get_fps_list)(int palette);
   boolean(*set_fps)(double fps);
 
-  /// for future use
-#define LIVES_INTENTION_PLAY               	1
-#define LIVES_INTENTION_STREAM          	2
-#define LIVES_INTENTION_TRANSCODE    	3
-#define LIVES_INTENTION_RENDER		    	4
-
   const char *(*get_init_rfx)(int intention);
 
 #ifdef __WEED_EFFECTS_H__
@@ -111,13 +179,6 @@ typedef struct {
   boolean(*render_audio_frame_float)(float **audio, int nsamps);
 
   uint64_t capabilities;
-
-#define VPP_CAN_RESIZE    (1<<0)
-#define VPP_CAN_RETURN    (1<<1)
-#define VPP_LOCAL_DISPLAY (1<<2)
-#define VPP_LINEAR_GAMMA  (1<<3)
-#define VPP_CAN_RESIZE_WINDOW          (1<<4)   /// can resize the image to fit the play window
-#define VPP_CAN_LETTERBOX                  (1<<5)
 
   int fwidth, fheight; /// width in pixels, but converted to macropixels for the player
 
@@ -255,12 +316,6 @@ extern const char *const anames[AUDIO_CODEC_MAX];
 /// not so good
 #define LIVES_SEEK_NEEDS_CALCULATION (1<<1)
 #define LIVES_SEEK_QUALITY_LOSS (1<<2)
-
-typedef struct {
-  char type[16];  ///< e.g. "decoder"
-  int api_version_major;
-  int api_version_minor;
-} lives_plugin_id_t;
 
 typedef struct _lives_clip_data {
   // fixed part

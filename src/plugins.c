@@ -2210,7 +2210,6 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList * disable
     g_print("trying decoder %s\n", dpsys->name);
 #endif
 
-    g_print("HERE %s\n", fake_cdata->URI);
     dplug->cdata = (dpsys->get_clip_data)(file_name, fake_cdata);
 
     if (dplug->cdata != NULL) {

@@ -1732,6 +1732,25 @@ LiVESWidget *create_info_error_dialog(lives_dialog_t info_type, const char *text
 }
 
 
+LiVESWidget *scrolled_textview(const char *text, LiVESTextBuffer *textbuffer, int window_width,
+			       LiVESWidget **textview) {
+  LiVESWidget *scrolledwindow = NULL;
+  *textview = lives_standard_text_view_new(text, textbuffer);
+  if (*textview) {
+    widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+    scrolledwindow = lives_standard_scrolled_window_new(window_width, RFX_WINSIZE_V,
+							*textview);
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
+    lives_container_set_border_width(LIVES_CONTAINER(scrolledwindow), widget_opts.border_width);
+    if (palette->style & STYLE_1) {
+      lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)),
+				LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
+    }
+  }
+  return scrolledwindow;
+}
+
+
 text_window *create_text_window(const char *title, const char *text, LiVESTextBuffer *textbuffer,
 				boolean add_buttons) {
   // general text window
@@ -1747,7 +1766,9 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
 
   if (LIVES_SHOULD_EXPAND_EXTRA_WIDTH) window_width = RFX_WINSIZE_H * 2;
 
-  textwindow->dialog = lives_standard_dialog_new(title, FALSE, window_width, DEF_DIALOG_HEIGHT);
+  textwindow->dialog = lives_standard_dialog_new(title, FALSE, window_width,
+						 LIVES_SHOULD_EXPAND_HEIGHT ? DEF_DIALOG_HEIGHT
+						 : DEF_DIALOG_HEIGHT >> 1);
   lives_window_add_accel_group(LIVES_WINDOW(textwindow->dialog), accel_group);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(textwindow->dialog));
@@ -1756,29 +1777,16 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
 
   textwindow->textview = textwindow->table = NULL;
 
-  if (textbuffer || text) textwindow->textview =
-			    lives_standard_text_view_new(text, textbuffer);
-
   woat = widget_opts.apply_theme;
   widget_opts.apply_theme = FALSE;
-
-  if (textwindow->textview) {
-    widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
-    scrolledwindow = lives_standard_scrolled_window_new(window_width, RFX_WINSIZE_V,
-							textwindow->textview);
-    widget_opts.expand = LIVES_EXPAND_DEFAULT;
-    lives_container_set_border_width(LIVES_CONTAINER(scrolledwindow), widget_opts.border_width);
-    if (palette->style & STYLE_1) {
-      lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)),
-				LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
-    }
-  } else {
+  if (textbuffer || text)
+    scrolledwindow = scrolled_textview(text, textbuffer, window_width, &textwindow->textview);
+  else {
     widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH;
     textwindow->table = lives_standard_table_new(1, 1, FALSE);
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
     scrolledwindow = lives_standard_scrolled_window_new(window_width, RFX_WINSIZE_V, textwindow->table);
   }
-
   widget_opts.apply_theme = woat;
 
   lives_box_pack_start(LIVES_BOX(textwindow->vbox), scrolledwindow, TRUE, TRUE, 0);
@@ -2026,8 +2034,6 @@ LiVESWidget *trash_rb(LiVESBox *parent) {
     lives_signal_connect(LIVES_GUI_OBJECT(rb), LIVES_WIDGET_ACTIVATE_SIGNAL,
 			 LIVES_GUI_CALLBACK(toggle_sets_pref),
 			 PREF_PREF_TRASH);
-
-
   }
   return rb;
 }
@@ -2040,6 +2046,7 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList *rec_list, LiVE
   LiVESWidget *top_vbox;
   LiVESWidget *hbox;
   LiVESWidget *cb;
+  LiVESWidget *accb;
   LiVESWidget *scrolledwindow;
   LiVESWidget *cancelbutton;
   LiVESResponseType resp;
@@ -2138,10 +2145,11 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList *rec_list, LiVE
 				     LIVES_RESPONSE_RESET);
 
   widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
-  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-				     LIVES_STOCK_APPLY, _("_Accept and Continue"),
-				     LIVES_RESPONSE_ACCEPT);
+  accb = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
+					    LIVES_STOCK_APPLY, _("_Accept and Continue"),
+					    LIVES_RESPONSE_ACCEPT);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  lives_button_grab_default_special(accb);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
 			       LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
@@ -2149,7 +2157,7 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList *rec_list, LiVE
   do {
     resp = lives_dialog_run(LIVES_DIALOG(dialog));
     //if (resp == LIVES_RESPONSE_RESET) reset_vals;
-  } while (resp != LIVES_RESPONSE_RESET);
+  } while (resp == LIVES_RESPONSE_RESET);
   lives_widget_destroy(dialog);
   return resp;
 }
@@ -3841,9 +3849,10 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
 
-  checkbutton = lives_standard_check_button_new((tmp = (_("Check for lost clips"))),
+  checkbutton = lives_standard_check_button_new((tmp = (_("Check for Lost Clips"))),
                 !(prefs->clear_disk_opts & LIVES_CDISK_REMOVE_ORPHAN_CLIPS), LIVES_BOX(hbox),
-                (tmp2 = (_("Allow attempted recovery of potential lost clips before deleting them."))));
+                (tmp2 = (_("#Enable attempted recovery of potential lost clips before deleting them.\n"
+			   "Can be overriden after disk analysis."))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -3855,9 +3864,24 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
 
+  checkbutton = lives_standard_check_button_new((tmp = (_("Remove Empty Directories"))),
+                !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_EMPTY_DIRS), LIVES_BOX(hbox),
+                (tmp2 = (_("#Remove any empty directories within the working directory"))));
+
+  lives_free(tmp);
+  lives_free(tmp2);
+
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(flip_cdisk_bit),
+                                  LIVES_INT_TO_POINTER(LIVES_CDISK_LEAVE_ORPHAN_SETS));
+
+    hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
+
   checkbutton = lives_standard_check_button_new((tmp = (_("Delete _Orphaned Clips"))),
                 !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_ORPHAN_SETS), LIVES_BOX(hbox),
-                (tmp2 = (_("Delete any clips which are not currently loaded or part of a set"))));
+                (tmp2 = (_("#Delete any clips which are not currently loaded or part of a set\n"
+			   "If 'Check for Lost Clips' is set, LiVES will try to recover them first"))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -5464,7 +5488,7 @@ boolean msg_area_config(LiVESWidget * widget) {
     xoverflowx = ww - w;
     if (xoverflowx > overflowx) {
 #ifdef DEBUG_OVERFLOW
-      g_print("ADJ B %d = %d - %d - %d\n", xoverflowx, rect.width, w, bx);
+      g_print("ADJ B1 %d = %d - %d - %d\n", xoverflowx, rect.width, w, bx);
 #endif
       overflowx = xoverflowx;
     }
@@ -5474,7 +5498,7 @@ boolean msg_area_config(LiVESWidget * widget) {
     xoverflowy = hh - h;
     if (xoverflowy > overflowy) {
 #ifdef DEBUG_OVERFLOW
-      g_print("ADJ B %d = %d - %d - %d\n", xoverflowy, rect.height, h, by);
+      g_print("ADJ B2 %d = %d - %d - %d\n", xoverflowy, rect.height, h, by);
 #endif
       overflowy = xoverflowy;
     }
@@ -5571,13 +5595,27 @@ boolean msg_area_config(LiVESWidget * widget) {
       if (mainw->multitrack) {
         /// in multitrack what we resize is the vpaned, and the msg area just occupies the lower part
         /// of that
-        int tvh = lives_widget_get_allocation_height(mainw->multitrack->top_vbox);
-        int xtra = hh - tvh;
-        width = lives_widget_get_allocation_width(LIVES_WIDGET(widget));
-        height = lives_widget_get_allocation_height(LIVES_WIDGET(widget));
-        height += xtra - SCRN_BRDR;
-      }
+        //int tvh = lives_widget_get_allocation_height(mainw->multitrack->top_vbox);
+        //int xtra = hh - tvh;
+        /* width = lives_widget_get_allocation_width(LIVES_WIDGET(widget)); */
+        /* height = lives_widget_get_allocation_height(LIVES_WIDGET(widget)); */
+        /* height += xtra - SCRN_BRDR; */
 
+        int tvh = lives_widget_get_allocation_height(mainw->multitrack->vpaned)
+                  - lives_widget_get_allocation_height(mainw->multitrack->tlx_vbox) + 2;
+        lives_paned_set_position(LIVES_PANED(mainw->multitrack->vpaned), 0);
+
+        if (height <= MIN_MSGBAR_HEIGHT) {
+          tvh = lives_paned_get_position(LIVES_PANED(mainw->multitrack->top_vpaned));
+          lives_paned_set_position(LIVES_PANED(mainw->multitrack->top_vpaned),
+                                   tvh + height - MIN_MSGBAR_HEIGHT);
+          height = MIN_MSGBAR_HEIGHT;
+          lives_container_child_set_shrinkable(LIVES_CONTAINER(mainw->multitrack->top_vpaned),
+                                               mainw->multitrack->vpaned, FALSE);
+        } else
+          lives_container_child_set_shrinkable(LIVES_CONTAINER(mainw->multitrack->top_vpaned),
+                                               mainw->multitrack->vpaned, TRUE);
+      }
       lives_widget_set_size_request(widget, width, height);
       reqwidth = width;
       reqheight = height;

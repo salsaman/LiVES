@@ -1012,11 +1012,12 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_INTERP_FAST   GDK_INTERP_NEAREST
 
 #if GTK_CHECK_VERSION(3, 10, 0)
-#define LIVES_STOCK_YES "gtk-yes"             // non-standard image ?
-#define LIVES_STOCK_NO "gtk-no"             // non-standard image ?
-#define LIVES_STOCK_APPLY "gtk-apply"      // non-standard image ?
-#define LIVES_STOCK_CANCEL "gtk-cancel"    // non-standard image ?
-#define LIVES_STOCK_OK "gtk-ok"    // non-standard image ?
+#define LIVES_STOCK_YES "gtk-yes"
+#define LIVES_STOCK_NO "gtk-no"
+#define LIVES_STOCK_APPLY "gtk-apply"
+#define LIVES_STOCK_CANCEL "gtk-cancel"
+#define LIVES_STOCK_OK "gtk-ok"
+#define LIVES_STOCK_EDIT "gtk-edit"
 
 #define LIVES_STOCK_UNDO "edit-undo"
 #define LIVES_STOCK_REDO "edit-redo"
@@ -1036,6 +1037,7 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_STOCK_GO_FORWARD "go-next"
 #define LIVES_STOCK_GO_UP "go-up"
 #define LIVES_STOCK_GO_DOWN "go-down"
+#define LIVES_STOCK_STOP "stop"
 #define LIVES_STOCK_SELECT_ALL "edit-select-all"
 #define LIVES_STOCK_REFRESH "view-refresh"
 #define LIVES_STOCK_MEDIA_PLAY "media-playback-start"

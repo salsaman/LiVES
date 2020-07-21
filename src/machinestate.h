@@ -453,7 +453,10 @@ boolean lives_proc_thread_cancelled(lives_proc_thread_t);
 
 void lives_proc_thread_sync_ready(lives_proc_thread_t);
 
+// WARNING !! version without a return value will free tinfo !
 void lives_proc_thread_join(lives_proc_thread_t);
+
+// with return value should free proc_thread
 int lives_proc_thread_join_int(lives_proc_thread_t);
 double lives_proc_thread_join_double(lives_proc_thread_t);
 int lives_proc_thread_join_boolean(lives_proc_thread_t);

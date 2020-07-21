@@ -9570,7 +9570,7 @@ if (defined($ARGV[0])) {
 	### a commentary is produced both on STDERR and STDOUT. The latter would be picked up
 	### using popen from the front end.
 
-	my ($opts, $trashdsubdir, $new_work) = @_;
+	my ($opts, $trashsubdir, $new_work) = @_;
 
 	&smog_chdir($workdir);
 	
@@ -9582,6 +9582,9 @@ if (defined($ARGV[0])) {
 	# clips (subdirectories)
 	#      - if unset bit 3 (8)  remove marker files
 	#      - if unset bit 4 (16) remove misc. files
+	#      - if set bit 5 (32) recover clips
+	#      - if set bit 6 (64) remove stale recovery files
+	#      - if set bit 7 (128) remove empty dirs
 
 	my $file;
 	my @left;
@@ -9606,7 +9609,7 @@ if (defined($ARGV[0])) {
 	#print STDERR "smogrify: size of directory at start is $start_total bytes\n";
 	opendir DIR, $workdir;
 	while ($file = readdir(DIR)) {
-	    next if $file eq "." || $file eq ".." || $file eq ".$DEFTRASH";
+	    next if $file eq "." || $file eq ".." || $file eq ".$DEFTRASH" || $file eq $trashsubdir;
 	    print STDERR "\nFile entry: $file:\n";
 	    print "\nFile entry: $file:\n";
 	    if (-d "$workdir/$file") {
@@ -9623,7 +9626,7 @@ if (defined($ARGV[0])) {
 			    print "\n$file is in use:\n";
 			    unless ($opts & 0x02) {
 				unless (-f "$file/noprune") {
-				    print STDERR "smogrify: doing osme careful cleaning " .
+				    print STDERR "smogrify: doing some careful cleaning " .
 					"of directory\n";
 				    print STDERR "\nsmogrify: (can be overriden with option 0x02)\n";
 				    print "doing osme careful cleaning " .
@@ -9641,10 +9644,14 @@ if (defined($ARGV[0])) {
 			}
 		    }
 		}
+		my $is_empty = 0;
+		if (!($opts & 0x80)) {
+		    $is_empty = !(&is_non_empty_dir("$workdir/$file"));
+		}
 		# remove a set unlesss it has clips OR (layouts AND NOT (opts & 0x04))
-		if (&is_non_empty_dir("$workdir/$file/clips")
+		if (!$is_empty && &is_non_empty_dir("$workdir/$file/clips")
 		    || (&is_non_empty_dir("$workdir/$file/layouts") && !($opts & 0x04))) {
-		    # new style sets, check clips anyd optionally layouts
+		    # new style sets, check clips and optionally layouts
 		    if ($new_work) {
 			print STDERR "smogrify: moving $workdir/$file\nto\n$new_work/$file\n";
 			# we are to move this set
@@ -9683,6 +9690,17 @@ if (defined($ARGV[0])) {
 		    }
 		}
 		else {
+		    if ($is_empty) {
+			print STDERR "smogrify: directory is empty and option 0x80 " .
+			    "is not set\n";
+			print STDERR "directory will be removed.\n";
+			print "directory is empty and option 'Remove Empty Directories' " .
+			    "is set\n";
+			print "directory will be removed.\n";
+			&smog_system("/bin/touch $remdir/$file");
+			$nitems++;
+			next;
+		    }
 		    print STDERR "with no clips...\n";
 		    print "with no clips...\n";
 		    $in_set = 0;
@@ -9697,7 +9715,7 @@ if (defined($ARGV[0])) {
 			if (!($opts & 0x01)) {
 			    print STDERR "\nsmogrify: option 0x01 is not set, so\n";
 			    print STDERR "considering $workdir/$file for removal\n";
-			    print "option 'Leave orphan sets' is not set, so\n";
+			    print "option 'Delete Orphan Clips' is set, so\n";
 			    print "considering $workdir/$file for removal\n";
 			    my $has_hdrs = 0;
 			    unless ($opts & 0x20) {
@@ -9890,8 +9908,6 @@ if (defined($ARGV[0])) {
 		}
 		&sig_error("Bad default trashdir");
 	    }
-	    ##print "\nremoving stale recovery files recorded-layout*\nfrom $workdir";
-	    ##print "\n(can be overriden with option 0x40)\n";
 	    print STDERR "\nsmogrify: removing stale recovery files recorded-layout* from $workdir\n";
 	    #print STDERR "\nsmogrify: (can be overriden with option 0x40)\n";
 	    print "\nremoving stale recovery files recorded-layout* from $workdir\n";

@@ -9,16 +9,19 @@
 #undef HAVE_AV_CONFIG_H
 #endif
 
-#ifdef HAVE_AV_CONFIG_H
-#undef HAVE_AV_CONFIG_H
-#endif
-
 #ifndef HAVE_SYSTEM_WEED
 #include "../../../libweed/weed-palettes.h"
+#else
+#include <weed/weed-palettes.h>
 #endif
 
 #define HAVE_AVCODEC
 #define HAVE_AVUTIL
+
+#include <libavformat/avformat.h>
+#include <libavutil/avstring.h>
+#include <libavcodec/version.h>
+#include <libavutil/mem.h>
 
 #ifdef NEED_LOCAL_WEED_COMPAT
 #include "../../../libweed/weed-compat.h"
@@ -26,13 +29,7 @@
 #include <weed/weed-compat.h>
 #endif
 
-#include <libavformat/avformat.h>
-#include <libavutil/avstring.h>
-#include <libavcodec/version.h>
-#include <libavutil/mem.h>
-
 #define NEED_CLONEFUNC
-
 #include "decplugin.h"
 
 ///////////////////////////////////////////////////////
@@ -47,17 +44,21 @@
 #include <pthread.h>
 #include <sys/time.h>
 
-#include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
-#include <libavcodec/version.h>
 #include <libavutil/samplefmt.h>
 #include <libavutil/mathematics.h>
+#include <libavutil/intreadwrite.h>
+#include <libavutil/lzo.h>
+#include <libavutil/dict.h>
 
 #include "libav_helper.h"
 
 #include "avformat_decoder.h"
 
-const char *plugin_version = "LiVES avformat decoder version 1.1";
+static const char *plname = "lives_libav";
+static int vmaj = 1;
+static int vmin = 1;
+static const char *plugin_version = "LiVES avformat decoder version 1.1";
 
 static pthread_mutex_t avcodec_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -72,9 +73,7 @@ static pthread_mutex_t avcodec_mutex = PTHREAD_MUTEX_INITIALIZER;
 #define JUMP_FRAMES_FAST 16 /// if seek is fast, how many frames to read forward rather than seek
 
 static inline void lives_avcodec_lock(void) {pthread_mutex_lock(&avcodec_mutex);}
-
 static inline void lives_avcodec_unlock(void) {pthread_mutex_unlock(&avcodec_mutex);}
-
 
 /* static int stream_peek(int fd, unsigned char *str, size_t len) { */
 /*   off_t cpos = lseek(fd, 0, SEEK_CUR); // get current posn */
@@ -788,36 +787,24 @@ static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
   lives_av_priv_t *priv;
   lives_clip_data_t *cdata;
 
-  if (!data) cdata = cdata_new(NULL);//(lives_clip_data_t *)malloc(sizeof(lives_clip_data_t));
-  else cdata = data;
+  if (!data) {
+    cdata = cdata_new(NULL);
+    cdata_stamp(cdata, plname, vmaj, vmin);
+    cdata->palettes = malloc(2 * sizeof(int));
+    cdata->palettes[1] = WEED_PALETTE_END;
+  } else cdata = data;
 
-  cdata->palettes = malloc(2 * sizeof(int));
-
-  cdata->palettes[1] = WEED_PALETTE_END;
-
-  cdata->priv = priv = malloc(sizeof(lives_av_priv_t));
-
-  priv->ic = NULL;
+  cdata->priv = priv = calloc(1, sizeof(lives_av_priv_t));
 
   priv->astream = -1;
   priv->vstream = -1;
 
-  priv->inited = priv->pkt_inited = FALSE;
-  priv->longer_seek = FALSE;
-
   cdata->seek_flag = LIVES_SEEK_FAST;
-
-  priv->ctx = NULL;
-  priv->pFrame = NULL;
 
   cdata->sync_hint = SYNC_HINT_AUDIO_PAD_START | SYNC_HINT_AUDIO_TRIM_END;
 
-  cdata->video_start_time = 0.;
   cdata->jump_limit = JUMP_FRAMES_FAST;
 
-  memset(cdata->author, 0, 1);
-  memset(cdata->title, 0, 1);
-  memset(cdata->comment, 0, 1);
 #ifdef TEST_CACHING
   priv->cachemax = 128;
   priv->cache = NULL;
@@ -827,14 +814,16 @@ static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
 
 
 static lives_clip_data_t *avf_clone(lives_clip_data_t *cdata) {
-  lives_clip_data_t *clone = clone = clone_cdata(NULL, cdata);
+  lives_clip_data_t *clone = clone = clone_cdata(cdata);
   lives_av_priv_t *dpriv, *spriv;
+
+  cdata_stamp(clone, plname, vmaj, vmin);
 
   // create "priv" elements
   spriv = cdata->priv;
 
   if (spriv != NULL) {
-    clone->priv = dpriv = malloc(sizeof(lives_av_priv_t));
+    clone->priv = dpriv = calloc(1, sizeof(lives_av_priv_t));
     dpriv->vstream = spriv->vstream;
     dpriv->astream = spriv->astream;
     dpriv->fps_avg = spriv->fps_avg;
@@ -845,9 +834,12 @@ static lives_clip_data_t *avf_clone(lives_clip_data_t *cdata) {
     dpriv = clone->priv;
   }
 
+  if (!clone->palettes) {
+    clone->palettes = malloc(2 * sizeof(int));
+    clone->palettes[1] = WEED_PALETTE_END;
+  }
+
   if (!attach_stream(clone, TRUE)) {
-    free(clone->URI);
-    clone->URI = NULL;
     clip_data_free(clone);
     return NULL;
   }
@@ -901,8 +893,6 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
     cdata->URI = strdup(URI);
     if (!attach_stream(cdata, FALSE)) {
       detach_stream(cdata);
-      free(cdata->URI);
-      cdata->URI = NULL;
       clip_data_free(cdata);
       return NULL;
     }
@@ -923,8 +913,6 @@ rescan:
       fprintf(stderr,
               "avformat_decoder: ERROR - could not find the last frame\navformat_decoder: I will pass on this file as it may be broken.\n");
       detach_stream(cdata);
-      free(cdata->URI);
-      cdata->URI = NULL;
       clip_data_free(cdata);
       return NULL;
     }
@@ -935,8 +923,6 @@ rescan:
               "I will pass on this file as it may be broken.\n",
               real_frames, cdata->nframes);
       detach_stream(cdata);
-      free(cdata->URI);
-      cdata->URI = NULL;
       clip_data_free(cdata);
       return NULL;
     }

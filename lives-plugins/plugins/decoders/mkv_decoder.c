@@ -37,11 +37,10 @@
 #include <sys/stat.h>
 #include <pthread.h>
 
+static const char *plname = "lives_mkv";
+static int vmaj = 1;
+static int vmin = 4;
 const char *plugin_version = "LiVES mkv decoder version 1.4";
-
-#ifdef HAVE_AV_CONFIG_H
-#undef HAVE_AV_CONFIG_H
-#endif
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
@@ -49,21 +48,23 @@ const char *plugin_version = "LiVES mkv decoder version 1.4";
 
 #ifndef HAVE_SYSTEM_WEED
 #include "../../../libweed/weed-palettes.h"
+#else
+#include <weed/weed-palettes.h>
 #endif
 
 #define HAVE_AVCODEC
 #define HAVE_AVUTIL
+
+#include <libavformat/avformat.h>
+#include <libavutil/avstring.h>
+#include <libavcodec/version.h>
+#include <libavutil/mem.h>
 
 #ifdef NEED_LOCAL_WEED_COMPAT
 #include "../../../libweed/weed-compat.h"
 #else
 #include <weed/weed-compat.h>
 #endif
-
-#include <libavformat/avformat.h>
-#include <libavutil/avstring.h>
-#include <libavcodec/version.h>
-#include <libavutil/mem.h>
 
 #define NEED_CLONEFUNC
 #include "decplugin.h"
@@ -2145,74 +2146,57 @@ const char *version(void) {
 }
 
 
-static lives_clip_data_t *init_cdata(void) {
-  static memcpy_f  ext_memcpy  = (memcpy_f)memcpy;
-  lives_mkv_priv_t *priv;
-  lives_clip_data_t *cdata = (lives_clip_data_t *)calloc(1, sizeof(lives_clip_data_t));
+static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
+  static memcpy_f  ext_memcpy = (memcpy_f)memcpy;
+  lives_clip_data_t *cdata;
 
-  cdata->URI = NULL;
+  if (!data) {
+    cdata = cdata_new(NULL);
+    cdata_stamp(cdata, plname, vmaj, vmin);
+    cdata->palettes = (int *)malloc(2 * sizeof(int));
+    cdata->palettes[1] = WEED_PALETTE_END;
+  } else cdata = data;
 
-  cdata->priv = priv = malloc(sizeof(lives_mkv_priv_t));
+  cdata->priv = calloc(1, sizeof(lives_mkv_priv_t));
 
   cdata->seek_flag = LIVES_SEEK_FAST;
 
-  priv->ctx = NULL;
-  priv->codec = NULL;
-  priv->picture = NULL;
-  priv->inited = FALSE;
-  priv->ext_memfuncs = FALSE;
-  priv->expect_eof = FALSE;
-
-  cdata->palettes = (int *)malloc(2 * sizeof(int));
-  cdata->palettes[1] = WEED_PALETTE_END;
-
   cdata->interlace = LIVES_INTERLACE_NONE;
-
-  cdata->nframes = 0;
-
-  cdata->sync_hint = 0;
   cdata->frame_gamma = WEED_GAMMA_UNKNOWN;
 
-  cdata->video_start_time = 0.;
-
-  cdata->ext_calloc = NULL;
   cdata->ext_memcpy = &ext_memcpy;
-  cdata->ext_free = NULL;
 
-  priv->idxc = NULL;
-
-  got_eof = FALSE;
   errval = 0;
 
   cdata->sync_hint = SYNC_HINT_AUDIO_PAD_START | SYNC_HINT_AUDIO_TRIM_END;
-
-  memset(cdata->author, 0, 1);
-  memset(cdata->title, 0, 1);
-  memset(cdata->comment, 0, 1);
-
   return cdata;
 }
 
 
 static lives_clip_data_t *mkv_clone(lives_clip_data_t *cdata) {
-  lives_clip_data_t *clone = init_cdata();
+  lives_clip_data_t *clone = clone_cdata(cdata);
   lives_mkv_priv_t *dpriv, *spriv;
 
-  // copy from cdata to clone, with a new context for clone
-  clone_cdata(clone, cdata);
+  cdata_stamp(clone, plname, vmaj, vmin);
 
   // create "priv" elements
-  dpriv = clone->priv;
   spriv = cdata->priv;
 
   if (spriv != NULL) {
+    clone->priv = dpriv = (lives_mkv_priv_t *)calloc(1, sizeof(lives_mkv_priv_t));
     dpriv->filesize = spriv->filesize;
     dpriv->inited = TRUE;
+  } else {
+    clone = init_cdata(clone);
+    dpriv = clone->priv;
+  }
+
+  if (!clone->palettes) {
+    clone->palettes = malloc(2 * sizeof(int));
+    clone->palettes[1] = WEED_PALETTE_END;
   }
 
   if (!attach_stream(clone, TRUE)) {
-    free(clone->URI);
-    clone->URI = NULL;
     clip_data_free(clone);
     return NULL;
   }
@@ -2272,23 +2256,23 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   lives_mkv_priv_t *priv;
 
-  if (URI == NULL && cdata != NULL) {
-    // create a clone of cdata - we also need to be able to handle a "fake" clone with only URI, nframes and fps set (priv == NULL)
+  if (!URI && cdata) {
+    // create a clone of cdata - we also need to be able to handle a "fake" clone
+    // with only URI, nframes and fps set (priv == NULL)
     return mkv_clone(cdata);
   }
 
   got_eof = FALSE;
   errval = 0;
 
-  if (cdata != NULL && cdata->current_clip > 0) {
+  if (cdata && cdata->current_clip > 0) {
     // currently we only support one clip per container
-
     clip_data_free(cdata);
     return NULL;
   }
 
-  if (cdata == NULL) {
-    cdata = init_cdata();
+  if (!cdata) {
+    cdata = init_cdata(NULL);
   }
 
   if (cdata->URI == NULL || strcmp(URI, cdata->URI)) {
@@ -2298,8 +2282,6 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
     }
     cdata->URI = strdup(URI);
     if (!attach_stream(cdata, FALSE)) {
-      free(cdata->URI);
-      cdata->URI = NULL;
       clip_data_free(cdata);
       return NULL;
     }
@@ -2991,20 +2973,13 @@ cleanup:
 
 void clip_data_free(lives_clip_data_t *cdata) {
   lives_mkv_priv_t *priv = cdata->priv;
-
-  if (cdata->palettes != NULL) free(cdata->palettes);
-  cdata->palettes = NULL;
-
   if (priv->idxc != NULL) idxc_release(cdata);
   priv->idxc = NULL;
 
-  if (cdata->URI != NULL) {
+  if (cdata->URI) {
     detach_stream(cdata);
-    free(cdata->URI);
   }
-
-  free(cdata->priv);
-  free(cdata);
+  lives_struct_free(&cdata->lsd);
 }
 
 

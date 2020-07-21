@@ -156,7 +156,6 @@ struct _mt_opts {
   lives_mt_mouse_mode_t mouse_mode;
   lives_mt_insert_mode_t insert_mode;
   boolean show_audio;
-  boolean show_ctx;
   boolean ign_ins_sel;
   boolean follow_playback;
   boolean insert_audio;  ///< do we insert audio with video ?
@@ -169,6 +168,7 @@ struct _mt_opts {
   boolean render_audp; ///< render audio
   boolean normalise_audp; ///< normalise audio
   boolean overlay_timecode;
+  boolean show_info;
   int hpaned_pos;
   int vpaned_pos;
   double ptr_time;
@@ -179,6 +179,7 @@ struct _mt {
   // widgets
   LiVESWidget *menubar;
   LiVESWidget *top_vbox;
+  LiVESWidget *top_vpaned;
   LiVESWidget *xtravbox;
   LiVESWidget *hbox;
   LiVESWidget *play_blank;
@@ -332,6 +333,7 @@ struct _mt {
   LiVESWidget *change_max_disp;
   LiVESWidget *add_vid_behind;
   LiVESWidget *add_vid_front;
+  LiVESWidget *show_info;
   LiVESWidget *quit;
   LiVESWidget *troubleshoot;
   LiVESWidget *expl_missing;
@@ -361,6 +363,7 @@ struct _mt {
   LiVESWidget *dumlabel2;
   LiVESWidget *top_eventbox;
   LiVESWidget *tlx_eventbox;
+  LiVESWidget *tlx_vbox;
 
   LiVESWidget *grav_submenu;
   LiVESWidget *ins_submenu;

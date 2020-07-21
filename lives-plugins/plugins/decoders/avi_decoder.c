@@ -22,11 +22,35 @@ const char *plugin_version = "LiVES avi decoder version 0.1";
 #undef HAVE_AV_CONFIG_H
 #endif
 
-#include <libavcodec/avcodec.h>
+#ifndef HAVE_SYSTEM_WEED
+#include "../../../libweed/weed-palettes.h"
+#else
+#include <weed/weed-palettes.h>
+#endif
+
+#define HAVE_AVCODEC
+#define HAVE_AVUTIL
+
 #include <libavformat/avformat.h>
 #include <libavutil/avstring.h>
+#include <libavcodec/version.h>
+#include <libavutil/mem.h>
 
+#ifdef NEED_LOCAL_WEED_COMPAT
+#include "../../../libweed/weed-compat.h"
+#else
+#include <weed/weed-compat.h>
+#endif
+
+#define NEED_CLONEFUNC
 #include "decplugin.h"
+
+#include <libavutil/intreadwrite.h>
+#include <libavutil/lzo.h>
+#include <libavutil/dict.h>
+
+#include "libav_helper.h"
+
 #include "avi_decoder.h"
 
 #define ER_EXPLODE 5 // set to lower to crap out on small errors
@@ -77,53 +101,6 @@ static void freep(void **x) {
 }
 
 ////////////////////////////////////////////////////////////////////////////
-
-static int pix_fmt_to_palette(enum PixelFormat pix_fmt, int *clamped) {
-
-  switch (pix_fmt) {
-  case PIX_FMT_RGB24:
-    return WEED_PALETTE_RGB24;
-  case PIX_FMT_BGR24:
-    return WEED_PALETTE_BGR24;
-  case PIX_FMT_RGBA:
-    return WEED_PALETTE_RGBA32;
-  case PIX_FMT_BGRA:
-    return WEED_PALETTE_BGRA32;
-  case PIX_FMT_ARGB:
-    return WEED_PALETTE_ARGB32;
-  case PIX_FMT_YUV444P:
-    return WEED_PALETTE_YUV444P;
-  case PIX_FMT_YUV422P:
-    return WEED_PALETTE_YUV422P;
-  case PIX_FMT_YUV420P:
-    return WEED_PALETTE_YUV420P;
-  case PIX_FMT_YUYV422:
-    return WEED_PALETTE_YUYV;
-  case PIX_FMT_UYVY422:
-    return WEED_PALETTE_UYVY;
-  case PIX_FMT_UYYVYY411:
-    return WEED_PALETTE_YUV411;
-  case PIX_FMT_GRAY8:
-  case PIX_FMT_Y400A:
-    return WEED_PALETTE_A8;
-  case PIX_FMT_MONOWHITE:
-  case PIX_FMT_MONOBLACK:
-    return WEED_PALETTE_A1;
-  case PIX_FMT_YUVJ422P:
-    if (clamped) *clamped = WEED_YUV_CLAMPING_UNCLAMPED;
-    return WEED_PALETTE_YUV422P;
-  case PIX_FMT_YUVJ444P:
-    if (clamped) *clamped = WEED_YUV_CLAMPING_UNCLAMPED;
-    return WEED_PALETTE_YUV444P;
-  case PIX_FMT_YUVJ420P:
-    if (clamped) *clamped = WEED_YUV_CLAMPING_UNCLAMPED;
-    return WEED_PALETTE_YUV420P;
-
-  default:
-    return WEED_PALETTE_END;
-  }
-}
-
 
 /* can enable this later to handle pix_fmt (35) - YUVA4204P */
 /*
@@ -192,7 +169,6 @@ static boolean check_eof(const lives_clip_data_t *cdata) {
   if (priv->input_position >= priv->filesize) return TRUE;
   return FALSE;
 }
-
 
 
 /////////////////////////////////////////////////////

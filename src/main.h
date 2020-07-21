@@ -54,7 +54,7 @@
 #ifdef __cplusplus
 #undef HAVE_UNICAP
 #endif
-#define WEED_STARTUP_TESTS
+//#define WEED_STARTUP_TESTS
 
 #ifdef __GNUC__
 #  define WARN_UNUSED  __attribute__((warn_unused_result))

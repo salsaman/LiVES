@@ -37,6 +37,9 @@
 #include <sys/stat.h>
 #include <pthread.h>
 
+static const char *plname = "lives_asf";
+static int vmaj = 1;
+static int vmin = 1;
 const char *plugin_version = "LiVES asf/wmv decoder version 1.1";
 
 #ifdef HAVE_AV_CONFIG_H
@@ -46,16 +49,18 @@ const char *plugin_version = "LiVES asf/wmv decoder version 1.1";
 #define HAVE_AVCODEC
 #define HAVE_AVUTIL
 
+#include <libavformat/avformat.h>
+#include <libavutil/avstring.h>
+#include <libavcodec/version.h>
+#include <libavutil/mem.h>
+
 #ifdef NEED_LOCAL_WEED_COMPAT
 #include "../../../libweed/weed-compat.h"
 #else
 #include <weed/weed-compat.h>
 #endif
 
-#include <libavformat/avformat.h>
-#include <libavcodec/version.h>
-#include <libavutil/avstring.h>
-
+#define NEED_CLONEFUNC
 #include "decplugin.h"
 #include "libav_helper.h"
 
@@ -675,7 +680,6 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
           // reached target dts
           return 0;
         }
-
 
         if (asf->packet_frag_offset == 0) {
           if (pack_fill == 0) priv->frame_dts = asf->packet_frag_timestamp;
@@ -2375,88 +2379,47 @@ const char *version(void) {
 }
 
 
-static lives_clip_data_t *init_cdata(void) {
-  lives_asf_priv_t *priv;
-  lives_clip_data_t *cdata = (lives_clip_data_t *)malloc(sizeof(lives_clip_data_t));
+static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
+  lives_clip_data_t *cdata;
 
-  cdata->URI = NULL;
+  if (!data) {
+    cdata = cdata_new(NULL);
+    cdata_stamp(cdata, plname, vmaj, vmin);
+    cdata->palettes = (int *)malloc(2 * sizeof(int));
+    cdata->palettes[1] = WEED_PALETTE_END;
+  } else cdata = data;
 
-  cdata->priv = priv = malloc(sizeof(lives_asf_priv_t));
-
-  cdata->seek_flag = 0;
-
-  priv->ctx = NULL;
-  priv->picture = NULL;
-
-  cdata->palettes = (int *)malloc(2 * sizeof(int));
-  cdata->palettes[1] = WEED_PALETTE_END;
-
-  priv->idxc = NULL;
-
-  priv->inited = FALSE;
-
-  cdata->sync_hint = 0;
-
-  cdata->video_start_time = 0.;
-
-  memset(cdata->author, 0, 1);
-  memset(cdata->title, 0, 1);
-  memset(cdata->comment, 0, 1);
+  cdata->priv = malloc(sizeof(lives_asf_priv_t));
 
   return cdata;
 }
 
 
 static lives_clip_data_t *asf_clone(lives_clip_data_t *cdata) {
-  lives_clip_data_t *clone = init_cdata();
+  lives_clip_data_t *clone = clone_cdata(cdata);
+  //lives_clip_data_t *clone = init_cdata();
   lives_asf_priv_t *dpriv, *spriv;
 
+  cdata_stamp(clone, plname, vmaj, vmin);
+
   // copy from cdata to clone, with a new context for clone
-  if (cdata->URI) clone->URI = strdup(cdata->URI);
-  clone->nclips = cdata->nclips;
-  snprintf(clone->container_name, 512, "%s", cdata->container_name);
-  clone->current_clip = cdata->current_clip;
-  clone->width = cdata->width;
-  clone->height = cdata->height;
-  clone->nframes = cdata->nframes;
-  clone->interlace = cdata->interlace;
-  clone->frame_gamma = WEED_GAMMA_UNKNOWN;
-  clone->offs_x = cdata->offs_x;
-  clone->offs_y = cdata->offs_y;
-  clone->frame_width = cdata->frame_width;
-  clone->frame_height = cdata->frame_height;
-  clone->par = cdata->par;
-  clone->fps = cdata->fps;
-  if (cdata->palettes != NULL) clone->palettes[0] = cdata->palettes[0];
-  clone->current_palette = cdata->current_palette;
-  clone->YUV_sampling = cdata->YUV_sampling;
-  clone->YUV_clamping = cdata->YUV_clamping;
-  snprintf(clone->video_name, 512, "%s", cdata->video_name);
-  clone->arate = cdata->arate;
-  clone->achans = cdata->achans;
-  clone->asamps = cdata->asamps;
-  clone->asigned = cdata->asigned;
-  clone->ainterleaf = cdata->ainterleaf;
-  snprintf(clone->audio_name, 512, "%s", cdata->audio_name);
-  clone->seek_flag = cdata->seek_flag;
-  clone->sync_hint = cdata->sync_hint;
-
-  snprintf(clone->author, 1024, "%s", cdata->author);
-  snprintf(clone->title, 1024, "%s", cdata->title);
-  snprintf(clone->comment, 1024, "%s", cdata->comment);
-
-  // create "priv" elements
-  dpriv = clone->priv;
   spriv = cdata->priv;
 
   if (spriv != NULL) {
+    clone->priv = dpriv = (lives_asf_priv_t *)calloc(1, sizeof(lives_asf_priv_t));
     dpriv->filesize = spriv->filesize;
     dpriv->inited = TRUE;
+  } else {
+    clone = init_cdata(clone);
+    dpriv = clone->priv;
+  }
+
+  if (!clone->palettes) {
+    clone->palettes = malloc(2 * sizeof(int));
+    clone->palettes[1] = WEED_PALETTE_END;
   }
 
   if (!attach_stream(clone, TRUE)) {
-    free(clone->URI);
-    clone->URI = NULL;
     clip_data_free(clone);
     return NULL;
   }
@@ -2514,20 +2477,19 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   lives_asf_priv_t *priv;
 
-  if (URI == NULL && cdata != NULL) {
+  if (!URI && cdata) {
     // create a clone of cdata - we also need to be able to handle a "fake" clone with only URI, nframes and fps set (priv == NULL)
     return asf_clone(cdata);
   }
 
   if (cdata != NULL && cdata->current_clip > 0) {
     // currently we only support one clip per container
-
     clip_data_free(cdata);
     return NULL;
   }
 
-  if (cdata == NULL) {
-    cdata = init_cdata();
+  if (!cdata) {
+    cdata = init_cdata(NULL);
   }
 
   if (cdata->URI == NULL || strcmp(URI, cdata->URI)) {
@@ -2537,8 +2499,6 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
     }
     cdata->URI = strdup(URI);
     if (!attach_stream(cdata, FALSE)) {
-      free(cdata->URI);
-      cdata->URI = NULL;
       clip_data_free(cdata);
       return NULL;
     }
@@ -2855,10 +2815,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
 void clip_data_free(lives_clip_data_t *cdata) {
   lives_asf_priv_t *priv = cdata->priv;
-
-  if (cdata->palettes != NULL) free(cdata->palettes);
-  cdata->palettes = NULL;
-
   if (priv->idxc != NULL)
     idxc_release(cdata);
 
@@ -2866,11 +2822,8 @@ void clip_data_free(lives_clip_data_t *cdata) {
 
   if (cdata->URI != NULL) {
     detach_stream(cdata);
-    free(cdata->URI);
   }
-
-  free(cdata->priv);
-  free(cdata);
+  lives_struct_free(&cdata->lsd);
 }
 
 

@@ -105,10 +105,18 @@ typedef void *(*memmove_f)(void *, const void *, size_t);
 
 #include "../../../src/lsd.h"
 
+#define PLUGIN_TYPE_DECODER			"decoder"
+#define PLUGIN_SUBTYPE_DLL 		"dll"
+
 typedef struct {
-  char type[16];  ///< "decoder"
-  int api_version_major;
+  char type[16];  ///< e.g. "decoder"
+  char subtype[16];  ///< e.g. "dll"
+  int api_version_major; ///< version of interface API
   int api_version_minor;
+  char name[64];  ///< e.g. "mkv_decoder"
+  int pl_version_major; ///< version of plugin
+  int pl_version_minor;
+  void *capabilities;  ///< for future use
 } lives_plugin_id_t;
 
 
@@ -258,6 +266,31 @@ enum LiVESMediaType {
 #ifdef NEED_CLONEFUNC
 #define CREATOR_ID "LiVES decoder plugin"
 static const lives_struct_def_t *cdata_lsd = NULL;
+
+static void make_acid(void) {
+  cdata_lsd = lsd_create("lives_clip_data_t", sizeof(lives_clip_data_t), "strgs", 6);
+  if (!cdata_lsd) return;
+  else {
+    lives_special_field_t **specf = cdata_lsd->special_fields;
+    lives_clip_data_t *cdata = (lives_clip_data_t *)calloc(1, sizeof(lives_clip_data_t));
+    specf[0] = make_special_field(LIVES_FIELD_CHARPTR, cdata, &cdata->URI,
+                                  "URI", 0, NULL, NULL, NULL);
+    specf[1] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY
+                                  | LIVES_FIELD_FLAG_FREE_ON_DELETE, cdata, &cdata->priv,
+                                  "priv", 0, NULL, NULL, NULL);
+    specf[2] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->title,
+                                  "title", 1024, NULL, NULL, NULL);
+    specf[3] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->author,
+                                  "author", 1024, NULL, NULL, NULL);
+    specf[4] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->comment,
+                                  "comment", 1024, NULL, NULL, NULL);
+    specf[5] = make_special_field(LIVES_FIELD_ARRAY, cdata, &cdata->palettes,
+                                  "palettes", 4, NULL, NULL, NULL);
+    lives_struct_init(cdata_lsd, cdata, &cdata->lsd);
+    free(cdata);
+    lives_struct_set_class_data((lives_struct_def_t *)cdata_lsd, CREATOR_ID);
+  }
+}
 #endif
 
 static lives_clip_data_t *cdata_new(lives_clip_data_t *data) {
@@ -265,48 +298,33 @@ static lives_clip_data_t *cdata_new(lives_clip_data_t *data) {
   if (data) cdata = data;
   else {
 #ifdef NEED_CLONEFUNC
-    if (!cdata_lsd) {
-      cdata_lsd = lsd_create("lives_clip_data_t", sizeof(lives_clip_data_t), "strgs", 6);
-      if (!cdata_lsd) return NULL;
-      else {
-        lives_special_field_t **specf = cdata_lsd->special_fields;
-        cdata = (lives_clip_data_t *)calloc(1, sizeof(lives_clip_data_t));
-        specf[0] = make_special_field(LIVES_FIELD_CHARPTR, cdata, &cdata->URI,
-                                      "URI", 0, NULL, NULL, NULL);
-        specf[1] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->priv,
-                                      "priv", 0, NULL, NULL, NULL);
-        specf[2] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->title,
-                                      "title", 1024, NULL, NULL, NULL);
-        specf[3] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->author,
-                                      "author", 1024, NULL, NULL, NULL);
-        specf[4] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->comment,
-                                      "comment", 1024, NULL, NULL, NULL);
-        specf[5] = make_special_field(LIVES_FIELD_ARRAY, cdata, &cdata->palettes,
-                                      "palettes", 4, NULL, NULL, NULL);
-        lives_struct_init(cdata_lsd, cdata, &cdata->lsd);
-        free(cdata);
-        lives_struct_set_class_data((lives_struct_def_t *)cdata_lsd, CREATOR_ID);
-      }
-    }
+    if (!cdata_lsd) make_acid();
+    if (!cdata_lsd) return NULL;
     cdata = lives_struct_create(cdata_lsd);
 #else
     cdata = calloc(1, sizeof(lives_clip_data_t));
 #endif
   }
   if (cdata) {
-    snprintf(cdata->plugin_id.type, 16, "%s", "decoder");
+    snprintf(cdata->plugin_id.type, 16, "%s", PLUGIN_TYPE_DECODER);
+    snprintf(cdata->plugin_id.subtype, 16, "%s", PLUGIN_SUBTYPE_DLL);
     cdata->plugin_id.api_version_major = DEC_PLUGIN_VERSION_MAJOR;
     cdata->plugin_id.api_version_major = DEC_PLUGIN_VERSION_MINOR;
   }
   return cdata;
 }
 
+static void cdata_stamp(lives_clip_data_t *cdata, const char *name, int vmaj, int vmin) {
+  snprintf(cdata->plugin_id.name, 32, "%s", name);
+  cdata->plugin_id.pl_version_major = vmaj;
+  cdata->plugin_id.pl_version_minor = vmin;
+}
 
 #ifdef NEED_CLONEFUNC
-static lives_clip_data_t *clone_cdata(lives_clip_data_t *clone, const lives_clip_data_t *cdata) {
+static lives_clip_data_t *clone_cdata(const lives_clip_data_t *cdata) {
   if (!cdata) return NULL;
-  clone = lives_struct_copy((void *)&cdata->lsd);
-  return clone;
+  if (!cdata_lsd) make_acid();
+  return lives_struct_copy((void *)&cdata->lsd);
 }
 #endif
 

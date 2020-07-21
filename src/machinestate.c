@@ -1245,6 +1245,7 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancelled(lives_proc_thread_t tinf
   return weed_get_##stype##_value(tinfo, _RV_, NULL);
 
 LIVES_GLOBAL_INLINE void lives_proc_thread_join(lives_proc_thread_t tinfo) {
+  // WARNING !! version without a return value will free tinfo !
   lives_nanosleep_until_nonzero((weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL) == WEED_TRUE));
   weed_plant_free(tinfo);
 }

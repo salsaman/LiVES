@@ -950,6 +950,7 @@ LiVESWidget *lives_layout_row_new(LiVESLayout *);
 int lives_layout_add_row(LiVESLayout *layout);
 LiVESWidget *lives_layout_pack(LiVESHBox *, LiVESWidget *);
 LiVESWidget *lives_layout_add_label(LiVESLayout *, const char *text, boolean horizontal);
+void lives_layout_label_set_text(LiVESLabel *label, const char *text);
 LiVESWidget *lives_layout_add_fill(LiVESLayout *, boolean horizontal);
 LiVESWidget *lives_layout_add_separator(LiVESLayout *, boolean horizontal);
 
@@ -1000,6 +1001,8 @@ LiVESWidget *lives_standard_image_menu_item_new_from_stock(const char *stock_id,
 LiVESWidget *lives_standard_radio_menu_item_new_with_label(LiVESSList *group, const char *labeltext);
 
 LiVESWidget *lives_standard_check_menu_item_new_with_label(const char *labeltext, boolean active);
+
+LiVESWidget *lives_standard_check_menu_item_new_for_var(const char *ltext, boolean *var, boolean invert);
 
 LiVESWidget *lives_standard_notebook_new(const LiVESWidgetColor *bg_color, const LiVESWidgetColor *act_color);
 
@@ -1155,6 +1158,9 @@ boolean set_submenu_colours(LiVESMenu *, LiVESWidgetColor *colf, LiVESWidgetColo
 
 /// set callbacks
 boolean toggle_sets_sensitive(LiVESToggleButton *tb, LiVESWidget *widget, boolean invert);
+boolean menu_sets_sensitive(LiVESCheckMenuItem *mi, LiVESWidget *widget,  boolean invert);
+boolean toggle_sets_visible(LiVESToggleButton *tb, LiVESWidget *widget, boolean invert);
+boolean menu_sets_visible(LiVESCheckMenuItem *mi, LiVESWidget *widget,  boolean invert);
 boolean toggle_sets_sensitive_cond(LiVESToggleButton *tb, LiVESWidget *widget,
                                    livespointer condsens, livespointer condinsens, boolean invert);
 boolean toggle_toggles_var(LiVESToggleButton *tbut, boolean *var, boolean invert);

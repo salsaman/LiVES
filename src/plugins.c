@@ -15,7 +15,11 @@
 #include "rfx-builder.h"
 #include "paramwindow.h"
 
-const char *const anames[AUDIO_CODEC_MAX] = {"mp3", "pcm", "mp2", "vorbis", "AC3", "AAC", "AMR_NB", "raw", "wma2", "opus", ""};
+#include "lsd-tab.h"
+
+const char *const anames[AUDIO_CODEC_MAX] = {"mp3", "pcm", "mp2", "vorbis", "AC3", "AAC", "AMR_NB",
+                                             "raw", "wma2", "opus", ""
+                                            };
 
 static boolean list_plugins;
 
@@ -2212,9 +2216,10 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList * disable
 
     dplug->cdata = (dpsys->get_clip_data)(file_name, fake_cdata);
 
-    if (dplug->cdata != NULL) {
+    if (dplug->cdata) {
       // check for sanity
-
+      if (lsd_check_match((lives_struct_def_t *)get_lsd(LIVES_STRUCT_CLIP_DATA_T),
+                          &dplug->cdata->lsd)) abort();
       if (!sanity_check_cdata(dplug->cdata)) {
         //last_decoder_plugin = decoder_plugin;
         decoder_plugin = decoder_plugin->next;

@@ -3479,7 +3479,7 @@ static char *set_proc_label(xprocess * proc, const char *label, boolean copy_old
   if (copy_old) blabel = lives_strdup(lives_label_get_text(LIVES_LABEL(proc->label)));
   lives_label_set_text(LIVES_LABEL(proc->label), label);
   lives_widget_queue_draw(proc->processing);
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   return blabel;
 }
 
@@ -4904,7 +4904,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
     lives_widget_show_all(e_rec_dialog);
     lives_dialog_run(LIVES_DIALOG(e_rec_dialog));
     lives_widget_destroy(e_rec_dialog);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     lives_widget_context_update();
     switch (render_choice) {
     case RENDER_CHOICE_DISCARD:
@@ -5017,7 +5017,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
       }
       elist_dialog = create_event_list_dialog(mainw->event_list, 0, 0);
       lives_dialog_run(LIVES_DIALOG(elist_dialog));
-      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
       lives_widget_context_update();
       render_choice = RENDER_CHOICE_PREVIEW;
       break;
@@ -6236,7 +6236,7 @@ render_details *create_render_details(int type) {
 
   if (needs_new_encoder) {
     lives_widget_set_sensitive(rdet->okbutton, FALSE);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); // force showing of transient window
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET); // force showing of transient window
     do_encoder_img_fmt_error(rdet);
   }
 
@@ -6265,7 +6265,7 @@ render_details *create_render_details(int type) {
     if (height > dheight) height = dheight;
 
     lives_widget_destroy(spillover); // remove extra height
-    lives_widget_process_updates(rdet->dialog, TRUE);
+    lives_widget_process_updates(rdet->dialog);
     lives_widget_context_update();
 
     if (width > 0) lives_scrolled_window_set_min_content_width(LIVES_SCROLLED_WINDOW(scrollw), width);

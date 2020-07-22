@@ -5,6 +5,8 @@
 
 // functions for dealing with externalities
 
+/// TODO - split into: memory, files, sysops, threads
+
 #ifndef _MACHINESTATE_H_
 #define _MACHINESTATE_H_
 
@@ -295,6 +297,16 @@ uint64_t sget_file_size(const char *name);
 void reget_afilesize(int fileno);
 uint64_t reget_afilesize_inner(int fileno);
 
+#define EXTRA_DETAILS_CLIP			(1 << 0)
+
+typedef struct {
+  char *name;
+  ssize_t size; // -1 not checked, -2 unreadable
+  uint64_t type;
+  LiVESWidget *widgets[8];
+  char *extra_details;
+} lives_file_dets_t;
+
 #ifdef PRODUCE_LOG
 // disabled by default
 void lives_log(const char *what);
@@ -468,6 +480,8 @@ int64_t lives_proc_thread_join_int64(lives_proc_thread_t);
 
 void resubmit_proc_thread(lives_proc_thread_t, lives_thread_attr_t *);
 
-LiVESWidgetLoop *get_widget_loop_for_context(LiVESWidgetContext *);
+
+
+
 
 #endif

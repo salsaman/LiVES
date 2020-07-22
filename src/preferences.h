@@ -10,13 +10,13 @@
 #define PREFS_PANED_POS ((int)(300.*widget_opts.scale))
 
 // for mainw->prefs_changed
-#define PREFS_THEME_CHANGED (1<<0)
-#define PREFS_JACK_CHANGED (1<<1)
-#define PREFS_WORKDIR_CHANGED (1<<2)
-#define PREFS_COLOURS_CHANGED (1<<3)
-#define PREFS_XCOLOURS_CHANGED (1<<4)
-#define PREFS_IMAGES_CHANGED (1<<5)
-#define PREFS_MONITOR_CHANGED (1<<6)
+#define PREFS_THEME_CHANGED		(1 << 0)
+#define PREFS_JACK_CHANGED		(1 << 1)
+#define PREFS_WORKDIR_CHANGED		(1 << 2)
+#define PREFS_COLOURS_CHANGED		(1 << 3)
+#define PREFS_XCOLOURS_CHANGED		(1 << 4)
+#define PREFS_IMAGES_CHANGED		(1 << 5)
+#define PREFS_MONITOR_CHANGED		(1 << 6)
 
 #define PULSE_AUDIO_URL "http://www.pulseaudio.org"
 #define JACK_URL "http://jackaudio.org"
@@ -80,46 +80,46 @@ typedef struct {
 #define DEF_WARNING_MASK 0x000C2C04
 
   // if these bits are set, we do not show the warning
-#define WARN_MASK_FPS 	       					(1<<0)
-#define WARN_MASK_FSIZE 	       				(1<<1)
-#define WARN_MASK_UNUSED1 	       				(1<<2)  ///< was "save_quality"
-#define WARN_MASK_SAVE_SET 		       			(1<<3)
-#define WARN_MASK_NO_MPLAYER 			       		(1<<4)
-#define WARN_MASK_RENDERED_FX 					(1<<5)
-#define WARN_MASK_NO_ENCODERS 					(1<<6)
-#define WARN_MASK_LAYOUT_MISSING_CLIPS 				(1<<7)
-#define WARN_MASK_LAYOUT_CLOSE_FILE 				(1<<8)
-#define WARN_MASK_LAYOUT_DELETE_FRAMES 				(1<<9)
+#define WARN_MASK_FPS 	       					(1 << 0)
+#define WARN_MASK_FSIZE 	       				(1 << 1)
+#define WARN_MASK_UNUSED1 	       				(1 << 2)  ///< was "save_quality"
+#define WARN_MASK_SAVE_SET 		       			(1 << 3)
+#define WARN_MASK_NO_MPLAYER 			       		(1 << 4)
+#define WARN_MASK_RENDERED_FX 					(1 << 5)
+#define WARN_MASK_NO_ENCODERS 					(1 << 6)
+#define WARN_MASK_LAYOUT_MISSING_CLIPS 				(1 << 7)
+#define WARN_MASK_LAYOUT_CLOSE_FILE 				(1 << 8)
+#define WARN_MASK_LAYOUT_DELETE_FRAMES 				(1 << 9)
 
   /** off by default on a fresh install */
-#define WARN_MASK_LAYOUT_SHIFT_FRAMES 				(1<<10)
+#define WARN_MASK_LAYOUT_SHIFT_FRAMES 				(1 << 10)
 
   /** off by default on a fresh install */
-#define WARN_MASK_LAYOUT_ALTER_FRAMES 				(1<<11)
-#define WARN_MASK_DUPLICATE_SET        				(1<<12)
+#define WARN_MASK_LAYOUT_ALTER_FRAMES 				(1 << 11)
+#define WARN_MASK_DUPLICATE_SET        				(1 << 12)
 
   /** off by default on a fresh install */
-#define WARN_MASK_EXIT_MT 		       			(1<<13)
-#define WARN_MASK_DISCARD_SET 					(1<<14)
-#define WARN_MASK_AFTER_DVGRAB 					(1<<15)
-#define WARN_MASK_MT_ACHANS 			       		(1<<16)
-#define WARN_MASK_LAYOUT_DELETE_AUDIO 				(1<<17)
+#define WARN_MASK_EXIT_MT 		       			(1 << 13)
+#define WARN_MASK_DISCARD_SET 					(1 << 14)
+#define WARN_MASK_AFTER_DVGRAB 					(1 << 15)
+#define WARN_MASK_MT_ACHANS 			       		(1 << 16)
+#define WARN_MASK_LAYOUT_DELETE_AUDIO 				(1 << 17)
 
   /** off by default on a fresh install */
-#define WARN_MASK_LAYOUT_SHIFT_AUDIO 				(1<<18)
+#define WARN_MASK_LAYOUT_SHIFT_AUDIO 				(1 << 18)
 
   /** off by default on a fresh install */
-#define WARN_MASK_LAYOUT_ALTER_AUDIO 				(1<<19)
-#define WARN_MASK_MT_NO_JACK 			       		(1<<20)
-#define WARN_MASK_OPEN_YUV4M 					(1<<21)
-#define WARN_MASK_MT_BACKUP_SPACE 				(1<<22)
-#define WARN_MASK_LAYOUT_POPUP 					(1<<23)
-#define WARN_MASK_CLEAN_AFTER_CRASH 				(1<<24)
-#define WARN_MASK_NO_PULSE_CONNECT 				(1<<25)
-#define WARN_MASK_LAYOUT_WIPE 					(1<<26)
-#define WARN_MASK_LAYOUT_GAMMA 					(1<<27)
-#define WARN_MASK_VJMODE_ENTER 					(1<<28)
-#define WARN_MASK_CLEAN_INVALID 		       		(1<<29)
+#define WARN_MASK_LAYOUT_ALTER_AUDIO 				(1 << 19)
+#define WARN_MASK_MT_NO_JACK 			       		(1 << 20)
+#define WARN_MASK_OPEN_YUV4M 					(1 << 21)
+#define WARN_MASK_MT_BACKUP_SPACE 				(1 << 22)
+#define WARN_MASK_LAYOUT_POPUP 					(1 << 23)
+#define WARN_MASK_CLEAN_AFTER_CRASH 				(1 << 24)
+#define WARN_MASK_NO_PULSE_CONNECT 				(1 << 25)
+#define WARN_MASK_LAYOUT_WIPE 					(1 << 26)
+#define WARN_MASK_LAYOUT_GAMMA 					(1 << 27)
+#define WARN_MASK_VJMODE_ENTER 					(1 << 28)
+#define WARN_MASK_CLEAN_INVALID 		       		(1 << 29)
 
   char cmd_log[PATH_MAX];
   char effect_command[PATH_MAX * 2];
@@ -150,12 +150,12 @@ typedef struct {
   boolean discard_tv;
   boolean save_directories;
   int rec_opts;
-#define REC_FRAMES (1<<0)
-#define REC_FPS (1<<1)
-#define REC_EFFECTS (1<<2)
-#define REC_CLIPS (1<<3)
-#define REC_AUDIO (1<<4)
-#define REC_AFTER_PB (1<<5)
+#define REC_FRAMES	(1 << 0)
+#define REC_FPS		(1 << 1)
+#define REC_EFFECTS	(1 << 2)
+#define REC_CLIPS	(1 << 3)
+#define REC_AUDIO	(1 << 4)
+#define REC_AFTER_PB	(1 << 5)
 
   int audio_src;
 #define AUDIO_SRC_INT 0
@@ -186,15 +186,15 @@ typedef struct {
   double fpschange_amount;
 
   uint32_t jack_opts;
-#define JACK_OPTS_TRANSPORT_CLIENT (1<<0)   ///< jack can start/stop
-#define JACK_OPTS_TRANSPORT_MASTER (1<<1)  ///< transport master
-#define JACK_OPTS_START_TSERVER (1<<2)     ///< start transport server
-#define JACK_OPTS_NOPLAY_WHEN_PAUSED (1<<3) ///< play audio even when transport paused
-#define JACK_OPTS_START_ASERVER (1<<4)     ///< start audio server
-#define JACK_OPTS_TIMEBASE_START (1<<5)    ///< jack sets play start position
-#define JACK_OPTS_TIMEBASE_CLIENT (1<<6)    ///< full timebase client
-#define JACK_OPTS_TIMEBASE_MASTER (1<<7)   ///< timebase master (not implemented yet)
-#define JACK_OPTS_NO_READ_AUTOCON (1<<8)   ///< do not auto connect read clients when playing ext audio
+#define JACK_OPTS_TRANSPORT_CLIENT	(1 << 0)   ///< jack can start/stop
+#define JACK_OPTS_TRANSPORT_MASTER	(1 << 1)  ///< transport master
+#define JACK_OPTS_START_TSERVER		(1 << 2)     ///< start transport server
+#define JACK_OPTS_NOPLAY_WHEN_PAUSED	(1 << 3) ///< play audio even when transport paused
+#define JACK_OPTS_START_ASERVER		(1 << 4)     ///< start audio server
+#define JACK_OPTS_TIMEBASE_START	(1 << 5)    ///< jack sets play start position
+#define JACK_OPTS_TIMEBASE_CLIENT	(1 << 6)    ///< full timebase client
+#define JACK_OPTS_TIMEBASE_MASTER	(1 << 7)   ///< timebase master (not implemented yet)
+#define JACK_OPTS_NO_READ_AUTOCON	(1 << 8)   ///< do not auto con. rd clients when playing ext aud
 
   char jack_tserver[PATH_MAX];
   char jack_aserver[PATH_MAX];
@@ -207,8 +207,8 @@ typedef struct {
   int acodec_list_to_format[AUDIO_CODEC_NONE];
 
   volatile uint32_t audio_opts;
-#define AUDIO_OPTS_FOLLOW_CLIPS (1<<0)
-#define AUDIO_OPTS_FOLLOW_FPS (1<<1)
+#define AUDIO_OPTS_FOLLOW_CLIPS		(1 << 0)
+#define AUDIO_OPTS_FOLLOW_FPS		(1 << 1)
 
   boolean event_window_show_frame_events;
   boolean crash_recovery; ///< TRUE==maintain mainw->recovery file
@@ -340,19 +340,19 @@ typedef struct {
 #define DEF_MSG_TEXTSIZE 4 // LIVES_FONTSIZE_LARGE (via lives_textsize_to_string())
 #define DEF_MAX_MSGS 10000
 
-#define LIVES_CDISK_LEAVE_ORPHAN_SETS (1<<0)
-#define LIVES_CDISK_LEAVE_BFILES (1<<1)
-#define LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS (1<<2)
-#define LIVES_CDISK_LEAVE_MARKER_FILES (1<<3)
-#define LIVES_CDISK_LEAVE_MISC_FILES (1<<4)
-#define LIVES_CDISK_REMOVE_ORPHAN_CLIPS (1<<5) /// ! == recover
-#define LIVES_CDISK_REMOVE_STALE_RECOVERY (1<<6)
-#define LIVES_CDISK_LEAVE_EMPTY_DIRS (1<<7)
+#define LIVES_CDISK_LEAVE_ORPHAN_SETS		(1 << 0)
+#define LIVES_CDISK_LEAVE_BFILES		(1 << 1)
+#define LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS	(1 << 2)
+#define LIVES_CDISK_LEAVE_MARKER_FILES		(1 << 3)
+#define LIVES_CDISK_LEAVE_MISC_FILES		(1 << 4)
+#define LIVES_CDISK_REMOVE_ORPHAN_CLIPS		(1 << 5) /// ! == recover
+#define LIVES_CDISK_REMOVE_STALE_RECOVERY	(1 << 6)
+#define LIVES_CDISK_LEAVE_EMPTY_DIRS		(1 << 7)
 
-#define LIVES_CDISK_REMOVE_LOCK_FILES (1<<16) ///< not yet implemented - TODO
-#define LIVES_CDISK_REBUILD_ORDER_FILES (1<<17) ///< not yet implemented - TODO
+#define LIVES_CDISK_REMOVE_LOCK_FILES		(1 << 16) ///< not yet implemented - TODO
+#define LIVES_CDISK_REBUILD_ORDER_FILES		(1 << 17) ///< not yet implemented - TODO
 
-#define LIVES_CDISK_SEND_TO_TRASH (1<<31)
+#define LIVES_CDISK_SEND_TO_TRASH		(1 << 31)
 
   uint32_t clear_disk_opts;
 

@@ -2038,28 +2038,66 @@ LiVESWidget *trash_rb(LiVESBox *parent) {
   return rb;
 }
 
+static LiVESResponseType filtresp;
 
-LiVESResponseType filter_cleanup(const char *trashdir, LiVESList *rec_list, LiVESList *rem_list,
-				 LiVESList *left_list) {
+static boolean filtc_response(LiVESWidget *w, LiVESResponseType resp, livespointer data) {
+  filtresp = resp;
+  return TRUE;
+}
+
+#define NMLEN_MAX 64
+LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiVESList **rem_list,
+				 LiVESList **left_list) {
   LiVESWidget *dialog;
   LiVESWidget *layout;
   LiVESWidget *top_vbox;
   LiVESWidget *hbox;
   LiVESWidget *cb;
-  LiVESWidget *accb;
   LiVESWidget *scrolledwindow;
-  LiVESWidget *cancelbutton;
-  LiVESResponseType resp;
-
+  LiVESWidget *button;
+  LiVESList *list;
   LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
+
+  lives_file_dets_t *filedets;
+  size_t slen;
+
+  char *txt;
 
   int winsize_h = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
   int winsize_v = GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY;
-
+  int rec_recheck = -1, rem_recheck = -1, leave_recheck = -1;
+  int idx = 0, pass = 0;
+  boolean needs_recheck;
   boolean woat = widget_opts.apply_theme;
+
+  // get size, type (dir or file), nitems, extra_dets
+  // cr dat, mod date
+
+  filtresp = LIVES_RESPONSE_NONE;
 
   dialog = lives_standard_dialog_new(_("Disk Cleanup"), FALSE, winsize_h, winsize_v);
   lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
+
+  button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
+						    LIVES_STOCK_CANCEL, NULL,
+						    LIVES_RESPONSE_CANCEL);
+
+  lives_widget_add_accelerator(button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+			       LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
+				     LIVES_STOCK_UNDO, _("_Reset"),
+				     LIVES_RESPONSE_RESET);
+
+  widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+  button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
+					    LIVES_STOCK_APPLY, _("_Accept and Continue"),
+					    LIVES_RESPONSE_ACCEPT);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  lives_button_grab_default_special(button);
+
+  lives_signal_sync_connect(dialog, LIVES_WIDGET_RESPONSE_SIGNAL,
+			    LIVES_GUI_CALLBACK(filtc_response), NULL);
 
   top_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
@@ -2073,93 +2111,206 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList *rec_list, LiVE
 
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Possibly Recoverable Clips"), FALSE);
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  /// TODO
   cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL);
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Check / Uncheck all"), TRUE);
   lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
+  list = *rec_list;
 
   do {
-    // put from recover subdir
-    hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-    cb = lives_standard_check_button_new(NULL, TRUE, LIVES_BOX(hbox), NULL);
-    lives_layout_add_label(LIVES_LAYOUT(layout), "foo", TRUE);
-    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
-    lives_layout_add_label(LIVES_LAYOUT(layout), "item size", TRUE);
-    widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
-    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
-    widget_opts.expand = LIVES_EXPAND_DEFAULT;
-    lives_layout_add_label(LIVES_LAYOUT(layout), "clip details here", TRUE);
-  } while (FALSE);
+    lives_widget_process_updates(dialog);
+    lives_nanosleep(1000);
+  } while (!list && filtresp == LIVES_RESPONSE_NONE);
+  if (filtresp != LIVES_RESPONSE_NONE) goto filtc_done;
+
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+  lives_nanosleep_until_nonzero(list);
+
+  filedets = (lives_file_dets_t *)(list->data);
+  if (!filedets->name) {
+    // print N / A
+    lives_layout_add_label(LIVES_LAYOUT(layout),
+			   mainw->string_constants[LIVES_STRING_CONSTANT_NONE],
+			   FALSE);
+  }
+  else {
+    while (filedets->name) {
+      // put from recover subdir
+      needs_recheck = TRUE;
+      if (!pass) {
+	hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+	filedets->widgets[0] = lives_standard_check_button_new(NULL, TRUE, LIVES_BOX(hbox), NULL);
+
+	hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+	filedets->widgets[1] = lives_standard_switch_new(NULL, TRUE, LIVES_BOX(hbox), NULL);
+
+	slen = lives_strlen(filedets->name);
+	if (slen > NMLEN_MAX) {
+	  txt = lives_strdup_printf("...%s", filedets->name + (slen - NMLEN_MAX));
+	}
+	else txt = filedets->name;
+	lives_layout_add_label(LIVES_LAYOUT(layout), txt, TRUE);
+	if (txt != filedets->name) {
+	  lives_free(txt);
+	  lives_widget_set_tooltip_text(widget_opts.last_label, filedets->name);
+	}
+	lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+	hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+	filedets->widgets[2] = lives_standard_label_new(NULL);
+	lives_layout_pack(LIVES_BOX(hbox), filedets->widgets[2]);
+	lives_widget_hide(filedets->widgets[2]);
+	lives_widget_set_no_show_all(filedets->widgets[2], TRUE);
+
+	if (filedets->size == -1) {
+	  filedets->widgets[3] = lives_spinner_new();
+	  if (filedets->widgets[3]) {
+	    lives_layout_pack(LIVES_BOX(hbox), filedets->widgets[3]);
+	    lives_spinner_start(LIVES_SPINNER(filedets->widgets[3]));
+	  }
+	  else filedets->widgets[3] = filedets->widgets[2];
+	}
+      }
+
+      if (filedets->widgets[3]) {
+	if (filedets->size != -1) {
+	  if (filedets->widgets[3] != filedets->widgets[2]) {
+	    lives_spinner_stop(LIVES_SPINNER(filedets->widgets[3]));
+	    lives_widget_hide(filedets->widgets[3]);
+	    lives_widget_set_no_show_all(filedets->widgets[3], TRUE);
+	  }
+	  lives_widget_set_no_show_all(filedets->widgets[2], FALSE);
+	  lives_widget_show_all(filedets->widgets[2]);
+
+	  if (filedets->size == -2) {
+	    lives_label_set_text(LIVES_LABEL(filedets->widgets[2]), "????");
+	  }
+	  if (filedets->size > 0) {
+	    char *txt = lives_format_storage_space_string(filedets->size);
+	    lives_label_set_text(LIVES_LABEL(filedets->widgets[2]), txt);
+	    lives_free(txt);
+	    needs_recheck = FALSE;
+	  }
+	}
+	filedets->widgets[3] = NULL;
+      }
+
+      if (!pass) {
+	lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+	hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+	filedets->widgets[4] = lives_standard_label_new(NULL);
+	lives_layout_pack(LIVES_BOX(hbox), filedets->widgets[4]);
+	lives_widget_hide(filedets->widgets[4]);
+	lives_widget_set_no_show_all(filedets->widgets[4], TRUE);
+
+	if (!filedets->extra_details) {
+	  filedets->widgets[5] = lives_spinner_new();
+	  if (filedets->widgets[5]) {
+	    lives_layout_pack(LIVES_BOX(hbox), filedets->widgets[5]);
+	    lives_spinner_start(LIVES_SPINNER(filedets->widgets[5]));
+	  }
+	  else filedets->widgets[5] = filedets->widgets[4];
+	}
+      }
+
+      if (filedets->widgets[5]) {
+	if (filedets->extra_details) {
+	  if (filedets->widgets[5] != filedets->widgets[4]) {
+	    lives_spinner_stop(LIVES_SPINNER(filedets->widgets[5]));
+	    lives_widget_hide(filedets->widgets[5]);
+	    lives_widget_set_no_show_all(filedets->widgets[5], TRUE);
+	  }
+	  lives_widget_set_no_show_all(filedets->widgets[4], FALSE);
+	  lives_widget_show_all(filedets->widgets[4]);
+
+	  if (!(*filedets->extra_details)) {
+	    lives_label_set_text(LIVES_LABEL(filedets->widgets[4]), "????");
+	  }
+	  if (*filedets->extra_details) {
+	    char *fdets;
+	    if (filedets->type == LIVES_FILE_TYPE_FILE)
+	      fdets = lives_strdup_printf(_("File\t\t: %s"),
+					    filedets->extra_details ? filedets->extra_details : "");
+	    else if (filedets->type == LIVES_FILE_TYPE_DIRECTORY)
+	      fdets = lives_strdup_printf(_("Directory\t\t: %s"),
+					    filedets->extra_details ? filedets->extra_details : "");
+	    else
+	      fdets = lives_strdup_printf(_("????????\t\t: %s"),
+					    filedets->extra_details ? filedets->extra_details : "");
+	    lives_label_set_text(LIVES_LABEL(filedets->widgets[4]), fdets);
+	    lives_free(fdets);
+	    needs_recheck = FALSE;
+	  }
+	}
+	filedets->widgets[5] = NULL;
+      }
+      if (needs_recheck && rec_recheck == -1) rec_recheck = idx;
+      idx++;
+      list = list->next;
+      do {
+	lives_widget_process_updates(dialog);
+	lives_nanosleep(1000);
+      } while (!list && filtresp == LIVES_RESPONSE_NONE);
+      if (filtresp != LIVES_RESPONSE_NONE) goto filtc_done;
+    }
+  }
+
+/*   lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE); */
+/*   lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE); */
+
+/*   lives_layout_add_label(LIVES_LAYOUT(layout), _("Items for Automatic Removal"), FALSE); */
+/*   hbox = lives_layout_row_new(LIVES_LAYOUT(layout)); */
+/*   cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL); */
+/*   lives_layout_add_label(LIVES_LAYOUT(layout), _("Check / Uncheck all [checdked items will be removed]"), TRUE); */
+/*   lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE); */
+
+/*   do { */
+/*     // put from leave subdir */
+/*     hbox = lives_layout_row_new(LIVES_LAYOUT(layout)); */
+/*     cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL); */
+/*     lives_layout_add_label(LIVES_LAYOUT(layout), "foo", TRUE); */
+/*     lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE); */
+/*     lives_layout_add_label(LIVES_LAYOUT(layout), "item size", TRUE); */
+/*     widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT; */
+/*     lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE); */
+/*     widget_opts.expand = LIVES_EXPAND_DEFAULT; */
+/*     lives_layout_add_label(LIVES_LAYOUT(layout), "File or directory", TRUE); */
+/*   } while (FALSE); */
+
+/* lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE); */
+/*   lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE); */
+
+/*   lives_layout_add_label(LIVES_LAYOUT(layout), _("Items for Manual Removal"), FALSE); */
+/*   hbox = lives_layout_row_new(LIVES_LAYOUT(layout)); */
+/*   cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL); */
+/*   lives_layout_add_label(LIVES_LAYOUT(layout), _("Check / Uncheck all"), TRUE); */
+/*   lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE); */
+
+/*   do { */
+/*     // put from l subdir */
+/*     hbox = lives_layout_row_new(LIVES_LAYOUT(layout)); */
+/*     cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL); */
+/*     lives_layout_add_label(LIVES_LAYOUT(layout), "foo", TRUE); */
+/*     lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE); */
+/*     lives_layout_add_label(LIVES_LAYOUT(layout), "item size", TRUE); */
+/*     widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT; */
+/*     lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE); */
+/*     widget_opts.expand = LIVES_EXPAND_DEFAULT; */
+/*     lives_layout_add_label(LIVES_LAYOUT(layout), " - Unrecoverable - ", TRUE); */
+/*   } while (FALSE); */
 
 
-  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
-  lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
-
-  lives_layout_add_label(LIVES_LAYOUT(layout), _("Items for Automatic Removal"), FALSE);
-  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL);
-  lives_layout_add_label(LIVES_LAYOUT(layout), _("Check / Uncheck all [checdked items will be removed]"), TRUE);
-  lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
-
-  do {
-    // put from leave subdir
-    hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-    cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL);
-    lives_layout_add_label(LIVES_LAYOUT(layout), "foo", TRUE);
-    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
-    lives_layout_add_label(LIVES_LAYOUT(layout), "item size", TRUE);
-    widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
-    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
-    widget_opts.expand = LIVES_EXPAND_DEFAULT;
-    lives_layout_add_label(LIVES_LAYOUT(layout), "File or directory", TRUE);
-  } while (FALSE);
-
-  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
-  lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
-
-  lives_layout_add_label(LIVES_LAYOUT(layout), _("Items for Manual Removal"), FALSE);
-  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL);
-  lives_layout_add_label(LIVES_LAYOUT(layout), _("Check / Uncheck all"), TRUE);
-  lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
-
-  do {
-    // put from l subdir
-    hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-    cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL);
-    lives_layout_add_label(LIVES_LAYOUT(layout), "foo", TRUE);
-    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
-    lives_layout_add_label(LIVES_LAYOUT(layout), "item size", TRUE);
-    widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
-    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
-    widget_opts.expand = LIVES_EXPAND_DEFAULT;
-    lives_layout_add_label(LIVES_LAYOUT(layout), " - Unrecoverable - ", TRUE);
-  } while (FALSE);
+/*   do { */
+/*     resp = lives_dialog_run(LIVES_DIALOG(dialog)); */
+/*     //if (resp == LIVES_RESPONSE_RESET) reset_vals; */
+/*   } while (resp == LIVES_RESPONSE_RESET); */
+/*   lives_widget_destroy(dialog); */
+/*   return resp; */
+ filtc_done:
+  return filtresp;
 
 
-  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-						    LIVES_STOCK_CANCEL, NULL,
-						    LIVES_RESPONSE_CANCEL);
-
-  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-				     LIVES_STOCK_UNDO, _("_Reset"),
-				     LIVES_RESPONSE_RESET);
-
-  widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
-  accb = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-					    LIVES_STOCK_APPLY, _("_Accept and Continue"),
-					    LIVES_RESPONSE_ACCEPT);
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
-  lives_button_grab_default_special(accb);
-
-  lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-			       LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
-
-  do {
-    resp = lives_dialog_run(LIVES_DIALOG(dialog));
-    //if (resp == LIVES_RESPONSE_RESET) reset_vals;
-  } while (resp == LIVES_RESPONSE_RESET);
-  lives_widget_destroy(dialog);
-  return resp;
 }
 
 
@@ -3375,7 +3526,7 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
     }
 
     lives_widget_set_size_request(vbox, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     lives_standard_expander_new(_("_Options"), LIVES_BOX(dialog_vbox), vbox);
   }
 
@@ -3631,8 +3782,7 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
     int bx, by, w, h;
 
     lives_widget_show_all(chooser);
-    lives_widget_process_updates(chooser, TRUE);
-    //lives_widget_context_update();
+    lives_widget_process_updates(chooser);
 
     get_border_size(chooser, &bx, &by);
     w = lives_widget_get_allocation_width(chooser);
@@ -3652,23 +3802,20 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
         if (overflowx > 0) mywidth -= overflowx;
         if (overflowy > 0) myheight -= overflowy;
 
-        lives_widget_process_updates(chooser, TRUE);
+        lives_widget_process_updates(chooser);
 
         if (overflowx > 0 || overflowy > 0) {
           lives_widget_set_size_request(chooser, mywidth, myheight);
         }
-        lives_widget_process_updates(chooser, TRUE);
-        //lives_widget_context_update();
+        lives_widget_process_updates(chooser);
 
         w = scr_width - bx;
         h = scr_height - by;
 
         lives_window_unmaximize(LIVES_WINDOW(chooser));
-        lives_widget_process_updates(chooser, TRUE);
-        //lives_widget_context_update();
+        lives_widget_process_updates(chooser);
         lives_window_resize(LIVES_WINDOW(chooser), w, h);
-        lives_widget_process_updates(chooser, TRUE);
-        //lives_widget_context_update();
+        lives_widget_process_updates(chooser);
 
         if (prefs->open_maximised) {
           lives_window_maximize(LIVES_WINDOW(chooser));
@@ -3677,8 +3824,7 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
     } else {
       lives_window_maximize(LIVES_WINDOW(chooser));
     }
-    lives_widget_process_updates(chooser, TRUE);
-    //lives_widget_context_update();
+    lives_widget_process_updates(chooser);
   }
   return chooser;
 }
@@ -4533,7 +4679,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   hbox = lives_hbox_new(FALSE, 0);
 
   lives_widget_show_all(dialog);
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), align_horizontal_with(hbox, radiobutton_free),
                        TRUE, FALSE, widget_opts.packing_height);
 
@@ -4738,7 +4884,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
     req = (lives_remote_clip_request_t *)lives_malloc(sizeof(lives_remote_clip_request_t));
     if (req == NULL) {
       lives_widget_destroy(dialog);
-      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
       lives_free(url);
       lives_free(dfile);
       LIVES_ERROR("Could not alloc memory for remote clip request");
@@ -4786,7 +4932,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   *req->audchoice = 0;
 
   lives_widget_destroy(dialog);
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   firsttime = FALSE;
   return req;
 }

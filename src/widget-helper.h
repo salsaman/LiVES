@@ -378,6 +378,14 @@ boolean lives_widget_set_focus_on_click(LiVESWidget *, boolean focus);
 
 /////////////////////////////
 
+LiVESWidget *lives_switch_new(void);
+boolean lives_switch_set_active(LiVESSwitch *, boolean);
+boolean lives_switch_get_active(LiVESSwitch *);
+
+LiVESWidget *lives_spinner_new(void);
+boolean lives_spinner_start(LiVESSpinner *);
+boolean lives_spinner_stop(LiVESSpinner *);
+
 LiVESWidget *lives_check_button_new(void);
 LiVESWidget *lives_check_button_new_with_label(const char *label);
 
@@ -869,8 +877,7 @@ boolean lives_widget_grab_default(LiVESWidget *);
 
 LiVESWidget *lives_widget_set_tooltip_text(LiVESWidget *, const char *text);
 
-boolean lives_widget_process_updates(LiVESWidget *, boolean upd_children);
-boolean lives_xwindow_process_all_updates(void);
+boolean lives_widget_process_updates(LiVESWidget *);
 
 boolean lives_xwindow_get_origin(LiVESXWindow *, int *posx, int *posy);
 boolean lives_xwindow_get_frame_extents(LiVESXWindow *, lives_rect_t *);
@@ -1003,6 +1010,8 @@ LiVESWidget *lives_standard_radio_menu_item_new_with_label(LiVESSList *group, co
 LiVESWidget *lives_standard_check_menu_item_new_with_label(const char *labeltext, boolean active);
 
 LiVESWidget *lives_standard_check_menu_item_new_for_var(const char *ltext, boolean *var, boolean invert);
+LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, LiVESBox *,
+                                       const char *tooltip);
 
 LiVESWidget *lives_standard_notebook_new(const LiVESWidgetColor *bg_color, const LiVESWidgetColor *act_color);
 

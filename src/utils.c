@@ -138,8 +138,7 @@ int lives_system(const char *com, boolean allow_error) {
        (mainw->multitrack != NULL && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL))) {
     cnorm = TRUE;
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-    /* if (!mainw->go_away) */
-    /*   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
+    /*   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET); */
   }
 
   do {
@@ -209,7 +208,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
        (mainw->multitrack != NULL && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL))) {
     cnorm = TRUE;
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-    //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   }
 
 
@@ -3884,7 +3883,7 @@ boolean prepare_to_play_foreign(void) {
 
   lives_widget_show(mainw->playframe);
   lives_widget_show(mainw->playarea);
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
   // size must be exact, must not be larger than play window or we end up with nothing
   mainw->pwidth = lives_widget_get_allocation_width(mainw->playframe) - H_RESIZE_ADJUST + 2;
@@ -5159,7 +5158,7 @@ LiVESList *get_set_list(const char *dir, boolean utf8) {
   if (!tldir) return NULL;
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
   while (1) {
     tdirent = readdir(tldir);

@@ -378,6 +378,7 @@ enum {
   LIVES_STRING_CONSTANT_BUILTIN,
   LIVES_STRING_CONSTANT_CUSTOM,
   LIVES_STRING_CONSTANT_TEST,
+  LIVES_STRING_CONSTANT_CLOSE_WINDOW,
   NUM_LIVES_STRING_CONSTANTS
 };
 
@@ -422,6 +423,21 @@ enum {
 
 /// other executables
 #define EXEC_SUDO "sudo"
+
+// file types
+#define LIVES_FILE_TYPE_UNKOWN				0
+#define LIVES_FILE_TYPE_FILE				(1 << 0)
+#define LIVES_FILE_TYPE_DIRECTORY			(1 << 1)
+#define LIVES_FILE_TYPE_SYMLINK				(1 << 2)
+#define LIVES_FILE_TYPE_HARDLINK			(1 << 3)
+#define LIVES_FILE_TYPE_SOCKET				(1 << 4)
+#define LIVES_FILE_TYPE_PIPE				(1 << 5)
+#define LIVES_FILE_TYPE_FIFO				(1 << 6)
+#define LIVES_FILE_TYPE_CHAR_DEV			(1 << 7)
+#define LIVES_FILE_TYPE_BLOCK_DEV			(1 << 8)
+#define LIVES_FILE_TYPE_STREAM_LOCAL			(1 << 9)
+#define LIVES_FILE_TYPE_STREAM_REMOTE			(1 << 10)
+#define LIVES_FILE_TYPE_SPECIAL				(1 << 60)ul
 
 // image types (string)
 #define LIVES_IMAGE_TYPE_UNKNOWN ""

@@ -609,6 +609,8 @@ static boolean pre_init(void) {
   mainw->string_constants[LIVES_STRING_CONSTANT_CUSTOM] = (_("Custom"));
   // TRANSLATORS: adjective for "Test" type effects
   mainw->string_constants[LIVES_STRING_CONSTANT_TEST] = (_("Test"));
+  // TRANSLATORS: order to close dialog window
+  mainw->string_constants[LIVES_STRING_CONSTANT_CLOSE_WINDOW] = (_("Close Window"));
 
   // now we can use PREFS properly
   cache_file_contents(capable->rcfile);
@@ -5252,7 +5254,7 @@ check_stcache:
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
     lives_widget_queue_resize(mainw->start_image);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   } while (rwidth != lives_widget_get_allocation_width(mainw->start_image) ||
            rheight != lives_widget_get_allocation_height(mainw->start_image));
 #if 0

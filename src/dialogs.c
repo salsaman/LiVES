@@ -546,7 +546,7 @@ boolean do_warning_dialog_with_check_transient(const char *text, uint64_t warn_m
   response = lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
 
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   lives_freep((void **)&mytext);
 
   return (response == LIVES_RESPONSE_OK);
@@ -571,7 +571,7 @@ boolean do_yesno_dialog_with_check_transient(const char *text, uint64_t warn_mas
     lives_widget_destroy(warning);
   } while (response == LIVES_RESPONSE_RETRY);
 
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   lives_freep((void **)&mytext);
 
   return (response == LIVES_RESPONSE_YES);
@@ -605,7 +605,7 @@ boolean do_yesno_dialogf(const char *fmt, ...) {
   lives_free(textx);
   response = lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   return (response == LIVES_RESPONSE_YES);
 }
 
@@ -620,7 +620,7 @@ boolean do_yesno_dialog(const char *text) {
   lives_widget_show_all(warning);
   response = lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   return (response == LIVES_RESPONSE_YES);
 }
 
@@ -639,7 +639,7 @@ static LiVESResponseType _do_abort_cancel_retry_dialog(const char *text, LiVESWi
     lives_widget_show_all(warning);
     response = lives_dialog_run(LIVES_DIALOG(warning)); // looping on retry
     lives_widget_destroy(warning);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
     if (response == LIVES_RESPONSE_ABORT) {
       if (mainw->is_ready) {
@@ -2859,9 +2859,7 @@ boolean do_auto_dialog(const char *text, int type) {
 
   while (mainw->cancelled == CANCEL_NONE && !(infofile = fopen(cfile->info_file, "r"))) {
     lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
-    /* lives_widget_context_update(); */
-    /* lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
-    lives_widget_process_updates(mainw->proc_ptr->processing, TRUE);
+    lives_widget_process_updates(mainw->proc_ptr->processing);
     lives_usleep(prefs->sleep_time);
     if (type == 1 && mainw->rec_end_time != -1.) {
       time = lives_get_current_ticks();
@@ -2892,7 +2890,7 @@ boolean do_auto_dialog(const char *text, int type) {
           ticks_t tl;
           while ((tl = lives_alarm_check(alarm_handle)) > 0 && !mainw->cancelled) {
             lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
-            lives_widget_process_updates(mainw->proc_ptr->processing, TRUE);
+            lives_widget_process_updates(mainw->proc_ptr->processing);
             lives_usleep(prefs->sleep_time);
           }
           lives_alarm_clear(alarm_handle);
@@ -3666,8 +3664,6 @@ void threaded_dialog_spin(double fraction) {
       disp_fraction(fraction_done, timesofar, mainw->proc_ptr);
     }
   }
-
-  //lives_widget_process_updates(procw->processing, TRUE);
 }
 
 
@@ -3695,7 +3691,7 @@ void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
   mainw->proc_ptr = create_threaded_dialog(copy_text, has_cancel, &td_had_focus);
   lives_free(copy_text);
 
-  lives_widget_process_updates(mainw->proc_ptr->processing, TRUE);
+  lives_widget_process_updates(mainw->proc_ptr->processing);
 }
 
 
@@ -4202,7 +4198,7 @@ boolean do_foundclips_query(void) {
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   ret = lives_dialog_run(LIVES_DIALOG(dlg));
   lives_widget_destroy(dlg);
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   return (ret == LIVES_RESPONSE_YES);
 }
 
@@ -4406,7 +4402,7 @@ try_again:
       widget_opts.expand = LIVES_EXPAND_DEFAULT;
       ret = lives_dialog_run(LIVES_DIALOG(dlg));
       lives_widget_destroy(dlg);
-      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
       if (ret == LIVES_RESPONSE_YES) {
         if (capable->has_wget != PRESENT) {
           capable->has_wget = has_executable(EXEC_WGET);

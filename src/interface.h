@@ -243,8 +243,8 @@ boolean youtube_select_format(lives_remote_clip_request_t *);
 void run_diskspace_dialog(void);
 void run_diskspace_dialog_cb(LiVESWidget *w, livespointer data);
 
-LiVESResponseType filter_cleanup(const char *trashdir, LiVESList *rec_list, LiVESList *rem_list,
-                                 LiVESList *left_list);
+LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiVESList **rem_list,
+                                 LiVESList **left_list);
 
 LiVESWidget *trash_rb(LiVESBox *parent);
 #endif

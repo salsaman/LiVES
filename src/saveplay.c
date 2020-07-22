@@ -1088,7 +1088,7 @@ load_done:
     get_total_time(cfile);
     if (!mainw->is_generating) mainw->current_file = mainw->multitrack->render_file;
     mt_init_clips(mainw->multitrack, current_file, TRUE);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     mt_clip_select(mainw->multitrack, TRUE);
   }
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
@@ -2307,20 +2307,21 @@ void play_file(void) {
 
     if (mainw->foreign) {
       lives_widget_show_all(mainw->top_vbox);
-      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     }
 
     /// blank the background if asked to
-    if ((mainw->faded || (prefs->show_playwin && !prefs->show_gui) || (mainw->fs && (!mainw->sep_win))) && (cfile->frames > 0 ||
-        mainw->foreign)) {
+    if ((mainw->faded || (prefs->show_playwin && !prefs->show_gui)
+         || (mainw->fs && (!mainw->sep_win))) && (cfile->frames > 0 ||
+             mainw->foreign)) {
       fade_background();
     }
 
-    if ((!mainw->sep_win || (!mainw->faded && (prefs->sepwin_type != SEPWIN_TYPE_STICKY))) && (cfile->frames > 0 ||
-        mainw->foreign)) {
+    if ((!mainw->sep_win || (!mainw->faded && (prefs->sepwin_type != SEPWIN_TYPE_STICKY)))
+        && (cfile->frames > 0 ||
+            mainw->foreign)) {
       /// show the frame in the main window
       lives_widget_show_all(mainw->playframe);
-      //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     }
 
     /// plug the plug into the playframe socket if we need to
@@ -2433,7 +2434,7 @@ void play_file(void) {
         /// needed
         if (mainw->multitrack == NULL) {
           block_expose();
-          lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+          lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
           unblock_expose();
         } else {
           /// this doesn't get called if we don't call resize_play_window()
@@ -3033,7 +3034,7 @@ void play_file(void) {
 
     lives_xwindow_set_keep_above(mainw->foreign_window, FALSE);
 
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
     return;
   }
@@ -4001,7 +4002,7 @@ void wait_for_stop(const char *stop_command) {
 
   // send another stop if necessary
   while (!(infofile = fopen(cfile->info_file, "r"))) {
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     lives_usleep(prefs->sleep_time);
     time_waited += 1000000. / prefs->sleep_time;
     if (time_waited > SECOND_STOP_TIME && !sent_second_stop) {
@@ -5834,7 +5835,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   do_threaded_dialog(_("Recovering files"), FALSE);
   d_print(_("Recovering files..."));
 
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   threaded_dialog_spin(0.);
 
   mainw->suppress_dprint = TRUE;
@@ -6124,9 +6125,9 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         mainw->current_file = mainw->multitrack->render_file;
         mt_init_clips(mainw->multitrack, current_file, TRUE);
         set_poly_tab(mainw->multitrack, POLY_CLIPS);
-        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
         mt_clip_select(mainw->multitrack, TRUE);
-        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
         mainw->current_file = current_file;
       }
 

@@ -540,6 +540,11 @@ static void mt_set_cursor_style(lives_mt *mt, lives_cursor_t cstyle, int width, 
   disp = lives_widget_get_display(LIVES_MAIN_WINDOW_WIDGET);
 
 #ifdef GUI_GTK
+  /* screen = gdk_display_get_default_screen (display); */
+  /* window = gdk_screen_get_root_window (screen); */
+  /* XQueryBestCursor (GDK_DISPLAY_XDISPLAY (display), */
+  /* 		    GDK_WINDOW_XID (window), */
+  /* 		    width, height, &cwidth, &cheight); */
   gdk_display_get_maximal_cursor_size(disp, &cwidth, &cheight);
 #endif
 #ifdef GUI_QT
@@ -789,7 +794,7 @@ static void save_mt_autoback(lives_mt *mt) {
   mt_desensitise(mt);
 
   // flush any pending events
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
   do {
     retval2 = 0;
@@ -2834,7 +2839,7 @@ void scroll_tracks(lives_mt * mt, int top_track, boolean set_value) {
 
   if (mt->is_ready) {
     mt->no_expose = FALSE;
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   }
 }
 
@@ -4464,7 +4469,6 @@ void mt_spin_start_value_changed(LiVESSpinButton * spinbutton, livespointer user
   lives_spin_button_set_value(spinbutton, mt->region_start);
   lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_end), mt->region_start, mt->end_secs);
   lives_widget_queue_draw(mt->timeline_reg);
-  lives_widget_process_updates(mt->timeline_reg, FALSE);
   draw_region(mt);
   do_sel_context(mt);
 
@@ -4519,7 +4523,6 @@ void mt_spin_end_value_changed(LiVESSpinButton * spinbutton, livespointer user_d
   lives_spin_button_set_value(spinbutton, mt->region_end);
   lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_start), 0., mt->region_end);
   lives_widget_queue_draw(mt->timeline_reg);
-  lives_widget_process_updates(mt->timeline_reg, FALSE);
   draw_region(mt);
   do_sel_context(mt);
 
@@ -6078,7 +6081,7 @@ static boolean timecode_string_validate(LiVESEntry * entry, lives_mt * mt) {
 
   mt_tl_move(mt, secs);
 
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
   pos = mt->ptr_time;
 
@@ -10957,7 +10960,7 @@ void mt_delete_clips(lives_mt * mt, int file) {
       clist->prev = clist->next->next = NULL;
       lives_list_free(clist);
 
-      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
       neg++;
     }
@@ -11276,7 +11279,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
   }
 
   if (prefs->show_gui) {
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); // force showing of transient window
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET); // force showing of transient window
   }
 
   // create new file for rendering to
@@ -11462,10 +11465,6 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
   }
   lives_toggle_button_toggle(LIVES_TOGGLE_BUTTON(multi->snapo_checkbutton));
 
-  //if (multi->msg_area != NULL) lives_signal_handler_unblock(multi->msg_area, multi->sw_func);
-
-  /* lives_widget_context_update(); */
-  /* lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
   mt_clip_select(multi, TRUE); // call this again to scroll clip on screen
 
   lives_toggle_button_toggle(LIVES_TOGGLE_BUTTON(multi->insa_checkbutton));
@@ -13010,7 +13009,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
     lives_widget_set_sensitive(mt->fx_edit, FALSE);
     lives_widget_set_sensitive(mt->fx_delete, FALSE);
     if (poly == POLY_PARAMS) {
-      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     } else {
       mt->init_event = NULL;
       mt_show_current_frame(mt, FALSE);
@@ -13293,7 +13292,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
     has_params = add_mt_param_box(mt);
 
     if (has_params && mainw->playing_file < 0) {
-      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
       mt->block_tl_move = TRUE;
       on_node_spin_value_changed(LIVES_SPIN_BUTTON(mt->node_spinbutton), mt); // force parameter interpolation
       mt->block_tl_move = FALSE;
@@ -13647,7 +13646,7 @@ static void mouse_select_move(LiVESWidget * widget, LiVESXEventMotion * event, l
   if (y < 0.) y = 0.;
 
   lives_widget_queue_draw(mt->tl_hbox);
-  lives_widget_process_updates(mt->tl_eventbox, FALSE);
+  lives_widget_process_updates(mt->tl_eventbox);
 
   if (x >= mt->sel_x) {
     start_x = mt->sel_x;
@@ -14002,7 +14001,7 @@ boolean on_track_release(LiVESWidget * eventbox, LiVESXEventButton * event, live
       mt->hotspot_x = mt->hotspot_y = 0;
       // we need to call this to warp the pointer
       //lives_widget_context_update();
-      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     }
 
     if (doubleclick) {
@@ -14275,7 +14274,7 @@ void unpaint_line(lives_mt * mt, LiVESWidget * eventbox) {
 
   if (xoffset < ebwidth) {
     lives_widget_queue_draw_area(eventbox, xoffset - 4, 0, 9, lives_widget_get_allocation_height(eventbox));
-    lives_widget_process_updates(eventbox, TRUE);
+    lives_widget_process_updates(eventbox);
   }
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "has_line", LIVES_INT_TO_POINTER(-1));
@@ -18222,7 +18221,7 @@ void multitrack_view_events(LiVESMenuItem * menuitem, livespointer user_data) {
           - count_events(mt->event_list, FALSE, 0, 0)) > 1000)))
     if (!do_event_list_warning()) return;
   mt_desensitise(mt);
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   elist_dialog = create_event_list_dialog(mt->event_list, 0, 0);
   mainw->gui_fooey = TRUE;
   lives_dialog_run(LIVES_DIALOG(elist_dialog));
@@ -18243,7 +18242,7 @@ void multitrack_view_sel_events(LiVESMenuItem * menuitem, livespointer user_data
           - count_events(mt->event_list, FALSE, tc_start, tc_end)) > 1000)))
     if (!do_event_list_warning()) return;
   mt_desensitise(mt);
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   elist_dialog = create_event_list_dialog(mt->event_list, tc_start, tc_end);
   mt_sensitise(mt);
   lives_dialog_run(LIVES_DIALOG(elist_dialog));
@@ -18756,7 +18755,6 @@ boolean on_timeline_release(LiVESWidget * eventbox, LiVESXEventButton * event, l
     lives_signal_handler_unblock(mt->spinbutton_start, mt->spin_start_func);
     lives_signal_handler_unblock(mt->spinbutton_end, mt->spin_end_func);
     lives_widget_queue_draw(mt->timeline_reg);
-    lives_widget_process_updates(mt->timeline_reg, FALSE);
     draw_region(mt);
     no_time_selected(mt);
   }
@@ -20092,7 +20090,7 @@ boolean set_new_set_name(lives_mt * mt) {
     lives_widget_destroy(renamew->dialog);
     lives_freep((void **)&renamew);
     lives_free(tmp);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   } while (!is_legal_set_name(new_set_name, FALSE));
 
   lives_snprintf(mainw->set_name, MAX_SET_NAME_LEN, "%s", new_set_name);
@@ -21915,7 +21913,7 @@ weed_plant_t *load_event_list(lives_mt * mt, char *eload_file) {
   d_print(_("Got %d events...processing..."), num_events);
 
   mt->changed = mainw->recoverable_layout;
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
   cfile->progress_start = 1;
   cfile->progress_end = num_events;

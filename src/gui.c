@@ -3352,7 +3352,7 @@ void fade_background(void) {
   }
 
   lives_widget_queue_draw(mainw->top_vbox);
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 }
 
 
@@ -3484,7 +3484,7 @@ void unfade_background(void) {
     set_colours(&palette->normal_fore, &palette->normal_back, &palette->menu_and_bars_fore, &palette->menu_and_bars,
                 &palette->info_base, &palette->info_text);
   }
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 }
 
 
@@ -3511,12 +3511,11 @@ void fullscreen_internal(void) {
     lives_widget_hide(mainw->message_box);
 
     lives_widget_context_update();
-    //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 
     if (prefs->open_maximised) {
       lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
       lives_widget_queue_resize(LIVES_MAIN_WINDOW_WIDGET);
-      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     }
 
     // try to get exact inner size of the main window
@@ -3526,7 +3525,7 @@ void fullscreen_internal(void) {
     // expand the inner box to fit this
     lives_widget_set_size_request(mainw->top_vbox, width, height);
     lives_widget_queue_resize(mainw->top_vbox);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
     // this and pf_grid should be the only other widgets still visible
     if (future_prefs->show_tool) height -= lives_widget_get_allocation_height(mainw->tb_hbox);
@@ -3546,7 +3545,7 @@ void fullscreen_internal(void) {
     lives_widget_set_size_request(mainw->play_image, width, height);
 
     lives_widget_queue_resize(mainw->pf_grid);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   } else {
     make_play_window();
   }
@@ -4167,7 +4166,7 @@ void resize_play_window(void) {
         if (prefs->show_playwin) {
           lives_widget_show(mainw->play_window);
         }
-        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
         mainw->opwx = mainw->opwy = -1;
       } else {
         if (pmonitor == 0) {

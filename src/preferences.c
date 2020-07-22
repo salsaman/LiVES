@@ -552,7 +552,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
       // revert text
       if (prefsw != NULL) {
         lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
-        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
       }
       goto fail1;
     }
@@ -572,7 +572,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
           // revert text
           if (prefsw != NULL) {
             lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
-            lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+            lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
           }
           goto fail1;
         }
@@ -583,7 +583,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
         // revert text
         if (prefsw != NULL) {
           lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
-          lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+          lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
         }
         goto fail1;
       } else {
@@ -611,7 +611,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
         // revert text
         if (prefsw != NULL) {
           lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
-          lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+          lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
         }
         goto fail1;
       } else {
@@ -619,7 +619,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
           // revert text
           if (prefsw != NULL) {
             lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
-            lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+            lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
           }
           goto fail1;
         } else {
@@ -687,7 +687,7 @@ fail1:
 
 success1:
   if (prefsw != NULL) {
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     prefsw->ignore_apply = FALSE;
   }
   return TRUE;
@@ -971,7 +971,7 @@ fail2:
 
 success2:
   if (prefsw != NULL) {
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     prefsw->ignore_apply = FALSE;
   }
   if (permanent) set_boolean_pref(prefidx, newval);
@@ -988,7 +988,7 @@ boolean pref_factory_color_button(lives_colRGBA64_t *pcol, LiVESColorButton *cbu
   if (!lives_rgba_equal(widget_color_to_lives_rgba(&lcol, lives_color_button_get_color(cbutton, &col)), pcol)) {
     lives_rgba_copy(pcol, &lcol);
     if (prefsw != NULL) {
-      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
       prefsw->ignore_apply = FALSE;
     }
     return TRUE;
@@ -1084,7 +1084,7 @@ fail3:
 
 success3:
   if (prefsw != NULL) {
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     prefsw->ignore_apply = FALSE;
   }
   if (permanent) set_int_pref(prefidx, newval);
@@ -1115,7 +1115,7 @@ fail4:
 
 success4:
   if (prefsw != NULL) {
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     prefsw->ignore_apply = FALSE;
   }
   if (permanent) set_int_pref(prefidx, idx);
@@ -1162,7 +1162,7 @@ fail5:
 
 success5:
   if (prefsw != NULL) {
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     prefsw->ignore_apply = FALSE;
   }
   if (permanent) set_double_pref(prefidx, newval);
@@ -1222,7 +1222,7 @@ fail6:
 
 success6:
   if (prefsw != NULL) {
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
     prefsw->ignore_apply = FALSE;
   }
   return TRUE;

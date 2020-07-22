@@ -526,10 +526,14 @@ static uint8_t *render_to_mainmem(int type, int row, int window_width, int windo
   // copy GL drawing buffer to main mem
   uint8_t *xretbuf;
 
+  //framebuffer = xretbuf;   ??
+  // glBindFramebufferEXT (GL_FRAMEBUFFER_EXT, framebuffer);
+  //   glFramebufferTexture2DEXT
+
   glPushAttrib(GL_PIXEL_MODE_BIT);
   glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
 
-  glPixelStorei(GL_PACK_ALIGNMENT, 1);
+  glPixelStorei(GL_PACK_ALIGNMENT, 1); // 4 ???
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ROW_LENGTH, row);
 
@@ -544,6 +548,12 @@ static uint8_t *render_to_mainmem(int type, int row, int window_width, int windo
     glReadPixels(0, 0, window_width, window_height, type, GL_UNSIGNED_BYTE, xretbuf);
   }
 
+  ///   glPixelStorei (GL_PACK_ROW_LENGTH, 0);
+  //   glBindFramebufferEXT (GL_FRAMEBUFFER_EXT, 0);
+
+  ///  check: glBindFramebufferEXT,   glFramebufferRenderbufferEXT,      glDrawBuffers.
+  ///  glBlitFramebufferEXT
+
   return xretbuf;
 }
 
@@ -554,6 +564,7 @@ static void render_to_gpumem_inner(int tnum, int width, int height, int type, vo
   int texID = get_texture_texID(tnum);
   int intype = type;
   int xwidth = width / typesize;
+  int btype = GL_UNSIGNED_BYTE;
 
   glEnable(m_TexTarget);
 
@@ -565,13 +576,14 @@ static void render_to_gpumem_inner(int tnum, int width, int height, int type, vo
   if (mypalette == WEED_PALETTE_BGRA32)
     intype = GL_BGRA;
 
-  /// does NOT work !!!
   if (mypalette == WEED_PALETTE_ARGB32) {
-    glPixelMapusv(GL_PIXEL_MAP_I_TO_I, 8, RGBA2RGB);
-    intype = GL_RGBA;
+    // needs testing
+    intype = GL_BGRA;
+    btype = GL_UNSIGNED_INT_8_8_8_8_REV;
   }
 
-  glTexImage2D(m_TexTarget, mipMapLevel, GL_RGBA, xwidth, height, 0, intype, GL_UNSIGNED_BYTE, (const GLvoid *)texturebuf);
+  glTexImage2D(m_TexTarget, mipMapLevel, GL_RGBA, xwidth, height, 0, intype, btyep,
+               (const GLvoid *)texturebuf);
 
   glGenerateMipmap(m_TexTarget);
 

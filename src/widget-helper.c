@@ -1480,7 +1480,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_maximum_size(LiVESWidget *w
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget *widget, boolean upd_children) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget *widget) {
 #ifdef GUI_GTK
   LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
   LiVESWindow *win, *modalold = modalw;
@@ -4650,7 +4650,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_toggle_button_get_active(LiVESToggleBu
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_toggle_button_set_active(LiVESToggleButton *button, boolean active) {
 #ifdef GUI_GTK
 #if LIVES_HAS_SWITCH_WIDGET
-  if (LIVES_IS_SWITCH(button)) gtk_switch_set_active(LIVES_SWITCH(button), active);
+  if (LIVES_IS_SWITCH(button)) lives_switch_set_active(LIVES_SWITCH(button), active);
   else
 #endif
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), active);
@@ -4703,22 +4703,61 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_radio_button_new(LiVESSList *grou
 #ifdef GUI_GTK
   button = gtk_radio_button_new(group);
 #endif
-#ifdef GUI_QT
-  QButtonGroup *qbg;
-  button = new LiVESRadioButton;
-  if (group == NULL) {
-    qbg = new QButtonGroup;
-    group = lives_slist_append(group, (void *)qbg);
-    qbg->setExclusive(true);
-  } else {
-    qbg = const_cast<QButtonGroup *>(static_cast<const QButtonGroup *>(lives_slist_nth_data(group, 0)));
-  }
-
-  (static_cast<LiVESRadioButton *>(button))->set_group(group);
-  qbg->addButton(dynamic_cast<QPushButton *>(button));
-
-#endif
   return button;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_switch_new(void) {
+  LiVESWidget *swtch = NULL;
+#if LIVES_HAS_SWITCH_WIDGET
+  swtch = gtk_switch_new();
+#endif
+  return swtch;
+}
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_switch_get_active(LiVESSwitch *swtch) {
+#if LIVES_HAS_SWITCH_WIDGET
+  return gtk_switch_get_active(swtch);
+#endif
+  return FALSE;
+}
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_switch_set_active(LiVESSwitch *swtch, boolean active) {
+#if LIVES_HAS_SWITCH_WIDGET
+  gtk_switch_set_active(swtch, active);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_spinner_new(void) {
+  LiVESWidget *spinner = NULL;
+#if LIVES_HAS_SPINNER_WIDGET
+  spinner = gtk_spinner_new();
+#endif
+  return spinner;
+}
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_spinner_start(LiVESSpinner *spinner) {
+  if (spinner) {
+#if LIVES_HAS_SPINNER_WIDGET
+    gtk_spinner_start(GTK_SPINNER(spinner));
+    return TRUE;
+#endif
+  }
+  return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_spinner_stop(LiVESSpinner *spinner) {
+  if (spinner) {
+#if LIVES_HAS_SPINNER_WIDGET
+    gtk_spinner_stop(GTK_SPINNER(spinner));
+    return TRUE;
+#endif
+  }
+  return FALSE;
 }
 
 
@@ -4726,9 +4765,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_check_button_new(void) {
   LiVESWidget *button = NULL;
 #ifdef GUI_GTK
   button = gtk_check_button_new();
-#endif
-#ifdef GUI_QT
-  button = new LiVESCheckButton;
 #endif
   return button;
 }
@@ -8602,11 +8638,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESXCursor *lives_cursor_new_from_pixbuf(LiVESXDis
 #ifdef GUI_GTK
   cursor = gdk_cursor_new_from_pixbuf(disp, pixbuf, x, y);
 #endif
-#ifdef GUI_QT
-  QPixmap qpx;
-  qpx.convertFromImage(*pixbuf);
-  cursor = new QCursor(qpx, x, y);
-#endif
   return cursor;
 }
 
@@ -9797,14 +9828,92 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_show_hide_parent(LiVESWidge
 }
 
 
+LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, LiVESBox *box,
+                                       const char *tooltip) {
+  LiVESWidget *swtch = NULL;
+#if LIVES_HAS_SWITCH_WIDGET
+  LiVESWidget *eventbox = NULL;
+  LiVESWidget *hbox;
+  LiVESWidget *img_tips = NULL;
+
+#if GTK_CHECK_VERSION(3, 14, 0)
+  char *colref;
+#endif
+  //char *tmp;
+
+  boolean expand;
+
+  widget_opts.last_label = NULL;
+
+  if (tooltip) img_tips = lives_widget_set_tooltip_text(swtch, tooltip);
+
+  if (box != NULL) {
+    int packing_width = 0;
+
+    if (labeltext != NULL) {
+      eventbox = make_label_eventbox(labeltext, swtch);
+    }
+
+    if (LIVES_IS_HBOX(box) && !LIVES_SHOULD_EXPAND_WIDTH) hbox = LIVES_WIDGET(box);
+    else {
+      hbox = make_inner_hbox(LIVES_BOX(box));
+      lives_widget_set_show_hide_parent(swtch);
+    }
+
+    expand = LIVES_SHOULD_EXPAND_EXTRA_FOR(hbox);
+    if (LIVES_SHOULD_EXPAND_WIDTH) packing_width = widget_opts.packing_width;
+
+    if (widget_opts.swap_label && eventbox != NULL)
+      lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, packing_width);
+
+    if (expand) add_fill_to_box(LIVES_BOX(hbox));
+
+    lives_box_pack_start(LIVES_BOX(hbox), swtch, expand, expand,
+                         eventbox == NULL ? packing_width : 0);
+
+    if (expand) add_fill_to_box(LIVES_BOX(hbox));
+
+    if (!widget_opts.swap_label && eventbox != NULL)
+      lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, packing_width);
+
+    add_warn_image(swtch, hbox);
+
+    if (img_tips) {
+      lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
+      if (prefs->show_tooltips) lives_widget_show(img_tips);
+      lives_widget_set_show_hide_with(swtch, img_tips);
+      lives_widget_set_sensitive_with(swtch, img_tips);
+    }
+  }
+
+  if (widget_opts.apply_theme) {
+#if GTK_CHECK_VERSION(3, 0, 0)
+    lives_widget_apply_theme(swtch, LIVES_WIDGET_STATE_NORMAL);
+#if GTK_CHECK_VERSION(3, 16, 0)
+    if (prefs->extra_colours && mainw->pretty_colours) {
+      colref = gdk_rgba_to_string(&palette->nice1);
+      set_css_value_direct(swtch, LIVES_WIDGET_STATE_NORMAL, "", "border-color", colref);
+      lives_free(colref);
+      colref = gdk_rgba_to_string(&palette->nice2);
+      set_css_value_direct(swtch, LIVES_WIDGET_STATE_NORMAL, "slider", "background-color",
+                           colref);
+      lives_free(colref);
+      colref = gdk_rgba_to_string(&palette->normal_fore);
+      set_css_value_direct(swtch, LIVES_WIDGET_STATE_CHECKED, "slider", "background-color",
+                           colref);
+    }
+#endif
+#endif
+  }
+  lives_switch_set_active(LIVES_SWITCH(swtch), active);
+#endif
+  return swtch;
+}
+
+
 LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean active, LiVESBox *box,
     const char *tooltip) {
   LiVESWidget *checkbutton = NULL;
-
-  // pack a themed check button into box
-
-  // seems like it is not possible to theme the checkbox
-
   LiVESWidget *eventbox = NULL;
   LiVESWidget *hbox;
   LiVESWidget *img_tips = NULL;
@@ -9816,19 +9925,13 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
 
   boolean expand;
 
-  widget_opts.last_label = NULL;
-
 #if LIVES_HAS_SWITCH_WIDGET
-  // TODO: need to intercept TOGGLED handler, and replace with "notify::active"
-  // since notify takes 3 params, we must remove the pspec param and call the real handler
-  // also, switch cannot be cast to a TOGGLE_BUTTON
-  /// gtk_toggle_button_get_active -> gtk_switch_get_state
-  /// gtk_toggle_button_set_active -> gtk_switch_set_state
-
-  if (prefs->cb_is_switch) checkbutton = gtk_switch_new();
+  if (prefs->cb_is_switch) return lives_standard_switch_new(labeltext, active, box, tooltip);
   else
 #endif
     checkbutton = lives_check_button_new();
+
+  widget_opts.last_label = NULL;
 
   if (tooltip) img_tips = lives_widget_set_tooltip_text(checkbutton, tooltip);
 
@@ -9875,54 +9978,38 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
 #if GTK_CHECK_VERSION(3, 0, 0)
     lives_widget_apply_theme(checkbutton, LIVES_WIDGET_STATE_NORMAL);
 #if GTK_CHECK_VERSION(3, 16, 0)
-    if (prefs->cb_is_switch) {
-      if (prefs->extra_colours && mainw->pretty_colours) {
-        colref = gdk_rgba_to_string(&palette->nice1);
-        set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_NORMAL, "", "border-color", colref);
-        lives_free(colref);
-        colref = gdk_rgba_to_string(&palette->nice2);
-        set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_NORMAL, "slider", "background-color",
-                             colref);
-        lives_free(colref);
-        colref = gdk_rgba_to_string(&palette->normal_fore);
-        set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_CHECKED, "slider", "background-color",
-                             colref);
-      }
+    set_css_min_size(checkbutton, 24, 20);
+
+    if (prefs->extra_colours && mainw->pretty_colours) {
+      colref = gdk_rgba_to_string(&palette->normal_fore);
+      set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_CHECKED, "check",
+                           "color", colref);
+      lives_free(colref);
+
+      colref = gdk_rgba_to_string(&palette->nice2);
+
+      tmp = lives_strdup_printf("image(%s)", colref);
+      set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_CHECKED, "check",
+                           "background-image", tmp);
+      set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_CHECKED, "check",
+                           "border-image", tmp);
+      lives_free(tmp);
     } else {
-      set_css_min_size(checkbutton, 24, 20);
+      colref = gdk_rgba_to_string(&palette->normal_fore);
+      set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_CHECKED, "check",
+                           "color", colref);
+      lives_free(colref);
 
-      if (prefs->extra_colours && mainw->pretty_colours) {
-        colref = gdk_rgba_to_string(&palette->normal_fore);
-        set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_CHECKED, "check",
-                             "color", colref);
-        lives_free(colref);
-
-        colref = gdk_rgba_to_string(&palette->nice2);
-
-        tmp = lives_strdup_printf("image(%s)", colref);
-        set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_CHECKED, "check",
-                             "background-image", tmp);
-        set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_CHECKED, "check",
-                             "border-image", tmp);
-        lives_free(tmp);
-      } else {
-        colref = gdk_rgba_to_string(&palette->normal_fore);
-        set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_CHECKED, "check",
-                             "color", colref);
-        lives_free(colref);
-
-        colref = gdk_rgba_to_string(&palette->normal_back);
-        set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_CHECKED, "check",
-                             "background-color", colref);
-        lives_free(colref);
-      }
+      colref = gdk_rgba_to_string(&palette->normal_back);
+      set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_CHECKED, "check",
+                           "background-color", colref);
+      lives_free(colref);
     }
 #endif
 #endif
   }
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), active);
-
   return checkbutton;
 }
 
@@ -11469,7 +11556,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_if_visible(LiVESWidg
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_and_update(LiVESWidget *widget) {
   lives_widget_queue_draw(widget);
-  lives_widget_process_updates(widget, TRUE);
+  lives_widget_process_updates(widget);
   return FALSE;
 }
 
@@ -12364,8 +12451,9 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget * widget) {
   GdkCursorType ctype = GDK_X_CURSOR;
 
   if (widget == NULL) {
-    if (mainw->recovering_files || ((mainw->multitrack == NULL && mainw->is_ready) || (mainw->multitrack != NULL &&
-                                    mainw->multitrack->is_ready))) {
+    if (mainw->recovering_files || ((mainw->multitrack == NULL && mainw->is_ready)
+                                    || (mainw->multitrack != NULL &&
+                                        mainw->multitrack->is_ready))) {
       if (cstyle != LIVES_CURSOR_NORMAL && mainw->cursor_style == cstyle) return;
       window = lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET);
     } else return;
@@ -12417,46 +12505,10 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget * widget) {
   if (cursor != NULL) lives_cursor_unref(cursor);
 #endif
 
-#ifdef GUI_QT
-  if (widget == NULL) {
-    if (mainw->multitrack == NULL && mainw->is_ready) {
-      if (cstyle != LIVES_CURSOR_NORMAL && mainw->cursor_style == cstyle) return;
-      widget = LIVES_MAIN_WINDOW_WIDGET;
-    } else if (mainw->multitrack != NULL && mainw->multitrack->is_ready) {
-      if (cstyle != LIVES_CURSOR_NORMAL && mainw->multitrack->cursor_style == cstyle) return;
-      widget = mainw->multitrack->window;
-    } else return;
-  }
-
-  switch (cstyle) {
-  case LIVES_CURSOR_NORMAL:
-    widget->setCursor(Qt::ArrowCursor);
-    break;
-  case LIVES_CURSOR_BUSY:
-    widget->setCursor(Qt::WaitCursor);
-    break;
-  case LIVES_CURSOR_CENTER_PTR:
-    widget->setCursor(Qt::UpArrowCursor);
-    break;
-  case LIVES_CURSOR_HAND2:
-    widget->setCursor(Qt::PointingHandCursor);
-    break;
-  case LIVES_CURSOR_SB_H_DOUBLE_ARROW:
-    widget->setCursor(Qt::SizeHorCursor);
-    break;
-  case LIVES_CURSOR_CROSSHAIR:
-    widget->setCursor(Qt::CrossCursor);
-    break;
-  case LIVES_CURSOR_TOP_LEFT_CORNER:
-    widget->setCursor(Qt::SizeFDiagCursor);
-    break;
-  case LIVES_CURSOR_BOTTOM_RIGHT_CORNER:
-    widget->setCursor(Qt::SizeBDiagCursor);
-    break;
-  default:
-    return;
-  }
-#endif
+  // TODO: gdk_x11_cursor_update_theme (
+  // XFixesChangeCursor (Display *dpy, Cursor source, Cursor destination);
+  // and then wait for X11 event...
+  // then no need for the majority of lives_window_process_updates().....y
 }
 
 
@@ -12543,8 +12595,10 @@ void lives_cool_toggled(LiVESWidget * tbutton, livespointer user_data) {
   // connect toggled event to this
   boolean *ret = (boolean *)user_data, active;
   if (!LIVES_IS_INTERACTIVE) return;
-  active = ((LIVES_IS_TOGGLE_BUTTON(tbutton) && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(tbutton))) ||
-            (LIVES_IS_TOGGLE_TOOL_BUTTON(tbutton) && lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(tbutton))));
+  active = ((LIVES_IS_TOGGLE_BUTTON(tbutton)
+             && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(tbutton))) ||
+            (LIVES_IS_TOGGLE_TOOL_BUTTON(tbutton)
+             && lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(tbutton))));
   if (prefs->lamp_buttons) {
     if (active)
       lives_widget_set_bg_color(tbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
@@ -12752,7 +12806,7 @@ void lives_general_button_clicked(LiVESButton * button, livespointer data_to_fre
   // destroy the button top-level and free data
   if (LIVES_IS_WIDGET(lives_widget_get_toplevel(LIVES_WIDGET(button)))) {
     lives_widget_destroy(lives_widget_get_toplevel(LIVES_WIDGET(button)));
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   }
   lives_freep((void **)&data_to_free);
 

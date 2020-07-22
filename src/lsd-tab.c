@@ -20,41 +20,42 @@ static void init_lsd_tab(void) {
   tab_inited = TRUE;
 }
 
-static const lives_struct_def_t *get_lsd(lives_struct_type st_type) {
+const lives_struct_def_t *get_lsd(lives_struct_type st_type) {
   const lives_struct_def_t *lsd;
-
+  if (st_type < LIVES_STRUCT_FIRST || st_type >= LIVES_N_STRUCTS) return NULL;
   if (!tab_inited) init_lsd_tab();
+  else if (lsd_tab[st_type]) return lsd_tab[st_type];
   switch (st_type) {
   case LIVES_STRUCT_CLIP_DATA_T:
-    if (!lsd_tab[st_type]) {
-      lsd = lsd_create("lives_clip_data_t", sizeof(lives_clip_data_t), "strgs", 6);
-      if (!lsd) return NULL;
-      else {
-        lives_special_field_t **specf = lsd->special_fields;
-        lives_clip_data_t *cdata = (lives_clip_data_t *)lives_calloc(1, sizeof(lives_clip_data_t));
-        specf[0] = make_special_field(LIVES_FIELD_CHARPTR, cdata, &cdata->URI,
-                                      "URI", 0, NULL, NULL, NULL);
-        specf[1] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->priv,
-                                      "priv", 0, NULL, NULL, NULL);
-        specf[2] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->title,
-                                      "title", 1024, NULL, NULL, NULL);
-        specf[3] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->author,
-                                      "author", 1024, NULL, NULL, NULL);
-        specf[4] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->comment,
-                                      "comment", 1024, NULL, NULL, NULL);
-        specf[5] = make_special_field(LIVES_FIELD_ARRAY, cdata, &cdata->palettes,
-                                      "palettes", 4, NULL, NULL, NULL);
-        lives_struct_init(lsd, cdata, &cdata->lsd);
-        lives_struct_set_class_data((lives_struct_def_t *)lsd, CREATOR_ID);
-        lives_free(cdata);
-      }
-      lsd_tab[st_type] = lsd;
+    lsd = lsd_create("lives_clip_data_t", sizeof(lives_clip_data_t), "sync_hint", 6);
+    if (lsd) {
+      lives_special_field_t **specf = lsd->special_fields;
+      lives_clip_data_t *cdata = (lives_clip_data_t *)lives_calloc(1, sizeof(lives_clip_data_t));
+      specf[0] = make_special_field(LIVES_FIELD_CHARPTR, cdata, &cdata->URI,
+                                    "URI", 0, NULL, NULL, NULL);
+      specf[1] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY |
+                                    LIVES_FIELD_FLAG_FREE_ON_DELETE, cdata, &cdata->priv,
+                                    "priv", 0, NULL, NULL, NULL);
+      specf[2] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->title,
+                                    "title", 1024, NULL, NULL, NULL);
+      specf[3] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->author,
+                                    "author", 1024, NULL, NULL, NULL);
+      specf[4] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->comment,
+                                    "comment", 1024, NULL, NULL, NULL);
+      specf[5] = make_special_field(LIVES_FIELD_ARRAY, cdata, &cdata->palettes,
+                                    "palettes", 4, NULL, NULL, NULL);
+      lives_struct_init(lsd, cdata, &cdata->lsd);
+      lives_free(cdata);
     }
-    return lsd_tab[st_type];
-  default:
     break;
+  default:
+    return NULL;
   }
-  return NULL;
+  if (lsd) {
+    lives_struct_set_class_data((lives_struct_def_t *)lsd, CREATOR_ID);
+    lsd_tab[st_type] = lsd;
+  }
+  return lsd;
 }
 
 void *struct_from_template(lives_struct_type st_type) {
@@ -104,4 +105,101 @@ LIVES_GLOBAL_INLINE boolean lives_structs_same_type(lives_struct_def_t *lsd,
   return FALSE;
 }
 
+
+#define CHECK_VERBOSE 0
+#if CHECK_VERBOSE
+#define errprint(...) fprintf(stderr, __VA_ARGS__)
+#else
+#define errprint(...)
+#endif
+
+uint64_t lsd_check_struct(lives_struct_def_t *lsd) {
+#if CHECK_VERBOSE
+  uint64_t id, eid, uid;
+#endif
+  uint64_t err = 0;
+  if (!lsd) {
+    errprint("lsd_check: lsd1 is NULL\n");
+    err |= (1ul << 0);
+    return err;
+  }
+
+#if CHECK_VERBOSE
+
+  /// non-error warnings
+  id = lives_struct_get_identifier(lsd);
+
+  if (id != LIVES_STUCT_ID)
+    errprint("lsd_check: lsd (%p) has non-standard identifier 0X%016lX\n", lsd, id);
+
+  eid = lives_struct_get_end_id(lsd);
+
+  if (eid != LIVES_STUCT_ID ^ 0xFFFFFFFFFFFFFFFF)
+    errprint("lsd_check: lsd (%p) has non-standard end_id 0X%016lX\n", lsd, eid);
+
+  if (eid != id ^ 0xFFFFFFFFFFFFFFFF)
+    errprint("lsd_check: lsd (%p) has non matching identifier / end_id pair\n"
+             "0X%016lX 0X%016lX should be 0X%016lX\n", lsd, id, eid, id ^ 0xFFFFFFFFFFFFFFFF);
+
+  uid = lives_struct_get_unique_id(lsd);
+  if (!uid)
+    errprint("lsd_check: lsd (%p) has no unique_id\n", lsd);
+
+  if (uid < (1 << 20))
+    errprint("lsd_check: lsd (%p) has unique_id 0X%016lX\n"
+             "The probability of this is < 1 in 17.5 trillion\n", lsd, uid);
+
+  if (lives_strcmp(lives_struct_get_class_data(lsd), CREATOR_ID))
+    errprint("lsd_check: lsd (%p) has alternat class_data [%s]\n"
+             "Ours is [%s]\n", lsd, lives_struct_get_class_data(lsd), CREATOR_ID);
+#endif
+  return err;
+}
+
+uint64_t lsd_check_match(lives_struct_def_t *lsd1, lives_struct_def_t *lsd2) {
+  size_t sz1, sz2;
+  uint64_t err = 0;
+  if (!lsd1) {
+    errprint("lsd_check: lsd1 is NULL\n");
+    err |= (1ul << 0);
+  }
+  if (!lsd1) {
+    errprint("lsd_check: lsd1 is NULL\n");
+    err |= (1ul << 24);
+  }
+  if (err) return err;
+
+  if (!lives_structs_same_type(lsd1, lsd2)) {
+    errprint("lsd_check: lsd1 type is %d but lsd2 type is %d\n",
+             lives_struct_get_type(lsd1), lives_struct_get_type(lsd2));
+
+    err |= (1ul << 48);
+  }
+
+  sz1 = lives_struct_get_size(lsd1);
+  sz2 = lives_struct_get_size(lsd2);
+  if (sz1 != sz2) {
+    errprint("lsd_check: lsd1 (%p) size is %lu but lsd2 (%p) size is %lu\n",
+             lsd1, sz1, lsd2, sz2);
+    if (sz1 > sz2) err |= (1ul << 49);
+    else err |= (1ul << 50);
+
+  }
+  if (lives_strcmp(lives_struct_get_last_field(lsd1), lives_struct_get_last_field(lsd2))) {
+    errprint("lsd_check: lsd1 (%p) last field [%s]\n"
+             "is not the same as lsd2 (%p) last field [%s]\n",
+             lsd1, lives_struct_get_last_field(lsd1),
+             lsd2, lives_struct_get_last_field(lsd2));
+    err |= (1ul << 51);
+  }
+
+  /// TODO - check special_fields and self_fields
+
+  errprint("lsd_check: checking lsd1 (%p)\n", lsd1);
+  err |= lsd_check_struct(lsd1);
+  errprint("lsd_check: checking lsd2 (%p)\n", lsd2);
+  err |= (lsd_check_struct(lsd2) << 24);
+
+  return err;
+}
 

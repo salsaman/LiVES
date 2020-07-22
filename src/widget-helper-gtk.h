@@ -515,6 +515,13 @@ typedef GtkNotebook                       LiVESNotebook;
 
 typedef GtkExpander                       LiVESExpander;
 
+#if GTK_CHECK_VERSION(2, 20, 0)
+#define LIVES_HAS_SPINNER_WIDGET 1
+typedef GtkSpinner        	          LiVESSpinner;
+#else
+typedef GtkWidget        	          LiVESSpinner;
+#endif
+
 typedef GtkProgressBar                    LiVESProgressBar;
 
 typedef GtkAboutDialog                    LiVESAboutDialog;
@@ -883,6 +890,10 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_NOTEBOOK(widget) GTK_NOTEBOOK(widget)
 
 #define LIVES_PROGRESS_BAR(widget) GTK_PROGRESS_BAR(widget)
+
+#if LIVES_HAS_SPINNER_WIDGET
+#define LIVES_SPINNER(widget) GTK_SPINNER(widget)
+#endif
 
 #define LIVES_EXPANDER(widget) GTK_EXPANDER(widget)
 

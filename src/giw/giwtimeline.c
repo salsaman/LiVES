@@ -645,8 +645,6 @@ static void giw_timeline_get_preferred_height(GtkWidget *widget, gint *minimum_h
 
 static void giw_timeline_style_updated(GtkWidget *widget) {
   GiwTimeline        *timeline = GIW_TIMELINE(widget);
-  GTK_WIDGET_CLASS(giw_timeline_parent_class)->style_updated(widget);
-
   gtk_widget_style_get(widget,
                        "font-scale", &timeline->font_scale,
                        NULL);

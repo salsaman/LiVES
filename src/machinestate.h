@@ -279,6 +279,8 @@ lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, 
 uint64_t get_ds_free(const char *dir);
 boolean get_ds_used(int64_t *bytes);
 
+void *dir_to_file_details(LiVESList **, const char *dir, const char *tsubdir, uint64_t extra);
+
 ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t orignsecs);
 ticks_t lives_get_current_ticks(void);
 char *lives_datetime(struct timeval *tv);
@@ -456,7 +458,7 @@ lives_thread_data_t *get_thread_data(void);
 lives_threadvars_t *get_threadvars(void);
 lives_thread_data_t *lives_thread_data_create(uint64_t idx);
 
-#define THREADVAR(var) get_threadvars()->var_##var
+#define THREADVAR(var) (get_threadvars()->var_##var)
 
 void lives_proc_thread_set_cancellable(lives_proc_thread_t);
 boolean lives_proc_thread_get_cancellable(lives_proc_thread_t);
@@ -480,8 +482,18 @@ int64_t lives_proc_thread_join_int64(lives_proc_thread_t);
 
 void resubmit_proc_thread(lives_proc_thread_t, lives_thread_attr_t *);
 
+///// cmdline
+char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase, int ridx, int rlen);
 
+/// x11
+char *get_wid_for_name(const char *wname);
+boolean hide_x11_window(const char *wid);
+boolean unhide_x11_window(const char *wid);
+boolean activate_x11_window(const char *wid);
+boolean show_desktop_panel(void);
+boolean hide_desktop_panel(void);
+boolean get_x11_visible(const char *wname);
 
-
+void get_wm_caps(const char *wm_name);
 
 #endif

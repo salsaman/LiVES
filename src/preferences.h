@@ -429,6 +429,8 @@ typedef struct {
   boolean extra_colours;
   boolean pref_trash; ///< user prefers trash to delete
   boolean autoclean; ///< remove temp files on shutdown / startup
+
+  boolean show_desktop_panel;
 } _prefs;
 
 enum {

@@ -239,7 +239,9 @@ typedef struct _lives_special_field {
 typedef struct _lives_struct_def {
   uint64_t identifier;  /// default: LIVES_STRUCT_ID
   uint64_t unique_id; /// randomly generted id, unique to each instance
+
   int32_t refcount; ///< refcount, set to 1 on creation, free unrefs and only frees when 0.
+  uint32_t generation; ///< initialized as 1 and incremented on each copy
 
   void *top; ///< ptr to the start of parent struct itself, typecast to a void *
 
@@ -258,8 +260,6 @@ typedef struct _lives_struct_def {
 
   lives_special_field_t **special_fields;  /// may be NULL, else is pointer to NULL terminated array
   lives_special_field_t **self_fields;  /// fields in the struct_def_t struct itself
-
-  uint32_t generation; ///< initialized as 1 and incremented on each copy
 
   void *class_data; /// user_data, value maintained across clones
   void *user_data; /// user_data for instances of struct, reset on copy

@@ -349,7 +349,8 @@ uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val) {
                 if (!strcmp(res[j], key2)) break;
               }
             }
-            if ((avcost = weed_get_double_value(*tuner, res[i], NULL) / (double)weed_get_int_value(*tuner, res[j], NULL)) < costmin
+            if ((avcost = weed_get_double_value(*tuner, res[i], NULL)
+                          / (double)weed_get_int_value(*tuner, res[j], NULL)) < costmin
                 || !gotcost) {
               costmin = avcost;
               bestval = xval;
@@ -831,6 +832,70 @@ uint64_t reget_afilesize_inner(int fileno) {
 }
 
 
+/**
+   @brief create a list from a (sub)directory
+   '.' and '..' are ignored
+   subdir can be NULL
+*/
+void *dir_to_file_details(LiVESList **listp, const char *dir, const char *tsubdir, uint64_t extra) {
+  lives_file_dets_t *fdets;
+  DIR *tldir, *subdir;
+  struct dirent *tdirent, *subdirent;
+  char *subdirname;
+  boolean empty = TRUE;
+  g_print("PARSE dir %s\n", dir);
+  if (!dir) return NULL;
+  tldir = opendir(dir);
+  if (!tldir) return NULL;
+
+  while (1) {
+    tdirent = readdir(tldir);
+    if (!tdirent) {
+      closedir(tldir);
+      g_print("PARSExxxxx dir %s\n", dir);
+      break;
+    }
+
+    if (!strncmp(tdirent->d_name, "..", strlen(tdirent->d_name))) continue;
+
+    g_print("PARSExxxxxxzxzxzxz dir %s\n", dir);
+    if (tsubdir) {
+      g_print("PARSExsssskok dir %s\n", tdirent->d_name);
+      if (!lives_strcmp(tdirent->d_name, tsubdir)) {
+        closedir(tldir);
+        subdirname = lives_build_filename(dir, tsubdir, NULL);
+        g_print("PARSExs44444444ssskok dir %s\n", subdirname);
+        subdir = opendir(subdirname);
+        lives_free(subdirname);
+        if (!subdir) break;
+        while (1) {
+          subdirent = readdir(subdir);
+          if (!subdirent) {
+            closedir(subdir);
+            break;
+          }
+          g_print("PARSExsssskok zzzzdir %s\n", subdirent->d_name);
+          if (!strncmp(subdirent->d_name, "..", strlen(subdirent->d_name))) continue;
+          fdets = (lives_file_dets_t *)lives_calloc(1, sizeof(lives_file_dets_t));
+          fdets->name = lives_strdup(subdirent->d_name);
+          fdets->size = -1;
+          *listp = lives_list_append(*listp, fdets);
+        }
+        break;
+      }
+    }
+  }
+  if (*listp) empty = FALSE;
+  *listp = lives_list_append(*listp, NULL);
+  if (empty) return NULL;
+
+  // listing done, now get details for each entry
+
+
+  return NULL;
+}
+
+
 #ifdef PRODUCE_LOG
 // disabled by default
 void lives_log(const char *what) {
@@ -876,6 +941,7 @@ int check_for_bad_ffmpeg(void) {
 
 LIVES_GLOBAL_INLINE char *lives_concat(char *st, char *x) {
   /// nb: lives strconcat
+  // uses realloc / memcpy, frees x
   size_t s1 = lives_strlen(st), s2 = lives_strlen(x);
   char *tmp = (char *)lives_realloc(st, ++s2 + s1);
   lives_memcpy(tmp + s1, x, s2);
@@ -916,13 +982,15 @@ LIVES_GLOBAL_INLINE const char *lives_strappendf(const char *string, int len, co
 			       : (nulmask & 2155872256ul) ? ((nulmask & 2147483648ul) ? 4 : 5) : ((nulmask & 32768ul) ? 6 : 7))
 
 LIVES_GLOBAL_INLINE size_t lives_strlen(const char *s) {
-  uint64_t *pi = (uint64_t *)s, nulmask;
   if (!s) return 0;
 #ifndef STD_STRINGFUNCS
-  if ((void *)pi == (void *)s) {
-    while (!(nulmask = hasNulByte(*pi))) pi++;
-    return (char *)pi - s + (capable->byte_order == LIVES_LITTLE_ENDIAN ? getnulpos(nulmask)
-                             : getnulpos_be(nulmask));
+  else {
+    uint64_t *pi = (uint64_t *)s, nulmask;
+    if ((void *)pi == (void *)s) {
+      while (!(nulmask = hasNulByte(*pi))) pi++;
+      return (char *)pi - s + (capable->byte_order == LIVES_LITTLE_ENDIAN ? getnulpos(nulmask)
+                               : getnulpos_be(nulmask));
+    }
   }
 #endif
   return strlen(s);
@@ -930,15 +998,18 @@ LIVES_GLOBAL_INLINE size_t lives_strlen(const char *s) {
 
 
 LIVES_GLOBAL_INLINE char *lives_strdup_quick(const char *s) {
-  uint64_t *pi = (uint64_t *)s, nulmask, stlen;
   if (!s) return NULL;
 #ifndef STD_STRINGFUNCS
-  if ((void *)pi == (void *)s) {
-    while (!(nulmask = hasNulByte(*pi))) pi++;
-    stlen = (char *)pi - s + 1
-            + (capable->byte_order == LIVES_LITTLE_ENDIAN)
-            ? getnulpos(nulmask) : getnulpos_be(nulmask);
-    return lives_memcpy(lives_malloc(stlen), s, stlen);
+  else {
+    uint64_t *pi = (uint64_t *)s, nulmask, stlen;
+    if (!s) return NULL;
+    if ((void *)pi == (void *)s) {
+      while (!(nulmask = hasNulByte(*pi))) pi++;
+      stlen = (char *)pi - s + 1
+              + (capable->byte_order == LIVES_LITTLE_ENDIAN)
+              ? getnulpos(nulmask) : getnulpos_be(nulmask);
+      return lives_memcpy(lives_malloc(stlen), s, stlen);
+    }
   }
 #endif
   return lives_strdup(s);
@@ -1034,7 +1105,7 @@ LIVES_GLOBAL_INLINE uint32_t lives_string_hash(const char *st) {
 }
 
 LIVES_GLOBAL_INLINE char *lives_strstop(char *st, const char term) {
-  /// trumcate st, replacing sterm with \0
+  /// trumcate st, replacing term with \0
   if (st && term) for (char *p = (char *)st; *p; p++) if (*p == term) {*p = 0; return st;}
   return st;
 }
@@ -1356,8 +1427,15 @@ lives_thread_data_t *get_thread_data(void) {
   return NULL;
 }
 
+
 LIVES_GLOBAL_INLINE lives_threadvars_t *get_threadvars(void) {
-  return &get_thread_data()->vars;
+  static lives_threadvars_t *dummyvars = NULL;
+  lives_thread_data_t *thrdat = get_thread_data();
+  if (!thrdat) {
+    if (!dummyvars) dummyvars = lives_calloc(1, sizeof(lives_threadvars_t));
+    return dummyvars;
+  }
+  return &thrdat->vars;
 }
 
 static lives_thread_data_t *get_thread_data_by_id(uint64_t idx) {
@@ -1986,3 +2064,244 @@ void update_effort(int nthings, boolean badthings) {
   //g_print("STRG %d and %d %d %d\n", struggling, mainw->effort, dfcount, prefs->pb_quality);
 }
 
+
+char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase, int ridx, int rlen) {
+  char **lines, **words, **mwords;
+  char *match = NULL;
+  char buff[65536];
+  size_t nlines, mwlen;
+  int m, minpieces;
+
+  if (!mphrase || npieces < -1 || !npieces || rlen < 1 || (ridx <= mstart && ridx + rlen > mstart)
+      || (npieces > 0 && (ridx + rlen > npieces || mstart >= npieces))) return NULL;
+
+  mwlen = get_token_count(mphrase, ' ');
+  if (mstart + mwlen > npieces
+      || (ridx + rlen > mstart && ridx < mstart + mwlen)) return NULL;
+
+  mwords = lives_strsplit(mphrase, " ", mwlen);
+
+  if (!cmd || !mphrase || !*cmd || !*mphrase) goto grpcln;
+  THREADVAR(com_failed) = FALSE;
+  lives_popen(cmd, FALSE, buff, 65536);
+  if (THREADVAR(com_failed)
+      || (!*buff || !(nlines = get_token_count(buff, '\n')))) {
+    THREADVAR(com_failed) = FALSE;
+    goto grpcln;
+  }
+
+  minpieces = MAX(mstart + mwlen, ridx + rlen);
+
+  lines = lives_strsplit(buff, "\n", nlines);
+  for (int l = 0; l < nlines; l++) {
+    if (*lines[l] && get_token_count(lines[l], ' ') >= minpieces) {
+      words = lives_strsplit(lines[l], " ", npieces);
+      for (m = 0; m < mwlen; m++) {
+	if (lives_strcmp(words[m + mstart], mwords[m])) break;
+      }
+      if (m == mwlen) {
+	match = lives_strdup(words[ridx]);
+	for (int w = 1; w < rlen; w++) {
+	  char *tmp = lives_strdup_printf(" %s", words[ridx + w]);
+	  match = lives_concat(match, tmp);
+	}
+      }
+      lives_strfreev(words);
+    }
+    if (match) break;
+  }
+  lives_strfreev(lines);
+ grpcln:
+  lives_strfreev(mwords);
+  return match;
+}
+
+
+/// x11 stuff
+static boolean mini_run(char *cmd) {
+  THREADVAR(com_failed) = FALSE;
+  if (!cmd) return FALSE;
+  lives_system(cmd, TRUE);
+  lives_free(cmd);
+  if (THREADVAR(com_failed)) {
+    THREADVAR(com_failed) = FALSE;
+    return FALSE;
+  }
+  return TRUE;
+}
+
+char *get_wid_for_name(const char *wname) {
+#ifndef GDK_WINDOWING_X11
+  return NULL;
+#else
+  char *wid = NULL, *cmd;
+  THREADVAR(com_failed) = FALSE;
+  if (check_for_executable(&capable->has_wmctrl, EXEC_WMCTRL)) {
+    cmd = lives_strdup_printf("%s -l", EXEC_WMCTRL);
+    wid = grep_in_cmd(cmd, 3, 4, wname, 0, 1);
+    lives_free(cmd);
+    if (wid) return wid;
+  }
+  if (check_for_executable(&capable->has_xwininfo, EXEC_XWININFO)) {
+    cmd = lives_strdup_printf("%s -name \"%s\" 2>/dev/null", EXEC_XWININFO, wname);
+    wid = grep_in_cmd(cmd, 1, -1, "Window id:", 3, 1);
+    lives_free(cmd);
+    if (wid) return wid;
+  }
+  if (check_for_executable(&capable->has_xdotool, EXEC_XDOTOOL)) {
+    char buff[65536];
+    size_t nlines;
+    // returns a list, and we need to check each one
+    cmd = lives_strdup_printf("%s search \"%s\"", EXEC_XDOTOOL, wname);
+    THREADVAR(com_failed) = FALSE;
+    lives_popen(cmd, FALSE, buff, 65536);
+    lives_free(cmd);
+    if (THREADVAR(com_failed)
+	|| (!*buff || !(nlines = get_token_count(buff, '\n')))) {
+      if (THREADVAR(com_failed)) THREADVAR(com_failed) = FALSE;
+    }
+    else {
+      char buff2[1024];
+      char **lines = lives_strsplit(buff, "\n", nlines);
+      for (int l = 0; l < nlines; l++) {
+	if (!*lines[l]) continue;
+	cmd = lives_strdup_printf("%s getwindowname %s", EXEC_XDOTOOL, lines[l]);
+	THREADVAR(com_failed) = FALSE;
+	lives_popen(cmd, FALSE, buff2, 1024);
+	lives_free(cmd);
+	if (THREADVAR(com_failed)) {
+	  THREADVAR(com_failed) = FALSE;
+	  break;
+	}
+	lives_chomp(buff2);
+	if (!lives_strcmp(wname, buff2)) {
+	  wid = lives_strdup_printf("0x%lX", atol(lines[l]));
+	  break;
+	}
+      }
+      lives_strfreev(lines);
+    }
+  }
+  return wid;
+#endif
+}
+
+
+boolean hide_x11_window(const char *wid) {
+  char *cmd = NULL;
+#ifndef GDK_WINDOWING_X11
+  return NULL;
+#endif
+  if (check_for_executable(&capable->has_xdotool, EXEC_XDOTOOL))
+    cmd = lives_strdup_printf("%s windowminimize \"%s\"", EXEC_XDOTOOL, wid);
+  return mini_run(cmd);
+}
+
+
+boolean unhide_x11_window(const char *wid) {
+  char *cmd = NULL;
+#ifndef GDK_WINDOWING_X11
+  return FALSE;
+#endif
+  if (check_for_executable(&capable->has_xdotool, EXEC_XDOTOOL))
+    cmd = lives_strdup_printf("%s windowmap \"%s\"", EXEC_XDOTOOL, wid);
+  return mini_run(cmd);
+}
+
+boolean activate_x11_window(const char *wid) {
+  char *cmd = NULL;
+#ifndef GDK_WINDOWING_X11
+  return FALSE;
+#endif
+  if (check_for_executable(&capable->has_xdotool, EXEC_XDOTOOL))
+    cmd = lives_strdup_printf("%s windowactivate \"%s\"", EXEC_XDOTOOL, wid);
+  else if (check_for_executable(&capable->has_wmctrl, EXEC_WMCTRL))
+    cmd = lives_strdup_printf("%s -Fa \"%s\"", EXEC_WMCTRL, wid);
+  return mini_run(cmd);
+}
+
+boolean show_desktop_panel(void) {
+  boolean ret = FALSE;
+#ifdef GDK_WINDOWING_X11
+  char *wid = get_wid_for_name("xfce4-panel");
+  if (wid) {
+    ret = unhide_x11_window(wid);
+    lives_free(wid);
+  }
+#endif
+  return ret;
+}
+
+boolean hide_desktop_panel(void) {
+  boolean ret = FALSE;
+#ifdef GDK_WINDOWING_X11
+  char *wid = get_wid_for_name("xfce4-panel");
+  if (wid) {
+    ret = hide_x11_window(wid);
+    lives_free(wid);
+  }
+#endif
+  return ret;
+}
+
+
+boolean get_x11_visible(const char *wname) {
+  char *cmd = NULL;
+#ifndef GDK_WINDOWING_X11
+  return FALSE;
+#endif
+  if (0 && check_for_executable(&capable->has_xwininfo, EXEC_XWININFO)) {
+    char *state;
+    cmd = lives_strdup_printf("%s -name \"%s\"", EXEC_XWININFO, wname);
+    state = grep_in_cmd(cmd, 2, -1, "Map State:", 4, 1);
+    lives_free(cmd);
+    if (state && !strcmp(state, "IsViewable")) {
+      lives_free(state);
+      return TRUE;
+    }
+  }
+  if (wname && check_for_executable(&capable->has_xdotool, EXEC_XDOTOOL)) {
+    char buff[65536];
+    size_t nlines;
+
+    // returns a list, and we need to check each one
+    cmd = lives_strdup_printf("%s search --all --onlyvisible \"%s\" 2>/dev/null", EXEC_XDOTOOL, wname);
+    THREADVAR(com_failed) = FALSE;
+    lives_popen(cmd, FALSE, buff, 65536);
+    lives_free(cmd);
+    if (THREADVAR(com_failed)
+	|| (!*buff || !(nlines = get_token_count(buff, '\n')))) {
+      if (THREADVAR(com_failed)) THREADVAR(com_failed) = FALSE;
+    }
+    else {
+      char *wid = get_wid_for_name(wname);
+      if (wid) {
+	int l;
+	char **lines = lives_strsplit(buff, "\n", nlines), *xwid;
+	for (l = 0; l < nlines; l++) {
+	  if (!*lines[l]) continue;
+	  xwid = lives_strdup_printf("0x%08lX", atol(lines[l]));
+	  if (!strcmp(xwid, wid)) break;
+	}
+	lives_strfreev(lines);
+	lives_free(wid);
+	if (l < nlines)  return TRUE;
+      }
+    }
+  }
+  return FALSE;
+}
+
+#define WM_XFWM4 "Xfwm4"
+#define WM_XFCE4_PANEL "xfce4-panel"
+
+
+void get_wm_caps(const char *wm_name) {
+  if (wm_name) {
+    if (!strcmp(wm_name, WM_XFWM4)) {
+      capable->has_wm_caps = TRUE;
+      capable->wm_caps = (wm_caps_t){WM_XFCE4_PANEL};
+    }
+    else capable->has_wm_caps = FALSE;
+  }
+}

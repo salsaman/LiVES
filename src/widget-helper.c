@@ -4336,6 +4336,9 @@ LIVES_GLOBAL_INLINE boolean lives_button_set_image_from_stock(LiVESButton *butto
   if (!strcmp(stock_id, LIVES_STOCK_YES)) stock_id = LIVES_STOCK_APPLY;
   if (!strcmp(stock_id, LIVES_STOCK_NO)) stock_id = LIVES_STOCK_STOP;
 
+  if (!strcmp(stock_id, LIVES_STOCK_OK)) stock_id = LIVES_STOCK_APPLY;
+  if (!strcmp(stock_id, LIVES_STOCK_CANCEL)) stock_id = LIVES_STOCK_STOP;
+
   if (!is_standard_widget(LIVES_WIDGET(button))) {
     if (stock_id && (widget_opts.show_button_images
                      || !strcmp(stock_id, LIVES_STOCK_ADD)
@@ -8921,7 +8924,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_pack(LiVESHBox *box, LiVES
       lives_widget_object_set_data_list(LIVES_WIDGET_OBJECT(layout), EXP_LIST_KEY, xwidgets);
     }
   }
-  lives_box_pack_start(LIVES_BOX(box), widget, FALSE, TRUE, LIVES_SHOULD_EXPAND_WIDTH
+  lives_box_pack_start(LIVES_BOX(box), widget, LIVES_SHOULD_EXPAND_EXTRA_WIDTH,
+                       TRUE, LIVES_SHOULD_EXPAND_WIDTH
                        ? widget_opts.packing_width >> 1 : 0);
   lives_widget_set_halign(widget, lives_justify_to_align(widget_opts.justify));
   return widget;
@@ -9842,6 +9846,8 @@ LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, Li
   //char *tmp;
 
   boolean expand;
+
+  swtch = lives_switch_new();
 
   widget_opts.last_label = NULL;
 

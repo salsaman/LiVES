@@ -22,4 +22,6 @@ void check_random(void);
 
 void lives_struct_test(void);
 
+void benchmark(void);
+
 #endif

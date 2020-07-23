@@ -25,6 +25,7 @@
 // real_main() [parse startup opts]
 // real_main() -> lives_startup() [added as idle function]
 // lives_startup ->lives_init
+// lives_startup2 [added as idle from lives_startup]
 // real_main() -> gtk_main()
 
 // idlefuncion:
@@ -1548,6 +1549,21 @@ static void lives_init(_ign_opts *ign_opts) {
 
   future_prefs->pref_trash = prefs->pref_trash = get_boolean_prefd(PREF_PREF_TRASH, FALSE);
 
+  // get window manager capabilities
+#ifdef GDK_WINDOWING_WAYLAND
+  if (GDK_IS_WAYLAND_DISPLAY(mainw->mgeom[0].disp))
+    capable->wm = lives_strdup("Wayland");
+#endif
+#ifdef GDK_WINDOWING_X11
+  if (GDK_IS_X11_DISPLAY(mainw->mgeom[0].disp))
+    capable->wm = lives_strdup(gdk_x11_screen_get_window_manager_name(gdk_screen_get_default()));
+#endif
+
+  get_wm_caps(capable->wm);
+
+  if (capable->has_wm_caps && capable->wm_caps.panel) {
+    prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);;
+  }
   //////////////////////////////////////////////////////////////////
 
   if (!mainw->foreign) {
@@ -1996,7 +2012,8 @@ static void lives_init(_ign_opts *ign_opts) {
           mainw->jackd->whentostop = &mainw->whentostop;
           mainw->jackd->cancelled = &mainw->cancelled;
           mainw->jackd->in_use = FALSE;
-          mainw->jackd->play_when_stopped = (prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED) ? FALSE : TRUE;
+          mainw->jackd->play_when_stopped = (prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED)
+                                            ? FALSE : TRUE;
 
           jack_write_driver_activate(mainw->jackd);
 
@@ -2078,7 +2095,7 @@ static void do_start_messages(void) {
 
   if (prefs->vj_mode) {
     d_print(_("Starting in VJ MODE: Skipping startup dependency checks\n"));
-    return;
+    goto some_more;
   }
 
   d_print(_("\nChecking RECOMMENDED dependencies: "));
@@ -2111,24 +2128,13 @@ static void do_start_messages(void) {
   SHOWDET(gdb);
   SHOWDETx(gconftool_2, EXEC_GCONFTOOL_2);
   SHOWDETx(xdg_screensaver, EXEC_XDG_SCREENSAVER);
+
+some_more:
   if (prefs->vj_mode)
     SHOWDET(wmctrl);
 
-#ifdef GDK_WINDOWING_WAYLAND
-  if (GDK_IS_WAYLAND_DISPLAY(mainw->mgeom[0].disp))
-    capable->wm = lives_strdup("Wayland");
-#endif
-#ifdef GDK_WINDOWING_X11
-  if (GDK_IS_X11_DISPLAY(mainw->mgeom[0].disp))
-    capable->wm = lives_strdup(gdk_x11_screen_get_window_manager_name(gdk_screen_get_default()));
-#endif
-  if (capable->wm == NULL)
-    capable->wm = lives_strdup((_("UNKNOWN - please patch me !")));
-
-  d_print(_("\n\nWindow manager reports as \"%s\"; "), capable->wm);
-
+  d_print(_("\n\nWindow manager reports as \"%s\"; "), capable->wm ? capable->wm : _("UNKNOWN - please patch me !"));
   d_print(_("number of monitors detected: %d\n"), capable->nmonitors);
-
   d_print(_("Number of CPUs detected: %d "), capable->ncpus);
 
   if (capable->byte_order == LIVES_LITTLE_ENDIAN) endian = (_("little endian"));
@@ -2168,8 +2174,13 @@ static void do_start_messages(void) {
   d_print(_("\n"));
 #endif
 
-  d_print("GUI theme set to %s, icon theme set to %s\n", capable->gui_theme_name,
+  if (*capable->gui_theme_name) tmp = lives_strdup(capable->gui_theme_name);
+  else tmp = lives_strdup_printf("lives-%s-dynamic", prefs->theme);
+
+  d_print("GUI theme set to %s, icon theme set to %s\n", tmp,
           capable->icon_theme_name);
+
+  lives_free(tmp);
 
 #ifndef RT_AUDIO
   d_print(_("WARNING - this version of LiVES was compiled without either\njack or pulseaudio support.\n"
@@ -2183,7 +2194,9 @@ static void do_start_messages(void) {
 #endif
 #endif
 
-  d_print(_("Gui screen size is %d X %d, scale was set to %.3f\n"), GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT, widget_opts.scale);
+  d_print(_("Gui screen size is %d X %d (usable %d X %d), scale was set to %.3f\n"), GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT,
+          mainw->mgeom[widget_opts.monitor].phys_width, mainw->mgeom[widget_opts.monitor].phys_height,
+          widget_opts.scale);
   if (get_screen_usable_size(&w, &h)) {
     d_print(_("GUI Screen usable size appears to be %d X %d, with %d dpi.\n"), w, h, (int)mainw->mgeom[widget_opts.monitor].dpi);
   }
@@ -3453,7 +3466,6 @@ static boolean lives_startup(livespointer data) {
 
 static boolean lives_startup2(livespointer data) {
   boolean layout_recovered = FALSE;
-  char *tmp;
 
   if (prefs->crash_recovery && !no_recover) got_files = check_for_recovery_files(auto_recover);
 
@@ -3470,7 +3482,10 @@ static boolean lives_startup2(livespointer data) {
   if (prefs->osc_start) prefs->osc_udp_started = lives_osc_init(prefs->osc_udp_port);
 #endif
 
-  if (mainw->recoverable_layout && !prefs->vj_mode) layout_recovered = do_layout_recover_dialog();
+  if (mainw->recoverable_layout) {
+    if (!prefs->vj_mode) layout_recovered = do_layout_recover_dialog();
+    else mainw->recoverable_layout = FALSE;
+  }
 
   if (!mainw->recording_recovered) {
     if (mainw->ascrap_file != -1) {
@@ -3528,11 +3543,12 @@ static boolean lives_startup2(livespointer data) {
   if (mainw->multitrack == NULL) {
     sensitize();
   }
-  if (prefs->vj_mode && capable->has_wmctrl) {
-    tmp = lives_strdup_printf("%s -Fa \"%s\"", EXEC_WMCTRL,
-                              lives_window_get_title(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET)));
-    lives_system(tmp, TRUE);
-    lives_free(tmp);
+  if (prefs->vj_mode) {
+    char *wid =
+      lives_strdup_printf("0x%08lx",
+                          (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow
+                              (LIVES_MAIN_WINDOW_WIDGET)));
+    if (wid) activate_x11_window(wid);
   }
   if (mainw->recording_recovered) {
     lives_idle_add(render_choice_idle, NULL);
@@ -3727,9 +3743,9 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   _weed_leaf_set_flags = weed_leaf_set_flags;
 
   init_random();
-  //check_random();
 
 #ifdef ENABLE_DIAGNOSTICS
+  check_random();
   run_weed_startup_tests();
   lives_struct_test();
   test_palette_conversions();
@@ -6536,6 +6552,10 @@ fndone:
       }
 
       switch (clip_type) {
+      case CLIP_TYPE_NULL_VIDEO:
+        mainw->osc_block = FALSE;
+        create_blank_layer(layer, image_ext, width, height, target_palette);
+        return TRUE;
       case CLIP_TYPE_DISK:
       case CLIP_TYPE_FILE:
         // frame number can be 0 during rendering
@@ -8977,11 +8997,14 @@ void load_frame_image(int frame) {
 
         if (!mainw->go_away && !LIVES_IS_PLAYING && CURRENT_CLIP_IS_NORMAL) {
           mainw->no_context_update = TRUE;
+
           reget_afilesize(mainw->current_file);
+
           mainw->no_context_update = FALSE;
         }
 
         if (new_file > 0) {
+          // redreaw the timer bars (video / left audio / right audio)
           lives_ce_update_timeline(0, cfile->real_pointer_time);
         }
         if (!CURRENT_CLIP_IS_VALID) return;
@@ -9234,9 +9257,11 @@ void load_frame_image(int frame) {
               mainw->pulsed->in_asamps = mainw->files[new_file]->asampsize;
               if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
                 if (!mainw->files[new_file]->play_paused)
-                  mainw->pulsed->in_arate = mainw->files[new_file]->arate * mainw->files[new_file]->pb_fps /
+                  mainw->pulsed->in_arate = mainw->files[new_file]->arate
+                                            * mainw->files[new_file]->pb_fps /
                                             mainw->files[new_file]->fps;
-                else mainw->pulsed->in_arate = mainw->files[new_file]->arate * mainw->files[new_file]->freeze_fps /
+                else mainw->pulsed->in_arate = mainw->files[new_file]->arate
+                                                 * mainw->files[new_file]->freeze_fps /
                                                  mainw->files[new_file]->fps;
               } else mainw->pulsed->in_arate = mainw->files[new_file]->arate;
               if (mainw->files[new_file]->adirection == LIVES_DIRECTION_REVERSE)
@@ -9297,7 +9322,8 @@ void load_frame_image(int frame) {
             if (!mainw->files[new_file]->play_paused)
               nullaudio_arate_set(mainw->files[new_file]->arate * mainw->files[new_file]->pb_fps /
                                   mainw->files[new_file]->fps);
-            else nullaudio_arate_set(mainw->files[new_file]->arate * mainw->files[new_file]->freeze_fps /
+            else nullaudio_arate_set(mainw->files[new_file]->arate
+                                       * mainw->files[new_file]->freeze_fps /
                                        mainw->files[new_file]->fps);
           } else nullaudio_arate_set(mainw->files[new_file]->arate);
           nullaudio_seek_set(mainw->files[new_file]->aseek_pos);
@@ -9514,7 +9540,7 @@ void load_frame_image(int frame) {
           lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
         }
 
-        if (mainw->play_window != NULL) return;
+        //if (mainw->play_window != NULL) return;
 
         hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
         vsize = scr_height - (CE_TIMELINE_HSPACE + hspace + by + mainw->mbar_res);

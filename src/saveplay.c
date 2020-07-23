@@ -2834,6 +2834,7 @@ void play_file(void) {
   mainw->osc_auto = 0;
 
   if (mainw->loop_locked) unlock_loop_lock();
+  lives_widget_set_size_request(mainw->message_box, -1, MIN_MSGBAR_HEIGHT);
 
 #ifdef ENABLE_JACK
   if (audio_player == AUD_PLAYER_JACK && (mainw->jackd != NULL || mainw->jackd_read != NULL)) {
@@ -3082,6 +3083,11 @@ void play_file(void) {
 
   /// kill the separate play window
   if (mainw->play_window != NULL) {
+    if (mainw->fs) {
+      if (prefs->show_desktop_panel) {
+        show_desktop_panel();
+      }
+    }
     lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
     if (prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY) {
       kill_play_window();
@@ -3411,12 +3417,13 @@ int close_temp_handle(int new_clip) {
    @brief get next free file slot, or -1 if we are full
 
   can support MAX_FILES files (default 65536) */
-static void get_next_free_file(void) {
-  mainw->first_free_file++;
+static int get_next_free_file(void) {
+  int idx = mainw->first_free_file++;
   while ((mainw->first_free_file != ALL_USED) && mainw->files[mainw->first_free_file] != NULL) {
     mainw->first_free_file++;
     if (mainw->first_free_file >= MAX_FILES) mainw->first_free_file = ALL_USED;
   }
+  return idx;
 }
 
 
@@ -3674,6 +3681,21 @@ LIVES_GLOBAL_INLINE char *get_untitled_name(int number) {
   return lives_strdup_printf(_("Untitled%d"), number);
 }
 
+
+int create_nullvideo_file(const char *handle) {
+  // create a file with no video, just produces blank frames
+  // may be used to playback with audio, for testign etc.
+  int new_file;
+  int current_file = mainw->current_file;
+  create_cfile(-1, handle, TRUE);
+  new_file = mainw->current_file;
+  cfile->hsize = 640;
+  cfile->vsize = 480;
+  cfile->fps = 25.;
+  cfile->end = cfile->frames = 1000;
+  mainw->current_file = current_file;
+  switch_clip(1, new_file, FALSE);
+}
 
 boolean get_new_handle(int index, const char *name) {
   // here is where we first initialize for the clipboard
@@ -4032,7 +4054,8 @@ boolean save_frame_inner(int clip, int frame, const char *file_name, int width, 
   int result;
 
   if (!from_osc && strrchr(file_name, '.') == NULL) {
-    lives_snprintf(full_file_name, PATH_MAX, "%s.%s", file_name, get_image_ext_for_type(sfile->img_type));
+    lives_snprintf(full_file_name, PATH_MAX, "%s.%s", file_name,
+                   get_image_ext_for_type(sfile->img_type));
   } else {
     lives_snprintf(full_file_name, PATH_MAX, "%s", file_name);
     if (!allow_over) allow_over = TRUE;
@@ -6351,6 +6374,8 @@ boolean check_for_recovery_files(boolean auto_recover) {
   retval = recover_files((recovery_file = lives_strdup_printf("%s/recovery.%d.%d.%d", prefs->workdir, luid,
                                           lgid, recpid)), auto_recover);
   lives_free(recovery_file);
+
+  if (prefs->vj_mode) return TRUE;
 
   if (!retval) {
     com = lives_strdup_printf("%s clean_recovery_files %d %d \"%s\" %d", prefs->backend_sync, luid, lgid, capable->myname,

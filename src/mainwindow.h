@@ -128,7 +128,7 @@
 #define DEF_FRAME_VSIZE_GUI (((int)(DEF_FRAME_VSIZE_43S_UNSCALED * widget_opts.scale) >> 1) << 1)
 
 // min screen height to show the message area
-#define MIN_MSGBAR_HEIGHT (widget_opts.scale >= 1. ? ((int)32. * widget_opts.scale) : 46)
+#define MIN_MSGBAR_HEIGHT (widget_opts.scale >= 1. ? ((int)46. * widget_opts.scale) : 46)
 #define MIN_MSG_AREA_SCRNHEIGHT (DEF_FRAME_HSIZE_GUI + CE_TIMELINE_HSPACE - MIN_MSGBAR_HEIGHT)
 #define MIN_MSGBOX_LLINES 2
 
@@ -418,6 +418,7 @@ enum {
 #define EXEC_GCONFTOOL_2 "gconftool-2"
 #define EXEC_XDG_SCREENSAVER "xdg-screensaver"
 #define EXEC_WMCTRL "wmctrl"
+#define EXEC_XDOTOOL "xdotool"
 #define EXEC_PLAY "play"
 #define EXEC_GIO "gio"
 

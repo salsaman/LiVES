@@ -1066,7 +1066,13 @@ static char *explain_missing(const char *exe) {
         "Youtube and other sites.\n\n"));
   else if (!lives_strcmp(exe, EXEC_XWININFO)) pt2 = (_("Enables identification of external windows "
         "so that they can be recorded.\n\n"));
-  else return lives_strdup_free(pt1, "");
+  else {
+    lives_free(pt1);
+    pt1 = lives_strdup_printf(_("\t'%s' was not found on your system.\n"
+                                "Installation is optional, but may enable additionl features\n\t- "), exe);
+    if (!lives_strcmp(exe, EXEC_XDOTOOL)) pt2 = (_("Enables adjustment of windows within the desktop,\n\n"));
+    else return lives_strdup_free(pt1, "");
+  }
   return lives_concat(pt1, pt2);
 }
 

@@ -6141,9 +6141,9 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       nitems = 1; /// TODO
 
       if (nitems) {
-        /* dir_to_file_details(&rec_list, full_trashdir, TRASH_RECOVER, EXTRA_DETAILS_CLIP); */
-        /* dir_to_file_details(&rem_list, full_trashdir, TRASH_REMOVE, 0); */
-        /* dir_to_file_details(&left_list, full_trashdir, TRASH_LEAVE, 0); */
+        dir_to_file_details(&rec_list, full_trashdir, TRASH_RECOVER, EXTRA_DETAILS_CLIP);
+        dir_to_file_details(&rem_list, full_trashdir, TRASH_REMOVE, 0);
+        dir_to_file_details(&left_list, full_trashdir, TRASH_LEAVE, 0);
       }
 
       widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH;
@@ -7511,7 +7511,9 @@ void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       // switch from fullscreen during pb
       if (mainw->sep_win) {
         // separate window
-
+        if (prefs->show_desktop_panel) {
+          show_desktop_panel();
+        }
         if (mainw->ext_playback) {
 #ifndef IS_MINGW
           vid_playback_plugin_exit();
@@ -7575,10 +7577,9 @@ void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
             lives_widget_show(mainw->t_bckground);
             lives_widget_show(mainw->t_double);
-          }
-        }
-      }
-    }
+	    // *INDENT-OFF*
+          }}}}
+    // *INDENT-ON*
     mainw->force_show = TRUE;
   } else {
     // not playing
@@ -7589,9 +7590,9 @@ void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       } else {
         lives_widget_set_sensitive(mainw->fade, TRUE);
         lives_widget_set_sensitive(mainw->dsize, TRUE);
-      }
-    }
-  }
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
 }
 
 
@@ -7723,11 +7724,8 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_tool_button_set_icon_widget(LIVES_TOOL_BUTTON(mainw->t_sepwin), sep_img2);
 
   if (prefs->sepwin_type == SEPWIN_TYPE_STICKY && !LIVES_IS_PLAYING) {
-    if (mainw->sep_win) {
-      make_play_window();
-    } else {
-      kill_play_window();
-    }
+    if (mainw->sep_win) make_play_window();
+    else kill_play_window();
     lives_widget_context_update();
     /* if (mainw->multitrack != NULL && !LIVES_IS_PLAYING) { */
     /*   activate_mt_preview(mainw->multitrack); // show frame preview */
@@ -7736,7 +7734,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     if (LIVES_IS_PLAYING) {
       if (mainw->sep_win) {
         // switch to separate window during pb
-        if (mainw->multitrack == NULL) {
+        if (!mainw->multitrack) {
           if (!prefs->hide_framebar && !mainw->faded && ((!mainw->preview && (CURRENT_CLIP_HAS_VIDEO || mainw->foreign)) ||
               (CURRENT_CLIP_IS_VALID &&
                cfile->opening))) {
@@ -7810,12 +7808,15 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
           vid_playback_plugin_exit();
 #endif
         }
+        if (mainw->fs) {
+          if (prefs->show_desktop_panel) {
+            show_desktop_panel();
+          }
+        }
 
         kill_play_window();
 
-        if (!mainw->fs && mainw->multitrack == NULL) {
-          /* mainw->pwidth = DEF_FRAME_HSIZE_GUI; */
-          /* mainw->pheight = DEF_FRAME_VSIZE_GUI; */
+        if (!mainw->fs && !mainw->multitrack) {
           lives_widget_show_all(mainw->playframe);
 
           lives_widget_show(mainw->t_bckground);
@@ -7837,11 +7838,10 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
           if (mainw->multitrack == NULL && CURRENT_CLIP_HAS_VIDEO) {
             fade_background();
             fullscreen_internal();
-          }
-        }
+	    // *INDENT-OFF*
+          }}
 
         hide_cursor(lives_widget_get_xwindow(mainw->playarea));
-	// *INDENT-OFF*
       }}}
   // *INDENT-ON*
   if (LIVES_IS_PLAYING) mainw->force_show = TRUE;
@@ -7856,9 +7856,9 @@ void on_showfct_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     } else {
       if (prefs->hide_framebar) {
         lives_widget_hide(mainw->framebar);
-      }
-    }
-  }
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
 }
 
 
@@ -8143,20 +8143,17 @@ void on_mute_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
+#define GEN_SPB_LINK(n, bit) case n: mainw->fx##n##_##bit = \
+    lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton)); break
+#define GEN_SPB_LINK_I(n, bit) case n: mainw->fx##n##_##bit = \
+    lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton)); break
+
 void on_spin_value_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
   // TODO - use array
   switch (LIVES_POINTER_TO_INT(user_data)) {
-  case 1:
-    mainw->fx1_val = lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton));
-    break;
-  case 2:
-    mainw->fx2_val = lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton));
-    break;
-  case 3:
-    mainw->fx3_val = lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton));
-    break;
-  case 4:
-    mainw->fx4_val = lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton));
+    GEN_SPB_LINK(1, val); GEN_SPB_LINK(2, val);
+    GEN_SPB_LINK(3, val); GEN_SPB_LINK(4, val);
+  default:
     break;
   }
 }
@@ -8166,17 +8163,9 @@ void on_spin_start_value_changed(LiVESSpinButton * spinbutton, livespointer user
   // generic
   // TODO - use array
   switch (LIVES_POINTER_TO_INT(user_data)) {
-  case 1:
-    mainw->fx1_start = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
-    break;
-  case 2:
-    mainw->fx2_start = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
-    break;
-  case 3:
-    mainw->fx3_start = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
-    break;
-  case 4:
-    mainw->fx4_start = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
+    GEN_SPB_LINK_I(1, start); GEN_SPB_LINK_I(2, start);
+    GEN_SPB_LINK_I(3, start); GEN_SPB_LINK_I(4, start);
+  default:
     break;
   }
 }
@@ -8186,17 +8175,9 @@ void on_spin_step_value_changed(LiVESSpinButton * spinbutton, livespointer user_
   // generic
   // TODO - use array
   switch (LIVES_POINTER_TO_INT(user_data)) {
-  case 1:
-    mainw->fx1_step = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
-    break;
-  case 2:
-    mainw->fx2_step = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
-    break;
-  case 3:
-    mainw->fx3_step = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
-    break;
-  case 4:
-    mainw->fx4_step = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
+    GEN_SPB_LINK_I(1, step); GEN_SPB_LINK_I(2, step);
+    GEN_SPB_LINK_I(3, step); GEN_SPB_LINK_I(4, step);
+  default:
     break;
   }
 }
@@ -8206,17 +8187,9 @@ void on_spin_end_value_changed(LiVESSpinButton * spinbutton, livespointer user_d
   // generic
   // TODO - use array
   switch (LIVES_POINTER_TO_INT(user_data)) {
-  case 1:
-    mainw->fx1_end = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
-    break;
-  case 2:
-    mainw->fx2_end = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
-    break;
-  case 3:
-    mainw->fx3_end = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
-    break;
-  case 4:
-    mainw->fx4_end = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
+    GEN_SPB_LINK_I(1, end); GEN_SPB_LINK_I(2, end);
+    GEN_SPB_LINK_I(3, end); GEN_SPB_LINK_I(4, end);
+  default:
     break;
   }
 }
@@ -9751,7 +9724,7 @@ boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespo
     mainw->configured = TRUE;
     return FALSE;
   }
-  if (widget == LIVES_MAIN_WINDOW_WIDGET) {
+  if (widget == LIVES_MAIN_WINDOW_WIDGET && !mainw->ignore_screen_size) {
     int scr_width, scr_height;
     scr_width = GUI_SCREEN_WIDTH;
     scr_height = GUI_SCREEN_HEIGHT;

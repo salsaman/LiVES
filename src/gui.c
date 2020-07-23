@@ -55,7 +55,7 @@ LIVES_GLOBAL_INLINE int get_hspace(void) {
   static int hspace = -1;
   if (hspace == -1) {
     LiVESPixbuf *sepbuf = lives_image_get_pixbuf(LIVES_IMAGE(mainw->sep_image));
-    hspace = sepbuf  != NULL ? lives_pixbuf_get_height(sepbuf) : 0;
+    hspace = (sepbuf != NULL ? lives_pixbuf_get_height(sepbuf) : 0);
   }
   return hspace;
 }
@@ -1561,7 +1561,7 @@ void create_LiVES(void) {
   mainw->troubleshoot = lives_standard_menu_item_new_with_label(_("_Troubleshoot"));
   lives_container_add(LIVES_CONTAINER(mainw->help_menu), mainw->troubleshoot);
 
-  mainw->expl_missing = lives_standard_menu_item_new_with_label(_("Check for Missing Features"));
+  mainw->expl_missing = lives_standard_menu_item_new_with_label(_("Check for Optional Features"));
   if (!prefs->vj_mode) lives_container_add(LIVES_CONTAINER(mainw->help_menu), mainw->expl_missing);
 
   lives_menu_add_separator(LIVES_MENU(mainw->help_menu));
@@ -1934,6 +1934,7 @@ void create_LiVES(void) {
   add_fill_to_box(LIVES_BOX(mainw->framebar));
 
   mainw->pf_grid = lives_table_new(1, 3, TRUE);
+  lives_widget_set_vexpand(mainw->pf_grid, FALSE);
 
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -2210,9 +2211,9 @@ void create_LiVES(void) {
 
   mainw->message_box = lives_hbox_new(FALSE, 0);
   lives_widget_set_app_paintable(mainw->message_box, TRUE);
-  lives_widget_set_vexpand(mainw->message_box, TRUE);
+  //lives_widget_set_vexpand(mainw->message_box, TRUE);
   if (prefs->show_msg_area)
-    lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->message_box, TRUE, TRUE, 0);
+    lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->message_box, FALSE, TRUE, 0);
   else lives_widget_object_ref_sink(mainw->message_box);
 
   mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(reshow_msg_area), &mainw->msg_surface);
@@ -3893,9 +3894,8 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
     mainw->fx_candidates[i].rfx = NULL;
   }
 
-  //mainw->helper_procthreads[PT_LAZY_RFX] = lives_proc_thread_create((lives_funcptr_t)add_rfx_effects, -1, "i", RFX_STATUS_ANY);
-  //add_rfx_effects(RFX_STATUS_ANY);
-  //replace_with_delegates();
+  mainw->resize_menuitem = NULL;
+  replace_with_delegates();
 
   show_lives();
 
@@ -4206,6 +4206,9 @@ void resize_play_window(void) {
       sched_yield();
       // leave this alone * !
       if (!(mainw->vpp != NULL && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
+        if (prefs->show_desktop_panel) {
+          hide_desktop_panel();
+        }
 #if GTK_CHECK_VERSION(3, 20, 0)
         LiVESXWindow *xwin = lives_widget_get_xwindow(mainw->play_window);
         if (pmonitor == 0)

@@ -353,19 +353,9 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     get_total_time(cfile);
   }
 
-  if (!mainw->is_ready) {
+  if (!mainw->is_ready || !prefs->show_gui) {
     mainw->current_file = current_file;
     return;
-  }
-
-  if (!prefs->show_gui || (!mainw->laudio_drawable || !mainw->raudio_drawable)) {
-    mainw->current_file = current_file;
-    return;
-  }
-
-  if (!cfile->audio_waveform && cfile->achans > 0) {
-    cfile->audio_waveform = (float **)lives_calloc(cfile->achans, sizeof(float *));
-    cfile->aw_sizes = (size_t *)lives_calloc(cfile->achans, sizeof(size_t));
   }
 
   // draw timer bars
@@ -472,7 +462,8 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
             return;
           }
           atime = (double)i / scalex;
-          cfile->audio_waveform[0][i] = cfile->vol * get_float_audio_val_at_time(mainw->current_file, afd, atime, 0, cfile->achans) * 2.;
+          cfile->audio_waveform[0][i] = cfile->vol
+                                        * get_float_audio_val_at_time(mainw->current_file, afd, atime, 0, cfile->achans) * 2.;
         }
         lives_close_buffered(afd);
       }
@@ -483,9 +474,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
         if (mainw->audio_end && !mainw->loop) {
           offset_right = ROUND_I((double)((is_realtime_aplayer(prefs->audio_player)) ?
                                           (double)cfile->end : mainw->audio_end) / cfile->fps * scalex);
-        } else {
-          offset_right = ROUND_I(cfile->laudio_time * scalex);
-        }
+        } else offset_right = ROUND_I(cfile->laudio_time * scalex);
       }
 
       offset_right = NORMAL_CLAMP(offset_right, cfile->laudio_time * scalex);
@@ -594,8 +583,8 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
     start = offset_end;
     if (!cfile->audio_waveform[1]) {
-      // re-read the audio
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0)); // force redrawing
+      // re-read the audio and force a redraw
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
       cfile->audio_waveform[1] = (float *)lives_calloc((int)offset_end, sizeof(float));
       start = cfile->aw_sizes[1] = 0;
     } else if (cfile->aw_sizes[1] != offset_end) {
@@ -619,7 +608,8 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
             return;
           }
           atime = (double)i / scalex;
-          cfile->audio_waveform[1][i] = cfile->vol * get_float_audio_val_at_time(mainw->current_file, afd, atime, 1, cfile->achans) * 2.;
+          cfile->audio_waveform[1][i] = cfile->vol
+                                        * get_float_audio_val_at_time(mainw->current_file, afd, atime, 1, cfile->achans) * 2.;
         }
         lives_close_buffered(afd);
         afd = -1;
@@ -631,9 +621,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
         if (mainw->audio_end && !mainw->loop) {
           offset_right = ROUND_I((double)((is_realtime_aplayer(prefs->audio_player)) ?
                                           (double)cfile->end : mainw->audio_end) / cfile->fps * scalex);
-        } else {
-          offset_right = ROUND_I(cfile->raudio_time * scalex);
-        }
+        } else offset_right = ROUND_I(cfile->raudio_time * scalex);
       }
 
       offset_right = NORMAL_CLAMP(offset_right, cfile->raudio_time * scalex);
@@ -794,7 +782,8 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     if (LIVES_IS_PLAYING) {
       ptrtime = 0.;
       if (which == 1)
-        ptrtime = (cfile->frameno + (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL * sig(cfile->pb_fps))
+        ptrtime = (cfile->frameno + (double)(mainw->currticks - mainw->startticks)
+                   / TICKS_PER_SECOND_DBL * sig(cfile->pb_fps))
                   / cfile->fps;
       else if (prefs->audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
@@ -837,10 +826,12 @@ void redraw_timer_bars(double oldx, double newx, int which) {
   scalex = allocwidth / CURRENT_CLIP_TOTAL_TIME;
 
   if (which == 0 || which == 2) {
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "drawn", LIVES_INT_TO_POINTER(0)); // force redrawing
+    // force redrawing
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
   }
   if (which == 0 || which == 3) {
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0)); // force redrawing
+    // force redrawing
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
   }
   if (newx > oldx) {
     update_timer_bars(ROUND_I(oldx * scalex - .5), 0, ROUND_I((newx - oldx) * scalex + .5), 0, which);
@@ -2046,28 +2037,185 @@ static boolean filtc_response(LiVESWidget *w, LiVESResponseType resp, livespoint
 }
 
 #define NMLEN_MAX 64
+
+static int fill_filt_section(LiVESList **listp, int pass, int type, LiVESWidget *layout) {
+  LiVESList *list = (LiVESList *)*listp;
+  lives_file_dets_t *filedets = (lives_file_dets_t *)(list->data);
+  LiVESWidget *hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  LiVESWidget *dialog;
+
+  char *txt;
+  size_t slen;
+  boolean needs_recheck;
+  int idx = 0, recheck = -1;
+
+  if (!filedets) {
+    // print N / A
+    lives_layout_add_label(LIVES_LAYOUT(layout),
+			   mainw->string_constants[LIVES_STRING_CONSTANT_NONE],
+			   FALSE);
+    return -1;
+  }
+
+  dialog = lives_widget_get_toplevel(layout);
+
+  lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL);
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Check / Uncheck all"), TRUE);
+  if (!type)
+    lives_layout_add_label(LIVES_LAYOUT(layout), type ? "      " : _("Recover"), TRUE);
+
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Name"), TRUE);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Size"), TRUE);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Details"), TRUE);
+  lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
+
+  while (list->data) {
+    // put from recover subdir
+    needs_recheck = TRUE;
+    if (!pass) {
+      hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+      filedets->widgets[0] = lives_standard_check_button_new(NULL, TRUE, LIVES_BOX(hbox), NULL);
+
+      if (!type) {
+	hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+	filedets->widgets[1] = lives_standard_switch_new(NULL, TRUE, LIVES_BOX(hbox), NULL);
+      }
+
+      slen = lives_strlen(filedets->name);
+      if (slen > NMLEN_MAX) {
+	txt = lives_strdup_printf("...%s", filedets->name + (slen - NMLEN_MAX));
+      }
+      else txt = filedets->name;
+      lives_layout_add_label(LIVES_LAYOUT(layout), txt, TRUE);
+      if (txt != filedets->name) {
+	lives_free(txt);
+	lives_widget_set_tooltip_text(widget_opts.last_label, filedets->name);
+      }
+      lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+      hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+      filedets->widgets[2] = lives_standard_label_new(NULL);
+      lives_layout_pack(LIVES_BOX(hbox), filedets->widgets[2]);
+      lives_widget_hide(filedets->widgets[2]);
+      lives_widget_set_no_show_all(filedets->widgets[2], TRUE);
+
+      if (filedets->size == -1) {
+	filedets->widgets[3] = lives_spinner_new();
+	if (filedets->widgets[3]) {
+	  lives_layout_pack(LIVES_BOX(hbox), filedets->widgets[3]);
+	  lives_spinner_start(LIVES_SPINNER(filedets->widgets[3]));
+	}
+	else filedets->widgets[3] = filedets->widgets[2];
+      }
+    }
+
+    if (filedets->widgets[3]) {
+      if (filedets->size != -1) {
+	if (filedets->widgets[3] != filedets->widgets[2]) {
+	  lives_spinner_stop(LIVES_SPINNER(filedets->widgets[3]));
+	  lives_widget_hide(filedets->widgets[3]);
+	  lives_widget_set_no_show_all(filedets->widgets[3], TRUE);
+	}
+	lives_widget_set_no_show_all(filedets->widgets[2], FALSE);
+	lives_widget_show_all(filedets->widgets[2]);
+
+	if (filedets->size == -2) {
+	  lives_label_set_text(LIVES_LABEL(filedets->widgets[2]), "????");
+	}
+	if (filedets->size > 0) {
+	  txt = lives_format_storage_space_string(filedets->size);
+	  lives_label_set_text(LIVES_LABEL(filedets->widgets[2]), txt);
+	  lives_free(txt);
+	  needs_recheck = FALSE;
+	}
+      }
+      filedets->widgets[3] = NULL;
+    }
+
+    if (!pass) {
+      lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+      hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+      filedets->widgets[4] = lives_standard_label_new(NULL);
+      lives_layout_pack(LIVES_BOX(hbox), filedets->widgets[4]);
+      lives_widget_hide(filedets->widgets[4]);
+      lives_widget_set_no_show_all(filedets->widgets[4], TRUE);
+
+      if (!filedets->extra_details) {
+	filedets->widgets[5] = lives_spinner_new();
+	if (filedets->widgets[5]) {
+	  widget_opts.justify = LIVES_JUSTIFY_CENTER;
+	  widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+	  lives_layout_pack(LIVES_BOX(hbox), filedets->widgets[5]);
+	  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+	  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+	  lives_spinner_start(LIVES_SPINNER(filedets->widgets[5]));
+	}
+	else filedets->widgets[5] = filedets->widgets[4];
+      }
+    }
+
+    if (filedets->widgets[5]) {
+      if (filedets->extra_details) {
+	if (filedets->widgets[5] != filedets->widgets[4]) {
+	  lives_spinner_stop(LIVES_SPINNER(filedets->widgets[5]));
+	  lives_widget_hide(filedets->widgets[5]);
+	  lives_widget_set_no_show_all(filedets->widgets[5], TRUE);
+	}
+	lives_widget_set_no_show_all(filedets->widgets[4], FALSE);
+	lives_widget_show_all(filedets->widgets[4]);
+
+	if (!(*filedets->extra_details)) {
+	  lives_label_set_text(LIVES_LABEL(filedets->widgets[4]), "????");
+	}
+	if (*filedets->extra_details) {
+	  if (filedets->type == LIVES_FILE_TYPE_FILE)
+	    txt = lives_strdup_printf(_("File\t\t: %s"),
+				      filedets->extra_details ? filedets->extra_details : "");
+	  else if (filedets->type == LIVES_FILE_TYPE_DIRECTORY)
+	    txt = lives_strdup_printf(_("Directory\t\t: %s"),
+				      filedets->extra_details ? filedets->extra_details : "");
+	  else
+	    txt = lives_strdup_printf(_("????????\t\t: %s"),
+				      filedets->extra_details ? filedets->extra_details : "");
+	  lives_label_set_text(LIVES_LABEL(filedets->widgets[4]), txt);
+	  lives_free(txt);
+	  needs_recheck = FALSE;
+	}
+      }
+      filedets->widgets[5] = NULL;
+    }
+    g_print("GOT aaxxxxxx %p name %s\n", list, filedets->name);
+    if (needs_recheck && recheck == -1) recheck = idx;
+    lives_widget_show_all(dialog);
+    idx++;
+    do {
+      lives_widget_process_updates(dialog);
+      lives_nanosleep(1000);
+    } while (!list->next && filtresp == LIVES_RESPONSE_NONE);
+    if (filtresp != LIVES_RESPONSE_NONE) return recheck;
+    list = list->next;
+  }
+  return recheck;
+}
+
+
 LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiVESList **rem_list,
 				 LiVESList **left_list) {
   LiVESWidget *dialog;
   LiVESWidget *layout;
   LiVESWidget *top_vbox;
-  LiVESWidget *hbox;
-  LiVESWidget *cb;
   LiVESWidget *scrolledwindow;
   LiVESWidget *button;
-  LiVESList *list;
+  LiVESWidget *hbox;
   LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
-
-  lives_file_dets_t *filedets;
-  size_t slen;
-
-  char *txt;
 
   int winsize_h = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
   int winsize_v = GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY;
-  int rec_recheck = -1, rem_recheck = -1, leave_recheck = -1;
-  int idx = 0, pass = 0;
-  boolean needs_recheck;
+  int rec_recheck, rem_recheck, leave_recheck;
+  int pass = 0;
+
   boolean woat = widget_opts.apply_theme;
 
   // get size, type (dir or file), nitems, extra_dets
@@ -2109,208 +2257,64 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
 
   lives_box_pack_start(LIVES_BOX(top_vbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_height);
 
-  lives_layout_add_label(LIVES_LAYOUT(layout), _("Possibly Recoverable Clips"), FALSE);
-  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  /// items for recovery /////////////////////////
 
-  /// TODO
-  cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL);
-  lives_layout_add_label(LIVES_LAYOUT(layout), _("Check / Uncheck all"), TRUE);
-  lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
-  list = *rec_list;
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Possibly Recoverable Clips"), FALSE);
+
+  lives_widget_show_all(dialog);
 
   do {
     lives_widget_process_updates(dialog);
     lives_nanosleep(1000);
-  } while (!list && filtresp == LIVES_RESPONSE_NONE);
+  } while (!*rec_list && filtresp == LIVES_RESPONSE_NONE);
+
   if (filtresp != LIVES_RESPONSE_NONE) goto filtc_done;
 
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-  lives_nanosleep_until_nonzero(list);
+  rec_recheck = fill_filt_section(rec_list, pass, 0, layout);
 
-  filedets = (lives_file_dets_t *)(list->data);
-  if (!filedets->name) {
-    // print N / A
-    lives_layout_add_label(LIVES_LAYOUT(layout),
-			   mainw->string_constants[LIVES_STRING_CONSTANT_NONE],
-			   FALSE);
-  }
-  else {
-    while (filedets->name) {
-      // put from recover subdir
-      needs_recheck = TRUE;
-      if (!pass) {
-	hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-	filedets->widgets[0] = lives_standard_check_button_new(NULL, TRUE, LIVES_BOX(hbox), NULL);
+  /// items for removal
 
-	hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-	filedets->widgets[1] = lives_standard_switch_new(NULL, TRUE, LIVES_BOX(hbox), NULL);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+  lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
 
-	slen = lives_strlen(filedets->name);
-	if (slen > NMLEN_MAX) {
-	  txt = lives_strdup_printf("...%s", filedets->name + (slen - NMLEN_MAX));
-	}
-	else txt = filedets->name;
-	lives_layout_add_label(LIVES_LAYOUT(layout), txt, TRUE);
-	if (txt != filedets->name) {
-	  lives_free(txt);
-	  lives_widget_set_tooltip_text(widget_opts.last_label, filedets->name);
-	}
-	lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
-	hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Items for Automatic Removal"), FALSE);
 
-	filedets->widgets[2] = lives_standard_label_new(NULL);
-	lives_layout_pack(LIVES_BOX(hbox), filedets->widgets[2]);
-	lives_widget_hide(filedets->widgets[2]);
-	lives_widget_set_no_show_all(filedets->widgets[2], TRUE);
+  lives_widget_show_all(dialog);
 
-	if (filedets->size == -1) {
-	  filedets->widgets[3] = lives_spinner_new();
-	  if (filedets->widgets[3]) {
-	    lives_layout_pack(LIVES_BOX(hbox), filedets->widgets[3]);
-	    lives_spinner_start(LIVES_SPINNER(filedets->widgets[3]));
-	  }
-	  else filedets->widgets[3] = filedets->widgets[2];
-	}
-      }
+  do {
+    lives_widget_process_updates(dialog);
+    lives_nanosleep(1000);
+  } while (!*rem_list && filtresp == LIVES_RESPONSE_NONE);
 
-      if (filedets->widgets[3]) {
-	if (filedets->size != -1) {
-	  if (filedets->widgets[3] != filedets->widgets[2]) {
-	    lives_spinner_stop(LIVES_SPINNER(filedets->widgets[3]));
-	    lives_widget_hide(filedets->widgets[3]);
-	    lives_widget_set_no_show_all(filedets->widgets[3], TRUE);
-	  }
-	  lives_widget_set_no_show_all(filedets->widgets[2], FALSE);
-	  lives_widget_show_all(filedets->widgets[2]);
+  if (filtresp != LIVES_RESPONSE_NONE) goto filtc_done;
 
-	  if (filedets->size == -2) {
-	    lives_label_set_text(LIVES_LABEL(filedets->widgets[2]), "????");
-	  }
-	  if (filedets->size > 0) {
-	    char *txt = lives_format_storage_space_string(filedets->size);
-	    lives_label_set_text(LIVES_LABEL(filedets->widgets[2]), txt);
-	    lives_free(txt);
-	    needs_recheck = FALSE;
-	  }
-	}
-	filedets->widgets[3] = NULL;
-      }
+  rem_recheck = fill_filt_section(rem_list, pass, 1, layout);
 
-      if (!pass) {
-	lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
-	hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-	filedets->widgets[4] = lives_standard_label_new(NULL);
-	lives_layout_pack(LIVES_BOX(hbox), filedets->widgets[4]);
-	lives_widget_hide(filedets->widgets[4]);
-	lives_widget_set_no_show_all(filedets->widgets[4], TRUE);
+  /// items for manual removal
 
-	if (!filedets->extra_details) {
-	  filedets->widgets[5] = lives_spinner_new();
-	  if (filedets->widgets[5]) {
-	    lives_layout_pack(LIVES_BOX(hbox), filedets->widgets[5]);
-	    lives_spinner_start(LIVES_SPINNER(filedets->widgets[5]));
-	  }
-	  else filedets->widgets[5] = filedets->widgets[4];
-	}
-      }
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+  lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
 
-      if (filedets->widgets[5]) {
-	if (filedets->extra_details) {
-	  if (filedets->widgets[5] != filedets->widgets[4]) {
-	    lives_spinner_stop(LIVES_SPINNER(filedets->widgets[5]));
-	    lives_widget_hide(filedets->widgets[5]);
-	    lives_widget_set_no_show_all(filedets->widgets[5], TRUE);
-	  }
-	  lives_widget_set_no_show_all(filedets->widgets[4], FALSE);
-	  lives_widget_show_all(filedets->widgets[4]);
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Items for Manual Removal"), FALSE);
 
-	  if (!(*filedets->extra_details)) {
-	    lives_label_set_text(LIVES_LABEL(filedets->widgets[4]), "????");
-	  }
-	  if (*filedets->extra_details) {
-	    char *fdets;
-	    if (filedets->type == LIVES_FILE_TYPE_FILE)
-	      fdets = lives_strdup_printf(_("File\t\t: %s"),
-					    filedets->extra_details ? filedets->extra_details : "");
-	    else if (filedets->type == LIVES_FILE_TYPE_DIRECTORY)
-	      fdets = lives_strdup_printf(_("Directory\t\t: %s"),
-					    filedets->extra_details ? filedets->extra_details : "");
-	    else
-	      fdets = lives_strdup_printf(_("????????\t\t: %s"),
-					    filedets->extra_details ? filedets->extra_details : "");
-	    lives_label_set_text(LIVES_LABEL(filedets->widgets[4]), fdets);
-	    lives_free(fdets);
-	    needs_recheck = FALSE;
-	  }
-	}
-	filedets->widgets[5] = NULL;
-      }
-      if (needs_recheck && rec_recheck == -1) rec_recheck = idx;
-      idx++;
-      list = list->next;
-      do {
-	lives_widget_process_updates(dialog);
-	lives_nanosleep(1000);
-      } while (!list && filtresp == LIVES_RESPONSE_NONE);
-      if (filtresp != LIVES_RESPONSE_NONE) goto filtc_done;
-    }
-  }
+  lives_widget_show_all(dialog);
 
-/*   lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE); */
-/*   lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE); */
+  do {
+    lives_widget_process_updates(dialog);
+    lives_nanosleep(1000);
+  } while (!*left_list && filtresp == LIVES_RESPONSE_NONE);
 
-/*   lives_layout_add_label(LIVES_LAYOUT(layout), _("Items for Automatic Removal"), FALSE); */
-/*   hbox = lives_layout_row_new(LIVES_LAYOUT(layout)); */
-/*   cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL); */
-/*   lives_layout_add_label(LIVES_LAYOUT(layout), _("Check / Uncheck all [checdked items will be removed]"), TRUE); */
-/*   lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE); */
+  if (filtresp != LIVES_RESPONSE_NONE) goto filtc_done;
 
-/*   do { */
-/*     // put from leave subdir */
-/*     hbox = lives_layout_row_new(LIVES_LAYOUT(layout)); */
-/*     cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL); */
-/*     lives_layout_add_label(LIVES_LAYOUT(layout), "foo", TRUE); */
-/*     lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE); */
-/*     lives_layout_add_label(LIVES_LAYOUT(layout), "item size", TRUE); */
-/*     widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT; */
-/*     lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE); */
-/*     widget_opts.expand = LIVES_EXPAND_DEFAULT; */
-/*     lives_layout_add_label(LIVES_LAYOUT(layout), "File or directory", TRUE); */
-/*   } while (FALSE); */
+  leave_recheck = fill_filt_section(left_list, pass, 2, layout);
 
-/* lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE); */
-/*   lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE); */
+  /////////
 
-/*   lives_layout_add_label(LIVES_LAYOUT(layout), _("Items for Manual Removal"), FALSE); */
-/*   hbox = lives_layout_row_new(LIVES_LAYOUT(layout)); */
-/*   cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL); */
-/*   lives_layout_add_label(LIVES_LAYOUT(layout), _("Check / Uncheck all"), TRUE); */
-/*   lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE); */
+  lives_dialog_run(LIVES_DIALOG(dialog));
 
-/*   do { */
-/*     // put from l subdir */
-/*     hbox = lives_layout_row_new(LIVES_LAYOUT(layout)); */
-/*     cb = lives_standard_check_button_new(NULL, FALSE, LIVES_BOX(hbox), NULL); */
-/*     lives_layout_add_label(LIVES_LAYOUT(layout), "foo", TRUE); */
-/*     lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE); */
-/*     lives_layout_add_label(LIVES_LAYOUT(layout), "item size", TRUE); */
-/*     widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT; */
-/*     lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE); */
-/*     widget_opts.expand = LIVES_EXPAND_DEFAULT; */
-/*     lives_layout_add_label(LIVES_LAYOUT(layout), " - Unrecoverable - ", TRUE); */
-/*   } while (FALSE); */
-
-
-/*   do { */
-/*     resp = lives_dialog_run(LIVES_DIALOG(dialog)); */
-/*     //if (resp == LIVES_RESPONSE_RESET) reset_vals; */
-/*   } while (resp == LIVES_RESPONSE_RESET); */
-/*   lives_widget_destroy(dialog); */
-/*   return resp; */
  filtc_done:
+  lives_widget_destroy(dialog);
   return filtresp;
-
-
 }
 
 
@@ -2468,7 +2472,8 @@ _entryw *create_location_dialog(void) {
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
 
   label = lives_standard_label_new(
-            _("\n\nTo open a stream, you must make sure that you have the correct libraries compiled in mplayer (or mpv).\n"
+            _("\n\nTo open a stream, you must make sure that you have the correct libraries "
+	      "compiled in mplayer (or mpv).\n"
               "Also make sure you have set your bandwidth in Preferences|Streaming\n\n"));
 
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
@@ -5565,7 +5570,7 @@ boolean msg_area_config(LiVESWidget * widget) {
   int width;
   int lineheight, llines, llast;
   int scr_width = GUI_SCREEN_WIDTH;
-  int scr_height = GUI_SCREEN_HEIGHT;
+  int scr_height = mainw->mgeom[0].phys_height; //GUI_SCREEN_HEIGHT;
   int bx, by, w = -1, h = -1, posx, posy;
   int overflowx = 0, overflowy = 0, xoverflowx, xoverflowy;
   int ww, hh;
@@ -5682,6 +5687,10 @@ boolean msg_area_config(LiVESWidget * widget) {
 #ifdef DEBUG_OVERFLOW
   g_print("WIDG SIZE %d X %d, %d,%d and %d %d %d\n", width, height, hmin, vmin, bx, by, mustret);
 #endif
+  int vvmin = by - vmin;
+
+  if (vvmin < by && by - vmin < vmin) vmin = by - vmin;
+
   if (mustret) {
     lives_widget_queue_draw(mainw->msg_area);
     return FALSE;
@@ -5762,6 +5771,12 @@ boolean msg_area_config(LiVESWidget * widget) {
           lives_container_child_set_shrinkable(LIVES_CONTAINER(mainw->multitrack->top_vpaned),
                                                mainw->multitrack->vpaned, TRUE);
       }
+
+      if (mainw->mbar_res && height >= mainw->mbar_res * 2) {
+        mainw->mbar_res = 0;
+        height -= mainw->mbar_res;
+      }
+
       lives_widget_set_size_request(widget, width, height);
       reqwidth = width;
       reqheight = height;

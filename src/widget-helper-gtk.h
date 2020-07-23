@@ -75,11 +75,16 @@ typedef uint8_t                           boolean;
 #define GDK_IS_WIN32_DISPLAY(display) (FALSE)
 #endif
 
+#define LIVES_XWINDOW_XID(z) GDK_WINDOW_XID(z)
+
 #else
 
 #ifndef GDK_IS_X11_DISPLAY
 #define GDK_IS_X11_DISPLAY(display) (FALSE)
 #endif
+
+
+#define LIVES_XWINDOW_XID(z) (z)
 
 #endif // GDK_WINDOWING_X11
 

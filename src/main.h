@@ -55,6 +55,7 @@
 #undef HAVE_UNICAP
 #endif
 //#define WEED_STARTUP_TESTS
+#define STD_STRINGFUNCS
 
 #ifdef __GNUC__
 #  define WARN_UNUSED  __attribute__((warn_unused_result))
@@ -545,12 +546,13 @@ typedef enum {
 
 typedef enum {
   CLIP_TYPE_DISK, ///< imported video, broken into frames
-  CLIP_TYPE_YUV4MPEG, ///< yuv4mpeg stream
-  CLIP_TYPE_GENERATOR, ///< frames from generator plugin
   CLIP_TYPE_FILE, ///< unimported video, not or partially broken in frames
+  CLIP_TYPE_GENERATOR, ///< frames from generator plugin
+  CLIP_TYPE_NULL_VIDEO, ///< generates blank video frames
+  CLIP_TYPE_TEMP, ///< temp type, for internal use only
+  CLIP_TYPE_YUV4MPEG, ///< yuv4mpeg stream
   CLIP_TYPE_LIVES2LIVES, ///< type for LiVES to LiVES streaming
   CLIP_TYPE_VIDEODEV,  ///< frames from video device
-  CLIP_TYPE_TEMP ///< temp type, for internal use only
 } lives_clip_type_t;
 
 typedef enum {
@@ -606,8 +608,10 @@ typedef enum {
 #define CLIP_TOTAL_TIME(clip) ((double)(CLIP_VIDEO_TIME(clip) > CLIP_AUDIO_TIME(clip) ? CLIP_VIDEO_TIME(clip) : \
 					CLIP_AUDIO_TIME(clip)))
 
-#define IS_NORMAL_CLIP(clip) (IS_VALID_CLIP(clip) ? (mainw->files[clip]->clip_type == CLIP_TYPE_DISK \
-						     || mainw->files[clip]->clip_type == CLIP_TYPE_FILE) : FALSE)
+#define IS_NORMAL_CLIP(clip) (IS_VALID_CLIP(clip)			\
+			      ? (mainw->files[clip]->clip_type == CLIP_TYPE_DISK \
+				 || mainw->files[clip]->clip_type == CLIP_TYPE_FILE \
+				 || mainw->files[clip]->clip_type == CLIP_TYPE_NULL_VIDEO) : FALSE)
 
 #define CURRENT_CLIP_IS_NORMAL IS_NORMAL_CLIP(mainw->current_file)
 
@@ -843,8 +847,8 @@ typedef struct _lives_clip_t {
 
   int last_play_sequence;  ///< updated only when FINISHING playing a clip (either by switching or ending playback, better for a/vsync)
 
-  frames_t tcache_dubious_from; /// set by clip alterations, frames from here onwards should be freed
   int tcache_height; /// height for thumbnail cache (width is fixed, but if this changes, invalidate)
+  frames_t tcache_dubious_from; /// set by clip alterations, frames from here onwards should be freed
   LiVESList *tcache; /// thumbnail cache, list of lives_tcache_entry_t
 } lives_clip_t;
 
@@ -895,12 +899,19 @@ typedef lives_presence_t lives_checkstatus_t;
 #endif
 
 typedef struct {
+  char panel[64];
+} wm_caps_t;
+
+
+typedef struct {
   // the following can be assumed TRUE / PRESENT, they are checked on startup
   lives_checkstatus_t has_smogrify;
   boolean smog_version_correct;
   boolean can_read_from_config;
+
   boolean can_write_to_config;
   boolean can_write_to_config_new;
+
   boolean can_write_to_config_backup;
   boolean can_write_to_workdir;
 
@@ -929,6 +940,7 @@ typedef struct {
   lives_checkstatus_t has_gconftool_2;
   lives_checkstatus_t has_xdg_screensaver;
   lives_checkstatus_t has_wmctrl;
+  lives_checkstatus_t has_xdotool;
   lives_checkstatus_t has_youtube_dl;
   lives_checkstatus_t has_du;
   lives_checkstatus_t has_md5sum;
@@ -963,12 +975,12 @@ typedef struct {
   uint64_t python_version;
 
   int ncpus;
-  short cpu_bits;
   int byte_order;
 
   char *myname_full;
   char *myname;
 
+  short cpu_bits;
   int xstdout;
   int nmonitors;
   int primary_monitor;
@@ -983,6 +995,8 @@ typedef struct {
   char *icon_theme_name;
 
   char *wm; ///<window manager name
+  boolean has_wm_caps;
+  wm_caps_t wm_caps;
 } capability;
 
 /// some shared structures
@@ -1287,6 +1301,7 @@ boolean get_temp_handle(int index);
 int close_temp_handle(int new_clip);
 boolean get_handle_from_info_file(int index);
 lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded);
+int create_nullvideo_file(const char *handle);
 void save_file(int clip, int start, int end, const char *filename);
 void play_file(void);
 void start_playback_async(int type);
@@ -1669,8 +1684,6 @@ LiVESList *lives_list_append_unique(LiVESList *xlist, const char *add);
 LiVESList *buff_to_list(const char *buffer, const char *delim, boolean allow_blanks, boolean strip);
 int lives_list_strcmp_index(LiVESList *list, livesconstpointer data, boolean case_sensitive);
 
-LiVESList *dir_to_list(const char *dir, char *tsubdir);
-
 LiVESList *get_set_list(const char *dir, boolean utf8);
 
 char *subst(const char *string, const char *from, const char *to);
@@ -1781,7 +1794,6 @@ void break_me(const char *dtl);
 //#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
-#define STD_STRINGFUNCS
 #else
 #define USE_REC_RS
 #define RESEEK_ENABLE

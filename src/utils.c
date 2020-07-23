@@ -133,7 +133,7 @@ int lives_system(const char *com, boolean allow_error) {
 
   //g_print("doing: %s\n",com);
 
-  if (mainw->is_ready && !mainw->is_exiting &&
+  if (mainw && mainw->is_ready && !mainw->is_exiting &&
       ((mainw->multitrack == NULL && mainw->cursor_style == LIVES_CURSOR_NORMAL) ||
        (mainw->multitrack != NULL && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL))) {
     cnorm = TRUE;
@@ -203,7 +203,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
   }
   //g_print("doing: %s\n",com);
 
-  if (mainw->is_ready && !mainw->is_exiting &&
+  if (mainw && mainw->is_ready && !mainw->is_exiting &&
       ((mainw->multitrack == NULL && mainw->cursor_style == LIVES_CURSOR_NORMAL) ||
        (mainw->multitrack != NULL && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL))) {
     cnorm = TRUE;
@@ -5091,54 +5091,6 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
   }
   if (THREADVAR(com_failed)) return FALSE;
   return TRUE;
-}
-
-
-/**
-   @brief create a kist from a (sub)directory
-   '.' and '..' are ignored
-   subdir can be NULL
-*/
-LiVESList *dir_to_list(const char *dir, char *tsubdir) {
-  LiVESList *list = NULL;
-  DIR *tldir, *subdir;
-  struct dirent *tdirent, *subdirent;
-  char *subdirname;
-
-  if (!dir) return NULL;
-  tldir = opendir(dir);
-  if (!tldir) return NULL;
-
-  while (1) {
-    tdirent = readdir(tldir);
-    if (!tdirent) {
-      closedir(tldir);
-      return list;
-    }
-
-    if (!strncmp(tdirent->d_name, "..", strlen(tdirent->d_name))) continue;
-
-    if (tsubdir) {
-      if (!lives_strcmp(tdirent->d_name, tsubdir)) {
-        closedir(tldir);
-        subdirname = lives_build_filename(dir, tdirent->d_name, NULL);
-        subdir = opendir(subdirname);
-        lives_free(subdirname);
-        if (!subdir) return list;
-        while (1) {
-          subdirent = readdir(subdir);
-          if (!subdirent) {
-            closedir(subdir);
-            return list;
-          }
-          if (!strncmp(subdirent->d_name, "..", strlen(subdirent->d_name))) continue;
-          list = lives_list_prepend(list, subdirent->d_name);
-        }
-      }
-      continue;
-    }
-    list = lives_list_prepend(list, tdirent->d_name);
-  }
 }
 
 

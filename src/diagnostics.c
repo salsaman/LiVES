@@ -216,6 +216,44 @@ typedef struct {
   char **strgs;
 } lives_test_t;
 
+
+static char *randstrg(size_t len) {
+  char *strg = lives_calloc(1, len), *ptr = strg;
+  for (int i = 1; i < len; i++) *(ptr++) = ((lives_random() & 63) + 32);
+  return strg;
+}
+
+
+void benchmark(void) {
+  int nruns = 1000000;
+  char *strg = randstrg(400);
+  char *strg2 = randstrg(500);
+  volatile size_t sz = 1;
+  int i, j;
+  memcpy(strg2, strg, 400);
+  for (j = 0; j < 5; j++) {
+    sz++;
+    fprintf(stderr, "test %d runs with lives_strlen()", nruns);
+    timerinfo = lives_get_current_ticks();
+    for (i = 0; i < nruns; i++) {
+      sz = lives_strcmp(strg, strg2);
+      //sz += lives_strlen(strg2);
+    }
+    show_timer_info();
+    sz++;
+    fprintf(stderr, "test %d runs with strlen()", nruns);
+    timerinfo = lives_get_current_ticks();
+    for (i = 0; i < nruns; i++) {
+      sz = strcmp(strg, strg2);
+      //sz += strlen(strg2);
+    }
+    show_timer_info();
+    sz++;
+  }
+  lives_free(strg2);
+}
+
+
 void lives_struct_test(void) {
   const lives_struct_def_t *lsd;
 

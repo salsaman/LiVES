@@ -732,7 +732,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             /// (since the buffer will be reversed)
             if (pulsed->in_arate > 0) {
               pad_with_silence(-1, (void *)pulsed->aPlayPtr->data, pulsed->aPlayPtr->size, in_bytes,
-                               afile->asampsize >> 3, afile->signed_endian & AFORM_UNSIGNED, afile->signed_endian & AFORM_BIG_ENDIAN);
+                               afile->asampsize >> 3, afile->signed_endian & AFORM_UNSIGNED,
+                               afile->signed_endian & AFORM_BIG_ENDIAN);
             } else {
               lives_memmove((void *)pulsed->aPlayPtr->data + (in_bytes - pulsed->aPlayPtr->size), (void *)pulsed->aPlayPtr->data,
                             pulsed->aPlayPtr->size);

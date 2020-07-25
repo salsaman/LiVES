@@ -268,7 +268,7 @@ boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, un
   if (event_list == NULL) return TRUE;
 
   gettimeofday(&otv, NULL);
-  cdate = lives_datetime(&otv);
+  cdate = lives_datetime(otv.tv_sec);
 
   event = get_first_event(event_list);
 
@@ -834,7 +834,7 @@ static void save_mt_autoback(lives_mt *mt) {
   mt->auto_back_time = lives_get_current_ticks();
 
   gettimeofday(&otv, NULL);
-  tmp = lives_datetime(&otv);
+  tmp = lives_datetime(otv.tv_sec);
   d_print("Auto backup of timeline at %s\n", tmp);
   lives_free(tmp);
 }
@@ -6172,8 +6172,8 @@ void set_mt_colours(lives_mt * mt) {
 #ifdef ENABLE_GIW_3
   // need to set this even if theme is none
   if (mt->timeline != NULL) {
-    boolean woat = widget_opts.apply_theme;
-    widget_opts.apply_theme = TRUE;
+    int woat = widget_opts.apply_theme;
+    widget_opts.apply_theme = 1;
     lives_widget_apply_theme(mt->timeline, LIVES_WIDGET_STATE_NORMAL);
     widget_opts.apply_theme = woat;
   }
@@ -6491,7 +6491,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   LiVESAdjustment *spinbutton_adj;
 
   boolean in_menubar = TRUE;
-  boolean woat = widget_opts.apply_theme;
 
   char *cname, *tname, *msg;
   char *tmp, *tmp2;
@@ -6500,6 +6499,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   int dph;
   int num_filters;
+  int woat = widget_opts.apply_theme;
   int scr_width = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
   int scr_height = GUI_SCREEN_HEIGHT;
 
@@ -8223,7 +8223,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   widget_opts.expand = LIVES_EXPAND_EXTRA_HEIGHT | LIVES_EXPAND_DEFAULT_WIDTH;
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  widget_opts.apply_theme = FALSE;
+  widget_opts.apply_theme = 0;
   widget_opts.font_size = LIVES_FONT_SIZE_LARGE;
   mt->timecode = lives_standard_entry_new(NULL, NULL, TIMECODE_LENGTH, TIMECODE_LENGTH, LIVES_BOX(hbox), NULL);
   widget_opts.font_size = LIVES_FONT_SIZE_MEDIUM;

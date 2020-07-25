@@ -661,6 +661,10 @@ typedef GtkAttachOptions LiVESAttachOptions;
 #define LIVES_SHRINK GTK_SHRINK
 #define LIVES_FILL GTK_FILL
 
+typedef GtkPackType LiVESPackType;
+#define LIVES_PACK_START GTK_PACK_START
+#define LIVES_PACK_END GTK_PACK_END
+
 typedef GtkWindowType LiVESWindowType;
 #define LIVES_WINDOW_TOPLEVEL GTK_WINDOW_TOPLEVEL
 #define LIVES_WINDOW_POPUP GTK_WINDOW_POPUP

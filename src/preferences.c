@@ -2033,7 +2033,7 @@ boolean apply_prefs(boolean skip_warn) {
       lives_snprintf(prefs->theme, 64, "%s", theme);
       lives_snprintf(future_prefs->theme, 64, "%s", theme);
       set_string_pref(PREF_GUI_THEME, future_prefs->theme);
-      widget_opts.apply_theme = TRUE;
+      widget_opts.apply_theme = 1;
       set_palette_colours(TRUE);
       if (mainw->multitrack != NULL) {
         if (mainw->multitrack->frame_pixbuf == mainw->imframe) mainw->multitrack->frame_pixbuf = NULL;

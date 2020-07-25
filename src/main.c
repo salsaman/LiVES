@@ -666,9 +666,11 @@ static boolean pre_init(void) {
   // get some prefs we need to set menu options
   prefs->gui_monitor = -1;
 
-  if (prefs->vj_mode)
+  if (prefs->vj_mode) {
     capable->has_wmctrl = has_executable(EXEC_WMCTRL);
-
+    capable->has_xwininfo = has_executable(EXEC_XWININFO);
+    capable->has_xdotool = has_executable(EXEC_XDOTOOL);
+  }
   mainw->mgeom = NULL;
 
   prefs->force_single_monitor = get_boolean_pref(PREF_FORCE_SINGLE_MONITOR);
@@ -841,7 +843,7 @@ static boolean pre_init(void) {
     lives_snprintf(prefs->theme, 64, "none");
     set_palette_colours(FALSE);
   } else if (palette->style & STYLE_1) {
-    widget_opts.apply_theme = TRUE;
+    widget_opts.apply_theme = 1;
   }
   if (!mainw->foreign && prefs->startup_phase == 0) {
     if (prefs->show_splash) splash_init();
@@ -1434,6 +1436,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->mt_needs_idlefunc = FALSE;
 
+  mainw->suppress_layout_warnings = FALSE;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);
@@ -1564,6 +1568,9 @@ static void lives_init(_ign_opts *ign_opts) {
   if (capable->has_wm_caps && capable->wm_caps.panel) {
     prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);;
   }
+
+  prefs->show_msgs_on_startup = get_boolean_prefd(PREF_MSG_START, TRUE);
+
   //////////////////////////////////////////////////////////////////
 
   if (!mainw->foreign) {
@@ -2031,6 +2038,7 @@ static void lives_init(_ign_opts *ign_opts) {
       splash_msg(_("Starting pulseaudio server..."), SPLASH_LEVEL_LOAD_APLAYER);
 
       if (!mainw->foreign) {
+        break_me("pa restart");
         if (prefs->pa_restart && !prefs->vj_mode) {
           char *com = lives_strdup_printf("%s %s", EXEC_PULSEAUDIO, prefs->pa_start_opts);
           lives_system(com, TRUE);
@@ -2130,8 +2138,13 @@ static void do_start_messages(void) {
   SHOWDETx(xdg_screensaver, EXEC_XDG_SCREENSAVER);
 
 some_more:
-  if (prefs->vj_mode)
+#ifndef IS_MINGW
+  if (prefs->vj_mode) {
     SHOWDET(wmctrl);
+    SHOWDET(xdotool);
+    SHOWDET(xwininfo);
+  }
+#endif
 
   d_print(_("\n\nWindow manager reports as \"%s\"; "), capable->wm ? capable->wm : _("UNKNOWN - please patch me !"));
   d_print(_("number of monitors detected: %d\n"), capable->nmonitors);
@@ -3572,6 +3585,8 @@ static boolean lives_startup2(livespointer data) {
 
   resize(1.);
   if (prefs->interactive) set_interactive(TRUE);
+
+  //if (prefs->show_msgs_on_startup) lives_idle_add_simple(st_msg_show);
 
   return FALSE;
 } // end lives_startup2()
@@ -5057,8 +5072,6 @@ void load_start_image(int frame) {
     expose = TRUE;
   }
 
-  lives_widget_set_opacity(mainw->start_image, 1.);
-
   if (!CURRENT_CLIP_IS_NORMAL || frame < 1 || frame > cfile->frames) {
     int bx, by, hsize, vsize;
     int scr_width = GUI_SCREEN_WIDTH;
@@ -5119,7 +5132,7 @@ check_stcache:
         && lives_layer_get_frame(mainw->st_fcache) == xpf) {
       if (is_virtual_frame(mainw->current_file, frame)) layer = mainw->st_fcache;
       else {
-        if (capable->has_md5sum) {
+        if (cfile->clip_type == CLIP_TYPE_DISK && capable->has_md5sum) {
           char *md5sum = weed_get_string_value(mainw->st_fcache, WEED_LEAF_MD5SUM, NULL);
           if (md5sum) {
             if (!fname) fname = make_image_file_name(cfile, frame, get_image_ext_for_type(cfile->img_type));
@@ -5185,7 +5198,7 @@ check_stcache:
       if (!mainw->st_fcache) {
         mainw->st_fcache = layer;
         if (!is_virtual_frame(mainw->current_file, frame)) {
-          if (capable->has_md5sum) {
+          if (cfile->clip_type == CLIP_TYPE_DISK && capable->has_md5sum) {
             if (!xmd5sum) {
               char *fname = make_image_file_name(cfile, frame, get_image_ext_for_type(cfile->img_type));
               xmd5sum = get_md5sum(fname);
@@ -5296,7 +5309,7 @@ check_stcache:
       if (!mainw->st_fcache) {
         mainw->st_fcache = layer;
         if (!is_virtual_frame(mainw->current_file, frame)) {
-          if (capable->has_md5sum) {
+          if (cfile->clip_type == CLIP_TYPE_DISK && capable->has_md5sum) {
             if (!xmd5sum) {
               char *fname = make_image_file_name(cfile, frame, get_image_ext_for_type(cfile->img_type));
               xmd5sum = get_md5sum(fname);
@@ -5401,7 +5414,7 @@ check_encache:
           && lives_layer_get_frame(mainw->en_fcache) == xpf) {
         if (is_virtual_frame(mainw->current_file, frame)) layer = mainw->en_fcache;
         else {
-          if (capable->has_md5sum) {
+          if (cfile->clip_type == CLIP_TYPE_DISK && capable->has_md5sum) {
             char *md5sum = weed_get_string_value(mainw->en_fcache, WEED_LEAF_MD5SUM, NULL);
             if (md5sum) {
               if (!fname) fname = make_image_file_name(cfile, frame, get_image_ext_for_type(cfile->img_type));
@@ -5466,7 +5479,7 @@ check_encache:
         if (!mainw->en_fcache) {
           mainw->en_fcache = layer;
           if (!is_virtual_frame(mainw->current_file, frame)) {
-            if (capable->has_md5sum) {
+            if (cfile->clip_type == CLIP_TYPE_DISK && capable->has_md5sum) {
               if (!xmd5sum) {
                 char *fname = make_image_file_name(cfile, frame, get_image_ext_for_type(cfile->img_type));
                 xmd5sum = get_md5sum(fname);
@@ -5573,7 +5586,7 @@ check_encache:
         if (!mainw->en_fcache) {
           mainw->en_fcache = layer;
           if (!is_virtual_frame(mainw->current_file, frame)) {
-            if (capable->has_md5sum) {
+            if (cfile->clip_type == CLIP_TYPE_DISK && capable->has_md5sum) {
               if (!xmd5sum) {
                 char *fname = make_image_file_name(cfile, frame, get_image_ext_for_type(cfile->img_type));
                 xmd5sum = get_md5sum(fname);
@@ -5696,7 +5709,7 @@ void load_preview_image(boolean update_always) {
 	  && lives_layer_get_frame(mainw->pr_fcache) == xpf) {
 	if (is_virtual_frame(mainw->current_file, mainw->preview_frame)) layer = mainw->pr_fcache;
 	else {
-	  if (capable->has_md5sum) {
+	  if (cfile->clip_type == CLIP_TYPE_DISK && capable->has_md5sum) {
 	    char *md5sum = weed_get_string_value(mainw->pr_fcache, WEED_LEAF_MD5SUM, NULL); 
 	    if (md5sum) {
 	      if (!fname) fname = make_image_file_name(cfile, mainw->preview_frame, get_image_ext_for_type(cfile->img_type));
@@ -5772,7 +5785,7 @@ void load_preview_image(boolean update_always) {
           if (!mainw->pr_fcache) {
             mainw->pr_fcache = layer;
             if (!is_virtual_frame(mainw->current_file, mainw->preview_frame)) {
-              if (capable->has_md5sum) {
+              if (cfile->clip_type == CLIP_TYPE_DISK && capable->has_md5sum) {
                 if (!xmd5sum) {
                   char *fname = make_image_file_name(cfile, mainw->preview_frame, get_image_ext_for_type(cfile->img_type));
                   xmd5sum = get_md5sum(fname);
@@ -7736,20 +7749,22 @@ void load_frame_image(int frame) {
           } else {
             //g_print("pull_frame @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
             // normal playback in the clip editor, or applying a non-realtime effect
-            if (!mainw->preview || cfile->clip_type == CLIP_TYPE_FILE || lives_file_test(fname_next, LIVES_FILE_TEST_EXISTS)) {
+            if (cfile->clip_type != CLIP_TYPE_DISK
+                || !mainw->preview || lives_file_test(fname_next, LIVES_FILE_TEST_EXISTS)) {
               mainw->frame_layer = lives_layer_new_for_frame(mainw->current_file, mainw->actual_frame);
               if (img_ext == NULL) img_ext = get_image_ext_for_type(cfile->img_type);
-
-              if (mainw->preview && mainw->frame_layer == NULL && (mainw->event_list == NULL || cfile->opening)) {
+              if (mainw->preview && mainw->frame_layer == NULL
+                  && (mainw->event_list == NULL || cfile->opening)) {
                 if (!pull_frame_at_size(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks,
                                         cfile->hsize, cfile->vsize, WEED_PALETTE_END)) {
-
                   if (mainw->frame_layer != NULL) {
                     weed_layer_free(mainw->frame_layer);
                     mainw->frame_layer = NULL;
                   }
 
-                  if (cfile->opening && cfile->img_type == IMG_TYPE_PNG && sget_file_size(fname_next) == 0) {
+                  if (cfile->clip_type == CLIP_TYPE_DISK &&
+                      cfile->opening && cfile->img_type == IMG_TYPE_PNG
+                      && sget_file_size(fname_next) == 0) {
                     if (++bad_frame_count > BFC_LIMIT) {
                       mainw->cancelled = check_for_bad_ffmpeg();
                       bad_frame_count = 0;
@@ -7761,7 +7776,8 @@ void load_frame_image(int frame) {
                 if (mainw->frame_layer_preload && mainw->pred_clip == mainw->playing_file
                     && mainw->pred_frame != 0 && is_layer_ready(mainw->frame_layer_preload)) {
                   frames_t delta = (labs(mainw->pred_frame) - mainw->actual_frame) * sig(cfile->pb_fps);
-                  /* g_print("THANKS for %p,! %d %ld should be %d, right  --  %d", mainw->frame_layer_preload, mainw->pred_clip, */
+                  /* g_print("THANKS for %p,! %d %ld should be %d, right  --  %d",
+                    // mainw->frame_layer_preload, mainw->pred_clip, */
                   /*         mainw->pred_frame, mainw->actual_frame, delta); */
                   if (delta <= 0 || (mainw->pred_frame < 0 && delta > 0)) {
                     check_layer_ready(mainw->frame_layer_preload);
@@ -7904,7 +7920,9 @@ void load_frame_image(int frame) {
           int wl = weed_layer_get_width(mainw->frame_layer) *
                    weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer));
           int hl = weed_layer_get_height(mainw->frame_layer);
-          if ((wl != cfile->hsize && wl != mainw->pwidth) || (hl != cfile->vsize && hl != mainw->pheight)) {
+          if ((wl != cfile->hsize && wl != mainw->pwidth)
+              || (hl != cfile->vsize && hl != mainw->pheight)) {
+            break_me("bad frame size");
             mainw->size_warn = mainw->current_file;
             size_ok = FALSE;
           }
@@ -9638,12 +9656,6 @@ void load_frame_image(int frame) {
             lives_widget_hide(mainw->eventbox3);
             lives_widget_hide(mainw->eventbox4);
           }
-        }
-
-        if (!mainw->foreign && CURRENT_CLIP_IS_VALID && (!cfile->opening
-            || cfile->clip_type == CLIP_TYPE_FILE)) {
-          /* load_end_image(cfile->end); */
-          /* load_start_image(cfile->start); */
         }
 
         if (!mainw->foreign && mainw->current_file == -1) {

@@ -3145,6 +3145,90 @@ char *ensure_extension(const char *fname, const char *ext) {
 }
 
 
+LIVES_GLOBAL_INLINE char *lives_ellipsise(char *txt, size_t maxlen, int align) {
+  /// eg. txt = "abcdefgh", maxlen = 6, LIVES_ALIGN_END  -> txt == "...gh" + NUL
+  ///     txt = "abcdefgh", maxlen = 6, LIVES_ALIGN_START  -> txt == "ab..." + NUL
+  ///     txt = "abcdefgh", maxlen = 6, LIVES_ALIGN_FILL  -> txt == "a...h" + NUL
+  // LIVES_ALIGN_CENTER - do not ellipsise
+  // return value should be freed, unless txt is returned
+  const char ellipsis[4] = "...\0";
+  size_t slen = lives_strlen(txt);
+  off_t stlen, enlen;
+  char *retval = txt;
+  if (!maxlen) return NULL;
+  if (slen >= maxlen) {
+    if (maxlen == 1) return lives_strdup("");
+    retval = (char *)lives_malloc(maxlen);
+    if (maxlen == 2) return lives_strdup(".");
+    if (maxlen == 3) return lives_strdup("..");
+    if (maxlen == 4) return lives_strdup("...");
+    maxlen -= 4;
+    switch (align) {
+    case LIVES_ALIGN_END:
+      lives_memcpy(retval, ellipsis, 3);
+      lives_memcpy(retval + 3, txt + slen - maxlen, maxlen + 1);
+      break;
+    case LIVES_ALIGN_START:
+      lives_memcpy(retval, txt, maxlen);
+      lives_memcpy(retval + maxlen, ellipsis, 4);
+      break;
+    case LIVES_ALIGN_FILL:
+      enlen = maxlen >> 1;
+      stlen = maxlen - enlen;
+      lives_memcpy(retval, txt, stlen);
+      lives_memcpy(retval + stlen, ellipsis, 3);
+      lives_memcpy(retval + stlen + 3, txt + slen - enlen, enlen + 1);
+      break;
+    default:
+      break;
+    }
+  }
+  return retval;
+}
+
+
+LIVES_GLOBAL_INLINE char *lives_pad(char *txt, size_t minlen, int align) {
+  // pad with spaces at start and end respectively
+  // ealign gives ellipsis pos, palign can be LIVES_ALIGN_START, LIVES_ALIGN_END
+  // LIVES_ALIGN_START -> pad end, LIVES_ALIGN_END -> pad start
+  // LIVES_ALIGN_CENTER -> pad on both sides
+  // LIVES_ALIGN_FILL - do not pad
+  size_t slen = lives_strlen(txt);
+  char *retval = txt;
+  off_t ipos = 0;
+  if (align == LIVES_ALIGN_FILL) return txt;
+  if (slen < minlen - 1) {
+    retval = (char *)lives_malloc(minlen);
+    lives_memset(retval, ' ', --minlen);
+    switch (align) {
+    case LIVES_ALIGN_END:
+      ipos = minlen - slen;
+      break;
+    case LIVES_ALIGN_CENTER:
+      ipos = minlen - slen;
+      break;
+    default:
+      break;
+    }
+    lives_memcpy(retval + ipos, txt, slen);
+  }
+  return retval;
+}
+
+
+LIVES_GLOBAL_INLINE char *lives_pad_ellipsise(char *txt, size_t fixlen, int ealign, int palign) {
+  // if len of txt < fixlen it will be padded, if longer, ellipsised
+  // ealign gives ellipsis pos, palign can be LIVES_ALIGN_START, LIVES_ALIGN_END
+  // pad with spaces at start and end respectively
+  // LIVES_ALIGN_CENTER -> pad on both sides
+  // LIVES_ALIGN_FILL - do not pad
+  size_t slen = lives_strlen(txt);
+  if (slen == fixlen - 1) return txt;
+  if (slen >= fixlen) return lives_ellipsise(txt, fixlen, ealign);
+  return lives_pad(txt, fixlen, palign);
+}
+
+
 boolean ensure_isdir(char *fname) {
   // ensure dirname ends in a single dir separator
   // fname should be char[PATH_MAX]
@@ -5121,7 +5205,8 @@ LiVESList *get_set_list(const char *dir, boolean utf8) {
       return setlist;
     }
 
-    if (!strncmp(tdirent->d_name, "..", strlen(tdirent->d_name))) continue;
+    if (tdirent->d_name[0] == '.'
+        && (!tdirent->d_name[1] || tdirent->d_name[1] == '.')) continue;
 
     subdirname = lives_build_filename(dir, tdirent->d_name, NULL);
     subdir = opendir(subdirname);

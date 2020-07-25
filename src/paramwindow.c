@@ -1760,7 +1760,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
         && param->special_type != LIVES_PARAM_SPECIAL_TYPE_FONT_CHOOSER
         && param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEWRITE) {
       LiVESWidget *vbox = lives_vbox_new(FALSE, 0);
-      boolean woat = widget_opts.apply_theme;
+      int woat = widget_opts.apply_theme;
 
       widget_opts.justify = LIVES_JUSTIFY_CENTER;
       if (use_mnemonic) label = lives_standard_label_new_with_mnemonic_widget(_(name), NULL);
@@ -1787,7 +1787,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
 
       lives_text_buffer_set_text(textbuffer, txt, -1);
 
-      widget_opts.apply_theme = FALSE;
+      widget_opts.apply_theme = 0;
       widget_opts.expand = LIVES_EXPAND_EXTRA;
       scrolledwindow = lives_standard_scrolled_window_new(-1, RFX_TEXT_SCROLL_HEIGHT, textview);
       widget_opts.expand = LIVES_EXPAND_DEFAULT;

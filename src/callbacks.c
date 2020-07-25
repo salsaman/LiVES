@@ -2080,10 +2080,8 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     stored_event_list_free_undos();
   }
 
-  // do not popup layout errors if the set name changes
-  if (!mainw->only_close) {
-    mainw->is_exiting = TRUE;
-  }
+  /// do not popup warning if set name is changed
+  mainw->suppress_layout_warnings = TRUE;
 
   if (mainw->clips_available > 0) {
     char *set_name;
@@ -2094,6 +2092,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       legal_set_name = TRUE;
       lives_widget_show_all(cdsw->dialog);
       resp = lives_dialog_run(LIVES_DIALOG(cdsw->dialog));
+
       if (resp == LIVES_RESPONSE_CANCEL) {
         lives_widget_destroy(cdsw->dialog);
         lives_free(cdsw);
@@ -5489,7 +5488,7 @@ boolean on_save_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     if (mainw->multitrack != NULL && !mainw->multitrack->changed) recover_layout_cancelled(FALSE);
   }
 
-  if (mainw->current_layouts_map != NULL && strcmp(old_set, mainw->set_name) && !mainw->is_exiting) {
+  if (mainw->current_layouts_map != NULL && strcmp(old_set, mainw->set_name) && !mainw->suppress_layout_warnings) {
     // warn the user about layouts if the set name changed
     // but, don't bother the user with errors if we are exiting
     add_lmap_error(LMAP_INFO_SETNAME_CHANGED, old_set, mainw->set_name, 0, 0, 0., FALSE);
@@ -5791,9 +5790,11 @@ boolean reload_set(const char *set_name) {
     }
 
     // get file details
-    if (!read_headers(".")) {
-      /// set clip failed to load, we need to do something with it else it will keep trying to reload each time.
+    if (!read_headers(mainw->current_file, NULL)) {
+      /// set clip failed to load, we need to do something with it
+      /// else it will keep trying to reload each time.
       /// for now we shall just move it out of the set
+      /// this is fine as the user can try to recover it at a later time
       lives_free(mainw->files[mainw->current_file]);
       mainw->files[mainw->current_file] = NULL;
       if (mainw->first_free_file > mainw->current_file) mainw->first_free_file = mainw->current_file;
@@ -6134,6 +6135,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       LiVESWidget *button, *rb = NULL, *accb;
       LiVESWidget *layout, *hbox;
       LiVESWidget *top_vbox;
+      lives_proc_thread_t recinfo, reminfo, leaveinfo;
       char *tmp, *tmp2;
       char *op;
       int nitems = atoi(mainw->msg);
@@ -6141,9 +6143,12 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       nitems = 1; /// TODO
 
       if (nitems) {
-        dir_to_file_details(&rec_list, full_trashdir, TRASH_RECOVER, EXTRA_DETAILS_CLIP);
-        dir_to_file_details(&rem_list, full_trashdir, TRASH_REMOVE, 0);
-        dir_to_file_details(&left_list, full_trashdir, TRASH_LEAVE, 0);
+        recinfo = dir_to_file_details(&rec_list, full_trashdir, TRASH_RECOVER, prefs->workdir,
+                                      EXTRA_DETAILS_CLIPHDR | EXTRA_DETAILS_EMPTY_DIR);
+        reminfo = dir_to_file_details(&rem_list, full_trashdir, TRASH_REMOVE, prefs->workdir,
+                                      EXTRA_DETAILS_EMPTY_DIR);
+        leaveinfo = dir_to_file_details(&left_list, full_trashdir, TRASH_LEAVE, prefs->workdir,
+                                        EXTRA_DETAILS_EMPTY_DIR);
       }
 
       widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH;
@@ -6181,14 +6186,6 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
                LIVES_RESPONSE_BROWSE);
         widget_opts.expand = LIVES_EXPAND_DEFAULT;
         lives_button_grab_default_special(accb);
-
-        widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
-        accb = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
-               LIVES_STOCK_APPLY, _("_Accept and Continue"),
-               LIVES_RESPONSE_ACCEPT);
-        widget_opts.expand = LIVES_EXPAND_DEFAULT;
-
-        lives_widget_set_sensitive(accb, FALSE);
       } else {
 
 
@@ -6197,24 +6194,20 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
 
 
       }
-rerun:
 
       retval = lives_dialog_run(LIVES_DIALOG(textwindow->dialog));
-
-      if (retval != LIVES_RESPONSE_CANCEL) {
-        lives_widget_hide(textwindow->dialog);
-        if (retval == LIVES_RESPONSE_BROWSE) {
-          retval = filter_cleanup(full_trashdir, &rec_list, &rem_list, &left_list);
-          if (retval != LIVES_RESPONSE_CANCEL) {
-            lives_widget_set_sensitive(accb, TRUE);
-            lives_button_grab_default_special(accb);
-            goto rerun;
-          }
-        }
-      }
-
       lives_widget_destroy(textwindow->dialog);
       lives_free(textwindow);
+
+      if (retval != LIVES_RESPONSE_CANCEL) {
+        retval = filter_cleanup(full_trashdir, &rec_list, &rem_list, &left_list);
+      }
+
+      if (nitems) {
+        lives_proc_thread_cancel(recinfo);
+        lives_proc_thread_cancel(reminfo);
+        lives_proc_thread_cancel(leaveinfo);
+      }
 
       //lives_list_free_all(&rem_list);  /// keep rec_list for recover and leav_list to show info
 
@@ -8642,7 +8635,8 @@ void on_open_new_audio_clicked(LiVESFileChooser * chooser, livespointer user_dat
   cfile->changed = TRUE;
   d_print_done();
 
-  d_print(P_("New audio: %d Hz %d channel %d bps\n", "New audio: %d Hz %d channels %d bps\n", cfile->achans),
+  d_print(P_("New audio: %d Hz %d channel %d bps\n", "New audio: %d Hz %d channels %d bps\n",
+             cfile->achans),
           cfile->arate, cfile->achans, cfile->asampsize);
 
   THREADVAR(com_failed) = FALSE;

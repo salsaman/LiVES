@@ -721,8 +721,10 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                 if (pulsed->aPlayPtr->size < in_bytes) {
                   pulsed->real_seek_pos = pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos, qnt);
                   lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
-                  pulsed->aPlayPtr->size += lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data)
-                                            + pulsed->aPlayPtr->size, in_bytes - pulsed->aPlayPtr->size, TRUE);
+                  pulsed->aPlayPtr->size
+                  += lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data)
+                                         + pulsed->aPlayPtr->size,
+                                         in_bytes - pulsed->aPlayPtr->size, TRUE);
 		  // *INDENT-OFF*
 		}}}}
 	  // *INDENT-ON*

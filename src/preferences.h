@@ -431,6 +431,7 @@ typedef struct {
   boolean autoclean; ///< remove temp files on shutdown / startup
 
   boolean show_desktop_panel;
+  boolean show_msgs_on_startup;
 } _prefs;
 
 enum {
@@ -976,6 +977,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_AUTOLOAD_SUBS "autoload_subtitles" /// add to prefs window
 #define PREF_AUTOCLEAN_TRASH "autoclean_trash" ///< remove unneeded files on shutdown / startup
 #define PREF_PREF_TRASH "prefer_trash" ///< prefer trash to delete
+#define PREF_MSG_START "show_msgs_on_startup" /// pop up msgs box on startup
 
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"

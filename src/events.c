@@ -5283,7 +5283,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
   char *iname = NULL, *fname = NULL;
   char *tmp;
 
-  boolean woat = widget_opts.apply_theme;
+  int woat = widget_opts.apply_theme;
 
   int winsize_h;
   int winsize_v;
@@ -5641,7 +5641,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
 
   lives_freep((void **)&iname);
 
-  widget_opts.apply_theme = FALSE;
+  widget_opts.apply_theme = 0;
   scrolledwindow = lives_standard_scrolled_window_new(winsize_h, winsize_v, table);
   widget_opts.apply_theme = woat;
 

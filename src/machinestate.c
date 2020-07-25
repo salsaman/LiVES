@@ -724,10 +724,10 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks(void) {
 }
 
 
-char *lives_datetime(struct timeval *tv) {
+char *lives_datetime(uint64_t secs) {
   char buf[128];
   char *datetime = NULL;
-  struct tm *gm = gmtime(&tv->tv_sec);
+  struct tm *gm = gmtime((time_t *)&secs);
   ssize_t written;
 
   if (gm) {
@@ -832,67 +832,205 @@ uint64_t reget_afilesize_inner(int fileno) {
 }
 
 
+boolean is_empty_dir(const char *dirname) {
+  DIR *tldir;
+  struct dirent *tdirent;
+  boolean empty = TRUE;
+  if (!dirname) return TRUE;
+  tldir = opendir(dirname);
+  if (!tldir) return FALSE;
+  while (empty && (tdirent = readdir(tldir))) {
+    if (tdirent->d_name[0] == '.'
+        && (!tdirent->d_name[1] || tdirent->d_name[1] == '.')) continue;
+    empty = FALSE;
+  }
+  closedir(tldir);
+  return empty;
+}
+
+
+int stat_to_file_dets(const char *fname, lives_file_dets_t *fdets) {
+  struct stat filestat;
+  int ret = stat(fname, &filestat);
+  if (ret) {
+    fdets->size = -2;
+    fdets->type = LIVES_FILE_TYPE_UNKNOWN;
+    return ret;
+  }
+  fdets->type = (uint64_t)((filestat.st_mode & S_IFMT) >> 12);
+  fdets->size = filestat.st_size;
+  fdets->blk_size = (uint64_t)filestat.st_blksize;
+  fdets->atime_sec = filestat.st_atim.tv_sec;
+  fdets->atime_nsec = filestat.st_atim.tv_nsec;
+  fdets->mtime_sec = filestat.st_mtim.tv_sec;
+  fdets->mtime_nsec = filestat.st_mtim.tv_nsec;
+  fdets->ctime_sec = filestat.st_ctim.tv_sec;
+  fdets->ctime_nsec = filestat.st_ctim.tv_nsec;
+  return ret;
+}
+
+
+char *file_to_file_details(const char *filename, lives_file_dets_t *fdets,
+                           lives_proc_thread_t tinfo, uint64_t extra) {
+  char *tmp;
+  char *extra_details = lives_strdup("");
+
+  if (!stat_to_file_dets(filename, fdets)) {
+    // if stat fails, we have set set size to -2, type to LIVES_FILE_TYPE_UNKNOWN
+    // and here we set extra_details to ""
+    if (tinfo && lives_proc_thread_cancelled(tinfo)) {
+      lives_free(extra_details);
+      return NULL;
+    }
+
+    if (fdets->type == LIVES_FILE_TYPE_DIRECTORY) {
+      boolean emptyd = FALSE;
+      if (extra & EXTRA_DETAILS_EMPTY_DIR) {
+        if ((emptyd = is_empty_dir(filename))) {
+          extra_details = lives_strdup_printf("%s%s%s", extra_details, *extra_details ? ", " : "",
+                                              (tmp = _("(empty)")));
+          lives_free(tmp);
+        }
+        if (tinfo && lives_proc_thread_cancelled(tinfo)) {
+          lives_free(extra_details);
+          return NULL;
+        }
+      }
+      if (!emptyd && (extra & EXTRA_DETAILS_CLIPHDR)) {
+        int clipno = create_nullvideo_clip(fdets->name);
+        if (clipno && IS_VALID_CLIP(clipno)) {
+          if (read_headers(clipno, NULL)) {
+            lives_clip_t *sfile = mainw->files[clipno];
+            char *name = lives_strdup(sfile->name);
+            extra_details = lives_strdup_printf("%s%s%s", extra_details, *extra_details ? ", " : "",
+                                                (tmp = lives_strdup_printf
+                                                    (_("Name: %s, frames: %d, size: %d X %d, "
+                                                        "fps: %.3f"),
+                                                        name, sfile->frames, sfile->hsize,
+                                                        sfile->vsize, sfile->fps)));
+            lives_free(tmp);
+            if (name != sfile->name) lives_free(name);
+            lives_freep((void **)&mainw->files[clipno]);
+            if (mainw->first_free_file == ALL_USED || mainw->first_free_file > clipno)
+              mainw->first_free_file = clipno;
+	    // *INDENT-OFF*
+	  }}}}}
+    // *INDENT-ON*
+
+  if (extra & EXTRA_DETAILS_MD5) {
+    fdets->md5sum = get_md5sum(filename);
+  }
+  return extra_details;
+}
+
+
 /**
    @brief create a list from a (sub)directory
    '.' and '..' are ignored
    subdir can be NULL
 */
-void *dir_to_file_details(LiVESList **listp, const char *dir, const char *tsubdir, uint64_t extra) {
+void *_dir_to_file_details(LiVESList **listp, const char *dir, const char *tsubdir,
+                           const char *orig_loc, uint64_t extra) {
   lives_file_dets_t *fdets;
   DIR *tldir, *subdir;
   struct dirent *tdirent, *subdirent;
+  lives_proc_thread_t tinfo = NULL;
+  LiVESList *list;
   char *subdirname;
+  char *extra_details;
   boolean empty = TRUE;
-  g_print("PARSE dir %s\n", dir);
+
+  tinfo = THREADVAR(tinfo);
+  if (tinfo) lives_proc_thread_set_cancellable(tinfo);
+
   if (!dir) return NULL;
   tldir = opendir(dir);
   if (!tldir) return NULL;
 
   while (1) {
     tdirent = readdir(tldir);
-    if (!tdirent) {
+    if (lives_proc_thread_cancelled(tinfo) || !tdirent) {
       closedir(tldir);
-      g_print("PARSExxxxx dir %s\n", dir);
+      if (lives_proc_thread_cancelled(tinfo)) return NULL;
       break;
     }
 
-    if (!strncmp(tdirent->d_name, "..", strlen(tdirent->d_name))) continue;
+    if (tdirent->d_name[0] == '.'
+        && (!tdirent->d_name[1] || tdirent->d_name[1] == '.')) continue;
 
-    g_print("PARSExxxxxxzxzxzxz dir %s\n", dir);
     if (tsubdir) {
-      g_print("PARSExsssskok dir %s\n", tdirent->d_name);
       if (!lives_strcmp(tdirent->d_name, tsubdir)) {
         closedir(tldir);
+        if (lives_proc_thread_cancelled(tinfo)) return NULL;
         subdirname = lives_build_filename(dir, tsubdir, NULL);
-        g_print("PARSExs44444444ssskok dir %s\n", subdirname);
         subdir = opendir(subdirname);
         lives_free(subdirname);
         if (!subdir) break;
         while (1) {
           subdirent = readdir(subdir);
-          if (!subdirent) {
+          if (lives_proc_thread_cancelled(tinfo) || !subdirent) {
             closedir(subdir);
+            if (lives_proc_thread_cancelled(tinfo)) return NULL;
             break;
           }
-          g_print("PARSExsssskok zzzzdir %s\n", subdirent->d_name);
-          if (!strncmp(subdirent->d_name, "..", strlen(subdirent->d_name))) continue;
+          if (subdirent->d_name[0] == '.'
+              && (!subdirent->d_name[1] || subdirent->d_name[1] == '.')) continue;
           fdets = (lives_file_dets_t *)lives_calloc(1, sizeof(lives_file_dets_t));
           fdets->name = lives_strdup(subdirent->d_name);
           fdets->size = -1;
           *listp = lives_list_append(*listp, fdets);
-        }
+          if (lives_proc_thread_cancelled(tinfo)) {
+            closedir(subdir);
+            return NULL;
+	    // *INDENT-OFF*
+	  }}
         break;
-      }
-    }
-  }
+      }}}
+  // *INDENT-OFF*
+
   if (*listp) empty = FALSE;
   *listp = lives_list_append(*listp, NULL);
-  if (empty) return NULL;
+  if (empty || lives_proc_thread_cancelled(tinfo)) return NULL;
 
   // listing done, now get details for each entry
+  list = *listp;
+  while (list && list->data) {
+    if (lives_proc_thread_cancelled(tinfo)) return NULL;
 
+    extra_details = lives_strdup("");
+    fdets = (lives_file_dets_t *)list->data;
+    subdirname = lives_build_filename(orig_loc, fdets->name, NULL);
+
+    if (!(extra_details = file_to_file_details(subdirname, fdets, tinfo, extra))) {
+      lives_free(subdirname);
+      lives_free(extra_details);
+      return NULL;
+    }
+
+    lives_free(subdirname);
+
+    if (tinfo && lives_proc_thread_cancelled(tinfo)) {
+      lives_free(extra_details);
+      return NULL;
+    }
+    fdets->extra_details = lives_strdup(extra_details);
+    lives_free(extra_details);
+    list = list->next;
+  }
 
   return NULL;
+}
+
+/**
+   @brief create a list from a (sub)directory
+   '.' and '..' are ignored
+   subdir can be NULL
+   runs in a proc_htread
+*/
+lives_proc_thread_t dir_to_file_details(LiVESList **listp, const char *dir, const char *tsubdir,
+					 const char *orig_loc, uint64_t extra) {
+  return lives_proc_thread_create(NULL, (lives_funcptr_t)_dir_to_file_details, -1, "vsssI",
+				  listp, dir, tsubdir, orig_loc, extra);
 }
 
 
@@ -1163,7 +1301,7 @@ lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t *attr, lives_fu
     case 'i': weed_set_int_value(thread_info, pkey, va_arg(xargs, int)); break;
     case 'd': weed_set_double_value(thread_info, pkey, va_arg(xargs, double)); break;
     case 'b': weed_set_boolean_value(thread_info, pkey, va_arg(xargs, int)); break;
-    case 's': weed_set_string_value(thread_info, pkey, va_arg(xargs, char *)); break;
+    case 's': case 'S': weed_set_string_value(thread_info, pkey, va_arg(xargs, char *)); break;
     case 'I': weed_set_int64_value(thread_info, pkey, va_arg(xargs, int64_t)); break;
     case 'F': weed_set_funcptr_value(thread_info, pkey, va_arg(xargs, weed_funcptr_t)); break;
     case 'V': case 'v': weed_set_voidptr_value(thread_info, pkey, va_arg(xargs, void *)); break;
@@ -1186,6 +1324,7 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
   /// ensure the matching case is handled in the switch statement
   uint32_t ret_type = weed_leaf_seed_type(info, _RV_);
   allfunc_t *thefunc = (allfunc_t *)lives_malloc(sizeof(allfunc_t));
+  char *msg;
 
   thefunc->func = weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL);
 
@@ -1200,6 +1339,7 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
 #define FUNCSIG_VOIDP_VOIDP_VOIDP 		        		0X00000DDD
 #define FUNCSIG_PLANTP_VOIDP_INT64 		        		0X00000ED5
 #define FUNCSIG_INT_INT_INT_BOOL_VOIDP					0X0001113D
+#define FUNCSIG_VOIDP_STRING_STRING_STRING_INT64		       	0X000D4445
 
   // Note: C compilers don't care about the type / number of function args., (else it would be impossible to alias any function pointer)
   // just the type / number must be correct at runtime;
@@ -1276,7 +1416,16 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
     default: CALL_VOID_5(int, int, int, boolean, voidptr); break;
     }
     break;
-  default: break;
+  case FUNCSIG_VOIDP_STRING_STRING_STRING_INT64:
+    switch (ret_type) {
+    default: CALL_VOID_5(voidptr, string, string, string, int64); break;
+    }
+    break;
+  default:
+    msg = lives_strdup_printf("Unknown funcsig with tyte 0x%016lX called", sig);
+    LIVES_ERROR(msg);
+    lives_free(msg);
+    break;
   }
 
   lives_free(thefunc);
@@ -1309,7 +1458,8 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancel(lives_proc_thread_t tinfo) 
 }
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancelled(lives_proc_thread_t tinfo) {
-  return weed_get_boolean_value(tinfo, WEED_LEAF_THREAD_CANCELLED, NULL) == WEED_TRUE ? TRUE : FALSE;
+  return (tinfo && weed_get_boolean_value(tinfo, WEED_LEAF_THREAD_CANCELLED, NULL) == WEED_TRUE)
+    ? TRUE : FALSE;
 }
 
 #define _join(stype) lives_nanosleep_until_nonzero(weed_leaf_num_elements(tinfo, _RV_)); \
@@ -1358,6 +1508,7 @@ static void *_plant_thread_func(void *args) {
   lives_proc_thread_t info = (lives_proc_thread_t)args;
   uint32_t ret_type = weed_leaf_seed_type(info, _RV_);
   funcsig_t sig = make_funcsig(info);
+  THREADVAR(tinfo) = info;
   call_funcsig(sig, info);
   if (weed_get_boolean_value(info, WEED_LEAF_NOTIFY, NULL) == WEED_TRUE)
     weed_set_boolean_value(info, WEED_LEAF_DONE, WEED_TRUE);

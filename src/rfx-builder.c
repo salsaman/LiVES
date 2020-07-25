@@ -2682,9 +2682,8 @@ LiVESWidget *make_trigger_dialog(int tnum, rfx_build_window_t *rfxbuilder) {
 
   char *title;
 
-  boolean woat;
-
-  register int i;
+  int woat;
+  int i;
 
   if (tnum < 0) {
     title = (_("New RFX Trigger"));
@@ -2725,7 +2724,7 @@ LiVESWidget *make_trigger_dialog(int tnum, rfx_build_window_t *rfxbuilder) {
   lives_text_view_set_cursor_visible(LIVES_TEXT_VIEW(rfxbuilder->code_textview), TRUE);
 
   woat = widget_opts.apply_theme;
-  widget_opts.apply_theme = FALSE;
+  widget_opts.apply_theme = 0;
   widget_opts.expand = LIVES_EXPAND_EXTRA; // prevent centering
   scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H * 2. / 3., RFX_WINSIZE_V / 4., rfxbuilder->code_textview);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
@@ -2760,7 +2759,7 @@ static void on_code_clicked(LiVESButton * button, livespointer user_data) {
 
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
 
-  boolean woat;
+  int woat;
 
   char *tmpx;
 
@@ -2772,7 +2771,7 @@ static void on_code_clicked(LiVESButton * button, livespointer user_data) {
   rfxbuilder->code_textview = lives_text_view_new();
 
   woat = widget_opts.apply_theme;
-  widget_opts.apply_theme = FALSE;
+  widget_opts.apply_theme = 0;
   widget_opts.expand = LIVES_EXPAND_EXTRA; // prevent centering
   scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V, rfxbuilder->code_textview);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;

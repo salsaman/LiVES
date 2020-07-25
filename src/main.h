@@ -1301,7 +1301,7 @@ boolean get_temp_handle(int index);
 int close_temp_handle(int new_clip);
 boolean get_handle_from_info_file(int index);
 lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded);
-int create_nullvideo_file(const char *handle);
+int create_nullvideo_clip(const char *handle);
 void save_file(int clip, int start, int end, const char *filename);
 void play_file(void);
 void start_playback_async(int type);
@@ -1326,7 +1326,7 @@ boolean write_headers(lives_clip_t *file);
 
 // saveplay.c restore
 ulong restore_file(const char *filename);
-boolean read_headers(const char *file_name);
+boolean read_headers(int clipno, const char *file_name);
 
 // saveplay.c sets
 void open_set_file(int clipnum);
@@ -1618,6 +1618,9 @@ boolean is_writeable_dir(const char *dir);
 boolean ensure_isdir(char *fname);
 boolean dirs_equal(const char *dira, const char *dirb);
 char *ensure_extension(const char *fname, const char *ext) WARN_UNUSED;
+char *lives_ellipsise(char *, size_t maxlen, int align);
+char *lives_pad(char *, size_t minlen, int align);
+char *lives_pad_ellipsise(char *, size_t fixlen, int ealign, int palign);
 void activate_url_inner(const char *link);
 void activate_url(LiVESAboutDialog *about, const char *link, livespointer data);
 void show_manual_section(const char *lang, const char *section);

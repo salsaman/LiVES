@@ -358,7 +358,7 @@ void create_LiVES(void) {
 
   int i;
   int dpw;
-  boolean woat;
+  int woat;
   boolean new_lives = FALSE;
 
   mainw->configured = FALSE;
@@ -2044,10 +2044,10 @@ void create_LiVES(void) {
   widget_opts.expand = LIVES_EXPAND_NONE;
 #if GTK_CHECK_VERSION(3, 0, 0)
   if (!(palette->style & STYLE_2)) {
-    widget_opts.apply_theme = FALSE;
+    widget_opts.apply_theme = 0;
   }
 #else
-  widget_opts.apply_theme = FALSE;
+  widget_opts.apply_theme = 0;
 #endif
   widget_opts.packing_width = MAIN_SPIN_SPACER;
   mainw->spinbutton_start = lives_standard_spin_button_new(NULL, 0., 0., 0., 1., 1., 0,
@@ -2102,10 +2102,10 @@ void create_LiVES(void) {
   widget_opts.packing_width = MAIN_SPIN_SPACER;
 #if GTK_CHECK_VERSION(3, 0, 0)
   if (!(palette->style & STYLE_2)) {
-    widget_opts.apply_theme = FALSE;
+    widget_opts.apply_theme = 0;
   }
 #else
-  widget_opts.apply_theme = FALSE;
+  widget_opts.apply_theme = 0;
 #endif
   mainw->spinbutton_end = lives_standard_spin_button_new(NULL, 0., 0., 0., 1., 1., 0,
                           LIVES_BOX(mainw->hbox3), _("The last selected frame in this clip"));
@@ -2162,7 +2162,7 @@ void create_LiVES(void) {
                        widget_opts.packing_height)) * widget_opts.packing_height);
   lives_widget_set_margin_bottom(mainw->vidbar, widget_opts.packing_height / 2);
 
-  widget_opts.apply_theme = TRUE;
+  widget_opts.apply_theme = 1;
   mainw->video_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), &mainw->video_drawable);
   widget_opts.apply_theme = woat;
 
@@ -2180,7 +2180,7 @@ void create_LiVES(void) {
                        widget_opts.packing_height)) * widget_opts.packing_height);
   lives_widget_set_margin_bottom(mainw->laudbar, widget_opts.packing_height / 2);
 
-  widget_opts.apply_theme = TRUE;
+  widget_opts.apply_theme = 1;
   mainw->laudio_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), &mainw->laudio_drawable);
   widget_opts.apply_theme = woat;
 
@@ -2198,7 +2198,7 @@ void create_LiVES(void) {
                        widget_opts.packing_height)) * widget_opts.packing_height);
   lives_widget_set_margin_bottom(mainw->raudbar, widget_opts.packing_height / 2);
 
-  widget_opts.apply_theme = TRUE;
+  widget_opts.apply_theme = 1;
   mainw->raudio_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), &mainw->raudio_drawable);
   widget_opts.apply_theme = woat;
 

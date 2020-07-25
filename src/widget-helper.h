@@ -477,6 +477,8 @@ LiVESAdjustment *lives_adjustment_new(double value, double lower, double upper,
 boolean lives_box_reorder_child(LiVESBox *, LiVESWidget *child, int pos);
 boolean lives_box_set_homogeneous(LiVESBox *, boolean homogeneous);
 boolean lives_box_set_spacing(LiVESBox *, int spacing);
+boolean lives_box_set_child_packing(LiVESBox *, LiVESWidget *child, boolean expand, boolean fill,
+                                    uint32_t padding, LiVESPackType pack_type);
 
 boolean lives_box_pack_start(LiVESBox *, LiVESWidget *child, boolean expand, boolean fill, uint32_t padding);
 boolean lives_box_pack_end(LiVESBox *, LiVESWidget *child, boolean expand, boolean fill, uint32_t padding);
@@ -1314,7 +1316,7 @@ typedef struct {
   boolean mnemonic_label; ///< if underscore in label text should be mnemonic accelerator
   boolean non_modal; ///< non-modal for dialogs
   lives_expand_t expand; ///< how much space to apply between widgets
-  boolean apply_theme; ///< whether to apply theming to widget
+  int apply_theme; ///< whether to apply theming to widget (0 -> no theme, 1 -> normal colours, 2+ -> theme variants)
   double scale; ///< scale factor for all sizes
   int packing_width; ///< horizontal pixels between widgets
   int packing_height; ///< vertical pixels between widgets

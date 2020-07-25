@@ -279,11 +279,9 @@ lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, 
 uint64_t get_ds_free(const char *dir);
 boolean get_ds_used(int64_t *bytes);
 
-void *dir_to_file_details(LiVESList **, const char *dir, const char *tsubdir, uint64_t extra);
-
 ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t orignsecs);
 ticks_t lives_get_current_ticks(void);
-char *lives_datetime(struct timeval *tv);
+char *lives_datetime(uint64_t secs);
 
 #define lives_nanosleep(nanosec) {struct timespec ts; ts.tv_sec = (uint64_t)nanosec / ONE_BILLION; \
     ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (nanosleep(&ts, &ts) == -1 && \
@@ -299,14 +297,27 @@ uint64_t sget_file_size(const char *name);
 void reget_afilesize(int fileno);
 uint64_t reget_afilesize_inner(int fileno);
 
-#define EXTRA_DETAILS_CLIP			(1 << 0)
+#define EXTRA_DETAILS_EMPTY_DIR			(1 << 0)
+#define EXTRA_DETAILS_CLIPHDR			(1 << 1)
+#define EXTRA_DETAILS_MD5			(1 << 2)
 
 typedef struct {
+  ///< if we can retrieve some kind of uinque id, we set it here
+  ///< may be useful in future for dictionary lookups
+  uint64_t uniq;
   char *name;
-  ssize_t size; // -1 not checked, -2 unreadable
-  uint64_t type;
-  LiVESWidget *widgets[8];
-  char *extra_details;
+  uint64_t type; /// e.g. LIVES_FILE_TYPE_FILE
+  off_t size; // -1 not checked, -2 unreadable
+  uint64_t blk_size;
+  uint64_t atime_sec;
+  uint64_t atime_nsec;
+  uint64_t mtime_sec;
+  uint64_t mtime_nsec;
+  uint64_t ctime_sec;
+  uint64_t ctime_nsec;
+  char *md5sum; /// only filled if EXTRA_DETAILS_MD5 is set, otherwis NULL
+  char *extra_details;  /// intialized to NULL, set to at least ""
+  LiVESWidget *widgets[16]; ///< caller set widgets for presentation, e.g. labels, spinners.
 } lives_file_dets_t;
 
 #ifdef PRODUCE_LOG
@@ -325,8 +336,10 @@ void reset_effort(void);
 //// threadpool API
 
 typedef void *(*lives_funcptr_t)(void *);
+typedef weed_plantptr_t lives_proc_thread_t;
 
 typedef struct {
+  lives_proc_thread_t var_tinfo;
   boolean var_com_failed;
   int var_write_failed, var_read_failed;
   boolean var_chdir_failed;
@@ -385,7 +398,6 @@ uint64_t lives_thread_join(lives_thread_t work, void **retval);
 
 #define _RV_ WEED_LEAF_RETURN_VALUE
 
-typedef weed_plantptr_t lives_proc_thread_t;
 typedef uint64_t funcsig_t;
 
 typedef int(*funcptr_int_t)();
@@ -482,6 +494,8 @@ int64_t lives_proc_thread_join_int64(lives_proc_thread_t);
 
 void resubmit_proc_thread(lives_proc_thread_t, lives_thread_attr_t *);
 
+lives_proc_thread_t dir_to_file_details(LiVESList **listp, const char *dir, const char *tsubdir,
+                                        const char *orig_loc, uint64_t extra);
 ///// cmdline
 char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase, int ridx, int rlen);
 

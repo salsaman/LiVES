@@ -181,13 +181,13 @@ static boolean widget_state_cb(LiVESWidgetObject *object, livespointer pspec, li
   //
   LiVESWidget *widget = (LiVESWidget *)object;
   LiVESWidgetState state;
-  boolean woat = widget_opts.apply_theme;
+  int woat = widget_opts.apply_theme;
 
   if (LIVES_IS_PLAYING || !mainw->is_ready) return FALSE;
 
   state = lives_widget_get_state(widget);
 
-  widget_opts.apply_theme = TRUE;
+  widget_opts.apply_theme = 1;
 
   if (LIVES_IS_TOOL_BUTTON(widget)) {
     LiVESWidget *label;
@@ -3283,19 +3283,19 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_box_reorder_child(LiVESBox *box, LiVES
 }
 
 
+LIVES_GLOBAL_INLINE boolean lives_box_set_child_packing(LiVESBox *box, LiVESWidget *child, boolean expand, boolean fill,
+    uint32_t padding, LiVESPackType pack_type) {
+#ifdef GUI_GTK
+  gtk_box_set_child_packing(box, child, expand, fill, padding, pack_type);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_box_set_spacing(LiVESBox *box, int spacing) {
 #ifdef GUI_GTK
   gtk_box_set_spacing(box, spacing);
-  return TRUE;
-#endif
-#ifdef GUI_QT
-  if (LIVES_IS_HBOX(box)) {
-    QHBoxLayout *qbox = dynamic_cast<QHBoxLayout *>(box);
-    qbox->setSpacing(spacing);
-  } else {
-    QVBoxLayout *qbox = dynamic_cast<QVBoxLayout *>(box);
-    qbox->setSpacing(spacing);
-  }
   return TRUE;
 #endif
   return FALSE;
@@ -8924,7 +8924,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_pack(LiVESHBox *box, LiVES
       lives_widget_object_set_data_list(LIVES_WIDGET_OBJECT(layout), EXP_LIST_KEY, xwidgets);
     }
   }
-  lives_box_pack_start(LIVES_BOX(box), widget, LIVES_SHOULD_EXPAND_EXTRA_WIDTH,
+  lives_box_pack_start(LIVES_BOX(box), widget, LIVES_SHOULD_EXPAND_EXTRA_WIDTH
+                       || (LIVES_IS_LABEL(widget) && LIVES_SHOULD_EXPAND_WIDTH),
                        TRUE, LIVES_SHOULD_EXPAND_WIDTH
                        ? widget_opts.packing_width >> 1 : 0);
   lives_widget_set_halign(widget, lives_justify_to_align(widget_opts.justify));
@@ -8976,6 +8977,9 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_hbox_new(LiVESLayout *layo
   if (++nadded > columns) lives_layout_resize(layout, rows, nadded);
   lives_layout_attach(layout, widget, nadded - 1, nadded, rows - 1);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), WADDED_KEY, LIVES_INT_TO_POINTER(nadded));
+  if (widget_opts.apply_theme == 2) {
+    lives_widget_apply_theme2(widget, LIVES_WIDGET_STATE_NORMAL, TRUE);
+  }
   return hbox;
 }
 
@@ -9897,16 +9901,32 @@ LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, Li
     lives_widget_apply_theme(swtch, LIVES_WIDGET_STATE_NORMAL);
 #if GTK_CHECK_VERSION(3, 16, 0)
     if (prefs->extra_colours && mainw->pretty_colours) {
+      char *tmp;
       colref = gdk_rgba_to_string(&palette->nice1);
       set_css_value_direct(swtch, LIVES_WIDGET_STATE_NORMAL, "", "border-color", colref);
       lives_free(colref);
-      colref = gdk_rgba_to_string(&palette->nice2);
-      set_css_value_direct(swtch, LIVES_WIDGET_STATE_NORMAL, "slider", "background-color",
-                           colref);
+
+      colref = gdk_rgba_to_string(&palette->menu_and_bars);
+      tmp = lives_strdup_printf("image(%s)", colref);
+      set_css_value_direct(swtch, LIVES_WIDGET_STATE_NORMAL, "slider",
+                           "background-image", tmp);
+      lives_free(tmp);
       lives_free(colref);
-      colref = gdk_rgba_to_string(&palette->normal_fore);
-      set_css_value_direct(swtch, LIVES_WIDGET_STATE_CHECKED, "slider", "background-color",
-                           colref);
+
+      colref = gdk_rgba_to_string(&palette->nice3);
+      tmp = lives_strdup_printf("image(%s)", colref);
+      set_css_value_direct(swtch, LIVES_WIDGET_STATE_CHECKED, "slider",
+                           "background-image", tmp);
+      lives_free(tmp);
+      lives_free(colref);
+
+      colref = gdk_rgba_to_string(&palette->nice2);
+      tmp = lives_strdup_printf("image(%s)", colref);
+      set_css_value_direct(swtch, LIVES_WIDGET_STATE_INSENSITIVE, "slider",
+                           "background-image", tmp);
+      lives_free(tmp);
+      set_css_value_direct(swtch, LIVES_WIDGET_STATE_INSENSITIVE, "", "border-color", colref);
+      lives_free(colref);
     }
 #endif
 #endif
@@ -10624,8 +10644,8 @@ WIDGET_HELPER_LOCAL_INLINE void dlg_focus_changed(LiVESContainer *c, LiVESWidget
       if (!LIVES_IS_WIDGET(toplevel)) return;
       button = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(toplevel), DEFBUTTON_KEY);
       if (button != NULL && lives_widget_is_sensitive(button)) {
-        boolean woat = widget_opts.apply_theme;
-        widget_opts.apply_theme = TRUE;
+        int woat = widget_opts.apply_theme;
+        widget_opts.apply_theme = 2;
         // default button gets the default
         lives_widget_object_set_data(LIVES_WIDGET_OBJECT(toplevel), CDEF_KEY, NULL);
         lives_widget_grab_default(button);

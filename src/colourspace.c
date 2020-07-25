@@ -9134,8 +9134,15 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
 weed_layer_t *create_blank_layer(weed_layer_t *layer, const char *image_ext, int width, int height, int target_palette) {
   if (!layer) layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
   else {
-    if (width == 0) width = weed_layer_get_width(layer);
-    if (height == 0) height = weed_layer_get_height(layer);
+    if (!width) width = weed_layer_get_width(layer);
+    if (!height) height = weed_layer_get_height(layer);
+    if (!width || !height) {
+      int clip = lives_layer_get_clip(layer);
+      if (clip && IS_VALID_CLIP(clip)) {
+        width = mainw->files[clip]->hsize;
+        height = mainw->files[clip]->vsize;
+      }
+    }
   }
   if (width == 0) width = DEF_FRAME_HSIZE_UNSCALED;
   if (height == 0) height = DEF_FRAME_VSIZE_UNSCALED;

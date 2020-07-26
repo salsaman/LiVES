@@ -1725,13 +1725,13 @@ LiVESWidget *create_info_error_dialog(lives_dialog_t info_type, const char *text
 
 
 LiVESWidget *scrolled_textview(const char *text, LiVESTextBuffer *textbuffer, int window_width,
-			       LiVESWidget **textview) {
+			       LiVESWidget **ptextview) {
   LiVESWidget *scrolledwindow = NULL;
-  *textview = lives_standard_text_view_new(text, textbuffer);
-  if (*textview) {
+  LiVESWidget *textview = lives_standard_text_view_new(text, textbuffer);
+  if (textview) {
     widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
     scrolledwindow = lives_standard_scrolled_window_new(window_width, RFX_WINSIZE_V,
-							*textview);
+							textview);
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
     lives_container_set_border_width(LIVES_CONTAINER(scrolledwindow), widget_opts.border_width);
     if (palette->style & STYLE_1) {
@@ -1739,6 +1739,7 @@ LiVESWidget *scrolled_textview(const char *text, LiVESTextBuffer *textbuffer, in
 				LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
     }
   }
+  if (ptextview) *ptextview = textview;
   return scrolledwindow;
 }
 
@@ -2069,7 +2070,7 @@ static void filt_all_toggled(LiVESWidget *cb, LiVESList *list) {
 }
 
 static void filt_reset_clicked(LiVESWidget *layout, LiVESWidget *rbut) {
-  LiVESList *list;
+  LiVESList *list, *xlist;
   LiVESWidget *cb =
     (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "cb");
   int ptype;
@@ -2077,17 +2078,17 @@ static void filt_reset_clicked(LiVESWidget *layout, LiVESWidget *rbut) {
 
   if (!cb) return;
 
-  ptype = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout),
-  list = (LiVESList *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout),
+  ptype = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "ptype"));
+  xlist = list = (LiVESList *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "list");
 
   switch (ptype) {
-  case 1:
-    filedets = (lives_file_dets_t *)(list->data);
-    for (; list && list->data; list = list->next) {
+  case 0:
+    for (; xlist && xlist->data; xlist = xlist->next) {
+      filedets = (lives_file_dets_t *)(xlist->data);
       lives_toggle_button_set_active(filedets->widgets[1], TRUE);
     }
     // fall through
-  case 0:
+  case 1:
     if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(cb)))
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(cb), TRUE);
     else
@@ -2160,7 +2161,7 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
     set_child_alt_colour(hbox, FALSE);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "cb", (livespointer)cb);
 
-    if (type == 1) {
+    if (!type) {
       widget_opts.justify = LIVES_JUSTIFY_CENTER;
       lives_layout_add_label(LIVES_LAYOUT(layout), _("Action"), TRUE);
       widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
@@ -2190,7 +2191,7 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
       filedets->widgets[0] = lives_standard_check_button_new("", type != 2, LIVES_BOX(hbox), NULL);
       filedets->widgets[8] = widget_opts.last_label;
 
-      if (type == 1) {
+      if (!type) {
 	hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 	filedets->widgets[1] = lives_standard_switch_new(NULL, TRUE, LIVES_BOX(hbox), NULL);
 	lives_signal_sync_connect(LIVES_GUI_OBJECT(filedets->widgets[1]), LIVES_WIDGET_TOGGLED_SIGNAL,
@@ -2383,8 +2384,9 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
   LiVESWidget *layout_rec, *layout_rem, *layout_leave;
   LiVESWidget *top_vbox;
   LiVESWidget *scrolledwindow;
-  LiVESWidget *button;
+  LiVESWidget *cancelb;
   LiVESWidget *resetb;
+  LiVESWidget *accb;
   LiVESWidget *vbox;
   LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
 
@@ -2403,11 +2405,11 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
   dialog = lives_standard_dialog_new(_("Disk Cleanup"), FALSE, winsize_h, winsize_v);
   lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
 
-  button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-						    LIVES_STOCK_CANCEL, NULL,
-						    LIVES_RESPONSE_CANCEL);
+  cancelb = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
+					       LIVES_STOCK_CANCEL, NULL,
+					       LIVES_RESPONSE_CANCEL);
 
-  lives_widget_add_accelerator(button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+  lives_widget_add_accelerator(cancelb, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
 			       LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   resetb = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
@@ -2416,17 +2418,16 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
   lives_widget_set_sensitive(resetb, FALSE);
 
   widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
-  button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
+  accb = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
 					    LIVES_STOCK_GO_FORWARD, _("_Accept and Continue"),
 					    LIVES_RESPONSE_ACCEPT);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
-  lives_button_grab_default_special(button);
+  lives_widget_set_sensitive(accb, FALSE);
 
   lives_signal_sync_connect(dialog, LIVES_WIDGET_RESPONSE_SIGNAL,
 			    LIVES_GUI_CALLBACK(filtc_response), NULL);
 
   top_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
-
 
   vbox = lives_vbox_new(FALSE, 0);
 
@@ -2512,13 +2513,13 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
 
   /// reset button
   if (!pass) {
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_rec), "list", rec_list);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_rec), "list", *rec_list);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_rec), "ptype",
 				 LIVES_INT_TO_POINTER(0));
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_rem), "list", rem_list);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_rem), "list", *rem_list);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_rem), "ptype",
 				 LIVES_INT_TO_POINTER(1));
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_leave), "list", left_list);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_leave), "list", *left_list);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_leave), "ptype",
 				 LIVES_INT_TO_POINTER(2));
 
@@ -2533,6 +2534,8 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
 				      layout_leave);
 
     lives_widget_set_sensitive(resetb, TRUE);
+    lives_widget_set_sensitive(accb, TRUE);
+    lives_button_grab_default_special(accb);
   }
 
   /////////
@@ -2548,7 +2551,51 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
   while (filtresp == LIVES_RESPONSE_NONE) lives_dialog_run(LIVES_DIALOG(dialog));
 
  filtc_done:
+  if (filtresp != LIVES_RESPONSE_CANCEL) {
+    // we need to shuffle the lists around before destroying the dialog; caller will move
+    // actual pointer files
+    LiVESList *list, *listnext;
+    lives_file_dets_t *filedets;
+    lives_widget_hide(dialog);
+    lives_widget_process_updates(dialog);
+
+    for (pass = 0; pass < 3; pass++) {
+      if (!pass) list = *rec_list;
+      else if (pass == 1) list = *rem_list;
+      else list = *left_list;
+      for (; list && list->data; list = listnext) {
+	listnext = list->next;
+	// entries can move to rem_list or left_list
+	// we no longer care about type, so the field will be reused to
+	// store the origin list number
+	// for this we will re-use pass, 0 -> rec_list, 1 -> rem_list, 2 -> left_list
+	filedets = (lives_file_dets_t *)list->data;
+	filedets->type = pass;
+	if (!pass || pass == 2) {
+	  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[0]))) {
+	    if (pass == 2 || !lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[1]))) {
+	      if (list->prev) list->prev->next = list->next;
+	      if (list->next) list->next->prev = list->prev;
+	      list->prev = NULL;
+	      list->next = *rem_list;
+	      (*rem_list)->prev = list;
+	      *rem_list = list;
+	    }
+	  }
+	}
+	if (pass != 2) {
+	  if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[0]))) {
+	    if (list->prev) list->prev->next = list->next;
+	    if (list->next) list->next->prev = list->prev;
+	    list->prev = NULL;
+	    list->next = *left_list;
+	    (*left_list)->prev = list;
+	    *left_list = list;
+	    // *INDENT-OFF*
+	  }}}}}
+  // *INDENT-ON*
   lives_widget_destroy(dialog);
+  //lives_widget_context_update();
   return filtresp;
 }
 
@@ -2708,7 +2755,7 @@ _entryw *create_location_dialog(void) {
 
   label = lives_standard_label_new(
             _("\n\nTo open a stream, you must make sure that you have the correct libraries "
-	      "compiled in mplayer (or mpv).\n"
+              "compiled in mplayer (or mpv).\n"
               "Also make sure you have set your bandwidth in Preferences|Streaming\n\n"));
 
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
@@ -2822,7 +2869,7 @@ _entryw *create_rename_dialog(int type) {
   if (type == 5) {
     label = lives_standard_label_new
             (_("In order to export this project, you must enter a name for this clip set.\n"
-	       "This will also be used for the project name.\n"));
+               "This will also be used for the project name.\n"));
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, 0);
   }
 
@@ -2835,7 +2882,7 @@ _entryw *create_rename_dialog(int type) {
 
     label = lives_standard_label_new
             (_("This startup wizard will guide you through the\n"
-	       "initial install so that you can get the most from this application."));
+               "initial install so that you can get the most from this application."));
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
     label = lives_standard_label_new
@@ -2869,13 +2916,12 @@ _entryw *create_rename_dialog(int type) {
     if (mainw->num_sets == -1) {
       mainw->set_list = get_set_list(prefs->workdir, TRUE);
       if (mainw->set_list) {
-	mainw->num_sets = lives_list_length(mainw->set_list);
-	if (mainw->was_set) mainw->num_sets--;
-      }
-      else mainw->num_sets = 0;
+        mainw->num_sets = lives_list_length(mainw->set_list);
+        if (mainw->was_set) mainw->num_sets--;
+      } else mainw->num_sets = 0;
       if (!mainw->num_sets) {
-	do_no_sets_dialog(prefs->workdir);
-	return NULL;
+        do_no_sets_dialog(prefs->workdir);
+        return NULL;
       }
     }
     mainw->set_list = lives_list_sort_alpha(mainw->set_list, TRUE);
@@ -2901,7 +2947,7 @@ _entryw *create_rename_dialog(int type) {
     } else {
       renamew->entry = lives_standard_entry_new(NULL, NULL, -1, -1, LIVES_BOX(hbox), NULL);
       lives_entry_set_max_length(LIVES_ENTRY(renamew->entry), type == 6 ? PATH_MAX
-				 : type == 7 ? 16 : 128);
+                                 : type == 7 ? 16 : 128);
       if (type == 2 && strlen(mainw->set_name)) {
         lives_entry_set_text(LIVES_ENTRY(renamew->entry), (tmp = F2U8(mainw->set_name)));
         lives_free(tmp);
@@ -3398,19 +3444,19 @@ void create_new_pb_speed(short type) {
   if (type == 1) {
     lives_snprintf(label_text, 256,
                    _("Current playback speed is %.3f frames per second.\n\n"
-		     "Please enter the desired playback speed\nin _frames per second"),
+                     "Please enter the desired playback speed\nin _frames per second"),
                    cfile->fps);
   } else if (type == 2) {
     lives_snprintf(label_text, 256,
                    _("Current playback speed is %.3f frames per second.\n\n"
-		     "Please enter the _resampled rate\nin frames per second"),
+                     "Please enter the _resampled rate\nin frames per second"),
                    cfile->fps);
   } else if (type == 3) {
     lives_snprintf(label_text, 256,
                    _("Current volume level for this clip is %.2f.\n\n"
-		     "You may select a new  _volume level here.\n\n"
+                     "You may select a new  _volume level here.\n\n"
                      "Please note that the volume can also be varied during playback\n"
-		     "using the %s and %s keys.\nChanging it here will make "
+                     "using the %s and %s keys.\nChanging it here will make "
                      "the adjustment permanent.\n"), "'<'", "'>'", cfile->vol);
   }
 
@@ -4238,7 +4284,7 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   checkbutton = lives_standard_check_button_new((tmp = (_("Check for Lost Clips"))),
                 !(prefs->clear_disk_opts & LIVES_CDISK_REMOVE_ORPHAN_CLIPS), LIVES_BOX(hbox),
                 (tmp2 = (_("#Enable attempted recovery of potential lost clips before deleting them.\n"
-			   "Can be overriden after disk analysis."))));
+                           "Can be overriden after disk analysis."))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -4261,13 +4307,13 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
                                   LIVES_GUI_CALLBACK(flip_cdisk_bit),
                                   LIVES_INT_TO_POINTER(LIVES_CDISK_LEAVE_ORPHAN_SETS));
 
-    hbox = lives_hbox_new(FALSE, 0);
+  hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
 
   checkbutton = lives_standard_check_button_new((tmp = (_("Delete _Orphaned Clips"))),
                 !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_ORPHAN_SETS), LIVES_BOX(hbox),
                 (tmp2 = (_("#Delete any clips which are not currently loaded or part of a set\n"
-			   "If 'Check for Lost Clips' is set, LiVES will try to recover them first"))));
+                           "If 'Check for Lost Clips' is set, LiVES will try to recover them first"))));
 
   lives_free(tmp);
   lives_free(tmp2);

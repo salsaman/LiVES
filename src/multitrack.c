@@ -4435,12 +4435,6 @@ void mt_zoom_out(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-void paned_position(LiVESWidgetObject * object, livespointer pspec, livespointer user_data) {
-  lives_mt *mt = (lives_mt *)user_data;
-  //mt->opts.vpaned_pos = lives_paned_get_position(LIVES_PANED(object));
-}
-
-
 static void hpaned_position(LiVESWidgetObject * object, livespointer pspec, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   mt->opts.hpaned_pos = lives_paned_get_position(LIVES_PANED(object));
@@ -8938,7 +8932,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_container_set_border_width(LIVES_CONTAINER(mt->tlx_vbox), 0);
   lives_widget_set_valign(mt->tlx_vbox, LIVES_ALIGN_START);
-  lives_box_pack_start(mt->vpaned, mt->tlx_vbox, FALSE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(mt->vpaned), mt->tlx_vbox, FALSE, TRUE, 0);
 
   mt->timeline_table_header = lives_table_new(2, TIMELINE_TABLE_COLUMNS, TRUE);
   lives_table_set_row_spacings(LIVES_TABLE(mt->timeline_table_header), 0);
@@ -9097,7 +9091,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     mt->msg_adj = NULL;
   }
 
-  lives_box_pack_start(mt->vpaned, mt->message_box, TRUE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(mt->vpaned), mt->message_box, TRUE, TRUE, 0);
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mt->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(mt_prevclip), mt, NULL));
@@ -11470,8 +11464,6 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
   else
     lives_paned_set_position(LIVES_PANED(multi->hpaned), (float)lives_widget_get_allocation_width(multi->hpaned) * .8); // 0 == top
 
-  //lives_paned_set_position(LIVES_PANED(multi->vpaned), (float)lives_widget_get_allocation_height(multi->vpaned) * .0); // 0 == top
-
   multi->no_expose = multi->no_expose_frame = FALSE;
 
   lives_container_child_set_shrinkable(LIVES_CONTAINER(multi->hpaned), multi->context_frame, TRUE);
@@ -11484,10 +11476,6 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
   lives_signal_connect(LIVES_GUI_OBJECT(multi->hpaned), LIVES_WIDGET_NOTIFY_SIGNAL "position",
                        LIVES_GUI_CALLBACK(hpaned_position),
                        (livespointer)multi);
-
-  /* lives_signal_connect(LIVES_GUI_OBJECT(multi->vpaned), LIVES_WIDGET_NOTIFY_SIGNAL "position", */
-  /*                      LIVES_GUI_CALLBACK(paned_position), */
-  /*                      (livespointer)multi); */
 
   if (prefs->show_msg_area) {
     if (mainw->idlemax == 0)

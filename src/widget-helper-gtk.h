@@ -940,7 +940,7 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_SWITCH(widget) GTK_SWITCH(widget)
 #define LIVES_TOGGLE_BUTTON(widget) widget
 #else
-#define LIVES_SWITCH(widget) GTK_WIDGET(widget)
+#define LIVES_SWITCH(widget) GTK_TOGGLE_BUTTON(widget)
 #define LIVES_TOGGLE_BUTTON(widget) GTK_TOGGLE_BUTTON(widget)
 #endif
 

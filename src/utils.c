@@ -240,7 +240,6 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
     if (tbuff) {
       lives_free(xbuff);
       totlen = xtotlen;
-      g_print("it all is %s\n", lives_text_buffer_get_all_text(tbuff));
     }
 
     if (err != 0) {

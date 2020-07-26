@@ -48,6 +48,21 @@ const lives_struct_def_t *get_lsd(lives_struct_type st_type) {
       lives_free(cdata);
     }
     break;
+  case LIVES_STRUCT_FILE_DETS_T:
+    lsd = lsd_create("lives_file_dets_t", sizeof(lives_file_dets_t), "widgets", 3);
+    if (lsd) {
+      lives_special_field_t **specf = lsd->special_fields;
+      lives_file_dets_t *fdets = (lives_file_dets_t *)lives_calloc(1, sizeof(lives_file_dets_t));
+      specf[0] = make_special_field(LIVES_FIELD_CHARPTR, fdets, &fdets->name,
+                                    "name", 0, NULL, NULL, NULL);
+      specf[1] = make_special_field(LIVES_FIELD_CHARPTR, fdets, &fdets->md5sum,
+                                    "md5sum", 0, NULL, NULL, NULL);
+      specf[2] = make_special_field(LIVES_FIELD_CHARPTR, fdets, &fdets->extra_details,
+                                    "extra_details", 0, NULL, NULL, NULL);
+      lives_struct_init_p(lsd, fdets, &fdets->lsd);
+      lives_free(fdets);
+    }
+    break;
   default:
     return NULL;
   }

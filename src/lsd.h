@@ -14,7 +14,7 @@ extern "C"
 {
 #endif
 
-//#define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 #include <stdio.h>
@@ -454,21 +454,20 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
           debug_print("error: memory request too large (%lu > %lu)\n", bsize, MAX_ALLOC);
           return;
         } else {
-          void **vptr = (void **)dst_field;
           debug_print("allocating %lu bytes...", bsize);
           if (spcf->flags & LIVES_FIELD_FLAG_ZERO_ON_COPY) {
-            if (!(*_lsd_calloc_aligned)((void **)vptr, 1, bsize)) {
+            if (!(*_lsd_calloc_aligned)((void **)dst_field, 1, bsize)) {
               debug_print("and set to zero.\n");
             } else {
               memerr_print(bsize, spcf->name, lsd->structtype);
             }
             return;
           } else {
-            if (!(*((void **)src_field))) {
+            if (src_field != lsd && !(*((void **)src_field))) {
               debug_print("value is NULL, not copying\n");
             } else {
-              if (!(*_lsd_calloc_aligned)((void **)vptr, 1, bsize)) {
-                (*_lsd_memcpy)(dst_field, src_field, bsize);
+              if (!(*_lsd_calloc_aligned)((void **)dst_field, 1, bsize)) {
+                (*_lsd_memcpy)(*(void **)dst_field, src_field, bsize);
                 debug_print("and copying from src to dest.\n");
               } else {
                 memerr_print(bsize, spcf->name, lsd->structtype);
@@ -485,7 +484,6 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
           // without ALLOC_AND_COPY we set it to NULL instead
           *cptr = (*_lsd_strdup)("");
           debug_print("string was set to \"\"\n");
-
         } else {
           if ((*((char **)src_field))) {
             *cptr = (*_lsd_strdup)(*((char **)src_field));
@@ -596,7 +594,6 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
             memerr_print((count + 1) * sizeof(void *), spcf->name, lsd->structtype);
             return;
           }
-
           for (j = 0; j < count; j++) {
             // flags tells us what to with each element
             if ((*_lsd_calloc_aligned)((void **)&dptr[j], 1, bsize)) {
@@ -689,33 +686,36 @@ static void _lsd_struct_free(lives_struct_def_t *lsd) {
 
 recurse_free:
   if (spfields) {
+    char *top;
+    off_t xoffset = 0;
+    if (spfields == lsd->self_fields) {
+      xoffset = spfields[0]->offset_to_field;
+    }
     for (int i = 0; spfields[i]; i++) {
       lives_special_field_t *spcf = spfields[i];
       if (spfields == lsd->self_fields) {
-        if (spcf[0].bytesize) {
+        if (spfields[0]->bytesize) {
+          top = (char *)lsd->top;
           if (!i) {
-            src_field = (void *)((char *)thestruct + spcf->offset_to_field);
             lsd_size = spcf->bytesize;
             lsd_flags = spcf->flags;
-            if (src_field != lsd || spcf->bytesize != sizeof(lives_struct_def_t)) {
-              baderr_print("Invalid free: expected lives_struct_def_t * for parameter 1\n");
-              abort();
-            }
-            continue;
-          } else
-            src_field = (void *)((char *)((lives_struct_def_t *)(*((lives_struct_def_t **)lsd)))
-                                 + spcf->offset_to_field);
-        } else
-          src_field = (char *)lsd + spcf->offset_to_field;
-        if (spcf->delete_func)(*spcf->delete_func)(lsd->top, SELF_STRUCT_TYPE,
-              spcf->name, src_field);
-      }
+          } else {
+            top = ((char *)lsd->top + xoffset);
+            top = (char *)(*((lives_struct_def_t **)top));
+          }
+        } else top = lsd->top + xoffset;
+      } else top = lsd->top;
+
+      src_field = top + spcf->offset_to_field;
+      if (spcf->delete_func)(*spcf->delete_func)(lsd->top, SELF_STRUCT_TYPE,
+            spcf->name, src_field);
       if (spfields == lsd->special_fields) {
         src_field = (char *)lsd->top + spcf->offset_to_field;
         if (spcf->delete_func)(*spcf->delete_func)(lsd->top, lsd->structtype,
               spcf->name, src_field);
       }
     }
+
     for (int i = 0; spfields[i]; i++) {
       lives_special_field_t *spcf = spfields[i];
       uint64_t flags = spcf->flags;
@@ -762,14 +762,14 @@ recurse_free:
 }
 
 static void *_lsd_struct_copy(lives_struct_def_t *lsd, void *new_struct) {
-  lives_struct_def_t *dst_lsd;
   lives_special_field_t **spfields;
-  void *dst_field, *src_field;
+  char *top, *dst_field, *src_field;
   void *parent = NULL;
-  off_t offset = 0;
+  off_t offset = 0, xoffset;
   spfields = lsd->self_fields;
 
   if (!new_struct) {
+    // copy
     if ((*_lsd_calloc_aligned)((void **)&new_struct, 1, lsd->structsize)) {
       memerr_print(lsd->structsize, "ALL FIELDS", lsd->structtype);
       return NULL;
@@ -778,55 +778,50 @@ static void *_lsd_struct_copy(lives_struct_def_t *lsd, void *new_struct) {
     debug_print("copying struct of type: %s, %p -> %p, with size %lu\n", lsd->structtype,
                 parent, new_struct,
                 lsd->structsize);
-    offset = ((char *)lsd - (char *)lsd->top);
+    xoffset = ((char *)lsd - (char *)lsd->top);
     (*_lsd_memcpy)(new_struct, parent, lsd->structsize);
 #ifdef DO_ALIGN_CHECK
     _lsd_memalign_check(parent, new_struct, lsd->structsize);
 #endif
   } else {
-    offset = spfields[0]->offset_to_field;
-    if (offset < 0) {
+    // init
+    xoffset = spfields[0]->offset_to_field;
+    if (xoffset < 0) {
       baderr_print("Unable to copy struct of type %s, lives_struct_init must be called first\n",
                    lsd->structtype);
       return NULL;
     }
-    debug_print("initing struct of type: %s\n", lsd->structtype);
+    debug_print("initing struct %p of type: %s\n", new_struct, lsd->structtype);
   }
-
-  if (spfields[0]->bytesize) dst_lsd = (lives_struct_def_t *)((char *)new_struct + offset);
-  dst_lsd = (lives_struct_def_t *)((char *)new_struct + offset);
 
   // copy self_fields first:
 
-  debug_print("copying lives_sttuct_def_t fields first\n");
+  debug_print("copying lives_struct_def_t fields first\n");
 
 recurse_copy:
 
   if (spfields) {
     for (int i = 0; spfields[i]; i++) {
       lives_special_field_t *spcf = spfields[i];
-      void *src_field;
 
       if (!spcf->flags) continue;
       if (i > 1) debug_print("field done\n\n");
 
-      offset = spcf->offset_to_field;
-
       if (spfields == lsd->self_fields) {
         if (spfields[0]->bytesize) {
-          if (!i)
-            dst_field = (void *)((char *)new_struct + offset);
-          else
-            dst_field = (void *)((char *)((lives_struct_def_t *)(*((lives_struct_def_t **)dst_lsd)))
-                                 + offset);
-        } else
-          dst_field = (void *)((char *)dst_lsd + offset);
-      } else {
-        dst_field = (void *)((char *)new_struct + offset);
-      }
+          top = (char *)new_struct;
+          if (i) {
+            top = ((char *)new_struct + xoffset);
+            top = (char *)(*((lives_struct_def_t **)top));
+          }
+        } else top = new_struct + xoffset;
+      } else top = new_struct;
 
-      debug_print("handling field %s at offset %lu with flags 0X%016lX\n",
-                  spcf->name, offset, spcf->flags);
+      offset = spcf->offset_to_field;
+      dst_field = top + offset;
+
+      debug_print("handling field %s at offset %lu from %p with flags 0X%016lX\n",
+                  spcf->name, offset, top, spcf->flags);
       if (spcf->flags & LIVES_FIELD_FLAG_IS_SUBSTRUCT) {
         // otherwise we descend into the substruct and locate its lives_struct_def *
         // TODO...
@@ -834,8 +829,12 @@ recurse_copy:
         continue;
       }
 
-      if (spfields == lsd->self_fields) src_field = (char *)lsd + offset;
-      else src_field = (char *)parent + offset;
+      if (spfields == lsd->self_fields) {
+        if (!i && spfields[0]->bytesize)
+          src_field = (char *)lsd;
+        else
+          src_field = (char *)lsd + offset;
+      } else src_field = (char *)parent + offset;
 
       _lsd_auto_copy(dst_field, src_field, spcf, lsd);
     }
@@ -848,11 +847,17 @@ recurse_callbacks:
     if (spfields) {
       for (int i = 0; spfields[i]; i++) {
         lives_special_field_t *spcf = spfields[i];
+        if (spfields == lsd->self_fields) {
+          if (spfields[0]->bytesize) {
+            top = (char *)new_struct;
+            if (i) {
+              top = ((char *)new_struct + xoffset);
+              top = (char *)(*((lives_struct_def_t **)top));
+            }
+          } else top = new_struct + xoffset;
+        } else top = new_struct;
         offset = spcf->offset_to_field;
-        if (spfields == lsd->self_fields)
-          dst_field = (void *)((char *)dst_lsd + offset);
-        else
-          dst_field = (void *)((char *)new_struct + offset);
+        dst_field = top + offset;
         if (parent) {
           if (spcf->copy_func) {
             debug_print("calling copy_func for %s\n", spcf->name);
@@ -896,8 +901,8 @@ recurse_callbacks:
       (*lsd->copied_struct_callback)(parent, new_struct, lsd->structtype, lsd->copied_user_data);
   }
 
-  if (dst_lsd->new_struct_callback)
-    (*dst_lsd->new_struct_callback)(new_struct, parent, lsd->structtype, dst_lsd->new_user_data);
+  /* if (dst_lsd->new_struct_callback) */
+  /*   (*dst_lsd->new_struct_callback)(new_struct, parent, lsd->structtype, dst_lsd->new_user_data); */
 
   return new_struct;
 }
@@ -914,10 +919,10 @@ static int _lsd_struct_init(const lives_struct_def_t *lsd, void *thestruct,
     lives_special_field_t **spfields = lsd->self_fields;
     if (is_ptr)
       spfields[0] = _lsd_make_special_field(LIVES_FIELD_FLAG_ALLOC_AND_COPY, thestruct,
-                                            lsd_in_structp, NULL,
+                                            lsd_in_structp, "lsd",
                                             sizeof(lives_struct_def_t), NULL, NULL, NULL);
     else
-      spfields[0] = _lsd_make_special_field(0, thestruct, lsd_in_struct, NULL, 0, NULL, NULL, NULL);
+      spfields[0] = _lsd_make_special_field(0, thestruct, lsd_in_struct, "lsd", 0, NULL, NULL, NULL);
   }
   return 0;
 }
@@ -1044,8 +1049,11 @@ static void *lives_struct_create(const lives_struct_def_t *lsd) {
     memerr_print(lsd->structsize, "ALL", lsd->structtype);
     return NULL;
   }
-  lsd_in_struct = (void *)((char *)thestruct + offset);
-  (*_lsd_memcpy)(lsd_in_struct, lsd, sizeof(lives_struct_def_t));
+
+  if (!(spfields[0]->bytesize)) {
+    lsd_in_struct = (void *)((char *)thestruct + offset);
+    (*_lsd_memcpy)(lsd_in_struct, lsd, sizeof(lives_struct_def_t));
+  }
   _lsd_struct_copy((lives_struct_def_t *)lsd, thestruct);
   return thestruct;
 }
@@ -1228,7 +1236,7 @@ static int lives_struct_init_p(const lives_struct_def_t *, void *thestruct,
 // or it can be lsd from inside another struct (cast to const)
 static void *lives_struct_create(const lives_struct_def_t *) ALLOW_UNUSED;
 
-// allocates and returns a copy of struct, calls copy_funcs, fills in lives_sttuct_def for copy
+// allocates and returns a copy of struct, calls copy_funcs, fills in lives_struct_def for copy
 // lsd must be within a struct, not a static template
 static void *lives_struct_copy(lives_struct_def_t *) ALLOW_UNUSED;
 

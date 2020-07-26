@@ -4233,11 +4233,10 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_hbox_new(FALSE, 0);
 
   widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
-  prefsw->workdir_entry = lives_standard_direntry_new(NULL,
-                          (tmp = lives_filename_to_utf8(strlen(future_prefs->workdir) > 0
-                                 ? future_prefs->workdir : prefs->workdir, -1,
-                                 NULL, NULL, NULL)),
-                          -1, PATH_MAX, LIVES_BOX(hbox), (tmp2 = lives_strdup(_("LiVES working directory."))));
+  prefsw->workdir_entry = lives_standard_direntry_new(NULL, future_prefs->workdir > 0
+                          ? future_prefs->workdir : prefs->workdir,
+                          -1, PATH_MAX, LIVES_BOX(hbox),
+                          (tmp2 = lives_strdup(_("LiVES working directory."))));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), hbox, 1, 2, 3, 4,

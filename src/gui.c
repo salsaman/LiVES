@@ -1965,6 +1965,8 @@ void create_LiVES(void) {
   mainw->frame1 = lives_standard_frame_new(_("First Frame"), 0.25, TRUE);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   lives_container_add(LIVES_CONTAINER(mainw->eventbox3), mainw->frame1);
+  lives_container_set_border_width(LIVES_CONTAINER(mainw->frame1),
+                                   ((((widget_opts.border_width + 1) >> 1) + 1) >> 1) << 1);
 
   // This is necessary to provide correct padding for the image in the frame
   mainw->freventbox0 = lives_event_box_new();
@@ -1978,11 +1980,12 @@ void create_LiVES(void) {
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   mainw->pl_eventbox = lives_event_box_new();
-  //lives_widget_set_app_paintable(mainw->pl_eventbox, TRUE);
+  lives_container_set_border_width(LIVES_CONTAINER(mainw->playframe),
+                                   ((((widget_opts.border_width + 1) >> 1) + 1) >> 1) << 1);
+
   lives_container_add(LIVES_CONTAINER(mainw->playframe), mainw->pl_eventbox);
   lives_widget_set_size_request(mainw->playframe, DEF_FRAME_HSIZE_GUI, DEF_FRAME_VSIZE_GUI);
   lives_widget_set_hexpand(mainw->pl_eventbox, FALSE);
-  //lives_widget_set_vexpand(mainw->pl_eventbox, TRUE);
 
   mainw->playarea = lives_event_box_new();
   lives_container_add(LIVES_CONTAINER(mainw->pl_eventbox), mainw->playarea);
@@ -2006,6 +2009,8 @@ void create_LiVES(void) {
   mainw->frame2 = lives_standard_frame_new(_("Last Frame"), 0.75, TRUE);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   lives_container_add(LIVES_CONTAINER(mainw->eventbox4), mainw->frame2);
+  lives_container_set_border_width(LIVES_CONTAINER(mainw->frame2),
+                                   ((((widget_opts.border_width + 1) >> 1) + 1) >> 1) << 1);
 
   mainw->freventbox1 = lives_event_box_new();
   lives_container_add(LIVES_CONTAINER(mainw->frame2), mainw->freventbox1);

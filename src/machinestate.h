@@ -305,6 +305,7 @@ typedef struct {
   ///< if we can retrieve some kind of uinque id, we set it here
   ///< may be useful in future for dictionary lookups
   uint64_t uniq;
+  lives_struct_def_t *lsd;
   char *name;
   uint64_t type; /// e.g. LIVES_FILE_TYPE_FILE
   off_t size; // -1 not checked, -2 unreadable
@@ -317,7 +318,7 @@ typedef struct {
   uint64_t ctime_nsec;
   char *md5sum; /// only filled if EXTRA_DETAILS_MD5 is set, otherwis NULL
   char *extra_details;  /// intialized to NULL, set to at least ""
-  LiVESWidget *widgets[16]; ///< caller set widgets for presentation, e.g. labels, spinners.
+  LiVESWidget *widgets[16]; ///< caller set widgets for presentation, e.g. labels, spinners. final entry must be followed by NULL
 } lives_file_dets_t;
 
 #ifdef PRODUCE_LOG

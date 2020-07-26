@@ -975,7 +975,7 @@ void *_dir_to_file_details(LiVESList **listp, const char *dir, const char *tsubd
           }
           if (subdirent->d_name[0] == '.'
               && (!subdirent->d_name[1] || subdirent->d_name[1] == '.')) continue;
-          fdets = (lives_file_dets_t *)lives_calloc(1, sizeof(lives_file_dets_t));
+          fdets = (lives_file_dets_t *)struct_from_template(LIVES_STRUCT_FILE_DETS_T);
           fdets->name = lives_strdup(subdirent->d_name);
           fdets->size = -1;
           *listp = lives_list_append(*listp, fdets);

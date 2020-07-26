@@ -120,9 +120,12 @@ typedef struct {
   LiVESWidget *vbox;
 } text_window;
 
+
 text_window *create_text_window(const char *title_part, const char *text, LiVESTextBuffer *,
                                 boolean add_buttons);
 
+LiVESWidget *scrolled_textview(const char *text, LiVESTextBuffer *, int window_width,
+                               LiVESWidget **ptextview);
 typedef struct {
   LiVESWidget *dialog;
   LiVESWidget *time_spin;

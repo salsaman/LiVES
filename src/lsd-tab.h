@@ -10,6 +10,7 @@
 
 typedef enum {
   LIVES_STRUCT_CLIP_DATA_T,
+  LIVES_STRUCT_FILE_DETS_T,
   LIVES_N_STRUCTS
 } lives_struct_type;
 

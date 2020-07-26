@@ -268,7 +268,7 @@ enum LiVESMediaType {
 static const lives_struct_def_t *cdata_lsd = NULL;
 
 static void make_acid(void) {
-  cdata_lsd = lsd_create("lives_clip_data_t", sizeof(lives_clip_data_t), "strgs", 6);
+  cdata_lsd = lsd_create("lives_clip_data_t", sizeof(lives_clip_data_t), "sync_hint", 6);
   if (!cdata_lsd) return;
   else {
     lives_special_field_t **specf = cdata_lsd->special_fields;

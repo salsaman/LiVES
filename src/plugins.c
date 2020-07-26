@@ -2218,8 +2218,12 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList * disable
 
     if (dplug->cdata) {
       // check for sanity
+      g_print("Checking return data from %s\n", dpsys->name);
       if (lsd_check_match((lives_struct_def_t *)get_lsd(LIVES_STRUCT_CLIP_DATA_T),
-                          &dplug->cdata->lsd)) abort();
+                          &dplug->cdata->lsd)) {
+        g_printerr("Error in cdata received from decoder plugin:\n%s\nAborting.", dpsys->name);
+        abort();
+      }
       if (!sanity_check_cdata(dplug->cdata)) {
         //last_decoder_plugin = decoder_plugin;
         decoder_plugin = decoder_plugin->next;

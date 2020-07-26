@@ -1496,9 +1496,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget *wi
 
   if (gov_running) {
     mainw->clutch = FALSE;
-    while (!mainw->clutch) {
-      lives_nanosleep(NSLEEP_TIME);
-      sched_yield();
+    if (!mainw->is_exiting) {
+      while (!mainw->clutch) {
+        lives_nanosleep(NSLEEP_TIME);
+        sched_yield();
+      }
     }
   }
 

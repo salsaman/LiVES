@@ -5018,7 +5018,7 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
     } else {
       if (prefs->funky_widgets) {
         lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->frame_surround);
-        lives_painter_rectangle(cr, 0, 0, rwidth, rheight);
+        lives_painter_rectangle(cr, cx - 1, cy - 1, width + 2, height + 2);
         // frame
         lives_painter_stroke(cr);
       }

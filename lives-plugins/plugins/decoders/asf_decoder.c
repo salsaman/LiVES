@@ -2389,7 +2389,7 @@ static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
     cdata->palettes[1] = WEED_PALETTE_END;
   } else cdata = data;
 
-  cdata->priv = malloc(sizeof(lives_asf_priv_t));
+  cdata->priv = calloc(1, sizeof(lives_asf_priv_t));
 
   return cdata;
 }

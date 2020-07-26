@@ -1689,7 +1689,7 @@ if (defined($ARGV[0])) {
 	    # - the user chooses to disable instant opening
 	    # - all of the decoder plugins fail
 	    # - opening the audio track
-	    $DEBUG_OPEN = 1;
+	    #$DEBUG_OPEN = 1;
 
 	    unlink "$curworkdir/pause";
 
@@ -1714,7 +1714,6 @@ if (defined($ARGV[0])) {
 			       "Please check the file name and try again.");
 		}
 	    }
-	    print STDERR "opentest 12\n";
 
 	    ## here we might set $mplay_command, $is_mpv
 	    &get_file_info($file, 1, 1);
@@ -1767,7 +1766,6 @@ if (defined($ARGV[0])) {
 		$achans = $ARGV[7];
 	    }
 
-	    print STDERR "opentest 13\n";
 	    my $alang;
 	    my @alanglist; ## TODO: get alanglist from get_file_details
 
@@ -1804,7 +1802,6 @@ if (defined($ARGV[0])) {
 	    }
 
 	    # process video
-	    print STDERR "opentest 14\n";
 
 	    # 3 other files we will use
 	    $curtmpfile = "tempresult";
@@ -1843,7 +1840,6 @@ if (defined($ARGV[0])) {
 	    if ($is_mpv) {
 		$aformnew = "--audio-format=s16";
 	    }
-	    print STDERR "opentest 15\n";
 
 	    $threads = &smog_system_direct("/bin/grep processor /proc/cpuinfo | wc -l");
 	    $threads = int($threads);
@@ -1908,14 +1904,13 @@ if (defined($ARGV[0])) {
 			$syscomb = "$mplay_command -quiet -noconfig all $band $osd $img_fmt $threadopts $audcom $channs " .
 			    "$aformnew \"$file\" $extra_params <$nulfile";
 		    } else {
-			$syscomb = "$mplay_command --quiet --no-config $osd $img_fmt $threadopts $audcom $channs $aformnew \"$file\"" .
-			    "$extra_params";
+			$syscomb = "$mplay_command --quiet --no-config $osd $img_fmt $threadopts $audcom $channs " .
+			    "$aformnew \"$file\" $extra_params";
 		    }
 
 		    if ($DEBUG_OPEN) {
 			print STDERR "vid open command for $handle is: $syscomb\n";
 		    }
-		    print STDERR "opentest 16\n";
 
 		    unless ($opentest == 1) {
 			&sig_progress(0);
@@ -1965,7 +1960,6 @@ if (defined($ARGV[0])) {
 			exit 1;
 		    }
 		} else {
-		    print STDERR "opentest 17\n";
 		    ## not remote
 		    if (!$is_mpv) {
 			if ($withsound == 0 || $withsound == 1) {
@@ -2021,7 +2015,6 @@ if (defined($ARGV[0])) {
 			    }
 			}
 		    }
-		    print STDERR "opentest 188\n";
 
 		    if ($syscomv) {
 			if (open (my $fh, "$syscomv 2> $nulfile |")) {
@@ -2083,7 +2076,6 @@ if (defined($ARGV[0])) {
 		    $count = &count_frames(1, $img_ext);
 		}
 	    }
-	    print STDERR "opentest 1888565\n";
 
 	    # if the last frame has zero size, delete it
 	    if ($count > 0) {
@@ -2100,7 +2092,6 @@ if (defined($ARGV[0])) {
 				   "You can work around this by switching to jpeg output in Preferences/Decoding.");
 		    }
 		}
-		print STDERR "opentest 1awsasa\n";
 
 		if (&location("identify") ne "") {
 		    # double check image size
@@ -2135,7 +2126,6 @@ if (defined($ARGV[0])) {
 		    #curworkdir can be removed by cancel
 		    exit 1;
 		}
-		print STDERR "opentest asas1\n";
 		if ($af_size > 0 || $count > 0) {
 		    &sig_complete($handle, $count, $type, $hsize, $vsize, $bpp, $fps, $f_size, $arate,
 				  $achans, $asamps,
@@ -2165,7 +2155,6 @@ if (defined($ARGV[0])) {
 			       "Check the terminal window for more details.");
 		}
 	    }
-	    print STDERR "opentest asasayyy1\n";
 
 	    # mplayer seems to sometimes output one extra frame for jpg
 	    if ($USE_WARNINGS) {
@@ -2199,7 +2188,6 @@ if (defined($ARGV[0])) {
 		    $count--;
 		}
 	    }
-	    print STDERR "opentest zygfd1\n";
 
 	    $af_size = -s $audio_out;
 	    if (-d $curworkdir) {

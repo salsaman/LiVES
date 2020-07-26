@@ -325,16 +325,18 @@ static void _lsd_init_copy(void *dst, void *strct, const char *strct_type, const
     if (!strcmp(field_name, "identifier")) {
       *(uint64_t *)ptr_to_field = LIVES_STRUCT_ID;
       return;
-    } else if (!strcmp(field_name, "end_id")) {
+    }
+    if (!strcmp(field_name, "end_id")) {
       *(uint64_t *)ptr_to_field =
         (LIVES_STRUCT_ID ^ 0xFFFFFFFFFFFFFFFF);
       return;
     }
   }
-  if (!strcmp(field_name, "unique_id")) {
+  if (!strcmp(field_name, "top")) {
+    if (dst) *(void **)ptr_to_field = dst;
+    else *(void **)ptr_to_field = strct;
+  } else if (!strcmp(field_name, "unique_id")) {
     IGN_RET(getentropy(ptr_to_field, 8));
-  } else if (!strcmp(field_name, "top")) {
-    *(void **)ptr_to_field = strct;
   } else if (!strcmp(field_name, "refcount")) {
     *((int *)ptr_to_field) = 1;
   } else if (!strcmp(field_name, "generation")) {
@@ -688,9 +690,8 @@ recurse_free:
   if (spfields) {
     char *top;
     off_t xoffset = 0;
-    if (spfields == lsd->self_fields) {
+    if (spfields == lsd->self_fields)
       xoffset = spfields[0]->offset_to_field;
-    }
     for (int i = 0; spfields[i]; i++) {
       lives_special_field_t *spcf = spfields[i];
       if (spfields == lsd->self_fields) {
@@ -720,8 +721,20 @@ recurse_free:
       lives_special_field_t *spcf = spfields[i];
       uint64_t flags = spcf->flags;
 
-      if (spfields == lsd->self_fields) src_field = (char *)lsd + spcf->offset_to_field;
-      else src_field = (char *)lsd->top + spcf->offset_to_field;
+      if (spfields == lsd->self_fields) {
+        if (spfields[0]->bytesize) {
+          top = (char *)lsd->top;
+          if (!i) {
+            lsd_size = spcf->bytesize;
+            lsd_flags = spcf->flags;
+          } else {
+            top = ((char *)lsd->top + xoffset);
+            top = (char *)(*((lives_struct_def_t **)top));
+          }
+        } else top = lsd->top + xoffset;
+      } else top = lsd->top;
+
+      src_field = top + spcf->offset_to_field;
 
       if (src_field == &spfields) {
         /// self_fields must be done last, since it is still needed for now

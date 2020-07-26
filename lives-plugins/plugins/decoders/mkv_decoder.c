@@ -1795,7 +1795,7 @@ static void detach_stream(lives_clip_data_t *cdata) {
     av_free(priv->ctx);
   }
 
-  avcodec_close(priv->vidst->codec);
+  if (priv->vidst) avcodec_close(priv->vidst->codec);
 
   if (priv->picture != NULL) av_frame_unref(priv->picture);
 

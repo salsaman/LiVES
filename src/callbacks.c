@@ -151,8 +151,8 @@ void lives_exit(int signum) {
 
     // unlock all mutexes to prevent deadlocks
 #ifdef HAVE_PULSE_AUDIO
-    if (mainw->pulsed != NULL || mainw->pulsed_read != NULL)
-      pa_mloop_unlock();
+    /* if (mainw->pulsed != NULL || mainw->pulsed_read != NULL) */
+    /*   pa_mloop_unlock(); */
 #endif
 
     // recursive

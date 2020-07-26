@@ -121,7 +121,7 @@ LIVES_GLOBAL_INLINE boolean lives_structs_same_type(lives_struct_def_t *lsd,
 }
 
 
-#define CHECK_VERBOSE 0
+#define CHECK_VERBOSE 1
 #if CHECK_VERBOSE
 #define errprint(...) fprintf(stderr, __VA_ARGS__)
 #else
@@ -144,29 +144,29 @@ uint64_t lsd_check_struct(lives_struct_def_t *lsd) {
   /// non-error warnings
   id = lives_struct_get_identifier(lsd);
 
-  if (id != LIVES_STUCT_ID)
+  if (id != LIVES_STRUCT_ID)
     errprint("lsd_check: lsd (%p) has non-standard identifier 0X%016lX\n", lsd, id);
 
   eid = lives_struct_get_end_id(lsd);
 
-  if (eid != LIVES_STUCT_ID ^ 0xFFFFFFFFFFFFFFFF)
+  if (eid != (LIVES_STRUCT_ID ^ 0xFFFFFFFFFFFFFFFF))
     errprint("lsd_check: lsd (%p) has non-standard end_id 0X%016lX\n", lsd, eid);
 
-  if (eid != id ^ 0xFFFFFFFFFFFFFFFF)
+  if (eid != (id ^ 0xFFFFFFFFFFFFFFFF))
     errprint("lsd_check: lsd (%p) has non matching identifier / end_id pair\n"
              "0X%016lX 0X%016lX should be 0X%016lX\n", lsd, id, eid, id ^ 0xFFFFFFFFFFFFFFFF);
 
-  uid = lives_struct_get_unique_id(lsd);
+  uid = lives_struct_get_uid(lsd);
   if (!uid)
     errprint("lsd_check: lsd (%p) has no unique_id\n", lsd);
 
-  if (uid < (1 << 20))
+  else if (uid < (1 << 20))
     errprint("lsd_check: lsd (%p) has unique_id 0X%016lX\n"
              "The probability of this is < 1 in 17.5 trillion\n", lsd, uid);
 
   if (lives_strcmp(lives_struct_get_class_data(lsd), CREATOR_ID))
-    errprint("lsd_check: lsd (%p) has alternat class_data [%s]\n"
-             "Ours is [%s]\n", lsd, lives_struct_get_class_data(lsd), CREATOR_ID);
+    errprint("lsd_check: lsd (%p) has alternate class_data [%s]\n"
+             "Ours is [%s]\n", lsd, (char *)lives_struct_get_class_data(lsd), CREATOR_ID);
 #endif
   return err;
 }
@@ -185,9 +185,8 @@ uint64_t lsd_check_match(lives_struct_def_t *lsd1, lives_struct_def_t *lsd2) {
   if (err) return err;
 
   if (!lives_structs_same_type(lsd1, lsd2)) {
-    errprint("lsd_check: lsd1 type is %d but lsd2 type is %d\n",
+    errprint("lsd_check: lsd1 type is %s but lsd2 type is %s\n",
              lives_struct_get_type(lsd1), lives_struct_get_type(lsd2));
-
     err |= (1ul << 48);
   }
 

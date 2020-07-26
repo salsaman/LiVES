@@ -586,7 +586,7 @@ typedef enum {
 
 #define CLIP_NAME_MAXLEN 256
 
-#define IS_VALID_CLIP(clip) (clip >= 0 && clip <= MAX_FILES && mainw->files[clip] != NULL)
+#define IS_VALID_CLIP(clip) (clip >= 0 && clip <= MAX_FILES && mainw->files[clip])
 #define CURRENT_CLIP_IS_VALID IS_VALID_CLIP(mainw->current_file)
 
 #define CLIP_HAS_VIDEO(clip) (IS_VALID_CLIP(clip) ? mainw->files[clip]->frames > 0 : FALSE)
@@ -615,10 +615,11 @@ typedef enum {
 
 #define CURRENT_CLIP_IS_NORMAL IS_NORMAL_CLIP(mainw->current_file)
 
-#define LIVES_IS_PLAYING (mainw != NULL && mainw->playing_file > -1)
+#define LIVES_IS_PLAYING (mainw && mainw->playing_file > -1)
 
-#define LIVES_IS_RENDERING (mainw != NULL && ((mainw->multitrack == NULL && mainw->is_rendering) \
-					      || (mainw->multitrack != NULL && mainw->multitrack->is_rendering)))
+#define LIVES_IS_RENDERING (mainw && ((mainw->multitrack && mainw->is_rendering) \
+					      || (!mainw->multitrack && mainw->multitrack->is_rendering)) \
+			    && !mainw->preview_rendering)
 
 #define CURRENT_CLIP_TOTAL_TIME CLIP_TOTAL_TIME(mainw->current_file)
 
@@ -641,7 +642,8 @@ typedef enum {
 #define LIVES_DIRECTION_SIG(dir) ((lives_direction_t)sig(dir))  /// LIVES_DIRECTION_REVERSE or LIVES_DIRECTION_FORWARD
 #define LIVES_DIRECTION_PAR(dir) ((lives_direction_t)((dir) & 1)) /// LIVES_DIRECTION_BACKWARD or LIVES_DIRECTION_FORWARD
 #define LIVES_DIRECTION_OPPOSITE(dir1, dir2) (((dir1) == LIVES_DIR_BACKWARD || (dir1) == LIVES_DIR_REVERSED) \
-					      ? (dir2) == LIVES_DIR_FORWARD : ((dir2) == LIVES_DIR_BACKWARD || (dir2) == LIVES_DIR_REVERSED) \
+					      ? (dir2) == LIVES_DIR_FORWARD : \
+					      ((dir2) == LIVES_DIR_BACKWARD || (dir2) == LIVES_DIR_REVERSED) \
 					      ? (dir1) == LIVES_DIR_FORWARD : sig(dir1) != sig(dir2))
 
 typedef union _binval {
@@ -1677,7 +1679,7 @@ void find_when_to_stop(void);
 int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc);
 void calc_aframeno(int fileno);
 void minimise_aspect_delta(double allowed_aspect, int hblock, int vblock, int hsize, int vsize, int *width, int *height);
-LiVESInterpType get_interp_value(short quality);
+LiVESInterpType get_interp_value(short quality, boolean low_for_mt);
 
 LiVESList *lives_list_move_to_first(LiVESList *list, LiVESList *item) WARN_UNUSED;
 LiVESList *lives_list_delete_string(LiVESList *, const char *string) WARN_UNUSED;

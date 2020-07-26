@@ -2030,6 +2030,78 @@ LiVESWidget *trash_rb(LiVESBox *parent) {
 }
 
 static LiVESResponseType filtresp;
+static char *rec_text = NULL, *rem_text = NULL, *leave_text = NULL;
+
+static void filt_cb_toggled(LiVESWidget *cb, lives_file_dets_t *filedets) {
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(cb))) {
+    if (filedets->widgets[1]) {
+      lives_widget_set_sensitive(filedets->widgets[1], TRUE);
+      if (lives_toggle_button_get_active(filedets->widgets[1]))
+	lives_label_set_text(LIVES_LABEL(filedets->widgets[8]), rec_text);
+      else
+	lives_label_set_text(LIVES_LABEL(filedets->widgets[8]), rem_text);
+    }
+    else
+      lives_label_set_text(LIVES_LABEL(filedets->widgets[8]), rem_text);
+  }
+  else {
+    if (filedets->widgets[1]) {
+      lives_widget_set_sensitive(filedets->widgets[1], FALSE);
+    }
+    lives_label_set_text(LIVES_LABEL(filedets->widgets[8]), leave_text);
+  }
+}
+
+static void filt_sw_toggled(LiVESWidget *sw, lives_file_dets_t *filedets) {
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(sw)))
+    lives_label_set_text(LIVES_LABEL(filedets->widgets[8]), rec_text);
+  else
+    lives_label_set_text(LIVES_LABEL(filedets->widgets[8]), rem_text);
+}
+
+static void filt_all_toggled(LiVESWidget *cb, LiVESList *list) {
+  lives_file_dets_t *filedets;
+  boolean act = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(cb));
+  for (; list && list->data; list = list->next) {
+    filedets = (lives_file_dets_t *)(list->data);
+    lives_toggle_button_set_active(filedets->widgets[0], act);
+  }
+}
+
+static void filt_reset_clicked(LiVESWidget *layout, LiVESWidget *rbut) {
+  LiVESList *list;
+  LiVESWidget *cb =
+    (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "cb");
+  int ptype;
+  lives_file_dets_t *filedets;
+
+  if (!cb) return;
+
+  ptype = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout),
+  list = (LiVESList *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout),
+
+  switch (ptype) {
+  case 1:
+    filedets = (lives_file_dets_t *)(list->data);
+    for (; list && list->data; list = list->next) {
+      lives_toggle_button_set_active(filedets->widgets[1], TRUE);
+    }
+    // fall through
+  case 0:
+    if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(cb)))
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(cb), TRUE);
+    else
+      filt_all_toggled(cb, list);
+    break;
+  case 2:
+    if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(cb)))
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(cb), FALSE);
+    else
+      filt_all_toggled(cb, list);
+    break;
+  default: break;
+  }
+}
 
 static boolean filtc_response(LiVESWidget *w, LiVESResponseType resp, livespointer data) {
   filtresp = resp;
@@ -2041,10 +2113,9 @@ static boolean filtc_response(LiVESWidget *w, LiVESResponseType resp, livespoint
 static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWidget *layout) {
   LiVESList *list = (LiVESList *)*listp;
   lives_file_dets_t *filedets;
-
   LiVESWidget *dialog = NULL;
   LiVESWidget *hbox;
-  LiVESWidget *cb;
+  LiVESWidget *cb = NULL;
 
   char *txt;
   char *today = NULL, *yesterday = NULL;
@@ -2068,23 +2139,33 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
   }
   if (!pass) {
     int woat = widget_opts.apply_theme;
+
+    if (!rec_text) rec_text = (_("Recover"));
+    if (!rem_text) rem_text = (_("Delete"));
+    if (!leave_text) leave_text = (_("Leave"));
+
     dialog = lives_widget_get_toplevel(layout);
 
     widget_opts.apply_theme = 2;
     hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
     widget_opts.expand = LIVES_EXPAND_NONE;
-    cb = lives_standard_check_button_new("Check / uncheck all", type != 2, LIVES_BOX(hbox), NULL);
+    cb = lives_standard_check_button_new(_("All"), type != 2, LIVES_BOX(hbox), NULL);
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
-    set_child_alt_colour(hbox, FALSE);
+    lives_widget_set_margin(cb, widget_opts.border_width >> 1);
     lives_box_set_child_packing(LIVES_BOX(hbox), cb, FALSE, FALSE, widget_opts.packing_width >> 1,
 				LIVES_PACK_START);
+
+    lives_widget_set_sensitive(cb, FALSE);
+    set_child_alt_colour(hbox, FALSE);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "cb", (livespointer)cb);
 
     if (type == 1) {
       widget_opts.justify = LIVES_JUSTIFY_CENTER;
       lives_layout_add_label(LIVES_LAYOUT(layout), _("Action"), TRUE);
       widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
     }
+
     lives_layout_add_label(LIVES_LAYOUT(layout), _("Name"), TRUE);
     lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
     lives_layout_add_label(LIVES_LAYOUT(layout), _("Size"), TRUE);
@@ -2106,17 +2187,23 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
     if (!pass) {
       hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
-      if (!type) txt = (_("Recover"));
-      else if (type == 1) txt = (_("Delete"));
-      else if (type == 2) txt = (_("Leave"));
-
-      filedets->widgets[0] = lives_standard_check_button_new(txt, type != 2, LIVES_BOX(hbox), NULL);
+      filedets->widgets[0] = lives_standard_check_button_new("", type != 2, LIVES_BOX(hbox), NULL);
       filedets->widgets[8] = widget_opts.last_label;
 
       if (type == 1) {
 	hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 	filedets->widgets[1] = lives_standard_switch_new(NULL, TRUE, LIVES_BOX(hbox), NULL);
+	lives_signal_sync_connect(LIVES_GUI_OBJECT(filedets->widgets[1]), LIVES_WIDGET_TOGGLED_SIGNAL,
+				  LIVES_GUI_CALLBACK(filt_sw_toggled),
+				  (livespointer)filedets);
       }
+      else filedets->widgets[1] = NULL;
+
+      lives_signal_sync_connect(LIVES_GUI_OBJECT(filedets->widgets[0]), LIVES_WIDGET_TOGGLED_SIGNAL,
+				LIVES_GUI_CALLBACK(filt_cb_toggled),
+				(livespointer)filedets);
+
+      filt_cb_toggled(filedets->widgets[0], filedets);
 
       txt = lives_pad_ellipsise(filedets->name, NMLEN_MAX, LIVES_ALIGN_FILL, LIVES_ALIGN_START);
       lives_layout_add_label(LIVES_LAYOUT(layout), txt, TRUE);
@@ -2270,11 +2357,17 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
       lives_widget_show_all(dialog);
       do {
 	lives_widget_process_updates(dialog);
-	lives_nanosleep(10000);
+	lives_nanosleep(100);
       } while (!list->next && filtresp == LIVES_RESPONSE_NONE);
     }
     if (filtresp != LIVES_RESPONSE_NONE) goto ffxdone;
     list = list->next;
+  }
+  if (cb) {
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(cb), LIVES_WIDGET_TOGGLED_SIGNAL,
+			      LIVES_GUI_CALLBACK(filt_all_toggled),
+			      (livespointer)*listp);
+    lives_widget_set_sensitive(cb, TRUE);
   }
  ffxdone:
   if (today) lives_free(today);
@@ -2291,6 +2384,7 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
   LiVESWidget *top_vbox;
   LiVESWidget *scrolledwindow;
   LiVESWidget *button;
+  LiVESWidget *resetb;
   LiVESWidget *vbox;
   LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
 
@@ -2316,9 +2410,10 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
   lives_widget_add_accelerator(button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
 			       LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-				     LIVES_STOCK_UNDO, _("_Reset"),
-				     LIVES_RESPONSE_RESET);
+  resetb = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
+					      LIVES_STOCK_UNDO, _("_Reset"),
+					      LIVES_RESPONSE_NONE);
+  lives_widget_set_sensitive(resetb, FALSE);
 
   widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
   button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
@@ -2366,11 +2461,6 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
   lives_layout_add_fill(LIVES_LAYOUT(layout_rec), FALSE);
 
   add_hsep_to_box(LIVES_BOX(vbox));
-
-  /// items for removal
-  //widget_opts.packing_width = 0;
-  //widget_opts.expand = LIVES_EXPAND_DEFAULT;
-
 
   layout_rem = lives_layout_new(LIVES_BOX(vbox));
   widget_opts.packing_width = wopw;
@@ -2420,6 +2510,31 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
   leave_recheck = fill_filt_section(left_list, pass, 2, layout_leave);
   lives_layout_add_fill(LIVES_LAYOUT(layout_leave), FALSE);
 
+  /// reset button
+  if (!pass) {
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_rec), "list", rec_list);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_rec), "ptype",
+				 LIVES_INT_TO_POINTER(0));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_rem), "list", rem_list);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_rem), "ptype",
+				 LIVES_INT_TO_POINTER(1));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_leave), "list", left_list);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_leave), "ptype",
+				 LIVES_INT_TO_POINTER(2));
+
+    lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(resetb), LIVES_WIDGET_CLICKED_SIGNAL,
+				      LIVES_GUI_CALLBACK(filt_reset_clicked),
+				      layout_rec);
+    lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(resetb), LIVES_WIDGET_CLICKED_SIGNAL,
+				      LIVES_GUI_CALLBACK(filt_reset_clicked),
+				      layout_rem);
+    lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(resetb), LIVES_WIDGET_CLICKED_SIGNAL,
+				      LIVES_GUI_CALLBACK(filt_reset_clicked),
+				      layout_leave);
+
+    lives_widget_set_sensitive(resetb, TRUE);
+  }
+
   /////////
   while (filtresp == LIVES_RESPONSE_NONE && (rec_recheck || rem_recheck || leave_recheck)) {
     ++pass;
@@ -2427,10 +2542,10 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
     if (rem_recheck) rem_recheck = fill_filt_section(rem_list, pass, 1, layout_rem);
     if (leave_recheck) leave_recheck = fill_filt_section(left_list, pass, 2, layout_leave);
     lives_widget_process_updates(dialog);
-    lives_nanosleep(10000);
+    lives_nanosleep(100);
   };
 
-  if (filtresp == LIVES_RESPONSE_NONE) lives_dialog_run(LIVES_DIALOG(dialog));
+  while (filtresp == LIVES_RESPONSE_NONE) lives_dialog_run(LIVES_DIALOG(dialog));
 
  filtc_done:
   lives_widget_destroy(dialog);

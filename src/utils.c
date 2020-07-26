@@ -5617,10 +5617,10 @@ boolean lives_make_writeable_dir(const char *newdir) {
 }
 
 
-LIVES_GLOBAL_INLINE LiVESInterpType get_interp_value(short quality) {
+LIVES_GLOBAL_INLINE LiVESInterpType get_interp_value(short quality, boolean low_for_mt) {
   if ((mainw->is_rendering || (mainw->multitrack != NULL && mainw->multitrack->is_rendering)) && !mainw->preview_rendering)
     return LIVES_INTERP_BEST;
-  if (mainw->multitrack != NULL) return LIVES_INTERP_FAST;
+  if (low_for_mt && mainw->multitrack != NULL) return LIVES_INTERP_FAST;
   if (quality <= PB_QUALITY_LOW) return LIVES_INTERP_FAST;
   else if (quality == PB_QUALITY_MED) return LIVES_INTERP_NORMAL;
   return LIVES_INTERP_BEST;

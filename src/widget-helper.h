@@ -26,7 +26,7 @@
 
 #define MIN_SPINBUTTON_SIZE 6 ///< min digits for spinbuttons
 
-#define LONG_ENTRY_WIDTH ((int)(120.*widget_opts.scale))
+#define LONG_ENTRY_WIDTH ((int)(100.*widget_opts.scale))
 #define SHORT_ENTRY_WIDTH ((int)(40.*widget_opts.scale))
 #define MEDIUM_ENTRY_WIDTH ((int)(60.*widget_opts.scale))
 
@@ -42,7 +42,9 @@ typedef struct {
   int width, height;
 } lives_rect_t;
 
-// values below are multiplied by scale
+// values below are multiplied by scale (unless value is -1)
+#define W_CSS_MIN_WIDTH -1
+#define W_CSS_MIN_HEIGHT 18
 #define W_PACKING_WIDTH  10 // packing width for widgets with labels
 #define W_PACKING_HEIGHT 6 // packing height for widgets
 #define W_BORDER_WIDTH   10 // default border width
@@ -427,6 +429,9 @@ boolean lives_widget_set_margin_left(LiVESWidget *, int margin);
 boolean lives_widget_set_margin_right(LiVESWidget *, int margin);
 boolean lives_widget_set_margin_top(LiVESWidget *, int margin);
 boolean lives_widget_set_margin_bottom(LiVESWidget *, int margin);
+
+boolean lives_widget_set_margin(LiVESWidget *, int margin);
+boolean lives_widget_set_padding(LiVESWidget *, int padding);
 
 LiVESWidget *lives_dialog_get_content_area(LiVESDialog *);
 LiVESWidget *lives_dialog_get_action_area(LiVESDialog *);
@@ -1208,7 +1213,7 @@ LiVESWidget *add_spring_to_box(LiVESBox *, int min);
 LiVESWidget *lives_toolbar_insert_space(LiVESToolbar *);
 LiVESWidget *lives_toolbar_insert_label(LiVESToolbar *, const char *labeltext);
 LiVESWidget *lives_standard_tool_button_new(LiVESToolbar *, GtkWidget *icon_widget, const char *label, const char *tooltips);
-boolean lives_tool_button_set_border_colour(LiVESWidget *button, LiVESWidgetState state, LiVESWidgetColor *);
+boolean lives_tool_button_set_border_color(LiVESWidget *button, LiVESWidgetState state, LiVESWidgetColor *);
 LiVESWidget *lives_glowing_tool_button_new(const char *labeltext, LiVESToolbar *tbar, const char *tooltip,
     boolean *togglevalue);
 
@@ -1318,6 +1323,8 @@ typedef struct {
   lives_expand_t expand; ///< how much space to apply between widgets
   int apply_theme; ///< whether to apply theming to widget (0 -> no theme, 1 -> normal colours, 2+ -> theme variants)
   double scale; ///< scale factor for all sizes
+  int css_min_width;
+  int css_min_height;
   int packing_width; ///< horizontal pixels between widgets
   int packing_height; ///< vertical pixels between widgets
   int border_width; ///< border width in pixels
@@ -1346,8 +1353,10 @@ const widget_opts_t def_widget_opts = {
   TRUE, ///< mnemonic_label
   FALSE, ///< non_modal
   LIVES_EXPAND_DEFAULT, ///< default expand
-  FALSE, ///< no themeing
+  0, ///< no themeing
   1.0, ///< default scale
+  W_CSS_MIN_WIDTH, ///< css_min_width
+  W_CSS_MIN_HEIGHT, ///< css_min_height
   W_PACKING_WIDTH, ///< def packing width
   W_PACKING_HEIGHT, ///< def packing height
   W_BORDER_WIDTH, ///< def border width

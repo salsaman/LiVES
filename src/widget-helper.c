@@ -194,7 +194,7 @@ static boolean widget_state_cb(LiVESWidgetObject *object, livespointer pspec, li
     LiVESWidget *icon = gtk_tool_button_get_icon_widget(LIVES_TOOL_BUTTON(widget));
     if (icon != NULL) {
       // if we have an icon (no label) just update the border
-      lives_tool_button_set_border_colour(widget, state, &palette->menu_and_bars);
+      lives_tool_button_set_border_color(widget, state, &palette->menu_and_bars);
       widget_opts.apply_theme = woat;
       return FALSE;
     }
@@ -209,13 +209,13 @@ static boolean widget_state_cb(LiVESWidgetObject *object, livespointer pspec, li
         dimval = (0.2 * 65535.);
         lives_widget_color_copy(&dimmed_fg, &palette->normal_fore);
         lives_widget_color_mix(&dimmed_fg, &palette->normal_back, (float)dimval / 65535.);
-        lives_tool_button_set_border_colour(widget, state, &dimmed_fg);
+        lives_tool_button_set_border_color(widget, state, &dimmed_fg);
         lives_widget_apply_theme_dimmed2(label, state, BUTTON_DIM_VAL);
       } else {
         dimval = (0.6 * 65535.);
         lives_widget_color_copy(&dimmed_fg, &palette->normal_fore);
         lives_widget_color_mix(&dimmed_fg, &palette->normal_back, (float)dimval / 65535.);
-        lives_tool_button_set_border_colour(widget, state, &dimmed_fg);
+        lives_tool_button_set_border_color(widget, state, &dimmed_fg);
         lives_widget_apply_theme2(label, state, TRUE);
       }
       // menutoolbuttons will also have an arrow
@@ -2444,6 +2444,34 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_margin_bottom(LiVESWidget *
 #endif
   return FALSE;
 }
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_margin(LiVESWidget *widget, int margin) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 0, 0)
+  lives_widget_set_margin_bottom(widget, margin);
+  lives_widget_set_margin_top(widget, margin);
+  lives_widget_set_margin_left(widget, margin);
+  lives_widget_set_margin_right(widget, margin);
+  return TRUE;
+#endif
+#endif
+  return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_padding(LiVESWidget *widget, int padding) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 16, 0)
+  char *wpx = lives_strdup_printf("%dpx", padding);
+  set_css_value_direct(widget, LIVES_WIDGET_STATE_NORMAL, "", "padding", wpx);
+  lives_free(wpx);
+  return TRUE;
+#endif
+#endif
+  return FALSE;
+}
+
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_add_action_widget(LiVESDialog *dialog, LiVESWidget *widget, int response) {
@@ -7098,10 +7126,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_entry_set_text(LiVESEntry *entry, cons
   gtk_entry_set_text(entry, text);
   return TRUE;
 #endif
-#ifdef GUI_QT
-  entry->setText(QString::fromUtf8(text));
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -7111,15 +7135,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_entry_set_width_chars(LiVESEntry *entr
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 12, 0)
   gtk_entry_set_max_width_chars(entry, nchars);
-#else
+#endif
   gtk_entry_set_width_chars(entry, nchars);
-#endif
-  return TRUE;
-#endif
-#ifdef GUI_QT
-  QFontMetrics metrics(QApplication::font());
-  (static_cast<QLineEdit *>(entry))->setFixedSize(metrics.width('A')*nchars,
-      (static_cast<QWidget *>(static_cast<QLineEdit *>(entry)))->height());
   return TRUE;
 #endif
   return FALSE;
@@ -7130,9 +7147,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_scrolled_window_new(LiVESAdjustme
   LiVESWidget *swindow = NULL;
 #ifdef GUI_GTK
   swindow = gtk_scrolled_window_new(hadj, vadj);
-#endif
-#ifdef GUI_QT
-  swindow = new LiVESScrolledWindow(hadj, vadj);
 #endif
   return swindow;
 }
@@ -8828,8 +8842,6 @@ boolean lives_button_grab_default_special(LiVESWidget *button) {
 static void set_css_min_size(LiVESWidget *w, int mw, int mh) {
 #if GTK_CHECK_VERSION(3, 16, 0)
   char *tmp;
-  mw = (((int)((double)mw * widget_opts.scale + 1.)) >> 1) << 1;
-  mh = (((int)((double)mw * widget_opts.scale + 1.)) >> 1) << 1;
   if (mw > 0) {
     tmp = lives_strdup_printf("%dpx", mw);
     set_css_value_direct(w, LIVES_WIDGET_STATE_NORMAL, "*", "min-width", tmp);
@@ -9063,13 +9075,19 @@ WIDGET_HELPER_GLOBAL_INLINE boolean show_warn_image(LiVESWidget *widget, const c
 }
 
 
-static LiVESWidget *make_inner_hbox(LiVESBox *box) {
+static LiVESWidget *make_inner_hbox(LiVESBox *box, boolean start) {
   LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
   LiVESWidget *vbox = lives_vbox_new(FALSE, 0);
 
   lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
   if (LIVES_IS_HBOX(box)) {
-    lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, LIVES_SHOULD_EXPAND_FOR(box)
+    if (start)
+      lives_box_pack_start(LIVES_BOX(box), hbox, LIVES_SHOULD_EXPAND_EXTRA_WIDTH,
+                           LIVES_SHOULD_EXPAND_WIDTH, LIVES_SHOULD_EXPAND_FOR(box)
+                           ? widget_opts.packing_width : 0);
+    else
+      lives_box_pack_end(LIVES_BOX(box), hbox, LIVES_SHOULD_EXPAND_EXTRA_WIDTH,
+                         LIVES_SHOULD_EXPAND_WIDTH, LIVES_SHOULD_EXPAND_FOR(box)
                          ? widget_opts.packing_width : 0);
     lives_widget_set_valign(hbox, LIVES_ALIGN_CENTER);
   } else {
@@ -9081,7 +9099,8 @@ static LiVESWidget *make_inner_hbox(LiVESBox *box) {
                          ? widget_opts.packing_width : 0);
   }
 
-  lives_box_pack_start(LIVES_BOX(hbox), vbox, FALSE, FALSE, 0);
+  lives_box_pack_end(LIVES_BOX(hbox), vbox, LIVES_SHOULD_EXPAND_EXTRA_WIDTH,
+                     LIVES_SHOULD_EXPAND_EXTRA_WIDTH, 0);
   lives_widget_set_show_hide_parent(vbox);
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -9339,7 +9358,7 @@ LiVESWidget *lives_standard_button_new(int width, int height) {
     set_standard_widget(button, TRUE);
 
 #if GTK_CHECK_VERSION(3, 16, 0)
-    set_css_value_direct(button, LIVES_WIDGET_STATE_NORMAL, "", "padding", "0px");
+    lives_widget_set_padding(button, 0);
     set_css_value_direct(button, LIVES_WIDGET_STATE_NORMAL, "", "background", "none");
     set_css_value_direct(button, LIVES_WIDGET_STATE_NORMAL, "", "border-width", "0px");
 #endif
@@ -9405,9 +9424,9 @@ static LiVESWidget *_lives_standard_button_set_full(LiVESWidget *sbutt, LiVESBox
 
     if (layout) {
       box = LIVES_BOX(lives_layout_hbox_new(LIVES_TABLE(layout)));
-      hbox = make_inner_hbox(LIVES_BOX(box));
+      hbox = make_inner_hbox(LIVES_BOX(box), TRUE);
       lives_widget_set_show_hide_with(sbutt, hbox);
-    } else hbox = make_inner_hbox(LIVES_BOX(box));
+    } else hbox = make_inner_hbox(LIVES_BOX(box), TRUE);
 
     expand = LIVES_SHOULD_EXPAND_EXTRA_FOR(hbox);
     if (expand) add_fill_to_box(LIVES_BOX(hbox));
@@ -9567,9 +9586,9 @@ LiVESWidget *lives_standard_notebook_new(const LiVESWidgetColor *bg_color, const
     set_css_value_direct(notebook, LIVES_WIDGET_STATE_ACTIVE, "*", "background", "none");
     set_css_value_direct(notebook, LIVES_WIDGET_STATE_ACTIVE, "*", "background-color", colref);
     lives_free(colref);
-    set_css_value_direct(notebook, LIVES_WIDGET_STATE_ACTIVE, "*", "hexpand", "TRUE");
   }
 #endif
+  lives_widget_set_hexpand(notebook, TRUE);
   return notebook;
 }
 
@@ -9598,7 +9617,7 @@ LiVESWidget *lives_standard_label_new_with_tooltips(const char *text, LiVESBox *
     const char *tips) {
   LiVESWidget *img_tips = make_ttips_image(tips);
   LiVESWidget *label = lives_standard_label_new(text);
-  LiVESWidget *hbox = make_inner_hbox(LIVES_BOX(box));
+  LiVESWidget *hbox = make_inner_hbox(LIVES_BOX(box), TRUE);
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
   lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
   lives_widget_set_show_hide_parent(label);
@@ -9679,9 +9698,6 @@ LiVESWidget *lives_standard_label_new_with_mnemonic_widget(const char *text, LiV
 LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boolean invis) {
   LiVESWidget *frame = lives_frame_new(NULL);
   LiVESWidget *label = NULL;
-#if GTK_CHECK_VERSION(3, 24, 0)
-  char *colref;
-#endif
 
   if (LIVES_SHOULD_EXPAND)
     lives_container_set_border_width(LIVES_CONTAINER(frame), widget_opts.border_width);
@@ -9698,14 +9714,21 @@ LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boole
   lives_widget_apply_theme(frame, LIVES_WIDGET_STATE_NORMAL);
   lives_widget_set_text_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
-#if GTK_CHECK_VERSION(3, 16, 0)
-  colref = gdk_rgba_to_string(&palette->menu_and_bars);
-  set_css_value_direct(frame, LIVES_WIDGET_STATE_NORMAL, "border", "border-color", colref);
-  lives_free(colref);
-#endif
-
-#if !GTK_CHECK_VERSION(3, 0, 0)
+#if !GTK_CHECK_VERSION(3, 16, 0)
   lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+
+#else
+  if (prefs->extra_colours && mainw->pretty_colours) {
+    char *colref = gdk_rgba_to_string(&palette->nice1);
+    set_css_value_direct(frame, LIVES_WIDGET_STATE_NORMAL, "border",
+                         "border-color", colref);
+    lives_free(colref);
+  } else {
+    char *colref = gdk_rgba_to_string(&palette->menu_and_bars);
+    set_css_value_direct(frame, LIVES_WIDGET_STATE_NORMAL, "border",
+                         "border-color", colref);
+    lives_free(colref);
+  }
 #endif
 
   if (xalign >= 0.) lives_frame_set_label_align(LIVES_FRAME(frame), xalign, 0.5);
@@ -9839,7 +9862,9 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_show_hide_parent(LiVESWidge
 LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, LiVESBox *box,
                                        const char *tooltip) {
   LiVESWidget *swtch = NULL;
-#if LIVES_HAS_SWITCH_WIDGET
+#if !LIVES_HAS_SWITCH_WIDGET
+  return lives_standard_check_button_new(labeltext, active, box, tooltip);
+#else
   LiVESWidget *eventbox = NULL;
   LiVESWidget *hbox;
   LiVESWidget *img_tips = NULL;
@@ -9866,7 +9891,7 @@ LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, Li
 
     if (LIVES_IS_HBOX(box) && !LIVES_SHOULD_EXPAND_WIDTH) hbox = LIVES_WIDGET(box);
     else {
-      hbox = make_inner_hbox(LIVES_BOX(box));
+      hbox = make_inner_hbox(LIVES_BOX(box), !widget_opts.swap_label);
       lives_widget_set_show_hide_parent(swtch);
     }
 
@@ -9899,12 +9924,11 @@ LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, Li
   if (widget_opts.apply_theme) {
 #if GTK_CHECK_VERSION(3, 0, 0)
     lives_widget_apply_theme(swtch, LIVES_WIDGET_STATE_NORMAL);
+    set_css_min_size(swtch, widget_opts.css_min_width, widget_opts.css_min_height);
 #if GTK_CHECK_VERSION(3, 16, 0)
     if (prefs->extra_colours && mainw->pretty_colours) {
       char *tmp;
-      colref = gdk_rgba_to_string(&palette->nice1);
-      set_css_value_direct(swtch, LIVES_WIDGET_STATE_NORMAL, "", "border-color", colref);
-      lives_free(colref);
+      lives_widget_set_border_color(swtch, LIVES_WIDGET_STATE_NORMAL, &palette->nice1);
 
       colref = gdk_rgba_to_string(&palette->menu_and_bars);
       tmp = lives_strdup_printf("image(%s)", colref);
@@ -9913,7 +9937,8 @@ LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, Li
       lives_free(tmp);
       lives_free(colref);
 
-      colref = gdk_rgba_to_string(&palette->nice3);
+      //colref = gdk_rgba_to_string(&palette->nice3);
+      colref = gdk_rgba_to_string(&palette->normal_fore);
       tmp = lives_strdup_printf("image(%s)", colref);
       set_css_value_direct(swtch, LIVES_WIDGET_STATE_CHECKED, "slider",
                            "background-image", tmp);
@@ -9925,8 +9950,9 @@ LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, Li
       set_css_value_direct(swtch, LIVES_WIDGET_STATE_INSENSITIVE, "slider",
                            "background-image", tmp);
       lives_free(tmp);
-      set_css_value_direct(swtch, LIVES_WIDGET_STATE_INSENSITIVE, "", "border-color", colref);
       lives_free(colref);
+
+      lives_widget_set_border_color(swtch, LIVES_WIDGET_STATE_INSENSITIVE, &palette->nice2);
     }
 #endif
 #endif
@@ -9970,7 +9996,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
 
     if (LIVES_IS_HBOX(box) && !LIVES_SHOULD_EXPAND_WIDTH) hbox = LIVES_WIDGET(box);
     else {
-      hbox = make_inner_hbox(LIVES_BOX(box));
+      hbox = make_inner_hbox(LIVES_BOX(box), !widget_opts.swap_label);
       lives_widget_set_show_hide_parent(checkbutton);
     }
 
@@ -10003,9 +10029,8 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
   if (widget_opts.apply_theme) {
 #if GTK_CHECK_VERSION(3, 0, 0)
     lives_widget_apply_theme(checkbutton, LIVES_WIDGET_STATE_NORMAL);
+    set_css_min_size(checkbutton, widget_opts.css_min_width, widget_opts.css_min_height);
 #if GTK_CHECK_VERSION(3, 16, 0)
-    set_css_min_size(checkbutton, 24, 20);
-
     if (prefs->extra_colours && mainw->pretty_colours) {
       colref = gdk_rgba_to_string(&palette->normal_fore);
       set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_CHECKED, "check",
@@ -10020,6 +10045,14 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
       set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_CHECKED, "check",
                            "border-image", tmp);
       lives_free(tmp);
+
+      colref = gdk_rgba_to_string(&palette->nice2);
+      tmp = lives_strdup_printf("image(%s)", colref);
+      set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_INSENSITIVE, "check",
+                           "background-image", tmp);
+      set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_INSENSITIVE, "check",
+                           "border-image", tmp);
+      lives_free(tmp);
     } else {
       colref = gdk_rgba_to_string(&palette->normal_fore);
       set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_CHECKED, "check",
@@ -10031,6 +10064,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
                            "background-color", colref);
       lives_free(colref);
     }
+    set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
 #endif
 #endif
   }
@@ -10043,6 +10077,9 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
 LiVESWidget *lives_glowing_check_button_new(const char *labeltext, LiVESBox *box, const char *tooltip, boolean *togglevalue) {
   boolean active = FALSE;
   LiVESWidget *checkbutton;
+#if GTK_CHECK_VERSION(3, 16, 0)
+  char *colref;
+#endif
   if (togglevalue != NULL) active = *togglevalue;
 
   checkbutton = lives_standard_check_button_new(labeltext, active, box, tooltip);
@@ -10055,7 +10092,29 @@ LiVESWidget *lives_glowing_check_button_new(const char *labeltext, LiVESBox *box
   if (prefs->lamp_buttons) {
     lives_toggle_button_set_mode(LIVES_TOGGLE_BUTTON(checkbutton), FALSE);
     if (widget_opts.apply_theme) {
-      lives_widget_set_bg_color(checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
+      if (prefs->extra_colours && mainw->pretty_colours)
+        lives_widget_set_bg_color(checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->nice3);
+      else
+        lives_widget_set_bg_color(checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
+
+      set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_NORMAL, "",
+                           "box-shadow", "4px 0 alpha(white, 0.5)");
+#if GTK_CHECK_VERSION(3, 16, 0)
+      colref = gdk_rgba_to_string(&palette->dark_red);
+      set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_NORMAL, "button",
+                           "color", colref);
+      set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_NORMAL, "button",
+                           "background-color", colref);
+      lives_free(colref);
+      colref = gdk_rgba_to_string(&palette->nice3);
+      set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_CHECKED, "button",
+                           "color", colref);
+      set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_CHECKED, "button",
+                           "background-color", colref);
+      lives_free(colref);
+      set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_NORMAL, "",
+                           "transition-duration", "0.2s");
+#endif
       lives_widget_set_bg_color(checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
       lives_cool_toggled(checkbutton, togglevalue);
       lives_signal_sync_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
@@ -10130,7 +10189,7 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList *
   LiVESWidget *img_tips = NULL;
   LiVESWidget *hbox;
 
-#if GTK_CHECK_VERSION(3, 14, 0)
+#if GTK_CHECK_VERSION(3, 16, 0)
   char *colref, *tmp; //*csstxt;
 #endif
 
@@ -10151,7 +10210,7 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList *
       eventbox = make_label_eventbox(labeltext, radiobutton);
     }
 
-    hbox = make_inner_hbox(LIVES_BOX(box));
+    hbox = make_inner_hbox(LIVES_BOX(box), !widget_opts.swap_label);
     expand = LIVES_SHOULD_EXPAND_EXTRA_FOR(hbox);
 
     if (LIVES_SHOULD_EXPAND_WIDTH) packing_width = widget_opts.packing_width;
@@ -10193,7 +10252,8 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList *
     lives_free(colref);
 
     if (prefs->extra_colours && mainw->pretty_colours) {
-      colref = gdk_rgba_to_string(&palette->nice3);
+      //colref = gdk_rgba_to_string(&palette->nice3);
+      colref = gdk_rgba_to_string(&palette->normal_fore);
       set_css_value_direct(radiobutton, LIVES_WIDGET_STATE_CHECKED, "radio", "color", colref);
 
       tmp = lives_strdup_printf("image(%s)", colref);
@@ -10265,7 +10325,6 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
   boolean expand;
 
   int maxlen;
-
   widget_opts.last_label = NULL;
 
   adj = lives_adjustment_new(val, min, max, step, page, 0.);
@@ -10294,21 +10353,29 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
                           WH_LAYOUT_KEY);
     int packing_width = 0;
 
+    if (LIVES_IS_HBOX(box)) {
+      hbox = lives_hbox_new(FALSE, 0);
+      lives_box_pack_start(box, hbox, FALSE, TRUE, 0);
+      box = LIVES_BOX(hbox);
+    }
+
     if (labeltext != NULL) {
       eventbox = make_label_eventbox(labeltext, spinbutton);
     }
 
-    hbox = make_inner_hbox(LIVES_BOX(box));
+    hbox = make_inner_hbox(LIVES_BOX(box), widget_opts.swap_label || !eventbox);
+
     expand = LIVES_SHOULD_EXPAND_EXTRA_FOR(hbox);
 
     if (LIVES_SHOULD_EXPAND_WIDTH) packing_width = widget_opts.packing_width;
 
-    if (!widget_opts.swap_label && eventbox != NULL) {
+    if (!widget_opts.swap_label && eventbox) {
       lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, packing_width);
+
       if (layout != NULL) {
         lives_widget_set_show_hide_with(spinbutton, hbox);
         box = LIVES_BOX(lives_layout_hbox_new(LIVES_TABLE(layout)));
-        hbox = make_inner_hbox(LIVES_BOX(box));
+        hbox = make_inner_hbox(LIVES_BOX(box), TRUE);
       }
     }
 
@@ -10321,7 +10388,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
     if (widget_opts.swap_label && eventbox != NULL) {
       if (layout != NULL) {
         box = LIVES_BOX(lives_layout_hbox_new(LIVES_TABLE(layout)));
-        hbox = make_inner_hbox(LIVES_BOX(box));
+        hbox = make_inner_hbox(LIVES_BOX(box), TRUE);
         lives_widget_set_show_hide_with(spinbutton, hbox);
       }
       lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, packing_width);
@@ -10339,7 +10406,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
   }
 
   if (widget_opts.apply_theme) {
-    set_css_min_size(spinbutton, -1, 18);
+    set_css_min_size(spinbutton, widget_opts.css_min_width, widget_opts.css_min_height);
     set_child_alt_colour(spinbutton, TRUE);
     set_child_dimmed_colour2(spinbutton, BUTTON_DIM_VAL); // insens, themecols 1, child only
     lives_widget_apply_theme2(LIVES_WIDGET(spinbutton), LIVES_WIDGET_STATE_NORMAL, TRUE);
@@ -10348,14 +10415,15 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
     colref = gdk_rgba_to_string(&palette->normal_fore);
     set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_NORMAL, "", "color", colref);
     lives_free(colref);
+
+    set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
+
     if (prefs->extra_colours && mainw->pretty_colours) {
       colref = gdk_rgba_to_string(&palette->nice1);
-      set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_NORMAL, "", "caret-color", colref);
       set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_NORMAL, "", "outline-color", colref);
       lives_free(colref);
     }
 #endif
-    lives_widget_set_fg_color(spinbutton, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
   return spinbutton;
@@ -10406,11 +10474,17 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
     LiVESWidget *layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(box), WH_LAYOUT_KEY);
     int packing_width = 0;
 
+    if (LIVES_IS_HBOX(box)) {
+      hbox = lives_hbox_new(FALSE, 0);
+      lives_box_pack_start(box, hbox, FALSE, TRUE, 0);
+      box = LIVES_BOX(hbox);
+    }
+
     if (labeltext != NULL) {
       eventbox = make_label_eventbox(labeltext, LIVES_WIDGET(entry));
     }
 
-    hbox = make_inner_hbox(LIVES_BOX(box));
+    hbox = make_inner_hbox(LIVES_BOX(box), widget_opts.swap_label || !eventbox);
     expand = LIVES_SHOULD_EXPAND_EXTRA_FOR(hbox);
     if (LIVES_SHOULD_EXPAND_WIDTH) packing_width = widget_opts.packing_width;
 
@@ -10419,7 +10493,7 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
       if (layout != NULL) {
         lives_widget_set_show_hide_with(combo, hbox);
         box = LIVES_BOX(lives_layout_hbox_new(LIVES_TABLE(layout)));
-        hbox = make_inner_hbox(LIVES_BOX(box));
+        hbox = make_inner_hbox(LIVES_BOX(box), TRUE);
       }
     }
 
@@ -10435,7 +10509,7 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
     if (widget_opts.swap_label && eventbox != NULL) {
       if (layout != NULL) {
         box = LIVES_BOX(lives_layout_hbox_new(LIVES_TABLE(layout)));
-        hbox = make_inner_hbox(LIVES_BOX(box));
+        hbox = make_inner_hbox(LIVES_BOX(box), TRUE);
         lives_widget_set_show_hide_with(combo, hbox);
       }
       lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, packing_width);
@@ -10458,7 +10532,7 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
   }
 
   if (widget_opts.apply_theme) {
-    set_css_min_size(combo, -1, 20);
+    set_css_min_size(combo, widget_opts.css_min_width, widget_opts.css_min_height);
     set_child_colour(combo, TRUE);
     set_child_dimmed_colour(combo, BUTTON_DIM_VAL); // insens, themecols 1, child only
     lives_widget_apply_theme2(combo, LIVES_WIDGET_STATE_NORMAL, TRUE);
@@ -10548,7 +10622,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
       eventbox = make_label_eventbox(labeltext, entry);
     }
 
-    hbox = make_inner_hbox(LIVES_BOX(box));
+    hbox = make_inner_hbox(LIVES_BOX(box), TRUE);
     expand = LIVES_SHOULD_EXPAND_EXTRA_FOR(hbox);
 
     if (LIVES_SHOULD_EXPAND_WIDTH) packing_width = widget_opts.packing_width;
@@ -10556,11 +10630,11 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
     if (!widget_opts.swap_label && eventbox != NULL)
       lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, packing_width);
 
-    if (expand) add_fill_to_box(LIVES_BOX(hbox));
+    if (expand && dispwidth != -1) add_fill_to_box(LIVES_BOX(hbox));
 
     lives_box_pack_start(LIVES_BOX(hbox), entry, LIVES_SHOULD_EXPAND_WIDTH, dispwidth == -1, packing_width);
 
-    if (expand) add_fill_to_box(LIVES_BOX(hbox));
+    if (expand && dispwidth != -1) add_fill_to_box(LIVES_BOX(hbox));
 
     if (widget_opts.swap_label && eventbox != NULL)
       lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, packing_width);
@@ -10571,11 +10645,9 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
 #if GTK_CHECK_VERSION(3, 0, 0)
 #if GTK_CHECK_VERSION(3, 16, 0)
     if (prefs->extra_colours && mainw->pretty_colours) {
-      char *colref;
-      colref = gdk_rgba_to_string(&palette->nice1);
-      set_css_value_direct(entry, LIVES_WIDGET_STATE_FOCUSED, "", "border-color", colref);
-      lives_free(colref);
+      lives_widget_set_border_color(entry, LIVES_WIDGET_STATE_NORMAL, &palette->nice1);
     }
+    set_css_value_direct(entry, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
 #endif
 
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(entry), LIVES_WIDGET_NOTIFY_SIGNAL "editable",
@@ -10999,13 +11071,14 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, LiVESBox *box, LiVES
 
     if (LIVES_IS_HBOX(box)) hbox = LIVES_WIDGET(box);
     else {
-      hbox = make_inner_hbox(LIVES_BOX(box));
+      hbox = make_inner_hbox(LIVES_BOX(box), TRUE);
       lives_widget_set_show_hide_parent(expander);
     }
 
     if (LIVES_SHOULD_EXPAND_WIDTH) packing_width = widget_opts.packing_width;
 
-    if (widget_opts.justify == LIVES_JUSTIFY_CENTER || widget_opts.justify == LIVES_JUSTIFY_LEFT) add_fill_to_box(LIVES_BOX(hbox));
+    if (widget_opts.justify == LIVES_JUSTIFY_CENTER || widget_opts.justify == LIVES_JUSTIFY_LEFT)
+      add_fill_to_box(LIVES_BOX(hbox));
 
     if (widget_opts.justify == LIVES_JUSTIFY_LEFT) lives_widget_set_halign(expander, LIVES_ALIGN_START);
     if (widget_opts.justify != LIVES_JUSTIFY_RIGHT) add_fill_to_box(LIVES_BOX(hbox));
@@ -11316,7 +11389,7 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
       lives_table_set_column_homogeneous(LIVES_TABLE(parent), FALSE);
       hbox = LIVES_WIDGET(box);
     } else {
-      hbox = LIVES_WIDGET(make_inner_hbox(LIVES_BOX(box)));
+      hbox = make_inner_hbox(LIVES_BOX(box), !box || widget_opts.swap_label || !labelcname);
     }
     expand = LIVES_SHOULD_EXPAND_EXTRA_FOR(hbox);
 
@@ -11356,9 +11429,9 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
   lives_widget_set_tooltip_text(cbutton, (_("Click to set the colour")));
   lives_color_button_set_title(LIVES_COLOR_BUTTON(cbutton), _("Select Colour"));
 
-  if (box != NULL) {
+  if (box) {
     if (!widget_opts.swap_label) {
-      if (labelcname != NULL) {
+      if (labelcname) {
         if (LIVES_SHOULD_EXPAND_WIDTH) lives_widget_set_margin_left(labelcname, widget_opts.packing_width >> 2);
         lives_box_pack_start(LIVES_BOX(hbox), labelcname, FALSE, FALSE, widget_opts.packing_width);
         if (parent_is_layout) {
@@ -11450,7 +11523,7 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
 
     if (parent_is_layout) {
       widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
-      hbox = make_inner_hbox(LIVES_BOX(hbox));
+      hbox = make_inner_hbox(LIVES_BOX(hbox), TRUE);
     }
 
     lives_container_add(LIVES_CONTAINER(frame), cbutton);
@@ -11462,6 +11535,10 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cbutton), SPALPHA_KEY, spinbutton_alpha);
 
     lives_widget_set_show_hide_parent(cbutton);
+
+    if (widget_opts.apply_theme) {
+      lives_widget_set_padding(cbutton, 0);
+    }
 
     if (widget_opts.swap_label) {
       if (labelcname != NULL) {
@@ -11563,10 +11640,18 @@ boolean widget_helper_init(void) {
 
 boolean widget_opts_rescale(double scale) {
   widget_opts.scale = scale;
-  widget_opts.border_width = (float)def_widget_opts.border_width * widget_opts.scale;
-  widget_opts.packing_width = (float)def_widget_opts.packing_width * widget_opts.scale;
-  widget_opts.packing_height = (float)def_widget_opts.packing_height * widget_opts.scale;
-  widget_opts.filler_len = (float)def_widget_opts.filler_len * widget_opts.scale;
+  if (def_widget_opts.css_min_width != -1) {
+    widget_opts.css_min_width = (int)((double)def_widget_opts.css_min_width * widget_opts.scale + .5);
+    widget_opts.css_min_width = ((widget_opts.css_min_width + 1) >> 1) << 1;
+  }
+  if (def_widget_opts.css_min_height != -1) {
+    widget_opts.css_min_height = (int)((double)def_widget_opts.css_min_height * widget_opts.scale + .5);
+    widget_opts.css_min_height = ((widget_opts.css_min_height + 1) >> 1) << 1;
+  }
+  widget_opts.border_width = (int)((double)def_widget_opts.border_width * widget_opts.scale + .5);
+  widget_opts.packing_width = (int)((double)def_widget_opts.packing_width * widget_opts.scale + .5);
+  widget_opts.packing_height = (int)((double)def_widget_opts.packing_height * widget_opts.scale + .5);
+  widget_opts.filler_len = (int)((double)def_widget_opts.filler_len * widget_opts.scale + .5);
   return TRUE;
 }
 
@@ -12160,6 +12245,8 @@ static void set_child_alt_colour_internal(LiVESWidget *widget, livespointer set_
   if (set_all || LIVES_IS_LABEL(widget)) {
     lives_widget_apply_theme2(widget, LIVES_WIDGET_STATE_INSENSITIVE, TRUE);
     lives_widget_apply_theme2(widget, LIVES_WIDGET_STATE_NORMAL, TRUE);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget),
+                                 ALT_THEME_KEY, widget);
   }
 
   if (LIVES_IS_CONTAINER(widget)) {
@@ -12618,6 +12705,7 @@ void funkify_dialog(LiVESWidget * dialog) {
 
 void lives_cool_toggled(LiVESWidget * tbutton, livespointer user_data) {
 #if GTK_CHECK_VERSION(3, 0, 0)
+  //#if !GTK_CHECK_VERSION(3, 16, 0)
   // connect toggled event to this
   boolean *ret = (boolean *)user_data, active;
   if (!LIVES_IS_INTERACTIVE) return;
@@ -12626,12 +12714,16 @@ void lives_cool_toggled(LiVESWidget * tbutton, livespointer user_data) {
             (LIVES_IS_TOGGLE_TOOL_BUTTON(tbutton)
              && lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(tbutton))));
   if (prefs->lamp_buttons) {
-    if (active)
-      lives_widget_set_bg_color(tbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
-    else lives_widget_set_bg_color(tbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
+    if (active) {
+      if (prefs->extra_colours && mainw->pretty_colours)
+        lives_widget_set_bg_color(tbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->nice3);
+      else
+        lives_widget_set_bg_color(tbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
+    } else lives_widget_set_bg_color(tbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
   }
   if (ret != NULL) *ret = active;
   lives_widget_queue_draw(tbutton);
+  //#endif
 #endif
 }
 
@@ -12655,10 +12747,16 @@ boolean draw_cool_toggle(LiVESWidget * widget, lives_painter_t *cr, livespointer
   rheight *= scaley;
 
   // draw the inside
+  //#if !GTK_CHECK_VERSION(3, 16, 0)
 
   if (active) {
-    lives_painter_set_source_rgba(cr, palette->light_green.red, palette->light_green.green,
-                                  palette->light_green.blue, 1.);
+    if (prefs->extra_colours && mainw->pretty_colours)
+      lives_painter_set_source_rgba(cr, palette->nice3.red, palette->nice3.green,
+                                    palette->nice3.blue, 1.);
+    else
+      lives_painter_set_source_rgba(cr, palette->light_green.red, palette->light_green.green,
+                                    palette->light_green.blue, 1.);
+
   } else {
     lives_painter_set_source_rgba(cr, palette->dark_red.red, palette->dark_red.green,
                                   palette->dark_red.blue, 1.);
@@ -12679,6 +12777,7 @@ boolean draw_cool_toggle(LiVESWidget * widget, lives_painter_t *cr, livespointer
                           rwidth / 2,
                           rwidth / 4);
   lives_painter_fill(cr);
+  //#endif
 
   rad = rwidth / 4.;
 
@@ -12843,7 +12942,10 @@ void lives_general_button_clicked(LiVESButton * button, livespointer data_to_fre
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_hseparator_new(void) {
   LiVESWidget *hseparator = lives_hseparator_new();
-  lives_widget_set_bg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+  if (prefs->extra_colours && mainw->pretty_colours)
+    lives_widget_set_bg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->nice1);
+  else
+    lives_widget_set_bg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   lives_widget_set_fg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   if (LIVES_SHOULD_EXPAND_HEIGHT)
     lives_widget_set_margin_top(hseparator, widget_opts.packing_height);
@@ -12974,7 +13076,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_uncenter(LiVESWidget * button, 
 }
 
 
-boolean lives_tool_button_set_border_colour(LiVESWidget * button, LiVESWidgetState state, LiVESWidgetColor * colour) {
+boolean lives_tool_button_set_border_color(LiVESWidget * button, LiVESWidgetState state, LiVESWidgetColor * colour) {
   if (LIVES_IS_TOOL_BUTTON(button)) {
     LiVESWidget *widget, *parent;
     widget = lives_tool_button_get_icon_widget(LIVES_TOOL_BUTTON(button));

@@ -2288,7 +2288,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     // setting the channel width. resize_layer() will handle conversion of the macropixel sizes between layer palette
     // and opalette
     if (inwidth != width || inheight != height) {
-      short interp = get_interp_value(pb_quality);
+      short interp = get_interp_value(pb_quality, TRUE);
       if ((mainw->multitrack != NULL && prefs->letterbox_mt) || (prefs->letterbox && !mainw->multitrack)) {
         // if we are letterboxing, as well as letterboxing the final output in the player, we will also letterbox each layer into its channel
         // if we only have 1 layer this is irrelevant since the channel size == layer size, (or in high quality, channel size == player size,

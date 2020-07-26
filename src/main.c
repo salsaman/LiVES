@@ -2599,6 +2599,9 @@ boolean set_palette_colours(boolean force_reload) {
 
 #ifndef VALGRIND_ON
   /// generate some complementary colours
+  // still experimenting...some values may need tweaking
+  // suggested uses for each colour in the process of being defined
+  // TODO - runa bg thread until we create GUI
   if (!(palette->style & STYLE_LIGHT)) {
     lmin = .05; lmax = .4;
   } else {
@@ -2610,6 +2613,7 @@ boolean set_palette_colours(boolean force_reload) {
   prefs->pb_quality = PB_QUALITY_HIGH;
   if (pick_nice_colour(palette->normal_back.red * 255., palette->normal_back.green * 255.,
                        palette->normal_back.blue * 255., &ncr, &ncg, &ncb, 1.5, .25, .75)) {
+    // nice1 - used for outlines
     palette->nice1.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
     palette->nice1.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
     palette->nice1.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
@@ -2621,6 +2625,8 @@ boolean set_palette_colours(boolean force_reload) {
 
     if (pick_nice_colour(palette->nice1.red * 255., palette->nice1.green * 255.,
                          palette->nice1.blue * 255., &ncr, &ncg, &ncb, 1., lmin, lmax)) {
+      // nice2 - alt for menu_and_bars
+      // insensitive colour ?
       palette->nice2.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
       palette->nice2.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
       palette->nice2.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
@@ -2628,12 +2634,13 @@ boolean set_palette_colours(boolean force_reload) {
       mainw->pretty_colours = TRUE;
 
       if (!(palette->style & STYLE_LIGHT)) {
-        lmin = .7; lmax = .9;
+        lmin = .6; lmax = .8;
       } else {
-        lmin = .1; lmax = .3;
+        lmin = .2; lmax = .4;
       }
       pick_nice_colour(palette->normal_fore.red * 255., palette->normal_fore.green * 255.,
                        palette->normal_fore.blue * 255., &ncr, &ncg, &ncb, 1., lmin, lmax);
+      // nice3 - alt for menu_and_bars_fore
       palette->nice3.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
       palette->nice3.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
       palette->nice3.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
@@ -4977,6 +4984,9 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
   rwidth = lives_widget_get_allocation_width(widget);
   rheight = lives_widget_get_allocation_height(widget);
 
+  rwidth = (rwidth >> 1) << 1;
+  rheight = (rheight >> 1) << 1;
+
   if (pixbuf != NULL) {
     owidth = width = lives_pixbuf_get_width(pixbuf);
     oheight = height = lives_pixbuf_get_height(pixbuf);
@@ -4999,17 +5009,16 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
   }
 
   if (pixbuf != NULL) {
-    cx = (rwidth - width) / 2;
-    cy = (rheight - height) / 2;
+    cx = (rwidth - width) >> 1;
+    cy = (rheight - height) >> 1;
 
-    if (mainw->multitrack && !mainw->play_window) {
-      cx += widget_opts.border_width;
-    }
-
-    if (!(widget == mainw->play_image && mainw->multitrack)) {
+    if (mainw->multitrack && widget == mainw->play_image) {
+      if (!mainw->play_window)
+        cx += widget_opts.border_width;
+    } else {
       if (prefs->funky_widgets) {
         lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->frame_surround);
-        lives_painter_rectangle(cr, cx - 1, cy - 1, width + 2, height + 2);
+        lives_painter_rectangle(cr, 0, 0, rwidth, rheight);
         // frame
         lives_painter_stroke(cr);
       }
@@ -5017,7 +5026,6 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
 
     lives_painter_set_source_pixbuf(cr, pixbuf, cx, cy);
     lives_painter_rectangle(cr, cx, cy, width, height);
-
   } else {
     lives_painter_render_background(widget, cr, 0, 0, rwidth, rheight);
   }
@@ -5174,7 +5182,7 @@ check_stcache:
       layer = lives_layer_new_for_frame(mainw->current_file, frame);
       if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, cfile->hsize, cfile->vsize,
                              WEED_PALETTE_RGB24)) {
-        interp = get_interp_value(prefs->pb_quality);
+        interp = get_interp_value(prefs->pb_quality, TRUE);
         if (!resize_layer(layer, cfile->hsize, cfile->vsize, interp, WEED_PALETTE_RGB24, 0) ||
             !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
           if (xmd5sum) lives_free(xmd5sum);
@@ -5249,7 +5257,7 @@ check_stcache:
     if (!layer && !start_pixbuf) {
       layer = lives_layer_new_for_frame(mainw->current_file, frame);
       if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, width, height, WEED_PALETTE_RGB24)) {
-        interp = get_interp_value(prefs->pb_quality);
+        interp = get_interp_value(prefs->pb_quality, TRUE);
         if (!resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0) ||
             !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
           weed_layer_free(layer);
@@ -5455,7 +5463,7 @@ check_encache:
         layer = lives_layer_new_for_frame(mainw->current_file, frame);
         if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, cfile->hsize, cfile->vsize,
                                WEED_PALETTE_RGB24)) {
-          interp = get_interp_value(prefs->pb_quality);
+          interp = get_interp_value(prefs->pb_quality, TRUE);
           if (!resize_layer(layer, cfile->hsize, cfile->vsize, interp, WEED_PALETTE_RGB24, 0) ||
               !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
             if (xmd5sum) lives_free(xmd5sum);
@@ -5526,7 +5534,7 @@ check_encache:
       if (!layer && !end_pixbuf) {
         layer = lives_layer_new_for_frame(mainw->current_file, frame);
         if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, width, height, WEED_PALETTE_RGB24)) {
-          interp = get_interp_value(prefs->pb_quality);
+          interp = get_interp_value(prefs->pb_quality, TRUE);
           if (!resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0) ||
               !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
             weed_layer_free(layer);
@@ -5749,7 +5757,7 @@ void load_preview_image(boolean update_always) {
           tc = ((mainw->preview_frame - 1.)) / cfile->fps * TICKS_PER_SECOND;
           if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, mainw->pwidth, mainw->pheight,
                                  WEED_PALETTE_RGB24)) {
-            LiVESInterpType interp = get_interp_value(prefs->pb_quality);
+            LiVESInterpType interp = get_interp_value(prefs->pb_quality, TRUE);
             if (!resize_layer(layer, mainw->pwidth, mainw->pheight, interp, WEED_PALETTE_RGB24, 0) ||
                 !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
               weed_layer_free(layer);
@@ -6178,7 +6186,7 @@ void load_preview_image(boolean update_always) {
       if (weed_threadsafe && twidth * theight != 0 && (twidth != width || theight != height) &&
           !png_get_interlace_type(png_ptr, info_ptr)) {
         weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 1);
-        reslayer_thread(layer, twidth, theight, get_interp_value(prefs->pb_quality),
+        reslayer_thread(layer, twidth, theight, get_interp_value(prefs->pb_quality, TRUE),
                         tpalette, weed_layer_get_yuv_clamping(layer),
                         gval == PNG_INFO_gAMA ? file_gamma : 1.);
         for (int j = 0; j < height; j++) {
@@ -6932,7 +6940,7 @@ static void *pft_thread(void *in) {
       && LIVES_IS_PLAYING && mainw->multitrack == NULL && mainw->blend_file != mainw->current_file
       && weed_get_int_value(layer, WEED_LEAF_CLIP, NULL) == mainw->blend_file) {
     int tgamma = WEED_GAMMA_UNKNOWN;
-    short interp = get_interp_value(prefs->pb_quality);
+    short interp = get_interp_value(prefs->pb_quality, TRUE);
     pull_frame_at_size(layer, img_ext, tc, mainw->blend_width, mainw->blend_height, mainw->blend_palette);
     if (is_layer_ready(layer)) {
       resize_layer(layer, mainw->blend_width,
@@ -8170,7 +8178,7 @@ void load_frame_image(int frame) {
           if (!weed_palette_is_valid(layer_palette)) goto lfi_done;
 
           if (mainw->vpp->palette != layer_palette) vpp_try_match_palette(mainw->vpp, mainw->frame_layer);
-          interp = get_interp_value(prefs->pb_quality);
+          interp = get_interp_value(prefs->pb_quality, TRUE);
 
           if (mainw->fs && (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)) {
             mainw->vpp->fwidth = mainw->pwidth;
@@ -8416,7 +8424,7 @@ void load_frame_image(int frame) {
       get_player_size(&mainw->pwidth, &mainw->pheight);
     }
 
-    interp = get_interp_value(prefs->pb_quality);
+    interp = get_interp_value(prefs->pb_quality, TRUE);
     pwidth = opwidth;
     pheight = opheight;
 

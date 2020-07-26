@@ -2832,10 +2832,7 @@ void scroll_tracks(lives_mt * mt, int top_track, boolean set_value) {
 
   if (xlist) lives_list_free(xlist);
 
-  lives_paned_set_position(LIVES_PANED(mt->vpaned), 0.);
-
   lives_widget_show_all(mt->timeline_table);
-  lives_widget_queue_draw(mt->vpaned);
 
   if (mt->is_ready) {
     mt->no_expose = FALSE;
@@ -3695,7 +3692,6 @@ static void mt_zoom(lives_mt * mt, double scale) {
 
   set_time_scrollbar(mt);
 
-  lives_widget_queue_draw(mt->vpaned);
   lives_widget_queue_draw(mt->timeline);
 
   redraw_all_event_boxes(mt);
@@ -4441,7 +4437,7 @@ void mt_zoom_out(LiVESMenuItem * menuitem, livespointer user_data) {
 
 void paned_position(LiVESWidgetObject * object, livespointer pspec, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
-  mt->opts.vpaned_pos = lives_paned_get_position(LIVES_PANED(object));
+  //mt->opts.vpaned_pos = lives_paned_get_position(LIVES_PANED(object));
 }
 
 
@@ -4861,7 +4857,7 @@ void mt_init_start_end_spins(lives_mt * mt) {
   lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
   lives_box_pack_start(LIVES_BOX(mt->tlx_vbox), hbox, FALSE, FALSE, 6);
 
-  mt->amixer_button = lives_standard_button_new_full(_("Open Audio _Mixer"), DEF_BUTTON_WIDTH,
+  mt->amixer_button = lives_standard_button_new_full(_("Open Aud1io _Mixer"), DEF_BUTTON_WIDTH,
                       DEF_BUTTON_HEIGHT, LIVES_BOX(hbox), TRUE, NULL);
 
   lives_widget_add_accelerator(mt->amixer_button, LIVES_WIDGET_CLICKED_SIGNAL, mt->accel_group,
@@ -6220,7 +6216,7 @@ void set_mt_colours(lives_mt * mt) {
 #endif
   lives_widget_set_fg_color(mt->grav_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
 
-  lives_tool_button_set_border_colour(mt->grav_menuitem, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+  lives_tool_button_set_border_color(mt->grav_menuitem, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   set_child_alt_colour(mt->grav_menuitem, TRUE);
 
   lives_widget_set_bg_color(mt->mm_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
@@ -6228,7 +6224,7 @@ void set_mt_colours(lives_mt * mt) {
   lives_widget_set_bg_color(mt->mm_submenu, LIVES_WIDGET_STATE_BACKDROP, &palette->menu_and_bars);
 #endif
   lives_widget_set_fg_color(mt->mm_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  lives_tool_button_set_border_colour(mt->mm_menuitem, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+  lives_tool_button_set_border_color(mt->mm_menuitem, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   set_child_alt_colour(mt->mm_menuitem, TRUE);
 
   lives_widget_set_bg_color(mt->ins_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
@@ -6236,7 +6232,7 @@ void set_mt_colours(lives_mt * mt) {
   lives_widget_set_bg_color(mt->ins_submenu, LIVES_WIDGET_STATE_BACKDROP, &palette->menu_and_bars);
 #endif
   lives_widget_set_fg_color(mt->ins_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
-  lives_tool_button_set_border_colour(mt->ins_menuitem, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+  lives_tool_button_set_border_color(mt->ins_menuitem, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   set_child_alt_colour(mt->ins_menuitem, TRUE);
 
   lives_widget_set_fg_color(mt->l_sel_arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -8935,15 +8931,14 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt_init_start_end_spins(mt);
 
-  mt->vpaned = lives_vpaned_new();
-  lives_widget_set_sensitive(mt->vpaned, FALSE);
+  mt->vpaned = lives_vbox_new(FALSE, 0);
 
-  lives_paned_pack(2, LIVES_PANED(mt->top_vpaned), mt->vpaned, TRUE, TRUE);
+  lives_paned_pack(2, LIVES_PANED(mt->top_vpaned), mt->vpaned, TRUE, FALSE);
   lives_widget_set_hexpand(mt->vpaned, FALSE);
 
   lives_container_set_border_width(LIVES_CONTAINER(mt->tlx_vbox), 0);
   lives_widget_set_valign(mt->tlx_vbox, LIVES_ALIGN_START);
-  lives_paned_pack(1, LIVES_PANED(mt->vpaned), mt->tlx_vbox, TRUE, FALSE);
+  lives_box_pack_start(mt->vpaned, mt->tlx_vbox, FALSE, TRUE, 0);
 
   mt->timeline_table_header = lives_table_new(2, TIMELINE_TABLE_COLUMNS, TRUE);
   lives_table_set_row_spacings(LIVES_TABLE(mt->timeline_table_header), 0);
@@ -9102,7 +9097,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     mt->msg_adj = NULL;
   }
 
-  lives_paned_pack(2, LIVES_PANED(mt->vpaned), mt->message_box, TRUE, FALSE);
+  lives_box_pack_start(mt->vpaned, mt->message_box, TRUE, TRUE, 0);
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mt->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(mt_prevclip), mt, NULL));
@@ -11475,7 +11470,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
   else
     lives_paned_set_position(LIVES_PANED(multi->hpaned), (float)lives_widget_get_allocation_width(multi->hpaned) * .8); // 0 == top
 
-  lives_paned_set_position(LIVES_PANED(multi->vpaned), (float)lives_widget_get_allocation_height(multi->vpaned) * .0); // 0 == top
+  //lives_paned_set_position(LIVES_PANED(multi->vpaned), (float)lives_widget_get_allocation_height(multi->vpaned) * .0); // 0 == top
 
   multi->no_expose = multi->no_expose_frame = FALSE;
 
@@ -11490,9 +11485,9 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
                        LIVES_GUI_CALLBACK(hpaned_position),
                        (livespointer)multi);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(multi->vpaned), LIVES_WIDGET_NOTIFY_SIGNAL "position",
-                       LIVES_GUI_CALLBACK(paned_position),
-                       (livespointer)multi);
+  /* lives_signal_connect(LIVES_GUI_OBJECT(multi->vpaned), LIVES_WIDGET_NOTIFY_SIGNAL "position", */
+  /*                      LIVES_GUI_CALLBACK(paned_position), */
+  /*                      (livespointer)multi); */
 
   if (prefs->show_msg_area) {
     if (mainw->idlemax == 0)
@@ -11980,10 +11975,14 @@ static void update_in_image(lives_mt * mt) {
     frame_start = mainw->files[filenum]->start;
   }
 
-  calc_maxspect(lives_widget_get_allocation_width(mt->in_frame), lives_widget_get_allocation_height(mt->in_frame), &width,
+  calc_maxspect((lives_widget_get_allocation_width(mt->in_frame) >> 1) << 1,
+                (lives_widget_get_allocation_height(mt->in_frame) >> 1) << 1, &width,
                 &height);
 
-  thumb = make_thumb(mt, filenum, width, height, frame_start, LIVES_INTERP_NORMAL, FALSE);
+  thumb = make_thumb(mt, filenum,
+                     width - ((widget_opts.border_width + 2) >> 1),
+                     height - ((widget_opts.border_width + 2) >> 1),
+                     frame_start, get_interp_value(prefs->pb_quality, FALSE), FALSE);
   set_drawing_area_from_pixbuf(mt->in_image, thumb, mt->insurface);
   if (thumb != NULL) lives_widget_object_unref(thumb);
 }
@@ -12010,10 +12009,14 @@ static void update_out_image(lives_mt * mt, weed_timecode_t end_tc) {
     frame_end = mainw->files[filenum]->end;
   }
 
-  calc_maxspect(lives_widget_get_allocation_width(mt->out_frame), lives_widget_get_allocation_height(mt->out_frame), &width,
+  calc_maxspect((lives_widget_get_allocation_width(mt->out_frame) >> 1) << 1,
+                (lives_widget_get_allocation_height(mt->out_frame) >> 1) << 1, &width,
                 &height);
 
-  thumb = make_thumb(mt, filenum, width, height, frame_end, LIVES_INTERP_NORMAL, FALSE);
+  thumb = make_thumb(mt, filenum,
+                     width - ((widget_opts.border_width + 2) >> 1),
+                     height - ((widget_opts.border_width + 2) >> 1),
+                     frame_end, get_interp_value(prefs->pb_quality, FALSE), FALSE);
   set_drawing_area_from_pixbuf(mt->out_image, thumb, mt->outsurface);
   if (thumb != NULL) lives_widget_object_unref(thumb);
 }

@@ -38,7 +38,6 @@ static void select_pref_list_row(uint32_t selected_idx, _prefsw *prefsw);
 
 
 /** @brief callback to set to make a togglebutton or check_menu_item directly control a boolean pref
-
   widget is either a togge_button (sets temporary) or a check_menuitem (sets permanent)
   pref must have a corresponding entry in pref_factory_bool() */
 void toggle_sets_pref(LiVESWidget *widget, livespointer prefidx) {
@@ -3544,7 +3543,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                                  mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED])),
       prefs->pbq_adaptive, LIVES_BOX(hbox),
       (tmp2 = (_(
-                 "Allows the quality to be adjusted automatically, prioritising smooth playback"))));
+                 "#If enabled, quality will be automatically adjusted during playback\n"
+                 "in order to maintain a smooth frame rate"))));
   lives_free(tmp);
   lives_free(tmp2);
 
@@ -3556,10 +3556,10 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   // TRANSLATORS: video quality, max len 50
   prefsw->pbq_list = lives_list_append(prefsw->pbq_list, (_("High - can improve quality on very fast machines")));
 
-  widget_opts.expand = LIVES_EXPAND_EXTRA;
+  //widget_opts.expand = LIVES_EXPAND_EXTRA;
   prefsw->pbq_combo = lives_standard_combo_new((tmp = (_("Preview _quality"))), prefsw->pbq_list, LIVES_BOX(hbox),
                       (tmp2 = (_("The preview quality for video playback - affects resizing"))));
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  //widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -3755,7 +3755,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   add_fill_to_box(LIVES_BOX(hbox));
 
   prefsw->audio_command_entry = lives_standard_entry_new(_("Pulseaudio restart command"),
-                                prefs->pa_start_opts, -1, PATH_MAX * 2,
+                                prefs->pa_start_opts, SHORT_ENTRY_WIDTH, PATH_MAX * 2,
                                 LIVES_BOX(hbox), NULL);
   ACTIVE(audio_command_entry, CHANGED);
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_parestart), prefsw->audio_command_entry, FALSE);
@@ -4231,10 +4231,14 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_entry_set_editable(LIVES_ENTRY(prefsw->proj_dir_entry), FALSE);
 
   hbox = lives_hbox_new(FALSE, 0);
-  prefsw->workdir_entry = lives_standard_direntry_new("",
-                          (tmp = lives_filename_to_utf8(strlen(future_prefs->workdir) > 0 ? future_prefs->workdir : prefs->workdir, -1, NULL, NULL,
-                                 NULL)),
-                          LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), (tmp2 = (_("LiVES working directory."))));
+
+  widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
+  prefsw->workdir_entry = lives_standard_direntry_new(NULL,
+                          (tmp = lives_filename_to_utf8(strlen(future_prefs->workdir) > 0
+                                 ? future_prefs->workdir : prefs->workdir, -1,
+                                 NULL, NULL, NULL)),
+                          -1, PATH_MAX, LIVES_BOX(hbox), (tmp2 = lives_strdup(_("LiVES working directory."))));
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), hbox, 1, 2, 3, 4,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
@@ -4244,10 +4248,6 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_free(tmp2);
 
   lives_entry_set_editable(LIVES_ENTRY(prefsw->workdir_entry), FALSE);
-
-  dirbutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dirbutton), "filesel_type",
-                               LIVES_INT_TO_POINTER(LIVES_DIR_SELECTION_WORKDIR));
 
   dirbutton = lives_standard_file_button_new(TRUE, NULL);
 

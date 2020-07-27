@@ -3308,15 +3308,19 @@ void play_file(void) {
     }
   }
 
-  if (prefs->show_gui && ((mainw->multitrack == NULL && mainw->double_size) ||
+  if (!mainw->multitrack) {
+    lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
+  }
+
+  if (prefs->show_gui && ((mainw->multitrack  && mainw->double_size) ||
                           (lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET) > GUI_SCREEN_HEIGHT ||
                            lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET) > GUI_SCREEN_WIDTH))) {
     /// the screen grew too much...remaximise it
-    lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
-    lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
-    /// must not call this again after calling sensitize(), else we can pick up keypresses
-    lives_widget_context_update();
-    lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
+    /* lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET); */
+    /* lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET); */
+    /* /// must not call this again after calling sensitize(), else we can pick up keypresses */
+    /* lives_widget_context_update(); */
+    /* lives_widget_show(LIVES_MAIN_WINDOW_WIDGET); */
     if (prefs->gui_monitor == 0) lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, 0);
     if (prefs->open_maximised)
       lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
@@ -3364,9 +3368,6 @@ void play_file(void) {
     showclipimgs();
   }
 
-  if (mainw->multitrack == NULL) {
-    lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
-  }
   if (prefs->show_msg_area && mainw->multitrack == NULL) {
     if (mainw->idlemax == 0) {
       lives_idle_add_simple(resize_message_area, NULL);

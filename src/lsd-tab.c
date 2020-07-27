@@ -31,11 +31,11 @@ const lives_struct_def_t *get_lsd(lives_struct_type st_type) {
     if (lsd) {
       lives_special_field_t **specf = lsd->special_fields;
       lives_clip_data_t *cdata = (lives_clip_data_t *)lives_calloc(1, sizeof(lives_clip_data_t));
-      specf[0] = make_special_field(LIVES_FIELD_CHARPTR, cdata, &cdata->URI,
-                                    "URI", 0, NULL, NULL, NULL);
-      specf[1] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY |
+      specf[0] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY |
                                     LIVES_FIELD_FLAG_FREE_ON_DELETE, cdata, &cdata->priv,
                                     "priv", 0, NULL, NULL, NULL);
+      specf[1] = make_special_field(LIVES_FIELD_CHARPTR, cdata, &cdata->URI,
+                                    "URI", 0, NULL, NULL, NULL);
       specf[2] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->title,
                                     "title", 1024, NULL, NULL, NULL);
       specf[3] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->author,
@@ -121,7 +121,7 @@ LIVES_GLOBAL_INLINE boolean lives_structs_same_type(lives_struct_def_t *lsd,
 }
 
 
-#define CHECK_VERBOSE 1
+#define CHECK_VERBOSE 0
 #if CHECK_VERBOSE
 #define errprint(...) fprintf(stderr, __VA_ARGS__)
 #else
@@ -233,11 +233,11 @@ char *weed_plant_to_header(weed_plant_t *plant, const char *tname) {
     weed_size_t ne = weed_leaf_num_elements(plant, leaves[i]);
     char *tp;
     switch (st) {
-    case WEED_SEED_INT: tp = "int"; break;
-    case WEED_SEED_BOOLEAN: tp = "boolean"; break;
-    case WEED_SEED_DOUBLE: tp = "double"; break;
+    case WEED_SEED_INT: tp = "int "; break;
+    case WEED_SEED_BOOLEAN: tp = "boolean "; break;
+    case WEED_SEED_DOUBLE: tp = "double "; break;
     case WEED_SEED_STRING: tp = "char *"; break;
-    case WEED_SEED_INT64: tp = "int64_t"; break;
+    case WEED_SEED_INT64: tp = "int64_t "; break;
     case WEED_SEED_FUNCPTR: tp = "lives_func_t *"; break;
     case WEED_SEED_VOIDPTR: tp = "void *"; break;
     case WEED_SEED_PLANTPTR: tp = "weed_plant_t *"; break;
@@ -245,7 +245,7 @@ char *weed_plant_to_header(weed_plant_t *plant, const char *tname) {
     }
 
     if (ne > 1) ar = lives_strdup_printf("[%d]", ne);
-    line = lives_strdup_printf("\n\t%s %s%s;", tp, leaves[i], ar ? ar : NULL);
+    line = lives_strdup_printf("\n  %s%s%s;", tp, leaves[i], ar ? ar : "");
     hdr = lives_concat(hdr, line);
     if (ar) {
       lives_free(ar);
@@ -255,7 +255,7 @@ char *weed_plant_to_header(weed_plant_t *plant, const char *tname) {
   }
   lives_free(leaves);
 
-  if (tname)
+  if (!tname)
     line = lives_strdup("\n}");
   else
     line = lives_strdup_printf("\n} %s;", tname);

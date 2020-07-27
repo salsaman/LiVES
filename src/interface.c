@@ -78,6 +78,7 @@ void show_playbar_labels(int clipno) {
   lives_clip_t *sfile = mainw->files[clipno];
   char *tmp, *tmpch;
   char *str_video = (_("Video")), *str_opening;
+  boolean hhr, hvb, hla, hra;
 
   lives_label_set_text(LIVES_LABEL(mainw->vidbar), str_video);
   tmp = get_achannel_name(2, 0);
@@ -88,20 +89,16 @@ void show_playbar_labels(int clipno) {
   lives_free(tmp);
 
   if (palette->style & STYLE_1) {
-    lives_widget_hide(mainw->hruler);
-    lives_widget_hide(mainw->vidbar);
-    lives_widget_hide(mainw->laudbar);
-    lives_widget_hide(mainw->raudbar);
+    hhr = hvb = hra = TRUE;
+    hla = FALSE;
   } else {
-    lives_widget_show(mainw->hruler);
-    lives_widget_show(mainw->vidbar);
-    lives_widget_show(mainw->laudbar);
-    lives_widget_show(mainw->raudbar);
+    hhr = hvb = hla = hra = FALSE;
   }
 
   if (!IS_VALID_CLIP(clipno)) {
     lives_free(str_video);
-    return;
+    hhr = hvb = hla = hra = TRUE;
+    goto showhide;
   }
 
   str_opening = (_("[opening...]"));
@@ -126,8 +123,7 @@ void show_playbar_labels(int clipno) {
     lives_label_set_text(LIVES_LABEL(mainw->vidbar), tmp);
     lives_free(tmp);
 
-    lives_widget_show(mainw->vidbar);
-    lives_widget_show(mainw->hruler);
+    hhr = hvb = FALSE;
   }
 
   lives_free(str_video);
@@ -135,7 +131,7 @@ void show_playbar_labels(int clipno) {
   if (!CLIP_HAS_AUDIO(clipno)) {
     tmp = (_("(No audio)"));
   } else {
-    lives_widget_show(mainw->hruler);
+    hhr = FALSE;
 
     tmpch = get_achannel_name(sfile->achans, 0);
     if (sfile->opening_audio) {
@@ -147,7 +143,6 @@ void show_playbar_labels(int clipno) {
   }
 
   lives_label_set_text(LIVES_LABEL(mainw->laudbar), tmp);
-  lives_widget_show(mainw->laudbar);
   lives_free(tmp);
 
   if (sfile->achans > 1) {
@@ -159,11 +154,21 @@ void show_playbar_labels(int clipno) {
     }
     lives_free(tmpch);
     lives_label_set_text(LIVES_LABEL(mainw->raudbar), tmp);
-    lives_widget_show(mainw->raudbar);
     lives_free(tmp);
+    hra = FALSE;
   }
 
   lives_free(str_opening);
+
+showhide:
+  if (!hhr && !lives_widget_is_visible(mainw->hruler)) lives_widget_show(mainw->hruler);
+  else if (hhr && lives_widget_is_visible(mainw->hruler)) lives_widget_hide(mainw->hruler);
+  if (!hvb && !lives_widget_is_visible(mainw->vidbar)) lives_widget_show(mainw->vidbar);
+  else if (hvb && lives_widget_is_visible(mainw->vidbar)) lives_widget_hide(mainw->vidbar);
+  if (!hla && !lives_widget_is_visible(mainw->laudbar)) lives_widget_show(mainw->laudbar);
+  else if (hla && lives_widget_is_visible(mainw->laudbar)) lives_widget_hide(mainw->laudbar);
+  if (!hra && !lives_widget_is_visible(mainw->raudbar)) lives_widget_show(mainw->raudbar);
+  else if (hra && lives_widget_is_visible(mainw->raudbar)) lives_widget_hide(mainw->raudbar);
 }
 
 
@@ -433,7 +438,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
     if (cfile->audio_waveform == NULL) {
       cfile->audio_waveform = (float **)lives_calloc(cfile->achans, sizeof(float *));
-      cfile->aw_sizes = (size_t *)lives_calloc(cfile->achans, sizint);
+      cfile->aw_sizes = (size_t *)lives_calloc(cfile->achans, sizeof(size_t));
     }
 
     start = offset_end;
@@ -5561,7 +5566,7 @@ void run_diskspace_dialog(void) {
   boolean wrtable = FALSE;
   boolean has_dsused = FALSE;
   char *title, *tmp;
-
+  return;
   if (prefsw) lives_widget_hide(prefsw->prefs_dialog);
 
   free_ds = (int64_t)get_ds_free(prefs->workdir);
@@ -5859,7 +5864,7 @@ boolean msg_area_config(LiVESWidget * widget) {
   int scr_height = mainw->mgeom[0].phys_height; //GUI_SCREEN_HEIGHT;
   int bx, by, w = -1, h = -1, posx, posy;
   int overflowx = 0, overflowy = 0, xoverflowx, xoverflowy;
-  int ww, hh;
+  int ww, hh, vvmin, hhmin;
   int paisize = 0, opaisize;
 
   if (!mainw->is_ready) return FALSE;
@@ -5868,6 +5873,8 @@ boolean msg_area_config(LiVESWidget * widget) {
 
   if (mainw->multitrack && lives_widget_get_allocation_height(mainw->multitrack->top_vbox) < 32)
     return FALSE;
+
+  lives_widget_set_vexpand(widget, TRUE);
 
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
 
@@ -5973,9 +5980,11 @@ boolean msg_area_config(LiVESWidget * widget) {
 #ifdef DEBUG_OVERFLOW
   g_print("WIDG SIZE %d X %d, %d,%d and %d %d %d\n", width, height, hmin, vmin, bx, by, mustret);
 #endif
-  int vvmin = by - vmin;
-
+  vvmin = by - vmin;
   if (vvmin < by && by - vmin < vmin) vmin = by - vmin;
+
+  hhmin = bx - hmin;
+  if (hhmin < bx && bx - hmin < hmin) hmin = bx - hmin;
 
   if (mustret) {
     lives_widget_queue_draw(mainw->msg_area);

@@ -194,7 +194,6 @@ static int rw_upgrade(weed_leaf_t *leaf, int block) {return 0;}
 static int rwt_upgrade(weed_leaf_t *leaf, int block) {return 0;}
 #endif
 
-static int stdstringfuncs = 0;
 static int allbugfixes = 0;
 static int debugmode = 0;
 
@@ -255,7 +254,7 @@ static uint32_t weed_hash(const char *) GNU_PURE;
 #endif
 
 #define weed_strdup(oldstring, size) (!oldstring ? (char *)NULL : \
-				      size < padbytes ? memcpy(leaf->padding, key, size + 1) : \
+				      size < _WEED_PADBYTES_ ? memcpy(leaf->padding, key, size + 1) : \
 				      (char *)(weed_malloc_and_copy(weed_strlen(oldstring) + 1, \
 								    oldstring)))
 
@@ -272,9 +271,12 @@ EXPORTED weed_error_t weed_init(int32_t abi, uint64_t init_flags) {
   if (abi < 0 || abi > WEED_ABI_VERSION) return WEED_ERROR_BADVERSION;
   _abi_ = abi;
 
-  if (init_flags & WEED_INIT_STD_STRINGFUNCS) stdstringfuncs = 1;
   if (init_flags & WEED_INIT_ALLBUGFIXES) allbugfixes = 1;
   if (init_flags & WEED_INIT_DEBUGMODE) debugmode = 1;
+
+  if (debugmode) {
+    fprintf(stderr, "Weed padding size is %d\n", _WEED_PADBYTES_);
+  }
 
   weed_leaf_get = _weed_leaf_get;
   weed_leaf_delete = _weed_leaf_delete;
@@ -294,35 +296,8 @@ EXPORTED weed_error_t weed_init(int32_t abi, uint64_t init_flags) {
   return WEED_SUCCESS;
 }
 
-#define hasNulByte(x) (((x) - 0x0101010101010101) & ~(x) & 0x8080808080808080)
-static inline weed_size_t weed_strlen(const char *s) {
-  if (!s) return 0;
-  if (!stdstringfuncs) {
-    uint64_t *pi = (uint64_t *)s;
-    if ((void *)pi == (void *)s) {
-      while (!(hasNulByte(*pi))) pi++;
-      for (char *p = (char *)pi;; p++) if (!(*p)) return p - s;
-    }}
-  return strlen(s);
-}
-
-static inline int weed_strcmp(const char *st1, const char *st2) {
-  if (!st1 || !st2) return (st1 != st2);
-  if (stdstringfuncs) return strcmp(st1, st2);
-  else {
-    uint64_t d1, d2, *ip1 = (uint64_t *)st1, *ip2 = (uint64_t *)st2;
-    while (1) {
-      if ((void *)ip1 == (void *)st1 && (void *)ip2 == (void *)st2) {
-        while (1) {
-          if ((d1 = *(ip1++)) == (d2 = *(ip2++))) {if (hasNulByte(d1)) return 0;}
-          else {if (!hasNulByte(d1 | d2)) return 1; break;}}
-        st1 = (const char *)(--ip1); st2 = (const char *)(--ip2);
-      }
-      if (*st1 != *(st2++)) return 1;
-      if (!(*(st1++))) return 0;
-    }}
-  return 0;
-}
+#define weed_strlen(s) ((s) ? strlen((s)) : 0)
+#define weed_strcmp(s1, s2) ((!(s1) || !(s2)) ? (s1 != s2) : strcmp(s1, s2))
 
 #define HASHROOT 5381
 static inline uint32_t weed_hash(const char *string) {

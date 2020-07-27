@@ -3184,6 +3184,8 @@ boolean resize_message_area(livespointer data) {
   msg_area_config(mainw->msg_area);
   //#endif
   if (isfirst) {
+    lives_widget_set_vexpand(mainw->msg_area, TRUE);
+    lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     if (!CURRENT_CLIP_IS_VALID) {
       d_print("");
     }
@@ -3740,11 +3742,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // start up the Weed system
   weed_abi_version = weed_get_abi_version();
   if (weed_abi_version > WEED_ABI_VERSION) weed_abi_version = WEED_ABI_VERSION;
-#ifdef STD_STRINGFUNCS
-  werr = weed_init(weed_abi_version, WEED_INIT_STD_STRINGFUNCS | WEED_INIT_DEBUGMODE);
-#else
+  //werr = weed_init(weed_abi_version, WEED_INIT_DEBUGMODE);
   werr = weed_init(weed_abi_version, 0);
-#endif
   if (werr != WEED_SUCCESS) {
     LIVES_FATAL("Failed to init Weed");
     lives_notify(LIVES_OSC_NOTIFY_QUIT, msg);
@@ -4757,7 +4756,7 @@ void desensitize(void) {
   // desensitize the main window when we are playing/processing a clip
   int i;
 
-  if (mainw->multitrack != NULL) {
+  if (mainw->multitrack) {
     mt_desensitise(mainw->multitrack);
     return;
   }
@@ -4816,7 +4815,7 @@ void desensitize(void) {
     }
   }
 
-  if (mainw->resize_menuitem != NULL) {
+  if (mainw->resize_menuitem) {
     lives_widget_set_sensitive(mainw->resize_menuitem, FALSE);
   }
 
@@ -4873,6 +4872,9 @@ void desensitize(void) {
   lives_widget_set_sensitive(mainw->recaudio_sel, FALSE);
   lives_widget_set_sensitive(mainw->mt_menu, FALSE);
 
+  lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
+  lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
+
   if (mainw->current_file >= 0 && (!LIVES_IS_PLAYING || mainw->foreign)) {
     //  if (!cfile->opening||mainw->dvgrab_preview||mainw->preview||cfile->opening_only_audio) {
     // disable the 'clips' menu entries
@@ -4896,9 +4898,6 @@ void procw_desensitize(void) {
 
   mainw->sense_state &= LIVES_SENSE_STATE_INTERACTIVE;
   mainw->sense_state |= LIVES_SENSE_STATE_PROC_INSENSITIZED | LIVES_SENSE_STATE_INSENSITIZED;
-
-  lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
-  lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
 
   if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID
       && (cfile->menuentry != NULL || cfile->opening) && !mainw->preview) {
@@ -6817,7 +6816,6 @@ fndone:
         // never free it !
         weed_plant_t *inst = (weed_plant_t *)sfile->ext_src;
         if (inst) {
-          //g_print("output:\n%s\n", weed_plant_to_header(inst, "weed_instace_t"));
           int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
           while (filter_mutex_trylock(key)) {
             sched_yield();

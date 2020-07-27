@@ -273,11 +273,11 @@ static void make_acid(void) {
   else {
     lives_special_field_t **specf = cdata_lsd->special_fields;
     lives_clip_data_t *cdata = (lives_clip_data_t *)calloc(1, sizeof(lives_clip_data_t));
-    specf[0] = make_special_field(LIVES_FIELD_CHARPTR, cdata, &cdata->URI,
-                                  "URI", 0, NULL, NULL, NULL);
-    specf[1] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY
+    specf[0] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY
                                   | LIVES_FIELD_FLAG_FREE_ON_DELETE, cdata, &cdata->priv,
                                   "priv", 0, NULL, NULL, NULL);
+    specf[1] = make_special_field(LIVES_FIELD_CHARPTR, cdata, &cdata->URI,
+                                  "URI", 0, NULL, NULL, NULL);
     specf[2] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->title,
                                   "title", 1024, NULL, NULL, NULL);
     specf[3] = make_special_field(LIVES_FIELD_FLAG_ZERO_ON_COPY, cdata, &cdata->author,

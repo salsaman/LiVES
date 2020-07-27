@@ -2849,13 +2849,16 @@ with keys prefixed "plugin_".
 
 '''Optional leaves''': [[BR]]
 
- * "layout_scheme" : WEED_SEED_STRING : string defining the layout scheme selected for creating interface windows
-                                        if the value is not equal to one of the elements of "layout_schemes"
-					set by the host in host_info, then the host is free to ignore this.
+ * "layout_scheme" : WEED_SEED_STRING : string defining the layout scheme(s) selected for creating interface windows
+					The leaf can take multiple values if the filter provides multiple layout schemes.
 
-					Depending on the layout_scheme selected, there may be additional optional
-					leaves describing the layout.
+					The host may optionally provide a list of schemes which it supports in the
+					"layout_schemes" leaf of host_info.
 
+					Depending on the scheme(s) selected, there may
+					be further leaves, for example xml, css, and so on.
+					These additional leaves should have names starting with "<layout_scheme>_"
+					where <layout_scheme> is the name of the layout.
 
  * "icon"         : WEED_SEED_STRING : name of the associated icon (if
                                        any) in the icons subdirectory [see below - Plugin locations/format]

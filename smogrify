@@ -9735,6 +9735,7 @@ if (defined($ARGV[0])) {
 					"need to check with the user first\n";
 				    &smog_system("/bin/touch $recdir/$file");
 				    $nitems++;
+				    next;
 				}
 				else {
 				    if (! -f "$workdir/$file/order") {
@@ -9963,7 +9964,7 @@ if (defined($ARGV[0])) {
 	#return 1 if "the parameter" is the name of a directory containing at least one non-dotted file
 	my $dirname = shift;
 	opendir (my $dh, $dirname) or return 0;
-	return scalar(grep { $_ ne "." && $_ ne ".." } readdir($dh)) == 0;
+	return scalar(grep { $_ ne "." && $_ ne ".." } readdir($dh)) != 0;
     }
 
     1; # for require (really !)

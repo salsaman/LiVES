@@ -2381,7 +2381,7 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
 LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiVESList **rem_list,
 				 LiVESList **left_list) {
   LiVESWidget *dialog;
-  LiVESWidget *layout_rec, *layout_rem, *layout_leave;
+  LiVESWidget *layout, *layout_rec, *layout_rem, *layout_leave;
   LiVESWidget *top_vbox;
   LiVESWidget *scrolledwindow;
   LiVESWidget *cancelb;
@@ -2396,6 +2396,8 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
   int pass = 0;
   int woat = widget_opts.apply_theme;
   int wopw = widget_opts.packing_width;
+
+  char *txt;
 
   // get size, type (dir or file), nitems, extra_dets
   // cr dat, mod date
@@ -2429,19 +2431,22 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
 
   top_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
-  vbox = lives_vbox_new(FALSE, 0);
+  layout = lives_layout_new(LIVES_BOX(top_vbox));
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+  txt = lives_strdup_printf(_("Analysis of directory: %s"), prefs->workdir);
+  lives_layout_add_label(LIVES_LAYOUT(layout), txt, FALSE);
+  lives_free(txt);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
 
+  vbox = lives_vbox_new(FALSE, 0);
   widget_opts.apply_theme = 0;
   scrolledwindow = lives_standard_scrolled_window_new(winsize_h, winsize_v, vbox);
   widget_opts.apply_theme = woat;
-
   lives_box_pack_start(LIVES_BOX(top_vbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_height);
 
   /// items for recovery /////////////////////////
 
   layout_rec = lives_layout_new(LIVES_BOX(vbox));
-  lives_layout_add_fill(LIVES_LAYOUT(layout_rec), FALSE);
-  lives_layout_add_fill(LIVES_LAYOUT(layout_rec), FALSE);
   widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   lives_layout_add_label(LIVES_LAYOUT(layout_rec), _("Possibly Recoverable Clips"), FALSE);

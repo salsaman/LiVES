@@ -6109,7 +6109,6 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   if (1) {
     lives_proc_thread_t tinfo;
     char *full_trashdir = lives_build_path(prefs->workdir, trashdir, NULL);
-    char *tmp;
 
     if (!check_dir_access(full_trashdir, TRUE)) {
       lives_free(trashdir);
@@ -6167,13 +6166,13 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       goto cleanup;
     } else {
       LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
-      LiVESWidget *button, *rb = NULL, *accb;
-      LiVESWidget *layout, *hbox;
+      LiVESWidget *button, *accb;
+      LiVESWidget *hbox, *label;
       LiVESWidget *top_vbox;
       LiVESList *list;
       lives_file_dets_t *filedets;
       lives_proc_thread_t recinfo, reminfo, leaveinfo;
-      char *tmp, *tmp2, *remtrashdir;
+      char *remtrashdir;
       char *op, *from, *to;
       int nitems = atoi(mainw->msg), orig;
 
@@ -6194,6 +6193,14 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       lives_window_add_accel_group(LIVES_WINDOW(textwindow->dialog), accel_group);
 
       top_vbox = lives_dialog_get_content_area(LIVES_DIALOG(textwindow->dialog));
+
+      hbox = lives_hbox_new(FALSE, 0);
+      lives_box_pack_start(LIVES_BOX(top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+      msg = lives_strdup_printf(_("\nAnalysis of directory %s complete.\n\n"), prefs->workdir);
+      label = lives_standard_label_new(msg);
+      lives_free(msg);
+      lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, TRUE, 0);
+      lives_widget_set_halign(label, LIVES_ALIGN_CENTER);
 
       lives_widget_object_ref(textwindow->vbox);
       lives_widget_unparent(textwindow->vbox);

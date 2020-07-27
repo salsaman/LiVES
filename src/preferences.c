@@ -2724,7 +2724,6 @@ void on_prefDomainChanged(LiVESTreeSelection *widget, livespointer xprefsw) {
   for (i = 0; i < 2; i++) {
     // for some reason gtk+ needs us to do this twice..
     if (lives_tree_selection_get_selected(widget, &model, &iter)) {
-      lives_tree_model_get(model, &iter, LIST_NUM, &prefs_current_page, LIST_ITEM, &name, -1);
 
       // Hide currently shown widget
       if (prefsw->right_shown) {
@@ -2811,9 +2810,11 @@ void on_prefDomainChanged(LiVESTreeSelection *widget, livespointer xprefsw) {
         }
         prefs_current_page = LIST_ENTRY_GUI;
       }
+      lives_tree_model_get(model, &iter, LIST_NUM, &prefs_current_page, LIST_ITEM, &name, -1);
+      lives_label_set_text(LIVES_LABEL(prefsw->tlabel), name);
     }
   }
-  lives_label_set_text(LIVES_LABEL(prefsw->tlabel), name);
+
   lives_widget_queue_draw(prefsw->prefs_dialog);
 }
 
@@ -4190,7 +4191,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   // workdir warning label
 
   layout = lives_layout_new(NULL);
-  lives_layout_add_label(LIVES_LAYOUT(layout), tmp, FALSE);
+
+  lives_layout_add_label(LIVES_LAYOUT(layout), NULL, FALSE);
+
   prefsw->workdir_label = widget_opts.last_label;
   set_workdir_label_text(LIVES_LABEL(prefsw->workdir_label), prefs->workdir);
 
@@ -4243,7 +4246,6 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
 
-  lives_free(tmp);
   lives_free(tmp2);
 
   lives_entry_set_editable(LIVES_ENTRY(prefsw->workdir_entry), FALSE);

@@ -907,7 +907,6 @@ typedef struct {
 
 typedef struct {
   // the following can be assumed TRUE / PRESENT, they are checked on startup
-  lives_checkstatus_t has_smogrify;
   boolean smog_version_correct;
   boolean can_read_from_config;
 
@@ -916,6 +915,8 @@ typedef struct {
 
   boolean can_write_to_config_backup;
   boolean can_write_to_workdir;
+
+  lives_checkstatus_t has_smogrify;
 
   // the following may need checking before use
   lives_checkstatus_t has_perl;

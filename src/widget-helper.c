@@ -10246,15 +10246,15 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList *
 #if GTK_CHECK_VERSION(3, 0, 0)
     lives_widget_apply_theme(radiobutton, LIVES_WIDGET_STATE_NORMAL);
 #if GTK_CHECK_VERSION(3, 16, 0)
-    colref = gdk_rgba_to_string(&palette->nice2);
-    set_css_value_direct(radiobutton, LIVES_WIDGET_STATE_NORMAL, "radio", "color", colref);
-    tmp = lives_strdup_printf("image(%s)", colref);
-    set_css_value_direct(radiobutton, LIVES_WIDGET_STATE_NORMAL, "radio",
-                         "background-image", tmp);
-    lives_free(colref);
 
     if (prefs->extra_colours && mainw->pretty_colours) {
-      //colref = gdk_rgba_to_string(&palette->nice3);
+      colref = gdk_rgba_to_string(&palette->nice2);
+      set_css_value_direct(radiobutton, LIVES_WIDGET_STATE_NORMAL, "radio", "color", colref);
+      tmp = lives_strdup_printf("image(%s)", colref);
+      set_css_value_direct(radiobutton, LIVES_WIDGET_STATE_NORMAL, "radio",
+                           "background-image", tmp);
+      lives_free(colref);
+
       colref = gdk_rgba_to_string(&palette->normal_fore);
       set_css_value_direct(radiobutton, LIVES_WIDGET_STATE_CHECKED, "radio", "color", colref);
 

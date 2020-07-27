@@ -902,12 +902,12 @@ char *file_to_file_details(const char *filename, lives_file_dets_t *fdets,
           if (read_headers(clipno, NULL)) {
             lives_clip_t *sfile = mainw->files[clipno];
             char *name = lives_strdup(sfile->name);
-            extra_details = lives_strdup_printf("%s%s%s", extra_details, *extra_details ? ", " : "",
-                                                (tmp = lives_strdup_printf
-                                                    (_("Name: %s, frames: %d, size: %d X %d, "
-                                                        "fps: %.3f"),
-                                                        name, sfile->frames, sfile->hsize,
-                                                        sfile->vsize, sfile->fps)));
+            extra_details =
+              lives_strdup_printf("%s%s%s", extra_details, *extra_details ? ", " : "",
+                                  (tmp = lives_strdup_printf
+                                         (_("Source: %s, frames: %d, size: %d X %d, fps: %.3f"),
+                                          name, sfile->frames, sfile->hsize,
+                                          sfile->vsize, sfile->fps)));
             lives_free(tmp);
             if (name != sfile->name) lives_free(name);
             lives_freep((void **)&mainw->files[clipno]);

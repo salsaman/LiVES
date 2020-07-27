@@ -2038,7 +2038,6 @@ static void lives_init(_ign_opts *ign_opts) {
       splash_msg(_("Starting pulseaudio server..."), SPLASH_LEVEL_LOAD_APLAYER);
 
       if (!mainw->foreign) {
-        break_me("pa restart");
         if (prefs->pa_restart && !prefs->vj_mode) {
           char *com = lives_strdup_printf("%s %s", EXEC_PULSEAUDIO, prefs->pa_start_opts);
           lives_system(com, TRUE);
@@ -2697,6 +2696,9 @@ capability *get_capabilities(void) {
   capable->rcfile = lives_build_filename(prefs->configdir, LIVES_RC_FILENAME, NULL);
   capable->wm = NULL;
 
+  capable->python_version = 0;
+  capable->xstdout = STDOUT_FILENO;
+
   // optional
   capable->has_mplayer = UNCHECKED;
   capable->has_mplayer2 = UNCHECKED;
@@ -2712,18 +2714,21 @@ capability *get_capabilities(void) {
   capable->has_autolives = UNCHECKED;
   capable->has_jackd = UNCHECKED;
   capable->has_gdb = UNCHECKED;
+  capable->has_icedax = UNCHECKED;
+  capable->has_du = UNCHECKED;
   capable->has_pulse_audio = UNCHECKED;
   capable->has_xwininfo = UNCHECKED;
   capable->has_midistartstop = UNCHECKED;
   capable->has_encoder_plugins = UNCHECKED;
   capable->has_python = UNCHECKED;
-  capable->python_version = 0;
-  capable->xstdout = STDOUT_FILENO;
   capable->has_gconftool_2 = UNCHECKED;
   capable->has_xdg_screensaver = UNCHECKED;
   capable->has_file = UNCHECKED;
   capable->has_md5sum = UNCHECKED;
   capable->has_gio = UNCHECKED;
+  capable->has_xdotool = UNCHECKED;
+  capable->has_wmctrl = UNCHECKED;
+  capable->has_wget = UNCHECKED;
 
   // not checked at startup
   capable->has_gzip = UNCHECKED;

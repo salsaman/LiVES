@@ -1625,6 +1625,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   }
 
   if (pulse_server_rate == 0) {
+    pa_mloop_unlock();
     LIVES_WARN("Problem getting pulseaudio rate...expect more problems ahead.");
     return 1;
   }
@@ -1632,11 +1633,19 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   pa_spec.rate = pdriver->out_arate = pdriver->in_arate = pulse_server_rate;
 
   pdriver->pstream = pa_stream_new_with_proplist(pdriver->con, pa_clientname, &pa_spec, &pa_map, pdriver->pa_props);
-  pa_mloop_unlock();
+
+  /// TODO: try to set volume and mute state from sever reather then the other way round
 
   if (pdriver->is_output) {
     pa_volume_t pavol;
     pdriver->is_corked = TRUE;
+
+    // set write callback
+    pa_stream_set_write_callback(pdriver->pstream, pulse_audio_write_process, pdriver);
+    pa_stream_set_underflow_callback(pdriver->pstream, stream_underflow_callback, pdriver);
+    pa_stream_set_overflow_callback(pdriver->pstream, stream_overflow_callback, pdriver);
+    pa_stream_set_moved_callback(pdriver->pstream, stream_moved_callback, pdriver);
+    pa_stream_set_buffer_attr_callback(pdriver->pstream, stream_buffer_attr_callback, pdriver);
 
 #if PA_SW_CONNECTION
     pa_stream_connect_playback(pdriver->pstream, NULL, &pa_battr, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY |
@@ -1648,6 +1657,8 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pavol = pa_sw_volume_from_linear(pdriver->volume_linear);
     pa_cvolume_set(&pdriver->volume, pdriver->out_achans, pavol);
 
+    // calling this may cause other streams to be interrupted temporarily
+    // it seems impossible to avoid this
     pa_stream_connect_playback(pdriver->pstream, NULL, &pa_battr, (pa_stream_flags_t)(0
                                | PA_STREAM_RELATIVE_VOLUME
                                | PA_STREAM_INTERPOLATE_TIMING
@@ -1657,16 +1668,12 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
                                | PA_STREAM_AUTO_TIMING_UPDATE),
                                &pdriver->volume, NULL);
 #endif
+    pa_mloop_unlock();
 
     while (pa_stream_get_state(pdriver->pstream) != PA_STREAM_READY) {
       sched_yield();
       lives_usleep(prefs->sleep_time);
     }
-
-    pa_stream_set_underflow_callback(pdriver->pstream, stream_underflow_callback, pdriver);
-    pa_stream_set_overflow_callback(pdriver->pstream, stream_overflow_callback, pdriver);
-    pa_stream_set_moved_callback(pdriver->pstream, stream_moved_callback, pdriver);
-    pa_stream_set_buffer_attr_callback(pdriver->pstream, stream_buffer_attr_callback, pdriver);
 
     pdriver->volume_linear = -1;
 
@@ -1680,8 +1687,6 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     }
     pa_operation_unref(pa_op);
 #endif
-    // set write callback
-    pa_stream_set_write_callback(pdriver->pstream, pulse_audio_write_process, pdriver);
   } else {
     // set read callback
     pdriver->frames_written = 0;
@@ -1696,6 +1701,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 
     pa_stream_set_moved_callback(pdriver->pstream, stream_moved_callback, pdriver);
     pa_stream_set_buffer_attr_callback(pdriver->pstream, stream_buffer_attr_callback, pdriver);
+    pa_stream_set_read_callback(pdriver->pstream, pulse_audio_read_process, pdriver);
 
     pa_stream_connect_record(pdriver->pstream, NULL, &pa_battr,
                              (pa_stream_flags_t)(PA_STREAM_START_CORKED
@@ -1704,12 +1710,13 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
                                  | PA_STREAM_AUTO_TIMING_UPDATE
                                  | PA_STREAM_NOT_MONOTONIC));
 
+    pa_mloop_unlock();
     while (pa_stream_get_state(pdriver->pstream) != PA_STREAM_READY) {
       sched_yield();
       lives_usleep(prefs->sleep_time);
     }
-    pa_stream_set_read_callback(pdriver->pstream, pulse_audio_read_process, pdriver);
   }
+
 
   return 0;
 }

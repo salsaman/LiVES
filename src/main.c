@@ -6816,7 +6816,8 @@ fndone:
         // Note: vlayer is actually the out channel of the generator, so we should
         // never free it !
         weed_plant_t *inst = (weed_plant_t *)sfile->ext_src;
-        if (inst != NULL) {
+        if (inst) {
+          //g_print("output:\n%s\n", weed_plant_to_header(inst, "weed_instace_t"));
           int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
           while (filter_mutex_trylock(key)) {
             sched_yield();

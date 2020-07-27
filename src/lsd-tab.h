@@ -29,4 +29,6 @@ boolean lives_structs_same_type(lives_struct_def_t *, lives_struct_def_t *);
 uint64_t lsd_check_struct(lives_struct_def_t *);
 uint64_t lsd_check_match(lives_struct_def_t *, lives_struct_def_t *);
 
+char *weed_plant_to_header(weed_plant_t *, const char *tname);
+
 #endif

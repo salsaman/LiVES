@@ -6011,17 +6011,16 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   char *uidgid;
   char *trashdir;
 
-  char *markerfile;
+  char *markerfile, *filedir;
   char *com, *msg, *tmp;
   char *extra = lives_strdup("");
-
-  int current_file = mainw->current_file;
-  int marker_fd;
 
   LiVESResponseType retval = LIVES_RESPONSE_NONE;
 
   boolean gotsize = FALSE;
 
+  int current_file = mainw->current_file;
+  int marker_fd;
   int i;
 
   mainw->mt_needs_idlefunc = FALSE;
@@ -6034,22 +6033,24 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   rem_list = &lists[1];
   left_list = &lists[2];
 
-  (*rec_list) = (*rem_list) = (*left_list) = NULL;
+  *rec_list = *rem_list = *left_list = NULL;
 
   mainw->tried_ds_recover = TRUE; ///< indicates we tried ds recovery already
   mainw->add_clear_ds_adv = TRUE; ///< auto reset by do_warning_dialog()
   if (!(prefs->clear_disk_opts & LIVES_CDISK_REMOVE_ORPHAN_CLIPS)) {
     lives_free(extra);
-    extra = (_("\n\nIf potential missing clips are detected, provide the option to try to recover them\n"
-               "before they are removed permanently from the disk.\n"));
+    extra = (_("\n\nIf potential missing clips are detected, you will be provided "
+               "the option to try to recover them\n"
+               "before they are removed permanently from the disk.\n\n"
+               "<b>You will also have an opportunity to view and revise the list of items to be removed "
+               "before continuing.</b>\n"));
   }
 
   if (!do_warning_dialogf(
         _("LiVES will attempt to recover some disk space.\n"
           "Unnecessary files will be removed from %s\n"
-          "You should ONLY run this if you have no other copies of LiVES running on this machine.\n"
-          "%s"
-          "Click OK to proceed.\n"), prefs->workdir, extra)) {
+          "You should <b>ONLY</b> run this if you have no other copies of LiVES running on this machine.\n"
+          "%s\nClick OK to proceed.\n"), prefs->workdir, extra)) {
     lives_free(extra);
     mainw->next_ds_warn_level = ds_warn_level;
     return;
@@ -6085,26 +6086,27 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   for (i = 0; i < MAX_FILES; i++) {
     // mark all free-floating files (directories) which we do not want to remove
     // we do error checking here
-
-    if ((i == mainw->current_file) || IS_NORMAL_CLIP(i)) {
-      markerfile = lives_build_filename(prefs->workdir, mainw->files[i]->handle, ".ignore", NULL);
-      lives_echo(trashdir, markerfile, FALSE);
-      lives_free(markerfile);
-      if (mainw->files[i]->undo_action != UNDO_NONE) {
-        markerfile = lives_build_filename(prefs->workdir, mainw->files[i]->handle, "noprune", NULL);
-        do {
-          retval = LIVES_RESPONSE_NONE;
-          marker_fd = creat(markerfile, S_IRUSR | S_IWUSR);
-          if (marker_fd < 0) {
-            retval = do_write_failed_error_s_with_retry(markerfile, lives_strerror(errno), NULL);
-          }
-        } while (retval == LIVES_RESPONSE_RETRY);
-        if (marker_fd >= 0) close(marker_fd);
+    if (mainw->files[i] && *mainw->files[i]->handle) {
+      filedir = lives_build_path(prefs->workdir, mainw->files[i]->handle, NULL);
+      if (lives_file_test(filedir, LIVES_FILE_TEST_IS_DIR)) {
+        markerfile = lives_build_filename(filedir, LIVES_FILENAME_IGNORE, NULL);
+        lives_echo(trashdir, markerfile, FALSE);
         lives_free(markerfile);
-        if (retval == LIVES_RESPONSE_CANCEL) goto cleanup;
-      }
-    }
-  }
+        if (mainw->files[i]->undo_action != UNDO_NONE) {
+          markerfile = lives_build_filename(filedir, LIVES_FILENAME_NOPRUNE, NULL);
+          do {
+            retval = LIVES_RESPONSE_NONE;
+            marker_fd = creat(markerfile, S_IRUSR | S_IWUSR);
+            if (marker_fd < 0) {
+              retval = do_write_failed_error_s_with_retry(markerfile, lives_strerror(errno), NULL);
+            }
+          } while (retval == LIVES_RESPONSE_RETRY);
+          if (marker_fd >= 0) close(marker_fd);
+          lives_free(markerfile);
+          if (retval == LIVES_RESPONSE_CANCEL) goto cleanup;
+	  // *INDENT-OFF*
+	}}}}
+  // *INDENT-ON*
 
   if (1) {
     lives_proc_thread_t tinfo;
@@ -6147,17 +6149,21 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
 
     // remove the protective markers
     for (i = 0; i < MAX_FILES; i++) {
-      if (IS_NORMAL_CLIP(i)) {
-        markerfile = lives_build_filename(prefs->workdir, mainw->files[i]->handle, ".ignore", NULL);
-        lives_rm(markerfile);
-        lives_free(markerfile);
-        if (mainw->files[i]->undo_action != UNDO_NONE) {
-          markerfile = lives_build_filename(prefs->workdir, mainw->files[i]->handle, "noprune", NULL);
+      if (mainw->files[i] && *mainw->files[i]->handle) {
+        filedir = lives_build_path(prefs->workdir, mainw->files[i]->handle, NULL);
+        if (lives_file_test(filedir, LIVES_FILE_TEST_IS_DIR)) {
+          markerfile = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
+                                            LIVES_FILENAME_IGNORE, NULL);
           lives_rm(markerfile);
           lives_free(markerfile);
-        }
-      }
-    }
+          if (mainw->files[i]->undo_action != UNDO_NONE) {
+            markerfile = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
+                                              LIVES_FILENAME_NOPRUNE, NULL);
+            lives_rm(markerfile);
+            lives_free(markerfile);
+	  // *INDENT-OFF*
+	  }}}}
+    // *INDENT-ON*
 
     if (THREADVAR(com_failed)) {
       THREADVAR(com_failed) = FALSE;
@@ -6166,30 +6172,31 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       goto cleanup;
     } else {
       LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
-      LiVESWidget *button, *accb;
-      LiVESWidget *hbox, *label;
-      LiVESWidget *top_vbox;
+      LiVESWidget *button, *accb, *hbox, *label, *top_vbox;
       LiVESList *list;
       lives_file_dets_t *filedets;
       lives_proc_thread_t recinfo, reminfo, leaveinfo;
-      char *remtrashdir;
-      char *op, *from, *to;
+      char *remtrashdir, *op, *from, *to;
       int nitems = atoi(mainw->msg), orig;
 
       nitems = 1; /// TODO
 
       if (nitems) {
-        recinfo = dir_to_file_details(rec_list, full_trashdir, TRASH_RECOVER, prefs->workdir,
-                                      EXTRA_DETAILS_CLIPHDR | EXTRA_DETAILS_EMPTY_DIR);
-        reminfo = dir_to_file_details(rem_list, full_trashdir, TRASH_REMOVE, prefs->workdir,
-                                      EXTRA_DETAILS_EMPTY_DIR);
-        leaveinfo = dir_to_file_details(left_list, full_trashdir, TRASH_LEAVE, prefs->workdir,
-                                        EXTRA_DETAILS_EMPTY_DIR);
+        recinfo =
+          dir_to_file_details(rec_list, full_trashdir, TRASH_RECOVER, prefs->workdir,
+                              EXTRA_DETAILS_CLIPHDR | EXTRA_DETAILS_EMPTY_DIR);
+        reminfo =
+          dir_to_file_details(rem_list, full_trashdir, TRASH_REMOVE, prefs->workdir,
+                              EXTRA_DETAILS_EMPTY_DIR);
+        leaveinfo =
+          dir_to_file_details(left_list, full_trashdir, TRASH_LEAVE, prefs->workdir,
+                              EXTRA_DETAILS_EMPTY_DIR);
       }
 
       widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH;
       textwindow = create_text_window(_("Disk Analysis Log"), NULL, tbuff, FALSE);
       widget_opts.expand = LIVES_EXPAND_DEFAULT;;
+
       lives_window_add_accel_group(LIVES_WINDOW(textwindow->dialog), accel_group);
 
       top_vbox = lives_dialog_get_content_area(LIVES_DIALOG(textwindow->dialog));
@@ -6199,6 +6206,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       msg = lives_strdup_printf(_("\nAnalysis of directory %s complete.\n\n"), prefs->workdir);
       label = lives_standard_label_new(msg);
       lives_free(msg);
+
       lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, TRUE, 0);
       lives_widget_set_halign(label, LIVES_ALIGN_CENTER);
 
@@ -6214,11 +6222,8 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       trash_rb(LIVES_BOX(top_vbox));
 
       button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
-               nitems ? LIVES_STOCK_CANCEL :
-               mainw->string_constants
-               [LIVES_STRING_CONSTANT_CLOSE_WINDOW],
-               NULL,
-               LIVES_RESPONSE_CANCEL);
+               nitems ? LIVES_STOCK_CANCEL : mainw->string_constants
+               [LIVES_STRING_CONSTANT_CLOSE_WINDOW], NULL, LIVES_RESPONSE_CANCEL);
 
       lives_widget_add_accelerator(button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                    LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
@@ -6226,8 +6231,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       if (nitems) {
         widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
         accb = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
-               LIVES_STOCK_EDIT, _("_Check and Filter Results"),
-               LIVES_RESPONSE_BROWSE);
+               LIVES_STOCK_EDIT, _("_Check and Filter Results"), LIVES_RESPONSE_BROWSE);
         widget_opts.expand = LIVES_EXPAND_DEFAULT;
         lives_button_grab_default_special(accb);
       } else {
@@ -6249,8 +6253,6 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
         lives_proc_thread_cancel(reminfo);
         lives_proc_thread_cancel(leaveinfo);
       }
-
-      //lives_list_free_all(&rem_list);  /// keep rec_list for recover and leav_list to show info
 
       if (retval == LIVES_RESPONSE_CANCEL) {
         com = lives_strdup_printf("%s restore_trash %s", prefs->backend, trashdir);
@@ -6377,19 +6379,14 @@ cleanup:
 
     msg = lives_strdup_printf(_("%s of disk space was recovered.\n"),
                               lives_format_storage_space_string((uint64_t)bytes));
-
     dialog = create_message_dialog(LIVES_DIALOG_INFO, msg, NULL, 0, TRUE);
     lives_free(msg);
 
     lives_label_chomp(LIVES_LABEL(widget_opts.last_label));
-
     top_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
-
     tview = scrolled_textview(NULL, tbuff, RFX_WINSIZE_H * 2, NULL);
-
     widget_opts.justify = LIVES_JUSTIFY_CENTER;
-    lives_standard_expander_new(_("Show _Log"), LIVES_BOX(top_vbox),
-                                tview);
+    lives_standard_expander_new(_("Show _Log"), LIVES_BOX(top_vbox), tview);
     widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
     if (*left_list) {
@@ -6418,8 +6415,8 @@ cleanup:
       lives_free(text);
 
       widget_opts.justify = LIVES_JUSTIFY_CENTER;
-      lives_standard_expander_new(_("Show _Remaining Items"), LIVES_BOX(top_vbox),
-                                  tview);
+      lives_standard_expander_new(_("Show _Remaining Items"),
+                                  LIVES_BOX(top_vbox), tview);
       widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
     }
 
@@ -6433,9 +6430,9 @@ cleanup:
 
   mainw->next_ds_warn_level = ds_warn_level;
 
-  if (user_data) {
+  if (user_data)
     lives_widget_show(lives_widget_get_toplevel(LIVES_WIDGET(user_data)));
-  } else {
+  else {
     if (!mainw->multitrack && !mainw->is_processing && !LIVES_IS_PLAYING) {
       sensitize();
     }
@@ -6444,9 +6441,9 @@ cleanup:
       if (!mainw->is_processing && !LIVES_IS_PLAYING) {
         mt_sensitise(mainw->multitrack);
         maybe_add_mt_idlefunc();
-      }
-    }
-  }
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
 }
 
 

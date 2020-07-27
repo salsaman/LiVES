@@ -12,11 +12,11 @@
 
 #define CREATOR_ID "Created in LiVES main"
 
-static const lives_struct_def_t *lsd_tab[LIVES_N_STRUCTS];
+static const lives_struct_def_t *lsd_table[LIVES_N_STRUCTS];
 boolean tab_inited = FALSE;
 
 static void init_lsd_tab(void) {
-  for (int i = 0; i < LIVES_N_STRUCTS; i++) lsd_tab[i] = NULL;
+  for (int i = 0; i < LIVES_N_STRUCTS; i++) lsd_table[i] = NULL;
   tab_inited = TRUE;
 }
 
@@ -24,7 +24,7 @@ const lives_struct_def_t *get_lsd(lives_struct_type st_type) {
   const lives_struct_def_t *lsd;
   if (st_type < LIVES_STRUCT_FIRST || st_type >= LIVES_N_STRUCTS) return NULL;
   if (!tab_inited) init_lsd_tab();
-  else if (lsd_tab[st_type]) return lsd_tab[st_type];
+  else if (lsd_table[st_type]) return lsd_table[st_type];
   switch (st_type) {
   case LIVES_STRUCT_CLIP_DATA_T:
     lsd = lsd_create("lives_clip_data_t", sizeof(lives_clip_data_t), "sync_hint", 6);
@@ -68,7 +68,7 @@ const lives_struct_def_t *get_lsd(lives_struct_type st_type) {
   }
   if (lsd) {
     lives_struct_set_class_data((lives_struct_def_t *)lsd, CREATOR_ID);
-    lsd_tab[st_type] = lsd;
+    lsd_table[st_type] = lsd;
   }
   return lsd;
 }
@@ -197,7 +197,6 @@ uint64_t lsd_check_match(lives_struct_def_t *lsd1, lives_struct_def_t *lsd2) {
              lsd1, sz1, lsd2, sz2);
     if (sz1 > sz2) err |= (1ul << 49);
     else err |= (1ul << 50);
-
   }
   if (lives_strcmp(lives_struct_get_last_field(lsd1), lives_struct_get_last_field(lsd2))) {
     errprint("lsd_check: lsd1 (%p) last field [%s]\n"
@@ -215,5 +214,52 @@ uint64_t lsd_check_match(lives_struct_def_t *lsd1, lives_struct_def_t *lsd2) {
   err |= (lsd_check_struct(lsd2) << 24);
 
   return err;
+}
+
+
+/// bonus functions
+
+char *weed_plant_to_header(weed_plant_t *plant, const char *tname) {
+  char **leaves = weed_plant_list_leaves(plant, NULL);
+  char *hdr, *ar = NULL, *line;
+
+  if (tname)
+    hdr  = lives_strdup("typedef struct {");
+  else
+    hdr = lives_strdup("struct {");
+
+  for (int i = 0; leaves[i]; i++) {
+    uint32_t st = weed_leaf_seed_type(plant, leaves[i]);
+    weed_size_t ne = weed_leaf_num_elements(plant, leaves[i]);
+    char *tp;
+    switch (st) {
+    case WEED_SEED_INT: tp = "int"; break;
+    case WEED_SEED_BOOLEAN: tp = "boolean"; break;
+    case WEED_SEED_DOUBLE: tp = "double"; break;
+    case WEED_SEED_STRING: tp = "char *"; break;
+    case WEED_SEED_INT64: tp = "int64_t"; break;
+    case WEED_SEED_FUNCPTR: tp = "lives_func_t *"; break;
+    case WEED_SEED_VOIDPTR: tp = "void *"; break;
+    case WEED_SEED_PLANTPTR: tp = "weed_plant_t *"; break;
+    default: tp = "void *"; break;
+    }
+
+    if (ne > 1) ar = lives_strdup_printf("[%d]", ne);
+    line = lives_strdup_printf("\n\t%s %s%s;", tp, leaves[i], ar ? ar : NULL);
+    hdr = lives_concat(hdr, line);
+    if (ar) {
+      lives_free(ar);
+      ar = NULL;
+    }
+    lives_free(leaves[i]);
+  }
+  lives_free(leaves);
+
+  if (tname)
+    line = lives_strdup("\n}");
+  else
+    line = lives_strdup_printf("\n} %s;", tname);
+  lives_concat(hdr, line);
+  return hdr;
 }
 

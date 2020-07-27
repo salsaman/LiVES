@@ -940,6 +940,8 @@ void *_dir_to_file_details(LiVESList **listp, const char *dir, const char *tsubd
   char *extra_details;
   boolean empty = TRUE;
 
+  g_print("CHECKING dir %s\n", dir);
+
   tinfo = THREADVAR(tinfo);
   if (tinfo) lives_proc_thread_set_cancellable(tinfo);
 
@@ -1706,6 +1708,7 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
 
 
 static void *thrdpool(void *arg) {
+  boolean skip_wait = FALSE;
   lives_thread_data_t *tdata = (lives_thread_data_t *)arg;
   if (!rpmalloc_is_thread_initialized()) {
     rpmalloc_thread_initialize();
@@ -1713,11 +1716,13 @@ static void *thrdpool(void *arg) {
   lives_widget_context_push_thread_default(tdata->ctx);
 
   while (!threads_die) {
-    pthread_mutex_lock(&tcond_mutex);
-    pthread_cond_wait(&tcond, &tcond_mutex);
-    pthread_mutex_unlock(&tcond_mutex);
+    if (!skip_wait) {
+      pthread_mutex_lock(&tcond_mutex);
+      pthread_cond_wait(&tcond, &tcond_mutex);
+      pthread_mutex_unlock(&tcond_mutex);
+    }
     if (LIVES_UNLIKELY(threads_die)) break;
-    do_something_useful(tdata);
+    skip_wait = do_something_useful(tdata);
     if (rpmalloc_is_thread_initialized()) {
       rpmalloc_thread_collect();
     }
@@ -1823,8 +1828,7 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives
   pthread_mutex_lock(&tcond_mutex);
   pthread_cond_signal(&tcond);
   pthread_mutex_unlock(&tcond_mutex);
-#ifndef VALGRIND_ONxxx
-  if (ntasks > npoolthreads) {
+  if (ntasks >= npoolthreads) {
     pthread_mutex_lock(&tcond_mutex);
     pthread_cond_broadcast(&tcond);
     pthread_mutex_unlock(&tcond_mutex);
@@ -1845,7 +1849,6 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives
     }
 #endif
   }
-#endif
   return 0;
 }
 

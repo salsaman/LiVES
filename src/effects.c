@@ -1013,7 +1013,7 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
         return TRUE;
       }
 
-      if (1 || !mainw->gen_started_play) { // should always be the case
+      if (!mainw->gen_started_play) {
         pthread_mutex_lock(&mainw->event_list_mutex);
         if (!(mainw->rte & new_rte)) mainw->rte |= new_rte;
         pthread_mutex_unlock(&mainw->event_list_mutex);

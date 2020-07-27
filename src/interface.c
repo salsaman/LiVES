@@ -2391,7 +2391,7 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
   LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
 
   int winsize_h = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
-  int winsize_v = GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY;
+  int winsize_v = GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY * 2;
   int rec_recheck, rem_recheck, leave_recheck;
   int pass = 0;
   int woat = widget_opts.apply_theme;
@@ -2406,6 +2406,7 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
 
   dialog = lives_standard_dialog_new(_("Disk Cleanup"), FALSE, winsize_h, winsize_v);
   lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
+  lives_widget_set_maximum_size(dialog, winsize_h, winsize_v);
 
   cancelb = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
 					       LIVES_STOCK_CANCEL, NULL,
@@ -4139,7 +4140,6 @@ _entryw *create_cds_dialog(int type) {
   LiVESWidget *cancelbutton;
   LiVESWidget *discardbutton;
   LiVESWidget *savebutton = NULL;
-  LiVESWidget *hbox;
 
   LiVESAccelGroup *accel_group;
 

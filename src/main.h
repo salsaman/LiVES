@@ -617,8 +617,8 @@ typedef enum {
 
 #define LIVES_IS_PLAYING (mainw && mainw->playing_file > -1)
 
-#define LIVES_IS_RENDERING (mainw && ((mainw->multitrack && mainw->is_rendering) \
-					      || (!mainw->multitrack && mainw->multitrack->is_rendering)) \
+#define LIVES_IS_RENDERING (mainw && ((!mainw->multitrack && mainw->is_rendering) \
+					      || (mainw->multitrack && mainw->multitrack->is_rendering)) \
 			    && !mainw->preview_rendering)
 
 #define CURRENT_CLIP_TOTAL_TIME CLIP_TOTAL_TIME(mainw->current_file)

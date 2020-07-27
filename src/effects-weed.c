@@ -1640,7 +1640,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
   // TODO - check if inited, if not return with error (check also for filters with no init_func)
 
-  /// pb_quality: HIGH == use MAX(in sizes, out size); MED == use MIN( MAX in sizes, output_size), LOW == use MIN(in sizes, out size)
+  /// pb_quality: HIGH == use MAX(in sizes, out size); MED == use MIN( MAX in sizes, output_size), LOW == use MIN(in sizes, out size
   if (pb_quality == PB_QUALITY_HIGH) {
     if (opwidth > 0)
       maxinwidth = opwidth;
@@ -1660,6 +1660,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
 
   if (is_pure_audio(filter, TRUE)) {
+    g_print("IS AUD %p\n", filter);
     /// we process audio effects elsewhere
     lives_freep((void **)&out_channels);
     return FILTER_ERROR_IS_AUDIO;
@@ -8190,7 +8191,7 @@ void weed_generator_end(weed_plant_t *inst) {
     if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) ce_thumbs_update_current_clip();
   } else {
     // close generator file and switch to original file if possible
-    mainw->rte ^= (GU641 << fg_generator_key);
+    //mainw->rte ^= (GU641 << fg_generator_key);
     if (cfile == NULL || cfile->clip_type != CLIP_TYPE_GENERATOR) {
       LIVES_WARN("Close non-generator file");
     } else {

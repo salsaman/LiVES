@@ -217,7 +217,7 @@ lives_exe_SOURCES = \
 	pangotext.c pangotext.h \
 	machinestate.c machinestate.h \
 	weed-effects-utils.c weed-effects-utils.h \
-	diagnostics.c diagnostics..h \
+	diagnostics.c \
 	tinyexr/tinyexr.h \
 	$(transcode_SOURCES) \
 	$(unicap_SOURCES) \

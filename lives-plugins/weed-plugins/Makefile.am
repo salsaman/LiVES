@@ -204,7 +204,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	warpTV.la \
 	xeffect.la
 
-EXTRA_DIST=data icons syna.h weed-utils-code.c weed-plugin-utils.c
+EXTRA_DIST=data icons syna.h weed-plugin-utils.c
 
 install-data-local:
 	$(MKDIR_P) "$(DESTDIR)$(fxpluginslibdir)"

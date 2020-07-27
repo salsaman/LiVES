@@ -3579,14 +3579,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_label_new(const char *text) {
   gtk_label_set_justify(LIVES_LABEL(label), widget_opts.justify);
   gtk_label_set_line_wrap(LIVES_LABEL(label), widget_opts.line_wrap);
 #endif
-#ifdef GUI_QT
-  QString qs = QString::fromUtf8(text);
-  LiVESLabel *ql = new LiVESLabel(qs);
-  ql->setAlignment(widget_opts.justify);
-  ql->setWordWrap(widget_opts.line_wrap);
-  ql->setTextFormat(Qt::PlainText);
-  label = static_cast<LiVESWidget *>(ql);
-#endif
   return label;
 }
 
@@ -6918,12 +6910,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_text(LiVESLabel *label, cons
   else gtk_label_set_text(label, text);
   return TRUE;
 #endif
-#ifdef GUI_QT
-  label->setTextFormat(Qt::PlainText);
-  label->setText(QString::fromUtf8(text));
-  label->set_text(QString::fromUtf8(text));
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -6932,12 +6918,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_markup(LiVESLabel *label, co
 #ifdef GUI_GTK
   if (!widget_opts.mnemonic_label) gtk_label_set_markup(label, markup);
   else gtk_label_set_markup_with_mnemonic(label, markup);
-  return TRUE;
-#endif
-#ifdef GUI_QT
-  label->setTextFormat(Qt::RichText);
-  label->setText(QString::fromUtf8(markup));
-  label->set_text(QString::fromUtf8(markup));
   return TRUE;
 #endif
   return FALSE;
@@ -9642,7 +9622,8 @@ LiVESWidget *lives_standard_formatted_label_new(const char *text) {
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   widget_opts.mnemonic_label = FALSE;
-  label = lives_standard_label_new(form_text);
+  label = lives_standard_label_new(NULL);
+  lives_label_set_markup(LIVES_LABEL(label), form_text);
   widget_opts.mnemonic_label = TRUE;
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 

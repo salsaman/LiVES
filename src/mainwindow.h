@@ -521,17 +521,19 @@ enum {
 #define LAYOUT_MAP_FILENAME LAYOUT_FILENAME "."  LIVES_FILE_EXT_MAP
 #define LAYOUT_NUMBERING_FILENAME LAYOUT_FILENAME "_numbering"
 
-// directory names
-#define LAYOUTS_DIRNAME "layouts"
-#define CLIPS_DIRNAME "clips"
-#define IMPORTS_DIRNAME "imports"
-
-// special files / dirs
+// trash deletion
+#define LIVES_FILENAME_IGNORE ".ignore"
+#define LIVES_FILENAME_NOPRUNE "noprune"
 
 #define TRASH_NAME "__TRASH-"
 #define TRASH_REMOVE 	"remove"
 #define TRASH_RECOVER 	"recover"
 #define TRASH_LEAVE 	"leave"
+
+// directory names
+#define LAYOUTS_DIRNAME "layouts"
+#define CLIPS_DIRNAME "clips"
+#define IMPORTS_DIRNAME "imports"
 
 #define SET_LOCK_FILE(set_name, lockfile) lives_build_filename(prefs->workdir, set_name, lockfile, NULL);
 #define SET_LOCK_FILES(set_name) SET_LOCK_FILE(set_name, SET_LOCK_FILENAME);

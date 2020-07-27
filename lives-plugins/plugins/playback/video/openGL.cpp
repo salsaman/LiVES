@@ -582,7 +582,7 @@ static void render_to_gpumem_inner(int tnum, int width, int height, int type, vo
     btype = GL_UNSIGNED_INT_8_8_8_8_REV;
   }
 
-  glTexImage2D(m_TexTarget, mipMapLevel, GL_RGBA, xwidth, height, 0, intype, btyep,
+  glTexImage2D(m_TexTarget, mipMapLevel, GL_RGBA, xwidth, height, 0, intype, btype,
                (const GLvoid *)texturebuf);
 
   glGenerateMipmap(m_TexTarget);

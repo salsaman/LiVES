@@ -310,7 +310,9 @@ static inline uint8_t *create_gamma_lut(double fileg, int gamma_from, int gamma_
 
     if (fileg != 1.0) {
       x = powf(a, fileg);
-    } else {
+    }
+
+    if (1) {
       switch (gamma_to) {
       // simple power law transformation
       case WEED_GAMMA_MONITOR:
@@ -9171,6 +9173,7 @@ LIVES_GLOBAL_INLINE boolean rowstrides_differ(int n1, int *n1_array, int n2, int
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_new(int layer_type) {
   weed_layer_t *layer = weed_plant_new(WEED_PLANT_LAYER);
   weed_set_int_value(layer, WEED_LEAF_LAYER_TYPE, layer_type);
+  weed_set_int_value(layer, WEED_LEAF_HOST_REFS, 1);
   return layer;
 }
 
@@ -9776,8 +9779,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     else weed_set_int_value(layer, WEED_LEAF_FLAGS, flags);
   }
 
-  if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS) &&
-      weed_get_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, &error) == WEED_TRUE)
+  if (weed_get_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, &error) == WEED_TRUE)
     contig = TRUE;
 
   width = weed_layer_get_width(layer);
@@ -11684,10 +11686,11 @@ LIVES_GLOBAL_INLINE boolean gamma_convert_layer(int gamma_type, weed_layer_t *la
 }
 
 
-LIVES_GLOBAL_INLINE boolean gamma_convert_layer_variant(double file_gamma, weed_layer_t *layer) {
+LIVES_GLOBAL_INLINE boolean gamma_convert_layer_variant(double file_gamma, int tgamma, weed_layer_t *layer) {
   int width = weed_layer_get_width(layer);
   int height = weed_layer_get_height(layer);
-  return gamma_convert_sub_layer(WEED_GAMMA_VARIANT, file_gamma, layer, 0, 0, width, height, TRUE);
+  weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
+  return gamma_convert_sub_layer(tgamma, file_gamma, layer, 0, 0, width, height, TRUE);
 }
 
 
@@ -11993,7 +11996,7 @@ static void *swscale_threadfunc(void *arg) {
                             0, swparams->iheight, (uint8_t *const *)swparams->opd, swparams->orw);
 
   if (scan && swparams->file_gamma != 1.) {
-    gamma_convert_sub_layer(WEED_GAMMA_VARIANT, 1. / swparams->file_gamma, swparams->layer, 0, 0, swparams->width,
+    gamma_convert_sub_layer(WEED_GAMMA_SRGB, 1. / swparams->file_gamma, swparams->layer, 0, 0, swparams->width,
                             swparams->ret, FALSE);
   }
 
@@ -13247,13 +13250,31 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
 /**
    @brief frees pixel_data for a layer, then the layer itself
 
+   if plant is freed
    returns (void *)NULL for convenience
 */
-void *weed_layer_free(weed_layer_t *layer) {
-  if (layer == NULL) return NULL;
+
+LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
+  if (weed_layer_unref(layer)) return layer;
+  return NULL;
+}
+
+int weed_layer_unref(weed_layer_t *layer) {
+  int refs;
+  if (!layer) return 0;
+  refs = weed_get_int_value(layer, WEED_LEAF_HOST_REFS, NULL);
+  if (--refs > 0) return refs;
   weed_layer_pixel_data_free(layer);
   weed_plant_free(layer);
-  return NULL;
+  return 0;
+}
+
+LIVES_GLOBAL_INLINE int weed_layer_ref(weed_layer_t *layer) {
+  int refs;
+  if (!layer) return 0;
+  refs = weed_get_int_value(layer, WEED_LEAF_HOST_REFS, NULL);
+  weed_set_int_value(layer, WEED_LEAF_HOST_REFS, ++refs);
+  return refs;
 }
 
 

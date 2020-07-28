@@ -3498,6 +3498,12 @@ boolean get_temp_handle(int index) {
   mainw->current_file = index;
 
   if (create) {
+    // create a marker file in directory, else we will be barred from
+    // removing it
+    char *canremove = lives_build_filename(prefs->workdir, cfile->handle,
+                                           TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
+    lives_touch(canremove);
+    lives_free(canremove);
     // fill with default values
     create_cfile(index, cfile->handle, FALSE);
     cfile->clip_type = CLIP_TYPE_TEMP;

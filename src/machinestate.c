@@ -1086,6 +1086,21 @@ int check_for_bad_ffmpeg(void) {
 }
 
 
+LIVES_GLOBAL_INLINE char *lives_concat_sep(char *st, const char *sep, char *x) {
+  /// nb: lives strconcat
+  // uses realloc / memcpy, frees x
+  char *tmp;
+  if (st) {
+    size_t s1 = lives_strlen(st), s2 = lives_strlen(x), s3 = lives_strlen(sep);
+    tmp = (char *)lives_realloc(st, ++s2 + s1 + s3);
+    lives_memcpy(tmp + s1, sep, s3);
+    lives_memcpy(tmp + s1 + s3, x, s2);
+  }
+  else tmp = lives_strdup(x);
+  lives_free(x);
+  return tmp;
+}
+
 LIVES_GLOBAL_INLINE char *lives_concat(char *st, char *x) {
   /// nb: lives strconcat
   // uses realloc / memcpy, frees x
@@ -1694,14 +1709,6 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
   mywork->busy = tdata->idx;
   myflags = mywork->flags;
 
-#if 0
-  boolean rpma = FALSE;
-  if (!rpmalloc_is_thread_initialized()) {
-    rpmalloc_thread_initialize();
-    rpma = TRUE;
-  }
-#endif
-
   if (myflags & LIVES_THRDFLAG_WAIT_SYNC) {
     lives_nanosleep_until_nonzero(mywork->sync_ready);
   } else {
@@ -1747,10 +1754,6 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
   }
 #endif
 
-#if 0
-  if (rpma) rpmalloc_thread_finalize();
-#endif
-
   pthread_mutex_lock(&twork_count_mutex);
   ntasks--;
   pthread_mutex_unlock(&twork_count_mutex);
@@ -1764,6 +1767,7 @@ static void *thrdpool(void *arg) {
   if (!rpmalloc_is_thread_initialized()) {
     rpmalloc_thread_initialize();
   }
+
   lives_widget_context_push_thread_default(tdata->ctx);
 
   while (!threads_die) {
@@ -2047,7 +2051,11 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
   } else {
     if ((chunk & 0x01) || (count % chunk) != 0) return FALSE;
     else {
+#ifdef USE_RPMALLOC
+      void *tbuff = rpmalloc(chunk);
+#else
       void *tbuff = lives_malloc(chunk);
+#endif
       start++;
       end = ocount - 1 - chunk;
       while (start + chunk < end) {
@@ -2057,7 +2065,11 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
         start += chunk;
         end -= chunk;
       }
+#ifdef USE_RPMALLOC
+      rpfree(tbuff);
+#else
       lives_free(tbuff);
+#endif
       return TRUE;
     }
   }

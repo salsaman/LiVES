@@ -2263,7 +2263,15 @@ if (defined($ARGV[0])) {
 
 	if ($command eq "close") {
 	    if (! -d $curworkdir || (! -f "$curworkdir/header.lives"
+				     && ! -f "$curworkdir/can_remove.tmp"
 				     && !&is_specialdir($handle))) {
+		print STDERR "\n\nsmogrify: WARNING ! asked to close dir $curworkdir\n";
+		if (! -d $curworkdir) {
+		    print STDERR "which does not exist\n\n";
+		}
+		else {
+		    print STDERR "which appears not to belong to us, there is no\n";
+		}
 		exit 1;
 	    }
 	    my $method = "delete";
@@ -2279,7 +2287,6 @@ if (defined($ARGV[0])) {
 		    &kill_child_pids($target_pid, $sig);
 		}
 	    }
-	    print STDERR "CLOSE $curworkdir\n";
 	    if ($method eq "giotrash") {
 		&smog_system("gio trash \"$curworkdir\"");
 	    }

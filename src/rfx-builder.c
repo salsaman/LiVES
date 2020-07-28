@@ -4610,7 +4610,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
     lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->custom_tools_submenu), mainw->custom_tools_menu);
   }
 
-  if (status == RFX_STATUS_ANY) {
+  if (status == RFX_STATUS_ANY && mainw->rendered_fx[0].menuitem) {
     lives_container_add(LIVES_CONTAINER(mainw->effects_menu), mainw->rendered_fx[0].menuitem);
     mainw->rte_separator = lives_menu_add_separator(LIVES_MENU(mainw->effects_menu));
   }

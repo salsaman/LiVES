@@ -2588,9 +2588,9 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
 	      // move into delete from recover or leave
 	      if (list->prev) list->prev->next = list->next;
 	      if (list->next) list->next->prev = list->prev;
+	      list->prev = NULL;
 	      if (list == *rec_list) *rec_list = list->next;
 	      else if (list == *left_list) *left_list = list->next;
-	      list->prev = NULL;
 	      list->next = *rem_list;
 	      (*rem_list)->prev = list;
 	      *rem_list = list;
@@ -2603,9 +2603,9 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
 	    if (list->prev) list->prev->next = list->next;
 	    if (list->next) list->next->prev = list->prev;
 	    list->prev = NULL;
-	    list->next = *left_list;
 	    if (list == *rec_list) *rec_list = list->next;
 	    else if (list == *rem_list) *rem_list = list->next;
+	    list->next = *left_list;
 	    (*left_list)->prev = list;
 	    *left_list = list;
 	    // *INDENT-OFF*
@@ -5746,7 +5746,7 @@ void run_diskspace_dialog(void) {
   lives_button_grab_default_special(okbutton);
   lives_widget_grab_focus(okbutton);
 
-  lives_widget_show_all(dialog);
+  lives_dialog_run(LIVES_DIALOG(dialog));
 }
 
 

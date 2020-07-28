@@ -240,6 +240,7 @@ boolean lives_strncmp(const char *, const char *, size_t) GNU_HOT GNU_PURE;
 char *lives_strdup_quick(const char *s);
 int lives_strcmp_ordered(const char *, const char *) GNU_HOT GNU_PURE;
 char *lives_concat(char *, char *) GNU_HOT;
+char *lives_concat_sep(char *st, const char *sep, char *x);
 char *lives_strstop(char *, const char term) GNU_HOT;
 int lives_strappend(const char *string, int len, const char *xnew);
 const char *lives_strappendf(const char *string, int len, const char *fmt, ...);

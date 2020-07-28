@@ -521,7 +521,9 @@ enum {
 #define LAYOUT_MAP_FILENAME LAYOUT_FILENAME "."  LIVES_FILE_EXT_MAP
 #define LAYOUT_NUMBERING_FILENAME LAYOUT_FILENAME "_numbering"
 
-// trash deletion
+#define TEMPFILE_MARKER "can_remove"
+
+// trash removal
 #define LIVES_FILENAME_IGNORE ".ignore"
 #define LIVES_FILENAME_NOPRUNE "noprune"
 

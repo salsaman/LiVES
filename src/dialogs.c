@@ -1851,10 +1851,13 @@ switch_point:
           mainw->frame_layer_preload = NULL;
           cleanup_preload = FALSE;
         } else if (cleanup_preload) {
-          if (is_layer_ready(mainw->frame_layer_preload)) {
+          if (mainw->frame_layer_preload && is_layer_ready(mainw->frame_layer_preload)) {
             check_layer_ready(mainw->frame_layer_preload);
             weed_layer_free(mainw->frame_layer_preload);
             mainw->frame_layer_preload = NULL;
+            cleanup_preload = FALSE;
+          }
+          if (mainw->frame_layer_preload) {
             cleanup_preload = FALSE;
           }
         }
@@ -3302,7 +3305,7 @@ boolean do_comments_dialog(int fileno, char *filename) {
 }
 
 
-LIVES_GLOBAL_INLINE void do_messages_window(void) {
+LIVES_GLOBAL_INLINE void do_messages_window(boolean is_startup) {
   char *text = dump_messages(-1, -1);
   widget_opts.expand = LIVES_EXPAND_EXTRA;
   create_text_window(_("Message History"), text, NULL, TRUE);

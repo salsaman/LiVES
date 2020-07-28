@@ -3113,6 +3113,8 @@ static boolean render_choice_idle(livespointer data) {
 
 static boolean lazy_startup_checks(void *data) {
   static boolean checked_trash = FALSE;
+  static boolean mwshown = FALSE;
+
   if (prefs->vj_mode) {
     resize(1.);
     if (prefs->open_maximised) {
@@ -3124,11 +3126,6 @@ static boolean lazy_startup_checks(void *data) {
     }
     return FALSE;
   }
-  if (needs_disk_quota) {
-    run_diskspace_dialog();
-    needs_disk_quota = FALSE;
-    return TRUE;
-  }
   if (!checked_trash) {
     if (prefs->autoclean) {
       char *com = lives_strdup_printf("%s empty_trash . general %s", prefs->backend, TRASH_NAME);
@@ -3136,6 +3133,16 @@ static boolean lazy_startup_checks(void *data) {
       lives_free(com);
     }
     checked_trash = TRUE;
+  }
+  if (needs_disk_quota) {
+    run_diskspace_dialog();
+    needs_disk_quota = FALSE;
+    return TRUE;
+  }
+
+  if (!mwshown) {
+    mwshown = TRUE;
+    if (prefs->show_msgs_on_startup) do_messages_window(TRUE);
   }
 
   if (mainw->ldg_menuitem) {
@@ -3145,6 +3152,7 @@ static boolean lazy_startup_checks(void *data) {
     add_rfx_effects2(RFX_STATUS_ANY);
     if (LIVES_IS_SENSITIZED) sensitize(); // call fn again to sens. new menu entries
   }
+
   return FALSE;
 }
 
@@ -3777,7 +3785,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   lives_struct_test();
   test_palette_conversions();
 #endif
-  //abort();
 
   // allow us to set immutable values (plugins can't)
   weed_leaf_set = weed_leaf_set_host;
@@ -5279,7 +5286,6 @@ check_stcache:
         else orig_pixbuf = start_pixbuf;
       }
       if (start_pixbuf != orig_pixbuf && LIVES_IS_PIXBUF(start_pixbuf)) {
-        lives_widget_object_unref(start_pixbuf);
         start_pixbuf = NULL;
       }
       if (LIVES_IS_PIXBUF(orig_pixbuf)) {
@@ -6079,6 +6085,10 @@ void load_preview_image(boolean update_always) {
         //png_set_gamma(png_ptr, 1.0, .45455); /// default, seemingly
         //png_set_gamma(png_ptr, 1. / .45455, 1.0); /// too bright
         png_set_gamma(png_ptr, 1.0, 1.0);
+      }
+
+      if (gval == PNG_INFO_gAMA) {
+        weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
       }
 
       // want to convert everything (greyscale, RGB, RGBA64 etc.) to RGBA32 (or RGB24)
@@ -8703,10 +8713,13 @@ void load_frame_image(int frame) {
 	cfile->vsize = mainw->def_height - V_RESIZE_ADJUST;
 
 	if (mainw->st_fcache) {
+	  if (mainw->en_fcache == mainw->st_fcache) mainw->en_fcache = NULL;
+	  if (mainw->pr_fcache == mainw->st_fcache) mainw->pr_fcache = NULL;
 	  weed_layer_free(mainw->st_fcache);
 	  mainw->st_fcache = NULL;
 	}
 	if (mainw->en_fcache) {
+	  if (mainw->pr_fcache == mainw->en_fcache) mainw->pr_fcache = NULL;
 	  weed_layer_free(mainw->en_fcache);
 	  mainw->en_fcache = NULL;
 	}

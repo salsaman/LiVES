@@ -6405,10 +6405,7 @@ cleanup:
       for (; list && list->data; list = list->next) {
         filedets = (lives_file_dets_t *)list->data;
         item = lives_build_path(prefs->workdir, filedets->name, NULL);
-        tmp = lives_strdup_printf("%s\n%s", text, item);
-        lives_free(text);
-        lives_free(item);
-        text = tmp;
+        text = lives_concat_sep(text, "\n", item);
       }
 
       tview = scrolled_textview(text, NULL, RFX_WINSIZE_H * 2, NULL);
@@ -6519,7 +6516,7 @@ void on_vj_reset_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 
 void on_show_messages_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  do_messages_window();
+  do_messages_window(FALSE);
 }
 
 

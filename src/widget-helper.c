@@ -984,6 +984,7 @@ static void sigdata_free(livespointer data, LiVESWidgetClosure *cl) {
   lives_free(sigdata);
 }
 
+static boolean timer_running = FALSE;
 
 static boolean governor_loop(livespointer data) {
   lives_sigdata_t *sigdata = (lives_sigdata_t *)data;
@@ -996,6 +997,8 @@ static boolean governor_loop(livespointer data) {
     dlgresp = gtk_dialog_run(LIVES_DIALOG(dlgtorun));
     dlgtorun = NULL;
   }
+
+  if (timer_running) return TRUE;
 
   mainw->clutch = TRUE;
 
@@ -1131,10 +1134,12 @@ static boolean async_timer_handler(livespointer data) {
         sigdata_free(sigdata, NULL);
         return res;
       }
+      timer_running = TRUE;
       while (lives_widget_context_iteration(NULL, FALSE)) {
         lives_nanosleep(NSLEEP_TIME);
         sched_yield();
       }
+      timer_running = FALSE;
     }
   }
   // should never reach here
@@ -1754,7 +1759,7 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
       }
 
       if (GTK_IS_TEXT_VIEW(widget)) {
-        selector = "text";
+        //selector = "text";
         /* tmp = lives_strdup_printf("%s %s text {\n %s: %s;}\n", css_string, wname, detail, value); */
         /* lives_free(css_string); */
         /* css_string = tmp; */
@@ -6914,12 +6919,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_text(LiVESLabel *label, cons
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_markup(LiVESLabel *label, const char *text) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_markup(LiVESLabel *label, const char *markup) {
 #ifdef GUI_GTK
-  char *markup = lives_markup_escape_text(text, -1);
   if (!widget_opts.mnemonic_label) gtk_label_set_markup(label, markup);
   else gtk_label_set_markup_with_mnemonic(label, markup);
-  lives_free(markup);
   return TRUE;
 #endif
   return FALSE;
@@ -9341,6 +9344,9 @@ LiVESWidget *lives_standard_button_new(int width, int height) {
   if (widget_opts.apply_theme) {
     set_standard_widget(button, TRUE);
 
+    set_css_min_size(button, width, height);
+    set_css_value_direct(button, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
+
 #if GTK_CHECK_VERSION(3, 16, 0)
     lives_widget_set_padding(button, 0);
     set_css_value_direct(button, LIVES_WIDGET_STATE_NORMAL, "", "background", "none");
@@ -10520,6 +10526,7 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
     set_css_min_size(combo, widget_opts.css_min_width, widget_opts.css_min_height);
     set_child_colour(combo, TRUE);
     set_child_dimmed_colour(combo, BUTTON_DIM_VAL); // insens, themecols 1, child only
+    set_css_value_direct(combo, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
     lives_widget_apply_theme2(combo, LIVES_WIDGET_STATE_NORMAL, TRUE);
     lives_widget_apply_theme2(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, TRUE);
     lives_widget_apply_theme_dimmed(combo, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
@@ -10911,7 +10918,7 @@ LiVESWidget *lives_standard_hscale_new(LiVESAdjustment *adj) {
     ctx = gtk_widget_get_style_context(hscale);
     provider = gtk_css_provider_new();
     gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
-                                   (provider), GTK_STYLE_PROVIDER_PRIORITY_USER);
+                                   (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
     gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
                                     tmp,
                                     -1, NULL);
@@ -11131,12 +11138,21 @@ LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer *tbu
   lives_text_view_set_editable(LIVES_TEXT_VIEW(textview), FALSE);
   lives_text_view_set_wrap_mode(LIVES_TEXT_VIEW(textview), LIVES_WRAP_WORD);
   lives_text_view_set_cursor_visible(LIVES_TEXT_VIEW(textview), FALSE);
+  lives_container_set_border_width(LIVES_CONTAINER(textview), 2);
 
   if (text) {
     lives_text_view_set_text(LIVES_TEXT_VIEW(textview), text, -1);
   }
 
-  lives_widget_apply_theme3(textview, LIVES_WIDGET_STATE_NORMAL);
+  if (widget_opts.apply_theme) {
+    lives_widget_apply_theme3(textview, LIVES_WIDGET_STATE_NORMAL);
+    if (prefs->extra_colours && mainw->pretty_colours) {
+      char *colref = gdk_rgba_to_string(&palette->menu_and_bars);
+      set_css_value_direct(textview, LIVES_WIDGET_STATE_NORMAL, "", "background-color", colref);
+      lives_free(colref);
+    }
+    set_css_value_direct(textview, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
+  }
 
   lives_text_view_set_justification(LIVES_TEXT_VIEW(textview), widget_opts.justify);
   if (widget_opts.justify == LIVES_JUSTIFY_CENTER) {
@@ -12476,6 +12492,7 @@ static void do_more_stuff(void) {
 
 boolean lives_widget_context_update(void) {
   static pthread_mutex_t ctx_mutex = PTHREAD_MUTEX_INITIALIZER;
+  if (timer_running) return FALSE;
   if (mainw->no_context_update) return FALSE;
   if (pthread_mutex_trylock(&ctx_mutex)) return FALSE;
   else {

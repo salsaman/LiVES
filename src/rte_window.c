@@ -1691,8 +1691,6 @@ void on_rte_info_clicked(LiVESButton * button, livespointer user_data) {
   lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
 
   if (has_desc) {
-
-
     hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
 
@@ -1710,7 +1708,8 @@ void on_rte_info_clicked(LiVESButton * button, livespointer user_data) {
     if (palette->style & STYLE_1) {
       lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
       lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-      lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
+      lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)),
+                                LIVES_WIDGET_STATE_NORMAL, &palette->nice1);
     }
   }
 
@@ -2151,7 +2150,7 @@ LiVESWidget *create_rte_window(void) {
   LiVESWidget *hbox;
   LiVESWidget *hbox2;
 
-  LiVESWidget *vbox;
+  LiVESWidget *vbox, *vbox2;
   LiVESWidget *label;
   LiVESWidget *combo;
   LiVESWidget *ok_button;
@@ -2341,8 +2340,12 @@ LiVESWidget *create_rte_window(void) {
       lives_combo_set_entry_text_column(LIVES_COMBO(combo), EXTENDED_NAME_COLUMN);
 
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo), "hashname", empty_string);
-      lives_box_pack_end(LIVES_BOX(hbox), clear_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
-      lives_box_pack_end(LIVES_BOX(hbox), info_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
+
+      vbox2 = lives_vbox_new(FALSE, 0);
+      lives_box_pack_end(LIVES_BOX(hbox), vbox2, FALSE, FALSE, widget_opts.packing_width);
+
+      lives_box_pack_start(LIVES_BOX(vbox2), info_buttons[idx], FALSE, FALSE, widget_opts.packing_height);
+      lives_box_pack_start(LIVES_BOX(vbox2), clear_buttons[idx], FALSE, FALSE, widget_opts.packing_height);
 
       combo_entries[idx] = lives_combo_get_entry(LIVES_COMBO(combo));
 
@@ -2387,8 +2390,8 @@ LiVESWidget *create_rte_window(void) {
 
   lives_container_add(LIVES_CONTAINER(irte_window), top_vbox);
 
-  hbuttonbox = lives_hbutton_box_new();
-  lives_box_pack_start(LIVES_BOX(top_vbox), hbuttonbox, TRUE, TRUE, 0);
+  hbuttonbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(top_vbox), hbuttonbox, FALSE, TRUE, 0);
 
   add_fill_to_box(LIVES_BOX(hbuttonbox));
   lives_widget_apply_theme(hbuttonbox, LIVES_WIDGET_STATE_NORMAL);
@@ -2396,29 +2399,36 @@ LiVESWidget *create_rte_window(void) {
   clear_all_button = lives_dialog_add_button_from_stock(NULL, LIVES_STOCK_CLEAR, _("_Clear all effects"),
                      LIVES_RESPONSE_RESET);
 
-  lives_container_add(LIVES_CONTAINER(hbuttonbox), clear_all_button);
+  lives_box_pack_start(LIVES_BOX(hbuttonbox), clear_all_button, TRUE, TRUE, widget_opts.packing_width);
 
   save_keymap_button = lives_dialog_add_button_from_stock(NULL, LIVES_STOCK_SAVE_AS, _("_Save as default keymap"),
                        LIVES_RESPONSE_ACCEPT);
 
-  lives_container_add(LIVES_CONTAINER(hbuttonbox), save_keymap_button);
+  lives_box_pack_start(LIVES_BOX(hbuttonbox), save_keymap_button, TRUE, TRUE, widget_opts.packing_width);
 
   load_keymap_button = lives_dialog_add_button_from_stock(NULL, LIVES_STOCK_OPEN, _("_Load default keymap"),
                        LIVES_RESPONSE_BROWSE);
 
-  lives_container_add(LIVES_CONTAINER(hbuttonbox), load_keymap_button);
+  lives_box_pack_start(LIVES_BOX(hbuttonbox), load_keymap_button, TRUE, TRUE, widget_opts.packing_width);
 
   ok_button = lives_dialog_add_button_from_stock(NULL, LIVES_STOCK_CLOSE, _("Close _window"),
               LIVES_RESPONSE_OK);
 
-  lives_container_add(LIVES_CONTAINER(hbuttonbox), ok_button);
+  lives_box_pack_start(LIVES_BOX(hbuttonbox), ok_button, TRUE, TRUE, widget_opts.packing_width);
 
   add_fill_to_box(LIVES_BOX(hbuttonbox));
 
-  lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), clear_all_button, DEF_BUTTON_WIDTH);
-  lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), save_keymap_button, DEF_BUTTON_WIDTH);
-  lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), load_keymap_button, DEF_BUTTON_WIDTH);
-  lives_button_box_set_button_width(LIVES_BUTTON_BOX(hbuttonbox), ok_button, DEF_BUTTON_WIDTH);
+  lives_widget_set_size_request(clear_all_button, DLG_BUTTON_WIDTH, DLG_BUTTON_HEIGHT);
+  lives_widget_set_margin(clear_all_button, widget_opts.border_width);
+
+  lives_widget_set_size_request(save_keymap_button, DLG_BUTTON_WIDTH, DLG_BUTTON_HEIGHT);
+  lives_widget_set_margin(save_keymap_button, widget_opts.border_width);
+
+  lives_widget_set_size_request(load_keymap_button, DLG_BUTTON_WIDTH, DLG_BUTTON_HEIGHT);
+  lives_widget_set_margin(load_keymap_button, widget_opts.border_width);
+
+  lives_widget_set_size_request(ok_button, DLG_BUTTON_WIDTH, DLG_BUTTON_HEIGHT);
+  lives_widget_set_margin(ok_button, widget_opts.border_width);
 
   rtew_accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(irte_window), rtew_accel_group);

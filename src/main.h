@@ -1180,7 +1180,7 @@ boolean rdet_suggest_values(int width, int height, double fps, int fps_num, int 
                             int asigned, boolean swap_endian, boolean anr, boolean ignore_fps);
 boolean do_encoder_restrict_dialog(int width, int height, double fps, int fps_num, int fps_denom,
                                    int arate, int asigned, boolean swap_endian, boolean anr, boolean save_all);
-void do_messages_window(void);
+void do_messages_window(boolean is_startup);
 void do_firstever_dialog(void);
 void do_upgrade_error_dialog(void);
 void do_no_mplayer_sox_error(void);

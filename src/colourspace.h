@@ -224,7 +224,9 @@ weed_layer_t *weed_layer_create(int width, int height, int *rowstrides, int curr
 weed_layer_t *weed_layer_create_full(int width, int height, int *rowstrides, int current_palette,
                                      int YUV_clamping, int YUV_sampling, int YUV_subspace, int gamma_type);
 weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer);
-void *weed_layer_free(weed_layer_t *);
+weed_layer_t *weed_layer_free(weed_layer_t *);
+int weed_layer_unref(weed_layer_t *);
+int weed_layer_ref(weed_layer_t *);
 
 // lives specific
 weed_layer_t *lives_layer_new_for_frame(int clip, frames_t frame);
@@ -247,13 +249,11 @@ void weed_layer_pixel_data_free(weed_layer_t *);
 #define WEED_GAMMA_VARIANT 2048
 #define WEED_LAYER_ALPHA_PREMULT 1
 
-#define DEF_FILE_GAMMA 1.22
-
 // layer transformation functions
 void alpha_unpremult(weed_layer_t *, boolean un);
 boolean copy_pixel_data(weed_layer_t *dst, weed_layer_t *src_or_null, size_t alignment);
 boolean gamma_convert_layer(int gamma_type, weed_layer_t *);
-boolean gamma_convert_layer_variant(double file_gamma, weed_layer_t *);
+boolean gamma_convert_layer_variant(double file_gamma, int tgamma, weed_layer_t *);
 boolean gamma_convert_sub_layer(int gamma_type, double fileg, weed_layer_t *, int x, int y,
                                 int width, int height, boolean may_thread);
 boolean convert_layer_palette(weed_layer_t *, int outpl, int op_clamping);

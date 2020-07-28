@@ -24,4 +24,5 @@ void lives_struct_test(void);
 
 void benchmark(void);
 
+void hash_test(void);
 #endif

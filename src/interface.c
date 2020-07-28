@@ -2467,7 +2467,7 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
     lives_nanosleep(1000);
   } while (!*rec_list && filtresp == LIVES_RESPONSE_NONE);
 
-  if (filtresp != LIVES_RESPONSE_NONE) goto filtc_done;
+  if (filtresp != LIVES_RESPONSE_NONE) goto harlem_shuffle;
 
   rec_recheck = fill_filt_section(rec_list, pass, 0, layout_rec);
   lives_layout_add_fill(LIVES_LAYOUT(layout_rec), FALSE);
@@ -2492,7 +2492,7 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
     lives_nanosleep(1000);
   } while (!*rem_list && filtresp == LIVES_RESPONSE_NONE);
 
-  if (filtresp != LIVES_RESPONSE_NONE) goto filtc_done;
+  if (filtresp != LIVES_RESPONSE_NONE) goto harlem_shuffle;
 
   rem_recheck = fill_filt_section(rem_list, pass, 1, layout_rem);
   lives_layout_add_fill(LIVES_LAYOUT(layout_rem), FALSE);
@@ -2517,7 +2517,7 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
     lives_nanosleep(1000);
   } while (!*left_list && filtresp == LIVES_RESPONSE_NONE);
 
-  if (filtresp != LIVES_RESPONSE_NONE) goto filtc_done;
+  if (filtresp != LIVES_RESPONSE_NONE) goto harlem_shuffle;
 
   leave_recheck = fill_filt_section(left_list, pass, 2, layout_leave);
   lives_layout_add_fill(LIVES_LAYOUT(layout_leave), FALSE);
@@ -2561,7 +2561,7 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
 
   while (filtresp == LIVES_RESPONSE_NONE) lives_dialog_run(LIVES_DIALOG(dialog));
 
- filtc_done:
+ harlem_shuffle:
   if (filtresp != LIVES_RESPONSE_CANCEL) {
     // we need to shuffle the lists around before destroying the dialog; caller will move
     // actual pointer files
@@ -2585,8 +2585,11 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
 	if (!pass || pass == 2) {
 	  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[0]))) {
 	    if (pass == 2 || !lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[1]))) {
+	      // move into delete from recover or leave
 	      if (list->prev) list->prev->next = list->next;
 	      if (list->next) list->next->prev = list->prev;
+	      if (list == *rec_list) *rec_list = list->next;
+	      else if (list == *left_list) *left_list = list->next;
 	      list->prev = NULL;
 	      list->next = *rem_list;
 	      (*rem_list)->prev = list;
@@ -2596,10 +2599,13 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
 	}
 	if (pass != 2) {
 	  if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[0]))) {
+	    // move to leave, from rec or rem
 	    if (list->prev) list->prev->next = list->next;
 	    if (list->next) list->next->prev = list->prev;
 	    list->prev = NULL;
 	    list->next = *left_list;
+	    if (list == *rec_list) *rec_list = list->next;
+	    else if (list == *rem_list) *rem_list = list->next;
 	    (*left_list)->prev = list;
 	    *left_list = list;
 	    // *INDENT-OFF*
@@ -4152,73 +4158,72 @@ _entryw *create_cds_dialog(int type) {
 
   _entryw *cdsw = (_entryw *)(lives_malloc(sizeof(_entryw)));
 
-  /* cdsw->warn_checkbutton = NULL; */
+  cdsw->warn_checkbutton = NULL;
 
-  /* if (type == 0) { */
-  /*   if (strlen(mainw->multitrack->layout_name) == 0) { */
-  /*     labeltext = lives_strdup( */
-  /*                   _("You are about to leave multitrack mode.\n" */
-  /* 		      "The current layout has not been saved.\nWhat would you like to do ?\n")); */
-  /*   } else { */
-  /*     labeltext = lives_strdup( */
-  /*                   _("You are about to leave multitrack mode.\n" */
-  /* 		      "The current layout has been changed since the last save.\n" */
-  /* 		      "What would you like to do ?\n")); */
-  /*   } */
-  /* } else if (type == 1) { */
-  /*   if (!mainw->only_close) labeltext = lives_strdup( */
-  /*                                           _("You are about to exit LiVES.\n" */
-  /* 					      "The current clip set can be saved.\n" */
-  /* 					      "What would you like to do ?\n")); */
-  /*   else labeltext = (_("The current clip set has not been saved.\nWhat would you like to do ?\n")); */
-  /* } else if (type == 2 || type == 3) { */
-  /*   if ((mainw->multitrack != NULL && mainw->multitrack->changed) || (mainw->stored_event_list != NULL && */
-  /*       mainw->stored_event_list_changed)) { */
-  /*     labeltext = (_("The current layout has not been saved.\nWhat would you like to do ?\n")); */
-  /*   } else { */
-  /*     labeltext = lives_strdup( */
-  /*                   _("The current layout has *NOT BEEN CHANGED* since it was last saved.\n" */
-  /* 		      "What would you like to do ?\n")); */
-  /*   } */
-  /* } else if (type == 4) { */
-  /*   labeltext = lives_strdup( */
-  /*                 _("You are about to leave multitrack mode.\n" */
-  /* 		    "The current layout contains generated frames and cannot be retained.\n" */
-  /* 		    "What do you wish to do ?")); */
-  /* } */
+  if (type == 0) {
+    if (strlen(mainw->multitrack->layout_name) == 0) {
+      labeltext = lives_strdup(
+                    _("You are about to leave multitrack mode.\n"
+                      "The current layout has not been saved.\nWhat would you like to do ?\n"));
+    } else {
+      labeltext = lives_strdup(
+                    _("You are about to leave multitrack mode.\n"
+                      "The current layout has been changed since the last save.\n"
+                      "What would you like to do ?\n"));
+    }
+  } else if (type == 1) {
+    if (!mainw->only_close) labeltext = lives_strdup(
+                                            _("You are about to exit LiVES.\n"
+                                              "The current clip set can be saved.\n"
+                                              "What would you like to do ?\n"));
+    else labeltext = (_("The current clip set has not been saved.\nWhat would you like to do ?\n"));
+  } else if (type == 2 || type == 3) {
+    if ((mainw->multitrack != NULL && mainw->multitrack->changed) || (mainw->stored_event_list != NULL &&
+        mainw->stored_event_list_changed)) {
+      labeltext = (_("The current layout has not been saved.\nWhat would you like to do ?\n"));
+    } else {
+      labeltext = lives_strdup(
+                    _("The current layout has *NOT BEEN CHANGED* since it was last saved.\n"
+                      "What would you like to do ?\n"));
+    }
+  } else if (type == 4) {
+    labeltext = lives_strdup(
+                  _("You are about to leave multitrack mode.\n"
+                    "The current layout contains generated frames and cannot be retained.\n"
+                    "What do you wish to do ?"));
+  }
 
   cdsw->dialog = create_question_dialog(_("Cancel/Discard/Save"), labeltext,
                                         LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  /* dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(cdsw->dialog)); */
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(cdsw->dialog));
 
-  /* if (labeltext != NULL) lives_free(labeltext); */
+  if (labeltext != NULL) lives_free(labeltext);
 
-  /* if (type == 1) { */
-  /*   LiVESWidget *checkbutton; */
+  if (type == 1) {
+    LiVESWidget *checkbutton;
+    LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  /*   hbox = lives_hbox_new(FALSE, 0); */
-  /*   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height); */
+    cdsw->entry = lives_standard_entry_new(_("Clip set _name"), strlen(mainw->set_name)
+                                           ? mainw->set_name : "",
+                                           SHORT_ENTRY_WIDTH, 128, LIVES_BOX(hbox), NULL);
 
-  /*   cdsw->entry = lives_standard_entry_new(_("Clip set _name"), strlen(mainw->set_name) */
-  /* 					   ? mainw->set_name : "", */
-  /*                                          SHORT_ENTRY_WIDTH, 128, LIVES_BOX(hbox), NULL); */
+    hbox = lives_hbox_new(FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  /*   hbox = lives_hbox_new(FALSE, 0); */
-  /*   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height); */
+    prefs->ar_clipset = !mainw->only_close;
+    checkbutton = make_autoreload_check(LIVES_HBOX(hbox), prefs->ar_clipset);
 
-  /*   prefs->ar_clipset = !mainw->only_close; */
-  /*   checkbutton = make_autoreload_check(LIVES_HBOX(hbox), prefs->ar_clipset); */
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(checkbutton), "cdsw", (livespointer)cdsw);
 
-  /*   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(checkbutton), "cdsw", (livespointer)cdsw); */
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                              LIVES_GUI_CALLBACK(toggle_sets_pref),
+                              (livespointer)PREF_AR_CLIPSET);
+  }
 
-  /*   lives_signal_sync_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL, */
-  /*                             LIVES_GUI_CALLBACK(toggle_sets_pref), */
-  /*                             (livespointer)PREF_AR_CLIPSET); */
-  /* } */
-
-  /* if (type == 0 && !(prefs->warning_mask & WARN_MASK_EXIT_MT)) { */
-  /*   add_warn_check(LIVES_BOX(dialog_vbox), WARN_MASK_EXIT_MT); */
-  /* } */
+  if (type == 0 && !(prefs->warning_mask & WARN_MASK_EXIT_MT)) {
+    add_warn_check(LIVES_BOX(dialog_vbox), WARN_MASK_EXIT_MT);
+  }
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(cdsw->dialog), accel_group);
@@ -4246,11 +4251,11 @@ _entryw *create_cds_dialog(int type) {
 
   lives_widget_show_all(cdsw->dialog);
 
-  /* if (type == 1) { */
-  /*   lives_widget_grab_focus(cdsw->entry); */
-  /* } */
+  if (type == 1) {
+    lives_widget_grab_focus(cdsw->entry);
+  }
 
-  /* if (!LIVES_IS_INTERACTIVE) lives_widget_set_sensitive(cancelbutton, FALSE); */
+  if (!LIVES_IS_INTERACTIVE) lives_widget_set_sensitive(cancelbutton, FALSE);
 
   return cdsw;
 }
@@ -5566,7 +5571,7 @@ void run_diskspace_dialog(void) {
   boolean wrtable = FALSE;
   boolean has_dsused = FALSE;
   char *title, *tmp;
-  return;
+
   if (prefsw) lives_widget_hide(prefsw->prefs_dialog);
 
   free_ds = (int64_t)get_ds_free(prefs->workdir);

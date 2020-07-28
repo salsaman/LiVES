@@ -8043,16 +8043,16 @@ if (defined($ARGV[0])) {
 	&smog_chdir("$workdir/$handle");
 	if ($log) {
 	    print "smogrify: removing *.mgk *.bak *.pre *.tmp" .
-		" pause audio audiodump* audioclip\n";
+		" pause audio.* audiodump* audioclip\n";
 	    print "smogrify: from directory $workdir/$handle\n";
 
 	    print STDERR  "smogrify: removing *.mgk *.bak *.pre *.tmp" .
-		" pause audio audiodump* audioclip\n";
+		" pause audio.*audiodump* audioclip\n";
 	    print STDERR "smogrify: from directory $workdir/$handle\n";
 	}
 
 	my $use_trash = 0;
-	my @files = glob ("*.mgk *.bak *.pre *.tmp pause audio audiodump* audioclip");
+	my @files = glob ("*.mgk *.bak *.pre *.tmp pause audio.* audiodump* audioclip");
 	if ($movetotrash) {
 	    my $deftrashdir = "$workdir/.$DEFTRASH";
 	    if (! -d $deftrashdir) {

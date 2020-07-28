@@ -367,6 +367,6 @@ weed_error_t weed_leaf_delete_host(weed_plant_t *plant, const char *key);
 weed_error_t weed_plant_free_host(weed_plant_t *plant);
 //weed_error_t weed_leaf_get_monitor(weed_plant_t *plant, const char *key, int32_t idx, void *value);
 
-void show_weed_stats(void);
+void show_weed_stats(weed_plant_t *statsplant);
 
 #endif

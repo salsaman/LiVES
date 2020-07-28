@@ -6914,10 +6914,12 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_text(LiVESLabel *label, cons
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_markup(LiVESLabel *label, const char *markup) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_markup(LiVESLabel *label, const char *text) {
 #ifdef GUI_GTK
+  char *markup = lives_markup_escape_text(text, -1);
   if (!widget_opts.mnemonic_label) gtk_label_set_markup(label, markup);
   else gtk_label_set_markup_with_mnemonic(label, markup);
+  lives_free(markup);
   return TRUE;
 #endif
   return FALSE;

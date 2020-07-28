@@ -1415,7 +1415,11 @@ typedef struct {
   ///< effects which can have candidates from which a delegate is selected (current examples are: audio_volume, resize)
   fx_candidates[MAX_FX_CANDIDATE_TYPES];
 
-  LiVESList *cached_list;  ///< cache of preferences or file header file (or NULL)
+  /// file caches
+  LiVESList *prefs_cache;  ///< cache of preferences, used during startup phase
+  LiVESList *hdrs_cache;  ///< cache of a file header (e.g. header.lives)
+  LiVESList *gen_cache;  ///< general cache of fi
+
   FILE *clip_header;
 
   LiVESList *file_buffers; ///< list of open files for buffered i/o

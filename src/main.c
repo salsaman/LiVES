@@ -614,7 +614,7 @@ static boolean pre_init(void) {
   mainw->string_constants[LIVES_STRING_CONSTANT_CLOSE_WINDOW] = (_("Close Window"));
 
   // now we can use PREFS properly
-  cache_file_contents(capable->rcfile);
+  mainw->prefs_cache = cache_file_contents(capable->rcfile);
 
   future_prefs->vj_mode = get_boolean_prefd(PREF_VJMODE, FALSE);
   if (!ign_opts.ign_vjmode) prefs->vj_mode = future_prefs->vj_mode;
@@ -2297,8 +2297,8 @@ static void set_toolkit_theme(int prefer) {
 
 boolean set_palette_colours(boolean force_reload) {
   // force_reload should only be set when the theme changes in prefs.
-  LiVESList *cache_backup = NULL;
   lives_colRGBA64_t lcol;
+  LiVESList *cache_backup;
 
   char *themedir, *themefile, *othemefile, *fname, *tmp;
   char pstyle[8];
@@ -2502,9 +2502,10 @@ boolean set_palette_colours(boolean force_reload) {
 
     // cache the themefile
     othemefile = themefile;
-    cache_backup = mainw->cached_list;
-    mainw->cached_list = NULL;
-    if ((cached = cache_file_contents(themefile))) themefile = NULL;
+
+    cache_backup = mainw->gen_cache;
+    if (!(mainw->gen_cache = cache_file_contents(themefile))) themefile = NULL;
+    else cached = TRUE;
 
     // mandatory for themes
 
@@ -2553,8 +2554,8 @@ boolean set_palette_colours(boolean force_reload) {
 
     if (!is_OK) {
       if (cached) {
-        lives_list_free_all(&mainw->cached_list);
-        mainw->cached_list = cache_backup;
+        lives_list_free_all(&mainw->gen_cache);
+        mainw->gen_cache = cache_backup;
         themefile = othemefile;
       }
       if (mainw->is_ready) do_bad_theme_error(themefile);
@@ -2585,8 +2586,8 @@ boolean set_palette_colours(boolean force_reload) {
     get_theme_colour_pref(themefile, THEME_DETAIL_CE_UNSEL, &palette->ce_unsel);
 
     if (cached) {
-      lives_list_free_all(&mainw->cached_list);
-      mainw->cached_list = cache_backup;
+      lives_list_free_all(&mainw->gen_cache);
+      mainw->gen_cache = cache_backup;
       themefile = othemefile;
     }
 
@@ -3454,7 +3455,7 @@ static boolean lives_startup(livespointer data) {
   }
 #endif
 
-  lives_list_free_all(&mainw->cached_list);
+  if (mainw->prefs_cache) cached_list_free(&mainw->prefs_cache);
 
   if (!prefs->show_gui) lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
 
@@ -3827,7 +3828,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   mainw = (mainwindow *)(lives_calloc(1, sizeof(mainwindow)));
   mainw->version_hash = lives_strdup_printf("%d", verhash(LiVES_VERSION));
   mainw->mgeom = NULL;
-  mainw->cached_list = NULL;
   mainw->msg[0] = '\0';
   mainw->error = FALSE;
   mainw->is_exiting = FALSE;
@@ -3850,6 +3850,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   mainw->has_session_workdir = FALSE;
   mainw->old_vhash = NULL;
+
+  mainw->prefs_cache = mainw->hdrs_cache = mainw->gen_cache = NULL;
 
   // mainw->foreign is set if we are grabbing an external window
   mainw->foreign = FALSE;

@@ -4383,7 +4383,7 @@ weed_size_t weed_leaf_num_elements_monitor(weed_plant_t *plant, const char *key)
 }
 
 
-void show_weed_stats(void) {
+void show_weed_stats(weed_plant_t *statsplant) {
   LiVESList *freq = NULL, *sorted = NULL, *list;
   char **leaves;
   int val, i, added = 0, min, lmin = 0;

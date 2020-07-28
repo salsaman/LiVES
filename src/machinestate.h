@@ -218,10 +218,13 @@ void *_ext_realloc(void *, size_t) GNU_MALLOC_SIZE(2);
 void *_ext_calloc(size_t, size_t) GNU_MALLOC_SIZE2(1, 2) GNU_ALIGN(2);
 
 #define OVERRIDE_MEMFUNCS
-static void *(*_lsd_calloc)(size_t nmemb, size_t size) = _ext_calloc;
 static void *(*_lsd_memcpy)(void *dest, const void *src, size_t n) = _ext_memcpy;
 static void *(*_lsd_memset)(void *s, int c, size_t n) = _ext_memset;
-static void (*_lsd_free)(void *ptr) = _ext_free;
+static void (*_lsd_free)(void *ptr) = rpfree;
+#define OVERRIDE_CALLOC_ALIGNED
+static int _lsd_calloc_aligned_(void **memptr, size_t nmemb, size_t size) {
+  return !memptr ? 0 : (!(*memptr = (rpaligned_calloc)(64, nmemb, size))) ? ENOMEM : 0;
+}
 #include "lsd.h"
 #undef OVERRIDE_MEMFUNCS
 
@@ -327,6 +330,7 @@ void lives_log(const char *what);
 #endif
 
 uint32_t lives_string_hash(const char *string) GNU_PURE GNU_HOT;
+uint32_t fast_hash(const char *key) GNU_PURE GNU_HOT;
 size_t lives_chomp(char *string);
 
 int check_for_bad_ffmpeg(void);

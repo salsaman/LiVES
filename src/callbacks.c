@@ -187,8 +187,7 @@ void lives_exit(int signum) {
     }
 
     //lives_threadpool_finish();
-    if (prefs->show_dev_opts)
-      show_weed_stats();
+    //show_weed_stats();
   }
 
   if (mainw->is_ready) {
@@ -1001,7 +1000,7 @@ void on_recent_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     mt_desensitise(mainw->multitrack);
   }
 
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+  //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
   pref = lives_strdup_printf("%s%d", PREF_RECENT, pno);
 
@@ -5660,9 +5659,7 @@ boolean reload_set(const char *set_name) {
   while (1) {
     if (prefs->show_gui) threaded_dialog_spin(0.);
 
-    if (mainw->cached_list != NULL) {
-      lives_list_free_all(&mainw->cached_list);
-    }
+    if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
 
     if (orderfile == NULL) {
       // old style (pre 0.9.6)
@@ -5798,6 +5795,7 @@ boolean reload_set(const char *set_name) {
       lives_free(mainw->files[mainw->current_file]);
       mainw->files[mainw->current_file] = NULL;
       if (mainw->first_free_file > mainw->current_file) mainw->first_free_file = mainw->current_file;
+      if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
       hadbad = TRUE;
       continue;
     }
@@ -5828,7 +5826,10 @@ boolean reload_set(const char *set_name) {
         We then check backwards from the end of file_index to find the final decoded frame.
         If this is the frame we expected then we assume all is OK */
 
-      if (!reload_clip(mainw->current_file, maxframe)) continue;
+      if (!reload_clip(mainw->current_file, maxframe)) {
+        if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
+        continue;
+      }
       if (cfile->clip_type == CLIP_TYPE_FILE && cfile->header_version >= 102) cfile->fps = cfile->pb_fps;
 
       /** if the image type is still unkown it means either there were no decoded frames, or the final decoded frame was absent
@@ -5859,6 +5860,7 @@ boolean reload_set(const char *set_name) {
         cfile->frames = get_frame_count(mainw->current_file, 1);
         if (cfile->frames == -1) {
           close_current_file(0);
+          if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
           continue;
         }
         cfile->needs_update = TRUE;
@@ -5897,9 +5899,7 @@ boolean reload_set(const char *set_name) {
       cfile->needs_silent_update = cfile->needs_update = FALSE;
     }
 
-    if (mainw->cached_list != NULL) {
-      lives_list_free_all(&mainw->cached_list);
-    }
+    if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
 
     if (prefs->autoload_subs) {
       reload_subs(mainw->current_file);
@@ -6314,12 +6314,12 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
         }
       }
 
-      if (*rec_list && (*rec_list)->data) {
-        /// try to recover lost files first
-        lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
-        recover_lost_clips(*rec_list);
-        /// TODO: unrecoverable files -> rem_list
-      }
+      /* if (*rec_list && (*rec_list)->data) { */
+      /*   /// try to recover lost files first */
+      /*   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL); */
+      /*   recover_lost_clips(*rec_list); */
+      /*   /// TODO: unrecoverable files -> rem_list */
+      /* } */
 
       // now finally we remove all in rem_list, this is done in the backend
 

@@ -205,6 +205,34 @@ static void show_timer_info(void) {
   timerinfo = lives_get_current_ticks();
 }
 
+static char *randstrg(size_t len) {
+  char *strg = lives_calloc(1, len), *ptr = strg;
+  for (int i = 1; i < len; i++) *(ptr++) = ((lives_random() & 63) + 32);
+  return strg;
+}
+
+
+
+void hash_test(void) {
+  char *str;
+  int i;
+  uint32_t val;
+  int nr = 100000000;
+  timerinfo = lives_get_current_ticks();
+  for (i = 0; i < nr; i++) {
+    str = randstrg(fastrand_int(20));
+    val = fast_hash(str) / 7;
+    lives_free(str);
+  }
+  show_timer_info();
+  for (i = 0; i < nr; i++) {
+    str = randstrg(fastrand_int(20));
+    lives_string_hash(str) / 7;
+    lives_free(str);
+  }
+  show_timer_info();
+}
+
 #include "lsd.h"
 
 typedef struct {
@@ -215,13 +243,6 @@ typedef struct {
   void *p;
   char **strgs;
 } lives_test_t;
-
-
-static char *randstrg(size_t len) {
-  char *strg = lives_calloc(1, len), *ptr = strg;
-  for (int i = 1; i < len; i++) *(ptr++) = ((lives_random() & 63) + 32);
-  return strg;
-}
 
 
 void benchmark(void) {

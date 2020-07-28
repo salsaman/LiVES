@@ -35,6 +35,7 @@ LIVES_GLOBAL_INLINE uint64_t lives_random(void) {return random();}
 
 
 uint64_t gen_unique_id(void) {
+  static uint64_t last_rnum = 0;
   uint64_t rnum;
   int randres = getentropy(&rnum, 8);
   if (randres) {
@@ -43,6 +44,12 @@ uint64_t gen_unique_id(void) {
     fastrand_val ^= lives_get_current_ticks();
     rnum = fastrand();
   }
+  /// if we have a genuine RNG for 64 bits, then the probability of generating
+  // a numbr < 1 billion is approx. 2 ^ 30 / 2 ^ 64 or about 1 chance in 17 trillion
+  // the chance of it happening the first time is thus minscule
+  // and the chance of it happening twice by chance is so unlikely we should discount it
+  if (rnum < BILLIONS(1) && last_rnum < BILLIONS(1)) abort();
+  last_rnum = rnum;
   return rnum;
 }
 
@@ -913,8 +920,10 @@ char *file_to_file_details(const char *filename, lives_file_dets_t *fdets,
             lives_freep((void **)&mainw->files[clipno]);
             if (mainw->first_free_file == ALL_USED || mainw->first_free_file > clipno)
               mainw->first_free_file = clipno;
-	    // *INDENT-OFF*
-	  }}}}}
+          }
+          if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
+	  // *INDENT-OFF*
+	}}}}
     // *INDENT-ON*
 
   if (extra & EXTRA_DETAILS_MD5) {
@@ -939,8 +948,6 @@ void *_dir_to_file_details(LiVESList **listp, const char *dir, const char *tsubd
   char *subdirname;
   char *extra_details;
   boolean empty = TRUE;
-
-  g_print("CHECKING dir %s\n", dir);
 
   tinfo = THREADVAR(tinfo);
   if (tinfo) lives_proc_thread_set_cancellable(tinfo);
@@ -1239,8 +1246,52 @@ LIVES_GLOBAL_INLINE boolean lives_strncmp(const char *st1, const char *st2, size
 
 #define HASHROOT 5381
 LIVES_GLOBAL_INLINE uint32_t lives_string_hash(const char *st) {
-  if (st) for (register uint32_t hash = HASHROOT;; hash += (hash << 5)
-                 + * (st++)) if (!(*st)) return hash;
+  if (st) for (uint32_t hash = HASHROOT;; hash += (hash << 5)
+                 + *(st++)) if (!(*st)) return hash;
+  return 0;
+}
+
+
+// fast has from: http://www.azillionmonkeys.com/qed/hash.html
+// (c) Paul Hsieh
+#define get16bits(d) (*((const uint16_t *) (d)))
+
+LIVES_GLOBAL_INLINE uint32_t fast_hash(const char *key) {
+  /// approx 5 - 10 % faster than lives_string_hash
+  if (key && *key) {
+    int len = lives_strlen(key), rem;
+    uint32_t hash = len + HASHROOT, tmp;
+    rem = len & 3;
+    len >>= 2;
+    for (;len > 0; len--) {
+      hash  += get16bits (key);
+      tmp    = (get16bits (key+2) << 11) ^ hash;
+      hash   = (hash << 16) ^ tmp;
+      key  += 2*sizeof (uint16_t);
+      hash  += hash >> 11;
+    }
+
+    /* Handle end cases */
+    switch (rem) {
+    case 3: hash += get16bits (key);
+      hash ^= hash << 16;
+      hash ^= ((signed char)key[sizeof (uint16_t)]) << 18;
+      hash += hash >> 11;
+      break;
+    case 2: hash += get16bits (key);
+      hash ^= hash << 11; hash += hash >> 17;
+      break;
+    case 1: hash += (signed char)*key;
+      hash ^= hash << 10; hash += hash >> 1;
+      break;
+    default: break;
+    }
+
+    /* Force "avalanching" of final 127 bits */
+    hash ^= hash << 3; hash += hash >> 5; hash ^= hash << 4;
+    hash += hash >> 17; hash ^= hash << 25; hash += hash >> 6;
+    return hash;
+  }
   return 0;
 }
 

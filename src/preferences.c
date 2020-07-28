@@ -59,13 +59,13 @@ static void on_osc_enable_toggled(LiVESToggleButton *t1, livespointer t2) {
 #endif
 
 
-static LiVESResponseType get_pref_inner(const char *filename, const char *key, char *val, int maxlen) {
+static LiVESResponseType get_pref_inner(const char *filename, const char *key, char *val, int maxlen,
+                                        LiVESList *cache) {
   char *com;
-
   memset(val, 0, maxlen);
-  if (filename == NULL) {
-    if (mainw->cached_list != NULL) {
-      char *prefval = get_val_from_cached_list(key, maxlen);
+  if (!filename) {
+    if (cache) {
+      char *prefval = get_val_from_cached_list(key, maxlen, cache);
       if (prefval != NULL) {
         lives_snprintf(val, maxlen, "%s", prefval);
         lives_free(prefval);
@@ -87,19 +87,22 @@ static LiVESResponseType get_pref_inner(const char *filename, const char *key, c
 
 
 LIVES_GLOBAL_INLINE LiVESResponseType get_string_pref(const char *key, char *val, int maxlen) {
-  return get_pref_inner(NULL, key, val, maxlen);
+  /// get from prefs
+  return get_pref_inner(NULL, key, val, maxlen, mainw->prefs_cache);
 }
 
 
 LIVES_GLOBAL_INLINE LiVESResponseType get_string_prefd(const char *key, char *val, int maxlen, const char *def) {
-  int ret = get_pref_inner(NULL, key, val, maxlen);
+  /// get from prefs
+  int ret = get_pref_inner(NULL, key, val, maxlen, mainw->prefs_cache);
   if (ret == LIVES_RESPONSE_NO) lives_snprintf(val, maxlen, "%s", def);
   return ret;
 }
 
 
 LIVES_GLOBAL_INLINE LiVESResponseType get_pref_from_file(const char *filename, const char *key, char *val, int maxlen) {
-  return get_pref_inner(filename, key, val, maxlen);
+  /// get from non-prefs
+  return get_pref_inner(filename, key, val, maxlen, mainw->gen_cache);
 }
 
 
@@ -203,6 +206,8 @@ LIVES_GLOBAL_INLINE boolean has_pref(const char *key) {
 
 
 boolean get_colour_pref(const char *key, lives_colRGBA64_t *lcol) {
+  /// this is for leading colours from prefs; for loading from themes
+  // use get_theme_colour_pref
   char buffer[64];
   char **array;
   int ntoks;
@@ -224,6 +229,8 @@ boolean get_colour_pref(const char *key, lives_colRGBA64_t *lcol) {
 
 
 boolean get_theme_colour_pref(const char *themefile, const char *key, lives_colRGBA64_t *lcol) {
+  /// load from mainw->gen_cache
+
   char buffer[64];
   char **array;
   int ntoks;

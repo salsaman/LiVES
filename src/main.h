@@ -1583,8 +1583,9 @@ uint64_t make_version_hash(const char *ver);
 
 void init_clipboard(void);
 
-boolean cache_file_contents(const char *filename);
-char *get_val_from_cached_list(const char *key, size_t maxlen);
+LiVESList *cache_file_contents(const char *filename);
+char *get_val_from_cached_list(const char *key, size_t maxlen, LiVESList *cache);
+void cached_list_free(LiVESList **list);
 
 void get_location(const char *exe, char *val, int maxlen);
 lives_presence_t has_executable(const char *exe);

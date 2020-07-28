@@ -4358,6 +4358,8 @@ boolean read_headers(int fileno, const char *file_name) {
 
   if (!IS_VALID_CLIP(fileno)) return FALSE;
 
+  if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
+
   sfile = mainw->files[fileno];
   old_hdrfile = lives_build_filename(prefs->workdir, sfile->handle, LIVES_CLIP_HEADER_OLD, NULL);
   lives_header = lives_build_filename(prefs->workdir, sfile->handle, LIVES_CLIP_HEADER, NULL);
@@ -4368,7 +4370,7 @@ boolean read_headers(int fileno, const char *file_name) {
   if (lives_file_test(lives_header, LIVES_FILE_TEST_EXISTS)) {
     do {
       retval2 = LIVES_RESPONSE_OK;
-      if (!cache_file_contents(lives_header)) {
+      if (!(mainw->hdrs_cache = cache_file_contents(lives_header))) {
         if (fileno != mainw->current_file) goto rhd_failed;
         retval2 = do_read_failed_error_s_with_retry(lives_header, NULL, NULL);
       }
@@ -4395,7 +4397,7 @@ boolean read_headers(int fileno, const char *file_name) {
           if (fileno != mainw->current_file) {
             goto rhd_failed;
           }
-          if (mainw->cached_list != NULL) {
+          if (mainw->hdrs_cache) {
             retval2 = do_header_missing_detail_error(fileno, CLIP_DETAILS_HEADER_VERSION);
           } else {
             retval2 = do_header_read_error_with_retry(fileno);
@@ -4501,7 +4503,7 @@ get_avals:
       }
       if (!retval) {
         if (fileno != mainw->current_file) goto rhd_failed;
-        if (mainw->cached_list != NULL) {
+        if (mainw->hdrs_cache) {
           retval2 = do_header_missing_detail_error(fileno, detail);
         } else {
           retval2 = do_header_read_error_with_retry(fileno);
@@ -4512,13 +4514,16 @@ get_avals:
         get_clip_value(fileno, CLIP_DETAILS_COMMENT, sfile->comment, 1024);
         get_clip_value(fileno, CLIP_DETAILS_KEYWORDS, sfile->keywords, 1024);
         get_clip_value(fileno, CLIP_DETAILS_INTERLACE, &sfile->interlace, 0);
-        // user must have forced this
+        // user must have selected this:
         if (sfile->interlace != LIVES_INTERLACE_NONE) sfile->deinterlace = TRUE;
         lives_free(old_hdrfile);
         lives_free(lives_header);
         if (!prefs->vj_mode) {
           sfile->afilesize = reget_afilesize_inner(fileno);
         }
+        /// need to maintain mainw->hdrs_cache in this case, as it may be
+        // passed to further functions, but it needs to be freed and set to NULL
+        // at some point
         return TRUE;
       }
     } while (retval2 == LIVES_RESPONSE_RETRY);
@@ -4545,7 +4550,6 @@ old_check:
       char *tmp;
 
       // use new style header (LiVES 0.9.6+)
-
       // clean up and get file sizes
       if (file_name) {
         com = lives_strdup_printf("%s restore_details \"%s\" \"%s\" 0",
@@ -4578,6 +4582,7 @@ old_check:
       if (fileno == mainw->current_file) threaded_dialog_spin(0.);
     } else goto rhd_failed;
     lives_free(old_hdrfile);
+    /// mainw->hdrs_cache never set
     return TRUE;
   }
 
@@ -4648,7 +4653,7 @@ old_check:
 
   lives_freep((void **)&old_hdrfile);
 
-  if (retval == LIVES_RESPONSE_CANCEL) return FALSE;
+  if (retval == LIVES_RESPONSE_CANCEL) goto rhd_failed;
 
   // handle version changes
   version_hash = verhash(version);
@@ -4667,7 +4672,7 @@ old_check:
 
   if (THREADVAR(com_failed)) {
     THREADVAR(com_failed) = FALSE;
-    return FALSE;
+    goto rhd_failed;
   }
 
   pieces = get_token_count(buff, '|');
@@ -4711,7 +4716,7 @@ void open_set_file(int clipnum) {
 
   lives_memset(name, 0, CLIP_NAME_MAXLEN);
 
-  if (mainw->cached_list != NULL) {
+  if (mainw->hdrs_cache) {
     boolean retval;
     // LiVES 0.9.6+
 
@@ -4863,8 +4868,7 @@ ulong restore_file(const char *file_name) {
   // call function to return rest of file details
   // fsize, afilesize and frames
   is_OK = read_headers(mainw->current_file, file_name);
-
-  lives_list_free_all(&mainw->cached_list);
+  if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
 
   if (!is_OK) {
     mesg = lives_strdup_printf(_("\n\nThe file %s is corrupt.\nLiVES was unable to restore it.\n"),
@@ -5665,10 +5669,8 @@ manual_locate:
       sfile->needs_silent_update = TRUE; // force filename update in header
       if (prefs->show_recent) {
         // replace in recent menu
-        LiVESList *cache_backup = mainw->cached_list;
         char file[PATH_MAX];
         int i;
-        mainw->cached_list = NULL;
         for (i = 0; i < 4; i++) {
           char *tmp;
           char *pref = lives_strdup_printf("%s%d", PREF_RECENT, i + 1);
@@ -5683,7 +5685,11 @@ manual_locate:
           lives_free(tmp);
           lives_free(pref);
         }
-        mainw->cached_list = cache_backup;
+        if (mainw->prefs_cache) {
+          // update recent files -> force reload of prefs
+          cached_list_free(&mainw->prefs_cache);
+          mainw->prefs_cache = cache_file_contents(capable->rcfile);
+        }
       }
     }
 
@@ -5878,11 +5884,11 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   mainw->recovering_files = TRUE;
 
   while (1) {
+    if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
+
     threaded_dialog_spin(0.);
     is_scrap = FALSE;
     is_ascrap = FALSE;
-
-    lives_list_free_all(&mainw->cached_list);
 
     THREADVAR(read_failed) = FALSE;
 
@@ -6007,7 +6013,8 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       }
 
       if (!is_ascrap) {
-        /// get file details
+        /// get file details; this will cache the header in mainw->hdrs_cache
+        // we need to keep this around for open_set_file(), below.
         read_headers(mainw->current_file, NULL);
       } else {
         lives_clip_details_t detail;
@@ -6103,11 +6110,14 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
       /** not really from a set, but let's pretend to get the details
         read the playback fps, play frame, and name */
+
+      /// NEED TO maintain mainw->hdrs_cache when entering the function,
+      /// else it will be considered a legacy file load
       open_set_file(++clipnum);
 
       threaded_dialog_spin(0.);
 
-      lives_list_free_all(&mainw->cached_list);
+      if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
 
       if (mainw->current_file < 1) continue;
 
@@ -6190,6 +6200,8 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
     }
   }
+
+  if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
 
   ngoodclips = lives_list_length(mainw->cliplist);
   if (!ngoodclips) {

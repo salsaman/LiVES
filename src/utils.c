@@ -4764,61 +4764,99 @@ LIVES_GLOBAL_INLINE void lives_list_free_all(LiVESList **list) {
   *list = NULL;
 }
 
+typedef struct {
+  uint32_t hash;
+  char *key;
+  char *data;
+} lives_speed_cache_t;
 
-boolean cache_file_contents(const char *filename) {
-  FILE *hfile;
-  char buff[65536];
 
-  lives_list_free_all(&mainw->cached_list);
-
-  if (!(hfile = fopen(filename, "r"))) return FALSE;
-  while (fgets(buff, 65536, hfile) != NULL) {
-    mainw->cached_list = lives_list_append(mainw->cached_list, lives_strdup(buff));
-    threaded_dialog_spin(0.);
+LIVES_GLOBAL_INLINE void cached_list_free(LiVESList **list) {
+  lives_speed_cache_t *speedy;
+  for (LiVESList *xlist = *list; xlist; xlist = xlist->next) {
+    speedy = (lives_speed_cache_t *)(*list)->data;
+    if (speedy) {
+      if (speedy->key) lives_free(speedy->key);
+      if (speedy->data) lives_free(speedy->data);
+      lives_free(speedy);
+    }
+    xlist->data = NULL;
   }
-  fclose(hfile);
-  return TRUE;
+  lives_list_free(*list);
+  *list = NULL;
 }
 
 
-char *get_val_from_cached_list(const char *key, size_t maxlen) {
-  // WARNING - contents may be invalid if the underlying file is updated (e.g with set_*_pref())
-  LiVESList *clist = mainw->cached_list, *clistnext;
-  char *keystr_start = lives_strdup_printf("<%s>", key);
-  char *keystr_end = lives_strdup_printf("</%s>", key);
-  size_t kslen = lives_strlen(keystr_start);
-  size_t kelen = lives_strlen(keystr_end);
+LiVESList *cache_file_contents(const char *filename) {
+  lives_speed_cache_t *speedy;
+  LiVESList *list = NULL;
+  FILE *hfile;
+  size_t kelen;
+  char buff[65536];
+  char *key = NULL, *keystr_end = NULL, *cptr, *tmp, *data = NULL;
 
-  boolean gotit = FALSE;
-  char buff[maxlen];
-
-  lives_memset(buff, 0, maxlen);
-  while (clist != NULL) {
-    clistnext = clist->next;
-    if (gotit) {
-      if (!lives_strncmp(keystr_end, (char *)clist->data, kelen)) {
+  if (!(hfile = fopen(filename, "r"))) return NULL;
+  while (fgets(buff, 65536, hfile)) {
+    if (!*buff) continue;
+    if (*buff == '#') continue;
+    if (key) {
+      if (!lives_strncmp(buff, keystr_end, kelen)) {
+        speedy = (lives_speed_cache_t *)lives_calloc(1, sizeof(lives_speed_cache_t));
+        speedy->hash = fast_hash(key);
+        speedy->key = key;
+        speedy->data = data;
+        key = data = NULL;
+        lives_free(keystr_end);
+        keystr_end = NULL;
+        list = lives_list_prepend(list, speedy);
+        continue;
+      }
+      cptr = buff;
+      if (data) {
+        if (*buff != '|') continue;
+        cptr++;
+      }
+      lives_chomp(cptr);
+      tmp = lives_strdup_printf("%s%s", data ? data : "", cptr);
+      if (data) lives_free(data);
+      data = tmp;
+      continue;
+    }
+    if (*buff != '<') continue;
+    kelen = 0;
+    for (cptr = buff; cptr; cptr++) {
+      if (*cptr == '>') {
+        kelen = cptr - buff;
+        if (kelen > 2) {
+          *cptr = 0;
+          key = lives_strdup(buff + 1);
+          keystr_end = lives_strdup_printf("</%s>", key);
+          kelen++;
+        }
         break;
       }
-      if (strncmp((char *)clist->data, "|", 1)) lives_strappend(buff, maxlen, (char *)clist->data);
-      else {
-        if (clist->prev != NULL) clist->prev->next = clist->next;
-        else mainw->cached_list = clistnext;
-        if (clistnext != NULL) clistnext->prev = clist->prev;
-        clist->prev = clist->next = NULL;
-        lives_list_free(clist);
-      }
-    } else if (!lives_strncmp(keystr_start, (char *)clist->data, kslen)) {
-      gotit = TRUE;
     }
-    clist = clistnext;
+    threaded_dialog_spin(0.);
   }
-  lives_free(keystr_start);
-  lives_free(keystr_end);
+  fclose(hfile);
+  if (key) lives_free(key);
+  if (keystr_end) lives_free(keystr_end);
+  return lives_list_reverse(list);
+}
 
-  if (!gotit) return NULL;
 
-  lives_chomp(buff);
-  return lives_strdup(buff);
+char *get_val_from_cached_list(const char *key, size_t maxlen, LiVESList * cache) {
+  // WARNING - contents may be invalid if the underlying file is updated (e.g with set_*_pref())
+  LiVESList *list = cache;
+  uint32_t khash = fast_hash(key);
+  lives_speed_cache_t *speedy;
+  for (; list; list = list->next) {
+    speedy = (lives_speed_cache_t *)list->data;
+    if (khash == speedy->hash && !lives_strcmp(key, speedy->key))
+      return lives_strndup(speedy->data, maxlen);
+  }
+  //return NULL;
+  return lives_strdup("");
 }
 
 
@@ -4917,7 +4955,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
 
   if (!IS_VALID_CLIP(which)) return FALSE;
 
-  if (mainw->cached_list == NULL) {
+  if (!mainw->hdrs_cache) {
     lives_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle, LIVES_CLIP_HEADER, NULL);
     if (!sfile->checked_for_old_header) {
       struct stat mystat;
@@ -4940,7 +4978,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   //////////////////////////////////////////////////
   key = clip_detail_to_string(what, &maxlen);
 
-  if (key == NULL) {
+  if (!key) {
     tmp = lives_strdup_printf("Invalid detail %d requested from file %s", which, lives_header);
     LIVES_ERROR(tmp);
     lives_free(tmp);
@@ -4949,8 +4987,8 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   }
 
 
-  if (mainw->cached_list != NULL) {
-    val = get_val_from_cached_list(key, maxlen);
+  if (mainw->hdrs_cache) {
+    val = get_val_from_cached_list(key, maxlen, mainw->hdrs_cache);
     lives_free(key);
     if (val == NULL) return FALSE;
   } else {

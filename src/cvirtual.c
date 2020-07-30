@@ -30,7 +30,7 @@ boolean create_frame_index(int fileno, boolean init, frames_t start_offset, fram
   if (!IS_VALID_CLIP(fileno) || sfile->frame_index) return FALSE;
   sfile->frame_index = (frames_t *)lives_calloc(idxsize, DEF_ALIGN);
   if (!sfile->frame_index) return FALSE;
-  if (init) for (register int i = 0; i < sfile->frames; i++) sfile->frame_index[i] = i + start_offset;
+  if (init) for (int i = 0; i < sfile->frames; i++) sfile->frame_index[i] = i + start_offset;
   return TRUE;
 }
 
@@ -47,7 +47,7 @@ static boolean extend_frame_index(int fileno, frames_t start, frames_t end) {
     sfile->frame_index_back = NULL;
     return FALSE;
   }
-  for (register int i = start; i < end; i++) sfile->frame_index[i] = -1;
+  for (int i = start; i < end; i++) sfile->frame_index[i] = -1;
   return TRUE;
 }
 
@@ -152,6 +152,10 @@ frames_t load_frame_index(int fileno) {
             continue;
           }
         }
+      } else if (sfile->frame_index_back) {
+        if (findex_bk_dialog(fname_back)) {
+          sfile->frame_index = sfile->frame_index_back;
+        }
       }
       if (retval == LIVES_RESPONSE_CANCEL) {
         lives_free(fname);
@@ -164,7 +168,7 @@ frames_t load_frame_index(int fileno) {
       do {
         response = LIVES_RESPONSE_OK;
         create_frame_index(fileno, FALSE, 0, sfile->frames);
-        if (cfile->frame_index == NULL) {
+        if (!cfile->frame_index) {
           response = do_memory_error_dialog(what, sfile->frames * sizeof(frames_t));
         }
       } while (response == LIVES_RESPONSE_RETRY);
@@ -186,8 +190,39 @@ frames_t load_frame_index(int fileno) {
         THREADVAR(read_failed) = 0;
         retval = do_read_failed_error_s_with_retry(fname, NULL, NULL);
       }
-    }
-  } while (retval == LIVES_RESPONSE_RETRY);
+
+      if (!backuptried) {
+        backuptried = TRUE;
+        fd = lives_open_buffered_rdonly(fname_back);
+        if (fd >= 0) {
+          LiVESList *list = NULL;
+          frames_t vframe;
+          int count = 0;
+          for (; lives_read_le_buffered(fd, &vframe, sizeof(frames_t), TRUE) == sizeof(frames_t); count++) {
+            if (THREADVAR(read_failed) == fd + 1) break;
+            list = lives_list_prepend(list, LIVES_INT_TO_POINTER(vframe));
+          }
+          lives_close_buffered(fd);
+          if (THREADVAR(read_failed) == fd + 1) {
+            THREADVAR(read_failed) = 0;
+          } else if (count) {
+            frames_t *f_index = sfile->frame_index;
+            list = lives_list_reverse(list);
+            lives_freep((void **)&sfile->frame_index_back);
+            sfile->frame_index = NULL;
+            create_frame_index(fileno, FALSE, 0, count);
+            sfile->frame_index_back = sfile->frame_index;
+            sfile->frame_index = f_index;
+            if (sfile->frame_index_back) {
+              sfile->old_frames = count;
+              count = 0;
+              for (; list; list = list->next) {
+                sfile->frame_index_back[count++] = LIVES_POINTER_TO_INT(list->data);
+		// *INDENT-OFF*
+	      }}}
+	  if (list) lives_list_free(list);
+	}}}} while (retval == LIVES_RESPONSE_RETRY);
+  // *INDENT-ON*
 
   lives_free(fname);
   lives_free(fname_back);
@@ -238,16 +273,17 @@ static frames_t scan_frames(lives_clip_t *sfile, frames_t vframes, frames_t last
 
 boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_t maxframe) {
   lives_clip_t *sfile = mainw->files[fileno], *binf = NULL;
-
-  lives_img_type_t empirical_img_type = sfile->img_type;
-
+  lives_img_type_t empirical_img_type = sfile->img_type, oemp = empirical_img_type;
+  lives_img_type_t ximgtype;
   frames_t last_real_frame = sfile->frames;
-
-  boolean has_missing_frames = FALSE;
-
+  int nimty = (int)N_IMG_TYPES, j;
+  boolean has_missing_frames = FALSE, bad_imgfmts = FALSE;
+  boolean mismatch = FALSE;
+  boolean isfirst = TRUE;
+  boolean backup_more_correct = FALSE;
   char *fname;
 
-  register frames_t i;
+  frames_t i;
 
   // check clip integrity upon loading
 
@@ -263,31 +299,44 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
 
   // check the image type
   for (i = sfile->frames - 1; i >= 0; i--) {
-    if (sfile->frame_index == NULL || sfile->frame_index[i] == -1) {
+    if (!sfile->frame_index || sfile->frame_index[i] == -1) {
       // this is a non-virtual frame
-      fname = make_image_file_name(sfile, i + 1, LIVES_FILE_EXT_PNG);
-      if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
-        empirical_img_type = IMG_TYPE_PNG;
-        lives_free(fname);
-        break;
-      }
-      lives_free(fname);
-      fname = make_image_file_name(sfile, i + 1, LIVES_FILE_EXT_JPG);
-      if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
-        empirical_img_type = IMG_TYPE_JPEG;
-        lives_free(fname);
-        break;
-      }
-      lives_free(fname);
-      last_real_frame = i;
-      has_missing_frames = TRUE;
-      if (prefs->show_dev_opts) {
-        g_printerr("clip %s is missing image frame %d\n", sfile->handle, i + 1);
-      }
-    }
-  }
+      ximgtype = empirical_img_type;
+      fname = NULL;
+      if (ximgtype != IMG_TYPE_UNKNOWN) fname = make_image_file_name(sfile, i + 1, get_image_ext_for_type(ximgtype));
+      if (!fname || !lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+        if (fname) lives_free(fname);
+        for (j = 1; j < nimty; j++) {
+          ximgtype = (lives_img_type_t)j;
+          if (ximgtype == empirical_img_type) continue;
+          fname = make_image_file_name(sfile, i + 1, get_image_ext_for_type(ximgtype));
+          if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+            if (isfirst) {
+              empirical_img_type = ximgtype;
+              if (oemp == IMG_TYPE_UNKNOWN) oemp = ximgtype;
+            } else {
+              if (ximgtype == oemp) empirical_img_type = oemp;
+              bad_imgfmts = TRUE;
+            }
+            lives_free(fname);
+            isfirst = FALSE;
+            break;
+          }
+          lives_free(fname);
+        }
+        if (j == nimty) {
+          has_missing_frames = TRUE;
+          if (prefs->show_dev_opts) {
+            g_printerr("clip %s is missing image frame %d\n", sfile->handle, i + 1);
+          }
+        } else {
+          last_real_frame = i;
+          isfirst = FALSE;
+	  // *INDENT-OFF*
+	}}}}
+  // *INDENT-OFF*
 
-  if (cdata != NULL) {
+  if (cdata) {
     // check frame count
     if (maxframe > cdata->nframes || has_missing_frames) {
       if (prefs->show_dev_opts) {
@@ -305,25 +354,48 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
     }
   }
 
-  if (sfile->frame_index != NULL) {
+  if (sfile->frame_index) {
     frames_t lgoodframe = -1;
     int goodidx;
+    frames_t xframes = sfile->frames;
+
+    if (sfile->frame_index_back) {
+      if (sfile->old_frames > sfile->frames) xframes = sfile->old_frames;
+      backup_more_correct = TRUE;
+    }
+
     // check and attempt to correct frame_index
-    for (i = 0; i < sfile->frames; i++) {
-      frames_t fr = sfile->frame_index[i];
-      if (fr < -1 || (cdata == NULL && (frames64_t)fr > sfile->frames - 1)
-          || (cdata != NULL && (frames64_t)fr > cdata->nframes - 1)) {
+    for (i = 0; i < xframes; i++) {
+      frames_t fr;
+      if (i < sfile->frames) fr = sfile->frame_index[i];
+      else fr = sfile->frame_index_back[i];
+      if (fr < -1 || (!cdata && (frames64_t)fr > sfile->frames - 1)
+          || (cdata && (frames64_t)fr > cdata->nframes - 1)) {
+	if (i >= sfile->frames) {
+	  backup_more_correct = FALSE;
+	  break;
+	}
+	if (backup_more_correct && i < sfile->old_frames) {
+	  frames_t fr2 = sfile->frame_index_back[i];
+	  if (fr2 < -1 || (!cdata && (frames64_t)fr2 > sfile->frames - 1)
+	      || (cdata && (frames64_t)fr2 > cdata->nframes - 1)) {
+	    backup_more_correct = FALSE;
+	  }
+	}
+
         if (prefs->show_dev_opts) {
           g_printerr("bad frame index %d, points to %d.....", i, fr);
         }
-        has_missing_frames = TRUE;
-        fname = make_image_file_name(sfile, i + 1, LIVES_FILE_EXT_PNG);
+        if (fr < sfile->frames) has_missing_frames = TRUE;
+        fname = make_image_file_name(sfile, i + 1, get_image_ext_for_type(empirical_img_type));
         if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
           sfile->frame_index[i] = -1;
           if (prefs->show_dev_opts) {
             g_printerr("relinked to image frame %d\n", i + 1);
           }
         } else {
+	  if (backup_more_correct && i < sfile->old_frames && sfile->frame_index_back[i] == -1)
+	    backup_more_correct = FALSE;
           if (lgoodframe != -1) {
             sfile->frame_index[i] = lgoodframe + i - goodidx;
             if (prefs->show_dev_opts) {
@@ -345,40 +417,111 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
 	  // *INDENT-OFF*
         }}}}
   // *INDENT-ON*
+  if (has_missing_frames && backup_more_correct) {
+    lives_freep((void **)&sfile->frame_index);
+    sfile->frame_index = sfile->frame_index_back;
+    if (sfile->old_frames > sfile->frames) {
+      sfile->frames = sfile->old_frames;
+      sfile->frames = scan_frames(sfile, sfile->frames, last_real_frame);
+    } else sfile->frames = sfile->old_frames;
+  }
 
   if (sfile->frames > 0) {
-    int hsize = sfile->hsize;
-    int vsize = sfile->vsize;
+    int hsize = sfile->hsize, chsize = hsize;
+    int vsize = sfile->vsize, cvsize = vsize;
 
     if (last_real_frame > 0) {
       sfile->img_type = empirical_img_type;
-      get_frames_sizes(fileno, last_real_frame);
-    } else {
-      if (cdata != NULL) {
-        if (!prefs->auto_nobord) {
-          sfile->hsize = cdata->frame_width * weed_palette_get_pixels_per_macropixel(cdata->current_palette);
-          sfile->vsize = cdata->frame_height;
-        } else {
-          sfile->hsize = cdata->width * weed_palette_get_pixels_per_macropixel(cdata->current_palette);
-          sfile->vsize = cdata->height;
-        }
+      get_frames_sizes(fileno, last_real_frame, &hsize, &vsize);
+    }
+
+    if (cdata) {
+      if (!prefs->auto_nobord) {
+        chsize = cdata->frame_width * weed_palette_get_pixels_per_macropixel(cdata->current_palette);
+        cvsize = cdata->frame_height;
+      } else {
+        chsize = cdata->width * weed_palette_get_pixels_per_macropixel(cdata->current_palette);
+        cvsize = cdata->height;
       }
     }
 
-    if (sfile->hsize != hsize || sfile->vsize != vsize) {
+    if (chsize == hsize && hsize != sfile->hsize) sfile->hsize = hsize;
+    if (cvsize == vsize && vsize != sfile->vsize) sfile->vsize = vsize;
+
+    if (last_real_frame > 0) {
+      if (hsize == sfile->hsize && vsize == sfile->vsize) {
+        frames_t fframe = 0;
+        /// last frame is most likely to return correct size
+        /// we should also check first frame, as it is more likely to be wrong
+        if (sfile->clip_type == CLIP_TYPE_DISK) fframe = 1;
+        else {
+          for (i = 1; i < last_real_frame; i++) {
+            if (sfile->frame_index[i - 1] == -1) {
+              fname = make_image_file_name(sfile, i, get_image_ext_for_type(empirical_img_type));
+              if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+                fframe = i;
+                lives_free(fname);
+                break;
+              }
+              has_missing_frames = TRUE;
+              lives_free(fname);
+	      // *INDENT-OFF*
+	    }}}
+	if (fframe) get_frames_sizes(fileno, fframe, &hsize, &vsize);
+      }}
+    // *INDENT-ON*
+
+    if (1 || sfile->hsize != hsize || sfile->vsize != vsize) {
+      LiVESResponseType resp = do_resize_dlg(sfile->hsize, sfile->vsize, hsize, vsize);
       if (prefs->show_dev_opts) {
         g_printerr("incorrect frame size %d X %d, corrected to %d X %d\n", hsize, vsize, sfile->hsize, sfile->vsize);
       }
-      goto mismatch;
+      if (resp == LIVES_RESPONSE_ACCEPT) {
+        sfile->hsize = hsize;
+        sfile->vsize = vsize;
+      } else if (resp == LIVES_RESPONSE_YES) {
+        int missing = 0, nbadsized = 0;
+        threaded_dialog_push();
+        do_threaded_dialog(_("Resizing all frames\n"), TRUE);
+        lives_widget_show_all(mainw->proc_ptr->processing);
+        if (resize_all(fileno, sfile->hsize, sfile->vsize, empirical_img_type, &nbadsized, &missing)) {
+          g_printerr("resize detected %d bad sized, %d missing \n", nbadsized, missing);
+          if (missing) has_missing_frames = TRUE;
+          if (mainw->cancelled == CANCEL_NONE) bad_imgfmts = FALSE;
+          else mismatch = TRUE;
+        }
+        mainw->cancelled = CANCEL_NONE;
+        end_threaded_dialog();
+        threaded_dialog_pop();
+      } else mismatch = TRUE;
     }
   }
-  if (has_missing_frames) goto mismatch;
+  if (bad_imgfmts) {
+    LiVESResponseType resp = do_imgfmts_error(empirical_img_type);
+    if (resp == LIVES_RESPONSE_OK) {
+      int missing = 0, nbadsized = 0;
+      threaded_dialog_push();
+      do_threaded_dialog(_("Correcting Image Formats\n"), TRUE);
+      if (resize_all(fileno, sfile->hsize, sfile->vsize, empirical_img_type, &nbadsized, &missing)) {
+        g_printerr("change fmts detected %d bad sized, %d missing \n", nbadsized, missing);
+        if (missing) has_missing_frames = TRUE;
+        if (mainw->cancelled == CANCEL_NONE) bad_imgfmts = FALSE;
+        else mismatch = TRUE;
+      }
+      mainw->cancelled = CANCEL_NONE;
+      end_threaded_dialog();
+      threaded_dialog_pop();
+    } else mismatch = TRUE;
+    mainw->cancelled = CANCEL_NONE;
+  }
+
+  if (has_missing_frames) mismatch = TRUE;
 
   if (cdata != NULL && (fabs(sfile->fps - (double)cdata->fps) > prefs->fps_tolerance)) {
     if (prefs->show_dev_opts) {
       g_printerr("fps mismtach, claimed %f, cdata said %f\n", sfile->fps, cdata->fps);
     }
-    goto mismatch;
+    mismatch = TRUE;
   }
   if (sfile->img_type != empirical_img_type) {
     if (prefs->show_dev_opts) {
@@ -386,6 +529,9 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
     }
     sfile->img_type = empirical_img_type;
   }
+
+  if (mismatch) goto mismatch;
+
   /*
     // ignore since we may have resampled audio
     if (sfile->achans != cdata->achans || sfile->arps != cdata->arate || sfile->asampsize != cdata->asamps ||
@@ -561,7 +707,8 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
       if (pbr && pixbuf) lives_widget_object_unref(pixbuf);
 
       pixbuf = pull_lives_pixbuf_at_size(sfileno, i, get_image_ext_for_type(sfile->img_type),
-                                         q_gint64((i - 1.) / sfile->fps, sfile->fps), sfile->hsize, sfile->vsize, LIVES_INTERP_BEST, FALSE);
+                                         q_gint64((i - 1.) / sfile->fps, sfile->fps), sfile->hsize,
+                                         sfile->vsize, LIVES_INTERP_BEST, FALSE);
 
       if (!pixbuf) return -i;
       if (!save_decoded(sfileno, i, pixbuf, pbr != NULL, progress)) return -i;

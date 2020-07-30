@@ -503,6 +503,7 @@ boolean lives_button_box_set_button_width(LiVESButtonBox *, LiVESWidget *button,
 boolean lives_button_set_border_colour(LiVESWidget *, LiVESWidgetState state, LiVESWidgetColor *);
 boolean lives_button_center(LiVESWidget *);
 boolean lives_button_uncenter(LiVESWidget *, int normal_width);
+boolean lives_button_box_make_first(LiVESButtonBox *, LiVESWidget *);
 
 LiVESWidget *lives_standard_hscale_new(LiVESAdjustment *);
 LiVESWidget *lives_vscale_new(LiVESAdjustment *);
@@ -950,8 +951,9 @@ boolean lives_scale_button_set_orientation(LiVESScaleButton *, LiVESOrientation 
 boolean lives_window_set_auto_startup_notification(boolean set);
 
 // compound functions (composed of basic functions)
+boolean lives_widget_set_pack_type(LiVESBox *, LiVESWidget *, LiVESPackType);
 
-void lives_label_set_hpadding(LiVESLabel *label, int pad);
+void lives_label_set_hpadding(LiVESLabel *, int pad);
 
 LiVESWidget *align_horizontal_with(LiVESWidget *thingtoadd, LiVESWidget *thingtoalignwith);
 
@@ -1063,6 +1065,8 @@ LiVESWidget *lives_standard_lock_button_new(boolean is_locked, int width, int he
     const char *label, const char *tooltip);
 
 boolean lives_lock_button_get_locked(LiVESButton *lockbutton);
+
+boolean lives_dialog_set_button_layout(LiVESDialog *dlg, LiVESButtonBoxStyle bstyle);
 
 LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_buttons, int width, int height);
 
@@ -1329,7 +1333,8 @@ typedef struct {
   int packing_height; ///< vertical pixels between widgets
   int border_width; ///< border width in pixels
   int filler_len; ///< length of extra "fill" between widgets
-  LiVESWidget *last_label; ///< label widget of last standard widget (spin,radio,check,entry,combo) [readonly]
+  LiVESWidget *last_label; ///< label widget of last standard widget (spin,radio,check,entry,combo) [readonly] (READONLY)
+  LiVESWidget *last_container; ///< container which wraps last widget created + subwidgets (READONLY)
   LiVESWindow *transient; ///< transient window for dialogs, if NULL then use the default
   LiVESJustification justify; ///< justify for labels
   LiVESJustification default_justify; ///< default value
@@ -1362,6 +1367,7 @@ const widget_opts_t def_widget_opts = {
   W_BORDER_WIDTH, ///< def border width
   W_FILL_LENGTH, ///< def fill width (in pixels)
   NULL, ///< last_label
+  NULL, ///< last_container
   NULL, ///< transient window
   LIVES_JUSTIFY_LEFT, ///< justify
   LIVES_JUSTIFY_LEFT, ///< default justify (should this be RIGHT for rtl ?)

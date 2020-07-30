@@ -931,11 +931,24 @@ int run_weed_startup_tests(void) {
   }
   free(keys);
 
+  flags = weed_leaf_get_flags(plant, "Test2");
+  fprintf(stderr, "get flags for Test2returned %d\n", flags);
+
+  werr = weed_leaf_set_flags(plant, "Test2", WEED_FLAG_UNDELETABLE);
+  flags = weed_leaf_get_flags(plant, "string2");
+
+  fprintf(stderr, "get flags for Test2returned %d\n", flags);
+
   werr = weed_leaf_set_flags(plant, "Test2", 0);
   flags = weed_leaf_get_flags(plant, "string2");
-  fprintf(stderr, "get flags returned %d\n", flags);
+
+  fprintf(stderr, "get flags for Test2returned %d\n", flags);
 
   werr = weed_leaf_set_flags(plant, "type", WEED_FLAG_UNDELETABLE | WEED_FLAG_IMMUTABLE);
+  fprintf(stderr, "wlsf for type returned %d\n", werr);
+
+
+
   flags = weed_leaf_get_flags(plant, "type");
   fprintf(stderr, "get type flags returned %d\n", flags);
 
@@ -957,6 +970,7 @@ int run_weed_startup_tests(void) {
 
   werr = weed_leaf_set_flags(plant, "arrawn", WEED_FLAG_UNDELETABLE);
   fprintf(stderr, "set flags returned %d\n", werr);
+
   flags = weed_leaf_get_flags(plant, "arrawn");
   fprintf(stderr, "get flags returned %d\n", flags);
 

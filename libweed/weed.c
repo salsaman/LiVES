@@ -48,7 +48,8 @@
 #include "weed.h"
 #endif
 
-#define WEED_MAGIC_HASH 0x7C9EBD07  // the magic number
+//#define WEED_MAGIC_HASH 0x7C9EBD07  // the magic number
+#define WEED_MAGIC_HASH 0xB82E802F
 #define WEED_FLAG_OP_DELETE WEED_FLAG_RESERVED_0
 
 #if defined __GNUC__ && !defined WEED_IGN_GNUC_OPT
@@ -354,9 +355,46 @@ EXPORTED weed_error_t weed_init(int32_t abi, uint64_t init_flags) {
 #define weed_strcmp(s1, s2) ((!(s1) || !(s2)) ? (s1 != s2) : strcmp(s1, s2))
 
 #define HASHROOT 5381
-static inline uint32_t weed_hash(const char *string) {
-  for (uint32_t hash = HASHROOT;; hash += (hash << 5) + *(string++))
-    if (!(*string)) return hash;}
+/* static inline uint32_t weed_hash(const char *string) { */
+/*   for (uint32_t hash = HASHROOT;; hash += (hash << 5) + *(string++)) */
+/*     if (!(*string)) return hash;} */
+
+#define get16bits(d) (*((const uint16_t *) (d)))
+
+// fast hash from: http://www.azillionmonkeys.com/qed/hash.html
+// (c) Paul Hsieh
+static uint32_t weed_hash(const char *key) {
+  if (key && *key) {
+    int len = weed_strlen(key), rem = len & 3;
+    uint32_t hash = len + HASHROOT, tmp;
+    len >>= 2;
+    for (;len > 0; len--) {
+      hash  += get16bits (key);
+      tmp    = (get16bits (key+2) << 11) ^ hash;
+      hash   = (hash << 16) ^ tmp;
+      key  += 4;
+      hash  += hash >> 11;
+    }
+    switch (rem) {
+    case 3: hash += get16bits (key);
+      hash ^= hash << 16;
+      hash ^= ((int8_t)key[2]) << 18;
+      hash += hash >> 11;
+      break;
+    case 2: hash += get16bits (key);
+      hash ^= hash << 11; hash += hash >> 17;
+      break;
+    case 1: hash += (int8_t)*key;
+      hash ^= hash << 10; hash += hash >> 1;
+      break;
+    default: break;
+    }
+    hash ^= hash << 3; hash += hash >> 5; hash ^= hash << 4;
+    hash += hash >> 17; hash ^= hash << 25; hash += hash >> 6;
+    return hash;
+  }
+  return 0;
+}
 
 #define weed_seed_is_ptr(seed_type) (seed_type >= 64 ? 1 : 0)
 
@@ -416,6 +454,8 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key, 
   uint32_t hash = WEED_MAGIC_HASH;
   weed_leaf_t *leaf = plant, *rwtleaf = NULL;
   int checkmode = 0;
+
+  if (!plant) return NULL;
 
   if (key && *key) {
     // if hash_ret is set then this is a setter looking for leaf
@@ -556,8 +596,8 @@ static weed_error_t _weed_plant_free(weed_plant_t *plant) {
 
   // see: weed_leaf_delete
   rwt_upgrade(plant, 0, 1);
+
   rwt_count_wait(plant);
-  rwt_count_sub(plant);
 
   /// hold on to mutex until we are done
   //rwt_mutex_unlock(plant);

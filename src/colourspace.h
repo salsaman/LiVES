@@ -334,4 +334,9 @@ weed_layer_t *weed_layer_set_pixel_data_packed(weed_layer_t *, void *pixel_data)
 weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *);
 weed_layer_t *weed_layer_set_audio_data(weed_layer_t *, float **data, int arate, int naudchans, weed_size_t nsamps);
 
+/// utility funcs for GUI
+int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, int *nbad, int *nmiss);
+
+
+
 #endif

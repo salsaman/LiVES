@@ -5721,15 +5721,12 @@ void run_diskspace_dialog(void) {
   add_fill_to_box(LIVES_BOX(dialog_vbox));
 
   aar = LIVES_BOX(lives_dialog_get_action_area(LIVES_DIALOG(dialog)));
-  lives_box_set_homogeneous(aar, FALSE);
 
   rembutton =
     lives_standard_check_button_new(_("Show this dialog on startup"), TRUE, aar,
                                     (tmp = lives_strdup(_("#These settings can also be changed "
                                         "in Preferences / Warnings"))));
-
-  widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
-  add_fill_to_box(aar);
+  lives_button_box_make_first(LIVES_BUTTON_BOX(aar), widget_opts.last_container);
 
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK,
              _("Continue with current values"), LIVES_RESPONSE_OK);
@@ -5928,72 +5925,83 @@ boolean msg_area_config(LiVESWidget * widget) {
   h = mainw->assumed_height;
   if (h == -1) h = hh;
 
-  overflowx = ww - (scr_width - bx);
-  overflowy = hh - (scr_height - by);
+  if (mainw->multitrack) {
+    overflowx = lives_widget_get_allocation_width(widget) +
+                lives_widget_get_allocation_width(mainw->multitrack->msg_scrollbar) - ww;
+
+    overflowy = lives_paned_get_position(LIVES_PANED(mainw->multitrack->top_vpaned)) +
+                lives_widget_get_allocation_height(mainw->multitrack->menu_hbox) + by +
+                lives_widget_get_allocation_y(widget) + lives_widget_get_allocation_height(widget) - hh;
+  } else {
+    overflowx = ww - (scr_width - bx);
+    overflowy = hh - (scr_height - by);
 #ifdef DEBUG_OVERFLOW
-  //g_print("ADJ A %d = %d - (%d - %d) + (%d - %d) %d %d\n", overflowy, h, scr_height, by, hh, mainw->assumed_height, ABS(overflowy), vmin);
+    //g_print("ADJ A %d = %d - (%d - %d) + (%d - %d) %d %d\n", overflowy, h, scr_height, by, hh,
+    // mainw->assumed_height, ABS(overflowy), vmin);
 #endif
-  if (overflowx >= 0 && mainw->assumed_width != -1) {
-    xoverflowx = ww - w;
-    if (xoverflowx > overflowx) {
+    if (overflowx >= 0 && mainw->assumed_width != -1) {
+      xoverflowx = ww - w;
+      if (xoverflowx > overflowx) {
 #ifdef DEBUG_OVERFLOW
-      g_print("ADJ B1 %d = %d - %d - %d\n", xoverflowx, rect.width, w, bx);
+        g_print("ADJ B1 %d = %d - %d - %d\n", xoverflowx, rect.width, w, bx);
 #endif
-      overflowx = xoverflowx;
+        overflowx = xoverflowx;
+      }
     }
-  }
 
-  if (overflowy >= 0 && mainw->assumed_height != -1) {
-    xoverflowy = hh - h;
-    if (xoverflowy > overflowy) {
+    if (overflowy >= 0 && mainw->assumed_height != -1) {
+      xoverflowy = hh - h;
+      if (xoverflowy > overflowy) {
 #ifdef DEBUG_OVERFLOW
-      g_print("ADJ B2 %d = %d - %d - %d\n", xoverflowy, rect.height, h, by);
+        g_print("ADJ B2 %d = %d - %d - %d\n", xoverflowy, rect.height, h, by);
 #endif
-      overflowy = xoverflowy;
+        overflowy = xoverflowy;
+      }
     }
-  }
 
-  if (ABS(overflowx) <= hmin) overflowx = 0;
-  if (ABS(overflowy) <= vmin) overflowy = 0;
+    if (ABS(overflowx) <= hmin) overflowx = 0;
+    if (ABS(overflowy) <= vmin) overflowy = 0;
 
 #ifdef DEBUG_OVERFLOW
-  g_print("overflow2 is %d : %d %d %d X %d : %d %d %d [%d %d %d]\n", overflowx, w, scr_width, bx, overflowy, h, scr_height, by, h,
-          rect.height, lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET));
+    g_print("overflow2 is %d : %d %d %d X %d : %d %d %d [%d %d %d]\n", overflowx, w, scr_width, bx, overflowy,
+            h, scr_height, by, h,
+            rect.height, lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET));
 #endif
 
-  if (overflowx != 0 && w < scr_width && ww <= scr_width && overflowx == last_overflowx) {
-    int xhmin = ABS(overflowx);
-    if (xhmin < ABS(hmin)) {
-      hmin = xhmin;
-      mustret = TRUE;
+    if (overflowx != 0 && w < scr_width && ww <= scr_width && overflowx == last_overflowx) {
+      int xhmin = ABS(overflowx);
+      if (xhmin < ABS(hmin)) {
+        hmin = xhmin;
+        mustret = TRUE;
+      }
     }
-  }
-  last_overflowx = overflowx;
+    last_overflowx = overflowx;
 
 #ifdef DEBUG_OVERFLOW
-  g_print("NOW %d %d %d %d %d\n", overflowy, h, scr_height, hh, last_overflowy);
+    g_print("NOW %d %d %d %d %d\n", overflowy, h, scr_height, hh, last_overflowy);
 #endif
-  if (overflowy != 0 && h <= scr_height && hh <= scr_height && overflowy == last_overflowy) {
-    int xvmin = ABS(overflowy);
-    if (xvmin < ABS(vmin)) {
-      vmin = xvmin;
-      mustret = TRUE;
+    if (overflowy != 0 && h <= scr_height && hh <= scr_height && overflowy == last_overflowy) {
+      int xvmin = ABS(overflowy);
+      if (xvmin < ABS(vmin)) {
+        vmin = xvmin;
+        mustret = TRUE;
+      }
     }
-  }
-  last_overflowy = overflowy;
+    last_overflowy = overflowy;
 
 #ifdef DEBUG_OVERFLOW
-  g_print("WIDG SIZE %d X %d, %d,%d and %d %d %d\n", width, height, hmin, vmin, bx, by, mustret);
+    g_print("WIDG SIZE %d X %d, %d,%d and %d %d %d\n", width, height, hmin, vmin, bx, by, mustret);
 #endif
-  vvmin = by - vmin;
-  if (vvmin < by && by - vmin < vmin) vmin = by - vmin;
+    vvmin = by - vmin;
+    if (vvmin < by && by - vmin < vmin) vmin = by - vmin;
 
-  hhmin = bx - hmin;
-  if (hhmin < bx && bx - hmin < hmin) hmin = bx - hmin;
+    hhmin = bx - hmin;
+    if (hhmin < bx && bx - hmin < hmin) hmin = bx - hmin;
 
-  if (mustret) {
-    lives_widget_queue_draw(mainw->msg_area);
-    return FALSE;
+    if (mustret) {
+      lives_widget_queue_draw(mainw->msg_area);
+      return FALSE;
+    }
   }
 
   if (overflowx != 0 || overflowy != 0) {
@@ -6003,12 +6011,14 @@ boolean msg_area_config(LiVESWidget * widget) {
     width -= overflowx;
     height -= overflowy;
 
-    if (height <= MIN_MSGBAR_HEIGHT) {
-      height = MIN_MSGBAR_HEIGHT;
-      mainw->mbar_res = height;
-    }
+    if (!mainw->multitrack) {
+      if (height <= MIN_MSGBAR_HEIGHT) {
+        height = MIN_MSGBAR_HEIGHT;
+        mainw->mbar_res = height;
+      }
 
-    if (width < 0 || height < 0) return FALSE;
+      if (width < 0 || height < 0) return FALSE;
+    }
 
     w -= overflowx;
     h -= overflowy;
@@ -6046,35 +6056,22 @@ boolean msg_area_config(LiVESWidget * widget) {
     }
 
     if (height > 0 && width > 0) {
-      //g_print("NEW SIZE %d\n", height - 4);
       if (mainw->multitrack) {
-        /// in multitrack what we resize is the vpaned, and the msg area just occupies the lower part
-        /// of that
-        //int tvh = lives_widget_get_allocation_height(mainw->multitrack->top_vbox);
-        //int xtra = hh - tvh;
-        /* width = lives_widget_get_allocation_width(LIVES_WIDGET(widget)); */
-        /* height = lives_widget_get_allocation_height(LIVES_WIDGET(widget)); */
-        /* height += xtra - SCRN_BRDR; */
-
-        int tvh = lives_widget_get_allocation_height(mainw->multitrack->vpaned)
-                  - lives_widget_get_allocation_height(mainw->multitrack->tlx_vbox) + 2;
-        lives_paned_set_position(LIVES_PANED(mainw->multitrack->vpaned), 0);
-
         if (height <= MIN_MSGBAR_HEIGHT) {
-          tvh = lives_paned_get_position(LIVES_PANED(mainw->multitrack->top_vpaned));
+          int tvh = lives_paned_get_position(LIVES_PANED(mainw->multitrack->top_vpaned));
           lives_paned_set_position(LIVES_PANED(mainw->multitrack->top_vpaned),
-                                   tvh + height - MIN_MSGBAR_HEIGHT);
+                                   tvh - MIN_MSGBAR_HEIGHT);
           height = MIN_MSGBAR_HEIGHT;
           lives_container_child_set_shrinkable(LIVES_CONTAINER(mainw->multitrack->top_vpaned),
                                                mainw->multitrack->vpaned, FALSE);
         } else
           lives_container_child_set_shrinkable(LIVES_CONTAINER(mainw->multitrack->top_vpaned),
                                                mainw->multitrack->vpaned, TRUE);
-      }
-
-      if (mainw->mbar_res && height >= mainw->mbar_res * 2) {
-        mainw->mbar_res = 0;
-        height -= mainw->mbar_res;
+      } else {
+        if (mainw->mbar_res && height >= mainw->mbar_res * 2) {
+          mainw->mbar_res = 0;
+          height -= mainw->mbar_res;
+        }
       }
 
       lives_widget_set_size_request(widget, width, height);

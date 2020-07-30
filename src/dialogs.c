@@ -2860,6 +2860,8 @@ boolean do_auto_dialog(const char *text, int type) {
     }
   }
 
+  g_print("autod checking %s\n", cfile->info_file);
+
   while (mainw->cancelled == CANCEL_NONE && !(infofile = fopen(cfile->info_file, "r"))) {
     lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
     lives_widget_process_updates(mainw->proc_ptr->processing);
@@ -3306,11 +3308,23 @@ boolean do_comments_dialog(int fileno, char *filename) {
 
 
 LIVES_GLOBAL_INLINE void do_messages_window(boolean is_startup) {
+  text_window *textwindow;
   char *text = dump_messages(-1, -1);
   widget_opts.expand = LIVES_EXPAND_EXTRA;
-  create_text_window(_("Message History"), text, NULL, TRUE);
+  textwindow = create_text_window(_("Message History"), text, NULL, TRUE);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   lives_free(text);
+  if (is_startup) {
+    LiVESWidget *area =
+      lives_dialog_get_action_area((LIVES_DIALOG(textwindow->dialog)));
+    LiVESWidget *cb = lives_standard_check_button_new(_("Show messages on startup"), TRUE,
+                      LIVES_BOX(area), NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(cb), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                              LIVES_GUI_CALLBACK(toggle_sets_pref),
+                              (livespointer)PREF_MSG_START);
+    lives_button_box_make_first(LIVES_BUTTON_BOX(area), widget_opts.last_container);
+    lives_widget_show_all(textwindow->dialog);
+  }
 }
 
 
@@ -3437,12 +3451,10 @@ LIVES_GLOBAL_INLINE void do_jack_noopen_warn(void) {
                             JACK_DRIVER_NAME);
 }
 
-
 LIVES_GLOBAL_INLINE void do_jack_noopen_warn3(void) {
   do_blocking_error_dialog(_("\nUnable to connect to jack server. "
                              "Please start jack before starting LiVES\n"));
 }
-
 
 LIVES_GLOBAL_INLINE void do_jack_noopen_warn4(void) {
 #ifdef HAVE_PULSE_AUDIO
@@ -3453,7 +3465,6 @@ LIVES_GLOBAL_INLINE void do_jack_noopen_warn4(void) {
   do_blocking_info_dialogf(_("\nAlternatively, try to start lives with either:\n\n"
                              "\"lives -jackopts 16\", or\n\n%s\n"), otherbit);
 }
-
 
 LIVES_GLOBAL_INLINE void do_jack_noopen_warn2(void) {
   do_blocking_info_dialog(_("\nAlternately, you can restart LiVES and select another audio player.\n"));
@@ -3636,6 +3647,36 @@ LIVES_GLOBAL_INLINE void do_rmem_max_error(int size) {
                      "echo %d > /proc/sys/net/core/rmem_max\n"), size);
 }
 
+static LiVESList *tdlglist = NULL;
+
+void threaded_dialog_push(void) {
+  if (mainw->proc_ptr) {
+    tdlglist = lives_list_prepend(tdlglist, mainw->proc_ptr);
+    if (mainw->proc_ptr->processing) lives_widget_hide(mainw->proc_ptr->processing);
+    mainw->proc_ptr = NULL;
+  }
+  mainw->threaded_dialog = FALSE;
+}
+
+void threaded_dialog_pop(void) {
+  end_threaded_dialog();
+  if (tdlglist) {
+    LiVESList *xtdlglist;
+    mainw->proc_ptr = (xprocess *)tdlglist->data;
+    xtdlglist = tdlglist;
+    tdlglist = tdlglist->next;
+    if (tdlglist) tdlglist->prev = NULL;
+    xtdlglist->next = NULL;
+    xtdlglist->data = NULL;
+    lives_list_free(xtdlglist);
+    if (mainw->proc_ptr && mainw->proc_ptr->processing) {
+      lives_widget_show(mainw->proc_ptr->processing);
+      lives_window_set_modal(LIVES_WINDOW(mainw->proc_ptr->processing), TRUE);
+      lives_widget_process_updates(mainw->proc_ptr->processing);
+    }
+  }
+}
+
 
 void threaded_dialog_spin(double fraction) {
   double timesofar;
@@ -3701,17 +3742,12 @@ void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
 void end_threaded_dialog(void) {
   mainw->cancel_type = CANCEL_KILL;
 
-  if (mainw->proc_ptr != NULL) {
-    if (mainw->proc_ptr->processing != NULL) lives_widget_destroy(mainw->proc_ptr->processing);
-  }
+  if (mainw->proc_ptr && mainw->proc_ptr->processing) lives_widget_destroy(mainw->proc_ptr->processing);
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
 
-  if (mainw->proc_ptr) {
-    lives_free(mainw->proc_ptr);
-    mainw->proc_ptr = NULL;
-  }
+  lives_freep((void **)&mainw->proc_ptr);
 
   mainw->threaded_dialog = FALSE;
 
@@ -4184,21 +4220,23 @@ LIVES_GLOBAL_INLINE void do_no_sets_dialog(const char *dir) {
 
 
 boolean do_foundclips_query(void) {
-  char *text = (_("Possible lost clips were detected within the LiVES working directory. "
+  char *text = (_("Possible lost clips were detected within the LiVES working directory.\n"
                   "What would you like me to do with them ?\n"));
   char *title = (_("Missing Clips Detected"));
   LiVESWidget *dlg = create_question_dialog(title, text, NULL);
   LiVESResponseType ret;
-  lives_free(text);
-  lives_free(title);
+  lives_free(text); lives_free(title);
   widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
   lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_CLEAR,
-                                     _("Ignore and Dslete them"),
+                                     _("Maybe later"),
                                      LIVES_RESPONSE_NO);
   lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_REMOVE,
                                      _("Try to recover them"),
                                      LIVES_RESPONSE_YES);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
+
+  lives_dialog_set_button_layout(LIVES_DIALOG(dlg), LIVES_BUTTONBOX_SPREAD);
+
   ret = lives_dialog_run(LIVES_DIALOG(dlg));
   lives_widget_destroy(dlg);
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
@@ -4221,6 +4259,60 @@ LIVES_GLOBAL_INLINE void do_do_not_close_d(void) {
                  "CLOSE LIVES !\n"));
   create_info_error_dialog(LIVES_DIALOG_WARN, msg, NULL, 0, FALSE);
   lives_free(msg);
+}
+
+
+LIVES_GLOBAL_INLINE LiVESResponseType do_resize_dlg(int cwidth, int cheight, int fwidth, int fheight) {
+  LiVESResponseType resp;
+  char *text = lives_strdup_printf(_("Some frames in this clip may be wrongly sized.\n"
+                                     "The clip size is %d X %d, however at least one frame has size %d X %d\n"
+                                     "What would you like to do ?"), cwidth, cheight, fwidth, fheight);
+
+  LiVESWidget *dialog = create_question_dialog(_("Problem Detected"), text, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+
+  lives_free(text);
+
+  widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, _("Continue anyway"),
+                                     LIVES_RESPONSE_CANCEL);
+
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CLEAR, _("Use the image size"),
+                                     LIVES_RESPONSE_ACCEPT);
+
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REVERT_TO_SAVED, _("Resize images to clip size"),
+                                     LIVES_RESPONSE_YES);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+
+  lives_dialog_set_button_layout(LIVES_DIALOG(dialog), LIVES_BUTTONBOX_EXPAND);
+  resp = lives_dialog_run(LIVES_DIALOG(dialog));
+  lives_widget_destroy(dialog);
+  lives_widget_context_update();
+  return resp;
+}
+
+
+LIVES_GLOBAL_INLINE LiVESResponseType do_imgfmts_error(lives_img_type_t imgtype) {
+  LiVESResponseType resp;
+  char *text = lives_strdup_printf(_("Some frames in this clip have the wrong image format.\n"
+                                     "The image format should be %s\n"
+                                     "What would you like to do ?"),
+                                   image_ext_to_lives_image_type(get_image_ext_for_type(imgtype)));
+
+  LiVESWidget *dialog = create_question_dialog(_("Problem Detected"), text, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+
+  lives_free(text);
+
+  widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, _("Continue anyway"),
+                                     LIVES_RESPONSE_CANCEL);
+
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REVERT_TO_SAVED, _("Correct the images"),
+                                     LIVES_RESPONSE_OK);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+
+  resp = lives_dialog_run(LIVES_DIALOG(dialog));
+  lives_widget_destroy(dialog);
+  return resp;
 }
 
 

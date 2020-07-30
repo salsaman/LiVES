@@ -804,7 +804,7 @@ void reget_afilesize(int fileno) {
   lives_clip_t *sfile = mainw->files[fileno];
   boolean bad_header = FALSE;
 
-  if (mainw->multitrack != NULL) return; // otherwise achans gets set to 0...
+  if (mainw->multitrack) return; // otherwise achans gets set to 0...
 
   sfile->afilesize = reget_afilesize_inner(fileno);
 
@@ -1267,22 +1267,21 @@ LIVES_GLOBAL_INLINE uint32_t lives_string_hash(const char *st) {
 }
 
 
-// fast has from: http://www.azillionmonkeys.com/qed/hash.html
+// fast hash from: http://www.azillionmonkeys.com/qed/hash.html
 // (c) Paul Hsieh
 #define get16bits(d) (*((const uint16_t *) (d)))
 
 LIVES_GLOBAL_INLINE uint32_t fast_hash(const char *key) {
   /// approx 5 - 10 % faster than lives_string_hash
   if (key && *key) {
-    int len = lives_strlen(key), rem;
+    int len = lives_strlen(key), rem = len & 3;
     uint32_t hash = len + HASHROOT, tmp;
-    rem = len & 3;
     len >>= 2;
     for (;len > 0; len--) {
       hash  += get16bits (key);
       tmp    = (get16bits (key+2) << 11) ^ hash;
       hash   = (hash << 16) ^ tmp;
-      key  += 2*sizeof (uint16_t);
+      key  += 4;
       hash  += hash >> 11;
     }
 
@@ -1290,13 +1289,13 @@ LIVES_GLOBAL_INLINE uint32_t fast_hash(const char *key) {
     switch (rem) {
     case 3: hash += get16bits (key);
       hash ^= hash << 16;
-      hash ^= ((signed char)key[sizeof (uint16_t)]) << 18;
+      hash ^= ((int8_t)key[2]) << 18;
       hash += hash >> 11;
       break;
     case 2: hash += get16bits (key);
       hash ^= hash << 11; hash += hash >> 17;
       break;
-    case 1: hash += (signed char)*key;
+    case 1: hash += (int8_t)*key;
       hash ^= hash << 10; hash += hash >> 1;
       break;
     default: break;
@@ -1311,7 +1310,7 @@ LIVES_GLOBAL_INLINE uint32_t fast_hash(const char *key) {
 }
 
 LIVES_GLOBAL_INLINE char *lives_strstop(char *st, const char term) {
-  /// trumcate st, replacing term with \0
+  /// truncate st, replacing term with \0
   if (st && term) for (char *p = (char *)st; *p; p++) if (*p == term) {*p = 0; return st;}
   return st;
 }
@@ -2253,7 +2252,7 @@ void update_effort(int nthings, boolean badthings) {
       struggling = 1;
       return;
     }
-    if (mainw->effort > EFFORT_LIMIT_MED || (struggling && (mainw->effort > EFFORT_LIMIT_LOW))) {
+    if (mainw->effort > EFFORT_LIMIT_MED || (struggling > 0 && (mainw->effort > EFFORT_LIMIT_LOW))) {
       if (struggling < EFFORT_RANGE_MAX) struggling++;
       if (struggling == EFFORT_RANGE_MAX) {
         if (pb_quality > PB_QUALITY_LOW) {
@@ -2278,7 +2277,8 @@ void update_effort(int nthings, boolean badthings) {
     prefs->pb_quality = pb_quality;
     mainw->blend_palette = WEED_PALETTE_END;
   }
-  //g_print("STRG %d and %d %d %d\n", struggling, mainw->effort, dfcount, prefs->pb_quality);
+
+  //g_print("STRG %d and %d %d\n", struggling, mainw->effort, prefs->pb_quality);
 }
 
 

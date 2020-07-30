@@ -3640,6 +3640,7 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->tcache_dubious_from = 0;
   cfile->tcache_height = 0;
   cfile->tcache = NULL;
+  cfile->checked = FALSE;
 
   if (!strcmp(prefs->image_ext, LIVES_FILE_EXT_JPG)) cfile->img_type = IMG_TYPE_JPEG;
   else cfile->img_type = IMG_TYPE_PNG;
@@ -4888,7 +4889,7 @@ ulong restore_file(const char *file_name) {
   }
 
   // get img_type, check frame count and size
-  if (!check_clip_integrity(mainw->current_file, NULL, cfile->frames)) {
+  if (!cfile->checked && !check_clip_integrity(mainw->current_file, NULL, cfile->frames)) {
     if (cfile->afilesize == 0) {
       reget_afilesize_inner(mainw->current_file);
     }
@@ -4896,6 +4897,7 @@ ulong restore_file(const char *file_name) {
       cfile->frames = get_frame_count(mainw->current_file, 1);
     }
   }
+  cfile->checked = TRUE;
 
   // add entry to window menu
   // TODO - do this earlier and allow switching during restore
@@ -5642,13 +5644,14 @@ manual_locate:
       lives_free(cwd);
 
       // NOT openable, or not found and user cancelled, switch back to original clip
-      if (cdata != NULL) {
+      if (!sfile->checked && cdata) {
         check_clip_integrity(fileno, cdata, maxframe);
         if (sfile->frames > 0 || sfile->afilesize > 0) {
           // recover whatever we can
           sfile->clip_type = CLIP_TYPE_FILE;
           retb = check_if_non_virtual(fileno, 1, sfile->frames);
         }
+        sfile->checked = TRUE;
       }
       if (!retb) {
         current_file = mainw->current_file;
@@ -5667,11 +5670,12 @@ manual_locate:
     if (was_renamed) {
       // manual relocation
       sfile->fps = orig_fps;
-      if (!check_clip_integrity(fileno, cdata, maxframe)) {
+      if (!sfile->checked && !check_clip_integrity(fileno, cdata, maxframe)) {
         // get correct img_type, fps, etc.
         if (THREADVAR(com_failed) || THREADVAR(write_failed)) do_header_write_error(fileno);
         goto manual_locate;
       }
+      sfile->checked = TRUE;
       sfile->needs_silent_update = TRUE; // force filename update in header
       if (prefs->show_recent) {
         // replace in recent menu
@@ -5718,7 +5722,11 @@ manual_locate:
   if (sfile->ext_src != NULL) {
     boolean bad_header = FALSE;
     boolean correct = TRUE;
-    if (!was_renamed) correct = check_clip_integrity(fileno, cdata, maxframe); // get correct img_type, fps, etc.
+    if (!was_renamed) {
+      if (!sfile->checked)
+        correct = check_clip_integrity(fileno, cdata, maxframe); // get correct img_type, fps, etc.
+      sfile->checked = TRUE;
+    }
     if (!correct) {
       if (THREADVAR(com_failed) || THREADVAR(write_failed)) bad_header = TRUE;
     } else {
@@ -5833,6 +5841,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   boolean retb = TRUE;
   boolean load_from_set = TRUE;
   boolean rec_cleanup = FALSE;
+  boolean checked;
 
   //splash_end();
 
@@ -5883,7 +5892,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   do_threaded_dialog(_("Recovering files"), FALSE);
   d_print(_("Recovering files..."));
 
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   threaded_dialog_spin(0.);
 
   mainw->suppress_dprint = TRUE;
@@ -5920,8 +5928,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       mainw->recovery_list = mainw->recovery_list->next;
     }
 
-    if (buff[strlen(buff) - 1] == '\n')
-      buff[strlen(buff) - 1] = 0;
+    lives_chomp(buff);
 
     if (buff[strlen(buff) - 1] == '*') {
       boolean crash_recovery = prefs->crash_recovery;
@@ -6079,6 +6086,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       }
 
       if (mainw->current_file < 1) continue;
+      checked = FALSE;
 
       /// see function reload_set() for detailed comments
       if ((maxframe = load_frame_index(mainw->current_file)) > 0) {
@@ -6089,17 +6097,21 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
           lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
           int fvirt = count_virtual_frames(cfile->frame_index, 1, cfile->frames);
           if (fvirt < cfile->frames) {
-            if (!check_clip_integrity(mainw->current_file, cdata, cfile->frames)) {
+            if (!cfile->checked && !check_clip_integrity(mainw->current_file, cdata, cfile->frames)) {
               cfile->needs_update = TRUE;
             }
+            cfile->checked = TRUE;
           }
           if (cfile->header_version >= 102) cfile->fps = cfile->pb_fps;
         }
       } else {
         /// CLIP_TYPE_DISK
         boolean is_ok;
-        if (!(is_ok = check_clip_integrity(mainw->current_file, NULL, cfile->frames))) {
-          cfile->needs_update = TRUE;
+        if (!cfile->checked) {
+          if (!(is_ok = check_clip_integrity(mainw->current_file, NULL, cfile->frames))) {
+            cfile->needs_update = TRUE;
+          }
+          cfile->checked = TRUE;
         }
         if (!prefs->vj_mode || !is_ok) {
           if (cfile->afilesize == 0) {
@@ -6109,6 +6121,13 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
             cfile->frames = get_frame_count(mainw->current_file, 1);
             cfile->needs_update = TRUE;
           }
+        }
+      }
+      if (!recovery_file && !cfile->checked) {
+        lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
+        if (!check_clip_integrity(mainw->current_file, cdata, cfile->frames)) {
+          cfile->needs_update = TRUE;
+          if (cfile->header_version >= 102) cfile->fps = cfile->pb_fps;
         }
       }
 
@@ -6151,20 +6170,20 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       cfile->is_loaded = TRUE;
       cfile->changed = TRUE;
       lives_rm(cfile->info_file);
-      if (!mainw->multitrack)
-        set_main_title(cfile->name, 0);
+      if (!mainw->multitrack) set_main_title(cfile->name, 0);
 
       restore_clip_binfmt(mainw->current_file);
 
       if (cfile->frameno > cfile->frames) cfile->frameno = cfile->last_frameno = 1;
 
-      if (mainw->multitrack == NULL) {
+      if (!mainw->multitrack) {
         lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
         lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
         lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
         lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
+        showclipimgs();
       } else {
         int current_file = mainw->current_file;
         lives_mt *multi = mainw->multitrack;

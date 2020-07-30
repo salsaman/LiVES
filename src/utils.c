@@ -622,7 +622,7 @@ boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
   if (fsize > 0) {
     lseek(fd, skip, SEEK_SET);
     fbuff->orig_size = fsize + skip;
-    fbuff->buffer = fbuff->ptr = lives_calloc(fsize, 1);
+    fbuff->buffer = fbuff->ptr = lives_calloc(1, fsize);
     //g_printerr("slurp for %d, %s with size %ld\n", fd, fbuff->pathname, fsize);
     while (fsize > 0) {
       if (bufsize > fsize) bufsize = fsize;
@@ -1150,7 +1150,8 @@ boolean lives_read_buffered_eof(int fd) {
     LIVES_ERROR("lives_read_buffered_eof: wrong buffer type");
     return FALSE;
   }
-  return fbuff->eof;
+  return (fbuff->eof && ((!fbuff->reversed && !fbuff->bytes)
+                         || (fbuff->reversed && fbuff->ptr == fbuff->buffer)));
 }
 
 
@@ -2948,7 +2949,7 @@ LIVES_GLOBAL_INLINE lives_img_type_t lives_image_type_to_img_type(const char *li
 }
 
 
-LIVES_GLOBAL_INLINE char *make_image_file_name(lives_clip_t *sfile, int frame, const char *img_ext) {
+LIVES_GLOBAL_INLINE char *make_image_file_name(lives_clip_t *sfile, frames_t frame, const char *img_ext) {
   return lives_strdup_printf("%s/%s/%08d.%s", prefs->workdir, sfile->handle, frame, img_ext);
 }
 
@@ -3011,15 +3012,15 @@ int get_frame_count(int idx, int start) {
 }
 
 
-boolean get_frames_sizes(int fileno, int frame) {
+boolean get_frames_sizes(int fileno, int frame, int *hsize, int *vsize) {
   // get the actual physical frame size
 
   lives_clip_t *sfile = mainw->files[fileno];
   LiVESPixbuf *pixbuf = pull_lives_pixbuf_at_size(fileno, frame, get_image_ext_for_type(sfile->img_type),
                         0, 0, 0, LIVES_INTERP_FAST, FALSE);
   if (pixbuf != NULL) {
-    sfile->hsize = lives_pixbuf_get_width(pixbuf);
-    sfile->vsize = lives_pixbuf_get_height(pixbuf);
+    *hsize = lives_pixbuf_get_width(pixbuf);
+    *vsize = lives_pixbuf_get_height(pixbuf);
     lives_widget_object_unref(pixbuf);
     return TRUE;
   }
@@ -3144,6 +3145,8 @@ char *ensure_extension(const char *fname, const char *ext) {
 }
 
 
+// input length includes terminating NUL
+
 LIVES_GLOBAL_INLINE char *lives_ellipsise(char *txt, size_t maxlen, int align) {
   /// eg. txt = "abcdefgh", maxlen = 6, LIVES_ALIGN_END  -> txt == "...gh" + NUL
   ///     txt = "abcdefgh", maxlen = 6, LIVES_ALIGN_START  -> txt == "ab..." + NUL
@@ -3199,6 +3202,7 @@ LIVES_GLOBAL_INLINE char *lives_pad(char *txt, size_t minlen, int align) {
   if (slen < minlen - 1) {
     retval = (char *)lives_malloc(minlen);
     lives_memset(retval, ' ', --minlen);
+    retval[minlen] = 0;
     switch (align) {
     case LIVES_ALIGN_END:
       ipos = minlen - slen;

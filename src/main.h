@@ -54,7 +54,7 @@
 #ifdef __cplusplus
 #undef HAVE_UNICAP
 #endif
-//#define WEED_STARTUP_TESTS
+#define WEED_STARTUP_TESTS
 #define STD_STRINGFUNCS
 
 #ifdef __GNUC__
@@ -558,7 +558,8 @@ typedef enum {
 typedef enum {
   IMG_TYPE_UNKNOWN = 0,
   IMG_TYPE_JPEG,
-  IMG_TYPE_PNG
+  IMG_TYPE_PNG,
+  N_IMG_TYPES
 } lives_img_type_t;
 
 #define IMG_TYPE_BEST IMG_TYPE_PNG
@@ -852,6 +853,7 @@ typedef struct _lives_clip_t {
   int tcache_height; /// height for thumbnail cache (width is fixed, but if this changes, invalidate)
   frames_t tcache_dubious_from; /// set by clip alterations, frames from here onwards should be freed
   LiVESList *tcache; /// thumbnail cache, list of lives_tcache_entry_t
+  boolean checked; /// clip integrity checked on load - to avoid duplicating it
 } lives_clip_t;
 
 typedef struct {
@@ -1164,6 +1166,9 @@ void workdir_warning(void);
 void do_audio_import_error(void);
 void do_mt_backup_space_error(lives_mt *, int memreq_mb);
 
+LiVESResponseType do_resize_dlg(int cwidth, int cheight, int fwidth, int fheight);
+LiVESResponseType do_imgfmts_error(lives_img_type_t imgtype);
+
 char *workdir_ch_warning(void);
 void do_shutdown_msg(void);
 
@@ -1261,6 +1266,9 @@ void update_progress(boolean visible);
 void do_threaded_dialog(const char *translated_text, boolean has_cancel);
 void end_threaded_dialog(void);
 void threaded_dialog_spin(double fraction);
+void threaded_dialog_push(void);
+void threaded_dialog_pop(void);
+
 void response_ok(LiVESButton *button, livespointer user_data);
 void pump_io_chan(LiVESIOChannel *iochan);
 
@@ -1593,7 +1601,7 @@ boolean check_for_executable(lives_checkstatus_t *cap, const char *exec);
 void do_please_install(const char *exec);
 
 /// lives_image_type can be a string, lives_img_type_t is an enumeration
-char *make_image_file_name(lives_clip_t *clip, int frame, const char *img_ext);
+char *make_image_file_name(lives_clip_t *clip, frames_t frame, const char *img_ext);
 const char *get_image_ext_for_type(lives_img_type_t imgtype);
 lives_img_type_t lives_image_ext_to_img_type(const char *img_ext);
 lives_img_type_t lives_image_type_to_img_type(const char *lives_image_type);
@@ -1659,7 +1667,7 @@ boolean get_clip_value(int which, lives_clip_details_t, void *retval, size_t max
 boolean save_clip_value(int which, lives_clip_details_t, void *val);
 boolean check_frame_count(int idx, boolean last_chkd);
 int get_frame_count(int idx, int xsize);
-boolean get_frames_sizes(int fileno, int frame_to_test);
+boolean get_frames_sizes(int fileno, int frame_to_test, int *hsize, int *vsize);
 int count_resampled_frames(int in_frames, double orig_fps, double resampled_fps);
 boolean int_array_contains_value(int *array, int num_elems, int value);
 boolean check_for_lock_file(const char *set_name, int type);

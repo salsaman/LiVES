@@ -432,6 +432,7 @@ typedef struct {
 
   boolean show_desktop_panel;
   boolean show_msgs_on_startup;
+  boolean show_disk_quota;
 } _prefs;
 
 enum {
@@ -659,6 +660,9 @@ typedef struct {
   LiVESWidget *checkbutton_hfbwnp;
   LiVESWidget *forcesmon;
   LiVESWidget *forcesmon_hbox;
+  LiVESWidget *cb_show_msgstart;
+  LiVESWidget *cb_show_quota;
+  LiVESWidget *cb_autoclean;
   LiVESList *pbq_list;
   char *audp_name;
   char *orig_audp_name;
@@ -978,6 +982,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_AUTOCLEAN_TRASH "autoclean_trash" ///< remove unneeded files on shutdown / startup
 #define PREF_PREF_TRASH "prefer_trash" ///< prefer trash to delete
 #define PREF_MSG_START "show_msgs_on_startup" /// pop up msgs box on startup
+#define PREF_SHOW_QUOTA "show_quota_on_startup" /// pop up quota box on startup
 
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"

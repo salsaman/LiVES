@@ -202,6 +202,8 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define lives_widget_context_pop_thread_default(ctx) g_main_context_pop_thread_default(ctx)
 #define lives_widget_context_invoke(ctx, func, arg) g_main_context_invoke(ctx, func, arg)
 #define lives_widget_context_iteration(ctx, block) g_main_context_iteration(ctx, block)
+#define lives_widget_context_pending(ctx) g_main_context_pending(ctx)
+#define lives_widgets_get_current_event() gtk_get_current_event()
 
 #define lives_idle_add_simple(func, data) g_idle_add(func, data)
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -762,10 +764,15 @@ typedef GtkSelectionMode LiVESSelectionMode;
 typedef GtkButtonBoxStyle LiVESButtonBoxStyle;
 #define LIVES_BUTTONBOX_DEFAULT_STYLE GTK_BUTTONBOX_DEFAULT_STYLE
 #define LIVES_BUTTONBOX_SPREAD GTK_BUTTONBOX_SPREAD
-#define LIVES_BUTTONBOX_EDGE GTK_BUTTONBOX_EDGE
+#define LIVES_BUTTONBOX_EDGE GTK_BUTTONBOX_EDGE  // like SPREAD but buttons touch edges
 #define LIVES_BUTTONBOX_START GTK_BUTTONBOX_START
 #define LIVES_BUTTONBOX_END GTK_BUTTONBOX_END
 #define LIVES_BUTTONBOX_CENTER GTK_BUTTONBOX_CENTER
+#if GTK_CHECK_VERSION(3, 12, 0)
+#define LIVES_BUTTONBOX_EXPAND GTK_BUTTONBOX_EXPAND // buttons take max size
+#else
+#define LIVES_BUTTONBOX_EXPAND 9999
+#endif
 
 typedef GdkEventMask LiVESEventMask;
 #define LIVES_EXPOSURE_MASK GDK_EXPOSURE_MASK

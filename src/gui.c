@@ -1058,13 +1058,14 @@ void create_LiVES(void) {
   mainw->effects_menu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mainw->effects_menu);
 
+  mainw->custom_tools_submenu = lives_standard_menu_item_new_with_label(_("Custom _Tools"));
+  lives_widget_set_no_show_all(mainw->custom_tools_submenu, TRUE);
+
   if (!RFX_LOADED) {
     mainw->ldg_menuitem = lives_standard_menu_item_new_with_label(_("Loading..."));
     lives_container_add(LIVES_CONTAINER(mainw->effects_menu), mainw->ldg_menuitem);
-  } else {
-    mainw->ldg_menuitem = NULL;
-    add_rfx_effects2(RFX_STATUS_ANY);
   }
+
   mainw->custom_effects_menu = NULL;
   mainw->custom_effects_separator = NULL;
 
@@ -1100,9 +1101,6 @@ void create_LiVES(void) {
   mainw->utilities_submenu = lives_standard_menu_item_new_with_label(_("_Utilities"));
 
   mainw->custom_utilities_menu = NULL;
-
-  mainw->custom_tools_submenu = lives_standard_menu_item_new_with_label(_("Custom _Tools"));
-  lives_widget_set_no_show_all(mainw->custom_tools_submenu, TRUE);
 
   mainw->custom_tools_separator = lives_standard_menu_item_new();
   lives_widget_set_sensitive(mainw->custom_tools_separator, FALSE);
@@ -3040,6 +3038,12 @@ void create_LiVES(void) {
   mainw->plug = NULL;
   lives_widget_set_can_focus(mainw->message_box, TRUE);
   if (new_lives) if (prefs->show_msg_area) lives_widget_grab_focus(mainw->message_box); // TODO !prefs->show_msg_area
+
+  if (RFX_LOADED) {
+    lives_widget_destroy(mainw->ldg_menuitem);
+    mainw->ldg_menuitem = NULL;
+    add_rfx_effects2(RFX_STATUS_ANY);
+  }
 }
 
 

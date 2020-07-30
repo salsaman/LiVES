@@ -19,7 +19,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-  QQQQQQQQQQQQQQQQQQQQ Franklin Street, Fifth Floor, Boston, MA.
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 */
 
 // *
@@ -38,22 +38,42 @@ boolean weed_palette_is_sane(int pal);
 
 #ifdef USE_SWSCALE
 
+#ifdef FF_API_PIX_FMT
+typedef enum PixelFormat swpixfmt;
+#else
+typedef enum AVPixelFormat swpixfmt;
+#endif
+
 #if USE_THREADS
 #include <pthread.h>
 typedef struct {
   volatile boolean in_use;
   int num;
   int offset;
+  int iwidth, iheight;
+  int irow[4];
+  swpixfmt ipixfmt;
+  int width, height;
+  int orow[4];
+  swpixfmt opixfmt;
+  int flags;
+  int subspace;
+  int iclamping, oclamp_hint;
 } swsctx_block;
+
+#define MAX_SWS_BLOCKS 8192
+#define MAX_SWS_CTX 65536
+
 short pbq;
 static volatile int nb = 0;
 static volatile int swctx_count = 0;
-static swsctx_block bloxx[MAX_THREADS];
-static struct SwsContext *swscalep[MAX_THREADS];
+static swsctx_block bloxx[MAX_SWS_BLOCKS];
+static struct SwsContext *swscalep[MAX_SWS_CTX];
 static pthread_mutex_t ctxcnt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static swsctx_block *sws_getblock(int nreq) {
-  swsctx_block *block, *bestblock = NULL;
+static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, swpixfmt ipixfmt, int width, int height,
+                                  int *orow, swpixfmt opixfmt, int flags, int subspace, int iclamping, int oclamp_hint) {
+  swsctx_block *block, *bestblock = NULL, *goodblock = NULL, *anyblock = NULL;
   int minnum = MAX_THREADS + 1, num;
   register int i;
 
@@ -62,18 +82,69 @@ static swsctx_block *sws_getblock(int nreq) {
   for (i = 0; i < nb; i++) {
     block = &bloxx[i];
     if (!block->in_use && (num = block->num) >= nreq && num < minnum) {
-      minnum = num;
-      bestblock = block;
+      if (iwidth == block->iwidth
+          && iheight == block->iheight
+          && ipixfmt == block->ipixfmt
+          && width == block->width
+          && height == block->height
+          && opixfmt == block->opixfmt
+          && flags == block->flags) {
+        if (subspace == block->subspace
+            && iclamping == block->iclamping
+            && oclamp_hint == block->oclamp_hint
+            && irow[0] == block->irow[0]
+            && irow[1] == block->irow[1]
+            && irow[2] == block->irow[2]
+            && irow[3] == block->irow[3]
+            && orow[0] == block->orow[0]
+            && orow[1] == block->orow[1]
+            && orow[2] == block->orow[2]
+            && orow[3] == block->orow[3]
+           ) {
+          minnum = num;
+          bestblock = block;
+        } else {
+          if (!bestblock) {
+            minnum = num;
+            goodblock = block;
+	    // *INDENT-OFF*
+	  }}}
+      else {
+	if (!bestblock && !goodblock) {
+	  anyblock = block;
+	  minnum = num;
+	}}}}
+  // *INDENT-ON*
+
+  if (!bestblock) {
+    if (swctx_count + nreq >= MAX_SWS_CTX
+        || nb + 1 >= MAX_SWS_BLOCKS) {
+      if (goodblock) bestblock = goodblock;
+      else if (anyblock) bestblock = anyblock;
+      else abort();
     }
   }
-  if (bestblock != NULL) {
+  if (bestblock) {
     bestblock->in_use = TRUE;
   } else {
-    if (swctx_count + nreq > MAX_THREADS) abort();
     bestblock = &bloxx[nb++];
     bestblock->in_use = TRUE;
     bestblock->num = nreq;
     bestblock->offset = swctx_count;
+    bestblock->iwidth = iwidth;
+    bestblock->iheight = iheight;
+    bestblock->ipixfmt = ipixfmt;
+    bestblock->width = width;
+    bestblock->height = height;
+    bestblock->opixfmt = opixfmt;
+    bestblock->flags = flags;
+    bestblock->subspace = subspace;
+    bestblock->iclamping = iclamping;
+    bestblock->oclamp_hint = oclamp_hint;
+    for (i = 0; i < 4; i++) {
+      bestblock->irow[i] = irow[i];
+      bestblock->orow[i] = orow[i];
+    }
     for (i = nreq; i != 0; i--) swscalep[swctx_count++] = NULL;
   }
 
@@ -81,7 +152,7 @@ static swsctx_block *sws_getblock(int nreq) {
   return bestblock;
 }
 
-LIVES_LOCAL_INLINE void sws_freeblock(swsctx_block *block) {
+LIVES_LOCAL_INLINE void sws_freeblock(swsctx_block * block) {
   block->in_use = FALSE;
 }
 
@@ -12205,11 +12276,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 
     //boolean store_ctx = FALSE;
 
-#ifdef FF_API_PIX_FMT
-    enum PixelFormat ipixfmt, opixfmt;
-#else
-    enum AVPixelFormat ipixfmt, opixfmt;
-#endif
+    swpixfmt ipixfmt, opixfmt;
 
     int flags;
 
@@ -12245,7 +12312,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 
     if (interp == LIVES_INTERP_BEST) {
       if (width > iwidth || height > iheight)
-        flags = SWS_SINC; // other opts SINC, LANCZOS, SPLINE; ACCURATE_RND, BITEXACT. ERROR_DIFFUSION
+        flags = SWS_LANCZOS; // other opts SINC, LANCZOS, SPLINE; ACCURATE_RND, BITEXACT. ERROR_DIFFUSION
       else
         flags = SWS_BICUBIC;
     } else if (interp == LIVES_INTERP_FAST) flags = SWS_FAST_BILINEAR;
@@ -12326,7 +12393,8 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     g_print("iht is %d, height = %d\n", iheight, height);
     swscale = sws_getCachedContext(swscale, iwidth, iheight, ipixfmt, width, height, opixfmt, flags, NULL, NULL, NULL);
     sws_setColorspaceDetails(swscale, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
-                             ? SWS_CS_ITU709 : SWS_CS_ITU601), iclamping, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
+                             ? SWS_CS_ITU709 : SWS_CS_ITU601), iclamping,
+                             sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
                                  ? SWS_CS_ITU709 : SWS_CS_ITU601), oclamp_hint,  0, 1 << 16, 1 << 16);
 
     if (swscale == NULL) {
@@ -12337,12 +12405,14 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 #ifdef DEBUG_RESIZE
     g_print("before resize with swscale: layer size %d X %d with palette %s to %d X %d, hinted %s,\n"
             "masquerading as %s (avpixfmt %d to avpixfmt %d)\n",
-            iwidth, iheight, weed_palette_get_name_full(palette, iclamping, 0), width, height, weed_palette_get_name_full(opal_hint,
-                oclamp_hint, 0),
+            iwidth, iheight, weed_palette_get_name_full(palette, iclamping, 0), width, height,
+            weed_palette_get_name_full(opal_hint,
+                                       oclamp_hint, 0),
             weed_palette_get_name_full(xopal_hint, oclamp_hint, 0), ipixfmt, opixfmt);
 #endif
 #if USE_THREADS
-    ctxblock = sws_getblock(nthrds);
+    ctxblock = sws_getblock(nthrds, iwidth, iheight, irw, ipixfmt, width, height, orw, opixfmt, flags,
+                            subspace, iclamping, oclamp_hint);
     offset = ctxblock->offset;
     for (int sl = 0; sl < nthrds; sl++) {
       swparams[sl].thread_id = sl;
@@ -13093,6 +13163,72 @@ boolean lives_painter_to_layer(lives_painter_t *cr, weed_layer_t *layer) {
 }
 
 #endif
+
+
+int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, int *nbad, int *nmiss) {
+  LiVESPixbuf *pixbuf;
+  LiVESError *error;
+  lives_clip_t *sfile;
+  lives_img_type_t ximgtype;
+  char *fname;
+  int miss = 0, bad = 0;
+  int nimty = (int)N_IMG_TYPES;
+  int j, nres = 0;
+
+  mainw->cancelled = CANCEL_NONE;
+  if (!IS_VALID_CLIP(fileno)) return 0;
+  sfile = mainw->files[fileno];
+  for (int i = 0; i < sfile->frames; i++) {
+    threaded_dialog_spin((double)i / (double)sfile->frames);
+    if (mainw->cancelled) return nres;
+    if (sfile->frame_index && sfile->frame_index[i] != -1) continue;
+    ximgtype = imgtype;
+    fname = make_image_file_name(sfile, i + 1, get_image_ext_for_type(ximgtype));
+    if (!lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+      // check all img_types
+      for (j = 1; j < nimty; j++) {
+        ximgtype = (lives_img_type_t)j;
+        if (ximgtype == imgtype) continue;
+        lives_free(fname);
+        fname = make_image_file_name(sfile, i + 1, get_image_ext_for_type(ximgtype));
+        if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) break;
+      }
+      if (j == nimty) {
+        miss++;
+        lives_free(fname);
+        continue;
+      } else bad++;
+    }
+    pixbuf = pull_lives_pixbuf_at_size(fileno, i + 1, get_image_ext_for_type(ximgtype),
+                                       0, 0, 0, LIVES_INTERP_BEST, FALSE);
+    if (!pixbuf) {
+      lives_free(fname);
+      miss++;
+      continue;
+    }
+    if (lives_pixbuf_get_width(pixbuf) != width ||
+        lives_pixbuf_get_height(pixbuf) != height) {
+      LiVESPixbuf *new_pixbuf = lives_pixbuf_scale_simple(pixbuf, width, height, LIVES_INTERP_BEST);
+      lives_widget_object_unref(pixbuf);
+      if (new_pixbuf) {
+        lives_pixbuf_save(new_pixbuf, fname, ximgtype, 100 - prefs->ocp, width, height, &error);
+        lives_widget_object_unref(new_pixbuf);
+        if (error) {
+          lives_error_free(error);
+          error = NULL;
+          lives_free(fname);
+          miss++;
+          continue;
+        }
+        nres++;
+      }
+    }
+    lives_free(fname);
+  }
+  *nbad = bad;
+  *nmiss = miss;
+  return nres;
+}
 
 
 /**

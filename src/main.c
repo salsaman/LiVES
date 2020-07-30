@@ -61,7 +61,7 @@
 #include "ce_thumbs.h"
 #include "rfx-builder.h"
 
-#ifdef ENABLE_DIAGNOSTICS
+#ifndef ENABLE_DIAGNOSTICS
 #include "diagnostics.h"
 #endif
 
@@ -624,9 +624,8 @@ static boolean pre_init(void) {
 
   prefs->ds_crit_level = (uint64_t)get_int64_prefd(PREF_DS_CRIT_LEVEL, DEF_DS_CRIT_LEVEL);
 
-  prefs->disk_quota = 0;
-  if (!has_pref(PREF_DISK_QUOTA)) needs_disk_quota = TRUE;
-  else prefs->disk_quota = get_int64_prefd(PREF_DISK_QUOTA, 0);
+  prefs->show_disk_quota = get_boolean_prefd(PREF_SHOW_QUOTA, TRUE);
+  prefs->disk_quota = get_int64_prefd(PREF_DISK_QUOTA, 0);
 
   if (mainw->next_ds_warn_level > 0) {
     if (!prefs->vj_mode) {
@@ -1566,7 +1565,8 @@ static void lives_init(_ign_opts *ign_opts) {
   get_wm_caps(capable->wm);
 
   if (capable->has_wm_caps && capable->wm_caps.panel) {
-    prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);;
+    prefs->show_desktop_panel = TRUE;
+    //prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);
   }
 
   prefs->show_msgs_on_startup = get_boolean_prefd(PREF_MSG_START, TRUE);
@@ -3778,10 +3778,10 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   _weed_leaf_set_flags = weed_leaf_set_flags;
 
   init_random();
-
+  /* run_weed_startup_tests(); */
+  /* abort(); */
 #ifdef ENABLE_DIAGNOSTICS
   check_random();
-  run_weed_startup_tests();
   lives_struct_test();
   test_palette_conversions();
 #endif
@@ -7933,7 +7933,7 @@ void load_frame_image(int frame) {
         // Finally we may want to end up with a GkdPixbuf (unless the playback plugin is VPP_DISPLAY_LOCAL
         // and we are in full screen mode).
 
-        if ((mainw->current_file != mainw->scrap_file || mainw->multitrack != NULL)
+        if (!prefs->vj_mode && (mainw->current_file != mainw->scrap_file || mainw->multitrack != NULL)
             && mainw->pwidth > 0 && mainw->pheight > 0
             && !(mainw->is_rendering && !(mainw->proc_ptr != NULL && mainw->preview))
             && !cfile->opening && !mainw->resizing && CURRENT_CLIP_IS_NORMAL
@@ -7961,7 +7961,8 @@ void load_frame_image(int frame) {
                 !mainw->multitrack->is_rendering && prefs->letterbox_mt)
                 || (!mainw->multitrack && prefs->letterbox && (!mainw->is_rendering
                     || mainw->preview_rendering)))) {
-              /// if letterboxing we adjust the player size to the inner rectangle. This avoids problems with varying quality levels
+              /// if letterboxing we adjust the player size to the inner rectangle.
+              // This avoids problems with varying quality levels
               boolean can_resize = FALSE;
               int pwidth = opwidth;
               int pheight = opheight;

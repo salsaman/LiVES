@@ -5837,22 +5837,26 @@ boolean reload_set(const char *set_name) {
         (or at least we recovered as many frames as we could using frame_index),
         and we'll accept whatever the decoder returns if there is a divergence with the clip metadata */
 
-      if (cfile->img_type == IMG_TYPE_UNKNOWN) {
+      if (!cfile->checked && cfile->img_type == IMG_TYPE_UNKNOWN) {
         lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
         int fvirt = count_virtual_frames(cfile->frame_index, 1, cfile->frames);
-        /** if there are some decoded frames then we have a problem. Since the img type was not found it means that the final decoded
+        /** if there are some decoded frames then we have a problem.
+          Since the img type was not found it means that the final decoded
             frame was missing. So we check backwards to find where the last actual decoded frame is and the frame count is set to
             final decoded frame + any virtual frames immediately following, and warn the user.
             If other frames are missing then the clip is corrupt, but we'll continue as best we can. */
         if (fvirt < cfile->frames) check_clip_integrity(mainw->current_file, cdata, cfile->frames);
       }
+      cfile->checked = TRUE;
     } else {
       /// CLIP_TYPE_DISK
       /** in this case we find the last decoded frame and check the frame size and get the image_type.
         If there is a discrepancy with the metadata then we trust the empirical evidence.
         If the final frame is absent then we find the real final frame, warn the user, and adjust frame count.
       */
-      boolean isok = check_clip_integrity(mainw->current_file, NULL, cfile->frames);
+      boolean isok = TRUE;
+      if (!cfile->checked) isok = check_clip_integrity(mainw->current_file, NULL, cfile->frames);
+      cfile->checked = TRUE;
       /** here we do a simple check: make sure the final frame is present and frame + 1 isn't
         if either check fails then we count all the frames (since we don't have a frame_index to guide us),
         - this can be pretty slow so we wan't to avoid it unless  we detected a problem. */
@@ -5962,13 +5966,13 @@ static void recover_lost_clips(LiVESList * reclist) {
   // save set
   if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID) {
     on_quit_activate(NULL, LIVES_INT_TO_POINTER(1));
-    if (mainw->current_file != -1 && (!mainw->multitrack
-                                      || mainw->current_file != mainw->multitrack->render_file)) return;
+    if (mainw->clips_available) return;
   }
 
   // recover files
   mainw->recovery_list = reclist;
   recover_files(NULL, TRUE);
+
   if (prefs->crash_recovery) rewrite_recovery_file();
 
   if (!CURRENT_CLIP_IS_VALID) {
@@ -5999,10 +6003,21 @@ static void free_fdets_list(LiVESList **listp) {
 }
 
 
+static void handle_remnants(LiVESList **rec_list, LiVESList **rem_list,
+                            LiVESList **left_list) {
+
+
+
+
+}
+
+
 void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   // recover disk space
   LiVESList *lists[3];
   LiVESList **left_list, **rec_list, **rem_list;
+  LiVESList *list;
+  lives_file_dets_t *filedets;
   LiVESTextBuffer *tbuff;
   int64_t bytes = 0, fspace = -1;
   int64_t ds_warn_level = mainw->next_ds_warn_level;
@@ -6012,7 +6027,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   char *trashdir;
 
   char *markerfile, *filedir;
-  char *com, *msg, *tmp;
+  char *com, *msg;
   char *extra = lives_strdup("");
 
   LiVESResponseType retval = LIVES_RESPONSE_NONE;
@@ -6173,8 +6188,6 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
     } else {
       LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
       LiVESWidget *button, *accb, *hbox, *label, *top_vbox;
-      LiVESList *list;
-      lives_file_dets_t *filedets;
       lives_proc_thread_t recinfo, reminfo, leaveinfo;
       char *remtrashdir, *op, *from, *to;
       int nitems = atoi(mainw->msg), orig;
@@ -6314,12 +6327,38 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
         }
       }
 
-      /* if (*rec_list && (*rec_list)->data) { */
-      /*   /// try to recover lost files first */
-      /*   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL); */
-      /*   recover_lost_clips(*rec_list); */
-      /*   /// TODO: unrecoverable files -> rem_list */
-      /* } */
+      list = *rec_list;
+
+      if (list && list->data) {
+        /// try to recover lost files first
+        // create a list with just the names
+        LiVESList *recnlist = NULL;
+        for (; list && list->data; list = list->next) {
+          filedets = (lives_file_dets_t *)list->data;
+          if (*filedets->name)
+            recnlist = lives_list_append(recnlist, lives_strdup(filedets->name));
+        }
+
+        // close the temporary clip
+        close_temp_handle(current_file);
+
+        lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+        recover_lost_clips(recnlist);
+        lives_list_free_all(&recnlist);
+
+        current_file = mainw->current_file;
+
+        // get a temporary clip for receiving data from backend
+        if (!get_temp_handle(-1)) {
+          lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+          d_print_failed();
+          mainw->next_ds_warn_level = ds_warn_level;
+          return;
+        }
+
+        /// handle unrecovered itesm, they can be moved to rem, left or to unrec dir
+        handle_remnants(rec_list, rem_list, left_list);
+      }
 
       // now finally we remove all in rem_list, this is done in the backend
 
@@ -6389,9 +6428,9 @@ cleanup:
     lives_standard_expander_new(_("Show _Log"), LIVES_BOX(top_vbox), tview);
     widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
-    if (*left_list) {
-      LiVESList *list;
-      lives_file_dets_t *filedets;
+    list = *left_list;
+
+    if (list && list->data) {
       char *text = NULL, *item;
       LiVESWidget *label = lives_standard_label_new(_("Some files and directories may be removed manually "
                            "if desired.\nClick for details:\n"));
@@ -6401,7 +6440,6 @@ cleanup:
       lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, TRUE, 0);
       lives_widget_set_halign(label, LIVES_ALIGN_CENTER);
 
-      list = *left_list;
       for (; list && list->data; list = list->next) {
         filedets = (lives_file_dets_t *)list->data;
         item = lives_build_path(prefs->workdir, filedets->name, NULL);

@@ -1464,11 +1464,12 @@ if (defined($ARGV[0])) {
 		exit 1;
 	    }
 
+	    print "\n\nCommencing disk cleanup operation:\n\n";
+	    print STDERR "smogrify: \n\nCommencing disk cleanup operation:\n\n";
+
 	    $trashdir = "$workdir/$trashdir";
 
 	    if (-d $trashdir) {
-		print "\n\nCommencing disk cleanup operation:\n\n";
-		print STDERR "smogrify: \n\nCommencing disk cleanup operation:\n\n";
 		opendir DIR, $trashdir;
 		while ($file = readdir(DIR)) {
 		    next if $file eq "." || $file eq "..";
@@ -1494,9 +1495,9 @@ if (defined($ARGV[0])) {
 		    }
 		}
 		closedir DIR;
-		print "\n\nDisk cleanup completed\n\n";
-		print STDERR "smogrify: \n\nDisk cleanup completed\n\n";
 	    }
+	    print "\n\nDisk cleanup completed\n\n";
+	    print STDERR "smogrify: \n\nDisk cleanup completed\n\n";
 	    if ($handle ne ".") {
 		&sig_complete;
 	    }

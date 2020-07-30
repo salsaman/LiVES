@@ -7793,9 +7793,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mt->view_menu);
 
   mt->show_info = lives_standard_check_menu_item_new_with_label(_("Show Info Box"), prefs->mt_show_ctx);
-  lives_signal_connect(LIVES_GUI_OBJECT(mt->show_info), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(toggle_sets_pref),
-                       (livespointer)PREF_MT_SHOW_CTX);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->show_info), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(toggle_sets_pref),
+                            (livespointer)PREF_MT_SHOW_CTX);
 
   lives_container_add(LIVES_CONTAINER(mt->view_menu), mt->show_info);
   lives_menu_add_separator(LIVES_MENU(mt->view_menu));
@@ -7933,9 +7933,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->show_devopts),  prefs->show_dev_opts);
 
   lives_container_add(LIVES_CONTAINER(mt->help_menu), mt->show_devopts);
-  lives_signal_connect(LIVES_GUI_OBJECT(mt->show_devopts), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(toggle_sets_pref),
-                       (livespointer)PREF_SHOW_DEVOPTS);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->show_devopts), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(toggle_sets_pref),
+                            (livespointer)PREF_SHOW_DEVOPTS);
 
   lives_menu_add_separator(LIVES_MENU(mt->help_menu));
 
@@ -8239,13 +8239,11 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                          &mt->opts.insert_audio);
   lives_free(tmp);
   lives_free(tmp2);
+  lives_widget_apply_theme2(widget_opts.last_container, LIVES_WIDGET_STATE_NORMAL, TRUE);
 
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   mt->insa_label = widget_opts.last_label;
-
-  lives_widget_apply_theme2(mt->insa_label, LIVES_WIDGET_STATE_NORMAL, FALSE);
-  lives_widget_set_bg_color(mt->insa_label, LIVES_WIDGET_STATE_INSENSITIVE, &palette->menu_and_bars);
 
   add_fill_to_box(LIVES_BOX(hbox));
 
@@ -8256,6 +8254,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                           &mt->opts.snap_over);
   lives_free(tmp);
   lives_free(tmp2);
+  lives_widget_apply_theme2(widget_opts.last_container, LIVES_WIDGET_STATE_NORMAL, TRUE);
 
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
@@ -20203,9 +20202,9 @@ boolean on_save_event_list_activate(LiVESMenuItem * menuitem, livespointer user_
   hbox = lives_hbox_new(FALSE, 0);
 
   ar_checkbutton = make_autoreload_check(LIVES_HBOX(hbox), prefs->ar_layout);
-  lives_signal_connect(LIVES_GUI_OBJECT(ar_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(toggle_sets_pref),
-                       (livespointer)PREF_AR_LAYOUT);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(ar_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(toggle_sets_pref),
+                            (livespointer)PREF_AR_LAYOUT);
 
   lives_widget_show_all(hbox);
 
@@ -21755,9 +21754,9 @@ char *get_eload_filename(lives_mt * mt, boolean allow_auto_reload) {
 
   if (allow_auto_reload) {
     ar_checkbutton = make_autoreload_check(LIVES_HBOX(hbox), prefs->ar_layout);
-    lives_signal_connect(LIVES_GUI_OBJECT(ar_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                         LIVES_GUI_CALLBACK(toggle_sets_pref),
-                         (livespointer)PREF_AR_LAYOUT);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(ar_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                              LIVES_GUI_CALLBACK(toggle_sets_pref),
+                              (livespointer)PREF_AR_LAYOUT);
   }
 
   if (mt->idlefunc > 0) {

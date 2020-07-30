@@ -3739,7 +3739,8 @@ lives_render_error_t render_events(boolean reset) {
               layer = lives_layer_new_for_frame(mainw->clip_index[scrap_track], mainw->frame_index[scrap_track]);
               offs = weed_get_int64_value(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, &weed_error);
               if (mainw->files[mainw->scrap_file]->ext_src == NULL) load_from_scrap_file(NULL, -1);
-              lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->clip_index[scrap_track]]->ext_src), offs);
+              lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->clip_index[scrap_track]]->ext_src),
+						   offs);
               if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), tc)) {
                 weed_layer_free(layer);
                 layer = NULL;
@@ -3765,7 +3766,8 @@ lives_render_error_t render_events(boolean reset) {
 
               if ((oclip = mainw->old_active_track_list[i]) != (nclip = mainw->active_track_list[i])) {
                 // now using threading, we want to start pulling all pixel_data for all active layers here
-                // however, we may have more than one copy of the same clip - in this case we want to create clones of the decoder plugin
+                // however, we may have more than one copy of the same clip - in this case we want to
+		// create clones of the decoder plugin
                 // this is to prevent constant seeking between different frames in the clip
 
                 // check if ext_src survives old->new
@@ -3978,7 +3980,7 @@ lives_render_error_t render_events(boolean reset) {
         retval = LIVES_RESPONSE_NONE;
         lives_pixbuf_save(pixbuf, oname, cfile->img_type, 100 - prefs->ocp, cfile->hsize, cfile->vsize, &error);
 
-        if (error != NULL) {
+        if (error) {
           retval = do_write_failed_error_s_with_retry(oname, error->message, NULL);
           lives_error_free(error);
           error = NULL;
@@ -5937,30 +5939,22 @@ render_details *create_render_details(int type) {
 
   lives_container_set_border_width(LIVES_CONTAINER(top_vbox), 0);
 
-  rdet->always_hbox = lives_hbox_new(TRUE, widget_opts.packing_width * 2);
-  if (type == 1 || type == 2) gtk_widget_set_no_show_all(rdet->always_hbox, TRUE);
-  rdet->always_checkbutton = lives_standard_check_button_new((tmp = (_("_Always use these values"))), FALSE,
-                             LIVES_BOX(rdet->always_hbox),
-                             (tmp2 = lives_strdup(
-                                       _("Check this button to always use these values when entering multitrack mode. "
-                                         "Choice can be re-enabled from Preferences."))));
-
-  lives_free(tmp);
-  lives_free(tmp2);
-
-  add_spring_to_box(LIVES_BOX(rdet->always_hbox), 0.);
-
   daa = lives_dialog_get_action_area(LIVES_DIALOG(rdet->dialog));
 
-  if (!LIVES_IS_BOX(daa)) {
-    lives_box_pack_end(LIVES_BOX(top_vbox), rdet->always_hbox, TRUE, TRUE, 0);
-    lives_widget_set_halign(rdet->always_checkbutton, LIVES_ALIGN_START);
-  }
+  rdet->always_checkbutton = lives_standard_check_button_new((tmp = (_("_Always use these values"))), FALSE,
+                             LIVES_BOX(daa),
+                             (tmp2 = lives_strdup(
+                                       _("#Check this button to always use these values when entering multitrack mode. "
+                                         "Choice can be re-enabled from Preferences."))));
+  lives_button_box_make_first(LIVES_BUTTON_BOX(daa), widget_opts.last_container);
 
-  hbox = NULL;
+  rdet->always_hbox = widget_opts.last_container;
+  if (type == 1 || type == 2) gtk_widget_set_no_show_all(rdet->always_hbox, TRUE);
+
+  lives_free(tmp); lives_free(tmp2);
 
   frame = add_video_options(&rdet->spinbutton_width, rdet->width, &rdet->spinbutton_height, rdet->height, &rdet->spinbutton_fps,
-                            rdet->fps, NULL, 0., TRUE, hbox);
+                            rdet->fps, NULL, 0., TRUE, NULL);
   lives_box_pack_start(LIVES_BOX(top_vbox), frame, FALSE, TRUE, 0);
 
   if (type == 1) gtk_widget_set_no_show_all(frame, TRUE);
@@ -6184,20 +6178,14 @@ render_details *create_render_details(int type) {
 
 
     rdet->debug = lives_standard_check_button_new((tmp = (_("Debug Mode"))), FALSE,
-                  LIVES_BOX(hbox),
-                  (tmp2 = (_("Output diagnostic information to STDERR "
-                             "instead of to the GUI."))));
+                  LIVES_BOX(hbox), (tmp2 = (_("Output diagnostic information to STDERR "
+                                            "instead of to the GUI."))));
     lives_free(tmp);
     lives_free(tmp2);
 
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
     //lives_widget_set_halign(rdet->acodec_combo, LIVES_ALIGN_CENTER);
     add_spring_to_box(LIVES_BOX(hbox), 0);
-  }
-
-  if (LIVES_IS_BOX(daa)) {
-    lives_box_pack_start(LIVES_BOX(daa), rdet->always_hbox, FALSE, FALSE, widget_opts.packing_width * 2);
-    add_fill_to_box(LIVES_BOX(daa));
   }
 
   add_fill_to_box(LIVES_BOX(dialog_vbox));
@@ -6211,7 +6199,8 @@ render_details *create_render_details(int type) {
   if (!(prefs->startup_interface == STARTUP_MT && !mainw->is_ready)) {
     if (type == 2 || type == 3) {
       if (CURRENT_CLIP_HAS_VIDEO && mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file) {
-        rdet->usecur_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(rdet->dialog), NULL, _("_Set to current clip values"),
+        rdet->usecur_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(rdet->dialog),
+                              NULL, _("_Set to current clip values"),
                               LIVES_RESPONSE_RESET);
         lives_signal_connect(rdet->usecur_button, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(rdet_use_current),
                              (livespointer)rdet);

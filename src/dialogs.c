@@ -3673,6 +3673,7 @@ void threaded_dialog_pop(void) {
       lives_widget_show(mainw->proc_ptr->processing);
       lives_window_set_modal(LIVES_WINDOW(mainw->proc_ptr->processing), TRUE);
       lives_widget_process_updates(mainw->proc_ptr->processing);
+      mainw->threaded_dialog = TRUE;
     }
   }
 }
@@ -3708,6 +3709,7 @@ void threaded_dialog_spin(double fraction) {
       disp_fraction(fraction_done, timesofar, mainw->proc_ptr);
     }
   }
+  lives_widget_process_updates(mainw->proc_ptr->processing);
 }
 
 
@@ -4263,6 +4265,7 @@ LIVES_GLOBAL_INLINE void do_do_not_close_d(void) {
 
 
 LIVES_GLOBAL_INLINE LiVESResponseType do_resize_dlg(int cwidth, int cheight, int fwidth, int fheight) {
+  LiVESWidget *butt;
   LiVESResponseType resp;
   char *text = lives_strdup_printf(_("Some frames in this clip may be wrongly sized.\n"
                                      "The clip size is %d X %d, however at least one frame has size %d X %d\n"
@@ -4279,9 +4282,11 @@ LIVES_GLOBAL_INLINE LiVESResponseType do_resize_dlg(int cwidth, int cheight, int
   lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CLEAR, _("Use the image size"),
                                      LIVES_RESPONSE_ACCEPT);
 
-  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REVERT_TO_SAVED, _("Resize images to clip size"),
-                                     LIVES_RESPONSE_YES);
+  butt = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REVERT_TO_SAVED,
+         _("Resize images to clip size"),
+         LIVES_RESPONSE_YES);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  lives_button_grab_default_special(butt);
 
   lives_dialog_set_button_layout(LIVES_DIALOG(dialog), LIVES_BUTTONBOX_EXPAND);
   resp = lives_dialog_run(LIVES_DIALOG(dialog));

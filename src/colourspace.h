@@ -21,6 +21,7 @@
 #define WEED_LEAF_HOST_PIXBUF_SRC "host_pixbuf_src"
 #define WEED_LEAF_HOST_SURFACE_SRC "host_surface_src"
 #define WEED_LEAF_PIXEL_BITS "pixel_bits"
+#define WEED_LEAF_HOST_FLAGS "host_flags"
 #define WEED_LEAF_RESIZE_THREAD "res_thread"
 #define WEED_LEAF_PROGSCAN "progscan"
 
@@ -249,6 +250,13 @@ void weed_layer_pixel_data_free(weed_layer_t *);
 #define WEED_GAMMA_VARIANT 2048
 #define WEED_LAYER_ALPHA_PREMULT 1
 
+/// private flags
+#define LIVES_LAYER_LOAD_IF_NEEDS_RESIZE 1
+#define LIVES_LAYER_GET_SIZE_ONLY 2
+
+// private flags bitfield
+#define LIVES_LAYER_HAS_SIZE_NOW (1 << 16)
+
 // layer transformation functions
 void alpha_unpremult(weed_layer_t *, boolean un);
 boolean copy_pixel_data(weed_layer_t *dst, weed_layer_t *src_or_null, size_t alignment);
@@ -336,7 +344,5 @@ weed_layer_t *weed_layer_set_audio_data(weed_layer_t *, float **data, int arate,
 
 /// utility funcs for GUI
 int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, int *nbad, int *nmiss);
-
-
 
 #endif

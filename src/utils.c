@@ -3014,16 +3014,18 @@ int get_frame_count(int idx, int start) {
 
 boolean get_frames_sizes(int fileno, int frame, int *hsize, int *vsize) {
   // get the actual physical frame size
-
   lives_clip_t *sfile = mainw->files[fileno];
-  LiVESPixbuf *pixbuf = pull_lives_pixbuf_at_size(fileno, frame, get_image_ext_for_type(sfile->img_type),
-                        0, 0, 0, LIVES_INTERP_FAST, FALSE);
-  if (pixbuf != NULL) {
-    *hsize = lives_pixbuf_get_width(pixbuf);
-    *vsize = lives_pixbuf_get_height(pixbuf);
-    lives_widget_object_unref(pixbuf);
-    return TRUE;
+  weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+  char *fname = make_image_file_name(sfile, frame, get_image_ext_for_type(sfile->img_type));
+  weed_set_int_value(layer, WEED_LEAF_HOST_FLAGS, LIVES_LAYER_GET_SIZE_ONLY);
+  if (!weed_layer_create_from_file_progressive(layer, fname, 0, 0, WEED_PALETTE_END,
+      get_image_ext_for_type(sfile->img_type))) {
+    lives_free(fname);
+    return FALSE;
   }
+  *hsize = weed_layer_get_width(layer);
+  *vsize = weed_layer_get_height(layer);
+  weed_layer_free(layer);
   return FALSE;
 }
 

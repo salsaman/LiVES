@@ -9085,6 +9085,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                          LIVES_GUI_CALLBACK(on_msg_area_scroll),
                          (livespointer)mt->msg_adj);
 
+    lives_widget_set_size_request(mainw->message_box, -1, MIN_MSGBAR_HEIGHT);
+
   } else {
     mt->msg_area = mt->msg_scrollbar = NULL;
     mt->msg_adj = NULL;

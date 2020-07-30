@@ -471,7 +471,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
       }}
     // *INDENT-ON*
 
-    if (1 || sfile->hsize != hsize || sfile->vsize != vsize) {
+    if (sfile->hsize != hsize || sfile->vsize != vsize) {
       LiVESResponseType resp = do_resize_dlg(sfile->hsize, sfile->vsize, hsize, vsize);
       if (prefs->show_dev_opts) {
         g_printerr("incorrect frame size %d X %d, corrected to %d X %d\n", hsize, vsize, sfile->hsize, sfile->vsize);

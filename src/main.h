@@ -1386,6 +1386,9 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
                                        int width, int height, LiVESInterpType interp, boolean fordisp);
 LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const char *image_ext, ticks_t tc);
 
+boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, const char *fname, int width,
+    int height, int tpalette, const char *img_ext);
+
 boolean lives_pixbuf_save(LiVESPixbuf *pixbuf, char *fname, lives_img_type_t imgtype, int quality,
                           int width, int height, LiVESError **gerrorptr);
 

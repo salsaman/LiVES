@@ -13170,6 +13170,7 @@ int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, int 
   LiVESError *error;
   lives_clip_t *sfile;
   lives_img_type_t ximgtype;
+  weed_layer_t *layer;
   char *fname;
   int miss = 0, bad = 0;
   int nimty = (int)N_IMG_TYPES;
@@ -13199,29 +13200,40 @@ int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, int 
         continue;
       } else bad++;
     }
-    pixbuf = pull_lives_pixbuf_at_size(fileno, i + 1, get_image_ext_for_type(ximgtype),
-                                       0, 0, 0, LIVES_INTERP_BEST, FALSE);
-    if (!pixbuf) {
+    layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+    weed_set_int_value(layer, WEED_LEAF_HOST_FLAGS, LIVES_LAYER_LOAD_IF_NEEDS_RESIZE);
+    if (!weed_layer_create_from_file_progressive(layer, fname, width, height, WEED_PALETTE_END,
+        get_image_ext_for_type(ximgtype))) {
       lives_free(fname);
       miss++;
       continue;
     }
-    if (lives_pixbuf_get_width(pixbuf) != width ||
-        lives_pixbuf_get_height(pixbuf) != height) {
-      LiVESPixbuf *new_pixbuf = lives_pixbuf_scale_simple(pixbuf, width, height, LIVES_INTERP_BEST);
+    if (weed_layer_get_width(layer) == width
+        && weed_layer_get_height(layer) == height) {
+      weed_layer_free(layer);
+      lives_free(fname);
+      continue;
+    }
+
+    if (!resize_layer(layer, width, height, LIVES_INTERP_BEST, WEED_PALETTE_END,
+                      WEED_YUV_CLAMPING_UNCLAMPED)) {
+      weed_layer_free(layer);
+      lives_free(fname);
+      continue;
+    }
+    pixbuf = layer_to_pixbuf(layer, TRUE, FALSE);
+    weed_layer_free(layer);
+    if (pixbuf) {
+      lives_pixbuf_save(pixbuf, fname, ximgtype, 100 - prefs->ocp, width, height, &error);
       lives_widget_object_unref(pixbuf);
-      if (new_pixbuf) {
-        lives_pixbuf_save(new_pixbuf, fname, ximgtype, 100 - prefs->ocp, width, height, &error);
-        lives_widget_object_unref(new_pixbuf);
-        if (error) {
-          lives_error_free(error);
-          error = NULL;
-          lives_free(fname);
-          miss++;
-          continue;
-        }
-        nres++;
+      if (error) {
+        lives_error_free(error);
+        error = NULL;
+        lives_free(fname);
+        miss++;
+        continue;
       }
+      nres++;
     }
     lives_free(fname);
   }

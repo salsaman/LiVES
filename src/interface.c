@@ -6058,9 +6058,6 @@ boolean msg_area_config(LiVESWidget * widget) {
     if (height > 0 && width > 0) {
       if (mainw->multitrack) {
         if (height <= MIN_MSGBAR_HEIGHT) {
-          int tvh = lives_paned_get_position(LIVES_PANED(mainw->multitrack->top_vpaned));
-          lives_paned_set_position(LIVES_PANED(mainw->multitrack->top_vpaned),
-                                   tvh - MIN_MSGBAR_HEIGHT);
           height = MIN_MSGBAR_HEIGHT;
           lives_container_child_set_shrinkable(LIVES_CONTAINER(mainw->multitrack->top_vpaned),
                                                mainw->multitrack->vpaned, FALSE);

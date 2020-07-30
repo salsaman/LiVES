@@ -5841,7 +5841,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   boolean retb = TRUE;
   boolean load_from_set = TRUE;
   boolean rec_cleanup = FALSE;
-  boolean checked;
 
   //splash_end();
 
@@ -6086,7 +6085,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       }
 
       if (mainw->current_file < 1) continue;
-      checked = FALSE;
 
       /// see function reload_set() for detailed comments
       if ((maxframe = load_frame_index(mainw->current_file)) > 0) {
@@ -6106,14 +6104,14 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         }
       } else {
         /// CLIP_TYPE_DISK
-        boolean is_ok;
+        boolean is_ok = TRUE;
         if (!cfile->checked) {
           if (!(is_ok = check_clip_integrity(mainw->current_file, NULL, cfile->frames))) {
             cfile->needs_update = TRUE;
           }
           cfile->checked = TRUE;
         }
-        if (!prefs->vj_mode || !is_ok) {
+        if (!prefs->vj_mode && !is_ok) {
           if (cfile->afilesize == 0) {
             reget_afilesize_inner(mainw->current_file);
           }

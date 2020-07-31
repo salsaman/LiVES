@@ -6022,24 +6022,29 @@ static boolean handle_remnants(LiVESList * recnlist, const char *trashremdir, Li
   char *text = lives_strdup_printf(_("Some clips could not be recovered.\n"
                                      "These items can be deleted or moved to the directory\n%s\n"
                                      "What would you like to do with them ?"), unrecdir);
-  LiVESWidget *dialog = create_question_dialog(_("Unrecoverable Clips"), text), *bbox;
+  LiVESWidget *dialog = create_question_dialog(_("Unrecoverable Clips"), text), *bbox, *cancelbutton;
 
   lives_free(text);
 
-  widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, _("Ignore"),
+                 LIVES_RESPONSE_CANCEL);
+
   lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_DELETE, _("Delete them"),
-                                     LIVES_RESPONSE_CANCEL);
+                                     LIVES_RESPONSE_NO);
 
   lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_SAVE, _("Move them"),
                                      LIVES_RESPONSE_OK);
 
   bbox = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
   trash_rb(LIVES_BUTTON_BOX(bbox));
+  lives_dialog_add_escape(LIVES_DIALOG(dialog), cancelbutton);
 
   resp = lives_dialog_run(LIVES_DIALOG(dialog));
   lives_widget_destroy(dialog);
   lives_widget_context_update();
   THREADVAR(com_failed) = FALSE;
+
+  if (resp == LIVES_RESPONSE_CANCEL) return FALSE;
 
   if (resp == LIVES_RESPONSE_OK) {
     // move from workdir to workdir/unrec
@@ -6380,10 +6385,10 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
     // we can stop when orig == current list
 
     THREADVAR(com_failed) = FALSE;
-    list = *rem_list;
-    while (list && list->data) {
+
+    for (list = *rem_list; list && list->data; list = list->next) {
       filedets = (lives_file_dets_t *)list->data;
-      orig = filedets->type;
+      orig = filedets->type & ~LIVES_FILE_TYPE_SPECIAL;
       if (orig == 1) break;
       to = lives_build_path(full_trashdir, TRASH_REMOVE, filedets->name, NULL);
       if (!orig) {
@@ -6402,8 +6407,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       }
     }
 
-    list = *left_list;
-    while (list && list->data) {
+    for (list = *left_list; list && list->data; list = list->next) {
       filedets = (lives_file_dets_t *)list->data;
       orig = filedets->type;
       if (orig == 2) break;
@@ -6473,12 +6477,22 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       }
 
       if (recnlist) {
+        boolean bresp;
         remtrashdir = lives_build_path(full_trashdir, TRASH_REMOVE, NULL);
 
         /// handle unrecovered items
         lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
-        handle_remnants(recnlist, remtrashdir, rem_list);
+        bresp = handle_remnants(recnlist, remtrashdir, rem_list);
         lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
+        if (!bresp) {
+          // if failed / cancelled, add to left_list
+          lives_file_dets_t *fdets;
+          for (list = recnlist; list; list = list->next) {
+            fdets = (lives_file_dets_t *)struct_from_template(LIVES_STRUCT_FILE_DETS_T);
+            fdets->name = lives_strdup((char *)list->data);
+            *left_list = lives_list_prepend(*left_list, fdets);
+          }
+        }
         lives_list_free_all(&recnlist);
         lives_free(remtrashdir);
       }
@@ -6544,6 +6558,7 @@ cleanup:
 
     msg = lives_strdup_printf(_("%s of disk space was recovered.\n"),
                               lives_format_storage_space_string((uint64_t)bytes));
+
     dialog = create_message_dialog(LIVES_DIALOG_INFO, msg, 0);
     lives_free(msg);
 
@@ -6552,7 +6567,9 @@ cleanup:
 
     if (list && list->data) {
       lives_label_chomp(LIVES_LABEL(widget_opts.last_label));
+      widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
       tview = scrolled_textview(NULL, tbuff, RFX_WINSIZE_H * 2, NULL);
+      widget_opts.expand = LIVES_EXPAND_DEFAULT;
       widget_opts.justify = LIVES_JUSTIFY_CENTER;
       lives_standard_expander_new(_("Show _Log"), LIVES_BOX(top_vbox), tview);
       widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
@@ -6576,7 +6593,9 @@ cleanup:
         text = lives_concat_sep(text, "\n", item);
       }
 
+      widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
       tview = scrolled_textview(text, NULL, RFX_WINSIZE_H * 2, NULL);
+      widget_opts.expand = LIVES_EXPAND_DEFAULT;
       lives_free(text);
 
       widget_opts.justify = LIVES_JUSTIFY_CENTER;

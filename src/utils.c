@@ -4338,7 +4338,7 @@ int lives_cp_keep_perms(const char *from, const char *to) {
 
 int lives_mv(const char *from, const char *to) {
   // may not fail
-  char *com = lives_strdup_printf("%s \"%s\" \"%s\" >\"%s\" 2>&1", capable->mv_cmd, from, to, prefs->cmd_log);
+  char *com = lives_strdup_printf("%s \"%s\" \"%s\"", capable->mv_cmd, from, to);
   int retval = lives_system(com, FALSE);
   lives_free(com);
   return retval;

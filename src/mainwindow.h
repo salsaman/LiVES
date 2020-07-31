@@ -439,7 +439,7 @@ enum {
 #define LIVES_FILE_TYPE_PIPE				(1 << 6)
 #define LIVES_FILE_TYPE_STREAM_LOCAL			(1 << 7)
 #define LIVES_FILE_TYPE_STREAM_REMOTE			(1 << 8)
-#define LIVES_FILE_TYPE_SPECIAL				(1 << 60)ul
+#define LIVES_FILE_TYPE_SPECIAL				(1ul << 60)
 
 // image types (string)
 #define LIVES_IMAGE_TYPE_UNKNOWN ""

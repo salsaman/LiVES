@@ -297,6 +297,8 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
   /*   sfile->frames = maxframe; */
   /* } */
 
+  if (prefs->vj_mode) return TRUE;
+
   // check the image type
   for (i = sfile->frames - 1; i >= 0; i--) {
     if (!sfile->frame_index || sfile->frame_index[i] == -1) {

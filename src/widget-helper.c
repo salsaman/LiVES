@@ -7364,6 +7364,7 @@ LiVESWidget *lives_volume_button_new(LiVESOrientation orientation, LiVESAdjustme
 boolean lives_button_ungrab_default_special(LiVESWidget *button) {
   LiVESWidget *toplevel = lives_widget_get_toplevel(button);
   LiVESWidget *deflt = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(toplevel), DEFBUTTON_KEY);
+
   lives_widget_set_can_default(button, FALSE);
   if (button == deflt)
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(LIVES_WIDGET_OBJECT(toplevel)),
@@ -9319,6 +9320,16 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_set_button_layout(LiVESDialog *
   LiVESWidget *bbox = lives_dialog_get_action_area(dlg);
   return lives_button_box_set_layout(LIVES_BUTTON_BOX(bbox), bstyle);
 }
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESAccelGroup *lives_dialog_add_escape(LiVESDialog *dlg, LiVESWidget *button) {
+  LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
+  lives_widget_add_accelerator(button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+  lives_window_add_accel_group(LIVES_WINDOW(dlg), accel_group);
+  return accel_group;
+}
+
 
 LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_buttons, int width, int height) {
   // in case of problems, try setting widget_opts.no_gui=TRUE

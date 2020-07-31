@@ -3184,27 +3184,35 @@ void play_file(void) {
 
   if (needsadone) d_print_done();
 
+  /// free any pre-cached frame
   if (mainw->frame_layer_preload && mainw->pred_clip != -1) {
     check_layer_ready(mainw->frame_layer_preload);
     weed_layer_free(mainw->frame_layer_preload);
   }
   mainw->frame_layer_preload = NULL;
 
-  if (mainw->size_warn) {
-    if (mainw->size_warn > 0 && mainw->files[mainw->size_warn] != NULL) {
-      char *smsg = lives_strdup_printf(
-                     _("\n\nSome frames in the clip\n%s\nare wrongly sized.\nYou should "
-                       "click on Tools--->Resize All\n"
-                       "and resize all frames to the current size.\n"),
-                     mainw->files[mainw->size_warn]->name);
-      widget_opts.non_modal = TRUE;
-      do_error_dialog(smsg);
-      widget_opts.non_modal = FALSE;
-      lives_free(smsg);
+  if (!prefs->vj_mode) {
+    /// pop up error dialog if badly sized frames were detected
+    if (mainw->size_warn) {
+      if (mainw->size_warn > 0 && mainw->files[mainw->size_warn] != NULL) {
+        char *smsg = lives_strdup_printf(
+                       _("\n\nSome frames in the clip\n%s\nare wrongly sized.\nYou should "
+                         "click on Tools--->Resize All\n"
+                         "and resize all frames to the current size.\n"),
+                       mainw->files[mainw->size_warn]->name);
+        widget_opts.non_modal = TRUE;
+        do_error_dialog(smsg);
+        widget_opts.non_modal = FALSE;
+        lives_free(smsg);
+      }
     }
-    mainw->size_warn = 0;
   }
+  mainw->size_warn = 0;
+
+  // set processing state again if a previewe finished
+  // CAUTION !!
   mainw->is_processing = mainw->preview;
+  /////////////////
 
   if (prefs->volume != (double)future_prefs->volume) pref_factory_float(PREF_MASTER_VOLUME, future_prefs->volume, TRUE);
 

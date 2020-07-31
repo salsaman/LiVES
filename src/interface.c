@@ -1714,10 +1714,13 @@ LiVESWidget *scrolled_textview(const char *text, LiVESTextBuffer *textbuffer, in
   LiVESWidget *scrolledwindow = NULL;
   LiVESWidget *textview = lives_standard_text_view_new(text, textbuffer);
   if (textview) {
+    int woex = widget_opts.expand;
+    int height = RFX_WINSIZE_V;
+    if (!LIVES_SHOULD_EXPAND_HEIGHT) height >>= 1;
     widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
-    scrolledwindow = lives_standard_scrolled_window_new(window_width, RFX_WINSIZE_V,
+    scrolledwindow = lives_standard_scrolled_window_new(window_width, height,
 							textview);
-    widget_opts.expand = LIVES_EXPAND_DEFAULT;
+    widget_opts.expand = woex;
     lives_container_set_border_width(LIVES_CONTAINER(scrolledwindow), widget_opts.border_width);
     if (palette->style & STYLE_1) {
       lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)),
@@ -2573,7 +2576,8 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
 	// store the origin list number
 	// for this we will re-use pass, 0 -> rec_list, 1 -> rem_list, 2 -> left_list
 	filedets = (lives_file_dets_t *)list->data;
-	filedets->type = pass;
+	if (filedets->type & LIVES_FILE_TYPE_SPECIAL) continue;
+	filedets->type = ((uint64_t)pass | (uint64_t)LIVES_FILE_TYPE_SPECIAL);
 	if (!pass || pass == 2) {
 	  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[0]))) {
 	    if (pass == 2 || !lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[1]))) {

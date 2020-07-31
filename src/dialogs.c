@@ -259,7 +259,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
   LiVESWidget *dialog_vbox;
   LiVESWidget *label;
   LiVESWidget *cancelbutton = NULL;
-  LiVESWidget *okbutton = NULL;
+  LiVESWidget *okbutton = NULL, *defbutton = NULL;
   LiVESWidget *abortbutton = NULL;
 
   LiVESAccelGroup *accel_group = NULL;
@@ -356,12 +356,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_NO, NULL,
                    LIVES_RESPONSE_NO);
 
-    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_YES, NULL,
-               LIVES_RESPONSE_YES);
-
-    lives_widget_set_can_focus_and_default(okbutton);
-    lives_button_grab_default_special(okbutton);
-    lives_widget_grab_focus(okbutton);
+    defbutton = okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_YES, NULL,
+                           LIVES_RESPONSE_YES);
     break;
 
   case LIVES_DIALOG_QUESTION:
@@ -438,7 +434,11 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
       lives_dialog_set_has_separator(LIVES_DIALOG(dialog), FALSE);
       lives_widget_set_bg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     }
+
+
+
     if (widget_opts.apply_theme) {
+      /// for unknown reasons, this resets the default button, so we have to set it after
       funkify_dialog(dialog);
     } else {
       lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width * 2);
@@ -493,7 +493,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
   if (okbutton && mainw && mainw->iochan) {
     lives_button_grab_default_special(okbutton);
     lives_widget_grab_focus(okbutton);
-  }
+  } else if (defbutton) lives_button_grab_default_special(defbutton);
 
   lives_widget_show_all(dialog);
   gdk_window_show_unraised(lives_widget_get_xwindow(dialog));

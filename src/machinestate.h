@@ -290,7 +290,6 @@ char *lives_datetime(uint64_t secs);
 #define lives_nanosleep(nanosec) {struct timespec ts; ts.tv_sec = (uint64_t)nanosec / ONE_BILLION; \
     ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (nanosleep(&ts, &ts) == -1 && \
 								     errno != ETIMEDOUT);}
-
 #define lives_nanosleep_until_nonzero(var) {while (!(var)) lives_nanosleep(1000);}
 
 int check_dev_busy(char *devstr);
@@ -301,7 +300,7 @@ uint64_t sget_file_size(const char *name);
 void reget_afilesize(int fileno);
 uint64_t reget_afilesize_inner(int fileno);
 
-boolean compress_all_in_dir(const char *dir, int method, void *data);
+boolean compress_files_in_dir(const char *dir, int method, void *data);
 
 #define EXTRA_DETAILS_EMPTY_DIR			(1 << 0)
 #define EXTRA_DETAILS_CLIPHDR			(1 << 1)

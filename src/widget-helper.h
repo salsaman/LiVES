@@ -500,10 +500,13 @@ LiVESWidget *lives_vbutton_box_new(void);
 boolean lives_button_box_set_layout(LiVESButtonBox *, LiVESButtonBoxStyle bstyle);
 boolean lives_button_box_set_button_width(LiVESButtonBox *, LiVESWidget *button, int min_width);
 
+boolean lives_button_box_set_child_non_homogeneous(LiVESButtonBox *, LiVESWidget *child, boolean set);
+
 boolean lives_button_set_border_colour(LiVESWidget *, LiVESWidgetState state, LiVESWidgetColor *);
 boolean lives_button_center(LiVESWidget *);
 boolean lives_button_uncenter(LiVESWidget *, int normal_width);
 boolean lives_button_box_make_first(LiVESButtonBox *, LiVESWidget *);
+boolean lives_dialog_make_widget_first(LiVESDialog *, LiVESWidget *);
 
 LiVESWidget *lives_standard_hscale_new(LiVESAdjustment *);
 LiVESWidget *lives_vscale_new(LiVESAdjustment *);
@@ -1334,6 +1337,7 @@ typedef struct {
   boolean pack_end; ///< pack widget at end or start
   boolean line_wrap; ///< line wrapping for labels
   boolean mnemonic_label; ///< if underscore in label text should be mnemonic accelerator
+  boolean use_markup; ///< whether markup should be used in labels
   boolean non_modal; ///< non-modal for dialogs
   LiVESWindow *transient; ///< transient window for dialogs, if NULL then use the default (READ / WRITE)
   int filler_len; ///< length of extra "fill" between widgets
@@ -1370,6 +1374,7 @@ const widget_opts_t def_widget_opts = {
   FALSE, ///<pack_end
   FALSE, ///< line_wrap
   TRUE, ///< mnemonic_label
+  FALSE, ///< use markup
   FALSE, ///< non_modal
   NULL, ///< transient window
   W_FILL_LENGTH, ///< def fill width (in pixels)

@@ -174,7 +174,7 @@
 #define DLG_BUTTON_HEIGHT (widget_opts.css_min_height * 3)
 
 #define DEF_BUTTON_WIDTH ((int)(180. * widget_opts.scale))
-#define DEF_BUTTON_HEIGHT (widget_opts.css_min_height * 2)
+#define DEF_BUTTON_HEIGHT ((int)((double)widget_opts.css_min_height * 2.5))
 
 #define DEF_DIALOG_WIDTH RFX_WINSIZE_H
 #define DEF_DIALOG_HEIGHT RFX_WINSIZE_V
@@ -524,8 +524,9 @@ enum {
 #define TEMPFILE_MARKER "can_remove"
 
 // trash removal
-#define LIVES_FILENAME_IGNORE ".ignore"
-#define LIVES_FILENAME_NOPRUNE "noprune"
+#define LIVES_FILENAME_NOREMOVE ".noremove"
+#define LIVES_FILENAME_INUSE ".inuse"
+#define LIVES_FILENAME_NOCLEAN ".noclean"
 
 #define TRASH_NAME "__TRASH-"
 #define TRASH_REMOVE 	"remove"

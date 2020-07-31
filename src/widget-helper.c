@@ -14,7 +14,7 @@
 
 // static defns
 
-#define EV_LIM 16
+#define EV_LIM 1024
 
 static void set_child_colour_internal(LiVESWidget *, livespointer set_allx);
 static void set_child_alt_colour_internal(LiVESWidget *, livespointer set_allx);
@@ -3230,6 +3230,18 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_box_set_layout(LiVESButtonBox *
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE
+boolean lives_button_box_set_child_non_homogeneous(LiVESButtonBox *bbox, LiVESWidget *child, boolean set) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 2, 0)
+  gtk_button_box_set_child_non_homogeneous(bbox, child, set);
+  return TRUE;
+#endif
+#endif
+  return FALSE;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_vscale_new(LiVESAdjustment *adj) {
   LiVESWidget *vscale = NULL;
 #ifdef GUI_GTK
@@ -4199,6 +4211,7 @@ LiVESWidget *lives_standard_button_new_from_stock(const char *stock_id, const ch
   if (label != NULL)
     lives_standard_button_set_label(LIVES_BUTTON(button), label);
 #endif
+
   lives_widget_set_can_focus_and_default(button);
   lives_widget_apply_theme(button, LIVES_WIDGET_STATE_NORMAL);
   return button;
@@ -5844,6 +5857,7 @@ WIDGET_HELPER_GLOBAL_INLINE const char *lives_label_get_text(LiVESLabel *label) 
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_text(LiVESLabel *label, const char *text) {
+  if (widget_opts.use_markup) return lives_label_set_markup(label, text);
 #ifdef GUI_GTK
   if (widget_opts.mnemonic_label) gtk_label_set_text_with_mnemonic(label, text);
   else gtk_label_set_text(label, text);
@@ -8152,7 +8166,10 @@ LiVESWidget *lives_standard_notebook_new(const LiVESWidgetColor *bg_color, const
 
 LiVESWidget *lives_standard_label_new(const char *text) {
   LiVESWidget *label = NULL;
-  label = lives_label_new(text);
+  label = lives_label_new(NULL);
+  // allows markup
+
+  if (text) lives_label_set_text(LIVES_LABEL(label), text);
   lives_widget_set_font_size(label, LIVES_WIDGET_STATE_NORMAL, widget_opts.font_size);
   lives_widget_set_halign(label, lives_justify_to_align(widget_opts.justify));
   if (widget_opts.apply_theme) {
@@ -8198,7 +8215,10 @@ LiVESWidget *lives_standard_formatted_label_new(const char *text) {
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   widget_opts.mnemonic_label = FALSE;
   label = lives_standard_label_new(NULL);
-  lives_label_set_markup(LIVES_LABEL(label), form_text);
+  if (widget_opts.use_markup)
+    lives_label_set_markup(LIVES_LABEL(label), form_text);
+  else
+    lives_label_set_text(LIVES_LABEL(label), form_text);
   widget_opts.mnemonic_label = TRUE;
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
@@ -11633,27 +11653,27 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_box_make_first(LiVESButtonBox *
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_make_widget_first(LiVESDialog * dlg, LiVESWidget * widget) {
+  LiVESWidget *daa = lives_dialog_get_action_area(dlg);
+  return lives_button_box_make_first(LIVES_BUTTON_BOX(daa), widget);
+}
+
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_center(LiVESWidget * button) {
   if (LIVES_SHOULD_EXPAND_WIDTH)
     lives_widget_set_size_request(button, DEF_BUTTON_WIDTH * 4, DLG_BUTTON_HEIGHT);
-
-#if !GTK_CHECK_VERSION(3, 0, 0)
   lives_button_box_set_layout(LIVES_BUTTON_BOX(lives_widget_get_parent(button)),
                               LIVES_BUTTONBOX_CENTER);
-#else
   lives_widget_set_halign(lives_widget_get_parent(button), LIVES_ALIGN_CENTER);
-#endif
   return TRUE;
 }
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_uncenter(LiVESWidget * button, int normal_width) {
   lives_widget_set_size_request(button, normal_width, DLG_BUTTON_HEIGHT);
-#if !GTK_CHECK_VERSION(3, 0, 0)
   lives_button_box_set_layout(LIVES_BUTTON_BOX(lives_widget_get_parent(button)), LIVES_BUTTONBOX_END);
-#else
   lives_widget_set_halign(lives_widget_get_parent(button), LIVES_ALIGN_FILL);
-#endif
   return TRUE;
 }
 

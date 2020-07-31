@@ -9615,7 +9615,28 @@ if (defined($ARGV[0])) {
 	    if (-d "$workdir/$file") {
 		print STDERR "is a directory...";
 		print "is a directory...";
-		my $ignfile = "$file/.ignore";
+		my $norem = "$file/.noremove";
+		if (-f $norem) {
+		    print STDERR "\nsmogrify: $file is marked for manual removal only\n";
+		    print "\n$file is marked for manual removal only\n";
+		    if ($new_work) {
+			print STDERR "smogrify: moving $workdir/$file\nto\n$new_work/$file\n";
+			# we are to move this set
+			if (-d "$new_work/$file") {
+			    print STDERR "smogrify: backing up $new_work/$file to " .
+				"$new_work/$file.bak first\n";
+			    &smog_rename("$new_work/$file", "$new_work/$file.bak");
+			}
+		    }
+		    else {
+			&smog_system("/bin/touch $leavedir/$file");
+		    }
+
+		    $nitems++;
+		    push (@left, $file);
+		    next;
+		}
+		my $ignfile = "$file/.inuse";
 		if (-f $ignfile && -s $ignfile) {
 		    if (defined(open IN, "<", $ignfile)) {
 			my $chval;
@@ -9625,7 +9646,7 @@ if (defined($ARGV[0])) {
 			    print STDERR "\nsmogrify: $file is in use:\n";
 			    print "\n$file is in use:\n";
 			    unless ($opts & 0x02) {
-				unless (-f "$file/noprune") {
+				unless (-f "$file/.noclean") {
 				    print STDERR "smogrify: doing some careful cleaning " .
 					"of directory\n";
 				    print STDERR "\nsmogrify: (can be overriden with option 0x02)\n";
@@ -9661,7 +9682,7 @@ if (defined($ARGV[0])) {
 			    &smog_rename("$new_work/$file", "$new_work/$file.bak");
 			}
 			unless ($opts & 0x02) {
-			    unless (-f "$file/noprune") {
+			    unless (-f "$file/.noclean") {
 				print STDERR "smogrify: removing unnecessary files from " .
 				    "$workdir/$file\n";
 				print STDERR "\nsmogrify: (can be overriden with option 0x02)\n";
@@ -9793,7 +9814,7 @@ if (defined($ARGV[0])) {
 				"assuming it is in a set\n";
 			    print "smogrify: $file contains set.* file, " .
 				"assuming it is in a set\n";
-			    unless (-f "$file/noprune") {
+			    unless (-f "$file/.noclean") {
 				print STDERR "smogrify: removing unnecessary files " .
 				    "from directory\n";
 				print STDERR "\nsmogrify: (can be overriden with option 0x02)\n";
@@ -9824,12 +9845,12 @@ if (defined($ARGV[0])) {
 
 		unless ($opts & 0x08) {
 		    print STDERR "smogrify: removing temporary marker file " .
-			"noprune from $workdir/$file\n";
+			".noclean from $workdir/$file\n";
 		    print STDERR "\nsmogrify: (can be overriden with option 0x08)\n";
 		    print "removing temporary marker file " .
-			"noprune from $workdir/$file\n";
+			".noclean from $workdir/$file\n";
 		    print "(can be overriden by disabling option 'Remove Misc Files')\n";
-		    unlink "$workdir/$file/noprune";
+		    unlink "$workdir/$file/.noclean";
 		}
 	    }
 	    else {
@@ -9890,7 +9911,7 @@ if (defined($ARGV[0])) {
 		make_path $deftrashdir, {mode => 1777};
 	    }
 	    for $filerem(glob "rfx.* .smogplugin.* .smogval.* keep_layout* .rfx* .info.*") {
-		&smog_rename($filerem, $deftrashdir);
+		&smog_rename("$workdir/$filerem", "$deftrashdir/$filerem");
 	    }
 	    if ($new_work) {
 		print STDERR "smogrify: removing firew* encoder_log_* and stream.* from $workdir\n";
@@ -9931,6 +9952,7 @@ if (defined($ARGV[0])) {
 	if (!$new_work) {
 	    print "\n\n";
 	}
+	return $nitems;
     }
 
 

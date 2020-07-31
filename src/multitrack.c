@@ -973,14 +973,17 @@ boolean mt_load_recovery_layout(lives_mt *mt) {
     char *uldir = lives_build_path(prefs->workdir, UNREC_LAYOUTS_DIR, NULL);
     lives_mkdir_with_parents(uldir, capable->umask);
     if (lives_file_test(uldir, LIVES_FILE_TEST_IS_DIR)) {
+      char *norem = lives_build_filename(uldir, LIVES_FILENAME_NOREMOVE, NULL);
+      lives_touch(norem);
+      lives_free(norem);
       if (lives_file_test(eload_file, LIVES_FILE_TEST_EXISTS)) {
         lives_mv(eload_file, uldir);
       }
       if (lives_file_test(aload_file, LIVES_FILE_TEST_EXISTS)) {
         lives_mv(aload_file, uldir);
       }
-
-      compress_all_in_dir(uldir, 0, NULL);
+      // this works very well on layout files
+      compress_files_in_dir(uldir, 0, NULL);
     }
     lives_free(uldir);
 

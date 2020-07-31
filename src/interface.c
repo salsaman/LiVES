@@ -1971,44 +1971,39 @@ _insertw *create_insert_dialog(void) {
 }
 
 
-LiVESWidget *trash_rb(LiVESBox *parent) {
+LiVESWidget *trash_rb(LiVESButtonBox *parent) {
+  /// parent should be a bbox
   LiVESWidget *rb = NULL;
 
   if (check_for_executable(&capable->has_gio, EXEC_GIO)) {
     LiVESSList *rb_group = NULL;
-    LiVESWidget *layout, *hbox, *rb2;
-    const char *wofs = widget_opts.font_size;
+    LiVESWidget *vbox, *hbox;
     char *tmp, *tmp2;
 
-    widget_opts.font_size = LIVES_FONT_SIZE_X_LARGE;
-    layout = lives_layout_new(LIVES_BOX(parent));
-    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
-    hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+    hbox = lives_hbox_new(FALSE, 0);
+    vbox = lives_vbox_new(FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(hbox), vbox, FALSE, FALSE, widget_opts.packing_width);
 
+    widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
     rb = lives_standard_radio_button_new((tmp = (_("Send to Trash"))), &rb_group,
-					 LIVES_BOX(hbox),
-					 (tmp2 = (_("#Send deleted items to Trash instead of erasing "
-						    "them permanently"))));
+					 LIVES_BOX(vbox),
+					 (tmp2 = (_("#Send deleted items to filesystem Trash\n"
+						    "instead of erasing them permanently"))));
     lives_free(tmp); lives_free(tmp2);
-    lives_widget_set_size_request(rb, -1, DEF_BUTTON_HEIGHT * 2);
-    widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
-    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+
+    rb = lives_standard_radio_button_new((tmp = (_("Delete"))), &rb_group, LIVES_BOX(vbox),
+					 (tmp2 = (_("#Permanently erase items from the disk"))));
+
+    lives_free(tmp); lives_free(tmp2);
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
-    hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-
-    rb2 = lives_standard_radio_button_new((tmp = (_("Delete"))), &rb_group, LIVES_BOX(hbox),
-					  (tmp2 = (_("#Permanently erase items from the disk"))));
-
-    lives_free(tmp); lives_free(tmp2);
-    lives_widget_set_size_request(rb2, -1, DEF_BUTTON_HEIGHT * 2);
-    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
-    widget_opts.font_size = wofs;
-
-    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(rb), prefs->pref_trash);
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(rb), !prefs->pref_trash);
 
     lives_signal_connect(LIVES_GUI_OBJECT(rb), LIVES_WIDGET_ACTIVATE_SIGNAL,
 			 LIVES_GUI_CALLBACK(toggle_sets_pref), PREF_PREF_TRASH);
+
+    lives_box_pack_start(LIVES_BOX(parent), hbox, FALSE, FALSE, 0);
+    lives_button_box_make_first(LIVES_BUTTON_BOX(parent), hbox);
   }
   return rb;
 }
@@ -2393,6 +2388,7 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
 
   if ((*rec_list && (*rec_list)->data) || (*rem_list && (*rem_list)->data)
       || (*left_list && (*left_list)->data)) {
+    LiVESWidget *bbox = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
     cancelb = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
 						 LIVES_STOCK_CANCEL, NULL,
 						 LIVES_RESPONSE_CANCEL);
@@ -2411,6 +2407,9 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
 					      LIVES_RESPONSE_ACCEPT);
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
     lives_widget_set_sensitive(accb, FALSE);
+
+    trash_rb(LIVES_BUTTON_BOX(bbox));
+    lives_button_box_set_layout(LIVES_BUTTON_BOX(bbox), LIVES_BUTTONBOX_CENTER);
   }
   else {
     accb = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
@@ -2511,29 +2510,30 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
   leave_recheck = fill_filt_section(left_list, pass, 2, layout_leave);
   lives_layout_add_fill(LIVES_LAYOUT(layout_leave), FALSE);
 
-  /// reset button
-  if (!pass) {
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_rec), "list", *rec_list);
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_rec), "ptype",
-				 LIVES_INT_TO_POINTER(0));
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_rem), "list", *rem_list);
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_rem), "ptype",
-				 LIVES_INT_TO_POINTER(1));
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_leave), "list", *left_list);
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_leave), "ptype",
-				 LIVES_INT_TO_POINTER(2));
 
-    lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(resetb), LIVES_WIDGET_CLICKED_SIGNAL,
-				      LIVES_GUI_CALLBACK(filt_reset_clicked),
-				      layout_rec);
-    lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(resetb), LIVES_WIDGET_CLICKED_SIGNAL,
-				      LIVES_GUI_CALLBACK(filt_reset_clicked),
-				      layout_rem);
-    lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(resetb), LIVES_WIDGET_CLICKED_SIGNAL,
-				      LIVES_GUI_CALLBACK(filt_reset_clicked),
-				      layout_leave);
+  if (resetb) {
+    /// reset button
+    if (!pass) {
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_rec), "list", *rec_list);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_rec), "ptype",
+				   LIVES_INT_TO_POINTER(0));
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_rem), "list", *rem_list);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_rem), "ptype",
+				   LIVES_INT_TO_POINTER(1));
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_leave), "list", *left_list);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_leave), "ptype",
+				   LIVES_INT_TO_POINTER(2));
 
-    if (resetb) {
+      lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(resetb), LIVES_WIDGET_CLICKED_SIGNAL,
+					LIVES_GUI_CALLBACK(filt_reset_clicked),
+					layout_rec);
+      lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(resetb), LIVES_WIDGET_CLICKED_SIGNAL,
+					LIVES_GUI_CALLBACK(filt_reset_clicked),
+					layout_rem);
+      lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(resetb), LIVES_WIDGET_CLICKED_SIGNAL,
+					LIVES_GUI_CALLBACK(filt_reset_clicked),
+					layout_leave);
+
       lives_widget_set_sensitive(resetb, TRUE);
       lives_widget_set_sensitive(accb, TRUE);
       lives_button_grab_default_special(accb);

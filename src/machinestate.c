@@ -769,8 +769,8 @@ boolean check_dev_busy(char *devstr) {
 }
 
 
-boolean compress_all_in_dir(const char *dir, int method, void *data) {
-  /// compress all files in dir with gzip
+boolean compress_files_in_dir(const char *dir, int method, void *data) {
+  /// compress all files in dir with gzip (directories are not compressed)
   /// gzip default action is to compress all files, replacing foo.bar with foo.bar.gz
   /// if a file already has a .gz extension then it will be left uncchanged
 
@@ -782,6 +782,12 @@ boolean compress_all_in_dir(const char *dir, int method, void *data) {
 
   if (!check_for_executable(&capable->has_gzip, EXEC_GZIP)) return FALSE;
   if (lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
+    boolean needs_norem = FALSE;
+    char *norem = lives_build_filename(dir, LIVES_FILENAME_NOREMOVE, NULL);
+    if (lives_file_test(norem, LIVES_FILE_TEST_EXISTS)) {
+      needs_norem = TRUE;
+      lives_rm(norem);
+    }
     cwd = lives_get_current_dir();
     THREADVAR(chdir_failed) = FALSE;
     lives_chdir(dir, TRUE);
@@ -789,6 +795,7 @@ boolean compress_all_in_dir(const char *dir, int method, void *data) {
       THREADVAR(chdir_failed) = FALSE;
       lives_chdir(cwd, TRUE);
       lives_free(cwd);
+      lives_free(norem);
       return FALSE;
     }
     com = lives_strdup_printf("%s * 2>&1", EXEC_GZIP);
@@ -799,6 +806,10 @@ boolean compress_all_in_dir(const char *dir, int method, void *data) {
     else retval = TRUE;
     lives_chdir(cwd, TRUE);
     lives_free(cwd);
+    if (needs_norem) {
+      lives_touch(norem);
+      lives_free(norem);
+    }
   }
   return retval;
 }

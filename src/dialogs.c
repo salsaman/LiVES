@@ -249,11 +249,9 @@ static void del_event_cb(LiVESWidget *dialog, livespointer data) {
 //Warning or yes/no dialog
 
 // the type of message box here is with 2 or more buttons (e.g. OK/CANCEL, YES/NO, ABORT/CANCEL/RETRY)
-// if a single OK button is needed, use create_info_error_dialog() in inteface.c instead
+// if a single OK button is needed, use create_message_dialog() in inteface.c instead
 
-
-LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESWindow *transient,
-                                   int warn_mask_number, boolean is_blocking) {
+LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int warn_mask_number) {
   LiVESWidget *dialog;
   LiVESWidget *dialog_vbox;
   LiVESWidget *label;
@@ -262,11 +260,14 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   LiVESWidget *abortbutton = NULL;
 
   LiVESAccelGroup *accel_group = NULL;
+  LiVESWindow *transient = widget_opts.transient;
 
   int cb_key = extra_cb_key;
   int del_key = del_cb_key;
   extra_cb_key = 0;
   del_cb_key = 0;
+
+  if (!transient) transient = get_transient_full();
 
   switch (diat) {
   case LIVES_DIALOG_WARN:
@@ -438,7 +439,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
       add_xlays_widget(LIVES_BOX(dialog_vbox));
     }
 
-    if (mainw->iochan != NULL && is_blocking) {
+    if (mainw->iochan != NULL && !widget_opts.non_modal) {
       LiVESWidget *details_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), NULL, _("Show _Details"),
                                     LIVES_RESPONSE_SHOW_DETAILS);
 
@@ -471,22 +472,22 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   if (mainw->mgeom)
     lives_window_center(LIVES_WINDOW(dialog));
 
-  if (is_blocking)
+  if (!widget_opts.non_modal)
     lives_window_set_modal(LIVES_WINDOW(dialog), TRUE);
 
-  if (prefs != NULL && prefs->present) {
+  if (prefs && prefs->present) {
     lives_window_present(LIVES_WINDOW(dialog));
     lives_xwindow_raise(lives_widget_get_xwindow(dialog));
   }
 
-  if (transient == NULL) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
+  if (!transient) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
   if (cb_key) extra_cb(dialog, cb_key);
   return dialog;
 }
 
 
-LIVES_GLOBAL_INLINE LiVESWidget *create_question_dialog(const char *title, const char *text, LiVESWindow *transient) {
-  LiVESWidget *dialog = create_message_dialog(LIVES_DIALOG_QUESTION, text, transient, 0, TRUE);
+LIVES_GLOBAL_INLINE LiVESWidget *create_question_dialog(const char *title, const char *text) {
+  LiVESWidget *dialog = create_message_dialog(LIVES_DIALOG_QUESTION, text, 0);
   lives_window_set_title(LIVES_WINDOW(dialog), title);
   return dialog;
 }
@@ -499,49 +500,28 @@ boolean do_warning_dialogf(const char *fmt, ...) {
   va_start(xargs, fmt);
   textx = lives_strdup_vprintf(fmt, xargs);
   va_end(xargs);
-  resb = do_warning_dialog_with_check(textx, 0);
+  resb = do_warning_dialog_with_checkx(textx, 0);
   lives_free(textx);
   return resb;
 }
 
 
 LIVES_GLOBAL_INLINE boolean do_warning_dialog(const char *text) {
-  return do_warning_dialog_with_check(text, 0);
+  return do_warning_dialog_with_checkx(text, 0);
 }
 
 
-LIVES_GLOBAL_INLINE boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number) {
-  if (!prefs->show_gui) {
-    return do_warning_dialog_with_check_transient(text, warn_mask_number, NULL);
-  } else {
-    return do_warning_dialog_with_check_transient(text, warn_mask_number, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
-}
-
-
-LIVES_GLOBAL_INLINE boolean do_yesno_dialog_with_check(const char *text, uint64_t warn_mask_number) {
-  return do_yesno_dialog_with_check_transient(text, warn_mask_number, NULL);
-}
-
-
-boolean do_warning_dialog_with_check_transient(const char *text, uint64_t warn_mask_number, LiVESWindow *transient) {
+boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number) {
   // show OK/CANCEL, returns FALSE if cancelled
   LiVESWidget *warning;
   int response = 1;
   char *mytext;
 
-  if (prefs->warning_mask & warn_mask_number) {
-    return TRUE;
-  }
-
-  if (transient == NULL && prefs->show_gui) transient = get_transient_full();
+  if (prefs->warning_mask & warn_mask_number) return TRUE;
 
   mytext = lives_strdup(text); // must copy this because of translation issues
 
-  warning = create_message_dialog(LIVES_DIALOG_WARN_WITH_CANCEL, mytext,
-                                  (transient  && lives_widget_is_visible(LIVES_WIDGET(transient)))
-                                  ? transient : NULL,
-                                  warn_mask_number, TRUE);
+  warning = create_message_dialog(LIVES_DIALOG_WARN_WITH_CANCEL, mytext, warn_mask_number);
 
   response = lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
@@ -553,7 +533,7 @@ boolean do_warning_dialog_with_check_transient(const char *text, uint64_t warn_m
 }
 
 
-boolean do_yesno_dialog_with_check_transient(const char *text, uint64_t warn_mask_number, LiVESWindow *transient) {
+boolean do_yesno_dialog_with_check(const char *text, uint64_t warn_mask_number) {
   // show YES/NO, returns TRUE for YES
   LiVESWidget *warning;
   int response = 1;
@@ -566,7 +546,7 @@ boolean do_yesno_dialog_with_check_transient(const char *text, uint64_t warn_mas
   mytext = lives_strdup(text); // must copy this because of translation issues
 
   do {
-    warning = create_message_dialog(LIVES_DIALOG_YESNO, mytext, transient, warn_mask_number, TRUE);
+    warning = create_message_dialog(LIVES_DIALOG_YESNO, mytext, warn_mask_number);
     response = lives_dialog_run(LIVES_DIALOG(warning));
     lives_widget_destroy(warning);
   } while (response == LIVES_RESPONSE_RETRY);
@@ -582,9 +562,10 @@ LIVES_GLOBAL_INLINE LiVESWindow *get_transient_full(void) {
   LiVESWindow *transient = NULL;
   if (prefs == NULL) return NULL;
   if (prefs->show_gui) {
-    if (prefsw != NULL && prefsw->prefs_dialog != NULL) transient = LIVES_WINDOW(prefsw->prefs_dialog);
+    if (rdet && rdet->dialog) transient = LIVES_WINDOW(rdet->dialog);
+    else if (prefsw && prefsw->prefs_dialog) transient = LIVES_WINDOW(prefsw->prefs_dialog);
     else if (!rte_window_hidden()) transient = LIVES_WINDOW(rte_window);
-    else if (LIVES_MAIN_WINDOW_WIDGET != NULL && mainw->is_ready) transient = LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET);
+    else if (LIVES_MAIN_WINDOW_WIDGET && mainw->is_ready) transient = LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET);
   }
   return transient;
 }
@@ -593,15 +574,15 @@ LIVES_GLOBAL_INLINE LiVESWindow *get_transient_full(void) {
 boolean do_yesno_dialogf(const char *fmt, ...) {
   // show Yes/No, returns TRUE if Yes
   LiVESWidget *warning;
-  LiVESWindow *transient = get_transient_full();
   int response;
   va_list xargs;
   char *textx;
+
   va_start(xargs, fmt);
   textx = lives_strdup_vprintf(fmt, xargs);
   va_end(xargs);
 
-  warning = create_message_dialog(LIVES_DIALOG_YESNO, textx, transient, 0, TRUE);
+  warning = create_message_dialog(LIVES_DIALOG_YESNO, textx, 0);
   lives_free(textx);
   response = lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
@@ -613,10 +594,9 @@ boolean do_yesno_dialogf(const char *fmt, ...) {
 boolean do_yesno_dialog(const char *text) {
   // show Yes/No, returns TRUE if Yes
   LiVESWidget *warning;
-  LiVESWindow *transient = get_transient_full();
   int response;
 
-  warning = create_message_dialog(LIVES_DIALOG_YESNO, text, transient, 0, TRUE);
+  warning = create_message_dialog(LIVES_DIALOG_YESNO, text, 0);
   lives_widget_show_all(warning);
   response = lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
@@ -625,17 +605,15 @@ boolean do_yesno_dialog(const char *text) {
 }
 
 
-static LiVESResponseType _do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient, lives_dialog_t dtype) {
+static LiVESResponseType _do_abort_cancel_retry_dialogx(const char *text, lives_dialog_t dtype) {
   LiVESResponseType response;
   char *mytext;
   LiVESWidget *warning;
 
   mytext = lives_strdup(text); // translation issues
 
-  if (transient == NULL) transient = get_transient_full();
-
   do {
-    warning = create_message_dialog(dtype, mytext, transient, 0, TRUE);
+    warning = create_message_dialog(dtype, mytext, 0);
     lives_widget_show_all(warning);
     response = lives_dialog_run(LIVES_DIALOG(warning)); // looping on retry
     lives_widget_destroy(warning);
@@ -663,38 +641,39 @@ static LiVESResponseType _do_abort_cancel_retry_dialog(const char *text, LiVESWi
       }
     }
   } while (response == LIVES_RESPONSE_ABORT);
+
   return response;
 }
 
 
 // returns LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY
-LIVES_GLOBAL_INLINE LiVESResponseType do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient) {
-  return _do_abort_cancel_retry_dialog(text, transient, LIVES_DIALOG_ABORT_CANCEL_RETRY);
+LIVES_GLOBAL_INLINE LiVESResponseType do_abort_cancel_retry_dialog(const char *text) {
+  return _do_abort_cancel_retry_dialogx(text, LIVES_DIALOG_ABORT_CANCEL_RETRY);
 }
 
 
 // always returns LIVES_RESPONSE_RETRY
-LIVES_GLOBAL_INLINE LiVESResponseType do_abort_retry_dialog(const char *text, LiVESWindow *transient) {
-  return _do_abort_cancel_retry_dialog(text, transient, LIVES_DIALOG_ABORT_RETRY);
+LIVES_GLOBAL_INLINE LiVESResponseType do_abort_retry_dialog(const char *text) {
+  return _do_abort_cancel_retry_dialogx(text, LIVES_DIALOG_ABORT_RETRY);
 }
 
 
 // always returns LIVES_RESPONSE_OK
-LIVES_GLOBAL_INLINE LiVESResponseType do_abort_ok_dialog(const char *text, LiVESWindow *transient) {
-  return _do_abort_cancel_retry_dialog(text, transient, LIVES_DIALOG_ABORT_OK);
+LIVES_GLOBAL_INLINE LiVESResponseType do_abort_ok_dialog(const char *text) {
+  return _do_abort_cancel_retry_dialogx(text, LIVES_DIALOG_ABORT_OK);
 }
 
 
 LiVESResponseType do_error_dialogf(const char *fmt, ...) {
   // show error box
-  LiVESWindow *transient = get_transient_full();
   LiVESResponseType resi;
   char *textx;
   va_list xargs;
+
   va_start(xargs, fmt);
   textx = lives_strdup_vprintf(fmt, xargs);
   va_end(xargs);
-  resi = do_error_dialog_with_check_transient(textx, FALSE, 0, transient);
+  resi = do_error_dialog_with_checkx(textx, 0);
   lives_free(textx);
   return resi;
 }
@@ -702,15 +681,13 @@ LiVESResponseType do_error_dialogf(const char *fmt, ...) {
 
 LIVES_GLOBAL_INLINE LiVESResponseType do_error_dialog(const char *text) {
   // show error box
-  LiVESWindow *transient = get_transient_full();
-  return do_error_dialog_with_check_transient(text, FALSE, 0, transient);
+  return do_error_dialog_with_checkx(text, 0);
 }
 
 
-static LiVESResponseType do_info_dialog_with_transient(const char *text, boolean is_blocking, LiVESWindow *transient,
-    const char *exp_title, LiVESList *exp_list) {
+static LiVESResponseType _do_info_dialogx(const char *text, const char *exp_title, LiVESList *exp_list) {
   LiVESResponseType ret = LIVES_RESPONSE_NONE;
-  LiVESWidget *info_box = create_info_error_dialog(LIVES_DIALOG_INFO, text, transient, 0, is_blocking);
+  LiVESWidget *info_box = create_message_dialog(LIVES_DIALOG_INFO, text, 0);
 
   if (exp_list != NULL) {
     LiVESWidget *dab = lives_dialog_get_content_area(LIVES_DIALOG(info_box));
@@ -718,56 +695,37 @@ static LiVESResponseType do_info_dialog_with_transient(const char *text, boolean
     lives_widget_show_all(info_box);
   }
 
-  if (is_blocking) {
+  if (!widget_opts.non_modal) {
     ret = lives_dialog_run(LIVES_DIALOG(info_box));
-    if (mainw != NULL && mainw->is_ready && transient != NULL) {
-      lives_widget_queue_draw(LIVES_WIDGET(transient));
-    }
   }
 
   return ret;
 }
 
 
-LiVESResponseType do_info_dialogf(const char *fmt, ...) {
+LiVESResponseType do_info_dialogfx(const char *fmt, ...) {
   // show info box
-  LiVESWindow *transient = get_transient_full();
   LiVESResponseType resi;
   char *textx;
   va_list xargs;
   va_start(xargs, fmt);
   textx = lives_strdup_vprintf(fmt, xargs);
   va_end(xargs);
-  resi = do_info_dialog_with_transient(textx, FALSE, transient, NULL, NULL);
+  resi = _do_info_dialogx(textx, NULL, NULL);
   lives_free(textx);
   return resi;
 }
 
 
-LIVES_GLOBAL_INLINE LiVESResponseType do_info_dialog(const char *text) {
-  // show info box
-  LiVESWindow *transient = get_transient_full();
-  return do_info_dialog_with_transient(text, FALSE, transient, NULL, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE LiVESResponseType do_error_dialog_with_check(const char *text, uint64_t warn_mask_number) {
-  // show warning box
-  LiVESWindow *transient = get_transient_full();
-  return do_error_dialog_with_check_transient(text, FALSE, warn_mask_number, transient);
-}
-
-
 LiVESResponseType do_blocking_error_dialogf(const char *fmt, ...) {
   // show error box - blocks until OK is pressed
-  LiVESWindow *transient = get_transient_full();
   va_list xargs;
   char *textx;
   LiVESResponseType resi;
   va_start(xargs, fmt);
   textx = lives_strdup_vprintf(fmt, xargs);
   va_end(xargs);
-  resi = do_error_dialog_with_check_transient(textx, TRUE, 0, transient);
+  resi = do_error_dialog_with_checkx(textx, 0);
   lives_free(textx);
   return resi;
 }
@@ -775,30 +733,21 @@ LiVESResponseType do_blocking_error_dialogf(const char *fmt, ...) {
 
 LiVESResponseType do_blocking_info_dialogf(const char *fmt, ...) {
   // show info box - blocks until OK is pressed
-  LiVESWindow *transient = get_transient_full();
-  va_list xargs;
+   va_list xargs;
   char *textx;
   LiVESResponseType resi;
   va_start(xargs, fmt);
   textx = lives_strdup_vprintf(fmt, xargs);
   va_end(xargs);
-  resi = do_info_dialog_with_transient(textx, TRUE, transient, NULL, NULL);
+  resi = _do_info_dialogx(textx, NULL, NULL);
   lives_free(textx);
   return resi;
 }
 
 
-LIVES_GLOBAL_INLINE LiVESResponseType do_blocking_error_dialog(const char *text) {
-  // show error box - blocks until OK is pressed
-  LiVESWindow *transient = get_transient_full();
-  return do_error_dialog_with_check_transient(text, TRUE, 0, transient);
-}
-
-
 static LiVESResponseType _do_blocking_info_dialog(const char *text,  const char *exp_text, LiVESList *list) {
   // show info box - blocks until OK is pressed
-  LiVESWindow *transient = get_transient_full();
-  return do_info_dialog_with_transient(text, TRUE, transient, exp_text, list);
+  return _do_info_dialogx(text, exp_text, list);
 }
 
 
@@ -808,30 +757,25 @@ LIVES_GLOBAL_INLINE LiVESResponseType do_blocking_info_dialog(const char *text) 
 }
 
 
-LIVES_GLOBAL_INLINE LiVESResponseType do_blocking_info_dialog_with_expander(const char *text,
+LIVES_GLOBAL_INLINE LiVESResponseType do_info_dialog_with_expander(const char *text,
     const char *exp_text, LiVESList *list) {
   // show info box - blocks until OK is pressed
-  return _do_blocking_info_dialog(text, exp_text, list);
+  return _do_info_dialogx(text, exp_text, list);
 }
 
 
-LiVESResponseType do_error_dialog_with_check_transient(const char *text, boolean is_blocking, uint64_t warn_mask_number,
-    LiVESWindow *transient) {
+LiVESResponseType do_error_dialog_with_check(const char *text, uint64_t warn_mask_number) {
   // show error box
   LiVESWidget *err_box;
 
   LiVESResponseType ret = LIVES_RESPONSE_NONE;
 
   if (prefs != NULL && (prefs->warning_mask & warn_mask_number)) return ret;
-  err_box = create_info_error_dialog(warn_mask_number == 0 ? LIVES_DIALOG_ERROR :
-                                     LIVES_DIALOG_WARN, text, transient, warn_mask_number,
-                                     is_blocking);
+  err_box = create_message_dialog(warn_mask_number == 0 ? LIVES_DIALOG_ERROR :
+                                     LIVES_DIALOG_WARN, text, warn_mask_number);
 
-  if (is_blocking) {
+  if (!widget_opts.non_modal) {
     ret = lives_dialog_run(LIVES_DIALOG(err_box));
-    if (mainw != NULL && mainw->is_ready && transient != NULL) {
-      lives_widget_queue_draw(LIVES_WIDGET(transient));
-    }
   }
 
   return ret;
@@ -880,7 +824,7 @@ char *ds_warning_msg(const char *dir, uint64_t dsval, uint64_t cwarn, uint64_t n
 LIVES_GLOBAL_INLINE void do_abortblank_error(const char *what) {
   char *msg = lives_strdup_printf(_("%s may not be blank.\nClick Abort to exit LiVES immediately or Ok "
                                     "to continue with the default value."), what);
-  do_abort_ok_dialog(msg, NULL);
+  do_abort_ok_dialog(msg);
   lives_free(msg);
 }
 
@@ -897,7 +841,7 @@ LIVES_GLOBAL_INLINE void do_clip_divergence_error(int fileno) {
                                     "Please click Abort if you wish to exit from LiVES,\n"
                                     "or OK to update the clip details in LiVES and continue anyway.\n"),
                                   IS_VALID_CLIP(fileno) ? mainw->files[fileno]->name : "??????");
-  do_abort_ok_dialog(msg, NULL);
+  do_abort_ok_dialog(msg);
   lives_free(msg);
   check_storage_space(fileno, FALSE);
 }
@@ -920,13 +864,13 @@ LiVESResponseType do_memory_error_dialog(char *op, size_t bytes) {
                               "Click Abort to exit from LiVES, Cancel to abandon the operation\n"
                               "or Retry to try again. You may need to close some other applications first.\n"), op, sizestr);
   lives_free(sizestr);
-  response = do_abort_cancel_retry_dialog(msg, NULL);
+  response = do_abort_cancel_retry_dialog(msg);
   lives_free(msg);
   return response;
 }
 
 
-LiVESResponseType handle_backend_errors(boolean can_retry, LiVESWindow *transient) {
+LiVESResponseType handle_backend_errors(boolean can_retry) {
   /// handle error conditions returned from the back end
 
   char **array;
@@ -984,7 +928,7 @@ LiVESResponseType handle_backend_errors(boolean can_retry, LiVESWindow *transien
         boolean trysudo = FALSE;
         if (addinfo && strstr(addinfo, "_TRY_SUDO_")) trysudo = TRUE;
         response = do_system_failed_error(array[2], atoi(array[3]), addinfo,
-                                          can_retry, transient, trysudo);
+                                          can_retry, trysudo);
         if (response == LIVES_RESPONSE_RETRY) return response;
       }
     }
@@ -1010,12 +954,12 @@ handled:
 }
 
 
-boolean check_backend_return(lives_clip_t *sfile, LiVESWindow *transient) {
+boolean check_backend_return(lives_clip_t *sfile) {
   // check return code after synchronous (foreground) backend commands
   lives_fread_string(mainw->msg, MAINW_MSG_SIZE, sfile->info_file);
 
   // TODO: consider permitting retry here
-  if (!strncmp(mainw->msg, "error", 5)) handle_backend_errors(FALSE, transient);
+  if (!strncmp(mainw->msg, "error", 5)) handle_backend_errors(FALSE);
 
   return TRUE;
 }
@@ -1147,7 +1091,7 @@ boolean check_storage_space(int clipno, boolean is_processing) {
       else
         msg = lives_strdup_printf("\n%s\n%s\n", tmp, pausstr);
       lives_free(tmp);
-      retval = do_abort_cancel_retry_dialog(msg, NULL);
+      retval = do_abort_cancel_retry_dialog(msg);
       lives_free(msg);
       if (retval == LIVES_RESPONSE_CANCEL) {
         if (is_processing) {
@@ -1206,7 +1150,7 @@ boolean check_storage_space(int clipno, boolean is_processing) {
         else
           msg = lives_strdup_printf("\n%s\n%s\n", tmp, pausstr);
         lives_free(tmp);
-        retval = do_abort_cancel_retry_dialog(msg, NULL);
+        retval = do_abort_cancel_retry_dialog(msg);
         lives_free(msg);
         if (retval == LIVES_RESPONSE_CANCEL) {
           if (is_processing) {
@@ -2781,7 +2725,7 @@ finish:
 
   // get error message (if any)
   if (!strncmp(mainw->msg, "error", 5)) {
-    handle_backend_errors(FALSE, NULL);
+    handle_backend_errors(FALSE);
     if (mainw->cancelled || mainw->error) return FALSE;
   } else {
     if (!check_storage_space(mainw->current_file, FALSE)) return FALSE;
@@ -2916,7 +2860,7 @@ boolean do_auto_dialog(const char *text, int type) {
 
   // get error message (if any)
   if (type != 1 && !strncmp(mainw->msg, "error", 5)) {
-    handle_backend_errors(FALSE, NULL);
+    handle_backend_errors(FALSE);
     if (mainw->cancelled || mainw->error) return FALSE;
   } else {
     if (CURRENT_CLIP_IS_VALID)
@@ -2941,7 +2885,7 @@ boolean do_save_clipset_warn(void) {
           extra);
   lives_free(extra);
 
-  if (!do_warning_dialog_with_check(msg, WARN_MASK_SAVE_SET)) {
+  if (!do_warning_dialog_with_checkx(msg, WARN_MASK_SAVE_SET)) {
     lives_free(msg);
     return FALSE;
   }
@@ -3219,7 +3163,7 @@ boolean do_clipboard_fps_warning(void) {
   if (prefs->warning_mask & WARN_MASK_FPS) {
     return TRUE;
   }
-  return do_warning_dialog_with_check(
+  return do_warning_dialog_with_checkx(
            _("The playback speed (fps), or the audio rate\n of the clipboard does not match\n"
              "the playback speed or audio rate of the clip you are inserting into.\n\n"
              "The insertion will be adjusted to fit into the clip.\n\n"
@@ -3254,7 +3198,7 @@ boolean do_yuv4m_open_warning(void) {
             "LiVES will pause briefly until frames are received.\nYou should only click OK if you understand what you are doing, "
             "otherwise, click Cancel."),
           prefs->workdir);
-  resp = do_warning_dialog_with_check(msg, WARN_MASK_OPEN_YUV4M);
+  resp = do_warning_dialog_with_checkx(msg, WARN_MASK_OPEN_YUV4M);
   lives_free(msg);
   return resp;
 }
@@ -3347,7 +3291,7 @@ LIVES_GLOBAL_INLINE void do_rendered_fx_dialog(void) {
                 prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_RENDERED_EFFECTS_BUILTIN,
                 (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL,
                        NULL)));
-  do_error_dialog_with_check(msg, WARN_MASK_RENDERED_FX);
+  do_error_dialog_with_checkx(msg, WARN_MASK_RENDERED_FX);
   lives_free(msg);
   lives_free(tmp);
 }
@@ -3393,7 +3337,7 @@ boolean do_set_duplicate_warning(const char *new_set) {
                   "Click OK to add the current clips and layouts to the existing set.\n"
                   "Click Cancel to pick a new name.\n"),
                 new_set);
-  boolean retcode = do_warning_dialog_with_check(msg, WARN_MASK_DUPLICATE_SET);
+  boolean retcode = do_warning_dialog_with_checkx(msg, WARN_MASK_DUPLICATE_SET);
   lives_free(msg);
   return retcode;
 }
@@ -3419,8 +3363,7 @@ LiVESResponseType do_original_lost_warning(const char *fname) {
                   "Click Retry to try again, or Browse to browse to the new location.\n"
                   "Otherwise click Cancel to skip loading this file.\n"),
                 fname);
-  LiVESWidget *warning = create_message_dialog(LIVES_DIALOG_CANCEL_RETRY_BROWSE, msg,
-                         LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, TRUE);
+  LiVESWidget *warning = create_message_dialog(LIVES_DIALOG_CANCEL_RETRY_BROWSE, msg, 0);
   LiVESResponseType response = lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
   lives_widget_context_update();
@@ -3477,8 +3420,7 @@ LIVES_GLOBAL_INLINE void do_mt_backup_space_error(lives_mt * mt, int memreq_mb) 
                   "the value in Preferences/Multitrack.\n"
                   "It is recommended to increase it to at least %d MB"),
                 memreq_mb);
-  do_error_dialog_with_check_transient(msg, TRUE, WARN_MASK_MT_BACKUP_SPACE,
-                                       LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+  do_error_dialog_with_checkx(msg, WARN_MASK_MT_BACKUP_SPACE);
   lives_free(msg);
 }
 
@@ -3505,27 +3447,24 @@ LIVES_GLOBAL_INLINE void do_mt_undo_buf_error(void) {
 }
 
 
-LIVES_GLOBAL_INLINE void do_mt_set_mem_error(boolean has_mt, boolean trans) {
+LIVES_GLOBAL_INLINE void do_mt_set_mem_error(boolean has_mt) {
   char *msg1 = (_("\nLiVES was unable to reserve enough memory for the multitrack undo buffer.\n"));
   char *msg2;
   char *msg3 = (_("or enter a smaller value.\n"));
-  char *msg;
+
   if (has_mt) msg2 = (_("Try again from the clip editor, try closing some other applications\n"));
   else msg2 = (_("Try closing some other applications\n"));
 
-  msg = lives_strdup_printf("%s%s%s", msg1, msg2, msg3);
-
-  if (!trans) do_blocking_error_dialog(msg);
-  else do_error_dialog_with_check_transient(msg, TRUE, 0, LIVES_WINDOW(prefsw->prefs_dialog));
-  lives_free(msg);
+  do_blocking_error_dialogf("%s%s%s", msg1, msg2, msg3);
+  lives_free(msg1); lives_free(msg2); lives_free(msg3);
 }
 
 
 LIVES_GLOBAL_INLINE void do_mt_audchan_error(int warn_mask) {
-  do_error_dialog_with_check_transient(
+  do_error_dialog_with_checkx(
     _("Multitrack is set to 0 audio channels, but this layout has audio.\n"
       "You should adjust the audio settings from the Tools menu.\n"),
-    warn_mask, FALSE, NULL);
+    warn_mask);
 }
 
 
@@ -3535,7 +3474,7 @@ LIVES_GLOBAL_INLINE void do_mt_no_audchan_error(void) {
 
 
 LIVES_GLOBAL_INLINE void do_mt_no_jack_error(int warn_mask) {
-  do_error_dialog_with_check(
+  do_error_dialog_with_checkx(
     _("Multitrack audio preview is only available with the\n\"jack\" or \"pulseaudio\" audio player.\n"
       "You can set this in Tools|Preferences|Playback."),
     warn_mask);
@@ -3613,8 +3552,7 @@ LIVES_GLOBAL_INLINE void do_nojack_rec_error(void) {
 
 
 LIVES_GLOBAL_INLINE void do_vpp_palette_error(void) {
-  do_error_dialog_with_check_transient(_("Video playback plugin failed to initialise palette !\n"), TRUE, 0,
-                                       prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) : LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+  do_error_dialog(_("Video playback plugin failed to initialise palette !\n"));
 }
 
 
@@ -3624,19 +3562,18 @@ LIVES_GLOBAL_INLINE void do_decoder_palette_error(void) {
 
 
 LIVES_GLOBAL_INLINE void do_vpp_fps_error(void) {
-  do_error_dialog_with_check_transient(_("Unable to set framerate of video plugin\n"), TRUE, 0,
-                                       prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) : LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+  do_error_dialog(_("Unable to set framerate of video plugin\n"));
 }
 
 
 LIVES_GLOBAL_INLINE void do_after_crash_warning(void) {
-  do_error_dialog_with_check(_("After a crash, it is advisable to clean up the disk with\nFile|Clean up disk space\n"),
+  do_error_dialog_with_checkx(_("After a crash, it is advisable to clean up the disk with\nFile|Clean up disk space\n"),
                              WARN_MASK_CLEAN_AFTER_CRASH);
 }
 
 
 LIVES_GLOBAL_INLINE void do_after_invalid_warning(void) {
-  do_error_dialog_with_check(_("Invalid clips were detected during reaload.\nIt is advisable to clean up the disk with\n"
+  do_error_dialog_with_checkx(_("Invalid clips were detected during reaload.\nIt is advisable to clean up the disk with\n"
                                "File|Clean up disk space\n"),
                              WARN_MASK_CLEAN_INVALID);
 }
@@ -3770,8 +3707,7 @@ void response_ok(LiVESButton * button, livespointer user_data) {
 
 
 LiVESResponseType do_system_failed_error(const char *com, int retval, const char *addinfo,
-    boolean can_retry,
-    LiVESWindow * transient, boolean trysudo) {
+    boolean can_retry, boolean trysudo) {
   // if can_retry is set, we can return LIVES_RESPONSE_RETRY
   // in all other cases we abort (exit) here.
   // if abort_hook_func() fails with a syserror, we don't show the abort / retry dialog, and we return LIVES_RESPONSE_NONE
@@ -3838,7 +3774,7 @@ LiVESResponseType do_system_failed_error(const char *com, int retval, const char
     if (!norecurse) {
       /// we must not fail during the abort hook
       norecurse = TRUE;
-      response = do_abort_retry_dialog(msgx, transient);
+      response = do_abort_retry_dialog(msgx);
       norecurse = FALSE;
     }
   } else {
@@ -3927,7 +3863,7 @@ void do_read_failed_error_s(const char *s, const char *addinfo) {
 }
 
 
-LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow * transient) {
+LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const char *errtext) {
   // err can be errno from open/fopen etc.
 
   // return same as do_abort_cancel_retry_dialog() - LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY (both non-zero)
@@ -3971,7 +3907,7 @@ LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const ch
   LIVES_ERROR(emsg);
   lives_free(emsg);
 
-  ret = do_abort_cancel_retry_dialog(msg, transient);
+  ret = do_abort_cancel_retry_dialog(msg);
 
   lives_free(dsmsg);
   lives_free(msg);
@@ -3983,7 +3919,7 @@ LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const ch
 }
 
 
-LiVESResponseType do_read_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow * transient) {
+LiVESResponseType do_read_failed_error_s_with_retry(const char *fname, const char *errtext) {
   // err can be errno from open/fopen etc.
 
   // return same as do_abort_cancel_retry_dialog() - LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY (both non-zero)
@@ -4005,7 +3941,7 @@ LiVESResponseType do_read_failed_error_s_with_retry(const char *fname, const cha
   LIVES_ERROR(emsg);
   lives_free(emsg);
 
-  ret = do_abort_cancel_retry_dialog(msg, transient);
+  ret = do_abort_cancel_retry_dialog(msg);
 
   lives_free(msg);
   lives_free(sutf);
@@ -4023,7 +3959,7 @@ LiVESResponseType do_header_read_error_with_retry(int clip) {
 
   hname = lives_build_filename(prefs->workdir, mainw->files[clip]->handle, LIVES_CLIP_HEADER, NULL);
 
-  ret = do_read_failed_error_s_with_retry(hname, NULL, NULL);
+  ret = do_read_failed_error_s_with_retry(hname, NULL);
 
   lives_free(hname);
   return ret;
@@ -4039,7 +3975,7 @@ boolean do_header_write_error(int clip) {
   if (mainw->files[clip] == NULL) return TRUE;
 
   hname = lives_build_filename(prefs->workdir, mainw->files[clip]->handle, LIVES_CLIP_HEADER, NULL);
-  retval = do_write_failed_error_s_with_retry(hname, NULL, NULL);
+  retval = do_write_failed_error_s_with_retry(hname, NULL);
   if (retval == LIVES_RESPONSE_RETRY && save_clip_values(clip)) retval = 0; // on retry try to save all values
   lives_free(hname);
 
@@ -4065,7 +4001,7 @@ LiVESResponseType do_header_missing_detail_error(int clip, lives_clip_details_t 
   }
 
   msg = lives_strdup_printf(_("Value for \"%s\" could not be read."), key);
-  ret = do_read_failed_error_s_with_retry(hname, msg, NULL);
+  ret = do_read_failed_error_s_with_retry(hname, msg);
 
   lives_free(msg);
   lives_free(key);
@@ -4122,14 +4058,9 @@ boolean do_abort_check(void) {
 
 
 void do_encoder_img_fmt_error(render_details * rdet) {
-  char *msg = lives_strdup_printf(
-                _("\nThe %s cannot encode clips with image type %s.\n"
-                  "Please select another encoder from the list.\n"),
-                prefs->encoder.name, get_image_ext_for_type(cfile->img_type));
-
-  do_error_dialog_with_check_transient(msg, TRUE, 0, LIVES_WINDOW(rdet->dialog));
-
-  lives_free(msg);
+  do_blocking_error_dialogf(_("\nThe %s cannot encode clips with image type %s.\n"
+			      "Please select another encoder from the list.\n"),
+			    prefs->encoder.name, get_image_ext_for_type(cfile->img_type));
 }
 
 
@@ -4225,7 +4156,7 @@ boolean do_foundclips_query(void) {
   char *text = (_("Possible lost clips were detected within the LiVES working directory.\n"
                   "What would you like me to do with them ?\n"));
   char *title = (_("Missing Clips Detected"));
-  LiVESWidget *dlg = create_question_dialog(title, text, NULL);
+  LiVESWidget *dlg = create_question_dialog(title, text);
   LiVESResponseType ret;
   lives_free(text); lives_free(title);
   widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
@@ -4259,7 +4190,7 @@ LIVES_GLOBAL_INLINE void do_locked_in_vdevs_error(void) {
 LIVES_GLOBAL_INLINE void do_do_not_close_d(void) {
   char *msg = (_("\n\nCLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\nDO NOT SHUT DOWN OR "
                  "CLOSE LIVES !\n"));
-  create_info_error_dialog(LIVES_DIALOG_WARN, msg, NULL, 0, FALSE);
+  create_message_dialog(LIVES_DIALOG_WARN, msg, 0);
   lives_free(msg);
 }
 
@@ -4271,7 +4202,7 @@ LIVES_GLOBAL_INLINE LiVESResponseType do_resize_dlg(int cwidth, int cheight, int
                                      "The clip size is %d X %d, however at least one frame has size %d X %d\n"
                                      "What would you like to do ?"), cwidth, cheight, fwidth, fheight);
 
-  LiVESWidget *dialog = create_question_dialog(_("Problem Detected"), text, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+  LiVESWidget *dialog = create_question_dialog(_("Problem Detected"), text);
 
   lives_free(text);
 
@@ -4303,7 +4234,7 @@ LIVES_GLOBAL_INLINE LiVESResponseType do_imgfmts_error(lives_img_type_t imgtype)
                                      "What would you like to do ?"),
                                    image_ext_to_lives_image_type(get_image_ext_for_type(imgtype)));
 
-  LiVESWidget *dialog = create_question_dialog(_("Problem Detected"), text, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+  LiVESWidget *dialog = create_question_dialog(_("Problem Detected"), text);
 
   lives_free(text);
 
@@ -4487,7 +4418,7 @@ try_again:
                                  argv[3], argv[offs], sudotext, argv[offs]);
       lives_free(sudotext);
       title = (_("Problem Detected"));
-      dlg = create_question_dialog(text, title, NULL);
+      dlg = create_question_dialog(text, title);
       lives_free(title);
       lives_free(text);
       widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;

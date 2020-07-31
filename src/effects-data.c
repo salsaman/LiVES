@@ -4996,7 +4996,9 @@ static void do_chan_connected_error(lives_conx_w * conxwp, int key, int mode, in
   lives_free(ochans);
   cname = get_chan_name(ctmpl, cnum, TRUE);
   msg = lives_strdup_printf(_("Input channel is already connected from (%d,%d) %s"), key + 1, mode + 1, cname);
-  do_error_dialog_with_check_transient(msg, TRUE, 0, LIVES_WINDOW(conxwp->conx_dialog));
+  widget_opts.transient = LIVES_WINDOW(conxwp->conx_dialog);
+  do_error_dialogx(msg);
+  widget_opts.transient = NULL;
   lives_free(msg);
   lives_free(cname);
 }
@@ -5011,14 +5013,17 @@ static void do_param_connected_error(lives_conx_w * conxwp, int key, int mode, i
     pname = get_param_name(ptmpl, pnum, TRUE);
   } else pname = (_("ACTIVATED"));
   msg = lives_strdup_printf(_("Input parameter is already connected from (%d,%d) %s"), key + 1, mode + 1, pname);
-  do_error_dialog_with_check_transient(msg, TRUE, 0, LIVES_WINDOW(conxwp->conx_dialog));
+  widget_opts.transient = LIVES_WINDOW(conxwp->conx_dialog);
+  do_error_dialogx(msg);
+  widget_opts.transient = NULL;
   lives_free(msg);
   lives_free(pname);
 }
 
 
 static void do_param_incompatible_error(lives_conx_w * conxwp) {
-  do_error_dialog_with_check_transient(_("Input and output parameters are not compatible"), TRUE, 0,
-                                       LIVES_WINDOW(conxwp->conx_dialog));
+  widget_opts.transient = LIVES_WINDOW(conxwp->conx_dialog);
+  do_error_dialogx(_("Input and output parameters are not compatible"));
+  widget_opts.transient = NULL;
 }
 

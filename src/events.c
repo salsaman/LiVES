@@ -3999,7 +3999,7 @@ lives_render_error_t render_events(boolean reset) {
       } else {
         lives_thread_join(*saver_thread, NULL);
         while (saveargs->error != NULL) {
-          retval = do_write_failed_error_s_with_retry(saveargs->fname, saveargs->error->message, NULL);
+          retval = do_write_failed_error_s_with_retry(saveargs->fname, saveargs->error->message);
           lives_error_free(saveargs->error);
           saveargs->error = NULL;
           if (retval != LIVES_RESPONSE_RETRY) {
@@ -4275,7 +4275,7 @@ filterinit2:
     if (saver_thread) {
       lives_thread_join(*saver_thread, NULL);
       while (saveargs->error != NULL) {
-        retval = do_write_failed_error_s_with_retry(saveargs->fname, saveargs->error->message, NULL);
+        retval = do_write_failed_error_s_with_retry(saveargs->fname, saveargs->error->message);
         lives_error_free(saveargs->error);
         saveargs->error = NULL;
         if (retval != LIVES_RESPONSE_RETRY) read_write_error = LIVES_RENDER_ERROR_WRITE_FRAME;
@@ -4372,7 +4372,9 @@ boolean start_render_effect_events(weed_plant_t *event_list) {
     mainw->cancelled = CANCEL_NONE;
 
     if (mainw->error) {
-      do_error_dialog(mainw->msg);
+      widget_opts.non_modal = TRUE;
+      do_error_dialogx(mainw->msg);
+      widget_opts.non_modal = FALSE;
       d_print_failed();
     } else if (mainw->render_error >= LIVES_RENDER_ERROR) d_print_failed();
     cfile->undo_start = oundo_start;

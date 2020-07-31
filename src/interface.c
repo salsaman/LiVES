@@ -1127,7 +1127,7 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean * td_ha
   procw = (xprocess *)(lives_calloc(sizeof(xprocess), 1));
 
   procw->processing = lives_standard_dialog_new(_("Processing..."), FALSE, -1, -1);
-  lives_window_set_transient_for(LIVES_WINDOW(procw->processing), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+
   lives_window_set_decorated(LIVES_WINDOW(procw->processing), FALSE);
 
   lives_window_add_accel_group(LIVES_WINDOW(procw->processing), accel_group);
@@ -1222,9 +1222,6 @@ xprocess *create_processing(const char *text) {
   char tmp_label[256];
 
   procw->processing = lives_standard_dialog_new(_("Processing..."), FALSE, -1, -1);
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(procw->processing), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
 
   lives_window_set_decorated(LIVES_WINDOW(procw->processing), FALSE);
 
@@ -1646,7 +1643,7 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
 
   char *labeltext, *tmp, *tmp2;
 
-  dialog = create_question_dialog(_("Encoding Options"), text1, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+  dialog = create_question_dialog(_("Encoding Options"), text1);
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   if (opt_resize) {
@@ -1708,23 +1705,6 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
   lives_button_grab_default_special(okbutton);
 
   lives_widget_show_all(dialog);
-  return dialog;
-}
-
-// Information/error dialog
-
-// the type of message box here is with a single OK button
-// if 2 or more buttons (e.g. OK/CANCEL, YES/NO, ABORT/RETRY/CANCEL) are needed, use create_message_dialog() in dialogs.c
-
-LiVESWidget *create_info_error_dialog(lives_dialog_t info_type, const char *text, LiVESWindow * transient, int mask,
-                                      boolean is_blocking) {
-  LiVESWidget *dialog;
-
-  if (transient == NULL && prefs != NULL && !prefs->show_gui) {
-    transient = get_transient_full();
-  }
-
-  dialog = create_message_dialog(info_type, text, transient, mask, is_blocking);
   return dialog;
 }
 
@@ -2017,8 +1997,7 @@ LiVESWidget *trash_rb(LiVESBox *parent) {
 
     hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
-    rb2 = lives_standard_radio_button_new((tmp = (_("Delete"))), &rb_group,
-					  LIVES_BOX(hbox),
+    rb2 = lives_standard_radio_button_new((tmp = (_("Delete"))), &rb_group, LIVES_BOX(hbox),
 					  (tmp2 = (_("#Permanently erase items from the disk"))));
 
     lives_free(tmp); lives_free(tmp2);
@@ -2029,8 +2008,7 @@ LiVESWidget *trash_rb(LiVESBox *parent) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(rb), prefs->pref_trash);
 
     lives_signal_connect(LIVES_GUI_OBJECT(rb), LIVES_WIDGET_ACTIVATE_SIGNAL,
-			 LIVES_GUI_CALLBACK(toggle_sets_pref),
-			 PREF_PREF_TRASH);
+			 LIVES_GUI_CALLBACK(toggle_sets_pref), PREF_PREF_TRASH);
   }
   return rb;
 }
@@ -2114,7 +2092,7 @@ static boolean filtc_response(LiVESWidget *w, LiVESResponseType resp, livespoint
   return TRUE;
 }
 
-#define NMLEN_MAX 32
+#define NMLEN_MAX 33
 #define SECS_IN_DAY 86400
 static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWidget *layout) {
   LiVESList *list = (LiVESList *)*listp;
@@ -2390,7 +2368,7 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
   LiVESWidget *top_vbox;
   LiVESWidget *scrolledwindow;
   LiVESWidget *cancelb;
-  LiVESWidget *resetb;
+  LiVESWidget *resetb = NULL;
   LiVESWidget *accb;
   LiVESWidget *vbox;
   LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
@@ -2413,24 +2391,35 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
   lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
   lives_widget_set_maximum_size(dialog, winsize_h, winsize_v);
 
-  cancelb = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-					       LIVES_STOCK_CANCEL, NULL,
-					       LIVES_RESPONSE_CANCEL);
+  if ((*rec_list && (*rec_list)->data) || (*rem_list && (*rem_list)->data)
+      || (*left_list && (*left_list)->data)) {
+    cancelb = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
+						 LIVES_STOCK_CANCEL, NULL,
+						 LIVES_RESPONSE_CANCEL);
 
-  lives_widget_add_accelerator(cancelb, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-			       LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+    lives_widget_add_accelerator(cancelb, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+				 LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  resetb = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-					      LIVES_STOCK_UNDO, _("_Reset"),
-					      LIVES_RESPONSE_NONE);
-  lives_widget_set_sensitive(resetb, FALSE);
+    resetb = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
+						LIVES_STOCK_UNDO, _("_Reset"),
+						LIVES_RESPONSE_NONE);
+    lives_widget_set_sensitive(resetb, FALSE);
 
-  widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
-  accb = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-					    LIVES_STOCK_GO_FORWARD, _("_Accept and Continue"),
-					    LIVES_RESPONSE_ACCEPT);
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
-  lives_widget_set_sensitive(accb, FALSE);
+    widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+    accb = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
+					      LIVES_STOCK_GO_FORWARD, _("_Accept and Continue"),
+					      LIVES_RESPONSE_ACCEPT);
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
+    lives_widget_set_sensitive(accb, FALSE);
+  }
+  else {
+    accb = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
+					      LIVES_STOCK_CLOSE, _("_Close Window"),
+					      LIVES_RESPONSE_OK);
+    lives_widget_add_accelerator(accb, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+				 LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+    lives_button_grab_default_special(accb);
+  }
 
   lives_signal_sync_connect(dialog, LIVES_WIDGET_RESPONSE_SIGNAL,
 			    LIVES_GUI_CALLBACK(filtc_response), NULL);
@@ -2544,9 +2533,11 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
 				      LIVES_GUI_CALLBACK(filt_reset_clicked),
 				      layout_leave);
 
-    lives_widget_set_sensitive(resetb, TRUE);
-    lives_widget_set_sensitive(accb, TRUE);
-    lives_button_grab_default_special(accb);
+    if (resetb) {
+      lives_widget_set_sensitive(resetb, TRUE);
+      lives_widget_set_sensitive(accb, TRUE);
+      lives_button_grab_default_special(accb);
+    }
   }
 
   /////////
@@ -2562,7 +2553,8 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
   while (filtresp == LIVES_RESPONSE_NONE) lives_dialog_run(LIVES_DIALOG(dialog));
 
  harlem_shuffle:
-  if (filtresp != LIVES_RESPONSE_CANCEL) {
+
+  if (filtresp != LIVES_RESPONSE_CANCEL && filtresp != LIVES_RESPONSE_OK) {
     // we need to shuffle the lists around before destroying the dialog; caller will move
     // actual pointer files
     LiVESList *list, *listnext;
@@ -2636,9 +2628,6 @@ LiVESWidget *create_opensel_dialog(int frames, double fps) {
   if (fps > 0.) tottime = (double)frames / fps;
 
   opensel_dialog = lives_standard_dialog_new(_("Open Selection"), FALSE, -1, -1);
-  if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(opensel_dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
 
   lives_window_add_accel_group(LIVES_WINDOW(opensel_dialog), accel_group);
 
@@ -3977,7 +3966,10 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   lives_container_set_border_width(LIVES_CONTAINER(chooser), widget_opts.border_width);
 
   if (prefs->show_gui) {
-    lives_window_set_transient_for(LIVES_WINDOW(chooser), get_transient_full());
+    LiVESWindow *transient = widget_opts.transient;
+    if (!transient) transient = get_transient_full();
+    if (transient)
+      lives_window_set_transient_for(LIVES_WINDOW(chooser), transient);
   }
 
   lives_signal_sync_connect(chooser, LIVES_WIDGET_CURRENT_FOLDER_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(chooser_check_dir), NULL);
@@ -4193,8 +4185,8 @@ _entryw *create_cds_dialog(int type) {
                     "What do you wish to do ?"));
   }
 
-  cdsw->dialog = create_question_dialog(_("Cancel/Discard/Save"), labeltext,
-                                        LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+  cdsw->dialog = create_question_dialog(_("Cancel/Discard/Save"), labeltext);
+
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(cdsw->dialog));
 
   if (labeltext != NULL) lives_free(labeltext);
@@ -5152,8 +5144,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
     ///////
 
     if (!strlen(lives_entry_get_text(LIVES_ENTRY(name_entry)))) {
-      do_error_dialog_with_check_transient(_("Please enter the name of the file to save the downloaded clip as.\n"), TRUE, 0,
-                                           LIVES_WINDOW(dialog));
+      do_blocking_error_dialog(_("Please enter the name of the file to save the downloaded clip as.\n"));
       continue;
     }
 
@@ -5161,7 +5152,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 
     if (!(*url)) {
       lives_free(url);
-      do_error_dialog_with_check_transient(_("Please enter a valid URL for the download.\n"), TRUE, 0, LIVES_WINDOW(dialog));
+      do_blocking_error_dialog(_("Please enter a valid URL for the download.\n"));
       continue;
     }
 
@@ -5535,7 +5526,7 @@ static void manclips_cb(LiVESWidget * w, livespointer data) {
                              + (mainw->was_set ? 1 : 0), extra);
   lives_free(extra);
 
-  dialog = create_question_dialog(_("Manage Clipsets"), text, NULL);
+  dialog = create_question_dialog(_("Manage Clipsets"), text);
   lives_free(text);
 
   button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK,

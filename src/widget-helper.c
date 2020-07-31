@@ -9311,10 +9311,9 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   if (height <= 0) height = 8;
 
   if (!widget_opts.no_gui) {
-    if (widget_opts.transient == NULL)
-      lives_window_set_transient_for(LIVES_WINDOW(dialog), get_transient_full());
-    else
-      lives_window_set_transient_for(LIVES_WINDOW(dialog), widget_opts.transient);
+    LiVESWindow *transient = widget_opts.transient;
+    if (!transient) transient = get_transient_full();
+    if (transient) lives_window_set_transient_for(LIVES_WINDOW(dialog), transient);
   }
 
   lives_window_set_monitor(LIVES_WINDOW(dialog), widget_opts.monitor);

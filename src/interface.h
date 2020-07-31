@@ -37,8 +37,6 @@ boolean expose_msg_area(LiVESWidget *, lives_painter_t *, livespointer user_data
 boolean msg_area_config(LiVESWidget *);
 boolean reshow_msg_area(LiVESWidget *, lives_painter_t *, livespointer user_data);
 
-LiVESWidget *create_info_error_dialog(lives_dialog_t info_type, const char *text, LiVESWindow *transient, int mask,
-                                      boolean is_blocking);
 LiVESWidget *create_opensel_dialog(int frames, double fps);
 
 LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, boolean opt_resize);

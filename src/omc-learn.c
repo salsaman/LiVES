@@ -1318,7 +1318,7 @@ static void del_all(LiVESButton *button, livespointer user_data) {
   omclearn_w *omclw = (omclearn_w *)user_data;
 
   // need to use the full version here to override the default transient window
-  if (!do_warning_dialog_with_check_transient(_("\nClick OK to delete all entries\n"), 0, LIVES_WINDOW(omclw->dialog))) return;
+  if (!do_warning_dialog_with_checkx(_("\nClick OK to delete all entries\n"), 0)) return;
 
   // destroy everything in table
   lives_container_foreach(LIVES_CONTAINER(omclw->table), killit, NULL);
@@ -2430,7 +2430,7 @@ void on_devicemap_save_activate(LiVESMenuItem *menuitem, livespointer user_data)
   do {
     retval = 0;
     if ((fd = open(save_file, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR)) < 0) {
-      retval = do_write_failed_error_s_with_retry(save_file, lives_strerror(errno), NULL);
+      retval = do_write_failed_error_s_with_retry(save_file, lives_strerror(errno));
       if (retval == LIVES_RESPONSE_CANCEL) {
         lives_free(save_file);
         d_print_failed();
@@ -2487,7 +2487,7 @@ void on_devicemap_save_activate(LiVESMenuItem *menuitem, livespointer user_data)
       close(fd);
 
       if (THREADVAR(write_failed)) {
-        retval = do_write_failed_error_s_with_retry(save_file, NULL, NULL);
+        retval = do_write_failed_error_s_with_retry(save_file, NULL);
         if (retval == LIVES_RESPONSE_CANCEL) d_print_file_error_failed();
       }
     }

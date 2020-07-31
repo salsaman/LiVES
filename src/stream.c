@@ -431,7 +431,9 @@ void lives2lives_read_stream(const char *host, int port) {
 
   lstream->handle = OpenHTMSocket(host, port, FALSE);
   if (lstream->handle == NULL) {
-    do_error_dialog(_("LiVES to LiVES stream error: Could not open port !\n"));
+    widget_opts.non_modal = TRUE;
+    do_error_dialogx(_("LiVES to LiVES stream error: Could not open port !\n"));
+    widget_opts.non_modal = FALSE;
     lives_widget_set_sensitive(mainw->open_lives2lives, TRUE);
     return;
   }
@@ -550,7 +552,9 @@ void lives2lives_read_stream(const char *host, int port) {
   else fps_can_change = FALSE;
 
   if (mainw->fixed_fpsd > 0. && (cfile->fps != mainw->fixed_fpsd)) {
-    do_error_dialog(_("\n\nUnable to open stream, framerate does not match fixed rate.\n"));
+    widget_opts.non_modal = TRUE;
+    do_error_dialogx(_("\n\nUnable to open stream, framerate does not match fixed rate.\n"));
+    widget_opts.non_modal = FALSE;
 #ifdef USE_STRMBUF
     buffering = FALSE;
     pthread_join(stthread, NULL);

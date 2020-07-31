@@ -825,7 +825,7 @@ static void save_mt_autoback(lives_mt *mt) {
 
     if (!retval || THREADVAR(write_failed)) {
       THREADVAR(write_failed) = FALSE;
-      retval2 = do_write_failed_error_s_with_retry(asave_file, NULL, NULL);
+      retval2 = do_write_failed_error_s_with_retry(asave_file, NULL);
     }
   } while (retval2 == LIVES_RESPONSE_RETRY);
 
@@ -970,33 +970,21 @@ boolean mt_load_recovery_layout(lives_mt *mt) {
   if (mainw->event_list == NULL) {
     // failed to load
     // keep the faulty layout for forensic purposes
-    char *uldir = lives_build_filename(prefs->workdir, "unrecoverable_layouts", LIVES_DIR_SEP, NULL);
+    char *uldir = lives_build_path(prefs->workdir, UNREC_LAYOUTS_DIR, NULL);
     lives_mkdir_with_parents(uldir, capable->umask);
-    if (lives_file_test(eload_file, LIVES_FILE_TEST_EXISTS)) {
-      lives_mv(eload_file, uldir);
-    }
-    if (lives_file_test(aload_file, LIVES_FILE_TEST_EXISTS)) {
-      lives_mv(aload_file, uldir);
-    }
-    if (!capable->has_gzip) capable->has_gzip = has_executable(EXEC_GZIP);
-    if (capable->has_gzip) {
-      char *cwd = lives_get_current_dir();
-      THREADVAR(chdir_failed) = FALSE;
-      lives_chdir(uldir, TRUE);
-      if (THREADVAR(chdir_failed)) THREADVAR(chdir_failed) = FALSE;
-      else {
-        char *com = lives_strdup_printf("%s * 2>%s", EXEC_GZIP, LIVES_DEVNULL);
-        lives_system(com, TRUE);
-        lives_free(com);
-        lives_chdir(cwd, FALSE);
+    if (lives_file_test(uldir, LIVES_FILE_TEST_IS_DIR)) {
+      if (lives_file_test(eload_file, LIVES_FILE_TEST_EXISTS)) {
+	lives_mv(eload_file, uldir);
       }
-      lives_free(cwd);
-    }
+      if (lives_file_test(aload_file, LIVES_FILE_TEST_EXISTS)) {
+	lives_mv(aload_file, uldir);
+      }
 
-    if (mt) {
-      mt->fps = prefs->mt_def_fps;
+      compress_all_in_dir(uldir, 0, NULL);
     }
     lives_free(uldir);
+    
+    if (mt) mt->fps = prefs->mt_def_fps;
     recovered = FALSE;
   }
 
@@ -5606,7 +5594,7 @@ static weed_plant_t *load_event_list_inner(lives_mt * mt, int fd, boolean show_e
                   "close the current set,\nthen load in the new set from the File menu.\n"),
                 set_needed);
         d_print(err);
-        do_error_dialog_with_check_transient(err, TRUE, 0, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+        do_error_dialogx(err);
         lives_free(err);
         lives_free(set_needed);
         return NULL;
@@ -5646,9 +5634,10 @@ static weed_plant_t *load_event_list_inner(lives_mt * mt, int fd, boolean show_e
         if (achans >= 0 && mt != NULL) {
           if (achans > 2) {
             char *err = lives_strdup_printf(
-                          _("\nThis layout has an invalid number of audio channels (%d) for LiVES.\nIt cannot be loaded.\n"), achans);
+                          _("\nThis layout has an invalid number of audio channels (%d) for LiVES.\n"
+			    "It cannot be loaded.\n"), achans);
             d_print(err);
-            do_error_dialog_with_check_transient(err, TRUE, 0, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+            do_error_dialogx(err);
             lives_free(err);
             return NULL;
           }
@@ -5773,7 +5762,7 @@ static weed_plant_t *load_event_list_inner(lives_mt * mt, int fd, boolean show_e
                "disable this feature in Tools -> Preferences -> Effects, whilst editing and rendering the layout."));
     }
     if (err != NULL) {
-      do_error_dialog_with_check_transient(err, TRUE, WARN_MASK_LAYOUT_GAMMA, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+      do_error_dialogx(err);
       lives_free(err);
     }
   }
@@ -16240,7 +16229,7 @@ boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       com = lives_strdup_printf("%s backup_audio \"%s\"", prefs->backend_sync, cfile->handle);
       lives_popen(com, TRUE, mainw->msg, MAINW_MSG_SIZE);
       lives_free(com);
-      handle_backend_errors(FALSE, get_transient_full());
+      handle_backend_errors(FALSE);
       if (mainw->error) return FALSE;
     }
     mt->has_audio_file = TRUE;
@@ -19729,7 +19718,7 @@ LiVESList *load_layout_map(void) {
     retval = 0;
     fd = lives_open2(lmap_name, O_RDONLY);
     if (fd < 0) {
-      retval = do_read_failed_error_s_with_retry(lmap_name, NULL, NULL);
+      retval = do_read_failed_error_s_with_retry(lmap_name, NULL);
     } else {
       while (1) {
         bytes = lives_read_le_buffered(fd, &len, 4, TRUE);
@@ -19810,7 +19799,7 @@ LiVESList *load_layout_map(void) {
     if (fd >= 0) lives_close_buffered(fd);
 
     if (err) {
-      retval = do_read_failed_error_s_with_retry(lmap_name, NULL, NULL);
+      retval = do_read_failed_error_s_with_retry(lmap_name, NULL);
     }
   } while (retval == LIVES_RESPONSE_RETRY);
 
@@ -19889,7 +19878,7 @@ void save_layout_map(int *lmap, double * lmap_audio, const char *file, const cha
     if (write_to_file) fd = lives_create_buffered(map_name, DEF_FILE_PERMS);
 
     if (fd == -1) {
-      retval = do_write_failed_error_s_with_retry(map_name, lives_strerror(errno), NULL);
+      retval = do_write_failed_error_s_with_retry(map_name, lives_strerror(errno));
     } else {
       THREADVAR(write_failed) = FALSE;
 
@@ -19952,7 +19941,7 @@ void save_layout_map(int *lmap, double * lmap_audio, const char *file, const cha
         if (THREADVAR(write_failed)) break;
       }
       if (THREADVAR(write_failed)) {
-        retval = do_write_failed_error_s_with_retry(map_name, NULL, NULL);
+        retval = do_write_failed_error_s_with_retry(map_name, NULL);
         THREADVAR(write_failed) = FALSE;
       }
 
@@ -20267,7 +20256,7 @@ boolean on_save_event_list_activate(LiVESMenuItem * menuitem, livespointer user_
     }
 
     if (!retval || fd < 0) {
-      retval2 = do_write_failed_error_s_with_retry(esave_file, (fd < 0) ? lives_strerror(errno) : NULL, NULL);
+      retval2 = do_write_failed_error_s_with_retry(esave_file, (fd < 0) ? lives_strerror(errno) : NULL);
       if (retval2 == LIVES_RESPONSE_CANCEL) {
         if (mt != NULL) {
           if (needs_idlefunc) {
@@ -21708,7 +21697,7 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
     }
     msg = lives_strdup_printf(_("%s\nSome %s are missing from the layout%s\nTherefore it could not be loaded properly.\n"),
                               bit1, bit2, bit3);
-    do_error_dialog_with_check_transient(msg, TRUE, 0, LIVES_WINDOW(transient));
+    do_error_dialogx(msg);
     lives_free(msg);
     lives_free(bit2);
     if (mt != NULL) mt->layout_prompt = TRUE;
@@ -21871,7 +21860,7 @@ weed_plant_t *load_event_list(lives_mt * mt, char *eload_file) {
 
       if (THREADVAR(read_failed) == fd + 1) {
         THREADVAR(read_failed) = 0;
-        if (mt != NULL) retval = do_read_failed_error_s_with_retry(eload_name, NULL, NULL);
+        if (mt != NULL) retval = do_read_failed_error_s_with_retry(eload_name, NULL);
         THREADVAR(read_failed) = FALSE;
       }
 
@@ -21952,7 +21941,7 @@ weed_plant_t *load_event_list(lives_mt * mt, char *eload_file) {
           }
 
           if (fd < 0 || !retval) {
-            retval2 = do_write_failed_error_s_with_retry(eload_file, (fd < 0) ? lives_strerror(errno) : NULL, NULL);
+            retval2 = do_write_failed_error_s_with_retry(eload_file, (fd < 0) ? lives_strerror(errno) : NULL);
             if (retval2 == LIVES_RESPONSE_CANCEL) d_print_file_error_failed();
           }
         } while (retval2 == LIVES_RESPONSE_RETRY);
@@ -22268,7 +22257,7 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
               }
               if (fd < 0 || !retval) {
                 if (fd > 0) lives_close_buffered(fd);
-                retval2 = do_write_failed_error_s_with_retry((char *)map->data, (fd < 0) ? lives_strerror(errno) : NULL, NULL);
+                retval2 = do_write_failed_error_s_with_retry((char *)map->data, (fd < 0) ? lives_strerror(errno) : NULL);
               }
             } while (retval2 == LIVES_RESPONSE_RETRY);
 
@@ -22276,7 +22265,7 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
           }
           if (retval2 == 0) lives_close_buffered(fd);
         } else {
-          retval2 = do_read_failed_error_s_with_retry((char *)map->data, NULL, NULL);
+          retval2 = do_read_failed_error_s_with_retry((char *)map->data, NULL);
         }
       } while (retval2 == LIVES_RESPONSE_RETRY);
     }

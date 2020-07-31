@@ -54,7 +54,7 @@
 #ifdef __cplusplus
 #undef HAVE_UNICAP
 #endif
-#define WEED_STARTUP_TESTS
+//#define WEED_STARTUP_TESTS
 #define STD_STRINGFUNCS
 
 #ifdef __GNUC__
@@ -1106,47 +1106,59 @@ boolean all_expose(LiVESWidget *, lives_painter_t *, livespointer psurf);
 boolean do_progress_dialog(boolean visible, boolean cancellable, const char *text);
 boolean do_warning_dialog(const char *text);
 boolean do_warning_dialogf(const char *fmt, ...);
-boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number);
-boolean do_warning_dialog_with_check_transient(const char *text, uint64_t warn_mask_number, LiVESWindow *transient);
+
+// combine...
+boolean do_warning_dialog_with_checkx(const char *text, uint64_t warn_mask_number);
+
 boolean do_yesno_dialog(const char *text);
 boolean do_yesno_dialogf(const char *fmt, ...);
-boolean do_yesno_dialog_with_check(const char *text, uint64_t warn_mask_number);
-boolean do_yesno_dialog_with_check_transient(const char *text, uint64_t warn_mask_number, LiVESWindow *transient);
-LiVESResponseType do_abort_ok_dialog(const char *text, LiVESWindow *transient);
-LiVESResponseType do_abort_retry_dialog(const char *text, LiVESWindow *transient);
-LiVESResponseType do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient) WARN_UNUSED;
-LiVESResponseType do_error_dialog(const char *text);
-LiVESResponseType do_error_dialogf(const char *fmt, ...);
-LiVESResponseType do_info_dialog(const char *text);
-LiVESResponseType do_info_dialogf(const char *fmt, ...);
-LiVESResponseType do_error_dialog_with_check(const char *text, uint64_t warn_mask_number);
+
+// combine..
+boolean do_yesno_dialog_with_checkx(const char *text, uint64_t warn_mask_number);
+
+LiVESResponseType do_abort_ok_dialog(const char *text);
+LiVESResponseType do_abort_retry_dialog(const char *text);
+LiVESResponseType do_abort_cancel_retry_dialog(const char *text) WARN_UNUSED;
+
+// combine
 LiVESResponseType do_blocking_error_dialog(const char *text);
+LiVESResponseType do_error_dialogx(const char *text);
+
+// combine
 LiVESResponseType do_blocking_error_dialogf(const char *fmt, ...);
+LiVESResponseType do_error_dialogfx(const char *fmt, ...);
+
+// combine
 LiVESResponseType do_blocking_info_dialog(const char *text);
+LiVESResponseType do_info_dialogx(const char *text);
+
+// combine
 LiVESResponseType do_blocking_info_dialogf(const char *fmt, ...);
-LiVESResponseType do_blocking_info_dialog_with_expander(const char *text, const char *exp_text, LiVESList *);
-LiVESResponseType do_error_dialog_with_check_transient(const char *text, boolean is_blocking, uint64_t warn_mask_number,
-    LiVESWindow *transient);
-LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESWindow *transient,
-                                   int warn_mask_number, boolean is_blocking);
-LiVESWidget *create_question_dialog(const char *title, const char *text, LiVESWindow *parent);
+LiVESResponseType do_info_dialogfx(const char *fmt, ...);
+
+// combine
+LiVESResponseType do_error_dialog_with_checkx(const char *text, uint64_t warn_mask_number);
+
+LiVESResponseType do_info_dialog_with_expander(const char *text, const char *exp_text, LiVESList *);
+
+LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int warn_mask_number);
+LiVESWidget *create_question_dialog(const char *title, const char *text);
 LiVESWindow *get_transient_full();
 void do_abortblank_error(const char *what);
 void do_optarg_blank_err(const char *what);
 void do_clip_divergence_error(int fileno);
 LiVESResponseType do_system_failed_error(const char *com, int retval, const char *addinfo, boolean can_retry,
-    LiVESWindow *transient, boolean try_sudo);
-LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const char *errtext,
-    LiVESWindow *transient) WARN_UNUSED;
+    boolean try_sudo);
+LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const char *errtext) WARN_UNUSED;
 void do_write_failed_error_s(const char *filename, const char *addinfo);
-LiVESResponseType do_read_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow *transient) WARN_UNUSED;
+LiVESResponseType do_read_failed_error_s_with_retry(const char *fname, const char *errtext) WARN_UNUSED;
 void do_read_failed_error_s(const char *filename, const char *addinfo);
 boolean do_header_write_error(int clip);
 LiVESResponseType do_header_read_error_with_retry(int clip) WARN_UNUSED;
 LiVESResponseType do_header_missing_detail_error(int clip, lives_clip_details_t detail) WARN_UNUSED;
 void do_chdir_failed_error(const char *dir);
-LiVESResponseType handle_backend_errors(boolean can_retry, LiVESWindow *transient);
-boolean check_backend_return(lives_clip_t *sfile, LiVESWindow *transient);
+LiVESResponseType handle_backend_errors(boolean can_retry);
+boolean check_backend_return(lives_clip_t *sfile);
 const char *get_cache_stats(void);
 
 /** warn about disk space */
@@ -1210,7 +1222,7 @@ boolean paste_enough_dlg(int lframe);
 boolean do_yuv4m_open_warning(void);
 void do_mt_undo_mem_error(void);
 void do_mt_undo_buf_error(void);
-void do_mt_set_mem_error(boolean has_mt, boolean trans);
+void do_mt_set_mem_error(boolean has_mt);
 void do_mt_audchan_error(int warn_mask);
 void do_mt_no_audchan_error(void);
 void do_mt_no_jack_error(int warn_mask);
@@ -1537,7 +1549,7 @@ boolean lives_read_buffered_eof(int fd);
 lives_file_buffer_t *get_file_buffer(int fd);
 void lives_buffered_rdonly_slurp(int fd, off_t skip);
 
-int lives_chdir(const char *path, boolean allow_fail);
+int lives_chdir(const char *path, boolean no_error_dlg);
 int lives_fputs(const char *s, FILE *stream);
 char *lives_fgets(char *s, int size, FILE *stream);
 size_t lives_fread(void *ptr, size_t size, size_t nmemb, FILE *stream);

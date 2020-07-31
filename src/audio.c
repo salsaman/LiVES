@@ -2057,7 +2057,7 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
       retval = 0;
       mainw->aud_rec_fd = lives_open3(outfilename, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR);
       if (mainw->aud_rec_fd < 0) {
-        retval = do_write_failed_error_s_with_retry(outfilename, lives_strerror(errno), NULL);
+        retval = do_write_failed_error_s_with_retry(outfilename, lives_strerror(errno));
         if (retval == LIVES_RESPONSE_CANCEL) {
           lives_free(outfilename);
           return;
@@ -3804,7 +3804,7 @@ LIVES_GLOBAL_INLINE lives_cancel_t handle_audio_timeout(void) {
                 audio_player_get_display_name(prefs->aplayer), msg2);
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-    int retval = do_abort_cancel_retry_dialog(msg, NULL);
+    int retval = do_abort_cancel_retry_dialog(msg);
     if (retval == LIVES_RESPONSE_RETRY) pulse_try_reconnect();
     else {
       mainw->aplayer_broken = TRUE;

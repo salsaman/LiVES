@@ -116,7 +116,7 @@ boolean save_clip_values(int which) {
     THREADVAR(com_failed) = THREADVAR(write_failed) = FALSE;
     mainw->clip_header = fopen(lives_header_new, "w");
     if (mainw->clip_header == NULL) {
-      retval = do_write_failed_error_s_with_retry(lives_header_new, lives_strerror(errno), NULL);
+      retval = do_write_failed_error_s_with_retry(lives_header_new, lives_strerror(errno));
       if (retval == LIVES_RESPONSE_CANCEL) {
         set_signal_handlers((SignalHandlerPointer)catch_sigint);
         if (mainw->signal_caught) catch_sigint(mainw->signal_caught);
@@ -169,14 +169,14 @@ boolean save_clip_values(int which) {
       fclose(mainw->clip_header);
 
       if (!all_ok) {
-        retval = do_write_failed_error_s_with_retry(lives_header_new, NULL, NULL);
+        retval = do_write_failed_error_s_with_retry(lives_header_new, NULL);
       } else {
         char *lives_header = lives_build_filename(prefs->workdir, sfile->handle, LIVES_CLIP_HEADER, NULL);
         // TODO - check the sizes before and after
         lives_cp(lives_header_new, lives_header);
         lives_free(lives_header);
         if (THREADVAR(com_failed) || THREADVAR(write_failed)) {
-          retval = do_write_failed_error_s_with_retry(lives_header_new, NULL, NULL);
+          retval = do_write_failed_error_s_with_retry(lives_header_new, NULL);
         } else lives_rm(lives_header_new);
       }
     }
@@ -669,10 +669,11 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         if (cfile->f_size > prefs->warn_file_size * 1000000. && mainw->is_ready && frames == 0) {
           char *fsize_ds = lives_format_storage_space_string((uint64_t)cfile->f_size);
           char *warn = lives_strdup_printf(
-                         _("\nLiVES cannot Instant Open this file, it may take some time to load.\nAre you sure you wish to continue ?"),
+                         _("\nLiVES cannot Instant Open this file, it may take some time to load.\n"
+			   "Are you sure you wish to continue ?"),
                          fsize_ds);
           lives_free(fsize_ds);
-          if (!do_warning_dialog_with_check(warn, WARN_MASK_FSIZE)) {
+          if (!do_warning_dialog_with_checkx(warn, WARN_MASK_FSIZE)) {
             lives_free(warn);
             close_current_file(old_file);
             if (mainw->multitrack != NULL) {
@@ -917,8 +918,10 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         if (strcmp(prefs->video_open_command, loc) && strncmp(prefs->video_open_command + 1, loc, strlen(loc))) {
           lives_strappend(msg, 256, _("\n\nPlease check the setting of Video Open Command in\nTools|Preferences|Decoding\n"));
         }
-      }
-      do_error_dialog(msg);
+      }      
+      widget_opts.non_modal = TRUE;
+      do_error_dialogx(msg);
+      widget_opts.non_modal = FALSE;
       d_print_failed();
       close_current_file(old_file);
       if (mainw->multitrack != NULL) {
@@ -1141,7 +1144,7 @@ boolean get_handle_from_info_file(int index) {
   lives_free(com);
 
   if (!strncmp(mainw->msg, "error|", 6)) {
-    handle_backend_errors(FALSE, NULL);
+    handle_backend_errors(FALSE);
     return FALSE;
   }
 
@@ -1719,7 +1722,7 @@ void save_file(int clip, int start, int end, const char *filename) {
       retval = 0;
       new_stderr = lives_open3(new_stderr_name, O_CREAT | O_RDONLY | O_TRUNC | O_SYNC, S_IRUSR | S_IWUSR);
       if (new_stderr < 0) {
-        retval = do_write_failed_error_s_with_retry(new_stderr_name, lives_strerror(errno), NULL);
+        retval = do_write_failed_error_s_with_retry(new_stderr_name, lives_strerror(errno));
         if (retval == LIVES_RESPONSE_CANCEL) redir = lives_strdup("1>&2");
       } else {
 
@@ -3194,7 +3197,9 @@ void play_file(void) {
                        "click on Tools--->Resize All\n"
                        "and resize all frames to the current size.\n"),
                      mainw->files[mainw->size_warn]->name);
-      do_error_dialog(smsg);
+      widget_opts.non_modal = TRUE;
+      do_error_dialogx(smsg);
+      widget_opts.non_modal = FALSE;
       lives_free(smsg);
     }
     mainw->size_warn = 0;
@@ -3818,7 +3823,9 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
           mesg = lives_strdup_printf(_("\nAn error occurred doing\n%s\n"), array[2]);
           LIVES_ERROR(array[2]);
         } else mesg = (_("\nAn error occurred opening the file\n"));
-        do_error_dialog(mesg);
+	widget_opts.non_modal = TRUE;
+        do_error_dialogx(mesg);
+	widget_opts.non_modal = FALSE;
         lives_free(mesg);
         lives_strfreev(array);
         return FALSE;
@@ -3830,7 +3837,9 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
         LIVES_ERROR("Handle!=statusfile !");
         mesg = lives_strdup_printf(_("\nError getting file info for clip %s.\nBad things may happen with this clip.\n"),
                                    check_handle);
-        do_error_dialog(mesg);
+	widget_opts.non_modal = TRUE;
+        do_error_dialogx(mesg);
+	widget_opts.non_modal = FALSE;
         lives_free(mesg);
         lives_strfreev(array);
         return FALSE;
@@ -3993,7 +4002,7 @@ boolean save_file_comments(int fileno) {
     comment_fd = creat(comment_file, S_IRUSR | S_IWUSR);
     if (comment_fd < 0) {
       THREADVAR(write_failed) = TRUE;
-      retval = do_write_failed_error_s_with_retry(comment_file, lives_strerror(errno), NULL);
+      retval = do_write_failed_error_s_with_retry(comment_file, lives_strerror(errno));
     } else {
       THREADVAR(write_failed) = FALSE;
       lives_write(comment_fd, sfile->title, strlen(sfile->title), TRUE);
@@ -4005,7 +4014,7 @@ boolean save_file_comments(int fileno) {
       close(comment_fd);
 
       if (THREADVAR(write_failed)) {
-        retval = do_write_failed_error_s_with_retry(comment_file, NULL, NULL);
+        retval = do_write_failed_error_s_with_retry(comment_file, NULL);
       }
     }
   } while (retval == LIVES_RESPONSE_RETRY);
@@ -4116,11 +4125,13 @@ boolean save_frame_inner(int clip, int frame, const char *file_name, int width, 
 
     do {
       retval = 0;
-      if (sfile->img_type == IMG_TYPE_JPEG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_JPEG, 100, sfile->hsize, sfile->vsize, &gerr);
-      else if (sfile->img_type == IMG_TYPE_PNG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_PNG, 100, sfile->hsize, sfile->vsize, &gerr);
+      if (sfile->img_type == IMG_TYPE_JPEG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_JPEG, 100,
+							      sfile->hsize, sfile->vsize, &gerr);
+      else if (sfile->img_type == IMG_TYPE_PNG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_PNG, 100,
+								  sfile->hsize, sfile->vsize, &gerr);
 
       if (gerr != NULL) {
-        retval = do_write_failed_error_s_with_retry(full_file_name, gerr->message, NULL);
+        retval = do_write_failed_error_s_with_retry(full_file_name, gerr->message);
         lives_error_free(gerr);
         gerr = NULL;
       }
@@ -4238,7 +4249,9 @@ void backup_file(int clip, int start, int end, const char *file_name) {
   mainw->current_file = current_file;
 
   if (mainw->error) {
-    do_error_dialog(mainw->msg);
+    widget_opts.non_modal = TRUE;
+    do_error_dialogx(mainw->msg);
+    widget_opts.non_modal = FALSE;
     d_print_failed();
     return;
   }
@@ -4282,7 +4295,7 @@ boolean write_headers(lives_clip_t *file) {
     retval = 0;
     header_fd = creat(hdrfile, S_IRUSR | S_IWUSR);
     if (header_fd < 0) {
-      retval = do_write_failed_error_s_with_retry(hdrfile, lives_strerror(errno), NULL);
+      retval = do_write_failed_error_s_with_retry(hdrfile, lives_strerror(errno));
     } else {
       THREADVAR(write_failed) = FALSE;
 
@@ -4300,7 +4313,7 @@ boolean write_headers(lives_clip_t *file) {
       lives_write(header_fd, LiVES_VERSION, strlen(LiVES_VERSION), TRUE);
       close(header_fd);
 
-      if (THREADVAR(write_failed)) retval = do_write_failed_error_s_with_retry(hdrfile, NULL, NULL);
+      if (THREADVAR(write_failed)) retval = do_write_failed_error_s_with_retry(hdrfile, NULL);
     }
   } while (retval == LIVES_RESPONSE_RETRY);
 
@@ -4315,7 +4328,7 @@ boolean write_headers(lives_clip_t *file) {
       header_fd = creat(hdrfile, S_IRUSR | S_IWUSR);
 
       if (header_fd < 0) {
-        retval = do_write_failed_error_s_with_retry(hdrfile, lives_strerror(errno), NULL);
+        retval = do_write_failed_error_s_with_retry(hdrfile, lives_strerror(errno));
       } else {
         THREADVAR(write_failed) = FALSE;
         lives_write_le(header_fd, &file->frames, 4, TRUE);
@@ -4324,7 +4337,7 @@ boolean write_headers(lives_clip_t *file) {
         lives_write(header_fd, &file->comment, 1024, TRUE);
         close(header_fd);
       }
-      if (THREADVAR(write_failed)) retval = do_write_failed_error_s_with_retry(hdrfile, NULL, NULL);
+      if (THREADVAR(write_failed)) retval = do_write_failed_error_s_with_retry(hdrfile, NULL);
     } while (retval == LIVES_RESPONSE_RETRY);
 
     lives_free(hdrfile);
@@ -4379,7 +4392,7 @@ boolean read_headers(int fileno, const char *file_name) {
       retval2 = LIVES_RESPONSE_OK;
       if (!(mainw->hdrs_cache = cache_file_contents(lives_header))) {
         if (fileno != mainw->current_file) goto rhd_failed;
-        retval2 = do_read_failed_error_s_with_retry(lives_header, NULL, NULL);
+        retval2 = do_read_failed_error_s_with_retry(lives_header, NULL);
       }
     } while (retval2 == LIVES_RESPONSE_RETRY);
 
@@ -4606,7 +4619,7 @@ old_check:
       if (fileno != mainw->current_file) {
         goto rhd_failed;
       }
-      retval = do_read_failed_error_s_with_retry(old_hdrfile, lives_strerror(errno), NULL);
+      retval = do_read_failed_error_s_with_retry(old_hdrfile, lives_strerror(errno));
     } else {
       THREADVAR(read_failed) = FALSE;
       header_size = get_file_size(header_fd);
@@ -4653,7 +4666,7 @@ old_check:
 
     if (THREADVAR(read_failed)) {
       if (fileno != mainw->current_file) goto rhd_failed;
-      retval = do_read_failed_error_s_with_retry(old_hdrfile, NULL, NULL);
+      retval = do_read_failed_error_s_with_retry(old_hdrfile, NULL);
       if (retval == LIVES_RESPONSE_CANCEL) goto rhd_failed;
     }
   } while (retval == LIVES_RESPONSE_RETRY);
@@ -4772,7 +4785,7 @@ void open_set_file(int clipnum) {
           lives_read(set_fd, name, CLIP_NAME_MAXLEN, TRUE);
         }
         close(set_fd);
-      } else retval = do_read_failed_error_s_with_retry(setfile, lives_strerror(errno), NULL);
+      } else retval = do_read_failed_error_s_with_retry(setfile, lives_strerror(errno));
     } while (retval == LIVES_RESPONSE_RETRY);
 
     lives_free(setfile);
@@ -5032,7 +5045,7 @@ int save_event_frames(void) {
     retval = 0;
     header_fd = creat(hdrfile, S_IRUSR | S_IWUSR);
     if (header_fd < 0) {
-      retval = do_write_failed_error_s_with_retry(hdrfile, lives_strerror(errno), NULL);
+      retval = do_write_failed_error_s_with_retry(hdrfile, lives_strerror(errno));
     } else {
       // use machine endian.
       // When we call "smogrify reorder", we will pass the endianness as 3rd parameter
@@ -5049,7 +5062,7 @@ int save_event_frames(void) {
       }
 
       if (THREADVAR(write_failed)) {
-        retval = do_write_failed_error_s_with_retry(hdrfile, NULL, NULL);
+        retval = do_write_failed_error_s_with_retry(hdrfile, NULL);
       }
 
       close(header_fd);
@@ -5879,7 +5892,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       retval = 0;
       rfile = fopen(recovery_file, "r");
       if (!rfile) {
-        retval = do_read_failed_error_s_with_retry(recovery_file, lives_strerror(errno), NULL);
+        retval = do_read_failed_error_s_with_retry(recovery_file, lives_strerror(errno));
         if (retval == LIVES_RESPONSE_CANCEL) {
           retb = FALSE;
           goto recovery_done;
@@ -5938,7 +5951,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         resp = LIVES_RESPONSE_OK;
         if (!is_legal_set_name(buff, TRUE)) {
           resp = do_abort_cancel_retry_dialog(_("Click Abort to exit LiVES immediately, Retry to try again,"
-                                                " or Cancel to continue without reloading the set.\n"), NULL);
+                                                " or Cancel to continue without reloading the set.\n"));
         }
       } while (resp == LIVES_RESPONSE_RETRY);
       if (resp == LIVES_RESPONSE_CANCEL) continue;
@@ -6354,11 +6367,11 @@ boolean rewrite_recovery_file(void) {
         }
 
         if (!opened) recovery_fd = creat(temp_recovery_file, S_IRUSR | S_IWUSR);
-        if (recovery_fd < 0) retval = do_write_failed_error_s_with_retry(temp_recovery_file, lives_strerror(errno), NULL);
+        if (recovery_fd < 0) retval = do_write_failed_error_s_with_retry(temp_recovery_file, lives_strerror(errno));
         else {
           opened = TRUE;
           lives_write(recovery_fd, recovery_entry, strlen(recovery_entry), TRUE);
-          if (THREADVAR(write_failed)) retval = do_write_failed_error_s_with_retry(temp_recovery_file, NULL, NULL);
+          if (THREADVAR(write_failed)) retval = do_write_failed_error_s_with_retry(temp_recovery_file, NULL);
         }
         lives_free(recovery_entry);
       }
@@ -6375,7 +6388,7 @@ boolean rewrite_recovery_file(void) {
       THREADVAR(com_failed) = FALSE;
       lives_mv(temp_recovery_file, mainw->recovery_file);
       if (THREADVAR(com_failed)) {
-        retval = do_write_failed_error_s_with_retry(temp_recovery_file, NULL, NULL);
+        retval = do_write_failed_error_s_with_retry(temp_recovery_file, NULL);
       }
     } while (retval == LIVES_RESPONSE_RETRY);
   }

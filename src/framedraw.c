@@ -740,7 +740,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     if (THREADVAR(read_failed)) {
       // TODO : should check fd
       THREADVAR(read_failed) = 0;
-      retval = do_read_failed_error_s_with_retry(cfile->info_file, NULL, NULL);
+      retval = do_read_failed_error_s_with_retry(cfile->info_file, NULL);
     }
   } while (retval == LIVES_RESPONSE_RETRY);
 

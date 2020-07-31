@@ -310,10 +310,12 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     mainw->show_procd = TRUE;
     mainw->keep_pre = FALSE;
     if (mainw->error) {
-      if (mainw->cancelled != CANCEL_ERROR) do_error_dialog(mainw->msg);
+      widget_opts.non_modal = TRUE;
+      if (mainw->cancelled != CANCEL_ERROR) do_error_dialogx(mainw->msg);
       d_print_failed();
       mainw->last_dprint_file = ldfile;
     }
+    widget_opts.non_modal = FALSE;
     if (mainw->cancelled != CANCEL_KEEP) {
       cfile->undo_start = oundo_start;
       cfile->undo_end = oundo_end;
@@ -433,11 +435,13 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     lives_free(com);
     mainw->keep_pre = FALSE;
 
-    check_backend_return(cfile, NULL);
+    check_backend_return(cfile);
 
     if (mainw->error) {
       if (!mainw->cancelled) {
-        do_info_dialog(_("\nNo frames were generated.\n"));
+	widget_opts.non_modal = TRUE;
+        do_info_dialogx(_("\nNo frames were generated.\n"));
+	widget_opts.non_modal = FALSE;
         d_print_failed();
       } else if (mainw->cancelled != CANCEL_ERROR) d_print_cancelled();
       else d_print_failed();
@@ -503,7 +507,9 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     if (got_no_frames || cfile->frames <= 0) {
       mainw->is_generating = FALSE;
       if (!mainw->cancelled) {
-        do_info_dialog(_("\nNo frames were generated.\n"));
+	widget_opts.non_modal = TRUE;
+        do_info_dialogx(_("\nNo frames were generated.\n"));
+	widget_opts.non_modal = FALSE;
         d_print_failed();
       } else d_print_cancelled();
       if (!got_no_frames) {
@@ -668,7 +674,7 @@ lives_render_error_t realfx_progress(boolean reset) {
         lives_pixbuf_save(pixbuf, oname, cfile->img_type, 100, cfile->hsize, cfile->vsize, &error);
 
         if (error != NULL) {
-          retval = do_write_failed_error_s_with_retry(oname, error->message, NULL);
+          retval = do_write_failed_error_s_with_retry(oname, error->message);
           lives_error_free(error);
           error = NULL;
           if (retval != LIVES_RESPONSE_RETRY) write_error = LIVES_RENDER_ERROR_WRITE_FRAME;
@@ -698,7 +704,7 @@ lives_render_error_t realfx_progress(boolean reset) {
       lives_free(com);
       mainw->internal_messaging = FALSE;
 
-      check_backend_return(cfile, NULL);
+      check_backend_return(cfile);
 
       if (mainw->error) write_error = LIVES_RENDER_ERROR_WRITE_FRAME;
       //cfile->may_be_damaged=TRUE;

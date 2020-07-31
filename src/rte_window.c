@@ -178,7 +178,7 @@ static boolean save_keymap2_file(char *kfname) {
     retval = 0;
     kfd = lives_create_buffered(kfname, DEF_FILE_PERMS);
     if (kfd == -1) {
-      retval = do_write_failed_error_s_with_retry(kfname, lives_strerror(errno), LIVES_WINDOW(rte_window));
+      retval = do_write_failed_error_s_with_retry(kfname, lives_strerror(errno));
     } else {
       lives_write_le_buffered(kfd, &version, 4, TRUE);
       for (i = 1; i <= prefs->rte_keys_virtual; i++) {
@@ -204,7 +204,7 @@ static boolean save_keymap2_file(char *kfname) {
 
       if (THREADVAR(write_failed) == kfd + 1) {
         THREADVAR(write_failed) = 0;
-        retval = do_write_failed_error_s_with_retry(kfname, NULL, LIVES_WINDOW(rte_window));
+        retval = do_write_failed_error_s_with_retry(kfname, NULL);
       }
     }
   } while (retval == LIVES_RESPONSE_RETRY);
@@ -232,7 +232,7 @@ static boolean save_keymap3_file(char *kfname) {
     retval = 0;
     kfd = lives_create_buffered(kfname, DEF_FILE_PERMS);
     if (kfd == -1) {
-      retval = do_write_failed_error_s_with_retry(kfname, lives_strerror(errno), LIVES_WINDOW(rte_window));
+      retval = do_write_failed_error_s_with_retry(kfname, lives_strerror(errno));
     } else {
       THREADVAR(write_failed) = FALSE;
 
@@ -396,7 +396,7 @@ write_failed1:
 
       if (THREADVAR(write_failed) == kfd + 1) {
         THREADVAR(write_failed) = 0;
-        retval = do_write_failed_error_s_with_retry(kfname, NULL, LIVES_WINDOW(rte_window));
+        retval = do_write_failed_error_s_with_retry(kfname, NULL);
       }
     }
   } while (retval == LIVES_RESPONSE_RETRY);
@@ -454,7 +454,7 @@ static boolean on_save_keymap_clicked(LiVESButton *button, livespointer user_dat
     retval = 0;
     if (!(kfile = fopen(keymap_file, "w"))) {
       msg = lives_strdup_printf(_("\n\nUnable to write keymap file\n%s\nError was %s\n"), keymap_file, lives_strerror(errno));
-      retval = do_abort_cancel_retry_dialog(msg, LIVES_WINDOW(rte_window));
+      retval = do_abort_cancel_retry_dialog(msg);
       lives_free(msg);
     } else {
       lives_fputs("LiVES keymap file version 4\n", kfile);
@@ -480,7 +480,7 @@ static boolean on_save_keymap_clicked(LiVESButton *button, livespointer user_dat
     }
 
     if (THREADVAR(write_failed)) {
-      retval = do_write_failed_error_s_with_retry(keymap_file, NULL, LIVES_WINDOW(rte_window));
+      retval = do_write_failed_error_s_with_retry(keymap_file, NULL);
     }
   } while (retval == LIVES_RESPONSE_RETRY);
 
@@ -538,7 +538,7 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
     if ((fd = lives_create_buffered(prefs->fxdefsfile, DEF_FILE_PERMS)) == -1) {
       end_threaded_dialog();
       msg = lives_strdup_printf(_("\n\nUnable to write defaults file\n%s\nError code %d\n"), prefs->fxdefsfile, errno);
-      retval = do_abort_cancel_retry_dialog(msg, LIVES_WINDOW(rte_window));
+      retval = do_abort_cancel_retry_dialog(msg);
       lives_free(msg);
     } else {
       msg = lives_strdup_printf("%s\n", FX_DEFS_VERSIONSTRING_1_1);
@@ -548,13 +548,13 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
       if (THREADVAR(write_failed) == fd + 1) {
         THREADVAR(write_failed) = 0;
         end_threaded_dialog();
-        retval = do_write_failed_error_s_with_retry(prefs->fxdefsfile, NULL, LIVES_WINDOW(rte_window));
+        retval = do_write_failed_error_s_with_retry(prefs->fxdefsfile, NULL);
       } else {
         // break on file write error
         for (i = 0; i < numfx; i++) {
           if (!write_filter_defaults(fd, i)) {
             end_threaded_dialog();
-            retval = do_write_failed_error_s_with_retry(prefs->fxdefsfile, NULL, LIVES_WINDOW(rte_window));
+            retval = do_write_failed_error_s_with_retry(prefs->fxdefsfile, NULL);
             break;
           }
         }
@@ -574,7 +574,7 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
     retval = LIVES_RESPONSE_NONE;
     if ((fd = lives_create_buffered(prefs->fxsizesfile, DEF_FILE_PERMS)) == -1) {
       end_threaded_dialog();
-      retval = do_write_failed_error_s_with_retry(prefs->fxsizesfile, lives_strerror(errno), LIVES_WINDOW(rte_window));
+      retval = do_write_failed_error_s_with_retry(prefs->fxsizesfile, lives_strerror(errno));
       lives_free(msg);
     } else {
       msg = lives_strdup_printf("%s\n", FX_SIZES_VERSIONSTRING_2);
@@ -583,12 +583,12 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
       if (THREADVAR(write_failed) == fd + 1) {
         THREADVAR(write_failed) = 0;
         end_threaded_dialog();
-        retval = do_write_failed_error_s_with_retry(prefs->fxsizesfile, NULL, LIVES_WINDOW(rte_window));
+        retval = do_write_failed_error_s_with_retry(prefs->fxsizesfile, NULL);
       } else {
         for (i = 0; i < numfx; i++) {
           if (!write_generator_sizes(fd, i)) {
             end_threaded_dialog();
-            retval = do_write_failed_error_s_with_retry(prefs->fxsizesfile, NULL, LIVES_WINDOW(rte_window));
+            retval = do_write_failed_error_s_with_retry(prefs->fxsizesfile, NULL);
             break;
           }
         }
@@ -625,7 +625,7 @@ void load_rte_defs(void) {
     do {
       retval = 0;
       if ((fd = lives_open_buffered_rdonly(prefs->fxdefsfile)) == -1) {
-        retval = do_read_failed_error_s_with_retry(prefs->fxdefsfile, lives_strerror(errno), NULL);
+        retval = do_read_failed_error_s_with_retry(prefs->fxdefsfile, lives_strerror(errno));
       } else {
         THREADVAR(read_failed) = FALSE;
         d_print(_("Loading real time effect defaults from %s..."), prefs->fxdefsfile);
@@ -639,12 +639,12 @@ void load_rte_defs(void) {
             d_print_done();
           } else {
             d_print_file_error_failed();
-            retval = do_read_failed_error_s_with_retry(prefs->fxdefsfile, NULL, NULL);
+            retval = do_read_failed_error_s_with_retry(prefs->fxdefsfile, NULL);
           }
         } else {
           d_print_file_error_failed();
           if (bytes < (ssize_t)msglen) {
-            retval = do_read_failed_error_s_with_retry(prefs->fxdefsfile, NULL, NULL);
+            retval = do_read_failed_error_s_with_retry(prefs->fxdefsfile, NULL);
           }
         }
 
@@ -664,7 +664,7 @@ void load_rte_defs(void) {
     do {
       retval = 0;
       if ((fd = lives_open_buffered_rdonly(prefs->fxsizesfile)) == -1) {
-        retval = do_read_failed_error_s_with_retry(prefs->fxsizesfile, lives_strerror(errno), NULL);
+        retval = do_read_failed_error_s_with_retry(prefs->fxsizesfile, lives_strerror(errno));
         if (retval == LIVES_RESPONSE_CANCEL) return;
       } else {
         d_print(_("Loading generator default sizes from %s..."), prefs->fxsizesfile);
@@ -678,12 +678,12 @@ void load_rte_defs(void) {
             d_print_done();
           } else {
             d_print_file_error_failed();
-            retval = do_read_failed_error_s_with_retry(prefs->fxsizesfile, NULL, NULL);
+            retval = do_read_failed_error_s_with_retry(prefs->fxsizesfile, NULL);
           }
         } else {
           d_print_file_error_failed();
           if (bytes < (ssize_t)msglen) {
-            retval = do_read_failed_error_s_with_retry(prefs->fxsizesfile, NULL, NULL);
+            retval = do_read_failed_error_s_with_retry(prefs->fxsizesfile, NULL);
           }
         }
         lives_close_buffered(fd);
@@ -766,7 +766,7 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
   do {
     retval = 0;
     if ((kfd = lives_open_buffered_rdonly(fname)) == -1) {
-      retval = do_read_failed_error_s_with_retry(fname, lives_strerror(errno), NULL);
+      retval = do_read_failed_error_s_with_retry(fname, lives_strerror(errno));
     } else {
       THREADVAR(read_failed) = FALSE;
 
@@ -1274,7 +1274,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
 
       if (has_error) {
         msg = lives_strdup_printf(_("\n\nUnable to read from keymap file\n%s\nError code %d\n"), keymap_file, errno);
-        retval = do_abort_cancel_retry_dialog(msg, LIVES_WINDOW(rte_window));
+        retval = do_abort_cancel_retry_dialog(msg);
         lives_free(msg);
 
         if (retval == LIVES_RESPONSE_CANCEL) {
@@ -1947,7 +1947,10 @@ static boolean on_rtew_ok_clicked(LiVESButton * button, livespointer user_data) 
 
 
 LIVES_LOCAL_INLINE void do_mix_error(void) {
-  do_error_dialog(_("\n\nThis version of LiVES does not allowing mixing of generators and non-generators on the same key.\n\n"));
+  widget_opts.non_modal = TRUE;
+  do_error_dialogx(_("\n\nThis version of LiVES does not allowing mixing of "
+		    "generators and non-generators on the same key.\n\n"));
+  widget_opts.non_modal = FALSE;
   return;
 }
 
@@ -2792,7 +2795,7 @@ void load_default_keymap(void) {
                        (_("Unable to create default keymap file: %s\nPlease make sure the directory\n%s\nis writable.\n"),
                         keymap_file, dir)));
 
-        retval = do_abort_cancel_retry_dialog(tmp, NULL);
+        retval = do_abort_cancel_retry_dialog(tmp);
 
         lives_free(tmp);
 

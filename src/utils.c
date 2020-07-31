@@ -156,7 +156,7 @@ int lives_system(const char *com, boolean allow_error) {
 #endif
                                  );
         LIVES_ERROR(msg);
-        response = do_system_failed_error(com, retval, NULL, TRUE, NULL, FALSE);
+        response = do_system_failed_error(com, retval, NULL, TRUE, FALSE);
       }
 #ifndef LIVES_NO_DEBUG
       else {
@@ -249,7 +249,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
         msg = lives_strdup_printf("lives_popen failed after %ld bytes with code %d: %s",
                                   strg == NULL ? 0 : lives_strlen(strg), err, com);
         LIVES_ERROR(msg);
-        response = do_system_failed_error(com, err, NULL, TRUE, NULL, FALSE);
+        response = do_system_failed_error(com, err, NULL, TRUE, FALSE);
       }
 #ifndef LIVES_NO_DEBUG
       else {
@@ -1358,15 +1358,23 @@ size_t lives_buffered_orig_size(int fd) {
 
 /////////////////////////////////////////////
 
-int lives_chdir(const char *path, boolean allow_fail) {
-  int retval;
-
-  retval = chdir(path);
+int lives_chdir(const char *path, boolean no_error_dlg) {
+  /// returns 0 on success
+  /// on failure pops up an error dialog, unless no_error_dlg is TRUE
+  int retval = chdir(path);
+  if (!retval) {
+    /// double check to be sure
+    char *cwd = lives_get_current_dir();
+    if (strcmp(cwd, path)) {
+      retval = -123456;
+    }
+    lives_free(cwd);
+  }
 
   if (retval) {
     char *msg = lives_strdup_printf("Chdir failed to: %s", path);
     THREADVAR(chdir_failed) = TRUE;
-    if (!allow_fail) {
+    if (!no_error_dlg) {
       LIVES_ERROR(msg);
       do_chdir_failed_error(path);
     } else LIVES_DEBUG(msg);
@@ -2817,7 +2825,9 @@ boolean check_for_lock_file(const char *set_name, int type) {
     if (type == 0) {
       if (mainw->recovering_files) return do_set_locked_warning(set_name);
       threaded_dialog_spin(0.);
-      do_error_dialogf(_("Set %s\ncannot be opened, as it is in use\nby another copy of LiVES.\n"), set_name);
+      widget_opts.non_modal = TRUE;
+      do_error_dialogfx(_("Set %s\ncannot be opened, as it is in use\nby another copy of LiVES.\n"), set_name);
+      widget_opts.non_modal = FALSE;
       threaded_dialog_spin(0.);
     } else if (type == 1) {
       if (!mainw->osc_auto) do_blocking_error_dialogf(_("\nThe set %s is currently in use by another copy of LiVES.\n"
@@ -4437,9 +4447,7 @@ boolean check_dir_access(const char *dir, boolean leaveit) {
   int fp;
   char *testfile;
 
-  if (!exists) {
-    lives_mkdir_with_parents(dir, capable->umask);
-  }
+  if (!exists) lives_mkdir_with_parents(dir, capable->umask);
 
   if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) return FALSE;
 

@@ -532,6 +532,9 @@ enum {
 #define TRASH_RECOVER 	"recover"
 #define TRASH_LEAVE 	"leave"
 
+#define UNREC_CLIPS_DIR "unrecoverable_clips"
+#define UNREC_LAYOUTS_DIR "unrecoverable_layouts"
+
 // directory names
 #define LAYOUTS_DIRNAME "layouts"
 #define CLIPS_DIRNAME "clips"

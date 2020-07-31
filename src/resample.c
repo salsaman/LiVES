@@ -1217,7 +1217,10 @@ void on_resaudio_ok_clicked(LiVESButton * button, LiVESEntry * entry) {
     lives_free(resaudw);
 
     if (arate <= 0) {
-      do_error_dialog(_("\n\nNew rate must be greater than 0\n"));
+      // TODO - show error icon1280
+      widget_opts.non_modal = TRUE;
+      do_error_dialogx(_("\n\nNew rate must be greater than 0\n"));
+      widget_opts.non_modal = FALSE;
       return;
     }
   } else {
@@ -1274,7 +1277,7 @@ void on_resaudio_ok_clicked(LiVESButton * button, LiVESEntry * entry) {
       mainw->error = FALSE;
       lives_rm(cfile->info_file);
       lives_system(com, FALSE);
-      check_backend_return(cfile, NULL);
+      check_backend_return(cfile);
       if (THREADVAR(com_failed)) {
         unbuffer_lmap_errors(FALSE);
         return;
@@ -1302,7 +1305,9 @@ void on_resaudio_ok_clicked(LiVESButton * button, LiVESEntry * entry) {
   reget_afilesize(mainw->current_file);
 
   if (cfile->afilesize == 0l) {
-    do_error_dialog(_("LiVES was unable to resample the audio as requested.\n"));
+    widget_opts.non_modal = TRUE;
+    do_error_dialogx(_("LiVES was unable to resample the audio as requested.\n"));
+    widget_opts.non_modal = FALSE;
     on_undo_activate(NULL, NULL);
     set_undoable(_("Resample Audio"), FALSE);
     mainw->error = TRUE;
@@ -1517,7 +1522,9 @@ void on_resample_vid_ok(LiVESButton * button, LiVESEntry * entry) {
     cfile->undo1_dbl = oundo1_dbl;
     sensitize();
     mainw->error = TRUE;
-    if (cfile->frames < 0) do_error_dialog(_("Reordering error !\n"));
+    widget_opts.non_modal = TRUE;
+    if (cfile->frames < 0) do_error_dialogx(_("Reordering error !\n"));
+    widget_opts.non_modal = FALSE;
     return;
   }
 
@@ -2225,7 +2232,9 @@ int reorder_frames(int rwidth, int rheight) {
   lives_free(com);
 
   if (mainw->error) {
-    if (mainw->cancelled != CANCEL_ERROR) do_error_dialog(_("\n\nLiVES was unable to reorder the frames."));
+    widget_opts.non_modal = TRUE;
+    if (mainw->cancelled != CANCEL_ERROR) do_error_dialogx(_("\n\nLiVES was unable to reorder the frames."));
+    widget_opts.non_modal = FALSE;
     deorder_frames(new_frames, FALSE);
     new_frames = -new_frames;
   } else {

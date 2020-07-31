@@ -3071,7 +3071,10 @@ boolean rfxbuilder_to_script(rfx_build_window_t *rfxbuilder) {
   do {
     retval = 0;
     if (!(sfile = fopen(script_file, "w"))) {
-      retval = do_write_failed_error_s_with_retry(script_file, lives_strerror(errno), LIVES_WINDOW(rfxbuilder->dialog));
+      widget_opts.transient = LIVES_WINDOW(rfxbuilder->dialog);
+      retval = do_write_failed_error_s_with_retry(script_file, lives_strerror(errno));
+      widget_opts.transient = NULL;
+      
       if (retval == LIVES_RESPONSE_CANCEL) {
         lives_free(script_file);
         d_print_failed();
@@ -3321,7 +3324,9 @@ boolean rfxbuilder_to_script(rfx_build_window_t *rfxbuilder) {
 
       if (THREADVAR(write_failed)) {
         THREADVAR(write_failed) = FALSE;
-        retval = do_write_failed_error_s_with_retry(script_file, NULL, LIVES_WINDOW(rfxbuilder->dialog));
+	widget_opts.transient = LIVES_WINDOW(rfxbuilder->dialog);
+        retval = do_write_failed_error_s_with_retry(script_file, NULL); 
+	widget_opts.transient = NULL;
         if (retval == LIVES_RESPONSE_CANCEL) d_print_file_error_failed();
       }
     }
@@ -3586,7 +3591,9 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
       } else {
         //invalid trigger
         char *msg = lives_strdup_printf(_("\n\nInvalid trigger (%s)\nfound in script.\n\n"), array[0]);
-        do_error_dialog(msg);
+	widget_opts.non_modal = TRUE;
+        do_error_dialogx(msg);
+	widget_opts.non_modal = FALSE;
         lives_free(msg);
       }
       lives_strfreev(array);
@@ -3813,7 +3820,9 @@ void on_delete_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     } else {
       d_print_failed();
       msg = lives_strdup_printf(_("\n\nFailed to delete the script\n%s\nError code was %d\n"), rfx_script_file, ret);
-      do_error_dialog(msg);
+      widget_opts.non_modal = TRUE;
+      do_error_dialogx(msg);
+      widget_opts.non_modal = FALSE;
       lives_free(msg);
     }
     lives_free(rfx_script_file);
@@ -3878,7 +3887,9 @@ void on_promote_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     d_print_failed();
     msg = lives_strdup_printf(_("\n\nFailed to move the plugin script from\n%s to\n%s\nReturn code was %d (%s)\n"),
                               rfx_script_from, rfx_script_to, errno, strerror(errno));
-    do_error_dialog(msg);
+    widget_opts.non_modal = TRUE;
+    do_error_dialogx(msg);
+    widget_opts.non_modal = FALSE;
     lives_free(msg);
   } else lives_rmdir(rfx_dir_from, FALSE);
 
@@ -4161,8 +4172,6 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
           OK = FALSE;
         } else {
           int ret;
-          char *tmp;
-
           from_name = lives_strdup(lives_entry_get_text(LIVES_ENTRY(script_combo_entry)));
           rfx_script_from = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR,
                                                  PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS, from_name, NULL);
@@ -4173,9 +4182,11 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
 
           if ((ret = rename(rfx_script_from, rfx_script_to))) {
             d_print_failed();
-            do_error_dialog((tmp = lives_strdup_printf(_("\n\nFailed to move the plugin script from\n%s to\n%s\nReturn code was %d\n"),
-                                   rfx_script_from,  rfx_script_to, ret)));
-            lives_free(tmp);
+	    widget_opts.non_modal = TRUE;
+            do_error_dialogfx(_("\n\nFailed to move the plugin script from\n%s to\n%s\n"
+			       "Return code was %d\n"),
+			     rfx_script_from,  rfx_script_to, ret);
+	    widget_opts.non_modal = FALSE;
           } else {
             d_print_done();
           }

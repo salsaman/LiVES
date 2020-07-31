@@ -301,6 +301,8 @@ uint64_t sget_file_size(const char *name);
 void reget_afilesize(int fileno);
 uint64_t reget_afilesize_inner(int fileno);
 
+boolean compress_all_in_dir(const char *dir, int method, void *data);
+
 #define EXTRA_DETAILS_EMPTY_DIR			(1 << 0)
 #define EXTRA_DETAILS_CLIPHDR			(1 << 1)
 #define EXTRA_DETAILS_MD5			(1 << 2)

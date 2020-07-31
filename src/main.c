@@ -3982,7 +3982,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           if (strlen(optarg) == 0) {
             msg = lives_strdup_printf(_("%s may not be blank.\nClick Abort to exit LiVES immediately or Ok "
                                         "to continue with the default value."), charopt);
-            do_abort_ok_dialog(msg, NULL);
+            do_abort_ok_dialog(msg);
             lives_free(msg);
             continue;
           }
@@ -4087,7 +4087,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           lives_free(dir);
 #else
           msg = (_("Must have mjpegtools installed for -yuvin to work"));
-          do_abort_ok_dialog(msg, NULL);
+          do_abort_ok_dialog(msg);
           lives_free(msg);
 #endif
           continue;
@@ -4114,7 +4114,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           }
           if (!is_legal_set_name(optarg, TRUE)) {
             msg = (_("Abort and retry or continue ?"));
-            do_abort_ok_dialog(msg, NULL);
+            do_abort_ok_dialog(msg);
             lives_free(msg);
           }
           lives_snprintf(prefs->ar_clipset_name, 128, "%s", optarg);
@@ -4484,19 +4484,25 @@ void startup_message_fatal(char *msg) {
 
 
 LIVES_GLOBAL_INLINE boolean startup_message_nonfatal(const char *msg) {
-  do_error_dialog(msg);
+  widget_opts.non_modal = TRUE;
+  do_error_dialogx(msg);
+  widget_opts.non_modal = FALSE;
   return TRUE;
 }
 
 
 boolean startup_message_info(const char *msg) {
-  do_info_dialog(msg);
+  widget_opts.non_modal = TRUE;
+  do_info_dialogx(msg);
+  widget_opts.non_modal = FALSE;
   return TRUE;
 }
 
 
 boolean startup_message_nonfatal_dismissable(const char *msg, uint64_t warning_mask) {
-  do_error_dialog_with_check(msg, warning_mask);
+  widget_opts.non_modal = TRUE;
+  do_error_dialog_with_checkx(msg, warning_mask);
+  widget_opts.non_modal = FALSE;
   return TRUE;
 }
 
@@ -7899,7 +7905,7 @@ void load_frame_image(int frame) {
                   lives_fgets(mainw->msg, MAINW_MSG_SIZE, fp);
                   if (THREADVAR(read_failed) && THREADVAR(read_failed) == fileno(fp) + 1) {
                     THREADVAR(read_failed) = 0;
-                    retval = do_read_failed_error_s_with_retry(info_file, NULL, NULL);
+                    retval = do_read_failed_error_s_with_retry(info_file, NULL);
                   }
                 } while (retval == LIVES_RESPONSE_RETRY);
                 fclose(fp);
@@ -8606,7 +8612,9 @@ void load_frame_image(int frame) {
 	  if (pixbuf != NULL) lives_widget_object_unref(pixbuf);
 	  cfile->frames = frame;
 	} else {
-	  do_error_dialog(_("LiVES was unable to capture this image\n\n"));
+	  widget_opts.non_modal = TRUE;
+	  do_error_dialogx(_("LiVES was unable to capture this image\n\n"));
+	  widget_opts.non_modal = FALSE;
 	  mainw->cancelled = CANCEL_CAPTURE_ERROR;
 	}
 	if (frame == mainw->rec_vid_frames) mainw->cancelled = CANCEL_KEEP;

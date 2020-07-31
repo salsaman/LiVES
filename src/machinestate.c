@@ -769,6 +769,41 @@ boolean check_dev_busy(char *devstr) {
 }
 
 
+boolean compress_all_in_dir(const char *dir, int method, void *data) {
+  /// compress all files in dir with gzip
+  /// gzip default action is to compress all files, replacing foo.bar with foo.bar.gz
+  /// if a file already has a .gz extension then it will be left uncchanged
+
+  /// in future, method and data may be used to select compression method
+  /// for now they are ignored
+  char buff[65536];
+  char *com, *cwd;
+  boolean retval = FALSE;
+
+  if (!check_for_executable(&capable->has_gzip, EXEC_GZIP)) return FALSE;
+  if (lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
+    cwd = lives_get_current_dir();
+    THREADVAR(chdir_failed) = FALSE;
+    lives_chdir(dir, TRUE);
+    if (THREADVAR(chdir_failed)) {
+      THREADVAR(chdir_failed) = FALSE;
+      lives_chdir(cwd, TRUE);
+      lives_free(cwd);
+      return FALSE;
+    }
+    com = lives_strdup_printf("%s * 2>&1", EXEC_GZIP);
+    THREADVAR(com_failed) = FALSE;
+    lives_popen(com, TRUE, buff, 65536);
+    lives_free(com);
+    if (THREADVAR(com_failed)) THREADVAR(com_failed) = FALSE;
+    else retval = TRUE;
+    lives_chdir(cwd, TRUE);
+    lives_free(cwd);
+  }
+  return retval;
+}
+
+
 size_t get_file_size(int fd) {
   // get the size of file fd
   struct stat filestat;

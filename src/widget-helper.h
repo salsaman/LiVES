@@ -1318,27 +1318,32 @@ const char *lives_textsize_to_string(int val);
 #define N_FONT_SIZES 7
 
 typedef struct {
-  boolean no_gui; ///< show nothing !
+  /// commonly adjusted values //////
+  LiVESWidget *last_label; ///< label widget of last standard widget (spin,radio,check,entry,combo) (READONLY)
+  LiVESWidget *last_container; ///< container which wraps last widget created + subwidgets (READONLY)
+  lives_expand_t expand; ///< how much space to apply between widgets
+  int apply_theme; ///< theming variation for widget (0 -> no theme, 1 -> normal colours, 2+ -> theme variants)
+  int packing_width; ///< horizontal pixels between widgets
+  int packing_height; ///< vertical pixels between widgets
+  LiVESJustification justify; ///< justify for labels
+
+  /// specialised values /////
+  const char *font_size; ///< size of font fot label widgets etc (e.g. LIVES_FONT_SIZE_MEDIUM)
+  int border_width; ///< border width in pixels
   boolean swap_label; ///< swap label/widget position
   boolean pack_end; ///< pack widget at end or start
   boolean line_wrap; ///< line wrapping for labels
   boolean mnemonic_label; ///< if underscore in label text should be mnemonic accelerator
   boolean non_modal; ///< non-modal for dialogs
-  lives_expand_t expand; ///< how much space to apply between widgets
-  int apply_theme; ///< whether to apply theming to widget (0 -> no theme, 1 -> normal colours, 2+ -> theme variants)
-  double scale; ///< scale factor for all sizes
+  LiVESWindow *transient; ///< transient window for dialogs, if NULL then use the default (READ / WRITE)
+  int filler_len; ///< length of extra "fill" between widgets
+
+  /// rarely changed values /////
   int css_min_width;
   int css_min_height;
-  int packing_width; ///< horizontal pixels between widgets
-  int packing_height; ///< vertical pixels between widgets
-  int border_width; ///< border width in pixels
-  int filler_len; ///< length of extra "fill" between widgets
-  LiVESWidget *last_label; ///< label widget of last standard widget (spin,radio,check,entry,combo) [readonly] (READONLY)
-  LiVESWidget *last_container; ///< container which wraps last widget created + subwidgets (READONLY)
-  LiVESWindow *transient; ///< transient window for dialogs, if NULL then use the default
-  LiVESJustification justify; ///< justify for labels
+  boolean no_gui; ///< show nothing !
+  double scale; ///< scale factor for all sizes
   LiVESJustification default_justify; ///< default value
-  const char *font_size; ///<
   char **image_filter; ///</ NULL or NULL terminated list of image extensions which can be loaded
   char *title_prefix; ///< Text which is prepended to window titles, etc.
   int monitor; ///< monitor we are displaying on
@@ -1351,27 +1356,29 @@ widget_opts_t widget_opts;
 #ifdef NEED_DEF_WIDGET_OPTS
 
 const widget_opts_t def_widget_opts = {
-  FALSE, ///< no_gui
+  NULL, ///< last_label
+  NULL, ///< last_container
+  LIVES_EXPAND_DEFAULT, ///< default expand
+  0, ///< no themeing
+  W_PACKING_WIDTH, ///< def packing width
+  W_PACKING_HEIGHT, ///< def packing height
+  LIVES_JUSTIFY_LEFT, ///< justify
+  LIVES_FONT_SIZE_MEDIUM, ///< default font size
+  W_BORDER_WIDTH, ///< def border width
+
   FALSE, ///< swap_label
   FALSE, ///<pack_end
   FALSE, ///< line_wrap
   TRUE, ///< mnemonic_label
   FALSE, ///< non_modal
-  LIVES_EXPAND_DEFAULT, ///< default expand
-  0, ///< no themeing
-  1.0, ///< default scale
+  NULL, ///< transient window
+  W_FILL_LENGTH, ///< def fill width (in pixels)
+
   W_CSS_MIN_WIDTH, ///< css_min_width
   W_CSS_MIN_HEIGHT, ///< css_min_height
-  W_PACKING_WIDTH, ///< def packing width
-  W_PACKING_HEIGHT, ///< def packing height
-  W_BORDER_WIDTH, ///< def border width
-  W_FILL_LENGTH, ///< def fill width (in pixels)
-  NULL, ///< last_label
-  NULL, ///< last_container
-  NULL, ///< transient window
-  LIVES_JUSTIFY_LEFT, ///< justify
+  FALSE, ///< no_gui
+  1.0, ///< default scale
   LIVES_JUSTIFY_LEFT, ///< default justify (should this be RIGHT for rtl ?)
-  LIVES_FONT_SIZE_MEDIUM, ///< default font size
   NULL, ///< image_filter
   "", ///< title_prefix
   0, ///< monitor

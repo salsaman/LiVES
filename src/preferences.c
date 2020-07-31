@@ -259,14 +259,14 @@ static int run_prefs_command(const char *com) {
       if (ret == 4) {
         // error writing to temp config file
         char *newrcfile = ensure_extension(capable->rcfile, LIVES_FILE_EXT_NEW);
-        ret = do_write_failed_error_s_with_retry(newrcfile, NULL, NULL);
+        ret = do_write_failed_error_s_with_retry(newrcfile, NULL);
         lives_free(newrcfile);
       } else if (ret == 3) {
         // error writing to config file
-        ret = do_write_failed_error_s_with_retry(capable->rcfile, NULL, NULL);
+        ret = do_write_failed_error_s_with_retry(capable->rcfile, NULL);
       } else if (ret != 0) {
         // error reading from config file
-        ret = do_read_failed_error_s_with_retry(capable->rcfile, NULL, NULL);
+        ret = do_read_failed_error_s_with_retry(capable->rcfile, NULL);
       }
     } else ret = 0;
   } while (ret == LIVES_RESPONSE_RETRY);
@@ -314,7 +314,7 @@ void set_theme_pref(const char *themefile, const char *key, const char *value) {
   int ret = 0;
   do {
     if (lives_system(com, TRUE)) {
-      ret = do_write_failed_error_s_with_retry(themefile, NULL, NULL);
+      ret = do_write_failed_error_s_with_retry(themefile, NULL);
     }
   } while (ret == LIVES_RESPONSE_RETRY);
   lives_free(com);
@@ -475,9 +475,7 @@ void set_vpp(boolean set_in_prefs) {
         if (set_in_prefs) {
           set_string_pref(PREF_VID_PLAYBACK_PLUGIN, mainw->vpp->name);
           if (!mainw->ext_playback)
-            do_error_dialog_with_check_transient
-            (_("\n\nVideo playback plugins are only activated in\nfull screen, separate window (fs) mode\n"),
-             TRUE, 0, prefsw ? LIVES_WINDOW(prefsw->prefs_dialog) : LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+            do_error_dialogx(_("\n\nVideo playback plugins are only activated in\nfull screen, separate window (fs) mode\n"));
         }
       }
     }
@@ -2291,7 +2289,7 @@ boolean apply_prefs(boolean skip_warn) {
 
   if (mt_undo_buf != prefs->mt_undo_buf) {
     if ((new_undo_buf = (unsigned char *)lives_malloc(mt_undo_buf * 1024 * 1024)) == NULL) {
-      do_mt_set_mem_error(mainw->multitrack != NULL, skip_warn);
+      do_mt_set_mem_error(mainw->multitrack != NULL);
     } else {
       if (mainw->multitrack) {
         if (mainw->multitrack->undo_mem) {
@@ -2310,7 +2308,7 @@ boolean apply_prefs(boolean skip_warn) {
         } else {
           mainw->multitrack->undo_mem = (unsigned char *)lives_malloc(mt_undo_buf * 1024 * 1024);
           if (mainw->multitrack->undo_mem == NULL) {
-            do_mt_set_mem_error(TRUE, skip_warn);
+            do_mt_set_mem_error(TRUE);
           } else {
             mainw->multitrack->undo_buffer_used = 0;
             mainw->multitrack->undos = NULL;

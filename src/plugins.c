@@ -281,7 +281,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
   do {
     retval = 0;
     if ((fd = lives_open2(vpp_file, O_RDONLY)) == -1) {
-      retval = do_read_failed_error_s_with_retry(vpp_file, lives_strerror(errno), NULL);
+      retval = do_read_failed_error_s_with_retry(vpp_file, lives_strerror(errno));
       if (retval == LIVES_RESPONSE_CANCEL) {
         vpp = NULL;
         return;
@@ -336,7 +336,9 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
                   _("\nThe %s video playback plugin has been updated.\nPlease check your settings in\n"
                     "Tools|Preferences|Playback|Playback Plugins Advanced\n\n"),
                   vpp->name);
-          do_error_dialog(msg);
+	  widget_opts.non_modal = TRUE;
+          do_error_dialogx(msg);
+	  widget_opts.non_modal = FALSE;
           lives_free(msg);
           lives_rm(vpp_file);
           d_print_failed();
@@ -385,7 +387,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
 
       if (THREADVAR(read_failed)) {
         close(fd);
-        retval = do_read_failed_error_s_with_retry(vpp_file, NULL, NULL);
+        retval = do_read_failed_error_s_with_retry(vpp_file, NULL);
         if (retval == LIVES_RESPONSE_CANCEL) {
           THREADVAR(read_failed) = FALSE;
           vpp = NULL;
@@ -1107,10 +1109,9 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
                                       "Playback plugin will be disabled,\n"
                                       "it can be re-anabled in Prefrences / Playback.\n"), plugname, dlerror());
     if (prefs->startup_phase != 1 && prefs->startup_phase != -1) {
-      if (prefsw != NULL) do_error_dialog_with_check_transient(msg, TRUE, 0, prefsw != NULL
-            ? LIVES_WINDOW(prefsw->prefs_dialog) :
-            LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-      else do_error_dialog(msg);
+      if (!prefsw) widget_opts.non_modal = TRUE;
+      do_blocking_error_dialog(msg);
+      widget_opts.non_modal = FALSE;
     }
     LIVES_ERROR(msg);
     lives_free(msg);
@@ -1161,8 +1162,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
     char *msg = lives_strdup_printf
                 (_("\n\nPlayback module %s\nis missing a mandatory function.\nUnable to use it.\n"), plugname);
     set_string_pref(PREF_VID_PLAYBACK_PLUGIN, "none");
-    do_error_dialog_with_check_transient(msg, TRUE, 0, prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) :
-                                         LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    do_blocking_error_dialog(msg);
     lives_free(msg);
     dlclose(handle);
     lives_free(vpp);
@@ -1174,8 +1174,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   if ((pl_error = (*vpp->module_check_init)()) != NULL) {
     msg = lives_strdup_printf(_("Video playback plugin failed to initialise.\nError was: %s\n"), pl_error);
     if (prefs->startup_phase != 1 && prefs->startup_phase != -1) {
-      do_error_dialog_with_check_transient(msg, TRUE, 0, prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) :
-                                           LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+      do_blocking_error_dialog(msg);
     } else {
       LIVES_ERROR(msg);
     }
@@ -1467,8 +1466,7 @@ int64_t get_best_audio(_vid_playback_plugin * vpp) {
 
         if (strlen(buf) > 0) {
           if (i == 0 && prefsw != NULL) {
-            do_error_dialog_with_check_transient
-            (buf, TRUE, 0, LIVES_WINDOW(prefsw->prefs_dialog));
+            do_blocking_error_dialog(buf);
             d_print(_("Audio stream unable to use preferred format '%s'\n"), anames[fmts[i]]);
           }
           continue;
@@ -1511,10 +1509,11 @@ void do_plugin_encoder_error(const char *plugin_name) {
     msg = lives_strdup_printf(
             _("LiVES was unable to find its encoder plugins. Please make sure you have the plugins installed in\n"
               "%s%s%s\nor change the value of <lib_dir> in %s\n"),
-            prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS, (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+            prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS,
+	    (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
     lives_free(tmp);
-    if (rdet != NULL) do_error_dialog_with_check_transient(msg, FALSE, 0, LIVES_WINDOW(rdet->dialog));
-    else do_error_dialog(msg);
+    widget_opts.non_modal = TRUE;
+    do_error_dialogx(msg);
     lives_free(msg);
     return;
   }
@@ -3686,7 +3685,7 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox * vbox, lives_rf
     retval = 0;
     sfile = fopen(rfxfile, "w");
     if (sfile == NULL) {
-      retval = do_write_failed_error_s_with_retry(rfxfile, lives_strerror(errno), NULL);
+      retval = do_write_failed_error_s_with_retry(rfxfile, lives_strerror(errno));
       if (retval == LIVES_RESPONSE_CANCEL) {
         lives_free(string);
         return NULL;
@@ -3702,7 +3701,7 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox * vbox, lives_rf
       fclose(sfile);
       lives_free(string);
       if (THREADVAR(write_failed)) {
-        retval = do_write_failed_error_s_with_retry(rfxfile, NULL, NULL);
+        retval = do_write_failed_error_s_with_retry(rfxfile, NULL);
         if (retval == LIVES_RESPONSE_CANCEL) {
           return NULL;
         }

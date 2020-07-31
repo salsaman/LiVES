@@ -500,14 +500,14 @@ boolean do_warning_dialogf(const char *fmt, ...) {
   va_start(xargs, fmt);
   textx = lives_strdup_vprintf(fmt, xargs);
   va_end(xargs);
-  resb = do_warning_dialog_with_checkx(textx, 0);
+  resb = do_warning_dialog_with_check(textx, 0);
   lives_free(textx);
   return resb;
 }
 
 
 LIVES_GLOBAL_INLINE boolean do_warning_dialog(const char *text) {
-  return do_warning_dialog_with_checkx(text, 0);
+  return do_warning_dialog_with_check(text, 0);
 }
 
 
@@ -605,7 +605,7 @@ boolean do_yesno_dialog(const char *text) {
 }
 
 
-static LiVESResponseType _do_abort_cancel_retry_dialogx(const char *text, lives_dialog_t dtype) {
+static LiVESResponseType _do_abort_cancel_retry_dialog(const char *text, lives_dialog_t dtype) {
   LiVESResponseType response;
   char *mytext;
   LiVESWidget *warning;
@@ -648,19 +648,19 @@ static LiVESResponseType _do_abort_cancel_retry_dialogx(const char *text, lives_
 
 // returns LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY
 LIVES_GLOBAL_INLINE LiVESResponseType do_abort_cancel_retry_dialog(const char *text) {
-  return _do_abort_cancel_retry_dialogx(text, LIVES_DIALOG_ABORT_CANCEL_RETRY);
+  return _do_abort_cancel_retry_dialog(text, LIVES_DIALOG_ABORT_CANCEL_RETRY);
 }
 
 
 // always returns LIVES_RESPONSE_RETRY
 LIVES_GLOBAL_INLINE LiVESResponseType do_abort_retry_dialog(const char *text) {
-  return _do_abort_cancel_retry_dialogx(text, LIVES_DIALOG_ABORT_RETRY);
+  return _do_abort_cancel_retry_dialog(text, LIVES_DIALOG_ABORT_RETRY);
 }
 
 
 // always returns LIVES_RESPONSE_OK
 LIVES_GLOBAL_INLINE LiVESResponseType do_abort_ok_dialog(const char *text) {
-  return _do_abort_cancel_retry_dialogx(text, LIVES_DIALOG_ABORT_OK);
+  return _do_abort_cancel_retry_dialog(text, LIVES_DIALOG_ABORT_OK);
 }
 
 
@@ -669,11 +669,10 @@ LiVESResponseType do_error_dialogf(const char *fmt, ...) {
   LiVESResponseType resi;
   char *textx;
   va_list xargs;
-
   va_start(xargs, fmt);
   textx = lives_strdup_vprintf(fmt, xargs);
   va_end(xargs);
-  resi = do_error_dialog_with_checkx(textx, 0);
+  resi = do_error_dialog_with_check(textx, 0);
   lives_free(textx);
   return resi;
 }
@@ -681,11 +680,11 @@ LiVESResponseType do_error_dialogf(const char *fmt, ...) {
 
 LIVES_GLOBAL_INLINE LiVESResponseType do_error_dialog(const char *text) {
   // show error box
-  return do_error_dialog_with_checkx(text, 0);
+  return do_error_dialog_with_check(text, 0);
 }
 
 
-static LiVESResponseType _do_info_dialogx(const char *text, const char *exp_title, LiVESList *exp_list) {
+static LiVESResponseType _do_info_dialog(const char *text, const char *exp_title, LiVESList *exp_list) {
   LiVESResponseType ret = LIVES_RESPONSE_NONE;
   LiVESWidget *info_box = create_message_dialog(LIVES_DIALOG_INFO, text, 0);
 
@@ -703,7 +702,7 @@ static LiVESResponseType _do_info_dialogx(const char *text, const char *exp_titl
 }
 
 
-LiVESResponseType do_info_dialogfx(const char *fmt, ...) {
+LiVESResponseType do_info_dialogf(const char *fmt, ...) {
   // show info box
   LiVESResponseType resi;
   char *textx;
@@ -711,56 +710,22 @@ LiVESResponseType do_info_dialogfx(const char *fmt, ...) {
   va_start(xargs, fmt);
   textx = lives_strdup_vprintf(fmt, xargs);
   va_end(xargs);
-  resi = _do_info_dialogx(textx, NULL, NULL);
+  resi = _do_info_dialog(textx, NULL, NULL);
   lives_free(textx);
   return resi;
 }
 
 
-LiVESResponseType do_blocking_error_dialogf(const char *fmt, ...) {
-  // show error box - blocks until OK is pressed
-  va_list xargs;
-  char *textx;
-  LiVESResponseType resi;
-  va_start(xargs, fmt);
-  textx = lives_strdup_vprintf(fmt, xargs);
-  va_end(xargs);
-  resi = do_error_dialog_with_checkx(textx, 0);
-  lives_free(textx);
-  return resi;
-}
-
-
-LiVESResponseType do_blocking_info_dialogf(const char *fmt, ...) {
+LIVES_GLOBAL_INLINE LiVESResponseType do_info_dialog(const char *text) {
   // show info box - blocks until OK is pressed
-   va_list xargs;
-  char *textx;
-  LiVESResponseType resi;
-  va_start(xargs, fmt);
-  textx = lives_strdup_vprintf(fmt, xargs);
-  va_end(xargs);
-  resi = _do_info_dialogx(textx, NULL, NULL);
-  lives_free(textx);
-  return resi;
-}
-
-
-static LiVESResponseType _do_blocking_info_dialog(const char *text,  const char *exp_text, LiVESList *list) {
-  // show info box - blocks until OK is pressed
-  return _do_info_dialogx(text, exp_text, list);
-}
-
-
-LIVES_GLOBAL_INLINE LiVESResponseType do_blocking_info_dialog(const char *text) {
-  // show info box - blocks until OK is pressed
-  return _do_blocking_info_dialog(text, NULL, NULL);
+  return _do_info_dialog(text, NULL, NULL);
 }
 
 
 LIVES_GLOBAL_INLINE LiVESResponseType do_info_dialog_with_expander(const char *text,
     const char *exp_text, LiVESList *list) {
   // show info box - blocks until OK is pressed
-  return _do_info_dialogx(text, exp_text, list);
+  return _do_info_dialog(text, exp_text, list);
 }
 
 
@@ -772,7 +737,7 @@ LiVESResponseType do_error_dialog_with_check(const char *text, uint64_t warn_mas
 
   if (prefs != NULL && (prefs->warning_mask & warn_mask_number)) return ret;
   err_box = create_message_dialog(warn_mask_number == 0 ? LIVES_DIALOG_ERROR :
-                                     LIVES_DIALOG_WARN, text, warn_mask_number);
+                                  LIVES_DIALOG_WARN, text, warn_mask_number);
 
   if (!widget_opts.non_modal) {
     ret = lives_dialog_run(LIVES_DIALOG(err_box));
@@ -848,7 +813,7 @@ LIVES_GLOBAL_INLINE void do_clip_divergence_error(int fileno) {
 
 
 LIVES_GLOBAL_INLINE void do_aud_during_play_error(void) {
-  do_blocking_error_dialog(_("Audio players cannot be switched during playback."));
+  do_error_dialog(_("Audio players cannot be switched during playback."));
 }
 
 
@@ -2885,7 +2850,7 @@ boolean do_save_clipset_warn(void) {
           extra);
   lives_free(extra);
 
-  if (!do_warning_dialog_with_checkx(msg, WARN_MASK_SAVE_SET)) {
+  if (!do_warning_dialog_with_check(msg, WARN_MASK_SAVE_SET)) {
     lives_free(msg);
     return FALSE;
   }
@@ -2913,8 +2878,8 @@ void workdir_warning(void) {
 
 
 LIVES_GLOBAL_INLINE void do_no_mplayer_sox_error(void) {
-  do_blocking_error_dialog(_("\nLiVES currently requires either 'mplayer', 'mplayer2', or 'sox' to function. "
-                             "Please install one or other of these, and try again.\n"));
+  do_error_dialog(_("\nLiVES currently requires either 'mplayer', 'mplayer2', or 'sox' to function. "
+                    "Please install one or other of these, and try again.\n"));
 }
 
 
@@ -2950,13 +2915,13 @@ LIVES_GLOBAL_INLINE void do_encoder_acodec_error(void) {
 
 
 LIVES_GLOBAL_INLINE void do_layout_scrap_file_error(void) {
-  do_blocking_error_dialog(
+  do_error_dialog(
     _("This layout includes generated frames.\nIt cannot be saved, you must render it to a clip first.\n"));
 }
 
 
 LIVES_GLOBAL_INLINE void do_layout_ascrap_file_error(void) {
-  do_blocking_error_dialog(
+  do_error_dialog(
     _("This layout includes generated or recorded audio.\nIt cannot be saved, you must render it to a clip first.\n"));
 }
 
@@ -3163,7 +3128,7 @@ boolean do_clipboard_fps_warning(void) {
   if (prefs->warning_mask & WARN_MASK_FPS) {
     return TRUE;
   }
-  return do_warning_dialog_with_checkx(
+  return do_warning_dialog_with_check(
            _("The playback speed (fps), or the audio rate\n of the clipboard does not match\n"
              "the playback speed or audio rate of the clip you are inserting into.\n\n"
              "The insertion will be adjusted to fit into the clip.\n\n"
@@ -3198,7 +3163,7 @@ boolean do_yuv4m_open_warning(void) {
             "LiVES will pause briefly until frames are received.\nYou should only click OK if you understand what you are doing, "
             "otherwise, click Cancel."),
           prefs->workdir);
-  resp = do_warning_dialog_with_checkx(msg, WARN_MASK_OPEN_YUV4M);
+  resp = do_warning_dialog_with_check(msg, WARN_MASK_OPEN_YUV4M);
   lives_free(msg);
   return resp;
 }
@@ -3291,7 +3256,7 @@ LIVES_GLOBAL_INLINE void do_rendered_fx_dialog(void) {
                 prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_RENDERED_EFFECTS_BUILTIN,
                 (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL,
                        NULL)));
-  do_error_dialog_with_checkx(msg, WARN_MASK_RENDERED_FX);
+  do_error_dialog_with_check(msg, WARN_MASK_RENDERED_FX);
   lives_free(msg);
   lives_free(tmp);
 }
@@ -3337,7 +3302,7 @@ boolean do_set_duplicate_warning(const char *new_set) {
                   "Click OK to add the current clips and layouts to the existing set.\n"
                   "Click Cancel to pick a new name.\n"),
                 new_set);
-  boolean retcode = do_warning_dialog_with_checkx(msg, WARN_MASK_DUPLICATE_SET);
+  boolean retcode = do_warning_dialog_with_check(msg, WARN_MASK_DUPLICATE_SET);
   lives_free(msg);
   return retcode;
 }
@@ -3374,29 +3339,29 @@ LiVESResponseType do_original_lost_warning(const char *fname) {
 
 LIVES_GLOBAL_INLINE void do_no_decoder_error(const char *fname) {
   lives_widget_context_update();
-  do_blocking_error_dialogf(
+  do_error_dialogf(
     _("\n\nLiVES could not find a required decoder plugin for the clip\n%s\n"
       "The clip could not be loaded.\n"), fname);
 }
 
 
 LIVES_GLOBAL_INLINE void do_no_loadfile_error(const char *fname) {
-  do_blocking_error_dialogf(_("\n\nThe file\n%s\nCould not be found.\n"), fname);
+  do_error_dialogf(_("\n\nThe file\n%s\nCould not be found.\n"), fname);
 }
 
 
 #ifdef ENABLE_JACK
 LIVES_GLOBAL_INLINE void do_jack_noopen_warn(void) {
-  do_blocking_error_dialogf(_("\nUnable to start up jack. "
-                              "Please ensure that %s is set up correctly on your machine\n"
-                              "and also that the soundcard is not in use by another program\n"
-                              "Automatic jack startup will be disabled now.\n"),
-                            JACK_DRIVER_NAME);
+  do_error_dialogf(_("\nUnable to start up jack. "
+                     "Please ensure that %s is set up correctly on your machine\n"
+                     "and also that the soundcard is not in use by another program\n"
+                     "Automatic jack startup will be disabled now.\n"),
+                   JACK_DRIVER_NAME);
 }
 
 LIVES_GLOBAL_INLINE void do_jack_noopen_warn3(void) {
-  do_blocking_error_dialog(_("\nUnable to connect to jack server. "
-                             "Please start jack before starting LiVES\n"));
+  do_error_dialog(_("\nUnable to connect to jack server. "
+                    "Please start jack before starting LiVES\n"));
 }
 
 LIVES_GLOBAL_INLINE void do_jack_noopen_warn4(void) {
@@ -3405,12 +3370,12 @@ LIVES_GLOBAL_INLINE void do_jack_noopen_warn4(void) {
 #else
   const char *otherbit = "\"lives -aplayer sox\"";
 #endif
-  do_blocking_info_dialogf(_("\nAlternatively, try to start lives with either:\n\n"
-                             "\"lives -jackopts 16\", or\n\n%s\n"), otherbit);
+  do_info_dialogf(_("\nAlternatively, try to start lives with either:\n\n"
+                    "\"lives -jackopts 16\", or\n\n%s\n"), otherbit);
 }
 
 LIVES_GLOBAL_INLINE void do_jack_noopen_warn2(void) {
-  do_blocking_info_dialog(_("\nAlternately, you can restart LiVES and select another audio player.\n"));
+  do_info_dialog(_("\nAlternately, you can restart LiVES and select another audio player.\n"));
 }
 #endif
 
@@ -3420,7 +3385,7 @@ LIVES_GLOBAL_INLINE void do_mt_backup_space_error(lives_mt * mt, int memreq_mb) 
                   "the value in Preferences/Multitrack.\n"
                   "It is recommended to increase it to at least %d MB"),
                 memreq_mb);
-  do_error_dialog_with_checkx(msg, WARN_MASK_MT_BACKUP_SPACE);
+  do_error_dialog_with_check(msg, WARN_MASK_MT_BACKUP_SPACE);
   lives_free(msg);
 }
 
@@ -3455,13 +3420,13 @@ LIVES_GLOBAL_INLINE void do_mt_set_mem_error(boolean has_mt) {
   if (has_mt) msg2 = (_("Try again from the clip editor, try closing some other applications\n"));
   else msg2 = (_("Try closing some other applications\n"));
 
-  do_blocking_error_dialogf("%s%s%s", msg1, msg2, msg3);
+  do_error_dialogf("%s%s%s", msg1, msg2, msg3);
   lives_free(msg1); lives_free(msg2); lives_free(msg3);
 }
 
 
 LIVES_GLOBAL_INLINE void do_mt_audchan_error(int warn_mask) {
-  do_error_dialog_with_checkx(
+  do_error_dialog_with_check(
     _("Multitrack is set to 0 audio channels, but this layout has audio.\n"
       "You should adjust the audio settings from the Tools menu.\n"),
     warn_mask);
@@ -3474,7 +3439,7 @@ LIVES_GLOBAL_INLINE void do_mt_no_audchan_error(void) {
 
 
 LIVES_GLOBAL_INLINE void do_mt_no_jack_error(int warn_mask) {
-  do_error_dialog_with_checkx(
+  do_error_dialog_with_check(
     _("Multitrack audio preview is only available with the\n\"jack\" or \"pulseaudio\" audio player.\n"
       "You can set this in Tools|Preferences|Playback."),
     warn_mask);
@@ -3495,34 +3460,34 @@ LIVES_GLOBAL_INLINE void do_bad_layout_error(void) {
 
 
 LIVES_GLOBAL_INLINE void do_program_not_found_error(const char *progname) {
-  do_blocking_error_dialogf(_("The program %s is required to use this feature.\nPlease install it and try again."), progname);
+  do_error_dialogf(_("The program %s is required to use this feature.\nPlease install it and try again."), progname);
 }
 
 
 LIVES_GLOBAL_INLINE void do_lb_composite_error(void) {
-  do_blocking_error_dialog(
+  do_error_dialog(
     _("LiVES currently requires composite from ImageMagick to do letterboxing.\n"
       "Please install 'imagemagick' and try again."));
 }
 
 
 LIVES_GLOBAL_INLINE void do_lb_convert_error(void) {
-  do_blocking_error_dialog(
+  do_error_dialog(
     _("LiVES currently requires convert from ImageMagick to do letterboxing.\n"
       "Please install 'imagemagick' and try again."));
 }
 
 
 LIVES_GLOBAL_INLINE void do_ra_convert_error(void) {
-  do_blocking_error_dialog(
+  do_error_dialog(
     _("LiVES currently requires convert from ImageMagick resize frames.\n"
       "Please install 'imagemagick' and try again."));
 }
 
 
 LIVES_GLOBAL_INLINE void do_please_install(const char *exec) {
-  do_blocking_info_dialogf(_("'%s'\nis necessary for this feature to work.\n"
-                             "If possible, kindly install it before continuing."), exec);
+  do_info_dialogf(_("'%s'\nis necessary for this feature to work.\n"
+                    "If possible, kindly install it before continuing."), exec);
 }
 
 
@@ -3557,7 +3522,7 @@ LIVES_GLOBAL_INLINE void do_vpp_palette_error(void) {
 
 
 LIVES_GLOBAL_INLINE void do_decoder_palette_error(void) {
-  do_blocking_error_dialog(_("Decoder plugin failed to initialise palette !\n"));
+  do_error_dialog(_("Decoder plugin failed to initialise palette !\n"));
 }
 
 
@@ -3567,13 +3532,13 @@ LIVES_GLOBAL_INLINE void do_vpp_fps_error(void) {
 
 
 LIVES_GLOBAL_INLINE void do_after_crash_warning(void) {
-  do_error_dialog_with_checkx(_("After a crash, it is advisable to clean up the disk with\nFile|Clean up disk space\n"),
+  do_error_dialog_with_check(_("After a crash, it is advisable to clean up the disk with\nFile|Clean up disk space\n"),
                              WARN_MASK_CLEAN_AFTER_CRASH);
 }
 
 
 LIVES_GLOBAL_INLINE void do_after_invalid_warning(void) {
-  do_error_dialog_with_checkx(_("Invalid clips were detected during reaload.\nIt is advisable to clean up the disk with\n"
+  do_error_dialog_with_check(_("Invalid clips were detected during reaload.\nIt is advisable to clean up the disk with\n"
                                "File|Clean up disk space\n"),
                              WARN_MASK_CLEAN_INVALID);
 }
@@ -3778,7 +3743,7 @@ LiVESResponseType do_system_failed_error(const char *com, int retval, const char
       norecurse = FALSE;
     }
   } else {
-    do_blocking_error_dialog(msgx);
+    do_error_dialog(msgx);
   }
   lives_free(msgx);
   lives_free(msg);
@@ -3833,7 +3798,7 @@ void do_write_failed_error_s(const char *s, const char *addinfo) {
   LIVES_ERROR(emsg);
   lives_free(emsg);
 
-  do_blocking_error_dialog(msg);
+  do_error_dialog(msg);
   lives_free(addbit);
   lives_free(dsmsg);
   lives_free(msg);
@@ -3857,7 +3822,7 @@ void do_read_failed_error_s(const char *s, const char *addinfo) {
   lives_free(emsg);
   lives_free(sutf);
 
-  do_blocking_error_dialog(msg);
+  do_error_dialog(msg);
   lives_free(msg);
   lives_free(addbit);
 }
@@ -4030,7 +3995,7 @@ void do_file_perm_error(const char *file_name) {
                 _("\nLiVES was unable to write to the file:\n%s\n"
                   "Please check the file permissions and try again."),
                 file_name);
-  do_blocking_error_dialog(msg);
+  do_error_dialog(msg);
   lives_free(msg);
 }
 
@@ -4040,14 +4005,14 @@ void do_dir_perm_error(const char *dir_name) {
                 _("\nLiVES was unable to either create or write to the directory:\n%s\n"
                   "Please check the directory permissions and try again."),
                 dir_name);
-  do_blocking_error_dialog(msg);
+  do_error_dialog(msg);
   lives_free(msg);
 }
 
 
 void do_dir_perm_access_error(const char *dir_name) {
   char *msg = lives_strdup_printf(_("\nLiVES was unable to read from the directory:\n%s\n"), dir_name);
-  do_blocking_error_dialog(msg);
+  do_error_dialog(msg);
   lives_free(msg);
 }
 
@@ -4058,23 +4023,23 @@ boolean do_abort_check(void) {
 
 
 void do_encoder_img_fmt_error(render_details * rdet) {
-  do_blocking_error_dialogf(_("\nThe %s cannot encode clips with image type %s.\n"
-			      "Please select another encoder from the list.\n"),
-			    prefs->encoder.name, get_image_ext_for_type(cfile->img_type));
+  do_error_dialogf(_("\nThe %s cannot encode clips with image type %s.\n"
+                     "Please select another encoder from the list.\n"),
+                   prefs->encoder.name, get_image_ext_for_type(cfile->img_type));
 }
 
 
 LIVES_GLOBAL_INLINE void do_card_in_use_error(void) {
-  do_blocking_error_dialog(_("\nThis card is already in use and cannot be opened multiple times.\n"));
+  do_error_dialog(_("\nThis card is already in use and cannot be opened multiple times.\n"));
 }
 
 
 LIVES_GLOBAL_INLINE void do_dev_busy_error(const char *devstr) {
-  do_blocking_error_dialogf(_("\nThe device %s is in use or unavailable.\n"
-                              "- Check the device permissions\n"
-                              "- Check if this device is in use by another program.\n"
-                              "- Check if the device actually exists.\n"),
-                            devstr);
+  do_error_dialogf(_("\nThe device %s is in use or unavailable.\n"
+                     "- Check the device permissions\n"
+                     "- Check if this device is in use by another program.\n"
+                     "- Check if the device actually exists.\n"),
+                   devstr);
 }
 
 
@@ -4144,11 +4109,11 @@ LIVES_GLOBAL_INLINE boolean do_set_locked_warning(const char *setname) {
 
 LIVES_GLOBAL_INLINE void do_no_sets_dialog(const char *dir) {
   extra_cb_key = 1;
-  do_blocking_info_dialogf(_("No Sets could be found in the directory\n%s\n\n"
-                             "If you have Sets in another directory, you can either:\n"
-                             " - change the working directory in Preferences, or\n"
-                             " - restart lives with the -workdir switch to set it temporarily"),
-                           dir);
+  do_info_dialogf(_("No Sets could be found in the directory\n%s\n\n"
+                    "If you have Sets in another directory, you can either:\n"
+                    " - change the working directory in Preferences, or\n"
+                    " - restart lives with the -workdir switch to set it temporarily"),
+                  dir);
 }
 
 
@@ -4333,7 +4298,7 @@ LIVES_GLOBAL_INLINE char *workdir_ch_warning(void) {
 
 
 LIVES_GLOBAL_INLINE void do_shutdown_msg(void) {
-  do_blocking_info_dialog(
+  do_info_dialog(
     _("\nLiVES will now shut down. You need to restart it for the new "
       "preferences to take effect.\nClick OK to continue.\n"));
 }

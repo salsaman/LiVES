@@ -386,7 +386,7 @@ static boolean call_osc_show_blocking_info(livespointer data) {
   int ret = LIVES_RESPONSE_INVALID;
   msginfo *minfo = (msginfo *)data;
   if (mainw != NULL && !mainw->go_away && !mainw->is_processing) {
-    ret = do_blocking_info_dialog(minfo->msg);
+    ret = do_info_dialog(minfo->msg);
     ret = trans_constant(ret, const_domain_notify);
   }
   ext_caller_return_int(minfo->id, ret);

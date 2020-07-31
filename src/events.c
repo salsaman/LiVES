@@ -4373,7 +4373,7 @@ boolean start_render_effect_events(weed_plant_t *event_list) {
 
     if (mainw->error) {
       widget_opts.non_modal = TRUE;
-      do_error_dialogx(mainw->msg);
+      do_error_dialog(mainw->msg);
       widget_opts.non_modal = FALSE;
       d_print_failed();
     } else if (mainw->render_error >= LIVES_RENDER_ERROR) d_print_failed();

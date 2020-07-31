@@ -4473,7 +4473,7 @@ void startup_message_fatal(char *msg) {
     lives_freep((void **)&old_vhash);
   }
 
-  do_blocking_error_dialog(msg);
+  do_error_dialog(msg);
 
   LIVES_FATAL(msg);
   // needs notify_socket and prefs->omc_events, so seems unlikely it will do anything, but anyway...
@@ -4485,7 +4485,7 @@ void startup_message_fatal(char *msg) {
 
 LIVES_GLOBAL_INLINE boolean startup_message_nonfatal(const char *msg) {
   widget_opts.non_modal = TRUE;
-  do_error_dialogx(msg);
+  do_error_dialog(msg);
   widget_opts.non_modal = FALSE;
   return TRUE;
 }
@@ -4493,7 +4493,7 @@ LIVES_GLOBAL_INLINE boolean startup_message_nonfatal(const char *msg) {
 
 boolean startup_message_info(const char *msg) {
   widget_opts.non_modal = TRUE;
-  do_info_dialogx(msg);
+  do_info_dialog(msg);
   widget_opts.non_modal = FALSE;
   return TRUE;
 }
@@ -4501,7 +4501,7 @@ boolean startup_message_info(const char *msg) {
 
 boolean startup_message_nonfatal_dismissable(const char *msg, uint64_t warning_mask) {
   widget_opts.non_modal = TRUE;
-  do_error_dialog_with_checkx(msg, warning_mask);
+  do_error_dialog_with_check(msg, warning_mask);
   widget_opts.non_modal = FALSE;
   return TRUE;
 }
@@ -8613,7 +8613,7 @@ void load_frame_image(int frame) {
 	  cfile->frames = frame;
 	} else {
 	  widget_opts.non_modal = TRUE;
-	  do_error_dialogx(_("LiVES was unable to capture this image\n\n"));
+	  do_error_dialog(_("LiVES was unable to capture this image\n\n"));
 	  widget_opts.non_modal = FALSE;
 	  mainw->cancelled = CANCEL_CAPTURE_ERROR;
 	}

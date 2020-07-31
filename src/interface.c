@@ -5144,7 +5144,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
     ///////
 
     if (!strlen(lives_entry_get_text(LIVES_ENTRY(name_entry)))) {
-      do_blocking_error_dialog(_("Please enter the name of the file to save the downloaded clip as.\n"));
+      do_error_dialog(_("Please enter the name of the file to save the downloaded clip as.\n"));
       continue;
     }
 
@@ -5152,7 +5152,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 
     if (!(*url)) {
       lives_free(url);
-      do_blocking_error_dialog(_("Please enter a valid URL for the download.\n"));
+      do_error_dialog(_("Please enter a valid URL for the download.\n"));
       continue;
     }
 
@@ -5480,7 +5480,7 @@ static void workdir_query_cb(LiVESWidget * w, livespointer data) {
         on_quit_activate(NULL, NULL);
       }
     } else {
-      do_blocking_info_dialog(_("\nDirectory was not changed\n"));
+      do_info_dialog(_("\nDirectory was not changed\n"));
     }
     *future_prefs->workdir = 0;
   }

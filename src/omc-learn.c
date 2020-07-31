@@ -1318,7 +1318,7 @@ static void del_all(LiVESButton *button, livespointer user_data) {
   omclearn_w *omclw = (omclearn_w *)user_data;
 
   // need to use the full version here to override the default transient window
-  if (!do_warning_dialog_with_checkx(_("\nClick OK to delete all entries\n"), 0)) return;
+  if (!do_warning_dialog(_("\nClick OK to delete all entries\n"))) return;
 
   // destroy everything in table
   lives_container_foreach(LIVES_CONTAINER(omclw->table), killit, NULL);
@@ -1733,7 +1733,7 @@ static lives_omc_match_node_t *omc_match_sig(int type, int index, const char *si
     break;
   }
 
-  do_blocking_error_dialog(msg);
+  do_error_dialog(msg);
   if (msg!=NULL) lives_free(msg);
 
   return NULL;
@@ -2528,14 +2528,14 @@ void create_devicemap_directory(void) {
 
 static void do_devicemap_load_error(const char *fname) {
   char *msg = lives_strdup_printf(_("\n\nError parsing file\n%s\n"), fname);
-  do_blocking_error_dialog(msg);
+  do_error_dialog(msg);
   lives_free(msg);
 }
 
 
 static void do_devicemap_version_error(const char *fname) {
   char *msg = lives_strdup_printf(_("\n\nInvalid version in file\n%s\n"), fname);
-  do_blocking_error_dialog(msg);
+  do_error_dialog(msg);
   lives_free(msg);
 }
 
@@ -2582,7 +2582,7 @@ void on_devicemap_load_activate(LiVESMenuItem *menuitem, livespointer user_data)
   if ((fd = open(load_file, O_RDONLY)) < 0) {
     if (!mainw->go_away) {
       char *msg = lives_strdup_printf(_("\n\nUnable to open file\n%s\nError code %d\n"), load_file, errno);
-      do_blocking_error_dialog(msg);
+      do_error_dialog(msg);
       lives_free(msg);
     }
     lives_free(load_file);

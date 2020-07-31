@@ -311,7 +311,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     mainw->keep_pre = FALSE;
     if (mainw->error) {
       widget_opts.non_modal = TRUE;
-      if (mainw->cancelled != CANCEL_ERROR) do_error_dialogx(mainw->msg);
+      if (mainw->cancelled != CANCEL_ERROR) do_error_dialog(mainw->msg);
       d_print_failed();
       mainw->last_dprint_file = ldfile;
     }
@@ -439,9 +439,9 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 
     if (mainw->error) {
       if (!mainw->cancelled) {
-	widget_opts.non_modal = TRUE;
-        do_info_dialogx(_("\nNo frames were generated.\n"));
-	widget_opts.non_modal = FALSE;
+        widget_opts.non_modal = TRUE;
+        do_info_dialog(_("\nNo frames were generated.\n"));
+        widget_opts.non_modal = FALSE;
         d_print_failed();
       } else if (mainw->cancelled != CANCEL_ERROR) d_print_cancelled();
       else d_print_failed();
@@ -507,9 +507,9 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     if (got_no_frames || cfile->frames <= 0) {
       mainw->is_generating = FALSE;
       if (!mainw->cancelled) {
-	widget_opts.non_modal = TRUE;
-        do_info_dialogx(_("\nNo frames were generated.\n"));
-	widget_opts.non_modal = FALSE;
+        widget_opts.non_modal = TRUE;
+        do_info_dialog(_("\nNo frames were generated.\n"));
+        widget_opts.non_modal = FALSE;
         d_print_failed();
       } else d_print_cancelled();
       if (!got_no_frames) {

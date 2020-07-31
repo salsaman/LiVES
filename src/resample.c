@@ -1219,7 +1219,7 @@ void on_resaudio_ok_clicked(LiVESButton * button, LiVESEntry * entry) {
     if (arate <= 0) {
       // TODO - show error icon1280
       widget_opts.non_modal = TRUE;
-      do_error_dialogx(_("\n\nNew rate must be greater than 0\n"));
+      do_error_dialog(_("\n\nNew rate must be greater than 0\n"));
       widget_opts.non_modal = FALSE;
       return;
     }
@@ -1306,7 +1306,7 @@ void on_resaudio_ok_clicked(LiVESButton * button, LiVESEntry * entry) {
 
   if (cfile->afilesize == 0l) {
     widget_opts.non_modal = TRUE;
-    do_error_dialogx(_("LiVES was unable to resample the audio as requested.\n"));
+    do_error_dialog(_("LiVES was unable to resample the audio as requested.\n"));
     widget_opts.non_modal = FALSE;
     on_undo_activate(NULL, NULL);
     set_undoable(_("Resample Audio"), FALSE);
@@ -1523,7 +1523,7 @@ void on_resample_vid_ok(LiVESButton * button, LiVESEntry * entry) {
     sensitize();
     mainw->error = TRUE;
     widget_opts.non_modal = TRUE;
-    if (cfile->frames < 0) do_error_dialogx(_("Reordering error !\n"));
+    if (cfile->frames < 0) do_error_dialog(_("Reordering error !\n"));
     widget_opts.non_modal = FALSE;
     return;
   }
@@ -2233,7 +2233,7 @@ int reorder_frames(int rwidth, int rheight) {
 
   if (mainw->error) {
     widget_opts.non_modal = TRUE;
-    if (mainw->cancelled != CANCEL_ERROR) do_error_dialogx(_("\n\nLiVES was unable to reorder the frames."));
+    if (mainw->cancelled != CANCEL_ERROR) do_error_dialog(_("\n\nLiVES was unable to reorder the frames."));
     widget_opts.non_modal = FALSE;
     deorder_frames(new_frames, FALSE);
     new_frames = -new_frames;

@@ -432,7 +432,7 @@ void lives2lives_read_stream(const char *host, int port) {
   lstream->handle = OpenHTMSocket(host, port, FALSE);
   if (lstream->handle == NULL) {
     widget_opts.non_modal = TRUE;
-    do_error_dialogx(_("LiVES to LiVES stream error: Could not open port !\n"));
+    do_error_dialog(_("LiVES to LiVES stream error: Could not open port !\n"));
     widget_opts.non_modal = FALSE;
     lives_widget_set_sensitive(mainw->open_lives2lives, TRUE);
     return;
@@ -553,7 +553,7 @@ void lives2lives_read_stream(const char *host, int port) {
 
   if (mainw->fixed_fpsd > 0. && (cfile->fps != mainw->fixed_fpsd)) {
     widget_opts.non_modal = TRUE;
-    do_error_dialogx(_("\n\nUnable to open stream, framerate does not match fixed rate.\n"));
+    do_error_dialog(_("\n\nUnable to open stream, framerate does not match fixed rate.\n"));
     widget_opts.non_modal = FALSE;
 #ifdef USE_STRMBUF
     buffering = FALSE;
@@ -1010,10 +1010,12 @@ void on_send_lives2lives_activate(LiVESMenuItem *menuitem, livespointer user_dat
   set_vpp(FALSE);
 
   if (strcmp(orig_name, "lives2lives_stream")) {
-    do_info_dialog((tmp = lives_strdup_printf(
-                            _("\nLiVES will stream whenever it is in full screen/separate window mode.\nTo reset this behaviour, go to Tools/Preferences/Playback,\nand set the playback plugin back to %s\n"),
-                            orig_name)));
-    lives_free(tmp);
+    widget_opts.non_modal = TRUE;
+    do_info_dialogf(_("\nLiVES will stream whenever it is in full screen/separate window mode.\n"
+                      "To reset this behaviour, go to Tools/Preferences/Playback,\nand set the playback "
+                      "plugin back to %s\n"),
+                    orig_name);
+    widget_opts.non_modal = FALSE;
   }
   lives_free(orig_name);
 }

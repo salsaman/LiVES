@@ -1111,10 +1111,12 @@ int check_for_bad_ffmpeg(void) {
   }
 
   if (!maybeok) {
+    widget_opts.non_modal = TRUE;
     do_error_dialog(
       _("Your version of mplayer/ffmpeg may be broken !\nSee http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071\n\n"
         "You can work around this temporarily by switching to jpeg output in Preferences/Decoding.\n\n"
         "Try running Help/Troubleshoot for more information."));
+    widget_opts.non_modal = FALSE;
     return CANCEL_ERROR;
   }
   return CANCEL_NONE;

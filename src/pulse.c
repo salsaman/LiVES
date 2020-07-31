@@ -156,7 +156,7 @@ retry:
                  _("\nUnable to connect to the pulseaudio server.\n"
                    "Click Abort to exit from LiVES, Retry to try again,\n"
                    "or Cancel to run LiVES without audio features.\n"
-                   "Audio settings can be updated in Tools/Preferences/Playback.\n"), NULL);
+                   "Audio settings can be updated in Tools/Preferences/Playback.\n"));
         if (resp == LIVES_RESPONSE_RETRY) {
           fprintf(stderr, "Retrying...\n");
           goto retry;
@@ -166,10 +166,10 @@ retry:
       } else {
         msg = (_("\nUnable to connect to the pulseaudio server.\n"));
         if (startup_phase != 2) {
-          do_blocking_error_dialog(msg);
+          do_error_dialog(msg);
           mainw->aplayer_broken = TRUE;
         } else {
-          do_blocking_error_dialogf("%s%s", msg, _("LiVES will exit and you can choose another audio player.\n"));
+          do_error_dialogf("%s%s", msg, _("LiVES will exit and you can choose another audio player.\n"));
         }
         lives_free(msg);
       }

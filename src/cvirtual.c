@@ -70,7 +70,7 @@ boolean save_frame_index(int fileno) {
     retval = 0;
     fd = lives_create_buffered(fname, DEF_FILE_PERMS);
     if (fd < 0) {
-      retval = do_write_failed_error_s_with_retry(fname, lives_strerror(errno), NULL);
+      retval = do_write_failed_error_s_with_retry(fname, lives_strerror(errno));
     } else {
       for (i = 0; i < sfile->frames; i++) {
         lives_write_le_buffered(fd, &sfile->frame_index[i], sizeof(frames_t), TRUE);
@@ -86,15 +86,15 @@ boolean save_frame_index(int fileno) {
 
       if (THREADVAR(write_failed) == fd + 1) {
         THREADVAR(write_failed) = 0;
-        retval = do_write_failed_error_s_with_retry(fname, NULL, NULL);
+        retval = do_write_failed_error_s_with_retry(fname, NULL);
       } else {
         if (sget_file_size(fname) != (size_t)sfile->frames * sizeof(frames_t)) {
-          retval = do_write_failed_error_s_with_retry(fname, NULL, NULL);
+          retval = do_write_failed_error_s_with_retry(fname, NULL);
         } else {
           THREADVAR(com_failed) = FALSE;
           lives_cp(fname, fname_new);
           if (sget_file_size(fname_new) != (size_t)sfile->frames * sizeof(frames_t)) {
-            retval = do_write_failed_error_s_with_retry(fname, NULL, NULL);
+            retval = do_write_failed_error_s_with_retry(fname, NULL);
 	    // *INDENT-OFF*
           }}}}
     // *INDENT-ON*
@@ -141,7 +141,7 @@ frames_t load_frame_index(int fileno) {
     retval = 0;
     fd = lives_open_buffered_rdonly(fname);
     if (fd < 0) {
-      retval = do_read_failed_error_s_with_retry(fname, lives_strerror(errno), NULL);
+      retval = do_read_failed_error_s_with_retry(fname, lives_strerror(errno));
       if (!backuptried) {
         fd = lives_open_buffered_rdonly(fname_back);
         if (fd >= 0) {
@@ -188,7 +188,7 @@ frames_t load_frame_index(int fileno) {
 
       if (THREADVAR(read_failed) == fd + 1) {
         THREADVAR(read_failed) = 0;
-        retval = do_read_failed_error_s_with_retry(fname, NULL, NULL);
+        retval = do_read_failed_error_s_with_retry(fname, NULL);
       }
 
       if (!backuptried) {
@@ -651,11 +651,11 @@ static boolean save_decoded(int fileno, frames_t i, LiVESPixbuf * pixbuf, boolea
     retval = LIVES_RESPONSE_NONE;
     retb = lives_pixbuf_save(pixbuf, oname, sfile->img_type, 100 - prefs->ocp, sfile->hsize, sfile->vsize, &error);
     if (error != NULL && !silent) {
-      retval = do_write_failed_error_s_with_retry(oname, error->message, NULL);
+      retval = do_write_failed_error_s_with_retry(oname, error->message);
       lives_error_free(error);
       error = NULL;
     } else if (!retb) {
-      retval = do_write_failed_error_s_with_retry(oname, NULL, NULL);
+      retval = do_write_failed_error_s_with_retry(oname, NULL);
     }
   } while (retval == LIVES_RESPONSE_RETRY);
 

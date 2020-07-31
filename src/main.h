@@ -1104,46 +1104,32 @@ boolean all_expose(LiVESWidget *, lives_painter_t *, livespointer psurf);
 
 // dialogs.c
 boolean do_progress_dialog(boolean visible, boolean cancellable, const char *text);
+
 boolean do_warning_dialog(const char *text);
 boolean do_warning_dialogf(const char *fmt, ...);
-
-// combine...
-boolean do_warning_dialog_with_checkx(const char *text, uint64_t warn_mask_number);
+boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number);
 
 boolean do_yesno_dialog(const char *text);
 boolean do_yesno_dialogf(const char *fmt, ...);
-
-// combine..
-boolean do_yesno_dialog_with_checkx(const char *text, uint64_t warn_mask_number);
+boolean do_yesno_dialog_with_check(const char *text, uint64_t warn_mask_number);
 
 LiVESResponseType do_abort_ok_dialog(const char *text);
 LiVESResponseType do_abort_retry_dialog(const char *text);
 LiVESResponseType do_abort_cancel_retry_dialog(const char *text) WARN_UNUSED;
 
-// combine
-LiVESResponseType do_blocking_error_dialog(const char *text);
-LiVESResponseType do_error_dialogx(const char *text);
+LiVESResponseType do_error_dialog(const char *text);
+LiVESResponseType do_error_dialogf(const char *fmt, ...);
+LiVESResponseType do_error_dialog_with_check(const char *text, uint64_t warn_mask_number);
 
-// combine
-LiVESResponseType do_blocking_error_dialogf(const char *fmt, ...);
-LiVESResponseType do_error_dialogfx(const char *fmt, ...);
-
-// combine
-LiVESResponseType do_blocking_info_dialog(const char *text);
-LiVESResponseType do_info_dialogx(const char *text);
-
-// combine
-LiVESResponseType do_blocking_info_dialogf(const char *fmt, ...);
-LiVESResponseType do_info_dialogfx(const char *fmt, ...);
-
-// combine
-LiVESResponseType do_error_dialog_with_checkx(const char *text, uint64_t warn_mask_number);
-
+LiVESResponseType do_info_dialog(const char *text);
+LiVESResponseType do_info_dialogf(const char *fmt, ...);
 LiVESResponseType do_info_dialog_with_expander(const char *text, const char *exp_text, LiVESList *);
 
 LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int warn_mask_number);
 LiVESWidget *create_question_dialog(const char *title, const char *text);
+
 LiVESWindow *get_transient_full();
+
 void do_abortblank_error(const char *what);
 void do_optarg_blank_err(const char *what);
 void do_clip_divergence_error(int fileno);

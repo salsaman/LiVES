@@ -2826,12 +2826,12 @@ boolean check_for_lock_file(const char *set_name, int type) {
       if (mainw->recovering_files) return do_set_locked_warning(set_name);
       threaded_dialog_spin(0.);
       widget_opts.non_modal = TRUE;
-      do_error_dialogfx(_("Set %s\ncannot be opened, as it is in use\nby another copy of LiVES.\n"), set_name);
+      do_error_dialogf(_("Set %s\ncannot be opened, as it is in use\nby another copy of LiVES.\n"), set_name);
       widget_opts.non_modal = FALSE;
       threaded_dialog_spin(0.);
     } else if (type == 1) {
-      if (!mainw->osc_auto) do_blocking_error_dialogf(_("\nThe set %s is currently in use by another copy of LiVES.\n"
-            "Please choose another set name.\n"), set_name);
+      if (!mainw->osc_auto) do_error_dialogf(_("\nThe set %s is currently in use by another copy of LiVES.\n"
+                                               "Please choose another set name.\n"), set_name);
     }
     return FALSE;
   }
@@ -2851,7 +2851,7 @@ boolean do_std_checks(const char *type_name, const char *type, size_t maxlen, co
 
   if (slen == 0) {
     msg = lives_strdup_printf(_("\n%s names may not be blank.\n"), xtype);
-    if (!mainw->osc_auto) do_blocking_error_dialog(msg);
+    if (!mainw->osc_auto) do_error_dialog(msg);
     lives_free(msg);
     lives_free(xtype);
     return FALSE;
@@ -2859,7 +2859,7 @@ boolean do_std_checks(const char *type_name, const char *type, size_t maxlen, co
 
   if (slen > MAX_SET_NAME_LEN) {
     msg = lives_strdup_printf(_("\n%s names may not be longer than %d characters.\n"), xtype, (int)maxlen);
-    if (!mainw->osc_auto) do_blocking_error_dialog(msg);
+    if (!mainw->osc_auto) do_error_dialog(msg);
     lives_free(msg);
     lives_free(xtype);
     return FALSE;
@@ -2867,7 +2867,7 @@ boolean do_std_checks(const char *type_name, const char *type, size_t maxlen, co
 
   if (strcspn(type_name, reject) != slen) {
     msg = lives_strdup_printf(_("\n%s names may not contain spaces or the characters%s.\n"), xtype, reject);
-    if (!mainw->osc_auto) do_blocking_error_dialog(msg);
+    if (!mainw->osc_auto) do_error_dialog(msg);
     lives_free(msg);
     lives_free(xtype);
     return FALSE;
@@ -2876,7 +2876,7 @@ boolean do_std_checks(const char *type_name, const char *type, size_t maxlen, co
   for (i = 0; i < slen; i++) {
     if (type_name[i] == '.' && (i == 0 || type_name[i - 1] == '.')) {
       msg = lives_strdup_printf(_("\n%s names may not start with a '.' or contain '..'\n"), xtype);
-      if (!mainw->osc_auto) do_blocking_error_dialog(msg);
+      if (!mainw->osc_auto) do_error_dialog(msg);
       lives_free(msg);
       lives_free(xtype);
       return FALSE;
@@ -2917,7 +2917,7 @@ boolean is_legal_set_name(const char *set_name, boolean allow_dupes) {
     if (lives_file_test(set_dir, LIVES_FILE_TEST_IS_DIR)) {
       lives_free(set_dir);
       msg = lives_strdup_printf(_("\nThe set %s already exists.\nPlease choose another set name.\n"), set_name);
-      do_blocking_error_dialog(msg);
+      do_error_dialog(msg);
       lives_free(msg);
       return FALSE;
     }

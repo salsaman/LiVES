@@ -556,7 +556,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
             close_current_file(old_file);
             lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
             if (mainw->error) {
-              do_blocking_error_dialog(mainw->msg);
+              do_error_dialog(mainw->msg);
               mainw->error = 0;
               clear_mainw_msg();
             }
@@ -670,10 +670,10 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
           char *fsize_ds = lives_format_storage_space_string((uint64_t)cfile->f_size);
           char *warn = lives_strdup_printf(
                          _("\nLiVES cannot Instant Open this file, it may take some time to load.\n"
-			   "Are you sure you wish to continue ?"),
+                           "Are you sure you wish to continue ?"),
                          fsize_ds);
           lives_free(fsize_ds);
-          if (!do_warning_dialog_with_checkx(warn, WARN_MASK_FSIZE)) {
+          if (!do_warning_dialog_with_check(warn, WARN_MASK_FSIZE)) {
             lives_free(warn);
             close_current_file(old_file);
             if (mainw->multitrack != NULL) {
@@ -818,7 +818,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         // mainw->error is TRUE if we could not open the file
         if (mainw->error) {
           d_print_failed();
-          do_blocking_error_dialog(mainw->msg);
+          do_error_dialog(mainw->msg);
         }
         showclipimgs();
         return 0;
@@ -851,7 +851,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
   // mainw->error is TRUE if we could not open the file
   if (mainw->error) {
-    do_blocking_error_dialog(mainw->msg);
+    do_error_dialog(mainw->msg);
     d_print_failed();
     close_current_file(old_file);
     lives_freep((void **)&mainw->file_open_params);
@@ -918,9 +918,9 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         if (strcmp(prefs->video_open_command, loc) && strncmp(prefs->video_open_command + 1, loc, strlen(loc))) {
           lives_strappend(msg, 256, _("\n\nPlease check the setting of Video Open Command in\nTools|Preferences|Decoding\n"));
         }
-      }      
+      }
       widget_opts.non_modal = TRUE;
-      do_error_dialogx(msg);
+      do_error_dialog(msg);
       widget_opts.non_modal = FALSE;
       d_print_failed();
       close_current_file(old_file);
@@ -1320,7 +1320,7 @@ void save_file(int clip, int start, int end, const char *filename) {
                   (_("\n\nUnable to find the 'init' method in the %s plugin.\nThe plugin may be broken or not installed correctly."),
                    prefs->encoder.name);
           }
-          do_blocking_error_dialog(msg);
+          do_error_dialog(msg);
           lives_free(msg);
         } else break;
       }
@@ -1946,7 +1946,7 @@ void save_file(int clip, int start, int end, const char *filename) {
       if (mainw->multitrack == NULL) {
         switch_to_file(mainw->current_file, current_file);
       }
-      retval = do_blocking_error_dialog(_("\n\nEncoder error - output file was not created !\n"));
+      retval = do_error_dialog(_("\n\nEncoder error - output file was not created !\n"));
 
       if (retval == LIVES_RESPONSE_SHOW_DETAILS) {
         /// show iochan (encoder) details
@@ -3198,7 +3198,7 @@ void play_file(void) {
                        "and resize all frames to the current size.\n"),
                      mainw->files[mainw->size_warn]->name);
       widget_opts.non_modal = TRUE;
-      do_error_dialogx(smsg);
+      do_error_dialog(smsg);
       widget_opts.non_modal = FALSE;
       lives_free(smsg);
     }
@@ -3823,9 +3823,9 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
           mesg = lives_strdup_printf(_("\nAn error occurred doing\n%s\n"), array[2]);
           LIVES_ERROR(array[2]);
         } else mesg = (_("\nAn error occurred opening the file\n"));
-	widget_opts.non_modal = TRUE;
-        do_error_dialogx(mesg);
-	widget_opts.non_modal = FALSE;
+        widget_opts.non_modal = TRUE;
+        do_error_dialog(mesg);
+        widget_opts.non_modal = FALSE;
         lives_free(mesg);
         lives_strfreev(array);
         return FALSE;
@@ -3837,9 +3837,9 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
         LIVES_ERROR("Handle!=statusfile !");
         mesg = lives_strdup_printf(_("\nError getting file info for clip %s.\nBad things may happen with this clip.\n"),
                                    check_handle);
-	widget_opts.non_modal = TRUE;
-        do_error_dialogx(mesg);
-	widget_opts.non_modal = FALSE;
+        widget_opts.non_modal = TRUE;
+        do_error_dialog(mesg);
+        widget_opts.non_modal = FALSE;
         lives_free(mesg);
         lives_strfreev(array);
         return FALSE;
@@ -4126,9 +4126,9 @@ boolean save_frame_inner(int clip, int frame, const char *file_name, int width, 
     do {
       retval = 0;
       if (sfile->img_type == IMG_TYPE_JPEG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_JPEG, 100,
-							      sfile->hsize, sfile->vsize, &gerr);
+            sfile->hsize, sfile->vsize, &gerr);
       else if (sfile->img_type == IMG_TYPE_PNG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_PNG, 100,
-								  sfile->hsize, sfile->vsize, &gerr);
+            sfile->hsize, sfile->vsize, &gerr);
 
       if (gerr != NULL) {
         retval = do_write_failed_error_s_with_retry(full_file_name, gerr->message);
@@ -4250,7 +4250,7 @@ void backup_file(int clip, int start, int end, const char *file_name) {
 
   if (mainw->error) {
     widget_opts.non_modal = TRUE;
-    do_error_dialogx(mainw->msg);
+    do_error_dialog(mainw->msg);
     widget_opts.non_modal = FALSE;
     d_print_failed();
     return;
@@ -4879,7 +4879,7 @@ ulong restore_file(const char *file_name) {
 
   if (mainw->error || !not_cancelled) {
     if (mainw->error && mainw->cancelled != CANCEL_ERROR) {
-      do_blocking_error_dialog(mainw->msg);
+      do_error_dialog(mainw->msg);
     }
     close_current_file(old_file);
     return 0;
@@ -4893,7 +4893,7 @@ ulong restore_file(const char *file_name) {
   if (!is_OK) {
     mesg = lives_strdup_printf(_("\n\nThe file %s is corrupt.\nLiVES was unable to restore it.\n"),
                                file_name);
-    do_blocking_error_dialog(mesg);
+    do_error_dialog(mesg);
     lives_free(mesg);
 
     d_print_failed();

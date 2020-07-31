@@ -456,7 +456,7 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
     if (!script_to_rfxbuilder(rfxbuilder, script_file)) {
       char *msg = lives_strdup_printf(_("\n\nUnable to parse the script file:\n%s\n%s\n"), script_file, mainw->msg);
       // must use blocking error dialogs as the scriptname window is modal
-      do_blocking_error_dialog(msg);
+      do_error_dialog(msg);
       lives_free(msg);
       rfxbuilder_destroy(rfxbuilder);
       lives_free(script_file);
@@ -1786,7 +1786,7 @@ static void on_table_delete_row(LiVESButton * button, livespointer user_data) {
 
       } else if (!(lives_widget_get_state(rfxbuilder->entry[i])&LIVES_WIDGET_STATE_INSENSITIVE)) {
         if (rfxbuilder->copy_params[i].onchange) {
-          do_blocking_error_dialog(_("\n\nCannot remove this parameter as it has a trigger.\nPlease remove the trigger first.\n\n"));
+          do_error_dialog(_("\n\nCannot remove this parameter as it has a trigger.\nPlease remove the trigger first.\n\n"));
           return;
         }
 
@@ -1830,7 +1830,7 @@ static void on_table_delete_row(LiVESButton * button, livespointer user_data) {
       triggers_adjusted = TRUE;
     }
     if (triggers_adjusted) {
-      do_blocking_error_dialog(_("\n\nSome triggers were adjusted.\nPlease check the trigger code.\n"));
+      do_error_dialog(_("\n\nSome triggers were adjusted.\nPlease check the trigger code.\n"));
     }
     break;
 
@@ -2939,31 +2939,31 @@ boolean perform_rfxbuilder_checks(rfx_build_window_t *rfxbuilder) {
   char *name = lives_strdup(lives_entry_get_text(LIVES_ENTRY(rfxbuilder->name_entry)));
 
   if (!strlen(name)) {
-    do_blocking_error_dialog(_("\n\nName must not be blank.\n"));
+    do_error_dialog(_("\n\nName must not be blank.\n"));
     lives_widget_grab_focus(rfxbuilder->name_entry);
     lives_free(name);
     return FALSE;
   }
   if (get_token_count(name, ' ') > 1) {
-    do_blocking_error_dialog(_("\n\nName must not contain spaces.\n"));
+    do_error_dialog(_("\n\nName must not contain spaces.\n"));
     lives_free(name);
     return FALSE;
   }
   if (!strlen(lives_entry_get_text(LIVES_ENTRY(rfxbuilder->menu_text_entry)))) {
-    do_blocking_error_dialog(_("\n\nMenu text must not be blank.\n"));
+    do_error_dialog(_("\n\nMenu text must not be blank.\n"));
     lives_widget_grab_focus(rfxbuilder->menu_text_entry);
     lives_free(name);
     return FALSE;
   }
   if (!strlen(lives_entry_get_text(LIVES_ENTRY(rfxbuilder->action_desc_entry))) &&
       rfxbuilder->type != RFX_BUILD_TYPE_UTILITY) {
-    do_blocking_error_dialog(_("\n\nAction description must not be blank.\n"));
+    do_error_dialog(_("\n\nAction description must not be blank.\n"));
     lives_widget_grab_focus(rfxbuilder->action_desc_entry);
     lives_free(name);
     return FALSE;
   }
   if (!strlen(lives_entry_get_text(LIVES_ENTRY(rfxbuilder->author_entry)))) {
-    do_blocking_error_dialog(_("\n\nAuthor must not be blank.\n"));
+    do_error_dialog(_("\n\nAuthor must not be blank.\n"));
     lives_widget_grab_focus(rfxbuilder->author_entry);
     lives_free(name);
     return FALSE;
@@ -2973,20 +2973,20 @@ boolean perform_rfxbuilder_checks(rfx_build_window_t *rfxbuilder) {
       !strcmp(rfxbuilder->oname, name))) {
     if (find_rfx_plugin_by_name(name, RFX_STATUS_TEST) > -1 || find_rfx_plugin_by_name
         (name, RFX_STATUS_CUSTOM) > -1 || find_rfx_plugin_by_name(name, RFX_STATUS_BUILTIN) > -1) {
-      do_blocking_error_dialog(_("\n\nThere is already a plugin with this name.\nName must be unique.\n"));
+      do_error_dialog(_("\n\nThere is already a plugin with this name.\nName must be unique.\n"));
       lives_free(name);
       return FALSE;
     }
   }
 
   if (!strlen(rfxbuilder->loop_code) && rfxbuilder->type != RFX_BUILD_TYPE_UTILITY) {
-    do_blocking_error_dialog(_("\n\nLoop code should not be blank.\n"));
+    do_error_dialog(_("\n\nLoop code should not be blank.\n"));
     lives_free(name);
     return FALSE;
   }
 
   if (rfxbuilder->num_triggers == 0 && rfxbuilder->type == RFX_BUILD_TYPE_UTILITY) {
-    do_blocking_error_dialog(_("\n\nTrigger code should not be blank for a utility.\n"));
+    do_error_dialog(_("\n\nTrigger code should not be blank for a utility.\n"));
     lives_free(name);
     return FALSE;
   }
@@ -3000,14 +3000,14 @@ boolean perform_param_checks(rfx_build_window_t *rfxbuilder, int index, int rows
   register int i;
 
   if (!strlen(lives_entry_get_text(LIVES_ENTRY(rfxbuilder->param_name_entry)))) {
-    do_blocking_error_dialog(_("\n\nParameter name must not be blank.\n"));
+    do_error_dialog(_("\n\nParameter name must not be blank.\n"));
     lives_widget_grab_focus(rfxbuilder->param_name_entry);
     return FALSE;
   }
   for (i = 0; i < rows; i++) {
     if (i != index && !(strcmp(lives_entry_get_text(LIVES_ENTRY(rfxbuilder->param_name_entry)),
                                rfxbuilder->copy_params[i].name))) {
-      do_blocking_error_dialog(_("\n\nDuplicate parameter name detected. Parameter names must be unique in a plugin.\n\n"));
+      do_error_dialog(_("\n\nDuplicate parameter name detected. Parameter names must be unique in a plugin.\n\n"));
       return FALSE;
     }
   }
@@ -3074,7 +3074,7 @@ boolean rfxbuilder_to_script(rfx_build_window_t *rfxbuilder) {
       widget_opts.transient = LIVES_WINDOW(rfxbuilder->dialog);
       retval = do_write_failed_error_s_with_retry(script_file, lives_strerror(errno));
       widget_opts.transient = NULL;
-      
+
       if (retval == LIVES_RESPONSE_CANCEL) {
         lives_free(script_file);
         d_print_failed();
@@ -3324,9 +3324,9 @@ boolean rfxbuilder_to_script(rfx_build_window_t *rfxbuilder) {
 
       if (THREADVAR(write_failed)) {
         THREADVAR(write_failed) = FALSE;
-	widget_opts.transient = LIVES_WINDOW(rfxbuilder->dialog);
-        retval = do_write_failed_error_s_with_retry(script_file, NULL); 
-	widget_opts.transient = NULL;
+        widget_opts.transient = LIVES_WINDOW(rfxbuilder->dialog);
+        retval = do_write_failed_error_s_with_retry(script_file, NULL);
+        widget_opts.transient = NULL;
         if (retval == LIVES_RESPONSE_CANCEL) d_print_file_error_failed();
       }
     }
@@ -3591,9 +3591,9 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
       } else {
         //invalid trigger
         char *msg = lives_strdup_printf(_("\n\nInvalid trigger (%s)\nfound in script.\n\n"), array[0]);
-	widget_opts.non_modal = TRUE;
-        do_error_dialogx(msg);
-	widget_opts.non_modal = FALSE;
+        widget_opts.non_modal = TRUE;
+        do_error_dialog(msg);
+        widget_opts.non_modal = FALSE;
         lives_free(msg);
       }
       lives_strfreev(array);
@@ -3751,7 +3751,7 @@ boolean check_builder_programs(void) {
     msg = lives_strdup_printf(
             _("\n\nLiVES was unable to find the program %s.\nPlease check this program is in your path and executable.\n"),
             EXEC_RFX_BUILDER);
-    do_blocking_error_dialog(msg);
+    do_error_dialog(msg);
     lives_free(msg);
     return FALSE;
   }
@@ -3760,7 +3760,7 @@ boolean check_builder_programs(void) {
     msg = lives_strdup_printf(
             _("\n\nLiVES was unable to find the program %s.\nPlease check this program is in your path and executable.\n"),
             EXEC_RFX_BUILDER_MULTI);
-    do_blocking_error_dialog(msg);
+    do_error_dialog(msg);
     lives_free(msg);
     return FALSE;
   }
@@ -3821,7 +3821,7 @@ void on_delete_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       d_print_failed();
       msg = lives_strdup_printf(_("\n\nFailed to delete the script\n%s\nError code was %d\n"), rfx_script_file, ret);
       widget_opts.non_modal = TRUE;
-      do_error_dialogx(msg);
+      do_error_dialog(msg);
       widget_opts.non_modal = FALSE;
       lives_free(msg);
     }
@@ -3859,7 +3859,7 @@ void on_promote_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       char *msg = lives_strdup_printf(
                     _("\nCustom script file:\n%s\nalready exists.\nPlease delete it first, or rename the test script.\n"),
                     script_name);
-      do_blocking_error_dialog(msg);
+      do_error_dialog(msg);
       lives_free(msg);
       lives_free(rfx_dir_from);
       lives_free(rfx_script_from);
@@ -3888,7 +3888,7 @@ void on_promote_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     msg = lives_strdup_printf(_("\n\nFailed to move the plugin script from\n%s to\n%s\nReturn code was %d (%s)\n"),
                               rfx_script_from, rfx_script_to, errno, strerror(errno));
     widget_opts.non_modal = TRUE;
-    do_error_dialogx(msg);
+    do_error_dialog(msg);
     widget_opts.non_modal = FALSE;
     lives_free(msg);
   } else lives_rmdir(rfx_dir_from, FALSE);
@@ -3983,9 +3983,9 @@ void on_import_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   if (lives_file_test(rfx_script_to, LIVES_FILE_TEST_EXISTS)) {
     // needs switch...eventually
-    do_blocking_error_dialog((tmpx = lives_strdup_printf
-                                     (_("\nCustom script file:\n%s\nalready exists.\nPlease delete it first, or rename the import script.\n"),
-                                      basename)));
+    do_error_dialog((tmpx = lives_strdup_printf
+                            (_("\nCustom script file:\n%s\nalready exists.\nPlease delete it first, or rename the import script.\n"),
+                             basename)));
     lives_free(tmpx);
     lives_free(rfx_script_to);
     lives_free(filename);
@@ -4135,7 +4135,7 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
         if (find_rfx_plugin_by_name(name, RFX_STATUS_TEST) > -1 ||
             find_rfx_plugin_by_name(name, RFX_STATUS_CUSTOM) > -1 ||
             find_rfx_plugin_by_name(name, RFX_STATUS_BUILTIN) > -1) {
-          do_blocking_error_dialog(_("\n\nThere is already a plugin with this name.\nName must be unique.\n"));
+          do_error_dialog(_("\n\nThere is already a plugin with this name.\nName must be unique.\n"));
           OK = FALSE;
         }
         //copy selected script to test
@@ -4168,7 +4168,7 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
         char *xname = ensure_extension(name, LIVES_FILE_EXT_RFX_SCRIPT);
 
         if (name && lives_list_find((nmlist = get_script_list(status)), xname)) {
-          do_blocking_error_dialog(_("\n\nThere is already a test script with this name.\nScript name must be unique.\n"));
+          do_error_dialog(_("\n\nThere is already a test script with this name.\nScript name must be unique.\n"));
           OK = FALSE;
         } else {
           int ret;
@@ -4182,11 +4182,11 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
 
           if ((ret = rename(rfx_script_from, rfx_script_to))) {
             d_print_failed();
-	    widget_opts.non_modal = TRUE;
-            do_error_dialogfx(_("\n\nFailed to move the plugin script from\n%s to\n%s\n"
-			       "Return code was %d\n"),
-			     rfx_script_from,  rfx_script_to, ret);
-	    widget_opts.non_modal = FALSE;
+            widget_opts.non_modal = TRUE;
+            do_error_dialogf(_("\n\nFailed to move the plugin script from\n%s to\n%s\n"
+                               "Return code was %d\n"),
+                             rfx_script_from,  rfx_script_to, ret);
+            widget_opts.non_modal = FALSE;
           } else {
             d_print_done();
           }

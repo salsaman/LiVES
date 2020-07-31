@@ -784,7 +784,7 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
       lives_list_free_all(&retvals);
       txt = lives_strdup_printf(_("\nYou must select at least %d frames to use this effect.\n\n"),
                                 rfx->min_frames);
-      do_blocking_error_dialog(txt);
+      do_error_dialog(txt);
       lives_free(txt);
       return NULL;
     }
@@ -3371,7 +3371,7 @@ LiVESList *do_onchange(LiVESWidgetObject *object, lives_rfx_t *rfx) {
   } else {
     if (which <= 0 && mainw->error) {
       mainw->error = FALSE;
-      do_blocking_error_dialog(lives_strdup_printf("\n\n%s\n\n", mainw->msg));
+      do_error_dialog(lives_strdup_printf("\n\n%s\n\n", mainw->msg));
     }
   }
   lives_free(com);

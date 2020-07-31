@@ -3813,7 +3813,7 @@ LIVES_GLOBAL_INLINE lives_cancel_t handle_audio_timeout(void) {
     }
 #endif
   } else {
-    do_blocking_error_dialog(msg);
+    do_error_dialog(msg);
     mainw->aplayer_broken = TRUE;
     switch_aud_to_none(FALSE);
     mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;

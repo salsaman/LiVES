@@ -974,16 +974,16 @@ boolean mt_load_recovery_layout(lives_mt *mt) {
     lives_mkdir_with_parents(uldir, capable->umask);
     if (lives_file_test(uldir, LIVES_FILE_TEST_IS_DIR)) {
       if (lives_file_test(eload_file, LIVES_FILE_TEST_EXISTS)) {
-	lives_mv(eload_file, uldir);
+        lives_mv(eload_file, uldir);
       }
       if (lives_file_test(aload_file, LIVES_FILE_TEST_EXISTS)) {
-	lives_mv(aload_file, uldir);
+        lives_mv(aload_file, uldir);
       }
 
       compress_all_in_dir(uldir, 0, NULL);
     }
     lives_free(uldir);
-    
+
     if (mt) mt->fps = prefs->mt_def_fps;
     recovered = FALSE;
   }
@@ -5594,7 +5594,7 @@ static weed_plant_t *load_event_list_inner(lives_mt * mt, int fd, boolean show_e
                   "close the current set,\nthen load in the new set from the File menu.\n"),
                 set_needed);
         d_print(err);
-        do_error_dialogx(err);
+        do_error_dialog(err);
         lives_free(err);
         lives_free(set_needed);
         return NULL;
@@ -5635,9 +5635,9 @@ static weed_plant_t *load_event_list_inner(lives_mt * mt, int fd, boolean show_e
           if (achans > 2) {
             char *err = lives_strdup_printf(
                           _("\nThis layout has an invalid number of audio channels (%d) for LiVES.\n"
-			    "It cannot be loaded.\n"), achans);
+                            "It cannot be loaded.\n"), achans);
             d_print(err);
-            do_error_dialogx(err);
+            do_error_dialog(err);
             lives_free(err);
             return NULL;
           }
@@ -5762,7 +5762,7 @@ static weed_plant_t *load_event_list_inner(lives_mt * mt, int fd, boolean show_e
                "disable this feature in Tools -> Preferences -> Effects, whilst editing and rendering the layout."));
     }
     if (err != NULL) {
-      do_error_dialogx(err);
+      do_error_dialog(err);
       lives_free(err);
     }
   }
@@ -20868,8 +20868,6 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
   double fps = 0.;
   double *aseek_index, *new_aseek_index;
 
-  LiVESWidget *transient;
-
   uint64_t event_id;
 
   uint64_t *init_events;
@@ -21674,8 +21672,6 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
 
   ebuf = add_missing_atrack_closers(event_list, fps, ebuf);
 
-  transient = LIVES_MAIN_WINDOW_WIDGET;
-
   if (missing_clips && missing_frames) {
     bit2 = (_("clips and frames"));
   } else {
@@ -21697,7 +21693,7 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
     }
     msg = lives_strdup_printf(_("%s\nSome %s are missing from the layout%s\nTherefore it could not be loaded properly.\n"),
                               bit1, bit2, bit3);
-    do_error_dialogx(msg);
+    do_error_dialog(msg);
     lives_free(msg);
     lives_free(bit2);
     if (mt != NULL) mt->layout_prompt = TRUE;
@@ -21827,7 +21823,7 @@ weed_plant_t *load_event_list(lives_mt * mt, char *eload_file) {
   if ((fd = lives_open_buffered_rdonly(eload_file)) < 0) {
     if (mt != NULL) {
       msg = lives_strdup_printf(_("\nUnable to load layout file %s\n"), eload_name);
-      do_error_dialog_with_check_transient(msg, TRUE, 0, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+      do_error_dialog(msg);
       lives_free(msg);
       if (needs_idlefunc) mt->idlefunc = mt_idle_add(mt);
     }

@@ -475,7 +475,7 @@ void set_vpp(boolean set_in_prefs) {
         if (set_in_prefs) {
           set_string_pref(PREF_VID_PLAYBACK_PLUGIN, mainw->vpp->name);
           if (!mainw->ext_playback)
-            do_error_dialogx(_("\n\nVideo playback plugins are only activated in\nfull screen, separate window (fs) mode\n"));
+            do_error_dialog(_("\n\nVideo playback plugins are only activated in\nfull screen, separate window (fs) mode\n"));
         }
       }
     }
@@ -565,14 +565,14 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
     if (!(lives_strcmp(audio_player, AUDIO_PLAYER_JACK)) && prefs->audio_player != AUD_PLAYER_JACK) {
       // switch to jack
       if (!capable->has_jackd) {
-        do_blocking_error_dialogf(_("\nUnable to switch audio players to %s\n%s must be installed first.\nSee %s\n"),
-                                  AUDIO_PLAYER_JACK,
-                                  EXEC_JACKD,
-                                  JACK_URL);
+        do_error_dialogf(_("\nUnable to switch audio players to %s\n%s must be installed first.\nSee %s\n"),
+                         AUDIO_PLAYER_JACK,
+                         EXEC_JACKD,
+                         JACK_URL);
         goto fail1;
       } else {
         if (prefs->audio_player == AUD_PLAYER_JACK && lives_strcmp(audio_player, AUDIO_PLAYER_JACK)) {
-          do_blocking_error_dialogf(_("\nSwitching audio players requires restart (%s must not be running)\n"), EXEC_JACKD);
+          do_error_dialogf(_("\nSwitching audio players requires restart (%s must not be running)\n"), EXEC_JACKD);
           // revert text
           if (prefsw) {
             lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
@@ -608,10 +608,10 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
         prefs->audio_player != AUD_PLAYER_PULSE) {
       // switch to pulseaudio
       if (!capable->has_pulse_audio) {
-        do_blocking_error_dialogf(_("\nUnable to switch audio players to %s\n%s must be installed first.\nSee %s\n"),
-                                  AUDIO_PLAYER_PULSE_AUDIO,
-                                  AUDIO_PLAYER_PULSE_AUDIO,
-                                  PULSE_AUDIO_URL);
+        do_error_dialogf(_("\nUnable to switch audio players to %s\n%s must be installed first.\nSee %s\n"),
+                         AUDIO_PLAYER_PULSE_AUDIO,
+                         AUDIO_PLAYER_PULSE_AUDIO,
+                         PULSE_AUDIO_URL);
         // revert text
         if (prefsw) {
           lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
@@ -5700,18 +5700,18 @@ void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
   }
 
   if (needs_restart) {
-    //do_blocking_info_dialog(_("For the directory change to take effect LiVES will restart when preferences dialog closes."));
-    do_blocking_info_dialog(_("LiVES will restart when preferences dialog closes."));
+    //do_info_dialog(_("For the directory change to take effect LiVES will restart when preferences dialog closes."));
+    do_info_dialog(_("LiVES will restart when preferences dialog closes."));
   }
 
   if (mainw->prefs_changed & PREFS_THEME_CHANGED) {
     lives_widget_set_sensitive(mainw->export_theme, FALSE);
-    do_blocking_info_dialog(_("Disabling the theme will not take effect until the next time you start LiVES."));
+    do_info_dialog(_("Disabling the theme will not take effect until the next time you start LiVES."));
   } else
     lives_widget_set_sensitive(mainw->export_theme, TRUE);
 
   if (mainw->prefs_changed & PREFS_JACK_CHANGED) {
-    do_blocking_info_dialog(_("Jack options will not take effect until the next time you start LiVES."));
+    do_info_dialog(_("Jack options will not take effect until the next time you start LiVES."));
   }
 
   if (!(mainw->prefs_changed & PREFS_THEME_CHANGED) &&

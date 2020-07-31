@@ -336,9 +336,9 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
                   _("\nThe %s video playback plugin has been updated.\nPlease check your settings in\n"
                     "Tools|Preferences|Playback|Playback Plugins Advanced\n\n"),
                   vpp->name);
-	  widget_opts.non_modal = TRUE;
-          do_error_dialogx(msg);
-	  widget_opts.non_modal = FALSE;
+          widget_opts.non_modal = TRUE;
+          do_error_dialog(msg);
+          widget_opts.non_modal = FALSE;
           lives_free(msg);
           lives_rm(vpp_file);
           d_print_failed();
@@ -1110,7 +1110,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
                                       "it can be re-anabled in Prefrences / Playback.\n"), plugname, dlerror());
     if (prefs->startup_phase != 1 && prefs->startup_phase != -1) {
       if (!prefsw) widget_opts.non_modal = TRUE;
-      do_blocking_error_dialog(msg);
+      do_error_dialog(msg);
       widget_opts.non_modal = FALSE;
     }
     LIVES_ERROR(msg);
@@ -1162,7 +1162,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
     char *msg = lives_strdup_printf
                 (_("\n\nPlayback module %s\nis missing a mandatory function.\nUnable to use it.\n"), plugname);
     set_string_pref(PREF_VID_PLAYBACK_PLUGIN, "none");
-    do_blocking_error_dialog(msg);
+    do_error_dialog(msg);
     lives_free(msg);
     dlclose(handle);
     lives_free(vpp);
@@ -1174,7 +1174,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   if ((pl_error = (*vpp->module_check_init)()) != NULL) {
     msg = lives_strdup_printf(_("Video playback plugin failed to initialise.\nError was: %s\n"), pl_error);
     if (prefs->startup_phase != 1 && prefs->startup_phase != -1) {
-      do_blocking_error_dialog(msg);
+      do_error_dialog(msg);
     } else {
       LIVES_ERROR(msg);
     }
@@ -1466,7 +1466,7 @@ int64_t get_best_audio(_vid_playback_plugin * vpp) {
 
         if (strlen(buf) > 0) {
           if (i == 0 && prefsw != NULL) {
-            do_blocking_error_dialog(buf);
+            do_error_dialog(buf);
             d_print(_("Audio stream unable to use preferred format '%s'\n"), anames[fmts[i]]);
           }
           continue;
@@ -1510,10 +1510,10 @@ void do_plugin_encoder_error(const char *plugin_name) {
             _("LiVES was unable to find its encoder plugins. Please make sure you have the plugins installed in\n"
               "%s%s%s\nor change the value of <lib_dir> in %s\n"),
             prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS,
-	    (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+            (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
     lives_free(tmp);
     widget_opts.non_modal = TRUE;
-    do_error_dialogx(msg);
+    do_error_dialog(msg);
     lives_free(msg);
     return;
   }
@@ -1523,7 +1523,7 @@ void do_plugin_encoder_error(const char *plugin_name) {
             "Please make sure you have that plugin installed correctly in\n%s%s%s\n"
             "or switch to another plugin using Tools|Preferences|Encoding\n"),
           plugin_name, prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS);
-  do_blocking_error_dialog(msg);
+  do_error_dialog(msg);
   lives_free(msg);
 }
 

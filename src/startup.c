@@ -14,7 +14,7 @@ static boolean allpassed;
 
 LiVESWidget *assist;
 
-static LiVESResponseType prompt_existing_dir(const char *dirname, uint64_t freespace, boolean wrtable, LiVESWindow *transient) {
+static LiVESResponseType prompt_existing_dir(const char *dirname, uint64_t freespace, boolean wrtable) {
   // can return LIVES_RESPONSE_OK, LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY
   char *msg;
   if (wrtable) {
@@ -38,7 +38,7 @@ static LiVESResponseType prompt_existing_dir(const char *dirname, uint64_t frees
                                 "or read its free space.\nClick Abort to exit from LiVES, or Retry to select another "
                                 "location.\n"), dirname);
 
-    do_abort_retry_dialog(msg, transient);
+    do_abort_retry_dialog(msg);
     lives_free(msg);
     return LIVES_RESPONSE_RETRY;
   }
@@ -53,7 +53,8 @@ static boolean prompt_new_dir(char *dirname, uint64_t freespace, boolean wrtable
     res = do_warning_dialogf(_("\nCreate the directory\n%s\n?\n\n(Free space = %s)"), dirname, fspstr);
     lives_free(fspstr);
   } else {
-    res = do_error_dialogf(_("\nLiVES could not write to the directory\n%s\nPlease try again and choose a different location.\n"),
+    res = do_error_dialogf(_("\nLiVES could not write to the directory\n%s\n"
+                             "Please try again and choose a different location.\n"),
                            dirname);
   }
   return res;
@@ -64,7 +65,7 @@ void dir_toolong_error(char *dirname, const char *dirtype, size_t max, boolean r
   char *msg = lives_strdup_printf(_("The name of the %s provided\n(%s)\nis too long (maximum is %d characters)\n"
                                     "Please click Retry to select an alternative directory, or Abort to exit immediately"
                                     "from LiVES"), dirtype, dirname, max);
-  if (retry) do_abort_retry_dialog(msg, NULL);
+  if (retry) do_abort_retry_dialog(msg);
   else startup_message_fatal(msg);
   lives_free(msg);
 }
@@ -75,7 +76,7 @@ void do_bad_dir_perms_error(const char *dirname) {
                                     "Click Abort to exit immediately from LiVES, or Retry to select a different directory.\n"),
                                   *dirname);
 
-  do_abort_retry_dialog(msg, NULL);
+  do_abort_retry_dialog(msg);
   lives_free(msg);
 }
 
@@ -102,7 +103,7 @@ LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog *dialog, bool
   if (pdirname == NULL || *pdirname == NULL) return LIVES_RESPONSE_RETRY;
 
   if (strlen(*pdirname) > (PATH_MAX - MAX_SET_NAME_LEN * 2)) {
-    do_blocking_error_dialog(_("Directory name is too long !"));
+    do_error_dialog(_("Directory name is too long !"));
     return LIVES_RESPONSE_RETRY;
   }
 
@@ -113,7 +114,7 @@ LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog *dialog, bool
   *pdirname = lives_strdup(cdir);
 
   if (strlen(*pdirname) > (PATH_MAX - MAX_SET_NAME_LEN * 2)) {
-    do_blocking_error_dialog(_("Directory name is too long !"));
+    do_error_dialog(_("Directory name is too long !"));
     return LIVES_RESPONSE_RETRY;
   }
 
@@ -128,7 +129,7 @@ LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog *dialog, bool
     }
 
     if (strlen(*pdirname) > (PATH_MAX - MAX_SET_NAME_LEN * 2)) {
-      do_blocking_error_dialog(_("Directory name is too long !"));
+      do_error_dialog(_("Directory name is too long !"));
       return LIVES_RESPONSE_RETRY;
     }
   }
@@ -142,29 +143,29 @@ LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog *dialog, bool
     if (lives_file_test(*pdirname, LIVES_FILE_TEST_IS_DIR)) {
       if (is_writeable_dir(*pdirname)) {
         freesp = get_ds_free(*pdirname);
-        if (!prompt_existing_dir(*pdirname, freesp, TRUE, LIVES_WINDOW(dialog))) {
+        widget_opts.transient = LIVES_WINDOW(dialog);
+        if (!prompt_existing_dir(*pdirname, freesp, TRUE))
           return LIVES_RESPONSE_RETRY;
-        }
-      } else {
-        if (!prompt_existing_dir(*pdirname, 0, FALSE, LIVES_WINDOW(dialog))) {
-          return LIVES_RESPONSE_RETRY;
-        }
       }
     } else {
-      if (is_writeable_dir(*pdirname)) {
-        freesp = get_ds_free(*pdirname);
-        if (!prompt_new_dir(*pdirname, freesp, TRUE)) {
-          lives_rmdir(*pdirname, FALSE);
-          return LIVES_RESPONSE_RETRY;
-        }
-      } else {
-        if (!prompt_new_dir(*pdirname, 0, FALSE)) {
-          lives_rmdir(*pdirname, FALSE);
-          return LIVES_RESPONSE_RETRY;
-        }
+      if (!prompt_existing_dir(*pdirname, 0, FALSE)) {
+        return LIVES_RESPONSE_RETRY;
       }
     }
-  }
+  } else {
+    if (is_writeable_dir(*pdirname)) {
+      freesp = get_ds_free(*pdirname);
+      if (!prompt_new_dir(*pdirname, freesp, TRUE)) {
+        lives_rmdir(*pdirname, FALSE);
+        return LIVES_RESPONSE_RETRY;
+      }
+    } else {
+      if (!prompt_new_dir(*pdirname, 0, FALSE)) {
+        lives_rmdir(*pdirname, FALSE);
+        return LIVES_RESPONSE_RETRY;
+	  // *INDENT-OFF*
+        }}}
+  // *INDENT-ON*
 
   if (!lives_make_writeable_dir(*pdirname)) {
     do_bad_dir_perms_error(*pdirname);
@@ -214,7 +215,7 @@ boolean do_workdir_query(void) {
 }
 
 
-static void on_init_aplayer_toggled(LiVESToggleButton *tbutton, livespointer user_data) {
+static void on_init_aplayer_toggled(LiVESToggleButton * tbutton, livespointer user_data) {
   int audp = LIVES_POINTER_TO_INT(user_data);
 
   if (!lives_toggle_button_get_active(tbutton)) return;
@@ -407,7 +408,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 }
 
 
-static void add_test(LiVESWidget *table, int row, char *ttext, boolean noskip) {
+static void add_test(LiVESWidget * table, int row, char *ttext, boolean noskip) {
   LiVESWidget *label = lives_standard_label_new(ttext);
 
   lives_table_attach(LIVES_TABLE(table), label, 0, 1, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 10, 10);
@@ -429,7 +430,7 @@ static void add_test(LiVESWidget *table, int row, char *ttext, boolean noskip) {
 }
 
 
-static boolean pass_test(LiVESWidget *table, int row) {
+static boolean pass_test(LiVESWidget * table, int row) {
   // TRANSLATORS - as in "passed test"
   LiVESWidget *label = lives_standard_label_new(_("Passed"));
 
@@ -450,7 +451,7 @@ static boolean pass_test(LiVESWidget *table, int row) {
 }
 
 
-static boolean _fail_test(LiVESWidget *table, int row, char *ftext, const char *type) {
+static boolean _fail_test(LiVESWidget * table, int row, char *ftext, const char *type) {
   LiVESWidget *label;
 #if GTK_CHECK_VERSION(3, 10, 0)
   LiVESWidget *image = lives_image_new_from_stock(LIVES_STOCK_REMOVE, LIVES_ICON_SIZE_LARGE_TOOLBAR);
@@ -476,12 +477,12 @@ static boolean _fail_test(LiVESWidget *table, int row, char *ftext, const char *
   return FALSE;
 }
 
-LIVES_LOCAL_INLINE boolean fail_test(LiVESWidget *table, int row, char *ftext) {
+LIVES_LOCAL_INLINE boolean fail_test(LiVESWidget * table, int row, char *ftext) {
   allpassed = FALSE;
   return _fail_test(table, row, ftext, _("Failed"));
 }
 
-LIVES_LOCAL_INLINE boolean skip_test(LiVESWidget *table, int row, char *ftext) {
+LIVES_LOCAL_INLINE boolean skip_test(LiVESWidget * table, int row, char *ftext) {
   return _fail_test(table, row, ftext, _("Skipped"));
 }
 
@@ -1046,7 +1047,7 @@ void do_startup_interface_query(void) {
 }
 
 
-void on_troubleshoot_activate(LiVESMenuItem *menuitem, livespointer user_data) {do_startup_tests(TRUE);}
+void on_troubleshoot_activate(LiVESMenuItem * menuitem, livespointer user_data) {do_startup_tests(TRUE);}
 
 
 static char *explain_missing(const char *exe) {
@@ -1081,7 +1082,7 @@ static char *explain_missing(const char *exe) {
     text = lives_concat(text, explain_missing(exec)) ;\
 }
 
-void explain_missing_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void explain_missing_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   char *title = (_("What is missing ?")), *text = lives_strdup("");
 
   if (capable->has_file == UNCHECKED) capable->has_file = has_executable(EXEC_FILE);

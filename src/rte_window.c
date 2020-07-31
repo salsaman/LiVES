@@ -1948,8 +1948,8 @@ static boolean on_rtew_ok_clicked(LiVESButton * button, livespointer user_data) 
 
 LIVES_LOCAL_INLINE void do_mix_error(void) {
   widget_opts.non_modal = TRUE;
-  do_error_dialogx(_("\n\nThis version of LiVES does not allowing mixing of "
-		    "generators and non-generators on the same key.\n\n"));
+  do_error_dialog(_("\n\nThis version of LiVES does not allowing mixing of "
+                    "generators and non-generators on the same key.\n\n"));
   widget_opts.non_modal = FALSE;
   return;
 }

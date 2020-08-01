@@ -1013,7 +1013,7 @@ static boolean governor_loop(livespointer data) {
     lpt_result = fg_run_func(lpttorun, (void *)lpt_retval);
     lpttorun = NULL;
   }
-  
+
   if (dlgtorun) {
     dlgresp = gtk_dialog_run(LIVES_DIALOG(dlgtorun));
     dlgtorun = NULL;
@@ -1637,15 +1637,14 @@ void *lives_fg_run(lives_proc_thread_t lpt, void *retval) {
   if (!ctx || ctx == lives_widget_context_default()) {
     // run direct
     ret = fg_run_func(lpt, retval);
-  }
-  else {
+  } else {
     if (gov_running) {
       lpttorun = lpt;
       lpt_retval = (volatile void *)retval;
       mainw->clutch = FALSE;
       while (!mainw->clutch) {
-	lives_nanosleep(NSLEEP_TIME);
-	sched_yield();
+        lives_nanosleep(NSLEEP_TIME);
+        sched_yield();
       }
       ret = (void *)lpt_result;
     }
@@ -8092,14 +8091,14 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_hpaned_new(void) {
   if (widget_opts.apply_theme) {
 #if GTK_CHECK_VERSION(3, 16, 0)
     if (prefs->extra_colours && mainw->pretty_colours) {
-    char *colref = gdk_rgba_to_string(&palette->nice1);
-    // clear background image
-    char *tmp = lives_strdup_printf("image(%s)", colref);
-    set_css_value_direct(vpaned, LIVES_WIDGET_STATE_NORMAL, "separator",
+      char *colref = gdk_rgba_to_string(&palette->nice1);
+      // clear background image
+      char *tmp = lives_strdup_printf("image(%s)", colref);
+      set_css_value_direct(vpaned, LIVES_WIDGET_STATE_NORMAL, "separator",
                            "background-image", tmp);
-    lives_free(tmp);
-    lives_free(colref);
-  }
+      lives_free(tmp);
+      lives_free(colref);
+    }
 #endif
   }
 #endif
@@ -8116,14 +8115,14 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_vpaned_new(void) {
   if (widget_opts.apply_theme) {
 #if GTK_CHECK_VERSION(3, 16, 0)
     if (prefs->extra_colours && mainw->pretty_colours) {
-    char *colref = gdk_rgba_to_string(&palette->nice1);
-    // clear background image
-    char *tmp = lives_strdup_printf("image(%s)", colref);
-    set_css_value_direct(vpaned, LIVES_WIDGET_STATE_NORMAL, "separator",
+      char *colref = gdk_rgba_to_string(&palette->nice1);
+      // clear background image
+      char *tmp = lives_strdup_printf("image(%s)", colref);
+      set_css_value_direct(vpaned, LIVES_WIDGET_STATE_NORMAL, "separator",
                            "background-image", tmp);
-    lives_free(tmp);
-    lives_free(colref);
-  }
+      lives_free(tmp);
+      lives_free(colref);
+    }
 #endif
   }
 #endif

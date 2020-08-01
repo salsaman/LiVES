@@ -353,7 +353,7 @@ boolean transcode(int start, int end) {
       weed_layer_copy(copy_frame_layer, frame_layer);
       weed_layer_nullify_pixel_data(frame_layer);
       coder = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)send_layer,
-				       WEED_SEED_BOOLEAN, "PVI", copy_frame_layer, vpp, currticks);
+                                       WEED_SEED_BOOLEAN, "PVI", copy_frame_layer, vpp, currticks);
     }
 
     //error = send_layer(frame_layer, vpp, currticks);

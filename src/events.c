@@ -5427,12 +5427,12 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
                 lives_freep((void **)&iname);
                 strval = lives_strdup_printf("%d		(%s)", intval[j],
                                              (tmp = get_track_name(mainw->multitrack,
-								   intval[j],
-								   is_pure_audio(get_weed_filter(ie_idx), FALSE))));
+                                                    intval[j],
+                                                    is_pure_audio(get_weed_filter(ie_idx), FALSE))));
                 lives_free(tmp);
               } else {
                 strval = lives_strdup_printf("%d		(%s)", intval[j],
-					     intval[j] == 0 ? _("		(foreground clip)")
+                                             intval[j] == 0 ? _("		(foreground clip)")
                                              : _("		(background_clip)"));
               }
             } else {

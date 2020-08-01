@@ -2897,13 +2897,13 @@ _entryw *create_rename_dialog(int type) {
 
     label = lives_standard_label_new
             (_("First of all you need to choose a working directory for LiVES.\n"
-	       "This should be a directory with plenty of disk space available."));
+               "This should be a directory with plenty of disk space available."));
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
   }
 
   if (type == 6 && mainw->is_ready) {
     label = lives_standard_label_new(_("I the value of the working directory is changed, the contents of the exisitng\n"
-	 "directory will be moved and added to the new location\n"));
+                                       "directory will be moved and added to the new location\n"));
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
   }
 
@@ -3883,7 +3883,7 @@ static void chooser_check_dir(LiVESFileChooser * chooser, livespointer user_data
 
 
 static char *_choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act,
-			  const char *title, LiVESWidget *extra_widget) {
+                          const char *title, LiVESWidget * extra_widget) {
   // new style file chooser
 
   // in/out values are in utf8 encoding
@@ -3894,7 +3894,7 @@ static char *_choose_file(const char *dir, const char *fname, char **const filt,
 
   int response;
   register int i;
-    
+
   if (!title) {
     if (act == LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE) {
       mytitle = lives_strdup_printf(_("%sChoose a Device"), widget_opts.title_prefix);
@@ -3914,8 +3914,7 @@ static char *_choose_file(const char *dir, const char *fname, char **const filt,
                                             LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
                                             LIVES_STOCK_LABEL_OPEN, LIVES_RESPONSE_ACCEPT,
                                             NULL);
-    }
-    else
+    } else
       chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
                                             LIVES_STOCK_LABEL_OPEN, LIVES_RESPONSE_ACCEPT,
                                             NULL);
@@ -3932,7 +3931,7 @@ static char *_choose_file(const char *dir, const char *fname, char **const filt,
     lives_window_maximize(LIVES_WINDOW(chooser));
   }
 
-     gtk_file_chooser_set_local_only(LIVES_FILE_CHOOSER(chooser), TRUE);
+  gtk_file_chooser_set_local_only(LIVES_FILE_CHOOSER(chooser), TRUE);
 
   if (filt) {
     GtkFileFilter *filter = gtk_file_filter_new();
@@ -4029,9 +4028,9 @@ rundlg:
 }
 
 char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act,
-			 const char *title, LiVESWidget *extra_widget) {
-    return main_thread_execute((lives_funcptr_t)_choose_file, WEED_SEED_STRING,
-			       NULL, "ssvisv", dir, fname, filt, act, title, extra_widget);
+                  const char *title, LiVESWidget * extra_widget) {
+  return main_thread_execute((lives_funcptr_t)_choose_file, WEED_SEED_STRING,
+                             NULL, "ssvisv", dir, fname, filt, act, title, extra_widget);
 }
 
 
@@ -4140,11 +4139,11 @@ static LiVESWidget *_choose_file_with_preview(const char *dir, const char *title
 }
 
 LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char **const filt, int filesel_type) {
-    return main_thread_execute((lives_funcptr_t)_choose_file_with_preview, WEED_SEED_STRING,
-			       NULL, "ssvi", dir, title, filt, filesel_type);
+  return main_thread_execute((lives_funcptr_t)_choose_file_with_preview, WEED_SEED_STRING,
+                             NULL, "ssvi", dir, title, filt, filesel_type);
 }
 
-  
+
 LIVES_GLOBAL_INLINE LiVESWidget *make_autoreload_check(LiVESHBox * hbox, boolean is_active) {
   return lives_standard_check_button_new(_("_Autoreload next time"), is_active, LIVES_BOX(hbox), NULL);
 }
@@ -5517,7 +5516,7 @@ void run_diskspace_dialog_cb(LiVESWidget * w, livespointer data) {
   run_diskspace_dialog();
 }
 
-static void manclips_ok(LiVESWidget *button, LiVESWidget *dialog) {
+static void manclips_ok(LiVESWidget * button, LiVESWidget * dialog) {
   lives_widget_hide(dialog);
   if (mainw->cliplist) {
     on_save_set_activate(NULL, mainw->set_name);
@@ -5525,7 +5524,7 @@ static void manclips_ok(LiVESWidget *button, LiVESWidget *dialog) {
   lives_widget_show(dialog);
 }
 
-static void manclips_cb(LiVESWidget *w, livespointer data) {
+static void manclips_cb(LiVESWidget * w, livespointer data) {
   LiVESWidget *dialog = (LiVESWidget *)data;
   LiVESWidget *button;
   char *text, *extra;

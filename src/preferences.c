@@ -4209,9 +4209,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   widget_opts.packing_width = 0;
   prefsw->workdir_entry =
     lives_standard_entry_new(NULL, *future_prefs->workdir
-			     ? future_prefs->workdir : prefs->workdir,
-			     -1, PATH_MAX, LIVES_BOX(hbox),
-			     (tmp2 =_("The default directory for saving encoded clips to")));
+                             ? future_prefs->workdir : prefs->workdir,
+                             -1, PATH_MAX, LIVES_BOX(hbox),
+                             (tmp2 = _("The default directory for saving encoded clips to")));
   lives_free(tmp2);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   widget_opts.packing_width = wopw;
@@ -4276,7 +4276,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   /* 								 -1, NULL, NULL, NULL)); */
 
   dirbutton = lives_standard_file_button_new(TRUE, *future_prefs->workdir
-					     ? future_prefs->workdir : prefs->workdir);
+              ? future_prefs->workdir : prefs->workdir);
 
   lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), dirbutton, 2, 3, 3, 4,
                      (LiVESAttachOptions)(0),
@@ -4544,7 +4544,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   ins_resample = lives_standard_radio_button_new(_("_Resample Insertion"), &rb_group2, LIVES_BOX(hbox), NULL);
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(ins_resample), prefs->ins_resample);
-  
+
   prefsw->cdda_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_misc), prefsw->cdda_hbox, FALSE, FALSE, widget_opts.packing_height);
 

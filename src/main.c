@@ -3114,7 +3114,7 @@ static boolean lazy_startup_checks(void *data) {
   static boolean checked_trash = FALSE;
   static boolean mwshown = FALSE;
   static boolean dqshown = FALSE;
-  
+
   if (prefs->vj_mode) {
     resize(1.);
     if (prefs->open_maximised) {
@@ -3780,7 +3780,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   _weed_leaf_set_flags = weed_leaf_set_flags;
 
   init_random();
-  
+
 #ifdef ENABLE_DIAGNOSTICS
   run_weed_startup_tests();
   check_random();

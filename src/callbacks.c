@@ -5296,7 +5296,7 @@ static LiVESResponseType rewrite_orderfile(boolean is_append, boolean add, boole
 }
 
 
-boolean on_save_set_activate(LiVESWidget *widget, livespointer user_data) {
+boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
   // here is where we save clipsets
   // SAVE CLIPSET FUNCTION
   // also handles migration and merging of sets
@@ -5528,7 +5528,7 @@ boolean on_save_set_activate(LiVESWidget *widget, livespointer user_data) {
 }
 
 
-char *on_load_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+char *on_load_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // get set name (use a modified rename window)
   char *set_name = NULL;
   LiVESResponseType resp;

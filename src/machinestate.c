@@ -1675,7 +1675,7 @@ void *fg_run_func(lives_proc_thread_t lpt, void *retval) {
   funcsig_t sig = make_funcsig(lpt);
 
   call_funcsig(sig, lpt);
-  
+
   switch (ret_type) {
   case WEED_SEED_INT:
     {

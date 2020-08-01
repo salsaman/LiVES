@@ -311,7 +311,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
         /* } */
         /* g_print("pt b %d %d %d\n", tjump, dirn, jumpval); */
 
-	/// TODO ****
+        /// TODO ****
         if (whint == 0 || whint + 4 > slen) {
           xx = lives_strndup(newtext, slen + tjump);
         } else {

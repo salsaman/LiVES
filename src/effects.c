@@ -213,8 +213,8 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     cfile->fx_frame_pump = cfile->start;
     if (!cfile->pumper) {
       cfile->pumper = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)virtual_to_images,
-					       -1, "iiibV", mainw->current_file,
-					       cfile->undo_start, cfile->undo_end, FALSE, NULL);
+                      -1, "iiibV", mainw->current_file,
+                      cfile->undo_start, cfile->undo_end, FALSE, NULL);
     }
   } else cfile->fx_frame_pump = 0;
 

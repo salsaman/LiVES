@@ -385,20 +385,22 @@ typedef struct {
 #define WEED_LEAF_THREAD_PARAM1 _WEED_LEAF_THREAD_PARAM("1")
 #define WEED_LEAF_THREAD_PARAM2 _WEED_LEAF_THREAD_PARAM("2")
 
-#define LIVES_THRDFLAG_AUTODELETE (1 << 0)
-#define LIVES_THRDFLAG_TUNING (1 << 1)
-#define LIVES_THRDFLAG_WAIT_SYNC (1 << 2)
+#define LIVES_THRDFLAG_AUTODELETE	(1 << 0)
+#define LIVES_THRDFLAG_TUNING		(1 << 1)
+#define LIVES_THRDFLAG_WAIT_SYNC	(1 << 2)
 
 typedef LiVESList lives_thread_t;
 typedef uint64_t lives_thread_attr_t;
 
-#define LIVES_THRDATTR_AUTODELETE (1 << 0)
-#define LIVES_THRDATTR_PRIORITY (1 << 1)
-#define LIVES_THRDATTR_WAIT_SYNC (1 << 2)
+#define LIVES_THRDATTR_NONE		0
+#define LIVES_THRDATTR_AUTODELETE	(1 << 0)
+#define LIVES_THRDATTR_PRIORITY		(1 << 1)
+#define LIVES_THRDATTR_WAIT_SYNC	(1 << 2)
+#define LIVES_THRDATTR_FG_THREAD	(1 << 3)
 
 void lives_threadpool_init(void);
 void lives_threadpool_finish(void);
-int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives_funcptr_t func, void *arg);
+int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr, lives_funcptr_t func, void *arg);
 uint64_t lives_thread_join(lives_thread_t work, void **retval);
 
 // lives_proc_thread_t //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -469,7 +471,7 @@ typedef union {
   funcptr_plantptr_t funcplantptr;
 } allfunc_t;
 
-lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t *, lives_funcptr_t, int return_type, const char *args_fmt,
+lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t, lives_funcptr_t, int return_type, const char *args_fmt,
     ...);
 boolean lives_proc_thread_check(lives_proc_thread_t);
 
@@ -499,7 +501,10 @@ void *lives_proc_thread_join_voidptr(lives_proc_thread_t);
 weed_plantptr_t lives_proc_thread_join_plantptr(lives_proc_thread_t) ;
 int64_t lives_proc_thread_join_int64(lives_proc_thread_t);
 
-void resubmit_proc_thread(lives_proc_thread_t, lives_thread_attr_t *);
+void resubmit_proc_thread(lives_proc_thread_t, lives_thread_attr_t);
+
+void *fg_run_func(lives_proc_thread_t lpt, void *retval);
+void *main_thread_execute(lives_funcptr_t func, int return_type, void *retval, const char *args_fmt, ...);
 
 lives_proc_thread_t dir_to_file_details(LiVESList **listp, const char *dir, const char *tsubdir,
                                         const char *orig_loc, uint64_t extra);

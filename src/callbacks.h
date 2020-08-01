@@ -398,7 +398,7 @@ char *get_palette_name_for_clip(int clipno);
 
 boolean show_sync_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer clip_number);
 
-boolean on_save_set_activate(LiVESMenuItem *, livespointer);
+boolean on_save_set_activate(LiVESWidget *, livespointer);
 
 void on_save_set_ok(void);
 

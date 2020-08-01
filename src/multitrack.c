@@ -6713,7 +6713,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->menu_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(mt->top_vbox), mt->menu_hbox, FALSE, FALSE, 0);
 
-  mt->top_vpaned = lives_vpaned_new();
+  mt->top_vpaned = lives_standard_vpaned_new();
   lives_box_pack_start(LIVES_BOX(mt->top_vbox), mt->top_vpaned, TRUE, TRUE, 0);
   lives_paned_set_position(LIVES_PANED(mt->top_vpaned), GUI_SCREEN_HEIGHT * 2 / 3);
   lives_widget_set_vexpand(mt->top_vpaned, TRUE);
@@ -8891,7 +8891,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   clear_context(mt);
 
-  ////
+  add_hsep_to_box(LIVES_BOX(mt->xtravbox));
 
   mt->hseparator = lives_hseparator_new();
 
@@ -10320,7 +10320,7 @@ LiVESWidget *add_audio_track(lives_mt * mt, int track, boolean behind) {
   dummy = lives_event_box_new();
   lives_widget_object_ref(dummy);
 
-  widget_opts.justify = LIVES_JUSTIFY_LEFT;
+  widget_opts.justify = LIVES_JUSTIFY_START;
   if (track == -1) {
     label = lives_label_new(_(" Backing audio"));
   } else {
@@ -10355,7 +10355,7 @@ LiVESWidget *add_audio_track(lives_mt * mt, int track, boolean behind) {
     lives_widget_object_set_data_widget_object(LIVES_WIDGET_OBJECT(audio_draw), pname, eventbox);
     lives_free(pname);
 
-    widget_opts.justify = LIVES_JUSTIFY_RIGHT;
+    widget_opts.justify = LIVES_JUSTIFY_END;
     tname = get_achannel_name(cfile->achans, i);
     label = lives_label_new(tname);
     lives_free(tname);
@@ -10614,7 +10614,7 @@ static int add_video_track(lives_mt * mt, boolean behind) {
     mt->current_track = mt->num_video_tracks - 1;
   }
 
-  widget_opts.justify = LIVES_JUSTIFY_LEFT;
+  widget_opts.justify = LIVES_JUSTIFY_START;
   label = lives_label_new((tmp = lives_strdup_printf(_("%s (layer %d)"),
                                  lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "track_name"),
                                  LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),

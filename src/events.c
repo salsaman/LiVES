@@ -4027,7 +4027,7 @@ lives_render_error_t render_events(boolean reset) {
 
       saveargs->pixbuf = pixbuf;
 
-      lives_thread_create(saver_thread, NULL, lives_pixbuf_save_threaded, saveargs);
+      lives_thread_create(saver_thread, LIVES_THRDATTR_NONE, lives_pixbuf_save_threaded, saveargs);
 #endif
 
       // sig_progress...
@@ -4899,7 +4899,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
   // crash recovery -> backup the event list
   if (prefs->crash_recovery) {
     /// pretty simple now to run any function in a thread !
-    info = lives_proc_thread_create(NULL, (lives_funcptr_t)backup_recording, -1, "vv",
+    info = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)backup_recording, -1, "vv",
                                     &esave_file, &asave_file);
   }
 
@@ -5426,10 +5426,13 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
                 }
                 lives_freep((void **)&iname);
                 strval = lives_strdup_printf("%d		(%s)", intval[j],
-                                             (tmp = get_track_name(mainw->multitrack, intval[j], is_pure_audio(get_weed_filter(ie_idx), FALSE))));
+                                             (tmp = get_track_name(mainw->multitrack,
+								   intval[j],
+								   is_pure_audio(get_weed_filter(ie_idx), FALSE))));
                 lives_free(tmp);
               } else {
-                strval = lives_strdup_printf("%d		(%s)", intval[j], intval[j] == 0 ? _("		(foreground clip)")
+                strval = lives_strdup_printf("%d		(%s)", intval[j],
+					     intval[j] == 0 ? _("		(foreground clip)")
                                              : _("		(background_clip)"));
               }
             } else {
@@ -5876,7 +5879,7 @@ render_details *create_render_details(int type) {
 
   mainw->no_context_update = TRUE;
 
-  rdet = (render_details *)lives_malloc(sizeof(render_details));
+  rdet = (render_details *)lives_calloc(1, sizeof(render_details));
 
   rdet->is_encoding = FALSE;
 

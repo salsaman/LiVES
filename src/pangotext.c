@@ -292,14 +292,15 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
     }
 
     // height was ok, now let's check the width
-    if (w > width) {
+    if (0 && w > width) {
       int jumpval = 1, dirn = -1, tjump = 0;
       //double nscale = 2.;
       // text was too wide
 #ifdef DEBUG_MSGS
       g_print("Too wide !!!\n");
 #endif
-      while (1) {
+      //while (1) {
+      while (0) {
         totlines -= get_token_count(newtext, '\n');
         slen = (int)lives_strlen(newtext);
         // for now we just truncate and elipsise lines
@@ -309,6 +310,8 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
         /*   tjump = dirn * jumpval; */
         /* } */
         /* g_print("pt b %d %d %d\n", tjump, dirn, jumpval); */
+
+	/// TODO ****
         if (whint == 0 || whint + 4 > slen) {
           xx = lives_strndup(newtext, slen + tjump);
         } else {

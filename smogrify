@@ -9620,12 +9620,23 @@ if (defined($ARGV[0])) {
 		    print STDERR "\nsmogrify: $file is marked for manual removal only\n";
 		    print "\n$file is marked for manual removal only\n";
 		    if ($new_work) {
-			print STDERR "smogrify: moving $workdir/$file\nto\n$new_work/$file\n";
+			print STDERR "smogrify: moving contents of $workdir/$file\nto\n$new_work/$file\n";
 			# we are to move this set
 			if (-d "$new_work/$file") {
-			    print STDERR "smogrify: backing up $new_work/$file to " .
-				"$new_work/$file.bak first\n";
-			    &smog_rename("$new_work/$file", "$new_work/$file.bak");
+			    opendir DIR2, "$workdir/$file";
+			    while (my $file2 = readdir(DIR2)) {
+				if (-e "$new_work/$file/$file2" && $file2 ne ".noremove") {
+				    &smog_rename("$new_work/$file/$file2", "$new_work/$file/$file2.bak");
+				    unless ($file2 eq ".noremove" && -e "$new_work/$file/$file2") {
+					&smog_rename("$workdir/$file/$file2", "$new_work/$file/$file2");
+				    }
+				}
+			    }
+			    closedir DIR2;
+			    remove_tree("$workdir/$file");
+			}
+			else {
+			    &smog_rename("$workdir/$file", "$new_work/$file");
 			}
 		    }
 		    else {

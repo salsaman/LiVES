@@ -632,12 +632,12 @@ void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
 
   int filesel_type = LIVES_FILE_SELECTION_UNDEFINED;
 
-  if (button != NULL) {
+  if (button) {
     def_dir = (char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), DEFDIR_KEY);
     is_dir = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), ISDIR_KEY));
-    filt = (char **)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "filter");
-    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "filesel_type") != NULL) {
-      filesel_type = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "filesel_type"));
+    filt = (char **)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), FILTER_KEY);
+    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), FILESEL_TYPE_KEY)) {
+      filesel_type = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), FILESEL_TYPE_KEY));
     }
   }
 
@@ -658,12 +658,13 @@ void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
       free_def_dir = TRUE;
     }
   case LIVES_DIR_SELECTION_WORKDIR:
-    dirname = choose_file(is_dir ? fname : def_dir, is_dir ? NULL : fname, filt,
-                          is_dir ? LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER :
-                          (fname == def_dir && def_dir != NULL && !strcmp(def_dir, LIVES_DEVICE_DIR))
-                          ? LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE :
-                          LIVES_FILE_CHOOSER_ACTION_OPEN,
-                          NULL, NULL);
+
+    /* dirname = choose_file(is_dir ? fname : def_dir, is_dir ? NULL : fname, filt, */
+    /*                       is_dir ? LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER : */
+    /*                       (fname == def_dir && def_dir != NULL && !strcmp(def_dir, LIVES_DEVICE_DIR)) */
+    /*                       ? LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE : */
+    /*                       LIVES_FILE_CHOOSER_ACTION_OPEN, */
+    /*                       NULL, NULL); */
 
     if (filesel_type == LIVES_DIR_SELECTION_WORKDIR) {
       if (strcmp(dirname, fname)) {
@@ -5295,7 +5296,7 @@ static LiVESResponseType rewrite_orderfile(boolean is_append, boolean add, boole
 }
 
 
-boolean on_save_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+boolean on_save_set_activate(LiVESWidget *widget, livespointer user_data) {
   // here is where we save clipsets
   // SAVE CLIPSET FUNCTION
   // also handles migration and merging of sets
@@ -5317,17 +5318,17 @@ boolean on_save_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   int retval;
 
-  if (mainw->cliplist == NULL) return FALSE;
+  if (!mainw->cliplist) return FALSE;
 
   // warn the user what will happen
-  if (menuitem != NULL && !do_save_clipset_warn()) return FALSE;
+  if (widget && !do_save_clipset_warn()) return FALSE;
 
-  if (mainw->stored_event_list != NULL && mainw->stored_event_list_changed) {
+  if (mainw->stored_event_list && mainw->stored_event_list_changed) {
     // if we have a current layout, give the user the chance to change their mind
     if (!check_for_layout_del(NULL, FALSE)) return FALSE;
   }
 
-  if (menuitem != NULL) {
+  if (widget) {
     // this was called from the GUI
     do {
       // prompt for a set name, advise user to save set
@@ -5349,7 +5350,7 @@ boolean on_save_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   lives_snprintf(mainw->set_name, MAX_SET_NAME_LEN, "%s", new_set_name);
 
-  if (strcmp(mainw->set_name, old_set)) {
+  if (lives_strcmp(mainw->set_name, old_set)) {
     // The user CHANGED the set name
     // we must migrate all physical files for the set, and possibly merge with another set
 
@@ -5392,7 +5393,7 @@ boolean on_save_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   THREADVAR(com_failed) = FALSE;
 
   current_clips_dir = lives_build_filename(prefs->workdir, old_set, CLIPS_DIRNAME "/", NULL);
-  if (strlen(old_set) && strcmp(mainw->set_name, old_set)
+  if (*old_set && strcmp(mainw->set_name, old_set)
       && lives_file_test(current_clips_dir, LIVES_FILE_TEST_IS_DIR)) {
     // set name was changed for an existing set
 
@@ -5470,7 +5471,7 @@ boolean on_save_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       lives_free(nsetn);
     }
 
-    osetn = lives_build_filename(prefs->workdir, old_set, LAYOUTS_DIRNAME, NULL);
+    osetn = lives_build_path(prefs->workdir, old_set, LAYOUTS_DIRNAME, NULL);
 
     if (lives_file_test(osetn, LIVES_FILE_TEST_IS_DIR)) {
       nsetn = lives_build_filename(prefs->workdir, mainw->set_name, NULL);
@@ -5499,7 +5500,7 @@ boolean on_save_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     if (mainw->multitrack != NULL && !mainw->multitrack->changed) recover_layout_cancelled(FALSE);
   }
 
-  if (mainw->current_layouts_map != NULL && strcmp(old_set, mainw->set_name) && !mainw->suppress_layout_warnings) {
+  if (mainw->current_layouts_map && strcmp(old_set, mainw->set_name) && !mainw->suppress_layout_warnings) {
     // warn the user about layouts if the set name changed
     // but, don't bother the user with errors if we are exiting
     add_lmap_error(LMAP_INFO_SETNAME_CHANGED, old_set, mainw->set_name, 0, 0, 0., FALSE);
@@ -5527,7 +5528,7 @@ boolean on_save_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-char *on_load_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+char *on_load_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // get set name (use a modified rename window)
   char *set_name = NULL;
   LiVESResponseType resp;
@@ -6230,7 +6231,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
 
   if (CURRENT_CLIP_IS_VALID) lives_rm(cfile->info_file);
 
-  tinfo = lives_proc_thread_create(NULL, (lives_funcptr_t)do_auto_dialog, -1,
+  tinfo = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)do_auto_dialog, -1,
                                    "si", _("Analysing Disk"), 0);
   tbuff = lives_text_buffer_new();
   com = lives_strdup_printf("%s disk_check %s %u %s", prefs->backend, cfile->handle,
@@ -6508,7 +6509,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       THREADVAR(com_failed) = FALSE;
       if (CURRENT_CLIP_IS_VALID) lives_rm(cfile->info_file);
 
-      tinfo = lives_proc_thread_create(NULL, (lives_funcptr_t)do_auto_dialog, -1,
+      tinfo = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)do_auto_dialog, -1,
                                        "si", _("Clearing Disk"), 0);
       tbuff = lives_text_buffer_new();
 

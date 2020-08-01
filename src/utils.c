@@ -651,14 +651,14 @@ void lives_buffered_rdonly_slurp(int fd, off_t skip) {
   if (!fbuff || fbuff->slurping) return;
   fbuff->slurping = TRUE;
   fbuff->bytes = fbuff->offset = 0;
-  lives_proc_thread_create(NULL, (lives_funcptr_t)_lives_buffered_rdonly_slurp, 0, "iI", fd, skip);
+  lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)_lives_buffered_rdonly_slurp, 0, "iI", fd, skip);
   lives_nanosleep_until_nonzero(fbuff->offset | fbuff->eof);
 }
 
 
 LIVES_GLOBAL_INLINE boolean lives_buffered_rdonly_set_reversed(int fd, boolean val) {
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
-  if (fbuff == NULL) {
+  if (!fbuff) {
     // normal non-buffered file
     LIVES_DEBUG("lives_buffered_readonly_set_reversed: no file buffer found");
     return FALSE;

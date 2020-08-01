@@ -523,7 +523,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
 
       param->widgets[2] = buttond = lives_standard_file_button_new(FALSE, NULL);
 
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(buttond), "filesel_type", (livespointer)LIVES_FILE_SELECTION_SAVE);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(buttond), FILESEL_TYPE_KEY, (livespointer)LIVES_FILE_SELECTION_SAVE);
       lives_box_pack_start(LIVES_BOX(box), buttond, FALSE, FALSE, widget_opts.packing_width);
       lives_signal_sync_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
                                 (livespointer)widget);

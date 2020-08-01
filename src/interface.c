@@ -2896,7 +2896,14 @@ _entryw *create_rename_dialog(int type) {
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
     label = lives_standard_label_new
-            (_("First of all you need to choose a working directory for LiVES.\nThis should be a directory with plenty of disk space available."));
+            (_("First of all you need to choose a working directory for LiVES.\n"
+	       "This should be a directory with plenty of disk space available."));
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+  }
+
+  if (type == 6 && mainw->is_ready) {
+    label = lives_standard_label_new(_("I the value of the working directory is changed, the contents of the exisitng\n"
+	 "directory will be moved and added to the new location\n"));
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
   }
 
@@ -3875,12 +3882,11 @@ static void chooser_check_dir(LiVESFileChooser * chooser, livespointer user_data
 /* } */
 
 
-char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act,
-                  const char *title, LiVESWidget * extra_widget) {
+static char *_choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act,
+			  const char *title, LiVESWidget *extra_widget) {
   // new style file chooser
 
   // in/out values are in utf8 encoding
-
   LiVESWidget *chooser;
 
   char *mytitle;
@@ -3888,8 +3894,8 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 
   int response;
   register int i;
-
-  if (title == NULL) {
+    
+  if (!title) {
     if (act == LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE) {
       mytitle = lives_strdup_printf(_("%sChoose a Device"), widget_opts.title_prefix);
       act = LIVES_FILE_CHOOSER_ACTION_OPEN;
@@ -3903,11 +3909,12 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 #ifdef GUI_GTK
 
   if (act != LIVES_FILE_CHOOSER_ACTION_SAVE) {
-    if (LIVES_IS_INTERACTIVE)
+    if (LIVES_IS_INTERACTIVE) {
       chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
                                             LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
                                             LIVES_STOCK_LABEL_OPEN, LIVES_RESPONSE_ACCEPT,
                                             NULL);
+    }
     else
       chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
                                             LIVES_STOCK_LABEL_OPEN, LIVES_RESPONSE_ACCEPT,
@@ -3925,17 +3932,17 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
     lives_window_maximize(LIVES_WINDOW(chooser));
   }
 
-  gtk_file_chooser_set_local_only(LIVES_FILE_CHOOSER(chooser), TRUE);
+     gtk_file_chooser_set_local_only(LIVES_FILE_CHOOSER(chooser), TRUE);
 
-  if (filt != NULL) {
+  if (filt) {
     GtkFileFilter *filter = gtk_file_filter_new();
-    for (i = 0; filt[i] != NULL; i++) gtk_file_filter_add_pattern(filter, filt[i]);
+    for (i = 0; filt[i]; i++) gtk_file_filter_add_pattern(filter, filt[i]);
     gtk_file_chooser_set_filter(LIVES_FILE_CHOOSER(chooser), filter);
-    if (fname == NULL && i == 1 && act == LIVES_FILE_CHOOSER_ACTION_SAVE)
+    if (fname && i == 1 && act == LIVES_FILE_CHOOSER_ACTION_SAVE)
       gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), filt[0]); //utf-8
   }
 
-  if (fname != NULL) {
+  if (fname) {
     if (act == LIVES_FILE_CHOOSER_ACTION_SAVE || act == LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER) { // prevent assertion in gtk+
       gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), fname); // utf-8
       if (fname != NULL && dir != NULL) {
@@ -3980,15 +3987,13 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 
   lives_widget_grab_focus(chooser);
 
-  lives_widget_show_all(chooser);
-
   lives_window_center(LIVES_WINDOW(chooser));
 
   lives_window_set_modal(LIVES_WINDOW(chooser), TRUE);
 
   lives_memset(last_good_folder, 0, 1);
 
-  // set this so we know when button is pressed, even if waiting for preview to finish
+  //set this so we know when button is pressed, even if waiting for preview to finish
   mainw->fc_buttonresponse = LIVES_RESPONSE_NONE;
   //lives_signal_sync_connect(chooser, LIVES_WIDGET_RESPONSE_SIGNAL, LIVES_GUI_CALLBACK(chooser_response), NULL);
 
@@ -3996,7 +4001,7 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
     return (char *)chooser; // kludge to allow custom adding of extra widgets
   }
 
-  if (dir != NULL) {
+  if (dir) {
     gtk_file_chooser_set_current_folder(LIVES_FILE_CHOOSER(chooser), dir);
     gtk_file_chooser_add_shortcut_folder(LIVES_FILE_CHOOSER(chooser), dir, NULL);
   }
@@ -4023,8 +4028,14 @@ rundlg:
   return filename;
 }
 
+char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act,
+			 const char *title, LiVESWidget *extra_widget) {
+    return main_thread_execute((lives_funcptr_t)_choose_file, WEED_SEED_STRING,
+			       NULL, "ssvisv", dir, fname, filt, act, title, extra_widget);
+}
 
-LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char **const filt, int filesel_type) {
+
+static LiVESWidget *_choose_file_with_preview(const char *dir, const char *title, char **const filt, int filesel_type) {
   // filesel_type 1 - video and audio open (single - opensel)
   //LIVES_FILE_SELECTION_VIDEO_AUDIO
 
@@ -4128,7 +4139,12 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
   return chooser;
 }
 
+LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char **const filt, int filesel_type) {
+    return main_thread_execute((lives_funcptr_t)_choose_file_with_preview, WEED_SEED_STRING,
+			       NULL, "ssvi", dir, title, filt, filesel_type);
+}
 
+  
 LIVES_GLOBAL_INLINE LiVESWidget *make_autoreload_check(LiVESHBox * hbox, boolean is_active) {
   return lives_standard_check_button_new(_("_Autoreload next time"), is_active, LIVES_BOX(hbox), NULL);
 }
@@ -5501,14 +5517,15 @@ void run_diskspace_dialog_cb(LiVESWidget * w, livespointer data) {
   run_diskspace_dialog();
 }
 
-static void manclips_ok(LiVESWidget * button, livespointer data) {
-  LiVESWidget *dialog = (LiVESWidget *)data;
-  lives_widget_destroy(dialog);
-  if (mainw->cliplist)
-    on_save_set_activate(NULL, NULL);
+static void manclips_ok(LiVESWidget *button, LiVESWidget *dialog) {
+  lives_widget_hide(dialog);
+  if (mainw->cliplist) {
+    on_save_set_activate(NULL, mainw->set_name);
+  }
+  lives_widget_show(dialog);
 }
 
-static void manclips_cb(LiVESWidget * w, livespointer data) {
+static void manclips_cb(LiVESWidget *w, livespointer data) {
   LiVESWidget *dialog = (LiVESWidget *)data;
   LiVESWidget *button;
   char *text, *extra;
@@ -5541,7 +5558,7 @@ static void manclips_cb(LiVESWidget * w, livespointer data) {
   button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,
            _("Continue"), LIVES_RESPONSE_OK);
   lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(manclips_ok), NULL);
+                       LIVES_GUI_CALLBACK(manclips_ok), dialog);
   lives_widget_show_all(dialog);
 }
 

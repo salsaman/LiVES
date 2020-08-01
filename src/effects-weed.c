@@ -1449,7 +1449,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
 
     if (j < to_use - 1) {
       // start a thread for processing
-      lives_thread_create(&dthreads[j], NULL, thread_process_func, &procvals[j]);
+      lives_thread_create(&dthreads[j], LIVES_THRDATTR_NONE, thread_process_func, &procvals[j]);
       nthreads++; // actual number of threads used
     } else {
       /// do the last portion oiurselves, rather than just waiting around

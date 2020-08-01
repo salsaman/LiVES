@@ -1026,6 +1026,9 @@ LiVESWidget *lives_standard_check_menu_item_new_for_var(const char *ltext, boole
 LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, LiVESBox *,
                                        const char *tooltip);
 
+LiVESWidget *lives_standard_vpaned_new(void);
+LiVESWidget *lives_standard_hpaned_new(void);
+
 LiVESWidget *lives_standard_notebook_new(const LiVESWidgetColor *bg_color, const LiVESWidgetColor *act_color);
 
 LiVESWidget *lives_standard_label_new(const char *labeltext);
@@ -1232,6 +1235,8 @@ boolean lives_widget_get_mod_mask(LiVESWidget *, LiVESXModifierType *modmask);
 boolean lives_widget_nullify_with(LiVESWidget *, void **);
 boolean lives_widget_destroy_with(LiVESWidget *widget, LiVESWidget *dieplease);
 
+void *lives_fg_run(weed_plant_t *lpt, void *retval);
+
 #endif // cplusplus
 
 #define LIVES_JUSTIFY_DEFAULT (widget_opts.default_justify)
@@ -1367,7 +1372,7 @@ const widget_opts_t def_widget_opts = {
   0, ///< no themeing
   W_PACKING_WIDTH, ///< def packing width
   W_PACKING_HEIGHT, ///< def packing height
-  LIVES_JUSTIFY_LEFT, ///< justify
+  LIVES_JUSTIFY_START, ///< justify
   LIVES_FONT_SIZE_MEDIUM, ///< default font size
   W_BORDER_WIDTH, ///< def border width
 
@@ -1384,7 +1389,7 @@ const widget_opts_t def_widget_opts = {
   W_CSS_MIN_HEIGHT, ///< css_min_height
   FALSE, ///< no_gui
   1.0, ///< default scale
-  LIVES_JUSTIFY_LEFT, ///< default justify (should this be RIGHT for rtl ?)
+  LIVES_JUSTIFY_START, ///< default justify (should this be RIGHT for rtl ?)
   NULL, ///< image_filter
   "", ///< title_prefix
   0, ///< monitor
@@ -1401,7 +1406,9 @@ extern const widget_opts_t def_widget_opts;
 #define SECLIST_KEY "secondary_list"
 #define SECLIST_VAL_KEY "secondary_list_value"
 #define ISDIR_KEY "is_dir"
+#define FILTER_KEY "filter"
 #define DEFDIR_KEY "def_dir"
+#define FILESEL_TYPE_KEY "filesel_type"
 #define PARAM_NUMBER_KEY "param_number"
 #define WH_LAYOUT_KEY "_wh_layout"
 

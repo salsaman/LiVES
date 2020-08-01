@@ -126,7 +126,6 @@ static char *old_vhash = NULL;
 static int initial_startup_phase = 0;
 static boolean needs_workdir = FALSE;
 static boolean user_configdir = FALSE;
-static boolean needs_disk_quota = FALSE;
 
 ////////////////////
 
@@ -3114,7 +3113,8 @@ static boolean render_choice_idle(livespointer data) {
 static boolean lazy_startup_checks(void *data) {
   static boolean checked_trash = FALSE;
   static boolean mwshown = FALSE;
-
+  static boolean dqshown = FALSE;
+  
   if (prefs->vj_mode) {
     resize(1.);
     if (prefs->open_maximised) {
@@ -3134,10 +3134,12 @@ static boolean lazy_startup_checks(void *data) {
     }
     checked_trash = TRUE;
   }
-  if (needs_disk_quota) {
-    run_diskspace_dialog();
-    needs_disk_quota = FALSE;
-    return TRUE;
+  if (!dqshown) {
+    dqshown = TRUE;
+    if (prefs->show_disk_quota) {
+      run_diskspace_dialog();
+      return TRUE;
+    }
   }
 
   if (!mwshown) {
@@ -3599,7 +3601,7 @@ static boolean lives_startup2(livespointer data) {
 
   if (!prefs->vj_mode) {
     mainw->helper_procthreads[PT_LAZY_RFX] =
-      lives_proc_thread_create(NULL, (lives_funcptr_t)add_rfx_effects, -1, "i", RFX_STATUS_ANY);
+      lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)add_rfx_effects, -1, "i", RFX_STATUS_ANY);
   }
   lives_idle_add_simple(lazy_startup_checks, NULL);
 
@@ -3778,9 +3780,9 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   _weed_leaf_set_flags = weed_leaf_set_flags;
 
   init_random();
-  /* run_weed_startup_tests(); */
-  /* abort(); */
+  
 #ifdef ENABLE_DIAGNOSTICS
+  run_weed_startup_tests();
   check_random();
   lives_struct_test();
   test_palette_conversions();
@@ -5995,7 +5997,7 @@ static void reslayer_thread(weed_layer_t *layer, int twidth, int theight, LiVESI
   priv->interp = interp;
   priv->pal = tpalette;
   priv->clamp = clamp;
-  lives_thread_create(res_thread, NULL, res_thrdfunc, (void *)priv);
+  lives_thread_create(res_thread, LIVES_THRDATTR_NONE, res_thrdfunc, (void *)priv);
 }
 
 
@@ -7042,7 +7044,7 @@ void pull_frame_threaded(weed_layer_t *layer, const char *img_ext, weed_timecode
     in->width = width;
     in->height = height;
     in->tc = tc;
-    lives_thread_create(frame_thread, &attr, pft_thread, (void *)in);
+    lives_thread_create(frame_thread, attr, pft_thread, (void *)in);
   }
 #endif
 }

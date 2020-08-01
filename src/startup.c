@@ -189,7 +189,8 @@ boolean do_workdir_query(void) {
 
     // TODO: should we convert to locale encoding ??
     dirname = lives_strdup(lives_entry_get_text(LIVES_ENTRY(wizard->entry)));
-  } while (check_workdir_valid(&dirname, LIVES_DIALOG(wizard->dialog), TRUE) == LIVES_RESPONSE_RETRY);
+  } while (lives_strcmp(dirname, prefs->workdir) &&
+	   check_workdir_valid(&dirname, LIVES_DIALOG(wizard->dialog), TRUE) == LIVES_RESPONSE_RETRY);
 
   lives_widget_destroy(wizard->dialog);
   lives_freep((void **)&wizard);

@@ -666,7 +666,7 @@ boolean get_ds_used(int64_t *bytes) {
   boolean ret = TRUE;
   static uint64_t _bytes = 0;
   static lives_proc_thread_t running = NULL;
-  if (!running) running = lives_proc_thread_create(NULL, (lives_funcptr_t)_get_usage, WEED_SEED_INT64, "");
+  if (!running) running = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)_get_usage, WEED_SEED_INT64, "");
   if (!lives_proc_thread_check(running)) ret = FALSE;
   else {
     _bytes = lives_proc_thread_join_int64(running);
@@ -1084,7 +1084,7 @@ void *_dir_to_file_details(LiVESList **listp, const char *dir, const char *tsubd
 */
 lives_proc_thread_t dir_to_file_details(LiVESList **listp, const char *dir, const char *tsubdir,
 					 const char *orig_loc, uint64_t extra) {
-  return lives_proc_thread_create(NULL, (lives_funcptr_t)_dir_to_file_details, -1, "vsssI",
+  return lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)_dir_to_file_details, -1, "vsssI",
 				  listp, dir, tsubdir, orig_loc, extra);
 }
 
@@ -1380,24 +1380,8 @@ LIVES_GLOBAL_INLINE size_t lives_chomp(char *buff) {
 
 typedef weed_plantptr_t lives_proc_thread_t;
 
-/**
-   create the specific plant which defines a background task to be run
-   - func is any function of a recognised type, with 0 - 16 parameters, and a value of type <return type> which may be retrieved by
-   later calling the appropriate lives_proc_thread_join_*() function
-   - args_fmt is a 0 terminated string describing the arguments of func, i ==int, d == double, b == boolean (int),
-   s == string (0 terminated), I == uint64_t, int64_t, P = weed_plant_t *, V / v == (void *), F == weed_funcptr_t
-   return_type is enumerated, e.g WEED_SEED_INT64. Return_type of 0 indicates no return value (void), then the thread
-   will free its own resources and NULL is returned from this function (fire and forget)
-   return_type of -1 has a special meaning, in this case no result is returned, but the thread can be monitored by calling:
-   lives_proc_thread_check() with the return : - this function is guaranteed to return FALSE whilst the thread is running
-   and TRUE thereafter, the proc_thread should be freed once TRUE id returned and not before.
-   for the other return_types, the appropriate join function should be called and it will block until the thread has completed its
-   task and return a copy of the actual return value of the func
-   alternatively, if return_type is non-zero, then the returned value from this function may be reutlised by passing it as the parameter
-   to run_as_thread(). */
-lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t *attr, lives_funcptr_t func,
-    int return_type, const char *args_fmt, ...) {
-  va_list xargs;
+static lives_proc_thread_t _lives_proc_thread_create(lives_thread_attr_t attr, lives_funcptr_t func,
+    int return_type, const char *args_fmt, va_list xargs) {
   int p = 0;
   const char *c;
   weed_plant_t *thread_info = lives_plant_new(LIVES_WEED_SUBTYPE_PROC_THREAD);
@@ -1407,8 +1391,6 @@ lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t *attr, lives_fu
     weed_set_boolean_value(thread_info, WEED_LEAF_NOTIFY, WEED_TRUE);
     if (return_type > 0)  weed_leaf_set(thread_info, WEED_LEAF_RETURN_VALUE, return_type, 0, NULL);
   }
-#define WSV(p, k, wt, t, x) weed_set_##wt_value(p. k, va_args(x, t))
-  va_start(xargs, args_fmt);
   c = args_fmt;
   for (c = args_fmt; *c; c++) {
     char *pkey = lives_strdup_printf("%s%d", WEED_LEAF_THREAD_PARAM, p++);
@@ -1426,11 +1408,53 @@ lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t *attr, lives_fu
     lives_free(pkey);
   }
 
-  va_end(xargs);
-  resubmit_proc_thread(thread_info, attr);
-  if (!return_type) return NULL;
+  if (!(attr & LIVES_THRDATTR_FG_THREAD)) {
+    resubmit_proc_thread(thread_info, attr);
+    if (!return_type) return NULL;
+  }
   return thread_info;
 }
+
+
+/**
+   create the specific plant which defines a background task to be run
+   - func is any function of a recognised type, with 0 - 16 parameters,
+   and a value of type <return type> which may be retrieved by
+   later calling the appropriate lives_proc_thread_join_*() function
+   - args_fmt is a 0 terminated string describing the arguments of func, i ==int, d == double, b == boolean (int),
+   s == string (0 terminated), I == uint64_t, int64_t, P = weed_plant_t *, V / v == (void *), F == weed_funcptr_t
+   return_type is enumerated, e.g WEED_SEED_INT64. Return_type of 0 indicates no return value (void), then the thread
+   will free its own resources and NULL is returned from this function (fire and forget)
+   return_type of -1 has a special meaning, in this case no result is returned, but the thread can be monitored by calling:
+   lives_proc_thread_check() with the return : - this function is guaranteed to return FALSE whilst the thread is running
+   and TRUE thereafter, the proc_thread should be freed once TRUE id returned and not before.
+   for the other return_types, the appropriate join function should be called and it will block until the thread has completed its
+   task and return a copy of the actual return value of the func
+   alternatively, if return_type is non-zero,
+   then the returned value from this function may be reutlised by passing it as the parameter
+   to run_as_thread(). */
+lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t attr, lives_funcptr_t func,
+    int return_type, const char *args_fmt, ...) {
+  lives_proc_thread_t lpt;
+  va_list xargs;
+  va_start(xargs, args_fmt);
+  lpt = _lives_proc_thread_create(attr, func, return_type, args_fmt, xargs);
+  va_end(xargs);
+  return lpt;
+}
+
+
+void *main_thread_execute(lives_funcptr_t func, int return_type, void *retval, const char *args_fmt, ...) {
+  lives_proc_thread_t lpt;
+  va_list xargs;
+  void *ret;
+  va_start(xargs, args_fmt);
+  lpt = _lives_proc_thread_create(LIVES_THRDATTR_FG_THREAD, func, return_type, args_fmt, xargs);
+  ret = lives_fg_run(lpt, retval);
+  va_end(xargs);
+  return ret;
+}
+
 
 static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
   /// funcsigs define the signature of any function we may wish to call via lives_proc_thread
@@ -1453,8 +1477,10 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
 #define FUNCSIG_PLANTP_BOOL 				       		0X000000E3
 #define FUNCSIG_VOIDP_VOIDP_VOIDP 		        		0X00000DDD
 #define FUNCSIG_PLANTP_VOIDP_INT64 		        		0X00000ED5
+#define FUNCSIG_STRING_STRING_VOIDP_INT					0X000044D1
 #define FUNCSIG_INT_INT_INT_BOOL_VOIDP					0X0001113D
 #define FUNCSIG_VOIDP_STRING_STRING_STRING_INT64		       	0X000D4445
+#define FUNCSIG_STRING_STRING_VOIDP_INT_STRING_VOIDP		       	0X0044D14D
 
   // Note: C compilers don't care about the type / number of function args., (else it would be impossible to alias any function pointer)
   // just the type / number must be correct at runtime;
@@ -1526,6 +1552,12 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
     default: CALL_VOID_3(plantptr, voidptr, int64); break;
     }
     break;
+  case FUNCSIG_STRING_STRING_VOIDP_INT:
+    switch (ret_type) {
+    case WEED_SEED_STRING: CALL_4(string, string, string, voidptr, int); break;
+    default: CALL_VOID_4(string, string, voidptr, int); break;
+    }
+    break;
   case FUNCSIG_INT_INT_INT_BOOL_VOIDP:
     switch (ret_type) {
     default: CALL_VOID_5(int, int, int, boolean, voidptr); break;
@@ -1536,9 +1568,15 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
     default: CALL_VOID_5(voidptr, string, string, string, int64); break;
     }
     break;
+  case FUNCSIG_STRING_STRING_VOIDP_INT_STRING_VOIDP:
+    switch (ret_type) {
+    case WEED_SEED_STRING: CALL_6(string, string, string, voidptr, int, string, voidptr); break;
+    default: CALL_VOID_6(string, string, voidptr, int, string, voidptr); break;
+    }
+    break;
   default:
     msg = lives_strdup_printf("Unknown funcsig with tyte 0x%016lX called", sig);
-    LIVES_ERROR(msg);
+    LIVES_FATAL(msg);
     lives_free(msg);
     break;
   }
@@ -1596,7 +1634,7 @@ LIVES_GLOBAL_INLINE weed_plantptr_t lives_proc_thread_join_plantptr(lives_proc_t
 
 /**
    create a funcsig from a lives_proc_thread_t object
-   the returned value can be passed to run_funcsig, along with the original lives_proc_thread_t
+   the returned value can be passed to call_funcsig, along with the original lives_proc_thread_t
 */
 static funcsig_t make_funcsig(lives_proc_thread_t func_info) {
   funcsig_t funcsig = 0;
@@ -1630,25 +1668,84 @@ static void *_plant_thread_func(void *args) {
   else if (!ret_type) weed_plant_free(info);
   return NULL;
 }
-#undef _RV_
 
+
+void *fg_run_func(lives_proc_thread_t lpt, void *retval) {
+  uint32_t ret_type = weed_leaf_seed_type(lpt, _RV_);
+  funcsig_t sig = make_funcsig(lpt);
+
+  call_funcsig(sig, lpt);
+  
+  switch (ret_type) {
+  case WEED_SEED_INT:
+    {
+      int *ival = (int *)retval;
+      *ival = weed_get_int_value(lpt, _RV_, NULL);
+      weed_plant_free(lpt);
+      return (void *)ival;
+    }
+  case WEED_SEED_BOOLEAN:
+    {
+      int *bval = (int *)retval;
+      *bval = weed_get_boolean_value(lpt, _RV_, NULL);
+      weed_plant_free(lpt);
+      return (void *)bval;
+    }
+  case WEED_SEED_DOUBLE:
+    {
+      double *dval = (double *)retval;
+      *dval = weed_get_double_value(lpt, _RV_, NULL);
+      weed_plant_free(lpt);
+      return (void *)dval;
+    }
+  case WEED_SEED_STRING:
+    {
+      char *chval = weed_get_string_value(lpt, _RV_, NULL);
+      weed_plant_free(lpt);
+      return (void *)chval;
+    }
+  case WEED_SEED_INT64:
+    {
+      int64_t *i64val = (int64_t *)retval;
+      *i64val = weed_get_int64_value(lpt, _RV_, NULL);
+      weed_plant_free(lpt);
+      return (void *)i64val;
+    }
+  case WEED_SEED_VOIDPTR:
+    {
+      void *val;
+      val = weed_get_voidptr_value(lpt, _RV_, NULL);
+      weed_plant_free(lpt);
+      return val;
+    }
+  case WEED_SEED_PLANTPTR:
+    {
+      weed_plant_t *pval;
+      pval = weed_get_plantptr_value(lpt, _RV_, NULL);
+      weed_plant_free(lpt);
+      return (void *)pval;
+    }
+    /// no funcptrs or custom...yet
+  default: break;
+  }
+  return NULL;
+}
+
+#undef _RV_
 
 /// (re)submission point, the function call is added to the threadpool tasklist
 /// if we have sufficient threads the task will be run at once, if all threads are busy then MINPOOLTHREADS new threads will be created
 /// and added to the pool
-void resubmit_proc_thread(lives_proc_thread_t thread_info, lives_thread_attr_t *attr) {
+void resubmit_proc_thread(lives_proc_thread_t thread_info, lives_thread_attr_t attr) {
   /// run any function as a lives_thread
   lives_thread_t *thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
-  lives_thread_attr_t zattr;
   thrd_work_t *work;
 
   /// tell the thread to clean up after itself [but it won't delete thread_info]
-  if (!attr) zattr = 0;
-  else zattr = *attr;
-  zattr |= LIVES_THRDATTR_AUTODELETE;
-  lives_thread_create(thread, &zattr, _plant_thread_func, (void *)thread_info);
+  attr |= LIVES_THRDATTR_AUTODELETE;
+  lives_thread_create(thread, attr, _plant_thread_func, (void *)thread_info);
   work = (thrd_work_t *)thread->data;
-  if (zattr & LIVES_THRDATTR_WAIT_SYNC) {
+  if (attr & LIVES_THRDATTR_WAIT_SYNC) {
     weed_set_voidptr_value(thread_info, "sync_ready", (void *) & (work->sync_ready));
   }
 }
@@ -1893,7 +1990,7 @@ void lives_threadpool_finish(void) {
 }
 
 
-int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives_funcptr_t func, void *arg) {
+int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr, lives_funcptr_t func, void *arg) {
   LiVESList *list = (LiVESList *)thread;
   thrd_work_t *work = (thrd_work_t *)lives_calloc(1, sizeof(thrd_work_t));
   if (!thread) list = (LiVESList *)lives_calloc(1, sizeof(LiVESList));
@@ -1902,9 +1999,9 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives
   work->func = func;
   work->arg = arg;
 
-  if (!thread || (attr && (*attr & LIVES_THRDATTR_AUTODELETE)))
+  if (!thread || (attr & LIVES_THRDATTR_AUTODELETE))
     work->flags |= LIVES_THRDFLAG_AUTODELETE;
-  if (attr && (*attr & LIVES_THRDATTR_WAIT_SYNC)) {
+  if (attr & LIVES_THRDATTR_WAIT_SYNC) {
     work->flags |= LIVES_THRDFLAG_WAIT_SYNC;
     work->sync_ready = FALSE;
   }
@@ -1913,7 +2010,7 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives
   if (twork_first == NULL) {
     twork_first = twork_last = list;
   } else {
-    if (!attr || !(*attr & LIVES_THRDATTR_PRIORITY)) {
+    if (!(attr & LIVES_THRDATTR_PRIORITY)) {
       twork_first->prev = list;
       list->next = twork_first;
       twork_first = list;

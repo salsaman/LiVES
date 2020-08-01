@@ -2238,7 +2238,7 @@ static void convert_yuv888_to_rgb_frame(uint8_t *src, int hsize, int vsize, int 
 
         if (i == 0) convert_yuv888_to_rgb_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_yuv888_to_rgb_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_yuv888_to_rgb_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -2318,7 +2318,7 @@ static void convert_yuva8888_to_rgba_frame(uint8_t *src, int hsize, int vsize, i
 
         if (i == 0) convert_yuva8888_to_rgba_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_yuva8888_to_rgba_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_yuva8888_to_rgba_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -2396,7 +2396,7 @@ static void convert_yuv888_to_bgr_frame(uint8_t *src, int hsize, int vsize, int 
 
         if (i == 0) convert_yuv888_to_bgr_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_yuv888_to_bgr_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_yuv888_to_bgr_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -2475,7 +2475,7 @@ static void convert_yuva8888_to_bgra_frame(uint8_t *src, int hsize, int vsize, i
 
         if (i == 0) convert_yuva8888_to_bgra_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_yuva8888_to_bgra_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_yuva8888_to_bgra_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -2552,7 +2552,7 @@ static void convert_yuv888_to_argb_frame(uint8_t *src, int hsize, int vsize, int
 
         if (i == 0) convert_yuv888_to_argb_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_yuv888_to_argb_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_yuv888_to_argb_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -2629,7 +2629,7 @@ static void convert_yuva8888_to_argb_frame(uint8_t *src, int hsize, int vsize, i
 
         if (i == 0) convert_yuva8888_to_argb_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_yuva8888_to_rgba_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_yuva8888_to_rgba_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -2937,7 +2937,7 @@ static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
         if (i == 0) convert_rgb_to_uyvy_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_rgb_to_uyvy_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_rgb_to_uyvy_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -3027,7 +3027,7 @@ static void convert_rgb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
         if (i == 0) convert_rgb_to_yuyv_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_rgb_to_yuyv_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_rgb_to_yuyv_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -3113,7 +3113,7 @@ static void convert_bgr_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
         if (i == 0) convert_bgr_to_uyvy_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_bgr_to_uyvy_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_bgr_to_uyvy_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -3201,7 +3201,7 @@ static void convert_bgr_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
         if (i == 0) convert_bgr_to_yuyv_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_bgr_to_yuyv_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_bgr_to_yuyv_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -3286,7 +3286,7 @@ static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, i
 
         if (i == 0) convert_argb_to_uyvy_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_argb_to_uyvy_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_argb_to_uyvy_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -3364,7 +3364,7 @@ static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, i
 
         if (i == 0) convert_argb_to_yuyv_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_argb_to_yuyv_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_argb_to_yuyv_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -3441,7 +3441,7 @@ static void convert_rgb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
 
         if (i == 0) convert_rgb_to_yuv_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_rgb_to_yuv_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_rgb_to_yuv_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -3536,7 +3536,7 @@ static void convert_rgb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
         if (i == 0) convert_rgb_to_yuvp_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_rgb_to_yuvp_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_rgb_to_yuvp_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -3623,7 +3623,7 @@ static void convert_bgr_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
 
         if (i == 0) convert_bgr_to_yuv_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_bgr_to_yuv_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_bgr_to_yuv_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -3719,7 +3719,7 @@ static void convert_bgr_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
         if (i == 0) convert_bgr_to_yuvp_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_bgr_to_yuvp_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_bgr_to_yuvp_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -3806,7 +3806,7 @@ static void convert_argb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
         if (i == 0) convert_rgb_to_yuv_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_argb_to_yuv_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_argb_to_yuv_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -3896,7 +3896,7 @@ static void convert_argb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, i
 
         if (i == 0) convert_argb_to_yuvp_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_argb_to_yuvp_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_argb_to_yuvp_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -4342,7 +4342,7 @@ static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int heigh
 
         if (i == 0) convert_uyvy_to_rgb_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_uyvy_to_rgb_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_uyvy_to_rgb_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -4427,7 +4427,7 @@ static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int heigh
 
         if (i == 0) convert_uyvy_to_bgr_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_uyvy_to_bgr_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_uyvy_to_bgr_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -4508,7 +4508,7 @@ static void convert_uyvy_to_argb_frame(uyvy_macropixel *src, int width, int heig
 
         if (i == 0) convert_uyvy_to_argb_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_uyvy_to_argb_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_uyvy_to_argb_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -4583,7 +4583,7 @@ static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int heigh
 
         if (i == 0) convert_yuyv_to_rgb_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_yuyv_to_rgb_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_yuyv_to_rgb_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -4666,7 +4666,7 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
 
         if (i == 0) convert_yuyv_to_bgr_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_yuyv_to_bgr_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_yuyv_to_bgr_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -4747,7 +4747,7 @@ static void convert_yuyv_to_argb_frame(yuyv_macropixel *src, int width, int heig
 
         if (i == 0) convert_yuyv_to_argb_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_yuyv_to_argb_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_yuyv_to_argb_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -4932,7 +4932,7 @@ static void convert_yuv_planar_to_rgb_frame(uint8_t **src, int width, int height
 
         if (i == 0) convert_yuv_planar_to_rgb_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_yuv_planar_to_rgb_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_yuv_planar_to_rgb_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -5032,7 +5032,7 @@ static void convert_yuv_planar_to_bgr_frame(uint8_t **src, int width, int height
 
         if (i == 0) convert_yuv_planar_to_bgr_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_yuv_planar_to_bgr_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_yuv_planar_to_bgr_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -5128,7 +5128,7 @@ static void convert_yuv_planar_to_argb_frame(uint8_t **src, int width, int heigh
 
         if (i == 0) convert_yuv_planar_to_argb_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_yuv_planar_to_argb_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_yuv_planar_to_argb_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -6977,7 +6977,7 @@ static void convert_swap3_frame(uint8_t *src, int width, int height, int irowstr
 
         if (i == 0) convert_swap3_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_swap3_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_swap3_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -7092,7 +7092,7 @@ static void convert_swap4_frame(uint8_t *src, int width, int height, int irowstr
 
         if (i == 0) convert_swap4_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_swap4_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_swap4_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -7188,7 +7188,7 @@ static void convert_swap3addpost_frame(uint8_t *src, int width, int height, int 
 
         if (i == 0) convert_swap3addpost_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_swap3addpost_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_swap3addpost_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -7266,7 +7266,7 @@ static void convert_swap3addpre_frame(uint8_t *src, int width, int height, int i
 
         if (i == 0) convert_swap3addpre_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_swap3addpre_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_swap3addpre_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -7342,7 +7342,7 @@ static void convert_swap3postalpha_frame(uint8_t *src, int width, int height, in
 
         if (i == 0) convert_swap3postalpha_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_swap3postalpha_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_swap3postalpha_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -7406,7 +7406,7 @@ static void convert_swap3prealpha_frame(uint8_t *src, int width, int height, int
 
         if (i == 0) convert_swap3prealpha_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_swap3prealpha_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_swap3prealpha_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -7474,7 +7474,7 @@ static void convert_addpost_frame(uint8_t *src, int width, int height, int irows
 
         if (i == 0) convert_addpost_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_addpost_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_addpost_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -7569,7 +7569,7 @@ static void convert_addpre_frame(uint8_t *src, int width, int height, int irowst
 
         if (i == 0) convert_addpre_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_addpre_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_addpre_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -7645,7 +7645,7 @@ static void convert_swap3delpost_frame(uint8_t *src, int width, int height, int 
 
         if (i == 0) convert_swap3delpost_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_swap3delpost_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_swap3delpost_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -7722,7 +7722,7 @@ static void convert_delpost_frame(uint8_t *src, int width, int height, int irows
 
         if (i == 0) convert_delpost_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_delpost_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_delpost_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -7809,7 +7809,7 @@ static void convert_delpre_frame(uint8_t *src, int width, int height, int irowst
 
         if (i == 0) convert_delpre_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_delpre_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_delpre_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -7885,7 +7885,7 @@ static void convert_swap3delpre_frame(uint8_t *src, int width, int height, int i
 
         if (i == 0) convert_swap3delpre_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_swap3delpre_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_swap3delpre_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -7962,7 +7962,7 @@ static void convert_swapprepost_frame(uint8_t *src, int width, int height, int i
 
         if (i == 0) convert_swapprepost_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_swapprepost_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_swapprepost_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -8065,7 +8065,7 @@ static void convert_swab_frame(uint8_t *src, int width, int height, int irow, in
 
         if (i == 0) convert_swab_frame_thread(&ccparams[i]);
         else {
-          lives_thread_create(&threads[i], NULL, convert_swab_frame_thread, &ccparams[i]);
+          lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, convert_swab_frame_thread, &ccparams[i]);
           nthreads++;
         }
       }
@@ -11731,7 +11731,7 @@ boolean gamma_convert_sub_layer(int gamma_type, double fileg, weed_layer_t *laye
             ccparams[i].thread_id = i;
             if (i == 0) gamma_convert_layer_thread(&ccparams[i]);
             else {
-              lives_thread_create(&threads[i], NULL, gamma_convert_layer_thread, &ccparams[i]);
+              lives_thread_create(&threads[i], LIVES_THRDATTR_NONE, gamma_convert_layer_thread, &ccparams[i]);
               nthreads++;
             }
           }
@@ -12454,7 +12454,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
         }
         swparams[sl].irw = irw;
         swparams[sl].orw = orw;
-        if (sl < nthrds - 1) lives_thread_create(&threads[sl], NULL, swscale_threadfunc, &swparams[sl]);
+        if (sl < nthrds - 1) lives_thread_create(&threads[sl], LIVES_THRDATTR_NONE, swscale_threadfunc, &swparams[sl]);
         else swscale_threadfunc(&swparams[sl]);
       }
     }

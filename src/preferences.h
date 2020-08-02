@@ -17,6 +17,7 @@
 #define PREFS_XCOLOURS_CHANGED		(1 << 4)
 #define PREFS_IMAGES_CHANGED		(1 << 5)
 #define PREFS_MONITOR_CHANGED		(1 << 6)
+#define PREFS_NEEDS_REVERT		(1 << 7)
 
 #define PULSE_AUDIO_URL "http://www.pulseaudio.org"
 #define JACK_URL "http://jackaudio.org"

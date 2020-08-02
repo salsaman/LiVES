@@ -658,13 +658,12 @@ void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
       free_def_dir = TRUE;
     }
   case LIVES_DIR_SELECTION_WORKDIR:
-
-    /* dirname = choose_file(is_dir ? fname : def_dir, is_dir ? NULL : fname, filt, */
-    /*                       is_dir ? LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER : */
-    /*                       (fname == def_dir && def_dir != NULL && !strcmp(def_dir, LIVES_DEVICE_DIR)) */
-    /*                       ? LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE : */
-    /*                       LIVES_FILE_CHOOSER_ACTION_OPEN, */
-    /*                       NULL, NULL); */
+    dirname = choose_file(is_dir ? fname : def_dir, is_dir ? NULL : fname, filt,
+                          is_dir ? LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER :
+                          (fname == def_dir && def_dir != NULL && !strcmp(def_dir, LIVES_DEVICE_DIR))
+                          ? LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE :
+                          LIVES_FILE_CHOOSER_ACTION_OPEN,
+                          NULL, NULL);
 
     if (filesel_type == LIVES_DIR_SELECTION_WORKDIR) {
       if (strcmp(dirname, fname)) {

@@ -556,7 +556,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
       // revert text
       if (prefsw) {
         lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
-        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+        lives_widget_process_updates(prefsw->prefs_dialog);
       }
       goto fail1;
     }
@@ -576,7 +576,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
           // revert text
           if (prefsw) {
             lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
-            lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+            lives_widget_process_updates(prefsw->prefs_dialog);
           }
           goto fail1;
         }
@@ -587,7 +587,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
         // revert text
         if (prefsw) {
           lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
-          lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+          lives_widget_process_updates(prefsw->prefs_dialog);
         }
         goto fail1;
       } else {
@@ -615,7 +615,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
         // revert text
         if (prefsw) {
           lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
-          lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+          lives_widget_process_updates(prefsw->prefs_dialog);
         }
         goto fail1;
       } else {
@@ -623,7 +623,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
           // revert text
           if (prefsw) {
             lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
-            lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+            lives_widget_process_updates(prefsw->prefs_dialog);
           }
           goto fail1;
         } else {
@@ -691,7 +691,7 @@ fail1:
 
 success1:
   if (prefsw) {
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+    lives_widget_process_updates(prefsw->prefs_dialog);
     prefsw->ignore_apply = FALSE;
   }
   return TRUE;
@@ -997,7 +997,7 @@ fail2:
 
 success2:
   if (prefsw) {
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+    lives_widget_process_updates(prefsw->prefs_dialog);
     prefsw->ignore_apply = FALSE;
   }
   if (permanent) set_boolean_pref(prefidx, newval);
@@ -1014,7 +1014,7 @@ boolean pref_factory_color_button(lives_colRGBA64_t *pcol, LiVESColorButton *cbu
   if (!lives_rgba_equal(widget_color_to_lives_rgba(&lcol, lives_color_button_get_color(cbutton, &col)), pcol)) {
     lives_rgba_copy(pcol, &lcol);
     if (prefsw) {
-      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+      lives_widget_process_updates(prefsw->prefs_dialog);
       prefsw->ignore_apply = FALSE;
     }
     return TRUE;
@@ -1110,7 +1110,7 @@ fail3:
 
 success3:
   if (prefsw) {
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+    lives_widget_process_updates(prefsw->prefs_dialog);
     prefsw->ignore_apply = FALSE;
   }
   if (permanent) set_int_pref(prefidx, newval);
@@ -1141,7 +1141,7 @@ fail4:
 
 success4:
   if (prefsw) {
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+    lives_widget_process_updates(prefsw->prefs_dialog);
     prefsw->ignore_apply = FALSE;
   }
   if (permanent) set_int_pref(prefidx, idx);
@@ -1188,7 +1188,7 @@ fail5:
 
 success5:
   if (prefsw) {
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+    lives_widget_process_updates(prefsw->prefs_dialog);
     prefsw->ignore_apply = FALSE;
   }
   if (permanent) set_double_pref(prefidx, newval);
@@ -1248,7 +1248,7 @@ fail6:
 
 success6:
   if (prefsw) {
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+    lives_widget_process_updates(prefsw->prefs_dialog);
     prefsw->ignore_apply = FALSE;
   }
   return TRUE;
@@ -1257,7 +1257,7 @@ success6:
 
 boolean apply_prefs(boolean skip_warn) {
   // set current prefs from prefs dialog
-  char prefworkdir[PATH_MAX];
+  char prefworkdir[PATH_MAX]; /// locale encoding
 
   const char *video_open_command = lives_entry_get_text(LIVES_ENTRY(prefsw->video_open_entry));
   /* const char *audio_play_command = lives_entry_get_text(LIVES_ENTRY(prefsw->audio_command_entry)); */
@@ -1273,7 +1273,7 @@ boolean apply_prefs(boolean skip_warn) {
   const char *sepimg_path = lives_entry_get_text(LIVES_ENTRY(prefsw->sepimg_entry));
   const char *frameblank_path = lives_entry_get_text(LIVES_ENTRY(prefsw->frameblank_entry));
 
-  char workdir[PATH_MAX];
+  char workdir[PATH_MAX]; /// locale encoding
   char *theme = lives_combo_get_active_text(LIVES_COMBO(prefsw->theme_combo));
   char *audp = lives_combo_get_active_text(LIVES_COMBO(prefsw->audp_combo));
   char *audio_codec = NULL;
@@ -1805,29 +1805,6 @@ boolean apply_prefs(boolean skip_warn) {
 
   ensure_isdir(workdir);
 
-  if (lives_strcmp(prefworkdir, workdir)) {
-    char *xworkdir = lives_strdup(workdir);
-    if (check_workdir_valid(&xworkdir, LIVES_DIALOG(prefsw->prefs_dialog), FALSE) == LIVES_RESPONSE_OK) {
-      char *msg = workdir_ch_warning();
-      lives_snprintf(workdir, PATH_MAX, "%s", xworkdir);
-      set_workdir_label_text(LIVES_LABEL(prefsw->workdir_label), xworkdir);
-      lives_free(xworkdir);
-
-      lives_widget_queue_draw(prefsw->workdir_label);
-      lives_widget_context_update(); // update prefs window before showing confirmation box
-
-      if (do_warning_dialog(msg)) {
-        lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", workdir);
-        mainw->prefs_changed = PREFS_WORKDIR_CHANGED;
-        needs_restart = TRUE;
-      } else {
-        future_prefs->workdir[0] = '\0';
-        set_workdir_label_text(LIVES_LABEL(prefsw->workdir_label), prefs->workdir);
-      }
-      lives_free(msg);
-    }
-  }
-
   // disabled_decoders
   if (string_lists_differ(prefs->disabled_decoders, future_prefs->disabled_decoders)) {
     lives_list_free_all(&prefs->disabled_decoders);
@@ -2345,6 +2322,29 @@ boolean apply_prefs(boolean skip_warn) {
   }
 
   mainw->no_context_update = FALSE;
+
+    if (lives_strcmp(prefworkdir, workdir)) {
+    char *xworkdir = lives_strdup(workdir);
+    if (check_workdir_valid(&xworkdir, LIVES_DIALOG(prefsw->prefs_dialog), FALSE) == LIVES_RESPONSE_OK) {
+      char *msg = workdir_ch_warning();
+
+      if (do_warning_dialog(msg)) {
+	lives_snprintf(workdir, PATH_MAX, "%s", xworkdir);
+	set_workdir_label_text(LIVES_LABEL(prefsw->workdir_label), xworkdir);
+	lives_free(xworkdir);
+
+	lives_widget_queue_draw(prefsw->workdir_label);
+	lives_widget_context_update(); // update prefs window before showing confirmation box
+        lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", workdir);
+        mainw->prefs_changed = PREFS_WORKDIR_CHANGED;
+        needs_restart = TRUE;
+      } else {
+        future_prefs->workdir[0] = '\0';
+	mainw->prefs_changed |= PREFS_NEEDS_REVERT;
+      }
+      lives_free(msg);
+    }
+  }
 
   return needs_restart;
 }
@@ -5561,8 +5561,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_widget_show_all(prefsw->prefs_dialog);
   on_prefDomainChanged(prefsw->selection, prefsw);
   lives_widget_queue_draw(prefsw->prefs_list);
-
-  return prefsw;
+   return prefsw;
 }
 
 
@@ -5735,6 +5734,9 @@ void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
     pref_change_colours();
     on_prefs_revert_clicked(button, NULL);
   }
+  else if (mainw->prefs_changed & PREFS_NEEDS_REVERT) {
+    on_prefs_revert_clicked(button, NULL);
+  }
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, prefsw->prefs_dialog);
@@ -5776,6 +5778,7 @@ void on_prefs_revert_clicked(LiVESButton *button, livespointer user_data) {
   register int i;
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
+  lives_widget_process_updates(prefsw->prefs_dialog);
 
   if (future_prefs->vpp_argv) {
     for (i = 0; future_prefs->vpp_argv[i]; lives_free(future_prefs->vpp_argv[i++]));

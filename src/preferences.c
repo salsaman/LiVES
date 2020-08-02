@@ -2323,24 +2323,24 @@ boolean apply_prefs(boolean skip_warn) {
 
   mainw->no_context_update = FALSE;
 
-    if (lives_strcmp(prefworkdir, workdir)) {
+  if (lives_strcmp(prefworkdir, workdir)) {
     char *xworkdir = lives_strdup(workdir);
     if (check_workdir_valid(&xworkdir, LIVES_DIALOG(prefsw->prefs_dialog), FALSE) == LIVES_RESPONSE_OK) {
       char *msg = workdir_ch_warning();
 
       if (do_warning_dialog(msg)) {
-	lives_snprintf(workdir, PATH_MAX, "%s", xworkdir);
-	set_workdir_label_text(LIVES_LABEL(prefsw->workdir_label), xworkdir);
-	lives_free(xworkdir);
+        lives_snprintf(workdir, PATH_MAX, "%s", xworkdir);
+        set_workdir_label_text(LIVES_LABEL(prefsw->workdir_label), xworkdir);
+        lives_free(xworkdir);
 
-	lives_widget_queue_draw(prefsw->workdir_label);
-	lives_widget_context_update(); // update prefs window before showing confirmation box
+        lives_widget_queue_draw(prefsw->workdir_label);
+        lives_widget_context_update(); // update prefs window before showing confirmation box
         lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", workdir);
         mainw->prefs_changed = PREFS_WORKDIR_CHANGED;
         needs_restart = TRUE;
       } else {
         future_prefs->workdir[0] = '\0';
-	mainw->prefs_changed |= PREFS_NEEDS_REVERT;
+        mainw->prefs_changed |= PREFS_NEEDS_REVERT;
       }
       lives_free(msg);
     }
@@ -5561,7 +5561,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_widget_show_all(prefsw->prefs_dialog);
   on_prefDomainChanged(prefsw->selection, prefsw);
   lives_widget_queue_draw(prefsw->prefs_list);
-   return prefsw;
+  return prefsw;
 }
 
 
@@ -5733,8 +5733,7 @@ void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
     // force reshow of window
     pref_change_colours();
     on_prefs_revert_clicked(button, NULL);
-  }
-  else if (mainw->prefs_changed & PREFS_NEEDS_REVERT) {
+  } else if (mainw->prefs_changed & PREFS_NEEDS_REVERT) {
     on_prefs_revert_clicked(button, NULL);
   }
 

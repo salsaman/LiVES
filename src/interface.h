@@ -251,6 +251,25 @@ typedef struct {
 lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req);
 boolean youtube_select_format(lives_remote_clip_request_t *);
 
+typedef struct {
+  char *mp;
+  LiVESWidget *top_label;
+  LiVESWidget *dsu_label;
+  LiVESWidget *used_label;
+  LiVESWidget *inst_label;
+  LiVESWidget *note_label;
+  LiVESWidget *checkbutton;
+  LiVESWidget *vlabel;
+  LiVESWidget *vvlabel;
+  LiVESWidget *pculabel;
+  LiVESWidget *slider;
+  LiVESWidget *button;
+  LiVESWidget *resbutton;
+  boolean setting, visible;
+  uint64_t sliderfunc, checkfunc;
+  lives_painter_surface_t *dsu_surface;
+} _dsquotaw;
+
 void run_diskspace_dialog(void);
 void run_diskspace_dialog_cb(LiVESWidget *w, livespointer data);
 

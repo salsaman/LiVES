@@ -10654,7 +10654,8 @@ boolean on_mouse_sel_start(LiVESWidget * widget, LiVESXEventButton * event, live
 
   if (event->button == 3 && !mainw->selwidth_locked) {
     mainw->sel_start = calc_frame_from_time3(mainw->current_file,
-                       (double)x / (double)lives_widget_get_allocation_width(mainw->video_draw) * CLIP_TOTAL_TIME(mainw->current_file));
+                       (double)x / (double)lives_widget_get_allocation_width(mainw->video_draw)
+                       * CLIP_TOTAL_TIME(mainw->current_file));
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), mainw->sel_start);
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), mainw->sel_start);
     mainw->sel_move = SEL_MOVE_AUTO;
@@ -10663,7 +10664,8 @@ boolean on_mouse_sel_start(LiVESWidget * widget, LiVESXEventButton * event, live
   else {
     if (event->button == 2 && !mainw->selwidth_locked) {
       mainw->sel_start = calc_frame_from_time3(mainw->current_file,
-                         (double)x / (double)lives_widget_get_allocation_width(mainw->video_draw) * CLIP_TOTAL_TIME(mainw->current_file));
+                         (double)x / (double)lives_widget_get_allocation_width(mainw->video_draw)
+                         * CLIP_TOTAL_TIME(mainw->current_file));
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), mainw->sel_start);
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), (int)mainw->sel_start);
       mainw->sel_move = SEL_MOVE_SINGLE;
@@ -10677,7 +10679,8 @@ boolean on_mouse_sel_start(LiVESWidget * widget, LiVESXEventButton * event, live
           mainw->sel_move = SEL_MOVE_START;
         } else {
           mainw->sel_start = calc_frame_from_time2(mainw->current_file,
-                             (double)x / (double)lives_widget_get_allocation_width(mainw->video_draw) * CLIP_TOTAL_TIME(mainw->current_file));
+                             (double)x / (double)lives_widget_get_allocation_width(mainw->video_draw)
+                             * CLIP_TOTAL_TIME(mainw->current_file));
           lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), mainw->sel_start - 1);
           mainw->sel_move = SEL_MOVE_END;
         }

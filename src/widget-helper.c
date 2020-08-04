@@ -3558,6 +3558,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_expander_get_expanded(LiVESExpander *e
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_width_chars(LiVESLabel *label, int nchars) {
 #ifdef GUI_GTK
+  gtk_label_set_width_chars(label, nchars);
   gtk_label_set_max_width_chars(label, nchars);
   return TRUE;
 #endif
@@ -8363,13 +8364,8 @@ LiVESWidget *lives_standard_label_new_with_tooltips(const char *text, LiVESBox *
 
 LiVESWidget *lives_standard_formatted_label_new(const char *text) {
   LiVESWidget *label;
-  char *form_text, *pad;
-  if (lives_strlen(text) < MIN_MSG_WIDTH_CHARS) {
-    pad = lives_strndup("                                  ",
-                        (MIN_MSG_WIDTH_CHARS - lives_strlen(text)) / 2);
-  } else pad = lives_strdup("");
-
-  form_text = lives_strdup_printf("\n%s%s%s\n", pad, text, pad);
+  char *form_text;
+  form_text = lives_strdup_printf("\n%s\n", text);
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   widget_opts.mnemonic_label = FALSE;
@@ -8380,9 +8376,11 @@ LiVESWidget *lives_standard_formatted_label_new(const char *text) {
     lives_label_set_text(LIVES_LABEL(label), form_text);
   widget_opts.mnemonic_label = TRUE;
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+  if (lives_strlen(text) < MIN_MSG_WIDTH_CHARS) {
+    lives_label_set_width_chars(LIVES_LABEL(label), MIN_MSG_WIDTH_CHARS);
+  }
 
   lives_free(form_text);
-  lives_free(pad);
   return label;
 }
 

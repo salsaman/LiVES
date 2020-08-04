@@ -213,8 +213,7 @@ static void extra_cb(LiVESWidget *dialog, int key) {
     layout = lives_layout_new(LIVES_BOX(dialog_vbox));
     lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
     lives_layout_add_label(LIVES_LAYOUT(layout), _("Sets detected: "), TRUE);
-    lives_layout_add_label(LIVES_LAYOUT(layout), _("0"), TRUE);
-    label = widget_opts.last_label;
+    label = lives_layout_add_label(LIVES_LAYOUT(layout), _("0"), TRUE);
     lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
 
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), "disp_label", label);
@@ -370,6 +369,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
   case LIVES_DIALOG_ABORT_CANCEL_RETRY:
   case LIVES_DIALOG_ABORT_RETRY:
   case LIVES_DIALOG_ABORT_OK:
+  case LIVES_DIALOG_ABORT:
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0,
                                       LIVES_MESSAGE_ERROR, LIVES_BUTTONS_NONE, NULL);
 
@@ -638,12 +638,9 @@ boolean do_yesno_dialog(const char *text) {
 }
 
 
-static LiVESResponseType _do_abort_cancel_retry_dialog(const char *text, lives_dialog_t dtype) {
+static LiVESResponseType _do_abort_cancel_retry_dialog(const char *mytext, lives_dialog_t dtype) {
   LiVESResponseType response;
-  char *mytext;
   LiVESWidget *warning;
-
-  mytext = lives_strdup(text); // translation issues
 
   do {
     warning = create_message_dialog(dtype, mytext, 0);
@@ -654,7 +651,7 @@ static LiVESResponseType _do_abort_cancel_retry_dialog(const char *text, lives_d
 
     if (response == LIVES_RESPONSE_ABORT) {
       if (mainw->is_ready) {
-        if (do_abort_check()) {
+        if (dtype == LIVES_DIALOG_ABORT || do_abort_check()) {
           if (CURRENT_CLIP_IS_VALID) {
             if (cfile->handle != NULL) {
               // stop any processing
@@ -694,6 +691,11 @@ LIVES_GLOBAL_INLINE LiVESResponseType do_abort_retry_dialog(const char *text) {
 // always returns LIVES_RESPONSE_OK
 LIVES_GLOBAL_INLINE LiVESResponseType do_abort_ok_dialog(const char *text) {
   return _do_abort_cancel_retry_dialog(text, LIVES_DIALOG_ABORT_OK);
+}
+
+// does not return
+LIVES_GLOBAL_INLINE void do_abort_dialog(const char *text) {
+  _do_abort_cancel_retry_dialog(text, LIVES_DIALOG_ABORT);
 }
 
 
@@ -3261,7 +3263,7 @@ LIVES_GLOBAL_INLINE void do_messages_window(boolean is_startup) {
       lives_dialog_get_action_area((LIVES_DIALOG(textwindow->dialog)));
     LiVESWidget *cb = lives_standard_check_button_new(_("Show messages on startup"), TRUE,
                       LIVES_BOX(area), NULL);
-    lives_signal_sync_connect(LIVES_GUI_OBJECT(cb), LIVES_WIDGET_ACTIVATE_SIGNAL,
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(cb), LIVES_WIDGET_TOGGLED_SIGNAL,
                               LIVES_GUI_CALLBACK(toggle_sets_pref),
                               (livespointer)PREF_MSG_START);
     lives_button_box_make_first(LIVES_BUTTON_BOX(area), widget_opts.last_container);

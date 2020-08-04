@@ -239,7 +239,8 @@ typedef enum {
   LIVES_DIALOG_ABORT_OK,
   LIVES_DIALOG_ABORT_RETRY,
   LIVES_DIALOG_ABORT_CANCEL_RETRY,
-  LIVES_DIALOG_CANCEL_RETRY_BROWSE
+  LIVES_DIALOG_CANCEL_RETRY_BROWSE,
+  LIVES_DIALOG_ABORT
 } lives_dialog_t;
 
 /// various return conditions from rendering (multitrack or after recording)
@@ -601,6 +602,7 @@ typedef struct {
 /// helper ptoc_threads
 #define N_HLP_PROCTHREADS 128
 #define PT_LAZY_RFX 16
+#define PT_LAZY_DSUSED 17
 
 typedef struct {
   char *name;

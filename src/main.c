@@ -661,6 +661,12 @@ static boolean pre_init(void) {
   /// kick off the thread pool
   lives_threadpool_init();
 
+  if (!prefs->vj_mode && prefs->disk_quota && !mainw->has_session_workdir && !needs_workdir) {
+    mainw->helper_procthreads[PT_LAZY_DSUSED] =
+      lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)get_dir_size, WEED_SEED_INT64, "s",
+                               prefs->workdir);
+  }
+
   // get some prefs we need to set menu options
   prefs->gui_monitor = -1;
 
@@ -3135,6 +3141,10 @@ static boolean lazy_startup_checks(void *data) {
     }
     return FALSE;
   }
+
+  if ((volatile LiVESWidget *)mainw->dsu_widget) return TRUE;
+
+
   if (!checked_trash) {
     if (prefs->autoclean) {
       char *com = lives_strdup_printf("%s empty_trash . general %s", prefs->backend, TRASH_NAME);
@@ -3144,8 +3154,34 @@ static boolean lazy_startup_checks(void *data) {
     checked_trash = TRUE;
   }
   if (!dqshown) {
+    lives_proc_thread_t lpt = mainw->helper_procthreads[PT_LAZY_DSUSED];
+    boolean do_show_quota = prefs->show_disk_quota;
     dqshown = TRUE;
-    if (prefs->show_disk_quota) {
+    if (!do_show_quota) {
+      if (lpt) {
+        if (!prefs->disk_quota) {
+          lives_proc_thread_dontcare(lpt);
+        } else {
+          ticks_t timeout = 1;
+          lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+          while (!lives_proc_thread_check(lpt)
+                 && (timeout = lives_alarm_check(alarm_handle)) <= 0) {
+            lives_nanosleep(1000);
+          }
+          lives_alarm_clear(alarm_handle);
+          if (!timeout) {
+            lives_proc_thread_dontcare(lpt);
+          } else {
+            capable->ds_used = lives_proc_thread_join_int64(lpt);
+            if (capable->ds_used > prefs->disk_quota) do_show_quota = TRUE;
+	    // *INDENT-OFF*
+	  }}}}
+    // *INDENT-ON*
+    else {
+      if (lpt) lives_proc_thread_dontcare(lpt);
+    }
+    mainw->helper_procthreads[PT_LAZY_DSUSED] = NULL;
+    if (do_show_quota) {
       run_diskspace_dialog();
       return TRUE;
     }
@@ -3394,7 +3430,8 @@ static boolean lives_startup(livespointer data) {
                 _("\nLiVES was unable to find any encoder plugins.\n"
                   "Please check that you have them installed correctly in\n%s%s%s/\n"
                   "You will not be able to 'Save' without them.\nYou may need to change the value of <lib_dir> in %s\n"),
-                prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS, (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+                prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS, (tmp = lives_filename_to_utf8(capable->rcfile, -1,
+                    NULL, NULL, NULL)));
         lives_free(tmp);
         startup_message_nonfatal_dismissable(msg, WARN_MASK_NO_ENCODERS);
         lives_free(msg);

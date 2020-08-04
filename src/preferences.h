@@ -1011,6 +1011,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent);
 boolean pref_factory_string(const char *prefidx, const char *newval, boolean permanent);
 boolean pref_factory_int(const char *prefidx, int newval, boolean permanent);
+boolean pref_factory_int64(const char *prefidx, int64_t newval, boolean permanent);
 boolean pref_factory_float(const char *prefidx, float newval, boolean permanent);
 boolean pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval, boolean permanent);
 boolean pref_factory_string_choice(const char *prefidx, LiVESList *list, const char *strval, boolean permanent);

@@ -1117,7 +1117,6 @@ success3:
   return TRUE;
 }
 
-
 boolean pref_factory_string_choice(const char *prefidx, LiVESList *list, const char *strval, boolean permanent) {
   int idx = lives_list_strcmp_index(list, (livesconstpointer)strval, TRUE);
   if (prefsw) prefsw->ignore_apply = TRUE;
@@ -1251,6 +1250,30 @@ success6:
     lives_widget_process_updates(prefsw->prefs_dialog);
     prefsw->ignore_apply = FALSE;
   }
+  return TRUE;
+}
+
+
+boolean pref_factory_int64(const char *prefidx, int64_t newval, boolean permanent) {
+  if (prefsw) prefsw->ignore_apply = TRUE;
+fail7:
+  if (prefsw) prefsw->ignore_apply = FALSE;
+  return FALSE;
+
+  if (!lives_strcmp(prefidx, PREF_DISK_QUOTA)) {
+    if (newval != prefs->disk_quota) {
+      future_prefs->disk_quota = prefs->disk_quota = newval;
+      goto success7;
+    }
+    goto fail7;
+  }
+
+success7:
+  if (prefsw) {
+    lives_widget_process_updates(prefsw->prefs_dialog);
+    prefsw->ignore_apply = FALSE;
+  }
+  if (permanent) set_int64_pref(prefidx, newval);
   return TRUE;
 }
 
@@ -4194,9 +4217,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   // workdir warning label
   layout = lives_layout_new(NULL);
 
-  lives_layout_add_label(LIVES_LAYOUT(layout), NULL, FALSE);
-
-  prefsw->workdir_label = widget_opts.last_label;
+  prefsw->workdir_label = lives_layout_add_label(LIVES_LAYOUT(layout), NULL, FALSE);
   set_workdir_label_text(LIVES_LABEL(prefsw->workdir_label), prefs->workdir);
 
   lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), layout, 0, 3, 0, 2,

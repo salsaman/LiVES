@@ -1003,13 +1003,13 @@ void draw_little_bars(double ptrtime, int which) {
 }
 
 
-static boolean on_fsp_click(LiVESWidget * widget, LiVESXEventButton * event, livespointer user_data) {
+static boolean on_fsp_click(LiVESWidget *widget, LiVESXEventButton *event, livespointer user_data) {
   lives_button_clicked(LIVES_BUTTON(user_data));
   return FALSE;
 }
 
 
-void widget_add_preview(LiVESWidget * widget, LiVESBox * for_preview, LiVESBox * for_button, LiVESBox * for_deint,
+void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *for_button, LiVESBox *for_deint,
                         int preview_type) {
   LiVESWidget *preview_button = NULL;
 
@@ -1105,7 +1105,7 @@ void widget_add_preview(LiVESWidget * widget, LiVESBox * for_preview, LiVESBox *
 }
 
 
-static void on_dth_cancel_clicked(LiVESButton * button, livespointer user_data) {
+static void on_dth_cancel_clicked(LiVESButton *button, livespointer user_data) {
   if (LIVES_POINTER_TO_INT(user_data) == 1) mainw->cancelled = CANCEL_KEEP;
   else mainw->cancelled = CANCEL_USER;
 }
@@ -1113,7 +1113,7 @@ static void on_dth_cancel_clicked(LiVESButton * button, livespointer user_data) 
 
 static ticks_t last_t;
 
-xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean * td_had_focus) {
+xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had_focus) {
   LiVESWidget *dialog_vbox;
   LiVESWidget *vbox;
   LiVESWidget *hbox;
@@ -1327,12 +1327,10 @@ xprocess *create_processing(const char *text) {
 
   if (procw->stop_button != NULL)
     lives_signal_connect(LIVES_GUI_OBJECT(procw->stop_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_stop_clicked),
-                         NULL);
+                         LIVES_GUI_CALLBACK(on_stop_clicked), NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(procw->pause_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_effects_paused),
-                       NULL);
+                       LIVES_GUI_CALLBACK(on_effects_paused), NULL);
 
   if (mainw->multitrack != NULL && mainw->multitrack->is_rendering) {
     lives_signal_connect(LIVES_GUI_OBJECT(procw->preview_button), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -1340,13 +1338,11 @@ xprocess *create_processing(const char *text) {
                          mainw->multitrack);
   } else {
     lives_signal_connect(LIVES_GUI_OBJECT(procw->preview_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_preview_clicked),
-                         NULL);
+                         LIVES_GUI_CALLBACK(on_preview_clicked), NULL);
   }
 
   lives_signal_connect(LIVES_GUI_OBJECT(procw->cancel_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_cancel_keep_button_clicked),
-                       NULL);
+                       LIVES_GUI_CALLBACK(on_cancel_keep_button_clicked), NULL);
 
   if (mainw->show_procd) lives_widget_show_all(procw->processing);
   lives_widget_hide(procw->preview_button);
@@ -1619,7 +1615,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
 }
 
 
-static void on_resizecb_toggled(LiVESToggleButton * t, livespointer user_data) {
+static void on_resizecb_toggled(LiVESToggleButton *t, livespointer user_data) {
   LiVESWidget *cb = (LiVESWidget *)user_data;
 
   if (!lives_toggle_button_get_active(t)) {
@@ -3001,8 +2997,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
             txt = lives_datetime(filedets->mtime_sec);
             dtxt = lives_datetime_rel(txt);
           }
-          lives_layout_add_label(LIVES_LAYOUT(renamew->clips_layout), dtxt, TRUE);
-          filedets->widgets[0] = widget_opts.last_label;
+          filedets->widgets[0] = lives_layout_add_label(LIVES_LAYOUT(renamew->clips_layout), dtxt, TRUE);
           if (dtxt != txt) lives_free(dtxt);
           lives_free(txt);
         }
@@ -3229,8 +3224,8 @@ _entryw *create_rename_dialog(int type) {
   }
 
   if (type == 6 && mainw->is_ready) {
-    label = lives_standard_label_new(_("I the value of the working directory is changed, the contents of the exisitng\n"
-                                       "directory will be moved and added to the new location\n"));
+    label = lives_standard_label_new(_("If the value of the working directory is changed, the contents of the exisitng\n"
+                                       "working directory will be moved and if applicable added to the new location\n"));
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
   }
 
@@ -3312,8 +3307,7 @@ _entryw *create_rename_dialog(int type) {
 
     layout = lives_layout_new(LIVES_BOX(vbox));
     lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
-    lives_layout_add_label(LIVES_LAYOUT(layout), "", FALSE);
-    renamew->exp_label = widget_opts.last_label;
+    renamew->exp_label = lives_layout_add_label(LIVES_LAYOUT(layout), "", FALSE);
     lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
 
     renamew->exp_vbox = lives_vbox_new(FALSE, 0);
@@ -3557,16 +3551,13 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
   widget_opts.mnemonic_label = FALSE;
   if (type == LIVES_DEVICE_CD || type == LIVES_DEVICE_DVD || type == LIVES_DEVICE_VCD) {
     spinbutton = lives_standard_spin_button_new(label_text, mainw->fx1_val,
-                 1., 256., 1., 10., 0,
-                 LIVES_BOX(hbox), NULL);
+                 1., 256., 1., 10., 0, LIVES_BOX(hbox), NULL);
   } else if (type == LIVES_DEVICE_INTERNAL) {
     spinbutton = lives_standard_spin_button_new(label_text, mainw->fx1_val,
-                 5., 15., 1., 1., 0,
-                 LIVES_BOX(hbox), NULL);
+                 5., 15., 1., 1., 0, LIVES_BOX(hbox), NULL);
   } else {
     spinbutton = lives_standard_spin_button_new(label_text, 0.,
-                 0., 31., 1., 1., 0,
-                 LIVES_BOX(hbox), NULL);
+                 0., 31., 1., 1., 0, LIVES_BOX(hbox), NULL);
   }
   widget_opts.mnemonic_label = TRUE;
 
@@ -3584,13 +3575,10 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
 
     if (type == LIVES_DEVICE_DVD) {
       spinbutton = lives_standard_spin_button_new(_("Chapter  "), mainw->fx2_val,
-                   1., 1024., 1., 10., 0,
-                   LIVES_BOX(hbox), NULL);
+                   1., 1024., 1., 10., 0, LIVES_BOX(hbox), NULL);
     } else {
       spinbutton = lives_standard_spin_button_new(_("Channel  "), 1.,
-                   1., 69., 1., 1., 0,
-                   LIVES_BOX(hbox), NULL);
-
+                   1., 69., 1., 1., 0, LIVES_BOX(hbox), NULL);
     }
 
     lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -3608,7 +3596,6 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
       lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                                  LIVES_GUI_CALLBACK(on_spin_value_changed),
                                  LIVES_INT_TO_POINTER(3));
-
     }
   }
 
@@ -5856,6 +5843,8 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
 
 static void lives_show_after(LiVESWidget * button, livespointer data) {
   LiVESWidget *showme = (LiVESWidget *)data;
+  prefs->disk_quota = future_prefs->disk_quota;
+  pref_factory_int64(PREF_DISK_QUOTA, future_prefs->disk_quota, TRUE);
   lives_general_button_clicked(LIVES_BUTTON(button), NULL);
   if (showme) lives_widget_show(showme);
 }
@@ -6041,23 +6030,6 @@ static void manclips_cb(LiVESWidget * w, livespointer data) {
 }
 
 
-typedef struct {
-  LiVESWidget *dsu_label;
-  LiVESWidget *used_label;
-  LiVESWidget *inst_label;
-  LiVESWidget *note_label;
-  LiVESWidget *checkbutton;
-  LiVESWidget *vlabel;
-  LiVESWidget *vvlabel;
-  LiVESWidget *pculabel;
-  LiVESWidget *slider;
-  LiVESWidget *button;
-  LiVESWidget *resbutton;
-  boolean setting, visible;
-  uint64_t sliderfunc, checkfunc;
-  lives_painter_surface_t *dsu_surface;
-} _dsquotaw;
-
 static _dsquotaw *dsq = NULL;
 
 void draw_dsu_widget(LiVESWidget * dsu_widget) {
@@ -6150,6 +6122,44 @@ void draw_dsu_widget(LiVESWidget * dsu_widget) {
 }
 
 
+static void dsu_set_toplabel(void) {
+  char *ltext;
+  widget_opts.font_size = LIVES_FONT_SIZE_LARGE;
+  if (!mainw->dsu_valid || mainw->dsu_scanning
+      || ((!future_prefs->disk_quota || capable->ds_used < future_prefs->disk_quota * .9) &&
+          capable->ds_free > prefs->ds_warn_level)) {
+    ltext = lives_strdup(_("LiVES can help limit the amount of diskspace used by projects (sets)."));
+  } else {
+    if (capable->ds_free <= prefs->ds_crit_level) {
+      ltext = lives_strdup_printf(_("<b>ALERT ! FREE SPACE IN %s IS BELOW THE CRITICAL LEVEL OF %s\n"
+                                    "YOU SHOULD EXIT LIVES IMMEDIATELY TO AVOID POSSIBLE DATA LOSS</b>"), dsq->mp,
+                                  prefs->ds_crit_level);
+      widget_opts.use_markup = TRUE;
+      lives_label_set_text(LIVES_LABEL(dsq->top_label), ltext);
+      widget_opts.use_markup = FALSE;
+      widget_opts.font_size = LIVES_FONT_SIZE_NORMAL;
+      do_abort_dialog(ltext);
+    }
+    if (capable->ds_free <= prefs->ds_warn_level) {
+      ltext = lives_strdup_printf(_("WARNING ! Free space in %s is below the warning level of %s\n"
+                                    "Action should be taken to remedy this"), dsq->mp,
+                                  prefs->ds_warn_level);
+    } else if (future_prefs->disk_quota && capable->ds_used > future_prefs->disk_quota) {
+      uint64_t xs = capable->ds_used - future_prefs->disk_quota;
+      char *xstxt = lives_format_storage_space_string(xs);
+      ltext = lives_strdup_printf(_("WARNING ! LiVES has exceeded its quota by %s"), xstxt);
+      lives_free(xstxt);
+    } else {
+      double pcused = (double)capable->ds_used / (double)future_prefs->disk_quota * 100.;
+      ltext = lives_strdup_printf(_("ATTENTION: LiVES is currently using %.2f%% of its assigned quota"), pcused);
+    }
+  }
+  lives_label_set_text(LIVES_LABEL(dsq->top_label), ltext);
+  lives_free(ltext);
+  widget_opts.font_size = LIVES_FONT_SIZE_NORMAL;
+}
+
+
 boolean update_dsu(livespointer data) {
   static boolean set_label = FALSE;
   int64_t dsu;
@@ -6172,6 +6182,7 @@ boolean update_dsu(livespointer data) {
         lives_label_set_text(LIVES_LABEL(dsq->used_label), txt);
         lives_free(txt);
         draw_dsu_widget(mainw->dsu_widget);
+        dsu_set_toplabel();
       }
       set_label = mainw->dsu_scanning = FALSE;
       return FALSE;
@@ -6210,6 +6221,7 @@ static void changequota_cb(LiVESWidget * butt, livespointer data) {
     dsq->setting = TRUE;
   } else {
     /// set prefs->disk_quota
+    dsu_set_toplabel();
     widget_opts.use_markup = TRUE;
     lives_label_set_text(LIVES_LABEL(dsq->inst_label), _("<b>Updated !</b>"));
     widget_opts.use_markup = FALSE;
@@ -6251,8 +6263,11 @@ static void qslider_changed(LiVESWidget * slid, livespointer data) {
 
   if (future_prefs->disk_quota > 0.) {
     char *txt = lives_format_storage_space_string(future_prefs->disk_quota);
-    lives_label_set_text(LIVES_LABEL(dsq->vlabel), txt);
-    lives_free(txt);
+    char *xtxt = lives_strdup_printf("<b>%s</b>", txt);
+    widget_opts.use_markup = TRUE;
+    lives_label_set_text(LIVES_LABEL(dsq->vlabel), xtxt);
+    widget_opts.use_markup = FALSE;
+    lives_free(txt);  lives_free(xtxt);
     if (mainw->dsu_valid && !mainw->dsu_scanning) {
       double pcused = 100. * (double)capable->ds_used
                       / (double)future_prefs->disk_quota;
@@ -6274,7 +6289,9 @@ static void qslider_changed(LiVESWidget * slid, livespointer data) {
   } else {
     hide_warn_image(dsq->pculabel);
     lives_label_set_text(LIVES_LABEL(dsq->pculabel), NULL);
-    lives_label_set_text(LIVES_LABEL(dsq->vlabel), _("No value set"));
+    widget_opts.use_markup = TRUE;
+    lives_label_set_text(LIVES_LABEL(dsq->vlabel), _("<b>No value set</b>"));
+    widget_opts.use_markup = FALSE;
   }
 }
 
@@ -6308,6 +6325,52 @@ static void resquota_cb(LiVESWidget * butt, livespointer data) {
 }
 
 
+static boolean mouse_on = FALSE;
+
+static boolean dsu_widget_clicked(LiVESWidget * widget, LiVESXEventButton * event, livespointer is_clickp) {
+  boolean is_click;
+  is_click = LIVES_POINTER_TO_INT(is_clickp);
+  if (is_click) mouse_on = TRUE;
+  else if (!mouse_on) return TRUE;
+
+  if (!mainw->dsu_valid || mainw->dsu_scanning) return TRUE;
+  else {
+    int width = lives_widget_get_allocation_width(widget);
+    if (width <= 0) return TRUE;
+    else {
+      int x;
+      lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
+                               widget, &x, NULL);
+      if (x > 0) {
+        uint64_t min = capable->ds_tot - capable->ds_free;
+        uint64_t max = capable->ds_tot - prefs->ds_warn_level;
+        double scale = (double)capable->ds_tot / (double)width;
+        double value = (double)x * scale;
+        value -= (double)min;
+        value = 100. * value / (double)(max - min);
+        if (value < 0.) value = 0.;
+        if (value > 100.) value = 100.;
+        lives_range_set_value(LIVES_RANGE(dsq->slider), value);
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
+
+  return TRUE;
+}
+
+static boolean dsu_widget_released(LiVESWidget * widget, LiVESXEventButton * event, livespointer is_clickp) {
+  mouse_on = FALSE;
+  return TRUE;
+}
+
+
+static void dsu_ok_clicked(LiVESWidget * butt, LiVESWidget * toshow) {
+  dsq->visible = FALSE;
+  mainw->dsu_widget = NULL;
+  lives_show_after(butt, toshow);
+}
+
+
 void run_diskspace_dialog(void) {
   LiVESWidget *dialog, *dialog_vbox;
   LiVESWidget *layout, *layout2;
@@ -6324,7 +6387,7 @@ void run_diskspace_dialog(void) {
 
   LiVESWidgetColor colr;
 
-  char *title, *tmp, *mp;
+  char *title, *tmp;
 
   /// kick off a bg process to get free ds and ds used
   mainw->dsu_scanning = mainw->dsu_valid = TRUE;
@@ -6350,9 +6413,9 @@ void run_diskspace_dialog(void) {
 
   widget_opts.font_size = LIVES_FONT_SIZE_LARGE;
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  lives_layout_add_label(LIVES_LAYOUT(layout),
-                         _("LiVES can help limit the amount of diskspace used by projects (sets)."),
-                         FALSE);
+  dsq->top_label = lives_layout_add_label(LIVES_LAYOUT(layout), NULL, FALSE);
+  dsu_set_toplabel();
+
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   widget_opts.font_size = LIVES_FONT_SIZE_NORMAL;
 
@@ -6384,18 +6447,15 @@ void run_diskspace_dialog(void) {
   widget_opts.use_markup = TRUE;
   lives_layout_add_label(LIVES_LAYOUT(layout), (_("<b>Disk space used by LiVES:</b>")), TRUE);
   widget_opts.use_markup = FALSE;
-  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
-  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
 
   dsq->used_label = lives_layout_add_label(LIVES_LAYOUT(layout), NULL, TRUE);
-  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
-  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
 
-  mp = get_mountpoint_for(prefs->workdir);
-  if (mp) {
-    char *txt = lives_strdup_printf(_("in %s"), mp);
+  lives_freep((void **)&dsq->mp);
+  dsq->mp = get_mountpoint_for(prefs->workdir);
+  if (dsq->mp) {
+    char *txt = lives_strdup_printf(_("in %s"), dsq->mp);
     lives_layout_add_label(LIVES_LAYOUT(layout), txt, TRUE);
-    lives_free(txt); lives_free(mp);
+    lives_free(txt);
   }
 
   widget_opts.font_size = LIVES_FONT_SIZE_NORMAL;
@@ -6409,6 +6469,16 @@ void run_diskspace_dialog(void) {
 
   /// dsu widget
   mainw->dsu_widget = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), &dsq->dsu_surface);
+  lives_widget_add_events(mainw->dsu_widget, LIVES_BUTTON_PRESS_MASK | LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON1_MOTION_MASK);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->dsu_widget), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+                       LIVES_GUI_CALLBACK(dsu_widget_clicked), LIVES_INT_TO_POINTER(TRUE));
+
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->dsu_widget), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
+                       LIVES_GUI_CALLBACK(dsu_widget_clicked), LIVES_INT_TO_POINTER(FALSE));
+
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->dsu_widget), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
+                       LIVES_GUI_CALLBACK(dsu_widget_released), NULL);
 
   lives_box_pack_start(LIVES_BOX(hbox), mainw->dsu_widget, TRUE, TRUE, 0);
   lives_widget_set_size_request(mainw->dsu_widget, -1, widget_opts.css_min_height);
@@ -6551,6 +6621,7 @@ void run_diskspace_dialog(void) {
   lives_widget_set_frozen(dsq->vvlabel, TRUE);
   dsq->vlabel = label = lives_layout_add_label(LIVES_LAYOUT(layout), NULL, TRUE);
   lives_widget_set_frozen(dsq->vlabel, TRUE);
+  lives_label_set_width_chars(LIVES_LABEL(dsq->vlabel), 12);
 
   add_fill_to_box(LIVES_BOX(lives_widget_get_parent(label)));
 
@@ -6636,7 +6707,7 @@ void run_diskspace_dialog(void) {
     lives_standard_check_button_new(_("Show this dialog on startup"), TRUE, aar,
                                     (tmp = lives_strdup(_("#These settings can also be changed "
                                         "in Preferences / Warnings"))));
-  lives_signal_connect(LIVES_GUI_OBJECT(rembutton), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_connect(LIVES_GUI_OBJECT(rembutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(toggle_sets_pref), PREF_SHOW_QUOTA);
 
   lives_button_box_make_first(LIVES_BUTTON_BOX(aar), widget_opts.last_container);
@@ -6644,10 +6715,10 @@ void run_diskspace_dialog(void) {
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK,
              _("Continue with current values"), LIVES_RESPONSE_OK);
 
-  lives_widget_set_size_request(okbutton, DLG_BUTTON_WIDTH * 2., DLG_BUTTON_HEIGHT);
+  lives_button_uncenter(okbutton, DLG_BUTTON_WIDTH * 2.);
 
   lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(lives_show_after),
+                       LIVES_GUI_CALLBACK(dsu_ok_clicked),
                        prefsw ? prefsw->prefs_dialog : NULL);
 
   lives_button_grab_default_special(okbutton);

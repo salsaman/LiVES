@@ -4235,11 +4235,9 @@ static void add_to_listbox(lives_mt * mt, LiVESWidget * xeventbox, char *fname, 
   else lives_box_pack_start(LIVES_BOX(mt->fx_list_vbox), xeventbox, TRUE, FALSE, 0);
 
   lives_signal_connect(LIVES_GUI_OBJECT(xeventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                       LIVES_GUI_CALLBACK(filter_ebox_pressed),
-                       (livespointer)mt);
+                       LIVES_GUI_CALLBACK(filter_ebox_pressed), (livespointer)mt);
   lives_signal_connect(LIVES_GUI_OBJECT(xeventbox), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
-                       LIVES_GUI_CALLBACK(on_drag_filter_end),
-                       (livespointer)mt);
+                       LIVES_GUI_CALLBACK(on_drag_filter_end), (livespointer)mt);
 }
 
 
@@ -9885,44 +9883,34 @@ void mt_init_tracks(lives_mt * mt, boolean set_min_max) {
                          (livespointer)mt);
 
     lives_signal_connect(LIVES_GUI_OBJECT(mt->timeline), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
-                         LIVES_GUI_CALLBACK(return_true),
-                         NULL);
+                         LIVES_GUI_CALLBACK(return_true), NULL);
 
     lives_signal_connect(LIVES_GUI_OBJECT(mt->timeline_eb), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
-                         LIVES_GUI_CALLBACK(on_timeline_update),
-                         (livespointer)mt);
+                         LIVES_GUI_CALLBACK(on_timeline_update), (livespointer)mt);
 
     lives_signal_connect(LIVES_GUI_OBJECT(mt->timeline_eb), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
-                         LIVES_GUI_CALLBACK(on_timeline_release),
-                         (livespointer)mt);
+                         LIVES_GUI_CALLBACK(on_timeline_release), (livespointer)mt);
 
     lives_signal_connect(LIVES_GUI_OBJECT(mt->timeline_eb), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                         LIVES_GUI_CALLBACK(on_timeline_press),
-                         (livespointer)mt);
+                         LIVES_GUI_CALLBACK(on_timeline_press), (livespointer)mt);
 
     lives_signal_connect(LIVES_GUI_OBJECT(mt->timeline), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                         LIVES_GUI_CALLBACK(on_timeline_press),
-                         (livespointer)mt);
+                         LIVES_GUI_CALLBACK(on_timeline_press), (livespointer)mt);
 
     lives_signal_connect(LIVES_GUI_OBJECT(mt->timeline), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
-                         LIVES_GUI_CALLBACK(on_timeline_release),
-                         (livespointer)mt);
+                         LIVES_GUI_CALLBACK(on_timeline_release), (livespointer)mt);
 
     lives_signal_connect(LIVES_GUI_OBJECT(mt->timeline_reg), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
-                         LIVES_GUI_CALLBACK(on_timeline_update),
-                         (livespointer)mt);
+                         LIVES_GUI_CALLBACK(on_timeline_update), (livespointer)mt);
 
     lives_signal_connect(LIVES_GUI_OBJECT(mt->timeline_reg), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
-                         LIVES_GUI_CALLBACK(on_timeline_release),
-                         (livespointer)mt);
+                         LIVES_GUI_CALLBACK(on_timeline_release), (livespointer)mt);
 
     lives_signal_connect(LIVES_GUI_OBJECT(mt->timeline_reg), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                         LIVES_GUI_CALLBACK(on_timeline_press),
-                         (livespointer)mt);
+                         LIVES_GUI_CALLBACK(on_timeline_press), (livespointer)mt);
 
     lives_signal_connect(LIVES_GUI_OBJECT(mt->timeline_reg), LIVES_WIDGET_EXPOSE_EVENT,
-                         LIVES_GUI_CALLBACK(expose_timeline_reg_event),
-                         (livespointer)mt);
+                         LIVES_GUI_CALLBACK(expose_timeline_reg_event), (livespointer)mt);
 
     lives_container_add(LIVES_CONTAINER(mt->timeline_eb), mt->timeline);
 
@@ -10070,7 +10058,8 @@ void mt_init_tracks(lives_mt * mt, boolean set_min_max) {
             if ((tracks[j] != renumbered_clips[clip_index[j]]) || forced_end) {
               // handling for block end or split blocks
               if (tracks[j] > 0) {
-                add_block_end_point(LIVES_WIDGET(lives_list_nth_data(mt->video_draws, j)), last_event); // end of previous rectangle
+                // end of previous rectangle
+                add_block_end_point(LIVES_WIDGET(lives_list_nth_data(mt->video_draws, j)), last_event);
               }
               if (clip_index[j] > 0) {
                 ordered = !mainw->unordered_blocks;
@@ -10093,7 +10082,8 @@ void mt_init_tracks(lives_mt * mt, boolean set_min_max) {
             new_clip_index[j] = -1;
             new_frame_index[j] = 0;
             if (tracks[j] > 0) {
-              add_block_end_point(LIVES_WIDGET(lives_list_nth_data(mt->video_draws, j)), last_event); // end of previous rectangle
+              // end of previous rectangle
+              add_block_end_point(LIVES_WIDGET(lives_list_nth_data(mt->video_draws, j)), last_event);
               tracks[j] = 0;
             }
           }
@@ -10150,7 +10140,8 @@ void mt_init_tracks(lives_mt * mt, boolean set_min_max) {
                 avels[aclips[i] + 1] = aseeks[i + 1];
                 //}
                 if (avels[aclips[i] + 1] != 0.) {
-                  add_block_start_point(audio_draw, tc, renumbered_clips[aclips[i + 1]], aseeks[i]*TICKS_PER_SECOND_DBL, event, TRUE);
+                  add_block_start_point(audio_draw, tc, renumbered_clips[aclips[i + 1]],
+                                        aseeks[i]*TICKS_PER_SECOND_DBL, event, TRUE);
                 }
               }
             }
@@ -10609,7 +10600,8 @@ static int add_video_track(lives_mt * mt, boolean behind) {
     // add track behind (below) stack
     mt->video_draws = lives_list_append(mt->video_draws, (livespointer)eventbox);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "layer_number", LIVES_INT_TO_POINTER(mt->num_video_tracks - 1));
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(checkbutton), "layer_number", LIVES_INT_TO_POINTER(mt->num_video_tracks - 1));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(checkbutton), "layer_number",
+                                 LIVES_INT_TO_POINTER(mt->num_video_tracks - 1));
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(arrow), "layer_number", LIVES_INT_TO_POINTER(mt->num_video_tracks - 1));
     mt->current_track = mt->num_video_tracks - 1;
   }
@@ -11088,11 +11080,9 @@ void mt_init_clips(lives_mt * mt, int orig_file, boolean add) {
       count++;
 
       lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                           LIVES_GUI_CALLBACK(clip_ebox_pressed),
-                           (livespointer)mt);
+                           LIVES_GUI_CALLBACK(clip_ebox_pressed), (livespointer)mt);
       lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
-                           LIVES_GUI_CALLBACK(on_drag_clip_end),
-                           (livespointer)mt);
+                           LIVES_GUI_CALLBACK(on_drag_clip_end), (livespointer)mt);
 
       if (add) {
         lives_widget_set_no_show_all(mt->poly_box, FALSE);
@@ -11817,8 +11807,10 @@ void clear_context(lives_mt * mt) {
 
   // Apply theme background to scrolled window
   if (palette->style & STYLE_1) {
-    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(mt->context_scroll)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->context_scroll)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(mt->context_scroll)), LIVES_WIDGET_STATE_NORMAL,
+                              &palette->normal_fore);
+    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->context_scroll)), LIVES_WIDGET_STATE_NORMAL,
+                              &palette->normal_back);
   }
 
   add_context_label(mt, ("                                          ")); // info box stop from shrinking
@@ -12234,7 +12226,8 @@ void in_out_start_changed(LiVESWidget * widget, livespointer user_data) {
     offset_end = q_gint64((block->offset_start = new_start_tc) + (weed_timecode_t)(TICKS_PER_SECOND_DBL / mt->fps) +
                           (get_event_timecode(block->end_event) - get_event_timecode(block->start_event)), mt->fps);
     mt->opts.insert_mode = INSERT_MODE_OVERWRITE;
-    if (track >= 0) insert_frames(filenum, new_start_tc, offset_end, tl_start, LIVES_DIRECTION_FORWARD, block->eventbox, mt, block);
+    if (track >= 0) insert_frames(filenum, new_start_tc, offset_end, tl_start, LIVES_DIRECTION_FORWARD,
+                                    block->eventbox, mt, block);
     if (ablock != NULL) {
       aclip = get_audio_frame_clip(ablock->start_event, track);
       aseek = get_audio_frame_seek(ablock->start_event, track);
@@ -12496,7 +12489,8 @@ void in_out_end_changed(LiVESWidget * widget, livespointer user_data) {
         remove_audio_for_track(ablock->end_event, track);
         if (new_end_event == NULL) {
           if (shortcut == NULL) shortcut = ablock->end_event;
-          mt->event_list = insert_blank_frame_event_at(mt->event_list, q_gint64(new_tl_tc + TICKS_PER_SECOND_DBL / mt->fps, mt->fps),
+          mt->event_list = insert_blank_frame_event_at(mt->event_list,
+                           q_gint64(new_tl_tc + TICKS_PER_SECOND_DBL / mt->fps, mt->fps),
                            &shortcut);
           ablock->end_event = shortcut;
         } else ablock->end_event = new_end_event;
@@ -12541,7 +12535,8 @@ void in_out_end_changed(LiVESWidget * widget, livespointer user_data) {
 
     // note: audio blocks end at the timecode, video blocks end at tc + TICKS_PER_SECOND_DBL/mt->fps
     if (track >= 0) insert_frames(filenum, offset_end, offset_start, tl_end +
-                                    (weed_timecode_t)((double)(track >= 0 && !mt->aud_track_selected)*TICKS_PER_SECOND_DBL / mt->fps),
+                                    (weed_timecode_t)((double)(track >= 0
+                                        && !mt->aud_track_selected)*TICKS_PER_SECOND_DBL / mt->fps),
                                     LIVES_DIRECTION_BACKWARD, block->eventbox, mt, block);
 
     block->offset_start = q_gint64(offset_start, mt->fps);
@@ -12683,8 +12678,8 @@ void avel_spin_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
 
   if (!block->end_anchored) {
     new_end_tc = q_gint64(start_tc + ((orig_end_val =
-                                         lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->spinbutton_out))) * TICKS_PER_SECOND_DBL - start_tc)
-                          / new_avel, mt->fps);
+                                         lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->spinbutton_out)))
+                                      * TICKS_PER_SECOND_DBL - start_tc) / new_avel, mt->fps);
 
     insert_audio_event_at(block->start_event, track, aclip, aseek, new_avel);
 
@@ -13036,7 +13031,8 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
       if (lives_widget_get_allocation_width(mt->poly_box) > 1 && lives_widget_get_allocation_height(mt->poly_box) > 1) {
         calc_maxspect(lives_widget_get_allocation_width(mt->poly_box) / 2 - POLY_WIDTH_MARGIN,
                       lives_widget_get_allocation_height(mt->poly_box) - POLY_WIDTH_MARGIN / 2 - 16 * widget_opts.packing_height -
-                      ((block == NULL || block->ordered) ? lives_widget_get_allocation_height(mainw->spinbutton_start) : 0), &width, &height);
+                      ((block == NULL || block->ordered) ? lives_widget_get_allocation_height(mainw->spinbutton_start) : 0),
+                      &width, &height);
 
         xxwidth = width;
         xxheight = height;
@@ -13342,7 +13338,8 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
     mt->fx_list_vbox = lives_vbox_new(FALSE, widget_opts.packing_height);
     lives_container_set_border_width(LIVES_CONTAINER(mt->fx_list_vbox), widget_opts.border_width);
     lives_scrolled_window_add_with_viewport(LIVES_SCROLLED_WINDOW(mt->fx_list_scroll), mt->fx_list_vbox);
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->fx_list_scroll)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->fx_list_scroll)), LIVES_WIDGET_STATE_NORMAL,
+                              &palette->normal_back);
 
     if (filter_map != NULL) {
       init_events = weed_get_voidptr_array_counted(filter_map, WEED_LEAF_INIT_EVENTS, &num_fx);
@@ -14008,7 +14005,8 @@ boolean on_track_release(LiVESWidget * eventbox, LiVESXEventButton * event, live
 
       // timecodes per pixel
       tcpp = TICKS_PER_SECOND_DBL * ((mt->tl_max - mt->tl_min) /
-                                     (double)lives_widget_get_allocation_width(LIVES_WIDGET(lives_list_nth_data(mt->video_draws, 0))));
+                                     (double)lives_widget_get_allocation_width
+                                     (LIVES_WIDGET(lives_list_nth_data(mt->video_draws, 0))));
 
       // need to move at least 1.5 pixels, or to another track
       if ((track != mt->current_track || (tc - start_tc > (tcpp * 3 / 2)) || (start_tc - tc > (tcpp * 3 / 2))) &&
@@ -14815,7 +14813,8 @@ static void split_block(lives_mt * mt, track_rect * block, weed_timecode_t tc, i
   }
 
   if (block->ordered ||
-      (is_audio_eventbox(eventbox))) offset_start = block->offset_start - get_event_timecode(start_event) + get_event_timecode(event);
+      (is_audio_eventbox(eventbox))) offset_start = block->offset_start - get_event_timecode(start_event)
+            + get_event_timecode(event);
   else offset_start = calc_time_from_frame(clip, frame) * TICKS_PER_SECOND_DBL;
 
   new_block = add_block_start_point(LIVES_WIDGET(eventbox), tc, clip, offset_start, event, block->ordered);

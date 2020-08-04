@@ -1116,6 +1116,7 @@ boolean do_yesno_dialog(const char *text);
 boolean do_yesno_dialogf(const char *fmt, ...);
 boolean do_yesno_dialog_with_check(const char *text, uint64_t warn_mask_number);
 
+void do_abort_dialog(const char *text);
 LiVESResponseType do_abort_ok_dialog(const char *text);
 LiVESResponseType do_abort_retry_dialog(const char *text);
 LiVESResponseType do_abort_cancel_retry_dialog(const char *text) WARN_UNUSED;

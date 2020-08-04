@@ -73,6 +73,8 @@ void on_import_theme_activate(LiVESMenuItem *, livespointer);
 
 void on_quit_activate(LiVESMenuItem *, livespointer);
 
+void del_current_set(boolean exit_after);
+
 void on_undo_activate(LiVESWidget *, livespointer);
 
 void on_redo_activate(LiVESWidget *, livespointer);

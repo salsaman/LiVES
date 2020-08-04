@@ -4359,7 +4359,7 @@ boolean write_headers(lives_clip_t *file) {
 }
 
 
-boolean read_headers(int fileno, const char *file_name) {
+boolean read_headers(int fileno, const char *dir, const char *file_name) {
   // file_name is only used to get the file size on the disk
   lives_clip_t *sfile;
   char **array;
@@ -4389,8 +4389,10 @@ boolean read_headers(int fileno, const char *file_name) {
   if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
 
   sfile = mainw->files[fileno];
-  old_hdrfile = lives_build_filename(prefs->workdir, sfile->handle, LIVES_CLIP_HEADER_OLD, NULL);
-  lives_header = lives_build_filename(prefs->workdir, sfile->handle, LIVES_CLIP_HEADER, NULL);
+
+
+  old_hdrfile = lives_build_filename(dir, LIVES_CLIP_HEADER_OLD, NULL);
+  lives_header = lives_build_filename(dir, LIVES_CLIP_HEADER, NULL);
 
   sfile->checked_for_old_header = TRUE;
   sfile->img_type = IMG_TYPE_UNKNOWN;
@@ -4842,6 +4844,7 @@ ulong restore_file(const char *file_name) {
   char *mesg, *mesg1, *tmp;
   boolean is_OK = TRUE;
   char *fname = lives_strdup(file_name);
+  char *clipdir;
 
   int old_file = mainw->current_file, current_file;
   int new_file = mainw->first_free_file;
@@ -4895,7 +4898,9 @@ ulong restore_file(const char *file_name) {
 
   // call function to return rest of file details
   // fsize, afilesize and frames
-  is_OK = read_headers(mainw->current_file, file_name);
+  clipdir = lives_build_path(prefs->workdir, cfile->handle, NULL);
+  is_OK = read_headers(mainw->current_file, clipdir, file_name);
+  lives_free(clipdir);
   if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
 
   if (!is_OK) {
@@ -5976,6 +5981,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         mainw->suppress_dprint = FALSE;
         continue;
       }
+      mainw->was_set = TRUE;
       prefs->crash_recovery = crash_recovery; /// reset to original value
     } else {
       /// load single file
@@ -6048,7 +6054,9 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       if (!is_ascrap) {
         /// get file details; this will cache the header in mainw->hdrs_cache
         // we need to keep this around for open_set_file(), below.
-        read_headers(mainw->current_file, NULL);
+        char *clipdir = lives_build_path(prefs->workdir, cfile->handle, NULL);
+        read_headers(mainw->current_file, clipdir, NULL);
+        lives_free(clipdir);
       } else {
         lives_clip_details_t detail;
         int asigned = 0, aendian = LIVES_LITTLE_ENDIAN;

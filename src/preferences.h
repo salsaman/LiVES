@@ -336,7 +336,7 @@ typedef struct {
   uint64_t ds_crit_level; ///< diskspace critical level bytes
 
 #define DEF_DISK_QUOTA 50  /// def 50 GiB
-  uint64_t disk_quota; /// max space we can use for all our files (0 means unlimited (up to ds_crtical))
+  uint64_t disk_quota; /// (SOFT LIMIT) max space we can use for all our files (0 means unlimited (up to ds_crtical, HARD LIMIT))
 
 #define DEF_MSG_TEXTSIZE 4 // LIVES_FONTSIZE_LARGE (via lives_textsize_to_string())
 #define DEF_MAX_MSGS 10000
@@ -721,35 +721,44 @@ typedef struct {
   char workdir[PATH_MAX];
   char theme[64];
   char vpp_name[64]; ///< new video playback plugin
+
   int vpp_fixed_fps_numer;
   int vpp_fixed_fps_denom;
+
   double vpp_fixed_fpsd;
+
   int vpp_palette;
   int vpp_YUV_clamping;
+
   int vpp_fwidth;
   int vpp_fheight;
+
   int vpp_argc;
+  int nfx_threads;
 
   char **vpp_argv;
+  uint64_t disk_quota;
 
   _encoder encoder;
+
   boolean show_recent;
   boolean show_tool;
+
   boolean osc_start;
   int startup_interface;
-  uint32_t jack_opts;
 
+  uint32_t jack_opts;
   int audio_src;
+
   uint32_t audio_opts;
   short pb_quality;
-
-  int nfx_threads;
+  short sepwin_type;
 
   LiVESList *disabled_decoders;
   LiVESList *disabled_decoders_new;
 
-  short sepwin_type;
   volatile float volume; ///< audio volume level (for jack and pulse)
+
   boolean vj_mode;
   boolean ar_clipset;
 

@@ -2584,7 +2584,7 @@ void rte_set_key_defs(LiVESButton * button, lives_rfx_t *rfx) {
   int key, mode;
   if (mainw->textwidget_focus != NULL) {
     LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus),
-                              "textwidget");
+                              TEXTWIDGET_KEY);
     after_param_text_changed(textwidget, rfx);
   }
 
@@ -2605,7 +2605,7 @@ void rte_set_defs_ok(LiVESButton * button, lives_rfx_t *rfx) {
 
   if (mainw->textwidget_focus != NULL) {
     LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus),
-                              "textwidget");
+                              TEXTWIDGET_KEY);
     after_param_text_changed(textwidget, rfx);
   }
 

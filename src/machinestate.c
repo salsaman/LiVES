@@ -621,6 +621,7 @@ char *lives_format_storage_space_string(uint64_t space) {
 
 lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, uint64_t *dsval) {
   // WARNING: this will actually create the directory (since we dont know if its parents are needed)
+  // call with dsval set to ds_used to check for OVER_QUOTA
   uint64_t ds;
   lives_storage_status_t storage = LIVES_STORAGE_STATUS_UNKNOWN;
   if (dsval && prefs->disk_quota > 0 && *dsval > prefs->disk_quota)
@@ -635,29 +636,6 @@ lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, 
 }
 
 
-static size_t _get_usage(void) {
-  int fd;
-  ssize_t bytes;
-  char buff[256];
-  char *dufile = lives_strdup_printf("%s/diskuse", prefs->workdir);
-  char *com = lives_strdup_printf("%s -sb0 \"%s\" > \"%s\"", EXEC_DU, prefs->workdir, dufile);
-  THREADVAR(com_failed) = FALSE;
-  lives_system(com, TRUE);
-  lives_free(com);
-  if (THREADVAR(com_failed)) {
-    THREADVAR(com_failed) = FALSE;
-    return 0;
-  }
-  fd = lives_open2(dufile, O_RDONLY);
-  if (fd < 0) return 0;
-  bytes = read(fd, buff, 256);
-  close(fd);
-  (void)bytes;
-  lives_rm(dufile);
-  lives_free(dufile);
-  return atoll(buff);
-}
-
 boolean get_ds_used(int64_t *bytes) {
   /// returns bytes used for the workdir
   /// because this may take some time on some OS, a background thread is run and  FALSE is returned along with the last
@@ -666,13 +644,15 @@ boolean get_ds_used(int64_t *bytes) {
   boolean ret = TRUE;
   static uint64_t _bytes = 0;
   static lives_proc_thread_t running = NULL;
-  if (!running) running = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)_get_usage, WEED_SEED_INT64, "");
+  if (!running) running = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)get_dir_size, WEED_SEED_INT64, "s",
+                            prefs->workdir);
   if (!lives_proc_thread_check(running)) ret = FALSE;
   else {
     _bytes = lives_proc_thread_join_int64(running);
     running = FALSE;
   }
   if (bytes) *bytes = _bytes;
+  capable->ds_used = _bytes;
   return ret;
 }
 
@@ -701,6 +681,10 @@ uint64_t get_ds_free(const char *dir) {
 
   // result is block size * blocks available
   bytes = sbuf.f_bsize * sbuf.f_bavail;
+  if (!strcmp(dir, prefs->workdir)) {
+    capable->ds_free = bytes;
+    capable->ds_tot = sbuf.f_bsize * sbuf.f_blocks;
+  }
 
 getfserr:
   if (must_delete) lives_rmdir(dir, FALSE);
@@ -728,6 +712,25 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t o
 LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks(void) {
   //  return current (wallclock) time in ticks (units of 10 nanoseconds)
   return lives_get_relative_ticks(0, 0);
+}
+
+
+#define SECS_IN_DAY 86400
+char *lives_datetime_rel(const char *datetime) {
+  /// replace date w. yesterday, today
+  char *dtxt;
+  char *today = NULL, *yesterday = NULL;
+  struct timeval otv;
+  gettimeofday(&otv, NULL);
+  today = lives_datetime(otv.tv_sec);
+  yesterday = lives_datetime(otv.tv_sec - SECS_IN_DAY);
+  if (!lives_strncmp(datetime, today, 10)) dtxt = lives_strdup_printf(_("Today %s"), datetime + 11);
+  else if (!lives_strncmp(datetime, yesterday, 10))
+    dtxt = lives_strdup_printf(_("Yesterday %s"), datetime + 11);
+  else dtxt = (char *)datetime;
+  if (today) lives_free(today);
+  if (yesterday) lives_free(yesterday);
+  return dtxt;
 }
 
 
@@ -902,10 +905,71 @@ boolean is_empty_dir(const char *dirname) {
 }
 
 
+char *get_mountpoint_for(char *dir) {
+  FILE *mountinfo;
+  char **array;
+  char *mp = NULL;
+  size_t lmatch = 0, slen;
+  char buff[65536];
+  int j;
+
+  if (!dir) return NULL;
+  slen = lives_strlen(dir);
+
+  if (!(mountinfo = fopen(MOUNTINFO, "r"))) return NULL;
+  while (1) {
+    if (!lives_fgets(buff, 65536, mountinfo)) break;
+    g_print("ARR was %s\n", buff);
+    array = lives_strsplit(buff, " ", 3);
+    g_print("ARR1 was %s\n", array[1]);
+    for (j = 0; array[1][j] && j < slen; j++) if (array[1][j] != dir[j]) break;
+    if (j > lmatch && !array[1][j]) {
+      lmatch = j;
+      if (mp) lives_free(mp);
+      mp = lives_strdup(array[0]);
+    }
+    lives_strfreev(array);
+  }
+  fclose(mountinfo);
+  return mp;
+}
+
+
+ssize_t get_dir_size(const char *dirname) {
+  ssize_t dirsize = -1;
+  if (check_for_executable(&capable->has_du, EXEC_DU)) {
+    char buff[PATH_MAX * 2];
+    char *com = lives_strdup_printf("%s -sb0 \"%s\"", EXEC_DU, dirname);
+    THREADVAR(com_failed) = FALSE;
+    lives_popen(com, TRUE, buff, PATH_MAX * 2);
+    lives_free(com);
+    if (THREADVAR(com_failed)) THREADVAR(com_failed) = FALSE;
+    else dirsize = atol(buff);
+  }
+  return dirsize;
+}
+
+
+void free_fdets_list(LiVESList **listp) {
+  LiVESList *list = *listp;
+  lives_file_dets_t *filedets;
+  for (; list && list->data; list = list->next) {
+    filedets = (lives_file_dets_t *)list->data;
+    lives_struct_free(filedets->lsd);
+    list->data = NULL;
+  }
+  if (*listp) {
+    lives_list_free(*listp);
+    *listp = NULL;
+  }
+}
+
+
 int stat_to_file_dets(const char *fname, lives_file_dets_t *fdets) {
   struct stat filestat;
   int ret = stat(fname, &filestat);
   if (ret) {
+    perror("stat failed:");
     fdets->size = -2;
     fdets->type = LIVES_FILE_TYPE_UNKNOWN;
     return ret;
@@ -923,8 +987,7 @@ int stat_to_file_dets(const char *fname, lives_file_dets_t *fdets) {
 }
 
 
-char *file_to_file_details(const char *filename, lives_file_dets_t *fdets,
-                           lives_proc_thread_t tinfo, uint64_t extra) {
+static char *file_to_file_details(const char *filename, lives_file_dets_t *fdets, lives_proc_thread_t tinfo, uint64_t extra) {
   char *tmp;
   char *extra_details = lives_strdup("");
 
@@ -935,7 +998,6 @@ char *file_to_file_details(const char *filename, lives_file_dets_t *fdets,
       lives_free(extra_details);
       return NULL;
     }
-
     if (fdets->type == LIVES_FILE_TYPE_DIRECTORY) {
       boolean emptyd = FALSE;
       if (extra & EXTRA_DETAILS_EMPTY_DIR) {
@@ -949,10 +1011,19 @@ char *file_to_file_details(const char *filename, lives_file_dets_t *fdets,
           return NULL;
         }
       }
+      if ((extra & EXTRA_DETAILS_DIRSIZE) &&
+          check_for_executable(&capable->has_du, EXEC_DU)
+          && !emptyd && fdets->type == LIVES_FILE_TYPE_DIRECTORY) {
+        fdets->size = get_dir_size(filename);
+      }
+
       if (!emptyd && (extra & EXTRA_DETAILS_CLIPHDR)) {
-        int clipno = create_nullvideo_clip(fdets->name);
+        int clipno;
+
+        clipno = create_nullvideo_clip("tmp");
+
         if (clipno && IS_VALID_CLIP(clipno)) {
-          if (read_headers(clipno, NULL)) {
+          if (read_headers(clipno, filename, NULL)) {
             lives_clip_t *sfile = mainw->files[clipno];
             char *name = lives_strdup(sfile->name);
             extra_details =
@@ -962,7 +1033,7 @@ char *file_to_file_details(const char *filename, lives_file_dets_t *fdets,
                                           name, sfile->frames, sfile->hsize,
                                           sfile->vsize, sfile->fps)));
             lives_free(tmp);
-            if (name != sfile->name) lives_free(name);
+            lives_free(name);
             lives_freep((void **)&mainw->files[clipno]);
             if (mainw->first_free_file == ALL_USED || mainw->first_free_file > clipno)
               mainw->first_free_file = clipno;
@@ -970,7 +1041,7 @@ char *file_to_file_details(const char *filename, lives_file_dets_t *fdets,
           if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
 	  // *INDENT-OFF*
 	}}}}
-    // *INDENT-ON*
+  // *INDENT-ON*
 
   if (extra & EXTRA_DETAILS_MD5) {
     fdets->md5sum = get_md5sum(filename);
@@ -984,67 +1055,87 @@ char *file_to_file_details(const char *filename, lives_file_dets_t *fdets,
    '.' and '..' are ignored
    subdir can be NULL
 */
-void *_dir_to_file_details(LiVESList **listp, const char *dir, const char *tsubdir,
-                           const char *orig_loc, uint64_t extra) {
+void *_item_to_file_details(LiVESList **listp, const char *item,
+                            const char *orig_loc, uint64_t extra, int type) {
+  // type 0 = dir
+  // type 1 = ordfile
   lives_file_dets_t *fdets;
-  DIR *tldir, *subdir;
-  struct dirent *tdirent, *subdirent;
   lives_proc_thread_t tinfo = NULL;
   LiVESList *list;
-  char *subdirname;
   char *extra_details;
+  const char *dir = NULL;
+  char *subdirname;
   boolean empty = TRUE;
 
   tinfo = THREADVAR(tinfo);
   if (tinfo) lives_proc_thread_set_cancellable(tinfo);
 
-  if (!dir) return NULL;
-  tldir = opendir(dir);
-  if (!tldir) return NULL;
+  switch (type) {
+  case 0: {
+    DIR *tldir;
+    struct dirent *tdirent;
+    // dir
+    dir = item;
+    if (!dir) return NULL;
+    tldir = opendir(dir);
+    if (!tldir) {
+      *listp = lives_list_append(*listp, NULL);
+      return NULL;
+    }
 
-  while (1) {
-    tdirent = readdir(tldir);
-    if (lives_proc_thread_cancelled(tinfo) || !tdirent) {
-      closedir(tldir);
+    while (1) {
+      tdirent = readdir(tldir);
+      if (lives_proc_thread_cancelled(tinfo) || !tdirent) {
+        closedir(tldir);
+        if (lives_proc_thread_cancelled(tinfo)) return NULL;
+        break;
+      }
+      if (tdirent->d_name[0] == '.'
+          && (!tdirent->d_name[1] || tdirent->d_name[1] == '.')) continue;
+      fdets = (lives_file_dets_t *)struct_from_template(LIVES_STRUCT_FILE_DETS_T);
+      fdets->name = lives_strdup(tdirent->d_name);
+      fdets->size = -1;
+      *listp = lives_list_append(*listp, fdets);
+      if (lives_proc_thread_cancelled(tinfo)) {
+        closedir(tldir);
+        return NULL;
+      }
+    }
+    break;
+  }
+  case 1: {
+    FILE *orderfile;
+    char buff[PATH_MAX];
+    const char *ofname = item;
+
+    if (!(orderfile = fopen(ofname, "r"))) return NULL;
+    if (lives_proc_thread_cancelled(tinfo) || !orderfile) {
       if (lives_proc_thread_cancelled(tinfo)) return NULL;
       break;
     }
+    if (!lives_fgets(buff, PATH_MAX, orderfile)) {
+      fclose(orderfile);
+      break;
+    }
+    lives_chomp(buff);
+    fdets = (lives_file_dets_t *)struct_from_template(LIVES_STRUCT_FILE_DETS_T);
 
-    if (tdirent->d_name[0] == '.'
-        && (!tdirent->d_name[1] || tdirent->d_name[1] == '.')) continue;
-
-    if (tsubdir) {
-      if (!lives_strcmp(tdirent->d_name, tsubdir)) {
-        closedir(tldir);
-        if (lives_proc_thread_cancelled(tinfo)) return NULL;
-        subdirname = lives_build_filename(dir, tsubdir, NULL);
-        subdir = opendir(subdirname);
-        lives_free(subdirname);
-        if (!subdir) break;
-        while (1) {
-          subdirent = readdir(subdir);
-          if (lives_proc_thread_cancelled(tinfo) || !subdirent) {
-            closedir(subdir);
-            if (lives_proc_thread_cancelled(tinfo)) return NULL;
-            break;
-          }
-          if (subdirent->d_name[0] == '.'
-              && (!subdirent->d_name[1] || subdirent->d_name[1] == '.')) continue;
-          fdets = (lives_file_dets_t *)struct_from_template(LIVES_STRUCT_FILE_DETS_T);
-          fdets->name = lives_strdup(subdirent->d_name);
-          fdets->size = -1;
-          *listp = lives_list_append(*listp, fdets);
-          if (lives_proc_thread_cancelled(tinfo)) {
-            closedir(subdir);
-            return NULL;
-	    // *INDENT-OFF*
-	  }}
-        break;
-      }}}
-  // *INDENT-OFF*
+    fdets->name = lives_strdup(buff);
+    fdets->size = -1;
+    *listp = lives_list_append(*listp, fdets);
+    if (lives_proc_thread_cancelled(tinfo)) {
+      fclose(orderfile);
+      return NULL;
+    }
+    fclose(orderfile);
+    break;
+  }
+  default: return NULL;
+  }
 
   if (*listp) empty = FALSE;
   *listp = lives_list_append(*listp, NULL);
+
   if (empty || lives_proc_thread_cancelled(tinfo)) return NULL;
 
   // listing done, now get details for each entry
@@ -1054,8 +1145,11 @@ void *_dir_to_file_details(LiVESList **listp, const char *dir, const char *tsubd
 
     extra_details = lives_strdup("");
     fdets = (lives_file_dets_t *)list->data;
-    subdirname = lives_build_filename(orig_loc, fdets->name, NULL);
 
+    if (orig_loc && *orig_loc) subdirname = lives_build_filename(orig_loc, fdets->name, NULL);
+    else subdirname = lives_build_path(dir, fdets->name, NULL);
+
+    // need to call even with no extra, because it gets size / type tc.
     if (!(extra_details = file_to_file_details(subdirname, fdets, tinfo, extra))) {
       lives_free(subdirname);
       lives_free(extra_details);
@@ -1082,10 +1176,17 @@ void *_dir_to_file_details(LiVESList **listp, const char *dir, const char *tsubd
    subdir can be NULL
    runs in a proc_htread
 */
-lives_proc_thread_t dir_to_file_details(LiVESList **listp, const char *dir, const char *tsubdir,
-					 const char *orig_loc, uint64_t extra) {
-  return lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)_dir_to_file_details, -1, "vsssI",
-				  listp, dir, tsubdir, orig_loc, extra);
+lives_proc_thread_t dir_to_file_details(LiVESList **listp, const char *dir,
+                                        const char *orig_loc, uint64_t extra) {
+  return lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)_item_to_file_details, -1, "vssIi",
+                                  listp, dir, orig_loc, extra, 0);
+}
+
+
+lives_proc_thread_t ordfile_to_file_details(LiVESList **listp, const char *ofname,
+    const char *orig_loc, uint64_t extra) {
+  return lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)_item_to_file_details, -1, "vssIi",
+                                  listp, ofname, orig_loc, extra, 1);
 }
 
 
@@ -1143,8 +1244,7 @@ LIVES_GLOBAL_INLINE char *lives_concat_sep(char *st, const char *sep, char *x) {
     tmp = (char *)lives_realloc(st, ++s2 + s1 + s3);
     lives_memcpy(tmp + s1, sep, s3);
     lives_memcpy(tmp + s1 + s3, x, s2);
-  }
-  else tmp = lives_strdup(x);
+  } else tmp = lives_strdup(x);
   lives_free(x);
   return tmp;
 }
@@ -1310,7 +1410,7 @@ LIVES_GLOBAL_INLINE boolean lives_strncmp(const char *st1, const char *st2, size
 #define HASHROOT 5381
 LIVES_GLOBAL_INLINE uint32_t lives_string_hash(const char *st) {
   if (st) for (uint32_t hash = HASHROOT;; hash += (hash << 5)
-                 + *(st++)) if (!(*st)) return hash;
+                 + * (st++)) if (!(*st)) return hash;
   return 0;
 }
 
@@ -1325,9 +1425,9 @@ LIVES_GLOBAL_INLINE uint32_t fast_hash(const char *key) {
     int len = lives_strlen(key), rem = len & 3;
     uint32_t hash = len + HASHROOT, tmp;
     len >>= 2;
-    for (;len > 0; len--) {
-      hash  += get16bits (key);
-      tmp    = (get16bits (key+2) << 11) ^ hash;
+    for (; len > 0; len--) {
+      hash  += get16bits(key);
+      tmp    = (get16bits(key + 2) << 11) ^ hash;
       hash   = (hash << 16) ^ tmp;
       key  += 4;
       hash  += hash >> 11;
@@ -1335,15 +1435,15 @@ LIVES_GLOBAL_INLINE uint32_t fast_hash(const char *key) {
 
     /* Handle end cases */
     switch (rem) {
-    case 3: hash += get16bits (key);
+    case 3: hash += get16bits(key);
       hash ^= hash << 16;
       hash ^= ((int8_t)key[2]) << 18;
       hash += hash >> 11;
       break;
-    case 2: hash += get16bits (key);
+    case 2: hash += get16bits(key);
       hash ^= hash << 11; hash += hash >> 17;
       break;
-    case 1: hash += (int8_t)*key;
+    case 1: hash += (int8_t) * key;
       hash ^= hash << 10; hash += hash >> 1;
       break;
     default: break;
@@ -1388,6 +1488,9 @@ static lives_proc_thread_t _lives_proc_thread_create(lives_thread_attr_t attr, l
   if (!thread_info) return NULL;
   weed_set_funcptr_value(thread_info, WEED_LEAF_THREADFUNC, func);
   if (return_type) {
+    pthread_mutex_t *dcmutex = (pthread_mutex_t *)lives_malloc(sizeof(pthread_mutex_t));
+    pthread_mutex_init(dcmutex, NULL);
+    weed_set_voidptr_value(thread_info, WEED_LEAF_DONTCARE_MUTEX, dcmutex);
     weed_set_boolean_value(thread_info, WEED_LEAF_NOTIFY, WEED_TRUE);
     if (return_type > 0)  weed_leaf_set(thread_info, WEED_LEAF_RETURN_VALUE, return_type, 0, NULL);
   }
@@ -1477,9 +1580,12 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
 #define FUNCSIG_PLANTP_BOOL 				       		0X000000E3
 #define FUNCSIG_VOIDP_VOIDP_VOIDP 		        		0X00000DDD
 #define FUNCSIG_PLANTP_VOIDP_INT64 		        		0X00000ED5
+  // 4p
 #define FUNCSIG_STRING_STRING_VOIDP_INT					0X000044D1
+  // 5p
 #define FUNCSIG_INT_INT_INT_BOOL_VOIDP					0X0001113D
-#define FUNCSIG_VOIDP_STRING_STRING_STRING_INT64		       	0X000D4445
+#define FUNCSIG_VOIDP_STRING_STRING_INT64_INT			       	0X000D4451
+  // 6p
 #define FUNCSIG_STRING_STRING_VOIDP_INT_STRING_VOIDP		       	0X0044D14D
 
   // Note: C compilers don't care about the type / number of function args., (else it would be impossible to alias any function pointer)
@@ -1511,6 +1617,7 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
   case FUNCSIG_STRING:
     switch (ret_type) {
     case WEED_SEED_STRING: CALL_1(string, string); break;
+    case WEED_SEED_INT64: CALL_1(int64, string); break;
     default: CALL_VOID_1(string); break;
     }
     break;
@@ -1558,14 +1665,14 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
     default: CALL_VOID_4(string, string, voidptr, int); break;
     }
     break;
+  case FUNCSIG_VOIDP_STRING_STRING_INT64_INT:
+    switch (ret_type) {
+    default: CALL_VOID_5(voidptr, string, string, int64, int); break;
+    }
+    break;
   case FUNCSIG_INT_INT_INT_BOOL_VOIDP:
     switch (ret_type) {
     default: CALL_VOID_5(int, int, int, boolean, voidptr); break;
-    }
-    break;
-  case FUNCSIG_VOIDP_STRING_STRING_STRING_INT64:
-    switch (ret_type) {
-    default: CALL_VOID_5(voidptr, string, string, string, int64); break;
     }
     break;
   case FUNCSIG_STRING_STRING_VOIDP_INT_STRING_VOIDP:
@@ -1610,9 +1717,27 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancel(lives_proc_thread_t tinfo) 
   return TRUE;
 }
 
+boolean lives_proc_thread_dontcare(lives_proc_thread_t tinfo) {
+  /// if thread is running, tell it we no longer care about return value, so it can free itself
+  /// if finished we just call lives_proc_thread_join() to free it
+  /// a mutex is used to ensure the proc_thread does not finish between setting the flag and checking if it has ifnished
+  pthread_mutex_t *dcmutex = weed_get_voidptr_value(tinfo, WEED_LEAF_DONTCARE_MUTEX, NULL);
+  if (dcmutex) {
+    pthread_mutex_lock(dcmutex);
+    if (!lives_proc_thread_check(tinfo)) {
+      weed_set_boolean_value(tinfo, WEED_LEAF_DONTCARE, WEED_TRUE);
+      pthread_mutex_unlock(dcmutex);
+    } else {
+      pthread_mutex_unlock(dcmutex);
+      lives_proc_thread_join(tinfo);
+    }
+  }
+  return TRUE;
+}
+
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancelled(lives_proc_thread_t tinfo) {
   return (tinfo && weed_get_boolean_value(tinfo, WEED_LEAF_THREAD_CANCELLED, NULL) == WEED_TRUE)
-    ? TRUE : FALSE;
+         ? TRUE : FALSE;
 }
 
 #define _join(stype) lives_nanosleep_until_nonzero(weed_leaf_num_elements(tinfo, _RV_)); \
@@ -1620,7 +1745,10 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancelled(lives_proc_thread_t tinf
 
 LIVES_GLOBAL_INLINE void lives_proc_thread_join(lives_proc_thread_t tinfo) {
   // WARNING !! version without a return value will free tinfo !
+  void *dcmutex;
   lives_nanosleep_until_nonzero((weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL) == WEED_TRUE));
+  dcmutex = weed_get_voidptr_value(tinfo, WEED_LEAF_DONTCARE_MUTEX, NULL);
+  if (dcmutex) lives_free(dcmutex);
   weed_plant_free(tinfo);
 }
 LIVES_GLOBAL_INLINE int lives_proc_thread_join_int(lives_proc_thread_t tinfo) { _join(int);}
@@ -1663,9 +1791,19 @@ static void *_plant_thread_func(void *args) {
   funcsig_t sig = make_funcsig(info);
   THREADVAR(tinfo) = info;
   call_funcsig(sig, info);
-  if (weed_get_boolean_value(info, WEED_LEAF_NOTIFY, NULL) == WEED_TRUE)
+
+  if (weed_get_boolean_value(info, WEED_LEAF_NOTIFY, NULL) == WEED_TRUE) {
+    boolean dontcare;
+    pthread_mutex_t *dcmutex = (pthread_mutex_t *)weed_get_voidptr_value(info, WEED_LEAF_DONTCARE_MUTEX, NULL);
+    pthread_mutex_lock(dcmutex);
+    dontcare = weed_get_boolean_value(info, WEED_LEAF_DONTCARE, NULL);
     weed_set_boolean_value(info, WEED_LEAF_DONE, WEED_TRUE);
-  else if (!ret_type) weed_plant_free(info);
+    pthread_mutex_unlock(dcmutex);
+    if (dontcare == WEED_TRUE) {
+      lives_free(dcmutex);
+      weed_plant_free(info);
+    }
+  } else if (!ret_type) weed_plant_free(info);
   return NULL;
 }
 
@@ -1677,55 +1815,48 @@ void *fg_run_func(lives_proc_thread_t lpt, void *retval) {
   call_funcsig(sig, lpt);
 
   switch (ret_type) {
-  case WEED_SEED_INT:
-    {
-      int *ival = (int *)retval;
-      *ival = weed_get_int_value(lpt, _RV_, NULL);
-      weed_plant_free(lpt);
-      return (void *)ival;
-    }
-  case WEED_SEED_BOOLEAN:
-    {
-      int *bval = (int *)retval;
-      *bval = weed_get_boolean_value(lpt, _RV_, NULL);
-      weed_plant_free(lpt);
-      return (void *)bval;
-    }
-  case WEED_SEED_DOUBLE:
-    {
-      double *dval = (double *)retval;
-      *dval = weed_get_double_value(lpt, _RV_, NULL);
-      weed_plant_free(lpt);
-      return (void *)dval;
-    }
-  case WEED_SEED_STRING:
-    {
-      char *chval = weed_get_string_value(lpt, _RV_, NULL);
-      weed_plant_free(lpt);
-      return (void *)chval;
-    }
-  case WEED_SEED_INT64:
-    {
-      int64_t *i64val = (int64_t *)retval;
-      *i64val = weed_get_int64_value(lpt, _RV_, NULL);
-      weed_plant_free(lpt);
-      return (void *)i64val;
-    }
-  case WEED_SEED_VOIDPTR:
-    {
-      void *val;
-      val = weed_get_voidptr_value(lpt, _RV_, NULL);
-      weed_plant_free(lpt);
-      return val;
-    }
-  case WEED_SEED_PLANTPTR:
-    {
-      weed_plant_t *pval;
-      pval = weed_get_plantptr_value(lpt, _RV_, NULL);
-      weed_plant_free(lpt);
-      return (void *)pval;
-    }
-    /// no funcptrs or custom...yet
+  case WEED_SEED_INT: {
+    int *ival = (int *)retval;
+    *ival = weed_get_int_value(lpt, _RV_, NULL);
+    weed_plant_free(lpt);
+    return (void *)ival;
+  }
+  case WEED_SEED_BOOLEAN: {
+    int *bval = (int *)retval;
+    *bval = weed_get_boolean_value(lpt, _RV_, NULL);
+    weed_plant_free(lpt);
+    return (void *)bval;
+  }
+  case WEED_SEED_DOUBLE: {
+    double *dval = (double *)retval;
+    *dval = weed_get_double_value(lpt, _RV_, NULL);
+    weed_plant_free(lpt);
+    return (void *)dval;
+  }
+  case WEED_SEED_STRING: {
+    char *chval = weed_get_string_value(lpt, _RV_, NULL);
+    weed_plant_free(lpt);
+    return (void *)chval;
+  }
+  case WEED_SEED_INT64: {
+    int64_t *i64val = (int64_t *)retval;
+    *i64val = weed_get_int64_value(lpt, _RV_, NULL);
+    weed_plant_free(lpt);
+    return (void *)i64val;
+  }
+  case WEED_SEED_VOIDPTR: {
+    void *val;
+    val = weed_get_voidptr_value(lpt, _RV_, NULL);
+    weed_plant_free(lpt);
+    return val;
+  }
+  case WEED_SEED_PLANTPTR: {
+    weed_plant_t *pval;
+    pval = weed_get_plantptr_value(lpt, _RV_, NULL);
+    weed_plant_free(lpt);
+    return (void *)pval;
+  }
+  /// no funcptrs or custom...yet
   default: break;
   }
   return NULL;
@@ -2478,8 +2609,6 @@ char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase,
   return match;
 }
 
-
-/// x11 stuff
 static boolean mini_run(char *cmd) {
   THREADVAR(com_failed) = FALSE;
   if (!cmd) return FALSE;
@@ -2491,6 +2620,37 @@ static boolean mini_run(char *cmd) {
   }
   return TRUE;
 }
+
+
+LiVESResponseType send_to_trash(const char *item) {
+  LiVESResponseType resp = LIVES_RESPONSE_NONE;
+  boolean retval = TRUE;
+  char *reason = NULL;
+  do {
+    resp = LIVES_RESPONSE_NONE;
+    if (!check_for_executable(&capable->has_gio, EXEC_GIO)) {
+      reason = lives_strdup_printf(_("%s was not found\n"), EXEC_GIO);
+      retval = FALSE;
+    }
+    else {
+      char *com = lives_strdup_printf("%s trash \"%s\"", EXEC_GIO, item);
+      THREADVAR(com_failed) = FALSE;
+      retval = mini_run(com);
+      lives_free(com);
+    }
+    if (!retval) {
+      char *msg = lives_strdup_printf(_("LiVES was unable to send the item to trash.\n%s"), reason ? reason : "");
+      lives_freep((void **)&reason);
+      resp = do_abort_cancel_retry_dialog(msg);
+      lives_free(msg);
+      if (resp == LIVES_RESPONSE_CANCEL) return resp;
+    }
+  } while (resp == LIVES_RESPONSE_RETRY);
+  return LIVES_RESPONSE_OK;
+}
+
+
+/// x11 stuff
 
 char *get_wid_for_name(const char *wname) {
 #ifndef GDK_WINDOWING_X11

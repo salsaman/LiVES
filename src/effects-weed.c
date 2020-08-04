@@ -1231,7 +1231,7 @@ reinit:
           if (mainw->textwidget_focus != NULL && LIVES_IS_WIDGET_OBJECT(mainw->textwidget_focus)) {
             // make sure text widgets are updated if they activate the default
             LiVESWidget *textwidget =
-              (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus), "textwidget");
+              (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus), TEXTWIDGET_KEY);
             weed_set_boolean_value(inst, WEED_LEAF_HOST_REINITING, WEED_TRUE);
             after_param_text_changed(textwidget, rfx);
             weed_leaf_delete(inst, WEED_LEAF_HOST_REINITING);

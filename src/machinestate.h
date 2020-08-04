@@ -283,9 +283,14 @@ lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, 
 uint64_t get_ds_free(const char *dir);
 boolean get_ds_used(int64_t *bytes);
 
+#define MOUNTINFO "/proc/mounts"
+
+char *get_mountpoint_for(char *dir);
+
 ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t orignsecs);
 ticks_t lives_get_current_ticks(void);
 char *lives_datetime(uint64_t secs);
+char *lives_datetime_rel(const char *datetime);
 
 #define lives_nanosleep(nanosec) {struct timespec ts; ts.tv_sec = (uint64_t)nanosec / ONE_BILLION; \
     ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (nanosleep(&ts, &ts) == -1 && \
@@ -300,11 +305,15 @@ uint64_t sget_file_size(const char *name);
 void reget_afilesize(int fileno);
 uint64_t reget_afilesize_inner(int fileno);
 
+ssize_t get_dir_size(const char *dirname);
+
 boolean compress_files_in_dir(const char *dir, int method, void *data);
+LiVESResponseType send_to_trash(const char *item);
 
 #define EXTRA_DETAILS_EMPTY_DIR			(1 << 0)
-#define EXTRA_DETAILS_CLIPHDR			(1 << 1)
-#define EXTRA_DETAILS_MD5			(1 << 2)
+#define EXTRA_DETAILS_DIRSIZE			(1 << 1)
+#define EXTRA_DETAILS_CLIPHDR			(1 << 2)
+#define EXTRA_DETAILS_MD5			(1 << 3)
 
 typedef struct {
   ///< if we can retrieve some kind of uinque id, we set it here
@@ -378,6 +387,8 @@ typedef struct {
 #define WEED_LEAF_THREAD_CANCELLABLE "t_can_cancel"
 #define WEED_LEAF_THREAD_CANCELLED "t_cancelled"
 #define WEED_LEAF_RETURN_VALUE "return_value"
+#define WEED_LEAF_DONTCARE "dontcare"  ///< tell proc_thread with return value that we n o longer need return val.
+#define WEED_LEAF_DONTCARE_MUTEX "dontcare_mutex" ///< ensures we can set dontcare without it finishing while doing so
 
 #define WEED_LEAF_THREAD_PARAM "thrd_param"
 #define _WEED_LEAF_THREAD_PARAM(n) WEED_LEAF_THREAD_PARAM  n
@@ -473,6 +484,8 @@ typedef union {
 
 lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t, lives_funcptr_t, int return_type, const char *args_fmt,
     ...);
+
+/// returns FALSE while the thread is running, TRUE once it has finished
 boolean lives_proc_thread_check(lives_proc_thread_t);
 
 lives_thread_data_t *get_thread_data(void);
@@ -481,10 +494,15 @@ lives_thread_data_t *lives_thread_data_create(uint64_t idx);
 
 #define THREADVAR(var) (get_threadvars()->var_##var)
 
+/// only threads with no return value can possibly be cancellable. For threads with a value, use
+/// lives_proc_thread_dontcare()
 void lives_proc_thread_set_cancellable(lives_proc_thread_t);
 boolean lives_proc_thread_get_cancellable(lives_proc_thread_t);
 boolean lives_proc_thread_cancel(lives_proc_thread_t);
 boolean lives_proc_thread_cancelled(lives_proc_thread_t);
+
+/// tell a threead with return value that we no longer need the value so it can free itself
+boolean lives_proc_thread_dontcare(lives_proc_thread_t);
 
 void lives_proc_thread_sync_ready(lives_proc_thread_t);
 
@@ -506,8 +524,12 @@ void resubmit_proc_thread(lives_proc_thread_t, lives_thread_attr_t);
 void *fg_run_func(lives_proc_thread_t lpt, void *retval);
 void *main_thread_execute(lives_funcptr_t func, int return_type, void *retval, const char *args_fmt, ...);
 
-lives_proc_thread_t dir_to_file_details(LiVESList **listp, const char *dir, const char *tsubdir,
+void free_fdets_list(LiVESList **);
+lives_proc_thread_t dir_to_file_details(LiVESList **, const char *dir,
                                         const char *orig_loc, uint64_t extra);
+lives_proc_thread_t ordfile_to_file_details(LiVESList **listp, const char *ofname,
+    const char *orig_loc, uint64_t extra);
+
 ///// cmdline
 char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase, int ridx, int rlen);
 

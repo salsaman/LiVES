@@ -527,7 +527,7 @@ void ce_thumbs_add_param_box(int key, boolean remove) {
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pscrolls[key]), "pinned", LIVES_INT_TO_POINTER(FALSE));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pscrolls[key]), "update", LIVES_INT_TO_POINTER(FALSE));
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pscrolls[key]), "rfx", rfx);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pscrolls[key]), RFX_KEY, rfx);
   lives_widget_show_all(param_hbox);
 }
 
@@ -537,7 +537,7 @@ static void ce_thumbs_remove_param_box(int key) {
   lives_rfx_t *rfx;
   if (key >= rte_keys_virtual) return;
   if (pscrolls[key] == NULL) return;
-  rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[key]), "rfx");
+  rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[key]), RFX_KEY);
   on_paramwindow_button_clicked(NULL, rfx); // free rfx and unref the inst (must be done before destroying the pscrolls[key]
   lives_widget_destroy(pscrolls[key]);
   pscrolls[key] = NULL;
@@ -573,7 +573,7 @@ void ce_thumbs_apply_rfx_changes(void) {
     if (pscrolls[i] != NULL) {
       if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[i]), "update"))) {
         lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pscrolls[i]), "update", LIVES_INT_TO_POINTER(FALSE));
-        rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[i]), "rfx");
+        rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[i]), RFX_KEY);
         update_visual_params(rfx, FALSE);
       }
     }
@@ -587,7 +587,7 @@ void ce_thumbs_update_params(int key, int i, LiVESList *list) {
   if (key >= rte_keys_virtual) return;
 
   if (pscrolls[key] != NULL) {
-    rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[key]), "rfx");
+    rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[key]), RFX_KEY);
     mainw->block_param_updates = TRUE;
     set_param_from_list(list, &rfx->params[key], 0, TRUE, TRUE);
     mainw->block_param_updates = FALSE;
@@ -601,7 +601,7 @@ void ce_thumbs_update_visual_params(int key) {
   if (key >= rte_keys_virtual) return;
 
   if (pscrolls[key] != NULL) {
-    rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[key]), "rfx");
+    rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[key]), RFX_KEY);
     update_visual_params(rfx, FALSE);
   }
 }
@@ -612,7 +612,7 @@ void ce_thumbs_check_for_rte(lives_rfx_t *rfx, lives_rfx_t *rte_rfx, int key) {
   register int i;
   for (i = 0; i < rte_keys_virtual; i++) {
     if (pscrolls[i] != NULL && i == key &&
-        rfx == (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[key]), "rfx")) {
+        rfx == (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[key]), RFX_KEY)) {
       update_visual_params(rte_rfx, FALSE);
       break;
     }

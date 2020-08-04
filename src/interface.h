@@ -24,6 +24,8 @@
 
 #define SCRN_BRDR 2.
 
+boolean update_dsu(void *lab);
+
 void draw_little_bars(double ptrtime, int which);
 double lives_ce_update_timeline(int frame, double x);  ///< pointer position in timeline
 void update_timer_bars(int posx, int posy, int width, int height, int which); ///< draw the timer bars
@@ -81,6 +83,14 @@ typedef struct {
   LiVESWidget *dir_entry;
   LiVESWidget *name_entry;
   LiVESWidget *warn_checkbutton;
+  LiVESWidget *okbutton;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *expander;
+  LiVESWidget *exp_label;
+  LiVESWidget *exp_vbox;
+  LiVESWidget *layouts_layout;
+  LiVESWidget *clips_layout;
+  LiVESWidget *parent;
 } _entryw;
 
 _entryw *create_rename_dialog(int type);
@@ -248,4 +258,7 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
                                  LiVESList **left_list);
 
 LiVESWidget *trash_rb(LiVESButtonBox *parent);
+
+void draw_dsu_widget(LiVESWidget *dsu_widget);
+
 #endif

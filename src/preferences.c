@@ -2922,7 +2922,7 @@ static boolean check_txtsize(LiVESWidget *combo) {
     show_warn_image(combo, _("Text size may be too large for the screen size"));
     return TRUE;
   }
-  show_warn_image(combo, NULL);
+  hide_warn_image(combo);
   return FALSE;
 }
 

@@ -173,7 +173,7 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
     title = (_("Edit Test RFX"));
   }
 
-  winsize_h = (PREF_RFXDIALOG_W < GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY / 5.) ? PREF_RFXDIALOG_W : GUI_SCREEN_WIDTH -
+  winsize_h = (PREF_RFXDIALOG_W  < GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY / 5.) ? PREF_RFXDIALOG_W : GUI_SCREEN_WIDTH -
               SCR_WIDTH_SAFETY / 5.;
   winsize_v = (PREF_RFXDIALOG_H < GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY / 2.) ? PREF_RFXDIALOG_H : GUI_SCREEN_HEIGHT -
               SCR_HEIGHT_SAFETY / 2.;
@@ -197,7 +197,7 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
   lives_box_pack_start(LIVES_BOX(top_vbox), hbox, TRUE, TRUE, 0);
 
   label = lives_standard_label_new(_("Type:"));
-  lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, FALSE, widget_opts.packing_width);
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
   string = lives_fx_cat_to_text(LIVES_FX_CAT_EFFECT, FALSE);
   rfxbuilder->type_effect1_radiobutton = lives_standard_radio_button_new(string, &radiobutton_type_group, LIVES_BOX(hbox), NULL);
@@ -237,6 +237,8 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
   lives_free(tmp2);
 
   // author
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   rfxbuilder->author_entry = lives_standard_entry_new((tmp = (_("    Author:       "))), NULL, -1, -1,
                              LIVES_BOX(hbox), (tmp2 = (_("The script author.")))
@@ -274,8 +276,7 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
   rfxbuilder->spinbutton_min_frames = lives_standard_spin_button_new((tmp = (_("Minimum frames:"))),
                                       1., 1., 1000., 1., 1., 0,
                                       LIVES_BOX(top_vbox),
-                                      (tmp2 = (_("Minimum number of frames this effect/tool can be applied to. Normally 1.")))
-                                                                    );
+                                      (tmp2 = (_("Minimum number of frames this effect/tool can be applied to. Normally 1."))));
   rfxbuilder->min_frames_label = widget_opts.last_label;
 
   // requirements

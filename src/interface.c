@@ -27,8 +27,7 @@ void add_suffix_check(LiVESBox *box, const char *ext) {
   checkbutton = lives_standard_check_button_new(ltext, mainw->fx1_bool, box, NULL);
   lives_free(ltext);
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                  LIVES_GUI_CALLBACK(on_boolean_toggled),
-                                  &mainw->fx1_bool);
+                                  LIVES_GUI_CALLBACK(on_boolean_toggled), &mainw->fx1_bool);
 }
 
 
@@ -38,8 +37,7 @@ static LiVESWidget *add_deinterlace_checkbox(LiVESBox *for_deint) {
   LiVESWidget *checkbutton = lives_standard_check_button_new((tmp = (_("Apply _Deinterlace"))), mainw->open_deint,
                              LIVES_BOX(hbox),
                              (tmp2 = (_("If this is set, frames will be deinterlaced as they are imported."))));
-  lives_free(tmp);
-  lives_free(tmp2);
+  lives_free(tmp); lives_free(tmp2);
 
   if (LIVES_IS_HBOX(for_deint)) {
     LiVESWidget *filler;
@@ -49,8 +47,7 @@ static LiVESWidget *add_deinterlace_checkbox(LiVESBox *for_deint) {
   } else lives_box_pack_start(for_deint, hbox, FALSE, FALSE, widget_opts.packing_height);
 
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                  LIVES_GUI_CALLBACK(on_boolean_toggled),
-                                  &mainw->open_deint);
+                                  LIVES_GUI_CALLBACK(on_boolean_toggled), &mainw->open_deint);
 
   lives_widget_show_all(LIVES_WIDGET(for_deint));
 
@@ -976,7 +973,8 @@ void draw_little_bars(double ptrtime, int which) {
 
       if (cfile->achans > 1 && (which == 0 || which == 3)) {
         if (mainw->raudio_drawable != NULL) {
-          allocheight = (double)lives_widget_get_allocation_height(mainw->raudbar) + bar_height + widget_opts.packing_height * 2.5;
+          allocheight = (double)lives_widget_get_allocation_height(mainw->raudbar)
+                        + bar_height + widget_opts.packing_height * 2.5;
           allocy = lives_widget_get_allocation_y(mainw->raudbar) - widget_opts.packing_height;
 
           if (LIVES_IS_PLAYING) {
@@ -1047,8 +1045,10 @@ void widget_add_preview(LiVESWidget * widget, LiVESBox * for_preview, LiVESBox *
 
     if (preview_type != LIVES_PREVIEW_TYPE_RANGE) {
       lives_widget_set_size_request(mainw->fs_playframe,
-                                    ((int)(DEF_FRAME_HSIZE_UNSCALED * (widget_opts.scale < 1. ? widget_opts.scale : 1.)) >> 2) << 1,
-                                    ((int)(DEF_FRAME_VSIZE_UNSCALED * (widget_opts.scale < 1. ? widget_opts.scale : 1.)) >> 2) << 1);
+                                    ((int)(DEF_FRAME_HSIZE_UNSCALED * (widget_opts.scale < 1.
+								       ? widget_opts.scale : 1.)) >> 2) << 1,
+                                    ((int)(DEF_FRAME_VSIZE_UNSCALED * (widget_opts.scale < 1.
+								       ? widget_opts.scale : 1.)) >> 2) << 1);
     } else {
       lives_widget_set_vexpand(mainw->fs_playframe, TRUE);
     }
@@ -1304,8 +1304,8 @@ xprocess *create_processing(const char *text) {
       lives_widget_set_can_default(procw->stop_button, TRUE);
     }
 
-    if (cfile->nokeep) procw->pause_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing), NULL, _("Paus_e"),
-          LIVES_RESPONSE_ACCEPT);
+    if (cfile->nokeep) procw->pause_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing),
+										NULL, _("Paus_e"), LIVES_RESPONSE_ACCEPT);
     else procw->pause_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing), NULL, _("Pause/_Enough"),
                                  LIVES_RESPONSE_ACCEPT);
     lives_widget_hide(procw->pause_button);
@@ -2091,7 +2091,6 @@ static boolean filtc_response(LiVESWidget *w, LiVESResponseType resp, livespoint
 }
 
 #define NMLEN_MAX 33
-#define SECS_IN_DAY 86400
 static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWidget *layout) {
   LiVESList *list = (LiVESList *)*listp;
   lives_file_dets_t *filedets;
@@ -2099,8 +2098,7 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
   LiVESWidget *hbox;
   LiVESWidget *cb = NULL;
 
-  char *txt;
-  char *today = NULL, *yesterday = NULL;
+  char *txt, *dtxt;
   boolean needs_recheck = FALSE;
 
   if (!pass) widget_opts.mnemonic_label = FALSE;
@@ -2121,6 +2119,7 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
   }
   if (!pass) {
     int woat = widget_opts.apply_theme;
+    int woph = widget_opts.packing_height;
 
     if (!rec_text) rec_text = (_("Recover"));
     if (!rem_text) rem_text = (_("Delete"));
@@ -2131,9 +2130,12 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
     widget_opts.apply_theme = 2;
     hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
-    widget_opts.expand = LIVES_EXPAND_NONE;
+    //widget_opts.expand = LIVES_EXPAND_NONE;
+
+    // do this to counter effect of setting margin
+    widget_opts.packing_height = 0;
     cb = lives_standard_check_button_new(_("All"), type != 2, LIVES_BOX(hbox), NULL);
-    widget_opts.expand = LIVES_EXPAND_DEFAULT;
+    widget_opts.packing_height = woph;
     lives_widget_set_margin(cb, widget_opts.border_width >> 1);
     lives_box_set_child_packing(LIVES_BOX(hbox), cb, FALSE, FALSE, widget_opts.packing_width >> 1,
 				LIVES_PACK_START);
@@ -2289,18 +2291,8 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
 	  lives_label_set_text(LIVES_LABEL(filedets->widgets[4]), "????");
 	}
 	else {
-	  char *dtxt;
-	  if (!today) {
-	    struct timeval otv;
-	    gettimeofday(&otv, NULL);
-	    today = lives_datetime(otv.tv_sec);
-	    yesterday = lives_datetime(otv.tv_sec - SECS_IN_DAY);
-	  }
 	  txt = lives_datetime(filedets->mtime_sec);
-	  if (!lives_strncmp(txt, today, 10)) dtxt = lives_strdup_printf(_("Today %s"), txt + 11);
-	  else if (!lives_strncmp(txt, yesterday, 10))
-	    dtxt = lives_strdup_printf(_("Yesterday %s"), txt + 11);
-	  else dtxt = txt;
+	  dtxt = lives_datetime_rel(txt);
 	  lives_label_set_text(LIVES_LABEL(filedets->widgets[4]), dtxt);
 	  if (dtxt != txt) lives_free(dtxt);
 	  lives_free(txt);
@@ -2352,8 +2344,6 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
     lives_widget_set_sensitive(cb, TRUE);
   }
  ffxdone:
-  if (today) lives_free(today);
-  if (yesterday) lives_free(yesterday);
   widget_opts.mnemonic_label = TRUE;
   return needs_recheck;
 }
@@ -2455,7 +2445,7 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
 
   do {
     lives_widget_process_updates(dialog);
-    lives_nanosleep(1000);
+    if (!*rec_list && filtresp == LIVES_RESPONSE_NONE) lives_nanosleep(1000);
   } while (!*rec_list && filtresp == LIVES_RESPONSE_NONE);
 
   if (filtresp != LIVES_RESPONSE_NONE) goto harlem_shuffle;
@@ -2480,7 +2470,7 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
 
   do {
     lives_widget_process_updates(dialog);
-    lives_nanosleep(1000);
+    if (!*rem_list && filtresp == LIVES_RESPONSE_NONE) lives_nanosleep(1000);
   } while (!*rem_list && filtresp == LIVES_RESPONSE_NONE);
 
   if (filtresp != LIVES_RESPONSE_NONE) goto harlem_shuffle;
@@ -2505,7 +2495,7 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
 
   do {
     lives_widget_process_updates(dialog);
-    lives_nanosleep(1000);
+    if (!*left_list && filtresp == LIVES_RESPONSE_NONE) lives_nanosleep(1000);
   } while (!*left_list && filtresp == LIVES_RESPONSE_NONE);
 
   if (filtresp != LIVES_RESPONSE_NONE) goto harlem_shuffle;
@@ -2550,7 +2540,7 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
     if (rem_recheck) rem_recheck = fill_filt_section(rem_list, pass, 1, layout_rem);
     if (leave_recheck) leave_recheck = fill_filt_section(left_list, pass, 2, layout_leave);
     lives_widget_process_updates(dialog);
-    lives_nanosleep(100);
+    if (filtresp == LIVES_RESPONSE_NONE && (rec_recheck || rem_recheck || leave_recheck)) lives_nanosleep(100);
   };
 
   while (filtresp == LIVES_RESPONSE_NONE) lives_dialog_run(LIVES_DIALOG(dialog));
@@ -2819,6 +2809,343 @@ _entryw *create_location_dialog(void) {
 }
 
 
+static char *mkszlabel(const char *set, ssize_t size) {
+  char *bit1 = lives_strdup_printf(_("Contents of Set %s"), set), *bit2;
+  char *szstr, *label;
+  if (size < 0) szstr = lives_strdup(_("Calculating..."));
+  else szstr = lives_format_storage_space_string(size);
+  bit2 = lives_strdup_printf(_("Total size = %s"), szstr);
+  label = lives_strdup_printf("%s\n%s\n", bit1, bit2);
+  lives_free(bit1); lives_free(bit2);
+  return label;
+}
+
+
+static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
+  static volatile boolean expanded;
+  lives_proc_thread_t layinfo = NULL, clipsinfo = NULL, sizinfo = NULL;
+  LiVESList *lists[2];
+  LiVESList **laylist = &lists[0], **clipslist = &lists[1];
+
+  *laylist = *clipslist = NULL;
+
+  expanded = lives_expander_get_expanded(LIVES_EXPANDER(exp));
+
+  if (!expanded) {
+    lives_file_dets_t *filedets;
+    const char *set = lives_entry_get_text(LIVES_ENTRY(renamew->entry));
+    LiVESList *list;
+    char *txt, *dtxt;
+    char *setdir = lives_build_path(prefs->workdir, set, NULL);
+    char *ldirname = lives_build_path(setdir, LAYOUTS_DIRNAME, NULL);
+    char *ordfilename = lives_build_filename(setdir, CLIP_ORDER_FILENAME, NULL);
+    int woat = widget_opts.apply_theme;
+    ssize_t totsize = -1;
+
+    sizinfo = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)get_dir_size, WEED_SEED_INT64, "s",
+                                       setdir);
+
+    layinfo = dir_to_file_details(laylist, ldirname, NULL, 0);
+
+    clipsinfo =
+      ordfile_to_file_details(clipslist, ordfilename, prefs->workdir,
+                              EXTRA_DETAILS_CLIPHDR | EXTRA_DETAILS_DIRSIZE);
+
+    if (lives_proc_thread_check(sizinfo)) totsize = lives_proc_thread_join_int64(sizinfo);
+    txt = mkszlabel(set, totsize);
+    lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
+    lives_free(txt);
+
+    lives_free(ldirname); lives_free(ordfilename);
+
+    lives_widget_set_sensitive(renamew->entry, FALSE);
+
+    // layouts
+    renamew->layouts_layout = lives_layout_new(LIVES_BOX(renamew->exp_vbox));
+    widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+    widget_opts.justify = LIVES_JUSTIFY_CENTER;
+    lives_layout_add_label(LIVES_LAYOUT(renamew->layouts_layout), _("Layouts"), FALSE);
+    widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
+    lives_layout_add_fill(LIVES_LAYOUT(renamew->layouts_layout), FALSE);
+
+    lives_widget_show_all(renamew->expander);
+
+    do {
+      lives_widget_process_updates(renamew->dialog);
+      if (!*laylist && !expanded) lives_nanosleep(1000);
+    } while (!*laylist && !expanded);
+
+    if (expanded) goto thrdjoin;
+
+    if (totsize == -1) {
+      if (lives_proc_thread_check(sizinfo)) totsize = lives_proc_thread_join_int64(sizinfo);
+      txt = mkszlabel(set, totsize);
+      lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
+      lives_free(txt);
+    }
+
+    list = *laylist;
+    if (!list->data) {
+      // NONE label
+      lives_layout_add_label(LIVES_LAYOUT(renamew->layouts_layout), mainw->string_constants[LIVES_STRING_CONSTANT_NONE], FALSE);
+    } else {
+      widget_opts.apply_theme = 2;
+      lives_layout_add_row(LIVES_LAYOUT(renamew->layouts_layout));
+      lives_layout_add_label(LIVES_LAYOUT(renamew->layouts_layout), _("Modified Date"), TRUE);
+      lives_layout_add_label(LIVES_LAYOUT(renamew->layouts_layout), _("Size"), TRUE);
+      lives_layout_add_label(LIVES_LAYOUT(renamew->layouts_layout), _("Name"), TRUE);
+      widget_opts.apply_theme = woat;
+
+      while (list->data && !expanded) {
+        filedets = (lives_file_dets_t *)(list->data);
+        do {
+          // wait for size
+          lives_widget_process_updates(renamew->dialog);
+          if (!expanded) {
+            if (!filedets->extra_details) lives_nanosleep(1000);
+            if (totsize == -1) {
+              if (lives_proc_thread_check(sizinfo)) {
+                totsize = lives_proc_thread_join_int64(sizinfo);
+                txt = mkszlabel(set, totsize);
+                lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
+                lives_free(txt);
+              }
+            }
+          }
+        } while (!filedets->extra_details && !expanded);
+        if (expanded) goto thrdjoin;
+        lives_layout_add_row(LIVES_LAYOUT(renamew->layouts_layout));
+        txt = lives_datetime(filedets->mtime_sec);
+        dtxt = lives_datetime_rel(txt);
+        lives_layout_add_label(LIVES_LAYOUT(renamew->layouts_layout), dtxt, TRUE);
+        if (dtxt != txt) lives_free(dtxt);
+        lives_free(txt);
+        txt = lives_format_storage_space_string(filedets->size);
+        lives_layout_add_label(LIVES_LAYOUT(renamew->layouts_layout), txt, TRUE);
+        lives_free(txt);
+        lives_layout_add_label(LIVES_LAYOUT(renamew->layouts_layout), filedets->name, TRUE);
+        lives_widget_show_all(renamew->expander);
+        do {
+          lives_widget_process_updates(renamew->dialog);
+          if (!expanded) {
+            if (totsize == -1) {
+              if (lives_proc_thread_check(sizinfo)) {
+                totsize = lives_proc_thread_join_int64(sizinfo);
+                txt = mkszlabel(set, totsize);
+                lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
+                lives_free(txt);
+                lives_widget_process_updates(renamew->dialog);
+              }
+            }
+          }
+          if (!expanded && !list->next) lives_nanosleep(1000);
+        } while (!list->next && !expanded);
+        if (expanded) goto thrdjoin;
+        list = list->next;
+      }
+    }
+
+    if (expanded) goto thrdjoin;
+
+    do {
+      lives_widget_process_updates(renamew->dialog);
+      if (!expanded) {
+        if (totsize == -1) {
+          if (lives_proc_thread_check(sizinfo)) {
+            totsize = lives_proc_thread_join_int64(sizinfo);
+            txt = mkszlabel(set, totsize);
+            lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
+            lives_free(txt);
+            lives_widget_process_updates(renamew->dialog);
+          }
+        }
+      }
+      if (!*clipslist && !expanded) lives_nanosleep(1000);
+    } while (!*clipslist && !expanded);
+
+    if (expanded) goto thrdjoin;
+
+    // clips
+    renamew->clips_layout = lives_layout_new(LIVES_BOX(renamew->exp_vbox));
+    lives_layout_add_fill(LIVES_LAYOUT(renamew->clips_layout), FALSE);
+    lives_layout_add_fill(LIVES_LAYOUT(renamew->clips_layout), FALSE);
+    widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+    widget_opts.justify = LIVES_JUSTIFY_CENTER;
+    lives_layout_add_label(LIVES_LAYOUT(renamew->clips_layout), _("Clips"), FALSE);
+    widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
+    lives_layout_add_fill(LIVES_LAYOUT(renamew->clips_layout), FALSE);
+
+    list = *clipslist;
+    if (!list->data) {
+      // NONE label
+      lives_layout_add_label(LIVES_LAYOUT(renamew->clips_layout), mainw->string_constants[LIVES_STRING_CONSTANT_NONE], FALSE);
+    } else {
+      int pass = 0;
+      widget_opts.apply_theme = 2;
+      lives_layout_add_row(LIVES_LAYOUT(renamew->clips_layout));
+      lives_layout_add_label(LIVES_LAYOUT(renamew->clips_layout), _("Modified Date"), TRUE);
+      lives_layout_add_label(LIVES_LAYOUT(renamew->clips_layout), _("Size"), TRUE);
+      lives_layout_add_label(LIVES_LAYOUT(renamew->clips_layout), _("Details"), TRUE);
+      widget_opts.apply_theme = woat;
+
+      while (list->data && !expanded) {
+        boolean needs_more = FALSE;
+        filedets = (lives_file_dets_t *)(list->data);
+
+        if (!pass) {
+          lives_layout_add_row(LIVES_LAYOUT(renamew->clips_layout));
+          if (!filedets->mtime_sec) dtxt = txt = lives_strdup("????");
+          else {
+            txt = lives_datetime(filedets->mtime_sec);
+            dtxt = lives_datetime_rel(txt);
+          }
+          lives_layout_add_label(LIVES_LAYOUT(renamew->clips_layout), dtxt, TRUE);
+          filedets->widgets[0] = widget_opts.last_label;
+          if (dtxt != txt) lives_free(dtxt);
+          lives_free(txt);
+        }
+
+        if (!pass) {
+          LiVESWidget *hbox = lives_layout_hbox_new(LIVES_LAYOUT(renamew->clips_layout));
+          filedets->widgets[1] = lives_standard_label_new(NULL);
+          lives_layout_pack(LIVES_BOX(hbox), filedets->widgets[1]);
+          if (filedets->size == -1) {
+            lives_widget_hide(filedets->widgets[1]);
+            lives_widget_set_no_show_all(filedets->widgets[1], TRUE);
+            filedets->widgets[2] = lives_spinner_new();
+            if (filedets->widgets[2]) {
+              lives_layout_pack(LIVES_BOX(hbox), filedets->widgets[2]);
+              lives_spinner_start(LIVES_SPINNER(filedets->widgets[2]));
+            } else filedets->widgets[2] = filedets->widgets[1];
+          } else filedets->widgets[2] = filedets->widgets[1];
+        }
+
+        if (filedets->size == -1) {
+          needs_more = TRUE;
+        }
+
+        if (filedets->size != -1) {
+          if (filedets->mtime_sec) {
+            txt = lives_datetime(filedets->mtime_sec);
+            dtxt = lives_datetime_rel(txt);
+            lives_label_set_text(LIVES_LABEL(filedets->widgets[0]), dtxt);
+            if (dtxt != txt) lives_free(dtxt);
+            lives_free(txt);
+          }
+          if (filedets->widgets[2]) {
+            if (filedets->widgets[2] != filedets->widgets[1]) {
+              // remove spinner
+              lives_spinner_stop(LIVES_SPINNER(filedets->widgets[2]));
+              lives_widget_destroy(filedets->widgets[2]);
+            }
+            if (filedets->size == -2) {
+              lives_label_set_text(LIVES_LABEL(filedets->widgets[1]), "????");
+            }
+            if (filedets->size > 0) {
+              txt = lives_format_storage_space_string(filedets->size);
+              lives_label_set_text(LIVES_LABEL(filedets->widgets[1]), txt);
+              lives_free(txt);
+            }
+            lives_widget_set_no_show_all(filedets->widgets[1], FALSE);
+            lives_widget_show(filedets->widgets[1]);
+            filedets->widgets[2] = NULL;
+          }
+        }
+
+        if (!pass) {
+          LiVESWidget *hbox = lives_layout_hbox_new(LIVES_LAYOUT(renamew->clips_layout));
+          filedets->widgets[3] = lives_standard_label_new(NULL);
+          lives_layout_pack(LIVES_BOX(hbox), filedets->widgets[3]);
+          if (!filedets->extra_details) {
+            lives_widget_hide(filedets->widgets[3]);
+            lives_widget_set_no_show_all(filedets->widgets[3], TRUE);
+            filedets->widgets[4] = lives_spinner_new();
+            if (filedets->widgets[4]) {
+              lives_layout_pack(LIVES_BOX(hbox), filedets->widgets[4]);
+              lives_spinner_start(LIVES_SPINNER(filedets->widgets[4]));
+            } else filedets->widgets[4] = filedets->widgets[3];
+          } else filedets->widgets[4] = filedets->widgets[3];
+        }
+
+        if (!filedets->extra_details) {
+          needs_more = TRUE;
+        }
+
+        if (filedets->extra_details) {
+          if (filedets->widgets[4]) {
+            if (filedets->widgets[4] != filedets->widgets[3]) {
+              // remove spinner
+              lives_spinner_stop(LIVES_SPINNER(filedets->widgets[4]));
+              lives_widget_destroy(filedets->widgets[4]);
+            }
+            lives_label_set_text(LIVES_LABEL(filedets->widgets[3]), filedets->extra_details);
+            lives_widget_set_no_show_all(filedets->widgets[3], FALSE);
+            lives_widget_show(filedets->widgets[3]);
+            filedets->widgets[4] = NULL;
+          }
+        }
+        lives_widget_show_all(renamew->clips_layout);
+
+        do {
+          lives_widget_process_updates(renamew->dialog);
+          if (!expanded && !pass && !list->next) lives_nanosleep(1000);
+          if (totsize == -1) {
+            if (lives_proc_thread_check(sizinfo)) {
+              totsize = lives_proc_thread_join_int64(sizinfo);
+              txt = mkszlabel(set, totsize);
+              lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
+              lives_free(txt);
+              lives_widget_process_updates(renamew->dialog);
+            }
+          }
+        } while (!pass && !list->next && !expanded);
+
+        if (expanded) goto thrdjoin;
+        list = list->next;
+        if (!list->data && needs_more) list = *clipslist;
+        pass++;
+      }
+    }
+    while (!expanded && totsize == -1) {
+      if (lives_proc_thread_check(sizinfo)) {
+        totsize = lives_proc_thread_join_int64(sizinfo);
+        txt = mkszlabel(set, totsize);
+        lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
+        lives_free(txt);
+      }
+      if (!expanded) lives_widget_process_updates(renamew->dialog);
+      if (!expanded) lives_nanosleep(1000);
+    }
+    if (!expanded) lives_widget_process_updates(renamew->dialog);
+  } else {
+    if (renamew->layouts_layout) {
+      lives_widget_destroy(renamew->layouts_layout);
+      renamew->layouts_layout = NULL;
+    }
+    if (renamew->clips_layout) {
+      lives_widget_destroy(renamew->clips_layout);
+      renamew->clips_layout = NULL;
+    }
+    lives_widget_set_sensitive(renamew->entry, TRUE);
+    return;
+  }
+
+thrdjoin:
+  lives_proc_thread_cancel(layinfo);
+  lives_proc_thread_cancel(clipsinfo);
+  lives_proc_thread_dontcare(sizinfo);
+  if (*laylist) free_fdets_list(laylist);
+  if (*clipslist) free_fdets_list(clipslist);
+}
+
+
+static void close_expander(LiVESWidget * button, _entryw * renamew) {
+  if (lives_expander_get_expanded(LIVES_EXPANDER(renamew->expander)))
+    lives_expander_set_expanded(LIVES_EXPANDER(renamew->expander), FALSE);
+}
+
 _entryw *create_rename_dialog(int type) {
   // type 1 = rename clip in menu
   // type 2 = save clip set
@@ -2835,8 +3162,6 @@ _entryw *create_rename_dialog(int type) {
   LiVESWidget *dialog_vbox;
   LiVESWidget *hbox;
   LiVESWidget *label;
-  LiVESWidget *cancelbutton = NULL;
-  LiVESWidget *okbutton;
   LiVESWidget *checkbutton;
   LiVESWidget *set_combo;
 
@@ -2844,7 +3169,7 @@ _entryw *create_rename_dialog(int type) {
 
   char *title = NULL, *workdir, *tmp, *tmp2;
 
-  _entryw *renamew = (_entryw *)(lives_malloc(sizeof(_entryw)));
+  _entryw *renamew = (_entryw *)(lives_calloc(1, sizeof(_entryw)));
 
   if (type == 1) {
     title = (_("Rename Clip"));
@@ -2871,8 +3196,10 @@ _entryw *create_rename_dialog(int type) {
 
   if (type == 4) {
     label = lives_standard_label_new
-            (_("You need to enter a name for the current clip set.\nThis will allow you reload the layout with the same clips later.\n"
-               "Please enter the set name you wish to use.\nLiVES will remind you to save the clip set later when you try to exit.\n"));
+            (_("You need to enter a name for the current clip set.\n"
+               "This will allow you reload the layout with the same clips later.\n"
+               "Please enter the set name you wish to use.\n"
+               "LiVES will remind you to save the clip set later when you try to exit.\n"));
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, 0);
   }
 
@@ -2972,6 +3299,37 @@ _entryw *create_rename_dialog(int type) {
     }
   }
 
+  add_fill_to_box(LIVES_BOX(dialog_vbox));
+
+  if (type == 3) {
+    /// add set details expander
+    int winsize_h = RFX_WINSIZE_H * 2;
+    int winsize_v = RFX_WINSIZE_V / 2;
+    LiVESWidget *layout;
+    LiVESWidget *scrolledwindow;
+    LiVESWidget *vbox = lives_vbox_new(FALSE, 0);
+    int woat = widget_opts.apply_theme;
+
+    layout = lives_layout_new(LIVES_BOX(vbox));
+    lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+    lives_layout_add_label(LIVES_LAYOUT(layout), "", FALSE);
+    renamew->exp_label = widget_opts.last_label;
+    lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+
+    renamew->exp_vbox = lives_vbox_new(FALSE, 0);
+    widget_opts.apply_theme = 0;
+    scrolledwindow = lives_standard_scrolled_window_new(winsize_h, winsize_v, renamew->exp_vbox);
+    widget_opts.apply_theme = woat;
+    lives_box_pack_start(LIVES_BOX(vbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_height);
+    widget_opts.justify = LIVES_JUSTIFY_CENTER;
+    renamew->expander = lives_standard_expander_new(_("Show contents"), LIVES_BOX(dialog_vbox), vbox);
+    widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+    lives_signal_connect(LIVES_GUI_OBJECT(renamew->expander), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                         LIVES_GUI_CALLBACK(on_set_exp), renamew);
+    add_fill_to_box(LIVES_BOX(dialog_vbox));
+    add_fill_to_box(LIVES_BOX(dialog_vbox));
+  }
+
   if (type == 8) {
     mainw->fx1_bool = FALSE;
     hbox = lives_hbox_new(FALSE, 0);
@@ -2987,33 +3345,46 @@ _entryw *create_rename_dialog(int type) {
   lives_entry_set_width_chars(LIVES_ENTRY(renamew->entry), MEDIUM_ENTRY_WIDTH);
 
   if (!(type == 4 && !LIVES_IS_INTERACTIVE)) {
-    cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(renamew->dialog), LIVES_STOCK_CANCEL, NULL,
-                   LIVES_RESPONSE_CANCEL);
-    lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+    renamew->cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(renamew->dialog), LIVES_STOCK_CANCEL, NULL,
+                            LIVES_RESPONSE_CANCEL);
+    lives_widget_add_accelerator(renamew->cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                  LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
   }
 
   if (type == 6 && !mainw->is_ready) {
-    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(renamew->dialog), LIVES_STOCK_GO_FORWARD, _("_Next"),
-               LIVES_RESPONSE_OK);
-  } else okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(renamew->dialog), LIVES_STOCK_OK,
-                      NULL, LIVES_RESPONSE_OK);
+    renamew->okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(renamew->dialog), LIVES_STOCK_GO_FORWARD, _("_Next"),
+                        LIVES_RESPONSE_OK);
+  } else renamew->okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(renamew->dialog), LIVES_STOCK_OK,
+                               NULL, LIVES_RESPONSE_OK);
 
-  lives_button_grab_default_special(okbutton);
+  lives_button_grab_default_special(renamew->okbutton);
 
-  if (type != 3 && cancelbutton != NULL) {
-    lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+  if (type != 3 && renamew->cancelbutton) {
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(renamew->cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                               LIVES_GUI_CALLBACK(lives_general_button_clicked),
                               renamew);
   }
 
+  if (type == 3) {
+    if (renamew->cancelbutton) {
+      lives_signal_sync_connect(LIVES_GUI_OBJECT(renamew->cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                LIVES_GUI_CALLBACK(close_expander),
+                                renamew);
+    }
+    if (renamew->okbutton) {
+      lives_signal_sync_connect(LIVES_GUI_OBJECT(renamew->okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                LIVES_GUI_CALLBACK(close_expander),
+                                renamew);
+    }
+  }
+
   if (type == 1) {
-    lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(renamew->okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                               LIVES_GUI_CALLBACK(on_rename_clip_name),
                               NULL);
   }
 
-  lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+  lives_widget_add_accelerator(renamew->cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   lives_widget_show_all(renamew->dialog);
@@ -4245,7 +4616,8 @@ _entryw *create_cds_dialog(int type) {
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  discardbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(cdsw->dialog), LIVES_STOCK_DELETE, NULL, 1 + (type == 2));
+  discardbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(cdsw->dialog), LIVES_STOCK_DELETE, NULL,
+                  (type == 2) ? LIVES_RESPONSE_ABORT : LIVES_RESPONSE_RETRY);
 
   if ((type == 0 && strlen(mainw->multitrack->layout_name) == 0) || type == 3 || type == 4)
     lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Wipe layout"));
@@ -4254,7 +4626,7 @@ _entryw *create_cds_dialog(int type) {
   else if (type == 2) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete layout"));
 
   if (type != 4) savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(cdsw->dialog), LIVES_STOCK_SAVE, NULL,
-                                2 - (type == 2));
+                                (type == 2) ? LIVES_RESPONSE_RETRY : LIVES_RESPONSE_ABORT);
   if (type == 0 || type == 3) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Save layout"));
   else if (type == 1) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Save clip set"));
   else if (type == 2) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Wipe layout"));
@@ -5488,14 +5860,15 @@ static void lives_show_after(LiVESWidget * button, livespointer data) {
   if (showme) lives_widget_show(showme);
 }
 
-static void workdir_query_cb(LiVESWidget * w, livespointer data) {
-  lives_general_button_clicked(LIVES_BUTTON(w), NULL);
+static void workdir_query_cb(LiVESWidget * w, LiVESWidget * dlg) {
+  lives_widget_hide(dlg);
   if (do_workdir_query()) {
     if (lives_strcmp(prefs->workdir, future_prefs->workdir)) {
       char *msg = workdir_ch_warning();
       if (do_warning_dialog(msg)) {
         lives_free(msg);
         do_shutdown_msg();
+        lives_widget_destroy(dlg);
         on_quit_activate(NULL, NULL);
       }
     } else {
@@ -5503,50 +5876,153 @@ static void workdir_query_cb(LiVESWidget * w, livespointer data) {
     }
     *future_prefs->workdir = 0;
   }
-  run_diskspace_dialog();
+  lives_widget_show(dlg);
 }
 
-static void cleards_cb(LiVESWidget * w, livespointer data) {
-  lives_general_button_clicked(LIVES_BUTTON(w), NULL);
+static void cleards_cb(LiVESWidget * w, LiVESWidget * dlg) {
+  lives_widget_hide(dlg);
   on_cleardisk_activate(NULL, NULL);
-  run_diskspace_dialog();
+  lives_widget_show(dlg);
 }
 
 void run_diskspace_dialog_cb(LiVESWidget * w, livespointer data) {
   run_diskspace_dialog();
 }
 
-static void manclips_ok(LiVESWidget * button, LiVESWidget * dialog) {
-  lives_widget_hide(dialog);
-  if (mainw->cliplist) {
-    on_save_set_activate(NULL, mainw->set_name);
+
+///////
+
+static void manclips_del(LiVESWidget * button, _entryw * renamew) {
+  boolean is_curset = FALSE;
+  const char *setname = lives_entry_get_text(LIVES_ENTRY(renamew->entry));
+  char *fsetname;
+  if (!*setname) return;
+
+retry1:
+  if (mainw->was_set && !lives_strcmp(setname, mainw->set_name)) {
+    is_curset = TRUE;
+    fsetname = lives_strdup(_("current set"));
+  } else
+    fsetname = lives_strdup_printf(_("set %s"), setname);
+  if (check_for_executable(&capable->has_gio, EXEC_GIO)) mainw->add_trash_rb = TRUE;
+  if (do_warning_dialogf(_("The %s will be permanently deleted from the disk.\n"
+                           "Are you sure ?"), fsetname)) {
+    mainw->add_trash_rb = FALSE;
+    lives_free(fsetname);
+    if (is_curset) {
+      del_current_set(FALSE);
+    } else {
+      char *setdir = lives_build_path(prefs->workdir, setname, NULL);
+      if (mainw->add_trash_rb && prefs->pref_trash) {
+        if (send_to_trash(setdir) == LIVES_RESPONSE_CANCEL) goto retry1;
+      } else lives_rmdir(setdir, TRUE);
+      mainw->num_sets--;
+    }
+    if (!mainw->num_sets && !mainw->clips_available) {
+      do_info_dialog(_("All Sets have been erased from the disk"));
+      lives_widget_destroy(renamew->dialog);
+      lives_widget_show(renamew->parent);
+      lives_free(renamew);
+      renamew = NULL;
+      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+      return;
+    }
+    // refresh entry
+    lives_entry_set_text(LIVES_ENTRY(renamew->entry), "");
+    lives_widget_queue_draw(renamew->dialog);
   }
-  lives_widget_show(dialog);
+  mainw->add_trash_rb = FALSE;
+  lives_free(fsetname);
+}
+
+static void manclips_reload(LiVESWidget * button, _entryw * renamew) {
+  char *setname = (char *)lives_entry_get_text(LIVES_ENTRY(renamew->entry));
+  if (!*setname) return;
+  setname = lives_strdup(lives_entry_get_text(LIVES_ENTRY(renamew->entry)));
+  if (mainw->was_set && !lives_strcmp(setname, mainw->set_name)) {
+    do_info_dialogf(_("The set %s is already loaded !"), setname);
+    return;
+  }
+  if (mainw->cliplist) {
+    do_info_dialog(_("The current clips must be saved before reloading another set"));
+    mainw->no_exit = mainw->only_close = TRUE;
+    on_save_set_activate(button, NULL);
+    mainw->no_exit = mainw->only_close = FALSE;
+  }
+
+  do_info_dialog(_("After reloading the Set you can inspect it and use it as normal.\n"
+                   "Should you decide to delete it or re-save it, click on Files | Save / Close all Clips\n"
+                   "You will then be returned to the Manage Setst dialog,\n"
+                   "where you may choos to continue this process further\n"));
+  lives_widget_destroy(renamew->dialog);
+  lives_widget_destroy(renamew->parent);
+  lives_free(renamew);
+  reload_set(setname);
+  if (mainw->num_sets > -1) mainw->num_sets--;
+  if (mainw->clips_available) mainw->cs_manage = TRUE;
+}
+
+static void manclips_ok(LiVESWidget * button, LiVESWidget * dialog) {
+  lives_general_button_clicked(LIVES_BUTTON(button), NULL);
+
+  //mainw->cs_manage = TRUE;
+  /// show list of all sets, excluding current
+
+  lives_widget_hide(dialog);
+
+  renamew = create_rename_dialog(3);
+  if (!renamew) return; ///< no sets available
+
+  renamew->parent = dialog;
+
+  /// show buttons "Cancel", "Delete", "Reload"
+
+  lives_signal_connect(LIVES_GUI_OBJECT(renamew->cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(lives_show_after), dialog);
+
+  lives_button_ungrab_default_special(renamew->okbutton);
+  lives_widget_destroy(renamew->okbutton);
+
+  button = lives_dialog_add_button_from_stock(LIVES_DIALOG(renamew->dialog), LIVES_STOCK_DELETE,
+           NULL, LIVES_RESPONSE_RESET);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(manclips_del), renamew);
+
+
+  // reaload will exit dlg and set mainw->cs_managed, after close/save all we come back here
+  button = lives_dialog_add_button_from_stock(LIVES_DIALOG(renamew->dialog), LIVES_STOCK_OPEN,
+           _("_Reload"), LIVES_RESPONSE_YES);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(manclips_reload), renamew);
+
+  lives_widget_show_all(renamew->dialog);
 }
 
 static void manclips_cb(LiVESWidget * w, livespointer data) {
-  LiVESWidget *dialog = (LiVESWidget *)data;
+  LiVESWidget *parent = (LiVESWidget *)data;
+  LiVESWidget *dialog;
   LiVESWidget *button;
   char *text, *extra;
 
-  lives_widget_hide(dialog);
-
-  if (mainw->cliplist) {
-    extra = (_("In order to proceed, the current clips must first be saved or deleted\n"));
+  if (mainw->was_set) {
+    extra = (_(" including the current set."));
   } else extra = lives_strdup("");
 
-  text = lives_strdup_printf(_("The current working directory contains %d Clip Sets\n"
+  text = lives_strdup_printf(_("<b>The current working directory contains %d Clip Sets%s</b>\n"
                                "You may be able to free up some disk space by deleting "
-                               "unwanted ones.\n"
+                               "unwanted ones.\n\n"
                                "After selecting an existing Set, "
                                "you will be presented with the options to "
                                "erase it from the disk\n"
-                               "or to reload it first to inspect the contents\n\n%s\n"
+                               "or to reload it first to inspect the contents\n\n"
                                "Please select an option below\n"), mainw->num_sets
                              + (mainw->was_set ? 1 : 0), extra);
   lives_free(extra);
-
+  widget_opts.use_markup = TRUE;
   dialog = create_question_dialog(_("Manage Clipsets"), text);
+  widget_opts.use_markup = FALSE;
   lives_free(text);
 
   button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK,
@@ -5556,9 +6032,279 @@ static void manclips_cb(LiVESWidget * w, livespointer data) {
 
   button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,
            _("Continue"), LIVES_RESPONSE_OK);
-  lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(manclips_ok), dialog);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(manclips_ok), parent);
+
   lives_widget_show_all(dialog);
+
+  lives_widget_hide(parent);
+}
+
+
+typedef struct {
+  LiVESWidget *dsu_label;
+  LiVESWidget *used_label;
+  LiVESWidget *inst_label;
+  LiVESWidget *note_label;
+  LiVESWidget *checkbutton;
+  LiVESWidget *vlabel;
+  LiVESWidget *vvlabel;
+  LiVESWidget *pculabel;
+  LiVESWidget *slider;
+  LiVESWidget *button;
+  LiVESWidget *resbutton;
+  boolean setting, visible;
+  uint64_t sliderfunc, checkfunc;
+  lives_painter_surface_t *dsu_surface;
+} _dsquotaw;
+
+static _dsquotaw *dsq = NULL;
+
+void draw_dsu_widget(LiVESWidget * dsu_widget) {
+  double scale, xw, offs_x = 0;
+  lives_painter_t *cr;
+  int width, height;
+
+  if (!dsq->dsu_surface) return;
+  cr = lives_painter_create_from_surface(dsq->dsu_surface);
+  if (!cr) return;
+
+  if (capable->ds_used == -1 || capable->ds_free == -1 || capable->ds_tot == -1) return;
+
+  width = lives_widget_get_allocation_width(dsu_widget);
+  height = lives_widget_get_allocation_height(dsu_widget);
+
+  if (width <= 0 || height <= 0) return;
+
+  scale = (double)capable->ds_tot / (double)width;
+
+  /// paint bg
+  lives_painter_set_source_rgb(cr, 1., 1., 1.);
+  lives_painter_rectangle(cr, 0, 0, width, height);
+  lives_painter_fill(cr);
+
+  /// space used by other apps
+  xw = (double)(capable->ds_tot - capable->ds_used - capable->ds_free) / scale;
+  lives_painter_set_source_rgb(cr, 0., 0., 1.);
+  lives_painter_rectangle(cr, 0, 0, xw, height);
+  lives_painter_fill(cr);
+
+  offs_x += xw;
+
+  /// space used by lives
+  xw = (double)capable->ds_used / scale;
+  lives_painter_set_source_rgb(cr, 0., 1., 1.);
+  lives_painter_rectangle(cr, offs_x, 0, offs_x + xw, height);
+  lives_painter_fill(cr);
+
+  offs_x += xw;
+
+  /// draw quota (if set)
+  if (future_prefs->disk_quota > capable->ds_used) {
+    xw = (double)(future_prefs->disk_quota - capable->ds_used) / scale;
+    if (xw > 0.) {
+      lives_painter_set_source_rgb(cr, 1., 1., 0.);
+      lives_painter_rectangle(cr, offs_x, 0, offs_x + xw, height);
+      lives_painter_fill(cr);
+      offs_x += xw;
+    }
+  }
+
+  /// draw ds_free
+  xw = (double)(capable->ds_free) / scale;
+  if (prefs->ds_warn_level > 0)
+    xw -= (double)prefs->ds_warn_level / scale;
+  if (future_prefs->disk_quota > capable->ds_used)
+    xw -= (double)(future_prefs->disk_quota - capable->ds_used) / scale;
+
+  if (xw > 0.) {
+    lives_painter_set_source_rgb(cr, 0., 1., 0.);
+    lives_painter_rectangle(cr, offs_x, 0, offs_x + xw, height);
+    lives_painter_fill(cr);
+    offs_x += xw;
+  }
+
+  /// ds warning level
+  if (prefs->ds_warn_level > 0) {
+    xw = (double)(capable->ds_tot - prefs->ds_warn_level) / scale;
+    if (xw > 0.) {
+      lives_painter_set_source_rgb(cr, 1., .5, 0.);
+      lives_painter_rectangle(cr, offs_x, 0, offs_x + xw, height);
+      lives_painter_fill(cr);
+      offs_x += xw;
+    }
+  }
+
+  /// ds critical level
+  if (prefs->ds_crit_level > 0) {
+    xw = (double)(capable->ds_tot - prefs->ds_crit_level) / scale;
+    if (xw > 0.) {
+      lives_painter_set_source_rgb(cr, 1., 0., 0.);
+      lives_painter_rectangle(cr, offs_x, 0, offs_x + xw, height);
+      lives_painter_fill(cr);
+      offs_x += xw;
+    }
+  }
+  lives_painter_destroy(cr);
+  lives_widget_queue_draw(dsu_widget);
+}
+
+
+boolean update_dsu(livespointer data) {
+  static boolean set_label = FALSE;
+  int64_t dsu;
+
+  if (!dsq || !dsq->visible) return FALSE;
+
+  if (!get_ds_used(&dsu)) {
+    if (!set_label) {
+      set_label = TRUE;
+      lives_label_set_text(LIVES_LABEL(dsq->used_label), _("Calculating..."));
+    }
+  } else {
+    if (mainw->dsu_valid) {
+      if (mainw->dsu_widget) {
+        char *txt;
+        uint64_t dsfree = capable->ds_used;
+        mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsfree);
+        capable->ds_free = dsfree;
+        txt = lives_format_storage_space_string(dsu);
+        lives_label_set_text(LIVES_LABEL(dsq->used_label), txt);
+        lives_free(txt);
+        draw_dsu_widget(mainw->dsu_widget);
+      }
+      set_label = mainw->dsu_scanning = FALSE;
+      return FALSE;
+    } else {
+      set_label = FALSE;
+      mainw->dsu_valid = TRUE;
+    }
+  }
+  return TRUE;
+}
+
+
+static void changequota_cb(LiVESWidget * butt, livespointer data) {
+  static char *otxt = NULL;
+
+  if (mainw->dsu_scanning || !mainw->dsu_valid) {
+    lives_label_set_text(LIVES_LABEL(dsq->inst_label), _("Still calculating...please wait and try again..."));
+    return;
+  }
+
+  if (!dsq->setting) {
+    otxt = lives_strdup(lives_standard_button_get_label(LIVES_BUTTON(butt)));
+    widget_opts.use_markup = TRUE;
+    lives_label_set_text(LIVES_LABEL(dsq->inst_label), _("<b>Change the quota by clicking in the free space area "
+                         "in the disk map above,\n"
+                         "or by dragging the slider below</b>"));
+    widget_opts.use_markup = FALSE;
+    lives_widget_set_sensitive(dsq->checkbutton, TRUE);
+    lives_widget_set_sensitive(dsq->vvlabel, TRUE);
+    lives_widget_set_sensitive(dsq->vlabel, TRUE);
+    lives_widget_set_sensitive(dsq->slider, TRUE);
+    lives_standard_button_set_label(LIVES_BUTTON(butt), _("APPLY _QUOTA"));
+    lives_widget_hide(dsq->note_label);
+    lives_widget_set_no_show_all(dsq->resbutton, FALSE);
+    lives_widget_show_all(dsq->resbutton);
+    dsq->setting = TRUE;
+  } else {
+    /// set prefs->disk_quota
+    widget_opts.use_markup = TRUE;
+    lives_label_set_text(LIVES_LABEL(dsq->inst_label), _("<b>Updated !</b>"));
+    widget_opts.use_markup = FALSE;
+    lives_widget_set_frozen(dsq->checkbutton, TRUE);
+    lives_widget_set_frozen(dsq->vvlabel, TRUE);
+    lives_widget_set_frozen(dsq->vlabel, TRUE);
+    lives_widget_set_frozen(dsq->slider, TRUE);
+    lives_standard_button_set_label(LIVES_BUTTON(dsq->button), otxt);
+    dsq->setting = FALSE;
+  }
+}
+
+static void qslider_changed(LiVESWidget * slid, livespointer data) {
+  if (mainw->dsu_valid && !mainw->dsu_scanning) {
+    uint64_t min = capable->ds_used;
+    uint64_t max = capable->ds_free + min - prefs->ds_warn_level;
+    double value = 0.;
+    if (dsq->setting) {
+      value = lives_range_get_value(LIVES_RANGE(slid)) / 100.;
+      lives_signal_handler_block(dsq->checkbutton, dsq->checkfunc);
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(dsq->checkbutton), FALSE);
+      lives_signal_handler_unblock(dsq->checkbutton, dsq->checkfunc);
+      future_prefs->disk_quota = (uint64_t)(min + value * (max - min) + .5);
+      draw_dsu_widget(mainw->dsu_widget);
+    } else {
+      if (future_prefs->disk_quota > 0) {
+        if (future_prefs->disk_quota >= capable->ds_used) {
+          uint64_t dq = future_prefs->disk_quota;
+          dq -= min;
+          value = 100. * (double)dq / (double)(max - min);
+          if (value > 100.) value = 100.;
+        }
+      }
+      lives_signal_handler_block(dsq->slider, dsq->sliderfunc);
+      lives_range_set_value(LIVES_RANGE(dsq->slider), value);
+      lives_signal_handler_unblock(dsq->slider, dsq->sliderfunc);
+    }
+  }
+
+  if (future_prefs->disk_quota > 0.) {
+    char *txt = lives_format_storage_space_string(future_prefs->disk_quota);
+    lives_label_set_text(LIVES_LABEL(dsq->vlabel), txt);
+    lives_free(txt);
+    if (mainw->dsu_valid && !mainw->dsu_scanning) {
+      double pcused = 100. * (double)capable->ds_used
+                      / (double)future_prefs->disk_quota;
+
+      if (pcused < 100.) txt = lives_strdup_printf(_("%.2f%% used"), pcused);
+      else {
+        txt = lives_strdup_printf(_("<b>%.2f%% used !!</b>"), pcused);
+        widget_opts.use_markup = TRUE;
+      }
+      lives_label_set_text(LIVES_LABEL(dsq->pculabel), txt);
+      widget_opts.use_markup = FALSE;
+      lives_free(txt);
+      if (pcused >= 90.) show_warn_image(dsq->pculabel, NULL);
+      else hide_warn_image(dsq->pculabel);
+    } else {
+      hide_warn_image(dsq->pculabel);
+      lives_label_set_text(LIVES_LABEL(dsq->pculabel), _("Calculating %% used"));
+    }
+  } else {
+    hide_warn_image(dsq->pculabel);
+    lives_label_set_text(LIVES_LABEL(dsq->pculabel), NULL);
+    lives_label_set_text(LIVES_LABEL(dsq->vlabel), _("No value set"));
+  }
+}
+
+static void dsq_check_toggled(LiVESWidget * cbutt, livespointer data) {
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(cbutt))) {
+    future_prefs->disk_quota = 0;
+  } else {
+    lives_widget_set_sensitive(dsq->slider, TRUE);
+    future_prefs->disk_quota = prefs->disk_quota;
+  }
+  dsq->setting = FALSE;
+  qslider_changed(dsq->slider, NULL);
+  dsq->setting = TRUE;
+  draw_dsu_widget(mainw->dsu_widget);
+}
+
+static void resquota_cb(LiVESWidget * butt, livespointer data) {
+  lives_widget_hide(butt);
+  lives_widget_show(dsq->note_label);
+  lives_label_set_text(LIVES_LABEL(dsq->inst_label), NULL);
+  future_prefs->disk_quota = prefs->disk_quota;
+  lives_signal_handler_block(dsq->checkbutton, dsq->checkfunc);
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(dsq->checkbutton), !prefs->disk_quota);
+  lives_signal_handler_unblock(dsq->checkbutton, dsq->checkfunc);
+
+  dsq->setting = TRUE;
+  changequota_cb(dsq->button, NULL);
+  lives_label_set_text(LIVES_LABEL(dsq->inst_label), NULL);
+  qslider_changed(dsq->slider, NULL);
+  draw_dsu_widget(mainw->dsu_widget);
 }
 
 
@@ -5568,25 +6314,29 @@ void run_diskspace_dialog(void) {
   LiVESWidget *label;
   LiVESWidget *entry;
   LiVESWidget *button;
-  LiVESWidget *checkbutton;
-  LiVESWidget *hbox;
+  LiVESWidget *hbox, *hbox2;
   LiVESWidget *vbox;
+  LiVESWidget *cbut;
   LiVESWidget *okbutton;
   LiVESWidget *rembutton;
 
-  LiVESWidget *dsu_label;
   LiVESBox *aar;
 
-  int64_t free_ds = -1;
-  int64_t ds_used = -1;
-  boolean wrtable = FALSE;
-  boolean has_dsused = FALSE;
-  char *title, *tmp;
+  LiVESWidgetColor colr;
+
+  char *title, *tmp, *mp;
+
+  /// kick off a bg process to get free ds and ds used
+  mainw->dsu_scanning = mainw->dsu_valid = TRUE;
+
+  get_ds_used(&capable->ds_used);
+
+  if (!dsq) dsq = (_dsquotaw *)lives_calloc(1, sizeof(_dsquotaw));
+  dsq->setting = FALSE;
+  dsq->visible = TRUE;
+  dsq->dsu_surface = NULL;
 
   if (prefsw) lives_widget_hide(prefsw->prefs_dialog);
-
-  free_ds = (int64_t)get_ds_free(prefs->workdir);
-  if (get_ds_used(&ds_used)) has_dsused = TRUE;
 
   title = (_("Diskspace Limits and Quotas"));
 
@@ -5601,7 +6351,7 @@ void run_diskspace_dialog(void) {
   widget_opts.font_size = LIVES_FONT_SIZE_LARGE;
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   lives_layout_add_label(LIVES_LAYOUT(layout),
-                         _("LiVES can limit the amount of diskspace reserved for projects (sets)."),
+                         _("LiVES can help limit the amount of diskspace used by projects (sets)."),
                          FALSE);
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   widget_opts.font_size = LIVES_FONT_SIZE_NORMAL;
@@ -5622,52 +6372,142 @@ void run_diskspace_dialog(void) {
 
   button = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("Change Directory"),
            DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+  lives_widget_set_focus_on_click(button, FALSE);
 
   lives_box_pack_start(LIVES_BOX(hbox), button, FALSE, TRUE, widget_opts.packing_width * 4);
 
   lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(workdir_query_cb),
-                       NULL);
+                       dialog);
+
+  widget_opts.font_size = LIVES_FONT_SIZE_LARGE;
+  widget_opts.use_markup = TRUE;
+  lives_layout_add_label(LIVES_LAYOUT(layout), (_("<b>Disk space used by LiVES:</b>")), TRUE);
+  widget_opts.use_markup = FALSE;
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+
+  dsq->used_label = lives_layout_add_label(LIVES_LAYOUT(layout), NULL, TRUE);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+
+  mp = get_mountpoint_for(prefs->workdir);
+  if (mp) {
+    char *txt = lives_strdup_printf(_("in %s"), mp);
+    lives_layout_add_label(LIVES_LAYOUT(layout), txt, TRUE);
+    lives_free(txt); lives_free(mp);
+  }
+
+  widget_opts.font_size = LIVES_FONT_SIZE_NORMAL;
 
   add_hsep_to_box(LIVES_BOX(dialog_vbox));
 
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, TRUE, widget_opts.packing_height >> 1);
+
   layout = lives_layout_new(LIVES_BOX(dialog_vbox));
 
-  lives_layout_add_label(LIVES_LAYOUT(layout), (_("Amount used by LiVES")), TRUE);
-  lives_layout_add_label(LIVES_LAYOUT(layout), (_("Calculating...")), TRUE);
-  dsu_label = widget_opts.last_label;
+  /// dsu widget
+  mainw->dsu_widget = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), &dsq->dsu_surface);
 
-  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
-  lives_layout_add_row(LIVES_LAYOUT(layout));
-  lives_layout_add_label(LIVES_LAYOUT(layout), (_("Quota")), TRUE);
+  lives_box_pack_start(LIVES_BOX(hbox), mainw->dsu_widget, TRUE, TRUE, 0);
+  lives_widget_set_size_request(mainw->dsu_widget, -1, widget_opts.css_min_height);
 
-  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  checkbutton =
-    lives_standard_check_button_new((tmp = (_("Unlimited"))),
-                                    prefs->disk_quota == 0,
-                                    LIVES_BOX(hbox), NULL);
+  hbox = lives_hbox_new(TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, TRUE, 0);
 
-  label = lives_layout_add_label(LIVES_LAYOUT(layout), (_("Value:")), TRUE);
-  add_fill_to_box(LIVES_BOX(lives_widget_get_parent(label)));
-  label = lives_layout_add_label(LIVES_LAYOUT(layout), (_("Not set")), TRUE);
-  add_fill_to_box(LIVES_BOX(lives_widget_get_parent(label)));
-  add_fill_to_box(LIVES_BOX(lives_widget_get_parent(label)));
-  add_fill_to_box(LIVES_BOX(lives_widget_get_parent(label)));
+  colr.alpha = 1.;
 
-  /// add slider here
+  hbox2 = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, TRUE, 0);
+  colr.red = colr.green = 0.; colr.blue = 1.;
+  cbut = lives_color_button_new_with_color(&colr);
+  lives_box_pack_start(LIVES_BOX(hbox2), cbut, FALSE, FALSE, widget_opts.packing_width);
+  label = lives_standard_label_new(_("Used by other apps"));
+  lives_box_pack_start(LIVES_BOX(hbox2), label, FALSE, FALSE, widget_opts.packing_width);
 
-  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  hbox2 = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, TRUE, 0);
+  colr.red = 0.; colr.green = colr.blue = 1.;
+  cbut = lives_color_button_new_with_color(&colr);
+  lives_box_pack_start(LIVES_BOX(hbox2), cbut, FALSE, FALSE, widget_opts.packing_width);
+  label = lives_standard_label_new(_("Used by LiVES"));
+  lives_box_pack_start(LIVES_BOX(hbox2), label, FALSE, FALSE, widget_opts.packing_width);
 
-  button = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("Change Quota"),
-           DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+  hbox2 = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, TRUE, 0);
+  colr.red = colr.green = 1.; colr.blue = 0.;
+  cbut = lives_color_button_new_with_color(&colr);
+  lives_box_pack_start(LIVES_BOX(hbox2), cbut, FALSE, FALSE, widget_opts.packing_width);
+  label = lives_standard_label_new(_("Quota"));
+  lives_box_pack_start(LIVES_BOX(hbox2), label, FALSE, FALSE, widget_opts.packing_width);
 
-  lives_box_pack_start(LIVES_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width * 4);
+  hbox2 = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, TRUE, 0);
+  colr.red = colr.blue = 0.; colr.green = 1.;
+  cbut = lives_color_button_new_with_color(&colr);
+  lives_box_pack_start(LIVES_BOX(hbox2), cbut, FALSE, FALSE, widget_opts.packing_width);
+  label = lives_standard_label_new(_("Free space"));
+  lives_box_pack_start(LIVES_BOX(hbox2), label, FALSE, FALSE, widget_opts.packing_width);
 
-  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  hbox2 = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, TRUE, 0);
+  colr.red = 1.; colr.green = .5; colr.blue = 0.;
+  cbut = lives_color_button_new_with_color(&colr);
+  lives_box_pack_start(LIVES_BOX(hbox2), cbut, FALSE, FALSE, widget_opts.packing_width);
+  label = lives_standard_label_new(_("Warn level"));
+  lives_box_pack_start(LIVES_BOX(hbox2), label, FALSE, FALSE, widget_opts.packing_width);
+
+  hbox2 = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, TRUE, 0);
+  colr.red = 1.; colr.green = colr.blue = 0.;
+  cbut = lives_color_button_new_with_color(&colr);
+  lives_box_pack_start(LIVES_BOX(hbox2), cbut, FALSE, FALSE, widget_opts.packing_width);
+  label = lives_standard_label_new(_("Critical level"));
+  lives_box_pack_start(LIVES_BOX(hbox2), label, FALSE, FALSE, widget_opts.packing_width);
 
   //// expander section ////
   vbox = lives_vbox_new(FALSE, 0);
   layout2 = lives_layout_new(LIVES_BOX(vbox));
+
+  layout = lives_layout_new(LIVES_BOX(dialog_vbox));
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  lives_standard_expander_new(_("Full _Details"), LIVES_BOX(hbox), vbox);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  widget_opts.use_markup = TRUE;
+  dsq->note_label = lives_layout_add_label(LIVES_LAYOUT(layout), (_("Note: LiVES cannot <b>guarantee"
+                    "</b> not to exceed its quota\n"
+                    "but it can warn you if this is detected.")), TRUE);
+  widget_opts.use_markup = FALSE;
+
+
+  dsq->resbutton = lives_standard_button_new_from_stock(LIVES_STOCK_UNDO, _("Reset"),
+                   DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+  lives_widget_set_focus_on_click(dsq->resbutton, FALSE);
+
+  lives_box_pack_start(LIVES_BOX(hbox), dsq->resbutton, FALSE, FALSE, widget_opts.packing_width * 4);
+
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(dsq->resbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(resquota_cb), NULL);
+
+  lives_widget_set_no_show_all(dsq->resbutton, TRUE);
+
+
+  // quota button
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  dsq->button = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("Change _Quota"),
+                DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+  lives_widget_set_focus_on_click(dsq->button, FALSE);
+
+  lives_box_pack_start(LIVES_BOX(hbox), dsq->button, FALSE, FALSE, widget_opts.packing_width * 4);
+
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(dsq->button), LIVES_WIDGET_CLICKED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(changequota_cb), NULL);
+
+  dsq->inst_label = lives_layout_add_label(LIVES_LAYOUT(layout), NULL, TRUE);
 
   /* prefsw->spinbutton_warn_ds = lives_standard_spin_button_new(_("Warn if available diskspace falls below: "), */
   /*                              (double)prefs->ds_warn_level / 1000000., */
@@ -5689,35 +6529,77 @@ void run_diskspace_dialog(void) {
   /* label = lives_standard_label_new(_("MB [set to 0 to disable]")); */
   /* lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width >> 1); */
 
-  lives_standard_expander_new(_("Show Details"), LIVES_BOX(hbox), vbox);
-
   ///////
-
-  lives_layout_add_separator(LIVES_LAYOUT(layout), TRUE);
 
   layout = lives_layout_new(LIVES_BOX(dialog_vbox));
 
-  lives_layout_add_label(LIVES_LAYOUT(layout), _("Diskspace Recovery Options"), FALSE);
+  lives_layout_add_label(LIVES_LAYOUT(layout), (_("Quota:")), TRUE);
 
-  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  dsq->checkbutton =
+    lives_standard_check_button_new((tmp = (_("Unlimited"))),
+                                    future_prefs->disk_quota == 0,
+                                    LIVES_BOX(hbox), NULL);
 
+  lives_widget_set_frozen(dsq->checkbutton, TRUE);
+  lives_widget_set_frozen(widget_opts.last_label, TRUE);
+
+  dsq->checkfunc = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(dsq->checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                   LIVES_GUI_CALLBACK(dsq_check_toggled), NULL);
+
+  dsq->vvlabel = lives_layout_add_label(LIVES_LAYOUT(layout), (_("Value:")), TRUE);
+  lives_widget_set_frozen(dsq->vvlabel, TRUE);
+  dsq->vlabel = label = lives_layout_add_label(LIVES_LAYOUT(layout), NULL, TRUE);
+  lives_widget_set_frozen(dsq->vlabel, TRUE);
+
+  add_fill_to_box(LIVES_BOX(lives_widget_get_parent(label)));
+
+  dsq->slider = lives_standard_hscale_new(NULL);
+  lives_widget_set_size_request(dsq->slider, DEF_SLIDER_WIDTH * 3, widget_opts.css_min_height);
+  lives_widget_set_sensitive(dsq->slider, TRUE);
+  lives_range_set_range(LIVES_RANGE(dsq->slider), 0., 100.);
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  lives_layout_pack(LIVES_HBOX(hbox), dsq->slider);
+
+  lives_widget_set_sensitive(dsq->slider, FALSE);
+
+  dsq->sliderfunc = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(dsq->slider), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                    LIVES_GUI_CALLBACK(qslider_changed), NULL);
+
+  dsq->pculabel = lives_layout_add_label(LIVES_LAYOUT(layout), NULL, TRUE);
+
+  add_hsep_to_box(LIVES_BOX(dialog_vbox));
+
+  layout = lives_layout_new(LIVES_BOX(dialog_vbox));
+
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Diskspace Management Options"), FALSE);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+
+  widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   button = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("Clean Up Diskspace"),
            DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+  lives_widget_set_focus_on_click(button, FALSE);
   lives_box_pack_start(LIVES_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width * 4);
 
   lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(cleards_cb), NULL);
+                       LIVES_GUI_CALLBACK(cleards_cb), dialog);
 
   lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   button = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("Manage Clip Sets"),
            DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+  lives_widget_set_focus_on_click(button, FALSE);
 
   lives_box_pack_start(LIVES_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width * 4);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(manclips_cb),  dialog);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(manclips_cb),  dialog);
 
   if (mainw->num_sets == -1) {
     mainw->set_list = get_set_list(prefs->workdir, TRUE);
@@ -5729,6 +6611,23 @@ void run_diskspace_dialog(void) {
 
   if (mainw->num_sets <= 0) lives_widget_set_sensitive(button, FALSE);
 
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  button = lives_standard_button_new_from_stock(LIVES_STOCK_CLOSE, _("Close Current Clips"),
+           DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+  lives_widget_set_focus_on_click(button, FALSE);
+
+  if (!mainw->clips_available) lives_widget_set_sensitive(button, FALSE);
+
+  lives_box_pack_start(LIVES_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width * 4);
+
+  widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+
+  ////
+
   add_fill_to_box(LIVES_BOX(dialog_vbox));
 
   aar = LIVES_BOX(lives_dialog_get_action_area(LIVES_DIALOG(dialog)));
@@ -5737,24 +6636,28 @@ void run_diskspace_dialog(void) {
     lives_standard_check_button_new(_("Show this dialog on startup"), TRUE, aar,
                                     (tmp = lives_strdup(_("#These settings can also be changed "
                                         "in Preferences / Warnings"))));
+  lives_signal_connect(LIVES_GUI_OBJECT(rembutton), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(toggle_sets_pref), PREF_SHOW_QUOTA);
+
   lives_button_box_make_first(LIVES_BUTTON_BOX(aar), widget_opts.last_container);
 
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK,
              _("Continue with current values"), LIVES_RESPONSE_OK);
 
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
   lives_widget_set_size_request(okbutton, DLG_BUTTON_WIDTH * 2., DLG_BUTTON_HEIGHT);
 
   lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(lives_show_after),
                        prefsw ? prefsw->prefs_dialog : NULL);
 
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
-
   lives_button_grab_default_special(okbutton);
   lives_widget_grab_focus(okbutton);
 
-  lives_dialog_run(LIVES_DIALOG(dialog));
+  lives_widget_show_all(dialog);
+
+  qslider_changed(dsq->slider, NULL);
+
+  lives_idle_add_simple(update_dsu, NULL);
 }
 
 

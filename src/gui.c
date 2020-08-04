@@ -167,7 +167,7 @@ boolean expose_pim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
   if (mainw->is_generating) return TRUE;
   lives_painter_set_source_surface(cr, mainw->pi_surface, 0., 0.);
   lives_painter_paint(cr);
-  return FALSE;
+  return TRUE;
 }
 
 #endif
@@ -1492,8 +1492,7 @@ void create_LiVES(void) {
   mainw->vj_mode = lives_standard_check_menu_item_new_with_label(_("Restart in _VJ Mode"), future_prefs->vj_mode);
   lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->vj_mode);
   mainw->vj_mode_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->vj_mode), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                        LIVES_GUI_CALLBACK(vj_mode_toggled),
-                        NULL);
+                        LIVES_GUI_CALLBACK(vj_mode_toggled), NULL);
 
   lives_menu_add_separator(LIVES_MENU(mainw->vj_menu));
 
@@ -3636,7 +3635,7 @@ void make_preview_box(void) {
   mainw->preview_image = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_pim), &mainw->pi_surface);
 
   lives_container_add(LIVES_CONTAINER(eventbox), mainw->preview_image);
-  //lives_widget_set_app_paintable(mainw->preview_image, TRUE);
+  lives_widget_set_app_paintable(mainw->preview_image, TRUE);
 
   if (mainw->play_window != NULL) {
     if (!CURRENT_CLIP_HAS_VIDEO) {

@@ -1689,6 +1689,11 @@ typedef struct {
   weed_layer_t *st_fcache, *en_fcache, *pr_fcache;
   /// these are freed when the clip is switched or closed, or when the source frame changes or is updated
   ////////////////////
+  boolean add_trash_rb;
+  boolean cs_manage;
+
+  boolean dsu_scanning, dsu_valid;
+  LiVESWidget *dsu_widget;
 
   int max_textsize;
   lives_permmgr_t *permmgr;

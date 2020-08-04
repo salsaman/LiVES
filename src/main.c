@@ -624,7 +624,7 @@ static boolean pre_init(void) {
   prefs->ds_crit_level = (uint64_t)get_int64_prefd(PREF_DS_CRIT_LEVEL, DEF_DS_CRIT_LEVEL);
 
   prefs->show_disk_quota = get_boolean_prefd(PREF_SHOW_QUOTA, TRUE);
-  prefs->disk_quota = get_int64_prefd(PREF_DISK_QUOTA, 0);
+  future_prefs->disk_quota = prefs->disk_quota = get_int64_prefd(PREF_DISK_QUOTA, 0);
 
   if (mainw->next_ds_warn_level > 0) {
     if (!prefs->vj_mode) {
@@ -1435,6 +1435,13 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->mt_needs_idlefunc = FALSE;
 
   mainw->suppress_layout_warnings = FALSE;
+
+  mainw->add_trash_rb = FALSE;
+
+  mainw->cs_manage = FALSE;
+
+  mainw->dsu_valid = mainw->dsu_scanning = FALSE;
+  mainw->dsu_widget = NULL;
 
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
@@ -2682,6 +2689,8 @@ capability *get_capabilities(void) {
 
   // this is _compile time_ bits, not runtime bits
   capable->cpu_bits = (sizeof(void *)) * 8;
+
+  capable->ds_used = capable->ds_free = capable->ds_tot = -1;
 
   capable->mainpid = lives_getpid();
 
@@ -5008,7 +5017,7 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
   rwidth = (rwidth >> 1) << 1;
   rheight = (rheight >> 1) << 1;
 
-  if (pixbuf != NULL) {
+  if (pixbuf) {
     owidth = width = lives_pixbuf_get_width(pixbuf);
     oheight = height = lives_pixbuf_get_height(pixbuf);
 
@@ -5029,7 +5038,7 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
     lives_painter_render_background(widget, cr, 0., 0., rwidth, rheight);
   }
 
-  if (pixbuf != NULL) {
+  if (pixbuf) {
     cx = (rwidth - width) >> 1;
     cy = (rheight - height) >> 1;
 

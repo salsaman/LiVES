@@ -511,6 +511,10 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
   if (!transient) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
   if (cb_key) extra_cb(dialog, cb_key);
+
+  if (mainw->add_trash_rb)
+    trash_rb(LIVES_BUTTON_BOX(lives_dialog_get_action_area(LIVES_DIALOG(dialog))));
+
   return dialog;
 }
 
@@ -1603,7 +1607,8 @@ switch_point:
     mainw->scratch = SCRATCH_NONE;
 
 #ifdef HAVE_PULSE_AUDIO
-    if (new_ticks != mainw->startticks && mainw->pulsed->seek_pos == last_seek_pos && CLIP_HAS_AUDIO(mainw->pulsed->playing_file)) {
+    if (new_ticks != mainw->startticks && mainw->pulsed->seek_pos == last_seek_pos
+        && CLIP_HAS_AUDIO(mainw->pulsed->playing_file)) {
       mainw->startticks = new_ticks;
       sfile->frameno = mainw->actual_frame;
     }
@@ -1619,8 +1624,8 @@ switch_point:
     }
 #endif
 
-    if (new_ticks != mainw->startticks && new_ticks != mainw->last_startticks && (requested_frame != last_req_frame ||
-        sfile->frames == 1)) {
+    if (new_ticks != mainw->startticks && new_ticks != mainw->last_startticks
+        && (requested_frame != last_req_frame || sfile->frames == 1)) {
       //g_print("%ld %ld %ld %d %d %d\n", mainw->currticks, mainw->startticks, new_ticks,
       //sfile->last_frameno, requested_frame, last_req_frame);
       if (mainw->fixed_fpsd <= 0. && (mainw->vpp == NULL ||
@@ -1842,7 +1847,8 @@ switch_point:
 
       if (getahead < 0) {
         /// this is where we rebase the time for the next frame calculation
-        /// if getahead >= 0 then we want to keep the base at the last "played" frame, and keep repeating getahead until we reach it
+        /// if getahead >= 0 then we want to keep the base at the last "played" frame,
+        //   and keep repeating getahead until we reach it
         /// but we did update last_start_ticks
         sfile->last_frameno = requested_frame;
         // set

@@ -886,7 +886,8 @@ typedef struct {
 
 #define XCAPABLE(foo, EXE_FOO) ((capable->has_##foo->present == UNCHECKED \
 				 ? ((capable->has_##foo->present =	\
-							 (has_executable(EXE_FOO) ? PRESENT : MISSING))) : capable->has_##foo->present) == PRESENT)
+							 (has_executable(EXE_FOO) ? PRESENT : MISSING))) : \
+				 capable->has_##foo->present) == PRESENT)
 #define GET_EXE(foo) QUOTEME(foo)
 #define PRESENT(foo) (XCAPABLE(foo, GET_EXE(foo)) == PRESENT)
 #define MISSING(foo) (XCAPABLE(foo, GET_EXE(foo)) == MISSING)
@@ -1002,6 +1003,8 @@ typedef struct {
   char *wm; ///<window manager name
   boolean has_wm_caps;
   wm_caps_t wm_caps;
+
+  int64_t ds_used, ds_free, ds_tot;
 } capability;
 
 /// some shared structures
@@ -1335,7 +1338,7 @@ boolean write_headers(lives_clip_t *file);
 
 // saveplay.c restore
 ulong restore_file(const char *filename);
-boolean read_headers(int clipno, const char *file_name);
+boolean read_headers(int clipno, const char *dir, const char *file_name);
 
 // saveplay.c sets
 void open_set_file(int clipnum);

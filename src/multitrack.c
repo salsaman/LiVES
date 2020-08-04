@@ -19552,7 +19552,7 @@ void on_set_pvals_clicked(LiVESWidget * button, livespointer user_data) {
   if (mt->current_rfx != NULL && mainw->textwidget_focus != NULL) {
     // make sure text widgets are updated if they activate the default
     LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus),
-                              "textwidget");
+                              TEXTWIDGET_KEY);
     after_param_text_changed(textwidget, mt->current_rfx);
   }
   if (mt->framedraw != NULL) {

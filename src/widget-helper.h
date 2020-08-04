@@ -272,32 +272,32 @@ typedef GConnectFlags LiVESConnectFlags;
 #define LIVES_CONNECT_SWAPPED G_CONNECT_SWAPPED
 
 unsigned long lives_signal_connect_sync(livespointer instance, const char *detailed_signal, LiVESGuiCallback c_handler,
-                                        livespointer data,
-                                        LiVESConnectFlags flags);
+                                        livespointer data, LiVESConnectFlags flags);
 
 unsigned long lives_signal_connect_async(livespointer instance, const char *detailed_signal, LiVESGuiCallback c_handler,
-    livespointer data,
-    LiVESConnectFlags flags);
+    livespointer data, LiVESConnectFlags flags);
 
-#define lives_signal_connect(instance, detailed_signal, c_handler, data) lives_signal_connect_async(instance, detailed_signal, c_handler, data, 0)
-#define lives_signal_connect_after(instance, detailed_signal, c_handler, data) lives_signal_connect_async(instance, detailed_signal, c_handler, data, LIVES_CONNECT_AFTER)
-#define lives_signal_connect_swapped(instance, detailed_signal, c_handler, data) lives_signal_connect_async(instance, detailed_signal, c_handler, data, LIVES_CONNECT_SWAPPED)
+#define lives_signal_connect(instance, detailed_signal, c_handler, data) \
+  lives_signal_connect_async(instance, detailed_signal, c_handler, data, 0)
+#define lives_signal_connect_after(instance, detailed_signal, c_handler, data) \
+  lives_signal_connect_async(instance, detailed_signal, c_handler, data, LIVES_CONNECT_AFTER)
+#define lives_signal_connect_swapped(instance, detailed_signal, c_handler, data) \
+  lives_signal_connect_async(instance, detailed_signal, c_handler, data, LIVES_CONNECT_SWAPPED)
 
-#define lives_signal_sync_connect(instance, detailed_signal, c_handler, data) lives_signal_connect_sync(instance, detailed_signal, c_handler, data, 0)
-#define lives_signal_sync_connect_after(instance, detailed_signal, c_handler, data) lives_signal_connect_sync(instance, detailed_signal, c_handler, data, LIVES_CONNECT_AFTER)
-#define lives_signal_sync_connect_swapped(instance, detailed_signal, c_handler, data) lives_signal_connect_sync(instance, detailed_signal, c_handler, data, LIVES_CONNECT_SWAPPED)
+#define lives_signal_sync_connect(instance, detailed_signal, c_handler, data) \
+  lives_signal_connect_sync(instance, detailed_signal, c_handler, data, 0)
+#define lives_signal_sync_connect_after(instance, detailed_signal, c_handler, data) \
+  lives_signal_connect_sync(instance, detailed_signal, c_handler, data, LIVES_CONNECT_AFTER)
+#define lives_signal_sync_connect_swapped(instance, detailed_signal, c_handler, data) \
+  lives_signal_connect_sync(instance, detailed_signal, c_handler, data, LIVES_CONNECT_SWAPPED)
 
-#define lives_signal_sync_handler_disconnect_by_func(obj, func, data) g_signal_handlers_disconnect_by_func(obj, func, data)
+boolean lives_signal_handlers_sync_disconnect_by_func(livespointer instance, LiVESGuiCallback func, livespointer data);
+boolean lives_signal_handlers_sync_block_by_func(livespointer instance, LiVESGuiCallback func, livespointer data);
+boolean lives_signal_handlers_sync_unblock_by_func(livespointer instance, LiVESGuiCallback func, livespointer data);
 
-boolean lives_signal_handlers_disconnect_by_func(livespointer instance,
-    LiVESGuiCallback func,
-    livespointer data);
-boolean lives_signal_handlers_block_by_func(livespointer instance,
-    LiVESGuiCallback func,
-    livespointer data);
-boolean lives_signal_handlers_unblock_by_func(livespointer instance,
-    LiVESGuiCallback func,
-    livespointer data);
+boolean lives_signal_handlers_disconnect_by_func(livespointer instance, LiVESGuiCallback func, livespointer data);
+boolean lives_signal_handlers_block_by_func(livespointer instance, LiVESGuiCallback func, livespointer data);
+boolean lives_signal_handlers_unblock_by_func(livespointer instance, LiVESGuiCallback func, livespointer data);
 #else
 ulong lives_signal_connect(LiVESWidget *, const char *signal_name, ulong funcptr, livespointer data);
 #endif
@@ -353,8 +353,6 @@ LiVESWidget *lives_label_new(const char *text);
 
 const char *lives_label_get_text(LiVESLabel *);
 boolean lives_label_set_text(LiVESLabel *, const char *text);
-
-//boolean lives_label_set_xalign(LiVESLabel *, double align);
 
 boolean lives_label_set_markup(LiVESLabel *, const char *markup);
 
@@ -528,10 +526,11 @@ LiVESWidget *lives_alignment_new(float xalign, float yalign, float xscale, float
 boolean lives_alignment_set(LiVESWidget *, float xalign, float yalign, float xscale, float yscale);
 
 LiVESWidget *lives_expander_new(const char *label);
-LiVESWidget *lives_expander_get_label_widget(LiVESExpander *expander);
-boolean lives_expander_set_use_markup(LiVESExpander *expander, boolean val);
-
-boolean lives_label_set_width_chars(LiVESLabel *label, int nchars);
+LiVESWidget *lives_expander_get_label_widget(LiVESExpander *);
+boolean lives_expander_set_use_markup(LiVESExpander *, boolean val);
+boolean lives_expander_set_expanded(LiVESExpander *, boolean val);
+boolean lives_expander_get_expanded(LiVESExpander *);
+boolean lives_label_set_width_chars(LiVESLabel *, int nchars);
 boolean lives_label_set_halignment(LiVESLabel *, float yalign);
 
 LiVESWidget *lives_combo_new(void);
@@ -539,8 +538,8 @@ LiVESWidget *lives_combo_new_with_model(LiVESTreeModel *model);
 LiVESTreeModel *lives_combo_get_model(LiVESCombo *);
 boolean lives_combo_set_model(LiVESCombo *, LiVESTreeModel *);
 boolean lives_combo_set_focus_on_click(LiVESCombo *, boolean state);
-void lives_combo_popup(LiVESCombo *combo);
-boolean lives_combo_remove_all_text(LiVESCombo *combo);
+void lives_combo_popup(LiVESCombo *);
+boolean lives_combo_remove_all_text(LiVESCombo *);
 
 boolean lives_combo_append_text(LiVESCombo *, const char *text);
 boolean lives_combo_set_entry_text_column(LiVESCombo *, int column);
@@ -567,7 +566,7 @@ boolean lives_text_view_set_wrap_mode(LiVESTextView *, LiVESWrapMode wrapmode);
 boolean lives_text_view_set_justification(LiVESTextView *, LiVESJustification justify);
 
 LiVESTextBuffer *lives_text_buffer_new(void);
-char *lives_text_buffer_get_text(LiVESTextBuffer *tbuff, LiVESTextIter *start,
+char *lives_text_buffer_get_text(LiVESTextBuffer *, LiVESTextIter *start,
                                  LiVESTextIter *end, boolean inc_hidden_chars);
 char *lives_text_buffer_get_all_text(LiVESTextBuffer *);
 boolean lives_text_buffer_set_text(LiVESTextBuffer *, const char *, int len);
@@ -967,12 +966,13 @@ boolean lives_box_pack_first(LiVESBox *, LiVESWidget *child, boolean expand, boo
 LiVESWidget *lives_layout_new(LiVESBox *);
 LiVESWidget *lives_layout_hbox_new(LiVESLayout *);
 LiVESWidget *lives_layout_row_new(LiVESLayout *);
-int lives_layout_add_row(LiVESLayout *layout);
+int lives_layout_add_row(LiVESLayout *);
 LiVESWidget *lives_layout_pack(LiVESHBox *, LiVESWidget *);
 LiVESWidget *lives_layout_add_label(LiVESLayout *, const char *text, boolean horizontal);
-void lives_layout_label_set_text(LiVESLabel *label, const char *text);
+void lives_layout_label_set_text(LiVESLabel *, const char *text);
 LiVESWidget *lives_layout_add_fill(LiVESLayout *, boolean horizontal);
 LiVESWidget *lives_layout_add_separator(LiVESLayout *, boolean horizontal);
+LiVESWidget *lives_layout_expansion_row_new(LiVESLayout *, LiVESWidget *widget);
 
 boolean lives_button_grab_default_special(LiVESWidget *);
 boolean lives_button_ungrab_default_special(LiVESWidget *);
@@ -983,8 +983,11 @@ boolean lives_button_ungrab_default_special(LiVESWidget *);
 #define LOCK_BUTTON_HEIGHT 24
 
 boolean show_warn_image(LiVESWidget *, const char *text);
+boolean hide_warn_image(LiVESWidget *);
 
-boolean is_standard_widget(LiVESWidget *widget);
+boolean is_standard_widget(LiVESWidget *);
+
+boolean lives_widget_set_frozen(LiVESWidget *, boolean state);
 
 #ifdef USE_SPECIAL_BUTTONS
 void sbutt_render(LiVESWidget *, LiVESWidgetState state, livespointer user_data);
@@ -998,8 +1001,7 @@ boolean lives_standard_button_set_image(LiVESButton *, LiVESWidget *image);
 LiVESWidget *lives_standard_button_new_full(const char *label, int width, int height, LiVESBox *,
     boolean fake_default, const char *ttips);
 LiVESWidget *lives_standard_button_new_from_stock_full(const char *stock_id, const char *label,
-    int width, int height, LiVESBox *,
-    boolean fake_default, const char *ttips);
+    int width, int height, LiVESBox *, boolean fake_default, const char *ttips);
 #else
 #define lives_standard_button_new(w, h) lives_button_new()
 #define lives_standard_button_new_with_label(l, w, h) lives_button_new_with_label(l)
@@ -1408,6 +1410,8 @@ extern const widget_opts_t def_widget_opts;
 #define ISDIR_KEY "is_dir"
 #define FILTER_KEY "filter"
 #define DEFDIR_KEY "def_dir"
+#define RFX_KEY "rfx"
+#define TEXTWIDGET_KEY "def_dir"
 #define FILESEL_TYPE_KEY "filesel_type"
 #define PARAM_NUMBER_KEY "param_number"
 #define WH_LAYOUT_KEY "_wh_layout"

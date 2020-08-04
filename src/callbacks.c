@@ -2029,11 +2029,63 @@ void mt_memory_free(void) {
 }
 
 
-void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-  char *msg, *tmp;
+void del_current_set(boolean exit_after) {
+  char *msg;
+  boolean moc = mainw->only_close;
+  mainw->only_close = !exit_after;
+  set_string_pref(PREF_AR_CLIPSET, "");
+  prefs->ar_clipset = FALSE;
 
-  boolean has_layout_map = FALSE;
-  boolean had_clips = FALSE, legal_set_name;
+  if (mainw->multitrack) {
+    event_list_free_undos(mainw->multitrack);
+
+    if (mainw->multitrack->event_list) {
+      event_list_free(mainw->multitrack->event_list);
+      mainw->multitrack->event_list = NULL;
+    }
+  }
+
+  // check for layout maps
+  if (mainw->current_layouts_map) {
+    check_remove_layout_files();
+  }
+
+  if (mainw->multitrack && !mainw->only_close) mt_memory_free();
+  else if (mainw->multitrack) wipe_layout(mainw->multitrack);
+
+  mainw->was_set = mainw->leave_files = mainw->leave_recovery = FALSE;
+
+  recover_layout_cancelled(FALSE);
+
+  if (mainw->clips_available) {
+    if (*mainw->set_name)
+      msg = lives_strdup_printf(_("Deleting set %s..."), mainw->set_name);
+    else
+      msg = lives_strdup(_("Deleting set..."));
+    d_print(msg);
+    lives_free(msg);
+
+    do_threaded_dialog(_("Deleting set"), FALSE);
+  }
+
+  prefs->crash_recovery = FALSE;
+
+  // do a lot of cleanup, delete files
+  lives_exit(0);
+  prefs->crash_recovery = TRUE;
+
+  if (*mainw->set_name) {
+    d_print(_("Set %s was permanently deleted from the disk.\n"), mainw->set_name);
+    lives_memset(mainw->set_name, 0, 1);
+  }
+  mainw->only_close = moc;
+}
+
+
+void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+  char *tmp;
+  boolean legal_set_name;
+
   mainw->mt_needs_idlefunc = FALSE;
 
   if (user_data != NULL && LIVES_POINTER_TO_INT(user_data) == 1) {
@@ -2087,8 +2139,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->clips_available > 0) {
     char *set_name;
     _entryw *cdsw = create_cds_dialog(1);
-    int resp;
-    had_clips = TRUE;
+    LiVESResponseType resp;
     do {
       legal_set_name = TRUE;
       lives_widget_show_all(cdsw->dialog);
@@ -2105,7 +2156,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         mainw->only_close = mainw->is_exiting = FALSE;
         return;
       }
-      if (resp == 2) {
+      if (resp == LIVES_RESPONSE_ABORT) { /// TODO
         // save set
         if ((legal_set_name = is_legal_set_name((set_name = U82F(lives_entry_get_text(LIVES_ENTRY(cdsw->entry)))), TRUE))) {
           lives_widget_destroy(cdsw->dialog);
@@ -2132,66 +2183,21 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         lives_free(set_name);
       }
       if (mainw->was_set && legal_set_name) {
+        // TODO
+        //if (check_for_executable(&capable->has_gio, EXEC_GIO)) mainw->add_trash_rb = TRUE;
         if (!do_warning_dialog(_("\n\nSet will be deleted from the disk.\nAre you sure ?\n"))) {
-          resp = 2;
+          resp = LIVES_RESPONSE_ABORT;
         }
+        //mainw->add_trash_rb = FALSE;
       }
-    } while (resp == 2);
+    } while (resp == LIVES_RESPONSE_ABORT);
 
-    // discard clipset
 
     lives_widget_destroy(cdsw->dialog);
     lives_free(cdsw);
 
-    set_string_pref(PREF_AR_CLIPSET, "");
-    prefs->ar_clipset = FALSE;
-
-    if (mainw->multitrack != NULL) {
-      event_list_free_undos(mainw->multitrack);
-
-      if (mainw->multitrack->event_list != NULL) {
-        event_list_free(mainw->multitrack->event_list);
-        mainw->multitrack->event_list = NULL;
-      }
-    }
-
-    // check for layout maps
-    if (mainw->current_layouts_map != NULL) {
-      has_layout_map = TRUE;
-    }
-
-    if (has_layout_map) {
-      check_remove_layout_files();
-    }
-  }
-
-  if (mainw->multitrack != NULL && !mainw->only_close) mt_memory_free();
-  else if (mainw->multitrack != NULL) wipe_layout(mainw->multitrack);
-
-  mainw->was_set = mainw->leave_files = mainw->leave_recovery = FALSE;
-
-  recover_layout_cancelled(FALSE);
-
-  if (had_clips) {
-    if (*mainw->set_name)
-      msg = lives_strdup_printf(_("Deleting set %s..."), mainw->set_name);
-    else
-      msg = lives_strdup_printf(_("Deleting set..."), mainw->set_name);
-    d_print(msg);
-    lives_free(msg);
-
-    do_threaded_dialog(_("Deleting set"), FALSE);
-  }
-
-  prefs->crash_recovery = FALSE;
-
-  // do a lot of cleanup, delete files
-  lives_exit(0);
-  prefs->crash_recovery = TRUE;
-
-  if (*mainw->set_name) {
-    d_print(_("Set %s was permanently deleted from the disk.\n"), mainw->set_name);
-    lives_memset(mainw->set_name, 0, 1);
+    // discard clipset
+    del_current_set(!mainw->only_close);
   }
 
   mainw->leave_recovery = TRUE;
@@ -5302,6 +5308,10 @@ boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
   // new_set_name can be passed in userdata, it should be in filename encoding
   // TODO - caller to do end_threaded_dialog()
 
+  /////////////////
+  /// IMPORTANT !!!  mainw->no_wxit must be set. otherwise the app will exit
+  ////////////
+
   char new_set_name[MAX_SET_NAME_LEN] = {0};
 
   char *old_set = lives_strdup(mainw->set_name);
@@ -5395,7 +5405,6 @@ boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
   if (*old_set && strcmp(mainw->set_name, old_set)
       && lives_file_test(current_clips_dir, LIVES_FILE_TEST_IS_DIR)) {
     // set name was changed for an existing set
-
     if (!is_append) {
       // create new dir, in case it doesn't already exist
       dfile = lives_build_filename(prefs->workdir, mainw->set_name, CLIPS_DIRNAME, NULL);
@@ -5560,7 +5569,7 @@ char *on_load_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     if (!is_legal_set_name(set_name, TRUE)) {
       lives_freep((void **)&set_name);
     } else {
-      if (user_data == NULL) {
+      if (!user_data) {
         if (mainw->cliplist)
           if (!do_reload_set_query()) return NULL;
         reload_set(set_name);
@@ -5604,11 +5613,7 @@ boolean reload_set(const char *set_name) {
   FILE *orderfile;
   lives_clip_t *sfile;
 
-  char *msg;
-  char *com;
-  char *ordfile;
-  char *cwd;
-  char *handle = NULL;
+  char *msg, *com, *ordfile, *cwd, *clipdir, *handle = NULL;
 
   boolean added_recovery = FALSE;
   boolean keep_threaded_dialog = FALSE;
@@ -5673,7 +5678,7 @@ boolean reload_set(const char *set_name) {
 
     if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
 
-    if (orderfile == NULL) {
+    if (!orderfile) {
       // old style (pre 0.9.6)
       com = lives_strdup_printf("%s get_next_in_set \"%s\" \"%s\" %d", prefs->backend_sync, mainw->msg,
                                 set_name, capable->mainpid);
@@ -5757,15 +5762,14 @@ boolean reload_set(const char *set_name) {
       added_recovery = TRUE;
     }
 
+    clipdir = lives_build_filename(prefs->workdir, mainw->msg, NULL);
     if (orderfile != NULL) {
       // newer style (0.9.6+)
-      char *clipdir = lives_build_filename(prefs->workdir, mainw->msg, NULL);
 
       if (!lives_file_test(clipdir, LIVES_FILE_TEST_IS_DIR)) {
         lives_free(clipdir);
         continue;
       }
-      lives_free(clipdir);
       threaded_dialog_spin(0.);
 
       //create a new cfile and fill in the details
@@ -5774,11 +5778,12 @@ boolean reload_set(const char *set_name) {
 
     // changes mainw->current_file on success
     sfile = create_cfile(-1, handle, FALSE);
-    if (handle != NULL) lives_free(handle);
+    if (handle) lives_free(handle);
     handle = NULL;
     threaded_dialog_spin(0.);
 
-    if (sfile == NULL) {
+    if (!sfile) {
+      lives_free(clipdir);
       mainw->suppress_dprint = FALSE;
 
       if (!keep_threaded_dialog) end_threaded_dialog();
@@ -5799,11 +5804,12 @@ boolean reload_set(const char *set_name) {
     }
 
     // get file details
-    if (!read_headers(mainw->current_file, NULL)) {
+    if (!read_headers(mainw->current_file, clipdir, NULL)) {
       /// set clip failed to load, we need to do something with it
       /// else it will keep trying to reload each time.
       /// for now we shall just move it out of the set
       /// this is fine as the user can try to recover it at a later time
+      lives_free(clipdir);
       lives_free(mainw->files[mainw->current_file]);
       mainw->files[mainw->current_file] = NULL;
       if (mainw->first_free_file > mainw->current_file) mainw->first_free_file = mainw->current_file;
@@ -5811,6 +5817,7 @@ boolean reload_set(const char *set_name) {
       hadbad = TRUE;
       continue;
     }
+    lives_free(clipdir);
 
     threaded_dialog_spin(0.);
 
@@ -5997,21 +6004,6 @@ static void recover_lost_clips(LiVESList * reclist) {
   }
   do_info_dialogf(P_("$d clip was recovered", "%d clips were recovered\n",
                      mainw->clips_available), mainw->clips_available);
-}
-
-
-static void free_fdets_list(LiVESList **listp) {
-  LiVESList *list = *listp;
-  lives_file_dets_t *filedets;
-  for (; list && list->data; list = list->next) {
-    filedets = (lives_file_dets_t *)list->data;
-    lives_struct_free(filedets->lsd);
-    list->data = NULL;
-  }
-  if (*listp) {
-    lives_list_free(*listp);
-    *listp = NULL;
-  }
 }
 
 
@@ -6276,15 +6268,23 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
     int orig;
 
     if (nitems) {
+      char *dirname = lives_build_path(full_trashdir, TRASH_RECOVER, NULL);
       recinfo =
-        dir_to_file_details(rec_list, full_trashdir, TRASH_RECOVER, prefs->workdir,
-                            EXTRA_DETAILS_CLIPHDR | EXTRA_DETAILS_EMPTY_DIR);
+        dir_to_file_details(rec_list, dirname, prefs->workdir,
+                            EXTRA_DETAILS_CLIPHDR);
+      lives_free(dirname);
+
+      dirname = lives_build_path(full_trashdir, TRASH_REMOVE, NULL);
       reminfo =
-        dir_to_file_details(rem_list, full_trashdir, TRASH_REMOVE, prefs->workdir,
-                            EXTRA_DETAILS_EMPTY_DIR);
+        dir_to_file_details(rem_list, dirname, prefs->workdir,
+                            EXTRA_DETAILS_EMPTY_DIR | EXTRA_DETAILS_DIRSIZE);
+      lives_free(dirname);
+
+      dirname = lives_build_path(full_trashdir, TRASH_LEAVE, NULL);
       leaveinfo =
-        dir_to_file_details(left_list, full_trashdir, TRASH_LEAVE, prefs->workdir,
-                            EXTRA_DETAILS_EMPTY_DIR);
+        dir_to_file_details(left_list, dirname, prefs->workdir,
+                            EXTRA_DETAILS_EMPTY_DIR | EXTRA_DETAILS_DIRSIZE);
+      lives_free(dirname);
     } else {
       *rec_list = lives_list_append(*rec_list, NULL);
       *rem_list = lives_list_append(*rem_list, NULL);
@@ -6524,7 +6524,6 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       lives_rm(cfile->info_file);
     }
 
-
     if (THREADVAR(com_failed)) {
       THREADVAR(com_failed) = FALSE;
       goto cleanup;
@@ -6615,9 +6614,14 @@ cleanup:
 
   mainw->next_ds_warn_level = ds_warn_level;
 
-  if (user_data)
+  if (user_data) {
+    mainw->dsu_valid = FALSE;
+    if (!mainw->dsu_scanning) {
+      mainw->dsu_scanning = TRUE;
+      lives_idle_add_simple(update_dsu, NULL);
+    }
     lives_widget_show(lives_widget_get_toplevel(LIVES_WIDGET(user_data)));
-  else {
+  } else {
     if (!mainw->multitrack && !mainw->is_processing && !LIVES_IS_PLAYING) {
       sensitize();
     }
@@ -8051,6 +8055,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       if (mainw->sep_win) {
         // switch to separate window during pb
         if (!mainw->multitrack) {
+          lives_widget_hide(mainw->playframe);
           if (!prefs->hide_framebar && !mainw->faded && ((!mainw->preview && (CURRENT_CLIP_HAS_VIDEO || mainw->foreign)) ||
               (CURRENT_CLIP_IS_VALID &&
                cfile->opening))) {
@@ -10021,6 +10026,8 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
     redraw_raudio();
   else if (widget == mainw->msg_area && !mainw->multitrack)
     msg_area_config(widget);
+  else if (widget == mainw->dsu_widget)
+    draw_dsu_widget(widget);
   else if (mainw->multitrack) {
     if (widget == mainw->multitrack->timeline_reg)
       draw_region(mainw->multitrack);

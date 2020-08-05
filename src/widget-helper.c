@@ -41,6 +41,9 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
 #define TTIPS_KEY "_wh_lives_tooltips"
 #define TTIPS_OVERRIDE_KEY "_wh_lives_tooltips_override"
 #define TTIPS_HIDE_KEY "_wh_lives_tooltips_hide"
+#define HAS_TTIPS_IMAGE_KEY "_wh_has_ttips_image"
+#define TTIPS_IMAGE_KEY "_wh_ttips_image"
+#define WARN_IMAGE_KEY "_wh_warn_image"
 #define SHOWALL_OVERRIDE_KEY "_wh_lives_showall_override"
 #define SHOWHIDE_CONTROLLER_KEY "_wh_lives_showhide_controller"
 #define ROWS_KEY "_wh_rows"
@@ -61,8 +64,6 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
 #define SPGREEN_KEY "_wh_sp_green"
 #define SPBLUE_KEY "_wh_sp_blue"
 #define SPALPHA_KEY "_wh_sp_alpha"
-#define WARN_IMAGE_KEY "_wh_warn_image"
-#define TTIPS_IMAGE_KEY "_wh_warn_image"
 #define ALT_THEME_KEY "_wh_alt_theme"
 
 #define SBUTT_SURFACE_KEY "_sbutt_surf"
@@ -902,12 +903,11 @@ static void notify_redirect_handler(LiVESWidgetObject *object, livespointer pspe
 }
 
 unsigned long lives_signal_connect_sync(livespointer instance, const char *detailed_signal,
-                                        LiVESGuiCallback c_handler,
-                                        livespointer data,
+                                        LiVESGuiCallback c_handler, livespointer data,
                                         LiVESConnectFlags flags) {
   unsigned long func_id;
 #if LIVES_HAS_SWITCH_WIDGET
-  if (LIVES_IS_SWITCH(LIVES_WIDGET(instance))
+  if (LIVES_IS_WIDGET(instance) && LIVES_IS_SWITCH(LIVES_WIDGET(instance))
       && !strcmp(detailed_signal, LIVES_WIDGET_TOGGLED_SIGNAL)) {
     /// to make switch and checkbutton interchangeable,
     /// we substitue the "toggled" signal for a switch with "notify::active"
@@ -1184,6 +1184,15 @@ unsigned long lives_signal_connect_async(livespointer instance, const char *deta
   lives_sigdata_t *sigdata;
   uint32_t nvals;
   GSignalQuery sigq;
+#if LIVES_HAS_SWITCH_WIDGET
+  if (LIVES_IS_WIDGET(instance) && LIVES_IS_SWITCH(LIVES_WIDGET(instance))
+      && !strcmp(detailed_signal, LIVES_WIDGET_TOGGLED_SIGNAL)) {
+    /// to make switch and checkbutton interchangeable,
+    /// we substitue the "toggled" signal for a switch with "notify::active"
+    /// and then redirect it back to the desired callback
+    return lives_signal_connect_sync(instance, LIVES_WIDGET_NOTIFY_SIGNAL "active", c_handler, data, flags);
+  }
+#endif
 
   if (notilen == -1) notilen = lives_strlen(LIVES_WIDGET_NOTIFY_SIGNAL);
   if (!lives_strncmp(detailed_signal, LIVES_WIDGET_NOTIFY_SIGNAL, notilen)) {
@@ -1209,7 +1218,7 @@ unsigned long lives_signal_connect_async(livespointer instance, const char *deta
   active_sigdets = lives_list_prepend(active_sigdets, (livespointer)sigdata);
 
 #if LIVES_HAS_SWITCH_WIDGET
-  if (LIVES_IS_SWITCH(LIVES_WIDGET(instance))
+  if (LIVES_IS_WIDGET(instance) && LIVES_IS_SWITCH(LIVES_WIDGET(instance))
       && !strcmp(detailed_signal, LIVES_WIDGET_TOGGLED_SIGNAL)) {
     /// to make switch and checkbutton interchangeable,
     /// we substitue the "toggled" signal for a switch with "notify::active"
@@ -1237,35 +1246,6 @@ unsigned long lives_signal_connect_async(livespointer instance, const char *deta
   return sigdata->funcid;
 }
 
-
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handlers_sync_disconnect_by_func(livespointer instance,
-    LiVESGuiCallback func, livespointer data) {
-#ifdef GUI_GTK
-  g_signal_handlers_disconnect_by_func(instance, func, data);
-  return TRUE;
-#endif
-  return FALSE;
-}
-
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handlers_sync_block_by_func(livespointer instance,
-    LiVESGuiCallback func, livespointer data) {
-#ifdef GUI_GTK
-  g_signal_handlers_block_by_func(instance, func, data);
-  return TRUE;
-#endif
-  return FALSE;
-}
-
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handlers_sync_unblock_by_func(livespointer instance,
-    LiVESGuiCallback func, livespointer data) {
-#ifdef GUI_GTK
-  g_signal_handlers_unblock_by_func(instance, func, data);
-  return TRUE;
-#endif
-  return FALSE;
-}
-
-
 static lives_sigdata_t *find_sigdata(livespointer instance, LiVESGuiCallback func, livespointer data) {
   LiVESList *list = active_sigdets;
   for (; list; list = list->next) {
@@ -1276,37 +1256,121 @@ static lives_sigdata_t *find_sigdata(livespointer instance, LiVESGuiCallback fun
   return NULL;
 }
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handlers_sync_disconnect_by_func(livespointer instance,
+    LiVESGuiCallback func, livespointer data) {
+#ifdef GUI_GTK
+#if LIVES_HAS_SWITCH_WIDGET
+  if (LIVES_IS_WIDGET(instance) && LIVES_IS_SWITCH(LIVES_WIDGET(instance))) {
+    /// to make switch and checkbutton interchangeable,
+    /// we substitue the "toggled" signal for a switch with "notify::active"
+    /// and then redirect it back to the desired callback
+    lives_sigdata_t *sigdata = find_sigdata(instance, LIVES_GUI_CALLBACK(func), data);
+    if (sigdata) {
+      g_signal_handler_disconnect(instance, sigdata->funcid);
+      return TRUE;
+    }
+  }
+#endif
+  g_signal_handlers_disconnect_by_func(instance, func, data);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handlers_sync_block_by_func(livespointer instance,
+    LiVESGuiCallback func, livespointer data) {
+#ifdef GUI_GTK
+#if LIVES_HAS_SWITCH_WIDGET
+  if (LIVES_IS_WIDGET(instance) && LIVES_IS_SWITCH(LIVES_WIDGET(instance))) {
+    /// to make switch and checkbutton interchangeable,
+    /// we substitue the "toggled" signal for a switch with "notify::active"
+    /// and then redirect it back to the desired callback
+    lives_sigdata_t *sigdata = find_sigdata(instance, LIVES_GUI_CALLBACK(func), data);
+    if (sigdata) {
+      g_signal_handler_block(instance, sigdata->funcid);
+      return TRUE;
+    }
+  }
+#endif
+  g_signal_handlers_block_by_func(instance, func, data);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handlers_sync_unblock_by_func(livespointer instance,
+    LiVESGuiCallback func, livespointer data) {
+#ifdef GUI_GTK
+#if LIVES_HAS_SWITCH_WIDGET
+  if (LIVES_IS_WIDGET(instance) && LIVES_IS_SWITCH(LIVES_WIDGET(instance))) {
+    /// to make switch and checkbutton interchangeable,
+    /// we substitue the "toggled" signal for a switch with "notify::active"
+    /// and then redirect it back to the desired callback
+    lives_sigdata_t *sigdata = find_sigdata(instance, LIVES_GUI_CALLBACK(func), data);
+    if (sigdata) {
+      g_signal_handler_unblock(instance, sigdata->funcid);
+      return TRUE;
+    }
+  }
+#endif
+  g_signal_handlers_unblock_by_func(instance, func, data);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handlers_disconnect_by_func(livespointer instance,
     LiVESGuiCallback func, livespointer data) {
-  /// assume there is only one connection for each .inst / func / data
-  lives_sigdata_t *sigdata = find_sigdata(instance, LIVES_GUI_CALLBACK(func), data);
-  if (sigdata) {
-    lives_signal_handler_disconnect(instance, sigdata->funcid);
-    return TRUE;
+#if LIVES_HAS_SWITCH_WIDGET
+  if (LIVES_IS_WIDGET(instance) && LIVES_IS_SWITCH(LIVES_WIDGET(instance))) {
+    return lives_signal_handlers_sync_disconnect_by_func(instance, func, data);
+  } else {
+#endif
+    lives_sigdata_t *sigdata = find_sigdata(instance, LIVES_GUI_CALLBACK(func), data);
+    if (sigdata) {
+      lives_signal_handler_disconnect(instance, sigdata->funcid);
+      return TRUE;
+    }
+    return lives_signal_handlers_sync_disconnect_by_func(instance, func, data);
+#if LIVES_HAS_SWITCH_WIDGET
   }
-  return lives_signal_handlers_sync_disconnect_by_func(instance, func, data);
+#endif
 }
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handlers_block_by_func(livespointer instance,
     LiVESGuiCallback func, livespointer data) {
-  /// assume there is only one connection for each .inst / func / data
-  lives_sigdata_t *sigdata = find_sigdata(instance, LIVES_GUI_CALLBACK(func), data);
-  if (sigdata) {
-    lives_signal_handler_block(instance, sigdata->funcid);
-    return TRUE;
+#if LIVES_HAS_SWITCH_WIDGET
+  if (LIVES_IS_WIDGET(instance) && LIVES_IS_SWITCH(LIVES_WIDGET(instance))) {
+    return lives_signal_handlers_sync_block_by_func(instance, func, data);
+  } else {
+#endif
+    lives_sigdata_t *sigdata = find_sigdata(instance, LIVES_GUI_CALLBACK(func), data);
+    if (sigdata) {
+      lives_signal_handler_block(instance, sigdata->funcid);
+      return TRUE;
+    }
+    return lives_signal_handlers_sync_block_by_func(instance, func, data);
+#if LIVES_HAS_SWITCH_WIDGET
   }
-  return lives_signal_handlers_sync_block_by_func(instance, func, data);
+#endif
 }
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handlers_unblock_by_func(livespointer instance,
     LiVESGuiCallback func, livespointer data) {
-  /// assume there is only one connection for each .inst / func / data
-  lives_sigdata_t *sigdata = find_sigdata(instance, LIVES_GUI_CALLBACK(func), data);
-  if (sigdata) {
-    lives_signal_handler_unblock(instance, sigdata->funcid);
-    return TRUE;
+#if LIVES_HAS_SWITCH_WIDGET
+  if (LIVES_IS_WIDGET(instance) && LIVES_IS_SWITCH(LIVES_WIDGET(instance))) {
+    return lives_signal_handlers_sync_unblock_by_func(instance, func, data);
+  } else {
+#endif
+    lives_sigdata_t *sigdata = find_sigdata(instance, LIVES_GUI_CALLBACK(func), data);
+    if (sigdata) {
+      lives_signal_handler_unblock(instance, sigdata->funcid);
+      return TRUE;
+    }
+    return lives_signal_handlers_sync_unblock_by_func(instance, func, data);
+#if LIVES_HAS_SWITCH_WIDGET
   }
-  return lives_signal_handlers_sync_unblock_by_func(instance, func, data);
+#endif
 }
 
 
@@ -1730,7 +1794,7 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
   ctx = gtk_widget_get_style_context(widget);
   provider = gtk_css_provider_new();
   gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
-                                 (provider), GTK_STYLE_PROVIDER_PRIORITY_USER);
+                                 (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
   widget_name = lives_strdup(gtk_widget_get_name(widget));
 
@@ -1799,23 +1863,9 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
 
 #if GTK_CHECK_VERSION(3, 24, 0)
     // special tweaks
-    if (selector == NULL) {
+    if (!selector) {
       if (GTK_IS_FRAME(widget)) {
         selector = "label";
-      }
-
-      if (GTK_IS_TEXT_VIEW(widget)) {
-        //selector = "text";
-        /* tmp = lives_strdup_printf("%s %s text {\n %s: %s;}\n", css_string, wname, detail, value); */
-        /* lives_free(css_string); */
-        /* css_string = tmp; */
-      }
-
-      if (GTK_IS_SPIN_BUTTON(widget)) {
-        selector = "*";
-        /* tmp = lives_strdup_printf("%s %s text {\n %s: %s;}\n", css_string, wname, detail, value); */
-        /* lives_free(css_string); */
-        /* css_string = tmp; */
       }
     }
 #endif
@@ -3550,6 +3600,18 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_expander_set_expanded(LiVESExpander *e
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_expander_set_label(LiVESExpander *expander, const char *text) {
+
+#ifdef GUI_GTK
+  char *labeltext = lives_strdup_printf("<big>%s</big>", text);
+  gtk_expander_set_label(expander, labeltext);
+  lives_free(labeltext);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_expander_get_expanded(LiVESExpander *expander) {
 #ifdef GUI_GTK
   return gtk_expander_get_expanded(expander);
@@ -3647,6 +3709,14 @@ static boolean setcellbg(LiVESCellRenderer *r, void *p) {
   lives_widget_object_set(r, "cell-background-rgba", &palette->info_base);
   lives_widget_object_set(r, "foreground-rgba", &palette->info_text);
   gtk_cell_renderer_set_fixed_size(r, -1, COMBO_CELL_HEIGHT);
+  //// not working, is not a widget
+  /* if (prefs->extra_colours && mainw->pretty_colours) { */
+  /*   char *colref = gdk_rgba_to_string(&palette->nice1); */
+  /*   char *tmp = lives_strdup_printf("0 0 0 1px %s inset", colref); */
+  /*   set_css_value_direct(r, LIVES_WIDGET_STATE_FOCUSED, "", "box-shadow", tmp); */
+  /*   lives_free(tmp); */
+  /*   lives_free(colref); */
+  /* } */
   return FALSE;
 }
 #endif
@@ -4537,11 +4607,9 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_check_button_new_with_label(const
 }
 
 
-static LiVESWidget *make_ttips_image(const char *text) {
+static LiVESWidget *make_ttips_image_for(LiVESWidget *widget, const char *text) {
   LiVESWidget *ttips_image = lives_image_new_from_stock(LIVES_STOCK_DIALOG_QUESTION,
                              LIVES_ICON_SIZE_SMALL_TOOLBAR);
-  /// dont work...
-  //lives_widget_set_bg_color(ttips_image, LIVES_WIDGET_STATE_NORMAL, &palette->dark_orange);
   lives_widget_set_no_show_all(ttips_image, TRUE);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ttips_image), TTIPS_IMAGE_KEY, ttips_image);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ttips_image), TTIPS_HIDE_KEY, ttips_image);
@@ -4550,6 +4618,9 @@ static LiVESWidget *make_ttips_image(const char *text) {
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ttips_image),
                                  SHOWALL_OVERRIDE_KEY, LIVES_INT_TO_POINTER(TRUE));
   }
+  lives_widget_set_show_hide_with(widget, ttips_image);
+  lives_widget_set_sensitive_with(widget, ttips_image);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), HAS_TTIPS_IMAGE_KEY, ttips_image);
   return ttips_image;
 }
 
@@ -4561,7 +4632,9 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_widget_set_tooltip_text(LiVESWidg
 
   if (tip_text && *tip_text == '#' && !lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
       TTIPS_IMAGE_KEY)) {
-    widget = img_tips = make_ttips_image(++ttext);
+    if (!(img_tips = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), HAS_TTIPS_IMAGE_KEY))) {
+      widget = img_tips = make_ttips_image_for(widget, ++ttext);
+    } else lives_widget_set_tooltip_text(img_tips, ++ttext);
   } else {
     if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_OVERRIDE_KEY))
       ttips_override = TRUE;
@@ -4569,29 +4642,41 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_widget_set_tooltip_text(LiVESWidg
       if (tip_text) {
         lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY,
                                           (livespointer)(lives_strdup(ttext)));
-        if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
-                                         TTIPS_IMAGE_KEY)) {
-          if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
-                                           SHOWALL_OVERRIDE_KEY)) {
-            LiVESWidget *cntrl;
-            lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget),
-                                         SHOWALL_OVERRIDE_KEY, NULL);
-            if ((cntrl = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
-                         SHOWHIDE_CONTROLLER_KEY))) {
-              if (lives_widget_is_visible(cntrl)) lives_widget_show_all(widget);
-            }
-          }
-        }
       } else {
         lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY, NULL);
-        if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
-                                         TTIPS_IMAGE_KEY)) {
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget),
-                                       SHOWALL_OVERRIDE_KEY, LIVES_INT_TO_POINTER(TRUE));
-          lives_widget_hide(widget);
+      }
+      if (!lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
+                                        TTIPS_IMAGE_KEY)) {
+        if (!lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
+                                          HAS_TTIPS_IMAGE_KEY)) {
+          img_tips = make_ttips_image_for(widget, NULL);
+          return img_tips;
         }
       }
       return NULL;
+    }
+    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
+                                     TTIPS_IMAGE_KEY)) {
+      if (ttext) {
+        if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
+                                         SHOWALL_OVERRIDE_KEY)) {
+          LiVESWidget *cntrl;
+          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget),
+                                       SHOWALL_OVERRIDE_KEY, NULL);
+          if ((cntrl = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
+                       SHOWHIDE_CONTROLLER_KEY))) {
+            if (lives_widget_is_visible(cntrl)) lives_widget_show_all(widget);
+          }
+        }
+      } else {
+        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget),
+                                     SHOWALL_OVERRIDE_KEY, widget);
+        lives_widget_hide(widget);
+      }
+    } else {
+      if (!lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), HAS_TTIPS_IMAGE_KEY)) {
+        img_tips = make_ttips_image_for(widget, NULL);
+      }
     }
   }
 #ifdef GUI_GTK
@@ -7400,7 +7485,7 @@ boolean lives_combo_populate(LiVESCombo *combo, LiVESList *list) {
     gtk_cell_area_foreach(celly, setcellbg, NULL);
 
     // need to get the GtkCellView !
-    lives_widget_object_set(celly, "background", &palette->info_base);
+    //lives_widget_object_set(celly, "background", &palette->info_base);
 #endif
   }
   return TRUE;
@@ -7467,11 +7552,13 @@ static void set_css_min_size(LiVESWidget *w, int mw, int mh) {
   char *tmp;
   if (mw > 0) {
     tmp = lives_strdup_printf("%dpx", mw);
+    set_css_value_direct(w, LIVES_WIDGET_STATE_NORMAL, "", "min-width", tmp);
     set_css_value_direct(w, LIVES_WIDGET_STATE_NORMAL, "*", "min-width", tmp);
     lives_free(tmp);
   }
   if (mh > 0) {
     tmp = lives_strdup_printf("%dpx", mh);
+    set_css_value_direct(w, LIVES_WIDGET_STATE_NORMAL, "", "min-height", tmp);
     set_css_value_direct(w, LIVES_WIDGET_STATE_NORMAL, "*", "min-height", tmp);
     lives_free(tmp);
   }
@@ -7915,6 +8002,7 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
         const char *text = (const char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(sbutt),
                            SBUTT_TXT_KEY);
         if (text) {
+          LiVESWidget *topl;
           LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
           LingoContext *ctx = gtk_widget_get_pango_context(widget);
           char *markup, *full_markup;
@@ -7930,7 +8018,11 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
           if (acc)
             lives_widget_add_accelerator(sbutt, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                          acc, (LiVESXModifierType)LIVES_ALT_MASK, (LiVESAccelFlags)0);
-          lives_window_add_accel_group(LIVES_WINDOW(toplevel), accel_group);
+
+          if (LIVES_IS_FRAME(toplevel)) topl = lives_bin_get_child(LIVES_BIN(toplevel));
+          else topl = toplevel;
+
+          lives_window_add_accel_group(LIVES_WINDOW(topl), accel_group);
           lingo_layout_get_size(layout, &w_, &h_);
 
           // scale width, height to pixels
@@ -8134,9 +8226,6 @@ static LiVESWidget *_lives_standard_button_set_full(LiVESWidget * sbutt, LiVESBo
 
     if (img_tips) {
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
-      if (prefs->show_tooltips) lives_widget_show(img_tips);
-      lives_widget_set_show_hide_with(sbutt, img_tips);
-      lives_widget_set_sensitive_with(sbutt, img_tips);
     }
   }
 
@@ -8364,20 +8453,13 @@ LiVESWidget *lives_standard_label_new(const char *text) {
 
 LiVESWidget *lives_standard_label_new_with_tooltips(const char *text, LiVESBox * box,
     const char *tips) {
-  LiVESWidget *img_tips = make_ttips_image(tips);
   LiVESWidget *label = lives_standard_label_new(text);
+  LiVESWidget *img_tips = make_ttips_image_for(label, tips);
   LiVESWidget *hbox = make_inner_hbox(LIVES_BOX(box), TRUE);
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
   add_warn_image(label, hbox);
   lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
   lives_widget_set_show_hide_parent(label);
-  lives_widget_set_sensitive_with(label, img_tips);
-  lives_widget_set_show_hide_with(label, img_tips);
-  if (prefs->show_tooltips) {
-    if (!lives_widget_object_get_data(LIVES_WIDGET_OBJECT(img_tips), SHOWALL_OVERRIDE_KEY)) {
-      lives_widget_show(img_tips);
-    }
-  }
   return label;
 }
 
@@ -8574,22 +8656,13 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_sensitive_with(LiVESWidget 
 
 
 static void lives_widget_show_all_cb(LiVESWidget * widget, livespointer user_data) {
-  LiVESWidget *parent = (LiVESWidget *)user_data;
   if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), SHOWALL_OVERRIDE_KEY)) return;
   if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_HIDE_KEY)) {
     if (prefs->show_tooltips) lives_widget_show(widget);
     return;
   }
-  if (!lives_widget_is_visible(parent))
-    lives_widget_show_all(parent);
+  if (!lives_widget_is_visible(widget)) lives_widget_show_all(widget);
 }
-
-
-static void lives_widget_hide_cb(LiVESWidget * widget, livespointer user_data) {
-  LiVESWidget *parent = (LiVESWidget *)user_data;
-  lives_widget_hide(parent);
-}
-
 
 boolean lives_widget_set_show_hide_with(LiVESWidget * widget, LiVESWidget * other) {
   // show / hide the other widget when and only when the child is shown / hidden
@@ -8597,13 +8670,13 @@ boolean lives_widget_set_show_hide_with(LiVESWidget * widget, LiVESWidget * othe
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(other),
                                SHOWHIDE_CONTROLLER_KEY, widget);
   if (!widget_opts.no_gui) {
-    lives_signal_sync_connect(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_SHOW_SIGNAL,
-                              LIVES_GUI_CALLBACK(lives_widget_show_all_cb),
-                              (livespointer)(other));
+    lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_SHOW_SIGNAL,
+                                      LIVES_GUI_CALLBACK(lives_widget_show_all_cb),
+                                      (livespointer)(other));
 
-    lives_signal_sync_connect(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_HIDE_SIGNAL,
-                              LIVES_GUI_CALLBACK(lives_widget_hide_cb),
-                              (livespointer)(other));
+    lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_HIDE_SIGNAL,
+                                      LIVES_GUI_CALLBACK(lives_widget_hide),
+                                      (livespointer)(other));
   }
   return TRUE;
 }
@@ -8680,9 +8753,6 @@ LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, Li
 
     if (img_tips) {
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
-      if (prefs->show_tooltips) lives_widget_show(img_tips);
-      lives_widget_set_show_hide_with(swtch, img_tips);
-      lives_widget_set_sensitive_with(swtch, img_tips);
     }
   }
 
@@ -8782,9 +8852,6 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
 
     if (img_tips) {
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
-      if (prefs->show_tooltips) lives_widget_show(img_tips);
-      lives_widget_set_show_hide_with(checkbutton, img_tips);
-      lives_widget_set_sensitive_with(checkbutton, img_tips);
     }
   }
 
@@ -9004,9 +9071,6 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList *
 
     if (img_tips) {
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
-      if (prefs->show_tooltips) lives_widget_show(img_tips);
-      lives_widget_set_show_hide_with(radiobutton, img_tips);
-      lives_widget_set_sensitive_with(radiobutton, img_tips);
     }
   }
 
@@ -9173,28 +9237,30 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
 
     if (img_tips) {
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
-      if (prefs->show_tooltips) lives_widget_show(img_tips);
-      lives_widget_set_show_hide_with(spinbutton, img_tips);
-      lives_widget_set_sensitive_with(spinbutton, img_tips);
     }
   }
 
   if (widget_opts.apply_theme) {
-    set_css_min_size(spinbutton, widget_opts.css_min_width, widget_opts.css_min_height);
+    set_css_min_size(spinbutton, widget_opts.css_min_width, widget_opts.css_min_height * 3 / 2);
     set_child_alt_colour(spinbutton, TRUE);
-    set_child_dimmed_colour2(spinbutton, BUTTON_DIM_VAL); // insens, themecols 1, child only
     lives_widget_apply_theme2(LIVES_WIDGET(spinbutton), LIVES_WIDGET_STATE_NORMAL, TRUE);
+#if !GTK_CHECK_VERSION(3, 16, 0)
+    set_child_dimmed_colour2(spinbutton, BUTTON_DIM_VAL); // insens, themecols 1, child only
     lives_widget_apply_theme_dimmed2(spinbutton, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
-#if GTK_CHECK_VERSION(3, 16, 0)
+#else
     colref = gdk_rgba_to_string(&palette->normal_fore);
     set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_NORMAL, "", "color", colref);
     lives_free(colref);
 
-    set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
+    set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_INSENSITIVE, "*", "opacity", "0.5");
 
     if (prefs->extra_colours && mainw->pretty_colours) {
+      char *tmp;
       colref = gdk_rgba_to_string(&palette->nice1);
-      set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_NORMAL, "", "outline-color", colref);
+      set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_NORMAL, "", "border-color", colref);
+      tmp = lives_strdup_printf("0 0 0 1px %s inset", colref);
+      set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_FOCUSED, "", "box-shadow", tmp);
+      lives_free(tmp);
       lives_free(colref);
     }
 #endif
@@ -9294,9 +9360,6 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList * list, L
 
     if (img_tips) {
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
-      if (prefs->show_tooltips) lives_widget_show(img_tips);
-      lives_widget_set_show_hide_with(combo, img_tips);
-      lives_widget_set_sensitive_with(combo, img_tips);
     }
   }
 
@@ -9306,13 +9369,24 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList * list, L
   }
 
   if (widget_opts.apply_theme) {
+    // TODO *** -- needs button size
     set_css_min_size(combo, widget_opts.css_min_width, widget_opts.css_min_height);
+    set_css_min_size(LIVES_WIDGET(entry), widget_opts.css_min_width, widget_opts.css_min_height);
     set_child_colour(combo, TRUE);
 
 #if !GTK_CHECK_VERSION(3, 16, 0)
     set_child_dimmed_colour(combo, BUTTON_DIM_VAL); // insens, themecols 1, child only
 #else
     set_css_value_direct(combo, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
+    if (prefs->extra_colours && mainw->pretty_colours) {
+      char *tmp;
+      char *colref = gdk_rgba_to_string(&palette->nice1);
+      set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, "", "border-color", colref);
+      tmp = lives_strdup_printf("0 0 0 1px %s inset", colref);
+      set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_FOCUSED, "", "box-shadow", tmp);
+      lives_free(tmp);
+      lives_free(colref);
+    }
 #endif
     lives_widget_apply_theme2(combo, LIVES_WIDGET_STATE_NORMAL, TRUE);
     lives_widget_apply_theme2(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, TRUE);
@@ -9427,15 +9501,23 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
 
     if (img_tips) {
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
-      if (prefs->show_tooltips) lives_widget_show(img_tips);
-      lives_widget_set_show_hide_with(entry, img_tips);
-      lives_widget_set_sensitive_with(entry, img_tips);
     }
   }
 
   if (widget_opts.apply_theme) {
 #if GTK_CHECK_VERSION(3, 0, 0)
+    set_css_min_size(entry, widget_opts.css_min_width, widget_opts.css_min_height * 3 / 2);
 #if GTK_CHECK_VERSION(3, 16, 0)
+    if (prefs->extra_colours && mainw->pretty_colours) {
+      char *tmp;
+      char *colref = gdk_rgba_to_string(&palette->nice1);
+      set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, "", "border-color", colref);
+      tmp = lives_strdup_printf("0 0 0 1px %s inset", colref);
+      set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_FOCUSED, "", "box-shadow", tmp);
+      lives_free(tmp);
+      lives_free(colref);
+    }
+
     if (prefs->extra_colours && mainw->pretty_colours) {
       lives_widget_set_border_color(entry, LIVES_WIDGET_STATE_NORMAL, &palette->nice1);
     }

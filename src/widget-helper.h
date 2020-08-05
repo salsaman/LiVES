@@ -529,6 +529,7 @@ LiVESWidget *lives_expander_new(const char *label);
 LiVESWidget *lives_expander_get_label_widget(LiVESExpander *);
 boolean lives_expander_set_use_markup(LiVESExpander *, boolean val);
 boolean lives_expander_set_expanded(LiVESExpander *, boolean val);
+boolean lives_expander_set_label(LiVESExpander *, const char *text);
 boolean lives_expander_get_expanded(LiVESExpander *);
 boolean lives_label_set_width_chars(LiVESLabel *, int nchars);
 boolean lives_label_set_halignment(LiVESLabel *, float yalign);

@@ -157,10 +157,18 @@ typedef GObject LiVESWidgetObject;
 
 typedef GLogLevelFlags LiVESLogLevelFlags;
 
-#define LIVES_LOG_LEVEL_WARNING G_LOG_LEVEL_WARNING
 #define LIVES_LOG_LEVEL_MASK G_LOG_LEVEL_MASK
-#define LIVES_LOG_LEVEL_CRITICAL G_LOG_LEVEL_CRITICAL
 #define LIVES_LOG_FATAL_MASK G_LOG_FATAL_MASK
+
+#define LIVES_LOG_FLAG_FATAL G_LOG_FLAG_FATAL ///< glib internal flag
+#define LIVES_LOG_FLAG_RECURSION G_LOG_FLAG_RECURSION ///< glib internal flag
+
+#define LIVES_LOG_LEVEL_FATAL G_LOG_LEVEL_ERROR
+#define LIVES_LOG_LEVEL_CRITICAL G_LOG_LEVEL_CRITICAL
+#define LIVES_LOG_LEVEL_WARNING G_LOG_LEVEL_WARNING
+#define LIVES_LOG_LEVEL_MESSAGE G_LOG_LEVEL_MESSAGE
+#define LIVES_LOG_LEVEL_INFO G_LOG_LEVEL_INFO
+#define LIVES_LOG_LEVEL_DEBUG G_LOG_LEVEL_DEBUG
 
 //////////////////////////////////////////////////
 
@@ -1007,6 +1015,8 @@ typedef GdkInterpType                     LiVESInterpType;
 #endif
 
 #define LIVES_IS_BOX(widget) (LIVES_IS_HBOX(widget) || LIVES_IS_VBOX(widget))
+
+#define LIVES_IS_FRAME(widget) GTK_IS_FRAME(widget)
 
 #define LIVES_IS_TOOLBAR(widget) GTK_IS_TOOLBAR(widget)
 #define LIVES_IS_EVENT_BOX(widget) GTK_IS_EVENT_BOX(widget)

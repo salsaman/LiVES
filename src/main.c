@@ -163,53 +163,93 @@ void *gtk_thread_wrapper(void *data) {
 
 #ifdef USE_GLIB
 static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, const char *message,  livespointer data) {
-  char *msg;
-#define SHOW_THEME_ERRORS
-#ifndef SHOW_THEME_ERRORS
-  if (prefs->show_dev_opts) {
-    if (!strncmp(message, "Theme parsing", strlen("Theme parsing"))) return;
-  }
+  if (prefs && prefs->vj_mode && !prefs->show_dev_opts) return;
+
+  if (level & LIVES_LOG_FATAL_MASK) {
+#ifndef IGNORE_FATAL_ERRORS
+    raise(LIVES_SIGSEGV);
+#endif
+  } else {
+    char *msg;
+    LiVESLogLevelFlags xlevel = level & LIVES_LOG_LEVEL_MASK;
+
+#ifdef LIVES_NO_DEBUG
+    if (prefs && !prefs->show_dev_opts) return;
 #endif
 
-  //#define TRAP_ERRMSG ""
+#ifndef SHOW_ALL_ERRORS
+#ifdef LIVES_NO_DEBUG
+    if (xlevel >= LIVES_LOG_LEVEL_DEBUG) return;
+#endif
+#define SHOW_INFO_ERRORS
+#ifndef SHOW_INFO_ERRORS
+    if (xlevel == LIVES_LOG_LEVEL_INFO) return;
+#endif
+#define SHOW_MSG_ERRORS
+#ifndef SHOW_MSG_ERRORS
+    if (xlevel == LIVES_LOG_LEVEL_MESSAGE) return;
+#endif
+    //#define NO_WARN_ERRORS
+#ifdef NO_WARN_ERRORS
+    if (xlevel == LIVES_LOG_LEVEL_WARNING) return;
+#endif
+    //#define NO_CRITICAL_ERRORS
+#ifdef NO_CRITICAL_ERRORS
+    if (xlevel == LIVES_LOG_LEVEL_CRITICAL) return;
+#endif
+#endif
+
+#define SHOW_THEME_ERRORS
+#ifndef SHOW_THEME_ERRORS
+    if (!strncmp(message, "Theme parsing", strlen("Theme parsing"))) return;
+#endif
+
+    //#define TRAP_ERRMSG ""
 #ifdef TRAP_ERRMSG
-  if (prefs->show_dev_opts) {
     if (!strncmp(message, TRAP_ERRMSG, strlen(TRAP_ERRMSG))) {
       fprintf(stderr, "Trapped message %s\n", message);
       raise(LIVES_SIGTRAP);
     }
-  }
 #endif
-
-#ifdef LIVES_NO_DEBUG
-  if (level >= LIVES_LOG_LEVEL_WARNING) return;
-#else
-  if ((level & LIVES_LOG_LEVEL_MASK) == LIVES_LOG_LEVEL_WARNING)
-    msg = lives_strdup_printf(_("%s Warning: %s\n"), domain, message);
-#endif
-  else {
-    if ((level & LIVES_LOG_LEVEL_MASK) == LIVES_LOG_LEVEL_CRITICAL)
+    if (xlevel == LIVES_LOG_LEVEL_FATAL)
+      msg = lives_strdup_printf(_("%s Fatal error: %s\n"), domain, message);
+    else if (xlevel == LIVES_LOG_LEVEL_CRITICAL)
       msg = lives_strdup_printf(_("%s Critical error: %s\n"), domain, message);
-    else msg = lives_strdup_printf(_("%s Fatal error: %s\n"), domain, message);
+    else if (xlevel == LIVES_LOG_LEVEL_WARNING)
+      msg = lives_strdup_printf(_("%s Warning: %s\n"), domain, message);
+    else if (xlevel == LIVES_LOG_LEVEL_MESSAGE)
+      msg = lives_strdup_printf(_("%s Warning: %s\n"), domain, message);
+    else if (xlevel == LIVES_LOG_LEVEL_INFO)
+      msg = lives_strdup_printf(_("%s Warning: %s\n"), domain, message);
+    else if (xlevel == LIVES_LOG_LEVEL_DEBUG)
+      msg = lives_strdup_printf(_("%s Warning: %s\n"), domain, message);
+    else {
+      msg = lives_strdup_printf(_("%s (Unknown level %u error: %s\n"), domain, xlevel, message);
+    }
+
+    if (mainw->is_ready) d_print(msg);
+    fprintf(stderr, "%s", msg);
+    lives_free(msg);
+
 #define BREAK_ON_CRIT
+    if (xlevel <= LIVES_LOG_LEVEL_CRITICAL) {
 #ifdef BREAK_ON_CRIT
-    if (prefs->show_dev_opts) raise(LIVES_SIGTRAP);
+      raise(LIVES_SIGTRAP);
+#endif
+    }
+
+#define BREAK_ON_WARN
+#ifdef BREAK_ON_WARN
+    if (xlevel <= LIVES_LOG_LEVEL_WARNING) raise(LIVES_SIGTRAP);
+#endif
+
+    //#define BREAK_ON_ALL
+#ifdef BREAK_ON_ALL
+    raise(LIVES_SIGTRAP);
 #endif
   }
-
-  if (mainw->is_ready) {
-    d_print(msg);
-  }
-
-  fprintf(stderr, "%s", msg);
-  lives_free(msg);
-
-#ifndef IGNORE_FATAL_ERRORS
-  if (level & LIVES_LOG_FATAL_MASK) raise(LIVES_SIGSEGV);
-#endif
 }
-
-#endif
+#endif // USE_GLIB
 
 
 #ifdef ENABLE_JACK
@@ -614,8 +654,16 @@ static boolean pre_init(void) {
   // now we can use PREFS properly
   mainw->prefs_cache = cache_file_contents(capable->rcfile);
 
+  prefs->show_dev_opts = get_boolean_prefd(PREF_SHOW_DEVOPTS, FALSE);
   future_prefs->vj_mode = get_boolean_prefd(PREF_VJMODE, FALSE);
   if (!ign_opts.ign_vjmode) prefs->vj_mode = future_prefs->vj_mode;
+
+#ifdef GUI_GTK
+  if (!prefs->show_dev_opts || prefs->vj_mode) {
+    // don't crash on GTK+ fatals
+    g_log_set_always_fatal((GLogLevelFlags)0);
+  }
+#endif
 
   prefs->ds_warn_level = (uint64_t)get_int64_prefd(PREF_DS_WARN_LEVEL, DEF_DS_WARN_LEVEL);
   mainw->next_ds_warn_level = prefs->ds_warn_level;
@@ -868,7 +916,6 @@ static boolean pre_init(void) {
 
   prefs->allow_easing = get_boolean_prefd(PREF_ALLOW_EASING, TRUE);
 
-  prefs->show_dev_opts = get_boolean_prefd(PREF_SHOW_DEVOPTS, FALSE);
   prefs->render_overlay = prefs->show_dev_opts;
 
   if (prefs->show_dev_opts) {
@@ -3776,22 +3823,11 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
 #endif
 
-  /* #ifdef GUI_GTK */
-  /*   if (gtk_thread != NULL) { */
-  /*     pthread_create(gtk_thread, NULL, gtk_thread_wrapper, NULL); */
-  /*   } */
-  /* #endif */
-
-#ifdef GUI_GTK
-#ifdef LIVES_NO_DEBUG
-  // don't crash on GTK+ fatals
-  g_log_set_always_fatal((GLogLevelFlags)0);
-  //gtk_window_set_interactive_debugging(TRUE);
-#else
-  g_print("DEBUGGING IS ON !!\n");
-#endif
-
   g_log_set_default_handler(lives_log_handler, NULL);
+
+  //gtk_window_set_interactive_debugging(TRUE);
+#ifndef LIVES_NO_DEBUG
+  g_printerr("FULL DEBUGGING IS ON !!\n");
 #endif
 
 #ifndef IS_LIBLIVES
@@ -4772,6 +4808,8 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->troubleshoot, TRUE);
   lives_widget_set_sensitive(mainw->expl_missing, TRUE);
 
+  lives_widget_set_sensitive(mainw->show_quota, TRUE);
+
   if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && (cfile->start == 1 || cfile->end == cfile->frames) &&
       !(cfile->start == 1 &&
         cfile->end == cfile->frames)) {
@@ -4929,6 +4967,7 @@ void desensitize(void) {
   lives_widget_set_sensitive(mainw->vj_load_set, FALSE);
   lives_widget_set_sensitive(mainw->vj_realize, FALSE);
   lives_widget_set_sensitive(mainw->vj_reset, FALSE);
+  lives_widget_set_sensitive(mainw->show_quota, FALSE);
   lives_widget_set_sensitive(mainw->export_proj, FALSE);
   lives_widget_set_sensitive(mainw->import_proj, FALSE);
   lives_widget_set_sensitive(mainw->recaudio_sel, FALSE);
@@ -6471,6 +6510,7 @@ boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, const char 
 
 #ifdef PNG_BIO
   fd = lives_open_buffered_rdonly(fname);
+  if (fd < 0) break_me(fname);
   if (fd < 0) return FALSE;
 #ifndef VALGRIND_ON
   if (is_png) lives_buffered_rdonly_slurp(fd, 8);
@@ -6506,8 +6546,7 @@ boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, const char 
   else pbload = gdk_pixbuf_loader_new();
 
   lives_signal_connect(LIVES_WIDGET_OBJECT(pbload), LIVES_WIDGET_SIZE_PREPARED_SIGNAL,
-		       LIVES_GUI_CALLBACK(pbsize_set),
-		       NULL);
+		       LIVES_GUI_CALLBACK(pbsize_set), NULL);
 
   while (1) {
 #ifndef PNG_BIO

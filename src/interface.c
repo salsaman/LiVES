@@ -388,11 +388,9 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     if (offset_left > posx) {
       // unselected
       lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
-
       lives_painter_rectangle(cr, posx, 0,
                               NORMAL_CLAMP(offset_left - posx, xwidth),
                               bar_height);
-
       lives_painter_fill(cr);
     }
 
@@ -401,11 +399,8 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
       if (offset_right > posx + xwidth) offset_right = posx + xwidth;
       // selected
       lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_sel);
-
-      lives_painter_rectangle(cr, offset_left, 0,
-                              offset_right - offset_left,
+      lives_painter_rectangle(cr, offset_left, 0, offset_right - offset_left,
                               bar_height);
-
       lives_painter_fill(cr);
     }
 
@@ -416,11 +411,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
       zwidth = NORMAL_CLAMP(zwidth, xwidth);
       // unselected
       lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
-
-      lives_painter_rectangle(cr, offset_right, 0,
-                              zwidth,
-                              bar_height);
-
+      lives_painter_rectangle(cr, offset_right, 0, zwidth, bar_height);
       lives_painter_fill(cr);
     }
     lives_painter_destroy(cr);
@@ -503,8 +494,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
         }
         if (bgimage == NULL) {
           bgimage = lives_painter_image_surface_create(LIVES_PAINTER_COLOR_PALETTE(capable->byte_order),
-                    allocwidth,
-                    allocheight);
+                    allocwidth, allocheight);
         }
 
         if (offset_end > posx + xwidth) offset_end = posx + xwidth;
@@ -650,8 +640,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
         }
         if (bgimage == NULL) {
           bgimage = lives_painter_image_surface_create(LIVES_PAINTER_COLOR_PALETTE(capable->byte_order),
-                    allocwidth,
-                    allocheight);
+                    allocwidth, allocheight);
         }
 
         if (offset_end > posx + xwidth) offset_end = posx + xwidth;
@@ -6102,7 +6091,7 @@ void draw_dsu_widget(LiVESWidget * dsu_widget) {
 
   /// ds warning level
   if (prefs->ds_warn_level > 0) {
-    xw = (double)(capable->ds_tot - prefs->ds_warn_level) / scale;
+    xw = (double)(prefs->ds_warn_level - prefs->ds_crit_level) / scale;
     if (xw > 0.) {
       lives_painter_set_source_rgb(cr, 1., .5, 0.);
       lives_painter_rectangle(cr, offs_x, 0, offs_x + xw, height);
@@ -6113,7 +6102,7 @@ void draw_dsu_widget(LiVESWidget * dsu_widget) {
 
   /// ds critical level
   if (prefs->ds_crit_level > 0) {
-    xw = (double)(capable->ds_tot - prefs->ds_crit_level) / scale;
+    xw = (double)prefs->ds_crit_level / scale;
     if (xw > 0.) {
       lives_painter_set_source_rgb(cr, 1., 0., 0.);
       lives_painter_rectangle(cr, offs_x, 0, offs_x + xw, height);
@@ -6130,7 +6119,7 @@ static void dsu_set_toplabel(void) {
   char *ltext = NULL;
   widget_opts.font_size = LIVES_FONT_SIZE_LARGE;
 
-  if (future_prefs->disk_quota && mainw->dsu_valid && !mainw->dsu_scanning) {
+  if (prefs->disk_quota && mainw->dsu_valid && !mainw->dsu_scanning) {
     if (capable->ds_free <= prefs->ds_crit_level) {
       ltext = lives_strdup_printf(_("<b>ALERT ! FREE SPACE IN %s IS BELOW THE CRITICAL LEVEL OF %s\n"
                                     "YOU SHOULD EXIT LIVES IMMEDIATELY TO AVOID POSSIBLE DATA LOSS</b>"), dsq->mp,
@@ -6145,15 +6134,15 @@ static void dsu_set_toplabel(void) {
       ltext = lives_strdup_printf(_("WARNING ! Free space in %s is below the warning level of %s\n"
                                     "Action should be taken to remedy this"), dsq->mp,
                                   prefs->ds_warn_level);
-    } else if (future_prefs->disk_quota && capable->ds_used > future_prefs->disk_quota) {
-      uint64_t xs = capable->ds_used - future_prefs->disk_quota;
+    } else if (prefs->disk_quota && capable->ds_used > prefs->disk_quota) {
+      uint64_t xs = capable->ds_used - prefs->disk_quota;
       char *xstxt = lives_format_storage_space_string(xs);
       ltext = lives_strdup_printf(_("WARNING ! LiVES has exceeded its quota by %s"), xstxt);
       lives_free(xstxt);
-    } else if (capable->ds_used >= future_prefs->disk_quota * .9) {
-      double pcused = (double)capable->ds_used / (double)future_prefs->disk_quota * 100.;
+    } else if (capable->ds_used >= prefs->disk_quota * .9) {
+      double pcused = (double)capable->ds_used / (double)prefs->disk_quota * 100.;
       ltext = lives_strdup_printf(_("ATTENTION: LiVES is currently using %.2f%% of its assigned quota"), pcused);
-    } else if (future_prefs->disk_quota - capable->ds_used + prefs->ds_warn_level > capable->ds_free) {
+    } else if (prefs->disk_quota - capable->ds_used + prefs->ds_warn_level > capable->ds_free) {
       ltext = lives_strdup(_("ATTENTION ! There is unsufficient free space on the disk for LiVES' current quota"));
     }
   }
@@ -6165,22 +6154,25 @@ static void dsu_set_toplabel(void) {
   widget_opts.font_size = LIVES_FONT_SIZE_NORMAL;
 }
 
+LIVES_LOCAL_INLINE char *dsu_label_notset(void) {return _("Value not set");}
+LIVES_LOCAL_INLINE char *dsu_label_calculating(void) {return _("Calculating....");}
 
 boolean update_dsu(livespointer data) {
   static boolean set_label = FALSE;
   int64_t dsu;
+  char *txt;
 
   if (!dsq || !dsq->visible) return FALSE;
 
   if (!get_ds_used(&dsu)) {
     if (!set_label) {
       set_label = TRUE;
-      lives_label_set_text(LIVES_LABEL(dsq->used_label), _("Calculating..."));
+      lives_label_set_text(LIVES_LABEL(dsq->used_label), (txt = dsu_label_calculating()));
+      lives_free(txt);
     }
   } else {
     if (mainw->dsu_valid) {
       if (mainw->dsu_widget) {
-        char *txt;
         uint64_t dsfree = capable->ds_used;
         mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsfree);
         capable->ds_free = dsfree;
@@ -6203,6 +6195,7 @@ boolean update_dsu(livespointer data) {
 }
 
 static void qslider_changed(LiVESWidget * slid, livespointer data) {
+  char *txt, *dtxt;
   if (mainw->dsu_valid && !mainw->dsu_scanning) {
     uint64_t min = capable->ds_used;
     uint64_t max = capable->ds_free + min - prefs->ds_warn_level;
@@ -6230,12 +6223,12 @@ static void qslider_changed(LiVESWidget * slid, livespointer data) {
   }
 
   if (future_prefs->disk_quota > 0.) {
-    char *txt = lives_format_storage_space_string(future_prefs->disk_quota);
-    char *xtxt = lives_strdup_printf("<b>%s</b>", txt);
+    txt = lives_format_storage_space_string(future_prefs->disk_quota);
+    dtxt = lives_strdup_printf("<b>%s</b>", txt);
     widget_opts.use_markup = TRUE;
-    lives_label_set_text(LIVES_LABEL(dsq->vlabel), xtxt);
+    lives_label_set_text(LIVES_LABEL(dsq->vlabel), dtxt);
     widget_opts.use_markup = FALSE;
-    lives_free(txt);  lives_free(xtxt);
+    lives_free(txt); lives_free(dtxt);
     if (mainw->dsu_valid && !mainw->dsu_scanning) {
       double pcused = 100. * (double)capable->ds_used
                       / (double)future_prefs->disk_quota;
@@ -6257,9 +6250,12 @@ static void qslider_changed(LiVESWidget * slid, livespointer data) {
   } else {
     hide_warn_image(dsq->pculabel);
     lives_label_set_text(LIVES_LABEL(dsq->pculabel), NULL);
+    txt = dsu_label_notset();
+    dtxt = lives_strdup_printf("<b>%s</b>", txt);
     widget_opts.use_markup = TRUE;
-    lives_label_set_text(LIVES_LABEL(dsq->vlabel), _("<b>No value set</b>"));
+    lives_label_set_text(LIVES_LABEL(dsq->vlabel), dtxt);
     widget_opts.use_markup = FALSE;
+    lives_free(dtxt); lives_free(txt);
   }
 }
 
@@ -6320,10 +6316,6 @@ static void dsu_ok_clicked(LiVESWidget * butt, LiVESWidget * toshow) {
   lives_show_after(butt, toshow);
 }
 
-LIVES_LOCAL_INLINE char *dsu_label_notset(void) {return _("Value not set");}
-
-LIVES_LOCAL_INLINE char *dsu_label_calculating(void) {return _("Calculating....");}
-
 static void dsu_fill_details(LiVESWidget * widget, livespointer data) {
   uint64_t dsval;
   char *txt;
@@ -6331,14 +6323,16 @@ static void dsu_fill_details(LiVESWidget * widget, livespointer data) {
 
   if (dsq->exp_layout) lives_widget_destroy(dsq->exp_layout);
   dsq->exp_layout = NULL;
-  if (!lives_expander_get_expanded(LIVES_EXPANDER(dsq->expander))) return;
+  if (!lives_expander_get_expanded(LIVES_EXPANDER(dsq->expander))) {
+    lives_expander_set_label(LIVES_EXPANDER(dsq->expander), _("Full _Details"));
+    return;
+  }
+
+  lives_expander_set_label(LIVES_EXPANDER(dsq->expander), _("Hide _Details"));
 
   dsq->exp_layout = lives_layout_new(LIVES_BOX(dsq->exp_vbox));
   layout2 = dsq->exp_layout;
 
-  lives_layout_add_label(LIVES_LAYOUT(layout2), _("Disk space details"), FALSE);
-
-  lives_layout_add_row(LIVES_LAYOUT(layout2));
   lives_layout_add_label(LIVES_LAYOUT(layout2), _("Working directory"), TRUE);
   lives_layout_add_label(LIVES_LAYOUT(layout2), prefs->workdir, TRUE);
 
@@ -6418,32 +6412,34 @@ static void dsu_fill_details(LiVESWidget * widget, livespointer data) {
     if (!mainw->dsu_valid || mainw->dsu_scanning)
       txt = dsu_label_calculating();
     else {
-      uint64_t qq = prefs->disk_quota - capable->ds_used, over = 0;
-      if (qq + prefs->ds_warn_level > capable->ds_free) over = qq + prefs->ds_warn_level - capable->ds_free;
-      if (over) {
-        char *txt2;
-        txt = lives_format_storage_space_string(over);
-        txt2 = lives_strdup_printf(_("Quota is reduced by %s due to free disk space limitations"), txt);
-        show_warn_image(widget_opts.last_label, txt2);
-        lives_free(txt); lives_free(txt2);
+      uint64_t qq = prefs->disk_quota, over = 0;
+      if (qq > capable->ds_used) {
+        qq -= capable->ds_used;
+        if (qq + prefs->ds_warn_level > capable->ds_free)
+          over = qq + prefs->ds_warn_level - capable->ds_free;
+        if (over) {
+          char *txt2;
+          txt = lives_format_storage_space_string(over);
+          txt2 = lives_strdup_printf(_("Quota is reduced by %s due to free disk space limitations"), txt);
+          show_warn_image(widget_opts.last_label, txt2);
+          lives_free(txt); lives_free(txt2);
+        }
+        if (qq < over) qq = 0;
+        else qq -= over;
+        pcu = (double)qq / (double)prefs->disk_quota;
       }
-      qq -= over;
-      pcu = (double)qq / (double)prefs->disk_quota;
       txt = lives_strdup_printf("%.2f%%", pcu * 100.);
     }
 
-    lives_layout_add_row(LIVES_LAYOUT(layout2));
     lives_layout_add_label(LIVES_LAYOUT(layout2), _("Unused quota"), TRUE);
     lives_layout_add_label(LIVES_LAYOUT(layout2), txt, TRUE);
     lives_free(txt);
-    if (pcu < .1) show_warn_image(widget_opts.last_label, _("LiVES is currently using over 90%% of its allocated quota"));;
+    if (pcu < .1) show_warn_image(widget_opts.last_label, _("LiVES is currently using over 90%% of its available quota"));;
   }
 
   lives_layout_add_row(LIVES_LAYOUT(layout2));
-  lives_layout_add_label(LIVES_LAYOUT(layout2), _("Values can be set in Preferences / Warnings:"), TRUE);
-
-  lives_layout_add_row(LIVES_LAYOUT(layout2));
   lives_layout_add_label(LIVES_LAYOUT(layout2), _("Disk warning level"), TRUE);
+  lives_widget_set_tooltip_text(widget_opts.last_label, _("#value can be set in Preferences . Warnings"));
   if (prefs->ds_warn_level)
     txt = lives_format_storage_space_string(prefs->ds_warn_level);
   else
@@ -6453,6 +6449,7 @@ static void dsu_fill_details(LiVESWidget * widget, livespointer data) {
 
   //lives_layout_add_row(LIVES_LAYOUT(layout2));
   lives_layout_add_label(LIVES_LAYOUT(layout2), _("Disk critical level"), TRUE);
+  lives_widget_set_tooltip_text(widget_opts.last_label, _("#value can be set in Preferences . Warnings"));
   if (prefs->ds_crit_level)
     txt = lives_format_storage_space_string(prefs->ds_crit_level);
   else
@@ -6552,7 +6549,7 @@ void run_diskspace_dialog(void) {
 
   if (prefsw) lives_widget_hide(prefsw->prefs_dialog);
 
-  title = (_("Diskspace Limits and Quotas"));
+  title = (_("Disk Space Quota"));
 
   dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
   lives_signal_handlers_disconnect_by_func(dialog, LIVES_GUI_CALLBACK(return_true), NULL);
@@ -6692,7 +6689,7 @@ void run_diskspace_dialog(void) {
 
   layout = lives_layout_new(LIVES_BOX(dialog_vbox));
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  dsq->expander = lives_standard_expander_new(_("Full _Details"), LIVES_BOX(hbox), dsq->exp_vbox);
+  dsq->expander = lives_standard_expander_new(NULL, LIVES_BOX(hbox), dsq->exp_vbox);
   lives_layout_expansion_row_new(LIVES_LAYOUT(layout), dsq->expander);
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(dsq->expander), LIVES_WIDGET_ACTIVATE_SIGNAL,

@@ -34,12 +34,12 @@ static uint32_t prefs_current_page;
 static void select_pref_list_row(uint32_t selected_idx, _prefsw *prefsw);
 
 #define ACTIVE(widget, signal) lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->widget), LIVES_WIDGET_ ##signal## \
-						    _SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL)
+							 _SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL)
 
 
 /** @brief callback to set to make a togglebutton or check_menu_item directly control a boolean pref
-  widget is either a togge_button (sets temporary) or a check_menuitem (sets permanent)
-  pref must have a corresponding entry in pref_factory_bool() */
+    widget is either a togge_button (sets temporary) or a check_menuitem (sets permanent)
+    pref must have a corresponding entry in pref_factory_bool() */
 void toggle_sets_pref(LiVESWidget *widget, livespointer prefidx) {
   if (LIVES_IS_TOGGLE_BUTTON(widget))
     pref_factory_bool((const char *)prefidx,
@@ -1256,9 +1256,6 @@ success6:
 
 boolean pref_factory_int64(const char *prefidx, int64_t newval, boolean permanent) {
   if (prefsw) prefsw->ignore_apply = TRUE;
-fail7:
-  if (prefsw) prefsw->ignore_apply = FALSE;
-  return FALSE;
 
   if (!lives_strcmp(prefidx, PREF_DISK_QUOTA)) {
     if (newval != prefs->disk_quota) {
@@ -1267,6 +1264,10 @@ fail7:
     }
     goto fail7;
   }
+
+fail7:
+  if (prefsw) prefsw->ignore_apply = FALSE;
+  return FALSE;
 
 success7:
   if (prefsw) {
@@ -2729,7 +2730,7 @@ void prefsw_set_rec_after_settings(_vid_playback_plugin *vpp, _prefsw *prefsw) {
 
 
 /*
-   Initialize preferences dialog list
+  Initialize preferences dialog list
 */
 static void pref_init_list(LiVESWidget *list) {
   LiVESCellRenderer *renderer, *pixbufRenderer;
@@ -2754,7 +2755,7 @@ static void pref_init_list(LiVESWidget *list) {
 
 
 /*
-   Adds entry to preferences dialog list
+  Adds entry to preferences dialog list
 */
 static void prefs_add_to_list(LiVESWidget *list, LiVESPixbuf *pix, const char *str, uint32_t idx) {
   LiVESListStore *store;
@@ -2771,7 +2772,7 @@ static void prefs_add_to_list(LiVESWidget *list, LiVESPixbuf *pix, const char *s
 
 
 /*
-   Callback function called when preferences list row changed
+  Callback function called when preferences list row changed
 */
 void on_prefDomainChanged(LiVESTreeSelection *widget, livespointer xprefsw) {
   LiVESTreeIter iter;
@@ -2880,7 +2881,7 @@ void on_prefDomainChanged(LiVESTreeSelection *widget, livespointer xprefsw) {
 
 
 /*
-   Function makes apply button sensitive
+  Function makes apply button sensitive
 */
 void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data) {
   if (prefsw->ignore_apply) return;
@@ -2965,7 +2966,7 @@ static boolean check_txtsize(LiVESWidget *combo) {
 
 
 /*
-   Function creates preferences dialog
+  Function creates preferences dialog
 */
 _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   LiVESWidget *dialog_vbox_main;
@@ -3466,9 +3467,10 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->checkbutton_instant_open = lives_standard_check_button_new((tmp = (_("Use instant opening when possible"))),
-                                     prefs->instant_open, LIVES_BOX(hbox),
-                                     (tmp2 = (_("Enable instant opening of some file types using decoder plugins"))));
+  prefsw->checkbutton_instant_open =
+    lives_standard_check_button_new((tmp = (_("Use instant opening when possible"))),
+                                    prefs->instant_open, LIVES_BOX(hbox),
+                                    (tmp2 = (_("#Enable instant opening of some file types using decoder plugins"))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -4391,8 +4393,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   prefsw->spinbutton_warn_ds =
     lives_standard_spin_button_new((tmp = (_("Disk space warning level"))),
                                    prefs->ds_warn_level / MILLIONS(1), prefs->ds_crit_level / MILLIONS(1), DS_WARN_CRIT_MAX,
-                                   1., 10., 1,
-                                   LIVES_BOX(hbox), (tmp2 = (_("LiVES will start showing warnings if usable disk space\n"
+                                   1., 50., 1,
+                                   LIVES_BOX(hbox), (tmp2 = (_("#LiVES will start showing warnings if usable disk space\n"
                                        "falls below this level"))));
   lives_free(tmp); lives_free(tmp2);
 
@@ -4408,7 +4410,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   prefsw->spinbutton_crit_ds =
     lives_standard_spin_button_new((tmp = (_("Disk space critical level"))),
                                    prefs->ds_crit_level / MILLIONS(1), 0, MILLIONS(1), 1., 10., 1,
-                                   LIVES_BOX(hbox), (tmp2 = (_("LiVES will abort if usable disk space\n"
+                                   LIVES_BOX(hbox), (tmp2 = (_("#LiVES will abort if usable disk space\n"
                                        "falls below this level"))));
   lives_free(tmp); lives_free(tmp2);
 
@@ -5652,7 +5654,7 @@ void on_preferences_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 /*!
-   Closes preferences dialog window
+  Closes preferences dialog window
 */
 void on_prefs_close_clicked(LiVESButton *button, livespointer user_data) {
   lives_list_free_all(&prefs->acodec_list);
@@ -5800,8 +5802,8 @@ void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
 
 
 /*
-   Function is used to select particular row in preferences selection list
-   selection is performed according to provided index which is one of LIST_ENTRY_* constants
+  Function is used to select particular row in preferences selection list
+  selection is performed according to provided index which is one of LIST_ENTRY_* constants
 */
 static void select_pref_list_row(uint32_t selected_idx, _prefsw *prefsw) {
   LiVESTreeIter iter;

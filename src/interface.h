@@ -17,7 +17,7 @@
 #define CE_VIDBAR_HEIGHT ((int)(4. * widget_opts.scale))
 
 /// clip edit vid/aud bar height
-#define CE_AUDBAR_HEIGHT ((int)(24. * widget_opts.scale))
+#define CE_AUDBAR_HEIGHT ((int)(48. * widget_opts.scale))
 
 #define MSG_AREA_VMARGIN 0
 #define LAYOUT_SIZE_MIN 0

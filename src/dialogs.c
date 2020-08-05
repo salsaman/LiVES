@@ -282,8 +282,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
     widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
 
-    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
-               LIVES_RESPONSE_OK);
+    defbutton = okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
+                           LIVES_RESPONSE_OK);
 
     lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(lives_general_button_clicked), NULL);
@@ -299,8 +299,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
     widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
 
-    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
-               LIVES_RESPONSE_OK);
+    defbutton = okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
+                           LIVES_RESPONSE_OK);
 
     lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(lives_general_button_clicked), NULL);
@@ -315,8 +315,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
     widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
 
-    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
-               LIVES_RESPONSE_OK);
+    defbutton = okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
+                           LIVES_RESPONSE_OK);
 
     lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(lives_general_button_clicked), NULL);
@@ -434,8 +434,6 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
       lives_dialog_set_has_separator(LIVES_DIALOG(dialog), FALSE);
       lives_widget_set_bg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     }
-
-
 
     if (widget_opts.apply_theme) {
       /// for unknown reasons, this resets the default button, so we have to set it after
@@ -790,7 +788,7 @@ char *ds_critical_msg(const char *dir, uint64_t dsval) {
   char *dscu = lives_format_storage_space_string(dsval); ///< current level
   msg = lives_strdup_printf(
           _("FREE SPACE IN THE PARTITION CONTAINING\n%s\nHAS FALLEN BELOW THE CRITICAL LEVEL OF %s\n"
-            "CURRENT FREE SPACE IS %s\n\n(Disk warning levels can be configured in Preferences.)"),
+            "CURRENT FREE SPACE IS %s\n\n(Disk warning levels can be configured in Preferences / Warnings.)"),
           (tmp = lives_filename_to_utf8(dir, -1, NULL, NULL, NULL)), dscr, dscu);
   msgx = insert_newlines(msg, MAX_MSG_WIDTH_CHARS);
   lives_free(msg);
@@ -810,7 +808,7 @@ char *ds_warning_msg(const char *dir, uint64_t dsval, uint64_t cwarn, uint64_t n
   char *dscn = lives_format_storage_space_string(nwarn); ///< next warn level
   msg = lives_strdup_printf(
           _("Free space in the partition containing\n%s\nhas fallen below the warning level of %s\nCurrent free space is %s\n\n"
-            "(Next warning will be shown at %s. Disk warning levels can be configured in Preferences.)"),
+            "(Next warning will be shown at %s. Disk warning levels can be configured in Preferences / Warnings.)"),
           (tmp = lives_filename_to_utf8(dir, -1, NULL, NULL, NULL)), dscw, dscu, dscn);
   msgx = insert_newlines(msg, MAX_MSG_WIDTH_CHARS);
   lives_free(msg);
@@ -2031,8 +2029,10 @@ switch_point:
             } else {
               // if the target is a clip-frame we have to decode it now, since we cannot simply decode 2 frames simultaneously
               // (although it could be possible in the future to have 2 clone decoders and have them leapfrog...)
-              mainw->frame_layer_preload = lives_layer_new_for_frame(mainw->pred_clip, get_indexed_frame(mainw->pred_clip,
-                                           mainw->pred_frame));
+              // NOTE: change to labs when frames_t updated
+              mainw->frame_layer_preload = lives_layer_new_for_frame(mainw->pred_clip,
+                                           ABS(get_indexed_frame(mainw->pred_clip,
+                                               mainw->pred_frame)));
               if (!pull_frame_at_size(mainw->frame_layer_preload, img_ext,
                                       (weed_timecode_t)mainw->currticks,
                                       sfile->hsize, sfile->vsize, WEED_PALETTE_END)) {

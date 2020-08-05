@@ -1302,7 +1302,7 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(mainw->info_menu), mainw->show_layout_errors);
   lives_widget_set_sensitive(mainw->show_layout_errors, FALSE);
 
-  mainw->show_quota = lives_standard_image_menu_item_new_with_label(_("Show Disk _Quota Settings"));
+  mainw->show_quota = lives_standard_image_menu_item_new_with_label(_("Show / Edit Disk _Quota Settings"));
   lives_container_add(LIVES_CONTAINER(mainw->info_menu), mainw->show_quota);
 
   win = lives_standard_menu_item_new_with_label(_("_Clips"));
@@ -2093,7 +2093,8 @@ void create_LiVES(void) {
 
   mainw->sa_hbox = lives_hbox_new(TRUE, 0);
   add_fill_to_box(LIVES_BOX(mainw->sa_hbox));
-  lives_box_pack_start(LIVES_BOX(vbox), mainw->sa_hbox, FALSE, FALSE, !(lives_widget_set_margin_top(mainw->sa_hbox, 4)) * 4);
+  lives_box_pack_start(LIVES_BOX(vbox), mainw->sa_hbox, FALSE, FALSE,
+                       lives_widget_set_margin_top(mainw->sa_hbox, 4) ? 0 : 4);
 
   mainw->sa_button = lives_standard_button_new_full(_("Select all Frames"), DEF_BUTTON_WIDTH,
                      DEF_BUTTON_HEIGHT, LIVES_BOX(mainw->sa_hbox), TRUE,
@@ -2164,9 +2165,9 @@ void create_LiVES(void) {
   mainw->vidbar = lives_standard_label_new(_("Video"));
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
-  lives_box_pack_start(LIVES_BOX(vbox2), mainw->vidbar, FALSE, FALSE, !(lives_widget_set_margin_top(mainw->vidbar,
-                       widget_opts.packing_height)) * widget_opts.packing_height);
-  lives_widget_set_margin_bottom(mainw->vidbar, widget_opts.packing_height / 2);
+  lives_box_pack_start(LIVES_BOX(vbox2), mainw->vidbar, FALSE, FALSE,
+                       lives_widget_set_margin(mainw->vidbar,
+                           widget_opts.packing_height * 2) ? 0 : widget_opts.packing_height * 2);
 
   widget_opts.apply_theme = 1;
   mainw->video_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), &mainw->video_drawable);
@@ -2182,9 +2183,9 @@ void create_LiVES(void) {
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_free(tmp);
 
-  lives_box_pack_start(LIVES_BOX(vbox2), mainw->laudbar, FALSE, FALSE, !(lives_widget_set_margin_top(mainw->laudbar,
-                       widget_opts.packing_height)) * widget_opts.packing_height);
-  lives_widget_set_margin_bottom(mainw->laudbar, widget_opts.packing_height / 2);
+  lives_box_pack_start(LIVES_BOX(vbox2), mainw->laudbar, FALSE, FALSE,
+                       lives_widget_set_margin_top(mainw->laudbar,
+                           widget_opts.packing_height + 4) ? 0 : widget_opts.packing_height + 4);
 
   widget_opts.apply_theme = 1;
   mainw->laudio_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), &mainw->laudio_drawable);
@@ -2200,10 +2201,9 @@ void create_LiVES(void) {
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_free(tmp);
 
-  lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudbar, FALSE, FALSE, !(lives_widget_set_margin_top(mainw->raudbar,
-                       widget_opts.packing_height)) * widget_opts.packing_height);
-  lives_widget_set_margin_bottom(mainw->raudbar, widget_opts.packing_height / 2);
-
+  lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudbar, FALSE, FALSE, 0);
+  /* lives_widget_set_margin_top(mainw->raudbar, */
+  /* 				   widget_opts.packing_height) ? 0 : widget_opts.packing_height); */
   widget_opts.apply_theme = 1;
   mainw->raudio_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), &mainw->raudio_drawable);
   widget_opts.apply_theme = woat;
@@ -2211,9 +2211,6 @@ void create_LiVES(void) {
   lives_widget_set_size_request(mainw->raudio_draw, -1, CE_AUDBAR_HEIGHT);
   lives_widget_set_hexpand(mainw->raudio_draw, TRUE);
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudio_draw, FALSE, FALSE, 0);
-
-  lives_widget_set_margin_top(mainw->raudio_draw, widget_opts.packing_height / 2);
-  lives_widget_set_margin_bottom(mainw->raudio_draw, widget_opts.packing_height * 4);
 
   mainw->message_box = lives_hbox_new(FALSE, 0);
   lives_widget_set_app_paintable(mainw->message_box, TRUE);

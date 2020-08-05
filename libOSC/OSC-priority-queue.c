@@ -165,7 +165,7 @@ void OSCQueuePrint(OSCQueue q) {
   printf("OSC Priority queue at %p has %d elements:\n", q, q->n);
 
   for (i = 0; i < q->n; ++i) {
-    printf("   list[%2d] is %p, timetag = %"PRIu64"\n", i, q->list[i], *(uint64_t *) & (q->list[i]->timetag));
+    //printf("   list[%2d] is %p, timetag = %"PRIu64"\n", i, q->list[i], *(uint64_t *) & (q->list[i]->timetag));
   }
   printf("\n\n");
 }

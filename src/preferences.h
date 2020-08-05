@@ -463,7 +463,7 @@ enum {
 #define PREFWIN_WIDTH (GUI_SCREEN_WIDTH * .9)
 #define PREFWIN_HEIGHT (GUI_SCREEN_HEIGHT * .9)
 
-#define DS_WARN_CRIT_MAX 1000000. ///< MB.
+#define DS_WARN_CRIT_MAX 1000000. ///< MB. (default 1 TB)
 
 /// prefs window
 typedef struct {
@@ -549,6 +549,8 @@ typedef struct {
   LiVESWidget *checkbutton_threads;
   LiVESWidget *spinbutton_warn_ds;
   LiVESWidget *spinbutton_crit_ds;
+  LiVESWidget *dsl_label;
+  LiVESWidget *dsc_label;
   LiVESWidget *checkbutton_warn_fps;
   LiVESWidget *checkbutton_warn_mplayer;
   LiVESWidget *checkbutton_warn_save_set;

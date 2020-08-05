@@ -1239,9 +1239,7 @@ boolean lives_widget_destroy_with(LiVESWidget *widget, LiVESWidget *dieplease);
 
 void *lives_fg_run(weed_plant_t *lpt, void *retval);
 
-#endif // cplusplus
-
-#define LIVES_JUSTIFY_DEFAULT (widget_opts.default_justify)
+#define LIVES_JUSTIFY_DEFAULT (def_widget_opts.justify)
 
 typedef enum {
   LIVES_CURSOR_NORMAL = 0, ///< must be zero
@@ -1355,7 +1353,6 @@ typedef struct {
   int css_min_height;
   boolean no_gui; ///< show nothing !
   double scale; ///< scale factor for all sizes
-  LiVESJustification default_justify; ///< default value
   char **image_filter; ///</ NULL or NULL terminated list of image extensions which can be loaded
   char *title_prefix; ///< Text which is prepended to window titles, etc.
   int monitor; ///< monitor we are displaying on
@@ -1364,10 +1361,11 @@ typedef struct {
 } widget_opts_t;
 
 widget_opts_t widget_opts;
+widget_opts_t def_widget_opts;
 
 #ifdef NEED_DEF_WIDGET_OPTS
 
-const widget_opts_t def_widget_opts = {
+const widget_opts_t _def_widget_opts = {
   NULL, ///< last_label
   NULL, ///< last_container
   LIVES_EXPAND_DEFAULT, ///< default expand
@@ -1391,7 +1389,6 @@ const widget_opts_t def_widget_opts = {
   W_CSS_MIN_HEIGHT, ///< css_min_height
   FALSE, ///< no_gui
   1.0, ///< default scale
-  LIVES_JUSTIFY_START, ///< default justify (should this be RIGHT for rtl ?)
   NULL, ///< image_filter
   "", ///< title_prefix
   0, ///< monitor
@@ -1399,9 +1396,7 @@ const widget_opts_t def_widget_opts = {
   NULL ///< icon theme
 };
 
-#else
-
-extern const widget_opts_t def_widget_opts;
+#endif
 
 // object data keys
 #define HIDDEN_KEY "hidden"

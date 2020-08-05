@@ -3804,7 +3804,7 @@ static void notebook_error(LiVESNotebook * nb, uint32_t tab, lives_mt_nb_error_t
     break;
   }
 
-  widget_opts.justify = widget_opts.default_justify;
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   lives_widget_set_hexpand(mt->nb_label, TRUE);
 
@@ -10611,7 +10611,7 @@ static int add_video_track(lives_mt * mt, boolean behind) {
                                  lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "track_name"),
                                  LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox),
                                      "layer_number")))));
-  widget_opts.justify = widget_opts.default_justify;
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   lives_free(tmp);
   lives_widget_object_ref(label);

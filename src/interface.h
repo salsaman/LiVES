@@ -265,6 +265,9 @@ typedef struct {
   LiVESWidget *slider;
   LiVESWidget *button;
   LiVESWidget *resbutton;
+  LiVESWidget *expander;
+  LiVESWidget *exp_vbox;
+  LiVESWidget *exp_layout;
   boolean setting, visible;
   uint64_t sliderfunc, checkfunc;
   lives_painter_surface_t *dsu_surface;

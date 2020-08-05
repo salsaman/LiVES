@@ -295,7 +295,7 @@ char *lives_datetime_rel(const char *datetime);
 #define lives_nanosleep(nanosec) {struct timespec ts; ts.tv_sec = (uint64_t)nanosec / ONE_BILLION; \
     ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (nanosleep(&ts, &ts) == -1 && \
 								     errno != ETIMEDOUT);}
-#define lives_nanosleep_until_nonzero(var) {while (!(var)) lives_nanosleep(1000);}
+#define lives_nanosleep_until_nonzero(condition) {while (!(condition)) lives_nanosleep(1000);}
 
 int check_dev_busy(char *devstr);
 

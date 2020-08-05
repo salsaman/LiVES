@@ -191,14 +191,13 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
   if (width < 32 || height < MIN_MSGBAR_HEIGHT) return NULL;
 
   ctx = lives_widget_create_lingo_context(widget);
-  if (ctx == NULL || !LINGO_IS_CONTEXT(ctx)) return NULL;
+  if (!ctx || !LINGO_IS_CONTEXT(ctx)) return NULL;
 
   layout = lingo_layout_new(ctx);
-  if (layout == NULL || !LINGO_IS_LAYOUT(layout)) {
+  if (!layout || !LINGO_IS_LAYOUT(layout)) {
     lives_widget_object_unref(ctx);
     return NULL;
   }
-  lives_widget_object_ref_sink(layout);
 
   readytext = lives_strdup("");
 

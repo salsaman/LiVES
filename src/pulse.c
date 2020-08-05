@@ -14,7 +14,6 @@
 
 //#define DEBUG_PULSE
 
-
 #define THRESH_BASE 10000.
 #define THRESH_MAX 50000.
 

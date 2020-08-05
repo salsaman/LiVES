@@ -917,11 +917,8 @@ char *get_mountpoint_for(char *dir) {
   slen = lives_strlen(dir);
 
   if (!(mountinfo = fopen(MOUNTINFO, "r"))) return NULL;
-  while (1) {
-    if (!lives_fgets(buff, 65536, mountinfo)) break;
-    g_print("ARR was %s\n", buff);
+  while (lives_fgets(buff, 65536, mountinfo)) {
     array = lives_strsplit(buff, " ", 3);
-    g_print("ARR1 was %s\n", array[1]);
     for (j = 0; array[1][j] && j < slen; j++) if (array[1][j] != dir[j]) break;
     if (j > lmatch && !array[1][j]) {
       lmatch = j;
@@ -1594,7 +1591,6 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
   // determined in the code., the first argument to the GETARG macro is set by this.
   // return_type determines which function flavour to call, e.g func, funcb, funci
   /// the second argument to GETARG relates to the internal structure of the lives_proc_thread;
-
 
   /// LIVES_PROC_THREADS ////////////////////////////////////////
 

@@ -4274,8 +4274,6 @@ void add_rfx_effects(lives_rfx_status_t status) {
 #if LIVES_HAS_IMAGE_MENU_ITEM
   LiVESWidget *rfx_image;
 #endif
-  LiVESWidget *menuitem;
-
   int i, plugin_idx;
 
   int rfx_builtin_list_length, rfx_custom_list_length, rfx_test_list_length;
@@ -4328,8 +4326,9 @@ void add_rfx_effects(lives_rfx_status_t status) {
 
     mainw->custom_effects_separator = mainw->custom_effects_menu = mainw->custom_effects_submenu
                                       = mainw->custom_gens_menu = mainw->custom_gens_submenu = mainw->gens_menu =
-                                            mainw->custom_utilities_separator = mainw->custom_utilities_menu = mainw->custom_utilities_submenu
-                                                = mainw->custom_tools_menu = mainw->utilities_menu = NULL;
+                                            mainw->custom_utilities_separator = mainw->custom_utilities_menu
+                                                = mainw->custom_utilities_submenu
+                                                    = mainw->custom_tools_menu = mainw->utilities_menu = NULL;
   }
 
   if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
@@ -4345,7 +4344,7 @@ void add_rfx_effects(lives_rfx_status_t status) {
   //if (status != RFX_STATUS_TEST) make_custom_submenus();
 
   if (status != RFX_STATUS_CUSTOM) {
-    mainw->run_test_rfx_menu = lives_standard_menu_new();
+    //mainw->run_test_rfx_menu = lives_standard_menu_new();
     rfx_test_list = get_plugin_list(PLUGIN_RENDERED_EFFECTS_TEST, FALSE, NULL, NULL);
     rfx_test_list_length = lives_list_length(rfx_test_list);
   }
@@ -4369,7 +4368,7 @@ void add_rfx_effects(lives_rfx_status_t status) {
 
   if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
-  rendered_fx = (lives_rfx_t *)lives_malloc((rfx_list_length + 1) * sizeof(lives_rfx_t));
+  rendered_fx = (lives_rfx_t *)lives_calloc((rfx_list_length + 1), sizeof(lives_rfx_t));
 
   if (status != RFX_STATUS_ANY) {
     // add others to rendered_fx
@@ -4539,34 +4538,6 @@ void add_rfx_effects(lives_rfx_status_t status) {
 
   if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
-  //////////////////////////////////////////////////////
-
-  if (status == RFX_STATUS_ANY) {
-    // recreate effects menu
-    menuitem = lives_standard_menu_item_new_with_label(mainw->rendered_fx[0].menu_text);
-
-    lives_widget_set_sensitive(menuitem, FALSE);
-    lives_widget_set_tooltip_text(menuitem, _("See: VJ - show VJ keys. Set the realtime effects, and then apply them here."));
-
-    lives_widget_add_accelerator(menuitem, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
-                                 LIVES_KEY_e, LIVES_CONTROL_MASK, LIVES_ACCEL_VISIBLE);
-
-    lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_realfx_activate), &mainw->rendered_fx[0]);
-
-    mainw->rendered_fx[0].menuitem = menuitem;
-    mainw->rendered_fx[0].num_in_channels = 1;
-
-    if (!LIVES_IS_PLAYING && mainw->current_file > 0 &&
-        ((has_video_filters(TRUE) && !has_video_filters(FALSE)) ||
-         (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT && has_audio_filters(AF_TYPE_ANY)) ||
-         mainw->agen_key != 0)) {
-      lives_widget_set_sensitive(menuitem, TRUE);
-    } else lives_widget_set_sensitive(menuitem, FALSE);
-  }
-
-  if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
-
   // now we need to add to the effects menu and set a callback
   for (rfx = &mainw->rendered_fx[(plugin_idx = 1)]; plugin_idx <= rfx_slot_count; rfx = &mainw->rendered_fx[++plugin_idx]) {
     if (status != RFX_STATUS_ANY && rfx->status != status) continue;
@@ -4592,11 +4563,11 @@ void add_rfx_effects(lives_rfx_status_t status) {
     }
   }
 
-  if (mainw->num_rendered_effects_test) {
-    lives_widget_set_sensitive(mainw->run_test_rfx_submenu, TRUE);
-    lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->run_test_rfx_submenu), mainw->run_test_rfx_menu);
-  } else {
-    //lives_widget_object_ref_sink(mainw->run_test_rfx_menu);
+  if (status != RFX_STATUS_ANY) {
+    if (mainw->num_rendered_effects_test) {
+      lives_widget_set_sensitive(mainw->run_test_rfx_submenu, TRUE);
+      lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->run_test_rfx_submenu), mainw->run_test_rfx_menu);
+    }
   }
 }
 
@@ -4606,6 +4577,35 @@ void add_rfx_effects2(lives_rfx_status_t status) {
   lives_rfx_t *rfx;
   char txt[64]; // menu text
   int plugin_idx, tool_posn = RFX_TOOL_MENU_POSN;
+
+  if (status == RFX_STATUS_ANY) {
+    // recreate effects menu
+    LiVESWidget *menuitem = lives_standard_menu_item_new_with_label(mainw->rendered_fx[0].menu_text);
+
+    lives_widget_set_sensitive(menuitem, FALSE);
+    lives_widget_set_tooltip_text(menuitem, _("See: VJ - show VJ keys. Set the realtime effects, and then apply them here."));
+
+    lives_widget_add_accelerator(menuitem, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
+                                 LIVES_KEY_e, LIVES_CONTROL_MASK, LIVES_ACCEL_VISIBLE);
+
+    lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                         LIVES_GUI_CALLBACK(on_realfx_activate), &mainw->rendered_fx[0]);
+
+    mainw->rendered_fx[0].menuitem = menuitem;
+    mainw->rendered_fx[0].num_in_channels = 1;
+
+    if (!LIVES_IS_PLAYING && mainw->current_file > 0 &&
+        ((has_video_filters(TRUE) && !has_video_filters(FALSE)) ||
+         (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT && has_audio_filters(AF_TYPE_ANY)) ||
+         mainw->agen_key != 0)) {
+      lives_widget_set_sensitive(menuitem, TRUE);
+    } else lives_widget_set_sensitive(menuitem, FALSE);
+  }
+
+  if (mainw->num_rendered_effects_test) {
+    lives_widget_set_sensitive(mainw->run_test_rfx_submenu, TRUE);
+    lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->run_test_rfx_submenu), mainw->run_test_rfx_menu);
+  }
 
   if (status != RFX_STATUS_TEST) make_custom_submenus();
 

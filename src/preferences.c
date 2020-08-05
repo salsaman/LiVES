@@ -1337,8 +1337,8 @@ boolean apply_prefs(boolean skip_warn) {
   boolean msgs_unlimited = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->msgs_unlimited));
   boolean msgs_pbdis = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->msgs_pbdis));
 
-  /* uint64_t ds_warn_level = (uint64_t)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_warn_ds)) * 1000000; */
-  /* uint64_t ds_crit_level = (uint64_t)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_crit_ds)) * 1000000; */
+  uint64_t ds_warn_level = (uint64_t)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_warn_ds)) * 1000000;
+  uint64_t ds_crit_level = (uint64_t)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_crit_ds)) * 1000000;
 
   boolean warn_fps = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_fps));
   boolean warn_save_set = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_save_set));
@@ -2123,16 +2123,16 @@ boolean apply_prefs(boolean skip_warn) {
     set_boolean_pref(PREF_INSERT_RESAMPLE, prefs->ins_resample);
   }
 
-  /* if (ds_warn_level != prefs->ds_warn_level) { */
-  /*   prefs->ds_warn_level = ds_warn_level; */
-  /*   mainw->next_ds_warn_level = prefs->ds_warn_level; */
-  /*   set_int64_pref(PREF_DS_WARN_LEVEL, ds_warn_level); */
-  /* } */
+  if (ds_warn_level != prefs->ds_warn_level) {
+    prefs->ds_warn_level = ds_warn_level;
+    mainw->next_ds_warn_level = prefs->ds_warn_level;
+    set_int64_pref(PREF_DS_WARN_LEVEL, ds_warn_level);
+  }
 
-  /* if (ds_crit_level != prefs->ds_crit_level) { */
-  /*   prefs->ds_crit_level = ds_crit_level; */
-  /*   set_int64_pref(PREF_DS_CRIT_LEVEL, ds_crit_level); */
-  /* } */
+  if (ds_crit_level != prefs->ds_crit_level) {
+    prefs->ds_crit_level = ds_crit_level;
+    set_int64_pref(PREF_DS_CRIT_LEVEL, ds_crit_level);
+  }
 
 #ifdef ENABLE_OSC
   if (osc_enable) {
@@ -2891,10 +2891,24 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data) {
 }
 
 
-static void spinbutton_crit_ds_value_changed(LiVESSpinButton *crit_ds, livespointer user_data) {
-  double myval = lives_spin_button_get_value(crit_ds);
-  lives_spin_button_set_range(LIVES_SPIN_BUTTON(prefsw->spinbutton_warn_ds), myval, DS_WARN_CRIT_MAX);
-  apply_button_set_enabled(NULL, NULL);
+static void spinbutton_ds_value_changed(LiVESSpinButton *warn_ds, livespointer is_critp) {
+  boolean is_crit = LIVES_POINTER_TO_INT(is_critp);
+  char *tmp = NULL, *tmp2;
+  double myval = lives_spin_button_get_value(warn_ds);
+  uint64_t umyval = (uint64_t)myval * MILLIONS(1);
+  if (is_crit)
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(prefsw->spinbutton_warn_ds), myval, DS_WARN_CRIT_MAX);
+  if (myval == 0.) tmp2 = lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_DISABLED]);
+  else {
+    tmp = lives_format_storage_space_string(umyval);
+    tmp2 = lives_strdup_printf("(%s)", tmp);
+  }
+  if (is_crit)
+    lives_label_set_text(LIVES_LABEL(prefsw->dsc_label), tmp2);
+  else
+    lives_label_set_text(LIVES_LABEL(prefsw->dsl_label), tmp2);
+  if (tmp)lives_free(tmp);
+  lives_free(tmp2);
 }
 
 
@@ -4369,15 +4383,41 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   prefsw->scrollw_right_warnings =
     lives_standard_scrolled_window_new(0, 0, prefsw->vbox_right_warnings);
 
+  layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_warnings));
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Low Disk Space Warnings (set to zero to disable)"), FALSE);
 
-  widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
-  advbutton = lives_standard_button_new_full(_("_Diskspace Limits and Quota"),
-              DEF_BUTTON_WIDTH * 2, DEF_BUTTON_HEIGHT,
-              LIVES_BOX(prefsw->vbox_right_warnings), TRUE, NULL);
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
-  lives_signal_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(run_diskspace_dialog_cb), NULL);
+  prefsw->spinbutton_warn_ds =
+    lives_standard_spin_button_new((tmp = (_("Disk space warning level"))),
+                                   prefs->ds_warn_level / MILLIONS(1), prefs->ds_crit_level / MILLIONS(1), DS_WARN_CRIT_MAX,
+                                   1., 10., 1,
+                                   LIVES_BOX(hbox), (tmp2 = (_("LiVES will start showing warnings if usable disk space\n"
+                                       "falls below this level"))));
+  lives_free(tmp); lives_free(tmp2);
+
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("MB"), TRUE);
+
+  tmp = lives_format_storage_space_string(prefs->ds_warn_level);
+  tmp2 = lives_strdup_printf("(%s)", tmp);
+  prefsw->dsl_label = lives_layout_add_label(LIVES_LAYOUT(layout), tmp2, TRUE);
+  lives_free(tmp); lives_free(tmp2);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  prefsw->spinbutton_crit_ds =
+    lives_standard_spin_button_new((tmp = (_("Disk space critical level"))),
+                                   prefs->ds_crit_level / MILLIONS(1), 0, MILLIONS(1), 1., 10., 1,
+                                   LIVES_BOX(hbox), (tmp2 = (_("LiVES will abort if usable disk space\n"
+                                       "falls below this level"))));
+  lives_free(tmp); lives_free(tmp2);
+
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("MB"), TRUE);
+
+  tmp = lives_format_storage_space_string(prefs->ds_crit_level);
+  tmp2 = lives_strdup_printf("(%s)", tmp);
+  prefsw->dsc_label = lives_layout_add_label(LIVES_LAYOUT(layout), tmp2, TRUE);
+  lives_free(tmp); lives_free(tmp2);
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_warnings));
 
@@ -4556,7 +4596,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_misc), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  label = lives_standard_label_new(_("When inserting/merging frames:  "));
+  label = lives_standard_label_new(_("When inserting/merging frames:"));
 
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
@@ -4569,7 +4609,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   prefsw->cdda_hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_misc), prefsw->cdda_hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->cdplay_entry = lives_standard_fileentry_new((tmp = (_("CD device           "))),
+  prefsw->cdplay_entry = lives_standard_fileentry_new((tmp = (_("CD device"))),
                          (tmp2 = lives_filename_to_utf8(prefs->cdplay_device, -1, NULL, NULL, NULL)),
                          LIVES_DEVICE_DIR, MEDIUM_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(prefsw->cdda_hbox),
                          (tmp3 = (_("LiVES can load audio tracks from this CD"))));
@@ -4578,10 +4618,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_misc), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->spinbutton_def_fps = lives_standard_spin_button_new((tmp = (_("Default FPS        "))),
+  prefsw->spinbutton_def_fps = lives_standard_spin_button_new((tmp = (_("Default FPS"))),
                                prefs->default_fps, 1., FPS_MAX, 1., 1., 3,
-                               LIVES_BOX(hbox),
-                               (tmp2 = (_("Frames per second to use when none is specified"))));
+                               LIVES_BOX(hbox), (tmp2 = (_("Frames per second to use when none is specified"))));
   lives_free(tmp); lives_free(tmp2);
 
   pixbuf_misc = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_MISC, LIVES_ICON_SIZE_CUSTOM, -1, -1);
@@ -5277,38 +5316,30 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   ACTIVE(rb_startup_mt, TOGGLED);
   ACTIVE(rb_startup_ce, TOGGLED);
 
-  /* lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_crit_ds), LIVES_WIDGET_VALUE_CHANGED_SIGNAL, */
-  /*                           LIVES_GUI_CALLBACK(spinbutton_crit_ds_value_changed), NULL); */
-  /* lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_crit_ds), LIVES_WIDGET_VALUE_CHANGED_SIGNAL, */
-  /*                           LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL); */
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_warn_ds), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(spinbutton_ds_value_changed), LIVES_INT_TO_POINTER(FALSE));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_crit_ds), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(spinbutton_ds_value_changed), LIVES_INT_TO_POINTER(TRUE));
 
   ACTIVE(spinbutton_gmoni, VALUE_CHANGED);
   ACTIVE(spinbutton_pmoni, VALUE_CHANGED);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_gmoni), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                            LIVES_GUI_CALLBACK(pmoni_gmoni_changed),
-                            NULL);
+                            LIVES_GUI_CALLBACK(pmoni_gmoni_changed), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_pmoni), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                            LIVES_GUI_CALLBACK(pmoni_gmoni_changed),
-                            NULL);
+                            LIVES_GUI_CALLBACK(pmoni_gmoni_changed), NULL);
 
   ACTIVE(forcesmon, TOGGLED);
+  ACTIVE(checkbutton_stream_audio, TOGGLED);
+  ACTIVE(checkbutton_rec_after_pb, TOGGLED);
+  ACTIVE(spinbutton_warn_ds, VALUE_CHANGED);
+  ACTIVE(spinbutton_crit_ds, VALUE_CHANGED);
 
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_stream_audio), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                            NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_rec_after_pb), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                            NULL);
-  /* lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_warn_ds), LIVES_WIDGET_VALUE_CHANGED_SIGNAL, */
-  /*                           LIVES_GUI_CALLBACK(apply_button_set_enabled), */
-  /*                           NULL); */
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->mt_enter_prompt), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                            NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mt_enter_defs), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                            NULL);
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+
+  ACTIVE(mt_enter_prompt, TOGGLED);
+
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_render_prompt), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(apply_button_set_enabled),
                             NULL);

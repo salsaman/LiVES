@@ -1134,6 +1134,7 @@ typedef struct {
   LiVESWidget *show_clipboard_info;
   LiVESWidget *show_messages;
   LiVESWidget *show_layout_errors;
+  LiVESWidget *show_quota;
   LiVESWidget *sel_label;
   LiVESAccelGroup *accel_group;
   LiVESWidget *sep_image;

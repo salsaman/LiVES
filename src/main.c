@@ -42,7 +42,6 @@
 #include <glib.h>
 #endif
 
-#define NEED_DEF_WIDGET_OPTS
 #define NEED_ENDIAN_TEST
 
 #define _MAIN_C_

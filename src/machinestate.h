@@ -279,13 +279,13 @@ void *proxy_realloc(void *ptr, size_t new_size);
 char *get_md5sum(const char *filename);
 
 char *lives_format_storage_space_string(uint64_t space);
-lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, uint64_t *dsval);
+lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, int64_t *dsval);
 uint64_t get_ds_free(const char *dir);
 boolean get_ds_used(int64_t *bytes);
 
 #define MOUNTINFO "/proc/mounts"
 
-char *get_mountpoint_for(char *dir);
+char *get_mountpoint_for(const char *dir);
 
 ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t orignsecs);
 ticks_t lives_get_current_ticks(void);

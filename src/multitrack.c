@@ -4854,7 +4854,7 @@ void mt_init_start_end_spins(lives_mt * mt) {
                        (livespointer)mt);
 
   mt->bleedthru = lives_glowing_check_button_new((tmp = _("  Bleedthru  ")), LIVES_BOX(hbox),
-                  (tmp2 = _("#When active, all layers will be audible regardless of visibility")),
+                  (tmp2 = H_("When active, all layers will be audible regardless of visibility")),
                   &mt->opts.audio_bleedthru);
   lives_free(tmp);
   lives_free(tmp2);

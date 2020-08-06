@@ -4609,7 +4609,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_check_button_new_with_label(const
 
 static LiVESWidget *make_ttips_image_for(LiVESWidget *widget, const char *text) {
   LiVESWidget *ttips_image = lives_image_new_from_stock(LIVES_STOCK_DIALOG_QUESTION,
-                             LIVES_ICON_SIZE_SMALL_TOOLBAR);
+                             LIVES_ICON_SIZE_LARGE_TOOLBAR);
   lives_widget_set_no_show_all(ttips_image, TRUE);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ttips_image), TTIPS_IMAGE_KEY, ttips_image);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ttips_image), TTIPS_HIDE_KEY, ttips_image);
@@ -7547,23 +7547,33 @@ boolean lives_button_grab_default_special(LiVESWidget *button) {
   return TRUE;
 }
 
-static void set_css_min_size(LiVESWidget *w, int mw, int mh) {
+static void _set_css_min_size(LiVESWidget *w, const char *sel, int mw, int mh) {
 #if GTK_CHECK_VERSION(3, 16, 0)
   char *tmp;
   if (mw > 0) {
     tmp = lives_strdup_printf("%dpx", mw);
-    set_css_value_direct(w, LIVES_WIDGET_STATE_NORMAL, "", "min-width", tmp);
-    set_css_value_direct(w, LIVES_WIDGET_STATE_NORMAL, "*", "min-width", tmp);
+    set_css_value_direct(w, LIVES_WIDGET_STATE_NORMAL, sel, "min-width", tmp);
+    set_css_value_direct(w, LIVES_WIDGET_STATE_NORMAL, sel, "min-width", tmp);
     lives_free(tmp);
   }
   if (mh > 0) {
     tmp = lives_strdup_printf("%dpx", mh);
-    set_css_value_direct(w, LIVES_WIDGET_STATE_NORMAL, "", "min-height", tmp);
-    set_css_value_direct(w, LIVES_WIDGET_STATE_NORMAL, "*", "min-height", tmp);
+    set_css_value_direct(w, LIVES_WIDGET_STATE_NORMAL, sel, "min-height", tmp);
+    set_css_value_direct(w, LIVES_WIDGET_STATE_NORMAL, sel, "min-height", tmp);
     lives_free(tmp);
   }
 #endif
 }
+
+static void set_css_min_size(LiVESWidget *w, int mw, int mh) {
+  _set_css_min_size(w, "", mw, mh);
+  _set_css_min_size(w, "*", mw, mh);
+}
+
+static void set_css_min_size_selected(LiVESWidget *w, char *selector, int mw, int mh) {
+  _set_css_min_size(w, selector, mw, mh);
+}
+
 
 
 ///////////////// lives_layout ////////////////////////
@@ -9241,7 +9251,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
   }
 
   if (widget_opts.apply_theme) {
-    set_css_min_size(spinbutton, widget_opts.css_min_width, widget_opts.css_min_height * 3 / 2);
+    set_css_min_size(spinbutton, widget_opts.css_min_width, ((widget_opts.css_min_height * 3 + 3) >> 2) << 1);
     set_child_alt_colour(spinbutton, TRUE);
     lives_widget_apply_theme2(LIVES_WIDGET(spinbutton), LIVES_WIDGET_STATE_NORMAL, TRUE);
 #if !GTK_CHECK_VERSION(3, 16, 0)
@@ -9372,7 +9382,15 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList * list, L
     // TODO *** -- needs button size
     set_css_min_size(combo, widget_opts.css_min_width, widget_opts.css_min_height);
     set_css_min_size(LIVES_WIDGET(entry), widget_opts.css_min_width, widget_opts.css_min_height);
+    set_css_min_size_selected(LIVES_WIDGET(entry), "button",  widget_opts.css_min_width, widget_opts.css_min_height);
+
+    set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, "button", "padding-top", "0");
+    set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, "button", "padding-bottom", "0");
+
+    set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, "", "border-radius", "5px");
+
     set_child_colour(combo, TRUE);
+    set_child_colour(LIVES_WIDGET(entry), TRUE);
 
 #if !GTK_CHECK_VERSION(3, 16, 0)
     set_child_dimmed_colour(combo, BUTTON_DIM_VAL); // insens, themecols 1, child only
@@ -9506,7 +9524,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
 
   if (widget_opts.apply_theme) {
 #if GTK_CHECK_VERSION(3, 0, 0)
-    set_css_min_size(entry, widget_opts.css_min_width, widget_opts.css_min_height * 3 / 2);
+    set_css_min_size(entry, widget_opts.css_min_width, ((widget_opts.css_min_height * 3 + 3) >> 2) << 1);
 #if GTK_CHECK_VERSION(3, 16, 0)
     if (prefs->extra_colours && mainw->pretty_colours) {
       char *tmp;

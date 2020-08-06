@@ -717,8 +717,6 @@ typedef struct _lives_clip_t {
 
   boolean deinterlace; ///< auto deinterlace
 
-  uint64_t op_ds_warn_level; ///< current disk space warning level for any output direcditory
-
   int header_version;
 #define LIVES_CLIP_HEADER_VERSION 102
 
@@ -777,8 +775,6 @@ typedef struct _lives_clip_t {
   double pb_fps;  ///< current playback rate, may vary from fps, can be 0. or negative
 
   char info_file[PATH_MAX]; ///< used for asynch communication with externals
-
-  char *op_dir;
 
   LiVESWidget *menuentry;
   ulong menuentry_func;
@@ -1005,6 +1001,7 @@ typedef struct {
   wm_caps_t wm_caps;
 
   int64_t ds_used, ds_free, ds_tot;
+  char *mountpoint;
 } capability;
 
 /// some shared structures
@@ -1152,8 +1149,8 @@ boolean check_backend_return(lives_clip_t *sfile);
 const char *get_cache_stats(void);
 
 /** warn about disk space */
-char *ds_critical_msg(const char *dir, uint64_t dsval);
-char *ds_warning_msg(const char *dir, uint64_t dsval, uint64_t cwarn, uint64_t nwarn);
+char *ds_critical_msg(const char *dir, char **mountpoint, uint64_t dsval);
+char *ds_warning_msg(const char *dir, char **mountpoint, uint64_t dsval, uint64_t cwarn, uint64_t nwarn);
 boolean check_storage_space(int clipno, boolean is_processing);
 
 char *get_upd_msg(void);

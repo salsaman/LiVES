@@ -3255,7 +3255,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
     lives_standard_spin_button_new(_("Monitor number for playback"),
                                    prefs->play_monitor, 0,
                                    nmons == 1 ? 0 : nmons, 1., 1., 0, LIVES_BOX(hbox),
-                                   (tmp = lives_strdup(_("#A setting of 0 means use all available "
+                                   (tmp = lives_strdup(H_("A setting of 0 means use all available "
                                           "monitors (only works with some playback "
                                           "plugins)."))));
   lives_free(tmp);
@@ -3470,7 +3470,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   prefsw->checkbutton_instant_open =
     lives_standard_check_button_new((tmp = (_("Use instant opening when possible"))),
                                     prefs->instant_open, LIVES_BOX(hbox),
-                                    (tmp2 = (_("#Enable instant opening of some file types using decoder plugins"))));
+                                    (tmp2 = (H_("Enable instant opening of some file types using decoder plugins"))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -3526,7 +3526,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   prefsw->spinbutton_ocp =
     lives_standard_spin_button_new(("  %  "), prefs->ocp, 0., 60., 1., 5., 0,
                                    LIVES_BOX(hbox),
-                                   (tmp = _("#A higher value will require less disk space\n"
+                                   (tmp = H_("A higher value will require less disk space\n"
                                           "but may slow down the application.\n"
                                           "For jpeg, a higher value may lead to\n"
                                           "loss of image quality\n"
@@ -3968,13 +3968,32 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE,
                        widget_opts.packing_height * 4);
 
-  prefsw->spinbutton_rec_gb = lives_standard_spin_button_new(_("Pause recording if free disk space falls below"),
+  label = lives_standard_label_new(_("Pause recording if:"));
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE,
+                       widget_opts.packing_height);
+
+  prefsw->spinbutton_rec_gb = lives_standard_spin_button_new(_(" - free disk space falls below"),
                               prefs->rec_stop_gb, 0., 1024., 1., 10., 0,
                               LIVES_BOX(hbox), NULL);
 
   // TRANSLATORS: gigabytes
   label = lives_standard_label_new(_("GB"));
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE,
+                       widget_opts.packing_height);
+  lives_standard_check_button_new(_(" or more than 90% of quota is used up"), TRUE,
+                                  LIVES_BOX(hbox), NULL);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE,
+                       widget_opts.packing_height);
+  lives_standard_check_button_new(_(" or disk space warning level is readhed"), TRUE,
+                                  LIVES_BOX(hbox), NULL);
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_recording));
 
@@ -4394,7 +4413,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
     lives_standard_spin_button_new((tmp = (_("Disk space warning level"))),
                                    prefs->ds_warn_level / MILLIONS(1), prefs->ds_crit_level / MILLIONS(1), DS_WARN_CRIT_MAX,
                                    1., 50., 1,
-                                   LIVES_BOX(hbox), (tmp2 = (_("#LiVES will start showing warnings if usable disk space\n"
+                                   LIVES_BOX(hbox), (tmp2 = (H_("LiVES will start showing warnings if usable disk space\n"
                                        "falls below this level"))));
   lives_free(tmp); lives_free(tmp2);
 
@@ -4410,7 +4429,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   prefsw->spinbutton_crit_ds =
     lives_standard_spin_button_new((tmp = (_("Disk space critical level"))),
                                    prefs->ds_crit_level / MILLIONS(1), 0, MILLIONS(1), 1., 10., 1,
-                                   LIVES_BOX(hbox), (tmp2 = (_("#LiVES will abort if usable disk space\n"
+                                   LIVES_BOX(hbox), (tmp2 = (H_("LiVES will abort if usable disk space\n"
                                        "falls below this level"))));
   lives_free(tmp); lives_free(tmp2);
 
@@ -4658,7 +4677,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   prefsw->cb_autoclean = lives_standard_check_button_new
                          (_("_Remove temporary backup files on startup and shutdown"),
-                          prefs->autoclean, LIVES_BOX(hbox), _("#Save disk space by "
+                          prefs->autoclean, LIVES_BOX(hbox), H_("Save disk space by "
                               "allowing LiVES to remove\ntemporary preview and backup files"));
   ACTIVE(cb_autoclean, TOGGLED);
 

@@ -1414,11 +1414,11 @@ typedef struct {
   pthread_mutex_t audio_filewriteend_mutex; ///< sync for ending writing audio to file
   pthread_mutex_t instance_ref_mutex; ///< refcounting for instances
   pthread_mutex_t exit_mutex; ///< prevent multiple threads trying to run cleanup
-  pthread_rwlock_t mallopt_lock; ///< write locked to allow mallopt updates (may be uneccessary)
-  pthread_mutex_t fbuffer_mutex; /// append / remove wirh file_buffer list
+  pthread_mutex_t fbuffer_mutex; /// append / remove with file_buffer list
   pthread_mutex_t alarmlist_mutex; /// single access for updating alarm list
 
-  volatile lives_rfx_t *vrfx_update; ///   ???
+  ///< set for param window updates from OSC or data connections, notifies main thread to do visual updates
+  volatile lives_rfx_t *vrfx_update;
 
   lives_fx_candidate_t
   ///< effects which can have candidates from which a delegate is selected (current examples are: audio_volume, resize)
@@ -1438,6 +1438,8 @@ typedef struct {
   int64_t rec_samples;
   double rec_fps;
   frames_t rec_vid_frames;
+
+  ///< values to be written to the event list concurrent with next video ftame event
   int rec_arate, rec_achans, rec_asamps, rec_signed_endian;
 
   /// message output settings
@@ -1657,7 +1659,6 @@ typedef struct {
 
   // disk space in workdir
   lives_storage_status_t ds_status;
-  uint64_t dsval;
 
   char *version_hash;
   char *old_vhash;

@@ -206,7 +206,7 @@ uint64_t nxtval(uint64_t val, uint64_t lim, boolean less) {
 
 static const char *get_tunert(int idx) {
   switch (idx) {
-  case 1: return "mallopt arenas";
+  case 1: return "mallopt arenas"; /// disused
   case 2: return "orc_memcpy cutoff";
   case 3: return "read buffer size (small)";
   case 4: return "read buffer size (small / medium)";
@@ -619,18 +619,19 @@ char *lives_format_storage_space_string(uint64_t space) {
 }
 
 
-lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, uint64_t *dsval) {
+lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, int64_t *dsval) {
   // WARNING: this will actually create the directory (since we dont know if its parents are needed)
   // call with dsval set to ds_used to check for OVER_QUOTA
+  // dsval is overwritten and set to ds_free
   uint64_t ds;
-  lives_storage_status_t storage = LIVES_STORAGE_STATUS_UNKNOWN;
+  lives_storage_status_t status = LIVES_STORAGE_STATUS_UNKNOWN;
   if (dsval && prefs->disk_quota > 0 && *dsval > prefs->disk_quota)
-    storage = LIVES_STORAGE_STATUS_OVER_QUOTA;
-  if (!is_writeable_dir(dir)) return storage;
+    status = LIVES_STORAGE_STATUS_OVER_QUOTA;
+  if (!is_writeable_dir(dir)) return status;
   ds = get_ds_free(dir);
-  if (dsval != NULL) *dsval = ds;
+  if (dsval) *dsval = ds;
   if (ds < prefs->ds_crit_level) return LIVES_STORAGE_STATUS_CRITICAL;
-  if (storage != LIVES_STORAGE_STATUS_UNKNOWN) return storage;
+  if (status != LIVES_STORAGE_STATUS_UNKNOWN) return status;
   if (ds < warn_level) return LIVES_STORAGE_STATUS_WARNING;
   return LIVES_STORAGE_STATUS_NORMAL;
 }
@@ -905,7 +906,7 @@ boolean is_empty_dir(const char *dirname) {
 }
 
 
-char *get_mountpoint_for(char *dir) {
+char *get_mountpoint_for(const char *dir) {
   FILE *mountinfo;
   char **array;
   char *mp = NULL;
@@ -1882,7 +1883,6 @@ void resubmit_proc_thread(lives_proc_thread_t thread_info, lives_thread_attr_t a
 
 ///////// thread pool ////////////////////////
 #ifndef VALGRIND_ON
-#define TUNE_MALLOPT 1
 #define MINPOOLTHREADS 8
 #else
 #define MINPOOLTHREADS 2
@@ -1896,14 +1896,6 @@ static pthread_mutex_t twork_count_mutex = PTHREAD_MUTEX_INITIALIZER;
 static LiVESList *twork_first, *twork_last; /// FIFO list of tasks
 static volatile int ntasks;
 static boolean threads_die;
-
-#ifdef TUNE_MALLOPT
-static size_t narenas;
-static weed_plant_t *mtuner = NULL;
-static boolean mtuned = FALSE;
-static pthread_mutex_t tuner_mutex = PTHREAD_MUTEX_INITIALIZER;
-#define MALLOPT_WAIT_MAX 30
-#endif
 
 static LiVESList *allctxs = NULL;
 
@@ -1982,48 +1974,13 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
 
   if (myflags & LIVES_THRDFLAG_WAIT_SYNC) {
     lives_nanosleep_until_nonzero(mywork->sync_ready);
-  } else {
-#ifdef TUNE_MALLOPT
-    if (!pthread_mutex_trylock(&tuner_mutex)) {
-      if (mtuner) {
-        myflags |= LIVES_THRDFLAG_TUNING;
-        autotune_u64(mtuner, 1, npoolthreads * 4, 128, (16. + (double)narenas * 2.
-                     + (double)(mainw->effort > 0 ? mainw->effort : 0) / 16));
-      }
-    }
-#endif
   }
 
   lives_widget_context_invoke(tdata->ctx, gsrc_wrapper, mywork);
 
   if (myflags & LIVES_THRDFLAG_AUTODELETE) {
-    lives_free(mywork);
-    lives_free(list);
-  } else {
-    mywork->done = tdata->idx;
-  }
-
-#ifdef TUNE_MALLOPT
-  if (myflags & LIVES_THRDFLAG_TUNING) {
-    if (mtuner) {
-      size_t onarenas = narenas;
-      narenas = autotune_u64_end(&mtuner, narenas);
-      if (!mtuner) mtuned = TRUE;
-      if (narenas != onarenas) {
-        struct timespec ts;
-        clock_gettime(CLOCK_REALTIME, &ts);
-        ts.tv_sec += MALLOPT_WAIT_MAX;
-        if (!pthread_rwlock_timedwrlock(&mainw->mallopt_lock, &ts)) {
-          if (prefs->show_dev_opts) g_printerr("mallopt %ld\n", narenas);
-          //lives_invalidate_all_file_buffers();
-          mallopt(M_ARENA_MAX, narenas);
-          pthread_rwlock_unlock(&mainw->mallopt_lock);
-        } else narenas = onarenas;
-      }
-    }
-    pthread_mutex_unlock(&tuner_mutex);
-  }
-#endif
+    lives_free(mywork); lives_free(list);
+  } else mywork->done = tdata->idx;
 
   pthread_mutex_lock(&twork_count_mutex);
   ntasks--;
@@ -2077,11 +2034,6 @@ LIVES_GLOBAL_INLINE weed_plant_t *lives_plant_new_with_index(int subtype, int64_
 void lives_threadpool_init(void) {
   npoolthreads = MINPOOLTHREADS;
   if (prefs->nfx_threads > npoolthreads) npoolthreads = prefs->nfx_threads;
-#ifdef TUNE_MALLOPT
-  narenas = npoolthreads * 2;
-  mallopt(M_ARENA_MAX, narenas);
-  if (!mtuned && !mtuner) mtuner = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 1);
-#endif
   poolthrds = (pthread_t **)lives_calloc(npoolthreads, sizeof(pthread_t *));
   threads_die = FALSE;
   twork_first = twork_last = NULL;
@@ -2168,12 +2120,6 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr, lives_
       pthread_mutex_unlock(&tcond_mutex);
     }
     npoolthreads += MINPOOLTHREADS;
-#ifdef TUNE_MALLOPT
-    if (!mtuner) {
-      mtuner = weed_plant_new(12345);
-      mtuned = FALSE;
-    }
-#endif
   }
   return 0;
 }

@@ -191,11 +191,6 @@ void lives_exit(int signum) {
   }
 
   if (mainw->is_ready) {
-    if (!pthread_rwlock_trywrlock(&mainw->mallopt_lock)) {
-      lives_invalidate_all_file_buffers();
-      pthread_rwlock_unlock(&mainw->mallopt_lock);
-    }
-
     if (mainw->multitrack != NULL && mainw->multitrack->idlefunc > 0) {
       //lives_source_remove(mainw->multitrack->idlefunc);
       mainw->multitrack->idlefunc = 0;
@@ -408,7 +403,6 @@ void lives_exit(int signum) {
               if (mainw->files[i]->frameno != mainw->files[i]->saved_frameno) {
                 save_clip_value(i, CLIP_DETAILS_PB_FRAMENO, &mainw->files[i]->frameno);
               }
-              lives_freep((void **)&mainw->files[i]->op_dir);
             }
           }
         }
@@ -1633,9 +1627,6 @@ void on_export_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     d_print_failed();
     return;
   }
-
-  cfile->op_dir = lives_filename_from_utf8((tmp = get_dir(proj_file)), -1, NULL, NULL, NULL);
-  lives_free(tmp);
 
   do_progress_dialog(TRUE, FALSE, _("Exporting project"));
 
@@ -11715,9 +11706,6 @@ void on_export_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
     d_print_failed();
     return;
   }
-
-  cfile->op_dir = lives_filename_from_utf8((tmp = get_dir(file_name)), -1, NULL, NULL, NULL);
-  lives_free(tmp);
 
   do_progress_dialog(TRUE, FALSE, _("Exporting audio"));
 

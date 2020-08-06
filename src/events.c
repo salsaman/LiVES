@@ -5949,8 +5949,9 @@ render_details *create_render_details(int type) {
   rdet->always_checkbutton = lives_standard_check_button_new((tmp = (_("_Always use these values"))), FALSE,
                              LIVES_BOX(daa),
                              (tmp2 = lives_strdup(
-                                       _("#Check this button to always use these values when entering multitrack mode. "
-                                         "Choice can be re-enabled from Preferences."))));
+                                       H_("Check this button to always use these values when entering "
+                                          "multitrack mode. "
+                                          "Choice can be re-enabled from Preferences / Multitrack"))));
   lives_button_box_make_first(LIVES_BUTTON_BOX(daa), widget_opts.last_container);
 
   rdet->always_hbox = widget_opts.last_container;

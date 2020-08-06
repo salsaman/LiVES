@@ -8,13 +8,6 @@
 #ifndef HAS_LIVES_SUPPORT_H
 #define HAS_LIVES_SUPPORT_H
 
-#ifndef NO_GTK
-#ifndef lives_locale_to_utf8
-#include <gtk/gtk.h>
-#define lives_locale_to_utf8(a, b, c, d, e) g_locale_to_utf8(a, b, c, d, e)
-#endif
-#endif
-
 /*
    Standard gettext macros.
 */
@@ -23,11 +16,19 @@
 char *translate(const char *String);
 char *translate_with_plural(const char *String, const char *StringPlural, unsigned long int n);
 
+/*
+   non-Standard gettext macros.
+*/
+char *translate_with_hash(const char *String);
+char *translate_with_plural_hash(const char *String, const char *StringPlural, unsigned long int n);
+
 #  include <libintl.h>
 #  include <locale.h>
 #  undef _
 #  define _(String) (translate(String))
+#  define H_(String) (translate_with_hash(String))
 #  define P_(String, StringPlural, n) (translate_with_plural(String, StringPlural, n))
+#  define h_(String, StringPlural, n) (translate_with_plural_hash(String, StringPlural, n))
 #  ifdef gettext_noop
 #    define N_(String) gettext_noop(String)
 #  else
@@ -43,7 +44,6 @@ char *translate_with_plural(const char *String, const char *StringPlural, unsign
 #  define _(String) (String)
 #  define N_(String) (String)
 #  define P_(String, StringPlural, n) (String)
-
 #endif
 #endif
 

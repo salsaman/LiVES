@@ -1656,8 +1656,8 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
 
     checkbutton2 = lives_standard_check_button_new
                    ((tmp = (_("Use _letterboxing to maintain aspect ratio (optional)"))), FALSE, LIVES_BOX(hbox),
-                    (tmp2 = (_("#Draw black rectangles either above or to the sides of the image, "
-			       "to prevent it from stretching."))));
+                    (tmp2 = (H_("Draw black rectangles either above or to the sides of the image, "
+				"to prevent it from stretching."))));
 
     lives_free(tmp);
     lives_free(tmp2);
@@ -1978,12 +1978,12 @@ LiVESWidget *trash_rb(LiVESButtonBox *parent) {
     widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
     rb = lives_standard_radio_button_new((tmp = (_("Send to Trash"))), &rb_group,
 					 LIVES_BOX(vbox),
-					 (tmp2 = (_("#Send deleted items to filesystem Trash\n"
+					 (tmp2 = (H_("Send deleted items to filesystem Trash\n"
 						    "instead of erasing them permanently"))));
     lives_free(tmp); lives_free(tmp2);
 
     rb = lives_standard_radio_button_new((tmp = (_("Delete"))), &rb_group, LIVES_BOX(vbox),
-					 (tmp2 = (_("#Permanently erase items from the disk"))));
+					 (tmp2 = (H_("Permanently erase items from the disk"))));
 
     lives_free(tmp); lives_free(tmp2);
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
@@ -4660,8 +4660,8 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
 
   checkbutton = lives_standard_check_button_new((tmp = (_("Check for Lost Clips"))),
                 !(prefs->clear_disk_opts & LIVES_CDISK_REMOVE_ORPHAN_CLIPS), LIVES_BOX(hbox),
-                (tmp2 = (_("#Enable attempted recovery of potential lost clips before deleting them.\n"
-                           "Can be overriden after disk analysis."))));
+                (tmp2 = (H_("Enable attempted recovery of potential lost clips before deleting them.\n"
+                            "Can be overriden after disk analysis."))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -4675,7 +4675,7 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
 
   checkbutton = lives_standard_check_button_new((tmp = (_("Remove Empty Directories"))),
                 !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_EMPTY_DIRS), LIVES_BOX(hbox),
-                (tmp2 = (_("#Remove any empty directories within the working directory"))));
+                (tmp2 = (H_("Remove any empty directories within the working directory"))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -4689,8 +4689,8 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
 
   checkbutton = lives_standard_check_button_new((tmp = (_("Delete _Orphaned Clips"))),
                 !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_ORPHAN_SETS), LIVES_BOX(hbox),
-                (tmp2 = (_("#Delete any clips which are not currently loaded or part of a set\n"
-                           "If 'Check for Lost Clips' is set, LiVES will try to recover them first"))));
+                (tmp2 = (H_("Delete any clips which are not currently loaded or part of a set\n"
+                            "If 'Check for Lost Clips' is set, LiVES will try to recover them first"))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -6173,7 +6173,7 @@ boolean update_dsu(livespointer data) {
   } else {
     if (mainw->dsu_valid) {
       if (mainw->dsu_widget) {
-        uint64_t dsfree = capable->ds_used;
+        int64_t dsfree = capable->ds_used;
         mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsfree);
         capable->ds_free = dsfree;
         txt = lives_format_storage_space_string(dsu);
@@ -6439,7 +6439,7 @@ static void dsu_fill_details(LiVESWidget * widget, livespointer data) {
 
   lives_layout_add_row(LIVES_LAYOUT(layout2));
   lives_layout_add_label(LIVES_LAYOUT(layout2), _("Disk warning level"), TRUE);
-  lives_widget_set_tooltip_text(widget_opts.last_label, _("#value can be set in Preferences . Warnings"));
+  lives_widget_set_tooltip_text(widget_opts.last_label, H_("value can be set in Preferences . Warnings"));
   if (prefs->ds_warn_level)
     txt = lives_format_storage_space_string(prefs->ds_warn_level);
   else
@@ -6449,7 +6449,7 @@ static void dsu_fill_details(LiVESWidget * widget, livespointer data) {
 
   //lives_layout_add_row(LIVES_LAYOUT(layout2));
   lives_layout_add_label(LIVES_LAYOUT(layout2), _("Disk critical level"), TRUE);
-  lives_widget_set_tooltip_text(widget_opts.last_label, _("#value can be set in Preferences . Warnings"));
+  lives_widget_set_tooltip_text(widget_opts.last_label, H_("value can be set in Preferences . Warnings"));
   if (prefs->ds_crit_level)
     txt = lives_format_storage_space_string(prefs->ds_crit_level);
   else
@@ -6573,7 +6573,7 @@ void run_diskspace_dialog(void) {
 
   entry = lives_standard_entry_new(_("Current working directory"), prefs->workdir, -1, PATH_MAX,
                                    LIVES_BOX(hbox),
-                                   _("#The directory where LiVES will save projects (sets)"));
+                                   H_("The directory where LiVES will save projects (sets)"));
 
   lives_entry_set_editable(LIVES_ENTRY(entry), FALSE);
 
@@ -6865,7 +6865,7 @@ void run_diskspace_dialog(void) {
 
   rembutton =
     lives_standard_check_button_new(_("Show this dialog on startup"), TRUE, aar,
-                                    (tmp = lives_strdup(_("#These settings can also be changed "
+                                    (tmp = lives_strdup(H_("These settings can also be changed "
                                         "in Preferences / Warnings"))));
   lives_signal_connect(LIVES_GUI_OBJECT(rembutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(toggle_sets_pref), PREF_SHOW_QUOTA);

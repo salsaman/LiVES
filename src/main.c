@@ -212,19 +212,19 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
     }
 #endif
     if (xlevel == LIVES_LOG_LEVEL_FATAL)
-      msg = lives_strdup_printf(_("%s Fatal error: %s\n"), domain, message);
+      msg = lives_strdup_printf("%s Fatal error: %s\n", domain, message);
     else if (xlevel == LIVES_LOG_LEVEL_CRITICAL)
-      msg = lives_strdup_printf(_("%s Critical error: %s\n"), domain, message);
+      msg = lives_strdup_printf("%s Critical error: %s\n", domain, message);
     else if (xlevel == LIVES_LOG_LEVEL_WARNING)
-      msg = lives_strdup_printf(_("%s Warning: %s\n"), domain, message);
+      msg = lives_strdup_printf("%s Warning: %s\n", domain, message);
     else if (xlevel == LIVES_LOG_LEVEL_MESSAGE)
-      msg = lives_strdup_printf(_("%s Warning: %s\n"), domain, message);
+      msg = lives_strdup_printf("%s Warning: %s\n", domain, message);
     else if (xlevel == LIVES_LOG_LEVEL_INFO)
-      msg = lives_strdup_printf(_("%s Warning: %s\n"), domain, message);
+      msg = lives_strdup_printf("%s Warning: %s\n", domain, message);
     else if (xlevel == LIVES_LOG_LEVEL_DEBUG)
-      msg = lives_strdup_printf(_("%s Warning: %s\n"), domain, message);
+      msg = lives_strdup_printf("%s Warning: %s\n", domain, message);
     else {
-      msg = lives_strdup_printf(_("%s (Unknown level %u error: %s\n"), domain, xlevel, message);
+      msg = lives_strdup_printf("%s (Unknown level %u error: %s\n", domain, xlevel, message);
     }
 
     if (mainw->is_ready) d_print(msg);
@@ -310,7 +310,8 @@ void catch_sigint(int signum) {
           if (mainw->debug) fprintf(stderr, "%s", _("and any information shown below:\n\n"));
           else fprintf(stderr, "%s", _("Please try running LiVES with the -debug option to collect more information.\n\n"));
         } else {
-          fprintf(stderr, "%s", _("Please install gdb and then run LiVES with the -debug option to collect more information.\n\n"));
+          fprintf(stderr, "%s", _("Please install gdb and then run LiVES with the -debug option "
+                                  "to collect more information.\n\n"));
         }
 
 #ifdef USE_GLIB
@@ -665,53 +666,58 @@ static boolean pre_init(void) {
   }
 #endif
 
-  prefs->ds_warn_level = (uint64_t)get_int64_prefd(PREF_DS_WARN_LEVEL, DEF_DS_WARN_LEVEL);
-  mainw->next_ds_warn_level = prefs->ds_warn_level;
-
-  prefs->ds_crit_level = (uint64_t)get_int64_prefd(PREF_DS_CRIT_LEVEL, DEF_DS_CRIT_LEVEL);
-
-  prefs->show_disk_quota = get_boolean_prefd(PREF_SHOW_QUOTA, TRUE);
-  future_prefs->disk_quota = prefs->disk_quota = get_int64_prefd(PREF_DISK_QUOTA, 0);
-
-  if (mainw->next_ds_warn_level > 0) {
-    if (!prefs->vj_mode) {
-      mainw->dsval = 0; /// TODO: kick off task to get used ds
-      mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &mainw->dsval);
-      if (mainw->ds_status == LIVES_STORAGE_STATUS_CRITICAL) {
-        tmp = ds_critical_msg(prefs->workdir, mainw->dsval);
-        msg = lives_strdup_printf("\n%s\n", tmp);
-        lives_free(tmp);
-        startup_message_nonfatal(msg);
-        lives_free(msg);
-      }
-    }
-  } else mainw->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
-
-  if (mainw->next_ds_warn_level > 0) {
-    mainw->dsval = 0; /// TODO: kick off task to get used ds
-    mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &mainw->dsval);
-    if (mainw->ds_status == LIVES_STORAGE_STATUS_CRITICAL) {
-      tmp = ds_critical_msg(prefs->workdir, mainw->dsval);
-      msg = lives_strdup_printf("\n%s\n", tmp);
-      lives_free(tmp);
-      startup_message_nonfatal(msg);
-      lives_free(msg);
-    }
-  } else mainw->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
-
+  /// kick off the thread pool ////////////////////////////////
+  /// this must be done before we can check the disk status
   future_prefs->nfx_threads = prefs->nfx_threads = get_int_prefd(PREF_NFX_THREADS, capable->ncpus);
 
 #ifdef VALGRIND_ON
   prefs->nfx_threads = 2;
 #endif
 
-  /// kick off the thread pool
   lives_threadpool_init();
 
-  if (!prefs->vj_mode && prefs->disk_quota && !mainw->has_session_workdir && !needs_workdir) {
-    mainw->helper_procthreads[PT_LAZY_DSUSED] =
-      lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)get_dir_size, WEED_SEED_INT64, "s",
-                               prefs->workdir);
+  /// check disk storage status /////////////////////////////////////
+  mainw->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
+
+  if (!ign_opts.ign_dscrit)
+    prefs->ds_crit_level = (uint64_t)get_int64_prefd(PREF_DS_CRIT_LEVEL, DEF_DS_CRIT_LEVEL);
+  if (prefs->ds_crit_level < 0) prefs->ds_crit_level = 0;
+
+  prefs->ds_warn_level = (uint64_t)get_int64_prefd(PREF_DS_WARN_LEVEL, DEF_DS_WARN_LEVEL);
+  if (prefs->ds_warn_level < prefs->ds_crit_level) prefs->ds_warn_level = prefs->ds_crit_level;
+  mainw->next_ds_warn_level = prefs->ds_warn_level;
+  prefs->show_disk_quota = get_boolean_prefd(PREF_SHOW_QUOTA, TRUE);
+  prefs->disk_quota = get_int64_prefd(PREF_DISK_QUOTA, 0);
+  if (prefs->disk_quota < 0) prefs->disk_quota = 0;
+  future_prefs->disk_quota = prefs->disk_quota;
+
+  if (!prefs->vj_mode) {
+    /// start a bg thread to get diskspace used
+    if (prefs->disk_quota && !mainw->has_session_workdir && !needs_workdir) {
+      mainw->helper_procthreads[PT_LAZY_DSUSED] =
+        lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)get_dir_size, WEED_SEED_INT64, "s",
+                                 prefs->workdir);
+    }
+
+    if (mainw->next_ds_warn_level > 0) {
+      int64_t dsval = 0;
+      lives_proc_thread_t lpt = mainw->helper_procthreads[PT_LAZY_DSUSED];
+      if (lpt && lives_proc_thread_check(lpt)) {
+        capable->ds_used = lives_proc_thread_join_int64(lpt);
+        /// free in lazy checks
+      }
+      dsval = capable->ds_used;
+      mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval);
+      capable->ds_free = dsval;
+      if (mainw->ds_status == LIVES_STORAGE_STATUS_CRITICAL) {
+        tmp = ds_critical_msg(prefs->workdir, &capable->mountpoint, dsval);
+        msg = lives_strdup_printf("\n%s\n", tmp);
+        lives_free(tmp);
+        // offer ABORT or change limit
+        startup_message_nonfatal(msg);
+        lives_free(msg);
+      }
+    }
   }
 
   // get some prefs we need to set menu options
@@ -757,9 +763,6 @@ static boolean pre_init(void) {
 
   // conds
   pthread_cond_init(&mainw->avseek_cond, NULL);
-
-  // rwlocks
-  pthread_rwlock_init(&mainw->mallopt_lock, NULL);
 
   if (prefs->vj_mode)
     prefs->load_rfx_builtin = FALSE;
@@ -1932,8 +1935,9 @@ static void lives_init(_ign_opts *ign_opts) {
     frei0r_path = getenv("FREI0R_PATH");
     if (frei0r_path == NULL) {
       get_string_pref(PREF_FREI0R_PATH, prefs->frei0r_path, PATH_MAX);
-      if (strlen(prefs->frei0r_path) == 0) frei0r_path = lives_strdup_printf("/usr/lib/frei0r-1:/usr/local/lib/frei0r-1:%s/frei0r-1",
-            capable->home_dir);
+      if (strlen(prefs->frei0r_path) == 0) frei0r_path =
+          lives_strdup_printf("/usr/lib/frei0r-1:/usr/local/lib/frei0r-1:%s/frei0r-1",
+                              capable->home_dir);
       else frei0r_path = lives_strdup(prefs->frei0r_path);
       lives_setenv("FREI0R_PATH", frei0r_path);
       needs_free = TRUE;
@@ -1972,7 +1976,8 @@ static void lives_init(_ign_opts *ign_opts) {
     array = lives_strsplit(DEF_AUTOTRANS, "|", 3);
     mainw->def_trans_idx = weed_filter_highest_version(array[0], array[1], array[2], NULL);
     if (mainw->def_trans_idx == - 1) {
-      msg = lives_strdup_printf(_("System default transition (%s from package %s by %s) not found."), array[1], array[0], array[2]);
+      msg = lives_strdup_printf(_("System default transition (%s from package %s by %s) not found."),
+                                array[1], array[0], array[2]);
       LIVES_WARN(msg);
       lives_free(msg);
     }
@@ -1987,7 +1992,8 @@ static void lives_init(_ign_opts *ign_opts) {
         array = lives_strsplit(buff, "|", 3);
         prefs->atrans_fx = weed_filter_highest_version(array[0], array[1], array[2], NULL);
         if (prefs->atrans_fx == - 1) {
-          msg = lives_strdup_printf(_("User default transition (%s from package %s by %s) not found."), array[1], array[0], array[2]);
+          msg = lives_strdup_printf(_("User default transition (%s from package %s by %s) not found."),
+                                    array[1], array[0], array[2]);
           LIVES_WARN(msg);
           lives_free(msg);
         }
@@ -2022,14 +2028,16 @@ static void lives_init(_ign_opts *ign_opts) {
           prefs->jack_opts & JACK_OPTS_START_ASERVER ||
           prefs->jack_opts & JACK_OPTS_START_TSERVER) {
         // start jack transport polling
-        if (prefs->jack_opts & JACK_OPTS_START_ASERVER) splash_msg(_("Starting jack audio server..."), SPLASH_LEVEL_LOAD_APLAYER);
+        if (prefs->jack_opts & JACK_OPTS_START_ASERVER) splash_msg(_("Starting jack audio server..."),
+              SPLASH_LEVEL_LOAD_APLAYER);
         else {
           if (prefs->jack_opts & JACK_OPTS_START_TSERVER) splash_msg(_("Starting jack transport server..."),
                 SPLASH_LEVEL_LOAD_APLAYER);
           else splash_msg(_("Connecting to jack server..."), SPLASH_LEVEL_LOAD_APLAYER);
         }
         if (!lives_jack_init()) {
-          if ((prefs->jack_opts & JACK_OPTS_START_ASERVER) || (prefs->jack_opts & JACK_OPTS_START_TSERVER)) do_jack_noopen_warn();
+          if ((prefs->jack_opts & JACK_OPTS_START_ASERVER) || (prefs->jack_opts & JACK_OPTS_START_TSERVER))
+            do_jack_noopen_warn();
           else do_jack_noopen_warn3();
           if (prefs->startup_phase == 4) {
             do_jack_noopen_warn2();
@@ -2085,9 +2093,9 @@ static void lives_init(_ign_opts *ign_opts) {
           if (prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT) {
             // create reader connection now, if permanent
             jack_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
-          }
-        }
-      }
+	    // *INDENT-OFF*
+          }}}
+      // *INDENT-ON*
 #endif
     }
 
@@ -2121,9 +2129,9 @@ static void lives_init(_ign_opts *ign_opts) {
         if (prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT) {
           // create reader connection now, if permanent
           pulse_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
-        }
-      }
-    }
+	  // *INDENT-OFF*
+        }}}
+      // *INDENT-ON*
 #endif
   }
 
@@ -3040,100 +3048,92 @@ capability *get_capabilities(void) {
 void print_opthelp(void) {
   print_notice();
 
-  lives_printerr(_("\nStartup syntax is: %s [opts] [filename [start_time] [frames]]\n"), capable->myname);
-  fprintf(stderr, "%s", _("Where: filename is the name of a media file or backup file to import.\n"));
+  lives_printerr(_("\nStartup syntax is: %s [OPTS] [filename [start_time] [frames]]\n"), capable->myname);
+  fprintf(stderr, "%s", _("Where: filename is the name of a media file or backup file to import\n"));
   fprintf(stderr, "%s", _("start_time : filename start time in seconds\n"));
   fprintf(stderr, "%s", _("frames : maximum number of frames to open\n"));
   fprintf(stderr, "%s", "\n");
-  fprintf(stderr, "%s", _("opts can be:\n"));
-  fprintf(stderr, "%s", _("-help OR --help             : print this help text on stderr and exit\n"));
-  fprintf(stderr, "%s", _("-version OR --version       : print the LiVES version on stderr and exit\n"));
-  fprintf(stderr, "%s", _("-workdir <workdir>          : specify the working directory for the session, "
+  fprintf(stderr, "%s", _("OPTS can be:\n"));
+  fprintf(stderr, "%s", _("-help | --help \t\t\t: print this help text on stderr and exit\n"));
+  fprintf(stderr, "%s", _("-version | --version\t\t: print the LiVES version on stderr and exit\n"));
+  fprintf(stderr, "%s", _("-workdir <workdir>\t\t: specify the working directory for the session, "
                           "overriding any value set in preferences\n"));
-  fprintf(stderr, "%s", _("-configdir <configdir>      : override the default configuration directory for the session\n"
-                          "                                    "));
-  fprintf(stderr, _("[default is %s\n"
-                    "                                    "
-                    " with config file %s%s and directory %s%s]\n"),
+  fprintf(stderr, "%s", _("-configdir <configdir>\t\t: override the default configuration directory for the session\n"));
+  fprintf(stderr, _("\t\t\t\t\t(default is %s\n"
+                    "\t\t\t\t\t with config file %s%s and directory %s%s)\n"),
           capable->home_dir, capable->home_dir, LIVES_RC_FILENAME, capable->home_dir, LIVES_CONFIG_DIR);
-  fprintf(stderr, "%s", _("-set <setname>              : autoload clip set <setname>\n"));
-  fprintf(stderr, "%s", _("-noset                      : do not reload any clip set on startup\n"));
-  fprintf(stderr, "%s", _("-layout <layout_name>       : autoload multitrack layout <layout_name>; may override -startup-ce\n"));
-  fprintf(stderr, "%s", _("-nolayout                   : do not reload any multitrack layout on startup\n"));
-  fprintf(stderr, "%s", _("-norecover                  : force non-loading of crash recovery files\n"));
+  fprintf(stderr, "%s", _("-dscrit <bytes>\t\t\t: temporarily sets the free disk space critical level for workdir to <bytes>\n"));
+  fprintf(stderr, "%s", _("\t\t\t\t\t(intended to allow correction of erroneous values within the app; "
+                          "<= 0 disables checks)\n"));
+  fprintf(stderr, "%s", _("-set <setname>\t\t\t: autoload clip set <setname>\n"));
+  fprintf(stderr, "%s", _("-noset\t\t\t\t: do not reload any clip set on startup (overrides -set)\n"));
+  fprintf(stderr, "%s", _("-layout <layout_name>\t\t: autoload multitrack layout <layout_name> (if successful, "
+                          "overrides -startup-ce)\n"));
+  fprintf(stderr, "%s", _("-nolayout\t\t\t: do not reload any multitrack layout on startup (overrides -layout)\n"));
+  fprintf(stderr, "%s", _("-norecover\t\t\t: force non-loading of crash recovery files (overrides -recover / -autorecover)\n"));
   fprintf(stderr, "%s",
-          _("-recover OR -autorecover    : force reloading of any crash recovery files; may override -noset and -nolayout\n"));
-  fprintf(stderr, "%s", _("-nogui                      : do not show the gui [still shows the play window when active]\n"));
-  fprintf(stderr, "%s", _("-nosplash                   : do not show the splash window\n"));
+          _("-recover | -autorecover\t\t: force reloading of any crash recovery files (may override -noset and -nolayout)\n"));
+  fprintf(stderr, "%s", _("-nogui\t\t\t\t: do not show the gui (still shows the play window when active)\n"));
+  fprintf(stderr, "%s", _("-nosplash\t\t\t: do not show the splash window\n"));
   fprintf(stderr, "%s",
-          _("-noplaywin                  : do not show the play window [still shows the internal player; intended for remote streaming]\n"));
+          _("-noplaywin\t\t\t: do not show the play window (still shows the internal player; intended for remote streaming)\n"));
   fprintf(stderr, "%s",
-          _("-noninteractive             : disable menu interactivity [intended for scripting applications, e.g liblives]\n"));
-  fprintf(stderr, "%s", _("-startup-ce                 : start in clip editor mode\n"));
-  fprintf(stderr, "%s", _("-startup-mt                 : start in multitrack mode\n"));
-  fprintf(stderr, "%s", _("-vjmode                     : start in VJ mode\n"));
+          _("-noninteractive\t\t\t: disable menu interactivity (intended for scripting applications, e.g liblives)\n"));
+  fprintf(stderr, "%s", _("-startup-ce\t\t\t: start in clip editor mode (overrides -startup-mt)\n"));
+  fprintf(stderr, "%s", _("-startup-mt\t\t\t: start in multitrack mode\n"));
+  fprintf(stderr, "%s", _("-vjmode\t\t\t\t: start in VJ mode (implicitly sets -startup-ce -autorecover "
+                          "-nolayout -asource external)\n"));
   fprintf(stderr, "%s",
-          _("-fxmodesmax <n>             : allow <n> modes per effect key; overrides any value set in preferences [minimum is 1, default is "
-            DEF_FX_KEYMODES "]\n"));
+          _("-fxmodesmax <n>\t\t\t: allow <n> modes per effect key (overrides any value set in preferences; minimum is 1)\n"));
 #ifdef ENABLE_OSC
-  fprintf(stderr,  _("-oscstart <port>            : start OSC listener on UDP port <port> [default is %d]\n"),
-          DEF_OSC_LISTEN_PORT);
+  fprintf(stderr,  _("-oscstart <port>\t\t: start OSC listener on UDP port <port> (default is %d)\n"), DEF_OSC_LISTEN_PORT);
   fprintf(stderr, "%s",
-          _("-nooscstart                 : do not start the OSC listener [the default, unless set in preferences]\n"));
+          _("-nooscstart\t\t\t: do not start the OSC listener (the default, unless set in preferences)\n"));
 #endif
   fprintf(stderr, "%s",
-          _("-asource <source>           : set the initial audio source; <source> can be 'internal' or 'external' \n"
-            "                                    "));
-  fprintf(stderr, _("[only valid for %s and %s players]\n"), AUDIO_PLAYER_JACK, AUDIO_PLAYER_PULSE_AUDIO);
-  fprintf(stderr, "%s", _("-aplayer <ap>               : start with selected audio player. <ap> can be "));
+          _("-asource <source>\t\t: set the initial audio source (<source> can be 'internal' or 'external')\n"));
+  fprintf(stderr, _("\t\t\t\t\t(only valid for %s and %s players)\n"), AUDIO_PLAYER_JACK, AUDIO_PLAYER_PULSE_AUDIO);
+  fprintf(stderr, "%s", _("-aplayer <ap>\t\t\t: start with the selected audio player (<ap> can be: "));
 #ifdef HAVE_PULSE_AUDIO
-  fprintf(stderr, "%s", AUDIO_PLAYER_PULSE);
+  fprintf(stderr, "'%s'", AUDIO_PLAYER_PULSE);
 #endif
 #ifdef ENABLE_JACK
 #ifdef HAVE_PULSE_AUDIO
   fprintf(stderr, ", "); // comma after pulse
 #endif
-  fprintf(stderr, "%s", AUDIO_PLAYER_JACK);
-  if (capable->has_sox_play) lives_printerr(", %s", AUDIO_PLAYER_SOX); // comma after jack
-  fprintf(stderr, " or %s\n", AUDIO_PLAYER_NONE);
+  fprintf(stderr, "'%s'", AUDIO_PLAYER_JACK);
+  if (capable->has_sox_play) lives_printerr(", '%s'", AUDIO_PLAYER_SOX); // comma after jack
+  fprintf(stderr, " or '%s')\n", AUDIO_PLAYER_NONE);
   fprintf(stderr, "%s",
-          _("-jackopts <opts>            : opts is a bitmap of jackd startup / playback options [default is (16)]\n"
-            "                                    "
-            "[1 = LiVES is a jack transport slave, \n"
-            "                                     "
-            "2 = LiVES is a jack transport master, \n"
-            "                                     "
-            "4 = start/stop jack transport server on LiVES playback start / stop [must be transport master], \n"
-            "                                     "
-            "8 = pause jack transport when video paused, [must be transport master]\n"
-            "                                    "
-            "16 = start/stop jack audio server on LiVES startup / shutdown [only if audio player is jack]] \n"));
+          _("-jackopts <opts>\t\t: opts is a bitmap of jackd startup / playback options (default is 16, unless set in Preferences)\n"
+            "\t\t\t\t\t 1 = LiVES is a jack transport slave, \n"
+            "\t\t\t\t\t 2 = LiVES is a jack transport master, \n"
+            "\t\t\t\t\t 4 = start/stop jack transport server on LiVES playback start / stop\n"
+            "\t\t\t\t\t\t(must be transport master), \n"
+            "\t\t\t\t\t 8 = pause jack transport when video paused\n"
+            "\t\t\t\t\t\t(must be transport master),\n"
+            "\t\t\t\t\t16 = start/stop jack audio server on LiVES startup / shutdown\n"
+            "\t\t\t\t\t\t(only if audio player is jack)) \n"));
 #else // no jack
   if (capable->has_sox_play) {
 #ifdef HAVE_PULSE_AUDIO
     fprintf(stderr, ", "); // comma after pulse
 #endif
-    fprintf(stderr, _("%s or :"), AUDIO_PLAYER_SOX);
+    fprintf(stderr, _("'%s' or "), AUDIO_PLAYER_SOX);
   }
 #ifdef HAVE_PULSE_AUDIO
   else fprintf(stderr, "%s", _(" or ")); // no sox, 'or' after pulse
 #endif
-  fprintf(stderr, "%s\n", AUDIO_PLAYER_NONE);
+  fprintf(stderr, "'%s')\n", AUDIO_PLAYER_NONE);
 #endif
-  //
-
-  fprintf(stderr, "%s", _("-devicemap <mapname>        : autoload devicemap <mapname> (for MIDI / joystick control)\n"));
-  fprintf(stderr, "%s", _("-vppdefaults <file>         : load defaults for video playback plugin from <file>\n"
-                          "                                    "
-                          "[Note: only affects the plugin settings, not the plugin type]\n"));
+  fprintf(stderr, "%s", _("-devicemap <mapname>\t\t: autoload devicemap <mapname> (for MIDI / joystick control)\n"));
+  fprintf(stderr, "%s", _("-vppdefaults <file>\t\t: load defaults for video playback plugin from <file>\n"
+                          "\t\t\t\t\t(Note: only affects the plugin settings, not the plugin type)\n"));
 #ifdef HAVE_YUV4MPEG
-  fprintf(stderr, "%s",  _("-yuvin <fifo>               : autoplay yuv4mpeg from stream <fifo> on startup\n"
-                           "                                    "));
-  fprintf(stderr, "%s", _("[only valid in clip edit startup mode]\n"));
+  fprintf(stderr, "%s",  _("-yuvin <fifo>\t\t\t: autoplay yuv4mpeg from stream <fifo> on startup\n"));
+  fprintf(stderr, "%s", _("\t\t\t\t\t(only valid in clip edit startup mode)\n"));
 #endif
-
-  fprintf(stderr, "%s", _("-debug                      : try to debug crashes (requires 'gdb' to be installed)\n"));
-
+  fprintf(stderr, "%s", _("-debug\t\t\t\t: try to debug crashes (requires 'gdb' to be installed)\n"));
   fprintf(stderr, "%s", "\n");
 }
 
@@ -3188,8 +3188,7 @@ static boolean lazy_startup_checks(void *data) {
     return FALSE;
   }
 
-  if ((volatile LiVESWidget *)mainw->dsu_widget) return TRUE;
-
+  if (mainw->dsu_widget) return TRUE;
 
   if (!checked_trash) {
     if (prefs->autoclean) {
@@ -3203,29 +3202,27 @@ static boolean lazy_startup_checks(void *data) {
     lives_proc_thread_t lpt = mainw->helper_procthreads[PT_LAZY_DSUSED];
     boolean do_show_quota = prefs->show_disk_quota;
     dqshown = TRUE;
-    if (!do_show_quota) {
-      if (lpt) {
-        if (!prefs->disk_quota) {
+    if (lpt) {
+      if (!prefs->disk_quota) {
+        lives_proc_thread_dontcare(lpt);
+      } else {
+        ticks_t timeout = 1;
+        lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+        while (!lives_proc_thread_check(lpt)
+               && (timeout = lives_alarm_check(alarm_handle)) <= 0) {
+          lives_nanosleep(1000);
+        }
+        lives_alarm_clear(alarm_handle);
+        if (!timeout) {
           lives_proc_thread_dontcare(lpt);
         } else {
-          ticks_t timeout = 1;
-          lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-          while (!lives_proc_thread_check(lpt)
-                 && (timeout = lives_alarm_check(alarm_handle)) <= 0) {
-            lives_nanosleep(1000);
-          }
-          lives_alarm_clear(alarm_handle);
-          if (!timeout) {
-            lives_proc_thread_dontcare(lpt);
-          } else {
-            capable->ds_used = lives_proc_thread_join_int64(lpt);
-            if (capable->ds_used > prefs->disk_quota) do_show_quota = TRUE;
-	    // *INDENT-OFF*
-	  }}}}
-    // *INDENT-ON*
-    else {
-      if (lpt) lives_proc_thread_dontcare(lpt);
-    }
+          capable->ds_used = lives_proc_thread_join_int64(lpt);
+          weed_plant_free(lpt);
+        }
+      }
+      /// TODO: pref for config quota warn level (90%) def.
+      if (capable->ds_used > prefs->disk_quota * .9) do_show_quota = TRUE;
+    } else if (lpt) lives_proc_thread_dontcare(lpt);
     mainw->helper_procthreads[PT_LAZY_DSUSED] = NULL;
     if (do_show_quota) {
       run_diskspace_dialog();
@@ -3488,9 +3485,9 @@ static boolean lives_startup(livespointer data) {
         if (mainw->ds_status == LIVES_STORAGE_STATUS_WARNING) {
           uint64_t curr_ds_warn = mainw->next_ds_warn_level;
           mainw->next_ds_warn_level >>= 1;
-          if (mainw->next_ds_warn_level > (mainw->dsval >> 1)) mainw->next_ds_warn_level = mainw->dsval >> 1;
+          if (mainw->next_ds_warn_level > (capable->ds_free >> 1)) mainw->next_ds_warn_level = capable->ds_free >> 1;
           if (mainw->next_ds_warn_level < prefs->ds_crit_level) mainw->next_ds_warn_level = prefs->ds_crit_level;
-          tmp = ds_warning_msg(prefs->workdir, mainw->dsval, curr_ds_warn, mainw->next_ds_warn_level);
+          tmp = ds_warning_msg(prefs->workdir, &capable->mountpoint, capable->ds_free, curr_ds_warn, mainw->next_ds_warn_level);
           msg = lives_strdup_printf("\n%s\n", tmp);
           lives_free(tmp);
           startup_message_nonfatal(msg);
@@ -4014,6 +4011,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         {"asource", 1, 0, 0},
         {"workdir", 1, 0, 0},
         {"configdir", 1, 0, 0},
+        {"dscrit", 1, 0, 0},
         {"set", 1, 0, 0},
         {"noset", 0, 0, 0},
 #ifdef ENABLE_OSC
@@ -4062,22 +4060,21 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           LIVES_FATAL(msg);
         }
         if (!strcmp(charopt, "workdir") || !strcmp(charopt, "tmpdir")) {
-          if (strlen(optarg) == 0) {
-            msg = lives_strdup_printf(_("%s may not be blank.\nClick Abort to exit LiVES immediately or Ok "
-                                        "to continue with the default value."), charopt);
-            do_abort_ok_dialog(msg);
+          if (!*optarg) {
+            do_abortblank_error(charopt);
             lives_free(msg);
             continue;
           }
           if (optarg[0] == '-') {
+            do_abortblank_error(charopt);
             optind--;
             continue;
           }
-          if (strlen(optarg) > PATH_MAX - MAX_SET_NAME_LEN * 2) {
+          if (lives_strlen(optarg) > PATH_MAX - MAX_SET_NAME_LEN * 2) {
             toolong = TRUE;
           } else {
             ensure_isdir(optarg);
-            if (strlen(optarg) > PATH_MAX - MAX_SET_NAME_LEN * 2) {
+            if (lives_strlen(optarg) > PATH_MAX - MAX_SET_NAME_LEN * 2) {
               toolong = TRUE;
             }
           }
@@ -4100,19 +4097,20 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         }
 
         if (!strcmp(charopt, "configdir")) {
-          if (strlen(optarg) == 0) {
+          if (!*optarg) {
             do_abortblank_error(charopt);
             continue;
           }
           if (optarg[0] == '-') {
+            do_abortblank_error(charopt);
             optind--;
             continue;
           }
-          if (strlen(optarg) > PATH_MAX - 64) {
+          if (lives_strlen(optarg) > PATH_MAX - 64) {
             toolong = TRUE;
           } else {
             ensure_isdir(optarg);
-            if (strlen(optarg) > PATH_MAX - 64) {
+            if (lives_strlen(optarg) > PATH_MAX - 64) {
               toolong = TRUE;
             }
           }
@@ -4153,7 +4151,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         if (!strcmp(charopt, "yuvin")) {
 #ifdef HAVE_YUV4MPEG
           char *dir;
-          if (strlen(optarg) == 0) {
+          if (!*optarg) {
             continue;
           }
           if (optarg[0] == '-') {
@@ -4176,6 +4174,22 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           continue;
         }
 
+        if (!strcmp(charopt, "dscrit") && optarg != NULL) {
+          // force clipset loading
+          if (!*optarg) {
+            do_abortblank_error(charopt);
+            continue;
+          }
+          if (optarg[0] == '-') {
+            do_abortblank_error(charopt);
+            optind--;
+            continue;
+          }
+          prefs->ds_crit_level = atoll(optarg);
+          ign_opts.ign_dscrit = TRUE;
+          continue;
+        }
+
         if (!strcmp(charopt, "noset")) {
           // override clipset loading
           lives_memset(prefs->ar_clipset_name, 0, 1);
@@ -4186,12 +4200,12 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
         if (!strcmp(charopt, "set") && optarg != NULL) {
           // force clipset loading
-          if (strlen(optarg) == 0) {
+          if (!*optarg) {
             do_abortblank_error(charopt);
             continue;
           }
           if (optarg[0] == '-') {
-            do_optarg_blank_err(charopt);
+            do_abortblank_error(charopt);
             optind--;
             continue;
           }
@@ -4216,8 +4230,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
         if (!strcmp(charopt, "layout") && optarg != NULL) {
           // force layout loading
-          if (strlen(optarg) == 0) {
-            do_abortblank_error(charopt);
+          if (!*optarg) {
+            do_optarg_blank_err(charopt);
             continue;
           }
           if (optarg[0] == '-') {
@@ -4235,7 +4249,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         if (!strcmp(charopt, "devicemap") && optarg != NULL) {
           // force devicemap loading
           char *devmap2;
-          if (strlen(optarg) == 0) {
+          if (!*optarg) {
+            do_optarg_blank_err(charopt);
             continue;
           }
           if (optarg[0] == '-') {
@@ -4261,7 +4276,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
         if (!strcmp(charopt, "vppdefaults") && optarg != NULL) {
           // load alternate vpp file
-          if (strlen(optarg) == 0) {
+          if (!*optarg) {
             do_optarg_blank_err(charopt);
             continue;
           }
@@ -4282,7 +4297,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
         if (!strcmp(charopt, "aplayer")) {
           boolean apl_valid = FALSE;
-          if (strlen(optarg) == 0) {
+          if (!*optarg) {
             do_optarg_blank_err(charopt);
             continue;
           }
@@ -4331,7 +4346,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         }
 
         if (!strcmp(charopt, "asource")) {
-          if (strlen(optarg) == 0) {
+          if (!*optarg) {
             do_optarg_blank_err(charopt);
             continue;
           }
@@ -4383,7 +4398,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         }
 
         if (!strcmp(charopt, "fxmodesmax") && optarg != NULL) {
-          if (strlen(optarg) == 0) {
+          if (!*optarg) {
             do_optarg_blank_err(charopt);
             continue;
           }
@@ -4400,7 +4415,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
         if (!strcmp(charopt, "bigendbug")) {
           // only for backwards comptaibility
-          if (optarg != NULL) {
+          if (optarg) {
             // set bigendbug
             prefs->bigendbug = atoi(optarg);
           } else prefs->bigendbug = 1;
@@ -4409,7 +4424,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef ENABLE_OSC
 
         if (!strcmp(charopt, "oscstart") && optarg != NULL) {
-          if (strlen(optarg) == 0) {
+          if (!*optarg) {
             do_optarg_blank_err(charopt);
             continue;
           }
@@ -4435,7 +4450,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
 #ifdef ENABLE_JACK
         if (!strcmp(charopt, "jackopts") && optarg != NULL) {
-          if (strlen(optarg) == 0) {
+          if (!*optarg) {
             do_optarg_blank_err(charopt);
             continue;
           }
@@ -4494,7 +4509,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         }}}}
   // *INDENT-ON*
 
-  if (strlen(prefs->configdir) == 0) {
+  if (!*prefs->configdir) {
     lives_snprintf(prefs->configdir, PATH_MAX, "%s", capable->home_dir);
   }
 
@@ -8885,8 +8900,6 @@ void load_frame_image(int frame) {
 	free_thumb_cache(mainw->current_file, 0);
 	lives_freep((void **)&cfile->frame_index);
 	lives_freep((void **)&cfile->frame_index_back);
-
-	lives_freep((void **)&cfile->op_dir);
 
 	if (cfile->clip_type != CLIP_TYPE_GENERATOR && !mainw->close_keep_frames) {
 	  com = lives_strdup_printf("%s close \"%s\"", prefs->backend_sync, cfile->handle);

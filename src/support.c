@@ -16,11 +16,35 @@
 
 #include "support.h"
 
+#ifndef NO_GTK
+#ifndef lives_locale_to_utf8
+#include <gtk/gtk.h>
+#define lives_locale_to_utf8(a, b, c, d, e) g_locale_to_utf8(a, b, c, d, e)
+#endif
+#ifndef lives_strdup_printf
+#define lives_strdup_printf(fmt, ...) g_strdup_printf(fmt, __VA_ARGS__)
+#endif
+#endif
+
 LIVES_GLOBAL_INLINE char *translate(const char *String) {
   return lives_locale_to_utf8(dgettext(PACKAGE, String), -1, NULL, NULL, NULL);
 }
 
+LIVES_GLOBAL_INLINE char *translate_with_hash(const char *String) {
+  char *tmp = lives_locale_to_utf8(dgettext(PACKAGE, String), -1, NULL, NULL, NULL);
+  char *txt = lives_strdup_printf("#%s", tmp);
+  free(tmp);
+  return txt;
+}
+
 LIVES_GLOBAL_INLINE char *translate_with_plural(const char *String, const char *StringPlural, unsigned long int n) {
   return lives_locale_to_utf8(dngettext(PACKAGE, String, StringPlural, n), -1, NULL, NULL, NULL);
+}
+
+LIVES_GLOBAL_INLINE char *translate_with_plural_hash(const char *String, const char *StringPlural, unsigned long int n) {
+  char *tmp = lives_locale_to_utf8(dngettext(PACKAGE, String, StringPlural, n), -1, NULL, NULL, NULL);
+  char *txt = lives_strdup_printf("#%s", tmp);
+  free(tmp);
+  return txt;
 }
 

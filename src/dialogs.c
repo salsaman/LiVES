@@ -203,9 +203,9 @@ static void extra_cb(LiVESWidget *dialog, int key) {
       lives_standard_button_new_from_stock_full(LIVES_STOCK_REFRESH,
           _("Scan other directory"), DEF_BUTTON_WIDTH,
           DEF_BUTTON_HEIGHT, LIVES_BOX(hbox), TRUE,
-          (tmp = lives_strdup(_("#Scan other directories for "
-                                "LiVES Clip Sets. May be slow "
-                                "for some directories."))));
+          (tmp = lives_strdup(H_("Scan other directories for "
+                                 "LiVES Clip Sets. May be slow "
+                                 "for some directories."))));
     lives_free(tmp);
     entry = lives_standard_direntry_new(NULL, prefs->workdir, MEDIUM_ENTRY_WIDTH, PATH_MAX,
                                         LIVES_BOX(hbox), NULL);
@@ -765,7 +765,6 @@ LIVES_GLOBAL_INLINE LiVESResponseType do_info_dialog_with_expander(const char *t
 LiVESResponseType do_error_dialog_with_check(const char *text, uint64_t warn_mask_number) {
   // show error box
   LiVESWidget *err_box;
-
   LiVESResponseType ret = LIVES_RESPONSE_NONE;
 
   if (prefs != NULL && (prefs->warning_mask & warn_mask_number)) return ret;
@@ -780,41 +779,47 @@ LiVESResponseType do_error_dialog_with_check(const char *text, uint64_t warn_mas
 }
 
 
-char *ds_critical_msg(const char *dir, uint64_t dsval) {
-  char *msg;
-  char *msgx;
-  char *tmp;
+char *ds_critical_msg(const char *dir, char **mountpoint, uint64_t dsval) {
+  char *msg, *msgx, *tmp, *mp, *mpstr;
   char *dscr = lives_format_storage_space_string(prefs->ds_crit_level); ///< crit level
   char *dscu = lives_format_storage_space_string(dsval); ///< current level
+  if (!mountpoint || !*mountpoint) mp = get_mountpoint_for(dir);
+  else mp = *mountpoint;
+  if (mp) mpstr = lives_strdup_printf("(%s) ", mp);
+  else mpstr = lives_strdup("");
   msg = lives_strdup_printf(
-          _("FREE SPACE IN THE PARTITION CONTAINING\n%s\nHAS FALLEN BELOW THE CRITICAL LEVEL OF %s\n"
+          _("FREE SPACE IN THE PARTITION CONTAINING\n%s\n%sHAS FALLEN BELOW THE CRITICAL LEVEL OF %s\n"
             "CURRENT FREE SPACE IS %s\n\n(Disk warning levels can be configured in Preferences / Warnings.)"),
-          (tmp = lives_filename_to_utf8(dir, -1, NULL, NULL, NULL)), dscr, dscu);
+          (tmp = lives_filename_to_utf8(dir, -1, NULL, NULL, NULL)), mpstr, dscr, dscu);
   msgx = insert_newlines(msg, MAX_MSG_WIDTH_CHARS);
-  lives_free(msg);
-  lives_free(tmp);
-  lives_free(dscr);
-  lives_free(dscu);
+  lives_free(msg); lives_free(tmp); lives_free(dscr);
+  lives_free(dscu); lives_free(mpstr);
+  if (mountpoint) {
+    if (!*mountpoint) *mountpoint = mp;
+  } else if (mp) lives_free(mp);
   return msgx;
 }
 
 
-char *ds_warning_msg(const char *dir, uint64_t dsval, uint64_t cwarn, uint64_t nwarn) {
-  char *msg;
-  char *msgx;
-  char *tmp;
+char *ds_warning_msg(const char *dir, char **mountpoint, uint64_t dsval, uint64_t cwarn, uint64_t nwarn) {
+  char *msg, *msgx, *tmp, *mp, *mpstr;
   char *dscw = lives_format_storage_space_string(cwarn); ///< warn level
   char *dscu = lives_format_storage_space_string(dsval); ///< current level
   char *dscn = lives_format_storage_space_string(nwarn); ///< next warn level
+  if (!mountpoint || !*mountpoint) mp = get_mountpoint_for(dir);
+  else mp = *mountpoint;
+  if (mp) mpstr = lives_strdup_printf("(%s) ", mp);
+  else mpstr = lives_strdup("");
   msg = lives_strdup_printf(
           _("Free space in the partition containing\n%s\nhas fallen below the warning level of %s\nCurrent free space is %s\n\n"
             "(Next warning will be shown at %s. Disk warning levels can be configured in Preferences / Warnings.)"),
-          (tmp = lives_filename_to_utf8(dir, -1, NULL, NULL, NULL)), dscw, dscu, dscn);
+          (tmp = lives_filename_to_utf8(dir, -1, NULL, NULL, NULL)), mpstr, dscw, dscu, dscn);
   msgx = insert_newlines(msg, MAX_MSG_WIDTH_CHARS);
-  lives_free(msg);
-  lives_free(dscw);
-  lives_free(dscu);
-  lives_free(dscn);
+  lives_free(msg); lives_free(dscw); lives_free(mpstr);
+  lives_free(dscu); lives_free(dscn);
+  if (mountpoint) {
+    if (!*mountpoint) *mountpoint = mp;
+  } else if (mp) lives_free(mp);
   return msgx;
 }
 
@@ -1032,13 +1037,14 @@ void pump_io_chan(LiVESIOChannel *iochan) {
 
 
 boolean check_storage_space(int clipno, boolean is_processing) {
-  // check storage space in prefs->workdir, and if sfile!=NULL, in sfile->op_dir
-  uint64_t dsval = 0;
+  // check storage space in prefs->workdir
   lives_clip_t *sfile = NULL;
-  int retval;
-  boolean did_pause = FALSE;
+
+  int64_t dsval = 0;
 
   lives_storage_status_t ds;
+  int retval;
+  boolean did_pause = FALSE;
 
   char *msg, *tmp;
   char *pausstr = (_("Processing has been paused."));
@@ -1047,7 +1053,9 @@ boolean check_storage_space(int clipno, boolean is_processing) {
 
   do {
     /// TODO: set dsval with ds used
+    dsval = capable->ds_used;
     ds = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval);
+    capable->ds_free = dsval;
     if (ds == LIVES_STORAGE_STATUS_WARNING) {
       uint64_t curr_ds_warn = mainw->next_ds_warn_level;
       mainw->next_ds_warn_level >>= 1;
@@ -1059,7 +1067,7 @@ boolean check_storage_space(int clipno, boolean is_processing) {
         did_pause = TRUE;
       }
 
-      tmp = ds_warning_msg(prefs->workdir, dsval, curr_ds_warn, mainw->next_ds_warn_level);
+      tmp = ds_warning_msg(prefs->workdir, &capable->mountpoint, dsval, curr_ds_warn, mainw->next_ds_warn_level);
       if (!did_pause)
         msg = lives_strdup_printf("\n%s\n", tmp);
       else
@@ -1083,7 +1091,7 @@ boolean check_storage_space(int clipno, boolean is_processing) {
         on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
         did_pause = TRUE;
       }
-      tmp = ds_critical_msg(prefs->workdir, dsval);
+      tmp = ds_critical_msg(prefs->workdir, &capable->mountpoint, dsval);
       if (!did_pause)
         msg = lives_strdup_printf("\n%s\n", tmp);
       else
@@ -1102,67 +1110,6 @@ boolean check_storage_space(int clipno, boolean is_processing) {
       }
     }
   } while (ds == LIVES_STORAGE_STATUS_CRITICAL);
-
-  if (sfile != NULL && sfile->op_dir != NULL && strcmp(sfile->op_dir, prefs->workdir)) {
-    do {
-      dsval = 0;
-      ds = get_storage_status(sfile->op_dir, sfile->op_ds_warn_level, &dsval);
-      if (ds == LIVES_STORAGE_STATUS_WARNING) {
-        uint64_t curr_ds_warn = sfile->op_ds_warn_level;
-        sfile->op_ds_warn_level >>= 1;
-        if (sfile->op_ds_warn_level > (dsval >> 1)) sfile->op_ds_warn_level = dsval >> 1;
-        if (sfile->op_ds_warn_level < prefs->ds_crit_level) sfile->op_ds_warn_level = prefs->ds_crit_level;
-        if (is_processing && sfile != NULL && mainw->proc_ptr != NULL && !mainw->effects_paused &&
-            lives_widget_is_visible(mainw->proc_ptr->pause_button)) {
-          on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
-          did_pause = TRUE;
-        }
-        tmp = ds_warning_msg(sfile->op_dir, dsval, curr_ds_warn, sfile->op_ds_warn_level);
-        if (!did_pause)
-          msg = lives_strdup_printf("\n%s\n", tmp);
-        else
-          msg = lives_strdup_printf("\n%s\n%s\n", tmp, pausstr);
-        lives_free(tmp);
-        mainw->add_clear_ds_button = TRUE; // gets reset by do_warning_dialog()
-        if (!do_warning_dialog(msg)) {
-          lives_free(msg);
-          lives_free(pausstr);
-          lives_freep((void **)&sfile->op_dir);
-          if (is_processing) {
-            sfile->nokeep = TRUE;
-            on_cancel_keep_button_clicked(NULL, NULL); // press the cancel button
-          }
-          mainw->cancelled = CANCEL_USER;
-          return FALSE;
-        }
-        lives_free(msg);
-      } else if (ds == LIVES_STORAGE_STATUS_CRITICAL) {
-        if (is_processing && sfile != NULL && mainw->proc_ptr != NULL && !mainw->effects_paused &&
-            lives_widget_is_visible(mainw->proc_ptr->pause_button)) {
-          on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
-          did_pause = TRUE;
-        }
-        tmp = ds_critical_msg(sfile->op_dir, dsval);
-        if (!did_pause)
-          msg = lives_strdup_printf("\n%s\n", tmp);
-        else
-          msg = lives_strdup_printf("\n%s\n%s\n", tmp, pausstr);
-        lives_free(tmp);
-        retval = do_abort_cancel_retry_dialog(msg);
-        lives_free(msg);
-        if (retval == LIVES_RESPONSE_CANCEL) {
-          if (is_processing) {
-            sfile->nokeep = TRUE;
-            on_cancel_keep_button_clicked(NULL, NULL); // press the cancel button
-          }
-          mainw->cancelled = CANCEL_ERROR;
-          if (sfile != NULL) lives_free(sfile->op_dir);
-          lives_free(pausstr);
-          return FALSE;
-        }
-      }
-    } while (ds == LIVES_STORAGE_STATUS_CRITICAL);
-  }
 
   if (did_pause && mainw->effects_paused) {
     on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
@@ -2523,7 +2470,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       if ((ret = process_one(visible))) {
         //g_print("pb stopped, reason %d\n", ret);
         lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
-        if (mainw->current_file > -1 && cfile != NULL) lives_freep((void **)&cfile->op_dir);
 #ifdef USE_GDK_FRAME_CLOCK
         if (using_gdk_frame_clock) {
           gdk_frame_clock_end_updating(gclock);
@@ -2560,7 +2506,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       mainw->render_error = (*mainw->progress_fn)(FALSE);
 
       if (mainw->render_error >= LIVES_RENDER_ERROR) {
-        if (mainw->current_file > -1 && cfile != NULL) lives_freep((void **)&cfile->op_dir);
         got_err = TRUE;
         goto finish;
       }
@@ -2648,7 +2593,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       // do a processing pass
       if (process_one(visible)) {
         lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
-        if (mainw->current_file > -1 && cfile != NULL) lives_freep((void **)&cfile->op_dir);
 #ifdef USE_GDK_FRAME_CLOCK
         if (using_gdk_frame_clock) {
           gdk_frame_clock_end_updating(gclock);
@@ -2723,8 +2667,6 @@ finish:
   }
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
-  if (mainw->current_file > -1 && cfile != NULL) lives_freep((void **)&cfile->op_dir);
-
   // get error message (if any)
   if (!strncmp(mainw->msg, "error", 5)) {
     handle_backend_errors(FALSE);
@@ -3719,29 +3661,20 @@ LiVESResponseType do_system_failed_error(const char *com, int retval, const char
   char *retstr = lives_strdup_printf("%d", retval >> 8);
   char *bit2 = (retval > 255) ? lives_strdup("") : lives_strdup_printf("[%s]", lives_strerror(retval));
   char *addbit;
-  char *dsmsg1 = lives_strdup("");
-  char *dsmsg2 = lives_strdup("");
+  char *dsmsg = lives_strdup("");
   char *sudomsg = lives_strdup("");
 
-  uint64_t dsval1 = 0, dsval2 = 0;
+  int64_t dsval = capable->ds_used;
 
-  lives_storage_status_t ds1 = get_storage_status(prefs->workdir, prefs->ds_crit_level, &dsval1), ds2;
+  lives_storage_status_t ds = get_storage_status(prefs->workdir, prefs->ds_crit_level, &dsval);
   LiVESResponseType response = LIVES_RESPONSE_NONE;
 
-  if (mainw->current_file > -1 && cfile != NULL && cfile->op_dir != NULL) {
-    ds2 = get_storage_status(cfile->op_dir, prefs->ds_crit_level, &dsval2);
-    if (ds2 == LIVES_STORAGE_STATUS_CRITICAL) {
-      lives_free(dsmsg2);
-      tmp = ds_critical_msg(cfile->op_dir, dsval2);
-      dsmsg2 = lives_strdup_printf("%s\n", tmp);
-      lives_free(tmp);
-    }
-  }
+  capable->ds_free = dsval;
 
-  if (ds1 == LIVES_STORAGE_STATUS_CRITICAL) {
-    lives_free(dsmsg1);
-    tmp = ds_critical_msg(prefs->workdir, dsval1);
-    dsmsg1 = lives_strdup_printf("%s\n", tmp);
+  if (ds == LIVES_STORAGE_STATUS_CRITICAL) {
+    lives_free(dsmsg);
+    tmp = ds_critical_msg(prefs->workdir, &capable->mountpoint, dsval);
+    dsmsg = lives_strdup_printf("%s\n", tmp);
     lives_free(tmp);
   }
 
@@ -3762,8 +3695,8 @@ LiVESResponseType do_system_failed_error(const char *com, int retval, const char
   }
 
   msg = lives_strdup_printf(_("\nLiVES failed doing the following:\n%s\nPlease check your system for "
-                              "errors.\n%s%s%s%s"),
-                            com, bit, addbit, dsmsg1, dsmsg2, sudomsg);
+                              "errors.\n%s%s%s"),
+                            com, bit, addbit, dsmsg, sudomsg);
 
   emsg = lives_strdup_printf("Command failed doing\n%s\n%s%s", com, bit, addbit);
   LIVES_ERROR(emsg);
@@ -3780,15 +3713,9 @@ LiVESResponseType do_system_failed_error(const char *com, int retval, const char
   } else {
     do_error_dialog(msgx);
   }
-  lives_free(msgx);
-  lives_free(msg);
-  lives_free(sudomsg);
-  lives_free(dsmsg1);
-  lives_free(dsmsg2);
-  lives_free(bit);
-  lives_free(bit2);
-  lives_free(addbit);
-  lives_free(retstr);
+  lives_free(msgx); lives_free(msg); lives_free(sudomsg);
+  lives_free(dsmsg); lives_free(bit); lives_free(bit2);
+  lives_free(addbit); lives_free(retstr);
   return response;
 }
 
@@ -3803,7 +3730,7 @@ void do_write_failed_error_s(const char *s, const char *addinfo) {
 
   boolean exists;
 
-  uint64_t dsval = 0;
+  int64_t dsval = capable->ds_used;
 
   lives_storage_status_t ds;
 
@@ -3811,11 +3738,12 @@ void do_write_failed_error_s(const char *s, const char *addinfo) {
   get_dirname(dirname);
   exists = lives_file_test(dirname, LIVES_FILE_TEST_EXISTS);
   ds = get_storage_status(dirname, prefs->ds_crit_level, &dsval);
+  capable->ds_free = dsval;
   if (!exists) lives_rmdir(dirname, FALSE);
 
   if (ds == LIVES_STORAGE_STATUS_CRITICAL) {
     lives_free(dsmsg);
-    tmp = ds_critical_msg(dirname, dsval);
+    tmp = ds_critical_msg(dirname, &capable->mountpoint, dsval);
     dsmsg = lives_strdup_printf("%s\n", tmp);
     lives_free(tmp);
   }
@@ -3877,7 +3805,7 @@ LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const ch
 
   boolean exists;
 
-  uint64_t dsval = 0;
+  int64_t dsval = capable->ds_used;
 
   lives_storage_status_t ds;
 
@@ -3885,11 +3813,12 @@ LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const ch
   get_dirname(dirname);
   exists = lives_file_test(dirname, LIVES_FILE_TEST_EXISTS);
   ds = get_storage_status(dirname, prefs->ds_crit_level, &dsval);
+  capable->ds_free = dsval;
   if (!exists) lives_rmdir(dirname, FALSE);
 
   if (ds == LIVES_STORAGE_STATUS_CRITICAL) {
     lives_free(dsmsg);
-    tmp = ds_critical_msg(dirname, dsval);
+    tmp = ds_critical_msg(dirname, &capable->mountpoint, dsval);
     dsmsg = lives_strdup_printf("%s\n", tmp);
     lives_free(tmp);
   }

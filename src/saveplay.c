@@ -516,9 +516,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
           lives_free(tmp);
 
-          cfile->op_dir = lives_filename_from_utf8((tmp = get_dir(file_name)), -1, NULL, NULL, NULL);
-          lives_freep((void **)&tmp);
-
           lives_rm(cfile->info_file);
           lives_system(com, FALSE);
           lives_free(com);
@@ -3640,8 +3637,6 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->stored_layout_idx = -1;
   cfile->interlace = LIVES_INTERLACE_NONE;
   cfile->subt = NULL;
-  cfile->op_dir = NULL;
-  cfile->op_ds_warn_level = 0;
   cfile->no_proc_sys_errors = cfile->no_proc_read_errors = cfile->no_proc_write_errors = FALSE;
   cfile->keep_without_preview = FALSE;
   cfile->cb_src = -1;
@@ -4230,9 +4225,6 @@ void backup_file(int clip, int start, int end, const char *file_name) {
     mainw->current_file = current_file;
     return;
   }
-
-  cfile->op_dir = lives_filename_from_utf8((tmp = get_dir(full_file_name)), -1, NULL, NULL, NULL);
-  lives_free(tmp);
 
   if (!(do_progress_dialog(TRUE, TRUE, _("Backing up"))) || mainw->error) {
     if (mainw->error) {
@@ -5816,7 +5808,7 @@ static lives_clip_t *_restore_binfmt(int clipno, boolean forensic) {
             if (forensic) return loaded;
             _RELOAD_STRING(save_file_name, PATH_MAX);  _RELOAD(start); _RELOAD(end); _RELOAD(is_untitled); _RELOAD(was_in_set);
             _RELOAD(ratio_fps); _RELOAD_STRING(mime_type, 256);
-            _RELOAD(changed); _RELOAD(deinterlace); _RELOAD(op_ds_warn_level); _RELOAD(vol);
+            _RELOAD(changed); _RELOAD(deinterlace); _RELOAD(vol);
             if (sfile->start < 1) sfile->start = 1;
             if (sfile->end > sfile->frames) sfile->end = sfile->frames;
             if (sfile->start > sfile->end) sfile->start = sfile->end;

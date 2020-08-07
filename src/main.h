@@ -1001,7 +1001,7 @@ typedef struct {
   wm_caps_t wm_caps;
 
   int64_t ds_used, ds_free, ds_tot;
-  char *mountpoint;
+  char *mountpoint;  ///< utf-8
 } capability;
 
 /// some shared structures

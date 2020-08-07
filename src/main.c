@@ -713,8 +713,13 @@ static boolean pre_init(void) {
         tmp = ds_critical_msg(prefs->workdir, &capable->mountpoint, dsval);
         msg = lives_strdup_printf("\n%s\n", tmp);
         lives_free(tmp);
-        // offer ABORT or change limit
+        widget_opts.use_markup = TRUE;
+#ifndef IS_MINGW
         startup_message_nonfatal(msg);
+#else
+        startup_message_fatal(msg);
+#endif
+        widget_opts.use_markup = FALSE;
         lives_free(msg);
       }
     }
@@ -3203,7 +3208,8 @@ static boolean lazy_startup_checks(void *data) {
     boolean do_show_quota = prefs->show_disk_quota;
     dqshown = TRUE;
     if (lpt) {
-      if (!prefs->disk_quota) {
+      if (!prefs->disk_quota && (mainw->ds_status == LIVES_STORAGE_STATUS_NORMAL
+                                 || mainw->ds_status == LIVES_STORAGE_STATUS_UNKNOWN)) {
         lives_proc_thread_dontcare(lpt);
       } else {
         ticks_t timeout = 1;
@@ -3221,9 +3227,13 @@ static boolean lazy_startup_checks(void *data) {
         }
       }
       /// TODO: pref for config quota warn level (90%) def.
-      if (capable->ds_used > prefs->disk_quota * .9) do_show_quota = TRUE;
     } else if (lpt) lives_proc_thread_dontcare(lpt);
     mainw->helper_procthreads[PT_LAZY_DSUSED] = NULL;
+    if (capable->ds_used > prefs->disk_quota * .9 || (mainw->ds_status != LIVES_STORAGE_STATUS_NORMAL
+        && mainw->ds_status != LIVES_STORAGE_STATUS_UNKNOWN)) {
+
+      do_show_quota = TRUE;
+    }
     if (do_show_quota) {
       run_diskspace_dialog();
       return TRUE;
@@ -3834,9 +3844,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   //werr = weed_init(weed_abi_version, WEED_INIT_DEBUGMODE);
   werr = weed_init(weed_abi_version, 0);
   if (werr != WEED_SUCCESS) {
+    lives_notify(LIVES_OSC_NOTIFY_QUIT, "Failed to init Weed");
     LIVES_FATAL("Failed to init Weed");
-    lives_notify(LIVES_OSC_NOTIFY_QUIT, msg);
-    lives_free(msg);
     _exit(1);
   }
 #ifndef USE_STD_MEMFUNCS
@@ -4062,7 +4071,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         if (!strcmp(charopt, "workdir") || !strcmp(charopt, "tmpdir")) {
           if (!*optarg) {
             do_abortblank_error(charopt);
-            lives_free(msg);
             continue;
           }
           if (optarg[0] == '-') {
@@ -4582,9 +4590,8 @@ void startup_message_fatal(char *msg) {
 
 
 LIVES_GLOBAL_INLINE boolean startup_message_nonfatal(const char *msg) {
-  widget_opts.non_modal = TRUE;
-  do_error_dialog(msg);
-  widget_opts.non_modal = FALSE;
+  if (mainw && mainw->ds_status == LIVES_STORAGE_STATUS_CRITICAL) do_abort_ok_dialog(msg);
+  else do_error_dialog(msg);
   return TRUE;
 }
 

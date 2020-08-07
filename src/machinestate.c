@@ -909,7 +909,7 @@ boolean is_empty_dir(const char *dirname) {
 char *get_mountpoint_for(const char *dir) {
   FILE *mountinfo;
   char **array;
-  char *mp = NULL;
+  char *mp = NULL, *tmp;
   size_t lmatch = 0, slen;
   char buff[65536];
   int j;
@@ -917,14 +917,16 @@ char *get_mountpoint_for(const char *dir) {
   if (!dir) return NULL;
   slen = lives_strlen(dir);
 
-  if (!(mountinfo = fopen(MOUNTINFO, "r"))) return NULL;
+  if (!(mountinfo = fopen(MOUNTINFO, "r"))) return lives_strdup("??????");
   while (lives_fgets(buff, 65536, mountinfo)) {
     array = lives_strsplit(buff, " ", 3);
     for (j = 0; array[1][j] && j < slen; j++) if (array[1][j] != dir[j]) break;
     if (j > lmatch && !array[1][j]) {
       lmatch = j;
       if (mp) lives_free(mp);
-      mp = lives_strdup(array[0]);
+      tmp = lives_strdup(array[0]);
+      mp = lives_filename_to_utf8(tmp, -1, NULL, NULL, NULL);
+      lives_free(tmp);
     }
     lives_strfreev(array);
   }

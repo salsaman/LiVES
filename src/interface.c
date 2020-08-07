@@ -6116,34 +6116,52 @@ void draw_dsu_widget(LiVESWidget * dsu_widget) {
 
 
 static void dsu_set_toplabel(void) {
-  char *ltext = NULL;
+  char *ltext = NULL, *dtxt, *dtxt2;
   widget_opts.font_size = LIVES_FONT_SIZE_LARGE;
 
-  if (prefs->disk_quota && mainw->dsu_valid && !mainw->dsu_scanning) {
-    if (capable->ds_free <= prefs->ds_crit_level) {
+  if (mainw->dsu_valid && !mainw->dsu_scanning) {
+    if (capable->ds_free < prefs->ds_crit_level) {
+      if (!capable->mountpoint) capable->mountpoint = get_mountpoint_for(prefs->workdir);
+      dtxt = lives_format_storage_space_string(prefs->ds_crit_level);
+      dtxt2 = lives_markup_escape_text(capable->mountpoint, -1);
       ltext = lives_strdup_printf(_("<b>ALERT ! FREE SPACE IN %s IS BELOW THE CRITICAL LEVEL OF %s\n"
-                                    "YOU SHOULD EXIT LIVES IMMEDIATELY TO AVOID POSSIBLE DATA LOSS</b>"), dsq->mp,
-                                  prefs->ds_crit_level);
+                                    "YOU SHOULD EXIT LIVES IMMEDIATELY TO AVOID POSSIBLE DATA LOSS</b>"),
+                                  dtxt2, dtxt);
+      lives_free(dtxt); lives_free(dtxt2);
       widget_opts.use_markup = TRUE;
       lives_label_set_text(LIVES_LABEL(dsq->top_label), ltext);
       widget_opts.use_markup = FALSE;
       widget_opts.font_size = LIVES_FONT_SIZE_NORMAL;
-      do_abort_dialog(ltext);
+      if (!dsq->crit_dism) {
+        dsq->crit_dism = TRUE;
+        lives_free(ltext);
+        ltext = ds_critical_msg(prefs->workdir, &capable->mountpoint, capable->ds_free);
+        widget_opts.use_markup = TRUE;
+        do_abort_ok_dialog(ltext);
+        widget_opts.use_markup = FALSE;
+      }
+      lives_free(ltext);
+      return;
     }
-    if (capable->ds_free <= prefs->ds_warn_level) {
+    if (capable->ds_free < prefs->ds_warn_level) {
+      if (!capable->mountpoint) capable->mountpoint = get_mountpoint_for(prefs->workdir);
+      dtxt = lives_format_storage_space_string(prefs->ds_crit_level);
       ltext = lives_strdup_printf(_("WARNING ! Free space in %s is below the warning level of %s\n"
-                                    "Action should be taken to remedy this"), dsq->mp,
-                                  prefs->ds_warn_level);
-    } else if (prefs->disk_quota && capable->ds_used > prefs->disk_quota) {
-      uint64_t xs = capable->ds_used - prefs->disk_quota;
-      char *xstxt = lives_format_storage_space_string(xs);
-      ltext = lives_strdup_printf(_("WARNING ! LiVES has exceeded its quota by %s"), xstxt);
-      lives_free(xstxt);
-    } else if (capable->ds_used >= prefs->disk_quota * .9) {
-      double pcused = (double)capable->ds_used / (double)prefs->disk_quota * 100.;
-      ltext = lives_strdup_printf(_("ATTENTION: LiVES is currently using %.2f%% of its assigned quota"), pcused);
-    } else if (prefs->disk_quota - capable->ds_used + prefs->ds_warn_level > capable->ds_free) {
-      ltext = lives_strdup(_("ATTENTION ! There is unsufficient free space on the disk for LiVES' current quota"));
+                                    "Action should be taken to remedy this"),
+                                  capable->mountpoint, dtxt);
+      lives_free(dtxt);
+    } else if (prefs->disk_quota) {
+      if (capable->ds_used > prefs->disk_quota) {
+        uint64_t xs = capable->ds_used - prefs->disk_quota;
+        dtxt = lives_format_storage_space_string(xs);
+        ltext = lives_strdup_printf(_("WARNING ! LiVES has exceeded its quota by %s"), dtxt);
+        lives_free(dtxt);
+      } else if (capable->ds_used >= prefs->disk_quota * .9) {
+        double pcused = (double)capable->ds_used / (double)prefs->disk_quota * 100.;
+        ltext = lives_strdup_printf(_("ATTENTION: LiVES is currently using %.2f%% of its assigned quota"), pcused);
+      } else if (prefs->disk_quota - capable->ds_used + prefs->ds_warn_level > capable->ds_free) {
+        ltext = lives_strdup(_("ATTENTION ! There is unsufficient free space on the disk for LiVES' current quota"));
+      }
     }
   }
   if (!ltext) {
@@ -6172,6 +6190,7 @@ boolean update_dsu(livespointer data) {
     }
   } else {
     if (mainw->dsu_valid) {
+      set_label = mainw->dsu_scanning = FALSE;
       if (mainw->dsu_widget) {
         int64_t dsfree = capable->ds_used;
         mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsfree);
@@ -6183,8 +6202,12 @@ boolean update_dsu(livespointer data) {
         dsu_set_toplabel();
         dsu_fill_details(NULL, NULL);
         qslider_changed(dsq->slider, dsq);
+        if (capable->ds_free < prefs->ds_warn_level) lives_widget_set_sensitive(dsq->button, FALSE);
+        if (capable->ds_free < prefs->ds_crit_level) {
+          lives_widget_set_no_show_all(dsq->abort_button, FALSE);
+          lives_widget_show(dsq->abort_button);
+        }
       }
-      set_label = mainw->dsu_scanning = FALSE;
       return FALSE;
     } else {
       set_label = FALSE;
@@ -6324,11 +6347,15 @@ static void dsu_fill_details(LiVESWidget * widget, livespointer data) {
   if (dsq->exp_layout) lives_widget_destroy(dsq->exp_layout);
   dsq->exp_layout = NULL;
   if (!lives_expander_get_expanded(LIVES_EXPANDER(dsq->expander))) {
-    lives_expander_set_label(LIVES_EXPANDER(dsq->expander), _("Full _Details"));
+    widget_opts.use_markup = TRUE;
+    lives_expander_set_label(LIVES_EXPANDER(dsq->expander), _("<b>Full _Details</b>"));
+    widget_opts.use_markup = FALSE;
     return;
   }
 
-  lives_expander_set_label(LIVES_EXPANDER(dsq->expander), _("Hide _Details"));
+  widget_opts.use_markup = TRUE;
+  lives_expander_set_label(LIVES_EXPANDER(dsq->expander), _("<b>Hide _Details</b>"));
+  widget_opts.use_markup = FALSE;
 
   dsq->exp_layout = lives_layout_new(LIVES_BOX(dsq->exp_vbox));
   layout2 = dsq->exp_layout;
@@ -6338,7 +6365,8 @@ static void dsu_fill_details(LiVESWidget * widget, livespointer data) {
 
   lives_layout_add_row(LIVES_LAYOUT(layout2));
   lives_layout_add_label(LIVES_LAYOUT(layout2), _("Mount point"), TRUE);
-  lives_layout_add_label(LIVES_LAYOUT(layout2), dsq->mp, TRUE);
+  if (!capable->mountpoint) capable->mountpoint = get_mountpoint_for(prefs->workdir);
+  lives_layout_add_label(LIVES_LAYOUT(layout2), capable->mountpoint, TRUE);
 
   lives_layout_add_row(LIVES_LAYOUT(layout2));
   lives_layout_add_label(LIVES_LAYOUT(layout2), _("Total size"), TRUE);
@@ -6515,6 +6543,10 @@ static void resquota_cb(LiVESWidget * butt, livespointer data) {
   draw_dsu_widget(mainw->dsu_widget);
 }
 
+static void dsu_abort_clicked(LiVESWidget * butt, livespointer data) {
+  if (do_abort_check()) abort();
+}
+
 void run_diskspace_dialog(void) {
   LiVESWidget *dialog, *dialog_vbox;
   LiVESWidget *layout;
@@ -6541,6 +6573,7 @@ void run_diskspace_dialog(void) {
   if (!dsq) dsq = (_dsquotaw *)lives_calloc(1, sizeof(_dsquotaw));
   dsq->setting = FALSE;
   dsq->visible = TRUE;
+  dsq->crit_dism = FALSE;
 
   dsq->exp_layout = NULL;
 
@@ -6577,9 +6610,10 @@ void run_diskspace_dialog(void) {
 
   lives_entry_set_editable(LIVES_ENTRY(entry), FALSE);
 
-  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  //lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
 
-  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  //hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   button = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("Change Directory"),
            DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
@@ -6591,6 +6625,8 @@ void run_diskspace_dialog(void) {
                        LIVES_GUI_CALLBACK(workdir_query_cb),
                        dialog);
 
+  lives_layout_add_row(LIVES_LAYOUT(layout));
+
   widget_opts.font_size = LIVES_FONT_SIZE_LARGE;
   widget_opts.use_markup = TRUE;
   lives_layout_add_label(LIVES_LAYOUT(layout), (_("<b>Disk space used by LiVES:</b>")), TRUE);
@@ -6598,10 +6634,9 @@ void run_diskspace_dialog(void) {
 
   dsq->used_label = lives_layout_add_label(LIVES_LAYOUT(layout), NULL, TRUE);
 
-  lives_freep((void **)&dsq->mp);
-  dsq->mp = get_mountpoint_for(prefs->workdir);
-  if (dsq->mp) {
-    char *txt = lives_strdup_printf(_("in %s"), dsq->mp);
+  if (!capable->mountpoint) capable->mountpoint = get_mountpoint_for(prefs->workdir);
+  if (capable->mountpoint) {
+    char *txt = lives_strdup_printf(_("in %s"), capable->mountpoint);
     lives_layout_add_label(LIVES_LAYOUT(layout), txt, TRUE);
     lives_free(txt);
   }
@@ -6871,6 +6906,16 @@ void run_diskspace_dialog(void) {
                        LIVES_GUI_CALLBACK(toggle_sets_pref), PREF_SHOW_QUOTA);
 
   lives_button_box_make_first(LIVES_BUTTON_BOX(aar), widget_opts.last_container);
+
+  dsq->abort_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_QUIT,
+                      _("Abort"), LIVES_RESPONSE_ABORT);
+
+  lives_button_uncenter(dsq->abort_button, DLG_BUTTON_WIDTH * 2.);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(dsq->abort_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(dsu_abort_clicked),
+                       prefsw ? prefsw->prefs_dialog : NULL);
+  lives_widget_set_no_show_all(dsq->abort_button, TRUE);
 
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK,
              _("Continue with current values"), LIVES_RESPONSE_OK);

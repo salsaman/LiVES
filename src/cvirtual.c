@@ -141,6 +141,7 @@ frames_t load_frame_index(int fileno) {
     retval = 0;
     fd = lives_open_buffered_rdonly(fname);
     if (fd < 0) {
+      THREADVAR(read_failed) = 0;
       retval = do_read_failed_error_s_with_retry(fname, lives_strerror(errno));
       if (!backuptried) {
         fd = lives_open_buffered_rdonly(fname_back);
@@ -179,7 +180,9 @@ frames_t load_frame_index(int fileno) {
 
       for (i = 0; i < sfile->frames; i++) {
         lives_read_le_buffered(fd, &sfile->frame_index[i], sizeof(frames_t), FALSE);
-        if (THREADVAR(read_failed) == fd + 1) break;
+        if (THREADVAR(read_failed) == fd + 1) {
+          break;
+        }
         if (sfile->frame_index[i] > maxframe) {
           maxframe = sfile->frame_index[i];
         }

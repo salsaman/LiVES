@@ -1076,7 +1076,6 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_STOCK_GO_DOWN "go-down"
 #define LIVES_STOCK_STOP "stop"
 #define LIVES_STOCK_SELECT_ALL "edit-select-all"
-#define LIVES_STOCK_REFRESH "view-refresh"
 #define LIVES_STOCK_MEDIA_PLAY "media-playback-start"
 #define LIVES_STOCK_MEDIA_STOP "media-playback-stop"
 #define LIVES_STOCK_MEDIA_REWIND "media-seek-backward"

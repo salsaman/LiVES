@@ -278,7 +278,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
     lives_window_set_title(LIVES_WINDOW(dialog), _("Warning !"));
 
-    lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_orange);
+    if (palette && widget_opts.apply_theme)
+      lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_orange);
 
     widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
 
@@ -292,7 +293,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
   case LIVES_DIALOG_ERROR:
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0,
                                       LIVES_MESSAGE_ERROR, LIVES_BUTTONS_NONE, NULL);
-    if (palette)
+    if (palette && widget_opts.apply_theme)
       lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
 
     lives_window_set_title(LIVES_WINDOW(dialog), _("Error !"));
@@ -311,7 +312,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
     lives_window_set_title(LIVES_WINDOW(dialog), _("Information"));
 
-    lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->light_green);
+    if (palette && widget_opts.apply_theme)
+      lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->light_green);
 
     widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
 
@@ -326,7 +328,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_WARNING,
                                       LIVES_BUTTONS_NONE, NULL);
 
-    lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_orange);
+    if (palette && widget_opts.apply_theme)
+      lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_orange);
 
     if (mainw != NULL && mainw->add_clear_ds_button) {
       mainw->add_clear_ds_button = FALSE;
@@ -335,7 +338,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
     lives_window_set_title(LIVES_WINDOW(dialog), _("Warning !"));
 
-    lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_orange);
+    if (palette && widget_opts.apply_theme)
+      lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_orange);
 
     cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
                    LIVES_RESPONSE_CANCEL);
@@ -350,7 +354,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
     lives_window_set_title(LIVES_WINDOW(dialog), _("Question"));
 
-    lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->light_red);
+    if (palette && widget_opts.apply_theme)
+      lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->light_red);
 
     cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_NO, NULL,
                    LIVES_RESPONSE_NO);
@@ -363,7 +368,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_QUESTION,
                                       LIVES_BUTTONS_NONE, NULL);
     // caller will set title and buttons
-    lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->light_red);
+    if (palette && widget_opts.apply_theme)
+      lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->light_red);
     break;
 
   case LIVES_DIALOG_ABORT_CANCEL_RETRY:
@@ -388,7 +394,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
       okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH,
                  _("_Retry"), LIVES_RESPONSE_RETRY);
     }
-    lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
+    if (palette && widget_opts.apply_theme)
+      lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
     break;
 
   case LIVES_DIALOG_CANCEL_RETRY_BROWSE:
@@ -406,7 +413,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     abortbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_QUIT,
                   _("_Browse"), LIVES_RESPONSE_BROWSE);
 
-    lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
+    if (palette && widget_opts.apply_theme)
+      lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
     break;
 
   default:
@@ -426,21 +434,19 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
   lives_window_set_deletable(LIVES_WINDOW(dialog), FALSE);
   lives_window_set_resizable(LIVES_WINDOW(dialog), FALSE);
 
-  if (mainw && palette) {
-    if (mainw->mgeom)
-      lives_window_set_monitor(LIVES_WINDOW(dialog), widget_opts.monitor);
+  if (mainw && mainw->mgeom)
+    lives_window_set_monitor(LIVES_WINDOW(dialog), widget_opts.monitor);
 
-    if (widget_opts.apply_theme && (palette->style & STYLE_1)) {
-      lives_dialog_set_has_separator(LIVES_DIALOG(dialog), FALSE);
+  if (widget_opts.apply_theme) {
+    lives_dialog_set_has_separator(LIVES_DIALOG(dialog), FALSE);
+    if (palette)
       lives_widget_set_bg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    }
+  }
 
-    if (widget_opts.apply_theme) {
-      /// for unknown reasons, this resets the default button, so we have to set it after
-      funkify_dialog(dialog);
-    } else {
-      lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width * 2);
-    }
+  if (widget_opts.apply_theme) {
+    funkify_dialog(dialog);
+  } else {
+    lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width * 2);
   }
 
   label = lives_standard_formatted_label_new(text);
@@ -450,7 +456,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
   lives_box_pack_start(LIVES_BOX(dialog_vbox), label, TRUE, TRUE, 0);
   lives_label_set_selectable(LIVES_LABEL(label), TRUE);
 
-  if (mainw->permmgr && (mainw->permmgr->cmdlist || mainw->permmgr->futures))
+  if (mainw && mainw->permmgr && (mainw->permmgr->cmdlist || mainw->permmgr->futures))
     add_perminfo(dialog);
 
   if (mainw) {
@@ -510,7 +516,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
   if (!transient) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
   if (cb_key) extra_cb(dialog, cb_key);
 
-  if (mainw->add_trash_rb)
+  if (mainw && mainw->add_trash_rb)
     trash_rb(LIVES_BUTTON_BOX(lives_dialog_get_action_area(LIVES_DIALOG(dialog))));
 
   return dialog;
@@ -780,19 +786,25 @@ LiVESResponseType do_error_dialog_with_check(const char *text, uint64_t warn_mas
 
 
 char *ds_critical_msg(const char *dir, char **mountpoint, uint64_t dsval) {
-  char *msg, *msgx, *tmp, *mp, *mpstr;
+  char *msg, *msgx, *tmp, *tmp2, *mp, *mpstr;
   char *dscr = lives_format_storage_space_string(prefs->ds_crit_level); ///< crit level
   char *dscu = lives_format_storage_space_string(dsval); ///< current level
   if (!mountpoint || !*mountpoint) mp = get_mountpoint_for(dir);
   else mp = *mountpoint;
-  if (mp) mpstr = lives_strdup_printf("(%s) ", mp);
-  else mpstr = lives_strdup("");
+  if (mp) {
+    tmp = lives_markup_escape_text(mp, -1);
+    mpstr = lives_strdup_printf("(%s)\n", tmp);
+    lives_free(tmp);
+  } else mpstr = lives_strdup("");
+  tmp = lives_filename_to_utf8(dir, -1, NULL, NULL, NULL);
+  tmp2 = lives_markup_escape_text(tmp, -1);
+  lives_free(tmp);
   msg = lives_strdup_printf(
-          _("FREE SPACE IN THE PARTITION CONTAINING\n%s\n%sHAS FALLEN BELOW THE CRITICAL LEVEL OF %s\n"
-            "CURRENT FREE SPACE IS %s\n\n(Disk warning levels can be configured in Preferences / Warnings.)"),
-          (tmp = lives_filename_to_utf8(dir, -1, NULL, NULL, NULL)), mpstr, dscr, dscu);
+          _("<b>FREE SPACE IN THE PARTITION CONTAINING\n%s\n%sHAS FALLEN BELOW THE CRITICAL LEVEL OF %s\n"
+            "CURRENT FREE SPACE IS %s\n</b>\n\n(Disk warning levels can be configured in Preferences / Warnings.)"),
+          tmp2, mpstr, dscr, dscu);
   msgx = insert_newlines(msg, MAX_MSG_WIDTH_CHARS);
-  lives_free(msg); lives_free(tmp); lives_free(dscr);
+  lives_free(msg); lives_free(tmp2); lives_free(dscr);
   lives_free(dscu); lives_free(mpstr);
   if (mountpoint) {
     if (!*mountpoint) *mountpoint = mp;
@@ -808,7 +820,7 @@ char *ds_warning_msg(const char *dir, char **mountpoint, uint64_t dsval, uint64_
   char *dscn = lives_format_storage_space_string(nwarn); ///< next warn level
   if (!mountpoint || !*mountpoint) mp = get_mountpoint_for(dir);
   else mp = *mountpoint;
-  if (mp) mpstr = lives_strdup_printf("(%s) ", mp);
+  if (mp) mpstr = lives_strdup_printf("(%s)\n", mp);
   else mpstr = lives_strdup("");
   msg = lives_strdup_printf(
           _("Free space in the partition containing\n%s\nhas fallen below the warning level of %s\nCurrent free space is %s\n\n"
@@ -1094,10 +1106,15 @@ boolean check_storage_space(int clipno, boolean is_processing) {
       tmp = ds_critical_msg(prefs->workdir, &capable->mountpoint, dsval);
       if (!did_pause)
         msg = lives_strdup_printf("\n%s\n", tmp);
-      else
-        msg = lives_strdup_printf("\n%s\n%s\n", tmp, pausstr);
+      else {
+        char *xpausstr = lives_markup_escape_text(pausstr, -1);
+        msg = lives_strdup_printf("\n%s\n%s\n", tmp, xpausstr);
+        lives_free(xpausstr);
+      }
       lives_free(tmp);
+      widget_opts.use_markup = TRUE;
       retval = do_abort_cancel_retry_dialog(msg);
+      widget_opts.use_markup = FALSE;
       lives_free(msg);
       if (retval == LIVES_RESPONSE_CANCEL) {
         if (is_processing) {
@@ -3655,9 +3672,8 @@ LiVESResponseType do_system_failed_error(const char *com, int retval, const char
   // if abort_hook_func() fails with a syserror, we don't show the abort / retry dialog, and we return LIVES_RESPONSE_NONE
   // from the inner call (otherwise we could get stuck in an infinite recursion)
   static boolean norecurse = FALSE;
-
-  char *msg, *tmp, *emsg, *msgx;
-  char *bit;
+  char *xcom, *xaddbit, *xbit, *xsudomsg;
+  char *msg, *tmp, *emsg, *msgx, *bit;
   char *retstr = lives_strdup_printf("%d", retval >> 8);
   char *bit2 = (retval > 255) ? lives_strdup("") : lives_strdup_printf("[%s]", lives_strerror(retval));
   char *addbit;
@@ -3694,10 +3710,16 @@ LiVESResponseType do_system_failed_error(const char *com, int retval, const char
     lives_free(retryop);
   }
 
+  xcom = lives_markup_escape_text(com, -1);
+  xbit = lives_markup_escape_text(bit, -1);
+  xaddbit = lives_markup_escape_text(addbit, -1);
+  xsudomsg = lives_markup_escape_text(sudomsg, -1);
+
   msg = lives_strdup_printf(_("\nLiVES failed doing the following:\n%s\nPlease check your system for "
                               "errors.\n%s%s%s"),
-                            com, bit, addbit, dsmsg, sudomsg);
+                            xcom, xbit, xaddbit, dsmsg, xsudomsg);
 
+  lives_free(xcom); lives_free(xbit); lives_free(xaddbit); lives_free(xsudomsg);
   emsg = lives_strdup_printf("Command failed doing\n%s\n%s%s", com, bit, addbit);
   LIVES_ERROR(emsg);
   lives_free(emsg);
@@ -3707,11 +3729,15 @@ LiVESResponseType do_system_failed_error(const char *com, int retval, const char
     if (!norecurse) {
       /// we must not fail during the abort hook
       norecurse = TRUE;
+      widget_opts.use_markup = TRUE;
       response = do_abort_retry_dialog(msgx);
+      widget_opts.use_markup = FALSE;
       norecurse = FALSE;
     }
   } else {
+    widget_opts.use_markup = TRUE;
     do_error_dialog(msgx);
+    widget_opts.use_markup = FALSE;
   }
   lives_free(msgx); lives_free(msg); lives_free(sudomsg);
   lives_free(dsmsg); lives_free(bit); lives_free(bit2);
@@ -3726,7 +3752,7 @@ void do_write_failed_error_s(const char *s, const char *addinfo) {
   char *dsmsg = lives_strdup("");
 
   char dirname[PATH_MAX];
-  char *sutf = lives_filename_to_utf8(s, -1, NULL, NULL, NULL);
+  char *sutf = lives_filename_to_utf8(s, -1, NULL, NULL, NULL), *xsutf, *xaddbit;
 
   boolean exists;
 
@@ -3751,9 +3777,14 @@ void do_write_failed_error_s(const char *s, const char *addinfo) {
   if (addinfo != NULL) addbit = lives_strdup_printf(_("Additional info: %s\n"), addinfo);
   else addbit = lives_strdup("");
 
+  xsutf = lives_markup_escape_text(sutf, -1);
+  xaddbit = lives_markup_escape_text(addbit, -1);
+
   msg = lives_strdup_printf(_("\nLiVES was unable to write to the file\n%s\n"
                               "Please check for possible error causes.\n%s"),
-                            sutf, addbit, dsmsg);
+                            xsutf, xaddbit, dsmsg);
+  lives_free(xsutf); lives_free(xaddbit);
+
   emsg = lives_strdup_printf("Unable to write to file\n%s\n%s", s, addbit);
 
   lives_free(sutf);
@@ -3761,10 +3792,10 @@ void do_write_failed_error_s(const char *s, const char *addinfo) {
   LIVES_ERROR(emsg);
   lives_free(emsg);
 
+  widget_opts.use_markup = TRUE;
   do_error_dialog(msg);
-  lives_free(addbit);
-  lives_free(dsmsg);
-  lives_free(msg);
+  widget_opts.use_markup = FALSE;
+  lives_free(addbit); lives_free(dsmsg); lives_free(msg);
 }
 
 
@@ -3798,7 +3829,7 @@ LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const ch
 
   LiVESResponseType ret;
   char *msg, *emsg, *tmp;
-  char *sutf = lives_filename_to_utf8(fname, -1, NULL, NULL, NULL);
+  char *sutf = lives_filename_to_utf8(fname, -1, NULL, NULL, NULL), *xsutf;
   char *dsmsg = lives_strdup("");
 
   char dirname[PATH_MAX];
@@ -3823,20 +3854,27 @@ LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const ch
     lives_free(tmp);
   }
 
-  if (errtext == NULL) {
+  xsutf = lives_markup_escape_text(sutf, -1);
+
+  if (errtext) {
     emsg = lives_strdup_printf("Unable to write to file %s", fname);
     msg = lives_strdup_printf(_("\nLiVES was unable to write to the file\n%s\n"
-                                "Please check for possible error causes.\n"), sutf);
+                                "Please check for possible error causes.\n%s"), xsutf, dsmsg);
   } else {
+    char *xerrtext = lives_markup_escape_text(errtext, -1);
     emsg = lives_strdup_printf("Unable to write to file %s, error was %s", fname, errtext);
-    msg = lives_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nThe error was\n%s.\n"),
-                              sutf, errtext);
+    msg = lives_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nThe error was\n%s.\n%s"),
+                              xsutf, xerrtext, dsmsg);
+    lives_free(xerrtext);
   }
 
+  lives_free(xsutf);
   LIVES_ERROR(emsg);
   lives_free(emsg);
 
+  widget_opts.use_markup = TRUE;
   ret = do_abort_cancel_retry_dialog(msg);
+  widget_opts.use_markup = FALSE;
 
   lives_free(dsmsg);
   lives_free(msg);

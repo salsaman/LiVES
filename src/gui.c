@@ -706,6 +706,11 @@ void create_LiVES(void) {
   mainw->sw_sound = lives_standard_check_menu_item_new_with_label(_("Encode/Load/Backup _with Sound"), TRUE);
   lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->sw_sound);
 
+  if (prefs->vj_mode) {
+    lives_widget_set_sensitive(mainw->sw_sound, FALSE);
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->sw_sound), FALSE);
+  }
+
   mainw->aload_subs = lives_standard_check_menu_item_new_with_label(_("Auto load subtitles"), prefs->autoload_subs);
   lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->aload_subs);
 
@@ -823,6 +828,11 @@ void create_LiVES(void) {
 
   mainw->ccpd_sound = lives_standard_check_menu_item_new_with_label(_("Decouple _Video from Audio"), !mainw->ccpd_with_sound);
   lives_container_add(LIVES_CONTAINER(mainw->edit_menu), mainw->ccpd_sound);
+
+  if (prefs->vj_mode) {
+    lives_widget_set_sensitive(mainw->ccpd_sound, FALSE);
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->ccpd_sound), TRUE);
+  }
 
   lives_menu_add_separator(LIVES_MENU(mainw->edit_menu));
 
@@ -1052,7 +1062,8 @@ void create_LiVES(void) {
 
   menuitem = lives_standard_menu_item_new_with_label(_("Effect_s"));
   lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
-  lives_widget_set_tooltip_text(menuitem, (_("Effects are applied to the current selection.")));
+  if (!prefs->vj_mode)
+    lives_widget_set_tooltip_text(menuitem, (_("Effects are applied to the current selection.")));
 
   // the dynamic effects menu
   mainw->effects_menu = lives_menu_new();
@@ -1061,8 +1072,13 @@ void create_LiVES(void) {
   mainw->custom_tools_submenu = lives_standard_menu_item_new_with_label(_("Custom _Tools"));
   lives_widget_set_no_show_all(mainw->custom_tools_submenu, TRUE);
 
-  if (!RFX_LOADED) {
-    mainw->ldg_menuitem = lives_standard_menu_item_new_with_label(_("Loading..."));
+  if (!prefs->vj_mode) {
+    if (!RFX_LOADED) {
+      mainw->ldg_menuitem = lives_standard_menu_item_new_with_label(_("Loading..."));
+      lives_container_add(LIVES_CONTAINER(mainw->effects_menu), mainw->ldg_menuitem);
+    }
+  } else {
+    mainw->ldg_menuitem = lives_standard_menu_item_new_with_label(_("Rendered effects disabled in VJ Mode"));
     lives_container_add(LIVES_CONTAINER(mainw->effects_menu), mainw->ldg_menuitem);
   }
 
@@ -1076,7 +1092,8 @@ void create_LiVES(void) {
 
   menuitem = lives_standard_menu_item_new_with_label(_("_Tools"));
   lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
-  lives_widget_set_tooltip_text(menuitem, (_("Tools are applied to complete clips.")));
+  if (!prefs->vj_mode)
+    lives_widget_set_tooltip_text(menuitem, (_("Tools are applied to complete clips.")));
 
   mainw->tools_menu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mainw->tools_menu);
@@ -1241,6 +1258,7 @@ void create_LiVES(void) {
 
   mainw->delaudio_submenu = lives_standard_menu_item_new_with_label(_("_Delete Audio..."));
   lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->delaudio_submenu);
+  if (prefs->vj_mode) lives_widget_set_sensitive(mainw->delaudio_submenu, FALSE);
 
   delaudio_submenu_menu = lives_menu_new();
 
@@ -1329,6 +1347,8 @@ void create_LiVES(void) {
 
   rfx_submenu = lives_standard_menu_item_new_with_label(_("_RFX Effects/Tools/Utilities"));
   lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), rfx_submenu);
+
+  if (prefs->vj_mode) lives_widget_set_sensitive(rfx_submenu, FALSE);
 
   rfx_menu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(rfx_submenu), rfx_menu);
@@ -1519,7 +1539,8 @@ void create_LiVES(void) {
 
   mainw->toy_tv = lives_standard_check_menu_item_new_with_label(_("_LiVES TV (broadband)"), FALSE);
 
-  lives_container_add(LIVES_CONTAINER(mainw->toys_menu), mainw->toy_tv);
+  if (!prefs->vj_mode)
+    lives_container_add(LIVES_CONTAINER(mainw->toys_menu), mainw->toy_tv);
 
   menuitem = lives_standard_menu_item_new_with_label(_("_Help"));
   lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);
@@ -1529,23 +1550,29 @@ void create_LiVES(void) {
 
   show_manual = lives_standard_menu_item_new_with_label(_("_Manual (opens in browser)"));
   lives_container_add(LIVES_CONTAINER(mainw->help_menu), show_manual);
+  if (prefs->vj_mode) lives_widget_set_sensitive(show_manual, FALSE);
 
   lives_menu_add_separator(LIVES_MENU(mainw->help_menu));
 
   donate = lives_standard_menu_item_new_with_label(_("_Donate to the Project !"));
   lives_container_add(LIVES_CONTAINER(mainw->help_menu), donate);
+  if (prefs->vj_mode) lives_widget_set_sensitive(donate, FALSE);
 
   email_author = lives_standard_menu_item_new_with_label(_("_Email the Author"));
   lives_container_add(LIVES_CONTAINER(mainw->help_menu), email_author);
+  if (prefs->vj_mode) lives_widget_set_sensitive(email_author, FALSE);
 
   report_bug = lives_standard_menu_item_new_with_label(_("Report a _Bug"));
   lives_container_add(LIVES_CONTAINER(mainw->help_menu), report_bug);
+  if (prefs->vj_mode) lives_widget_set_sensitive(report_bug, FALSE);
 
   suggest_feature = lives_standard_menu_item_new_with_label(_("Suggest a _Feature"));
   lives_container_add(LIVES_CONTAINER(mainw->help_menu), suggest_feature);
+  if (prefs->vj_mode) lives_widget_set_sensitive(suggest_feature, FALSE);
 
   help_translate = lives_standard_menu_item_new_with_label(_("Assist with _Translating"));
   lives_container_add(LIVES_CONTAINER(mainw->help_menu), help_translate);
+  if (prefs->vj_mode) lives_widget_set_sensitive(help_translate, FALSE);
 
   lives_menu_add_separator(LIVES_MENU(mainw->help_menu));
 

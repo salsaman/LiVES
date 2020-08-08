@@ -39,7 +39,10 @@ static void select_pref_list_row(uint32_t selected_idx, _prefsw *prefsw);
 
 /** @brief callback to set to make a togglebutton or check_menu_item directly control a boolean pref
     widget is either a togge_button (sets temporary) or a check_menuitem (sets permanent)
-    pref must have a corresponding entry in pref_factory_bool() */
+    pref must have a corresponding entry in pref_factory_bool()
+
+    See also: on_boolean_toggled()
+*/
 void toggle_sets_pref(LiVESWidget *widget, livespointer prefidx) {
   if (LIVES_IS_TOGGLE_BUTTON(widget))
     pref_factory_bool((const char *)prefidx,
@@ -3223,6 +3226,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   prefsw->rb_startup_mt = lives_standard_radio_button_new(_("_Multitrack mode"), &st_interface_group, LIVES_BOX(hbox), NULL);
 
+  if (prefs->vj_mode)
+    show_warn_image(prefsw->rb_startup_mt, _("Disabled in VJ mode"));
+
   if (future_prefs->startup_interface == STARTUP_MT) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rb_startup_mt), TRUE);
   } else {
@@ -4109,6 +4115,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   prefsw->checkbutton_load_rfx = lives_standard_check_button_new(_("Load rendered effects on startup"), prefs->load_rfx_builtin,
                                  LIVES_BOX(hbox), NULL);
 
+  if (prefs->vj_mode)
+    show_warn_image(prefsw->checkbutton_load_rfx, _("Disabled in VJ mode"));
+
   prefsw->checkbutton_antialias = lives_standard_check_button_new(_("Use _antialiasing when resizing"), prefs->antialias,
                                   LIVES_BOX(hbox), NULL);
 
@@ -4269,6 +4278,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                              -1, PATH_MAX, LIVES_BOX(hbox),
                              (tmp2 = _("The default directory for saving encoded clips to")));
   lives_free(tmp2);
+
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   widget_opts.packing_width = wopw;
 
@@ -4342,7 +4352,10 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                        prefsw->workdir_entry);
 
   if (mainw->has_session_workdir) {
-    show_warn_image(prefsw->workdir_entry, _("Value cannot be changed when using a temporary work directory"));
+    show_warn_image(prefsw->workdir_entry, _("Value cannot be changed when workdir\nis set via commandline option"));
+    lives_widget_set_sensitive(dirbutton, FALSE);
+  } else if (prefs->vj_mode) {
+    show_warn_image(prefsw->workdir_entry, _("Changes disabled in VJ mode"));
     lives_widget_set_sensitive(dirbutton, FALSE);
   }
 
@@ -4417,6 +4430,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                                        "falls below this level"))));
   lives_free(tmp); lives_free(tmp2);
 
+  if (prefs->vj_mode)
+    show_warn_image(prefsw->spinbutton_warn_ds, _("Reduced checking in VJ mode"));
+
   lives_layout_add_label(LIVES_LAYOUT(layout), _("MB"), TRUE);
 
   tmp = lives_format_storage_space_string(prefs->ds_warn_level);
@@ -4432,6 +4448,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                                    LIVES_BOX(hbox), (tmp2 = (H_("LiVES will abort if usable disk space\n"
                                        "falls below this level"))));
   lives_free(tmp); lives_free(tmp2);
+
+  if (prefs->vj_mode)
+    show_warn_image(prefsw->spinbutton_crit_ds, _("Reduced checking in VJ mode"));
 
   lives_layout_add_label(LIVES_LAYOUT(layout), _("MB"), TRUE);
 
@@ -4662,6 +4681,11 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   prefsw->cb_show_quota = lives_standard_check_button_new
                           (_("Pop up disk quota settings window on startup"), prefs->show_disk_quota, LIVES_BOX(hbox), NULL);
   ACTIVE(cb_show_quota, TOGGLED);
+  if (mainw->has_session_workdir)
+    show_warn_image(prefsw->cb_show_quota, _("Quota checking is disabled when workdir is set\n"
+                    "via the commandline option"));
+  else if (prefs->vj_mode)
+    show_warn_image(prefsw->cb_show_quota, _("Disabled in VJ mode"));
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_misc), hbox, FALSE, FALSE,
@@ -4670,6 +4694,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   prefsw->cb_show_msgstart = lives_standard_check_button_new
                              (_("Pop up messages window on startup"), prefs->show_msgs_on_startup, LIVES_BOX(hbox), NULL);
   ACTIVE(cb_show_msgstart, TOGGLED);
+  if (prefs->vj_mode)
+    show_warn_image(prefsw->cb_show_msgstart, _("Disabled in VJ mode"));
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_misc), hbox, FALSE, FALSE,
@@ -4680,6 +4706,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                           prefs->autoclean, LIVES_BOX(hbox), H_("Save disk space by "
                               "allowing LiVES to remove\ntemporary preview and backup files"));
   ACTIVE(cb_autoclean, TOGGLED);
+
+  if (prefs->vj_mode)
+    show_warn_image(prefsw->rb_startup_mt, _("Disabled in VJ mode"));
 
   // -----------,
   // Themes     |

@@ -186,7 +186,6 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
           cfile->progress_end = cfile->frames;
 
           lives_rm(cfile->info_file);
-          THREADVAR(com_failed) = FALSE;
           lives_system(com, FALSE);
           lives_free(com);
 
@@ -378,7 +377,6 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
         cfile->undo1_dbl = cfile->fps;
 
         lives_rm(cfile->info_file);
-        THREADVAR(com_failed) = FALSE;
         lives_system(com, FALSE);
         lives_free(com);
 
@@ -1257,7 +1255,6 @@ void on_resaudio_ok_clicked(LiVESButton * button, LiVESEntry * entry) {
                                 cfile->handle, cfile->arps,
                                 cfile->achans, cfile->asampsize, cur_signed, cur_endian, arps, cfile->achans, cfile->asampsize,
                                 cur_signed, cur_endian, audio_stretch);
-      THREADVAR(com_failed) = FALSE;
       lives_system(com, FALSE);
       if (THREADVAR(com_failed)) {
         unbuffer_lmap_errors(FALSE);
@@ -1272,10 +1269,10 @@ void on_resaudio_ok_clicked(LiVESButton * button, LiVESEntry * entry) {
                                 cfile->handle, cfile->arps,
                                 cfile->achans, cfile->asampsize, cur_signed, cur_endian, arps, achans, asampsize,
                                 asigned, aendian);
-      THREADVAR(com_failed) = FALSE;
       mainw->cancelled = CANCEL_NONE;
       mainw->error = FALSE;
       lives_rm(cfile->info_file);
+      THREADVAR(com_failed) = FALSE;
       lives_system(com, FALSE);
       check_backend_return(cfile);
       if (THREADVAR(com_failed)) {
@@ -2206,7 +2203,6 @@ int reorder_frames(int rwidth, int rheight) {
 
   lives_rm(cfile->info_file);
   mainw->error = FALSE;
-  THREADVAR(com_failed) = FALSE;
   lives_system(com, FALSE);
   if (THREADVAR(com_failed)) return -cur_frames;
 
@@ -2275,7 +2271,6 @@ int deorder_frames(int old_frames, boolean leave_bak) {
                             get_image_ext_for_type(cfile->img_type), leave_bak);
 
   lives_rm(cfile->info_file);
-  THREADVAR(com_failed) = FALSE;
   lives_system(com, TRUE);
   if (THREADVAR(com_failed)) return cfile->frames;
 
@@ -2321,7 +2316,6 @@ boolean resample_clipboard(double new_fps) {
     com = lives_strdup_printf("%s redo \"%s\" %d %d \"%s\"", prefs->backend, cfile->handle, 1, new_frames,
                               get_image_ext_for_type(cfile->img_type));
     lives_rm(cfile->info_file);
-    THREADVAR(com_failed) = FALSE;
     lives_system(com, FALSE);
 
     if (THREADVAR(com_failed)) {

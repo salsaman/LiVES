@@ -3046,8 +3046,6 @@ boolean rfxbuilder_to_script(rfx_build_window_t *rfxbuilder) {
     script_name = new_name;
   }
 
-  THREADVAR(com_failed) = FALSE;
-
   script_file_dir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS, NULL);
 
   if (!lives_file_test(script_file_dir, LIVES_FILE_TEST_IS_DIR)) {
@@ -3921,7 +3919,6 @@ void on_export_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   d_print(_("Copying %s to %s..."), rfx_script_from, filename);
 
-  THREADVAR(com_failed) = FALSE;
   lives_cp((tmp = lives_filename_from_utf8(rfx_script_from, -1, NULL, NULL, NULL)),
            (tmp2 = lives_filename_from_utf8(filename, -1, NULL, NULL, NULL)));
 
@@ -3995,7 +3992,6 @@ void on_import_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   d_print(_("Copying %s to %s..."), filename, rfx_script_to);
 
-  THREADVAR(com_failed) = FALSE;
   lives_cp((tmp = lives_filename_from_utf8(filename, -1, NULL, NULL, NULL)),
            (tmp2 = lives_filename_from_utf8(rfx_script_to, -1, NULL, NULL, NULL)));
 

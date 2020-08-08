@@ -649,7 +649,6 @@ void on_live_tvcard_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_widget_destroy(card_dialog);
   lives_free(tvcardw);
 
-  THREADVAR(com_failed) = FALSE;
   lives_system(com, FALSE);
   lives_free(com);
 
@@ -733,7 +732,6 @@ void on_live_fw_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mkfifo(fifofile, S_IRUSR | S_IWUSR);
 
   com = lives_strdup_printf("%s open_fw_card \"%s\" %d %d \"%s\"", prefs->backend, cfile->handle, cardno, cache, fifofile);
-  THREADVAR(com_failed) = FALSE;
   lives_system(com, FALSE);
   lives_free(com);
 

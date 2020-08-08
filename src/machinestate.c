@@ -576,7 +576,6 @@ char *get_md5sum(const char *filename) {
   char **array;
   char *md5;
   char *com = lives_strdup_printf("%s \"%s\"", EXEC_MD5SUM, filename);
-  THREADVAR(com_failed) = FALSE;
   lives_popen(com, TRUE, mainw->msg, MAINW_MSG_SIZE);
   lives_free(com);
   if (THREADVAR(com_failed)) {
@@ -637,25 +636,75 @@ lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, 
 }
 
 
-boolean get_ds_used(int64_t *bytes) {
-  /// returns bytes used for the workdir
-  /// because this may take some time on some OS, a background thread is run and  FALSE is returned along with the last
-  /// read value in bytes
-  /// once a new value is obtained TRUE is returned and bytes will reflect the updated val
-  boolean ret = TRUE;
-  static uint64_t _bytes = 0;
-  static lives_proc_thread_t running = NULL;
-  if (!running) running = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)get_dir_size, WEED_SEED_INT64, "s",
-                            prefs->workdir);
-  if (!lives_proc_thread_check(running)) ret = FALSE;
-  else {
-    _bytes = lives_proc_thread_join_int64(running);
-    running = FALSE;
-  }
-  if (bytes) *bytes = _bytes;
-  capable->ds_used = _bytes;
-  return ret;
+/* boolean get_ds_used(int64_t *bytes) { */
+/*   /// returns bytes used for the workdir */
+/*   /// because this may take some time on some OS, a background thread is run and  FALSE is returned along with the last */
+/*   /// read value in bytes */
+/*   /// once a new value is obtained TRUE is returned and bytes will reflect the updated val */
+/*   boolean ret = TRUE; */
+/*   static uint64_t _bytes = 0; */
+/*   if (!running) running = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)get_dir_size, WEED_SEED_INT64, "s", */
+/*                             prefs->workdir); */
+/*   if (!lives_proc_thread_check(running)) ret = FALSE; */
+/*   else { */
+/*     running = FALSE; */
+/*   } */
+/*   if (bytes) *bytes = _bytes; */
+/*   capable->ds_used = _bytes; */
+/*   return ret; */
+/* } */
+
+
+static lives_proc_thread_t running = NULL;
+
+boolean disk_monitor_running(void) {return (running != NULL);}
+
+lives_proc_thread_t disk_monitor_start(const char *dir) {
+  if (disk_monitor_running()) disk_monitor_forget();
+  running = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)get_dir_size, WEED_SEED_INT64, "s",
+                                     dir);
+  return running;
 }
+
+int64_t disk_monitor_check_result(const char *dir) {
+  int64_t bytes;
+  if (!disk_monitor_running()) disk_monitor_start(dir);
+  if (!lives_proc_thread_check(running)) return -1;
+  bytes = lives_proc_thread_join_int64(running);
+  lives_proc_thread_free(running);
+  running = NULL;
+  return bytes;
+}
+
+
+LIVES_GLOBAL_INLINE int64_t disk_monitor_wait_result(const char *dir, ticks_t timeout) {
+  lives_alarm_t alarm_handle = LIVES_NO_ALARM;
+  int64_t dsval;
+  if (timeout > 0) {
+    alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+    timeout = 1;
+  }
+
+  while ((dsval = disk_monitor_check_result(dir)) < 0
+         && (alarm_handle == LIVES_NO_ALARM || ((timeout = lives_alarm_check(alarm_handle)) > 0))) {
+    lives_nanosleep(1000);
+  }
+  if (alarm_handle != LIVES_NO_ALARM) {
+    lives_alarm_clear(alarm_handle);
+    if (!timeout) {
+      disk_monitor_forget();
+      return -1;
+    }
+  }
+  return dsval;
+}
+
+void disk_monitor_forget(void) {
+  if (!disk_monitor_running()) return;
+  lives_proc_thread_dontcare(running);
+  running = NULL;
+}
+
 
 uint64_t get_ds_free(const char *dir) {
   // get free space in bytes for volume containing directory dir
@@ -803,7 +852,6 @@ boolean compress_files_in_dir(const char *dir, int method, void *data) {
       return FALSE;
     }
     com = lives_strdup_printf("%s * 2>&1", EXEC_GZIP);
-    THREADVAR(com_failed) = FALSE;
     lives_popen(com, TRUE, buff, 65536);
     lives_free(com);
     if (THREADVAR(com_failed)) THREADVAR(com_failed) = FALSE;
@@ -940,7 +988,6 @@ ssize_t get_dir_size(const char *dirname) {
   if (check_for_executable(&capable->has_du, EXEC_DU)) {
     char buff[PATH_MAX * 2];
     char *com = lives_strdup_printf("%s -sb0 \"%s\"", EXEC_DU, dirname);
-    THREADVAR(com_failed) = FALSE;
     lives_popen(com, TRUE, buff, PATH_MAX * 2);
     lives_free(com);
     if (THREADVAR(com_failed)) THREADVAR(com_failed) = FALSE;
@@ -1480,6 +1527,8 @@ LIVES_GLOBAL_INLINE size_t lives_chomp(char *buff) {
 
 typedef weed_plantptr_t lives_proc_thread_t;
 
+LIVES_GLOBAL_INLINE void lives_proc_thread_free(lives_proc_thread_t lpt) {weed_plant_free(lpt);}
+
 static lives_proc_thread_t _lives_proc_thread_create(lives_thread_attr_t attr, lives_funcptr_t func,
     int return_type, const char *args_fmt, va_list xargs) {
   int p = 0;
@@ -1572,10 +1621,12 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
 
 #define FUNCSIG_VOID				       			0X00000000
 #define FUNCSIG_INT 			       				0X00000001
+#define FUNCSIG_DOUBLE 				       			0X00000002
 #define FUNCSIG_STRING 				       			0X00000004
 #define FUNCSIG_VOIDP 				       			0X0000000D
 #define FUNCSIG_INT_INT64 			       			0X00000015
 #define FUNCSIG_STRING_INT 			      			0X00000041
+#define FUNCSIG_STRING_BOOL 			      			0X00000043
 #define FUNCSIG_VOIDP_VOIDP 				       		0X000000DD
 #define FUNCSIG_PLANTP_BOOL 				       		0X000000E3
 #define FUNCSIG_VOIDP_VOIDP_VOIDP 		        		0X00000DDD
@@ -1613,6 +1664,11 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
     default: CALL_VOID_1(int); break;
     }
     break;
+  case FUNCSIG_DOUBLE:
+    switch (ret_type) {
+    default: CALL_VOID_1(double); break;
+    }
+    break;
   case FUNCSIG_STRING:
     switch (ret_type) {
     case WEED_SEED_STRING: CALL_1(string, string); break;
@@ -1634,6 +1690,11 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
   case FUNCSIG_STRING_INT:
     switch (ret_type) {
     default: CALL_VOID_2(string, int); break;
+    }
+    break;
+  case FUNCSIG_STRING_BOOL:
+    switch (ret_type) {
+    default: CALL_VOID_2(string, boolean); break;
     }
     break;
   case FUNCSIG_VOIDP_VOIDP:
@@ -2519,7 +2580,6 @@ char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase,
   mwords = lives_strsplit(mphrase, " ", mwlen);
 
   if (!cmd || !mphrase || !*cmd || !*mphrase) goto grpcln;
-  THREADVAR(com_failed) = FALSE;
   lives_popen(cmd, FALSE, buff, 65536);
   if (THREADVAR(com_failed)
       || (!*buff || !(nlines = get_token_count(buff, '\n')))) {
@@ -2554,7 +2614,6 @@ char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase,
 }
 
 static boolean mini_run(char *cmd) {
-  THREADVAR(com_failed) = FALSE;
   if (!cmd) return FALSE;
   lives_system(cmd, TRUE);
   lives_free(cmd);
@@ -2578,7 +2637,6 @@ LiVESResponseType send_to_trash(const char *item) {
     }
     else {
       char *com = lives_strdup_printf("%s trash \"%s\"", EXEC_GIO, item);
-      THREADVAR(com_failed) = FALSE;
       retval = mini_run(com);
       lives_free(com);
     }
@@ -2601,7 +2659,6 @@ char *get_wid_for_name(const char *wname) {
   return NULL;
 #else
   char *wid = NULL, *cmd;
-  THREADVAR(com_failed) = FALSE;
   if (check_for_executable(&capable->has_wmctrl, EXEC_WMCTRL)) {
     cmd = lives_strdup_printf("%s -l", EXEC_WMCTRL);
     wid = grep_in_cmd(cmd, 3, 4, wname, 0, 1);
@@ -2619,7 +2676,6 @@ char *get_wid_for_name(const char *wname) {
     size_t nlines;
     // returns a list, and we need to check each one
     cmd = lives_strdup_printf("%s search \"%s\"", EXEC_XDOTOOL, wname);
-    THREADVAR(com_failed) = FALSE;
     lives_popen(cmd, FALSE, buff, 65536);
     lives_free(cmd);
     if (THREADVAR(com_failed)
@@ -2632,7 +2688,6 @@ char *get_wid_for_name(const char *wname) {
       for (int l = 0; l < nlines; l++) {
 	if (!*lines[l]) continue;
 	cmd = lives_strdup_printf("%s getwindowname %s", EXEC_XDOTOOL, lines[l]);
-	THREADVAR(com_failed) = FALSE;
 	lives_popen(cmd, FALSE, buff2, 1024);
 	lives_free(cmd);
 	if (THREADVAR(com_failed)) {
@@ -2732,7 +2787,6 @@ boolean get_x11_visible(const char *wname) {
 
     // returns a list, and we need to check each one
     cmd = lives_strdup_printf("%s search --all --onlyvisible \"%s\" 2>/dev/null", EXEC_XDOTOOL, wname);
-    THREADVAR(com_failed) = FALSE;
     lives_popen(cmd, FALSE, buff, 65536);
     lives_free(cmd);
     if (THREADVAR(com_failed)

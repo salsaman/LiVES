@@ -178,7 +178,7 @@ LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog *dialog, bool
 
 boolean do_workdir_query(void) {
   LiVESResponseType response;
-  char *dirname = NULL;
+  char *dirname = NULL, *mp;
   _entryw *wizard = create_rename_dialog(6);
   gtk_window_set_urgency_hint(LIVES_WINDOW(wizard->dialog), TRUE); // dont know if this actually does anything...
 
@@ -191,6 +191,15 @@ boolean do_workdir_query(void) {
     dirname = lives_strdup(lives_entry_get_text(LIVES_ENTRY(wizard->entry)));
   } while (lives_strcmp(dirname, prefs->workdir) &&
            check_workdir_valid(&dirname, LIVES_DIALOG(wizard->dialog), TRUE) == LIVES_RESPONSE_RETRY);
+
+  mp = get_mountpoint_for(dirname);
+  if (lives_strcmp(mp, capable->mountpoint) || !strcmp(mp, "??????")) {
+    capable->ds_free = capable->ds_used = capable->ds_tot = -1;
+    mainw->dsu_valid = FALSE;
+    mainw->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
+    if (capable->mountpoint) lives_free(capable->mountpoint);
+    capable->mountpoint = mp;
+  }
 
   lives_widget_destroy(wizard->dialog);
   lives_freep((void **)&wizard);
@@ -637,10 +646,11 @@ boolean do_startup_tests(boolean tshoot) {
     if (!THREADVAR(write_failed)) {
       afile = lives_build_filename(prefs->workdir, cfile->handle, "testout.wav", NULL);
 
-      THREADVAR(com_failed) = FALSE;
-      com = lives_strdup_printf("%s export_audio \"%s\" 0. 0. 44100 2 16 1 22050 \"%s\"", prefs->backend_sync, cfile->handle, afile);
+      com = lives_strdup_printf("%s export_audio \"%s\" 0. 0. 44100 2 16 1 22050 \"%s\"", prefs->backend_sync,
+                                cfile->handle, afile);
       lives_system(com, TRUE);
       if (THREADVAR(com_failed)) {
+        THREADVAR(com_failed) = FALSE;
         tmp = lives_strdup_printf(_("Command failed: %s"), com);
         fail_test(table, testcase, tmp);
         lives_free(tmp);
@@ -823,9 +833,9 @@ boolean do_startup_tests(boolean tshoot) {
     lives_free(tmp);
     lives_free(rname);
 
-    THREADVAR(com_failed) = FALSE;
     lives_system(com, TRUE);
     if (THREADVAR(com_failed)) {
+      THREADVAR(com_failed) = FALSE;
       tmp = lives_strdup_printf(_("Command failed: %s"), com);
       fail_test(table, testcase, tmp);
       lives_free(tmp);

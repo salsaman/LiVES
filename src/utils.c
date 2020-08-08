@@ -142,6 +142,7 @@ int lives_system(const char *com, boolean allow_error) {
   }
 
   do {
+    THREADVAR(com_failed) = FALSE;
     response = LIVES_RESPONSE_NONE;
     retval = system(com);
     if (retval) {
@@ -215,6 +216,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
   do {
     char *strg = NULL;
     response = LIVES_RESPONSE_NONE;
+    THREADVAR(com_failed) = FALSE;
     fp = popen(com, "r");
     if (!fp) {
       err = errno;
@@ -2168,7 +2170,6 @@ void init_clipboard(void) {
         cfile->clip_type = CLIP_TYPE_DISK;
       }
 
-      THREADVAR(com_failed) = FALSE;
       com = lives_strdup_printf("%s clear_clipboard \"%s\"", prefs->backend, clipboard->handle);
       lives_rm(clipboard->info_file);
       lives_system(com, FALSE);
@@ -2791,7 +2792,6 @@ boolean check_for_lock_file(const char *set_name, int type) {
   clear_mainw_msg();
 
   threaded_dialog_spin(0.);
-  THREADVAR(com_failed) = FALSE;
   lives_popen(com, TRUE, mainw->msg, MAINW_MSG_SIZE);
   threaded_dialog_spin(0.);
   lives_free(com);
@@ -2872,6 +2872,9 @@ boolean is_legal_set_name(const char *set_name, boolean allow_dupes) {
   // -  may not start with a .
   // -  may not contain ..
 
+  // - as of 3.2.0
+  //   - must start with a letter [a - z] or [A - Z]
+
   // should be in FILESYSTEM encoding
 
   // may not be longer than MAX_SET_NAME_LEN chars
@@ -2881,6 +2884,12 @@ boolean is_legal_set_name(const char *set_name, boolean allow_dupes) {
   char *msg;
 
   if (!do_std_checks(set_name, _("Set"), MAX_SET_NAME_LEN, NULL)) return FALSE;
+
+  if ((set_name[0] < 'a' || set_name[0] > 'z') && (set_name[0] < 'A' || set_name[0] > 'Z')) {
+    /// TODO: disallow for saving
+    /// allow only for reloading legacy sets
+
+  }
 
   // check if this is a set in use by another copy of LiVES
   if (mainw != NULL && mainw->is_ready && !check_for_lock_file(set_name, 1)) return FALSE;
@@ -2982,7 +2991,6 @@ int get_frame_count(int idx, int start) {
   char *com = lives_strdup_printf("%s count_frames \"%s\" %s %d", prefs->backend_sync, mainw->files[idx]->handle,
                                   get_image_ext_for_type(mainw->files[idx]->img_type), start);
 
-  THREADVAR(com_failed) = FALSE;
   bytes = lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
   lives_free(com);
 
@@ -3453,7 +3461,6 @@ void remove_layout_files(LiVESList * map) {
 
           char *protect_file = lives_build_filename(prefs->workdir, "noremove", NULL);
 
-          THREADVAR(com_failed) = FALSE;
           // touch a file in tpmdir, so we cannot remove workdir itself
           lives_touch(protect_file);
 
@@ -4088,7 +4095,6 @@ boolean after_foreign_play(void) {
                                     cfile->achans, cfile->asampsize, !(cfile->signed_endian & AFORM_UNSIGNED),
                                     !(cfile->signed_endian & AFORM_BIG_ENDIAN));
           lives_rm(cfile->info_file);
-          THREADVAR(com_failed) = FALSE;
           lives_system(com, FALSE);
 
           cfile->nopreview = TRUE;
@@ -4799,7 +4805,6 @@ LiVESList *cache_file_contents(const char *filename) {
         break;
       }
     }
-    threaded_dialog_spin(0.);
   }
   fclose(hfile);
   if (key) lives_free(key);

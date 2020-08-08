@@ -518,6 +518,8 @@ enum {
 
 #define SET_LOCK_FILENAME "lock"
 
+#define CLIP_ARCHIVE_NAME "__CLIP_ARCHIVE-"
+
 #define LAYOUT_FILENAME "layout"
 #define LAYOUT_MAP_FILENAME LAYOUT_FILENAME "."  LIVES_FILE_EXT_MAP
 #define LAYOUT_NUMBERING_FILENAME LAYOUT_FILENAME "_numbering"
@@ -1540,6 +1542,7 @@ typedef struct {
   int log_fd; ///
 
   /// lives_alarms
+#define LIVES_NO_ALARM 0
 #define LIVES_MAX_ALARMS 1024
 #define LIVES_MAX_USER_ALARMS 512
 

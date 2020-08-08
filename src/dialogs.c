@@ -3575,7 +3575,7 @@ void threaded_dialog_pop(void) {
 }
 
 
-void threaded_dialog_spin(double fraction) {
+static void _threaded_dialog_spin(double fraction) {
   double timesofar;
   int progress;
 
@@ -3609,12 +3609,14 @@ void threaded_dialog_spin(double fraction) {
 }
 
 
-void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
+void threaded_dialog_spin(double fraction) {
+  main_thread_execute((lives_funcptr_t)_threaded_dialog_spin, 0,
+                      NULL, "d", fraction);
+}
+
+static void _do_threaded_dialog(const char *trans_text, boolean has_cancel) {
   // calling this causes a threaded progress dialog to appear
   // until end_threaded_dialog() is called
-  //
-  // WARNING: if trans_text is a translated string, it will be automatically freed by translations inside this function
-
   char *copy_text;
 
   if (!prefs->show_gui) return;
@@ -3637,7 +3639,13 @@ void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
 }
 
 
-void end_threaded_dialog(void) {
+void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
+  main_thread_execute((lives_funcptr_t)_do_threaded_dialog, 0,
+                      NULL, "sb", trans_text, has_cancel);
+}
+
+
+static void _end_threaded_dialog(void) {
   mainw->cancel_type = CANCEL_KILL;
 
   if (mainw->proc_ptr && mainw->proc_ptr->processing) lives_widget_destroy(mainw->proc_ptr->processing);
@@ -3657,6 +3665,10 @@ void end_threaded_dialog(void) {
       gtk_window_set_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->msg_area);
     }
   }
+}
+
+void end_threaded_dialog(void) {
+  main_thread_execute((lives_funcptr_t)_end_threaded_dialog, 0, NULL, "");
 }
 
 

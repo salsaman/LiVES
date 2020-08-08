@@ -163,7 +163,7 @@ void *gtk_thread_wrapper(void *data) {
 
 #ifdef USE_GLIB
 static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, const char *message,  livespointer data) {
-  if (prefs && prefs->vj_mode && !prefs->show_dev_opts) return;
+  if (prefs && prefs->vj_mode) return;
 
   if (level & LIVES_LOG_FATAL_MASK) {
 #ifndef IGNORE_FATAL_ERRORS
@@ -275,9 +275,10 @@ void defer_sigint(int signum) {
   return;
 }
 
-#define QUICK_EXIT
+//#define QUICK_EXIT
 void catch_sigint(int signum) {
   // trap for ctrl-C and others
+  if (prefs->vj_mode) abort();
   if (capable && !pthread_equal(capable->main_thread, pthread_self())) {
     sleep(3600);
     pthread_exit(NULL);
@@ -689,24 +690,23 @@ static boolean pre_init(void) {
   prefs->show_disk_quota = get_boolean_prefd(PREF_SHOW_QUOTA, TRUE);
   prefs->disk_quota = get_int64_prefd(PREF_DISK_QUOTA, 0);
   if (prefs->disk_quota < 0) prefs->disk_quota = 0;
+
+  if (mainw->has_session_workdir) {
+    prefs->show_disk_quota = FALSE;
+    prefs->disk_quota = 0;
+  }
+
   future_prefs->disk_quota = prefs->disk_quota;
 
   if (!prefs->vj_mode) {
     /// start a bg thread to get diskspace used
-    if (prefs->disk_quota && !mainw->has_session_workdir && !needs_workdir) {
-      mainw->helper_procthreads[PT_LAZY_DSUSED] =
-        lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)get_dir_size, WEED_SEED_INT64, "s",
-                                 prefs->workdir);
-    }
+    if (prefs->disk_quota && !needs_workdir)
+      mainw->helper_procthreads[PT_LAZY_DSUSED] = disk_monitor_start(prefs->workdir);
 
     if (mainw->next_ds_warn_level > 0) {
-      int64_t dsval = 0;
-      lives_proc_thread_t lpt = mainw->helper_procthreads[PT_LAZY_DSUSED];
-      if (lpt && lives_proc_thread_check(lpt)) {
-        capable->ds_used = lives_proc_thread_join_int64(lpt);
-        /// free in lazy checks
-      }
-      dsval = capable->ds_used;
+      int64_t dsval = disk_monitor_check_result(prefs->workdir);
+      if (dsval > 0) capable->ds_used = dsval;
+      else dsval = capable->ds_used;
       mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval);
       capable->ds_free = dsval;
       if (mainw->ds_status == LIVES_STORAGE_STATUS_CRITICAL) {
@@ -714,11 +714,7 @@ static boolean pre_init(void) {
         msg = lives_strdup_printf("\n%s\n", tmp);
         lives_free(tmp);
         widget_opts.use_markup = TRUE;
-#ifndef IS_MINGW
         startup_message_nonfatal(msg);
-#else
-        startup_message_fatal(msg);
-#endif
         widget_opts.use_markup = FALSE;
         lives_free(msg);
       }
@@ -2672,50 +2668,52 @@ boolean set_palette_colours(boolean force_reload) {
   /// generate some complementary colours
   // still experimenting...some values may need tweaking
   // suggested uses for each colour in the process of being defined
-  // TODO - runa bg thread until we create GUI
-  if (!(palette->style & STYLE_LIGHT)) {
-    lmin = .05; lmax = .4;
-  } else {
-    lmin = .6; lmax = .8;
-  }
-  ncr = palette->menu_and_bars.red * 255.;
-  ncg = palette->menu_and_bars.green * 255.;
-  ncb = palette->menu_and_bars.blue * 255.;
-  prefs->pb_quality = PB_QUALITY_HIGH;
-  if (pick_nice_colour(palette->normal_back.red * 255., palette->normal_back.green * 255.,
-                       palette->normal_back.blue * 255., &ncr, &ncg, &ncb, 1.5, .25, .75)) {
-    // nice1 - used for outlines
-    palette->nice1.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
-    palette->nice1.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
-    palette->nice1.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
-    palette->nice1.alpha = 1.;
-
+  // TODO - run a bg thread until we create GUI
+  if (!prefs->vj_mode) {
+    if (!(palette->style & STYLE_LIGHT)) {
+      lmin = .05; lmax = .4;
+    } else {
+      lmin = .6; lmax = .8;
+    }
     ncr = palette->menu_and_bars.red * 255.;
     ncg = palette->menu_and_bars.green * 255.;
     ncb = palette->menu_and_bars.blue * 255.;
+    prefs->pb_quality = PB_QUALITY_HIGH;
+    if (pick_nice_colour(palette->normal_back.red * 255., palette->normal_back.green * 255.,
+                         palette->normal_back.blue * 255., &ncr, &ncg, &ncb, 1.5, .25, .75)) {
+      // nice1 - used for outlines
+      palette->nice1.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
+      palette->nice1.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
+      palette->nice1.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
+      palette->nice1.alpha = 1.;
 
-    if (pick_nice_colour(palette->nice1.red * 255., palette->nice1.green * 255.,
-                         palette->nice1.blue * 255., &ncr, &ncg, &ncb, 1., lmin, lmax)) {
-      // nice2 - alt for menu_and_bars
-      // insensitive colour ?
-      palette->nice2.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
-      palette->nice2.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
-      palette->nice2.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
-      palette->nice2.alpha = 1.;
-      mainw->pretty_colours = TRUE;
+      ncr = palette->menu_and_bars.red * 255.;
+      ncg = palette->menu_and_bars.green * 255.;
+      ncb = palette->menu_and_bars.blue * 255.;
 
-      if (!(palette->style & STYLE_LIGHT)) {
-        lmin = .6; lmax = .8;
-      } else {
-        lmin = .2; lmax = .4;
+      if (pick_nice_colour(palette->nice1.red * 255., palette->nice1.green * 255.,
+                           palette->nice1.blue * 255., &ncr, &ncg, &ncb, 1., lmin, lmax)) {
+        // nice2 - alt for menu_and_bars
+        // insensitive colour ?
+        palette->nice2.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
+        palette->nice2.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
+        palette->nice2.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
+        palette->nice2.alpha = 1.;
+        mainw->pretty_colours = TRUE;
+
+        if (!(palette->style & STYLE_LIGHT)) {
+          lmin = .6; lmax = .8;
+        } else {
+          lmin = .2; lmax = .4;
+        }
+        pick_nice_colour(palette->normal_fore.red * 255., palette->normal_fore.green * 255.,
+                         palette->normal_fore.blue * 255., &ncr, &ncg, &ncb, 1., lmin, lmax);
+        // nice3 - alt for menu_and_bars_fore
+        palette->nice3.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
+        palette->nice3.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
+        palette->nice3.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
+        palette->nice3.alpha = 1.;
       }
-      pick_nice_colour(palette->normal_fore.red * 255., palette->normal_fore.green * 255.,
-                       palette->normal_fore.blue * 255., &ncr, &ncg, &ncb, 1., lmin, lmax);
-      // nice3 - alt for menu_and_bars_fore
-      palette->nice3.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
-      palette->nice3.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
-      palette->nice3.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
-      palette->nice3.alpha = 1.;
     }
   }
 #endif
@@ -3063,6 +3061,7 @@ void print_opthelp(void) {
   fprintf(stderr, "%s", _("-version | --version\t\t: print the LiVES version on stderr and exit\n"));
   fprintf(stderr, "%s", _("-workdir <workdir>\t\t: specify the working directory for the session, "
                           "overriding any value set in preferences\n"));
+  fprintf(stderr, "%s", _("\t\t\t\t\t(disables any disk quota checking)"));
   fprintf(stderr, "%s", _("-configdir <configdir>\t\t: override the default configuration directory for the session\n"));
   fprintf(stderr, _("\t\t\t\t\t(default is %s\n"
                     "\t\t\t\t\t with config file %s%s and directory %s%s)\n"),
@@ -3204,35 +3203,33 @@ static boolean lazy_startup_checks(void *data) {
     checked_trash = TRUE;
   }
   if (!dqshown) {
-    lives_proc_thread_t lpt = mainw->helper_procthreads[PT_LAZY_DSUSED];
     boolean do_show_quota = prefs->show_disk_quota;
     dqshown = TRUE;
-    if (lpt) {
-      if (!prefs->disk_quota && (mainw->ds_status == LIVES_STORAGE_STATUS_NORMAL
-                                 || mainw->ds_status == LIVES_STORAGE_STATUS_UNKNOWN)) {
-        lives_proc_thread_dontcare(lpt);
-      } else {
-        ticks_t timeout = 1;
-        lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-        while (!lives_proc_thread_check(lpt)
-               && (timeout = lives_alarm_check(alarm_handle)) <= 0) {
-          lives_nanosleep(1000);
-        }
-        lives_alarm_clear(alarm_handle);
-        if (!timeout) {
-          lives_proc_thread_dontcare(lpt);
+    if (mainw->helper_procthreads[PT_LAZY_DSUSED]) {
+      if (disk_monitor_running()) {
+        int64_t dsval = capable->ds_used = disk_monitor_check_result(prefs->workdir);
+        mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval);
+        capable->ds_free = dsval;
+        if (capable->ds_used < 0)
+          capable->ds_used = disk_monitor_check_result(prefs->workdir);
+        if (!prefs->disk_quota && (mainw->ds_status == LIVES_STORAGE_STATUS_NORMAL
+                                   || mainw->ds_status == LIVES_STORAGE_STATUS_UNKNOWN)) {
+          if (capable->ds_used < 0) disk_monitor_forget();
         } else {
-          capable->ds_used = lives_proc_thread_join_int64(lpt);
-          weed_plant_free(lpt);
+          if (capable->ds_used < 0) {
+            capable->ds_used = disk_monitor_wait_result(prefs->workdir, LIVES_DEFAULT_TIMEOUT);
+          }
         }
       }
-      /// TODO: pref for config quota warn level (90%) def.
-    } else if (lpt) lives_proc_thread_dontcare(lpt);
-    mainw->helper_procthreads[PT_LAZY_DSUSED] = NULL;
-    if (capable->ds_used > prefs->disk_quota * .9 || (mainw->ds_status != LIVES_STORAGE_STATUS_NORMAL
-        && mainw->ds_status != LIVES_STORAGE_STATUS_UNKNOWN)) {
-
-      do_show_quota = TRUE;
+      mainw->helper_procthreads[PT_LAZY_DSUSED] = NULL;
+      if (capable->ds_used > prefs->disk_quota * .9 || (mainw->ds_status != LIVES_STORAGE_STATUS_NORMAL
+          && mainw->ds_status != LIVES_STORAGE_STATUS_UNKNOWN)) {
+        if (capable->ds_used > prefs->disk_quota * .9 && (mainw->ds_status == LIVES_STORAGE_STATUS_NORMAL
+            || mainw->ds_status == LIVES_STORAGE_STATUS_UNKNOWN)) {
+          mainw->ds_status = LIVES_STORAGE_STATUS_OVER_QUOTA;
+        }
+        do_show_quota = TRUE;
+      }
     }
     if (do_show_quota) {
       run_diskspace_dialog();
@@ -4677,20 +4674,25 @@ void sensitize(void) {
 #ifdef LIBAV_TRANSCODE
   lives_widget_set_sensitive(mainw->transcode, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
 #endif
-  lives_widget_set_sensitive(mainw->backup, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
-  lives_widget_set_sensitive(mainw->save_selection, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO &&
-                             capable->has_encoder_plugins);
+  if (!prefs->vj_mode) {
+    lives_widget_set_sensitive(mainw->backup, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
+    lives_widget_set_sensitive(mainw->save_selection, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO &&
+                               capable->has_encoder_plugins);
+  }
   lives_widget_set_sensitive(mainw->clear_ds, TRUE);
   lives_widget_set_sensitive(mainw->load_cdtrack, TRUE);
   lives_widget_set_sensitive(mainw->playsel, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
-  lives_widget_set_sensitive(mainw->copy, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
-  lives_widget_set_sensitive(mainw->cut, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
-  lives_widget_set_sensitive(mainw->rev_clipboard, !(clipboard == NULL));
-  lives_widget_set_sensitive(mainw->playclip, !(clipboard == NULL));
-  lives_widget_set_sensitive(mainw->paste_as_new, !(clipboard == NULL));
-  lives_widget_set_sensitive(mainw->insert, !(clipboard == NULL));
-  lives_widget_set_sensitive(mainw->merge, (clipboard != NULL && !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO));
-  lives_widget_set_sensitive(mainw->xdelete, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+
+  if (!prefs->vj_mode) {
+    lives_widget_set_sensitive(mainw->copy, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+    lives_widget_set_sensitive(mainw->cut, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+    lives_widget_set_sensitive(mainw->rev_clipboard, !(clipboard == NULL));
+    lives_widget_set_sensitive(mainw->playclip, !(clipboard == NULL));
+    lives_widget_set_sensitive(mainw->paste_as_new, !(clipboard == NULL));
+    lives_widget_set_sensitive(mainw->insert, !(clipboard == NULL));
+    lives_widget_set_sensitive(mainw->merge, (clipboard != NULL && !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO));
+    lives_widget_set_sensitive(mainw->xdelete, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+  }
   lives_widget_set_sensitive(mainw->playall, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->m_playbutton, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->m_playselbutton, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
@@ -4711,78 +4713,85 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->show_file_info, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID);
   lives_widget_set_sensitive(mainw->show_file_comments, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID);
   lives_widget_set_sensitive(mainw->full_screen, TRUE);
-  lives_widget_set_sensitive(mainw->mt_menu, TRUE);
+  if (!prefs->vj_mode)
+    lives_widget_set_sensitive(mainw->mt_menu, TRUE);
   lives_widget_set_sensitive(mainw->unicap, TRUE);
   lives_widget_set_sensitive(mainw->firewire, TRUE);
   lives_widget_set_sensitive(mainw->tvdev, TRUE);
 
-  lives_widget_set_sensitive(mainw->export_proj, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID);
-  lives_widget_set_sensitive(mainw->import_proj, TRUE);
+  if (!prefs->vj_mode) {
+    lives_widget_set_sensitive(mainw->export_proj, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID);
+    lives_widget_set_sensitive(mainw->import_proj, TRUE);
+  }
 
   if (is_realtime_aplayer(prefs->audio_player) && prefs->audio_player != AUD_PLAYER_NONE) {
     lives_widget_set_sensitive(mainw->int_audio_checkbutton, TRUE);
     lives_widget_set_sensitive(mainw->ext_audio_checkbutton, TRUE);
   }
 
-  if (RFX_LOADED) {
-    if (!mainw->foreign) {
-      if (mainw->rendered_fx) {
-        for (i = 1; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
-             mainw->num_rendered_effects_test; i++)
-          if (mainw->rendered_fx[i].menuitem != NULL && mainw->rendered_fx[i].min_frames >= 0)
-            lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+  if (!prefs->vj_mode) {
+    if (RFX_LOADED) {
+      if (!mainw->foreign) {
+        if (mainw->rendered_fx) {
+          for (i = 1; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
+               mainw->num_rendered_effects_test; i++)
+            if (mainw->rendered_fx[i].menuitem != NULL && mainw->rendered_fx[i].min_frames >= 0)
+              lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
 
-        if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && ((has_video_filters(FALSE) && !has_video_filters(TRUE)) ||
-            (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT
-             && has_audio_filters(AF_TYPE_ANY)) || mainw->agen_key != 0)) {
-          lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, TRUE);
-        } else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, FALSE);
+          if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && ((has_video_filters(FALSE) && !has_video_filters(TRUE)) ||
+              (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT
+               && has_audio_filters(AF_TYPE_ANY))
+              || mainw->agen_key != 0)) {
+            lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, TRUE);
+          } else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, FALSE);
+        }
+      }
+
+      if (mainw->num_rendered_effects_test > 0) {
+        lives_widget_set_sensitive(mainw->run_test_rfx_submenu, TRUE);
+      }
+
+      if (mainw->has_custom_gens) {
+        lives_widget_set_sensitive(mainw->custom_gens_submenu, TRUE);
+      }
+
+      if (mainw->has_custom_tools) {
+        lives_widget_set_sensitive(mainw->custom_tools_submenu, TRUE);
+      }
+
+      if (mainw->has_custom_effects) {
+        lives_widget_set_sensitive(mainw->custom_effects_submenu, TRUE);
       }
     }
 
-    if (mainw->num_rendered_effects_test > 0) {
-      lives_widget_set_sensitive(mainw->run_test_rfx_submenu, TRUE);
-    }
-
-    if (mainw->has_custom_gens) {
-      lives_widget_set_sensitive(mainw->custom_gens_submenu, TRUE);
-    }
-
-    if (mainw->has_custom_tools) {
-      lives_widget_set_sensitive(mainw->custom_tools_submenu, TRUE);
-    }
-
-    if (mainw->has_custom_effects) {
-      lives_widget_set_sensitive(mainw->custom_effects_submenu, TRUE);
+    if (mainw->resize_menuitem != NULL) {
+      lives_widget_set_sensitive(mainw->resize_menuitem, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
     }
   }
-
-  if (mainw->resize_menuitem != NULL) {
-    lives_widget_set_sensitive(mainw->resize_menuitem, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
-  }
-
   lives_widget_set_sensitive(mainw->record_perf, TRUE);
-  lives_widget_set_sensitive(mainw->export_submenu, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_AUDIO));
-  lives_widget_set_sensitive(mainw->export_selaudio, (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO));
-  lives_widget_set_sensitive(mainw->export_allaudio, CURRENT_CLIP_HAS_AUDIO);
-  lives_widget_set_sensitive(mainw->recaudio_submenu, TRUE);
-  lives_widget_set_sensitive(mainw->recaudio_sel, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
-  lives_widget_set_sensitive(mainw->append_audio, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
-  lives_widget_set_sensitive(mainw->trim_submenu, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
-  lives_widget_set_sensitive(mainw->voladj, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
-  lives_widget_set_sensitive(mainw->fade_aud_in, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
-  lives_widget_set_sensitive(mainw->fade_aud_out, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
-  lives_widget_set_sensitive(mainw->trim_audio, !CURRENT_CLIP_IS_CLIPBOARD
-                             && CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO);
-  lives_widget_set_sensitive(mainw->trim_to_pstart, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_AUDIO &&
-                             cfile->real_pointer_time > 0.));
-  lives_widget_set_sensitive(mainw->delaudio_submenu, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
-  lives_widget_set_sensitive(mainw->delsel_audio, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO
-                             && CURRENT_CLIP_HAS_AUDIO);
-  lives_widget_set_sensitive(mainw->delall_audio, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO
-                             && CURRENT_CLIP_HAS_AUDIO);
-  lives_widget_set_sensitive(mainw->resample_audio, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_AUDIO &&
-                             capable->has_sox_sox));
+  if (!prefs->vj_mode) {
+    lives_widget_set_sensitive(mainw->export_submenu, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_AUDIO));
+    lives_widget_set_sensitive(mainw->export_selaudio, (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO));
+    lives_widget_set_sensitive(mainw->export_allaudio, CURRENT_CLIP_HAS_AUDIO);
+    lives_widget_set_sensitive(mainw->recaudio_submenu, TRUE);
+    lives_widget_set_sensitive(mainw->recaudio_sel, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+    lives_widget_set_sensitive(mainw->append_audio, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
+    lives_widget_set_sensitive(mainw->trim_submenu, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
+    lives_widget_set_sensitive(mainw->voladj, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
+    lives_widget_set_sensitive(mainw->fade_aud_in, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
+    lives_widget_set_sensitive(mainw->fade_aud_out, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
+    lives_widget_set_sensitive(mainw->trim_audio, !CURRENT_CLIP_IS_CLIPBOARD
+                               && CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO);
+    lives_widget_set_sensitive(mainw->trim_to_pstart, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_AUDIO &&
+                               cfile->real_pointer_time > 0.));
+    lives_widget_set_sensitive(mainw->delaudio_submenu, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
+    lives_widget_set_sensitive(mainw->delsel_audio, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO
+                               && CURRENT_CLIP_HAS_AUDIO);
+    lives_widget_set_sensitive(mainw->delall_audio, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO
+                               && CURRENT_CLIP_HAS_AUDIO);
+    lives_widget_set_sensitive(mainw->resample_audio, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_AUDIO &&
+                               capable->has_sox_sox));
+  }
   lives_widget_set_sensitive(mainw->dsize, TRUE);
   lives_widget_set_sensitive(mainw->fade, !(mainw->fs));
   lives_widget_set_sensitive(mainw->mute_audio, TRUE);
@@ -4794,9 +4803,11 @@ void sensitize(void) {
   if (capable->has_cdda2wav && strlen(prefs->cdplay_device)) lives_widget_set_sensitive(mainw->load_cdtrack, TRUE);
   lives_widget_set_sensitive(mainw->rename, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && !cfile->opening);
   lives_widget_set_sensitive(mainw->change_speed, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
-  lives_widget_set_sensitive(mainw->resample_video, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+  if (!prefs->vj_mode)
+    lives_widget_set_sensitive(mainw->resample_video, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
   lives_widget_set_sensitive(mainw->preferences, TRUE);
-  lives_widget_set_sensitive(mainw->ins_silence, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+  if (!prefs->vj_mode)
+    lives_widget_set_sensitive(mainw->ins_silence, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
   lives_widget_set_sensitive(mainw->close, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->select_submenu, !CURRENT_CLIP_IS_CLIPBOARD && !mainw->selwidth_locked &&
                              CURRENT_CLIP_HAS_VIDEO);
@@ -4826,7 +4837,8 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->autolives, TRUE);
   lives_widget_set_sensitive(mainw->toy_random_frames, TRUE);
   //lives_widget_set_sensitive(mainw->open_lives2lives, TRUE);
-  lives_widget_set_sensitive(mainw->gens_submenu, TRUE);
+  if (!prefs->vj_mode)
+    lives_widget_set_sensitive(mainw->gens_submenu, TRUE);
   lives_widget_set_sensitive(mainw->troubleshoot, TRUE);
   lives_widget_set_sensitive(mainw->expl_missing, TRUE);
 
@@ -4870,7 +4882,19 @@ void sensitize(void) {
 	// *INDENT-OFF*
       }}}
   // *INDENT-ON*
-
+  if (prefs->vj_mode) {
+#ifdef LIBAV_TRANSCODE
+    lives_widget_set_sensitive(mainw->transcode, FALSE);
+#endif
+    lives_widget_set_sensitive(mainw->import_theme, FALSE);
+    lives_widget_set_sensitive(mainw->export_theme, FALSE);
+    lives_widget_set_sensitive(mainw->backup, FALSE);
+    lives_widget_set_sensitive(mainw->capture, FALSE);
+    lives_widget_set_sensitive(mainw->save_as, FALSE);
+    lives_widget_set_sensitive(mainw->mt_menu, FALSE);
+    lives_widget_set_sensitive(mainw->gens_submenu, FALSE);
+    lives_widget_set_sensitive(mainw->utilities_submenu, FALSE);
+  }
 }
 
 
@@ -4927,13 +4951,15 @@ void desensitize(void) {
     lives_widget_set_sensitive(mainw->playall, FALSE);
   }
   lives_widget_set_sensitive(mainw->rewind, FALSE);
-  if (RFX_LOADED) {
-    if (!mainw->foreign) {
-      for (i = 0; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
-           mainw->num_rendered_effects_test; i++)
-        if (mainw->rendered_fx[i].menuitem != NULL && mainw->rendered_fx[i].menuitem != NULL &&
-            mainw->rendered_fx[i].min_frames >= 0)
-          lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem, FALSE);
+  if (!prefs->vj_mode) {
+    if (RFX_LOADED) {
+      if (!mainw->foreign) {
+        for (i = 0; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
+             mainw->num_rendered_effects_test; i++)
+          if (mainw->rendered_fx[i].menuitem != NULL && mainw->rendered_fx[i].menuitem != NULL &&
+              mainw->rendered_fx[i].min_frames >= 0)
+            lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem, FALSE);
+      }
     }
   }
 
@@ -4941,9 +4967,11 @@ void desensitize(void) {
     lives_widget_set_sensitive(mainw->resize_menuitem, FALSE);
   }
 
-  if (mainw->num_rendered_effects_test > 0) {
-    lives_widget_set_sensitive(mainw->run_test_rfx_submenu, FALSE);
-  }
+  if (!prefs->vj_mode)
+    if (mainw->num_rendered_effects_test > 0) {
+      lives_widget_set_sensitive(mainw->run_test_rfx_submenu, FALSE);
+    }
+
 
   if (mainw->has_custom_gens) {
     lives_widget_set_sensitive(mainw->custom_gens_submenu, FALSE);
@@ -7856,7 +7884,8 @@ void load_frame_image(int frame) {
 								      IMG_TYPE_JPEG) ? WEED_PALETTE_RGB24 : WEED_PALETTE_RGBA32);
 	    if ((oclip = mainw->old_active_track_list[i]) != (nclip = mainw->active_track_list[i])) {
 	      // now using threading, we want to start pulling all pixel_data for all active layers here
-	      // however, we may have more than one copy of the same clip - in this case we want to create clones of the decoder plugin
+	      // however, we may have more than one copy of the same clip -
+	      // in this case we want to create clones of the decoder plugin
 	      // this is to prevent constant seeking between different frames in the clip
 	      if (oclip > 0) {
 		if (mainw->files[oclip]->clip_type == CLIP_TYPE_FILE) {

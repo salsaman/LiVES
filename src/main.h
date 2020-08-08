@@ -593,7 +593,7 @@ typedef enum {
 #define CLIP_HAS_VIDEO(clip) (IS_VALID_CLIP(clip) ? mainw->files[clip]->frames > 0 : FALSE)
 #define CURRENT_CLIP_HAS_VIDEO CLIP_HAS_VIDEO(mainw->current_file)
 
-#define CLIP_HAS_AUDIO(clip) (IS_VALID_CLIP(clip) ? mainw->files[clip]->achans > 0 && mainw->files[clip]->asampsize > 0 : FALSE)
+#define CLIP_HAS_AUDIO(clip) (IS_VALID_CLIP(clip) ? (mainw->files[clip]->achans > 0 && mainw->files[clip]->asampsize > 0) : FALSE)
 #define CURRENT_CLIP_HAS_AUDIO CLIP_HAS_AUDIO(mainw->current_file)
 
 #define CLIP_VIDEO_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? mainw->files[clip]->video_time : 0.))
@@ -806,6 +806,8 @@ typedef struct _lives_clip_t {
   ////////////////////////////////////////////////////////////////////////////////////////
 
   void *ext_src; ///< points to opaque source for non-disk types
+
+  uint64_t *cache_objects; ///< for future use
 
   lives_proc_thread_t pumper;
   frames_t fx_frame_pump; ///< rfx frame pump for virtual clips (CLIP_TYPE_FILE)
@@ -1062,38 +1064,38 @@ typedef enum {
   CLIP_DETAILS_DECODER_NAME,
   CLIP_DETAILS_GAMMA_TYPE,
   CLIP_DETAILS_MD5SUM, // for future use
-  CLIP_DETAILS_RESERVED1,
-  CLIP_DETAILS_RESERVED2,
-  CLIP_DETAILS_RESERVED3,
-  CLIP_DETAILS_RESERVED4,
-  CLIP_DETAILS_RESERVED5,
-  CLIP_DETAILS_RESERVED6,
-  CLIP_DETAILS_RESERVED7,
-  CLIP_DETAILS_RESERVED8,
-  CLIP_DETAILS_RESERVED9,
-  CLIP_DETAILS_RESERVED10,
-  CLIP_DETAILS_RESERVED11,
-  CLIP_DETAILS_RESERVED12,
-  CLIP_DETAILS_RESERVED13,
-  CLIP_DETAILS_RESERVED14,
-  CLIP_DETAILS_RESERVED15,
-  CLIP_DETAILS_RESERVED16,
-  CLIP_DETAILS_RESERVED17,
-  CLIP_DETAILS_RESERVED18,
-  CLIP_DETAILS_RESERVED19,
-  CLIP_DETAILS_RESERVED20,
-  CLIP_DETAILS_RESERVED21,
-  CLIP_DETAILS_RESERVED22,
-  CLIP_DETAILS_RESERVED23,
-  CLIP_DETAILS_RESERVED24,
-  CLIP_DETAILS_RESERVED25,
-  CLIP_DETAILS_RESERVED26,
-  CLIP_DETAILS_RESERVED27,
-  CLIP_DETAILS_RESERVED28,
-  CLIP_DETAILS_RESERVED29,
+  CLIP_DETAILS_CACHE_OBJECTS, // for future use
   CLIP_DETAILS_RESERVED30,
-  CLIP_DETAILS_RESERVED31,
-  CLIP_DETAILS_RESERVED32
+  CLIP_DETAILS_RESERVED29,
+  CLIP_DETAILS_RESERVED28,
+  CLIP_DETAILS_RESERVED27,
+  CLIP_DETAILS_RESERVED26,
+  CLIP_DETAILS_RESERVED25,
+  CLIP_DETAILS_RESERVED24,
+  CLIP_DETAILS_RESERVED23,
+  CLIP_DETAILS_RESERVED22,
+  CLIP_DETAILS_RESERVED21,
+  CLIP_DETAILS_RESERVED20,
+  CLIP_DETAILS_RESERVED19,
+  CLIP_DETAILS_RESERVED18,
+  CLIP_DETAILS_RESERVED17,
+  CLIP_DETAILS_RESERVED16,
+  CLIP_DETAILS_RESERVED15,
+  CLIP_DETAILS_RESERVED14,
+  CLIP_DETAILS_RESERVED13,
+  CLIP_DETAILS_RESERVED12,
+  CLIP_DETAILS_RESERVED11,
+  CLIP_DETAILS_RESERVED10,
+  CLIP_DETAILS_RESERVED9,
+  CLIP_DETAILS_RESERVED8,
+  CLIP_DETAILS_RESERVED7,
+  CLIP_DETAILS_RESERVED6,
+  CLIP_DETAILS_RESERVED5,
+  CLIP_DETAILS_RESERVED4,
+  CLIP_DETAILS_RESERVED3,
+  CLIP_DETAILS_RESERVED2,
+  CLIP_DETAILS_RESERVED1,
+  CLIP_DETAILS_RESERVED0
 } lives_clip_details_t;
 
 // some useful functions
@@ -1520,7 +1522,6 @@ int lives_open_buffered_rdonly(const char *pathname);
 int lives_open_buffered_writer(const char *pathname, int mode, boolean append);
 int lives_create_buffered(const char *pathname, int mode);
 int lives_close_buffered(int fd);
-void lives_invalidate_all_file_buffers(void);
 off_t lives_lseek_buffered_writer(int fd, off_t offset);
 off_t lives_lseek_buffered_rdonly(int fd, off_t offset);
 off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset);

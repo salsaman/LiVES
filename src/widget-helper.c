@@ -7766,6 +7766,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_add_label(LiVESLayout * la
     lives_layout_pack(LIVES_HBOX(hbox), conter);
     lives_widget_object_unref(conter);
     widget_opts.last_container = hbox;
+    if (widget_opts.apply_theme == 2) set_child_alt_colour(hbox, TRUE);
     return label;
   } else {
     LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
@@ -7779,6 +7780,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_add_label(LiVESLayout * la
     lives_layout_expansion_row_new(layout, conter);
     lives_widget_object_ref(conter);
     widget_opts.last_container = hbox;
+    if (widget_opts.apply_theme == 2) set_child_alt_colour(hbox, TRUE);
     return label;
   }
 }
@@ -7851,7 +7853,8 @@ static LiVESWidget *make_inner_hbox(LiVESBox * box, boolean start) {
   LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
   LiVESWidget *vbox = lives_vbox_new(FALSE, 0);
 
-  lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
+  if (widget_opts.apply_theme == 2) lives_widget_apply_theme2(hbox, LIVES_WIDGET_STATE_NORMAL, TRUE);
+  else lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
   if (LIVES_IS_HBOX(box)) {
     widget_opts.last_container = hbox;
     lives_box_pack_start(LIVES_BOX(box), hbox, LIVES_SHOULD_EXPAND_EXTRA_WIDTH,
@@ -8034,7 +8037,11 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
           if (LIVES_IS_FRAME(toplevel)) topl = lives_bin_get_child(LIVES_BIN(toplevel));
           else topl = toplevel;
 
+
+          /// can be a box !???
           lives_window_add_accel_group(LIVES_WINDOW(topl), accel_group);
+
+
           lingo_layout_get_size(layout, &w_, &h_);
 
           // scale width, height to pixels
@@ -11900,6 +11907,7 @@ LiVESWidget *add_fill_to_box(LiVESBox * box) {
       lives_widget_set_vexpand(widget, TRUE);
     } else lives_box_pack_start(box, widget, FALSE, TRUE, LIVES_SHOULD_EXPAND_FOR(box) ? widget_opts.packing_height : 0);
   }
+  if (widget_opts.apply_theme == 2) set_child_alt_colour(widget, TRUE);
   return widget;
 }
 

@@ -203,6 +203,8 @@ typedef enum {
 #define LIVES_WEED_SUBTYPE_TUNABLE 3
 #define LIVES_WEED_SUBTYPE_PROC_THREAD 4
 
+typedef weed_plantptr_t lives_proc_thread_t;
+
 weed_plant_t *lives_plant_new(int subtype);
 weed_plant_t *lives_plant_new_with_index(int subtype, int64_t index);
 
@@ -281,7 +283,12 @@ char *get_md5sum(const char *filename);
 char *lives_format_storage_space_string(uint64_t space);
 lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, int64_t *dsval);
 uint64_t get_ds_free(const char *dir);
-boolean get_ds_used(int64_t *bytes);
+
+lives_proc_thread_t disk_monitor_start(const char *dir);
+boolean disk_monitor_running(void);
+int64_t disk_monitor_check_result(const char *dir);
+int64_t disk_monitor_wait_result(const char *dir, ticks_t timeout);
+void disk_monitor_forget(void);
 
 #define MOUNTINFO "/proc/mounts"
 
@@ -352,7 +359,6 @@ void reset_effort(void);
 //// threadpool API
 
 typedef void *(*lives_funcptr_t)(void *);
-typedef weed_plantptr_t lives_proc_thread_t;
 
 typedef struct {
   lives_proc_thread_t var_tinfo;
@@ -484,6 +490,8 @@ typedef union {
 
 lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t, lives_funcptr_t, int return_type, const char *args_fmt,
     ...);
+
+void lives_proc_thread_free(lives_proc_thread_t lpt);
 
 /// returns FALSE while the thread is running, TRUE once it has finished
 boolean lives_proc_thread_check(lives_proc_thread_t);

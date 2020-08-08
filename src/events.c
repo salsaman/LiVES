@@ -4300,7 +4300,6 @@ filterinit2:
                                 cfile->undo_end, get_image_ext_for_type(cfile->img_type));
       lives_rm(cfile->info_file);
       mainw->error = FALSE;
-      THREADVAR(com_failed) = FALSE;
       mainw->cancelled = CANCEL_NONE;
 
       lives_system(com, FALSE);
@@ -4624,7 +4623,6 @@ boolean render_to_clip(boolean new_clip) {
     if (prefs->rec_opts & REC_AUDIO) {
       do_threaded_dialog(_("Backing up audio..."), FALSE);
       com = lives_strdup_printf("%s backup_audio \"%s\"", prefs->backend_sync, cfile->handle);
-      THREADVAR(com_failed) = FALSE;
       mainw->error = FALSE;
       mainw->cancelled = CANCEL_NONE;
       lives_rm(cfile->info_file);

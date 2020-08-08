@@ -782,7 +782,6 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
       if (has_new_audio) cfile->achans = cfile->asampsize = cfile->arate = cfile->arps = 0;
       else {
         char *com = lives_strdup_printf("%s undo_audio %s", prefs->backend_sync, cfile->handle);
-        THREADVAR(com_failed) = FALSE;
         lives_rm(cfile->info_file);
         lives_system(com, FALSE);
         lives_free(com);

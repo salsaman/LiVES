@@ -91,7 +91,6 @@ boolean save_frame_index(int fileno) {
         if (sget_file_size(fname) != (size_t)sfile->frames * sizeof(frames_t)) {
           retval = do_write_failed_error_s_with_retry(fname, NULL);
         } else {
-          THREADVAR(com_failed) = FALSE;
           lives_cp(fname, fname_new);
           if (sget_file_size(fname_new) != (size_t)sfile->frames * sizeof(frames_t)) {
             retval = do_write_failed_error_s_with_retry(fname, NULL);
@@ -1010,9 +1009,8 @@ frames_t *frame_index_copy(frames_t *findex, frames_t nframes, frames_t offset) 
   // no checking is done to make sure nframes is in range
 
   // start at frame offset
-  size_t idxsize = (ALIGN_CEIL(nframes * sizeof(frames_t), DEF_ALIGN)) / DEF_ALIGN;
-  frames_t *findexc = (frames_t *)lives_calloc(idxsize, DEF_ALIGN);
-  for (register int i = 0; i < nframes; i++) findexc[i] = findex[i + offset];
+  frames_t *findexc = (frames_t *)lives_calloc(nframes, sizeof(frames_t));;
+  for (int i = 0; i < nframes; i++) findexc[i] = findex[i + offset];
   return findexc;
 }
 
@@ -1058,7 +1056,6 @@ void insert_blank_frames(int sfileno, frames_t nframes, frames_t after, int pale
           tmp = make_image_file_name(sfile, i + nframes, get_image_ext_for_type(sfile->img_type));
           lives_snprintf(nname, PATH_MAX, "%s", tmp);
           lives_free(tmp);
-          THREADVAR(com_failed) = FALSE;
           lives_mv(oname, nname);
           if (THREADVAR(com_failed)) {
             return;

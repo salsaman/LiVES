@@ -21729,7 +21729,6 @@ char *get_eload_filename(lives_mt * mt, boolean allow_auto_reload) {
 
   eload_dir = lives_build_path(prefs->workdir, mainw->set_name, LAYOUTS_DIRNAME, NULL);
 
-  THREADVAR(com_failed) = FALSE;
   lives_mkdir_with_parents(eload_dir, capable->umask);
 
   if (!mainw->recoverable_layout && !lives_file_test(eload_dir, LIVES_FILE_TEST_IS_DIR)) {

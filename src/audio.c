@@ -1858,7 +1858,6 @@ boolean adjust_clip_volume(int fileno, float newvol, boolean make_backup) {
   double dvol = (double)newvol;
   if (make_backup) {
     char *com = lives_strdup_printf("%s backup_audio \"%s\"", prefs->backend_sync, cfile->handle);
-    THREADVAR(com_failed) = FALSE;
     lives_system(com, FALSE);
     lives_free(com);
     if (THREADVAR(com_failed)) {
@@ -3303,7 +3302,6 @@ boolean apply_rte_audio_init(void) {
   char *com;
 
   if (!prefs->conserve_space) {
-    THREADVAR(com_failed) = FALSE;
     com = lives_strdup_printf("%s backup_audio %s", prefs->backend_sync, cfile->handle);
     lives_system(com, FALSE);
     lives_free(com);

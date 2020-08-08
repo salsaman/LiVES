@@ -32,7 +32,6 @@ LiVESList *get_plugin_result(const char *command, const char *delim, boolean all
 
   //threaded_dialog_spin(0.);
 
-  THREADVAR(com_failed) = FALSE;
   lives_popen(command, !mainw->is_ready && !list_plugins, buffer, 65535);
 
   if (THREADVAR(com_failed)) return NULL;
@@ -1453,7 +1452,6 @@ int64_t get_best_audio(_vid_playback_plugin * vpp) {
       if (int_array_contains_value(sfmts, nfmts, fmts[i])) {
 
         com = lives_strdup_printf("\"%s\" check %d", astreamer, fmts[i]);
-        THREADVAR(com_failed) = FALSE;
         lives_popen(com, FALSE, buf, 1024);
         lives_free(com);
 
@@ -2157,7 +2155,7 @@ lives_decoder_t *clone_decoder(int fileno) {
   const lives_decoder_sys_t *dpsys;
   lives_clip_data_t *cdata;
 
-  if (mainw->files[fileno] == NULL || mainw->files[fileno]->ext_src == NULL) return NULL;
+  if (!mainw->files[fileno] || !mainw->files[fileno]->ext_src) return NULL;
 
   cdata = ((lives_decoder_sys_t *)((lives_decoder_t *)mainw->files[fileno]->ext_src)->decoder)->get_clip_data
           (NULL, ((lives_decoder_t *)mainw->files[fileno]->ext_src)->cdata);
@@ -2165,7 +2163,6 @@ lives_decoder_t *clone_decoder(int fileno) {
   if (cdata == NULL) return NULL;
 
   dplug = (lives_decoder_t *)lives_malloc(sizeof(lives_decoder_t));
-
   dpsys = ((lives_decoder_t *)mainw->files[fileno]->ext_src)->decoder;
 
   dplug->decoder = dpsys;
@@ -3741,7 +3738,6 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox * vbox, lives_rf
 
     fnamex = lives_build_filename(prefs->workdir, rfx_scrapname, NULL);
     com = lives_strdup_printf("\"%s\" get_define", fnamex);
-    THREADVAR(com_failed) = FALSE;
 
     if (!lives_popen(com, TRUE, buff, 32)) {
       THREADVAR(com_failed) = TRUE;

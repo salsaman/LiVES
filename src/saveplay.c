@@ -204,7 +204,8 @@ boolean read_file_details(const char *file_name, boolean is_audio, boolean is_im
 
   char *tmp, *com = lives_strdup_printf("%s get_details \"%s\" \"%s\" \"%s\" %d", prefs->backend_sync, cfile->handle,
                                         (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)),
-                                        get_image_ext_for_type(IMG_TYPE_BEST), mainw->opening_loc ? 3 : is_audio ? 2 : is_img ? 4 : 0);
+                                        get_image_ext_for_type(IMG_TYPE_BEST), mainw->opening_loc ? 3 :
+                                        is_audio ? 2 : is_img ? 4 : 0);
   lives_free(tmp);
   lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
   lives_free(com);
@@ -427,7 +428,8 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
         do {
           response = LIVES_RESPONSE_OK;
-          create_frame_index(mainw->current_file, TRUE, cfile->fps * (start == 0 ? 0 : start - 1), frames == 0 ? cfile->frames : frames);
+          create_frame_index(mainw->current_file, TRUE, cfile->fps * (start == 0 ? 0 : start - 1),
+                             frames == 0 ? cfile->frames : frames);
           if (cfile->frame_index == NULL) {
             response = do_memory_error_dialog(what, (frames == 0 ? cfile->frames : frames) * 4);
           }
@@ -495,14 +497,12 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
         if (cfile->achans == 0 && probed_achans > 0 && withsound == 1) {
           // plugin returned no audio, try with mplayer / mpv
-          THREADVAR(com_failed) = FALSE;
-
           if (probed_achans > MAX_ACHANS) {
             probed_achans = MAX_ACHANS;
             d_print(_("Forcing audio channels to %d\n"), MAX_ACHANS);
           }
 
-          if (mainw->file_open_params == NULL) {
+          if (!mainw->file_open_params) {
 #if 1
             mainw->file_open_params = lives_strdup("alang eng");
 #else
@@ -649,7 +649,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       }
     }
 
-    if (cfile->ext_src != NULL) {
+    if (cfile->ext_src) {
       if (mainw->open_deint) {
         // override what the plugin says
         cfile->deinterlace = TRUE;
@@ -682,6 +682,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
           }
           lives_free(warn);
           d_print(_(" - please be patient."));
+
         }
         d_print("\n");
 #if defined DEBUG
@@ -880,7 +881,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         }
       }
       if (subtype != SUBTITLE_TYPE_NONE) {
-        THREADVAR(com_failed) = FALSE;
         lives_cp(isubfname, subfname);
         if (!THREADVAR(com_failed))
           subtitles_init(cfile, subfname, subtype);
@@ -1031,8 +1031,6 @@ img_load:
 
       mainw->cancelled = CANCEL_NONE;
       mainw->error = FALSE;
-      THREADVAR(com_failed) = FALSE;
-
       lives_system(com, FALSE);
       lives_free(com);
 
@@ -1145,7 +1143,7 @@ boolean get_handle_from_info_file(int index) {
     return FALSE;
   }
 
-  if (mainw->files[index] == NULL) {
+  if (!mainw->files[index]) {
     mainw->files[index] = (lives_clip_t *)(lives_calloc(1, sizeof(lives_clip_t)));
     mainw->files[index]->clip_type = CLIP_TYPE_DISK; // the default
   }
@@ -1504,10 +1502,10 @@ void save_file(int clip, int start, int end, const char *filename) {
 
     com = lives_strdup_printf("%s link_frames \"%s\" %d %d %.8f %.8f %d %d %d %d %d \"%s\"", prefs->backend, nfile->handle,
                               start, end, aud_start, aud_end, nfile->arate, nfile->achans, nfile->asampsize,
-                              !(nfile->signed_endian & AFORM_UNSIGNED), !(nfile->signed_endian & AFORM_BIG_ENDIAN), sfile->handle);
+                              !(nfile->signed_endian & AFORM_UNSIGNED), !(nfile->signed_endian & AFORM_BIG_ENDIAN),
+                              sfile->handle);
 
     lives_rm(nfile->info_file);
-    THREADVAR(com_failed) = FALSE;
     lives_system(com, FALSE);
     lives_free(com);
 
@@ -1616,7 +1614,6 @@ void save_file(int clip, int start, int end, const char *filename) {
                               !(sfile->signed_endian & AFORM_UNSIGNED), !(sfile->signed_endian & AFORM_BIG_ENDIAN));
 
     lives_rm(sfile->info_file);
-    THREADVAR(com_failed) = FALSE;
     lives_system(com, FALSE);
     lives_free(com);
 
@@ -1800,8 +1797,6 @@ void save_file(int clip, int start, int end, const char *filename) {
   lives_rm(cfile->info_file);
   THREADVAR(write_failed) = FALSE;
   save_file_comments(current_file);
-
-  THREADVAR(com_failed) = FALSE;
 
   if (debug_mode) {
     fprintf(stderr, "Running command: %s\n", com);
@@ -3399,7 +3394,7 @@ void play_file(void) {
    (c.f. close_current_file())
    returns new_clip */
 int close_temp_handle(int new_clip) {
-  char *com;
+  char *com, *permitname;
   int clipno = mainw->current_file;
 
   if (!IS_VALID_CLIP(new_clip)) new_clip = -1;
@@ -3411,6 +3406,11 @@ int close_temp_handle(int new_clip) {
       && mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file) {
     close_current_file(new_clip);
   }
+
+  // as a safety feature we create a special file which allows the back end to delete the directory
+  permitname = lives_build_filename(prefs->workdir, cfile->handle, TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
+  lives_touch(permitname);
+  lives_free(permitname);
 
   com = lives_strdup_printf("%s close \"%s\"", prefs->backend, cfile->handle);
   lives_system(com, TRUE);
@@ -4216,7 +4216,6 @@ void backup_file(int clip, int start, int end, const char *file_name) {
 
   lives_rm(cfile->info_file);
   cfile->nopreview = TRUE;
-  THREADVAR(com_failed) = FALSE;
   lives_system(com, FALSE);
   lives_free(com);
 
@@ -4862,11 +4861,8 @@ ulong restore_file(const char *file_name) {
   com = lives_strdup_printf("%s restore %s %s", prefs->backend, cfile->handle,
                             (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)));
 
-  THREADVAR(com_failed) = FALSE;
   lives_rm(cfile->info_file);
-
   lives_system(com, FALSE);
-
   lives_free(tmp);
   lives_free(com);
 
@@ -5281,7 +5277,7 @@ boolean check_for_disk_space(boolean fullcheck) {
   if (prefs->disk_quota > 0) {
     int64_t xds_used = -1;
 
-    if (get_ds_used(&ds_used)) {
+    if ((ds_used = disk_monitor_check_result(prefs->workdir)) > -1) {
       xds_used = ds_used;
       xxscrap_mb = scrap_mb;
       xxascrap_mb = ascrap_mb;
@@ -6313,7 +6309,6 @@ recovery_done:
 
 
 void add_to_recovery_file(const char *handle) {
-  THREADVAR(com_failed) = FALSE;
   lives_echo(handle, mainw->recovery_file, TRUE);
 
   if (THREADVAR(com_failed)) {
@@ -6393,7 +6388,6 @@ boolean rewrite_recovery_file(void) {
     close(recovery_fd);
     retval = LIVES_RESPONSE_INVALID;
     do {
-      THREADVAR(com_failed) = FALSE;
       lives_mv(temp_recovery_file, mainw->recovery_file);
       if (THREADVAR(com_failed)) {
         retval = do_write_failed_error_s_with_retry(temp_recovery_file, NULL);
@@ -6428,7 +6422,6 @@ boolean check_for_recovery_files(boolean auto_recover) {
   com = lives_strdup_printf("%s get_recovery_file %d %d %s recovery %d", prefs->backend_sync, luid, lgid,
                             capable->myname, capable->mainpid);
 
-  THREADVAR(com_failed) = FALSE;
   lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
   lives_free(com);
 

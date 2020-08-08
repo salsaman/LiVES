@@ -2129,7 +2129,7 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
 				LIVES_PACK_START);
 
     lives_widget_set_sensitive(cb, FALSE);
-    set_child_alt_colour(hbox, FALSE);
+    //set_child_alt_colour(hbox, FALSE);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "cb", (livespointer)cb);
 
     if (!type) {
@@ -6179,10 +6179,8 @@ boolean update_dsu(livespointer data) {
   static boolean set_label = FALSE;
   int64_t dsu;
   char *txt;
-
-  if (!dsq || !dsq->visible) return FALSE;
-
-  if (!get_ds_used(&dsu)) {
+  if ((dsu = disk_monitor_check_result(prefs->workdir)) < 0) {
+    if (!dsq || !dsq->visible) return FALSE;
     if (!set_label) {
       set_label = TRUE;
       lives_label_set_text(LIVES_LABEL(dsq->used_label), (txt = dsu_label_calculating()));
@@ -6190,11 +6188,11 @@ boolean update_dsu(livespointer data) {
     }
   } else {
     if (mainw->dsu_valid) {
-      set_label = mainw->dsu_scanning = FALSE;
+      int64_t dsfree = capable->ds_used;
+      mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsfree);
+      capable->ds_free = dsfree;
+      mainw->dsu_scanning = FALSE;
       if (mainw->dsu_widget) {
-        int64_t dsfree = capable->ds_used;
-        mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsfree);
-        capable->ds_free = dsfree;
         txt = lives_format_storage_space_string(dsu);
         lives_label_set_text(LIVES_LABEL(dsq->used_label), txt);
         lives_free(txt);
@@ -6202,16 +6200,16 @@ boolean update_dsu(livespointer data) {
         dsu_set_toplabel();
         dsu_fill_details(NULL, NULL);
         qslider_changed(dsq->slider, dsq);
-        if (capable->ds_free < prefs->ds_warn_level) lives_widget_set_sensitive(dsq->button, FALSE);
+        if (capable->ds_free < prefs->ds_warn_level || mainw->has_session_workdir)
+          lives_widget_set_sensitive(dsq->button, FALSE);
         if (capable->ds_free < prefs->ds_crit_level) {
           lives_widget_set_no_show_all(dsq->abort_button, FALSE);
           lives_widget_show(dsq->abort_button);
         }
       }
-      return FALSE;
-    } else {
       set_label = FALSE;
       mainw->dsu_valid = TRUE;
+      return FALSE;
     }
   }
   return TRUE;
@@ -6568,7 +6566,7 @@ void run_diskspace_dialog(void) {
   /// kick off a bg process to get free ds and ds used
   mainw->dsu_scanning = mainw->dsu_valid = TRUE;
 
-  get_ds_used(&capable->ds_used);
+  disk_monitor_start(prefs->workdir);
 
   if (!dsq) dsq = (_dsquotaw *)lives_calloc(1, sizeof(_dsquotaw));
   dsq->setting = FALSE;
@@ -6740,9 +6738,13 @@ void run_diskspace_dialog(void) {
   widget_opts.filler_len = wofl;
 
   widget_opts.use_markup = TRUE;
-  dsq->note_label = lives_layout_add_label(LIVES_LAYOUT(layout), (_("Note: LiVES cannot <b>guarantee"
-                    "</b> not to exceed its quota\n"
-                    "but it can warn you if this is detected.")), TRUE);
+  if (!mainw->has_session_workdir)
+    dsq->note_label = lives_layout_add_label(LIVES_LAYOUT(layout), (_("Note: LiVES cannot <b>guarantee"
+                      "</b> not to exceed its quota\n"
+                      "but it can warn you if this is detected.")), TRUE);
+  else
+    dsq->note_label = lives_layout_add_label(LIVES_LAYOUT(layout), (_("<b>Quota checking is disabled when workidr\n"
+                      "is set via commandline option.</b>")), TRUE);
 
   widget_opts.use_markup = FALSE;
   hbox = widget_opts.last_container;

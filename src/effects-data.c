@@ -688,13 +688,15 @@ static weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, 
 
           // out param is "ACTIVATED"
           if (pconx->params[i] == FX_DATA_PARAM_ACTIVE) {
+            weed_plant_t *gui = weed_instance_get_gui(inst, FALSE);
             pthread_mutex_lock(&mainw->fxd_active_mutex);
-            if (active_dummy == NULL) {
+            if (!active_dummy) {
               active_dummy = weed_plant_new(WEED_PLANT_PARAMETER);
               weed_set_plantptr_value(active_dummy, WEED_LEAF_TEMPLATE, NULL);
             }
+
             weed_set_boolean_value(active_dummy, WEED_LEAF_VALUE, inst != NULL
-                                   && !weed_plant_has_leaf(inst, WEED_LEAF_HOST_EASE_OUT));
+                                   && (!gui || !weed_plant_has_leaf(gui, WEED_LEAF_EASE_OUT)));
             param = active_dummy;
             pthread_mutex_unlock(&mainw->fxd_active_mutex);
           } else {

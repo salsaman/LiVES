@@ -64,7 +64,6 @@ typedef struct {
 #define MAX_SWS_BLOCKS 8192
 #define MAX_SWS_CTX 65536
 
-short pbq;
 static volatile int nb = 0;
 static volatile int swctx_count = 0;
 static swsctx_block bloxx[MAX_SWS_BLOCKS];
@@ -73,15 +72,18 @@ static pthread_mutex_t ctxcnt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, swpixfmt ipixfmt, int width, int height,
                                   int *orow, swpixfmt opixfmt, int flags, int subspace, int iclamping, int oclamp_hint) {
-  swsctx_block *block, *bestblock = NULL, *goodblock = NULL, *anyblock = NULL;
-  int minnum = MAX_THREADS + 1, num;
-  register int i;
+  swsctx_block *block, *bestblock;
+  int max = MAX_THREADS + 1, minbnum = max, mingnum = minbnum, minanum = mingnum, num;
+  int i = -1, lastblock = THREADVAR(last_sws_block), j = 0, bestidx = -1;
+
+  if (lastblock >= 0) j = lastblock;
+  else i = 0;
 
   pthread_mutex_lock(&ctxcnt_mutex);
 
-  for (i = 0; i < nb; i++) {
-    block = &bloxx[i];
-    if (!block->in_use && (num = block->num) >= nreq && num < minnum) {
+  for (; i < nb; j = ++i) {
+    block = &bloxx[j];
+    if (!block->in_use && (num = block->num) >= nreq) {
       if (iwidth == block->iwidth
           && iheight == block->iheight
           && ipixfmt == block->ipixfmt
@@ -101,36 +103,55 @@ static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, 
             && orow[2] == block->orow[2]
             && orow[3] == block->orow[3]
            ) {
-          minnum = num;
-          bestblock = block;
+          if (num < minbnum) {
+            minbnum = num;
+            bestidx = j;
+            //g_print("%d is perfect match !\n", i);
+            if (num == nreq) {
+              //if (i == -1) g_print("BINGO !\n");
+              break;
+            }
+          }
         } else {
-          if (!bestblock) {
-            minnum = num;
-            goodblock = block;
+          if (minbnum == max) {
+            if (num < mingnum) {
+              bestidx = j;
+              mingnum = num;
 	    // *INDENT-OFF*
-	  }}}
+	    }}}}
       else {
-	if (!bestblock && !goodblock) {
-	  anyblock = block;
-	  minnum = num;
-	}}}}
+	if (minbnum == max && mingnum == max) {
+	  if (num < minanum) {
+	    bestidx = j;
+	    minanum = num;
+	}}}}}
   // *INDENT-ON*
 
-  if (!bestblock) {
-    if (swctx_count + nreq >= MAX_SWS_CTX
-        || nb + 1 >= MAX_SWS_BLOCKS) {
-      if (goodblock) bestblock = goodblock;
-      else if (anyblock) bestblock = anyblock;
-      else abort();
-    }
-  }
-  if (bestblock) {
+  if (minbnum < max) {
+    bestblock = &bloxx[bestidx];
     bestblock->in_use = TRUE;
+    pthread_mutex_unlock(&ctxcnt_mutex);
+    THREADVAR(last_sws_block) = bestidx;
   } else {
-    bestblock = &bloxx[nb++];
-    bestblock->in_use = TRUE;
-    bestblock->num = nreq;
-    bestblock->offset = swctx_count;
+    int startctx = swctx_count, endctx = startctx + nreq;
+    if (endctx >= MAX_SWS_CTX
+        || nb  >= MAX_SWS_BLOCKS - 1) {
+      if (bestidx == -1) abort();
+      bestblock = &bloxx[bestidx];
+      bestblock->in_use = TRUE;
+      pthread_mutex_unlock(&ctxcnt_mutex);
+      THREADVAR(last_sws_block) = bestidx;
+    } else {
+      bestblock = &bloxx[nb++];
+      bestblock->in_use = TRUE;
+      swctx_count = endctx;
+      pthread_mutex_unlock(&ctxcnt_mutex);
+
+      bestblock->num = nreq;
+      bestblock->offset = startctx;
+      for (i = startctx; i < endctx; i++) swscalep[i] = NULL;
+    }
+
     bestblock->iwidth = iwidth;
     bestblock->iheight = iheight;
     bestblock->ipixfmt = ipixfmt;
@@ -138,6 +159,7 @@ static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, 
     bestblock->height = height;
     bestblock->opixfmt = opixfmt;
     bestblock->flags = flags;
+
     bestblock->subspace = subspace;
     bestblock->iclamping = iclamping;
     bestblock->oclamp_hint = oclamp_hint;
@@ -145,10 +167,9 @@ static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, 
       bestblock->irow[i] = irow[i];
       bestblock->orow[i] = orow[i];
     }
-    for (i = nreq; i != 0; i--) swscalep[swctx_count++] = NULL;
   }
 
-  pthread_mutex_unlock(&ctxcnt_mutex);
+  //g_print("NCTX = %d\n", swctx_count);
   return bestblock;
 }
 
@@ -387,16 +408,6 @@ static inline uint8_t *create_gamma_lut(double fileg, int gamma_from, int gamma_
       switch (gamma_to) {
       // simple power law transformation
       case WEED_GAMMA_MONITOR:
-        if (gamma_from == WEED_GAMMA_SRGB) {
-          a = (a < gamma_tx[WEED_GAMMA_SRGB].thresh) ? a / gamma_tx[WEED_GAMMA_SRGB].lin
-              : powf((a + gamma_tx[WEED_GAMMA_SRGB].offs) / (1. + gamma_tx[WEED_GAMMA_SRGB].offs),
-                     gamma_tx[WEED_GAMMA_SRGB].pf);
-        } else if (gamma_from == WEED_GAMMA_BT709) {
-          a = (a < gamma_tx[WEED_GAMMA_BT709].thresh) ? a / gamma_tx[WEED_GAMMA_BT709].lin
-              : powf((a + gamma_tx[WEED_GAMMA_BT709].offs) / (1. + gamma_tx[WEED_GAMMA_BT709].offs),
-                     gamma_tx[WEED_GAMMA_BT709].pf);
-        }
-        // LINEAR
         x = powf(a, inv_gamma);
         break;
 
@@ -414,6 +425,9 @@ static inline uint8_t *create_gamma_lut(double fileg, int gamma_from, int gamma_
               : powf((1. + gamma_tx[WEED_GAMMA_SRGB].offs) * a,
                      1. / gamma_tx[WEED_GAMMA_SRGB].pf) - gamma_tx[WEED_GAMMA_SRGB].offs;
           break;
+        case WEED_GAMMA_MONITOR:
+          x = powf(a, prefs->screen_gamma);
+          break;
         default:
           break;
         }
@@ -421,6 +435,8 @@ static inline uint8_t *create_gamma_lut(double fileg, int gamma_from, int gamma_
 
       case WEED_GAMMA_LINEAR:
         switch (gamma_from) {
+        case WEED_GAMMA_MONITOR:
+          x = powf(a, prefs->screen_gamma);
         case WEED_GAMMA_SRGB:
           x = (a < gamma_tx[WEED_GAMMA_SRGB].thresh) ? a / gamma_tx[WEED_GAMMA_SRGB].lin
               : powf((a + gamma_tx[WEED_GAMMA_SRGB].offs) / (1. + gamma_tx[WEED_GAMMA_SRGB].offs),
@@ -437,6 +453,8 @@ static inline uint8_t *create_gamma_lut(double fileg, int gamma_from, int gamma_
       // rec 709 gamma
       case WEED_GAMMA_BT709:
         switch (gamma_from) {
+        case WEED_GAMMA_MONITOR:
+          x = powf(a, prefs->screen_gamma);
         case WEED_GAMMA_SRGB:
           // convert first to linear
           a = (a < gamma_tx[WEED_GAMMA_SRGB].thresh) ? a / gamma_tx[WEED_GAMMA_SRGB].lin
@@ -11815,10 +11833,10 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
         // force conversion to RGB24 or RGBA32
         xpalette = WEED_PALETTE_END;
       } else {
-        if (fordisplay && !prefs->gamma_srgb)
-          gamma_convert_layer(WEED_GAMMA_MONITOR, layer);
-        else {
+        if (prefs->apply_gamma) {
           gamma_convert_layer(WEED_GAMMA_SRGB, layer);
+          if (fordisplay && prefs->use_screen_gamma)
+            gamma_convert_layer(WEED_GAMMA_MONITOR, layer);
         }
       }
     }
@@ -12424,7 +12442,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
                                    height,
                                    opixfmt, flags, NULL, NULL, NULL);
 
-      if (swparams[sl].swscale == NULL) {
+      if (!swparams[sl].swscale) {
         LIVES_DEBUG("swscale is NULL !!");
       } else {
         if (progscan) {
@@ -12461,7 +12479,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     iheight = height;
     // height = 0;
     for (int sl = 0; sl < nthrds - 1; sl++) {
-      if (swparams[sl].swscale != NULL) {
+      if (swparams[sl].swscale) {
         lives_thread_join(threads[sl], NULL);
         height += swparams[sl].ret;
       } else height += iheight;

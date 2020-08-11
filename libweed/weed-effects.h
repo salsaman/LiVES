@@ -288,10 +288,13 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_FPS "fps"
 #define WEED_LEAF_TARGET_FPS "target_fps"
 
-// experimental
-#define WEED_LEAF_EASE_IN "ease_in" // host request val, >= WEED_LEAF_PLUGIN_EASING
-#define WEED_LEAF_EASE_OUT "ease_out" // host request val, >= WEED_LEAF_PLUGIN_EASING
-#define WEED_LEAF_PLUGIN_EASING "plugin_easing" // min or current frames for plugin to ease out
+// instance GUI leaves
+#define WEED_LEAF_EASE_IN_FRAMES "ease_in_frames" // set by filter in init_func()
+#define WEED_LEAF_EASE_OUT_FRAMES "ease_out_frames" // set by filter in process_func()
+
+#define WEED_LEAF_EASE_IN "ease_in" // host request, set prior to first process_func() call
+#define WEED_LEAF_EASE_OUT "ease_out" // host request, set prior to andy process_func() call
+
 
 
 // CHANNEL_TEMPLATE

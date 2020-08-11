@@ -1872,12 +1872,13 @@ boolean pulse_audio_seek_frame(pulse_driver_t *pulsed, double frame) {
   double fps;
 
   if (frame > afile->frames && afile->frames > 0) frame = afile->frames;
-  if (LIVES_IS_PLAYING) fps = afile->pb_fps;
+  if (LIVES_IS_PLAYING) fps = fabs(afile->pb_fps);
   else fps = afile->fps;
 
   seekstart = (int64_t)(((frame - 1.) / fps
                          + (LIVES_IS_PLAYING ? (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL
-                            * (pulsed->in_arate >= 0. ? 1.0 : -1.0) : 0.)) * (double)afile->arate) * afile->achans * afile->asampsize / 8;
+                            * (pulsed->in_arate >= 0. ? 1.0 : -1.0) : 0.)) * (double)afile->arate)
+              * afile->achans * afile->asampsize / 8;
 
   /* g_print("vals %ld and %ld %d\n", mainw->currticks, mainw->startticks, afile->arate); */
   /* g_print("bytes %f     %f       %d        %ld          %f\n", frame, afile->fps, LIVES_IS_PLAYING, seekstart, */

@@ -1141,6 +1141,7 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
           && (!tdirent->d_name[1] || tdirent->d_name[1] == '.')) continue;
       fdets = (lives_file_dets_t *)struct_from_template(LIVES_STRUCT_FILE_DETS_T);
       fdets->name = lives_strdup(tdirent->d_name);
+      //g_print("GOT %s\n", fdets->name);
       fdets->size = -1;
       *listp = lives_list_append(*listp, fdets);
       if (lives_proc_thread_cancelled(tinfo)) {
@@ -1762,6 +1763,18 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_check(lives_proc_thread_t tinfo) {
           || weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL) == WEED_TRUE);
 }
 
+LIVES_GLOBAL_INLINE int lives_proc_thread_signalled(lives_proc_thread_t tinfo) {
+  /// returns FALSE while the thread is running, TRUE once it has finished
+  return (weed_get_int_value(tinfo, WEED_LEAF_SIGNALLED, NULL) == WEED_TRUE);
+}
+
+LIVES_GLOBAL_INLINE int64_t lives_proc_thread_signalled_idx(lives_proc_thread_t tinfo) {
+  /// returns FALSE while the thread is running, TRUE once it has finished
+  lives_thread_data_t *tdata = (lives_thread_data_t *)weed_get_voidptr_value(tinfo, WEED_LEAF_SIGNAL_DATA, NULL);
+  if (tdata) return tdata->idx;
+  return 0;
+}
+
 LIVES_GLOBAL_INLINE void lives_proc_thread_set_cancellable(lives_proc_thread_t tinfo) {
   weed_set_boolean_value(tinfo, WEED_LEAF_THREAD_CANCELLABLE, WEED_TRUE);
 }
@@ -1954,6 +1967,7 @@ static int npoolthreads;
 static pthread_t **poolthrds;
 static pthread_cond_t tcond  = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t tcond_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t twork_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t twork_count_mutex = PTHREAD_MUTEX_INITIALIZER;
 static LiVESList *twork_first, *twork_last; /// FIFO list of tasks
@@ -1997,6 +2011,8 @@ lives_thread_data_t *lives_thread_data_create(uint64_t idx) {
   else tdata->ctx = lives_widget_context_default();
   tdata->idx = idx;
   tdata->vars.var_rowstride_alignment = ALIGN_DEF;
+  tdata->vars.var_last_sws_block = -1;
+  tdata->vars.var_mydata = tdata;
   allctxs = lives_list_prepend(allctxs, (livespointer)tdata);
   return tdata;
 }
@@ -2169,6 +2185,7 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr, lives_
   pthread_mutex_lock(&tcond_mutex);
   pthread_cond_signal(&tcond);
   pthread_mutex_unlock(&tcond_mutex);
+  pthread_mutex_lock(&pool_mutex);
   if (ntasks >= npoolthreads) {
     pthread_mutex_lock(&tcond_mutex);
     pthread_cond_broadcast(&tcond);
@@ -2184,6 +2201,7 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr, lives_
     }
     npoolthreads += MINPOOLTHREADS;
   }
+  pthread_mutex_unlock(&pool_mutex);
   return 0;
 }
 

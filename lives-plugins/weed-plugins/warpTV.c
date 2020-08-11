@@ -63,15 +63,11 @@ struct _sdata {
 
 static void initSinTable(struct _sdata *sdata) {
   Sint32 *tptr, *tsinptr;
-  double i;
-
+  int i;
   tsinptr = tptr = sdata->sintable;
-
   for (i = 0; i < 1024; i++)
-    *tptr++ = (int)(sin(i * M_PI / 512) * 32767);
-
-  for (i = 0; i < 256; i++)
-    *tptr++ = *tsinptr++;
+    *tptr++ = (int)(sin((double)i * M_PI / 512) * 32767);
+  for (i = 0; i < 256; i++) *tptr++ = *tsinptr++;
 }
 
 
@@ -153,10 +149,10 @@ static weed_error_t warp_init(weed_plant_t *inst) {
   struct _sdata *sdata = weed_malloc(sizeof(struct _sdata));
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  in_channel = weed_get_in_channel(inst, 0);
 
-  video_height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
-  video_width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
+  video_width = weed_channel_get_width(in_channel);
+  video_height = weed_channel_get_height(in_channel);
 
   video_width = video_width / 2. + .5;
   video_width *= 2;
@@ -206,7 +202,8 @@ static weed_error_t warp_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 
   if (sdata->ease_every == 0.) {
     // easing (experimental) part 1
-    int host_ease = weed_get_int_value(inst, WEED_LEAF_EASE_OUT, NULL);
+    weed_plant_t *gui = weed_instance_get_gui(inst);
+    int host_ease = weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL);
     if (host_ease > 0) {
       // how many cycles to ease by 1
       sdata->ease_every = (float)sdata->tval / (float)host_ease;
@@ -214,17 +211,17 @@ static weed_error_t warp_process(weed_plant_t *inst, weed_timecode_t timestamp) 
     }
   }
 
-  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
-  out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  in_channel = weed_get_in_channel(inst, 0);
+  out_channel = weed_get_out_channel(inst, 0);
 
-  src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
-  dest = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  src = weed_channel_get_pixel_data(in_channel);
+  dest = weed_channel_get_pixel_data(out_channel);
 
-  width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
-  height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
+  width = weed_channel_get_width(in_channel);
+  height = weed_channel_get_height(in_channel);
 
-  irow = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL) / 4;
-  orow = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL) / 4;
+  irow = weed_channel_get_stride(in_channel) / 4;
+  orow = weed_channel_get_stride(out_channel) / 4;
 
   xw  = (int)(sin((sdata->tval + 100) * M_PI / 128) * 30);
   yw  = (int)(sin((sdata->tval) * M_PI / 256) * -35);
@@ -233,16 +230,18 @@ static weed_error_t warp_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   yw += (int)(sin((sdata->tval + 30) * M_PI / 512) * 40);
 
   if (sdata->ease_every != 0.) {
+    weed_plant_t *gui = weed_instance_get_gui(inst);
     sdata->easeval -= sdata->ease_every;
     sdata->tval = (int)sdata->easeval;
-    weed_set_int_value(inst, WEED_LEAF_PLUGIN_EASING, (int)(sdata->easeval / sdata->ease_every));
+    weed_set_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, (int)(sdata->easeval / sdata->ease_every));
   }
 
   doWarp(xw, yw, cw, src, dest, width, height, irow, orow, sdata);
 
   if (sdata->ease_every == 0.) {
+    weed_plant_t *gui = weed_instance_get_gui(inst);
     sdata->tval = (sdata->tval + 1) & 511;
-    weed_set_int_value(inst, WEED_LEAF_PLUGIN_EASING, 1);
+    weed_set_int_value(gui, WEED_LEAF_PLUGIN_EASING, 1);
   }
 
   return WEED_SUCCESS;
@@ -253,13 +252,10 @@ WEED_SETUP_START(200, 200) {
   int palette_list[] = {WEED_PALETTE_RGBA32, WEED_PALETTE_END};
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
-
   weed_plant_t *filter_class = weed_filter_class_init("warpTV", "effectTV", 1, 0, palette_list,
                                warp_init, warp_process, warp_deinit, in_chantmpls, out_chantmpls, NULL, NULL);
-
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+  weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;
 

@@ -380,6 +380,7 @@ static boolean open_vdev_inner(unicap_device_t *device) {
   cfile->vsize = format->size.height;
 
   cfile->ext_src = ldev;
+  cfile->ext_src_type = LIVES_EXT_SRC_DEVICE;
 
   ldev->buffer1.data = (unsigned char *)lives_malloc(format->buffer_size);
   ldev->buffer1.buffer_size = format->buffer_size;

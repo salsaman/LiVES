@@ -597,6 +597,7 @@ void lives2lives_read_stream(const char *host, int port) {
   cfile->vsize = lstream->vsize;
 
   cfile->ext_src = lstream;
+  cfile->ext_src_type = LIVES_EXT_SRC_STREAM;
 
   switch_to_file((mainw->current_file = old_file), new_file);
   set_main_title(cfile->file_name, 0);
@@ -664,6 +665,7 @@ void lives2lives_read_stream(const char *host, int port) {
 #endif
   lives_free(cfile->ext_src);
   cfile->ext_src = NULL;
+  cfile->ext_src_type = LIVES_EXT_SRC_NONE;
 
   close_current_file(old_file);
   lives_widget_set_sensitive(mainw->open_lives2lives, TRUE);

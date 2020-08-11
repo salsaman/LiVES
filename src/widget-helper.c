@@ -38,6 +38,8 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
 
 /// internal data keys
 #define STD_KEY "_wh_is_standard"
+#define BACCL_GROUP_KEY "_wh_baccl_group"
+#define BACCL_ACCL_KEY "_wh_baccl_accl"
 #define TTIPS_KEY "_wh_lives_tooltips"
 #define TTIPS_OVERRIDE_KEY "_wh_lives_tooltips_override"
 #define TTIPS_HIDE_KEY "_wh_lives_tooltips_hide"
@@ -1037,6 +1039,10 @@ reloop:
       // while any signal handler is running in the bg, we just loop here until either:
       // the task completes, the task wants to run a main loop cycle, or the app exits
       lives_nanosleep(NSLEEP_TIME);
+      if (lives_proc_thread_signalled(sigdata->proc)) {
+        g_print("Thread %lu received signal %d\n", lives_proc_thread_signalled_idx(sigdata->proc),
+                lives_proc_thread_signalled(sigdata->proc));
+      }
       sched_yield();
     }
   }
@@ -2257,6 +2263,7 @@ LiVESPixbuf *lives_pixbuf_new_from_stock_at_size(const char *stock_id, LiVESIcon
         if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_DIALOG)) size = LIVES_ICON_SIZE_DIALOG;
       }
     }
+
     if (size != LIVES_ICON_SIZE_CUSTOM) {
       if (lives_has_icon(stock_id, size)) {
 #if GTK_CHECK_VERSION(3, 10, 0)
@@ -2268,11 +2275,11 @@ LiVESPixbuf *lives_pixbuf_new_from_stock_at_size(const char *stock_id, LiVESIcon
         image = gtk_image_new_from_stock(stock_id, size);
 #endif
       }
-      if (image != NULL) return lives_image_get_pixbuf(LIVES_IMAGE(image));
+      if (image) return lives_image_get_pixbuf(LIVES_IMAGE(image));
     }
     // custom size, or failed at specified size
     // try all sizes to see if we get one
-    if (image == NULL) {
+    if (!image) {
       if (lives_has_icon(stock_id, LIVES_ICON_SIZE_DIALOG)) {
         size = LIVES_ICON_SIZE_DIALOG;
       } else if (lives_has_icon(stock_id, LIVES_ICON_SIZE_DND)) {
@@ -2296,17 +2303,17 @@ LiVESPixbuf *lives_pixbuf_new_from_stock_at_size(const char *stock_id, LiVESIcon
       image = gtk_image_new_from_stock(stock_id, size);
 #endif
     }
-    if (image == NULL) return NULL;
+    if (!image) return NULL;
     pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(image));
   } else {
+    // lives- icons
     char *fname = lives_strdup_printf("%s.%s", stock_id, LIVES_FILE_EXT_PNG);
     char *fnamex = lives_build_filename(prefs->prefix_dir, ICON_DIR, fname, NULL);
     LiVESError *error = NULL;
     pixbuf = lives_pixbuf_new_from_file(fnamex, &error);
-    lives_free(fnamex);
-    lives_free(fname);
+    lives_free(fname); lives_free(fnamex);
   }
-  if (pixbuf != NULL) {
+  if (pixbuf) {
     if (size != LIVES_ICON_SIZE_CUSTOM) {
       x = y = get_real_size_from_icon_size(size);
     }
@@ -2324,42 +2331,14 @@ LiVESPixbuf *lives_pixbuf_new_from_stock_at_size(const char *stock_id, LiVESIcon
 
 LiVESWidget *lives_image_new_from_stock_at_size(const char *stock_id, LiVESIconSize size, int x, int y) {
   LiVESWidget *image = NULL;
-  LiVESPixbuf *pixbuf = NULL;
-#ifdef GUI_GTK
-  if (strncmp(stock_id, "lives-", 6)) {
-    if (size == LIVES_ICON_SIZE_CUSTOM) {
-      if (x == y) {
-        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_MENU)) size = LIVES_ICON_SIZE_MENU;
-        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_SMALL_TOOLBAR))
-          size = LIVES_ICON_SIZE_SMALL_TOOLBAR;
-        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_LARGE_TOOLBAR))
-          size = LIVES_ICON_SIZE_LARGE_TOOLBAR;
-        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_BUTTON)) size = LIVES_ICON_SIZE_BUTTON;
-        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_DND)) size = LIVES_ICON_SIZE_DND;
-        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_DIALOG)) size = LIVES_ICON_SIZE_DIALOG;
-      }
-    }
-    if (size != LIVES_ICON_SIZE_CUSTOM) {
-      if (lives_has_icon(stock_id, size)) {
-#if GTK_CHECK_VERSION(3, 10, 0)
-        pixbuf = gtk_icon_theme_load_icon((LiVESIconTheme *)widget_opts.icon_theme, stock_id,
-                                          get_real_size_from_icon_size(size),
-                                          GTK_ICON_LOOKUP_FORCE_SIZE, NULL);
-        if (!pixbuf) return NULL;
-        return lives_image_new_from_pixbuf(pixbuf);
-#else
-        image = gtk_image_new_from_stock(stock_id, size);
-#endif
-      }
-      if (image) return image;
-    }
+  LiVESPixbuf *pixbuf = lives_pixbuf_new_from_stock_at_size(stock_id, size, x, y);
+  if (pixbuf) {
+    image = lives_image_new_from_pixbuf(pixbuf);
+    lives_widget_object_unref(pixbuf);
   }
-  pixbuf = lives_pixbuf_new_from_stock_at_size(stock_id, size, x, y);
-  if (!pixbuf) return NULL;
-  return lives_image_new_from_pixbuf(pixbuf);
-#endif
   return image;
 }
+
 
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_new_from_stock(const char *stock_id,
@@ -4610,19 +4589,21 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_check_button_new_with_label(const
 
 
 static LiVESWidget *make_ttips_image_for(LiVESWidget *widget, const char *text) {
-  LiVESWidget *ttips_image = lives_image_new_from_stock(LIVES_STOCK_DIALOG_QUESTION,
-                             LIVES_ICON_SIZE_LARGE_TOOLBAR);
-  lives_widget_set_no_show_all(ttips_image, TRUE);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ttips_image), TTIPS_IMAGE_KEY, ttips_image);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ttips_image), TTIPS_HIDE_KEY, ttips_image);
-  if (text) lives_widget_set_tooltip_text(ttips_image, text);
-  else {
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ttips_image),
-                                 SHOWALL_OVERRIDE_KEY, LIVES_INT_TO_POINTER(TRUE));
+  LiVESWidget *ttips_image = lives_image_new_from_stock("my-help-info",
+                             LIVES_ICON_SIZE_SMALL_TOOLBAR);
+  if (ttips_image) {
+    lives_widget_set_no_show_all(ttips_image, TRUE);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ttips_image), TTIPS_IMAGE_KEY, ttips_image);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ttips_image), TTIPS_HIDE_KEY, ttips_image);
+    if (text) lives_widget_set_tooltip_text(ttips_image, text);
+    else {
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ttips_image),
+                                   SHOWALL_OVERRIDE_KEY, LIVES_INT_TO_POINTER(TRUE));
+    }
+    lives_widget_set_show_hide_with(widget, ttips_image);
+    lives_widget_set_sensitive_with(widget, ttips_image);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), HAS_TTIPS_IMAGE_KEY, ttips_image);
   }
-  lives_widget_set_show_hide_with(widget, ttips_image);
-  lives_widget_set_sensitive_with(widget, ttips_image);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), HAS_TTIPS_IMAGE_KEY, ttips_image);
   return ttips_image;
 }
 
@@ -4632,12 +4613,16 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_widget_set_tooltip_text(LiVESWidg
   boolean ttips_override = FALSE;
   const char *ttext = tip_text;
 
+  if (!widget) return NULL;
+
   if (tip_text && *tip_text == '#' && !lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
       TTIPS_IMAGE_KEY)) {
     if (!(img_tips = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), HAS_TTIPS_IMAGE_KEY))) {
-      widget = img_tips = make_ttips_image_for(widget, ++ttext);
+      img_tips = make_ttips_image_for(widget, ++ttext);
+      if (img_tips) widget = img_tips;
     } else lives_widget_set_tooltip_text(img_tips, ++ttext);
-  } else {
+  }
+  if (!img_tips) {
     if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_OVERRIDE_KEY))
       ttips_override = TRUE;
     if (!prefs->show_tooltips && !ttips_override) {
@@ -8018,7 +8003,6 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
                            SBUTT_TXT_KEY);
         if (text) {
           LiVESWidget *topl;
-          LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
           LingoContext *ctx = gtk_widget_get_pango_context(widget);
           char *markup, *full_markup;
           layout = pango_layout_new(ctx);
@@ -8030,18 +8014,26 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
 
           lingo_layout_set_markup_with_accel(layout, full_markup, -1, '_', &acc);
           lives_free(markup); lives_free(full_markup);
-          if (acc)
-            lives_widget_add_accelerator(sbutt, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-                                         acc, (LiVESXModifierType)LIVES_ALT_MASK, (LiVESAccelFlags)0);
+          if (acc) {
+            if (LIVES_IS_FRAME(toplevel)) topl = lives_bin_get_child(LIVES_BIN(toplevel));
+            else topl = toplevel;
 
-          if (LIVES_IS_FRAME(toplevel)) topl = lives_bin_get_child(LIVES_BIN(toplevel));
-          else topl = toplevel;
-
-
-          /// can be a box !???
-          lives_window_add_accel_group(LIVES_WINDOW(topl), accel_group);
-
-
+            if (topl && LIVES_IS_WINDOW(topl)) {
+              LiVESAccelGroup *accel_group =
+                (LiVESAccelGroup *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(topl), BACCL_GROUP_KEY);
+              if (!accel_group) {
+                lives_widget_object_set_data(LIVES_WIDGET_OBJECT(topl), BACCL_GROUP_KEY, accel_group);
+                accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
+                lives_window_add_accel_group(LIVES_WINDOW(topl), accel_group);
+              } else {
+                uint32_t oaccl = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(topl), BACCL_ACCL_KEY));
+                if (oaccl) lives_widget_remove_accelerator(sbutt, accel_group, oaccl, (LiVESXModifierType)LIVES_ALT_MASK);
+              }
+              lives_widget_add_accelerator(sbutt, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+                                           acc, (LiVESXModifierType)LIVES_ALT_MASK, (LiVESAccelFlags)0);
+              lives_widget_object_set_data(LIVES_WIDGET_OBJECT(topl), BACCL_ACCL_KEY, LIVES_INT_TO_POINTER(acc));
+            }
+          }
           lingo_layout_get_size(layout, &w_, &h_);
 
           // scale width, height to pixels
@@ -8475,8 +8467,10 @@ LiVESWidget *lives_standard_label_new_with_tooltips(const char *text, LiVESBox *
   LiVESWidget *img_tips = make_ttips_image_for(label, tips);
   LiVESWidget *hbox = make_inner_hbox(LIVES_BOX(box), TRUE);
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
-  add_warn_image(label, hbox);
-  lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
+  if (img_tips) {
+    add_warn_image(label, hbox);
+    lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
+  }
   lives_widget_set_show_hide_parent(label);
   return label;
 }
@@ -8521,7 +8515,7 @@ LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, lives_pa
   if (ppsurf) {
     if (callback)
 #if GTK_CHECK_VERSION(4, 0, 0)
-      gtk_drawing_area_set_draw_func(darea, callback, (livespointer)surf, NULL);
+      gtk_drawing_area_set_draw_func(darea, callback, (livespointer)ppsurf, NULL);
 #else
       lives_signal_sync_connect(LIVES_GUI_OBJECT(darea), LIVES_WIDGET_EXPOSE_EVENT,
                                 LIVES_GUI_CALLBACK(callback),
@@ -9279,6 +9273,9 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
       set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_FOCUSED, "", "box-shadow", tmp);
       lives_free(tmp);
       lives_free(colref);
+      colref = gdk_rgba_to_string(&palette->nice2);
+      set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_NORMAL, "entry selection", "background-color", colref);
+      lives_free(colref);
     }
 #endif
   }
@@ -9530,7 +9527,8 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
 
   if (widget_opts.apply_theme) {
 #if GTK_CHECK_VERSION(3, 0, 0)
-    set_css_min_size(entry, widget_opts.css_min_width, ((widget_opts.css_min_height * 3 + 3) >> 2) << 1);
+    set_css_min_size(entry, widget_opts.css_min_width, (widget_opts.css_min_height * 2 + 1) >> 1);
+    //((widget_opts.css_min_height * 3 + 3) >> 2) << 1);
 #if GTK_CHECK_VERSION(3, 16, 0)
     if (prefs->extra_colours && mainw->pretty_colours) {
       char *tmp;
@@ -9807,6 +9805,20 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_fileentry_new(const char
     const char *defdir,
     int dispwidth, int maxchars, LiVESBox * box, const char *tooltip) {
   return lives_standard_dfentry_new(labeltext, txt, defdir, dispwidth, maxchars, box, tooltip, FALSE);
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_toolbar_new(void) {
+  LiVESWidget *toolbar = lives_toolbar_new();
+  lives_toolbar_set_show_arrow(LIVES_TOOLBAR(toolbar), TRUE);
+  lives_toolbar_set_style(LIVES_TOOLBAR(toolbar), LIVES_TOOLBAR_ICONS);
+  lives_toolbar_set_icon_size(LIVES_TOOLBAR(toolbar), LIVES_ICON_SIZE_LARGE_TOOLBAR);
+  if (widget_opts.apply_theme) {
+#if GTK_CHECK_VERSION(3, 0, 0)
+    set_css_min_size(toolbar, widget_opts.css_min_width, widget_opts.css_min_height);
+#endif
+  }
+  return toolbar;
 }
 
 

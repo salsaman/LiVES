@@ -1816,7 +1816,7 @@ void calc_aframeno(int fileno) {
 }
 
 
-int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
+frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   // returns a frame number (floor) using sfile->last_frameno and ntc-otc
   // takes into account looping modes
 
@@ -1850,7 +1850,8 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   lives_clip_t *sfile = mainw->files[fileno];
   double fps;
   lives_direction_t dir;
-  int cframe, nframe, nloops;
+  frames_t cframe, nframe, fdelta;
+  int nloops;
   int aplay_file = fileno;
 
   if (sfile == NULL) return 0;
@@ -1915,7 +1916,7 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
 
   // nframe is our new frame; convert dtc to sencods, and multiply by the frame rate, then add or subtract from current frame number
   // the small constant is just to account for rounding errors
-  if (fps >= 0)
+  if (fps >= 0.)
     nframe = cframe + (frames_t)((double)dtc / TICKS_PER_SECOND_DBL * fps + .00001);
   else
     nframe = cframe + (frames_t)((double)dtc / TICKS_PER_SECOND_DBL * fps - .00001);
@@ -1974,14 +1975,14 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
       return nframe;
     }
 
-    if (!mainw->clip_switched && mainw->scratch == SCRATCH_NONE) {
+    if (!mainw->clip_switched && (mainw->scratch == SCRATCH_NONE || mainw->scratch == SCRATCH_REV)) {
       last_frame = mainw->playing_sel ? sfile->end : mainw->play_end;
       if (last_frame > sfile->frames) last_frame = sfile->frames;
       first_frame = mainw->playing_sel ? sfile->start : mainw->loop_video ? mainw->play_start : 1;
       if (first_frame > sfile->frames) first_frame = sfile->frames;
     }
 
-    if (sfile->frames > 1 && prefs->noframedrop && mainw->scratch == SCRATCH_NONE) {
+    if (sfile->frames > 1 && prefs->noframedrop && (mainw->scratch == SCRATCH_NONE || mainw->scratch == SCRATCH_REV)) {
       // if noframedrop is set, we may not skip any frames
       // - the usual situation is that we are allowed to drop late frames
       // in this mode we may be forced to play at a reduced framerate
@@ -2034,12 +2035,13 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
       break;
     }
 
+    fdelta = ABS(sfile->frameno - sfile->last_frameno);
     nframe -= first_frame;
     selrange = (1 + last_frame - first_frame);
-    if (nframe < 0) nframe = selrange - nframe;
+    if (nframe < 0) nframe = -nframe;
     nloops = nframe / selrange;
     if (mainw->ping_pong && (dir == LIVES_DIRECTION_BACKWARD || (clip_can_reverse(fileno)))) {
-      dir += nloops;
+      dir += nloops + dir + 1;
       dir = LIVES_DIRECTION_PAR(dir);
       if (dir == LIVES_DIRECTION_BACKWARD && !clip_can_reverse(fileno))
         dir = LIVES_DIRECTION_FORWARD;
@@ -2048,9 +2050,10 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     nframe -= nloops * selrange;
 
     if (dir == LIVES_DIRECTION_FORWARD) {
+      nframe += first_frame;
+      sfile->last_frameno = nframe - fdelta;
       if (fps < 0.) {
-        // backwards -> forwards, nframe is negative
-        nframe = first_frame - nframe;
+        // backwards -> forwards
         if (fileno == mainw->playing_file) {
           /// must set norecurse, otherwise we can end up in an infinite loop since dirchange_callback calls this function
           norecurse = TRUE;
@@ -2058,31 +2061,24 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
                              LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
           norecurse = FALSE;
         } else sfile->pb_fps = -sfile->pb_fps;
-      } else {
-        // forwards -> forwards, nframe is positive
-        nframe += first_frame;
       }
     }
 
     else {
+      nframe = last_frame - nframe;
+      sfile->last_frameno = nframe + fdelta;
       if (fps > 0.) {
-        // forwards -> backwards, nframe is positive
-        nframe = last_frame - nframe;
+        // forwards -> backwards
         if (fileno == mainw->playing_file) {
           norecurse = TRUE;
           dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
                              LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
           norecurse = FALSE;
         } else sfile->pb_fps = -sfile->pb_fps;
-      } else {
-        // backwards -> backwards, nframe is negative
-        nframe += last_frame;
-	// *INDENT-OFF*
-      }}
+      }
+    }
     break;
   }
-  // *INDENT-ON*
-
 
   if (fileno == mainw->playing_file && prefs->audio_src == AUDIO_SRC_INT && fileno == aplay_file && sfile->achans > 0
       && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
@@ -2139,10 +2135,10 @@ void init_clipboard(void) {
   int current_file = mainw->current_file;
   char *com;
 
-  if (clipboard == NULL) {
+  if (!clipboard) {
     // here is where we create the clipboard
     // use get_new_handle(clipnumber,name);
-    if (!get_new_handle(0, "clipboard")) {
+    if (!get_new_handle(CLIPBOARD_FILE, "clipboard")) {
       mainw->error = TRUE;
       return;
     }
@@ -2160,13 +2156,14 @@ void init_clipboard(void) {
     if (clipboard->frames > 0) {
       // clear old clipboard
       // need to set current file to 0 before monitoring progress
-      mainw->current_file = 0;
+      mainw->current_file = CLIPBOARD_FILE;
       cfile->cb_src = current_file;
 
       if (cfile->clip_type == CLIP_TYPE_FILE) {
         lives_freep((void **)&cfile->frame_index);
-        close_decoder_plugin((lives_decoder_t *)cfile->ext_src);
-        cfile->ext_src = NULL;
+        if (cfile->ext_src && cfile->ext_src_type == LIVES_EXT_SRC_DECODER) {
+          close_clip_decoder(CLIPBOARD_FILE);
+        }
         cfile->clip_type = CLIP_TYPE_DISK;
       }
 
@@ -2186,9 +2183,10 @@ void init_clipboard(void) {
       do_progress_dialog(TRUE, FALSE, _("Clearing the clipboard"));
     }
   }
+  mainw->current_file = current_file;
+  *clipboard->file_name = 0;
   clipboard->img_type = IMG_TYPE_BEST; // override the pref
   clipboard->cb_src = current_file;
-  mainw->current_file = current_file;
 }
 
 
@@ -3377,6 +3375,18 @@ uint64_t make_version_hash(const char *ver) {
 
   lives_strfreev(array);
   return hash;
+}
+
+
+char *unhash_version(uint64_t version) {
+  if (!version) return lives_strdup(_("'Unknown'"));
+  else {
+    uint64_t maj = version / VER_MAJOR_MULT, min;
+    version -= maj * VER_MAJOR_MULT;
+    min = version / VER_MINOR_MULT;
+    version -= min * VER_MINOR_MULT;
+    return lives_strdup_printf("%lu.%lu.%lu", maj, min, version);
+  }
 }
 
 

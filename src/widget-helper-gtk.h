@@ -1087,7 +1087,7 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_STOCK_MEDIA_PAUSE2 "media-pause"
 
 #define LIVES_STOCK_PREFERENCES "preferences-system"
-#define LIVES_STOCK_DIALOG_INFO "dialog-information"
+#define LIVES_STOCK_DIALOG_INFO "gtk-dialog-info"
 #define LIVES_STOCK_DIALOG_WARNING "dialog-warning"
 #define LIVES_STOCK_DIALOG_QUESTION "dialog-question"
 #define LIVES_STOCK_MISSING_IMAGE "image-missing"

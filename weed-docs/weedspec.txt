@@ -2612,6 +2612,11 @@ The following is optional but recommended, particularly if the plugin set "prefe
 * "flags" : WEED_SEED_INT : a bitmap of flags informing the plugin it may perform certain updates (see below for definitions)
 
 
+ * "gui" : WEED_SEED_PLANTPTR : pointer to a plant
+           type GUI [see below - GUI plants].
+	   The plugin may optionally create and populate one GUI plant for the instance. Teh plant may be updated by the
+	   plugin within its init_func() and may be updated by the host prior to calling process_func().
+
 
  * Every plugin can store internal data in leaves inside this plant, and host MUST NOT change their values or make them
  READONLY for the plugin. Those internal leaves MUST have keys prefixed with "plugin_".
@@ -2922,7 +2927,7 @@ rely on setting "copy_value_to" to force the host to set indentical
 
 
 
- * "flags" : WEED_SEED_INT : btimap of WEED_GUI_* flags. (See below).
+ * "flags" : WEED_SEED_INT : bitmap of WEED_GUI_* flags. (See below).
 
 
 ///////// (the following leaf may also be set by the plugin in a parameter GUI during init_func())
@@ -3101,6 +3106,94 @@ parameter GUI plants, and may show or hide parameters in the interface according
 				     selected by the host.
 
 
+
+== parameter_instance GUI =====
+
+
+== Filter Easing ==
+
+THIS IS AN EXPERIMENTAL ADDITION, AND SOME DETAILS MAY CHANGE.
+
+For some filters, it may be visually pleasing for the filter instance to "ease out", rather than being
+deinited and switching off right away.
+
+In this case, the plugin may
+- CREATE a GUI PLANT for the FILTER_INSTNACE withim the leaf "gui".
+
+
+- within the instance GUI, there are the folloewing leaves:
+
+"ease_out_frames" : WEED_SEED_INT
+
+this value may be set by the plugin to a number representing the number of processing cycles for the
+filter to smoothly return to a "neutral" state, i.e. when this value reaches 0, the output will look indentical
+to the input. The value may be updated during each process_func() call.
+
+The value of the leaf is linked to some kind of internal state for the plugin.
+The value should be set such that decreasing it by one each cycle causes the plugin to return smoothly no neutral.
+
+e.g it could be a count of previous frames stored in an internal  buffer, and reducing this count by 1 each cycle
+would gradually return the output to neutral.
+
+
+The host can request "easing out" by setting a second leaf in the instance:
+
+"ease_out" : WEED_SEED_INT
+
+If this value is set to non-zero, then for that process_func() call, and each following call, the filter must take 1 step
+towards returning the output channel to the neutral state, and additionally it MUST reduce the
+value of "ease_out_frames" by 1.
+
+Once "ease_out_frames" reaches zero, the process_func() should simply copy input to output unaltered,
+or if it is running 'inplace' then it should do nothing, but just return WEED_SUCCESS.
+Output parameters, if any, should be set as they normally would be.
+
+
+
+- If "ease_out" is subsequently deleted by the host, or set to 0, then the filter may resume normal operation.
+Thus the filter should check for this at the start of its process_func(), and if this is the case then it should
+abort the easing process.
+
+In case this is not possible (i.e the plugin has somehow committed to easing out), the plugin should ease down to
+zero as normal however it must in this case  return WEED_ERROR_REINIT_NEEDED from each process_func() call.
+
+
+In case for some reason it is not possible for the filter to continue easing out, then
+it should return WEED_ERROR_REINIT_NEEDED.
+
+
+The value of "ease_out_frames" may be reduced by zero or by more than 1; however this is undesirable behaviour
+and should be avoided if at all possible.
+
+
+Host controlled easing:
+
+In many cases, the plugin filter may be able to return to "neutral" over any number of steps. In this case it may indicate
+this to the host by setting "ease_out_frames" to a negative value.
+
+When the host wants to initiate easing out, it can set the value of "ease_out" to an intger greater than zero.
+The plugin should aknowledge this by setting "ease_out_frames" to the same value, and then continuing exactly as if the plugin
+had set this value itself. (i.e take one step towards neutral, subtract 1 from "ease_out_frames" and so on.)
+
+
+
+"ease_in_frames" : WEED_SEED_INT
+This value works exactly like "ease_out_frames", except that
+
+- the plugin sets this value in its init_func() for the filter instance.
+
+- if the host wants to use this feature, it will set "ease_in_frames" to non-zero prior to the FIRST process_func() after calling
+init_func().
+
+- the plugin may then begin decreasing its "ease_in_frames" on each process cycle.
+when the value reaches zero, the plugin is operating at "full strength".
+
+The same rules apply for the host setting "ease_in" to zero - in this case the filter should immediately go to full strength,
+and if not possible then return WEED_ERROR_REINIT_NEEDED.
+
+
+
+
 === WEED_SETUP ===========
 
 The full details of the plugin / host initialisation are described here.
@@ -3252,58 +3345,6 @@ This may seem complex, but it provides several advantages:
 
 - the host can have access to functions which the plugin cannot, for example, only the host 
   can call weed_leaf_delete, (unlocked) weed_plant_free and weed_leaf_set_flags
-
-
-== Filter Easing ==
-
-THIS IS AN EXPERIMENTAL ADDITION, AND SOME DETAILS MAY CHANGE.
-
-For some filters, it may be visually pleasing for the filter instance to "ease out", rather than being
-deinited and switching off right away.
-
-In this case, the plugin may set a special optional value in the instance during its process_func:
-
-"plugin_easing" : WEED_SEED_INT
-
-this value may be set by the plugin to a number representing the number of processing cycles for the
-filter to reach a "neutral" state, i.e. when this value reaches 0, the output will look indentical
-to the input. The value may be updated during each process_func() call.
-
-The host can request "easing out" by setting a second leaf in the instance:
-
-"ease_out" : WEED_SEED_BOOLEAN
-
-If this value is set to WEED_TRUE then for that process_func() call, the filter should take 1 step
-towards returning the output channel to the neutral state, and additionally it should reduce the
-value of "plugin_easing" by 1.
-
-Once "plugin_easing" reaches zero, the process_func() in the filter may optionally
-do nothing and return WEED_ERROR_REINIT_NEEDED, even on succesful operation, or else it may simply copy
-input to output and return WEED_SUCCESS.
-
-If "ease_out" is absent or set to WEED_FALSE, then the filter may resume normal operation. In case
-this is not possible (i.e the plugin has commited to easing out), the plugin should ease down to
-zero as normal and then return WEED_ERROR_REINIT_NEEDED, or else this may be returned straight away.
-
-In case for some reason it is not possible for the filter to continue easing out, then
-the value of "plugin_easing" should not be decreased. The host should note this and abort the easing
-operation. Thus it is essential that the plugin reduce the value by 1 during successful easing.
-
-The value of "plugin_easing" may be reduced by more than 1, however this is undesirable behaviour
-and should be avoided if at all possible.
-
-
-"ease_in" : WEED_SEED_INT
-This is an optional leaf which the host may set in the filter instance. The value may be set to
-a number of processing cycles which the host desires for the filter to reach its "full" value.
-The value is only valid during the init_func() for the filter, and the plugin is free to ignore it,
-thus the value should be considered a hint only. Setting "ease_in" to zero allows the filter to
-ease in on its own schedule, should the filter support this.
-
-
-
-
-
 
 
 

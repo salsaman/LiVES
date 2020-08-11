@@ -2670,7 +2670,7 @@ boolean resync_audio(double frameno) {
   if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT) return TRUE;
 
   // if we are playing an audio generator or an event_list, then resync is meaningless
-  if ((mainw->event_list != NULL && mainw->multitrack == NULL && !mainw->record && !mainw->record_paused)
+  if ((mainw->event_list && !mainw->multitrack && !mainw->record && !mainw->record_paused)
       || mainw->agen_key != 0 || mainw->agen_needs_reinit) return FALSE;
 
   // also can't resync if the playing file has no audio, or prefs dont allow it
@@ -2702,7 +2702,7 @@ boolean resync_audio(double frameno) {
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
+  if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
     /* if (mainw->files[mainw->pulsed->playing_file]->pb_fps != 0.) */
     /*   frameno += (double)(mainw->startticks - mainw->currticks) / TICKS_PER_SECOND_DBL */
     /* 	/ mainw->files[mainw->pulsed->playing_file]->pb_fps; */

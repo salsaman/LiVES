@@ -3456,9 +3456,10 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
                  cpal, 0);
 
     convert_layer_palette_full(mainw->frame_layer, cpal, 0, 0, 0,
-                               prefs->gamma_srgb ? WEED_GAMMA_SRGB : WEED_GAMMA_MONITOR);
+                               WEED_GAMMA_SRGB);
 
-    gamma_convert_layer(prefs->gamma_srgb ? WEED_GAMMA_SRGB : WEED_GAMMA_MONITOR, mainw->frame_layer);
+    if (prefs->use_screen_gamma)
+      gamma_convert_layer(WEED_GAMMA_MONITOR, mainw->frame_layer);
 
     if (mt->framedraw) mt_framedraw(mt, mainw->frame_layer); // framedraw will free the frame_layer itself
     else {
@@ -9606,7 +9607,6 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
       mainw->msg_scrollbar = mainw_msg_scrollbar;
       if (mainw->reconfig) return TRUE;
       show_lives();
-      unblock_expose();
       resize(1.);
     }
   }
@@ -11303,7 +11303,6 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
     event_list_rectify(NULL, event_list);
   }
 
-  if (prefs->show_gui) block_expose();
   prefs->msg_textsize = future_prefs->msg_textsize;
 
   ///////// CREATE MULTITRACK CONTENTS ////////////
@@ -11325,7 +11324,6 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
       mainw->msg_area = mainw_msg_area;
       mainw->msg_adj = mainw_msg_adj;
       mainw->msg_scrollbar = mainw_msg_scrollbar;
-      if (prefs->show_gui) unblock_expose();
       lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
       return FALSE;
     }
@@ -11346,7 +11344,6 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
     mainw->msg_area = mainw_msg_area;
     mainw->msg_adj = mainw_msg_adj;
     mainw->msg_scrollbar = mainw->msg_scrollbar;
-    if (prefs->show_gui) unblock_expose();
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
     return FALSE;
   }

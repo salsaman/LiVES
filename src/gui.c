@@ -148,7 +148,7 @@ boolean expose_sim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
                                          (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
   lives_painter_set_source_surface(cr, mainw->si_surface, 0., 0.);
   lives_painter_paint(cr);
-  return TRUE;
+  return FALSE;
 }
 
 boolean expose_eim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
@@ -159,7 +159,7 @@ boolean expose_eim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
                                          (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
   lives_painter_set_source_surface(cr, mainw->ei_surface, 0., 0.);
   lives_painter_paint(cr);
-  return TRUE;
+  return FALSE;
 }
 
 boolean expose_pim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
@@ -167,7 +167,7 @@ boolean expose_pim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
   if (mainw->is_generating) return TRUE;
   lives_painter_set_source_surface(cr, mainw->pi_surface, 0., 0.);
   lives_painter_paint(cr);
-  return TRUE;
+  return FALSE;
 }
 
 #endif
@@ -1597,11 +1597,7 @@ void create_LiVES(void) {
   about = lives_standard_menu_item_new_with_label(_("_About"));
   lives_container_add(LIVES_CONTAINER(mainw->help_menu), about);
 
-  mainw->btoolbar = lives_toolbar_new();
-  lives_toolbar_set_show_arrow(LIVES_TOOLBAR(mainw->btoolbar), TRUE);
-
-  lives_toolbar_set_style(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOLBAR_ICONS);
-  lives_toolbar_set_icon_size(LIVES_TOOLBAR(mainw->btoolbar), LIVES_ICON_SIZE_LARGE_TOOLBAR);
+  mainw->btoolbar = lives_standard_toolbar_new();
 
   lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->btoolbar, FALSE, TRUE, 0);
   tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_SEPWIN,
@@ -2951,18 +2947,15 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(frame_context), LIVES_INT_TO_POINTER(2));
 
   lives_window_add_accel_group(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->accel_group);
-  if (new_lives) {
-    mainw->laudio_drawable = NULL;
-    mainw->raudio_drawable = NULL;
-    mainw->video_drawable = NULL;
-  }
   mainw->plug = NULL;
   lives_widget_set_can_focus(mainw->message_box, TRUE);
   if (new_lives) if (prefs->show_msg_area) lives_widget_grab_focus(mainw->message_box); // TODO !prefs->show_msg_area
 
   if (RFX_LOADED) {
-    lives_widget_destroy(mainw->ldg_menuitem);
-    mainw->ldg_menuitem = NULL;
+    if (mainw->ldg_menuitem) {
+      lives_widget_destroy(mainw->ldg_menuitem);
+      mainw->ldg_menuitem = NULL;
+    }
     add_rfx_effects2(RFX_STATUS_ANY);
   }
 }
@@ -3467,35 +3460,6 @@ void fullscreen_internal(void) {
   } else {
     make_play_window();
   }
-}
-
-
-void block_expose(void) {
-  // block expose/config events
-  // sometimes we need to do this before showing/re-showing the play window
-  // otherwise we get into a loop of expose events
-  // symptoms - strace shows the app looping on poll() and it is otherwise
-  // unresponsive
-  /// THIS WAS FIXED: gtkdrawingarea must be used instead of gtkimage !
-  //mainw->draw_blocked = TRUE;
-#if !GTK_CHECK_VERSION(3, 0, 0)
-  /* lives_signal_handler_block(mainw->video_draw, mainw->vidbar_func); */
-  /* lives_signal_handler_block(mainw->laudio_draw, mainw->laudbar_func); */
-  /* lives_signal_handler_block(mainw->raudio_draw, mainw->raudbar_func); */
-  /* if (mainw->msg_area != NULL) lives_signal_handler_block(mainw->msg_area, mainw->sw_func); */
-#endif
-}
-
-
-void unblock_expose(void) {
-  // unblock expose/config events
-#if !GTK_CHECK_VERSION(3, 0, 0)
-  /* lives_signal_handler_unblock(mainw->video_draw, mainw->config_func); */
-  /* lives_signal_handler_unblock(mainw->video_draw, mainw->vidbar_func); */
-  /* lives_signal_handler_unblock(mainw->laudio_draw, mainw->laudbar_func); */
-  /* lives_signal_handler_unblock(mainw->raudio_draw, mainw->raudbar_func); */
-  /* if (mainw->msg_area != NULL) lives_signal_handler_unblock(mainw->msg_area, mainw->sw_func); */
-#endif
 }
 
 

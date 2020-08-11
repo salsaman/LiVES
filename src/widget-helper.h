@@ -507,6 +507,8 @@ boolean lives_button_box_make_first(LiVESButtonBox *, LiVESWidget *);
 boolean lives_dialog_make_widget_first(LiVESDialog *, LiVESWidget *);
 LiVESAccelGroup *lives_dialog_add_escape(LiVESDialog *dlg, LiVESWidget *button);
 
+LiVESWidget *lives_standard_toolbar_new(void);
+
 LiVESWidget *lives_standard_hscale_new(LiVESAdjustment *);
 LiVESWidget *lives_vscale_new(LiVESAdjustment *);
 

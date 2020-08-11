@@ -89,7 +89,7 @@ typedef enum {
 
 #define WEED_LEAF_HOST_IDENTIFIER "host_unique_id"
 
-#define WEED_LEAF_HOST_EASE_OUT "host_ease_out"
+#define WEED_LEAF_HOST_EASING_END "host_easing_end"
 #define WEED_LEAF_HOST_EASE_OUT_COUNT "host_ease_out_count"
 #define WEED_LEAF_AUTO_EASING "host_auto_easing"
 
@@ -365,6 +365,7 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data);
 weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, uint32_t seed_type, weed_size_t num_elems, void *value);
 weed_error_t weed_leaf_delete_host(weed_plant_t *plant, const char *key);
 weed_error_t weed_plant_free_host(weed_plant_t *plant);
+weed_plant_t *weed_plant_new_host(int type);
 //weed_error_t weed_leaf_get_monitor(weed_plant_t *plant, const char *key, int32_t idx, void *value);
 
 void show_weed_stats(weed_plant_t *statsplant);

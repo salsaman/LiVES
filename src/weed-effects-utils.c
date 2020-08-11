@@ -100,7 +100,7 @@ WEED_LOCAL_INLINE weed_plant_t *_weed_get_gui(weed_plant_t *plant,  int create_i
   weed_plant_t *gui = NULL;
   int type = weed_plant_get_type(plant);
   if (type != WEED_PLANT_FILTER_CLASS && type != WEED_PLANT_PARAMETER_TEMPLATE
-      && type != WEED_PLANT_PARAMETER) return NULL;
+      && type != WEED_PLANT_PARAMETER && type != WEED_PLANT_FILTER_INSTANCE) return NULL;
   gui = weed_get_plantptr_value(plant, WEED_LEAF_GUI, NULL);
   if (!gui && create_if_not_exists == WEED_TRUE) {
     gui = weed_plant_new(WEED_PLANT_GUI);
@@ -124,6 +124,10 @@ WEED_GLOBAL_INLINE weed_plant_t *weed_filter_get_plugin_info(weed_plant_t *filte
 
 WEED_GLOBAL_INLINE char *weed_filter_get_package_name(weed_plant_t *filter) {
   return weed_plugin_info_get_package_name(weed_filter_get_plugin_info(filter));
+}
+
+WEED_GLOBAL_INLINE weed_plant_t *weed_instance_get_gui(weed_plant_t *inst, int create_if_not_exists) {
+  return _weed_get_gui(inst, create_if_not_exists);
 }
 
 WEED_GLOBAL_INLINE weed_plant_t *weed_paramtmpl_get_gui(weed_plant_t *paramt, int create_if_not_exists) {

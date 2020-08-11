@@ -368,7 +368,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
           lives_free(vpp->extra_argv);
         }
 
-        vpp->extra_argv = (char **)lives_malloc((vpp->extra_argc + 1) * (sizeof(char *)));
+        vpp->extra_argv = (char **)lives_calloc((vpp->extra_argc + 1), (sizeof(char *)));
 
         for (i = 0; i < vpp->extra_argc; i++) {
           lives_read_le(fd, &len, 4, FALSE);
@@ -761,16 +761,14 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     tmpvpp = mainw->vpp;
   }
 
-  vppa = (_vppaw *)(lives_malloc(sizeof(_vppaw)));
+  vppa = (_vppaw *)(lives_calloc(1, sizeof(_vppaw)));
 
   vppa->plugin = tmpvpp;
-  vppa->rfx = NULL;
-
-  vppa->spinbuttonh = vppa->spinbuttonw = NULL;
-  vppa->apply_fx = NULL;
-  vppa->pal_entry = vppa->fps_entry = NULL;
-
-  vppa->keep_rfx = FALSE;
+  /* vppa->rfx = NULL; */
+  /* vppa->spinbuttonh = vppa->spinbuttonw = NULL; */
+  /* vppa->apply_fx = NULL; */
+  /* vppa->pal_entry = vppa->fps_entry = NULL; */
+  /* vppa->keep_rfx = FALSE; */
 
   vppa->intention = intention;
 
@@ -820,7 +818,6 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
       // fps
       combo = lives_standard_combo_new((tmp = (_("_FPS"))), fps_list_strings,
                                        LIVES_BOX(dialog_vbox), (tmp2 = (_("Fixed framerate for plugin.\n"))));
-
       lives_free(tmp);
       lives_free(tmp2);
       vppa->fps_entry = lives_combo_get_entry(LIVES_COMBO(combo));
@@ -1255,12 +1252,12 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
 
   if (future_prefs->vpp_argv != NULL) {
     vpp->extra_argc = future_prefs->vpp_argc;
-    vpp->extra_argv = (char **)lives_malloc((vpp->extra_argc + 1) * (sizeof(char *)));
+    vpp->extra_argv = (char **)lives_calloc((vpp->extra_argc + 1), (sizeof(char *)));
     for (register int i = 0; i <= vpp->extra_argc; i++) vpp->extra_argv[i] = lives_strdup(future_prefs->vpp_argv[i]);
   } else {
     if (!in_use && mainw->vpp != NULL && !(strcmp(name, mainw->vpp->name))) {
       vpp->extra_argc = mainw->vpp->extra_argc;
-      vpp->extra_argv = (char **)lives_malloc((mainw->vpp->extra_argc + 1) * (sizeof(char *)));
+      vpp->extra_argv = (char **)lives_calloc((mainw->vpp->extra_argc + 1), (sizeof(char *)));
       for (register int i = 0; i <= vpp->extra_argc; i++) vpp->extra_argv[i] = lives_strdup(mainw->vpp->extra_argv[i]);
     } else {
       vpp->extra_argc = 0;
@@ -1438,7 +1435,7 @@ int64_t get_best_audio(_vid_playback_plugin * vpp) {
 
     nfmts = get_token_count(buf, '|');
     array = lives_strsplit(buf, "|", nfmts);
-    sfmts = (int *)lives_malloc(nfmts * sizint);
+    sfmts = (int *)lives_calloc(nfmts, sizint);
 
     for (i = 0; i < nfmts; i++) {
       if (array[i] != NULL && strlen(array[i]) > 0) sfmts[j++] = atoi(array[i]);
@@ -2162,11 +2159,12 @@ lives_decoder_t *clone_decoder(int fileno) {
 
   if (cdata == NULL) return NULL;
 
-  dplug = (lives_decoder_t *)lives_malloc(sizeof(lives_decoder_t));
+  dplug = (lives_decoder_t *)lives_calloc(1, sizeof(lives_decoder_t));
   dpsys = ((lives_decoder_t *)mainw->files[fileno]->ext_src)->decoder;
 
   dplug->decoder = dpsys;
   dplug->cdata = cdata;
+  dplug->refs = 1;
   set_cdata_memfuncs((lives_clip_data_t *)cdata);
   cdata->rec_rowstrides = NULL;
   return dplug;
@@ -2185,9 +2183,11 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList * disable
   // when reloading clips we try the decoder which last opened them first, othwerwise they could get picked up by another
   // decoder and the frames could come out different
 
-  lives_decoder_t *dplug = (lives_decoder_t *)lives_malloc(sizeof(lives_decoder_t));
+  lives_decoder_t *dplug = (lives_decoder_t *)lives_calloc(1, sizeof(lives_decoder_t));
   LiVESList *decoder_plugin = mainw->decoder_list;
   //LiVESList *last_decoder_plugin = NULL;
+
+  dplug->refs = 1;
 
   if (fake_cdata != NULL) {
     set_cdata_memfuncs((lives_clip_data_t *)fake_cdata);
@@ -2198,7 +2198,6 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList * disable
 
   while (decoder_plugin != NULL) {
     lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)decoder_plugin->data;
-
     if (lives_list_strcmp_index(disabled, dpsys->name, FALSE) != -1) {
       // check if (user) disabled this decoder
       decoder_plugin = decoder_plugin->next;
@@ -2243,7 +2242,7 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList * disable
     decoder_plugin = decoder_plugin->next;
   }
 
-  if (decoder_plugin == NULL) {
+  if (!decoder_plugin) {
     lives_freep((void **)&dplug);
   } else {
     dplug->cdata->rec_rowstrides = NULL;
@@ -2286,6 +2285,7 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList * disabled, con
   // until we get non-NULL cdata
 
   sfile->ext_src = NULL;
+  sfile->ext_src_type = LIVES_EXT_SRC_NONE;
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
 
@@ -2317,6 +2317,7 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList * disabled, con
   if (dplug != NULL) {
     d_print(_(" using %s"), dplug->decoder->version());
     sfile->ext_src = dplug;
+    sfile->ext_src_type = LIVES_EXT_SRC_DECODER;
     return dplug->cdata;
   }
 
@@ -2329,11 +2330,14 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList * disabled, con
 void close_decoder_plugin(lives_decoder_t *dplug) {
   lives_clip_data_t *cdata;
 
-  if (dplug == NULL) return;
+  if (!dplug) return;
+
+  dplug->refs--;
+  if (dplug->refs) return;
 
   cdata = dplug->cdata;
 
-  if (cdata != NULL) {
+  if (cdata) {
     if (cdata->rec_rowstrides) {
       lives_free(cdata->rec_rowstrides);
       cdata->rec_rowstrides = NULL;
@@ -2341,6 +2345,25 @@ void close_decoder_plugin(lives_decoder_t *dplug) {
     (*dplug->decoder->clip_data_free)(cdata);
   }
   lives_free(dplug);
+}
+
+
+void close_clip_decoder(int clipno) {
+  if (!IS_VALID_CLIP(clipno)) return;
+  else {
+    lives_clip_t *sfile = mainw->files[clipno];
+    if (sfile->ext_src && sfile->ext_src_type == LIVES_EXT_SRC_DECODER) {
+      char *cwd = lives_get_current_dir();
+      char *ppath = lives_build_filename(prefs->workdir, sfile->handle, NULL);
+      lives_chdir(ppath, FALSE);
+      lives_free(ppath);
+      close_decoder_plugin((lives_decoder_t *)sfile->ext_src);
+      sfile->ext_src = NULL;
+      sfile->ext_src_type = LIVES_EXT_SRC_NONE;
+      lives_chdir(cwd, FALSE);
+      lives_free(cwd);
+    }
+  }
 }
 
 
@@ -2388,7 +2411,7 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
   const char *err;
   int dlflags = RTLD_NOW | RTLD_LOCAL;
 
-  dplug = (lives_decoder_sys_t *)lives_malloc(sizeof(lives_decoder_sys_t));
+  dplug = (lives_decoder_sys_t *)lives_calloc(1, sizeof(lives_decoder_sys_t));
 
   dplug->name = NULL;
 
@@ -2686,7 +2709,7 @@ void render_fx_get_params(lives_rfx_t *rfx, const char *plugin_name, short statu
 
   //threaded_dialog_spin(0.);
   rfx->num_params = lives_list_length(parameter_list);
-  rfx->params = (lives_param_t *)lives_malloc(rfx->num_params * sizeof(lives_param_t));
+  rfx->params = (lives_param_t *)lives_calloc(rfx->num_params, sizeof(lives_param_t));
   list = parameter_list;
 
   for (param_idx = 0; param_idx < rfx->num_params; param_idx++) {
@@ -2864,7 +2887,7 @@ void sort_rfx_array(lives_rfx_t *in, int num) {
     rfx_list = lives_list_prepend(rfx_list, (livespointer)&in[i]);
   }
   rfx_list = lives_list_sort(rfx_list, cmp_menu_entries);
-  rfx = mainw->rendered_fx = (lives_rfx_t *)lives_malloc((num + 1) * sizeof(lives_rfx_t));
+  rfx = mainw->rendered_fx = (lives_rfx_t *)lives_calloc((num + 1), sizeof(lives_rfx_t));
   rfx_copy(rfx, in, FALSE);
   xrfx_list = rfx_list;
   while (xrfx_list != NULL) {
@@ -3148,7 +3171,7 @@ lives_param_t *find_rfx_param_by_name(lives_rfx_t *rfx, const char *name) {
 
 lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_reinits) {
   int i, j;
-  lives_param_t *rpar = (lives_param_t *)lives_malloc(npar * sizeof(lives_param_t));
+  lives_param_t *rpar = (lives_param_t *)lives_calloc(npar, sizeof(lives_param_t));
   int param_hint;
   char **list;
   LiVESList *gtk_list = NULL;
@@ -3518,7 +3541,7 @@ lives_rfx_t *weed_to_rfx(weed_plant_t *plant, boolean show_reinits) {
   weed_plant_t *filter, *inst;
 
   char *string;
-  lives_rfx_t *rfx = (lives_rfx_t *)lives_malloc(sizeof(lives_rfx_t));
+  lives_rfx_t *rfx = (lives_rfx_t *)lives_calloc(1, sizeof(lives_rfx_t));
   rfx->is_template = FALSE;
   if (weed_get_int_value(plant, WEED_LEAF_TYPE, &error) == WEED_PLANT_FILTER_INSTANCE) {
     filter = weed_instance_get_filter(plant, TRUE);
@@ -3661,7 +3684,7 @@ LiVESList *get_external_window_hints(lives_rfx_t *rfx) {
 char *plugin_run_param_window(const char *scrap_text, LiVESVBox * vbox, lives_rfx_t **ret_rfx) {
   FILE *sfile;
 
-  lives_rfx_t *rfx = (lives_rfx_t *)lives_malloc(sizeof(lives_rfx_t));
+  lives_rfx_t *rfx = (lives_rfx_t *)lives_calloc(1, sizeof(lives_rfx_t));
 
   char *string;
   char *rfx_scrapname = lives_strdup_printf("rfx.%d", capable->mainpid);

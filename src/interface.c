@@ -185,7 +185,7 @@ static void clear_tbar_bgs(int posx, int posy, int width, int height, int which)
   if (posy < 0) posy = 0;
 
   if (which == 0 || which == 2) {
-    if (mainw->laudio_drawable != NULL) {
+    if (mainw->laudio_drawable) {
       allocwidth = lives_widget_get_allocation_width(mainw->laudio_draw);
       allocheight = lives_widget_get_allocation_height(mainw->laudio_draw);
       cr = lives_painter_create_from_surface(mainw->laudio_drawable);
@@ -197,12 +197,10 @@ static void clear_tbar_bgs(int posx, int posy, int width, int height, int which)
   }
 
   if (which == 0 || which == 3) {
-    if (mainw->raudio_drawable != NULL) {
+    if (mainw->raudio_drawable) {
       allocwidth = lives_widget_get_allocation_width(mainw->raudio_draw);
       allocheight = lives_widget_get_allocation_height(mainw->raudio_draw);
-
       cr = lives_painter_create_from_surface(mainw->raudio_drawable);
-
       lives_painter_render_background(mainw->raudio_draw, cr, posx, posy,
                                       UTIL_CLAMP(width, allocwidth),
                                       UTIL_CLAMP(height, allocheight));
@@ -211,12 +209,10 @@ static void clear_tbar_bgs(int posx, int posy, int width, int height, int which)
   }
 
   if (which == 0 || which == 1) {
-    if (mainw->video_drawable != NULL) {
+    if (mainw->video_drawable) {
       allocwidth = lives_widget_get_allocation_width(mainw->video_draw);
       allocheight = lives_widget_get_allocation_height(mainw->video_draw);
-
       cr = lives_painter_create_from_surface(mainw->video_drawable);
-
       lives_painter_render_background(mainw->video_draw, cr, posx, posy,
                                       UTIL_CLAMP(width, allocwidth),
                                       UTIL_CLAMP(height, allocheight));
@@ -224,7 +220,6 @@ static void clear_tbar_bgs(int posx, int posy, int width, int height, int which)
     }
   }
 }
-
 
 
 double lives_ce_update_timeline(int frame, double x) {
@@ -236,9 +231,7 @@ double lives_ce_update_timeline(int frame, double x) {
 
   static int last_current_file = -1;
 
-  if (!prefs->show_gui) {
-    return 0.;
-  }
+  if (!prefs->show_gui) return 0.;
 
   if (lives_widget_get_allocation_width(mainw->vidbar) <= 0) {
     return 0.;
@@ -301,10 +294,9 @@ double lives_ce_update_timeline(int frame, double x) {
     lives_signal_handler_unblock(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
   }
 
-  lives_widget_queue_draw(mainw->eventbox2);
   show_playbar_labels(mainw->current_file);
-
-  update_timer_bars(0, 0, 0, 0, 0);
+  redraw_timeline(mainw->current_file);
+  lives_widget_queue_draw(mainw->eventbox2);
 
   last_current_file = mainw->current_file;
   return cfile->pointer_time;
@@ -321,17 +313,14 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
   // which 0 = all, 1 = vidbar, 2 = laudbar, 3 = raudbar
 
   lives_painter_t *cr = NULL;
-  lives_painter_surface_t *bgimage;
-
   char *filename;
 
   double allocwidth;
   double allocheight;
   double atime;
-  double scalex;
   double ptrtime;
 
-  double y = 0.;
+  double y = 0., scalex;
 
   int start;
   int offset_left = 0;
@@ -370,11 +359,10 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
   // empirically we need to draw wider
   posx -= OVERDRAW_MARGIN;
   if (width > 0) width += OVERDRAW_MARGIN;
-
   if (posx < 0) posx = 0;
   if (posy < 0) posy = 0;
 
-  if (cfile->frames > 0 && mainw->video_drawable != NULL && (which == 0 || which == 1)) {
+  if (cfile->frames > 0 && mainw->video_drawable && (which == 0 || which == 1)) {
     bar_height = CE_VIDBAR_HEIGHT;
     allocwidth = lives_widget_get_allocation_width(mainw->video_draw);
     scalex = (double)allocwidth / CURRENT_CLIP_TOTAL_TIME;
@@ -419,7 +407,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
   bar_height = CE_AUDBAR_HEIGHT / 2.;
 
-  if (cfile->achans > 0 && mainw->laudio_drawable != NULL && (which == 0 || which == 2)) {
+  if (cfile->achans > 0 && mainw->laudio_drawable && (which == 0 || which == 2)) {
     allocwidth = lives_widget_get_allocation_width(mainw->laudio_draw);
     allocheight = CE_AUDBAR_HEIGHT;
     scalex = (double)allocwidth / CURRENT_CLIP_TOTAL_TIME;
@@ -439,9 +427,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
       cfile->audio_waveform[0] = (float *)lives_calloc((int)offset_end, sizeof(float));
       start = cfile->aw_sizes[0] = 0;
     } else if (cfile->aw_sizes[0] != offset_end) {
-      if (LIVES_IS_PLAYING)
-        start = cfile->aw_sizes[0];
-      else start = 0;
+      start = 0;
       cfile->audio_waveform[0] = (float *)lives_realloc(cfile->audio_waveform[0], (int)offset_end * sizeof(float));
     }
 
@@ -464,111 +450,66 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
         lives_close_buffered(afd);
       }
 
-      if (LIVES_IS_PLAYING) {
-        offset_left = ROUND_I(((mainw->playing_sel && is_realtime_aplayer(prefs->audio_player)) ?
-                               cfile->start - 1. : mainw->audio_start - 1.) / cfile->fps * scalex);
-        if (mainw->audio_end && !mainw->loop) {
-          offset_right = ROUND_I((double)((is_realtime_aplayer(prefs->audio_player)) ?
-                                          (double)cfile->end : mainw->audio_end) / cfile->fps * scalex);
-        } else offset_right = ROUND_I(cfile->laudio_time * scalex);
-      }
-
+      cr = lives_painter_create_from_surface(mainw->laudio_drawable);
       offset_right = NORMAL_CLAMP(offset_right, cfile->laudio_time * scalex);
-
-      bgimage = (lives_painter_surface_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "bgimg");
       xwidth = UTIL_CLAMP(width, allocwidth);
-
-      if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "drawn"))) {
-        // audio and in / out points unchanged, just redraw existing ["drawn" is TRUE] -> expose / draw event
-        if (bgimage != NULL && lives_painter_image_surface_get_width(bgimage) > 0) {
-          cr = lives_painter_create_from_surface(mainw->laudio_drawable);
-          lives_painter_set_source_surface(cr, bgimage, 0, 0);
-          lives_painter_rectangle(cr, posx, posy, xwidth, UTIL_CLAMP(height, allocheight));
-          lives_painter_fill(cr);
-          lives_painter_destroy(cr);
-        }
-      } else {
-        if (xwidth == allocwidth) {
-          if (bgimage != NULL) lives_painter_surface_destroy(bgimage);
-          bgimage = NULL;
-        }
-        if (bgimage == NULL) {
-          bgimage = lives_painter_image_surface_create(LIVES_PAINTER_COLOR_PALETTE(capable->byte_order),
-                    allocwidth, allocheight);
+      if (offset_end > posx + xwidth) offset_end = posx + xwidth;
+      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
+      lpos = -9999;
+      lives_painter_move_to(cr, posx, bar_height);
+      for (i = posx; i < offset_left && i < offset_end; i++) {
+        pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
+        if (pos != lpos) {
+          lpos = pos;
+          y = bar_height * (1. - cfile->audio_waveform[0][pos] / 2.);
         }
 
-        if (offset_end > posx + xwidth) offset_end = posx + xwidth;
+        lives_painter_line_to(cr, i, bar_height);
+        lives_painter_line_to(cr, i, y);
+        lives_painter_line_to(cr, i, bar_height);
+      }
+      lives_painter_close_path(cr);
+      lives_painter_stroke(cr);
 
-        if (bgimage != NULL && lives_painter_image_surface_get_width(bgimage) > 0) {
-          lives_painter_t *crx = lives_painter_create_from_surface(bgimage);
+      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_sel);
+      lpos = -9999;
 
-          lives_painter_set_source_rgb_from_lives_rgba(crx, &palette->ce_unsel);
-          lpos = -9999;
-          lives_painter_move_to(crx, posx, bar_height);
-          for (i = posx; i < offset_left && i < offset_end; i++) {
-            pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
-            if (pos != lpos) {
-              lpos = pos;
-              y = bar_height * (1. - cfile->audio_waveform[0][pos] / 2.);
-            }
+      lives_painter_move_to(cr, i, bar_height);
+      for (; i < offset_right && i < offset_end; i++) {
+        pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
+        if (pos != lpos) {
+          lpos = pos;
+          y = bar_height * (1. - cfile->audio_waveform[0][pos] / 2.);
+        }
 
-            lives_painter_line_to(crx, i, bar_height);
-            lives_painter_line_to(crx, i, y);
-            lives_painter_line_to(crx, i, bar_height);
-          }
-          lives_painter_close_path(crx);
-          lives_painter_stroke(crx);
+        lives_painter_line_to(cr, i, bar_height);
+        lives_painter_line_to(cr, i, y);
+        lives_painter_line_to(cr, i, bar_height);
+      }
+      lives_painter_close_path(cr);
+      lives_painter_stroke(cr);
 
-          lives_painter_set_source_rgb_from_lives_rgba(crx, &palette->ce_sel);
-          lpos = -9999;
+      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
+      lpos = -9999;
+      lives_painter_move_to(cr, offset_right, bar_height);
+      for (; i < offset_end; i++) {
+        pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
+        if (pos != lpos) {
+          lpos = pos;
+          y = bar_height * (1. - cfile->audio_waveform[0][pos] / 2.);
+        }
 
-          lives_painter_move_to(crx, i, bar_height);
-          for (; i < offset_right && i < offset_end; i++) {
-            pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
-            if (pos != lpos) {
-              lpos = pos;
-              y = bar_height * (1. - cfile->audio_waveform[0][pos] / 2.);
-            }
+        lives_painter_line_to(cr, i, bar_height);
+        lives_painter_line_to(cr, i, y);
+        lives_painter_line_to(cr, i, bar_height);
+      }
+      lives_painter_close_path(cr);
+      lives_painter_stroke(cr);
+      lives_painter_destroy(cr);
+    }
+  }
 
-            lives_painter_line_to(crx, i, bar_height);
-            lives_painter_line_to(crx, i, y);
-            lives_painter_line_to(crx, i, bar_height);
-          }
-          lives_painter_close_path(crx);
-          lives_painter_stroke(crx);
-
-          lives_painter_set_source_rgb_from_lives_rgba(crx, &palette->ce_unsel);
-          lpos = -9999;
-          lives_painter_move_to(crx, offset_right, bar_height);
-          for (; i < offset_end; i++) {
-            pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
-            if (pos != lpos) {
-              lpos = pos;
-              y = bar_height * (1. - cfile->audio_waveform[0][pos] / 2.);
-            }
-
-            lives_painter_line_to(crx, i, bar_height);
-            lives_painter_line_to(crx, i, y);
-            lives_painter_line_to(crx, i, bar_height);
-          }
-          lives_painter_close_path(crx);
-          lives_painter_stroke(crx);
-          lives_painter_destroy(crx);
-
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "bgimg", (livespointer)bgimage);
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "drawn", LIVES_INT_TO_POINTER(1));
-
-          // paint bgimage onto the drawable
-          cr = lives_painter_create_from_surface(mainw->laudio_drawable);
-          lives_painter_set_source_surface(cr, bgimage, 0, 0);
-          lives_painter_rectangle(cr, posx, posy, xwidth, UTIL_CLAMP(height, allocheight));
-          lives_painter_fill(cr);
-          lives_painter_destroy(cr);
-	  // *INDENT-OFF*
-	}}}}
-  // *INDENT-ON*
-
-  if (cfile->achans > 1 && mainw->raudio_drawable != NULL && (which == 0 || which == 3)) {
+  if (cfile->achans > 1 && mainw->raudio_drawable && (which == 0 || which == 3)) {
     allocwidth = lives_widget_get_allocation_width(mainw->raudio_draw);
     allocheight = CE_AUDBAR_HEIGHT;
     scalex = (double)allocwidth / CURRENT_CLIP_TOTAL_TIME;
@@ -583,10 +524,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
       cfile->audio_waveform[1] = (float *)lives_calloc((int)offset_end, sizeof(float));
       start = cfile->aw_sizes[1] = 0;
     } else if (cfile->aw_sizes[1] != offset_end) {
-      if (LIVES_IS_PLAYING)
-        start = cfile->aw_sizes[1];
-      else
-        start = 0;
+      start = 0;
       cfile->audio_waveform[1] = (float *)lives_realloc(cfile->audio_waveform[1], (int)offset_end * sizeof(float));
     }
     cfile->aw_sizes[1] = offset_end;
@@ -610,193 +548,94 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
         afd = -1;
       }
 
-      if (LIVES_IS_PLAYING) {
-        offset_left = ROUND_I(((mainw->playing_sel && is_realtime_aplayer(prefs->audio_player)) ?
-                               cfile->start - 1. : mainw->audio_start - 1.) / cfile->fps * scalex);
-        if (mainw->audio_end && !mainw->loop) {
-          offset_right = ROUND_I((double)((is_realtime_aplayer(prefs->audio_player)) ?
-                                          (double)cfile->end : mainw->audio_end) / cfile->fps * scalex);
-        } else offset_right = ROUND_I(cfile->raudio_time * scalex);
-      }
-
       offset_right = NORMAL_CLAMP(offset_right, cfile->raudio_time * scalex);
-
-      bgimage = (lives_painter_surface_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "bgimg");
       xwidth = UTIL_CLAMP(width, allocwidth);
 
-      if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn"))) {
-        // audio and in / out points unchanged, just redraw existing ["drawn" is TRUE] -> expose / draw event
-        if (bgimage != NULL && lives_painter_image_surface_get_width(bgimage) > 0) {
-          cr = lives_painter_create_from_surface(mainw->raudio_drawable);
-          lives_painter_set_source_surface(cr, bgimage, 0, 0);
-          lives_painter_rectangle(cr, posx, posy, xwidth, UTIL_CLAMP(height, allocheight));
-          lives_painter_fill(cr);
-          lives_painter_destroy(cr);
-        }
-      } else {
-        if (xwidth == allocwidth) {
-          if (bgimage != NULL) lives_painter_surface_destroy(bgimage);
-          bgimage = NULL;
-        }
-        if (bgimage == NULL) {
-          bgimage = lives_painter_image_surface_create(LIVES_PAINTER_COLOR_PALETTE(capable->byte_order),
-                    allocwidth, allocheight);
+      cr = lives_painter_create_from_surface(mainw->raudio_drawable);
+      if (offset_end > posx + xwidth) offset_end = posx + xwidth;
+      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
+      lpos = -9999;
+      lives_painter_move_to(cr, posx, bar_height);
+      for (i = posx; i < offset_left && i < offset_end; i++) {
+        pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
+        if (pos != lpos) {
+          lpos = pos;
+          y = bar_height * (1. - cfile->audio_waveform[1][pos] / 2.);
         }
 
-        if (offset_end > posx + xwidth) offset_end = posx + xwidth;
+        lives_painter_line_to(cr, i, bar_height);
+        lives_painter_line_to(cr, i, y);
+        lives_painter_line_to(cr, i, bar_height);
+      }
+      lives_painter_close_path(cr);
+      lives_painter_stroke(cr);
 
-        if (bgimage != NULL && lives_painter_image_surface_get_width(bgimage) > 0) {
-          lives_painter_t *crx = lives_painter_create_from_surface(bgimage);
+      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_sel);
+      lpos = -9999;
 
-          lives_painter_set_source_rgb_from_lives_rgba(crx, &palette->ce_unsel);
-          lpos = -9999;
-          lives_painter_move_to(crx, posx, bar_height);
-          for (i = posx; i < offset_left && i < offset_end; i++) {
-            pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
-            if (pos != lpos) {
-              lpos = pos;
-              y = bar_height * (1. - cfile->audio_waveform[1][pos] / 2.);
-            }
-
-            lives_painter_line_to(crx, i, bar_height);
-            lives_painter_line_to(crx, i, y);
-            lives_painter_line_to(crx, i, bar_height);
-          }
-          lives_painter_close_path(crx);
-          lives_painter_stroke(crx);
-
-          lives_painter_set_source_rgb_from_lives_rgba(crx, &palette->ce_sel);
-          lpos = -9999;
-
-          lives_painter_move_to(crx, i, bar_height);
-          for (; i < offset_right && i < offset_end; i++) {
-            pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
-            if (pos != lpos) {
-              lpos = pos;
-              y = bar_height * (1. - cfile->audio_waveform[1][pos] / 2.);
-            }
-
-            lives_painter_line_to(crx, i, bar_height);
-            lives_painter_line_to(crx, i, y);
-            lives_painter_line_to(crx, i, bar_height);
-          }
-          lives_painter_close_path(crx);
-          lives_painter_stroke(crx);
-
-          lives_painter_set_source_rgb_from_lives_rgba(crx, &palette->ce_unsel);
-          lpos = -9999;
-          lives_painter_move_to(crx, offset_right, bar_height);
-          for (; i < offset_end; i++) {
-            pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
-            if (pos != lpos) {
-              lpos = pos;
-              y = bar_height * (1. - cfile->audio_waveform[1][pos] / 2.);
-            }
-
-            lives_painter_line_to(crx, i, bar_height);
-            lives_painter_line_to(crx, i, y);
-            lives_painter_line_to(crx, i, bar_height);
-          }
-          lives_painter_close_path(crx);
-          lives_painter_stroke(crx);
-          lives_painter_destroy(crx);
-
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "bgimg", (livespointer)bgimage);
-          lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(1));
-          ;
-          // paint bgimage onto the drawable
-          cr = lives_painter_create_from_surface(mainw->raudio_drawable);
-          lives_painter_set_source_surface(cr, bgimage, 0, 0);
-          lives_painter_rectangle(cr, posx, posy, xwidth, UTIL_CLAMP(height, allocheight));
-          lives_painter_fill(cr);
-          lives_painter_destroy(cr);
-	  // *INDENT-OFF*
-        }}}}
-  // *INDENT-ON*
-  if (which == 0) {
-    // playback cursors
-    if (!LIVES_IS_PLAYING || (mainw->switch_during_pb && !mainw->faded)) {
-      if (CURRENT_CLIP_TOTAL_TIME > 0.) {
-        // set the range of the timeline
-        if (!cfile->opening_loc && which == 0) {
-          if (!lives_widget_is_visible(mainw->hruler)) {
-            lives_widget_show(mainw->hruler);
-          }
+      lives_painter_move_to(cr, i, bar_height);
+      for (; i < offset_right && i < offset_end; i++) {
+        pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
+        if (pos != lpos) {
+          lpos = pos;
+          y = bar_height * (1. - cfile->audio_waveform[1][pos] / 2.);
         }
 
-        if (!lives_widget_is_visible(mainw->video_draw)) {
-          lives_widget_show(mainw->hruler);
-          lives_widget_show(mainw->video_draw);
-          lives_widget_show(mainw->laudio_draw);
-          lives_widget_show(mainw->raudio_draw);
+        lives_painter_line_to(cr, i, bar_height);
+        lives_painter_line_to(cr, i, y);
+        lives_painter_line_to(cr, i, bar_height);
+      }
+      lives_painter_close_path(cr);
+      lives_painter_stroke(cr);
+
+      lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->ce_unsel);
+      lpos = -9999;
+      lives_painter_move_to(cr, offset_right, bar_height);
+      for (; i < offset_end; i++) {
+        pos = ROUND_I((double)(i * cfile->fps / scalex) / cfile->fps * scalex);
+        if (pos != lpos) {
+          lpos = pos;
+          y = bar_height * (1. - cfile->audio_waveform[1][pos] / 2.);
         }
 
-#ifdef ENABLE_GIW
-        giw_timeline_set_max_size(GIW_TIMELINE(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
-#endif
-        lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
-        lives_widget_queue_draw(mainw->hruler);
-
-        draw_little_bars(cfile->pointer_time, 1);
-        draw_little_bars(cfile->real_pointer_time, 2);
-        draw_little_bars(cfile->real_pointer_time, 3);
+        lives_painter_line_to(cr, i, bar_height);
+        lives_painter_line_to(cr, i, y);
+        lives_painter_line_to(cr, i, bar_height);
       }
-      show_playbar_labels(mainw->current_file);
-    } else {
-      // playback, and we didnt switch clips during playback
-      ptrtime = -1.;
-      if (prefs->audio_player == AUD_PLAYER_JACK) {
-#ifdef ENABLE_JACK
-        if (mainw->jackd != NULL && mainw->jackd->in_use) ptrtime = lives_jack_get_pos(mainw->jackd) /
-              cfile->arate / cfile->achans / cfile->asampsize * 8;
-#endif
-      }
-
-      if (prefs->audio_player == AUD_PLAYER_PULSE) {
-#ifdef HAVE_PULSE_AUDIO
-        if (mainw->pulsed != NULL && mainw->pulsed->in_use) ptrtime = lives_pulse_get_pos(mainw->pulsed) /
-              cfile->arate / cfile->achans / cfile->asampsize * 8;
-#endif
-      }
-      if (ptrtime >= 0.) {
-        draw_little_bars(ptrtime, 2);
-        draw_little_bars(ptrtime, 3);
-        which = 1;
-      }
-      ptrtime = ((double)(cfile->frameno - 1.) + ((double)(mainw->currticks - mainw->startticks)
-                 / TICKS_PER_SECOND_DBL * sig(cfile->pb_fps)))
-                / cfile->fps;
-      if (ptrtime < 0.) ptrtime = 0.;
-      draw_little_bars(ptrtime, which);
-      which = 0;
-    }
-    //lives_widget_queue_draw_if_visible(mainw->vidbar);
-    lives_widget_queue_draw_if_visible(mainw->hruler);
-  } else {
-    if (LIVES_IS_PLAYING) {
-      ptrtime = 0.;
-      if (which == 1)
-        ptrtime = (cfile->frameno + (double)(mainw->currticks - mainw->startticks)
-                   / TICKS_PER_SECOND_DBL * sig(cfile->pb_fps))
-                  / cfile->fps;
-      else if (prefs->audio_player == AUD_PLAYER_JACK) {
-#ifdef ENABLE_JACK
-        if (mainw->jackd != NULL && mainw->jackd->in_use) ptrtime = lives_jack_get_pos(mainw->jackd) /
-              cfile->arate / cfile->achans / cfile->asampsize * 8;
-#endif
-      }
-
-      if (prefs->audio_player == AUD_PLAYER_PULSE) {
-#ifdef HAVE_PULSE_AUDIO
-        if (mainw->pulsed != NULL && mainw->pulsed->in_use) ptrtime = lives_pulse_get_pos(mainw->pulsed) /
-              cfile->arate / cfile->achans / cfile->asampsize * 8;
-#endif
-      }
-
-      if (ptrtime < 0.) ptrtime = 0.;
-      draw_little_bars(ptrtime, which);
+      lives_painter_close_path(cr);
+      lives_painter_stroke(cr);
+      lives_painter_destroy(cr);
     }
   }
+
+  if (which == 0) {
+    // playback cursors
+    if (CURRENT_CLIP_TOTAL_TIME > 0.) {
+      // set the range of the timeline
+      if (!cfile->opening_loc && which == 0) {
+        if (!lives_widget_is_visible(mainw->hruler)) {
+          lives_widget_show(mainw->hruler);
+        }
+      }
+
+      if (!lives_widget_is_visible(mainw->video_draw)) {
+        lives_widget_show(mainw->hruler);
+        lives_widget_show(mainw->video_draw);
+        lives_widget_show(mainw->laudio_draw);
+        lives_widget_show(mainw->raudio_draw);
+      }
+
+#ifdef ENABLE_GIW
+      giw_timeline_set_max_size(GIW_TIMELINE(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
+#endif
+      lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
+      lives_widget_queue_draw(mainw->hruler);
+    }
+    show_playbar_labels(mainw->current_file);
+  }
+  //lives_widget_queue_draw_if_visible(mainw->hruler);
+
+
   mainw->current_file = current_file;
   if (which == 0 || which == 1) lives_widget_queue_draw_if_visible(mainw->video_draw);
   if (which == 0 || which == 2) lives_widget_queue_draw_if_visible(mainw->laudio_draw);
@@ -819,179 +658,11 @@ void redraw_timer_bars(double oldx, double newx, int which) {
 
   scalex = allocwidth / CURRENT_CLIP_TOTAL_TIME;
 
-  if (which == 0 || which == 2) {
-    // force redrawing
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
-  }
-  if (which == 0 || which == 3) {
-    // force redrawing
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
-  }
   if (newx > oldx) {
     update_timer_bars(ROUND_I(oldx * scalex - .5), 0, ROUND_I((newx - oldx) * scalex + .5), 0, which);
   } else {
     update_timer_bars(ROUND_I(newx * scalex - .5), 0, ROUND_I((oldx - newx) * scalex + .5), 0, which);
   }
-}
-
-
-void draw_little_bars(double ptrtime, int which) {
-  //draw the vertical player bars
-  lives_painter_t *cr;
-  int bar_height;
-  int allocy;
-  double allocwidth = (double)lives_widget_get_allocation_width(mainw->video_draw), allocheight;
-  double offset;
-
-#ifdef TEST_VOL_LIGHTS
-  float maxvol = 0.;
-  static int last_maxvol_lights = 0;
-  int maxvol_lights;
-  int i;
-#endif
-
-  int frame = 0;
-
-  if (!prefs->show_gui) return;
-
-  if (!CURRENT_CLIP_IS_VALID) return;
-  mainw->ptrtime = ptrtime;
-  offset = ptrtime / CURRENT_CLIP_TOTAL_TIME * allocwidth;
-#ifdef TEST_VOL_LIGHTS
-  if (which == 0) {
-#ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player == AUD_PLAYER_PULSE) {
-      if (mainw->pulsed_read != NULL) maxvol = mainw->pulsed_read->abs_maxvol_heard;
-      else if (mainw->pulsed != NULL) maxvol = mainw->pulsed->abs_maxvol_heard;
-    }
-#endif
-#ifdef ENABLE_JACK
-    if (prefs->audio_player == AUD_PLAYER_JACK) {
-      if (mainw->jackd_read != NULL) maxvol = mainw->jackd_read->abs_maxvol_heard;
-      else if (mainw->jackd != NULL) maxvol = mainw->jackd->abs_maxvol_heard;
-    }
-#endif
-    maxvol_lights = (int)(maxvol * (float)NUM_VOL_LIGHTS + .5);
-    if (maxvol_lights != last_maxvol_lights) {
-      last_maxvol_lights = maxvol_lights;
-      for (i = 0; i < NUM_VOL_LIGHTS; i++) {
-        lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->vol_checkbuttons[i][0]), i < maxvol_lights);
-      }
-    }
-  }
-#endif
-
-  if (CURRENT_CLIP_TOTAL_TIME > 0.) {
-    if (!(frame = calc_frame_from_time(mainw->current_file, ptrtime)))
-      frame = cfile->frames;
-
-    if (cfile->frames > 0 && (which == 0 || which == 1)) {
-      if (mainw->video_drawable != NULL) {
-        bar_height = CE_VIDBAR_HEIGHT;
-
-        allocheight = (double)lives_widget_get_allocation_height(mainw->vidbar) + bar_height + widget_opts.packing_height * 2.5;
-        allocy = lives_widget_get_allocation_y(mainw->vidbar) - widget_opts.packing_height;
-
-        if (LIVES_IS_PLAYING) {
-          if (offset > 0.) {
-            lives_widget_queue_draw_area(mainw->eventbox2, 0, allocy, offset - 1, allocheight + .5);
-          }
-          if (offset < allocwidth) {
-            lives_widget_queue_draw_area(mainw->eventbox2, offset + 1, allocy, allocwidth - offset - 1., allocheight + .5);
-          }
-        }
-
-        cr = lives_painter_create_from_surface(mainw->video_drawable);
-        lives_painter_set_line_width(cr, 1.);
-        if (palette->style & STYLE_LIGHT) {
-          lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
-        } else {
-          lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->white);
-        }
-        lives_painter_move_to(cr, offset, 0);
-        lives_painter_line_to(cr, offset, bar_height);
-        lives_painter_stroke(cr);
-        lives_painter_destroy(cr);
-      }
-    }
-
-    if (LIVES_IS_PLAYING) {
-      if (which == 0) lives_ruler_set_value(LIVES_RULER(mainw->hruler), ptrtime);
-      if (cfile->achans > 0 && cfile->is_loaded && prefs->audio_src != AUDIO_SRC_EXT) {
-        if (is_realtime_aplayer(prefs->audio_player) && (mainw->event_list == NULL || !mainw->preview)) {
-#ifdef ENABLE_JACK
-          if (mainw->jackd != NULL && prefs->audio_player == AUD_PLAYER_JACK) {
-            offset = allocwidth * ((double)mainw->jackd->seek_pos / cfile->arate / cfile->achans /
-                                   cfile->asampsize * 8) / CURRENT_CLIP_TOTAL_TIME;
-          }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-          if (mainw->pulsed != NULL && prefs->audio_player == AUD_PLAYER_PULSE) {
-            offset = allocwidth * ((double)mainw->pulsed->seek_pos / cfile->arate / cfile->achans /
-                                   cfile->asampsize * 8) / CURRENT_CLIP_TOTAL_TIME;
-          }
-#endif
-        } else offset = allocwidth * (mainw->aframeno - .5) / cfile->fps / CURRENT_CLIP_TOTAL_TIME;
-      }
-    }
-
-    if (cfile->achans > 0) {
-      bar_height = CE_AUDBAR_HEIGHT;
-      if (mainw->laudio_drawable != NULL && (which == 0 || which == 2)) {
-        allocheight = (double)lives_widget_get_allocation_height(mainw->laudbar) + bar_height + widget_opts.packing_height * 2.5;
-        allocy = lives_widget_get_allocation_y(mainw->laudbar) - widget_opts.packing_height;
-
-        if (LIVES_IS_PLAYING) {
-          if (offset > 0.) {
-            lives_widget_queue_draw_area(mainw->eventbox2, 0, allocy, offset - 1, allocheight + .5);
-          }
-          if (offset < allocwidth) {
-            lives_widget_queue_draw_area(mainw->eventbox2, offset + 1, allocy, allocwidth - offset - 1., allocheight + .5);
-          }
-        }
-
-        cr = lives_painter_create_from_surface(mainw->laudio_drawable);
-        lives_painter_set_line_width(cr, 1.);
-        if (palette->style & STYLE_LIGHT) {
-          lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
-        } else {
-          lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->white);
-        }
-        lives_painter_move_to(cr, offset, 0);
-        lives_painter_line_to(cr, offset, bar_height);
-        lives_painter_stroke(cr);
-        lives_painter_destroy(cr);
-      }
-
-      if (cfile->achans > 1 && (which == 0 || which == 3)) {
-        if (mainw->raudio_drawable != NULL) {
-          allocheight = (double)lives_widget_get_allocation_height(mainw->raudbar)
-                        + bar_height + widget_opts.packing_height * 2.5;
-          allocy = lives_widget_get_allocation_y(mainw->raudbar) - widget_opts.packing_height;
-
-          if (LIVES_IS_PLAYING) {
-            if (offset > 0.) {
-              lives_widget_queue_draw_area(mainw->eventbox2, 0, allocy, offset - 1, allocheight + .5);
-            }
-            if (offset < allocwidth) {
-              lives_widget_queue_draw_area(mainw->eventbox2, offset + 1, allocy, allocwidth - offset - 1., allocheight + .5);
-            }
-          }
-
-          cr = lives_painter_create_from_surface(mainw->raudio_drawable);
-          lives_painter_set_line_width(cr, 1.);
-          if (palette->style & STYLE_LIGHT) {
-            lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
-          } else {
-            lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->white);
-          }
-          lives_painter_move_to(cr, offset, 0);
-          lives_painter_line_to(cr, offset, bar_height);
-          lives_painter_stroke(cr);
-          lives_painter_destroy(cr);
-	  // *INDENT-OFF*
-        }}}}
-  // *INDENT-OFF*
 }
 
 
@@ -1038,9 +709,9 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
     if (preview_type != LIVES_PREVIEW_TYPE_RANGE) {
       lives_widget_set_size_request(mainw->fs_playframe,
                                     ((int)(DEF_FRAME_HSIZE_UNSCALED * (widget_opts.scale < 1.
-								       ? widget_opts.scale : 1.)) >> 2) << 1,
+                                           ? widget_opts.scale : 1.)) >> 2) << 1,
                                     ((int)(DEF_FRAME_VSIZE_UNSCALED * (widget_opts.scale < 1.
-								       ? widget_opts.scale : 1.)) >> 2) << 1);
+                                           ? widget_opts.scale : 1.)) >> 2) << 1);
     } else {
       lives_widget_set_vexpand(mainw->fs_playframe, TRUE);
     }
@@ -1297,7 +968,7 @@ xprocess *create_processing(const char *text) {
     }
 
     if (cfile->nokeep) procw->pause_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing),
-										NULL, _("Paus_e"), LIVES_RESPONSE_ACCEPT);
+          NULL, _("Paus_e"), LIVES_RESPONSE_ACCEPT);
     else procw->pause_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing), NULL, _("Pause/_Enough"),
                                  LIVES_RESPONSE_ACCEPT);
     lives_widget_hide(procw->pause_button);
@@ -1657,7 +1328,7 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
     checkbutton2 = lives_standard_check_button_new
                    ((tmp = (_("Use _letterboxing to maintain aspect ratio (optional)"))), FALSE, LIVES_BOX(hbox),
                     (tmp2 = (H_("Draw black rectangles either above or to the sides of the image, "
-				"to prevent it from stretching."))));
+                                "to prevent it from stretching."))));
 
     lives_free(tmp);
     lives_free(tmp2);
@@ -1698,7 +1369,7 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
 
 
 LiVESWidget *scrolled_textview(const char *text, LiVESTextBuffer *textbuffer, int window_width,
-			       LiVESWidget **ptextview) {
+                               LiVESWidget **ptextview) {
   LiVESWidget *scrolledwindow = NULL;
   LiVESWidget *textview = lives_standard_text_view_new(text, textbuffer);
   if (textview) {
@@ -1707,12 +1378,12 @@ LiVESWidget *scrolled_textview(const char *text, LiVESTextBuffer *textbuffer, in
     if (!LIVES_SHOULD_EXPAND_HEIGHT) height >>= 1;
     widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
     scrolledwindow = lives_standard_scrolled_window_new(window_width, height,
-							textview);
+                     textview);
     widget_opts.expand = woex;
     lives_container_set_border_width(LIVES_CONTAINER(scrolledwindow), widget_opts.border_width);
     if (palette->style & STYLE_1) {
       lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)),
-				LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
+                                LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
     }
   }
   if (ptextview) *ptextview = textview;
@@ -1721,7 +1392,7 @@ LiVESWidget *scrolled_textview(const char *text, LiVESTextBuffer *textbuffer, in
 
 
 text_window *create_text_window(const char *title, const char *text, LiVESTextBuffer *textbuffer,
-				boolean add_buttons) {
+                                boolean add_buttons) {
   // general text window
   LiVESWidget *dialog_vbox;
   LiVESWidget *scrolledwindow;
@@ -1735,8 +1406,8 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
   if (LIVES_SHOULD_EXPAND_EXTRA_WIDTH) window_width = RFX_WINSIZE_H * 2;
 
   textwindow->dialog = lives_standard_dialog_new(title, FALSE, window_width,
-						 LIVES_SHOULD_EXPAND_HEIGHT ? DEF_DIALOG_HEIGHT
-						 : DEF_DIALOG_HEIGHT >> 1);
+                       LIVES_SHOULD_EXPAND_HEIGHT ? DEF_DIALOG_HEIGHT
+                       : DEF_DIALOG_HEIGHT >> 1);
   lives_window_add_accel_group(LIVES_WINDOW(textwindow->dialog), accel_group);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(textwindow->dialog));
@@ -1762,7 +1433,7 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
   if (add_buttons && (text != NULL || mainw->iochan != NULL || textwindow->table != NULL)) {
     if (textwindow->table == NULL) {
       LiVESWidget *savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
-								   LIVES_STOCK_SAVE,
+                                LIVES_STOCK_SAVE,
                                 _("_Save to file"),
                                 LIVES_RESPONSE_YES);
       lives_signal_connect(LIVES_GUI_OBJECT(savebutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -1771,8 +1442,8 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
     }
 
     textwindow->button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
-							    LIVES_STOCK_CLOSE, _("_Close Window"),
-							    LIVES_RESPONSE_CANCEL);
+                         LIVES_STOCK_CLOSE, _("_Close Window"),
+                         LIVES_RESPONSE_CANCEL);
 
     lives_button_grab_default_special(textwindow->button);
 
@@ -1977,13 +1648,13 @@ LiVESWidget *trash_rb(LiVESButtonBox *parent) {
 
     widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
     rb = lives_standard_radio_button_new((tmp = (_("Send to Trash"))), &rb_group,
-					 LIVES_BOX(vbox),
-					 (tmp2 = (H_("Send deleted items to filesystem Trash\n"
-						    "instead of erasing them permanently"))));
+                                         LIVES_BOX(vbox),
+                                         (tmp2 = (H_("Send deleted items to filesystem Trash\n"
+                                             "instead of erasing them permanently"))));
     lives_free(tmp); lives_free(tmp2);
 
     rb = lives_standard_radio_button_new((tmp = (_("Delete"))), &rb_group, LIVES_BOX(vbox),
-					 (tmp2 = (H_("Permanently erase items from the disk"))));
+                                         (tmp2 = (H_("Permanently erase items from the disk"))));
 
     lives_free(tmp); lives_free(tmp2);
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
@@ -1991,7 +1662,7 @@ LiVESWidget *trash_rb(LiVESButtonBox *parent) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(rb), !prefs->pref_trash);
 
     lives_signal_connect(LIVES_GUI_OBJECT(rb), LIVES_WIDGET_ACTIVATE_SIGNAL,
-			 LIVES_GUI_CALLBACK(toggle_sets_pref), PREF_PREF_TRASH);
+                         LIVES_GUI_CALLBACK(toggle_sets_pref), PREF_PREF_TRASH);
 
     lives_box_pack_start(LIVES_BOX(parent), hbox, FALSE, FALSE, 0);
     lives_button_box_make_first(LIVES_BUTTON_BOX(parent), hbox);
@@ -2007,14 +1678,12 @@ static void filt_cb_toggled(LiVESWidget *cb, lives_file_dets_t *filedets) {
     if (filedets->widgets[1]) {
       lives_widget_set_sensitive(filedets->widgets[1], TRUE);
       if (lives_toggle_button_get_active(filedets->widgets[1]))
-	lives_label_set_text(LIVES_LABEL(filedets->widgets[8]), rec_text);
+        lives_label_set_text(LIVES_LABEL(filedets->widgets[8]), rec_text);
       else
-	lives_label_set_text(LIVES_LABEL(filedets->widgets[8]), rem_text);
-    }
-    else
+        lives_label_set_text(LIVES_LABEL(filedets->widgets[8]), rem_text);
+    } else
       lives_label_set_text(LIVES_LABEL(filedets->widgets[8]), rem_text);
-  }
-  else {
+  } else {
     if (filedets->widgets[1]) {
       lives_widget_set_sensitive(filedets->widgets[1], FALSE);
     }
@@ -2056,7 +1725,7 @@ static void filt_reset_clicked(LiVESWidget *layout, LiVESWidget *rbut) {
       filedets = (lives_file_dets_t *)(xlist->data);
       lives_toggle_button_set_active(filedets->widgets[1], TRUE);
     }
-    // fall through
+  // fall through
   case 1:
     if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(cb)))
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(cb), TRUE);
@@ -2094,7 +1763,7 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
   if (!list->data) {
     if (!pass) {
       txt = lives_strdup_printf("  - %s -  ",
-				mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
+                                mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
       widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
       widget_opts.justify = LIVES_JUSTIFY_CENTER;
       lives_layout_add_label(LIVES_LAYOUT(layout), txt, FALSE);
@@ -2126,7 +1795,7 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
     widget_opts.packing_height = woph;
     lives_widget_set_margin(cb, widget_opts.border_width >> 1);
     lives_box_set_child_packing(LIVES_BOX(hbox), cb, FALSE, FALSE, widget_opts.packing_width >> 1,
-				LIVES_PACK_START);
+                                LIVES_PACK_START);
 
     lives_widget_set_sensitive(cb, FALSE);
     //set_child_alt_colour(hbox, FALSE);
@@ -2163,25 +1832,24 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
       filedets->widgets[8] = widget_opts.last_label;
 
       if (!type) {
-	hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-	filedets->widgets[1] = lives_standard_switch_new(NULL, TRUE, LIVES_BOX(hbox), NULL);
-	lives_signal_sync_connect(LIVES_GUI_OBJECT(filedets->widgets[1]), LIVES_WIDGET_TOGGLED_SIGNAL,
-				  LIVES_GUI_CALLBACK(filt_sw_toggled),
-				  (livespointer)filedets);
-      }
-      else filedets->widgets[1] = NULL;
+        hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+        filedets->widgets[1] = lives_standard_switch_new(NULL, TRUE, LIVES_BOX(hbox), NULL);
+        lives_signal_sync_connect(LIVES_GUI_OBJECT(filedets->widgets[1]), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(filt_sw_toggled),
+                                  (livespointer)filedets);
+      } else filedets->widgets[1] = NULL;
 
       lives_signal_sync_connect(LIVES_GUI_OBJECT(filedets->widgets[0]), LIVES_WIDGET_TOGGLED_SIGNAL,
-				LIVES_GUI_CALLBACK(filt_cb_toggled),
-				(livespointer)filedets);
+                                LIVES_GUI_CALLBACK(filt_cb_toggled),
+                                (livespointer)filedets);
 
       filt_cb_toggled(filedets->widgets[0], filedets);
 
       txt = lives_pad_ellipsise(filedets->name, NMLEN_MAX, LIVES_ALIGN_FILL, LIVES_ALIGN_START);
       lives_layout_add_label(LIVES_LAYOUT(layout), txt, TRUE);
       if (txt != filedets->name) {
-	lives_free(txt);
-	lives_widget_set_tooltip_text(widget_opts.last_label, filedets->name);
+        lives_free(txt);
+        lives_widget_set_tooltip_text(widget_opts.last_label, filedets->name);
       }
       lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
       hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
@@ -2192,37 +1860,34 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
       lives_widget_set_no_show_all(filedets->widgets[2], TRUE);
 
       if (filedets->size == -1) {
-	filedets->widgets[3] = lives_spinner_new();
-	if (filedets->widgets[3]) {
-	  lives_layout_pack(LIVES_BOX(hbox), filedets->widgets[3]);
-	  lives_spinner_start(LIVES_SPINNER(filedets->widgets[3]));
-	}
-	else filedets->widgets[3] = filedets->widgets[2];
-      }
-      else filedets->widgets[3] = filedets->widgets[2];
+        filedets->widgets[3] = lives_spinner_new();
+        if (filedets->widgets[3]) {
+          lives_layout_pack(LIVES_BOX(hbox), filedets->widgets[3]);
+          lives_spinner_start(LIVES_SPINNER(filedets->widgets[3]));
+        } else filedets->widgets[3] = filedets->widgets[2];
+      } else filedets->widgets[3] = filedets->widgets[2];
     }
 
     if (filedets->widgets[3]) {
       if (filedets->size != -1) {
-	if (filedets->widgets[3] != filedets->widgets[2]) {
-	  lives_spinner_stop(LIVES_SPINNER(filedets->widgets[3]));
-	  lives_widget_hide(filedets->widgets[3]);
-	  lives_widget_set_no_show_all(filedets->widgets[3], TRUE);
-	}
-	lives_widget_set_no_show_all(filedets->widgets[2], FALSE);
-	lives_widget_show_all(filedets->widgets[2]);
+        if (filedets->widgets[3] != filedets->widgets[2]) {
+          lives_spinner_stop(LIVES_SPINNER(filedets->widgets[3]));
+          lives_widget_hide(filedets->widgets[3]);
+          lives_widget_set_no_show_all(filedets->widgets[3], TRUE);
+        }
+        lives_widget_set_no_show_all(filedets->widgets[2], FALSE);
+        lives_widget_show_all(filedets->widgets[2]);
 
-	if (filedets->size == -2) {
-	  lives_label_set_text(LIVES_LABEL(filedets->widgets[2]), "????");
-	}
-	if (filedets->size > 0) {
-	  txt = lives_format_storage_space_string(filedets->size);
-	  lives_label_set_text(LIVES_LABEL(filedets->widgets[2]), txt);
-	  lives_free(txt);
-	}
-	filedets->widgets[3] = NULL;
-      }
-      else needs_recheck = TRUE;
+        if (filedets->size == -2) {
+          lives_label_set_text(LIVES_LABEL(filedets->widgets[2]), "????");
+        }
+        if (filedets->size > 0) {
+          txt = lives_format_storage_space_string(filedets->size);
+          lives_label_set_text(LIVES_LABEL(filedets->widgets[2]), txt);
+          lives_free(txt);
+        }
+        filedets->widgets[3] = NULL;
+      } else needs_recheck = TRUE;
     }
 
     if (!pass) {
@@ -2234,14 +1899,12 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
       lives_widget_set_no_show_all(filedets->widgets[4], TRUE);
 
       if (!filedets->extra_details) {
-	filedets->widgets[5] = lives_spinner_new();
-	if (filedets->widgets[5]) {
-	  lives_layout_pack(LIVES_BOX(hbox), filedets->widgets[5]);
-	  lives_spinner_start(LIVES_SPINNER(filedets->widgets[5]));
-	}
-	else filedets->widgets[5] = filedets->widgets[4];
-      }
-      else filedets->widgets[5] = filedets->widgets[4];
+        filedets->widgets[5] = lives_spinner_new();
+        if (filedets->widgets[5]) {
+          lives_layout_pack(LIVES_BOX(hbox), filedets->widgets[5]);
+          lives_spinner_start(LIVES_SPINNER(filedets->widgets[5]));
+        } else filedets->widgets[5] = filedets->widgets[4];
+      } else filedets->widgets[5] = filedets->widgets[4];
 
       lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
       hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
@@ -2251,75 +1914,70 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
       lives_widget_set_no_show_all(filedets->widgets[6], TRUE);
 
       if (!filedets->extra_details) {
-	filedets->widgets[7] = lives_spinner_new();
-	if (filedets->widgets[7]) {
-	  widget_opts.justify = LIVES_JUSTIFY_CENTER;
-	  widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
-	  lives_layout_pack(LIVES_BOX(hbox), filedets->widgets[7]);
-	  widget_opts.expand = LIVES_EXPAND_DEFAULT;
-	  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
-	  lives_spinner_start(LIVES_SPINNER(filedets->widgets[7]));
-	}
-	else filedets->widgets[7] = filedets->widgets[6];
-      }
-      else filedets->widgets[7] = filedets->widgets[6];
+        filedets->widgets[7] = lives_spinner_new();
+        if (filedets->widgets[7]) {
+          widget_opts.justify = LIVES_JUSTIFY_CENTER;
+          widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+          lives_layout_pack(LIVES_BOX(hbox), filedets->widgets[7]);
+          widget_opts.expand = LIVES_EXPAND_DEFAULT;
+          widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+          lives_spinner_start(LIVES_SPINNER(filedets->widgets[7]));
+        } else filedets->widgets[7] = filedets->widgets[6];
+      } else filedets->widgets[7] = filedets->widgets[6];
     }
 
     if (filedets->widgets[5]) {
       if (filedets->extra_details) {
-	if (filedets->widgets[5] != filedets->widgets[4]) {
-	  lives_spinner_stop(LIVES_SPINNER(filedets->widgets[5]));
-	  lives_widget_hide(filedets->widgets[5]);
-	  lives_widget_set_no_show_all(filedets->widgets[5], TRUE);
-	}
-	lives_widget_set_no_show_all(filedets->widgets[4], FALSE);
-	lives_widget_show_all(filedets->widgets[4]);
+        if (filedets->widgets[5] != filedets->widgets[4]) {
+          lives_spinner_stop(LIVES_SPINNER(filedets->widgets[5]));
+          lives_widget_hide(filedets->widgets[5]);
+          lives_widget_set_no_show_all(filedets->widgets[5], TRUE);
+        }
+        lives_widget_set_no_show_all(filedets->widgets[4], FALSE);
+        lives_widget_show_all(filedets->widgets[4]);
 
-	if (!filedets->mtime_sec) {
-	  lives_label_set_text(LIVES_LABEL(filedets->widgets[4]), "????");
-	}
-	else {
-	  txt = lives_datetime(filedets->mtime_sec);
-	  dtxt = lives_datetime_rel(txt);
-	  lives_label_set_text(LIVES_LABEL(filedets->widgets[4]), dtxt);
-	  if (dtxt != txt) lives_free(dtxt);
-	  lives_free(txt);
-	}
+        if (!filedets->mtime_sec) {
+          lives_label_set_text(LIVES_LABEL(filedets->widgets[4]), "????");
+        } else {
+          txt = lives_datetime(filedets->mtime_sec);
+          dtxt = lives_datetime_rel(txt);
+          lives_label_set_text(LIVES_LABEL(filedets->widgets[4]), dtxt);
+          if (dtxt != txt) lives_free(dtxt);
+          lives_free(txt);
+        }
 
-	if (filedets->widgets[7] != filedets->widgets[6]) {
-	  lives_spinner_stop(LIVES_SPINNER(filedets->widgets[7]));
-	  lives_widget_hide(filedets->widgets[7]);
-	  lives_widget_set_no_show_all(filedets->widgets[7], TRUE);
-	}
-	lives_widget_set_no_show_all(filedets->widgets[6], FALSE);
-	lives_widget_show_all(filedets->widgets[6]);
+        if (filedets->widgets[7] != filedets->widgets[6]) {
+          lives_spinner_stop(LIVES_SPINNER(filedets->widgets[7]));
+          lives_widget_hide(filedets->widgets[7]);
+          lives_widget_set_no_show_all(filedets->widgets[7], TRUE);
+        }
+        lives_widget_set_no_show_all(filedets->widgets[6], FALSE);
+        lives_widget_show_all(filedets->widgets[6]);
 
-	if (filedets->type == LIVES_FILE_TYPE_UNKNOWN) {
-	  lives_label_set_text(LIVES_LABEL(filedets->widgets[6]), "????");
-	}
-	else {
-	  if (filedets->type == LIVES_FILE_TYPE_FILE)
-	    txt = lives_strdup_printf(_("\tFile\t\t:\t%s"),
-				      filedets->extra_details ? filedets->extra_details : " - ");
-	  else if (filedets->type == LIVES_FILE_TYPE_DIRECTORY)
-	    txt = lives_strdup_printf(_("\tDirectory\t\t:\t%s"),
-				      filedets->extra_details ? filedets->extra_details : " - ");
-	  else
-	    txt = lives_strdup_printf(_("\t????????\t\t:\t%s"),
-				      filedets->extra_details ? filedets->extra_details : " - ");
-	  lives_label_set_text(LIVES_LABEL(filedets->widgets[6]), txt);
-	  lives_free(txt);
-	}
-	filedets->widgets[5] = NULL;
-      }
-      else needs_recheck = TRUE;
+        if (filedets->type == LIVES_FILE_TYPE_UNKNOWN) {
+          lives_label_set_text(LIVES_LABEL(filedets->widgets[6]), "????");
+        } else {
+          if (filedets->type == LIVES_FILE_TYPE_FILE)
+            txt = lives_strdup_printf(_("\tFile\t\t:\t%s"),
+                                      filedets->extra_details ? filedets->extra_details : " - ");
+          else if (filedets->type == LIVES_FILE_TYPE_DIRECTORY)
+            txt = lives_strdup_printf(_("\tDirectory\t\t:\t%s"),
+                                      filedets->extra_details ? filedets->extra_details : " - ");
+          else
+            txt = lives_strdup_printf(_("\t????????\t\t:\t%s"),
+                                      filedets->extra_details ? filedets->extra_details : " - ");
+          lives_label_set_text(LIVES_LABEL(filedets->widgets[6]), txt);
+          lives_free(txt);
+        }
+        filedets->widgets[5] = NULL;
+      } else needs_recheck = TRUE;
     }
 
     if (!pass) {
       lives_widget_show_all(dialog);
       do {
-	lives_widget_process_updates(dialog);
-	lives_nanosleep(100);
+        lives_widget_process_updates(dialog);
+        lives_nanosleep(100);
       } while (!list->next && filtresp == LIVES_RESPONSE_NONE);
     }
     if (filtresp != LIVES_RESPONSE_NONE) goto ffxdone;
@@ -2327,18 +1985,18 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
   }
   if (cb) {
     lives_signal_sync_connect(LIVES_GUI_OBJECT(cb), LIVES_WIDGET_TOGGLED_SIGNAL,
-			      LIVES_GUI_CALLBACK(filt_all_toggled),
-			      (livespointer)*listp);
+                              LIVES_GUI_CALLBACK(filt_all_toggled),
+                              (livespointer)*listp);
     lives_widget_set_sensitive(cb, TRUE);
   }
- ffxdone:
+ffxdone:
   widget_opts.mnemonic_label = TRUE;
   return needs_recheck;
 }
 
 
 LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiVESList **rem_list,
-				 LiVESList **left_list) {
+                                 LiVESList **left_list) {
   LiVESWidget *dialog;
   LiVESWidget *layout, *layout_rec, *layout_rem, *layout_leave;
   LiVESWidget *top_vbox;
@@ -2371,38 +2029,37 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
       || (*left_list && (*left_list)->data)) {
     LiVESWidget *bbox = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
     cancelb = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-						 LIVES_STOCK_CANCEL, NULL,
-						 LIVES_RESPONSE_CANCEL);
+              LIVES_STOCK_CANCEL, NULL,
+              LIVES_RESPONSE_CANCEL);
 
     lives_widget_add_accelerator(cancelb, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-				 LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+                                 LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
     resetb = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-						LIVES_STOCK_UNDO, _("_Reset"),
-						LIVES_RESPONSE_NONE);
+             LIVES_STOCK_UNDO, _("_Reset"),
+             LIVES_RESPONSE_NONE);
     lives_widget_set_sensitive(resetb, FALSE);
 
     widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
     accb = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-					      LIVES_STOCK_GO_FORWARD, _("_Accept and Continue"),
-					      LIVES_RESPONSE_ACCEPT);
+           LIVES_STOCK_GO_FORWARD, _("_Accept and Continue"),
+           LIVES_RESPONSE_ACCEPT);
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
     lives_widget_set_sensitive(accb, FALSE);
 
     trash_rb(LIVES_BUTTON_BOX(bbox));
     lives_button_box_set_layout(LIVES_BUTTON_BOX(bbox), LIVES_BUTTONBOX_CENTER);
-  }
-  else {
+  } else {
     accb = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-					      LIVES_STOCK_CLOSE, _("_Close Window"),
-					      LIVES_RESPONSE_OK);
+           LIVES_STOCK_CLOSE, _("_Close Window"),
+           LIVES_RESPONSE_OK);
     lives_widget_add_accelerator(accb, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-				 LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+                                 LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
     lives_button_grab_default_special(accb);
   }
 
   lives_signal_sync_connect(dialog, LIVES_WIDGET_RESPONSE_SIGNAL,
-			    LIVES_GUI_CALLBACK(filtc_response), NULL);
+                            LIVES_GUI_CALLBACK(filtc_response), NULL);
 
   top_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
@@ -2497,23 +2154,23 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
     if (!pass) {
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_rec), "list", *rec_list);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_rec), "ptype",
-				   LIVES_INT_TO_POINTER(0));
+                                   LIVES_INT_TO_POINTER(0));
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_rem), "list", *rem_list);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_rem), "ptype",
-				   LIVES_INT_TO_POINTER(1));
+                                   LIVES_INT_TO_POINTER(1));
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_leave), "list", *left_list);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout_leave), "ptype",
-				   LIVES_INT_TO_POINTER(2));
+                                   LIVES_INT_TO_POINTER(2));
 
       lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(resetb), LIVES_WIDGET_CLICKED_SIGNAL,
-					LIVES_GUI_CALLBACK(filt_reset_clicked),
-					layout_rec);
+                                        LIVES_GUI_CALLBACK(filt_reset_clicked),
+                                        layout_rec);
       lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(resetb), LIVES_WIDGET_CLICKED_SIGNAL,
-					LIVES_GUI_CALLBACK(filt_reset_clicked),
-					layout_rem);
+                                        LIVES_GUI_CALLBACK(filt_reset_clicked),
+                                        layout_rem);
       lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(resetb), LIVES_WIDGET_CLICKED_SIGNAL,
-					LIVES_GUI_CALLBACK(filt_reset_clicked),
-					layout_leave);
+                                        LIVES_GUI_CALLBACK(filt_reset_clicked),
+                                        layout_leave);
 
       lives_widget_set_sensitive(resetb, TRUE);
       lives_widget_set_sensitive(accb, TRUE);
@@ -2533,7 +2190,7 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
 
   while (filtresp == LIVES_RESPONSE_NONE) lives_dialog_run(LIVES_DIALOG(dialog));
 
- harlem_shuffle:
+harlem_shuffle:
 
   if (filtresp != LIVES_RESPONSE_CANCEL && filtresp != LIVES_RESPONSE_OK) {
     // we need to shuffle the lists around before destroying the dialog; caller will move
@@ -2548,40 +2205,40 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
       else if (pass == 1) list = *rem_list;
       else list = *left_list;
       for (; list && list->data; list = listnext) {
-	listnext = list->next;
-	// entries can move to rem_list or left_list
-	// we no longer care about type, so the field will be reused to
-	// store the origin list number
-	// for this we will re-use pass, 0 -> rec_list, 1 -> rem_list, 2 -> left_list
-	filedets = (lives_file_dets_t *)list->data;
-	if (filedets->type & LIVES_FILE_TYPE_SPECIAL) continue;
-	filedets->type = ((uint64_t)pass | (uint64_t)LIVES_FILE_TYPE_SPECIAL);
-	if (!pass || pass == 2) {
-	  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[0]))) {
-	    if (pass == 2 || !lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[1]))) {
-	      // move into delete from recover or leave
-	      if (list->prev) list->prev->next = list->next;
-	      if (list->next) list->next->prev = list->prev;
-	      list->prev = NULL;
-	      if (list == *rec_list) *rec_list = list->next;
-	      else if (list == *left_list) *left_list = list->next;
-	      list->next = *rem_list;
-	      (*rem_list)->prev = list;
-	      *rem_list = list;
-	    }
-	  }
-	}
-	if (pass != 2) {
-	  if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[0]))) {
-	    // move to leave, from rec or rem
-	    if (list->prev) list->prev->next = list->next;
-	    if (list->next) list->next->prev = list->prev;
-	    list->prev = NULL;
-	    if (list == *rec_list) *rec_list = list->next;
-	    else if (list == *rem_list) *rem_list = list->next;
-	    list->next = *left_list;
-	    (*left_list)->prev = list;
-	    *left_list = list;
+        listnext = list->next;
+        // entries can move to rem_list or left_list
+        // we no longer care about type, so the field will be reused to
+        // store the origin list number
+        // for this we will re-use pass, 0 -> rec_list, 1 -> rem_list, 2 -> left_list
+        filedets = (lives_file_dets_t *)list->data;
+        if (filedets->type & LIVES_FILE_TYPE_SPECIAL) continue;
+        filedets->type = ((uint64_t)pass | (uint64_t)LIVES_FILE_TYPE_SPECIAL);
+        if (!pass || pass == 2) {
+          if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[0]))) {
+            if (pass == 2 || !lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[1]))) {
+              // move into delete from recover or leave
+              if (list->prev) list->prev->next = list->next;
+              if (list->next) list->next->prev = list->prev;
+              list->prev = NULL;
+              if (list == *rec_list) *rec_list = list->next;
+              else if (list == *left_list) *left_list = list->next;
+              list->next = *rem_list;
+              (*rem_list)->prev = list;
+              *rem_list = list;
+            }
+          }
+        }
+        if (pass != 2) {
+          if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(filedets->widgets[0]))) {
+            // move to leave, from rec or rem
+            if (list->prev) list->prev->next = list->next;
+            if (list->next) list->next->prev = list->prev;
+            list->prev = NULL;
+            if (list == *rec_list) *rec_list = list->next;
+            else if (list == *rem_list) *rem_list = list->next;
+            list->next = *left_list;
+            (*left_list)->prev = list;
+            *left_list = list;
 	    // *INDENT-OFF*
 	  }}}}}
   // *INDENT-ON*
@@ -3756,6 +3413,50 @@ static void on_avolch_ok(LiVESButton * button, livespointer data) {
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   }
 }
+
+
+void redraw_timeline(int clipno) {
+  lives_clip_t *sfile;
+
+  if (!IS_VALID_CLIP(clipno)) return;
+
+  sfile = mainw->files[clipno];
+
+  if (!mainw->video_drawable) {
+    mainw->video_drawable = lives_widget_create_painter_surface(mainw->video_draw);
+    clear_tbar_bgs(0, 0, 0, 0, 1);
+  }
+  update_timer_bars(0, 0, 0, 0, 1);
+
+  if (!sfile->laudio_drawable) {
+    sfile->laudio_drawable = lives_widget_create_painter_surface(mainw->laudio_draw);
+    mainw->laudio_drawable = sfile->laudio_drawable;
+    clear_tbar_bgs(0, 0, 0, 0, 2);
+    update_timer_bars(0, 0, 0, 0, 2);
+  } else {
+    mainw->laudio_drawable = sfile->laudio_drawable;
+    if (!LIVES_IS_PLAYING) {
+      update_timer_bars(0, 0, 0, 0, 2);
+    }
+  }
+  if (!sfile->raudio_drawable) {
+    sfile->raudio_drawable = lives_widget_create_painter_surface(mainw->raudio_draw);
+    mainw->raudio_drawable = sfile->raudio_drawable;
+    clear_tbar_bgs(0, 0, 0, 0, 3);
+    update_timer_bars(0, 0, 0, 0, 3);
+  } else {
+    mainw->raudio_drawable = sfile->raudio_drawable;
+    if (!LIVES_IS_PLAYING) {
+      update_timer_bars(0, 0, 0, 0, 3);
+    }
+  }
+
+  lives_widget_queue_draw(mainw->video_draw);
+  lives_widget_queue_draw(mainw->laudio_draw);
+  lives_widget_queue_draw(mainw->raudio_draw);
+  lives_widget_queue_draw(mainw->eventbox2);
+}
+
 
 //static void preview_aud_vol_cb(LiVESButton *button, livespointer data) {preview_aud_vol();}
 

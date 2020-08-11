@@ -727,15 +727,15 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       cfile->frames = 0;
     }
 
-    if (mainw->multitrack == NULL) get_play_times();
+    if (!mainw->multitrack) get_play_times();
 
     add_to_clipmenu();
     set_main_title(cfile->file_name, 0);
 
     mainw->effects_paused = FALSE;
 
-    if (cfile->ext_src == NULL) {
-      if (mainw->file_open_params == NULL) mainw->file_open_params = lives_strdup("");
+    if (!cfile->ext_src) {
+      if (!mainw->file_open_params) mainw->file_open_params = lives_strdup("");
 
       tmp = lives_strconcat(mainw->file_open_params, get_deinterlace_string(), NULL);
       lives_free(mainw->file_open_params);
@@ -786,7 +786,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     // (also check for cancel)
     msgstr = lives_strdup_printf(_("Opening %s"), file_name);
 
-    if (cfile->ext_src == NULL && mainw->toy_type != LIVES_TOY_TV) {
+    if (!cfile->ext_src && mainw->toy_type != LIVES_TOY_TV) {
       mainw->cs_permitted = TRUE;
       if (!do_progress_dialog(TRUE, TRUE, msgstr)) {
         // user cancelled or switched to another clip
@@ -892,14 +892,15 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
   }
 
   // now file should be loaded...get full details
-  if (cfile->ext_src == NULL) add_file_info(cfile->handle, FALSE);
+  if (!cfile->ext_src) add_file_info(cfile->handle, FALSE);
   cfile->is_loaded = TRUE;
 
   if (cfile->frames <= 0) {
     if (cfile->afilesize == 0l) {
       // we got neither video nor audio...
       lives_snprintf(msg, 256, "%s", _
-                     ("\n\nLiVES was unable to extract either video or audio.\nPlease check the terminal window for more details.\n"));
+                     ("\n\nLiVES was unable to extract either video or audio.\n"
+                      "Please check the terminal window for more details.\n"));
 
       if (!capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv) {
         lives_strappend(msg, 256, _("\n\nYou may need to install mplayer, mplayer2 or mpv to open this file.\n"));
@@ -932,7 +933,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     cfile->frames = 0;
   }
 
-  if (cfile->ext_src == NULL) {
+  if (!cfile->ext_src) {
     extra_frames = cfile->frames;
     add_file_info(cfile->handle, FALSE);
     extra_frames -= cfile->frames;
@@ -943,7 +944,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     if (cfile->f_size == 0) cfile->f_size = sget_file_size((char *)file_name);
   }
 
-  if (cfile->ext_src == NULL) {
+  if (!cfile->ext_src) {
     reget_afilesize(mainw->current_file);
     if (prefs->auto_trim_audio || prefs->keep_all_audio) {
       if (cfile->laudio_time > cfile->video_time && cfile->frames > 0) {
@@ -2274,7 +2275,8 @@ void play_file(void) {
     if (mainw->audio_end == 0) {
       mainw->audio_start = calc_time_from_frame(mainw->current_file,
                            mainw->play_start) * cfile->fps + 1. * cfile->arate / cfile->arps;
-      mainw->audio_end = calc_time_from_frame(mainw->current_file, mainw->play_end) * cfile->fps + 1. * cfile->arate / cfile->arps;
+      mainw->audio_end = calc_time_from_frame(mainw->current_file, mainw->play_end) * cfile->fps
+                         + 1. * cfile->arate / cfile->arps;
       if (!mainw->playing_sel) {
         mainw->audio_end = 0;
       }
@@ -2298,7 +2300,6 @@ void play_file(void) {
       lives_widget_set_fg_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->playframe)),
                                 LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     }
-
 
     if (mainw->foreign) {
       lives_widget_show_all(mainw->top_vbox);
@@ -2408,10 +2409,7 @@ void play_file(void) {
     if (mainw->sep_win) {
       /// create a separate window for the internal player if requested
       if (prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY) {
-        /// needed
-        block_expose();
         make_play_window();
-        unblock_expose();
       } else {
         if (mainw->multitrack == NULL) {
           if (mainw->preview_controls) {
@@ -2428,9 +2426,7 @@ void play_file(void) {
 
         /// needed
         if (mainw->multitrack == NULL) {
-          block_expose();
           lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-          unblock_expose();
         } else {
           /// this doesn't get called if we don't call resize_play_window()
           if (mainw->play_window != NULL) {
@@ -2486,7 +2482,8 @@ void play_file(void) {
     com2 = lives_strdup("xset s off 2>/dev/null; xset -dpms 2>/dev/null ;");
 
     if (capable->has_gconftool_2) {
-      char *xnew = lives_strdup(" gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled false 2>/dev/null ;");
+      char *xnew = lives_strdup(" gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled "
+                                "false 2>/dev/null ;");
       tmp = lives_concat(com2, xnew);
       com2 = tmp;
     }
@@ -2784,7 +2781,6 @@ void play_file(void) {
       if (mainw->multitrack != NULL) pb_start_event = mainw->multitrack->pb_start_event;
     } while (mainw->multitrack != NULL && (mainw->loop_cont || mainw->scratch != SCRATCH_NONE) &&
              (mainw->cancelled == CANCEL_NONE || mainw->cancelled == CANCEL_EVENT_LIST_END));
-
   }
 
   mainw->osc_block = TRUE;
@@ -2965,7 +2961,8 @@ void play_file(void) {
     com = lives_strdup("xset s on 2>/dev/null; xset +dpms 2>/dev/null ;");
 
     if (capable->has_gconftool_2) {
-      char *xnew = lives_strdup(" gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled true 2>/dev/null ;");
+      char *xnew = lives_strdup(" gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled "
+                                "true 2>/dev/null ;");
       tmp = lives_strconcat(com, xnew, NULL);
       lives_free(com);
       lives_free(xnew);
@@ -3018,6 +3015,7 @@ void play_file(void) {
   if (IS_VALID_CLIP(mainw->scrap_file) && mainw->files[mainw->scrap_file]->ext_src != NULL) {
     lives_close_buffered(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src));
     mainw->files[mainw->scrap_file]->ext_src = NULL;
+    mainw->files[mainw->scrap_file]->ext_src_type = LIVES_EXT_SRC_NONE;
   }
 
   if (mainw->foreign) {
@@ -3124,10 +3122,6 @@ void play_file(void) {
           play_window_set_title();
           load_preview_image(FALSE);
         }
-
-        /* block_expose(); */
-        /* lives_widget_context_update(); */
-        /* unblock_expose(); */
 
         if (mainw->play_window != NULL) {
           if (prefs->show_playwin) {
@@ -3307,9 +3301,18 @@ void play_file(void) {
   }
 
   if (CURRENT_CLIP_IS_VALID) {
-    if (!mainw->multitrack && cfile->achans > 0) {
-      update_timer_bars(0, 0, 0, 0, 2);
-      update_timer_bars(0, 0, 0, 0, 3);
+    if (!mainw->multitrack) {
+
+      lives_ce_update_timeline(0, cfile->real_pointer_time);
+      mainw->ptrtime = cfile->real_pointer_time;
+      lives_widget_queue_draw(mainw->eventbox2);
+      lives_widget_queue_draw_if_visible(mainw->framecounter);
+
+      /* draw_little_bars(cfile->pointer_time, 1); */
+      /* draw_little_bars(cfile->real_pointer_time, 2); */
+      /* draw_little_bars(cfile->real_pointer_time, 3); */
+      // PAUSE
+      //lives_ce_update_timeline(cfile->frameno, 0);
     }
   }
 
@@ -3623,6 +3626,7 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->play_paused = cfile->nokeep = FALSE;
   cfile->undo_start = cfile->undo_end = 0;
   cfile->ext_src = NULL;
+  cfile->ext_src_type = LIVES_EXT_SRC_NONE;
   cfile->clip_type = CLIP_TYPE_DISK;
   cfile->ratio_fps = FALSE;
   cfile->aseek_pos = 0;
@@ -3649,6 +3653,7 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->tcache_height = 0;
   cfile->tcache = NULL;
   cfile->checked = FALSE;
+  cfile->has_binfmt = TRUE;
 
   if (!strcmp(prefs->image_ext, LIVES_FILE_EXT_JPG)) cfile->img_type = IMG_TYPE_JPEG;
   else cfile->img_type = IMG_TYPE_PNG;
@@ -3681,9 +3686,6 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
 
   lives_snprintf(cfile->info_file, PATH_MAX, "%s", stfile);
   lives_free(stfile);
-
-  cfile->laudio_drawable = NULL;
-  cfile->raudio_drawable = NULL;
 
   // backwards compat.
   cfile->checked_for_old_header = FALSE;
@@ -3780,7 +3782,7 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
     char *com;
     // user pressed "enough"
     // just in case last frame is damaged, we delete it (physically, otherwise it will get dragged in when the file is opened)
-    if (cfile->ext_src == NULL) {
+    if (!cfile->ext_src) {
       cfile->frames = get_frame_count(mainw->current_file, cfile->opening_frames);
       if (cfile->frames > 1) {
         com = lives_strdup_printf("%s cut \"%s\" %d %d %d %d \"%s\" %.3f %d %d %d",
@@ -4381,7 +4383,6 @@ boolean read_headers(int fileno, const char *dir, const char *file_name) {
 
   sfile = mainw->files[fileno];
 
-
   old_hdrfile = lives_build_filename(dir, LIVES_CLIP_HEADER_OLD, NULL);
   lives_header = lives_build_filename(dir, LIVES_CLIP_HEADER, NULL);
 
@@ -4404,6 +4405,8 @@ boolean read_headers(int fileno, const char *dir, const char *file_name) {
     if (fileno == mainw->current_file) {
       threaded_dialog_spin(0.);
     }
+
+    restore_clip_binfmt(fileno);
 
     do {
       do {
@@ -4470,6 +4473,10 @@ boolean read_headers(int fileno, const char *dir, const char *file_name) {
           detail = CLIP_DETAILS_GAMMA_TYPE;
           get_clip_value(fileno, detail, &sfile->gamma_type, 0);
           if (sfile->gamma_type == 0) sfile->gamma_type = WEED_GAMMA_SRGB;
+          if (sfile->gamma_type != WEED_GAMMA_SRGB) {
+            if (!do_gamma_import_warn(sfile->has_binfmt ?
+                                      sfile->binfmt_version.num : 0, sfile->gamma_type)) goto rhd_failed;
+          }
         }
       }
       if (retval) {
@@ -5214,7 +5221,7 @@ boolean load_from_scrap_file(weed_layer_t *layer, int frame) {
   int fd;
   if (!IS_VALID_CLIP(mainw->scrap_file)) return FALSE;
 
-  if (scrapfile->ext_src == NULL) {
+  if (!scrapfile->ext_src) {
     oname = make_image_file_name(scrapfile, 1, LIVES_FILE_EXT_SCRAP);
     fd = lives_open_buffered_rdonly(oname);
     lives_free(oname);
@@ -5223,9 +5230,10 @@ boolean load_from_scrap_file(weed_layer_t *layer, int frame) {
     posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
 #endif
     scrapfile->ext_src = LIVES_INT_TO_POINTER(fd);
+    scrapfile->ext_src_type = LIVES_EXT_SRC_FILE_BUFF;
   } else fd = LIVES_POINTER_TO_INT(scrapfile->ext_src);
 
-  if (frame < 0 || layer == NULL) return TRUE; /// just open fd
+  if (frame < 0 || !layer) return TRUE; /// just open fd
 
   if (weed_plant_deserialise(fd, NULL, layer) == NULL) {
     //g_print("bad scrapfile frame\n");
@@ -5344,7 +5352,7 @@ int save_to_scrap_file(weed_layer_t *layer) {
 
   if (mainw->frame_layer == NULL) return scrapfile->frames;
 
-  if (scrapfile->ext_src == NULL) {
+  if (!scrapfile->ext_src) {
     char *oname = make_image_file_name(scrapfile, 1, LIVES_FILE_EXT_SCRAP), *dirname;
 
 #ifdef O_NOATIME
@@ -5361,6 +5369,7 @@ int save_to_scrap_file(weed_layer_t *layer) {
     if (fd < 0) return scrapfile->frames;
 
     scrapfile->ext_src = LIVES_INT_TO_POINTER(fd);
+    scrapfile->ext_src_type = LIVES_EXT_SRC_FILE_BUFF;
 
 #ifdef HAVE_POSIX_FADVISE
     posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
@@ -5411,8 +5420,10 @@ void close_scrap_file(boolean remove) {
   if (!IS_VALID_CLIP(mainw->scrap_file)) return;
 
   mainw->current_file = mainw->scrap_file;
-  if (cfile->ext_src != NULL) lives_close_buffered(LIVES_POINTER_TO_INT(cfile->ext_src));
+  if (cfile->ext_src && cfile->ext_src_type == LIVES_EXT_SRC_FILE_BUFF)
+    lives_close_buffered(LIVES_POINTER_TO_INT(cfile->ext_src));
   cfile->ext_src = NULL;
+  cfile->ext_src_type = LIVES_EXT_SRC_NONE;
 
   if (remove) close_temp_handle(current_file);
   else mainw->current_file = current_file;
@@ -5672,8 +5683,8 @@ manual_locate:
         mainw->current_file = fileno;
         close_current_file(current_file);
       }
-      lives_freep((void **)&fake_cdata->URI);
-      lives_free(fake_cdata);
+      unref_struct(&fake_cdata->lsd);
+
       lives_free(orig_filename);
       lives_list_free(mainw->decoder_list);
       mainw->decoder_list = odeclist;
@@ -5718,9 +5729,7 @@ manual_locate:
     }
 
     threaded_dialog_spin(0.);
-    //lives_freep((void **)&fake_cdata->URI);
     unref_struct(&fake_cdata->lsd);
-    //lives_free(fake_cdata);
     break;
   }
 
@@ -5767,54 +5776,71 @@ manual_locate:
 #define _RELOAD(field) sfile->field = loaded->field
 #define _RELOAD_STRING(field, len) lives_snprintf(sfile->field, len, "%s", loaded->field)
 
+#define DSIZE_MAX 100000
+
 static lives_clip_t *_restore_binfmt(int clipno, boolean forensic) {
   if (IS_NORMAL_CLIP(clipno)) {
     lives_clip_t *sfile = mainw->files[clipno];
     char *fname = lives_build_filename(prefs->workdir, sfile->handle, TOTALSAVE_NAME, NULL);
     if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
-      size_t fsize, dsize;
-      int fd;
+      ssize_t bytes;
+      size_t cursize = (size_t)((char *)&sfile->binfmt_end - (char *)sfile), dsize;
+      char *xloaded = (char *)lives_calloc(1, cursize);
       boolean badsize = FALSE;
-      lives_clip_t *loaded = (lives_clip_t *)lives_calloc(1, sizeof(lives_clip_t));
-      dsize = (size_t)((void *)&loaded->binfmt_end - (void *)loaded);
-      fd = lives_open_buffered_rdonly(fname);
-      fsize = lives_buffered_orig_size(fd);
-      if (fsize < dsize) badsize = TRUE;
-      else lives_read_buffered(fd, loaded, sizeof(lives_clip_t), TRUE);
+      int fd = lives_open_buffered_rdonly(fname);
+      size_t fsize = lives_buffered_orig_size(fd);
+      lives_clip_t *loaded = (lives_clip_t *)xloaded;
+      if (fsize < cursize) badsize = TRUE;
+      else {
+        bytes = lives_read_buffered(fd, xloaded, 8, TRUE);
+        if (bytes < 8 || lives_memcmp(loaded->binfmt_check.chars, CLIP_BINFMT_CHECK, 8)) badsize = TRUE;
+        else {
+          bytes += lives_read_buffered(fd, xloaded + 8, 16, TRUE);
+          if (bytes < 16) badsize = TRUE;
+          else {
+            dsize = loaded->binfmt_bytes.num;
+            if (dsize < cursize) badsize = TRUE;
+            else {
+              if (dsize > cursize && dsize < DSIZE_MAX) {
+                xloaded = lives_realloc(xloaded, dsize);
+                loaded = (lives_clip_t *)xloaded;
+              } else dsize = cursize;
+              bytes += lives_read_buffered(fd, xloaded + 24, dsize - 24, TRUE);
+              if (bytes < dsize) badsize = TRUE;
+            }
+          }
+        }
+      }
       lives_close_buffered(fd);
-      if (!forensic) lives_rm(fname);
+      //if (!forensic) lives_rm(fname);
       lives_free(fname);
 
       if (badsize) {
-        lives_free(loaded);
+        lives_free(xloaded);
         return FALSE;
       }
 
       THREADVAR(com_failed) = FALSE;
       if (THREADVAR(read_failed) == fd + 1) {
         THREADVAR(read_failed) = 0;
-        lives_free(loaded);
+        lives_free(xloaded);
         return NULL;
       }
 
-      if (!lives_memcmp(loaded->binfmt_check.chars, CLIP_BINFMT_CHECK, 8)) {
-        uint64_t ver = loaded->binfmt_version.num;
-        if (ver <= (uint64_t)atoll(mainw->version_hash)) {
-          if (dsize == loaded->binfmt_bytes.size) {
-            if (forensic) return loaded;
-            _RELOAD_STRING(save_file_name, PATH_MAX);  _RELOAD(start); _RELOAD(end); _RELOAD(is_untitled); _RELOAD(was_in_set);
-            _RELOAD(ratio_fps); _RELOAD_STRING(mime_type, 256);
-            _RELOAD(changed); _RELOAD(deinterlace); _RELOAD(vol);
-            if (sfile->start < 1) sfile->start = 1;
-            if (sfile->end > sfile->frames) sfile->end = sfile->frames;
-            if (sfile->start > sfile->end) sfile->start = sfile->end;
-            if (lives_strlen(sfile->save_file_name) > PATH_MAX) lives_memset(sfile->save_file_name, 0, PATH_MAX);
-            if (sfile->pointer_time > sfile->video_time) sfile->pointer_time = 0.;
-            if (sfile->real_pointer_time > CLIP_TOTAL_TIME(clipno)) sfile->real_pointer_time = sfile->pointer_time;
-            return loaded;
-          }
-        }
-      }
+      sfile->has_binfmt = TRUE;
+
+      if (forensic) return loaded;
+
+      _RELOAD_STRING(save_file_name, PATH_MAX);  _RELOAD(start); _RELOAD(end); _RELOAD(is_untitled); _RELOAD(was_in_set);
+      _RELOAD(ratio_fps); _RELOAD_STRING(mime_type, 256);
+      _RELOAD(changed); _RELOAD(deinterlace); _RELOAD(vol);
+      if (sfile->start < 1) sfile->start = 1;
+      if (sfile->end > sfile->frames) sfile->end = sfile->frames;
+      if (sfile->start > sfile->end) sfile->start = sfile->end;
+      if (lives_strlen(sfile->save_file_name) > PATH_MAX) lives_memset(sfile->save_file_name, 0, PATH_MAX);
+      if (sfile->pointer_time > sfile->video_time) sfile->pointer_time = 0.;
+      if (sfile->real_pointer_time > CLIP_TOTAL_TIME(clipno)) sfile->real_pointer_time = sfile->pointer_time;
+      return loaded;
     }
     lives_free(fname);
   }
@@ -6186,8 +6212,6 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       cfile->changed = TRUE;
       lives_rm(cfile->info_file);
       if (!mainw->multitrack) set_main_title(cfile->name, 0);
-
-      restore_clip_binfmt(mainw->current_file);
 
       if (cfile->frameno > cfile->frames) cfile->frameno = cfile->last_frameno = 1;
 

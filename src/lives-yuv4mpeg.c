@@ -329,6 +329,7 @@ static boolean open_yuv4m_inner(const char *filename, const char *fname, int new
   yuv4mpeg->cardno = cardno;
 
   cfile->ext_src = yuv4mpeg;
+  cfile->ext_src_type = LIVES_EXT_SRC_FIFO;
 
   cfile->bpp = 12;
 

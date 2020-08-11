@@ -394,7 +394,6 @@ typedef struct {
 
   float ahold_threshold;
 
-  boolean gamma_srgb;
   double screen_gamma;
 
   int max_messages;
@@ -405,6 +404,7 @@ typedef struct {
   boolean load_rfx_builtin;
 
   boolean apply_gamma;
+  boolean use_screen_gamma;
   boolean btgamma; ///< allows clips to be *stored* with bt709 gamma - CAUTION not backwards compatible, untested
 
   boolean show_tooltips;
@@ -517,7 +517,7 @@ typedef struct {
   LiVESWidget *recent_check;
   LiVESWidget *checkbutton_lb; //< letterbox
   LiVESWidget *checkbutton_lbmt;
-  LiVESWidget *checkbutton_srgb;
+  LiVESWidget *checkbutton_screengamma;
   LiVESWidget *spinbutton_gamma;
   LiVESWidget *video_open_entry;
   LiVESWidget *audio_command_entry;
@@ -897,7 +897,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_NFX_THREADS "nfx_threads"
 
 #define PREF_BTGAMMA "experimental_bt709_gamma"
-#define PREF_SRGB_GAMMA "use_srgb_gamma"
+#define PREF_USE_SCREEN_GAMMA "use_screen_gamma"
 #define PREF_SCREEN_GAMMA "screen_gamma"
 
 #define PREF_CLEAR_DISK_OPTS "clear_disk_opts"

@@ -779,10 +779,10 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     goto success2;
   }
 
-  if (!lives_strcmp(prefidx, PREF_SRGB_GAMMA)) {
-    if (prefs->gamma_srgb == newval) goto fail2;
-    prefs->gamma_srgb = newval;
-    if (prefsw) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_srgb), newval);
+  if (!lives_strcmp(prefidx, PREF_USE_SCREEN_GAMMA)) {
+    if (prefs->use_screen_gamma == newval) goto fail2;
+    prefs->use_screen_gamma = newval;
+    if (prefsw) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_screengamma), newval);
     goto success2;
   }
 
@@ -1324,7 +1324,7 @@ boolean apply_prefs(boolean skip_warn) {
 
   boolean lbox = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_lb));
   boolean lboxmt = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_lbmt));
-  boolean srgb = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_srgb));
+  boolean scgamma = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_screengamma));
   double gamma = lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_gamma));
 
   int nfx_threads = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_nfx_threads));
@@ -1733,7 +1733,7 @@ boolean apply_prefs(boolean skip_warn) {
   pref_factory_bool(PREF_LETTERBOX, lbox, TRUE);
   pref_factory_bool(PREF_LETTERBOXMT, lboxmt, TRUE);
 
-  pref_factory_bool(PREF_SRGB_GAMMA, srgb, TRUE);
+  pref_factory_bool(PREF_USE_SCREEN_GAMMA, scgamma, TRUE);
   pref_factory_float(PREF_SCREEN_GAMMA, gamma, TRUE);
 
   ulist = get_textsizes_list();
@@ -3672,14 +3672,14 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   label = lives_standard_label_new(_("Monitor gamma setting:"));
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
-  prefsw->checkbutton_srgb = lives_standard_check_button_new(_("sRGB"),
-                             prefs->gamma_srgb, LIVES_BOX(hbox), NULL);
+  prefsw->checkbutton_screengamma = lives_standard_check_button_new(_("Apply screen gamma"),
+                                    prefs->use_screen_gamma, LIVES_BOX(hbox), NULL);
 
   prefsw->spinbutton_gamma = lives_standard_spin_button_new(_("Inverse power law"),
                              prefs->screen_gamma, 1.2, 3.0, .01, .1, 2,
                              LIVES_BOX(hbox), NULL);
 
-  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_srgb), prefsw->spinbutton_gamma, TRUE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_screengamma), prefsw->spinbutton_gamma, FALSE);
 
   add_hsep_to_box(LIVES_BOX(vbox));
 
@@ -5444,7 +5444,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   ACTIVE(checkbutton_concat_images, TOGGLED);
   ACTIVE(checkbutton_lb, TOGGLED);
   ACTIVE(checkbutton_lbmt, TOGGLED);
-  ACTIVE(checkbutton_srgb, TOGGLED);
+  ACTIVE(checkbutton_screengamma, TOGGLED);
   ACTIVE(spinbutton_gamma, VALUE_CHANGED);
   ACTIVE(pbq_adaptive, TOGGLED);
 

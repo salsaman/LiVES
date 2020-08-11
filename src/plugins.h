@@ -450,6 +450,7 @@ typedef struct {
 typedef struct {
   const lives_decoder_sys_t *decoder;
   lives_clip_data_t *cdata;
+  int refs;
 } lives_decoder_t;
 
 LiVESList *load_decoders(void);
@@ -457,6 +458,7 @@ boolean chill_decoder_plugin(int fileno);
 boolean decoder_plugin_move_to_first(const char *name);
 const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList *disabled, const lives_clip_data_t *fake_cdata);
 void close_decoder_plugin(lives_decoder_t *);
+void close_clip_decoder(int clipno);
 lives_decoder_sys_t *open_decoder_plugin(const char *plname);
 void get_mime_type(char *text, int maxlen, const lives_clip_data_t *);
 void unload_decoder_plugins(void);

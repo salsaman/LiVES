@@ -653,6 +653,7 @@ typedef union _binval {
   size_t size;
 } binval;
 
+
 /// corresponds to one clip in the GUI
 typedef struct _lives_clip_t {
   binval binfmt_check, binfmt_version, binfmt_bytes;
@@ -759,11 +760,23 @@ typedef struct _lives_clip_t {
   // used only for insert_silence, holds pre-padding length for undo
   double old_laudio_time, old_raudio_time;
 
+  /////
+  // binfmt fields may be added here:
+  ///
+
+
+  ////
+  //// end add section ^^^^^^^
+
   /// binfmt is just a file dump of the struct up to the end of binfmt_end
   char binfmt_rsvd[4096];
   uint64_t binfmt_end; ///< marks the end of anything "interesring" we may want to save via binfmt extension
 
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  /// DO NOT remove or alter any fields before this ^^^^^
+  ///////////////////////////////////////////////////////////////////////////
+  // fields after here can be removed or changed or added to
+
+  boolean has_binfmt;
 
   /// index of frames for CLIP_TYPE_FILE
   /// >0 means corresponding frame within original clip
@@ -806,6 +819,21 @@ typedef struct _lives_clip_t {
   ////////////////////////////////////////////////////////////////////////////////////////
 
   void *ext_src; ///< points to opaque source for non-disk types
+
+#define LIVES_EXT_SRC_UNKNOWN -1
+#define LIVES_EXT_SRC_NONE 0
+#define LIVES_EXT_SRC_DECODER 1
+#define LIVES_EXT_SRC_FILTER 2
+#define LIVES_EXT_SRC_FIFO 3
+#define LIVES_EXT_SRC_STREAM 4
+#define LIVES_EXT_SRC_DEVICE 5
+#define LIVES_EXT_SRC_FILE_BUFF 6
+
+  int ext_src_type;
+
+  int n_altsrcs;
+  void **alt_srcs;
+  int *alt_src_types;
 
   uint64_t *cache_objects; ///< for future use
 
@@ -997,6 +1025,8 @@ typedef struct {
 
   char *gui_theme_name;
   char *icon_theme_name;
+  char *extra_icon_path;
+  LiVESList *all_icons;
 
   char *wm; ///<window manager name
   boolean has_wm_caps;
@@ -1223,6 +1253,7 @@ void do_vpp_palette_error(void);
 void do_vpp_fps_error(void);
 void do_decoder_palette_error(void);
 void do_rmem_max_error(int size);
+boolean do_gamma_import_warn(uint64_t fv, int gamma_type);
 LiVESResponseType do_original_lost_warning(const char *fname);
 void do_no_decoder_error(const char *fname);
 void do_no_loadfile_error(const char *fname);
@@ -1591,6 +1622,7 @@ char *get_extension(const char *filename);
 
 uint64_t get_version_hash(const char *exe, const char *sep, int piece);
 uint64_t make_version_hash(const char *ver);
+char *unhash_version(uint64_t version);
 
 void init_clipboard(void);
 
@@ -1689,7 +1721,7 @@ void clear_mainw_msg(void);
 size_t get_token_count(const char *string, int delim);
 LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette);
 void find_when_to_stop(void);
-int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc);
+frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc);
 void calc_aframeno(int fileno);
 void minimise_aspect_delta(double allowed_aspect, int hblock, int vblock, int hsize, int vsize, int *width, int *height);
 LiVESInterpType get_interp_value(short quality, boolean low_for_mt);

@@ -101,7 +101,7 @@ void get_samps_and_signed(enum AVSampleFormat sfmt, int *asamps, boolean *asigne
 
 static inline int64_t get_current_ticks(void) {
   struct timespec ts;
-  clock_gettime(CLOCK_REALTIME, &ts);
+  clock_gettime(CLOCK_MONOTONIC, &ts);
   return ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
 }
 
@@ -372,7 +372,7 @@ skip_probe:
     return FALSE;
   }
 
-  if (priv->ic->pb == NULL) {
+  if (!priv->ic->pb) {
     fprintf(stderr, "avformat stream not video\n");
     return FALSE;
   }
@@ -476,6 +476,8 @@ skip_init:
 
       vdecoder = avcodec_find_decoder(cc->codec_id);
       avcodec_open2(cc, vdecoder, NULL);
+
+      priv->ctx = cc;
 
       if (isclone) return TRUE;
 
@@ -743,7 +745,7 @@ static void detach_stream(lives_clip_data_t *cdata) {
   lives_av_priv_t *priv = cdata->priv;
 
   // will close and free the context
-  if (priv->ic != NULL) {
+  if (priv->ic) {
     avformat_close_input(&priv->ic);
   }
 
@@ -822,7 +824,7 @@ static lives_clip_data_t *avf_clone(lives_clip_data_t *cdata) {
   // create "priv" elements
   spriv = cdata->priv;
 
-  if (spriv != NULL) {
+  if (spriv) {
     clone->priv = dpriv = calloc(1, sizeof(lives_av_priv_t));
     dpriv->vstream = spriv->vstream;
     dpriv->astream = spriv->astream;
@@ -1298,7 +1300,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     if (timex > FAST_SEEK_LIMIT * 1000)((lives_clip_data_t *)cdata)->seek_flag = LIVES_SEEK_NEEDS_CALCULATION;
     else {
       ((lives_clip_data_t *)cdata)->seek_flag &= ~LIVES_SEEK_NEEDS_CALCULATION;
-      ((lives_clip_data_t *)cdata)->seek_flag |= ~LIVES_SEEK_FAST;
+      ((lives_clip_data_t *)cdata)->seek_flag |= LIVES_SEEK_FAST;
     }
     ((lives_clip_data_t *)cdata)->max_decode_fps = (((lives_clip_data_t *)cdata)->max_decode_fps + mdf) / 2.;
     /* fprintf(stderr, "avformat_dec: vplay of %d frames took %ld usec (%ld per frame / %.4f / %.4f fps)\n", loops, timex, */

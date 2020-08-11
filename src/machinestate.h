@@ -360,21 +360,25 @@ void reset_effort(void);
 
 typedef void *(*lives_funcptr_t)(void *);
 
+typedef struct _lives_thread_data_t lives_thread_data_t;
+
 typedef struct {
   lives_proc_thread_t var_tinfo;
+  lives_thread_data_t *var_mydata;
   boolean var_com_failed;
   int var_write_failed, var_read_failed;
   boolean var_chdir_failed;
   char *var_read_failed_file, *var_write_failed_file, *var_bad_aud_file;
   int var_rowstride_alignment;   // used to align the rowstride bytesize in create_empty_pixel_data
   int var_rowstride_alignment_hint;
+  int var_last_sws_block;
 } lives_threadvars_t;
 
-typedef struct {
+struct _lives_thread_data_t {
   LiVESWidgetContext *ctx;
   int64_t idx;
   lives_threadvars_t vars;
-} lives_thread_data_t;
+};
 
 typedef struct {
   lives_funcptr_t func;
@@ -395,6 +399,9 @@ typedef struct {
 #define WEED_LEAF_RETURN_VALUE "return_value"
 #define WEED_LEAF_DONTCARE "dontcare"  ///< tell proc_thread with return value that we n o longer need return val.
 #define WEED_LEAF_DONTCARE_MUTEX "dontcare_mutex" ///< ensures we can set dontcare without it finishing while doing so
+
+#define WEED_LEAF_SIGNALLED "signalled"
+#define WEED_LEAF_SIGNAL_DATA "signal_data"
 
 #define WEED_LEAF_THREAD_PARAM "thrd_param"
 #define _WEED_LEAF_THREAD_PARAM(n) WEED_LEAF_THREAD_PARAM  n
@@ -495,6 +502,8 @@ void lives_proc_thread_free(lives_proc_thread_t lpt);
 
 /// returns FALSE while the thread is running, TRUE once it has finished
 boolean lives_proc_thread_check(lives_proc_thread_t);
+int lives_proc_thread_signalled(lives_proc_thread_t tinfo);
+int64_t lives_proc_thread_signalled_idx(lives_proc_thread_t tinfo);
 
 lives_thread_data_t *get_thread_data(void);
 lives_threadvars_t *get_threadvars(void);

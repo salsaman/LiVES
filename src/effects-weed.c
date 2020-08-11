@@ -1173,24 +1173,21 @@ LIVES_GLOBAL_INLINE weed_plant_t *get_next_compound_inst(weed_plant_t *inst) {
 lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compound) {
   // call with filter_mutex unlocked
   weed_plant_t *filter, *orig_inst = inst;
-
   lives_filter_error_t filter_error = FILTER_SUCCESS;
-
   char *cwd;
-
   boolean deinit_first = FALSE;
-
-  int error, key = -1;
   weed_error_t retval;
+  int key = -1;
 
   weed_instance_ref(inst);
 
-  if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
+  if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
 
   if (key != -1) {
+    weed_plant_t *gui;
     filter_mutex_lock(key);
-
-    if (weed_get_int_value(inst, WEED_LEAF_EASE_OUT, NULL) > 0) {
+    gui = weed_instance_get_gui(inst, FALSE);
+    if (weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL) > 0) {
       // plugin is easing, so we need to deinit it
       uint64_t new_rte = GU641 << (key);
       if (mainw->rte & new_rte) mainw->rte ^= new_rte;
@@ -3434,6 +3431,7 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
   // free playback: we will have here only one or two layers, and no filter_map.
   // Effects are applied in key order, in tracks are 0 and 1, out track is 0
   else {
+    weed_plant_t *gui;
     for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
       if (rte_key_valid(i + 1, TRUE)) {
 
@@ -3453,10 +3451,11 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
             weed_instance_unref(instance);
             continue;
           }
-          if (weed_get_int_value(instance, WEED_LEAF_EASE_OUT, NULL) > 0) {
+          gui = weed_instance_get_gui(instance, FALSE);
+          if (weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL) > 0) {
             // if the plugin is easing out, check if it finished
             if (!weed_plant_has_leaf(instance, WEED_LEAF_AUTO_EASING)) { // if auto_Easing then we'll deinit it on the event_list
-              if (weed_get_int_value(instance, WEED_LEAF_PLUGIN_EASING, NULL) < 1) {
+              if (!weed_get_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, NULL)) {
                 // easing finished, deinit it
                 uint64_t new_rte = GU641 << (i);
                 // record
@@ -3465,7 +3464,7 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
                   // we'll need to repeat the same process during preview / rendering
                   // - when we hit the init_event, we'll find the deinit, then work back x frames and mark easing start
                   weed_set_int_value(init_events[i], WEED_LEAF_EASE_OUT,
-                                     weed_get_int_value(instance, WEED_LEAF_HOST_EASE_OUT_COUNT, NULL));
+                                     weed_get_int_value(instance, WEED_LEAF_EASE_OUT, NULL));
                 }
                 weed_instance_unref(instance);
                 filter_mutex_lock(i);
@@ -3529,27 +3528,28 @@ apply_inst3:
 
           if (easeval > 0 && !weed_plant_has_leaf(orig_inst, WEED_LEAF_AUTO_EASING)) {
             // if the plugin is supposed to be easing out, make sure it is really
-            int xeaseval = weed_get_int_value(orig_inst, WEED_LEAF_PLUGIN_EASING, NULL);
-            int myeaseval = weed_get_int_value(instance, WEED_LEAF_HOST_EASE_OUT, NULL);
-            if (xeaseval >= myeaseval) {
-              uint64_t new_rte = GU641 << (i);
-              filter_mutex_lock(i);
-              weed_instance_unref(orig_inst);
-              if (mainw->rte & new_rte) {
-                mainw->rte ^= new_rte;
-                if (rte_window != NULL) rtew_set_keych(i, FALSE);
-                if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
+            weed_plant_t *gui = weed_instance_get_gui(orig_inst, FALSE);
+            if (gui) {
+              int xeaseval = weed_get_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, NULL), myeaseval;
+              myeaseval = weed_get_int_value(instance, WEED_LEAF_HOST_EASE_OUT_COUNT, NULL);
+              if (xeaseval > myeaseval) {
+                uint64_t new_rte = GU641 << (i);
+                filter_mutex_lock(i);
+                weed_instance_unref(orig_inst);
+                if (mainw->rte & new_rte) {
+                  mainw->rte ^= new_rte;
+                  if (rte_window) rtew_set_keych(i, FALSE);
+                  if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
+                }
+                weed_deinit_effect(i);
+                filter_mutex_unlock(i);
+                continue;
               }
-              weed_deinit_effect(i);
-              filter_mutex_unlock(i);
-              continue;
+              // count how many frames to ease out
+              weed_set_int_value(instance, WEED_LEAF_HOST_EASE_OUT_COUNT,
+                                 weed_get_int_value(instance, WEED_LEAF_HOST_EASE_OUT_COUNT, NULL) + 1);
             }
-            weed_set_int_value(instance, WEED_LEAF_HOST_EASE_OUT, xeaseval);
-            // count how many frames to ease out
-            weed_set_int_value(instance, WEED_LEAF_HOST_EASE_OUT_COUNT,
-                               weed_get_int_value(instance, WEED_LEAF_HOST_EASE_OUT_COUNT, NULL) + 1);
           }
-
           if (filter_error == FILTER_ERROR_NEEDS_REINIT) {
             // TODO...
           }
@@ -4092,19 +4092,21 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
           naudins += ctachans;
         else naudins += filter_achans;
         if (naudins > 2) {
-          // currently we only handle mono and stereo audio filters
-          char *filtname = weed_filter_get_name(filter);
-          char *pkgstring = weed_filter_get_package_name(filter);
-          char *msg, *pkstr;
-          lives_freep((void **)&array);
-          if (pkgstring) pkstr = lives_strdup_printf(" from package %s ", pkgstring);
-          else pkstr = lives_strdup("");
-          msg = lives_strdup_printf("Cannot use filter %s%s\n"
-                                    "as it requires at least %d input audio channels\n",
-                                    filtname, pkstr, naudins);
-          lives_free(filtname); lives_free(pkstr); lives_free(pkgstring);
-          LIVES_INFO(msg);
-          lives_free(msg);
+          if (!prefs->vj_mode) {
+            // currently we only handle mono and stereo audio filters
+            char *filtname = weed_filter_get_name(filter);
+            char *pkgstring = weed_filter_get_package_name(filter);
+            char *msg, *pkstr;
+            lives_freep((void **)&array);
+            if (pkgstring) pkstr = lives_strdup_printf(" from package %s ", pkgstring);
+            else pkstr = lives_strdup("");
+            msg = lives_strdup_printf("Cannot use filter %s%s\n"
+                                      "as it requires at least %d input audio channels\n",
+                                      filtname, pkstr, naudins);
+            lives_free(filtname); lives_free(pkstr); lives_free(pkgstring);
+            LIVES_INFO(msg);
+            lives_free(msg);
+          }
           return 7;
         }
       }
@@ -4138,18 +4140,20 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
   if (num_elements > 0) lives_freep((void **)&array);
   if (chans_in_mand > 2) {
     // currently we only handle mono and stereo audio filters
-    char *filtname = weed_filter_get_name(filter);
-    char *pkgstring = weed_filter_get_package_name(filter);
-    char *msg, *pkstr;
-    lives_freep((void **)&array);
-    if (pkgstring) pkstr = lives_strdup_printf(" from package %s ", pkgstring);
-    else pkstr = lives_strdup("");
-    msg = lives_strdup_printf("Cannot use filter %s%s\n"
-                              "as it requires at least %d input video channels\n",
-                              filtname, pkstr, chans_in_mand);
-    lives_free(filtname); lives_free(pkstr); lives_free(pkgstring);
-    LIVES_INFO(msg);
-    lives_free(msg);
+    if (!prefs->vj_mode) {
+      char *filtname = weed_filter_get_name(filter);
+      char *pkgstring = weed_filter_get_package_name(filter);
+      char *msg, *pkstr;
+      lives_freep((void **)&array);
+      if (pkgstring) pkstr = lives_strdup_printf(" from package %s ", pkgstring);
+      else pkstr = lives_strdup("");
+      msg = lives_strdup_printf("Cannot use filter %s%s\n"
+                                "as it requires at least %d input video channels\n",
+                                filtname, pkstr, chans_in_mand);
+      lives_free(filtname); lives_free(pkstr); lives_free(pkgstring);
+      LIVES_INFO(msg);
+      lives_free(msg);
+    }
     return 8; // we dont handle mixers yet...
   }
   if (achans_in_mand > 0 && chans_in_mand > 0) return 13; // can't yet handle effects that need both audio and video
@@ -4264,6 +4268,11 @@ weed_error_t weed_plant_free_host(weed_plant_t *plant) {
     return _weed_plant_free(plant);
   }
   return err;
+}
+
+
+weed_plant_t *weed_plant_new_host(int type) {
+  return _weed_plant_new(type);
 }
 
 
@@ -4816,9 +4825,11 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
     // *INDENT-ON*
 
     if (blacklisted) {
-      msg = lives_strdup_printf(_("%sskipping blacklisted filter %s\n"), package_name, filtname);
-      fprintf(stderr, "%s", msg);
-      lives_free(msg);
+      if (!prefs->vj_mode) {
+        msg = lives_strdup_printf(_("%sskipping blacklisted filter %s\n"), package_name, filtname);
+        fprintf(stderr, "%s", msg);
+        lives_free(msg);
+      }
       continue;
     }
 
@@ -4842,9 +4853,11 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
         if (hashnames[idx][0].hash == hashnames[i][0].hash
             && !lives_utf8_strcasecmp(hashnames[idx][0].string, hashnames[i][0].string)) {
           // skip dups
-          msg = lives_strdup_printf(_("Found duplicate plugin %s"), hashnames[idx][0].string);
-          LIVES_INFO(msg);
-          lives_free(msg);
+          if (!prefs->vj_mode) {
+            msg = lives_strdup_printf(_("Found duplicate plugin %s"), hashnames[idx][0].string);
+            LIVES_INFO(msg);
+            lives_free(msg);
+          }
           for (j = 0; j < NHASH_TYPES; j ++) {
             lives_freep((void **)&hashnames[idx][j].string);
           }
@@ -5312,9 +5325,11 @@ static weed_plant_t *create_compound_filter(char *plugin_name, int nfilts, int *
       tfps = weed_get_double_value(xfilter, WEED_LEAF_PREFERRED_FPS, &error);
       if (tgfps == -1.) tgfps = tfps;
       else if (tgfps != tfps) {
-        d_print((tmp = lives_strdup_printf(_("Invalid compound effect %s - has conflicting target_fps\n"), plugin_name)));
-        LIVES_ERROR(tmp);
-        lives_free(tmp);
+        if (!prefs->vj_mode) {
+          d_print((tmp = lives_strdup_printf(_("Invalid compound effect %s - has conflicting target_fps\n"), plugin_name)));
+          LIVES_ERROR(tmp);
+          lives_free(tmp);
+        }
         return NULL;
       }
     }
@@ -5330,9 +5345,12 @@ static weed_plant_t *create_compound_filter(char *plugin_name, int nfilts, int *
 
       if (tparam != -1) {
         if (txparam != -1) {
-          d_print((tmp = lives_strdup_printf(_("Invalid compound effect %s - has multiple transition parameters\n"), plugin_name)));
-          LIVES_ERROR(tmp);
-          lives_free(tmp);
+          if (!prefs->vj_mode) {
+            d_print((tmp = lives_strdup_printf(_("Invalid compound effect %s - has multiple transition parameters\n"),
+                                               plugin_name)));
+            LIVES_ERROR(tmp);
+            lives_free(tmp);
+          }
           return NULL;
         }
         txparam = tparam;
@@ -5344,9 +5362,12 @@ static weed_plant_t *create_compound_filter(char *plugin_name, int nfilts, int *
 
       if (tvolm != -1) {
         if (txvolm != -1) {
-          d_print((tmp = lives_strdup_printf(_("Invalid compound effect %s - has multiple master volume parameters\n"), plugin_name)));
-          LIVES_ERROR(tmp);
-          lives_free(tmp);
+          if (!prefs->vj_mode) {
+            d_print((tmp = lives_strdup_printf(_("Invalid compound effect %s - has multiple master volume parameters\n"),
+                                               plugin_name)));
+            LIVES_ERROR(tmp);
+            lives_free(tmp);
+          }
           return NULL;
         }
         txvolm = tvolm;
@@ -5461,9 +5482,11 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
         if (++stage == 5) break;
         if (stage == 2) {
           if (nfilts < 2) {
-            d_print((tmp = lives_strdup_printf(_("Invalid compound effect %s - must have >1 sub filters\n"), plugin_name)));
-            LIVES_ERROR(tmp);
-            lives_free(tmp);
+            if (!prefs->vj_mode) {
+              d_print((tmp = lives_strdup_printf(_("Invalid compound effect %s - must have >1 sub filters\n"), plugin_name)));
+              LIVES_ERROR(tmp);
+              lives_free(tmp);
+            }
             ok = FALSE;
             break;
           }
@@ -5481,9 +5504,12 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
         // add filters
         fnum = weed_get_idx_for_hashname(buff, TRUE);
         if (fnum == -1) {
-          d_print((tmp = lives_strdup_printf(_("Invalid effect %s found in compound effect %s, line %d\n"), buff, plugin_name, line)));
-          LIVES_INFO(tmp);
-          lives_free(tmp);
+          if (!prefs->vj_mode) {
+            d_print((tmp = lives_strdup_printf(_("Invalid effect %s found in compound effect %s, line %d\n"),
+                                               buff, plugin_name, line)));
+            LIVES_INFO(tmp);
+            lives_free(tmp);
+          }
           ok = FALSE;
           break;
         }
@@ -5496,9 +5522,11 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
         ntok = get_token_count(buff, '|');
 
         if (ntok < 2) {
-          d_print((tmp = lives_strdup_printf(_("Invalid default found in compound effect %s, line %d\n"), plugin_name, line)));
-          LIVES_ERROR(tmp);
-          lives_free(tmp);
+          if (!prefs->vj_mode) {
+            d_print((tmp = lives_strdup_printf(_("Invalid default found in compound effect %s, line %d\n"), plugin_name, line)));
+            LIVES_ERROR(tmp);
+            lives_free(tmp);
+          }
           ok = FALSE;
           break;
         }
@@ -5507,10 +5535,12 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
 
         xfilt = atoi(array[0]); // sub filter number
         if (xfilt < 0 || xfilt >= nfilts) {
-          d_print((tmp = lives_strdup_printf(_("Invalid filter %d for defaults found in compound effect %s, line %d\n"),
-                                             xfilt, plugin_name, line)));
-          LIVES_ERROR(tmp);
-          lives_free(tmp);
+          if (!prefs->vj_mode) {
+            d_print((tmp = lives_strdup_printf(_("Invalid filter %d for defaults found in compound effect %s, line %d\n"),
+                                               xfilt, plugin_name, line)));
+            LIVES_ERROR(tmp);
+            lives_free(tmp);
+          }
           ok = FALSE;
           lives_strfreev(array);
           break;
@@ -5522,10 +5552,12 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
         pnum = atoi(array[1]);
 
         if (pnum >= nparams) {
-          d_print((tmp = lives_strdup_printf(_("Invalid param %d for defaults found in compound effect %s, line %d\n"),
-                                             pnum, plugin_name, line)));
-          LIVES_ERROR(tmp);
-          lives_free(tmp);
+          if (!prefs->vj_mode) {
+            d_print((tmp = lives_strdup_printf(_("Invalid param %d for defaults found in compound effect %s, line %d\n"),
+                                               pnum, plugin_name, line)));
+            LIVES_ERROR(tmp);
+            lives_free(tmp);
+          }
           ok = FALSE;
           lives_strfreev(array);
           break;
@@ -5550,10 +5582,12 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
 
         if ((ntok != weed_leaf_num_elements(ptmpl, WEED_LEAF_DEFAULT) && !(pflags & WEED_PARAMETER_VARIABLE_SIZE)) ||
             ntok % qvals != 0) {
-          d_print((tmp = lives_strdup_printf(_("Invalid number of values for defaults found in compound effect %s, line %d\n"),
-                                             plugin_name, line)));
-          LIVES_ERROR(tmp);
-          lives_free(tmp);
+          if (!prefs->vj_mode) {
+            d_print((tmp = lives_strdup_printf(_("Invalid number of values for defaults found in compound effect %s, line %d\n"),
+                                               plugin_name, line)));
+            LIVES_ERROR(tmp);
+            lives_free(tmp);
+          }
           ok = FALSE;
           lives_strfreev(array);
           break;
@@ -5585,10 +5619,12 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
 
             if (ivals[i] != WEED_TRUE && ivals[i] != WEED_FALSE) {
               lives_free(ivals);
-              d_print((tmp = lives_strdup_printf(_("Invalid non-boolean value for defaults found in compound effect %s, line %d\n"),
-                                                 pnum, plugin_name, line)));
-              LIVES_ERROR(tmp);
-              lives_free(tmp);
+              if (!prefs->vj_mode) {
+                d_print((tmp = lives_strdup_printf(_("Invalid non-boolean value for defaults found in compound effect %s, "
+                                                     "line %d\n"), pnum, plugin_name, line)));
+                LIVES_ERROR(tmp);
+                lives_free(tmp);
+              }
               ok = FALSE;
               lives_strfreev(array);
               break;
@@ -5618,9 +5654,12 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
         ntok = get_token_count(buff, '|');
 
         if (ntok != 5) {
-          d_print((tmp = lives_strdup_printf(_("Invalid param link found in compound effect %s, line %d\n"), plugin_name, line)));
-          LIVES_ERROR(tmp);
-          lives_free(tmp);
+          if (!prefs->vj_mode) {
+            d_print((tmp = lives_strdup_printf(_("Invalid param link found in compound effect %s, line %d\n"),
+                                               plugin_name, line)));
+            LIVES_ERROR(tmp);
+            lives_free(tmp);
+          }
           ok = FALSE;
           break;
         }
@@ -5629,10 +5668,12 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
 
         xfilt = atoi(array[0]); // sub filter number
         if (xfilt < -1 || xfilt >= nfilts) {
-          d_print((tmp = lives_strdup_printf(_("Invalid out filter %d for link params found in compound effect %s, line %d\n"),
-                                             xfilt, plugin_name, line)));
-          LIVES_ERROR(tmp);
-          lives_free(tmp);
+          if (!prefs->vj_mode) {
+            d_print((tmp = lives_strdup_printf(_("Invalid out filter %d for link params found in compound effect %s, line %d\n"),
+                                               xfilt, plugin_name, line)));
+            LIVES_ERROR(tmp);
+            lives_free(tmp);
+          }
           ok = FALSE;
           lives_strfreev(array);
           break;
@@ -5648,10 +5689,12 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
           else nparams = 0;
 
           if (pnum >= nparams) {
-            d_print((tmp = lives_strdup_printf(_("Invalid out param %d for link params found in compound effect %s, line %d\n"),
-                                               pnum, plugin_name, line)));
-            LIVES_ERROR(tmp);
-            lives_free(tmp);
+            if (!prefs->vj_mode) {
+              d_print((tmp = lives_strdup_printf(_("Invalid out param %d for link params found in compound effect %s, line %d\n"),
+                                                 pnum, plugin_name, line)));
+              LIVES_ERROR(tmp);
+              lives_free(tmp);
+            }
             ok = FALSE;
             lives_strfreev(array);
             break;
@@ -5661,10 +5704,12 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
         autoscale = atoi(array[2]);
 
         if (autoscale != WEED_TRUE && autoscale != WEED_FALSE) {
-          d_print((tmp = lives_strdup_printf(_("Invalid non-boolean value for autoscale found in compound effect %s, line %d\n"),
-                                             pnum, plugin_name, line)));
-          LIVES_ERROR(tmp);
-          lives_free(tmp);
+          if (!prefs->vj_mode) {
+            d_print((tmp = lives_strdup_printf(_("Invalid non-boolean value for autoscale found in compound effect %s, "
+                                                 "line %d\n"), pnum, plugin_name, line)));
+            LIVES_ERROR(tmp);
+            lives_free(tmp);
+          }
           ok = FALSE;
           lives_strfreev(array);
           break;
@@ -5672,10 +5717,12 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
 
         xfilt2 = atoi(array[3]); // sub filter number
         if (xfilt >= nfilts) {
-          d_print((tmp = lives_strdup_printf(_("Invalid in filter %d for link params found in compound effect %s, line %d\n"),
-                                             xfilt2, plugin_name, line)));
-          LIVES_ERROR(tmp);
-          lives_free(tmp);
+          if (!prefs->vj_mode) {
+            d_print((tmp = lives_strdup_printf(_("Invalid in filter %d for link params found in compound effect %s, line %d\n"),
+                                               xfilt2, plugin_name, line)));
+            LIVES_ERROR(tmp);
+            lives_free(tmp);
+          }
           ok = FALSE;
           lives_strfreev(array);
           break;
@@ -5687,10 +5734,12 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
         pnum2 = atoi(array[4]);
 
         if (pnum2 >= nparams) {
-          d_print((tmp = lives_strdup_printf(_("Invalid in param %d for link params found in compound effect %s, line %d\n"),
-                                             pnum2, plugin_name, line)));
-          LIVES_ERROR(tmp);
-          lives_free(tmp);
+          if (!prefs->vj_mode) {
+            d_print((tmp = lives_strdup_printf(_("Invalid in param %d for link params found in compound effect %s, line %d\n"),
+                                               pnum2, plugin_name, line)));
+            LIVES_ERROR(tmp);
+            lives_free(tmp);
+          }
           ok = FALSE;
           lives_strfreev(array);
           break;
@@ -5717,9 +5766,12 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
         ntok = get_token_count(buff, '|');
 
         if (ntok != 4) {
-          d_print((tmp = lives_strdup_printf(_("Invalid channel link found in compound effect %s, line %d\n"), plugin_name, line)));
-          LIVES_ERROR(tmp);
-          lives_free(tmp);
+          if (!prefs->vj_mode) {
+            d_print((tmp = lives_strdup_printf(_("Invalid channel link found in compound effect %s, line %d\n"),
+                                               plugin_name, line)));
+            LIVES_ERROR(tmp);
+            lives_free(tmp);
+          }
           ok = FALSE;
           break;
         }
@@ -5728,10 +5780,12 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
 
         xfilt = atoi(array[0]); // sub filter number
         if (xfilt < 0 || xfilt >= nfilts) {
-          d_print((tmp = lives_strdup_printf(_("Invalid out filter %d for link channels found in compound effect %s, line %d\n"),
-                                             xfilt, plugin_name, line)));
-          LIVES_ERROR(tmp);
-          lives_free(tmp);
+          if (!prefs->vj_mode) {
+            d_print((tmp = lives_strdup_printf(_("Invalid out filter %d for link channels found in compound effect %s, "
+                                                 "line %d\n"), xfilt, plugin_name, line)));
+            LIVES_ERROR(tmp);
+            lives_free(tmp);
+          }
           ok = FALSE;
           lives_strfreev(array);
           break;
@@ -5747,10 +5801,12 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
         cnum = atoi(array[1]);
 
         if (cnum >= nchans) {
-          d_print((tmp = lives_strdup_printf(_("Invalid out channel %d for link params found in compound effect %s, line %d\n"),
-                                             cnum, plugin_name, line)));
-          LIVES_ERROR(tmp);
-          lives_free(tmp);
+          if (!prefs->vj_mode) {
+            d_print((tmp = lives_strdup_printf(_("Invalid out channel %d for link params found in compound effect %s, line %d\n"),
+                                               cnum, plugin_name, line)));
+            LIVES_ERROR(tmp);
+            lives_free(tmp);
+          }
           ok = FALSE;
           lives_strfreev(array);
           break;
@@ -5758,10 +5814,12 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
 
         xfilt2 = atoi(array[2]); // sub filter number
         if (xfilt2 <= xfilt || xfilt >= nfilts) {
-          d_print((tmp = lives_strdup_printf(_("Invalid in filter %d for link channels found in compound effect %s, line %d\n"),
-                                             xfilt2, plugin_name, line)));
-          LIVES_ERROR(tmp);
-          lives_free(tmp);
+          if (!prefs->vj_mode) {
+            d_print((tmp = lives_strdup_printf(_("Invalid in filter %d for link channels found in compound effect %s, line %d\n"),
+                                               xfilt2, plugin_name, line)));
+            LIVES_ERROR(tmp);
+            lives_free(tmp);
+          }
           ok = FALSE;
           lives_strfreev(array);
           break;
@@ -5777,10 +5835,12 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
         cnum2 = atoi(array[3]);
 
         if (cnum2 >= nchans) {
-          d_print((tmp = lives_strdup_printf(_("Invalid in channel %d for link params found in compound effect %s, line %d\n"),
-                                             cnum2, plugin_name, line)));
-          LIVES_ERROR(tmp);
-          lives_free(tmp);
+          if (!prefs->vj_mode) {
+            d_print((tmp = lives_strdup_printf(_("Invalid in channel %d for link params found in compound effect %s, line %d\n"),
+                                               cnum2, plugin_name, line)));
+            LIVES_ERROR(tmp);
+            lives_free(tmp);
+          }
           ok = FALSE;
           lives_strfreev(array);
           break;
@@ -7032,15 +7092,15 @@ boolean weed_deinit_effect(int hotkey) {
   if (LIVES_IS_PLAYING && hotkey < FX_KEYS_MAX_VIRTUAL) {
     if (prefs->allow_easing) {
       // if it's a user key and the plugin supports easing out, we'll do that instead
-      if (!weed_plant_has_leaf(instance, WEED_LEAF_EASE_OUT)) {
+      weed_plant_t *gui = weed_instance_get_gui(instance, FALSE);
+      if (!weed_plant_has_leaf(gui, WEED_LEAF_EASE_OUT_FRAMES)) {
         uint64_t new_rte = GU641 << (hotkey);
         if (mainw->rte & new_rte) {
-          if ((easing = weed_get_int_value(instance, WEED_LEAF_PLUGIN_EASING, NULL)) > 0) {
+          if ((easing = weed_get_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, NULL))) {
             int myease = cfile->pb_fps * 2.;
-            if (easing <= myease) {
-              weed_set_int_value(instance, WEED_LEAF_EASE_OUT, myease);
-              weed_set_int_value(instance, WEED_LEAF_HOST_EASE_OUT, myease);
-              weed_set_int_value(instance, WEED_LEAF_HOST_EASE_OUT_COUNT, 0);
+            if (easing < myease) {
+              weed_set_int_value(gui, WEED_LEAF_EASE_OUT, myease);
+              weed_set_int_value(instance, WEED_LEAF_HOST_EASE_OUT_COUNT, myease);
               weed_instance_unref(instance);
               return FALSE;
 	      // *INDENT-OFF*
@@ -7285,7 +7345,8 @@ void deinit_easing_effects(void) {
 
   for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if ((instance = key_to_instance[i][key_modes[i]]) != NULL) {
-      if (weed_plant_has_leaf(instance, WEED_LEAF_EASE_OUT)) {
+      weed_plant_t *gui = weed_instance_get_gui(instance, FALSE);
+      if (weed_plant_has_leaf(gui, WEED_LEAF_EASE_OUT)) {
         // no mutex needed since we are rendering. and since we arent playing it will get deinited now
         weed_deinit_effect(i);
         /// if recording, the deinit_event won't be recorded, since we are not playing now,
@@ -7872,7 +7933,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
     mainw->play_start = mainw->play_end = 1;
     mainw->startticks = mainw->currticks;
   } else {
-    if (create_cfile(-1, filter_name, TRUE) == NULL) {
+    if (!create_cfile(-1, filter_name, TRUE)) {
       filter_mutex_unlock(key);
       return 3;
     }
@@ -7890,6 +7951,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
 
   new_file = mainw->current_file;
   cfile->ext_src = inst;
+  cfile->ext_src_type = LIVES_EXT_SRC_FILTER;
 
   if (is_bg) {
     mainw->blend_file = mainw->current_file;
@@ -7910,14 +7972,16 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   if (num_channels  == 0) {
     filter_mutex_unlock(key);
     cfile->ext_src = NULL;
+    cfile->ext_src_type = LIVES_EXT_SRC_NONE;
     close_current_file(mainw->pre_src_file);
     return 4;
   }
 
-  if ((channel = get_enabled_channel(inst, 0, FALSE)) == NULL) {
+  if (!(channel = get_enabled_channel(inst, 0, FALSE))) {
     lives_free(out_channels);
     filter_mutex_unlock(key);
     cfile->ext_src = NULL;
+    cfile->ext_src_type = LIVES_EXT_SRC_NONE;
     close_current_file(mainw->pre_src_file);
     return 5;
   }
@@ -8155,6 +8219,7 @@ void weed_generator_end(weed_plant_t *inst) {
     // we started playing from an audio clip
     cfile->frames = cfile->start = cfile->end = 0;
     cfile->ext_src = NULL;
+    cfile->ext_src_type = LIVES_EXT_SRC_NONE;
     cfile->clip_type = CLIP_TYPE_DISK;
     cfile->hsize = cfile->vsize = 0;
     cfile->pb_fps = cfile->fps = prefs->default_fps;
@@ -8181,9 +8246,8 @@ void weed_generator_end(weed_plant_t *inst) {
       mainw->current_file = mainw->pre_src_file;
     } else {
       cfile->ext_src = NULL;
+      cfile->ext_src_type = LIVES_EXT_SRC_NONE;
       close_current_file(mainw->pre_src_file);
-
-
       /* if (mainw->playing_file != mainw->pre_src_file) { */
       /*   mainw->scratch = SCRATCH_JUMP; */
       /* } */
@@ -8196,6 +8260,7 @@ void weed_generator_end(weed_plant_t *inst) {
       LIVES_WARN("Close non-generator file");
     } else {
       cfile->ext_src = NULL;
+      cfile->ext_src_type = LIVES_EXT_SRC_NONE;
       if (cfile->achans == 0) {
         current_file = mainw->current_file;
         close_current_file(mainw->pre_src_file);
@@ -8311,6 +8376,7 @@ deinit4:
           filter_mutex_unlock(fg_gen_to_start);
           fg_gen_to_start = -1;
           cfile->ext_src = NULL;
+          cfile->ext_src_type = LIVES_EXT_SRC_NONE;
           mainw->osc_block = FALSE;
           return FALSE;
         }
@@ -8336,6 +8402,7 @@ deinit4:
 
         mainw->clip_switched = TRUE;
         cfile->ext_src = inst;
+        cfile->ext_src_type = LIVES_EXT_SRC_FILTER;
         weed_instance_unref(inst);
       }
     }
@@ -8457,6 +8524,7 @@ deinit5:
         cfile->start = cfile->end = cfile->frames = 1;
         mainw->blend_file = mainw->current_file;
         mainw->files[mainw->blend_file]->ext_src = inst;
+        mainw->files[mainw->blend_file]->ext_src_type = LIVES_EXT_SRC_FILTER;
         mainw->current_file = current_file;
       }
     }

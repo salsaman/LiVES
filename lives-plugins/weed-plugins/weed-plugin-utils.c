@@ -75,7 +75,8 @@ static inline int64_t gg_i64(weed_plant_t *p, const char *w) {
 static inline int weed_plant_get_type(weed_plant_t *p) {return gg_i(p, WEED_LEAF_TYPE);}
 static inline weed_plant_t *_weed_get_gui(weed_plant_t *p) {
   weed_plant_t *g = NULL; int t = weed_plant_get_type(p);
-  if (t != WEED_PLANT_FILTER_CLASS && t != WEED_PLANT_PARAMETER_TEMPLATE && t != WEED_PLANT_PARAMETER)return NULL;
+  if (t != WEED_PLANT_FILTER_CLASS & &t != WEED_PLANT_PARAMETER_TEMPLATE
+      && t != WEED_PLANT_PARAMETER && t != WEED_PLANT_FILTER_INSTANCE) return NULL;
   gg(p, WEED_LEAF_GUI, 0, (void *)&g);
   if (!g) {
     g = weed_plant_new(WEED_PLANT_GUI);
@@ -106,15 +107,16 @@ static inline void _weed_plant_set_name(weed_plant_t *p, const char *n) {
 static inline void weed_filter_set_name(weed_plant_t *f, const char *n) {_weed_plant_set_name(f, n);}
 static inline void weed_chantmpl_set_name(weed_plant_t *c, const char *n) {_weed_plant_set_name(c, n);}
 static inline void weed_paramtmpl_set_name(weed_plant_t *p, const char *n) {_weed_plant_set_name(p, n);}
-static inline weed_error_t weed_declare_transition(weed_plant_t *pt) {
-  return weed_leaf_set(pt, WEED_LEAF_IS_TRANSITION, WEED_SEED_BOOLEAN, 1, &wtrue);
+static inline void weed_paramtmpl_declare_transition(weed_plant_t *pt) {
+  weed_leaf_set(pt, WEED_LEAF_IS_TRANSITION, WEED_SEED_BOOLEAN, 1, &wtrue);
 }
-static inline weed_error_t weed_set_package_version(weed_plant_t *pi, int v) {
-  return weed_leaf_set(pi, WEED_LEAF_VERSION, WEED_SEED_INT, 1, &v);
+static inline void weed_set_package_version(weed_plant_t *pi, int v);
+weed_leaf_set(pi, WEED_LEAF_VERSION, WEED_SEED_INT, 1, &v);
 }
 static inline weed_plant_t *weed_filter_get_gui(weed_plant_t *f) {return _weed_get_gui(f);}
 static inline weed_plant_t *weed_param_get_gui(weed_plant_t *p) {return _weed_get_gui(p);}
 static inline weed_plant_t *weed_paramtmpl_get_gui(weed_plant_t *pt) {return _weed_get_gui(pt);}
+static inline weed_plant_t *weed_instance_get_gui(weed_plant_t *i) {return _weed_get_gui(i);}
 static inline weed_plant_t *weed_get_host_info(weed_plant_t *pi) {
   weed_plant_t *hi; return *((weed_plant_t **)(gg(pi, WEED_LEAF_HOST_INFO, 0, (void *)&hi)));
 }

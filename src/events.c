@@ -3181,12 +3181,12 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
 #ifdef DEBUG_EVENTS
       g_print("event: front frame is %d tc %"PRId64" curr_tc=%"PRId64"\n", mainw->frame_index[0], tc, curr_tc);
 #endif
-      if ((inst = weed_get_plantptr_value(next_event, WEED_LEAF_PLUGIN_EASING, NULL)) != NULL) {
+      if ((inst = weed_get_plantptr_value(next_event, WEED_LEAF_HOST_EASING_END, NULL)) != NULL) {
         easing = weed_get_int_value(next_event, WEED_LEAF_EASE_OUT, NULL);
-        if (weed_get_int_value(inst, WEED_LEAF_PLUGIN_EASING, NULL) > 0) {
-          weed_set_int_value(inst, WEED_LEAF_EASE_OUT, easing);
-          weed_set_boolean_value(inst, WEED_LEAF_AUTO_EASING, WEED_TRUE);
-        }
+        //if (weed_get_int_value(inst, WEED_LEAF_EASE_OUT_FRAMES, NULL) > 0) {
+        weed_set_int_value(inst, WEED_LEAF_EASE_OUT, easing);
+        weed_set_boolean_value(inst, WEED_LEAF_AUTO_EASING, WEED_TRUE);
+        //}
       }
 
       // handle case where new_file==-1: we must somehow create a blank frame in load_frame_image
@@ -3388,9 +3388,9 @@ filterinit1:
             for (i = 0; i < easing && event != NULL; i++) {
               event = get_prev_frame_event(event);
             }
-            if (event != deinit && event != NULL) {
+            if (event != deinit && event) {
               weed_set_int_value(event, WEED_LEAF_EASE_OUT, easing);
-              weed_set_plantptr_value(event, WEED_LEAF_PLUGIN_EASING, inst);
+              weed_set_plantptr_value(event, WEED_LEAF_HOST_EASING_END, inst);
             }
 	    // *INDENT-OFF*
           }}}
@@ -3808,12 +3808,10 @@ lives_render_error_t render_events(boolean reset) {
             }
             layers[i] = NULL;
 
-            if ((inst = weed_get_plantptr_value(event, WEED_LEAF_PLUGIN_EASING, NULL)) != NULL) {
+            if ((inst = weed_get_plantptr_value(event, WEED_LEAF_HOST_EASING_END, NULL)) != NULL) {
               easing = weed_get_int_value(event, WEED_LEAF_EASE_OUT, NULL);
-              if (weed_get_int_value(inst, WEED_LEAF_PLUGIN_EASING, NULL) > 0) {
-                weed_set_int_value(inst, WEED_LEAF_EASE_OUT, easing);
-                weed_set_boolean_value(inst, WEED_LEAF_AUTO_EASING, WEED_TRUE);
-              }
+              weed_set_int_value(inst, WEED_LEAF_EASE_OUT, easing);
+              weed_set_boolean_value(inst, WEED_LEAF_AUTO_EASING, WEED_TRUE);
             }
 
             layer = weed_apply_effects(layers, mainw->filter_map, tc, cfile->hsize, cfile->vsize, pchains);
@@ -4196,14 +4194,14 @@ filterinit2:
 
         if ((easing = weed_get_int_value(event, WEED_LEAF_EASE_OUT, NULL)) > 0) {
           weed_plant_t *deinit = weed_get_plantptr_value(event, WEED_LEAF_DEINIT_EVENT, NULL);
-          if (deinit != NULL) {
+          if (deinit) {
             weed_plant_t *xevent = deinit;
             for (i = 0; i < easing; i++) {
               xevent = get_prev_frame_event(xevent);
             }
             if (xevent != deinit && xevent != NULL) {
               weed_set_int_value(xevent, WEED_LEAF_EASE_OUT, easing);
-              weed_set_plantptr_value(xevent, WEED_LEAF_PLUGIN_EASING, inst);
+              weed_set_plantptr_value(xevent, WEED_LEAF_HOST_EASING_END, inst);
 	      // *INDENT-OFF*
             }}}}
 	  // *INDENT-ON*

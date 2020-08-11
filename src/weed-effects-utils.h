@@ -82,6 +82,7 @@ weed_plant_t **weed_instance_get_out_channels(weed_plant_t *instance, int *nchan
 weed_plant_t **weed_instance_get_in_channels(weed_plant_t *instance, int *nchans);
 weed_plant_t **weed_instance_get_in_params(weed_plant_t *instance, int *nparams);
 weed_plant_t **weed_instance_get_out_params(weed_plant_t *instance, int *nparams);
+weed_plant_t *weed_instance_get_gui(weed_plant_t *inst, int create_if_not_exists);
 int weed_instance_get_flags(weed_plant_t *instance);
 void weed_instance_set_flags(weed_plant_t *instance, int flags);
 
@@ -177,6 +178,7 @@ char *weed_palette_get_name_full(int pal, int clamping, int subspace) WARN_UNUSE
 const char *weed_palette_get_name(int pal);
 const char *weed_yuv_clamping_get_name(int clamping);
 const char *weed_yuv_subspace_get_name(int subspace);
+const char *weed_gamma_get_name(int gamma);
 
 double weed_palette_get_compression_ratio(int pal);
 

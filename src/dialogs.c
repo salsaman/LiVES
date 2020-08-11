@@ -1266,7 +1266,7 @@ void update_progress(boolean visible) {
   }
 }
 
-
+#define ENABLE_PRECACHE
 static short scratch = SCRATCH_NONE;
 
 int process_one(boolean visible) {
@@ -1282,7 +1282,9 @@ int process_one(boolean visible) {
   boolean show_frame = FALSE;
   boolean did_switch = FALSE;
   int old_current_file, old_playing_file;
+#ifdef ENABLE_PRECACHE
   int delta = 0;
+#endif
   int aplay_file = 0;
 #ifdef RT_AUDIO
   double audio_stretch = 1.0;
@@ -1531,7 +1533,6 @@ switch_point:
 
   // free playback
 
-#define ENABLE_PRECACHE
   //#define SHOW_CACHE_PREDICTIONS
 #define TEST_TRIGGER 9999
 
@@ -1566,17 +1567,10 @@ switch_point:
     // which will be <= the current time
     // and requested_frame is set to the frame to show. By default this is the frame we show, but we may vary
     // this depending on the cached frame
+
     sfile->frameno = requested_frame = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);
     if (mainw->scratch != SCRATCH_NONE) scratch  = mainw->scratch;
     mainw->scratch = SCRATCH_NONE;
-
-#ifdef HAVE_PULSE_AUDIO
-    if (new_ticks != mainw->startticks && mainw->pulsed->seek_pos == last_seek_pos
-        && CLIP_HAS_AUDIO(mainw->pulsed->playing_file)) {
-      mainw->startticks = new_ticks;
-      sfile->frameno = mainw->actual_frame;
-    }
-#endif
 
 #ifdef ENABLE_PRECACHE
     if (scratch != SCRATCH_NONE) {
@@ -1630,7 +1624,7 @@ switch_point:
 #endif
           if (delta == 0)  bungle_frames++;
           if (delta > 0 && delta < 3 && bungle_frames > 1) bungle_frames--;
-          else bungle_frames += requested_frame - test_getahead;
+          else bungle_frames += (requested_frame - test_getahead) * dir;
           if (bungle_frames <= -dir) bungle_frames = 0;
           if (delta >= 0 && getahead > -1) drop_off = TRUE;
         }
@@ -1703,7 +1697,8 @@ switch_point:
                   getahead = -1;
                   mainw->pred_frame = 0;
                   cleanup_preload = TRUE;
-                  sfile->last_frameno = requested_frame;
+                  if (sfile->pb_fps > 0.)  /// not sure why yet but this doesnt work for rev. pb
+                    sfile->last_frameno = requested_frame;
                   drop_off = FALSE;
                 }
               } else {
@@ -1742,15 +1737,25 @@ switch_point:
                                                 || (abs(sfile->frameno - sfile->last_vframe_played) >= JUMPFRAME_TRIGGER)
                                                 || dropped >= DROPFRAME_TRIGGER)) {
                 getahead = test_getahead;
-                if (mainw->pred_frame > 0 && mainw->pred_frame > mainw->actual_frame
+                if (mainw->pred_frame > 0 && (mainw->pred_frame - mainw->actual_frame) * dir > 0
                     && mainw->frame_layer_preload && is_layer_ready(mainw->frame_layer_preload))
                   sfile->frameno = mainw->pred_frame;
                 else sfile->frameno = getahead;
 		// *INDENT-OFF*
 	      }}}
 	  // *INDENT-ON*
+#else
+        if (1) {
 #endif
         }
+
+#ifdef HAVE_PULSE_AUDIO
+        if (getahead < 0 && new_ticks != mainw->startticks && mainw->pulsed->seek_pos == last_seek_pos
+            && CLIP_HAS_AUDIO(mainw->pulsed->playing_file)) {
+          mainw->startticks = new_ticks;
+          sfile->frameno = mainw->actual_frame;
+        }
+#endif
 
 #ifdef ENABLE_PRECACHE
         if (mainw->pred_clip == -1) {
@@ -1817,7 +1822,10 @@ switch_point:
         sfile->last_frameno = requested_frame;
         // set
         if (new_ticks > mainw->startticks) mainw->startticks = new_ticks;
-        if (scratch != SCRATCH_NONE) mainw->startticks = mainw->currticks;
+        if (scratch != SCRATCH_NONE) {
+          mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
+          mainw->startticks = mainw->currticks;
+        }
       }
 
       mainw->last_startticks = mainw->startticks;
@@ -1837,9 +1845,9 @@ switch_point:
       if (mainw->force_show || ((sfile->frameno != mainw->actual_frame || (sfile->frames == 1 && sfile->frameno == 1))
 #ifdef ENABLE_PRECACHE
                                 && getahead < 0)
-          || (getahead > -1 && mainw->frame_layer_preload && !cleanup_preload && requested_frame != last_req_frame)
+          || (getahead > -1 && mainw->frame_layer_preload && !cleanup_preload && requested_frame != last_req_frame
 #endif
-         ) {
+             )) {
         spare_cycles = 0;
         mainw->record_frame = requested_frame;
 
@@ -1854,7 +1862,8 @@ switch_point:
             mainw->files[aplay_file]->aseek_pos =
               (double)((off_t)((double) mainw->pulsed->seek_pos / (double)mainw->files[aplay_file]->arps
                                / (mainw->files[aplay_file]->achans * mainw->files[aplay_file]->asampsize / 8)
-                               * mainw->files[aplay_file]->fps + .5)) / mainw->files[aplay_file]->fps * mainw->files[aplay_file]->arps * qnt;
+                               * mainw->files[aplay_file]->fps + .5)) / mainw->files[aplay_file]->fps
+              * mainw->files[aplay_file]->arps * qnt;
           }
         }
 #endif
@@ -1994,14 +2003,13 @@ switch_point:
               // if the target is a clip-frame we have to decode it now, since we cannot simply decode 2 frames simultaneously
               // (although it could be possible in the future to have 2 clone decoders and have them leapfrog...)
               // NOTE: change to labs when frames_t updated
-              mainw->frame_layer_preload = lives_layer_new_for_frame(mainw->pred_clip,
-                                           ABS(get_indexed_frame(mainw->pred_clip,
-                                               mainw->pred_frame)));
+              mainw->frame_layer_preload = lives_layer_new_for_frame(mainw->pred_clip, mainw->pred_frame);
               if (!pull_frame_at_size(mainw->frame_layer_preload, img_ext,
                                       (weed_timecode_t)mainw->currticks,
                                       sfile->hsize, sfile->vsize, WEED_PALETTE_END)) {
-                if (mainw->frame_layer_preload != NULL) {
+                if (mainw->frame_layer_preload) {
                   weed_layer_free(mainw->frame_layer_preload);
+                  mainw->frame_layer_preload = NULL;
                   mainw->pred_clip = -1;
                 }
 #ifdef SHOW_CACHE_PREDICTIONS
@@ -2718,6 +2726,8 @@ boolean do_auto_dialog(const char *text, int type) {
   int time_rem, last_time_rem = 10000000;
   lives_alarm_t alarm_handle = 0;
 
+  mainw->cancelled = CANCEL_NONE;
+
   if (type == 1 && mainw->rec_end_time != -1.) {
     stime = lives_get_current_ticks();
   }
@@ -2727,7 +2737,7 @@ boolean do_auto_dialog(const char *text, int type) {
   mainw->proc_ptr = create_processing(mytext);
 
   lives_freep((void **)&mytext);
-  if (mainw->proc_ptr->stop_button != NULL)
+  if (mainw->proc_ptr->stop_button)
     lives_widget_hide(mainw->proc_ptr->stop_button);
 
   if (type == 2) {
@@ -2786,7 +2796,7 @@ boolean do_auto_dialog(const char *text, int type) {
   }
 
   if (!mainw->cancelled) {
-    if (infofile != NULL) {
+    if (infofile) {
       if (type == 0 || type == 2) {
         size_t bread;
         THREADVAR(read_failed) = FALSE;
@@ -3316,6 +3326,17 @@ LIVES_GLOBAL_INLINE boolean do_layout_alter_audio_warning(void) {
 }
 
 
+LIVES_GLOBAL_INLINE boolean do_gamma_import_warn(uint64_t fv, int gamma_type) {
+  char *fvx = unhash_version(fv);
+  boolean ret = do_yesno_dialogf(_("This clip is saved with a gamma type of %s\n"
+                                   "from a future version of LiVES (%s)\n"
+                                   "Opening it with the current version may result in a loss of quality\n"
+                                   "Do you wish to continue ?"), weed_gamma_get_name(gamma_type), fvx);
+  lives_free(fvx);
+  return ret;
+}
+
+
 LiVESResponseType do_original_lost_warning(const char *fname) {
   char *msg = lives_strdup_printf(
                 _("\nThe original file\n%s\ncould not be found.\n"
@@ -3622,6 +3643,8 @@ static void _do_threaded_dialog(const char *trans_text, boolean has_cancel) {
   if (!prefs->show_gui) return;
 
   if (mainw->threaded_dialog) return;
+
+  mainw->cancelled = CANCEL_NONE;
 
   copy_text = lives_strdup(trans_text);
 

@@ -850,7 +850,7 @@ typedef struct {
 
   volatile lives_whentostop_t whentostop;
 
-  int play_start, play_end;
+  frames_t play_start, play_end;
 
   // for jack transport
   boolean jack_can_stop, jack_can_start;
@@ -946,8 +946,9 @@ typedef struct {
 #define SCRATCH_NONE 0
 #define SCRATCH_BACK -1
 #define SCRATCH_FWD 1
-#define SCRATCH_JUMP 2  ///< jump and resybc audio
-#define SCRATCH_JUMP_NORESYNC 3 ///< jump with no audio resync
+#define SCRATCH_REV 2 ///< set on direction change (video)
+#define SCRATCH_JUMP 3  ///< jump and resybc audio
+#define SCRATCH_JUMP_NORESYNC 4 ///< jump with no audio resync
 
   /////
 
@@ -1296,7 +1297,6 @@ typedef struct {
   LiVESWidget *video_draw, *laudio_draw, *raudio_draw;
 
   lives_painter_surface_t *video_drawable, *laudio_drawable, *raudio_drawable;
-  lives_painter_surface_t *blank_laudio_drawable, *blank_raudio_drawable;
 
   // framecounter
   LiVESWidget *framebar;

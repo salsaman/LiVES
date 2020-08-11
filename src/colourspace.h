@@ -25,7 +25,7 @@
 #define WEED_LEAF_RESIZE_THREAD "res_thread"
 #define WEED_LEAF_PROGSCAN "progscan"
 
-#define DEF_SCREEN_GAMMA 2.2
+#define DEF_SCREEN_GAMMA 1.4 // extra gammm boost
 
 /// rowstride alignment values
 #define ALIGN_MIN 4

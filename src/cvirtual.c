@@ -520,7 +520,18 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
   }
 
   if (has_missing_frames) mismatch = TRUE;
-
+  else {
+    if (sfile->frame_index) {
+      for (i = 0; i < sfile->frames; i++) {
+        if (sfile->frame_index[i] != -1) {
+          fname = make_image_file_name(sfile, i + 1, get_image_ext_for_type(empirical_img_type));
+          if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+            lives_rm(fname);
+	    // *INDENT-OFF*
+	  }
+	  lives_free(fname);
+	}}}}
+  // *INDENT-ON*
   if (cdata != NULL && (fabs(sfile->fps - (double)cdata->fps) > prefs->fps_tolerance)) {
     if (prefs->show_dev_opts) {
       g_printerr("fps mismtach, claimed %f, cdata said %f\n", sfile->fps, cdata->fps);
@@ -603,11 +614,10 @@ boolean check_if_non_virtual(int fileno, frames_t start, frames_t end) {
 
   register frames_t i;
   lives_clip_t *sfile = mainw->files[fileno];
-  char *ppath, *cwd;
 
   if (sfile->clip_type != CLIP_TYPE_FILE) return TRUE;
 
-  if (sfile->frame_index != NULL) {
+  if (sfile->frame_index) {
     for (i = start; i <= end; i++) {
       if (sfile->frame_index[i - 1] != -1) return FALSE;
     }
@@ -619,15 +629,7 @@ boolean check_if_non_virtual(int fileno, frames_t start, frames_t end) {
 
   sfile->clip_type = CLIP_TYPE_DISK;
   del_frame_index(sfile);
-
-  cwd = lives_get_current_dir();
-  ppath = lives_build_filename(prefs->workdir, sfile->handle, NULL);
-  lives_chdir(ppath, FALSE);
-  lives_free(ppath);
-  close_decoder_plugin((lives_decoder_t *)sfile->ext_src);
-  sfile->ext_src = NULL;
-  lives_chdir(cwd, FALSE);
-  lives_free(cwd);
+  close_clip_decoder(fileno);
 
   if (sfile->interlace != LIVES_INTERLACE_NONE) {
     sfile->interlace = LIVES_INTERLACE_NONE; // all frames should have been deinterlaced
@@ -642,7 +644,6 @@ boolean check_if_non_virtual(int fileno, frames_t start, frames_t end) {
 }
 
 #define DS_SPACE_CHECK_FRAMES 100
-
 
 static boolean save_decoded(int fileno, frames_t i, LiVESPixbuf * pixbuf, boolean silent, int progress) {
   lives_clip_t *sfile = mainw->files[fileno];

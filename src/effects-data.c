@@ -4130,10 +4130,10 @@ static void ptable_row_add_variable_widgets(lives_conx_w * conxwp, int idx, int 
                      (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
                      (LiVESAttachOptions)(0), 0, 0);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(conxwp->pfxcombo[idx]), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(dfxp_changed), (livespointer)conxwp);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(conxwp->pfxcombo[idx]), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(dfxp_changed), (livespointer)conxwp);
 
-  conxwp->dpp_func[idx] = lives_signal_connect(LIVES_GUI_OBJECT(conxwp->pcombo[idx]), LIVES_WIDGET_CHANGED_SIGNAL,
+  conxwp->dpp_func[idx] = lives_signal_sync_connect(LIVES_GUI_OBJECT(conxwp->pcombo[idx]), LIVES_WIDGET_CHANGED_SIGNAL,
                           LIVES_GUI_CALLBACK(dpp_changed), (livespointer)conxwp);
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(conxwp->pcombo[idx]), "pidx", LIVES_INT_TO_POINTER(pidx));
@@ -4168,7 +4168,7 @@ static void ptable_row_add_variable_widgets(lives_conx_w * conxwp, int idx, int 
     lives_widget_set_sensitive(conxwp->acheck[idx], FALSE);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(conxwp->acheck[idx]), "available", LIVES_INT_TO_POINTER(hasrange));
 
-    conxwp->acheck_func[idx] = lives_signal_connect_after(LIVES_GUI_OBJECT(conxwp->acheck[idx]), LIVES_WIDGET_TOGGLED_SIGNAL,
+    conxwp->acheck_func[idx] = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(conxwp->acheck[idx]), LIVES_WIDGET_TOGGLED_SIGNAL,
                                LIVES_GUI_CALLBACK(on_acheck_toggled),
                                (livespointer)conxwp);
 
@@ -4217,10 +4217,10 @@ static void ctable_row_add_variable_widgets(lives_conx_w * conxwp, int idx, int 
                      (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
                      (LiVESAttachOptions)(0), 0, 0);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(conxwp->cfxcombo[idx]), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(dfxc_changed), (livespointer)conxwp);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(conxwp->cfxcombo[idx]), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(dfxc_changed), (livespointer)conxwp);
 
-  conxwp->dpc_func[idx] = lives_signal_connect(LIVES_GUI_OBJECT(conxwp->ccombo[idx]), LIVES_WIDGET_CHANGED_SIGNAL,
+  conxwp->dpc_func[idx] = lives_signal_sync_connect(LIVES_GUI_OBJECT(conxwp->ccombo[idx]), LIVES_WIDGET_CHANGED_SIGNAL,
                           LIVES_GUI_CALLBACK(dpc_changed), (livespointer)conxwp);
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(conxwp->ccombo[idx]), "cidx", LIVES_INT_TO_POINTER(cidx));
@@ -4248,9 +4248,9 @@ static void ptable_row_add_standard_widgets(lives_conx_w * conxwp, int idx) {
                      (LiVESAttachOptions)(0),
                      (LiVESAttachOptions)(0), 0, 0);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(conxwp->add_button[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(padd_clicked),
-                       (livespointer)conxwp);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(conxwp->add_button[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(padd_clicked),
+                            (livespointer)conxwp);
 
   conxwp->del_button[idx] = lives_standard_button_new_from_stock(LIVES_STOCK_REMOVE, NULL, BW, BH);
   lives_widget_set_tooltip_text(conxwp->del_button[idx], _("Delete this connection"));
@@ -4263,9 +4263,9 @@ static void ptable_row_add_standard_widgets(lives_conx_w * conxwp, int idx) {
                      (LiVESAttachOptions)(0),
                      (LiVESAttachOptions)(0), 0, 0);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(conxwp->del_button[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(pdel_clicked),
-                       (livespointer)conxwp);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(conxwp->del_button[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(pdel_clicked),
+                            (livespointer)conxwp);
 
   lives_widget_set_sensitive(conxwp->del_button[idx], FALSE);
 }
@@ -4290,9 +4290,9 @@ static void ctable_row_add_standard_widgets(lives_conx_w * conxwp, int idx) {
                      (LiVESAttachOptions)(0),
                      (LiVESAttachOptions)(0), 0, 0);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(conxwp->add_button[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(cadd_clicked),
-                       (livespointer)conxwp);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(conxwp->add_button[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(cadd_clicked),
+                            (livespointer)conxwp);
 
   conxwp->del_button[idx] = lives_standard_button_new_from_stock(LIVES_STOCK_REMOVE, NULL, BW, BH);
   lives_widget_set_tooltip_text(conxwp->del_button[idx], _("Delete this connection"));
@@ -4305,9 +4305,9 @@ static void ctable_row_add_standard_widgets(lives_conx_w * conxwp, int idx) {
                      (LiVESAttachOptions)(0),
                      (LiVESAttachOptions)(0), 0, 0);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(conxwp->del_button[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(cdel_clicked),
-                       (livespointer)conxwp);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(conxwp->del_button[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(cdel_clicked),
+                            (livespointer)conxwp);
 
   lives_widget_set_sensitive(conxwp->del_button[idx], FALSE);
 }
@@ -4477,9 +4477,9 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
     conxwp->allcheckc = lives_standard_check_button_new(_("Autoscale All"), TRUE, LIVES_BOX(hbox), NULL);
     conxwp->allcheck_label = widget_opts.last_label;
 
-    lives_signal_connect_after(LIVES_GUI_OBJECT(conxwp->allcheckc), LIVES_WIDGET_TOGGLED_SIGNAL,
-                               LIVES_GUI_CALLBACK(on_allcheck_toggled),
-                               (livespointer)conxwp);
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(conxwp->allcheckc), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(on_allcheck_toggled),
+                                    (livespointer)conxwp);
 
     if (EXTRA_PARAMS_OUT > 0) {
       lives_table_resize(LIVES_TABLE(conxwp->tablep), ++conxwp->trowsp, 7);
@@ -4914,9 +4914,9 @@ LiVESWidget *make_datacon_window(int key, int mode) {
     lives_container_set_border_width(LIVES_CONTAINER(conxw.acbutton), widget_opts.border_width);
     lives_widget_set_sensitive(conxw.acbutton, FALSE);
 
-    lives_signal_connect(LIVES_GUI_OBJECT(conxw.acbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(acbutton_clicked),
-                         (livespointer)&conxw);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(conxw.acbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                              LIVES_GUI_CALLBACK(acbutton_clicked),
+                              (livespointer)&conxw);
   }
 
   if (conxw.num_params > EXTRA_PARAMS_OUT) {
@@ -4925,9 +4925,9 @@ LiVESWidget *make_datacon_window(int key, int mode) {
     lives_container_set_border_width(LIVES_CONTAINER(conxw.apbutton), widget_opts.border_width);
     lives_widget_set_sensitive(conxw.apbutton, FALSE);
 
-    lives_signal_connect(LIVES_GUI_OBJECT(conxw.apbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(apbutton_clicked),
-                         (livespointer)&conxw);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(conxw.apbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                              LIVES_GUI_CALLBACK(apbutton_clicked),
+                              (livespointer)&conxw);
   }
 
   conxw.disconbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(conxw.conx_dialog), NULL, _("_Disconnect All"),
@@ -4935,9 +4935,9 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   //lives_container_set_border_width(LIVES_CONTAINER(conxw.disconbutton), widget_opts.border_width); !! dont - causes other buttons to exp. vert in gtk2
   lives_widget_set_sensitive(conxw.disconbutton, FALSE);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(conxw.disconbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(disconbutton_clicked),
-                       (livespointer)&conxw);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(conxw.disconbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(disconbutton_clicked),
+                            (livespointer)&conxw);
 
   abox = lives_dialog_get_action_area(LIVES_DIALOG(conxw.conx_dialog));
   if (LIVES_IS_BOX(abox) && (conxw.num_alpha > 0 || conxw.num_params > 0)) add_fill_to_box(LIVES_BOX(abox));
@@ -4969,13 +4969,13 @@ LiVESWidget *make_datacon_window(int key, int mode) {
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(conxw_cancel_clicked),
-                       (livespointer)&conxw);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(conxw_cancel_clicked),
+                            (livespointer)&conxw);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(conxw_ok_clicked),
-                       (livespointer)&conxw);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(conxw_ok_clicked),
+                            (livespointer)&conxw);
 
   lives_widget_show_all(conxw.conx_dialog);
 

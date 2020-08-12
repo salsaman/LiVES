@@ -2264,7 +2264,12 @@ void play_file(void) {
     }
   }
   /// set performance at right place
-  else if (mainw->event_list != NULL) cfile->next_event = get_first_event(mainw->event_list);
+  else if (mainw->event_list) cfile->next_event = get_first_event(mainw->event_list);
+
+  if (!mainw->multitrack && CURRENT_CLIP_HAS_VIDEO) {
+    lives_widget_set_frozen(mainw->spinbutton_start, TRUE);
+    lives_widget_set_frozen(mainw->spinbutton_end, TRUE);
+  }
 
   /// note, here our start is in frames, in save_file it is in seconds !
   // TODO - check if we can change it to seconds here too
@@ -2272,9 +2277,9 @@ void play_file(void) {
   mainw->audio_start = mainw->audio_end = 0;
 
   if (cfile->achans > 0) {
-    if (mainw->event_list != NULL &&
+    if (mainw->event_list &&
         !(mainw->preview && mainw->is_rendering) &&
-        !(mainw->multitrack != NULL && mainw->preview && mainw->multitrack->is_rendering)) {
+        !(mainw->multitrack && mainw->preview && mainw->multitrack->is_rendering)) {
       /// play performance data
       if (event_list_get_end_secs(mainw->event_list) > cfile->frames / cfile->fps && !mainw->playing_sel) {
         mainw->audio_end = (event_list_get_end_secs(mainw->event_list) * cfile->fps + 1.) * cfile->arate / cfile->arps;
@@ -3281,6 +3286,11 @@ void play_file(void) {
     mainw->noswitch = TRUE;
   }
 
+  if (!mainw->multitrack && CURRENT_CLIP_HAS_VIDEO) {
+    lives_widget_set_sensitive(mainw->spinbutton_start, TRUE);
+    lives_widget_set_sensitive(mainw->spinbutton_end, TRUE);
+  }
+
   /// need to do this here, in case we want to preview with only a generator and no other clips (which will close to -1)
   if (mainw->record) {
     if (!mainw->preview && CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR) {
@@ -3368,7 +3378,6 @@ void play_file(void) {
     if (prefs->hfbwnp) {
       lives_widget_hide(mainw->framebar);
     }
-    lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), "");
     set_drawing_area_from_pixbuf(mainw->play_image, NULL, mainw->play_surface);
   }
 
@@ -3378,10 +3387,10 @@ void play_file(void) {
 
   lives_menu_item_set_accel_path(LIVES_MENU_ITEM(mainw->quit), LIVES_ACCEL_PATH_QUIT);
 
-  if (mainw->multitrack == NULL && CURRENT_CLIP_IS_VALID)
+  if (!mainw->multitrack && CURRENT_CLIP_IS_VALID)
     set_main_title(cfile->name, 0);
 
-  if (mainw->multitrack == NULL && !mainw->foreign && CURRENT_CLIP_IS_VALID && (!cfile->opening ||
+  if (!mainw->multitrack && !mainw->foreign && CURRENT_CLIP_IS_VALID && (!cfile->opening ||
       cfile->clip_type == CLIP_TYPE_FILE)) {
     showclipimgs();
   }

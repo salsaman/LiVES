@@ -977,6 +977,7 @@ typedef struct {
   lives_checkstatus_t has_md5sum;
   lives_checkstatus_t has_gio;
   lives_checkstatus_t has_wget;
+  lives_checkstatus_t has_curl;
 
   /// home directory - default location for config file - locale encoding
   char home_dir[PATH_MAX];
@@ -1634,6 +1635,7 @@ void get_location(const char *exe, char *val, int maxlen);
 lives_presence_t has_executable(const char *exe);
 boolean check_for_executable(lives_checkstatus_t *cap, const char *exec);
 void do_please_install(const char *exec);
+void do_please_install_either(const char *exec, const char *exec2);
 
 /// lives_image_type can be a string, lives_img_type_t is an enumeration
 char *make_image_file_name(lives_clip_t *clip, frames_t frame, const char *img_ext);
@@ -1842,7 +1844,7 @@ void break_me(const char *dtl);
 #endif
 
 #endif
-#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #else

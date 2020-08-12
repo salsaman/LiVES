@@ -189,7 +189,7 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
 #ifndef SHOW_MSG_ERRORS
     if (xlevel == LIVES_LOG_LEVEL_MESSAGE) return;
 #endif
-    //#define NO_WARN_ERRORS
+#define NO_WARN_ERRORS
 #ifdef NO_WARN_ERRORS
     if (xlevel == LIVES_LOG_LEVEL_WARNING) return;
 #endif
@@ -2854,10 +2854,11 @@ capability *get_capabilities(void) {
   capable->has_gio = UNCHECKED;
   capable->has_xdotool = UNCHECKED;
   capable->has_wmctrl = UNCHECKED;
-  capable->has_wget = UNCHECKED;
 
   // not checked at startup
   capable->has_gzip = UNCHECKED;
+  capable->has_wget = UNCHECKED;
+  capable->has_curl = UNCHECKED;
 
   capable->has_smogrify = UNCHECKED;
 
@@ -6045,6 +6046,8 @@ void load_preview_image(boolean update_always) {
 	  lives_widget_set_sensitive(mainw->p_rewindbutton, TRUE);
 	}
       }
+      mainw->ptrtime = cfile->pointer_time;
+      lives_widget_queue_draw(mainw->eventbox2);
       break;
 
     case PRV_START:
@@ -9820,6 +9823,7 @@ mainw->track_decoders[i] = clone_decoder(nclip);
 
         if (!mainw->fs && !mainw->faded) {
           redraw_timeline(mainw->current_file);
+          set_sel_label(mainw->sel_label);
         }
       }
 

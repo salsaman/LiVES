@@ -4639,6 +4639,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   label = lives_standard_label_new(_("When inserting/merging frames:"));
 
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+  add_fill_to_box(LIVES_BOX(hbox));
 
   prefsw->ins_speed = lives_standard_radio_button_new(_("_Speed Up/Slow Down Insertion"), &rb_group2, LIVES_BOX(hbox), NULL);
 
@@ -5638,17 +5639,17 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                        (livespointer)prefsw->enable_OSC_start);
 #endif
   if (saved_dialog == NULL) {
-    lives_signal_connect(LIVES_GUI_OBJECT(prefsw->revertbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_prefs_revert_clicked), NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->revertbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                              LIVES_GUI_CALLBACK(on_prefs_revert_clicked), NULL);
 
-    lives_signal_connect(LIVES_GUI_OBJECT(prefsw->prefs_dialog), LIVES_WIDGET_DELETE_EVENT,
-                         LIVES_GUI_CALLBACK(on_prefs_close_clicked), NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->prefs_dialog), LIVES_WIDGET_DELETE_EVENT,
+                              LIVES_GUI_CALLBACK(on_prefs_close_clicked), NULL);
 
-    lives_signal_connect(LIVES_GUI_OBJECT(prefsw->applybutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_prefs_apply_clicked), NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->applybutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                              LIVES_GUI_CALLBACK(on_prefs_apply_clicked), NULL);
   }
 
-  prefsw->close_func = lives_signal_connect(LIVES_GUI_OBJECT(prefsw->closebutton), LIVES_WIDGET_CLICKED_SIGNAL,
+  prefsw->close_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->closebutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_prefs_close_clicked), prefsw);
 
   lives_list_free_all(&audp);

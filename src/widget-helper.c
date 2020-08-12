@@ -4927,11 +4927,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_get_preferred_size(LiVESWidget 
   return TRUE;
 #endif
 #endif
-#ifdef GUI_QT
-  *min_size = widget->minimumSize();
-  *nat_size = widget->size();
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -7967,6 +7962,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_frozen(LiVESWidget * widget
 #if GTK_CHECK_VERSION(3, 16, 0)
   if (state) {
     set_css_value_direct(widget, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.75");
+    set_css_value_direct(widget, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.75");
   } else
     set_css_value_direct(widget, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
 #endif
@@ -9481,35 +9477,35 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList * list, L
     set_css_value_direct(combo, LIVES_WIDGET_STATE_NORMAL, "button", "padding-top", "0");
     set_css_value_direct(combo, LIVES_WIDGET_STATE_NORMAL, "button", "padding-bottom", "0");
 
-    //set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, "", "border-radius", "5px");
+    set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, "", "border-radius", "5px");
 
-    /* #if !GTK_CHECK_VERSION(3, 16, 0) */
-    /*     set_child_dimmed_colour(combo, BUTTON_DIM_VAL); // insens, themecols 1, child only */
-    /* #else */
-    /*     set_css_value_direct(combo, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5"); */
-    /*     if (prefs->extra_colours && mainw->pretty_colours) { */
-    /*       char *tmp; */
-    /*       char *colref = gdk_rgba_to_string(&palette->nice1); */
-    /*       set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, "", "border-color", colref); */
-    /*       tmp = lives_strdup_printf("0 0 0 1px %s inset", colref); */
-    /*       set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_FOCUSED, "", "box-shadow", tmp); */
-    /*       lives_free(tmp); */
-    /*       lives_free(colref); */
-    /*     } */
-    /* #endif */
-    /*     lives_widget_apply_theme2(combo, LIVES_WIDGET_STATE_NORMAL, TRUE); */
-    /*     lives_widget_apply_theme2(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, TRUE); */
-    /* #if !GTK_CHECK_VERSION(3, 16, 0) */
+#if !GTK_CHECK_VERSION(3, 16, 0)
+    set_child_dimmed_colour(combo, BUTTON_DIM_VAL); // insens, themecols 1, child only
+#else
+    set_css_value_direct(combo, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
+    if (prefs->extra_colours && mainw->pretty_colours) {
+      char *tmp;
+      char *colref = gdk_rgba_to_string(&palette->nice1);
+      set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, "", "border-color", colref);
+      tmp = lives_strdup_printf("0 0 0 1px %s inset", colref);
+      set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_FOCUSED, "", "box-shadow", tmp);
+      lives_free(tmp);
+      lives_free(colref);
+    }
+#endif
+    lives_widget_apply_theme2(combo, LIVES_WIDGET_STATE_NORMAL, TRUE);
+    lives_widget_apply_theme2(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, TRUE);
+#if !GTK_CHECK_VERSION(3, 16, 0)
 
-    /*     lives_widget_apply_theme_dimmed(combo, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL); */
-    /*     lives_widget_apply_theme_dimmed(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL); */
+    lives_widget_apply_theme_dimmed(combo, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
+    lives_widget_apply_theme_dimmed(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(entry), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
                                     LIVES_GUI_CALLBACK(widget_state_cb), NULL);
     widget_state_cb(LIVES_WIDGET_OBJECT(entry), NULL, NULL);
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(combo), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
                                     LIVES_GUI_CALLBACK(widget_state_cb), NULL);
     widget_state_cb(LIVES_WIDGET_OBJECT(combo), NULL, NULL);
-    //#endif
+#endif
   }
   widget_opts.last_container = container;
   return combo;
@@ -9615,8 +9611,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
 
   if (widget_opts.apply_theme) {
 #if GTK_CHECK_VERSION(3, 0, 0)
-    set_css_min_size(entry, widget_opts.css_min_width, (widget_opts.css_min_height * 2 + 1) >> 1);
-    //((widget_opts.css_min_height * 3 + 3) >> 2) << 1);
+    set_css_min_size(entry, widget_opts.css_min_width, (widget_opts.css_min_height * 4 - 10) >> 1);
 #if GTK_CHECK_VERSION(3, 16, 0)
     if (prefs->extra_colours && mainw->pretty_colours) {
       char *tmp;
@@ -9649,6 +9644,8 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
     widget_state_cb(LIVES_WIDGET_OBJECT(entry), NULL, NULL);
 #endif
   }
+
+  //lives_widget_set_size_request(entry, -1, (widget_opts.css_min_height * 2 + 1) >> 1);
   widget_opts.last_container = container;
   return entry;
 }
@@ -9740,6 +9737,14 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   LiVESWidget *dialog = NULL;
 
   dialog = lives_dialog_new();
+
+  /* set_css_value_direct(dialog, LIVES_WIDGET_STATE_NORMAL, "", "opacity", "1."); */
+  /* set_css_value_direct(dialog, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0."); */
+  /* set_css_value_direct(dialog,  LIVES_WIDGET_STATE_INSENSITIVE, "", */
+  /* 		       "transition-duration", "4s"); */
+  /* set_css_value_direct(dialog,  LIVES_WIDGET_STATE_NORMAL, "", */
+  /* 		       "transition-duration", "4s"); */
+  /* lives_widget_set_sensitive(dialog, FALSE); */
 
   if (width <= 0) width = 8;
   if (height <= 0) height = 8;
@@ -9834,6 +9839,11 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
   if (!widget_opts.non_modal)
     lives_window_set_resizable(LIVES_WINDOW(dialog), FALSE);
+
+  /* lives_widget_show_all(dialog); */
+  /* lives_widget_context_update(); */
+  /* lives_widget_set_sensitive(dialog, TRUE); */
+
   return dialog;
 }
 
@@ -9934,14 +9944,8 @@ LiVESWidget *lives_standard_hscale_new(LiVESAdjustment * adj) {
       lives_free(colref);
     }
 
-    tmp = lives_strdup_printf("%dpx", DEF_BUTTON_WIDTH);
-    set_css_value_direct(hscale, LIVES_WIDGET_STATE_NORMAL, "", "min-width", tmp);
-    lives_free(tmp);
-
-    tmp = lives_strdup_printf("%dpx", widget_opts.css_min_height);
-    set_css_value_direct(hscale, LIVES_WIDGET_STATE_NORMAL, "", "min-height", tmp);
-    lives_free(tmp);
-
+    set_css_min_size_selected(hscale, "slider", widget_opts.css_min_width, widget_opts.css_min_height);
+    set_css_min_size_selected(hscale, "scale", DEF_BUTTON_WIDTH, widget_opts.css_min_height);
     set_css_value_direct(hscale, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
 #endif
   }

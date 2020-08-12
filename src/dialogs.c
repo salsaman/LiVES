@@ -104,9 +104,9 @@ void add_warn_check(LiVESBox *box, int warn_mask_number) {
                                _("Do _not show this warning any more\n(can be turned back on from Preferences/Warnings)"),
                                FALSE, LIVES_BOX(box), NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_warn_mask_toggled),
-                       LIVES_INT_TO_POINTER(warn_mask_number));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_warn_mask_toggled),
+                            LIVES_INT_TO_POINTER(warn_mask_number));
 }
 
 
@@ -116,8 +116,8 @@ static void add_clear_ds_button(LiVESDialog *dialog) {
   if (mainw->tried_ds_recover) lives_widget_set_sensitive(button, FALSE);
   lives_dialog_make_widget_first(LIVES_DIALOG(dialog), widget_opts.last_container);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_cleardisk_activate), (livespointer)button);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_cleardisk_activate), (livespointer)button);
 }
 
 
@@ -132,8 +132,8 @@ static void add_clear_ds_adv(LiVESBox *box) {
   lives_box_pack_start(box, hbox, FALSE, FALSE, widget_opts.packing_height);
   add_fill_to_box(LIVES_BOX(box));
 
-  lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_cleardisk_advanced_clicked), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_cleardisk_advanced_clicked), NULL);
 }
 
 
@@ -218,8 +218,8 @@ static void extra_cb(LiVESWidget *dialog, int key) {
 
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), "disp_label", label);
 
-    lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(scan_for_sets), entry);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
+                              LIVES_GUI_CALLBACK(scan_for_sets), entry);
 
     layout = lives_layout_new(LIVES_BOX(dialog_vbox));
     widget_opts.justify = LIVES_JUSTIFY_CENTER;
@@ -286,8 +286,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     defbutton = okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
                            LIVES_RESPONSE_OK);
 
-    lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(lives_general_button_clicked), NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                              LIVES_GUI_CALLBACK(lives_general_button_clicked), NULL);
 
     break;
   case LIVES_DIALOG_ERROR:
@@ -303,8 +303,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     defbutton = okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
                            LIVES_RESPONSE_OK);
 
-    lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(lives_general_button_clicked), NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                              LIVES_GUI_CALLBACK(lives_general_button_clicked), NULL);
     break;
   case LIVES_DIALOG_INFO:
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0,
@@ -320,8 +320,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     defbutton = okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
                            LIVES_RESPONSE_OK);
 
-    lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(lives_general_button_clicked), NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                              LIVES_GUI_CALLBACK(lives_general_button_clicked), NULL);
     break;
 
   case LIVES_DIALOG_WARN_WITH_CANCEL:
@@ -477,8 +477,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
       LiVESWidget *details_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), NULL, _("Show _Details"),
                                     LIVES_RESPONSE_SHOW_DETAILS);
 
-      lives_signal_connect(LIVES_GUI_OBJECT(details_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                           LIVES_GUI_CALLBACK(lives_general_button_clicked), NULL);
+      lives_signal_sync_connect(LIVES_GUI_OBJECT(details_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                                LIVES_GUI_CALLBACK(lives_general_button_clicked), NULL);
     }
   }
 
@@ -1583,7 +1583,8 @@ switch_point:
 #endif
 
     if (new_ticks != mainw->startticks && new_ticks != mainw->last_startticks
-        && (requested_frame != last_req_frame || sfile->frames == 1)) {
+        && (requested_frame != last_req_frame || sfile->frames == 1
+            || (mainw->playing_sel && sfile->start == sfile->end))) {
       //g_print("%ld %ld %ld %d %d %d\n", mainw->currticks, mainw->startticks, new_ticks,
       //sfile->last_frameno, requested_frame, last_req_frame);
       if (mainw->fixed_fpsd <= 0. && (mainw->vpp == NULL ||
@@ -1842,7 +1843,8 @@ switch_point:
       drop_off = FALSE;
       last_pwidth = mainw->pwidth;
       last_pheight = mainw->pheight;
-      if (mainw->force_show || ((sfile->frameno != mainw->actual_frame || (sfile->frames == 1 && sfile->frameno == 1))
+      if (mainw->force_show || ((sfile->frameno != mainw->actual_frame || (sfile->frames == 1 && sfile->frameno == 1)
+                                 || (mainw->playing_sel && sfile->start == sfile->end))
 #ifdef ENABLE_PRECACHE
                                 && getahead < 0)
           || (getahead > -1 && mainw->frame_layer_preload && !cleanup_preload && requested_frame != last_req_frame
@@ -2451,9 +2453,9 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     display_ready = FALSE;
     gclock = gtk_widget_get_frame_clock(LIVES_MAIN_WINDOW_WIDGET);
     gdk_frame_clock_begin_updating(gclock);
-    lives_signal_connect(LIVES_GUI_OBJECT(gclock), "update",
-                         LIVES_GUI_CALLBACK(clock_upd),
-                         NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(gclock), "update",
+                              LIVES_GUI_CALLBACK(clock_upd),
+                              NULL);
   }
 #endif
 
@@ -2889,7 +2891,8 @@ LIVES_GLOBAL_INLINE void do_no_mplayer_sox_error(void) {
 
 LIVES_GLOBAL_INLINE void do_need_mplayer_dialog(void) {
   do_error_dialog(
-    _("\nThis function requires either mplayer or mplayer2 to operate.\nYou may wish to install one or other of these and try again.\n"));
+    _("\nThis function requires either mplayer or mplayer2 to operate.\nYou may wish to install "
+      "one or other of these and try again.\n"));
 }
 
 
@@ -3105,13 +3108,8 @@ boolean do_encoder_restrict_dialog(int width, int height, double fps, int fps_nu
   } else {
     msg_b = (_("\nChanges applied to the selection will not be permanent.\n\n"));
   }
-  lives_free(msg1);
-  lives_free(msg2);
-  lives_free(msg3);
-  lives_free(msg4);
-  lives_free(msg5);
-  lives_free(msg6);
-  lives_free(msg7);
+  lives_free(msg1); lives_free(msg2); lives_free(msg3); lives_free(msg4);
+  lives_free(msg5); lives_free(msg6); lives_free(msg7);
   prep_dialog = create_encoder_prep_dialog(msg_a, msg_b, anr);
   lives_free(msg_a);
   if (msg_b != NULL) lives_free(msg_b);
@@ -3455,7 +3453,7 @@ LIVES_GLOBAL_INLINE void do_mt_no_audchan_error(void) {
 
 LIVES_GLOBAL_INLINE void do_mt_no_jack_error(int warn_mask) {
   do_error_dialog_with_check(
-    _("Multitrack audio preview is only available with the\n\"jack\" or \"pulseaudio\" audio player.\n"
+    _("Multitrack audieeeeeeeeo preview is only available with the\n\"jack\" or \"pulseaudio\" audio player.\n"
       "You can set this in Tools|Preferences|Playback."),
     warn_mask);
 }
@@ -3465,7 +3463,7 @@ LIVES_GLOBAL_INLINE boolean do_mt_rect_prompt(void) {
   return do_yesno_dialog(
            _("Errors were detected in the layout (which may be due to transferring from another system, "
              "or from an older version of LiVES).\n"
-             "Should I try to repair the disk copy of the layout ?\n"));
+             "Should I try to repair the disk copy of the layaout ?\n"));
 }
 
 
@@ -3503,6 +3501,13 @@ LIVES_GLOBAL_INLINE void do_ra_convert_error(void) {
 LIVES_GLOBAL_INLINE void do_please_install(const char *exec) {
   do_info_dialogf(_("'%s'\nis necessary for this feature to work.\n"
                     "If possible, kindly install it before continuing."), exec);
+}
+
+
+LIVES_GLOBAL_INLINE void do_please_install_either(const char *exec, const char *exec2) {
+  do_info_dialogf(_("Either '%s' or '%s' must be installed for this feature to work.\n"
+                    "If possible, kindly install one or other of these before continuing\n"),
+                  exec, exec2);
 }
 
 
@@ -4392,7 +4397,7 @@ boolean ask_permission_dialog_complex(int what, char **argv, int argc, int offs,
   if (prefs->show_gui) {
     LiVESWidget *dlg;
     LiVESResponseType ret;
-    char *sudotext, *text, *title;
+    char *text, *title, *prname, *errtxt, *xsudt;
     int nrem = argc - offs;
     boolean retry;
 
@@ -4411,45 +4416,55 @@ try_again:
       if (nrem >= 6) mainw->permmgr->futures = argv[offs + 5];
 
       if (sudocom) {
-        sudotext = lives_strdup_printf(_("It may be possible to fix this by running\n"
-                                         "  %s %s\n from the commandline.\nAlternately, "),
-                                       EXEC_SUDO, sudocom);
-      } else sudotext = lives_strdup("");
-      text = lives_strdup_printf(_("The following error occured:\n%s\nwhen running %s\n\n%s"
-                                   "It may be possible to work around this problem, "
-                                   "by downloading an individual copy of\n%s\n"
-                                   "Please consider the options carefully, "
-                                   "and then click one of the buttons below."),
-                                 argv[3], argv[offs], sudotext, argv[offs]);
-      lives_free(sudotext);
+        char *sudotext = lives_strdup_printf(_("Alternately, you can try running\n"
+                                               "  %s %s\n from a commandline terminal\n"),
+                                             EXEC_SUDO, sudocom);
+        xsudt = lives_markup_escape_text(sudotext, -1);
+        lives_free(sudotext);
+      } else xsudt = lives_strdup("");
+
+      prname = lives_markup_escape_text(argv[offs], -1);
+      errtxt = lives_markup_escape_text(argv[3], -1);
+
+      text = lives_strdup_printf(_("The following error occured when running %s:"
+                                   "\n\n'%s'\n\n"
+                                   "<b>It may be possible to fix this "
+                                   "by downloading an individual copy of the program\n%s</b>\n"
+                                   "Please consider the options "
+                                   "and then decide how to proceed.\n"),
+                                 prname, errtxt, xsudt);
+      lives_free(prname); lives_free(errtxt); lives_free(xsudt);
       title = (_("Problem Detected"));
-      dlg = create_question_dialog(text, title);
+      widget_opts.use_markup = TRUE;
+      dlg = create_question_dialog(title, text);
+      widget_opts.use_markup = FALSE;
       lives_free(title);
       lives_free(text);
       widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+
+      lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_REDO,
+                                         _("Retry with current version"),
+                                         LIVES_RESPONSE_NO);
+
       lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_ADD,
                                          _("Proeceed with download"),
                                          LIVES_RESPONSE_YES);
-
-      lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_GO_FORWARD,
-                                         _("Continue using current version"),
-                                         LIVES_RESPONSE_NO);
 
       widget_opts.expand = LIVES_EXPAND_DEFAULT;
       ret = lives_dialog_run(LIVES_DIALOG(dlg));
       lives_widget_destroy(dlg);
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+
       if (ret == LIVES_RESPONSE_YES) {
-        if (capable->has_wget != PRESENT) {
-          capable->has_wget = has_executable(EXEC_WGET);
-          if (capable->has_wget == PRESENT) return TRUE;
-          do_please_install(EXEC_WGET);
-          capable->has_wget = has_executable(EXEC_WGET);
-          if (capable->has_wget == PRESENT) retry = TRUE;
+        if (!check_for_executable(&capable->has_wget, EXEC_WGET)
+            && !check_for_executable(&capable->has_curl, EXEC_CURL)) {
+          do_please_install_either(EXEC_WGET, EXEC_CURL);
+          if (check_for_executable(&capable->has_wget, EXEC_WGET)
+              || (check_for_executable(&capable->has_wget, EXEC_WGET))) retry = TRUE;
           else do_program_not_found_error(EXEC_WGET);
         }
+        lives_free((void **)&mainw->permmgr->key);
       }
-      lives_free((void **)&mainw->permmgr->key);
       lives_free(mainw->permmgr);
       mainw->permmgr = NULL;
       if (retry) goto try_again;

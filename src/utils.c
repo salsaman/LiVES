@@ -2018,6 +2018,11 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
       mainw->scratch = SCRATCH_JUMP;
     }
 
+    if (first_frame == last_frame) {
+      nframe = first_frame;
+      break;
+    }
+
     if (fps < 0.) dir = LIVES_DIRECTION_BACKWARD; // 0, and even parity
     else dir = LIVES_DIRECTION_FORWARD; // 1, and odd parity
 
@@ -4704,7 +4709,7 @@ void set_sel_label(LiVESWidget * sel_label) {
   char *tstr, *frstr, *tmp;
   char *sy, *sz;
 
-  if (mainw->current_file == -1 || !cfile->frames || mainw->multitrack != NULL) {
+  if (mainw->current_file == -1 || !cfile->frames || mainw->multitrack) {
     lives_label_set_text(LIVES_LABEL(sel_label), _("-------------Selection------------"));
   } else {
     tstr = lives_strdup_printf("%.2f", calc_time_from_frame(mainw->current_file, cfile->end + 1) -

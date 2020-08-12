@@ -669,7 +669,9 @@ lives_proc_thread_t disk_monitor_start(const char *dir) {
 int64_t disk_monitor_check_result(const char *dir) {
   int64_t bytes;
   if (!disk_monitor_running()) disk_monitor_start(dir);
-  if (!lives_proc_thread_check(running)) return -1;
+  if (!lives_proc_thread_check(running)) {
+    return -1;
+  }
   bytes = lives_proc_thread_join_int64(running);
   lives_proc_thread_free(running);
   running = NULL;
@@ -1016,13 +1018,20 @@ int stat_to_file_dets(const char *fname, lives_file_dets_t *fdets) {
   struct stat filestat;
   int ret = stat(fname, &filestat);
   if (ret) {
-    perror("stat failed:");
+    if (prefs->show_dev_opts) {
+      char *msg = lives_strdup_printf("\nstat failed for file %s\n", fname);
+      perror(msg);
+      lives_free(msg);
+    }
     fdets->size = -2;
     fdets->type = LIVES_FILE_TYPE_UNKNOWN;
     return ret;
   }
   fdets->type = (uint64_t)((filestat.st_mode & S_IFMT) >> 12);
   fdets->size = filestat.st_size;
+  fdets->mode = (uint64_t)(filestat.st_mode & 0x0FFF);
+  fdets->uid = filestat.st_uid;
+  fdets->gid = filestat.st_gid;
   fdets->blk_size = (uint64_t)filestat.st_blksize;
   fdets->atime_sec = filestat.st_atim.tv_sec;
   fdets->atime_nsec = filestat.st_atim.tv_nsec;
@@ -1035,7 +1044,7 @@ int stat_to_file_dets(const char *fname, lives_file_dets_t *fdets) {
 
 
 static char *file_to_file_details(const char *filename, lives_file_dets_t *fdets, lives_proc_thread_t tinfo, uint64_t extra) {
-  char *tmp;
+  char *tmp, *tmp2;
   char *extra_details = lives_strdup("");
 
   if (!stat_to_file_dets(filename, fdets)) {
@@ -1045,13 +1054,16 @@ static char *file_to_file_details(const char *filename, lives_file_dets_t *fdets
       lives_free(extra_details);
       return NULL;
     }
-    if (fdets->type == LIVES_FILE_TYPE_DIRECTORY) {
+    if (LIVES_FILE_IS_DIRECTORY(fdets->type)) {
       boolean emptyd = FALSE;
-      if (extra & EXTRA_DETAILS_EMPTY_DIR) {
+      if (extra & EXTRA_DETAILS_EMPTY_DIRS) {
         if ((emptyd = is_empty_dir(filename))) {
-          extra_details = lives_strdup_printf("%s%s%s", extra_details, *extra_details ? ", " : "",
-                                              (tmp = _("(empty)")));
+          fdets->type |= LIVES_FILE_TYPE_FLAG_EMPTY;
+          tmp2 = lives_strdup_printf("%s%s%s", extra_details, *extra_details ? ", " : "",
+                                     (tmp = _("(empty)")));
           lives_free(tmp);
+          lives_free(extra_details);
+          extra_details = tmp2;
         }
         if (tinfo && lives_proc_thread_cancelled(tinfo)) {
           lives_free(extra_details);
@@ -1087,11 +1099,39 @@ static char *file_to_file_details(const char *filename, lives_file_dets_t *fdets
           }
           if (mainw->hdrs_cache) cached_list_free(&mainw->hdrs_cache);
 	  // *INDENT-OFF*
-	}}}}
+	}}}
+    if (extra & EXTRA_DETAILS_MD5SUM) {
+      fdets->md5sum = get_md5sum(filename);
+    }
+    if (extra & EXTRA_DETAILS_SYMLINK) {
+      if (lives_file_test(filename, LIVES_FILE_TEST_IS_SYMLINK))
+	fdets->type |= LIVES_FILE_TYPE_FLAG_SYMLINK;
+    }
+    if (extra & EXTRA_DETAILS_EXECUTABLE) {
+      if (lives_file_test(filename, LIVES_FILE_TEST_IS_EXECUTABLE))
+	fdets->type |= LIVES_FILE_TYPE_FLAG_EXECUTABLE;
+    }
+    /// TODO
+    /* if (extra & EXTRA_DETAILS_WRITEABLE) { */
+    /*   if (LIVES_FILE_TEST_IS_EXECUTABLE(filename)) fdets->type |= LIVES_FILE_TYPE_FLAG_EXECUTABLE; */
+    /* } */
+    /* if (extra & EXTRA_DETAILS_ACCESSIBLE) { */
+    /*   if (LIVES_FILE_TEST_IS_EXECUTABLE(filename)) fdets->type |= LIVES_FILE_TYPE_FLAG_EXECUTABLE; */
+    /* } */
+  }
   // *INDENT-ON*
-
-  if (extra & EXTRA_DETAILS_MD5) {
-    fdets->md5sum = get_md5sum(filename);
+  else {
+    /// stat failed
+    if (extra & EXTRA_DETAILS_CHECK_MISSING) {
+      if (!lives_file_test(filename, LIVES_FILE_TEST_EXISTS)) {
+        fdets->type |= LIVES_FILE_TYPE_FLAG_MISSING;
+        tmp2 = lives_strdup_printf("%s%s%s", extra_details, *extra_details ? ", " : "",
+                                   (tmp = _("(ABSENT)")));
+        lives_free(tmp);
+        lives_free(extra_details);
+        extra_details = tmp2;
+      }
+    }
   }
   return extra_details;
 }
@@ -1166,6 +1206,7 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
       break;
     }
     lives_chomp(buff);
+
     fdets = (lives_file_dets_t *)struct_from_template(LIVES_STRUCT_FILE_DETS_T);
 
     fdets->name = lives_strdup(buff);

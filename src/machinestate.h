@@ -317,10 +317,18 @@ ssize_t get_dir_size(const char *dirname);
 boolean compress_files_in_dir(const char *dir, int method, void *data);
 LiVESResponseType send_to_trash(const char *item);
 
-#define EXTRA_DETAILS_EMPTY_DIR			(1 << 0)
-#define EXTRA_DETAILS_DIRSIZE			(1 << 1)
-#define EXTRA_DETAILS_CLIPHDR			(1 << 2)
-#define EXTRA_DETAILS_MD5			(1 << 3)
+/// extras we can check for, may consume more time
+#define EXTRA_DETAILS_CHECK_MISSING	       	(1ul << 0)
+#define EXTRA_DETAILS_DIRSIZE			(1ul << 1)
+#define EXTRA_DETAILS_EMPTY_DIRS	       	(1ul << 2)
+#define EXTRA_DETAILS_SYMLINK		       	(1ul << 3)
+#define EXTRA_DETAILS_ACCESSIBLE	       	(1ul << 4)
+#define EXTRA_DETAILS_WRITEABLE			(1ul << 5)
+#define EXTRA_DETAILS_EXECUTABLE       		(1ul << 6)
+#define EXTRA_DETAILS_CLIPHDR			(1ul << 7)
+
+/// derived values
+#define EXTRA_DETAILS_MD5SUM			(1ul << 33)
 
 typedef struct {
   ///< if we can retrieve some kind of uinque id, we set it here
@@ -330,6 +338,9 @@ typedef struct {
   char *name;
   uint64_t type; /// e.g. LIVES_FILE_TYPE_FILE
   off_t size; // -1 not checked, -2 unreadable
+  uint64_t mode;
+  uint64_t uid; /// userid as uint64_t
+  uint64_t gid;
   uint64_t blk_size;
   uint64_t atime_sec;
   uint64_t atime_nsec;

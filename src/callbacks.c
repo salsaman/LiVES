@@ -6235,13 +6235,13 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       dirname = lives_build_path(full_trashdir, TRASH_REMOVE, NULL);
       reminfo =
         dir_to_file_details(rem_list, dirname, prefs->workdir,
-                            EXTRA_DETAILS_EMPTY_DIR | EXTRA_DETAILS_DIRSIZE);
+                            EXTRA_DETAILS_EMPTY_DIRS | EXTRA_DETAILS_DIRSIZE);
       lives_free(dirname);
 
       dirname = lives_build_path(full_trashdir, TRASH_LEAVE, NULL);
       leaveinfo =
         dir_to_file_details(left_list, dirname, prefs->workdir,
-                            EXTRA_DETAILS_EMPTY_DIR | EXTRA_DETAILS_DIRSIZE);
+                            EXTRA_DETAILS_EMPTY_DIRS | EXTRA_DETAILS_DIRSIZE);
       lives_free(dirname);
     } else {
       *rec_list = lives_list_append(*rec_list, NULL);
@@ -6346,7 +6346,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
 
     for (list = *rem_list; list && list->data; list = list->next) {
       filedets = (lives_file_dets_t *)list->data;
-      orig = filedets->type & ~LIVES_FILE_TYPE_SPECIAL;
+      orig = filedets->type & ~LIVES_FILE_TYPE_FLAG_SPECIAL;
       if (orig == 1) break;
       to = lives_build_path(full_trashdir, TRASH_REMOVE, filedets->name, NULL);
       if (!orig) {
@@ -7149,9 +7149,9 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
                                                    LIVES_PAINTER_CONTENT_COLOR,
                                                    width, height);
             if (mainw->fsp_func == 0)
-              mainw->fsp_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->fs_playimg), LIVES_WIDGET_EXPOSE_EVENT,
-                                                     LIVES_GUI_CALLBACK(all_expose),
-                                                     &mainw->fsp_surface);
+              mainw->fsp_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->fs_playimg), LIVES_WIDGET_EXPOSE_EVENT,
+                                LIVES_GUI_CALLBACK(all_expose),
+                                &mainw->fsp_surface);
           }
           set_drawing_area_from_pixbuf(mainw->fs_playimg, pixbuf, mainw->fsp_surface);
         } else {
@@ -9314,9 +9314,9 @@ void popup_lmap_errors(LiVESMenuItem * menuitem, livespointer user_data) {
   button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_CLOSE, _("_Close Window"),
            LIVES_RESPONSE_OK);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(lives_general_button_clicked),
-                       textwindow);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(lives_general_button_clicked),
+                            textwindow);
 
   lives_container_set_border_width(LIVES_CONTAINER(button), widget_opts.border_width);
 
@@ -9324,9 +9324,9 @@ void popup_lmap_errors(LiVESMenuItem * menuitem, livespointer user_data) {
                              _("Clear _Errors"),
                              LIVES_RESPONSE_CANCEL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(textwindow->clear_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_lerrors_clear_clicked),
-                       LIVES_INT_TO_POINTER(FALSE));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(textwindow->clear_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_lerrors_clear_clicked),
+                            LIVES_INT_TO_POINTER(FALSE));
 
   lives_container_set_border_width(LIVES_CONTAINER(textwindow->clear_button), widget_opts.border_width);
 
@@ -9341,9 +9341,9 @@ void popup_lmap_errors(LiVESMenuItem * menuitem, livespointer user_data) {
 
   lives_container_set_border_width(LIVES_CONTAINER(textwindow->delete_button), widget_opts.border_width);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(textwindow->delete_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_lerrors_delete_clicked),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(textwindow->delete_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_lerrors_delete_clicked),
+                            NULL);
 
   lives_widget_show_all(textwindow->dialog);
 }
@@ -10024,8 +10024,6 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
 
 
 boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
-  static int ovdwidth = -1, ovdheight = -1;
-
   if (!mainw->configured) {
     mainw->configured = TRUE;
     return FALSE;
@@ -10587,9 +10585,11 @@ boolean on_mouse_sel_update(LiVESWidget * widget, LiVESXEventMotion * event, liv
 
     if (mainw->sel_move == SEL_MOVE_START || (mainw->sel_move == SEL_MOVE_AUTO && sel_current < mainw->sel_start)) {
       sel_current = calc_frame_from_time(mainw->current_file, tpos);
+      if (LIVES_IS_PLAYING && sel_current > cfile->end) sel_current = cfile->end;
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), sel_current);
     } else if (mainw->sel_move == SEL_MOVE_END || (mainw->sel_move == SEL_MOVE_AUTO && sel_current > mainw->sel_start)) {
       sel_current = calc_frame_from_time2(mainw->current_file, tpos);
+      if (LIVES_IS_PLAYING && sel_current <= cfile->start) sel_current = cfile->start + 1;
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), sel_current - 1);
     }
   }
@@ -10647,13 +10647,21 @@ boolean on_mouse_sel_start(LiVESWidget * widget, LiVESXEventButton * event, live
       if (!mainw->selwidth_locked) {
         if ((mainw->sel_start < cfile->end && ((mainw->sel_start - cfile->start) <= (cfile->end - mainw->sel_start))) ||
             mainw->sel_start < cfile->start) {
+          if (LIVES_IS_PLAYING && mainw->sel_start >= cfile->end) {
+            mainw->sel_start = cfile->end;
+            lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), mainw->sel_start);
+          }
           lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), mainw->sel_start);
           mainw->sel_move = SEL_MOVE_START;
         } else {
           mainw->sel_start = calc_frame_from_time2(mainw->current_file,
                              (double)x / (double)lives_widget_get_allocation_width(mainw->video_draw)
                              * CLIP_TOTAL_TIME(mainw->current_file));
-          lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), mainw->sel_start - 1);
+          if (LIVES_IS_PLAYING && mainw->sel_start <= cfile->start) {
+            mainw->sel_start = cfile->start;
+            lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), mainw->sel_start);
+          } else
+            lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), mainw->sel_start - 1);
           mainw->sel_move = SEL_MOVE_END;
         }
       } else {
@@ -10858,9 +10866,9 @@ boolean frame_context(LiVESWidget * widget, LiVESXEventButton * event, livespoin
 
   if (cfile->frames > 0 || mainw->multitrack != NULL) {
     save_frame_as = lives_standard_menu_item_new_with_label(_("_Save Frame as..."));
-    lives_signal_connect(LIVES_GUI_OBJECT(save_frame_as), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                         LIVES_GUI_CALLBACK(save_frame),
-                         LIVES_INT_TO_POINTER(frame));
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(save_frame_as), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                              LIVES_GUI_CALLBACK(save_frame),
+                              LIVES_INT_TO_POINTER(frame));
 
     if (capable->has_convert && capable->has_composite)
       lives_container_add(LIVES_CONTAINER(menu), save_frame_as);

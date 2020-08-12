@@ -3781,24 +3781,39 @@ if (defined($ARGV[0])) {
 	    ##print STDERR "DO UPDATE is $do_update\n";
 
 	    my $youtube_dl = "youtube-dl";
-	    my $lives_config_bindir = "$configdir/.lives-dir/bin";
-	    my $prog = "";
+
 	    my $islocal = 0;
 	    my $com;
 	    my $smerr;
 
+	    my $home = $ENV {"HOME"};
+	    my $local_bindir = "$home/.local/bin";
+	    my $prog = "$local_bindir/$youtube_dl";
+
+	    my $dlprog = "wget";
+	    my $opts = "-O";
+	    if (!&location($dlprog)) {
+		$dlprog = "curl";
+		$opts = "-o";
+	    }
+
+	    $debug = 1;
+
 	    if ($ARGV[13] eq "forceddownload") {
-		$prog = "$lives_config_bindir/$youtube_dl";
 		$islocal = 1;
-		if (! -d $lives_config_bindir) {
-		    make_path $lives_config_bindir;
+		if (! -d $local_bindir) {
+		    make_path $local_bindir;
 		}
-		#print STDERR "commencing download\n";
-		$com = "wget https://yt-dl.org/downloads/latest/youtube-dl -O '$prog'";
+		if ($debug) {
+		    print STDERR "commencing download of binary $youtube_dl\n";
+		}
+		$com = "$dlprog https://yt-dl.org/downloads/latest/youtube-dl $opts'$prog'";
 		$smerr = &smog_system($com);
-		#print STDERR "download done, result was $smerr\n";
+		if ($debug) {
+		    print STDERR "ran command: $com\nresult was $smerr\n";
+		}
 		if ($smerr || ! -f $prog) {
-		    &sig_system_error("Downloading $youtube_dl to $lives_config_bindir",
+		    &sig_system_error("Downloading $youtube_dl to $local_bindir",
 				      $smerr);
 		    exit 1;
 		}
@@ -3813,10 +3828,12 @@ if (defined($ARGV[0])) {
 	    }
 	    else {
 		## if there is a local copy of ytdl we try to use that
+		$prog = "";
 		if ($configdir) {
-		    if (-x "$lives_config_bindir/$youtube_dl"
-			&& ! -z "$lives_config_bindir/$youtube_dl") {
-			#print STDERR "found local\n";
+		    if (-x $prog && ! -z $prog) {
+			if ($debug) {
+			    print STDERR "found local copy of $youtube-dl at $prog\n";
+			}
 			$prog = "$lives_config_bindir/$youtube_dl";
 			$islocal = 1;
 		    }
@@ -3828,12 +3845,16 @@ if (defined($ARGV[0])) {
 		    $com = "$youtube_dl";
 		    open (my $fh, "$com 2>&1 |");
 		    my $line = <$fh>;
+		    if ($debug) {
+			print STDERR "unable to run: $com,\nerror was $line\n";
+			print STDERR "exiting\n\n";
+		    }
 		    &sig_system_error(
 			$com, $line, "_ASKPERM_|DOWNLOADLOCAL|youtube-dl|" .
 			"13|forceddownload|" .
-			"wget https://yt-dl.org/downloads/latest/youtube-dl " .
-			"-O '$lives_config_bindir/$youtube_dl'\nchmod u+x " .
-			"'$lives_config_bindir/$youtube_dl'"
+			"$dlprog https://yt-dl.org/downloads/latest/youtube-dl " .
+			"$opts'$local_bindir/$youtube_dl'\nchmod u+x " .
+			"'$local_bindir/$youtube_dl'"
 			);
 		    exit 1;
 		}
@@ -3843,46 +3864,62 @@ if (defined($ARGV[0])) {
 
 	    if ($do_update) {
 		$com = "'$prog' -U";
-		#print STDERR "UPDATING WITH $com\n";
+		if ($debug) {
+		    print STDERR "\n\nUPDATING $prog WITH $com\n";
+		}
 		open (my $fh, "$com 2>&1 |");
 		while (defined(my $line = <$fh>)) {
-		    #print STDERR "got line $line\n";
+		    if ($debug) {
+			print STDERR "got line: $line\n";
+		    }
 		    if (!$islocal && $line =~ /^youtube-dl:(.*)error:(.*)/) {
-			#print STDERR "ret ERROR\n";
+			if ($debug) {
+			    print STDERR "returning ERROR\n\n";
+			}
 			&sig_system_error(
-			     $com, $2, "_ASKPERM_|DOWNLOADLOCAL|youtube-dl|" .
-			     "13|forceddownload|" .
-			     "wget https://yt-dl.org/downloads/latest/youtube-dl " .
-			     "-O '$lives_config_bindir/$youtube_dl'\nchmod u+x " .
-			     "'$lives_config_bindir/$youtube_dl'"
+			    $com, $2, "_ASKPERM_|DOWNLOADLOCAL|youtube-dl|" .
+			    "13|forceddownload|" .
+			    "$dlprog https://yt-dl.org/downloads/latest/youtube-dl " .
+			    "$opts '$local_bindir/$youtube_dl'\nchmod u+x " .
+			    "'$local_bindir/$youtube_dl'"
 			    );
 			exit 1;
 		    }
 		}
 		close $fh;
-		#print STDERR "Update of $prog complete, result was $?\n";
+		if ($debug) {
+		    print STDERR "Update of $prog complete, result was $?\n";
+		}
 		my $errnum = ($? >> 8);
 		if ($errnum) {
-		    #print STDERR "WAS ERROR\n";
-		    if (!$islocal) {
-			#print STDERR "RET ERROR\n";
-			&sig_system_error(
-			     $com, $errnum, "_TRY_SUDO_, _ASKPERM_|DOWNLOADLOCAL|youtube-dl|" .
-			     "13|forceddownload|" .
-			     "wget https://yt-dl.org/downloads/latest/youtube-dl " .
-			     "-O '$lives_config_bindir/$youtube_dl'\nchmod u+x " .
-			     "'$lives_config_bindir/$youtube_dl'"
-			    );
-			exit 1;
+		    if ($debug) {
+			print STDERR "Update failed !\n";
 		    }
-		    else {
-			#print STDERR "RET2 ERROR\n";
-			&sig_error("Unknown error");
-			exit 1;
+		    if (!$islocal) {
+			if ($debug) {
+			    print STDERR "returning ERROR\n\n";
+			    &sig_system_error(
+				$com, $errnum, "_TRY_SUDO_, _ASKPERM_|DOWNLOADLOCAL|youtube-dl|" .
+				"13|forceddownload|" .
+				"$dlprog https://yt-dl.org/downloads/latest/youtube-dl " .
+				"$opts '$local_bindir/$youtube_dl'\nchmod u+x " .
+				"'$local_bindir/$youtube_dl'"
+				);
+			    exit 1;
+			}
+			else {
+			    if ($debug) {
+				print STDERR "unknown ERROR. Exiting\n";
+			    }
+			    &sig_error("Unknown error");
+			    exit 1;
+			}
 		    }
 		}
 	    }
-	    #print STDERR "Listing files\n";
+	    if ($debug) {
+		print STDERR "Listing files\n";
+	    }
 	    my $tdiag = sqrt($deswidth * $deswidth + $desheight * $desheight);
 	    if ($vidchoice ne "") {
 		$bestvideo = $vidchoice;
@@ -3943,7 +3980,6 @@ if (defined($ARGV[0])) {
 				else {
 				    $bestaudio = "bestaudio";
 				}}}
-
 			next;
 		    }
 
@@ -4070,22 +4106,25 @@ if (defined($ARGV[0])) {
 			&sig_complete("altfmts");
 			exit 0;
 		    }
-		    ##print STDERR "SMOG returning error\n";
-		    &sig_error("The requested URL", $url, "could not be opened with the desired format.", "\nPlease try again.");
-		    exit 1;
-		}
+		    if ($debug) {
+			print STDERR "Could not open $url\n\n";
+			&sig_error("The requested URL", $url, "could not be opened with the desired format.", "\nPlease try again.");
+			exit 1;
+		    }
 
-		if ($audchoice eq "" && $xbestaudio ne "") {
-		    $bestaudio = $xbestaudio;
-		}
+		    if ($audchoice eq "" && $xbestaudio ne "") {
+			$bestaudio = $xbestaudio;
+		    }
 
-		if ($vidchoice eq "") {
-		    ##print STDERR "SMOG returning sel\n";
-		    &sig_complete($bestvideo, $bestaudio);
-		    exit 0;
+		    if ($vidchoice eq "") {
+			if ($debug) {
+			    print STDERR "SMOG returning sel\n";
+			}
+			&sig_complete($bestvideo, $bestaudio);
+			exit 0;
+		    }
 		}
 	    }
-
 	    if (-f $xdfile) {
 		unlink $xdfile;
 	    }
@@ -4142,7 +4181,6 @@ if (defined($ARGV[0])) {
 	    &sig_complete;
 	    exit 0;
 	}
-
 
 	if ($command eq "cdopen") {
 	    my $cdda2wav_command = &location("cdda2wav");

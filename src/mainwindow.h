@@ -404,6 +404,7 @@ enum {
 #define EXEC_GZIP "gzip"
 #define EXEC_DU "du"
 #define EXEC_WGET "wget"
+#define EXEC_CURL "curl"
 
 // optional
 #define EXEC_PYTHON "python"
@@ -427,20 +428,45 @@ enum {
 #define EXEC_SUDO "sudo"
 
 // file types
-#define LIVES_FILE_TYPE_UNKNOWN				0
+#define LIVES_FILE_TYPE_UNKNOWN					(0ul)
 
-#define LIVES_FILE_TYPE_FIFO				(1 << 0)
-#define LIVES_FILE_TYPE_CHAR_DEV			(1 << 1)
-#define LIVES_FILE_TYPE_DIRECTORY			(1 << 2)
-#define LIVES_FILE_TYPE_BLOCK_DEV 			((1 << 1) | (1 << 2))
-#define LIVES_FILE_TYPE_FILE				(1 << 3)
-#define LIVES_FILE_TYPE_SYMLINK				(1 << 4)
-#define LIVES_FILE_TYPE_SOCKET				(1 << 5)
+#define LIVES_FILE_TYPE_FIFO					(1ul << 0)
+#define LIVES_FILE_TYPE_CHAR_DEV				(1ul << 1)
+#define LIVES_FILE_TYPE_DIRECTORY				(1ul << 2)
+#define LIVES_FILE_TYPE_BLOCK_DEV 				((1ul << 1) | (1ul << 2))
+#define LIVES_FILE_TYPE_FILE					(1ul << 3)
+#define LIVES_FILE_TYPE_SYMLINK					(1ul << 4)
+#define LIVES_FILE_TYPE_SOCKET					(1ul << 5)
 
-#define LIVES_FILE_TYPE_PIPE				(1 << 6)
-#define LIVES_FILE_TYPE_STREAM_LOCAL			(1 << 7)
-#define LIVES_FILE_TYPE_STREAM_REMOTE			(1 << 8)
-#define LIVES_FILE_TYPE_SPECIAL				(1ul << 60)
+#define LIVES_FILE_TYPE_PIPE					(1ul << 6)
+#define LIVES_FILE_TYPE_STREAM_LOCAL				(1ul << 7)
+#define LIVES_FILE_TYPE_STREAM_REMOTE				(1ul << 8)
+
+#define LIVES_FILE_TYPE_MASK					(0xFFFF)
+
+#define LIVES_FILE_TYPE_FLAG_SYMLINK				(1ul << 32)
+#define LIVES_FILE_TYPE_FLAG_EXECUTABLE				(1ul << 33)
+#define LIVES_FILE_TYPE_FLAG_UNWRITEABLE	       		(1ul << 34)
+#define LIVES_FILE_TYPE_FLAG_INACCESSIBLE		       	(1ul << 35)
+
+#define LIVES_FILE_TYPE_FLAG_EMPTY				(1ul << 59)
+#define LIVES_FILE_TYPE_FLAG_MISSING				(1ul << 60)
+#define LIVES_FILE_TYPE_FLAG_DAMAGED				(1ul << 61)
+#define LIVES_FILE_TYPE_FLAG_INCOMPLETE		       		(1ul << 62)
+#define LIVES_FILE_TYPE_FLAG_SPECIAL				(1ul << 63)
+
+#define LIVES_FILE_IS_FILE(ftype)		((ftype & LIVES_FILE_TYPE_FILE) ? TRUE : FALSE)
+#define LIVES_FILE_IS_DIRECTORY(ftype)		((ftype & LIVES_FILE_TYPE_DIRECTORY) ? TRUE : FALSE)
+#define LIVES_FILE_IS_BLOCK_DEV(ftype)		((ftype & LIVES_FILE_TYPE_BLOCK_DEV) == LIVES_FILE_TYPE_BLOCK_DEV \
+						 ? TRUE : FALSE)
+#define LIVES_FILE_IS_CHAR_DEV(ftype)		((ftype & LIVES_FILE_TYPE_CHAR_DEV) ? TRUE : FALSE)
+
+#define LIVES_FILE_IS_EMPTYY_FILE(ftype)	((ftype & LIVES_FILE_TYPE_FLAG_EMPTY) && LIVES_FILE_IS_FILE(ftype) \
+						 ? TRUE : FALSE)
+#define LIVES_FILE_IS_EMPTY_DIR(ftype)		((ftype & LIVES_FILE_TYPE_FLAG_EMPTY) && LIVES_FILE_IS_DIR(ftype) \
+						 ? TRUE : FALSE)
+
+#define LIVES_FILE_IS_MISSING(ftype)		((ftype & LIVES_FILE_TYPE_FLAG_MISSING) ? TRUE : FALSE)
 
 // image types (string)
 #define LIVES_IMAGE_TYPE_UNKNOWN ""

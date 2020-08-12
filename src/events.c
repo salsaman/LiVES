@@ -5632,9 +5632,9 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
                          (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND), 0, 0);
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-      lives_signal_connect(LIVES_GUI_OBJECT(tree), LIVES_WIDGET_ROW_EXPANDED_SIGNAL,
-                           LIVES_GUI_CALLBACK(rowexpand),
-                           NULL);
+      lives_signal_sync_connect(LIVES_GUI_OBJECT(tree), LIVES_WIDGET_ROW_EXPANDED_SIGNAL,
+                                LIVES_GUI_CALLBACK(rowexpand),
+                                NULL);
 
       lives_widget_set_size_request(tree, -1, TREE_ROW_HEIGHT);
 #endif
@@ -5666,9 +5666,9 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
       LiVESWidget *qbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(event_dialog), NULL, tmp,
                              LIVES_RESPONSE_OK);
       lives_free(tmp);
-      lives_signal_connect(LIVES_GUI_OBJECT(qbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                           LIVES_GUI_CALLBACK(quant_clicked),
-                           (livespointer)event_list);
+      lives_signal_sync_connect(LIVES_GUI_OBJECT(qbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                LIVES_GUI_CALLBACK(quant_clicked),
+                                (livespointer)event_list);
     }
   }
   ok_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(event_dialog), LIVES_STOCK_CLOSE, _("_Close Window"),
@@ -5679,9 +5679,9 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
   lives_widget_add_accelerator(ok_button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(lives_general_button_clicked),
-                       NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(lives_general_button_clicked),
+                            NULL);
 
   if (prefs->gui_monitor != 0) {
     lives_window_center(LIVES_WINDOW(event_dialog));
@@ -5981,19 +5981,19 @@ render_details *create_render_details(int type) {
   rdetw_spinw_changed(LIVES_SPIN_BUTTON(rdet->spinbutton_width), (livespointer)rdet);
   rdetw_spinh_changed(LIVES_SPIN_BUTTON(rdet->spinbutton_height), (livespointer)rdet);
 
-  lives_signal_connect_after(LIVES_GUI_OBJECT(rdet->spinbutton_width), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                             LIVES_GUI_CALLBACK(rdetw_spinw_changed),
-                             rdet);
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(rdet->spinbutton_width), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(rdetw_spinw_changed),
+                                  rdet);
 
-  lives_signal_connect_after(LIVES_GUI_OBJECT(rdet->spinbutton_height), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                             LIVES_GUI_CALLBACK(rdetw_spinh_changed),
-                             rdet);
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(rdet->spinbutton_height), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(rdetw_spinh_changed),
+                                  rdet);
 
   if (type == 4 && mainw->multitrack->event_list != NULL) lives_widget_set_sensitive(rdet->spinbutton_fps, FALSE);
 
-  lives_signal_connect_after(LIVES_GUI_OBJECT(rdet->spinbutton_fps), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                             LIVES_GUI_CALLBACK(rdetw_spinf_changed),
-                             rdet);
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(rdet->spinbutton_fps), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(rdetw_spinf_changed),
+                                  rdet);
 
   rdet->pertrack_checkbutton = lives_check_button_new();
   rdet->backaudio_checkbutton = lives_check_button_new();
@@ -6083,7 +6083,7 @@ render_details *create_render_details(int type) {
   lives_widget_set_halign(rdet->encoder_combo, LIVES_ALIGN_CENTER);
   add_spring_to_box(LIVES_BOX(hbox), 0);
 
-  rdet->encoder_name_fn = lives_signal_connect_after(LIVES_COMBO(rdet->encoder_combo), LIVES_WIDGET_CHANGED_SIGNAL,
+  rdet->encoder_name_fn = lives_signal_sync_connect_after(LIVES_COMBO(rdet->encoder_combo), LIVES_WIDGET_CHANGED_SIGNAL,
                           LIVES_GUI_CALLBACK(on_encoder_entry_changed), rdet);
 
   lives_signal_handler_block(rdet->encoder_combo, rdet->encoder_name_fn);
@@ -6132,7 +6132,7 @@ render_details *create_render_details(int type) {
 
   lives_list_free_all(&ofmt);
 
-  rdet->encoder_ofmt_fn = lives_signal_connect_after(LIVES_COMBO(rdet->ofmt_combo), LIVES_WIDGET_CHANGED_SIGNAL,
+  rdet->encoder_ofmt_fn = lives_signal_sync_connect_after(LIVES_COMBO(rdet->ofmt_combo), LIVES_WIDGET_CHANGED_SIGNAL,
                           LIVES_GUI_CALLBACK(on_encoder_ofmt_changed), rdet);
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
@@ -6206,8 +6206,8 @@ render_details *create_render_details(int type) {
         rdet->usecur_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(rdet->dialog),
                               NULL, _("_Set to current clip values"),
                               LIVES_RESPONSE_RESET);
-        lives_signal_connect(rdet->usecur_button, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(rdet_use_current),
-                             (livespointer)rdet);
+        lives_signal_sync_connect(rdet->usecur_button, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(rdet_use_current),
+                                  (livespointer)rdet);
       }
     }
   }
@@ -6233,8 +6233,8 @@ render_details *create_render_details(int type) {
     do_encoder_img_fmt_error(rdet);
   }
 
-  lives_signal_connect_after(LIVES_COMBO(rdet->acodec_combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                             LIVES_GUI_CALLBACK(rdet_acodec_changed), rdet);
+  lives_signal_sync_connect_after(LIVES_COMBO(rdet->acodec_combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(rdet_acodec_changed), rdet);
 
   mainw->no_context_update = FALSE;
 

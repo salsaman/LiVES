@@ -5380,9 +5380,9 @@ static void apply_avol_filter(lives_mt * mt) {
       if (mt->opts.aparam_view_list != NULL) {
         for (list = mt->audio_draws; list != NULL; list = list->next) {
           lives_widget_queue_draw((LiVESWidget *)list->data);
-        }
-      }
-    }
+		  // *INDENT-OFF*
+        }}}
+    // *INDENT-ON*
     return;
   }
 
@@ -6469,6 +6469,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   LiVESWidget *report_bug;
   LiVESWidget *suggest_feature;
   LiVESWidget *help_translate;
+  LiVESWidget *label;
 
   LiVESWidgetObject *vadjustment;
   LiVESAdjustment *spinbutton_adj;
@@ -8222,7 +8223,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->tc_func = lives_signal_connect_after(LIVES_WIDGET_OBJECT(mt->timecode), LIVES_WIDGET_FOCUS_OUT_EVENT,
                 LIVES_GUI_CALLBACK(after_timecode_changed), (livespointer) mt);
 
-  add_fill_to_box(LIVES_BOX(hbox));
+  label = add_fill_to_box(LIVES_BOX(hbox));
+  lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+  lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
 
   widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
 
@@ -8237,7 +8240,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->insa_label = widget_opts.last_label;
 
-  add_fill_to_box(LIVES_BOX(hbox));
+  label = add_fill_to_box(LIVES_BOX(hbox));
+  lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+  lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
 
   widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
 

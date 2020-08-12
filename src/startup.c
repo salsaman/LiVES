@@ -343,9 +343,9 @@ boolean do_audio_choice_dialog(short startup_phase) {
     set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
   }
 
-  lives_signal_connect(LIVES_GUI_OBJECT(radiobutton0), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
-                       LIVES_INT_TO_POINTER(AUD_PLAYER_PULSE));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton0), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
+                            LIVES_INT_TO_POINTER(AUD_PLAYER_PULSE));
 
 #endif
 
@@ -361,9 +361,9 @@ boolean do_audio_choice_dialog(short startup_phase) {
     set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
   }
 
-  lives_signal_connect(LIVES_GUI_OBJECT(radiobutton1), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
-                       LIVES_INT_TO_POINTER(AUD_PLAYER_JACK));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton1), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
+                            LIVES_INT_TO_POINTER(AUD_PLAYER_JACK));
 
 #endif
 
@@ -380,9 +380,9 @@ boolean do_audio_choice_dialog(short startup_phase) {
       set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_SOX);
     }
 
-    lives_signal_connect(LIVES_GUI_OBJECT(radiobutton2), LIVES_WIDGET_TOGGLED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
-                         LIVES_INT_TO_POINTER(AUD_PLAYER_SOX));
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton2), LIVES_WIDGET_TOGGLED_SIGNAL,
+                              LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
+                              LIVES_INT_TO_POINTER(AUD_PLAYER_SOX));
   }
 
   cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,

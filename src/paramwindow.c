@@ -376,8 +376,8 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
                    (tmp2 = (_("Click to set the transition parameter to show only the front frame"))));
   lives_free(tmp); lives_free(tmp2);
 
-  lives_signal_connect_after(LIVES_GUI_OBJECT(radiobutton_in), LIVES_WIDGET_TOGGLED_SIGNAL,
-                             LIVES_GUI_CALLBACK(transition_in_pressed), (livespointer)rfx);
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(radiobutton_in), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(transition_in_pressed), (livespointer)rfx);
 
   if (add_audio_check) {
     int error;
@@ -399,9 +399,9 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
     lives_free(tmp);
     lives_free(tmp2);
 
-    lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                               LIVES_GUI_CALLBACK(after_transaudio_toggled),
-                               (livespointer)rfx);
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(after_transaudio_toggled),
+                                    (livespointer)rfx);
 
     after_transaudio_toggled(LIVES_TOGGLE_BUTTON(checkbutton), (livespointer)rfx);
 
@@ -417,9 +417,9 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
 
   widget_opts.pack_end = FALSE;
 
-  lives_signal_connect_after(LIVES_GUI_OBJECT(radiobutton_out), LIVES_WIDGET_TOGGLED_SIGNAL,
-                             LIVES_GUI_CALLBACK(transition_out_pressed),
-                             (livespointer)rfx);
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(radiobutton_out), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(transition_out_pressed),
+                                  (livespointer)rfx);
 
 
   if (palette->style & STYLE_1) {
@@ -480,8 +480,8 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
       spinbuttonf = lives_standard_spin_button_new(_("Target _FPS (plugin may override this)"),
                     def_fps, 1., FPS_MAX, 1., 10., 3, LIVES_BOX(hbox), NULL);
 
-      lives_signal_connect_after(LIVES_GUI_OBJECT(spinbuttonf), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                                 LIVES_GUI_CALLBACK(gen_fps_changed), filter);
+      lives_signal_sync_connect_after(LIVES_GUI_OBJECT(spinbuttonf), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                      LIVES_GUI_CALLBACK(gen_fps_changed), filter);
 
       add_fill_to_box(LIVES_BOX(hbox));
     }
@@ -530,8 +530,8 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
     lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(spinbuttonw), width_step);
     lives_spin_button_update(LIVES_SPIN_BUTTON(spinbuttonw));
 
-    lives_signal_connect_after(LIVES_GUI_OBJECT(spinbuttonw), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                               LIVES_GUI_CALLBACK(gen_width_changed), tmpl);
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(spinbuttonw), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(gen_width_changed), tmpl);
     weed_leaf_delete(tmpl, WEED_LEAF_HOST_WIDTH); // force a reset
     gen_width_changed(LIVES_SPIN_BUTTON(spinbuttonw), tmpl);
 
@@ -552,8 +552,8 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
     lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(spinbuttonh), height_step);
     lives_spin_button_update(LIVES_SPIN_BUTTON(spinbuttonh));
 
-    lives_signal_connect_after(LIVES_GUI_OBJECT(spinbuttonh), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                               LIVES_GUI_CALLBACK(gen_height_changed), tmpl);
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(spinbuttonh), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(gen_height_changed), tmpl);
     weed_leaf_delete(tmpl, WEED_LEAF_HOST_HEIGHT); // force a reset
     gen_height_changed(LIVES_SPIN_BUTTON(spinbuttonh), tmpl);
   }
@@ -644,14 +644,14 @@ static void add_genparams(LiVESWidget *vbox, lives_rfx_t *rfx) {
   cfile->ohsize = cfile->hsize = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(sp_width));
   cfile->ovsize = cfile->vsize = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(sp_height));
 
-  lives_signal_connect_after(LIVES_GUI_OBJECT(sp_width), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                             LIVES_GUI_CALLBACK(xspinw_changed), NULL);
-  lives_signal_connect_after(LIVES_GUI_OBJECT(sp_height), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                             LIVES_GUI_CALLBACK(xspinh_changed), NULL);
-  lives_signal_connect_after(LIVES_GUI_OBJECT(sp_frames), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                             LIVES_GUI_CALLBACK(xspinfr_changed), NULL);
-  lives_signal_connect_after(LIVES_GUI_OBJECT(sp_fps), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                             LIVES_GUI_CALLBACK(xspinfps_changed), NULL);
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(sp_width), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(xspinw_changed), NULL);
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(sp_height), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(xspinh_changed), NULL);
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(sp_frames), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(xspinfr_changed), NULL);
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(sp_fps), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(xspinfps_changed), NULL);
 }
 
 
@@ -858,12 +858,9 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
 
     if (add_reset_ok) {
       fx_dialog[didx]->resetbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]->dialog),
-                                     LIVES_STOCK_REVERT_TO_SAVED,
-                                     _("Reset"),
-                                     LIVES_RESPONSE_RESET);
+                                     LIVES_STOCK_REVERT_TO_SAVED, _("Reset"), LIVES_RESPONSE_RESET);
       fx_dialog[didx]->okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]->dialog), LIVES_STOCK_APPLY,
-                                  _("Set as default"),
-                                  LIVES_RESPONSE_OK);
+                                  _("Set as default"), LIVES_RESPONSE_OK);
       if (!has_param) {
         lives_widget_set_sensitive(fx_dialog[didx]->resetbutton, FALSE);
         lives_widget_set_sensitive(fx_dialog[didx]->okbutton, FALSE);
@@ -886,51 +883,51 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
     if (no_process && !is_defaults) {
       if (!is_realtime) {
         if (fx_dialog[didx]->okbutton != NULL)
-          lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                               LIVES_GUI_CALLBACK(on_paramwindow_button_clicked), rfx);
-        lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                             LIVES_GUI_CALLBACK(on_paramwindow_button_clicked), rfx);
-        lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->dialog), LIVES_WIDGET_DELETE_EVENT,
-                             LIVES_GUI_CALLBACK(on_paramwindow_button_clicked), rfx);
+          lives_signal_sync_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(on_paramwindow_button_clicked), rfx);
+        lives_signal_sync_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(on_paramwindow_button_clicked), rfx);
+        lives_signal_sync_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->dialog), LIVES_WIDGET_DELETE_EVENT,
+                                  LIVES_GUI_CALLBACK(on_paramwindow_button_clicked), rfx);
       } else {
-        lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                             LIVES_GUI_CALLBACK(on_paramwindow_button_clicked2), rfx);
+        lives_signal_sync_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(on_paramwindow_button_clicked2), rfx);
         if (rfx->status == RFX_STATUS_SCRAP)
-          lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                               LIVES_GUI_CALLBACK(on_paramwindow_button_clicked2), rfx);
+          lives_signal_sync_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(on_paramwindow_button_clicked2), rfx);
         else {
           if (fx_dialog[didx]->okbutton != NULL)
-            lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                                 LIVES_GUI_CALLBACK(rte_set_key_defs), rfx);
+            lives_signal_sync_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                      LIVES_GUI_CALLBACK(rte_set_key_defs), rfx);
           if (fx_dialog[didx]->resetbutton != NULL) {
-            lives_signal_connect_after(LIVES_GUI_OBJECT(fx_dialog[didx]->resetbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                                       LIVES_GUI_CALLBACK(rte_reset_defs_clicked), rfx);
+            lives_signal_sync_connect_after(LIVES_GUI_OBJECT(fx_dialog[didx]->resetbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                            LIVES_GUI_CALLBACK(rte_reset_defs_clicked), rfx);
           }
         }
-        lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->dialog), LIVES_WIDGET_DELETE_EVENT,
-                             LIVES_GUI_CALLBACK(on_paramwindow_button_clicked2), rfx);
+        lives_signal_sync_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->dialog), LIVES_WIDGET_DELETE_EVENT,
+                                  LIVES_GUI_CALLBACK(on_paramwindow_button_clicked2), rfx);
       }
     } else {
       if (!is_defaults) {
         if (fx_dialog[didx]->okbutton != NULL)
-          lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                               LIVES_GUI_CALLBACK(on_paramwindow_button_clicked), (livespointer)rfx);
-        lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                             LIVES_GUI_CALLBACK(on_paramwindow_button_clicked), (livespointer)rfx);
-        lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->dialog), LIVES_WIDGET_DELETE_EVENT,
-                             LIVES_GUI_CALLBACK(on_paramwindow_button_clicked), (livespointer)rfx);
+          lives_signal_sync_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(on_paramwindow_button_clicked), (livespointer)rfx);
+        lives_signal_sync_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(on_paramwindow_button_clicked), (livespointer)rfx);
+        lives_signal_sync_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->dialog), LIVES_WIDGET_DELETE_EVENT,
+                                  LIVES_GUI_CALLBACK(on_paramwindow_button_clicked), (livespointer)rfx);
       } else {
         if (fx_dialog[didx]->okbutton != NULL)
-          lives_signal_connect_after(LIVES_GUI_OBJECT(fx_dialog[didx]->okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                                     LIVES_GUI_CALLBACK(rte_set_defs_ok), rfx);
+          lives_signal_sync_connect_after(LIVES_GUI_OBJECT(fx_dialog[didx]->okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                          LIVES_GUI_CALLBACK(rte_set_defs_ok), rfx);
         if (fx_dialog[didx]->resetbutton != NULL) {
-          lives_signal_connect_after(LIVES_GUI_OBJECT(fx_dialog[didx]->resetbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                                     LIVES_GUI_CALLBACK(rte_reset_defs_clicked), rfx);
+          lives_signal_sync_connect_after(LIVES_GUI_OBJECT(fx_dialog[didx]->resetbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                          LIVES_GUI_CALLBACK(rte_reset_defs_clicked), rfx);
         }
-        lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                             LIVES_GUI_CALLBACK(rte_set_defs_cancel), rfx);
-        lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->dialog), LIVES_WIDGET_DELETE_EVENT,
-                             LIVES_GUI_CALLBACK(rte_set_defs_cancel), rfx);
+        lives_signal_sync_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(rte_set_defs_cancel), rfx);
+        lives_signal_sync_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->dialog), LIVES_WIDGET_DELETE_EVENT,
+                                  LIVES_GUI_CALLBACK(rte_set_defs_cancel), rfx);
       }
     }
   }
@@ -1546,9 +1543,9 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
     if (!param->group) {
       widget_opts.mnemonic_label = use_mnemonic;
       checkbutton = lives_standard_check_button_new(name, get_bool_param(param->value), (LiVESBox *)hbox, param->desc);
-      lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                 LIVES_GUI_CALLBACK(after_boolean_param_toggled),
-                                 (livespointer)rfx);
+      lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                      LIVES_GUI_CALLBACK(after_boolean_param_toggled),
+                                      (livespointer)rfx);
       widget_opts.mnemonic_label = TRUE;
 
       // store parameter so we know whose trigger to use
@@ -1585,8 +1582,8 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
 
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), get_bool_param(param->value));
 
-      lives_signal_connect_after(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                 LIVES_GUI_CALLBACK(after_boolean_param_toggled), (livespointer)rfx);
+      lives_signal_sync_connect_after(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                      LIVES_GUI_CALLBACK(after_boolean_param_toggled), (livespointer)rfx);
 
       // store parameter so we know whose trigger to use
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(radiobutton), PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));
@@ -1612,8 +1609,8 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
 
     lives_spin_button_set_wrap(LIVES_SPIN_BUTTON(spinbutton), param->wrap);
 
-    lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                               LIVES_GUI_CALLBACK(after_param_value_changed), (livespointer)rfx);
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(after_param_value_changed), (livespointer)rfx);
 
     // store parameter so we know whose trigger to use
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton), PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));
@@ -1679,15 +1676,15 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cbutton), PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));
     if (param->desc != NULL) lives_widget_set_tooltip_text(cbutton, param->desc);
 
-    lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton_red), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                               LIVES_GUI_CALLBACK(after_param_red_changed), (livespointer)rfx);
-    lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton_green), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                               LIVES_GUI_CALLBACK(after_param_green_changed), (livespointer)rfx);
-    lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton_blue), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                               LIVES_GUI_CALLBACK(after_param_blue_changed), (livespointer)rfx);
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(spinbutton_red), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(after_param_red_changed), (livespointer)rfx);
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(spinbutton_green), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(after_param_green_changed), (livespointer)rfx);
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(spinbutton_blue), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(after_param_blue_changed), (livespointer)rfx);
 
-    lives_signal_connect_after(LIVES_GUI_OBJECT(cbutton), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                               LIVES_GUI_CALLBACK(on_pwcolsel), (livespointer)rfx);
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(cbutton), LIVES_WIDGET_COLOR_SET_SIGNAL,
+                                    LIVES_GUI_CALLBACK(on_pwcolsel), (livespointer)rfx);
 
     // store parameter so we know whose trigger to use
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton_red), PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));
@@ -1728,9 +1725,9 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       if (param->desc != NULL) lives_widget_set_tooltip_text(textview, param->desc);
       textbuffer = lives_text_view_get_buffer(LIVES_TEXT_VIEW(textview));
 
-      lives_signal_connect_after(LIVES_WIDGET_OBJECT(textbuffer), LIVES_WIDGET_CHANGED_SIGNAL,
-                                 LIVES_GUI_CALLBACK(after_param_text_buffer_changed),
-                                 (livespointer) rfx);
+      lives_signal_sync_connect_after(LIVES_WIDGET_OBJECT(textbuffer), LIVES_WIDGET_CHANGED_SIGNAL,
+                                      LIVES_GUI_CALLBACK(after_param_text_buffer_changed),
+                                      (livespointer) rfx);
 
       lives_text_view_set_editable(LIVES_TEXT_VIEW(textview), TRUE);
       lives_text_view_set_wrap_mode(LIVES_TEXT_VIEW(textview), LIVES_WRAP_WORD);
@@ -1761,8 +1758,8 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
                                   (int)param->max, LIVES_BOX(hbox), param->desc);
 
       if (rfx->status == RFX_STATUS_WEED && param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
-        lives_signal_connect_after(LIVES_WIDGET_OBJECT(entry), LIVES_WIDGET_CHANGED_SIGNAL,
-                                   LIVES_GUI_CALLBACK(after_param_text_changed), (livespointer)rfx);
+        lives_signal_sync_connect_after(LIVES_WIDGET_OBJECT(entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                                        LIVES_GUI_CALLBACK(after_param_text_changed), (livespointer)rfx);
       }
     }
     param->widgets[1] = widget_opts.last_label;
@@ -1798,8 +1795,8 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
                                     (char *)lives_list_nth_data(param->list, get_int_param(param->value)));
     }
 
-    lives_signal_connect_after(LIVES_WIDGET_OBJECT(combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                               LIVES_GUI_CALLBACK(after_string_list_changed), (livespointer)rfx);
+    lives_signal_sync_connect_after(LIVES_WIDGET_OBJECT(combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(after_string_list_changed), (livespointer)rfx);
 
     // store parameter so we know whose trigger to use
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo), PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));

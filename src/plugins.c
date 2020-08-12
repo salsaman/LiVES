@@ -2589,9 +2589,9 @@ void on_decplug_advanced_clicked(LiVESButton * button, livespointer user_data) {
 
     lives_free(ltext);
 
-    lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                               LIVES_GUI_CALLBACK(on_dpa_cb_toggled),
-                               (livespointer)dpsys->name);
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(on_dpa_cb_toggled),
+                                    (livespointer)dpsys->name);
 
     decoder_plugin = decoder_plugin->next;
   }

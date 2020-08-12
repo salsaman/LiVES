@@ -653,9 +653,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               }
               pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos - qnt, qnt);
               pulsed->real_seek_pos = pulsed->seek_pos;
-
-
-
               if (mainw->record && !mainw->record_paused) pulse_set_rec_avals(pulsed);
             }
           }
@@ -687,8 +684,16 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                 pulsed->seek_pos = ALIGN_CEIL64(seek_start, qnt);
                 if (((mainw->agen_key == 0 && !mainw->agen_needs_reinit))) {
                   lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
-                  pulsed->aPlayPtr->size = lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data) + in_bytes - pad_bytes -
-                                           (pulsed->real_seek_pos - seek_start), pulsed->real_seek_pos - seek_start, TRUE);
+
+
+                  g_print("read at %p, size = %ld\n", (void *)(pulsed->aPlayPtr->data) + in_bytes - pad_bytes -
+                          (pulsed->real_seek_pos - pulsed->seek_pos),
+                          pulsed->real_seek_pos - pulsed->seek_pos);
+
+                  pulsed->aPlayPtr->size = lives_read_buffered(pulsed->fd,
+                                           (void *)(pulsed->aPlayPtr->data) + in_bytes - pad_bytes -
+                                           (pulsed->real_seek_pos - pulsed->seek_pos),
+                                           pulsed->real_seek_pos - pulsed->seek_pos, TRUE);
                   if (pulsed->aPlayPtr->size < pulsed->real_seek_pos - seek_start) {
                     /// short read, shift them up
                     lives_memmove((void *)pulsed->aPlayPtr->data + in_bytes - pad_bytes - pulsed->aPlayPtr->size,
@@ -744,7 +749,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               lives_memmove((void *)pulsed->aPlayPtr->data + (in_bytes - pulsed->aPlayPtr->size), (void *)pulsed->aPlayPtr->data,
                             pulsed->aPlayPtr->size);
               pad_with_silence(-1, (void *)pulsed->aPlayPtr->data, 0, in_bytes - pulsed->aPlayPtr->size,
-                               afile->asampsize >> 3, afile->signed_endian & AFORM_UNSIGNED, afile->signed_endian & AFORM_BIG_ENDIAN);
+                               afile->asampsize >> 3, afile->signed_endian & AFORM_UNSIGNED,
+                               afile->signed_endian & AFORM_BIG_ENDIAN);
             }
           }
         }
@@ -783,8 +789,10 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           numFramesToWrite = MIN(pulseFramesAvailable, (inputFramesAvailable / fabsf(shrink_factor) + .001)); // VALGRIND
 
 #ifdef DEBUG_PULSE
-          lives_printerr("inputFramesAvailable after conversion %ld\n", (uint64_t)((double)inputFramesAvailable / shrink_factor + .001));
-          lives_printerr("nsamples == %ld, pulseFramesAvailable == %ld,\n\tpulsed->num_input_channels == %ld, pulsed->out_achans == %ld\n",
+          lives_printerr("inputFramesAvailable after conversion %ld\n", (uint64_t)((double)inputFramesAvailable
+                         / shrink_factor + .001));
+          lives_printerr("nsamples == %ld, pulseFramesAvailable == %ld,\n\tpulsed->num_input_channels == %ld, "
+                         "pulsed->out_achans == %ld\n",
                          nsamples,
                          pulseFramesAvailable, pulsed->in_achans, pulsed->out_achans);
 #endif
@@ -851,7 +859,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
               if (has_audio_filters(AF_TYPE_ANY)) {
                 /** we create an Audio Layer and then call weed_apply_audio_effects_rt. The layer data is copied by ref
-                  to the in channel of the filter and then from the out channel back to the layer. IF the filter supports inplace then
+                  to the in channel of the filter and then from the out channel back to the layer.
+                  IF the filter supports inplace then
                   we get the same buffers back, otherwise we will get newly allocated ones, we copy by ref back to our audio buf
                   and feed the result to the player as usual */
                 weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
@@ -890,7 +899,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           if (mainw->agen_needs_reinit) pl_error = TRUE;
           else {
             fltbuf = (float **)lives_malloc(pulsed->out_achans * sizeof(float *));
-            for (int i = 0; i < pulsed->out_achans; i++) fltbuf[i] = (float *)lives_calloc_safety(numFramesToWrite, sizeof(float));
+            for (int i = 0; i < pulsed->out_achans; i++) fltbuf[i] =
+                (float *)lives_calloc_safety(numFramesToWrite, sizeof(float));
             if (!get_audio_from_plugin(fltbuf, pulsed->out_achans, pulsed->out_arate, numFramesToWrite, TRUE)) {
               pl_error = TRUE;
             }

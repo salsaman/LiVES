@@ -199,6 +199,20 @@ static void extra_cb(LiVESWidget *dialog, int key) {
 
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, TRUE, 0);
+
+    entry = lives_standard_direntry_new(NULL, prefs->workdir, MEDIUM_ENTRY_WIDTH, PATH_MAX,
+                                        LIVES_BOX(hbox), NULL);
+
+    layout = lives_layout_new(LIVES_BOX(dialog_vbox));
+    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+    lives_layout_add_label(LIVES_LAYOUT(layout), _("Sets detected: "), TRUE);
+    label = lives_layout_add_label(LIVES_LAYOUT(layout), _("0"), TRUE);
+
+    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+
+    hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
     button =
       lives_standard_button_new_from_stock_full(LIVES_STOCK_REFRESH,
           _("Scan other directory"), DEF_BUTTON_WIDTH,
@@ -207,19 +221,10 @@ static void extra_cb(LiVESWidget *dialog, int key) {
                                  "LiVES Clip Sets. May be slow "
                                  "for some directories."))));
     lives_free(tmp);
-    entry = lives_standard_direntry_new(NULL, prefs->workdir, MEDIUM_ENTRY_WIDTH, PATH_MAX,
-                                        LIVES_BOX(hbox), NULL);
-
-    layout = lives_layout_new(LIVES_BOX(dialog_vbox));
-    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
-    lives_layout_add_label(LIVES_LAYOUT(layout), _("Sets detected: "), TRUE);
-    label = lives_layout_add_label(LIVES_LAYOUT(layout), _("0"), TRUE);
-    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
-
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), "disp_label", label);
-
     lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
                               LIVES_GUI_CALLBACK(scan_for_sets), entry);
+
 
     layout = lives_layout_new(LIVES_BOX(dialog_vbox));
     widget_opts.justify = LIVES_JUSTIFY_CENTER;
@@ -482,7 +487,6 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     }
   }
 
-
   if (okbutton || cancelbutton) {
     accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
     lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
@@ -500,7 +504,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
   } else if (defbutton) lives_button_grab_default_special(defbutton);
 
   lives_widget_show_all(dialog);
-  gdk_window_show_unraised(lives_widget_get_xwindow(dialog));
+  //gdk_window_show_unraised(lives_widget_get_xwindow(dialog));
 
   if (mainw->mgeom)
     lives_window_center(LIVES_WINDOW(dialog));
@@ -3605,11 +3609,6 @@ static void _threaded_dialog_spin(double fraction) {
   double timesofar;
   int progress;
 
-  if (mainw->splash_window) return;
-  if (!mainw->threaded_dialog) return;
-
-  if (!mainw->proc_ptr || !mainw->is_ready || !prefs->show_gui) return;
-
   if (fraction > 0.) {
     timesofar = (double)(lives_get_current_ticks() - sttime) / TICKS_PER_SECOND_DBL;
     disp_fraction(fraction, timesofar, mainw->proc_ptr);
@@ -3636,6 +3635,8 @@ static void _threaded_dialog_spin(double fraction) {
 
 
 void threaded_dialog_spin(double fraction) {
+  if (!mainw->threaded_dialog || mainw->splash_window || !mainw->proc_ptr
+      || !mainw->is_ready || !prefs->show_gui) return;
   if (THREADVAR(no_gui)) return;
   main_thread_execute((lives_funcptr_t)_threaded_dialog_spin, 0,
                       NULL, "d", fraction);
@@ -3645,31 +3646,21 @@ static void _do_threaded_dialog(const char *trans_text, boolean has_cancel) {
   // calling this causes a threaded progress dialog to appear
   // until end_threaded_dialog() is called
   char *copy_text;
-
-  if (!prefs->show_gui) return;
-
-  if (mainw->threaded_dialog) return;
-
   mainw->cancelled = CANCEL_NONE;
-
   copy_text = lives_strdup(trans_text);
-
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-
   sttime = lives_get_current_ticks();
-
   mainw->threaded_dialog = TRUE;
   clear_mainw_msg();
-
   mainw->proc_ptr = create_threaded_dialog(copy_text, has_cancel, &td_had_focus);
   lives_free(copy_text);
-
   lives_widget_process_updates(mainw->proc_ptr->processing);
 }
 
 
 void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
-  if (THREADVAR(no_gui)) return;
+  if (!prefs->show_gui) return;
+  if (mainw->threaded_dialog || !prefs->show_gui) return;
   main_thread_execute((lives_funcptr_t)_do_threaded_dialog, 0,
                       NULL, "sb", trans_text, has_cancel);
 }
@@ -3699,6 +3690,7 @@ static void _end_threaded_dialog(void) {
 
 void end_threaded_dialog(void) {
   if (THREADVAR(no_gui)) return;
+  if (!mainw->threaded_dialog) return;
   main_thread_execute((lives_funcptr_t)_end_threaded_dialog, 0, NULL, "");
 }
 

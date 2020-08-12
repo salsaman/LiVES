@@ -1322,6 +1322,7 @@ typedef struct {
   // timer bars
   LiVESWidget *video_draw, *laudio_draw, *raudio_draw;
 
+  int drawsrc;
   lives_painter_surface_t *video_drawable, *laudio_drawable, *raudio_drawable;
 
   // framecounter

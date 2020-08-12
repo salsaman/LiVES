@@ -175,7 +175,7 @@ int lives_system(const char *com, boolean allow_error) {
 }
 
 
-ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buflen) {
+ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t buflen) {
   // runs com, fills buff with a NUL terminated string (total length <= buflen)
   // returns number of bytes read. If an error occurs during popen or fread
   // then THREADVAR(com_failed) is set, and if allow_error is FALSE then an an error dialog is displayed to the user
@@ -194,7 +194,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
   boolean cnorm = FALSE;
   int err = 0;
 
-  if (!buflen) {
+  if (buflen <= 0) {
     tbuff = (LiVESTextBuffer *)buff;
     buflen = get_read_buff_size(BUFF_SIZE_READ_LARGE);
     xbuff = (char *)lives_calloc(1, buflen);
@@ -211,7 +211,6 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
     //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   }
-
 
   do {
     char *strg = NULL;
@@ -290,20 +289,22 @@ lives_pgid_t lives_fork(const char *com) {
 }
 
 
-ssize_t lives_write(int fd, const void *buf, size_t count, boolean allow_fail) {
+ssize_t lives_write(int fd, const void *buf, ssize_t count, boolean allow_fail) {
   ssize_t retval;
+  if (count <= 0) return 0;
+
   retval = write(fd, buf, count);
 
-  if (retval < (ssize_t)count) {
+  if (retval < count) {
     char *msg = NULL;
     /// TODO ****: this needs to be threadsafe
     THREADVAR(write_failed) = fd + 1;
     THREADVAR(write_failed_file) = filename_from_fd(THREADVAR(write_failed_file), fd);
     if (retval >= 0)
-      msg = lives_strdup_printf("Write failed %"PRIu64" of %"PRIu64" in: %s", (uint64_t)retval,
-                                (uint64_t)count, THREADVAR(write_failed_file));
+      msg = lives_strdup_printf("Write failed %"PRId64" of %"PRId64" in: %s", retval,
+                                count, THREADVAR(write_failed_file));
     else
-      msg = lives_strdup_printf("Write failed with error %"PRIu64" in: %s", (uint64_t)retval,
+      msg = lives_strdup_printf("Write failed with error %"PRId64" in: %s", retval,
                                 THREADVAR(write_failed_file));
 
     if (!allow_fail) {
@@ -329,7 +330,8 @@ ssize_t lives_write(int fd, const void *buf, size_t count, boolean allow_fail) {
 }
 
 
-ssize_t lives_write_le(int fd, const void *buf, size_t count, boolean allow_fail) {
+ssize_t lives_write_le(int fd, const void *buf, ssize_t count, boolean allow_fail) {
+  if (count <= 0) return 0;
   if (capable->byte_order == LIVES_BIG_ENDIAN && (prefs->bigendbug != 1)) {
     reverse_bytes((char *)buf, count, count);
   }
@@ -338,45 +340,39 @@ ssize_t lives_write_le(int fd, const void *buf, size_t count, boolean allow_fail
 
 
 int lives_fputs(const char *s, FILE *stream) {
-  int retval;
-
-  retval = fputs(s, stream);
-
+  int retval = fputs(s, stream);
   if (retval == EOF) {
     THREADVAR(write_failed) = fileno(stream) + 1;
   }
-
   return retval;
 }
 
 
 char *lives_fgets(char *s, int size, FILE *stream) {
   char *retval;
-
+  if (!size) return NULL;
   retval = fgets(s, size, stream);
-
-  if (retval == NULL && ferror(stream)) {
+  if (!retval && ferror(stream)) {
     THREADVAR(read_failed) = fileno(stream) + 1;
   }
-
   return retval;
 }
 
 
 size_t lives_fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
   size_t bytes_read = fread(ptr, size, nmemb, stream);
-
   if (ferror(stream)) {
     THREADVAR(read_failed) = fileno(stream) + 1;
   }
-
   return bytes_read;
 }
 
 
 size_t lives_fread_string(char *buff, size_t stlen, const char *fname) {
   size_t bread = 0;
-  FILE *infofile = fopen(fname, "r");
+  FILE *infofile;
+  if (!stlen) return 0;
+  infofile = fopen(fname, "r");
   if (!infofile) return 0;
   bread = lives_fread(buff, 1, stlen - 1, infofile);
   fclose(infofile);
@@ -403,7 +399,7 @@ lives_file_buffer_t *find_in_file_buffers_by_pathname(const char *pathname) {
   lives_file_buffer_t *fbuff;
   LiVESList *fblist = mainw->file_buffers;
 
-  while (fblist != NULL) {
+  while (fblist) {
     fbuff = (lives_file_buffer_t *)fblist->data;
     if (!lives_strcmp(fbuff->pathname, pathname)) return fbuff;
     fblist = fblist->next;
@@ -413,14 +409,14 @@ lives_file_buffer_t *find_in_file_buffers_by_pathname(const char *pathname) {
 }
 
 
-static void do_file_read_error(int fd, ssize_t errval, void *buff, size_t count) {
+static void do_file_read_error(int fd, ssize_t errval, void *buff, ssize_t count) {
   char *msg = NULL;
   THREADVAR(read_failed) = fd + 1;
   THREADVAR(read_failed_file) = filename_from_fd(THREADVAR(read_failed_file), fd);
 
   if (errval >= 0)
-    msg = lives_strdup_printf("Read failed %"PRId64" of %"PRIu64" in: %s", (int64_t)errval,
-                              (uint64_t)count, THREADVAR(read_failed_file));
+    msg = lives_strdup_printf("Read failed %"PRId64" of %"PRId64" in: %s", (int64_t)errval,
+                              count, THREADVAR(read_failed_file));
   else {
     msg = lives_strdup_printf("Read failed with error %"PRId64" in: %s (%s)", (int64_t)errval,
                               THREADVAR(read_failed_file),
@@ -436,10 +432,11 @@ static void do_file_read_error(int fd, ssize_t errval, void *buff, size_t count)
 }
 
 
-ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less) {
+ssize_t lives_read(int fd, void *buf, ssize_t count, boolean allow_less) {
   ssize_t retval = read(fd, buf, count);
+  if (count <= 0) return 0;
 
-  if (retval < (ssize_t)count) {
+  if (retval < count) {
     if (!allow_less || retval < 0) {
       do_file_read_error(fd, retval, buf, count);
       close(fd);
@@ -461,9 +458,11 @@ ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less) {
 }
 
 
-ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
-  ssize_t retval = lives_read(fd, buf, count, allow_less);
-  if (retval < (ssize_t)count) return retval;
+ssize_t lives_read_le(int fd, void *buf, ssize_t count, boolean allow_less) {
+  ssize_t retval;
+  if (count <= 0) return 0;
+  retval = lives_read(fd, buf, count, allow_less);
+  if (retval < count) return retval;
   if (capable->byte_order == LIVES_BIG_ENDIAN && !prefs->bigendbug) {
     reverse_bytes((char *)buf, count, count);
   }
@@ -544,7 +543,6 @@ void lives_invalidate_all_file_buffers(void) {
     }
   }
 }
-
 
 
 static int lives_open_real_buffered(const char *pathname, int flags, int mode, boolean isread) {
@@ -686,7 +684,7 @@ int lives_close_buffered(int fd) {
 
   fbuff = find_in_file_buffers(fd);
 
-  if (fbuff == NULL) {
+  if (!fbuff) {
     // normal non-buffered file
     LIVES_DEBUG("lives_close_buffered: no file buffer found");
     if (should_close) ret = close(fd);
@@ -717,7 +715,7 @@ int lives_close_buffered(int fd) {
   mainw->file_buffers = lives_list_remove(mainw->file_buffers, (livesconstpointer)fbuff);
   pthread_mutex_unlock(&mainw->fbuffer_mutex);
 
-  if (fbuff->buffer != NULL && !fbuff->invalid) {
+  if (fbuff->buffer && !fbuff->invalid) {
     lives_free(fbuff->buffer);
   }
 
@@ -737,10 +735,12 @@ size_t get_read_buff_size(int sztype) {
 }
 
 
-static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, size_t min) {
+static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
   ssize_t res;
   ssize_t delta = 0;
   size_t bufsize;
+
+  if (min < 0) min = 0;
 
   if (fbuff->bufsztype == BUFF_SIZE_READ_CUSTOM) {
     if (fbuff->buffer) bufsize = fbuff->ptr - fbuff->buffer + fbuff->bytes;
@@ -878,7 +878,7 @@ off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset) {
 }
 
 
-ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less) {
+ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less) {
   lives_file_buffer_t *fbuff;
   ssize_t retval = 0, res = 0;
   size_t ocount = count;
@@ -888,7 +888,7 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
   double cost;
 #endif
 
-  if (count == 0) return retval;
+  if (count <= 0) return retval;
 
   if ((fbuff = find_in_file_buffers(fd)) == NULL) {
     LIVES_DEBUG("lives_read_buffered: no file buffer found");
@@ -1112,11 +1112,12 @@ rd_exit:
 }
 
 
-ssize_t lives_read_le_buffered(int fd, void *buf, size_t count, boolean allow_less) {
-  ssize_t retval = lives_read_buffered(fd, buf, count, allow_less);
-  if (retval < (ssize_t)count) return retval;
+ssize_t lives_read_le_buffered(int fd, void *buf, ssize_t count, boolean allow_less) {
+  ssize_t retval;
+  if (count <= 0) return 0;
+  retval = lives_read_buffered(fd, buf, count, allow_less);
+  if (retval < count) return retval;
   if (capable->byte_order == LIVES_BIG_ENDIAN && !prefs->bigendbug) {
-    g_print("Im a biggie !\n");
     reverse_bytes((char *)buf, count, count);
   }
   return retval;
@@ -1139,9 +1140,11 @@ boolean lives_read_buffered_eof(int fd) {
 }
 
 
-static ssize_t lives_write_buffered_direct(lives_file_buffer_t *fbuff, const char *buf, size_t count, boolean allow_fail) {
+static ssize_t lives_write_buffered_direct(lives_file_buffer_t *fbuff, const char *buf, ssize_t count, boolean allow_fail) {
   ssize_t res = 0;
   ssize_t bytes = fbuff->bytes;
+
+  if (count <= 0) return 0;
 
   if (bytes > 0) {
     res = file_buffer_flush(fbuff);
@@ -1177,14 +1180,14 @@ static ssize_t lives_write_buffered_direct(lives_file_buffer_t *fbuff, const cha
 }
 
 
-ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allow_fail) {
+ssize_t lives_write_buffered(int fd, const char *buf, ssize_t count, boolean allow_fail) {
   lives_file_buffer_t *fbuff;
   ssize_t retval = 0, res;
   size_t space_left;
   int bufsztype = BUFF_SIZE_WRITE_SMALL;
   ssize_t buffsize;
 
-  if ((fbuff = find_in_file_buffers(fd)) == NULL) {
+  if (!(fbuff = find_in_file_buffers(fd))) {
     LIVES_DEBUG("lives_write_buffered: no file buffer found");
     return lives_write(fd, buf, count, allow_fail);
   }
@@ -1193,6 +1196,8 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
     LIVES_ERROR("lives_write_buffered: wrong buffer type");
     return 0;
   }
+
+  if (count <= 0) return 0;
 
   if (count > BUFFER_FILL_BYTES_LARGE) return lives_write_buffered_direct(fbuff, buf, count, allow_fail);
 
@@ -1214,7 +1219,7 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
 
   // write bytes to fbuff
   while (count) {
-    if (fbuff->buffer == NULL) fbuff->bufsztype = bufsztype;
+    if (!fbuff->buffer) fbuff->bufsztype = bufsztype;
 
     if (fbuff->bufsztype == BUFF_SIZE_WRITE_SMALL)
       buffsize = BUFFER_FILL_BYTES_SMALL;
@@ -1227,7 +1232,7 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
     else
       buffsize = BUFFER_FILL_BYTES_LARGE;
 
-    if (fbuff->buffer == NULL) {
+    if (!fbuff->buffer) {
       fbuff->buffer = (uint8_t *)lives_calloc(buffsize >> 4, 16);
       fbuff->ptr = fbuff->buffer;
       fbuff->bytes = 0;
@@ -1278,7 +1283,8 @@ ssize_t lives_buffered_write_printf(int fd, boolean allow_fail, const char *fmt,
 }
 
 
-ssize_t lives_write_le_buffered(int fd, const void *buf, size_t count, boolean allow_fail) {
+ssize_t lives_write_le_buffered(int fd, const void *buf, ssize_t count, boolean allow_fail) {
+  if (count <= 0) return 0;
   if (capable->byte_order == LIVES_BIG_ENDIAN && (prefs->bigendbug != 1)) {
     reverse_bytes((char *)buf, count, count);
   }
@@ -5058,10 +5064,6 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
   case CLIP_DETAILS_FPS:
     if (!sfile->ratio_fps) myval = lives_strdup_printf("%.3f", *(double *)val);
     else myval = lives_strdup_printf("%.8f", *(double *)val);
-    // dont need to block this because it does nothing during non-playback
-    // and we shouldnt be updating clip details during playback
-    if (which == mainw->current_file &&
-        mainw->is_ready) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), *(double *)val);
     break;
   case CLIP_DETAILS_PB_FPS:
     if (sfile->ratio_fps && (sfile->pb_fps == sfile->fps))

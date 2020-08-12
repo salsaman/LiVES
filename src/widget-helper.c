@@ -1541,7 +1541,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_now(LiVESWidget *widget) {
 }
 
 
-WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_destroy(LiVESWidget *widget) {
+static boolean _lives_widget_destroy(LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_widget_destroy(widget);
   return TRUE;
@@ -1753,7 +1753,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_opacity(LiVESWidget *widget
 }
 
 
-WIDGET_HELPER_LOCAL_INLINE LiVESResponseType _lives_dialog_run(LiVESDialog *dialog) {
+static LiVESResponseType _lives_dialog_run(LiVESDialog *dialog) {
 #ifdef GUI_GTK
   //LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
   LiVESResponseType resp;
@@ -7645,7 +7645,6 @@ static void set_css_min_size_selected(LiVESWidget *w, char *selector, int mw, in
 }
 
 
-
 ///////////////// lives_layout ////////////////////////
 
 WIDGET_HELPER_LOCAL_INLINE void lives_layout_attach(LiVESLayout *layout, LiVESWidget *widget, int start, int end, int row) {
@@ -9611,7 +9610,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
 
   if (widget_opts.apply_theme) {
 #if GTK_CHECK_VERSION(3, 0, 0)
-    set_css_min_size(entry, widget_opts.css_min_width, (widget_opts.css_min_height * 4 - 10) >> 1);
+    set_css_min_size(entry, widget_opts.css_min_width, ((widget_opts.css_min_height * 3 + 3) >> 2) << 1);
 #if GTK_CHECK_VERSION(3, 16, 0)
     if (prefs->extra_colours && mainw->pretty_colours) {
       char *tmp;
@@ -9771,7 +9770,6 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   if (title) lives_window_set_title(LIVES_WINDOW(dialog), title);
 
   lives_window_set_deletable(LIVES_WINDOW(dialog), FALSE);
-
 
   if (LIVES_SHOULD_EXPAND_WIDTH) lives_widget_set_hexpand(dialog, TRUE);
   if (LIVES_SHOULD_EXPAND_HEIGHT) lives_widget_set_vexpand(dialog, TRUE);

@@ -531,13 +531,15 @@ LIVES_GLOBAL_INLINE size_t get_max_align(size_t req_size, size_t align_max) {
 
 
 LIVES_GLOBAL_INLINE void *lives_calloc_safety(size_t nmemb, size_t xsize) {
+  void *p;
   size_t totsize = nmemb * xsize;
-  if (totsize == 0) return NULL;
+  if (!totsize) return NULL;
   if (xsize < DEF_ALIGN) {
     xsize = DEF_ALIGN;
     nmemb = (totsize / xsize) + 1;
   }
-  return __builtin_assume_aligned(lives_calloc(nmemb + (EXTRA_BYTES / xsize), xsize), DEF_ALIGN);
+  p = __builtin_assume_aligned(lives_calloc(nmemb + (EXTRA_BYTES / xsize), xsize), DEF_ALIGN);
+  return p;
 }
 
 LIVES_GLOBAL_INLINE void *lives_recalloc(void *p, size_t nmemb, size_t omemb, size_t xsize) {

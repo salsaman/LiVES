@@ -1516,6 +1516,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->dsu_valid = mainw->dsu_scanning = FALSE;
   mainw->dsu_widget = NULL;
 
+  mainw->drawsrc = -1;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);
@@ -3199,7 +3201,6 @@ static boolean open_yuv4m_startup(livespointer data) {
 
 boolean render_choice_idle(livespointer data) {
   // TODO: *** figure out why we cant preview with only scrap_file loaded
-  g_print("RCIDLE\n");
   static boolean norecurse = FALSE;
   boolean rec_recovered = FALSE;
   boolean is_recovery = LIVES_POINTER_TO_INT(data);
@@ -3766,6 +3767,7 @@ static boolean lives_startup2(livespointer data) {
   mainw->kb_timer = lives_timer_add_simple(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
 
   resize(1.);
+  if (!CURRENT_CLIP_IS_VALID) lives_ce_update_timeline(0, 0.);
 
   if (prefs->interactive) set_interactive(TRUE);
 
@@ -5254,12 +5256,12 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
   update_rect.width = rwidth;
   update_rect.height = rheight;
 
-  if (!LIVES_IS_XWINDOW(xwin) || !LIVES_IS_WINDOW(widget)) return;
+  if (!LIVES_IS_XWINDOW(xwin)) return;
   lives_xwindow_invalidate_rect(lives_widget_get_xwindow(widget), &update_rect, FALSE);
 }
 
 
-LIVES_GLOBAL_INLINE void showclipimgs(void) {
+void showclipimgs(void) {
   if (CURRENT_CLIP_IS_VALID) {
     load_end_image(cfile->end);
     load_start_image(cfile->start);
@@ -5269,6 +5271,7 @@ LIVES_GLOBAL_INLINE void showclipimgs(void) {
   }
   lives_widget_queue_draw(mainw->start_image);
   lives_widget_queue_draw(mainw->end_image);
+  lives_widget_context_update();
 }
 
 
@@ -8909,7 +8912,7 @@ mainw->track_decoders[i] = clone_decoder(nclip);
       // fname should be in local charset
 
       if (!LIVES_IS_PIXBUF(pixbuf)) {
-	/// invalid pixbef, we will save a blank image
+	/// invalid pixbuf, we will save a blank image
 	const char *img_ext = get_image_ext_for_type(imgtype);
 	weed_layer_t  *layer = create_blank_layer(NULL, img_ext, width, height, WEED_PALETTE_END);
 	pixbuf = layer_to_pixbuf(layer, TRUE, FALSE);
@@ -8997,15 +9000,19 @@ mainw->track_decoders[i] = clone_decoder(nclip);
 	cfile->vsize = mainw->def_height - V_RESIZE_ADJUST;
 
 	if (cfile->laudio_drawable) {
-	  if (mainw->laudio_drawable == cfile->laudio_drawable) mainw->laudio_drawable = NULL;
+	  if (mainw->laudio_drawable == cfile->laudio_drawable
+	      || mainw->drawsrc == mainw->current_file) mainw->laudio_drawable = NULL;
 	  lives_painter_surface_destroy(cfile->laudio_drawable);
 	  cfile->laudio_drawable = NULL;
 	}
 	if (cfile->raudio_drawable) {
-	  if (mainw->raudio_drawable == cfile->raudio_drawable) mainw->raudio_drawable = NULL;
+	  if (mainw->raudio_drawable == cfile->raudio_drawable
+	      || mainw->drawsrc == mainw->current_file) mainw->raudio_drawable = NULL;
 	  lives_painter_surface_destroy(cfile->raudio_drawable);
 	  cfile->raudio_drawable = NULL;
 	}
+
+	if (mainw->drawsrc == mainw->current_file) mainw->drawsrc = -1;
 
 	if (mainw->st_fcache) {
 	  if (mainw->en_fcache == mainw->st_fcache) mainw->en_fcache = NULL;
@@ -9278,6 +9285,7 @@ mainw->track_decoders[i] = clone_decoder(nclip);
           if (CURRENT_CLIP_IS_VALID) {
             mainw->laudio_drawable = cfile->laudio_drawable;
             mainw->raudio_drawable = cfile->raudio_drawable;
+            mainw->drawsrc = mainw->current_file;
           }
           if (old_file != 0 && new_file != 0) mainw->preview_frame = 0;
           if (1) {
@@ -9727,6 +9735,7 @@ mainw->track_decoders[i] = clone_decoder(nclip);
 
         mainw->laudio_drawable = cfile->laudio_drawable;
         mainw->raudio_drawable = cfile->raudio_drawable;
+        mainw->drawsrc = mainw->current_file;
 
         if (!mainw->fs && !mainw->faded) {
           redraw_timeline(mainw->current_file);

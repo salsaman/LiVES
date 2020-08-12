@@ -11570,7 +11570,6 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_cheat(boolean has_alpha, int width, int h
 
   pixbuf = lives_pixbuf_new_from_data(buf, has_alpha, width, height, rowstride,
                                       (LiVESPixbufDestroyNotify)lives_free_buffer, NULL);
-  threaded_dialog_spin(0.);
   return pixbuf;
 }
 

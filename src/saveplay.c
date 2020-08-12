@@ -577,6 +577,8 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
               cfile->video_time += st_extra_frames / cfile->fps;
               extra_frames -= st_extra_frames;
               showclipimgs();
+              if (!mainw->multitrack)
+                redraw_timeline(mainw->current_file);
             }
 
             if ((cfile->frames + extra_frames) / cfile->fps > cfile->laudio_time) {
@@ -818,6 +820,8 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
           d_print_failed();
           do_error_dialog(mainw->msg);
         }
+        if (!mainw->multitrack)
+          redraw_timeline(mainw->current_file);
         showclipimgs();
         return 0;
       }
@@ -961,6 +965,8 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
           cfile->video_time += extra_frames / cfile->fps;
           cfile->end = cfile->frames;
           showclipimgs();
+          if (!mainw->multitrack)
+            redraw_timeline(mainw->current_file);
         }
       }
       if (cfile->laudio_time < cfile->video_time && cfile->achans > 0) {
@@ -2269,6 +2275,8 @@ void play_file(void) {
   if (!mainw->multitrack && CURRENT_CLIP_HAS_VIDEO) {
     lives_widget_set_frozen(mainw->spinbutton_start, TRUE);
     lives_widget_set_frozen(mainw->spinbutton_end, TRUE);
+    lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
+    lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
   }
 
   /// note, here our start is in frames, in save_file it is in seconds !
@@ -3289,6 +3297,8 @@ void play_file(void) {
   if (!mainw->multitrack && CURRENT_CLIP_HAS_VIDEO) {
     lives_widget_set_sensitive(mainw->spinbutton_start, TRUE);
     lives_widget_set_sensitive(mainw->spinbutton_end, TRUE);
+    lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
+    lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
   }
 
   /// need to do this here, in case we want to preview with only a generator and no other clips (which will close to -1)
@@ -3316,6 +3326,8 @@ void play_file(void) {
     if (mainw->current_file > -1) {
       if (mainw->toy_type == LIVES_TOY_MAD_FRAMES && !cfile->opening) {
         showclipimgs();
+        if (!mainw->multitrack)
+          redraw_timeline(mainw->current_file);
       }
     }
   }
@@ -3393,6 +3405,7 @@ void play_file(void) {
   if (!mainw->multitrack && !mainw->foreign && CURRENT_CLIP_IS_VALID && (!cfile->opening ||
       cfile->clip_type == CLIP_TYPE_FILE)) {
     showclipimgs();
+    redraw_timeline(mainw->current_file);
   }
 
   if (prefs->show_msg_area && mainw->multitrack == NULL) {
@@ -6320,6 +6333,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       rec_cleanup = TRUE;
       switch_to_file(mainw->current_file, start_file);
       showclipimgs();
+      redraw_timeline(mainw->current_file);
     }
   } else {
     mt_clip_select(mainw->multitrack, TRUE); // scroll clip on screen

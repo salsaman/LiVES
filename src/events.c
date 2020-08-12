@@ -4850,7 +4850,6 @@ boolean deal_with_render_choice(boolean add_deinit) {
   // return TRUE if we rendered to a new clip
   lives_proc_thread_t info = NULL;
 
-
   LiVESWidget *elist_dialog;
 
   double df;
@@ -4871,6 +4870,22 @@ boolean deal_with_render_choice(boolean add_deinit) {
   /* lives_signal_handler_block(mainw->record_perf, mainw->record_perf_func); */
   /* lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->record_perf), FALSE); */
   /* lives_signal_handler_unblock(mainw->record_perf, mainw->record_perf_func); */
+
+  render_choice = RENDER_CHOICE_NONE;
+
+  if (!CURRENT_CLIP_IS_VALID) {
+    /// user may have recorded a  generator with no other clips loaded
+    if (mainw->scrap_file != -1)
+      mainw->current_file = mainw->scrap_file;
+    else if (mainw->ascrap_file != -1)
+      mainw->current_file = mainw->ascrap_file;
+    if (CURRENT_CLIP_IS_VALID) {
+      cfile->hsize = DEF_GEN_WIDTH;
+      cfile->vsize = DEF_GEN_HEIGHT;
+    }
+  }
+
+  if (!CURRENT_CLIP_IS_VALID) render_choice = RENDER_CHOICE_MULTITRACK;
 
   if (count_events(mainw->event_list, FALSE, 0, 0) == 0) {
     event_list_free(mainw->event_list);
@@ -4907,10 +4922,15 @@ boolean deal_with_render_choice(boolean add_deinit) {
   }
 
   do {
-    if (show_rc_dlg() == LIVES_RESPONSE_CANCEL) render_choice = RENDER_CHOICE_DISCARD;
+    if (render_choice == RENDER_CHOICE_NONE || render_choice == RENDER_CHOICE_PREVIEW)
+      if (show_rc_dlg() == LIVES_RESPONSE_CANCEL) render_choice = RENDER_CHOICE_DISCARD;
     switch (render_choice) {
     case RENDER_CHOICE_DISCARD:
-      if (CURRENT_CLIP_IS_VALID) cfile->redoable = FALSE;
+      if ((mainw->current_file == mainw->scrap_file || mainw->current_file == mainw->ascrap_file)
+          && !mainw->clips_available) {
+        mainw->current_file = -1;
+        lives_ce_update_timeline(0, 0.);
+      } else if (CURRENT_CLIP_IS_VALID) cfile->redoable = FALSE;
       close_scrap_file(TRUE);
       close_ascrap_file(TRUE);
       sensitize();
@@ -5917,6 +5937,7 @@ render_details *create_render_details(int type) {
     width /= 2;
     height /= 2;
   }
+
 
   widget_opts.expand = LIVES_EXPAND_NONE;
   rdet->dialog = lives_standard_dialog_new(title, FALSE, 8., 8.);

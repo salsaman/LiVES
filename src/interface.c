@@ -88,6 +88,8 @@ void show_playbar_labels(int clipno) {
   lives_label_set_text(LIVES_LABEL(mainw->raudbar), tmp);
   lives_free(tmp);
 
+  tmp = (_("(No video)"));
+
   if (palette->style & STYLE_1) {
     hhr = hvb = hra = TRUE;
     hla = FALSE;
@@ -96,6 +98,9 @@ void show_playbar_labels(int clipno) {
   }
 
   if (!IS_VALID_CLIP(clipno)) {
+    lives_label_set_text(LIVES_LABEL(mainw->vidbar), tmp);
+    lives_free(tmp);
+
     lives_free(str_video);
     hhr = hvb = hla = hra = TRUE;
     goto showhide;
@@ -105,18 +110,19 @@ void show_playbar_labels(int clipno) {
 
   if (CLIP_HAS_VIDEO(clipno)) {
     if (sfile->opening_loc || (sfile->frames == 123456789 && sfile->opening)) {
+      lives_free(tmp);
       tmp = lives_strdup_printf(_("%s %s"), str_video, str_opening);
     } else {
       if (sfile->fps > 0.) {
         sfile->video_time = sfile->frames / sfile->fps;
       }
       if (sfile->video_time > 0.) {
+        lives_free(tmp);
         tmp = lives_strdup_printf(_("%s [%.2f sec]"), str_video, sfile->video_time);
       } else {
         if (sfile->video_time <= 0. && sfile->frames > 0) {
+          lives_free(tmp);
           tmp = (_("(Undefined)"));
-        } else {
-          tmp = (_("(No video)"));
         }
       }
     }
@@ -243,6 +249,7 @@ double lives_ce_update_timeline(int frame, double x) {
       lives_widget_queue_draw_if_visible(mainw->framecounter);
     }
     clear_tbar_bgs(0, 0, 0, 0, 0);
+    show_playbar_labels(-1);
     return -1.;
   }
 
@@ -3417,8 +3424,8 @@ void redraw_timeline(int clipno) {
   lives_clip_t *sfile;
 
   if (!IS_VALID_CLIP(clipno)) return;
-
   sfile = mainw->files[clipno];
+  if (sfile->clip_type == CLIP_TYPE_TEMP) return;
 
   if (!mainw->video_drawable) {
     mainw->video_drawable = lives_widget_create_painter_surface(mainw->video_draw);
@@ -3448,6 +3455,8 @@ void redraw_timeline(int clipno) {
       update_timer_bars(0, 0, 0, 0, 3);
     }
   }
+
+  mainw->drawsrc = clipno;
 
   lives_widget_queue_draw(mainw->video_draw);
   lives_widget_queue_draw(mainw->laudio_draw);

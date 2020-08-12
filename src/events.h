@@ -230,12 +230,13 @@ render_details *rdet;
 LiVESWidget *events_rec_dialog(void);
 boolean deal_with_render_choice(boolean add_deinit);
 
-#define RENDER_CHOICE_DISCARD 0
-#define RENDER_CHOICE_PREVIEW 1
-#define RENDER_CHOICE_SAME_CLIP 2
-#define RENDER_CHOICE_NEW_CLIP 3
-#define RENDER_CHOICE_MULTITRACK 4
-#define RENDER_CHOICE_EVENT_LIST 5
+#define RENDER_CHOICE_NONE 0
+#define RENDER_CHOICE_DISCARD 1
+#define RENDER_CHOICE_PREVIEW 2
+#define RENDER_CHOICE_SAME_CLIP 3
+#define RENDER_CHOICE_NEW_CLIP 4
+#define RENDER_CHOICE_MULTITRACK 5
+#define RENDER_CHOICE_EVENT_LIST 6
 
 LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, ticks_t start_tc, ticks_t end_tc);
 render_details *create_render_details(int type);

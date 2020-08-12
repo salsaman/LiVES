@@ -1626,12 +1626,12 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
         giw_knob_set_wrap(GIW_KNOB(scale), param->wrap);
         lives_widget_set_size_request(scale, GIW_KNOB_WIDTH, GIW_KNOB_HEIGHT);
         giw_knob_set_legends_digits(GIW_KNOB(scale), 0);
-        if (layout != NULL) {
+        if (layout) {
           hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
           lives_layout_pack(LIVES_HBOX(hbox), scale);
         } else
           lives_box_pack_start(LIVES_BOX(hbox), scale, FALSE, FALSE, widget_opts.packing_width >> 1);
-        if (param->desc != NULL) lives_widget_set_tooltip_text(scale, param->desc);
+        if (param->desc) lives_widget_set_tooltip_text(scale, param->desc);
         lives_widget_set_fg_color(scale, LIVES_WIDGET_STATE_NORMAL, &palette->white);
         lives_widget_set_fg_color(scale, LIVES_WIDGET_STATE_PRELIGHT, &palette->dark_orange);
         lives_widget_set_bg_color(scale, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);

@@ -5299,7 +5299,6 @@ boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
     do {
       // prompt for a set name, advise user to save set
       renamew = create_rename_dialog(2);
-      lives_widget_show_all(renamew->dialog);
       response = lives_dialog_run(LIVES_DIALOG(renamew->dialog));
       if (response == LIVES_RESPONSE_CANCEL) return FALSE;
       lives_snprintf(new_set_name, MAX_SET_NAME_LEN, "%s",
@@ -5308,7 +5307,6 @@ boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
       lives_widget_destroy(renamew->dialog);
       lives_free(renamew);
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-
     } while (!is_legal_set_name(new_set_name, TRUE));
   } else lives_snprintf(new_set_name, MAX_SET_NAME_LEN, "%s", (char *)user_data);
 
@@ -9951,10 +9949,10 @@ boolean expose_laud_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer
 boolean config_laud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
   lives_painter_surface_t *surf = lives_widget_create_painter_surface(widget);
   if (mainw->laudio_drawable) lives_painter_surface_destroy(mainw->laudio_drawable);
-  if (CURRENT_CLIP_IS_VALID) {
-    if (!cfile->laudio_drawable || mainw->laudio_drawable == cfile->laudio_drawable) cfile->laudio_drawable = surf;
-  }
   mainw->laudio_drawable = surf;
+  if (IS_VALID_CLIP(mainw->drawsrc)) {
+    mainw->files[mainw->drawsrc]->laudio_drawable = mainw->laudio_drawable;
+  }
   return TRUE;
 }
 
@@ -9970,10 +9968,10 @@ boolean expose_raud_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer
 boolean config_raud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
   lives_painter_surface_t *surf = lives_widget_create_painter_surface(widget);
   if (mainw->raudio_drawable) lives_painter_surface_destroy(mainw->raudio_drawable);
-  if (CURRENT_CLIP_IS_VALID) {
-    if (!cfile->raudio_drawable || mainw->raudio_drawable == cfile->raudio_drawable) cfile->raudio_drawable = surf;
-  }
   mainw->raudio_drawable = surf;
+  if (IS_VALID_CLIP(mainw->drawsrc)) {
+    mainw->files[mainw->drawsrc]->raudio_drawable = mainw->raudio_drawable;
+  }
   return TRUE;
 }
 

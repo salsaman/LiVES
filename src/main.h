@@ -1495,14 +1495,14 @@ boolean expose_eim(LiVESWidget *, lives_painter_t *, livespointer);
 
 // system calls in utils.c
 int lives_system(const char *com, boolean allow_error);
-ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buflen);
+ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t buflen);
 lives_pid_t lives_fork(const char *com);
 int lives_open3(const char *pathname, int flags, mode_t mode);
 int lives_open2(const char *pathname, int flags);
-ssize_t lives_write(int fd, livesconstpointer buf, size_t count, boolean allow_fail);
-ssize_t lives_write_le(int fd, livesconstpointer buf, size_t count, boolean allow_fail);
-ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less);
-ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less);
+ssize_t lives_write(int fd, livesconstpointer buf, ssize_t count, boolean allow_fail);
+ssize_t lives_write_le(int fd, livesconstpointer buf, ssize_t count, boolean allow_fail);
+ssize_t lives_read(int fd, void *buf, ssize_t count, boolean allow_less);
+ssize_t lives_read_le(int fd, void *buf, ssize_t count, boolean allow_less);
 
 // buffered io
 
@@ -1560,11 +1560,11 @@ off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset);
 off_t lives_buffered_offset(int fd);
 size_t lives_buffered_orig_size(int fd);
 boolean lives_buffered_rdonly_set_reversed(int fd, boolean val);
-ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allow_fail);
+ssize_t lives_write_buffered(int fd, const char *buf, ssize_t count, boolean allow_fail);
 ssize_t lives_buffered_write_printf(int fd, boolean allow_fail, const char *fmt, ...);
-ssize_t lives_write_le_buffered(int fd, livesconstpointer buf, size_t count, boolean allow_fail);
-ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less);
-ssize_t lives_read_le_buffered(int fd, void *buf, size_t count, boolean allow_less);
+ssize_t lives_write_le_buffered(int fd, livesconstpointer buf, ssize_t count, boolean allow_fail);
+ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less);
+ssize_t lives_read_le_buffered(int fd, void *buf, ssize_t count, boolean allow_less);
 boolean lives_read_buffered_eof(int fd);
 lives_file_buffer_t *get_file_buffer(int fd);
 void lives_buffered_rdonly_slurp(int fd, off_t skip);

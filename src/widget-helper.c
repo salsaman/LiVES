@@ -5063,7 +5063,11 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_container_get_focus_child(LiVESCo
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_progress_bar_new(void) {
   LiVESWidget *pbar = NULL;
 #ifdef GUI_GTK
+#ifdef PROGBAR_IS_ENTRY
+  pbar = gtk_entry_new();
+#else
   pbar = gtk_progress_bar_new();
+#endif
 #endif
   return pbar;
 }
@@ -5071,7 +5075,11 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_progress_bar_new(void) {
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_progress_bar_set_fraction(LiVESProgressBar *pbar, double fraction) {
 #ifdef GUI_GTK
+#ifdef PROGBAR_IS_ENTRY
+  gtk_entry_set_progress_fraction(pbar, fraction);
+#else
   gtk_progress_bar_set_fraction(pbar, fraction);
+#endif
   return TRUE;
 #endif
   return FALSE;
@@ -5080,7 +5088,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_progress_bar_set_fraction(LiVESProgres
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_progress_bar_set_pulse_step(LiVESProgressBar *pbar, double fraction) {
 #ifdef GUI_GTK
+#ifdef PROGBAR_IS_ENTRY
+  gtk_entry_set_progress_pulse_step(pbar, fraction);
+#else
   gtk_progress_bar_set_pulse_step(pbar, fraction);
+#endif
   return TRUE;
 #endif
   return FALSE;
@@ -5089,7 +5101,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_progress_bar_set_pulse_step(LiVESProgr
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_progress_bar_pulse(LiVESProgressBar *pbar) {
 #ifdef GUI_GTK
+#ifdef PROGBAR_IS_ENTRY
+  gtk_entry_progress_pulse(pbar);
+#else
   gtk_progress_bar_pulse(pbar);
+#endif
   return TRUE;
 #endif
   return FALSE;

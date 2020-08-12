@@ -33,7 +33,7 @@
 #define GTK_TEXT_VIEW_DRAW_BUG
 
 #if !GTK_CHECK_VERSION(3, 18, 9) // fixed version
-// a bug where named textviews cannot be set by CSS
+// a bug where named textviews cannot be set by CSS: (res. not a bug, need to set the "text" node)
 #define GTK_TEXT_VIEW_CSS_BUG
 #endif
 
@@ -93,16 +93,9 @@ typedef uint8_t                           boolean;
 
 #ifdef GUI_GTK
 
-//#include "support.h"
+/// custom tweaks
+#define PROGBAR_IS_ENTRY 1
 
-/* #if GTK_CHECK_VERSION(2, 28, 0) */
-/* #define USE_MONOTONIC_TIME */
-/* #define lives_get_monotonic_time() g_get_monotonic_time() */
-/* #endif */
-
-//#if GTK_CHECK_VERSION(3, 8, 0)
-//#define USE_GDK_FRAME_CLOCK
-//#endif
 
 /// Glib type stuff //////////////////////////////////////////
 #ifndef G_ENCODE_VERSION
@@ -510,7 +503,11 @@ typedef GtkSpinner        	          LiVESSpinner;
 typedef GtkWidget        	          LiVESSpinner;
 #endif
 
+#ifdef PROGBAR_IS_ENTRY
+typedef GtkEntry 	                   LiVESProgressBar;
+#else
 typedef GtkProgressBar                    LiVESProgressBar;
+#endif
 
 typedef GtkAboutDialog                    LiVESAboutDialog;
 
@@ -886,7 +883,11 @@ typedef GdkInterpType                     LiVESInterpType;
 
 #define LIVES_NOTEBOOK(widget) GTK_NOTEBOOK(widget)
 
+#ifdef PROGBAR_IS_ENTRY
+#define LIVES_PROGRESS_BAR(widget) GTK_ENTRY(widget)
+#else
 #define LIVES_PROGRESS_BAR(widget) GTK_PROGRESS_BAR(widget)
+#endif
 
 #if LIVES_HAS_SPINNER_WIDGET
 #define LIVES_SPINNER(widget) GTK_SPINNER(widget)
@@ -973,8 +974,10 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_IS_TOOL_BUTTON(widget) GTK_IS_TOOL_BUTTON(widget)
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-#define LIVES_IS_HBOX(widget) (GTK_IS_BOX(widget) && gtk_orientable_get_orientation(GTK_ORIENTABLE(widget)) == GTK_ORIENTATION_HORIZONTAL)
-#define LIVES_IS_VBOX(widget) (GTK_IS_BOX(widget) && gtk_orientable_get_orientation(GTK_ORIENTABLE(widget)) == GTK_ORIENTATION_VERTICAL)
+#define LIVES_IS_HBOX(widget) (GTK_IS_BOX(widget) && gtk_orientable_get_orientation(GTK_ORIENTABLE(widget)) \
+			       == GTK_ORIENTATION_HORIZONTAL)
+#define LIVES_IS_VBOX(widget) (GTK_IS_BOX(widget) && gtk_orientable_get_orientation(GTK_ORIENTABLE(widget)) \
+			       == GTK_ORIENTATION_VERTICAL)
 #define LIVES_IS_SCROLLABLE(widget) GTK_IS_SCROLLABLE(widget)
 #else
 #define LIVES_IS_HBOX(widget) GTK_IS_HBOX(widget)
@@ -1009,7 +1012,11 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_IS_IMAGE(widget) GTK_IS_IMAGE(widget)
 #define LIVES_IS_ENTRY(widget) GTK_IS_ENTRY(widget)
 #define LIVES_IS_RANGE(widget) GTK_IS_RANGE(widget)
+#ifdef PROGBAR_IS_ENTRY
+#define LIVES_IS_PROGRESS_BAR(widget) GTK_IS_ENTRY(widget)
+#else
 #define LIVES_IS_PROGRESS_BAR(widget) GTK_IS_PROGRESS_BAR(widget)
+#endif
 #define LIVES_IS_TEXT_VIEW(widget) GTK_IS_TEXT_VIEW(widget)
 #define LIVES_IS_MENU_ITEM(widget) GTK_IS_MENU_ITEM(widget)
 #define LIVES_IS_CHECK_MENU_ITEM(widget) GTK_IS_CHECK_MENU_ITEM(widget)

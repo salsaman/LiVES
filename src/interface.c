@@ -825,10 +825,13 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
   lives_box_pack_start(LIVES_BOX(vbox), procw->label2, FALSE, FALSE, 0);
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
+#ifdef PROGBAR_IS_ENTRY
+  procw->label3 = procw->progressbar;
+#else
   procw->label3 = lives_standard_label_new("");
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_box_pack_start(LIVES_BOX(vbox), procw->label3, FALSE, FALSE, 0);
-
+#endif
   widget_opts.expand = LIVES_EXPAND_EXTRA;
   hbox = lives_hbox_new(FALSE, widget_opts.filler_len * 8);
   add_fill_to_box(LIVES_BOX(hbox));
@@ -2926,14 +2929,14 @@ _entryw *create_rename_dialog(int type) {
     lives_entry_set_editable(LIVES_ENTRY(renamew->entry), TRUE);
     lives_entry_set_max_length(LIVES_ENTRY(renamew->entry), MAX_SET_NAME_LEN);
 
-    if (strlen(prefs->ar_clipset_name)) {
+    if (*prefs->ar_clipset_name) {
       // set default to our auto-reload clipset
       lives_entry_set_text(LIVES_ENTRY(renamew->entry), prefs->ar_clipset_name);
     }
     lives_entry_set_completion_from_list(LIVES_ENTRY(renamew->entry), mainw->set_list);
   } else {
     if (type == 6) {
-      if (strlen(prefs->workdir) > 0) workdir = lives_strdup(prefs->workdir);
+      if (*prefs->workdir) workdir = lives_strdup(prefs->workdir);
       else workdir = lives_build_path(capable->home_dir, LIVES_DEF_WORK_NAME, NULL);
       renamew->entry = lives_standard_direntry_new("", (tmp = F2U8(workdir)),
                        LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),

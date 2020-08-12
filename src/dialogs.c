@@ -1186,7 +1186,11 @@ static void disp_fraction(double fraction_done, double timesofar, xprocess * pro
   est_time = timesofar / fraction_done - timesofar;
   prog_label = lives_strdup_printf(_("\n%d%% done. Time remaining: %u sec\n"), (int)(fraction_done * 100.),
                                    (uint32_t)(est_time + .5));
+#ifdef PROGBAR_IS_ENTRY
+  lives_entry_set_text(LIVES_ENTRY(mainw->proc_ptr->label3), prog_label);
+#else
   if (LIVES_IS_LABEL(proc->label3)) lives_label_set_text(LIVES_LABEL(proc->label3), prog_label);
+#endif
   lives_free(prog_label);
 
   disp_fraction_done = fraction_done;
@@ -1252,7 +1256,11 @@ void update_progress(boolean visible) {
           lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
           prog_label = lives_strdup_printf(_("\n%d frames opened.\n"), cfile->opening_frames - 1);
         }
+#ifdef PROGBAR_IS_ENTRY
+        lives_entry_set_text(LIVES_ENTRY(mainw->proc_ptr->label3), prog_label);
+#else
         lives_label_set_text(LIVES_LABEL(mainw->proc_ptr->label3), prog_label);
+#endif
         lives_free(prog_label);
         cfile->start = cfile->end > 0 ? 1 : 0;
         showclipimgs();

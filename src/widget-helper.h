@@ -62,12 +62,23 @@ typedef struct {
 // pango stuff. I suppose it should be here on the offchance that it might one day be used with a non-gtk+ toolkit...
 typedef PangoLayout LingoLayout;
 typedef PangoContext LingoContext;
+typedef PangoWrapMode LingoWrapMode;
+typedef PangoEllipsizeMode LingoEllipsizeMode;
 typedef PangoFontDescription LingoFontDescription;
 #define lingo_layout_set_alignment(a, b) pango_layout_set_alignment(a, b)
 
 #define LINGO_ALIGN_LEFT PANGO_ALIGN_LEFT
 #define LINGO_ALIGN_RIGHT PANGO_ALIGN_RIGHT
 #define LINGO_ALIGN_CENTER PANGO_ALIGN_CENTER
+
+#define LINGO_WRAP_WORD PANGO_WRAP_WORD
+#define LINGO_WRAP_CHAR PANGO_WRAP_CHAR
+#define LINGO_WRAP_WORD_CHAR PANGO_WRAP_WORD_CHAR
+
+#define LINGO_ELLIPSIZE_NONE PANGO_ELLIPSIZE_NONE
+#define LINGO_ELLIPSIZE_START PANGO_ELLIPSIZE_START
+#define LINGO_ELLIPSIZE_END PANGO_ELLIPSIZE_END
+#define LINGO_ELLIPSIZE_MIDDLE PANGO_ELLIPSIZE_MIDDLE
 
 #define lingo_layout_set_text(a, b, c) pango_layout_set_text(a, b, c)
 #define lingo_layout_set_markup_with_accel(a, b, c, d, e) \
@@ -95,6 +106,13 @@ typedef PangoFontDescription LingoFontDescription;
 
 #define LINGO_SCALE PANGO_SCALE
 #endif
+
+typedef LingoEllipsizeMode LiVESEllipsizeMode;
+#define LIVES_ELLIPSIZE_NONE LINGO_ELLIPSIZE_NONE
+#define LIVES_ELLIPSIZE_START LINGO_ELLIPSIZE_START
+#define LIVES_ELLIPSIZE_MIDDLE LINGO_ELLIPSIZE_MIDDLE
+#define LIVES_ELLIPSIZE_END LINGO_ELLIPSIZE_END
+
 
 #ifdef LIVES_PAINTER_IS_CAIRO
 // ...likewise with cairo
@@ -360,6 +378,11 @@ boolean lives_label_set_mnemonic_widget(LiVESLabel *, LiVESWidget *widget);
 LiVESWidget *lives_label_get_mnemonic_widget(LiVESLabel *);
 
 boolean lives_label_set_selectable(LiVESLabel *, boolean setting);
+
+boolean lives_label_set_line_wrap(LiVESLabel *, boolean set);
+boolean lives_label_set_line_wrap_mode(LiVESLabel *, LingoWrapMode mode);
+boolean lives_label_seT_lines(LiVESLabel *, int nlines);
+boolean lives_label_set_ellipsize(LiVESLabel *, LiVESEllipsizeMode mode);
 
 //////////
 

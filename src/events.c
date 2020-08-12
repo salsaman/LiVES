@@ -2150,9 +2150,9 @@ LiVESWidget *events_rec_dialog(void) {
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), TRUE);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(set_render_choice),
-                       LIVES_INT_TO_POINTER(RENDER_CHOICE_PREVIEW));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(set_render_choice),
+                            LIVES_INT_TO_POINTER(RENDER_CHOICE_PREVIEW));
 
   if (!mainw->clip_switched && CURRENT_CLIP_IS_NORMAL && !mainw->recording_recovered
       && (last_rec_start_tc == -1 || ((double)last_rec_start_tc / TICKS_PER_SECOND_DBL) < (cfile->frames - 1.) / cfile->fps)) {
@@ -2161,9 +2161,9 @@ LiVESWidget *events_rec_dialog(void) {
 
     radiobutton = lives_standard_radio_button_new(_("Render events to _same clip"), &radiobutton_group, LIVES_BOX(hbox), NULL);
 
-    lives_signal_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                         LIVES_GUI_CALLBACK(set_render_choice),
-                         LIVES_INT_TO_POINTER(RENDER_CHOICE_SAME_CLIP));
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                              LIVES_GUI_CALLBACK(set_render_choice),
+                              LIVES_INT_TO_POINTER(RENDER_CHOICE_SAME_CLIP));
   }
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -2171,9 +2171,9 @@ LiVESWidget *events_rec_dialog(void) {
 
   radiobutton = lives_standard_radio_button_new(_("Render events to _new clip"), &radiobutton_group, LIVES_BOX(hbox), NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(set_render_choice),
-                       LIVES_INT_TO_POINTER(RENDER_CHOICE_NEW_CLIP));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(set_render_choice),
+                            LIVES_INT_TO_POINTER(RENDER_CHOICE_NEW_CLIP));
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
@@ -2182,9 +2182,9 @@ LiVESWidget *events_rec_dialog(void) {
                 LIVES_BOX(hbox),
                 NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(set_render_choice),
-                       LIVES_INT_TO_POINTER(RENDER_CHOICE_MULTITRACK));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(set_render_choice),
+                            LIVES_INT_TO_POINTER(RENDER_CHOICE_MULTITRACK));
 
   if (mainw->stored_event_list != NULL) lives_widget_set_no_show_all(hbox, TRUE);
 
@@ -2196,16 +2196,16 @@ LiVESWidget *events_rec_dialog(void) {
 
   add_fill_to_box(LIVES_BOX(vbox));
 
-  lives_signal_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(set_render_choice),
-                       LIVES_INT_TO_POINTER(RENDER_CHOICE_EVENT_LIST));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(set_render_choice),
+                            LIVES_INT_TO_POINTER(RENDER_CHOICE_EVENT_LIST));
 
   cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(e_rec_dialog), LIVES_STOCK_CANCEL, NULL,
                  LIVES_RESPONSE_CANCEL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(set_render_choice_button),
-                       LIVES_INT_TO_POINTER(RENDER_CHOICE_DISCARD));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(set_render_choice_button),
+                            LIVES_INT_TO_POINTER(RENDER_CHOICE_DISCARD));
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
@@ -4499,13 +4499,8 @@ boolean has_audio_frame(weed_plant_t *event_list) {
 
 boolean render_to_clip(boolean new_clip) {
   // this function is called to actually start rendering mainw->event_list to a new/current clip
-  char *com, *tmp;
-  char *clipname = NULL;
-
-  boolean retval = TRUE;
-  boolean rendaud = TRUE;
-  boolean response;
-
+  char *com, *tmp, *clipname = NULL;
+  boolean retval = TRUE, rendaud = TRUE, response;
   int xachans = 0, xarate = 0, xasamps = 0, xse = 0;
   int current_file = mainw->current_file;
 
@@ -4557,14 +4552,12 @@ boolean render_to_clip(boolean new_clip) {
       }
     } else {
       // TODO: prompt just for clip name
-
-
     }
 
-    if (mainw->current_file > -1 && cfile != NULL && cfile->clip_type == CLIP_TYPE_GENERATOR) {
-      // can call this simply, because we arent playing
-      weed_generator_end((weed_plant_t *)cfile->ext_src);
-    }
+    /* if (mainw->current_file > -1 && cfile != NULL && cfile->clip_type == CLIP_TYPE_GENERATOR) { */
+    /*   // can call this simply, because we arent playing */
+    /*   weed_generator_end((weed_plant_t *)cfile->ext_src); */
+    /* } */
 
     // create new file
     mainw->current_file = mainw->first_free_file;
@@ -4616,7 +4609,7 @@ boolean render_to_clip(boolean new_clip) {
       if (IS_VALID_CLIP(current_file)) cfile->gamma_type = mainw->files[current_file]->gamma_type;
     }
     show_playbar_labels(mainw->current_file);
-  } else if (mainw->multitrack == NULL) {
+  } else if (!mainw->multitrack) {
     // back up audio to audio.back (in case we overwrite it)
     if (prefs->rec_opts & REC_AUDIO) {
       do_threaded_dialog(_("Backing up audio..."), FALSE);
@@ -4636,24 +4629,22 @@ boolean render_to_clip(boolean new_clip) {
     end_threaded_dialog();
   }
 
-  if (mainw->event_list != NULL && (mainw->multitrack == NULL || mainw->unordered_blocks)) {
+  if (mainw->event_list && (!mainw->multitrack || mainw->unordered_blocks)) {
     weed_plant_t *qevent_list = quantise_events(mainw->event_list, cfile->fps, !new_clip);
-    if (qevent_list != NULL) {
+    if (qevent_list) {
       event_list_replace_events(mainw->event_list, qevent_list);
       weed_set_double_value(mainw->event_list, WEED_LEAF_FPS, cfile->fps);
     }
   }
 
-  if (mainw->multitrack != NULL && mainw->multitrack->pr_audio) d_print(_("Pre-rendering audio..."));
+  if (mainw->multitrack && mainw->multitrack->pr_audio) d_print(_("Pre-rendering audio..."));
   else d_print(_("Rendering..."));
 
   cfile->old_frames = cfile->frames;
   cfile->changed = TRUE;
   mainw->effects_paused = FALSE;
 
-  if (new_clip) {
-    cfile->img_type = IMG_TYPE_BEST; // override the pref
-  }
+  if (new_clip) cfile->img_type = IMG_TYPE_BEST; // override the pref
 
   prefs->render_audio = rendaud;
 
@@ -4662,16 +4653,16 @@ boolean render_to_clip(boolean new_clip) {
   if (start_render_effect_events(mainw->event_list)) { // re-render, applying effects
     // and reordering/resampling/resizing if necessary
 
-    if (mainw->multitrack == NULL && mainw->event_list != NULL) {
+    if (!mainw->multitrack && mainw->event_list) {
       if (!new_clip) {
         // this is needed in case we render to same clip, and then undo ///////
-        if (cfile->event_list_back != NULL) event_list_free(cfile->event_list_back);
+        if (cfile->event_list_back) event_list_free(cfile->event_list_back);
         cfile->event_list_back = mainw->event_list;
         ///////////////////////////////////////////////////////////////////////
       } else event_list_free(mainw->event_list);
     }
     mainw->event_list = NULL;
-    if (mainw->scrap_pixbuf != NULL) {
+    if (mainw->scrap_pixbuf) {
       lives_widget_object_unref(mainw->scrap_pixbuf);
       mainw->scrap_pixbuf = NULL;
     }
@@ -4693,8 +4684,8 @@ boolean render_to_clip(boolean new_clip) {
         return FALSE;
       }
       if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
-      if (mainw->multitrack == NULL) {
-        switch_to_file((mainw->current_file = 0), current_file);
+      if (!mainw->multitrack) {
+        switch_clip(1, current_file, TRUE);
       }
       d_print((tmp = lives_strdup_printf(_("rendered %d frames to new clip.\n"), cfile->frames)));
       lives_free(tmp);
@@ -4723,7 +4714,7 @@ boolean render_to_clip(boolean new_clip) {
           cfile->frame_index_back = cfile->frame_index;  // save for undo :: TODO
           cfile->frame_index = NULL;
           create_frame_index(mainw->current_file, FALSE, 0, cfile->frames);
-          if (cfile->frame_index == NULL) {
+          if (!cfile->frame_index) {
             cfile->frame_index = cfile->frame_index_back;
             cfile->frame_index_back = NULL;
             response = do_memory_error_dialog(what, cfile->frames * 4);
@@ -4732,7 +4723,7 @@ boolean render_to_clip(boolean new_clip) {
         lives_free(what);
 
         if (response == LIVES_RESPONSE_CANCEL) {
-          if (mainw->multitrack == NULL) {
+          if (!mainw->multitrack) {
             if (new_clip) { // check
               close_current_file(current_file);
             } else {
@@ -4743,21 +4734,21 @@ boolean render_to_clip(boolean new_clip) {
           return FALSE; /// will reshow the dialog
         }
 
-        lives_memcpy(cfile->frame_index, cfile->frame_index_back, cfile->undo_start * 4);
+        lives_memcpy(cfile->frame_index, cfile->frame_index_back, cfile->undo_start * sizeof(frames_t));
 
         for (i = cfile->undo_start - 1; i < cfile->undo_end; i++) {
           cfile->frame_index[i] = -1;
         }
 
         lives_memcpy(&cfile->frame_index[cfile->undo_end], &cfile->frame_index_back[cfile->undo_end],
-                     (cfile->frames - cfile->undo_end) * 4);
+                     (cfile->frames - cfile->undo_end) * sizeof(frames_t));
 
         save_frame_index(mainw->current_file);
       }
     }
   } else {
     retval = FALSE; // cancelled or error, so show the dialog again
-    if (new_clip && mainw->multitrack == NULL) {
+    if (new_clip && !mainw->multitrack) {
       // for mt we are rendering to the actual mt file, so we cant close it (CHECK: did we delete all images ?)
       close_current_file(current_file);
     }
@@ -4771,9 +4762,7 @@ boolean render_to_clip(boolean new_clip) {
 }
 
 
-LIVES_INLINE void dprint_recneg(void) {
-  d_print(_("nothing recorded.\n"));
-}
+LIVES_INLINE void dprint_recneg(void) {d_print(_("nothing recorded.\n"));}
 
 boolean backup_recording(char **esave_file, char **asave_file) {
   char *x, *y;
@@ -4781,8 +4770,8 @@ boolean backup_recording(char **esave_file, char **asave_file) {
   double vald = 0.;
   int fd, i, hdlsize;
 
-  if (esave_file == NULL) esave_file = &x;
-  if (asave_file == NULL) asave_file = &y;
+  if (!esave_file) esave_file = &x;
+  if (!asave_file) asave_file = &y;
 
   *esave_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, lives_getuid(), lives_getgid(),
                                     capable->mainpid, LIVES_FILE_EXT_LAYOUT);
@@ -4833,6 +4822,24 @@ boolean backup_recording(char **esave_file, char **asave_file) {
 }
 
 
+static LiVESResponseType _show_rc_dlg(void) {
+  LiVESResponseType resp;
+  LiVESWidget *e_rec_dialog = events_rec_dialog();
+  resp = lives_dialog_run(LIVES_DIALOG(e_rec_dialog));
+  lives_widget_destroy(e_rec_dialog);
+  return resp;
+  //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+  //lives_widget_context_update();
+}
+
+
+static LiVESResponseType show_rc_dlg(void) {
+  LiVESResponseType resp;
+  main_thread_execute((lives_funcptr_t)_show_rc_dlg, WEED_SEED_INT, &resp, "");
+  return resp;
+}
+
+
 boolean deal_with_render_choice(boolean add_deinit) {
   // this is called from saveplay.c after record/playback ends
   // here we deal with the user's wishes as to how to deal with the recorded events
@@ -4843,7 +4850,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
   // return TRUE if we rendered to a new clip
   lives_proc_thread_t info = NULL;
 
-  LiVESWidget *e_rec_dialog;
+
   LiVESWidget *elist_dialog;
 
   double df;
@@ -4857,20 +4864,20 @@ boolean deal_with_render_choice(boolean add_deinit) {
   int oplay_start;
 
   // record end
-  mainw->record = FALSE;
-  mainw->record_paused = FALSE;
-  mainw->record_starting = FALSE;
+  /* mainw->record = FALSE; */
+  /* mainw->record_paused = FALSE; */
+  /* mainw->record_starting = FALSE; */
 
-  lives_signal_handler_block(mainw->record_perf, mainw->record_perf_func);
-  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->record_perf), FALSE);
-  lives_signal_handler_unblock(mainw->record_perf, mainw->record_perf_func);
+  /* lives_signal_handler_block(mainw->record_perf, mainw->record_perf_func); */
+  /* lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->record_perf), FALSE); */
+  /* lives_signal_handler_unblock(mainw->record_perf, mainw->record_perf_func); */
 
   if (count_events(mainw->event_list, FALSE, 0, 0) == 0) {
     event_list_free(mainw->event_list);
     mainw->event_list = NULL;
   }
 
-  if (mainw->event_list == NULL) {
+  if (!mainw->event_list) {
     close_scrap_file(TRUE);
     close_ascrap_file(TRUE);
     dprint_recneg();
@@ -4895,17 +4902,12 @@ boolean deal_with_render_choice(boolean add_deinit) {
   // crash recovery -> backup the event list
   if (prefs->crash_recovery) {
     /// pretty simple now to run any function in a thread !
-    info = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)backup_recording, -1, "vv",
+    info = lives_proc_thread_create(LIVES_THRDATTR_NO_GUI, (lives_funcptr_t)backup_recording, -1, "vv",
                                     &esave_file, &asave_file);
   }
 
   do {
-    e_rec_dialog = events_rec_dialog();
-    lives_widget_show_all(e_rec_dialog);
-    lives_dialog_run(LIVES_DIALOG(e_rec_dialog));
-    lives_widget_destroy(e_rec_dialog);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-    lives_widget_context_update();
+    if (show_rc_dlg() == LIVES_RESPONSE_CANCEL) render_choice = RENDER_CHOICE_DISCARD;
     switch (render_choice) {
     case RENDER_CHOICE_DISCARD:
       if (CURRENT_CLIP_IS_VALID) cfile->redoable = FALSE;

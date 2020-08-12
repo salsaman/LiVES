@@ -1680,6 +1680,7 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
   case FUNCSIG_VOIDP:
     switch (ret_type) {
     case WEED_SEED_BOOLEAN: CALL_1(boolean, voidptr); break;
+    case WEED_SEED_INT: CALL_1(int, voidptr); break;
     default: CALL_VOID_1(voidptr); break;
     }
     break;
@@ -1863,6 +1864,7 @@ static void *_plant_thread_func(void *args) {
   uint32_t ret_type = weed_leaf_seed_type(info, _RV_);
   funcsig_t sig = make_funcsig(info);
   THREADVAR(tinfo) = info;
+  if (weed_get_boolean_value(info, "no_gui", NULL) == WEED_TRUE) THREADVAR(no_gui) = TRUE;
   call_funcsig(sig, info);
 
   if (weed_get_boolean_value(info, WEED_LEAF_NOTIFY, NULL) == WEED_TRUE) {
@@ -1951,6 +1953,9 @@ void resubmit_proc_thread(lives_proc_thread_t thread_info, lives_thread_attr_t a
   work = (thrd_work_t *)thread->data;
   if (attr & LIVES_THRDATTR_WAIT_SYNC) {
     weed_set_voidptr_value(thread_info, "sync_ready", (void *) & (work->sync_ready));
+  }
+  if (attr & LIVES_THRDATTR_NO_GUI) {
+    weed_set_boolean_value(thread_info, "no_gui", WEED_TRUE);
   }
 }
 

@@ -1631,7 +1631,7 @@ draw1:
 #endif
 
   if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "drawn"))) {
-    if (bgimage && lives_painter_image_surface_get_width(bgimage) > 0) {
+    if (bgimage) {
       lives_painter_set_source_surface(cr, bgimage, startx, starty);
       lives_painter_rectangle(cr, startx, starty, width, height);
       lives_painter_fill(cr);
@@ -1658,11 +1658,13 @@ draw1:
 
   if (bgimage) lives_painter_surface_destroy(bgimage);
 
-  bgimage = lives_painter_image_surface_create(LIVES_PAINTER_COLOR_PALETTE(capable->byte_order),
-            width,
-            height);
+  bgimage = lives_widget_create_painter_surface(eventbox);
 
-  if (bgimage && lives_painter_image_surface_get_width(bgimage) > 0) {
+  /* lives_painter_image_surface_create(LIVES_PAINTER_COLOR_PALETTE(capable->byte_order), */
+  /*         width, */
+  /*         height); */
+
+  if (bgimage) {
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
 
     if (palette->style & STYLE_1) {
@@ -1707,7 +1709,7 @@ draw1:
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "bgimg", (livespointer)bgimage);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "drawn", LIVES_INT_TO_POINTER(bgimage != NULL));
 
-  if (bgimage && lives_painter_image_surface_get_width(bgimage) > 0) goto draw1;
+  if (bgimage) goto draw1;
 
   if (idlefunc > 0) {
     mt->idlefunc = mt_idle_add(mt);
@@ -5373,7 +5375,7 @@ static void apply_avol_filter(lives_mt * mt) {
   new_end_event = get_last_frame_event(mt->event_list);
 
   if (new_end_event == NULL) {
-    if (init_event != NULL) {
+    if (init_event) {
       remove_filter_from_event_list(mt->event_list, init_event);
       if (mt->opts.aparam_view_list != NULL) {
         for (list = mt->audio_draws; list != NULL; list = list->next) {
@@ -5386,7 +5388,7 @@ static void apply_avol_filter(lives_mt * mt) {
 
   if (mt->opts.pertrack_audio) lives_widget_set_sensitive(mt->prerender_aud, TRUE);
 
-  if (init_event == NULL) {
+  if (!init_event) {
     LiVESList *slist = lives_list_copy(mt->selected_tracks);
 
     weed_plant_t *old_mt_init = mt->init_event;
@@ -5399,7 +5401,7 @@ static void apply_avol_filter(lives_mt * mt) {
 
     mt->region_start = 0.;
     mt->region_end = (get_event_timecode(new_end_event) + TICKS_PER_SECOND_DBL / mt->fps) / TICKS_PER_SECOND_DBL;
-    if (mt->selected_tracks != NULL) {
+    if (mt->selected_tracks) {
       lives_list_free(mt->selected_tracks);
       mt->selected_tracks = NULL;
     }
@@ -5461,7 +5463,7 @@ static void set_audio_filter_channel_values(lives_mt * mt) {
 
   add_aparam_menuitems(mt);
 
-  if (mt->current_rfx == NULL || mt->current_fx == -1 || mt->current_fx != mt->avol_fx) return;
+  if (!mt->current_rfx || mt->current_fx == -1 || mt->current_fx != mt->avol_fx) return;
 
   inst = (weed_plant_t *)mt->current_rfx->source;
   in_channels = weed_get_plantptr_array_counted(inst, WEED_LEAF_IN_CHANNELS, &num_in);
@@ -7995,22 +7997,21 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_signal_connect(LIVES_GUI_OBJECT(show_messages), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_show_messages_activate),
                        NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mt->stop), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_stop_activate),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mt->rewind), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_rewind_activate),
-                       NULL);
-  mt->sepwin_func = lives_signal_connect(LIVES_GUI_OBJECT(mt->sepwin), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                                         LIVES_GUI_CALLBACK(on_sepwin_activate),
-                                         NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(full_screen), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_full_screen_activate),
-                       NULL);
-  mt->loop_cont_func = lives_signal_connect(LIVES_GUI_OBJECT(mt->loop_continue), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->stop), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_stop_activate),
+                            NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->rewind), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_rewind_activate),
+                            NULL);
+  mt->sepwin_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->sepwin), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                    LIVES_GUI_CALLBACK(on_sepwin_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(full_screen), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_full_screen_activate),
+                            NULL);
+  mt->loop_cont_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->loop_continue), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_loop_cont_activate),
                        NULL);
-  mt->mute_audio_func = lives_signal_connect(LIVES_GUI_OBJECT(mt->mute_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  mt->mute_audio_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->mute_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
                         LIVES_GUI_CALLBACK(on_mute_activate),
                         NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mt->rename_track), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -9560,8 +9561,10 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
     if (mt->audio_vols != NULL) lives_list_free(mt->audio_vols);
   }
 
-  if (CURRENT_CLIP_IS_VALID && CLIP_TOTAL_TIME(mainw->current_file) == 0.)
+  if (CURRENT_CLIP_IS_VALID && CLIP_TOTAL_TIME(mainw->current_file) == 0.) {
+    cfile->laudio_drawable = cfile->raudio_drawable = NULL;
     close_current_file(mt->file_selected);
+  }
 
   if (mt->video_draws != NULL) {
     for (i = 0; i < mt->num_video_tracks; i++) {
@@ -9636,11 +9639,17 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
   desensitize();
 
   // force the message area to get its correct space, in case we started in STARTUP_MT and haven't show it yet
-  lives_widget_context_update();
+  //lives_widget_context_update();
 
   if (mt->file_selected != -1) {
+    mainw->files[mt->file_selected]->laudio_drawable = mainw->laudio_drawable;
+    mainw->files[mt->file_selected]->raudio_drawable = mainw->raudio_drawable;
+    mainw->laudio_drawable = mainw->raudio_drawable = NULL;
     switch_to_file((mainw->current_file = 0), mt->file_selected);
   } else {
+    if (mainw->laudio_drawable) lives_painter_surface_destroy(mainw->laudio_drawable);
+    if (mainw->raudio_drawable) lives_painter_surface_destroy(mainw->raudio_drawable);
+    mainw->laudio_drawable = mainw->raudio_drawable = NULL;
     resize(1);
     lives_widget_hide(mainw->playframe);
     lives_widget_context_update();
@@ -9657,6 +9666,8 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
   pref_factory_int(PREF_SEPWIN_TYPE, future_prefs->sepwin_type, FALSE);
 
   lives_free(mt);
+
+  lives_idle_add_simple(redraw_tl_idle, NULL);
 
   if (prefs->sepwin_type == SEPWIN_TYPE_STICKY && mainw->sep_win) {
     make_play_window();
@@ -11250,9 +11261,9 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
     weed_generator_end((weed_plant_t *)cfile->ext_src);
   }
 
-  if (prefs->show_gui) {
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET); // force showing of transient window
-  }
+  /* if (prefs->show_gui) { */
+  /*   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET); // force showing of transient window */
+  /* } */
 
   // create new file for rendering to
   renumber_clips();
@@ -11817,8 +11828,9 @@ void clear_context(lives_mt * mt) {
 
 void add_context_label(lives_mt * mt, const char *text) {
   // WARNING - do not add > 8 lines of text (including newlines) - otherwise the window can get resized
-
   LiVESWidget *label;
+
+  if (!prefs->mt_show_ctx) return;
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   widget_opts.line_wrap = TRUE;
@@ -14253,7 +14265,7 @@ void unpaint_line(lives_mt * mt, LiVESWidget * eventbox) {
 
   if (xoffset < ebwidth) {
     lives_widget_queue_draw_area(eventbox, xoffset - 4, 0, 9, lives_widget_get_allocation_height(eventbox));
-    lives_widget_process_updates(eventbox);
+    // lives_widget_process_updates(eventbox);
   }
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "has_line", LIVES_INT_TO_POINTER(-1));
@@ -14296,7 +14308,7 @@ static void paint_lines(lives_mt * mt, double currtime, boolean unpaint, lives_p
 }
 
 
-void animate_multitrack(lives_mt * mt) {
+static void _animate_multitrack(lives_mt * mt) {
   // update timeline pointer(s)
   double currtime = mainw->currticks / TICKS_PER_SECOND_DBL;
   double tl_page;
@@ -14332,6 +14344,10 @@ void animate_multitrack(lives_mt * mt) {
   paint_lines(mt, currtime, TRUE, NULL);
 }
 
+
+void animate_multitrack(lives_mt * mt) {
+  main_thread_execute((lives_funcptr_t)_animate_multitrack, 0, NULL, "v", mt);
+}
 
 ////////////////////////////////////////////////////
 // menuitem callbacks
@@ -17221,13 +17237,16 @@ void mt_sensitise(lives_mt * mt) {
   if (mt->redoable) lives_widget_set_sensitive(mt->redo, TRUE);
   if (mt->selected_init_event != NULL) lives_widget_set_sensitive(mt->fx_edit, TRUE);
   if (mt->selected_init_event != NULL) lives_widget_set_sensitive(mt->fx_delete, TRUE);
-  lives_widget_set_sensitive(mt->checkbutton_avel_reverse, TRUE);
 
-  if (mt->block_selected != NULL && (!mt->block_selected->start_anchored ||
-                                     !mt->block_selected->end_anchored) && !lives_toggle_button_get_active
-      (LIVES_TOGGLE_BUTTON(mt->checkbutton_avel_reverse))) {
-    lives_widget_set_sensitive(mt->spinbutton_avel, TRUE);
-    lives_widget_set_sensitive(mt->avel_scale, TRUE);
+  if (mt->checkbutton_avel_reverse) {
+    lives_widget_set_sensitive(mt->checkbutton_avel_reverse, TRUE);
+
+    if (mt->block_selected != NULL && (!mt->block_selected->start_anchored ||
+                                       !mt->block_selected->end_anchored) && !lives_toggle_button_get_active
+        (LIVES_TOGGLE_BUTTON(mt->checkbutton_avel_reverse))) {
+      lives_widget_set_sensitive(mt->spinbutton_avel, TRUE);
+      lives_widget_set_sensitive(mt->avel_scale, TRUE);
+    }
   }
 
   lives_widget_set_sensitive(mt->load_event_list, *mainw->set_name != 0);
@@ -17487,7 +17506,8 @@ void multitrack_playall(lives_mt * mt) {
     boolean had_audio = mt->has_audio_file;
     mt->pb_start_event = NULL;
     mt->has_audio_file = TRUE;
-    on_preview_clicked(LIVES_BUTTON(mainw->proc_ptr->preview_button), NULL);
+    main_thread_execute((lives_funcptr_t)on_preview_clicked, 0, NULL, "vv", mainw->proc_ptr->preview_button, NULL);
+    //on_preview_clicked(LIVES_BUTTON(
     mt->has_audio_file = had_audio;
   } else {
     if (mt->event_list != NULL) {
@@ -18489,7 +18509,7 @@ static EXPOSE_FN_DECL(mt_expose_audtrack_event, ebox, user_data) {
   bgimage = (lives_painter_surface_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(ebox), "bgimg");
 
   if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(ebox), "drawn"))) {
-    if (bgimage != NULL && lives_painter_image_surface_get_width(bgimage) > 0) {
+    if (bgimage) {
       lives_painter_set_source_surface(cairo, bgimage, startx, starty);
       lives_painter_rectangle(cairo, startx, starty, width, height);
       lives_painter_fill(cairo);
@@ -18504,11 +18524,9 @@ static EXPOSE_FN_DECL(mt_expose_audtrack_event, ebox, user_data) {
     height = lives_widget_get_allocation_height(ebox);
   }
 
-  if (bgimage != NULL) lives_painter_surface_destroy(bgimage);
+  if (bgimage) lives_painter_surface_destroy(bgimage);
 
-  bgimage = lives_painter_image_surface_create(LIVES_PAINTER_COLOR_PALETTE(capable->byte_order),
-            width,
-            height);
+  bgimage = lives_widget_create_painter_surface(ebox);
 
   if (palette->style & STYLE_1) {
     lives_painter_t *crx = lives_painter_create_from_surface(bgimage);
@@ -18521,7 +18539,7 @@ static EXPOSE_FN_DECL(mt_expose_audtrack_event, ebox, user_data) {
 
   channum = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(ebox), "channel"));
 
-  if (bgimage != NULL && lives_painter_image_surface_get_width(bgimage) > 0) {
+  if (bgimage) {
     draw_soundwave(ebox, bgimage, channum, mt);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ebox), "drawn", LIVES_INT_TO_POINTER(TRUE));
     lives_widget_queue_draw(ebox);

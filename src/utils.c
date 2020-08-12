@@ -3136,11 +3136,11 @@ char *ensure_extension(const char *fname, const char *ext) {
 
 // input length includes terminating NUL
 
-LIVES_GLOBAL_INLINE char *lives_ellipsise(char *txt, size_t maxlen, int align) {
-  /// eg. txt = "abcdefgh", maxlen = 6, LIVES_ALIGN_END  -> txt == "...gh" + NUL
-  ///     txt = "abcdefgh", maxlen = 6, LIVES_ALIGN_START  -> txt == "ab..." + NUL
-  ///     txt = "abcdefgh", maxlen = 6, LIVES_ALIGN_FILL  -> txt == "a...h" + NUL
-  // LIVES_ALIGN_CENTER - do not ellipsise
+LIVES_GLOBAL_INLINE char *lives_ellipsize(char *txt, size_t maxlen, LiVESEllipsizeMode mode) {
+  /// eg. txt = "abcdefgh", maxlen = 6, LIVES_ELLIPSIZE_END  -> txt == "...gh" + NUL
+  ///     txt = "abcdefgh", maxlen = 6, LIVES_ELLIPSIZE_START  -> txt == "ab..." + NUL
+  ///     txt = "abcdefgh", maxlen = 6, LIVES_ELLIPSIZE_MIDDLE  -> txt == "a...h" + NUL
+  // LIVES_ELLIPSIZE_NONE - do not ellipsise
   // return value should be freed, unless txt is returned
   const char ellipsis[4] = "...\0";
   size_t slen = lives_strlen(txt);
@@ -3154,24 +3154,23 @@ LIVES_GLOBAL_INLINE char *lives_ellipsise(char *txt, size_t maxlen, int align) {
     if (maxlen == 3) return lives_strdup("..");
     if (maxlen == 4) return lives_strdup("...");
     maxlen -= 4;
-    switch (align) {
-    case LIVES_ALIGN_END:
+    switch (mode) {
+    case LIVES_ELLIPSIZE_END:
       lives_memcpy(retval, ellipsis, 3);
       lives_memcpy(retval + 3, txt + slen - maxlen, maxlen + 1);
       break;
-    case LIVES_ALIGN_START:
+    case LIVES_ELLIPSIZE_START:
       lives_memcpy(retval, txt, maxlen);
       lives_memcpy(retval + maxlen, ellipsis, 4);
       break;
-    case LIVES_ALIGN_FILL:
+    case LIVES_ELLIPSIZE_MIDDLE:
       enlen = maxlen >> 1;
       stlen = maxlen - enlen;
       lives_memcpy(retval, txt, stlen);
       lives_memcpy(retval + stlen, ellipsis, 3);
       lives_memcpy(retval + stlen + 3, txt + slen - enlen, enlen + 1);
       break;
-    default:
-      break;
+    default: break;
     }
   }
   return retval;
@@ -3208,7 +3207,7 @@ LIVES_GLOBAL_INLINE char *lives_pad(char *txt, size_t minlen, int align) {
 }
 
 
-LIVES_GLOBAL_INLINE char *lives_pad_ellipsise(char *txt, size_t fixlen, int ealign, int palign) {
+LIVES_GLOBAL_INLINE char *lives_pad_ellipsize(char *txt, size_t fixlen, int palign,  LiVESEllipsizeMode emode) {
   // if len of txt < fixlen it will be padded, if longer, ellipsised
   // ealign gives ellipsis pos, palign can be LIVES_ALIGN_START, LIVES_ALIGN_END
   // pad with spaces at start and end respectively
@@ -3216,7 +3215,7 @@ LIVES_GLOBAL_INLINE char *lives_pad_ellipsise(char *txt, size_t fixlen, int eali
   // LIVES_ALIGN_FILL - do not pad
   size_t slen = lives_strlen(txt);
   if (slen == fixlen - 1) return txt;
-  if (slen >= fixlen) return lives_ellipsise(txt, fixlen, ealign);
+  if (slen >= fixlen) return lives_ellipsize(txt, fixlen, emode);
   return lives_pad(txt, fixlen, palign);
 }
 

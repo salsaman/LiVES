@@ -1008,72 +1008,164 @@ static void sigdata_free(livespointer data, LiVESWidgetClosure *cl) {
 
 static boolean timer_running = FALSE;
 
+static LiVESList *task_list = NULL;
+
+static lives_sigdata_t *tasks_running(void) {
+  LiVESList *list;
+  lives_sigdata_t *sigdata;
+  list = task_list;
+  if (!list) return NULL;
+  sigdata = (lives_sigdata_t *)list->data;
+  if (lives_proc_thread_check(sigdata->proc)) {
+    task_list = task_list->next;
+    if (task_list) task_list->prev = NULL;
+    list->next = NULL;
+    list->data = NULL;
+    lives_list_free(list);
+    if (!task_list) return sigdata;
+    sigdata_free(sigdata, NULL);
+  }
+  return NULL;
+}
+
 static boolean governor_loop(livespointer data) {
-  lives_sigdata_t *sigdata = (lives_sigdata_t *)data;
+  static boolean lpt_recurse = FALSE;
+  static boolean lpt_recurse2 = FALSE;
+  boolean is_timer = FALSE;
+  lives_sigdata_t *sigdata = NULL;
+  lives_sigdata_t *new_sigdata = (lives_sigdata_t *)data;
   /// this loop runs in the main thread while callbacks are being run in bg.
-
-  if (mainw->is_exiting) return FALSE;
-  if (!sigdata->proc) return FALSE;
-
-  if (lpttorun) {
-    lpt_result = fg_run_func(lpttorun, (void *)lpt_retval);
-    lpttorun = NULL;
-  }
-
-  if (dlgtorun) {
-    dlgresp = gtk_dialog_run(LIVES_DIALOG(dlgtorun));
-    dlgtorun = NULL;
-  }
-
-  if (timer_running) return TRUE;
-
-  mainw->clutch = TRUE;
-
 reloop:
 
-  if (!lives_proc_thread_check(sigdata->proc)) {
-    // signal bg that it can start now...
-    gov_running = TRUE;
-    lives_proc_thread_sync_ready(sigdata->proc);
-    while (mainw->clutch && !mainw->is_exiting && !lives_proc_thread_check(sigdata->proc)) {
-      // while any signal handler is running in the bg, we just loop here until either:
-      // the task completes, the task wants to run a main loop cycle, or the app exits
-      lives_nanosleep(NSLEEP_TIME);
-      if (lives_proc_thread_signalled(sigdata->proc)) {
-        g_print("Thread %lu received signal %d\n", lives_proc_thread_signalled_idx(sigdata->proc),
-                lives_proc_thread_signalled(sigdata->proc));
+  if (mainw->is_exiting) return FALSE;
+
+  if (lpt_recurse2) return TRUE;
+
+  if (!new_sigdata) {
+    // here we ar either re-entering as an idlefunc, or we are in a timer and looped back
+
+    if (lpttorun) {
+      // check if there is a foreground task to run
+      lpt_recurse2 = TRUE;
+      lpt_result = fg_run_func(lpttorun, (void *)lpt_retval);
+      if (!is_timer) {
+        lpttorun = NULL;
+        lpt_recurse2 = FALSE;
+        if (!lpt_recurse) return FALSE;
+        else {
+          lpt_recurse = FALSE;
+          return TRUE;
+        }
       }
-      sched_yield();
+      if (!lpttorun && !dlgtorun)
+        while (lives_widget_context_iteration(NULL, FALSE));
+      lpttorun = NULL;
+      lpt_recurse = FALSE;
+      lpt_recurse2 = FALSE;
+    }
+
+    if (dlgtorun) {
+      dlgresp = gtk_dialog_run(LIVES_DIALOG(dlgtorun));
+      dlgtorun = NULL;
+    }
+
+    if (timer_running) {
+      mainw->clutch = FALSE;
+      return TRUE;
     }
   }
 
+  // this is a shared variable which can be reset to interrupt us
+  mainw->clutch = TRUE;
+
+  if (!new_sigdata || !lives_proc_thread_check(new_sigdata->proc)) {
+    // either we rentered as an idle, or reloop for timer, or adding a new task
+
+    // sigdata will be set if the last task on the stack completed
+    if (!(sigdata = tasks_running()) || new_sigdata) {
+      // either a task is still running, or else we are adding a new one
+
+      if (sigdata && new_sigdata) {
+        // handle the case where the last task finished, and we need to add a new one
+        if (sigdata->is_timer) {
+          // this is complicated, We need to return to caller so it can exit with correct value
+          // but we need to return to run the new task
+          lives_idle_add_simple(governor_loop, new_sigdata);
+          return FALSE;
+        }
+      }
+      // signal that ww are in the loop
+      gov_running = TRUE;
+
+      if (new_sigdata) {
+        // push a new task to the stack
+        // signal bg that it can start now...
+        lives_proc_thread_sync_ready(new_sigdata->proc);
+        task_list = lives_list_prepend(task_list, new_sigdata);
+        new_sigdata = NULL;
+        goto reloop;
+      }
+
+      //while (!sigdata && task_list && !lpttorun && mainw->clutch && !mainw->is_exiting && !(sigdata = tasks_running())) {
+      while (task_list && !lpttorun && mainw->clutch && !mainw->is_exiting && !(sigdata = tasks_running())) {
+        // while any signal handler is running in the bg, we just loop here until either:
+        // the task completes, the task wants to run a main loop cycle, or the app exits
+        lives_nanosleep(NSLEEP_TIME);
+        /* if (lives_proc_thread_signalled(sigdata->proc)) { */
+        /*   g_print("Thread %lu received signal %d\n", lives_proc_thread_signalled_idx(sigdata->proc), */
+        /*           lives_proc_thread_signalled(sigdata->proc)); */
+        /* } */
+        //sched_yield();
+      }
+    }
+  }
+  //else sigdata = new_sigdata;
+
   if (mainw->is_exiting) return FALSE; // app exit
 
-  if (!mainw->clutch) {
-    // run mainloop
-    if (sigdata->is_timer) return TRUE;
-    lives_idle_add_simple(governor_loop, data);
+  if (!task_list && !lpttorun && !sigdata) {
+    gov_running = FALSE;
+    return FALSE;
+  }
+
+  //if (!mainw->clutch || !sigdata) {
+  if (lpttorun || (!mainw->clutch && !sigdata)) {
+    // a thread wants to wiggle the widgets...
+    if (task_list) sigdata = (lives_sigdata_t *)lives_list_last(task_list)->data;
+    if (sigdata && sigdata->is_timer) {
+      // this is also complicated. We are running in a timer and we need to run mainloop
+      is_timer = TRUE;
+      sigdata = NULL;
+      if (!lpttorun && !dlgtorun)
+        while (lives_widget_context_iteration(NULL, FALSE));
+      goto reloop;
+    }
+    if (lpttorun) lpt_recurse = TRUE;
+    lives_idle_add_simple(governor_loop, NULL);
+    gov_running = FALSE;
     return FALSE;
   }
 
   /// something else might have removed the clutch, so check again
   if (!lives_proc_thread_check(sigdata->proc)) goto reloop;
 
+  /// something else might have removed the clutch, so check again
+  //if (!lives_proc_thread_check(sigdata->proc)) goto reloop;
+  //if (!(sigdata = tasks_running())) goto reloop;
+
   // bg handler finished
   gov_running = FALSE;
   // if a timer, set sigdata->swapped
   if (sigdata->is_timer) {
-    sigdata->swapped = TRUE;
+    if (sigdata) sigdata->swapped = TRUE;
     /// timer handler will free sigdata
-  } else {
-    sigdata_free(sigdata, NULL);
-  }
+  } else sigdata_free(sigdata, NULL);
   return FALSE;
 }
 
 
 static void async_sig_handler(livespointer instance, livespointer data) {
-  LiVESWidgetContext *ctx;
+  lives_thread_attr_t attr = LIVES_THRDATTR_WAIT_SYNC;
   lives_sigdata_t *sigdata = lives_calloc(1, sizeof(lives_sigdata_t));
   lives_memcpy(sigdata, data, sizeof(lives_sigdata_t));
   sigdata->detsig = NULL;
@@ -1085,75 +1177,51 @@ static void async_sig_handler(livespointer instance, livespointer data) {
   // g_print("SOURCE is %s\n", g_source_get_name(g_main_current_source()));
   if (sigdata->instance != instance) return;
 
-  ctx = lives_widget_context_get_thread_default();
-  if (!gov_running && (!ctx || ctx == lives_widget_context_default())) {
-    lives_thread_attr_t attr = LIVES_THRDATTR_WAIT_SYNC;
-    mainw->clutch = TRUE;
-    if (sigdata->swapped) {
-      sigdata->proc = lives_proc_thread_create(attr, (lives_funcptr_t)sigdata->callback, -1, "vv", sigdata->user_data, instance);
-    } else {
-      sigdata->proc = lives_proc_thread_create(attr, (lives_funcptr_t)sigdata->callback, -1, "vv", instance, sigdata->user_data);
-    }
-    governor_loop(sigdata);
+  /* ctx = lives_widget_context_get_thread_default(); */
+  /* if (!gov_running && (!ctx || ctx == lives_widget_context_default())) { */
+
+  mainw->clutch = TRUE;
+  if (sigdata->swapped) {
+    sigdata->proc = lives_proc_thread_create(attr, (lives_funcptr_t)sigdata->callback, -1, "vv", sigdata->user_data, instance);
   } else {
-    if (!sigdata->swapped)
-      (*((bifunc)sigdata->callback))(instance, sigdata->user_data);
-    else
-      (*((bifunc)sigdata->callback))(sigdata->user_data, instance);
-    sigdata_free(sigdata, NULL);
+    sigdata->proc = lives_proc_thread_create(attr, (lives_funcptr_t)sigdata->callback, -1, "vv", instance, sigdata->user_data);
   }
+  governor_loop(sigdata);
 }
 
 
 static void async_sig_handler3(livespointer instance, livespointer extra, livespointer data) {
-  LiVESWidgetContext *ctx;
   lives_sigdata_t *sigdata = lives_calloc(1, sizeof(lives_sigdata_t));
+  lives_thread_attr_t attr = LIVES_THRDATTR_WAIT_SYNC;
   lives_memcpy(sigdata, data, sizeof(lives_sigdata_t));
   sigdata->detsig = NULL;
-
-  ctx = lives_widget_context_get_thread_default();
-  if (!gov_running && (!ctx || ctx == lives_widget_context_default())) {
-    lives_thread_attr_t attr = LIVES_THRDATTR_WAIT_SYNC;
-    if (sigdata->swapped)
-      sigdata->proc = lives_proc_thread_create(attr, sigdata->callback, -1, "vvv", sigdata->user_data,
-                      extra, instance);
-    else
-      sigdata->proc = lives_proc_thread_create(attr, sigdata->callback, -1, "vvv", instance, extra,
-                      sigdata->user_data);
-    governor_loop((livespointer)sigdata);
-  } else {
-    if (sigdata->swapped)
-      (*((trifunc)sigdata->callback))(sigdata->user_data, extra, instance);
-    else
-      (*((trifunc)sigdata->callback))(instance, extra, sigdata->user_data);
-    sigdata_free(sigdata, NULL);
-  }
+  if (sigdata->swapped)
+    sigdata->proc = lives_proc_thread_create(attr, sigdata->callback, -1, "vvv", sigdata->user_data,
+                    extra, instance);
+  else
+    sigdata->proc = lives_proc_thread_create(attr, sigdata->callback, -1, "vvv", instance, extra,
+                    sigdata->user_data);
+  governor_loop((livespointer)sigdata);
 }
 
 
 static boolean async_timer_handler(livespointer data) {
   if (mainw->is_exiting) return FALSE;
   else {
-    LiVESWidgetContext *ctx;
     lives_sigdata_t *sigdata = lives_calloc(1, sizeof(lives_sigdata_t));
     lives_memcpy(sigdata, data, sizeof(lives_sigdata_t));
     sigdata->detsig = NULL;
+    sigdata->is_timer = TRUE;
     //g_print("SOURCE is %s\n", g_source_get_name(g_main_current_source())); // NULL for timer, GIdleSource for idle
     //g_print("hndling %p %s %p\n", sigdata, sigdata->detsig, (void *)sigdata->detsig);
 
     if (!sigdata->added) {
-      ctx = lives_widget_context_get_thread_default();
-      if (!ctx || ctx == lives_widget_context_default()) {
-        lives_thread_attr_t attr = LIVES_THRDATTR_WAIT_SYNC;
-        mainw->clutch = FALSE;
-        sigdata->swapped = FALSE;
-        sigdata->proc = lives_proc_thread_create(attr, (lives_funcptr_t)sigdata->callback, WEED_SEED_BOOLEAN,
-                        "v", sigdata->user_data);
-        sigdata->added = TRUE;
-        //governor_loop((livespointer)sigdata);
-      } else {
-        return (*((LiVESWidgetSourceFunc)sigdata->callback))(sigdata->user_data);
-      }
+      lives_thread_attr_t attr = LIVES_THRDATTR_WAIT_SYNC;
+      mainw->clutch = FALSE;
+      sigdata->swapped = FALSE;
+      sigdata->proc = lives_proc_thread_create(attr, (lives_funcptr_t)sigdata->callback, WEED_SEED_BOOLEAN,
+                      "v", sigdata->user_data);
+      sigdata->added = TRUE;
     }
 
     while (1) {
@@ -1190,15 +1258,6 @@ unsigned long lives_signal_connect_async(livespointer instance, const char *deta
   lives_sigdata_t *sigdata;
   uint32_t nvals;
   GSignalQuery sigq;
-#if LIVES_HAS_SWITCH_WIDGET
-  if (LIVES_IS_WIDGET(instance) && LIVES_IS_SWITCH(LIVES_WIDGET(instance))
-      && !strcmp(detailed_signal, LIVES_WIDGET_TOGGLED_SIGNAL)) {
-    /// to make switch and checkbutton interchangeable,
-    /// we substitue the "toggled" signal for a switch with "notify::active"
-    /// and then redirect it back to the desired callback
-    return lives_signal_connect_sync(instance, LIVES_WIDGET_NOTIFY_SIGNAL "active", c_handler, data, flags);
-  }
-#endif
 
   if (notilen == -1) notilen = lives_strlen(LIVES_WIDGET_NOTIFY_SIGNAL);
   if (!lives_strncmp(detailed_signal, LIVES_WIDGET_NOTIFY_SIGNAL, notilen)) {
@@ -1482,12 +1541,19 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_now(LiVESWidget *widget) {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_destroy(LiVESWidget *widget) {
+WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_destroy(LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_widget_destroy(widget);
   return TRUE;
 #endif
   return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_destroy(LiVESWidget *widget) {
+  boolean ret;
+  main_thread_execute((lives_funcptr_t)_lives_widget_destroy, WEED_SEED_BOOLEAN, &ret, "v", widget);
+  return ret;
 }
 
 
@@ -1687,26 +1753,34 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_opacity(LiVESWidget *widget
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dialog) {
+WIDGET_HELPER_LOCAL_INLINE LiVESResponseType _lives_dialog_run(LiVESDialog *dialog) {
 #ifdef GUI_GTK
-  LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
-
+  //LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
+  LiVESResponseType resp;
   lives_widget_show_all(LIVES_WIDGET(dialog));
+  resp = gtk_dialog_run(dialog);
+  return resp;
+  /* if (!ctx || ctx == lives_widget_context_default()) return gtk_dialog_run(dialog); */
 
-  if (!ctx || ctx == lives_widget_context_default()) return gtk_dialog_run(dialog);
-
-  if (gov_running) {
-    dlgresp = LIVES_RESPONSE_INVALID;
-    dlgtorun = dialog;
-    mainw->clutch = FALSE;
-    while (!mainw->clutch) {
-      lives_nanosleep(NSLEEP_TIME);
-      sched_yield();
-    }
-    return dlgresp;
-  }
+  /* if (gov_running) { */
+  /*   dlgresp = LIVES_RESPONSE_INVALID; */
+  /*   dlgtorun = dialog; */
+  /*   mainw->clutch = FALSE; */
+  /*   while (dlgtorun) { */
+  /*     lives_nanosleep(NSLEEP_TIME); */
+  /*     sched_yield(); */
+  /*   } */
+  /*   return dlgresp; */
+  /* } */
 #endif
   return LIVES_RESPONSE_INVALID;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dialog) {
+  LiVESResponseType resp;
+  main_thread_execute((lives_funcptr_t)_lives_dialog_run, WEED_SEED_INT, &resp, "v", dialog);
+  return resp;
 }
 
 
@@ -1718,16 +1792,19 @@ void *lives_fg_run(lives_proc_thread_t lpt, void *retval) {
     // run direct
     ret = fg_run_func(lpt, retval);
   } else {
-    if (gov_running) {
-      lpttorun = lpt;
-      lpt_retval = (volatile void *)retval;
-      mainw->clutch = FALSE;
-      while (!mainw->clutch) {
+    lpttorun = lpt;
+    lpt_retval = (volatile void *)retval;
+    if (!gov_running) {
+      lives_idle_add_simple(governor_loop, NULL);
+      while (!gov_running) {
         lives_nanosleep(NSLEEP_TIME);
-        sched_yield();
       }
-      ret = (void *)lpt_result;
+    } else mainw->clutch = FALSE;
+    while (lpttorun) {
+      lives_nanosleep(NSLEEP_TIME);
+      sched_yield();
     }
+    ret = (void *)lpt_result;
   }
 #endif
   return ret;
@@ -1783,7 +1860,7 @@ static char *make_random_string(const char *prefix) {
 
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 16, 0)
-#define ORD_NAMES
+//#define ORD_NAMES
 
 static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetState state, const char *selector,
     const char *detail, const char *value) {
@@ -1792,8 +1869,7 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
   char *widget_name, *wname;
   char *css_string;
   char *state_str, *selstr;
-  char *tmp;
-#ifdef ORD_NAMESxx
+#ifdef ORD_NAMES
   static int widnum = 1;
   int brk_widnum = 3128;
 #endif
@@ -1802,19 +1878,19 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
   ctx = gtk_widget_get_style_context(widget);
   provider = gtk_css_provider_new();
   gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
-                                 (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+                                 (provider), GTK_STYLE_PROVIDER_PRIORITY_USER);
 
   widget_name = lives_strdup(gtk_widget_get_name(widget));
 
   if (widget_name == NULL || (strncmp(widget_name, RND_STR_PREFIX, strlen(RND_STR_PREFIX)))) {
     lives_freep((void **)&widget_name);
-#ifdef ORD_NAMESxx
+#ifdef ORD_NAMES
     widget_name = lives_strdup_printf("%s-%d", RND_STR_PREFIX, ++widnum);
 #else
     widget_name = make_random_string(RND_STR_PREFIX);
 #endif
     gtk_widget_set_name(widget, widget_name);
-#ifdef ORD_NAMESxx
+#ifdef ORD_NAMES
     if (widnum == brk_widnum) break_me("widnum");
 #endif
   }
@@ -1869,14 +1945,17 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
       state_str = "";
     }
 
-#if GTK_CHECK_VERSION(3, 24, 0)
     // special tweaks
     if (!selector) {
       if (GTK_IS_FRAME(widget)) {
         selector = "label";
+      } else if (GTK_IS_TEXT_VIEW(widget)) {
+        selector = "text";
+      }
+      if (GTK_IS_SPIN_BUTTON(widget)) {
+        selector = "*";
       }
     }
-#endif
 
     if (!selector || !(*selector)) selstr = lives_strdup("");
     else selstr = lives_strdup_printf(" %s", selector);
@@ -1889,27 +1968,6 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
 
   lives_free(widget_name);
   css_string = g_strdup_printf(" %s {\n %s: %s;}\n", wname, detail, value);
-
-  // special tweaks
-  if (GTK_IS_FRAME(widget)) {
-    tmp = lives_strdup_printf("%s %s label {\n %s: %s;}\n", css_string, wname, detail, value);
-    lives_free(css_string);
-    css_string = tmp;
-  }
-
-  if (GTK_IS_TEXT_VIEW(widget)) {
-    tmp = lives_strdup_printf("%s %s text {\n %s: %s;}\n", css_string, wname, detail, value);
-    lives_free(css_string);
-    css_string = tmp;
-  }
-#if !GTK_CHECK_VERSION(3, 24, 0)
-
-  if (GTK_IS_SPIN_BUTTON(widget)) {
-    tmp = lives_strdup_printf("%s %s * {\n %s: %s;}\n", css_string, wname, detail, value);
-    lives_free(css_string);
-    css_string = tmp;
-  }
-#endif
 
   if (show_css) g_print("running CSS %s\n", css_string);
 
@@ -3611,6 +3669,38 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_width_chars(LiVESLabel *labe
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_line_wrap(LiVESLabel *label, boolean set) {
+#ifdef GUI_GTK
+  gtk_label_set_line_wrap(label, set);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_line_wrap_mode(LiVESLabel *label, LingoWrapMode mode) {
+#ifdef GUI_GTK
+  gtk_label_set_line_wrap_mode(label, mode);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_seT_lines(LiVESLabel *label, int nlines) {
+#ifdef GUI_GTK
+  gtk_label_set_lines(label, nlines);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_ellipsize(LiVESLabel *label, LiVESEllipsizeMode mode) {
+#ifdef GUI_GTK
+  gtk_label_set_ellipsize(label, mode);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_halignment(LiVESLabel *label, float xalign) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 16, 0)
@@ -4173,8 +4263,8 @@ LIVES_GLOBAL_INLINE boolean lives_button_set_image_from_stock(LiVESButton *butto
       LiVESPixbuf *pixbuf = lives_pixbuf_new_from_stock_at_size(stock_id, LIVES_ICON_SIZE_BUTTON,
                             0, 0);
       if (LIVES_IS_PIXBUF(pixbuf))
-        lives_widget_object_set_data_widget_object(LIVES_WIDGET_OBJECT(button), SBUTT_PIXBUF_KEY,
-            (livespointer)pixbuf);
+        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), SBUTT_PIXBUF_KEY,
+                                     (livespointer)pixbuf);
       else return FALSE;
     }
   }
@@ -7540,12 +7630,10 @@ static void _set_css_min_size(LiVESWidget *w, const char *sel, int mw, int mh) {
   if (mw > 0) {
     tmp = lives_strdup_printf("%dpx", mw);
     set_css_value_direct(w, LIVES_WIDGET_STATE_NORMAL, sel, "min-width", tmp);
-    set_css_value_direct(w, LIVES_WIDGET_STATE_NORMAL, sel, "min-width", tmp);
     lives_free(tmp);
   }
   if (mh > 0) {
     tmp = lives_strdup_printf("%dpx", mh);
-    set_css_value_direct(w, LIVES_WIDGET_STATE_NORMAL, sel, "min-height", tmp);
     set_css_value_direct(w, LIVES_WIDGET_STATE_NORMAL, sel, "min-height", tmp);
     lives_free(tmp);
   }
@@ -8119,18 +8207,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_standard_button_set_image(LiVESButton 
   if (img) {
     LiVESPixbuf *pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(img));
     if (LIVES_IS_PIXBUF(pixbuf)) lives_widget_object_set_data_widget_object(LIVES_WIDGET_OBJECT(sbutt),
-          SBUTT_PIXBUF_KEY,
-          (livespointer)pixbuf);
-    lives_widget_object_set_data_widget_object(LIVES_WIDGET_OBJECT(sbutt),
-        SBUTT_FORCEIMG_KEY,
-        pixbuf);
+          SBUTT_PIXBUF_KEY, (livespointer)pixbuf);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(sbutt),
+                                 SBUTT_FORCEIMG_KEY, pixbuf);
   } else {
-    lives_widget_object_set_data_widget_object(LIVES_WIDGET_OBJECT(sbutt),
-        SBUTT_PIXBUF_KEY,
-        NULL);
-    lives_widget_object_set_data_widget_object(LIVES_WIDGET_OBJECT(sbutt),
-        SBUTT_FORCEIMG_KEY,
-        NULL);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(sbutt),
+                                 SBUTT_PIXBUF_KEY, NULL);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(sbutt),
+                                 SBUTT_FORCEIMG_KEY, NULL);
   }
   sbutt_render(LIVES_WIDGET(sbutt), 0, NULL);
   return TRUE;
@@ -8296,7 +8380,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_hpaned_new(void) {
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_vpaned_new(void) {
   LiVESWidget *vpaned = lives_vpaned_new();
 #ifdef GUI_GTK
-  vpaned = gtk_paned_new(LIVES_ORIENTATION_HORIZONTAL);
+  vpaned = gtk_paned_new(LIVES_ORIENTATION_VERTICAL);
 #if GTK_CHECK_VERSION(3, 0, 0)
   gtk_paned_set_wide_handle(GTK_PANED(vpaned), TRUE);
   if (widget_opts.apply_theme) {
@@ -8770,11 +8854,12 @@ LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, Li
 
   if (widget_opts.apply_theme) {
 #if GTK_CHECK_VERSION(3, 0, 0)
+    char *tmp;
     lives_widget_apply_theme(swtch, LIVES_WIDGET_STATE_NORMAL);
     set_css_min_size(swtch, widget_opts.css_min_width, widget_opts.css_min_height);
+
 #if GTK_CHECK_VERSION(3, 16, 0)
     if (prefs->extra_colours && mainw->pretty_colours) {
-      char *tmp;
       lives_widget_set_border_color(swtch, LIVES_WIDGET_STATE_NORMAL, &palette->nice1);
 
       colref = gdk_rgba_to_string(&palette->menu_and_bars);
@@ -8785,12 +8870,6 @@ LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, Li
       lives_free(colref);
 
       //colref = gdk_rgba_to_string(&palette->nice3);
-      colref = gdk_rgba_to_string(&palette->normal_fore);
-      tmp = lives_strdup_printf("image(%s)", colref);
-      set_css_value_direct(swtch, LIVES_WIDGET_STATE_CHECKED, "slider",
-                           "background-image", tmp);
-      lives_free(tmp);
-      lives_free(colref);
 
       colref = gdk_rgba_to_string(&palette->nice2);
       tmp = lives_strdup_printf("image(%s)", colref);
@@ -8801,6 +8880,12 @@ LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, Li
 
       lives_widget_set_border_color(swtch, LIVES_WIDGET_STATE_INSENSITIVE, &palette->nice2);
     }
+    colref = gdk_rgba_to_string(&palette->normal_fore);
+    tmp = lives_strdup_printf("image(%s)", colref);
+    set_css_value_direct(swtch, LIVES_WIDGET_STATE_CHECKED, "slider",
+                         "background-image", tmp);
+    lives_free(tmp);
+    lives_free(colref);
 #endif
 #endif
   }
@@ -8955,12 +9040,16 @@ LiVESWidget *lives_glowing_check_button_new(const char *labeltext, LiVESBox * bo
       set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_NORMAL, "button",
                            "background-color", colref);
       lives_free(colref);
-      colref = gdk_rgba_to_string(&palette->nice3);
-      set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_CHECKED, "button",
-                           "color", colref);
-      set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_CHECKED, "button",
-                           "background-color", colref);
-      lives_free(colref);
+
+      if (prefs->extra_colours && mainw->pretty_colours) {
+        colref = gdk_rgba_to_string(&palette->nice3);
+        set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_CHECKED, "button",
+                             "color", colref);
+        set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_CHECKED, "button",
+                             "background-color", colref);
+        lives_free(colref);
+      }
+
       set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_NORMAL, "",
                            "transition-duration", "0.2s");
 #endif
@@ -9382,46 +9471,45 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList * list, L
   }
 
   if (widget_opts.apply_theme) {
-    // TODO *** -- needs button size
-    set_css_min_size(combo, widget_opts.css_min_width, widget_opts.css_min_height);
-    set_css_min_size(LIVES_WIDGET(entry), widget_opts.css_min_width, widget_opts.css_min_height);
-    set_css_min_size_selected(LIVES_WIDGET(entry), "button",  widget_opts.css_min_width, widget_opts.css_min_height);
-
-    set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, "button", "padding-top", "0");
-    set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, "button", "padding-bottom", "0");
-
-    set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, "", "border-radius", "5px");
-
     set_child_colour(combo, TRUE);
     set_child_colour(LIVES_WIDGET(entry), TRUE);
 
-#if !GTK_CHECK_VERSION(3, 16, 0)
-    set_child_dimmed_colour(combo, BUTTON_DIM_VAL); // insens, themecols 1, child only
-#else
-    set_css_value_direct(combo, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
-    if (prefs->extra_colours && mainw->pretty_colours) {
-      char *tmp;
-      char *colref = gdk_rgba_to_string(&palette->nice1);
-      set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, "", "border-color", colref);
-      tmp = lives_strdup_printf("0 0 0 1px %s inset", colref);
-      set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_FOCUSED, "", "box-shadow", tmp);
-      lives_free(tmp);
-      lives_free(colref);
-    }
-#endif
-    lives_widget_apply_theme2(combo, LIVES_WIDGET_STATE_NORMAL, TRUE);
-    lives_widget_apply_theme2(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, TRUE);
-#if !GTK_CHECK_VERSION(3, 16, 0)
+    set_css_min_size(combo, widget_opts.css_min_width, widget_opts.css_min_height);
+    set_css_min_size(LIVES_WIDGET(entry), widget_opts.css_min_width, widget_opts.css_min_height);
+    set_css_min_size_selected(combo, "button",  widget_opts.css_min_width, 0);
 
-    lives_widget_apply_theme_dimmed(combo, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
-    lives_widget_apply_theme_dimmed(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
+    set_css_value_direct(combo, LIVES_WIDGET_STATE_NORMAL, "button", "padding-top", "0");
+    set_css_value_direct(combo, LIVES_WIDGET_STATE_NORMAL, "button", "padding-bottom", "0");
+
+    //set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, "", "border-radius", "5px");
+
+    /* #if !GTK_CHECK_VERSION(3, 16, 0) */
+    /*     set_child_dimmed_colour(combo, BUTTON_DIM_VAL); // insens, themecols 1, child only */
+    /* #else */
+    /*     set_css_value_direct(combo, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5"); */
+    /*     if (prefs->extra_colours && mainw->pretty_colours) { */
+    /*       char *tmp; */
+    /*       char *colref = gdk_rgba_to_string(&palette->nice1); */
+    /*       set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, "", "border-color", colref); */
+    /*       tmp = lives_strdup_printf("0 0 0 1px %s inset", colref); */
+    /*       set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_FOCUSED, "", "box-shadow", tmp); */
+    /*       lives_free(tmp); */
+    /*       lives_free(colref); */
+    /*     } */
+    /* #endif */
+    /*     lives_widget_apply_theme2(combo, LIVES_WIDGET_STATE_NORMAL, TRUE); */
+    /*     lives_widget_apply_theme2(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, TRUE); */
+    /* #if !GTK_CHECK_VERSION(3, 16, 0) */
+
+    /*     lives_widget_apply_theme_dimmed(combo, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL); */
+    /*     lives_widget_apply_theme_dimmed(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL); */
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(entry), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
                                     LIVES_GUI_CALLBACK(widget_state_cb), NULL);
     widget_state_cb(LIVES_WIDGET_OBJECT(entry), NULL, NULL);
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(combo), LIVES_WIDGET_NOTIFY_SIGNAL "sensitive",
                                     LIVES_GUI_CALLBACK(widget_state_cb), NULL);
     widget_state_cb(LIVES_WIDGET_OBJECT(combo), NULL, NULL);
-#endif
+    //#endif
   }
   widget_opts.last_container = container;
   return combo;
@@ -11216,7 +11304,6 @@ char *lives_text_view_get_text(LiVESTextView * textview) {
   LiVESTextBuffer *textbuf = lives_text_view_get_buffer(textview);
   lives_text_buffer_get_start_iter(textbuf, &siter);
   lives_text_buffer_get_end_iter(textbuf, &eiter);
-
   return lives_text_buffer_get_text(textbuf, &siter, &eiter, FALSE);
 }
 
@@ -11275,7 +11362,8 @@ boolean set_submenu_colours(LiVESMenu * menu, LiVESWidgetColor * colf, LiVESWidg
   while (list != NULL) {
     LiVESWidget *child = (LiVESWidget *)list->data;
     if (LIVES_IS_MENU_ITEM(child)) {
-      if ((menu = (LiVESMenu *)lives_menu_item_get_submenu(LIVES_MENU_ITEM(child))) != NULL) set_submenu_colours(menu, colf, colb);
+      if ((menu = (LiVESMenu *)lives_menu_item_get_submenu(LIVES_MENU_ITEM(child))))
+        set_submenu_colours(menu, colf, colb);
       else {
         lives_widget_set_bg_color(LIVES_WIDGET(child), LIVES_WIDGET_STATE_NORMAL, colb);
         lives_widget_set_fg_color(LIVES_WIDGET(child), LIVES_WIDGET_STATE_NORMAL, colf);
@@ -11288,12 +11376,8 @@ boolean set_submenu_colours(LiVESMenu * menu, LiVESWidgetColor * colf, LiVESWidg
 }
 
 
-boolean lives_spin_button_configure(LiVESSpinButton * spinbutton,
-                                    double value,
-                                    double lower,
-                                    double upper,
-                                    double step_increment,
-                                    double page_increment) {
+boolean lives_spin_button_configure(LiVESSpinButton * spinbutton, double value, double lower,
+                                    double upper, double step_increment, double page_increment) {
   LiVESAdjustment *adj = lives_spin_button_get_adjustment(spinbutton);
 
 #ifdef GUI_GTK
@@ -11455,9 +11539,6 @@ WIDGET_HELPER_GLOBAL_INLINE int lives_display_get_n_screens(LiVESXDisplay * disp
   return gdk_display_get_n_screens(disp);
 #endif
 #endif
-#ifdef GUI_QT
-  return QApplication::desktop()->screenCount();
-#endif
   return 1;
 }
 
@@ -11504,8 +11585,7 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget * widget) {
   case LIVES_CURSOR_BOTTOM_RIGHT_CORNER:
     ctype = GDK_BOTTOM_RIGHT_CORNER;
     break;
-  default:
-    return;
+  default: return;
   }
   if (widget == NULL) {
     if (mainw->multitrack != NULL) mainw->multitrack->cursor_style = cstyle;
@@ -11527,7 +11607,7 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget * widget) {
   // TODO: gdk_x11_cursor_update_theme (
   // XFixesChangeCursor (Display *dpy, Cursor source, Cursor destination);
   // and then wait for X11 event...
-  // then no need for the majority of lives_window_process_updates().....y
+  // then no need for the majority of lives_window_process_updates().....
 }
 
 
@@ -11557,19 +11637,14 @@ void hide_cursor(LiVESXWindow * window) {
   GdkColor bg = { 0, 0, 0, 0 };
 
   if (hidden_cursor == NULL) {
-    source = gdk_bitmap_create_from_data(NULL, cursor_bits,
-                                         1, 1);
-    mask = gdk_bitmap_create_from_data(NULL, cursormask_bits,
-                                       1, 1);
+    source = gdk_bitmap_create_from_data(NULL, cursor_bits, 1, 1);
+    mask = gdk_bitmap_create_from_data(NULL, cursormask_bits, 1, 1);
     hidden_cursor = gdk_cursor_new_from_pixmap(source, mask, &fg, &bg, 0, 0);
     g_object_unref(source);
     g_object_unref(mask);
   }
   if (GDK_IS_WINDOW(window)) gdk_window_set_cursor(window, hidden_cursor);
 #endif
-#endif
-#ifdef GUI_QT
-  window->setCursor(Qt::BlankCursor);
 #endif
 }
 
@@ -11627,7 +11702,7 @@ void lives_cool_toggled(LiVESWidget * tbutton, livespointer user_data) {
         lives_widget_set_bg_color(tbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
     } else lives_widget_set_bg_color(tbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
   }
-  if (ret != NULL) *ret = active;
+  if (ret) *ret = active;
   lives_widget_queue_draw(tbutton);
   //#endif
 #endif
@@ -11638,14 +11713,11 @@ boolean draw_cool_toggle(LiVESWidget * widget, lives_painter_t *cr, livespointer
   // connect expose event to this
   double rwidth = (double)lives_widget_get_allocation_width(LIVES_WIDGET(widget));
   double rheight = (double)lives_widget_get_allocation_height(LIVES_WIDGET(widget));
-
-  double rad;
-
-  double scalex = 1.;
-  double scaley = .8;
-  boolean active = ((LIVES_IS_TOGGLE_BUTTON(widget) && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget))) ||
-                    (LIVES_IS_TOGGLE_TOOL_BUTTON(widget)
-                     && lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(widget))));
+  double rad, scalex = 1., scaley = .8;
+  boolean active =
+    ((LIVES_IS_TOGGLE_BUTTON(widget) && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget))) ||
+     (LIVES_IS_TOGGLE_TOOL_BUTTON(widget)
+      && lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(widget))));
 
   lives_painter_translate(cr, rwidth * (1. - scalex) / 2., rheight * (1. - scaley) / 2.);
 

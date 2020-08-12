@@ -1222,6 +1222,15 @@ static void save_log_file(const char *prefix) {
 }
 
 
+LIVES_GLOBAL_INLINE void set_default_comment(lives_clip_t *sfile, const char *extrat) {
+  if (!*sfile->comment)
+    lives_snprintf(sfile->comment, 1024, "Created with LiVES version %s.\nSee: %s\n%s",
+                   LiVES_VERSION, LIVES_WEBSITE, extrat);
+  if (!*sfile->author && *prefs->def_author)
+    lives_snprintf(sfile->author, 1024, "%s", prefs->def_author);
+}
+
+
 void save_file(int clip, int start, int end, const char *filename) {
   // save clip from frame start to frame end
   lives_clip_t *sfile = mainw->files[clip], *nfile = NULL;
@@ -1313,7 +1322,8 @@ void save_file(int clip, int start, int end, const char *filename) {
             msg = lives_strdup_printf(_("\n\nThe '%s' plugin reports:\n%s\n"), prefs->encoder.name, mainw->msg);
           } else {
             msg = lives_strdup_printf
-                  (_("\n\nUnable to find the 'init' method in the %s plugin.\nThe plugin may be broken or not installed correctly."),
+                  (_("\n\nUnable to find the 'init' method in the %s plugin.\n"
+                     "The plugin may be broken or not installed correctly."),
                    prefs->encoder.name);
           }
           do_error_dialog(msg);
@@ -1389,9 +1399,8 @@ void save_file(int clip, int start, int end, const char *filename) {
     sfile->orig_file_name = FALSE;
   }
 
-  if (!strlen(sfile->comment)) {
-    lives_snprintf(sfile->comment, 251, "Created with LiVES");
-  }
+  if (!*sfile->comment) set_default_comment(sfile, NULL);
+
   if (!do_comments_dialog(clip, full_file_name)) {
     lives_free(full_file_name);
     if (rdet != NULL) {
@@ -3283,10 +3292,11 @@ void play_file(void) {
       mainw->osc_block = FALSE;
     }
     mainw->noswitch = FALSE;
-    deal_with_render_choice(TRUE); ///< will finish closing the generator if applicable
+    lives_idle_add_simple(render_choice_idle, LIVES_INT_TO_POINTER(FALSE));
+    //deal_with_render_choice(TRUE); ///< will finish closing the generator if applicable
   }
 
-  mainw->record_paused = mainw->record_starting = FALSE;
+  mainw->record_paused = mainw->record_starting = mainw->record = FALSE;
 
   if (!mainw->preview && CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR) {
     mainw->osc_block = TRUE;

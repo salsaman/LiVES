@@ -372,6 +372,7 @@ typedef struct {
   int var_rowstride_alignment;   // used to align the rowstride bytesize in create_empty_pixel_data
   int var_rowstride_alignment_hint;
   int var_last_sws_block;
+  boolean var_no_gui;
 } lives_threadvars_t;
 
 struct _lives_thread_data_t {
@@ -421,6 +422,7 @@ typedef uint64_t lives_thread_attr_t;
 #define LIVES_THRDATTR_PRIORITY		(1 << 1)
 #define LIVES_THRDATTR_WAIT_SYNC	(1 << 2)
 #define LIVES_THRDATTR_FG_THREAD	(1 << 3)
+#define LIVES_THRDATTR_NO_GUI		(1 << 4)
 
 void lives_threadpool_init(void);
 void lives_threadpool_finish(void);

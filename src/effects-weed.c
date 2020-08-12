@@ -2650,7 +2650,7 @@ static lives_filter_error_t enable_disable_channels(weed_plant_t *inst, boolean 
   else
     channels = weed_get_plantptr_array_counted(inst, WEED_LEAF_OUT_CHANNELS, &num_channels);
 
-  if (num_tracks > num_channels) num_tracks = num_channels;
+  if (num_tracks > num_channels) maxcheck = num_tracks = num_channels;
   if (num_channels > num_tracks) maxcheck = num_channels;
 
   for (i = 0; i < maxcheck; i++) {

@@ -558,18 +558,6 @@ void lives_exit(int signum) {
   for (i = 0; i < NUM_LIVES_STRING_CONSTANTS; i++) lives_freep((void **)&mainw->string_constants[i]);
   for (i = 0; i < mainw->n_screen_areas; i++) lives_freep((void **)&mainw->screen_areas[i].name);
 
-  if (*mainw->video_drawablep) {
-    lives_painter_surface_destroy(*mainw->video_drawablep);
-  }
-
-  if (*mainw->laudio_drawablep) {
-    lives_painter_surface_destroy(*mainw->laudio_drawablep);
-  }
-
-  if (*mainw->raudio_drawablep) {
-    lives_painter_surface_destroy(*mainw->raudio_drawablep);
-  }
-
   lives_freep((void **)&mainw->foreign_visual);
   lives_freep((void **)&THREADVAR(read_failed_file));
   lives_freep((void **)&THREADVAR(write_failed_file));
@@ -3083,6 +3071,8 @@ void on_paste_as_new_activate(LiVESMenuItem * menuitem, livespointer user_data) 
   cfile->img_type = clipboard->img_type;
   cfile->gamma_type = clipboard->gamma_type;
 
+  set_default_comment(cfile, NULL);
+
 #ifndef VIRT_PASTE
   msg = (_("Pulling frames from clipboard..."));
 
@@ -4619,7 +4609,6 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   // record performance
   if (!mainw->record) {
-
     // TODO - change message depending on rec_opts
     d_print(_("Ready to record. Use 'control' and cursor keys during playback to record your performance.\n"
               "(To cancel, press 'r' or click on Play|Record Performance again before you play.)\n"));
@@ -7744,7 +7733,7 @@ void on_full_screen_pressed(LiVESButton * button, livespointer user_data) {
 }
 
 
-void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   LiVESWidget *fs_img;
 
   // ignore if audio only clip
@@ -7867,7 +7856,7 @@ void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
           lives_widget_show(mainw->t_double);
 	    // *INDENT-OFF*
 	}}
-      if (!mainw->faded) {
+      if (!mainw->multitrack && !mainw->faded) {
 	if (CURRENT_CLIP_IS_VALID) {
 	  redraw_timeline(mainw->current_file);
 	  show_playbar_labels(mainw->current_file);
@@ -7888,6 +7877,10 @@ void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // *INDENT-ON*
 }
 
+
+void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  main_thread_execute((lives_funcptr_t)_on_full_screen_activate, 0, NULL, "vv", menuitem, user_data);
+}
 
 void on_double_size_pressed(LiVESButton * button, livespointer user_data) {
   // toolbar button (separate window)
@@ -8191,7 +8184,7 @@ void on_fade_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       if (!prefs->hide_framebar && !(prefs->hfbwnp && !LIVES_IS_PLAYING)) {
         lives_widget_show(mainw->framebar);
       }
-      if (CURRENT_CLIP_IS_VALID) {
+      if (!mainw->multitrack && CURRENT_CLIP_IS_VALID) {
         redraw_timeline(mainw->current_file);
         show_playbar_labels(mainw->current_file);
 	// *INDENT-OFF*
@@ -9931,30 +9924,58 @@ boolean all_expose_nopb(LiVESWidget * widget, lives_painter_t *cr, livespointer 
   return TRUE;
 }
 
-
-static void redraw_video(void) {
-  if (!LIVES_IS_PLAYING && CURRENT_CLIP_IS_VALID)
-    redraw_timeline(mainw->current_file);
-  else {
-    update_timer_bars(0, 0, 0, 0, 1);
-    lives_widget_queue_draw(mainw->video_draw);
+boolean expose_vid_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf) {
+  if (mainw->video_drawable) {
+    lives_painter_set_source_surface(cr, mainw->video_drawable, 0., 0.);
+    lives_painter_paint(cr);
   }
+  return TRUE;
 }
 
-static void redraw_laudio(void) {
-  if (!LIVES_IS_PLAYING && CURRENT_CLIP_IS_VALID)
-    redraw_timeline(mainw->current_file);
-  else
-    lives_widget_queue_draw(mainw->laudio_draw);
+boolean config_vid_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
+  if (mainw->video_drawable) lives_painter_surface_destroy(mainw->video_drawable);
+  mainw->video_drawable = lives_widget_create_painter_surface(widget);
+  clear_tbar_bgs(0, 0, 0, 0, 1);
+  update_timer_bars(0, 0, 0, 0, 1);
+  return TRUE;
 }
 
-static void redraw_raudio(void) {
-  if (!LIVES_IS_PLAYING && CURRENT_CLIP_IS_VALID)
-    redraw_timeline(mainw->current_file);
-  else
-    lives_widget_queue_draw(mainw->raudio_draw);
+boolean expose_laud_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf) {
+  if (mainw->laudio_drawable) {
+    lives_painter_set_source_surface(cr, mainw->laudio_drawable, 0., 0.);
+    lives_painter_paint(cr);
+  }
+  return TRUE;
 }
 
+boolean config_laud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
+  lives_painter_surface_t *surf = lives_widget_create_painter_surface(widget);
+  if (mainw->laudio_drawable) lives_painter_surface_destroy(mainw->laudio_drawable);
+  if (CURRENT_CLIP_IS_VALID) {
+    if (!cfile->laudio_drawable || mainw->laudio_drawable == cfile->laudio_drawable) cfile->laudio_drawable = surf;
+  }
+  mainw->laudio_drawable = surf;
+  return TRUE;
+}
+
+
+boolean expose_raud_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf) {
+  if (mainw->raudio_drawable) {
+    lives_painter_set_source_surface(cr, mainw->raudio_drawable, 0., 0.);
+    lives_painter_paint(cr);
+  }
+  return TRUE;
+}
+
+boolean config_raud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
+  lives_painter_surface_t *surf = lives_widget_create_painter_surface(widget);
+  if (mainw->raudio_drawable) lives_painter_surface_destroy(mainw->raudio_drawable);
+  if (CURRENT_CLIP_IS_VALID) {
+    if (!cfile->raudio_drawable || mainw->raudio_drawable == cfile->raudio_drawable) cfile->raudio_drawable = surf;
+  }
+  mainw->raudio_drawable = surf;
+  return TRUE;
+}
 
 boolean config_event2(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
   mainw->msg_area_configed = TRUE;
@@ -9966,14 +9987,8 @@ boolean config_event2(LiVESWidget * widget, LiVESXEventConfigure * event, livesp
 boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer ppsurf) {
   lives_painter_surface_t **psurf = (lives_painter_surface_t **)ppsurf;
   if (!psurf) return FALSE;
-  if (mainw && !*psurf && (widget == mainw->laudio_draw
-                           || widget == mainw->raudio_draw)) return FALSE;
   if (*psurf) lives_painter_surface_destroy(*psurf);
   *psurf = lives_widget_create_painter_surface(widget);
-  /* if (mainw && CURRENT_CLIP_IS_VALID) { */
-  /*   if (widget == mainw->laudio_draw) cfile->laudio_drawable = *psurf; */
-  /*   else if (widget == mainw->raudio_draw) cfile->raudio_drawable = *psurf; */
-  /* } */
 
 #ifdef USE_SPECIAL_BUTTONS
   if (LIVES_IS_DRAWING_AREA(widget)) {
@@ -9991,12 +10006,6 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
     load_end_image(CURRENT_CLIP_IS_VALID ? cfile->end : 0);
   else if (widget == mainw->preview_image)
     load_preview_image(FALSE);
-  else if (widget == mainw->video_draw)
-    redraw_video();
-  else if (widget == mainw->laudio_draw)
-    redraw_laudio();
-  else if (widget == mainw->raudio_draw)
-    redraw_raudio();
   else if (widget == mainw->msg_area && !mainw->multitrack)
     msg_area_config(widget);
   else if (widget == mainw->dsu_widget)
@@ -10034,14 +10043,6 @@ boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespo
       lives_ce_update_timeline(0, 0.);
     }
     return FALSE;
-  } else if (widget == mainw->video_draw) {
-    if (ovdwidth == event->width && ovdheight == event->height) return FALSE;
-    ovdwidth = event->width;
-    ovdheight = event->height;
-    if (CURRENT_CLIP_IS_VALID && !mainw->is_rendering && !mainw->is_processing && !mainw->multitrack &&
-        !mainw->preview) {
-      get_play_times();
-    }
   }
   return FALSE;
 }

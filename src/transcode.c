@@ -137,6 +137,11 @@ boolean transcode(int start, int end) {
     lives_free(rfx);
     goto tr_err2;
   }
+
+  /* mainw->vpp->extra_argc = 0; */
+  /* mainw->vpp->extra_argv = param_marshall_to_argv(rfx); */
+  /* for (i = 0; mainw->vpp->extra_argv[i]; mainw->vpp->extra_argc = ++i); */
+
   mainw->cancelled = CANCEL_NONE;
   // get the param value ourselves
   get_rfx_param_by_name_string(rfx, TRANSCODE_PARAM_FILENAME, (char **)&pname);
@@ -291,7 +296,8 @@ boolean transcode(int start, int end) {
           // convert to float
           if (cfile->asampsize == 16) {
             sample_move_d16_float(fltbuf[j], (short *)abuff, (uint64_t)nsamps,
-                                  cfile->achans, asigned ? AFORM_SIGNED : AFORM_UNSIGNED, swap_endian, lives_vol_from_linear(cfile->vol));
+                                  cfile->achans, asigned ? AFORM_SIGNED : AFORM_UNSIGNED, swap_endian,
+                                  lives_vol_from_linear(cfile->vol));
           } else {
             sample_move_d8_d16(sbuff, (uint8_t *)abuff, (uint64_t)nsamps, in_bytes,
                                1.0, cfile->achans, cfile->achans, !asigned ? SWAP_U_TO_S : 0);

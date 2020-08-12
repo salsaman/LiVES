@@ -957,10 +957,10 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
     blend_tc = ntc;
   }
 
-  if (is_virtual_frame(mainw->blend_file, blend_file->frameno))
-    mainw->blend_layer = lives_layer_new_for_frame(mainw->blend_file, blend_file->frame_index[blend_file->frameno]);
-  else
-    mainw->blend_layer = lives_layer_new_for_frame(mainw->blend_file, blend_file->frameno);
+  /* if (is_virtual_frame(mainw->blend_file, blend_file->frameno)) */
+  /*   mainw->blend_layer = lives_layer_new_for_frame(mainw->blend_file, blend_file->frame_index[blend_file->frameno]); */
+  /* else */
+  mainw->blend_layer = lives_layer_new_for_frame(mainw->blend_file, blend_file->frameno);
   pull_frame_threaded(mainw->blend_layer, get_image_ext_for_type(blend_file->img_type), blend_tc, 0, 0);
   return mainw->blend_layer;
 }
@@ -1051,12 +1051,16 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
 
   mainw->osc_block = FALSE;
 
-  if (mainw->rendered_fx != NULL) {
-    if (!LIVES_IS_PLAYING && mainw->current_file > 0 && ((has_video_filters(FALSE) && !has_video_filters(TRUE)) ||
-        (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT && has_audio_filters(AF_TYPE_ANY)) ||
-        mainw->agen_key != 0)) {
-      lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, TRUE);
-    } else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, FALSE);
+  if (mainw->rendered_fx) {
+    if (mainw->rendered_fx[0].menuitem && LIVES_IS_WIDGET(mainw->rendered_fx[0].menuitem)) {
+      if (!LIVES_IS_PLAYING
+          && mainw->current_file > 0 && ((has_video_filters(FALSE) && !has_video_filters(TRUE))
+                                         || (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT
+                                             && has_audio_filters(AF_TYPE_ANY)) ||
+                                         mainw->agen_key != 0)) {
+        lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, TRUE);
+      } else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, FALSE);
+    }
   }
 
   if (key > 0 && !mainw->fx_is_auto) {

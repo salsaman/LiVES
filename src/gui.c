@@ -382,7 +382,7 @@ void create_LiVES(void) {
     LIVES_MAIN_WINDOW_WIDGET = lives_window_new(LIVES_WINDOW_TOPLEVEL);
     lives_container_set_border_width(LIVES_CONTAINER(LIVES_MAIN_WINDOW_WIDGET), 0);
     lives_window_set_monitor(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), widget_opts.monitor);
-    mainw->config_func = lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET),
+    mainw->config_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET),
                          LIVES_WIDGET_CONFIGURE_EVENT,
                          LIVES_GUI_CALLBACK(config_event),
                          NULL);
@@ -1079,7 +1079,6 @@ void create_LiVES(void) {
     }
   } else {
     mainw->ldg_menuitem = lives_standard_menu_item_new_with_label(_("Rendered effects disabled in VJ Mode"));
-    lives_container_add(LIVES_CONTAINER(mainw->effects_menu), mainw->ldg_menuitem);
   }
 
   mainw->custom_effects_menu = NULL;
@@ -2193,8 +2192,15 @@ void create_LiVES(void) {
                            widget_opts.packing_height * 2) ? 0 : widget_opts.packing_height * 2);
 
   widget_opts.apply_theme = 1;
-  mainw->video_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), &mainw->video_drawable);
+  mainw->video_draw = lives_drawing_area_new();
   widget_opts.apply_theme = woat;
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->video_draw), LIVES_WIDGET_EXPOSE_EVENT,
+                            LIVES_GUI_CALLBACK(expose_vid_draw), NULL);
+
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->video_draw), LIVES_WIDGET_CONFIGURE_EVENT,
+                                  LIVES_GUI_CALLBACK(config_vid_draw), NULL);
+
 
   lives_widget_set_size_request(mainw->video_draw, -1, CE_VIDBAR_HEIGHT);
   lives_widget_set_hexpand(mainw->video_draw, TRUE);
@@ -2211,8 +2217,14 @@ void create_LiVES(void) {
                            widget_opts.packing_height + 4) ? 0 : widget_opts.packing_height + 4);
 
   widget_opts.apply_theme = 1;
-  mainw->laudio_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), &mainw->laudio_drawable);
+  mainw->laudio_draw = lives_drawing_area_new();
   widget_opts.apply_theme = woat;
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->laudio_draw), LIVES_WIDGET_EXPOSE_EVENT,
+                            LIVES_GUI_CALLBACK(expose_laud_draw), NULL);
+
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->laudio_draw), LIVES_WIDGET_CONFIGURE_EVENT,
+                                  LIVES_GUI_CALLBACK(config_laud_draw), NULL);
 
   lives_widget_set_size_request(mainw->laudio_draw, -1, CE_AUDBAR_HEIGHT);
   lives_widget_set_hexpand(mainw->laudio_draw, TRUE);
@@ -2228,8 +2240,14 @@ void create_LiVES(void) {
   /* lives_widget_set_margin_top(mainw->raudbar, */
   /* 				   widget_opts.packing_height) ? 0 : widget_opts.packing_height); */
   widget_opts.apply_theme = 1;
-  mainw->raudio_draw = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), &mainw->raudio_drawable);
+  mainw->raudio_draw = lives_drawing_area_new();
   widget_opts.apply_theme = woat;
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->raudio_draw), LIVES_WIDGET_EXPOSE_EVENT,
+                            LIVES_GUI_CALLBACK(expose_raud_draw), NULL);
+
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->raudio_draw), LIVES_WIDGET_CONFIGURE_EVENT,
+                                  LIVES_GUI_CALLBACK(config_raud_draw), NULL);
 
   lives_widget_set_size_request(mainw->raudio_draw, -1, CE_AUDBAR_HEIGHT);
   lives_widget_set_hexpand(mainw->raudio_draw, TRUE);
@@ -2544,8 +2562,6 @@ void create_LiVES(void) {
     lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_KEY_RELEASE_EVENT,
                          LIVES_GUI_CALLBACK(key_press_or_release), NULL);
   }
-  mainw->config_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->video_draw), LIVES_WIDGET_CONFIGURE_EVENT,
-                       LIVES_GUI_CALLBACK(config_event), NULL);
   mainw->pb_fps_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->spinbutton_pb_fps),
                        LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(changed_fps_during_pb), NULL);
@@ -2663,7 +2679,7 @@ void create_LiVES(void) {
   lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->stop), LIVES_WIDGET_ACTIVATE_SIGNAL,
                              LIVES_GUI_CALLBACK(on_stop_activate),
                              NULL);  // connect after to stop keypress propagating to removed fs window
-  mainw->fullscreen_cb_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->full_screen), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  mainw->fullscreen_cb_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->full_screen), LIVES_WIDGET_ACTIVATE_SIGNAL,
                               LIVES_GUI_CALLBACK(on_full_screen_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->sw_sound), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_boolean_toggled),
@@ -2679,7 +2695,7 @@ void create_LiVES(void) {
                        &mainw->ccpd_with_sound); // TODO - make pref
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->dsize), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_double_size_activate), NULL);
-  mainw->sepwin_cb_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->sepwin), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  mainw->sepwin_cb_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->sepwin), LIVES_WIDGET_ACTIVATE_SIGNAL,
                           LIVES_GUI_CALLBACK(on_sepwin_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->fade), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_fade_activate), NULL);
@@ -2808,8 +2824,8 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_load_set_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->vj_show_keys), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_show_keys_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(assign_rte_keys), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_assign_rte_keys_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(assign_rte_keys), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_assign_rte_keys_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->save_rte_defs), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_save_rte_defs_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->vj_reset), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -2874,8 +2890,8 @@ void create_LiVES(void) {
                          LIVES_GUI_CALLBACK(on_spinbutton_end_value_changed), NULL);
 
   // these are for the menu transport buttons
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->m_sepwinbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_sepwin_pressed), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->m_sepwinbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_sepwin_pressed), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->m_playbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_playall_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->m_stopbutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -2894,12 +2910,12 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_stop_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_bckground), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_fade_pressed), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_sepwin), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_sepwin_pressed), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->t_sepwin), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_sepwin_pressed), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_double), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_double_size_pressed), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_fullscreen), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_full_screen_pressed), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->t_fullscreen), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_full_screen_pressed), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_infobutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_show_file_info_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_hide), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -3820,7 +3836,7 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
 }
 
 
-void make_play_window(void) {
+void _make_play_window(void) {
   //  separate window
   pb_added = FALSE;
 
@@ -3913,6 +3929,10 @@ void make_play_window(void) {
   //lives_widget_context_update();
 }
 
+void make_play_window(void) {
+  main_thread_execute((lives_funcptr_t)_make_play_window, 0, NULL, "");
+}
+
 
 LIVES_GLOBAL_INLINE boolean get_play_screen_size(int *opwidth, int *opheight) {
   // get the size of the screen / player in fullscreen / sepwin mode
@@ -3947,7 +3967,7 @@ LIVES_GLOBAL_INLINE boolean get_play_screen_size(int *opwidth, int *opheight) {
 }
 
 
-void resize_play_window(void) {
+void _resize_play_window(void) {
   int opwx, opwy, pmonitor = prefs->play_monitor;
 
   boolean fullscreen = TRUE;
@@ -4303,8 +4323,11 @@ void resize_play_window(void) {
   }
 }
 
+void resize_play_window(void) {
+  main_thread_execute((lives_funcptr_t)_resize_play_window, 0, NULL, "");
+}
 
-void kill_play_window(void) {
+void _kill_play_window(void) {
   // plug our player back into internal window
   mainw->ignore_screen_size = FALSE;
 
@@ -4335,6 +4358,10 @@ void kill_play_window(void) {
   }
   lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Show Play Window"));
   //lives_widget_context_update();
+}
+
+void kill_play_window(void) {
+  main_thread_execute((lives_funcptr_t)_kill_play_window, 0, NULL, "");
 }
 
 

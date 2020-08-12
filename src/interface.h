@@ -40,6 +40,18 @@ boolean expose_msg_area(LiVESWidget *, lives_painter_t *, livespointer user_data
 boolean msg_area_config(LiVESWidget *);
 boolean reshow_msg_area(LiVESWidget *, lives_painter_t *, livespointer user_data);
 
+boolean expose_vid_draw(LiVESWidget *widget, lives_painter_t *cr, livespointer psurf);
+boolean expose_laud_draw(LiVESWidget *widget, lives_painter_t *cr, livespointer psurf);
+boolean expose_raud_draw(LiVESWidget *widget, lives_painter_t *cr, livespointer psurf);
+
+boolean config_vid_draw(LiVESWidget *widget, LiVESXEventConfigure *event, livespointer user_data);
+boolean config_laud_draw(LiVESWidget *widget, LiVESXEventConfigure *event, livespointer user_data);
+boolean config_raud_draw(LiVESWidget *widget, LiVESXEventConfigure *event, livespointer user_data);
+
+void clear_tbar_bgs(int posx, int posy, int width, int height, int which);
+
+boolean redraw_tl_idle(void *data);
+
 LiVESWidget *create_opensel_dialog(int frames, double fps);
 
 LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, boolean opt_resize);

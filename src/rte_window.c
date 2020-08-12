@@ -118,6 +118,7 @@ void type_label_set_text(int key, int mode) {
     lives_widget_set_sensitive(nlabels[idx], TRUE);
     lives_widget_set_sensitive(type_labels[idx], TRUE);
   } else {
+    lives_label_set_text(LIVES_LABEL(type_labels[idx]), NULL);
     lives_widget_set_sensitive(info_buttons[idx], FALSE);
     lives_widget_set_sensitive(clear_buttons[idx], FALSE);
     lives_widget_set_sensitive(mode_radios[idx], FALSE);
@@ -2265,7 +2266,9 @@ LiVESWidget *create_rte_window(void) {
       }
     }
 
-    label = lives_standard_label_new((tmp = lives_strdup_printf(_("Ctrl-%s"), labelt)));
+    widget_opts.use_markup = TRUE;
+    label = lives_standard_label_new((tmp = lives_strdup_printf(_("<big><b>Ctrl-%s</b></big>"), labelt)));
+    widget_opts.use_markup = FALSE;
     lives_free(labelt);
     lives_free(tmp);
 
@@ -2273,7 +2276,8 @@ LiVESWidget *create_rte_window(void) {
 
     hbox2 = lives_hbox_new(FALSE, 0);
 
-    key_checks[i] = lives_standard_check_button_new(_("Key active"), (mainw->rte & (GU641 << i)), LIVES_BOX(hbox2), NULL);
+    //key_checks[i] = lives_standard_check_button_new(_("Key active"), (mainw->rte & (GU641 << i)), LIVES_BOX(hbox2), NULL);
+    key_checks[i] = lives_standard_switch_new(_("Key active"), (mainw->rte & (GU641 << i)), LIVES_BOX(hbox2), NULL);
 
     lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
 
@@ -2304,9 +2308,10 @@ LiVESWidget *create_rte_window(void) {
       lives_table_attach(LIVES_TABLE(table), hbox, i, i + 1, j + 1, j + 2,
                          (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                          (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL), 0, 0);
-      lives_container_set_border_width(LIVES_CONTAINER(hbox), widget_opts.border_width);
+      lives_container_set_border_width(LIVES_CONTAINER(hbox), widget_opts.border_width * 1.5);
 
       hbox2 = lives_hbox_new(FALSE, 0);
+
       lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
 
       mode_radios[idx] = lives_standard_radio_button_new(_("Mode active"), &mode_group, LIVES_BOX(hbox2), NULL);
@@ -2316,7 +2321,13 @@ LiVESWidget *create_rte_window(void) {
       mode_ra_fns[idx] = lives_signal_connect_after(LIVES_GUI_OBJECT(mode_radios[idx]), LIVES_WIDGET_TOGGLED_SIGNAL,
                          LIVES_GUI_CALLBACK(rtemode_callback_hook), LIVES_INT_TO_POINTER(idx));
 
+
       type_labels[idx] = lives_standard_label_new("");
+
+      lives_label_set_line_wrap(LIVES_LABEL(type_labels[idx]), TRUE);
+      lives_label_set_line_wrap_mode(LIVES_LABEL(type_labels[idx]), LINGO_WRAP_WORD_CHAR);
+      lives_label_seT_lines(LIVES_LABEL(type_labels[idx]), 3);
+      lives_label_set_ellipsize(LIVES_LABEL(type_labels[idx]), LIVES_ELLIPSIZE_END);
 
       info_buttons[idx] = lives_standard_button_new_with_label(_("Info"),
                           DEF_BUTTON_WIDTH / 3, DEF_BUTTON_HEIGHT);
@@ -2328,8 +2339,12 @@ LiVESWidget *create_rte_window(void) {
                            DEF_BUTTON_WIDTH / 3, DEF_BUTTON_HEIGHT);
 
       vbox = lives_vbox_new(FALSE, 0);
-      lives_box_pack_start(LIVES_BOX(hbox), vbox, FALSE, FALSE, widget_opts.packing_width);
-      lives_container_set_border_width(LIVES_CONTAINER(vbox), widget_opts.border_width);
+      lives_box_pack_start(LIVES_BOX(hbox), vbox, FALSE, FALSE, 0);
+
+      vbox2 = lives_vbox_new(FALSE, 0);
+      lives_box_pack_end(LIVES_BOX(hbox), vbox2, FALSE, FALSE, widget_opts.packing_width);
+
+      lives_container_set_border_width(LIVES_CONTAINER(vbox), 0);
 
       hbox = lives_hbox_new(FALSE, 0);
 
@@ -2343,9 +2358,6 @@ LiVESWidget *create_rte_window(void) {
       lives_combo_set_entry_text_column(LIVES_COMBO(combo), EXTENDED_NAME_COLUMN);
 
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo), "hashname", empty_string);
-
-      vbox2 = lives_vbox_new(FALSE, 0);
-      lives_box_pack_end(LIVES_BOX(hbox), vbox2, FALSE, FALSE, widget_opts.packing_width);
 
       lives_box_pack_start(LIVES_BOX(vbox2), info_buttons[idx], FALSE, FALSE, widget_opts.packing_height);
       lives_box_pack_start(LIVES_BOX(vbox2), clear_buttons[idx], FALSE, FALSE, widget_opts.packing_height);

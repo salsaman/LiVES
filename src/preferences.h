@@ -434,6 +434,8 @@ typedef struct {
   boolean show_desktop_panel;
   boolean show_msgs_on_startup;
   boolean show_disk_quota;
+
+  char def_author[1024];
 } _prefs;
 
 enum {
@@ -696,6 +698,7 @@ typedef struct {
   LiVESWidget *midi_hbox;
   LiVESWidget *frameblank_entry;
   LiVESWidget *sepimg_entry;
+  LiVESWidget *def_author_entry;
   LiVESWidget *dialog_hpaned;
   LiVESTreeSelection *selection;
 
@@ -861,6 +864,8 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 #define PREF_SCREEN_SCALE "screen_scale"
 #define PREF_PASTARTOPTS "pa_start_opts"
+
+#define PREF_DEF_AUTHOR "default_author_name"
 
 ////////////////////// utf8 values
 

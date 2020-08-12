@@ -172,7 +172,7 @@ showhide:
 }
 
 
-static void clear_tbar_bgs(int posx, int posy, int width, int height, int which) {
+void clear_tbar_bgs(int posx, int posy, int width, int height, int which) {
   double allocwidth;
   double allocheight;
   lives_painter_t *cr = NULL;
@@ -276,7 +276,7 @@ double lives_ce_update_timeline(int frame, double x) {
     else framecount = lives_strdup_printf("%9d", frame);
     lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount);
     lives_freep((void **)&framecount);
-    lives_widget_queue_draw_if_visible(mainw->framecounter);
+    //lives_widget_queue_draw_if_visible(mainw->framecounter);
   }
 
   if (!LIVES_IS_PLAYING && mainw->play_window != NULL && cfile->is_loaded && mainw->multitrack == NULL) {
@@ -316,9 +316,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
   char *filename;
 
   double allocwidth;
-  double allocheight;
   double atime;
-  double ptrtime;
 
   double y = 0., scalex;
 
@@ -409,7 +407,6 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
   if (cfile->achans > 0 && mainw->laudio_drawable && (which == 0 || which == 2)) {
     allocwidth = lives_widget_get_allocation_width(mainw->laudio_draw);
-    allocheight = CE_AUDBAR_HEIGHT;
     scalex = (double)allocwidth / CURRENT_CLIP_TOTAL_TIME;
     offset_left = ROUND_I((double)(cfile->start - 1.) / cfile->fps * scalex);
     offset_right = ROUND_I((double)(cfile->end) / cfile->fps * scalex);
@@ -511,7 +508,6 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
   if (cfile->achans > 1 && mainw->raudio_drawable && (which == 0 || which == 3)) {
     allocwidth = lives_widget_get_allocation_width(mainw->raudio_draw);
-    allocheight = CE_AUDBAR_HEIGHT;
     scalex = (double)allocwidth / CURRENT_CLIP_TOTAL_TIME;
     offset_left = ROUND_I((double)(cfile->start - 1.) / cfile->fps * scalex);
     offset_right = ROUND_I((double)(cfile->end) / cfile->fps * scalex);
@@ -1835,17 +1831,15 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
         hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
         filedets->widgets[1] = lives_standard_switch_new(NULL, TRUE, LIVES_BOX(hbox), NULL);
         lives_signal_sync_connect(LIVES_GUI_OBJECT(filedets->widgets[1]), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                  LIVES_GUI_CALLBACK(filt_sw_toggled),
-                                  (livespointer)filedets);
+                                  LIVES_GUI_CALLBACK(filt_sw_toggled), (livespointer)filedets);
       } else filedets->widgets[1] = NULL;
 
       lives_signal_sync_connect(LIVES_GUI_OBJECT(filedets->widgets[0]), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                LIVES_GUI_CALLBACK(filt_cb_toggled),
-                                (livespointer)filedets);
+                                LIVES_GUI_CALLBACK(filt_cb_toggled), (livespointer)filedets);
 
       filt_cb_toggled(filedets->widgets[0], filedets);
 
-      txt = lives_pad_ellipsise(filedets->name, NMLEN_MAX, LIVES_ALIGN_FILL, LIVES_ALIGN_START);
+      txt = lives_pad_ellipsize(filedets->name, NMLEN_MAX, LIVES_ALIGN_START, LIVES_ELLIPSIZE_MIDDLE);
       lives_layout_add_label(LIVES_LAYOUT(layout), txt, TRUE);
       if (txt != filedets->name) {
         lives_free(txt);
@@ -3457,6 +3451,10 @@ void redraw_timeline(int clipno) {
   lives_widget_queue_draw(mainw->eventbox2);
 }
 
+
+boolean redraw_tl_idle(void *data) {
+  redraw_timeline(mainw->current_file);
+}
 
 //static void preview_aud_vol_cb(LiVESButton *button, livespointer data) {preview_aud_vol();}
 

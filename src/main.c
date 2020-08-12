@@ -1650,7 +1650,10 @@ static void lives_init(_ign_opts *ign_opts) {
 
   prefs->show_msgs_on_startup = get_boolean_prefd(PREF_MSG_START, TRUE);
 
+  /// new prefs here:
   //////////////////////////////////////////////////////////////////
+
+  get_string_prefd(PREF_DEF_AUTHOR, prefs->def_author, 1024, "");
 
   if (!mainw->foreign) {
     prefs->midi_check_rate = get_int_pref(PREF_MIDI_CHECK_RATE);
@@ -3193,25 +3196,28 @@ static boolean open_yuv4m_startup(livespointer data) {
 
 ///////////////////////////////// TODO - move idle functions into another file //////////////////////////////////////
 
-static boolean render_choice_idle(livespointer data) {
+boolean render_choice_idle(livespointer data) {
   // TODO: *** figure out why we cant preview with only scrap_file loaded
+  g_print("RCIDLE\n");
   static boolean norecurse = FALSE;
   boolean rec_recovered = FALSE;
+  boolean is_recovery = LIVES_POINTER_TO_INT(data);
   if (norecurse) return FALSE;
   norecurse = TRUE;
-  if (mt_load_recovery_layout(NULL)) {
-    if (mainw->event_list != NULL) {
-      if (mainw->multitrack != NULL) {
+  if (!is_recovery || mt_load_recovery_layout(NULL)) {
+    if (mainw->event_list) {
+      if (mainw->multitrack) {
         /// exit multitrack, backup mainw->event_as it will get set to NULL
         weed_plant_t *backup_elist = mainw->event_list;
         multitrack_delete(mainw->multitrack, FALSE);
         mainw->event_list = backup_elist;
       }
-      deal_with_render_choice(FALSE);
-      if (mainw->multitrack != NULL) rec_recovered = TRUE;
+      deal_with_render_choice(!is_recovery);
+      if (is_recovery && mainw->multitrack) rec_recovered = TRUE;
     }
   }
-  mainw->recording_recovered = rec_recovered;
+  if (is_recovery) mainw->recording_recovered = rec_recovered;
+  norecurse = FALSE;
   return FALSE;
 }
 
@@ -3220,6 +3226,13 @@ static boolean lazy_startup_checks(void *data) {
   static boolean checked_trash = FALSE;
   static boolean mwshown = FALSE;
   static boolean dqshown = FALSE;
+  static boolean tlshown = FALSE;
+
+  if (!tlshown) {
+    if (!mainw->multitrack) redraw_timeline(mainw->current_file);
+    tlshown = TRUE;
+    return TRUE;
+  }
 
   if (prefs->vj_mode) {
     resize(1.);
@@ -3703,7 +3716,7 @@ static boolean lives_startup2(livespointer data) {
   mainw->no_switch_dprint = FALSE;
   d_print("");
 
-  if (mainw->multitrack == NULL) {
+  if (!mainw->multitrack) {
     if (mainw->current_file == -1) {
       resize(1.);
       if (prefs->show_msg_area) {
@@ -3721,7 +3734,7 @@ static boolean lives_startup2(livespointer data) {
     }
   }
   mainw->go_away = FALSE;
-  if (mainw->multitrack == NULL) {
+  if (!mainw->multitrack) {
     sensitize();
   }
   if (prefs->vj_mode) {
@@ -3732,12 +3745,12 @@ static boolean lives_startup2(livespointer data) {
     if (wid) activate_x11_window(wid);
   }
   if (mainw->recording_recovered) {
-    lives_idle_add(render_choice_idle, NULL);
+    lives_idle_add(render_choice_idle, LIVES_INT_TO_POINTER(TRUE));
   }
 
   mainw->overlay_alarm = lives_alarm_set(0);
 
-  if (mainw->multitrack == NULL)
+  if (!mainw->multitrack)
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
   else
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_MT);
@@ -3752,6 +3765,7 @@ static boolean lives_startup2(livespointer data) {
   mainw->kb_timer = lives_timer_add_simple(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
 
   resize(1.);
+
   if (prefs->interactive) set_interactive(TRUE);
 
   return FALSE;
@@ -5239,7 +5253,7 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
   update_rect.width = rwidth;
   update_rect.height = rheight;
 
-  if (!LIVES_IS_XWINDOW(xwin)) return;
+  if (!LIVES_IS_XWINDOW(xwin) || !LIVES_IS_WINDOW(widget)) return;
   lives_xwindow_invalidate_rect(lives_widget_get_xwindow(widget), &update_rect, FALSE);
 }
 
@@ -5252,6 +5266,8 @@ LIVES_GLOBAL_INLINE void showclipimgs(void) {
     load_end_image(0);
     load_start_image(0);
   }
+  lives_widget_queue_draw(mainw->start_image);
+  lives_widget_queue_draw(mainw->end_image);
 }
 
 
@@ -8937,7 +8953,8 @@ mainw->track_decoders[i] = clone_decoder(nclip);
 
     /**
        @brief save frame to pixbuf in a thread.
-       The renderer uses this now so that it can be saving the current output frame at the same time as it prepares the following frame
+       The renderer uses this now so that it can be saving the current output frame
+       at the same time as it prepares the following frame
     */
     void  *lives_pixbuf_save_threaded(void *args) {
       savethread_priv_t *saveargs = (savethread_priv_t *)args;
@@ -8975,6 +8992,17 @@ mainw->track_decoders[i] = clone_decoder(nclip);
 	/* vsize = (scr_height - (CE_TIMELINE_HSPACE + hspace + by));  */
 	cfile->hsize = mainw->def_width - H_RESIZE_ADJUST;
 	cfile->vsize = mainw->def_height - V_RESIZE_ADJUST;
+
+	if (cfile->laudio_drawable) {
+	  if (mainw->laudio_drawable == cfile->laudio_drawable) mainw->laudio_drawable = NULL;
+	  lives_painter_surface_destroy(cfile->laudio_drawable);
+	  cfile->laudio_drawable = NULL;
+	}
+	if (cfile->raudio_drawable) {
+	  if (mainw->raudio_drawable == cfile->raudio_drawable) mainw->raudio_drawable = NULL;
+	  lives_painter_surface_destroy(cfile->raudio_drawable);
+	  cfile->raudio_drawable = NULL;
+	}
 
 	if (mainw->st_fcache) {
 	  if (mainw->en_fcache == mainw->st_fcache) mainw->en_fcache = NULL;
@@ -9022,6 +9050,11 @@ mainw->track_decoders[i] = clone_decoder(nclip);
 	lives_freep((void **)&cfile->frame_index_back);
 
 	if (cfile->clip_type != CLIP_TYPE_GENERATOR && !mainw->close_keep_frames) {
+	  // as a safety feature we create a special file which allows the back end to delete the directory
+	  char *permitname = lives_build_filename(prefs->workdir, cfile->handle, TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
+	  lives_touch(permitname);
+	  lives_free(permitname);
+
 	  com = lives_strdup_printf("%s close \"%s\"", prefs->backend_sync, cfile->handle);
 	  lives_system(com, TRUE);
 	  lives_free(com);
@@ -9236,14 +9269,13 @@ mainw->track_decoders[i] = clone_decoder(nclip);
           return;
         }
 
-        if (CURRENT_CLIP_IS_VALID) {
-          cfile->laudio_drawable = mainw->laudio_drawable;
-          cfile->raudio_drawable = mainw->raudio_drawable;
-        }
-
         mainw->current_file = new_file;
 
         if (old_file != new_file) {
+          if (CURRENT_CLIP_IS_VALID) {
+            mainw->laudio_drawable = cfile->laudio_drawable;
+            mainw->raudio_drawable = cfile->raudio_drawable;
+          }
           if (old_file != 0 && new_file != 0) mainw->preview_frame = 0;
           if (1) {
             // TODO - indicate "opening" in clipmenu
@@ -9688,12 +9720,10 @@ mainw->track_decoders[i] = clone_decoder(nclip);
 
         if (CURRENT_CLIP_IS_NORMAL) cfile->last_play_sequence = mainw->play_sequence;
 
-        if (CURRENT_CLIP_IS_VALID) {
-          cfile->laudio_drawable = mainw->laudio_drawable;
-          cfile->raudio_drawable = mainw->raudio_drawable;
-        }
-
         mainw->current_file = new_file;
+
+        mainw->laudio_drawable = cfile->laudio_drawable;
+        mainw->raudio_drawable = cfile->raudio_drawable;
 
         if (!mainw->fs && !mainw->faded) {
           redraw_timeline(mainw->current_file);
@@ -9765,8 +9795,7 @@ mainw->track_decoders[i] = clone_decoder(nclip);
         } else resize(1);
 
         if (!mainw->fs && !mainw->faded) {
-          load_end_image(cfile->end);
-          load_start_image(cfile->start);
+          showclipimgs();
         }
 
         if (new_file == mainw->blend_file) {
@@ -9789,6 +9818,9 @@ mainw->track_decoders[i] = clone_decoder(nclip);
         mainw->osc_block = osc_block;
         lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
 
+        if (!mainw->fs && !mainw->faded) {
+          redraw_timeline(mainw->current_file);
+        }
       }
 
 

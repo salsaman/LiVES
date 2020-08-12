@@ -3631,6 +3631,7 @@ static void _threaded_dialog_spin(double fraction) {
 
 
 void threaded_dialog_spin(double fraction) {
+  if (THREADVAR(no_gui)) return;
   main_thread_execute((lives_funcptr_t)_threaded_dialog_spin, 0,
                       NULL, "d", fraction);
 }
@@ -3663,6 +3664,7 @@ static void _do_threaded_dialog(const char *trans_text, boolean has_cancel) {
 
 
 void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
+  if (THREADVAR(no_gui)) return;
   main_thread_execute((lives_funcptr_t)_do_threaded_dialog, 0,
                       NULL, "sb", trans_text, has_cancel);
 }
@@ -3691,6 +3693,7 @@ static void _end_threaded_dialog(void) {
 }
 
 void end_threaded_dialog(void) {
+  if (THREADVAR(no_gui)) return;
   main_thread_execute((lives_funcptr_t)_end_threaded_dialog, 0, NULL, "");
 }
 

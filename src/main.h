@@ -653,7 +653,6 @@ typedef union _binval {
   size_t size;
 } binval;
 
-
 /// corresponds to one clip in the GUI
 typedef struct _lives_clip_t {
   binval binfmt_check, binfmt_version, binfmt_bytes;
@@ -1330,6 +1329,7 @@ void do_text_window(const char *title, const char *text);
 boolean read_file_details(const char *file_name, boolean only_check_for_audio, boolean open_image);
 boolean add_file_info(const char *check_handle, boolean aud_only);
 boolean save_file_comments(int fileno);
+void set_default_comment(lives_clip_t *sfile, const char *extrat);
 boolean restore_clip_binfmt(int clipno);
 lives_clip_t *clip_forensic(int clipno);
 boolean reload_clip(int fileno, int maxframe);
@@ -1665,13 +1665,14 @@ boolean is_writeable_dir(const char *dir);
 boolean ensure_isdir(char *fname);
 boolean dirs_equal(const char *dira, const char *dirb);
 char *ensure_extension(const char *fname, const char *ext) WARN_UNUSED;
-char *lives_ellipsise(char *, size_t maxlen, int align);
+char *lives_ellipsize(char *, size_t maxlen, LiVESEllipsizeMode mode);
 char *lives_pad(char *, size_t minlen, int align);
-char *lives_pad_ellipsise(char *, size_t fixlen, int ealign, int palign);
+char *lives_pad_ellipsize(char *, size_t fixlen, int padlen, LiVESEllipsizeMode mode);
 void activate_url_inner(const char *link);
 void activate_url(LiVESAboutDialog *about, const char *link, livespointer data);
 void show_manual_section(const char *lang, const char *section);
 void maybe_add_mt_idlefunc(void);
+boolean render_choice_idle(livespointer data);
 
 double calc_time_from_frame(int clip, int frame);
 int calc_frame_from_time(int filenum, double time);   ///< nearest frame [1, frames]
@@ -1841,7 +1842,7 @@ void break_me(const char *dtl);
 #endif
 
 #endif
-//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #else

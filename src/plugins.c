@@ -568,7 +568,8 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
 #endif
 #ifdef ENABLE_JACK
                 if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
-                  if ((*vpp->init_audio)(mainw->jackd->sample_out_rate, mainw->jackd->num_output_channels, vpp->extra_argc, vpp->extra_argv))
+                  if ((*vpp->init_audio)(mainw->jackd->sample_out_rate, mainw->jackd->num_output_channels,
+                                         vpp->extra_argc, vpp->extra_argv))
                     ext_audio = TRUE;
                 }
 #endif
@@ -598,15 +599,15 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
       }
       lives_free(cur_pal);
     }
-    if (vpp->extra_argv != NULL) {
-      for (i = 0; vpp->extra_argv[i] != NULL; i++) lives_free(vpp->extra_argv[i]);
+    if (vpp->extra_argv) {
+      for (i = 0; vpp->extra_argv[i]; i++) lives_free(vpp->extra_argv[i]);
       lives_free(vpp->extra_argv);
       vpp->extra_argv = NULL;
     }
     vpp->extra_argc = 0;
-    if (vppw->rfx != NULL) {
+    if (vppw->rfx) {
       vpp->extra_argv = param_marshall_to_argv(vppw->rfx);
-      for (i = 0; vpp->extra_argv[i] != NULL; vpp->extra_argc = ++i);
+      for (i = 0; vpp->extra_argv[i]; vpp->extra_argc = ++i);
     }
     mainw->write_vpp_file = TRUE;
   } else {
@@ -955,13 +956,11 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
   lives_button_grab_default_special(okbutton);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_vppa_cancel_clicked),
-                       vppa);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_vppa_cancel_clicked), vppa);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_vppa_ok_clicked),
-                       vppa);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_vppa_ok_clicked), vppa);
 
   lives_widget_show_all(vppa->dialog);
   lives_window_present(LIVES_WINDOW(vppa->dialog));

@@ -3099,7 +3099,9 @@ void play_file(void) {
   /// kill the separate play window
   if (mainw->play_window != NULL) {
     if (mainw->fs) {
-      if (prefs->show_desktop_panel) {
+      if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
+          && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) &&
+          capable->wm_caps.pan_res & RESTYPE_ACTION) {
         show_desktop_panel();
       }
     }

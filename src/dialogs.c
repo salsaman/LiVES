@@ -1006,7 +1006,7 @@ void pump_io_chan(LiVESIOChannel *iochan) {
 #endif
   // check each line of str_return, if it contains ptext, (whitespace), then number get the number and set percentage
 
-  if (retlen > 0 && mainw->proc_ptr != NULL) {
+  if (retlen > 0 && mainw->proc_ptr) {
     double max;
     LiVESAdjustment *adj = lives_scrolled_window_get_vadjustment(LIVES_SCROLLED_WINDOW(((xprocess *)(
                              mainw->proc_ptr))->scrolledwindow));
@@ -4455,7 +4455,7 @@ try_again:
       lives_widget_destroy(dlg);
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
-      if (ret == LIVES_RESPONSE_YES) {
+      if (ret == LIVES_RESPONSE_NO) {
         if (!check_for_executable(&capable->has_wget, EXEC_WGET)
             && !check_for_executable(&capable->has_curl, EXEC_CURL)) {
           do_please_install_either(EXEC_WGET, EXEC_CURL);
@@ -4463,11 +4463,13 @@ try_again:
               || (check_for_executable(&capable->has_wget, EXEC_WGET))) retry = TRUE;
           else do_program_not_found_error(EXEC_WGET);
         }
-        lives_free((void **)&mainw->permmgr->key);
+        lives_freep((void **)&mainw->permmgr->key);
       }
-      lives_free(mainw->permmgr);
-      mainw->permmgr = NULL;
-      if (retry) goto try_again;
+      if (retry) {
+        lives_free(mainw->permmgr);
+        mainw->permmgr = NULL;
+        goto try_again;
+      }
       return FALSE;
     default:
       break;

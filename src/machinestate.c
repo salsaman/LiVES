@@ -2636,8 +2636,12 @@ char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase,
   size_t nlines, mwlen;
   int m, minpieces;
 
+  break_me("GIC");
+
   if (!mphrase || npieces < -1 || !npieces || rlen < 1 || (ridx <= mstart && ridx + rlen > mstart)
       || (npieces > 0 && (ridx + rlen > npieces || mstart >= npieces))) return NULL;
+
+  g_print("OIK\n");
 
   mwlen = get_token_count(mphrase, ' ');
   if (mstart + mwlen > npieces
@@ -2652,6 +2656,8 @@ char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase,
     THREADVAR(com_failed) = FALSE;
     goto grpcln;
   }
+
+  g_print("got buff %s\n", buff);
 
   minpieces = MAX(mstart + mwlen, ridx + rlen);
 
@@ -2679,15 +2685,24 @@ char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase,
   return match;
 }
 
-static boolean mini_run(char *cmd) {
+LIVES_LOCAL_INLINE boolean mini_run(char *cmd) {
   if (!cmd) return FALSE;
   lives_system(cmd, TRUE);
   lives_free(cmd);
-  if (THREADVAR(com_failed)) {
-    THREADVAR(com_failed) = FALSE;
-    return FALSE;
-  }
+  if (THREADVAR(com_failed)) return FALSE;
   return TRUE;
+}
+
+LIVES_LOCAL_INLINE char *mini_popen(char *cmd) {
+  if (!cmd) return NULL;
+  else {
+    char buff[PATH_MAX];
+    //char *com = lives_strdup_printf("%s $(%s)", capable->echo_cmd, EXEC_MKTEMP);
+    lives_popen(cmd, TRUE, buff, PATH_MAX);
+    lives_free(cmd);
+    lives_chomp(buff);
+    return lives_strdup(buff);
+  }
 }
 
 
@@ -2695,6 +2710,7 @@ LiVESResponseType send_to_trash(const char *item) {
   LiVESResponseType resp = LIVES_RESPONSE_NONE;
   boolean retval = TRUE;
   char *reason = NULL;
+#ifndef IMPL_TRASH
   do {
     resp = LIVES_RESPONSE_NONE;
     if (!check_for_executable(&capable->has_gio, EXEC_GIO)) {
@@ -2704,8 +2720,27 @@ LiVESResponseType send_to_trash(const char *item) {
     else {
       char *com = lives_strdup_printf("%s trash \"%s\"", EXEC_GIO, item);
       retval = mini_run(com);
-      lives_free(com);
     }
+#else
+    /// TODO *** - files should be moved to
+    /// 1) if not $HOME partition, capable->mountpoint/.Trash; also check all toplevels
+    /// check for sticky bit and also non symlink. Then create uid subdir
+    /// else try to create mountpoint / .Trash-$uid
+    /// else (or if in home dir):
+    /// capable->xdg_data_home/Trash/
+
+    /// create an entry like info/foo1.trashinfo (O_EXCL)
+
+    /// [Trash Info]
+    /// Path=/home/user/livesprojects/foo1
+    /// DeletionDate=2020-07-11T14:57:00
+
+    /// then move / copy file or dir to files/foo1
+    /// - if already exists, append .2, .3 etc.
+    // see: https://specifications.freedesktop.org/trash-spec/trashspec-latest.html
+    char *trashdir = lives_build_path(capable->xdg_data_home, "Trash", NULL);
+    /// TODO...
+#endif
     if (!retval) {
       char *msg = lives_strdup_printf(_("LiVES was unable to send the item to trash.\n%s"), reason ? reason : "");
       lives_freep((void **)&reason);
@@ -2807,10 +2842,53 @@ boolean activate_x11_window(const char *wid) {
   return mini_run(cmd);
 }
 
+#define WM_XFWM4 "Xfwm4"
+#define WM_XFCE4_PANEL "xfce4-panel"
+#define WM_XFCE4_SSAVE "xfce4-ssave"
+#define WM_XFCE4_COLOR "xfce4-color-settings"
+#define WM_XFCE4_DISP "xfce4-display-settings"
+#define WM_XFCE4_POW "xfce4-power-manager-settings"
+#define WM_XFCE4_SETTINGS "xfce4-settings"
+#define WM_XFCE4_TERMINAL "xfce4-terminal"
+#define WM_XFCE4_TASKMGR "xfce4-taskmanager"
+#define WM_XFCE4_SSHOT "xfce4-screenshooter"
+
+#define XDG_CURRENT_DESKTOP "XDG_CURRENT_DESKTOP"
+
+boolean get_wm_caps(void) {
+  char *wmname;
+  if (capable->has_wm_caps) return TRUE;
+  capable->has_wm_caps = TRUE;
+  wmname = getenv(XDG_CURRENT_DESKTOP);
+  if (!wmname) {
+    if (capable->wm) wmname = capable->wm;
+  }
+  if (!wmname) return FALSE;
+  capable->has_wm_caps = TRUE;
+  lives_snprintf(capable->wm_caps.wm_name, 64, "%s", wmname);
+
+  if (!strcmp(wmname, WM_XFWM4)) {
+    lives_snprintf(capable->wm_caps.panel, 64, "%s", WM_XFCE4_PANEL);
+    capable->wm_caps.pan_annoy = ANNOY_DISPLAY | ANNOY_FS;
+    capable->wm_caps.pan_res = RES_HIDE | RESTYPE_ACTION;
+    lives_snprintf(capable->wm_caps.ssave, 64, "%s", WM_XFCE4_SSAVE);
+    lives_snprintf(capable->wm_caps.color_settings, 64, "%s", WM_XFCE4_COLOR);
+    lives_snprintf(capable->wm_caps.display_settings, 64, "%s", WM_XFCE4_DISP);
+    lives_snprintf(capable->wm_caps.ssv_settings, 64, "%s", WM_XFCE4_SSAVE);
+    lives_snprintf(capable->wm_caps.pow_settings, 64, "%s", WM_XFCE4_POW);
+    lives_snprintf(capable->wm_caps.settings, 64, "%s", WM_XFCE4_SETTINGS);
+    lives_snprintf(capable->wm_caps.term, 64, "%s", WM_XFCE4_TERMINAL);
+    lives_snprintf(capable->wm_caps.taskmgr, 64, "%s", WM_XFCE4_TASKMGR);
+    lives_snprintf(capable->wm_caps.sshot, 64, "%s", WM_XFCE4_SSHOT);
+    return TRUE;
+  }
+  return FALSE;
+}
+
 boolean show_desktop_panel(void) {
   boolean ret = FALSE;
 #ifdef GDK_WINDOWING_X11
-  char *wid = get_wid_for_name("xfce4-panel");
+  char *wid = get_wid_for_name(capable->wm_caps.panel);
   if (wid) {
     ret = unhide_x11_window(wid);
     lives_free(wid);
@@ -2822,7 +2900,7 @@ boolean show_desktop_panel(void) {
 boolean hide_desktop_panel(void) {
   boolean ret = FALSE;
 #ifdef GDK_WINDOWING_X11
-  char *wid = get_wid_for_name("xfce4-panel");
+  char *wid = get_wid_for_name(capable->wm_caps.panel);
   if (wid) {
     ret = hide_x11_window(wid);
     lives_free(wid);
@@ -2878,16 +2956,21 @@ boolean get_x11_visible(const char *wname) {
   return FALSE;
 }
 
-#define WM_XFWM4 "Xfwm4"
-#define WM_XFCE4_PANEL "xfce4-panel"
+
+char *get_systmpdir(void) {
+  char *dir;
+  if (!check_for_executable(&capable->has_mktemp, EXEC_MKTEMP)) return NULL;
+  char *com = lives_strdup_printf("%s $(%s)", capable->echo_cmd, EXEC_MKTEMP);
+  dir = mini_popen(com);
+  return dir;
+}
 
 
-void get_wm_caps(const char *wm_name) {
-  if (wm_name) {
-    if (!strcmp(wm_name, WM_XFWM4)) {
-      capable->has_wm_caps = TRUE;
-      capable->wm_caps = (wm_caps_t){WM_XFCE4_PANEL};
-    }
-    else capable->has_wm_caps = FALSE;
-  }
+boolean check_snap(const char *prog) {
+  if (!check_for_executable(&capable->has_snap, EXEC_SNAP)) return FALSE;
+  char *com = lives_strdup_printf("%s find %s", EXEC_SNAP, prog);
+  char *res = grep_in_cmd(com, 0, 1, prog, 0, 1);
+  if (!res) return FALSE;
+  lives_free(res);
+  return TRUE;
 }

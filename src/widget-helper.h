@@ -1092,6 +1092,8 @@ LiVESWidget *lives_standard_fileentry_new(const char *labeltext, const char *txt
     int maxchars,
     LiVESBox *box, const char *tooltip);
 
+LiVESWidget *lives_standard_progress_bar_new(void);
+
 LiVESWidget *lives_standard_font_chooser_new(void);
 
 LiVESToolItem *lives_menu_tool_button_new(LiVESWidget *icon, const char *label);

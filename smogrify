@@ -3828,17 +3828,13 @@ if (defined($ARGV[0])) {
 	    }
 	    else {
 		## if there is a local copy of ytdl we try to use that
-		$prog = "";
-		if ($configdir) {
-		    if (-x $prog && ! -z $prog) {
-			if ($debug) {
-			    print STDERR "found local copy of $youtube-dl at $prog\n";
-			}
-			$prog = "$lives_config_bindir/$youtube_dl";
-			$islocal = 1;
+		if (-x $prog && ! -z $prog) {
+		    if ($debug) {
+			print STDERR "found local copy of $youtube-dl at $prog\n";
 		    }
+		    $islocal = 1;
 		}
-		if ($prog eq "") {
+		else {
 		    $prog = &location($youtube_dl);
 		}
 		if ($prog eq "") {
@@ -3917,8 +3913,10 @@ if (defined($ARGV[0])) {
 		    }
 		}
 	    }
+	    my $vb = "";
 	    if ($debug) {
 		print STDERR "Listing files\n";
+		$vb = "-v";
 	    }
 	    my $tdiag = sqrt($deswidth * $deswidth + $desheight * $desheight);
 	    if ($vidchoice ne "") {
@@ -3944,10 +3942,10 @@ if (defined($ARGV[0])) {
 		my $count = 0;
 
 		if ($debug) {
-		    print STDERR "DOING .'$prog' --no-playlist -F '$url'\n";
+		    print STDERR "DOING: '$prog' $vb --no-playlist -F '$url'\n";
 		}
 
-		open (my $fh, "'$prog' --no-playlist -F '$url' |");
+		open (my $fh, "'$prog' $vb --no-playlist -F '$url' |");
 		while (defined(my $line = <$fh>)) {
 		    if ($debug) {
 			print STDERR "WE GOT $line.";
@@ -4108,7 +4106,8 @@ if (defined($ARGV[0])) {
 		    }
 		    if ($debug) {
 			print STDERR "Could not open $url\n\n";
-			&sig_error("The requested URL", $url, "could not be opened with the desired format.", "\nPlease try again.");
+			&sig_error("The requested URL", $url, "could not be opened with the desired format.",
+				   "\nPlease try again.");
 			exit 1;
 		    }
 
@@ -4142,12 +4141,13 @@ if (defined($ARGV[0])) {
 	    if ($formreq eq "mp4") {
 		#$extra = "--merge-output-format mp4";
 		$extra = "";
-		$com = "'$prog' --no-playlist -o \"$xdfile\" $extra --no-part --no-cache-dir -f '$bestvideo$xbestaudio' \"$url\"";
+		$com = "'$prog' $vb --no-playlist -o \"$xdfile\" $extra --no-part --no-cache-dir -f " .
+		    "'$bestvideo$xbestaudio' \"$url\"";
 	    } elsif ($formreq eq "webm") {
 		if ($bestaudio eq "") {
 		    $dfile = $xdfile;
 		}
-		$com = "'$prog' --no-playlist -o \"$dfile\" --no-part --no-cache-dir -f '$bestvideo$xbestaudio' \"$url\"";
+		$com = "'$prog' $vb --no-playlist -o \"$dfile\" --no-part --no-cache-dir -f '$bestvideo$xbestaudio' \"$url\"";
 	    }
 
 	    if ($debug) {

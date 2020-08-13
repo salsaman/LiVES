@@ -423,6 +423,8 @@ enum {
 #define EXEC_XDOTOOL "xdotool"
 #define EXEC_PLAY "play"
 #define EXEC_GIO "gio"
+#define EXEC_MKTEMP "mktemp"
+#define EXEC_SNAP "snap"
 
 /// other executables
 #define EXEC_SUDO "sudo"

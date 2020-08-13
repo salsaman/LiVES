@@ -205,8 +205,8 @@ WEED_SETUP_START(200, 200) {
                              chroma_init, chroma_process, chroma_deinit,
                              in_chantmpls, out_chantmpls, in_params1, NULL);
 
-  weed_declare_transition(in_params1[0]);
-  weed_declare_transition(in_params2[0]);
+  weed_paramtmpl_declare_transition(in_params1[0]);
+  weed_paramtmpl_declare_transition(in_params2[0]);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
@@ -257,6 +257,6 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone2);
   weed_free(clone3);
 
-  weed_set_package_version(plugin_info, package_version);
+  weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;

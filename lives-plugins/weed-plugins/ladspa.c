@@ -94,7 +94,8 @@ static weed_error_t ladspa_init(weed_plant_t *inst) {
   weed_plant_t *filter = weed_instance_get_filter(inst);
 
   if (!(weed_instance_get_flags(inst) & WEED_INSTANCE_UPDATE_GUI_ONLY)) {
-    lad_instantiate_f lad_instantiate_func = (lad_instantiate_f)weed_get_funcptr_value(filter, "plugin_lad_instantiate_func", NULL);
+    lad_instantiate_f lad_instantiate_func =
+      (lad_instantiate_f)weed_get_funcptr_value(filter, "plugin_lad_instantiate_func", NULL);
     LADSPA_Descriptor *laddes = (LADSPA_Descriptor *)weed_get_voidptr_value(filter, "plugin_lad_descriptor", NULL);
     weed_plant_t *channel = NULL;
     unsigned long rate = 0;
@@ -451,7 +452,7 @@ WEED_SETUP_START(200, 200) {
 
   int dual;
 
-  if (lpp == NULL) return NULL;
+  if (!lpp) return NULL;
 
   verbosity = weed_get_host_verbosity(weed_get_host_info(plugin_info));
 
@@ -463,17 +464,17 @@ WEED_SETUP_START(200, 200) {
     getenv_piece(vdir, PATH_MAX, lpp, vdirval);
     free(lpp_copy);
 
-    if (curvdir != NULL) closedir(curvdir);
+    if (curvdir) closedir(curvdir);
     curvdir = NULL;
 
     if (!strlen(vdir)) break;
     curvdir = opendir(vdir);
-    if (curvdir == NULL) break;
+    if (!curvdir) break;
 
     while (1) {
       // check each plugin
       vdirent = readdir(curvdir);
-      if (vdirent == NULL) {
+      if (!vdirent) {
         closedir(curvdir);
         curvdir = NULL;
         vdirval++;
@@ -586,8 +587,8 @@ WEED_SETUP_START(200, 200) {
 
         if (ninps > 0) {
           // add extra in param for "link channels"
-          in_params = (weed_plant_t **)weed_malloc(((++ninps + stcount) * (dual == WEED_TRUE ? 1 : 2) - (dual == WEED_TRUE ? 0 : 1))
-                      * sizeof(weed_plant_t *));
+          in_params = (weed_plant_t **)weed_malloc(((++ninps + stcount) * (dual == WEED_TRUE ? 1 : 2)
+                      - (dual == WEED_TRUE ? 0 : 1)) * sizeof(weed_plant_t *));
           in_params[(ninps + stcount) * (dual == WEED_TRUE ? 1 : 2) - 1 - (dual == WEED_TRUE ? 0 : 1)] = NULL;
           if (dual == WEED_TRUE) {
             in_params[ninps - 1] = weed_switch_init("link", "_Link left and right parameters", WEED_TRUE);
@@ -687,10 +688,12 @@ WEED_SETUP_START(200, 200) {
                 }
               }
 
-              if (ladphintdes & LADSPA_HINT_SAMPLE_RATE) weed_set_boolean_value(in_params[cninps], "plugin_sample_rate", WEED_TRUE);
+              if (ladphintdes & LADSPA_HINT_SAMPLE_RATE) weed_set_boolean_value(in_params[cninps],
+                    "plugin_sample_rate", WEED_TRUE);
               else weed_set_boolean_value(in_params[cninps], "plugin_sample_rate", WEED_FALSE);
 
-              if (ladphintdes & LADSPA_HINT_LOGARITHMIC) weed_set_boolean_value(in_params[cninps], "plugin_logarithmic", WEED_TRUE);
+              if (ladphintdes & LADSPA_HINT_LOGARITHMIC) weed_set_boolean_value(in_params[cninps],
+                    "plugin_logarithmic", WEED_TRUE);
               else weed_set_boolean_value(in_params[cninps], "plugin_logarithmic", WEED_FALSE);
 
               if (dual) {
@@ -734,12 +737,15 @@ WEED_SETUP_START(200, 200) {
                 else if (ladphintdes & LADSPA_HINT_DEFAULT_440) defval = 440.;
 
                 if (ladphintdes & LADSPA_HINT_INTEGER) {
-                  out_params[cnoutps] = weed_out_param_integer_init(laddes->PortNames[i], defval + .5, lbound + .5, ubound + .5);
-                  if (dual) out_params[cnoutps + onoutps] = weed_out_param_integer_init(laddes->PortNames[i], defval + .5, lbound + .5,
-                        ubound + .5);
+                  out_params[cnoutps] = weed_out_param_integer_init(laddes->PortNames[i], defval + .5,
+                                        lbound + .5, ubound + .5);
+                  if (dual) out_params[cnoutps + onoutps] =
+                      weed_out_param_integer_init(laddes->PortNames[i], defval + .5, lbound + .5,
+                                                  ubound + .5);
                 } else {
                   out_params[cnoutps] = weed_out_param_float_init(laddes->PortNames[i], defval, lbound, ubound);
-                  if (dual) out_params[cnoutps + onoutps] = weed_out_param_float_init(laddes->PortNames[i], defval, lbound, ubound);
+                  if (dual) out_params[cnoutps + onoutps] =
+                      weed_out_param_float_init(laddes->PortNames[i], defval, lbound, ubound);
                 }
               }
 
@@ -824,6 +830,6 @@ WEED_SETUP_START(200, 200) {
   }
 
   add_filters_from_list(plugin_info, list);
-  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+  weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;

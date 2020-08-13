@@ -1036,13 +1036,6 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req) {
   boolean hasnone = FALSE, hasalts = FALSE;
   int current_file = mainw->current_file;
 
-  if (!CURRENT_CLIP_IS_VALID) {
-    if (!get_temp_handle(-1)) {
-      d_print_failed();
-      return NULL;
-    }
-  }
-
   mainw->no_switch_dprint = TRUE;
 
   dfile = lives_build_filename(req->save_dir, req->fname, NULL);
@@ -1051,13 +1044,20 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req) {
 
   while (1) {
 retry:
+    if (!CURRENT_CLIP_IS_VALID) {
+      if (!get_temp_handle(-1)) {
+        d_print_failed();
+        return NULL;
+      }
+    }
+
     lives_rm(cfile->info_file);
 
     if (mainw->permmgr && mainw->permmgr->key) {
       overrdkey = mainw->permmgr->key;
     }
 
-    com = lives_strdup_printf("%s download_clip \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %f \"%s\""
+    com = lives_strdup_printf("%s download_clip \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %f \"%s\" "
                               "\"%s\" %d %d%s",
                               prefs->backend,
                               cfile->handle,
@@ -1123,7 +1123,9 @@ retry:
         } else {
           do_error_dialogf(_("Unable to download media from the requested URL:\n%s\n\n"
                              "NB: Obtaining the address by right clicking on the target itself "
-                             "can sometimes work better\n"), req->URI);
+                             "can sometimes work better\n\n\nAlso, please note that downloading of 'Private' videos "
+                             "from Youtube is not possible,\nthey need to be changed to'Unlisted' "
+                             "in order for the download to succeed.\n"), req->URI);
         }
       }
       mainw->error = FALSE;
@@ -7785,7 +7787,9 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
       // switch from fullscreen during pb
       if (mainw->sep_win) {
         // separate window
-        if (prefs->show_desktop_panel) {
+        if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
+            && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) &&
+            capable->wm_caps.pan_res & RESTYPE_ACTION) {
           show_desktop_panel();
         }
         if (mainw->ext_playback) {

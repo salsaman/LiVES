@@ -13,6 +13,8 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
+#define NEED_AUDIO
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-utils.h> // optional
@@ -560,28 +562,26 @@ static void syna_play(_sdata *sdata, float **dest, int length, int channels, int
   /* Fix the fscking Windoze/DOS newlines */
 #ifndef TINY
   void cleanup(char *s) {
-    char    *d = strdup(s);
-
+    char *d = strdup(s);
     for (; *d; d++)
-      if (*d != '\r' && *d != ' ')
-        *s++ = *d;
+      if (*d != '\r' && *d != ' ') *s++ = *d;
     *s = 0;
   }
 #endif
 
 
   static void syna_deinit(_sdata *sdata) {
-    register int n;
+    int n;
 
-    if (sdata == NULL) return;
+    if (!sdata) return;
 
     for (n = 0; n < WAVES; n++) {
-      if (sdata->aalto[n] != NULL) weed_free(sdata->aalto[n]);
+      if (sdata->aalto[n]) weed_free(sdata->aalto[n]);
     }
     for (n = 0; n < INSTR; n++) {
-      if (sdata->echo[n] != NULL) weed_free(sdata->echo[n]);
+      if (sdata->echo[n]) weed_free(sdata->echo[n]);
     }
-    if (sdata->module != NULL) weed_free(sdata->module);
+    if (sdata->module) weed_free(sdata->module);
   }
 
 
@@ -589,7 +589,7 @@ static void syna_play(_sdata *sdata, float **dest, int length, int channels, int
 
   static weed_error_t fourk_deinit(weed_plant_t *inst) {
     _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
-    if (sdata != NULL) {
+    if (sdata) {
       syna_deinit(sdata);
       weed_free(sdata);
       weed_set_voidptr_value(inst, "plugin_internal", NULL);
@@ -750,7 +750,7 @@ static void syna_play(_sdata *sdata, float **dest, int length, int channels, int
     snprintf(desc, 512, "fourK is a mini tracker player, which plays tunes from\ntext files\n");
 
     weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, desc);
-    weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+    weed_plugin_set_package_version(plugin_info, package_version);
   }
   WEED_SETUP_END;
 

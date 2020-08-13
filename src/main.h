@@ -124,6 +124,8 @@ typedef int lives_pgid_t;
 
 #define USE_GLIB
 
+#define LIVES_OS_UNIX G_OS_UNIX
+
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 
@@ -646,7 +648,6 @@ typedef enum {
 					      ? (dir2) == LIVES_DIR_FORWARD : \
 					      ((dir2) == LIVES_DIR_BACKWARD || (dir2) == LIVES_DIR_REVERSED) \
 					      ? (dir1) == LIVES_DIR_FORWARD : sig(dir1) != sig(dir2))
-
 typedef union _binval {
   uint64_t num;
   const char chars[8];
@@ -708,7 +709,7 @@ typedef struct _lives_clip_t {
   // various times; total time is calculated as the longest of video, laudio and raudio
   double video_time, laudio_time, raudio_time;
 
-  double pointer_time;  ///< pointer time in timeline, also the playback start position for clipeditor (unless playing the selection)
+  double pointer_time;  ///< pointer time in timeline, + the playback start posn for clipeditor (unless playing the selection)
   double real_pointer_time;  ///< pointer time in timeline, can extend beyond video, for audio
 
   frames_t frameno, last_frameno;
@@ -929,7 +930,58 @@ typedef lives_presence_t lives_checkstatus_t;
 #endif
 
 typedef struct {
+  char wm_name[64];
+  uint64_t ver_major;
+  uint64_t ver_minor;
+  uint64_t ver_micro;
+
+#define ANNOY_DISPLAY      	(1ul << 0)
+#define ANNOY_DISK		(1ul << 1)
+#define ANNOY_PROC		(1ul << 2)
+#define ANNOY_NETWORK		(1ul << 3)
+#define ANNOY_SOUNDS		(1ul << 4)
+#define ANNOY_DEV		(1ul << 5)
+#define ANNOY_OTHER		(1ul << 6)
+
+#define ANNOY_FS		(1ul << 32)
+#define ANNOY_CONT		(1ul << 33)
+#define ANNOY_PERIOD		(1ul << 34)
+#define ANNOY_SPONT		(1ul << 35)
+#define ANNOY_TIMED		(1ul << 36)
+#define ANNOY_LOCK		(1ul << 37)
+
+#define RES_HIDE		(1ul << 0)
+#define RES_SUSPEND		(1ul << 1)
+#define RES_STOP		(1ul << 2)
+#define RES_BLOCK		(1ul << 3)
+#define RES_MUTE		(1ul << 4)
+
+#define RESTYPE_ACTION		(1ul << 16)
+#define RESTYPE_CONFIG		(1ul << 17)
+#define RESTYPE_SIGNAL		(1ul << 18)
+#define RESTYPE_CMD		(1ul << 19)
+#define RESTYPE_LOCKOUT		(1ul << 20)
+#define RESTYPE_TIMED		(1ul << 21)
+#define RESTYPE_MONITOR		(1ul << 22)
+
   char panel[64];
+  uint64_t pan_annoy;
+  uint64_t pan_res;
+  char ssave[64];
+  uint64_t ssave_annoy;
+  uint64_t ssave_res;
+  char other[64];
+  uint64_t oth_annoy;
+  uint64_t oth_res;
+
+  char color_settings[64];
+  char display_settings[64];
+  char ssv_settings[64];
+  char pow_settings[64];
+  char settings[64];
+  char term[64];
+  char taskmgr[64];
+  char sshot[64];
 } wm_caps_t;
 
 
@@ -978,11 +1030,19 @@ typedef struct {
   lives_checkstatus_t has_gio;
   lives_checkstatus_t has_wget;
   lives_checkstatus_t has_curl;
+  lives_checkstatus_t has_mktemp;
+  lives_checkstatus_t has_snap;
 
   /// home directory - default location for config file - locale encoding
   char home_dir[PATH_MAX];
 
   char backend_path[PATH_MAX];
+
+  char *xdg_data_home; // e.g $HOME/.local/share
+  char *xdg_session_desktop; // e.g ubuntustudio
+  char *xdg_current_desktop; // e.g XFCE
+  char *xdg_runtime_dir; // e.g /run/user/$uid
+  char *xdg_session_type; // e.g x11
 
   char touch_cmd[PATH_MAX];
   char rm_cmd[PATH_MAX];
@@ -1802,7 +1862,8 @@ void break_me(const char *dtl);
 
 #ifndef LIVES_FATAL
 #ifndef LIVES_NO_FATAL
-#define LIVES_FATAL(x)      {fprintf(stderr, "LiVES FATAL: %s\n", x); lives_notify(LIVES_OSC_NOTIFY_QUIT, x), break_me(x); _exit (1);}
+#define LIVES_FATAL(x)      {fprintf(stderr, "LiVES FATAL: %s\n", x); lives_notify(LIVES_OSC_NOTIFY_QUIT, x), \
+									break_me(x); _exit (1);}
 #else // LIVES_NO_FATAL
 #define LIVES_FATAL(x)      dummychar = x
 #endif // LIVES_NO_FATAL

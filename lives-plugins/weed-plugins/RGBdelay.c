@@ -153,15 +153,14 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   double tstr_red = 0., tstr_green = 0., tstr_blue = 0., cstr_red, cstr_green, cstr_blue, cstr;
   double yscale = 1., uvscale = 1.;
 
-  int width = weed_channel_geet_width(in_channel);
+  int width = weed_channel_get_width(in_channel);
   int height = weed_channel_get_height(in_channel);
-  int irowstride = weed_dhannel_get_stride(in_channel);
+  int irowstride = weed_channel_get_stride(in_channel);
   int orowstride = weed_channel_get_stride(out_channel);
   int palette = weed_channel_get_palette(in_channel);
 
   unsigned char *src = weed_channel_get_pixel_data(in_channel);
   unsigned char *dst = weed_channel_get_pixel_data(out_channel);
-  unsigned char *end = src + height * irowstride;
   unsigned char *tmpcache = NULL;
 
   int maxcache = weed_param_get_value_int(in_params[0]);
@@ -171,8 +170,10 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   int b1, b2, b3, bx;
   int maxneeded = 0;
   int is_bgr = 0, is_yuv = 0, yuvmin = 0, uvmin = 0;
+  int i, j, k, d, s;
 
-  register int i, j, k;
+  int iframesize = height * irowstride;
+  int dframesize = height * orowstride;
 
   if (sdata->ease_every == 0) {
     // easing (experimental) part 1
@@ -226,7 +227,7 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
     if (weed_param_get_value_boolean(in_params[GREEN_ON(i)]) == WEED_TRUE)
       tstr_green += weed_param_get_value_double(in_params[STRENGTH(i)]);
 
-    if (weed_param_get_value(in_params[BLUE_ON(i)]) == WEED_TRUE) {
+    if (weed_param_get_value_boolean(in_params[BLUE_ON(i)]) == WEED_TRUE) {
       tstr_blue += weed_param_get_value_double(in_params[STRENGTH(i)]);
     }
   }
@@ -237,9 +238,9 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   } else is_bgr = sdata->is_bgr[0] = 0;
 
   if (sdata->tcache > 0) {
-    // copy current frame -> sdata->cache[0]
-    for (; src < end; src += irowstride) {
-      weed_memcpy(tmpcache + x, src, width);
+    // copy current frame -> qsdata->cache[0]
+    for (j = 0; j < iframesize; j += irowstride) {
+      weed_memcpy(&tmpcache[x], &src[j], width);
       x += width;
     }
     sdata->cache[0] = tmpcache;
@@ -254,8 +255,7 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
     is_yuv = 1;
     if (weed_channel_get_yuv_clamping(in_channel) == WEED_YUV_CLAMPING_CLAMPED) {
       // unclamp the values in the lut
-      yuvmin = 16;
-      uvmin = 16;
+      yuvmin = 16; uvmin = 16;
       yscale = 255. / 219.;
       uvscale = 255. / 224.;
     }
@@ -273,31 +273,24 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 
     if (is_bgr) {
       // swap r / b (on-off and lut)
-      bx = b1;
-      b1 = b3;
-      b3 = bx;
-      red = 2;
-      blue = 0;
+      bx = b1; b1 = b3; b3 = bx;
+      red = 2; blue = 0;
     }
 
     make_lut(sdata->lut[red], cstr_red * yscale, yuvmin);
     make_lut(sdata->lut[1], cstr_green * uvscale, yuvmin);
     make_lut(sdata->lut[blue], cstr_blue * uvscale, yuvmin);
-
-    height--;
-    src = osrc;
-    end = odst + height * orowstride;
-
-    for (dst = odst; dst < end; dst += orowstride) {
+    s = 0;
+    for (d = 0; d < dframesize; d += orowstride) {
       for (i = 0; i < width; i += 3) {
-        if (b1) dst[i] = sdata->lut[0][src[i]];
-        else if (inplace) dst[i] = yuvmin;
-        if (b2) dst[i + 1] = sdata->lut[1][src[i + 1]];
-        else if (inplace) dst[i + 1] = uvmin;
-        if (b3) dst[i + 2] = sdata->lut[2][src[i + 2]];
-        else if (inplace) dst[i + 2] = uvmin;
+        if (b1) dst[d + i] = sdata->lut[0][src[s + i]];
+        else if (inplace) dst[d + i] = yuvmin;
+        if (b2) dst[d + i + 1] = sdata->lut[1][src[s + i + 1]];
+        else if (inplace) dst[d + i + 1] = uvmin;
+        if (b3) dst[d + i + 2] = sdata->lut[2][src[s + i + 2]];
+        else if (inplace) dst[d + i + 2] = uvmin;
       }
-      src += irowstride;
+      s += irowstride;
     }
   } else {
     for (j = 0; j < sdata->tcache; j++) {
@@ -323,30 +316,25 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 
       if (sdata->is_bgr[j]) {
         // swap r / b (on-off and lut)
-        bx = b1;
-        b1 = b3;
-        b3 = bx;
-        red = 2;
-        blue = 0;
+        bx = b1; b1 = b3; b3 = bx;
+        red = 2; blue = 0;
       } else {
-        red = 0;
-        blue = 2;
+        red = 0; blue = 2;
       }
 
       make_lut(sdata->lut[red], cstr_red * yscale, yuvmin);
       make_lut(sdata->lut[1], cstr_green * uvscale, yuvmin);
       make_lut(sdata->lut[blue], cstr_blue * uvscale, yuvmin);
 
-      x = 0;
-
-      for (dst = odst; dst < end; dst += orowstride) {
+      s = 0;
+      for (d = 0; d < dframesize; d += orowstride) {
         for (i = 0; i < width; i += 3) {
-          if (!j) weed_memset(&dst[i], 0, 3);
-          if (b1) dst[i] += sdata->lut[0][sdata->cache[k][x + i + cross]];
-          if (b2) dst[i + 1] += sdata->lut[1][sdata->cache[k][x + i + 1]];
-          if (b3) dst[i + 2] += sdata->lut[2][sdata->cache[k][x + i + 2 - cross]];
+          if (!j) weed_memset(&dst[d + i], 0, 3);
+          if (b1) dst[d + i] += sdata->lut[0][sdata->cache[k][s + i + cross]];
+          if (b2) dst[d + i + 1] += sdata->lut[1][sdata->cache[k][s + i + 1]];
+          if (b3) dst[d + i + 2] += sdata->lut[2][sdata->cache[k][s + x + i + 2 - cross]];
         }
-        x += width;
+        s += width;
       }
     }
   }
@@ -355,11 +343,11 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
     // reclamp the values
     make_lut(sdata->lut[0], 1. / yscale, -yuvmin);
     make_lut(sdata->lut[1], 1. / uvscale, -yuvmin);
-    for (dst = odst; dst < end; dst += orowstride) {
+    for (d = 0; d < dframesize; d += orowstride) {
       for (i = 0; i < width; i += 3) {
-        dst[i] = sdata->lut[0][dst[i]];
-        dst[i + 1] = sdata->lut[1][dst[i + 1]];
-        dst[i + 2] = sdata->lut[1][dst[i + 2]];
+        dst[d + i] = sdata->lut[0][dst[d + i]];
+        dst[d + i + 1] = sdata->lut[1][dst[d + i + 1]];
+        dst[d + i + 2] = sdata->lut[1][dst[d + i + 2]];
       }
     }
   }
@@ -456,7 +444,7 @@ WEED_SETUP_START(200, 200) {
 
   for (i = 3; i < 54; i++) {
     rfx_strings[i] = weed_malloc(1024);
-    if (rfx_strings[i] == NULL) return NULL;
+    if (!rfx_strings[i]) return NULL;
     snprintf(rfx_strings[i], 1024, "layout|p%d|p%d|p%d|p%d|",
              (i - 3) * 4 + 1, (i - 3) * 4 + 2, (i - 3) * 4 + 3, (i - 2) * 4);
   }

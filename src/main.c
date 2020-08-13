@@ -92,6 +92,11 @@
 #include <sys/prctl.h>
 #endif
 
+#ifdef LIVES_OS_UNIX
+#include <glib-unix.h>
+#endif
+
+
 ////////////////////////////////
 _palette *palette;
 ssize_t sizint, sizdbl, sizshrt;
@@ -278,7 +283,14 @@ void defer_sigint(int signum) {
 //#define QUICK_EXIT
 void catch_sigint(int signum) {
   // trap for ctrl-C and others
-  if (prefs->vj_mode) abort();
+  if (prefs->vj_mode) {
+    if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
+        && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) &&
+        capable->wm_caps.pan_res & RESTYPE_ACTION) {
+      show_desktop_panel();
+    }
+  }
+
   if (capable && !pthread_equal(capable->main_thread, pthread_self())) {
     lives_proc_thread_t lpt = THREADVAR(tinfo);
     weed_set_int_value(lpt, WEED_LEAF_SIGNALLED, signum);
@@ -286,6 +298,11 @@ void catch_sigint(int signum) {
     g_print("Thread got signal %d\n", signum);
     sleep(3600);
     pthread_exit(NULL);
+  }
+  if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
+      && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) &&
+      capable->wm_caps.pan_res & RESTYPE_ACTION) {
+    show_desktop_panel();
   }
 #ifdef QUICK_EXIT
   /* shoatend(); */
@@ -348,6 +365,14 @@ void catch_sigint(int signum) {
   }
   exit(signum);
 }
+
+#ifdef USE_GLIB
+static boolean glib_sighandler(livespointer data) {
+  int signum = LIVES_POINTER_TO_INT(data);
+  catch_sigint(signum);
+  return TRUE;
+}
+#endif
 
 
 #ifdef GUI_GTK
@@ -1643,12 +1668,12 @@ static void lives_init(_ign_opts *ign_opts) {
     capable->wm = lives_strdup(gdk_x11_screen_get_window_manager_name(gdk_screen_get_default()));
 #endif
 
-  get_wm_caps(capable->wm);
+  *capable->wm_caps.wm_name = 0;
 
-  if (capable->has_wm_caps && capable->wm_caps.panel) {
-    prefs->show_desktop_panel = TRUE;
-    //prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);
-  }
+  get_wm_caps();
+
+  capable->wm_caps.wm_name[0] = 0;
+  prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);
 
   prefs->show_msgs_on_startup = get_boolean_prefd(PREF_MSG_START, TRUE);
 
@@ -2861,6 +2886,8 @@ capability *get_capabilities(void) {
   capable->has_gzip = UNCHECKED;
   capable->has_wget = UNCHECKED;
   capable->has_curl = UNCHECKED;
+  capable->has_mktemp = UNCHECKED;
+  capable->has_snap = UNCHECKED;
 
   capable->has_smogrify = UNCHECKED;
 
@@ -3231,6 +3258,7 @@ static boolean lazy_startup_checks(void *data) {
   static boolean tlshown = FALSE;
 
   if (!tlshown) {
+    //g_print("val is $d\n", check_snap("youtube-dl"));
     if (!mainw->multitrack) redraw_timeline(mainw->current_file);
     tlshown = TRUE;
     return TRUE;
@@ -3777,13 +3805,19 @@ static boolean lives_startup2(livespointer data) {
 
 void set_signal_handlers(SignalHandlerPointer sigfunc) {
   sigset_t smask;
-
   struct sigaction sact;
 
   sigemptyset(&smask);
 
+#define USE_GLIB_SIGHANDLER
+#ifdef USE_GLIB_SIGHANDLER
+  g_unix_signal_add(LIVES_SIGINT, glib_sighandler, LIVES_INT_TO_POINTER(LIVES_SIGINT));
+  g_unix_signal_add(LIVES_SIGTERM, glib_sighandler, LIVES_INT_TO_POINTER(LIVES_SIGTERM));
+#else
   sigaddset(&smask, LIVES_SIGINT);
   sigaddset(&smask, LIVES_SIGTERM);
+#endif
+
   sigaddset(&smask, LIVES_SIGSEGV);
   sigaddset(&smask, LIVES_SIGABRT);
 
@@ -3796,7 +3830,7 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
   sigaction(LIVES_SIGSEGV, &sact, NULL);
   sigaction(LIVES_SIGABRT, &sact, NULL);
 
-  if (mainw != NULL) {
+  if (mainw) {
     if (sigfunc == defer_sigint) mainw->signals_deferred = TRUE;
     else mainw->signals_deferred = FALSE;
   }
@@ -3812,12 +3846,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   pthread_mutexattr_t mattr;
 #ifndef IS_LIBLIVES
   weed_plant_t *test_plant;
-#endif
-
-#ifdef GUI_QT
-  qapp = new QApplication(argc, argv);
-  qtime = new QTime();
-  qtime->start();
 #endif
 
   mainw = NULL;

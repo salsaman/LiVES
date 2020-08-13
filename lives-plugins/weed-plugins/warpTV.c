@@ -241,7 +241,7 @@ static weed_error_t warp_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   if (sdata->ease_every == 0.) {
     weed_plant_t *gui = weed_instance_get_gui(inst);
     sdata->tval = (sdata->tval + 1) & 511;
-    weed_set_int_value(gui, WEED_LEAF_PLUGIN_EASING, 1);
+    weed_set_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, 1);
   }
 
   return WEED_SUCCESS;

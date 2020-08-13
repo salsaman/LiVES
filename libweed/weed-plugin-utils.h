@@ -93,7 +93,6 @@ FN_DECL weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot,
     int32_t filter_api_min_version, int32_t weed_filter_api_max_version) ALLOW_UNUSED;
 
 FN_DECL weed_plant_t *weed_channel_template_init(const char *name, int flags) ALLOW_UNUSED;
-FN_DECL weed_plant_t *weed_audio_channel_template_init(const char *name, int flags) ALLOW_UNUSED;
 
 FN_DECL weed_plant_t **weed_clone_plants(weed_plant_t **plants) ALLOW_UNUSED;
 
@@ -183,9 +182,11 @@ FN_DECL int weed_channel_get_yuv_clamping(weed_plant_t *channel);
 FN_DECL int weed_channel_get_stride(weed_plant_t *channel);
 
 #ifdef NEED_AUDIO
+FN_DECL weed_plant_t *weed_audio_channel_template_init(const char *name, int flags);
 FN_DECL int weed_channel_get_audio_rate(weed_plant_t *channel);
 FN_DECL int weed_channel_get_naudchans(weed_plant_t *channel);
 FN_DECL int weed_channel_get_audio_length(weed_plant_t *channel);
+FN_DECL void weed_paramtmpl_declare_volume_master(weed_plant_t *pt);
 #ifdef __WEED_UTILS_H__
 FN_DECL float **weed_channel_get_audio_data(weed_plant_t *channel, int *naudchans);
 #endif

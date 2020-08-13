@@ -12,6 +12,8 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
+#define NEEDS_AUDIO
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-utils.h> // optional
@@ -39,15 +41,16 @@ static weed_error_t atrans_process(weed_plant_t *inst, weed_timecode_t timestamp
 
 WEED_SETUP_START(200, 200) {
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("in channel 0", 0),
-                                  weed_audio_channel_template_init("in channel 1", 0), NULL};
+                                  weed_audio_channel_template_init("in channel 1", 0), NULL
+                                 };
   weed_plant_t *out_chantmpls[] = {weed_audio_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
   weed_plant_t *in_params[] = {weed_float_init("transition", "_Rear track level", 0.0, 0.0, 1.0), NULL};
   weed_plant_t *filter_class = weed_filter_class_init("audio transition", "salsaman", 1, 0, NULL, NULL,
                                atrans_process, NULL, in_chantmpls, out_chantmpls, in_params, NULL);
 
-  weed_paramtmpl_declare_trransition(in_params[0]);
+  weed_paramtmpl_declare_transition(in_params[0]);
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-  weed_set_package_version(package_version);
+  weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;
 

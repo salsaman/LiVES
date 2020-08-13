@@ -4096,7 +4096,9 @@ void _resize_play_window(void) {
       sched_yield();
       // leave this alone * !
       if (!(mainw->vpp != NULL && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
-        if (prefs->show_desktop_panel) {
+        if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
+            && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) &&
+            capable->wm_caps.pan_res & RESTYPE_ACTION) {
           hide_desktop_panel();
         }
 #if GTK_CHECK_VERSION(3, 20, 0)
@@ -4608,14 +4610,20 @@ void splash_init(void) {
 
     if (splash_pix != NULL) lives_widget_object_unref(splash_pix);
 
+    mainw->splash_progress = lives_standard_progress_bar_new();
+
+#ifdef PROGBAR_IS_ENTRY
+    mainw->splash_label = mainw->splash_progress;
+#else
+
     widget_opts.justify = LIVES_JUSTIFY_CENTER;
     mainw->splash_label = lives_standard_label_new("");
     widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
     lives_box_pack_start(LIVES_BOX(vbox), mainw->splash_label, TRUE, TRUE, 4. * widget_opts.scale);
     lives_widget_set_valign(vbox, LIVES_ALIGN_END);
+#endif
 
-    mainw->splash_progress = lives_progress_bar_new();
     lives_progress_bar_set_pulse_step(LIVES_PROGRESS_BAR(mainw->splash_progress), .01);
 
     if (palette->style & STYLE_1) {
@@ -4650,11 +4658,20 @@ void splash_init(void) {
 
 
 void splash_msg(const char *msg, double pct) {
-  if (mainw->foreign || mainw->splash_window == NULL) return;
+  if (mainw->foreign || !mainw->splash_window) return;
 
+#ifdef PROGBAR_IS_ENTRY
+  else {
+    char *tmp = lives_strdup(msg);
+    lives_chomp(tmp);
+    lives_entry_set_text(LIVES_ENTRY(mainw->splash_label), tmp + 1);
+    lives_free(tmp);
+  }
+#else
   widget_opts.mnemonic_label = FALSE;
   lives_label_set_text(LIVES_LABEL(mainw->splash_label), msg);
   widget_opts.mnemonic_label = TRUE;
+#endif
 
   lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(mainw->splash_progress), pct);
 
@@ -4668,7 +4685,7 @@ void splash_msg(const char *msg, double pct) {
 void splash_end(void) {
   if (mainw->foreign) return;
 
-  if (mainw->splash_window != NULL) {
+  if (mainw->splash_window) {
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, mainw->splash_window);
     lives_widget_destroy(mainw->splash_window);
   }

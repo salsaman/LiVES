@@ -94,7 +94,7 @@ static weed_error_t  avol_process(weed_plant_t *inst, weed_timecode_t timestamp)
 
   double voll, volr;
   float tmp;
-  int i;
+  int i, j;
 
   weed_free(in_params);
   voll = volr = vol[0];
@@ -103,25 +103,23 @@ static weed_error_t  avol_process(weed_plant_t *inst, weed_timecode_t timestamp)
     if (pan[0] < 0.) volr *= (1. + pan[0]);
     else voll *= (1. - pan[0]);
     if (swapchans[0] == WEED_FALSE) {
-      while (nsamps--) {
-        *(dst[0]++) = voll * (*(src[0]++));
-        *(dst[1]++) = volr * (*(src[1]++));
+      for (j = 0; j < nsamps; j++) {
+        dst[0][j] = voll * src[0][j];
+        dst[1][j] = volr * src[1][j];
       }
     } else {
       if (swappan[0]) {
-        tmp = voll;
-        voll = volr;
-        volr = tmp;
+        tmp = voll; voll = volr; volr = tmp;
       }
-      while (nsamps--) {
-        tmp = volr * (*(src[0]++)); // in case inplace, src[0] will become dst[0]
-        *(dst[0]++) = voll * (*(src[1]++));
-        *(dst[1]++) = tmp;
+      for (j = 0; j < nsamps; j++) {
+        tmp = volr * src[0][j]; // in case inplace, src[0] will become dst[0]
+        dst[0][j] = voll * src[1][j];
+        dst[1][j] = tmp;
       }
     }
   } else if (chans == 1) {
-    while (nsamps--) {
-      *(dst[0]++) = vol[0] * (*(src[0]++));
+    for (j = 0; j < nsamps; j++) {
+      dst[0][j] = vol[0] * src[0][j];
     }
   }
 
@@ -143,25 +141,23 @@ static weed_error_t  avol_process(weed_plant_t *inst, weed_timecode_t timestamp)
       if (pan[i] < 0.) volr *= (1. + pan[i]);
       else voll *= (1. - pan[i]);
       if (swapchans[i] == WEED_FALSE) {
-        while (nsamps--) {
-          *(dst[0]++) += voll * (*(src[0]++));
-          *(dst[1]++) += volr * (*(src[1]++));
+        for (j = 0; j < nsamps; j++) {
+          dst[0][j] += voll * src[0][j];
+          dst[1][j] += volr * src[1][j];
         }
       } else {
         if (swappan[i]) {
-          tmp = voll;
-          voll = volr;
-          volr = tmp;
+          tmp = voll; voll = volr; volr = tmp;
         }
-        while (nsamps--) {
-          tmp = volr * (*(src[0]++)); // in case inplace, src[0] will become dst[0]
-          *(dst[0]++) += voll * (*(src[1]++));
-          *(dst[1]++) += tmp;
+        for (j = 0; j < nsamps; j++) {
+          tmp = volr * src[0][j]; // in case inplace, src[0] will become dst[0]
+          dst[0][j] += voll * src[1][j];
+          dst[1][j] += tmp;
         }
       }
     } else if (chans == 1) {
-      while (nsamps--) {
-        *(dst[0]++) += vol[0] * (*(src[0]++));
+      for (j = 0; j < nsamps; j++) {
+        dst[0][j] += vol[0] * src[0][j];
       }
     }
   }
@@ -188,15 +184,12 @@ WEED_SETUP_START(200, 200) {
 
   weed_plant_t *in_params[] = {weed_float_init("volume", "_Volume", 1.0, 0.0, 1.0), weed_float_init("pan", "_Pan", 0., -1., 1.),
                                weed_switch_init("swap", "_Swap left and right channels", WEED_FALSE),
-                               weed_switch_init("swappan", "_Swap panning when channels swap", WEED_TRUE),
-                               NULL
+                               weed_switch_init("swappan", "_Swap panning when channels swap", WEED_TRUE), NULL
                               };
 
   weed_plant_t *filter_class = weed_filter_class_init("audio volume and pan", "salsaman", 2,
                                WEED_FILTER_IS_CONVERTER | WEED_FILTER_HINT_PROCESS_LAST, NULL,
-                               avol_init,
-                               avol_process,
-                               NULL, in_chantmpls, out_chantmpls, in_params, NULL);
+                               avol_init, avol_process, NULL, in_chantmpls, out_chantmpls, in_params, NULL);
 
   weed_set_int_value(in_chantmpls[0], WEED_LEAF_MAX_REPEATS, 0); // set optional repeats of this channel
 

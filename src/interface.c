@@ -811,7 +811,8 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
   widget_opts.mnemonic_label = TRUE;
   lives_box_pack_start(LIVES_BOX(vbox), procw->label, FALSE, FALSE, 0);
 
-  procw->progressbar = lives_progress_bar_new();
+  procw->progressbar = lives_standard_progress_bar_new();
+
   lives_progress_bar_set_pulse_step(LIVES_PROGRESS_BAR(procw->progressbar), .01);
   lives_box_pack_start(LIVES_BOX(vbox), procw->progressbar, FALSE, FALSE, 0);
 
@@ -917,7 +918,8 @@ xprocess *create_processing(const char *text) {
 
   lives_box_pack_start(LIVES_BOX(vbox3), procw->label, TRUE, TRUE, 0);
 
-  procw->progressbar = lives_progress_bar_new();
+  procw->progressbar = lives_standard_progress_bar_new();
+
   lives_box_pack_start(LIVES_BOX(vbox3), procw->progressbar, FALSE, FALSE, 0);
   if (palette->style & STYLE_1) {
     lives_widget_set_fg_color(procw->progressbar, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -931,11 +933,14 @@ xprocess *create_processing(const char *text) {
 
   lives_box_pack_start(LIVES_BOX(vbox3), procw->label2, FALSE, FALSE, 0);
 
+#ifdef PROGBAR_IS_ENTRY
+  procw->label3 = procw->progressbar;
+#else
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   procw->label3 = lives_standard_label_new("");
   lives_box_pack_start(LIVES_BOX(vbox3), procw->label3, FALSE, FALSE, 0);
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
-
+#endif
   widget_opts.expand = LIVES_EXPAND_EXTRA;
   hbox = lives_hbox_new(FALSE, widget_opts.filler_len * 8);
   add_fill_to_box(LIVES_BOX(hbox));
@@ -5574,6 +5579,7 @@ static void cleards_cb(LiVESWidget * w, LiVESWidget * dlg) {
   lives_widget_hide(dlg);
   on_cleardisk_activate(NULL, NULL);
   lives_widget_show(dlg);
+
 }
 
 void run_diskspace_dialog_cb(LiVESWidget * w, livespointer data) {
@@ -5908,7 +5914,7 @@ boolean update_dsu(livespointer data) {
       capable->ds_free = dsu;
       mainw->dsu_scanning = FALSE;
       if (mainw->dsu_widget) {
-        txt = lives_format_storage_space_string(dsu);
+        txt = lives_format_storage_space_string(capable->ds_used);
         lives_label_set_text(LIVES_LABEL(dsq->used_label), txt);
         lives_free(txt);
         draw_dsu_widget(mainw->dsu_widget);

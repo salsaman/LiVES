@@ -485,7 +485,7 @@ void lives_exit(int signum) {
             reset_message_area();
             lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
             if (mainw->idlemax == 0) {
-              lives_idle_add(resize_message_area, NULL);
+              lives_idle_add_simple(resize_message_area, NULL);
             }
             mainw->idlemax = DEF_IDLE_MAX;
           }
@@ -8277,7 +8277,7 @@ void on_loop_cont_activate(LiVESMenuItem * menuitem, livespointer user_data) {
         }
         lives_image_set_from_pixbuf(LIVES_IMAGE(loop_img), pixbuf2);
         lives_standard_button_set_image(LIVES_BUTTON(mainw->p_loopbutton), loop_img);
-        lives_widget_object_unref(pixbuf);
+        //lives_widget_object_unref(pixbuf);
       }
     }
   }

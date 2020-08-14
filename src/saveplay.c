@@ -2447,11 +2447,11 @@ void play_file(void) {
         }
 
         /// needed
-        if (mainw->multitrack == NULL) {
+        if (!mainw->multitrack) {
           lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
         } else {
           /// this doesn't get called if we don't call resize_play_window()
-          if (mainw->play_window != NULL) {
+          if (mainw->play_window) {
             if (prefs->show_playwin) {
               lives_window_present(LIVES_WINDOW(mainw->play_window));
               lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
@@ -2459,7 +2459,7 @@ void play_file(void) {
 	    }}}}}
     // *INDENT-ON*
 
-    if (mainw->play_window != NULL) {
+    if (mainw->play_window) {
       hide_cursor(lives_widget_get_xwindow(mainw->play_window));
       lives_widget_set_app_paintable(mainw->play_window, TRUE);
       play_window_set_title();
@@ -2474,7 +2474,7 @@ void play_file(void) {
       else resize(1);
     }
 
-    if (mainw->vpp != NULL && mainw->vpp->fheight > -1 && mainw->vpp->fwidth > -1) {
+    if (mainw->vpp && mainw->vpp->fheight > -1 && mainw->vpp->fwidth > -1) {
       // fixed o/p size for stream
       if (mainw->vpp->fwidth * mainw->vpp->fheight == 0) {
         mainw->vpp->fwidth = DEF_VPP_HSIZE;
@@ -2536,17 +2536,21 @@ void play_file(void) {
   lives_free(com3);
   com3 = lives_strdup(" ");
 
-  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
+  if (!mainw->multitrack) {
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
 
-  mainw->last_blend_file = -1;
+    mainw->last_blend_file = -1;
 
-  // show the framebar
-  if (mainw->multitrack == NULL && !mainw->faded && (!prefs->hide_framebar &&
-      (!mainw->fs || (widget_opts.monitor + 1 != prefs->play_monitor && prefs->play_monitor != 0 && capable->nmonitors > 1 &&
-                      mainw->sep_win) ||
-       (mainw->vpp != NULL && mainw->sep_win && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) &&
-      ((!mainw->preview && (cfile->frames > 0 || mainw->foreign)) || cfile->opening))) {
-    //lives_widget_show(mainw->framebar);
+    // show the framebar
+    if (mainw->multitrack == NULL && !mainw->faded
+        && (!prefs->hide_framebar &&
+            (!mainw->fs || (widget_opts.monitor + 1 != prefs->play_monitor && prefs->play_monitor != 0
+                            && capable->nmonitors > 1 &&
+                            mainw->sep_win) ||
+             (mainw->vpp != NULL && mainw->sep_win && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) &&
+            ((!mainw->preview && (cfile->frames > 0 || mainw->foreign)) || cfile->opening))) {
+      lives_widget_show(mainw->framebar);
+    }
   }
 
   cfile->play_paused = FALSE;
@@ -3410,7 +3414,7 @@ void play_file(void) {
     redraw_timeline(mainw->current_file);
   }
 
-  if (prefs->show_msg_area && mainw->multitrack == NULL) {
+  if (prefs->show_msg_area) {
     if (mainw->idlemax == 0) {
       lives_idle_add_simple(resize_message_area, NULL);
     }

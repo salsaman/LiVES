@@ -753,11 +753,13 @@ boolean do_startup_tests(boolean tshoot) {
   if (success2) {
     // TODO - add a timeout
 #ifndef IS_MINGW
-    com = lives_strdup_printf("LANG=en LANGUAGE=en %s -ao help | grep pcm >/dev/null 2>&1", prefs->video_open_command);
+    com = lives_strdup_printf("LANG=en LANGUAGE=en %s -ao help | %s pcm >/dev/null 2>&1", prefs->video_open_command,
+                              capable->grep_cmd);
     res = lives_system(com, TRUE);
     lives_free(com);
 #else
-    com = lives_strdup_printf("%s -ao help | grep pcm >NUL 2>&1", prefs->video_open_command);
+    com = lives_strdup_printf("%s -ao help | %s pcm >NUL 2>&1", prefs->video_open_command,
+                              capable->grep_cmd);
     res = lives_system(com, TRUE);
     lives_free(com);
 #endif
@@ -803,10 +805,11 @@ boolean do_startup_tests(boolean tshoot) {
     else lookfor = "png file";
 
 #ifndef IS_MINGW
-    com = lives_strdup_printf("LANG=en LANGUAGE=en %s -vo help | grep -i \"%s\" >/dev/null 2>&1",
-                              prefs->video_open_command, lookfor);
+    com = lives_strdup_printf("LANG=en LANGUAGE=en %s -vo help | %s -i \"%s\" >/dev/null 2>&1",
+                              prefs->video_open_command, capable->grep_cmd, lookfor);
 #else
-    com = lives_strdup_printf("%s -vo help | grep -i \"%s\" >NUL 2>&1", prefs->video_open_command, lookfor);
+    com = lives_strdup_printf("%s -vo help | %s -i \"%s\" >NUL 2>&1", prefs->video_open_command,
+                              capable->grep_cmd, lookfor);
 #endif
     res = lives_system(com, TRUE);
     lives_free(com);
@@ -901,12 +904,13 @@ boolean do_startup_tests(boolean tshoot) {
 
   if (success2) {
 #ifndef IS_MINGW
-    com = lives_strdup_printf("LANG=en LANGUAGE=en %s -vo help | grep -i \"%s\" >/dev/null 2>&1",
-                              prefs->video_open_command, lookfor);
+    com = lives_strdup_printf("LANG=en LANGUAGE=en %s -vo help | %s -i \"%s\" >/dev/null 2>&1",
+                              prefs->video_open_command, capable->grep_cmd, lookfor);
     res = lives_system(com, TRUE);
     lives_free(com);
 #else
-    com = lives_strdup_printf("%s -vo help | grep -i \"%s\" >NUL 2>&1", prefs->video_open_command, lookfor);
+    com = lives_strdup_printf("%s -vo help | %s -i \"%s\" >NUL 2>&1", prefs->video_open_command,
+                              capable->grep_cmd, lookfor);
     res = lives_system(com, TRUE);
     lives_free(com);
 #endif

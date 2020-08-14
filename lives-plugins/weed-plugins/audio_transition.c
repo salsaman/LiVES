@@ -12,7 +12,7 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#define NEEDS_AUDIO
+#define NEED_AUDIO
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>

@@ -1051,6 +1051,9 @@ typedef struct {
   char ln_cmd[PATH_MAX];
   char chmod_cmd[PATH_MAX];
   char cat_cmd[PATH_MAX];
+  char grep_cmd[PATH_MAX];
+  char sed_cmd[PATH_MAX];
+  char wc_cmd[PATH_MAX];
   char echo_cmd[PATH_MAX];
   char eject_cmd[PATH_MAX];
   char rmdir_cmd[PATH_MAX];
@@ -1072,6 +1075,7 @@ typedef struct {
   char *myname_full;
   char *myname;
 
+  char *cpu_name;
   short cpu_bits;
   int xstdout;
   int nmonitors;
@@ -1080,6 +1084,8 @@ typedef struct {
   pid_t mainpid;
   pthread_t main_thread;
   pthread_t gui_thread;
+
+  char *username;
 
   mode_t umask;
 
@@ -1094,6 +1100,16 @@ typedef struct {
 
   int64_t ds_used, ds_free, ds_tot;
   char *mountpoint;  ///< utf-8
+
+  char *os_name;
+  char *os_release;
+  char *os_hardware;
+
+  char *distro_name;
+  char *distro_ver;
+  char *distro_codename;
+
+  char *mach_name;
 } capability;
 
 /// some shared structures

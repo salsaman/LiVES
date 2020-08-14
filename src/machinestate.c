@@ -1550,7 +1550,7 @@ LIVES_GLOBAL_INLINE uint32_t fast_hash(const char *key) {
 
 LIVES_GLOBAL_INLINE char *lives_strstop(char *st, const char term) {
   /// truncate st, replacing term with \0
-  if (st && term) for (char *p = (char *)st; *p; p++) if (*p == term) {*p = 0; return st;}
+  if (st && term) for (int i = 0; st[i]; i++) if (st[i] == term) {st[i] = 0; break;}
   return st;
 }
 
@@ -1803,6 +1803,7 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_sync_ready(lives_proc_thread_t tinfo)
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_check(lives_proc_thread_t tinfo) {
   /// returns FALSE while the thread is running, TRUE once it has finished
+  if (!tinfo) return TRUE;
   return (weed_leaf_num_elements(tinfo, _RV_) > 0
           || weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL) == WEED_TRUE);
 }
@@ -2636,12 +2637,10 @@ char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase,
   size_t nlines, mwlen;
   int m, minpieces;
 
-  break_me("GIC");
+  //break_me("GIC");
 
   if (!mphrase || npieces < -1 || !npieces || rlen < 1 || (ridx <= mstart && ridx + rlen > mstart)
       || (npieces > 0 && (ridx + rlen > npieces || mstart >= npieces))) return NULL;
-
-  g_print("OIK\n");
 
   mwlen = get_token_count(mphrase, ' ');
   if (mstart + mwlen > npieces
@@ -2656,8 +2655,6 @@ char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase,
     THREADVAR(com_failed) = FALSE;
     goto grpcln;
   }
-
-  g_print("got buff %s\n", buff);
 
   minpieces = MAX(mstart + mwlen, ridx + rlen);
 
@@ -2860,14 +2857,16 @@ boolean get_wm_caps(void) {
   if (capable->has_wm_caps) return TRUE;
   capable->has_wm_caps = TRUE;
   wmname = getenv(XDG_CURRENT_DESKTOP);
+
   if (!wmname) {
     if (capable->wm) wmname = capable->wm;
   }
   if (!wmname) return FALSE;
+
   capable->has_wm_caps = TRUE;
   lives_snprintf(capable->wm_caps.wm_name, 64, "%s", wmname);
 
-  if (!strcmp(wmname, WM_XFWM4)) {
+  if (!strcmp(wmname, WM_XFWM4) || !strcmp(capable->wm, WM_XFWM4)) {
     lives_snprintf(capable->wm_caps.panel, 64, "%s", WM_XFCE4_PANEL);
     capable->wm_caps.pan_annoy = ANNOY_DISPLAY | ANNOY_FS;
     capable->wm_caps.pan_res = RES_HIDE | RESTYPE_ACTION;
@@ -2972,5 +2971,51 @@ boolean check_snap(const char *prog) {
   char *res = grep_in_cmd(com, 0, 1, prog, 0, 1);
   if (!res) return FALSE;
   lives_free(res);
+  return TRUE;
+}
+
+
+#define LSB_OS_FILE "/etc/lsb-release"
+boolean get_distro_dets(void) {
+  char *com = lives_strdup_printf("%s %s", capable->cat_cmd, LSB_OS_FILE), *ret;
+  if ((ret = mini_popen(com))) {
+    int xlen = get_token_count(ret, '=');
+    char **array = lives_strsplit(ret, "=", xlen);
+    lives_free(ret);
+    if (xlen > 1) {
+      lives_strstop(array[1], '\n');
+      capable->distro_name = lives_strdup(array[1]);
+      if (xlen > 2) {
+	lives_strstop(array[2], '\n');
+	capable->distro_ver = lives_strdup(array[2]);
+	if (xlen > 3) {
+	  lives_strstop(array[3], '\n');
+	  capable->distro_codename = lives_strdup(array[3]);
+	}}}
+    lives_strfreev(array);
+    return TRUE;
+  }
+  return FALSE;
+}
+
+
+boolean get_machine_dets(void) {
+  char *com = lives_strdup_printf("%s -m1 \"^model name\" /proc/cpuinfo | %s -e \"s/.*: //\" -e \"s:\\s\\+:/:g\"",
+				  capable->grep_cmd, capable->sed_cmd);
+  capable->cpu_name = mini_popen(com);
+  com = lives_strdup("uname -o");
+  capable->os_name = mini_popen(com);
+  com = lives_strdup("uname -r");
+  capable->os_release = mini_popen(com);
+  com = lives_strdup("uname -m");
+  capable->os_hardware = mini_popen(com);
+  com = lives_strdup("uname -n");
+  capable->mach_name = mini_popen(com);
+  com = lives_strdup("whoami");
+  capable->username = mini_popen(com);
+  if (THREADVAR(com_failed)) {
+    THREADVAR(com_failed) = FALSE;
+    return FALSE;
+  }
   return TRUE;
 }

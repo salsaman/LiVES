@@ -12077,8 +12077,9 @@ static void *swscale_threadfunc(void *arg) {
   if (swparams->layer) {
     int last = swparams->iheight * (swparams->thread_id + 1);
     while ((scan = weed_get_int_value(swparams->layer, WEED_LEAF_PROGSCAN, NULL)) > 0
-           && scan - 2 < last)
+           && scan < last) {
       lives_nanosleep(100);
+    }
   }
   swparams->ret = sws_scale(swparams->swscale, (const uint8_t *const *)swparams->ipd, swparams->irw,
                             0, swparams->iheight, (uint8_t *const *)swparams->opd, swparams->orw);
@@ -12489,7 +12490,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 
 #else
     if (progscan)
-      while ((scan = weed_get_int_value(layer, WEED_LEAF_PROGSCAN, NULL)) > 0 && scan - 2 < iheight)
+      while ((scan = weed_get_int_value(layer, WEED_LEAF_PROGSCAN, NULL)) > 0 && scan < iheight)
         lives_nanosleep(100);
     height = sws_scale(swscale, (const uint8_t *const *)ipd, irw, 0, iheight,
                        (uint8_t *const *)opd, orw);

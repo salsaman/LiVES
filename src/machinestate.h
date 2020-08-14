@@ -573,6 +573,8 @@ boolean hide_desktop_panel(void);
 boolean get_x11_visible(const char *wname);
 
 boolean get_wm_caps(void);
+boolean get_distro_dets(void);
+boolean get_machine_dets(void);
 
 char *get_systmpdir(void);
 boolean check_snap(const char *prog);

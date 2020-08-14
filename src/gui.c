@@ -383,9 +383,7 @@ void create_LiVES(void) {
     lives_container_set_border_width(LIVES_CONTAINER(LIVES_MAIN_WINDOW_WIDGET), 0);
     lives_window_set_monitor(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), widget_opts.monitor);
     mainw->config_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET),
-                         LIVES_WIDGET_CONFIGURE_EVENT,
-                         LIVES_GUI_CALLBACK(config_event),
-                         NULL);
+                         LIVES_WIDGET_CONFIGURE_EVENT, LIVES_GUI_CALLBACK(config_event), NULL);
   }
   ////////////////////////////////////
 
@@ -2198,7 +2196,6 @@ void create_LiVES(void) {
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->video_draw), LIVES_WIDGET_CONFIGURE_EVENT,
                                   LIVES_GUI_CALLBACK(config_vid_draw), NULL);
 
-
   lives_widget_set_size_request(mainw->video_draw, -1, CE_VIDBAR_HEIGHT);
   lives_widget_set_hexpand(mainw->video_draw, TRUE);
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->video_draw, FALSE, TRUE, widget_opts.packing_height / 2);
@@ -2559,7 +2556,7 @@ void create_LiVES(void) {
     lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_KEY_RELEASE_EVENT,
                          LIVES_GUI_CALLBACK(key_press_or_release), NULL);
   }
-  mainw->pb_fps_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->spinbutton_pb_fps),
+  mainw->pb_fps_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->spinbutton_pb_fps),
                        LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(changed_fps_during_pb), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->open), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -3636,7 +3633,7 @@ void make_preview_box(void) {
         lives_pixbuf_saturate_and_pixelate(pixbuf2, pixbuf2, 0.2, FALSE);
       }
       lives_image_set_from_pixbuf(LIVES_IMAGE(loop_img), pixbuf2);
-      lives_widget_object_unref(pixbuf);
+      //lives_widget_object_unref(pixbuf);
     }
   }
 
@@ -4695,7 +4692,7 @@ void splash_end(void) {
   if (mainw && LIVES_MAIN_WINDOW_WIDGET && prefs && prefs->startup_phase != 0) lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
   lives_widget_context_update();
 
-  if (prefs->startup_interface == STARTUP_MT && prefs->startup_phase == 0 && mainw->multitrack == NULL) {
+  if (prefs->startup_interface == STARTUP_MT && prefs->startup_phase == 0 && !mainw->multitrack) {
     // realize the window so it gets added to wm toplevels
     //lives_widget_realize(LIVES_MAIN_WINDOW_WIDGET);
     on_multitrack_activate(NULL, NULL);

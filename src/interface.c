@@ -830,9 +830,9 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
   procw->label3 = procw->progressbar;
 #else
   procw->label3 = lives_standard_label_new("");
-  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_box_pack_start(LIVES_BOX(vbox), procw->label3, FALSE, FALSE, 0);
 #endif
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   widget_opts.expand = LIVES_EXPAND_EXTRA;
   hbox = lives_hbox_new(FALSE, widget_opts.filler_len * 8);
   add_fill_to_box(LIVES_BOX(hbox));
@@ -867,9 +867,10 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
   }
 
   if (lives_has_toplevel_focus(LIVES_MAIN_WINDOW_WIDGET)) {
-    lives_widget_show_all(procw->processing);
     *td_had_focus = TRUE;
   } else *td_had_focus = FALSE;
+
+  lives_widget_show_all(procw->processing);
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, procw->processing);
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
@@ -933,14 +934,14 @@ xprocess *create_processing(const char *text) {
 
   lives_box_pack_start(LIVES_BOX(vbox3), procw->label2, FALSE, FALSE, 0);
 
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
 #ifdef PROGBAR_IS_ENTRY
   procw->label3 = procw->progressbar;
 #else
-  widget_opts.justify = LIVES_JUSTIFY_CENTER;
   procw->label3 = lives_standard_label_new("");
   lives_box_pack_start(LIVES_BOX(vbox3), procw->label3, FALSE, FALSE, 0);
-  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 #endif
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   widget_opts.expand = LIVES_EXPAND_EXTRA;
   hbox = lives_hbox_new(FALSE, widget_opts.filler_len * 8);
   add_fill_to_box(LIVES_BOX(hbox));
@@ -6817,14 +6818,7 @@ boolean msg_area_config(LiVESWidget * widget) {
   h = mainw->assumed_height;
   if (h == -1) h = hh;
 
-  if (mainw->multitrack) {
-    overflowx = lives_widget_get_allocation_width(widget) +
-                lives_widget_get_allocation_width(mainw->multitrack->msg_scrollbar) - ww;
-
-    overflowy = lives_paned_get_position(LIVES_PANED(mainw->multitrack->top_vpaned)) +
-                lives_widget_get_allocation_height(mainw->multitrack->menu_hbox) + by +
-                lives_widget_get_allocation_y(widget) + lives_widget_get_allocation_height(widget) - hh;
-  } else {
+  if (!mainw->multitrack) {
     overflowx = ww - (scr_width - bx);
     overflowy = hh - (scr_height - by);
 #ifdef DEBUG_OVERFLOW
@@ -6950,9 +6944,13 @@ boolean msg_area_config(LiVESWidget * widget) {
     if (height > 0 && width > 0) {
       if (mainw->multitrack) {
         if (height <= MIN_MSGBAR_HEIGHT) {
+          int pos = lives_paned_get_position(LIVES_PANED(mainw->multitrack->top_vpaned));
+          pos = pos + height - MIN_MSGBAR_HEIGHT;
           height = MIN_MSGBAR_HEIGHT;
           lives_container_child_set_shrinkable(LIVES_CONTAINER(mainw->multitrack->top_vpaned),
                                                mainw->multitrack->vpaned, FALSE);
+          lives_paned_set_position(LIVES_PANED(mainw->multitrack->top_vpaned), pos);
+
         } else
           lives_container_child_set_shrinkable(LIVES_CONTAINER(mainw->multitrack->top_vpaned),
                                                mainw->multitrack->vpaned, TRUE);

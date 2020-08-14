@@ -92,18 +92,18 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
   boolean def_ok = FALSE;
   int i;
 
-  if (button != NULL) {
+  if (button) {
     lives_widget_set_sensitive(LIVES_WIDGET(button), FALSE);
     dialog = lives_widget_get_toplevel(LIVES_WIDGET(button));
   }
 
-  if (dialog != NULL && LIVES_IS_DIALOG(dialog)) {
+  if (dialog && LIVES_IS_DIALOG(dialog)) {
     if (lives_dialog_get_response_for_widget(LIVES_DIALOG(dialog), LIVES_WIDGET(button)) == LIVES_RESPONSE_OK) {
       def_ok = TRUE;
     }
   }
 
-  if (mainw->textwidget_focus != NULL && LIVES_IS_WIDGET_OBJECT(mainw->textwidget_focus)) {
+  if (mainw->textwidget_focus && LIVES_IS_WIDGET_OBJECT(mainw->textwidget_focus)) {
     // make sure text widgets are updated if they activate the default
     LiVESWidget *textwidget =
       (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus), TEXTWIDGET_KEY);
@@ -112,13 +112,13 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
 
   if (!special_cleanup(def_ok)) {
     lives_dialog_response(LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))), LIVES_RESPONSE_RETRY);
-    if (button != NULL) lives_widget_set_sensitive(LIVES_WIDGET(button), TRUE);
+    if (button) lives_widget_set_sensitive(LIVES_WIDGET(button), TRUE);
     return;
   }
 
   mainw->textwidget_focus = NULL;
 
-  if (def_ok && rfx != NULL && rfx->status != RFX_STATUS_SCRAP) mainw->keep_pre = mainw->did_rfx_preview;
+  if (def_ok && rfx && rfx->status != RFX_STATUS_SCRAP) mainw->keep_pre = mainw->did_rfx_preview;
 
   mainw->block_param_updates = TRUE;
 
@@ -147,15 +147,15 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
   }
 
   if (!def_ok) {
-    if (rfx != NULL && mainw->is_generating && rfx->source_type == LIVES_RFX_SOURCE_NEWCLIP &&
+    if (rfx && mainw->is_generating && rfx->source_type == LIVES_RFX_SOURCE_NEWCLIP &&
         CURRENT_CLIP_IS_NORMAL && rfx->source == cfile &&
-        rfx->name != NULL && rfx->status != RFX_STATUS_WEED && rfx->status != RFX_STATUS_SCRAP &&
+        rfx->name && rfx->status != RFX_STATUS_WEED && rfx->status != RFX_STATUS_SCRAP &&
         rfx->num_in_channels == 0 && rfx->min_frames >= 0 && !rfx->is_template) {
       // for a generator, we silently close the (now) temporary file we would have generated frames into
       mainw->suppress_dprint = TRUE;
       close_current_file(mainw->pre_src_file);
       mainw->suppress_dprint = FALSE;
-      if (mainw->multitrack != NULL) mainw->pre_src_file = -1;
+      if (mainw->multitrack) mainw->pre_src_file = -1;
       mainw->is_generating = FALSE;
       rfx->source = NULL;
       rfx->source_type = LIVES_RFX_SOURCE_RFX;
@@ -163,29 +163,29 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
     mainw->keep_pre = FALSE;
   }
 
-  if (rfx == NULL) {
-    if (usrgrp_to_livesgrp[1] != NULL) lives_slist_free(usrgrp_to_livesgrp[1]);
+  if (!rfx) {
+    if (usrgrp_to_livesgrp[1]) lives_slist_free(usrgrp_to_livesgrp[1]);
     usrgrp_to_livesgrp[1] = NULL;
   } else {
     if (rfx->status == RFX_STATUS_WEED) {
-      if (usrgrp_to_livesgrp[1] != NULL) lives_slist_free(usrgrp_to_livesgrp[1]);
+      if (usrgrp_to_livesgrp[1]) lives_slist_free(usrgrp_to_livesgrp[1]);
       usrgrp_to_livesgrp[1] = NULL;
       if (rfx != mainw->fx_candidates[FX_CANDIDATE_RESIZER].rfx) {
         rfx_free(rfx);
         lives_free(rfx);
       }
     } else {
-      if (usrgrp_to_livesgrp[0] != NULL) lives_slist_free(usrgrp_to_livesgrp[0]);
+      if (usrgrp_to_livesgrp[0]) lives_slist_free(usrgrp_to_livesgrp[0]);
       usrgrp_to_livesgrp[0] = NULL;
     }
   }
 
   mainw->block_param_updates = FALSE;
 
-  if (def_ok && rfx != NULL && rfx->status == RFX_STATUS_SCRAP) return;
+  if (def_ok && rfx && rfx->status == RFX_STATUS_SCRAP) return;
 
-  if (button != NULL)
-    if (dialog != NULL) {
+  if (button)
+    if (dialog) {
       // prevent a gtk+ crash by removing the focus before detroying the dialog
       LiVESWidget *content_area = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
       lives_container_set_focus_child(LIVES_CONTAINER(content_area), NULL);
@@ -198,7 +198,7 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
     else on_render_fx_activate(NULL, rfx);
   }
 
-  if (mainw->multitrack != NULL) {
+  if (mainw->multitrack) {
     polymorph(mainw->multitrack, POLY_NONE);
     polymorph(mainw->multitrack, POLY_CLIPS);
     mt_sensitise(mainw->multitrack);
@@ -404,7 +404,6 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
                                     (livespointer)rfx);
 
     after_transaudio_toggled(LIVES_TOGGLE_BUTTON(checkbutton), (livespointer)rfx);
-
   }
 
   widget_opts.pack_end = TRUE;
@@ -677,13 +676,13 @@ LIVES_GLOBAL_INLINE void on_render_fx_pre_activate(LiVESMenuItem *menuitem, live
     }
   }
   fxdialog = on_fx_pre_activate(rfx, FALSE, NULL);
-  if (fxdialog != NULL) {
+  if (fxdialog) {
     if (menuitem == LIVES_MENU_ITEM(mainw->resize_menuitem)) add_resnn_label(LIVES_DIALOG(fxdialog->dialog));
-    do {
-      resp = lives_dialog_run(LIVES_DIALOG(fxdialog->dialog));
-    } while (resp == LIVES_RESPONSE_RETRY);
+    /* do { */
+    /*   resp = lives_dialog_run(LIVES_DIALOG(fxdialog->dialog)); */
+    /* } while (resp == LIVES_RESPONSE_RETRY); */
   }
-  lives_freep((void **)&fx_dialog[0]);
+
 }
 
 
@@ -933,10 +932,10 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
   }
 
   // tweak some things to do with framedraw preview
-  if (mainw->framedraw != NULL) fd_tweak(rfx);
+  if (mainw->framedraw) fd_tweak(rfx);
   lives_widget_show_all(fx_dialog[didx]->dialog);
 
-  if (retvals != NULL) {
+  if (retvals) {
     // now apply visually anything we got from onchange_init
     param_demarshall(rfx, retvals, TRUE, TRUE);
     lives_list_free_all(&retvals);

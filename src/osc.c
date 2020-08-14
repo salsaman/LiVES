@@ -807,7 +807,7 @@ static boolean osc_fx_on(int effect_key) {
     if (mainw->preview || (mainw->multitrack == NULL && mainw->event_list != NULL) || mainw->is_processing ||
         mainw->multitrack != NULL) return lives_osc_notify_failure();
     mainw->error = FALSE;
-    lives_timer_add(0, osc_init_generator, LIVES_INT_TO_POINTER(effect_key));
+    lives_timer_add_simple(0, osc_init_generator, LIVES_INT_TO_POINTER(effect_key));
     return TRUE;
   } else {
     rte_key_toggle(effect_key);

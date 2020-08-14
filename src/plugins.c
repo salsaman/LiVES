@@ -120,6 +120,8 @@ LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const c
 
   // TODO - use enum for plugin_type
 
+  // format is: allow_nonex (0 or 1) allow_subdirs (0 or 1)  plugindir   ext
+
   char *com, *tmp;
   LiVESList *pluglist;
 

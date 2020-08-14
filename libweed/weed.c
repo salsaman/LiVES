@@ -101,7 +101,6 @@ typedef struct {
 typedef struct {
   leaf_priv_data_t	ldata;
   pthread_rwlock_t	reader_count;
-  pthread_mutex_t	atomic_mutex;
   pthread_mutex_t	structure_mutex;
 } plant_priv_data_t;
 
@@ -121,7 +120,6 @@ typedef struct {
 
 #define get_structure_mutex(plant) (&(((plant_priv_data_t *)((plant)->private_data))->structure_mutex))
 
-#define get_reader_mutex(plant) (&(((plant_priv_data_t *)((plant)->private_data))->atomic_mutex))
 
 #define get_count_lock(plant) (&(((plant_priv_data_t *)((plant)->private_data))->reader_count))
 
@@ -155,14 +153,6 @@ typedef struct {
 
 #define structure_mutex_unlock(obj) do {				\
     if ((obj)) pthread_mutex_unlock(get_structure_mutex((obj)));} while (0)
-
-#define atomic_mutex_trylock(obj) (pthread_mutex_trylock(get_reader_mutex((obj))))
-
-#define atomic_mutex_lock(obj) do {					\
-    if ((obj)) pthread_mutex_lock(get_reader_mutex((obj)));} while (0)
-
-#define atomic_mutex_unlock(obj) do {					\
-    if ((obj)) pthread_mutex_unlock(get_reader_mutex((obj)));} while (0)
 
 #define reader_count_add(obj) do {					\
     if ((obj)) pthread_rwlock_rdlock(get_count_lock((obj)));} while (0)
@@ -215,17 +205,13 @@ static int chain_lock_upgrade(weed_leaf_t *leaf, int have_rdlock, int is_del) {
     // with the mutex held, other threads will be blocked
     // and released their readlocks, allowing us to proceed
 
-    if (!have_rdlock)
-      // we want to make getting writelock and setting OP_DELETE atomic
-      atomic_mutex_lock(leaf);
-
     chain_lock_writelock(leaf);
 
     // if it is a SET, then we release the mutex; the next writer
     // will block on writelock; subsequent writeers will block on the mutex
     if (is_del) leaf->flags |= WEED_FLAG_OP_DELETE;
     else if (!have_rdlock) structure_mutex_unlock(leaf);
-    if (!have_rdlock) atomic_mutex_unlock(leaf);
+
   }
   return 0;
 }
@@ -445,15 +431,15 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key, 
       /// grab rwt mutex
       /// if we get a readlock, then remove it at end
       /// othewise check flagbits, if op. is !SET, run in checking mode
-      atomic_mutex_lock(plant);
       if (chain_lock_try_readlock(plant)) {
 	// another thread has writelock
 	if (plant->flags & WEED_FLAG_OP_DELETE) checkmode = 1;
       }
       else chain_lock_unlock(plant);
       // this counts the number of readers running in non-check mode
-      if (!checkmode) reader_count_add(plant);
-      atomic_mutex_unlock(plant);
+      if (!checkmode) {
+	reader_count_add(plant);
+      }
     }
 
     hash = weed_hash(key);
@@ -474,9 +460,7 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key, 
     if (!hash_ret) {
       chain_lock_unlock(chain_leaf);
       if (!checkmode) {
-	atomic_mutex_lock(plant);
 	reader_count_sub(plant);
-	atomic_mutex_unlock(plant);
       }
     }
   }
@@ -533,7 +517,6 @@ static inline weed_leaf_t *weed_leaf_new(const char *key, uint32_t seed_type, ui
     pthread_mutex_init(&pdata->ldata.data_mutex, NULL);
 
     pthread_rwlock_init(&pdata->reader_count, NULL);
-    pthread_mutex_init(&pdata->atomic_mutex, NULL);
     pthread_mutex_init(&pdata->structure_mutex, NULL);
     leaf->private_data = (void *)pdata;
   }

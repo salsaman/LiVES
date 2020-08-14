@@ -221,7 +221,7 @@ static void jack_transport_check_state(void) {
       !LIVES_IS_PLAYING && mainw->current_file > 0 && !mainw->is_processing) {
     mainw->jack_can_start = FALSE;
     mainw->jack_can_stop = TRUE;
-    lives_timer_add(0, jack_playall, NULL);
+    lives_timer_add_simple(0, jack_playall, NULL);
     return;
   }
 

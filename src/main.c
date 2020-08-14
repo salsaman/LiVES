@@ -243,7 +243,7 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
 #endif
     }
 
-#define BREAK_ON_WARN
+    //#define BREAK_ON_WARN
 #ifdef BREAK_ON_WARN
     if (xlevel <= LIVES_LOG_LEVEL_WARNING) raise(LIVES_SIGTRAP);
 #endif
@@ -717,7 +717,6 @@ static boolean pre_init(void) {
   prefs->nfx_threads = 2;
 #endif
 
-  lives_threadpool_init();
 
   /// check disk storage status /////////////////////////////////////
   mainw->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
@@ -1669,10 +1668,8 @@ static void lives_init(_ign_opts *ign_opts) {
 #endif
 
   *capable->wm_caps.wm_name = 0;
-
   get_wm_caps();
 
-  capable->wm_caps.wm_name[0] = 0;
   prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);
 
   prefs->show_msgs_on_startup = get_boolean_prefd(PREF_MSG_START, TRUE);
@@ -2216,81 +2213,101 @@ static void do_start_messages(void) {
 
   if (prefs->vj_mode) {
     d_print(_("Starting in VJ MODE: Skipping startup dependency checks\n"));
-    goto some_more;
-  }
+  } else {
+    d_print(_("\nChecking RECOMMENDED dependencies: "));
 
-  d_print(_("\nChecking RECOMMENDED dependencies: "));
-
-  SHOWDET(mplayer);
-  if (!capable->has_mplayer) {
-    SHOWDET(mplayer2);
-    if (!capable->has_mplayer2) {
-      SHOWDET(mpv);
+    SHOWDET(mplayer);
+    if (!capable->has_mplayer) {
+      SHOWDET(mplayer2);
+      if (!capable->has_mplayer2) {
+        SHOWDET(mpv);
+      }
     }
+    //SHOWDET(file);
+    SHOWDET(identify);
+    if (!capable->has_jackd)
+      SHOWDETx(pulse_audio, EXEC_PULSEAUDIO);
+    SHOWDETx(sox_sox, EXEC_SOX);
+    SHOWDET(convert);
+    SHOWDET(composite);
+    SHOWDET(ffprobe);
+    SHOWDET(gzip);
+    SHOWDET(md5sum);
+    SHOWDETx(youtube_dl, EXEC_YOUTUBE_DL);
+
+    d_print(_("\n\nChecking OPTIONAL dependencies: "));
+    SHOWDET(jackd);
+    SHOWDET(python);
+    SHOWDET(xwininfo);
+    SHOWDETx(cdda2wav, "cdda2wav/icedax");
+    SHOWDET(dvgrab);
+    SHOWDET(gdb);
+    SHOWDETx(gconftool_2, EXEC_GCONFTOOL_2);
+    SHOWDETx(xdg_screensaver, EXEC_XDG_SCREENSAVER);
   }
-  //SHOWDET(file);
-  SHOWDET(identify);
-  if (!capable->has_jackd)
-    SHOWDETx(pulse_audio, EXEC_PULSEAUDIO);
-  SHOWDETx(sox_sox, EXEC_SOX);
-  SHOWDET(convert);
-  SHOWDET(composite);
-  SHOWDET(ffprobe);
-  SHOWDET(gzip);
-  SHOWDET(md5sum);
-  SHOWDETx(youtube_dl, EXEC_YOUTUBE_DL);
 
-  d_print(_("\n\nChecking OPTIONAL dependencies: "));
-  SHOWDET(jackd);
-  SHOWDET(python);
-  SHOWDET(xwininfo);
-  SHOWDETx(cdda2wav, "cdda2wav/icedax");
-  SHOWDET(dvgrab);
-  SHOWDET(gdb);
-  SHOWDETx(gconftool_2, EXEC_GCONFTOOL_2);
-  SHOWDETx(xdg_screensaver, EXEC_XDG_SCREENSAVER);
-
-some_more:
-#ifndef IS_MINGW
   if (prefs->vj_mode) {
+#ifndef IS_MINGW
     SHOWDET(wmctrl);
     SHOWDET(xdotool);
     SHOWDET(xwininfo);
-  }
 #endif
+  } else {
+    d_print(_("\n\nMachine details:\n"));
 
-  d_print(_("\n\nWindow manager reports as \"%s\"; "), capable->wm ? capable->wm : _("UNKNOWN - please patch me !"));
-  d_print(_("number of monitors detected: %d\n"), capable->nmonitors);
-  d_print(_("Number of CPUs detected: %d "), capable->ncpus);
+    get_machine_dets();
+    d_print(_("OS is %s %s, running on %s\n"),
+            capable->os_name ? capable->os_name : _("unknown"),
+            capable->os_release ? capable->os_release : "?",
+            capable->os_hardware ? capable->os_hardware : "????");
 
-  if (capable->byte_order == LIVES_LITTLE_ENDIAN) endian = (_("little endian"));
-  else endian = (_("big endian"));
-  d_print(_("(%d bits, %s)\n"), capable->cpu_bits, endian);
-  lives_free(endian);
+    d_print(_("CPU type is %s "), capable->cpu_name);
+    d_print(P_("(%d core, ", "(%d cores, ", capable->ncpus), capable->ncpus);
+
+    if (capable->byte_order == LIVES_LITTLE_ENDIAN) endian = (_("little endian"));
+    else endian = (_("big endian"));
+    d_print(_("%d bits, %s)\n"), capable->cpu_bits, endian);
+    lives_free(endian);
+
+    d_print(_("Machine name is '%s'\n"), capable->mach_name);
+  }
+  d_print(_("Number of monitors detected: %d: "), capable->nmonitors);
+
+  d_print(_("GUI screen size is %d X %d (usable: %d X %d); %d dpi.\nWidget scaling set to %.3f.\n"),
+          mainw->mgeom[widget_opts.monitor].phys_width, mainw->mgeom[widget_opts.monitor].phys_height,
+          GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT,
+          (int)mainw->mgeom[widget_opts.monitor].dpi,
+          widget_opts.scale);
+
+  if (get_screen_usable_size(&w, &h)) {
+    d_print(_("Actual usable size appears to be %d X %d\n"), w, h);
+  }
+  if (!prefs->vj_mode) {
+    get_wm_caps();
+
+    d_print(_("Window manager reports as \"%s\" (%s)\n"),
+            capable->wm ? capable->wm : _("UNKNOWN - please patch me !"),
+            capable->wm_caps.wm_name ? capable->wm_caps.wm_name : "unknown");
+
+    get_distro_dets();
+    d_print(_("Distro is %s %s (%s)\n"), capable->distro_name ? capable->distro_name : "?????",
+            capable->distro_ver ? capable->distro_ver : "?????",
+            capable->distro_codename ? capable->distro_codename : "");
+  }
 
   d_print("%s", _("GUI type is: "));
 
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
-  d_print(_("GTK+ "
-            "version %d.%d.%d ("
-            "compiled with %d.%d.%d"
-            ")"),
-          gtk_get_major_version(),
-          gtk_get_minor_version(),
+  d_print(_("GTK+ version %d.%d.%d (compiled with %d.%d.%d)"),
+          gtk_get_major_version(), gtk_get_minor_version(),
           gtk_get_micro_version(),
-          GTK_MAJOR_VERSION,
-          GTK_MINOR_VERSION,
+          GTK_MAJOR_VERSION, GTK_MINOR_VERSION,
           GTK_MICRO_VERSION
          );
 #else
-  d_print(_("GTK+ "
-            "(compiled with %d.%d.%d"
-            ")"),
-          GTK_MAJOR_VERSION,
-          GTK_MINOR_VERSION,
-          GTK_MICRO_VERSION
-         );
+  d_print(_("GTK+ (compiled with %d.%d.%d)"),
+          GTK_MAJOR_VERSION, GTK_MINOR_VERSION, GTK_MICRO_VERSION);
 #endif
 #endif
 
@@ -2299,14 +2316,15 @@ some_more:
 #else
   d_print(_("\n"));
 #endif
+  if (!prefs->vj_mode) {
+    if (*capable->gui_theme_name) tmp = lives_strdup(capable->gui_theme_name);
+    else tmp = lives_strdup_printf("lives-%s-dynamic", prefs->theme);
 
-  if (*capable->gui_theme_name) tmp = lives_strdup(capable->gui_theme_name);
-  else tmp = lives_strdup_printf("lives-%s-dynamic", prefs->theme);
+    d_print("GUI theme set to %s, icon theme set to %s\n", tmp,
+            capable->icon_theme_name);
 
-  d_print("GUI theme set to %s, icon theme set to %s\n", tmp,
-          capable->icon_theme_name);
-
-  lives_free(tmp);
+    lives_free(tmp);
+  }
 
 #ifndef RT_AUDIO
   d_print(_("WARNING - this version of LiVES was compiled without either\njack or pulseaudio support.\n"
@@ -2320,13 +2338,6 @@ some_more:
 #endif
 #endif
 
-  d_print(_("Gui screen size is %d X %d (usable %d X %d), scale was set to %.3f\n"), GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT,
-          mainw->mgeom[widget_opts.monitor].phys_width, mainw->mgeom[widget_opts.monitor].phys_height,
-          widget_opts.scale);
-  if (get_screen_usable_size(&w, &h)) {
-    d_print(_("GUI Screen usable size appears to be %d X %d, with %d dpi.\n"), w, h, (int)mainw->mgeom[widget_opts.monitor].dpi);
-  }
-
   if (user_configdir) {
     tmp = (_("set via -configdir commandline option"));
   } else {
@@ -2335,7 +2346,14 @@ some_more:
   d_print(_("\nConfig directory is %s (%s)\n"), prefs->configdir, tmp);
   lives_free(tmp);
 
-  d_print(_("\nWorking directory is %s\n"), prefs->workdir);
+  if (!prefs->vj_mode && (!capable->mountpoint || !*capable->mountpoint))
+    capable->mountpoint = get_mountpoint_for(prefs->workdir);
+  if (capable->mountpoint && *capable->mountpoint) tmp = lives_strdup_printf(_(", contained in volume %s"), capable->mountpoint);
+  else tmp = lives_strdup("");
+
+  d_print(_("\nWorking directory is %s%s\n"), prefs->workdir, tmp);
+  lives_free(tmp);
+
   if (mainw->has_session_workdir) {
     d_print(_("(Set by -workdir commandline option)\n"));
   } else {
@@ -2397,13 +2415,13 @@ some_more:
 
 static void set_toolkit_theme(int prefer) {
   char *lname;
-  LiVESList *list;
+  //  LiVESList *list;
   if (prefer & LIVES_THEME_DARK) {
     lives_widget_object_set(gtk_settings_get_default(), "gtk-application-prefer-dark-theme", TRUE);
   }
+  lives_widget_object_get(gtk_settings_get_default(), "gtk-icon-theme-name", &capable->icon_theme_name);
   lives_widget_object_set(gtk_settings_get_default(), "gtk-theme-name", "");
   lives_widget_object_get(gtk_settings_get_default(), "gtk-theme-name", &capable->gui_theme_name);
-  lives_widget_object_get(gtk_settings_get_default(), "gtk-icon-theme-name", &capable->icon_theme_name);
 
   lname = lives_strdup("-lives-hybrid");
   capable->icon_theme_name = lives_concat(capable->icon_theme_name, lname);
@@ -2422,9 +2440,10 @@ static void set_toolkit_theme(int prefer) {
   gtk_icon_theme_rescan_if_needed((LiVESIconTheme *)widget_opts.icon_theme);
 
   capable->all_icons = gtk_icon_theme_list_icons((LiVESIconTheme *)widget_opts.icon_theme, NULL);
-  for (list = capable->all_icons; list; list = list->next) {
-    if (!strncmp(list->data, "help-info", 9)) g_print("FOUND %s\n", list->data);
-  }
+
+  /* for (list = capable->all_icons; list; list = list->next) { */
+  /*   if (!strncmp(list->data, "help-info", 9)) g_print("FOUND %s\n", list->data); */
+  /* } */
 
   /* for (i = 0; i < LIVES_N_ICONS; i++) { */
   /*   for (j = 0; j < lives_icons[i].alts; j++) { */
@@ -2436,10 +2455,10 @@ static void set_toolkit_theme(int prefer) {
   /* } */
 
 
-  int nelems;
-  char **array;
-  gtk_icon_theme_get_search_path(widget_opts.icon_theme, &array, &nelems);
-  for (int i = 0; i < nelems; i++) g_print("PAT %d is %s\n", i, array[i]);
+  /* int nelems; */
+  /* char **array; */
+  /* gtk_icon_theme_get_search_path(widget_opts.icon_theme, &array, &nelems); */
+  /* for (int i = 0; i < nelems; i++) g_print("PAT %d is %s\n", i, array[i]); */
 }
 
 
@@ -2805,15 +2824,11 @@ boolean set_palette_colours(boolean force_reload) {
 capability *get_capabilities(void) {
   // get capabilities of backend system
   char **array;
-
   char *msg, *tmp;
-
   char buffer[PATH_MAX * 4];
   char command[PATH_MAX * 4];
   char dir[PATH_MAX];
-
   int numtok;
-
   size_t xs;
 
 #ifdef IS_DARWIN
@@ -3111,7 +3126,9 @@ capability *get_capabilities(void) {
   }
   capable->ncpus = (int)numProcessors;
 #else
-  lives_popen("cat /proc/cpuinfo 2>/dev/null | grep processor 2>/dev/null | wc -l 2>/dev/null", TRUE, buffer, 1024);
+  lives_snprintf(command, PATH_MAX, "%s /proc/cpuinfo 2>/dev/null | %s processor 2>/dev/null | %s -l 2>/dev/null",
+                 capable->cat_cmd, capable->grep_cmd, capable->wc_cmd);
+  lives_popen(command, TRUE, buffer, 1024);
   capable->ncpus = atoi(buffer);
 #endif
 
@@ -3389,11 +3406,14 @@ boolean resize_message_area(livespointer data) {
 /////////////////////////////////////////////////////////////////////////////////////////////////
 static boolean got_files = FALSE;
 static boolean lives_startup2(livespointer data);
-
 static boolean lives_startup(livespointer data) {
   // this is run in an idlefunc
 
   char *tmp, *tmp2, *msg;
+
+
+  lives_threadpool_init();
+
 
   capable->gui_thread = pthread_self();
 
@@ -3589,10 +3609,9 @@ static boolean lives_startup(livespointer data) {
             lives_free(tmp);
             startup_message_nonfatal(msg);
             lives_free(msg);
-          }
-        }
-      }
-    }
+	    // *INDENT-OFF*
+          }}}}
+    // *INDENT-OFF*
     splash_msg(_("Loading rendered effect plugins..."), SPLASH_LEVEL_LOAD_RFX);
     // must call this at least to set up rendered_fx[0]
   } else {
@@ -3684,12 +3703,13 @@ static boolean lives_startup(livespointer data) {
     switch_aud_to_none(FALSE);
   }
 
-  lives_idle_add(lives_startup2, NULL);
+  lives_idle_add_simple(lives_startup2, NULL);
   return FALSE;
 }
 
 
 static boolean lives_startup2(livespointer data) {
+  char *ustr;
   boolean layout_recovered = FALSE;
 
   if (prefs->crash_recovery && !no_recover) got_files = check_for_recovery_files(auto_recover);
@@ -3728,7 +3748,7 @@ static boolean lives_startup2(livespointer data) {
   }
 
 #ifdef HAVE_YUV4MPEG
-  if (strlen(prefs->yuvin) > 0) lives_idle_add(open_yuv4m_startup, NULL);
+  if (strlen(prefs->yuvin) > 0) lives_idle_add_simple(open_yuv4m_startup, NULL);
 #endif
 
   mainw->no_switch_dprint = TRUE;
@@ -3741,7 +3761,13 @@ static boolean lives_startup2(livespointer data) {
 
   if (*devmap) on_devicemap_load_activate(NULL, devmap);
 
-  d_print(_("Welcome to LiVES version %s.\n"), LiVES_VERSION);
+  if (capable->username)
+    ustr = lives_strdup_printf(", %s", capable->username);
+  else
+    ustr = lives_strdup("");
+
+  d_print(_("\nWelcome to LiVES version %s%s !\n"), LiVES_VERSION, ustr);
+  lives_free(ustr);
 
   mainw->no_switch_dprint = FALSE;
   d_print("");
@@ -3758,7 +3784,7 @@ static boolean lives_startup2(livespointer data) {
       }
     }
   } else {
-    lives_idle_add(mt_idle_show_current_frame, (livespointer)mainw->multitrack);
+    lives_idle_add_simple(mt_idle_show_current_frame, (livespointer)mainw->multitrack);
     if (mainw->multitrack->idlefunc == 0) {
       mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
     }
@@ -3775,7 +3801,7 @@ static boolean lives_startup2(livespointer data) {
     if (wid) activate_x11_window(wid);
   }
   if (mainw->recording_recovered) {
-    lives_idle_add(render_choice_idle, LIVES_INT_TO_POINTER(TRUE));
+    lives_idle_add_simple(render_choice_idle, LIVES_INT_TO_POINTER(TRUE));
   }
 
   mainw->overlay_alarm = lives_alarm_set(0);
@@ -4067,6 +4093,9 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   get_location("touch", capable->touch_cmd, PATH_MAX); // needed for make_writeable_dir()
   get_location("rm", capable->rm_cmd, PATH_MAX); // ditto
   get_location("rmdir", capable->rmdir_cmd, PATH_MAX); // ditto
+  get_location("sed", capable->sed_cmd, PATH_MAX); // nice to know
+  get_location("grep", capable->grep_cmd, PATH_MAX); // ditto
+  get_location("wc", capable->wc_cmd, PATH_MAX); // ditto
 
   // get opts first
   if (argc > 1) {
@@ -4636,7 +4665,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   if (!ign_opts.ign_vppdefs)
     lives_snprintf(mainw->vpp_defs_file, PATH_MAX, "%s/%svpp_defaults", prefs->configdir, LIVES_CONFIG_DIR);
 
-  lives_idle_add(lives_startup, NULL);
+  lives_idle_add_simple(lives_startup, NULL);
 
 #ifdef GUI_GTK
   if (gtk_thread == NULL) {
@@ -5431,6 +5460,7 @@ check_stcache:
       layer = lives_layer_new_for_frame(mainw->current_file, frame);
       if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, cfile->hsize, cfile->vsize,
                              WEED_PALETTE_RGB24)) {
+        check_layer_ready(layer);
         interp = get_interp_value(prefs->pb_quality, TRUE);
         if (!resize_layer(layer, cfile->hsize, cfile->vsize, interp, WEED_PALETTE_RGB24, 0) ||
             !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
@@ -5506,6 +5536,7 @@ check_stcache:
     if (!layer && !start_pixbuf) {
       layer = lives_layer_new_for_frame(mainw->current_file, frame);
       if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, width, height, WEED_PALETTE_RGB24)) {
+        check_layer_ready(layer);
         interp = get_interp_value(prefs->pb_quality, TRUE);
         if (!resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0) ||
             !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
@@ -5712,6 +5743,7 @@ check_encache:
         layer = lives_layer_new_for_frame(mainw->current_file, frame);
         if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, cfile->hsize, cfile->vsize,
                                WEED_PALETTE_RGB24)) {
+          check_layer_ready(layer);
           interp = get_interp_value(prefs->pb_quality, TRUE);
           if (!resize_layer(layer, cfile->hsize, cfile->vsize, interp, WEED_PALETTE_RGB24, 0) ||
               !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
@@ -5783,6 +5815,7 @@ check_encache:
       if (!layer && !end_pixbuf) {
         layer = lives_layer_new_for_frame(mainw->current_file, frame);
         if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, width, height, WEED_PALETTE_RGB24)) {
+          check_layer_ready(layer);
           interp = get_interp_value(prefs->pb_quality, TRUE);
           if (!resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0) ||
               !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
@@ -6007,6 +6040,7 @@ void load_preview_image(boolean update_always) {
           if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, mainw->pwidth, mainw->pheight,
                                  WEED_PALETTE_RGB24)) {
             LiVESInterpType interp = get_interp_value(prefs->pb_quality, TRUE);
+            check_layer_ready(layer);
             if (!resize_layer(layer, mainw->pwidth, mainw->pheight, interp, WEED_PALETTE_RGB24, 0) ||
                 !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
               weed_layer_free(layer);
@@ -6206,28 +6240,30 @@ typedef struct {
 } resl_priv_data;
 
 
-static void *res_thrdfunc(void *arg) {
+static lives_proc_thread_t resthread = NULL;
+
+static void res_thrdfunc(void *arg) {
   resl_priv_data *priv = (resl_priv_data *)arg;
   resize_layer(priv->layer, priv->width, priv->height, priv->interp, priv->pal, priv->clamp);
-  weed_set_voidptr_value(priv->layer, WEED_LEAF_RESIZE_THREAD, NULL);
+  //weed_set_voidptr_value(priv->layer, WEED_LEAF_RESIZE_THREAD, NULL);
   lives_free(priv);
-  return NULL;
 }
 
 
 static void reslayer_thread(weed_layer_t *layer, int twidth, int theight, LiVESInterpType interp,
 			    int tpalette, int clamp, double file_gamma) {
   resl_priv_data *priv = (resl_priv_data *)lives_malloc(sizeof(resl_priv_data));
-  lives_thread_t *res_thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
+  //lives_thread_t *res_thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
   weed_set_double_value(layer, "file_gamma", file_gamma);
-  weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, res_thread);
   priv->layer = layer;
   priv->width = twidth;
   priv->height = theight;
   priv->interp = interp;
   priv->pal = tpalette;
   priv->clamp = clamp;
-  lives_thread_create(res_thread, LIVES_THRDATTR_NONE, res_thrdfunc, (void *)priv);
+  resthread = lives_proc_thread_create(LIVES_THRDATTR_NO_GUI, (lives_funcptr_t)res_thrdfunc, -1, "v", priv);
+  //weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, res_thread);
+  // res_proc = lives_proc_thread_create(res_thread, LIVES_THRDATTR_NONE, res_thrdfunc, (void *)priv);
 }
 
 
@@ -6464,19 +6500,17 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
     }
   }
 
-  if (weed_threadsafe && twidth * theight != 0 && (twidth != width || theight != height) &&
-      !png_get_interlace_type(png_ptr, info_ptr)) {
+  if (0 && (weed_threadsafe && twidth * theight != 0 && (twidth != width || theight != height) &&
+	    !png_get_interlace_type(png_ptr, info_ptr))) {
     weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 1);
     reslayer_thread(layer, twidth, theight, get_interp_value(prefs->pb_quality, TRUE),
 		    tpalette, weed_layer_get_yuv_clamping(layer),
 		    gval == PNG_INFO_gAMA ? file_gamma : 1.);
     for (int j = 0; j < height; j++) {
       png_read_row(png_ptr, row_ptrs[j], NULL);
-
-      weed_set_int_value(layer, WEED_LEAF_PROGSCAN, j + 2);
-
+      weed_set_int_value(layer, WEED_LEAF_PROGSCAN, j + 1);
     }
-    weed_set_int_value(layer, WEED_LEAF_PROGSCAN, -1);
+    //weed_set_int_value(layer, WEED_LEAF_PROGSCAN, -1);
   } else {
     png_read_image(png_ptr, row_ptrs);
   }
@@ -6501,17 +6535,17 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
 
   if (is16bit) {
     int clamping, sampling, subspace;
-    lives_thread_t *resl_thrd;
     weed_layer_get_palette_yuv(layer, &clamping, &sampling, &subspace);
     weed_set_int_value(layer, WEED_LEAF_PIXEL_BITS, 16);
     if (weed_palette_has_alpha(tpalette)) tpalette = WEED_PALETTE_YUVA4444P;
     else {
       if (tpalette != WEED_PALETTE_YUV420P) tpalette = WEED_PALETTE_YUV444P;
     }
-    if ((resl_thrd = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL)) != NULL) {
-      lives_thread_join(*resl_thrd, NULL);
-      weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL);
-      lives_free(resl_thrd);
+    //if ((resl_thrd = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL))) {
+    if (resthread) {
+      lives_nanosleep_until_nonzero(lives_proc_thread_check(resthread));
+      lives_proc_thread_join(resthread);
+      resthread = NULL;
     }
     // convert RGBA -> YUVA4444P or RGB -> 444P or 420
     // 16 bit conversion
@@ -7045,17 +7079,23 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
             // pull frame from decoded images
             boolean ret;
             char *fname = make_image_file_name(sfile, frame, image_ext);
-            if (height * width == 0) {
-              ret = weed_layer_create_from_file_progressive(layer, fname, 0, 0, target_palette, image_ext);
-            } else {
-              lives_thread_t *resl_thrd;
-              ret = weed_layer_create_from_file_progressive(layer, fname, width, height, target_palette, image_ext);
-              if ((resl_thrd = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL)) != NULL) {
-                lives_thread_join(*resl_thrd, NULL);
-                weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL);
-                lives_free(resl_thrd);
-              }
+            /* if (height * width == 0) { */
+            /*   ret = weed_layer_create_from_file_progressive(layer, fname, 0, 0, target_palette, image_ext); */
+            /* } else { */
+            //lives_thread_t *resl_thrd;
+            ret = weed_layer_create_from_file_progressive(layer, fname, width, height, target_palette, image_ext);
+            if (resthread) {
+              lives_nanosleep_until_nonzero(lives_proc_thread_check(resthread));
+              lives_proc_thread_join(resthread);
+              resthread = NULL;
             }
+            /* if ((resl_thrd = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL))) { */
+            /*   lives_thread_join(*resl_thrd, NULL); */
+            /*   weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL); */
+            /*   lives_free(resl_thrd); */
+            /* } */
+            //}
+
             lives_free(fname);
             mainw->osc_block = FALSE;
             if (!ret) {
@@ -7183,9 +7223,14 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
         weed_leaf_delete(layer, WEED_LEAF_HOST_PTHREAD);
         lives_free(thrd);
       }
-      while ((thrd = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL)) != NULL) {
-        lives_nanosleep(100);
+      if (resthread) {
+        lives_nanosleep_until_nonzero(lives_proc_thread_check(resthread));
+        lives_proc_thread_join(resthread);
+        resthread = NULL;
       }
+      /* while ((thrd = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL))) { */
+      /*   lives_nanosleep(100); */
+      /* } */
 
       if (weed_get_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, NULL) == WEED_TRUE) {
         weed_timecode_t tc = weed_get_int64_value(layer, WEED_LEAF_HOST_TC, NULL);
@@ -7326,6 +7371,7 @@ else palette = WEED_PALETTE_END;
 #endif
 
 if (pull_frame_at_size(layer, image_ext, tc, width, height, palette)) {
+check_layer_ready(layer);
 pixbuf = layer_to_pixbuf(layer, TRUE, fordisp);
 }
 weed_layer_free(layer);
@@ -8201,7 +8247,7 @@ mainw->track_decoders[i] = clone_decoder(nclip);
 
         lives_freep((void **)&info_file);
 
-        if (LIVES_UNLIKELY((mainw->frame_layer == NULL) || mainw->cancelled > 0)) {
+        if (LIVES_UNLIKELY((!mainw->frame_layer) || mainw->cancelled > 0)) {
           // NULL frame or user cancelled
           if (mainw->frame_layer != NULL) {
             check_layer_ready(mainw->frame_layer);

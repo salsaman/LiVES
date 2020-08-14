@@ -3643,10 +3643,8 @@ static void _threaded_dialog_spin(double fraction) {
       disp_fraction(fraction_done, timesofar, mainw->proc_ptr);
     }
   }
-  while (1) {
-    //lives_widget_process_updates(mainw->proc_ptr->processing);
-    lives_widget_context_update();
-  }
+  // necessary
+  lives_widget_process_updates(mainw->proc_ptr->processing);
 }
 
 

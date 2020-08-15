@@ -834,6 +834,7 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
   }
 
   // add the param widgets; here we also set parameters for any special widgets in the framedraw
+  //main_thread_execute((lives_funcptr_t)make_param_box, WEED_SEED_BOOLEAN, &has_param, "vv", pbox, rfx);
   has_param = make_param_box(LIVES_VBOX(pbox), rfx);
 
   // update widgets from onchange_init here

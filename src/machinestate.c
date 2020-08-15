@@ -1726,6 +1726,7 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
     break;
   case FUNCSIG_VOIDP_VOIDP:
     switch (ret_type) {
+    case WEED_SEED_BOOLEAN: CALL_2(boolean, voidptr, voidptr); break;
     default: CALL_VOID_2(voidptr, voidptr); break;
     }
     break;

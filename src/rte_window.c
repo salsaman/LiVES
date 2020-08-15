@@ -2372,20 +2372,20 @@ LiVESWidget *create_rte_window(void) {
       hbox = lives_hbox_new(FALSE, 0);
       lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-      lives_signal_connect(LIVES_GUI_OBJECT(combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                           LIVES_GUI_CALLBACK(fx_changed), LIVES_INT_TO_POINTER(i * rte_getmodespk() + j));
+      lives_signal_sync_connect(LIVES_GUI_OBJECT(combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                                LIVES_GUI_CALLBACK(fx_changed), LIVES_INT_TO_POINTER(i * rte_getmodespk() + j));
 
-      lives_signal_connect(LIVES_GUI_OBJECT(info_buttons[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
-                           LIVES_GUI_CALLBACK(on_rte_info_clicked), LIVES_INT_TO_POINTER(idx));
+      lives_signal_sync_connect(LIVES_GUI_OBJECT(info_buttons[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
+                                LIVES_GUI_CALLBACK(on_rte_info_clicked), LIVES_INT_TO_POINTER(idx));
 
-      lives_signal_connect(LIVES_GUI_OBJECT(clear_buttons[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
-                           LIVES_GUI_CALLBACK(on_clear_clicked), LIVES_INT_TO_POINTER(idx));
+      lives_signal_sync_connect(LIVES_GUI_OBJECT(clear_buttons[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
+                                LIVES_GUI_CALLBACK(on_clear_clicked), LIVES_INT_TO_POINTER(idx));
 
-      lives_signal_connect(LIVES_GUI_OBJECT(param_buttons[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
-                           LIVES_GUI_CALLBACK(on_params_clicked), LIVES_INT_TO_POINTER(idx));
+      lives_signal_sync_connect(LIVES_GUI_OBJECT(param_buttons[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
+                                LIVES_GUI_CALLBACK(on_params_clicked), LIVES_INT_TO_POINTER(idx));
 
-      lives_signal_connect(LIVES_GUI_OBJECT(conx_buttons[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
-                           LIVES_GUI_CALLBACK(on_datacon_clicked), LIVES_INT_TO_POINTER(idx));
+      lives_signal_sync_connect(LIVES_GUI_OBJECT(conx_buttons[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
+                                LIVES_GUI_CALLBACK(on_datacon_clicked), LIVES_INT_TO_POINTER(idx));
 
       lives_box_pack_start(LIVES_BOX(hbox), type_labels[idx], FALSE, FALSE, widget_opts.packing_width);
       lives_box_pack_start(LIVES_BOX(hbox), conx_buttons[idx], FALSE, FALSE, widget_opts.packing_width);

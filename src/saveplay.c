@@ -2208,6 +2208,7 @@ void play_file(void) {
 
   /// from now on we can only switch at the designated SWITCH POINT
   mainw->noswitch = TRUE;
+  mainw->cancelled = CANCEL_NONE;
 
   asigned = !(cfile->signed_endian & AFORM_UNSIGNED);
   aendian = !(cfile->signed_endian & AFORM_BIG_ENDIAN);

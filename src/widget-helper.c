@@ -1507,7 +1507,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_hide(LiVESWidget *widget) {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget *widget) {
+WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_show_all(LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_widget_show_all(widget);
 
@@ -1518,6 +1518,13 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget *widget) {
 #endif
   return FALSE;
 }
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget *widget) {
+  boolean ret;
+  main_thread_execute((lives_funcptr_t)_lives_widget_show_all, WEED_SEED_BOOLEAN, &ret, "v", widget);
+  return ret;
+}
+
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_now(LiVESWidget *widget) {
@@ -1745,7 +1752,7 @@ static LiVESResponseType _lives_dialog_run(LiVESDialog *dialog) {
 #ifdef GUI_GTK
   //LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
   LiVESResponseType resp;
-  lives_widget_show_all(LIVES_WIDGET(dialog));
+  _lives_widget_show_all(LIVES_WIDGET(dialog));
   resp = gtk_dialog_run(dialog);
   return resp;
   /* if (!ctx || ctx == lives_widget_context_default()) return gtk_dialog_run(dialog); */
@@ -4735,7 +4742,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_widget_set_tooltip_text(LiVESWidg
                                        SHOWALL_OVERRIDE_KEY, NULL);
           if ((cntrl = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
                        SHOWHIDE_CONTROLLER_KEY))) {
-            if (lives_widget_is_visible(cntrl)) lives_widget_show_all(widget);
+            if (lives_widget_is_visible(cntrl)) _lives_widget_show_all(widget);
           }
         }
       } else {
@@ -5092,6 +5099,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_progress_bar_pulse(LiVESProgressBar *p
   gtk_entry_progress_pulse(pbar);
   if (is_standard_widget(LIVES_WIDGET(pbar)) && widget_opts.apply_theme) {
     char *tmp = lives_strdup_printf("%dpx", widget_opts.css_min_height);
+    set_css_value_direct(LIVES_WIDGET(pbar), LIVES_WIDGET_STATE_NORMAL, "progress",
+                         "border-top-width", tmp);
     set_css_value_direct(LIVES_WIDGET(pbar), LIVES_WIDGET_STATE_NORMAL, "progress",
                          "border-bottom-width", tmp);
     lives_free(tmp);
@@ -8186,7 +8195,8 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
       if (lh != 0 && lw != 0 && layout) {
         layout_to_lives_painter(layout, cr, LIVES_TEXT_MODE_FOREGROUND_ONLY, &fg,
                                 &bg, lw, lh, x_pos, y_pos, x_pos, y_pos);
-        lingo_painter_show_layout(cr, layout);
+        if (LINGO_IS_LAYOUT(layout))
+          lingo_painter_show_layout(cr, layout);
       }
 
       if (pixbuf) {
@@ -8831,7 +8841,7 @@ static void lives_widget_show_all_cb(LiVESWidget * widget, livespointer user_dat
     if (prefs->show_tooltips) lives_widget_show(widget);
     return;
   }
-  if (!lives_widget_is_visible(widget)) lives_widget_show_all(widget);
+  if (!lives_widget_is_visible(widget)) _lives_widget_show_all(widget);
 }
 
 boolean lives_widget_set_show_hide_with(LiVESWidget * widget, LiVESWidget * other) {
@@ -11823,7 +11833,7 @@ void funkify_dialog(LiVESWidget * dialog) {
 
     lives_widget_set_margin_top(action, widget_opts.packing_height); // only works for gtk+ 3.x
 
-    lives_widget_show_all(frame);
+    _lives_widget_show_all(frame);
 
     lives_container_set_border_width(LIVES_CONTAINER(box), widget_opts.border_width * 2);
   } else {

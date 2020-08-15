@@ -1242,7 +1242,7 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
       if (!mainw->is_rendering)  progress_speed = 2.;
     }
   }
-  //lives_widget_context_update();
+  lives_widget_context_update();
 }
 
 
@@ -2815,7 +2815,8 @@ boolean do_auto_dialog(const char *text, int type) {
 
   while (mainw->cancelled == CANCEL_NONE && !(infofile = fopen(cfile->info_file, "r"))) {
     lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
-    lives_widget_process_updates(mainw->proc_ptr->processing);
+    lives_widget_context_update();
+    //lives_widget_process_updates(mainw->proc_ptr->processing);
     lives_usleep(prefs->sleep_time);
     if (type == 1 && mainw->rec_end_time != -1.) {
       time = lives_get_current_ticks();

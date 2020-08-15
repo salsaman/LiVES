@@ -958,6 +958,8 @@ final123:
     }
     lives_free(tmpdir);
   }
+
+  if (!mainw->multitrack) sensitize();
 }
 
 
@@ -1049,6 +1051,7 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
   boolean badfile = FALSE;
   int keep_frags = 0;
   int manage_ds = 0;
+  int current_file = mainw->current_file;
 
   mainw->no_switch_dprint = TRUE;
 
@@ -1335,7 +1338,7 @@ retry:
   }
 
 cleanup_ut:
-  close_temp_handle(-1);
+  close_temp_handle(current_file);
   lives_freep((void **)&mpt);
 
   if (manage_ds) {

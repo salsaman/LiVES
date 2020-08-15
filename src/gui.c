@@ -2572,8 +2572,8 @@ void create_LiVES(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->open_loc), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_open_loc_activate), NULL);
   //#ifdef HAVE_WEBM
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->open_utube), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_open_utube_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->open_utube), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_open_utube_activate), NULL);
 
 #ifdef HAVE_LDVGRAB
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->open_firewire), LIVES_WIDGET_ACTIVATE_SIGNAL,

@@ -2087,6 +2087,7 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
   }
 
   lives_widget_context_invoke(tdata->ctx, gsrc_wrapper, mywork);
+  //(*mywork->func)(mywork->arg);
 
   if (myflags & LIVES_THRDFLAG_AUTODELETE) {
     lives_free(mywork); lives_free(list);

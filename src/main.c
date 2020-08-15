@@ -2176,7 +2176,7 @@ static void lives_init(_ign_opts *ign_opts) {
           pulse_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
 	  // *INDENT-OFF*
         }}}
-      // *INDENT-ON*
+    // *INDENT-ON*
 #endif
   }
 
@@ -3797,7 +3797,7 @@ static boolean lives_startup2(livespointer data) {
     char *wid =
       lives_strdup_printf("0x%08lx",
                           (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow
-                              (LIVES_MAIN_WINDOW_WIDGET)));
+						      (LIVES_MAIN_WINDOW_WIDGET)));
     if (wid) activate_x11_window(wid);
   }
   if (mainw->recording_recovered) {
@@ -4126,42 +4126,42 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
       exit(0);
     } else {
       struct option longopts[] = {
-        {"aplayer", 1, 0, 0},
-        {"asource", 1, 0, 0},
-        {"workdir", 1, 0, 0},
-        {"configdir", 1, 0, 0},
-        {"dscrit", 1, 0, 0},
-        {"set", 1, 0, 0},
-        {"noset", 0, 0, 0},
+				  {"aplayer", 1, 0, 0},
+				  {"asource", 1, 0, 0},
+				  {"workdir", 1, 0, 0},
+				  {"configdir", 1, 0, 0},
+				  {"dscrit", 1, 0, 0},
+				  {"set", 1, 0, 0},
+				  {"noset", 0, 0, 0},
 #ifdef ENABLE_OSC
-        {"devicemap", 1, 0, 0},
+				  {"devicemap", 1, 0, 0},
 #endif
-        {"vppdefaults", 1, 0, 0},
-        {"recover", 0, 0, 0},
-        {"autorecover", 0, 0, 0},
-        {"norecover", 0, 0, 0},
-        {"nogui", 0, 0, 0},
-        {"nosplash", 0, 0, 0},
-        {"noplaywin", 0, 0, 0},
-        {"noninteractive", 0, 0, 0},
-        {"startup-ce", 0, 0, 0},
-        {"startup-mt", 0, 0, 0},
-        {"vjmode", 0, 0, 0},
-        {"fxmodesmax", 1, 0, 0},
-        {"yuvin", 1, 0, 0},
-        {"debug", 0, 0, 0},
+				  {"vppdefaults", 1, 0, 0},
+				  {"recover", 0, 0, 0},
+				  {"autorecover", 0, 0, 0},
+				  {"norecover", 0, 0, 0},
+				  {"nogui", 0, 0, 0},
+				  {"nosplash", 0, 0, 0},
+				  {"noplaywin", 0, 0, 0},
+				  {"noninteractive", 0, 0, 0},
+				  {"startup-ce", 0, 0, 0},
+				  {"startup-mt", 0, 0, 0},
+				  {"vjmode", 0, 0, 0},
+				  {"fxmodesmax", 1, 0, 0},
+				  {"yuvin", 1, 0, 0},
+				  {"debug", 0, 0, 0},
 #ifdef ENABLE_OSC
-        {"oscstart", 1, 0, 0},
-        {"nooscstart", 0, 0, 0},
+				  {"oscstart", 1, 0, 0},
+				  {"nooscstart", 0, 0, 0},
 #endif
 #ifdef ENABLE_JACK
-        {"jackopts", 1, 0, 0},
+				  {"jackopts", 1, 0, 0},
 #endif
-        // deprecated
-        {"nothreaddialog", 0, 0, 0},
-        {"bigendbug", 1, 0, 0},
-        {"tmpdir", 1, 0, 0},
-        {0, 0, 0, 0}
+				  // deprecated
+				  {"nothreaddialog", 0, 0, 0},
+				  {"bigendbug", 1, 0, 0},
+				  {"tmpdir", 1, 0, 0},
+				  {0, 0, 0, 0}
       };
 
       int option_index = 0;
@@ -7794,9 +7794,17 @@ bg_frame = 0;
 actual_ticks = mainw->startticks; ///< use the "thoretical" time
 
 if (mainw->record_starting) {
+if (!mainw->event_list) {
+char *cdate;
+struct timeval otv;
+gettimeofday(&otv, NULL);
+cdate = lives_datetime(otv.tv_sec);
+mainw->event_list = lives_event_list_new(NULL, cdate);
+lives_free(cdate);
+}
+
 // mark record start
-event_list = append_marker_event(mainw->event_list, actual_ticks, EVENT_MARKER_RECORD_START);
-if (mainw->event_list == NULL) mainw->event_list = event_list;
+mainw->event_list = append_marker_event(mainw->event_list, actual_ticks, EVENT_MARKER_RECORD_START);
 
 if (prefs->rec_opts & REC_EFFECTS) {
 // add init events and pchanges for all active fx

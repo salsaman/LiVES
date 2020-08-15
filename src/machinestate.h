@@ -361,7 +361,7 @@ void lives_log(const char *what);
 
 uint32_t lives_string_hash(const char *string) GNU_PURE GNU_HOT;
 uint32_t fast_hash(const char *key) GNU_PURE GNU_HOT;
-size_t lives_chomp(char *string);
+char *lives_chomp(char *string);
 
 int check_for_bad_ffmpeg(void);
 

@@ -1038,7 +1038,7 @@ void on_location_select(LiVESButton * button, livespointer user_data) {
 
 //ret updated req if fmt sel. needs change
 lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, const char *tmpdir) {
-  char *com, *dfile, *full_dfile, *tmp, *ddir;
+  char *com, *dfile = NULL, *full_dfile = NULL, *tmp, *ddir;
   char *overrdkey = NULL;
   char *mpf = NULL, *mpt = NULL;
   lives_remote_clip_request_t *reqout = NULL;
@@ -1397,24 +1397,36 @@ cleanup_ut:
       }
     }
     if (dstat != LIVES_STORAGE_STATUS_NORMAL) {
-      check_storage_space(-1, FALSE);
+      /// iff critical, delete file
+      // we should probably offer if warn or quota too
+      if (mainw->ds_status == LIVES_STORAGE_STATUS_CRITICAL && full_dfile) {
+        lives_rm(full_dfile);
+      }
+      if (!check_storage_space(-1, FALSE)) {
+        badfile = TRUE;
+      }
     }
   }
 
   mainw->img_concat_clip = -1;
   mainw->no_switch_dprint = FALSE;
 
-  lives_free(dfile);
-  open_file(full_dfile);
-  lives_free(full_dfile);
+  if (dfile) lives_free(dfile);
 
+  if (full_dfile) {
+    if (!badfile) {
+      open_file(full_dfile);
+      if (mainw->multitrack) {
+        polymorph(mainw->multitrack, POLY_NONE);
+        polymorph(mainw->multitrack, POLY_CLIPS);
+        mt_sensitise(mainw->multitrack);
+      }
+    }
+    lives_free(full_dfile);
+  }
   if (mainw->multitrack) {
-    polymorph(mainw->multitrack, POLY_NONE);
-    polymorph(mainw->multitrack, POLY_CLIPS);
-    mt_sensitise(mainw->multitrack);
     maybe_add_mt_idlefunc();
   }
-
   return reqout;
 }
 
@@ -4715,7 +4727,7 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
     // end record during playback
 
-    if (mainw->event_list != NULL) {
+    if (mainw->event_list) {
       // switch audio off at previous frame event
       pthread_mutex_lock(&mainw->event_list_mutex);
 

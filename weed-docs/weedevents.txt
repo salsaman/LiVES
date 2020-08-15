@@ -42,10 +42,16 @@ Added optional "author", "title", "comments", "created_version" and "edited_vers
 27/02/2020
 "frames" changed from int to int64. "hint" changed to "event_type"
 
+15/08/2020
+clarify that audio "seek" position is relevent even when "velocity" is set to 0.
+API updated to 122 to facilitate this change.
+
+
+
 (C) Gabriel "Salsaman" Finch 2005 - 2020
 
 == WEED_EVENT_API_VERSION ==
-This is defined as 121 for this version of the specification. This
+This is defined as 122 for this version of the specification. This
 number will be increased for future revisions of the spec. if a
 function or a symbol is changed or added.
 
@@ -57,16 +63,10 @@ and optional 'leaves'.
 
 == PLANT TYPE EVENT_LIST ==
 
-Event lists contain events which are linked as a singly or doubly
-linked list. Events may be held in an event list.
-Some kinds of plugins (timeline plugins) can take an event_list input
-and produce an event_list output.
+This an optional first "plant" in an event list, it contains metadata applied to the remeaning events.
 
-Event lists can also be serialised and passed between applications.
-
-Unlike some systems where event lists (or Edit Decision Lists) are
-forced to be held per-track/channel, Weed allows both this mode, and/or use of a global
-event list for all tracks/channels.
+Depending on the use of the list, the metadata and following events may be held in a list in memory
+or may be serialised for offline storage / interchange, etc.
 
 
  * "type" == WEED_PLANT_EVENT_LIST
@@ -74,7 +74,7 @@ event list for all tracks/channels.
 '''Mandatory leaves''':[[BR]]
  
  * "weed_event_api_version" : WEED_SEED_INT : API version of this
-   spec. (currently 121) [as of version 121]
+   spec. (currently 122)
 
  * "fps" : WEED_SEED_DOUBLE : framerate of timeline; all events in the
    timeline MUST be quantised to this rate. An "fps" of 0 indicates
@@ -141,7 +141,9 @@ event list for all tracks/channels.
 
  * "timecode"	  : WEED_SEED_INT64 : the timecode of the event
 
-It is recommended that timecodes be in ascending order, and that events (at least frames) are quantised to the event_list framerate. However, there may exist occasions when this is not possible, so it should not be assumed...
+It is recommended that timecodes be in ascending order, and that events (at least frames)
+are quantised to the event_list framerate.
+However, there may exist occasions when this is not possible, so it should not be assumed.
 
 
 == Order of events at one timecode ==
@@ -178,6 +180,11 @@ This is not actually a true event type, but for example a function can return th
 As of API version 110.
 
 
+
+TODO: better definition of "blank" and "ignore".
+
+
+
 === WEED_EVENT_TYPE_FRAME ===
 A FRAME event can contain video and/or audio.
 
@@ -185,10 +192,13 @@ The video part of a FRAME represents a stack of clip/frame pairs. Number of elem
 
 Mandatory leaves for all frames:
 
- * "clips" : WEED_SEED_INT : array of clips (clip number >=1)  [clip <=0 means no frame/blank frame at that position]
- * "frames" : WEED_SEED_INT64 : array of frames (frame number >=1) [frame <=0 means a blank frame at that position]
+ * "clips" : WEED_SEED_INT : array of clips (clip number >= 1)
 
- "clips"==-1, "frames"==0 is strongly suggested for a blank frame.
+ * "frames" : WEED_SEED_INT64 : array of frames (frame number >= 1) [frame == 0 means a blank frame at that position]
+                                frame < 0 means "ignore this frame event"
+
+
+Each clip / frame pair creates a "track", which is used for inputs to filter, as well as audio.
 
 
 Mandatory leaves for frames with audio:
@@ -200,12 +210,19 @@ equal.
  * "audio_clips" : WEED_SEED_INT : array of audio clips as pairs:
 		 track_number, clip_number. Track number can be used to link the
 		 audio track visually and functionally with a video track (e.g. 0 =
-		 linked to first video track, <0 = "floating" audio track). In addition if new values appear on the same 
+		 linked to first video track, < 0 = "floating" audio track - i.e not linked to any video track.)
+
+		 In addition if new values appear on the same 
 		 track as a previous audio event, the previous audio should be stopped (as if velocity 0.0 were sent). 
-		 Clip number is the clip number where the audio is taken from. Clip
+		 Clip number is the clip number where the audio is taken from.
+
+
+		 Clip
 		 number <=0 means ignore the value. This is useful
 		 if leaves cannot be deleted. To create an ignore event, e.g. use values
-		 "-1,-1,0.,0." for "audio_clips" and "audio_seek".
+		 "-1, -1, 0., 0." for "audio_clips" and "audio_seek".
+
+
 
  * "audio_seeks" : WEED_SEED_DOUBLE : an array of double pairs, giving audio
 		   seek times in seconds (the player should quantise
@@ -213,18 +230,18 @@ equal.
 		   (velocity 1. == normal play, 0.5 == half speed, -1.
 		   == play backwards, etc). Number of elements MUST match number of
 		   elements in "audio_clips", and the elements
-		   correspond in order pair-by-pair. Seek values must be >=0. 
+		   correspond in order pair-by-pair. Seek values must be >= 0. 
 
-		   If clip number is <=0 in "audio_clips" - ignore, the corresponding "audio_seeks" pair
+		   If clip number is <= 0 in "audio_clips" - ignore, the corresponding "audio_seeks" pair
 		   is ignored. 
 
 		   A velocity of "0." with clip number >0 will switch
-		   audio off for that track, e.g. "-1,1,0.,0."
+		   audio off for that track, e.g. "-1, 1, 0., 0."
 		   switches off audio on track -1.
 
 		   The seek value may be < 0., this is to allow a
 		   small adjustment to synch audio with the video
-		   frame.
+		   frame. (????)
 
 
    There is no volume or pan setting: audio samples can be mixed using a filter (see the WEED AUDIO
@@ -235,12 +252,16 @@ equal.
    reached, i.e. values are sparse: only "on", "off", "seek" and "velocity" changes need to
    be recorded.
 
+   If the seek / velocity times do not match up, the producing host may try to correct this,
+   either by scaling timecodes, adjusting the velocit, seek value, or some combination.
+   
+
 Audio and video frames should be combined where possible. I.e. there
 should only be one frame event at a particular timecode.
 
-Note that audio events take place at the start of the video frame. Thus to ensure that all audio is turned off at the end of timeline it 
-may be necessary to add an additional blank frame.
-
+Note that audio events take place at the start of the video frame. Thus to ensure that all audio is turned off at
+the end of timeline it may be necessary to add an additional blank frame; in this case the "cli" number may be set to a
+negative value.
 
 
 === WEED_EVENT_TYPE_FILTER_INIT ===
@@ -379,7 +400,7 @@ Format shall be little endian for all types (except string).
 == definitions ==
 The weed-events.h header currently contains the following definitions:
 
-#define WEED_EVENT_API_VERSION 121
+#define WEED_EVENT_API_VERSION 122
 
 
 Summary:

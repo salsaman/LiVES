@@ -265,11 +265,12 @@ boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, un
 
   register int i;
 
-  if (event_list == NULL) return TRUE;
+  if (!event_list) return TRUE;
 
   gettimeofday(&otv, NULL);
   cdate = lives_datetime(otv.tv_sec);
 
+  event_list = lives_event_list_new(event_list, cdate);
   event = get_first_event(event_list);
 
   threaded_dialog_spin(0.);
@@ -280,15 +281,7 @@ boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, un
   weed_set_int_value(event_list, WEED_LEAF_AUDIO_RATE, cfile->arate);
   weed_set_int_value(event_list, WEED_LEAF_AUDIO_SAMPLE_SIZE, cfile->asampsize);
 
-  weed_set_int_value(event_list, WEED_LEAF_WEED_EVENT_API_VERSION, WEED_EVENT_API_VERSION);
-  weed_set_int_value(event_list, WEED_LEAF_WEED_API_VERSION, WEED_API_VERSION);
-  weed_set_int_value(event_list, WEED_LEAF_FILTER_API_VERSION, WEED_FILTER_API_VERSION);
-
   cversion = lives_strdup_printf("LiVES version %s", LiVES_VERSION);
-  if (!weed_plant_has_leaf(event_list, WEED_LEAF_LIVES_CREATED_VERSION)) {
-    weed_set_string_value(event_list, WEED_LEAF_LIVES_CREATED_VERSION, cversion);
-    weed_set_string_value(event_list, WEED_LEAF_CREATED_DATE, cdate);
-  }
   weed_set_string_value(event_list, WEED_LEAF_LIVES_EDITED_VERSION, cversion);
   weed_set_string_value(event_list, WEED_LEAF_EDITED_DATE, cdate);
   lives_free(cversion);
@@ -20882,6 +20875,9 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
   ttable trans_table[FX_KEYS_MAX - FX_KEYS_MAX_VIRTUAL]; // translation table for init_events
 
   if (weed_plant_has_leaf(event_list, WEED_LEAF_FPS)) fps = weed_get_double_value(event_list, WEED_LEAF_FPS, &error);
+
+  if (!weed_plant_has_leaf(event_list, WEED_LEAF_WEED_EVENT_API_VERSION))
+    weed_set_int_value(event_list, WEED_LEAF_WEED_EVENT_API_VERSION, 100); // unknown but older version
 
   if (mt != NULL) mt->layout_prompt = FALSE;
 

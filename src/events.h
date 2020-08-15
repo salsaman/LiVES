@@ -122,6 +122,7 @@ void event_list_free(weed_plant_t *event_list);
 
 /// lib-ish stuff
 typedef weed_plant_t weed_event_t;
+weed_plant_t *lives_event_list_new(weed_event_t *elist, const char *cdate);
 int weed_event_get_type(weed_event_t *event);
 weed_timecode_t weed_event_set_timecode(weed_event_t *, weed_timecode_t tc);
 weed_timecode_t weed_event_get_timecode(weed_event_t *);
@@ -178,7 +179,7 @@ int get_event_hint(weed_plant_t *);
 boolean is_blank_frame(weed_plant_t *, boolean count_audio);
 boolean has_audio_frame(weed_plant_t *event_list);
 int get_frame_event_clip(weed_plant_t *, int layer);
-int get_frame_event_frame(weed_plant_t *, int layer);
+frames_t get_frame_event_frame(weed_plant_t *, int layer);
 boolean frame_event_has_frame_for_track(weed_plant_t *event, int track);
 double *get_track_visibility_at_tc(weed_plant_t *event_list, int ntracks, int n_back_tracks,
                                    ticks_t tc, weed_plant_t **shortcut, boolean bleedthru);

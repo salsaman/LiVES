@@ -55,7 +55,7 @@ LIVES_GLOBAL_INLINE int weed_frame_event_get_tracks(weed_event_t *event,  int **
 LIVES_GLOBAL_INLINE int weed_frame_event_get_audio_tracks(weed_event_t *event,  int **clips, double **seeks) {
   /// number of actual tracks is actually half of the returned value
   int ntracks = 0, xntracks = 0;
-  if (event == NULL || !WEED_EVENT_IS_FRAME(event)) return -1;
+  if (!event || !WEED_EVENT_IS_FRAME(event)) return -1;
   if (clips) *clips = weed_get_int_array_counted(event, WEED_LEAF_AUDIO_CLIPS, &ntracks);
   else ntracks = weed_leaf_num_elements(event, WEED_LEAF_AUDIO_CLIPS);
   if (seeks) *seeks = weed_get_double_array_counted(event, WEED_LEAF_AUDIO_SEEKS, &xntracks);
@@ -217,8 +217,9 @@ int get_frame_event_clip(weed_plant_t *event, int layer) {
 }
 
 
-int get_frame_event_frame(weed_plant_t *event, int layer) {
-  int numframes, framenum;
+frames_t get_frame_event_frame(weed_plant_t *event, int layer) {
+  int numframes;
+  frames_t framenum;
   int64_t *frames;
   if (!WEED_EVENT_IS_FRAME(event)) return -2;
   frames = weed_get_int64_array_counted(event, WEED_LEAF_FRAMES, &numframes);
@@ -226,9 +227,30 @@ int get_frame_event_frame(weed_plant_t *event, int layer) {
     lives_freep((void **)&frames);
     return -3;
   }
-  framenum = (int)frames[layer];
+  framenum = (frames_t)frames[layer];
   lives_free(frames);
   return framenum;
+}
+
+
+weed_event_t *lives_event_list_new(weed_event_t *elist, const char *cdate) {
+  weed_event_t *evelist;
+  if (elist) evelist = elist;
+  else evelist = weed_plant_new(WEED_PLANT_EVENT_LIST);
+
+  if (!weed_plant_has_leaf(evelist, WEED_LEAF_WEED_API_VERSION))
+    weed_set_int_value(evelist, WEED_LEAF_WEED_API_VERSION, WEED_API_VERSION);
+
+  if (!weed_plant_has_leaf(evelist, WEED_LEAF_FILTER_API_VERSION))
+    weed_set_int_value(evelist, WEED_LEAF_FILTER_API_VERSION, WEED_FILTER_API_VERSION);
+
+  if (!weed_plant_has_leaf(evelist, WEED_LEAF_LIVES_CREATED_VERSION)) {
+    char *cversion = lives_strdup_printf("LiVES version %s", LiVES_VERSION);
+    weed_set_string_value(evelist, WEED_LEAF_LIVES_CREATED_VERSION, cversion);
+    weed_set_string_value(evelist, WEED_LEAF_CREATED_DATE, cdate);
+    lives_free(cversion);
+  }
+  return evelist;
 }
 
 
@@ -293,9 +315,9 @@ void replace_event(weed_plant_t *event_list, weed_plant_t *at_event, weed_plant_
 
 weed_plant_t *get_next_frame_event(weed_plant_t *event) {
   weed_plant_t *next;
-  if (event == NULL) return NULL;
+  if (!event) return NULL;
   next = get_next_event(event);
-  while (next != NULL) {
+  while (next) {
     if (WEED_EVENT_IS_FRAME(next)) return next;
     next = get_next_event(next);
   }
@@ -2305,8 +2327,9 @@ void event_list_close_gaps(weed_plant_t *event_list) {
   //tc_offs = get_event_timecode(event);
 
   event = get_first_event(event_list);
+  if (WEED_PLANT_IS_EVENT_LIST(event)) event = get_next_event(event);
 
-  while (event != NULL) {
+  while (event) {
     next_event = get_next_event(event);
 
     tc = get_event_timecode(event) - tc_offs;

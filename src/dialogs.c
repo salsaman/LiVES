@@ -1207,7 +1207,7 @@ static void disp_fraction(double fraction_done, double timesofar, xprocess * pro
                                    (uint32_t)(est_time + .5));
 #ifdef PROGBAR_IS_ENTRY
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  lives_entry_set_text(LIVES_ENTRY(mainw->proc_ptr->label3), prog_label);
+  lives_entry_set_text(LIVES_ENTRY(mainw->proc_ptr->label3),  lives_chomp(prog_label) + 1);
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 #else
   if (LIVES_IS_LABEL(proc->label3)) lives_label_set_text(LIVES_LABEL(proc->label3), prog_label);

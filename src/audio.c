@@ -2199,30 +2199,21 @@ void pulse_rec_audio_end(boolean close_device, boolean close_fd) {
 // playback via memory buffers (e.g. in multitrack)
 
 ////////////////////////////////////////////////////////////////
+/// TODO - move these to events.c
 
 static lives_audio_track_state_t *resize_audstate(lives_audio_track_state_t *ostate, int nostate, int nstate) {
   // increase the element size of the audstate array (ostate)
   // from nostate elements to nstate elements
-
   lives_audio_track_state_t *audstate = (lives_audio_track_state_t *)lives_calloc(nstate, sizeof(lives_audio_track_state_t));
-
-  for (int i = 0; i < nstate; i++) {
-    if (i < nostate) {
-      audstate[i].afile = ostate[i].afile;
-      audstate[i].seek = ostate[i].seek;
-      audstate[i].vel = ostate[i].vel;
-    } else {
-      audstate[i].afile = 0;
-      audstate[i].seek = audstate[i].vel = 0.;
-    }
-  }
-
+  int n = MIN(nostate, nstate);
+  if (n > 0)
+    lives_memcpy(audstate, ostate, n * sizeof(lives_audio_track_state_t));
   lives_freep((void **)&ostate);
   return audstate;
 }
 
 
-static lives_audio_track_state_t *aframe_to_atstate(weed_plant_t *event) {
+static lives_audio_track_state_t *aframe_to_atstate_inner(weed_plant_t *event, int *ntracks) {
   // parse an audio frame, and set the track file, seek and velocity values
   int num_aclips, atrack;
   int *aclips = NULL;
@@ -2232,7 +2223,7 @@ static lives_audio_track_state_t *aframe_to_atstate(weed_plant_t *event) {
 
   register int i;
 
-  int btoffs = mainw->multitrack != NULL ? mainw->multitrack->opts.back_audio_tracks : 1;
+  int btoffs = mainw->multitrack ? mainw->multitrack->opts.back_audio_tracks : 1;
   num_aclips = weed_frame_event_get_audio_tracks(event, &aclips, &aseeks);
   for (i = 0; i < num_aclips; i += 2) {
     if (aclips[i + 1] > 0) { // else ignore
@@ -2252,6 +2243,16 @@ static lives_audio_track_state_t *aframe_to_atstate(weed_plant_t *event) {
   lives_freep((void **)&aseeks);
 
   return atstate;
+}
+
+
+LIVES_LOCAL_INLINE lives_audio_track_state_t *aframe_to_atstate(weed_plant_t *event) {
+  return aframe_to_atstate_inner(event, NULL);
+}
+
+
+LIVES_GLOBAL_INLINE lives_audio_track_state_t *audio_frame_to_atstate(weed_event_t *event, int *ntracks) {
+  return aframe_to_atstate_inner(event, ntracks);
 }
 
 

@@ -9975,18 +9975,17 @@ if (defined($ARGV[0])) {
 	    ##print "\nRemoving rfx.* .smogplugin.* .smogval.* .rfx.* .info.*" .
 	    ##	"and keep_layout*\nfrom $workdir";
 	    ##print "\n(can be overriden with option 0x10)\n";
-	    print STDERR "\nsmogrify: removing rfx.* .smogplugin.* .smogval.* .rfx.* .info.*" .
+	    print STDERR "\nsmogrify: removing rfx.* *" .
 		"and keep_layout* from $workdir";
 	    print STDERR "\nsmogrify: (can be overriden with option 0x10)\n";
-	    print "\nremoving rfx.* .smogplugin.* .smogval.* .rfx.* .info.*" .
-		"and keep_layout* from $workdir";
+	    print "\nremoving rfx.* keep_layout* from $workdir";
 	    print "\n(can be overriden by disabling 'Remove Misc Files')\n";
 
 	    my $deftrashdir = "$workdir/.$DEFTRASH";
 	    if (! -d $deftrashdir) {
 		make_path $deftrashdir, {mode => 1777};
 	    }
-	    for $filerem(glob "rfx.* .smogplugin.* .smogval.* keep_layout* .rfx* .info.*") {
+	    for $filerem(glob "rfx.* keep_layout**") {
 		&smog_rename("$workdir/$filerem", "$deftrashdir/$filerem");
 	    }
 	    if ($new_work) {

@@ -25,8 +25,8 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-#define WEED_EVENT_API_VERSION 121
-#define WEED_EVENT_API_VERSION_121
+#define WEED_EVENT_API_VERSION 122
+#define WEED_EVENT_API_VERSION_122
 
 #define WEED_PLANT_EVENT 256
 #define WEED_PLANT_EVENT_LIST 257

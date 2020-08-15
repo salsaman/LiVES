@@ -11,6 +11,7 @@
 #include "callbacks.h"
 #include "effects.h"
 #include "audio.h"
+#include "events.h"
 #include "cvirtual.h"
 
 static int reorder_width = 0;
@@ -470,27 +471,109 @@ static boolean copy_with_check(weed_plant_t *event, weed_plant_t *out_list, weed
 }
 
 
-/* weed_plant_t *pre_analyse(weed_plant_t *elist) { */
-/*   weed_plant_t *event = get_first_event(elist), *nevent; */
-/*   weed_timecode_t stc; */
-/*   lives_audio_track_state_t *astate; */
-/*   if (!WEED_EVENT_IS_AUDIO_FRAME(event)) event = get_next_audio_frame(event); */
-/*   if (event) { */
-/*     stc = weed_event_get_timecode(event); */
-/*     atstate = aframe_to_atstate(event); */
-/*     /// get the next audio frame */
-/*     nevent = get_next_audio_frame(event); */
-/*     if (nevent) { */
-/*       ntc = weed_event_get_timecode(event); */
-/*       ntstate = aframe_to_atstate(event); */
-
-/*       /// analyse velocity and seek values */
+#define READJ_MAX 2.
+#define READJ_MIN 0.1
 
 
+void pre_analyse(weed_plant_t *elist) {
+  // note, this only works when we have a single audio track
+  // if we have > 1 then we would need to do something extra, like averaging the deltas
 
-/*     } */
-/*   } */
-/* } */
+  // optionally we can also try to smooth the frames; if abs(nxt - prev) < lim, curr = av(prev, nxt)
+
+  weed_event_t *event = get_first_event(elist), *last = NULL, *xevent;
+#ifdef PRE_SMOOTH
+  weed_event_t *pframev = NULL, *ppframev = NULL;
+  int pclip, ppclip;
+  int pframe, ppframe;
+#endif
+  weed_timecode_t stc = 0, etc, tc;
+  lives_audio_track_state_t *ststate, *enstate;
+  ticks_t offs = 0;
+  int ev_api = 100;
+  int ntracks;
+
+  if (weed_plant_has_leaf(elist, WEED_LEAF_WEED_EVENT_API_VERSION))
+    ev_api = weed_get_int_value(elist, WEED_LEAF_WEED_EVENT_API_VERSION, NULL);
+
+  for (; event; event = get_next_event(event)) {
+#ifdef PRE_SMOOTH
+    if (WEED_EVENT_IS_FRAME(event)) {
+      weed_timecode_t tc = weed_event_get_timecode(event);
+      int clip = get_frame_event_clip(event);
+      frames_t frame = get_frame_event_frame(event);
+      if (pframev && ppframev && pclip == cclip && ppclip == cclip) {
+        if (abs(frame - pframe) <= SMT_FRAME_LIM && tc - pptc < SMTH_FRAME_TC_LIM) {
+          double dell1 = (double)(ptc - pptc);
+          double dell2 = (double)(tc - ptc);
+          if (del1 * del2 >= 3.5) {
+            pframe = (frames_t)(((double)ppframe * del2 + (double)frame * del1) / (del1 + del) + .5);
+            weed_set_int64_value(pframev, WEED_LEAF_FRAMES, pframe);
+          }
+        }
+      }
+      ppframe = pframe;
+      pframe = frame;
+      ppclip = pclip;
+      pclip = clip;
+      ppframev = pframev;
+      pframev = event;
+    }
+#endif
+    if (!WEED_EVENT_IS_AUDIO_FRAME(event)) continue;
+    if (!last) {
+      stc = weed_event_get_timecode(event);
+      ststate = audio_frame_to_atstate(event, &ntracks);
+      if (ntracks > 1) break;
+      last = event;
+      continue;
+    }
+    // we know the velocity from last aud. event, and current seekpos
+    // thus we can easily calculate the theoretical time we should arrive at
+    // seekpoint, and scale all timecodes.accordingly
+
+    // after the final, we just add constat adj.
+
+    etc = weed_event_get_timecode(event);
+    enstate = audio_frame_to_atstate(event, &ntracks);
+    if (ntracks > 1) break;
+
+    if (ststate[0].vel != 0. && (enstate[0].vel != 0. || ev_api >= 122) && enstate[0].afile == ststate[0].afile) {
+      double dtime = (double)(etc - stc) / TICKS_PER_SECOND_DBL;
+
+      if (dtime <= READJ_MAX && dtime >= READJ_MIN) {
+        /// for older lists we didnt set the seek point at audio off, so ignore those
+        double tpos = ststate[0].seek + ststate[0].vel * dtime;
+        double ratio = fabs(enstate[0].seek - ststate[0].seek) / fabs(tpos - ststate[0].seek);
+        double dtime;
+        weed_timecode_t otc = 0, ntc = 0;
+        // now have calculated the ratio, we can backtrack to start audio event, and adjust tcs
+        // new_tc -> start_tc + diff * ratio
+        for (xevent = last; xevent != event; xevent = get_next_event(xevent)) {
+          otc = get_event_timecode(xevent);
+          dtime = (double)(otc - stc) / TICKS_PER_SECOND_DBL;
+          dtime *= ratio;
+          ntc = stc + offs + (ticks_t)(dtime * TICKS_PER_SECOND_DBL);
+          weed_event_set_timecode(xevent, ntc);
+        }
+        offs += ntc - otc;
+      }
+    }
+    /// offs is what we will add to remianing events when we hit the end
+    lives_free(ststate);
+    ststate = enstate;
+    last = event;
+    stc = etc;
+  }
+
+  lives_freep((void **)&ststate);
+
+  // we hit the end, just add offs
+  for (xevent = last; xevent; xevent = get_next_event(xevent)) {
+    tc = get_event_timecode(xevent);
+    weed_event_set_timecode(xevent, tc + offs);
+  }
+}
 
 
 /**
@@ -568,9 +651,11 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   int tracks, ntracks = 0, natracks = 0, xatracks = 0;
   int etype;
   int is_final = 0;
+  int ev_api = 100;
+
   register int i, j, k;
 
-  if (in_list == NULL) return NULL;
+  if (!in_list) return NULL;
   if (qfps < 1.) return NULL;
 
   old_fps = weed_get_double_value(in_list, WEED_LEAF_FPS, NULL);
@@ -582,7 +667,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   do {
     response = LIVES_RESPONSE_OK;
     out_list = weed_plant_new(WEED_PLANT_EVENT_LIST);
-    if (out_list == NULL) {
+    if (!out_list) {
       response = do_memory_error_dialog(what, 0);
     }
   } while (response == LIVES_RESPONSE_RETRY);
@@ -592,11 +677,14 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
     return NULL;
   }
 
-  /* if (old_fps == 0.) { */
-  /*   /// in pre-analysis, we will look at the audio frames, and instead of correcting the audio veloicity, we will */
-  /*   /// attempt to slightly modify (scale) the frame timings such that the audio hits the precise seek point  */
-  /*   in_list = pre_analyse(in_list); */
-  /* } */
+  if (weed_plant_has_leaf(in_list, WEED_LEAF_WEED_EVENT_API_VERSION))
+    ev_api = weed_get_int_value(in_list, WEED_LEAF_WEED_EVENT_API_VERSION, NULL);
+
+  if (old_fps == 0.) {
+    /// in pre-analysis, we will look at the audio frames, and instead of correcting the audio veloicity, we will
+    /// attempt to slightly modify (scale) the frame timings such that the audio hits the precise seek point
+    pre_analyse(in_list);
+  }
 
   weed_set_voidptr_value(out_list, WEED_LEAF_FIRST, NULL);
   weed_set_voidptr_value(out_list, WEED_LEAF_LAST, NULL);
@@ -945,14 +1033,15 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           /// the player seek pos will be slightly off.
           /// To remedy this we can very slightly adjust the velocity at the prior frame, so that the seek is correct when
           /// arriving at the current audio frame
-          /// TODO: needs fixing, does not work as intended - not sure why
+
 #ifdef SMOOTH_AUD_VEL
           prev_aframe = get_prev_audio_frame_event(newframe);
           if (prev_aframe) {
             for (i = 0; i < natracks; i += 2) {
               // check each track in natracks (currently active) to see if it is also in xatracks (all active)
               boolean gottrack = FALSE;
-              if (naseeks[i + 1] == 0.) continue; ///< audio was off, currently we don't store the seek point there (we SHOULD: TODO)
+              ///< audio was off, older lists didnt store the offset
+              if (naseeks[i + 1] == 0. && ev_api < 122) continue;
               for (k = 0; k < xatracks; k += 2) {
                 if (xaclips[k] == naclips[i]) {
                   //. track is in xatracks, so there must be a prev audio frame for the track;

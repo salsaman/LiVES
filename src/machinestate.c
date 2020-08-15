@@ -1536,10 +1536,10 @@ LIVES_GLOBAL_INLINE char *lives_strstop(char *st, const char term) {
   return st;
 }
 
-LIVES_GLOBAL_INLINE size_t lives_chomp(char *buff) {
+LIVES_GLOBAL_INLINE char *lives_chomp(char *buff) {
   size_t xs = lives_strlen(buff);
   if (xs && buff[xs - 1] == '\n') buff[--xs] = '\0'; // remove trailing newline
-  return xs;
+  return buff;
 }
 
 

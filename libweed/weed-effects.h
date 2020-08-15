@@ -296,7 +296,6 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_EASE_OUT "ease_out" // host request, set prior to andy process_func() call
 
 
-
 // CHANNEL_TEMPLATE
 // mandatory
 /// WEED_LEAF_NAME

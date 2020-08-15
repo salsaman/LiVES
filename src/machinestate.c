@@ -620,42 +620,24 @@ char *lives_format_storage_space_string(uint64_t space) {
 }
 
 
-lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, int64_t *dsval) {
+lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, int64_t *dsval, int64_t ds_resvd) {
   // WARNING: this will actually create the directory (since we dont know if its parents are needed)
   // call with dsval set to ds_used to check for OVER_QUOTA
   // dsval is overwritten and set to ds_free
-  uint64_t ds;
+  int64_t ds;
   lives_storage_status_t status = LIVES_STORAGE_STATUS_UNKNOWN;
   if (dsval && prefs->disk_quota > 0 && *dsval > prefs->disk_quota)
     status = LIVES_STORAGE_STATUS_OVER_QUOTA;
   if (!is_writeable_dir(dir)) return status;
-  ds = get_ds_free(dir);
+  ds = (int64_t)get_ds_free(dir);
+  ds -= ds_resvd;
   if (dsval) *dsval = ds;
+  if (ds <= 0) return LIVES_STORAGE_STATUS_OVERFLOW;
   if (ds < prefs->ds_crit_level) return LIVES_STORAGE_STATUS_CRITICAL;
   if (status != LIVES_STORAGE_STATUS_UNKNOWN) return status;
   if (ds < warn_level) return LIVES_STORAGE_STATUS_WARNING;
   return LIVES_STORAGE_STATUS_NORMAL;
 }
-
-
-/* boolean get_ds_used(int64_t *bytes) { */
-/*   /// returns bytes used for the workdir */
-/*   /// because this may take some time on some OS, a background thread is run and  FALSE is returned along with the last */
-/*   /// read value in bytes */
-/*   /// once a new value is obtained TRUE is returned and bytes will reflect the updated val */
-/*   boolean ret = TRUE; */
-/*   static uint64_t _bytes = 0; */
-/*   if (!running) running = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)get_dir_size, WEED_SEED_INT64, "s", */
-/*                             prefs->workdir); */
-/*   if (!lives_proc_thread_check(running)) ret = FALSE; */
-/*   else { */
-/*     running = FALSE; */
-/*   } */
-/*   if (bytes) *bytes = _bytes; */
-/*   capable->ds_used = _bytes; */
-/*   return ret; */
-/* } */
-
 
 static lives_proc_thread_t running = NULL;
 
@@ -665,10 +647,12 @@ lives_proc_thread_t disk_monitor_start(const char *dir) {
   if (disk_monitor_running()) disk_monitor_forget();
   running = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)get_dir_size, WEED_SEED_INT64, "s",
                                      dir);
+  mainw->dsu_valid = TRUE;
   return running;
 }
 
 int64_t disk_monitor_check_result(const char *dir) {
+  // caller MUST check if mainw->ds_valid is TRUE, or recheck the results
   int64_t bytes;
   if (!disk_monitor_running()) disk_monitor_start(dir);
   if (!lives_proc_thread_check(running)) {
@@ -682,12 +666,11 @@ int64_t disk_monitor_check_result(const char *dir) {
 
 
 LIVES_GLOBAL_INLINE int64_t disk_monitor_wait_result(const char *dir, ticks_t timeout) {
+  // caller MUST check if mainw->ds_valid is TRUE, or recheck the results
   lives_alarm_t alarm_handle = LIVES_NO_ALARM;
   int64_t dsval;
-  if (timeout > 0) {
-    alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-    timeout = 1;
-  }
+  if (timeout < 0) timeout = LIVES_LONGEST_TIMEOUT;
+  if (timeout > 0) alarm_handle = lives_alarm_set(timeout);
 
   while ((dsval = disk_monitor_check_result(dir)) < 0
          && (alarm_handle == LIVES_NO_ALARM || ((timeout = lives_alarm_check(alarm_handle)) > 0))) {
@@ -871,33 +854,32 @@ boolean compress_files_in_dir(const char *dir, int method, void *data) {
 }
 
 
-size_t get_file_size(int fd) {
+off_t get_file_size(int fd) {
   // get the size of file fd
   struct stat filestat;
-  size_t fsize;
+  off_t fsize;
   lives_file_buffer_t *fbuff;
   fstat(fd, &filestat);
-  fsize = (uint64_t)(filestat.st_size);
+  fsize = filestat.st_size;
   //g_printerr("fssize for %d is %ld\n", fd, fsize);
   if ((fbuff = find_in_file_buffers(fd)) != NULL) {
     if (!fbuff->read) {
-      /// because of padding bytes...
-      size_t f2size;
-      if ((f2size = (size_t)(fbuff->offset + fbuff->bytes)) > fsize) return f2size;
+      /// because of padding bytes... !!!!
+      off_t f2size;
+      if ((f2size = (off_t)(fbuff->offset + fbuff->bytes)) > fsize) return f2size;
     }
   }
   return fsize;
 }
 
 
-size_t sget_file_size(const char *name) {
-  // get the size of file fd
-  int fd;
-  size_t fsize;
-  if ((fd = open(name, O_RDONLY)) == -1) return 0;
-  fsize = get_file_size(fd);
-  close(fd);
-  return fsize;
+off_t sget_file_size(const char *name) {
+  off_t res;
+  struct stat xstat;
+  if (!name) return 0;
+  res = stat(name, &xstat);
+  if (res < 0) return res;
+  return xstat.st_size;
 }
 
 
@@ -930,9 +912,9 @@ void reget_afilesize(int fileno) {
 }
 
 
-uint64_t reget_afilesize_inner(int fileno) {
+off_t reget_afilesize_inner(int fileno) {
   // safe version that just returns the audio file size
-  uint64_t filesize;
+  off_t filesize;
   char *afile = lives_get_audio_file_name(fileno);
   lives_sync(1);
   filesize = sget_file_size(afile);
@@ -987,8 +969,8 @@ char *get_mountpoint_for(const char *dir) {
 }
 
 
-ssize_t get_dir_size(const char *dirname) {
-  ssize_t dirsize = -1;
+off_t get_dir_size(const char *dirname) {
+  off_t dirsize = -1;
   if (check_for_executable(&capable->has_du, EXEC_DU)) {
     char buff[PATH_MAX * 2];
     char *com = lives_strdup_printf("%s -sb0 \"%s\"", EXEC_DU, dirname);
@@ -2956,12 +2938,55 @@ boolean get_x11_visible(const char *wname) {
 }
 
 
-char *get_systmpdir(void) {
-  char *dir;
+char *get_systmp(const char *suff, boolean is_dir) {
+  /// create a file or dir in /tmp
+  /// check the name returned has the lenght we expect
+  /// check it was created
+  /// ensure it is not a symlink
+  /// if a directory, ensure we have rw access
+  char *res = NULL;
+
   if (!check_for_executable(&capable->has_mktemp, EXEC_MKTEMP)) return NULL;
-  char *com = lives_strdup_printf("%s $(%s)", capable->echo_cmd, EXEC_MKTEMP);
-  dir = mini_popen(com);
-  return dir;
+  else {
+    size_t slen;
+    char *tmp, *com;
+    const char *dirflg;
+    if (suff) {
+      tmp = lives_strdup_printf("lives-XXXXXXXXXX-%s", suff);
+    }
+    else
+      tmp = lives_strdup("lives-XXXXXXXXXX");
+
+    slen = lives_strlen(tmp);
+
+    if (is_dir) dirflg = "d";
+    else dirflg = "";
+
+    com = lives_strdup_printf("%s -n $(%s -qt%s %s)", capable->echo_cmd, EXEC_MKTEMP, dirflg, tmp);
+    lives_free(tmp);
+    res = mini_popen(com);
+    if (!res) return NULL;
+    if (THREADVAR(com_failed)) {
+      lives_free(res);
+      return NULL;
+    }
+    if (lives_strlen(res) < slen + 2) {
+      lives_free(res);
+      return NULL;
+    }
+  }
+  if (!lives_file_test(res, LIVES_FILE_TEST_EXISTS)
+      || lives_file_test(res, LIVES_FILE_TEST_IS_SYMLINK)) {
+      lives_free(res);
+      return NULL;
+  }
+  if (is_dir) {
+    if (!check_dir_access(res, FALSE)) {
+      lives_free(res);
+      return NULL;
+    }
+  }
+  return res;
 }
 
 

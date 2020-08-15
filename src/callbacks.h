@@ -145,7 +145,7 @@ void on_ok_file_open_clicked(LiVESFileChooser *, LiVESSList *fnames);
 
 void on_location_select(LiVESButton *, livespointer);
 
-lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req);
+lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, const char *tmpdir);
 
 void on_opensel_range_ok_clicked(LiVESButton *, livespointer);
 

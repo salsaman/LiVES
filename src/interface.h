@@ -252,6 +252,7 @@ typedef struct {
   char save_dir[PATH_MAX];
   char fname[PATH_MAX];
   char format[256];
+  char ext[16];
   int desired_width;
   int desired_height;
   float desired_fps;  // unused for now
@@ -267,6 +268,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 boolean youtube_select_format(lives_remote_clip_request_t *);
 
 typedef struct {
+  boolean scanning;
   LiVESWidget *top_label;
   LiVESWidget *dsu_label;
   LiVESWidget *used_label;
@@ -287,6 +289,7 @@ typedef struct {
   uint64_t sliderfunc, checkfunc;
   lives_painter_surface_t *dsu_surface;
   boolean crit_dism;
+  char *ext;
 } _dsquotaw;
 
 void run_diskspace_dialog(void);

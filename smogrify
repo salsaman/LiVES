@@ -3766,18 +3766,19 @@ if (defined($ARGV[0])) {
 
 	if ($command eq "download_clip") {
 	    my $url = $ARGV[2];
-	    my $dfile = $ARGV[3];
-	    my $formreq = $ARGV[4];
-	    my $deswidth = int($ARGV[5]);
-	    my $desheight = int($ARGV[6]);
-	    my $matchsize = int($ARGV[7]);
-	    my $desfps = $ARGV[8]; ## unused
+	    my $ddir = $ARGV[3];
+	    my $dfile = $ARGV[4];
+	    my $formreq = $ARGV[5];
+	    my $deswidth = int($ARGV[6]);
+	    my $desheight = int($ARGV[7]);
+	    my $matchsize = int($ARGV[8]);
 	    my $vidchoice = $ARGV[9];
-	    my $audchoice = $ARGV[10]; ## unused
+	    my $keep_frags = $ARGV[10];
 	    my $do_update = int($ARGV[11]);
 	    my $debug = $ARGV[12];
 
 	    ##print STDERR "DO UPDATE is $do_update\n";
+	    my $YTDL_URL = "https://yt-dl.org/downloads/latest/youtube-dl";
 
 	    my $youtube_dl = "youtube-dl";
 
@@ -3796,8 +3797,6 @@ if (defined($ARGV[0])) {
 		$opts = "-o";
 	    }
 
-	    $debug = 1;
-
 	    if ($ARGV[13] eq "forceddownload") {
 		$islocal = 1;
 		if (! -d $local_bindir) {
@@ -3806,13 +3805,13 @@ if (defined($ARGV[0])) {
 		if ($debug) {
 		    print STDERR "commencing download of binary $youtube_dl\n";
 		}
-		$com = "$dlprog https://yt-dl.org/downloads/latest/youtube-dl $opts'$prog'";
+		$com = "$dlprog $YTDL_URL $opts'$prog'";
 		$smerr = &smog_system($com);
 		if ($debug) {
 		    print STDERR "ran command: $com\nresult was $smerr\n";
 		}
 		if ($smerr || ! -f $prog) {
-		    &sig_system_error("Downloading $youtube_dl to $local_bindir",
+		    &sig_system_error("Downloading $youtube_dl from $YTDL_URL to $local_bindir",
 				      $smerr);
 		    exit 1;
 		}
@@ -3912,6 +3911,9 @@ if (defined($ARGV[0])) {
 		    }
 		}
 	    }
+
+	    ## get list of files for select format type
+	    ## also note if there are files in alternate format(s)
 	    my $vb = "";
 	    if ($debug) {
 		print STDERR "Listing files\n";
@@ -3926,7 +3928,7 @@ if (defined($ARGV[0])) {
 		$ddelta = -1;
 	    }
 	    my $bestaudio = "";
-	    my $xdfile = "$dfile.$formreq";
+	    my $xdfile = "$ddir/$dfile.$formreq";
 
 	    if ($audchoice ne "") {
 		$bestaudio = $audchoice;
@@ -4058,6 +4060,7 @@ if (defined($ARGV[0])) {
 				else {
 				    $xbestaudio = "";
 				}}}}
+
 		    elsif ($matchsize == 4) {
 			## largest
 			if ($idiag >= $tdiag) {
@@ -4070,6 +4073,7 @@ if (defined($ARGV[0])) {
 				else {
 				    $xbestaudio = "";
 				}}}}
+
 		    elsif ($matchsize == 5) {
 			## smallest
 			if ($idiag <= $tdiag) {
@@ -4116,20 +4120,23 @@ if (defined($ARGV[0])) {
 
 		    if ($vidchoice eq "") {
 			if ($debug) {
-			    print STDERR "SMOG returning sel\n";
+			    print STDERR "SMOG returning selection\n";
 			}
 			&sig_complete($bestvideo, $bestaudio);
 			exit 0;
 		    }
 		}
 	    }
+
+	    ## perform the actual download
+	    
 	    if (-f $xdfile) {
 		unlink $xdfile;
 	    }
 
 	    if (-f $xdfile) {
-		##print STDERR "SMOG returning error2\n";
-		&sig_error;
+		print STDERR "Could not remove existing file $xdfile\n";
+		&sig_error("Could not remove existing file $xdfile");
 		exit 3;
 	    }
 
@@ -4137,18 +4144,28 @@ if (defined($ARGV[0])) {
 		$xbestaudio = "+$bestaudio";
 	    }
 
+	    my $kf = "";
+	    if ($keep_frags) {
+		$kf = "--keep-fragments";
+	    }
+	    
+	    my $extra = "";
+	    ## TODO: proxy URl, ipv4 / ipv6 switch
+
+	    ## for now we assume these are set in the config file
+	    
 	    if ($formreq eq "mp4") {
 		#$extra = "--merge-output-format mp4";
-		$extra = "";
-		$com = "'$prog' $vb --no-playlist -o \"$xdfile\" $extra --no-part --no-cache-dir -f " .
-		    "'$bestvideo$xbestaudio' \"$url\"";
+		$dfile = $xdfile;
 	    } elsif ($formreq eq "webm") {
 		if ($bestaudio eq "") {
 		    $dfile = $xdfile;
 		}
-		$com = "'$prog' $vb --no-playlist -o \"$dfile\" --no-part --no-cache-dir -f '$bestvideo$xbestaudio' \"$url\"";
 	    }
 
+	    $com = "'$prog' $vb --audio-quality 0 --no-mark-watched $kf --no-playlist $kf -o \"$dfile\" $extra " .
+		"--no-part --no-cache-dir -f $bestvideo$xbestaudio' \"$url\"";
+	    
 	    if ($debug) {
 		print STDERR "RUNNING $com\n";
 	    }
@@ -4162,18 +4179,27 @@ if (defined($ARGV[0])) {
 	    $res = &smog_system($com);
 
 	    if ($res || ! -f $xdfile || -z $xdfile) {
+		## if $kf is set, we can leave the fragments for a retry (needs testing)
+
 		if (-f $xdfile) {
 		    unlink $xdfile;
 		}
 		if ($formreq eq "mp4") {
 		    #unlink "$dfile.f$bestfmt.mp4";
-		    unlink "$dfile.temp.mp4";
+		    #unlink "$ddir/$dfile.temp.mp4";
 		    ##unlink "$dfile.mp4.f$audfmt"; ## need actual audfmt
 		}
-		##print STDERR "SMOG returning error 3\n";
+		if ($debug) {
+		    print STDERR "\nDownload failed ! Error was $res\n\n";
+		}
 		&sig_system_error($com, $res);
 		exit 1;
 	    }
+
+	    if ($kf) {
+		unlink glob "$ddir/$dfile.*.Frag";
+	    }
+
 	    if ($debug) {
 		print STDERR "download complete\n";
 	    }

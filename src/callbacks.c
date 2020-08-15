@@ -908,11 +908,13 @@ void on_open_loc_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 
 void on_open_utube_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  /// get a system tmpdir
+  char *tmpdir = get_systmp("ytdl", TRUE);
   lives_remote_clip_request_t *req = NULL, *req2;
 
   mainw->mt_needs_idlefunc = FALSE;
 
-  if (mainw->multitrack != NULL) {
+  if (mainw->multitrack) {
     if (mainw->multitrack->idlefunc > 0) {
       lives_source_remove(mainw->multitrack->idlefunc);
       mainw->multitrack->idlefunc = 0;
@@ -926,18 +928,18 @@ void on_open_utube_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   do {
     mainw->cancelled = CANCEL_NONE;
     req = run_youtube_dialog(req);
-    if (req == NULL) {
-      if (mainw->multitrack != NULL) {
+    if (!req) {
+      if (mainw->multitrack) {
         mt_sensitise(mainw->multitrack);
         maybe_add_mt_idlefunc();
       }
       goto final123;
     }
-    req2 = on_utube_select(req);
+    req2 = on_utube_select(req, tmpdir);
 #ifndef ALLOW_NONFREE_CODECS
     req2 = NULL;
 #endif
-    if (req2 != NULL && mainw->cancelled == CANCEL_RETRY) req = req2;
+    if (req2 && mainw->cancelled == CANCEL_RETRY) req = req2;
     else {
       lives_free(req);
       req = NULL;
@@ -949,6 +951,12 @@ final123:
     lives_freep((void **)&mainw->permmgr->key);
     lives_free(mainw->permmgr);
     mainw->permmgr = NULL;
+  }
+  if (tmpdir) {
+    if (lives_file_test(tmpdir, LIVES_FILE_TEST_EXISTS)) {
+      lives_rmdir(tmpdir, TRUE);
+    }
+    lives_free(tmpdir);
   }
 }
 
@@ -1029,42 +1037,103 @@ void on_location_select(LiVESButton * button, livespointer user_data) {
 
 
 //ret updated req if fmt sel. needs change
-lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req) {
-  char *com, *dfile, *full_dfile, *tmp;
+lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, const char *tmpdir) {
+  char *com, *dfile, *full_dfile, *tmp, *ddir;
   char *overrdkey = NULL;
+  char *mpf = NULL, *mpt = NULL;
   lives_remote_clip_request_t *reqout = NULL;
   boolean hasnone = FALSE, hasalts = FALSE;
-  int current_file = mainw->current_file;
+  boolean keep_old_dir = FALSE;
+  boolean forcecheck = FALSE;
+  boolean bres;
+  boolean badfile = FALSE;
+  int keep_frags = 0;
+  int manage_ds = 0;
 
   mainw->no_switch_dprint = TRUE;
 
-  dfile = lives_build_filename(req->save_dir, req->fname, NULL);
+  // if possible, download to a temp dir first, that way we can cleanly delete leftover fragments, etc.
+  if (tmpdir) {
+    ddir = lives_build_path(tmpdir, req->fname, NULL);
+    keep_frags = 1;
+    if (lives_file_test(ddir, LIVES_FILE_TEST_IS_DIR)) {
+      if (check_dir_access(ddir, FALSE)) {
+        keep_old_dir = TRUE;
+      }
+    }
+    if (!keep_old_dir) {
+      char *xdir = lives_build_path(tmpdir, "*", NULL);
+      lives_rmdir(xdir, TRUE);
+      lives_free(xdir);
+      if (!lives_make_writeable_dir(ddir)) {
+        do_dir_perm_error(ddir);
+        goto cleanup_ut;
+      }
+    }
+  } else ddir = req->save_dir;
+
+  if (capable->mountpoint && *capable->mountpoint) {
+    /// if tempdir is on same volume as workdir, or if not using tmpdir and final is on same
+    // then we monitor continuously
+    mpf = get_mountpoint_for(ddir);
+    if (mpf && *mpf && !lives_strcmp(mpf, capable->mountpoint)) {
+      manage_ds = 1;
+    }
+  }
+  if (!manage_ds && ddir != req->save_dir) {
+    mpt = get_mountpoint_for(req->save_dir);
+    if (mpf && *mpf && mpt && *mpt) {
+      if (lives_strcmp(mpf, mpt)) {
+        /// in this case tmpdir is on another volume, but final dest. is on our volume
+        /// or a different one
+        /// we will only check before moving the file
+        if (capable->mountpoint && *capable->mountpoint && !lives_strcmp(mpt, capable->mountpoint)) {
+          // final dest is ours, we will check warn, crit and overflow
+          manage_ds = 2;
+        } else {
+          // final dest is not ours, we will only check overflow
+          manage_ds = 3;
+        }
+      }
+    }
+  }
+  lives_freep((void **)&mpf);
+
+  if (prefs->ds_warn_level && !prefs->ds_crit_level) {
+    /// if the user disabled disk_quota, disk_warn, AND disk_crit, then we just let the disk fill up
+    /// the only thing we will care about is if there is insufficient space to move the file
+    if (manage_ds == 2) manage_ds = 3;
+    else manage_ds = 0;
+  }
 
   mainw->error = FALSE;
 
+  // do minimal ds checking until we hit full download
+  forcecheck = FALSE;
+
   while (1) {
-retry:
-    if (!CURRENT_CLIP_IS_VALID) {
-      if (!get_temp_handle(-1)) {
-        d_print_failed();
-        return NULL;
-      }
+    if (!get_temp_handle(-1)) {
+      // we failed because we ran out of file handles; this hsould almost never happen
+      // we wil do only minimal ds checks
+      d_print_failed();
+      goto cleanup_ut;
     }
 
-    lives_rm(cfile->info_file);
+retry:
 
     if (mainw->permmgr && mainw->permmgr->key) {
       overrdkey = mainw->permmgr->key;
     }
 
-    com = lives_strdup_printf("%s download_clip \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %f \"%s\" "
-                              "\"%s\" %d %d%s",
-                              prefs->backend,
-                              cfile->handle,
-                              req->URI,
-                              dfile, req->format, req->desired_width, req->desired_height,
-                              req->matchsize, req->desired_fps,
-                              req->vidchoice, req->audchoice,
+    // get format list
+
+    // for now, we dont't pass req->desired_fps or req->audchoice
+    // also we could send req->sub_lang...
+
+    com = lives_strdup_printf("%s download_clip \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d \"%s\" %d "
+                              "%d %d%s", prefs->backend, cfile->handle, req->URI, ddir,
+                              req->fname, req->format, req->desired_width, req->desired_height,
+                              req->matchsize, req->vidchoice, keep_frags,
                               req->do_update, prefs->show_dev_opts,
                               overrdkey ? (tmp = lives_strdup_printf(" %s", overrdkey))
                               : (tmp = lives_strdup("")));
@@ -1082,29 +1151,15 @@ retry:
     lives_free(com);
 
     if (THREADVAR(com_failed)) {
-      if (!IS_VALID_CLIP(current_file)) {
-        close_temp_handle(-1);
-      }
-      lives_free(dfile);
       d_print_failed();
-      mainw->no_switch_dprint = FALSE;
-      if (mainw->multitrack != NULL) {
-        mt_sensitise(mainw->multitrack);
-        maybe_add_mt_idlefunc();
-      }
-      return NULL;
+      goto cleanup_ut;
     }
-
-    if (*(req->vidchoice)) break;
-
-    req->do_update = FALSE;
 
     // we expect to get back a list of available formats
     // or the selected format
+    if (*(req->vidchoice)) break;
+
     if (!do_auto_dialog(_("Getting format list"), 2)) {
-      if (!IS_VALID_CLIP(current_file)) {
-        close_temp_handle(-1);
-      }
       if (mainw->cancelled) d_print_cancelled();
       else if (mainw->error) {
         d_print_failed();
@@ -1130,13 +1185,7 @@ retry:
       }
       mainw->error = FALSE;
       mainw->cancelled = CANCEL_RETRY;
-      mainw->no_switch_dprint = FALSE;
-      if (mainw->multitrack != NULL) {
-        mt_sensitise(mainw->multitrack);
-        maybe_add_mt_idlefunc();
-      }
-      lives_free(dfile);
-      return NULL;
+      goto cleanup_ut;
     }
 
     if (!(*mainw->msg)) {
@@ -1149,11 +1198,7 @@ retry:
 #endif
 
     if (hasnone || hasalts) {
-      lives_free(dfile);
       d_print_failed();
-      if (!IS_VALID_CLIP(current_file)) {
-        close_temp_handle(-1);
-      }
       if (hasnone) {
         do_error_dialog(
           _("\nLiVES was unable to download the clip.\nPlease check the clip URL and make sure you have \n"
@@ -1170,27 +1215,13 @@ retry:
 #endif
         }
       }
-      mainw->no_switch_dprint = FALSE;
-      if (mainw->multitrack != NULL) {
-        mt_sensitise(mainw->multitrack);
-        maybe_add_mt_idlefunc();
-      }
-      return reqout;
+      goto cleanup_ut;
     }
 
     if (req->matchsize == LIVES_MATCH_CHOICE && strlen(req->vidchoice) == 0)  {
       // show a list of the video formats and let the user pick one
       if (!youtube_select_format(req)) {
-        if (!IS_VALID_CLIP(current_file)) {
-          close_temp_handle(-1);
-        }
-        lives_free(dfile);
-        d_print_failed();
-        if (mainw->multitrack != NULL) {
-          mt_sensitise(mainw->multitrack);
-          maybe_add_mt_idlefunc();
-        }
-        return NULL;
+        goto cleanup_ut;
       }
       // we try again, this time with req->vidchoice set
       req->matchsize = LIVES_MATCH_SPECIFIED;
@@ -1205,75 +1236,186 @@ retry:
 
   // backend should now be downloading the clip
 
+  // do more intensive diskspace checking
+  forcecheck = TRUE;
+
+  if (manage_ds == 1) {
+    /// type 1, we do continuous monitoring
+    // we will only monitor for CRIT, other statuses will be checked at the end
+    mainw->ds_mon = CHECK_CRIT;
+  }
+
   cfile->nopreview = TRUE;
   cfile->no_proc_sys_errors = TRUE; ///< do not show processing error dialogs, we will show our own msg
 
-  if (!do_progress_dialog(TRUE, TRUE, _("Downloading clip")) || mainw->error) {
-    // user cancelled or error
-    cfile->nopreview = FALSE;
-    cfile->no_proc_sys_errors = FALSE;
-    cfile->keep_without_preview = FALSE;
+  //// TODO - allow downloading in bg while user does something else
+  /// **ADD TASK CALLBACK
 
-    if (mainw->cancelled == CANCEL_KEEP && !mainw->error) {
-      mainw->cancelled = CANCEL_NONE;
+  lives_snprintf(req->ext, 16, "%s", req->format);
+
+  full_dfile = lives_strdup_printf("%s.%s", dfile, req->ext);
+
+  bres = do_progress_dialog(TRUE, TRUE, _("Downloading clip"));
+  if (!bres || mainw->error) badfile = TRUE;
+  else {
+    lives_storage_status_t dstate;
+    char *from = lives_build_filename(ddir, full_dfile, NULL);
+    off_t clipsize;
+    if (!lives_file_test(from, LIVES_FILE_TEST_EXISTS) || (clipsize = sget_file_size(from)) <= 0) {
+      badfile = TRUE;
     } else {
-      lives_kill_subprocesses(cfile->handle, TRUE);
-      if (!IS_VALID_CLIP(current_file)) {
-        // we made a temp file so close it
-        close_temp_handle(-1);
+      if (manage_ds == 2 || manage_ds == 3) {
+        LiVESResponseType resp;
+        do {
+          char *msg = NULL;
+          int64_t dsu = -1;
+          resp = LIVES_RESPONSE_OK;
+          dstate = get_storage_status(req->save_dir, mainw->next_ds_warn_level, &dsu, clipsize);
+          if (dstate == LIVES_STORAGE_STATUS_OVERFLOW) {
+            msg =
+              lives_strdup_printf(_("There is insufficient disk space in %s to move the downloaded clip.\n"), mpt);
+          } else if (manage_ds != 3) {
+            if (dstate == LIVES_STORAGE_STATUS_CRITICAL || dstate == LIVES_STORAGE_STATUS_WARNING) {
+              msg = lives_strdup_printf(_("Moving the downloaded clip to\n%s\nwill bring free disk space in %s\n"
+                                          "below the %s level of %s\n"), mpt);
+            }
+          }
+
+          if (msg) {
+            char *cs = lives_format_storage_space_string(clipsize);
+            char *vs = lives_format_storage_space_string(dsu);
+            char *xmsg = lives_strdup_printf("%s\n(Free space in volume = %s, clip size = %s)\n"
+                                             "You can either try deleting some files from %s and clicking on  Retry\n"
+                                             "or else click Cancel to cancel the download.\n", msg, vs, cs, mpt);
+            resp = do_retry_cancel_dialog(xmsg);
+            lives_free(xmsg); lives_free(msg);
+            lives_free(cs); lives_free(vs);
+          }
+        } while (resp == LIVES_RESPONSE_RETRY);
+        if (resp == LIVES_RESPONSE_CANCEL) {
+          badfile = TRUE;
+        }
       }
-
-      if (mainw->error) {
-        d_print_failed();
-        do_error_dialog(
-          _("\nLiVES was unable to download the clip.\nPlease check the clip URL and make sure you have \n"
-            "the latest youtube-dl installed.\n(Note: try right-clicking on the clip itself to copy its address)\n"));
-        mainw->error = FALSE;
+    }
+    if (!badfile) {
+      /// move file to its final destination
+      LiVESResponseType resp;
+      char *to = lives_build_filename(req->save_dir, full_dfile, NULL);
+      req->do_update = FALSE;
+      if (lives_mv(from, to)) {
+        lives_free(from);
+        lives_free(to);
+        goto cleanup_ut;
       }
-
-      full_dfile = lives_strdup_printf("%s.%s", dfile, req->format);
-      lives_rm(full_dfile);
-      lives_free(full_dfile);
-      lives_free(dfile);
-
-      dfile = lives_strdup_printf("%s.f%s", req->fname, req->vidchoice);
-      full_dfile = lives_build_filename(req->save_dir, dfile, NULL);
-      lives_rm(full_dfile);
-      lives_free(full_dfile);
-      lives_free(dfile);
-
-      sensitize();
-      mainw->no_switch_dprint = FALSE;
-      if (mainw->multitrack != NULL) {
-        mt_sensitise(mainw->multitrack);
-        maybe_add_mt_idlefunc();
+      do {
+        if (!lives_file_test(to, LIVES_FILE_TEST_EXISTS)) {
+          char *errtxt = lives_strdup_printf(_("Failed to move %s to $\n"), from, to);
+          resp = do_write_failed_error_s_with_retry(to, errtxt);
+          lives_free(errtxt);
+        }
+      } while (resp == LIVES_RESPONSE_RETRY);
+      if (resp == LIVES_RESPONSE_CANCEL) {
+        badfile = TRUE;
       }
-      return NULL;
+      lives_free(to);
+      lives_free(from);
+    }
+    //lives_free(to);
+  }
+  if (badfile) {
+    lives_kill_subprocesses(cfile->handle, TRUE);
+    // we made a temp file so close it
+    if (mainw->error) {
+      d_print_failed();
+      do_error_dialog(
+        _("\nLiVES was unable to download the clip.\nPlease check the clip URL and make sure you have \n"
+          "the latest youtube-dl installed.\n(Note: try right-clicking on the clip itself to copy its address)\n"));
+      mainw->error = FALSE;
     }
   }
 
-  cfile->nopreview = FALSE;
-  cfile->no_proc_sys_errors = FALSE;
-  cfile->keep_without_preview = FALSE;
+cleanup_ut:
+  close_temp_handle(-1);
+  lives_freep((void **)&mpt);
 
-  if (!IS_VALID_CLIP(current_file)) {
-    close_temp_handle(-1);
+  if (manage_ds) {
+    lives_storage_status_t dstat;
+    boolean recheck = FALSE;
+    boolean tempdir_removed = FALSE;
+    int64_t dsu = -1;
+    if (prefs->disk_quota) {
+      size_t wdlen = lives_strlen(prefs->workdir);
+      size_t tlen = lives_strlen(req->save_dir);
+      if (tlen >= wdlen && lives_strncmp(req->save_dir, prefs->workdir, wdlen)) {
+        dsu = capable->ds_used = get_dir_size(prefs->workdir);
+      }
+    }
+    dstat = mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsu, 0);
+    capable->ds_free = dsu;
+    THREADVAR(com_failed) = FALSE;
+    if (dstat != LIVES_STORAGE_STATUS_NORMAL) {
+      // Houston, we hava problem !
+      if (!forcecheck) recheck = TRUE;
+      if (tmpdir) {
+        /// remove tmpdir and re-check
+        lives_freep((void **)&mpt);
+        mpt = get_mountpoint_for(tmpdir);
+        if (!lives_strcmp(mpt, capable->mountpoint)) {
+          tempdir_removed = TRUE;
+          lives_rmdir(tmpdir, TRUE);
+          if (!THREADVAR(com_failed)) {
+            recheck = TRUE;
+          }
+        }
+      }
+    }
+    if (recheck) {
+      if (prefs->disk_quota) {
+        mainw->dsu_valid = TRUE;
+        dsu = capable->ds_used = get_dir_size(prefs->workdir);
+      }
+      dstat = mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsu, 0);
+      capable->ds_free = dsu;
+    }
+    if (dstat != LIVES_STORAGE_STATUS_NORMAL) {
+      if (!tempdir_removed) {
+        if (tmpdir) {
+          /// remove tmpdir and re-check
+          lives_freep((void **)&mpt);
+          mpt = get_mountpoint_for(tmpdir);
+          if (!lives_strcmp(mpt, capable->mountpoint)) {
+            lives_rmdir(tmpdir, TRUE);
+            if (!THREADVAR(com_failed)) {
+              if (prefs->disk_quota) {
+                dsu = capable->ds_used = get_dir_size(prefs->workdir);
+              }
+              dstat = mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsu, 0);
+              capable->ds_free = dsu;
+            }
+          }
+        }
+      }
+    }
+    if (dstat != LIVES_STORAGE_STATUS_NORMAL) {
+      check_storage_space(-1, FALSE);
+    }
   }
 
   mainw->img_concat_clip = -1;
   mainw->no_switch_dprint = FALSE;
-  full_dfile = lives_strdup_printf("%s.%s", dfile, req->format);
+
   lives_free(dfile);
   open_file(full_dfile);
   lives_free(full_dfile);
 
-  if (mainw->multitrack != NULL) {
+  if (mainw->multitrack) {
     polymorph(mainw->multitrack, POLY_NONE);
     polymorph(mainw->multitrack, POLY_CLIPS);
     mt_sensitise(mainw->multitrack);
     maybe_add_mt_idlefunc();
   }
-  return NULL;
+
+  return reqout;
 }
 
 
@@ -3398,7 +3540,8 @@ void on_insert_activate(LiVESButton * button, livespointer user_data) {
                 float volx = 1.;
                 double chvols = 1.;
                 double avels = -1.;
-                double aseeks = (double)clipboard->afilesize / (double)(-clipboard->arate * clipboard->asampsize / 8 * clipboard->achans);
+                double aseeks = (double)clipboard->afilesize / (double)(-clipboard->arate
+                                * clipboard->asampsize / 8 * clipboard->achans);
                 ticks_t tc = (ticks_t)(aseeks * TICKS_PER_SECOND_DBL);
                 if (cfile->vol > 0.001) volx = clipboard->vol / cfile->vol;
                 render_audio_segment(1, &zero, mainw->current_file, &avels, &aseeks, 0, tc, &chvols, volx, volx, NULL);
@@ -5343,7 +5486,7 @@ boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
           // clear _old_layout maps
           char *dfile = lives_build_filename(prefs->workdir, mainw->set_name, LAYOUTS_DIRNAME, NULL);
           lives_rm(dfile);
-          lives_free(dfile);
+          //lives_free(dfile);
         }
       }
       lives_free(layout_map_file);
@@ -6573,8 +6716,8 @@ cleanup:
 
   if (user_data) {
     mainw->dsu_valid = FALSE;
-    if (!mainw->dsu_scanning) {
-      mainw->dsu_scanning = TRUE;
+    if (!disk_monitor_running()) {
+      mainw->dsu_valid = TRUE;
       lives_idle_add_simple(update_dsu, NULL);
     }
     lives_widget_show(lives_widget_get_toplevel(LIVES_WIDGET(user_data)));

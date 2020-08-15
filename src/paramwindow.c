@@ -657,7 +657,6 @@ static void add_genparams(LiVESWidget *vbox, lives_rfx_t *rfx) {
 LIVES_GLOBAL_INLINE void on_render_fx_pre_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
   _fx_dialog *fxdialog;
   uint32_t chk_mask;
-  LiVESResponseType resp;
   int start, end;
 
   if (!check_storage_space(mainw->current_file, FALSE)) return;

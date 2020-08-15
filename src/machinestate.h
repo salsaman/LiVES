@@ -184,6 +184,7 @@ typedef enum {
   LIVES_STORAGE_STATUS_NORMAL,
   LIVES_STORAGE_STATUS_WARNING,
   LIVES_STORAGE_STATUS_CRITICAL,
+  LIVES_STORAGE_STATUS_OVERFLOW,
   LIVES_STORAGE_STATUS_OVER_QUOTA,
   LIVES_STORAGE_STATUS_OFFLINE
 } lives_storage_status_t;
@@ -281,7 +282,7 @@ void *proxy_realloc(void *ptr, size_t new_size);
 char *get_md5sum(const char *filename);
 
 char *lives_format_storage_space_string(uint64_t space);
-lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, int64_t *dsval);
+lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, int64_t *dsval, int64_t resvd);
 uint64_t get_ds_free(const char *dir);
 
 lives_proc_thread_t disk_monitor_start(const char *dir);
@@ -306,13 +307,13 @@ char *lives_datetime_rel(const char *datetime);
 
 int check_dev_busy(char *devstr);
 
-uint64_t get_file_size(int fd);
-uint64_t sget_file_size(const char *name);
+off_t get_file_size(int fd);
+off_t sget_file_size(const char *name);
 
 void reget_afilesize(int fileno);
-uint64_t reget_afilesize_inner(int fileno);
+off_t reget_afilesize_inner(int fileno);
 
-ssize_t get_dir_size(const char *dirname);
+off_t get_dir_size(const char *dirname);
 
 boolean compress_files_in_dir(const char *dir, int method, void *data);
 LiVESResponseType send_to_trash(const char *item);
@@ -576,7 +577,7 @@ boolean get_wm_caps(void);
 boolean get_distro_dets(void);
 boolean get_machine_dets(void);
 
-char *get_systmpdir(void);
+char *get_systmp(const char *suff, boolean is_dir);
 boolean check_snap(const char *prog);
 
 #endif

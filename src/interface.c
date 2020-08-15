@@ -5838,7 +5838,7 @@ static void dsu_set_toplabel(void) {
   char *ltext = NULL, *dtxt, *dtxt2;
   widget_opts.font_size = LIVES_FONT_SIZE_LARGE;
 
-  if (mainw->dsu_valid && !mainw->dsu_scanning) {
+  if (mainw->dsu_valid && !dsq->scanning) {
     if (capable->ds_free < prefs->ds_crit_level) {
       if (!capable->mountpoint) capable->mountpoint = get_mountpoint_for(prefs->workdir);
       dtxt = lives_format_storage_space_string(prefs->ds_crit_level);
@@ -5898,7 +5898,7 @@ boolean update_dsu(livespointer data) {
   static boolean set_label = FALSE;
   int64_t dsu = -1;
   char *txt;
-  if (mainw->dsu_scanning && (dsu = disk_monitor_check_result(prefs->workdir)) < 0) {
+  if ((!dsq || dsq->scanning) && (dsu = disk_monitor_check_result(prefs->workdir)) < 0) {
     if (!dsq || !dsq->visible) {
       return FALSE;
     }
@@ -5911,9 +5911,9 @@ boolean update_dsu(livespointer data) {
     if (mainw->dsu_valid) {
       if (dsu > -1) capable->ds_used = dsu;
       dsu = capable->ds_used;
-      mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsu);
+      mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsu, 0);
       capable->ds_free = dsu;
-      mainw->dsu_scanning = FALSE;
+      dsq->scanning = FALSE;
       if (mainw->dsu_widget) {
         txt = lives_format_storage_space_string(capable->ds_used);
         lives_label_set_text(LIVES_LABEL(dsq->used_label), txt);
@@ -5939,7 +5939,7 @@ boolean update_dsu(livespointer data) {
 
 static void qslider_changed(LiVESWidget * slid, livespointer data) {
   char *txt, *dtxt;
-  if (mainw->dsu_valid && !mainw->dsu_scanning) {
+  if (mainw->dsu_valid && !dsq->scanning) {
     uint64_t min = capable->ds_used;
     uint64_t max = capable->ds_free + min - prefs->ds_warn_level;
     double value = 0.;
@@ -5972,7 +5972,7 @@ static void qslider_changed(LiVESWidget * slid, livespointer data) {
     lives_label_set_text(LIVES_LABEL(dsq->vlabel), dtxt);
     widget_opts.use_markup = FALSE;
     lives_free(txt); lives_free(dtxt);
-    if (mainw->dsu_valid && !mainw->dsu_scanning) {
+    if (mainw->dsu_valid && !dsq->scanning) {
       double pcused = 100. * (double)capable->ds_used
                       / (double)future_prefs->disk_quota;
 
@@ -6023,7 +6023,7 @@ static boolean dsu_widget_clicked(LiVESWidget * widget, LiVESXEventButton * even
   if (is_click) mouse_on = TRUE;
   else if (!mouse_on) return TRUE;
 
-  if (!mainw->dsu_valid || mainw->dsu_scanning) return TRUE;
+  if (!mainw->dsu_valid || dsq->scanning) return TRUE;
   else {
     int width = lives_widget_get_allocation_width(widget);
     if (width <= 0) return TRUE;
@@ -6090,7 +6090,7 @@ static void dsu_fill_details(LiVESWidget * widget, livespointer data) {
 
   lives_layout_add_row(LIVES_LAYOUT(layout2));
   lives_layout_add_label(LIVES_LAYOUT(layout2), _("Total size"), TRUE);
-  if (!mainw->dsu_valid || mainw->dsu_scanning)
+  if (!mainw->dsu_valid || dsq->scanning)
     txt = dsu_label_calculating();
   else
     txt = lives_format_storage_space_string(capable->ds_tot);
@@ -6098,14 +6098,14 @@ static void dsu_fill_details(LiVESWidget * widget, livespointer data) {
   lives_free(txt);
 
   lives_layout_add_label(LIVES_LAYOUT(layout2), _("Disk space free"), TRUE);
-  if (!mainw->dsu_valid || mainw->dsu_scanning)
+  if (!mainw->dsu_valid || dsq->scanning)
     txt = dsu_label_calculating();
   else
     txt = lives_format_storage_space_string(capable->ds_free);
   lives_layout_add_label(LIVES_LAYOUT(layout2), txt, TRUE);
   lives_free(txt);
 
-  if (mainw->dsu_valid && !mainw->dsu_scanning) {
+  if (mainw->dsu_valid && !dsq->scanning) {
     if (capable->ds_free <= prefs->ds_crit_level)
       show_warn_image(widget_opts.last_label, _("Free diskspace is below the critical level"));
     else if (capable->ds_free <= prefs->ds_warn_level)
@@ -6114,7 +6114,7 @@ static void dsu_fill_details(LiVESWidget * widget, livespointer data) {
 
   lives_layout_add_row(LIVES_LAYOUT(layout2));
   lives_layout_add_label(LIVES_LAYOUT(layout2), _("Used by other applications"), TRUE);
-  if (!mainw->dsu_valid || mainw->dsu_scanning)
+  if (!mainw->dsu_valid || dsq->scanning)
     txt = dsu_label_calculating();
   else {
     dsval = capable->ds_tot - capable->ds_free - capable->ds_used;
@@ -6126,7 +6126,7 @@ static void dsu_fill_details(LiVESWidget * widget, livespointer data) {
   //lives_layout_add_row(LIVES_LAYOUT(layout2));
   lives_layout_add_label(LIVES_LAYOUT(layout2), _("Used by LiVES"), TRUE);
 
-  if (!mainw->dsu_valid || mainw->dsu_scanning)
+  if (!mainw->dsu_valid || dsq->scanning)
     txt = dsu_label_calculating();
   else
     txt = lives_format_storage_space_string(capable->ds_used);
@@ -6157,7 +6157,7 @@ static void dsu_fill_details(LiVESWidget * widget, livespointer data) {
   if (prefs->disk_quota) {
     double pcu = 0.;
 
-    if (!mainw->dsu_valid || mainw->dsu_scanning)
+    if (!mainw->dsu_valid || dsq->scanning)
       txt = dsu_label_calculating();
     else {
       uint64_t qq = prefs->disk_quota, over = 0;
@@ -6210,7 +6210,7 @@ static void dsu_fill_details(LiVESWidget * widget, livespointer data) {
 static void changequota_cb(LiVESWidget * butt, livespointer data) {
   static char *otxt = NULL;
 
-  if (mainw->dsu_scanning || !mainw->dsu_valid) {
+  if (dsq->scanning || !mainw->dsu_valid) {
     lives_label_set_text(LIVES_LABEL(dsq->inst_label), _("Still calculating...please wait and try again..."));
     return;
   }
@@ -6286,8 +6286,7 @@ void run_diskspace_dialog(void) {
   int wofl;
 
   /// kick off a bg process to get free ds and ds used
-  mainw->dsu_scanning = mainw->dsu_valid = TRUE;
-
+  dsq->scanning = TRUE;
   disk_monitor_start(prefs->workdir);
 
   if (!dsq) dsq = (_dsquotaw *)lives_calloc(1, sizeof(_dsquotaw));

@@ -1931,7 +1931,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
   if (rec_type == RECA_EXTERNAL || rec_type == RECA_GENERATED) {
     int asigned;
     int aendian;
-    uint64_t fsize = get_file_size(mainw->aud_rec_fd);
+    off_t fsize = get_file_size(mainw->aud_rec_fd);
 
     if (rec_type == RECA_EXTERNAL) {
       mainw->jackd_read->reverse_endian = FALSE;
@@ -2091,7 +2091,7 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
   if (rec_type == RECA_EXTERNAL || rec_type == RECA_GENERATED) {
     int asigned;
     int aendian;
-    uint64_t fsize = get_file_size(mainw->aud_rec_fd);
+    off_t fsize = get_file_size(mainw->aud_rec_fd);
 
     if (rec_type == RECA_EXTERNAL) {
       mainw->pulsed_read->reverse_endian = FALSE;

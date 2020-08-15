@@ -88,11 +88,11 @@ boolean save_frame_index(int fileno) {
         THREADVAR(write_failed) = 0;
         retval = do_write_failed_error_s_with_retry(fname, NULL);
       } else {
-        if (sget_file_size(fname) != (size_t)sfile->frames * sizeof(frames_t)) {
+        if (sget_file_size(fname) != (off_t)sfile->frames * sizeof(frames_t)) {
           retval = do_write_failed_error_s_with_retry(fname, NULL);
         } else {
           lives_cp(fname, fname_new);
-          if (sget_file_size(fname_new) != (size_t)sfile->frames * sizeof(frames_t)) {
+          if (sget_file_size(fname_new) != (off_t)sfile->frames * sizeof(frames_t)) {
             retval = do_write_failed_error_s_with_retry(fname, NULL);
 	    // *INDENT-OFF*
           }}}}
@@ -113,7 +113,7 @@ boolean save_frame_index(int fileno) {
 
 frames_t load_frame_index(int fileno) {
   lives_clip_t *sfile = mainw->files[fileno];
-  size_t filesize;
+  off_t filesize;
   char *fname, *fname_back;
   boolean backuptried = FALSE;
   int fd, retval;
@@ -128,12 +128,12 @@ frames_t load_frame_index(int fileno) {
   fname = lives_build_filename(prefs->workdir, sfile->handle, FRAME_INDEX_FNAME, NULL);
   filesize = sget_file_size(fname);
 
-  if (filesize == 0) {
+  if (filesize <= 0) {
     lives_free(fname);
     return 0;
   }
 
-  if (filesize >> 2 > (size_t)sfile->frames) sfile->frames = (frames_t)(filesize >> 2);
+  if (filesize >> 2 > (off_t)sfile->frames) sfile->frames = (frames_t)(filesize >> 2);
   fname_back = lives_build_filename(prefs->workdir, sfile->handle, FRAME_INDEX_FNAME "." LIVES_FILE_EXT_BACK, NULL);
 
   do {

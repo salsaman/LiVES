@@ -19850,7 +19850,7 @@ void save_layout_map(int *lmap, double * lmap_audio, const char *file, const cha
   char *map_name = NULL, *ldir = NULL;
   char *string;
 
-  uint32_t size = 0;
+  off_t size = 0;
 
   double max_atime;
 
@@ -19960,7 +19960,7 @@ void save_layout_map(int *lmap, double * lmap_audio, const char *file, const cha
     lives_close_buffered(fd);
     size = sget_file_size(map_name);
 
-    if (size == 0 || !written) {
+    if (size <= 0 || !written) {
       LIVES_DEBUG("Removing layout map file: ");
       LIVES_DEBUG(map_name);
       lives_rm(map_name);

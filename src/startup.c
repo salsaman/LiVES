@@ -523,7 +523,7 @@ boolean do_startup_tests(boolean tshoot) {
 
   uint8_t *abuff;
 
-  size_t fsize;
+  off_t fsize;
 
   boolean success, success2, success3, success4;
   boolean imgext_switched = FALSE;
@@ -672,7 +672,7 @@ boolean do_startup_tests(boolean tshoot) {
         lives_rm(afile);
         lives_free(afile);
 
-        if (fsize == 0) {
+        if (fsize <= 0) {
           fail_test(table, testcase, _("You should install sox_fmt_all or similar"));
         } else pass_test(table, testcase);
       }

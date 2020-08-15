@@ -238,6 +238,7 @@ typedef enum {
   LIVES_DIALOG_QUESTION,
   LIVES_DIALOG_ABORT_OK,
   LIVES_DIALOG_ABORT_RETRY,
+  LIVES_DIALOG_RETRY_CANCEL,
   LIVES_DIALOG_ABORT_CANCEL_RETRY,
   LIVES_DIALOG_CANCEL_RETRY_BROWSE,
   LIVES_DIALOG_ABORT
@@ -1691,6 +1692,11 @@ typedef struct {
 
   // disk space in workdir
   lives_storage_status_t ds_status;
+  int ds_mon;
+
+#define CHECK_CRIT		(1 << 0)
+#define CHECK_WARN		(1 << 1)
+#define CHECK_QUOTA		(1 << 2)
 
   char *version_hash;
   char *old_vhash;
@@ -1728,7 +1734,7 @@ typedef struct {
   boolean add_trash_rb;
   boolean cs_manage;
 
-  boolean dsu_scanning, dsu_valid;
+  boolean dsu_valid;
   LiVESWidget *dsu_widget;
 
   int max_textsize;

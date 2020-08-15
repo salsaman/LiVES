@@ -574,7 +574,8 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
     } else {
       if (!isread && !(flags & O_TRUNC)) {
         if (is_append) fbuff->offset = fbuff->orig_size = lseek(fd, 0, SEEK_END);
-        else fbuff->orig_size = get_file_size(fd);
+        else fbuff->orig_size = (size_t)get_file_size(fd);
+        /// TODO - handle fsize < 0
       }
     }
     pthread_mutex_lock(&mainw->fbuffer_mutex);
@@ -609,7 +610,7 @@ LIVES_GLOBAL_INLINE int lives_open_buffered_rdonly(const char *pathname) {
 
 boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
-  ssize_t fsize = get_file_size(fd) - skip, bufsize = smbytes, res;
+  off_t fsize = get_file_size(fd) - skip, bufsize = smbytes, res;
   if (fsize > 0) {
     lseek(fd, skip, SEEK_SET);
     fbuff->orig_size = fsize + skip;
@@ -1340,7 +1341,7 @@ size_t lives_buffered_orig_size(int fd) {
   }
 
   if (!fbuff->read) return fbuff->orig_size;
-  if (fbuff->orig_size == 0) fbuff->orig_size = get_file_size(fd);
+  if (fbuff->orig_size == 0) fbuff->orig_size = (size_t)get_file_size(fd);
   return fbuff->orig_size;
 }
 
@@ -4417,7 +4418,7 @@ void lives_suspend_resume_process(const char *dirname, boolean suspend) {
 boolean check_dir_access(const char *dir, boolean leaveit) {
   // if a directory exists, make sure it is readable and writable
   // otherwise create it and then check
-
+  // we test here by actually creating a (mkstemp) file and writing to it
   // dir is in locale encoding
 
   // see also is_writeable_dir() which uses statvfs
@@ -5549,10 +5550,8 @@ LIVES_GLOBAL_INLINE int hextodec(const char *string) {
 
 
 boolean is_writeable_dir(const char *dir) {
-  // return FALSE if we cannot create/write to dir
-
+  // return FALSE if we cannot create / write to dir
   // dir should be in locale encoding
-
   // WARNING: this will actually create the directory (since we dont know if its parents are needed)
 
   struct statvfs sbuf;
@@ -5571,6 +5570,8 @@ boolean is_writeable_dir(const char *dir) {
 
 
 boolean lives_make_writeable_dir(const char *newdir) {
+  /// create a directory (including parents)
+  /// and ensure we can actually write to it
   int ret = lives_mkdir_with_parents(newdir, capable->umask);
   int myerrno = errno;
   if (!check_dir_access(newdir, TRUE)) {

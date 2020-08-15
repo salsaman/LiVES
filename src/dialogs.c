@@ -378,26 +378,33 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     break;
 
   case LIVES_DIALOG_ABORT_CANCEL_RETRY:
+  case LIVES_DIALOG_RETRY_CANCEL:
   case LIVES_DIALOG_ABORT_RETRY:
   case LIVES_DIALOG_ABORT_OK:
   case LIVES_DIALOG_ABORT:
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0,
                                       LIVES_MESSAGE_ERROR, LIVES_BUTTONS_NONE, NULL);
 
-    abortbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-                  LIVES_STOCK_QUIT, _("_Abort"), LIVES_RESPONSE_ABORT);
+    if (diat != LIVES_DIALOG_RETRY_CANCEL) {
+      abortbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
+                    LIVES_STOCK_QUIT, _("_Abort"), LIVES_RESPONSE_ABORT);
 
-    if (diat == LIVES_DIALOG_ABORT_CANCEL_RETRY) {
-      lives_window_set_title(LIVES_WINDOW(dialog), _("File Error"));
-      cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
-                     LIVES_RESPONSE_CANCEL);
-    }
-    if (diat == LIVES_DIALOG_ABORT_OK) {
-      okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
-                 LIVES_RESPONSE_OK);
+      if (diat == LIVES_DIALOG_ABORT_CANCEL_RETRY) {
+        lives_window_set_title(LIVES_WINDOW(dialog), _("File Error"));
+        cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
+                       LIVES_RESPONSE_CANCEL);
+      }
+      if (diat == LIVES_DIALOG_ABORT_OK) {
+        okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
+                   LIVES_RESPONSE_OK);
+      }
     } else {
       okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH,
                  _("_Retry"), LIVES_RESPONSE_RETRY);
+    }
+    if (diat == LIVES_DIALOG_RETRY_CANCEL) {
+      cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
+                     LIVES_RESPONSE_CANCEL);
     }
     if (palette && widget_opts.apply_theme)
       lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
@@ -704,6 +711,11 @@ LIVES_GLOBAL_INLINE LiVESResponseType do_abort_ok_dialog(const char *text) {
 // does not return
 LIVES_GLOBAL_INLINE void do_abort_dialog(const char *text) {
   _do_abort_cancel_retry_dialog(text, LIVES_DIALOG_ABORT);
+}
+
+
+LIVES_GLOBAL_INLINE LiVESResponseType do_retry_cancel_dialog(const char *text) {
+  return _do_abort_cancel_retry_dialog(text, LIVES_DIALOG_RETRY_CANCEL);
 }
 
 
@@ -1056,7 +1068,7 @@ boolean check_storage_space(int clipno, boolean is_processing) {
   // check storage space in prefs->workdir
   lives_clip_t *sfile = NULL;
 
-  int64_t dsval = 0;
+  int64_t dsval = -1;
 
   lives_storage_status_t ds;
   int retval;
@@ -1068,9 +1080,12 @@ boolean check_storage_space(int clipno, boolean is_processing) {
   if (IS_VALID_CLIP(clipno)) sfile = mainw->files[clipno];
 
   do {
-    /// TODO: set dsval with ds used
-    dsval = capable->ds_used;
-    ds = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval);
+    if (mainw->dsu_valid && capable->ds_used > -1) {
+      dsval = capable->ds_used;
+    } else if (prefs->disk_quota) {
+      dsval = capable->ds_used = get_dir_size(prefs->workdir);
+    }
+    ds = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval, 0);
     capable->ds_free = dsval;
     if (ds == LIVES_STORAGE_STATUS_WARNING) {
       uint64_t curr_ds_warn = mainw->next_ds_warn_level;
@@ -1131,6 +1146,10 @@ boolean check_storage_space(int clipno, boolean is_processing) {
       }
     }
   } while (ds == LIVES_STORAGE_STATUS_CRITICAL);
+
+  if (ds == LIVES_STORAGE_STATUS_OVER_QUOTA) {
+    run_diskspace_dialog();
+  }
 
   if (did_pause && mainw->effects_paused) {
     on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
@@ -3731,7 +3750,7 @@ LiVESResponseType do_system_failed_error(const char *com, int retval, const char
 
   int64_t dsval = capable->ds_used;
 
-  lives_storage_status_t ds = get_storage_status(prefs->workdir, prefs->ds_crit_level, &dsval);
+  lives_storage_status_t ds = get_storage_status(prefs->workdir, prefs->ds_crit_level, &dsval, 0);
   LiVESResponseType response = LIVES_RESPONSE_NONE;
 
   capable->ds_free = dsval;
@@ -3812,7 +3831,7 @@ void do_write_failed_error_s(const char *s, const char *addinfo) {
   lives_snprintf(dirname, PATH_MAX, "%s", s);
   get_dirname(dirname);
   exists = lives_file_test(dirname, LIVES_FILE_TEST_EXISTS);
-  ds = get_storage_status(dirname, prefs->ds_crit_level, &dsval);
+  ds = get_storage_status(dirname, prefs->ds_crit_level, &dsval, 0);
   capable->ds_free = dsval;
   if (!exists) lives_rmdir(dirname, FALSE);
 
@@ -3892,7 +3911,7 @@ LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const ch
   lives_snprintf(dirname, PATH_MAX, "%s", fname);
   get_dirname(dirname);
   exists = lives_file_test(dirname, LIVES_FILE_TEST_EXISTS);
-  ds = get_storage_status(dirname, prefs->ds_crit_level, &dsval);
+  ds = get_storage_status(dirname, prefs->ds_crit_level, &dsval, 0);
   capable->ds_free = dsval;
   if (!exists) lives_rmdir(dirname, FALSE);
 

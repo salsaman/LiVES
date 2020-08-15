@@ -748,7 +748,7 @@ static boolean pre_init(void) {
       int64_t dsval = disk_monitor_check_result(prefs->workdir);
       if (dsval > 0) capable->ds_used = dsval;
       else dsval = capable->ds_used;
-      mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval);
+      mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval, 0);
       capable->ds_free = dsval;
       if (mainw->ds_status == LIVES_STORAGE_STATUS_CRITICAL) {
         tmp = ds_critical_msg(prefs->workdir, &capable->mountpoint, dsval);
@@ -1537,7 +1537,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->cs_manage = FALSE;
 
-  mainw->dsu_valid = mainw->dsu_scanning = FALSE;
+  mainw->dsu_valid = FALSE;
   mainw->dsu_widget = NULL;
 
   mainw->drawsrc = -1;
@@ -3309,7 +3309,7 @@ static boolean lazy_startup_checks(void *data) {
     if (mainw->helper_procthreads[PT_LAZY_DSUSED]) {
       if (disk_monitor_running()) {
         int64_t dsval = capable->ds_used = disk_monitor_check_result(prefs->workdir);
-        mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval);
+        mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval, 0);
         capable->ds_free = dsval;
         if (capable->ds_used < 0)
           capable->ds_used = disk_monitor_check_result(prefs->workdir);
@@ -8124,7 +8124,7 @@ mainw->track_decoders[i] = clone_decoder(nclip);
 
                   if (cfile->clip_type == CLIP_TYPE_DISK &&
                       cfile->opening && cfile->img_type == IMG_TYPE_PNG
-                      && sget_file_size(fname_next) == 0) {
+                      && sget_file_size(fname_next) <= 0) {
                     if (++bad_frame_count > BFC_LIMIT) {
                       mainw->cancelled = check_for_bad_ffmpeg();
                       bad_frame_count = 0;

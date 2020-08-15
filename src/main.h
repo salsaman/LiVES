@@ -1226,6 +1226,8 @@ LiVESResponseType do_abort_ok_dialog(const char *text);
 LiVESResponseType do_abort_retry_dialog(const char *text);
 LiVESResponseType do_abort_cancel_retry_dialog(const char *text) WARN_UNUSED;
 
+LiVESResponseType do_retry_cancel_dialog(const char *text);
+
 LiVESResponseType do_error_dialog(const char *text);
 LiVESResponseType do_error_dialogf(const char *fmt, ...);
 LiVESResponseType do_error_dialog_with_check(const char *text, uint64_t warn_mask_number);

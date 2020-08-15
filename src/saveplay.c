@@ -945,7 +945,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     cfile->video_time = cfile->frames / cfile->fps;
   } else {
     add_file_info(NULL, FALSE);
-    if (cfile->f_size == 0) cfile->f_size = sget_file_size((char *)file_name);
+    if (cfile->f_size == 0) cfile->f_size = (size_t)sget_file_size((char *)file_name);
   }
 
   if (!cfile->ext_src) {
@@ -1271,7 +1271,7 @@ void save_file(int clip, int start, int end, const char *filename) {
 
   struct stat filestat;
 
-  uint64_t fsize;
+  off_t fsize;
 
   LiVESWidget *hbox;
   frames_t res;
@@ -2012,7 +2012,8 @@ void save_file(int clip, int start, int end, const char *filename) {
       sfile->changed = FALSE;
 
       /// save was successful
-      sfile->f_size = sget_file_size(full_file_name);
+      /// TODO - check for size < 0 !!!
+      sfile->f_size = (size_t)sget_file_size(full_file_name);
 
       if (sfile->is_untitled) {
         sfile->is_untitled = FALSE;
@@ -2062,15 +2063,18 @@ void save_file(int clip, int start, int end, const char *filename) {
     /// get size of file and show it
 
     fsize = sget_file_size(full_file_name);
-    fsize_ds = lives_format_storage_space_string(fsize);
-    d_print(_("File size was %s\n"), fsize_ds);
-    lives_free(fsize_ds);
+    if (fsize >= 0) {
+      /// TODO - handle file errors !!!!!
 
-    if (mainw->subt_save_file != NULL) {
-      save_subs_to_file(sfile, mainw->subt_save_file);
-      lives_freep((void **)&mainw->subt_save_file);
+      fsize_ds = lives_format_storage_space_string(fsize);
+      d_print(_("File size was %s\n"), fsize_ds);
+      lives_free(fsize_ds);
+
+      if (mainw->subt_save_file) {
+        save_subs_to_file(sfile, mainw->subt_save_file);
+        lives_freep((void **)&mainw->subt_save_file);
+      }
     }
-
     mainw->no_switch_dprint = FALSE;
 
     lives_notify(LIVES_OSC_NOTIFY_SUCCESS,
@@ -4399,7 +4403,7 @@ boolean read_headers(int fileno, const char *dir, const char *file_name) {
   char *com, *tmp;
   char *old_hdrfile, *lives_header;
 
-  int header_size;
+  off_t header_size;
   int version_hash;
   int pieces;
   int header_fd;
@@ -4410,7 +4414,7 @@ boolean read_headers(int fileno, const char *dir, const char *file_name) {
 
   boolean retval, retvala;
 
-  ssize_t sizhead = 28; //8 * 4 + 8 + 8;
+  off_t sizhead = 28; //8 * 4 + 8 + 8;
 
   time_t old_time = 0, new_time = 1;
   struct stat mystat;

@@ -8681,9 +8681,9 @@ LiVESWidget *lives_standard_drawing_area_new(LiVESGuiCallback callback, lives_pa
 #if GTK_CHECK_VERSION(4, 0, 0)
       gtk_drawing_area_set_draw_func(darea, callback, (livespointer)ppsurf, NULL);
 #else
-      lives_signal_sync_connect(LIVES_GUI_OBJECT(darea), LIVES_WIDGET_EXPOSE_EVENT,
-                                LIVES_GUI_CALLBACK(callback),
-                                (livespointer)ppsurf);
+      lives_signal_connect(LIVES_GUI_OBJECT(darea), LIVES_WIDGET_EXPOSE_EVENT,
+                           LIVES_GUI_CALLBACK(callback),
+                           (livespointer)ppsurf);
 #endif
     lives_signal_sync_connect(LIVES_GUI_OBJECT(darea), LIVES_WIDGET_CONFIGURE_EVENT,
                               LIVES_GUI_CALLBACK(all_config),

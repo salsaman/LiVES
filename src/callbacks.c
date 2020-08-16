@@ -1040,7 +1040,7 @@ void on_location_select(LiVESButton * button, livespointer user_data) {
 
 //ret updated req if fmt sel. needs change
 lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, const char *tmpdir) {
-  char *com, *dfile = NULL, *full_dfile = NULL, *tmp, *ddir;
+  char *com, *full_dfile = NULL, *tmp, *ddir, *dest = NULL;
   char *overrdkey = NULL;
   char *mpf = NULL, *mpt = NULL;
   lives_remote_clip_request_t *reqout = NULL;
@@ -1096,10 +1096,10 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
         } else {
           // final dest is not ours, we will only check overflow
           manage_ds = 3;
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
+
   lives_freep((void **)&mpf);
 
   if (prefs->ds_warn_level && !prefs->ds_crit_level) {
@@ -1256,78 +1256,83 @@ retry:
 
   lives_snprintf(req->ext, 16, "%s", req->format);
 
-  full_dfile = lives_strdup_printf("%s.%s", dfile, req->ext);
+  full_dfile = lives_strdup_printf("%s.%s", req->fname, req->ext);
 
   bres = do_progress_dialog(TRUE, TRUE, _("Downloading clip"));
+  cfile->no_proc_sys_errors = FALSE;
   if (!bres || mainw->error) badfile = TRUE;
   else {
-    lives_storage_status_t dstate;
-    char *from = lives_build_filename(ddir, full_dfile, NULL);
-    off_t clipsize;
-    if (!lives_file_test(from, LIVES_FILE_TEST_EXISTS) || (clipsize = sget_file_size(from)) <= 0) {
-      badfile = TRUE;
-    } else {
-      if (manage_ds == 2 || manage_ds == 3) {
-        LiVESResponseType resp;
-        do {
-          char *msg = NULL;
-          int64_t dsu = -1;
-          resp = LIVES_RESPONSE_OK;
-          dstate = get_storage_status(req->save_dir, mainw->next_ds_warn_level, &dsu, clipsize);
-          if (dstate == LIVES_STORAGE_STATUS_OVERFLOW) {
-            msg =
-              lives_strdup_printf(_("There is insufficient disk space in %s to move the downloaded clip.\n"), mpt);
-          } else if (manage_ds != 3) {
-            if (dstate == LIVES_STORAGE_STATUS_CRITICAL || dstate == LIVES_STORAGE_STATUS_WARNING) {
-              msg = lives_strdup_printf(_("Moving the downloaded clip to\n%s\nwill bring free disk space in %s\n"
-                                          "below the %s level of %s\n"), mpt);
+    dest = lives_build_filename(req->save_dir, full_dfile, NULL);
+    if (ddir != req->save_dir) {
+      lives_storage_status_t dstate;
+      char *from = lives_build_filename(ddir, full_dfile, NULL);
+      off_t clipsize;
+      if (!lives_file_test(from, LIVES_FILE_TEST_EXISTS) || (clipsize = sget_file_size(from)) <= 0) {
+        badfile = TRUE;
+      } else {
+        if (manage_ds == 2 || manage_ds == 3) {
+          LiVESResponseType resp;
+          do {
+            char *msg = NULL;
+            int64_t dsu = -1;
+            resp = LIVES_RESPONSE_OK;
+            dstate = get_storage_status(req->save_dir, mainw->next_ds_warn_level, &dsu, clipsize);
+            if (dstate == LIVES_STORAGE_STATUS_OVERFLOW) {
+              msg =
+                lives_strdup_printf(_("There is insufficient disk space in %s to move the downloaded clip.\n"), mpt);
+            } else if (manage_ds != 3) {
+              if (dstate == LIVES_STORAGE_STATUS_CRITICAL || dstate == LIVES_STORAGE_STATUS_WARNING) {
+                msg = lives_strdup_printf(_("Moving the downloaded clip to\n%s\nwill bring free disk space in %s\n"
+                                            "below the %s level of %s\n"), mpt);
+              }
             }
-          }
 
-          if (msg) {
-            char *cs = lives_format_storage_space_string(clipsize);
-            char *vs = lives_format_storage_space_string(dsu);
-            char *xmsg = lives_strdup_printf("%s\n(Free space in volume = %s, clip size = %s)\n"
-                                             "You can either try deleting some files from %s and clicking on  Retry\n"
-                                             "or else click Cancel to cancel the download.\n", msg, vs, cs, mpt);
-            resp = do_retry_cancel_dialog(xmsg);
-            lives_free(xmsg); lives_free(msg);
-            lives_free(cs); lives_free(vs);
+            if (msg) {
+              char *cs = lives_format_storage_space_string(clipsize);
+              char *vs = lives_format_storage_space_string(dsu);
+              char *xmsg = lives_strdup_printf("%s\n(Free space in volume = %s, clip size = %s)\n"
+                                               "You can either try deleting some files from %s and clicking on  Retry\n"
+                                               "or else click Cancel to cancel the download.\n", msg, vs, cs, mpt);
+              resp = do_retry_cancel_dialog(xmsg);
+              lives_free(xmsg); lives_free(msg);
+              lives_free(cs); lives_free(vs);
+            }
+          } while (resp == LIVES_RESPONSE_RETRY);
+          if (resp == LIVES_RESPONSE_CANCEL) {
+            badfile = TRUE;
+          }
+        }
+      }
+      if (!badfile) {
+        /// move file to its final destination
+        LiVESResponseType resp;
+        req->do_update = FALSE;
+        if (tmpdir) {
+          if (lives_mv(from, dest)) {
+            lives_free(from);
+            lives_free(dest);
+            badfile = TRUE;
+            goto cleanup_ut;
+          }
+        }
+        do {
+          resp = LIVES_RESPONSE_NONE;
+          if (!lives_file_test(dest, LIVES_FILE_TEST_EXISTS)) {
+            char *errtxt = lives_strdup_printf(_("Failed to move %s to $\n"), from, dest);
+            resp = do_write_failed_error_s_with_retry(dest, errtxt);
+            lives_free(errtxt);
           }
         } while (resp == LIVES_RESPONSE_RETRY);
         if (resp == LIVES_RESPONSE_CANCEL) {
           badfile = TRUE;
         }
       }
-    }
-    if (!badfile) {
-      /// move file to its final destination
-      LiVESResponseType resp;
-      char *to = lives_build_filename(req->save_dir, full_dfile, NULL);
-      req->do_update = FALSE;
-      if (lives_mv(from, to)) {
-        lives_free(from);
-        lives_free(to);
-        goto cleanup_ut;
-      }
-      do {
-        if (!lives_file_test(to, LIVES_FILE_TEST_EXISTS)) {
-          char *errtxt = lives_strdup_printf(_("Failed to move %s to $\n"), from, to);
-          resp = do_write_failed_error_s_with_retry(to, errtxt);
-          lives_free(errtxt);
-        }
-      } while (resp == LIVES_RESPONSE_RETRY);
-      if (resp == LIVES_RESPONSE_CANCEL) {
-        badfile = TRUE;
-      }
-      lives_free(to);
       lives_free(from);
     }
-    //lives_free(to);
   }
+
   if (badfile) {
     lives_kill_subprocesses(cfile->handle, TRUE);
-    // we made a temp file so close it
     if (mainw->error) {
       d_print_failed();
       do_error_dialog(
@@ -1368,10 +1373,10 @@ cleanup_ut:
           lives_rmdir(tmpdir, TRUE);
           if (!THREADVAR(com_failed)) {
             recheck = TRUE;
-          }
-        }
-      }
-    }
+	    // *INDENT-OFF*
+          }}}}
+    // *INDENT-ON*
+
     if (recheck) {
       if (prefs->disk_quota) {
         mainw->dsu_valid = TRUE;
@@ -1394,16 +1399,15 @@ cleanup_ut:
               }
               dstat = mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsu, 0);
               capable->ds_free = dsu;
-            }
-          }
-        }
-      }
-    }
+	      // *INDENT-OFF*
+            }}}}}
+    // *INDENT-ON*
     if (dstat != LIVES_STORAGE_STATUS_NORMAL) {
       /// iff critical, delete file
       // we should probably offer if warn or quota too
-      if (mainw->ds_status == LIVES_STORAGE_STATUS_CRITICAL && full_dfile) {
-        lives_rm(full_dfile);
+      if (mainw->ds_status == LIVES_STORAGE_STATUS_CRITICAL && dest) {
+        lives_rm(dest);
+        badfile = TRUE;
       }
       if (!check_storage_space(-1, FALSE)) {
         badfile = TRUE;
@@ -1414,18 +1418,16 @@ cleanup_ut:
   mainw->img_concat_clip = -1;
   mainw->no_switch_dprint = FALSE;
 
-  if (dfile) lives_free(dfile);
-
-  if (full_dfile) {
+  if (dest) {
     if (!badfile) {
-      open_file(full_dfile);
+      open_file(dest);
       if (mainw->multitrack) {
         polymorph(mainw->multitrack, POLY_NONE);
         polymorph(mainw->multitrack, POLY_CLIPS);
         mt_sensitise(mainw->multitrack);
       }
     }
-    lives_free(full_dfile);
+    lives_free(dest);
   }
   if (mainw->multitrack) {
     maybe_add_mt_idlefunc();

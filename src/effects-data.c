@@ -6,7 +6,7 @@
 
 // functions for chaining and data passing between fx plugins
 
-//#define DEBUG_PCONX
+#define DEBUG_PCONX
 
 #include "main.h"
 #include "effects.h"
@@ -60,8 +60,7 @@ static void dump_connections(void) {
 #endif
 
 static char *get_param_name(weed_plant_t *param, int pnum, boolean is_in) {
-  int error;
-  char *name = weed_get_string_value(param, WEED_LEAF_NAME, &error);
+  char *name = weed_get_string_value(param, WEED_LEAF_NAME, NULL);
   if (!strlen(name)) {
     lives_free(name);
     name = NULL;
@@ -75,8 +74,7 @@ static char *get_param_name(weed_plant_t *param, int pnum, boolean is_in) {
 
 
 static char *get_chan_name(weed_plant_t *chan, int cnum, boolean is_in) {
-  int error;
-  char *name = weed_get_string_value(chan, WEED_LEAF_NAME, &error);
+  char *name = weed_get_string_value(chan, WEED_LEAF_NAME, NULL);
   if (!strlen(name)) {
     lives_free(name);
     name = NULL;
@@ -120,10 +118,8 @@ void override_if_active_input(int hotkey) {
           pconx->autoscale[i] = TRUE;
           //}
           return;
-        }
-      }
-    }
-
+	  // *INDENT-OFF*
+        }}}
     pconx = pconx->next;
   }
 }
@@ -136,22 +132,21 @@ void end_override_if_activate_output(int hotkey) {
   int totcons;
   int omode = rte_key_getmode(hotkey);
 
-  register int i, j;
+  int j;
 
-  while (pconx != NULL) {
+  while (pconx) {
     if (pconx->okey == hotkey && pconx->omode == omode) {
       totcons = 0;
       j = 0;
-      for (i = 0; i < pconx->nparams; i++) {
+      for (int i = 0; i < pconx->nparams; i++) {
         totcons += pconx->nconns[i];
         for (; j < totcons; j++) {
           if (pconx->ipnum[j] == FX_DATA_PARAM_ACTIVE) {
             // abuse "autoscale" for this
             pconx->autoscale[j] = FALSE;
-          }
-        }
-      }
-    }
+	    // *INDENT-OFF*
+          }}}}
+    // *INDENT-OFF*
     pconx = pconx->next;
   }
 }
@@ -159,12 +154,11 @@ void end_override_if_activate_output(int hotkey) {
 
 void pconx_delete_all(void) {
   lives_pconnect_t *pconx = mainw->pconx, *pconx_next;
-
-  register int i;
+  int i;
 
   for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_lock(&mainw->fx_mutex[i]);
 
-  while (pconx != NULL) {
+  while (pconx) {
     pconx_next = pconx->next;
     lives_free(pconx->params);
     lives_free(pconx->nconns);
@@ -179,18 +173,13 @@ void pconx_delete_all(void) {
   mainw->pconx = NULL;
 
   for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->fx_mutex[i]);
-
 }
 
 
 static lives_pconnect_t *pconx_new(int okey, int omode) {
   lives_pconnect_t *pconx = (lives_pconnect_t *)lives_calloc(sizeof(struct _lives_pconnect_t), 1);
-  pconx->next = NULL;
   pconx->okey = okey;
   pconx->omode = omode;
-  pconx->nparams = 0;
-  pconx->last_boolval = NULL;
-  pconx->nconns = NULL;
   return pconx;
 }
 
@@ -200,11 +189,11 @@ static lives_pconnect_t *pconx_copy(lives_pconnect_t *spconx) {
 
   int totcons = 0;
 
-  register int i, j = 0;
+  int j = 0;
 
-  while (spconx != NULL) {
+  while (spconx) {
     dpconx = pconx_new(spconx->okey, spconx->omode);
-    if (pconx == NULL) pconx = dpconx;
+    if (!pconx) pconx = dpconx;
     else last_dpconx->next = dpconx;
 
     dpconx->nparams = spconx->nparams;
@@ -218,7 +207,7 @@ static lives_pconnect_t *pconx_copy(lives_pconnect_t *spconx) {
 
     j = 0;
 
-    for (i = 0; i < dpconx->nparams; i++) {
+    for (int i = 0; i < dpconx->nparams; i++) {
       dpconx->params[i] = spconx->params[i];
       dpconx->nconns[i] = spconx->nconns[i];
       dpconx->last_boolval[i] = spconx->last_boolval[i];
@@ -249,17 +238,16 @@ static lives_pconnect_t *pconx_copy(lives_pconnect_t *spconx) {
 char *pconx_list(int okey, int omode, int opnum) {
   char *st1 = lives_strdup(""), *st2;
   lives_pconnect_t *pconx = mainw->pconx;
-
   int totcons = 0;
-
-  register int i, j;
+  int i, j;
 
   while (pconx != NULL) {
     if (pconx->okey == okey && pconx->omode == omode) {
       for (i = 0; i < pconx->nparams; i++) {
         if (pconx->params[i] == opnum) {
           for (j = totcons; j < totcons + pconx->nconns[i]; j++) {
-            if (strlen(st1) == 0) st2 = lives_strdup_printf("%d %d %d %d", pconx->ikey[j] + 1, pconx->imode[j] + 1, pconx->ipnum[j],
+            if (strlen(st1) == 0)
+	      st2 = lives_strdup_printf("%d %d %d %d", pconx->ikey[j] + 1, pconx->imode[j] + 1, pconx->ipnum[j],
                                           pconx->autoscale[j]);
             st2 = lives_strdup_printf("%s %d %d %d %d", st1, pconx->ikey[j] + 1, pconx->imode[j] + 1,
                                       pconx->ipnum[j], pconx->autoscale[j]);
@@ -328,7 +316,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
         maxcons += pconx->nconns[i];
       }
 
-      for (i = 0; pconx != NULL && i < pconx->nparams; i++) {
+      for (i = 0; pconx && i < pconx->nparams; i++) {
 #ifdef DEBUG_PCONX
         g_print("Checking oparams, want %d, got %d with %d connections\n", opnum, pconx->params[i], pconx->nconns[i]);
 #endif
@@ -422,9 +410,9 @@ void pconx_remap_mode(int key, int omode, int nmode) {
       for (; j < totcons; j++) {
         if (pconx->ikey[j] == key && pconx->imode[j] == omode) {
           pconx->imode[j] = nmode;
-        }
-      }
-    }
+	  // *INDENT-OFF*
+        }}}
+    // *INDENT-OFF*
     pconx = pconx->next;
   }
 }
@@ -447,7 +435,7 @@ static void pconx_append(lives_pconnect_t *pconx) {
 static lives_pconnect_t *pconx_find(int okey, int omode) {
   //
   lives_pconnect_t *pconx = mainw->pconx;
-  while (pconx != NULL) {
+  while (pconx) {
     if (pconx->okey == okey && pconx->omode == omode) {
       return pconx;
     }
@@ -461,11 +449,9 @@ static int pconx_get_numcons(lives_conx_w * conxwp, int pnum) {
   // get displayed number
   int totcons = 0;
 
-  register int j;
-
   if (pnum != FX_DATA_WILDCARD) return conxwp->dispp[pnum + EXTRA_PARAMS_OUT];
 
-  for (j = 0; j < conxwp->num_params; j++) {
+  for (int j = 0; j < conxwp->num_params; j++) {
     totcons += conxwp->dispp[j];
   }
 
@@ -476,11 +462,10 @@ static int pconx_get_numcons(lives_conx_w * conxwp, int pnum) {
 static int pconx_get_nconns(lives_pconnect_t *pconx, int pnum) {
   // get actual number of connections
   int totcons = 0;
-  register int j;
 
-  if (pconx == NULL) return 0;
+  if (!pconx) return 0;
 
-  for (j = 0; j < pconx->nparams; j++) {
+  for (int j = 0; j < pconx->nparams; j++) {
     if (pnum != FX_DATA_WILDCARD) {
       if (pconx->params[j] == pnum) return pconx->nconns[j];
     } else totcons += pconx->nconns[j];
@@ -499,7 +484,7 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
 
   if (ikey >= 0) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_lock(&mainw->fx_mutex[i]);
 
-  if (pconx == NULL) {
+  if (!pconx) {
     // add whole new node
     pconx = pconx_new(okey, omode);
     pconx_append(pconx);
@@ -659,21 +644,20 @@ static weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, 
 
   lives_pconnect_t *pconx = mainw->pconx;
   weed_plant_t *inst = NULL, *filter = NULL;
-  int totcons, error;
-  register int i, j;
+  int totcons, i, j;
 
-  while (pconx != NULL) {
+  while (pconx) {
     if (!use_filt) {
       if (mainw->is_rendering) return NULL;
       else {
         inst = rte_keymode_get_instance(pconx->okey + 1, pconx->omode);
       }
-      if (inst != NULL) filter = weed_instance_get_filter(inst, TRUE); // inst could be NULL if we connected to "Activated"
+      if (inst) filter = weed_instance_get_filter(inst, TRUE); // inst could be NULL if we connected to "Activated"
       else filter = NULL;
     } else {
       inst = NULL;
       filter = rte_keymode_get_filter(pconx->okey + 1, pconx->omode);
-      if (filter == NULL) {
+      if (!filter) {
         pconx = pconx->next;
         continue;
       }
@@ -701,27 +685,27 @@ static weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, 
             pthread_mutex_unlock(&mainw->fxd_active_mutex);
           } else {
             if (use_filt) {
-              weed_plant_t **outparams = weed_get_plantptr_array(filter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, &error);
+              weed_plant_t **outparams = weed_get_plantptr_array(filter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, NULL);
               if (pconx->params[i] < weed_leaf_num_elements(filter, WEED_LEAF_OUT_PARAMETER_TEMPLATES)) {
                 param = outparams[pconx->params[i]];
               }
               lives_free(outparams);
             } else {
-              if (inst == NULL) return NULL;
+              if (!inst) return NULL;
               param = weed_inst_out_param(inst, pconx->params[i]);
             }
           }
-          if (okey != NULL) *okey = pconx->okey;
-          if (omode != NULL) *omode = pconx->omode;
-          if (opnum != NULL) *opnum = pconx->params[i];
-          if (autoscale != NULL) *autoscale = pconx->autoscale[j];
-          if (inst != NULL) weed_instance_unref(inst);
+          if (okey) *okey = pconx->okey;
+          if (omode) *omode = pconx->omode;
+          if (opnum) *opnum = pconx->params[i];
+          if (autoscale) *autoscale = pconx->autoscale[j];
+          if (inst) weed_instance_unref(inst);
           return param;
         }
       }
     }
     pconx = pconx->next;
-    if (inst != NULL) weed_instance_unref(inst);
+    if (inst) weed_instance_unref(inst);
   }
 
   return NULL;
@@ -741,19 +725,11 @@ static boolean params_compatible(weed_plant_t *sparam, weed_plant_t *dparam) {
   // int[4x]/double[4x] -> colourRGBA
   //
 
-  int error;
-
   weed_plant_t *dptmpl = NULL;
 
-  int dtype = 0;
-
-  int stype = 0;
-
-  int ndvals = 0;
-  int nsvals = 0;
-
-  int dhint;
-  int dflags = 0;
+  int dtype = 0, stype = 0;
+  int ndvals = 0, nsvals = 0;
+  int dhint, dflags = 0;
 
   if (dparam == active_dummy) {
     dptmpl = NULL;
@@ -761,7 +737,7 @@ static boolean params_compatible(weed_plant_t *sparam, weed_plant_t *dparam) {
     ndvals = 1;
   } else {
     if (WEED_PLANT_IS_PARAMETER(dparam)) {
-      dptmpl = weed_get_plantptr_value(dparam, WEED_LEAF_TEMPLATE, &error);
+      dptmpl = weed_get_plantptr_value(dparam, WEED_LEAF_TEMPLATE, NULL);
       dtype = weed_leaf_seed_type(dparam, WEED_LEAF_VALUE);
       ndvals = weed_leaf_num_elements(dparam, WEED_LEAF_VALUE);
     } else {
@@ -784,12 +760,12 @@ static boolean params_compatible(weed_plant_t *sparam, weed_plant_t *dparam) {
     }
   }
 
-  if (dptmpl != NULL) {
-    dhint = weed_get_int_value(dptmpl, WEED_LEAF_HINT, &error);
-    dflags = weed_get_int_value(dptmpl, WEED_LEAF_FLAGS, &error);
+  if (dptmpl) {
+    dhint = weed_get_int_value(dptmpl, WEED_LEAF_HINT, NULL);
+    dflags = weed_get_int_value(dptmpl, WEED_LEAF_FLAGS, NULL);
 
     if (dhint == WEED_HINT_COLOR) {
-      int cspace = weed_get_int_value(dptmpl, WEED_LEAF_COLORSPACE, &error);
+      int cspace = weed_get_int_value(dptmpl, WEED_LEAF_COLORSPACE, NULL);
       if (cspace == WEED_COLORSPACE_RGB) {
         if (!(nsvals & 3)) return FALSE;
       } else if (nsvals & 3) return FALSE;
@@ -827,7 +803,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
 
   double ratio;
 
-  int dtype = 0, stype, nsvals, ndvals = 0, error;
+  int dtype = 0, stype, nsvals, ndvals = 0;
   int ondvals = 0;
   int nsmin = 0, nsmax = 0;
   int minct = 0, maxct = 0;
@@ -835,11 +811,11 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
   int nmax = 0, nmin = 0;
   boolean retval = FALSE;
 
-  register int i;
+  int i;
 
   if (toggle_fx) *toggle_fx = FALSE;
 
-  if (dparam == sparam && (dparam != active_dummy || active_dummy == NULL)) return FALSE;
+  if (dparam == sparam && (dparam != active_dummy || !active_dummy)) return FALSE;
 
   if (sparam == active_dummy) {
     nsvals = 1;
@@ -873,7 +849,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
     }
   }
 
-  if (dptmpl != NULL && weed_plant_has_leaf(dptmpl, WEED_LEAF_MAX)) {
+  if (dptmpl && weed_plant_has_leaf(dptmpl, WEED_LEAF_MAX)) {
     nmax = weed_leaf_num_elements(dptmpl, WEED_LEAF_MAX);
     nmin = weed_leaf_num_elements(dptmpl, WEED_LEAF_MIN);
   }
@@ -883,8 +859,8 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
     switch (dtype) {
     case WEED_SEED_STRING: {
       char **valsS, **valss;
-      if ((valsS = weed_get_string_array(sparam, WEED_LEAF_VALUE, &error)) == NULL) return retval;
-      if ((valss = weed_get_string_array(dparam, WEED_LEAF_VALUE, &error)) == NULL) return retval;
+      if ((valsS = weed_get_string_array(sparam, WEED_LEAF_VALUE, NULL)) == NULL) return retval;
+      if ((valss = weed_get_string_array(dparam, WEED_LEAF_VALUE, NULL)) == NULL) return retval;
 
       if (ndvals > ondvals) valss = (char **)lives_realloc(valss, ndvals * sizeof(char *));
 
@@ -915,17 +891,17 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
   case WEED_SEED_DOUBLE:
     switch (dtype) {
     case WEED_SEED_DOUBLE: {
-      double *valsD = weed_get_double_array(sparam, WEED_LEAF_VALUE, &error);
-      double *valsd = weed_get_double_array(dparam, WEED_LEAF_VALUE, &error);
+      double *valsD = weed_get_double_array(sparam, WEED_LEAF_VALUE, NULL);
+      double *valsd = weed_get_double_array(dparam, WEED_LEAF_VALUE, NULL);
 
-      double *maxd = weed_get_double_array(dptmpl, WEED_LEAF_MAX, &error);
-      double *mind = weed_get_double_array(dptmpl, WEED_LEAF_MIN, &error);
+      double *maxd = weed_get_double_array(dptmpl, WEED_LEAF_MAX, NULL);
+      double *mind = weed_get_double_array(dptmpl, WEED_LEAF_MIN, NULL);
 
       double *mins = NULL, *maxs = NULL;
 
       if (autoscale) {
-        mins = weed_get_double_array(sptmpl, WEED_LEAF_MIN, &error);
-        maxs = weed_get_double_array(sptmpl, WEED_LEAF_MAX, &error);
+        mins = weed_get_double_array(sptmpl, WEED_LEAF_MIN, NULL);
+        maxs = weed_get_double_array(sptmpl, WEED_LEAF_MAX, NULL);
       }
 
       if (ndvals > ondvals) valsd = (double *)lives_realloc(valsd, ndvals * sizeof(double));
@@ -949,13 +925,13 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         if (++minct == nmin) minct = 0;
       }
 
-      if (mins != NULL) {
+      if (mins) {
         lives_free(mins);
         lives_free(maxs);
       }
 
       if (retval) {
-        if (inst != NULL && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
+        if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
           /* copyto = set_copy_to(inst, pnum, FALSE); */
@@ -973,12 +949,12 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
 
     case WEED_SEED_STRING: {
       char *opstring, *tmp, *bit;
-      double *valsd = weed_get_double_array(sparam, WEED_LEAF_VALUE, &error);
+      double *valsd = weed_get_double_array(sparam, WEED_LEAF_VALUE, NULL);
       char **valss, *vals;
 
       if (ndvals == 1) {
         opstring = lives_strdup("");
-        vals = weed_get_string_value(dparam, WEED_LEAF_VALUE, &error);
+        vals = weed_get_string_value(dparam, WEED_LEAF_VALUE, NULL);
         for (i = 0; i < nsvals; i++) {
           bit = lives_strdup_printf("%.4f", valsd[i]);
           if (strlen(opstring) == 0)
@@ -999,7 +975,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         return retval;
       }
 
-      valss = weed_get_string_array(dparam, WEED_LEAF_VALUE, &error);
+      valss = weed_get_string_array(dparam, WEED_LEAF_VALUE, NULL);
 
       if (ndvals > ondvals) valss = (char **)lives_realloc(valsd, ndvals * sizeof(char *));
 
@@ -1035,13 +1011,13 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
     switch (dtype) {
     case WEED_SEED_STRING: {
       char *opstring, *tmp, *bit;
-      int *valsi = weed_get_int_array(sparam, WEED_LEAF_VALUE, &error);
+      int *valsi = weed_get_int_array(sparam, WEED_LEAF_VALUE, NULL);
 
       char **valss, *vals;
 
       if (ndvals == 1) {
         opstring = lives_strdup("");
-        vals = weed_get_string_value(dparam, WEED_LEAF_VALUE, &error);
+        vals = weed_get_string_value(dparam, WEED_LEAF_VALUE, NULL);
         for (i = 0; i < nsvals; i++) {
           bit = lives_strdup_printf("%d", valsi[i]);
           if (strlen(opstring) == 0)
@@ -1062,7 +1038,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         return retval;
       }
 
-      valss = weed_get_string_array(dparam, WEED_LEAF_VALUE, &error);
+      valss = weed_get_string_array(dparam, WEED_LEAF_VALUE, NULL);
 
       if (ndvals > ondvals) valss = (char **)lives_realloc(valss, ndvals * sizeof(char *));
 
@@ -1089,18 +1065,18 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
     }
     return retval;
     case WEED_SEED_DOUBLE: {
-      int *valsi = weed_get_int_array(sparam, WEED_LEAF_VALUE, &error);
-      double *valsd = weed_get_double_array(dparam, WEED_LEAF_VALUE, &error);
+      int *valsi = weed_get_int_array(sparam, WEED_LEAF_VALUE, NULL);
+      double *valsd = weed_get_double_array(dparam, WEED_LEAF_VALUE, NULL);
 
-      double *maxd = weed_get_double_array(dptmpl, WEED_LEAF_MAX, &error);
-      double *mind = weed_get_double_array(dptmpl, WEED_LEAF_MIN, &error);
+      double *maxd = weed_get_double_array(dptmpl, WEED_LEAF_MAX, NULL);
+      double *mind = weed_get_double_array(dptmpl, WEED_LEAF_MIN, NULL);
       double vald;
 
       int *mins = NULL, *maxs = NULL;
 
       if (autoscale) {
-        mins = weed_get_int_array(sptmpl, WEED_LEAF_MIN, &error);
-        maxs = weed_get_int_array(sptmpl, WEED_LEAF_MAX, &error);
+        mins = weed_get_int_array(sptmpl, WEED_LEAF_MIN, NULL);
+        maxs = weed_get_int_array(sptmpl, WEED_LEAF_MAX, NULL);
       }
 
       if (ndvals > ondvals) valsd = (double *)lives_realloc(valsd, ndvals * sizeof(double));
@@ -1124,13 +1100,13 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         if (++minct == nmin) minct = 0;
       }
 
-      if (mins != NULL) {
+      if (mins) {
         lives_free(mins);
         lives_free(maxs);
       }
 
       if (retval) {
-        if (inst != NULL && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
+        if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
           /* copyto = set_copy_to(inst, pnum, FALSE); */
@@ -1150,14 +1126,14 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
       int *valsI, *valsi, *maxi, *mini;
       int *mins = NULL, *maxs = NULL;
 
-      if ((valsI = weed_get_int_array(sparam, WEED_LEAF_VALUE, &error)) == NULL) return retval;
-      if ((valsi = weed_get_int_array(dparam, WEED_LEAF_VALUE, &error)) == NULL) return retval;
-      if ((maxi = weed_get_int_array(dptmpl, WEED_LEAF_MAX, &error)) == NULL) return retval;
-      if ((mini = weed_get_int_array(dptmpl, WEED_LEAF_MIN, &error)) == NULL) return retval;
+      if ((valsI = weed_get_int_array(sparam, WEED_LEAF_VALUE, NULL)) == NULL) return retval;
+      if ((valsi = weed_get_int_array(dparam, WEED_LEAF_VALUE, NULL)) == NULL) return retval;
+      if ((maxi = weed_get_int_array(dptmpl, WEED_LEAF_MAX, NULL)) == NULL) return retval;
+      if ((mini = weed_get_int_array(dptmpl, WEED_LEAF_MIN, NULL)) == NULL) return retval;
 
       if (autoscale) {
-        mins = weed_get_int_array(sptmpl, WEED_LEAF_MIN, &error);
-        maxs = weed_get_int_array(sptmpl, WEED_LEAF_MAX, &error);
+        mins = weed_get_int_array(sptmpl, WEED_LEAF_MIN, NULL);
+        maxs = weed_get_int_array(sptmpl, WEED_LEAF_MAX, NULL);
       }
 
       if (ndvals > ondvals) valsi = (int *)lives_realloc(valsi, ndvals * sizeof(int));
@@ -1181,7 +1157,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         if (++minct == nmin) minct = 0;
       }
 
-      if (mins != NULL) {
+      if (mins) {
         lives_free(mins);
         lives_free(maxs);
       }
@@ -1210,7 +1186,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
     if (dparam == active_dummy) {
       // ACTIVATE
       if (!autoscale) { // autoscale is now "user override"
-        int valb = weed_get_boolean_value(sparam, WEED_LEAF_VALUE, &error);
+        int valb = weed_get_boolean_value(sparam, WEED_LEAF_VALUE, NULL);
         if ((valb == WEED_TRUE && (mainw->rte & (GU641 << (key))) == 0) ||
             (valb == WEED_FALSE && (mainw->rte & (GU641 << (key)))) != 0) {
           if (toggle_fx) *toggle_fx = TRUE;
@@ -1218,7 +1194,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
       }
       return retval;
     }
-    valsb = weed_get_boolean_array(sparam, WEED_LEAF_VALUE, &error);
+    valsb = weed_get_boolean_array(sparam, WEED_LEAF_VALUE, NULL);
     switch (dtype) {
     case WEED_SEED_STRING: {
       char *opstring, *tmp, *bit;
@@ -1226,7 +1202,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
 
       if (ndvals == 1) {
         opstring = lives_strdup("");
-        vals = weed_get_string_value(dparam, WEED_LEAF_VALUE, &error);
+        vals = weed_get_string_value(dparam, WEED_LEAF_VALUE, NULL);
         for (i = 0; i < nsvals; i++) {
           bit = lives_strdup_printf("%d", valsb[i]);
           if (strlen(opstring) == 0)
@@ -1247,7 +1223,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         return retval;
       }
 
-      valss = weed_get_string_array(dparam, WEED_LEAF_VALUE, &error);
+      valss = weed_get_string_array(dparam, WEED_LEAF_VALUE, NULL);
       if (ndvals > ondvals) valss = (char **)lives_realloc(valss, ndvals * sizeof(char *));
 
       for (i = 0; i < ndvals; i++) {
@@ -1273,10 +1249,10 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
     }
     return retval;
     case WEED_SEED_DOUBLE: {
-      double *valsd = weed_get_double_array(dparam, WEED_LEAF_VALUE, &error);
+      double *valsd = weed_get_double_array(dparam, WEED_LEAF_VALUE, NULL);
 
-      double *maxd = weed_get_double_array(dptmpl, WEED_LEAF_MAX, &error);
-      double *mind = weed_get_double_array(dptmpl, WEED_LEAF_MIN, &error);
+      double *maxd = weed_get_double_array(dptmpl, WEED_LEAF_MAX, NULL);
+      double *mind = weed_get_double_array(dptmpl, WEED_LEAF_MIN, NULL);
       double vald;
 
       if (ndvals > ondvals) valsd = (double *)lives_realloc(valsd, ndvals * sizeof(double));
@@ -1298,7 +1274,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         if (++minct == nmin) minct = 0;
       }
       if (retval) {
-        if (inst != NULL && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
+        if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
           /* copyto = set_copy_to(inst, pnum, FALSE); */
@@ -1314,10 +1290,10 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
     }
     return retval;
     case WEED_SEED_INT: {
-      int *valsi = weed_get_int_array(dparam, WEED_LEAF_VALUE, &error);
+      int *valsi = weed_get_int_array(dparam, WEED_LEAF_VALUE, NULL);
 
-      int *maxi = weed_get_int_array(dptmpl, WEED_LEAF_MAX, &error);
-      int *mini = weed_get_int_array(dptmpl, WEED_LEAF_MIN, &error);
+      int *maxi = weed_get_int_array(dptmpl, WEED_LEAF_MAX, NULL);
+      int *mini = weed_get_int_array(dptmpl, WEED_LEAF_MIN, NULL);
 
       if (ndvals > ondvals) valsi = (int *)lives_realloc(valsi, ndvals * sizeof(int));
 
@@ -1337,7 +1313,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         if (++minct == nmin) minct = 0;
       }
       if (retval) {
-        if (inst != NULL && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
+        if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
           /* copyto = set_copy_to(inst, pnum, FALSE); */
@@ -1354,7 +1330,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
     return retval;
 
     case WEED_SEED_BOOLEAN: {
-      int *valsB = weed_get_boolean_array(dparam, WEED_LEAF_VALUE, &error);
+      int *valsB = weed_get_boolean_array(dparam, WEED_LEAF_VALUE, NULL);
 
       if (ndvals > ondvals) valsB = (int *)lives_realloc(valsB, ndvals * sizeof(int));
 
@@ -1365,7 +1341,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         }
       }
       if (retval) {
-        if (inst != NULL && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
+        if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
           /* copyto = set_copy_to(inst, pnum, FALSE); */
@@ -1399,21 +1375,21 @@ int pconx_chain_data_omc(weed_plant_t *inst, int okey, int omode) {
 
   char *valstr = NULL;
 
-  int totcons, pidx, error;
+  int totcons, pidx;
   int actions = 0;
 
   boolean cbval, lbval;
 
-  register int i, j;
+  int i, j;
 
-  if (inst == NULL) return 0;
+  if (!inst) return 0;
 
-  if (mainw->event_list != NULL && !mainw->record && !mainw->record_paused) return 0;
+  if (mainw->event_list && !mainw->record && !mainw->record_paused) return 0;
 
   // check for any inkeys == FX_DATA_KEY_OMC_MACRO and matching okey, omode
   // for each match we construct a string and send it to the OMC learner
 
-  while (pconx != NULL) {
+  while (pconx) {
     if (pconx->okey == okey && pconx->omode == omode) {
       totcons = 0;
       j = 0;
@@ -1428,22 +1404,21 @@ int pconx_chain_data_omc(weed_plant_t *inst, int okey, int omode) {
               weed_plant_t *oparam = weed_inst_out_param(inst, pidx);
               switch (weed_leaf_seed_type(oparam, WEED_LEAF_VALUE)) {
               case WEED_SEED_BOOLEAN:
-                cbval = weed_get_boolean_value(oparam, WEED_LEAF_VALUE, &error);
+                cbval = weed_get_boolean_value(oparam, WEED_LEAF_VALUE, NULL);
                 if (cbval == WEED_TRUE && lbval == WEED_FALSE) {
                   // state changed, so trigger act
                   valstr = lives_strdup_printf("%d", cbval);
                 }
                 pconx->last_boolval[i] = cbval;
                 break;
-              default:
-                break;
+              default: break;
               }
             } else {
               valstr = lives_strdup_printf("%d", WEED_TRUE);
               pconx->last_boolval[i] = WEED_TRUE;
             }
           }
-          if (valstr != NULL) {
+          if (valstr) {
             // construct string to pass
             char *msgstring = lives_strdup_printf("%d %d %d %s", OMC_INTERNAL, pconx->imode[j], pconx->ipnum[j], valstr);
             lives_free(valstr);
@@ -1451,10 +1426,9 @@ int pconx_chain_data_omc(weed_plant_t *inst, int okey, int omode) {
             omc_process_string(OMC_INTERNAL, (const char *)msgstring, FALSE, NULL);
             actions++;
             lives_free(msgstring);
-          }
-        }
-      }
-    }
+	    // *INDENT-OFF*
+          }}}}
+    // *INDENT-ON*
 
     pconx = pconx->next;
   }
@@ -1474,30 +1448,29 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
   int pflags;
   int okey, omode;
   boolean toggle_fx = FALSE;
-  //int copyto = -1;
-
-  register int i;
+  int i;
+  break_me("pcxd\n");
   if (mainw->is_rendering) return FALSE;
 
   if (key == FX_DATA_KEY_PLAYBACK_PLUGIN) {
     // playback plugin
-    if (mainw->vpp == NULL) return FALSE;
+    if (!mainw->vpp) return FALSE;
     inparams = mainw->vpp->play_params;
     nparams = mainw->vpp->num_play_params;
   } else {
     filter_mutex_lock(key);
     inst = rte_keymode_get_instance(key + 1, mode);
-    if (inst == NULL) filter_mutex_unlock(key);
+    if (!inst) filter_mutex_unlock(key);
     start = -EXTRA_PARAMS_IN;
   }
 
-  if (inst != NULL) {
+  if (inst) {
     if (weed_plant_has_leaf(inst, WEED_LEAF_IN_PARAMETERS))
       inparams = weed_get_plantptr_array_counted(inst, WEED_LEAF_IN_PARAMETERS, &nparams);
   } else if (rte_keymode_get_filter_idx(key + 1, mode) == -1) return FALSE;
 
   for (i = start; i < nparams; i++) {
-    if ((oparam = pconx_get_out_param(FALSE, key, mode, i, &okey, &omode, NULL, &autoscale)) != NULL) {
+    if ((oparam = pconx_get_out_param(FALSE, key, mode, i, &okey, &omode, NULL, &autoscale))) {
       //#define DEBUG_PCONX
 #ifdef DEBUG_PCONX
       g_print("got pconx to %d %d %d\n", key, mode, i);
@@ -1518,7 +1491,7 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
         weed_plant_t *oinst = rte_keymode_get_instance(okey + 1, omode);
         if (oinst == NULL) {
           filter_mutex_unlock(okey);
-          if (inst != NULL) {
+          if (inst) {
             weed_instance_unref(inst);
             filter_mutex_unlock(key);
           }
@@ -1537,7 +1510,7 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
           // let the video thread handle it
           weed_plant_t *filter = rte_keymode_get_filter(key + 1, rte_key_getmode(key + 1));
           if (!is_pure_audio(filter, FALSE)) {
-            if (inst != NULL) {
+            if (inst) {
               weed_instance_unref(inst);
               inst = NULL;
               filter_mutex_unlock(key);
@@ -1546,7 +1519,7 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
             return FALSE;
           }
         }
-        if (inst != NULL) {
+        if (inst) {
           weed_instance_unref(inst);
           inst = NULL;
           filter_mutex_unlock(key);
@@ -1555,7 +1528,7 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
         filter_mutex_unlock(okey);
       } else {
         filter_mutex_unlock(okey);
-        if (changed && inst != NULL && key > -1) {
+        if (changed && inst && key > -1) {
           // only store value if it changed; for int, double or colour, store old value too
 
           //copyto = set_copy_to(inst, i, TRUE);
@@ -1568,11 +1541,11 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
           pflags = weed_get_int_value(inparams[i], WEED_LEAF_FLAGS, NULL);
           if (pflags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE) reinit_inst = TRUE;
           /* if (copyto != -1) { */
-          /*   pflags = weed_get_int_value(inparams[copyto], WEED_LEAF_FLAGS, &error); */
+          /*   pflags = weed_get_int_value(inparams[copyto], WEED_LEAF_FLAGS, NULL); */
           /*   if (pflags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE) reinit_inst = TRUE; */
           /* } */
 
-          if (fx_dialog[1] != NULL && !reinit_inst) {
+          if (fx_dialog[1] && !reinit_inst) {
             lives_rfx_t *rfx = fx_dialog[1]->rfx;
             if (!rfx->is_template) {
               int keyw = fx_dialog[1]->key;
@@ -1583,18 +1556,17 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
             }
           }
           if (mainw->ce_thumbs) ce_thumbs_register_rfx_change(key, mode);
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
 
-  if (inst != NULL) {
+  if (inst) {
     weed_instance_unref(inst);
     inst = NULL;
     filter_mutex_unlock(key);
   }
 
-  if (key != FX_DATA_KEY_PLAYBACK_PLUGIN && inparams != NULL) lives_free(inparams);
+  if (key != FX_DATA_KEY_PLAYBACK_PLUGIN && inparams) lives_free(inparams);
   return reinit_inst;
 }
 
@@ -1605,29 +1577,27 @@ boolean pconx_chain_data_internal(weed_plant_t *inst) {
 
   boolean autoscale, reinit_inst = FALSE;
 
-  int nparams = 0, error, pflags;
-
-  register int i;
+  int nparams = 0, pflags, i;
 
   nparams = num_in_params(inst, FALSE, FALSE);
-  if (nparams == 0) return FALSE;
+  if (!nparams) return FALSE;
 
-  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
+  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
 
   for (i = 0; i < nparams; i++) {
     if (weed_plant_has_leaf(in_params[i], WEED_LEAF_HOST_INTERNAL_CONNECTION)) {
       autoscale = FALSE;
       if (weed_plant_has_leaf(in_params[i], WEED_LEAF_HOST_INTERNAL_CONNECTION_AUTOSCALE) &&
           weed_get_boolean_value(in_params[i],
-                                 WEED_LEAF_HOST_INTERNAL_CONNECTION_AUTOSCALE, &error) == WEED_TRUE) autoscale = TRUE;
+                                 WEED_LEAF_HOST_INTERNAL_CONNECTION_AUTOSCALE, NULL) == WEED_TRUE) autoscale = TRUE;
       if (pconx_convert_value_data(inst, i, -1, in_params[i], -1, weed_get_plantptr_value(in_params[i],
-                                   WEED_LEAF_HOST_INTERNAL_CONNECTION, &error), autoscale, FALSE, NULL)) {
+                                   WEED_LEAF_HOST_INTERNAL_CONNECTION, NULL), autoscale, FALSE, NULL)) {
         //copyto = set_copy_to(inst, i, TRUE);
 
-        pflags = weed_get_int_value(in_params[i], WEED_LEAF_FLAGS, &error);
+        pflags = weed_get_int_value(in_params[i], WEED_LEAF_FLAGS, NULL);
         if (pflags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE) reinit_inst = TRUE;
         /* if (copyto != -1) { */
-        /*   pflags = weed_get_int_value(in_params[copyto], WEED_LEAF_FLAGS, &error); */
+        /*   pflags = weed_get_int_value(in_params[copyto], WEED_LEAF_FLAGS, NULL); */
         /*   if (pflags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE) reinit_inst = TRUE; */
         /* } */
       }
@@ -1643,7 +1613,7 @@ boolean pconx_chain_data_internal(weed_plant_t *inst) {
 
 void cconx_delete_all(void) {
   lives_cconnect_t *cconx = mainw->cconx, *cconx_next;
-  while (cconx != NULL) {
+  while (cconx) {
     cconx_next = cconx->next;
     if (cconx->nchans > 0) {
       lives_free(cconx->chans);
@@ -1677,7 +1647,7 @@ static lives_cconnect_t *cconx_copy(lives_cconnect_t *scconx) {
 
   register int i, j = 0;
 
-  while (scconx != NULL) {
+  while (scconx) {
     dcconx = cconx_new(scconx->okey, scconx->omode);
     if (cconx == NULL) cconx = dcconx;
     else last_dcconx->next = dcconx;
@@ -1724,7 +1694,7 @@ char *cconx_list(int okey, int omode, int ocnum) {
 
   register int i, j;
 
-  while (cconx != NULL) {
+  while (cconx) {
     if (cconx->okey == okey && cconx->omode == omode) {
       for (i = 0; i < cconx->nchans; i++) {
         if (cconx->chans[i] == ocnum) {
@@ -1753,7 +1723,7 @@ void cconx_delete(int okey, int omode, int ocnum, int ikey, int imode, int icnum
 
   int totcons = 0, maxcons = 0;
 
-  while (cconx != NULL) {
+  while (cconx) {
     cconx_next = cconx->next;
     if (okey == FX_DATA_WILDCARD || (cconx->okey == okey && cconx->omode == omode)) {
       if (ikey == FX_DATA_WILDCARD) {
@@ -1777,7 +1747,7 @@ void cconx_delete(int okey, int omode, int ocnum, int ikey, int imode, int icnum
         maxcons += cconx->nconns[i];
       }
 
-      for (i = 0; cconx != NULL && i < cconx->nchans; i++) {
+      for (i = 0; cconx && i < cconx->nchans; i++) {
         totcons += cconx->nconns[i];
 
         if (okey != FX_DATA_WILDCARD && cconx->chans[i] != ocnum) {
@@ -1840,7 +1810,7 @@ void cconx_remap_mode(int key, int omode, int nmode) {
 
   register int i, j, totcons;
 
-  while (cconx != NULL) {
+  while (cconx) {
     if (cconx->okey == key && cconx->omode == omode) {
       cconx->omode = nmode;
     }
@@ -1863,19 +1833,19 @@ static void cconx_append(lives_cconnect_t *cconx) {
   lives_cconnect_t *occonx = mainw->cconx;
   lives_cconnect_t *last_cconx = occonx;
 
-  while (occonx != NULL) {
+  while (occonx) {
     last_cconx = occonx;
     occonx = occonx->next;
   }
 
-  if (last_cconx != NULL) last_cconx->next = cconx;
+  if (last_cconx) last_cconx->next = cconx;
   if (mainw->cconx == NULL) mainw->cconx = cconx;
 }
 
 
 static lives_cconnect_t *cconx_find(int okey, int omode) {
   lives_cconnect_t *cconx = mainw->cconx;
-  while (cconx != NULL) {
+  while (cconx) {
     if (cconx->okey == okey && cconx->omode == omode) {
       return cconx;
     }
@@ -1904,10 +1874,9 @@ static int cconx_get_numcons(lives_conx_w * conxwp, int cnum) {
 static int cconx_get_nconns(lives_cconnect_t *cconx, int cnum) {
   // get actual number of connections
 
-  int totcons = 0;
-  register int j;
+  int totcons = 0, j;
 
-  if (cconx == NULL) return 0;
+  if (!cconx) return 0;
 
   for (j = 0; j < cconx->nchans; j++) {
     if (cnum != FX_DATA_WILDCARD) {
@@ -1920,13 +1889,12 @@ static int cconx_get_nconns(lives_cconnect_t *cconx, int cnum) {
 
 static void cconx_add_connection_private(lives_cconnect_t *cconx, int okey, int omode, int ocnum, int ikey, int imode,
     int icnum) {
-  int posn = 0, totcons = 0;
-  register int i, j;
+  int posn = 0, totcons = 0, i, j;
 
   // delete any existing connection to the input channel
   cconx_delete(FX_DATA_WILDCARD, 0, 0, ikey, imode, icnum);
 
-  if (cconx == NULL) {
+  if (!cconx) {
     // add whole new node
     cconx = cconx_new(okey, omode);
     cconx_append(cconx);
@@ -2055,20 +2023,17 @@ static weed_plant_t *cconx_get_out_alpha(boolean use_filt, int ikey, int imode, 
   // then all we need do is convert the pixel_data
 
   lives_cconnect_t *cconx = mainw->cconx;
-
   weed_plant_t *inst = NULL, *filter = NULL, *orig_inst = NULL;
+  int totcons, i, j;
 
-  int totcons, error;
-  register int i, j;
-
-  while (cconx != NULL) {
+  while (cconx) {
     if (!use_filt) {
       if (mainw->is_rendering) {
         inst = get_new_inst_for_keymode(cconx->okey, cconx->omode);
       } else {
         inst = rte_keymode_get_instance(cconx->okey + 1, cconx->omode);
       }
-      if (inst == NULL) {
+      if (!inst) {
         cconx = cconx->next;
         continue;
       }
@@ -2076,13 +2041,13 @@ static weed_plant_t *cconx_get_out_alpha(boolean use_filt, int ikey, int imode, 
     } else {
       inst = NULL;
       filter = rte_keymode_get_filter(cconx->okey + 1, cconx->omode);
-      if (filter == NULL) {
+      if (!filter) {
         cconx = cconx->next;
         continue;
       }
     }
     if (!weed_plant_has_leaf(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES)) {
-      if (inst != NULL) weed_instance_unref(inst);
+      if (inst) weed_instance_unref(inst);
       cconx = cconx->next;
       continue;
     }
@@ -2096,23 +2061,23 @@ static weed_plant_t *cconx_get_out_alpha(boolean use_filt, int ikey, int imode, 
           weed_plant_t **outchans;
           weed_plant_t *channel = NULL;
           if (use_filt) {
-            outchans = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &error);
+            outchans = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, NULL);
             if (cconx->chans[i] < weed_leaf_num_elements(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES)) {
               channel = outchans[cconx->chans[i]];
             }
           } else {
             while (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE)) inst = weed_get_plantptr_value(inst,
-                  WEED_LEAF_HOST_NEXT_INSTANCE, &error);
-            outchans = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, &error);
+                  WEED_LEAF_HOST_NEXT_INSTANCE, NULL);
+            outchans = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, NULL);
             if (cconx->chans[i] < weed_leaf_num_elements(inst, WEED_LEAF_OUT_CHANNELS)) {
               channel = outchans[cconx->chans[i]];
             }
           }
           lives_free(outchans);
-          if (okey != NULL) *okey = cconx->okey;
-          if (omode != NULL) *omode = cconx->omode;
-          if (ocnum != NULL) *ocnum = cconx->chans[i];
-          if (orig_inst != NULL) weed_instance_unref(orig_inst);
+          if (okey) *okey = cconx->okey;
+          if (omode) *omode = cconx->omode;
+          if (ocnum) *ocnum = cconx->chans[i];
+          if (orig_inst) weed_instance_unref(orig_inst);
           return channel;
         }
       }
@@ -2132,30 +2097,29 @@ boolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
 
   // we set boolean "host_orig_pdata" if we steal the schan pdata (so do not free....)
 
-  int error;
   int iwidth, iheight, ipal, irow;
   int owidth, oheight, opal, orow, oflags;
   boolean pal_ok, needs_reinit = FALSE;
 
-  weed_plant_t *dtmpl = weed_get_plantptr_value(dchan, WEED_LEAF_TEMPLATE, &error);
+  weed_plant_t *dtmpl = weed_get_plantptr_value(dchan, WEED_LEAF_TEMPLATE, NULL);
 
   uint8_t *spdata, *dpdata;
 
-  register int i;
+  int i;
 
-  ipal = weed_get_int_value(schan, WEED_LEAF_CURRENT_PALETTE, &error);
+  ipal = weed_get_int_value(schan, WEED_LEAF_CURRENT_PALETTE, NULL);
   if (!weed_palette_is_alpha(ipal)) return FALSE;
 
-  iwidth = weed_get_int_value(schan, WEED_LEAF_WIDTH, &error);
-  iheight = weed_get_int_value(schan, WEED_LEAF_HEIGHT, &error);
-  irow = weed_get_int_value(schan, WEED_LEAF_ROWSTRIDES, &error);
+  iwidth = weed_get_int_value(schan, WEED_LEAF_WIDTH, NULL);
+  iheight = weed_get_int_value(schan, WEED_LEAF_HEIGHT, NULL);
+  irow = weed_get_int_value(schan, WEED_LEAF_ROWSTRIDES, NULL);
 
-  owidth = weed_get_int_value(dchan, WEED_LEAF_WIDTH, &error);
-  oheight = weed_get_int_value(dchan, WEED_LEAF_HEIGHT, &error);
-  opal = weed_get_int_value(dchan, WEED_LEAF_CURRENT_PALETTE, &error);
-  orow = weed_get_int_value(dchan, WEED_LEAF_ROWSTRIDES, &error);
+  owidth = weed_get_int_value(dchan, WEED_LEAF_WIDTH, NULL);
+  oheight = weed_get_int_value(dchan, WEED_LEAF_HEIGHT, NULL);
+  opal = weed_get_int_value(dchan, WEED_LEAF_CURRENT_PALETTE, NULL);
+  orow = weed_get_int_value(dchan, WEED_LEAF_ROWSTRIDES, NULL);
 
-  spdata = (uint8_t *)weed_get_voidptr_value(schan, WEED_LEAF_PIXEL_DATA, &error);
+  spdata = (uint8_t *)weed_get_voidptr_value(schan, WEED_LEAF_PIXEL_DATA, NULL);
 
 #ifdef DEBUG_CCONX
   g_print("spd is %p %d %d %d %d %d %d %d %d\n", spdata, ipal, opal, iwidth, owidth, iheight, oheight, irow, orow);
@@ -2174,10 +2138,10 @@ boolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
   else {
     /// see if dest chan supports the source chan palette
     int num_palettes = weed_leaf_num_elements(dtmpl, WEED_LEAF_PALETTE_LIST);
-    int *palettes = weed_get_int_array(dtmpl, WEED_LEAF_PALETTE_LIST, &error);
+    int *palettes = weed_get_int_array(dtmpl, WEED_LEAF_PALETTE_LIST, NULL);
     if (best_palette_match(palettes, num_palettes, ipal) == ipal) pal_ok = TRUE; ///< yes
     else pal_ok = FALSE; ///<no
-    oflags = weed_get_int_value(dtmpl, WEED_LEAF_FLAGS, &error);
+    oflags = weed_get_int_value(dtmpl, WEED_LEAF_FLAGS, NULL);
     if (ipal != opal && (oflags & WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE)) needs_reinit = TRUE;
     lives_free(palettes);
   }
@@ -2201,9 +2165,9 @@ boolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
   }
 
   create_empty_pixel_data(dchan, FALSE, TRUE);
-  dpdata = (uint8_t *)weed_get_voidptr_value(dchan, WEED_LEAF_PIXEL_DATA, &error);
+  dpdata = (uint8_t *)weed_get_voidptr_value(dchan, WEED_LEAF_PIXEL_DATA, NULL);
 
-  orow = weed_get_int_value(dchan, WEED_LEAF_ROWSTRIDES, &error);
+  orow = weed_get_int_value(dchan, WEED_LEAF_ROWSTRIDES, NULL);
 
   if (irow == orow) {
     lives_memcpy((void *)dpdata, (void *)spdata, irow * iheight);
@@ -2250,13 +2214,13 @@ boolean cconx_chain_data(int key, int mode) {
 
   while ((ichan = (key == FX_DATA_KEY_PLAYBACK_PLUGIN ? (weed_plant_t *)pp_get_chan(mainw->vpp->play_params, i)
                    : get_enabled_channel(inst, i, TRUE))) != NULL) {
-    if ((ochan = cconx_get_out_alpha(FALSE, key, mode, i++, NULL, NULL, NULL)) != NULL) {
+    if ((ochan = cconx_get_out_alpha(FALSE, key, mode, i++, NULL, NULL, NULL))) {
       filter_mutex_lock(key);
       if (cconx_convert_pixel_data(ichan, ochan)) needs_reinit = TRUE;
       filter_mutex_unlock(key);
     }
   }
-  if (inst != NULL) weed_instance_unref(inst);
+  if (inst) weed_instance_unref(inst);
   return needs_reinit;
 }
 
@@ -2266,8 +2230,7 @@ boolean cconx_chain_data_internal(weed_plant_t *ichan) {
   boolean needs_reinit = FALSE;
 
   if (weed_plant_has_leaf(ichan, WEED_LEAF_HOST_INTERNAL_CONNECTION)) {
-    int error;
-    weed_plant_t *ochan = weed_get_plantptr_value(ichan, WEED_LEAF_HOST_INTERNAL_CONNECTION, &error);
+    weed_plant_t *ochan = weed_get_plantptr_value(ichan, WEED_LEAF_HOST_INTERNAL_CONNECTION, NULL);
     if (cconx_convert_pixel_data(ichan, ochan)) needs_reinit = TRUE;
   }
   return needs_reinit;
@@ -2279,9 +2242,7 @@ boolean feeds_to_video_filters(int okey, int omode) {
   char **array;
   char *chlist;
   int nparams, niparams;
-  int ikey, imode;
-
-  register int i, j;
+  int ikey, imode, i, j;
 
   filter = rte_keymode_get_filter(okey + 1, omode);
 
@@ -2447,9 +2408,8 @@ static void apbutton_clicked(LiVESButton * button, livespointer user_data) {
 
   int fidx, key, mode, totchans;
   int niparams, ours, addn, stparam;
-  int error;
 
-  register int i, k = 1;
+  int i, k = 1;
 
   // get filter from last connection from first parameter
 
@@ -2479,7 +2439,7 @@ static void apbutton_clicked(LiVESButton * button, livespointer user_data) {
   // find the receiving filter/instance
   filter = get_weed_filter(fidx);
 
-  iparams = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error);
+  iparams = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, NULL);
   niparams = weed_leaf_num_elements(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
 
 #ifdef COMBO_LIST_LIMIT
@@ -2489,8 +2449,7 @@ static void apbutton_clicked(LiVESButton * button, livespointer user_data) {
 #endif
 
   oparams = weed_get_plantptr_array(rte_keymode_get_filter(conxwp->okey + 1, conxwp->omode),
-                                    WEED_LEAF_OUT_PARAMETER_TEMPLATES,
-                                    &error);
+                                    WEED_LEAF_OUT_PARAMETER_TEMPLATES, NULL);
 
   totchans = cconx_get_numcons(conxwp, FX_DATA_WILDCARD);
 
@@ -2510,7 +2469,7 @@ static void apbutton_clicked(LiVESButton * button, livespointer user_data) {
 
     if (weed_plant_has_leaf(param, WEED_LEAF_HOST_INTERNAL_CONNECTION)) continue;
 
-    if (pconx_get_out_param(TRUE, key - 1, mode, i, NULL, NULL, NULL, NULL) != NULL) continue;
+    if (pconx_get_out_param(TRUE, key - 1, mode, i, NULL, NULL, NULL, NULL)) continue;
 
     oparam = oparams[k];
 
@@ -2561,9 +2520,8 @@ static void acbutton_clicked(LiVESButton * button, livespointer user_data) {
 
   int fidx, key, mode;
   int nichans, nochans, ours, addn, stchan;
-  int error;
 
-  register int i, j = 0, k = 1;
+  int i, j = 0, k = 1;
 
   // get filter from last connection from first parameter
 
@@ -2585,12 +2543,11 @@ static void acbutton_clicked(LiVESButton * button, livespointer user_data) {
   // find the receiving filter/instance
   filter = get_weed_filter(fidx);
 
-  ichans = weed_get_plantptr_array(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, &error);
+  ichans = weed_get_plantptr_array(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, NULL);
   nichans = weed_leaf_num_elements(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES);
 
   ochans = weed_get_plantptr_array(rte_keymode_get_filter(conxwp->okey + 1, conxwp->omode),
-                                   WEED_LEAF_OUT_CHANNEL_TEMPLATES,
-                                   &error);
+                                   WEED_LEAF_OUT_CHANNEL_TEMPLATES, NULL);
   nochans = weed_leaf_num_elements(rte_keymode_get_filter(conxwp->okey + 1, conxwp->omode),
                                    WEED_LEAF_OUT_CHANNEL_TEMPLATES);
 
@@ -2619,7 +2576,7 @@ static void acbutton_clicked(LiVESButton * button, livespointer user_data) {
 
     if (!has_alpha_palette(chan, filter)) continue;
 
-    if (cconx_get_out_alpha(TRUE, key - 1, mode, i, NULL, NULL, NULL) != NULL) continue;
+    if (cconx_get_out_alpha(TRUE, key - 1, mode, i, NULL, NULL, NULL)) continue;
 
     ochan = ochans[k];
 
@@ -2753,7 +2710,7 @@ static void padd_clicked(LiVESWidget * button, livespointer user_data) {
     lives_widget_reparent(comhbox, hbox[3]);
     hbox[3] = hboxb[3];
 
-    if (conxwp->acheck[i] != NULL) {
+    if (conxwp->acheck[i]) {
       achbox = lives_widget_get_parent(conxwp->acheck[i]);
       hboxb[4] = lives_widget_get_parent(achbox);
       lives_widget_reparent(achbox, hbox[4]);
@@ -2884,7 +2841,7 @@ static void pdel_clicked(LiVESWidget * button, livespointer user_data) {
     lives_widget_reparent(comhbox, hbox[2]);
     hbox[2] = hboxb[2];
 
-    if (conxwp->acheck[i] != NULL) {
+    if (conxwp->acheck[i]) {
       if (hbox[3] == NULL) {
         achbox = lives_widget_get_parent(conxwp->acheck[i]);
         hbox[3] = lives_widget_get_parent(achbox);
@@ -3244,11 +3201,9 @@ static void dfxc_changed(LiVESWidget * combo, livespointer user_data) {
   char *channame;
 
   int fidx, cidx, key, mode;
-  int nichans, nchans;
-  int error;
-  int ours = -1;
+  int nichans, nchans, ours = -1;
 
-  register int i, j = 0;
+  int i, j = 0;
 
   if (!lives_combo_get_active_iter(LIVES_COMBO(combo), &iter)) return;
   model = lives_combo_get_model(LIVES_COMBO(combo));
@@ -3280,7 +3235,7 @@ static void dfxc_changed(LiVESWidget * combo, livespointer user_data) {
   // find the receiving filter/instance
   filter = get_weed_filter(fidx);
 
-  ichans = weed_get_plantptr_array(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, &error);
+  ichans = weed_get_plantptr_array(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, NULL);
   nichans = weed_leaf_num_elements(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES);
 
   // populate all ccombo with channels
@@ -3324,13 +3279,9 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
   char *array_type, *text;
 
   int defelems, pflags, stype;
-
   int fidx, key, mode, pidx;
   int niparams = 0, nparams;
-  int error;
-  int ours = -1;
-
-  register int i, j = 0;
+  int ours = -1, i, j = 0;
 
   if (!lives_combo_get_active_iter(LIVES_COMBO(combo), &iter)) {
     return;
@@ -3360,7 +3311,7 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
     ofilter = conxwp->filter;
 
     if (pidx >= 0) {
-      weed_plant_t **oparams = weed_get_plantptr_array(ofilter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, &error);
+      weed_plant_t **oparams = weed_get_plantptr_array(ofilter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, NULL);
       weed_plant_t *oparam = oparams[pidx];
       lives_free(oparams);
       stype = weed_leaf_seed_type(oparam, WEED_LEAF_DEFAULT);
@@ -3389,7 +3340,7 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
     if (fidx == -1) {
       // connection deleted
       LiVESWidget *acheck = conxwp->acheck[ours];
-      if (acheck != NULL) {
+      if (acheck) {
         lives_signal_handler_block(acheck, conxwp->acheck_func[ours]);
         lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(acheck), FALSE);
         lives_widget_set_sensitive(acheck, FALSE);
@@ -3413,7 +3364,7 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
     filter = get_weed_filter(fidx);
 
     if (weed_plant_has_leaf(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES)) {
-      iparams = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error);
+      iparams = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, NULL);
       niparams = weed_leaf_num_elements(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
 #ifdef COMBO_LIST_LIMIT
       if (niparams + EXTRA_PARAMS_IN > COMBO_LIST_LIMIT) {
@@ -3432,27 +3383,28 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
 
         if (weed_plant_has_leaf(param, WEED_LEAF_HOST_INTERNAL_CONNECTION)) continue;
 
-        if (weed_plant_has_leaf(param, WEED_LEAF_GROUP) && weed_get_int_value(param, WEED_LEAF_GROUP, &error) != 0) continue;
+        if (weed_plant_has_leaf(param, WEED_LEAF_GROUP) && weed_get_int_value(param, WEED_LEAF_GROUP, NULL) != 0) continue;
 
         paramname = get_param_name(param, j - 1, TRUE);
 
         ptype = weed_seed_type_to_text((stype = weed_leaf_seed_type(param, WEED_LEAF_DEFAULT)));
 
-        pflags = weed_get_int_value(param, WEED_LEAF_FLAGS, &error);
+        pflags = weed_get_int_value(param, WEED_LEAF_FLAGS, NULL);
 
         if (pflags & WEED_PARAMETER_VARIABLE_SIZE) array_type = lives_strdup("[]");
-        else if ((defelems = weed_leaf_num_elements(param, WEED_LEAF_DEFAULT)) > 1) array_type = lives_strdup_printf("[%d]", defelems);
+        else if ((defelems = weed_leaf_num_elements(param, WEED_LEAF_DEFAULT)) > 1)
+          array_type = lives_strdup_printf("[%d]", defelems);
         else array_type = lives_strdup("");
 
         if (weed_plant_has_leaf(param, WEED_LEAF_MAX) && weed_plant_has_leaf(param, WEED_LEAF_MIN)) {
           if (stype == WEED_SEED_INT) {
-            range = lives_strdup_printf("Range: %d to %d", weed_get_int_value(param, WEED_LEAF_MIN, &error), weed_get_int_value(param,
-                                        WEED_LEAF_MAX,
-                                        &error));
+            range = lives_strdup_printf("Range: %d to %d",
+                                        weed_get_int_value(param, WEED_LEAF_MIN, NULL), weed_get_int_value(param,
+                                            WEED_LEAF_MAX, NULL));
           } else if (stype == WEED_SEED_DOUBLE) {
-            range = lives_strdup_printf("Range: %f to %f", weed_get_double_value(param, WEED_LEAF_MIN, &error), weed_get_double_value(param,
-                                        WEED_LEAF_MAX,
-                                        &error));
+            range = lives_strdup_printf("Range: %f to %f",
+                                        weed_get_double_value(param, WEED_LEAF_MIN, NULL), weed_get_double_value(param,
+                                            WEED_LEAF_MAX, NULL));
           } else range = lives_strdup("");
         } else range = lives_strdup("");
 
@@ -3465,7 +3417,7 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
       plist = lives_list_append(plist, text);
     }
 
-    if (iparams != NULL) lives_free(iparams);
+    if (iparams) lives_free(iparams);
   }
 
   lives_combo_populate(LIVES_COMBO(conxwp->pcombo[ours]), plist);
@@ -3486,24 +3438,22 @@ int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode
   weed_plant_t **oparams = NULL, **iparams;
   weed_plant_t *oparam, *iparam = NULL;
 
-  int niparams, error, idx;
-
-  register int i, j = 0;
+  int niparams, idx, i, j = 0;
 
   // TODO :: key FX_DATA_KEY_OMC_MACRO == OMC Macro
 
   if (opnum >= 0) {
-    oparams = weed_get_plantptr_array(ofilter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, &error);
+    oparams = weed_get_plantptr_array(ofilter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, NULL);
     oparam = oparams[opnum];
     lives_free(oparams);
   } else {
     // invent an "ACTIVATED" param
     pthread_mutex_lock(&mainw->fxd_active_mutex);
-    if (active_dummy != NULL && WEED_PLANT_IS_PARAMETER(active_dummy)) {
+    if (active_dummy && WEED_PLANT_IS_PARAMETER(active_dummy)) {
       weed_plant_free(active_dummy);
       active_dummy = NULL;
     }
-    if (active_dummy == NULL) {
+    if (!active_dummy) {
       active_dummy = weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
       weed_set_boolean_value(active_dummy, WEED_LEAF_DEFAULT, WEED_FALSE);
     }
@@ -3514,11 +3464,11 @@ int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode
   if (ipnum == FX_DATA_PARAM_ACTIVE) {
     // invent an "ACTIVATE" param
     pthread_mutex_lock(&mainw->fxd_active_mutex);
-    if (active_dummy != NULL && WEED_PLANT_IS_PARAMETER(active_dummy)) {
+    if (active_dummy && WEED_PLANT_IS_PARAMETER(active_dummy)) {
       weed_plant_free(active_dummy);
       active_dummy = NULL;
     }
-    if (active_dummy == NULL) {
+    if (!active_dummy) {
       active_dummy = weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
       weed_set_boolean_value(active_dummy, WEED_LEAF_DEFAULT, WEED_FALSE);
     }
@@ -3530,13 +3480,13 @@ int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode
     int fidx = rte_keymode_get_filter_idx(ikey, imode);
     weed_plant_t *filter = get_weed_filter(fidx);
 
-    iparams = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error);
+    iparams = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, NULL);
     niparams = weed_leaf_num_elements(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
 
     for (i = 0; i < niparams; i++) {
       iparam = iparams[i];
       if (weed_plant_has_leaf(iparam, WEED_LEAF_HOST_INTERNAL_CONNECTION)) continue;
-      if (weed_plant_has_leaf(iparam, WEED_LEAF_GROUP) && weed_get_int_value(iparam, WEED_LEAF_GROUP, &error) != 0) continue;
+      if (weed_plant_has_leaf(iparam, WEED_LEAF_GROUP) && weed_get_int_value(iparam, WEED_LEAF_GROUP, NULL) != 0) continue;
       if (j == ipnum) break;
       j++;
     }
@@ -3544,11 +3494,11 @@ int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode
     lives_free(iparams);
   }
 
-  if (iparam_ret != NULL) *iparam_ret = iparam;
-  if (idx_ret != NULL) *idx_ret = idx;
+  if (iparam_ret) *iparam_ret = iparam;
+  if (idx_ret) *idx_ret = idx;
 
   if (!setup) {
-    if (pconx_get_out_param(TRUE, ikey > 0 ? ikey - 1 : ikey, imode, ipnum, okey, omode, oopnum, NULL) != NULL) {
+    if (pconx_get_out_param(TRUE, ikey > 0 ? ikey - 1 : ikey, imode, ipnum, okey, omode, oopnum, NULL)) {
       // dest param already has a connection
       return -1;
     }
@@ -3682,7 +3632,7 @@ static void dpp_changed(LiVESWidget * combo, livespointer user_data) {
 
   acheck = conxwp->acheck[ours];
 
-  if (acheck != NULL) {
+  if (acheck) {
     boolean hasrange = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(acheck), "available"));
 
     lives_signal_handler_block(acheck, conxwp->acheck_func[ours]);
@@ -3740,15 +3690,14 @@ int cconx_check_connection(int ikey, int imode, int icnum, boolean setup, weed_p
   weed_plant_t **ichans;
   weed_plant_t *filter, *ichan = NULL;
 
-  int fidx, idx, nichans, error;
-  register int i, j = 0;
+  int fidx, idx, nichans, i, j = 0;
 
   fidx = rte_keymode_get_filter_idx(ikey, imode);
 
   // find the receiving filter/instance
   filter = get_weed_filter(fidx);
 
-  ichans = weed_get_plantptr_array(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, &error);
+  ichans = weed_get_plantptr_array(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, NULL);
   nichans = weed_leaf_num_elements(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES);
 
   // find actual in channel number from list of alpha channels
@@ -3763,11 +3712,11 @@ int cconx_check_connection(int ikey, int imode, int icnum, boolean setup, weed_p
 
   idx = i;
 
-  if (ichan_ret != NULL) *ichan_ret = ichan;
-  if (idx_ret != NULL) *idx_ret = idx;
+  if (ichan_ret) *ichan_ret = ichan;
+  if (idx_ret) *idx_ret = idx;
 
   if (!setup) {
-    if (cconx_get_out_alpha(TRUE, ikey - 1, imode, i, okey, omode, ocnum) != NULL) {
+    if (cconx_get_out_alpha(TRUE, ikey - 1, imode, i, okey, omode, ocnum)) {
       // dest chan already has a connection
       return -1;
     }
@@ -3778,13 +3727,9 @@ int cconx_check_connection(int ikey, int imode, int icnum, boolean setup, weed_p
 
 static void dpc_changed(LiVESWidget * combo, livespointer user_data) {
   lives_conx_w *conxwp = (lives_conx_w *)user_data;
-
   weed_plant_t *ichan;
-
   LiVESTreeModel *model;
-
   LiVESTreeIter iter;
-
   LiVESWidget *fxcombo;
 
   char *channame;
@@ -3793,13 +3738,10 @@ static void dpc_changed(LiVESWidget * combo, livespointer user_data) {
   boolean setup = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "setup"));
 
   int nchans, nparams;
-
   int key, mode, cidx, ours = -1, ret, j;
   int okey, omode, ocnum;
-
   int idx = lives_combo_get_active(LIVES_COMBO(combo));
-
-  register int i;
+  int i;
 
   nchans = cconx_get_numcons(conxwp, FX_DATA_WILDCARD);
   nparams = pconx_get_numcons(conxwp, FX_DATA_WILDCARD);
@@ -3830,9 +3772,7 @@ static void dpc_changed(LiVESWidget * combo, livespointer user_data) {
     if (!hasone) lives_widget_set_sensitive(conxwp->disconbutton, FALSE);
 
     if (conxwp->ikeys[ours] != 0) cconx_delete(conxwp->okey, conxwp->omode, cidx,
-          conxwp->ikeys[ours] - 1,
-          conxwp->imodes[ours],
-          conxwp->idx[ours]);
+          conxwp->ikeys[ours] - 1, conxwp->imodes[ours], conxwp->idx[ours]);
     conxwp->cconx = cconx_find(conxwp->okey, conxwp->omode);
 
     conxwp->ikeys[ours] = 0;
@@ -3875,9 +3815,7 @@ static void dpc_changed(LiVESWidget * combo, livespointer user_data) {
   if (setup) return;
 
   if (conxwp->ikeys[ours] != 0) cconx_delete(conxwp->okey, conxwp->omode, cidx,
-        conxwp->ikeys[ours] - 1,
-        conxwp->imodes[ours],
-        conxwp->idx[ours]);
+        conxwp->ikeys[ours] - 1, conxwp->imodes[ours], conxwp->idx[ours]);
 
   conxwp->cconx = cconx_find(conxwp->okey, conxwp->omode);
 
@@ -3894,36 +3832,27 @@ static void dpc_changed(LiVESWidget * combo, livespointer user_data) {
 
 static void on_allcheck_toggled(LiVESToggleButton * button, livespointer user_data) {
   lives_conx_w *conxwp = (lives_conx_w *)user_data;
-
   boolean on = lives_toggle_button_get_active(button);
-
   int nparams = pconx_get_numcons(conxwp, FX_DATA_WILDCARD);
-  register int i;
 
-  for (i = EXTRA_PARAMS_OUT; i < nparams; i++) {
-    if (lives_widget_is_sensitive(conxwp->acheck[i])) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(conxwp->acheck[i]), on);
+  for (int i = EXTRA_PARAMS_OUT; i < nparams; i++) {
+    if (lives_widget_is_sensitive(conxwp->acheck[i]))
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(conxwp->acheck[i]), on);
   }
 }
 
 
 static void on_acheck_toggled(LiVESToggleButton * acheck, livespointer user_data) {
   lives_conx_w *conxwp = (lives_conx_w *)user_data;
-
   weed_plant_t **iparams;
   weed_plant_t *param, *filter;
-
   LiVESTreeModel *model;
-
   LiVESTreeIter iter;
-
   LiVESWidget *fxcombo;
 
   boolean on = lives_toggle_button_get_active(acheck);
-
-  int ours = -1, fidx, key, mode, error, niparams, nparams, nchans, nx = 0;
-  int idx, pidx;
-
-  register int i, j = 0;
+  int ours = -1, fidx, key, mode, niparams, nparams, nchans, nx = 0;
+  int idx, pidx, i, j = 0;
 
   if (EXTRA_PARAMS_OUT > 0) nx = pconx_get_numcons(conxwp, -EXTRA_PARAMS_OUT);
 
@@ -3960,7 +3889,7 @@ static void on_acheck_toggled(LiVESToggleButton * acheck, livespointer user_data
       // find the receiving filter/instance
       filter = get_weed_filter(fidx);
 
-      iparams = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error);
+      iparams = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, NULL);
       niparams = weed_leaf_num_elements(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
 
 #ifdef COMBO_LIST_LIMIT
@@ -3999,22 +3928,11 @@ static void on_acheck_toggled(LiVESToggleButton * acheck, livespointer user_data
 
 static LiVESTreeModel *inparam_fx_model(boolean is_chans, int key) {
   LiVESTreeStore *tstore;
-
   LiVESTreeIter iter1, iter2;
-
   weed_plant_t *filter;
-
   char *fxname, *keystr, *text;
-
   boolean key_added;
-
-  int idx;
-
-  int error;
-
-  int nmodes = rte_getmodespk();
-
-  register int i, j;
+  int idx, nmodes = rte_getmodespk(), i, j;
 
   tstore = lives_tree_store_new(EFD_NUM_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_INT,
                                 LIVES_COL_TYPE_INT);
@@ -4023,9 +3941,7 @@ static LiVESTreeModel *inparam_fx_model(boolean is_chans, int key) {
   lives_tree_store_set(tstore, &iter1,
                        KEY_COLUMN, mainw->string_constants[LIVES_STRING_CONSTANT_NONE],
                        NAME_COLUMN, mainw->string_constants[LIVES_STRING_CONSTANT_NONE],
-                       KEYVAL_COLUMN, 0,
-                       MODEVAL_COLUMN, 0,
-                       -1);
+                       KEYVAL_COLUMN, 0, MODEVAL_COLUMN, 0, -1);
 
   if (!is_chans) {
     // add OMC Macros
@@ -4033,12 +3949,12 @@ static LiVESTreeModel *inparam_fx_model(boolean is_chans, int key) {
     lives_tree_store_append(tstore, &iter1, NULL);   /* Acquire an iterator */
     lives_tree_store_set(tstore, &iter1, KEY_COLUMN, keystr, NAME_COLUMN, keystr, KEYVAL_COLUMN, 0, MODEVAL_COLUMN, 0, -1);
 
-    for (i = 0; get_omc_macro(i) != NULL; i++) {
+    for (i = 0; get_omc_macro(i); i++) {
       if (i != OSC_NOTIFY) continue; // TODO
       text = get_omc_macro(i)->macro_text;
       lives_tree_store_append(tstore, &iter2, &iter1);
-      lives_tree_store_set(tstore, &iter2, KEY_COLUMN, text, NAME_COLUMN, text, KEYVAL_COLUMN, FX_DATA_KEY_OMC_MACRO, MODEVAL_COLUMN,
-                           i, -1);
+      lives_tree_store_set(tstore, &iter2, KEY_COLUMN, text, NAME_COLUMN, text,
+                           KEYVAL_COLUMN, FX_DATA_KEY_OMC_MACRO, MODEVAL_COLUMN, i, -1);
     }
 
     lives_free(keystr);
@@ -4059,7 +3975,7 @@ static LiVESTreeModel *inparam_fx_model(boolean is_chans, int key) {
       if (is_chans)
         if (num_alpha_channels(filter, FALSE) == 0) continue;
 
-      fxname = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
+      fxname = weed_get_string_value(filter, WEED_LEAF_NAME, NULL);
       text = lives_strdup_printf("(%d,%d) %s", i, j + 1, fxname);
 
       if (!key_added) {
@@ -4090,7 +4006,7 @@ static void ptable_row_add_variable_widgets(lives_conx_w * conxwp, int idx, int 
 
   boolean hasrange = FALSE;
 
-  int stype, error, totchans;
+  int stype, totchans;
 
   totchans = cconx_get_numcons(conxwp, FX_DATA_WILDCARD);
 
@@ -4142,7 +4058,7 @@ static void ptable_row_add_variable_widgets(lives_conx_w * conxwp, int idx, int 
     conxwp->acheck[idx] = NULL;
   } else {
     if (weed_plant_has_leaf(conxwp->filter, WEED_LEAF_OUT_PARAMETER_TEMPLATES)) {
-      oparams = weed_get_plantptr_array(conxwp->filter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, &error);
+      oparams = weed_get_plantptr_array(conxwp->filter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, NULL);
 
       param = oparams[pidx];
       stype = weed_leaf_seed_type(param, WEED_LEAF_DEFAULT);
@@ -4233,8 +4149,7 @@ static void ptable_row_add_standard_widgets(lives_conx_w * conxwp, int idx) {
   hbox = lives_hbox_new(FALSE, 0);
 
   lives_table_attach(LIVES_TABLE(conxwp->tablep), hbox, 1, 2, conxwp->trowsp - 1, conxwp->trowsp,
-                     (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
-                     (LiVESAttachOptions)(0), 0, 0);
+                     (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND), (LiVESAttachOptions)(0), 0, 0);
 
   conxwp->clabel[idx] = lives_standard_label_new(lctext);
   lives_box_pack_start(LIVES_BOX(hbox), conxwp->clabel[idx], FALSE, FALSE, widget_opts.packing_width);
@@ -4244,13 +4159,10 @@ static void ptable_row_add_standard_widgets(lives_conx_w * conxwp, int idx) {
                                 _("Add another connection for this output parameter"));
 
   lives_table_attach(LIVES_TABLE(conxwp->tablep), conxwp->add_button[idx], 6, 7, conxwp->trowsp - 1,
-                     conxwp->trowsp,
-                     (LiVESAttachOptions)(0),
-                     (LiVESAttachOptions)(0), 0, 0);
+                     conxwp->trowsp, (LiVESAttachOptions)(0), (LiVESAttachOptions)(0), 0, 0);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(conxwp->add_button[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(padd_clicked),
-                            (livespointer)conxwp);
+                            LIVES_GUI_CALLBACK(padd_clicked), (livespointer)conxwp);
 
   conxwp->del_button[idx] = lives_standard_button_new_from_stock(LIVES_STOCK_REMOVE, NULL, BW, BH);
   lives_widget_set_tooltip_text(conxwp->del_button[idx], _("Delete this connection"));
@@ -4260,12 +4172,10 @@ static void ptable_row_add_standard_widgets(lives_conx_w * conxwp, int idx) {
   lives_box_pack_start(LIVES_BOX(hbox), conxwp->del_button[idx], FALSE, FALSE, 0);
 
   lives_table_attach(LIVES_TABLE(conxwp->tablep), hbox, 5, 6, conxwp->trowsp - 1, conxwp->trowsp,
-                     (LiVESAttachOptions)(0),
-                     (LiVESAttachOptions)(0), 0, 0);
+                     (LiVESAttachOptions)(0), (LiVESAttachOptions)(0), 0, 0);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(conxwp->del_button[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(pdel_clicked),
-                            (livespointer)conxwp);
+                            LIVES_GUI_CALLBACK(pdel_clicked), (livespointer)conxwp);
 
   lives_widget_set_sensitive(conxwp->del_button[idx], FALSE);
 }
@@ -4277,8 +4187,7 @@ static void ctable_row_add_standard_widgets(lives_conx_w * conxwp, int idx) {
   hbox = lives_hbox_new(FALSE, 0);
 
   lives_table_attach(LIVES_TABLE(conxwp->tablec), hbox, 1, 2, conxwp->trowsc - 1, conxwp->trowsc,
-                     (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
-                     (LiVESAttachOptions)(0), 0, 0);
+                     (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND), (LiVESAttachOptions)(0), 0, 0);
 
   conxwp->clabel[idx] = lives_standard_label_new(lctext);
   lives_box_pack_start(LIVES_BOX(hbox), conxwp->clabel[idx], FALSE, FALSE, widget_opts.packing_width);
@@ -4287,12 +4196,10 @@ static void ctable_row_add_standard_widgets(lives_conx_w * conxwp, int idx) {
   lives_widget_set_tooltip_text(conxwp->add_button[idx], _("Add another connection for this output channel"));
 
   lives_table_attach(LIVES_TABLE(conxwp->tablec), conxwp->add_button[idx], 5, 6, conxwp->trowsc - 1, conxwp->trowsc,
-                     (LiVESAttachOptions)(0),
-                     (LiVESAttachOptions)(0), 0, 0);
+                     (LiVESAttachOptions)(0), (LiVESAttachOptions)(0), 0, 0);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(conxwp->add_button[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(cadd_clicked),
-                            (livespointer)conxwp);
+                            LIVES_GUI_CALLBACK(cadd_clicked), (livespointer)conxwp);
 
   conxwp->del_button[idx] = lives_standard_button_new_from_stock(LIVES_STOCK_REMOVE, NULL, BW, BH);
   lives_widget_set_tooltip_text(conxwp->del_button[idx], _("Delete this connection"));
@@ -4330,8 +4237,6 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
   int defelems, pflags, stype;
 
   int totchans, totparams, nconns;
-
-  int error;
 
   register int i, j = 0, x = 0;
 
@@ -4372,10 +4277,10 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
 
   conxwp->trowsc = conxwp->trowsp = 0;
 
-  fname = weed_get_string_value(conxwp->filter, WEED_LEAF_NAME, &error);
+  fname = weed_get_string_value(conxwp->filter, WEED_LEAF_NAME, NULL);
 
   if (conxwp->num_alpha > 0) {
-    weed_plant_t **ochans = weed_get_plantptr_array(conxwp->filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &error);
+    weed_plant_t **ochans = weed_get_plantptr_array(conxwp->filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, NULL);
 
     conxwp->dpc_func = (ulong *)lives_malloc(totchans * sizeof(ulong));
 
@@ -4445,7 +4350,7 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
     pmodel = inparam_fx_model(FALSE, conxwp->okey);
 
     if (weed_plant_has_leaf(conxwp->filter, WEED_LEAF_OUT_PARAMETER_TEMPLATES))
-      oparams = weed_get_plantptr_array(conxwp->filter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, &error);
+      oparams = weed_get_plantptr_array(conxwp->filter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, NULL);
 
     conxwp->pfxcombo = (LiVESWidget **)lives_malloc(totparams * sizeof(LiVESWidget *));
     conxwp->pcombo = (LiVESWidget **)lives_malloc(totparams * sizeof(LiVESWidget *));
@@ -4537,7 +4442,7 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
 
           ptype = weed_seed_type_to_text((stype = weed_leaf_seed_type(param, WEED_LEAF_DEFAULT)));
 
-          pflags = weed_get_int_value(param, WEED_LEAF_FLAGS, &error);
+          pflags = weed_get_int_value(param, WEED_LEAF_FLAGS, NULL);
 
           if (pflags & WEED_PARAMETER_VARIABLE_SIZE) array_type = lives_strdup("[]");
           else if ((defelems = weed_leaf_num_elements(param, WEED_LEAF_DEFAULT)) > 1)
@@ -4546,15 +4451,15 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
 
           if (weed_plant_has_leaf(param, WEED_LEAF_MAX) && weed_plant_has_leaf(param, WEED_LEAF_MIN)) {
             if (stype == WEED_SEED_INT) {
-              range = lives_strdup_printf("Range: %d to %d", weed_get_int_value(param, WEED_LEAF_MIN, &error),
+              range = lives_strdup_printf("Range: %d to %d", weed_get_int_value(param, WEED_LEAF_MIN, NULL),
                                           weed_get_int_value(param,
                                               WEED_LEAF_MAX,
-                                              &error));
+                                              NULL));
             } else if (stype == WEED_SEED_DOUBLE) {
-              range = lives_strdup_printf("Range: %f to %f", weed_get_double_value(param, WEED_LEAF_MIN, &error),
+              range = lives_strdup_printf("Range: %f to %f", weed_get_double_value(param, WEED_LEAF_MIN, NULL),
                                           weed_get_double_value(param,
                                               WEED_LEAF_MAX,
-                                              &error));
+                                              NULL));
             } else range = lives_strdup("");
           } else range = lives_strdup("");
 
@@ -4589,21 +4494,22 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
 static void conxw_cancel_clicked(LiVESWidget * button, livespointer user_data) {
   lives_conx_w *conxwp = (lives_conx_w *)user_data;
 
-  if (conxwp->pclabel != NULL) lives_free(conxwp->pclabel);
-  if (conxwp->clabel != NULL) lives_free(conxwp->clabel);
-  if (conxwp->cfxcombo != NULL) lives_free(conxwp->cfxcombo);
-  if (conxwp->ccombo != NULL) lives_free(conxwp->ccombo);
-  if (conxwp->pfxcombo != NULL) lives_free(conxwp->pfxcombo);
-  if (conxwp->pcombo != NULL) lives_free(conxwp->pcombo);
-  if (conxwp->acheck != NULL) lives_free(conxwp->acheck);
-  if (conxwp->add_button != NULL) lives_free(conxwp->add_button);
-  if (conxwp->del_button != NULL) lives_free(conxwp->del_button);
-  if (conxwp->dpp_func != NULL) lives_free(conxwp->dpp_func);
-  if (conxwp->dpc_func != NULL) lives_free(conxwp->dpc_func);
-  if (conxwp->acheck_func != NULL) lives_free(conxwp->acheck_func);
+  /// TODO - consider the benefits of using LSD
+  if (conxwp->pclabel) lives_free(conxwp->pclabel);
+  if (conxwp->clabel) lives_free(conxwp->clabel);
+  if (conxwp->cfxcombo) lives_free(conxwp->cfxcombo);
+  if (conxwp->ccombo) lives_free(conxwp->ccombo);
+  if (conxwp->pfxcombo) lives_free(conxwp->pfxcombo);
+  if (conxwp->pcombo) lives_free(conxwp->pcombo);
+  if (conxwp->acheck) lives_free(conxwp->acheck);
+  if (conxwp->add_button) lives_free(conxwp->add_button);
+  if (conxwp->del_button) lives_free(conxwp->del_button);
+  if (conxwp->dpp_func) lives_free(conxwp->dpp_func);
+  if (conxwp->dpc_func) lives_free(conxwp->dpc_func);
+  if (conxwp->acheck_func) lives_free(conxwp->acheck_func);
 
-  if (conxwp->dispp != NULL) lives_free(conxwp->dispp);
-  if (conxwp->dispc != NULL) lives_free(conxwp->dispc);
+  if (conxwp->dispp) lives_free(conxwp->dispp);
+  if (conxwp->dispc) lives_free(conxwp->dispc);
 
   lives_free(conxwp->ikeys);
   lives_free(conxwp->imodes);
@@ -4614,7 +4520,7 @@ static void conxw_cancel_clicked(LiVESWidget * button, livespointer user_data) {
   pconx_delete_all();
   cconx_delete_all();
 
-  if (button == NULL) return;
+  if (!button) return;
 
   // restore old values
   mainw->pconx = spconx;
@@ -4675,22 +4581,18 @@ static boolean show_existing(lives_conx_w * conxwp) {
 
   weed_plant_t **ochans, **ichans;
   weed_plant_t **iparams;
-
   weed_plant_t *ofilter = conxwp->filter, *filter;
-
   weed_plant_t *chan, *param;
 
-  int ikey, imode, icnum, error, ipnum, nichans, niparams;
-
+  int ikey, imode, icnum, ipnum, nichans, niparams;
   int posn = 0, cidx, pidx, totchans = 0;
+  int i, j, k, l;
 
-  register int i, j, k, l;
-
-  if (cconx == NULL) goto show_ex_params;
+  if (!cconx) goto show_ex_params;
 
   totchans = cconx_get_numcons(conxwp, FX_DATA_WILDCARD);
 
-  ochans = weed_get_plantptr_array(ofilter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &error);
+  ochans = weed_get_plantptr_array(ofilter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, NULL);
 
   for (i = 0; i < cconx->nchans; i++) {
     // find the row
@@ -4722,7 +4624,7 @@ static boolean show_existing(lives_conx_w * conxwp) {
       icnum = cconx->icnum[j];
 
       filter = rte_keymode_get_filter(ikey + 1, imode);
-      ichans = weed_get_plantptr_array(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, &error);
+      ichans = weed_get_plantptr_array(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, NULL);
       nichans = weed_leaf_num_elements(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES);
 
       cidx = 0;
@@ -4791,7 +4693,7 @@ show_ex_params:
       pcombo = conxwp->pcombo[l];
       acheck = conxwp->acheck[l];
 
-      if (acheck != NULL) {
+      if (acheck) {
         lives_widget_set_sensitive(acheck, TRUE);
 
         lives_signal_handler_block(acheck, conxwp->acheck_func[l]);
@@ -4807,7 +4709,7 @@ show_ex_params:
         pidx = FX_DATA_PARAM_ACTIVE;
       } else {
         filter = rte_keymode_get_filter(ikey + 1, imode);
-        iparams = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error);
+        iparams = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, NULL);
         niparams = weed_leaf_num_elements(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
 
 #ifdef COMBO_LIST_LIMIT
@@ -4915,8 +4817,7 @@ LiVESWidget *make_datacon_window(int key, int mode) {
     lives_widget_set_sensitive(conxw.acbutton, FALSE);
 
     lives_signal_sync_connect(LIVES_GUI_OBJECT(conxw.acbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                              LIVES_GUI_CALLBACK(acbutton_clicked),
-                              (livespointer)&conxw);
+                              LIVES_GUI_CALLBACK(acbutton_clicked), (livespointer)&conxw);
   }
 
   if (conxw.num_params > EXTRA_PARAMS_OUT) {
@@ -4926,18 +4827,17 @@ LiVESWidget *make_datacon_window(int key, int mode) {
     lives_widget_set_sensitive(conxw.apbutton, FALSE);
 
     lives_signal_sync_connect(LIVES_GUI_OBJECT(conxw.apbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                              LIVES_GUI_CALLBACK(apbutton_clicked),
-                              (livespointer)&conxw);
+                              LIVES_GUI_CALLBACK(apbutton_clicked), (livespointer)&conxw);
   }
 
   conxw.disconbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(conxw.conx_dialog), NULL, _("_Disconnect All"),
                        LIVES_RESPONSE_NONE);
-  //lives_container_set_border_width(LIVES_CONTAINER(conxw.disconbutton), widget_opts.border_width); !! dont - causes other buttons to exp. vert in gtk2
+  //lives_container_set_border_width(LIVES_CONTAINER(conxw.disconbutton), widget_opts.border_width);
+  //!! dont - causes other buttons to exp. vert in gtk2
   lives_widget_set_sensitive(conxw.disconbutton, FALSE);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(conxw.disconbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(disconbutton_clicked),
-                            (livespointer)&conxw);
+                            LIVES_GUI_CALLBACK(disconbutton_clicked), (livespointer)&conxw);
 
   abox = lives_dialog_get_action_area(LIVES_DIALOG(conxw.conx_dialog));
   if (LIVES_IS_BOX(abox) && (conxw.num_alpha > 0 || conxw.num_params > 0)) add_fill_to_box(LIVES_BOX(abox));
@@ -4991,9 +4891,8 @@ LiVESWidget *make_datacon_window(int key, int mode) {
 static void do_chan_connected_error(lives_conx_w * conxwp, int key, int mode, int cnum) {
   weed_plant_t *filter, *ctmpl, **ochans;
   char *msg, *cname;
-  int error;
   filter = rte_keymode_get_filter(key + 1, mode);
-  ochans = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &error);
+  ochans = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, NULL);
   ctmpl = ochans[cnum];
   lives_free(ochans);
   cname = get_chan_name(ctmpl, cnum, TRUE);

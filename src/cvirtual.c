@@ -286,7 +286,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
   char *fname;
 
   frames_t i;
-
+  g_print("lrf1 is %d\n", last_real_frame);
   // check clip integrity upon loading
 
   // check that cached values match with sfile (on disk) values
@@ -335,6 +335,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
           }
         } else {
           last_real_frame = i;
+          g_print("lrf2 is %d\n", last_real_frame);
           isfirst = FALSE;
 	  // *INDENT-OFF*
 	}}}}
@@ -352,6 +353,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
 
       has_missing_frames = TRUE;
       sfile->frames = scan_frames(sfile, cdata->nframes, last_real_frame);
+      g_print("lrf23 is %d\n", last_real_frame);
       if (prefs->show_dev_opts) {
         g_printerr("rescan counted %d frames\n.", sfile->frames);
       }
@@ -427,16 +429,27 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
     if (sfile->old_frames > sfile->frames) {
       sfile->frames = sfile->old_frames;
       sfile->frames = scan_frames(sfile, sfile->frames, last_real_frame);
+      g_print("lrsdsdf2 is %d\n", last_real_frame);
     } else sfile->frames = sfile->old_frames;
   }
 
   if (sfile->frames > 0) {
     int hsize = sfile->hsize, chsize = hsize;
     int vsize = sfile->vsize, cvsize = vsize;
-
+    frames_t last_img_frame = -1;
     if (last_real_frame > 0) {
-      sfile->img_type = empirical_img_type;
-      get_frames_sizes(fileno, last_real_frame, &hsize, &vsize);
+      if (sfile->frame_index) {
+        for (i = last_real_frame; i > 0; i--) {
+          if (sfile->frame_index[i - 1] == -1) {
+            last_img_frame = i;
+            break;
+          }
+        }
+      } else last_img_frame = last_real_frame;
+      if (last_img_frame > -1) {
+        sfile->img_type = empirical_img_type;
+        get_frames_sizes(fileno, last_real_frame, &hsize, &vsize);
+      }
     }
 
     if (cdata) {

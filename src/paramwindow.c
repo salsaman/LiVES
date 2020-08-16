@@ -968,7 +968,6 @@ static int num_in_params_for_nth_instance(weed_plant_t *inst, int idx) {
 static boolean fmt_match(char *fmt_string) {
   const char *myfmt = fmt_string, *xfmt = myfmt + FMT_STRING_SIZE;
   size_t xlen = lives_strlen(myfmt), ylen;
-  int j;
 
   // g_print("\nROW\n");
   if (xlen == 0) {
@@ -983,7 +982,7 @@ static boolean fmt_match(char *fmt_string) {
 
   if (xlen < ylen) ylen = xlen;
 
-  for (j = 0; j < ylen; j++) {
+  for (int j = 0; j < ylen; j++) {
     //g_print(" CF %d %d", myfmt[j], xfmt[j]);
     if (xfmt[j] != -1 && myfmt[j] != -1 && xfmt[j] != myfmt[j]) return FALSE;
     if ((xfmt[j] == -2 || myfmt[j] == -2) && xfmt[j] != myfmt[j]) return FALSE;

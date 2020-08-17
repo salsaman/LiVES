@@ -9247,6 +9247,13 @@ weed_layer_t *create_blank_layer(weed_layer_t *layer, const char *image_ext, int
     }
   }
   if (!create_empty_pixel_data(layer, TRUE, TRUE)) weed_layer_nullify_pixel_data(layer);
+  if (!weed_plant_has_leaf(layer, WEED_LEAF_GAMMA_TYPE)) {
+    int clip = lives_layer_get_clip(layer);
+    if (clip && IS_VALID_CLIP(clip))
+      weed_layer_set_gamma(layer, mainw->files[clip]->gamma_type);
+    else
+      weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
+  }
   return layer;
 }
 

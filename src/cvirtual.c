@@ -286,7 +286,6 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
   char *fname;
 
   frames_t i;
-  g_print("lrf1 is %d\n", last_real_frame);
   // check clip integrity upon loading
 
   // check that cached values match with sfile (on disk) values
@@ -335,7 +334,6 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
           }
         } else {
           last_real_frame = i;
-          g_print("lrf2 is %d\n", last_real_frame);
           isfirst = FALSE;
 	  // *INDENT-OFF*
 	}}}}
@@ -353,7 +351,6 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
 
       has_missing_frames = TRUE;
       sfile->frames = scan_frames(sfile, cdata->nframes, last_real_frame);
-      g_print("lrf23 is %d\n", last_real_frame);
       if (prefs->show_dev_opts) {
         g_printerr("rescan counted %d frames\n.", sfile->frames);
       }

@@ -4643,11 +4643,10 @@ void on_playclip_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // real time recording
 
-  if (mainw->multitrack != NULL) return;
+  if (mainw->multitrack) return;
 
   if (LIVES_IS_PLAYING) {
     // we are playing a clip
-    ticks_t tc;
     if (!mainw->record || mainw->record_paused) {
       // recording is starting
       mainw->record_starting = TRUE;
@@ -4681,11 +4680,11 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
               mainw->jackd_read->is_paused = FALSE;
               mainw->jackd_read->in_use = TRUE;
             } else {
-              if (mainw->jackd != NULL) {
+              if (mainw->jackd) {
                 jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
               }
             }
-            if (mainw->clip_header != NULL) fclose(mainw->clip_header);
+            if (mainw->clip_header) fclose(mainw->clip_header);
             mainw->clip_header = NULL;
           }
 
@@ -4702,11 +4701,11 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
               mainw->pulsed_read->is_paused = FALSE;
               mainw->pulsed_read->in_use = TRUE;
             } else {
-              if (mainw->pulsed != NULL) {
+              if (mainw->pulsed) {
                 pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
               }
             }
-            if (mainw->clip_header != NULL) fclose(mainw->clip_header);
+            if (mainw->clip_header) fclose(mainw->clip_header);
             mainw->clip_header = NULL;
           }
 #endif
@@ -4717,12 +4716,12 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       if (prefs->rec_opts & REC_AUDIO) {
         // recording INTERNAL audio
 #ifdef ENABLE_JACK
-        if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
+        if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) {
           jack_get_rec_avals(mainw->jackd);
         }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-        if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
+        if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
           pulse_get_rec_avals(mainw->pulsed);
         }
 #endif
@@ -4731,39 +4730,9 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     }
 
     // end record during playback
-
-    if (mainw->event_list) {
-      // switch audio off at previous frame event
-      pthread_mutex_lock(&mainw->event_list_mutex);
-
-#ifdef RT_AUDIO
-      if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)
-          && mainw->agen_key == 0 && !mainw->agen_needs_reinit &&
-          prefs->audio_src == AUDIO_SRC_INT) {
-        if (!mainw->mute) {
-          weed_plant_t *last_frame = get_last_frame_event(mainw->event_list);
-          insert_audio_event_at(last_frame, -1, mainw->rec_aclip, 0., 0.);
-        }
-      }
-#endif
-
-      if (prefs->rec_opts & REC_EFFECTS) {
-        // add deinit events for all active effects
-        pthread_mutex_unlock(&mainw->event_list_mutex);
-        add_filter_deinit_events(mainw->event_list);
-        pthread_mutex_lock(&mainw->event_list_mutex);
-      }
-
-      // write a RECORD_END marker
-      tc = get_event_timecode(get_last_event(mainw->event_list));
-      mainw->event_list = append_marker_event(mainw->event_list, tc, EVENT_MARKER_RECORD_END); // mark record end
-      pthread_mutex_unlock(&mainw->event_list_mutex);
-    }
-
+    event_list_add_end_events(mainw->event_list, FALSE);
     mainw->record_paused = TRUE; // pause recording of further events
-
     enable_record();
-
     return;
   }
 
@@ -4816,7 +4785,7 @@ void on_rewind_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 void on_stop_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // stop during playback
 
-  if (mainw->multitrack != NULL && mainw->multitrack->is_paused && !LIVES_IS_PLAYING) {
+  if (mainw->multitrack && mainw->multitrack->is_paused && !LIVES_IS_PLAYING) {
     mainw->multitrack->is_paused = FALSE;
     mainw->multitrack->playing_sel = FALSE;
     mt_tl_move(mainw->multitrack, mainw->multitrack->pb_unpaused_start_time);
@@ -4824,19 +4793,13 @@ void on_stop_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     lives_widget_set_sensitive(mainw->m_stopbutton, FALSE);
     return;
   }
+
   mainw->cancelled = CANCEL_USER;
-  if (mainw->jack_can_stop) mainw->jack_can_start = FALSE;
-  mainw->jack_can_stop = FALSE;
 }
 
 
 boolean on_stop_activate_by_del(LiVESWidget * widget, LiVESXEventDelete * event, livespointer user_data) {
   // called if the user closes the separate play window
-  if (LIVES_IS_PLAYING) {
-    mainw->cancelled = CANCEL_USER;
-    if (mainw->jack_can_stop) mainw->jack_can_start = FALSE;
-    mainw->jack_can_stop = FALSE;
-  }
   if (prefs->sepwin_type == SEPWIN_TYPE_STICKY) {
     on_sepwin_pressed(NULL, NULL);
   }

@@ -20,16 +20,17 @@ static boolean reorder_leave_back = FALSE;
 
 void reorder_leave_back_set(boolean val) {reorder_leave_back = val;}
 
+#define RND_ERROR (0.00000000000001)
+
 /////////////////////////////////////////////////////
 
 LIVES_GLOBAL_INLINE ticks_t q_gint64(ticks_t in, double fps) {
   // quantise timecode to fps
-  if (in > (ticks_t)0) return ((ticks_t)((double)in / (double)TICKS_PER_SECOND_DBL * (double)fps +
-                                           (double).5) /
-                                 (double)fps) * (ticks_t)TICKS_PER_SECOND; // quantise to frame timing
-  if (in < (ticks_t)0) return ((ticks_t)((double)in / (double)TICKS_PER_SECOND_DBL * (double)fps -
-                                           (double).5) /
-                                 (double)fps) * (ticks_t)TICKS_PER_SECOND; // quantise to frame timing
+  if (in > (ticks_t)0) return ((((double)((ticks_t)((double)in / (double)TICKS_PER_SECOND_DBL * (double)fps))) /
+                                  (double)fps) + RND_ERROR) * TICKS_PER_SECOND_DBL; // quantise to frame timing
+
+  if (in < (ticks_t)0) return ((((double)((ticks_t)((double)in / (double)TICKS_PER_SECOND_DBL * (double)fps))) /
+                                  (double)fps) - RND_ERROR) * TICKS_PER_SECOND_DBL; // quantise to frame timing
   return (ticks_t)0;
 }
 
@@ -316,111 +317,25 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
       video_resampled = TRUE;
     }
   } else {
-    boolean rs_builtin = TRUE;
-    lives_rfx_t *resize_rfx;
+    /* boolean rs_builtin = TRUE; */
+    /* lives_rfx_t *resize_rfx; */
     // NO FPS CHANGE
     if ((width != cfile->hsize || height != cfile->vsize) && width * height > 0) {
       // no fps change - just a normal resize
       cfile->undo_start = 1;
       cfile->undo_end = cfile->frames;
-
-      if (mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate == -1 || prefs->enc_letterbox) {
-        // use builtin resize
-
-        if (prefs->enc_letterbox && LETTERBOX_NEEDS_COMPOSITE && !capable->has_composite) {
-          do_lb_composite_error();
-          on_undo_activate(NULL, NULL);
-          return FALSE;
-        }
-
-        if (prefs->enc_letterbox && LETTERBOX_NEEDS_CONVERT && !capable->has_convert) {
-          do_lb_convert_error();
-          on_undo_activate(NULL, NULL);
-          return FALSE;
-        }
-
-        if (!prefs->enc_letterbox && RESIZE_ALL_NEEDS_CONVERT && !capable->has_convert) {
-          do_ra_convert_error();
-          on_undo_activate(NULL, NULL);
-          return FALSE;
-        }
-
-        if (cfile->clip_type == CLIP_TYPE_FILE) {
-          cfile->fx_frame_pump = 1;
-        }
-
-        if (!prefs->enc_letterbox) {
-          com = lives_strdup_printf("%s resize_all \"%s\" %d %d %d \"%s\"", prefs->backend,
-                                    cfile->handle, cfile->frames, width, height,
-                                    get_image_ext_for_type(cfile->img_type));
-          msg = lives_strdup_printf(_("Resizing frames 1 to %d"), cfile->frames);
-        } else {
-          int iwidth = cfile->hsize, iheight = cfile->vsize;
-          calc_maxspect(width, height, &iwidth, &iheight);
-
-          if (iwidth == cfile->hsize && iheight == cfile->vsize) {
-            iwidth = -iwidth;
-            iheight = -iheight;
-          }
-
-          com = lives_strdup_printf("%s resize_all \"%s\" %d %d %d \"%s\" %d %d", prefs->backend,
-                                    cfile->handle, cfile->frames, width, height,
-                                    get_image_ext_for_type(cfile->img_type), iwidth, iheight);
-          msg = lives_strdup_printf(_("Resizing/letterboxing frames 1 to %d"), cfile->frames);
-        }
-
-        cfile->progress_start = 1;
-        cfile->progress_end = cfile->frames;
-
-        cfile->ohsize = cfile->hsize;
-        cfile->ovsize = cfile->vsize;
-
-        cfile->undo1_dbl = cfile->fps;
-
-        lives_rm(cfile->info_file);
-        lives_system(com, FALSE);
-        lives_free(com);
-
-        if (THREADVAR(com_failed)) return FALSE;
-
-        mainw->resizing = TRUE;
-      } else {
-        int error;
-        weed_plant_t *first_out;
-        weed_plant_t *ctmpl;
-
-        rs_builtin = FALSE;
-        resize_rfx = mainw->fx_candidates[FX_CANDIDATE_RESIZER].rfx;
-        first_out = get_enabled_channel((weed_plant_t *)resize_rfx->source, 0, FALSE);
-        ctmpl = weed_get_plantptr_value(first_out, WEED_LEAF_TEMPLATE, &error);
-        weed_set_int_value(ctmpl, WEED_LEAF_HOST_WIDTH, width);
-        weed_set_int_value(ctmpl, WEED_LEAF_HOST_HEIGHT, height);
+      if (prefs->enc_letterbox) {
+        int iwidth = cfile->hsize, iheight = cfile->vsize;
+        calc_maxspect(width, height, &iwidth, &iheight);
+        width = iwidth;
+        height = iheight;
       }
 
-      cfile->nokeep = TRUE;
-
-      if ((rs_builtin && !do_progress_dialog(TRUE, TRUE, msg)) || (!rs_builtin && !on_realfx_activate_inner(1, resize_rfx))) {
-        mainw->resizing = FALSE;
-        if (msg != NULL) lives_free(msg);
-        cfile->hsize = width;
-        cfile->vsize = height;
-        if (audio_resampled) cfile->undo_action = UNDO_ATOMIC_RESAMPLE_RESIZE;
-        else {
-          cfile->undo_action = UNDO_RESIZABLE;
-          set_undoable(_("Resize"), TRUE);
-        }
-        cfile->fx_frame_pump = 0;
-        on_undo_activate(NULL, NULL);
-        cfile->nokeep = FALSE;
-        return FALSE;
-      }
+      resize_all(mainw->current_file, width, height, cfile->img_type, NULL, NULL);
+      realize_all_frames(mainw->current_file, _("Pullunig frames"), FALSE);
 
       cfile->hsize = width;
       cfile->vsize = height;
-
-      lives_free(msg);
-      mainw->resizing = FALSE;
-      cfile->fx_frame_pump = 0;
 
       if (!save_clip_value(mainw->current_file, CLIP_DETAILS_WIDTH, &cfile->hsize)) bad_header = TRUE;
       if (!save_clip_value(mainw->current_file, CLIP_DETAILS_HEIGHT, &cfile->vsize)) bad_header = TRUE;
@@ -470,10 +385,11 @@ static boolean copy_with_check(weed_plant_t *event, weed_plant_t *out_list, weed
   return TRUE;
 }
 
-
 #define READJ_MAX 2.
 #define READJ_MIN 0.1
 
+#define SMTH_FRAME_LIM 8
+#define SMTH_TC_LIM  (0.5 * TICKS_PER_SECOND_DBL)
 
 void pre_analyse(weed_plant_t *elist) {
   // note, this only works when we have a single audio track
@@ -482,13 +398,14 @@ void pre_analyse(weed_plant_t *elist) {
   // optionally we can also try to smooth the frames; if abs(nxt - prev) < lim, curr = av(prev, nxt)
 
   weed_event_t *event = get_first_event(elist), *last = NULL, *xevent;
+#define PRE_SMOOTH
 #ifdef PRE_SMOOTH
   weed_event_t *pframev = NULL, *ppframev = NULL;
-  int pclip, ppclip;
-  int pframe, ppframe;
+  int pclip = 0, ppclip = 0;
+  int pframe = 0, ppframe = 0;
 #endif
-  weed_timecode_t stc = 0, etc, tc;
-  lives_audio_track_state_t *ststate, *enstate;
+  weed_timecode_t stc = 0, etc, tc, ptc = 0, pptc = 0;
+  lives_audio_track_state_t *ststate = NULL, *enstate;
   ticks_t offs = 0;
   int ev_api = 100;
   int ntracks;
@@ -500,18 +417,20 @@ void pre_analyse(weed_plant_t *elist) {
 #ifdef PRE_SMOOTH
     if (WEED_EVENT_IS_FRAME(event)) {
       weed_timecode_t tc = weed_event_get_timecode(event);
-      int clip = get_frame_event_clip(event);
-      frames_t frame = get_frame_event_frame(event);
-      if (pframev && ppframev && pclip == cclip && ppclip == cclip) {
-        if (abs(frame - pframe) <= SMT_FRAME_LIM && tc - pptc < SMTH_FRAME_TC_LIM) {
-          double dell1 = (double)(ptc - pptc);
-          double dell2 = (double)(tc - ptc);
+      int clip = get_frame_event_clip(event, 0);
+      frames_t frame = get_frame_event_frame(event, 0);
+      if (pframev && ppframev && pclip == clip && ppclip == clip) {
+        if (abs(frame - pframe) <= SMTH_FRAME_LIM && (tc - pptc) < SMTH_TC_LIM) {
+          double del1 = (double)(ptc - pptc);
+          double del2 = (double)(tc - ptc);
           if (del1 * del2 >= 3.5) {
-            pframe = (frames_t)(((double)ppframe * del2 + (double)frame * del1) / (del1 + del) + .5);
+            pframe = (frames_t)(((double)ppframe * del2 + (double)frame * del1) / (del1 + del2) + .5);
             weed_set_int64_value(pframev, WEED_LEAF_FRAMES, pframe);
           }
         }
       }
+      pptc = ptc;
+      ptc = tc;
       ppframe = pframe;
       pframe = frame;
       ppclip = pclip;
@@ -666,7 +585,8 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
   do {
     response = LIVES_RESPONSE_OK;
-    out_list = weed_plant_new(WEED_PLANT_EVENT_LIST);
+    /// copy metadata; we will change PREV, NEXT and FPS
+    out_list = weed_plant_copy(in_list);
     if (!out_list) {
       response = do_memory_error_dialog(what, 0);
     }
@@ -683,7 +603,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   if (old_fps == 0.) {
     /// in pre-analysis, we will look at the audio frames, and instead of correcting the audio veloicity, we will
     /// attempt to slightly modify (scale) the frame timings such that the audio hits the precise seek point
-    pre_analyse(in_list);
+    //pre_analyse(in_list);
   }
 
   weed_set_voidptr_value(out_list, WEED_LEAF_FIRST, NULL);
@@ -705,7 +625,6 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   for (; out_tc < end_tc || event != NULL; out_tc = q_gint64(out_tc + tl + (tl >> 2), qfps)) {
     weed_timecode_t stop_tc = out_tc + offset_tc;
     if (out_tc > end_tc) out_tc = end_tc;
-
     while (1) {
       /// in this mode we walk the event_list until we pass the output time, keeping track of
       /// state - frame and clip numbers, audio positions, param values, then insert everything at the output slot
@@ -964,10 +883,13 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
         /// now we insert the frame
         do {
           response = LIVES_RESPONSE_OK;
+
           //g_print("frame with %d tracks %d %d  going in at %ld\n", tracks, clips[0], frames[0], out_tc);
-          if (insert_frame_event_at(out_list, out_tc, tracks, clips, frames, &newframe) == NULL) {
+          out_list = append_frame_event(out_list, out_tc, tracks, clips, frames);
+          if (!insert_frame_event_at(out_list, out_tc, tracks, clips, frames, &newframe)) {
             response = do_memory_error_dialog(what, 0);
           }
+          //newframe = get_last_event(out_list);
         } while (response == LIVES_RESPONSE_RETRY);
         if (response == LIVES_RESPONSE_CANCEL) {
           event_list_free(out_list);
@@ -1531,12 +1453,14 @@ void on_resample_vid_ok(LiVESButton * button, LiVESEntry * entry) {
   real_back_list = cfile->event_list;
   what = (_("creating the event list for resampling"));
 
-  if (cfile->event_list == NULL) {
+  if (!cfile->event_list) {
+    /* new_event_list = lives_event_list_new(NULL, 0); */
+    /* weed_set_double_value(new_event_list, WEED_LEAF_FPS, cfile->fps); */
     for (int64_t i64 = 1; i64 <= (int64_t)cfile->frames; i64++) {
       do {
         response = LIVES_RESPONSE_OK;
         new_event_list = append_frame_event(new_event_list, in_time, 1, &(mainw->current_file), &i64);
-        if (new_event_list == NULL) {
+        if (!new_event_list) {
           response = do_memory_error_dialog(what, 0);
         }
       } while (response == LIVES_RESPONSE_RETRY);
@@ -1550,24 +1474,24 @@ void on_resample_vid_ok(LiVESButton * button, LiVESEntry * entry) {
   }
   cfile->undo1_dbl = cfile->fps;
 
-  if (cfile->event_list_back != NULL) event_list_free(cfile->event_list_back);
+  if (cfile->event_list_back) event_list_free(cfile->event_list_back);
   cfile->event_list_back = cfile->event_list;
 
   //QUANTISE
   new_event_list = quantise_events(cfile->event_list_back, mainw->fx1_val, real_back_list != NULL);
   cfile->event_list = new_event_list;
 
-  if (real_back_list == NULL) event_list_free(cfile->event_list_back);
+  if (!real_back_list) event_list_free(cfile->event_list_back);
   cfile->event_list_back = NULL;
 
-  if (cfile->event_list == NULL) {
+  if (!cfile->event_list) {
     cfile->event_list = real_back_list;
     cfile->undo1_dbl = oundo1_dbl;
     mainw->error = TRUE;
     return;
   }
 
-  if (mainw->multitrack != NULL) return;
+  if (mainw->multitrack) return;
 
   ratio_fps = check_for_ratio_fps(mainw->fx1_val);
 

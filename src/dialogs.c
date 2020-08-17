@@ -1528,9 +1528,9 @@ switch_point:
 
   // playing back an event_list
   // here we need to add mainw->offsetticks, to get the correct position whe playing back in multitrack
-  if (mainw->proc_ptr == NULL && cfile->next_event != NULL) {
+  if (!mainw->proc_ptr && cfile->next_event) {
     // playing an event_list
-    if (mainw->scratch != SCRATCH_NONE && mainw->multitrack != NULL) {
+    if (mainw->scratch != SCRATCH_NONE && mainw->multitrack) {
 #ifdef ENABLE_JACK_TRANSPORT
       // handle transport jump in multitrack : end current playback and restart it from the new position
       // TODO: retest this and enable in the clip_editor
@@ -1539,10 +1539,10 @@ switch_point:
       if (mainw->cancelled == CANCEL_NONE) mainw->cancelled = CANCEL_EVENT_LIST_END;
 #endif
     } else {
-      if (mainw->multitrack != NULL) mainw->currticks += mainw->offsetticks; // add the offset of playback start time
+      if (mainw->multitrack) mainw->currticks += mainw->offsetticks; // add the offset of playback start time
       if (mainw->currticks >= event_start) {
         // see if we are playing a selection and reached the end
-        if (mainw->multitrack != NULL && mainw->multitrack->playing_sel &&
+        if (mainw->multitrack && mainw->multitrack->playing_sel &&
             get_event_timecode(cfile->next_event) / TICKS_PER_SECOND_DBL >=
             mainw->multitrack->region_end) mainw->cancelled = CANCEL_EVENT_LIST_END;
         else {
@@ -1550,7 +1550,7 @@ switch_point:
           mainw->noswitch = FALSE;
           cfile->next_event = process_events(cfile->next_event, FALSE, mainw->currticks);
           mainw->noswitch = TRUE;
-          if (cfile->next_event == NULL) mainw->cancelled = CANCEL_EVENT_LIST_END;
+          if (!cfile->next_event) mainw->cancelled = CANCEL_EVENT_LIST_END;
           else if (prefs->pbq_adaptive && mainw->last_display_ticks != ldt) {
             update_effort(spare_cycles + 1, FALSE);
             spare_cycles = 0ul;
@@ -2160,6 +2160,14 @@ refresh:
 
     return 0;
   }
+
+  if (LIVES_IS_PLAYING) {
+    if (mainw->record && !mainw->record_paused)
+      event_list_add_end_events(mainw->event_list, TRUE);
+    if (mainw->jack_can_stop) mainw->jack_can_start = FALSE;
+    mainw->jack_can_stop = FALSE;
+  }
+
   cancel_process(visible);
 
   return 2000000 + mainw->cancelled;
@@ -2398,12 +2406,12 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     proc_start_ticks = lives_get_current_ticks();
   } else {
     // video playback
-    if (mainw->event_list != NULL || !CLIP_HAS_VIDEO(mainw->playing_file)) mainw->video_seek_ready = TRUE;
-    if (mainw->event_list != NULL || !CLIP_HAS_AUDIO(mainw->playing_file)) mainw->audio_seek_ready = TRUE;
+    if (mainw->event_list || !CLIP_HAS_VIDEO(mainw->playing_file)) mainw->video_seek_ready = TRUE;
+    if (mainw->event_list || !CLIP_HAS_AUDIO(mainw->playing_file)) mainw->audio_seek_ready = TRUE;
 
 #ifdef ENABLE_JACK_TRANSPORT
-    if (mainw->jack_can_stop && mainw->multitrack == NULL && (prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT) &&
-        !(mainw->record && !(prefs->rec_opts & REC_FRAMES) && cfile->next_event == NULL)) {
+    if (mainw->jack_can_stop && !mainw->multitrack && (prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT) &&
+        !(mainw->record && !(prefs->rec_opts & REC_FRAMES) && !cfile->next_event)) {
       // calculate the start position from jack transport
 
       ticks_t ntc = jack_transport_get_time() * TICKS_PER_SECOND_DBL;

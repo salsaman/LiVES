@@ -809,7 +809,7 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
   procw->label = lives_standard_label_new(tmp_label);
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   widget_opts.mnemonic_label = TRUE;
-  lives_box_pack_start(LIVES_BOX(vbox), procw->label, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), procw->label, FALSE, TRUE, 0);
 
   procw->progressbar = lives_standard_progress_bar_new();
 
@@ -6286,10 +6286,12 @@ void run_diskspace_dialog(void) {
   int wofl;
 
   /// kick off a bg process to get free ds and ds used
+
+  if (!dsq) dsq = (_dsquotaw *)lives_calloc(1, sizeof(_dsquotaw));
+
   dsq->scanning = TRUE;
   disk_monitor_start(prefs->workdir);
 
-  if (!dsq) dsq = (_dsquotaw *)lives_calloc(1, sizeof(_dsquotaw));
   dsq->setting = FALSE;
   dsq->visible = TRUE;
   dsq->crit_dism = FALSE;

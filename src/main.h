@@ -70,6 +70,7 @@
 #  define GNU_NORETURN __attribute__((noreturn))
 #  define GNU_FLATTEN  __attribute__((flatten)) // inline all function calls
 #  define GNU_HOT  __attribute__((hot))
+#  define GNU_SENTINEL  __attribute__((__sentinel__(0)))
 #  define GNU_RETURNS_TWICE  __attribute__((returns_twice))
 #else
 #  define WARN_UNUSED
@@ -84,6 +85,7 @@
 #  define GNU_NORETURN
 #  define GNU_FLATTEN
 #  define GNU_HOT
+#  define GNU_SENTINEL
 #  define GNU_RETURNS_TWICE
 #endif
 
@@ -308,6 +310,9 @@ typedef int lives_pgid_t;
 
 // clamp a between 1 and b; both values rounded to nearest int; if rounded value of a is <= 0, return rounded b
 #define UTIL_CLAMP(a, b) (NORMAL_CLAMP((a), (b)) <= 0 ? ROUND_I((b)) : ROUND_I((a)))
+
+// normal integer clamp
+#define INT_CLAMP(i, min, max) ((i) < (min) ? (min) : (i) > (max) ? (max) : (i))
 
 // round a up double / float a to  next multiple of int b
 #define CEIL(a, b) ((int)(((double)(a) + (double)(b) - .000000001) / ((double)(b))) * (b))
@@ -1128,8 +1133,8 @@ capability *capable;
 #include "plugins.h"
 #include "paramspecial.h"
 #include "multitrack.h"
-#include "mainwindow.h"
 #include "events.h"
+#include "mainwindow.h"
 #include "keyboard.h"
 #include "preferences.h"
 

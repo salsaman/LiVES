@@ -435,6 +435,15 @@ typedef struct {
   boolean show_msgs_on_startup;
   boolean show_disk_quota;
 
+  boolean rr_crash;
+  int rr_qmode;
+  boolean rr_super;
+  boolean rr_pre_smooth;
+  boolean rr_qsmooth;
+  int rr_fstate;
+  boolean rr_amicro;
+  boolean rr_ramicro;
+
   char def_author[1024];
 } _prefs;
 
@@ -544,6 +553,14 @@ typedef struct {
   LiVESWidget *rextaudio;
   LiVESWidget *rintaudio;
   LiVESWidget *rdesk_audio;
+  LiVESWidget *rr_crash;
+  LiVESWidget *rr_super;
+  LiVESWidget *rr_combo;
+  LiVESWidget *rr_pre_smooth;
+  LiVESWidget *rr_qsmooth;
+  LiVESWidget *rr_scombo;
+  LiVESWidget *rr_amicro;
+  LiVESWidget *rr_ramicro;
   LiVESWidget *encoder_combo;
   LiVESWidget *checkbutton_load_rfx;
   LiVESWidget *checkbutton_apply_gamma;
@@ -950,6 +967,9 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_SCFWD_AMOUNT "trickplay_scratch_fwd"
 #define PREF_SCBACK_AMOUNT "trickplay_scratch_back"
 
+#define PREF_RRQMODE "recrender_quant_mode"
+#define PREF_RRFSTATE "recrender_fx_posn_state"
+
 ////////// boolean values
 #define PREF_SHOW_RECENT_FILES "show_recent_files"
 #define PREF_FORCE_SINGLE_MONITOR "force_single_monitor"
@@ -1001,6 +1021,13 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_PREF_TRASH "prefer_trash" ///< prefer trash to delete
 #define PREF_MSG_START "show_msgs_on_startup" /// pop up msgs box on startup
 #define PREF_SHOW_QUOTA "show_quota_on_startup" /// pop up quota box on startup
+
+#define PREF_RRCRASH "recrender_crash_protection" /// option for rendering recordings
+#define PREF_RRSUPER "recrender_super" /// option for rendering recordings
+#define PREF_RRPRESMOOTH "recrender_presmooth" /// option for rendering recordings
+#define PREF_RRQSMOOTH "recrender_qsmooth" /// option for rendering recordings
+#define PREF_RRAMICRO "recrender_amicro" /// option for rendering recordings
+#define PREF_RRRAMICRO "recrender_rend_amicro" /// option for rendering recordings
 
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"

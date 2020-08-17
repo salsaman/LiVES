@@ -123,9 +123,9 @@ void load_theme_images(void) {
 
         mainw->imframe = lives_pixbuf_scale_simple(pixbuf, width, height, LIVES_INTERP_BEST);
         lives_widget_object_unref(pixbuf);
-      }
-    }
-  }
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
 }
 
 
@@ -140,29 +140,27 @@ void make_custom_submenus(void) {
 
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-boolean expose_sim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
+boolean expose_sim(LiVESWidget * widget, lives_painter_t *cr, livespointer user_data) {
   if (mainw->is_generating) return TRUE;
   if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((widget_opts.monitor == prefs->play_monitor ||
-                                        capable->nmonitors == 1) &&
-                                        (!mainw->ext_playback ||
-                                         (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
+                                        capable->nmonitors == 1) && (!mainw->ext_playback ||
+                                            (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
   lives_painter_set_source_surface(cr, mainw->si_surface, 0., 0.);
   lives_painter_paint(cr);
   return FALSE;
 }
 
-boolean expose_eim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
+boolean expose_eim(LiVESWidget * widget, lives_painter_t *cr, livespointer user_data) {
   if (mainw->is_generating) return TRUE;
   if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((widget_opts.monitor == prefs->play_monitor ||
-                                        capable->nmonitors == 1)  &&
-                                        (!mainw->ext_playback ||
-                                         (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
+                                        capable->nmonitors == 1)  && (!mainw->ext_playback ||
+                                            (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return TRUE;
   lives_painter_set_source_surface(cr, mainw->ei_surface, 0., 0.);
   lives_painter_paint(cr);
   return FALSE;
 }
 
-boolean expose_pim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
+boolean expose_pim(LiVESWidget * widget, lives_painter_t *cr, livespointer user_data) {
   //if (LIVES_IS_PLAYING) return FALSE;
   if (mainw->is_generating) return TRUE;
   lives_painter_set_source_surface(cr, mainw->pi_surface, 0., 0.);
@@ -173,8 +171,8 @@ boolean expose_pim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
 #endif
 
 
-void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColor *colf2,
-                 LiVESWidgetColor *colb2, LiVESWidgetColor *coli, LiVESWidgetColor *colt) {
+void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetColor * colf2,
+                 LiVESWidgetColor * colb2, LiVESWidgetColor * coli, LiVESWidgetColor * colt) {
   lives_widget_apply_theme(LIVES_MAIN_WINDOW_WIDGET, LIVES_WIDGET_STATE_NORMAL);
 
   lives_widget_apply_theme2(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, FALSE);
@@ -439,8 +437,7 @@ void create_LiVES(void) {
                       (GdkDragAction)(GDK_ACTION_COPY | GDK_ACTION_MOVE | GDK_ACTION_LINK));
 
     lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_DRAG_DATA_RECEIVED_SIGNAL,
-                         LIVES_GUI_CALLBACK(drag_from_outside),
-                         NULL);
+                         LIVES_GUI_CALLBACK(drag_from_outside), NULL);
 
 #endif
 
@@ -3753,8 +3750,10 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
 
   get_monitors(TRUE);
 
-  if (mainw->multitrack != NULL) {
-    if (mainw->multitrack->event_list == NULL) {
+  if (mainw->multitrack) {
+    if (!mainw->multitrack->event_list) {
+      /// create a fake event list with no events
+      /// this prevents  problems like the multitrack window trying to auto reload from disk
       weed_plant_t *event_list = weed_plant_new(WEED_PLANT_EVENT_LIST);
       weed_set_int_value(event_list, WEED_LEAF_WEED_EVENT_API_VERSION, WEED_EVENT_API_VERSION);
       weed_set_voidptr_value(event_list, WEED_LEAF_FIRST, NULL);
@@ -3838,13 +3837,13 @@ void _make_play_window(void) {
     unhide_cursor(lives_widget_get_xwindow(mainw->playarea));
   }
 
-  if (mainw->play_window != NULL) {
+  if (mainw->play_window) {
     // this shouldn't ever happen
     kill_play_window();
   }
 
   mainw->play_window = lives_window_new(LIVES_WINDOW_TOPLEVEL);
-  if (mainw->multitrack != NULL) lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
+  if (mainw->multitrack) lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
   gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), TRUE);
   gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), TRUE);
 
@@ -3921,7 +3920,6 @@ void _make_play_window(void) {
                             LIVES_GUI_CALLBACK(key_press_or_release), NULL);
 
   lives_widget_set_sensitive(mainw->play_window, TRUE);
-  //lives_widget_context_update();
 }
 
 void make_play_window(void) {

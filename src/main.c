@@ -1674,6 +1674,18 @@ static void lives_init(_ign_opts *ign_opts) {
 
   prefs->show_msgs_on_startup = get_boolean_prefd(PREF_MSG_START, TRUE);
 
+  /// record rendering options
+  prefs->rr_crash = get_boolean_prefd(PREF_RRCRASH, TRUE);
+  prefs->rr_super = get_boolean_prefd(PREF_RRSUPER, TRUE);
+  prefs->rr_pre_smooth = get_boolean_prefd(PREF_RRPRESMOOTH, TRUE);
+  prefs->rr_qsmooth = get_boolean_prefd(PREF_RRQSMOOTH, TRUE);
+  prefs->rr_amicro = get_boolean_prefd(PREF_RRAMICRO, TRUE);
+  prefs->rr_ramicro = get_boolean_prefd(PREF_RRRAMICRO, TRUE);
+  prefs->rr_qmode = get_int_prefd(PREF_RRQMODE, 0);
+  prefs->rr_qmode = INT_CLAMP(prefs->rr_qmode, 0, 1);
+  prefs->rr_fstate = get_int_prefd(PREF_RRFSTATE, 0);
+  prefs->rr_fstate = INT_CLAMP(prefs->rr_fstate, 0, 1);
+
   /// new prefs here:
   //////////////////////////////////////////////////////////////////
 
@@ -2414,7 +2426,7 @@ static void do_start_messages(void) {
 #undef SHOWDET
 
 static void set_toolkit_theme(int prefer) {
-  char *lname;
+  char *lname, *ic_dir;
   //  LiVESList *list;
   if (prefer & LIVES_THEME_DARK) {
     lives_widget_object_set(gtk_settings_get_default(), "gtk-application-prefer-dark-theme", TRUE);
@@ -2431,34 +2443,17 @@ static void set_toolkit_theme(int prefer) {
 
   capable->extra_icon_path = lives_build_path(prefs->configdir, LIVES_CONFIG_DIR, "stock-icons", NULL);
   widget_opts.icon_theme = gtk_icon_theme_new();
-
   gtk_icon_theme_set_custom_theme((LiVESIconTheme *)widget_opts.icon_theme, capable->icon_theme_name);
-  //gtk_icon_theme_prepend_search_path(widget_opts.icon_theme, capable->extra_icon_path);
 
-  gtk_icon_theme_add_resource_path(widget_opts.icon_theme, capable->extra_icon_path);
+  gtk_icon_theme_prepend_search_path((LiVESIconTheme *)widget_opts.icon_theme, capable->extra_icon_path);
 
-  gtk_icon_theme_rescan_if_needed((LiVESIconTheme *)widget_opts.icon_theme);
+  ic_dir = lives_build_path(prefs->prefix_dir, ICON_DIR, NULL);
+  gtk_icon_theme_prepend_search_path((LiVESIconTheme *)widget_opts.icon_theme, ic_dir);
+  lives_free(ic_dir);
 
   capable->all_icons = gtk_icon_theme_list_icons((LiVESIconTheme *)widget_opts.icon_theme, NULL);
 
-  /* for (list = capable->all_icons; list; list = list->next) { */
-  /*   if (!strncmp(list->data, "help-info", 9)) g_print("FOUND %s\n", list->data); */
-  /* } */
-
-  /* for (i = 0; i < LIVES_N_ICONS; i++) { */
-  /*   for (j = 0; j < lives_icons[i].alts; j++) { */
-  /*     for (list = capable->all_icons; list; list = list->next) { */
-  /* 	if (!strcmp(lives_icons[i].alt_name[j], (char *)list->data)) */
-  /* 	  lives_icons[i].icon_name = lives_strdup((char *)list->data); */
-  /*     } */
-  /*   } */
-  /* } */
-
-
-  /* int nelems; */
-  /* char **array; */
-  /* gtk_icon_theme_get_search_path(widget_opts.icon_theme, &array, &nelems); */
-  /* for (int i = 0; i < nelems; i++) g_print("PAT %d is %s\n", i, array[i]); */
+  widget_helper_set_stock_icon_alts((LiVESIconTheme *)widget_opts.icon_theme);
 }
 
 
@@ -3801,7 +3796,7 @@ static boolean lives_startup2(livespointer data) {
     if (wid) activate_x11_window(wid);
   }
   if (mainw->recording_recovered) {
-    lives_idle_add_simple(render_choice_idle, LIVES_INT_TO_POINTER(TRUE));
+    lives_idle_add(render_choice_idle, LIVES_INT_TO_POINTER(TRUE));
   }
 
   mainw->overlay_alarm = lives_alarm_set(0);
@@ -4382,7 +4377,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           get_basename(devmap);
           if (!strcmp(devmap, devmap2)) {
             lives_free(dir);
-            dir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, LIVES_DEVICEMAPS_DIR, NULL);
+            dir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, LIVES_DEVICEMAP_DIR, NULL);
           }
           lives_snprintf(devmap, PATH_MAX, "%s", (tmp = lives_build_filename(dir, devmap, NULL)));
           lives_free(tmp);
@@ -7795,12 +7790,7 @@ actual_ticks = mainw->startticks; ///< use the "thoretical" time
 
 if (mainw->record_starting) {
 if (!mainw->event_list) {
-char *cdate;
-struct timeval otv;
-gettimeofday(&otv, NULL);
-cdate = lives_datetime(otv.tv_sec);
-mainw->event_list = lives_event_list_new(NULL, cdate);
-lives_free(cdate);
+mainw->event_list = lives_event_list_new(NULL, NULL);
 }
 
 // mark record start
@@ -8105,14 +8095,15 @@ mainw->track_decoders[i] = clone_decoder(nclip);
                 }
               }
               lives_free(layers);
-            }
 
-            if (mainw->internal_messaging) {
-              // this happens if we are calling from multitrack, or apply rte.  We get our mainw->frame_layer and exit.
-              // DO NOT goto lfi_done, as that will free mainw->frame_layer.
-              lives_freep((void **)&framecount);
-              lives_freep((void **)&info_file);
-              return;
+
+              if (mainw->internal_messaging) {
+                // this happens if we are calling from multitrack, or apply rte.  We get our mainw->frame_layer and exit.
+                // DO NOT goto lfi_done, as that will free mainw->frame_layer.
+                lives_freep((void **)&framecount);
+                lives_freep((void **)&info_file);
+                return;
+              }
             }
           } else {
             //g_print("pull_frame @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
@@ -8317,7 +8308,7 @@ mainw->track_decoders[i] = clone_decoder(nclip);
             }
             mainw->frame_layer = on_rte_apply(mainw->frame_layer, lb_width, lb_height, (weed_timecode_t)mainw->currticks);
 	// *INDENT-OFF*
-      }}
+	  }}
     // *INDENT-ON*
 
         //g_print("rte done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
@@ -8805,7 +8796,7 @@ mainw->track_decoders[i] = clone_decoder(nclip);
     interp = get_interp_value(prefs->pb_quality, TRUE);
     pwidth = opwidth;
     pheight = opheight;
-
+    if (!weed_plant_has_leaf(mainw->frame_layer, WEED_LEAF_GAMMA_TYPE)) break_me("no gamma");
     //g_print("res start @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     if ((mainw->multitrack && prefs->letterbox_mt) || (!mainw->multitrack && prefs->letterbox)) {
       /// letterbox internal
@@ -9504,7 +9495,7 @@ mainw->track_decoders[i] = clone_decoder(nclip);
 
         if (prefs->audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-          if (mainw->jackd != NULL) {
+          if (mainw->jackd) {
             if (mainw->jackd->playing_file == new_file ||
                 (IS_VALID_CLIP(mainw->playing_file) && mainw->files[mainw->playing_file]->achans > 0
                  && mainw->jackd->playing_file != mainw->playing_file)) return FALSE;
@@ -9603,9 +9594,8 @@ mainw->track_decoders[i] = clone_decoder(nclip);
                                              / (mainw->files[new_file]->achans * mainw->files[new_file]->asampsize / 8))
                                     / (double)mainw->files[new_file]->arps);
           } else {
-            mainw->rec_aclip = mainw->playing_file;
+            jack_get_rec_avals(mainw->jackd);
             mainw->rec_avel = 0.;
-            mainw->rec_aseek = 0.;
             mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
           }
           /* event = get_last_frame_event(mainw->event_list); */
@@ -9616,7 +9606,7 @@ mainw->track_decoders[i] = clone_decoder(nclip);
 
         if (prefs->audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-          if (mainw->pulsed != NULL) {
+          if (mainw->pulsed) {
             if (mainw->pulsed->playing_file == new_file ||
                 (IS_VALID_CLIP(mainw->playing_file) && mainw->files[mainw->playing_file]->achans > 0
                  && mainw->pulsed->playing_file != mainw->playing_file)) return FALSE;
@@ -9716,10 +9706,9 @@ mainw->track_decoders[i] = clone_decoder(nclip);
                                                / (mainw->files[new_file]->achans * mainw->files[new_file]->asampsize / 8))
                                       / (double)mainw->files[new_file]->arps);
             } else {
-              mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
-              mainw->rec_aclip = mainw->playing_file;
+              pulse_get_rec_avals(mainw->pulsed);
               mainw->rec_avel = 0.;
-              mainw->rec_aseek = 0.;
+              mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
             }
           }
 #endif
@@ -9745,9 +9734,8 @@ mainw->track_decoders[i] = clone_decoder(nclip);
           if (CLIP_HAS_AUDIO(new_file)) {
             nullaudio_get_rec_avals();
           } else {
-            mainw->rec_aclip = mainw->current_file;
+            nullaudio_get_rec_avals();
             mainw->rec_avel = 0.;
-            mainw->rec_aseek = 0.;
           }
         }
 #endif

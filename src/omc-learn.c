@@ -2405,7 +2405,7 @@ void on_devicemap_save_activate(LiVESMenuItem *menuitem, livespointer user_data)
   lives_omc_macro_t omacro;
 
   char *save_file;
-  char *devmapdir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, LIVES_DEVICEMAPS_DIR, NULL);
+  char *devmapdir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, LIVES_DEVICEMAP_DIR, NULL);
 
   int nnodes;
   int retval;
@@ -2511,10 +2511,10 @@ static void omc_node_list_free(LiVESSList *slist) {
 
 void create_devicemap_directory(void) {
   // create devicemap directory in ~/.lives-dir if necessary
-  char *configdir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, NULL);
-  char *devmapdir = lives_build_filename(configdir, LIVES_DEVICEMAPS_DIR, NULL);
+  char *configdir = lives_build_path(prefs->configdir, LIVES_CONFIG_DIR, NULL);
+  char *devmapdir = lives_build_path(configdir, LIVES_DEVICEMAP_DIR, NULL);
   if (!lives_file_test(devmapdir, LIVES_FILE_TEST_IS_DIR)) {
-    char *def_devmapdir = lives_build_filename(prefs->prefix_dir, DATA_DIR, LIVES_DEVICEMAPS_DIR, NULL);
+    char *def_devmapdir = lives_build_path(prefs->prefix_dir, DATA_DIR, LIVES_DEVICEMAP_DIR, NULL);
     if (lives_file_test(def_devmapdir, LIVES_FILE_TEST_IS_DIR)) {
       lives_mkdir_with_parents(configdir, capable->umask);
       lives_cp_recursive(def_devmapdir, configdir);
@@ -2565,7 +2565,7 @@ void on_devicemap_load_activate(LiVESMenuItem *menuitem, livespointer user_data)
   char *tmp;
 #endif
 
-  char *devmapdir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, LIVES_DEVICEMAPS_DIR, NULL);
+  char *devmapdir = lives_build_path(prefs->configdir, LIVES_CONFIG_DIR, LIVES_DEVICEMAP_DIR, NULL);
 
   if (user_data == NULL) load_file = choose_file(devmapdir, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_OPEN, NULL, NULL);
   else load_file = lives_strdup((char *)user_data);

@@ -2866,10 +2866,12 @@ void on_prefDomainChanged(LiVESTreeSelection *widget, livespointer xprefsw) {
       default:
         lives_widget_show_all(prefsw->scrollw_right_gui);
         prefsw->right_shown = prefsw->scrollw_right_gui;
-        if (nmons <= 1) {
-          lives_widget_hide(prefsw->forcesmon_hbox);
+        if (nmons > 1) {
+          lives_widget_set_no_show_all(prefsw->forcesmon_hbox, FALSE);
+          lives_widget_show(prefsw->forcesmon_hbox);
 #if !LIVES_HAS_GRID_WIDGET
-          lives_widget_hide(lives_widget_get_parent(prefsw->ce_thumbs));
+          lives_widget_set_no_show_all(prefsw->ce_thumbs, FALSE);
+          lives_widget_show(prefsw->ce_thumbs);
 #endif
         }
         prefs_current_page = LIST_ENTRY_GUI;
@@ -3044,6 +3046,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   LiVESList *encoders = NULL;
   LiVESList *vid_playback_plugins = NULL;
   LiVESList *textsizes_list;
+  LiVESList *rmodelist = NULL;
+  LiVESList *radjlist = NULL;
 
   lives_colRGBA64_t rgba;
 
@@ -3277,6 +3281,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_free(tmp);
   lives_free(tmp2);
 
+  lives_widget_set_no_show_all(prefsw->forcesmon, TRUE);
+
   if (nmons <= 1) {
     lives_widget_set_sensitive(prefsw->spinbutton_gmoni, FALSE);
     lives_widget_set_sensitive(prefsw->spinbutton_pmoni, FALSE);
@@ -3289,6 +3295,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   prefsw->ce_thumbs = lives_standard_check_button_new(_("Show clip thumbnails during playback"), prefs->ce_thumb_mode,
                       LIVES_BOX(hbox), NULL);
+  lives_widget_set_no_show_all(prefsw->ce_thumbs, TRUE);
 
   lives_widget_set_sensitive(prefsw->ce_thumbs, prefs->play_monitor != prefs->gui_monitor &&
                              prefs->play_monitor != 0 && !prefs->force_single_monitor &&
@@ -3610,8 +3617,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_container_add(LIVES_CONTAINER(frame), vbox);
   lives_container_set_border_width(LIVES_CONTAINER(vbox), widget_opts.border_width);
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  layout = lives_layout_new(LIVES_BOX(vbox));
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   prefsw->pbq_adaptive =
     lives_standard_check_button_new(
@@ -3632,6 +3639,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   // TRANSLATORS: video quality, max len 50
   prefsw->pbq_list = lives_list_append(prefsw->pbq_list, (_("High - can improve quality on very fast machines")));
 
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
   //widget_opts.expand = LIVES_EXPAND_EXTRA;
   prefsw->pbq_combo = lives_standard_combo_new((tmp = (_("Preview _quality"))), prefsw->pbq_list, LIVES_BOX(hbox),
                       (tmp2 = (_("The preview quality for video playback - affects resizing"))));
@@ -3648,34 +3657,35 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
     lives_combo_set_active_index(LIVES_COMBO(prefsw->pbq_combo), 1);
   }
 
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
   prefsw->checkbutton_show_stats = lives_standard_check_button_new(_("_Show FPS statistics"),
                                    prefs->show_player_stats,
-                                   LIVES_BOX(vbox), NULL);
+                                   LIVES_BOX(hbox), NULL);
 
   add_hsep_to_box(LIVES_BOX(vbox));
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  layout = lives_layout_new(LIVES_BOX(vbox));
 
-  label = lives_standard_label_new(_("Letterbox by default:"));
-  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Use letterboxing by default:"), TRUE);
 
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_lb = lives_standard_check_button_new(_("In Clip Edit Mode"),
                            prefs->letterbox, LIVES_BOX(hbox), NULL);
 
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_lbmt = lives_standard_check_button_new(_("In Multitrack Mode"),
                              prefs->letterbox_mt, LIVES_BOX(hbox), NULL);
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_layout_add_row(LIVES_LAYOUT(layout));
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Monitor gamma setting:"), TRUE);
 
-  label = lives_standard_label_new(_("Monitor gamma setting:"));
-  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
-
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_screengamma = lives_standard_check_button_new(_("Apply screen gamma"),
                                     prefs->use_screen_gamma, LIVES_BOX(hbox), NULL);
 
-  prefsw->spinbutton_gamma = lives_standard_spin_button_new(_("Inverse power law"),
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  prefsw->spinbutton_gamma = lives_standard_spin_button_new(_("Screen gamma value"),
                              prefs->screen_gamma, 1.2, 3.0, .01, .1, 2,
                              LIVES_BOX(hbox), NULL);
 
@@ -3683,17 +3693,16 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   add_hsep_to_box(LIVES_BOX(vbox));
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  layout = lives_layout_new(LIVES_BOX(vbox));
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   vid_playback_plugins = get_plugin_list(PLUGIN_VID_PLAYBACK, TRUE, NULL, "-"DLL_NAME);
   vid_playback_plugins = lives_list_prepend(vid_playback_plugins,
                          lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]));
 
-  widget_opts.expand = LIVES_EXPAND_EXTRA;
   pp_combo = lives_standard_combo_new(_("_Plugin"), vid_playback_plugins, LIVES_BOX(hbox), NULL);
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   advbutton = lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES, _("_Advanced"),
               DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT,
               LIVES_BOX(hbox), TRUE, NULL);
@@ -3713,11 +3722,11 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_signal_connect_after(LIVES_WIDGET_OBJECT(pp_combo), LIVES_WIDGET_CHANGED_SIGNAL,
                              LIVES_GUI_CALLBACK(after_vpp_changed), (livespointer) advbutton);
 
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
   prefsw->checkbutton_stream_audio =
-    lives_standard_check_button_new((tmp = (_("Stream audio"))),
-                                    prefs->stream_audio_out, LIVES_BOX(vbox),
-                                    (tmp2 = lives_strdup
-                                        (_("Stream audio to playback plugin"))));
+    lives_standard_check_button_new((tmp = (_("Stream audio"))), prefs->stream_audio_out, LIVES_BOX(hbox),
+                                    (tmp2 = _("Stream audio to playback plugin")));
   lives_free(tmp);
   lives_free(tmp2);
 
@@ -3726,9 +3735,11 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_stream_audio), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(stream_audio_toggled), NULL);
 
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
   prefsw->checkbutton_rec_after_pb =
     lives_standard_check_button_new((tmp = (_("Record player output"))),
-                                    (prefs->rec_opts & REC_AFTER_PB), LIVES_BOX(vbox),
+                                    (prefs->rec_opts & REC_AFTER_PB), LIVES_BOX(hbox),
                                     (tmp2 = lives_strdup
                                         (_("Record output from player instead of input to player"))));
   lives_free(tmp);
@@ -3766,17 +3777,17 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                                     mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]));
   }
 
-  widget_opts.expand = LIVES_EXPAND_EXTRA;
-  prefsw->audp_combo = lives_standard_combo_new(_("_Player"), audp, LIVES_BOX(vbox), NULL);
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  layout = lives_layout_new(LIVES_BOX(vbox));
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  prefsw->audp_combo = lives_standard_combo_new(_("_Player"), audp, LIVES_BOX(hbox), NULL);
 
   has_ap_rec = FALSE;
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_layout_add_row(LIVES_LAYOUT(layout));
 
-  prefsw->jack_int_label = lives_standard_label_new(_("(See also the Jack Integration tab for jack startup options)"));
-  lives_box_pack_start(LIVES_BOX(hbox), prefsw->jack_int_label, FALSE, FALSE, widget_opts.packing_width);
+  prefsw->jack_int_label =
+    lives_layout_add_label(LIVES_LAYOUT(layout), _("(See also the Jack Integration tab for jack startup options)"), TRUE);
   lives_widget_set_no_show_all(prefsw->jack_int_label, TRUE);
 
   prefsw->audp_name = NULL;
@@ -3816,8 +3827,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   //---
 
 #ifdef HAVE_PULSE_AUDIO
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   prefsw->checkbutton_parestart = lives_standard_check_button_new((tmp = (_("Restart pulseaudio on LiVES startup"))),
                                   prefs->pa_restart, LIVES_BOX(hbox),
@@ -3827,8 +3837,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_free(tmp2);
   ACTIVE(checkbutton_parestart, TOGGLED);
 
-  add_fill_to_box(LIVES_BOX(hbox));
-
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   prefsw->audio_command_entry = lives_standard_entry_new(_("Pulseaudio restart command"),
                                 prefs->pa_start_opts, SHORT_ENTRY_WIDTH, PATH_MAX * 2,
                                 LIVES_BOX(hbox), NULL);
@@ -3836,13 +3845,12 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_parestart), prefsw->audio_command_entry, FALSE);
 #endif
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   prefsw->checkbutton_afollow = lives_standard_check_button_new(_("Audio follows video _rate/direction"),
                                 (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) ? TRUE : FALSE, LIVES_BOX(hbox), NULL);
 
-  add_fill_to_box(LIVES_BOX(hbox));
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   prefsw->checkbutton_aclips = lives_standard_check_button_new(_("Audio follows _clip switches"),
                                (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) ? TRUE : FALSE, LIVES_BOX(hbox), NULL);
@@ -3970,48 +3978,51 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_recording));
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE,
-                       widget_opts.packing_height * 4);
+  layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_recording));
 
-  label = lives_standard_label_new(_("Pause recording if:"));
-  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Pause recording if:"), TRUE);
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE,
-                       widget_opts.packing_height);
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
-  prefsw->spinbutton_rec_gb = lives_standard_spin_button_new(_(" - free disk space falls below"),
-                              prefs->rec_stop_gb, 0., 1024., 1., 10., 0,
-                              LIVES_BOX(hbox), NULL);
+  lives_standard_check_button_new(_("Free disk space falls below"),
+                                  TRUE, LIVES_BOX(hbox), NULL);
+
+  widget_opts.swap_label = TRUE;
 
   // TRANSLATORS: gigabytes
-  label = lives_standard_label_new(_("GB"));
-  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+  prefsw->spinbutton_rec_gb = lives_standard_spin_button_new(_("GB"), prefs->rec_stop_gb, 0., 1024., 1., 10., 0,
+                              LIVES_BOX(hbox), NULL);
+  widget_opts.swap_label = FALSE;
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE,
-                       widget_opts.packing_height);
-  lives_standard_check_button_new(_(" or more than 90% of quota is used up"), TRUE,
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  lives_standard_check_button_new(_("More than"), TRUE, LIVES_BOX(hbox), NULL);
+
+  //hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  widget_opts.swap_label = TRUE;
+  lives_standard_spin_button_new(_("% of quota is used"), 90., 0., 100., 1., 5., 0,
+                                 LIVES_BOX(hbox), NULL);
+  widget_opts.swap_label = FALSE;
+
+  //lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  lives_standard_check_button_new(_("Disk space warning level is passed"), TRUE,
                                   LIVES_BOX(hbox), NULL);
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE,
-                       widget_opts.packing_height);
-  lives_standard_check_button_new(_(" or disk space warning level is readhed"), TRUE,
-                                  LIVES_BOX(hbox), NULL);
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Recording is always paused if the disk space critical level is reached"),
+                         FALSE);
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_recording));
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE,
-                       widget_opts.packing_height * 4);
+                       widget_opts.packing_height);
 
   label = lives_standard_label_new(_("External Audio Source"));
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height);
   prefsw->spinbutton_ext_aud_thresh = lives_standard_spin_button_new(
                                         _("Delay recording playback start until external audio volume reaches "),
                                         prefs->ahold_threshold * 100., 0., 100., 1., 10., 0,
@@ -4020,6 +4031,90 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   label = lives_standard_label_new("%");
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
   add_fill_to_box(LIVES_BOX(hbox));
+
+  // Rendering options
+
+  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_recording));
+
+  layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_recording));
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Rendering Options (for Recording)"), FALSE);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  prefsw->rr_crash = lives_standard_check_button_new(_("Enable Crash Recovery for recordings"), prefs->rr_crash,
+                     LIVES_BOX(hbox),
+                     (tmp = H_("If LiVES crashes or ctrl-c is pressed during "
+                               "recording or when rendering a recording,"
+                               "the recorded material will be retained and reloaded "
+                               "the next time LiVES is restarted.\n\n")));
+  ACTIVE(rr_crash, TOGGLED);
+
+  if (!prefs->crash_recovery)
+    show_warn_image(prefsw->rr_crash, _("Crash recovery also needs to be enabled for this feature to function."));
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  widget_opts.use_markup = TRUE;
+  prefsw->rr_super = lives_standard_check_button_new(_("Enable <b><u>SuperFluid</u></b> rendering:"),
+                     prefs->rr_super, LIVES_BOX(hbox),
+                     H_("Enables various pre-processing stages so that the resulting rendering\n"
+                        "appears smoother and with fewer audio glitches"));
+  widget_opts.use_markup = FALSE;
+
+  ACTIVE(rr_super, TOGGLED);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  rmodelist = lives_list_append(rmodelist, _("Prioritize Audio rate"));
+  rmodelist = lives_list_append(rmodelist, _("Prioritize Frame rate"));
+  prefsw->rr_combo = lives_standard_combo_new(_("Render mode:"), rmodelist, LIVES_BOX(hbox),
+                     H_("In 'Prioritize Audio rate' mode, frame timings will be adjusted slightly "
+                        "to maintain the correct audio rate\n"
+                        "In 'Constant Frame Rate' mode, the audio rate will be adjusted slightly "
+                        "so that frames are shown at the exact recorded time\n"));
+  lives_list_free_all(&rmodelist);
+  lives_combo_set_active_index(LIVES_COMBO(prefsw->rr_combo), prefs->rr_qmode);
+  ACTIVE(rr_combo, CHANGED);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  prefsw->rr_pre_smooth = lives_standard_check_button_new(_("Enable pre-quantisation frame smoothing"), prefs->rr_pre_smooth,
+                          LIVES_BOX(hbox), NULL);
+  lives_widget_set_margin_left(widget_opts.last_container, widget_opts.packing_width * 4);
+  ACTIVE(rr_pre_smooth, TOGGLED);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  prefsw->rr_qsmooth = lives_standard_check_button_new(_("Enable frame smoothing during quantisation"), prefs->rr_qsmooth,
+                       LIVES_BOX(hbox), NULL);
+  lives_widget_set_margin_left(widget_opts.last_container, widget_opts.packing_width * 4);
+  ACTIVE(rr_qsmooth, TOGGLED);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  radjlist = lives_list_append(radjlist, _("Apply effects state at adjusted time"));
+  radjlist = lives_list_append(radjlist, _("Apply effects state at original time"));
+  prefsw->rr_scombo = lives_standard_combo_new(_("When re-aligning frames"), radjlist, LIVES_BOX(hbox), NULL);
+  lives_list_free_all(&radjlist);
+  lives_combo_set_active_index(LIVES_COMBO(prefsw->rr_scombo), prefs->rr_fstate);
+  ACTIVE(rr_scombo, CHANGED);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  prefsw->rr_amicro = lives_standard_check_button_new(_("Enable audio micro-adjustments during quantisation"), prefs->rr_amicro,
+                      LIVES_BOX(hbox), NULL);
+  lives_widget_set_margin_left(widget_opts.last_container, widget_opts.packing_width * 4);
+  ACTIVE(rr_amicro, TOGGLED);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  prefsw->rr_ramicro = lives_standard_check_button_new(_("Ignore tiny audio jumps during rendering"), prefs->rr_ramicro,
+                       LIVES_BOX(hbox), NULL);
+  lives_widget_set_margin_left(widget_opts.last_container, widget_opts.packing_width * 4);
+  ACTIVE(rr_ramicro, TOGGLED);
+
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->rr_super), prefsw->rr_combo, FALSE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->rr_super), prefsw->rr_scombo, FALSE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->rr_super), prefsw->rr_combo, FALSE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->rr_super), prefsw->rr_pre_smooth, FALSE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->rr_super), prefsw->rr_qsmooth, FALSE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->rr_super), prefsw->rr_amicro, FALSE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->rr_super), prefsw->rr_ramicro, FALSE);
 
   pixbuf_recording = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_RECORD, LIVES_ICON_SIZE_CUSTOM, -1, -1);
 
@@ -5273,8 +5368,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
 #ifdef ALSA_MIDI
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->alsa_midi), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_alsa_midi_toggled),
-                       NULL);
+                       LIVES_GUI_CALLBACK(on_alsa_midi_toggled), NULL);
 
   on_alsa_midi_toggled(LIVES_TOGGLE_BUTTON(prefsw->alsa_midi), prefsw);
 #endif
@@ -5308,8 +5402,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
     widget_opts.expand |= LIVES_EXPAND_EXTRA_WIDTH;
     // Preferences 'Revert' button
     prefsw->revertbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(prefsw->prefs_dialog),
-                           LIVES_STOCK_REVERT_TO_SAVED, NULL,
-                           LIVES_RESPONSE_CANCEL);
+                           LIVES_STOCK_REVERT_TO_SAVED, NULL, LIVES_RESPONSE_CANCEL);
     lives_widget_show(prefsw->revertbutton);
 
     // Preferences 'Apply' button
@@ -5367,6 +5460,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   ACTIVE(rb_startup_mt, TOGGLED);
   ACTIVE(rb_startup_ce, TOGGLED);
 
+  ACTIVE(spinbutton_warn_ds, VALUE_CHANGED);
+  ACTIVE(spinbutton_crit_ds, VALUE_CHANGED);
+
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_warn_ds), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                             LIVES_GUI_CALLBACK(spinbutton_ds_value_changed), LIVES_INT_TO_POINTER(FALSE));
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_crit_ds), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -5390,29 +5486,20 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                             LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
 
   ACTIVE(mt_enter_prompt, TOGGLED);
+  ACTIVE(checkbutton_render_prompt, TOGGLED);
 
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_render_prompt), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                            NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_mt_def_width), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                            NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_mt_def_height), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                            NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_mt_def_fps), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                            NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->backaudio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->pertrack_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  ACTIVE(spinbutton_mt_def_width, VALUE_CHANGED);
+  ACTIVE(spinbutton_mt_def_height, VALUE_CHANGED);
+  ACTIVE(spinbutton_mt_def_fps, VALUE_CHANGED);
+
+  ACTIVE(backaudio_checkbutton, TOGGLED);
+  ACTIVE(pertrack_checkbutton, TOGGLED);
+
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_mt_undo_buf), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                             LIVES_GUI_CALLBACK(apply_button_set_enabled),
                             NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_mt_exit_render), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                            NULL);
+  ACTIVE(checkbutton_mt_exit_render, TOGGLED);
+
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_mt_ab_time), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                             LIVES_GUI_CALLBACK(apply_button_set_enabled),
                             NULL);
@@ -5437,9 +5524,6 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                             LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   ACTIVE(jpeg, TOGGLED);
 
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(png), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-
   ACTIVE(checkbutton_instant_open, TOGGLED);
   ACTIVE(checkbutton_auto_deint, TOGGLED);
   ACTIVE(checkbutton_concat_images, TOGGLED);
@@ -5449,55 +5533,39 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   ACTIVE(spinbutton_gamma, VALUE_CHANGED);
   ACTIVE(pbq_adaptive, TOGGLED);
 
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->pbq_combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_show_stats), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  ACTIVE(pbq_combo, CHANGED);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(pp_combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                            NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->audp_combo), LIVES_WIDGET_CHANGED_SIGNAL,
                             LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  /* lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->audio_command_entry), LIVES_WIDGET_CHANGED_SIGNAL, */
-  /*                      LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL); */
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_afollow), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_aclips), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->rdesk_audio), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                            NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->rframes), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->rfps), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                            NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->reffects), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->rclips), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->raudio), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->pa_gens), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->rextaudio), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  ACTIVE(audp_combo, CHANGED);
+
+  ACTIVE(checkbutton_show_stats, TOGGLED);
+
+  ACTIVE(checkbutton_afollow, TOGGLED);
+  ACTIVE(checkbutton_aclips, TOGGLED);
+
+  ACTIVE(rdesk_audio, TOGGLED);
+
+  ACTIVE(rframes, TOGGLED);
+  ACTIVE(rfps, TOGGLED);
+  ACTIVE(reffects, TOGGLED);
+  ACTIVE(rclips, TOGGLED);
+  ACTIVE(raudio, TOGGLED);
+  ACTIVE(rextaudio, TOGGLED);
+
+  ACTIVE(pa_gens, TOGGLED);
+
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_ext_aud_thresh), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                             LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_rec_gb), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                             LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->encoder_combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                            NULL);
-  if (capable->has_encoder_plugins) {
-    lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->ofmt_combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                              LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
 
-    if (prefsw->acodec_combo)
-      lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->acodec_combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                                LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                                NULL);
+  ACTIVE(encoder_combo, CHANGED);
+
+  if (capable->has_encoder_plugins) {
+    ACTIVE(ofmt_combo, CHANGED);
+    ACTIVE(acodec_combo, CHANGED);
   }
+
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_antialias), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_load_rfx), LIVES_WIDGET_TOGGLED_SIGNAL,
@@ -5505,13 +5573,11 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_apply_gamma), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_rte_keys), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                            NULL);
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_threads), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_nfx_threads), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                            NULL);
+                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
 
   ACTIVE(checkbutton_warn_fps, TOGGLED);
   ACTIVE(checkbutton_warn_fsize, TOGGLED);
@@ -5562,9 +5628,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_def_fps), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                             LIVES_GUI_CALLBACK(apply_button_set_enabled),
                             NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->theme_combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                            LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                            NULL);
+  ACTIVE(theme_combo, CHANGED);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_bwidth), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                             LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
 #ifdef ENABLE_OSC
@@ -5622,16 +5686,14 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   if (capable->has_encoder_plugins) {
     prefsw->encoder_name_fn = lives_signal_connect(LIVES_GUI_OBJECT(LIVES_COMBO(prefsw->encoder_combo)),
-                              LIVES_WIDGET_CHANGED_SIGNAL,
-                              LIVES_GUI_CALLBACK(on_encoder_entry_changed), NULL);
+                              LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(on_encoder_entry_changed), NULL);
 
     prefsw->encoder_ofmt_fn = lives_signal_connect(LIVES_GUI_OBJECT(LIVES_COMBO(prefsw->ofmt_combo)),
-                              LIVES_WIDGET_CHANGED_SIGNAL,
-                              LIVES_GUI_CALLBACK(on_encoder_ofmt_changed), NULL);
+                              LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(on_encoder_ofmt_changed), NULL);
   }
 
-  prefsw->audp_entry_func = lives_signal_connect(LIVES_GUI_OBJECT(LIVES_COMBO(prefsw->audp_combo)), LIVES_WIDGET_CHANGED_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_audp_entry_changed), NULL);
+  prefsw->audp_entry_func = lives_signal_connect(LIVES_GUI_OBJECT(LIVES_COMBO(prefsw->audp_combo)),
+                            LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(on_audp_entry_changed), NULL);
 
 #ifdef ENABLE_OSC
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->enable_OSC), LIVES_WIDGET_TOGGLED_SIGNAL,

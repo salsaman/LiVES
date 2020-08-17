@@ -235,21 +235,57 @@ frames_t get_frame_event_frame(weed_plant_t *event, int layer) {
 
 weed_event_t *lives_event_list_new(weed_event_t *elist, const char *cdate) {
   weed_event_t *evelist;
+  weed_error_t error;
+  char *xdate = (char *)cdate;
+  char *cversion;
+
   if (elist) evelist = elist;
-  else evelist = weed_plant_new(WEED_PLANT_EVENT_LIST);
+  else {
+    evelist = weed_plant_new(WEED_PLANT_EVENT_LIST);
+    if (!evelist) return NULL;
+    error = weed_set_int_value(evelist, WEED_LEAF_WEED_EVENT_API_VERSION, WEED_EVENT_API_VERSION);
+    if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
+    error = weed_set_voidptr_value(evelist, WEED_LEAF_FIRST, NULL);
+    if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
+    error = weed_set_voidptr_value(evelist, WEED_LEAF_LAST, NULL);
+    if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
+  }
 
   if (!weed_plant_has_leaf(evelist, WEED_LEAF_WEED_API_VERSION))
-    weed_set_int_value(evelist, WEED_LEAF_WEED_API_VERSION, WEED_API_VERSION);
+    error = weed_set_int_value(evelist, WEED_LEAF_WEED_API_VERSION, WEED_API_VERSION);
+  if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
 
   if (!weed_plant_has_leaf(evelist, WEED_LEAF_FILTER_API_VERSION))
-    weed_set_int_value(evelist, WEED_LEAF_FILTER_API_VERSION, WEED_FILTER_API_VERSION);
+    error = weed_set_int_value(evelist, WEED_LEAF_FILTER_API_VERSION, WEED_FILTER_API_VERSION);
+  if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
+
+  if (!xdate) {
+    struct timeval otv;
+    gettimeofday(&otv, NULL);
+    xdate = lives_datetime(otv.tv_sec);
+  }
+  cversion = lives_strdup_printf("LiVES version %s", LiVES_VERSION);
 
   if (!weed_plant_has_leaf(evelist, WEED_LEAF_LIVES_CREATED_VERSION)) {
-    char *cversion = lives_strdup_printf("LiVES version %s", LiVES_VERSION);
-    weed_set_string_value(evelist, WEED_LEAF_LIVES_CREATED_VERSION, cversion);
-    weed_set_string_value(evelist, WEED_LEAF_CREATED_DATE, cdate);
-    lives_free(cversion);
+    error = weed_set_string_value(evelist, WEED_LEAF_LIVES_CREATED_VERSION, cversion);
+    if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
   }
+  if (!weed_plant_has_leaf(evelist, WEED_LEAF_CREATED_DATE)) {
+    error = weed_set_string_value(evelist, WEED_LEAF_CREATED_DATE, xdate);
+    if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
+  }
+
+  if (!weed_plant_has_leaf(evelist, WEED_LEAF_LIVES_EDITED_VERSION)) {
+    error = weed_set_string_value(evelist, WEED_LEAF_LIVES_EDITED_VERSION, cversion);
+    if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
+  }
+  if (!weed_plant_has_leaf(evelist, WEED_LEAF_EDITED_DATE)) {
+    error = weed_set_string_value(evelist, WEED_LEAF_EDITED_DATE, xdate);
+    if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
+  }
+
+  if (xdate != cdate) lives_free(xdate);
+  lives_free(cversion);
   return evelist;
 }
 
@@ -574,22 +610,15 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_timecode_t out_
 
   register int i;
 
-  if (in_event == NULL) return event_list;
+  if (!in_event) return event_list;
 
-  if (event_list == NULL) {
-    event_list = weed_plant_new(WEED_PLANT_EVENT_LIST);
-    if (event_list == NULL) return NULL;
-    error = weed_set_int_value(event_list, WEED_LEAF_WEED_EVENT_API_VERSION, WEED_EVENT_API_VERSION);
-    if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
-    error = weed_set_voidptr_value(event_list, WEED_LEAF_FIRST, NULL);
-    if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
-    error = weed_set_voidptr_value(event_list, WEED_LEAF_LAST, NULL);
-    if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
-    //weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
+  if (!event_list) {
+    event_list = lives_event_list_new(NULL, NULL);
+    if (!event_list) return NULL;
     event_before = NULL;
   } else {
     event_before = get_last_event(event_list);
-    while (event_before != NULL) {
+    while (event_before) {
       if (get_event_timecode(event_before) < out_tc || (get_event_timecode(event_before) == out_tc
           && (!WEED_EVENT_IS_FRAME(event_before) ||
               WEED_EVENT_IS_FILTER_DEINIT(in_event)))) break;
@@ -720,14 +749,16 @@ weed_plant_t *get_frame_event_at(weed_plant_t *event_list, weed_timecode_t tc, w
   weed_plant_t *event, *next_event;
   weed_timecode_t xtc, next_tc = 0;
 
-  if (event_list == NULL) return NULL;
-  if (shortcut != NULL) event = shortcut;
+  if (!event_list) return NULL;
+  if (shortcut) event = shortcut;
   else event = get_first_frame_event(event_list);
-  while (event != NULL) {
+  while (event) {
     next_event = get_next_event(event);
-    if (next_event != NULL) next_tc = get_event_timecode(next_event);
-    if (((tc == (xtc = get_event_timecode(event))) || ((next_tc > tc || next_event == NULL) && !exact)) &&
-        WEED_EVENT_IS_FRAME(event)) return event;
+    if (next_event) next_tc = get_event_timecode(next_event);
+    if (((tc == (xtc = get_event_timecode(event))) || ((next_tc > tc || !next_event) && !exact)) &&
+        WEED_EVENT_IS_FRAME(event)) {
+      return event;
+    }
     if (xtc > tc) return NULL;
     event = next_event;
   }
@@ -739,7 +770,7 @@ boolean filter_map_after_frame(weed_plant_t *fmap) {
   // return TRUE if filter_map follows frame at same timecode
   weed_plant_t *frame = get_prev_frame_event(fmap);
 
-  if (frame != NULL && get_event_timecode(frame) == get_event_timecode(fmap)) return TRUE;
+  if (frame && get_event_timecode(frame) == get_event_timecode(fmap)) return TRUE;
   return FALSE;
 }
 
@@ -1089,33 +1120,33 @@ weed_plant_t *insert_frame_event_at(weed_plant_t *event_list, weed_timecode_t tc
   weed_plant_t *new_event_list, *xevent_list;
   weed_timecode_t xtc;
   weed_error_t error;
-  if (event_list == NULL || get_first_frame_event(event_list) == NULL) {
+  if (!event_list || !get_first_frame_event(event_list)) {
     // no existing event list, or no frames,  append
     event_list = append_frame_event(event_list, tc, numframes, clips, frames);
-    if (event_list == NULL) return NULL; // memory error
-    if (shortcut != NULL) *shortcut = get_last_event(event_list);
+    if (!event_list) return NULL; // memory error
+    if (shortcut) *shortcut = get_last_event(event_list);
     return event_list;
   }
 
   // skip the next part if we know we have to add at end
   if (tc <= get_event_timecode(get_last_event(event_list))) {
-    if (shortcut != NULL && *shortcut != NULL) {
+    if (shortcut && *shortcut) {
       event = *shortcut;
     } else event = get_first_event(event_list);
 
     if (get_event_timecode(event) > tc) {
       // step backwards until we get to a frame before where we want to add
-      while (event != NULL && get_event_timecode(event) > tc) event = get_prev_frame_event(event);
+      while (event && get_event_timecode(event) > tc) event = get_prev_frame_event(event);
       // event can come out NULL (add before first frame event), in which case we fall through
     } else {
-      while (event != NULL && get_event_timecode(event) < tc) event = get_next_frame_event(event);
+      while (event && get_event_timecode(event) < tc) event = get_next_frame_event(event);
 
       // we reached the end, so we will add after last frame event
-      if (event == NULL) event = get_last_frame_event(event_list);
+      if (!event) event = get_last_frame_event(event_list);
     }
 
-    while (event != NULL && (((xtc = get_event_timecode(event)) < tc) || (xtc == tc && (!WEED_EVENT_IS_FILTER_DEINIT(event))))) {
-      if (shortcut != NULL) *shortcut = event;
+    while (event && (((xtc = get_event_timecode(event)) < tc) || (xtc == tc && (!WEED_EVENT_IS_FILTER_DEINIT(event))))) {
+      if (shortcut) *shortcut = event;
       if (xtc == tc && WEED_EVENT_IS_FRAME(event)) {
         error = weed_set_int_array(event, WEED_LEAF_CLIPS, numframes, clips);
         if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
@@ -1127,32 +1158,32 @@ weed_plant_t *insert_frame_event_at(weed_plant_t *event_list, weed_timecode_t tc
     }
 
     // we passed all events in event_list; there was one or more at tc, but none were deinits or frames
-    if (event == NULL) {
+    if (!event) {
       event = get_last_event(event_list);
       // event is after last event, append it
-      if ((xevent_list = append_frame_event(event_list, tc, numframes, clips, frames)) == NULL) return NULL;
+      if (!(xevent_list = append_frame_event(event_list, tc, numframes, clips, frames))) return NULL;
       event_list = xevent_list;
-      if (shortcut != NULL) *shortcut = get_last_event(event_list);
+      if (shortcut) *shortcut = get_last_event(event_list);
       return event_list;
     }
   } else {
     // event is after last event, append it
-    if ((xevent_list = append_frame_event(event_list, tc, numframes, clips, frames)) == NULL) return NULL;
+    if (!(xevent_list = append_frame_event(event_list, tc, numframes, clips, frames))) return NULL;
     event_list = xevent_list;
-    if (shortcut != NULL) *shortcut = get_last_event(event_list);
+    if (shortcut) *shortcut = get_last_event(event_list);
     return event_list;
   }
 
   // add frame before "event"
 
-  if ((new_event_list = append_frame_event(NULL, tc, numframes, clips, frames)) == NULL) return NULL;
+  if (!(new_event_list = append_frame_event(NULL, tc, numframes, clips, frames))) return NULL;
   // new_event_list is now an event_list with one frame event. We will steal its event and prepend it !
 
   new_event = get_first_event(new_event_list);
 
   prev = get_prev_event(event);
 
-  if (prev != NULL) {
+  if (prev) {
     error = weed_set_voidptr_value(prev, WEED_LEAF_NEXT, new_event);
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
   }
@@ -1317,12 +1348,9 @@ void remove_audio_for_track(weed_plant_t *event, int track) {
 weed_plant_t *append_marker_event(weed_plant_t *event_list, weed_timecode_t tc, int marker_type) {
   weed_plant_t *event, *prev;
 
-  if (event_list == NULL) {
-    event_list = weed_plant_new(WEED_PLANT_EVENT_LIST);
-    weed_set_int_value(event_list, WEED_LEAF_WEED_EVENT_API_VERSION, WEED_EVENT_API_VERSION);
-    weed_set_voidptr_value(event_list, WEED_LEAF_FIRST, NULL);
-    weed_set_voidptr_value(event_list, WEED_LEAF_LAST, NULL);
-    //weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
+  if (!event_list) {
+    event_list = lives_event_list_new(NULL, NULL);
+    if (!event_list) return NULL;
   }
 
   event = weed_plant_new(WEED_PLANT_EVENT);
@@ -2547,22 +2575,15 @@ weed_plant_t *append_frame_event(weed_plant_t *event_list, weed_timecode_t tc, i
   // returns NULL on memory error
 
   ///////////// TODO - to func //////////////
-  if (event_list == NULL) {
-    event_list = weed_plant_new(WEED_PLANT_EVENT_LIST);
-    if (event_list == NULL) return NULL;
-    error = weed_set_int_value(event_list, WEED_LEAF_WEED_EVENT_API_VERSION, WEED_EVENT_API_VERSION);
-    if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
-    error = weed_set_voidptr_value(event_list, WEED_LEAF_FIRST, NULL);
-    if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
-    error = weed_set_voidptr_value(event_list, WEED_LEAF_LAST, NULL);
-    if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
+  if (!event_list) {
+    event_list = lives_event_list_new(NULL, NULL);
     //weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
   }
 
   event = create_frame_event(tc, numframes, clips, frames);
-  if (event == NULL) return NULL;
+  if (!event) return NULL;
 
-  if (get_first_event(event_list) == NULL) {
+  if (!get_first_event(event_list)) {
     error = weed_set_voidptr_value(event_list, WEED_LEAF_FIRST, event);
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
     error = weed_set_voidptr_value(event, WEED_LEAF_PREVIOUS, NULL);
@@ -2573,7 +2594,7 @@ weed_plant_t *append_frame_event(weed_plant_t *event_list, weed_timecode_t tc, i
   }
   //weed_add_plant_flags(event, WEED_LEAF_READONLY_PLUGIN);
   prev = get_prev_event(event);
-  if (prev != NULL) {
+  if (prev) {
     error = weed_set_voidptr_value(prev, WEED_LEAF_NEXT, event);
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
   }
@@ -2679,21 +2700,14 @@ weed_plant_t *append_filter_init_event(weed_plant_t *event_list, weed_timecode_t
   int e_in_channels, e_out_channels, e_ins, e_outs;
   int total_in_channels = 0;
   int total_out_channels = 0;
-  int error;
+  weed_error_t error;
   int my_in_tracks = 0;
 
-  register int i;
+  int i;
 
-  if (event_list == NULL) {
-    event_list = weed_plant_new(WEED_PLANT_EVENT_LIST);
-    if (event_list == NULL) return NULL;
-    error = weed_set_int_value(event_list, WEED_LEAF_WEED_EVENT_API_VERSION, WEED_EVENT_API_VERSION);
-    if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
-    error = weed_set_voidptr_value(event_list, WEED_LEAF_FIRST, NULL);
-    if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
-    error = weed_set_voidptr_value(event_list, WEED_LEAF_LAST, NULL);
-    if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
-    //weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
+  if (!event_list) {
+    event_list = lives_event_list_new(NULL, NULL);
+    if (!event_list) return NULL;
   }
 
   event = weed_plant_new(WEED_PLANT_EVENT);
@@ -2831,12 +2845,9 @@ weed_plant_t *append_filter_init_event(weed_plant_t *event_list, weed_timecode_t
 weed_plant_t *append_filter_deinit_event(weed_plant_t *event_list, weed_timecode_t tc, void *init_event, void **pchain) {
   weed_plant_t *event, *prev;
 
-  if (event_list == NULL) {
-    event_list = weed_plant_new(WEED_PLANT_EVENT_LIST);
-    weed_set_int_value(event_list, WEED_LEAF_WEED_EVENT_API_VERSION, WEED_EVENT_API_VERSION);
-    weed_set_voidptr_value(event_list, WEED_LEAF_FIRST, NULL);
-    weed_set_voidptr_value(event_list, WEED_LEAF_LAST, NULL);
-    //weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
+  if (!event_list) {
+    event_list = lives_event_list_new(NULL, NULL);
+    if (!event_list) return NULL;
   }
 
   event = weed_plant_new(WEED_PLANT_EVENT);
@@ -2874,12 +2885,9 @@ weed_plant_t *append_param_change_event(weed_plant_t *event_list, weed_timecode_
   weed_plant_t *last_pchange_event;
   int error;
 
-  if (event_list == NULL) {
-    event_list = weed_plant_new(WEED_PLANT_EVENT_LIST);
-    weed_set_int_value(event_list, WEED_LEAF_WEED_EVENT_API_VERSION, WEED_EVENT_API_VERSION);
-    weed_set_voidptr_value(event_list, WEED_LEAF_FIRST, NULL);
-    weed_set_voidptr_value(event_list, WEED_LEAF_LAST, NULL);
-    //weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
+  if (!event_list) {
+    event_list = lives_event_list_new(NULL, NULL);
+    if (!event_list) return NULL;
   }
 
   event = weed_plant_new(WEED_PLANT_EVENT);
@@ -2925,12 +2933,9 @@ weed_plant_t *append_filter_map_event(weed_plant_t *event_list, weed_timecode_t 
   weed_plant_t *event, *prev;
   int i = 0;
 
-  if (event_list == NULL) {
-    event_list = weed_plant_new(WEED_PLANT_EVENT_LIST);
-    weed_set_int_value(event_list, WEED_LEAF_WEED_EVENT_API_VERSION, WEED_EVENT_API_VERSION);
-    weed_set_voidptr_value(event_list, WEED_LEAF_FIRST, NULL);
-    weed_set_voidptr_value(event_list, WEED_LEAF_LAST, NULL);
-    //weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
+  if (!event_list) {
+    event_list = lives_event_list_new(NULL, NULL);
+    if (!event_list) return NULL;
   }
 
   event = weed_plant_new(WEED_PLANT_EVENT);
@@ -3498,7 +3503,7 @@ filterinit1:
 
 static char *set_proc_label(xprocess * proc, const char *label, boolean copy_old) {
   char *blabel = NULL;
-  if (proc == NULL) return NULL;
+  if (!proc) return NULL;
   if (copy_old) blabel = lives_strdup(lives_label_get_text(LIVES_LABEL(proc->label)));
   lives_label_set_text(LIVES_LABEL(proc->label), label);
   lives_widget_queue_draw(proc->processing);
@@ -4487,7 +4492,7 @@ int count_resampled_events(weed_plant_t *event_list, double fps) {
 
 
 weed_timecode_t event_list_get_end_tc(weed_plant_t *event_list) {
-  if (event_list == NULL || get_last_event(event_list) == NULL) return 0.;
+  if (!event_list  || !get_last_event(event_list)) return 0.;
   return get_event_timecode(get_last_event(event_list));
 }
 
@@ -4863,6 +4868,63 @@ static LiVESResponseType show_rc_dlg(void) {
 }
 
 
+void event_list_add_end_events(weed_event_t *event_list, boolean is_final) {
+  // for realtime recording, add filter deinit events and switch off audio
+  // this occurs either when recording is paused (is_final == FALSE) or when playback ends (is_final == TRUE)
+  if (event_list) {
+    pthread_mutex_t *event_list_mutex = NULL;
+    if (event_list == mainw->event_list) event_list_mutex = &mainw->event_list_mutex;
+
+    if (prefs->rec_opts & REC_EFFECTS) {
+      // add deinit events for all active effects
+      // this will lock the event _list itself
+      add_filter_deinit_events(event_list);
+    }
+
+    if (is_final) {
+      // switch audio off
+#ifdef RT_AUDIO
+      if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)
+          && mainw->agen_key == 0 && !mainw->agen_needs_reinit &&
+          prefs->audio_src == AUDIO_SRC_INT) {
+        if (!mainw->mute) {
+          weed_plant_t *last_frame = get_last_event(event_list);
+          event_list = insert_blank_frame_event_at(event_list, mainw->currticks, &last_frame);
+          if (last_frame) {
+#ifdef ENABLE_JACK
+            if (prefs->audio_player == AUD_PLAYER_JACK) {
+              if (mainw->jackd)
+                jack_get_rec_avals(mainw->pulsed);
+            }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+            if (prefs->audio_player == AUD_PLAYER_PULSE) {
+              if (mainw->pulsed)
+                pulse_get_rec_avals(mainw->pulsed);
+            }
+#endif
+#if 0
+            if (prefs->audio_player == AUD_PLAYER_NONE) {
+              nullaudio_get_rec_avals();
+            }
+#endif
+            insert_audio_event_at(last_frame, -1, mainw->rec_aclip, mainw->rec_aseek, 0.);
+	    // *INDENT-OFF*
+	  }}}
+      // *INDENT-ON*
+#endif
+    } else {
+      // write a RECORD_END marker
+      weed_timecode_t tc;
+      if (event_list_mutex) pthread_mutex_lock(event_list_mutex);
+      tc = get_event_timecode(get_last_event(event_list));
+      event_list = append_marker_event(event_list, tc, EVENT_MARKER_RECORD_END); // mark record end
+      if (event_list_mutex) pthread_mutex_unlock(event_list_mutex);
+    }
+  }
+}
+
+
 boolean deal_with_render_choice(boolean add_deinit) {
   // this is called from saveplay.c after record/playback ends
   // here we deal with the user's wishes as to how to deal with the recorded events
@@ -4880,7 +4942,6 @@ boolean deal_with_render_choice(boolean add_deinit) {
   char *esave_file = NULL, *asave_file = NULL;
 
   boolean new_clip = FALSE;
-  boolean was_paused = mainw->record_paused;
 
   int dh, dw, dar, das, dac, dse;
   int oplay_start;
@@ -4922,12 +4983,10 @@ boolean deal_with_render_choice(boolean add_deinit) {
     return FALSE;
   }
 
-  // add deinit events for any effects that are left on
-  // TODO *** - needs trans_table, only created in event_list_rectify
-  if (add_deinit && !was_paused) mainw->event_list = add_filter_deinit_events(mainw->event_list);
-
   last_rec_start_tc = -1;
-  if (add_deinit) event_list_close_gaps(mainw->event_list);
+
+  // TODO, we should do this every time
+  if (1 || add_deinit) event_list_close_gaps(mainw->event_list);
 
   // need to retain play_start for rendering to same clip
   oplay_start = mainw->play_start;

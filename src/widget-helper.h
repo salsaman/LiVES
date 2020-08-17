@@ -221,6 +221,11 @@ LiVESAlign lives_justify_to_align(LiVESJustification justification);
 
 LiVESScrollDirection lives_get_scroll_direction(LiVESXEventScroll *event);
 
+boolean lives_has_icon(LiVESIconTheme *, const char *stock_id, LiVESIconSize size);
+
+const char *lives_get_stock_icon_alt(int alt_stock_id);
+void widget_helper_set_stock_icon_alts(LiVESIconTheme *);
+
 boolean widget_helper_init(void);
 boolean widget_opts_rescale(double scale);
 
@@ -673,8 +678,6 @@ boolean lives_toggle_tool_button_set_active(LiVESToggleToolButton *, boolean act
 int lives_utf8_strcmpfunc(livesconstpointer, livesconstpointer, livespointer fwd);
 
 LiVESList *add_sorted_list_to_menu(LiVESMenu *, LiVESList *);
-
-boolean lives_has_icon(const char *stock_id, LiVESIconSize size);
 
 LiVESSList *lives_radio_button_get_group(LiVESRadioButton *);
 LiVESSList *lives_radio_menu_item_get_group(LiVESRadioMenuItem *);

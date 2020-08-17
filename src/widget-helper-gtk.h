@@ -1029,6 +1029,11 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_INTERP_FAST   GDK_INTERP_NEAREST
 
 #if GTK_CHECK_VERSION(3, 10, 0)
+#define STOCK_ALTS_MEDIA_PAUSE 0
+#define N_STOCK_ALTS 1
+
+#define GET_STOCK_ALT(stock_name) (lives_get_stock_icon_alt((stock_name)))
+
 #define LIVES_STOCK_YES "gtk-yes"
 #define LIVES_STOCK_NO "gtk-no"
 #define LIVES_STOCK_APPLY "gtk-apply"
@@ -1063,17 +1068,15 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_STOCK_MEDIA_RECORD "media-record"
 #define LIVES_STOCK_LOOP "system-reboot"
 
-#define LIVES_STOCK_MEDIA_PAUSE "media-playback-pause"
-#define LIVES_STOCK_MEDIA_PAUSE2 "media-pause"
-
 #define LIVES_STOCK_PREFERENCES "preferences-system"
 #define LIVES_STOCK_DIALOG_INFO "gtk-dialog-info"
 #define LIVES_STOCK_DIALOG_WARNING "dialog-warning"
 #define LIVES_STOCK_DIALOG_QUESTION "dialog-question"
 #define LIVES_STOCK_MISSING_IMAGE "image-missing"
 
-#define LIVES_STOCK_ALTS(a, b) (lives_has_icon(LIVES_STOCK_##a, b) ? LIVES_STOCK_##a \
-				: LIVES_STOCK_##a##2)
+#define LIVES_STOCK_MEDIA_PAUSE_ALT_1 "media-playback-pause"
+#define LIVES_STOCK_MEDIA_PAUSE_ALT_2 "media-pause"
+#define LIVES_STOCK_MEDIA_PAUSE GET_STOCK_ALT(STOCK_ALTS_MEDIA_PAUSE)
 
 // these are set up in widget_helper_init()
 char LIVES_STOCK_LABEL_CANCEL[32];

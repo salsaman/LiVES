@@ -244,21 +244,6 @@ typedef enum {
   LIVES_DIALOG_ABORT
 } lives_dialog_t;
 
-/// various return conditions from rendering (multitrack or after recording)
-typedef enum {
-  LIVES_RENDER_ERROR_NONE = 0,
-  LIVES_RENDER_READY,
-  LIVES_RENDER_PROCESSING,
-  LIVES_RENDER_EFFECTS_PAUSED,
-  LIVES_RENDER_COMPLETE,
-  LIVES_RENDER_WARNING,
-  LIVES_RENDER_WARNING_READ_FRAME,
-  LIVES_RENDER_ERROR,
-  LIVES_RENDER_ERROR_READ_AUDIO,
-  LIVES_RENDER_ERROR_WRITE_AUDIO,
-  LIVES_RENDER_ERROR_WRITE_FRAME,
-} lives_render_error_t;
-
 #define DVD_AUDIO_CHAN_MIN 128
 #define DVD_AUDIO_CHAN_DEFAULT 128
 #define DVD_AUDIO_CHAN_MAX 159
@@ -751,8 +736,8 @@ typedef struct {
 
   boolean error;
 
-  weed_plant_t *event_list; ///< current event_list, for recording
-  weed_plant_t *stored_event_list; ///< stored mt -> clip editor
+  weed_event_t *event_list; ///< current event_list, for recording
+  weed_event_t *stored_event_list; ///< stored mt -> clip editor
   boolean stored_event_list_changed;
   boolean stored_event_list_auto_changed;
   boolean stored_layout_save_all_vals;

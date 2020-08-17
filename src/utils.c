@@ -852,8 +852,7 @@ static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, o
 off_t lives_lseek_buffered_rdonly(int fd, off_t offset) {
   // seek relative
   lives_file_buffer_t *fbuff;
-  g_print("lseek to %ld\n", offset);
-  if ((fbuff = find_in_file_buffers(fd)) == NULL) {
+  if (!(fbuff = find_in_file_buffers(fd))) {
     LIVES_DEBUG("lives_lseek_buffered_rdonly: no file buffer found");
     return lseek(fd, offset, SEEK_CUR);
   }
@@ -865,12 +864,12 @@ off_t lives_lseek_buffered_rdonly(int fd, off_t offset) {
 off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset) {
   lives_file_buffer_t *fbuff;
 
-  if ((fbuff = find_in_file_buffers(fd)) == NULL) {
+  if (!(fbuff = find_in_file_buffers(fd))) {
     LIVES_DEBUG("lives_lseek_buffered_rdonly_absolute: no file buffer found");
     return lseek(fd, offset, SEEK_SET);
   }
 
-  if (fbuff->ptr == NULL || fbuff->buffer == NULL) {
+  if (!fbuff->ptr || !fbuff->buffer) {
     fbuff->offset = offset;
     return fbuff->offset;
   }

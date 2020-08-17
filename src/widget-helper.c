@@ -1092,7 +1092,6 @@ reloop:
         goto reloop;
       }
 
-      //while (!sigdata && task_list && !lpttorun && mainw->clutch && !mainw->is_exiting && !(sigdata = tasks_running())) {
       while (task_list && !lpttorun && mainw->clutch && !mainw->is_exiting && !(sigdata = tasks_running())) {
         // while any signal handler is running in the bg, we just loop here until either:
         // the task completes, the task wants to run a main loop cycle, or the app exits
@@ -1114,7 +1113,6 @@ reloop:
     return FALSE;
   }
 
-  //if (!mainw->clutch || !sigdata) {
   if (lpttorun || (!mainw->clutch && !sigdata)) {
     // a thread wants to wiggle the widgets...
     if (task_list) sigdata = (lives_sigdata_t *)lives_list_last(task_list)->data;
@@ -2302,51 +2300,22 @@ WIDGET_HELPER_LOCAL_INLINE int get_real_size_from_icon_size(LiVESIconSize size) 
 
 LiVESPixbuf *lives_pixbuf_new_from_stock_at_size(const char *stock_id, LiVESIconSize size, int x, int y) {
   LiVESPixbuf *pixbuf = NULL;
-  if (strncmp(stock_id, "lives-", 6)) {
-    LiVESWidget *image = NULL;
-    if (size == LIVES_ICON_SIZE_CUSTOM) {
-      if (x == y) {
-        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_MENU)) size = LIVES_ICON_SIZE_MENU;
-        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_SMALL_TOOLBAR))
-          size = LIVES_ICON_SIZE_SMALL_TOOLBAR;
-        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_LARGE_TOOLBAR))
-          size = LIVES_ICON_SIZE_LARGE_TOOLBAR;
-        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_BUTTON)) size = LIVES_ICON_SIZE_BUTTON;
-        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_DND)) size = LIVES_ICON_SIZE_DND;
-        if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_DIALOG)) size = LIVES_ICON_SIZE_DIALOG;
-      }
-    }
-
-    if (size != LIVES_ICON_SIZE_CUSTOM) {
-      if (lives_has_icon(stock_id, size)) {
-#if GTK_CHECK_VERSION(3, 10, 0)
-        pixbuf = gtk_icon_theme_load_icon((LiVESIconTheme *)widget_opts.icon_theme, stock_id,
-                                          get_real_size_from_icon_size(size),
-                                          GTK_ICON_LOOKUP_FORCE_SIZE, NULL);
-        return pixbuf;
-#else
-        image = gtk_image_new_from_stock(stock_id, size);
-#endif
-      }
-      if (image) return lives_image_get_pixbuf(LIVES_IMAGE(image));
-    }
-    // custom size, or failed at specified size
-    // try all sizes to see if we get one
-    if (!image) {
-      if (lives_has_icon(stock_id, LIVES_ICON_SIZE_DIALOG)) {
-        size = LIVES_ICON_SIZE_DIALOG;
-      } else if (lives_has_icon(stock_id, LIVES_ICON_SIZE_DND)) {
-        size = LIVES_ICON_SIZE_DND;
-      } else if (lives_has_icon(stock_id, LIVES_ICON_SIZE_LARGE_TOOLBAR)) {
-        size = LIVES_ICON_SIZE_LARGE_TOOLBAR;
-      } else if (lives_has_icon(stock_id, LIVES_ICON_SIZE_SMALL_TOOLBAR)) {
+  LiVESWidget *image = NULL;
+  if (size == LIVES_ICON_SIZE_CUSTOM) {
+    if (x == y) {
+      if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_MENU)) size = LIVES_ICON_SIZE_MENU;
+      if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_SMALL_TOOLBAR))
         size = LIVES_ICON_SIZE_SMALL_TOOLBAR;
-      } else if (lives_has_icon(stock_id, LIVES_ICON_SIZE_BUTTON)) {
-        size = LIVES_ICON_SIZE_BUTTON;
-      } else if (lives_has_icon(stock_id, LIVES_ICON_SIZE_MENU)) {
-        size = LIVES_ICON_SIZE_MENU;
-      } else return NULL;
+      if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_LARGE_TOOLBAR))
+        size = LIVES_ICON_SIZE_LARGE_TOOLBAR;
+      if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_BUTTON)) size = LIVES_ICON_SIZE_BUTTON;
+      if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_DND)) size = LIVES_ICON_SIZE_DND;
+      if (x == get_real_size_from_icon_size(LIVES_ICON_SIZE_DIALOG)) size = LIVES_ICON_SIZE_DIALOG;
+    }
+  }
 
+  if (size != LIVES_ICON_SIZE_CUSTOM) {
+    if (lives_has_icon(widget_opts.icon_theme, stock_id, size)) {
 #if GTK_CHECK_VERSION(3, 10, 0)
       pixbuf = gtk_icon_theme_load_icon((LiVESIconTheme *)widget_opts.icon_theme, stock_id,
                                         get_real_size_from_icon_size(size),
@@ -2356,27 +2325,36 @@ LiVESPixbuf *lives_pixbuf_new_from_stock_at_size(const char *stock_id, LiVESIcon
       image = gtk_image_new_from_stock(stock_id, size);
 #endif
     }
+    if (image) return lives_image_get_pixbuf(LIVES_IMAGE(image));
+  }
+
+  // custom size, or failed at specified size
+  // try all sizes to see if we get one
+  if (!image) {
+    if (lives_has_icon(widget_opts.icon_theme, stock_id, LIVES_ICON_SIZE_DIALOG)) {
+      size = LIVES_ICON_SIZE_DIALOG;
+    } else if (lives_has_icon(widget_opts.icon_theme, stock_id, LIVES_ICON_SIZE_DND)) {
+      size = LIVES_ICON_SIZE_DND;
+    } else if (lives_has_icon(widget_opts.icon_theme, stock_id, LIVES_ICON_SIZE_LARGE_TOOLBAR)) {
+      size = LIVES_ICON_SIZE_LARGE_TOOLBAR;
+    } else if (lives_has_icon(widget_opts.icon_theme, stock_id, LIVES_ICON_SIZE_SMALL_TOOLBAR)) {
+      size = LIVES_ICON_SIZE_SMALL_TOOLBAR;
+    } else if (lives_has_icon(widget_opts.icon_theme, stock_id, LIVES_ICON_SIZE_BUTTON)) {
+      size = LIVES_ICON_SIZE_BUTTON;
+    } else if (lives_has_icon(widget_opts.icon_theme, stock_id, LIVES_ICON_SIZE_MENU)) {
+      size = LIVES_ICON_SIZE_MENU;
+    } else return NULL;
+
+#if GTK_CHECK_VERSION(3, 10, 0)
+    pixbuf = gtk_icon_theme_load_icon((LiVESIconTheme *)widget_opts.icon_theme, stock_id,
+                                      get_real_size_from_icon_size(size),
+                                      GTK_ICON_LOOKUP_FORCE_SIZE, NULL);
+    return pixbuf;
+#else
+    image = gtk_image_new_from_stock(stock_id, size);
+#endif
     if (!image) return NULL;
     pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(image));
-  } else {
-    // lives- icons
-    char *fname = lives_strdup_printf("%s.%s", stock_id, LIVES_FILE_EXT_PNG);
-    char *fnamex = lives_build_filename(prefs->prefix_dir, ICON_DIR, fname, NULL);
-    LiVESError *error = NULL;
-    pixbuf = lives_pixbuf_new_from_file(fnamex, &error);
-    lives_free(fname); lives_free(fnamex);
-  }
-  if (pixbuf) {
-    if (size != LIVES_ICON_SIZE_CUSTOM) {
-      x = y = get_real_size_from_icon_size(size);
-    }
-    if (x > 0 && y > 0) {
-      if (x != lives_pixbuf_get_width(pixbuf) || y != lives_pixbuf_get_height(pixbuf)) {
-        LiVESPixbuf *new_pixbuf = lives_pixbuf_scale_simple(pixbuf, x, y, LIVES_INTERP_BEST);
-        lives_widget_object_unref(pixbuf);
-        pixbuf = new_pixbuf;
-      }
-    }
   }
   return pixbuf;
 }
@@ -2391,7 +2369,6 @@ LiVESWidget *lives_image_new_from_stock_at_size(const char *stock_id, LiVESIconS
   }
   return image;
 }
-
 
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_new_from_stock(const char *stock_id,
@@ -3866,10 +3843,6 @@ boolean lives_combo_remove_all_text(LiVESCombo *combo) {
 #endif
   return TRUE;
 #endif
-#ifdef GUI_QT
-  static_cast<QComboBox *>(combo)->clear();
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -3881,10 +3854,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_set_entry_text_column(LiVESCombo
 #else
   gtk_combo_box_entry_set_text_column(GTK_COMBO_BOX_ENTRY(combo), column);
 #endif
-  return TRUE;
-#endif
-#ifdef GUI_QT
-  (static_cast<QComboBox *>(combo))->setModelColumn(column);
   return TRUE;
 #endif
   return FALSE;
@@ -3907,10 +3876,6 @@ WIDGET_HELPER_GLOBAL_INLINE char *lives_combo_get_active_text(LiVESCombo *combo)
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_set_active_index(LiVESCombo *combo, int index) {
 #ifdef GUI_GTK
   gtk_combo_box_set_active(combo, index);
-  return TRUE;
-#endif
-#ifdef GUI_QT
-  (static_cast<QComboBox *>(combo))->setCurrentIndex(index);
   return TRUE;
 #endif
   return FALSE;
@@ -3938,9 +3903,6 @@ WIDGET_HELPER_GLOBAL_INLINE int lives_combo_get_active(LiVESCombo *combo) {
 #ifdef GUI_GTK
   return gtk_combo_box_get_active(combo);
 #endif
-#ifdef GUI_QT
-  return (static_cast<QComboBox *>(combo))->currentIndex();
-#endif
   return -1;
 }
 
@@ -3949,9 +3911,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_text_view_new(void) {
   LiVESWidget *tview = NULL;
 #ifdef GUI_GTK
   tview = gtk_text_view_new();
-#endif
-#ifdef GUI_QT
-  tview = new LiVESTextView;
 #endif
   return tview;
 }
@@ -3962,9 +3921,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_text_view_new_with_buffer(LiVESTe
 #ifdef GUI_GTK
   tview = gtk_text_view_new_with_buffer(tbuff);
 #endif
-#ifdef GUI_QT
-  tview = new LiVESTextView(tbuff);
-#endif
   return tview;
 }
 
@@ -3973,9 +3929,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESTextBuffer *lives_text_view_get_buffer(LiVESTex
   LiVESTextBuffer *tbuff = NULL;
 #ifdef GUI_GTK
   tbuff = gtk_text_view_get_buffer(tview);
-#endif
-#ifdef GUI_QT
-  tbuff = tview->get_buffer();
 #endif
   return tbuff;
 }
@@ -4022,10 +3975,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_view_set_justification(LiVESTextV
   gtk_text_view_set_justification(tview, justify);
   return TRUE;
 #endif
-#ifdef GUI_QT
-  tview->setAlignment(justify);
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -4034,9 +3983,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESTextBuffer *lives_text_buffer_new(void) {
   LiVESTextBuffer *tbuff = NULL;
 #ifdef GUI_GTK
   tbuff = gtk_text_buffer_new(NULL);
-#endif
-#ifdef GUI_QT
-  tbuff = new LiVESTextBuffer;
 #endif
   return tbuff;
 }
@@ -4057,11 +4003,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_buffer_insert_at_cursor(LiVESText
   gtk_text_buffer_insert_at_cursor(tbuff, text, len);
   return TRUE;
 #endif
-#ifdef GUI_QT
-  QTextCursor qtc = tbuff->get_cursor();
-  QString qs = QString::fromUtf8(text, len);
-  qtc.insertText(qs);
-#endif
   return FALSE;
 }
 
@@ -4071,10 +4012,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_buffer_set_text(LiVESTextBuffer *
   gtk_text_buffer_set_text(tbuff, text, len);
   return TRUE;
 #endif
-#ifdef GUI_QT
-  QString qs = QString::fromUtf8(text, len);
-  tbuff->setPlainText(qs);
-#endif
   return FALSE;
 }
 
@@ -4083,12 +4020,6 @@ WIDGET_HELPER_GLOBAL_INLINE char *lives_text_buffer_get_text(LiVESTextBuffer *tb
     boolean inc_hidden_chars) {
 #ifdef GUI_GTK
   return gtk_text_buffer_get_text(tbuff, start, end, inc_hidden_chars);
-#endif
-#ifdef GUI_QT
-  QTextCursor qtc = QTextCursor(tbuff);
-  qtc.setPosition(*start);
-  qtc.setPosition(*end, QTextCursor::KeepAnchor);
-  return strdup(qtc.selection().toPlainText().toUtf8().constData());
 #endif
   return NULL;
 }
@@ -4107,10 +4038,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_buffer_get_start_iter(LiVESTextBu
   gtk_text_buffer_get_start_iter(tbuff, iter);
   return TRUE;
 #endif
-#ifdef GUI_QT
-  *iter = 0;
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -4120,10 +4047,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_buffer_get_end_iter(LiVESTextBuff
   gtk_text_buffer_get_end_iter(tbuff, iter);
   return TRUE;
 #endif
-#ifdef GUI_QT
-  *iter = tbuff->characterCount();
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -4131,10 +4054,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_buffer_get_end_iter(LiVESTextBuff
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_buffer_place_cursor(LiVESTextBuffer *tbuff, LiVESTextIter *iter) {
 #ifdef GUI_GTK
   gtk_text_buffer_place_cursor(tbuff, iter);
-  return TRUE;
-#endif
-#ifdef GUI_QT
-  tbuff->get_cursor().setPosition(*iter);
   return TRUE;
 #endif
   return FALSE;
@@ -4147,9 +4066,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESTextMark *lives_text_buffer_create_mark(LiVESTe
 #ifdef GUI_GTK
   tmark = gtk_text_buffer_create_mark(tbuff, mark_name, where, left_gravity);
 #endif
-#ifdef GUI_QT
-  tmark = new LiVESTextMark(tbuff, mark_name, *where, left_gravity);
-#endif
   return tmark;
 }
 
@@ -4157,10 +4073,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESTextMark *lives_text_buffer_create_mark(LiVESTe
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_buffer_delete_mark(LiVESTextBuffer *tbuff, LiVESTextMark *mark) {
 #ifdef GUI_GTK
   gtk_text_buffer_delete_mark(tbuff, mark);
-  return TRUE;
-#endif
-#ifdef GUI_QT
-  mark->dec_refcount();
   return TRUE;
 #endif
   return FALSE;
@@ -4189,10 +4101,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_buffer_get_iter_at_mark(LiVESText
   gtk_text_buffer_get_iter_at_mark(tbuff, iter, mark);
   return TRUE;
 #endif
-#ifdef GUI_QT
-  *iter = mark->position();
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -4201,9 +4109,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_dialog_new(void) {
   LiVESWidget *dialog = NULL;
 #ifdef GUI_GTK
   dialog = gtk_dialog_new();
-#endif
-#ifdef GUI_QT
-  dialog = new LiVESDialog();
 #endif
   return dialog;
 }
@@ -4214,9 +4119,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_button_new(void) {
 #ifdef GUI_GTK
   button = gtk_button_new();
   gtk_button_set_use_underline(GTK_BUTTON(button), widget_opts.mnemonic_label);
-#endif
-#ifdef GUI_QT
-  button = new LiVESButton;
 #endif
   return button;
 }
@@ -4674,11 +4576,12 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_check_button_new_with_label(const
 
 
 static LiVESWidget *make_ttips_image_for(LiVESWidget *widget, const char *text) {
-  LiVESWidget *ttips_image = lives_image_new_from_stock("my-help-info",
-                             LIVES_ICON_SIZE_SMALL_TOOLBAR);
+  LiVESWidget *ttips_image = lives_image_new_from_stock("livestock-help-info",
+                             LIVES_ICON_SIZE_LARGE_TOOLBAR);
   if (ttips_image) {
 #if GTK_CHECK_VERSION(3, 16, 0)
     if (widget_opts.apply_theme) {
+      set_css_value_direct(ttips_image, LIVES_WIDGET_STATE_NORMAL, "", "opacity", "0.75");
       set_css_value_direct(ttips_image, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
     }
 #endif
@@ -8838,7 +8741,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_sensitive_with(LiVESWidget 
 static void lives_widget_show_all_cb(LiVESWidget * widget, livespointer user_data) {
   if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), SHOWALL_OVERRIDE_KEY)) return;
   if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_HIDE_KEY)) {
-    if (prefs->show_tooltips) lives_widget_show(widget);
+    if (prefs->show_tooltips) {
+      lives_widget_set_no_show_all(widget, FALSE);
+      lives_widget_show(widget);
+    }
     return;
   }
   if (!lives_widget_is_visible(widget)) _lives_widget_show_all(widget);
@@ -10733,6 +10639,35 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox * box, const char *name, b
 
 // utils
 
+#if GTK_CHECK_VERSION(3, 10, 0)
+
+static const char *LIVES_STOCK_ALTS[N_STOCK_ALTS];
+
+const char *lives_get_stock_icon_alt(int alt_stock_id) {
+  return LIVES_STOCK_ALTS[alt_stock_id];
+}
+
+static const char *lives_icon_get_stock_alt(LiVESIconTheme * icon_theme, const char *str,  ...) GNU_SENTINEL;
+static const char *lives_icon_get_stock_alt(LiVESIconTheme * icon_theme, const char *str, ...) {
+  va_list xargs;
+  va_start(xargs, str);
+  for (; str; str++) {
+    if (lives_has_icon(icon_theme, str, LIVES_ICON_SIZE_BUTTON)) break;
+  }
+  va_end(xargs);
+  return str;
+}
+#endif
+
+
+void widget_helper_set_stock_icon_alts(LiVESIconTheme * icon_theme) {
+#if GTK_CHECK_VERSION(3, 10, 0)
+  LIVES_STOCK_ALTS[STOCK_ALTS_MEDIA_PAUSE] =
+    lives_icon_get_stock_alt(icon_theme, LIVES_STOCK_MEDIA_PAUSE_ALT_1, LIVES_STOCK_MEDIA_PAUSE_ALT_2, (char *)NULL);
+#endif
+}
+
+
 boolean widget_helper_init(void) {
 #ifdef GUI_GTK
   GSList *flist, *slist;
@@ -10874,11 +10809,11 @@ LiVESList *add_sorted_list_to_menu(LiVESMenu * menu, LiVESList * menu_list) {
 }
 
 
-boolean lives_has_icon(const char *stock_id, LiVESIconSize size)  {
+boolean lives_has_icon(LiVESIconTheme * icon_theme, const char *stock_id, LiVESIconSize size)  {
   boolean has_icon = FALSE;
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
-  GtkIconInfo *iset = gtk_icon_theme_lookup_icon(gtk_icon_theme_get_default(), stock_id, size, GTK_ICON_LOOKUP_USE_BUILTIN);
+  GtkIconInfo *iset = gtk_icon_theme_lookup_icon(icon_theme, stock_id, size, 0);
 #else
   GtkIconSet *iset = gtk_icon_factory_lookup_default(stock_id);
 #endif
@@ -10890,22 +10825,18 @@ boolean lives_has_icon(const char *stock_id, LiVESIconSize size)  {
 
 WIDGET_HELPER_GLOBAL_INLINE lives_colRGB48_t *lives_painter_set_source_rgb_from_lives_rgb(lives_painter_t *cr,
     lives_colRGB48_t *col) {
-  lives_painter_set_source_rgb(cr,
-                               (double)col->red / 65535.,
+  lives_painter_set_source_rgb(cr, (double)col->red / 65535.,
                                (double)col->green / 65535.,
-                               (double)col->blue / 65535.
-                              );
+                               (double)col->blue / 65535.);
   return col;
 }
 
 
 WIDGET_HELPER_GLOBAL_INLINE lives_colRGBA64_t *lives_painter_set_source_rgb_from_lives_rgba(lives_painter_t *cr,
     lives_colRGBA64_t *col) {
-  lives_painter_set_source_rgb(cr,
-                               (double)col->red / 65535.,
+  lives_painter_set_source_rgb(cr, (double)col->red / 65535.,
                                (double)col->green / 65535.,
-                               (double)col->blue / 65535.
-                              );
+                               (double)col->blue / 65535.);
   return col;
 }
 

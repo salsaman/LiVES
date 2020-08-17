@@ -348,15 +348,16 @@ void lives_exit(int signum) {
             cfile->layout_map = NULL;
           }
 
-          if (mainw->files[i] != NULL) {
+          if (mainw->files[i]) {
             if ((!mainw->leave_files && !prefs->crash_recovery && !(*mainw->set_name)) ||
                 (!mainw->only_close && (i == 0 || !IS_NORMAL_CLIP(i))) ||
                 (i == mainw->scrap_file && !mainw->leave_recovery) ||
                 (i == mainw->ascrap_file && !mainw->leave_recovery) ||
-                (mainw->multitrack != NULL && i == mainw->multitrack->render_file)) {
+                (mainw->multitrack && i == mainw->multitrack->render_file)) {
+	      char *permitname;
               // close all open clips, except for ones we want to retain
 #ifdef HAVE_YUV4MPEG
-              if (mainw->files[i]->clip_type == CLIP_TYPE_YUV4MPEG) {
+	      if (mainw->files[i]->clip_type == CLIP_TYPE_YUV4MPEG) {
                 lives_yuv_stream_stop_read((lives_yuv4m_t *)mainw->files[i]->ext_src);
                 lives_free(mainw->files[i]->ext_src);
               }
@@ -369,7 +370,11 @@ void lives_exit(int signum) {
 #endif
               threaded_dialog_spin(0.);
               lives_kill_subprocesses(mainw->files[i]->handle, TRUE);
-              com = lives_strdup_printf("%s close \"%s\"", prefs->backend, mainw->files[i]->handle);
+	      permitname = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
+						TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
+	      lives_touch(permitname);
+	      lives_free(permitname);
+	      com = lives_strdup_printf("%s close \"%s\"", prefs->backend, mainw->files[i]->handle);
               lives_system(com, FALSE);
               lives_free(com);
               threaded_dialog_spin(0.);
@@ -7608,9 +7613,12 @@ void end_fs_preview(void) {
 
   if (mainw->in_fs_preview) {
     char *tmp = lives_strdup_printf("fsp%d", capable->mainpid);
+    char *permitname = lives_build_filename(prefs->workdir, tmp, TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
     lives_kill_subprocesses(tmp, TRUE);
+    lives_touch(permitname);
+    lives_free(permitname);
+    com = lives_strdup_printf("%s close \"%s\"", prefs->backend, tmp);
     lives_free(tmp);
-    com = lives_strdup_printf("%s close fsp%d", prefs->backend, capable->mainpid);
     lives_system(com, TRUE);
     lives_free(com);
     mainw->in_fs_preview = FALSE;

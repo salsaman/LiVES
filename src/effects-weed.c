@@ -8240,7 +8240,7 @@ void weed_generator_end(weed_plant_t *inst) {
     mainw->blend_file = mainw->new_blend_file;
     mainw->new_blend_file = -1;
     // close generator file and switch to original file if possible
-    if (cfile == NULL || cfile->clip_type != CLIP_TYPE_GENERATOR) {
+    if (!cfile || cfile->clip_type != CLIP_TYPE_GENERATOR) {
       break_me("close non-gen file");
       LIVES_WARN("Close non-generator file");
       mainw->current_file = mainw->pre_src_file;

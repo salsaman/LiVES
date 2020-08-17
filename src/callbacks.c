@@ -354,10 +354,10 @@ void lives_exit(int signum) {
                 (i == mainw->scrap_file && !mainw->leave_recovery) ||
                 (i == mainw->ascrap_file && !mainw->leave_recovery) ||
                 (mainw->multitrack && i == mainw->multitrack->render_file)) {
-	      char *permitname;
+              char *permitname;
               // close all open clips, except for ones we want to retain
 #ifdef HAVE_YUV4MPEG
-	      if (mainw->files[i]->clip_type == CLIP_TYPE_YUV4MPEG) {
+              if (mainw->files[i]->clip_type == CLIP_TYPE_YUV4MPEG) {
                 lives_yuv_stream_stop_read((lives_yuv4m_t *)mainw->files[i]->ext_src);
                 lives_free(mainw->files[i]->ext_src);
               }
@@ -370,11 +370,11 @@ void lives_exit(int signum) {
 #endif
               threaded_dialog_spin(0.);
               lives_kill_subprocesses(mainw->files[i]->handle, TRUE);
-	      permitname = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
-						TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
-	      lives_touch(permitname);
-	      lives_free(permitname);
-	      com = lives_strdup_printf("%s close \"%s\"", prefs->backend, mainw->files[i]->handle);
+              permitname = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
+                                                TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
+              lives_touch(permitname);
+              lives_free(permitname);
+              com = lives_strdup_printf("%s close \"%s\"", prefs->backend, mainw->files[i]->handle);
               lives_system(com, FALSE);
               lives_free(com);
               threaded_dialog_spin(0.);
@@ -6194,7 +6194,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   int current_file = mainw->current_file;
   int marker_fd;
   int i, ntok, nitems = 0;
-
+  mainw->debug = TRUE;
   mainw->mt_needs_idlefunc = FALSE;
 
   mainw->next_ds_warn_level = 0; /// < avoid nested warnings
@@ -6316,6 +6316,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   lives_free(uidgid);
   lives_popen(com, TRUE, (char *)tbuff, 0);
   lives_free(com);
+
   lives_proc_thread_join(tinfo);
 
   if (*mainw->msg && (ntok = get_token_count(mainw->msg, '|')) > 1) {
@@ -6718,6 +6719,7 @@ cleanup:
 	// *INDENT-OFF*
       }}}
   // *INDENT-ON*
+  mainw->debug = FALSE;
 }
 
 

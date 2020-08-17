@@ -1034,7 +1034,6 @@ reloop:
 
   if (!new_sigdata) {
     // here we ar either re-entering as an idlefunc, or we are in a timer and looped back
-
     if (lpttorun) {
       // check if there is a foreground task to run
       lpt_recurse2 = TRUE;
@@ -1048,8 +1047,8 @@ reloop:
           return TRUE;
         }
       }
-      if (!lpttorun)
-        while (lives_widget_context_iteration(NULL, FALSE));
+      /* if (!lpttorun) */
+      /*   while (lives_widget_context_iteration(NULL, FALSE)); */
       lpttorun = NULL;
       lpt_recurse = FALSE;
       lpt_recurse2 = FALSE;
@@ -1120,8 +1119,8 @@ reloop:
       // this is also complicated. We are running in a timer and we need to run mainloop
       is_timer = TRUE;
       sigdata = NULL;
-      if (!lpttorun)
-        while (lives_widget_context_iteration(NULL, FALSE));
+      /* if (!lpttorun) */
+      /*   while (lives_widget_context_iteration(NULL, FALSE)); */
       goto reloop;
     }
     if (lpttorun) lpt_recurse = TRUE;
@@ -1521,6 +1520,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget *widget) {
   boolean ret;
   main_thread_execute((lives_funcptr_t)_lives_widget_show_all, WEED_SEED_BOOLEAN, &ret, "v", widget);
   return ret;
+  //return lives_widget_show_all(widget);
 }
 
 
@@ -1534,7 +1534,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_now(LiVESWidget *widget) {
 }
 
 
-static boolean _lives_widget_destroy(LiVESWidget *widget) {
+LIVES_GLOBAL_INLINE boolean lives_widget_destroy(LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_widget_destroy(widget);
   return TRUE;
@@ -1543,10 +1543,11 @@ static boolean _lives_widget_destroy(LiVESWidget *widget) {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_destroy(LiVESWidget *widget) {
-  boolean ret;
-  main_thread_execute((lives_funcptr_t)_lives_widget_destroy, WEED_SEED_BOOLEAN, &ret, "v", widget);
-  return ret;
+WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_destroy(LiVESWidget *widget) {
+  /* boolean ret; */
+  /* main_thread_execute((lives_funcptr_t)_lives_widget_destroy, WEED_SEED_BOOLEAN, &ret, "v", widget); */
+  /* return ret; */
+  return lives_widget_destroy(widget);
 }
 
 
@@ -1779,6 +1780,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dial
 
 void *lives_fg_run(lives_proc_thread_t lpt, void *retval) {
   void *ret = NULL;
+  boolean waitgov = FALSE;
 #ifdef GUI_GTK
   LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
   if (!ctx || ctx == lives_widget_context_default()) {
@@ -1792,8 +1794,11 @@ void *lives_fg_run(lives_proc_thread_t lpt, void *retval) {
       while (!gov_running) {
         lives_nanosleep(NSLEEP_TIME);
       }
-    } else mainw->clutch = FALSE;
-    while (lpttorun) {
+    } else {
+      waitgov = TRUE;
+      mainw->clutch = FALSE;
+    }
+    while (lpttorun || (waitgov && !mainw->clutch)) {
       lives_nanosleep(NSLEEP_TIME);
       sched_yield();
     }
@@ -11568,7 +11573,7 @@ boolean lives_widget_context_update(void) {
   else {
     LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
     do_some_things();
-    if (ctx != NULL && ctx != lives_widget_context_default() && gov_running) {
+    if (ctx && ctx != lives_widget_context_default() && gov_running) {
       mainw->clutch = FALSE;
       while (!mainw->clutch && !mainw->is_exiting) {
         lives_nanosleep(NSLEEP_TIME);

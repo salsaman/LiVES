@@ -1986,7 +1986,8 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
     if (!pass) {
       lives_widget_show_all(dialog);
       do {
-        lives_widget_process_updates(dialog);
+        lives_widget_context_update();
+        //lives_widget_process_updates(dialog);
         lives_nanosleep(100);
       } while (!list->next && filtresp == LIVES_RESPONSE_NONE);
     }

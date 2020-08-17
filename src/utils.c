@@ -2157,11 +2157,11 @@ void init_clipboard(void) {
     // experimental feature - we can have duplicate copies of the clipboard with different palettes / gamma
     for (int i = 0; i < mainw->ncbstores; i++) {
       if (mainw->cbstores[i] != clipboard) {
-	char *com = lives_strdup_printf("%s close \"%s\"", prefs->backend, mainw->cbstores[i]->handle);
-	char *permitname = lives_build_filename(prefs->workdir, mainw->cbstores[i]->handle,
-						TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
-	lives_touch(permitname);
-	lives_free(permitname);
+        char *com = lives_strdup_printf("%s close \"%s\"", prefs->backend, mainw->cbstores[i]->handle);
+        char *permitname = lives_build_filename(prefs->workdir, mainw->cbstores[i]->handle,
+                                                TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
+        lives_touch(permitname);
+        lives_free(permitname);
         lives_system(com, TRUE);
         lives_free(com);
       }

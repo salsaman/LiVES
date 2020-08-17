@@ -1916,11 +1916,11 @@ void save_file(int clip, int start, int end, const char *filename) {
       mainw->no_switch_dprint = FALSE;
       lives_free(full_file_name);
       if (!save_all && !safe_symlinks) {
-	char *permitname = lives_build_filename(prefs->workdir, cfile->handle, TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
+        char *permitname = lives_build_filename(prefs->workdir, cfile->handle, TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
         lives_kill_subprocesses(cfile->handle, TRUE);
-	lives_touch(permitname);
-	lives_free(permitname);
-	lives_system((com = lives_strdup_printf("%s close \"%s\"", prefs->backend, cfile->handle)), TRUE);
+        lives_touch(permitname);
+        lives_free(permitname);
+        lives_system((com = lives_strdup_printf("%s close \"%s\"", prefs->backend, cfile->handle)), TRUE);
         lives_free(com);
         lives_freep((void **)&cfile);
         if (mainw->first_free_file == ALL_USED || mainw->first_free_file > mainw->current_file)
@@ -1951,10 +1951,10 @@ void save_file(int clip, int start, int end, const char *filename) {
       mainw->no_switch_dprint = FALSE;
       lives_free(full_file_name);
       if (!save_all && !safe_symlinks) {
-	char *permitname = lives_build_filename(prefs->workdir, cfile->handle, TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
+        char *permitname = lives_build_filename(prefs->workdir, cfile->handle, TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
         lives_kill_subprocesses(cfile->handle, TRUE);
-	lives_touch(permitname);
-	lives_free(permitname);
+        lives_touch(permitname);
+        lives_free(permitname);
         lives_system((com = lives_strdup_printf("%s close \"%s\"", prefs->backend, cfile->handle)), TRUE);
         lives_free(com);
         lives_freep((void **)&cfile);
@@ -2044,12 +2044,12 @@ void save_file(int clip, int start, int end, const char *filename) {
       }
     } else {
       if (!safe_symlinks) {
-	char *permitname = lives_build_filename(prefs->workdir, nfile->handle, TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
+        char *permitname = lives_build_filename(prefs->workdir, nfile->handle, TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
 #ifdef IS_MINGW
         lives_kill_subprocesses(nfile->handle, TRUE);
 #endif
-	lives_touch(permitname);
-	lives_free(permitname);
+        lives_touch(permitname);
+        lives_free(permitname);
         lives_system((com = lives_strdup_printf("%s close \"%s\"", prefs->backend, nfile->handle)), TRUE);
         lives_free(com);
         lives_free(nfile);

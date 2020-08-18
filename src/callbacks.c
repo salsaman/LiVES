@@ -6194,7 +6194,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   int current_file = mainw->current_file;
   int marker_fd;
   int i, ntok, nitems = 0;
-  mainw->debug = TRUE;
+
   mainw->mt_needs_idlefunc = FALSE;
 
   mainw->next_ds_warn_level = 0; /// < avoid nested warnings
@@ -6719,7 +6719,6 @@ cleanup:
 	// *INDENT-OFF*
       }}}
   // *INDENT-ON*
-  mainw->debug = FALSE;
 }
 
 
@@ -8345,18 +8344,26 @@ void on_boolean_toggled(LiVESWidgetObject * obj, livespointer user_data) {
 }
 
 
-void on_audio_toggled(LiVESWidget * tbutton, livespointer user_data) {
+void on_audio_toggled(LiVESWidget * tbutton, LiVESWidget * label) {
+  boolean state;
   if (!LIVES_IS_INTERACTIVE) return;
-  if (!lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(tbutton))) {
-    lives_signal_handlers_block_by_func(tbutton, (livespointer)on_audio_toggled, NULL);
-    lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(tbutton), TRUE);
-    lives_signal_handlers_unblock_by_func(tbutton, (livespointer)on_audio_toggled, NULL);
-    lives_signal_stop_emission_by_name(tbutton, LIVES_WIDGET_TOGGLED_SIGNAL);
-    return;
-  }
-  pref_factory_bool(PREF_REC_EXT_AUDIO, prefs->audio_src != AUDIO_SRC_EXT, TRUE);
-}
+  /* if (!lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(tbutton))) { */
+  /*   lives_signal_handlers_block_by_func(tbutton, (livespointer)on_audio_toggled, NULL); */
+  /*   lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(tbutton), TRUE); */
+  /*   lives_signal_handlers_unblock_by_func(tbutton, (livespointer)on_audio_toggled, NULL); */
+  /*   lives_signal_stop_emission_by_name(tbutton, LIVES_WIDGET_TOGGLED_SIGNAL); */
+  /*   lives_widget_set_frozen(label, FALSE); */
+  /*   return; */
+  /* } */
+  state = lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(tbutton));
+  lives_widget_set_sensitive(tbutton, !state);
 
+  if (tbutton == mainw->ext_audio_checkbutton) {
+    pref_factory_bool(PREF_REC_EXT_AUDIO, state, TRUE);
+  } else {
+    pref_factory_bool(PREF_REC_EXT_AUDIO, !state, TRUE);
+  }
+}
 
 void on_loop_video_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->current_file == 0) return;

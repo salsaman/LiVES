@@ -759,8 +759,8 @@ char *lives_datetime_rel(const char *datetime) {
   char *today = NULL, *yesterday = NULL;
   struct timeval otv;
   gettimeofday(&otv, NULL);
-  today = lives_datetime(otv.tv_sec);
-  yesterday = lives_datetime(otv.tv_sec - SECS_IN_DAY);
+  today = lives_datetime(otv.tv_sec, TRUE);
+  yesterday = lives_datetime(otv.tv_sec - SECS_IN_DAY, TRUE);
   if (!lives_strncmp(datetime, today, 10)) dtxt = lives_strdup_printf(_("Today %s"), datetime + 11);
   else if (!lives_strncmp(datetime, yesterday, 10))
     dtxt = lives_strdup_printf(_("Yesterday %s"), datetime + 11);
@@ -771,10 +771,10 @@ char *lives_datetime_rel(const char *datetime) {
 }
 
 
-char *lives_datetime(uint64_t secs) {
+char *lives_datetime(uint64_t secs, boolean use_local) {
   char buf[128];
   char *datetime = NULL;
-  struct tm *gm = gmtime((time_t *)&secs);
+  struct tm *gm = use_local ? localtime((time_t *)&secs) : gmtime((time_t *)&secs);
   ssize_t written;
 
   if (gm) {

@@ -163,6 +163,13 @@ should be:
 
 == EVENT TYPES ==
 
+(N.B. prior to Event API 122, the name of this leaf was "hint". This was changed to avoid possible confusion, since the value
+is not simply a hint, but changes the function of the event.
+There may be some legacy applications still using the old name of the leaf,
+thus if the "event_type" leaf is absent for an event, and the event_list Event API is absent or < 122,
+the prescence of a "hint" leaf should be checked for)
+
+
 The "event_type" is a mandatory WEED_SEED_INT leaf of every event; the defined values are:
 
  * WEED_EVENT_TYPE_UNDEFINED
@@ -173,7 +180,8 @@ The "event_type" is a mandatory WEED_SEED_INT leaf of every event; the defined v
  * WEED_EVENT_TYPE_PARAM_CHANGE
  * WEED_EVENT_TYPE_MARKER
 
-Depending on the "event_type" parameter seed type additional leaves are:
+Depending on the "event_type" value, additional leaves are:
+
 
 === WEED_EVENT_TYPE_UNDEFINED ===
 This is not actually a true event type, but for example a function can return this as the event_type value for a NULL event.

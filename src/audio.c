@@ -2297,14 +2297,14 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
     etype = weed_event_get_type(event);
     if (what_to_get == LIVES_PREVIEW_TYPE_VIDEO_AUDIO || (etype != 1 && etype != 5)) {
       switch (etype) {
-      case WEED_EVENT_HINT_FILTER_MAP:
+      case WEED_EVENT_TYPE_FILTER_MAP:
         if (what_to_get != LIVES_PREVIEW_TYPE_AUDIO_ONLY)
           mainw->filter_map = event;
         if (what_to_get != LIVES_PREVIEW_TYPE_VIDEO_ONLY) {
           mainw->afilter_map = event;
         }
         break;
-      case WEED_EVENT_HINT_FILTER_INIT:
+      case WEED_EVENT_TYPE_FILTER_INIT:
         deinit_event = weed_get_plantptr_value(event, WEED_LEAF_DEINIT_EVENT, NULL);
         if (deinit_event == NULL || get_event_timecode(deinit_event) >= fill_tc) {
           // this effect should be activated
@@ -2315,14 +2315,14 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
           /// TODO: if exact && non-stateless, silently process audio / video until st_event
         }
         break;
-      case WEED_EVENT_HINT_FILTER_DEINIT:
+      case WEED_EVENT_TYPE_FILTER_DEINIT:
         if (what_to_get == LIVES_PREVIEW_TYPE_AUDIO_ONLY) {
           weed_event_t *init_event = weed_get_voidptr_value((weed_plant_t *)event, WEED_LEAF_INIT_EVENT, NULL);
           if (get_event_timecode(init_event) >= last_tc) break;
           process_events(event, TRUE, get_event_timecode(event));
         }
         break;
-      case WEED_EVENT_HINT_PARAM_CHANGE:
+      case WEED_EVENT_TYPE_PARAM_CHANGE:
         if (mainw->multitrack == NULL) {
           weed_event_t *init_event = weed_get_voidptr_value((weed_plant_t *)event, WEED_LEAF_INIT_EVENT, NULL);
           deinit_event = weed_get_plantptr_value(init_event, WEED_LEAF_DEINIT_EVENT, NULL);
@@ -2352,7 +2352,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
           }
         }
         break;
-      case WEED_EVENT_HINT_FRAME:
+      case WEED_EVENT_TYPE_FRAME:
         if (what_to_get != LIVES_PREVIEW_TYPE_VIDEO_AUDIO) break;
 
         if (WEED_EVENT_IS_AUDIO_FRAME(event)) {

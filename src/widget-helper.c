@@ -1463,10 +1463,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_sensitive(LiVESWidget *widg
 #endif
   return TRUE;
 #endif
-#ifdef GUI_QT
-  (static_cast<QWidget *>(widget))->setEnabled(state);
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -1474,9 +1470,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_sensitive(LiVESWidget *widg
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_get_sensitive(LiVESWidget *widget) {
 #ifdef GUI_GTK
   return gtk_widget_get_sensitive(widget);
-#endif
-#ifdef GUI_QT
-  return (static_cast<QWidget *>(widget))->isEnabled();
 #endif
   return FALSE;
 }
@@ -1496,10 +1489,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_hide(LiVESWidget *widget) {
   gtk_widget_hide(widget);
   return TRUE;
 #endif
-#ifdef GUI_QT
-  (static_cast<QWidget *>(widget))->setVisible(false);
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -1517,6 +1506,7 @@ WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_show_all(LiVESWidget *widget) {
 }
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget *widget) {
+  // run in main thread as it seems to give a smoother result
   boolean ret;
   main_thread_execute((lives_funcptr_t)_lives_widget_show_all, WEED_SEED_BOOLEAN, &ret, "v", widget);
   return ret;
@@ -1749,23 +1739,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_opacity(LiVESWidget *widget
 
 static LiVESResponseType _lives_dialog_run(LiVESDialog *dialog) {
 #ifdef GUI_GTK
-  //LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
   LiVESResponseType resp;
   _lives_widget_show_all(LIVES_WIDGET(dialog));
   resp = gtk_dialog_run(dialog);
   return resp;
-  /* if (!ctx || ctx == lives_widget_context_default()) return gtk_dialog_run(dialog); */
-
-  /* if (gov_running) { */
-  /*   dlgresp = LIVES_RESPONSE_INVALID; */
-  /*   dlgtorun = dialog; */
-  /*   mainw->clutch = FALSE; */
-  /*   while (dlgtorun) { */
-  /*     lives_nanosleep(NSLEEP_TIME); */
-  /*     sched_yield(); */
-  /*   } */
-  /*   return dlgresp; */
-  /* } */
 #endif
   return LIVES_RESPONSE_INVALID;
 }
@@ -1812,10 +1789,6 @@ void *lives_fg_run(lives_proc_thread_t lpt, void *retval) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_response(LiVESDialog *dialog, int response) {
 #ifdef GUI_GTK
   gtk_dialog_response(dialog, response);
-  return TRUE;
-#endif
-#ifdef GUI_QT
-  dialog->setResult(response);
   return TRUE;
 #endif
   return FALSE;
@@ -4340,11 +4313,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_clicked(LiVESButton *button) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_set_relief(LiVESButton *button, LiVESReliefStyle rstyle) {
 #ifdef GUI_GTK
   gtk_button_set_relief(button, rstyle);
-  return TRUE;
-#endif
-#ifdef GUI_QT
-  if (rstyle == LIVES_RELIEF_NONE) button->setFlat(true);
-  else button->setFlat(false);
   return TRUE;
 #endif
   return FALSE;
@@ -7894,7 +7862,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_frozen(LiVESWidget * widget
   // set insens. but w.out dimming
 #if GTK_CHECK_VERSION(3, 16, 0)
   if (state) {
-    set_css_value_direct(widget, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.75");
     set_css_value_direct(widget, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.75");
   } else
     set_css_value_direct(widget, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
@@ -11813,10 +11780,14 @@ boolean draw_cool_toggle(LiVESWidget * widget, lives_painter_t *cr, livespointer
      (LIVES_IS_TOGGLE_TOOL_BUTTON(widget)
       && lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(widget))));
 
+  if (!mainw->multitrack) rheight /= 2.;
+
   lives_painter_translate(cr, rwidth * (1. - scalex) / 2., rheight * (1. - scaley) / 2.);
 
   rwidth *= scalex;
   rheight *= scaley;
+
+  if (widget == mainw->ext_audio_mon) rwidth = rheight = 4.;
 
   // draw the inside
   //#if !GTK_CHECK_VERSION(3, 16, 0)

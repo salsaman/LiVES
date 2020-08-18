@@ -349,8 +349,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
                    LIVES_RESPONSE_CANCEL);
 
-    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
-               LIVES_RESPONSE_OK);
+    defbutton = okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
+                           LIVES_RESPONSE_OK);
     break;
 
   case LIVES_DIALOG_YESNO:

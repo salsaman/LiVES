@@ -1285,6 +1285,7 @@ typedef struct {
   LiVESWidget *l3_tb;
 
   LiVESWidget *int_audio_checkbutton, *ext_audio_checkbutton;
+  LiVESWidget *ext_audio_mon;
 
   ulong int_audio_func, ext_audio_func;
 

@@ -11609,19 +11609,19 @@ void gamma_conv_params(int gamma_type, weed_layer_t *inst, boolean is_in) {
 
     int *ivals;
     int ogamma_type, oogamma_type = WEED_GAMMA_UNKNOWN;
-    int phint, pcspace, ptype, nvals, qvals;
-    int nparms, i, j, k, error;
+    int pptype, pcspace, ptype, nvals, qvals;
+    int nparms;
 
-    if (inst == NULL) return;
+    if (!inst) return;
     params = weed_get_plantptr_array_counted(inst, type, &nparms);
     if (!nparms) return;
 
-    for (i = 0; i < nparms; i++) {
+    for (int i = 0; i < nparms; i++) {
       param = params[i];
       if (!(nvals = weed_leaf_num_elements(param, WEED_LEAF_VALUE))) continue;
-      ptmpl = weed_get_plantptr_value(param, WEED_LEAF_TEMPLATE, &error);
-      phint = weed_get_int_value(ptmpl, WEED_LEAF_HINT, &error);
-      if (phint != WEED_HINT_COLOR) continue;
+      ptmpl = weed_get_plantptr_value(param, WEED_LEAF_TEMPLATE, NULL);
+      pptype = weed_paramtmpl_get_type(ptmpl);
+      if (pptype != WEED_PARAM_COLOR) continue;
 
       ptype = weed_leaf_seed_type(ptmpl, WEED_LEAF_DEFAULT);
 
@@ -11630,7 +11630,7 @@ void gamma_conv_params(int gamma_type, weed_layer_t *inst, boolean is_in) {
       if (!prefs->apply_gamma || !weed_plant_has_leaf(param, WEED_LEAF_GAMMA_TYPE)) {
         ogamma_type = WEED_GAMMA_SRGB;
       } else {
-        ogamma_type = weed_get_int_value(param, WEED_LEAF_GAMMA_TYPE, &error);
+        ogamma_type = weed_get_int_value(param, WEED_LEAF_GAMMA_TYPE, NULL);
       }
 
       if (ogamma_type != oogamma_type && gamma_type != ogamma_type) {
@@ -11648,12 +11648,12 @@ void gamma_conv_params(int gamma_type, weed_layer_t *inst, boolean is_in) {
       if (gamma_type == ogamma_type) continue;
 
       qvals = 3;
-      pcspace = weed_get_int_value(ptmpl, WEED_LEAF_COLORSPACE, &error);
+      pcspace = weed_get_int_value(ptmpl, WEED_LEAF_COLORSPACE, NULL);
       if (pcspace == WEED_COLORSPACE_RGBA) qvals = 4;
-      ivals = weed_get_int_array(param, WEED_LEAF_VALUE, &error);
+      ivals = weed_get_int_array(param, WEED_LEAF_VALUE, NULL);
       if (gamma_lut) {
-        for (j = 0; j < nvals; j += qvals) {
-          for (k = 0; k < 3; k++) {
+        for (int j = 0; j < nvals; j += qvals) {
+          for (int k = 0; k < 3; k++) {
             ivals[j + k] = gamma_lut[ivals[j + k]];
           }
         }
@@ -11801,7 +11801,6 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
 
   boolean cheat = FALSE, done;
 
-  weed_error_t error;
   int palette, xpalette;
   int width;
   int height;
@@ -11809,13 +11808,13 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
   int rowstride, orowstride;
   int n_channels;
 
-  if (layer == NULL) return NULL;
+  if (!layer) return NULL;
 
   palette = weed_layer_get_palette(layer);
 
   if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC) && (!realpalette || weed_palette_is_pixbuf_palette(palette))) {
     // our layer pixel_data originally came from a pixbuf, so just free the layer and return the pixbuf
-    pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PIXBUF_SRC, &error);
+    pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PIXBUF_SRC, NULL);
     weed_layer_nullify_pixel_data(layer);
     weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
     return pixbuf;
@@ -13123,13 +13122,13 @@ boolean lives_painter_to_layer(lives_painter_t *cr, weed_layer_t *layer) {
   lives_painter_surface_t *surface = lives_painter_get_target(cr), *xsurface = NULL;
   lives_painter_format_t  cform;
 
-  int width, height, rowstride, error;
+  int width, height, rowstride;
 
   /// flush to ensure all writing to the image surface was done
   lives_painter_surface_flush(surface);
 
   if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_SURFACE_SRC)) {
-    xsurface = (lives_painter_surface_t *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_SURFACE_SRC, &error);
+    xsurface = (lives_painter_surface_t *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_SURFACE_SRC, NULL);
   }
   if (xsurface != surface) weed_layer_pixel_data_free(layer);
 

@@ -56,12 +56,12 @@ extern "C"
 #define WEED_PLANT_HOST_INFO                     	9
 
 /* Parameter types */
-#define WEED_HINT_UNSPECIFIED  	0
-#define WEED_HINT_INTEGER        	1
-#define WEED_HINT_FLOAT           	2
-#define WEED_HINT_TEXT             	3
-#define WEED_HINT_SWITCH          	4
-#define WEED_HINT_COLOR           	5
+#define WEED_PARAM_UNSPECIFIED	  	0
+#define WEED_PARAM_INTEGER        	1
+#define WEED_PARAM_FLOAT           	2
+#define WEED_PARAM_TEXT             	3
+#define WEED_PARAM_SWITCH          	4
+#define WEED_PARAM_COLOR           	5
 
 typedef struct {
   int32_t red, green, blue;
@@ -349,7 +349,6 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_MIN "min"  /// Mand. for in chans, Opt. for out
 #define WEED_LEAF_MAX "max"  /// M for in chans, O for out
 #define WEED_LEAF_PARAM_TYPE "param_type"
-#define WEED_LEAF_HINT "hint"
 
 //optional
 /// WEED_LEAF_FLAGS

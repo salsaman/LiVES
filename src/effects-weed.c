@@ -816,7 +816,8 @@ weed_plant_t *add_filter_deinit_events(weed_plant_t *event_list) {
     if (init_events[i] != NULL) {
       event_list = append_filter_deinit_event(event_list, last_tc, init_events[i], pchains[i]);
       init_events[i] = NULL;
-      lives_freep((void **)&pchains[i]);
+      // no freep !
+      if (pchains[i]) lives_free(pchains[i]);
       pchains[i] = NULL;
       needs_filter_map = TRUE;
     }
@@ -5469,7 +5470,7 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
   int stage = 0, nfilts = 0, fnum, line = 0, version = 0;
   int qvals = 1, ntok, xfilt, xfilt2;
   int xconx = 0;
-  int nparams, nchans, pnum, pnum2, xpnum2, cnum, cnum2, ptype, phint, pcspace, pflags;
+  int nparams, nchans, pnum, pnum2, xpnum2, cnum, cnum2, ptype, pptype, pcspace, pflags;
   int error;
 
   register int i;
@@ -5570,9 +5571,9 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
 
         ptype = weed_leaf_seed_type(ptmpl, WEED_LEAF_DEFAULT);
         pflags = weed_get_int_value(ptmpl, WEED_LEAF_FLAGS, &error);
-        phint = weed_get_int_value(ptmpl, WEED_LEAF_HINT, &error);
+        pptype = weed_paramtmpl_get_type(ptmpl);
 
-        if (phint == WEED_HINT_COLOR) {
+        if (pptype == WEED_PARAM_COLOR) {
           pcspace = weed_get_int_value(ptmpl, WEED_LEAF_COLORSPACE, &error);
           qvals = 3;
           if (pcspace == WEED_COLORSPACE_RGBA) qvals = 4;
@@ -8591,22 +8592,22 @@ boolean is_hidden_param(weed_plant_t *plant, int i) {
 
   /// if we are to copy the values to another param, make sure it's possible (type, num values)
   if ((weed_plant_has_leaf(wtmpl, WEED_LEAF_COPY_VALUE_TO))
-      || (pgui != NULL && weed_plant_has_leaf(pgui, WEED_LEAF_COPY_VALUE_TO))) {
+      || (pgui && weed_plant_has_leaf(pgui, WEED_LEAF_COPY_VALUE_TO))) {
     int copyto = -1;
-    int flags2 = 0, param_hint, param_hint2;
+    int flags2 = 0, param_type, param_type2;
     weed_plant_t *wtmpl2;
     if (weed_plant_has_leaf(wtmpl, WEED_LEAF_COPY_VALUE_TO))
       copyto = weed_get_int_value(wtmpl, WEED_LEAF_COPY_VALUE_TO, NULL);
-    if (pgui != NULL && weed_plant_has_leaf(pgui, WEED_LEAF_COPY_VALUE_TO))
+    if (pgui && weed_plant_has_leaf(pgui, WEED_LEAF_COPY_VALUE_TO))
       copyto = weed_get_int_value(pgui, WEED_LEAF_COPY_VALUE_TO, NULL);
     if (copyto == i || copyto < 0) copyto = -1;
     if (copyto > -1) {
       visible = FALSE;
       wtmpl2 = wtmpls[copyto];
-      flags2 = weed_get_int_value(wtmpl2, WEED_LEAF_FLAGS, NULL);
-      param_hint = weed_get_int_value(wtmpl, WEED_LEAF_HINT, NULL);
-      param_hint2 = weed_get_int_value(wtmpl2, WEED_LEAF_HINT, NULL);
-      if (param_hint == param_hint2
+      flags2 = weed_paramtmpl_get_flags(wtmpl2);
+      param_type = weed_paramtmpl_get_type(wtmpl);
+      param_type2 = weed_paramtmpl_get_type(wtmpl2);
+      if (param_type == param_type2
           && ((flags2 & WEED_PARAMETER_VARIABLE_SIZE)
               || (flags2 & WEED_PARAMETER_VALUE_PER_CHANNEL)
               || weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT)
@@ -8820,7 +8821,7 @@ int get_nth_simple_param(weed_plant_t *plant, int pnum) {
 
   // -1 is returned if no such parameter is found
 
-  int i, error, hint, flags, nparams;
+  int i, ptype, flags, nparams;
   weed_plant_t **in_ptmpls;
   weed_plant_t *tparamtmpl;
   weed_plant_t *gui;
@@ -8832,17 +8833,16 @@ int get_nth_simple_param(weed_plant_t *plant, int pnum) {
   in_ptmpls = weed_get_plantptr_array_counted(plant, WEED_LEAF_IN_PARAMETER_TEMPLATES, &nparams);
 
   for (i = 0; i < nparams; i++) {
-    gui = NULL;
     tparamtmpl = in_ptmpls[i];
-    if (weed_plant_has_leaf(tparamtmpl, WEED_LEAF_GUI)) gui = weed_get_plantptr_value(tparamtmpl, WEED_LEAF_GUI, &error);
+    gui = weed_paramtmpl_get_gui(tparamtmpl, FALSE);
 
-    hint = weed_get_int_value(tparamtmpl, WEED_LEAF_HINT, &error);
+    ptype = weed_paramtmpl_get_type(tparamtmpl);
 
-    if (gui != NULL && hint == WEED_HINT_INTEGER && weed_plant_has_leaf(gui, WEED_LEAF_CHOICES)) continue;
+    if (gui && ptype == WEED_PARAM_INTEGER && weed_plant_has_leaf(gui, WEED_LEAF_CHOICES)) continue;
 
-    flags = weed_get_int_value(tparamtmpl, WEED_LEAF_FLAGS, &error);
+    flags = weed_paramtmpl_get_flags(tparamtmpl);
 
-    if ((hint == WEED_HINT_INTEGER || hint == WEED_HINT_FLOAT)
+    if ((ptype == WEED_PARAM_INTEGER || ptype == WEED_PARAM_FLOAT)
         && flags == 0 && weed_leaf_num_elements(tparamtmpl, WEED_LEAF_DEFAULT) == 1 &&
         !is_hidden_param(plant, i)) {
       if (pnum == 0) {
@@ -8858,7 +8858,7 @@ int get_nth_simple_param(weed_plant_t *plant, int pnum) {
 
 
 int count_simple_params(weed_plant_t *plant) {
-  int i, error, hint, flags, nparams, count = 0;
+  int i, ptype, flags, nparams, count = 0;
   weed_plant_t **in_ptmpls;
   weed_plant_t *tparamtmpl;
 
@@ -8870,9 +8870,9 @@ int count_simple_params(weed_plant_t *plant) {
 
   for (i = 0; i < nparams; i++) {
     tparamtmpl = in_ptmpls[i];
-    hint = weed_get_int_value(tparamtmpl, WEED_LEAF_HINT, &error);
-    flags = weed_get_int_value(tparamtmpl, WEED_LEAF_FLAGS, &error);
-    if ((hint == WEED_HINT_INTEGER || hint == WEED_HINT_FLOAT)
+    ptype = weed_paramtmpl_get_type(tparamtmpl);
+    flags = weed_paramtmpl_get_flags(tparamtmpl);
+    if ((ptype == WEED_PARAM_INTEGER || ptype == WEED_PARAM_FLOAT)
         && flags == 0 && weed_leaf_num_elements(tparamtmpl, WEED_LEAF_DEFAULT) == 1 &&
         !is_hidden_param(plant, i)) {
       count++;
@@ -8891,14 +8891,14 @@ int set_copy_to(weed_plant_t *inst, int pnum, lives_rfx_t *rfx, boolean update) 
   weed_plant_t *in_param = weed_inst_in_param(inst, pnum, FALSE, FALSE); // use this here in case of compound fx
   int copyto = -1;
   int key = -1;
-  int param_hint, param_hint2;
+  int param_type, param_type2;
 
-  if (in_param == NULL) return -1;
+  if (!in_param) return -1;
 
   pgui = weed_param_get_gui(in_param, FALSE);
   paramtmpl = weed_param_get_template(in_param);
 
-  if (pgui != NULL && weed_plant_has_leaf(pgui, WEED_LEAF_COPY_VALUE_TO)) {
+  if (pgui && weed_plant_has_leaf(pgui, WEED_LEAF_COPY_VALUE_TO)) {
     copyto = weed_get_int_value(pgui, WEED_LEAF_COPY_VALUE_TO, NULL);
     if (copyto == pnum || copyto < 0) return -1;
   }
@@ -8911,14 +8911,14 @@ int set_copy_to(weed_plant_t *inst, int pnum, lives_rfx_t *rfx, boolean update) 
 
   if (rfx->params[copyto].change_blocked) return -1; ///< prevent loops
 
-  param_hint = weed_param_get_hint(in_param);
+  param_type = weed_param_get_type(in_param);
   in_param2 = weed_inst_in_param(inst, copyto, FALSE, FALSE); // use this here in case of compound fx
-  if (in_param2 == NULL) return -1;
+  if (!in_param2) return -1;
   if (weed_plant_has_leaf(in_param2, WEED_LEAF_HOST_INTERNAL_CONNECTION)) return -1;
-  param_hint2 = weed_param_get_hint(in_param2);
+  param_type2 = weed_param_get_type(in_param2);
 
   /// check for compatibility nvalues
-  if (!(param_hint == param_hint2 && (!weed_param_has_variable_size(in_param) || weed_param_has_variable_size(in_param2))
+  if (!(param_type == param_type2 && (!weed_param_has_variable_size(in_param) || weed_param_has_variable_size(in_param2))
         && (!weed_param_has_value_perchannel(in_param) || weed_param_has_variable_size(in_param2)
             || weed_param_has_value_perchannel(in_param2)))) return -1;
 
@@ -8934,7 +8934,7 @@ int set_copy_to(weed_plant_t *inst, int pnum, lives_rfx_t *rfx, boolean update) 
       int *ign_array;
       int nvals = weed_leaf_num_elements(in_param2, WEED_LEAF_VALUE);
       int vsize = 1;
-      if (param_hint2 == WEED_HINT_COLOR) {
+      if (param_type2 == WEED_PARAM_COLOR) {
         int cspace = weed_get_int_value(paramtmpl2, WEED_LEAF_COLORSPACE, NULL);
         if (cspace == WEED_COLORSPACE_RGB) vsize = 3;
         else vsize = 4;
@@ -9013,9 +9013,8 @@ void weed_set_blend_factor(int hotkey) {
 
   double vald, mind, maxd;
 
-  weed_error_t error;
   int vali, mini, maxi;
-  int param_hint, pnum, inc_count;
+  int param_type, pnum, inc_count;
 
   if (hotkey < 0) return;
 
@@ -9023,7 +9022,7 @@ void weed_set_blend_factor(int hotkey) {
 
   inst = weed_instance_obtain(hotkey, key_modes[hotkey]);
 
-  if (inst == NULL) {
+  if (!inst) {
     filter_mutex_unlock(hotkey);
     return;
   }
@@ -9036,12 +9035,12 @@ void weed_set_blend_factor(int hotkey) {
     return;
   }
 
-  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
+  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
   in_param = in_params[pnum];
   lives_free(in_params);
 
-  paramtmpl = weed_get_plantptr_value(in_param, WEED_LEAF_TEMPLATE, &error);
-  param_hint = weed_get_int_value(paramtmpl, WEED_LEAF_HINT, &error);
+  paramtmpl = weed_param_get_template(in_param);
+  param_type = weed_paramtmpl_get_type(paramtmpl);
 
   inc_count = enabled_in_channels(inst, FALSE);
 
@@ -9067,16 +9066,16 @@ void weed_set_blend_factor(int hotkey) {
     else if (mainw->blend_factor > 255.) mainw->blend_factor = 255.;
   }
 
-  switch (param_hint) {
-  case WEED_HINT_INTEGER:
-    vali = weed_get_int_value(in_param, WEED_LEAF_VALUE, &error);
-    mini = weed_get_int_value(paramtmpl, WEED_LEAF_MIN, &error);
-    maxi = weed_get_int_value(paramtmpl, WEED_LEAF_MAX, &error);
+  switch (param_type) {
+  case WEED_PARAM_INTEGER:
+    vali = weed_get_int_value(in_param, WEED_LEAF_VALUE, NULL);
+    mini = weed_get_int_value(paramtmpl, WEED_LEAF_MIN, NULL);
+    maxi = weed_get_int_value(paramtmpl, WEED_LEAF_MAX, NULL);
 
     weed_set_int_value(in_param, WEED_LEAF_VALUE, (int)((double)mini +
                        (mainw->blend_factor / KEYSCALE * (double)(maxi - mini)) + .5));
 
-    vali = weed_get_int_value(in_param, WEED_LEAF_VALUE, &error);
+    vali = weed_get_int_value(in_param, WEED_LEAF_VALUE, NULL);
 
     list = lives_list_append(list, lives_strdup_printf("%d", vali));
     list = lives_list_append(list, lives_strdup_printf("%d", mini));
@@ -9086,13 +9085,13 @@ void weed_set_blend_factor(int hotkey) {
     lives_list_free_all(&list);
 
     break;
-  case WEED_HINT_FLOAT:
-    vald = weed_get_double_value(in_param, WEED_LEAF_VALUE, &error);
-    mind = weed_get_double_value(paramtmpl, WEED_LEAF_MIN, &error);
-    maxd = weed_get_double_value(paramtmpl, WEED_LEAF_MAX, &error);
+  case WEED_PARAM_FLOAT:
+    vald = weed_get_double_value(in_param, WEED_LEAF_VALUE, NULL);
+    mind = weed_get_double_value(paramtmpl, WEED_LEAF_MIN, NULL);
+    maxd = weed_get_double_value(paramtmpl, WEED_LEAF_MAX, NULL);
 
     weed_set_double_value(in_param, WEED_LEAF_VALUE, mind + (mainw->blend_factor / KEYSCALE * (maxd - mind)));
-    vald = weed_get_double_value(in_param, WEED_LEAF_VALUE, &error);
+    vald = weed_get_double_value(in_param, WEED_LEAF_VALUE, NULL);
 
     list = lives_list_append(list, lives_strdup_printf("%.4f", vald));
     list = lives_list_append(list, lives_strdup_printf("%.4f", mind));
@@ -9102,10 +9101,10 @@ void weed_set_blend_factor(int hotkey) {
     lives_list_free_all(&list);
 
     break;
-  case WEED_HINT_SWITCH:
+  case WEED_PARAM_SWITCH:
     vali = !!(int)mainw->blend_factor;
     weed_set_boolean_value(in_param, WEED_LEAF_VALUE, vali);
-    vali = weed_get_boolean_value(in_param, WEED_LEAF_VALUE, &error);
+    vali = weed_get_boolean_value(in_param, WEED_LEAF_VALUE, NULL);
     mainw->blend_factor = (double)vali;
 
     list = lives_list_append(list, lives_strdup_printf("%d", vali));
@@ -9139,18 +9138,15 @@ int weed_get_blend_factor(int hotkey) {
   // filter mutex MUST be locked
 
   weed_plant_t *inst, **in_params, *in_param, *paramtmpl;
-  int error;
   int vali, mini, maxi;
   double vald, mind, maxd;
-  int weed_hint;
+  int weed_ptype;
   int i;
 
   if (hotkey < 0) return 0;
   inst = weed_instance_obtain(hotkey, key_modes[hotkey]);
 
-  if (inst == NULL)  {
-    return 0;
-  }
+  if (!inst) return 0;
 
   i = get_nth_simple_param(inst, 0);
 
@@ -9159,29 +9155,29 @@ int weed_get_blend_factor(int hotkey) {
     return 0;
   }
 
-  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
+  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
   in_param = in_params[i];
 
-  paramtmpl = weed_get_plantptr_value(in_param, WEED_LEAF_TEMPLATE, &error);
-  weed_hint = weed_get_int_value(paramtmpl, WEED_LEAF_HINT, &error);
+  paramtmpl = weed_param_get_template(in_param);
+  weed_ptype = weed_paramtmpl_get_type(paramtmpl);
 
-  switch (weed_hint) {
-  case WEED_HINT_INTEGER:
-    vali = weed_get_int_value(in_param, WEED_LEAF_VALUE, &error);
-    mini = weed_get_int_value(paramtmpl, WEED_LEAF_MIN, &error);
-    maxi = weed_get_int_value(paramtmpl, WEED_LEAF_MAX, &error);
+  switch (weed_ptype) {
+  case WEED_PARAM_INTEGER:
+    vali = weed_get_int_value(in_param, WEED_LEAF_VALUE, NULL);
+    mini = weed_get_int_value(paramtmpl, WEED_LEAF_MIN, NULL);
+    maxi = weed_get_int_value(paramtmpl, WEED_LEAF_MAX, NULL);
     lives_free(in_params);
     weed_instance_unref(inst);
     return (double)(vali - mini) / (double)(maxi - mini) * KEYSCALE;
-  case WEED_HINT_FLOAT:
-    vald = weed_get_double_value(in_param, WEED_LEAF_VALUE, &error);
-    mind = weed_get_double_value(paramtmpl, WEED_LEAF_MIN, &error);
-    maxd = weed_get_double_value(paramtmpl, WEED_LEAF_MAX, &error);
+  case WEED_PARAM_FLOAT:
+    vald = weed_get_double_value(in_param, WEED_LEAF_VALUE, NULL);
+    mind = weed_get_double_value(paramtmpl, WEED_LEAF_MIN, NULL);
+    maxd = weed_get_double_value(paramtmpl, WEED_LEAF_MAX, NULL);
     lives_free(in_params);
     weed_instance_unref(inst);
     return (vald - mind) / (maxd - mind) * KEYSCALE;
-  case WEED_HINT_SWITCH:
-    vali = weed_get_boolean_value(in_param, WEED_LEAF_VALUE, &error);
+  case WEED_PARAM_SWITCH:
+    vali = weed_get_boolean_value(in_param, WEED_LEAF_VALUE, NULL);
     lives_free(in_params);
     weed_instance_unref(inst);
     return vali;
@@ -9545,14 +9541,13 @@ char *rte_keymode_get_plugin_name(int key, int mode) {
   // key is 1 based
   weed_plant_t *filter, *plugin_info;
   char *name;
-  int error;
 
   key--;
   if (!rte_keymode_valid(key + 1, mode, TRUE)) return lives_strdup("");
 
   filter = weed_filters[key_to_fx[key][mode]];
-  plugin_info = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, &error);
-  name = weed_get_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_NAME, &error);
+  plugin_info = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, NULL);
+  name = weed_get_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_NAME, NULL);
   return name;
 }
 
@@ -9583,13 +9578,13 @@ LIVES_GLOBAL_INLINE int rte_fg_gen_mode(void) {
 weed_plant_t *get_textparm(void) {
   weed_plant_t *inst, **in_params, *ptmpl, *ret;
 
-  int key = mainw->rte_keys, mode, error, i, hint;
+  int key = mainw->rte_keys, mode, i, ptype;
 
   if (key == -1) return NULL;
 
   mode = rte_key_getmode(key + 1);
 
-  if ((inst = weed_instance_obtain(key, mode)) != NULL) {
+  if ((inst = weed_instance_obtain(key, mode))) {
     int nparms;
 
     in_params = weed_get_plantptr_array_counted(inst, WEED_LEAF_IN_PARAMETERS, &nparms);
@@ -9599,11 +9594,10 @@ weed_plant_t *get_textparm(void) {
     }
 
     for (i = 0; i < nparms; i++) {
-      ptmpl = weed_get_plantptr_value(in_params[0], WEED_LEAF_TEMPLATE, &error);
+      ptmpl = weed_param_get_template(in_params[i]);
+      ptype = weed_paramtmpl_get_type(ptmpl);
 
-      hint = weed_get_int_value(ptmpl, WEED_LEAF_HINT, &error);
-
-      if (hint == WEED_HINT_TEXT) {
+      if (ptype == WEED_PARAM_TEXT) {
         ret = in_params[i];
         weed_set_int_value(ret, WEED_LEAF_HOST_IDX, i);
         weed_set_plantptr_value(ret, WEED_LEAF_HOST_INSTANCE, inst);
@@ -9917,7 +9911,7 @@ LIVES_GLOBAL_INLINE int rte_get_numfilters(void) {
   paramtmpl must be supplied, since pchanges do not have one directly
 */
 void fill_param_vals_to(weed_plant_t *param, weed_plant_t *paramtmpl, int index) {
-  int i, error, hint;
+  int i, ptype;
   int num_vals = weed_leaf_num_elements(param, WEED_LEAF_VALUE);
   int new_defi, *valis, *nvalis;
   double new_defd, *valds, *nvalds;
@@ -9927,15 +9921,15 @@ void fill_param_vals_to(weed_plant_t *param, weed_plant_t *paramtmpl, int index)
   int vcount;
   double *colsds, *cold;
 
-  hint = weed_get_int_value(paramtmpl, WEED_LEAF_HINT, &error);
+  ptype = weed_paramtmpl_get_type(paramtmpl);
   vcount = num_vals;
   if (index >= vcount) vcount = ++index;
 
-  switch (hint) {
-  case WEED_HINT_INTEGER:
+  switch (ptype) {
+  case WEED_PARAM_INTEGER:
     if (vcount > num_vals) {
-      new_defi = weed_get_int_value(paramtmpl, WEED_LEAF_NEW_DEFAULT, &error);
-      valis = weed_get_int_array(param, WEED_LEAF_VALUE, &error);
+      new_defi = weed_get_int_value(paramtmpl, WEED_LEAF_NEW_DEFAULT, NULL);
+      valis = weed_get_int_array(param, WEED_LEAF_VALUE, NULL);
       nvalis = (int *)lives_malloc(vcount * sizint);
       for (i = 0; i < vcount; i++) {
         if (i < num_vals && i < index) nvalis[i] = valis[i];
@@ -9947,10 +9941,10 @@ void fill_param_vals_to(weed_plant_t *param, weed_plant_t *paramtmpl, int index)
       lives_freep((void **)&nvalis);
     }
     break;
-  case WEED_HINT_FLOAT:
+  case WEED_PARAM_FLOAT:
     if (vcount > num_vals) {
-      new_defd = weed_get_double_value(paramtmpl, WEED_LEAF_NEW_DEFAULT, &error);
-      valds = weed_get_double_array(param, WEED_LEAF_VALUE, &error);
+      new_defd = weed_get_double_value(paramtmpl, WEED_LEAF_NEW_DEFAULT, NULL);
+      valds = weed_get_double_array(param, WEED_LEAF_VALUE, NULL);
       nvalds = (double *)lives_malloc(vcount * sizdbl);
       for (i = 0; i < vcount; i++) {
         if (i < num_vals && i < index) nvalds[i] = valds[i];
@@ -9963,10 +9957,10 @@ void fill_param_vals_to(weed_plant_t *param, weed_plant_t *paramtmpl, int index)
       lives_freep((void **)&nvalds);
     }
     break;
-  case WEED_HINT_SWITCH:
+  case WEED_PARAM_SWITCH:
     if (vcount > num_vals) {
-      new_defi = weed_get_boolean_value(paramtmpl, WEED_LEAF_NEW_DEFAULT, &error);
-      valis = weed_get_boolean_array(param, WEED_LEAF_VALUE, &error);
+      new_defi = weed_get_boolean_value(paramtmpl, WEED_LEAF_NEW_DEFAULT, NULL);
+      valis = weed_get_boolean_array(param, WEED_LEAF_VALUE, NULL);
       nvalis = (int *)lives_malloc(vcount * sizint);
       for (i = 0; i < vcount; i++) {
         if (i < num_vals && i < index) nvalis[i] = valis[i];
@@ -9978,10 +9972,10 @@ void fill_param_vals_to(weed_plant_t *param, weed_plant_t *paramtmpl, int index)
       lives_freep((void **)&nvalis);
     }
     break;
-  case WEED_HINT_TEXT:
+  case WEED_PARAM_TEXT:
     if (vcount > num_vals) {
-      new_defs = weed_get_string_value(paramtmpl, WEED_LEAF_NEW_DEFAULT, &error);
-      valss = weed_get_string_array(param, WEED_LEAF_VALUE, &error);
+      new_defs = weed_get_string_value(paramtmpl, WEED_LEAF_NEW_DEFAULT, NULL);
+      valss = weed_get_string_array(param, WEED_LEAF_VALUE, NULL);
       nvalss = (char **)lives_malloc(vcount * sizeof(char *));
       for (i = 0; i < vcount; i++) {
         if (i < num_vals && i < index) nvalss[i] = valss[i];
@@ -9998,8 +9992,8 @@ void fill_param_vals_to(weed_plant_t *param, weed_plant_t *paramtmpl, int index)
       lives_freep((void **)&nvalss);
     }
     break;
-  case WEED_HINT_COLOR:
-    cspace = weed_get_int_value(paramtmpl, WEED_LEAF_COLORSPACE, &error);
+  case WEED_PARAM_COLOR:
+    cspace = weed_get_int_value(paramtmpl, WEED_LEAF_COLORSPACE, NULL);
     switch (cspace) {
     case WEED_COLORSPACE_RGB:
       num_vals /= 3;
@@ -10008,12 +10002,12 @@ void fill_param_vals_to(weed_plant_t *param, weed_plant_t *paramtmpl, int index)
       if (index >= vcount) vcount = ++index;
       vcount *= 3;
       if (weed_leaf_seed_type(paramtmpl, WEED_LEAF_NEW_DEFAULT) == WEED_SEED_INT) {
-        colsis = weed_get_int_array(param, WEED_LEAF_VALUE, &error);
+        colsis = weed_get_int_array(param, WEED_LEAF_VALUE, NULL);
         if (weed_leaf_num_elements(paramtmpl, WEED_LEAF_NEW_DEFAULT) == 1) {
           coli = (int *)lives_malloc(3 * sizint);
-          coli[0] = coli[1] = coli[2] = weed_get_int_value(paramtmpl, WEED_LEAF_NEW_DEFAULT, &error);
-        } else coli = weed_get_int_array(paramtmpl, WEED_LEAF_NEW_DEFAULT, &error);
-        valis = weed_get_int_array(param, WEED_LEAF_VALUE, &error);
+          coli[0] = coli[1] = coli[2] = weed_get_int_value(paramtmpl, WEED_LEAF_NEW_DEFAULT, NULL);
+        } else coli = weed_get_int_array(paramtmpl, WEED_LEAF_NEW_DEFAULT, NULL);
+        valis = weed_get_int_array(param, WEED_LEAF_VALUE, NULL);
         nvalis = (int *)lives_malloc(vcount * sizint);
         for (i = 0; i < vcount; i += 3) {
           if (i < num_vals && i < index) {
@@ -10035,12 +10029,12 @@ void fill_param_vals_to(weed_plant_t *param, weed_plant_t *paramtmpl, int index)
         lives_freep((void **)&colsis);
         lives_freep((void **)&nvalis);
       } else {
-        colsds = weed_get_double_array(param, WEED_LEAF_VALUE, &error);
+        colsds = weed_get_double_array(param, WEED_LEAF_VALUE, NULL);
         if (weed_leaf_num_elements(paramtmpl, WEED_LEAF_NEW_DEFAULT) == 1) {
           cold = (double *)lives_malloc(3 * sizdbl);
-          cold[0] = cold[1] = cold[2] = weed_get_double_value(paramtmpl, WEED_LEAF_NEW_DEFAULT, &error);
-        } else cold = weed_get_double_array(paramtmpl, WEED_LEAF_NEW_DEFAULT, &error);
-        valds = weed_get_double_array(param, WEED_LEAF_VALUE, &error);
+          cold[0] = cold[1] = cold[2] = weed_get_double_value(paramtmpl, WEED_LEAF_NEW_DEFAULT, NULL);
+        } else cold = weed_get_double_array(paramtmpl, WEED_LEAF_NEW_DEFAULT, NULL);
+        valds = weed_get_double_array(param, WEED_LEAF_VALUE, NULL);
         nvalds = (double *)lives_malloc(vcount * sizdbl);
         for (i = 0; i < vcount; i += 3) {
           if (i < num_vals && i < index) {
@@ -10207,7 +10201,7 @@ boolean interpolate_param(weed_plant_t *param, void *pchain, weed_timecode_t tc)
   int *valis = NULL, *nvalis, last_valuei;
   int last_valueir, last_valueig, last_valueib, last_valueia;
   int *ign, num_ign = 0;
-  int hint, cspace = 0;
+  int ptype, cspace = 0;
   int got_npc, num_values, xnum, num_pvals, k, j;
 
   if (pchange == NULL) return TRUE;
@@ -10259,12 +10253,12 @@ boolean interpolate_param(weed_plant_t *param, void *pchain, weed_timecode_t tc)
     }
   }
 
-  hint = weed_get_int_value(wtmpl, WEED_LEAF_HINT, NULL);
-  switch (hint) {
-  case WEED_HINT_FLOAT:
+  ptype = weed_paramtmpl_get_type(wtmpl);
+  switch (ptype) {
+  case WEED_PARAM_FLOAT:
     valds = (double *)lives_malloc(num_values * (sizeof(double)));
     break;
-  case WEED_HINT_COLOR:
+  case WEED_PARAM_COLOR:
     cspace = weed_get_int_value(wtmpl, WEED_LEAF_COLORSPACE, NULL);
     switch (cspace) {
     case WEED_COLORSPACE_RGB:
@@ -10285,8 +10279,8 @@ boolean interpolate_param(weed_plant_t *param, void *pchain, weed_timecode_t tc)
       break;
     }
     break;
-  case WEED_HINT_SWITCH:
-  case WEED_HINT_INTEGER:
+  case WEED_PARAM_SWITCH:
+  case WEED_PARAM_INTEGER:
     valis = (int *)lives_malloc(num_values * sizint);
     break;
   }
@@ -10296,8 +10290,8 @@ boolean interpolate_param(weed_plant_t *param, void *pchain, weed_timecode_t tc)
     if (lpc[j] == NULL && npc[j] == NULL) continue;
     if (lpc[j] != NULL && npc[j] != NULL) tc_diff = weed_get_int64_value((weed_plant_t *)npc[j], WEED_LEAF_TIMECODE, NULL) -
           weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, NULL);
-    switch (hint) {
-    case WEED_HINT_FLOAT:
+    switch (ptype) {
+    case WEED_PARAM_FLOAT:
       if (lpc[j] == NULL) {
         // before first change
         valds[j] = get_default_element_double(param, j, 1, 0);
@@ -10325,7 +10319,7 @@ boolean interpolate_param(weed_plant_t *param, void *pchain, weed_timecode_t tc)
       lives_free(last_valuesd);
       lives_free(next_valuesd);
       break;
-    case WEED_HINT_COLOR:
+    case WEED_PARAM_COLOR:
       if (num_values != weed_leaf_num_elements(last_pchange, WEED_LEAF_VALUE)) break; // no interp possible
 
       switch (cspace) {
@@ -10553,7 +10547,7 @@ boolean interpolate_param(weed_plant_t *param, void *pchain, weed_timecode_t tc)
         break;
       } // cspace
       break; // color
-    case WEED_HINT_INTEGER:
+    case WEED_PARAM_INTEGER:
       if (weed_param_get_nchoices(param) > 0) {
         // no interpolation
         if (npc[j] != NULL && get_event_timecode((weed_plant_t *)npc[j]) == tc) {
@@ -10599,7 +10593,7 @@ boolean interpolate_param(weed_plant_t *param, void *pchain, weed_timecode_t tc)
         lives_free(next_valuesi);
         break;
       }
-    case WEED_HINT_SWITCH:
+    case WEED_PARAM_SWITCH:
       // no interpolation
       if (npc[j] != NULL && get_event_timecode((weed_plant_t *)npc[j]) == tc) {
         nvalis = weed_get_boolean_array((weed_plant_t *)npc[j], WEED_LEAF_VALUE, NULL);
@@ -10617,7 +10611,7 @@ boolean interpolate_param(weed_plant_t *param, void *pchain, weed_timecode_t tc)
         continue;
       }
       break;
-    case WEED_HINT_TEXT:
+    case WEED_PARAM_TEXT:
       // no interpolation
       valss = weed_get_string_array(param, WEED_LEAF_VALUE, NULL);
       if (npc[j] != NULL && get_event_timecode((weed_plant_t *)npc[j]) == tc) {
@@ -10644,15 +10638,15 @@ boolean interpolate_param(weed_plant_t *param, void *pchain, weed_timecode_t tc)
         continue;
       }
       break;
-    } // parameter hint
+    } // parameter ptype
   } // j
 
-  switch (hint) {
-  case WEED_HINT_FLOAT:
+  switch (ptype) {
+  case WEED_PARAM_FLOAT:
     weed_set_double_array(param, WEED_LEAF_VALUE, num_values, valds);
     lives_free(valds);
     break;
-  case WEED_HINT_COLOR:
+  case WEED_PARAM_COLOR:
     switch (cspace) {
     case WEED_COLORSPACE_RGB:
       if (weed_leaf_seed_type(wtmpl, WEED_LEAF_DEFAULT) == WEED_SEED_INT) {
@@ -10665,11 +10659,11 @@ boolean interpolate_param(weed_plant_t *param, void *pchain, weed_timecode_t tc)
       break;
     }
     break;
-  case WEED_HINT_INTEGER:
+  case WEED_PARAM_INTEGER:
     weed_set_int_array(param, WEED_LEAF_VALUE, num_values, valis);
     lives_free(valis);
     break;
-  case WEED_HINT_SWITCH:
+  case WEED_PARAM_SWITCH:
     weed_set_boolean_array(param, WEED_LEAF_VALUE, num_values, valis);
     lives_free(valis);
     break;

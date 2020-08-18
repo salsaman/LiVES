@@ -3041,6 +3041,9 @@ void play_file(void) {
     }
   }
 
+  if (!mainw->multitrack && mainw->ext_audio_mon)
+    lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_mon), FALSE);
+
   // reset in case audio lock was actioned
   prefs->audio_opts = future_prefs->audio_opts;
 

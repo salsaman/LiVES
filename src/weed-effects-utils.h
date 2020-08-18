@@ -138,7 +138,7 @@ weed_plant_t *weed_channel_set_audio_data(weed_plant_t *channel, float **data, i
 weed_plant_t *weed_paramtmpl_get_gui(weed_plant_t *paramtmpl, int create_if_not_exists);
 int weed_paramtmpl_get_flags(weed_plant_t *paramtmpl);
 char *weed_paramtmpl_get_name(weed_plant_t *paramtmpl);
-int weed_paramtmpl_get_hint(weed_plant_t *paramtmpl);
+int weed_paramtmpl_get_type(weed_plant_t *paramtmpl);
 int weed_paramtmpl_has_variable_size(weed_plant_t *paramtmpl);
 int weed_paramtmpl_has_value_perchannel(weed_plant_t *paramtmpl);
 uint32_t weed_paramtmpl_value_type(weed_plant_t *paramtmpl);
@@ -151,7 +151,7 @@ int weed_paramtmpl_value_irrelevant(weed_plant_t *paramtmpl);
 int weed_param_is_hidden(weed_plant_t *param);
 weed_plant_t *weed_param_get_gui(weed_plant_t *param, int create_if_not_exists);
 weed_plant_t *weed_param_get_template(weed_plant_t *param);
-int weed_param_get_hint(weed_plant_t *paraml);
+int weed_param_get_type(weed_plant_t *param);
 int weed_param_has_variable_size(weed_plant_t *param);
 int weed_param_has_value_perchannel(weed_plant_t *param);
 int weed_param_does_wrap(weed_plant_t *param);

@@ -727,7 +727,7 @@ static boolean params_compatible(weed_plant_t *sparam, weed_plant_t *dparam) {
 
   int dtype = 0, stype = 0;
   int ndvals = 0, nsvals = 0;
-  int dhint, dflags = 0;
+  int ptype, dflags = 0;
 
   if (dparam == active_dummy) {
     dptmpl = NULL;
@@ -759,10 +759,10 @@ static boolean params_compatible(weed_plant_t *sparam, weed_plant_t *dparam) {
   }
 
   if (dptmpl) {
-    dhint = weed_get_int_value(dptmpl, WEED_LEAF_HINT, NULL);
-    dflags = weed_get_int_value(dptmpl, WEED_LEAF_FLAGS, NULL);
+    ptype = weed_paramtmpl_get_type(dptmpl);
+    dflags = weed_paramtmpl_get_flags(dptmpl);
 
-    if (dhint == WEED_HINT_COLOR) {
+    if (ptype == WEED_PARAM_COLOR) {
       int cspace = weed_get_int_value(dptmpl, WEED_LEAF_COLORSPACE, NULL);
       if (cspace == WEED_COLORSPACE_RGB) {
         if (!(nsvals & 3)) return FALSE;

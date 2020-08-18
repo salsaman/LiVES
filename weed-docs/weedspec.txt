@@ -2399,7 +2399,7 @@ The "param_type" is a mandatory WEED_SEED_INT leaf of every parameter; the defin
  * WEED_PARAM_SWITCH
  * WEED_PARAM_COLOR
 
-Depending on the "param_type" parameter seed type additional leaves are:
+Depending on the value of "param_type", additional leaves may be defined for that parameter tmeplate.
 
  * WEED_PARAM_UNSPECIFIED
    Parameter is of an unknown type. Plugins should never use this

@@ -3796,7 +3796,7 @@ static boolean lives_startup2(livespointer data) {
     if (wid) activate_x11_window(wid);
   }
   if (mainw->recording_recovered) {
-    lives_idle_add(render_choice_idle, LIVES_INT_TO_POINTER(TRUE));
+    lives_idle_add_simple(render_choice_idle, LIVES_INT_TO_POINTER(TRUE));
   }
 
   mainw->overlay_alarm = lives_alarm_set(0);
@@ -3815,7 +3815,7 @@ static boolean lives_startup2(livespointer data) {
   // timer to poll for external commands: MIDI, joystick, jack transport, osc, etc.
   mainw->kb_timer = lives_timer_add_simple(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
 
-  resize(1.);
+  //resize(1.);
   if (!CURRENT_CLIP_IS_VALID) lives_ce_update_timeline(0, 0.);
 
   if (prefs->interactive) set_interactive(TRUE);
@@ -4874,7 +4874,7 @@ void sensitize(void) {
       }
     }
 
-    if (mainw->resize_menuitem != NULL) {
+    if (mainw->resize_menuitem) {
       lives_widget_set_sensitive(mainw->resize_menuitem, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
     }
   }
@@ -5373,8 +5373,6 @@ void load_start_image(int frame) {
 
     lives_widget_set_hexpand(mainw->frame1, FALSE);
     lives_widget_set_vexpand(mainw->frame1, FALSE);
-
-    lives_widget_set_hexpand(mainw->eventbox3, FALSE);
   }
 
   if (CURRENT_CLIP_IS_VALID && (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV)) {
@@ -5657,9 +5655,6 @@ check_stcache:
 
       lives_widget_set_hexpand(mainw->frame2, FALSE);
       lives_widget_set_vexpand(mainw->frame2, FALSE);
-
-      lives_widget_set_hexpand(mainw->eventbox4, TRUE);
-      //lives_widget_set_vexpand(mainw->eventbox4, TRUE);
     }
 
     if (CURRENT_CLIP_IS_VALID && (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV)) {
@@ -9421,7 +9416,7 @@ mainw->track_decoders[i] = clone_decoder(nclip);
           lives_widget_set_sensitive(mainw->rename, FALSE);
         }
 
-        if (cfile->menuentry != NULL) {
+        if (cfile->menuentry) {
           reset_clipmenu();
         }
 
@@ -9432,7 +9427,7 @@ mainw->track_decoders[i] = clone_decoder(nclip);
 
         set_sel_label(mainw->sel_label);
 
-        if (mainw->eventbox5 != NULL) lives_widget_show(mainw->eventbox5);
+        if (mainw->eventbox5) lives_widget_show(mainw->eventbox5);
         lives_widget_show(mainw->hruler);
         lives_widget_show(mainw->vidbar);
         lives_widget_show(mainw->laudbar);

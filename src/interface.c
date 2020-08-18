@@ -1949,7 +1949,7 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
         if (!filedets->mtime_sec) {
           lives_label_set_text(LIVES_LABEL(filedets->widgets[4]), "????");
         } else {
-          txt = lives_datetime(filedets->mtime_sec);
+          txt = lives_datetime(filedets->mtime_sec, TRUE);
           dtxt = lives_datetime_rel(txt);
           lives_label_set_text(LIVES_LABEL(filedets->widgets[4]), dtxt);
           if (dtxt != txt) lives_free(dtxt);
@@ -2588,7 +2588,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
         } while (!filedets->extra_details && lives_expander_get_expanded(LIVES_EXPANDER(exp)));
         if (!lives_expander_get_expanded(LIVES_EXPANDER(exp))) goto thrdjoin;
         lives_layout_add_row(LIVES_LAYOUT(renamew->layouts_layout));
-        txt = lives_datetime(filedets->mtime_sec);
+        txt = lives_datetime(filedets->mtime_sec, TRUE);
         dtxt = lives_datetime_rel(txt);
         lives_layout_add_label(LIVES_LAYOUT(renamew->layouts_layout), dtxt, TRUE);
         if (dtxt != txt) lives_free(dtxt);
@@ -2670,7 +2670,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
           lives_layout_add_row(LIVES_LAYOUT(renamew->clips_layout));
           if (!filedets->mtime_sec) dtxt = txt = lives_strdup("????");
           else {
-            txt = lives_datetime(filedets->mtime_sec);
+            txt = lives_datetime(filedets->mtime_sec, TRUE);
             dtxt = lives_datetime_rel(txt);
           }
           filedets->widgets[0] = lives_layout_add_label(LIVES_LAYOUT(renamew->clips_layout), dtxt, TRUE);
@@ -2699,7 +2699,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
 
         if (filedets->size != -1) {
           if (filedets->mtime_sec) {
-            txt = lives_datetime(filedets->mtime_sec);
+            txt = lives_datetime(filedets->mtime_sec, TRUE);
             dtxt = lives_datetime_rel(txt);
             lives_label_set_text(LIVES_LABEL(filedets->widgets[0]), dtxt);
             if (dtxt != txt) lives_free(dtxt);

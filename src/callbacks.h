@@ -353,7 +353,7 @@ void on_showfct_activate(LiVESMenuItem *, livespointer);
 
 void on_boolean_toggled(LiVESWidgetObject *, livespointer);
 
-void on_audio_toggled(LiVESWidget *, livespointer);
+void on_audio_toggled(LiVESWidget *, LiVESWidget *label);
 
 void on_showsubs_toggled(LiVESWidgetObject *, livespointer);
 

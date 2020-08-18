@@ -7,6 +7,10 @@
 
 // weed filter utility functions
 
+// TODO: get in_paramtmpl(ptmpl, n)
+/// get_colorspace
+/// get_max / min
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -226,9 +230,9 @@ WEED_GLOBAL_INLINE uint32_t weed_paramtmpl_value_type(weed_plant_t *paramtmpl) {
   return weed_leaf_seed_type(paramtmpl, WEED_LEAF_DEFAULT);
 }
 
-WEED_GLOBAL_INLINE int weed_paramtmpl_get_hint(weed_plant_t *paramtmpl) {
+WEED_GLOBAL_INLINE int weed_paramtmpl_get_type(weed_plant_t *paramtmpl) {
   if (!WEED_PLANT_IS_PARAMETER_TEMPLATE(paramtmpl)) return 0;
-  return weed_get_int_value(paramtmpl, WEED_LEAF_HINT, NULL);
+  return weed_get_int_value(paramtmpl, WEED_LEAF_PARAM_TYPE, NULL);
 }
 
 WEED_GLOBAL_INLINE char *weed_paramtmpl_get_name(weed_plant_t *paramtmpl) {
@@ -437,9 +441,9 @@ WEED_GLOBAL_INLINE weed_plant_t *weed_param_get_template(weed_plant_t *param) {
   return weed_get_plantptr_value(param, WEED_LEAF_TEMPLATE, NULL);
 }
 
-WEED_GLOBAL_INLINE int weed_param_get_hint(weed_plant_t *param) {
-  if (!WEED_PLANT_IS_PARAMETER(param)) return WEED_HINT_UNSPECIFIED;
-  return weed_paramtmpl_get_hint(weed_param_get_template(param));
+WEED_GLOBAL_INLINE int weed_param_get_type(weed_plant_t *param) {
+  if (!WEED_PLANT_IS_PARAMETER(param)) return WEED_PARAM_UNSPECIFIED;
+  return weed_paramtmpl_get_type(weed_param_get_template(param));
 }
 
 WEED_GLOBAL_INLINE int weed_param_get_value_type(weed_plant_t *param) {

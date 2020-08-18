@@ -1253,7 +1253,10 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
 
   if (!pulsed->in_use || (mainw->playing_file < 0 && prefs->audio_src == AUDIO_SRC_EXT) || mainw->effects_paused) {
     pa_stream_peek(pulsed->pstream, (const void **)&data, &rbytes);
-    if (rbytes > 0) pa_stream_drop(pulsed->pstream);
+    if (rbytes > 0) {
+      g_print("PVAL %d\n", (*(uint8_t *)data & 0x80) >> 7);
+      pa_stream_drop(pulsed->pstream);
+    }
     prb = 0;
     if (pulsed->in_use)
       pulsed->extrausec += ((double)nbytes / (double)(pulsed->out_arate) * 1000000.
@@ -1272,12 +1275,15 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
     return;
   }
 
-  if (data == NULL) {
+  if (!data) {
     if (rbytes > 0) {
       pa_stream_drop(pulsed->pstream);
     }
     return;
   }
+
+  if (!mainw->fs && !mainw->faded && !mainw->multitrack && mainw->ext_audio_mon)
+    lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_mon), (*(uint8_t *)data & 0x80) >> 7);
 
   // time interpolation
   pulsed->extrausec += ((double)rbytes / (double)(pulsed->out_arate) * 1000000.

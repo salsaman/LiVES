@@ -97,7 +97,7 @@ LIVES_GLOBAL_INLINE weed_timecode_t get_event_timecode(weed_plant_t *plant) {
 
 
 LIVES_GLOBAL_INLINE int get_event_type(weed_plant_t *plant) {
-  if (plant == NULL) return 0;
+  if (!plant) return 0;
   return weed_get_int_value(plant, WEED_LEAF_EVENT_TYPE, NULL);
 }
 

@@ -4840,8 +4840,8 @@ void sensitize(void) {
   }
 
   if (is_realtime_aplayer(prefs->audio_player) && prefs->audio_player != AUD_PLAYER_NONE) {
-    lives_widget_set_sensitive(mainw->int_audio_checkbutton, TRUE);
-    lives_widget_set_sensitive(mainw->ext_audio_checkbutton, TRUE);
+    lives_widget_set_sensitive(mainw->int_audio_checkbutton, prefs->audio_src != AUDIO_SRC_INT);
+    lives_widget_set_sensitive(mainw->ext_audio_checkbutton, prefs->audio_src != AUDIO_SRC_EXT);
   }
 
   if (!prefs->vj_mode) {
@@ -8960,7 +8960,7 @@ mainw->track_decoders[i] = clone_decoder(nclip);
       THREADVAR(rowstride_alignment_hint) = 0;
       lives_freep((void **)&framecount);
       if (success) {
-	if (mainw->multitrack == NULL &&
+	if (!mainw->multitrack &&
 	    !mainw->faded && (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor
 					     && prefs->play_monitor != 0 && capable->nmonitors > 1))
 	    && mainw->current_file != mainw->scrap_file) {
@@ -8968,7 +8968,7 @@ mainw->track_decoders[i] = clone_decoder(nclip);
 	  mainw->ptrtime = ptrtime;
 	  lives_widget_queue_draw(mainw->eventbox2);
 	}
-	if (mainw->multitrack != NULL && !cfile->opening) animate_multitrack(mainw->multitrack);
+	if (mainw->multitrack && !cfile->opening) animate_multitrack(mainw->multitrack);
       }
     }
 

@@ -152,12 +152,12 @@ static void weed_params_to_frei0r_params(weed_plant_t *inst, weed_plant_t **in_p
     ptmpl = weed_get_plantptr_value(in_params[i], WEED_LEAF_TEMPLATE, NULL);
     hint = weed_get_int_value(ptmpl, "hint", NULL);
     switch (hint) {
-    case WEED_HINT_SWITCH:
+    case WEED_PARAM_SWITCH:
       vali = weed_get_boolean_value(in_params[i], WEED_LEAF_VALUE, NULL);
       vald = (double)vali;
       (*f0r_set_param_value)(f0rinst, (f0r_param_t)&vald, pnum);
       break;
-    case WEED_HINT_FLOAT:
+    case WEED_PARAM_FLOAT:
       vald = weed_get_double_value(in_params[i], WEED_LEAF_VALUE, NULL);
       if (!weed_plant_has_leaf(ptmpl, "plugin_f0r_position"))(*f0r_set_param_value)(f0rinst, (f0r_param_t)&vald, pnum);
       else {
@@ -168,7 +168,7 @@ static void weed_params_to_frei0r_params(weed_plant_t *inst, weed_plant_t **in_p
         (*f0r_set_param_value)(f0rinst, (f0r_param_t)&f0rpos, pnum);
       }
       break;
-    case WEED_HINT_COLOR:
+    case WEED_PARAM_COLOR:
       cols = weed_get_double_array(in_params[i], WEED_LEAF_VALUE, NULL);
       f0rcol.r = cols[0];
       f0rcol.g = cols[1];
@@ -176,7 +176,7 @@ static void weed_params_to_frei0r_params(weed_plant_t *inst, weed_plant_t **in_p
       (*f0r_set_param_value)(f0rinst, (f0r_param_t)&f0rcol, pnum);
       weed_free(cols);
       break;
-    case WEED_HINT_TEXT:
+    case WEED_PARAM_TEXT:
       string = weed_get_string_value(in_params[i], WEED_LEAF_VALUE, NULL);
       (*f0r_set_param_value)(f0rinst, (f0r_param_t)&string, pnum);
       weed_free(string);

@@ -2758,13 +2758,13 @@ static void stream_audio_toggled(LiVESToggleButton *togglebutton, livespointer u
       } else {
         // restore current codec
         mainw->vpp->audio_codec = orig_acodec;
-      }
-    }
-  }
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
 }
 
 
-void prefsw_set_astream_settings(_vid_playback_plugin *vpp, _prefsw *prefsw) {
+void prefsw_set_astream_settings(_vid_playback_plugin * vpp, _prefsw * prefsw) {
   if (vpp && (vpp->audio_codec != AUDIO_CODEC_NONE || vpp->init_audio)) {
     lives_widget_set_sensitive(prefsw->checkbutton_stream_audio, TRUE);
     //lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),future_prefs->stream_audio_out);
@@ -2775,7 +2775,7 @@ void prefsw_set_astream_settings(_vid_playback_plugin *vpp, _prefsw *prefsw) {
 }
 
 
-void prefsw_set_rec_after_settings(_vid_playback_plugin *vpp, _prefsw *prefsw) {
+void prefsw_set_rec_after_settings(_vid_playback_plugin * vpp, _prefsw * prefsw) {
   if (vpp && (vpp->capabilities & VPP_CAN_RETURN)) {
     lives_widget_set_sensitive(prefsw->checkbutton_rec_after_pb, TRUE);
     //lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),future_prefs->stream_audio_out);
@@ -2789,7 +2789,7 @@ void prefsw_set_rec_after_settings(_vid_playback_plugin *vpp, _prefsw *prefsw) {
 /*
   Initialize preferences dialog list
 */
-static void pref_init_list(LiVESWidget *list) {
+static void pref_init_list(LiVESWidget * list) {
   LiVESCellRenderer *renderer, *pixbufRenderer;
   LiVESTreeViewColumn *column1, *column2;
   LiVESListStore *store;
@@ -2814,7 +2814,7 @@ static void pref_init_list(LiVESWidget *list) {
 /*
   Adds entry to preferences dialog list
 */
-static void prefs_add_to_list(LiVESWidget *list, LiVESPixbuf *pix, const char *str, uint32_t idx) {
+static void prefs_add_to_list(LiVESWidget * list, LiVESPixbuf * pix, const char *str, uint32_t idx) {
   LiVESListStore *store;
   LiVESTreeIter iter;
 
@@ -2831,15 +2831,12 @@ static void prefs_add_to_list(LiVESWidget *list, LiVESPixbuf *pix, const char *s
 /*
   Callback function called when preferences list row changed
 */
-void on_prefDomainChanged(LiVESTreeSelection *widget, livespointer xprefsw) {
+void on_prefs_page_changed(LiVESTreeSelection * widget, _prefsw * prefsw) {
   LiVESTreeIter iter;
   LiVESTreeModel *model;
+  char *name, *tmp;
 
-  register int i;
-  char *name;
-  _prefsw *prefsw = (_prefsw *)xprefsw;
-
-  for (i = 0; i < 2; i++) {
+  for (int i = 0; i < 2; i++) {
     // for some reason gtk+ needs us to do this twice..
     if (lives_tree_selection_get_selected(widget, &model, &iter)) {
 
@@ -2931,7 +2928,11 @@ void on_prefDomainChanged(LiVESTreeSelection *widget, livespointer xprefsw) {
         prefs_current_page = LIST_ENTRY_GUI;
       }
       lives_tree_model_get(model, &iter, LIST_NUM, &prefs_current_page, LIST_ITEM, &name, -1);
-      lives_label_set_text(LIVES_LABEL(prefsw->tlabel), name);
+      tmp = lives_strdup_printf("<big><b>%s</b></big>", name);
+      widget_opts.use_markup = TRUE;
+      lives_label_set_text(LIVES_LABEL(prefsw->tlabel), tmp);
+      widget_opts.use_markup = FALSE;
+      lives_free(tmp);
     }
   }
 
@@ -2942,7 +2943,7 @@ void on_prefDomainChanged(LiVESTreeSelection *widget, livespointer xprefsw) {
 /*
   Function makes apply button sensitive
 */
-void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data) {
+void apply_button_set_enabled(LiVESWidget * widget, livespointer func_data) {
   if (prefsw->ignore_apply) return;
   lives_button_grab_default_special(prefsw->applybutton); // need to do this first or the button doesnt get its colour
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->applybutton), TRUE);
@@ -2951,7 +2952,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data) {
 }
 
 
-static void spinbutton_ds_value_changed(LiVESSpinButton *warn_ds, livespointer is_critp) {
+static void spinbutton_ds_value_changed(LiVESSpinButton * warn_ds, livespointer is_critp) {
   boolean is_crit = LIVES_POINTER_TO_INT(is_critp);
   char *tmp = NULL, *tmp2;
   double myval = lives_spin_button_get_value(warn_ds);
@@ -2972,7 +2973,7 @@ static void spinbutton_ds_value_changed(LiVESSpinButton *warn_ds, livespointer i
 }
 
 
-static void theme_widgets_set_sensitive(LiVESCombo *combo, livespointer xprefsw) {
+static void theme_widgets_set_sensitive(LiVESCombo * combo, livespointer xprefsw) {
   _prefsw *prefsw = (_prefsw *)xprefsw;
   char *theme = lives_combo_get_active_text(combo);
   boolean theme_set = TRUE;
@@ -3008,7 +3009,7 @@ static void theme_widgets_set_sensitive(LiVESCombo *combo, livespointer xprefsw)
 }
 
 
-static boolean check_txtsize(LiVESWidget *combo) {
+static boolean check_txtsize(LiVESWidget * combo) {
   LiVESList *list = get_textsizes_list();
   char *msgtextsize = lives_combo_get_active_text(LIVES_COMBO(combo));
   int idx = lives_list_strcmp_index(list, (livesconstpointer)msgtextsize, TRUE);
@@ -3027,7 +3028,7 @@ static boolean check_txtsize(LiVESWidget *combo) {
 /*
   Function creates preferences dialog
 */
-_prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
+_prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   LiVESWidget *dialog_vbox_main;
   LiVESWidget *dialog_table;
   LiVESWidget *list_scroll;
@@ -3131,7 +3132,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   woph = widget_opts.packing_height;
 
-  if (saved_dialog == NULL) {
+  if (!saved_dialog) {
     // Create new modal dialog window and set some attributes
     prefsw->prefs_dialog = lives_standard_dialog_new(_("Preferences"), FALSE, PREFWIN_WIDTH, PREFWIN_HEIGHT);
     lives_window_add_accel_group(LIVES_WINDOW(prefsw->prefs_dialog), prefsw->accel_group);
@@ -3159,6 +3160,20 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_widget_apply_theme2(prefsw->tlabel, LIVES_WIDGET_STATE_NORMAL, TRUE);
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_box_pack_start(LIVES_BOX(hbox), prefsw->tlabel, TRUE, TRUE, 0);
+
+#if GTK_CHECK_VERSION(3, 16, 0)
+  if (mainw->pretty_colours) {
+    char *colref2 = gdk_rgba_to_string(&palette->menu_and_bars);
+    char *colref = gdk_rgba_to_string(&palette->normal_back);
+    char *tmp = lives_strdup_printf("linear-gradient(%s, %s)", colref2, colref);
+    set_css_value_direct(prefsw->tlabel, LIVES_WIDGET_STATE_NORMAL, "",
+                         "background-image", tmp);
+    lives_free(colref); lives_free(colref2);
+    lives_free(tmp);
+    set_css_value_direct(LIVES_WIDGET(prefsw->tlabel), LIVES_WIDGET_STATE_NORMAL, "", "border-top-left-radius", "20px");
+    set_css_value_direct(LIVES_WIDGET(prefsw->tlabel), LIVES_WIDGET_STATE_NORMAL, "", "border-top-right-radius", "20px");
+  }
+#endif
 
   lives_widget_show_all(dialog_table);
   lives_widget_set_no_show_all(dialog_table, TRUE);
@@ -3472,7 +3487,6 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_mt_exit_render = lives_standard_check_button_new(_("_Exit multitrack mode after rendering"),
                                        prefs->mt_exit_render, LIVES_BOX(hbox), NULL);
-
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   label = lives_standard_label_new(_("Auto backup layouts"));
@@ -5440,7 +5454,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   prefsw->selection = lives_tree_view_get_selection(LIVES_TREE_VIEW(prefsw->prefs_list));
   lives_tree_selection_set_mode(prefsw->selection, LIVES_SELECTION_SINGLE);
 
-  lives_signal_connect(prefsw->selection, LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(on_prefDomainChanged),
+  lives_signal_connect(prefsw->selection, LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(on_prefs_page_changed),
                        (livespointer)prefsw);
 
   if (!saved_dialog) {
@@ -5733,13 +5747,13 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   } else select_pref_list_row(prefs_current_page, prefsw);
 
   lives_widget_show_all(prefsw->prefs_dialog);
-  on_prefDomainChanged(prefsw->selection, prefsw);
+  on_prefs_page_changed(prefsw->selection, prefsw);
   lives_widget_queue_draw(prefsw->prefs_list);
   return prefsw;
 }
 
 
-void on_preferences_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_preferences_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   LiVESWidget *saved_dialog = (LiVESWidget *)user_data;
   mt_needs_idlefunc = FALSE;
 
@@ -5776,7 +5790,7 @@ void on_preferences_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 /*!
   Closes preferences dialog window
 */
-void on_prefs_close_clicked(LiVESButton *button, livespointer user_data) {
+void on_prefs_close_clicked(LiVESButton * button, livespointer user_data) {
   lives_list_free_all(&prefs->acodec_list);
   lives_list_free_all(&prefsw->pbq_list);
   lives_tree_view_set_model(LIVES_TREE_VIEW(prefsw->prefs_list), NULL);
@@ -5852,7 +5866,7 @@ void pref_change_colours(void) {
 }
 
 
-void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
+void on_prefs_apply_clicked(LiVESButton * button, livespointer user_data) {
   boolean needs_restart = FALSE;
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, prefsw->prefs_dialog);
@@ -5925,7 +5939,7 @@ void on_prefs_apply_clicked(LiVESButton *button, livespointer user_data) {
   Function is used to select particular row in preferences selection list
   selection is performed according to provided index which is one of LIST_ENTRY_* constants
 */
-static void select_pref_list_row(uint32_t selected_idx, _prefsw *prefsw) {
+static void select_pref_list_row(uint32_t selected_idx, _prefsw * prefsw) {
   LiVESTreeIter iter;
   LiVESTreeModel *model;
   boolean valid;
@@ -5946,7 +5960,7 @@ static void select_pref_list_row(uint32_t selected_idx, _prefsw *prefsw) {
 }
 
 
-void on_prefs_revert_clicked(LiVESButton *button, livespointer user_data) {
+void on_prefs_revert_clicked(LiVESButton * button, livespointer user_data) {
   LiVESWidget *saved_dialog;
   register int i;
 

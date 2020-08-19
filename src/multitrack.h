@@ -32,7 +32,7 @@
 
 #define MT_TRACK_HEIGHT ((int)(35.*widget_opts.scale))
 
-#define TIMECODE_LENGTH 14 ///< length of timecode text entry, must be >12
+#define TIMECODE_LENGTH 14 ///< length of timecode text entry, must be > 12
 
 #define TIMELINE_TABLE_COLUMNS 40
 

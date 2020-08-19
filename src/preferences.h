@@ -804,7 +804,7 @@ void on_preferences_activate(LiVESMenuItem *, livespointer);
 void on_prefs_close_clicked(LiVESButton *, livespointer);
 void on_prefs_revert_clicked(LiVESButton *, livespointer);
 void on_prefs_apply_clicked(LiVESButton *, livespointer user_data);
-void on_prefDomainChanged(LiVESTreeSelection *, livespointer);
+void on_prefs_page_changed(LiVESTreeSelection *, _prefsw *);
 void populate_combo_box(LiVESCombo *, LiVESList *data);
 void set_combo_box_active_string(LiVESCombo *, char *active_str);
 

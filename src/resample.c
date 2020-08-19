@@ -20,7 +20,7 @@ static boolean reorder_leave_back = FALSE;
 
 void reorder_leave_back_set(boolean val) {reorder_leave_back = val;}
 
-#define RND_ERROR (0.00000000000001)
+#define RND_ERROR (0.000000000001)
 
 /////////////////////////////////////////////////////
 
@@ -946,7 +946,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           weed_set_int_array(newframe, WEED_LEAF_AUDIO_CLIPS, natracks, naclips);
           weed_set_double_array(newframe, WEED_LEAF_AUDIO_SEEKS, natracks, naseeks);
 
-          if (prefs->rr_super && prefs->rr_amicro) {
+          if (0 && prefs->rr_super && prefs->rr_amicro) {
             /// the timecode of each audio frame is adjusted to the quantised time, and we update the seek position accordingly
             /// however, when playing back, any velocity change will come slightly later than when recorded; thus
             /// the player seek pos will be slightly off.
@@ -954,7 +954,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
             /// arriving at the current audio frame
             double amicro_lim = 4. / qfps;
             prev_aframe = get_prev_audio_frame_event(newframe);
-            if (prev_aframe) {
+            while (prev_aframe && out_tc - get_event_timecode(prev_aframe) <= amicro_lim) {
               for (i = 0; i < natracks; i += 2) {
                 // check each track in natracks (currently active) to see if it is also in xatracks (all active)
                 boolean gottrack = FALSE;
@@ -973,7 +973,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
                 /// find the prior audio frame for the track
                 xprev_aframe = prev_aframe;
-                while (xprev_aframe) {
+                while (gottrack && xprev_aframe) {
                   weed_timecode_t ptc = get_event_timecode(xprev_aframe);
                   int *paclips;
                   double *paseeks;
@@ -1017,7 +1017,10 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
                     lives_freep((void **)&paclips);
                     lives_freep((void **)&paseeks);
                     if (j == patracks) xprev_aframe = get_prev_audio_frame_event(xprev_aframe);
-                    else break;
+                    else {
+                      gottrack = FALSE;
+                      break;
+                    }
 		    // *INDENT-OFF*
 		  }}}}}
 	  // *INDENT-ON*

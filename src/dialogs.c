@@ -3672,7 +3672,8 @@ static void _threaded_dialog_spin(double fraction) {
     }
   }
   // necessary
-  lives_widget_process_updates(mainw->proc_ptr->processing);
+  lives_widget_context_update();
+  //lives_widget_process_updates(mainw->proc_ptr->processing);
 }
 
 

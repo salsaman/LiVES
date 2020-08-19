@@ -674,6 +674,7 @@ boolean lives_toggle_button_toggle(LiVESToggleButton *);
 LiVESWidget *lives_toggle_tool_button_new(void);
 boolean lives_toggle_tool_button_get_active(LiVESToggleToolButton *);
 boolean lives_toggle_tool_button_set_active(LiVESToggleToolButton *, boolean active);
+boolean lives_toggle_tool_button_toggle(LiVESToggleToolButton *);
 
 int lives_utf8_strcmpfunc(livesconstpointer, livesconstpointer, livespointer fwd);
 
@@ -1228,9 +1229,9 @@ boolean toggle_sets_sensitive_cond(LiVESToggleButton *tb, LiVESWidget *widget,
 boolean toggle_toggles_var(LiVESToggleButton *tbut, boolean *var, boolean invert);
 
 // callbacks
-boolean label_act_toggle(LiVESWidget *, LiVESXEventButton *, LiVESToggleButton *);
-boolean widget_act_toggle(LiVESWidget *, LiVESToggleButton *);
-boolean widget_inact_toggle(LiVESWidget *, LiVESToggleButton *);
+boolean label_act_toggle(LiVESWidget *, LiVESXEventButton *, LiVESWidget *);
+boolean widget_act_toggle(LiVESWidget *, LiVESWidget *);
+boolean widget_inact_toggle(LiVESWidget *, LiVESWidget *);
 
 boolean toggle_button_toggle(LiVESToggleButton *);
 
@@ -1257,7 +1258,7 @@ LiVESWidget *add_fill_to_box(LiVESBox *);
 LiVESWidget *add_spring_to_box(LiVESBox *, int min);
 
 LiVESWidget *lives_toolbar_insert_space(LiVESToolbar *);
-LiVESWidget *lives_toolbar_insert_label(LiVESToolbar *, const char *labeltext);
+LiVESWidget *lives_toolbar_insert_label(LiVESToolbar *, const char *labeltext, LiVESWidget *actwidg);
 LiVESWidget *lives_standard_tool_button_new(LiVESToolbar *, GtkWidget *icon_widget, const char *label, const char *tooltips);
 boolean lives_tool_button_set_border_color(LiVESWidget *button, LiVESWidgetState state, LiVESWidgetColor *);
 LiVESWidget *lives_glowing_tool_button_new(const char *labeltext, LiVESToolbar *tbar, const char *tooltip,

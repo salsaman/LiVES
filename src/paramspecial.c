@@ -450,7 +450,6 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
         lives_box_pack_start(LIVES_BOX(hbox), aspect.lockbutton, expand, FALSE, 0);
       }
 
-
       if (expand) add_fill_to_box(LIVES_BOX(hbox));
     }
   }

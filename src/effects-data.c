@@ -3538,10 +3538,10 @@ static void dpp_changed(LiVESWidget * combo, livespointer user_data) {
   int okey, omode, opnum, ikey;
 
   int pidx, key, mode, ours = -1, ret;
-  int idx = lives_combo_get_active(LIVES_COMBO(combo));
+  int idx = lives_combo_get_active_index(LIVES_COMBO(combo));
   int j;
 
-  register int i;
+  int i;
 
   nparams = pconx_get_numcons(conxwp, FX_DATA_WILDCARD);
   nchans = cconx_get_numcons(conxwp, FX_DATA_WILDCARD);
@@ -3559,7 +3559,7 @@ static void dpp_changed(LiVESWidget * combo, livespointer user_data) {
     // connection deleted
     if (setup) return;
     for (i = 0; i < nchans; i++) {
-      if (lives_combo_get_active(LIVES_COMBO(conxwp->ccombo[i])) > -1) {
+      if (lives_combo_get_active_index(LIVES_COMBO(conxwp->ccombo[i])) > -1) {
         hasone = TRUE;
         break;
       }
@@ -3738,7 +3738,7 @@ static void dpc_changed(LiVESWidget * combo, livespointer user_data) {
   int nchans, nparams;
   int key, mode, cidx, ours = -1, ret, j;
   int okey, omode, ocnum;
-  int idx = lives_combo_get_active(LIVES_COMBO(combo));
+  int idx = lives_combo_get_active_index(LIVES_COMBO(combo));
   int i;
 
   nchans = cconx_get_numcons(conxwp, FX_DATA_WILDCARD);
@@ -3755,7 +3755,7 @@ static void dpc_changed(LiVESWidget * combo, livespointer user_data) {
 
   if (idx == -1) {
     for (i = 0; i < nchans; i++) {
-      if (lives_combo_get_active(LIVES_COMBO(conxwp->ccombo[i])) > -1) {
+      if (lives_combo_get_active_index(LIVES_COMBO(conxwp->ccombo[i])) > -1) {
         hasone = TRUE;
         break;
       }

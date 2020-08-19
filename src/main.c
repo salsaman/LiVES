@@ -717,6 +717,9 @@ static boolean pre_init(void) {
   prefs->nfx_threads = 2;
 #endif
 
+  lives_threadpool_init();
+
+  capable->gui_thread = pthread_self();
 
   /// check disk storage status /////////////////////////////////////
   mainw->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
@@ -855,7 +858,7 @@ static boolean pre_init(void) {
   prefs->show_subtitles = get_boolean_prefd(PREF_SHOW_SUBS, TRUE);
 
   prefs->pa_restart = get_boolean_prefd(PREF_PARESTART, FALSE);
-  get_string_prefd(PREF_PASTARTOPTS, prefs->pa_start_opts, 255, "-k --high-priority");
+  get_string_prefd(PREF_PASTARTOPTS, prefs->pa_start_opts, 255, "--high-priority");
 
   prefs->letterbox = get_boolean_prefd(PREF_LETTERBOX, TRUE);
   prefs->letterbox_mt = get_boolean_prefd(PREF_LETTERBOXMT, TRUE);
@@ -1542,6 +1545,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->drawsrc = -1;
 
+  mainw->lazy = 0;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);
@@ -1668,6 +1672,7 @@ static void lives_init(_ign_opts *ign_opts) {
 #endif
 
   *capable->wm_caps.wm_name = 0;
+  capable->has_wm_caps = FALSE;
   get_wm_caps();
 
   prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);
@@ -1681,6 +1686,7 @@ static void lives_init(_ign_opts *ign_opts) {
   prefs->rr_qsmooth = get_boolean_prefd(PREF_RRQSMOOTH, TRUE);
   prefs->rr_amicro = get_boolean_prefd(PREF_RRAMICRO, TRUE);
   prefs->rr_ramicro = get_boolean_prefd(PREF_RRRAMICRO, TRUE);
+
   prefs->rr_qmode = get_int_prefd(PREF_RRQMODE, 0);
   prefs->rr_qmode = INT_CLAMP(prefs->rr_qmode, 0, 1);
   prefs->rr_fstate = get_int_prefd(PREF_RRFSTATE, 0);
@@ -2162,7 +2168,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
       if (!mainw->foreign) {
         if (prefs->pa_restart && !prefs->vj_mode) {
-          char *com = lives_strdup_printf("%s %s", EXEC_PULSEAUDIO, prefs->pa_start_opts);
+          char *com = lives_strdup_printf("%s -k %s", EXEC_PULSEAUDIO, prefs->pa_start_opts);
           lives_system(com, TRUE);
           lives_free(com);
         }
@@ -3239,7 +3245,6 @@ static boolean open_yuv4m_startup(livespointer data) {
 ///////////////////////////////// TODO - move idle functions into another file //////////////////////////////////////
 
 boolean render_choice_idle(livespointer data) {
-  // TODO: *** figure out why we cant preview with only scrap_file loaded
   static boolean norecurse = FALSE;
   boolean rec_recovered = FALSE;
   boolean is_recovery = LIVES_POINTER_TO_INT(data);
@@ -3253,7 +3258,8 @@ boolean render_choice_idle(livespointer data) {
         multitrack_delete(mainw->multitrack, FALSE);
         mainw->event_list = backup_elist;
       }
-      deal_with_render_choice(!is_recovery);
+
+      deal_with_render_choice(is_recovery);
       if (is_recovery && mainw->multitrack) rec_recovered = TRUE;
     }
   }
@@ -3263,11 +3269,16 @@ boolean render_choice_idle(livespointer data) {
 }
 
 
-static boolean lazy_startup_checks(void *data) {
+boolean lazy_startup_checks(void *data) {
   static boolean checked_trash = FALSE;
   static boolean mwshown = FALSE;
   static boolean dqshown = FALSE;
   static boolean tlshown = FALSE;
+
+  if (LIVES_IS_PLAYING) {
+    dqshown = mwshown = tlshown = TRUE;
+    return FALSE;
+  }
 
   if (!tlshown) {
     //g_print("val is $d\n", check_snap("youtube-dl"));
@@ -3346,6 +3357,7 @@ static boolean lazy_startup_checks(void *data) {
     if (LIVES_IS_SENSITIZED) sensitize(); // call fn again to sens. new menu entries
   }
 
+  mainw->lazy = 0;
   return FALSE;
 }
 
@@ -3406,12 +3418,6 @@ static boolean lives_startup(livespointer data) {
 
   char *tmp, *tmp2, *msg;
 
-
-  lives_threadpool_init();
-
-
-  capable->gui_thread = pthread_self();
-
   // check the working directory
   if ((prefs->startup_phase == 1 || prefs->startup_phase == -1)) {
     needs_workdir = TRUE;
@@ -3470,7 +3476,7 @@ static boolean lives_startup(livespointer data) {
 #ifdef HAVE_PULSE_AUDIO
   if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_pulse_audio) {
     if (prefs->pa_restart) {
-      char *com = lives_strdup_printf("%s %s", EXEC_PULSEAUDIO, prefs->pa_start_opts);
+      char *com = lives_strdup_printf("%s -k %s", EXEC_PULSEAUDIO, prefs->pa_start_opts);
       lives_system(com, TRUE);
       lives_free(com);
     }
@@ -3729,12 +3735,12 @@ static boolean lives_startup2(livespointer data) {
 
   if (!mainw->recording_recovered) {
     if (mainw->ascrap_file != -1) {
-      if (!layout_recovered || mainw->multitrack == NULL || !used_in_current_layout(mainw->multitrack, mainw->ascrap_file)) {
+      if (!layout_recovered || !mainw->multitrack || !used_in_current_layout(mainw->multitrack, mainw->ascrap_file)) {
         close_ascrap_file(FALSE); // ignore but leave file on disk for recovery purposes
       }
     }
     if (mainw->scrap_file != -1) {
-      if (!layout_recovered || mainw->multitrack == NULL || !used_in_current_layout(mainw->multitrack, mainw->scrap_file)) {
+      if (!layout_recovered || mainw->multitrack || !used_in_current_layout(mainw->multitrack, mainw->scrap_file)) {
         close_scrap_file(FALSE); // ignore but leave file on disk for recovery purposes
       }
     }
@@ -3810,7 +3816,8 @@ static boolean lives_startup2(livespointer data) {
     mainw->helper_procthreads[PT_LAZY_RFX] =
       lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)add_rfx_effects, -1, "i", RFX_STATUS_ANY);
   }
-  lives_idle_add_simple(lazy_startup_checks, NULL);
+
+  mainw->lazy = lives_idle_add_simple(lazy_startup_checks, NULL);
 
   // timer to poll for external commands: MIDI, joystick, jack transport, osc, etc.
   mainw->kb_timer = lives_timer_add_simple(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);

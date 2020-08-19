@@ -2367,8 +2367,6 @@ void play_file(void) {
 
     /// plug the plug into the playframe socket if we need to
     add_to_playframe();
-    lives_widget_queue_draw(mainw->playframe);
-    lives_widget_queue_draw(mainw->play_image);
   }
 
   arate = cfile->arate;
@@ -2907,10 +2905,6 @@ void play_file(void) {
       mainw->jackd->msgq = &jack_message;
       if (timeout == 0) handle_audio_timeout();
     }
-    if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
-      weed_plant_t *event = get_last_frame_event(mainw->event_list);
-      insert_audio_event_at(event, -1, 1, 0., 0.); // audio switch off
-    }
   } else {
 #endif
 #ifdef HAVE_PULSE_AUDIO
@@ -2954,10 +2948,6 @@ void play_file(void) {
           }
         } else {
           pulse_driver_cork(mainw->pulsed);
-        }
-        if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
-          weed_plant_t *event = get_last_frame_event(mainw->event_list);
-          insert_audio_event_at(event, -1, 1, 0., 0.); // audio switch off
         }
       }
     } else {
@@ -3163,18 +3153,18 @@ void play_file(void) {
         }
       }
 
-      if (mainw->multitrack == NULL) {
+      if (!mainw->multitrack) {
         mainw->playing_file = -2;
         resize_play_window();
         mainw->playing_file = -1;
         lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
 
-        if (mainw->preview_box == NULL) {
+        if (!mainw->preview_box) {
           // create the preview box that shows frames
           make_preview_box();
         }
         // and add it to the play window
-        if (lives_widget_get_parent(mainw->preview_box) == NULL && CURRENT_CLIP_IS_NORMAL && !mainw->is_rendering) {
+        if (!lives_widget_get_parent(mainw->preview_box) && CURRENT_CLIP_IS_NORMAL && !mainw->is_rendering) {
           lives_widget_queue_draw(mainw->play_window);
           lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
           lives_widget_grab_focus(mainw->preview_spinbutton);
@@ -3196,6 +3186,8 @@ void play_file(void) {
     weed_layer_free(mainw->frame_layer);
     mainw->frame_layer = NULL;
   }
+
+  if (mainw->lazy) mainw->lazy = lives_idle_add_simple(lazy_startup_checks, NULL);
 
   cliplist = mainw->cliplist;
   while (cliplist) {
@@ -6568,7 +6560,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
     }
   }
 
-  if (lives_file_test(recording_file, LIVES_FILE_TEST_EXISTS)) {
+  if (prefs->rr_crash && lives_file_test(recording_file, LIVES_FILE_TEST_EXISTS)) {
     if (lives_file_test(recording_numbering_file, LIVES_FILE_TEST_EXISTS)) {
       found_recording = TRUE;
       xfile = lives_strdup_printf("%s/keep_recorded-layout.%d.%d.%d", prefs->workdir, luid, lgid, lpid);

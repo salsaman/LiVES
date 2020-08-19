@@ -5002,8 +5002,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
   }
 
   // crash recovery -> backup the event list
-  if (prefs->crash_recovery) {
-    /// pretty simple now to run any function in a thread !
+  if (prefs->crash_recovery && prefs->rr_crash) {
     info = lives_proc_thread_create(LIVES_THRDATTR_NO_GUI, (lives_funcptr_t)backup_recording, -1, "vv",
                                     &esave_file, &asave_file);
   }
@@ -6272,7 +6271,6 @@ render_details *create_render_details(int type) {
   if (type == 1 && prefs->show_dev_opts) {
     hbox = lives_hbox_new(FALSE, 0);
     //add_spring_to_box(LIVES_BOX(hbox), 0);
-
 
     rdet->debug = lives_standard_check_button_new((tmp = (_("Debug Mode"))), FALSE,
                   LIVES_BOX(hbox), (tmp2 = (_("Output diagnostic information to STDERR "

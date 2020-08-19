@@ -1985,17 +1985,15 @@ void fx_changed(LiVESCombo * combo, livespointer user_data) {
   int key = (int)(key_mode / modes);
   int mode = key_mode - key * modes;
 
-  int error;
+  int i, error;
 
-  register int i;
-
-  if (lives_combo_get_active(combo) == -1) return; // -1 is returned after we set our own text (without the type)
+  if (lives_combo_get_active_index(combo) == -1) return; // -1 is returned after we set our own text (without the type)
 
   lives_combo_get_active_iter(combo, &iter1);
   model = lives_combo_get_model(combo);
 
   lives_tree_model_get(model, &iter1, HASH_COLUMN, &hashname1, -1);
-  if (hashname1 == NULL) {
+  if (!hashname1) {
     lives_entry_set_text(LIVES_ENTRY(combo_entries[key_mode]), (tmp = rte_keymode_get_filter_name(key + 1, mode, FALSE, FALSE)));
     lives_free(tmp);
     return;
@@ -2068,20 +2066,18 @@ static LiVESTreeModel *rte_window_fx_model(void) {
   char *pkg = NULL, *pkgstring, *fxname, *typestr;
 
   int fx_idx = 0;
-  int error;
 
-  if (tstore != NULL) return (LiVESTreeModel *)tstore;
+  if (tstore) return (LiVESTreeModel *)tstore;
 
   tstore = lives_tree_store_new(NUM_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING);
-  while (list != NULL) {
+  while (list) {
     weed_plant_t *filter = get_weed_filter(weed_get_idx_for_hashname((char *)phash_list->data, TRUE));
-    int filter_flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, &error);
-    if ((weed_filter_hints_unstable(filter) && !prefs->unstable_fx) || ((enabled_in_channels(filter, FALSE) > 1 &&
-        !has_video_chans_in(filter, FALSE)) ||
-        (weed_plant_has_leaf(filter, WEED_LEAF_HOST_MENU_HIDE) &&
-         weed_get_boolean_value(filter, WEED_LEAF_HOST_MENU_HIDE, &error) == WEED_TRUE)
-        || (filter_flags & WEED_FILTER_IS_CONVERTER))
-        || enabled_in_channels(filter, TRUE) == 1000000) {
+    if ((weed_filter_hints_unstable(filter)
+         && !prefs->unstable_fx) || ((enabled_in_channels(filter, FALSE) > 1 &&
+                                      !has_video_chans_in(filter, FALSE)) ||
+                                     (weed_filter_hints_hidden(filter)
+                                      || weed_filter_is_converter(filter))
+                                     || enabled_in_channels(filter, TRUE) == 1000000)) {
       list = list->next;
       fx_idx++;
       pname_list = pname_list->next;
@@ -2095,9 +2091,9 @@ static LiVESTreeModel *rte_window_fx_model(void) {
                                  enabled_out_channels(filter, TRUE));
     typestr = lives_fx_cat_to_text(cat, TRUE);
 
-    pinfo = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, &error);
+    pinfo = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, NULL);
     if (weed_plant_has_leaf(pinfo, WEED_LEAF_PACKAGE_NAME))
-      pkgstring = weed_get_string_value(pinfo, WEED_LEAF_PACKAGE_NAME, &error);
+      pkgstring = weed_get_string_value(pinfo, WEED_LEAF_PACKAGE_NAME, NULL);
     else pkgstring = NULL;
 
     if (pkgstring != NULL) {
@@ -2190,7 +2186,7 @@ LiVESWidget *create_rte_window(void) {
   winsize_h = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
   winsize_v = GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY;
 
-  if (irte_window != NULL) {
+  if (irte_window) {
     if (prefs->rte_keys_virtual != old_rte_keys_virtual) {
       // number of fx keys changed, rebuild the window
       mainw->no_context_update = FALSE;
@@ -2235,9 +2231,9 @@ LiVESWidget *create_rte_window(void) {
   grab_group = lives_radio_button_get_group(LIVES_RADIO_BUTTON(dummy_radio));
   lives_widget_set_no_show_all(dummy_radio, TRUE);
 
-  if (name_list == NULL) name_list = weed_get_all_names(FX_LIST_NAME);
-  if (extended_name_list == NULL) extended_name_list = weed_get_all_names(FX_LIST_EXTENDED_NAME);
-  if (hash_list == NULL) hash_list = weed_get_all_names(FX_LIST_HASHNAME);
+  if (!name_list) name_list = weed_get_all_names(FX_LIST_NAME);
+  if (!extended_name_list) extended_name_list = weed_get_all_names(FX_LIST_EXTENDED_NAME);
+  if (!hash_list) hash_list = weed_get_all_names(FX_LIST_HASHNAME);
 
   model = rte_window_fx_model();
 
@@ -2452,16 +2448,13 @@ LiVESWidget *create_rte_window(void) {
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   lives_signal_connect(LIVES_GUI_OBJECT(irte_window), LIVES_WIDGET_DELETE_EVENT,
-                       LIVES_GUI_CALLBACK(on_rtew_ok_clicked),
-                       NULL);
+                       LIVES_GUI_CALLBACK(on_rtew_ok_clicked), NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_rtew_ok_clicked),
-                       NULL);
+                       LIVES_GUI_CALLBACK(on_rtew_ok_clicked), NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(save_keymap_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_save_keymap_clicked),
-                       NULL);
+                       LIVES_GUI_CALLBACK(on_save_keymap_clicked), NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(load_keymap_button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_load_keymap_clicked),
@@ -2516,7 +2509,7 @@ void on_assign_rte_keys_activate(LiVESMenuItem * menuitem, livespointer user_dat
     rte_window = create_rte_window();
     rte_window_set_interactive(prefs->interactive);
     lives_widget_show(rte_window);
-    if (mainw->play_window != NULL && !mainw->fs && (prefs->play_monitor == widget_opts.monitor + 1 || capable->nmonitors == 1)) {
+    if (mainw->play_window && !mainw->fs && (prefs->play_monitor == widget_opts.monitor + 1 || capable->nmonitors == 1)) {
       lives_widget_hide(mainw->play_window);
       lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), LIVES_WINDOW(rte_window));
       lives_widget_show(mainw->play_window);
@@ -2559,11 +2552,11 @@ void update_pwindow(int key, int i, LiVESList * list) {
   lives_rfx_t *rfx;
   int keyw, modew;
 
-  if (fx_dialog[1] != NULL) {
+  if (fx_dialog[1]) {
     keyw = fx_dialog[1]->key;
     modew = fx_dialog[1]->mode;
     if (key == keyw) {
-      if ((inst = rte_keymode_get_instance(key + 1, modew)) == NULL) return;
+      if (!(inst = rte_keymode_get_instance(key + 1, modew))) return;
       weed_instance_unref(inst);
       rfx = fx_dialog[1]->rfx;
       mainw->block_param_updates = TRUE;
@@ -2579,7 +2572,7 @@ void rte_set_defs_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   weed_plant_t *filter = get_weed_filter(idx);
   lives_rfx_t *rfx;
 
-  if (fx_dialog[1] != NULL) {
+  if (fx_dialog[1]) {
     rfx = fx_dialog[1]->rfx;
     on_paramwindow_button_clicked(NULL, rfx);
     lives_widget_destroy(fx_dialog[1]->dialog);
@@ -2594,7 +2587,7 @@ void rte_set_defs_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 void rte_set_key_defs(LiVESButton * button, lives_rfx_t *rfx) {
   int key, mode;
-  if (mainw->textwidget_focus != NULL) {
+  if (mainw->textwidget_focus) {
     LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus),
                               TEXTWIDGET_KEY);
     after_param_text_changed(textwidget, rfx);
@@ -2615,7 +2608,7 @@ void rte_set_defs_ok(LiVESButton * button, lives_rfx_t *rfx) {
 
   register int i;
 
-  if (mainw->textwidget_focus != NULL) {
+  if (mainw->textwidget_focus) {
     LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus),
                               TEXTWIDGET_KEY);
     after_param_text_changed(textwidget, rfx);
@@ -2648,9 +2641,9 @@ void rte_set_defs_ok(LiVESButton * button, lives_rfx_t *rfx) {
         break;
       default:
         break;
-      }
-    }
-  }
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
 }
 
 
@@ -2673,16 +2666,15 @@ void rte_reset_defs_clicked(LiVESButton * button, lives_rfx_t *rfx) {
   boolean is_generic_defs = FALSE;
   boolean add_pcons = FALSE;
 
-  int error;
   int nchans;
 
   int poffset = 0, ninpar, x;
 
-  register int i;
+  int i;
 
   cancelbutton = fx_dialog[1]->cancelbutton;
 
-  if (cancelbutton != NULL) is_generic_defs = TRUE;
+  if (cancelbutton) is_generic_defs = TRUE;
 
   inst = (weed_plant_t *)rfx->source;
 
@@ -2691,7 +2683,7 @@ void rte_reset_defs_clicked(LiVESButton * button, lives_rfx_t *rfx) {
   if (rfx->num_params > 0) {
     if (is_generic_defs) {
       // for generic, reset from plugin supplied defs
-      ptmpls = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error);
+      ptmpls = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, NULL);
       for (i = 0; i < rfx->num_params; i++) {
         if (weed_plant_has_leaf(ptmpls[i], WEED_LEAF_HOST_DEFAULT)) weed_leaf_delete(ptmpls[i], WEED_LEAF_HOST_DEFAULT);
       }
@@ -2720,7 +2712,7 @@ resetdefs1:
 
     if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE)) {
       // handle compound fx
-      inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error);
+      inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, NULL);
       add_pcons = TRUE;
       goto resetdefs1;
     }
@@ -2744,7 +2736,7 @@ resetdefs1:
     if (weed_plant_has_leaf(filter, WEED_LEAF_HOST_FPS)) weed_leaf_delete(filter, WEED_LEAF_HOST_FPS);
 
     if (weed_plant_has_leaf(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES)) {
-      ctmpls = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &error);
+      ctmpls = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, NULL);
       nchans = weed_leaf_num_elements(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES);
       for (i = 0; i < nchans; i++) {
         if (weed_plant_has_leaf(ctmpls[i], WEED_LEAF_HOST_WIDTH)) weed_leaf_delete(ctmpls[i], WEED_LEAF_HOST_WIDTH);

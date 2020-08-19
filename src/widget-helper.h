@@ -578,7 +578,7 @@ boolean lives_combo_set_entry_text_column(LiVESCombo *, int column);
 char *lives_combo_get_active_text(LiVESCombo *) WARN_UNUSED;
 boolean lives_combo_set_active_text(LiVESCombo *, const char *text);
 boolean lives_combo_set_active_index(LiVESCombo *, int index);
-int lives_combo_get_active(LiVESCombo *);
+int lives_combo_get_active_index(LiVESCombo *);
 boolean lives_combo_get_active_iter(LiVESCombo *, LiVESTreeIter *);
 boolean lives_combo_set_active_iter(LiVESCombo *, LiVESTreeIter *);
 boolean lives_combo_set_active_string(LiVESCombo *, const char *active_str);
@@ -1218,8 +1218,10 @@ boolean set_submenu_colours(LiVESMenu *, LiVESWidgetColor *colf, LiVESWidgetColo
 
 /// set callbacks
 boolean toggle_sets_sensitive(LiVESToggleButton *tb, LiVESWidget *widget, boolean invert);
+boolean toggle_toolbutton_sets_sensitive(LiVESToggleToolButton *tb, LiVESWidget *widget, boolean invert);
 boolean menu_sets_sensitive(LiVESCheckMenuItem *mi, LiVESWidget *widget,  boolean invert);
 boolean toggle_sets_visible(LiVESToggleButton *tb, LiVESWidget *widget, boolean invert);
+boolean toggle_toolbutton_sets_visible(LiVESToggleToolButton *tb, LiVESWidget *widget, boolean invert);
 boolean menu_sets_visible(LiVESCheckMenuItem *mi, LiVESWidget *widget,  boolean invert);
 boolean toggle_sets_sensitive_cond(LiVESToggleButton *tb, LiVESWidget *widget,
                                    livespointer condsens, livespointer condinsens, boolean invert);

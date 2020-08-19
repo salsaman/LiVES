@@ -2753,7 +2753,7 @@ possible, and process video accordingly:
 					       
 
  * "alpha_premult" :       WEED_SEED_BOOLEAN :
-   		  		  	     if the plugin set WEED_FILTER_PREMULTIPLIED_ALPHA for the filter, then the host MAY
+   		  		  	     if the plugin set WEED_FILTER_PREF_PREMULTIPLIED_ALPHA for the filter, then the host MAY
 					     set this to WEED_TRUE if the channel contains pre-multiplied data.
 
 					     If not set, then the alpha is post-multiplied.
@@ -3469,7 +3469,7 @@ WEED_VERBOSITY_DEBUG 	(3) : WEED_VERBOSITY_INFO + debugging messages
    (see note below about colour spaces). Hosts which support this option should set the flag bit
    WEED_HOST_SUPPORTS_LINEAR_GAMMA in the host_info plant.
 
- * WEED_FILTER_PREF_ALPHA_PREMULTIPLIED
+ * WEED_FILTER_PREF_PREMULTIPLIED_ALPHA
    This is a hint to the host that the plugin prefers to receive pre-multiplied alpha (i.e the values of the color pixels should
    already be multiplied by the alpha value). Hosts which support this option should set the flag bit
    WEED_HOST_SUPPORTS_PREMULTIPLIED_ALPHA in the host_info plant.
@@ -4031,7 +4031,7 @@ subspace types >= 512 are reserved for custom subspaces.
 Channels with alpha:
 
 Alpha is always POST MULTIPLIED in Weed, unless the host sets the WEED_HOST_SUPPORTS_PREMULTIPLIED_ALPHA bit
-in the HOST_INFO "flags" AND the plugin sets WEED_FILTER_HINT_ALPHA_PREMULTIPLIED in the filter flags.
+in the HOST_INFO "flags" AND the plugin sets WEED_FILTER_PREF_PREMULTIPLIED_ALPHA in the filter flags.
 (Even then the value of "alpha_premultiplied" should be checked in each channel).
 
 

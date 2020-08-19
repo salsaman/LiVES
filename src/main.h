@@ -1489,6 +1489,7 @@ void load_end_image(int frame);
 void showclipimgs(void);
 void load_preview_image(boolean update_always);
 boolean resize_message_area(livespointer data);
+boolean lazy_startup_checks(void *data);
 
 #define is_layer_ready(layer) (weed_get_boolean_value((layer), WEED_LEAF_THREAD_PROCESSING, NULL) == WEED_FALSE \
 			       && weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL) == NULL)

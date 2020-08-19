@@ -59,6 +59,13 @@ void weed_clear_plant_flags(weed_plant_t *t, uint32_t flags, const char *ign_pre
 uint32_t weed_leaf_set_flagbits(weed_plant_t *, const char *leaf, uint32_t flagbits); ///< value ORed with flags
 uint32_t weed_leaf_clear_flagbits(weed_plant_t *, const char *leaf, uint32_t flagbits); ///< ~value ANDed with flags
 
+/* HOST_INFO functions */
+int weed_host_info_get_flags(weed_plant_t *host_info);
+void weed_host_info_set_flags(weed_plant_t *host_info, int flags);
+void weed_host_set_supports_linear_gamma(weed_plant_t *host_info);
+void weed_host_set_supports_premult_alpha(weed_plant_t *host_info);
+void weed_host_set_verbosity(weed_plant_t *host_info, int verbosityy);
+
 /* PLUGIN_INFO functions */
 char *weed_plugin_info_get_package_name(weed_plant_t *pinfo);
 
@@ -75,6 +82,16 @@ weed_plant_t *weed_filter_get_gui(weed_plant_t *filter, int create_if_not_exists
 weed_plant_t *weed_filter_get_plugin_info(weed_plant_t *filter);
 char *weed_filter_get_package_name(weed_plant_t *filter);
 int weed_filter_hints_unstable(weed_plant_t *filter);
+int weed_filter_hints_hidden(weed_plant_t *filter);
+int weed_filter_hints_stateless(weed_plant_t *filter);
+int weed_filter_is_converter(weed_plant_t *filter);
+int weed_filter_process_last(weed_plant_t *filter);
+int weed_filter_prefers_linear_gamma(weed_plant_t *filter);
+int weed_filter_prefers_premult_alpha(weed_plant_t *filter);
+int weed_filter_non_realtime(weed_plant_t *filter);
+int weed_filter_may_thread(weed_plant_t *filter);
+int weed_filter_channel_sizes_vary(weed_plant_t *filter);
+int weed_filter_palettes_vary(weed_plant_t *filter);
 
 
 /* FILTER_INSTANCE functions */

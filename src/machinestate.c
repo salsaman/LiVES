@@ -1787,6 +1787,9 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_sync_ready(lives_proc_thread_t tinfo)
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_check(lives_proc_thread_t tinfo) {
   /// returns FALSE while the thread is running, TRUE once it has finished
   if (!tinfo) return TRUE;
+  if (weed_plant_has_leaf(tinfo, WEED_LEAF_NOTIFY) && weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL)
+      == WEED_FALSE)
+    return FALSE;
   return (weed_leaf_num_elements(tinfo, _RV_) > 0
           || weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL) == WEED_TRUE);
 }

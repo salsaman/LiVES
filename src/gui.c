@@ -230,9 +230,9 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
     lives_free(tmp);
 
     set_css_value_direct(mainw->l2_tb, LIVES_WIDGET_STATE_NORMAL, "", "opacity", "0.8");
-    set_css_value_direct(mainw->l2_tb, LIVES_WIDGET_STATE_ACTIVE, "", "opacity", "1.0");
+    set_css_value_direct(mainw->l2_tb, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "1.0");
     set_css_value_direct(mainw->l3_tb, LIVES_WIDGET_STATE_NORMAL, "", "opacity", "0.8");
-    set_css_value_direct(mainw->l3_tb, LIVES_WIDGET_STATE_ACTIVE, "", "opacity", "1.0");
+    set_css_value_direct(mainw->l3_tb, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "1.0");
 
     lives_widget_set_valign(mainw->int_audio_checkbutton, LIVES_ALIGN_START);
     lives_widget_set_valign(mainw->ext_audio_checkbutton, LIVES_ALIGN_START);
@@ -1742,13 +1742,14 @@ void create_LiVES(void) {
   mainw->l2_tb = lives_toolbar_insert_label(LIVES_TOOLBAR(mainw->btoolbar), _("Internal"));
   lives_toolbar_insert_label(LIVES_TOOLBAR(mainw->btoolbar), "            ");
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
-  lives_widget_set_frozen(mainw->l2_tb, prefs->audio_src != AUDIO_SRC_INT);
+
+  toggle_toolbutton_sets_sensitive(LIVES_TOGGLE_TOOL_BUTTON(mainw->int_audio_checkbutton),
+                                   mainw->l2_tb, TRUE);
 
   mainw->ext_audio_checkbutton = lives_toggle_tool_button_new();
 
   mainw->int_audio_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->int_audio_checkbutton),
-                          LIVES_WIDGET_TOGGLED_SIGNAL,
-                          LIVES_GUI_CALLBACK(on_audio_toggled), mainw->l2_tb);
+                          LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(on_audio_toggled), NULL);
 
 #if GTK_CHECK_VERSION(3, 0, 0)
   // insert audio src buttons
@@ -1765,8 +1766,6 @@ void create_LiVES(void) {
   }
 #endif
 
-  lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_checkbutton),
-                                      prefs->audio_src == AUDIO_SRC_EXT);
   lives_widget_set_sensitive(mainw->ext_audio_checkbutton, prefs->audio_src != AUDIO_SRC_EXT);
 
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->ext_audio_checkbutton), -1);
@@ -1776,7 +1775,8 @@ void create_LiVES(void) {
   mainw->l3_tb = lives_toolbar_insert_label(LIVES_TOOLBAR(mainw->btoolbar), _("External"));
   lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
-  lives_widget_set_frozen(mainw->l3_tb, prefs->audio_src != AUDIO_SRC_EXT);
+  toggle_toolbutton_sets_sensitive(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_checkbutton),
+                                   mainw->l3_tb, TRUE);
   lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_checkbutton),
                                       prefs->audio_src == AUDIO_SRC_EXT);
 

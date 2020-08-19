@@ -77,7 +77,7 @@ static void ce_thumbs_fx_changed(LiVESCombo *combo, livespointer user_data) {
   int key = LIVES_POINTER_TO_INT(user_data);
   int mode, cmode;
 
-  if ((mode = lives_combo_get_active(combo)) == -1) return; // -1 is returned after we set our own text (without the type)
+  if ((mode = lives_combo_get_active_index(combo)) == -1) return; // -1 is returned after we set our own text (without the type)
   cmode = rte_key_getmode(key + 1);
 
   if (cmode == mode) return;

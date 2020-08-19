@@ -45,15 +45,15 @@ extern "C"
 #define WEED_FILTER_API_VERSION 200
 
 /* plant types */
-#define WEED_PLANT_PLUGIN_INFO              		1
-#define WEED_PLANT_FILTER_CLASS         		2
-#define WEED_PLANT_FILTER_INSTANCE       		3
+#define WEED_PLANT_PLUGIN_INFO        		1
+#define WEED_PLANT_FILTER_CLASS       		2
+#define WEED_PLANT_FILTER_INSTANCE     		3
 #define WEED_PLANT_CHANNEL_TEMPLATE     	4
 #define WEED_PLANT_PARAMETER_TEMPLATE   	5
-#define WEED_PLANT_CHANNEL                        	6
-#define WEED_PLANT_PARAMETER                    	7
-#define WEED_PLANT_GUI                                 	8
-#define WEED_PLANT_HOST_INFO                     	9
+#define WEED_PLANT_CHANNEL                     	6
+#define WEED_PLANT_PARAMETER                  	7
+#define WEED_PLANT_GUI                        	8
+#define WEED_PLANT_HOST_INFO                   	9
 
 /* Parameter types */
 #define WEED_PARAM_UNSPECIFIED	  	0
@@ -85,44 +85,44 @@ typedef struct {
 
 /* host_info flags */
 /* API version 200 */
-#define WEED_HOST_SUPPORTS_LINEAR_GAMMA    			(1<<0)
-#define WEED_HOST_SUPPORTS_PREMULTIPLIED_ALPHA    	(1<<1)
+#define WEED_HOST_SUPPORTS_LINEAR_GAMMA    		(1 << 0)
+#define WEED_HOST_SUPPORTS_PREMULTIPLIED_ALPHA    	(1 << 1)
 
 /* Filter flags */
-#define WEED_FILTER_NON_REALTIME                        		(1<<0)
-#define WEED_FILTER_IS_CONVERTER                        		(1<<1)
-#define WEED_FILTER_HINT_STATELESS                 			(1<<2)
-#define WEED_FILTER_PREF_LINEAR_GAMMA              		(1<<3)
-#define WEED_FILTER_PREF_PREMULTIPLIED_ALPHA              	(1<<4)
-#define WEED_FILTER_HINT_PROCESS_LAST                   		(1<<5)
-#define WEED_FILTER_HINT_MAY_THREAD                  		(1<<6)
-#define WEED_FILTER_HINT_MAYBE_UNSTABLE             		(1<<7)
-#define WEED_FILTER_CHANNEL_SIZES_MAY_VARY     		(1<<8)
-#define WEED_FILTER_PALETTES_MAY_VARY               		(1<<9)
+#define WEED_FILTER_NON_REALTIME                	(1 << 0)
+#define WEED_FILTER_IS_CONVERTER                	(1 << 1)
+#define WEED_FILTER_HINT_STATELESS			(1 << 2)
+#define WEED_FILTER_PREF_LINEAR_GAMMA			(1 << 3)
+#define WEED_FILTER_PREF_PREMULTIPLIED_ALPHA		(1 << 4)
+#define WEED_FILTER_HINT_PROCESS_LAST			(1 << 5)
+#define WEED_FILTER_HINT_MAY_THREAD                    	(1 << 6)
+#define WEED_FILTER_HINT_MAYBE_UNSTABLE                	(1 << 7)
+#define WEED_FILTER_CHANNEL_SIZES_MAY_VARY     		(1 << 8)
+#define WEED_FILTER_PALETTES_MAY_VARY			(1 << 9)
 
 /* audio */
-#define WEED_FILTER_CHANNEL_LAYOUTS_MAY_VARY   	(1 << 15)
+#define WEED_FILTER_CHANNEL_LAYOUTS_MAY_VARY		(1 << 15)
 #define WEED_FILTER_AUDIO_RATES_MAY_VARY	 	(1 << 16)
 
 /* Channel template flags */
-#define WEED_CHANNEL_REINIT_ON_SIZE_CHANGE                 	(1<<0)
-#define WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE           	(1<<1)
-#define WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE    	(1<<2)
-#define WEED_CHANNEL_OPTIONAL                                         	(1<<3)
-#define WEED_CHANNEL_CAN_DO_INPLACE                             	(1<<4)
+#define WEED_CHANNEL_REINIT_ON_SIZE_CHANGE		(1 << 0)
+#define WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE          	(1 << 1)
+#define WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE    	(1 << 2)
+#define WEED_CHANNEL_OPTIONAL                          	(1 << 3)
+#define WEED_CHANNEL_CAN_DO_INPLACE                    	(1 << 4)
 
 /* audio */
 #define WEED_CHANNEL_REINIT_ON_RATE_CHANGE	WEED_CHANNEL_REINIT_ON_SIZE_CHANGE
 #define WEED_CHANNEL_REINIT_ON_LAYOUT_CHANGE	WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE
 
 /* Parameter template flags */
-#define WEED_PARAMETER_REINIT_ON_VALUE_CHANGE     	(1<<0)
-#define WEED_PARAMETER_VARIABLE_SIZE                        	(1<<1)
-#define WEED_PARAMETER_VALUE_PER_CHANNEL              	(1<<2)
-#define WEED_PARAMETER_VALUE_IRRELEVANT			(1<<3)
+#define WEED_PARAMETER_REINIT_ON_VALUE_CHANGE     	(1 << 0)
+#define WEED_PARAMETER_VARIABLE_SIZE                   	(1 << 1)
+#define WEED_PARAMETER_VALUE_PER_CHANNEL              	(1 << 2)
+#define WEED_PARAMETER_VALUE_IRRELEVANT			(1 << 3)
 
 /* Parameter template GUI flags */
-#define WEED_GUI_REINIT_ON_VALUE_CHANGE	(1 << 0)
+#define WEED_GUI_REINIT_ON_VALUE_CHANGE		(1 << 0)
 #define WEED_GUI_CHOICES_SET_ON_INIT	      	(1 << 1)
 
 /* filter instance flags */
@@ -130,13 +130,13 @@ typedef struct {
 
 /* error codes (in addidion to WEED_SUCCESS and WEED_ERROR_MEMORY_ALLOCATION) */
 #define WEED_ERROR_PLUGIN_INVALID              	64
-#define WEED_ERROR_FILTER_INVALID			65
-#define WEED_ERROR_TOO_MANY_INSTANCES	66
+#define WEED_ERROR_FILTER_INVALID		65
+#define WEED_ERROR_TOO_MANY_INSTANCES		66
 #define WEED_ERROR_REINIT_NEEDED               	67
-#define WEED_ERROR_NOT_READY		               	68
+#define WEED_ERROR_NOT_READY	               	68
 
 #define WEED_VERBOSITY_SILENT	 	-2 ///< no output
-#define WEED_VERBOSITY_CRITICAL	-1 ///< only critical errors which prevent the plugin / filter from operating AT ALL
+#define WEED_VERBOSITY_CRITICAL		-1 ///< only critical errors which prevent the plugin / filter from operating AT ALL
 #define WEED_VERBOSITY_ERROR	      	 0 ///< default choice a (errors which prevent normal operation)
 #define WEED_VERBOSITY_WARN	      	 1 ///< default choice b (errors which adversly affect operation)
 #define WEED_VERBOSITY_INFO		 2 ///< info (any additional non-debug info)

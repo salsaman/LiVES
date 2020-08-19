@@ -351,8 +351,8 @@ void lives_exit(int signum) {
           if (mainw->files[i]) {
             if ((!mainw->leave_files && !prefs->crash_recovery && !(*mainw->set_name)) ||
                 (!mainw->only_close && (i == 0 || !IS_NORMAL_CLIP(i))) ||
-                (i == mainw->scrap_file && !mainw->leave_recovery) ||
-                (i == mainw->ascrap_file && !mainw->leave_recovery) ||
+                (i == mainw->scrap_file && (!mainw->leave_recovery || !prefs->rr_crash)) ||
+                (i == mainw->ascrap_file && (!mainw->leave_recovery || !prefs->rr_crash)) ||
                 (mainw->multitrack && i == mainw->multitrack->render_file)) {
               char *permitname;
               // close all open clips, except for ones we want to retain
@@ -4610,7 +4610,7 @@ void on_playsel_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // play part of a clip (in clip editor)
   if (!CURRENT_CLIP_IS_VALID || CURRENT_CLIP_IS_CLIPBOARD) return;
 
-  if (mainw->proc_ptr != NULL && menuitem != NULL) {
+  if (mainw->proc_ptr && menuitem) {
     on_preview_clicked(LIVES_BUTTON(mainw->proc_ptr->preview_button), NULL);
     return;
   }
@@ -8347,14 +8347,7 @@ void on_boolean_toggled(LiVESWidgetObject * obj, livespointer user_data) {
 void on_audio_toggled(LiVESWidget * tbutton, LiVESWidget * label) {
   boolean state;
   if (!LIVES_IS_INTERACTIVE) return;
-  /* if (!lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(tbutton))) { */
-  /*   lives_signal_handlers_block_by_func(tbutton, (livespointer)on_audio_toggled, NULL); */
-  /*   lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(tbutton), TRUE); */
-  /*   lives_signal_handlers_unblock_by_func(tbutton, (livespointer)on_audio_toggled, NULL); */
-  /*   lives_signal_stop_emission_by_name(tbutton, LIVES_WIDGET_TOGGLED_SIGNAL); */
-  /*   lives_widget_set_frozen(label, FALSE); */
-  /*   return; */
-  /* } */
+
   state = lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(tbutton));
   lives_widget_set_sensitive(tbutton, !state);
 

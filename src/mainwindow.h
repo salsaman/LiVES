@@ -1730,6 +1730,7 @@ typedef struct {
   boolean suppress_layout_warnings;
 
   lives_proc_thread_t helper_procthreads[N_HLP_PROCTHREADS];
+  uint32_t lazy;
 } mainwindow;
 
 /// interface colour settings

@@ -708,6 +708,42 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
 
   if (prefsw) prefsw->ignore_apply = TRUE;
 
+  if (!lives_strcmp(prefidx, PREF_RRCRASH)) {
+    if (prefs->rr_crash == newval) goto fail2;
+    prefs->rr_crash = newval;
+    goto success2;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_RRSUPER)) {
+    if (prefs->rr_super == newval) goto fail2;
+    prefs->rr_super = newval;
+    goto success2;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_RRPRESMOOTH)) {
+    if (prefs->rr_pre_smooth == newval) goto fail2;
+    prefs->rr_pre_smooth = newval;
+    goto success2;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_RRQSMOOTH)) {
+    if (prefs->rr_qsmooth == newval) goto fail2;
+    prefs->rr_qsmooth = newval;
+    goto success2;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_RRAMICRO)) {
+    if (prefs->rr_amicro == newval) goto fail2;
+    prefs->rr_amicro = newval;
+    goto success2;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_RRRAMICRO)) {
+    if (prefs->rr_ramicro == newval) goto fail2;
+    prefs->rr_ramicro = newval;
+    goto success2;
+  }
+
   if (!lives_strcmp(prefidx, PREF_SHOW_QUOTA)) {
     if (prefs->show_disk_quota == newval) goto fail2;
     prefs->show_disk_quota = newval;
@@ -1084,6 +1120,22 @@ boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
 
     if (permanent) future_prefs->sepwin_type = prefs->sepwin_type;
     goto success3;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_RRQMODE)) {
+    if (newval != prefs->rr_qmode) {
+      prefs->rr_qmode = newval;
+      goto success3;
+    }
+    goto fail3;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_RRFSTATE)) {
+    if (newval != prefs->rr_fstate) {
+      prefs->rr_fstate = newval;
+      goto success3;
+    }
+    goto fail3;
   }
 
   if (!lives_strcmp(prefidx, PREF_MIDI_CHECK_RATE)) {
@@ -1756,6 +1808,17 @@ boolean apply_prefs(boolean skip_warn) {
     prefs->mouse_scroll_clips = mouse_scroll;
     set_boolean_pref(PREF_MOUSE_SCROLL_CLIPS, mouse_scroll);
   }
+
+
+  pref_factory_bool(PREF_RRCRASH, lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rr_crash)), TRUE);
+  pref_factory_bool(PREF_RRSUPER, lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rr_super)), TRUE);
+  pref_factory_bool(PREF_RRPRESMOOTH, lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rr_pre_smooth)), TRUE);
+  pref_factory_bool(PREF_RRQSMOOTH, lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rr_qsmooth)), TRUE);
+  pref_factory_bool(PREF_RRAMICRO, lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rr_amicro)), TRUE);
+  pref_factory_bool(PREF_RRRAMICRO, lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rr_ramicro)), TRUE);
+
+  pref_factory_int(PREF_RRQMODE, lives_combo_get_active_index(LIVES_COMBO(prefsw->rr_combo)), TRUE);
+  pref_factory_int(PREF_RRFSTATE, lives_combo_get_active_index(LIVES_COMBO(prefsw->rr_scombo)), TRUE);
 
   pref_factory_bool(PREF_PUSH_AUDIO_TO_GENS, pa_gens, TRUE);
 
@@ -3827,8 +3890,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   ACTIVE(checkbutton_parestart, TOGGLED);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  prefsw->audio_command_entry = lives_standard_entry_new(_("Pulseaudio restart command"),
-                                prefs->pa_start_opts, SHORT_ENTRY_WIDTH, PATH_MAX * 2,
+  tmp = lives_strdup_printf(_("Pulseaudio restart command: %s -k "), EXEC_PULSEAUDIO);
+  prefsw->audio_command_entry = lives_standard_entry_new(tmp, prefs->pa_start_opts, SHORT_ENTRY_WIDTH, PATH_MAX * 2,
                                 LIVES_BOX(hbox), NULL);
   ACTIVE(audio_command_entry, CHANGED);
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_parestart), prefsw->audio_command_entry, FALSE);

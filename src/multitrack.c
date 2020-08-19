@@ -12854,22 +12854,22 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
   case (POLY_IN_OUT) :
     lives_signal_handler_block(mt->spinbutton_in, mt->spin_in_func);
     lives_signal_handler_block(mt->spinbutton_out, mt->spin_out_func);
-    if (lives_widget_get_parent(mt->in_out_box) != NULL) lives_widget_unparent(mt->in_out_box);
-    if (lives_widget_get_parent(mt->avel_box) != NULL) lives_widget_unparent(mt->avel_box);
+    if (lives_widget_get_parent(mt->in_out_box)) lives_widget_unparent(mt->in_out_box);
+    if (lives_widget_get_parent(mt->avel_box)) lives_widget_unparent(mt->avel_box);
 
     break;
   case (POLY_PARAMS) :
-    if (mt->framedraw != NULL) {
+    if (mt->framedraw) {
       special_cleanup(FALSE);
       mt->framedraw = NULL;
     }
-    if (mt->current_rfx != NULL) {
+    if (mt->current_rfx) {
       rfx_free(mt->current_rfx);
       lives_free(mt->current_rfx);
     }
     mt->current_rfx = NULL;
 
-    if (mt->fx_box != NULL) {
+    if (mt->fx_box) {
       lives_widget_destroy(mt->fx_box);
       mt->fx_box = NULL;
       lives_widget_destroy(mt->fx_params_label);
@@ -12884,7 +12884,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
         lives_widget_set_bg_color(mt->fd_frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
       }
     }
-    if (pchain != NULL && poly != POLY_PARAMS) {
+    if (pchain && poly != POLY_PARAMS) {
       // no freep !
       lives_free(pchain);
       pchain = NULL;
@@ -12913,16 +12913,16 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
   case POLY_TRANS:
   case POLY_COMP:
     free_pkg_list();
-    if (mt->fx_list_scroll != NULL) lives_widget_destroy(mt->fx_list_scroll);
+    if (mt->fx_list_scroll) lives_widget_destroy(mt->fx_list_scroll);
     mt->fx_list_scroll = NULL;
     break;
   default:
     break;
   }
 
-  if (mt->fx_list_box != NULL) lives_widget_unparent(mt->fx_list_box);
+  if (mt->fx_list_box) lives_widget_unparent(mt->fx_list_box);
   mt->fx_list_box = NULL;
-  if (mt->nb_label != NULL) lives_widget_destroy(mt->nb_label);
+  if (mt->nb_label) lives_widget_destroy(mt->nb_label);
   mt->nb_label = NULL;
 
   mt->poly_state = poly;
@@ -12938,7 +12938,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
       if (lives_widget_get_allocation_width(mt->poly_box) > 1 && lives_widget_get_allocation_height(mt->poly_box) > 1) {
         calc_maxspect(lives_widget_get_allocation_width(mt->poly_box) / 2 - POLY_WIDTH_MARGIN,
                       lives_widget_get_allocation_height(mt->poly_box) - POLY_WIDTH_MARGIN / 2 - 16 * widget_opts.packing_height -
-                      ((block == NULL || block->ordered) ? lives_widget_get_allocation_height(mainw->spinbutton_start) : 0),
+                      ((!block || block->ordered) ? lives_widget_get_allocation_height(mainw->spinbutton_start) : 0),
                       &width, &height);
 
         xxwidth = width;
@@ -12955,7 +12955,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
     height = xxheight;
 
     mt->init_event = NULL;
-    if (block == NULL || block->ordered) {
+    if (!block || block->ordered) {
       lives_widget_show(mt->in_hbox);
       lives_widget_show(mt->out_hbox);
       lives_idle_add_simple(show_in_out_images, (livespointer)mt);
@@ -12964,7 +12964,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
       lives_widget_hide(mt->out_hbox);
     }
 
-    if (block != NULL) {
+    if (block) {
       track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(block->eventbox), "layer_number"));
 
       offset_end = block->offset_start + (weed_timecode_t)((double)(track >= 0) * TICKS_PER_SECOND_DBL / mt->fps) +
@@ -12983,7 +12983,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
     if (track > -1) {
       LiVESWidget *oeventbox;
 
-      if (block != NULL) {
+      if (block) {
         secs = lives_ruler_get_value(LIVES_RULER(mt->timeline));
         if (mt->context_time != -1. && mt->use_context) secs = mt->context_time;
         if (is_audio_eventbox(block->eventbox) &&
@@ -12992,7 +12992,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
           // if moving an audio block we move the associated video block first
           block = get_block_from_time(oeventbox, secs, mt);
         }
-        if (block != NULL) {
+        if (block) {
           filenum = get_frame_event_clip(block->start_event, track);
           frame_start = calc_frame_from_time(filenum, block->offset_start / TICKS_PER_SECOND_DBL);
           frame_end = calc_frame_from_time(filenum, offset_end / TICKS_PER_SECOND_DBL - 1. / mt->fps);
@@ -13013,7 +13013,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
       if (mt->insurface) {
         thumb = make_thumb(mt, filenum, width, height, frame_start, LIVES_INTERP_NORMAL, FALSE);
         set_drawing_area_from_pixbuf(mt->in_image, thumb, mt->insurface);
-        if (thumb != NULL) lives_widget_object_unref(thumb);
+        if (thumb) lives_widget_object_unref(thumb);
       }
     } else {
       lives_container_set_border_width(LIVES_CONTAINER(mt->poly_box), widget_opts.border_width);
@@ -13025,7 +13025,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
                    ((get_event_timecode(block->end_event) - get_event_timecode(block->start_event)) * ABS(avel)), mt->fps);
     }
 
-    if (block == NULL) {
+    if (!block) {
       lives_widget_hide(mt->checkbutton_start_anchored);
       lives_widget_hide(mt->checkbutton_end_anchored);
       lives_spin_button_set_digits(LIVES_SPIN_BUTTON(mt->spinbutton_in), 0);
@@ -13044,7 +13044,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
     }
 
     if (avel > 0.) {
-      if (block != NULL) {
+      if (block) {
         lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_in), 0., offset_end / TICKS_PER_SECOND_DBL - 1. / mt->fps);
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_in), block->offset_start / TICKS_PER_SECOND_DBL);
 
@@ -13079,14 +13079,14 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
       if (mt->outsurface) {
         thumb = make_thumb(mt, filenum, width, height, frame_end, LIVES_INTERP_NORMAL, FALSE);
         set_drawing_area_from_pixbuf(mt->out_image, thumb, mt->outsurface);
-        if (thumb != NULL) lives_widget_object_unref(thumb);
+        if (thumb) lives_widget_object_unref(thumb);
       }
       out_end_range = count_resampled_frames(mainw->files[filenum]->frames, mainw->files[filenum]->fps, mt->fps) / mt->fps;
     } else {
       out_end_range = q_gint64(mainw->files[filenum]->laudio_time * TICKS_PER_SECOND_DBL, mt->fps) / TICKS_PER_SECOND_DBL;
     }
     if (avel > 0.) {
-      if (block != NULL) {
+      if (block) {
         lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_out), block->offset_start / TICKS_PER_SECOND_DBL + 1.
                                     / mt->fps, out_end_range);
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out), offset_end / TICKS_PER_SECOND_DBL);
@@ -13122,7 +13122,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
       lives_widget_hide(mt->out_image);
     }
 
-    if (block == NULL) {
+    if (!block) {
       lives_widget_hide(mt->checkbutton_start_anchored);
       lives_widget_hide(mt->checkbutton_end_anchored);
     }
@@ -13150,7 +13150,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
 
     filter = get_weed_filter(mt->current_fx);
 
-    if (mt->current_rfx != NULL) {
+    if (mt->current_rfx) {
       rfx_free(mt->current_rfx);
       lives_free(mt->current_rfx);
     }
@@ -13166,7 +13166,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
 
     tc = get_event_timecode(mt->init_event);
 
-    if (fx_dialog[1] != NULL) {
+    if (fx_dialog[1]) {
       lives_rfx_t *rfx = fx_dialog[1]->rfx;
       on_paramwindow_button_clicked(NULL, rfx);
       lives_widget_destroy(fx_dialog[1]->dialog);
@@ -13208,15 +13208,15 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
     if (mt->current_track >= 0) eventbox = (LiVESWidget *)lives_list_nth_data(mt->video_draws, mt->current_track);
     else eventbox = (LiVESWidget *)mt->audio_draws->data;
 
-    if (eventbox == NULL) break; /// < can happen during mt exit
+    if (!eventbox) break; /// < can happen during mt exit
 
     secs = mt->ptr_time;
     if (mt->context_time != -1. && mt->use_context) secs = mt->context_time;
 
     block = get_block_from_time(eventbox, secs, mt);
-    if (block == NULL) {
+    if (!block) {
       block = get_block_before(eventbox, secs, FALSE);
-      if (block != NULL) shortcut = block->end_event;
+      if (block) shortcut = block->end_event;
       else shortcut = NULL;
     } else shortcut = block->start_event;
 
@@ -13224,7 +13224,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
 
     frame_event = get_frame_event_at(mt->event_list, tc, shortcut, TRUE);
 
-    if (frame_event != NULL)
+    if (frame_event)
       filter_map = mt->fm_edit_event = get_filter_map_before(frame_event, LIVES_TRACK_ANY, NULL);
 
     mt->fx_list_box = lives_vbox_new(FALSE, 0);
@@ -13248,12 +13248,12 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
     lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->fx_list_scroll)), LIVES_WIDGET_STATE_NORMAL,
                               &palette->normal_back);
 
-    if (filter_map != NULL) {
+    if (filter_map) {
       init_events = weed_get_voidptr_array_counted(filter_map, WEED_LEAF_INIT_EVENTS, &num_fx);
       if (num_fx > 0) {
         for (i = 0; i < num_fx; i++) {
           init_event = (weed_plant_t *)init_events[i];
-          if (init_event != NULL) {
+          if (init_event) {
             is_input = FALSE;
             fromtrack = -1;
             in_tracks = weed_get_int_array_counted(init_event, WEED_LEAF_IN_TRACKS, &num_in_tracks);

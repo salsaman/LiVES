@@ -3459,7 +3459,8 @@ filterinit1:
         weed_instance_unref(inst);
       }
       // no freep !
-      lives_free((void **)&pchains[key]);
+      if (pchains[i]) lives_free(pchains[key]);
+      pchains[key] = NULL;
     }
     break;
 

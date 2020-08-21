@@ -273,6 +273,27 @@ static frames_t scan_frames(lives_clip_t *sfile, frames_t vframes, frames_t last
 }
 
 
+lives_img_type_t resolve_img_type(lives_clip_t *sfile) {
+  lives_img_type_t ximgtype;
+  int nimty = (int)N_IMG_TYPES;
+  char *fname;
+  for (int i = sfile->frames - 1; i >= 0; i--) {
+    if (!sfile->frame_index || sfile->frame_index[i] == -1) {
+      for (int j = 1; j < nimty; j++) {
+        ximgtype = (lives_img_type_t)j;
+        fname = make_image_file_name(sfile, i + 1, get_image_ext_for_type(ximgtype));
+        if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+          lives_free(fname);
+          return j;
+        }
+        lives_free(fname);
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
+  return IMG_TYPE_BEST;
+}
+
+
 boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_t maxframe) {
   lives_clip_t *sfile = mainw->files[fileno], *binf = NULL;
   lives_img_type_t empirical_img_type = sfile->img_type, oemp = empirical_img_type;
@@ -338,6 +359,11 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
 	  // *INDENT-OFF*
 	}}}}
   // *INDENT-OFF*
+
+  if (empirical_img_type == IMG_TYPE_UNKNOWN) {
+    /// this is possible if clip is only virtual frames
+    empirical_img_type = sfile->img_type = IMG_TYPE_BEST; // read_headers() will have set this to "jpeg" (default)
+  }
 
   if (cdata) {
     // check frame count
@@ -426,7 +452,6 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
     if (sfile->old_frames > sfile->frames) {
       sfile->frames = sfile->old_frames;
       sfile->frames = scan_frames(sfile, sfile->frames, last_real_frame);
-      g_print("lrsdsdf2 is %d\n", last_real_frame);
     } else sfile->frames = sfile->old_frames;
   }
 

@@ -301,17 +301,14 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
         LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_apply_theme(mainw->hruler, LIVES_WIDGET_STATE_NORMAL);
 
+
   lives_widget_set_fg_color(mainw->vidbar, LIVES_WIDGET_STATE_NORMAL, colf);
-
-  lives_widget_set_bg_color(mainw->video_draw, LIVES_WIDGET_STATE_NORMAL, colb);
-
-  lives_widget_set_bg_color(mainw->laudio_draw, LIVES_WIDGET_STATE_NORMAL, colb);
-
   lives_widget_set_fg_color(mainw->laudbar, LIVES_WIDGET_STATE_NORMAL, colf);
-
   lives_widget_set_fg_color(mainw->raudbar, LIVES_WIDGET_STATE_NORMAL, colf);
 
-  lives_widget_set_bg_color(mainw->raudio_draw, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_apply_theme(mainw->video_draw, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_apply_theme(mainw->laudio_draw, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_apply_theme(mainw->raudio_draw, LIVES_WIDGET_STATE_NORMAL);
 
   lives_widget_apply_theme(mainw->vps_label, LIVES_WIDGET_STATE_NORMAL);
 
@@ -2116,6 +2113,7 @@ void create_LiVES(void) {
   mainw->playarea = lives_event_box_new();
   lives_container_add(LIVES_CONTAINER(mainw->pl_eventbox), mainw->playarea);
   lives_widget_set_app_paintable(mainw->playarea, TRUE);
+  lives_widget_apply_theme(mainw->playarea, LIVES_WIDGET_STATE_NORMAL);
 
   lives_table_attach(LIVES_TABLE(mainw->pf_grid), mainw->playframe, 1, 2, 0, 1,
                      (LiVESAttachOptions)(0),
@@ -2154,6 +2152,7 @@ void create_LiVES(void) {
   // the actual playback image for the internal player
   mainw->play_image = lives_standard_drawing_area_new(NULL, &mainw->play_surface);
   lives_widget_show(mainw->play_image); // needed to get size
+  lives_widget_apply_theme(mainw->play_image, LIVES_WIDGET_STATE_NORMAL);
 
   //lives_container_add(mainw->pl_eventbox, mainw->play_image);
 

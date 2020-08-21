@@ -1410,7 +1410,7 @@ const widget_opts_t _def_widget_opts = {
   LIVES_FONT_SIZE_MEDIUM, ///< default font size
   W_BORDER_WIDTH, ///< def border width
 
-  FALSE, ///< swap_label
+  FALSE, ///< swap_label (TRUE for RTL ?)
   FALSE, ///<pack_end
   FALSE, ///< line_wrap
   TRUE, ///< mnemonic_label

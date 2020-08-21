@@ -1536,10 +1536,23 @@ LIVES_GLOBAL_INLINE char *lives_strstop(char *st, const char term) {
   return st;
 }
 
+
 LIVES_GLOBAL_INLINE char *lives_chomp(char *buff) {
-  size_t xs = lives_strlen(buff);
-  if (xs && buff[xs - 1] == '\n') buff[--xs] = '\0'; // remove trailing newline
+  if (buff) {
+    size_t xs = lives_strlen(buff);
+    if (xs && buff[xs - 1] == '\n') buff[--xs] = '\0'; // remove trailing newline
+  }
   return buff;
+}
+
+
+LIVES_GLOBAL_INLINE char *lives_strtrim(const char *buff) {
+  /// return string with start and end newlines stripped
+  int i, j;
+  if (!buff) return NULL;
+  for (i = 0; buff[i] == '\n'; i++);
+  for (j = i; buff[j]; j++) if (buff[j] == '\n') break;
+  return lives_strndup(buff + i, j - i);
 }
 
 
@@ -2943,7 +2956,7 @@ boolean get_x11_visible(const char *wname) {
 }
 
 
-char *get_systmp(const char *suff, boolean is_dir) {
+static char *get_systmp_inner(const char *suff, boolean is_dir, const char *xprefix) {
   /// create a file or dir in /tmp
   /// check the name returned has the lenght we expect
   /// check it was created
@@ -2955,20 +2968,24 @@ char *get_systmp(const char *suff, boolean is_dir) {
   else {
     size_t slen;
     char *tmp, *com;
+    char *prefix, *tmpdir;
     const char *dirflg;
+    if (xprefix) prefix = (char *)xprefix;
+    else prefix = "lives-";
     if (suff) {
-      tmp = lives_strdup_printf("lives-XXXXXXXXXX-%s", suff);
+      tmp = lives_strdup_printf("%sXXXXXXXXXX-%s", prefix, suff);
     }
     else
-      tmp = lives_strdup("lives-XXXXXXXXXX");
+      tmp = lives_strdup_printf("%sXXXXXXXXXX", prefix);
 
     slen = lives_strlen(tmp);
 
     if (is_dir) dirflg = "d";
     else dirflg = "";
-
-    com = lives_strdup_printf("%s -n $(%s -qt%s %s)", capable->echo_cmd, EXEC_MKTEMP, dirflg, tmp);
-    lives_free(tmp);
+    if (!prefix) tmpdir = lives_strdup("");
+    else tmpdir = lives_strdup_printf("='%s'", prefs->workdir);
+    com = lives_strdup_printf("%s -n $(%s --tmpdir%s -q%s %s)", capable->echo_cmd, EXEC_MKTEMP, tmpdir, dirflg, tmp);
+    lives_free(tmp); lives_free(tmpdir);
     res = mini_popen(com);
     if (!res) return NULL;
     if (THREADVAR(com_failed)) {
@@ -2994,8 +3011,17 @@ char *get_systmp(const char *suff, boolean is_dir) {
   return res;
 }
 
+char *get_systmp(const char *suff, boolean is_dir) {
+  return get_systmp_inner(suff, is_dir, NULL);
+}
+
+char *get_worktmp(const char *prefix) {
+  return get_systmp_inner(NULL, TRUE, prefix);
+}
+
 
 boolean check_snap(const char *prog) {
+  // not working yet...
   if (!check_for_executable(&capable->has_snap, EXEC_SNAP)) return FALSE;
   char *com = lives_strdup_printf("%s find %s", EXEC_SNAP, prog);
   char *res = grep_in_cmd(com, 0, 1, prog, 0, 1);

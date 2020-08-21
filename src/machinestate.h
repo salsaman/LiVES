@@ -362,6 +362,7 @@ void lives_log(const char *what);
 uint32_t lives_string_hash(const char *string) GNU_PURE GNU_HOT;
 uint32_t fast_hash(const char *key) GNU_PURE GNU_HOT;
 char *lives_chomp(char *string);
+char *lives_strtrim(const char *buff);
 
 int check_for_bad_ffmpeg(void);
 
@@ -578,6 +579,8 @@ boolean get_distro_dets(void);
 boolean get_machine_dets(void);
 
 char *get_systmp(const char *suff, boolean is_dir);
+char *get_worktmp(const char *prefix);
+
 boolean check_snap(const char *prog);
 
 #endif

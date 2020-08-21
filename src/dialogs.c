@@ -1193,6 +1193,9 @@ static void cancel_process(boolean visible) {
 
 static void disp_fraction(double fraction_done, double timesofar, xprocess * proc) {
   // display fraction done and estimated time remaining
+#ifdef PROGBAR_IS_ENTRY
+  char *tmp;
+#endif
   char *prog_label;
   double est_time;
 
@@ -1206,9 +1209,11 @@ static void disp_fraction(double fraction_done, double timesofar, xprocess * pro
   prog_label = lives_strdup_printf(_("\n%d%% done. Time remaining: %u sec\n"), (int)(fraction_done * 100.),
                                    (uint32_t)(est_time + .5));
 #ifdef PROGBAR_IS_ENTRY
+  tmp = lives_strtrim(prog_label);
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  lives_entry_set_text(LIVES_ENTRY(mainw->proc_ptr->label3),  lives_chomp(prog_label) + 1);
+  lives_entry_set_text(LIVES_ENTRY(mainw->proc_ptr->label3), tmp);
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+  lives_free(tmp);
 #else
   if (LIVES_IS_LABEL(proc->label3)) lives_label_set_text(LIVES_LABEL(proc->label3), prog_label);
 #endif

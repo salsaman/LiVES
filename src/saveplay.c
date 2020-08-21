@@ -2419,7 +2419,7 @@ void play_file(void) {
 
   lives_widget_set_sensitive(mainw->stop, TRUE);
 
-  if (mainw->multitrack == NULL) lives_widget_set_sensitive(mainw->m_playbutton, FALSE);
+  if (!mainw->multitrack) lives_widget_set_sensitive(mainw->m_playbutton, FALSE);
   else if (!cfile->opening) {
     if (!mainw->is_processing) mt_swap_play_pause(mainw->multitrack, TRUE);
     else {
@@ -2428,7 +2428,7 @@ void play_file(void) {
     }
   }
 
-  if (!mainw->double_size) lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
+  lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), !mainw->double_size);
 
   lives_widget_set_sensitive(mainw->m_playselbutton, FALSE);
   lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
@@ -3372,7 +3372,7 @@ void play_file(void) {
   }
 
   if (!mainw->multitrack) {
-    lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
+    //lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
   }
 
   if (prefs->show_gui && ((mainw->multitrack  && mainw->double_size) ||
@@ -3407,6 +3407,7 @@ void play_file(void) {
       lives_widget_hide(mainw->framebar);
     }
     set_drawing_area_from_pixbuf(mainw->play_image, NULL, mainw->play_surface);
+    lives_widget_set_opacity(mainw->play_image, 0.);
   }
 
   if (!mainw->multitrack) mainw->osc_block = FALSE;

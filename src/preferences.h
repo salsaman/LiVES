@@ -1064,7 +1064,7 @@ double get_double_prefd(const char *key, double defval);
 int get_int_pref(const char *key);
 LiVESList *get_list_pref(const char *key);
 boolean get_colour_pref(const char *key, lives_colRGBA64_t *lcol);
-boolean get_theme_colour_pref(const char *themefile, const char *key, lives_colRGBA64_t *lcol);
+boolean get_theme_colour_pref(const char *key, lives_colRGBA64_t *lcol);
 
 boolean get_boolean_prefd(const char *key, boolean defval);
 int get_int_prefd(const char *key, int defval);

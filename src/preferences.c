@@ -105,6 +105,7 @@ LIVES_GLOBAL_INLINE LiVESResponseType get_string_prefd(const char *key, char *va
 
 LIVES_GLOBAL_INLINE LiVESResponseType get_pref_from_file(const char *filename, const char *key, char *val, int maxlen) {
   /// get from non-prefs
+  g_print("fetching %s, %s, %p\n", filename, key, mainw->gen_cache);
   return get_pref_inner(filename, key, val, maxlen, mainw->gen_cache);
 }
 
@@ -231,25 +232,27 @@ boolean get_colour_pref(const char *key, lives_colRGBA64_t *lcol) {
 }
 
 
-boolean get_theme_colour_pref(const char *themefile, const char *key, lives_colRGBA64_t *lcol) {
+boolean get_theme_colour_pref(const char *key, lives_colRGBA64_t *lcol) {
   /// load from mainw->gen_cache
-
-  char buffer[64];
+  char *tmp;
   char **array;
   int ntoks;
 
-  if (get_pref_from_file(themefile, key, buffer, 64) == LIVES_RESPONSE_NO) return FALSE;
-  if (!(*buffer)) return FALSE;
-  if ((ntoks = get_token_count(buffer, ' ')) < 3) return FALSE;
+  tmp = get_val_from_cached_list(key, 64, mainw->gen_cache);
+  if (!tmp) return FALSE;
 
-  array = lives_strsplit(buffer, " ", 4);
+  if ((ntoks = get_token_count(tmp, ' ')) < 3) {
+    lives_free(tmp);
+    return FALSE;
+  }
+  array = lives_strsplit(tmp, " ", 4);
   lcol->red = atoi(array[0]);
   lcol->green = atoi(array[1]);
   lcol->blue = atoi(array[2]);
   if (ntoks == 4) lcol->alpha = atoi(array[3]);
   else lcol->alpha = 65535;
   lives_strfreev(array);
-
+  lives_free(tmp);
   return TRUE;
 }
 
@@ -2974,6 +2977,7 @@ static void spinbutton_ds_value_changed(LiVESSpinButton * warn_ds, livespointer 
 
 
 static void theme_widgets_set_sensitive(LiVESCombo * combo, livespointer xprefsw) {
+  return;
   _prefsw *prefsw = (_prefsw *)xprefsw;
   char *theme = lives_combo_get_active_text(combo);
   boolean theme_set = TRUE;
@@ -3764,7 +3768,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   layout = lives_layout_new(LIVES_BOX(vbox));
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
-  vid_playback_plugins = get_plugin_list(PLUGIN_VID_PLAYBACK, TRUE, NULL, "-"DLL_NAME);
+  vid_playback_plugins = get_plugin_list(PLUGIN_VID_PLAYBACK, TRUE, NULL, "-" DLL_NAME);
   vid_playback_plugins = lives_list_prepend(vid_playback_plugins,
                          lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]));
 
@@ -3772,8 +3776,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   advbutton = lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES, _("_Advanced"),
-              DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT,
-              LIVES_BOX(hbox), TRUE, NULL);
+              DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT, LIVES_BOX(hbox), TRUE, NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_vpp_advanced_clicked),

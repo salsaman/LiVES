@@ -2859,7 +2859,9 @@ static char *time_to_string(double secs) {
 static void update_timecodes(lives_mt * mt, double dtime) {
   char *timestring = time_to_string(QUANT_TIME(dtime));
   lives_snprintf(mt->timestring, TIMECODE_LENGTH, "%s", timestring);
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
   lives_entry_set_text(LIVES_ENTRY(mt->timecode), timestring);
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_free(timestring);
 }
 

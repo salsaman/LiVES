@@ -496,7 +496,24 @@ enum {
 
 #define LIVES_FILE_EXT_RFX_SCRIPT "script"
 
+//////////////////////////////
+
+// URLs
+#define LIVES_WEBSITE PACKAGE_URL
+#define LIVES_MANUAL_URL LIVES_WEBSITE "/manual/"
+#define LIVES_MANUAL_FILENAME "LiVES_manual.html"
+#define LIVES_AUTHOR_EMAIL "salsaman+lives@gmail.com"
+#define LIVES_DONATE_URL "https://sourceforge.net/p/lives/donate/"
+#define LIVES_BUG_URL PACKAGE_BUGREPORT
+#define LIVES_FEATURE_URL "https://sourceforge.net/p/lives/feature-requests/"
+#define LIVES_TRANSLATE_URL "https://translations.launchpad.net/lives/trunk"
+
 // file names
+#define DLL_NAME "so"
+
+#define LIVES_STATUS_FILE_NAME ".status"
+#define LIVES_ENC_DEBUG_FILE_NAME ".debug_out"
+
 #define TOTALSAVE_NAME "totalsave"
 #define CLIP_BINFMT_CHECK "LiVESXXX"
 #define CLIP_AUDIO_FILENAME "audio"
@@ -554,6 +571,24 @@ enum {
 #define UNREC_LAYOUTS_DIR "unrecoverable_layouts"
 
 // directory names
+#define LIVES_DEVNULL "/dev/null"
+
+#define DOC_DIR "/share/doc/lives-"
+#define THEME_DIR "/share/lives/themes/"
+#define PLUGIN_SCRIPTS_DIR "/share/lives/plugins/"
+#define PLUGIN_COMPOUND_DIR "/share/lives/plugins/"
+#define PLUGIN_EXEC_DIR "/lives/plugins/"
+#define ICON_DIR "/share/lives/icons/"
+#define DESKTOP_ICON_DIR "/share/icons/hicolor/256x256/apps"
+#define DATA_DIR "/share/lives/"
+#define LIVES_RC_FILENAME ".lives"
+#define LIVES_CONFIG_DIR ".lives-dir/"
+#define LIVES_DEVICEMAP_DIR "devicemaps"
+#define LIVES_DEF_WORK_NAME "livesprojects"
+#define LIVES_RESOURCES_DIR "resources"
+
+#define LIVES_DEVICE_DIR "/dev/"
+
 #define LAYOUTS_DIRNAME "layouts"
 #define CLIPS_DIRNAME "clips"
 #define IMPORTS_DIRNAME "imports"

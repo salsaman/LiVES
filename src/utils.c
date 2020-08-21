@@ -16,6 +16,13 @@
 #include "audio.h"
 #include "resample.h"
 #include "callbacks.h"
+#include "cvirtual.h"
+
+typedef struct {
+  uint32_t hash;
+  char *key;
+  char *data;
+} lives_speed_cache_t;
 
 static boolean  omute,  osepwin,  ofs,  ofaded,  odouble;
 
@@ -2953,6 +2960,10 @@ LIVES_GLOBAL_INLINE lives_img_type_t lives_image_type_to_img_type(const char *li
 
 
 LIVES_GLOBAL_INLINE char *make_image_file_name(lives_clip_t *sfile, frames_t frame, const char *img_ext) {
+  if (!*img_ext) {
+    sfile->img_type = resolve_img_type(sfile);
+    img_ext = get_image_ext_for_type(sfile->img_type);
+  }
   return lives_strdup_printf("%s/%s/%08d.%s", prefs->workdir, sfile->handle, frame, img_ext);
 }
 
@@ -4757,12 +4768,6 @@ LIVES_GLOBAL_INLINE void lives_list_free_all(LiVESList **list) {
   *list = NULL;
 }
 
-typedef struct {
-  uint32_t hash;
-  char *key;
-  char *data;
-} lives_speed_cache_t;
-
 
 LIVES_GLOBAL_INLINE void cached_list_free(LiVESList **list) {
   lives_speed_cache_t *speedy;
@@ -4777,6 +4782,18 @@ LIVES_GLOBAL_INLINE void cached_list_free(LiVESList **list) {
   }
   lives_list_free(*list);
   *list = NULL;
+}
+
+
+void print_cache(LiVESList * cache) {
+  /// for debugging
+  lives_speed_cache_t *speedy;
+  LiVESList *ll = cache;
+  g_print("dumping cache %p\n", cache);
+  for (; ll; ll = ll->next) {
+    speedy = (lives_speed_cache_t *)ll->data;
+    g_print("cach dets: %s = %s\n", speedy->key, speedy->data);
+  }
 }
 
 
@@ -4847,8 +4864,7 @@ char *get_val_from_cached_list(const char *key, size_t maxlen, LiVESList * cache
     if (khash == speedy->hash && !lives_strcmp(key, speedy->key))
       return lives_strndup(speedy->data, maxlen);
   }
-  //return NULL;
-  return lives_strdup("");
+  return NULL;
 }
 
 
@@ -4951,14 +4967,13 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     return FALSE;
   }
 
-
   if (mainw->hdrs_cache) {
     val = get_val_from_cached_list(key, maxlen, mainw->hdrs_cache);
     lives_free(key);
-    if (val == NULL) return FALSE;
+    if (!val) return FALSE;
   } else {
     val = (char *)lives_malloc(maxlen);
-    if (val == NULL) return FALSE;
+    if (!val) return FALSE;
     retval2 = get_pref_from_file(lives_header, key, val, maxlen);
     lives_free(lives_header);
     lives_free(key);

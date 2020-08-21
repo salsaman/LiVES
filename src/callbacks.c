@@ -732,23 +732,26 @@ static void open_sel_range_activate(int frames, double fps) {
 }
 
 
-static boolean read_file_details_generic(char *fname) {
-  char *dfile, *com;
-
-  mainw->cancelled = CANCEL_NONE;
-
-  dfile = lives_strdup_printf("%s" LIVES_DIR_SEP "fsp%d" LIVES_DIR_SEP, prefs->workdir, capable->mainpid);
-  if (!lives_make_writeable_dir(dfile)) {
-    workdir_warning();
-    lives_free(dfile);
-    end_fs_preview();
-    return FALSE;
+static boolean read_file_details_generic(const char *fname) {
+  /// make a tmpdir in case we need to open images for example
+  char *tmpdir, *dirname, *com;
+  const char *prefix = "fsp";
+  tmpdir = get_worktmp(prefix);
+  if (tmpdir) dirname = lives_path_get_basename(tmpdir);
+  else {
+    dirname = lives_strdup_printf("%s%lu", prefix, gen_unique_id());
+    tmpdir = lives_build_path(prefs->workdir, dirname, NULL);
+    if (!lives_make_writeable_dir(tmpdir)) {
+      workdir_warning();
+      lives_free(tmpdir); lives_free(dirname);
+      end_fs_preview();
+      return FALSE;
+    }
   }
 
   // check details
-  com = lives_strdup_printf("%s get_details fsp%d \"%s\" \"%s\" %d", prefs->backend_sync,
-                            capable->mainpid, fname, prefs->image_ext, 0);
-
+  com = lives_strdup_printf("%s get_details %s \"%s\" \"%s\" %d", prefs->backend_sync,
+                            dirname, fname, prefs->image_ext, 0);
   lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
   lives_free(com);
 
@@ -9955,8 +9958,7 @@ boolean all_expose(LiVESWidget * widget, lives_painter_t *cr, livespointer psurf
       lives_painter_set_source_surface(cr, *surf, 0., 0.);
       lives_painter_paint(cr);
     } else {
-      //*surf = lives_widget_create_painter_surface(widget);
-      return FALSE;
+      return TRUE;
     }
   }
   return TRUE;
@@ -10120,7 +10122,9 @@ boolean config_event2(LiVESWidget * widget, LiVESXEventConfigure * event, livesp
 
 /// genric func. to create surfaces
 boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer ppsurf) {
+  lives_painter_t *cr;
   lives_painter_surface_t **psurf = (lives_painter_surface_t **)ppsurf;
+  int rwidth, rheight;
   if (!psurf) return FALSE;
   if (*psurf) lives_painter_surface_destroy(*psurf);
   *psurf = lives_widget_create_painter_surface(widget);
@@ -10134,6 +10138,12 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
     }
   }
 #endif
+  cr = lives_painter_create_from_surface(*psurf);
+  rwidth = lives_widget_get_allocation_width(widget);
+  rheight = lives_widget_get_allocation_height(widget);
+  lives_painter_render_background(widget, cr, 0., 0., rwidth, rheight);
+  lives_painter_destroy(cr);
+  lives_widget_queue_draw(widget);
 
   if (widget == mainw->start_image)
     load_start_image(CURRENT_CLIP_IS_VALID ? cfile->start : 0);

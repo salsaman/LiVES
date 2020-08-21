@@ -66,7 +66,7 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
 #define SPGREEN_KEY "_wh_sp_green"
 #define SPBLUE_KEY "_wh_sp_blue"
 #define SPALPHA_KEY "_wh_sp_alpha"
-#define ALT_THEME_KEY "_wh_alt_theme"
+#define THEME_KEY "_wh_theme"
 
 #define SBUTT_SURFACE_KEY "_sbutt_surf"
 #define SBUTT_TXT_KEY "_sbutt_txt"
@@ -247,7 +247,8 @@ static boolean widget_state_cb(LiVESWidgetObject *object, livespointer pspec, li
 
   if (LIVES_IS_LABEL(widget)) {
     // other widgets get dimmed text
-    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), ALT_THEME_KEY)) {
+    int themetype = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), THEME_KEY));
+    if (themetype == 2) {
       if (!lives_widget_is_sensitive(widget)) {
         set_child_dimmed_colour2(widget, BUTTON_DIM_VAL); // insens, themecols 1, child only
       } else set_child_alt_colour(widget, TRUE);
@@ -423,36 +424,44 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_destroy(lives_painter_t *cr) {
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_render_background(LiVESWidget *widget, lives_painter_t *cr, double x,
-    double y,
-    double width,
-    double height) {
+    double y, double width, double height) {
+  int themetype = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), THEME_KEY));
 #ifdef LIVES_PAINTER_IS_CAIRO
+  if (themetype == 1) {
+    lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->normal_back);
+    //lives_painter_set_source_rgb(cr, 1., 0., 1.);
+    lives_painter_paint(cr);
+  } else {
 #if GTK_CHECK_VERSION(3, 0, 0)
-  GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
-  gtk_render_background(ctx, cr, x, y, width, height);
+    GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
+    gtk_render_background(ctx, cr, x, y, width, height);
 #else
-  LiVESWidgetColor color;
-  lives_widget_color_copy(&color, &gtk_widget_get_style(widget)->bg[lives_widget_get_state(widget)]);
+    LiVESWidgetColor color;
+    lives_widget_color_copy(&color, &gtk_widget_get_style(widget)->bg[lives_widget_get_state(widget)]);
 
 #if LIVES_WIDGET_COLOR_HAS_ALPHA
-  lives_painter_set_source_rgba(cr,
-                                LIVES_WIDGET_COLOR_SCALE(color.red),
-                                LIVES_WIDGET_COLOR_SCALE(color.green),
-                                LIVES_WIDGET_COLOR_SCALE(color.blue),
-                                LIVES_WIDGET_COLOR_SCALE(color.alpha));
+
+    lives_painter_set_source_rgba(cr,
+                                  LIVES_WIDGET_COLOR_SCALE(color.red),
+                                  LIVES_WIDGET_COLOR_SCALE(color.green),
+                                  LIVES_WIDGET_COLOR_SCALE(color.blue),
+                                  LIVES_WIDGET_COLOR_SCALE(color.alpha));
 #else
-  lives_painter_set_source_rgb(cr,
-                               LIVES_WIDGET_COLOR_SCALE(color.red),
-                               LIVES_WIDGET_COLOR_SCALE(color.green),
-                               LIVES_WIDGET_COLOR_SCALE(color.blue));
-#endif
-  lives_painter_rectangle(cr, x, y, width, height);
-  lives_painter_fill(cr);
-#endif
+    lives_painter_set_source_rgb(cr,
+                                 LIVES_WIDGET_COLOR_SCALE(color.red),
+                                 LIVES_WIDGET_COLOR_SCALE(color.green),
+                                 LIVES_WIDGET_COLOR_SCALE(color.blue));
+#endif // has_alpha
+#endif // gtk 3
+    lives_painter_rectangle(cr, x, y, width, height);
+    lives_painter_fill(cr);
+  }
+  lives_widget_queue_draw(widget);
   return TRUE;
-#endif
+#endif /// painter cairo
   return FALSE;
 }
+
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_surface_destroy(lives_painter_surface_t *surf) {
@@ -1833,41 +1842,60 @@ static char *make_random_string(const char *prefix) {
 #if GTK_CHECK_VERSION(3, 16, 0)
 //#define ORD_NAMES
 
-static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetState state, const char *selector,
+static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetState state, const char *xselector,
     const char *detail, const char *value) {
   GtkCssProvider *provider;
   GtkStyleContext *ctx;
-  char *widget_name, *wname;
+  char *widget_name, *wname, *selector;
   char *css_string;
   char *state_str, *selstr;
 #ifdef ORD_NAMES
   static int widnum = 1;
   int brk_widnum = 3128;
 #endif
-  if (widget == NULL || !LIVES_IS_WIDGET(widget)) return FALSE;
+  if (!widget) {
+    int numtok = get_token_count(xselector, ' ') ;
+    if (numtok > 1) {
+      char **array = lives_strsplit(xselector, " ", 2);
+      widget_name = lives_strdup(array[0]);
+      selector = lives_strdup(array[1]);
+      lives_strfreev(array);
+    } else {
+      widget_name = lives_strdup(xselector);
+      selector = lives_strdup("");
+    }
+    provider = gtk_css_provider_new();
 
-  ctx = gtk_widget_get_style_context(widget);
-  provider = gtk_css_provider_new();
-  gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
-                                 (provider), GTK_STYLE_PROVIDER_PRIORITY_USER);
+    // setting context provider for screen is VERY slow, so this should be used sparingly
+    gtk_style_context_add_provider_for_screen(mainw->mgeom[widget_opts.monitor].screen, GTK_STYLE_PROVIDER
+        (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 10000);
+  } else {
+    if (!LIVES_IS_WIDGET(widget)) return FALSE;
+    selector = (char *)xselector;
 
-  widget_name = lives_strdup(gtk_widget_get_name(widget));
+    ctx = gtk_widget_get_style_context(widget);
+    provider = gtk_css_provider_new();
+    gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
+                                   (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 10000);
 
-  if (widget_name == NULL || (strncmp(widget_name, RND_STR_PREFIX, strlen(RND_STR_PREFIX)))) {
-    lives_freep((void **)&widget_name);
+    widget_name = lives_strdup(gtk_widget_get_name(widget));
+
+    if (!widget_name || (strncmp(widget_name, RND_STR_PREFIX, strlen(RND_STR_PREFIX)))) {
+      lives_freep((void **)&widget_name);
 #ifdef ORD_NAMES
-    widget_name = lives_strdup_printf("%s-%d", RND_STR_PREFIX, ++widnum);
+      widget_name = lives_strdup_printf("%s-%d", RND_STR_PREFIX, ++widnum);
 #else
-    widget_name = make_random_string(RND_STR_PREFIX);
+      widget_name = make_random_string(RND_STR_PREFIX);
 #endif
-    gtk_widget_set_name(widget, widget_name);
+      gtk_widget_set_name(widget, widget_name);
 #ifdef ORD_NAMES
-    if (widnum == brk_widnum) break_me("widnum");
+      if (widnum == brk_widnum) break_me("widnum");
 #endif
+    }
   }
 
 #ifdef GTK_TEXT_VIEW_CSS_BUG
-  if (GTK_IS_TEXT_VIEW(widget)) {
+  if (widget && GTK_IS_TEXT_VIEW(widget)) {
     lives_freep((void **)&widget_name);
     widget_name = lives_strdup("GtkTextView");
   } else {
@@ -1915,23 +1943,31 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
     default:
       state_str = "";
     }
-
-    // special tweaks
-    if (!selector) {
-      if (GTK_IS_FRAME(widget)) {
-        selector = "label";
-      } else if (GTK_IS_TEXT_VIEW(widget)) {
-        selector = "text";
-      }
-      if (GTK_IS_SPIN_BUTTON(widget)) {
-        selector = "*";
+    if (widget) {
+      // special tweaks
+      if (!selector) {
+        if (GTK_IS_FRAME(widget)) {
+          if (selector != xselector) lives_free(selector);
+          selector = lives_strdup("label");
+        } else if (GTK_IS_TEXT_VIEW(widget)) {
+          if (selector != xselector) lives_free(selector);
+          selector = lives_strdup("text");
+        }
+        if (GTK_IS_SPIN_BUTTON(widget)) {
+          if (selector != xselector) lives_free(selector);
+          selector = lives_strdup("*");
+        }
       }
     }
 
     if (!selector || !(*selector)) selstr = lives_strdup("");
     else selstr = lives_strdup_printf(" %s", selector);
-    wname = lives_strdup_printf("#%s%s%s", widget_name, state_str, selstr);
+    if (widget)
+      wname = lives_strdup_printf("#%s%s%s", widget_name, state_str, selstr);
+    else
+      wname = lives_strdup_printf("%s%s%s", widget_name, selstr, state_str);
     lives_free(selstr);
+    if (selector && selector != xselector) lives_free(selector);
 
 #ifdef GTK_TEXT_VIEW_CSS_BUG
   }
@@ -1944,12 +1980,10 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
 
 #if GTK_CHECK_VERSION(4, 0, 0)
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
-                                  css_string,
-                                  -1);
+                                  css_string, -1);
 #else
   gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
-                                  css_string,
-                                  -1, NULL);
+                                  css_string, -1, NULL);
 #endif
   lives_free(wname);
   lives_free(css_string);
@@ -2004,10 +2038,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widge
 #endif
   return TRUE;
 #endif
-#ifdef GUI_QT
-  widget->set_bg_color(state, color);
-  return TRUE;
-#endif
   return FALSE;
 }
 
@@ -2028,10 +2058,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_fg_color(LiVESWidget *widge
   gtk_widget_modify_text(widget, state, color);
   gtk_widget_modify_fg(widget, state, color);
 #endif
-  return TRUE;
-#endif
-#ifdef GUI_QT
-  widget->set_fg_color(state, color);
   return TRUE;
 #endif
   return FALSE;
@@ -3678,7 +3704,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_combo_new(void) {
   LiVESWidget *combo = NULL;
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2, 24, 0)
-  combo = gtk_combo_box_text_new_with_entry();
+  combo = gtk_combo_box_new_with_entry();
 #else
   combo = gtk_combo_box_entry_new_text();
 #endif
@@ -3719,31 +3745,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESTreeModel *lives_combo_get_model(LiVESCombo *co
 }
 
 
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3, 0, 0)
-
-#define COMBO_CELL_HEIGHT 24
-
-static boolean setcellbg(LiVESCellRenderer *r, void *p) {
-  // set the pop-up colours
-  //lives_widget_object_set(r, "border-width", 0);
-  lives_widget_object_set(r, "cell-background-rgba", &palette->info_base);
-  lives_widget_object_set(r, "foreground-rgba", &palette->info_text);
-  gtk_cell_renderer_set_fixed_size(r, -1, COMBO_CELL_HEIGHT);
-  //// not working, is not a widget
-  /* if (prefs->extra_colours && mainw->pretty_colours) { */
-  /*   char *colref = gdk_rgba_to_string(&palette->nice1); */
-  /*   char *tmp = lives_strdup_printf("0 0 0 1px %s inset", colref); */
-  /*   set_css_value_direct(r, LIVES_WIDGET_STATE_FOCUSED, "", "box-shadow", tmp); */
-  /*   lives_free(tmp); */
-  /*   lives_free(colref); */
-  /* } */
-  return FALSE;
-}
-#endif
-#endif
-
-
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_set_model(LiVESCombo *combo, LiVESTreeModel *model) {
 #ifdef GUI_GTK
   gtk_combo_box_set_model(combo, model);
@@ -3776,11 +3777,20 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_set_focus_on_click(LiVESCombo *c
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_append_text(LiVESCombo *combo, const char *text) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2, 24, 0)
-  gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), text);
-#else
-  gtk_combo_box_append_text(GTK_COMBO_BOX(combo), text);
-#endif
+  LiVESTreeModel *tmodel = lives_combo_get_model(combo);
+  if (!GTK_IS_LIST_STORE(tmodel)) return FALSE;
+  else {
+    LiVESTreeIter iter;
+    LiVESListStore *lstore = GTK_LIST_STORE(tmodel);
+    gtk_list_store_append(lstore, &iter);   /* Acquire an iterator */
+    lives_tree_store_set(GTK_TREE_STORE(lstore), &iter, 0, text, -1);
+  }
+
+  /* #if GTK_CHECK_VERSION(2, 24, 0) */
+  /*   gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), text); */
+  /* #else */
+  /*   gtk_combo_box_append_text(GTK_COMBO_BOX(combo), text); */
+  /* #endif */
   return TRUE;
 #endif
   return FALSE;
@@ -3789,11 +3799,19 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_append_text(LiVESCombo *combo, c
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_prepend_text(LiVESCombo *combo, const char *text) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2, 24, 0)
-  gtk_combo_box_text_prepend_text(GTK_COMBO_BOX_TEXT(combo), text);
-#else
-  gtk_combo_box_prepend_text(GTK_COMBO_BOX(combo), text);
-#endif
+  LiVESTreeModel *tmodel = lives_combo_get_model(combo);
+  if (!GTK_IS_LIST_STORE(tmodel)) return FALSE;
+  else {
+    LiVESTreeIter iter;
+    LiVESListStore *lstore = GTK_LIST_STORE(tmodel);
+    gtk_list_store_prepend(lstore, &iter);   /* Acquire an iterator */
+    lives_tree_store_set(GTK_TREE_STORE(lstore), &iter, 0, text, -1);
+  }
+  /* #if GTK_CHECK_VERSION(2, 24, 0) */
+  /*   gtk_combo_box_text_prepend_text(GTK_COMBO_BOX_TEXT(combo), text); */
+  /* #else */
+  /*   gtk_combo_box_prepend_text(GTK_COMBO_BOX(combo), text); */
+  /* #endif */
   return TRUE;
 #endif
   return FALSE;
@@ -3812,13 +3830,14 @@ boolean lives_combo_remove_all_text(LiVESCombo *combo) {
   /* lives_combo_set_model(LIVES_COMBO(combo), LIVES_TREE_MODEL(lstore)); */
   /* return TRUE; */
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3, 0, 0)
-  // TODO *** - only works with list model
-  gtk_combo_box_text_remove_all(GTK_COMBO_BOX_TEXT(combo));
-#else
-  register int count = lives_tree_model_iter_n_children(lives_combo_get_model(combo), NULL);
-  while (count-- > 0) gtk_combo_box_remove_text(combo, 0);
-#endif
+  LiVESTreeModel *tmodel = lives_combo_get_model(combo);
+  if (GTK_IS_TREE_STORE(tmodel)) {
+    LiVESTreeStore *tstore = GTK_TREE_STORE(tmodel);
+    gtk_tree_store_clear(tstore);
+  } else if (GTK_IS_LIST_STORE(tmodel)) {
+    LiVESListStore *lstore = GTK_LIST_STORE(tmodel);
+    gtk_list_store_clear(lstore);
+  }
   return TRUE;
 #endif
   return FALSE;
@@ -3841,11 +3860,13 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_set_entry_text_column(LiVESCombo
 WIDGET_HELPER_GLOBAL_INLINE char *lives_combo_get_active_text(LiVESCombo *combo) {
   // return value should be freed
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2, 24, 0)
-  return gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo));
-#else
-  return gtk_combo_box_get_active_text(GTK_COMBO_BOX(combo));
-#endif
+  char *text = NULL;
+  LiVESTreeIter iter;
+  if (lives_combo_get_active_iter(combo, &iter)) {
+    LiVESTreeModel *tmodel = lives_combo_get_model(combo);
+    gtk_tree_model_get(tmodel, &iter, 0, &text, -1);
+  }
+  return text;
 #endif
   return NULL;
 }
@@ -3879,6 +3900,21 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_get_active_iter(LiVESCombo *comb
 
 WIDGET_HELPER_GLOBAL_INLINE int lives_combo_get_active_index(LiVESCombo *combo) {
 #ifdef GUI_GTK
+  LiVESTreeModel *tmodel = lives_combo_get_model(combo);
+  if (GTK_IS_TREE_STORE(tmodel)) {
+    int count = 0;
+    LiVESTreeIter iter, iter1, iter2;
+    if (!lives_combo_get_active_iter(combo, &iter)) return -1;
+    if (gtk_tree_model_iter_children(tmodel, &iter1, NULL)) {
+      if (gtk_tree_model_iter_children(tmodel, &iter2, &iter1)) {
+        while (1) {
+          if (iter2.stamp == iter.stamp) return count;
+          count++;
+          if (!gtk_tree_model_iter_next(tmodel, &iter2)) break;
+        }
+      }
+    }
+  }
   return gtk_combo_box_get_active(combo);
 #endif
   return -1;
@@ -6123,6 +6159,9 @@ WIDGET_HELPER_GLOBAL_INLINE const char *lives_entry_get_text(LiVESEntry *entry) 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_entry_set_text(LiVESEntry *entry, const char *text) {
 #ifdef GUI_GTK
+  if (widget_opts.justify == LIVES_JUSTIFY_START) lives_entry_set_alignment(entry, 0.);
+  else if (widget_opts.justify == LIVES_JUSTIFY_CENTER) lives_entry_set_alignment(entry, 0.5);
+  if (widget_opts.justify == LIVES_JUSTIFY_END) lives_entry_set_alignment(entry, 1.);
   gtk_entry_set_text(entry, text);
   return TRUE;
 #endif
@@ -7420,8 +7459,11 @@ boolean lives_combo_populate(LiVESCombo *combo, LiVESList *list) {
   LiVESList *revlist;
 
   // remove any current list
-  if (!lives_combo_set_active_index(combo, -1)) return FALSE;
-  if (!lives_combo_remove_all_text(combo)) return FALSE;
+  LiVESTreeModel *tmodel = lives_combo_get_model(combo);
+  if (tmodel) {
+    if (!lives_combo_set_active_index(combo, -1)) return FALSE;
+    if (!lives_combo_remove_all_text(combo)) return FALSE;
+  }
 
   if (lives_list_length(list) > COMBO_LIST_LIMIT) {
     // use a treestore
@@ -7430,29 +7472,25 @@ boolean lives_combo_populate(LiVESCombo *combo, LiVESList *list) {
     char *cat;
     for (revlist = list; revlist; revlist = revlist->next) {
       cat = lives_strndup((const char *)revlist->data, 1);
+      // returns the iter for cat if it already exists, else appends cat and returns it
       lives_tree_store_find_iter(tstore, 0, cat, NULL, &iter1);
       lives_tree_store_append(tstore, &iter2, &iter1);   /* Acquire an iterator */
       lives_tree_store_set(tstore, &iter2, 0, revlist->data, -1);
       lives_free(cat);
     }
     lives_combo_set_model(LIVES_COMBO(combo), LIVES_TREE_MODEL(tstore));
+    lives_combo_set_entry_text_column(combo, 0);
   } else {
     // reverse the list and then prepend the items
     // this is faster (O(1) than traversing the list and appending O(2))
+    LiVESTreeIter iter;
+    LiVESListStore *lstore = lives_list_store_new(1, LIVES_COL_TYPE_STRING);
     for (revlist = lives_list_last(list); revlist; revlist = revlist->prev) {
-      if (!lives_combo_prepend_text(LIVES_COMBO(combo), (const char *)revlist->data)) return FALSE;
+      gtk_list_store_prepend(lstore, &iter);   /* Acquire an iterator */
+      gtk_list_store_set(GTK_LIST_STORE(lstore), &iter, 0, revlist->data, -1);
     }
-  }
-
-  if (widget_opts.apply_theme) {
-#if GTK_CHECK_VERSION(3, 0, 0)
-    GtkCellArea *celly;
-    lives_widget_object_get(LIVES_WIDGET_OBJECT(combo), "cell-area", &celly);
-    gtk_cell_area_foreach(celly, setcellbg, NULL);
-
-    // need to get the GtkCellView !
-    //lives_widget_object_set(celly, "background", &palette->info_base);
-#endif
+    lives_combo_set_model(LIVES_COMBO(combo), LIVES_TREE_MODEL(lstore));
+    lives_combo_set_entry_text_column(combo, 0);
   }
   return TRUE;
 }
@@ -7908,7 +7946,6 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
       LiVESWidget *toplevel = lives_widget_get_toplevel(widget);
       LiVESWidget *deflt = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(toplevel), DEFBUTTON_KEY);
       LiVESWidget *defover = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(toplevel), DEFOVERRIDE_KEY);
-      LiVESWidgetColor wcol;
       LiVESPixbuf *pixbuf = NULL;
       double offs_x = 0., offs_y = 0;
       boolean fake_default = (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(sbutt), SBUTT_FAKEDEF_KEY)
@@ -7917,27 +7954,34 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
       boolean insens = (state & LIVES_WIDGET_STATE_INSENSITIVE) == 0 ? FALSE : TRUE;
       boolean focused = lives_widget_is_focus(sbutt);
       uint32_t acc;
+      int themetype;
       int width, height;
       int lw = 0, lh = 0, x_pos, y_pos, w_, h_;
       int pbw = 0, pbh = 0;
 
-      if (insens) {
-        prelit = focused = FALSE;
-      }
+      if (insens) prelit = focused = FALSE;
+
+      pab2.red = pab2.green = pab2.blue = 0;
+      pab2.alpha = 1.;
 
       /* lives_widget_get_bg_state_color(sbutt, LIVES_WIDGET_STATE_NORMAL, &wcol); */
       /* widget_color_to_lives_rgba(&bg, &wcol); */
-      widget_color_to_lives_rgba(&bg, &palette->normal_back);
-
-      lives_widget_get_fg_state_color(sbutt, LIVES_WIDGET_STATE_NORMAL, &wcol);
-      widget_color_to_lives_rgba(&fg, &wcol);
-
-      if (prefs->extra_colours && mainw->pretty_colours) {
-        widget_color_to_lives_rgba(&pab, &palette->nice1);
-        widget_color_to_lives_rgba(&pab2, &palette->nice2);
-      } else {
-        widget_color_to_lives_rgba(&pab, &palette->menu_and_bars);
-        widget_color_to_lives_rgba(&pab2, &palette->menu_and_bars);
+      themetype = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(sbutt), THEME_KEY));
+      if (themetype) {
+        if (themetype == 1) {
+          widget_color_to_lives_rgba(&bg, &palette->normal_back);
+          widget_color_to_lives_rgba(&fg, &palette->normal_fore);
+        } else {
+          widget_color_to_lives_rgba(&bg, &palette->menu_and_bars);
+          widget_color_to_lives_rgba(&fg, &palette->menu_and_bars_fore);
+        }
+        if (prefs->extra_colours && mainw->pretty_colours) {
+          widget_color_to_lives_rgba(&pab, &palette->nice1);
+          widget_color_to_lives_rgba(&pab2, &palette->nice2);
+        } else {
+          widget_color_to_lives_rgba(&pab, &palette->menu_and_bars);
+          widget_color_to_lives_rgba(&pab2, &palette->menu_and_bars);
+        }
       }
 
       bsurf = *pbsurf;
@@ -7947,18 +7991,24 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
 
       cr = lives_painter_create_from_surface(bsurf);
 
-      lives_painter_set_line_width(cr, BT_PRE_WIDTH);
-      if (prelit) lives_painter_set_source_rgb_from_lives_rgba(cr, &pab);
-      else lives_painter_set_source_rgb_from_lives_rgba(cr, &bg);
-      lives_painter_rectangle(cr, 0, 0, width, height);
-      lives_painter_stroke(cr);
-      offs_x += BT_PRE_WIDTH;
-      offs_y += BT_PRE_WIDTH;
+      if (themetype) {
+        lives_painter_set_line_width(cr, BT_PRE_WIDTH);
+        if (prelit) lives_painter_set_source_rgb_from_lives_rgba(cr, &pab);
+        else lives_painter_set_source_rgb_from_lives_rgba(cr, &bg);
+        lives_painter_rectangle(cr, 0, 0, width, height);
+        lives_painter_stroke(cr);
+        offs_x += BT_PRE_WIDTH;
+        offs_y += BT_PRE_WIDTH;
 
-      lives_painter_set_line_width(cr, BT_UNPRE_WIDTH);
-      lives_painter_set_source_rgb_from_lives_rgba(cr, &pab);
-      lives_painter_rectangle(cr, offs_x, offs_y, width - offs_x * 2., height - offs_y * 2.);
-      lives_painter_stroke(cr);
+        lives_painter_set_line_width(cr, BT_UNPRE_WIDTH);
+        lives_painter_set_source_rgb_from_lives_rgba(cr, &pab);
+        lives_painter_rectangle(cr, offs_x, offs_y, width - offs_x * 2., height - offs_y * 2.);
+        lives_painter_stroke(cr);
+      } else {
+        offs_x += BT_PRE_WIDTH;
+        offs_y += BT_PRE_WIDTH;
+      }
+
       offs_x += BT_UNPRE_WIDTH;
       offs_y += BT_UNPRE_WIDTH;
 
@@ -8044,30 +8094,36 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
           lives_widget_object_set_data(LIVES_WIDGET_OBJECT(toplevel), DEFOVERRIDE_KEY, sbutt);
           sbutt_render(deflt, 0, NULL);
         }
-        lives_painter_set_source_rgb_from_lives_rgba(cr, &pab2);
-        lives_painter_rectangle(cr, offs_x, offs_y, width - offs_x * 2., height - offs_y * 2.);
-        lives_painter_fill(cr);
+        if (themetype) {
+          lives_painter_set_source_rgb_from_lives_rgba(cr, &pab2);
+          lives_painter_rectangle(cr, offs_x, offs_y, width - offs_x * 2., height - offs_y * 2.);
+          lives_painter_fill(cr);
+        }
       } else {
         if (sbutt == defover) {
           lives_widget_object_set_data(LIVES_WIDGET_OBJECT(toplevel), DEFOVERRIDE_KEY, NULL);
           if (deflt) sbutt_render(deflt, 0, NULL);
         }
-        lives_painter_set_source_rgb_from_lives_rgba(cr, &bg);
-        lives_painter_rectangle(cr, offs_x, offs_y, width - offs_x * 2., height - offs_y * 2.);
-        lives_painter_fill(cr);
+        if (themetype) {
+          lives_painter_set_source_rgb_from_lives_rgba(cr, &bg);
+          lives_painter_rectangle(cr, offs_x, offs_y, width - offs_x * 2., height - offs_y * 2.);
+          lives_painter_fill(cr);
+        }
       }
 
+      // top left of layout
       x_pos = (width - lw) >> 1;
       y_pos = (height - lh) >> 1;
 
-      if (pixbuf) {
+      // if pixbuf, offset a little more
+      if (pixbuf && lw && layout) {
         if (!widget_opts.swap_label)
           x_pos -= (pbw + widget_opts.packing_width) >> 1;
         else
           x_pos += (pbw + widget_opts.packing_width) >> 1;
       }
 
-      if (lh != 0 && lw != 0 && layout) {
+      if (lh && lw && layout) {
         layout_to_lives_painter(layout, cr, LIVES_TEXT_MODE_FOREGROUND_ONLY, &fg,
                                 &bg, lw, lh, x_pos, y_pos, x_pos, y_pos);
         if (LINGO_IS_LAYOUT(layout))
@@ -8075,15 +8131,18 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
       }
 
       if (pixbuf) {
-        if (!widget_opts.swap_label) {
-          x_pos += (lw + widget_opts.packing_width);
-          if (x_pos + pbw + widget_opts.packing_width + widget_opts.border_width < width)
-            x_pos += widget_opts.packing_width;
-        } else {
-          x_pos -= (pbw + widget_opts.packing_width);
-          if (x_pos > widget_opts.packing_width + widget_opts.border_width)
-            x_pos -= widget_opts.packing_width;
-        }
+        if (lw && layout) {
+          // shift to get pixbuf pos
+          if (!widget_opts.swap_label) {
+            x_pos += (lw + widget_opts.packing_width);
+            if (x_pos + pbw + widget_opts.packing_width + widget_opts.border_width < width)
+              x_pos += widget_opts.packing_width;
+          } else {
+            x_pos -= (pbw + widget_opts.packing_width);
+            if (x_pos > widget_opts.packing_width + widget_opts.border_width)
+              x_pos -= widget_opts.packing_width;
+          }
+        } else x_pos -= pbw >> 1;
         y_pos = (height - pbh) >> 1;
         lives_painter_set_source_pixbuf(cr, pixbuf, x_pos, y_pos);
         lives_painter_rectangle(cr, 0, 0, pbw, pbh);
@@ -8094,7 +8153,6 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
     }
   }
 }
-
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_standard_button_set_image(LiVESButton * sbutt,
@@ -8127,6 +8185,13 @@ LiVESWidget *lives_standard_button_new(int width, int height) {
 
   if (widget_opts.apply_theme) {
     set_standard_widget(button, TRUE);
+
+    if (palette->style & STYLE_LIGHT)
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), THEME_KEY,
+                                   LIVES_INT_TO_POINTER(2));
+    else
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), THEME_KEY,
+                                   LIVES_INT_TO_POINTER(widget_opts.apply_theme));
 
 #if GTK_CHECK_VERSION(3, 16, 0)
     set_css_min_size(button, width, height);
@@ -8840,8 +8905,6 @@ LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, Li
       lives_free(tmp);
       lives_free(colref);
 
-      //colref = gdk_rgba_to_string(&palette->nice3);
-
       colref = gdk_rgba_to_string(&palette->nice2);
       tmp = lives_strdup_printf("image(%s)", colref);
       set_css_value_direct(swtch, LIVES_WIDGET_STATE_INSENSITIVE, "slider",
@@ -8930,34 +8993,32 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
     set_css_min_size(checkbutton, widget_opts.css_min_width, widget_opts.css_min_height);
 #if GTK_CHECK_VERSION(3, 16, 0)
     if (prefs->extra_colours && mainw->pretty_colours) {
-      colref = gdk_rgba_to_string(&palette->nice2);
+      if (!(palette->style & STYLE_LIGHT))
+        colref = gdk_rgba_to_string(&palette->nice2);
+      else
+        colref = gdk_rgba_to_string(&palette->menu_and_bars);
+
       tmp = lives_strdup_printf("image(%s)", colref);
       set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_NORMAL, "check",
                            "background-image", tmp);
-      lives_free(colref);
-      lives_free(tmp);
+      set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_CHECKED, "check",
+                           "background-image", tmp);
+      set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_CHECKED, "check",
+                           "border-image", tmp);
+      lives_free(colref); lives_free(tmp);
 
       colref = gdk_rgba_to_string(&palette->normal_fore);
       set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_CHECKED, "check",
                            "color", colref);
       lives_free(colref);
 
-      colref = gdk_rgba_to_string(&palette->nice2);
-
-      tmp = lives_strdup_printf("image(%s)", colref);
-      set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_CHECKED, "check",
-                           "background-image", tmp);
-      set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_CHECKED, "check",
-                           "border-image", tmp);
-      lives_free(tmp);
-
-      colref = gdk_rgba_to_string(&palette->nice2);
-      tmp = lives_strdup_printf("image(%s)", colref);
-      set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_INSENSITIVE, "check",
-                           "background-image", tmp);
-      set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_INSENSITIVE, "check",
-                           "border-image", tmp);
-      lives_free(tmp);
+      /* colref = gdk_rgba_to_string(&palette->nice2); */
+      /* tmp = lives_strdup_printf("image(%s)", colref); */
+      /* set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_INSENSITIVE, "check", */
+      /*                      "background-image", tmp); */
+      /* set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_INSENSITIVE, "check", */
+      /*                      "border-image", tmp); */
+      //lives_free(tmp);
     } else {
       colref = gdk_rgba_to_string(&palette->normal_fore);
       set_css_value_direct(checkbutton, LIVES_WIDGET_STATE_CHECKED, "check",
@@ -8992,15 +9053,12 @@ LiVESWidget *lives_glowing_check_button_new(const char *labeltext, LiVESBox * bo
                                   LIVES_GUI_CALLBACK(lives_cool_toggled),
                                   togglevalue);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget_opts.last_label),
-                               ALT_THEME_KEY, checkbutton);
+                               THEME_KEY, LIVES_INT_TO_POINTER(2));
 
   if (prefs->lamp_buttons) {
     lives_toggle_button_set_mode(LIVES_TOGGLE_BUTTON(checkbutton), FALSE);
     if (widget_opts.apply_theme) {
-      if (prefs->extra_colours && mainw->pretty_colours)
-        lives_widget_set_bg_color(checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->nice3);
-      else
-        lives_widget_set_bg_color(checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
+      lives_widget_set_bg_color(checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
 
       set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_NORMAL, "",
                            "box-shadow", "4px 0 alpha(white, 0.5)");
@@ -9012,14 +9070,14 @@ LiVESWidget *lives_glowing_check_button_new(const char *labeltext, LiVESBox * bo
                            "background-color", colref);
       lives_free(colref);
 
-      if (prefs->extra_colours && mainw->pretty_colours) {
-        colref = gdk_rgba_to_string(&palette->nice3);
-        set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_CHECKED, "button",
-                             "color", colref);
-        set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_CHECKED, "button",
-                             "background-color", colref);
-        lives_free(colref);
-      }
+      /* if (prefs->extra_colours && mainw->pretty_colours) { */
+      /*   colref = gdk_rgba_to_string(&palette->nice3); */
+      /*   set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_CHECKED, "button", */
+      /*                        "color", colref); */
+      /*   set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_CHECKED, "button", */
+      /*                        "background-color", colref); */
+      /*   lives_free(colref); */
+      /* } */
 
       set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_NORMAL, "",
                            "transition-duration", "0.2s");
@@ -9148,14 +9206,24 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList *
     lives_widget_apply_theme(radiobutton, LIVES_WIDGET_STATE_NORMAL);
 #if GTK_CHECK_VERSION(3, 16, 0)
     if (prefs->extra_colours && mainw->pretty_colours) {
-      colref = gdk_rgba_to_string(&palette->nice2);
+
+      if (!(palette->style & STYLE_LIGHT))
+        colref = gdk_rgba_to_string(&palette->nice2);
+      else
+        colref = gdk_rgba_to_string(&palette->menu_and_bars);
       set_css_value_direct(radiobutton, LIVES_WIDGET_STATE_NORMAL, "radio", "color", colref);
       tmp = lives_strdup_printf("image(%s)", colref);
       set_css_value_direct(radiobutton, LIVES_WIDGET_STATE_NORMAL, "radio",
                            "background-image", tmp);
       lives_free(colref);
 
-      colref = gdk_rgba_to_string(&palette->normal_fore);
+      if (!(palette->style & STYLE_LIGHT))
+        colref = gdk_rgba_to_string(&palette->normal_fore);
+      else {
+        set_css_value_direct(radiobutton, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.25");
+        set_css_value_direct(radiobutton, LIVES_WIDGET_STATE_CHECKED, "", "opacity", "0.5");
+        colref = gdk_rgba_to_string(&palette->nice3);
+      }
       set_css_value_direct(radiobutton, LIVES_WIDGET_STATE_CHECKED, "radio", "color", colref);
 
       tmp = lives_strdup_printf("image(%s)", colref);
@@ -9309,17 +9377,17 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
 
   if (widget_opts.apply_theme) {
     set_css_min_size(spinbutton, widget_opts.css_min_width, ((widget_opts.css_min_height * 3 + 3) >> 2) << 1);
-    set_child_alt_colour(spinbutton, TRUE);
+    //set_child_alt_colour(spinbutton, TRUE);
     lives_widget_apply_theme2(LIVES_WIDGET(spinbutton), LIVES_WIDGET_STATE_NORMAL, TRUE);
+
 #if !GTK_CHECK_VERSION(3, 16, 0)
-    set_child_dimmed_colour2(spinbutton, BUTTON_DIM_VAL); // insens, themecols 1, child only
     lives_widget_apply_theme_dimmed2(spinbutton, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
 #else
     colref = gdk_rgba_to_string(&palette->normal_fore);
     set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_NORMAL, "", "color", colref);
     lives_free(colref);
 
-    set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_INSENSITIVE, "*", "opacity", "0.5");
+    set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
 
     if (prefs->extra_colours && mainw->pretty_colours) {
       char *tmp;
@@ -9333,14 +9401,29 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
       set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_NORMAL, "", "caret-color", colref);
       set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_NORMAL, "entry selection", "background-color", colref);
       lives_free(colref);
+      colref = gdk_rgba_to_string(&palette->normal_fore);
+      set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_NORMAL, "entry selection", "color", colref);
+      lives_free(colref);
     }
 #endif
   }
 
+  //set_child_dimmed_colour2(spinbutton, BUTTON_DIM_VAL);// insens, themecols 1, child only
   widget_opts.last_container = container;
   return spinbutton;
 }
 
+
+static void setminsz(LiVESWidget * widget, livespointer data) {
+  set_css_min_size(widget, widget_opts.css_min_width, ((widget_opts.css_min_height * 3 + 3) >> 2) << 1);
+  if (LIVES_IS_BUTTON(widget)) {
+    set_css_value_direct(widget, LIVES_WIDGET_STATE_NORMAL, "", "padding-top", "0");
+    set_css_value_direct(widget, LIVES_WIDGET_STATE_NORMAL, "", "padding-bottom", "0");
+  }
+  if (LIVES_IS_CONTAINER(widget)) {
+    lives_container_forall(LIVES_CONTAINER(widget), setminsz, NULL);
+  }
+}
 
 LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList * list, LiVESBox * box, const char *tooltip) {
   LiVESWidget *combo = NULL;
@@ -9440,16 +9523,15 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList * list, L
 
   if (widget_opts.apply_theme) {
     set_standard_widget(combo, TRUE);
-    set_child_colour(combo, TRUE);
-    set_child_colour(LIVES_WIDGET(entry), TRUE);
+
+    if (palette->style & STYLE_LIGHT)
+      set_child_alt_colour(combo, TRUE);
+    else
+      set_child_colour(combo, TRUE);
+
 #if GTK_CHECK_VERSION(3, 0, 0)
-
-    set_css_min_size(combo, widget_opts.css_min_width, widget_opts.css_min_height);
-    set_css_min_size(LIVES_WIDGET(entry), widget_opts.css_min_width, widget_opts.css_min_height);
-    set_css_min_size_selected(combo, "button",  widget_opts.css_min_width, 0);
-
-    set_css_value_direct(combo, LIVES_WIDGET_STATE_NORMAL, "button", "padding-top", "0");
-    set_css_value_direct(combo, LIVES_WIDGET_STATE_NORMAL, "button", "padding-bottom", "0");
+    set_css_min_size(combo, widget_opts.css_min_width, ((widget_opts.css_min_height * 3 + 3) >> 2) << 1);
+    lives_container_forall(LIVES_CONTAINER(combo), setminsz, NULL);
 
     set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, "", "border-radius", "5px");
 
@@ -9467,8 +9549,6 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList * list, L
       lives_free(colref);
     }
 #endif
-    lives_widget_apply_theme2(combo, LIVES_WIDGET_STATE_NORMAL, TRUE);
-    lives_widget_apply_theme2(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, TRUE);
 #endif
 #if !GTK_CHECK_VERSION(3, 16, 0)
     lives_widget_apply_theme_dimmed(combo, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
@@ -9489,18 +9569,6 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList * list, L
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_combo_new_with_model(LiVESTreeModel * model, LiVESBox * box) {
   LiVESWidget *combo = lives_standard_combo_new(NULL, NULL, box, NULL);
   lives_combo_set_model(LIVES_COMBO(combo), model);
-
-  if (widget_opts.apply_theme) {
-#if GTK_CHECK_VERSION(3, 0, 0)
-    GtkCellArea *celly;
-    lives_widget_object_get(LIVES_WIDGET_OBJECT(combo), "cell-area", &celly);
-    gtk_cell_area_foreach(celly, setcellbg, NULL);
-
-    // need to get the GtkCellView !
-    //lives_widget_object_set(celly, "background", &palette->info_base);
-#endif
-  }
-
   return combo;
 }
 
@@ -9649,6 +9717,7 @@ LiVESWidget *lives_standard_progress_bar_new(void) {
 #endif
 
   if (widget_opts.apply_theme) {
+    lives_widget_apply_theme(pbar, LIVES_WIDGET_STATE_NORMAL);
 #if GTK_CHECK_VERSION(3, 0, 0)
 #if GTK_CHECK_VERSION(3, 16, 0)
     char *tmp, *colref;
@@ -9745,13 +9814,10 @@ WIDGET_HELPER_LOCAL_INLINE void dlg_focus_changed(LiVESContainer * c, LiVESWidge
       if (!LIVES_IS_WIDGET(toplevel)) return;
       button = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(toplevel), DEFBUTTON_KEY);
       if (button && lives_widget_is_sensitive(button)) {
-        int woat = widget_opts.apply_theme;
-        widget_opts.apply_theme = 2;
         // default button gets the default
         lives_widget_object_set_data(LIVES_WIDGET_OBJECT(toplevel), CDEF_KEY, NULL);
         lives_widget_grab_default(button);
-        set_child_alt_colour(button, TRUE);
-        widget_opts.apply_theme = woat;
+        lives_widget_queue_draw(button);
       }
     }
   }
@@ -10223,10 +10289,11 @@ LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer * tb
 
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir) {
-  LiVESWidget *fbutton = fbutton = lives_standard_button_new(DEF_BUTTON_WIDTH / 4, DEF_BUTTON_HEIGHT);
+  LiVESWidget *fbutton;
   LiVESWidget *image = lives_image_new_from_stock(LIVES_STOCK_OPEN, LIVES_ICON_SIZE_BUTTON);
+  fbutton = lives_standard_button_new(DEF_BUTTON_WIDTH / 4, DEF_BUTTON_HEIGHT);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fbutton), ISDIR_KEY, LIVES_INT_TO_POINTER(is_dir));
-  if (def_dir != NULL) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fbutton), DEFDIR_KEY, (livespointer)def_dir);
+  if (def_dir) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fbutton), DEFDIR_KEY, (livespointer)def_dir);
   lives_standard_button_set_image(LIVES_BUTTON(fbutton), image);
   return fbutton;
 }
@@ -10685,6 +10752,8 @@ boolean widget_helper_init(void) {
   def_widget_opts = _def_widget_opts;
   lives_memcpy(&widget_opts, &def_widget_opts, sizeof(widget_opts_t));
 
+  // TODO: - for rtl set swap_labels
+
 #ifdef GUI_GTK
   gtk_accel_map_add_entry("<LiVES>/save", LIVES_KEY_s, LIVES_CONTROL_MASK);
   gtk_accel_map_add_entry("<LiVES>/quit", LIVES_KEY_q, LIVES_CONTROL_MASK);
@@ -10873,6 +10942,8 @@ void lives_widget_apply_theme(LiVESWidget * widget, LiVESWidgetState state) {
     lives_widget_set_base_color(widget, state, &palette->normal_back);
     lives_widget_set_text_color(widget, state, &palette->normal_fore);
 #endif
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), THEME_KEY,
+                                 LIVES_INT_TO_POINTER(widget_opts.apply_theme));
   }
 }
 
@@ -11345,7 +11416,7 @@ static void set_child_alt_colour_internal(LiVESWidget * widget, livespointer set
     lives_widget_apply_theme2(widget, LIVES_WIDGET_STATE_INSENSITIVE, TRUE);
     lives_widget_apply_theme2(widget, LIVES_WIDGET_STATE_NORMAL, TRUE);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget),
-                                 ALT_THEME_KEY, widget);
+                                 THEME_KEY, LIVES_INT_TO_POINTER(2));
   }
 
   if (LIVES_IS_CONTAINER(widget)) {
@@ -11801,10 +11872,7 @@ void lives_cool_toggled(LiVESWidget * tbutton, livespointer user_data) {
              && lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(tbutton))));
   if (prefs->lamp_buttons) {
     if (active) {
-      if (prefs->extra_colours && mainw->pretty_colours)
-        lives_widget_set_bg_color(tbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->nice3);
-      else
-        lives_widget_set_bg_color(tbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
+      lives_widget_set_bg_color(tbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
     } else lives_widget_set_bg_color(tbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
   }
   if (ret) *ret = active;
@@ -11834,16 +11902,9 @@ boolean draw_cool_toggle(LiVESWidget * widget, lives_painter_t *cr, livespointer
   if (widget == mainw->ext_audio_mon) rwidth = rheight = 4.;
 
   // draw the inside
-  //#if !GTK_CHECK_VERSION(3, 16, 0)
-
   if (active) {
-    if (prefs->extra_colours && mainw->pretty_colours)
-      lives_painter_set_source_rgba(cr, palette->nice3.red, palette->nice3.green,
-                                    palette->nice3.blue, 1.);
-    else
-      lives_painter_set_source_rgba(cr, palette->light_green.red, palette->light_green.green,
-                                    palette->light_green.blue, 1.);
-
+    lives_painter_set_source_rgba(cr, palette->light_green.red, palette->light_green.green,
+                                  palette->light_green.blue, 1.);
   } else {
     lives_painter_set_source_rgba(cr, palette->dark_red.red, palette->dark_red.green,
                                   palette->dark_red.blue, 1.);

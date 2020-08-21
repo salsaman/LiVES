@@ -194,43 +194,7 @@ typedef int lives_pgid_t;
 #endif
 
 #define LIVES_DIR_SEP "/"
-#define LIVES_STATUS_FILE_NAME ".status"
-#define LIVES_INFO_FILE_NAME ".info"
-#define LIVES_BFILE_NAME ".smogrify"
-#define LIVES_SMOGPLUGIN_FILE_NAME ".smogplugin"
-#define LIVES_SMOGVAL_FILE_NAME ".smogval"
-#define LIVES_ENC_DEBUG_FILE_NAME ".debug_out"
-#define LIVES_DEVNULL "/dev/null"
-
-#define DLL_NAME "so"
-
-#define DOC_DIR "/share/doc/lives-"
-
-#define THEME_DIR "/share/lives/themes/"
-#define PLUGIN_SCRIPTS_DIR "/share/lives/plugins/"
-#define PLUGIN_COMPOUND_DIR "/share/lives/plugins/"
-#define PLUGIN_EXEC_DIR "/lives/plugins/"
-#define ICON_DIR "/share/lives/icons/"
-#define DESKTOP_ICON_DIR "/share/icons/hicolor/256x256/apps"
-#define DATA_DIR "/share/lives/"
-#define LIVES_RC_FILENAME ".lives"
-#define LIVES_CONFIG_DIR ".lives-dir/"
-#define LIVES_DEVICEMAP_DIR "devicemaps"
-#define LIVES_DEF_WORK_NAME "livesprojects"
-#define LIVES_RESOURCES_DIR "resources"
-
-#define LIVES_DEVICE_DIR "/dev/"
-
 #define LIVES_COPYRIGHT_YEARS "2002 - 2020"
-
-#define LIVES_WEBSITE PACKAGE_URL
-#define LIVES_MANUAL_URL LIVES_WEBSITE "/manual/"
-#define LIVES_MANUAL_FILENAME "LiVES_manual.html"
-#define LIVES_AUTHOR_EMAIL "salsaman+lives@gmail.com"
-#define LIVES_DONATE_URL "https://sourceforge.net/p/lives/donate/"
-#define LIVES_BUG_URL PACKAGE_BUGREPORT
-#define LIVES_FEATURE_URL "https://sourceforge.net/p/lives/feature-requests/"
-#define LIVES_TRANSLATE_URL "https://translations.launchpad.net/lives/trunk"
 
 #if defined (IS_DARWIN) || defined (__FreeBSD__)
 #ifndef off64_t
@@ -1710,6 +1674,8 @@ uint64_t make_version_hash(const char *ver);
 char *unhash_version(uint64_t version);
 
 void init_clipboard(void);
+
+void print_cache(LiVESList *cache);
 
 LiVESList *cache_file_contents(const char *filename);
 char *get_val_from_cached_list(const char *key, size_t maxlen, LiVESList *cache);

@@ -1339,7 +1339,6 @@ if (defined($ARGV[0])) {
 
 	if ($command eq "get_details") {
 	    #attempt to get file details
-	    $handle = $ARGV[1];
 	    my $file = $ARGV[2];
 	    $img_ext = "." . $ARGV[3];
 	    my $scan_type = $ARGV[4];
@@ -6597,11 +6596,14 @@ if (defined($ARGV[0])) {
 	    if (($ptypes & $P_IMAGE) && $guess_type ne "video"
 		&& !($type eq "Audio" && $achans >0 ) && (!$hsize || !$vsize || !$count
 							  ## test for various image types...
-							  || (($type eq "ffpng" || $fwtype eq "PNG" || (($type eq "mjpeg" || $type=="png")
-													&& $length eq "" && int($fps)==1) || $type eq "gif") && !$count)
+							  || (($type eq "ffpng" || $fwtype eq "PNG"
+							       || (($type eq "mjpeg" || $type=="png")
+								   && $length eq "" && int($fps)==1)
+							       || $type eq "gif") && !$count)
 							  || (($type eq "ffmjpeg" || $fwtype eq "MJPEG")
 							      && $count == 1)
-							  || ($fps == 1. && $count == 1 && $id_aud_form eq "" && (int($length) == 1 || !$length)))) {
+							  || ($fps == 1. && $count == 1 && $id_aud_form eq ""
+							      && (int($length) == 1 || !$length)))) {
 
 		$origcount = $count;
 		$name = &mkname(1);

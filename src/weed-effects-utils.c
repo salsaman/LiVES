@@ -223,7 +223,7 @@ WEED_GLOBAL_INLINE int weed_filter_is_converter(weed_plant_t *filter) {
   return WEED_FALSE;
 }
 
-WEED_GLOBAL_INLINE int weed_filter_process_last(weed_plant_t *filter) {
+WEED_GLOBAL_INLINE int weed_filter_is_process_last(weed_plant_t *filter) {
   if (weed_filter_get_flags(filter) & WEED_FILTER_HINT_PROCESS_LAST) return WEED_TRUE;
   return WEED_FALSE;
 }

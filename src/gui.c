@@ -183,7 +183,7 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
   lives_widget_apply_theme2(mainw->vol_toolitem, LIVES_WIDGET_STATE_NORMAL, FALSE);
   lives_widget_apply_theme2(mainw->volume_scale, LIVES_WIDGET_STATE_NORMAL, FALSE);
 
-  if (mainw->plug != NULL)
+  if (mainw->plug)
     lives_widget_set_bg_color(mainw->plug, LIVES_WIDGET_STATE_NORMAL, colb);
 
   lives_widget_set_bg_color(mainw->sel_label, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -2113,7 +2113,6 @@ void create_LiVES(void) {
   mainw->playarea = lives_event_box_new();
   lives_container_add(LIVES_CONTAINER(mainw->pl_eventbox), mainw->playarea);
   lives_widget_set_app_paintable(mainw->playarea, TRUE);
-  lives_widget_apply_theme(mainw->playarea, LIVES_WIDGET_STATE_NORMAL);
 
   lives_table_attach(LIVES_TABLE(mainw->pf_grid), mainw->playframe, 1, 2, 0, 1,
                      (LiVESAttachOptions)(0),
@@ -2982,10 +2981,10 @@ void create_LiVES(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(help_translate), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(help_translate_activate), NULL);
 
-  mainw->spin_start_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->spinbutton_start),
+  mainw->spin_start_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->spinbutton_start),
                            LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                            LIVES_GUI_CALLBACK(on_spinbutton_start_value_changed), NULL);
-  mainw->spin_end_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->spinbutton_end),
+  mainw->spin_end_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->spinbutton_end),
                          LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                          LIVES_GUI_CALLBACK(on_spinbutton_end_value_changed), NULL);
 
@@ -3176,7 +3175,7 @@ void set_interactive(boolean interactive) {
       //lives_widget_set_sensitive(mainw->multitrack->insa_checkbutton, FALSE);
       lives_widget_set_sensitive(mainw->multitrack->snapo_checkbutton, FALSE);
       list = mainw->multitrack->cb_list;
-      while (list != NULL) {
+      while (list) {
         lives_widget_set_sensitive((LiVESWidget *)list->data, FALSE);
         list = list->next;
       }
@@ -3187,9 +3186,9 @@ void set_interactive(boolean interactive) {
     lives_widget_set_sensitive(mainw->spinbutton_end, FALSE);
     lives_widget_set_sensitive(mainw->sa_button, FALSE);
 
-    if (CURRENT_CLIP_IS_VALID && mainw->proc_ptr != NULL) {
+    if (CURRENT_CLIP_IS_VALID && mainw->proc_ptr) {
       lives_widget_set_sensitive(mainw->proc_ptr->cancel_button, FALSE);
-      if (mainw->proc_ptr->stop_button != NULL)
+      if (mainw->proc_ptr->stop_button)
         lives_widget_set_sensitive(mainw->proc_ptr->stop_button, FALSE);
       lives_widget_set_sensitive(mainw->proc_ptr->pause_button, FALSE);
       lives_widget_set_sensitive(mainw->proc_ptr->preview_button, FALSE);
@@ -3202,9 +3201,9 @@ void set_interactive(boolean interactive) {
 
     lives_set_cursor_style(LIVES_CURSOR_CENTER_PTR, mainw->hruler);
 
-    if (mainw->multitrack != NULL) {
+    if (mainw->multitrack) {
       lives_set_cursor_style(LIVES_CURSOR_CENTER_PTR, mainw->multitrack->timeline);
-      if (lives_widget_get_parent(mainw->multitrack->menubar) == NULL) {
+      if (!lives_widget_get_parent(mainw->multitrack->menubar)) {
         lives_box_pack_start(LIVES_BOX(mainw->multitrack->menu_hbox), mainw->multitrack->menubar, FALSE, FALSE, 0);
         lives_widget_object_unref(mainw->multitrack->menubar);
       }
@@ -3249,7 +3248,7 @@ void set_interactive(boolean interactive) {
       lives_widget_set_sensitive(mainw->multitrack->insa_checkbutton, TRUE);
       lives_widget_set_sensitive(mainw->multitrack->snapo_checkbutton, TRUE);
       list = mainw->multitrack->cb_list;
-      while (list != NULL) {
+      while (list) {
         lives_widget_set_sensitive((LiVESWidget *)list->data, TRUE);
         list = list->next;
       }
@@ -3263,9 +3262,9 @@ void set_interactive(boolean interactive) {
     lives_widget_set_sensitive(mainw->spinbutton_end, TRUE);
     lives_widget_set_sensitive(mainw->sa_button, CURRENT_CLIP_HAS_VIDEO && (cfile->start > 1 || cfile->end < cfile->frames));
 
-    if (CURRENT_CLIP_IS_VALID && mainw->proc_ptr != NULL) {
+    if (CURRENT_CLIP_IS_VALID && mainw->proc_ptr) {
       lives_widget_set_sensitive(mainw->proc_ptr->cancel_button, TRUE);
-      if (mainw->proc_ptr->stop_button != NULL)
+      if (mainw->proc_ptr->stop_button)
         lives_widget_set_sensitive(mainw->proc_ptr->stop_button, TRUE);
       lives_widget_set_sensitive(mainw->proc_ptr->pause_button, TRUE);
       lives_widget_set_sensitive(mainw->proc_ptr->preview_button, TRUE);
@@ -3273,7 +3272,7 @@ void set_interactive(boolean interactive) {
   }
 
   if (mainw->ce_thumbs) ce_thumbs_set_interactive(interactive);
-  if (rte_window != NULL) rte_window_set_interactive(interactive);
+  if (rte_window) rte_window_set_interactive(interactive);
 
   if (mainw->sense_state & LIVES_SENSE_STATE_INSENSITIZED) {
     if (!mainw->multitrack) desensitize();
@@ -3519,7 +3518,7 @@ void fullscreen_internal(void) {
   // resize for full screen, internal player, no separate window
   int width, height;
 
-  if (mainw->multitrack == NULL) {
+  if (!mainw->multitrack) {
     lives_widget_hide(mainw->framebar);
 
     // hide all except tb_hbox and pf_grid
@@ -3537,7 +3536,7 @@ void fullscreen_internal(void) {
     lives_widget_hide(mainw->t_double);
     lives_widget_hide(mainw->message_box);
 
-    lives_widget_context_update();
+    //lives_widget_context_update();
 
     if (prefs->open_maximised) {
       lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
@@ -3652,8 +3651,7 @@ void make_preview_box(void) {
 
   mainw->preview_spinbutton = lives_standard_spin_button_new(NULL, (CURRENT_CLIP_HAS_VIDEO) ? 1. : 0.,
                               (CURRENT_CLIP_HAS_VIDEO) ? 1. : 0.,
-                              (CURRENT_CLIP_HAS_VIDEO) ? cfile->frames : 0.,
-                              1., 1., 0,
+                              (CURRENT_CLIP_HAS_VIDEO) ? cfile->frames : 0., 1., 1., 0,
                               LIVES_BOX(mainw->preview_hbox), _("Frame number to preview"));
 
   mainw->preview_scale = lives_standard_hscale_new(lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(
@@ -4711,8 +4709,9 @@ void splash_init(void) {
     splash_img = lives_image_new_from_pixbuf(splash_pix);
 
     lives_box_pack_start(LIVES_BOX(vbox), splash_img, TRUE, TRUE, 0);
+    lives_widget_set_opacity(splash_img, .75);
 
-    if (splash_pix != NULL) lives_widget_object_unref(splash_pix);
+    if (splash_pix) lives_widget_object_unref(splash_pix);
 
     mainw->splash_progress = lives_standard_progress_bar_new();
 

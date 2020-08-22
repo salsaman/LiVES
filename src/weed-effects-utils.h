@@ -85,7 +85,7 @@ int weed_filter_hints_unstable(weed_plant_t *filter);
 int weed_filter_hints_hidden(weed_plant_t *filter);
 int weed_filter_hints_stateless(weed_plant_t *filter);
 int weed_filter_is_converter(weed_plant_t *filter);
-int weed_filter_process_last(weed_plant_t *filter);
+int weed_filter_is_process_last(weed_plant_t *filter);
 int weed_filter_prefers_linear_gamma(weed_plant_t *filter);
 int weed_filter_prefers_premult_alpha(weed_plant_t *filter);
 int weed_filter_non_realtime(weed_plant_t *filter);

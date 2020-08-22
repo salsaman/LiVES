@@ -9,6 +9,9 @@
 #ifndef HAS_LIVES_EVENTS_H
 #define HAS_LIVES_EVENTS_H
 
+/// for backwards compat.
+#define WEED_LEAF_HINT "hint"
+
 /// parts of this may eventually become libweed-events
 
 // event_list

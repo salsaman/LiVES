@@ -430,7 +430,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_render_background(LiVESWidget 
   if (themetype == 1) {
     lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->normal_back);
     //lives_painter_set_source_rgb(cr, 1., 0., 1.);
-    lives_painter_paint(cr);
+    //lives_painter_paint(cr);
   } else {
 #if GTK_CHECK_VERSION(3, 0, 0)
     GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
@@ -453,9 +453,9 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_render_background(LiVESWidget 
                                  LIVES_WIDGET_COLOR_SCALE(color.blue));
 #endif // has_alpha
 #endif // gtk 3
-    lives_painter_rectangle(cr, x, y, width, height);
-    lives_painter_fill(cr);
   }
+  lives_painter_rectangle(cr, x, y, width, height);
+  lives_painter_fill(cr);
   lives_widget_queue_draw(widget);
   return TRUE;
 #endif /// painter cairo
@@ -4978,6 +4978,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_progress_bar_new(void) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_progress_bar_set_fraction(LiVESProgressBar *pbar, double fraction) {
 #ifdef GUI_GTK
 #ifdef PROGBAR_IS_ENTRY
+  lives_widget_set_sensitive(LIVES_WIDGET(pbar), FALSE);
   gtk_entry_set_progress_fraction(pbar, fraction);
   if (is_standard_widget(LIVES_WIDGET(pbar)) && widget_opts.apply_theme) {
     set_css_value_direct(LIVES_WIDGET(pbar), LIVES_WIDGET_STATE_NORMAL, "progress",
@@ -5008,6 +5009,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_progress_bar_set_pulse_step(LiVESProgr
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_progress_bar_pulse(LiVESProgressBar *pbar) {
 #ifdef GUI_GTK
 #ifdef PROGBAR_IS_ENTRY
+  lives_widget_set_sensitive(LIVES_WIDGET(pbar), TRUE);
   gtk_entry_progress_pulse(pbar);
   if (is_standard_widget(LIVES_WIDGET(pbar)) && widget_opts.apply_theme) {
     char *tmp = lives_strdup_printf("%dpx", widget_opts.css_min_height);
@@ -7964,8 +7966,6 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
       pab2.red = pab2.green = pab2.blue = 0;
       pab2.alpha = 1.;
 
-      /* lives_widget_get_bg_state_color(sbutt, LIVES_WIDGET_STATE_NORMAL, &wcol); */
-      /* widget_color_to_lives_rgba(&bg, &wcol); */
       themetype = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(sbutt), THEME_KEY));
       if (themetype) {
         if (themetype == 1) {
@@ -8212,8 +8212,9 @@ LiVESWidget *lives_standard_button_new(int width, int height) {
 
     lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_STATE_CHANGED_SIGNAL,
                               LIVES_GUI_CALLBACK(sbutt_render), NULL);
-
+#ifdef USE_SPECIAL_BUTTONS
     lives_widget_apply_theme(button, LIVES_WIDGET_STATE_NORMAL);
+#endif
     lives_widget_set_app_paintable(button, TRUE);
     lives_widget_set_app_paintable(da, TRUE);
   }
@@ -9660,7 +9661,8 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
       char *tmp;
       char *colref = gdk_rgba_to_string(&palette->nice1);
       set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, "", "border-color", colref);
-      tmp = lives_strdup_printf("0 0 0 1px %s inset", colref);
+      set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_FOCUSED, "", "border-color", colref);
+      tmp = lives_strdup_printf("0 0 0 2px %s inset", colref);
       set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_FOCUSED, "", "box-shadow", tmp);
       lives_free(tmp);
       lives_free(colref);
@@ -9669,9 +9671,6 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
       lives_free(colref);
     }
 
-    if (prefs->extra_colours && mainw->pretty_colours) {
-      lives_widget_set_border_color(entry, LIVES_WIDGET_STATE_NORMAL, &palette->nice1);
-    }
     set_css_value_direct(entry, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
 #endif
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(entry), LIVES_WIDGET_NOTIFY_SIGNAL "editable",
@@ -9743,7 +9742,7 @@ LiVESWidget *lives_standard_progress_bar_new(void) {
 #ifdef PROGBAR_IS_ENTRY
       colref2 = gdk_rgba_to_string(&palette->nice2);
       tmp = lives_strdup_printf("linear-gradient(to right, %s, %s)", colref2, colref);
-      set_css_value_direct(pbar, LIVES_WIDGET_STATE_NORMAL, "progress",
+      set_css_value_direct(pbar, LIVES_WIDGET_STATE_INSENSITIVE, "progress",
                            "background-image", tmp);
       lives_free(tmp);
       lives_free(colref2);
@@ -9751,8 +9750,6 @@ LiVESWidget *lives_standard_progress_bar_new(void) {
 #endif
       lives_free(colref);
     }
-
-    set_css_value_direct(pbar, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
 #ifdef PROGBAR_IS_ENTRY
     set_css_min_size_selected(pbar, "progress", -1, -1);
 #endif
@@ -9771,10 +9768,12 @@ LiVESWidget *lives_dialog_add_button_from_stock(LiVESDialog * dialog, const char
                         DLG_BUTTON_HEIGHT);
   LiVESWidget *first_button;
 
-  if (dialog != NULL) lives_dialog_add_action_widget(dialog, button, response_id);
+  if (dialog) lives_dialog_add_action_widget(dialog, button, response_id);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), NWIDTH_KEY, LIVES_INT_TO_POINTER(bwidth));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), THEME_KEY,
+                               LIVES_INT_TO_POINTER(widget_opts.apply_theme));
 
-  if (dialog != NULL) {
+  if (dialog) {
     /// if we have only ome button, center it
     if (!(first_button =
             (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(dialog), FBUTT_KEY))) {

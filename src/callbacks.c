@@ -4528,7 +4528,7 @@ void on_lock_selwidth_activate(LiVESMenuItem * menuitem, livespointer user_data)
 void play_all(boolean from_menu) {
   if (!CURRENT_CLIP_IS_VALID || CURRENT_CLIP_IS_CLIPBOARD) return;
 
-  if (mainw->multitrack != NULL) {
+  if (mainw->multitrack) {
     if (!LIVES_IS_PLAYING) {
       if (!mainw->multitrack->playing_sel) multitrack_playall(mainw->multitrack);
       else multitrack_play_sel(NULL, mainw->multitrack);
@@ -4537,7 +4537,7 @@ void play_all(boolean from_menu) {
   }
 
   if (!LIVES_IS_PLAYING) {
-    if (mainw->proc_ptr != NULL && from_menu) {
+    if (mainw->proc_ptr && from_menu) {
       on_preview_clicked(LIVES_BUTTON(mainw->proc_ptr->preview_button), NULL);
       return;
     }
@@ -7277,13 +7277,11 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
           if (LIVES_IS_XWINDOW(xwin)) {
             if (mainw->fsp_surface) lives_painter_surface_destroy(mainw->fsp_surface);
             mainw->fsp_surface =
-              lives_xwindow_create_similar_surface(xwin,
-                                                   LIVES_PAINTER_CONTENT_COLOR,
+              lives_xwindow_create_similar_surface(xwin, LIVES_PAINTER_CONTENT_COLOR,
                                                    width, height);
             if (mainw->fsp_func == 0)
               mainw->fsp_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->fs_playimg), LIVES_WIDGET_EXPOSE_EVENT,
-                                LIVES_GUI_CALLBACK(all_expose),
-                                &mainw->fsp_surface);
+                                LIVES_GUI_CALLBACK(all_expose), &mainw->fsp_surface);
           }
           set_drawing_area_from_pixbuf(mainw->fs_playimg, pixbuf, mainw->fsp_surface);
         } else {
@@ -10087,6 +10085,7 @@ boolean expose_laud_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer
 
 boolean config_laud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
   lives_painter_surface_t *surf = lives_widget_create_painter_surface(widget);
+  clear_widget_bg(widget, surf);
   if (mainw->laudio_drawable) lives_painter_surface_destroy(mainw->laudio_drawable);
   mainw->laudio_drawable = surf;
   if (IS_VALID_CLIP(mainw->drawsrc)) {
@@ -10106,6 +10105,7 @@ boolean expose_raud_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer
 
 boolean config_raud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
   lives_painter_surface_t *surf = lives_widget_create_painter_surface(widget);
+  clear_widget_bg(widget, surf);
   if (mainw->raudio_drawable) lives_painter_surface_destroy(mainw->raudio_drawable);
   mainw->raudio_drawable = surf;
   if (IS_VALID_CLIP(mainw->drawsrc)) {
@@ -10122,9 +10122,7 @@ boolean config_event2(LiVESWidget * widget, LiVESXEventConfigure * event, livesp
 
 /// genric func. to create surfaces
 boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer ppsurf) {
-  lives_painter_t *cr;
   lives_painter_surface_t **psurf = (lives_painter_surface_t **)ppsurf;
-  int rwidth, rheight;
   if (!psurf) return FALSE;
   if (*psurf) lives_painter_surface_destroy(*psurf);
   *psurf = lives_widget_create_painter_surface(widget);
@@ -10132,18 +10130,12 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
 #ifdef USE_SPECIAL_BUTTONS
   if (LIVES_IS_DRAWING_AREA(widget)) {
     LiVESWidget *parent = lives_widget_get_parent(widget);
-    if (parent && is_standard_widget(parent)) {
+    if (parent && LIVES_IS_BUTTON(parent) && is_standard_widget(parent)) {
       sbutt_render(parent, 0, NULL);
       return FALSE;
     }
   }
 #endif
-  cr = lives_painter_create_from_surface(*psurf);
-  rwidth = lives_widget_get_allocation_width(widget);
-  rheight = lives_widget_get_allocation_height(widget);
-  lives_painter_render_background(widget, cr, 0., 0., rwidth, rheight);
-  lives_painter_destroy(cr);
-  lives_widget_queue_draw(widget);
 
   if (widget == mainw->start_image)
     load_start_image(CURRENT_CLIP_IS_VALID ? cfile->start : 0);
@@ -10158,9 +10150,12 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
   else if (mainw->multitrack) {
     if (widget == mainw->multitrack->timeline_reg)
       draw_region(mainw->multitrack);
-    else if (widget == mainw->play_image)
-      mt_show_current_frame(mainw->multitrack, FALSE);
-    else if (widget == mainw->multitrack->msg_area) {
+    else if (widget == mainw->play_image) {
+      lives_idle_add_simple(mt_idle_show_current_frame, (livespointer)mainw->multitrack);
+      //lives_widget_queue_draw(mainw->multitrack->preview_frame);
+      //set_mt_play_sizes_cfg(mainw->multitrack);
+      //mt_show_current_frame(mainw->multitrack, FALSE);
+    } else if (widget == mainw->multitrack->msg_area) {
       msg_area_config(widget);
     }
   }
@@ -10361,10 +10356,10 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
         mainw->toy_type = LIVES_TOY_NONE;
         lives_widget_set_sensitive(mainw->toys_menu, FALSE);
       }
-      if (mainw->multitrack == NULL && prefs->show_gui) lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
+      if (!mainw->multitrack && prefs->show_gui) lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
 
-      if (mainw->multitrack == NULL && !cfile->is_loaded) {
-        if (mainw->play_window != NULL) {
+      if (!mainw->multitrack && !cfile->is_loaded) {
+        if (mainw->play_window) {
           cfile->is_loaded = TRUE;
           resize_play_window();
           cfile->is_loaded = FALSE;
@@ -10374,7 +10369,7 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
 
     resume_after = FALSE;
 
-    if (mainw->multitrack != NULL) {
+    if (mainw->multitrack) {
       mt_prepare_for_playback(mainw->multitrack);
       if (cfile->opening) {
         lives_widget_set_sensitive(mainw->multitrack->playall, FALSE);
@@ -10382,12 +10377,12 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
       }
     }
 
-    if (user_data != NULL) {
+    if (user_data) {
       // called from multitrack
       /* if (mainw->play_window != NULL) { */
       /*   resize_play_window(); */
       /* } */
-      if (mainw->multitrack != NULL && mainw->multitrack->is_rendering) {
+      if (mainw->multitrack && mainw->multitrack->is_rendering) {
         mainw->play_start = 1;
         mainw->play_end = cfile->frames;
       } else {
@@ -10427,8 +10422,8 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
       }
     }
 
-    if (button != NULL) lives_button_set_label(LIVES_BUTTON(button), _("Stop"));
-    if (mainw->proc_ptr != NULL) {
+    if (button) lives_button_set_label(LIVES_BUTTON(button), _("Stop"));
+    if (mainw->proc_ptr) {
       lives_widget_set_sensitive(mainw->proc_ptr->pause_button, FALSE);
       lives_widget_set_sensitive(mainw->proc_ptr->cancel_button, FALSE);
     }
@@ -10440,7 +10435,7 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
 
     if (cfile->opening || cfile->opening_only_audio) {
       lives_widget_hide(mainw->proc_ptr->processing);
-      if (mainw->multitrack == NULL && !cfile->opening_audio) {
+      if (!mainw->multitrack && !cfile->opening_audio) {
         showclipimgs();
       }
       resize(1);
@@ -10473,7 +10468,7 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
       if (resume_after) on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
     }
     // user_data is non-NULL if called from multitrack. We want to preserve the value of cancelled.
-    if (user_data == NULL) mainw->cancelled = CANCEL_NONE;
+    if (!user_data) mainw->cancelled = CANCEL_NONE;
 
     cfile->start = ostart;
     cfile->end = oend;
@@ -10481,7 +10476,7 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
     mainw->toy_type = (lives_toy_t)toy_type;
     lives_widget_set_sensitive(mainw->toys_menu, TRUE);
 
-    if (mainw->proc_ptr != NULL) {
+    if (mainw->proc_ptr) {
       // proc_ptr can be NULL if we finished loading with a bg generator running
       lives_widget_show(mainw->proc_ptr->processing);
       lives_button_set_label(LIVES_BUTTON(button), _("Preview"));
@@ -10500,17 +10495,17 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
         if (mainw->files[i]->menuentry!=NULL) {
         lives_widget_set_sensitive (mainw->files[i]->menuentry, TRUE);
         }}}*/
-      if (mainw->multitrack == NULL && mainw->play_window != NULL) {
+      if (!mainw->multitrack && mainw->play_window) {
         resize_play_window();
       }
     }
   }
 
-  if (mainw->preview_box != NULL) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Preview"));
+  if (mainw->preview_box) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Preview"));
   lives_widget_set_tooltip_text(mainw->m_playbutton, _("Preview"));
 
   // redraw our bars for the clip
-  if (!mainw->merge && mainw->multitrack == NULL) {
+  if (!mainw->merge && !mainw->multitrack) {
     get_play_times();
   }
   if (ointernal_messaging) {
@@ -10520,7 +10515,7 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
     mainw->rte = old_rte;
   }
 
-  if (mainw->play_window != NULL && mainw->fs && mainw->multitrack == NULL) {
+  if (mainw->play_window && mainw->fs && !mainw->multitrack) {
     // this prevents a hang when the separate window is visible
     // it may be the first time we have shown it
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
@@ -10532,10 +10527,11 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
   mainw->afilter_map = afilter_map;
   mainw->audio_event = audio_event;
 
-  if (mainw->multitrack != NULL) {
+  if (mainw->multitrack) {
     current_file = mainw->current_file;
     mainw->current_file = mainw->multitrack->render_file;
-    mt_post_playback(mainw->multitrack);
+    main_thread_execute((lives_funcptr_t)mt_post_playback, -1, NULL, "v", mainw->multitrack);
+    //mt_post_playback(mainw->multitrack);
     mainw->current_file = current_file;
   }
 

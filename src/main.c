@@ -2821,6 +2821,8 @@ boolean set_palette_colours(boolean force_reload) {
 #endif
   /// set global values
 
+  set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "toolbutton *", "background-image", "none");
+
   colref = gdk_rgba_to_string(&palette->normal_back);
   set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "combobox window menu", "background-color", colref);
   lives_free(colref);
@@ -2837,7 +2839,7 @@ boolean set_palette_colours(boolean force_reload) {
   lives_free(colref);
 
   if (prefs->extra_colours && mainw->pretty_colours) {
-    set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "combobox window menu menuitem", "border_width", "2px");
+    set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "combobox window menu menuitem", "border-width", "2px");
     colref = gdk_rgba_to_string(&palette->nice1);
     set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "combobox window menu menuitem", "border-color", colref);
     tmp = lives_strdup_printf("0 0 0 4px %s inset", colref);
@@ -4105,6 +4107,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   prefs->max_modes_per_key = atoi(DEF_FX_KEYMODES);
 
   devmap[0] = '\0';
+  capable->mountpoint = NULL;
   capable->startup_msg[0] = '\0';
   capable->has_perl = TRUE;
   capable->has_smogrify = TRUE;
@@ -5294,6 +5297,8 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
   rwidth = lives_widget_get_allocation_width(widget);
   rheight = lives_widget_get_allocation_height(widget);
 
+  if (!rwidth || !rheight) return;
+
   rwidth = (rwidth >> 1) << 1;
   rheight = (rheight >> 1) << 1;
 
@@ -5301,44 +5306,37 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
     owidth = width = lives_pixbuf_get_width(pixbuf);
     oheight = height = lives_pixbuf_get_height(pixbuf);
 
-    if (prefs->ce_maxspect) {
-      calc_maxspect(rwidth, rheight, &width, &height);
+    if (widget == mainw->start_image || widget == mainw->end_image) {// || (widget == mainw->play_window && !mainw->fs)) {
+      LiVESWidget *p = lives_widget_get_parent(widget);
+      if (prefs->ce_maxspect) {
+        calc_maxspect(rwidth, rheight, &width, &height);
 
-      width = (width >> 1) << 1;
-      height = (height >> 1) << 1;
+        width = (width >> 1) << 1;
+        height = (height >> 1) << 1;
 
-      if (width > owidth && height > oheight) {
-        width = owidth;
-        height = oheight;
+        if (width > owidth && height > oheight) {
+          width = owidth;
+          height = oheight;
+        }
       }
+      p = lives_widget_get_parent(p);
+      p = lives_widget_get_parent(p);
+      rwidth = lives_widget_get_allocation_width(p);
+      rheight = lives_widget_get_allocation_height(widget);
+      lives_painter_render_background(widget, cr, 0., 0., rwidth, rheight);
     }
-  }
 
-  if (widget == mainw->start_image || widget == mainw->end_image) {// || (widget == mainw->play_window && !mainw->fs)) {
-    LiVESWidget *p = lives_widget_get_parent(widget);
-    p = lives_widget_get_parent(p);
-    p = lives_widget_get_parent(p);
-    rwidth = lives_widget_get_allocation_width(p);
-    rheight = lives_widget_get_allocation_height(widget);
-    lives_painter_render_background(widget, cr, 0., 0., rwidth, rheight);
-  }
-
-  if (pixbuf) {
     lives_widget_set_opacity(widget, 1.);
     cx = (rwidth - width) >> 1;
     cy = (rheight - height) >> 1;
 
-    if (mainw->multitrack && widget == mainw->play_image) {
-      if (!mainw->play_window) {
-        cx += widget_opts.border_width;
-        cy += widget_opts.border_width;
-      }
-    } else {
-      if (!mainw->play_window) {
+    if (!mainw->multitrack || widget != mainw->play_image) {
+      if (!mainw->play_window && !mainw->faded && widget == mainw->play_image) {
         lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->normal_back);
         lives_painter_rectangle(cr, 0, 0, rwidth, rheight);
         lives_painter_fill(cr);
       }
+
       if (prefs->funky_widgets) {
         lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->frame_surround);
         lives_painter_rectangle(cr, cx - 1, cy - 1, width + 2, height + 2);
@@ -5346,9 +5344,11 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
         lives_painter_stroke(cr);
       }
     }
-
+    /// x, y values are offset of top / left of image in drawing area
     lives_painter_set_source_pixbuf(cr, pixbuf, cx, cy);
-    lives_painter_rectangle(cr, cx, cy, width, height);
+
+    /// clipping area for image
+    lives_painter_rectangle(cr, 0, 0, rwidth, rheight);
   } else {
     lives_widget_set_opacity(widget, 0.);
     clear_widget_bg(widget, surface);
@@ -7482,12 +7482,11 @@ goto align;
 
 /////////////////////////////////////////////////////////////////////////////////
 // multitrack: we ignore double size, and fullscreen unless playing in the separate window
-if (mainw->multitrack != NULL) {
+if (mainw->multitrack) {
 // frame max sizes for multitrack
 *opwidth = mainw->files[mainw->multitrack->render_file]->hsize;
 *opheight = mainw->files[mainw->multitrack->render_file]->vsize;
 if (!mainw->multitrack->is_rendering) {
-set_mt_play_sizes(mainw->multitrack, cfile->hsize, cfile->vsize, FALSE);
 calc_maxspect(mainw->multitrack->play_width, mainw->multitrack->play_height, opwidth, opheight);
 }
 goto align;

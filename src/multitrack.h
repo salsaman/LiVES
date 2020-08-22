@@ -768,7 +768,7 @@ void set_poly_tab(lives_mt *mt, uint32_t tab);
 // gui related
 void mt_desensitise(lives_mt *);
 void mt_sensitise(lives_mt *);
-void set_mt_play_sizes(lives_mt *mt, int width, int height, boolean reset);
+void set_mt_play_sizes_cfg(lives_mt *);
 boolean mt_idle_show_current_frame(livespointer mt);
 
 void add_aparam_menuitems(lives_mt *);

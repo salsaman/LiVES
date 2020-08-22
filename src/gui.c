@@ -177,6 +177,16 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
 
   lives_widget_apply_theme2(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, FALSE);
   lives_widget_apply_theme2(mainw->menu_hbox, LIVES_WIDGET_STATE_NORMAL, FALSE);
+  lives_widget_apply_theme(mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_apply_theme(mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_apply_theme(mainw->frame1, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_apply_theme(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_apply_theme(mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_apply_theme(mainw->frame2, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_apply_theme(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL);
+
+  lives_widget_apply_theme(mainw->start_image, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_apply_theme(mainw->end_image, LIVES_WIDGET_STATE_NORMAL);
 
   lives_widget_set_bg_color(mainw->sa_hbox, LIVES_WIDGET_STATE_NORMAL, colb);
 
@@ -274,13 +284,6 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
   lives_widget_set_bg_color(mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->top_vbox, LIVES_WIDGET_STATE_NORMAL, colb);
 
-  lives_widget_apply_theme(mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL);
-  lives_widget_apply_theme(mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL);
-  lives_widget_apply_theme(mainw->frame1, LIVES_WIDGET_STATE_NORMAL);
-
-  lives_widget_apply_theme(mainw->start_image, LIVES_WIDGET_STATE_NORMAL);
-  lives_widget_apply_theme(mainw->end_image, LIVES_WIDGET_STATE_NORMAL);
-
   lives_widget_set_base_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)),
                               LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_text_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)),
@@ -288,19 +291,21 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
 
   lives_widget_set_bg_color(mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->play_image, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_bg_color(mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, colb);
 
   lives_widget_set_bg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_fg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, colb);
-
-  lives_widget_apply_theme(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL);
-  lives_widget_apply_theme(mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL);
-  lives_widget_apply_theme(mainw->frame2, LIVES_WIDGET_STATE_NORMAL);
 
   lives_widget_apply_theme(mainw->eventbox2, LIVES_WIDGET_STATE_NORMAL);
   if (mainw->eventbox5) lives_widget_set_bg_color(mainw->eventbox5,
         LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_apply_theme(mainw->hruler, LIVES_WIDGET_STATE_NORMAL);
 
+  lives_widget_set_bg_color(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_bg_color(mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_bg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_bg_color(mainw->frame1, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_bg_color(mainw->frame2, LIVES_WIDGET_STATE_NORMAL, colb);
 
   lives_widget_set_fg_color(mainw->vidbar, LIVES_WIDGET_STATE_NORMAL, colf);
   lives_widget_set_fg_color(mainw->laudbar, LIVES_WIDGET_STATE_NORMAL, colf);
@@ -334,7 +339,6 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
 
   lives_widget_set_bg_color(mainw->msg_scrollbar, LIVES_WIDGET_STATE_NORMAL, colb2);
 
-  lives_widget_apply_theme(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL);
   lives_widget_set_fg_color(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL, colb);
 
   lives_widget_set_bg_color(lives_widget_get_parent(mainw->framebar), LIVES_WIDGET_STATE_NORMAL, colb);
@@ -2796,8 +2800,8 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_double_size_activate), NULL);
   mainw->sepwin_cb_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->sepwin), LIVES_WIDGET_ACTIVATE_SIGNAL,
                           LIVES_GUI_CALLBACK(on_sepwin_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->fade), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_fade_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->fade), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_fade_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->loop_video), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_loop_video_activate), NULL);
   mainw->loop_cont_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->loop_continue), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -3299,11 +3303,12 @@ void fade_background(void) {
     }
   }
 
-
   if (palette->style & STYLE_1) {
     set_colours(&palette->normal_fore, &palette->fade_colour, &palette->menu_and_bars_fore, &palette->menu_and_bars,
                 &palette->info_base, &palette->info_text);
   }
+
+  clear_widget_bg(mainw->play_image, mainw->play_surface);
 
   lives_frame_set_label(LIVES_FRAME(mainw->frame1), NULL);
   lives_frame_set_label(LIVES_FRAME(mainw->frame2), NULL);

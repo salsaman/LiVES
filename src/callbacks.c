@@ -8192,7 +8192,9 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 		// *INDENT-OFF*
                 }}}}}
 	// *INDENT-ON*
-
+        else {
+          set_drawing_area_from_pixbuf(mainw->play_image, NULL, mainw->play_surface);
+        }
         make_play_window();
 
         mainw->pw_scroll_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_SCROLL_EVENT,
@@ -10136,6 +10138,7 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
     }
   }
 #endif
+  clear_widget_bg(widget, *psurf);
 
   if (widget == mainw->start_image)
     load_start_image(CURRENT_CLIP_IS_VALID ? cfile->start : 0);

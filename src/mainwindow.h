@@ -257,8 +257,8 @@ enum {
   LIVES_DEVICE_FW_CARD, // 5
 };
 
-#define LIVES_THEME_DARK 	(1 << 0)
-#define LIVES_THEME_LIGHT 	(1 << 1)
+#define USE_LIVES_THEMEING 	(1 << 0)
+#define LIVES_THEME_DARK 	(1 << 1)
 #define LIVES_THEME_COMPACT 	(1 << 2)
 
 #define THEME_DETAIL_NAME "theme_name"
@@ -530,6 +530,7 @@ enum {
 #define THEME_HEADER HEADER_LITERAL "." THEME_LITERAL
 #define THEME_HEADER_2 THEME_HEADER "_gtk2"
 
+#define LIVES_THEME_NONE "none"
 #define LIVES_THEME_CAMERA "camera"
 
 #define LIVES_CLIP_HEADER HEADER_LITERAL ".lives"

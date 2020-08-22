@@ -1632,10 +1632,6 @@ draw1:
 
   bgimage = lives_widget_create_painter_surface(eventbox);
 
-  /* lives_painter_image_surface_create(LIVES_PAINTER_COLOR_PALETTE(capable->byte_order), */
-  /*         width, */
-  /*         height); */
-
   if (bgimage) {
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
 
@@ -1646,7 +1642,7 @@ draw1:
       lives_painter_fill(crx);
       lives_painter_paint(crx);
       lives_painter_destroy(crx);
-    }
+    } else clear_widget_bg(eventbox, bgimage);
 
     if (mt->block_selected) {
       sblock = mt->block_selected;
@@ -3396,9 +3392,11 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
     int cpal = WEED_PALETTE_RGB24, layer_palette = weed_layer_get_palette(mainw->frame_layer);
     if (weed_palette_has_alpha(layer_palette)) cpal = WEED_PALETTE_RGBA32;
 
-    pwidth = cfile->hsize;
-    pheight = cfile->vsize;
-    calc_maxspect(mt->play_width, mt->play_height, &pwidth, &pheight);
+    /* pwidth = cfile->hsize; */
+    /* pheight = cfile->vsize; */
+    /* calc_maxspect(mt->play_width, mt->play_height, &pwidth, &pheight); */
+    pwidth = mt->play_width;
+    pheight = mt->play_height;
     /* lb_width = pwidth; */
     /* lb_height = pheight; */
     /* letterbox_layer(mainw->frame_layer, mt->play_width, mt->play_height, lb_width, lb_height, LIVES_INTERP_BEST, */
@@ -5457,8 +5455,8 @@ static char *mt_set_vals_string(void) {
 void set_mt_play_sizes_cfg(lives_mt * mt) {
   if (!CURRENT_CLIP_IS_VALID) return;
   else {
-    int rwidth = lives_widget_get_allocation_width(mainw->playarea);
-    int rheight = lives_widget_get_allocation_height(mainw->playarea);
+    int rwidth = lives_widget_get_allocation_width(mt->preview_frame);
+    int rheight = lives_widget_get_allocation_height(mt->preview_frame);
     int width = cfile->hsize;
     int height = cfile->vsize;
 
@@ -6255,8 +6253,10 @@ void set_mt_colours(lives_mt * mt) {
     lives_widget_apply_theme(lives_bin_get_child(LIVES_BIN(mt->context_scroll)), LIVES_WIDGET_STATE_NORMAL);
   }
 
-  lives_widget_apply_theme(mt->context_box, LIVES_WIDGET_STATE_NORMAL);
-  set_child_colour(mt->context_box, TRUE);
+  if (mt->context_box) {
+    lives_widget_apply_theme(mt->context_box, LIVES_WIDGET_STATE_NORMAL);
+    set_child_colour(mt->context_box, TRUE);
+  }
 
   lives_widget_apply_theme(mt->vpaned, LIVES_WIDGET_STATE_NORMAL);
 
@@ -17316,9 +17316,12 @@ void multitrack_playall(lives_mt * mt) {
   if (mt->fx_base_box) lives_widget_set_sensitive(mt->fx_base_box, FALSE);
   lives_widget_set_sensitive(mt->quit, TRUE);
 
-  lives_widget_object_ref(mt->context_scroll); // this allows us to get our old messages back
-  lives_container_remove(LIVES_CONTAINER(mt->context_frame), mt->context_scroll);
-  mt->context_scroll = NULL;
+  if (mt->context_scroll) {
+    lives_widget_object_ref(mt->context_scroll); // this allows us to get our old messages back
+    lives_container_remove(LIVES_CONTAINER(mt->context_frame), mt->context_scroll);
+    mt->context_scroll = NULL;
+  }
+
   clear_context(mt);
 
   add_context_label(mt, _("Press 'm' during playback"));
@@ -17373,17 +17376,20 @@ void multitrack_playall(lives_mt * mt) {
 
   mt_swap_play_pause(mt, FALSE);
 
-  lives_container_remove(LIVES_CONTAINER(mt->context_frame), mt->context_scroll);
+  if (mt->context_scroll)
+    lives_container_remove(LIVES_CONTAINER(mt->context_frame), mt->context_scroll);
 
   mt->context_scroll = old_context_scroll;
-  lives_container_add(LIVES_CONTAINER(mt->context_frame), mt->context_scroll);
+  if (mt->context_scroll)
+    lives_container_add(LIVES_CONTAINER(mt->context_frame), mt->context_scroll);
 
   if (prefs->mt_show_ctx) {
     lives_widget_show_all(mt->context_frame);
     lives_widget_set_sensitive(mt->context_frame, TRUE);
   }
 
-  lives_widget_object_unref(mt->context_scroll);
+  if (mt->context_scroll)
+    lives_widget_object_unref(mt->context_scroll);
 
   if (!mt->is_rendering) {
     mt_sensitise(mt);
@@ -18110,7 +18116,7 @@ void draw_region(lives_mt * mt) {
   double start, end;
 
   if (mt->tl_reg_surf) lives_painter_surface_destroy(mt->tl_reg_surf);
-  if (1 || !mt->tl_reg_surf) mt->tl_reg_surf = lives_widget_create_painter_surface(mt->timeline_reg);
+  mt->tl_reg_surf = lives_widget_create_painter_surface(mt->timeline_reg);
 
   if (mt->region_start == mt->region_end) {
     cr = lives_painter_create_from_surface(mt->tl_reg_surf);
@@ -18387,7 +18393,7 @@ static EXPOSE_FN_DECL(mt_expose_audtrack_event, ebox, user_data) {
     lives_painter_fill(crx);
     lives_painter_paint(crx);
     lives_painter_destroy(crx);
-  }
+  } else clear_widget_bg(ebox, bgimage);
 
   channum = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(ebox), "channel"));
 
@@ -18395,7 +18401,7 @@ static EXPOSE_FN_DECL(mt_expose_audtrack_event, ebox, user_data) {
     draw_soundwave(ebox, bgimage, channum, mt);
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(ebox), "drawn", LIVES_INT_TO_POINTER(TRUE));
     lives_widget_queue_draw(ebox);
-  } else if (bgimage != NULL) {
+  } else if (bgimage) {
     lives_painter_surface_destroy(bgimage);
     bgimage = NULL;
   }

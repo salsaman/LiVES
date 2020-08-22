@@ -179,10 +179,6 @@ showhide:
 
 
 void clear_tbar_bgs(int posx, int posy, int width, int height, int which) {
-  double allocwidth;
-  double allocheight;
-  lives_painter_t *cr = NULL;
-
   // empirically we need to draw wider
   posx -= OVERDRAW_MARGIN;
   if (width > 0) width += OVERDRAW_MARGIN;
@@ -192,38 +188,18 @@ void clear_tbar_bgs(int posx, int posy, int width, int height, int which) {
 
   if (which == 0 || which == 2) {
     if (mainw->laudio_drawable) {
-      allocwidth = lives_widget_get_allocation_width(mainw->laudio_draw);
-      allocheight = lives_widget_get_allocation_height(mainw->laudio_draw);
-      cr = lives_painter_create_from_surface(mainw->laudio_drawable);
-      lives_painter_render_background(mainw->laudio_draw, cr, posx, posy,
-                                      UTIL_CLAMP(width, allocwidth),
-                                      UTIL_CLAMP(height, allocheight));
-      lives_painter_destroy(cr);
+      clear_widget_bg(mainw->laudio_draw, mainw->laudio_drawable);
     }
   }
 
   if (which == 0 || which == 3) {
     if (mainw->raudio_drawable) {
-      allocwidth = lives_widget_get_allocation_width(mainw->raudio_draw);
-      allocheight = lives_widget_get_allocation_height(mainw->raudio_draw);
-      cr = lives_painter_create_from_surface(mainw->raudio_drawable);
-      lives_painter_render_background(mainw->raudio_draw, cr, posx, posy,
-                                      UTIL_CLAMP(width, allocwidth),
-                                      UTIL_CLAMP(height, allocheight));
-      lives_painter_destroy(cr);
+      clear_widget_bg(mainw->raudio_draw, mainw->raudio_drawable);
     }
   }
 
   if (which == 0 || which == 1) {
-    if (mainw->video_drawable) {
-      allocwidth = lives_widget_get_allocation_width(mainw->video_draw);
-      allocheight = lives_widget_get_allocation_height(mainw->video_draw);
-      cr = lives_painter_create_from_surface(mainw->video_drawable);
-      lives_painter_render_background(mainw->video_draw, cr, posx, posy,
-                                      UTIL_CLAMP(width, allocwidth),
-                                      UTIL_CLAMP(height, allocheight));
-      lives_painter_destroy(cr);
-    }
+    clear_widget_bg(mainw->video_draw, mainw->video_drawable);
   }
 }
 

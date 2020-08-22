@@ -1610,7 +1610,7 @@ boolean apply_prefs(boolean skip_warn) {
   lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_infob), &coli);
   lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_infot), &colt);
 
-  if (strcasecmp(future_prefs->theme, "none")) {
+  if (strcasecmp(future_prefs->theme, LIVES_THEME_NONE)) {
     if (!lives_widget_color_equal(&colf, &palette->normal_fore) ||
         !lives_widget_color_equal(&colb, &palette->normal_back) ||
         !lives_widget_color_equal(&colf2, &palette->menu_and_bars_fore) ||
@@ -2124,7 +2124,7 @@ boolean apply_prefs(boolean skip_warn) {
   }
 
   // the theme
-  if (lives_utf8_strcmp(future_prefs->theme, theme) && !(!strcasecmp(future_prefs->theme, "none") &&
+  if (lives_utf8_strcmp(future_prefs->theme, theme) && !(!strcasecmp(future_prefs->theme, LIVES_THEME_NONE) &&
       !lives_utf8_strcmp(theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE]))) {
     if (lives_utf8_strcmp(theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
       lives_snprintf(prefs->theme, 64, "%s", theme);
@@ -2138,7 +2138,7 @@ boolean apply_prefs(boolean skip_warn) {
       load_theme_images();
       mainw->prefs_changed |= PREFS_COLOURS_CHANGED | PREFS_IMAGES_CHANGED;
     } else {
-      lives_snprintf(future_prefs->theme, 64, "none");
+      lives_snprintf(future_prefs->theme, 64, LIVES_THEME_NONE);
       set_string_pref(PREF_GUI_THEME, future_prefs->theme);
       delete_pref(THEME_DETAIL_STYLE);
       delete_pref(THEME_DETAIL_SEPWIN_IMAGE);
@@ -4887,7 +4887,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   prefsw->theme_combo = lives_standard_combo_new(_("New theme:           "), themes, LIVES_BOX(hbox), NULL);
 
-  if (strcasecmp(future_prefs->theme, "none")) {
+  if (strcasecmp(future_prefs->theme, LIVES_THEME_NONE)) {
     theme = lives_strdup(future_prefs->theme);
   } else theme = lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
 
@@ -5827,7 +5827,7 @@ void pref_change_images(void) {
       if (mainw->preview_box) load_preview_image(FALSE);
     }
     lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
-    if (mainw->multitrack) {
+    if (mainw->multitrack && mainw->multitrack->sep_image) {
       lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->multitrack->sep_image), mainw->imsep);
       mt_show_current_frame(mainw->multitrack, FALSE);
       lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);

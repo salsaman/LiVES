@@ -427,32 +427,38 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_render_background(LiVESWidget 
     double y, double width, double height) {
   int themetype = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), THEME_KEY));
 #ifdef LIVES_PAINTER_IS_CAIRO
-  if (themetype == 1) {
-    lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->normal_back);
-    //lives_painter_set_source_rgb(cr, 1., 0., 1.);
-    //lives_painter_paint(cr);
+  if (LIVES_IS_PLAYING && mainw->fade) {
+    lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->fade_colour);
   } else {
+    if (themetype) {
+      lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->normal_back);
+      //lives_painter_set_source_rgb(cr, 1., 0., 1.);
+      //lives_painter_paint(cr);
+    } else {
 #if GTK_CHECK_VERSION(3, 0, 0)
-    GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
-    gtk_render_background(ctx, cr, x, y, width, height);
+      /// this is supposed to paint the background colour with no theme,
+      // but it seems broken in gtk+, and just paints black.
+      GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
+      gtk_render_background(ctx, cr, x, y, width, height);
 #else
-    LiVESWidgetColor color;
-    lives_widget_color_copy(&color, &gtk_widget_get_style(widget)->bg[lives_widget_get_state(widget)]);
+      LiVESWidgetColor color;
+      lives_widget_color_copy(&color, &gtk_widget_get_style(widget)->bg[lives_widget_get_state(widget)]);
 
 #if LIVES_WIDGET_COLOR_HAS_ALPHA
 
-    lives_painter_set_source_rgba(cr,
-                                  LIVES_WIDGET_COLOR_SCALE(color.red),
-                                  LIVES_WIDGET_COLOR_SCALE(color.green),
-                                  LIVES_WIDGET_COLOR_SCALE(color.blue),
-                                  LIVES_WIDGET_COLOR_SCALE(color.alpha));
+      lives_painter_set_source_rgba(cr,
+                                    LIVES_WIDGET_COLOR_SCALE(color.red),
+                                    LIVES_WIDGET_COLOR_SCALE(color.green),
+                                    LIVES_WIDGET_COLOR_SCALE(color.blue),
+                                    LIVES_WIDGET_COLOR_SCALE(color.alpha));
 #else
-    lives_painter_set_source_rgb(cr,
-                                 LIVES_WIDGET_COLOR_SCALE(color.red),
-                                 LIVES_WIDGET_COLOR_SCALE(color.green),
-                                 LIVES_WIDGET_COLOR_SCALE(color.blue));
+      lives_painter_set_source_rgb(cr,
+                                   LIVES_WIDGET_COLOR_SCALE(color.red),
+                                   LIVES_WIDGET_COLOR_SCALE(color.green),
+                                   LIVES_WIDGET_COLOR_SCALE(color.blue));
 #endif // has_alpha
 #endif // gtk 3
+    }
   }
   lives_painter_rectangle(cr, x, y, width, height);
   lives_painter_fill(cr);
@@ -9058,8 +9064,12 @@ LiVESWidget *lives_glowing_check_button_new(const char *labeltext, LiVESBox * bo
 
   if (prefs->lamp_buttons) {
     lives_toggle_button_set_mode(LIVES_TOGGLE_BUTTON(checkbutton), FALSE);
+    lives_widget_set_bg_color(checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
+    lives_widget_set_bg_color(checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
+    lives_cool_toggled(checkbutton, togglevalue);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
+                              LIVES_GUI_CALLBACK(draw_cool_toggle), NULL);
     if (widget_opts.apply_theme) {
-      lives_widget_set_bg_color(checkbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->light_green);
 
       set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_NORMAL, "",
                            "box-shadow", "4px 0 alpha(white, 0.5)");
@@ -9083,12 +9093,6 @@ LiVESWidget *lives_glowing_check_button_new(const char *labeltext, LiVESBox * bo
       set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_NORMAL, "",
                            "transition-duration", "0.2s");
 #endif
-      lives_widget_set_bg_color(checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
-      lives_cool_toggled(checkbutton, togglevalue);
-      lives_signal_sync_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_EXPOSE_EVENT,
-                                LIVES_GUI_CALLBACK(draw_cool_toggle), NULL);
-      set_css_value_direct(checkbutton,  LIVES_WIDGET_STATE_NORMAL, "",
-                           "box-shadow", "4px 0 alpha(white, 0.5)");
     }
   }
   return checkbutton;
@@ -9324,12 +9328,6 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
                           WH_LAYOUT_KEY);
     int packing_width = 0;
 
-    /* if (LIVES_IS_HBOX(box)) { */
-    /*   hbox = lives_hbox_new(FALSE, 0); */
-    /*   lives_box_pack_start(box, hbox, FALSE, TRUE, 0); */
-    /*   box = LIVES_BOX(hbox); */
-    /* } */
-
     if (labeltext) {
       eventbox = make_label_eventbox(labeltext, spinbutton);
     }
@@ -9378,17 +9376,22 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
 
   if (widget_opts.apply_theme) {
     set_css_min_size(spinbutton, widget_opts.css_min_width, ((widget_opts.css_min_height * 3 + 3) >> 2) << 1);
-    //set_child_alt_colour(spinbutton, TRUE);
-    lives_widget_apply_theme2(LIVES_WIDGET(spinbutton), LIVES_WIDGET_STATE_NORMAL, TRUE);
+
+    // breaks button insens !
+    //
 
 #if !GTK_CHECK_VERSION(3, 16, 0)
+    lives_widget_apply_theme2(LIVES_WIDGET(spinbutton), LIVES_WIDGET_STATE_NORMAL, TRUE);
     lives_widget_apply_theme_dimmed2(spinbutton, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
 #else
+    lives_widget_apply_theme2(LIVES_WIDGET(spinbutton), LIVES_WIDGET_STATE_NORMAL, FALSE);
+
     colref = gdk_rgba_to_string(&palette->normal_fore);
     set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_NORMAL, "", "color", colref);
     lives_free(colref);
 
     set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
+    set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_INSENSITIVE, "button", "opacity", "0.5");
 
     if (prefs->extra_colours && mainw->pretty_colours) {
       char *tmp;
@@ -9409,7 +9412,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
 #endif
   }
 
-  //set_child_dimmed_colour2(spinbutton, BUTTON_DIM_VAL);// insens, themecols 1, child only
+  set_child_dimmed_colour2(spinbutton, BUTTON_DIM_VAL);// insens, themecols 1, child only
   widget_opts.last_container = container;
   return spinbutton;
 }
@@ -9524,11 +9527,7 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList * list, L
 
   if (widget_opts.apply_theme) {
     set_standard_widget(combo, TRUE);
-
-    if (palette->style & STYLE_LIGHT)
-      set_child_alt_colour(combo, TRUE);
-    else
-      set_child_colour(combo, TRUE);
+    set_child_alt_colour(combo, TRUE);
 
 #if GTK_CHECK_VERSION(3, 0, 0)
     set_css_min_size(combo, widget_opts.css_min_width, ((widget_opts.css_min_height * 3 + 3) >> 2) << 1);

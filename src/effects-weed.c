@@ -7910,7 +7910,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
     return 1;
   }
 
-  if ((mainw->preview || (mainw->current_file > -1 && cfile != NULL && cfile->opening)) &&
+  if ((mainw->preview || (CURRENT_CLIP_IS_VALID && cfile->opening)) &&
       (mainw->num_tr_applied == 0 || mainw->blend_file == -1 || mainw->blend_file == mainw->current_file)) {
     filter_mutex_unlock(key);
     return 2;
@@ -7919,7 +7919,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   if (!LIVES_IS_PLAYING) mainw->pre_src_file = mainw->current_file;
 
   if (old_file != -1 && mainw->blend_file != -1 && mainw->blend_file != mainw->current_file &&
-      mainw->num_tr_applied > 0 && mainw->files[mainw->blend_file] != NULL &&
+      mainw->num_tr_applied > 0 && mainw->files[mainw->blend_file] &&
       mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
     ////////////////////////// switching background generator: stop the old one first
     weed_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
@@ -8039,7 +8039,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
     pthread_mutex_unlock(&mainw->event_list_mutex);
 
     mainw->last_grabbable_effect = key;
-    if (rte_window != NULL) rtew_set_keych(key, TRUE);
+    if (rte_window) rtew_set_keych(key, TRUE);
     if (mainw->ce_thumbs) {
       ce_thumbs_set_keych(key, TRUE);
 
@@ -8051,7 +8051,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
 
     weed_instance_unref(inst);  // release ref from weed_instance_from_filter, normally we would do this on return
 
-    if (mainw->play_window != NULL) {
+    if (mainw->play_window) {
       lives_widget_queue_draw(mainw->play_window);
     }
     mainw->gen_started_play = TRUE;
@@ -8067,7 +8067,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   } else {
     // already playing
 
-    if (old_file != -1 && mainw->files[old_file] != NULL) {
+    if (old_file != -1 && mainw->files[old_file]) {
       if (IS_NORMAL_CLIP(old_file)) mainw->pre_src_file = old_file;
       mainw->current_file = old_file;
     }
@@ -8089,12 +8089,13 @@ int weed_generator_start(weed_plant_t *inst, int key) {
         /*   switch_audio_clip(new_file, TRUE); */
         /* } */
 
-        if (mainw->files[mainw->new_blend_file] != NULL) mainw->blend_file = mainw->new_blend_file;
-        if (!is_bg && blend_file != -1 && mainw->files[blend_file] != NULL) mainw->blend_file = blend_file;
+        if (mainw->files[mainw->new_blend_file]) mainw->blend_file = mainw->new_blend_file;
+        if (!is_bg && IS_VALID_CLIP(blend_file)) mainw->blend_file = blend_file;
         mainw->new_blend_file = -1;
       } else {
-        lives_widget_show(mainw->playframe);
+        lives_widget_show_all(mainw->playframe);
         resize(1);
+        lives_widget_set_opacity(mainw->playframe, 1.);
       }
       //if (old_file==-1) mainw->whentostop=STOP_ON_VID_END;
     } else {
@@ -8132,7 +8133,7 @@ void wge_inner(weed_plant_t *inst) {
     key_to_instance[key][key_modes[key]] = NULL;
   }
 
-  while (inst != NULL) {
+  while (inst) {
     next_inst = get_next_compound_inst(inst);
     weed_call_deinit_func(inst);
     weed_instance_unref(inst);

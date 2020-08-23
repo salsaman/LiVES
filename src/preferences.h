@@ -416,6 +416,7 @@ typedef struct {
   boolean allow_easing;
 
   boolean show_dev_opts;
+  boolean dev_show_dabg;
 
   boolean msgs_pbdis;
 

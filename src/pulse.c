@@ -1737,7 +1737,6 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     }
   }
 
-
   return 0;
 }
 
@@ -2010,20 +2009,20 @@ void pulse_aud_pb_ready(int fileno) {
 
   lives_freep((void **) & (mainw->pulsed->aPlayPtr->data));
   mainw->pulsed->aPlayPtr->size = mainw->pulsed->aPlayPtr->max_size = 0;
-  if (mainw->pulsed != NULL) pulse_driver_uncork(mainw->pulsed);
+  if (mainw->pulsed) pulse_driver_uncork(mainw->pulsed);
 
   // called at pb start and rec stop (after rec_ext_audio)
-  if (mainw->pulsed != NULL && mainw->aud_rec_fd == -1) {
+  if (mainw->pulsed && mainw->aud_rec_fd == -1) {
     mainw->pulsed->is_paused = FALSE;
     mainw->pulsed->mute = mainw->mute;
     if ((mainw->loop_cont || mainw->whentostop != STOP_ON_AUD_END) && !mainw->preview) {
-      if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS && mainw->event_list == NULL)
+      if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS && !mainw->event_list)
         mainw->pulsed->loop = AUDIO_LOOP_PINGPONG;
       else mainw->pulsed->loop = AUDIO_LOOP_FORWARD;
     } else mainw->pulsed->loop = AUDIO_LOOP_NONE;
     if (sfile->achans > 0 && (!mainw->preview || (mainw->preview && mainw->is_processing)) &&
         (sfile->laudio_time > 0. || sfile->opening ||
-         (mainw->multitrack != NULL && mainw->multitrack->is_rendering &&
+         (mainw->multitrack && mainw->multitrack->is_rendering &&
           lives_file_test((tmpfilename = lives_get_audio_file_name(fileno)), LIVES_FILE_TEST_EXISTS)))) {
       ticks_t timeout;
       lives_alarm_t alarm_handle;
@@ -2034,6 +2033,7 @@ void pulse_aud_pb_ready(int fileno) {
       mainw->pulsed->in_arate = sfile->arate;
       mainw->pulsed->usigned = !asigned;
       mainw->pulsed->seek_end = sfile->afilesize;
+      mainw->pulsed->seek_pos = 0;
 
       if ((aendian && (capable->byte_order == LIVES_BIG_ENDIAN)) || (!aendian && (capable->byte_order == LIVES_LITTLE_ENDIAN)))
         mainw->pulsed->reverse_endian = TRUE;
@@ -2048,8 +2048,8 @@ void pulse_aud_pb_ready(int fileno) {
 
       if (timeout == 0) pulse_try_reconnect();
 
-      if ((mainw->multitrack == NULL || mainw->multitrack->is_rendering ||
-           sfile->opening) && (mainw->event_list == NULL || mainw->record || (mainw->preview && mainw->is_processing))) {
+      if ((!mainw->multitrack || mainw->multitrack->is_rendering ||
+           sfile->opening) && (!mainw->event_list || mainw->record || (mainw->preview && mainw->is_processing))) {
         // tell pulse server to open audio file and start playing it
         pulse_message.command = ASERVER_CMD_FILE_OPEN;
         pulse_message.data = lives_strdup_printf("%d", fileno);
@@ -2064,7 +2064,7 @@ void pulse_aud_pb_ready(int fileno) {
         mainw->rec_aseek = (double)sfile->aseek_pos / (double)(sfile->arps * sfile->achans * (sfile->asampsize / 8));
       }
     }
-    if (mainw->agen_key != 0 && mainw->multitrack == NULL) mainw->pulsed->in_use = TRUE; // audio generator is active
+    if (mainw->agen_key != 0 && !mainw->multitrack) mainw->pulsed->in_use = TRUE; // audio generator is active
   }
 }
 

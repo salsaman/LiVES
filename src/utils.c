@@ -3990,10 +3990,11 @@ boolean prepare_to_play_foreign(void) {
   lives_widget_show(mainw->playframe);
   lives_widget_show(mainw->playarea);
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+  lives_widget_set_opacity(mainw->playframe, 1.);
 
   // size must be exact, must not be larger than play window or we end up with nothing
-  mainw->pwidth = lives_widget_get_allocation_width(mainw->playframe) - H_RESIZE_ADJUST + 2;
-  mainw->pheight = lives_widget_get_allocation_height(mainw->playframe) - V_RESIZE_ADJUST + 2;
+  mainw->pwidth = lives_widget_get_allocation_width(mainw->playframe);// - H_RESIZE_ADJUST + 2;
+  mainw->pheight = lives_widget_get_allocation_height(mainw->playframe);// - V_RESIZE_ADJUST + 2;
 
   cfile->hsize = mainw->pwidth;
   cfile->vsize = mainw->pheight;

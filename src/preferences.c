@@ -2126,6 +2126,7 @@ boolean apply_prefs(boolean skip_warn) {
   // the theme
   if (lives_utf8_strcmp(future_prefs->theme, theme) && !(!strcasecmp(future_prefs->theme, LIVES_THEME_NONE) &&
       !lives_utf8_strcmp(theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE]))) {
+    mainw->prefs_changed |= PREFS_THEME_CHANGED;
     if (lives_utf8_strcmp(theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
       lives_snprintf(prefs->theme, 64, "%s", theme);
       lives_snprintf(future_prefs->theme, 64, "%s", theme);
@@ -2149,7 +2150,6 @@ boolean apply_prefs(boolean skip_warn) {
       delete_pref(THEME_DETAIL_ALT_BACK);
       delete_pref(THEME_DETAIL_INFO_TEXT);
       delete_pref(THEME_DETAIL_INFO_BASE);
-      mainw->prefs_changed |= PREFS_THEME_CHANGED;
     }
   }
 
@@ -5891,8 +5891,10 @@ void on_prefs_apply_clicked(LiVESButton * button, livespointer user_data) {
   }
 
   if (mainw->prefs_changed & PREFS_THEME_CHANGED) {
-    lives_widget_set_sensitive(mainw->export_theme, FALSE);
-    do_info_dialog(_("Disabling the theme will not take effect until the next time you start LiVES."));
+    if (!lives_strcmp(future_prefs->theme, LIVES_THEME_NONE)) {
+      lives_widget_set_sensitive(mainw->export_theme, FALSE);
+      do_info_dialog(_("Disabling the theme will not take effect until the next time you start LiVES."));
+    } else do_info_dialog(_("Theme changes will only take full effect after restarting LiVES."));
   } else
     lives_widget_set_sensitive(mainw->export_theme, TRUE);
 

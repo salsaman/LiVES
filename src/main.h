@@ -904,6 +904,9 @@ typedef struct {
   uint64_t ver_minor;
   uint64_t ver_micro;
 
+  LiVESXWindow *root_window;
+  boolean is_composited;
+
 #define ANNOY_DISPLAY      	(1ul << 0)
 #define ANNOY_DISK		(1ul << 1)
 #define ANNOY_PROC		(1ul << 2)

@@ -2362,6 +2362,7 @@ void play_file(void) {
         && (cfile->frames > 0 ||
             mainw->foreign)) {
       /// show the frame in the main window
+      lives_widget_set_opacity(mainw->playframe, 1.);
       lives_widget_show_all(mainw->playframe);
     }
 

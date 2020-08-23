@@ -574,6 +574,8 @@ boolean show_desktop_panel(void);
 boolean hide_desktop_panel(void);
 boolean get_x11_visible(const char *wname);
 
+int get_window_stack_level(LiVESXWindow *, int *nwins);
+
 boolean get_wm_caps(void);
 boolean get_distro_dets(void);
 boolean get_machine_dets(void);

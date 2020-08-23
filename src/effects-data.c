@@ -112,13 +112,12 @@ void override_if_active_input(int hotkey) {
       for (; j < totcons; j++) {
         if (pconx->ikey[j] == hotkey && pconx->imode[j] == imode && pconx->ipnum[j] == FX_DATA_PARAM_ACTIVE) {
           // out param is "ACTIVATED"
-          //if (pconx->params[i] == FX_DATA_PARAM_ACTIVE) {
           // abuse "autoscale" for this
           pconx->autoscale[i] = TRUE;
-          //}
           return;
-	  // *INDENT-OFF*
-        }}}
+        }
+      }
+    }
     pconx = pconx->next;
   }
 }
@@ -145,7 +144,7 @@ void end_override_if_activate_output(int hotkey) {
             pconx->autoscale[j] = FALSE;
 	    // *INDENT-OFF*
           }}}}
-    // *INDENT-OFF*
+    // *INDENT-ON*
     pconx = pconx->next;
   }
 }
@@ -246,8 +245,8 @@ char *pconx_list(int okey, int omode, int opnum) {
         if (pconx->params[i] == opnum) {
           for (j = totcons; j < totcons + pconx->nconns[i]; j++) {
             if (strlen(st1) == 0)
-	      st2 = lives_strdup_printf("%d %d %d %d", pconx->ikey[j] + 1, pconx->imode[j] + 1, pconx->ipnum[j],
-                                          pconx->autoscale[j]);
+              st2 = lives_strdup_printf("%d %d %d %d", pconx->ikey[j] + 1, pconx->imode[j] + 1, pconx->ipnum[j],
+                                        pconx->autoscale[j]);
             st2 = lives_strdup_printf("%s %d %d %d %d", st1, pconx->ikey[j] + 1, pconx->imode[j] + 1,
                                       pconx->ipnum[j], pconx->autoscale[j]);
             lives_free(st1);
@@ -410,7 +409,7 @@ void pconx_remap_mode(int key, int omode, int nmode) {
           pconx->imode[j] = nmode;
 	  // *INDENT-OFF*
         }}}
-    // *INDENT-OFF*
+    // *INDENT-ON*
     pconx = pconx->next;
   }
 }

@@ -1055,6 +1055,7 @@ LiVESWidget *lives_standard_radio_menu_item_new_with_label(LiVESSList *group, co
 LiVESWidget *lives_standard_check_menu_item_new_with_label(const char *labeltext, boolean active);
 
 LiVESWidget *lives_standard_check_menu_item_new_for_var(const char *ltext, boolean *var, boolean invert);
+
 LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, LiVESBox *,
                                        const char *tooltip);
 

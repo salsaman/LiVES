@@ -71,18 +71,18 @@ void load_theme_images(void) {
 
   pixbuf = lives_pixbuf_new_from_file(mainw->sepimg_path, &error);
 
-  if (mainw->imsep != NULL) lives_widget_object_unref(mainw->imsep);
+  if (mainw->imsep) lives_widget_object_unref(mainw->imsep);
   mainw->imsep = NULL;
-  if (mainw->imframe != NULL) lives_widget_object_unref(mainw->imframe);
+  if (mainw->imframe) lives_widget_object_unref(mainw->imframe);
   mainw->imframe = NULL;
 
-  if (error != NULL) {
+  if (error) {
     palette->style = STYLE_PLAIN;
     LIVES_ERROR("Theme Error !");
     lives_snprintf(prefs->theme, 64, "%%ERROR%%");
     lives_error_free(error);
   } else {
-    if (pixbuf != NULL) {
+    if (pixbuf) {
       //resize
       width = lives_pixbuf_get_width(pixbuf);
       height = lives_pixbuf_get_height(pixbuf);
@@ -109,10 +109,10 @@ void load_theme_images(void) {
 
     pixbuf = lives_pixbuf_new_from_file(mainw->frameblank_path, &error);
 
-    if (error != NULL) {
+    if (error) {
       lives_error_free(error);
     } else {
-      if (pixbuf != NULL) {
+      if (pixbuf) {
         width = lives_pixbuf_get_width(pixbuf);
         height = lives_pixbuf_get_height(pixbuf);
 
@@ -172,26 +172,30 @@ boolean expose_pim(LiVESWidget * widget, lives_painter_t *cr, livespointer user_
 
 
 void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetColor * colf2,
-                 LiVESWidgetColor * colb2, LiVESWidgetColor * coli, LiVESWidgetColor * colt) {
+                 LiVESWidgetColor * colb2, LiVESWidgetColor * colt, LiVESWidgetColor * coli) {
   lives_widget_apply_theme(LIVES_MAIN_WINDOW_WIDGET, LIVES_WIDGET_STATE_NORMAL);
 
-  lives_widget_apply_theme2(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, FALSE);
-  lives_widget_apply_theme2(mainw->menu_hbox, LIVES_WIDGET_STATE_NORMAL, FALSE);
-  lives_widget_apply_theme(mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL);
-  lives_widget_apply_theme(mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL);
-  lives_widget_apply_theme(mainw->frame1, LIVES_WIDGET_STATE_NORMAL);
-  lives_widget_apply_theme(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL);
-  lives_widget_apply_theme(mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL);
-  lives_widget_apply_theme(mainw->frame2, LIVES_WIDGET_STATE_NORMAL);
-  lives_widget_apply_theme(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL);
+  if (palette->style & STYLE_1) {
+    lives_widget_apply_theme2(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, FALSE);
+    lives_widget_apply_theme2(mainw->menu_hbox, LIVES_WIDGET_STATE_NORMAL, FALSE);
+    lives_widget_apply_theme(mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL);
+    lives_widget_apply_theme(mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL);
+    lives_widget_apply_theme(mainw->frame1, LIVES_WIDGET_STATE_NORMAL);
+    lives_widget_apply_theme(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL);
+    lives_widget_apply_theme(mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL);
+    lives_widget_apply_theme(mainw->frame2, LIVES_WIDGET_STATE_NORMAL);
+    lives_widget_apply_theme(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL);
 
-  lives_widget_apply_theme(mainw->start_image, LIVES_WIDGET_STATE_NORMAL);
-  lives_widget_apply_theme(mainw->end_image, LIVES_WIDGET_STATE_NORMAL);
+    lives_widget_apply_theme(mainw->start_image, LIVES_WIDGET_STATE_NORMAL);
+    lives_widget_apply_theme(mainw->end_image, LIVES_WIDGET_STATE_NORMAL);
+  }
 
   lives_widget_set_bg_color(mainw->sa_hbox, LIVES_WIDGET_STATE_NORMAL, colb);
 
-  lives_widget_apply_theme2(mainw->vol_toolitem, LIVES_WIDGET_STATE_NORMAL, FALSE);
-  lives_widget_apply_theme2(mainw->volume_scale, LIVES_WIDGET_STATE_NORMAL, FALSE);
+  if (palette->style & STYLE_1) {
+    lives_widget_apply_theme2(mainw->vol_toolitem, LIVES_WIDGET_STATE_NORMAL, FALSE);
+    lives_widget_apply_theme2(mainw->volume_scale, LIVES_WIDGET_STATE_NORMAL, FALSE);
+  }
 
   if (mainw->plug)
     lives_widget_set_bg_color(mainw->plug, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -201,105 +205,109 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
   lives_widget_set_bg_color(mainw->laudbar, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->raudbar, LIVES_WIDGET_STATE_NORMAL, colb);
 
-  set_submenu_colours(LIVES_MENU(mainw->files_menu), colf2, colb2);
-  set_submenu_colours(LIVES_MENU(mainw->edit_menu), colf2, colb2);
-  set_submenu_colours(LIVES_MENU(mainw->play_menu), colf2, colb2);
-  set_submenu_colours(LIVES_MENU(mainw->effects_menu), colf2, colb2);
-  set_submenu_colours(LIVES_MENU(mainw->tools_menu), colf2, colb2);
-  set_submenu_colours(LIVES_MENU(mainw->audio_menu), colf2, colb2);
-  set_submenu_colours(LIVES_MENU(mainw->info_menu), colf2, colb2);
-  set_submenu_colours(LIVES_MENU(mainw->clipsmenu), colf2, colb2);
-  set_submenu_colours(LIVES_MENU(mainw->advanced_menu), colf2, colb2);
-  set_submenu_colours(LIVES_MENU(mainw->vj_menu), colf2, colb2);
-  set_submenu_colours(LIVES_MENU(mainw->toys_menu), colf2, colb2);
-  set_submenu_colours(LIVES_MENU(mainw->help_menu), colf2, colb2);
+  if (palette->style & STYLE_1) {
+    set_submenu_colours(LIVES_MENU(mainw->files_menu), colf2, colb2);
+    set_submenu_colours(LIVES_MENU(mainw->edit_menu), colf2, colb2);
+    set_submenu_colours(LIVES_MENU(mainw->play_menu), colf2, colb2);
+    set_submenu_colours(LIVES_MENU(mainw->effects_menu), colf2, colb2);
+    set_submenu_colours(LIVES_MENU(mainw->tools_menu), colf2, colb2);
+    set_submenu_colours(LIVES_MENU(mainw->audio_menu), colf2, colb2);
+    set_submenu_colours(LIVES_MENU(mainw->info_menu), colf2, colb2);
+    set_submenu_colours(LIVES_MENU(mainw->clipsmenu), colf2, colb2);
+    set_submenu_colours(LIVES_MENU(mainw->advanced_menu), colf2, colb2);
+    set_submenu_colours(LIVES_MENU(mainw->vj_menu), colf2, colb2);
+    set_submenu_colours(LIVES_MENU(mainw->toys_menu), colf2, colb2);
+    set_submenu_colours(LIVES_MENU(mainw->help_menu), colf2, colb2);
 
-  lives_widget_apply_theme2(mainw->l2_tb, LIVES_WIDGET_STATE_NORMAL, TRUE);
-  lives_widget_apply_theme2(mainw->l3_tb, LIVES_WIDGET_STATE_NORMAL, TRUE);
-  lives_widget_apply_theme2(mainw->l2_tb, LIVES_WIDGET_STATE_INSENSITIVE, TRUE);
-  lives_widget_apply_theme2(mainw->l3_tb, LIVES_WIDGET_STATE_INSENSITIVE, TRUE);
+    lives_widget_apply_theme2(mainw->l2_tb, LIVES_WIDGET_STATE_NORMAL, TRUE);
+    lives_widget_apply_theme2(mainw->l3_tb, LIVES_WIDGET_STATE_NORMAL, TRUE);
+    lives_widget_apply_theme2(mainw->l2_tb, LIVES_WIDGET_STATE_INSENSITIVE, TRUE);
+    lives_widget_apply_theme2(mainw->l3_tb, LIVES_WIDGET_STATE_INSENSITIVE, TRUE);
 
-  lives_widget_apply_theme2(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, TRUE);
+    lives_widget_apply_theme2(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, TRUE);
 #if GTK_CHECK_VERSION(3, 16, 0)
-  if (mainw->pretty_colours) {
-    char *colref2 = gdk_rgba_to_string(&palette->menu_and_bars);
-    char *colref = gdk_rgba_to_string(&palette->normal_back);
-    char *tmp = lives_strdup_printf("linear-gradient(%s, %s)", colref2, colref);
-    int mh = 8;
+    if (mainw->pretty_colours) {
+      char *colref2 = gdk_rgba_to_string(&palette->menu_and_bars);
+      char *colref = gdk_rgba_to_string(&palette->normal_back);
+      char *tmp = lives_strdup_printf("linear-gradient(%s, %s)", colref2, colref);
+      int mh = 8;
 
-    set_css_value_direct(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, "",
-                         "background-image", tmp);
-    set_css_value_direct(mainw->volume_scale, LIVES_WIDGET_STATE_NORMAL, "",
-                         "background-image", tmp);
-    tmp = lives_strdup_printf("%dpx", mh);
+      set_css_value_direct(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, "",
+                           "background-image", tmp);
+      set_css_value_direct(mainw->volume_scale, LIVES_WIDGET_STATE_NORMAL, "",
+                           "background-image", tmp);
+      tmp = lives_strdup_printf("%dpx", mh);
 
-    lives_free(colref); lives_free(colref2);
+      lives_free(colref); lives_free(colref2);
 
-    lives_widget_set_size_request(mainw->volume_scale, -1, 12);
+      lives_widget_set_size_request(mainw->volume_scale, -1, 12);
 
-    set_css_value_direct(mainw->int_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, "*", "min-height", tmp);
-    set_css_value_direct(mainw->ext_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, "*", "min-height", tmp);
+      set_css_value_direct(mainw->int_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, "*", "min-height", tmp);
+      set_css_value_direct(mainw->ext_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, "*", "min-height", tmp);
 
-    set_css_value_direct(mainw->int_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, "button", "min-height", tmp);
-    set_css_value_direct(mainw->ext_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, "button", "min-height", tmp);
-    lives_free(tmp);
+      set_css_value_direct(mainw->int_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, "button", "min-height", tmp);
+      set_css_value_direct(mainw->ext_audio_checkbutton, LIVES_WIDGET_STATE_NORMAL, "button", "min-height", tmp);
+      lives_free(tmp);
 
-    set_css_value_direct(mainw->l2_tb, LIVES_WIDGET_STATE_NORMAL, "", "opacity", "0.4");
-    set_css_value_direct(mainw->l2_tb, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "1.0");
+      set_css_value_direct(mainw->l2_tb, LIVES_WIDGET_STATE_NORMAL, "", "opacity", "0.4");
+      set_css_value_direct(mainw->l2_tb, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "1.0");
 
-    set_css_value_direct(mainw->l3_tb, LIVES_WIDGET_STATE_NORMAL, "", "opacity", "0.4");
-    set_css_value_direct(mainw->l3_tb, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "1.0");
+      set_css_value_direct(mainw->l3_tb, LIVES_WIDGET_STATE_NORMAL, "", "opacity", "0.4");
+      set_css_value_direct(mainw->l3_tb, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "1.0");
 
-    set_css_value_direct(lives_widget_get_parent(mainw->l2_tb), LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "1.0");
-    set_css_value_direct(lives_widget_get_parent(lives_widget_get_parent(mainw->l2_tb)),
-                         LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "1.0");
-    set_css_value_direct(lives_widget_get_parent(mainw->l2_tb), LIVES_WIDGET_STATE_NORMAL, "", "opacity", "1.0");
-    set_css_value_direct(lives_widget_get_parent(lives_widget_get_parent(mainw->l2_tb)),
-                         LIVES_WIDGET_STATE_NORMAL, "", "opacity", "1.0");
-    set_css_value_direct(lives_widget_get_parent(mainw->l3_tb), LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "1.0");
-    set_css_value_direct(lives_widget_get_parent(lives_widget_get_parent(mainw->l3_tb)),
-                         LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "1.0");
-    set_css_value_direct(lives_widget_get_parent(mainw->l3_tb), LIVES_WIDGET_STATE_NORMAL, "", "opacity", "1.0");
-    set_css_value_direct(lives_widget_get_parent(lives_widget_get_parent(mainw->l3_tb)),
-                         LIVES_WIDGET_STATE_NORMAL, "", "opacity", "1.0");
+      set_css_value_direct(lives_widget_get_parent(mainw->l2_tb), LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "1.0");
+      set_css_value_direct(lives_widget_get_parent(lives_widget_get_parent(mainw->l2_tb)),
+                           LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "1.0");
+      set_css_value_direct(lives_widget_get_parent(mainw->l2_tb), LIVES_WIDGET_STATE_NORMAL, "", "opacity", "1.0");
+      set_css_value_direct(lives_widget_get_parent(lives_widget_get_parent(mainw->l2_tb)),
+                           LIVES_WIDGET_STATE_NORMAL, "", "opacity", "1.0");
+      set_css_value_direct(lives_widget_get_parent(mainw->l3_tb), LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "1.0");
+      set_css_value_direct(lives_widget_get_parent(lives_widget_get_parent(mainw->l3_tb)),
+                           LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "1.0");
+      set_css_value_direct(lives_widget_get_parent(mainw->l3_tb), LIVES_WIDGET_STATE_NORMAL, "", "opacity", "1.0");
+      set_css_value_direct(lives_widget_get_parent(lives_widget_get_parent(mainw->l3_tb)),
+                           LIVES_WIDGET_STATE_NORMAL, "", "opacity", "1.0");
 
-    lives_widget_set_valign(mainw->int_audio_checkbutton, LIVES_ALIGN_START);
-    lives_widget_set_valign(mainw->ext_audio_checkbutton, LIVES_ALIGN_START);
+      lives_widget_set_valign(mainw->int_audio_checkbutton, LIVES_ALIGN_START);
+      lives_widget_set_valign(mainw->ext_audio_checkbutton, LIVES_ALIGN_START);
 
-    lives_widget_set_valign(mainw->l1_tb, LIVES_ALIGN_START);
-    lives_widget_set_valign(mainw->l2_tb, LIVES_ALIGN_START);
-    lives_widget_set_valign(mainw->l3_tb, LIVES_ALIGN_START);
-    lives_widget_set_valign(mainw->volume_scale, LIVES_ALIGN_START);
+      lives_widget_set_valign(mainw->l1_tb, LIVES_ALIGN_START);
+      lives_widget_set_valign(mainw->l2_tb, LIVES_ALIGN_START);
+      lives_widget_set_valign(mainw->l3_tb, LIVES_ALIGN_START);
+      lives_widget_set_valign(mainw->volume_scale, LIVES_ALIGN_START);
 
-    gtk_button_set_image_position(LIVES_BUTTON(mainw->volume_scale), LIVES_POS_TOP);
-    set_css_value_direct(mainw->vol_toolitem,  LIVES_WIDGET_STATE_NORMAL, "",
-                         "box-shadow", "none");
-  }
+      gtk_button_set_image_position(LIVES_BUTTON(mainw->volume_scale), LIVES_POS_TOP);
+      set_css_value_direct(mainw->vol_toolitem,  LIVES_WIDGET_STATE_NORMAL, "",
+                           "box-shadow", "none");
+    }
 #endif
-  lives_widget_set_fg_color(mainw->l2_tb, LIVES_WIDGET_STATE_NORMAL, colf2);
-  lives_widget_set_fg_color(mainw->l3_tb, LIVES_WIDGET_STATE_NORMAL, colf2);
-  lives_widget_set_fg_color(mainw->l2_tb, LIVES_WIDGET_STATE_INSENSITIVE, colf2);
-  lives_widget_set_fg_color(mainw->l3_tb, LIVES_WIDGET_STATE_INSENSITIVE, colf2);
+    lives_widget_set_fg_color(mainw->l2_tb, LIVES_WIDGET_STATE_NORMAL, colf2);
+    lives_widget_set_fg_color(mainw->l3_tb, LIVES_WIDGET_STATE_NORMAL, colf2);
+    lives_widget_set_fg_color(mainw->l2_tb, LIVES_WIDGET_STATE_INSENSITIVE, colf2);
+    lives_widget_set_fg_color(mainw->l3_tb, LIVES_WIDGET_STATE_INSENSITIVE, colf2);
 
-  lives_widget_set_bg_color(mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, colb);
-  lives_widget_set_bg_color(mainw->top_vbox, LIVES_WIDGET_STATE_NORMAL, colb);
+    lives_widget_set_bg_color(mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, colb);
+    lives_widget_set_bg_color(mainw->top_vbox, LIVES_WIDGET_STATE_NORMAL, colb);
 
-  lives_widget_set_base_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)),
-                              LIVES_WIDGET_STATE_NORMAL, colb);
-  lives_widget_set_text_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)),
-                              LIVES_WIDGET_STATE_NORMAL, colf);
+    lives_widget_set_base_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)),
+                                LIVES_WIDGET_STATE_NORMAL, colb);
+    lives_widget_set_text_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)),
+                                LIVES_WIDGET_STATE_NORMAL, colf);
 
-  lives_widget_set_bg_color(mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, colb);
-  lives_widget_set_bg_color(mainw->play_image, LIVES_WIDGET_STATE_NORMAL, colb);
-  lives_widget_set_bg_color(mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, colb);
+    lives_widget_set_bg_color(mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, colb);
+    lives_widget_set_bg_color(mainw->play_image, LIVES_WIDGET_STATE_NORMAL, colb);
+    lives_widget_set_bg_color(mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, colb);
 
-  lives_widget_set_bg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, colb);
-  lives_widget_set_fg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, colb);
-
+    lives_widget_set_bg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, colb);
+    lives_widget_set_fg_color(mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, colb);
+  }
   lives_widget_apply_theme(mainw->eventbox2, LIVES_WIDGET_STATE_NORMAL);
   if (mainw->eventbox5) lives_widget_set_bg_color(mainw->eventbox5,
         LIVES_WIDGET_STATE_NORMAL, colb);
-  lives_widget_apply_theme(mainw->hruler, LIVES_WIDGET_STATE_NORMAL);
+
+  /// no theme !
+  lives_widget_set_bg_color(mainw->hruler, LIVES_WIDGET_STATE_NORMAL, colb);
+  lives_widget_set_fg_color(mainw->hruler, LIVES_WIDGET_STATE_NORMAL, colf);
 
   lives_widget_set_bg_color(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -655,8 +663,7 @@ void create_LiVES(void) {
 #ifdef HAVE_UNICAP
   lives_container_add(LIVES_CONTAINER(submenu), mainw->unicap);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->unicap), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_open_vdev_activate),
-                       NULL);
+                       LIVES_GUI_CALLBACK(on_open_vdev_activate), NULL);
 #endif
 
 #ifdef HAVE_YUV4MPEG
@@ -666,15 +673,13 @@ void create_LiVES(void) {
       lives_container_add(LIVES_CONTAINER(submenu), mainw->firewire);
 
       lives_signal_connect(LIVES_GUI_OBJECT(mainw->firewire), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                           LIVES_GUI_CALLBACK(on_live_fw_activate),
-                           NULL);
+                           LIVES_GUI_CALLBACK(on_live_fw_activate), NULL);
     }
 
     lives_container_add(LIVES_CONTAINER(submenu), mainw->tvdev);
 
     lives_signal_connect(LIVES_GUI_OBJECT(mainw->tvdev), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_live_tvcard_activate),
-                         NULL);
+                         LIVES_GUI_CALLBACK(on_live_tvcard_activate), NULL);
   }
 
 #endif
@@ -1059,13 +1064,12 @@ void create_LiVES(void) {
                                LIVES_ACCEL_VISIBLE);
 
   mainw->fade = lives_standard_check_menu_item_new_with_label(_("_Blank Background"), FALSE);
-  if (palette->style != STYLE_PLAIN) {
-    lives_widget_add_accelerator(mainw->fade, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
-                                 LIVES_KEY_b, (LiVESXModifierType)0,
-                                 LIVES_ACCEL_VISIBLE);
 
-    lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->fade);
-  }
+  lives_widget_add_accelerator(mainw->fade, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
+                               LIVES_KEY_b, (LiVESXModifierType)0,
+                               LIVES_ACCEL_VISIBLE);
+
+  lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->fade);
 
   mainw->loop_video = lives_standard_check_menu_item_new_with_label(_("Stop on _Audio End"), mainw->loop);
   lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->loop_video);
@@ -1644,6 +1648,11 @@ void create_LiVES(void) {
                             LIVES_GUI_CALLBACK(toggle_sets_pref),
                             (livespointer)PREF_SHOW_DEVOPTS);
 
+  mainw->dev_dabg = lives_standard_check_menu_item_new_for_var(_("Show drawing area backgrounds"),
+                    &prefs->dev_show_dabg, FALSE);
+  lives_container_add(LIVES_CONTAINER(mainw->help_menu), mainw->dev_dabg);
+  menu_sets_visible(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), mainw->dev_dabg, FALSE);
+
   lives_menu_add_separator(LIVES_MENU(mainw->help_menu));
 
   mainw->troubleshoot = lives_standard_menu_item_new_with_label(_("_Troubleshoot"));
@@ -2063,6 +2072,7 @@ void create_LiVES(void) {
 
   mainw->pf_grid = lives_table_new(1, 3, TRUE);
   lives_widget_set_vexpand(mainw->pf_grid, FALSE);
+  lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
 
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -2084,16 +2094,16 @@ void create_LiVES(void) {
   lives_table_attach(LIVES_TABLE(mainw->pf_grid), mainw->eventbox3, 0, 1, 0, 1,
                      (LiVESAttachOptions)(0),
                      (LiVESAttachOptions)(0), 0, 0);
-  lives_widget_set_halign(mainw->eventbox3, LIVES_ALIGN_START);
+  lives_widget_set_halign(mainw->eventbox3, LIVES_ALIGN_CENTER);
+
+  lives_widget_set_margin_left(mainw->eventbox3, widget_opts.packing_width);
+  lives_widget_set_margin_right(mainw->eventbox3, widget_opts.packing_width);
 
   widget_opts.expand = LIVES_EXPAND_NONE;
   mainw->frame1 = lives_standard_frame_new(_("First Frame"), 0.25, TRUE);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   lives_container_add(LIVES_CONTAINER(mainw->eventbox3), mainw->frame1);
-  lives_container_set_border_width(LIVES_CONTAINER(mainw->frame1),
-                                   ((((widget_opts.border_width + 1) >> 1) + 1) >> 1) << 1);
 
-  // This is necessary to provide correct padding for the image in the frame
   mainw->freventbox0 = lives_event_box_new();
   lives_container_add(LIVES_CONTAINER(mainw->frame1), mainw->freventbox0);
   lives_container_add(LIVES_CONTAINER(mainw->freventbox0), mainw->start_image);
@@ -2105,13 +2115,16 @@ void create_LiVES(void) {
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   mainw->pl_eventbox = lives_event_box_new();
-  lives_container_set_border_width(LIVES_CONTAINER(mainw->playframe),
-                                   ((((widget_opts.border_width + 1) >> 1) + 1) >> 1) << 1);
+
+  lives_container_set_border_width(LIVES_CONTAINER(mainw->playframe), 0);
 
   lives_widget_set_hexpand(mainw->playframe, TRUE);
 
+  lives_widget_set_margin_left(mainw->playframe, widget_opts.packing_width);
+  lives_widget_set_margin_right(mainw->playframe, widget_opts.packing_width);
+
   lives_container_add(LIVES_CONTAINER(mainw->playframe), mainw->pl_eventbox);
-  lives_widget_set_size_request(mainw->playframe, DEF_FRAME_HSIZE_GUI, DEF_FRAME_VSIZE_GUI);
+  lives_widget_set_size_request(mainw->playframe, -1, DEF_FRAME_VSIZE_GUI);
   lives_widget_set_hexpand(mainw->pl_eventbox, FALSE);
 
   mainw->playarea = lives_event_box_new();
@@ -2124,26 +2137,27 @@ void create_LiVES(void) {
   lives_widget_set_halign(mainw->playframe, LIVES_ALIGN_CENTER);
 
   mainw->eventbox4 = lives_event_box_new();
-  lives_widget_set_size_request(mainw->eventbox4, DEF_FRAME_HSIZE_GUI, DEF_FRAME_VSIZE_GUI);
+
   lives_widget_set_app_paintable(mainw->eventbox4, TRUE);
 
   lives_table_attach(LIVES_TABLE(mainw->pf_grid), mainw->eventbox4, 2, 3, 0, 1,
                      (LiVESAttachOptions)(0),
                      (LiVESAttachOptions)(0), 0, 0);
-  lives_widget_set_halign(mainw->eventbox4, LIVES_ALIGN_END);
+  lives_widget_set_halign(mainw->eventbox4, LIVES_ALIGN_CENTER);
+
+  lives_widget_set_margin_left(mainw->eventbox4, widget_opts.packing_width);
+  lives_widget_set_margin_right(mainw->eventbox4, widget_opts.packing_width);
 
   widget_opts.expand = LIVES_EXPAND_NONE;
   mainw->frame2 = lives_standard_frame_new(_("Last Frame"), 0.75, TRUE);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   lives_container_add(LIVES_CONTAINER(mainw->eventbox4), mainw->frame2);
-  lives_container_set_border_width(LIVES_CONTAINER(mainw->frame2),
-                                   ((((widget_opts.border_width + 1) >> 1) + 1) >> 1) << 1);
 
   mainw->freventbox1 = lives_event_box_new();
   lives_container_add(LIVES_CONTAINER(mainw->frame2), mainw->freventbox1);
   lives_container_add(LIVES_CONTAINER(mainw->freventbox1), mainw->end_image);
 
-  if (!(mainw->imframe == NULL)) {
+  if (mainw->imframe) {
     if (lives_pixbuf_get_width(mainw->imframe) + H_RESIZE_ADJUST < mainw->def_width) {
       mainw->def_width = lives_pixbuf_get_width(mainw->imframe) + H_RESIZE_ADJUST;
     }
@@ -2156,8 +2170,6 @@ void create_LiVES(void) {
   mainw->play_image = lives_standard_drawing_area_new(NULL, &mainw->play_surface);
   lives_widget_show(mainw->play_image); // needed to get size
   lives_widget_apply_theme(mainw->play_image, LIVES_WIDGET_STATE_NORMAL);
-
-  //lives_container_add(mainw->pl_eventbox, mainw->play_image);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->play_image), LIVES_WIDGET_EXPOSE_EVENT,
                             LIVES_GUI_CALLBACK(all_expose),
@@ -3093,10 +3105,15 @@ void show_lives(void) {
     lives_widget_show_all(LIVES_MAIN_WINDOW_WIDGET);
   }
 
-  if (prefs->show_gui)
-    set_colours(&palette->normal_fore, &palette->normal_back, &palette->menu_and_bars_fore, &palette->menu_and_bars, \
-                &palette->info_base, &palette->info_text);
-
+  if (prefs->show_gui) {
+    if (palette->style & STYLE_1) {
+      set_colours(&palette->normal_fore, &palette->normal_back, &palette->menu_and_bars_fore, &palette->menu_and_bars, \
+                  &palette->info_text, &palette->info_base);
+    } else {
+      set_colours(&palette->normal_fore, &palette->normal_back, &palette->normal_fore, &palette->normal_back, \
+                  &palette->normal_fore, &palette->normal_back);
+    }
+  }
   lives_widget_hide(mainw->redo);
 #ifdef LIVES_TV_CHANNEL1
   lives_widget_show(mainw->toy_tv);
@@ -3109,7 +3126,7 @@ void show_lives(void) {
     lives_widget_hide(mainw->framebar);
   }
 
-  lives_widget_hide(mainw->playframe);
+  lives_widget_set_opacity(mainw->playframe, 0.);
 
   if (prefs->show_recent) {
     lives_widget_show(mainw->recent_menu);
@@ -3299,7 +3316,7 @@ void fade_background(void) {
     lives_label_set_text(LIVES_LABEL(mainw->vps_label), ("                      "));
   } else {
     if (mainw->sep_win) {
-      lives_widget_hide(mainw->playframe);
+      lives_widget_set_opacity(mainw->playframe, 0.);
     }
   }
 
@@ -3345,7 +3362,7 @@ void fade_background(void) {
   // since the hidden menu buttons are not activatable on some window managers
   // we need to remove the accelerators and add accelerator keys instead
 
-  if (stop_closure == NULL) {
+  if (!stop_closure) {
     lives_widget_remove_accelerator(mainw->stop, mainw->accel_group, LIVES_KEY_q, (LiVESXModifierType)0);
     lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_q, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                               (stop_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(stop_callback), NULL, NULL)));
@@ -3401,7 +3418,7 @@ void fade_background(void) {
 
 
 void unfade_background(void) {
-  if (mainw->multitrack != NULL) return;
+  if (mainw->multitrack) return;
 
   if (palette->style == STYLE_PLAIN) {
     lives_label_set_text(LIVES_LABEL(mainw->banner), "   = <  L i V E S > =                            ");
@@ -3445,9 +3462,10 @@ void unfade_background(void) {
 
   if (CURRENT_CLIP_HAS_VIDEO && !mainw->sep_win) {
     lives_widget_show_all(mainw->playframe);
+    lives_widget_set_opacity(mainw->playframe, 1.);
   }
 
-  if (stop_closure != NULL && prefs->show_gui) {
+  if (stop_closure && prefs->show_gui) {
     lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), stop_closure);
     lives_widget_add_accelerator(mainw->stop, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                  LIVES_KEY_q, (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE);
@@ -3505,7 +3523,7 @@ void unfade_background(void) {
     stop_closure = NULL;
   }
 
-  if (mainw->double_size) {
+  if (mainw->double_size && !mainw->play_window) {
     resize(2.);
   } else {
     resize(1.);
@@ -3551,6 +3569,7 @@ void fullscreen_internal(void) {
 
     // try to get exact inner size of the main window
     lives_window_get_inner_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), &width, &height);
+
     height -= SCRN_BRDR; // necessary, or screen expands too much (!?)
 
     // expand the inner box to fit this
@@ -3574,6 +3593,8 @@ void fullscreen_internal(void) {
     lives_widget_set_size_request(mainw->playframe, width, height);
     lives_widget_set_size_request(mainw->playarea, width, height);
     lives_widget_set_size_request(mainw->play_image, width, height);
+    lives_widget_set_margin_left(mainw->playframe, 0);
+    lives_widget_set_margin_right(mainw->playframe, 0);
 
     lives_widget_queue_resize(mainw->pf_grid);
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
@@ -3629,9 +3650,9 @@ void make_preview_box(void) {
   lives_container_add(LIVES_CONTAINER(eventbox), mainw->preview_image);
   lives_widget_set_app_paintable(mainw->preview_image, TRUE);
 
-  if (mainw->play_window != NULL) {
+  if (mainw->play_window) {
     if (!CURRENT_CLIP_HAS_VIDEO) {
-      if (mainw->imframe != NULL) {
+      if (mainw->imframe) {
         lives_widget_set_size_request(mainw->preview_image, lives_pixbuf_get_width(mainw->imframe),
                                       lives_pixbuf_get_height(mainw->imframe));
       }
@@ -3670,14 +3691,12 @@ void make_preview_box(void) {
   radiobutton_free = lives_standard_radio_button_new((tmp = (_("_Free"))), &radiobutton_group,
                      LIVES_BOX(mainw->preview_hbox),
                      (tmp2 = (_("Free choice of frame number"))));
-  lives_free(tmp);
-  lives_free(tmp2);
+  lives_free(tmp); lives_free(tmp2);
 
   radiobutton_start = lives_standard_radio_button_new((tmp = (_("_Start"))), &radiobutton_group,
                       LIVES_BOX(mainw->preview_hbox),
                       (tmp2 = (_("Frame number is linked to start frame"))));
-  lives_free(tmp);
-  lives_free(tmp2);
+  lives_free(tmp); lives_free(tmp2);
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_start), mainw->prv_link == PRV_START);
 
@@ -3789,8 +3808,7 @@ void make_preview_box(void) {
 
   mainw->preview_spin_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->preview_spinbutton),
                              LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                             LIVES_GUI_CALLBACK(on_preview_spinbutton_changed),
-                             NULL);
+                             LIVES_GUI_CALLBACK(on_preview_spinbutton_changed), NULL);
 
   if (palette->style & STYLE_1) {
     set_preview_box_colours();
@@ -3819,8 +3837,8 @@ void disable_record(void) {
 void play_window_set_title(void) {
   char *xtrabit;
   char *title = NULL;
-  if (mainw->multitrack != NULL) return;
-  if (mainw->play_window == NULL) return;
+  if (mainw->multitrack) return;
+  if (!mainw->play_window) return;
 
   if (!LIVES_IS_PLAYING)
     xtrabit = lives_strdup_printf(_(" (%d %% scale)"), (int)mainw->sepwin_scale);
@@ -3828,7 +3846,7 @@ void play_window_set_title(void) {
     xtrabit = lives_strdup("");
 
   if (LIVES_IS_PLAYING) {
-    if (mainw->vpp != NULL && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) && mainw->fs)
+    if (mainw->vpp && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) && mainw->fs)
       lives_window_set_title(LIVES_WINDOW(mainw->play_window), _("Streaming"));
     else {
       title = lives_strdup_printf(_("Play Window%s"), xtrabit);
@@ -3843,7 +3861,7 @@ void play_window_set_title(void) {
     widget_opts.title_prefix = otit;
   }
 
-  if (title != NULL) lives_free(title);
+  if (title) lives_free(title);
   lives_free(xtrabit);
 }
 
@@ -3865,7 +3883,7 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
   if (mainw->multitrack) {
     if (!mainw->multitrack->event_list) {
       /// create a fake event list with no events
-      /// this prevents  problems like the multitrack window trying to auto reload from disk
+      /// this prevents problems like the multitrack window trying to auto reload from disk
       weed_plant_t *event_list = weed_plant_new(WEED_PLANT_EVENT_LIST);
       weed_set_int_value(event_list, WEED_LEAF_WEED_EVENT_API_VERSION, WEED_EVENT_API_VERSION);
       weed_set_voidptr_value(event_list, WEED_LEAF_FIRST, NULL);
@@ -3967,7 +3985,7 @@ void _make_play_window(void) {
   // cannot do this or it forces showing on the GUI monitor
   //gtk_window_set_position(LIVES_WINDOW(mainw->play_window),GTK_WIN_POS_CENTER_ALWAYS);
 
-  if (mainw->multitrack == NULL) lives_window_add_accel_group(LIVES_WINDOW(mainw->play_window), mainw->accel_group);
+  if (!mainw->multitrack) lives_window_add_accel_group(LIVES_WINDOW(mainw->play_window), mainw->accel_group);
   else lives_window_add_accel_group(LIVES_WINDOW(mainw->play_window), mainw->multitrack->accel_group);
 
   if (palette->style & STYLE_1) {
@@ -3976,7 +3994,7 @@ void _make_play_window(void) {
 
   if ((!LIVES_IS_PLAYING && prefs->show_gui) || (LIVES_IS_PLAYING && prefs->show_playwin)) {
     // show the window (so we can hide its cursor !), and get its xwin
-    if (!(mainw->fs && LIVES_IS_PLAYING && mainw->vpp != NULL)) {
+    if (!(mainw->fs && LIVES_IS_PLAYING && mainw->vpp)) {
       lives_widget_show_all(mainw->play_window);
     }
     resize_play_window();
@@ -4008,19 +4026,10 @@ void _make_play_window(void) {
       lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
       lives_widget_show_all(mainw->preview_controls);
       lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
-      //lives_widget_grab_focus(mainw->preview_spinbutton);
     }
     load_preview_image(FALSE);
     lives_widget_queue_draw(mainw->play_window);
   }
-
-  /* if ((!CURRENT_CLIP_IS_VALID || (!cfile->is_loaded && !mainw->preview) || */
-  /*      (cfile->frames == 0 && (mainw->multitrack == NULL || !LIVES_IS_PLAYING))) && mainw->imframe != NULL) { */
-  /*   lives_painter_t *cr = lives_painter_create_from_surface(mainw->play_surface); */
-  /*   lives_painter_set_source_pixbuf(cr, mainw->imframe, (LiVESXModifierType)0, 0); */
-  /*   lives_painter_paint(cr); */
-  /*   lives_painter_destroy(cr); */
-  /* } */
 
   lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Hide Play Window"));
 
@@ -4092,7 +4101,7 @@ void _resize_play_window(void) {
   fullscreen = FALSE;
 #endif
 
-  if (mainw->play_window == NULL) return;
+  if (!mainw->play_window) return;
 
   if (!LIVES_IS_PLAYING && !mainw->multitrack)
     lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), TRUE);
@@ -4104,20 +4113,20 @@ void _resize_play_window(void) {
     height = lives_widget_get_allocation_height(mainw->play_window);
   }
 
-  if ((!CURRENT_CLIP_IS_VALID || (cfile->frames == 0 && mainw->multitrack == NULL) ||
+  if ((!CURRENT_CLIP_IS_VALID || (cfile->frames == 0 && !mainw->multitrack) ||
        (!cfile->is_loaded && !mainw->preview && cfile->clip_type != CLIP_TYPE_GENERATOR)) ||
-      (mainw->multitrack != NULL && mainw->playing_file < 1 && !mainw->preview)) {
-    if (mainw->imframe != NULL) {
+      (mainw->multitrack && mainw->playing_file < 1 && !mainw->preview)) {
+    if (mainw->imframe) {
       mainw->pwidth = lives_pixbuf_get_width(mainw->imframe);
       mainw->pheight = lives_pixbuf_get_height(mainw->imframe);
     } else {
-      if (mainw->multitrack == NULL) {
+      if (!mainw->multitrack) {
         mainw->pwidth = DEF_FRAME_HSIZE;
         mainw->pheight = DEF_FRAME_VSIZE;
       }
     }
   } else {
-    if (mainw->multitrack == NULL) {
+    if (!mainw->multitrack) {
       mainw->pwidth = cfile->hsize;
       mainw->pheight = cfile->vsize;
     } else {
@@ -4126,7 +4135,7 @@ void _resize_play_window(void) {
     }
   }
 
-  if ((mainw->double_size || mainw->multitrack != NULL) && (!mainw->fs || !LIVES_IS_PLAYING)) {
+  if ((mainw->double_size || mainw->multitrack) && (!mainw->fs || !LIVES_IS_PLAYING)) {
     // double size: maxspect to the screen size
     mainw->pwidth = cfile->hsize;
     mainw->pheight = cfile->vsize;
@@ -4138,14 +4147,14 @@ void _resize_play_window(void) {
 
   if (!mainw->fs || !LIVES_IS_PLAYING) {
     if (pmonitor == 0) {
-      if ((((mainw->double_size || mainw->multitrack != NULL) && (!mainw->fs || !LIVES_IS_PLAYING))) ||
+      if ((((mainw->double_size || mainw->multitrack) && (!mainw->fs || !LIVES_IS_PLAYING))) ||
           (mainw->pwidth > scr_width - scr_width_safety ||
            mainw->pheight > scr_height - scr_height_safety)) {
         calc_maxspect(scr_width - scr_width_safety, scr_height - scr_height_safety, &mainw->pwidth, &mainw->pheight);
         mainw->sepwin_scale = (float)mainw->pwidth / (float)cfile->hsize * 100.;
       }
     } else {
-      if ((((mainw->double_size || mainw->multitrack != NULL) && (!mainw->fs || !LIVES_IS_PLAYING))) ||
+      if ((((mainw->double_size || mainw->multitrack) && (!mainw->fs || !LIVES_IS_PLAYING))) ||
           (mainw->pwidth > mainw->mgeom[pmonitor - 1].width - scr_width_safety ||
            mainw->pheight > mainw->mgeom[pmonitor - 1].height - scr_height_safety)) {
         calc_maxspect(mainw->mgeom[pmonitor - 1].width - scr_width_safety,
@@ -4187,13 +4196,13 @@ void _resize_play_window(void) {
       }
 
       if (pmonitor == 0) {
-        if (mainw->vpp != NULL && mainw->vpp->fwidth > 0) {
+        if (mainw->vpp && mainw->vpp->fwidth > 0) {
           lives_window_move(LIVES_WINDOW(mainw->play_window), (scr_width - mainw->vpp->fwidth) / 2,
                             (scr_height - mainw->vpp->fheight) / 2);
         } else lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0);
       } else {
         lives_window_set_monitor(LIVES_WINDOW(mainw->play_window), pmonitor - 1);
-        if (mainw->vpp != NULL && mainw->vpp->fwidth > 0) {
+        if (mainw->vpp && mainw->vpp->fwidth > 0) {
           lives_window_move(LIVES_WINDOW(mainw->play_window), mainw->mgeom[pmonitor - 1].x +
                             (mainw->mgeom[pmonitor - 1].width - mainw->vpp->fwidth) / 2,
                             mainw->mgeom[pmonitor - 1].y + (mainw->mgeom[pmonitor - 1].height - mainw->vpp->fheight) / 2);
@@ -4202,7 +4211,7 @@ void _resize_play_window(void) {
       }
       sched_yield();
       // leave this alone * !
-      if (!(mainw->vpp != NULL && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
+      if (!(mainw->vpp && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
         if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
             && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) &&
             capable->wm_caps.pan_res & RESTYPE_ACTION) {
@@ -4233,8 +4242,8 @@ void _resize_play_window(void) {
 
       // init the playback plugin, unless the player cannot resize and there is a possibility of
       // wrongly sized frames (i.e. during a preview), or we are previewing and it's a remote display
-      if (mainw->vpp != NULL && (!mainw->preview || (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)) &&
-          (mainw->multitrack != NULL || (mainw->vpp->capabilities & VPP_CAN_RESIZE))) {
+      if (mainw->vpp && (!mainw->preview || (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)) &&
+          (mainw->multitrack || (mainw->vpp->capabilities & VPP_CAN_RESIZE))) {
         mainw->ptr_x = mainw->ptr_y = -1;
         if (pmonitor == 0) {
           // fullscreen playback on all screens (of first display)
@@ -4270,7 +4279,7 @@ void _resize_play_window(void) {
 
         if (pmonitor != 0) {
           fullscreen = FALSE;
-          if (mainw->play_window != NULL) {
+          if (mainw->play_window) {
             if (prefs->show_playwin) {
               xwinid = lives_widget_get_xwinid(mainw->play_window, "Unsupported display type for playback plugin");
               if (xwinid == -1) return;
@@ -4286,7 +4295,7 @@ void _resize_play_window(void) {
           mainw->ext_audio = FALSE;
           pthread_mutex_unlock(&mainw->vpp_stream_mutex);
 
-          if (mainw->vpp->exit_screen != NULL) {
+          if (mainw->vpp->exit_screen) {
             (*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
           }
           if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY && pmonitor == 0)
@@ -4304,16 +4313,16 @@ void _resize_play_window(void) {
         if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY && pmonitor == 0)
           lives_window_set_keep_below(LIVES_WINDOW(mainw->play_window), TRUE);
 
-        if (mainw->vpp->init_audio != NULL && prefs->stream_audio_out) {
+        if (mainw->vpp->init_audio && prefs->stream_audio_out) {
 #ifdef HAVE_PULSE_AUDIO
-          if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
+          if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
             if ((*mainw->vpp->init_audio)(mainw->pulsed->out_arate, mainw->pulsed->out_achans, mainw->vpp->extra_argc,
                                           mainw->vpp->extra_argv))
               ext_audio = TRUE;
           }
 #endif
 #ifdef ENABLE_JACK
-          if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
+          if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) {
             if ((*mainw->vpp->init_audio)(mainw->jackd->sample_out_rate,
                                           mainw->jackd->num_output_channels, mainw->vpp->extra_argc,
                                           mainw->vpp->extra_argv))
@@ -4324,10 +4333,10 @@ void _resize_play_window(void) {
 
         //lives_widget_context_update();
 
-        if ((mainw->vpp->init_screen == NULL) || ((*mainw->vpp->init_screen)
-            (mainw->vpp->fwidth > 0 ? mainw->vpp->fwidth : mainw->pwidth,
-             mainw->vpp->fheight > 0 ? mainw->vpp->fheight : mainw->pheight,
-             fullscreen, xwinid, mainw->vpp->extra_argc, mainw->vpp->extra_argv))) {
+        if (!mainw->vpp->init_screen || ((*mainw->vpp->init_screen)
+                                         (mainw->vpp->fwidth > 0 ? mainw->vpp->fwidth : mainw->pwidth,
+                                          mainw->vpp->fheight > 0 ? mainw->vpp->fheight : mainw->pheight,
+                                          fullscreen, xwinid, mainw->vpp->extra_argc, mainw->vpp->extra_argv))) {
           mainw->force_show = TRUE;
           mainw->ext_playback = TRUE;
           // the play window is still visible (in case it was 'always on top')
@@ -4338,7 +4347,7 @@ void _resize_play_window(void) {
           if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY && (pmonitor == 0 || capable->nmonitors == 1)) {
             lives_grab_add(LIVES_MAIN_WINDOW_WIDGET);
           }
-        } else if (mainw->vpp->init_screen != NULL) {
+        } else if (mainw->vpp->init_screen) {
           LIVES_ERROR("Failed to start playback plugin");
         }
       }
@@ -4346,7 +4355,7 @@ void _resize_play_window(void) {
 #define TEST_CE_THUMBS 0
       if (TEST_CE_THUMBS || (prefs->show_gui && prefs->ce_thumb_mode && prefs->play_monitor != widget_opts.monitor &&
                              prefs->play_monitor != 0 &&
-                             capable->nmonitors > 1 && mainw->multitrack == NULL)) {
+                             capable->nmonitors > 1 && !mainw->multitrack)) {
         start_ce_thumb_mode();
       }
     } else {
@@ -4368,7 +4377,7 @@ void _resize_play_window(void) {
       if (mainw->ce_thumbs) {
         end_ce_thumb_mode();
       }
-      if (mainw->opwx >= 0 && mainw->opwy >= 0) {
+      if (!mainw->multitrack && mainw->opwx >= 0 && mainw->opwy >= 0) {
         // move window back to its old position after play
         if (pmonitor > 0) lives_window_set_monitor(LIVES_WINDOW(mainw->play_window),
               pmonitor - 1);
@@ -4442,8 +4451,8 @@ void _kill_play_window(void) {
     end_ce_thumb_mode();
   }
 
-  if (mainw->play_window != NULL) {
-    if (mainw->preview_box != NULL && lives_widget_get_parent(mainw->preview_box) != NULL) {
+  if (mainw->play_window) {
+    if (mainw->preview_box && lives_widget_get_parent(mainw->preview_box) != NULL) {
       // preview_box is refed, so it will survive
       if (mainw->pi_surface) {
         /// invalid the preview windo surface (IMPORTANT !)
@@ -4460,8 +4469,9 @@ void _kill_play_window(void) {
     }
     mainw->play_window = NULL;
   }
-  if ((!CURRENT_CLIP_IS_VALID || cfile->frames > 0) && mainw->multitrack == NULL && LIVES_IS_PLAYING) {
+  if ((!CURRENT_CLIP_IS_VALID || cfile->frames > 0) && !mainw->multitrack && LIVES_IS_PLAYING) {
     lives_widget_show_all(mainw->playframe);
+    lives_widget_set_opacity(mainw->playframe, 1.);
   }
   lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Show Play Window"));
   //lives_widget_context_update();
@@ -4554,6 +4564,7 @@ void add_to_playframe(void) {
     }
   }
   resize(1);
+  if (LIVES_IS_PLAYING) lives_widget_set_opacity(mainw->playframe, 1.);
 }
 
 
@@ -4569,7 +4580,7 @@ char *get_menu_name(lives_clip_t *sfile, boolean add_setname) {
   char *clipname;
   char *extra, *menuname;
 
-  if (sfile == NULL) return NULL;
+  if (!sfile) return NULL;
   if (add_setname && sfile->was_in_set) {
     char *shortened_set_name;
     if (strlen(mainw->set_name) > MAX_DISP_SETNAME_LEN) {
@@ -4669,9 +4680,9 @@ void remove_from_clipmenu(void) {
   list = mainw->cliplist;
   mainw->clips_group = NULL;
 
-  while (list != NULL) {
+  while (list) {
     fileno = LIVES_POINTER_TO_INT(list->data);
-    if (mainw->files[fileno] != NULL && mainw->files[fileno]->menuentry != NULL) {
+    if (mainw->files[fileno] != NULL && mainw->files[fileno]->menuentrqy != NULL) {
       mainw->clips_group = lives_radio_menu_item_get_group(LIVES_RADIO_MENU_ITEM(mainw->files[fileno]->menuentry));
       break;
     }

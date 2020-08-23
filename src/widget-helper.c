@@ -425,39 +425,23 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_destroy(lives_painter_t *cr) {
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_render_background(LiVESWidget *widget, lives_painter_t *cr, double x,
     double y, double width, double height) {
-  int themetype = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), THEME_KEY));
 #ifdef LIVES_PAINTER_IS_CAIRO
-  if (LIVES_IS_PLAYING && mainw->fade) {
-    lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->fade_colour);
+  if (widget == mainw->play_image && mainw->multitrack) {
+    if (prefs->dev_show_dabg)
+      lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->dark_orange);
+    else
+      lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
   } else {
-    if (themetype) {
-      lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->normal_back);
-      //lives_painter_set_source_rgb(cr, 1., 0., 1.);
-      //lives_painter_paint(cr);
+    if (LIVES_IS_PLAYING && mainw->faded) {
+      if (prefs->dev_show_dabg)
+        lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->light_green);
+      else
+        lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->fade_colour);
     } else {
-#if GTK_CHECK_VERSION(3, 0, 0)
-      /// this is supposed to paint the background colour with no theme,
-      // but it seems broken in gtk+, and just paints black.
-      GtkStyleContext *ctx = gtk_widget_get_style_context(widget);
-      gtk_render_background(ctx, cr, x, y, width, height);
-#else
-      LiVESWidgetColor color;
-      lives_widget_color_copy(&color, &gtk_widget_get_style(widget)->bg[lives_widget_get_state(widget)]);
-
-#if LIVES_WIDGET_COLOR_HAS_ALPHA
-
-      lives_painter_set_source_rgba(cr,
-                                    LIVES_WIDGET_COLOR_SCALE(color.red),
-                                    LIVES_WIDGET_COLOR_SCALE(color.green),
-                                    LIVES_WIDGET_COLOR_SCALE(color.blue),
-                                    LIVES_WIDGET_COLOR_SCALE(color.alpha));
-#else
-      lives_painter_set_source_rgb(cr,
-                                   LIVES_WIDGET_COLOR_SCALE(color.red),
-                                   LIVES_WIDGET_COLOR_SCALE(color.green),
-                                   LIVES_WIDGET_COLOR_SCALE(color.blue));
-#endif // has_alpha
-#endif // gtk 3
+      if (prefs->dev_show_dabg)
+        lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->dark_red);
+      else
+        lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->normal_back);
     }
   }
   lives_painter_rectangle(cr, x, y, width, height);
@@ -1745,8 +1729,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_app_paintable(LiVESWidget *
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_opacity(LiVESWidget *widget, double opacity) {
 #ifdef GUI_GTK
-  gtk_widget_set_opacity(widget, opacity);
+#if GTK_CHECK_VERSION(3, 8, 0)
+  if (capable->wm_caps.is_composited) {
+    gtk_widget_set_opacity(widget, opacity);
+  }
   return TRUE;
+#endif
+  if (opacity == 0.) lives_widget_hide(widget);
+  if (opacity == 1.) lives_widget_show(widget);
 #endif
   return FALSE;
 }
@@ -4984,7 +4974,9 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_progress_bar_new(void) {
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_progress_bar_set_fraction(LiVESProgressBar *pbar, double fraction) {
 #ifdef GUI_GTK
 #ifdef PROGBAR_IS_ENTRY
-  lives_widget_set_sensitive(LIVES_WIDGET(pbar), FALSE);
+  if (palette->style & STYLE_1) {
+    lives_widget_set_sensitive(LIVES_WIDGET(pbar), FALSE);
+  }
   gtk_entry_set_progress_fraction(pbar, fraction);
   if (is_standard_widget(LIVES_WIDGET(pbar)) && widget_opts.apply_theme) {
     set_css_value_direct(LIVES_WIDGET(pbar), LIVES_WIDGET_STATE_NORMAL, "progress",
@@ -5015,7 +5007,9 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_progress_bar_set_pulse_step(LiVESProgr
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_progress_bar_pulse(LiVESProgressBar *pbar) {
 #ifdef GUI_GTK
 #ifdef PROGBAR_IS_ENTRY
-  lives_widget_set_sensitive(LIVES_WIDGET(pbar), TRUE);
+  if (palette->style & STYLE_1) {
+    lives_widget_set_sensitive(LIVES_WIDGET(pbar), TRUE);
+  }
   gtk_entry_progress_pulse(pbar);
   if (is_standard_widget(LIVES_WIDGET(pbar)) && widget_opts.apply_theme) {
     char *tmp = lives_strdup_printf("%dpx", widget_opts.css_min_height);
@@ -9377,10 +9371,8 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
   if (widget_opts.apply_theme) {
     set_css_min_size(spinbutton, widget_opts.css_min_width, ((widget_opts.css_min_height * 3 + 3) >> 2) << 1);
 
-    // breaks button insens !
-    //
-
 #if !GTK_CHECK_VERSION(3, 16, 0)
+    // breaks button insens !
     lives_widget_apply_theme2(LIVES_WIDGET(spinbutton), LIVES_WIDGET_STATE_NORMAL, TRUE);
     lives_widget_apply_theme_dimmed2(spinbutton, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
 #else
@@ -10932,32 +10924,40 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_cursor_unref(LiVESXCursor * cursor) {
 
 
 void lives_widget_apply_theme(LiVESWidget * widget, LiVESWidgetState state) {
-  if (!widget_opts.apply_theme) return;
-  if (palette->style & STYLE_1) {
-    lives_widget_set_fg_color(widget, state, &palette->normal_fore);
-    lives_widget_set_bg_color(widget, state, &palette->normal_back);
+  if ((palette->style & STYLE_1) && !widget_opts.apply_theme) return;
+  lives_widget_set_fg_color(widget, state, &palette->normal_fore);
+  lives_widget_set_bg_color(widget, state, &palette->normal_back);
 #if GTK_CHECK_VERSION(3, 0, 0)
-    lives_widget_set_base_color(widget, state, &palette->normal_back);
-    lives_widget_set_text_color(widget, state, &palette->normal_fore);
+  lives_widget_set_base_color(widget, state, &palette->normal_back);
+  lives_widget_set_text_color(widget, state, &palette->normal_fore);
 #endif
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), THEME_KEY,
-                                 LIVES_INT_TO_POINTER(widget_opts.apply_theme));
-  }
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), THEME_KEY,
+                               LIVES_INT_TO_POINTER(widget_opts.apply_theme));
 }
 
 
 void lives_widget_apply_theme2(LiVESWidget * widget, LiVESWidgetState state, boolean set_fg) {
-  if (!widget_opts.apply_theme) return;
-  if (palette->style & STYLE_1) {
-    if (set_fg)
-      lives_widget_set_fg_color(widget, state, &palette->menu_and_bars_fore);
-    lives_widget_set_bg_color(widget, state, &palette->menu_and_bars);
+  if (!widget_opts.apply_theme) {
+    if (!(palette->style & STYLE_1)) {
+      lives_widget_set_fg_color(widget, state, &palette->normal_fore);
+      lives_widget_set_bg_color(widget, state, &palette->normal_back);
+    }
+    return;
   }
+  if (set_fg)
+    lives_widget_set_fg_color(widget, state, &palette->menu_and_bars_fore);
+  lives_widget_set_bg_color(widget, state, &palette->menu_and_bars);
 }
 
 
 void lives_widget_apply_theme3(LiVESWidget * widget, LiVESWidgetState state) {
-  if (!widget_opts.apply_theme) return;
+  if (!widget_opts.apply_theme) {
+    if (!(palette->style & STYLE_1)) {
+      lives_widget_set_fg_color(widget, state, &palette->normal_fore);
+      lives_widget_set_bg_color(widget, state, &palette->normal_back);
+    }
+    return;
+  }
   if (palette->style & STYLE_1) {
     lives_widget_set_text_color(widget, state, &palette->info_text);
     lives_widget_set_base_color(widget, state, &palette->info_base);

@@ -1744,10 +1744,10 @@ switch_point:
                 }
               } else {
                 sfile->frameno = getahead;
-              }
-            }
-          }
-        } else {
+		// *INDENT-OFF*
+              }}}}
+	// *INDENT-ON*
+        else {
           lives_direction_t dir;
           if (sfile->clip_type == CLIP_TYPE_FILE && scratch == SCRATCH_NONE
               && is_virtual_frame(mainw->playing_file, sfile->frameno)
@@ -1791,10 +1791,13 @@ switch_point:
         }
 
 #ifdef HAVE_PULSE_AUDIO
-        if (getahead < 0 && new_ticks != mainw->startticks && mainw->pulsed->seek_pos == last_seek_pos
-            && CLIP_HAS_AUDIO(mainw->pulsed->playing_file)) {
-          mainw->startticks = new_ticks;
-          sfile->frameno = mainw->actual_frame;
+        if (prefs->audio_player == AUD_PLAYER_PULSE) {
+          if (getahead < 0 && new_ticks != mainw->startticks
+              && (!mainw->pulsed || (mainw->pulsed->seek_pos == last_seek_pos
+                                     && CLIP_HAS_AUDIO(mainw->pulsed->playing_file)))) {
+            mainw->startticks = new_ticks;
+            sfile->frameno = mainw->actual_frame;
+          }
         }
 #endif
 
@@ -4323,7 +4326,7 @@ LIVES_GLOBAL_INLINE char *get_upd_msg(void) {
   // TRANSLATORS: make sure the menu text matches what is in gui.c
   char *msg = lives_strdup_printf(_("\nWelcome to LiVES version %s\n\n"
                                     "After upgrading, you are advised to run:"
-                                    "\n\nFile -> Clean up Diskspace\n"), LiVES_VERSION);
+                                    "\n\nFiles -> Clean up Diskspace\n"), LiVES_VERSION);
   return msg;
 }
 

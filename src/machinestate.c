@@ -2862,6 +2862,20 @@ boolean get_wm_caps(void) {
   char *wmname;
   if (capable->has_wm_caps) return TRUE;
   capable->has_wm_caps = TRUE;
+
+#if IS_MINGW
+  capable->wm_caps.is_composited = TRUE;
+  capable->wm_caps.root_window = gdk_screen_get_root_window(mainw->mgeom[widget_opts.monitor].screen);
+#else
+#ifdef GUI_GTK
+  capable->wm_caps.is_composited = gdk_screen_is_composited(mainw->mgeom[widget_opts.monitor].screen);
+  capable->wm_caps.root_window = gdk_screen_get_root_window(mainw->mgeom[widget_opts.monitor].screen);
+#else
+  capable->wm_caps.is_composited = FALSE;
+  capable->wm_caps.root_window = NULL;
+#endif
+#endif
+
   wmname = getenv(XDG_CURRENT_DESKTOP);
 
   if (!wmname) {
@@ -2889,6 +2903,25 @@ boolean get_wm_caps(void) {
   }
   return FALSE;
 }
+
+
+int get_window_stack_level(LiVESXWindow *xwin, int *nwins) {
+#ifndef GUI_GTK
+  if (nwins) *nwins = -1;
+  return -1;
+#else
+  int mywin = -1, i = 0;
+  LiVESList *winlist = gdk_screen_get_window_stack(mainw->mgeom[widget_opts.monitor].screen), *list = winlist;
+  for (; list; list = list->next, i++) {
+    if ((LiVESXWindow *)list->data == xwin) mywin = i;
+    lives_widget_object_unref(list->data);
+  }
+  lives_list_free(winlist);
+  if (nwins) *nwins = ++i;
+  return mywin;
+#endif
+}
+
 
 boolean show_desktop_panel(void) {
   boolean ret = FALSE;

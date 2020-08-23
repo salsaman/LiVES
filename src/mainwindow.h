@@ -63,8 +63,8 @@
 /////// GUI related constants /////////////////////////////////////////////////////////
 
 // parameters for resizing the image frames, and for capture
-#define H_RESIZE_ADJUST ((widget_opts.packing_width + 2) * 2)
-#define V_RESIZE_ADJUST ((widget_opts.packing_height + 2) * 2)
+#define H_RESIZE_ADJUST (widget_opts.packing_width * 2)
+#define V_RESIZE_ADJUST (widget_opts.packing_height * 2)
 
 // space to reserve for the CE timeline
 // IMPORTANT to fine tune this - TODO
@@ -1202,6 +1202,7 @@ typedef struct {
   LiVESWidget *vj_realize;
   LiVESWidget *vj_mode;
   LiVESWidget *show_devopts;
+  LiVESWidget *dev_dabg;
   LiVESWidget *mt_menu;
   LiVESWidget *troubleshoot;
   LiVESWidget *expl_missing;

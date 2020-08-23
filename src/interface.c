@@ -4458,7 +4458,7 @@ static boolean exposetview(LiVESWidget * widget, lives_painter_t *cr, livespoint
 
   lives_free(text);
 
-  if (layout != NULL) {
+  if (layout) {
     if (LINGO_IS_LAYOUT(layout)) {
       lingo_painter_show_layout(cr, layout);
     }
@@ -7024,12 +7024,12 @@ boolean reshow_msg_area(LiVESWidget * widget, lives_painter_t *cr, livespointer 
 
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
 
-  if (layout != NULL && LINGO_IS_LAYOUT(layout)) {
+  if (layout && LINGO_IS_LAYOUT(layout)) {
     lives_colRGBA64_t fg, bg;
     int rwidth = lives_widget_get_allocation_width(widget);
     int rheight = lives_widget_get_allocation_height(widget);
 
-    widget_color_to_lives_rgba(&fg, &palette->info_text);
+    widget_color_to_lives_rgba(&fg, &palette->black);
     widget_color_to_lives_rgba(&bg, &palette->info_base);
 
     cr2 = lives_painter_create_from_surface(mainw->msg_surface);

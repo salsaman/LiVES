@@ -358,7 +358,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
           isfirst = FALSE;
 	  // *INDENT-OFF*
 	}}}}
-  // *INDENT-OFF*
+  // *INDENT-ON*
 
   if (empirical_img_type == IMG_TYPE_UNKNOWN) {
     /// this is possible if clip is only virtual frames
@@ -400,17 +400,17 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
       else fr = sfile->frame_index_back[i];
       if (fr < -1 || (!cdata && (frames64_t)fr > sfile->frames - 1)
           || (cdata && (frames64_t)fr > cdata->nframes - 1)) {
-	if (i >= sfile->frames) {
-	  backup_more_correct = FALSE;
-	  break;
-	}
-	if (backup_more_correct && i < sfile->old_frames) {
-	  frames_t fr2 = sfile->frame_index_back[i];
-	  if (fr2 < -1 || (!cdata && (frames64_t)fr2 > sfile->frames - 1)
-	      || (cdata && (frames64_t)fr2 > cdata->nframes - 1)) {
-	    backup_more_correct = FALSE;
-	  }
-	}
+        if (i >= sfile->frames) {
+          backup_more_correct = FALSE;
+          break;
+        }
+        if (backup_more_correct && i < sfile->old_frames) {
+          frames_t fr2 = sfile->frame_index_back[i];
+          if (fr2 < -1 || (!cdata && (frames64_t)fr2 > sfile->frames - 1)
+              || (cdata && (frames64_t)fr2 > cdata->nframes - 1)) {
+            backup_more_correct = FALSE;
+          }
+        }
 
         if (prefs->show_dev_opts) {
           g_printerr("bad frame index %d, points to %d.....", i, fr);
@@ -423,8 +423,8 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
             g_printerr("relinked to image frame %d\n", i + 1);
           }
         } else {
-	  if (backup_more_correct && i < sfile->old_frames && sfile->frame_index_back[i] == -1)
-	    backup_more_correct = FALSE;
+          if (backup_more_correct && i < sfile->old_frames && sfile->frame_index_back[i] == -1)
+            backup_more_correct = FALSE;
           if (lgoodframe != -1) {
             sfile->frame_index[i] = lgoodframe + i - goodidx;
             if (prefs->show_dev_opts) {

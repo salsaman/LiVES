@@ -3071,7 +3071,7 @@ static boolean setfx(weed_plant_t *plant, weed_plant_t *tparam, int pnum, int na
                     filter_mutex_unlock(key);
 		  // *INDENT-OFF*
 }}}}}}
-// *INDENT-ON*
+    // *INDENT-ON*
     } else {
       weed_set_boolean_array(tparam, WEED_LEAF_HOST_DEFAULT, nargs, valuesb);
 
@@ -3094,9 +3094,10 @@ static boolean setfx(weed_plant_t *plant, weed_plant_t *tparam, int pnum, int na
               if (xgroup == group) {
                   weed_set_boolean_value(tparam, WEED_LEAF_HOST_DEFAULT, WEED_FALSE);
 		// *INDENT-OFF*
-              }}}}}}
+            }}}}}}
+  // *INDENT-ON*
 
-    grpinvalid:
+grpinvalid:
 
     lives_free(valuesb);
 
@@ -5661,7 +5662,7 @@ boolean lives_osc_cb_rte_getparamval(void *context, int arglen, const void *varg
   ptmpl = weed_get_plantptr_value(param, WEED_LEAF_TEMPLATE, &error);
 
   ptype = weed_paramtmpl_get_type(ptmpl);
-  if (ptype== WEED_PARAM_COLOR) {
+  if (ptype == WEED_PARAM_COLOR) {
     int valsize = 4;
     cspace = weed_get_int_value(ptmpl, WEED_LEAF_COLORSPACE, &error);
     if (cspace == WEED_COLORSPACE_RGB) valsize = 3;

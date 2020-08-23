@@ -7963,11 +7963,11 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
         // in frame window
         if (!mainw->multitrack) {
           if (!mainw->faded) {
-            lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
             if (mainw->double_size) {
+              lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
               lives_widget_hide(mainw->sep_image);
               lives_widget_hide(mainw->message_box);
-            }
+            } else lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
             unfade_background();
           } else {
             lives_widget_hide(mainw->frame1);
@@ -8059,8 +8059,8 @@ void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   mainw->opwx = mainw->opwy = -1;
 
   if ((LIVES_IS_PLAYING && !mainw->fs) || (!LIVES_IS_PLAYING && mainw->play_window)) {
-    mainw->pwidth = DEF_FRAME_HSIZE - H_RESIZE_ADJUST;
-    mainw->pheight = DEF_FRAME_VSIZE - V_RESIZE_ADJUST;
+    //mainw->pwidth = DEF_FRAME_HSIZE - H_RESIZE_ADJUST;
+    //mainw->pheight = DEF_FRAME_VSIZE - V_RESIZE_ADJUST;
 
     if (mainw->play_window) {
       resize_play_window();
@@ -8156,7 +8156,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       if (mainw->sep_win) {
         // switch to separate window during pb
         if (!mainw->multitrack) {
-          lives_widget_hide(mainw->playframe);
+          lives_widget_set_opacity(mainw->playframe, 0.);
           if (!prefs->hide_framebar && !mainw->faded && ((!mainw->preview && (CURRENT_CLIP_HAS_VIDEO || mainw->foreign)) ||
               (CURRENT_CLIP_IS_VALID &&
                cfile->opening))) {
@@ -8174,7 +8174,8 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
             resize(1.);
           } else {
             if (mainw->faded) {
-              lives_widget_hide(mainw->playframe);
+              lives_widget_set_opacity(mainw->playframe, 0.);
+              //lives_widget_hide(mainw->playframe);
               lives_widget_hide(mainw->frame1);
               lives_widget_hide(mainw->frame2);
               lives_widget_show(mainw->eventbox3);
@@ -8239,33 +8240,34 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
         kill_play_window();
 
-        if (!mainw->fs && !mainw->multitrack) {
+        if (!mainw->multitrack) {
           lives_widget_show_all(mainw->playframe);
+          if (!mainw->fs) {
+            lives_widget_show(mainw->t_bckground);
+            lives_widget_show(mainw->t_double);
 
-          lives_widget_show(mainw->t_bckground);
-          lives_widget_show(mainw->t_double);
-
-          if (!mainw->double_size) {
-            lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
-            resize(1.);
-          } else {
-            if (palette->style & STYLE_1) {
-              lives_widget_hide(mainw->sep_image);
+            if (!mainw->double_size) {
+              lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
+              resize(1.);
+            } else {
+              if (palette->style & STYLE_1) {
+                lives_widget_hide(mainw->sep_image);
+              }
+              lives_widget_hide(mainw->message_box);
+              lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
+              resize(2.);
             }
-            lives_widget_hide(mainw->message_box);
-            lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
-            resize(2.);
-          }
-        } else {
-          // fullscreen
-          if (mainw->multitrack && CURRENT_CLIP_HAS_VIDEO) {
-            fade_background();
-            fullscreen_internal();
-	    // *INDENT-OFF*
-          }}
-
-        hide_cursor(lives_widget_get_xwindow(mainw->playarea));
-      }}}
+          } else {
+            // fullscreen
+            if (!mainw->multitrack && CURRENT_CLIP_HAS_VIDEO) {
+              lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
+              fade_background();
+              fullscreen_internal();
+	      // *INDENT-OFF*
+	    }}
+	  lives_widget_set_opacity(mainw->playframe, 1.);
+	  hide_cursor(lives_widget_get_xwindow(mainw->playarea));
+	}}}}
   // *INDENT-ON*
   if (LIVES_IS_PLAYING) mainw->force_show = TRUE;
 }
@@ -10072,7 +10074,7 @@ boolean expose_vid_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer 
 boolean config_vid_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
   if (mainw->video_drawable) lives_painter_surface_destroy(mainw->video_drawable);
   mainw->video_drawable = lives_widget_create_painter_surface(widget);
-  clear_tbar_bgs(0, 0, 0, 0, 1);
+  clear_widget_bg(widget, mainw->video_drawable);
   update_timer_bars(0, 0, 0, 0, 1);
   return TRUE;
 }
@@ -10138,6 +10140,7 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
     }
   }
 #endif
+
   clear_widget_bg(widget, *psurf);
 
   if (widget == mainw->start_image)

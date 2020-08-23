@@ -3406,9 +3406,9 @@ filterinit1:
             if (event != deinit && event) {
               weed_set_int_value(event, WEED_LEAF_EASE_OUT, easing);
               weed_set_plantptr_value(event, WEED_LEAF_HOST_EASING_END, inst);
-            }
 	    // *INDENT-OFF*
-          }}}
+            }}}}
+      // *INDENT-ON*
 
       if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE)) {
         // handle compound fx
@@ -3755,7 +3755,7 @@ lives_render_error_t render_events(boolean reset) {
               offs = weed_get_int64_value(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, &weed_error);
               if (!mainw->files[mainw->scrap_file]->ext_src) load_from_scrap_file(NULL, -1);
               lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->clip_index[scrap_track]]->ext_src),
-						   offs);
+                                                   offs);
               if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), tc)) {
                 weed_layer_free(layer);
                 layer = NULL;
@@ -3782,7 +3782,7 @@ lives_render_error_t render_events(boolean reset) {
               if ((oclip = mainw->old_active_track_list[i]) != (nclip = mainw->active_track_list[i])) {
                 // now using threading, we want to start pulling all pixel_data for all active layers here
                 // however, we may have more than one copy of the same clip - in this case we want to
-		// create clones of the decoder plugin
+                // create clones of the decoder plugin
                 // this is to prevent constant seeking between different frames in the clip
 
                 // check if ext_src survives old->new

@@ -3071,7 +3071,7 @@ static boolean setfx(weed_plant_t *plant, weed_plant_t *tparam, int pnum, int na
                     filter_mutex_unlock(key);
 		  // *INDENT-OFF*
 }}}}}}
-    // *INDENT-ON*
+  // *INDENT-ON*
     } else {
       weed_set_boolean_array(tparam, WEED_LEAF_HOST_DEFAULT, nargs, valuesb);
 
@@ -3094,8 +3094,8 @@ static boolean setfx(weed_plant_t *plant, weed_plant_t *tparam, int pnum, int na
               if (xgroup == group) {
                   weed_set_boolean_value(tparam, WEED_LEAF_HOST_DEFAULT, WEED_FALSE);
 		// *INDENT-OFF*
-            }}}}}}
-  // *INDENT-ON*
+          }}}}}}
+// *INDENT-ON*
 
 grpinvalid:
 

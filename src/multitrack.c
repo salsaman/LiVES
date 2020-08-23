@@ -6426,7 +6426,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   int dph;
   int num_filters;
   int woat = widget_opts.apply_theme;
-  nt i;
+  int i;
 
   lives_mt *mt = (lives_mt *)lives_calloc(1, sizeof(lives_mt));
 
@@ -8188,7 +8188,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add(LIVES_CONTAINER(mt->mm_submenu), mt->mm_select);
 
   mt->mm_select_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->mm_select), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_mouse_mode_changed)(livespointer)mt);
+                       LIVES_GUI_CALLBACK(on_mouse_mode_changed), (livespointer)mt);
 
   lives_widget_show_all(mt->mm_submenu); // needed
 

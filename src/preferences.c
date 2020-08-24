@@ -1353,10 +1353,10 @@ boolean apply_prefs(boolean skip_warn) {
   const char *frameblank_path = lives_entry_get_text(LIVES_ENTRY(prefsw->frameblank_entry));
 
   char workdir[PATH_MAX]; /// locale encoding
-  char *theme = lives_combo_get_active_text(LIVES_COMBO(prefsw->theme_combo));
-  char *audp = lives_combo_get_active_text(LIVES_COMBO(prefsw->audp_combo));
-  char *audio_codec = NULL;
-  char *pb_quality = lives_combo_get_active_text(LIVES_COMBO(prefsw->pbq_combo));
+  const char *theme = lives_combo_get_active_text(LIVES_COMBO(prefsw->theme_combo));
+  const char *audp = lives_combo_get_active_text(LIVES_COMBO(prefsw->audp_combo));
+  const char *audio_codec = NULL;
+  const char *pb_quality = lives_combo_get_active_text(LIVES_COMBO(prefsw->pbq_combo));
 
   LiVESWidgetColor colf, colb, colf2, colb2, coli, colt, col, coltcfg, coltcbg;
   lives_colRGBA64_t lcol;
@@ -1389,7 +1389,7 @@ boolean apply_prefs(boolean skip_warn) {
   boolean rec_after_pb = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_rec_after_pb));
 
   int max_msgs = (uint64_t)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->nmessages_spin));
-  char *msgtextsize = lives_combo_get_active_text(LIVES_COMBO(prefsw->msg_textsize_combo));
+  const char *msgtextsize = lives_combo_get_active_text(LIVES_COMBO(prefsw->msg_textsize_combo));
   boolean msgs_unlimited = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->msgs_unlimited));
   boolean msgs_pbdis = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->msgs_pbdis));
 
@@ -1557,7 +1557,7 @@ boolean apply_prefs(boolean skip_warn) {
   const char *omc_midi_fname = lives_entry_get_text(LIVES_ENTRY(prefsw->omc_midi_entry));
   int midicr = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_midicr));
   int midirpt = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_midirpt));
-  char *midichan = lives_combo_get_active_text(LIVES_COMBO(prefsw->midichan_combo));
+  const char *midichan = lives_combo_get_active_text(LIVES_COMBO(prefsw->midichan_combo));
 
 #ifdef ALSA_MIDI
   boolean use_alsa_midi = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->alsa_midi));
@@ -1708,8 +1708,7 @@ boolean apply_prefs(boolean skip_warn) {
   if (capable->has_encoder_plugins) {
     audio_codec = lives_combo_get_active_text(LIVES_COMBO(prefsw->acodec_combo));
 
-    for (idx = 0; idx < listlen && strcmp((char *)lives_list_nth_data(prefs->acodec_list, idx), audio_codec); idx++);
-    lives_free(audio_codec);
+    for (idx = 0; idx < listlen && lives_strcmp((char *)lives_list_nth_data(prefs->acodec_list, idx), audio_codec); idx++);
 
     if (idx == listlen) future_prefs->encoder.audio_codec = 0;
     else future_prefs->encoder.audio_codec = prefs->acodec_list_to_format[idx];
@@ -1727,8 +1726,6 @@ boolean apply_prefs(boolean skip_warn) {
   else if (!strncmp(audp, AUDIO_PLAYER_SOX, strlen(AUDIO_PLAYER_SOX))) lives_snprintf(audio_player, 256, AUDIO_PLAYER_SOX);
   else if (!strncmp(audp, AUDIO_PLAYER_PULSE_AUDIO, strlen(AUDIO_PLAYER_PULSE_AUDIO))) lives_snprintf(audio_player, 256,
         AUDIO_PLAYER_PULSE);
-
-  lives_free(audp);
 
   if (!((prefs->audio_player == AUD_PLAYER_JACK && capable->has_jackd) || (prefs->audio_player == AUD_PLAYER_PULSE &&
         capable->has_pulse_audio))) {
@@ -1785,7 +1782,6 @@ boolean apply_prefs(boolean skip_warn) {
   ulist = get_textsizes_list();
   pref_factory_string_choice(PREF_MSG_TEXTSIZE, ulist, msgtextsize, TRUE);
   lives_list_free_all(&ulist);
-  lives_free(msgtextsize);
 
   if (fsize_to_warn != (prefs->warn_file_size)) {
     prefs->warn_file_size = fsize_to_warn;
@@ -2050,8 +2046,6 @@ boolean apply_prefs(boolean skip_warn) {
   if (!strcmp(pb_quality, (char *)lives_list_nth_data(prefsw->pbq_list, 1))) pbq = PB_QUALITY_MED;
   if (!strcmp(pb_quality, (char *)lives_list_nth_data(prefsw->pbq_list, 2))) pbq = PB_QUALITY_HIGH;
 
-  lives_free(pb_quality);
-
   if (pbq != prefs->pb_quality) {
     future_prefs->pb_quality = prefs->pb_quality = pbq;
     set_int_pref(PREF_PB_QUALITY, pbq);
@@ -2152,8 +2146,6 @@ boolean apply_prefs(boolean skip_warn) {
       delete_pref(THEME_DETAIL_INFO_BASE);
     }
   }
-
-  lives_free(theme);
 
   // default fps
   if (prefs->default_fps != default_fps) {
@@ -2258,8 +2250,6 @@ boolean apply_prefs(boolean skip_warn) {
 
 #ifdef OMC_MIDI_IMPL
   pref_factory_string(PREF_MIDI_RCV_CHANNEL, midichan, TRUE);
-  lives_free(midichan);
-
   pref_factory_string(PREF_OMC_MIDI_FNAME, omc_midi_fname, TRUE);
 
   pref_factory_int(PREF_MIDI_CHECK_RATE, midicr, TRUE);
@@ -2463,14 +2453,10 @@ void save_future_prefs(void) {
 void rdet_acodec_changed(LiVESCombo *acodec_combo, livespointer user_data) {
   int listlen = lives_list_length(prefs->acodec_list);
   int idx;
-  char *audio_codec = lives_combo_get_active_text(acodec_combo);
-  if (!strcmp(audio_codec, mainw->string_constants[LIVES_STRING_CONSTANT_ANY])) {
-    lives_free(audio_codec);
-    return;
-  }
+  const char *audio_codec = lives_combo_get_active_text(acodec_combo);
+  if (!strcmp(audio_codec, mainw->string_constants[LIVES_STRING_CONSTANT_ANY])) return;
 
   for (idx = 0; idx < listlen && strcmp((char *)lives_list_nth_data(prefs->acodec_list, idx), audio_codec); idx++);
-  lives_free(audio_codec);
 
   if (idx == listlen) future_prefs->encoder.audio_codec = 0;
   else future_prefs->encoder.audio_codec = prefs->acodec_list_to_format[idx];
@@ -2545,7 +2531,7 @@ void set_acodec_list_from_allowed(_prefsw *prefsw, render_details *rdet) {
 
 
 void after_vpp_changed(LiVESWidget *vpp_combo, livespointer advbutton) {
-  char *newvpp = lives_combo_get_active_text(LIVES_COMBO(vpp_combo));
+  const char *newvpp = lives_combo_get_active_text(LIVES_COMBO(vpp_combo));
   _vid_playback_plugin *tmpvpp;
 
   if (!lives_utf8_strcasecmp(newvpp, mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
@@ -2555,14 +2541,12 @@ void after_vpp_changed(LiVESWidget *vpp_combo, livespointer advbutton) {
 
     // will call set_astream_settings
     if ((tmpvpp = open_vid_playback_plugin(newvpp, FALSE)) == NULL) {
-      lives_free(newvpp);
       lives_combo_set_active_string(LIVES_COMBO(vpp_combo), mainw->vpp->name);
       return;
     }
     close_vid_playback_plugin(tmpvpp);
   }
   lives_snprintf(future_prefs->vpp_name, 64, "%s", newvpp);
-  lives_free(newvpp);
 
   if (future_prefs->vpp_argv) {
     register int i;
@@ -2657,13 +2641,9 @@ static void on_alsa_midi_toggled(LiVESToggleButton *tbutton, livespointer user_d
 
 
 static void on_audp_entry_changed(LiVESWidget *audp_combo, livespointer ptr) {
-  char *audp = lives_combo_get_active_text(LIVES_COMBO(audp_combo));
+  const char *audp = lives_combo_get_active_text(LIVES_COMBO(audp_combo));
 
-  if (!(*audp) || !strcmp(audp, prefsw->audp_name)) {
-    lives_free(audp);
-    return;
-  }
-
+  if (!(*audp) || !strcmp(audp, prefsw->audp_name)) return;
   if (LIVES_IS_PLAYING) {
     do_aud_during_play_error();
     lives_signal_handler_block(audp_combo, prefsw->audp_entry_func);
@@ -2672,7 +2652,6 @@ static void on_audp_entry_changed(LiVESWidget *audp_combo, livespointer ptr) {
 
     //lives_widget_queue_draw(audp_entry);
     lives_signal_handler_unblock(audp_combo, prefsw->audp_entry_func);
-    lives_free(audp);
     return;
   }
 
@@ -2691,6 +2670,7 @@ static void on_audp_entry_changed(LiVESWidget *audp_combo, livespointer ptr) {
     lives_widget_set_sensitive(prefsw->rextaudio, FALSE);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), FALSE);
   }
+#ifdef ENABLE_JACK
   if (!strcmp(audp, AUDIO_PLAYER_JACK)) {
     lives_widget_set_sensitive(prefsw->checkbutton_jack_pwp, TRUE);
     lives_widget_set_sensitive(prefsw->checkbutton_jack_read_autocon, TRUE);
@@ -2702,20 +2682,24 @@ static void on_audp_entry_changed(LiVESWidget *audp_combo, livespointer ptr) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack), FALSE);
     lives_widget_hide(prefsw->jack_int_label);
   }
+#endif
+#ifdef HAVE_PULSE_AUDIO
   if (!strcmp(audp, AUDIO_PLAYER_PULSE_AUDIO)) {
     lives_widget_set_sensitive(prefsw->checkbutton_parestart, TRUE);
     lives_widget_set_sensitive(prefsw->audio_command_entry,
                                lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_parestart)));
+
   } else {
     lives_widget_set_sensitive(prefsw->checkbutton_parestart, FALSE);
     lives_widget_set_sensitive(prefsw->audio_command_entry, FALSE);
   }
 #endif
+#endif
   lives_free(prefsw->audp_name);
-  prefsw->audp_name = lives_combo_get_active_text(LIVES_COMBO(audp_combo));
+
+  prefsw->audp_name = lives_strdup(lives_combo_get_active_text(LIVES_COMBO(audp_combo)));
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_stream_audio), FALSE);
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_rec_after_pb), FALSE);
-  lives_free(audp);
 }
 
 
@@ -2977,12 +2961,10 @@ static void spinbutton_ds_value_changed(LiVESSpinButton * warn_ds, livespointer 
 
 
 static void theme_widgets_set_sensitive(LiVESCombo * combo, livespointer xprefsw) {
-  return;
   _prefsw *prefsw = (_prefsw *)xprefsw;
-  char *theme = lives_combo_get_active_text(combo);
+  const char *theme = lives_combo_get_active_text(combo);
   boolean theme_set = TRUE;
   if (!lives_utf8_strcmp(theme, mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) theme_set = FALSE;
-  lives_free(theme);
   lives_widget_set_sensitive(prefsw->cbutton_fxcol, theme_set);
   lives_widget_set_sensitive(prefsw->cbutton_audcol, theme_set);
   lives_widget_set_sensitive(prefsw->cbutton_vidcol, theme_set);
@@ -3015,10 +2997,9 @@ static void theme_widgets_set_sensitive(LiVESCombo * combo, livespointer xprefsw
 
 static boolean check_txtsize(LiVESWidget * combo) {
   LiVESList *list = get_textsizes_list();
-  char *msgtextsize = lives_combo_get_active_text(LIVES_COMBO(combo));
+  const char *msgtextsize = lives_combo_get_active_text(LIVES_COMBO(combo));
   int idx = lives_list_strcmp_index(list, (livesconstpointer)msgtextsize, TRUE);
   lives_list_free_all(&list);
-  lives_free(msgtextsize);
 
   if (idx > mainw->max_textsize) {
     show_warn_image(combo, _("Text size may be too large for the screen size"));
@@ -5750,7 +5731,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   } else select_pref_list_row(prefs_current_page, prefsw);
 
   lives_widget_show_all(prefsw->prefs_dialog);
-  on_prefs_page_changed(prefsw->selection, prefsw);
+
+  main_thread_execute((lives_funcptr_t)on_prefs_page_changed, -1, NULL, "vv", prefsw->selection, prefsw);
+  //on_prefs_page_changed(prefsw->selection, prefsw);
+
   lives_widget_queue_draw(prefsw->prefs_list);
   return prefsw;
 }

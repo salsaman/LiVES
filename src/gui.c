@@ -1653,6 +1653,11 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(mainw->help_menu), mainw->dev_dabg);
   menu_sets_visible(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), mainw->dev_dabg, FALSE);
 
+  mainw->dev_timing = lives_standard_check_menu_item_new_for_var(_("Show frame timings on console"),
+                      &prefs->dev_show_timing, FALSE);
+  lives_container_add(LIVES_CONTAINER(mainw->help_menu), mainw->dev_timing);
+  menu_sets_visible(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), mainw->dev_timing, FALSE);
+
   lives_menu_add_separator(LIVES_MENU(mainw->help_menu));
 
   mainw->troubleshoot = lives_standard_menu_item_new_with_label(_("_Troubleshoot"));
@@ -2826,8 +2831,8 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_sticky_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->showfct), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_showfct_activate), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->preferences), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_preferences_activate), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->preferences), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_preferences_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->change_speed), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_change_speed_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->resample_video), LIVES_WIDGET_ACTIVATE_SIGNAL,

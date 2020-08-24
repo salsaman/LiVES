@@ -829,18 +829,14 @@ static void omc_learn_link_params(lives_omc_match_node_t *mnode) {
 
 
 static void on_omc_combo_entry_changed(LiVESCombo *combo, livespointer ptr) {
-  char *macro_text;
-
-  int i;
-
   lives_omc_match_node_t *mnode = (lives_omc_match_node_t *)ptr;
-
-  int row = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "row"));
+  const char *macro_text;
+  int i, row = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "row"));
   omclearn_w *omclw = (omclearn_w *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "omclw");
 
   macro_text = lives_combo_get_active_text(LIVES_COMBO(combo));
 
-  if (mnode->treev2 != NULL) {
+  if (mnode->treev2) {
     // remove old mapping
     lives_widget_destroy(mnode->treev2);
     mnode->treev2 = NULL;
@@ -856,15 +852,12 @@ static void on_omc_combo_entry_changed(LiVESCombo *combo, livespointer ptr) {
   }
 
   if (!strcmp(macro_text, mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
-    lives_free(macro_text);
     return;
   }
 
   for (i = 0; i < N_OMC_MACROS; i++) {
     if (!strcmp(macro_text, omc_macros[i].macro_text)) break;
   }
-
-  lives_free(macro_text);
 
   mnode->macro = i;
   omc_learn_link_params(mnode);

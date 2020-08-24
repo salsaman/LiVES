@@ -686,7 +686,7 @@ static boolean pre_init(void) {
   mainw->prefs_cache = cache_file_contents(capable->rcfile);
 
   prefs->show_dev_opts = get_boolean_prefd(PREF_SHOW_DEVOPTS, FALSE);
-  prefs->dev_show_dabg = FALSE;
+  prefs->dev_show_dabg = prefs->dev_show_timing = FALSE;
 
   future_prefs->vj_mode = get_boolean_prefd(PREF_VJMODE, FALSE);
   if (!ign_opts.ign_vjmode) prefs->vj_mode = future_prefs->vj_mode;
@@ -733,9 +733,11 @@ static boolean pre_init(void) {
   prefs->ds_warn_level = (uint64_t)get_int64_prefd(PREF_DS_WARN_LEVEL, DEF_DS_WARN_LEVEL);
   if (prefs->ds_warn_level < prefs->ds_crit_level) prefs->ds_warn_level = prefs->ds_crit_level;
   mainw->next_ds_warn_level = prefs->ds_warn_level;
-  prefs->show_disk_quota = get_boolean_prefd(PREF_SHOW_QUOTA, TRUE);
+  prefs->show_disk_quota = get_boolean_prefd(PREF_SHOW_QUOTA, FALSE);
   prefs->disk_quota = get_int64_prefd(PREF_DISK_QUOTA, 0);
   if (prefs->disk_quota < 0) prefs->disk_quota = 0;
+
+  prefs->quota_limit = 90.0;
 
   if (mainw->has_session_workdir) {
     prefs->show_disk_quota = FALSE;
@@ -2291,7 +2293,7 @@ static void do_start_messages(void) {
   }
   d_print(_("Number of monitors detected: %d: "), capable->nmonitors);
 
-  d_print(_("GUI screen size is %d X %d (usable: %d X %d); %d dpi.\nWidget scaling set to %.3f.\n"),
+  d_print(_("GUI screen size is %d X %d (usable: %d X %d); %d dpi.\nWidget scaling has been set to %.3f.\n"),
           mainw->mgeom[widget_opts.monitor].phys_width, mainw->mgeom[widget_opts.monitor].phys_height,
           GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT,
           (int)mainw->mgeom[widget_opts.monitor].dpi,
@@ -2303,11 +2305,11 @@ static void do_start_messages(void) {
   if (!prefs->vj_mode) {
     get_wm_caps();
 
-    d_print(_("Window manager reports as \"%s\" (%s)\n"),
+    d_print(_("Window manager reports as \"%s\" (%s)"),
             capable->wm ? capable->wm : _("UNKNOWN - please patch me !"),
             capable->wm_caps.wm_name ? capable->wm_caps.wm_name : "unknown");
 
-    d_print(_("Compositing is %s.\n"), capable->wm_caps.is_composited ? _("supported") : _("not supported"));
+    d_print(_("; compositing is %s.\n"), capable->wm_caps.is_composited ? _("supported") : _("not supported"));
 
     get_distro_dets();
     d_print(_("Distro is %s %s (%s)\n"), capable->distro_name ? capable->distro_name : "?????",
@@ -5339,20 +5341,21 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
     cx = (rwidth - width) >> 1;
     cy = (rheight - height) >> 1;
 
-    if (!mainw->multitrack || widget != mainw->play_image) {
+    if ((!mainw->multitrack || widget != mainw->play_image) && widget != mainw->preview_image) {
       if (prefs->funky_widgets) {
         lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->frame_surround);
         lives_painter_rectangle(cr, cx - 1, cy - 1, width + 2, height + 2);
         // frame
         lives_painter_stroke(cr);
+        cx += 2;
       }
     }
 
     /// x, y values are offset of top / left of image in drawing area
-    lives_painter_set_source_pixbuf(cr, pixbuf, cx, cy);
+    lives_painter_set_source_pixbuf(cr, pixbuf, cx + 2, cy);
 
     /// clipping area for image
-    lives_painter_rectangle(cr, cx, cy, rwidth, rheight);
+    lives_painter_rectangle(cr, cx + 2, cy, rwidth, rheight);
   } else {
     lives_widget_set_opacity(widget, 0.);
     clear_widget_bg(widget, surface);
@@ -7759,7 +7762,7 @@ weed_plant_t *event = get_last_event(mainw->event_list);
 weed_plant_t *event_list = insert_blank_frame_event_at(mainw->event_list, lives_get_relative_ticks(mainw->origsecs,
 mainw->orignsecs),
 &event);
-if (mainw->event_list == NULL) mainw->event_list = event_list;
+if (!mainw->event_list) mainw->event_list = event_list;
 if (mainw->rec_aclip != -1 && (prefs->rec_opts & REC_AUDIO) && !mainw->record_starting) {
 // we are recording, and the audio clip changed; add audio
 if (mainw->rec_aclip == mainw->ascrap_file) {
@@ -7904,7 +7907,7 @@ pthread_mutex_lock(&mainw->event_list_mutex);
 
 /// usual function to record a frame event
 if ((event_list = append_frame_event(mainw->event_list, actual_ticks, numframes, clips, frames)) != NULL) {
-if (mainw->event_list == NULL) mainw->event_list = event_list;
+if (!mainw->event_list) mainw->event_list = event_list;
 
 // TODO ***: do we need to perform more checks here ???
 if (scrap_file_size != -1 || (mainw->rec_aclip != -1 && (prefs->rec_opts & REC_AUDIO))) {
@@ -7986,7 +7989,7 @@ goto lfi_done;
 }
 
 // play preview
-if (cfile->opening || (cfile->next_event && mainw->proc_ptr == NULL)) {
+if (cfile->opening || (cfile->next_event && !mainw->proc_ptr)) {
 fname_next = make_image_file_name(cfile, frame + 1, get_image_ext_for_type(cfile->img_type));
 if (!mainw->fs && !prefs->hide_framebar && !mainw->is_rendering) {
 lives_freep((void **)&framecount);
@@ -8044,7 +8047,7 @@ get_player_size(&opwidth, &opheight);
 ////////////////////////////////////////////////////////////
 // load a frame from disk buffer
 
-if (mainw->preview && mainw->frame_layer == NULL && (mainw->event_list == NULL || cfile->opening)) {
+if (mainw->preview && !mainw->frame_layer && (!mainw->event_list || cfile->opening)) {
 info_file = lives_build_filename(prefs->workdir, cfile->handle, LIVES_STATUS_FILE_NAME, NULL);
 }
 
@@ -8152,14 +8155,15 @@ mainw->track_decoders[i] = clone_decoder(nclip);
               }
             }
           } else {
-            //g_print("pull_frame @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+            if (prefs->dev_show_timing)
+              g_printerr("pull_frame @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
             // normal playback in the clip editor, or applying a non-realtime effect
             if (cfile->clip_type != CLIP_TYPE_DISK
                 || !mainw->preview || lives_file_test(fname_next, LIVES_FILE_TEST_EXISTS)) {
               mainw->frame_layer = lives_layer_new_for_frame(mainw->current_file, mainw->actual_frame);
-              if (img_ext == NULL) img_ext = get_image_ext_for_type(cfile->img_type);
-              if (mainw->preview && mainw->frame_layer == NULL
-                  && (mainw->event_list == NULL || cfile->opening)) {
+              if (!img_ext) img_ext = get_image_ext_for_type(cfile->img_type);
+              if (mainw->preview && !mainw->frame_layer
+                  && (!mainw->event_list || cfile->opening)) {
                 if (!pull_frame_at_size(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks,
                                         cfile->hsize, cfile->vsize, WEED_PALETTE_END)) {
                   if (mainw->frame_layer) {
@@ -8211,11 +8215,12 @@ mainw->track_decoders[i] = clone_decoder(nclip);
               }
             }
 
-            //g_print("pull_frame done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-            if ((cfile->next_event == NULL && mainw->is_rendering && !mainw->switch_during_pb &&
-                 (mainw->multitrack == NULL || (!mainw->multitrack->is_rendering && !mainw->is_generating))) ||
-                ((mainw->multitrack == NULL || (mainw->multitrack && mainw->multitrack->is_rendering)) &&
-                 mainw->preview && mainw->frame_layer == NULL)) {
+            if (prefs->dev_show_timing)
+              g_printerr("pull_frame done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+            if ((!cfile->next_event && mainw->is_rendering && !mainw->switch_during_pb &&
+                 (!mainw->multitrack || (!mainw->multitrack->is_rendering && !mainw->is_generating))) ||
+                ((!mainw->multitrack || (mainw->multitrack && mainw->multitrack->is_rendering)) &&
+                 mainw->preview && !mainw->frame_layer)) {
               // preview ended
               if (!cfile->opening) mainw->cancelled = CANCEL_NO_MORE_PREVIEW;
               if (mainw->cancelled) {
@@ -8356,7 +8361,8 @@ mainw->track_decoders[i] = clone_decoder(nclip);
           }
         }
 
-        //g_print("rte done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+        if (prefs->dev_show_timing)
+          g_printerr("rte done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
         ////////////////////////
 
@@ -8432,8 +8438,9 @@ mainw->track_decoders[i] = clone_decoder(nclip);
                                           mainw->vpp->YUV_sampling, mainw->vpp->YUV_subspace, tgamma)) {
             goto lfi_done;
           }
-          //g_print("cl palette done %d to %d @ %f\n", weed_layer_get_palette(frame_layer), mainw->vpp->palette,
-          //lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+          if (prefs->dev_show_timing)
+            g_print("cl palette done %d to %d @ %f\n", weed_layer_get_palette(frame_layer), mainw->vpp->palette,
+                    lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
           if (!player_v2) {
             // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
@@ -8441,7 +8448,8 @@ mainw->track_decoders[i] = clone_decoder(nclip);
               goto lfi_done;
             }
           }
-          //g_print("comp rs done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+          if (prefs->dev_show_timing)
+            g_print("comp rs done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
           if (mainw->stream_ticks == -1) mainw->stream_ticks = mainw->currticks;
 
           if (rec_after_pb) {
@@ -8478,7 +8486,8 @@ mainw->track_decoders[i] = clone_decoder(nclip);
             // gamma correction
             gamma_convert_layer(tgamma, frame_layer);
           }
-          //g_print("gamma conv done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+          if (prefs->dev_show_timing)
+            g_print("gamma conv done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
           if (return_layer) weed_leaf_dup(return_layer, frame_layer, WEED_LEAF_GAMMA_TYPE);
           pd_array = weed_layer_get_pixel_data(frame_layer, NULL);
@@ -8524,7 +8533,8 @@ mainw->track_decoders[i] = clone_decoder(nclip);
               return_layer = NULL;
             }
           } else success = TRUE;
-          //g_print("rend fr done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+          if (prefs->dev_show_timing)
+            g_printerr("rend fr done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
           lives_free(pd_array);
           if (frame_layer != mainw->frame_layer) {
             weed_layer_free(frame_layer);
@@ -8552,7 +8562,8 @@ mainw->track_decoders[i] = clone_decoder(nclip);
         }
 
         get_player_size(&mainw->pwidth, &mainw->pheight);
-        //g_print("ext start  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+        if (prefs->dev_show_timing)
+          g_printerr("ext start  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
         if (mainw->ext_playback && (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)
                                     || (((!mainw->multitrack && prefs->letterbox) || (mainw->multitrack && prefs->letterbox_mt))
@@ -8576,7 +8587,8 @@ mainw->track_decoders[i] = clone_decoder(nclip);
 
           check_layer_ready(mainw->frame_layer);
           mainw->video_seek_ready = TRUE;
-          //g_print("clr2  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+          if (prefs->dev_show_timing)
+            g_printerr("clr2  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
           layer_palette = weed_layer_get_palette(mainw->frame_layer);
           if (!weed_palette_is_valid(layer_palette)) goto lfi_done;
@@ -8606,7 +8618,8 @@ mainw->track_decoders[i] = clone_decoder(nclip);
             if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
             frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
           }
-          //g_print("copied  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+          if (prefs->dev_show_timing)
+            g_printerr("copied  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
           pwidth = mainw->vpp->fwidth;
           pheight = mainw->vpp->fheight;
@@ -8623,7 +8636,6 @@ mainw->track_decoders[i] = clone_decoder(nclip);
               if (!(mainw->vpp->capabilities & VPP_CAN_LETTERBOX)) {
                 if (frame_layer == mainw->frame_layer) {
                   if (layer_palette != mainw->vpp->palette && (pwidth > lb_width || pheight > lb_height)) {
-                    g_print("RS is %p\n", weed_get_int_array(mainw->frame_layer, WEED_LEAF_ROWSTRIDES, NULL));
                     frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
                     if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
                     if (!convert_layer_palette_full(frame_layer, mainw->vpp->palette, mainw->vpp->YUV_clamping,
@@ -8648,7 +8660,8 @@ mainw->track_decoders[i] = clone_decoder(nclip);
       }
       // *INDENT-ON*
 
-          //g_print("lbb  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+          if (prefs->dev_show_timing)
+            g_printerr("lbb  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
           layer_palette = weed_layer_get_palette(frame_layer);
 
           if ((((weed_layer_get_width(frame_layer) *
@@ -8662,7 +8675,8 @@ mainw->track_decoders[i] = clone_decoder(nclip);
             if (!resize_layer(frame_layer, lb_width, lb_height, interp,
                               mainw->vpp->palette, mainw->vpp->YUV_clamping)) goto lfi_done;
           }
-          //g_print("resize done  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+          if (prefs->dev_show_timing)
+            g_printerr("resize done  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
           // resize_layer can change palette
 
@@ -8707,14 +8721,16 @@ mainw->track_decoders[i] = clone_decoder(nclip);
             goto lfi_done;
           }
 
-          //g_print("clp done  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+          if (prefs->dev_show_timing)
+            g_printerr("clp done  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
           if (mainw->stream_ticks == -1) mainw->stream_ticks = mainw->currticks;
 
           if (!player_v2) {
             // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
             if (!compact_rowstrides(frame_layer)) goto lfi_done;
-            //g_print("c rows done  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+            if (prefs->dev_show_timing)
+              g_printerr("c rows done  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
           }
           if (rec_after_pb) {
             // record output from playback plugin
@@ -8783,7 +8799,8 @@ mainw->track_decoders[i] = clone_decoder(nclip);
               }
             } else success = TRUE;
             lives_free(pd_array);
-            //g_print("rend done  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+            if (prefs->dev_show_timing)
+              g_printerr("rend done  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
             if (return_layer) {
               int width = MIN(weed_layer_get_width(mainw->frame_layer)
@@ -8814,10 +8831,12 @@ mainw->track_decoders[i] = clone_decoder(nclip);
         ////////////////////////////////////////////////////////
         // local display - either we are playing with no playback plugin, or else the playback plugin has no
         // local display of its own
-        //g_print("clr @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+        if (prefs->dev_show_timing)
+          g_printerr("clr @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
         check_layer_ready(mainw->frame_layer); // wait for all threads to complete
         mainw->video_seek_ready = TRUE;
-        //g_print("clr end @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+        if (prefs->dev_show_timing)
+          g_printerr("clr end @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
         if (weed_layer_get_width(mainw->frame_layer) == 0) return;
         if ((mainw->sep_win && !prefs->show_playwin) || (!mainw->sep_win && !prefs->show_gui)) {
           // no display to output, skip the rest
@@ -8842,7 +8861,8 @@ mainw->track_decoders[i] = clone_decoder(nclip);
         pwidth = opwidth;
         pheight = opheight;
 
-        //g_print("res start @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+        if (prefs->dev_show_timing)
+          g_printerr("res start @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
         if ((0 && mainw->multitrack && prefs->letterbox_mt) || (!mainw->multitrack && prefs->letterbox)) {
           /// letterbox internal
           lb_width = weed_layer_get_width(mainw->frame_layer) *
@@ -8853,22 +8873,18 @@ mainw->track_decoders[i] = clone_decoder(nclip);
           was_letterboxed = TRUE;
           layer_palette = weed_layer_get_palette(mainw->frame_layer);
         }
-
-        g_print("HERE %d %d and %d %d\n",  weed_layer_get_width(mainw->frame_layer) *
-                weed_palette_get_pixels_per_macropixel(layer_palette), pwidth,
-                weed_layer_get_height(mainw->frame_layer), pheight);
-
         if (weed_layer_get_width(mainw->frame_layer) *
             weed_palette_get_pixels_per_macropixel(layer_palette) != pwidth ||
             weed_layer_get_height(mainw->frame_layer) != pheight) {
           if (!resize_layer(mainw->frame_layer, pwidth, pheight, interp, cpal, 0)) goto lfi_done;
         }
-        //g_print("res end @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+        if (prefs->dev_show_timing)
+          g_printerr("res end @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
-        if (!convert_layer_palette_full(mainw->frame_layer, cpal, 0, 0, 0,
-                                        WEED_GAMMA_SRGB)) goto lfi_done;
+        if (!convert_layer_palette_full(mainw->frame_layer, cpal, 0, 0, 0, WEED_GAMMA_SRGB)) goto lfi_done;
 
-        //g_print("clp end @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+        if (prefs->dev_show_timing)
+          g_printerr("clp end @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
         if (LIVES_IS_PLAYING) {
           if (!check_for_overlay_text(mainw->frame_layer)) {
             if (mainw->multitrack && mainw->multitrack->opts.overlay_timecode) {
@@ -8891,11 +8907,13 @@ mainw->track_decoders[i] = clone_decoder(nclip);
         /*                             lb_width, lb_height); */
         /* } */
 
-        //g_print("l2p start @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+        if (prefs->dev_show_timing)
+          g_printerr("l2p start @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
         pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE, TRUE);
 
-        //g_print("l2p @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+        if (prefs->dev_show_timing)
+          g_printerr("l2p @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
         if (!avsync_check()) goto lfi_done;
 
@@ -8917,7 +8935,8 @@ mainw->track_decoders[i] = clone_decoder(nclip);
 
         if (pixbuf) lives_widget_object_unref(pixbuf);
         success = TRUE;
-        //g_print("paint @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+        if (prefs->dev_show_timing)
+          g_print("paint @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
         goto lfi_done;
       }
 

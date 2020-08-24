@@ -234,14 +234,11 @@ void on_trans_method_changed(LiVESCombo *combo, livespointer user_data) {
 
   LiVESList *retvals;
 
-  char *txt = lives_combo_get_active_text(combo);
+  const char *txt = lives_combo_get_active_text(combo);
 
   int idx;
 
-  if (strlen(txt) == 0) {
-    lives_free(txt);
-    return;
-  }
+  if (!*txt) return;
 
   rfx = &mainw->rendered_fx[mainw->last_transition_idx];
 
@@ -249,8 +246,6 @@ void on_trans_method_changed(LiVESCombo *combo, livespointer user_data) {
   on_paramwindow_button_clicked(NULL, rfx);
 
   idx = lives_list_strcmp_index(merge_opts->trans_list, txt, TRUE);
-
-  lives_free(txt);
 
   mainw->last_transition_idx = merge_opts->list_to_rfx_index[idx];
   rfx = &mainw->rendered_fx[mainw->last_transition_idx];
@@ -260,7 +255,7 @@ void on_trans_method_changed(LiVESCombo *combo, livespointer user_data) {
 
   retvals = do_onchange_init(rfx);
 
-  if (retvals != NULL) {
+  if (retvals) {
     // now apply visually anything we got from onchange_init
     param_demarshall(rfx, retvals, TRUE, TRUE);
     lives_list_free_all(&retvals);

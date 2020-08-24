@@ -417,6 +417,7 @@ typedef struct {
 
   boolean show_dev_opts;
   boolean dev_show_dabg;
+  boolean dev_show_timing;
 
   boolean msgs_pbdis;
 
@@ -435,6 +436,7 @@ typedef struct {
   boolean show_desktop_panel;
   boolean show_msgs_on_startup;
   boolean show_disk_quota;
+  double quota_limit;
 
   boolean rr_crash;
   int rr_qmode;

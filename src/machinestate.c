@@ -626,7 +626,7 @@ lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, 
   // dsval is overwritten and set to ds_free
   int64_t ds;
   lives_storage_status_t status = LIVES_STORAGE_STATUS_UNKNOWN;
-  if (dsval && prefs->disk_quota > 0 && *dsval > prefs->disk_quota)
+  if (dsval && prefs->disk_quota > 0 && *dsval > (int64_t)((double)prefs->disk_quota * prefs->quota_limit / 100.))
     status = LIVES_STORAGE_STATUS_OVER_QUOTA;
   if (!is_writeable_dir(dir)) return status;
   ds = (int64_t)get_ds_free(dir);

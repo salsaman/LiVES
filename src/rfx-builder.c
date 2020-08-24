@@ -1131,7 +1131,7 @@ static void on_table_add_row(LiVESButton * button, livespointer user_data) {
   register int i;
 
   char *tmpx;
-  char *ctext;
+  const char *ctext;
 
   LiVESWidget *ebox, *ebox2 = NULL, *ebox3 = NULL;
 
@@ -1230,7 +1230,7 @@ static void on_table_add_row(LiVESButton * button, livespointer user_data) {
 
     entry3 = rfxbuilder->entry3[rfxbuilder->table_rows - 1] = lives_entry_new();
 
-    if (button == NULL) {
+    if (!button) {
       param = &rfxbuilder->params[rfxbuilder->table_rows - 1];
     } else {
       param_set_from_dialog((param = &rfxbuilder->copy_params[rfxbuilder->table_rows - 1]), rfxbuilder);
@@ -1283,7 +1283,6 @@ static void on_table_add_row(LiVESButton * button, livespointer user_data) {
       entry = rfxbuilder->entry[rfxbuilder->table_rows] = lives_entry_new();
       ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_kw_combo));
       lives_entry_set_text(LIVES_ENTRY(entry), ctext);
-      lives_free(ctext);
       rfxbuilder->num_paramw_hints++;
     } else {
       char **array = lives_strsplit(rfxbuilder->paramw_hints[rfxbuilder->table_rows], rfxbuilder->field_delim, 2);
@@ -1313,17 +1312,16 @@ static void on_table_add_row(LiVESButton * button, livespointer user_data) {
         // TODO - use lives_rfx_special_t->has_subtype,name,num_params
         ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_sp_combo));
         if (!strcmp(ctext, "framedraw")) {
-          char *ctext2 = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_spsub_combo));
-          lives_entry_set_text(LIVES_ENTRY(entry2), (tmpx = lives_strdup_printf("%s%s%s%s%s", ctext, rfxbuilder->field_delim, ctext2,
+          const char *ctext2 = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_spsub_combo));
+          lives_entry_set_text(LIVES_ENTRY(entry2), (tmpx = lives_strdup_printf("%s%s%s%s%s",
+                               ctext, rfxbuilder->field_delim, ctext2,
                                rfxbuilder->field_delim,
                                lives_entry_get_text(LIVES_ENTRY(rfxbuilder->paramw_rest_entry)))));
-          lives_free(ctext2);
         } else {
           lives_entry_set_text(LIVES_ENTRY(entry2), (tmpx = lives_strdup_printf("%s%s%s", ctext, rfxbuilder->field_delim,
                                lives_entry_get_text(LIVES_ENTRY(rfxbuilder->paramw_rest_entry)))));
         }
         lives_free(tmpx);
-        lives_free(ctext);
       }
     } else {
       char **array = lives_strsplit(rfxbuilder->paramw_hints[rfxbuilder->table_rows - 1], rfxbuilder->field_delim, 2);
@@ -1479,7 +1477,7 @@ add_row_done:
 static void param_set_from_dialog(lives_param_t *copy_param, rfx_build_window_t *rfxbuilder) {
   // set parameter values from param_dialog
   // this is called after adding a new copy_param or editing an existing one
-  char *ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
+  const char *ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
 
   copy_param->name = lives_strdup(lives_entry_get_text(LIVES_ENTRY(rfxbuilder->param_name_entry)));
   copy_param->label = lives_strdup(lives_entry_get_text(LIVES_ENTRY(rfxbuilder->param_label_entry)));
@@ -1495,8 +1493,6 @@ static void param_set_from_dialog(lives_param_t *copy_param, rfx_build_window_t 
   } else if (!strcmp(ctext, "string_list")) {
     copy_param->type = LIVES_PARAM_STRING_LIST;
   }
-
-  lives_free(ctext);
 
   copy_param->dp = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_dp));
   copy_param->group = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_group));
@@ -1534,7 +1530,6 @@ static void param_set_from_dialog(lives_param_t *copy_param, rfx_build_window_t 
     copy_param->def = lives_malloc(sizdbl);
     ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_def_combo));
     set_int_param(copy_param->def, lives_list_strcmp_index(copy_param->list, ctext, TRUE));
-    lives_free(ctext);
     break;
   case LIVES_PARAM_COLRGB24:
     copy_param->def = lives_malloc(3 * sizint);
@@ -1562,7 +1557,7 @@ static void on_table_edit_row(LiVESButton * button, livespointer user_data) {
   boolean param_ok = FALSE;
 
   char *tmpx;
-  char *ctext;
+  const char *ctext;
 
   for (i = 0; i < rfxbuilder->table_rows && found == -1; i++) {
     if (lives_widget_is_sensitive(rfxbuilder->entry[i])) {
@@ -1626,24 +1621,23 @@ static void on_table_edit_row(LiVESButton * button, livespointer user_data) {
     }
     ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_kw_combo));
     lives_entry_set_text(LIVES_ENTRY(rfxbuilder->entry[found]), ctext);
-    lives_free(ctext);
     if (!strcmp(lives_entry_get_text(LIVES_ENTRY(rfxbuilder->entry[found])), "layout")) {
-      lives_entry_set_text(LIVES_ENTRY(rfxbuilder->entry2[found]), lives_entry_get_text(LIVES_ENTRY(rfxbuilder->paramw_rest_entry)));
+      lives_entry_set_text(LIVES_ENTRY(rfxbuilder->entry2[found]),
+                           lives_entry_get_text(LIVES_ENTRY(rfxbuilder->paramw_rest_entry)));
     } else {
       // TODO - use lives_rfx_special_t->has_subtype,name,num_params
       ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_sp_combo));
       if (!strcmp(ctext, "framedraw")) {
-        char *ctext2 = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_spsub_combo));
+        const char *ctext2 = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_spsub_combo));
         lives_entry_set_text(LIVES_ENTRY(rfxbuilder->entry2[found]),
-                             (tmpx = lives_strdup_printf("%s%s%s%s%s", ctext, rfxbuilder->field_delim, ctext2, rfxbuilder->field_delim,
+                             (tmpx = lives_strdup_printf("%s%s%s%s%s", ctext, rfxbuilder->field_delim, ctext2,
+                                     rfxbuilder->field_delim,
                                      lives_entry_get_text(LIVES_ENTRY(rfxbuilder->paramw_rest_entry)))));
-        lives_free(ctext2);
       } else {
         lives_entry_set_text(LIVES_ENTRY(rfxbuilder->entry2[found]),
                              (tmpx = lives_strdup_printf("%s%s%s", ctext, rfxbuilder->field_delim, lives_entry_get_text
                                      (LIVES_ENTRY(rfxbuilder->paramw_rest_entry)))));
       }
-      lives_free(ctext);
       lives_free(tmpx);
     }
     lives_widget_destroy(paramw_dialog);
@@ -2162,15 +2156,10 @@ LiVESWidget *make_param_dialog(int pnum, rfx_build_window_t *rfxbuilder) {
 
 static void after_param_dp_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
-  char *ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
+  const char *ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
   int dp;
 
-  if (strcmp(ctext, "num")) {
-    lives_free(ctext);
-    return;
-  }
-
-  lives_free(ctext);
+  if (strcmp(ctext, "num")) return;
 
   dp = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
 
@@ -2211,14 +2200,9 @@ static void after_param_dp_changed(LiVESSpinButton * spinbutton, livespointer us
 static void after_param_min_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
   int dp;
-  char *ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
+  const char *ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
 
-  if (strcmp(ctext, "num")) {
-    lives_free(ctext);
-    return;
-  }
-
-  lives_free(ctext);
+  if (strcmp(ctext, "num")) return;
 
   lives_signal_handler_block(rfxbuilder->spinbutton_param_max, rfxbuilder->max_spin_f);
   lives_signal_handler_block(rfxbuilder->spinbutton_param_def, rfxbuilder->def_spin_f);
@@ -2260,14 +2244,9 @@ static void after_param_min_changed(LiVESSpinButton * spinbutton, livespointer u
 static void after_param_max_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
   int dp;
-  char *ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
+  const char *ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
 
-  if (strcmp(ctext, "num")) {
-    lives_free(ctext);
-    return;
-  }
-
-  lives_free(ctext);
+  if (strcmp(ctext, "num")) return;
 
   lives_signal_handler_block(rfxbuilder->spinbutton_param_min, rfxbuilder->min_spin_f);
   lives_signal_handler_block(rfxbuilder->spinbutton_param_def, rfxbuilder->def_spin_f);
@@ -2306,14 +2285,9 @@ static void after_param_max_changed(LiVESSpinButton * spinbutton, livespointer u
 
 static void after_param_def_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
-  char *ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
+  const char *ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
 
-  if (strcmp(ctext, "num")) {
-    lives_free(ctext);
-    return;
-  }
-
-  lives_free(ctext);
+  if (strcmp(ctext, "num")) return;
 
   if (lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_dp))) {
     double dbl_def = lives_spin_button_get_value(LIVES_SPIN_BUTTON(rfxbuilder->spinbutton_param_def));
@@ -2337,7 +2311,7 @@ static void on_param_type_changed(LiVESCombo * param_type_combo, livespointer us
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
   int pnum = rfxbuilder->edit_param;
 
-  char *ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
+  const char *ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
 
   lives_widget_show(rfxbuilder->param_min_label);
   lives_widget_show(rfxbuilder->param_max_label);
@@ -2469,8 +2443,6 @@ static void on_param_type_changed(LiVESCombo * param_type_combo, livespointer us
       }
     }
   }
-
-  lives_free(ctext);
 }
 
 
@@ -2598,7 +2570,7 @@ LiVESWidget *make_param_window_dialog(int pnum, rfx_build_window_t *rfxbuilder) 
 
 static void on_paramw_kw_changed(LiVESCombo * combo, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
-  char *ctext = lives_combo_get_active_text(combo);
+  const char *ctext = lives_combo_get_active_text(combo);
 
   if (!strcmp(ctext, "special")) {
     lives_widget_show_all(lives_widget_get_parent(rfxbuilder->paramw_sp_combo));
@@ -2610,8 +2582,6 @@ static void on_paramw_kw_changed(LiVESCombo * combo, livespointer user_data) {
     lives_widget_hide(lives_widget_get_parent(rfxbuilder->paramw_spsub_combo));
     lives_widget_grab_focus(rfxbuilder->paramw_rest_entry);
   }
-
-  lives_free(ctext);
 }
 
 
@@ -2637,7 +2607,7 @@ static void paramw_set_splabel(LiVESLabel * label, int npars) {
 static void on_paramw_sp_changed(LiVESCombo * combo, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
   int npars;
-  char *ctext = lives_combo_get_active_text(combo);
+  const char *ctext = lives_combo_get_active_text(combo);
 
   if (!strcmp(ctext, "framedraw")) {
     lives_widget_show_all(lives_widget_get_parent(rfxbuilder->paramw_spsub_combo));
@@ -2651,14 +2621,12 @@ static void on_paramw_sp_changed(LiVESCombo * combo, livespointer user_data) {
   }
 
   lives_widget_grab_focus(rfxbuilder->paramw_rest_entry);
-
-  lives_free(ctext);
 }
 
 
 static void on_paramw_spsub_changed(LiVESCombo * combo, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
-  char *ctext = lives_combo_get_active_text(combo);
+  const char *ctext = lives_combo_get_active_text(combo);
   int npars = 0;
 
   if (!strcmp(ctext, "rectdemask") || !strcmp(ctext, "multirect")) {
@@ -2669,7 +2637,6 @@ static void on_paramw_spsub_changed(LiVESCombo * combo, livespointer user_data) 
     npars = 3;
   }
   paramw_set_splabel(LIVES_LABEL(rfxbuilder->paramw_rest_label), npars);
-  lives_free(ctext);
 }
 
 
@@ -3030,12 +2997,10 @@ boolean rfxbuilder_to_script(rfx_build_window_t *rfxbuilder) {
   char *script_file, *script_file_dir;
   char *script_name = lives_strdup_printf("%s.%s", name, RFXBUILDER_SCRIPT_SUFFIX);
   char *new_name;
-  char *buf;
-  char *tmp, *tmp2;
+  char *buf, *tmp, *tmp2;
+  const char *ctext;
 
-  int retval;
-
-  register int i, j;
+  int retval, i, j;
 
   if (rfxbuilder->mode != RFX_BUILDER_MODE_EDIT) {
     if (!(new_name = prompt_for_script_name(script_name, RFX_STATUS_TEST))) {
@@ -3272,16 +3237,16 @@ boolean rfxbuilder_to_script(rfx_build_window_t *rfxbuilder) {
       if (rfxbuilder->type == RFX_BUILD_TYPE_TOOL) props = rfxbuilder->props | RFX_PROPS_MAY_RESIZE;
       else props = rfxbuilder->props;
 
-      if (rfxbuilder->type != RFX_BUILD_TYPE_EFFECT0 && (rfxbuilder->props & RFX_PROPS_BATCHG)) rfxbuilder->props ^= RFX_PROPS_BATCHG;
+      if (rfxbuilder->type != RFX_BUILD_TYPE_EFFECT0 && (rfxbuilder->props & RFX_PROPS_BATCHG))
+        rfxbuilder->props ^= RFX_PROPS_BATCHG;
 
       buf = lives_strdup_printf("0x%04X", props);
       lives_fputs(buf, sfile);
       lives_free(buf);
       lives_fputs("\n</properties>\n\n", sfile);
       lives_fputs("<language_code>\n", sfile);
-      tmp = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->langc_combo));
-      array = lives_strsplit(tmp, " ", -1);
-      lives_free(tmp);
+      ctext = lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->langc_combo));
+      array = lives_strsplit(ctext, " ", -1);
       lives_fputs(array[0], sfile);
       lives_strfreev(array);
       lives_fputs("\n</language_code>\n\n", sfile);
@@ -3302,12 +3267,10 @@ boolean rfxbuilder_to_script(rfx_build_window_t *rfxbuilder) {
       lives_fputs("</post>\n\n", sfile);
       lives_fputs("<onchange>\n", sfile);
       for (i = 0; i < rfxbuilder->num_triggers; i++) {
-        int j;
         int numtok = get_token_count(rfxbuilder->triggers[i].code, '\n');
-
         buf = rfxbuilder->triggers[i].when ? lives_strdup_printf("%d", rfxbuilder->triggers[i].when - 1) : lives_strdup("init");
         array = lives_strsplit(rfxbuilder->triggers[i].code, "\n", numtok);
-        for (j = 0; j < numtok; j++) {
+        for (int j = 0; j < numtok; j++) {
           lives_fputs(buf, sfile);
           lives_fputs(rfxbuilder->field_delim, sfile);
           if (array[j]) lives_fputs(array[j], sfile);
@@ -3941,7 +3904,7 @@ void on_import_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   char *filename = choose_file(NULL, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_OPEN, _("Import Script"), NULL);
 
-  if (filename == NULL) return;
+  if (!filename) return;
 
   lives_snprintf(basename, PATH_MAX, "%s", filename);
   get_basename(basename);
@@ -4218,10 +4181,10 @@ static void populate_script_combo(LiVESCombo * script_combo, lives_rfx_status_t 
 
 
 static void on_script_status_changed(LiVESCombo * status_combo, livespointer user_data) {
-  char *text = lives_combo_get_active_text(status_combo);
+  const char *text = lives_combo_get_active_text(status_combo);
   LiVESWidget *script_combo = (LiVESWidget *)user_data;
 
-  if (script_combo == NULL || !LIVES_IS_COMBO(script_combo)) return;
+  if (!script_combo || !LIVES_IS_COMBO(script_combo)) return;
 
   if (!(strcmp(text, mainw->string_constants[LIVES_STRING_CONSTANT_BUILTIN]))) {
     populate_script_combo(LIVES_COMBO(script_combo), RFX_STATUS_BUILTIN);
@@ -4234,7 +4197,6 @@ static void on_script_status_changed(LiVESCombo * status_combo, livespointer use
       }
     }
   }
-  lives_free(text);
 }
 
 

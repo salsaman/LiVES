@@ -2704,13 +2704,11 @@ void after_string_list_changed(LiVESWidget * entry, lives_rfx_t *rfx) {
   int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(entry), PARAM_NUMBER_KEY));
   LiVESCombo *combo = (LiVESCombo *)(rfx->params[param_number].widgets[0]);
   lives_param_t *param = &rfx->params[param_number];
-  char *txt = lives_combo_get_active_text(combo);
+  const char *txt = lives_combo_get_active_text(combo);
   int old_index = get_int_param(param->value);
   int new_index = lives_list_strcmp_index(param->list, txt, TRUE);
   boolean needs_update = FALSE;
   int copyto = -1;
-
-  lives_free(txt);
 
   if (new_index == -1) return;
   if (new_index == old_index) return;
@@ -3229,7 +3227,7 @@ int set_param_from_list(LiVESList * plist, lives_param_t *param, int pnum, boole
       lives_combo_set_active_string(LIVES_COMBO(param->widgets[0]), (char *)lives_list_nth_data(param->list, int_value));
     if (!upd) set_int_param(param->def, int_value);
     if (upd && param->widgets[0] && LIVES_IS_COMBO(param->widgets[0])) {
-      char *txt = lives_combo_get_active_text(LIVES_COMBO(param->widgets[0]));
+      const char *txt = lives_combo_get_active_text(LIVES_COMBO(param->widgets[0]));
       int new_index = lives_list_strcmp_index(param->list, txt, TRUE);
       set_int_param(param->value, new_index);
     } else set_int_param(param->value, int_value);

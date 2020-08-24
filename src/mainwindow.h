@@ -1203,6 +1203,7 @@ typedef struct {
   LiVESWidget *vj_mode;
   LiVESWidget *show_devopts;
   LiVESWidget *dev_dabg;
+  LiVESWidget *dev_timing;
   LiVESWidget *mt_menu;
   LiVESWidget *troubleshoot;
   LiVESWidget *expl_missing;

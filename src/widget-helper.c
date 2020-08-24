@@ -3853,16 +3853,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_set_entry_text_column(LiVESCombo
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE char *lives_combo_get_active_text(LiVESCombo *combo) {
+WIDGET_HELPER_GLOBAL_INLINE const char *lives_combo_get_active_text(LiVESCombo *combo) {
   // return value should be freed
 #ifdef GUI_GTK
-  char *text = NULL;
-  LiVESTreeIter iter;
-  if (lives_combo_get_active_iter(combo, &iter)) {
-    LiVESTreeModel *tmodel = lives_combo_get_model(combo);
-    gtk_tree_model_get(tmodel, &iter, 0, &text, -1);
-  }
-  return text;
+  return lives_entry_get_text(LIVES_ENTRY(lives_bin_get_child(LIVES_BIN(combo))));
 #endif
   return NULL;
 }
@@ -7834,7 +7828,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean show_warn_image(LiVESWidget * widget, const 
   if (!(warn_image = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), WARN_IMAGE_KEY))) return FALSE;
   lives_widget_set_tooltip_text(warn_image, text);
   lives_widget_set_no_show_all(warn_image, FALSE);
-  lives_widget_show(warn_image);
+  _lives_widget_show_all(warn_image);
   return TRUE;
 }
 

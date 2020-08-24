@@ -318,8 +318,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
   if (CURRENT_CLIP_IS_VALID && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
 
-  if (!CURRENT_CLIP_IS_VALID || mainw->foreign || mainw->multitrack != NULL
-      || mainw->recoverable_layout) {
+  if (!CURRENT_CLIP_IS_VALID || mainw->foreign || mainw->multitrack || mainw->recoverable_layout) {
     mainw->current_file = current_file;
     return;
   }
@@ -335,7 +334,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
   // draw timer bars
   // first the background
-  clear_tbar_bgs(posx, posy, width, height, which);
+  //clear_tbar_bgs(posx, posy, width, height, which);
 
   // empirically we need to draw wider
   posx -= OVERDRAW_MARGIN;
@@ -3064,9 +3063,8 @@ static void rb_tvcarddef_toggled(LiVESToggleButton * tbut, livespointer user_dat
 static void after_dialog_combo_changed(LiVESWidget * combo, livespointer plist) {
   // set mainw->fx1_val to the index of combo text in plist
   LiVESList *list = (LiVESList *)plist;
-  char *etext = lives_combo_get_active_text(LIVES_COMBO(combo));
+  const char *etext = lives_combo_get_active_text(LIVES_COMBO(combo));
   mainw->fx1_val = lives_list_strcmp_index(list, etext, TRUE);
-  lives_free(etext);
 }
 
 
@@ -5852,9 +5850,9 @@ static void dsu_set_toplabel(void) {
         dtxt = lives_format_storage_space_string(xs);
         ltext = lives_strdup_printf(_("WARNING ! LiVES has exceeded its quota by %s"), dtxt);
         lives_free(dtxt);
-      } else if (capable->ds_used >= prefs->disk_quota * .9) {
+      } else if (capable->ds_used >= (int64_t)((double)prefs->disk_quota * prefs->quota_limit / 100.)) {
         double pcused = (double)capable->ds_used / (double)prefs->disk_quota * 100.;
-        ltext = lives_strdup_printf(_("ATTENTION: LiVES is currently using %.2f%% of its assigned quota"), pcused);
+        ltext = lives_strdup_printf(_("ATTENTION: LiVES is currently using over %d%% of its assigned quota"), (int)pcused);
       } else if (prefs->disk_quota - capable->ds_used + prefs->ds_warn_level > capable->ds_free) {
         ltext = lives_strdup(_("ATTENTION ! There is unsufficient free space on the disk for LiVES' current quota"));
       }
@@ -5961,8 +5959,11 @@ static void qslider_changed(LiVESWidget * slid, livespointer data) {
       lives_label_set_text(LIVES_LABEL(dsq->pculabel), txt);
       widget_opts.use_markup = FALSE;
       lives_free(txt);
-      if (pcused >= 90.) show_warn_image(dsq->pculabel, NULL);
-      else hide_warn_image(dsq->pculabel);
+      if (pcused >= prefs->quota_limit) {
+        txt = lives_strdup_printf(_("LiVES is currently using over %d%% of its available quota"), (int)prefs->quota_limit);
+        show_warn_image(dsq->pculabel, txt);
+        lives_free(txt);
+      } else hide_warn_image(dsq->pculabel);
     } else {
       hide_warn_image(dsq->pculabel);
       lives_label_set_text(LIVES_LABEL(dsq->pculabel), _("Calculating %% used"));
@@ -6159,9 +6160,13 @@ static void dsu_fill_details(LiVESWidget * widget, livespointer data) {
     lives_layout_add_label(LIVES_LAYOUT(layout2), _("Unused quota"), TRUE);
     lives_layout_add_label(LIVES_LAYOUT(layout2), txt, TRUE);
     lives_free(txt);
-    if (pcu < .1) show_warn_image(widget_opts.last_label, _("LiVES is currently using over 90%% of its available quota"));;
+    pcu = 100. * (1. - pcu);
+    if (pcu > prefs->quota_limit) {
+      txt = lives_strdup_printf(_("LiVES is currently using over %d%% of its available quota"), (int)prefs->quota_limit);
+      show_warn_image(widget_opts.last_label, txt);
+      lives_free(txt);
+    }
   }
-
   lives_layout_add_row(LIVES_LAYOUT(layout2));
   lives_layout_add_label(LIVES_LAYOUT(layout2), _("Disk warning level"), TRUE);
   lives_widget_set_tooltip_text(widget_opts.last_label, H_("value can be set in Preferences . Warnings"));
@@ -6580,7 +6585,7 @@ void run_diskspace_dialog(void) {
   aar = LIVES_BOX(lives_dialog_get_action_area(LIVES_DIALOG(dialog)));
 
   rembutton =
-    lives_standard_check_button_new(_("Show this dialog on startup"), TRUE, aar,
+    lives_standard_check_button_new(_("Show this dialog on startup"), prefs->show_disk_quota, aar,
                                     (tmp = lives_strdup(H_("These settings can also be changed "
                                         "in Preferences / Warnings"))));
   lives_signal_sync_connect(LIVES_GUI_OBJECT(rembutton), LIVES_WIDGET_TOGGLED_SIGNAL,
@@ -7029,7 +7034,7 @@ boolean reshow_msg_area(LiVESWidget * widget, lives_painter_t *cr, livespointer 
     int rwidth = lives_widget_get_allocation_width(widget);
     int rheight = lives_widget_get_allocation_height(widget);
 
-    widget_color_to_lives_rgba(&fg, &palette->black);
+    widget_color_to_lives_rgba(&fg, &palette->info_text);
     widget_color_to_lives_rgba(&bg, &palette->info_base);
 
     cr2 = lives_painter_create_from_surface(mainw->msg_surface);

@@ -62,15 +62,15 @@ static void start_preview(LiVESButton *button, lives_rfx_t *rfx) {
   int i;
   char *com;
 
-  if (fx_dialog[0] != NULL) {
-    if (fx_dialog[0]->okbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->okbutton, FALSE);
-    if (fx_dialog[0]->cancelbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->cancelbutton, FALSE);
+  if (fx_dialog[0]) {
+    if (fx_dialog[0]->okbutton) lives_widget_set_sensitive(fx_dialog[0]->okbutton, FALSE);
+    if (fx_dialog[0]->cancelbutton) lives_widget_set_sensitive(fx_dialog[0]->cancelbutton, FALSE);
   }
 
   if (!check_filewrite_overwrites()) {
-    if (fx_dialog[0] != NULL) {
-      if (fx_dialog[0]->okbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->okbutton, TRUE);
-      if (fx_dialog[0]->cancelbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->cancelbutton, TRUE);
+    if (fx_dialog[0]) {
+      if (fx_dialog[0]->okbutton) lives_widget_set_sensitive(fx_dialog[0]->okbutton, TRUE);
+      if (fx_dialog[0]->cancelbutton) lives_widget_set_sensitive(fx_dialog[0]->cancelbutton, TRUE);
     }
     return;
   }
@@ -112,9 +112,9 @@ static void start_preview(LiVESButton *button, lives_rfx_t *rfx) {
 
   lives_widget_set_sensitive(mainw->framedraw_spinbutton, TRUE);
   lives_widget_set_sensitive(mainw->framedraw_scale, TRUE);
-  if (fx_dialog[0] != NULL) {
-    if (fx_dialog[0]->okbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->okbutton, TRUE);
-    if (fx_dialog[0]->cancelbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->cancelbutton, TRUE);
+  if (fx_dialog[0]) {
+    if (fx_dialog[0]->okbutton) lives_widget_set_sensitive(fx_dialog[0]->okbutton, TRUE);
+    if (fx_dialog[0]->cancelbutton) lives_widget_set_sensitive(fx_dialog[0]->cancelbutton, TRUE);
   }
   lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), cfile->start, cfile->start + 1);
   mainw->did_rfx_preview = TRUE;
@@ -131,19 +131,19 @@ static void after_framedraw_frame_spinbutton_changed(LiVESSpinButton *spinbutton
   // update the single frame/framedraw preview
   // after the "frame number" spinbutton has changed
   lives_signal_handler_block(mainw->framedraw_spinbutton, mainw->fd_spin_func);
-  if (fx_dialog[0] != NULL) {
-    if (fx_dialog[0]->okbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->okbutton, FALSE);
-    if (fx_dialog[0]->cancelbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->cancelbutton, FALSE);
+  if (fx_dialog[0]) {
+    if (fx_dialog[0]->okbutton) lives_widget_set_sensitive(fx_dialog[0]->okbutton, FALSE);
+    if (fx_dialog[0]->cancelbutton) lives_widget_set_sensitive(fx_dialog[0]->cancelbutton, FALSE);
   }
   mainw->framedraw_frame = lives_spin_button_get_value_as_int(spinbutton);
   if (!(framedraw->rfx->props & RFX_PROPS_MAY_RESIZE)) {
-    if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, FALSE);
+    if (mainw->framedraw_preview) lives_widget_set_sensitive(mainw->framedraw_preview, FALSE);
     //lives_widget_context_update();
     load_rfx_preview(framedraw->rfx);
   } else framedraw_redraw(framedraw, NULL);
-  if (fx_dialog[0] != NULL) {
-    if (fx_dialog[0]->okbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->okbutton, TRUE);
-    if (fx_dialog[0]->cancelbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->cancelbutton, TRUE);
+  if (fx_dialog[0]) {
+    if (fx_dialog[0]->okbutton) lives_widget_set_sensitive(fx_dialog[0]->okbutton, TRUE);
+    if (fx_dialog[0]->cancelbutton) lives_widget_set_sensitive(fx_dialog[0]->cancelbutton, TRUE);
   }
   lives_signal_handler_unblock(mainw->framedraw_spinbutton, mainw->fd_spin_func);
 }
@@ -154,41 +154,33 @@ void framedraw_connect_spinbutton(lives_special_framedraw_rect_t *framedraw, liv
 
   mainw->fd_spin_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->framedraw_spinbutton),
                         LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                        LIVES_GUI_CALLBACK(after_framedraw_frame_spinbutton_changed),
-                        framedraw);
+                        LIVES_GUI_CALLBACK(after_framedraw_frame_spinbutton_changed), framedraw);
   lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->framedraw_opscale), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                             LIVES_GUI_CALLBACK(framedraw_redraw_cb),
-                             framedraw);
+                             LIVES_GUI_CALLBACK(framedraw_redraw_cb), framedraw);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->framedraw_cbutton), LIVES_WIDGET_COLOR_SET_SIGNAL,
-                       LIVES_GUI_CALLBACK(framedraw_redraw_cb),
-                       framedraw);
+                       LIVES_GUI_CALLBACK(framedraw_redraw_cb), framedraw);
 }
 
 
 void framedraw_connect(lives_special_framedraw_rect_t *framedraw, int width, int height, lives_rfx_t *rfx) {
   // add mouse fn's so we can draw on frames
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->framedraw), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
-                       LIVES_GUI_CALLBACK(on_framedraw_mouse_update),
-                       framedraw);
+                       LIVES_GUI_CALLBACK(on_framedraw_mouse_update), framedraw);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->framedraw), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
-                       LIVES_GUI_CALLBACK(on_framedraw_mouse_reset),
-                       framedraw);
+                       LIVES_GUI_CALLBACK(on_framedraw_mouse_reset), framedraw);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->framedraw), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                       LIVES_GUI_CALLBACK(on_framedraw_mouse_start),
-                       framedraw);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->framedraw), LIVES_WIDGET_ENTER_EVENT, LIVES_GUI_CALLBACK(on_framedraw_enter),
-                       framedraw);
+                       LIVES_GUI_CALLBACK(on_framedraw_mouse_start), framedraw);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->framedraw), LIVES_WIDGET_ENTER_EVENT,
+                       LIVES_GUI_CALLBACK(on_framedraw_enter), framedraw);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->framedraw), LIVES_WIDGET_LEAVE_NOTIFY_EVENT,
-                       LIVES_GUI_CALLBACK(on_framedraw_leave),
-                       framedraw);
+                       LIVES_GUI_CALLBACK(on_framedraw_leave), framedraw);
 
   framedraw_connect_spinbutton(framedraw, rfx);
 
   lives_widget_set_bg_color(mainw->fd_frame, LIVES_WIDGET_STATE_NORMAL, &palette->light_red);
   lives_widget_set_bg_color(fbord_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->light_red);
 
-  if (mainw->fd_layer != NULL)
-    framedraw_redraw(framedraw, mainw->fd_layer_orig);
+  if (mainw->fd_layer) framedraw_redraw(framedraw, mainw->fd_layer_orig);
 }
 
 
@@ -230,14 +222,12 @@ static void redraw_framedraw_image(weed_layer_t *layer) {
 
   lives_painter_t *cr, *cr2;
 
-  int fd_width;
-  int fd_height;
-
+  int fd_width, fd_height;
   int width, height, cx, cy;
 
-  if (layer == NULL) return;
+  if (!layer) return;
 
-  if (mainw->current_file < 1 || cfile == NULL) return;
+  if (!CURRENT_CLIP_IS_VALID) return;
 
   if (!LIVES_IS_WIDGET(mainw->framedraw)) return;
 
@@ -261,9 +251,7 @@ static void redraw_framedraw_image(weed_layer_t *layer) {
   cy = (fd_height - height) / 2;
 
   lives_painter_set_source_surface(cr2, lives_painter_get_target(cr), cx, cy);
-  lives_painter_rectangle(cr2, cx, cy,
-                          width,
-                          height);
+  lives_painter_rectangle(cr2, cx, cy, width, height);
   lives_painter_fill(cr2);
   lives_painter_destroy(cr2);
 
@@ -372,8 +360,8 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   mainw->framedraw_opscale = lives_standard_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
   lives_box_pack_start(LIVES_BOX(mainw->framedraw_maskbox), mainw->framedraw_opscale, TRUE, TRUE, 0);
   opcol = lives_rgba_col_new(0, 0, 0, 65535);
-  cbutton = lives_standard_color_button_new(LIVES_BOX(mainw->framedraw_maskbox), _("color"), FALSE, &opcol, NULL, NULL, NULL,
-            NULL);
+  cbutton = lives_standard_color_button_new(LIVES_BOX(mainw->framedraw_maskbox), _("color"),
+            FALSE, &opcol, NULL, NULL, NULL, NULL);
   mainw->framedraw_cbutton = cbutton;
 
   hbox = lives_hbox_new(FALSE, 2);
@@ -442,7 +430,7 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
 
   lives_painter_t *cr;
 
-  if (mainw->current_file < 1 || cfile == NULL) return NULL;
+  if (!CURRENT_CLIP_IS_VALID) return NULL;
 
   if (framedraw->rfx->source_type == LIVES_RFX_SOURCE_RFX)
     if (noupdate) return NULL; // static volatile
@@ -462,7 +450,7 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
 
   // copy from orig, resize
 
-  if (layer == NULL) {
+  if (!layer) {
     // forced reload: get frame from clip, and set in mainw->fd_layer_orig
     const char *img_ext;
     if (framedraw->rfx->num_in_channels > 0 && !(framedraw->rfx->props & RFX_PROPS_MAY_RESIZE)) {
@@ -476,17 +464,17 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
       weed_plant_free(layer);
       return NULL;
     }
-    if (mainw->fd_layer_orig != NULL) weed_layer_free(mainw->fd_layer_orig);
+    if (mainw->fd_layer_orig) weed_layer_free(mainw->fd_layer_orig);
     mainw->fd_layer_orig = layer;
   } else {
-    if (mainw->fd_layer_orig != NULL && mainw->fd_layer_orig != layer) {
+    if (mainw->fd_layer_orig && mainw->fd_layer_orig != layer) {
       weed_layer_free(mainw->fd_layer_orig);
       mainw->fd_layer_orig = layer;
     }
   }
 
   // copy orig layer to new layer
-  if (mainw->fd_layer != NULL) {
+  if (mainw->fd_layer) {
     weed_layer_free(mainw->fd_layer);
     mainw->fd_layer = NULL;
   }
@@ -649,9 +637,9 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
     weed_layer_nullify_pixel_data(mainw->fd_layer);
     weed_layer_free(mainw->fd_layer);
     mainw->fd_layer = NULL;
-    if (pixbuf != NULL) {
+    if (pixbuf) {
       if (mainw->multitrack->frame_pixbuf != mainw->imframe) {
-        if (mainw->multitrack->frame_pixbuf != NULL) lives_widget_object_unref(mainw->multitrack->frame_pixbuf);
+        if (mainw->multitrack->frame_pixbuf) lives_widget_object_unref(mainw->multitrack->frame_pixbuf);
       }
       // set frame_pixbuf, this gets painted in in expose_event
       mainw->multitrack->frame_pixbuf = pixbuf;
@@ -788,10 +776,10 @@ void load_rfx_preview(lives_rfx_t *rfx) {
           lives_range_set_value(LIVES_RANGE(mainw->framedraw_scale), mainw->fd_max_frame);
           mainw->current_file = current_file;
           return;
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
+
   layer = lives_layer_new_for_frame(mainw->current_file, mainw->framedraw_frame);
   if (rfx->num_in_channels > 0 && !(rfx->props & RFX_PROPS_MAY_RESIZE)) {
     img_ext = LIVES_FILE_EXT_PRE;
@@ -801,7 +789,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   if (!pull_frame(layer, img_ext, 0)) {
     weed_plant_free(layer);
   } else {
-    if (mainw->fd_layer_orig != NULL && mainw->fd_layer_orig != layer)
+    if (mainw->fd_layer_orig && mainw->fd_layer_orig != layer)
       weed_layer_free(mainw->fd_layer_orig);
     mainw->fd_layer_orig = layer;
     if (mainw->fd_layer) weed_layer_free(mainw->fd_layer);
@@ -814,21 +802,21 @@ void load_rfx_preview(lives_rfx_t *rfx) {
 
 // change cursor maybe when we enter or leave the framedraw window
 
-boolean on_framedraw_enter(LiVESWidget *widget, LiVESXEventCrossing *event, lives_special_framedraw_rect_t *framedraw) {
-  if (framedraw == NULL && mainw->multitrack != NULL) {
+boolean on_framedraw_enter(LiVESWidget * widget, LiVESXEventCrossing * event, lives_special_framedraw_rect_t *framedraw) {
+  if (!framedraw && mainw->multitrack) {
     framedraw = mainw->multitrack->framedraw;
-    if (framedraw == NULL && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL)
+    if (!framedraw && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL)
       lives_set_cursor_style(LIVES_CURSOR_NORMAL, mainw->multitrack->preview_eventbox);
   }
 
-  if (framedraw == NULL) return FALSE;
-  if (mainw->multitrack != NULL && (mainw->multitrack->track_index == -1 ||
-                                    mainw->multitrack->cursor_style != LIVES_CURSOR_NORMAL)) return FALSE;
+  if (!framedraw) return FALSE;
+  if (mainw->multitrack && (mainw->multitrack->track_index == -1 ||
+                            mainw->multitrack->cursor_style != LIVES_CURSOR_NORMAL)) return FALSE;
 
   switch (framedraw->type) {
   case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
   case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT:
-    if (mainw->multitrack == NULL) {
+    if (!mainw->multitrack) {
       lives_set_cursor_style(LIVES_CURSOR_TOP_LEFT_CORNER, mainw->framedraw);
     } else {
       lives_set_cursor_style(LIVES_CURSOR_TOP_LEFT_CORNER, mainw->multitrack->preview_eventbox);
@@ -837,7 +825,7 @@ boolean on_framedraw_enter(LiVESWidget *widget, LiVESXEventCrossing *event, live
 
   case LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT:
   case LIVES_PARAM_SPECIAL_TYPE_SCALEDPOINT:
-    if (mainw->multitrack == NULL) {
+    if (!mainw->multitrack) {
       lives_set_cursor_style(LIVES_CURSOR_CROSSHAIR, mainw->framedraw);
     } else {
       lives_set_cursor_style(LIVES_CURSOR_CROSSHAIR, mainw->multitrack->preview_eventbox);
@@ -850,7 +838,7 @@ boolean on_framedraw_enter(LiVESWidget *widget, LiVESXEventCrossing *event, live
   return FALSE;
 }
 
-boolean on_framedraw_leave(LiVESWidget *widget, LiVESXEventCrossing *event, lives_special_framedraw_rect_t *framedraw) {
+boolean on_framedraw_leave(LiVESWidget * widget, LiVESXEventCrossing * event, lives_special_framedraw_rect_t *framedraw) {
   if (framedraw == NULL) return FALSE;
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, mainw->framedraw);
   return FALSE;
@@ -859,7 +847,7 @@ boolean on_framedraw_leave(LiVESWidget *widget, LiVESXEventCrossing *event, live
 
 // using these 3 functions, the user can draw on frames
 
-boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, lives_special_framedraw_rect_t *framedraw) {
+boolean on_framedraw_mouse_start(LiVESWidget * widget, LiVESXEventButton * event, lives_special_framedraw_rect_t *framedraw) {
   // user clicked in the framedraw widget (or multitrack playback widget)
   double xend, yend;
 
@@ -871,12 +859,12 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
 
   int xstarti, ystarti;
 
-  if (framedraw == NULL && mainw->multitrack != NULL) framedraw = mainw->multitrack->framedraw;
+  if (!framedraw && mainw->multitrack) framedraw = mainw->multitrack->framedraw;
 
-  if (framedraw == NULL) return FALSE;
-  if (mainw->multitrack != NULL && mainw->multitrack->track_index == -1) return FALSE;
+  if (!framedraw) return FALSE;
+  if (mainw->multitrack && mainw->multitrack->track_index == -1) return FALSE;
 
-  if (framedraw == NULL && mainw->multitrack != NULL && event->button == 3) {
+  if (!framedraw && mainw->multitrack && event->button == 3) {
     // right click brings up context menu
     frame_context(widget, event, LIVES_INT_TO_POINTER(0));
   }
@@ -891,8 +879,8 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
 
   if ((framedraw->type == LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT ||
        framedraw->type == LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK) &&
-      (mainw->multitrack == NULL || mainw->multitrack->cursor_style == 0)) {
-    if (mainw->multitrack == NULL) {
+      (!mainw->multitrack || mainw->multitrack->cursor_style == 0)) {
+    if (!mainw->multitrack) {
       lives_set_cursor_style(LIVES_CURSOR_BOTTOM_RIGHT_CORNER, widget);
     } else {
       lives_set_cursor_style(LIVES_CURSOR_BOTTOM_RIGHT_CORNER, mainw->multitrack->preview_eventbox);
@@ -940,11 +928,13 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
     if (framedraw->xstart_param->dp > 0)
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xstart);
     else
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), (int)(xstart * (double)cfile->hsize + .5));
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),
+                                  (int)(xstart * (double)cfile->hsize + .5));
     if (framedraw->xstart_param->dp > 0)
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), ystart);
     else
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), (int)(ystart * (double)cfile->vsize + .5));
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),
+                                  (int)(ystart * (double)cfile->vsize + .5));
 
     if (framedraw->xend_param->dp > 0)
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), xend);
@@ -961,10 +951,10 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
     break;
   }
 
-  if (mainw->framedraw_reset != NULL) {
+  if (mainw->framedraw_reset) {
     lives_widget_set_sensitive(mainw->framedraw_reset, TRUE);
   }
-  if (mainw->framedraw_preview != NULL) {
+  if (mainw->framedraw_preview) {
     lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
   }
 
@@ -975,7 +965,7 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
   return FALSE;
 }
 
-boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event, lives_special_framedraw_rect_t *framedraw) {
+boolean on_framedraw_mouse_update(LiVESWidget * widget, LiVESXEventMotion * event, lives_special_framedraw_rect_t *framedraw) {
   // pointer moved in the framedraw widget
   int xcurrenti, ycurrenti;
 
@@ -985,9 +975,9 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
 
   if (!b1_held) return FALSE;
 
-  if (framedraw == NULL && mainw->multitrack != NULL) framedraw = mainw->multitrack->framedraw;
-  if (framedraw == NULL) return FALSE;
-  if (mainw->multitrack != NULL && mainw->multitrack->track_index == -1) return FALSE;
+  if (!framedraw && mainw->multitrack) framedraw = mainw->multitrack->framedraw;
+  if (!framedraw) return FALSE;
+  if (mainw->multitrack && mainw->multitrack->track_index == -1) return FALSE;
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                            widget, &xcurrenti, &ycurrenti);
@@ -1021,13 +1011,15 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
       if (framedraw->xend_param->dp > 0)
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), xscale);
       else
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), (int)(xscale * (double)cfile->hsize + .5));
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]),
+                                    (int)(xscale * (double)cfile->hsize + .5));
     } else {
       if (framedraw->xstart_param->dp > 0) {
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), -xscale);
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xcurrent);
       } else {
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), (int)(-xscale * (double)cfile->hsize - .5));
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]),
+                                    (int)(-xscale * (double)cfile->hsize - .5));
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),
                                     (int)(xcurrent * (double)cfile->hsize + .5));
       }
@@ -1037,13 +1029,15 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
       if (framedraw->yend_param->dp > 0)
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), yscale);
       else
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), (int)(yscale * (double)cfile->vsize + .5));
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]),
+                                    (int)(yscale * (double)cfile->vsize + .5));
     } else {
       if (framedraw->xstart_param->dp > 0) {
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), -yscale);
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), ycurrent);
       } else {
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), (int)(-yscale * (double)cfile->vsize - .5));
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]),
+                                    (int)(-yscale * (double)cfile->vsize - .5));
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),
                                     (int)(ycurrent * (double)cfile->vsize + .5));
       }
@@ -1064,7 +1058,8 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), xstart);
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xcurrent);
       } else {
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), (int)(xstart * (double)cfile->hsize + .5));
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]),
+                                    (int)(xstart * (double)cfile->hsize + .5));
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),
                                     (int)(xcurrent * (double)cfile->hsize + .5));
       }
@@ -1081,7 +1076,8 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), ystart);
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), ycurrent);
       } else {
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), (int)(ystart * (double)cfile->vsize + .5));
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]),
+                                    (int)(ystart * (double)cfile->vsize + .5));
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),
                                     (int)(ycurrent * (double)cfile->vsize + .5));
       }
@@ -1123,10 +1119,10 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
   lives_widget_context_update();
 #endif
 
-  if (mainw->framedraw_reset != NULL) {
+  if (mainw->framedraw_reset) {
     lives_widget_set_sensitive(mainw->framedraw_reset, TRUE);
   }
-  if (mainw->framedraw_preview != NULL) {
+  if (mainw->framedraw_preview) {
     lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
   }
 
@@ -1136,7 +1132,7 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
   return FALSE;
 }
 
-boolean on_framedraw_mouse_reset(LiVESWidget *widget, LiVESXEventButton *event, lives_special_framedraw_rect_t *framedraw) {
+boolean on_framedraw_mouse_reset(LiVESWidget * widget, LiVESXEventButton * event, lives_special_framedraw_rect_t *framedraw) {
   // user released the mouse button in framedraw widget
   int xcurrenti, ycurrenti;
   int fd_width, fd_height, width, height;
@@ -1145,9 +1141,9 @@ boolean on_framedraw_mouse_reset(LiVESWidget *widget, LiVESXEventButton *event, 
 
   b1_held = FALSE;
 
-  if (framedraw == NULL && mainw->multitrack != NULL) framedraw = mainw->multitrack->framedraw;
-  if (framedraw == NULL) return FALSE;
-  if (mainw->multitrack != NULL && mainw->multitrack->track_index == -1) return FALSE;
+  if (!framedraw && mainw->multitrack) framedraw = mainw->multitrack->framedraw;
+  if (!framedraw) return FALSE;
+  if (mainw->multitrack && mainw->multitrack->track_index == -1) return FALSE;
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                            widget, &xcurrenti, &ycurrenti);
@@ -1170,7 +1166,7 @@ boolean on_framedraw_mouse_reset(LiVESWidget *widget, LiVESXEventButton *event, 
   switch (framedraw->type) {
   case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT:
   case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
-    if (mainw->multitrack == NULL) {
+    if (!mainw->multitrack) {
       lives_set_cursor_style(LIVES_CURSOR_TOP_LEFT_CORNER, widget);
     } else if (mainw->multitrack->cursor_style == 0) {
       lives_set_cursor_style(LIVES_CURSOR_TOP_LEFT_CORNER, mainw->multitrack->preview_eventbox);
@@ -1227,11 +1223,13 @@ boolean on_framedraw_mouse_reset(LiVESWidget *widget, LiVESXEventButton *event, 
     if (framedraw->xstart_param->dp > 0)
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xstart);
     else
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), (int)(xstart * (double)cfile->hsize + .5));
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),
+                                  (int)(xstart * (double)cfile->hsize + .5));
     if (framedraw->xstart_param->dp > 0)
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), ystart);
     else
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), (int)(ystart * (double)cfile->vsize + .5));
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),
+                                  (int)(ystart * (double)cfile->vsize + .5));
     break;
 
   default:
@@ -1241,11 +1239,11 @@ boolean on_framedraw_mouse_reset(LiVESWidget *widget, LiVESXEventButton *event, 
   return FALSE;
 }
 
-boolean on_framedraw_scroll(LiVESWidget *widget, LiVESXEventScroll *event,
+boolean on_framedraw_scroll(LiVESWidget * widget, LiVESXEventScroll * event,
                             lives_special_framedraw_rect_t *framedraw) {
-  if (framedraw == NULL && mainw->multitrack != NULL) framedraw = mainw->multitrack->framedraw;
-  if (framedraw == NULL) return FALSE;
-  if (mainw->multitrack != NULL && mainw->multitrack->track_index == -1) return FALSE;
+  if (!framedraw && mainw->multitrack) framedraw = mainw->multitrack->framedraw;
+  if (!framedraw) return FALSE;
+  if (mainw->multitrack && mainw->multitrack->track_index == -1) return FALSE;
 
   if (framedraw->type == LIVES_PARAM_SPECIAL_TYPE_SCALEDPOINT) {
     LiVESSpinButton *spb = (LiVESSpinButton *)framedraw->scale_param->widgets[0];
@@ -1260,7 +1258,7 @@ boolean on_framedraw_scroll(LiVESWidget *widget, LiVESXEventScroll *event,
 }
 
 
-void after_framedraw_widget_changed(LiVESWidget *widget, lives_special_framedraw_rect_t *framedraw) {
+void after_framedraw_widget_changed(LiVESWidget * widget, lives_special_framedraw_rect_t *framedraw) {
   if (mainw->block_param_updates || noupdate) return;
 
   // redraw mask when spin values change
@@ -1274,29 +1272,29 @@ void after_framedraw_widget_changed(LiVESWidget *widget, lives_special_framedraw
 }
 
 
-void on_framedraw_reset_clicked(LiVESButton *button, lives_special_framedraw_rect_t *framedraw) {
+void on_framedraw_reset_clicked(LiVESButton * button, lives_special_framedraw_rect_t *framedraw) {
   // reset to defaults
-  if (fx_dialog[0] != NULL) {
-    if (fx_dialog[0]->okbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->okbutton, FALSE);
-    if (fx_dialog[0]->cancelbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->cancelbutton, FALSE);
+  if (fx_dialog[0]) {
+    if (fx_dialog[0]->okbutton) lives_widget_set_sensitive(fx_dialog[0]->okbutton, FALSE);
+    if (fx_dialog[0]->cancelbutton) lives_widget_set_sensitive(fx_dialog[0]->cancelbutton, FALSE);
   }
 
   noupdate = TRUE;
-  if (framedraw->xend_param != NULL) {
+  if (framedraw->xend_param) {
     if (framedraw->xend_param->dp == 0)
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]),
                                   (double)get_int_param(framedraw->xend_param->def));
     else
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), get_double_param(framedraw->xend_param->def));
   }
-  if (framedraw->yend_param != NULL) {
+  if (framedraw->yend_param) {
     if (framedraw->yend_param->dp == 0)
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]),
                                   (double)get_int_param(framedraw->yend_param->def));
     else
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), get_double_param(framedraw->yend_param->def));
   }
-  if (framedraw->xstart_param != NULL) {
+  if (framedraw->xstart_param) {
     if (framedraw->xstart_param->dp == 0)
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),
                                   (double)get_int_param(framedraw->xstart_param->def));
@@ -1304,7 +1302,7 @@ void on_framedraw_reset_clicked(LiVESButton *button, lives_special_framedraw_rec
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),
                                   get_double_param(framedraw->xstart_param->def));
   }
-  if (framedraw->ystart_param != NULL) {
+  if (framedraw->ystart_param) {
     if (framedraw->ystart_param->dp == 0)
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),
                                   (double)get_int_param(framedraw->ystart_param->def));
@@ -1313,10 +1311,10 @@ void on_framedraw_reset_clicked(LiVESButton *button, lives_special_framedraw_rec
                                   get_double_param(framedraw->ystart_param->def));
   }
 
-  if (mainw->framedraw_reset != NULL) {
+  if (mainw->framedraw_reset) {
     lives_widget_set_sensitive(mainw->framedraw_reset, TRUE);
   }
-  if (mainw->framedraw_preview != NULL) {
+  if (mainw->framedraw_preview) {
     lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
   }
 
@@ -1326,8 +1324,8 @@ void on_framedraw_reset_clicked(LiVESButton *button, lives_special_framedraw_rec
   noupdate = FALSE;
 
   framedraw_redraw(framedraw, mainw->fd_layer_orig);
-  if (fx_dialog[0] != NULL) {
-    if (fx_dialog[0]->okbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->okbutton, TRUE);
-    if (fx_dialog[0]->cancelbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->cancelbutton, TRUE);
+  if (fx_dialog[0]) {
+    if (fx_dialog[0]->okbutton) lives_widget_set_sensitive(fx_dialog[0]->okbutton, TRUE);
+    if (fx_dialog[0]->cancelbutton) lives_widget_set_sensitive(fx_dialog[0]->cancelbutton, TRUE);
   }
 }

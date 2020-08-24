@@ -3817,7 +3817,8 @@ boolean switch_aud_to_pulse(boolean set_in_prefs) {
     lives_widget_set_sensitive(mainw->ext_audio_checkbutton, TRUE);
     lives_widget_set_sensitive(mainw->mute_audio, TRUE);
     lives_widget_set_sensitive(mainw->m_mutebutton, TRUE);
-    lives_widget_set_sensitive(mainw->p_mutebutton, TRUE);
+    if (mainw->play_window)
+      lives_widget_set_sensitive(mainw->p_mutebutton, TRUE);
 
     return retval;
   }

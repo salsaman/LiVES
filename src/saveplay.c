@@ -2298,8 +2298,8 @@ void play_file(void) {
   if (!mainw->multitrack && CURRENT_CLIP_HAS_VIDEO) {
     lives_widget_set_frozen(mainw->spinbutton_start, TRUE);
     lives_widget_set_frozen(mainw->spinbutton_end, TRUE);
-    lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
-    lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
+    //lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
+    //lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
   }
 
   /// note, here our start is in frames, in save_file it is in seconds !
@@ -3327,8 +3327,8 @@ void play_file(void) {
   if (!mainw->multitrack && CURRENT_CLIP_HAS_VIDEO) {
     lives_widget_set_sensitive(mainw->spinbutton_start, TRUE);
     lives_widget_set_sensitive(mainw->spinbutton_end, TRUE);
-    lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
-    lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
+    //lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
+    //lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
   }
 
   /// need to do this here, in case we want to preview with only a generator and no other clips (which will close to -1)

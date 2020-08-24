@@ -3094,7 +3094,7 @@ static boolean setfx(weed_plant_t *plant, weed_plant_t *tparam, int pnum, int na
               if (xgroup == group) {
                   weed_set_boolean_value(tparam, WEED_LEAF_HOST_DEFAULT, WEED_FALSE);
 		// *INDENT-OFF*
-        }}}}}}
+      }}}}}}
 // *INDENT-ON*
 
 grpinvalid:

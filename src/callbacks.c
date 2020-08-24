@@ -5533,7 +5533,7 @@ boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
   if (got_new_handle && !strlen(old_set)) migrate_layouts(NULL, mainw->set_name);
 
   if (*old_set && strcmp(old_set, mainw->set_name)) {
-    layout_map_dir = lives_build_filename(prefs->workdir, old_set, LAYOUTS_DIRNAME, LIVES_DIR_SEP, NULL);
+    layout_map_dir = lives_build_path(prefs->workdir, old_set, LAYOUTS_DIRNAME, NULL);
     layout_map_file = lives_build_filename(layout_map_dir, LAYOUT_MAP_FILENAME, NULL);
     // update details for layouts - needs_set, current_layout_map and affected_layout_map
     if (lives_file_test(layout_map_file, LIVES_FILE_TEST_EXISTS)) {
@@ -7307,6 +7307,7 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
   }
 
   dfile = lives_strdup_printf("%s" LIVES_DIR_SEP "fsp%d" LIVES_DIR_SEP, prefs->workdir, capable->mainpid);
+
   if (!lives_make_writeable_dir(dfile)) {
     workdir_warning();
     lives_free(dfile);

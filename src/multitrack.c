@@ -22036,7 +22036,7 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
   size_t chlen;
 
   if (old_set_name != NULL) {
-    changefrom = lives_build_filename(prefs->workdir, old_set_name, LAYOUTS_DIRNAME LIVES_DIR_SEP, NULL);
+    changefrom = lives_build_path(prefs->workdir, old_set_name, LAYOUTS_DIRNAME, NULL);
     chlen = strlen(changefrom);
   } else chlen = 0;
 

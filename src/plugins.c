@@ -1106,8 +1106,9 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
     return NULL;
   }
 
-  plugname = lives_strdup_printf("%s%s%s" LIVES_DIR_SEP "%s." DLL_NAME, prefs->lib_dir, PLUGIN_EXEC_DIR,
-                                 PLUGIN_VID_PLAYBACK, name);
+  tmp = lives_strdup_printf("%s.%s", name, DLL_NAME);
+  plugname = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_VID_PLAYBACK, tmp, NULL);
+  lives_free(tmp);
 
   handle = dlopen(plugname, dlflags);
 
@@ -2417,7 +2418,7 @@ boolean chill_decoder_plugin(int fileno) {
 
 lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
   lives_decoder_sys_t *dplug;
-  char *plugname;
+  char *plugname, *tmp;
   boolean OK = TRUE;
   const char *err;
   int dlflags = RTLD_NOW | RTLD_LOCAL;
@@ -2426,8 +2427,9 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
 
   dplug->name = NULL;
 
-  plugname = lives_strdup_printf("%s%s%s" LIVES_DIR_SEP "%s." DLL_NAME, prefs->lib_dir,
-                                 PLUGIN_EXEC_DIR, PLUGIN_DECODERS, plname);
+  tmp = lives_strdup_printf("%s.%s", plname, DLL_NAME);
+  plugname = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_DECODERS, tmp, NULL);
+  lives_free(tmp);
 
 #ifdef RTLD_DEEPBIND
   dlflags |= RTLD_DEEPBIND;

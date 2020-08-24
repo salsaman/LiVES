@@ -100,7 +100,7 @@ LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog *dialog, bool
   size_t chklen = strlen(LIVES_DEF_WORK_NAME) + strlen(LIVES_DIR_SEP) * 2;
   char *tmp;
 
-  if (pdirname == NULL || *pdirname == NULL) return LIVES_RESPONSE_RETRY;
+  if (!pdirname || !*pdirname) return LIVES_RESPONSE_RETRY;
 
   if (strlen(*pdirname) > (PATH_MAX - MAX_SET_NAME_LEN * 2)) {
     do_error_dialog(_("Directory name is too long !"));
@@ -123,7 +123,7 @@ LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog *dialog, bool
     if (lives_file_test(*pdirname, LIVES_FILE_TEST_EXISTS) &&
         (strlen(*pdirname) < chklen || strncmp(*pdirname + strlen(*pdirname) - chklen,
             LIVES_DIR_SEP LIVES_DEF_WORK_NAME LIVES_DIR_SEP, chklen))) {
-      tmp = lives_strdup_printf("%s%s%s", *pdirname, LIVES_DEF_WORK_NAME, LIVES_DIR_SEP);
+      tmp = lives_build_path(*pdirname, LIVES_DEF_WORK_NAME, NULL);
       lives_free(*pdirname);
       *pdirname = tmp;
     }

@@ -3940,7 +3940,7 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   char *filename = NULL;
 
   int response;
-  register int i;
+  int i;
 
   if (!title) {
     if (act == LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE) {
@@ -3959,17 +3959,18 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
     if (LIVES_IS_INTERACTIVE) {
       chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
                                             LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
-                                            LIVES_STOCK_LABEL_OPEN, LIVES_RESPONSE_ACCEPT,
-                                            NULL);
+                                            LIVES_STOCK_LABEL_OPEN, LIVES_RESPONSE_ACCEPT, NULL);
     } else
       chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
-                                            LIVES_STOCK_LABEL_OPEN, LIVES_RESPONSE_ACCEPT,
-                                            NULL);
+                                            LIVES_STOCK_LABEL_OPEN, LIVES_RESPONSE_ACCEPT, NULL);
   } else {
     chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
                                           LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
-                                          LIVES_STOCK_LABEL_SAVE, LIVES_RESPONSE_ACCEPT,
-                                          NULL);
+                                          LIVES_STOCK_LABEL_SAVE, LIVES_RESPONSE_ACCEPT, NULL);
+  }
+
+  if (dir) {
+    gtk_file_chooser_set_current_folder(LIVES_FILE_CHOOSER(chooser), dir);
   }
 
   lives_widget_show_all(chooser);
@@ -3984,14 +3985,14 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
     GtkFileFilter *filter = gtk_file_filter_new();
     for (i = 0; filt[i]; i++) gtk_file_filter_add_pattern(filter, filt[i]);
     gtk_file_chooser_set_filter(LIVES_FILE_CHOOSER(chooser), filter);
-    if (fname && i == 1 && act == LIVES_FILE_CHOOSER_ACTION_SAVE)
+    if (i == 1 && act == LIVES_FILE_CHOOSER_ACTION_SAVE)
       gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), filt[0]); //utf-8
   }
 
   if (fname) {
     if (act == LIVES_FILE_CHOOSER_ACTION_SAVE || act == LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER) { // prevent assertion in gtk+
       gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), fname); // utf-8
-      if (fname != NULL && dir != NULL) {
+      if (fname && dir) {
         char *ffname = lives_build_filename(dir, fname, NULL);
         gtk_file_chooser_select_filename(LIVES_FILE_CHOOSER(chooser), ffname); // must be dir and file
         lives_free(ffname);
@@ -3999,12 +4000,12 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
     }
   }
 
-  if (extra_widget != NULL && extra_widget != LIVES_MAIN_WINDOW_WIDGET) {
+  if (extra_widget && extra_widget != LIVES_MAIN_WINDOW_WIDGET) {
     gtk_file_chooser_set_extra_widget(LIVES_FILE_CHOOSER(chooser), extra_widget);
     if (palette->style & STYLE_1) {
       LiVESWidget *parent = lives_widget_get_parent(extra_widget);
 
-      while (parent != NULL) {
+      while (parent) {
         lives_widget_set_fg_color(parent, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
         lives_widget_set_bg_color(parent, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
         parent = lives_widget_get_parent(parent);
@@ -4043,13 +4044,13 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   mainw->fc_buttonresponse = LIVES_RESPONSE_NONE;
   //lives_signal_sync_connect(chooser, LIVES_WIDGET_RESPONSE_SIGNAL, LIVES_GUI_CALLBACK(chooser_response), NULL);
 
-  if (extra_widget == LIVES_MAIN_WINDOW_WIDGET && LIVES_MAIN_WINDOW_WIDGET != NULL) {
-    return (char *)chooser; // kludge to allow custom adding of extra widgets
-  }
-
   if (dir) {
     gtk_file_chooser_set_current_folder(LIVES_FILE_CHOOSER(chooser), dir);
     gtk_file_chooser_add_shortcut_folder(LIVES_FILE_CHOOSER(chooser), dir, NULL);
+  }
+
+  if (extra_widget == LIVES_MAIN_WINDOW_WIDGET && LIVES_MAIN_WINDOW_WIDGET) {
+    return (char *)chooser; // kludge to allow custom adding of extra widgets
   }
 
 rundlg:
@@ -4060,7 +4061,7 @@ rundlg:
     lives_free(tmp);
   } else filename = NULL;
 
-  if (filename != NULL && act == LIVES_FILE_CHOOSER_ACTION_SAVE) {
+  if (filename && act == LIVES_FILE_CHOOSER_ACTION_SAVE) {
     if (!check_file(filename, TRUE)) {
       lives_free(filename);
       filename = NULL;
@@ -4232,7 +4233,7 @@ _entryw *create_cds_dialog(int type) {
                                               "What would you like to do ?\n"));
     else labeltext = (_("The current clip set has not been saved.\nWhat would you like to do ?\n"));
   } else if (type == 2 || type == 3) {
-    if ((mainw->multitrack != NULL && mainw->multitrack->changed) || (mainw->stored_event_list != NULL &&
+    if ((mainw->multitrack && mainw->multitrack->changed) || (mainw->stored_event_list &&
         mainw->stored_event_list_changed)) {
       labeltext = (_("The current layout has not been saved.\nWhat would you like to do ?\n"));
     } else {
@@ -4251,7 +4252,7 @@ _entryw *create_cds_dialog(int type) {
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(cdsw->dialog));
 
-  if (labeltext != NULL) lives_free(labeltext);
+  if (labeltext) lives_free(labeltext);
 
   if (type == 1) {
     LiVESWidget *checkbutton;
@@ -4866,7 +4867,7 @@ LiVESWidget *add_list_expander(LiVESBox * box, const char *title, int width, int
 
   lives_text_buffer_insert_at_cursor(textbuffer, "\n", strlen("\n"));
 
-  for (; xlist != NULL; xlist = xlist->next) {
+  for (; xlist; xlist = xlist->next) {
     lives_text_buffer_insert_at_cursor(textbuffer, (const char *)xlist->data, strlen((char *)xlist->data));
     lives_text_buffer_insert_at_cursor(textbuffer, "\n", strlen("\n"));
   }
@@ -4891,7 +4892,7 @@ static void utsense(LiVESToggleButton * togglebutton, livespointer user_data) {
   if (!lives_toggle_button_get_active(togglebutton)) return;
   lives_widget_set_sensitive(spinbutton_width, sensitive);
   lives_widget_set_sensitive(spinbutton_height, sensitive);
-  if (aspect != NULL) lives_widget_set_sensitive(aspect->lockbutton, sensitive);
+  if (aspect) lives_widget_set_sensitive(aspect->lockbutton, sensitive);
 }
 
 static void dl_url_changed(LiVESWidget * urlw, livespointer user_data) {
@@ -5811,7 +5812,7 @@ void draw_dsu_widget(LiVESWidget * dsu_widget) {
 
 static void dsu_set_toplabel(void) {
   char *ltext = NULL, *dtxt, *dtxt2;
-  widget_opts.font_size = LIVES_FONT_SIZE_LARGE;
+  widget_opts.text_size = LIVES_TEXT_SIZE_LARGE;
 
   if (mainw->dsu_valid && !dsq->scanning) {
     if (capable->ds_free < prefs->ds_crit_level) {
@@ -5825,7 +5826,7 @@ static void dsu_set_toplabel(void) {
       widget_opts.use_markup = TRUE;
       lives_label_set_text(LIVES_LABEL(dsq->top_label), ltext);
       widget_opts.use_markup = FALSE;
-      widget_opts.font_size = LIVES_FONT_SIZE_NORMAL;
+      widget_opts.text_size = LIVES_TEXT_SIZE_NORMAL;
       if (!dsq->crit_dism) {
         dsq->crit_dism = TRUE;
         lives_free(ltext);
@@ -5863,7 +5864,7 @@ static void dsu_set_toplabel(void) {
   }
   lives_label_set_text(LIVES_LABEL(dsq->top_label), ltext);
   lives_free(ltext);
-  widget_opts.font_size = LIVES_FONT_SIZE_NORMAL;
+  widget_opts.text_size = LIVES_TEXT_SIZE_NORMAL;
 }
 
 LIVES_LOCAL_INLINE char *dsu_label_notset(void) {return _("Value not set");}
@@ -6295,13 +6296,13 @@ void run_diskspace_dialog(void) {
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
   layout = lives_layout_new(LIVES_BOX(dialog_vbox));
 
-  widget_opts.font_size = LIVES_FONT_SIZE_LARGE;
+  widget_opts.text_size = LIVES_TEXT_SIZE_LARGE;
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   dsq->top_label = lives_layout_add_label(LIVES_LAYOUT(layout), NULL, FALSE);
   dsu_set_toplabel();
 
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
-  widget_opts.font_size = LIVES_FONT_SIZE_NORMAL;
+  widget_opts.text_size = LIVES_TEXT_SIZE_NORMAL;
 
   lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
 
@@ -6330,7 +6331,7 @@ void run_diskspace_dialog(void) {
 
   lives_layout_add_row(LIVES_LAYOUT(layout));
 
-  widget_opts.font_size = LIVES_FONT_SIZE_LARGE;
+  widget_opts.text_size = LIVES_TEXT_SIZE_LARGE;
   widget_opts.use_markup = TRUE;
   lives_layout_add_label(LIVES_LAYOUT(layout), (_("<b>Disk space used by LiVES:</b>")), TRUE);
   widget_opts.use_markup = FALSE;
@@ -6344,7 +6345,7 @@ void run_diskspace_dialog(void) {
     lives_free(txt);
   }
 
-  widget_opts.font_size = LIVES_FONT_SIZE_NORMAL;
+  widget_opts.text_size = LIVES_TEXT_SIZE_NORMAL;
 
   add_hsep_to_box(LIVES_BOX(dialog_vbox));
 
@@ -6675,7 +6676,7 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
   if (msgno >= mainw->n_messages) msgno = mainw->n_messages - 1;
 
   // redraw the layout ///////////////////////
-  lives_widget_set_font_size(widget, LIVES_WIDGET_STATE_NORMAL, lives_textsize_to_string(prefs->msg_textsize));
+  lives_widget_set_text_size(widget, LIVES_WIDGET_STATE_NORMAL, lives_textsize_to_string(prefs->msg_textsize));
 
   layout = layout_nth_message_at_bottom(msgno, width, height, LIVES_WIDGET(widget), &nlines);
   if (!LINGO_IS_LAYOUT(layout) || layout == NULL) {

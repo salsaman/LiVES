@@ -115,7 +115,7 @@ boolean save_clip_values(int which) {
   do {
     THREADVAR(com_failed) = THREADVAR(write_failed) = FALSE;
     mainw->clip_header = fopen(lives_header_new, "w");
-    if (mainw->clip_header == NULL) {
+    if (!mainw->clip_header) {
       retval = do_write_failed_error_s_with_retry(lives_header_new, lives_strerror(errno));
       if (retval == LIVES_RESPONSE_CANCEL) {
         set_signal_handlers((SignalHandlerPointer)catch_sigint);
@@ -430,7 +430,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
           response = LIVES_RESPONSE_OK;
           create_frame_index(mainw->current_file, TRUE, cfile->fps * (start == 0 ? 0 : start - 1),
                              frames == 0 ? cfile->frames : frames);
-          if (cfile->frame_index == NULL) {
+          if (!cfile->frame_index) {
             response = do_memory_error_dialog(what, (frames == 0 ? cfile->frames : frames) * 4);
           }
         } while (response == LIVES_RESPONSE_RETRY);
@@ -1105,7 +1105,7 @@ static void save_subs_to_file(lives_clip_t *sfile, char *fname) {
   char *ext;
   lives_subtitle_type_t otype, itype;
 
-  if (sfile->subt == NULL) return;
+  if (!sfile->subt) return;
 
   itype = sfile->subt->type;
 
@@ -1188,8 +1188,8 @@ void save_frame(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_free(filt[0]);
   lives_free(ttl);
 
-  if (filename == NULL) return;
-  if (!strlen(filename)) {
+  if (!filename) return;
+  if (!*filename) {
     lives_free(filename);
     return;
   }
@@ -1294,7 +1294,7 @@ void save_file(int clip, int start, int end, const char *filename) {
   // symlinks are now created in /tmp (for dynebolic)
   // then encode the symlinked frames
 
-  if (filename == NULL) {
+  if (!filename) {
     // prompt for encoder type/output format
     if (prefs->show_rdet) {
       int response;
@@ -1341,7 +1341,7 @@ void save_file(int clip, int start, int end, const char *filename) {
     }
   }
 
-  if (enc_exec_name == NULL)
+  if (!enc_exec_name)
     enc_exec_name = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS, prefs->encoder.name, NULL);
 
   // get file extension
@@ -1357,12 +1357,12 @@ void save_file(int clip, int start, int end, const char *filename) {
     lives_widget_set_bg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
-  if (filename == NULL) {
+  if (!filename) {
     char *ttl = (_("Save Clip"));
     do {
       lives_freep((void **)&n_file_name);
       n_file_name = choose_file(mainw->vid_save_dir, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_SAVE, ttl, hbox);
-      if (n_file_name == NULL) return;
+      if (!n_file_name) return;
     } while (!strlen(n_file_name));
     lives_snprintf(mainw->vid_save_dir, PATH_MAX, "%s", n_file_name);
     get_dirname(mainw->vid_save_dir);
@@ -1386,11 +1386,11 @@ void save_file(int clip, int start, int end, const char *filename) {
     }
   }
 
-  if (full_file_name == NULL) {
+  if (!full_file_name) {
     full_file_name = lives_strdup(n_file_name);
   }
 
-  if (filename == NULL && recheck_name) {
+  if (!filename && recheck_name) {
     if (!check_file(full_file_name, strcmp(full_file_name, n_file_name))) {
       lives_free(full_file_name);
       lives_free(n_file_name);
@@ -1460,9 +1460,9 @@ void save_file(int clip, int start, int end, const char *filename) {
     if (!THREADVAR(com_failed)) {
       extra_params = plugin_run_param_window(buff, NULL, NULL);
     }
-    if (extra_params == NULL) {
+    if (!extra_params) {
       lives_free(fps_string);
-      if (mainw->multitrack == NULL) {
+      if (!mainw->multitrack) {
         switch_to_file(mainw->current_file, current_file);
       }
       lives_freep((void **)&mainw->subt_save_file);
@@ -1529,7 +1529,7 @@ void save_file(int clip, int start, int end, const char *filename) {
     mainw->current_file = new_file;
 
     if (THREADVAR(com_failed)) {
-      char *permitname = lives_build_filename(prefs->workdir, cfile->handle, TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
+      char *permitname = lives_build_filename(prefs->workdir, cfile->handle, TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
 #ifdef IS_MINGW
       // kill any active processes: for other OSes the backend does this
       lives_kill_subprocesses(cfile->handle, TRUE);
@@ -1540,7 +1540,7 @@ void save_file(int clip, int start, int end, const char *filename) {
       lives_freep((void **)&cfile);
       if (mainw->first_free_file == ALL_USED || mainw->first_free_file > new_file)
         mainw->first_free_file = new_file;
-      if (mainw->multitrack == NULL) {
+      if (!mainw->multitrack) {
         switch_to_file(mainw->current_file, current_file);
       }
       d_print_cancelled();
@@ -1550,7 +1550,7 @@ void save_file(int clip, int start, int end, const char *filename) {
 
     cfile->nopreview = TRUE;
     if (!(do_progress_dialog(TRUE, TRUE, _("Linking selection")))) {
-      char *permitname = lives_build_filename(prefs->workdir, cfile->handle, TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
+      char *permitname = lives_build_filename(prefs->workdir, cfile->handle, TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
 #ifdef IS_MINGW
       // kill any active processes: for other OSes the backend does this
       lives_kill_subprocesses(cfile->handle, TRUE);
@@ -1563,7 +1563,7 @@ void save_file(int clip, int start, int end, const char *filename) {
       if (mainw->first_free_file == ALL_USED || mainw->first_free_file > new_file)
         mainw->first_free_file = new_file;
 
-      if (mainw->multitrack == NULL) {
+      if (!mainw->multitrack) {
         switch_to_file(mainw->current_file, current_file);
       }
       if (mainw->error) d_print_failed();
@@ -1592,7 +1592,7 @@ void save_file(int clip, int start, int end, const char *filename) {
 
   if (!check_encoder_restrictions(FALSE, FALSE, save_all)) {
     if (!save_all && !safe_symlinks) {
-      char *permitname = lives_build_filename(prefs->workdir, nfile->handle, TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
+      char *permitname = lives_build_filename(prefs->workdir, nfile->handle, TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
 #ifdef IS_MINGW
       lives_kill_subprocesses(nfile->handle, TRUE);
 #endif
@@ -1604,7 +1604,7 @@ void save_file(int clip, int start, int end, const char *filename) {
       mainw->files[new_file] = NULL;
       if (mainw->first_free_file == ALL_USED || new_file) mainw->first_free_file = new_file;
     }
-    if (mainw->multitrack == NULL) {
+    if (!mainw->multitrack) {
       switch_to_file(mainw->current_file, current_file);
     }
     d_print_cancelled();
@@ -1655,7 +1655,7 @@ void save_file(int clip, int start, int end, const char *filename) {
       lives_system(com, TRUE);
       lives_free(com);
       cfile->nopreview = FALSE;
-      if (mainw->multitrack == NULL) {
+      if (!mainw->multitrack) {
         switch_to_file(mainw->current_file, current_file);
       }
       d_print_cancelled();
@@ -1669,7 +1669,7 @@ void save_file(int clip, int start, int end, const char *filename) {
       lives_system(com, TRUE);
       lives_free(com);
       cfile->nopreview = FALSE;
-      if (mainw->multitrack == NULL) {
+      if (!mainw->multitrack) {
         switch_to_file(mainw->current_file, current_file);
       }
       if (mainw->error) d_print_failed();
@@ -1702,7 +1702,7 @@ void save_file(int clip, int start, int end, const char *filename) {
         lives_free(msg);
         lives_freep((void **)&mainw->subt_save_file);
         if (ret > 0) d_print_cancelled();
-        if (mainw->multitrack == NULL) {
+        if (!mainw->multitrack) {
           switch_to_file(mainw->current_file, current_file);
         }
         return;
@@ -1916,7 +1916,7 @@ void save_file(int clip, int start, int end, const char *filename) {
       mainw->no_switch_dprint = FALSE;
       lives_free(full_file_name);
       if (!save_all && !safe_symlinks) {
-        char *permitname = lives_build_filename(prefs->workdir, cfile->handle, TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
+        char *permitname = lives_build_filename(prefs->workdir, cfile->handle, TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
         lives_kill_subprocesses(cfile->handle, TRUE);
         lives_touch(permitname);
         lives_free(permitname);
@@ -1951,7 +1951,7 @@ void save_file(int clip, int start, int end, const char *filename) {
       mainw->no_switch_dprint = FALSE;
       lives_free(full_file_name);
       if (!save_all && !safe_symlinks) {
-        char *permitname = lives_build_filename(prefs->workdir, cfile->handle, TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
+        char *permitname = lives_build_filename(prefs->workdir, cfile->handle, TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
         lives_kill_subprocesses(cfile->handle, TRUE);
         lives_touch(permitname);
         lives_free(permitname);
@@ -1966,7 +1966,7 @@ void save_file(int clip, int start, int end, const char *filename) {
         lives_free(com);
       }
 
-      if (mainw->multitrack == NULL) {
+      if (!mainw->multitrack) {
         switch_to_file(mainw->current_file, current_file);
       }
       retval = do_error_dialog(_("\n\nEncoder error - output file was not created !\n"));
@@ -2044,7 +2044,7 @@ void save_file(int clip, int start, int end, const char *filename) {
       }
     } else {
       if (!safe_symlinks) {
-        char *permitname = lives_build_filename(prefs->workdir, nfile->handle, TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
+        char *permitname = lives_build_filename(prefs->workdir, nfile->handle, TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
 #ifdef IS_MINGW
         lives_kill_subprocesses(nfile->handle, TRUE);
 #endif
@@ -2064,7 +2064,7 @@ void save_file(int clip, int start, int end, const char *filename) {
     }
   }
 
-  if (mainw->multitrack == NULL) {
+  if (!mainw->multitrack) {
     switch_to_file(mainw->current_file, current_file);
   }
   if (mainw->iochan) {
@@ -2182,7 +2182,7 @@ char *prep_audio_player(char *com2, char *com3, frames_t audio_end, int arate, i
                                 cfile->fps, mainw->audio_start, audio_end, loop,
                                 arate, cfile->achans, cfile->asampsize, asigned, aendian);
     }
-    if (mainw->multitrack == NULL && com) lives_system(com, FALSE);
+    if (!mainw->multitrack && com) lives_system(com, FALSE);
   }
   return stopcom;
 }
@@ -2398,7 +2398,7 @@ void play_file(void) {
       || (mainw->event_list && (!mainw->is_rendering || !mainw->preview || mainw->preview_rendering)))
     audio_cache_init();
 
-  if (mainw->blend_file != -1 && mainw->files[mainw->blend_file] == NULL) mainw->blend_file = -1;
+  if (mainw->blend_file != -1 && !IS_VALID_CLIP(mainw->blend_file)) mainw->blend_file = -1;
 
   lives_widget_set_sensitive(mainw->m_stopbutton, TRUE);
   mainw->playing_file = mainw->current_file;
@@ -2414,7 +2414,7 @@ void play_file(void) {
     mainw->record_starting = TRUE;
   }
 
-  if (mainw->double_size && mainw->multitrack == NULL) {
+  if (mainw->double_size && !mainw->multitrack) {
     lives_widget_hide(mainw->message_box);
   }
 
@@ -2442,7 +2442,7 @@ void play_file(void) {
                              is_realtime_aplayer(audio_player))
                              && mainw->current_file > 0);
 
-  if (cfile->frames == 0 && mainw->multitrack == NULL) {
+  if (cfile->frames == 0 && !mainw->multitrack) {
     if (mainw->preview_box && lives_widget_get_parent(mainw->preview_box)) {
 
       lives_container_remove(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
@@ -2543,7 +2543,7 @@ void play_file(void) {
       com2 = lives_strdup("gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled false 2>/dev/null ;");
     } else com2 = lives_strdup("");
 #endif
-    if (com2 == NULL) com2 = lives_strdup("");
+    if (!com2) com2 = lives_strdup("");
   }
 
   if (!mainw->foreign && prefs->midisynch && !mainw->preview) {
@@ -2566,7 +2566,7 @@ void play_file(void) {
     mainw->last_blend_file = -1;
 
     // show the framebar
-    if (mainw->multitrack == NULL && !mainw->faded
+    if (!mainw->multitrack && !mainw->faded
         && (!prefs->hide_framebar &&
             (!mainw->fs || (widget_opts.monitor + 1 != prefs->play_monitor && prefs->play_monitor != 0
                             && capable->nmonitors > 1 &&
@@ -3042,7 +3042,7 @@ void play_file(void) {
   if (!mainw->foreign && prefs->midisynch) lives_system("midistop", TRUE);
 
   // we could have started by playing a generator, which could've been closed
-  if (mainw->files[current_file] == NULL) current_file = mainw->current_file;
+  if (!mainw->files[current_file]) current_file = mainw->current_file;
 
   if (!is_realtime_aplayer(audio_player)) {
     // wait for audio_ended...
@@ -3104,7 +3104,7 @@ void play_file(void) {
       lives_widget_show(mainw->sep_image);
     }
 
-    if (prefs->show_msg_area && mainw->multitrack == NULL) {
+    if (prefs->show_msg_area && !mainw->multitrack) {
       lives_widget_show(mainw->message_box);
       reset_message_area(); ///< necessary
     }
@@ -3461,7 +3461,7 @@ int close_temp_handle(int new_clip) {
   }
 
   // as a safety feature we create a special file which allows the back end to delete the directory
-  permitname = lives_build_filename(prefs->workdir, cfile->handle, TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
+  permitname = lives_build_filename(prefs->workdir, cfile->handle, TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
   lives_touch(permitname);
   lives_free(permitname);
 
@@ -3621,7 +3621,7 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
       return NULL;
     }
 
-    if (handle == NULL) {
+    if (!handle) {
       // if handle is NULL, we create a new clip on disk, switch to it
       // (unused)
       if (!get_handle_from_info_file(new_file)) return NULL;
@@ -3629,7 +3629,7 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
     } else {
       // else just create the in-memory part and set the handle
       sfile = mainw->files[new_file] = (lives_clip_t *)(lives_calloc(1, sizeof(lives_clip_t)));
-      if (sfile == NULL) return NULL;
+      if (!sfile) return NULL;
       lives_snprintf(sfile->handle, 256, "%s", handle);
     }
   }
@@ -3798,7 +3798,7 @@ boolean get_new_handle(int index, const char *name) {
     get_next_free_file();
   }
 
-  if (name == NULL || !strlen(name)) {
+  if (!name || !*name) {
     cfile->is_untitled = TRUE;
     xname = get_untitled_name(mainw->untitled_number++);
   } else xname = lives_strdup(name);
@@ -3888,6 +3888,7 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
 
       // sanity check handle against status file
       // (this should never happen...)
+      g_print("VLAX %s and %s\n", check_handle, array[1]);
       if (strcmp(check_handle, array[1])) {
         LIVES_ERROR("Handle!=statusfile !");
         mesg = lives_strdup_printf(_("\nError getting file info for clip %s.\nBad things may happen with this clip.\n"),
@@ -4137,7 +4138,7 @@ boolean save_frame_inner(int clip, int frame, const char *file_name, int width, 
 
   tmp = lives_filename_from_utf8(full_file_name, -1, NULL, NULL, NULL);
 
-  if (mainw->multitrack == NULL) {
+  if (!mainw->multitrack) {
     d_print(_("Saving frame %d as %s..."), frame, full_file_name);
 
     if (sfile->clip_type == CLIP_TYPE_FILE) {
@@ -4910,7 +4911,7 @@ ulong restore_file(const char *file_name) {
   cfile->hsize = mainw->def_width;
   cfile->vsize = mainw->def_height;
 
-  if (mainw->multitrack == NULL) {
+  if (!mainw->multitrack) {
     switch_to_file((mainw->current_file = old_file), new_file);
     set_main_title(cfile->file_name, 0);
   }
@@ -5035,7 +5036,7 @@ ulong restore_file(const char *file_name) {
 
   if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
 
-  if (mainw->multitrack == NULL) {
+  if (!mainw->multitrack) {
     switch_to_file((mainw->current_file = old_file), current_file);
   }
   lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
@@ -5057,7 +5058,7 @@ int save_event_frames(void) {
   int perf_start, perf_end;
   int nevents;
 
-  if (cfile->event_list == NULL) {
+  if (!cfile->event_list) {
     lives_rm(hdrfile);
     return -1;
   }
@@ -5079,7 +5080,7 @@ int save_event_frames(void) {
     do {
       response = LIVES_RESPONSE_OK;
       create_frame_index(mainw->current_file, FALSE, 0, nevents);
-      if (cfile->frame_index == NULL) {
+      if (!cfile->frame_index) {
         response = do_memory_error_dialog(what, nevents * 4);
       }
     } while (response == LIVES_RESPONSE_RETRY);
@@ -5111,7 +5112,7 @@ int save_event_frames(void) {
       THREADVAR(write_failed) = FALSE;
       lives_write(header_fd, &perf_start, 4, FALSE);
 
-      if (!(cfile->resample_events == NULL)) {
+      if (cfile->resample_events) {
         for (i = 0; i <= perf_end - perf_start; i++) {
           if (THREADVAR(write_failed)) break;
           lives_write(header_fd, &((cfile->resample_events + i)->value), 4, TRUE);
@@ -5160,7 +5161,7 @@ boolean open_scrap_file(void) {
   char *handle, *scrap_handle;
 
   handle = lives_strdup_printf("scrap%d", capable->mainpid);
-  if (create_cfile(-1, handle, FALSE) == NULL) return FALSE;
+  if (!create_cfile(-1, handle, FALSE)) return FALSE;
   lives_free(handle);
 
   mainw->scrap_file = mainw->current_file;
@@ -5195,7 +5196,7 @@ boolean open_ascrap_file(void) {
   char *handle, *ascrap_handle;
 
   handle = lives_strdup_printf("ascrap%d", capable->mainpid);
-  if (create_cfile(-1, handle, FALSE) == NULL) return FALSE;
+  if (!create_cfile(-1, handle, FALSE)) return FALSE;
   lives_free(handle);
 
   mainw->ascrap_file = mainw->current_file;
@@ -5285,7 +5286,7 @@ boolean load_from_scrap_file(weed_layer_t *layer, int frame) {
 
   if (frame < 0 || !layer) return TRUE; /// just open fd
 
-  if (weed_plant_deserialise(fd, NULL, layer) == NULL) {
+  if (!weed_plant_deserialise(fd, NULL, layer)) {
     //g_print("bad scrapfile frame\n");
     return FALSE;
   }
@@ -5400,7 +5401,7 @@ int save_to_scrap_file(weed_layer_t *layer) {
 
   if (!IS_VALID_CLIP(mainw->scrap_file)) return -1;
 
-  if (mainw->frame_layer == NULL) return scrapfile->frames;
+  if (!mainw->frame_layer) return scrapfile->frames;
 
   if (!scrapfile->ext_src) {
     char *oname = make_image_file_name(scrapfile, 1, LIVES_FILE_EXT_SCRAP), *dirname;
@@ -5528,7 +5529,7 @@ void recover_layout_map(int numclips) {
     // assign layout map to clips
     for (i = 1; i <= numclips; i++) {
       lives_clip_t *sfile = mainw->files[i];
-      if (sfile == NULL) continue;
+      if (!sfile) continue;
       lmap_node = mlist;
       while (lmap_node) {
         lmap_node_next = lmap_node->next;
@@ -5566,7 +5567,7 @@ void recover_layout_map(int numclips) {
           lives_free(lmap_entry->name);
           lives_free(lmap_entry);
           if (lmap_node->prev) lmap_node->prev->next = lmap_node_next;
-          else mlist = lmap_node_next;
+          else omlist = mlist = lmap_node_next;
           if (lmap_node_next) lmap_node_next->prev = lmap_node->prev;
           lmap_node->prev = lmap_node->next = NULL;
           lives_list_free(lmap_node);
@@ -5996,7 +5997,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
     THREADVAR(read_failed) = FALSE;
 
     if (recovery_file) {
-      if (lives_fgets(buff, 256, rfile) == NULL) {
+      if (!lives_fgets(buff, 256, rfile)) {
         reset_clipmenu();
         threaded_dialog_spin(0.);
         mainw->suppress_dprint = FALSE;
@@ -6026,7 +6027,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       buff[strlen(buff) - 1 - strlen(LIVES_DIR_SEP)] = 0;
       do {
         resp = LIVES_RESPONSE_OK;
-        if (!is_legal_set_name(buff, TRUE)) {
+        if (!is_legal_set_name(buff, TRUE, TRUE)) {
           resp = do_abort_cancel_retry_dialog(_("Click Abort to exit LiVES immediately, Retry to try again,"
                                                 " or Cancel to continue without reloading the set.\n"));
         }
@@ -6091,7 +6092,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       }
 
       /// create a new cfile and fill in the details
-      if (create_cfile(-1, buffptr, FALSE) == NULL) {
+      if (!create_cfile(-1, buffptr, FALSE)) {
         threaded_dialog_spin(0.);
         end_threaded_dialog();
         mainw->suppress_dprint = FALSE;
@@ -6327,7 +6328,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   else
     d_print(_("from previous sessions.\n"));
 
-  if (mainw->multitrack == NULL) { // TODO check if we can do this in mt too
+  if (!mainw->multitrack) { // TODO check if we can do this in mt too
     int start_file = mainw->current_file;
     if (start_file > 1 && start_file == mainw->ascrap_file && mainw->files[start_file - 1]) {
       start_file--;
@@ -6411,7 +6412,7 @@ boolean rewrite_recovery_file(void) {
 
   register int i;
 
-  if (clist == NULL || !prefs->crash_recovery) {
+  if (!clist || !prefs->crash_recovery) {
     lives_rm(mainw->recovery_file);
     return FALSE;
   }

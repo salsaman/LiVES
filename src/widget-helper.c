@@ -1040,8 +1040,10 @@ reloop:
       if (!is_timer) {
         lpttorun = NULL;
         lpt_recurse2 = FALSE;
-        if (!lpt_recurse) return FALSE;
-        else {
+        if (!lpt_recurse) {
+          return FALSE;
+        } else {
+          //gov_running = FALSE;
           lpt_recurse = FALSE;
           return TRUE;
         }
@@ -1525,7 +1527,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_now(LiVESWidget *widget) {
 
 LIVES_GLOBAL_INLINE boolean lives_widget_destroy(LiVESWidget *widget) {
 #ifdef GUI_GTK
-  gtk_widget_destroy(widget);
+  if (GTK_IS_WIDGET(widget))
+    gtk_widget_destroy(widget);
   return TRUE;
 #endif
   return FALSE;
@@ -2138,7 +2141,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_border_color(LiVESWidget *w
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_font_size(LiVESWidget *widget, LiVESWidgetState state,
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_text_size(LiVESWidget *widget, LiVESWidgetState state,
     const char *size) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 16, 0)
@@ -3803,11 +3806,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_prepend_text(LiVESCombo *combo, 
     gtk_list_store_prepend(lstore, &iter);   /* Acquire an iterator */
     lives_tree_store_set(GTK_TREE_STORE(lstore), &iter, 0, text, -1);
   }
-  /* #if GTK_CHECK_VERSION(2, 24, 0) */
-  /*   gtk_combo_box_text_prepend_text(GTK_COMBO_BOX_TEXT(combo), text); */
-  /* #else */
-  /*   gtk_combo_box_prepend_text(GTK_COMBO_BOX(combo), text); */
-  /* #endif */
   return TRUE;
 #endif
   return FALSE;
@@ -3815,16 +3813,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_prepend_text(LiVESCombo *combo, 
 
 
 boolean lives_combo_remove_all_text(LiVESCombo *combo) {
-  /* // for tstore, need lives_tree_store_find_iter(), gtk_tree_model_iter_has_child () */
-  /* // or maybe just free the treestore and add a new list store */
-  /* //LiVESTreeStore *tstore = lives_tree_store_new(1, LIVES_COL_TYPE_STRING); */
-  /* LiVESListStore *lstore = lives_list_store_new(1, LIVES_COL_TYPE_STRING); */
-  /* //lives_combo_set_model(combo, NULL); */
-  /* GtkCellArea *celly; */
-  /* lives_widget_object_get(LIVES_WIDGET_OBJECT(combo), "cell-area", &celly); */
-  /* gtk_cell_layout_clear(celly); */
-  /* lives_combo_set_model(LIVES_COMBO(combo), LIVES_TREE_MODEL(lstore)); */
-  /* return TRUE; */
 #ifdef GUI_GTK
   LiVESTreeModel *tmodel = lives_combo_get_model(combo);
   if (GTK_IS_TREE_STORE(tmodel)) {
@@ -3832,7 +3820,12 @@ boolean lives_combo_remove_all_text(LiVESCombo *combo) {
     gtk_tree_store_clear(tstore);
   } else if (GTK_IS_LIST_STORE(tmodel)) {
     LiVESListStore *lstore = GTK_LIST_STORE(tmodel);
+    /// block CHANGED signal else it gets called for EVERY SINGLE removed element !
+    //uint32_t sigid = g_signal_lookup(LIVES_WIDGET_CHANGED_SIGNAL, GTK_TYPE_COMBO_BOX);
+    // does NOT WORK ! bug in glib / gtk ?
+    //g_signal_handlers_block_matched(combo, G_SIGNAL_MATCH_ID, sigid, 0, NULL, NULL, NULL);
     gtk_list_store_clear(lstore);
+    //g_signal_handlers_unblock_matched(combo, G_SIGNAL_MATCH_ID, sigid, 0, NULL, NULL, NULL);
   }
   return TRUE;
 #endif
@@ -6681,6 +6674,31 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESSList *lives_file_chooser_get_filenames(LiVESFi
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_parse_font_string(const char *string, char **font, int *size, char **stretch,
+    char **style, char **weight) {
+  if (!string) return FALSE;
+  int numtok = get_token_count(string, ' ') ;
+  char **array = lives_strsplit(string, " ", numtok);
+  //int xsize = -1;
+  if (font) {
+    *font = lives_strdup("");
+    for (int i = 0; i < numtok - 1; i++) {
+      char *tmp = lives_strdup_printf("%s %s", *font, array[i]);
+      lives_free(*font);
+      *font = tmp;
+    }
+  }
+  if (size && numtok > 1 && atoi(array[numtok - 1])) *size = atoi(array[numtok - 1]);
+  if (font && !atoi(array[numtok - 1])) {
+    char *tmp = lives_strdup_printf("%s %s", *font, array[numtok - 1]);
+    lives_free(*font);
+    *font = tmp;
+  }
+  lives_strfreev(array);
+  return TRUE;
+}
+
+
 #if GTK_CHECK_VERSION(3,2,0)
 WIDGET_HELPER_GLOBAL_INLINE char *lives_font_chooser_get_font(LiVESFontChooser *fc) {
   return gtk_font_chooser_get_font(fc);
@@ -8037,7 +8055,7 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
           lingo_layout_set_alignment(layout, LINGO_ALIGN_CENTER);
 
           markup = lives_markup_escape_text(text, -1);
-          full_markup = lives_strdup_printf("<span size=\"%s\">%s</span>", widget_opts.font_size,
+          full_markup = lives_strdup_printf("<span size=\"%s\">%s</span>", widget_opts.text_size,
                                             markup);
 
           lingo_layout_set_markup_with_accel(layout, full_markup, -1, '_', &acc);
@@ -8534,7 +8552,7 @@ LiVESWidget *lives_standard_label_new(const char *text) {
   // allows markup
 
   if (text) lives_label_set_text(LIVES_LABEL(label), text);
-  lives_widget_set_font_size(label, LIVES_WIDGET_STATE_NORMAL, widget_opts.font_size);
+  lives_widget_set_text_size(label, LIVES_WIDGET_STATE_NORMAL, widget_opts.text_size);
   lives_widget_set_halign(label, lives_justify_to_align(widget_opts.justify));
   if (widget_opts.apply_theme) {
     set_standard_widget(label, TRUE);
@@ -8572,6 +8590,20 @@ LiVESWidget *lives_standard_label_new_with_tooltips(const char *text, LiVESBox *
   }
   lives_widget_set_show_hide_parent(label);
   return label;
+}
+
+
+char *lives_big_and_bold(const char *fmt, ...) {
+  va_list xargs;
+  char *text, *text2, *text3;
+  va_start(xargs, fmt);
+  text = lives_strdup_vprintf(fmt, xargs);
+  va_end(xargs);
+  text2 = lives_markup_escape_text(text, -1);
+  lives_free(text);
+  text3 = lives_strdup_printf("<big><b>%s</b></big>", text2);
+  lives_free(text2);
+  return text3;
 }
 
 
@@ -9437,7 +9469,7 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList * list, L
   if (tooltip) img_tips = lives_widget_set_tooltip_text(combo, tooltip);
 
   entry = (LiVESEntry *)lives_combo_get_entry(LIVES_COMBO(combo));
-  lives_widget_set_font_size(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, widget_opts.font_size);
+  lives_widget_set_text_size(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, widget_opts.text_size);
 
   lives_entry_set_has_frame(entry, TRUE);
   lives_entry_set_editable(LIVES_ENTRY(entry), FALSE);
@@ -9574,7 +9606,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
   entry = lives_entry_new();
   lives_widget_set_valign(entry, LIVES_ALIGN_CENTER);
 
-  lives_widget_set_font_size(entry, LIVES_WIDGET_STATE_NORMAL, widget_opts.font_size);
+  lives_widget_set_text_size(entry, LIVES_WIDGET_STATE_NORMAL, widget_opts.text_size);
 
   if (tooltip) img_tips = lives_widget_set_tooltip_text(entry, tooltip);
 
@@ -9684,7 +9716,7 @@ LiVESWidget *lives_standard_progress_bar_new(void) {
   pbar = lives_entry_new();
   set_standard_widget(pbar, TRUE);
   lives_widget_set_valign(pbar, LIVES_ALIGN_CENTER);
-  lives_widget_set_font_size(pbar, LIVES_WIDGET_STATE_NORMAL, widget_opts.font_size);
+  lives_widget_set_text_size(pbar, LIVES_WIDGET_STATE_NORMAL, widget_opts.text_size);
   lives_entry_set_editable(LIVES_ENTRY(pbar), FALSE);
   lives_widget_set_can_focus(LIVES_WIDGET(pbar), FALSE);
   if (widget_opts.justify == LIVES_JUSTIFY_START) {
@@ -10243,7 +10275,7 @@ LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer * tb
   else
     textview = lives_text_view_new_with_buffer(tbuff);
 
-  lives_widget_set_font_size(textview, LIVES_WIDGET_STATE_NORMAL, widget_opts.font_size);
+  lives_widget_set_text_size(textview, LIVES_WIDGET_STATE_NORMAL, widget_opts.text_size);
   lives_text_view_set_editable(LIVES_TEXT_VIEW(textview), FALSE);
   lives_text_view_set_wrap_mode(LIVES_TEXT_VIEW(textview), LIVES_WRAP_WORD);
   lives_text_view_set_cursor_visible(LIVES_TEXT_VIEW(textview), FALSE);
@@ -12374,20 +12406,20 @@ LiVESList *get_textsizes_list(void) {
 const char *lives_textsize_to_string(int val) {
   switch (val) {
   case 0:
-    return LIVES_FONT_SIZE_XX_SMALL;
+    return LIVES_TEXT_SIZE_XX_SMALL;
   case 1:
-    return LIVES_FONT_SIZE_X_SMALL;
+    return LIVES_TEXT_SIZE_X_SMALL;
   case 2:
-    return LIVES_FONT_SIZE_SMALL;
+    return LIVES_TEXT_SIZE_SMALL;
   case 3:
-    return LIVES_FONT_SIZE_MEDIUM;
+    return LIVES_TEXT_SIZE_MEDIUM;
   case 4:
-    return LIVES_FONT_SIZE_LARGE;
+    return LIVES_TEXT_SIZE_LARGE;
   case 5:
-    return LIVES_FONT_SIZE_X_LARGE;
+    return LIVES_TEXT_SIZE_X_LARGE;
   case 6:
-    return LIVES_FONT_SIZE_XX_LARGE;
+    return LIVES_TEXT_SIZE_XX_LARGE;
   default:
-    return LIVES_FONT_SIZE_NORMAL;
+    return LIVES_TEXT_SIZE_NORMAL;
   }
 }

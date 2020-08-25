@@ -209,7 +209,7 @@ static void font_set_cb(LiVESFontButton * button, livespointer data) {
   lingo_font_description_free(lfd);
 }
 
-static void font_size_cb(LiVESSpinButton * button, livespointer data) {
+static void text_size_cb(LiVESSpinButton * button, livespointer data) {
   int sval = lives_spin_button_get_value_as_int(button);
   LingoFontDescription *lfd =
     lives_font_chooser_get_font_desc(LIVES_FONT_CHOOSER(fchooser.font_param->widgets[1]));
@@ -221,7 +221,7 @@ static void font_size_cb(LiVESSpinButton * button, livespointer data) {
 static void font_entry_cb(LiVESEntry * entry, livespointer data) {
   LiVESFontButton *button = (LiVESFontButton *)fchooser.font_param->widgets[1];
   lives_font_chooser_set_font(LIVES_FONT_CHOOSER(button), lives_entry_get_text(entry));
-  font_size_cb(LIVES_SPIN_BUTTON(fchooser.size_param->widgets[0]), data);
+  text_size_cb(LIVES_SPIN_BUTTON(fchooser.size_param->widgets[0]), data);
   font_set_cb(button, data);
 }
 #endif
@@ -417,7 +417,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
     if (param == fchooser.size_param) {
       fchooser.size_paramfunc = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(widget),
                                 LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                                LIVES_GUI_CALLBACK(font_size_cb),
+                                LIVES_GUI_CALLBACK(text_size_cb),
                                 (livespointer)rfx);
       if (fchooser.nwidgets == 1) {
         font_entry_cb(LIVES_ENTRY(param->widgets[0]), (livespointer)rfx);

@@ -1082,6 +1082,9 @@ typedef struct {
   char *distro_codename;
 
   char *mach_name;
+
+  int dclick_time;
+  int dclick_dist;
 } capability;
 
 /// some shared structures
@@ -1751,7 +1754,7 @@ void unbuffer_lmap_errors(boolean add);
 void clear_lmap_errors(void);
 boolean prompt_remove_layout_files(void);
 boolean do_std_checks(const char *type_name, const char *type, size_t maxlen, const char *nreject);
-boolean is_legal_set_name(const char *set_name, boolean allow_dupes);
+boolean is_legal_set_name(const char *set_name, boolean allow_dupes, boolean leeway);
 char *repl_workdir(const char *entry, boolean fwd);
 char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp);
 boolean get_clip_value(int which, lives_clip_details_t, void *retval, size_t maxlen);

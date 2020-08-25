@@ -119,6 +119,10 @@ static void cleanup_set_dir(const char *set_name) {
   lives_rm(ofile);
   lives_free(ofile);
 
+  ofile = lives_build_filename(prefs->workdir, set_name, CLIP_ORDER_FILENAME "." LIVES_FILE_EXT_NEW, NULL);
+  lives_rm(ofile);
+  lives_free(ofile);
+
   lives_sync(1);
 
   sdir = lives_build_filename(prefs->workdir, set_name, NULL);
@@ -371,7 +375,7 @@ void lives_exit(int signum) {
               threaded_dialog_spin(0.);
               lives_kill_subprocesses(mainw->files[i]->handle, TRUE);
               permitname = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
-                                                TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
+                                                TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
               lives_touch(permitname);
               lives_free(permitname);
               com = lives_strdup_printf("%s close \"%s\"", prefs->backend, mainw->files[i]->handle);
@@ -448,7 +452,7 @@ void lives_exit(int signum) {
         mainw->close_keep_frames = TRUE;
         mainw->is_processing = TRUE; ///< stop multitrack from sensitizing too soon
         for (i = 1; i <= MAX_FILES; i++) {
-          if (IS_NORMAL_CLIP(i) && (mainw->multitrack == NULL || i != mainw->multitrack->render_file)) {
+          if (IS_NORMAL_CLIP(i) && (!mainw->multitrack || i != mainw->multitrack->render_file)) {
             mainw->current_file = i;
             close_current_file(0);
             threaded_dialog_spin(0.);
@@ -467,7 +471,7 @@ void lives_exit(int signum) {
         }
 
         mainw->suppress_dprint = FALSE;
-        if (mainw->multitrack == NULL) resize(1);
+        if (!mainw->multitrack) resize(1);
         mainw->was_set = FALSE;
         lives_memset(mainw->set_name, 0, 1);
         mainw->only_close = FALSE;
@@ -1646,7 +1650,7 @@ void on_import_proj_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     return;
   }
 
-  if (!is_legal_set_name(mainw->msg, TRUE)) return;
+  if (!is_legal_set_name(mainw->msg, TRUE, FALSE)) return;
 
   new_set = lives_strdup(mainw->msg);
   set_dir = lives_build_filename(prefs->workdir, new_set, NULL);
@@ -1731,7 +1735,7 @@ void on_export_proj_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       lives_free(tmp);
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
-    } while (!is_legal_set_name(new_set_name, FALSE));
+    } while (!is_legal_set_name(new_set_name, FALSE, FALSE));
     lives_snprintf(mainw->set_name, MAX_SET_NAME_LEN, "%s", new_set_name);
   }
 
@@ -2285,7 +2289,8 @@ void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       }
       if (resp == LIVES_RESPONSE_ABORT) { /// TODO
         // save set
-        if ((legal_set_name = is_legal_set_name((set_name = U82F(lives_entry_get_text(LIVES_ENTRY(cdsw->entry)))), TRUE))) {
+        if ((legal_set_name = is_legal_set_name((set_name = U82F(lives_entry_get_text(LIVES_ENTRY(cdsw->entry)))),
+                                                TRUE, FALSE))) {
           lives_widget_destroy(cdsw->dialog);
           lives_free(cdsw);
 
@@ -5433,7 +5438,7 @@ boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
       lives_widget_destroy(renamew->dialog);
       lives_free(renamew);
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-    } while (!is_legal_set_name(new_set_name, TRUE));
+    } while (!is_legal_set_name(new_set_name, TRUE, FALSE));
   } else lives_snprintf(new_set_name, MAX_SET_NAME_LEN, "%s", (char *)user_data);
 
   lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
@@ -5647,7 +5652,7 @@ char *on_load_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_freep((void **)&renamew);
 
   if (resp == LIVES_RESPONSE_OK) {
-    if (!is_legal_set_name(set_name, TRUE)) {
+    if (!is_legal_set_name(set_name, TRUE, TRUE)) {
       lives_freep((void **)&set_name);
     } else {
       if (!user_data) {
@@ -5778,7 +5783,7 @@ boolean reload_set(const char *set_name) {
 
       //mainw->current_file = current_file;
 
-      if (mainw->multitrack == NULL) {
+      if (!mainw->multitrack) {
         if (last_file > 0) {
           threaded_dialog_spin(0.);
           switch_to_file(current_file, last_file);
@@ -5808,7 +5813,7 @@ boolean reload_set(const char *set_name) {
       }
 
       threaded_dialog_spin(0.);
-      if (mainw->multitrack == NULL) {
+      if (!mainw->multitrack) {
         if (mainw->is_ready) {
           if (clipnum > 0 && CURRENT_CLIP_IS_VALID) {
             showclipimgs();
@@ -6037,7 +6042,7 @@ boolean reload_set(const char *set_name) {
     set_main_title(cfile->name, 0);
     restore_clip_binfmt(mainw->current_file);
 
-    if (mainw->multitrack == NULL) {
+    if (!mainw->multitrack) {
       resize(1);
     }
 
@@ -7535,7 +7540,7 @@ void drag_from_outside(LiVESWidget * widget, GdkDragContext * dcon, int x, int y
   }
 
   if ((mainw->multitrack && !lives_widget_is_sensitive(mainw->multitrack->open_menu)) ||
-      (mainw->multitrack == NULL && !lives_widget_is_sensitive(mainw->open))) {
+      (!mainw->multitrack && !lives_widget_is_sensitive(mainw->open))) {
     gtk_drag_finish(dcon, FALSE, FALSE, time);
     return;
   }
@@ -7609,7 +7614,7 @@ void end_fs_preview(void) {
 
   if (mainw->in_fs_preview) {
     char *tmp = lives_strdup_printf("fsp%d", capable->mainpid);
-    char *permitname = lives_build_filename(prefs->workdir, tmp, TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
+    char *permitname = lives_build_filename(prefs->workdir, tmp, TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
     lives_kill_subprocesses(tmp, TRUE);
     lives_touch(permitname);
     lives_free(permitname);
@@ -8732,7 +8737,7 @@ void on_load_subs_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   subtitles_init(cfile, subfname, subtype);
   lives_free(subfname);
 
-  if (mainw->multitrack == NULL) {
+  if (!mainw->multitrack) {
     // force update
     switch_to_file(0, mainw->current_file);
   }
@@ -8794,7 +8799,7 @@ void on_erase_subs_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   if (menuitem) {
     // force update
-    if (mainw->multitrack == NULL) {
+    if (!mainw->multitrack) {
       switch_to_file(0, mainw->current_file);
     }
     d_print(_("Subtitles were erased.\n"));
@@ -9117,7 +9122,7 @@ void on_open_new_audio_clicked(LiVESFileChooser * chooser, livespointer user_dat
 
   if (bad_header) do_header_write_error(mainw->current_file);
 
-  if (mainw->multitrack == NULL) {
+  if (!mainw->multitrack) {
     switch_to_file(mainw->current_file, mainw->current_file);
   }
 
@@ -9476,8 +9481,7 @@ void popup_lmap_errors(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_container_set_border_width(LIVES_CONTAINER(textwindow->delete_button), widget_opts.border_width);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(textwindow->delete_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_lerrors_delete_clicked),
-                            NULL);
+                            LIVES_GUI_CALLBACK(on_lerrors_delete_clicked), NULL);
 
   lives_widget_show_all(textwindow->dialog);
 }
@@ -9704,7 +9708,7 @@ void on_toy_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       lives_system(com, FALSE);
       save_clip_values(current_file);
       if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
-      if (mainw->multitrack == NULL) {
+      if (!mainw->multitrack) {
         switch_to_file((mainw->current_file = 0), current_file);
         sensitize();
       }
@@ -10121,6 +10125,8 @@ boolean config_event2(LiVESWidget * widget, LiVESXEventConfigure * event, livesp
 /// genric func. to create surfaces
 boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer ppsurf) {
   lives_painter_surface_t **psurf = (lives_painter_surface_t **)ppsurf;
+  if (mainw->no_configs) return TRUE;
+
   if (!psurf) return FALSE;
   if (*psurf) lives_painter_surface_destroy(*psurf);
   *psurf = lives_widget_create_painter_surface(widget);
@@ -10238,7 +10244,7 @@ void on_effects_paused(LiVESButton * button, livespointer user_data) {
           lives_free(tmp);
           lives_free(ltext);
         }
-        if ((mainw->multitrack == NULL && mainw->is_rendering && prefs->render_audio) || (mainw->multitrack &&
+        if ((!mainw->multitrack && mainw->is_rendering && prefs->render_audio) || (mainw->multitrack &&
             mainw->multitrack->opts.render_audp)) {
           // render audio up to current tc
           mainw->flush_audio_tc = q_gint64((double)cfile->undo_end / cfile->fps * TICKS_PER_SECOND_DBL, cfile->fps);
@@ -10979,7 +10985,7 @@ boolean frame_context(LiVESWidget * widget, LiVESXEventButton * event, livespoin
 
   if (event->button != 3) return FALSE;
 
-  if (mainw->multitrack == NULL) {
+  if (!mainw->multitrack) {
     switch (LIVES_POINTER_TO_INT(which)) {
     case 1:
       // start frame
@@ -12645,7 +12651,7 @@ void on_recaudclip_ok_clicked(LiVESButton * button, livespointer user_data) {
 
   new_file = mainw->current_file;
   if (type == 0) {
-    if (mainw->multitrack == NULL) {
+    if (!mainw->multitrack) {
       switch_to_file((mainw->current_file = 0), new_file);
     }
   } else {

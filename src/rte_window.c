@@ -136,7 +136,7 @@ boolean on_clear_all_clicked(LiVESButton *button, livespointer user_data) {
   ca_canc = FALSE;
 
   // prompt for "are you sure ?"
-  if (user_data != NULL) if (!do_warning_dialog(_("\n\nUnbind all effects from all keys/modes.\n\nAre you sure ?\n\n"))) {
+  if (user_data) if (!do_warning_dialog(_("\n\nUnbind all effects from all keys/modes.\n\nAre you sure ?\n\n"))) {
       ca_canc = TRUE;
       return FALSE;
     }
@@ -145,20 +145,20 @@ boolean on_clear_all_clicked(LiVESButton *button, livespointer user_data) {
   cconx_delete_all();
 
   for (i = 0; i < prefs->rte_keys_virtual; i++) {
-    if (rte_window != NULL) {
+    if (rte_window) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]), FALSE);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(key_checks[i]), "active", LIVES_INT_TO_POINTER(FALSE));
     }
     for (j = modes - 1; j >= 0; j--) {
       weed_delete_effectkey(i + 1, j);
-      if (rte_window != NULL) {
+      if (rte_window) {
         rtew_combo_set_text(i, j, "");
       }
     }
     if (mainw->ce_thumbs) ce_thumbs_reset_combo(i);
   }
 
-  if (button != NULL) lives_widget_set_sensitive(LIVES_WIDGET(button), FALSE);
+  if (button) lives_widget_set_sensitive(LIVES_WIDGET(button), FALSE);
 
   return FALSE;
 }
@@ -239,11 +239,11 @@ static boolean save_keymap3_file(char *kfname) {
 
       lives_write_le_buffered(kfd, &version, 4, TRUE);
 
-      if (mainw->cconx != NULL) {
+      if (mainw->cconx) {
         lives_cconnect_t *cconx = mainw->cconx;
         int nchans;
 
-        while (cconx != NULL) {
+        while (cconx) {
           count++;
           cconx = cconx->next;
         }
@@ -252,7 +252,7 @@ static boolean save_keymap3_file(char *kfname) {
         if (THREADVAR(write_failed)) goto write_failed1;
 
         cconx = mainw->cconx;
-        while (cconx != NULL) {
+        while (cconx) {
           totcons = 0;
           j = 0;
 
@@ -312,14 +312,14 @@ static boolean save_keymap3_file(char *kfname) {
         if (THREADVAR(write_failed)) goto write_failed1;
       }
 
-      if (mainw->pconx != NULL) {
+      if (mainw->pconx) {
         lives_pconnect_t *pconx = mainw->pconx;
 
         int nparams;
 
         count = 0;
 
-        while (pconx != NULL) {
+        while (pconx) {
           count++;
           pconx = pconx->next;
         }
@@ -328,7 +328,7 @@ static boolean save_keymap3_file(char *kfname) {
         if (THREADVAR(write_failed) == kfd + 1) goto write_failed1;
 
         pconx = mainw->pconx;
-        while (pconx != NULL) {
+        while (pconx) {
           totcons = 0;
           j = 0;
 
@@ -436,7 +436,7 @@ static boolean on_save_keymap_clicked(LiVESButton *button, livespointer user_dat
   int i, j;
   int retval;
 
-  if (button != NULL) {
+  if (button) {
     if (!do_warning_dialog(_("\n\nClick 'OK' to save this keymap as your default\n\n"))) {
       lives_free(keymap_file3);
       lives_free(keymap_file2);
@@ -447,7 +447,7 @@ static boolean on_save_keymap_clicked(LiVESButton *button, livespointer user_dat
   } else {
     update = TRUE;
     list = (LiVESList *)user_data;
-    if (list == NULL) return FALSE;
+    if (!list) return FALSE;
     d_print(_("\nUpdating keymap file %s..."), keymap_file);
   }
 
@@ -494,7 +494,7 @@ static boolean on_save_keymap_clicked(LiVESButton *button, livespointer user_dat
   } else lives_rm(keymap_file2);
 
   // if we have data connections, save them
-  if (mainw->pconx != NULL || mainw->cconx != NULL) {
+  if (mainw->pconx || mainw->cconx) {
     if (!save_keymap3_file(keymap_file3)) {
       lives_rm(keymap_file3);
       retval = LIVES_RESPONSE_CANCEL;
@@ -521,11 +521,11 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
 
   register int i;
 
-  if (prefs->fxdefsfile == NULL) {
+  if (!prefs->fxdefsfile) {
     prefs->fxdefsfile = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, FX_DEFS_FILENAME, NULL);
   }
 
-  if (prefs->fxsizesfile == NULL) {
+  if (!prefs->fxsizesfile) {
     prefs->fxsizesfile = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, FX_SIZES_FILENAME, NULL);
   }
 
@@ -618,7 +618,7 @@ void load_rte_defs(void) {
   int fd;
   int retval;
 
-  if (prefs->fxdefsfile == NULL) {
+  if (!prefs->fxdefsfile) {
     prefs->fxdefsfile = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, FX_DEFS_FILENAME, NULL);
   }
 
@@ -657,7 +657,7 @@ void load_rte_defs(void) {
     } while (retval == LIVES_RESPONSE_RETRY);
   }
 
-  if (prefs->fxsizesfile == NULL) {
+  if (!prefs->fxsizesfile) {
     prefs->fxsizesfile = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, FX_SIZES_FILENAME, NULL);
   }
 
@@ -808,7 +808,7 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
 
         hashname = (char *)lives_malloc(hlen + 1);
 
-        if (hashname == NULL) {
+        if (!hashname) {
           eof = TRUE;
           break;
         }
@@ -901,7 +901,7 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
 
             hashname = (char *)lives_malloc(hlen + 1);
 
-            if (hashname == NULL) {
+            if (!hashname) {
               eof = TRUE;
               break;
             }
@@ -1002,7 +1002,7 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
 
         hashname = (char *)lives_malloc(hlen + 1);
 
-        if (hashname == NULL) {
+        if (!hashname) {
           eof = TRUE;
           break;
         }
@@ -1090,7 +1090,7 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
 
             hashname = (char *)lives_malloc(hlen + 1);
 
-            if (hashname == NULL) {
+            if (!hashname) {
               eof = TRUE;
               break;
             }
@@ -1187,16 +1187,16 @@ static void set_param_and_con_buttons(int key, int mode) {
   int modes = rte_getmodespk();
   int idx = key * modes + mode;
 
-  if (filter != NULL) {
+  if (filter) {
     lives_widget_set_sensitive(conx_buttons[idx], TRUE);
     if (num_in_params(filter, TRUE, TRUE) > 0) lives_widget_set_sensitive(param_buttons[idx], TRUE);
     else lives_widget_set_sensitive(param_buttons[idx], FALSE);
     lives_widget_set_sensitive(combos[idx], TRUE);
-    if (combos[idx + 1] != NULL && mode < modes - 1) lives_widget_set_sensitive(combos[idx + 1], TRUE);
+    if (combos[idx + 1] && mode < modes - 1) lives_widget_set_sensitive(combos[idx + 1], TRUE);
   } else {
     lives_widget_set_sensitive(conx_buttons[idx], FALSE);
     lives_widget_set_sensitive(param_buttons[idx], FALSE);
-    if (mode == 0 || rte_keymode_get_filter(key + 1, mode - 1) != NULL)
+    if (mode == 0 || rte_keymode_get_filter(key + 1, mode - 1))
       lives_widget_set_sensitive(combos[idx], TRUE);
     else
       lives_widget_set_sensitive(combos[idx], FALSE);
@@ -1265,7 +1265,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
     do {
       retval = 0;
 
-      if (keymap_file2 != NULL) {
+      if (keymap_file2) {
         if ((kfd = lives_open_buffered_rdonly(keymap_file)) < 0) has_error = TRUE;
       } else {
         if (!(kfile = fopen(keymap_file, "r"))) {
@@ -1304,7 +1304,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
     badkeymap[i] = (uint8_t *)lives_calloc(modes, 1);
   }
 
-  if (keymap_file2 == NULL) {
+  if (!keymap_file2) {
     // version 1 file
     while (fgets(buff, 65536, kfile)) {
       if (*buff) {
@@ -1342,10 +1342,10 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
 
   lives_free(whole);
 
-  for (i = 1; (keymap_file2 == NULL && i < lives_list_length(list)) || (keymap_file2 != NULL && !eof); i++) {
+  for (i = 1; (!keymap_file2 && i < lives_list_length(list)) || (keymap_file2 && !eof); i++) {
     char **array;
 
-    if (keymap_file2 == NULL) {
+    if (!keymap_file2) {
       // old style
 
       line = (char *)lives_list_nth_data(list, i);
@@ -1406,7 +1406,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
 
       hashname = (char *)lives_malloc(hlen + 1);
 
-      if (hashname == NULL) {
+      if (!hashname) {
         eof = TRUE;
         break;
       }
@@ -1433,7 +1433,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
       lives_free(tmp);
       notfound = TRUE;
       lives_free(hashname);
-      if (keymap_file2 != NULL) {
+      if (keymap_file2) {
         // read param defaults
         if (!read_perkey_defaults(kfd, -1, -1, version)) break; // file read error
       }
@@ -1449,7 +1449,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
       notfound = TRUE;
       lives_free(hashname);
       badkeymap[key - 1][def_modes[key - 1]]++;
-      if (keymap_file2 != NULL) {
+      if (keymap_file2) {
         // read param defaults
         if (!read_perkey_defaults(kfd, -1, -1, version)) break; // file read error
       }
@@ -1468,7 +1468,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
       notfound = TRUE;
       lives_free(hashname);
       badkeymap[key - 1][def_modes[key - 1]]++;
-      if (keymap_file2 != NULL) {
+      if (keymap_file2) {
         // read param defaults
         if (!read_perkey_defaults(kfd, -1, -1, version)) break; // file read error
       }
@@ -1484,7 +1484,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
       LIVES_ERROR(tmp);
       lives_free(tmp);
       badkeymap[key - 1][def_modes[key - 1]]++;
-      if (keymap_file2 != NULL) {
+      if (keymap_file2) {
         // read param defaults
         if (!read_perkey_defaults(kfd, -1, -1, version)) break; // file read error
       }
@@ -1495,14 +1495,14 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
       d_print((tmp = lives_strdup_printf(_("Too many effects bound to key %d.\n"), key)));
       LIVES_ERROR(tmp);
       lives_free(tmp);
-      if (keymap_file2 != NULL) {
+      if (keymap_file2) {
         // read param defaults
         if (!read_perkey_defaults(kfd, -1, -1, version)) break; // file read error
       }
       def_modes[key - 1]--;
       continue;
     }
-    if (rte_window != NULL) {
+    if (rte_window) {
       int idx = (key - 1) * modes + mode;
       int fx_idx = rte_keymode_get_filter_idx(key, mode);
 
@@ -1518,13 +1518,13 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
       set_param_and_con_buttons(key - 1, mode);
     }
 
-    if (keymap_file2 != NULL) {
+    if (keymap_file2) {
       // read param defaults
       if (!read_perkey_defaults(kfd, key - 1, def_modes[key - 1], version)) break; // file read error
     }
   }
 
-  if (keymap_file2 == NULL) {
+  if (!keymap_file2) {
     lives_list_free_all(&list);
 
     if (update > 0) {
@@ -1554,7 +1554,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
 
 cleanup1:
 
-  if (badkeymap != NULL) {
+  if (badkeymap) {
     for (i = 0; i < prefs->rte_keys_virtual; i++) {
       lives_free(badkeymap[i]);
     }
@@ -1565,7 +1565,7 @@ cleanup1:
   lives_freep((void **)&keymap_file3);
   lives_freep((void **)&def_modes);
   if (mainw->ce_thumbs) ce_thumbs_reset_combos();
-  if (rte_window != NULL) check_clear_all_button();
+  if (rte_window) check_clear_all_button();
 
   d_print_done();
   return FALSE;
@@ -1584,17 +1584,12 @@ void on_rte_info_clicked(LiVESButton * button, livespointer user_data) {
   LiVESWidget *scrolledwindow;
   LiVESWidget *ok_button;
 
-  char *filter_name;
-  char *filter_author;
-  char *filter_copyright;
+  char *filter_name, *filter_author, *filter_copyright;
   char *filter_extra_authors = NULL;
   char *filter_description;
-  char *url;
-  char *license;
+  char *url, *license, *type;
+  char *plugin_name, *plname, *package_name;
   char *tmp;
-  char *type;
-  char *plugin_name;
-  char *package_name;
 
   boolean has_desc = FALSE;
   boolean has_url = FALSE;
@@ -1661,11 +1656,12 @@ void on_rte_info_clicked(LiVESButton * button, livespointer user_data) {
   lives_free(tmp);
   lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
 
-  label = lives_standard_label_new((tmp = lives_strdup_printf(_("Plugin name: %s"), plugin_name)));
-  lives_free(tmp);
+  plname = lives_strdup_printf("%s.%s", plugin_name, DLL_NAME);
+  label = lives_standard_label_new((tmp = lives_strdup_printf(_("Plugin name: %s"), plname)));
+  lives_free(tmp); lives_free(plname);
   lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
 
-  if (package_name != NULL) {
+  if (package_name) {
     label = lives_standard_label_new((tmp = lives_strdup_printf(_("Package name: %s"), package_name)));
     lives_free(tmp);
     lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
@@ -1675,7 +1671,7 @@ void on_rte_info_clicked(LiVESButton * button, livespointer user_data) {
   lives_free(tmp);
   lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
 
-  if (filter_extra_authors != NULL) {
+  if (filter_extra_authors) {
     label = lives_standard_label_new((tmp = lives_strdup_printf(_("and: %s"), filter_extra_authors)));
     lives_free(tmp);
     lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
@@ -1736,8 +1732,7 @@ void on_rte_info_clicked(LiVESButton * button, livespointer user_data) {
   lives_button_grab_default_special(ok_button);
 
   lives_signal_connect(LIVES_GUI_OBJECT(ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(lives_general_button_clicked),
-                       NULL);
+                       LIVES_GUI_CALLBACK(lives_general_button_clicked), NULL);
 
   lives_free(filter_name);
   lives_free(filter_author);
@@ -1779,7 +1774,7 @@ void on_clear_clicked(LiVESButton * button, livespointer user_data) {
 
   if (mainw->ce_thumbs) ce_thumbs_set_mode_combo(key, newmode);
 
-  if (rte_window != NULL) {
+  if (rte_window) {
     rtew_set_mode_radio(key, newmode);
   }
 
@@ -1787,7 +1782,7 @@ void on_clear_clicked(LiVESButton * button, livespointer user_data) {
     pconx_remap_mode(key, i + 1, i);
     cconx_remap_mode(key, i + 1, i);
 
-    if (rte_window != NULL) {
+    if (rte_window) {
       int fx_idx = rte_keymode_get_filter_idx(key, mode);
       idx = key * modes + i;
       rtew_combo_set_text(key, i, lives_entry_get_text(LIVES_ENTRY(combo_entries[idx + 1])));
@@ -1803,7 +1798,7 @@ void on_clear_clicked(LiVESButton * button, livespointer user_data) {
   }
   idx++;
 
-  if (rte_window != NULL) {
+  if (rte_window) {
     rtew_combo_set_text(key, i, "");
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combos[idx]), "hashname", empty_string);
 
@@ -1812,10 +1807,10 @@ void on_clear_clicked(LiVESButton * button, livespointer user_data) {
   }
 
   if (!rte_keymode_valid(key + 1, 0, TRUE)) {
-    if (rte_window != NULL) rtew_set_keych(key, FALSE);
+    if (rte_window) rtew_set_keych(key, FALSE);
     if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
   }
-  if (rte_window != NULL) check_clear_all_button();
+  if (rte_window) check_clear_all_button();
 
   if (mainw->ce_thumbs) ce_thumbs_reset_combo(key);
 }
@@ -1858,7 +1853,7 @@ static void on_params_clicked(LiVESButton * button, livespointer user_data) {
   if ((inst = rte_keymode_get_instance(key + 1, mode)) == NULL) {
     // create a new detached instance for the dialog
     weed_plant_t *filter = rte_keymode_get_filter(key + 1, mode);
-    if (filter == NULL) {
+    if (!filter) {
       filter_mutex_unlock(key);
       return;
     }
@@ -1878,7 +1873,7 @@ static void on_params_clicked(LiVESButton * button, livespointer user_data) {
 
   filter_mutex_unlock(key);
 
-  if (fx_dialog[1] != NULL) {
+  if (fx_dialog[1]) {
     lives_widget_destroy(fx_dialog[1]->dialog);
     rfx = fx_dialog[1]->rfx;
     on_paramwindow_button_clicked(NULL, rfx);
@@ -1908,9 +1903,9 @@ boolean on_rtew_delete_event(LiVESWidget * widget, LiVESXEventDelete * event, li
   old_rte_keys_virtual = prefs->rte_keys_virtual;
   lives_widget_set_sensitive(mainw->mt_menu, TRUE);
   lives_widget_set_sensitive(mainw->rte_defs_menu, TRUE);
-  if (user_data == NULL) {
+  if (!user_data) {
     // first time around we come here, and just hide the window
-    if (mainw->play_window != NULL && !mainw->fs && (prefs->play_monitor == widget_opts.monitor + 1 || capable->nmonitors == 1)) {
+    if (mainw->play_window && !mainw->fs && (prefs->play_monitor == widget_opts.monitor + 1 || capable->nmonitors == 1)) {
       lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), get_transient_full());
     }
     lives_widget_hide(rte_window);
@@ -2096,14 +2091,14 @@ static LiVESTreeModel *rte_window_fx_model(void) {
       pkgstring = weed_get_string_value(pinfo, WEED_LEAF_PACKAGE_NAME, NULL);
     else pkgstring = NULL;
 
-    if (pkgstring != NULL) {
+    if (pkgstring) {
       // package effect
-      if (pkg != NULL && lives_strcmp(pkg, pkgstring)) {
+      if (pkg && lives_strcmp(pkg, pkgstring)) {
         // new package
         lives_freep((void **)&pkg);
       }
 
-      if (pkg == NULL) {
+      if (!pkg) {
         // add package to menu
         pkg = pkgstring;
 
@@ -2121,7 +2116,7 @@ static LiVESTreeModel *rte_window_fx_model(void) {
       lives_tree_store_set(tstore, &iter3, EXTENDED_NAME_COLUMN, list->data, NAME_COLUMN, fxname,
                            HASH_COLUMN, lives_list_nth_data(hash_list, fx_idx), -1);
     } else {
-      //if (pkg != NULL) lives_freep((void **)&pkg);
+      //if (pkg) lives_freep((void **)&pkg);
       // get a new or existing iterator for the category
       lives_tree_store_find_iter(tstore, EXTENDED_NAME_COLUMN, typestr, NULL, &iter1);
 
@@ -2489,7 +2484,7 @@ rte_window_ready:
 
 
 LiVESWidget *refresh_rte_window(void) {
-  if (rte_window != NULL) {
+  if (rte_window) {
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
     lives_set_cursor_style(LIVES_CURSOR_BUSY, rte_window);
     lives_widget_context_update();
@@ -2503,7 +2498,7 @@ LiVESWidget *refresh_rte_window(void) {
 
 
 void on_assign_rte_keys_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  if (rte_window != NULL && !rte_window_is_hidden) {
+  if (rte_window && !rte_window_is_hidden) {
     on_rtew_delete_event(NULL, NULL, NULL);
   } else {
     rte_window = create_rte_window();
@@ -2762,7 +2757,7 @@ resetdefs1:
     lives_widget_destroy(widget);
   }
 
-  if (child_list != NULL) lives_list_free(child_list);
+  if (child_list) lives_list_free(child_list);
 
   make_param_box(LIVES_VBOX(pbox), rfx);
   lives_widget_show_all(pbox);
@@ -2782,7 +2777,7 @@ void load_default_keymap(void) {
 
   threaded_dialog_spin(0.);
 
-  if (hash_list == NULL) hash_list = weed_get_all_names(FX_LIST_HASHNAME);
+  if (!hash_list) hash_list = weed_get_all_names(FX_LIST_HASHNAME);
 
   if (prefs->startup_phase != 0 && prefs->startup_phase < 4) {
     do {

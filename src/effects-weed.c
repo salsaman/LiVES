@@ -3344,7 +3344,7 @@ static void weed_apply_filter_map(weed_plant_t **layers, weed_plant_t *filter_ma
           /// avoid applying to non-active tracks
           if (!is_valid) continue;
 
-          if (pchains != NULL && pchains[key] != NULL) {
+          if (pchains && pchains[key]) {
             interpolate_params(instance, pchains[key], tc); // interpolate parameters during playback
           }
         }
@@ -3422,9 +3422,9 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
 
   register int i;
 
-  if (mainw->is_rendering && !(mainw->proc_ptr != NULL && mainw->preview)) {
+  if (mainw->is_rendering && !(mainw->proc_ptr && mainw->preview)) {
     // rendering from multitrack
-    if (filter_map != NULL && layers[0] != NULL) {
+    if (filter_map && layers[0]) {
       weed_apply_filter_map(layers, filter_map, tc, pchains);
     }
   }
@@ -3460,7 +3460,7 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
                 // easing finished, deinit it
                 uint64_t new_rte = GU641 << (i);
                 // record
-                if (init_events[i] != NULL) {
+                if (init_events[i]) {
                   // if we are recording, mark the number of frames to ease out
                   // we'll need to repeat the same process during preview / rendering
                   // - when we hit the init_event, we'll find the deinit, then work back x frames and mark easing start
@@ -3472,7 +3472,7 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
                 weed_deinit_effect(i);
                 if (mainw->rte & new_rte) {
                   mainw->rte ^= new_rte;
-                  if (rte_window != NULL) rtew_set_keych(i, FALSE);
+                  if (rte_window) rtew_set_keych(i, FALSE);
                   if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
                 }
                 filter_mutex_unlock(i);
@@ -3481,7 +3481,7 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
               }}}
 	  // *INDENT-ON*
 
-          if (mainw->pchains != NULL && mainw->pchains[i] != NULL) {
+          if (mainw->pchains && mainw->pchains[i]) {
             if (!filter_mutex_trylock(i)) {
               interpolate_params(instance, mainw->pchains[i], tc); // interpolate parameters during preview
               filter_mutex_unlock(i);
@@ -3491,7 +3491,7 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
 
           // TODO *** enable this, and apply pconx to audio gens in audio.c
           if (!is_pure_audio(filter, TRUE)) {
-            if (mainw->pconx != NULL && !(mainw->preview || mainw->is_rendering)) {
+            if (mainw->pconx && !(mainw->preview || mainw->is_rendering)) {
               // chain any data pipelines
               needs_reinit = pconx_chain_data(i, key_modes[i], FALSE);
 
@@ -3560,10 +3560,10 @@ apply_inst3:
 #ifdef DEBUG_RTE
           if (filter_error != FILTER_SUCCESS) lives_printerr("Render error was %d\n", filter_error);
 #endif
-          if (filter_error == FILTER_SUCCESS && (instance = get_next_compound_inst(instance)) != NULL) goto apply_inst3;
+          if (filter_error == FILTER_SUCCESS && (instance = get_next_compound_inst(instance))) goto apply_inst3;
 
-          if (mainw->pconx != NULL && (filter_error == FILTER_SUCCESS || filter_error == FILTER_INFO_REINITED
-                                       || filter_error == FILTER_INFO_REDRAWN)) {
+          if (mainw->pconx && (filter_error == FILTER_SUCCESS || filter_error == FILTER_INFO_REINITED
+                               || filter_error == FILTER_INFO_REDRAWN)) {
             pconx_chain_data_omc(orig_inst, i, key_modes[i]);
           }
           weed_instance_unref(orig_inst);
@@ -3579,12 +3579,12 @@ apply_inst3:
 
   // caller should free all layers, but here we will free all other pixel_data
 
-  for (i = 0; layers[i] != NULL; i++) {
+  for (i = 0; layers[i]; i++) {
     if (layers[i] == mainw->blend_layer) mainw->blend_layer = NULL;
 
-    if ((mainw->multitrack != NULL && i == mainw->multitrack->preview_layer) || ((mainw->multitrack == NULL ||
+    if ((mainw->multitrack && i == mainw->multitrack->preview_layer) || ((mainw->multitrack == NULL ||
         mainw->multitrack->preview_layer < 0) &&
-        ((weed_get_voidptr_value(layers[i], WEED_LEAF_PIXEL_DATA, NULL) != NULL) ||
+        ((weed_get_voidptr_value(layers[i], WEED_LEAF_PIXEL_DATA, NULL)) ||
          (weed_get_int_value(layers[i], WEED_LEAF_FRAME, NULL) != 0 &&
           (LIVES_IS_PLAYING || mainw->multitrack == NULL || mainw->multitrack->current_rfx == NULL ||
            (mainw->multitrack->init_event == NULL || tc < get_event_timecode(mainw->multitrack->init_event) ||
@@ -3639,8 +3639,8 @@ void weed_apply_audio_effects(weed_plant_t *filter_map, weed_layer_t **layers, i
   // abuf will be a NULL terminated array of float audio
 
   // the results of abuf[0] and abuf[1] (for stereo) will be written to fileno
-  if (filter_map == NULL || !weed_plant_has_leaf(filter_map, WEED_LEAF_INIT_EVENTS) ||
-      (weed_get_voidptr_value(filter_map, WEED_LEAF_INIT_EVENTS, &error) == NULL)) {
+  if (!filter_map || !weed_plant_has_leaf(filter_map, WEED_LEAF_INIT_EVENTS) ||
+      !weed_get_voidptr_value(filter_map, WEED_LEAF_INIT_EVENTS, NULL)) {
     return;
   }
   mainw->pchains = get_event_pchains();
@@ -3673,7 +3673,7 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
   // free playback: apply any audio filters or analysers (but not generators)
   // Effects are applied in key order
 
-  if (alayer == NULL) return;
+  if (!alayer) return;
 
   nchans = weed_layer_get_naudchans(alayer);
   arate = weed_layer_get_audio_rate(alayer);
@@ -3706,13 +3706,13 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
           continue;
         }
 
-        if (mainw->pchains != NULL && mainw->pchains[i] != NULL) {
+        if (mainw->pchains && mainw->pchains[i]) {
           if (!filter_mutex_trylock(i)) {
             interpolate_params(instance, mainw->pchains[i], tc); // interpolate parameters during preview
             filter_mutex_unlock(i);
           }
         }
-        if (mainw->pconx != NULL  && is_audio_thread) {
+        if (mainw->pconx  && is_audio_thread) {
           // chain any data pipelines
 
           needs_reinit = pconx_chain_data(i, key_modes[i], TRUE);
@@ -3754,7 +3754,7 @@ apply_audio_inst2:
         // will unref instance
         filter_error = weed_apply_audio_instance(instance, layers, 0, nchans, nsamps, arate, tc, NULL);
 
-        if (filter_error == FILTER_SUCCESS && (instance = get_next_compound_inst(instance)) != NULL) {
+        if (filter_error == FILTER_SUCCESS && (instance = get_next_compound_inst(instance))) {
           goto apply_audio_inst2;
         }
         if (filter_error == FILTER_ERROR_NEEDS_REINIT) {
@@ -3769,8 +3769,8 @@ apply_audio_inst2:
 #endif
         mainw->osc_block = FALSE;
 
-        if (mainw->pconx != NULL && (filter_error == FILTER_SUCCESS || filter_error == FILTER_INFO_REINITED
-                                     || filter_error == FILTER_INFO_REDRAWN)) {
+        if (mainw->pconx && (filter_error == FILTER_SUCCESS || filter_error == FILTER_INFO_REINITED
+                             || filter_error == FILTER_INFO_REDRAWN)) {
           pconx_chain_data_omc((instance = weed_instance_obtain(i, key_modes[i])), i, key_modes[i]);
           weed_instance_unref(instance);
 	  // *INDENT-OFF*
@@ -6573,7 +6573,7 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
 boolean weed_init_effect(int hotkey) {
   // mainw->osc_block should be set to TRUE before calling this function !
   // filter_mutex MUST be locked, on FALSE return is unlocked
-  weed_plant_t *filter;
+  weed_plant_t *filter, *gui;
   weed_plant_t *new_instance, *inst;
   weed_plant_t *event_list;
   weed_error_t error;
@@ -6764,6 +6764,13 @@ boolean weed_init_effect(int hotkey) {
   weed_set_int_value(new_instance, WEED_LEAF_HOST_KEY, hotkey);
 
   inst = new_instance;
+
+  gui = weed_instance_get_gui(inst, FALSE);
+  if (gui && weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL)) {
+    weed_leaf_delete(gui, WEED_LEAF_EASE_OUT);
+  }
+  weed_leaf_delete(inst, WEED_LEAF_HOST_EASE_OUT_COUNT);
+  weed_leaf_delete(inst, WEED_LEAF_AUTO_EASING);
 
   if (weed_plant_has_leaf(filter, WEED_LEAF_HOST_FPS))
     weed_leaf_copy(inst, WEED_LEAF_TARGET_FPS, filter, WEED_LEAF_HOST_FPS);
@@ -7075,7 +7082,7 @@ boolean weed_deinit_effect(int hotkey) {
 
   // filter_mutex_lock(hotkey) must be be called before entering
 
-  weed_plant_t *instance, *inst, *last_inst, *next_inst, *filter;
+  weed_plant_t *instance, *inst, *last_inst, *next_inst, *filter, *gui;
 
   boolean is_modeswitch = FALSE;
   boolean was_transition = FALSE;
@@ -7102,7 +7109,7 @@ boolean weed_deinit_effect(int hotkey) {
     if (prefs->allow_easing) {
       // if it's a user key and the plugin supports easing out, we'll do that instead
       weed_plant_t *gui = weed_instance_get_gui(instance, FALSE);
-      if (!weed_plant_has_leaf(gui, WEED_LEAF_EASE_OUT_FRAMES)) {
+      if (!weed_plant_has_leaf(gui, WEED_LEAF_EASE_OUT)) {
         uint64_t new_rte = GU641 << (hotkey);
         if (mainw->rte & new_rte) {
           if ((easing = weed_get_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, NULL))) {
@@ -7121,6 +7128,13 @@ boolean weed_deinit_effect(int hotkey) {
   weed_set_boolean_value(instance, WEED_LEAF_HOST_NORECORD, WEED_TRUE);
 
   num_in_chans = enabled_in_channels(instance, FALSE);
+
+  gui = weed_instance_get_gui(instance, FALSE);
+  if (gui && weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL)) {
+    weed_leaf_delete(gui, WEED_LEAF_EASE_OUT);
+  }
+  weed_leaf_delete(instance, WEED_LEAF_HOST_EASE_OUT_COUNT);
+  weed_leaf_delete(instance, WEED_LEAF_AUTO_EASING);
 
   // handle compound fx
   last_inst = instance;
@@ -11365,14 +11379,14 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
 
   register int i, j;
 
-  if (key == NULL && check_key) {
+  if (!key && check_key) {
     check_ptrs = TRUE;
     check_key = FALSE;
   }
 
-  if (key == NULL || check_key) {
+  if (!key || check_key) {
     // key length
-    if (mem == NULL) {
+    if (!mem) {
       if (lives_read_le_buffered(fd, &len, 4, TRUE) < 4) {
         return -4;
       }
@@ -11389,10 +11403,10 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
     if (len > MAX_WEED_STRLEN) return -10;
 
     mykey = (char *)lives_malloc((size_t)len + 1);
-    if (mykey == NULL) return -5;
+    if (!mykey) return -5;
 
     // read key
-    if (mem == NULL) {
+    if (!mem) {
       if (lives_read_buffered(fd, mykey, (size_t)len, TRUE) < len) {
         type = -4;
         goto done;
@@ -11408,13 +11422,13 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
       goto done;
     }
 
-    if (key == NULL) key = mykey;
+    if (!key) key = mykey;
     else {
       lives_freep((void **)&mykey);
     }
   }
 
-  if (mem == NULL) {
+  if (!mem) {
     if (lives_read_le_buffered(fd, &st, 4, TRUE) < 4) {
       type = -4;
       goto done;
@@ -11441,7 +11455,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
     }
   }
 
-  if (mem == NULL) {
+  if (!mem) {
     if (lives_read_le_buffered(fd, &ne, 4, TRUE) < 4) {
       type = -4;
       goto done;
@@ -11467,7 +11481,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
   }
   if (ne > 0) {
     values = (void **)lives_malloc(ne * sizeof(void *));
-    if (values == NULL) {
+    if (!values) {
       type = -5;
       goto done;
     }
@@ -11482,7 +11496,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
   }
 
   // for pixel_data we do special handling
-  if (mem == NULL && !lives_strcmp(key, WEED_LEAF_PIXEL_DATA)) {
+  if (!mem && !lives_strcmp(key, WEED_LEAF_PIXEL_DATA)) {
     int width, height, pal = 0, *rs = NULL, nplanes = ne;
     height = weed_layer_get_height(plant);
     if (height > 0) {
@@ -11545,7 +11559,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
 
           values[0] = lives_calloc(ALIGN_CEIL(vlen64_tot + EXTRA_BYTES, 16) / 16, 16);
 
-          if (values[0] == NULL) {
+          if (!values[0]) {
             msg = lives_strdup_printf("Could not allocate %d bytes for deserialised frame", vlen);
             LIVES_ERROR(msg);
             lives_free(msg);
@@ -11584,7 +11598,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
           type = -11;
           goto done;
         }
-        if (rs != NULL && vlen != rs[j] * height * weed_palette_get_plane_ratio_vertical(pal, j)) {
+        if (rs && vlen != rs[j] * height * weed_palette_get_plane_ratio_vertical(pal, j)) {
           int xrs, xw, xh, psize = pixel_size(pal);
           xrs = vlen / height;
           xw = xrs / psize;
@@ -11602,7 +11616,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
         }
 
         values[j] = lives_calloc(ALIGN_CEIL(vlen + EXTRA_BYTES, 16) / 16, 16);
-        if (values[j] == NULL) {
+        if (!values[j]) {
           msg = lives_strdup_printf("Could not allocate %d bytes for deserialised frame", vlen);
           LIVES_ERROR(msg);
           lives_free(msg);
@@ -11618,14 +11632,14 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
         if (j >= nplanes) lives_free(values[j]);
       }
     }
-    if (plant != NULL) {
+    if (plant) {
       weed_set_voidptr_array(plant, WEED_LEAF_PIXEL_DATA, nplanes, values);
       while (nplanes != 0) values[--nplanes] = NULL; /// prevent "values" from being freed because we copy-by-value
     }
     goto done;
   } else {
     for (i = 0; i < ne; i++) {
-      if (mem == NULL) {
+      if (!mem) {
         bytes = lives_read_le_buffered(fd, &vlen, 4, TRUE);
         if (bytes < 4) {
           for (--i; i >= 0; lives_freep((void **)&values[i--]));
@@ -11658,7 +11672,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
         } else values[i] = lives_malloc((size_t)vlen);
       }
       if (vlen > 0) {
-        if (mem == NULL) {
+        if (!mem) {
           if (st != WEED_SEED_STRING)
             bytes = lives_read_le_buffered(fd, values[i], vlen, TRUE);
           else
@@ -11684,8 +11698,8 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
     type = *(int32_t *)(values[0]);
     if (type < 0) return -8;
   }
-  if (plant != NULL) {
-    if (values == NULL) {
+  if (plant) {
+    if (!values) {
       weed_leaf_set(plant, key, st, 0, NULL);
     } else {
       switch (st) {
@@ -11735,7 +11749,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
         weed_leaf_set(plant, key, st, ne, (void *)values);
         break;
       default:
-        if (plant != NULL) {
+        if (plant) {
           boolean add_leaf = TRUE;
           if (check_ptrs) {
             switch (weed_plant_get_type(plant)) {
@@ -11749,7 +11763,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
             }
           }
           if (add_leaf) {
-            if (mem == NULL && prefs->force64bit) {
+            if (!mem && prefs->force64bit) {
               // force pointers to uint64_t
               uint64_t *voids = (uint64_t *)lives_malloc(ne * sizeof(uint64_t));
               for (j = 0; j < ne; j++) voids[j] = (uint64_t)(*(void **)values[j]);
@@ -11766,7 +11780,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
 
 done:
 
-  if (values != NULL) {
+  if (values) {
     for (i = 0; i < ne; i++) lives_freep((void **)&values[i]);
     lives_freep((void **)&values);
   }
@@ -11789,9 +11803,9 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
 realign:
 
   // caller should clear and check THREADVAR(read_failed)
-  if (mem == NULL) {
+  if (!mem) {
     if (fd == bugfd) {
-      if (plant == NULL) {
+      if (!plant) {
         // create a new plant with type unknown
         plant = weed_plant_new(WEED_PLANT_UNKNOWN);
         newd = TRUE;
@@ -11813,7 +11827,7 @@ realign:
     *mem += 4;
   }
 
-  if (plant == NULL) {
+  if (!plant) {
     // create a new plant with type unknown
     plant = weed_plant_new(type);
     newd = TRUE;

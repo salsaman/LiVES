@@ -2164,13 +2164,16 @@ void init_clipboard(void) {
     // experimental feature - we can have duplicate copies of the clipboard with different palettes / gamma
     for (int i = 0; i < mainw->ncbstores; i++) {
       if (mainw->cbstores[i] != clipboard) {
-        char *com = lives_strdup_printf("%s close \"%s\"", prefs->backend, mainw->cbstores[i]->handle);
-        char *permitname = lives_build_filename(prefs->workdir, mainw->cbstores[i]->handle,
-                                                TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
-        lives_touch(permitname);
-        lives_free(permitname);
-        lives_system(com, TRUE);
-        lives_free(com);
+        char *clipd = lives_build_path(prefs->workdir, mainw->cbstores[i]->handle, NULL);
+        if (lives_file_test(clipd, LIVES_FILE_TEST_EXISTS)) {
+          char *com = lives_strdup_printf("%s close \"%s\"", prefs->backend, mainw->cbstores[i]->handle);
+          char *permitname = lives_build_path(clipd, TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
+          lives_touch(permitname);
+          lives_free(permitname);
+          lives_system(com, TRUE);
+          lives_free(com);
+        }
+        lives_free(clipd);
       }
     }
     mainw->ncbstores = 0;
@@ -2882,7 +2885,7 @@ boolean do_std_checks(const char *type_name, const char *type, size_t maxlen, co
 }
 
 
-boolean is_legal_set_name(const char *set_name, boolean allow_dupes) {
+boolean is_legal_set_name(const char *set_name, boolean allow_dupes, boolean leeway) {
   // check (clip) set names for validity
   // - may not be of zero length
   // - may not contain spaces or characters / \ * "
@@ -2901,28 +2904,29 @@ boolean is_legal_set_name(const char *set_name, boolean allow_dupes) {
 
   // iff allow_dupes is FALSE then we disallow the name of any existing set (has a subdirectory in the working directory)
 
-  char *msg;
-
   if (!do_std_checks(set_name, _("Set"), MAX_SET_NAME_LEN, NULL)) return FALSE;
 
-  if ((set_name[0] < 'a' || set_name[0] > 'z') && (set_name[0] < 'A' || set_name[0] > 'Z')) {
-    /// TODO: disallow for saving
-    /// allow only for reloading legacy sets
-
-  }
-
   // check if this is a set in use by another copy of LiVES
-  if (mainw != NULL && mainw->is_ready && !check_for_lock_file(set_name, 1)) return FALSE;
+  if (mainw && mainw->is_ready && !check_for_lock_file(set_name, 1)) return FALSE;
+
+  if ((set_name[0] < 'a' || set_name[0] > 'z') && (set_name[0] < 'A' || set_name[0] > 'Z')) {
+    if (leeway) {
+      if (mainw->is_ready)
+        do_warning_dialog(_("As of LiVES 3.2.0 all set names must begin with alphabetical character\n"
+                            "(A - Z or a - z)\nYou will need to give a new name for the set when saving it.\n"));
+    } else {
+      do_error_dialog(_("All set names must begin with an alphabetical character\n(A - Z or a - z)\n"));
+      return FALSE;
+    }
+  }
 
   if (!allow_dupes) {
     // check for duplicate set names
     char *set_dir = lives_build_filename(prefs->workdir, set_name, NULL);
     if (lives_file_test(set_dir, LIVES_FILE_TEST_IS_DIR)) {
       lives_free(set_dir);
-      msg = lives_strdup_printf(_("\nThe set %s already exists.\nPlease choose another set name.\n"), set_name);
-      do_error_dialog(msg);
-      lives_free(msg);
-      return FALSE;
+      return do_yesno_dialogf(_("\nThe set %s already exists.\n"
+                                "Do you want to add the current clips to the existing set ?.\n"), set_name);
     }
     lives_free(set_dir);
   }

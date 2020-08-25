@@ -16,8 +16,8 @@
 static lives_pconnect_t *spconx;
 static lives_cconnect_t *scconx;
 
-static boolean do_chan_connected_query(lives_conx_w *, int okey, int omode, int ocnum);
-static boolean do_param_connected_query(lives_conx_w *, int okey, int omode, int opnum);
+static boolean do_chan_connected_query(lives_conx_w *, int okey, int omode, int ocnum, boolean is_same_key);
+static boolean do_param_connected_query(lives_conx_w *, int okey, int omode, int opnum, boolean is_same_key);
 static void do_param_incompatible_error(lives_conx_w *);
 
 static void ptable_row_add_standard_widgets(lives_conx_w *, int idx);
@@ -110,15 +110,15 @@ void override_if_active_input(int hotkey) {
     for (i = 0; i < pconx->nparams; i++) {
       totcons += pconx->nconns[i];
       for (; j < totcons; j++) {
-        if (pconx->ikey[j] == hotkey && pconx->imode[j] == imode && pconx->ipnum[j] == FX_DATA_PARAM_ACTIVE) {
+        if (pconx->ikey[j] == hotkey - 1 && pconx->imode[j] == imode && pconx->ipnum[j] == FX_DATA_PARAM_ACTIVE) {
           // out param is "ACTIVATED"
           // abuse "autoscale" for this
           pconx->autoscale[i] = TRUE;
           return;
-        }
-      }
-    }
+	  // *INDENT-OFF*
+        }}}
     pconx = pconx->next;
+    // *INDENT-ON*
   }
 }
 
@@ -239,7 +239,7 @@ char *pconx_list(int okey, int omode, int opnum) {
   int totcons = 0;
   int i, j;
 
-  while (pconx != NULL) {
+  while (pconx) {
     if (pconx->okey == okey && pconx->omode == omode) {
       for (i = 0; i < pconx->nparams; i++) {
         if (pconx->params[i] == opnum) {
@@ -2457,7 +2457,7 @@ static void apbutton_clicked(LiVESButton * button, livespointer user_data) {
   // get first param connected
   stparam = conxwp->idx[totchans + ours];
 
-  if (conxwp->ikeys[totchans + ours] == 0) {
+  if (conxwp->ikeys[totchans + ours] < 0) {
     // first out not connected, we will add this back in
     ours -= pconx_get_numcons(conxwp, 0);
     k = 0;
@@ -2482,7 +2482,7 @@ static void apbutton_clicked(LiVESButton * button, livespointer user_data) {
 
     combo = conxwp->pcombo[ours];
 
-    if (conxwp->ikeys[ours + totchans] != 0) {
+    if (conxwp->ikeys[ours + totchans] >= 0) {
       // add another if needed
       padd_clicked(conxwp->add_button[ours + totchans], (livespointer)conxwp);
       ours++;
@@ -2555,7 +2555,7 @@ static void acbutton_clicked(LiVESButton * button, livespointer user_data) {
   // get first param connected
   stchan = conxwp->idx[ours];
 
-  if (conxwp->ikeys[ours] == 0) {
+  if (conxwp->ikeys[ours] < 0) {
     // first out not connected, we will add this back in
     ours -= cconx_get_numcons(conxwp, 0);
     k = 0;
@@ -2592,7 +2592,7 @@ static void acbutton_clicked(LiVESButton * button, livespointer user_data) {
 
     combo = conxwp->ccombo[ours];
 
-    if (conxwp->ikeys[ours] != 0) {
+    if (conxwp->ikeys[ours] >= 0) {
       // add another if needed
       cadd_clicked(conxwp->add_button[ours], (livespointer)conxwp);
       ours++;
@@ -2628,7 +2628,7 @@ static void padd_clicked(LiVESWidget * button, livespointer user_data) {
   LiVESWidget *hbox[5], *hboxb[5], *achbox, *comhbox;
 #endif
 
-  register int i;
+  int i;
 
   totparams = pconx_get_numcons(conxwp, FX_DATA_WILDCARD);
   totchans = cconx_get_numcons(conxwp, FX_DATA_WILDCARD);
@@ -2742,6 +2742,7 @@ static void padd_clicked(LiVESWidget * button, livespointer user_data) {
   conxwp->dispp[pidx + EXTRA_PARAMS_OUT]++;
 
   lives_widget_set_sensitive(conxwp->del_button[ours + 1], TRUE);
+  lives_widget_set_sensitive(conxwp->add_button[ours], FALSE);
 
   lives_widget_show_all(conxwp->tablep);
 }
@@ -2780,17 +2781,23 @@ static void pdel_clicked(LiVESWidget * button, livespointer user_data) {
 
   lives_combo_set_active_index(LIVES_COMBO(conxwp->pfxcombo[ours]), 0);
 
-  if (conxwp->dispp[pidx + EXTRA_PARAMS_OUT] == 1) {
-    // last one, dont delete, just clear
+  if (conxwp->dispp[pidx + EXTRA_PARAMS_OUT] <= 1) {
+    // last one for this param, dont delete, just clear
     lives_widget_set_sensitive(conxwp->del_button[totchans + ours], FALSE);
     return;
   }
 
-  // force callback for pfxcombo before destroying it
-  lives_widget_context_update();
+  if (ours > 0) {
+    if (lives_widget_get_sensitive(conxwp->del_button[totchans + ours - 1])
+        && lives_widget_get_sensitive(conxwp->add_button[totchans + ours])) {
+      lives_widget_set_sensitive(conxwp->add_button[totchans + ours - 1], TRUE);
+    }
+  }
 
   conxwp->dispp[pidx + EXTRA_PARAMS_OUT]--;
 
+  // force callback for pfxcombo before destroying it
+  lives_widget_context_update();
   totparams--;
 
 #if !LIVES_TABLE_IS_GRID
@@ -3028,11 +3035,13 @@ static void cadd_clicked(LiVESWidget * button, livespointer user_data) {
 
   ctable_row_add_variable_widgets(conxwp, ours + 1, ours + 2, cidx);
 
-  conxwp->ikeys[ours + 1] = conxwp->imodes[ours + 1] = conxwp->idx[i + 1] = 0;
+  conxwp->ikeys[ours + 1] = -1;
+  conxwp->imodes[ours + 1] = conxwp->idx[i + 1] = 0;
 
   conxwp->dispc[cidx]++;
 
   lives_widget_set_sensitive(conxwp->del_button[ours + 1], TRUE);
+  lives_widget_set_sensitive(conxwp->add_button[ours], FALSE);
 
   lives_widget_show_all(conxwp->tablec);
 }
@@ -3067,7 +3076,7 @@ static void cdel_clicked(LiVESWidget * button, livespointer user_data) {
 
   lives_combo_set_active_index(LIVES_COMBO(conxwp->cfxcombo[ours]), 0);
 
-  if (conxwp->dispc[cidx] == 1) {
+  if (conxwp->dispc[cidx] <= 1) {
     // last one, dont delete, just clear
     lives_widget_set_sensitive(conxwp->del_button[ours], FALSE);
     return;
@@ -3169,6 +3178,11 @@ static void cdel_clicked(LiVESWidget * button, livespointer user_data) {
   lives_grid_remove_row(LIVES_GRID(conxwp->tablec), ours + 1);
 #endif
 
+  if (ours == totchans) {
+    if (lives_widget_get_sensitive(conxwp->del_button[ours - 1]))
+      lives_widget_set_sensitive(conxwp->add_button[ours - 1], TRUE);
+  }
+
   conxwp->pclabel = (LiVESWidget **)lives_realloc(conxwp->pclabel, (totchans + totparams) * sizeof(LiVESWidget *));
 
   conxwp->add_button = (LiVESWidget **)lives_realloc(conxwp->add_button, (totchans + totparams) * sizeof(LiVESWidget *));
@@ -3222,9 +3236,10 @@ static void dfxc_changed(LiVESWidget * combo, livespointer user_data) {
   cidx = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "cidx"));
 
   if (fidx == -1) {
-    lives_combo_set_active_index(LIVES_COMBO(combo), 0);
-    lives_combo_populate(LIVES_COMBO(conxw->ccombo[ours]), NULL);
     lives_combo_set_active_string(LIVES_COMBO(conxw->ccombo[ours]), "");
+    lives_signal_handler_block(conxw->ccombo[ours], conxw->dpc_func[ours]);
+    lives_combo_populate(LIVES_COMBO(conxw->ccombo[ours]), NULL);
+    lives_signal_handler_unblock(conxw->ccombo[ours], conxw->dpc_func[ours]);
     if (conxw->acbutton && cconx_get_nconns(conxw->cconx, 0) == 0 && cidx == 0)
       lives_widget_set_sensitive(conxw->acbutton, FALSE);
     lives_widget_set_sensitive(conxw->ccombo[ours], FALSE);
@@ -3249,8 +3264,10 @@ static void dfxc_changed(LiVESWidget * combo, livespointer user_data) {
 
   lives_free(ichans);
 
-  lives_combo_populate(LIVES_COMBO(conxw->ccombo[ours]), clist);
   lives_combo_set_active_string(LIVES_COMBO(conxw->ccombo[ours]), "");
+  lives_signal_handler_block(conxw->ccombo[ours], conxw->dpc_func[ours]);
+  lives_combo_populate(LIVES_COMBO(conxw->ccombo[ours]), clist);
+  lives_signal_handler_unblock(conxw->ccombo[ours], conxw->dpc_func[ours]);
 
   if (cidx == 0) if (conxw->acbutton) lives_widget_set_sensitive(conxw->acbutton, TRUE);
   lives_widget_set_sensitive(conxw->ccombo[ours], TRUE);
@@ -3346,10 +3363,10 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
         lives_signal_handler_unblock(acheck, conxwp->acheck_func[ours]);
       }
 
-      lives_combo_set_active_index(LIVES_COMBO(combo), 0);
-
-      lives_combo_populate(LIVES_COMBO(conxwp->pcombo[ours]), NULL);
       lives_combo_set_active_string(LIVES_COMBO(conxwp->pcombo[ours]), "");
+      lives_signal_handler_block(conxwp->pcombo[ours], conxwp->dpp_func[ours]);
+      lives_combo_populate(LIVES_COMBO(conxwp->pcombo[ours]), NULL);
+      lives_signal_handler_unblock(conxwp->pcombo[ours], conxwp->dpp_func[ours]);
 
       if (conxwp->apbutton && pconx_get_nconns(conxwp->pconx, 0) == 0 && pidx == 0)
         lives_widget_set_sensitive(conxwp->apbutton, FALSE);
@@ -3419,8 +3436,12 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
     if (iparams) lives_free(iparams);
   }
 
-  lives_combo_populate(LIVES_COMBO(conxwp->pcombo[ours]), plist);
   lives_combo_set_active_string(LIVES_COMBO(conxwp->pcombo[ours]), "");
+  lives_signal_handler_block(conxwp->pcombo[ours], conxwp->dpp_func[ours]);
+  lives_combo_populate(LIVES_COMBO(conxwp->pcombo[ours]), plist);
+  lives_signal_handler_unblock(conxwp->pcombo[ours], conxwp->dpp_func[ours]);
+
+  //lives_combo_set_active_string(LIVES_COMBO(conxwp->pcombo[ours]), "");
 
   if (pidx == 0) if (conxwp->apbutton) lives_widget_set_sensitive(conxwp->apbutton, TRUE);
 
@@ -3495,7 +3516,7 @@ int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode
   if (idx_ret) *idx_ret = idx;
 
   if (!setup) {
-    if (pconx_get_out_param(TRUE, ikey > 0 ? ikey - 1 : ikey, imode, ipnum, okey, omode, oopnum, NULL)) {
+    if (pconx_get_out_param(TRUE, ikey, imode, ipnum, okey, omode, oopnum, NULL)) {
       // dest param already has a connection
       return -1;
     }
@@ -3576,14 +3597,14 @@ static void dpp_changed(LiVESWidget * combo, livespointer user_data) {
 
     ikey = conxwp->ikeys[nchans + ours];
 
-    if (ikey != 0) {
-      if (ikey > 0) ikey--;
+    if (ikey >= 0) {
+      //if (ikey > 0) ikey--;
       pconx_delete(conxwp->okey, conxwp->omode, pidx, ikey, conxwp->imodes[nchans + ours],
                    conxwp->idx[nchans + ours]);
 
       conxwp->pconx = pconx_find(conxwp->okey, conxwp->omode);
     }
-    conxwp->ikeys[nchans + ours] = 0;
+    conxwp->ikeys[nchans + ours] = -1;
     conxwp->imodes[nchans + ours] = 0;
     conxwp->idx[nchans + ours] = 0;
 
@@ -3614,7 +3635,7 @@ static void dpp_changed(LiVESWidget * combo, livespointer user_data) {
     return;
   }
   if (ret == -1) {
-    if (!do_param_connected_query(conxwp, okey, omode, opnum)) {
+    if (!do_param_connected_query(conxwp, okey, omode, opnum, conxwp->okey == okey)) {
       lives_combo_set_active_string(LIVES_COMBO(combo), "");
       return;
     } else {
@@ -3659,12 +3680,13 @@ static void dpp_changed(LiVESWidget * combo, livespointer user_data) {
   lives_free(paramname);
 
   lives_widget_set_sensitive(conxwp->del_button[nchans + ours], TRUE);
-  lives_widget_set_sensitive(conxwp->add_button[nchans + ours], TRUE);
 
   if (setup) return;
 
-  if (conxwp->ikeys[nchans + ours] != 0) pconx_delete(conxwp->okey, conxwp->omode, pidx,
-        conxwp->ikeys[nchans + ours] - 1, conxwp->imodes[nchans + ours], conxwp->idx[nchans + ours]);
+  lives_widget_set_sensitive(conxwp->add_button[nchans + ours], TRUE);
+
+  if (conxwp->ikeys[nchans + ours] >= 0) pconx_delete(conxwp->okey, conxwp->omode, pidx,
+        conxwp->ikeys[nchans + ours], conxwp->imodes[nchans + ours], conxwp->idx[nchans + ours]);
 
   conxwp->pconx = pconx_find(conxwp->okey, conxwp->omode);
 
@@ -3689,7 +3711,7 @@ int cconx_check_connection(int ikey, int imode, int icnum, boolean setup, weed_p
 
   int fidx, idx, nichans, i, j = 0;
 
-  fidx = rte_keymode_get_filter_idx(ikey, imode);
+  fidx = rte_keymode_get_filter_idx(ikey + 1, imode);
 
   // find the receiving filter/instance
   filter = get_weed_filter(fidx);
@@ -3713,7 +3735,7 @@ int cconx_check_connection(int ikey, int imode, int icnum, boolean setup, weed_p
   if (idx_ret) *idx_ret = idx;
 
   if (!setup) {
-    if (cconx_get_out_alpha(TRUE, ikey - 1, imode, i, okey, omode, ocnum)) {
+    if (cconx_get_out_alpha(TRUE, ikey, imode, i, okey, omode, ocnum)) {
       // dest chan already has a connection
       return -1;
     }
@@ -3768,11 +3790,11 @@ static void dpc_changed(LiVESWidget * combo, livespointer user_data) {
 
     if (!hasone) lives_widget_set_sensitive(conxwp->disconbutton, FALSE);
 
-    if (conxwp->ikeys[ours] != 0) cconx_delete(conxwp->okey, conxwp->omode, cidx,
-          conxwp->ikeys[ours] - 1, conxwp->imodes[ours], conxwp->idx[ours]);
+    if (conxwp->ikeys[ours] >= 0) cconx_delete(conxwp->okey, conxwp->omode, cidx,
+          conxwp->ikeys[ours], conxwp->imodes[ours], conxwp->idx[ours]);
     conxwp->cconx = cconx_find(conxwp->okey, conxwp->omode);
 
-    conxwp->ikeys[ours] = 0;
+    conxwp->ikeys[ours] = -1;
     conxwp->imodes[ours] = 0;
     conxwp->idx[ours] = 0;
 
@@ -3793,7 +3815,7 @@ static void dpc_changed(LiVESWidget * combo, livespointer user_data) {
 
   if (ret == -1) {
     // dest chan already has a connection
-    if (!do_chan_connected_query(conxwp, okey, omode, ocnum)) {
+    if (!do_chan_connected_query(conxwp, okey, omode, ocnum, conxwp->okey == okey)) {
       lives_combo_set_active_string(LIVES_COMBO(combo), "");
       return;
     } else {
@@ -3814,8 +3836,8 @@ static void dpc_changed(LiVESWidget * combo, livespointer user_data) {
 
   if (setup) return;
 
-  if (conxwp->ikeys[ours] != 0) cconx_delete(conxwp->okey, conxwp->omode, cidx,
-        conxwp->ikeys[ours] - 1, conxwp->imodes[ours], conxwp->idx[ours]);
+  if (conxwp->ikeys[ours] >= 0) cconx_delete(conxwp->okey, conxwp->omode, cidx,
+        conxwp->ikeys[ours], conxwp->imodes[ours], conxwp->idx[ours]);
 
   conxwp->cconx = cconx_find(conxwp->okey, conxwp->omode);
 
@@ -3877,7 +3899,7 @@ static void on_acheck_toggled(LiVESToggleButton * acheck, livespointer user_data
 
   lives_tree_model_get(model, &iter, KEYVAL_COLUMN, &key, MODEVAL_COLUMN, &mode, -1);
 
-  if (key == 0) return;
+  if (key < 0) return;
 
   if (key == FX_DATA_KEY_OMC_MACRO) {
     // match with OMC macro
@@ -3915,8 +3937,8 @@ static void on_acheck_toggled(LiVESToggleButton * acheck, livespointer user_data
 
   pidx = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(acheck), "pidx"));
 
-  if (conxwp->ikeys[nchans + ours] != 0) {
-    pconx_delete(conxwp->okey, conxwp->omode, pidx, key - 1, mode, j);
+  if (conxwp->ikeys[nchans + ours] >= 0) {
+    pconx_delete(conxwp->okey, conxwp->omode, pidx, key, mode, j);
     conxwp->pconx = pconx_find(conxwp->okey, conxwp->omode);
   }
   pconx_add_connection_private(conxwp->pconx, conxwp->okey, conxwp->omode, pidx, key > 0 ? key - 1 : key, mode, j, on);
@@ -4032,6 +4054,7 @@ static void ptable_row_add_variable_widgets(lives_conx_w * conxwp, int idx, int 
                      (LiVESAttachOptions)(0), 0, 0);
 
   fx_entry = lives_combo_get_entry(LIVES_COMBO(conxwp->pfxcombo[idx]));
+  lives_entry_set_width_chars(LIVES_ENTRY(fx_entry), SHORTER_ENTRY_WIDTH);
   lives_entry_set_text(LIVES_ENTRY(fx_entry), mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
   lives_entry_set_editable(LIVES_ENTRY(fx_entry), FALSE);
 
@@ -4041,6 +4064,7 @@ static void ptable_row_add_variable_widgets(lives_conx_w * conxwp, int idx, int 
   lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, 0);
 
   conxwp->pcombo[idx] = lives_standard_combo_new("", NULL, LIVES_BOX(hbox2), NULL);
+  lives_entry_set_width_chars(LIVES_ENTRY(lives_combo_get_entry(LIVES_COMBO(conxwp->pcombo[idx]))), SHORTER_ENTRY_WIDTH);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(conxwp->pcombo[idx]), "idx", LIVES_INT_TO_POINTER(-1));
   lives_widget_set_sensitive(conxwp->pcombo[idx], FALSE);
 
@@ -4119,6 +4143,7 @@ static void ctable_row_add_variable_widgets(lives_conx_w * conxwp, int idx, int 
                      (LiVESAttachOptions)(0), 0, 0);
 
   fx_entry = lives_combo_get_entry(LIVES_COMBO(conxwp->cfxcombo[idx]));
+  lives_entry_set_width_chars(LIVES_ENTRY(fx_entry), SHORTER_ENTRY_WIDTH);
   lives_entry_set_text(LIVES_ENTRY(fx_entry), mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
   lives_entry_set_editable(LIVES_ENTRY(fx_entry), FALSE);
 
@@ -4128,6 +4153,7 @@ static void ctable_row_add_variable_widgets(lives_conx_w * conxwp, int idx, int 
   lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, 0);
 
   conxwp->ccombo[idx] = lives_standard_combo_new("", NULL, LIVES_BOX(hbox2), NULL);
+  lives_entry_set_width_chars(LIVES_ENTRY(lives_combo_get_entry(LIVES_COMBO(conxwp->ccombo[idx]))), SHORTER_ENTRY_WIDTH);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(conxwp->ccombo[idx]), "idx", LIVES_INT_TO_POINTER(-1));
   lives_widget_set_sensitive(conxwp->ccombo[idx], FALSE);
 
@@ -4270,7 +4296,10 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
   conxwp->imodes = (int *)lives_malloc((totchans + totparams) * sizint);
   conxwp->idx = (int *)lives_malloc((totchans + totparams) * sizint);
 
-  for (i = 0; i < totchans + totparams; i++) conxwp->ikeys[i] = conxwp->imodes[i] = conxwp->idx[i] = 0;
+  for (i = 0; i < totchans + totparams; i++) {
+    conxwp->ikeys[i] = -1;
+    conxwp->imodes[i] = conxwp->idx[i] = 0;
+  }
 
   lctext = (_("Connected to -->"));
 
@@ -4291,7 +4320,15 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
 
     conxwp->ccombo = (LiVESWidget **)lives_malloc(totchans * sizeof(LiVESWidget *));
 
-    label = lives_standard_label_new((tmp = lives_strdup_printf(_("%s - Alpha Channel Connections"), fname)));
+    tmp = lives_big_and_bold("%s - Alpha Channel Connections", fname);
+
+    widget_opts.use_markup = TRUE;
+    widget_opts.justify = LIVES_JUSTIFY_CENTER;
+    label = lives_standard_label_new(tmp);
+    widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+    widget_opts.use_markup = FALSE;
+    lives_free(tmp);
+
     lives_box_pack_start(LIVES_BOX(top_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
     conxwp->tablec = lives_table_new(0, 6, FALSE);
@@ -4319,7 +4356,6 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
 
       do {
         ctable_row_add_variable_widgets(conxwp, x, conxwp->trowsc - 1, i);
-
         ctable_row_add_standard_widgets(conxwp, x);
 
         if (isfirst) {
@@ -4363,7 +4399,13 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
 
     conxwp->acheck = (LiVESWidget **)lives_malloc(totparams * sizeof(LiVESWidget *));
 
-    label = lives_standard_label_new((tmp = lives_strdup_printf(_("%s - Parameter Data Connections"), fname)));
+    tmp = lives_big_and_bold("%s - Parameter Data Connections", fname);
+
+    widget_opts.use_markup = TRUE;
+    widget_opts.justify = LIVES_JUSTIFY_CENTER;
+    label = lives_standard_label_new(tmp);
+    widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+    widget_opts.use_markup = FALSE;
     lives_free(tmp);
 
     lives_box_pack_start(LIVES_BOX(top_vbox), label, FALSE, FALSE, widget_opts.packing_height);
@@ -4400,8 +4442,9 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
         // TODO: for OMC, adjust the pmodel for each oparam type
 
         ptable_row_add_variable_widgets(conxwp, x, conxwp->trowsp - 1, -EXTRA_PARAMS_OUT);
-
         ptable_row_add_standard_widgets(conxwp, x + totchans);
+
+        //lives_widget_set_sensitive(conxwp->add_button[x + totchans], FALSE);
 
         if (isfirst) {
           /* TRANSLATORS - as in "Effect ACTIVATED" */
@@ -4649,7 +4692,7 @@ static boolean show_existing(lives_conx_w * conxwp) {
       lives_combo_set_active_index(LIVES_COMBO(ccombo), cidx);
       lives_signal_handler_unblock(ccombo, conxwp->dpc_func[l]);
 
-      conxwp->ikeys[l] = ikey + 1;
+      conxwp->ikeys[l] = ikey;
       conxwp->imodes[l] = imode;
       conxwp->idx[l] = icnum;
 
@@ -4696,6 +4739,9 @@ show_ex_params:
       pcombo = conxwp->pcombo[l];
       acheck = conxwp->acheck[l];
 
+      if (j == posn + pconx->nconns[i] - 1)
+        lives_widget_set_sensitive(conxwp->add_button[l], TRUE);
+
       if (acheck) {
         lives_widget_set_sensitive(acheck, TRUE);
 
@@ -4735,7 +4781,7 @@ show_ex_params:
 
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pcombo), "setup", LIVES_INT_TO_POINTER(TRUE));
 
-      conxwp->ikeys[totchans + l] = ikey > 0 ? ikey + 1 : ikey;
+      conxwp->ikeys[totchans + l] = ikey;
       conxwp->imodes[totchans + l] = imode;
       conxwp->idx[totchans + l] = ipnum;
 
@@ -4777,7 +4823,7 @@ LiVESWidget *make_datacon_window(int key, int mode) {
 
   conxw.filter = rte_keymode_get_filter(key + 1, mode);
 
-  if (conxw.filter == NULL) return NULL;
+  if (!conxw.filter) return NULL;
 
   conxw.acbutton = conxw.apbutton = NULL;
 
@@ -4889,39 +4935,47 @@ LiVESWidget *make_datacon_window(int key, int mode) {
 }
 
 
-static boolean do_chan_connected_query(lives_conx_w * conxwp, int key, int mode, int cnum) {
+static boolean do_chan_connected_query(lives_conx_w * conxwp, int key, int mode, int cnum, boolean is_same) {
   weed_plant_t *filter = rte_keymode_get_filter(key + 1, mode);
   weed_plant_t *ctmpl, **ochans;
-  char *cname, *fname = weed_filter_get_name(filter);
-  boolean resp;
+  char *cname, *msg, *fname = weed_filter_get_name(filter);
+  boolean resp = FALSE;
   ochans = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, NULL);
   ctmpl = ochans[cnum];
   lives_free(ochans);
   cname = get_chan_name(ctmpl, cnum, TRUE);
   widget_opts.transient = LIVES_WINDOW(conxwp->conx_dialog);
-  resp = do_yesno_dialogf(_("Input channel is already connected from kay %d, mode %d\n\n(%s:%s)\n\n"
-                            "Would you like to replace the existing connection ?\n\n"),
-                          key + 1, mode, fname, cname);
+  msg = lives_strdup_printf(_("Input channel is already connected from key %d, mode %d\n\n(%s:%s)\n\n"),
+                            key + 1, mode, fname, cname);
+  if (!is_same)
+    resp = do_yesno_dialogf(_("%sWould you like to replace the existing connection ?\n\n"), msg);
+
+  else
+    do_error_dialogf(_("%sYou need to remove this connection first before adding another.\n\n"), msg);
   widget_opts.transient = NULL;
-  lives_free(cname); lives_free(fname);
+  lives_free(msg); lives_free(cname); lives_free(fname);
   return resp;
 }
 
 
-static boolean do_param_connected_query(lives_conx_w * conxwp, int key, int mode, int pnum) {
+static boolean do_param_connected_query(lives_conx_w * conxwp, int key, int mode, int pnum, boolean is_same) {
   weed_plant_t *filter = rte_keymode_get_filter(key + 1, mode);
-  char *pname, *fname = weed_filter_get_name(filter);
-  boolean resp;
+  char *pname, *msg, *fname = weed_filter_get_name(filter);
+  boolean resp = FALSE;
   if (pnum >= 0) {
     weed_plant_t *ptmpl = weed_filter_out_paramtmpl(filter, pnum);
     pname = get_param_name(ptmpl, pnum, TRUE);
   } else pname = (_("ACTIVATED"));
   widget_opts.transient = LIVES_WINDOW(conxwp->conx_dialog);
-  resp = do_yesno_dialogf(_("Input parameter is already connected from kay %d, mode %d\n\n(%s:%s)\n\n"
-                            "Would you like to replace the current connection ?\n\n"),
-                          key + 1, mode, fname, pname);
+  msg = lives_strdup_printf(_("Input parameter is already connected from key %d, mode %d\n\n(%s:%s)\n\n"),
+                            key + 1, mode, fname, pname);
+  if (!is_same)
+    resp = do_yesno_dialogf(_("%sWould you like to replace the existing connection ?\n\n"), msg);
+
+  else
+    do_error_dialogf(_("%sYou need to remove this connection first before adding another.\n\n"), msg);
   widget_opts.transient = NULL;
-  lives_free(pname); lives_free(fname);
+  lives_free(msg); lives_free(pname); lives_free(fname);
   return resp;
 }
 

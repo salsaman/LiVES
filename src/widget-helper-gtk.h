@@ -83,19 +83,16 @@ typedef uint8_t                           boolean;
 #define GDK_IS_X11_DISPLAY(display) (FALSE)
 #endif
 
-
 #define LIVES_XWINDOW_XID(z) (z)
 
 #endif // GDK_WINDOWING_X11
 
 #endif // GUI_GTK
 
-
 #ifdef GUI_GTK
 
 /// custom tweaks
 #define PROGBAR_IS_ENTRY 1
-
 
 /// Glib type stuff //////////////////////////////////////////
 #ifndef G_ENCODE_VERSION
@@ -338,23 +335,29 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 #if GTK_CHECK_VERSION(3, 0, 0)
 #if GTK_CHECK_VERSION(4, 0, 0)
 // gtk+ 4
-#define EXPOSE_FN_DECL(fn, widget, user_data) boolean fn(LiVESWidget *widget, lives_painter_t *cairo, int width, int height, livespointer user_data) { \
-    LiVESXEventExpose *event = NULL; \
-    (void)event; // avoid compiler warnings
+#define EXPOSE_FN_DECL(fn, widget, user_data) \
+  boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, livespointer user_data) \
+  {LiVESXEventExpose *event = NULL; (void)event; // avoid compiler warnings
+
 #define EXPOSE_FN_PAINTER
 #define EXPOSE_FN_PROTOTYPE(fn) boolean fn(LiVESWidget *, lives_painter_t *, int, int, livespointer);
+
 #else
 // gtk+ 3
-#define EXPOSE_FN_DECL(fn, widget, user_data) boolean fn(LiVESWidget *widget, lives_painter_t *cairo, livespointer user_data) { \
-    LiVESXEventExpose *event = NULL; \
-    (void)event;
+
+#define EXPOSE_FN_DECL(fn, widget, user_data)				\
+  boolean fn(LiVESWidget *widget, lives_painter_t *cairo, livespointer user_data) {LiVESXEventExpose *event = NULL; (void)event;
+
 #define EXPOSE_FN_PAINTER
 #define EXPOSE_FN_PROTOTYPE(fn) boolean fn(LiVESWidget *, lives_painter_t *, livespointer);
 #endif
+
 #else
 // gtk+ 2
-#define EXPOSE_FN_DECL(fn, widget, user_data) boolean fn(LiVESWidget *widget, LiVESXEventExpose *event, livespointer user_data) { \
-    lives_painter_t *cairo = NULL;
+
+#define EXPOSE_FN_DECL(fn, widget, user_data) boolean fn(LiVESWidget *widget, LiVESXEventExpose *event, \
+							 livespointer user_data) {lives_painter_t *cairo = NULL;
+
 #define EXPOSE_FN_EVENT
 #define EXPOSE_FN_PROTOTYPE(fn) boolean fn(LiVESWidget *, LiVESXEventExpose *, livespointer);
 #endif

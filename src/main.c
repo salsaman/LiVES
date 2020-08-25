@@ -204,9 +204,16 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
 #endif
 #endif
 
+#define TRAP_THEME_ERRORS
 #define SHOW_THEME_ERRORS
 #ifndef SHOW_THEME_ERRORS
-    if (!strncmp(message, "Theme parsing", strlen("Theme parsing"))) return;
+    if (prefs->show_dev_opts)
+      if (!strncmp(message, "Theme parsing", strlen("Theme parsing"))) {
+#ifdef TRAP_THEME_ERRORS
+        raise(LIVES_SIGTRAP);
+#endif
+        return;
+      }
 #endif
 
     //#define TRAP_ERRMSG ""
@@ -961,7 +968,13 @@ static boolean pre_init(void) {
     prefs->jack_opts = future_prefs->jack_opts = get_int_prefd(PREF_JACK_OPTS, 0);
   }
 
-  prefs->show_tooltips = get_boolean_prefd(PREF_SHOW_TOOLTIPS, TRUE);
+
+#ifdef GUI_GTK
+  if (!has_pref(PREF_SHOW_TOOLTIPS)) {
+    lives_widget_object_get(gtk_settings_get_default(), "gtk-enable-tooltips", &prefs->show_tooltips);
+  } else
+#endif
+    prefs->show_tooltips = get_boolean_prefd(PREF_SHOW_TOOLTIPS, TRUE);
 
   prefs->show_urgency_msgs = get_boolean_prefd(PREF_SHOW_URGENCY, TRUE);
   prefs->show_overlay_msgs = get_boolean_prefd(PREF_SHOW_OVERLAY_MSGS, TRUE);
@@ -1550,6 +1563,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->drawsrc = -1;
 
   mainw->lazy = 0;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);
@@ -2438,6 +2452,22 @@ static void do_start_messages(void) {
 static void set_toolkit_theme(int prefer) {
   char *lname, *ic_dir;
   //  LiVESList *list;
+  char *tmp;
+
+  lives_widget_object_get(gtk_settings_get_default(), "gtk-double-click-time", &capable->dclick_time);
+  if (capable->dclick_time <= 0) capable->dclick_time = LIVES_DEF_DCLICK_TIME;
+
+  lives_widget_object_get(gtk_settings_get_default(), "gtk-double-click-distance", &capable->dclick_dist);
+  if (capable->dclick_dist <= 0) capable->dclick_dist = LIVES_DEF_DCLICK_DIST;
+
+  lives_widget_object_get(gtk_settings_get_default(), "gtk-font-name", &tmp);
+
+  /// stretch, style, weight not used
+  lives_parse_font_string(tmp, &widget_opts.font_name, &widget_opts.font_size, NULL, NULL, NULL);
+  lives_free(tmp);
+
+  lives_widget_object_get(gtk_settings_get_default(), "gtk-lternative-button-order", &widget_opts.alt_button_order);
+
   lives_widget_object_get(gtk_settings_get_default(), "gtk-icon-theme-name", &capable->icon_theme_name);
   lives_widget_object_get(gtk_settings_get_default(), "gtk-theme-name", &capable->gui_theme_name);
 
@@ -2853,6 +2883,7 @@ boolean set_palette_colours(boolean force_reload) {
     set_css_value_direct(NULL, LIVES_WIDGET_STATE_NORMAL, "combobox window menu menuitem", "border-width", "2px");
     colref = gdk_rgba_to_string(&palette->nice1);
     set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "combobox window menu menuitem", "border-color", colref);
+    set_css_value_direct(NULL, LIVES_WIDGET_STATE_ACTIVE, "scrollbar slider", "background-color", colref);
     tmp = lives_strdup_printf("0 0 0 4px %s inset", colref);
     set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "combobox window menu menuitem", "box-shadow", tmp);
     lives_free(tmp);
@@ -3809,6 +3840,13 @@ static boolean lives_startup2(livespointer data) {
     switch_clip(1, mainw->current_file, TRUE);
   }
 
+  if (!palette || !(palette->style & STYLE_LIGHT)) {
+    lives_widget_set_opacity(mainw->sep_image, 0.4);
+  } else {
+    lives_widget_set_opacity(mainw->sep_image, 0.8);
+  }
+  lives_widget_queue_draw(mainw->sep_image);
+
   // anything that d_prints messages should go here:
   do_start_messages();
 
@@ -4100,7 +4138,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   mainw->suppress_dprint = FALSE;
   mainw->clutch = TRUE;
   mainw->mbar_res = 0;
-  mainw->max_textsize = N_FONT_SIZES;
+  mainw->max_textsize = N_TEXT_SIZES;
+  mainw->no_configs = FALSE;
 
   pthread_mutexattr_init(&mattr);
   pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
@@ -4382,7 +4421,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
             optind--;
             continue;
           }
-          if (!is_legal_set_name(optarg, TRUE)) {
+          if (!is_legal_set_name(optarg, TRUE, TRUE)) {
             msg = (_("Abort and retry or continue ?"));
             do_abort_ok_dialog(msg);
             lives_free(msg);
@@ -7320,7 +7359,7 @@ fndone:
 
       /// if loading the blend frame in clip editor, then we recall the palette details and size @ injection, and prepare it in this thread
       if (mainw->blend_file != -1 && mainw->blend_palette != WEED_PALETTE_END
-          && LIVES_IS_PLAYING && mainw->multitrack == NULL && mainw->blend_file != mainw->current_file
+          && LIVES_IS_PLAYING && !mainw->multitrack && mainw->blend_file != mainw->current_file
           && weed_get_int_value(layer, WEED_LEAF_CLIP, NULL) == mainw->blend_file) {
         int tgamma = WEED_GAMMA_UNKNOWN;
         short interp = get_interp_value(prefs->pb_quality, TRUE);
@@ -7777,9 +7816,8 @@ mainw->rec_aclip = -1;
 }
 }
 }
-if (!mainw->fs && !mainw->faded) {
-get_play_times();
-}
+if (!mainw->fs && !mainw->faded) get_play_times();
+
 return;
 }
 
@@ -9139,16 +9177,21 @@ lfi_done:
           if (cfile->laudio_drawable) {
             if (mainw->laudio_drawable == cfile->laudio_drawable
                 || mainw->drawsrc == mainw->current_file) mainw->laudio_drawable = NULL;
-            lives_painter_surface_destroy(cfile->laudio_drawable);
+            if (!mainw->multitrack) {
+              if (cairo_surface_get_reference_count(cfile->laudio_drawable))
+                lives_painter_surface_destroy(cfile->laudio_drawable);
+            }
             cfile->laudio_drawable = NULL;
           }
           if (cfile->raudio_drawable) {
             if (mainw->raudio_drawable == cfile->raudio_drawable
                 || mainw->drawsrc == mainw->current_file) mainw->raudio_drawable = NULL;
-            lives_painter_surface_destroy(cfile->raudio_drawable);
+            if (!mainw->multitrack) {
+              if (cairo_surface_get_reference_count(cfile->raudio_drawable))
+                lives_painter_surface_destroy(cfile->raudio_drawable);
+            }
             cfile->raudio_drawable = NULL;
           }
-
           if (mainw->drawsrc == mainw->current_file) mainw->drawsrc = -1;
 
           if (mainw->st_fcache) {
@@ -9197,15 +9240,18 @@ lfi_done:
           lives_freep((void **)&cfile->frame_index_back);
 
           if (cfile->clip_type != CLIP_TYPE_GENERATOR && !mainw->close_keep_frames) {
-            // as a safety feature we create a special file which allows the back end to delete the directory
-            char *permitname = lives_build_filename(prefs->workdir, cfile->handle, TEMPFILE_MARKER "," LIVES_FILE_EXT_TMP, NULL);
-            lives_touch(permitname);
-            lives_free(permitname);
+            char *clipd = lives_build_path(prefs->workdir, cfile->handle, NULL);
+            if (lives_file_test(clipd, LIVES_FILE_TEST_EXISTS)) {
+              // as a safety feature we create a special file which allows the back end to delete the directory
+              char *permitname = lives_build_filename(clipd, TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
+              lives_touch(permitname);
+              lives_free(permitname);
 
-            com = lives_strdup_printf("%s close \"%s\"", prefs->backend_sync, cfile->handle);
-            lives_system(com, TRUE);
-            lives_free(com);
-
+              com = lives_strdup_printf("%s close \"%s\"", prefs->backend_sync, cfile->handle);
+              lives_system(com, TRUE);
+              lives_free(com);
+            }
+            lives_free(clipd);
             if (cfile->event_list_back) event_list_free(cfile->event_list_back);
             if (cfile->event_list) event_list_free(cfile->event_list);
 
@@ -9362,7 +9408,8 @@ lfi_done:
 
         if (!mainw->multitrack) {
           //resize(1);
-          lives_widget_hide(mainw->playframe);
+          lives_widget_set_opacity(mainw->playframe, 0.);
+          //lives_widget_hide(mainw->playframe);
           load_start_image(0);
           load_end_image(0);
           if (prefs->show_msg_area && !mainw->only_close) {

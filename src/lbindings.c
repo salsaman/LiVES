@@ -496,7 +496,7 @@ static boolean call_reload_set(livespointer data) {
       mdata->msg = on_load_set_activate(NULL, (livespointer)1);
       if (mdata->msg == NULL) mdata->msg = lives_strdup("");
     }
-    if (!is_legal_set_name(mdata->msg, TRUE)) {
+    if (!is_legal_set_name(mdata->msg, TRUE, TRUE)) {
       mainw->osc_auto = 0;
       resp = FALSE;
     } else {
@@ -1439,7 +1439,7 @@ boolean idle_reload_set(const char *setname, ulong id) {
 
   if (setname == NULL) return FALSE;
 
-  if (strlen(setname) && !is_legal_set_name(setname, TRUE)) return FALSE;
+  if (strlen(setname) && !is_legal_set_name(setname, TRUE, TRUE)) return FALSE;
 
   data = (msginfo *)lives_malloc(sizeof(msginfo));
   data->id = id;

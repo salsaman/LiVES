@@ -1386,7 +1386,7 @@ int process_one(boolean visible) {
         IS_VALID_CLIP(mainw->playing_file)  &&
         sfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) &&
         (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 && ((audio_ticks = lives_jack_get_time(mainw->jackd)) >
-            mainw->offsetticks || audio_ticks == -1)) {
+									    mainw->offsetticks || audio_ticks == -1)) {
       if (audio_ticks == -1) {
         if (mainw->cancelled == CANCEL_NONE) {
           if (IS_VALID_CLIP(mainw->playing_file)  && !sfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE;
@@ -1415,7 +1415,7 @@ int process_one(boolean visible) {
          mainw->offsetticks || audio_ticks == -1)) {
       if (audio_ticks == -1) {
         if (mainw->cancelled == CANCEL_NONE) {
-          if (sfile != NULL && !sfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE;
+          if (sfile && !sfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE;
           else mainw->cancelled = CANCEL_AUDIO_ERROR;
           return mainw->cancelled;
         }

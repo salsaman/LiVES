@@ -3094,7 +3094,7 @@ static boolean setfx(weed_plant_t *plant, weed_plant_t *tparam, int pnum, int na
               if (xgroup == group) {
                   weed_set_boolean_value(tparam, WEED_LEAF_HOST_DEFAULT, WEED_FALSE);
 		// *INDENT-OFF*
-      }}}}}}
+    }}}}}}
 // *INDENT-ON*
 
 grpinvalid:
@@ -6523,7 +6523,7 @@ boolean lives_osc_cb_loadset(void *context, int arglen, const void *vargs, OSCTi
   lives_osc_parse_string_argument(vargs, setname);
 
   mainw->osc_auto = 1;
-  if (!is_legal_set_name((tmp = U82F(setname)), TRUE)) {
+  if (!is_legal_set_name((tmp = U82F(setname)), TRUE, TRUE)) {
     mainw->osc_auto = 0;
     lives_free(tmp);
     return lives_osc_notify_failure();
@@ -6585,7 +6585,7 @@ boolean lives_osc_cb_saveset(void *context, int arglen, const void *vargs, OSCTi
     else return lives_osc_notify_failure();
   }
 
-  if (is_legal_set_name((tmp = U82F(setname)), TRUE)) {
+  if (is_legal_set_name((tmp = U82F(setname)), TRUE, FALSE)) {
     mainw->only_close = TRUE;
     if (force_append) mainw->osc_auto = 2;
     else mainw->osc_auto = 1;

@@ -29,6 +29,7 @@
 #define LONG_ENTRY_WIDTH ((int)(100.*widget_opts.scale))
 #define SHORT_ENTRY_WIDTH ((int)(40.*widget_opts.scale))
 #define MEDIUM_ENTRY_WIDTH ((int)(60.*widget_opts.scale))
+#define SHORTER_ENTRY_WIDTH (MEDIUM_ENTRY_WIDTH >> 1)
 
 typedef enum {
   LIVES_DISPLAY_TYPE_UNKNOWN = 0,
@@ -433,7 +434,7 @@ boolean lives_widget_set_base_color(LiVESWidget *, LiVESWidgetState state, const
 boolean lives_widget_set_border_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);
 boolean lives_widget_set_outline_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);
 
-boolean lives_widget_set_font_size(LiVESWidget *, LiVESWidgetState state, const char *size);
+boolean lives_widget_set_text_size(LiVESWidget *, LiVESWidgetState state, const char *size);
 
 boolean lives_widget_get_fg_state_color(LiVESWidget *, LiVESWidgetState state, LiVESWidgetColor *);
 boolean lives_widget_get_bg_state_color(LiVESWidget *, LiVESWidgetState state, LiVESWidgetColor *);
@@ -852,6 +853,9 @@ LingoFontDescription *lives_font_chooser_get_font_desc(LiVESFontChooser *);
 boolean lives_font_chooser_set_font_desc(LiVESFontChooser *, LingoFontDescription *lfd);
 #endif
 
+boolean lives_parse_font_string(const char *string, char **font, int *size, char **stretch,
+                                char **style, char **weight);
+
 LiVESWidget *lives_frame_new(const char *label);
 boolean lives_frame_set_label(LiVESFrame *, const char *label);
 boolean lives_frame_set_label_align(LiVESFrame *, float xalign, float yalign);
@@ -1069,6 +1073,8 @@ LiVESWidget *lives_standard_label_new_with_mnemonic_widget(const char *text, LiV
 LiVESWidget *lives_standard_label_new_with_tooltips(const char *text, LiVESBox *box,
     const char *tips);
 LiVESWidget *lives_standard_formatted_label_new(const char *text);
+
+char *lives_big_and_bold(const char *fmt, ...);
 
 void lives_label_chomp(LiVESLabel *);
 
@@ -1351,15 +1357,15 @@ const char *lives_textsize_to_string(int val);
 #define LIVES_LIVES_STOCK_PREF_WARNING "lives-pref_warning"
 
 // font sizes
-#define LIVES_FONT_SIZE_XX_SMALL "xx-small" // 0
-#define LIVES_FONT_SIZE_X_SMALL "x-small"  // 1
-#define LIVES_FONT_SIZE_SMALL "small"      // 2
-#define LIVES_FONT_SIZE_MEDIUM "medium"   // 3
-#define LIVES_FONT_SIZE_LARGE "large"      // 4
-#define LIVES_FONT_SIZE_X_LARGE "x-large"    // 5
-#define LIVES_FONT_SIZE_XX_LARGE "xx-large"   // 6
-#define LIVES_FONT_SIZE_NORMAL LIVES_FONT_SIZE_MEDIUM
-#define N_FONT_SIZES 7
+#define LIVES_TEXT_SIZE_XX_SMALL "xx-small" // 0
+#define LIVES_TEXT_SIZE_X_SMALL "x-small"  // 1
+#define LIVES_TEXT_SIZE_SMALL "small"      // 2
+#define LIVES_TEXT_SIZE_MEDIUM "medium"   // 3
+#define LIVES_TEXT_SIZE_LARGE "large"      // 4
+#define LIVES_TEXT_SIZE_X_LARGE "x-large"    // 5
+#define LIVES_TEXT_SIZE_XX_LARGE "xx-large"   // 6
+#define LIVES_TEXT_SIZE_NORMAL LIVES_TEXT_SIZE_MEDIUM
+#define N_TEXT_SIZES 7
 
 typedef struct {
   /// commonly adjusted values //////
@@ -1372,7 +1378,7 @@ typedef struct {
   LiVESJustification justify; ///< justify for labels
 
   /// specialised values /////
-  const char *font_size; ///< size of font fot label widgets etc (e.g. LIVES_FONT_SIZE_MEDIUM)
+  const char *text_size; ///< size of text for label widgets etc (e.g. LIVES_TEXT_SIZE_MEDIUM)
   int border_width; ///< border width in pixels
   boolean swap_label; ///< swap label/widget position
   boolean pack_end; ///< pack widget at end or start
@@ -1386,8 +1392,11 @@ typedef struct {
   /// rarely changed values /////
   int css_min_width;
   int css_min_height;
+  char *font_name; ///< readonly for now
+  int font_size; ///< ditto
   boolean no_gui; ///< show nothing !
   double scale; ///< scale factor for all sizes
+  boolean alt_button_order; ///< unused for now
   char **image_filter; ///</ NULL or NULL terminated list of image extensions which can be loaded
   char *title_prefix; ///< Text which is prepended to window titles, etc.
   int monitor; ///< monitor we are displaying on
@@ -1408,7 +1417,7 @@ const widget_opts_t _def_widget_opts = {
   W_PACKING_WIDTH, ///< def packing width
   W_PACKING_HEIGHT, ///< def packing height
   LIVES_JUSTIFY_START, ///< justify
-  LIVES_FONT_SIZE_MEDIUM, ///< default font size
+  LIVES_TEXT_SIZE_MEDIUM, ///< default font size
   W_BORDER_WIDTH, ///< def border width
 
   FALSE, ///< swap_label (TRUE for RTL ?)
@@ -1422,8 +1431,11 @@ const widget_opts_t _def_widget_opts = {
 
   W_CSS_MIN_WIDTH, ///< css_min_width
   W_CSS_MIN_HEIGHT, ///< css_min_height
+  NULL, ///< font name
+  -1, ///< font size
   FALSE, ///< no_gui
   1.0, ///< default scale
+  FALSE, ///< alt button order
   NULL, ///< image_filter
   "", ///< title_prefix
   0, ///< monitor

@@ -153,7 +153,7 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   double tstr_red = 0., tstr_green = 0., tstr_blue = 0., cstr_red, cstr_green, cstr_blue, cstr;
   double yscale = 1., uvscale = 1.;
 
-  int width = weed_channel_get_width(in_channel);
+  int width = weed_channel_get_width(in_channel) * 3;
   int height = weed_channel_get_height(in_channel);
   int irowstride = weed_channel_get_stride(in_channel);
   int orowstride = weed_channel_get_stride(out_channel);
@@ -175,15 +175,16 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   int iframesize = height * irowstride;
   int dframesize = height * orowstride;
 
-  if (sdata->ease_every == 0) {
-    // easing (experimental) part 1
-    weed_plant_t *gui = weed_instance_get_gui(inst);
-    int host_ease = weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL);
-    if (host_ease > 0) {
-      // how many cycles to ease by 1
-      sdata->ease_every = (int)((float)host_ease / (float)sdata->ccache);
-    }
-  }
+  /* weed_plant_t *gui = weed_instance_get_gui(inst); */
+  /* int host_ease = weed_get_int_value(gui, WEED_LEAF_EASE_OUT, NULL); */
+  /* if (host_ease > 0) { */
+  /*   if (sdata->ease_every == 0) { */
+  /*     // easing (experimental) part 1 */
+  /*     // how many cycles to ease by 1 */
+  /*     sdata->ease_every = (int)((float)host_ease / (float)sdata->ccache); */
+  /*   } */
+  /* } */
+  /* else sdata->ease_every = sdata->ease_counter = 0; */
 
   if (maxcache < 0) maxcache = 0;
   else if (maxcache > 50) maxcache = 50;
@@ -332,7 +333,7 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
           if (!j) weed_memset(&dst[d + i], 0, 3);
           if (b1) dst[d + i] += sdata->lut[0][sdata->cache[k][s + i + cross]];
           if (b2) dst[d + i + 1] += sdata->lut[1][sdata->cache[k][s + i + 1]];
-          if (b3) dst[d + i + 2] += sdata->lut[2][sdata->cache[k][s + x + i + 2 - cross]];
+          if (b3) dst[d + i + 2] += sdata->lut[2][sdata->cache[k][s + i + 2 - cross]];
         }
         s += width;
       }
@@ -355,10 +356,10 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   weed_free(in_params);
 
   // easing part 2
-  if (sdata->ease_every <= 0) {
-    weed_plant_t *gui = weed_instance_get_gui(inst);
+  if (1 || sdata->ease_every <= 0) {
+    //weed_plant_t *gui = weed_instance_get_gui(inst);
     if (sdata->ccache < sdata->tcache) sdata->ccache++;
-    weed_set_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, sdata->ccache);
+    //weed_set_int_value(gui, WEED_LEAF_EASE_OUT_FRAMES, sdata->ccache);
   } else {
     weed_plant_t *gui = weed_instance_get_gui(inst);
     if (sdata->ease_counter++ >= sdata->ease_every) {

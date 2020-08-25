@@ -204,7 +204,8 @@
 
 #define MAX_FX_THREADS 1024 ///< may be increased if necessary
 
-#define LIVES_DCLICK_TIME 400 ///< double click time (milliseconds)
+#define LIVES_DEF_DCLICK_TIME 400 ///< default double click time (milliseconds), can be overriden by system settings
+#define LIVES_DEF_DCLICK_DIST 5 ///< default double click dist. (pixels), can be overriden by system settings
 
 /// external control types
 typedef enum {
@@ -1769,6 +1770,8 @@ typedef struct {
 
   lives_proc_thread_t helper_procthreads[N_HLP_PROCTHREADS];
   uint32_t lazy;
+
+  boolean no_configs;
 } mainwindow;
 
 /// interface colour settings

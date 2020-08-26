@@ -112,7 +112,7 @@ endif
 
 endif
 
-	$(MKDIR_P) "$(DESTDIR)$(docdir)/html/LiVES"
+	$(MKDIR_P) "$(DESTDIR)$(docdir)"
 	@echo $(VERSION) > "$(DESTDIR)$(docdir)/version"
 
 	$(MKDIR_P) "$(DESTDIR)$(sharedir)/applications/"

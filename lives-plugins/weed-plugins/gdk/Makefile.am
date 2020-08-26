@@ -55,8 +55,8 @@ EXTRA_DIST=data icons
 
 install-data-local:
 	mkdir -p "$(DESTDIR)$(fxpluginslibdir)"
-	cp -rf data/ "$(DESTDIR)$(fxpluginslibdir)" && chmod -R a+r "$(DESTDIR)$(fxpluginslibdir)/data/"
-	cp -rf icons/ "$(DESTDIR)$(fxpluginslibdir)" && chmod -R a+r "$(DESTDIR)$(fxpluginslibdir)/icons/"
+	cp -rf data "$(DESTDIR)$(fxpluginslibdir)" && chmod -R a+r "$(DESTDIR)$(fxpluginslibdir)/data"
+	cp -rf icons "$(DESTDIR)$(fxpluginslibdir)" && chmod -R a+r "$(DESTDIR)$(fxpluginslibdir)/icons"
 	$(MAKE) -i install-data-local-remove-vcs-files
 
 install-data-local-remove-vcs-files:

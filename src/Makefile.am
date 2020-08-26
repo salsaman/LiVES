@@ -218,7 +218,6 @@ lives_exe_SOURCES = \
 	machinestate.c machinestate.h \
 	weed-effects-utils.c weed-effects-utils.h \
 	diagnostics.c \
-#	tinyexr/tinyexr.h \
 	$(transcode_SOURCES) \
 	$(unicap_SOURCES) \
 	$(jack_SOURCES) \

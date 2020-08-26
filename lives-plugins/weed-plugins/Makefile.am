@@ -16,7 +16,6 @@ shared_cflags = -fno-common
 else
 shared_ldflags = -shared -fPIC -DPIC -module -avoid-version --tag=disable-static -lm
 
-
 ## --whole-archive is supposed to work, but doesn't....
 #shared_cflags = -fPIC -DPIC -Wno-unused-function -Wl,--whole-archive $(libdir)/libweed-plugin-utils.a -Wl,--no-whole-archive
 
@@ -91,9 +90,33 @@ frei0rpluginslibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed/frei0r
 frei0rpluginslib_LTLIBRARIES = $(frei0r_libs)
 endif
 
+if HAVE_OPENCV4
+farneback_analyser_libs = farneback_analyser.la
+farneback_analyser_la_LDFLAGS = $(AM_LDFLAGS) $(OPENCV4_LIBS_ONLY_L) $(OPENCV4_LIBS_ONLY_OTHER) \
+	-lopencv_core -lopencv_video -lopencv_imgproc
+farneback_analyser_la_CXXFLAGS = $(OPENCV4_CFLAGS) -DHAVE_OPENCV4
+farneback_analyser_la_CPPFLAGS = $(AM_CPPFLAGS)
+farneback_analyser_la_SOURCES = farneback_analyser.cpp
+
+if ENABLE_TOONZ
+toonz_libs = toonz.la
+toonz_la_LDFLAGS = $(AM_LDFLAGS) $(OPENCV4_LIBS_ONLY_L) -lopencv_core -lopencv_imgproc
+toonz_la_CPPFLAGS = $(AM_CPPFLAGS) -std=c++11
+toonz_la_SOURCES = toonz.cpp
+else
+toonz_libs =
+endif
+
+opencvlibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
+opencvlib_LTLIBRARIES = $(farneback_analyser_libs) $(toonz_libs)
+
+else
+
 if HAVE_OPENCV
 farneback_analyser_libs = farneback_analyser.la
-farneback_analyser_la_LDFLAGS = $(AM_LDFLAGS) $(OPENCV_LIBS_ONLY_L) -lopencv_core -lopencv_video -lopencv_imgproc
+farneback_analyser_la_LDFLAGS = $(AM_LDFLAGS) $(OPENCV_LIBS_ONLY_L) $(OPENCV_LIBS_ONLY_OTHER) \
+	-lopencv_core -lopencv_video -lopencv_imgproc
+farneback_analyser_la_CXXFLAGS = $(OPENCV_CFLAGS)
 farneback_analyser_la_CPPFLAGS = $(AM_CPPFLAGS)
 farneback_analyser_la_SOURCES = farneback_analyser.cpp
 
@@ -108,6 +131,8 @@ endif
 
 opencvlibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
 opencvlib_LTLIBRARIES = $(farneback_analyser_libs) $(toonz_libs)
+endif
+
 endif
 
 if HAVE_FFTW3F
@@ -208,8 +233,8 @@ EXTRA_DIST=data icons syna.h weed-plugin-utils.c
 
 install-data-local:
 	$(MKDIR_P) "$(DESTDIR)$(fxpluginslibdir)"
-	cp -rf data/ "$(DESTDIR)$(fxpluginslibdir)" && chmod -Rf a+r "$(DESTDIR)$(fxpluginslibdir)/data/"
-	cp -rf icons/ "$(DESTDIR)$(fxpluginslibdir)" && chmod -Rf a+r "$(DESTDIR)$(fxpluginslibdir)/icons/"
+	cp -rf data "$(DESTDIR)$(fxpluginslibdir)" && chmod -Rf a+r "$(DESTDIR)$(fxpluginslibdir)/data"
+	cp -rf icons "$(DESTDIR)$(fxpluginslibdir)" && chmod -Rf a+r "$(DESTDIR)$(fxpluginslibdir)/icons"
 	$(MAKE) -i install-data-local-remove-vcs-files
 
 install-data-local-remove-vcs-files:

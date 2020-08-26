@@ -35,7 +35,7 @@ endif
 SUBDIRS = $(OSC_SUBDIRS) intl $(WEED_SUBDIRS) src m4 lives-plugins po resources
 PACKAGE_CAPITALISED = LiVES
 
-docdir = "$(prefix)/share/doc/$(PACKAGE)-$(VERSION)"
+docdir = "$(prefix)/share/doc/$(PACKAGE)"
 sharedir = "$(prefix)/share"
 
 if HAVE_DOXYGEN
@@ -106,12 +106,15 @@ endif
 #NOTE - if packaging libweed separately, this should go in libweed/Makefile.am
 	$(MKDIR_P) "$(DESTDIR)$(docdir)/html/libweed"
 
-
 if NEED_LOCAL_WEED
 	cp -rf "$(srcdir)/weed-docs/doxygen/html/"* "$(DESTDIR)$(docdir)/html/libweed"
 endif
 
 endif
+
+	$(MKDIR_P) "$(DESTDIR)$(docdir)/html/LiVES"
+	@echo $(VERSION) > "$(DESTDIR)$(docdir)/version"
+
 	$(MKDIR_P) "$(DESTDIR)$(sharedir)/applications/"
 	cp -f "$(srcdir)/menu-entries/LiVES.desktop" "$(DESTDIR)$(sharedir)/applications/"
 	$(MKDIR_P) "$(DESTDIR)$(sharedir)/pixmaps/"
@@ -134,7 +137,7 @@ endif
 	$(MKDIR_P) "$(DESTDIR)$(sharedir)/icons/hicolor/22x22/apps/"
 	cp -f "$(srcdir)/menu-entries/lives22.png" "$(DESTDIR)$(sharedir)/icons/hicolor/22x22/apps/lives.png"
 	$(MKDIR_P) "$(DESTDIR)$(sharedir)/$(PACKAGE)/devicemaps/"
-	cp -rf "$(srcdir)/resources/devicemaps/" "$(DESTDIR)$(sharedir)/$(PACKAGE)/"
+	cp -rf "$(srcdir)/resources/devicemaps" "$(DESTDIR)$(sharedir)/$(PACKAGE)"
 
 
 install-exec-local:
@@ -181,8 +184,4 @@ dist-hook:
 DISTCLEANFILES = intltool-extract intltool-merge intltool-update po/POTFILES_PLUGINS
 
 ACLOCAL_AMFLAGS = -I m4
-
-if TURBO
-
-endif
 

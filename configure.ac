@@ -539,17 +539,39 @@ AM_CONDITIONAL(HAVE_AV_SET_BITS_PER_SAMPLE,$HAVE_AV_SET_BITS_PER_SAMPLE)
 AM_CONDITIONAL(HAVE_AVPRIV_SET_PTS_INFO,$HAVE_AVPRIV_SET_PTS_INFO)
 
 HAVE_OPENCV=false
+HAVE_OPENCV4=false
 
 dnl check for opencv
 
 PKG_CHECK_MODULES(OPENCV, opencv >= 2.3.1, HAVE_OPENCV=true, HAVE_OPENCV=false)
 
+if test "$HAVE_OPENCV" = "false" ; then
+
+PKG_CHECK_MODULES(OPENCV4, opencv4, HAVE_OPENCV4=true, HAVE_OPENCV4=false)
+
+if test "$HAVE_OPENCV4" = "true" ; then
+OPENCV4_LIBS_ONLY_L=`$PKG_CONFIG opencv4 --libs-only-L`
+OPENCV4_LIBS_ONLY_OTHER=`$PKG_CONFIG opencv4 --libs-only-other`
+fi
+
+AC_SUBST(OPENCV4_CFLAGS)
+AC_SUBST(OPENCV4_LIBS_ONLY_L)
+AC_SUBST(OPENCV4_LIBS_ONLY_OTHER)
+
+AM_CONDITIONAL(HAVE_OPENCV4,$HAVE_OPENCV4)
+
+else
+
 if test "$HAVE_OPENCV" = "true" ; then
-OPENCV_LIBS_ONLY_L = `pkg-config opencv --libs-only-L`
+OPENCV_LIBS_ONLY_L=`$PKG_CONFIG opencv --libs-only-L`
+OPENCV_LIBS_ONLY_OTHER=`$PKG_CONFIG opencv --libs-only-other`
+fi
+
 fi
 
 AC_SUBST(OPENCV_CFLAGS)
 AC_SUBST(OPENCV_LIBS_ONLY_L)
+AC_SUBST(OPENCV_LIBS_ONLY_OTHER)
 
 AM_CONDITIONAL(HAVE_OPENCV,$HAVE_OPENCV)
 
@@ -752,15 +774,26 @@ AM_CONDITIONAL(HAVE_DIRAC,$HAVE_DIRAC)
 
 HAVE_ALSA=false
 dnl check for libasound
+AC_ARG_ENABLE(alsa, [  --disable-alsa     Disable alsa support.] , disable_alsa=yes)
+if test "x$disable_alsa" != "xyes" ; then
+
 PKG_CHECK_MODULES(ALSA,alsa,HAVE_ALSA=true,HAVE_ALSA=false)
 AC_SUBST(ALSA_CFLAGS)
 AC_SUBST(ALSA_LIBS)
+
+else
+echo not checking for alsa
+fi
 
 AM_CONDITIONAL(HAVE_ALSA,$HAVE_ALSA)
 
 HAVE_PULSE_AUDIO=false
 HAVE_PA_STREAM_BEGIN_WRITE=false
 dnl check for pulse-audio
+
+AC_ARG_ENABLE(pulse, [  --disable-pulse    Disable pulseaudio support.] , disable_pulse=yes)
+if test "x$disable_pulse" != "xyes" ; then
+
 PKG_CHECK_MODULES(PULSE,libpulse >= 0.9.14,HAVE_PULSE_AUDIO=true,HAVE_PULSE_AUDIO=false)
 if test "$HAVE_PULSE_AUDIO" = "true" ; then
 AC_CHECK_LIB(pulse,pa_stream_begin_write,HAVE_PA_STREAM_BEGIN_WRITE=true,HAVE_PA_STREAM_BEGIN_WRITE=false)
@@ -768,6 +801,10 @@ fi
 
 AC_SUBST(PULSE_CFLAGS)
 AC_SUBST(PULSE_LIBS)
+
+else
+echo not checking for pulse
+fi
 
 AM_CONDITIONAL(HAVE_PULSE_AUDIO,$HAVE_PULSE_AUDIO)
 AM_CONDITIONAL(HAVE_PA_STREAM_BEGIN_WRITE,$HAVE_PA_STREAM_BEGIN_WRITE)
@@ -874,7 +911,9 @@ NEED_LOCAL_WEED_UTILS=false
 NEED_LOCAL_WEED_COMPAT=false
 NEED_LOCAL_WEED_PLUGIN=false
 
+AC_ARG_ENABLE(weed, [  --disable-system-weed Disable check system weed.] , disable_system_weed=yes)
 if test "$IS_MINGW" = "false"; then
+if test "x$disable_system_weed" != "xyes"; then
 
 if test "$DISABLE_GSLICE" = "false"; then
 PKG_CHECK_MODULES(WEED_GSLICE, libweed_gslice >= 2.0.0, NEED_LOCAL_WEED_GSLICE=false, NEED_LOCAL_WEED_GSLICE=true)
@@ -928,6 +967,7 @@ fi
 AC_SUBST(WEED_PLUGIN_CFLAGS)
 AC_SUBST(WEED_PLUGIN_LIBS)
 
+fi
 fi
 
 AM_CONDITIONAL(NEED_LOCAL_WEED,         $NEED_LOCAL_WEED)

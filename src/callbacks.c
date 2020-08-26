@@ -2115,13 +2115,14 @@ void on_restore_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   lives_free(text);
 
-  if (file_name == NULL) return;
+  if (!file_name) return;
 
   restore_file(file_name);
 
   lives_snprintf(mainw->proj_load_dir, PATH_MAX, "%s", file_name);
   get_dirname(mainw->proj_load_dir);
   lives_free(file_name);
+  check_storage_space(-1, FALSE);
 }
 
 
@@ -3312,13 +3313,17 @@ void on_paste_as_new_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
   cfile->nopreview = TRUE;
 
+  mainw->disk_mon = MONITOR_QUOTA;
+
   // show a progress dialog, not cancellable
   if (!do_progress_dialog(TRUE, TRUE, _("Pasting"))) {
+    mainw->disk_mon = 0;
     if (mainw->error) d_print_failed();
     close_current_file(old_file);
     return;
   }
   cfile->nopreview = FALSE;
+  mainw->disk_mon = 0;
 
   if (mainw->ccpd_with_sound) {
     if (cfile->audio_waveform) {
@@ -3366,6 +3371,7 @@ void on_paste_as_new_activate(LiVESMenuItem * menuitem, livespointer user_data) 
   d_print(""); // force switchtext
 
   lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
+  check_storage_space(-1, FALSE);
 }
 
 
@@ -3763,11 +3769,14 @@ void on_insert_activate(LiVESButton * button, livespointer user_data) {
     cfile->progress_start = 1;
     cfile->progress_end = remainder_frames;
 
+    mainw->disk_mon = MONITOR_QUOTA;
     do_progress_dialog(TRUE, FALSE, _("Inserting"));
+    mainw->disk_mon = 0;
 
     if (mainw->error) {
       d_print_failed();
       unbuffer_lmap_errors(FALSE);
+      check_storage_space(-1, FALSE);
       return;
     }
 
@@ -3832,10 +3841,11 @@ void on_insert_activate(LiVESButton * button, livespointer user_data) {
 
   // show a progress dialog
   cfile->nopreview = TRUE;
+  mainw->disk_mon = MONITOR_QUOTA;
   if (!do_progress_dialog(TRUE, TRUE, _("Inserting"))) {
     // cancelled
-
     cfile->nopreview = FALSE;
+    mainw->disk_mon = 0;
 
     if (mainw->error) {
       d_print_failed();
@@ -3885,6 +3895,7 @@ void on_insert_activate(LiVESButton * button, livespointer user_data) {
     unbuffer_lmap_errors(FALSE);
     return;
   }
+  mainw->disk_mon = 0;
 
   mainw->cancelled = CANCEL_NONE;
   cfile->nopreview = FALSE;
@@ -3937,7 +3948,9 @@ void on_insert_activate(LiVESButton * button, livespointer user_data) {
     cfile->progress_start = 1;
     cfile->progress_end = remainder_frames;
 
+    mainw->disk_mon = MONITOR_QUOTA;
     do_progress_dialog(TRUE, FALSE, _("Inserting"));
+    mainw->disk_mon = 0;
 
     if (mainw->error) {
       d_print_failed();
@@ -4048,9 +4061,10 @@ void on_insert_activate(LiVESButton * button, livespointer user_data) {
   if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames)) bad_header = TRUE;
 
   if (bad_header) do_header_write_error(mainw->current_file);
-
   switch_clip(1, current_file, TRUE);
   mainw->error = FALSE;
+
+  check_storage_space(-1, FALSE);
 
   if (mainw->sl_undo_mem && (cfile->stored_layout_frame != 0 || (with_sound && cfile->stored_layout_audio != 0.))) {
     // need to invalidate undo/redo stack, in case file was used in some layout undo
@@ -6703,7 +6717,7 @@ cleanup:
 
   if (user_data) {
     mainw->dsu_valid = FALSE;
-    if (!disk_monitor_running()) {
+    if (!disk_monitor_running(prefs->workdir)) {
       mainw->dsu_valid = TRUE;
       lives_idle_add_simple(update_dsu, NULL);
     }
@@ -9472,11 +9486,7 @@ void popup_lmap_errors(LiVESMenuItem * menuitem, livespointer user_data) {
   textwindow->delete_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_DELETE,
                               _("_Delete affected layouts"), LIVES_RESPONSE_CANCEL);
 
-#if !GTK_CHECK_VERSION(3, 0, 0)
   lives_button_box_set_layout(LIVES_BUTTON_BOX(lives_widget_get_parent(textwindow->delete_button)), LIVES_BUTTONBOX_SPREAD);
-#else
-  lives_widget_set_halign(lives_widget_get_parent(textwindow->delete_button), LIVES_ALIGN_FILL);
-#endif
 
   lives_container_set_border_width(LIVES_CONTAINER(textwindow->delete_button), widget_opts.border_width);
 

@@ -41,6 +41,7 @@ static ticks_t last_open_check_ticks;
 static ticks_t last_anim_ticks;
 static uint64_t spare_cycles, last_spare_cycles;
 static ticks_t last_kbd_ticks;
+static ticks_t last_cpuload_ticks = 0;
 static frames_t getahead = -1, test_getahead = -1, bungle_frames;
 
 static boolean recalc_bungle_frames = 0;
@@ -1047,10 +1048,8 @@ void pump_io_chan(LiVESIOChannel *iochan) {
             cptr++;
           }
           if (!linebrk) {
-            if (ispct) mainw->proc_ptr->frames_done =
-                (int)(strtod(cptr, NULL)
-                      * (mainw->proc_ptr->progress_end
-                         - mainw->proc_ptr->progress_start + 1.) / 100.);
+            if (ispct) mainw->proc_ptr->frames_done = (int)(strtod(cptr, NULL)
+                  * (mainw->proc_ptr->progress_end - mainw->proc_ptr->progress_start + 1.) / 100.);
             else mainw->proc_ptr->frames_done = atoi(cptr);
           }
           break;
@@ -1083,7 +1082,8 @@ boolean check_storage_space(int clipno, boolean is_processing) {
     if (mainw->dsu_valid && capable->ds_used > -1) {
       dsval = capable->ds_used;
     } else if (prefs->disk_quota) {
-      dsval = capable->ds_used = get_dir_size(prefs->workdir);
+      dsval = disk_monitor_check_result(prefs->workdir);
+      if (dsval >= 0) capable->ds_used = dsval;
     }
     ds = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval, 0);
     capable->ds_free = dsval;
@@ -1092,7 +1092,7 @@ boolean check_storage_space(int clipno, boolean is_processing) {
       mainw->next_ds_warn_level >>= 1;
       if (mainw->next_ds_warn_level > (dsval >> 1)) mainw->next_ds_warn_level = dsval >> 1;
       if (mainw->next_ds_warn_level < prefs->ds_crit_level) mainw->next_ds_warn_level = prefs->ds_crit_level;
-      if (is_processing && sfile != NULL && mainw->proc_ptr != NULL && !mainw->effects_paused &&
+      if (is_processing && sfile && mainw->proc_ptr && !mainw->effects_paused &&
           lives_widget_is_visible(mainw->proc_ptr->pause_button)) {
         on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
         did_pause = TRUE;
@@ -1110,14 +1110,14 @@ boolean check_storage_space(int clipno, boolean is_processing) {
         lives_free(pausstr);
         mainw->cancelled = CANCEL_USER;
         if (is_processing) {
-          if (sfile != NULL) sfile->nokeep = TRUE;
+          if (sfile) sfile->nokeep = TRUE;
           on_cancel_keep_button_clicked(NULL, NULL); // press the cancel button
         }
         return FALSE;
       }
       lives_free(msg);
     } else if (ds == LIVES_STORAGE_STATUS_CRITICAL) {
-      if (is_processing && sfile != NULL && mainw->proc_ptr != NULL && !mainw->effects_paused &&
+      if (is_processing && sfile && mainw->proc_ptr && !mainw->effects_paused &&
           lives_widget_is_visible(mainw->proc_ptr->pause_button)) {
         on_effects_paused(LIVES_BUTTON(mainw->proc_ptr->pause_button), NULL);
         did_pause = TRUE;
@@ -1137,7 +1137,7 @@ boolean check_storage_space(int clipno, boolean is_processing) {
       lives_free(msg);
       if (retval == LIVES_RESPONSE_CANCEL) {
         if (is_processing) {
-          if (sfile != NULL) sfile->nokeep = TRUE;
+          if (sfile) sfile->nokeep = TRUE;
           on_cancel_keep_button_clicked(NULL, NULL); // press the cancel button
         }
         mainw->cancelled = CANCEL_ERROR;
@@ -1147,7 +1147,7 @@ boolean check_storage_space(int clipno, boolean is_processing) {
     }
   } while (ds == LIVES_STORAGE_STATUS_CRITICAL);
 
-  if (ds == LIVES_STORAGE_STATUS_OVER_QUOTA) {
+  if (ds == LIVES_STORAGE_STATUS_OVER_QUOTA && !mainw->is_processing) {
     run_diskspace_dialog();
   }
 
@@ -1229,15 +1229,16 @@ static int prog_fs_check;
 
 #define PROG_LOOP_VAL 200
 
-static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
-  double timesofar, fraction_done;
+static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done, double fraction_done) {
+  double timesofar;
 
   if ((progress_count++ * progress_speed) >= PROG_LOOP_VAL) {
     if (frames_done <= mainw->proc_ptr->progress_end && mainw->proc_ptr->progress_end > 0 && !mainw->effects_paused &&
         frames_done > 0) {
       timesofar = (lives_get_current_ticks() - proc_start_ticks - mainw->timeout_ticks) / TICKS_PER_SECOND_DBL;
-      fraction_done = (double)(frames_done - mainw->proc_ptr->progress_start)
-                      / (double)(mainw->proc_ptr->progress_end - mainw->proc_ptr->progress_start + 1.);
+      if (fraction_done < 0.)
+        fraction_done = (double)(frames_done - mainw->proc_ptr->progress_start)
+                        / (double)(mainw->proc_ptr->progress_end - mainw->proc_ptr->progress_start + 1.);
       disp_fraction(fraction_done, timesofar, mainw->proc_ptr);
       progress_count = 0;
       progress_speed = 4.;
@@ -1253,7 +1254,7 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
 
 void update_progress(boolean visible) {
   double fraction_done, timesofar;
-  static double est_time = 0.;
+  static double est_time = 0., frac_done = -1;
   char *prog_label;
 
   if (cfile->opening && cfile->clip_type == CLIP_TYPE_DISK && !cfile->opening_only_audio &&
@@ -1299,7 +1300,7 @@ void update_progress(boolean visible) {
     if (visible && mainw->proc_ptr->frames_done >= mainw->proc_ptr->progress_start) {
       if (progress_count == 0) check_storage_space(mainw->current_file, TRUE);
       // display progress fraction or pulse bar
-      progbar_pulse_or_fraction(cfile, mainw->proc_ptr->frames_done);
+      progbar_pulse_or_fraction(cfile, mainw->proc_ptr->frames_done, frac_done);
       //sched_yield();
       lives_usleep(prefs->sleep_time);
     }
@@ -1369,9 +1370,10 @@ int process_one(boolean visible) {
     mainw->actual_frame = sfile->frameno;
   }
 
-  last_time_source = time_source;
-  //if (mainw->startticks > mainw->currticks) mainw->startticks = mainw->currticks;
-  if (last_anim_ticks > mainw->currticks) last_anim_ticks = mainw->currticks;
+  if (mainw->wall_ticks > last_cpuload_ticks + 10 * TICKS_PER_SECOND_DBL) {
+    g_print("CPU LOAD IS %.4f\n", (double)get_cpu_load(0) / (double)MILLIONS(1));
+    last_cpuload_ticks = mainw->wall_ticks;
+  }
 
   mainw->audio_stretch = 1.0;
 
@@ -1386,7 +1388,7 @@ int process_one(boolean visible) {
         IS_VALID_CLIP(mainw->playing_file)  &&
         sfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) &&
         (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 && ((audio_ticks = lives_jack_get_time(mainw->jackd)) >
-									    mainw->offsetticks || audio_ticks == -1)) {
+            mainw->offsetticks || audio_ticks == -1)) {
       if (audio_ticks == -1) {
         if (mainw->cancelled == CANCEL_NONE) {
           if (IS_VALID_CLIP(mainw->playing_file)  && !sfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE;
@@ -1627,8 +1629,7 @@ switch_point:
             || (mainw->playing_sel && sfile->start == sfile->end))) {
       //g_print("%ld %ld %ld %d %d %d\n", mainw->currticks, mainw->startticks, new_ticks,
       //sfile->last_frameno, requested_frame, last_req_frame);
-      if (mainw->fixed_fpsd <= 0. && (mainw->vpp == NULL ||
-                                      mainw->vpp->fixed_fpsd <= 0. || !mainw->ext_playback)) {
+      if (mainw->fixed_fpsd <= 0. && (!mainw->vpp || mainw->vpp->fixed_fpsd <= 0. || !mainw->ext_playback)) {
         show_frame = TRUE;
       }
       if (prefs->show_dev_opts) jitter = (double)(mainw->currticks - new_ticks) / TICKS_PER_SECOND_DBL;
@@ -1757,7 +1758,7 @@ switch_point:
 #ifdef SHOW_CACHE_PREDICTIONS
             if (abs(sfile->frameno - sfile->last_vframe_played) >= JUMPFRAME_TRIGGER) {
               lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->ext_src)->cdata;
-              if (cdata != NULL) {
+              if (cdata) {
                 g_print("decoder: seek flags = %d, jump_limit = %ld, max_fps = %.4f\n", cdata->seek_flag,
                         cdata->jump_limit, cdata->max_decode_fps);
                 g_print("vframe jump will be %d\n", requested_frame - sfile->last_vframe_played);
@@ -2258,7 +2259,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   boolean got_err = FALSE;
 
   // translation issues
-  if (visible && text != NULL) mytext = lives_strdup(text);
+  if (visible && text) mytext = lives_strdup(text);
 
   if (visible) {
     // check we have sufficient storage space
@@ -2268,6 +2269,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       on_cancel_keep_button_clicked(NULL, NULL);
       if (mainw->cancelled != CANCEL_NONE) mainw->cancelled = cancelled;
       d_print_cancelled();
+      if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
       return FALSE;
     }
   }
@@ -2327,15 +2329,15 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
     if (!LIVES_IS_INTERACTIVE) {
       lives_widget_set_sensitive(mainw->proc_ptr->cancel_button, FALSE);
-      if (mainw->proc_ptr->stop_button != NULL)
+      if (mainw->proc_ptr->stop_button)
         lives_widget_set_sensitive(mainw->proc_ptr->stop_button, FALSE);
       lives_widget_set_sensitive(mainw->proc_ptr->pause_button, FALSE);
       lives_widget_set_sensitive(mainw->proc_ptr->preview_button, FALSE);
     }
 
-    if (cfile->opening && (capable->has_sox_play || (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) ||
-                           (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL)) && !LIVES_IS_PLAYING) {
-      if (mainw->preview_box != NULL) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Preview"));
+    if (cfile->opening && (capable->has_sox_play || (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) ||
+                           (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed)) && !LIVES_IS_PLAYING) {
+      if (mainw->preview_box) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Preview"));
       lives_widget_set_tooltip_text(mainw->m_playbutton, _("Preview"));
       lives_widget_remove_accelerator(mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
       lives_widget_add_accelerator(mainw->proc_ptr->preview_button, LIVES_WIDGET_CLICKED_SIGNAL, mainw->accel_group, LIVES_KEY_p,
@@ -2344,7 +2346,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     }
   }
 
-  if (cfile->next_event != NULL) event_start = get_event_timecode(cfile->next_event);
+  if (cfile->next_event) event_start = get_event_timecode(cfile->next_event);
 
   /// INIT here
   cache_hits = cache_misses = 0;
@@ -2361,7 +2363,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
 #ifdef ENABLE_JACK
   if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT && prefs->audio_player == AUD_PLAYER_JACK &&
-      mainw->jackd_read != NULL && prefs->ahold_threshold > 0.) {
+      mainw->jackd_read && prefs->ahold_threshold > 0.) {
     // if recording with external audio, wait for audio threshold before commencing
     mainw->jackd_read->abs_maxvol_heard = 0.;
     cfile->progress_end = 0;
@@ -2373,14 +2375,16 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     }
     end_threaded_dialog();
     mainw->proc_ptr = NULL;
-    if (mainw->cancelled != CANCEL_NONE) return FALSE;
+    if (mainw->cancelled != CANCEL_NONE) {
+      if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
+      return FALSE;
+    }
   }
-
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
   // start audio recording now
-  if (mainw->pulsed_read != NULL) {
+  if (mainw->pulsed_read) {
     pulse_driver_uncork(mainw->pulsed_read);
   }
   if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT && prefs->audio_player == AUD_PLAYER_PULSE &&
@@ -2393,12 +2397,15 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       lives_widget_context_update();
     }
     end_threaded_dialog();
-    if (mainw->cancelled != CANCEL_NONE) return FALSE;
+    if (mainw->cancelled != CANCEL_NONE) {
+      if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
+      return FALSE;
+    }
   }
 #endif
   last_kbd_ticks = 0;
   mainw->scratch = SCRATCH_NONE;
-  if (mainw->iochan != NULL) lives_widget_show(mainw->proc_ptr->pause_button);
+  if (mainw->iochan) lives_widget_show(mainw->proc_ptr->pause_button);
   display_ready = TRUE;
 
   last_time_source = LIVES_TIME_SOURCE_NONE;
@@ -2409,6 +2416,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     return FALSE;
   }
   //////////////////////////
+  //if (mainw->disk_mon & MONITOR_GROWTH) disk_monitor_start(mainw->monitor_dir);
+  if ((mainw->disk_mon & MONITOR_QUOTA && prefs->disk_quota)) disk_monitor_start(prefs->workdir);
 
   if (visible) {
     proc_start_ticks = lives_get_current_ticks();
@@ -2442,7 +2451,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   if (!mainw->playing_sel) mainw->play_start = 1;
 
-  if (mainw->multitrack != NULL && !mainw->multitrack->is_rendering) {
+  if (mainw->multitrack && !mainw->multitrack->is_rendering) {
     // playback start from middle of multitrack
     // calculate when we "would have started" at time 0
     mainw->offsetticks = get_event_timecode(mainw->multitrack->pb_start_event);
@@ -2459,7 +2468,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   // re-seek to new playback start
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK && cfile->achans > 0 && cfile->laudio_time > 0. &&
-      !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->jackd != NULL
+      !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->jackd
       && mainw->jackd->playing_file > -1) {
     if (!jack_audio_seek_frame(mainw->jackd, mainw->aframeno)) {
       if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, mainw->aframeno);
@@ -2479,10 +2488,11 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 #endif
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE && cfile->achans > 0 && cfile->laudio_time > 0. &&
-      !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->pulsed != NULL
+      !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->pulsed
       && mainw->pulsed->playing_file > -1) {
     if (!pulse_audio_seek_frame(mainw->pulsed, mainw->aframeno)) {
       handle_audio_timeout();
+      if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
       return FALSE;
     }
 
@@ -2505,25 +2515,24 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     gclock = gtk_widget_get_frame_clock(LIVES_MAIN_WINDOW_WIDGET);
     gdk_frame_clock_begin_updating(gclock);
     lives_signal_sync_connect(LIVES_GUI_OBJECT(gclock), "update",
-                              LIVES_GUI_CALLBACK(clock_upd),
-                              NULL);
+                              LIVES_GUI_CALLBACK(clock_upd), NULL);
   }
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-  if (mainw->pulsed_read != NULL) {
+  if (mainw->pulsed_read) {
     mainw->pulsed_read->is_paused = FALSE;
   }
 #endif
 #ifdef ENABLE_JACK
-  if (mainw->jackd_read != NULL) {
+  if (mainw->jackd_read) {
     mainw->jackd_read->is_paused = FALSE;
   }
 #endif
 
   if (mainw->record) mainw->record_paused = FALSE;
 
-  if (mainw->proc_ptr == NULL && cfile->next_event != NULL) {
+  if (!mainw->proc_ptr && cfile->next_event) {
     /// reset dropped frame count etc
     process_events(NULL, FALSE, 0);
   }
@@ -2553,7 +2562,22 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
           gdk_frame_clock_end_updating(gclock);
         }
 #endif
+        if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
         return FALSE;
+      }
+
+      /* if (mainw->disk_mon & MONITOR_GROWTH) { */
+      /* 	int64_t dsused = disk_monitor_check_result(mainw->monitor_dir); */
+      /* 	if (dsused >= 0) mainw->monitor_size = dsused; */
+      /* 	disk_monitor_start(mainw->monitor_dir); */
+      /* } */
+      if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) {
+        int64_t dsused = disk_monitor_check_result(prefs->workdir);
+        if (dsused >= 0) {
+          capable->ds_used = dsused;
+        }
+        disk_monitor_start(prefs->workdir);
+        mainw->dsu_valid = FALSE;
       }
 
       if (LIVES_UNLIKELY(mainw->agen_needs_reinit)) {
@@ -2568,7 +2592,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       // normal playback, wth realtime audio player
       if (!visible && (mainw->whentostop != STOP_ON_AUD_END || is_realtime_aplayer(prefs->audio_player))) continue;
 
-      if (mainw->iochan != NULL && progress_count == 0) {
+      if (mainw->iochan && !progress_count) {
         // pump data from stdout to textbuffer
         // this is for encoder output
         pump_io_chan(mainw->iochan);
@@ -2578,7 +2602,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     if (!mainw->internal_messaging) {
       // background processing (e.g. rendered effects)
       lives_fread_string(mainw->msg, MAINW_MSG_SIZE, cfile->info_file);
-      progbar_pulse_or_fraction(cfile, mainw->proc_ptr->frames_done);
+      progbar_pulse_or_fraction(cfile, mainw->proc_ptr->frames_done, mainw->proc_ptr->frac_done);
     }
     // else call realtime effect pass
     else {
@@ -2590,17 +2614,19 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       }
 
       // display progress fraction or pulse bar
-      if (*(mainw->msg) && (frames_done = atoi(mainw->msg)) > 0)
-        mainw->proc_ptr->frames_done = atoi(mainw->msg);
-      else
+      if (*mainw->msg && (frames_done = atoi(mainw->msg)) > 0) {
+        if (mainw->msg[lives_strlen(mainw->msg) - 1] == '%')
+          mainw->proc_ptr->frac_done = atof(mainw->msg);
+        else
+          mainw->proc_ptr->frames_done = atoi(mainw->msg);
+      } else
         mainw->proc_ptr->frames_done = 0;
-
       if (!mainw->effects_paused) {
         if (prog_fs_check-- <= 0) {
           check_storage_space(mainw->current_file, TRUE);
           prog_fs_check = PROG_LOOP_VAL;
         }
-        progbar_pulse_or_fraction(cfile, mainw->proc_ptr->frames_done);
+        progbar_pulse_or_fraction(cfile, mainw->proc_ptr->frames_done, mainw->proc_ptr->frac_done);
       } else lives_widget_context_update();
     }
 
@@ -2611,25 +2637,26 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
     // we got a message from the backend...
 
-    if (visible && (!accelerators_swapped || cfile->opening) && cancellable && (!cfile->nopreview || cfile->keep_without_preview)) {
-      if (!cfile->nopreview && !(cfile->opening && mainw->multitrack != NULL)) {
+    if (visible && (!accelerators_swapped || cfile->opening) && cancellable
+        && (!cfile->nopreview || cfile->keep_without_preview)) {
+      if (!cfile->nopreview && !(cfile->opening && mainw->multitrack)) {
         lives_widget_show(mainw->proc_ptr->preview_button);
       }
 
       // show buttons
       if (cfile->opening_loc) {
         lives_widget_hide(mainw->proc_ptr->pause_button);
-        if (mainw->proc_ptr->stop_button != NULL)
+        if (mainw->proc_ptr->stop_button)
           lives_widget_show(mainw->proc_ptr->stop_button);
       } else {
         lives_widget_show(mainw->proc_ptr->pause_button);
-        if (mainw->proc_ptr->stop_button != NULL)
+        if (mainw->proc_ptr->stop_button)
           lives_widget_hide(mainw->proc_ptr->stop_button);
       }
 
       if (!cfile->opening && !cfile->nopreview) {
         lives_button_grab_default_special(mainw->proc_ptr->preview_button);
-        if (mainw->preview_box != NULL) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Preview"));
+        if (mainw->preview_box) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Preview"));
         lives_widget_set_tooltip_text(mainw->m_playbutton, _("Preview"));
         lives_widget_remove_accelerator(mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
         lives_widget_add_accelerator(mainw->proc_ptr->preview_button, LIVES_WIDGET_CLICKED_SIGNAL,
@@ -2666,7 +2693,12 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
             cfile->progress_end = atoi(array[4]);
           }
           lives_strfreev(array);
-        } else mainw->proc_ptr->frames_done = atoi(mainw->msg);
+        } else {
+          if (mainw->msg[lives_strlen(mainw->msg) - 1] == '%')
+            mainw->proc_ptr->frac_done = atof(mainw->msg);
+          else
+            mainw->proc_ptr->frames_done = atoi(mainw->msg);
+        }
       }
 
       // do a processing pass
@@ -2677,20 +2709,32 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
           gdk_frame_clock_end_updating(gclock);
         }
 #endif
+        if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
         return FALSE;
       }
 
+      if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) {
+        int64_t dsused = disk_monitor_check_result(prefs->workdir);
+        if (dsused >= 0) {
+          capable->ds_used = dsused;
+        }
+        disk_monitor_start(prefs->workdir);
+        mainw->dsu_valid = FALSE;
+      }
+
+
       if (LIVES_UNLIKELY(mainw->agen_needs_reinit)) {
-        // we are generating audio from a plugin and it needs reinit - we do it in this thread so as not to hold up the player thread
+        // we are generating audio from a plugin and it needs reinit
+        // - we do it in this thread so as not to hold up the player thread
         reinit_audio_gen();
       }
 
-      if (mainw->iochan != NULL && progress_count == 0) {
+      if (mainw->iochan && progress_count == 0) {
         // pump data from stdout to textbuffer
         pump_io_chan(mainw->iochan);
       }
 
-      if (!mainw->internal_messaging) lives_usleep(prefs->sleep_time);
+      if (!mainw->internal_messaging) lives_nanosleep(1000);
     } else break;
   }
 
@@ -2705,13 +2749,14 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 #endif
 
 finish:
+  if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
 
   //play/operation ended
   if (visible) {
     if (cfile->clip_type == CLIP_TYPE_DISK && (mainw->cancelled != CANCEL_NO_MORE_PREVIEW || !cfile->opening)) {
       lives_rm(cfile->info_file);
     }
-    if (mainw->preview_box != NULL && !mainw->preview) lives_widget_set_tooltip_text(mainw->p_playbutton,
+    if (mainw->preview_box && !mainw->preview) lives_widget_set_tooltip_text(mainw->p_playbutton,
           _("Play all"));
     if (accelerators_swapped) {
       if (!mainw->preview) lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play all"));
@@ -2721,19 +2766,19 @@ finish:
                                    LIVES_ACCEL_VISIBLE);
       accelerators_swapped = FALSE;
     }
-    if (mainw->proc_ptr != NULL) {
+    if (mainw->proc_ptr) {
       const char *btext = NULL;
-      if (mainw->iochan != NULL) btext = lives_text_view_get_text(mainw->optextview);
-      if (mainw->proc_ptr->processing != NULL) lives_widget_destroy(mainw->proc_ptr->processing);
+      if (mainw->iochan) btext = lives_text_view_get_text(mainw->optextview);
+      if (mainw->proc_ptr->processing) lives_widget_destroy(mainw->proc_ptr->processing);
       lives_free(mainw->proc_ptr);
       mainw->proc_ptr = NULL;
-      if (btext != NULL) {
+      if (btext) {
         lives_text_view_set_text(mainw->optextview, btext, -1);
         lives_free((char *)btext);
       }
     }
     mainw->is_processing = FALSE;
-    if (!(cfile->menuentry == NULL)) {
+    if (cfile->menuentry) {
       // note - for operations to/from clipboard (file 0) we
       // should manually call sensitize() after operation
       sensitize();
@@ -2749,13 +2794,18 @@ finish:
   // get error message (if any)
   if (!strncmp(mainw->msg, "error", 5)) {
     handle_backend_errors(FALSE);
-    if (mainw->cancelled || mainw->error) return FALSE;
+    if (mainw->cancelled || mainw->error) {
+      return FALSE;
+    }
   } else {
-    if (!check_storage_space(mainw->current_file, FALSE)) return FALSE;
+    if (!check_storage_space(mainw->current_file, FALSE)) {
+      return FALSE;
+    }
   }
 
-  if (got_err) return FALSE;
-
+  if (got_err) {
+    return FALSE;
+  }
 #ifdef DEBUG
   g_print("exiting progress dialog\n");
 #endif
@@ -2815,11 +2865,11 @@ boolean do_auto_dialog(const char *text, int type) {
     alarm_handle = lives_alarm_set(MIN_FLASH_TIME); // don't want to flash too fast...
   } else if (type == 1) {
     // show buttons
-    if (mainw->proc_ptr->stop_button != NULL)
+    if (mainw->proc_ptr->stop_button)
       lives_widget_show(mainw->proc_ptr->stop_button);
     lives_widget_show(mainw->proc_ptr->cancel_button);
 #ifdef HAVE_PULSE_AUDIO
-    if (mainw->pulsed_read != NULL) {
+    if (mainw->pulsed_read) {
       pulse_driver_uncork(mainw->pulsed_read);
     }
 #endif
@@ -2929,7 +2979,7 @@ void workdir_warning(void) {
                         "Please make sure you can write to this directory."),
                       (tmp = lives_filename_to_utf8(prefs->workdir, -1, NULL, NULL, NULL)));
   lives_free(tmp);
-  if (mainw != NULL && mainw->is_ready) {
+  if (mainw && mainw->is_ready) {
     do_error_dialog(com);
   }
   lives_free(com);
@@ -2970,7 +3020,8 @@ LIVES_GLOBAL_INLINE void do_encoder_sox_error(void) {
 
 LIVES_GLOBAL_INLINE void do_encoder_acodec_error(void) {
   do_error_dialog(
-    _("\n\nThis encoder/format cannot use the requested audio codec.\nPlease set the audio codec in Tools|Preferences|Encoding\n"));
+    _("\n\nThis encoder/format cannot use the requested audio codec.\n"
+      "Please set the audio codec in Tools|Preferences|Encoding\n"));
 }
 
 
@@ -2991,12 +3042,8 @@ boolean rdet_suggest_values(int width, int height, double fps, int fps_num, int 
   LiVESWidget *prep_dialog;
 
   char *msg1 = lives_strdup_printf(_("\n\nDue to restrictions in the %s format\n"), prefs->encoder.of_desc);
-  char *msg2 = lives_strdup("");
-  char *msg3 = lives_strdup("");
-  char *msg4 = lives_strdup("");
-  char *msg5 = lives_strdup("");
-  char *msg6 = lives_strdup("");
-  char *msg7 = lives_strdup("");
+  char *msg2 = lives_strdup(""), *msg3 = lives_strdup(""), *msg4 = lives_strdup("");
+  char *msg5 = lives_strdup(""), *msg6 = lives_strdup(""), *msg7 = lives_strdup("");
   char *msg8 = lives_strdup("");
   char *msg_a;
 
@@ -3063,14 +3110,8 @@ boolean rdet_suggest_values(int width, int height, double fps, int fps_num, int 
     } else anr = FALSE;
   }
   msg_a = lives_strconcat(msg1, msg2, msg3, msg4, msg5, msg6, msg7, msg8, NULL);
-  lives_free(msg1);
-  lives_free(msg2);
-  lives_free(msg3);
-  lives_free(msg4);
-  lives_free(msg5);
-  lives_free(msg6);
-  lives_free(msg7);
-  lives_free(msg8);
+  lives_free(msg1); lives_free(msg2); lives_free(msg3); lives_free(msg4);
+  lives_free(msg5); lives_free(msg6); lives_free(msg7); lives_free(msg8);
   prep_dialog = create_encoder_prep_dialog(msg_a, NULL, anr);
   lives_free(msg_a);
   ret = (lives_dialog_run(LIVES_DIALOG(prep_dialog)) == LIVES_RESPONSE_OK);
@@ -3084,12 +3125,8 @@ boolean do_encoder_restrict_dialog(int width, int height, double fps, int fps_nu
   LiVESWidget *prep_dialog;
 
   char *msg1 = lives_strdup_printf(_("\n\nDue to restrictions in the %s format\n"), prefs->encoder.of_desc);
-  char *msg2 = lives_strdup("");
-  char *msg3 = lives_strdup("");
-  char *msg4 = lives_strdup("");
-  char *msg5 = lives_strdup("");
-  char *msg6 = lives_strdup("");
-  char *msg7 = lives_strdup("");
+  char *msg2 = lives_strdup(""), *msg3 = lives_strdup(""), *msg4 = lives_strdup("");
+  char *msg5 = lives_strdup(""), *msg6 = lives_strdup(""), *msg7 = lives_strdup("");
   char *msg_a, *msg_b = NULL;
 
   double cfps;
@@ -3098,7 +3135,7 @@ boolean do_encoder_restrict_dialog(int width, int height, double fps, int fps_nu
 
   int carate, chsize, cvsize;
 
-  if (rdet != NULL) {
+  if (rdet) {
     carate = rdet->arate;
     chsize = rdet->width;
     cvsize = rdet->height;
@@ -3165,7 +3202,7 @@ boolean do_encoder_restrict_dialog(int width, int height, double fps, int fps_nu
   lives_free(msg5); lives_free(msg6); lives_free(msg7);
   prep_dialog = create_encoder_prep_dialog(msg_a, msg_b, anr);
   lives_free(msg_a);
-  if (msg_b != NULL) lives_free(msg_b);
+  if (msg_b) lives_free(msg_b);
   ret = (lives_dialog_run(LIVES_DIALOG(prep_dialog)) == LIVES_RESPONSE_OK);
   lives_widget_destroy(prep_dialog);
   return ret;
@@ -3187,8 +3224,7 @@ boolean do_clipboard_fps_warning(void) {
            _("The playback speed (fps), or the audio rate\n of the clipboard does not match\n"
              "the playback speed or audio rate of the clip you are inserting into.\n\n"
              "The insertion will be adjusted to fit into the clip.\n\n"
-             "Please press Cancel to abort the insert, or OK to continue."),
-           WARN_MASK_FPS);
+             "Please press Cancel to abort the insert, or OK to continue."), WARN_MASK_FPS);
 }
 
 
@@ -3245,7 +3281,7 @@ boolean do_comments_dialog(int fileno, char *filename) {
       save_clip_value(fileno, CLIP_DETAILS_AUTHOR, sfile->author);
       save_clip_value(fileno, CLIP_DETAILS_COMMENT, sfile->comment);
 
-      if (encoding && sfile->subt != NULL && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(commentsw->subt_checkbutton))) {
+      if (encoding && sfile->subt && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(commentsw->subt_checkbutton))) {
         char *ext = get_extension(lives_entry_get_text(LIVES_ENTRY(commentsw->subt_entry)));
         if (strcmp(ext, LIVES_FILE_EXT_SUB) && strcmp(ext, LIVES_FILE_EXT_SRT)) {
           if (!do_sub_type_warning(ext, sfile->subt->type == SUBTITLE_TYPE_SRT ? LIVES_FILE_EXT_SRT : LIVES_FILE_EXT_SUB)) {
@@ -3309,8 +3345,7 @@ LIVES_GLOBAL_INLINE void do_rendered_fx_dialog(void) {
                 _("\n\nLiVES could not find any rendered effect plugins.\nPlease make sure you have them installed in\n"
                   "%s%s%s\nor change the value of <lib_dir> in %s\n"),
                 prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_RENDERED_EFFECTS_BUILTIN,
-                (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL,
-                       NULL)));
+                (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
   do_error_dialog_with_check(msg, WARN_MASK_RENDERED_FX);
   lives_free(msg);
   lives_free(tmp);
@@ -3325,8 +3360,8 @@ void do_audio_import_error(void) {
 
   register int i = 0;
 
-  while (filt[i] != NULL) {
-    if (filt[i + 1] == NULL) {
+  while (filt[i]) {
+    if (filt[i + 1]) {
       tmp = lives_strdup_printf("%s or .%s)", msg, filt[i] + 2);
     } else if (i == 0) {
       tmp = lives_strdup_printf("%s .%s)", msg, filt[i] + 2);
@@ -3355,8 +3390,7 @@ boolean do_set_duplicate_warning(const char *new_set) {
   char *msg = lives_strdup_printf(
                 _("\nA set entitled %s already exists.\n"
                   "Click OK to add the current clips and layouts to the existing set.\n"
-                  "Click Cancel to pick a new name.\n"),
-                new_set);
+                  "Click Cancel to pick a new name.\n"), new_set);
   boolean retcode = do_warning_dialog_with_check(msg, WARN_MASK_DUPLICATE_SET);
   lives_free(msg);
   return retcode;
@@ -3392,8 +3426,7 @@ LiVESResponseType do_original_lost_warning(const char *fname) {
   char *msg = lives_strdup_printf(
                 _("\nThe original file\n%s\ncould not be found.\n"
                   "Click Retry to try again, or Browse to browse to the new location.\n"
-                  "Otherwise click Cancel to skip loading this file.\n"),
-                fname);
+                  "Otherwise click Cancel to skip loading this file.\n"), fname);
   LiVESWidget *warning = create_message_dialog(LIVES_DIALOG_CANCEL_RETRY_BROWSE, msg, 0);
   LiVESResponseType response = lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
@@ -3611,7 +3644,7 @@ LIVES_GLOBAL_INLINE void do_after_crash_warning(void) {
 
 
 LIVES_GLOBAL_INLINE void do_after_invalid_warning(void) {
-  do_error_dialog_with_check(_("Invalid clips were detected during reaload.\nIt is advisable to clean up the disk with\n"
+  do_error_dialog_with_check(_("Invalid clips were detected during reload.\nIt is advisable to clean up the disk with\n"
                                "File|Clean up disk space\n"),
                              WARN_MASK_CLEAN_INVALID);
 }
@@ -3780,7 +3813,7 @@ LiVESResponseType do_system_failed_error(const char *com, int retval, const char
     lives_free(tmp);
   }
 
-  if (addinfo != NULL) addbit = lives_strdup_printf(_("Additional info: %s\n"), addinfo);
+  if (addinfo) addbit = lives_strdup_printf(_("Additional info: %s\n"), addinfo);
   else addbit = lives_strdup("");
 
   if (retval > 0) bit = lives_strdup_printf(_("The error value was %d%s\n"), retval, bit2);
@@ -3860,7 +3893,7 @@ void do_write_failed_error_s(const char *s, const char *addinfo) {
     lives_free(tmp);
   }
 
-  if (addinfo != NULL) addbit = lives_strdup_printf(_("Additional info: %s\n"), addinfo);
+  if (addinfo) addbit = lives_strdup_printf(_("Additional info: %s\n"), addinfo);
   else addbit = lives_strdup("");
 
   xsutf = lives_markup_escape_text(sutf, -1);
@@ -3890,7 +3923,7 @@ void do_read_failed_error_s(const char *s, const char *addinfo) {
   char *addbit;
   char *sutf = lives_filename_to_utf8(s, -1, NULL, NULL, NULL);
 
-  if (addinfo != NULL) addbit = lives_strdup_printf(_("Additional info: %s\n"), addinfo);
+  if (addinfo) addbit = lives_strdup_printf(_("Additional info: %s\n"), addinfo);
   else addbit = lives_strdup("");
 
   msg = lives_strdup_printf(_("\nLiVES was unable to read from the file\n%s\n"
@@ -3981,7 +4014,7 @@ LiVESResponseType do_read_failed_error_s_with_retry(const char *fname, const cha
   char *msg, *emsg;
   char *sutf = lives_filename_to_utf8(fname, -1, NULL, NULL, NULL);
 
-  if (errtext == NULL) {
+  if (!errtext) {
     emsg = lives_strdup_printf("Unable to read from file %s", fname);
     msg = lives_strdup_printf(_("\nLiVES was unable to read from the file\n%s\n"
                                 "Please check for possible error causes.\n"), sutf);
@@ -4008,7 +4041,7 @@ LiVESResponseType do_read_failed_error_s_with_retry(const char *fname, const cha
 LiVESResponseType do_header_read_error_with_retry(int clip) {
   LiVESResponseType ret;
   char *hname;
-  if (mainw->files[clip] == NULL) return 0;
+  if (!mainw->files[clip]) return 0;
 
   hname = lives_build_filename(prefs->workdir, mainw->files[clip]->handle, LIVES_CLIP_HEADER, NULL);
 
@@ -4039,13 +4072,13 @@ boolean do_header_write_error(int clip) {
 LiVESResponseType do_header_missing_detail_error(int clip, lives_clip_details_t detail) {
   LiVESResponseType ret;
   char *hname, *key, *msg;
-  if (mainw->files[clip] == NULL) return 0;
+  if (!mainw->files[clip]) return 0;
 
   hname = lives_build_filename(prefs->workdir, mainw->files[clip]->handle, LIVES_CLIP_HEADER, NULL);
 
   key = clip_detail_to_string(detail, NULL);
 
-  if (key == NULL) {
+  if (!key) {
     msg = lives_strdup_printf("Invalid detail %d requested from file %s", detail, hname);
     LIVES_ERROR(msg);
     lives_free(msg);
@@ -4064,37 +4097,25 @@ LiVESResponseType do_header_missing_detail_error(int clip, lives_clip_details_t 
 
 
 void do_chdir_failed_error(const char *dir) {
-  char *msg;
-  char *dutf;
-  char *emsg = lives_strdup_printf("Failed directory change to\n%s", dir);
+  char *dutf, *emsg = lives_strdup_printf("Failed directory change to\n%s", dir);
   LIVES_ERROR(emsg);
   lives_free(emsg);
   dutf = lives_filename_to_utf8(dir, -1, NULL, NULL, NULL);
-  msg = lives_strdup_printf(_("\nLiVES failed to change directory to\n%s\n"
-                              "Please check your system for errors.\n"), dutf);
-  do_error_dialog(msg);
-  lives_free(msg);
+  do_error_dialogf(_("\nLiVES failed to change directory to\n%s\n"
+                     "Please check your system for errors.\n"), dutf);
   lives_free(dutf);
 }
 
 
 void do_file_perm_error(const char *file_name) {
-  char *msg = lives_strdup_printf(
-                _("\nLiVES was unable to write to the file:\n%s\n"
-                  "Please check the file permissions and try again."),
-                file_name);
-  do_error_dialog(msg);
-  lives_free(msg);
+  do_error_dialogf(_("\nLiVES was unable to write to the file:\n%s\n"
+                     "Please check the file permissions and try again."), file_name);
 }
 
 
 void do_dir_perm_error(const char *dir_name) {
-  char *msg = lives_strdup_printf(
-                _("\nLiVES was unable to either create or write to the directory:\n%s\n"
-                  "Please check the directory permissions and try again."),
-                dir_name);
-  do_error_dialog(msg);
-  lives_free(msg);
+  do_error_dialogf(_("\nLiVES was unable to either create or write to the directory:\n%s\n"
+                     "Please check the directory permissions and try again."), dir_name);
 }
 
 
@@ -4126,8 +4147,7 @@ LIVES_GLOBAL_INLINE void do_dev_busy_error(const char *devstr) {
   do_error_dialogf(_("\nThe device %s is in use or unavailable.\n"
                      "- Check the device permissions\n"
                      "- Check if this device is in use by another program.\n"
-                     "- Check if the device actually exists.\n"),
-                   devstr);
+                     "- Check if the device actually exists.\n"), devstr);
 }
 
 
@@ -4145,8 +4165,8 @@ void do_invalid_subs_error(void) {
 
   register int i = 0;
 
-  while (filt[i] != NULL) {
-    if (filt[i + 1] == NULL) {
+  while (filt[i]) {
+    if (!filt[i + 1]) {
       tmp = lives_strdup_printf("%s or .%s\n", msg, filt[i] + 2);
     } else if (i > 0) {
       tmp = lives_strdup_printf("%s, .%s)", msg, filt[i] + 2);
@@ -4409,7 +4429,7 @@ void add_resnn_label(LiVESDialog * dialog) {
                                      "\n\nResizing of clips is no longer necessary, "
                                      "as LiVES will internally adjust frame sizes as "
                                      "needed at the appropriate moments.\n\n"
-                                     "However, physicallly reducing the frame size may in some cases "
+                                     "However, physically reducing the frame size may in some cases "
                                      "lead to improved playback \n"
                                      "and processing rates.\n\n"));
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;

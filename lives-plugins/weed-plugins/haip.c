@@ -224,7 +224,7 @@ static weed_error_t haip_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   unsigned char *pt;
 
   int width = weed_channel_get_width(in_channel), width3 = width * 3;
-  int height = weed_channel_get_width(in_channel);
+  int height = weed_channel_get_height(in_channel);
   int irowstride = weed_channel_get_stride(in_channel);
   int orowstride = weed_channel_get_stride(out_channel);
   int palette = weed_channel_get_palette(in_channel);

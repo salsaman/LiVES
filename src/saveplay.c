@@ -790,9 +790,11 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
     if (!cfile->ext_src && mainw->toy_type != LIVES_TOY_TV) {
       mainw->cs_permitted = TRUE;
+      mainw->disk_mon = MONITOR_QUOTA;
       if (!do_progress_dialog(TRUE, TRUE, msgstr)) {
         // user cancelled or switched to another clip
         mainw->cs_permitted = FALSE;
+        mainw->disk_mon = 0;
 
         lives_free(msgstr);
         mainw->effects_paused = FALSE;
@@ -826,6 +828,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         return 0;
       }
       mainw->cs_permitted = FALSE;
+      mainw->disk_mon = 0;
     }
     lives_free(msgstr);
   }
@@ -1097,6 +1100,7 @@ load_done:
     mt_clip_select(mainw->multitrack, TRUE);
   }
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+  check_storage_space(-1, FALSE);
   return cfile->unique_id;
 }
 

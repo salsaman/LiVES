@@ -124,7 +124,7 @@ static weed_error_t  avol_process(weed_plant_t *inst, weed_timecode_t timestamp)
   }
 
   for (i = 1; i < ntracks; i++) {
-    if (in_channels[i] == NULL) continue;
+    if (!in_channels[i]) continue;
     if (weed_channel_is_disabled(in_channels[i])) continue;
     if (vol[i] == 0.) continue;
     dst[0] = odst[0];
@@ -132,7 +132,7 @@ static weed_error_t  avol_process(weed_plant_t *inst, weed_timecode_t timestamp)
     if (chans == 2) dst[1] = odst[1];
 
     nsamps = orig_nsamps = weed_get_int_value(in_channels[i], WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
-    if (src != NULL) weed_free(src);
+    if (src) weed_free(src);
     src = (float **)weed_get_voidptr_array(in_channels[i], WEED_LEAF_AUDIO_DATA, NULL);
 
     voll = volr = vol[i];

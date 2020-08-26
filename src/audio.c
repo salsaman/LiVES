@@ -90,12 +90,12 @@ void append_to_audio_bufferf(float *src, uint64_t nsamples, int channum) {
 
   abuf = (lives_audio_buf_t *)mainw->audio_frame_buffer; // this is a pointer to either mainw->afb[0] or mainw->afb[1]
 
-  if (abuf == NULL) {
+  if (!abuf) {
     pthread_mutex_unlock(&mainw->abuf_mutex);
     return;
   }
 
-  if (abuf->bufferf == NULL) free_audio_frame_buffer(abuf);
+  if (!abuf->bufferf) free_audio_frame_buffer(abuf);
 
   nsampsize = (abuf->samples_filled + nsamples);
 
@@ -126,15 +126,15 @@ void append_to_audio_buffer16(void *src, uint64_t nsamples, int channum) {
 
   abuf = (lives_audio_buf_t *)mainw->audio_frame_buffer; // this is a pointer to either mainw->afb[0] or mainw->afb[1]
 
-  if (abuf == NULL) {
+  if (!abuf) {
     pthread_mutex_unlock(&mainw->abuf_mutex);
     return;
   }
-  if (abuf->buffer16 == NULL) free_audio_frame_buffer(abuf);
+  if (!abuf->buffer16) free_audio_frame_buffer(abuf);
 
   nsampsize = (abuf->samples_filled + nsamples);
   channum++;
-  if (abuf->buffer16 == NULL || channum > abuf->out_achans) {
+  if (!abuf->buffer16 || channum > abuf->out_achans) {
     register int i;
     abuf->buffer16 = (int16_t **)lives_calloc(channum, sizeof(short *));
     for (i = abuf->out_achans; i < channum; i++) {
@@ -171,10 +171,10 @@ void init_audio_frame_buffers(short aplayer) {
     case AUD_PLAYER_PULSE:
       abuf->in_interleaf = abuf->out_interleaf = TRUE;
       abuf->s16_signed = TRUE;
-      if (mainw->pulsed_read != NULL) {
+      if (mainw->pulsed_read) {
         abuf->in_achans = abuf->out_achans = mainw->pulsed_read->in_achans;
         abuf->arate = mainw->pulsed_read->in_arate;
-      } else if (mainw->pulsed != NULL) {
+      } else if (mainw->pulsed) {
         abuf->in_achans = abuf->out_achans = mainw->pulsed->out_achans;
         abuf->arate = mainw->pulsed->out_arate;
       }
@@ -183,11 +183,11 @@ void init_audio_frame_buffers(short aplayer) {
 #ifdef ENABLE_JACK
     case AUD_PLAYER_JACK:
       abuf->in_interleaf = abuf->out_interleaf = FALSE;
-      if (mainw->jackd_read != NULL && mainw->jackd_read->in_use) {
+      if (mainw->jackd_read && mainw->jackd_read->in_use) {
         abuf->in_achans = abuf->out_achans = mainw->jackd_read->num_input_channels;
         abuf->arate = mainw->jackd_read->sample_in_rate;
         abuf->in_achans = abuf->out_achans = mainw->jackd_read->num_input_channels;
-      } else if (mainw->jackd != NULL) {
+      } else if (mainw->jackd) {
         abuf->in_achans = abuf->out_achans = mainw->jackd->num_output_channels;
         abuf->arate = mainw->jackd->sample_out_rate;
         abuf->in_achans = abuf->out_achans = mainw->jackd->num_output_channels;
@@ -212,28 +212,28 @@ void free_audio_frame_buffer(lives_audio_buf_t *abuf) {
   // function should be called to clear samples
   // cannot use lives_freep
   register int i;
-  if (abuf != NULL) {
-    if (abuf->bufferf != NULL) {
+  if (abuf) {
+    if (abuf->bufferf) {
       for (i = 0; i < abuf->out_achans; i++) lives_free(abuf->bufferf[i]);
       lives_free(abuf->bufferf);
       abuf->bufferf = NULL;
     }
-    if (abuf->buffer32 != NULL) {
+    if (abuf->buffer32) {
       for (i = 0; i < abuf->out_achans; i++) lives_free(abuf->buffer32[i]);
       lives_free(abuf->buffer32);
       abuf->buffer32 = NULL;
     }
-    if (abuf->buffer24 != NULL) {
+    if (abuf->buffer24) {
       for (i = 0; i < abuf->out_achans; i++) lives_free(abuf->buffer24[i]);
       lives_free(abuf->buffer24);
       abuf->buffer24 = NULL;
     }
-    if (abuf->buffer16 != NULL) {
+    if (abuf->buffer16) {
       for (i = 0; i < abuf->out_achans; i++) lives_free(abuf->buffer16[i]);
       lives_free(abuf->buffer16);
       abuf->buffer16 = NULL;
     }
-    if (abuf->buffer8 != NULL) {
+    if (abuf->buffer8) {
       for (i = 0; i < abuf->out_achans; i++) lives_free(abuf->buffer8[i]);
       lives_free(abuf->buffer8);
       abuf->buffer8 = NULL;
@@ -330,7 +330,7 @@ void sample_silence_stream(int nchans, int64_t nframes) {
   }
   if (memok) {
     pthread_mutex_lock(&mainw->vpp_stream_mutex);
-    if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
+    if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float) {
       (*mainw->vpp->render_audio_frame_float)(fbuff, nframes);
     }
     pthread_mutex_unlock(&mainw->vpp_stream_mutex);
@@ -981,7 +981,7 @@ boolean float_deinterleave(float *fbuffer, int nsamps, int nchans) {
   register int i, j;
 
   float *tmpfbuffer = (float *)lives_calloc_safety(nsamps * nchans, sizeof(float));
-  if (tmpfbuffer == NULL) return FALSE;
+  if (!tmpfbuffer) return FALSE;
 
   for (i = 0; i < nsamps; i++) {
     for (j = 0; j < nchans; j++) {
@@ -999,7 +999,7 @@ boolean float_interleave(float *fbuffer, int nsamps, int nchans) {
   register int i, j;
 
   float *tmpfbuffer = (float *)lives_calloc_safety(nsamps * nchans, sizeof(float));
-  if (tmpfbuffer == NULL) return FALSE;
+  if (!tmpfbuffer) return FALSE;
 
   for (i = 0; i < nsamps; i++) {
     for (j = 0; j < nchans; j++) {
@@ -1213,12 +1213,12 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   if (out_achans * nfiles * tsamples == 0) return 0l;
 
-  if (to_file > -1 && mainw->multitrack == NULL && opvol_start != opvol_end) is_fade = TRUE;
+  if (to_file > -1 && !mainw->multitrack && opvol_start != opvol_end) is_fade = TRUE;
 
   if (!storedfdsset) audio_reset_stored_fnames();
 
-  if (!(is_fade) && (mainw->event_list == NULL || (mainw->multitrack == NULL && nfiles == 1 && from_files != NULL &&
-                     from_files != NULL && from_files[0] == mainw->ascrap_file))) render_block_size *= 100;
+  if (!(is_fade) && (!mainw->event_list || (!mainw->multitrack && nfiles == 1 && from_files &&
+                     from_files && from_files[0] == mainw->ascrap_file))) render_block_size *= 100;
 
   if (to_file > -1) {
     // prepare outfile stuff
@@ -1257,7 +1257,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       return tsamples;
     }
   } else {
-    if (mainw->event_list != NULL) cfile->aseek_pos = fromtime[0];
+    if (mainw->event_list) cfile->aseek_pos = fromtime[0];
 
     tc_end -= tc_start;
     tc_start = 0;
@@ -1307,7 +1307,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       infilename = lives_get_audio_file_name(from_files[track]);
 
       // try to speed up access by keeping some files open
-      if (track < NSTOREDFDS && storedfnames[track] != NULL && !strcmp(infilename, storedfnames[track])) {
+      if (track < NSTOREDFDS && storedfnames[track] && !strcmp(infilename, storedfnames[track])) {
         in_fd[track] = storedfds[track];
       } else {
         if (track < NSTOREDFDS && storedfds[track] > -1) lives_close_buffered(storedfds[track]);
@@ -1399,8 +1399,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
   g_print("  rendering %ld samples %f\n", tsamples, opvol);
 #endif
 
-  // TODO - need to check amixer != NULL and get vals from sliders
-  /* if (mainw->multitrack != NULL && mainw->multitrack->audio_vols != NULL && obuf != NULL) { */
+  // TODO - need to check amixer and get vals from sliders
+  /* if (mainw->multitrack && mainw->multitrack->audio_vols && obuf) { */
   /*   use_live_chvols = TRUE; */
   /*   audio_vols = mainw->multitrack->audio_vols; */
   /* } */
@@ -1527,7 +1527,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         }
       }
 
-      if (mainw->event_list != NULL && !(mainw->multitrack == NULL && from_files[0] == mainw->ascrap_file)) {
+      if (mainw->event_list && !(!mainw->multitrack && from_files[0] == mainw->ascrap_file)) {
         // we need to apply all audio effects with output here.
         // even in clipedit mode (for preview/rendering with an event list)
         // also, we will need to keep updating mainw->afilter_map from mainw->event_list,
@@ -1539,10 +1539,10 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         // filter inits and deinits, and filter maps will update the current fx state
         if (tc > 0) audio_process_events_to(tc);
 
-        if (mainw->multitrack != NULL || mainw->afilter_map != NULL) {
+        if (mainw->multitrack || mainw->afilter_map) {
 
           // apply audio filter(s)
-          if (mainw->multitrack != NULL) {
+          if (mainw->multitrack) {
             /// here we work out the "visibility" of each track at tc (i.e we only get audio from the front track + backing audio)
             /// any transitions will combine audio from 2 layers (if the pref is set)
             /// backing audio tracks are always full visible
@@ -1576,7 +1576,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
           weed_apply_audio_effects(mainw->afilter_map, layers, nbtracks, out_achans, blocksize, out_arate, tc, vis);
           lives_freep((void **)&vis);
 
-          if (layers != NULL) {
+          if (layers) {
             /// after processing we get the audio data back from the layers
             for (x = 0; x < nfiles; x++) {
               float **adata = (weed_layer_get_audio_data(layers[x], NULL));
@@ -1592,7 +1592,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         }
       }
 
-      if (mainw->multitrack == NULL && opvol_end != opvol_start) {
+      if (!mainw->multitrack && opvol_end != opvol_start) {
         time += (double)frames_out / (double)out_arate;
         opvol = opvol_start + (opvol_end - opvol_start) * (time / (double)((tc_end - tc_start) / TICKS_PER_SECOND_DBL));
         opvol = lives_vol_from_linear(opvol);
@@ -1641,12 +1641,12 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   if (xsamples > 0) {
     for (i = 0; i < out_achans * nfiles; i++) {
-      if (float_buffer[i] != NULL) lives_free(float_buffer[i]);
+      if (float_buffer[i]) lives_free(float_buffer[i]);
     }
   }
 
-  if (finish_buff != NULL) lives_free(finish_buff);
-  if (holding_buff != NULL) lives_free(holding_buff);
+  if (finish_buff) lives_free(finish_buff);
+  if (holding_buff) lives_free(holding_buff);
 
   // close files
   for (track = 0; track < nfiles; track++) {
@@ -1707,11 +1707,11 @@ void preview_audio(void) {
   // start up our audio player (jack or pulse)
   if (prefs->audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-    if (mainw->jackd != NULL) jack_aud_pb_ready(mainw->current_file);
+    if (mainw->jackd) jack_aud_pb_ready(mainw->current_file);
 #endif
   } else if (prefs->audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-    if (mainw->pulsed != NULL) pulse_aud_pb_ready(mainw->current_file);
+    if (mainw->pulsed) pulse_aud_pb_ready(mainw->current_file);
 #endif
 
 #ifdef ENABLE_JACK
@@ -1724,14 +1724,14 @@ void preview_audio(void) {
       mainw->jackd->read_abuf = 0;
       mainw->abufs_to_fill = 0;
       pthread_mutex_unlock(&mainw->abuf_mutex);
-      if (mainw->event_list != NULL)
+      if (mainw->event_list)
         mainw->jackd->is_paused = mainw->jackd->in_use = TRUE;
     }
 #endif
     mainw->playing_file = mainw->current_file;
 #ifdef ENABLE_JACK
     if (prefs->audio_player == AUD_PLAYER_JACK && cfile->achans > 0 && cfile->laudio_time > 0. &&
-        !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->jackd != NULL
+        !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->jackd
         && mainw->jackd->playing_file > -1) {
       if (!jack_audio_seek_frame(mainw->jackd, mainw->aframeno)) {
         if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, mainw->aframeno);
@@ -1741,7 +1741,7 @@ void preview_audio(void) {
 #endif
 #ifdef HAVE_PULSE_AUDIO
     if (prefs->audio_player == AUD_PLAYER_PULSE && cfile->achans > 0 && cfile->laudio_time > 0. &&
-        !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->pulsed != NULL
+        !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->pulsed
         && mainw->pulsed->playing_file > -1) {
       if (!pulse_audio_seek_frame(mainw->pulsed, mainw->aframeno)) {
         handle_audio_timeout();
@@ -1758,7 +1758,7 @@ void preview_audio(void) {
 
     // reset audio buffers
 #ifdef ENABLE_JACK
-    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
+    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) {
       // must do this before deinit fx
       pthread_mutex_lock(&mainw->abuf_mutex);
       mainw->jackd->read_abuf = -1;
@@ -1768,7 +1768,7 @@ void preview_audio(void) {
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
+    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
       pthread_mutex_lock(&mainw->abuf_mutex);
       mainw->pulsed->read_abuf = -1;
       mainw->pulsed->in_use = FALSE;
@@ -1783,9 +1783,9 @@ void preview_audio(void) {
     }
 
 #ifdef ENABLE_JACK
-    if (prefs->audio_player == AUD_PLAYER_JACK && (mainw->jackd != NULL || mainw->jackd_read != NULL)) {
+    if (prefs->audio_player == AUD_PLAYER_JACK && (mainw->jackd || mainw->jackd_read)) {
       // tell jack client to close audio file
-      if (mainw->jackd != NULL && mainw->jackd->playing_file > 0) {
+      if (mainw->jackd && mainw->jackd->playing_file > 0) {
         ticks_t timeout = 0;
         if (mainw->cancelled != CANCEL_AUDIO_ERROR) {
           lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
@@ -1805,9 +1805,9 @@ void preview_audio(void) {
     }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player == AUD_PLAYER_PULSE && (mainw->pulsed != NULL || mainw->pulsed_read != NULL)) {
+    if (prefs->audio_player == AUD_PLAYER_PULSE && (mainw->pulsed || mainw->pulsed_read)) {
       // tell pulse client to close audio file
-      if (mainw->pulsed != NULL) {
+      if (mainw->pulsed) {
         if (mainw->pulsed->playing_file > 0 || mainw->pulsed->fd > 0) {
           ticks_t timeout = 0;
           if (mainw->cancelled != CANCEL_AUDIO_ERROR) {
@@ -1884,7 +1884,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
 
   if (fileno == -1) {
     // respond to external audio, but do not record it (yet)
-    if (mainw->jackd_read == NULL) {
+    if (!mainw->jackd_read) {
       mainw->jackd_read = jack_get_driver(0, FALSE);
       mainw->jackd_read->playing_file = fileno;
       mainw->jackd_read->reverse_endian = FALSE;
@@ -2012,7 +2012,7 @@ void jack_rec_audio_end(boolean close_device, boolean close_fd) {
 
   if (close_device) {
     // stop recording
-    if (mainw->jackd_read != NULL) jack_close_device(mainw->jackd_read);
+    if (mainw->jackd_read) jack_close_device(mainw->jackd_read);
     mainw->jackd_read = NULL;
   } else {
     mainw->jackd_read->in_use = FALSE;
@@ -2037,7 +2037,7 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
   int retval;
 
   if (fileno == -1) {
-    if (mainw->pulsed_read == NULL) {
+    if (!mainw->pulsed_read) {
       mainw->pulsed_read = pulse_get_driver(FALSE);
       mainw->pulsed_read->playing_file = -1;
       mainw->pulsed_read->frames_written = 0;
@@ -2066,7 +2066,7 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
     lives_free(outfilename);
     if (fileno == mainw->ascrap_file) {
       mainw->files[mainw->ascrap_file]->cb_src = mainw->aud_rec_fd;
-      /*      if (mainw->pulsed_read != NULL) {
+      /*      if (mainw->pulsed_read) {
         // flush all data from buffer; this seems like the only way
         void *data;
         size_t rbytes;
@@ -2170,7 +2170,7 @@ void pulse_rec_audio_end(boolean close_device, boolean close_fd) {
 
   // stop recording
 
-  if (mainw->pulsed_read != NULL) {
+  if (mainw->pulsed_read) {
     pthread_mutex_lock(&mainw->audio_filewriteend_mutex);
     if (mainw->pulsed_read->playing_file > -1)
       pulse_flush_read_data(mainw->pulsed_read, mainw->pulsed_read->playing_file, 0, mainw->pulsed_read->reverse_endian, NULL);
@@ -2293,7 +2293,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
     last_tc = get_event_timecode(event);
   }
 
-  while ((st_event != NULL && event != st_event) || (st_event == NULL && get_event_timecode(event) < fill_tc)) {
+  while ((st_event && event != st_event) || (!st_event && get_event_timecode(event) < fill_tc)) {
     etype = weed_event_get_type(event);
     if (what_to_get == LIVES_PREVIEW_TYPE_VIDEO_AUDIO || (etype != 1 && etype != 5)) {
       switch (etype) {
@@ -2306,7 +2306,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
         break;
       case WEED_EVENT_TYPE_FILTER_INIT:
         deinit_event = weed_get_plantptr_value(event, WEED_LEAF_DEINIT_EVENT, NULL);
-        if (deinit_event == NULL || get_event_timecode(deinit_event) >= fill_tc) {
+        if (!deinit_event || get_event_timecode(deinit_event) >= fill_tc) {
           // this effect should be activated
           if (what_to_get != LIVES_PREVIEW_TYPE_AUDIO_ONLY)
             process_events(event, FALSE, get_event_timecode(event));
@@ -2323,10 +2323,10 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
         }
         break;
       case WEED_EVENT_TYPE_PARAM_CHANGE:
-        if (mainw->multitrack == NULL) {
+        if (!mainw->multitrack) {
           weed_event_t *init_event = weed_get_voidptr_value((weed_plant_t *)event, WEED_LEAF_INIT_EVENT, NULL);
           deinit_event = weed_get_plantptr_value(init_event, WEED_LEAF_DEINIT_EVENT, NULL);
-          if (deinit_event != NULL && get_event_timecode(deinit_event) < fill_tc) break;
+          if (deinit_event && get_event_timecode(deinit_event) < fill_tc) break;
 
           if (weed_plant_has_leaf((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG)) {
             char *key_string = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG, NULL);
@@ -2358,7 +2358,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
         if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
           /// update audio state
           atstate = aframe_to_atstate(event);
-          if (audstate == NULL) audstate = atstate;
+          if (!audstate) audstate = atstate;
           else {
             // have an existing audio state, update with current
             weed_timecode_t delta = get_event_timecode(event) - last_tc;
@@ -2391,12 +2391,12 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
       }
     }
     nevent = get_next_event(event);
-    if (nevent == NULL) break;
+    if (!nevent) break;
     event = nevent;
     if (what_to_get == LIVES_PREVIEW_TYPE_AUDIO_ONLY && WEED_EVENT_IS_AUDIO_FRAME(event)) break;
   }
   if (what_to_get == LIVES_PREVIEW_TYPE_VIDEO_AUDIO) {
-    if (audstate != NULL) {
+    if (audstate) {
       weed_timecode_t delta = get_event_timecode(event) - last_tc;
       if (delta > 0) {
         for (nfiles = 0; audstate[nfiles].afile != -1; nfiles++) {
@@ -2435,12 +2435,12 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 
   register int i;
 
-  if (abuf == NULL) return;
+  if (!abuf) return;
 
   abuf->samples_filled = 0; // write fill level of buffer
   abuf->start_sample = 0; // read level
 
-  if (st_event != NULL) {
+  if (st_event) {
     // this is only called for the first buffered read
     //
     event = st_event;
@@ -2450,7 +2450,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     lives_freep((void **)&avels);
     lives_freep((void **)&aseeks);
 
-    if (mainw->multitrack != NULL && mainw->multitrack->avol_init_event != NULL)
+    if (mainw->multitrack && mainw->multitrack->avol_init_event)
       nfiles = weed_leaf_num_elements(mainw->multitrack->avol_init_event, WEED_LEAF_IN_TRACKS);
 
     else nfiles = 1;
@@ -2467,7 +2467,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     // get audio and fx state at pt immediately before st_event
     atstate = get_audio_and_effects_state_at(event_list, event, 0, LIVES_PREVIEW_TYPE_VIDEO_AUDIO, exact);
 
-    if (atstate != NULL) {
+    if (atstate) {
       for (i = 0; atstate[i].afile != -1; i++) {
         if (atstate[i].afile > 0) {
           from_files[i] = atstate[i].afile;
@@ -2479,10 +2479,10 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     }
   }
 
-  if (mainw->multitrack != NULL) {
+  if (mainw->multitrack) {
     // get channel volumes from the mixer
     for (i = 0; i < nfiles; i++) {
-      if (mainw->multitrack != NULL && mainw->multitrack->audio_vols != NULL) {
+      if (mainw->multitrack && mainw->multitrack->audio_vols) {
         chvols[i] = (double)LIVES_POINTER_TO_INT(lives_list_nth_data(mainw->multitrack->audio_vols, i)) / ONE_MILLION_DBL;
       }
     }
@@ -2493,7 +2493,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   // continue until we have a full buffer
   // if we get an audio frame we render up to that point
   // then we render what is left to fill abuf
-  while (event != NULL && (tc = get_event_timecode(event)) < fill_tc) {
+  while (event && (tc = get_event_timecode(event)) < fill_tc) {
     if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
       // got next audio frame
       render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, tc, chvols, 1., 1., abuf);
@@ -2507,7 +2507,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
       // process audio updates at this frame
       atstate = aframe_to_atstate(event);
 
-      if (atstate != NULL) {
+      if (atstate) {
         int nnfiles;
         for (nnfiles = 0; atstate[nnfiles].afile != -1; nnfiles++);
         for (i = 0; i < nnfiles; i++) {
@@ -2593,11 +2593,10 @@ void free_jack_audio_buffers(void) {
 #ifdef ENABLE_JACK
   int chan;
 
-  if (mainw->jackd == NULL) return;
-  if (mainw->jackd->abufs == NULL) return;
+  if (!mainw->jackd || !mainw->jackd->abufs) return;
 
   for (int i = 0; i < prefs->num_rtaudiobufs; i++) {
-    if (mainw->jackd->abufs[i] != NULL) {
+    if (mainw->jackd->abufs[i]) {
       for (chan = 0; chan < mainw->jackd->abufs[i]->out_achans; chan++) {
         lives_free(mainw->jackd->abufs[i]->bufferf[chan]);
       }
@@ -2613,11 +2612,10 @@ void free_jack_audio_buffers(void) {
 void free_pulse_audio_buffers(void) {
 #ifdef HAVE_PULSE_AUDIO
 
-  if (mainw->pulsed == NULL) return;
-  if (mainw->pulsed->abufs == NULL) return;
+  if (!mainw->pulsed || !mainw->pulsed->abufs) return;
 
   for (int i = 0; i < prefs->num_rtaudiobufs; i++) {
-    if (mainw->pulsed->abufs[i] != NULL) {
+    if (mainw->pulsed->abufs[i]) {
       lives_free(mainw->pulsed->abufs[i]->buffer16[0]);
       lives_free(mainw->pulsed->abufs[i]->buffer16);
       lives_free(mainw->pulsed->abufs[i]);
@@ -2678,19 +2676,19 @@ boolean resync_audio(double frameno) {
   if (cfile->achans == 0
       || (0
 #ifdef HAVE_PULSE_AUDIO
-          || (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL
+          || (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed
               && mainw->current_file != mainw->pulsed->playing_file)
 #endif
           ||
 #ifdef ENABLE_JACK
-          (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL
+          (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd
            && mainw->current_file != mainw->jackd->playing_file) ||
 #endif
           0))
     return FALSE;
 
 #ifdef ENABLE_JACK
-  if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
+  if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) {
     if (!jack_audio_seek_frame(mainw->jackd, frameno)) {
       if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, frameno);
       else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
@@ -2759,8 +2757,8 @@ static void *cache_my_audio(void *arg) {
     }
 
     if (cbuffer->die) {
-      if (mainw->event_list == NULL
-          || (mainw->record || (mainw->is_rendering && mainw->preview && !mainw->preview_rendering))) {
+      if (!mainw->event_list || (mainw->record
+                                 || (mainw->is_rendering && mainw->preview && !mainw->preview_rendering))) {
         if (cbuffer->_fd != -1)
           lives_close_buffered(cbuffer->_fd);
       }
@@ -2773,14 +2771,14 @@ static void *cache_my_audio(void *arg) {
     ////  for multitrack:
 
 #ifdef ENABLE_JACK
-    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL && mainw->abufs_to_fill > 0) {
+    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd && mainw->abufs_to_fill > 0) {
       mainw->jackd->abufs[mainw->write_abuf]->samples_filled = 0;
       fill_abuffer_from(mainw->jackd->abufs[mainw->write_abuf], mainw->event_list, NULL, FALSE);
       continue;
     }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL && mainw->abufs_to_fill > 0) {
+    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed && mainw->abufs_to_fill > 0) {
       mainw->pulsed->abufs[mainw->write_abuf]->samples_filled = 0;
       fill_abuffer_from(mainw->pulsed->abufs[mainw->write_abuf], mainw->event_list, NULL, FALSE);
       continue;
@@ -2798,7 +2796,7 @@ static void *cache_my_audio(void *arg) {
 
     // TODO - if out_asamps changed, we need to free all buffers and set _cachans==0
     if (cbuffer->out_asamps != cbuffer->_casamps) {
-      if (cbuffer->bufferf != NULL) {
+      if (cbuffer->bufferf) {
         // free float channels
         for (i = 0; i < (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans); i++) {
           lives_free(cbuffer->bufferf[i]);
@@ -2807,7 +2805,7 @@ static void *cache_my_audio(void *arg) {
         cbuffer->bufferf = NULL;
       }
 
-      if (cbuffer->buffer16 != NULL) {
+      if (cbuffer->buffer16) {
         // free 16bit channels
         for (i = 0; i < (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans); i++) {
           lives_free(cbuffer->buffer16[i]);
@@ -2830,7 +2828,7 @@ static void *cache_my_audio(void *arg) {
       break;
     case 16:
       // we need 16 bit buffer(s) only
-      if (cbuffer->bufferf != NULL) {
+      if (cbuffer->bufferf) {
         // free float channels
         for (i = 0; i < (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans); i++) {
           lives_free(cbuffer->bufferf[i]);
@@ -2997,7 +2995,7 @@ static void *cache_my_audio(void *arg) {
     if (cbuffer->bytesize != cbuffer->_cbytesize) {
       cbuffer->_filebuffer = (uint8_t *)lives_realloc(cbuffer->_filebuffer, cbuffer->bytesize);
 
-      if (cbuffer->_filebuffer == NULL) {
+      if (!cbuffer->_filebuffer) {
         cbuffer->_cbytesize = cbuffer->bytesize = 0;
         cbuffer->in_achans = 0;
         cbuffer->is_ready = TRUE;
@@ -3073,7 +3071,7 @@ lives_audio_buf_t *audio_cache_init(void) {
   cache_buffer->is_ready = FALSE;
   cache_buffer->die = FALSE;
 
-  if (mainw->multitrack == NULL) {
+  if (!mainw->multitrack) {
     cache_buffer->in_achans = 0;
 
     // NULLify all pointers of cache_buffer
@@ -3108,10 +3106,10 @@ lives_audio_buf_t *audio_cache_init(void) {
 
 void audio_cache_end(void) {
   lives_audio_buf_t *xcache_buffer;
-  register int i;
+  int i;
 
   pthread_mutex_lock(&mainw->cache_buffer_mutex);
-  if (cache_buffer == NULL) {
+  if (!cache_buffer) {
     pthread_mutex_unlock(&mainw->cache_buffer_mutex);
     return;
   }
@@ -3120,24 +3118,24 @@ void audio_cache_end(void) {
   pthread_join(athread, NULL);
   pthread_mutex_unlock(&mainw->cache_buffer_mutex);
 
-  if (mainw->event_list == NULL) {
+  if (!mainw->event_list) {
     // free all buffers
 
     for (i = 0; i < (cache_buffer->_cin_interleaf ? 1 : cache_buffer->_cachans); i++) {
-      if (cache_buffer->buffer8 != NULL && cache_buffer->buffer8[i] != NULL) lives_free(cache_buffer->buffer8[i]);
-      if (cache_buffer->buffer16 != NULL && cache_buffer->buffer16[i] != NULL) lives_free(cache_buffer->buffer16[i]);
-      if (cache_buffer->buffer24 != NULL && cache_buffer->buffer24[i] != NULL) lives_free(cache_buffer->buffer24[i]);
-      if (cache_buffer->buffer32 != NULL && cache_buffer->buffer32[i] != NULL) lives_free(cache_buffer->buffer32[i]);
-      if (cache_buffer->bufferf != NULL && cache_buffer->bufferf[i] != NULL) lives_free(cache_buffer->bufferf[i]);
+      if (cache_buffer->buffer8 && cache_buffer->buffer8[i]) lives_free(cache_buffer->buffer8[i]);
+      if (cache_buffer->buffer16 && cache_buffer->buffer16[i]) lives_free(cache_buffer->buffer16[i]);
+      if (cache_buffer->buffer24 && cache_buffer->buffer24[i]) lives_free(cache_buffer->buffer24[i]);
+      if (cache_buffer->buffer32 && cache_buffer->buffer32[i]) lives_free(cache_buffer->buffer32[i]);
+      if (cache_buffer->bufferf && cache_buffer->bufferf[i]) lives_free(cache_buffer->bufferf[i]);
     }
 
-    if (cache_buffer->buffer8 != NULL) lives_free(cache_buffer->buffer8);
-    if (cache_buffer->buffer16 != NULL) lives_free(cache_buffer->buffer16);
-    if (cache_buffer->buffer24 != NULL) lives_free(cache_buffer->buffer24);
-    if (cache_buffer->buffer32 != NULL) lives_free(cache_buffer->buffer32);
-    if (cache_buffer->bufferf != NULL) lives_free(cache_buffer->bufferf);
+    if (cache_buffer->buffer8) lives_free(cache_buffer->buffer8);
+    if (cache_buffer->buffer16) lives_free(cache_buffer->buffer16);
+    if (cache_buffer->buffer24) lives_free(cache_buffer->buffer24);
+    if (cache_buffer->buffer32) lives_free(cache_buffer->buffer32);
+    if (cache_buffer->bufferf) lives_free(cache_buffer->bufferf);
 
-    if (cache_buffer->_filebuffer != NULL) lives_free(cache_buffer->_filebuffer);
+    if (cache_buffer->_filebuffer) lives_free(cache_buffer->_filebuffer);
   }
 
   if (cache_buffer->_fd != -1) lives_close_buffered(cache_buffer->_fd);
@@ -3184,7 +3182,7 @@ boolean get_audio_from_plugin(float **fbuffer, int nchans, int arate, int nsamps
 getaud1:
 
   channel = get_enabled_channel(inst, 0, FALSE);
-  if (channel != NULL) {
+  if (channel) {
     xnchans = nchans; // preferred value
     ctmpl = weed_channel_get_template(channel);
     cflags = weed_chantmpl_get_flags(ctmpl);
@@ -3234,7 +3232,7 @@ getaud1:
     weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
   }
 
-  if (mainw->pconx != NULL && !(mainw->preview || mainw->is_rendering)) {
+  if (mainw->pconx && !(mainw->preview || mainw->is_rendering)) {
     // chain any data pipelines
     if (!pthread_mutex_trylock(&mainw->fx_mutex[mainw->agen_key - 1])) {
       mainw->agen_needs_reinit = pconx_chain_data(mainw->agen_key - 1, rte_key_getmode(mainw->agen_key), is_audio_thread);
@@ -3256,7 +3254,7 @@ getaud1:
     return FALSE;
   }
 
-  if (channel != NULL && xnchans == 1 && nchans == 2) {
+  if (channel && xnchans == 1 && nchans == 2) {
     // if we got mono but we wanted stereo, copy to right channel
     lives_memcpy(fbuffer[1], fbuffer[0], nsamps * sizeof(float));
   }
@@ -3375,11 +3373,11 @@ boolean apply_rte_audio(int64_t nframes) {
   onframes = nframes;
 
   in_buff = (uint8_t *)lives_calloc_safety(tbytes, 1);
-  if (in_buff == NULL) return FALSE;
+  if (!in_buff) return FALSE;
 
   if (cfile->asampsize == 8) {
     shortbuf = (short *)lives_calloc_safety(tbytes / sizeof(short), sizeof(short));
-    if (shortbuf == NULL) {
+    if (!shortbuf) {
       lives_free(in_buff);
       return FALSE;
     }
@@ -3414,7 +3412,7 @@ boolean apply_rte_audio(int64_t nframes) {
     for (i = 0; i < cfile->achans; i++) {
       // convert s16 to non-interleaved float
       fltbuf[i] = (float *)lives_calloc(nframes, sizeof(float));
-      if (fltbuf[i] == NULL) {
+      if (!fltbuf[i]) {
         for (--i; i >= 0; i--) {
           lives_free(fltbuf[i]);
         }
@@ -3452,7 +3450,7 @@ boolean apply_rte_audio(int64_t nframes) {
 
     audio_pos += tbytes;
 
-    if (fltbufni == NULL) {
+    if (!fltbufni) {
       for (i = 0; i < cfile->achans; i++) {
         lives_free(fltbuf[i]);
       }
@@ -3470,7 +3468,7 @@ boolean apply_rte_audio(int64_t nframes) {
   sample_move_float_int(in_buff, fltbuf, onframes, 1.0, cfile->achans, cfile->asampsize, (cfile->signed_endian & AFORM_UNSIGNED),
                         !(cfile->signed_endian & AFORM_BIG_ENDIAN), FALSE, 1.0);
 
-  if (fltbufni == NULL) {
+  if (!fltbufni) {
     for (i = 0; i < cfile->achans; i++) {
       lives_free(fltbuf[i]);
     }
@@ -3569,10 +3567,10 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
 #endif
 
   // plugin will get float, so we first convert to that
-  if (abuf->bufferf == NULL) {
+  if (!abuf->bufferf) {
 
     // try 8 bit -> 16
-    if (abuf->buffer8 != NULL && abuf->buffer16 == NULL) {
+    if (abuf->buffer8 && !abuf->buffer16) {
       int swap = 0;
       if (!abuf->s8_signed) swap = SWAP_U_TO_S;
       abuf->s16_signed = TRUE;
@@ -3586,7 +3584,7 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
     }
 
     // try convert S16 -> float
-    if (abuf->buffer16 != NULL) {
+    if (abuf->buffer16) {
       abuf->bufferf = (float **)lives_calloc(abuf->out_achans, sizeof(float *));
       for (i = 0; i < abuf->out_achans; i++) {
         if (!abuf->in_interleaf) {
@@ -3604,7 +3602,7 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
     }
   }
 
-  if (abuf->bufferf == NULL) return FALSE;
+  if (!abuf->bufferf) return FALSE;
   // now we should have float
 
   if (abuf->in_interleaf) samps /= abuf->in_achans;
@@ -3624,7 +3622,7 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
   for (i = 0; i < tchans; i++) {
     pthread_mutex_lock(&mainw->abuf_mutex);
     src = abuf->bufferf[i % abuf->out_achans];
-    if (src != NULL) {
+    if (src) {
       dst[i] = lives_calloc(alen, sizeof(float));
       if (abuf->arate == trate) {
         lives_memcpy(dst[i], src, alen * sizeof(float));

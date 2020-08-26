@@ -68,42 +68,26 @@ typedef struct {
 
 
 static void unclamp_frame(uint8_t *data, int width, int row, int height) {
-  register int i, j;
-
   row -= width;
-
-  for (i = 0; i < height; i++) {
-    for (j = 0; j < width; j++) {
-      *data = y_clamped_to_unclamped(*data);
-      data++;
+  for (int i = 0; i < height; i++) {
+    for (int j = 0; j < width; j++) {
+      data[i * row + j] = y_clamped_to_unclamped(data[i * row + j]);
     }
-    data += row;
   }
 }
 
 
-static uint8_t *copy_frame(const uint8_t *csrc, int width, int row, int height) {
-  uint8_t *src = (uint8_t *)csrc;
-  uint8_t *dst = (uint8_t *)weed_malloc(width * row);
+static uint8_t *copy_frame(const uint8_t *src, int width, int row, int height) {
+  uint8_t *dst = (uint8_t *)weed_calloc(height, row);
   if (!dst) return NULL;
-  if (width == row) weed_memcpy(dst, src, width * height);
-  else {
-    uint8_t *dstp = dst;
-    register int i;
-    for (i = 0; i < height; i++) {
-      weed_memcpy(dstp, src, width);
-      weed_memset(dstp + width, 0, row - width);
-      dstp += row;
-      src += row;
-    }
-  }
+  weed_memcpy(dst, src, row * height);
   return dst;
 }
 
 
 static weed_error_t farneback_init(weed_plant_t *inst) {
   _sdata *sdata = (_sdata *)weed_malloc(sizeof(_sdata));
-  if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
+  if (!sdata) return WEED_ERROR_MEMORY_ALLOCATION;
 
   sdata->inited = WEED_FALSE;
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
@@ -126,21 +110,21 @@ static weed_error_t farneback_deinit(weed_plant_t *inst) {
 
 
 static weed_error_t farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
-  weed_plant_t **out_channels = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  weed_plant_t *in_channel = weed_get_in_channel(inst, 0);
+  weed_plant_t **out_channels = weed_get_out_channels(inst, NULL);
 
-  uint8_t *src = (uint8_t *)weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  uint8_t *src = (uint8_t *)weed_channel_get_pixel_data(in_channel);
 
-  float *dst1 = (float *)weed_get_voidptr_value(out_channels[0], WEED_LEAF_PIXEL_DATA, NULL);
-  float *dst2 = (float *)weed_get_voidptr_value(out_channels[1], WEED_LEAF_PIXEL_DATA, NULL);
+  float *dst1 = (float *)weed_channel_get_pixel_data(out_channels[0]);
+  float *dst2 = (float *)weed_channel_get_pixel_data(out_channels[1]);
 
-  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
-  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
-  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
+  int width = weed_channel_get_width(in_channel);
+  int height = weed_channel_get_height(in_channel);
+  int palette = weed_channel_get_palette(in_channel);
 
-  int irow = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
-  int orow1 = weed_get_int_value(out_channels[0], WEED_LEAF_ROWSTRIDES, NULL);
-  int orow2 = weed_get_int_value(out_channels[1], WEED_LEAF_ROWSTRIDES, NULL);
+  int irow = weed_channel_get_stride(in_channel);
+  int orow1 = weed_channel_get_stride(out_channels[0]);
+  int orow2 = weed_channel_get_stride(out_channels[1]);
 
   register int i, j;
 
@@ -159,29 +143,29 @@ static weed_error_t farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
   switch (palette) {
   case WEED_PALETTE_RGB24:
     srcMat = Mat(height, width, CV_8UC3, src, irow);
-    cvtColor(srcMat, *cvgrey, CV_RGB2GRAY); // may segfault here, not sure what causes it. Bug in opencv 2.4 ?
+    cvtColor(srcMat, *cvgrey, COLOR_RGB2GRAY);
     // This used to work at one point.
     // the only thing I can see is that the plugin complains about not finding _ZN2cv6String10deallocateEv
     // which seems odd since we are doing only matrix transforms and nothing with strings.
     break;
   case WEED_PALETTE_BGR24:
     srcMat = Mat(height, width, CV_8UC3, src, irow);
-    cvtColor(srcMat, *cvgrey, CV_BGR2GRAY);
+    cvtColor(srcMat, *cvgrey, COLOR_BGR2GRAY);
     break;
   case WEED_PALETTE_RGBA32:
     srcMat = Mat(height, width, CV_8UC4, src, irow);
-    cvtColor(srcMat, *cvgrey, CV_RGB2GRAY);
+    cvtColor(srcMat, *cvgrey, COLOR_RGB2GRAY);
     break;
   case WEED_PALETTE_BGRA32:
     srcMat = Mat(height, width, CV_8UC4, src, irow);
-    cvtColor(srcMat, *cvgrey, CV_BGR2GRAY);
+    cvtColor(srcMat, *cvgrey, COLOR_BGR2GRAY);
     break;
   case WEED_PALETTE_ARGB32: {
     int from_to[] = {0, 3, 1, 0, 2, 1, 3, 2}; // convert argb to rgba
     srcMat = Mat(height, width, CV_8UC4, src, irow);
     mixMat = Mat(height, width, CV_8UC4);
     mixChannels(&srcMat, 1, &mixMat, 1, from_to, 4);
-    cvtColor(mixMat, *cvgrey, CV_RGB2GRAY);
+    cvtColor(mixMat, *cvgrey, COLOR_RGB2GRAY);
   }
   break;
   case WEED_PALETTE_YUVA4444P:
@@ -189,8 +173,7 @@ static weed_error_t farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
   case WEED_PALETTE_YUV422P:
   case WEED_PALETTE_YUV420P:
   case WEED_PALETTE_YVU420P:
-    if (weed_plant_has_leaf(in_channel, WEED_LEAF_YUV_CLAMPING) &&
-        (weed_get_int_value(in_channel, WEED_LEAF_YUV_CLAMPING, NULL) == WEED_YUV_CLAMPING_CLAMPED)) {
+    if (weed_channel_get_yuv_clamping(in_channel) == WEED_YUV_CLAMPING_CLAMPED) {
       srcMat = Mat(height, width, CV_8U, src, irow);
       ucMat = Mat(256, 1, CV_8U, YCL_YUCL);
       LUT(srcMat, ucMat, *cvgrey);
@@ -291,13 +274,10 @@ static weed_error_t farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
 
 WEED_SETUP_START(200, 200) {
   int ipalette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32,
-                         WEED_PALETTE_YUVA4444P,
-                         WEED_PALETTE_YUV444P,
-                         WEED_PALETTE_YUV422P,
-                         WEED_PALETTE_YUV420P,
-                         WEED_PALETTE_YVU420P,
-                         WEED_PALETTE_END
+                         WEED_PALETTE_YUVA4444P, WEED_PALETTE_YUV444P, WEED_PALETTE_YUV422P,
+                         WEED_PALETTE_YUV420P, WEED_PALETTE_YVU420P, WEED_PALETTE_END
                         };
+
   // define a vector output
   int opalette_list[] = {WEED_PALETTE_AFLOAT, WEED_PALETTE_END};
 
@@ -324,7 +304,7 @@ WEED_SETUP_START(200, 200) {
 
   weed_set_int_value(in_chantmpls[0], WEED_LEAF_YUV_CLAMPING, WEED_YUV_CLAMPING_UNCLAMPED);
 
-  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+  weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;
 

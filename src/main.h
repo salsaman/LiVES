@@ -1049,6 +1049,7 @@ typedef struct {
 
   char *cpu_name;
   short cpu_bits;
+  int64_t boot_time;
   int xstdout;
   int nmonitors;
   int primary_monitor;

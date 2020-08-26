@@ -286,7 +286,7 @@ lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, 
 uint64_t get_ds_free(const char *dir);
 
 lives_proc_thread_t disk_monitor_start(const char *dir);
-boolean disk_monitor_running(void);
+boolean disk_monitor_running(const char *dir);
 int64_t disk_monitor_check_result(const char *dir);
 int64_t disk_monitor_wait_result(const char *dir, ticks_t timeout);
 void disk_monitor_forget(void);
@@ -579,6 +579,8 @@ int get_window_stack_level(LiVESXWindow *, int *nwins);
 boolean get_wm_caps(void);
 boolean get_distro_dets(void);
 boolean get_machine_dets(void);
+double get_disk_load(const char *mp);
+uint64_t get_cpu_load(int cpun);
 
 char *get_systmp(const char *suff, boolean is_dir);
 char *get_worktmp(const char *prefix);

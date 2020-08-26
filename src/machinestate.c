@@ -640,27 +640,31 @@ lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, 
 }
 
 static lives_proc_thread_t running = NULL;
+static char *running_for = NULL;
 
-boolean disk_monitor_running(void) {return (running != NULL);}
+boolean disk_monitor_running(const char *dir) {return (running != NULL && (!dir || !lives_strcmp(dir, running_for)));}
 
 lives_proc_thread_t disk_monitor_start(const char *dir) {
-  if (disk_monitor_running()) disk_monitor_forget();
+  if (disk_monitor_running(dir)) disk_monitor_forget();
   running = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)get_dir_size, WEED_SEED_INT64, "s",
                                      dir);
   mainw->dsu_valid = TRUE;
+  running_for = lives_strdup(dir);
   return running;
 }
 
 int64_t disk_monitor_check_result(const char *dir) {
   // caller MUST check if mainw->ds_valid is TRUE, or recheck the results
   int64_t bytes;
-  if (!disk_monitor_running()) disk_monitor_start(dir);
-  if (!lives_proc_thread_check(running)) {
-    return -1;
-  }
-  bytes = lives_proc_thread_join_int64(running);
-  lives_proc_thread_free(running);
-  running = NULL;
+  if (!disk_monitor_running(dir)) disk_monitor_start(dir);
+  if (!lives_strcmp(dir, running_for)) {
+    if (!lives_proc_thread_check(running)) {
+      return -1;
+    }
+    bytes = lives_proc_thread_join_int64(running);
+    lives_proc_thread_free(running);
+    running = NULL;
+  } else bytes = (int64_t)get_dir_size(dir);
   return bytes;
 }
 
@@ -669,6 +673,12 @@ LIVES_GLOBAL_INLINE int64_t disk_monitor_wait_result(const char *dir, ticks_t ti
   // caller MUST check if mainw->ds_valid is TRUE, or recheck the results
   lives_alarm_t alarm_handle = LIVES_NO_ALARM;
   int64_t dsval;
+
+  if (*running_for && !lives_strcmp(dir, running_for)) {
+    if (timeout) return -1;
+    return get_dir_size(dir);
+  }
+
   if (timeout < 0) timeout = LIVES_LONGEST_TIMEOUT;
   if (timeout > 0) alarm_handle = lives_alarm_set(timeout);
 
@@ -687,7 +697,7 @@ LIVES_GLOBAL_INLINE int64_t disk_monitor_wait_result(const char *dir, ticks_t ti
 }
 
 void disk_monitor_forget(void) {
-  if (!disk_monitor_running()) return;
+  if (!disk_monitor_running(NULL)) return;
   lives_proc_thread_dontcare(running);
   running = NULL;
 }
@@ -731,18 +741,23 @@ getfserr:
 
 
 LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t orignsecs) {
+  ticks_t ret = -1;
 #if _POSIX_TIMERS
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
-  return ((ts.tv_sec * ONE_BILLION + ts.tv_nsec) - (origsecs * ONE_BILLION + orignsecs)) / TICKS_TO_NANOSEC;
+  ret = ((ts.tv_sec * ONE_BILLION + ts.tv_nsec) - (origsecs * ONE_BILLION + orignsecs)) / TICKS_TO_NANOSEC;
 #else
 #ifdef USE_MONOTONIC_TIME
-  return (lives_get_monotonic_time() - orignsecs) / 10;
+  ret = (lives_get_monotonic_time() - orignsecs) / 10;
 #else
   gettimeofday(&tv, NULL);
-  return ((tv.tv_sec * ONE_MILLLION + tv.tv_usec) - (origsecs * ONE_MILLION + orignsecs / 1000)) * USEC_TO_TICKS;
+  ret = ((tv.tv_sec * ONE_MILLLION + tv.tv_usec) - (origsecs * ONE_MILLION + orignsecs / 1000)) * USEC_TO_TICKS;
 #endif
 #endif
+  mainw->wall_ticks = ret;
+  if (ret >= 0)
+    mainw->wall_ticks += (origsecs * ONE_BILLION + orignsecs) / TICKS_TO_NANOSEC;
+  return ret;
 }
 
 
@@ -3113,4 +3128,81 @@ boolean get_machine_dets(void) {
     return FALSE;
   }
   return TRUE;
+}
+
+
+#define DISK_STATS_FILE "/proc/diskstats"
+
+double get_disk_load(const char *mp) {
+  if (!mp) return -1;
+  else {
+    static ticks_t lticks = 0;
+    static uint64_t lval = 0;
+    double ret = -1.;
+    const char *xmp;
+    char *com, *res;
+    if (!lives_strncmp(mp, "/dev/", 5))
+      xmp = (char *)mp + 5;
+    else
+      xmp = mp;
+    com = lives_strdup_printf("%s -n $(%s %s %s)", capable->echo_cmd, capable->grep_cmd, xmp, DISK_STATS_FILE);
+    if ((res = mini_popen(com))) {
+      int xbits = get_token_count(res, ' ');
+      char **array = lives_strsplit(res, " ", xbits);
+      lives_free(res);
+      if (xbits > 13) {
+	uint64_t val = atoll(array[13]);
+	ticks_t clock_ticks;
+	if (LIVES_IS_PLAYING) clock_ticks = mainw->clock_ticks;
+	else clock_ticks = lives_get_current_ticks();
+	if (lticks > 0 && clock_ticks > lticks) ret = (double)(val - lval) / ((double)(clock_ticks - lticks)
+									      / TICKS_PER_SECOND_DBL);
+	lticks = clock_ticks;
+	lval = val;
+      }
+      lives_strfreev(array);
+    }
+  return ret;
+  }
+  return -1.;
+}
+
+
+#define CPU_STATS_FILE "/proc/stat"
+
+uint64_t get_cpu_load(int cpun) {
+  uint64_t ret;
+  char *res, *target, *com;
+  if (cpun > 0) target = lives_strdup_printf("cpu%d", --cpun);
+  else if (cpun == 0) target = lives_strdup_printf("cpu");
+  else target = lives_strdup_printf("btime");
+  com = lives_strdup_printf("%s -n $(%s %s %s)", capable->echo_cmd, capable->grep_cmd, target, CPU_STATS_FILE);
+  if ((res = mini_popen(com))) {
+    int xbits = get_token_count(res, ' ');
+    char **array = lives_strsplit(res, " ", xbits);
+    lives_free(res);
+    if (cpun == -1) {
+      // get boot time
+      if (xbits > 1) {
+	ret = atoll(array[1]);
+      }
+    }
+    else {
+      if (xbits > 7) {
+	uint64_t user = atoll(array[1]);
+	uint64_t nice = atoll(array[2]);
+	uint64_t sys = atoll(array[3]);
+	uint64_t idle = atoll(array[4]);
+	uint64_t iowait = atoll(array[5]);
+	uint64_t irq = atoll(array[6]);
+	uint64_t softirq = atoll(array[7]);
+	double load =
+	  ((double)idle * 100.) / (double)(user + nice + sys + idle + iowait + irq + softirq);
+	ret = load * (double)MILLIONS(1);
+      }
+      lives_strfreev(array);
+    }
+  return ret;
+  }
+  return -1.;
 }

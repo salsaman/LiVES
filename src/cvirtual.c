@@ -712,6 +712,8 @@ static boolean save_decoded(int fileno, frames_t i, LiVESPixbuf * pixbuf, boolea
 }
 
 
+#define STRG_CHECK 1000
+
 frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolean update_progress, LiVESPixbuf **pbr) {
   // pull frames from a clip to images
   // from sframe to eframe inclusive (first frame is 1)
@@ -728,7 +730,7 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
   lives_clip_t *sfile = mainw->files[sfileno];
   LiVESPixbuf *pixbuf = NULL;
   lives_proc_thread_t tinfo = THREADVAR(tinfo);
-  int progress = 1;
+  int progress = 1, count = 0;
 
   if (tinfo) lives_proc_thread_set_cancellable(tinfo);
 
@@ -751,15 +753,20 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
                                          sfile->vsize, LIVES_INTERP_BEST, FALSE);
 
       if (!pixbuf) return -i;
-      if (!save_decoded(sfileno, i, pixbuf, pbr != NULL, progress)) return -i;
-
-      if (pbr == NULL) {
-        if (pixbuf != NULL) lives_widget_object_unref(pixbuf);
+      if (!save_decoded(sfileno, i, pixbuf, pbr != NULL, progress)) {
+        check_storage_space(-1, TRUE);
+        return -i;
+      }
+      if (!pbr) {
+        if (pixbuf) lives_widget_object_unref(pixbuf);
         pixbuf = NULL;
+      }
+      if (++count == STRG_CHECK) {
+        if (!check_storage_space(-1, TRUE)) break;
       }
 
       // another thread may have called check_if_non_virtual - TODO : use a mutex
-      if (sfile->frame_index == NULL) break;
+      if (!sfile->frame_index) break;
       sfile->frame_index[i - 1] = -1;
 
       if (update_progress) {
@@ -771,14 +778,17 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
 
       if (mainw->cancelled != CANCEL_NONE) {
         if (!check_if_non_virtual(sfileno, 1, sfile->frames)) save_frame_index(sfileno);
-        if (pbr != NULL) *pbr = pixbuf;
+        if (pbr) *pbr = pixbuf;
         return i;
       }
     }
   }
 
   if (pbr) *pbr = pixbuf;
-  if (!check_if_non_virtual(sfileno, 1, sfile->frames) && !save_frame_index(sfileno)) return -i;
+  if (!check_if_non_virtual(sfileno, 1, sfile->frames) && !save_frame_index(sfileno)) {
+    check_storage_space(-1, FALSE);
+    return -i;
+  }
   return i;
 }
 

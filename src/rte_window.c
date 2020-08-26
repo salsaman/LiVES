@@ -98,7 +98,8 @@ void rtew_set_key_check_state(void) {
   for (i = 0; i < prefs->rte_keys_virtual; i++) {
     lives_signal_handler_block(key_checks[i], ch_fns[i]);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),
-                                   LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(key_checks[i]), "active")));
+                                   LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(key_checks[i]),
+                                       "active")));
     lives_signal_handler_unblock(key_checks[i], ch_fns[i]);
   }
 }

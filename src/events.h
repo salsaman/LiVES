@@ -260,6 +260,7 @@ boolean deal_with_render_choice(boolean add_deinit);
 #define RENDER_CHOICE_NEW_CLIP 4
 #define RENDER_CHOICE_MULTITRACK 5
 #define RENDER_CHOICE_EVENT_LIST 6
+#define RENDER_CHOICE_TRANSCODE 7
 
 LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, ticks_t start_tc, ticks_t end_tc);
 render_details *create_render_details(int type);

@@ -690,6 +690,7 @@ typedef struct {
   LiVESWidget *scrolledwindow;
   frames_t progress_start, progress_end;
   frames_t frames_done;
+  double frac_done;
   boolean is_ready;
   int owner;
 } xprocess;
@@ -974,6 +975,7 @@ typedef struct {
   ticks_t orignsecs; ///< usecs at start of playback - ditto
   ticks_t offsetticks; ///< offset for multitrack playback start
   volatile ticks_t clock_ticks; ///< unadjusted system time since pb start, measured concurrently with currticks
+  ticks_t wall_ticks; /// wall clock time, updated whenever lives_get_*_ticks is called
   volatile ticks_t currticks; ///< current playback ticks (relative)
   ticks_t deltaticks; ///< deltaticks for scratching
   ticks_t adjticks; ///< used to equalise the timecode between alternate timer sources (souce -> clock adjustment)
@@ -1772,6 +1774,10 @@ typedef struct {
   uint32_t lazy;
 
   boolean no_configs;
+
+#define MONITOR_QUOTA (1 << 0)
+
+  uint32_t disk_mon;
 } mainwindow;
 
 /// interface colour settings

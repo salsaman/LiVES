@@ -4272,9 +4272,9 @@ weed_error_t weed_plant_free_host(weed_plant_t *plant) {
 }
 
 
-weed_plant_t *weed_plant_new_host(int type) {
-  return _weed_plant_new(type);
-}
+/* weed_plant_t *weed_plant_new_host(int type) { */
+/*   return _weed_plant_new(type); */
+/* } */
 
 
 weed_error_t weed_leaf_delete_host(weed_plant_t *plant, const char *key) {

@@ -9901,9 +9901,9 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   if (LIVES_SHOULD_EXPAND_WIDTH) lives_widget_set_hexpand(dialog, TRUE);
   if (LIVES_SHOULD_EXPAND_HEIGHT) lives_widget_set_vexpand(dialog, TRUE);
 
-#if !GTK_CHECK_VERSION(3, 0, 0)
-  lives_dialog_set_has_separator(LIVES_DIALOG(dialog), FALSE);
-#endif
+  /* #if !GTK_CHECK_VERSION(3, 0, 0) */
+  /*   lives_dialog_set_has_separator(LIVES_DIALOG(dialog), FALSE); */
+  /* #endif */
 
   if (widget_opts.apply_theme) {
     lives_widget_apply_theme(dialog, LIVES_WIDGET_STATE_NORMAL);
@@ -11854,10 +11854,17 @@ WIDGET_HELPER_GLOBAL_INLINE boolean unhide_cursor(LiVESXWindow * window) {
   return FALSE;
 }
 
-
+///#define USE_REVEAL - not working here
 void funkify_dialog(LiVESWidget * dialog) {
   if (prefs->funky_widgets) {
+#ifdef USE_REVEAL
+    LiVESWidget *frame = gtk_revealer_new();
+    gtk_revealer_set_transition_duration(GTK_REVEALER(frame), 20000);
+    gtk_revealer_set_transition_type(GTK_REVEALER(frame), GTK_REVEALER_TRANSITION_TYPE_SLIDE_UP);
+    gtk_revealer_set_reveal_child(GTK_REVEALER(frame), FALSE);
+#else
     LiVESWidget *frame = lives_standard_frame_new(NULL, 0., FALSE);
+#endif
     LiVESWidget *box = lives_vbox_new(FALSE, 0);
     LiVESWidget *content = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
     LiVESWidget *action = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
@@ -11878,6 +11885,9 @@ void funkify_dialog(LiVESWidget * dialog) {
     _lives_widget_show_all(frame);
 
     lives_container_set_border_width(LIVES_CONTAINER(box), widget_opts.border_width * 2);
+#ifdef USE_REVEAL
+    gtk_revealer_set_reveal_child(GTK_REVEALER(frame), TRUE);
+#endif
   } else {
     lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width);
   }

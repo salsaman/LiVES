@@ -32,7 +32,7 @@ boolean send_layer(weed_layer_t *layer, _vid_playback_plugin *vpp, int64_t timec
   // get a void ** to the planar pixel_data
   pd_array = weed_layer_get_pixel_data(layer, NULL);
 
-  if (pd_array != NULL) {
+  if (pd_array) {
     // send pixel data to the video frame renderer
     error = !(*vpp->render_frame)(weed_layer_get_width(layer),
                                   weed_layer_get_height(layer),
@@ -87,7 +87,7 @@ boolean transcode(int start, int end) {
   mainw->suppress_dprint = FALSE;
   mainw->no_switch_dprint = TRUE;
 
-  if (vpp == NULL) {
+  if (!vpp) {
     mainw->vpp = ovpp;
     d_print(_("Plugin %s not found.\n"), TRANSCODE_PLUGIN_NAME);
     mainw->no_switch_dprint = FALSE;
@@ -105,7 +105,7 @@ boolean transcode(int start, int end) {
 
   // keep this, stop it from being freed
   rfx = vppa->rfx;
-  if (rfx == NULL) {
+  if (!rfx) {
     lives_widget_destroy(vppa->dialog);
     goto tr_err2;
   }
@@ -116,7 +116,7 @@ boolean transcode(int start, int end) {
   lives_freep((void **)&pname);
 
   retvals = do_onchange_init(rfx);
-  if (retvals != NULL) {
+  if (retvals) {
     // now apply visually anything we got from onchange_init
     param_demarshall(rfx, retvals, TRUE, TRUE);
     lives_list_free_all(&retvals);
@@ -152,14 +152,14 @@ boolean transcode(int start, int end) {
   lives_free(rfx);
 
   // (re)set these for the current clip
-  if (vpp->set_fps != NULL)(*vpp->set_fps)(cfile->fps);
+  if (vpp->set_fps)(*vpp->set_fps)(cfile->fps);
 
   (*vpp->set_palette)(vpp->palette);
   if (weed_palette_is_yuv(vpp->palette)) {
-    if (vpp->set_yuv_palette_clamping != NULL)(*vpp->set_yuv_palette_clamping)(vpp->YUV_clamping);
+    if (vpp->set_yuv_palette_clamping)(*vpp->set_yuv_palette_clamping)(vpp->YUV_clamping);
   }
   //
-  if (vpp->init_audio != NULL && mainw->save_with_sound && cfile->achans * cfile->arps > 0) {
+  if (vpp->init_audio && mainw->save_with_sound && cfile->achans * cfile->arps > 0) {
     int in_arate = cfile->arate;
     if ((*vpp->init_audio)(in_arate, cfile->achans, mainw->vpp->extra_argc, mainw->vpp->extra_argv)) {
       // we will buffer audio and send it in packets of one frame worth of audio
@@ -267,7 +267,7 @@ boolean transcode(int start, int end) {
       get_best_palette_match(weed_layer_get_palette(frame_layer), pal_list, &vpp->palette, &vpp->YUV_clamping);
       (*vpp->set_palette)(vpp->palette);
       if (weed_palette_is_yuv(vpp->palette)) {
-        if (vpp->set_yuv_palette_clamping != NULL)(*vpp->set_yuv_palette_clamping)(vpp->YUV_clamping);
+        if (vpp->set_yuv_palette_clamping)(*vpp->set_yuv_palette_clamping)(vpp->YUV_clamping);
       }
       if (!(*vpp->init_screen)(vpp->fwidth, vpp->fheight, FALSE, 0, vpp->extra_argc, vpp->extra_argv)) {
         error = TRUE;
@@ -390,7 +390,7 @@ tr_err:
   }
 
   // flush streams, write headers, plugin cleanup
-  if (vpp != NULL && vpp->exit_screen != NULL) {
+  if (vpp && vpp->exit_screen) {
     (*vpp->exit_screen)(0, 0);
   }
 
@@ -399,15 +399,15 @@ tr_err:
 
 tr_err2:
   // close vpp, unless mainw->vpp
-  if (ovpp == NULL || (vpp->handle != ovpp->handle)) {
+  if (!ovpp || (vpp->handle != ovpp->handle)) {
     close_vid_playback_plugin(vpp);
   }
 
-  if (ovpp != NULL && (vpp->handle == ovpp->handle)) {
+  if (ovpp && (vpp->handle == ovpp->handle)) {
     // we "borrowed" the playback plugin, so set these back how they were
-    if (ovpp->set_fps != NULL)(*ovpp->set_fps)(ovpp->fixed_fpsd);
-    if (ovpp->set_palette != NULL)(*ovpp->set_palette)(ovpp->palette);
-    if (ovpp->set_yuv_palette_clamping != NULL)(*ovpp->set_yuv_palette_clamping)(ovpp->YUV_clamping);
+    if (ovpp->set_fps)(*ovpp->set_fps)(ovpp->fixed_fpsd);
+    if (ovpp->set_palette)(*ovpp->set_palette)(ovpp->palette);
+    if (ovpp->set_yuv_palette_clamping)(*ovpp->set_yuv_palette_clamping)(ovpp->YUV_clamping);
   }
 
   mainw->vpp = ovpp;
@@ -434,7 +434,7 @@ tr_err2:
   lives_freep((void **)&afname);
 
   lives_freep((void **)&abuff);
-  if (fltbuf != NULL) {
+  if (fltbuf) {
     for (i = 0; i < cfile->achans; lives_freep((void **) & (fltbuf[i++])));
     lives_free(fltbuf);
   }

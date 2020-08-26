@@ -194,7 +194,7 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
 #ifndef SHOW_MSG_ERRORS
     if (xlevel == LIVES_LOG_LEVEL_MESSAGE) return;
 #endif
-#define NO_WARN_ERRORS
+    //#define NO_WARN_ERRORS
 #ifdef NO_WARN_ERRORS
     if (xlevel == LIVES_LOG_LEVEL_WARNING) return;
 #endif
@@ -204,7 +204,7 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
 #endif
 #endif
 
-#define TRAP_THEME_ERRORS
+    //#define TRAP_THEME_ERRORS
 #define SHOW_THEME_ERRORS
 #ifndef SHOW_THEME_ERRORS
     if (prefs->show_dev_opts)
@@ -1564,6 +1564,10 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->lazy = 0;
 
+  mainw->disk_mon = 0;
+
+  mainw->wall_ticks = -1;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);
@@ -2466,7 +2470,7 @@ static void set_toolkit_theme(int prefer) {
   lives_parse_font_string(tmp, &widget_opts.font_name, &widget_opts.font_size, NULL, NULL, NULL);
   lives_free(tmp);
 
-  lives_widget_object_get(gtk_settings_get_default(), "gtk-lternative-button-order", &widget_opts.alt_button_order);
+  lives_widget_object_get(gtk_settings_get_default(), "gtk-alternative-button-order", &widget_opts.alt_button_order);
 
   lives_widget_object_get(gtk_settings_get_default(), "gtk-icon-theme-name", &capable->icon_theme_name);
   lives_widget_object_get(gtk_settings_get_default(), "gtk-theme-name", &capable->gui_theme_name);
@@ -3355,6 +3359,7 @@ boolean lazy_startup_checks(void *data) {
   static boolean mwshown = FALSE;
   static boolean dqshown = FALSE;
   static boolean tlshown = FALSE;
+  static boolean extra_caps = FALSE;
 
   if (LIVES_IS_PLAYING) {
     dqshown = mwshown = tlshown = TRUE;
@@ -3394,7 +3399,7 @@ boolean lazy_startup_checks(void *data) {
     boolean do_show_quota = prefs->show_disk_quota;
     dqshown = TRUE;
     if (mainw->helper_procthreads[PT_LAZY_DSUSED]) {
-      if (disk_monitor_running()) {
+      if (disk_monitor_running(prefs->workdir)) {
         int64_t dsval = capable->ds_used = disk_monitor_check_result(prefs->workdir);
         mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval, 0);
         capable->ds_free = dsval;
@@ -3428,6 +3433,11 @@ boolean lazy_startup_checks(void *data) {
   if (!mwshown) {
     mwshown = TRUE;
     if (prefs->show_msgs_on_startup) do_messages_window(TRUE);
+  }
+
+  if (!extra_caps) {
+    extra_caps = TRUE;
+    capable->boot_time = get_cpu_load(-1);
   }
 
   if (mainw->ldg_menuitem) {
@@ -4083,8 +4093,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   // allow us to free undeletable plants (plugins cant')
   weed_plant_free = weed_plant_free_host;
-
-  weed_plant_new = weed_plant_new_host;
+  // weed_plant_new = weed_plant_new_host;
 
   init_colour_engine();
 

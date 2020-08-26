@@ -878,7 +878,7 @@ AM_CONDITIONAL(ENABLE_LIBORC,$HAVE_LIBORC)
 
 HAVE_FREI0R=false
 AC_ARG_ENABLE(frei0r, [  --disable-frei0r     Disable frei0r support.] , disable_frei0r=yes)
-if test "x$disable_freior" != "xyes" ; then
+if test "x$disable_frei0r" != "xyes" ; then
 
 dnl check for frei0r
 AC_CHECK_HEADERS(frei0r.h, HAVE_FREI0R=true, HAVE_FREI0R=false)

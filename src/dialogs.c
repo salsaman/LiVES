@@ -3539,7 +3539,7 @@ LIVES_GLOBAL_INLINE void do_mt_no_audchan_error(void) {
 
 LIVES_GLOBAL_INLINE void do_mt_no_jack_error(int warn_mask) {
   do_error_dialog_with_check(
-    _("Multitrack audieeeeeeeeo preview is only available with the\n\"jack\" or \"pulseaudio\" audio player.\n"
+    _("Multitrack audio preview is only available with the\n\"jack\" or \"pulseaudio\" audio player.\n"
       "You can set this in Tools|Preferences|Playback."),
     warn_mask);
 }
@@ -3549,7 +3549,7 @@ LIVES_GLOBAL_INLINE boolean do_mt_rect_prompt(void) {
   return do_yesno_dialog(
            _("Errors were detected in the layout (which may be due to transferring from another system, "
              "or from an older version of LiVES).\n"
-             "Should I try to repair the disk copy of the layaout ?\n"));
+             "Should I try to repair the disk copy of the layout ?\n"));
 }
 
 
@@ -4489,7 +4489,7 @@ try_again:
       prname = lives_markup_escape_text(argv[offs], -1);
       errtxt = lives_markup_escape_text(argv[3], -1);
 
-      text = lives_strdup_printf(_("The following error occured when running %s:"
+      text = lives_strdup_printf(_("The following error occurred when running %s:"
                                    "\n\n'%s'\n\n"
                                    "<b>It may be possible to fix this "
                                    "by downloading an individual copy of the program\n%s</b>\n"
@@ -4510,7 +4510,7 @@ try_again:
                                          LIVES_RESPONSE_NO);
 
       lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_ADD,
-                                         _("Proeceed with download"),
+                                         _("Proceed with download"),
                                          LIVES_RESPONSE_YES);
 
       widget_opts.expand = LIVES_EXPAND_DEFAULT;

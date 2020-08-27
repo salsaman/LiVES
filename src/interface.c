@@ -4583,7 +4583,7 @@ void do_keys_window(void) {
   ADD_KEYDEF(_("ctrl-alt-space"),
              _("Loop Lock\n(press once to mark IN point, then again to mark OUT point;\n"
                "ctrl-space, ctrl-enter, or switching clips clears)"));
-  ADD_KEYDEF(_("ctrl-backspace"), _("freeze frame (forground and background)"));
+  ADD_KEYDEF(_("ctrl-backspace"), _("freeze frame (foreground and background)"));
   ADD_KEYDEF(_("ctrl-alt-backspace"), _("freeze frame (background clip only)"));
   ADD_KEYDEF("a", _("audio lock ON: lock audio to the current foreground clip;\nignore video clip switches"));
   ADD_KEYDEF("A", _("audio lock OFF; audio follows the foreground video clip\n(unless overridden in Preferences)"));
@@ -5572,8 +5572,8 @@ static void manclips_reload(LiVESWidget * button, _entryw * renamew) {
 
   do_info_dialog(_("After reloading the Set you can inspect it and use it as normal.\n"
                    "Should you decide to delete it or re-save it, click on Files | Save / Close all Clips\n"
-                   "You will then be returned to the Manage Setst dialog,\n"
-                   "where you may choos to continue this process further\n"));
+                   "You will then be returned to the Manage Sets dialog,\n"
+                   "where you may choose to continue this process further\n"));
   lives_widget_destroy(renamew->dialog);
   lives_widget_destroy(renamew->parent);
   lives_free(renamew);
@@ -5802,7 +5802,7 @@ static void dsu_set_toplabel(void) {
         double pcused = (double)capable->ds_used / (double)prefs->disk_quota * 100.;
         ltext = lives_strdup_printf(_("ATTENTION: LiVES is currently using over %d%% of its assigned quota"), (int)pcused);
       } else if (prefs->disk_quota - capable->ds_used + prefs->ds_warn_level > capable->ds_free) {
-        ltext = lives_strdup(_("ATTENTION ! There is unsufficient free space on the disk for LiVES' current quota"));
+        ltext = lives_strdup(_("ATTENTION ! There is insufficient free space on the disk for LiVES' current quota"));
       }
     }
   }
@@ -6397,7 +6397,7 @@ void run_diskspace_dialog(void) {
                       "</b> not to exceed its quota\n"
                       "but it can warn you if this is detected.")), TRUE);
   else
-    dsq->note_label = lives_layout_add_label(LIVES_LAYOUT(layout), (_("<b>Quota checking is disabled when workidr\n"
+    dsq->note_label = lives_layout_add_label(LIVES_LAYOUT(layout), (_("<b>Quota checking is disabled when workdir\n"
                       "is set via commandline option.</b>")), TRUE);
 
   widget_opts.use_markup = FALSE;

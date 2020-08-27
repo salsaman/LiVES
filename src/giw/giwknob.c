@@ -722,7 +722,7 @@ giw_knob_button_press(GtkWidget      *widget,
   if (knob->button) return TRUE; // Some button is already pressed
 
   /* To verify if the pointer is in the knob, the distance between the pointer and the center
-    of the circle is calculated, if it's less the the radius of the circle , it's in!!*/
+    of the circle is calculated, if it's less than the radius of the circle , it's in!!*/
 
   xc = lives_widget_get_allocation_width(widget) / 2;
   yc = lives_widget_get_allocation_height(widget) / 2;

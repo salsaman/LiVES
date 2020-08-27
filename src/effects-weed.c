@@ -2475,7 +2475,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
       if (svary && is_converter) {
         /// resizing - use the value we set in channel template
-        /// this allows us to, for example, resize the the same in_channel to multiple out_channels at various sizes
+        /// this allows us to, for example, resize the same in_channel to multiple out_channels at various sizes
         width = weed_get_int_value(chantmpl, WEED_LEAF_HOST_WIDTH, NULL);
         width /= weed_palette_get_pixels_per_macropixel(weed_channel_get_palette(channel));
         height = weed_get_int_value(chantmpl, WEED_LEAF_HOST_HEIGHT, NULL);

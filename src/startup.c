@@ -1074,10 +1074,10 @@ static char *explain_missing(const char *exe) {
   else if (!lives_strcmp(exe, EXEC_FFPROBE)) pt2 = (_("Assists in the identification of video clips\n\n"));
   else if (!lives_strcmp(exe, EXEC_IDENTIFY)) pt2 = (_("Assists in the identification of image files\n\n"));
   else if (!lives_strcmp(exe, EXEC_CONVERT)) pt2 = (_("Required for many rendered effects in the clip editor.\n\n"));
-  else if (!lives_strcmp(exe, EXEC_COMPOSITE)) pt2 = (_("Enables clip mergeing in the clip editor.\n\n"));
+  else if (!lives_strcmp(exe, EXEC_COMPOSITE)) pt2 = (_("Enables clip merging in the clip editor.\n\n"));
   else if (!lives_strcmp(exe, EXEC_PYTHON)) pt2 = (_("Allows use of some additional encoder plugins\n\n"));
   else if (!lives_strcmp(exe, EXEC_MD5SUM)) pt2 = (_("Allows checking for file changes, "
-        "enabing additional files to be cached in memory.\n\n"));
+        "enabling additional files to be cached in memory.\n\n"));
   else if (!lives_strcmp(exe, EXEC_YOUTUBE_DL)) pt2 = (_("Enables download and import of files from "
         "Youtube and other sites.\n\n"));
   else if (!lives_strcmp(exe, EXEC_XWININFO)) pt2 = (_("Enables identification of external windows "
@@ -1085,7 +1085,7 @@ static char *explain_missing(const char *exe) {
   else {
     lives_free(pt1);
     pt1 = lives_strdup_printf(_("\t'%s' was not found on your system.\n"
-                                "Installation is optional, but may enable additionl features\n\t- "), exe);
+                                "Installation is optional, but may enable additional features\n\t- "), exe);
     if (!lives_strcmp(exe, EXEC_XDOTOOL)) pt2 = (_("Enables adjustment of windows within the desktop,\n\n"));
     else return lives_strdup_free(pt1, "");
   }

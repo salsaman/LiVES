@@ -460,7 +460,7 @@ char *midi_mangle(void) {
     if (hasmore || poll(pfd, npfd, 0) > 0) {
       do {
         if (snd_seq_event_input(mainw->seq_handle, &ev) < 0) {
-          break; // an error occured reading from the port
+          break; // an error occurred reading from the port
         }
 
         switch (ev->type) {

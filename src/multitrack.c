@@ -4789,7 +4789,7 @@ void mt_init_start_end_spins(lives_mt * mt) {
   lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
   lives_box_pack_start(LIVES_BOX(mt->tlx_vbox), hbox, FALSE, FALSE, 6);
 
-  mt->amixer_button = lives_standard_button_new_full(_("Open Aud1io _Mixer"), DEF_BUTTON_WIDTH,
+  mt->amixer_button = lives_standard_button_new_full(_("Open Audio _Mixer"), DEF_BUTTON_WIDTH,
                       DEF_BUTTON_HEIGHT, LIVES_BOX(hbox), TRUE, NULL);
 
   mt->amix_label = widget_opts.last_label;

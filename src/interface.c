@@ -2867,7 +2867,7 @@ _entryw *create_rename_dialog(int type) {
   }
 
   if (type == 6 && mainw->is_ready) {
-    label = lives_standard_label_new(_("If the value of the working directory is changed, the contents of the exisitng\n"
+    label = lives_standard_label_new(_("If the value of the working directory is changed, the contents of the existing\n"
                                        "working directory will be moved and if applicable added to the new location\n"));
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
   }

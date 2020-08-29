@@ -17,9 +17,10 @@
 
 #include "lsd-tab.h"
 
+// *INDENT-OFF*
 const char *const anames[AUDIO_CODEC_MAX] = {"mp3", "pcm", "mp2", "vorbis", "AC3", "AAC", "AMR_NB",
-                                             "raw", "wma2", "opus", ""
-                                            };
+                                             "raw", "wma2", "opus", ""};
+// *INDENT-ON*
 
 static boolean list_plugins;
 
@@ -1451,7 +1452,7 @@ int64_t get_best_audio(_vid_playback_plugin * vpp) {
     sfmts = (int *)lives_calloc(nfmts, sizint);
 
     for (i = 0; i < nfmts; i++) {
-      if (array[i] && strlen(array[i]) > 0) sfmts[j++] = atoi(array[i]);
+      if (array[i] && *array[i]) sfmts[j++] = atoi(array[i]);
     }
 
     nfmts = j;
@@ -1472,7 +1473,7 @@ int64_t get_best_audio(_vid_playback_plugin * vpp) {
           return ret;
         }
 
-        if (strlen(buf) > 0) {
+        if (*buf) {
           if (i == 0 && prefsw) {
             do_error_dialog(buf);
             d_print(_("Audio stream unable to use preferred format '%s'\n"), anames[fmts[i]]);
@@ -1628,24 +1629,24 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
 
   if (user_audio && future_prefs->encoder.of_allowed_acodecs == 0) best_arate = -1;
 
-  if ((strlen(prefs->encoder.of_restrict) == 0 || !strcmp(prefs->encoder.of_restrict, "none")) && best_arate > -1) {
+  if (!*prefs->encoder.of_restrict || !strcmp(prefs->encoder.of_restrict, "none")) && best_arate > -1) {
     return TRUE;
   }
 
   if (!rdet) {
-    arate = cfile->arate;
-    achans = cfile->achans;
-    asampsize = cfile->asampsize;
-  } else {
-    arate = rdet->arate;
-    achans = rdet->achans;
-    asampsize = rdet->asamps;
-  }
+  arate = cfile->arate;
+  achans = cfile->achans;
+  asampsize = cfile->asampsize;
+} else {
+  arate = rdet->arate;
+  achans = rdet->achans;
+  asampsize = rdet->asamps;
+}
 
-  // audio endianness check - what should we do for big-endian machines ?
-  if (((mainw->save_with_sound || rdet) && (!resaudw || resaudw->aud_checkbutton ||
+// audio endianness check - what should we do for big-endian machines ?
+if (((mainw->save_with_sound || rdet) && (!resaudw || resaudw->aud_checkbutton ||
        lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton))))
-      && prefs->encoder.audio_codec != AUDIO_CODEC_NONE && arate != 0 && achans != 0 && asampsize != 0) {
+        && prefs->encoder.audio_codec != AUDIO_CODEC_NONE && arate != 0 && achans != 0 && asampsize != 0) {
     if (rdet && !rdet->is_encoding) {
       if (mainw->endian != AFORM_BIG_ENDIAN && (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend))))
         swap_endian = TRUE;
@@ -1655,8 +1656,8 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
     }
   }
 
-  if (strlen(prefs->encoder.of_restrict) > 0) {
-    pieces = get_token_count(prefs->encoder.of_restrict, ',');
+  if (*prefs->encoder.of_restrict) {
+  pieces = get_token_count(prefs->encoder.of_restrict, ',');
     checks = lives_strsplit(prefs->encoder.of_restrict, ",", pieces);
 
     for (r = 0; r < pieces; r++) {
@@ -1906,8 +1907,8 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
   // if we have min or max size, make sure we fit within that
 
   if (((width != owidth || height != oheight) && width * height > 0) || (best_fps_delta > 0.) || (best_arate_delta > 0 &&
-      best_arate > 0) ||
-      best_arate < 0 || asigned != 0 || swap_endian) {
+        best_arate > 0) ||
+        best_arate < 0 || asigned != 0 || swap_endian) {
     boolean ofx1_bool = mainw->fx1_bool;
     mainw->fx1_bool = FALSE;
     if ((width != owidth || height != oheight) && width * height > 0) {
@@ -2109,7 +2110,7 @@ LiVESList *load_decoders(void) {
 
   lives_list_free(decoder_plugins_o);
 
-  if (dlist == NULL) {
+  if (!dlist) {
     char *msg = lives_strdup_printf(_("\n\nNo decoders found in %s !\n"), decplugdir);
     LIVES_WARN(msg);
     d_print(msg);
@@ -2170,7 +2171,7 @@ lives_decoder_t *clone_decoder(int fileno) {
   cdata = ((lives_decoder_sys_t *)((lives_decoder_t *)mainw->files[fileno]->ext_src)->decoder)->get_clip_data
           (NULL, ((lives_decoder_t *)mainw->files[fileno]->ext_src)->cdata);
 
-  if (cdata == NULL) return NULL;
+  if (!cdata) return NULL;
 
   dplug = (lives_decoder_t *)lives_calloc(1, sizeof(lives_decoder_t));
   dpsys = ((lives_decoder_t *)mainw->files[fileno]->ext_src)->decoder;
@@ -2306,7 +2307,7 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList * disabled, con
 
   if (fake_cdata) {
     get_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, decplugname, PATH_MAX);
-    if (strlen(decplugname)) {
+    if (*decplugname) {
       LiVESList *decoder_plugin = mainw->decoder_list;
       xdisabled = lives_list_remove(xdisabled, decplugname);
       while (decoder_plugin) {
@@ -2439,7 +2440,7 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
   dplug->handle = dlopen(plugname, dlflags);
   lives_free(plugname);
 
-  if (dplug->handle == NULL) {
+  if (!dplug->handle) {
     d_print(_("\n\nFailed to open decoder plugin %s\nError was %s\n"), plname, dlerror());
     lives_free(dplug);
     return NULL;
@@ -2495,19 +2496,19 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
 void get_mime_type(char *text, int maxlen, const lives_clip_data_t *cdata) {
   char *audname;
 
-  if (!strlen(cdata->container_name)) lives_snprintf(text, maxlen, "%s", _("unknown"));
+  if (!*cdata->container_name) lives_snprintf(text, maxlen, "%s", _("unknown"));
   else lives_snprintf(text, maxlen, "%s", cdata->container_name);
 
-  if (!strlen(cdata->video_name) && !strlen(cdata->audio_name)) return;
+  if (!*cdata->video_name && !*cdata->audio_name) return;
 
-  if (!strlen(cdata->video_name)) lives_strappend(text, maxlen, _("/unknown"));
+  if (!*cdata->video_name) lives_strappend(text, maxlen, _("/unknown"));
   else {
     char *vidname = lives_strdup_printf("/%s", cdata->video_name);
     lives_strappend(text, maxlen, vidname);
     lives_free(vidname);
   }
 
-  if (!strlen(cdata->audio_name)) {
+  if (!*cdata->audio_name) {
     if (cfile->achans == 0) return;
     audname = lives_strdup_printf("/%s", _("unknown"));
   } else
@@ -2713,7 +2714,7 @@ void render_fx_get_params(lives_rfx_t *rfx, const char *plugin_name, short statu
     break;
   }
 
-  if (parameter_list == NULL) {
+  if (!parameter_list) {
     rfx->num_params = 0;
     rfx->params = NULL;
     return;
@@ -2874,7 +2875,7 @@ LiVESList *array_to_string_list(char **array, int offset, int len) {
     lives_free(tmp);
 
     // omit a last empty string
-    if (i < len - 1 || strlen(string)) {
+    if (i < len - 1 || *string) {
       slist = lives_list_append(slist, string);
     } else lives_free(string);
   }
@@ -2967,7 +2968,7 @@ void rfx_params_free(lives_rfx_t *rfx) {
 
 
 void rfx_free(lives_rfx_t *rfx) {
-  if (rfx == NULL) return;
+  if (!rfx) return;
 
   if (mainw->vrfx_update == rfx) mainw->vrfx_update = NULL;
 
@@ -3106,14 +3107,13 @@ void set_double_param(void *value, double _const) {
 boolean set_rfx_param_by_name_string(lives_rfx_t *rfx, const char *name, const char *value, boolean update_visual) {
   size_t len = strlen(value);
   lives_param_t *param = find_rfx_param_by_name(rfx, name);
-  if (param == NULL) return FALSE;
+  if (!param) return FALSE;
   set_string_param((void **)&param->value, value, len > RFX_MAXSTRINGLEN ? RFX_MAXSTRINGLEN : len);
   if (update_visual) {
     LiVESList *list = NULL;
     char *tmp, *tmp2;
     list = lives_list_append(list, lives_strdup_printf("\"%s\"", (tmp = U82L(tmp2 = subst(value, "\"", "\\\"")))));
-    lives_free(tmp);
-    lives_free(tmp2);
+    lives_free(tmp); lives_free(tmp2);
     set_param_from_list(list, param, 0, FALSE, TRUE);
     lives_list_free_all(&list);
   }
@@ -3123,7 +3123,7 @@ boolean set_rfx_param_by_name_string(lives_rfx_t *rfx, const char *name, const c
 
 boolean get_rfx_param_by_name_string(lives_rfx_t *rfx, const char *name, char **return_value) {
   lives_param_t *param = find_rfx_param_by_name(rfx, name);
-  if (param == NULL) return FALSE;
+  if (!param) return FALSE;
   *return_value = lives_strndup(param->value, RFX_MAXSTRINGLEN);
   return TRUE;
 }
@@ -3171,7 +3171,7 @@ int find_rfx_plugin_by_name(const char *name, short status) {
 
 lives_param_t *find_rfx_param_by_name(lives_rfx_t *rfx, const char *name) {
   int i;
-  if (rfx == NULL) return NULL;
+  if (!rfx) return NULL;
   for (i = 0; i < rfx->num_params; i++) {
     if (!strcmp(name, rfx->params[i].name)) {
       return &rfx->params[i];
@@ -3221,7 +3221,7 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
       continue;
     }
 
-    if (wpars == NULL) {
+    if (!wpars) {
       lives_free(rpar);
       return NULL;
     }
@@ -3716,7 +3716,7 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox * vbox, lives_rf
   do {
     retval = 0;
     sfile = fopen(rfxfile, "w");
-    if (sfile == NULL) {
+    if (!sfile) {
       retval = do_write_failed_error_s_with_retry(rfxfile, lives_strerror(errno));
       if (retval == LIVES_RESPONSE_CANCEL) {
         lives_free(string);
@@ -3808,7 +3808,7 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox * vbox, lives_rf
     }
 
     // now we build our window and get param values
-    if (vbox == NULL) {
+    if (!vbox) {
       _fx_dialog *fxdialog = on_fx_pre_activate(rfx, TRUE, NULL);
       LiVESWidget *dialog = fxdialog->dialog;
       if (prefs->show_gui) {

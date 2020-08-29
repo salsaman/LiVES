@@ -4336,7 +4336,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   lives_layout_add_label(LIVES_LAYOUT(layout),
                          _("(Frei0r directories should be separated by ':', "
-			   "ordered from lowest to highest priority)"), FALSE);
+                           "ordered from lowest to highest priority)"), FALSE);
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
@@ -4488,10 +4488,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                      (LiVESAttachOptions)(0), (LiVESAttachOptions)(0), 0, 0);
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dirbutton), FILESEL_TYPE_KEY,
-			       (livespointer)LIVES_DIR_SELECTION_WORKDIR);
-  
+                               (livespointer)LIVES_DIR_SELECTION_WORKDIR);
+
   lives_signal_sync_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
-			    prefsw->workdir_entry);
+                            prefsw->workdir_entry);
 
   if (mainw->has_session_workdir) {
     show_warn_image(prefsw->workdir_entry, _("Value cannot be changed when workdir\nis set via commandline option"));
@@ -4507,7 +4507,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                      (LiVESAttachOptions)(0), (LiVESAttachOptions)(0), 0, 0);
 
   lives_signal_sync_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
-                       prefsw->vid_load_dir_entry);
+                            prefsw->vid_load_dir_entry);
 
   dirbutton = lives_standard_file_button_new(TRUE, NULL);
 
@@ -4515,7 +4515,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                      (LiVESAttachOptions)(0), (LiVESAttachOptions)(0), 0, 0);
 
   lives_signal_sync_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
-                       prefsw->vid_save_dir_entry);
+                            prefsw->vid_save_dir_entry);
 
   dirbutton = lives_standard_file_button_new(TRUE, NULL);
 
@@ -4523,7 +4523,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                      (LiVESAttachOptions)(0), (LiVESAttachOptions)(0), 0, 0);
 
   lives_signal_sync_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
-                       prefsw->audio_dir_entry);
+                            prefsw->audio_dir_entry);
 
   dirbutton = lives_standard_file_button_new(TRUE, NULL);
 
@@ -4531,7 +4531,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                      (LiVESAttachOptions)(0), (LiVESAttachOptions)(0), 0, 0);
 
   lives_signal_sync_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
-                       prefsw->image_dir_entry);
+                            prefsw->image_dir_entry);
 
   dirbutton = lives_standard_file_button_new(TRUE, NULL);
 
@@ -4539,7 +4539,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                      (LiVESAttachOptions)(0), (LiVESAttachOptions)(0), 0, 0);
 
   lives_signal_sync_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
-                       prefsw->proj_dir_entry);
+                            prefsw->proj_dir_entry);
 
   pixbuf_directories = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_DIRECTORY, LIVES_ICON_SIZE_CUSTOM, -1, -1);
 
@@ -4970,7 +4970,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   filt[0] = LIVES_FILE_EXT_JPG;
   filt[1] = LIVES_FILE_EXT_PNG;
   filt[2] = NULL;
-  
+
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Frame blank image"), TRUE);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
@@ -4996,7 +4996,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   prefsw->se_filebutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
   lives_signal_sync_connect(prefsw->se_filebutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
-                       prefsw->sepimg_entry);
+                            prefsw->sepimg_entry);
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(prefsw->se_filebutton), FILTER_KEY, filt);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(prefsw->se_filebutton), FILESEL_TYPE_KEY,
@@ -5192,7 +5192,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                     LIVES_BOX(hbox), NULL);
 
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_client), LIVES_WIDGET_TOGGLED_SIGNAL,
-                             LIVES_GUI_CALLBACK(after_jack_client_toggled), NULL);
+                                  LIVES_GUI_CALLBACK(after_jack_client_toggled), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -5206,7 +5206,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                              lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_client)));
 
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_tb_start), LIVES_WIDGET_TOGGLED_SIGNAL,
-                             LIVES_GUI_CALLBACK(after_jack_tb_start_toggled), NULL);
+                                  LIVES_GUI_CALLBACK(after_jack_tb_start_toggled), NULL);
 
   add_fill_to_box(LIVES_BOX(hbox));
 
@@ -5239,7 +5239,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->jack_aserver_entry = lives_standard_entry_new(_("Jack _audio server config file"), prefs->jack_aserver, -1,
-							PATH_MAX, LIVES_BOX(hbox), NULL);
+                               PATH_MAX, LIVES_BOX(hbox), NULL);
 
   lives_widget_set_sensitive(prefsw->jack_aserver_entry, FALSE);
 
@@ -5415,7 +5415,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
 #ifdef ALSA_MIDI
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->alsa_midi), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_alsa_midi_toggled), NULL);
+                            LIVES_GUI_CALLBACK(on_alsa_midi_toggled), NULL);
 
   on_alsa_midi_toggled(LIVES_TOGGLE_BUTTON(prefsw->alsa_midi), prefsw);
 #endif
@@ -5708,8 +5708,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
 #ifdef ENABLE_OSC
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->enable_OSC), LIVES_WIDGET_TOGGLED_SIGNAL,
-			    LIVES_GUI_CALLBACK(on_osc_enable_toggled),
-			    (livespointer)prefsw->enable_OSC_start);
+                            LIVES_GUI_CALLBACK(on_osc_enable_toggled),
+                            (livespointer)prefsw->enable_OSC_start);
 #endif
   if (saved_dialog == NULL) {
     lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->revertbutton), LIVES_WIDGET_CLICKED_SIGNAL,

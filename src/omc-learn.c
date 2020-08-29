@@ -354,7 +354,7 @@ boolean midi_open(void) {
       // create dummy MIDI out if asked to. Some clients use the name for reference.
       if ((mainw->alsa_midi_dummy = snd_seq_create_simple_port(mainw->seq_handle,
                                     "LiVES", // some external clients read this name,
-							       //but will actually send to the WRITE port with same name
+                                    //but will actually send to the WRITE port with same name
                                     SND_SEQ_PORT_CAP_READ | SND_SEQ_PORT_CAP_SUBS_READ, // need both
                                     SND_SEQ_PORT_TYPE_APPLICATION | SND_SEQ_PORT_TYPE_PORT | SND_SEQ_PORT_TYPE_SOFTWARE)) < 0) {
         snd_seq_delete_simple_port(mainw->seq_handle, mainw->alsa_midi_port);
@@ -491,7 +491,7 @@ char *midi_mangle(void) {
           typeNumber = 144;
           if (prefs->midi_rcv_channel == MIDI_OMNI)
             string = lives_strdup_printf("%d %d %d %d", typeNumber + ev->data.note.channel,
-					 ev->data.note.channel, ev->data.note.note,
+                                         ev->data.note.channel, ev->data.note.note,
                                          ev->data.note.velocity);
           else
             string = lives_strdup_printf("%d %d %d", typeNumber, ev->data.note.note,
@@ -503,7 +503,7 @@ char *midi_mangle(void) {
           typeNumber = 128;
           if (prefs->midi_rcv_channel == MIDI_OMNI)
             string = lives_strdup_printf("%d %d %d %d", typeNumber + ev->data.note.channel,
-					 ev->data.note.channel, ev->data.note.note,
+                                         ev->data.note.channel, ev->data.note.note,
                                          ev->data.note.off_velocity);
           else
             string = lives_strdup_printf("%d %d %d", typeNumber, ev->data.note.note,
@@ -515,7 +515,7 @@ char *midi_mangle(void) {
           typeNumber = 192;
           if (prefs->midi_rcv_channel == MIDI_OMNI)
             string = lives_strdup_printf("%d %d %d", typeNumber + ev->data.note.channel,
-					 ev->data.note.channel, ev->data.control.value);
+                                         ev->data.note.channel, ev->data.control.value);
           else
             string = lives_strdup_printf("%d %d", typeNumber, ev->data.control.value);
 
@@ -1186,7 +1186,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
     lives_signal_connect(renderer, LIVES_WIDGET_EDITED_SIGNAL, LIVES_GUI_CALLBACK(cell_edited_callback), mnode);
 
     column = lives_tree_view_column_new_with_attributes(_("+ offset2"),
-             renderer,LIVES_TREE_VIEW_COLUMN_TEXT, OFFS2_COLUMN, NULL);
+             renderer, LIVES_TREE_VIEW_COLUMN_TEXT, OFFS2_COLUMN, NULL);
     lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
   }
 
@@ -1239,7 +1239,7 @@ static void show_existing(omclearn_w *omclw) {
 
       type = midi_msg_type(array[1]);
       if (get_token_count(srch, ' ') > (prefs->midi_rcv_channel == -1 ? 3 : 2))
-	idx = atoi(array[prefs->midi_rcv_channel == -1 ? 3 : 2]);
+        idx = atoi(array[prefs->midi_rcv_channel == -1 ? 3 : 2]);
       else idx = -1;
       srch = lives_strdup(mnode->srch);
       if (prefs->midi_rcv_channel == MIDI_OMNI) {
@@ -2710,7 +2710,7 @@ void on_devicemap_load_activate(LiVESMenuItem *menuitem, livespointer user_data)
     lives_free(dpr);
     do_warning_dialog(
       _("The MIDI receive channel setting was updated by the device map.\n"
-	"Please review the setting in Preferences and adjust it if necessary.\n"));
+        "Please review the setting in Preferences and adjust it if necessary.\n"));
   }
   return;
 

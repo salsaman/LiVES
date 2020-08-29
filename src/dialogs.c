@@ -3428,21 +3428,18 @@ static LiVESResponseType _do_df_notfound_dialog(const char *detail, const char *
     if (!detail) {
       xdetail = lives_strdup(_("The file"));
       extra = _("could not be found.");
-    }
-    else extra = lives_strdup("");
+    } else extra = lives_strdup("");
     whatitis = (_("this file"));
-  }
-  else {
+  } else {
     if (!detail) {
       xdetail = lives_strdup(_("The directory"));
       extra = _("could not be found.");
-    }
-    else extra = lives_strdup("");
+    } else extra = lives_strdup("");
     whatitis = (_("this directory"));
   }
   msg = lives_strdup_printf(_("\n%s\n%s\n%s\n"
-			      "Click Retry to try again, or Browse to browse to the new location.\n"
-			      "Otherwise click Cancel to skip loading %s.\n"), xdetail, dfname, extra, whatitis);
+                              "Click Retry to try again, or Browse to browse to the new location.\n"
+                              "Otherwise click Cancel to skip loading %s.\n"), xdetail, dfname, extra, whatitis);
   warning = create_message_dialog(LIVES_DIALOG_CANCEL_RETRY_BROWSE, msg, 0);
   response = lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
@@ -4128,58 +4125,58 @@ void do_chdir_failed_error(const char *dir) {
   lives_free(emsg);
   dutf = lives_filename_to_utf8(dir, -1, NULL, NULL, NULL);
   msg = lives_strdup_printf(_("\nLiVES failed to change directory to\n%s\n"
-			      "Please check your system for errors.\n"), dutf);
+                              "Please check your system for errors.\n"), dutf);
   lives_free(dutf);
   do_abort_ok_dialog(msg);
   lives_free(msg);
 }
 
 
- LiVESResponseType  do_file_perm_error(const char *file_name, boolean allow_cancel) {
+LiVESResponseType  do_file_perm_error(const char *file_name, boolean allow_cancel) {
   LiVESResponseType resp;
   char *msg, *can_cancel;
-   if (allow_cancel)
-     can_cancel = (_(", click Cancel to continue regardless,\n"));
-   else
-     can_cancel = lives_strdup("");
+  if (allow_cancel)
+    can_cancel = (_(", click Cancel to continue regardless,\n"));
+  else
+    can_cancel = lives_strdup("");
 
-   msg = lives_strdup_printf(_("\nLiVES was unable to write to the file:\n%s\n"
-			       "Please check the file permissions and try again."
-			       "%sor click Abort to exit from LiVES"), file_name, can_cancel);
-   resp = do_abort_retry_dialog(msg);
-   if (!allow_cancel)
-     resp = do_abort_retry_dialog(msg);
-   else
-     resp = do_abort_cancel_retry_dialog(msg);
-   lives_free(msg);
-   return resp;
+  msg = lives_strdup_printf(_("\nLiVES was unable to write to the file:\n%s\n"
+                              "Please check the file permissions and try again."
+                              "%sor click Abort to exit from LiVES"), file_name, can_cancel);
+  resp = do_abort_retry_dialog(msg);
+  if (!allow_cancel)
+    resp = do_abort_retry_dialog(msg);
+  else
+    resp = do_abort_cancel_retry_dialog(msg);
+  lives_free(msg);
+  return resp;
 }
 
 
 LiVESResponseType do_dir_perm_error(const char *dir_name, boolean allow_cancel) {
   LiVESResponseType resp;
   char *msg, *can_cancel;
-   if (allow_cancel)
-     can_cancel = (_("click Cancel to continue regardless, "));
-   else
-     can_cancel = lives_strdup("");
+  if (allow_cancel)
+    can_cancel = (_("click Cancel to continue regardless, "));
+  else
+    can_cancel = lives_strdup("");
 
-   msg = lives_strdup_printf(_("\nLiVES was unable to either create or write to the directory:\n%s\n"
-			       "Please check the directory permissions and try again,\n"
-			       "%sor click Abort to exit from LiVES"), dir_name, can_cancel);
-   lives_free(can_cancel);
+  msg = lives_strdup_printf(_("\nLiVES was unable to either create or write to the directory:\n%s\n"
+                              "Please check the directory permissions and try again,\n"
+                              "%sor click Abort to exit from LiVES"), dir_name, can_cancel);
+  lives_free(can_cancel);
 
-   if (!allow_cancel)
-     resp = do_abort_retry_dialog(msg);
-   else
-     resp = do_abort_cancel_retry_dialog(msg);
+  if (!allow_cancel)
+    resp = do_abort_retry_dialog(msg);
+  else
+    resp = do_abort_cancel_retry_dialog(msg);
 
-   lives_free(msg);
-   return resp;
- }
+  lives_free(msg);
+  return resp;
+}
 
 
- void do_dir_perm_access_error(const char *dir_name) {
+void do_dir_perm_access_error(const char *dir_name) {
   char *msg = lives_strdup_printf(_("\nLiVES was unable to read from the directory:\n%s\n"), dir_name);
   do_abort_ok_dialog(msg);
   lives_free(msg);

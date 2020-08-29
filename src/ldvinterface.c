@@ -34,93 +34,93 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
 
   dvgrabw->dirname = lives_filename_to_utf8((tmp = lives_get_current_dir()), -1, NULL, NULL, NULL);
   dvgrabw->dirent = lives_standard_direntry_new(_("Save directory:", dvgrabw->dirname, LONG_ENTRY_WIDTH, PATH_MAX,
-						  LIVES_BOX(hbox), NULL);
-  lives_free(tmp);
-
-  //////////////////
-
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-
-  dvgrabw->filent = lives_standard_entry_new(_("File_name:"), type == CAM_FORMAT_DV ? "dvgrab-" : "hdvgrab-", -1, -1,
                     LIVES_BOX(hbox), NULL);
+                    lives_free(tmp);
 
-  if (type == CAM_FORMAT_DV) label = lives_standard_label_new("%d.dv");
-  else label = lives_standard_label_new("%d.mpg");
-  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
+                    //////////////////
 
-  label = lives_standard_label_new(_("(files will not be overwritten)"));
-  lives_box_pack_end(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+                    hbox = lives_hbox_new(FALSE, 0);
+                    lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+                    dvgrabw->filent = lives_standard_entry_new(_("File_name:"), type == CAM_FORMAT_DV ? "dvgrab-" : "hdvgrab-", -1, -1,
+                                      LIVES_BOX(hbox), NULL);
 
-  dvgrabw->split = lives_standard_check_button_new(_("_Split into scenes"), FALSE, LIVES_BOX(hbox), NULL);
+                    if (type == CAM_FORMAT_DV) label = lives_standard_label_new("%d.dv");
+                    else label = lives_standard_label_new("%d.mpg");
+                      lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
 
-  // TODO - widget_opts.editable
-  dvgrabw->status_entry = lives_entry_new();
+                      label = lives_standard_label_new(_("(files will not be overwritten)"));
+                      lives_box_pack_end(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
-  lives_box_pack_start(LIVES_BOX(vbox), dvgrabw->status_entry, FALSE, FALSE, widget_opts.packing_height);
-  lives_entry_set_text(LIVES_ENTRY(dvgrabw->status_entry), _("Status: Ready"));
-  lives_editable_set_editable(LIVES_EDITABLE(dvgrabw->status_entry), FALSE);
+                      hbox = lives_hbox_new(FALSE, 0);
+                      lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  add_hsep_to_box(LIVES_BOX(vbox));
+                      dvgrabw->split = lives_standard_check_button_new(_("_Split into scenes"), FALSE, LIVES_BOX(hbox), NULL);
 
-  hbuttonbox1 = lives_hbutton_box_new();
+                      // TODO - widget_opts.editable
+                      dvgrabw->status_entry = lives_entry_new();
 
-  lives_box_pack_start(LIVES_BOX(vbox), hbuttonbox1, FALSE, FALSE, widget_opts.packing_height);
+                      lives_box_pack_start(LIVES_BOX(vbox), dvgrabw->status_entry, FALSE, FALSE, widget_opts.packing_height);
+                      lives_entry_set_text(LIVES_ENTRY(dvgrabw->status_entry), _("Status: Ready"));
+                      lives_editable_set_editable(LIVES_EDITABLE(dvgrabw->status_entry), FALSE);
 
-  // TODO: use lives_dialog_add_button_from_stock()
+                      add_hsep_to_box(LIVES_BOX(vbox));
 
-  button3 = lives_standard_button_new_from_stock(LIVES_STOCK_MEDIA_REWIND, NULL, TRUE);
+                      hbuttonbox1 = lives_hbutton_box_new();
 
-  lives_container_add(LIVES_CONTAINER(hbuttonbox1), button3);
-  lives_widget_set_can_focus(button3, TRUE);
+                      lives_box_pack_start(LIVES_BOX(vbox), hbuttonbox1, FALSE, FALSE, widget_opts.packing_height);
 
-  button4 = lives_standard_button_new_from_stock(LIVES_STOCK_MEDIA_FORWARD, NULL, TRUE);
+                      // TODO: use lives_dialog_add_button_from_stock()
 
-  lives_container_add(LIVES_CONTAINER(hbuttonbox1), button4);
-  lives_widget_set_can_focus(button4, TRUE);
+                      button3 = lives_standard_button_new_from_stock(LIVES_STOCK_MEDIA_REWIND, NULL, TRUE);
 
-  dvgrabw->stop = lives_standard_button_new_from_stock(LIVES_STOCK_MEDIA_STOP, NULL, TRUE);
+                      lives_container_add(LIVES_CONTAINER(hbuttonbox1), button3);
+                      lives_widget_set_can_focus(button3, TRUE);
 
-  lives_container_add(LIVES_CONTAINER(hbuttonbox1), dvgrabw->stop);
-  lives_widget_set_can_focus_and_default(dvgrabw->stop);
-  lives_widget_set_sensitive(dvgrabw->stop, FALSE);
+                      button4 = lives_standard_button_new_from_stock(LIVES_STOCK_MEDIA_FORWARD, NULL, TRUE);
 
-  dvgrabw->play = lives_standard_button_new_from_stock(LIVES_STOCK_MEDIA_PLAY, NULL, TRUE);
+                      lives_container_add(LIVES_CONTAINER(hbuttonbox1), button4);
+                      lives_widget_set_can_focus(button4, TRUE);
 
-  lives_container_add(LIVES_CONTAINER(hbuttonbox1), dvgrabw->play);
-  lives_widget_set_can_focus_and_default(dvgrabw->play);
+                      dvgrabw->stop = lives_standard_button_new_from_stock(LIVES_STOCK_MEDIA_STOP, NULL, TRUE);
 
-  dvgrabw->grab = lives_standard_button_new_from_stock(LIVES_STOCK_MEDIA_RECORD, _("_Grab"));
+                      lives_container_add(LIVES_CONTAINER(hbuttonbox1), dvgrabw->stop);
+                      lives_widget_set_can_focus_and_default(dvgrabw->stop);
+                      lives_widget_set_sensitive(dvgrabw->stop, FALSE);
 
-  lives_container_add(LIVES_CONTAINER(hbuttonbox1), dvgrabw->grab);
-  lives_widget_set_can_focus_and_default(dvgrabw->grab);
+                      dvgrabw->play = lives_standard_button_new_from_stock(LIVES_STOCK_MEDIA_PLAY, NULL, TRUE);
 
-  label = lives_standard_label_new(
-            _("\nUse this tool to control your camera and grab clips.\n"
-	      "After grabbing your clips, you can close this window \nand then load them into LiVES.\n"));
-  lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, widget_opts.packing_height * 4);
+                      lives_container_add(LIVES_CONTAINER(hbuttonbox1), dvgrabw->play);
+                      lives_widget_set_can_focus_and_default(dvgrabw->play);
 
-  dvgrabw->quit =
-    lives_dialog_add_button_from_stock(LIVES_DIALOG(dvgrabw->dialog),
-				       LIVES_STOCK_CLOSE, LIVES_STOCK_LABEL_CLOSE_WINDOW, LIVES_RESPONSE_CLOSE);
+                      dvgrabw->grab = lives_standard_button_new_from_stock(LIVES_STOCK_MEDIA_RECORD, _("_Grab"));
 
-  lives_widget_set_can_focus_and_default(dvgrabw->quit);
+                      lives_container_add(LIVES_CONTAINER(hbuttonbox1), dvgrabw->grab);
+                      lives_widget_set_can_focus_and_default(dvgrabw->grab);
 
-  //////////////////////////////////////////////////////////////////////////////////////////
+                      label = lives_standard_label_new(
+                                _("\nUse this tool to control your camera and grab clips.\n"
+                                  "After grabbing your clips, you can close this window \nand then load them into LiVES.\n"));
+                      lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, widget_opts.packing_height * 4);
 
-  lives_signal_sync_connect(button3, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_camrew_clicked), (livespointer)cam);
-  lives_signal_sync_connect(button4, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_camff_clicked), (livespointer)cam);
-  lives_signal_sync_connect(dvgrabw->stop, LIVES_WIDGET_CLICKED_SIGNAL,
-			    LIVES_GUI_CALLBACK(on_camstop_clicked), (livespointer)cam);
-  lives_signal_sync_connect(dvgrabw->play, LIVES_WIDGET_CLICKED_SIGNAL,
-			    LIVES_GUI_CALLBACK(on_camplay_clicked), (livespointer)cam);
-  lives_signal_sync_connect(dvgrabw->grab, LIVES_WIDGET_CLICKED_SIGNAL,
-			    LIVES_GUI_CALLBACK(on_camgrab_clicked), (livespointer)cam);
-  lives_signal_sync_connect(dvgrabw->quit, LIVES_WIDGET_CLICKED_SIGNAL,
-			    LIVES_GUI_CALLBACK(on_camquit_clicked), (livespointer)cam);
-  return dvgrabw;
-}
+                      dvgrabw->quit =
+                        lives_dialog_add_button_from_stock(LIVES_DIALOG(dvgrabw->dialog),
+                            LIVES_STOCK_CLOSE, LIVES_STOCK_LABEL_CLOSE_WINDOW, LIVES_RESPONSE_CLOSE);
+
+                      lives_widget_set_can_focus_and_default(dvgrabw->quit);
+
+                      //////////////////////////////////////////////////////////////////////////////////////////
+
+                      lives_signal_sync_connect(button3, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_camrew_clicked), (livespointer)cam);
+                      lives_signal_sync_connect(button4, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_camff_clicked), (livespointer)cam);
+                      lives_signal_sync_connect(dvgrabw->stop, LIVES_WIDGET_CLICKED_SIGNAL,
+                          LIVES_GUI_CALLBACK(on_camstop_clicked), (livespointer)cam);
+                      lives_signal_sync_connect(dvgrabw->play, LIVES_WIDGET_CLICKED_SIGNAL,
+                          LIVES_GUI_CALLBACK(on_camplay_clicked), (livespointer)cam);
+                      lives_signal_sync_connect(dvgrabw->grab, LIVES_WIDGET_CLICKED_SIGNAL,
+                          LIVES_GUI_CALLBACK(on_camgrab_clicked), (livespointer)cam);
+                      lives_signal_sync_connect(dvgrabw->quit, LIVES_WIDGET_CLICKED_SIGNAL,
+                          LIVES_GUI_CALLBACK(on_camquit_clicked), (livespointer)cam);
+                      return dvgrabw;
+  }
 

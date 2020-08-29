@@ -29,11 +29,11 @@ boolean build_init_config(const char *config_datadir, boolean prompt) {
     if (!lives_file_test(config_datadir, LIVES_FILE_TEST_IS_DIR)) {
       if (mainw && mainw->splash_window) lives_widget_hide(mainw->splash_window);
       while (1) {
-	if (!lives_make_writeable_dir(config_datadir)) {
-	  do_dir_perm_error(config_datadir, FALSE);
-	  continue;
-	}
-	break;
+        if (!lives_make_writeable_dir(config_datadir)) {
+          do_dir_perm_error(config_datadir, FALSE);
+          continue;
+        }
+        break;
 	  // *INDENT-OFF*
       }}
     // *INDENT-ON*
@@ -44,16 +44,16 @@ boolean build_init_config(const char *config_datadir, boolean prompt) {
       char *tmp, *keymap_template = lives_build_filename(prefs->prefix_dir, DATA_DIR, DEF_KEYMAP_FILE, NULL);
       if (mainw && mainw->splash_window) lives_widget_hide(mainw->splash_window);
       do {
-	retval = LIVES_RESPONSE_NONE;
-	lives_cp(keymap_template, keymap_file);
-	if (!lives_file_test(keymap_file, LIVES_FILE_TEST_EXISTS)) {
-	  // give up
-	  d_print((tmp = lives_strdup_printf
-		   (_("Unable to create default keymap file: %s\nPlease make sure the directory\n%s\nis writable.\n"),
-		    keymap_file, config_datadir)));
+        retval = LIVES_RESPONSE_NONE;
+        lives_cp(keymap_template, keymap_file);
+        if (!lives_file_test(keymap_file, LIVES_FILE_TEST_EXISTS)) {
+          // give up
+          d_print((tmp = lives_strdup_printf
+                         (_("Unable to create default keymap file: %s\nPlease make sure the directory\n%s\nis writable.\n"),
+                          keymap_file, config_datadir)));
 
-	  retval = do_abort_cancel_retry_dialog(tmp);
-	}
+          retval = do_abort_cancel_retry_dialog(tmp);
+        }
       } while (retval == LIVES_RESPONSE_RETRY);
       lives_free(keymap_template);
     }
@@ -65,32 +65,32 @@ boolean build_init_config(const char *config_datadir, boolean prompt) {
       char *sys_devmap_dir = lives_build_path(prefs->prefix_dir, DATA_DIR, LIVES_DEVICEMAP_DIR, NULL);
       if (mainw && mainw->splash_window) lives_widget_hide(mainw->splash_window);
       do {
-	retval = LIVES_RESPONSE_NONE;
-	if (!lives_file_test(sys_devmap_dir, LIVES_FILE_TEST_IS_DIR)) {
-	  retval = do_dir_notfound_dialog(_("LiVES was unable to find its default device maps in\n"),
-					  sys_devmap_dir);
-	  if (retval == LIVES_RESPONSE_BROWSE) {
-	    char *xsys_devmap_dir = choose_file(sys_devmap_dir, NULL, NULL,
-						LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER, NULL, NULL);
-	    if (xsys_devmap_dir && *xsys_devmap_dir) {
-	      lives_free(sys_devmap_dir);
-	      sys_devmap_dir = xsys_devmap_dir;
-	    }
-	    continue;
-	  }
-	}
+        retval = LIVES_RESPONSE_NONE;
+        if (!lives_file_test(sys_devmap_dir, LIVES_FILE_TEST_IS_DIR)) {
+          retval = do_dir_notfound_dialog(_("LiVES was unable to find its default device maps in\n"),
+                                          sys_devmap_dir);
+          if (retval == LIVES_RESPONSE_BROWSE) {
+            char *xsys_devmap_dir = choose_file(sys_devmap_dir, NULL, NULL,
+                                                LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER, NULL, NULL);
+            if (xsys_devmap_dir && *xsys_devmap_dir) {
+              lives_free(sys_devmap_dir);
+              sys_devmap_dir = xsys_devmap_dir;
+            }
+            continue;
+          }
+        }
       } while (retval == LIVES_RESPONSE_RETRY);
 
       if (retval != LIVES_RESPONSE_CANCEL) {
-	do {
-	  retval = LIVES_RESPONSE_NONE;
-	  if (!lives_make_writeable_dir(devmapdir))
-	    retval = do_dir_perm_error(devmapdir, TRUE);
-	} while (retval == LIVES_RESPONSE_RETRY);
+        do {
+          retval = LIVES_RESPONSE_NONE;
+          if (!lives_make_writeable_dir(devmapdir))
+            retval = do_dir_perm_error(devmapdir, TRUE);
+        } while (retval == LIVES_RESPONSE_RETRY);
 
-	if (retval != LIVES_RESPONSE_CANCEL) {
-	  lives_cp_recursive(sys_devmap_dir, config_datadir);
-	}
+        if (retval != LIVES_RESPONSE_CANCEL) {
+          lives_cp_recursive(sys_devmap_dir, config_datadir);
+        }
       }
       lives_free(sys_devmap_dir);
 #endif
@@ -99,37 +99,37 @@ boolean build_init_config(const char *config_datadir, boolean prompt) {
 
 #ifdef GUI_GTK
     /// stock_icons
-    stock_icons_dir = lives_build_path(config_datadir, STOCK_ICONS_DIR, NULL);      
+    stock_icons_dir = lives_build_path(config_datadir, STOCK_ICONS_DIR, NULL);
     if (!lives_file_test(stock_icons_dir, LIVES_FILE_TEST_IS_DIR)) {
       char *sys_stock_icons_dir = lives_build_path(prefs->prefix_dir, DATA_DIR, STOCK_ICONS_DIR, NULL);
       if (mainw && mainw->splash_window) lives_widget_hide(mainw->splash_window);
       do {
-	retval = LIVES_RESPONSE_NONE;
-	if (!lives_file_test(sys_stock_icons_dir, LIVES_FILE_TEST_IS_DIR)) {
-	  retval = do_dir_notfound_dialog(_("LiVES was unable to find its default icons in\n"),
-					  sys_stock_icons_dir);
-	  if (retval == LIVES_RESPONSE_BROWSE) {
-	    char *xsys_stock_icons_dir = choose_file(sys_stock_icons_dir, NULL, NULL,
-						     LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER, NULL, NULL);
-	    if (xsys_stock_icons_dir && *xsys_stock_icons_dir) {
-	      lives_free(sys_stock_icons_dir);
-	      sys_stock_icons_dir = xsys_stock_icons_dir;
-	    }
-	    continue;
-	  }
-	}
+        retval = LIVES_RESPONSE_NONE;
+        if (!lives_file_test(sys_stock_icons_dir, LIVES_FILE_TEST_IS_DIR)) {
+          retval = do_dir_notfound_dialog(_("LiVES was unable to find its default icons in\n"),
+                                          sys_stock_icons_dir);
+          if (retval == LIVES_RESPONSE_BROWSE) {
+            char *xsys_stock_icons_dir = choose_file(sys_stock_icons_dir, NULL, NULL,
+                                         LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER, NULL, NULL);
+            if (xsys_stock_icons_dir && *xsys_stock_icons_dir) {
+              lives_free(sys_stock_icons_dir);
+              sys_stock_icons_dir = xsys_stock_icons_dir;
+            }
+            continue;
+          }
+        }
       } while (retval == LIVES_RESPONSE_RETRY);
 
       if (retval != LIVES_RESPONSE_CANCEL) {
-	do {
-	  retval = LIVES_RESPONSE_NONE;
-	  if (!lives_make_writeable_dir(stock_icons_dir))
-	    retval = do_dir_perm_error(stock_icons_dir, TRUE);
-	} while (retval == LIVES_RESPONSE_RETRY);
+        do {
+          retval = LIVES_RESPONSE_NONE;
+          if (!lives_make_writeable_dir(stock_icons_dir))
+            retval = do_dir_perm_error(stock_icons_dir, TRUE);
+        } while (retval == LIVES_RESPONSE_RETRY);
 
-	if (retval != LIVES_RESPONSE_CANCEL) {
-	  lives_cp_recursive(sys_stock_icons_dir, config_datadir);
-	}
+        if (retval != LIVES_RESPONSE_CANCEL) {
+          lives_cp_recursive(sys_stock_icons_dir, config_datadir);
+        }
       }
       lives_free(sys_stock_icons_dir);
     }
@@ -193,11 +193,11 @@ static boolean prompt_new_dir(char *dirname, uint64_t freespace, boolean wrtable
 void filename_toolong_error(const char *fname, const char *ftype, size_t max, boolean can_retry) {
   char *rstr, *msg;
   if (can_retry) rstr = _("\nPlease click Retry to select an alternative directory, or Abort to exit immediately"
-			  "from LiVES\n");
+                            "from LiVES\n");
   else rstr = lives_strdup("");
 
   msg = lives_strdup_printf(_("The name of the %s provided\n(%s)\nis too long (maximum is %d characters)\n%s"),
-			    ftype, fname, max, rstr);
+                            ftype, fname, max, rstr);
   if (can_retry) do_abort_retry_dialog(msg);
   else startup_message_fatal(msg);
   lives_free(msg); lives_free(rstr);
@@ -206,10 +206,10 @@ void filename_toolong_error(const char *fname, const char *ftype, size_t max, bo
 void dir_toolong_error(const char *dirname, const char *dirtype, size_t max, boolean can_retry) {
   char *rstr, *msg;
   if (can_retry) rstr = _("\nPlease click Retry to select an alternative directory, or Abort to exit immediately"
-			  "from LiVES\n");
+                            "from LiVES\n");
   else rstr = lives_strdup("");
   msg = lives_strdup_printf(_("The name of the %s provided\n(%s)\nis too long (maximum is %d characters)\n%s"),
-			    dirtype, dirname, max, rstr);
+                            dirtype, dirname, max, rstr);
   if (can_retry) do_abort_retry_dialog(msg);
   else startup_message_fatal(msg);
   lives_free(msg); lives_free(rstr);
@@ -228,7 +228,7 @@ void close_file(int current_file, boolean tshoot) {
 }
 
 
-LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog *dialog, boolean fullcheck) {
+LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog * dialog, boolean fullcheck) {
   // returns LIVES_RESPONSE_RETRY or LIVES_RESPONSE_OK
   char cdir[PATH_MAX];
   uint64_t freesp;
@@ -280,10 +280,10 @@ LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog *dialog, bool
         freesp = get_ds_free(*pdirname);
         widget_opts.transient = LIVES_WINDOW(dialog);
         if (!prompt_existing_dir(*pdirname, freesp, TRUE)) {
-	  widget_opts.transient = NULL;
+          widget_opts.transient = NULL;
           return LIVES_RESPONSE_RETRY;
-	}
-	widget_opts.transient = NULL;
+        }
+        widget_opts.transient = NULL;
       }
     } else {
       if (!prompt_existing_dir(*pdirname, 0, FALSE)) {
@@ -352,7 +352,7 @@ boolean do_workdir_query(void) {
 
   lives_snprintf(prefs->workdir, PATH_MAX, "%s", dirname);
   lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGFILE=\"%s\" --", EXEC_PERL,
-		 capable->backend_path, prefs->workdir, prefs->configfile);
+                 capable->backend_path, prefs->workdir, prefs->configfile);
   lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
 
   set_string_pref_priority(PREF_WORKING_DIR, prefs->workdir);
@@ -424,7 +424,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   if (!capable->has_pulse_audio) {
     txt2 = lives_strdup(
              _(", but you do not have pulseaudio installed on your system.\n "
-	       "You are advised to install pulseaudio first before running LiVES.\n\n"));
+               "You are advised to install pulseaudio first before running LiVES.\n\n"));
   } else txt2 = lives_strdup(".\n\n");
 #endif
 
@@ -973,7 +973,7 @@ boolean do_startup_tests(boolean tshoot) {
 
     com = lives_strdup_printf("%s open_test \"%s\" %s \"%s\" 0 png", prefs->backend_sync, cfile->handle,
                               prefs->video_open_command,
-			      (tmp = lives_filename_from_utf8(rname, -1, NULL, NULL, NULL)));
+                              (tmp = lives_filename_from_utf8(rname, -1, NULL, NULL, NULL)));
     lives_free(tmp);
     lives_free(rname);
 
@@ -1189,7 +1189,7 @@ void do_startup_interface_query(void) {
 
   lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
   lives_widget_show_now(dialog);
-  
+
   wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
   if (!wid || !activate_x11_window(wid)) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
 

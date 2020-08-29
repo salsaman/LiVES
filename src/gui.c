@@ -1888,7 +1888,7 @@ void create_LiVES(void) {
   lives_widget_set_tooltip_text(mainw->t_bckground, _("Unblank background (b)"));
 
   tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_SEPWIN,
-						lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->toolbar)));
+                     lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->toolbar)));
   if (LIVES_IS_IMAGE(tmp_toolbar_icon) && !mainw->sep_win) {
     pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
     lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
@@ -1927,14 +1927,14 @@ void create_LiVES(void) {
   lives_widget_set_tooltip_text(mainw->t_slower, _("Play slower (ctrl-down)"));
 
   tmp_toolbar_icon = lives_image_new_from_stock(LIVES_STOCK_ADD,
-						lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->toolbar)));
+                     lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->toolbar)));
 
   mainw->t_faster = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar), LIVES_TOOL_ITEM(mainw->t_faster), 6);
   lives_widget_set_tooltip_text(mainw->t_faster, _("Play faster (ctrl-up)"));
 
   tmp_toolbar_icon = lives_image_new_from_stock(LIVES_STOCK_GO_BACK,
-						lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->toolbar)));
+                     lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->toolbar)));
 
   mainw->t_back = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar), LIVES_TOOL_ITEM(mainw->t_back), 7);
@@ -1955,7 +1955,7 @@ void create_LiVES(void) {
   lives_widget_set_tooltip_text(mainw->t_infobutton, _("Show clip info (i)"));
 
   tmp_toolbar_icon = lives_image_new_from_stock(LIVES_STOCK_CLOSE,
-						lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->toolbar)));
+                     lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->toolbar)));
 
   mainw->t_hide = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar), LIVES_TOOL_ITEM(mainw->t_hide), 10);
@@ -3123,7 +3123,6 @@ void set_interactive(boolean interactive) {
       lives_widget_set_sensitive(mainw->m_sepwinbutton, FALSE);
       lives_widget_set_sensitive(mainw->multitrack->btoolbar2, FALSE);
       lives_widget_set_sensitive(mainw->multitrack->btoolbar3, FALSE);
-      //lives_widget_set_sensitive(mainw->multitrack->insa_checkbutton, FALSE);
       lives_widget_set_sensitive(mainw->multitrack->snapo_checkbutton, FALSE);
       list = mainw->multitrack->cb_list;
       while (list) {

@@ -60,11 +60,11 @@ static void dump_connections(void) {
 
 static char *get_param_name(weed_plant_t *param, int pnum, boolean is_in) {
   char *name = weed_get_string_value(param, WEED_LEAF_NAME, NULL);
-  if (!strlen(name)) {
+  if (!*name) {
     lives_free(name);
     name = NULL;
   }
-  if (name == NULL) {
+  if (!name) {
     if (is_in) name = lives_strdup_printf(_("In param %d"), pnum);
     else name = lives_strdup_printf(_("Out param %d"), pnum);
   }
@@ -74,11 +74,11 @@ static char *get_param_name(weed_plant_t *param, int pnum, boolean is_in) {
 
 static char *get_chan_name(weed_plant_t *chan, int cnum, boolean is_in) {
   char *name = weed_get_string_value(chan, WEED_LEAF_NAME, NULL);
-  if (!strlen(name)) {
+  if (!*name) {
     lives_free(name);
     name = NULL;
   }
-  if (name == NULL) {
+  if (!name) {
     if (is_in) name = lives_strdup_printf(_("In channel %d"), cnum);
     else name = lives_strdup_printf(_("Out channel %d"), cnum);
   }
@@ -104,7 +104,7 @@ void override_if_active_input(int hotkey) {
 
   register int i, j;
 
-  while (pconx != NULL) {
+  while (pconx) {
     totcons = 0;
     j = 0;
     for (i = 0; i < pconx->nparams; i++) {
@@ -244,7 +244,7 @@ char *pconx_list(int okey, int omode, int opnum) {
       for (i = 0; i < pconx->nparams; i++) {
         if (pconx->params[i] == opnum) {
           for (j = totcons; j < totcons + pconx->nconns[i]; j++) {
-            if (strlen(st1) == 0)
+            if (!*st1)
               st2 = lives_strdup_printf("%d %d %d %d", pconx->ikey[j] + 1, pconx->imode[j] + 1, pconx->ipnum[j],
                                         pconx->autoscale[j]);
             st2 = lives_strdup_printf("%s %d %d %d %d", st1, pconx->ikey[j] + 1, pconx->imode[j] + 1,
@@ -274,7 +274,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
     for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++)
       pthread_mutex_lock(&mainw->fx_mutex[i]);
 
-  while (pconx != NULL) {
+  while (pconx) {
     pconx_next = pconx->next;
 
 #ifdef DEBUG_PCONX
@@ -396,7 +396,7 @@ void pconx_remap_mode(int key, int omode, int nmode) {
 
   register int i, j, totcons;
 
-  while (pconx != NULL) {
+  while (pconx) {
     if (pconx->okey == key && pconx->omode == omode) {
       pconx->omode = nmode;
     }
@@ -419,13 +419,13 @@ static void pconx_append(lives_pconnect_t *pconx) {
   lives_pconnect_t *opconx = mainw->pconx;
   lives_pconnect_t *last_pconx = opconx;
 
-  while (opconx != NULL) {
+  while (opconx) {
     last_pconx = opconx;
     opconx = opconx->next;
   }
 
-  if (last_pconx != NULL) last_pconx->next = pconx;
-  if (mainw->pconx == NULL) mainw->pconx = pconx;
+  if (last_pconx) last_pconx->next = pconx;
+  if (!mainw->pconx) mainw->pconx = pconx;
 }
 
 
@@ -937,10 +937,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
 
         weed_set_double_array(dparam, WEED_LEAF_VALUE, ndvals, valsd);
       }
-      lives_free(maxd);
-      lives_free(mind);
-      lives_free(valsD);
-      lives_free(valsd);
+      lives_free(maxd); lives_free(mind); lives_free(valsD); lives_free(valsd);
     }
     return retval;
 
@@ -954,7 +951,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         vals = weed_get_string_value(dparam, WEED_LEAF_VALUE, NULL);
         for (i = 0; i < nsvals; i++) {
           bit = lives_strdup_printf("%.4f", valsd[i]);
-          if (strlen(opstring) == 0)
+          if (!*opstring)
             tmp = lives_strconcat(opstring, bit, NULL);
           else
             tmp = lives_strconcat(opstring, " ", bit, NULL);
@@ -1017,7 +1014,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         vals = weed_get_string_value(dparam, WEED_LEAF_VALUE, NULL);
         for (i = 0; i < nsvals; i++) {
           bit = lives_strdup_printf("%d", valsi[i]);
-          if (strlen(opstring) == 0)
+          if (!*opstring)
             tmp = lives_strconcat(opstring, bit, NULL);
           else
             tmp = lives_strconcat(opstring, " ", bit, NULL);
@@ -1202,7 +1199,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         vals = weed_get_string_value(dparam, WEED_LEAF_VALUE, NULL);
         for (i = 0; i < nsvals; i++) {
           bit = lives_strdup_printf("%d", valsb[i]);
-          if (strlen(opstring) == 0)
+          if (!*opstring)
             tmp = lives_strconcat(opstring, bit, NULL);
           else
             tmp = lives_strconcat(opstring, " ", bit, NULL);
@@ -1490,7 +1487,7 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
       filter_mutex_lock(okey);
       if (oparam != active_dummy) {
         weed_plant_t *oinst = rte_keymode_get_instance(okey + 1, omode);
-        if (oinst == NULL) {
+        if (!oinst) {
           filter_mutex_unlock(okey);
           if (inst) {
             weed_instance_unref(inst);
@@ -1650,7 +1647,7 @@ static lives_cconnect_t *cconx_copy(lives_cconnect_t *scconx) {
 
   while (scconx) {
     dcconx = cconx_new(scconx->okey, scconx->omode);
-    if (cconx == NULL) cconx = dcconx;
+    if (!cconx) cconx = dcconx;
     else last_dcconx->next = dcconx;
 
     dcconx->nchans = scconx->nchans;
@@ -1690,18 +1687,16 @@ static lives_cconnect_t *cconx_copy(lives_cconnect_t *scconx) {
 char *cconx_list(int okey, int omode, int ocnum) {
   char *st1 = lives_strdup(""), *st2;
   lives_cconnect_t *cconx = mainw->cconx;
-
   int totcons = 0;
-
-  register int i, j;
 
   while (cconx) {
     if (cconx->okey == okey && cconx->omode == omode) {
-      for (i = 0; i < cconx->nchans; i++) {
+      for (int i = 0; i < cconx->nchans; i++) {
         if (cconx->chans[i] == ocnum) {
-          for (j = totcons; j < totcons + cconx->nconns[i]; j++) {
-            if (strlen(st1) == 0) st2 = lives_strdup_printf("%d %d %d", cconx->ikey[j] + 1, cconx->imode[j] + 1, cconx->icnum[j]);
-            st2 = lives_strdup_printf("%s %d %d %d", st1, cconx->ikey[j] + 1, cconx->imode[j] + 1, cconx->icnum[j]);
+          for (int j = totcons; j < totcons + cconx->nconns[i]; j++) {
+            if (!*st1) st1 = lives_strdup_printf("%d %d %d", cconx->key[j] + 1, cconx->mode[j] + 1, cconx->cnum[j]);
+            else
+              st2 = lives_strdup_printf("%s %d %d %d", st1, cconx->ikey[j] + 1, cconx->imode[j] + 1, cconx->icnum[j]);
             lives_free(st1);
             st1 = st2;
           }
@@ -1840,7 +1835,7 @@ static void cconx_append(lives_cconnect_t *cconx) {
   }
 
   if (last_cconx) last_cconx->next = cconx;
-  if (mainw->cconx == NULL) mainw->cconx = cconx;
+  if (!mainw->cconx) mainw->cconx = cconx;
 }
 
 
@@ -2210,7 +2205,7 @@ boolean cconx_chain_data(int key, int mode) {
       }
     }
   } else if (key == FX_DATA_KEY_PLAYBACK_PLUGIN) {
-    if (mainw->vpp == NULL || mainw->vpp->num_alpha_chans == 0) return FALSE;
+    if (!mainw->vpp || mainw->vpp->num_alpha_chans == 0) return FALSE;
   }
 
   while ((ichan = (key == FX_DATA_KEY_PLAYBACK_PLUGIN ? (weed_plant_t *)pp_get_chan(mainw->vpp->play_params, i)
@@ -2294,8 +2289,7 @@ boolean feeds_to_audio_filters(int okey, int omode) {
   char *chlist;
   int nparams, niparams;
   int ikey, imode;
-
-  register int i, j;
+  int i, j;
 
   filter = rte_keymode_get_filter(okey + 1, omode);
 
@@ -2850,7 +2844,7 @@ static void pdel_clicked(LiVESWidget * button, livespointer user_data) {
     hbox[2] = hboxb[2];
 
     if (conxwp->acheck[i]) {
-      if (hbox[3] == NULL) {
+      if (!hbox[3]) {
         achbox = lives_widget_get_parent(conxwp->acheck[i]);
         hbox[3] = lives_widget_get_parent(achbox);
         lives_widget_destroy(achbox);
@@ -4710,7 +4704,7 @@ static boolean show_existing(lives_conx_w * conxwp) {
 
 show_ex_params:
 
-  if (pconx == NULL) goto show_ex_done;
+  if (!pconx) goto show_ex_done;
 
   posn = 0;
 

@@ -345,7 +345,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     lives_rm(cfile->info_file);
     if (THREADVAR(com_failed)) return 0;
 
-    if (strlen(mainw->msg) > 0) add_file_info(cfile->handle, FALSE);
+    if (*mainw->msg) add_file_info(cfile->handle, FALSE);
 
     if (mainw->multitrack) {
       // set up for opening preview
@@ -409,11 +409,11 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
           extra_frames = cfile->frames - cdata->nframes;
         }
         cfile->frames = cdata->nframes;
-        if (strlen(cfile->author) == 0)
+        if (!*cfile->author)
           lives_snprintf(cfile->author, 1024, "%s", cdata->author);
-        if (strlen(cfile->title) == 0)
+        if (!*cfile->title)
           lives_snprintf(cfile->title, 1024, "%s", cdata->title);
-        if (strlen(cfile->comment) == 0)
+        if (!*cfile->comment)
           lives_snprintf(cfile->comment, 1024, "%s", cdata->comment);
 
         if (frames > 0 && cfile->frames > frames) {
@@ -1184,13 +1184,10 @@ void save_frame(LiVESMenuItem * menuitem, livespointer user_data) {
 
   defname = lives_strdup_printf("frame%08d.%s", frame, get_image_ext_for_type(cfile->img_type));
 
-  filename = choose_file(strlen(mainw->image_dir) ? mainw->image_dir : NULL, defname, filt, LIVES_FILE_CHOOSER_ACTION_SAVE, ttl,
-                         NULL);
+  filename = choose_file(*mainw->image_dir ? mainw->image_dir : NULL, defname,
+                         filt, LIVES_FILE_CHOOSER_ACTION_SAVE, ttl, NULL);
 
-  lives_free(defname);
-
-  lives_free(filt[0]);
-  lives_free(ttl);
+  lives_free(defname); lives_free(filt[0]); lives_free(ttl);
 
   if (!filename) return;
   if (!*filename) {
@@ -1328,13 +1325,12 @@ void save_file(int clip, int start, int end, const char *filename) {
         lives_free(com);
 
         if (strcmp(mainw->msg, "initialised\n")) {
-          if (strlen(mainw->msg)) {
+          if (*mainw->msg) {
             msg = lives_strdup_printf(_("\n\nThe '%s' plugin reports:\n%s\n"), prefs->encoder.name, mainw->msg);
           } else {
             msg = lives_strdup_printf
                   (_("\n\nUnable to find the 'init' method in the %s plugin.\n"
-                     "The plugin may be broken or not installed correctly."),
-                   prefs->encoder.name);
+                     "The plugin may be broken or not installed correctly."), prefs->encoder.name);
           }
           do_error_dialog(msg);
           lives_free(msg);
@@ -1367,7 +1363,7 @@ void save_file(int clip, int start, int end, const char *filename) {
       lives_freep((void **)&n_file_name);
       n_file_name = choose_file(mainw->vid_save_dir, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_SAVE, ttl, hbox);
       if (!n_file_name) return;
-    } while (!strlen(n_file_name));
+    } while (!*n_file_name);
     lives_snprintf(mainw->vid_save_dir, PATH_MAX, "%s", n_file_name);
     get_dirname(mainw->vid_save_dir);
     if (prefs->save_directories) {
@@ -1377,7 +1373,7 @@ void save_file(int clip, int start, int end, const char *filename) {
   } else n_file_name = lives_strdup(filename);
 
   //append default extension (if necessary)
-  if (!strlen(prefs->encoder.of_def_ext)) {
+  if (!*prefs->encoder.of_def_ext) {
     // encoder adds its own extension
     get_filename(n_file_name, FALSE);
   } else {
@@ -2555,7 +2551,7 @@ void play_file(void) {
     com3 = lives_strdup("midistart");
   }
   com = lives_strconcat(com2, com3, NULL);
-  if (strlen(com)) {
+  if (*com) {
     // allow this to fail - not all sub-commands may be present
     lives_system(com, TRUE);
   }
@@ -3555,7 +3551,7 @@ boolean get_temp_handle(int index) {
       return FALSE;
     }
 
-    if (strlen(mainw->set_name) > 0) {
+    if (*mainw->set_name) {
       char *setclipdir = CLIPDIR(cfile->handle);
       if (lives_file_test(setclipdir, LIVES_FILE_TEST_IS_DIR)) is_unique = FALSE;
       lives_free(setclipdir);
@@ -3933,13 +3929,13 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
         }
       }
 
-      if (!strlen(cfile->title) && npieces > 16 && array[16]) {
+      if (!*cfile->title && npieces > 16 && array[16]) {
         lives_snprintf(cfile->title, 1024, "%s", lives_strstrip(array[16]));
       }
-      if (!strlen(cfile->author) && npieces > 17 && array[17]) {
+      if (!*cfile->author && npieces > 17 && array[17]) {
         lives_snprintf(cfile->author, 1024, "%s", lives_strstrip(array[17]));
       }
-      if (!strlen(cfile->comment) && npieces > 18 && array[18]) {
+      if (!*cfile->comment && npieces > 18 && array[18]) {
         lives_snprintf(cfile->comment, 1024, "%s", lives_strstrip(array[18]));
       }
 
@@ -4034,13 +4030,13 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
   lives_free(mesg);
 
   // get the author,title,comments
-  if (strlen(cfile->author)) {
+  if (*cfile->author) {
     d_print(_(" - Author: %s\n"), cfile->author);
   }
-  if (strlen(cfile->title)) {
+  if (*cfile->title) {
     d_print(_(" - Title: %s\n"), cfile->title);
   }
-  if (strlen(cfile->comment)) {
+  if (*cfile->comment) {
     d_print(_(" - Comment: %s\n"), cfile->comment);
   }
 
@@ -4156,23 +4152,23 @@ boolean save_frame_inner(int clip, int frame, const char *file_name, int width, 
       resp = LIVES_RESPONSE_NONE;
 
       com = lives_strdup_printf("%s save_frame %s %d \"%s\" %d %d", prefs->backend_sync, sfile->handle,
-				frame, tmp, width, height);
+                                frame, tmp, width, height);
       lives_system(com, FALSE);
       lives_free(com);
 
       if (THREADVAR(write_failed)) {
-	THREADVAR(write_failed) = 0;
-	d_print_file_error_failed();
-	resp = do_file_perm_error(tmp, TRUE);
-	if (resp == LIVES_RESPONSE_CANCEL) {
-	  lives_free(tmp);
-	  return FALSE;
-	}
+        THREADVAR(write_failed) = 0;
+        d_print_file_error_failed();
+        resp = do_file_perm_error(tmp, TRUE);
+        if (resp == LIVES_RESPONSE_CANCEL) {
+          lives_free(tmp);
+          return FALSE;
+        }
       }
       if (!THREADVAR(com_failed)) {
-	lives_free(tmp);
-	d_print_done();
-	return TRUE;
+        lives_free(tmp);
+        d_print_done();
+        return TRUE;
       }
     } while (resp == LIVES_RESPONSE_RETRY);
   } else {
@@ -4861,7 +4857,7 @@ void open_set_file(int clipnum) {
     cfile->needs_silent_update = TRUE;
   }
 
-  if (strlen(name) == 0) {
+  if (!*name) {
     lives_snprintf(name, CLIP_NAME_MAXLEN, "set_clip %.3d", clipnum);
   } else {
     // pre 3.x, files erroneously had the set name appended permanently, so here we undo that
@@ -5651,7 +5647,7 @@ boolean reload_clip(int fileno, int maxframe) {
 
   odeclist = lives_list_copy(mainw->decoder_list);  ///< retain original order to restore for freshly opened clips
   retb = get_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, decoder_name, PATH_MAX);
-  if (retb && strlen(decoder_name)) {
+  if (retb && *decoder_name) {
     decoder_plugin_move_to_first(decoder_name);
   }
   retb = FALSE;
@@ -5697,9 +5693,9 @@ manual_locate:
             lives_widget_destroy(LIVES_WIDGET(chooser));
 
             if (newname && *newname) {
-	      char *tmp;
-	      lives_snprintf(sfile->file_name, PATH_MAX, "%s", (tmp = lives_filename_to_utf8(newname, -1, NULL, NULL, NULL)));
-	      lives_free(tmp);
+              char *tmp;
+              lives_snprintf(sfile->file_name, PATH_MAX, "%s", (tmp = lives_filename_to_utf8(newname, -1, NULL, NULL, NULL)));
+              lives_free(tmp);
               lives_free(newname);
             }
 
@@ -5815,7 +5811,7 @@ manual_locate:
       lives_decoder_t *dplug = (lives_decoder_t *)sfile->ext_src;
       if (dplug) {
         lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->decoder;
-        if (dpsys && strlen(dpsys->name) > 0 && strcmp(dpsys->name, decoder_name)) {
+        if (dpsys && *dpsys->name && strcmp(dpsys->name, decoder_name)) {
           save_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, (void *)dpsys->name);
           if (THREADVAR(com_failed) || THREADVAR(write_failed)) bad_header = TRUE;
         }
@@ -6191,7 +6187,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       /// see function reload_set() for detailed comments
       if ((maxframe = load_frame_index(mainw->current_file)) > 0) {
         /// CLIP_TYPE_FILE
-        if (!strlen(cfile->file_name)) continue;
+        if (!*cfile->file_name) continue;
         if (!reload_clip(mainw->current_file, maxframe)) continue;
         if (cfile->img_type == IMG_TYPE_UNKNOWN) {
           lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
@@ -6316,7 +6312,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       }
 
       if (mainw->current_file != -1)
-        if (strlen(mainw->set_name) > 0) recover_layout_map(mainw->current_file);
+        if (*mainw->set_name) recover_layout_map(mainw->current_file);
 
       if (!mainw->multitrack) resize(1);
 

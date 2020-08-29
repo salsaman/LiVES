@@ -426,7 +426,7 @@ typedef struct {
   boolean noframedrop;
 
   boolean back_compat;
-  
+
   char pa_start_opts[255];
   boolean pa_restart;
 

@@ -602,7 +602,7 @@ static boolean pre_init(void) {
   cfgdir = get_dir(prefs->configfile);
   lives_make_writeable_dir(cfgdir);
   lives_free(cfgdir);
-  
+
   // pre-checked conditions. We will check for these agian
   if (capable->has_perl && capable->can_write_to_workdir && capable->can_write_to_config &&
       capable->can_write_to_config_backup && capable->can_write_to_config_new && capable->can_read_from_config &&
@@ -1019,7 +1019,7 @@ static boolean pre_init(void) {
 
 #ifdef ENABLE_OSC
 #ifdef OMC_JS_IMPL
-  if (strlen(prefs->omc_js_fname) == 0) {
+  if (!*prefs->omc_js_fname) {
     const char *tmp = get_js_filename();
     if (tmp) {
       lives_snprintf(prefs->omc_js_fname, PATH_MAX, "%s", tmp);
@@ -1031,7 +1031,7 @@ static boolean pre_init(void) {
   get_utf8_pref(PREF_OMC_MIDI_FNAME, prefs->omc_midi_fname, PATH_MAX);
 #ifdef ENABLE_OSC
 #ifdef OMC_MIDI_IMPL
-  if (strlen(prefs->omc_midi_fname) == 0) {
+  if (!*prefs->omc_midi_fname) {
     const char *tmp = get_midi_filename();
     if (tmp) {
       lives_snprintf(prefs->omc_midi_fname, PATH_MAX, "%s", tmp);
@@ -1730,7 +1730,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
     get_string_pref(PREF_VIDEO_OPEN_COMMAND, prefs->video_open_command, PATH_MAX * 2);
 
-    if (strlen(prefs->video_open_command) == 0) {
+    if (!*prefs->video_open_command) {
       lives_memset(mppath, 0, 1);
 
       if (!(*prefs->video_open_command) && capable->has_mplayer) {
@@ -1745,7 +1745,7 @@ static void lives_init(_ign_opts *ign_opts) {
         get_location(EXEC_MPV, mppath, PATH_MAX);
       }
 
-      if (strlen(mppath)) {
+      if (*mppath) {
         lives_snprintf(prefs->video_open_command, PATH_MAX + 2, "\"%s\"", mppath);
         set_string_pref(PREF_VIDEO_OPEN_COMMAND, prefs->video_open_command);
       }
@@ -1785,13 +1785,13 @@ static void lives_init(_ign_opts *ign_opts) {
 
     if (!ign_opts->ign_clipset) {
       get_string_prefd(PREF_AR_CLIPSET, prefs->ar_clipset_name, 128, "");
-      if (strlen(prefs->ar_clipset_name)) future_prefs->ar_clipset = prefs->ar_clipset = TRUE;
+      if (*prefs->ar_clipset_name) future_prefs->ar_clipset = prefs->ar_clipset = TRUE;
       else prefs->ar_clipset = FALSE;
     } else set_string_pref(PREF_AR_CLIPSET, "");
 
     if (!ign_opts->ign_layout) {
       get_string_prefd(PREF_AR_LAYOUT, prefs->ar_layout_name, PATH_MAX, "");
-      if (strlen(prefs->ar_layout_name)) prefs->ar_layout = TRUE;
+      if (*prefs->ar_layout_name) prefs->ar_layout = TRUE;
       else prefs->ar_layout = FALSE;
     } else set_string_pref(PREF_AR_LAYOUT, "");
 
@@ -2000,12 +2000,12 @@ static void lives_init(_ign_opts *ign_opts) {
 
     // anything that d_prints messages should go here:
     do_start_messages();
-    
+
     needs_free = FALSE;
     weed_plugin_path = getenv("WEED_PLUGIN_PATH");
     if (!weed_plugin_path) {
       get_string_pref(PREF_WEED_PLUGIN_PATH, prefs->weed_plugin_path, PATH_MAX);
-      if (strlen(prefs->weed_plugin_path) == 0) weed_plugin_path = lives_build_path(prefs->lib_dir, PLUGIN_EXEC_DIR,
+      if (!*prefs->weed_plugin_path) weed_plugin_path = lives_build_path(prefs->lib_dir, PLUGIN_EXEC_DIR,
             PLUGIN_WEED_FX_BUILTIN, NULL);
       else weed_plugin_path = lives_strdup(prefs->weed_plugin_path);
       lives_setenv("WEED_PLUGIN_PATH", weed_plugin_path);
@@ -2018,7 +2018,7 @@ static void lives_init(_ign_opts *ign_opts) {
     frei0r_path = getenv("FREI0R_PATH");
     if (!frei0r_path) {
       get_string_pref(PREF_FREI0R_PATH, prefs->frei0r_path, PATH_MAX);
-      if (strlen(prefs->frei0r_path) == 0) frei0r_path =
+      if (!*prefs->frei0r_path) frei0r_path =
           lives_strdup_printf("/usr/lib/frei0r-1:/usr/local/lib/frei0r-1:%s/frei0r-1",
                               capable->home_dir);
       else frei0r_path = lives_strdup(prefs->frei0r_path);
@@ -2032,7 +2032,7 @@ static void lives_init(_ign_opts *ign_opts) {
     ladspa_path = getenv("LADSPA_PATH");
     if (!ladspa_path || !*ladspa_path) {
       get_string_pref(PREF_LADSPA_PATH, prefs->ladspa_path, PATH_MAX);
-      if (strlen(prefs->ladspa_path) == 0) ladspa_path = lives_build_filename(prefs->lib_dir, "ladspa", NULL);
+      if (!*prefs->ladspa_path) ladspa_path = lives_build_filename(prefs->lib_dir, "ladspa", NULL);
       else ladspa_path = lives_strdup(prefs->ladspa_path);
       lives_setenv("LADSPA_PATH", ladspa_path);
       needs_free = TRUE;
@@ -2380,7 +2380,7 @@ static void do_start_messages(void) {
   }
 
   if (initial_startup_phase == 0) {
-    if (strlen(mainw->old_vhash) == 0 || !strcmp(mainw->old_vhash, "0")) {
+    if (!*mainw->old_vhash || !strcmp(mainw->old_vhash, "0")) {
       phase = (_("STARTUP ERROR OCCURRED - FORCED REINSTALL"));
     } else {
       if (atoi(mainw->old_vhash) < atoi(mainw->version_hash)) {
@@ -2693,8 +2693,7 @@ boolean set_palette_colours(boolean force_reload) {
     if (lives_file_test(tmp, LIVES_FILE_TEST_EXISTS)) {
       lives_snprintf(mainw->sepimg_path, PATH_MAX, "%s", tmp);
       lives_free(tmp);
-    }
-    else {
+    } else {
       fname = lives_strdup_printf("%s.%s", THEME_SEP_IMG_LITERAL, LIVES_FILE_EXT_PNG);
       lives_free(tmp);
       tmp = lives_build_filename(themedir, fname, NULL);
@@ -2709,8 +2708,7 @@ boolean set_palette_colours(boolean force_reload) {
     if (lives_file_test(tmp, LIVES_FILE_TEST_EXISTS)) {
       lives_snprintf(mainw->frameblank_path, PATH_MAX, "%s", tmp);
       lives_free(tmp);
-    }
-    else {
+    } else {
       fname = lives_strdup_printf("%s.%s", THEME_FRAME_IMG_LITERAL, LIVES_FILE_EXT_PNG);
       tmp = lives_build_filename(themedir, fname, NULL);
       lives_free(fname);
@@ -2977,7 +2975,7 @@ capability *get_capabilities(void) {
   get_location("cat", capable->cat_cmd, PATH_MAX);
   get_location("echo", capable->echo_cmd, PATH_MAX);
   get_location("eject", capable->eject_cmd, PATH_MAX);
-      
+
   capable->wm_name = NULL;
   capable->wm_type = NULL;
 
@@ -3025,7 +3023,7 @@ capability *get_capabilities(void) {
 
   lives_snprintf(capable->backend_path, PATH_MAX, "%s", (tmp = lives_find_program_in_path(BACKEND_NAME)));
   lives_free(tmp);
-  if (strlen(capable->backend_path) == 0) return capable;
+  if (!*capable->backend_path) return capable;
   capable->has_smogrify = PRESENT;
 
   if (!mainw->has_session_workdir) {
@@ -3074,7 +3072,7 @@ capability *get_capabilities(void) {
 
   lives_strfreev(array);
   capable->smog_version_correct = TRUE;
-  
+
   lives_snprintf(command, PATH_MAX * 4, "%s report -", prefs->backend_sync);
 
   // check_settings:
@@ -3206,13 +3204,13 @@ capability *get_capabilities(void) {
       prefs->startup_phase = -1;
     }
 
-    if (strlen(mainw->old_vhash) > 0 && strcmp(mainw->old_vhash, "0")) {
+    if (*mainw->old_vhash && strcmp(mainw->old_vhash, "0")) {
       if (atoi(mainw->old_vhash) < atoi(mainw->version_hash)) {
         if (prefs->startup_phase == 0) {
           msg = get_upd_msg();
           lives_snprintf(capable->startup_msg, 1024, "%s", msg);
           lives_free(msg);
-          if (numtok > 4 && strlen(array[4])) {
+          if (numtok > 4 && *array[4]) {
             lives_strappend(capable->startup_msg, 1024, array[4]);
 	    // *INDENT-OFF*
           }}}}}
@@ -3587,7 +3585,7 @@ static boolean lives_startup(livespointer data) {
 
   get_string_pref(PREF_VID_PLAYBACK_PLUGIN, buff, 256);
 
-  if (strlen(buff) && strcmp(buff, "(null)") && strcmp(buff, "none")) {
+  if (*buff && strcmp(buff, "(null)") && strcmp(buff, "none")) {
     mainw->vpp = open_vid_playback_plugin(buff, TRUE);
   } else if (prefs->startup_phase == 3) {
     mainw->vpp = open_vid_playback_plugin(DEFAULT_VPP, TRUE);
@@ -3828,7 +3826,7 @@ static boolean lives_startup(livespointer data) {
   }
 
   // splash_end() will start up multitrack if in STARTUP_MT mode
-  if (strlen(start_file) && strcmp(start_file, "-")) {
+  if (*start_file && strcmp(start_file, "-")) {
     splash_end();
     deduce_file(start_file, start, end);
     got_files = TRUE;
@@ -3893,7 +3891,7 @@ static boolean lives_startup2(livespointer data) {
   }
 
 #ifdef HAVE_YUV4MPEG
-  if (strlen(prefs->yuvin) > 0) lives_idle_add_simple(open_yuv4m_startup, NULL);
+  if (*prefs->yuvin) lives_idle_add_simple(open_yuv4m_startup, NULL);
 #endif
 
   mainw->no_switch_dprint = TRUE;
@@ -3938,15 +3936,13 @@ static boolean lives_startup2(livespointer data) {
       mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
     }
   }
+
   mainw->go_away = FALSE;
-  if (!mainw->multitrack) {
-    sensitize();
-  }
+  if (!mainw->multitrack) sensitize();
+
   if (prefs->vj_mode) {
-    char *wid =
-      lives_strdup_printf("0x%08lx",
-                          (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow
-                              (LIVES_MAIN_WINDOW_WIDGET)));
+    char *wid = lives_strdup_printf("0x%08lx",
+                                    (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET)));
     if (wid) activate_x11_window(wid);
   }
   if (mainw->recording_recovered) {
@@ -4257,7 +4253,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
     } else if (!strcmp(argv[1], "-help") || !strcmp(argv[1], "--help")) {
       char string[256];
       get_location(EXEC_PLAY, string, 256);
-      if (strlen(string)) capable->has_sox_play = TRUE;
+      if (*string) capable->has_sox_play = TRUE;
 
       capable->myname_full = lives_find_program_in_path(argv[0]);
 
@@ -4391,11 +4387,11 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           }
 
           lives_snprintf(prefs->config_datadir, PATH_MAX, "%s", optarg);
-	  ign_opts.ign_config_datadir = TRUE;
+          ign_opts.ign_config_datadir = TRUE;
           continue;
         }
 
-	if (!strcmp(charopt, "configfile")) {
+        if (!strcmp(charopt, "configfile")) {
           if (!*optarg) {
             do_abortblank_error(charopt);
             continue;
@@ -4414,7 +4410,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           }
 
           lives_snprintf(prefs->configfile, PATH_MAX, "%s", optarg);
-	  ign_opts.ign_configfile = TRUE;
+          ign_opts.ign_configfile = TRUE;
           continue;
         }
 
@@ -4551,8 +4547,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           get_basename(devmap);
           if (!strcmp(devmap, devmap2)) {
             dir = lives_build_filename(prefs->config_datadir, LIVES_DEVICEMAP_DIR, NULL);
-          }
-	  else dir = get_dir(devmap);
+          } else dir = get_dir(devmap);
           lives_snprintf(devmap, PATH_MAX, "%s", (tmp = lives_build_filename(dir, devmap, NULL)));
           lives_free(tmp);
           lives_free(dir);
@@ -5095,7 +5090,7 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->load_audio, TRUE);
   lives_widget_set_sensitive(mainw->load_subs, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->erase_subs, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->subt != NULL);
-  if (capable->has_cdda2wav && strlen(prefs->cdplay_device)) lives_widget_set_sensitive(mainw->load_cdtrack, TRUE);
+  if (capable->has_cdda2wav && *prefs->cdplay_device) lives_widget_set_sensitive(mainw->load_cdtrack, TRUE);
   lives_widget_set_sensitive(mainw->rename, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && !cfile->opening);
   lives_widget_set_sensitive(mainw->change_speed, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   if (!prefs->vj_mode)

@@ -4240,13 +4240,13 @@ boolean check_file(const char *file_name, boolean check_existing) {
     // check if file exists
     if (lives_file_test(lfile_name, LIVES_FILE_TEST_EXISTS)) {
       if (check_existing) {
-	msg = lives_strdup_printf(_("\n%s\nalready exists.\n\nOverwrite ?\n"), file_name);
-	if (!do_warning_dialog(msg)) {
-	  lives_free(msg);
-	  lives_free(lfile_name);
-	  return FALSE;
-	}
-	lives_free(msg);
+        msg = lives_strdup_printf(_("\n%s\nalready exists.\n\nOverwrite ?\n"), file_name);
+        if (!do_warning_dialog(msg)) {
+          lives_free(msg);
+          lives_free(lfile_name);
+          return FALSE;
+        }
+        lives_free(msg);
       }
       check = open(lfile_name, O_WRONLY);
       exists = TRUE;
@@ -4260,13 +4260,13 @@ boolean check_file(const char *file_name, boolean check_existing) {
       LiVESResponseType resp = LIVES_RESPONSE_NONE;
       mainw->error = TRUE;
       if (mainw && mainw->is_ready) {
-	if (errno == EACCES)
-	  resp = do_file_perm_error(lfile_name, TRUE);
-	else
-	  resp = do_write_failed_error_s_with_retry(lfile_name, NULL);
-	if (resp == LIVES_RESPONSE_RETRY) {
-	  continue;
-	}
+        if (errno == EACCES)
+          resp = do_file_perm_error(lfile_name, TRUE);
+        else
+          resp = do_write_failed_error_s_with_retry(lfile_name, NULL);
+        if (resp == LIVES_RESPONSE_RETRY) {
+          continue;
+        }
       }
       lives_free(lfile_name);
       return FALSE;

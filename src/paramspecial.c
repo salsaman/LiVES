@@ -109,7 +109,7 @@ void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
       if (rfx->status == RFX_STATUS_WEED) {
         if (mainw->multitrack) {
           if (rfx->params[pnum].multi == PVAL_MULTI_PER_CHANNEL) {
-	    /// handling for "value per channel" parameters in multitrack
+            /// handling for "value per channel" parameters in multitrack
             if ((rfx->params[pnum].hidden & HIDDEN_MULTI) == HIDDEN_MULTI) {
               if (mainw->multitrack->track_index != -1) {
                 rfx->params[pnum].hidden ^= HIDDEN_MULTI; // multivalues allowed
@@ -616,7 +616,7 @@ boolean check_filewrite_overwrites(void) {
       if (param->edited) {
         // check for overwrite
         if (LIVES_IS_ENTRY(param->widgets[0])) {
-          if (strlen(lives_entry_get_text(LIVES_ENTRY(param->widgets[0])))) {
+          if (*(lives_entry_get_text(LIVES_ENTRY(param->widgets[0])))) {
             if (!check_file(lives_entry_get_text(LIVES_ENTRY(param->widgets[0])), TRUE)) {
               return FALSE;
 	      // *INDENT-OFF*

@@ -2935,7 +2935,7 @@ _entryw *create_rename_dialog(int type) {
       renamew->entry = lives_standard_entry_new(NULL, NULL, -1, -1, LIVES_BOX(hbox), NULL);
       lives_entry_set_max_length(LIVES_ENTRY(renamew->entry), type == 6 ? PATH_MAX
                                  : type == 7 ? 16 : 128);
-      if (type == 2 && strlen(mainw->set_name)) {
+      if (type == 2 && *mainw->set_name) {
         lives_entry_set_text(LIVES_ENTRY(renamew->entry), (tmp = F2U8(mainw->set_name)));
         lives_free(tmp);
       }
@@ -3955,7 +3955,7 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
 
   /// TODO: only do this for directory mode, blank text is valid filename
   if (is_dir) {
-  /// if no text, we look instead in def_dir (if present)
+    /// if no text, we look instead in def_dir (if present)
     if (!*fname) {
       lives_free(fname);
       fname = def_dir;
@@ -3985,9 +3985,9 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
     if (strcmp(dirname, fname)) {
       /// apply extra validity checks (check writeable, warn if set to home dir, etc)
       if (check_workdir_valid(&dirname, LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))),
-			      FALSE) == LIVES_RESPONSE_RETRY) {
-	lives_free(dirname);
-	dirname = lives_strdup(fname);
+                              FALSE) == LIVES_RESPONSE_RETRY) {
+        lives_free(dirname);
+        dirname = lives_strdup(fname);
       }
     }
     break;
@@ -4001,7 +4001,7 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
     get_dirname(dirnamex);
     get_basename(fnamex);
 
-    if (!is_dir && !filt && strlen(fnamex)) {
+    if (!is_dir && !filt && *fnamex) {
       /// for save and not is_dir, we break filename into directory, filename components
       /// and set a filter with the filename extension (can be overridden by setting FILTER_KEY)
       char *tmp;
@@ -4019,7 +4019,7 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
       lives_free(filt);
     }
   }
-    break;
+  break;
 
   default: {
     /// other types get a filechooser with preview
@@ -4043,7 +4043,7 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
 
   /// update text widget
   if (LIVES_IS_ENTRY(tentry)) lives_entry_set_text(LIVES_ENTRY(tentry),
-						   (tmp = lives_filename_to_utf8(dirname, -1, NULL, NULL, NULL)));
+        (tmp = lives_filename_to_utf8(dirname, -1, NULL, NULL, NULL)));
   else lives_text_view_set_text(LIVES_TEXT_VIEW(tentry), (tmp = lives_filename_to_utf8(dirname, -1, NULL, NULL, NULL)), -1);
   lives_free(tmp); lives_free(dirname);
 
@@ -4341,7 +4341,7 @@ _entryw *create_cds_dialog(int type) {
   cdsw->warn_checkbutton = NULL;
 
   if (type == 0) {
-    if (strlen(mainw->multitrack->layout_name) == 0) {
+    if (!*mainw->multitrack->layout_name) {
       labeltext = lives_strdup(
                     _("You are about to leave multitrack mode.\n"
                       "The current layout has not been saved.\nWhat would you like to do ?\n"));
@@ -4417,24 +4417,24 @@ _entryw *create_cds_dialog(int type) {
   discardbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(cdsw->dialog), LIVES_STOCK_DELETE, NULL,
                   (type == 2) ? LIVES_RESPONSE_ABORT : LIVES_RESPONSE_RETRY);
 
-  if ((type == 0 && strlen(mainw->multitrack->layout_name) == 0) || type == 3 || type == 4)
-    lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Wipe layout"));
-  else if (type == 0) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Ignore changes"));
-  else if (type == 1) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete clip set"));
-  else if (type == 2) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete layout"));
+  if ((type == 0 && !*mainw->multitrack->layout_name || type == 3 || type == 4)
+      lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Wipe layout"));
+      else if (type == 0) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Ignore changes"));
+        else if (type == 1) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete clip set"));
+          else if (type == 2) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete layout"));
 
-  if (type != 4) savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(cdsw->dialog), LIVES_STOCK_SAVE, NULL,
-                                (type == 2) ? LIVES_RESPONSE_RETRY : LIVES_RESPONSE_ABORT);
-  if (type == 0 || type == 3) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Save layout"));
-  else if (type == 1) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Save clip set"));
-  else if (type == 2) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Wipe layout"));
-  if (type == 1 || type == 2) lives_button_grab_default_special(savebutton);
+            if (type != 4) savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(cdsw->dialog), LIVES_STOCK_SAVE, NULL,
+                                          (type == 2) ? LIVES_RESPONSE_RETRY : LIVES_RESPONSE_ABORT);
+              if (type == 0 || type == 3) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Save layout"));
+                else if (type == 1) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Save clip set"));
+                  else if (type == 2) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Wipe layout"));
+                    if (type == 1 || type == 2) lives_button_grab_default_special(savebutton);
 
-  lives_widget_show_all(cdsw->dialog);
+                      lives_widget_show_all(cdsw->dialog);
 
-  if (type == 1) {
-    lives_widget_grab_focus(cdsw->entry);
-  }
+                  if (type == 1) {
+                    lives_widget_grab_focus(cdsw->entry);
+                    }
 
   if (!LIVES_IS_INTERACTIVE) lives_widget_set_sensitive(cancelbutton, FALSE);
 
@@ -4624,7 +4624,7 @@ static void pair_add(LiVESWidget * table, const char *key, const char *meaning) 
       labelk = lives_standard_hseparator_new();
       key_all = TRUE;
     } else {
-      if (strlen(meaning) > 0) {
+      if (*meaning) {
         // NULL, meaning -> centered meaning; hsep key
         pair_add(table, meaning, "");
         pair_add(table, NULL, "");
@@ -4636,13 +4636,13 @@ static void pair_add(LiVESWidget * table, const char *key, const char *meaning) 
       }
     }
   } else {
-    if (strlen(key) == 0) {
+    if (!*key) {
       // "", NULL -> hsep meaning
       if (!meaning) {
         labelk = lives_standard_label_new("");
         labelm = lives_standard_hseparator_new();
       } else {
-        if (strlen(meaning) == 0) {
+        if (!*meaning) {
           //// "", "" -> newline
           labelk = lives_standard_label_new("");
           labelm = lives_standard_label_new("");
@@ -4661,7 +4661,7 @@ static void pair_add(LiVESWidget * table, const char *key, const char *meaning) 
         key_all = TRUE;
       } else {
         // key, meaning ->  key | meaning
-        if (strlen(meaning) > 0) {
+        if (*meaning) {
           labelk = lives_standard_label_new(key);
           labelm = lives_standard_label_new(meaning);
         } else {
@@ -5305,7 +5305,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 
     ///////
 
-    if (!strlen(lives_entry_get_text(LIVES_ENTRY(name_entry)))) {
+    if (!*lives_entry_get_text(LIVES_ENTRY(name_entry))) {
       do_error_dialog(_("Please enter the name of the file to save the downloaded clip as.\n"));
       continue;
     }
@@ -5427,7 +5427,7 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
 
   LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
 
-  if (strlen(mainw->msg) < 10) return FALSE;
+  if (lives_strlen(mainw->msg) < 10) return FALSE;
   numlines = get_token_count(mainw->msg, '|');
   if (numlines < 2) return FALSE;
   lines = lives_strsplit(mainw->msg, "|", numlines);
@@ -5513,7 +5513,7 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
     pdone = 0;
 
     for (j = 0; j < npieces; j++) {
-      if (pdone < 3 && strlen(pieces[j]) == 0) continue;
+      if (pdone < 3 && !*pieces[j]) continue;
 
       if (pdone == 0) {
         // id no
@@ -5580,7 +5580,7 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
 
     lives_strfreev(pieces);
 
-    slen = strlen(notes);
+    slen = lives_strlen(notes);
     // strip trailing newline
     if (slen > 0 && notes[slen - 1] == '\n') notes[slen - 1] = 0;
 

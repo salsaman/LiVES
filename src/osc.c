@@ -6256,7 +6256,7 @@ boolean lives_osc_cb_rte_listpconnection(void *context, int arglen, const void *
 
   msg = pconx_list(okey, omode, opnum);
 
-  if (strlen(msg) == 0) {
+  if (!*msg) {
     lives_free(msg);
     msg = lives_strdup("0 0 0 0");
   }
@@ -6351,7 +6351,7 @@ boolean lives_osc_cb_rte_listcconnection(void *context, int arglen, const void *
 
   msg = cconx_list(okey, omode, ocnum);
 
-  if (strlen(msg) == 0) {
+  if (!*msg) {
     lives_free(msg);
     msg = lives_strdup("0 0 0");
   }
@@ -6503,7 +6503,7 @@ boolean lives_osc_cb_loadset(void *context, int arglen, const void *vargs, OSCTi
 
   if (LIVES_IS_PLAYING) return lives_osc_notify_failure();
 
-  if (strlen(mainw->set_name) > 0) return lives_osc_notify_failure();
+  if (*mainw->set_name) return lives_osc_notify_failure();
 
   if (!lives_osc_check_arguments(arglen, vargs, "s", TRUE)) {
     return lives_osc_notify_failure();
@@ -6565,7 +6565,7 @@ boolean lives_osc_cb_saveset(void *context, int arglen, const void *vargs, OSCTi
     lives_osc_parse_string_argument(vargs, setname);
   }
 
-  if (strlen(setname) == 0) {
+  if (!*setname) {
     mainw->only_close = TRUE;
     ret = on_save_set_activate((LiVESWidget *)1, NULL);
     mainw->only_close = FALSE;

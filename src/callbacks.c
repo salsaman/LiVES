@@ -956,11 +956,11 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
       lives_rmdir(xdir, TRUE);
       lives_free(xdir);
       do {
-	resp = LIVES_RESPONSE_NONE;
-	if (!lives_make_writeable_dir(ddir)) {
-	  resp = do_dir_perm_error(ddir, TRUE);
-	  if (resp == LIVES_RESPONSE_CANCEL) goto cleanup_ut;
-	}
+        resp = LIVES_RESPONSE_NONE;
+        if (!lives_make_writeable_dir(ddir)) {
+          resp = do_dir_perm_error(ddir, TRUE);
+          if (resp == LIVES_RESPONSE_CANCEL) goto cleanup_ut;
+        }
       } while (resp == LIVES_RESPONSE_RETRY);
     }
   } else ddir = req->save_dir;
@@ -6180,7 +6180,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
 
   do {
     resp = LIVES_RESPONSE_NONE;
-    if (!lives_make_writeable_dir(full_trashdir) ||!check_dir_access(full_trashdir, TRUE)) {
+    if (!lives_make_writeable_dir(full_trashdir) || !check_dir_access(full_trashdir, TRUE)) {
       resp = do_dir_perm_error(full_trashdir, TRUE);
       if (resp == LIVES_RESPONSE_CANCEL) goto cleanup;
     }

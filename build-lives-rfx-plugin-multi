@@ -6,8 +6,13 @@
 #########################################################
 
 my $smogcmd = "smogrify";
-my $home_dir_extra = "/.lives-dir/plugins/effects/";
+
+## TODO - should be passed as args
+#my $home_dir_extra = "/.lives-dir/plugins/effects/";
+my $home_dir_extra = "/.local/share/lives/plugins/effects/";
 my $dir_extra = "/lives/plugins/effects/";
+
+
 my $builder = "build-lives-rfx-plugin";
 
 my $type="builtin"; # default

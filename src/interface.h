@@ -27,7 +27,7 @@
 boolean update_dsu(void *lab);
 
 void draw_little_bars(double ptrtime, int which);
-double lives_ce_update_timeline(int frame, double x);  ///< pointer position in timeline
+double lives_ce_update_timeline(frames_t frame, double x);  ///< pointer position in timeline
 void update_timer_bars(int posx, int posy, int width, int height, int which); ///< draw the timer bars
 void redraw_timer_bars(double oldx, double newx, int which); ///< paint a damage region
 void show_playbar_labels(int clipno);
@@ -40,13 +40,13 @@ boolean expose_msg_area(LiVESWidget *, lives_painter_t *, livespointer user_data
 boolean msg_area_config(LiVESWidget *);
 boolean reshow_msg_area(LiVESWidget *, lives_painter_t *, livespointer user_data);
 
-boolean expose_vid_draw(LiVESWidget *widget, lives_painter_t *cr, livespointer psurf);
-boolean expose_laud_draw(LiVESWidget *widget, lives_painter_t *cr, livespointer psurf);
-boolean expose_raud_draw(LiVESWidget *widget, lives_painter_t *cr, livespointer psurf);
+boolean expose_vid_draw(LiVESWidget *, lives_painter_t *, livespointer psurf);
+boolean expose_laud_draw(LiVESWidget *, lives_painter_t *, livespointer psurf);
+boolean expose_raud_draw(LiVESWidget *, lives_painter_t *, livespointer psurf);
 
-boolean config_vid_draw(LiVESWidget *widget, LiVESXEventConfigure *event, livespointer user_data);
-boolean config_laud_draw(LiVESWidget *widget, LiVESXEventConfigure *event, livespointer user_data);
-boolean config_raud_draw(LiVESWidget *widget, LiVESXEventConfigure *event, livespointer user_data);
+boolean config_vid_draw(LiVESWidget *, LiVESXEventConfigure *, livespointer user_data);
+boolean config_laud_draw(LiVESWidget *, LiVESXEventConfigure *, livespointer user_data);
+boolean config_raud_draw(LiVESWidget *, LiVESXEventConfigure *, livespointer user_data);
 
 void clear_tbar_bgs(int posx, int posy, int width, int height, int which);
 
@@ -56,7 +56,7 @@ LiVESWidget *create_opensel_dialog(int frames, double fps);
 
 LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, boolean opt_resize);
 
-void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *for_button,
+void widget_add_preview(LiVESWidget *, LiVESBox *for_preview, LiVESBox *for_button,
                         LiVESBox *for_deinterlace, int preview_type);  ///< for fileselector preview
 
 /// window change speed from Tools menu
@@ -72,7 +72,7 @@ LiVESWidget *create_cleardisk_advanced_dialog(void);
 
 LiVESWidget *make_autoreload_check(LiVESHBox *parent, boolean is_active);
 
-LiVESWidget *add_list_expander(LiVESBox *box, const char *title, int width, int height, LiVESList *xlist);
+LiVESWidget *add_list_expander(LiVESBox *, const char *title, int width, int height, LiVESList *xlist);
 
 typedef struct {
   LiVESWidget *dialog;
@@ -129,7 +129,7 @@ typedef struct __commentsw {
   LiVESWidget *subt_entry;
 } _commentsw;
 
-_commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename);
+_commentsw *create_comments_dialog(lives_clip_t *, char *filename);
 
 typedef struct {
   LiVESWidget *dialog;
@@ -181,6 +181,7 @@ typedef struct {
 #define LIVES_FILE_SELECTION_SAVE 6
 
 #define LIVES_DIR_SELECTION_WORKDIR 1024
+#define LIVES_DIR_SELECTION_DEVICES 1025
 
 aud_dialog_t *create_audfade_dialog(int type);
 LiVESWidget *create_combo_dialog(int type, LiVESList *list);
@@ -211,30 +212,28 @@ typedef struct {
 autolives_window *autolives_pre_dialog(void);
 
 LiVESTextView *create_output_textview(void);
+
+void on_filesel_button_clicked(LiVESButton *, livespointer);
+
 char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act, const char *title,
                   LiVESWidget *extra);
 char *choose_file_bg(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act, const char *title,
                      LiVESWidget *extra);
 LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char **const filt, int preview_type);
-void add_suffix_check(LiVESBox *box, const char *ext);
+
+void add_suffix_check(LiVESBox *, const char *ext);
 
 const lives_special_aspect_t *add_aspect_ratio_button(LiVESSpinButton *sp_width, LiVESSpinButton *sp_height,
     LiVESBox *container);
-
-_commentsw *commentsw;
-_entryw *renamew;
-_entryw *locw;
-_insertw *insertw;
-text_window *textwindow;
 
 #define DEF_AUD_FADE_SECS 10. ///< default time to offer fade audio in/out for
 
 #define MIN_MSGBOX_WIDTH ((int)(620. * widget_opts.scale))
 
 // textboxes for clip info
-#define TB_WIDTH ((int)(200.*widget_opts.scale))
-#define TB_HEIGHT_VID ((int)(80.*widget_opts.scale))
-#define TB_HEIGHT_AUD ((int)(50.*widget_opts.scale))
+#define TB_WIDTH ((int)(200. * widget_opts.scale))
+#define TB_HEIGHT_VID ((int)(80. * widget_opts.scale))
+#define TB_HEIGHT_AUD ((int)(50. * widget_opts.scale))
 
 typedef enum {
   LIVES_MATCH_UNDEFINED = 0,
@@ -264,7 +263,7 @@ typedef struct {
   // TODO: add audio bitrate ?, audio_lang, get_sub, sub_format, sub_language, etc.
 } lives_remote_clip_request_t;
 
-lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req);
+lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *);
 boolean youtube_select_format(lives_remote_clip_request_t *);
 
 typedef struct {
@@ -293,7 +292,7 @@ typedef struct {
 } _dsquotaw;
 
 void run_diskspace_dialog(void);
-void run_diskspace_dialog_cb(LiVESWidget *w, livespointer data);
+void run_diskspace_dialog_cb(LiVESWidget *, livespointer data);
 
 LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiVESList **rem_list,
                                  LiVESList **left_list);
@@ -301,5 +300,11 @@ LiVESResponseType filter_cleanup(const char *trashdir, LiVESList **rec_list, LiV
 LiVESWidget *trash_rb(LiVESButtonBox *parent);
 
 void draw_dsu_widget(LiVESWidget *dsu_widget);
+
+_commentsw *commentsw;
+_entryw *renamew;
+_entryw *locw;
+_insertw *insertw;
+text_window *textwindow;
 
 #endif

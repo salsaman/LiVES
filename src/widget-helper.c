@@ -9926,12 +9926,10 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
     LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
     LiVESWidget *cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-                                LIVES_STOCK_CANCEL, NULL,
-                                LIVES_RESPONSE_CANCEL);
+                                LIVES_STOCK_CANCEL, NULL, LIVES_RESPONSE_CANCEL);
 
     LiVESWidget *okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-                            LIVES_STOCK_OK, NULL,
-                            LIVES_RESPONSE_OK);
+                            LIVES_STOCK_OK, NULL, LIVES_RESPONSE_OK);
 
     lives_button_grab_default_special(okbutton);
 
@@ -9965,10 +9963,6 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   if (!widget_opts.non_modal)
     lives_window_set_resizable(LIVES_WINDOW(dialog), FALSE);
 
-  /* lives_widget_show_all(dialog); */
-  /* lives_widget_context_update(); */
-  /* lives_widget_set_sensitive(dialog, TRUE); */
-
   return dialog;
 }
 
@@ -9999,7 +9993,7 @@ static LiVESWidget *lives_standard_dfentry_new(const char *labeltext, const char
   LiVESWidget *direntry = NULL;
   LiVESWidget *buttond;
 
-  if (box == NULL) return NULL;
+  if (!box) return NULL;
 
   direntry = lives_standard_entry_new(labeltext, txt, dispwidth, maxchars == -1 ? PATH_MAX : maxchars, box, tooltip);
   lives_entry_set_editable(LIVES_ENTRY(direntry), FALSE);
@@ -10307,7 +10301,9 @@ LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer * tb
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir) {
   LiVESWidget *fbutton;
   LiVESWidget *image = lives_image_new_from_stock(LIVES_STOCK_OPEN, LIVES_ICON_SIZE_BUTTON);
-  fbutton = lives_standard_button_new(DEF_BUTTON_WIDTH / 4, DEF_BUTTON_HEIGHT);
+
+  /// height X height is correct
+  fbutton = lives_standard_button_new(DEF_BUTTON_HEIGHT, DEF_BUTTON_HEIGHT);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fbutton), ISDIR_KEY, LIVES_INT_TO_POINTER(is_dir));
   if (def_dir) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fbutton), DEFDIR_KEY, (livespointer)def_dir);
   lives_standard_button_set_image(LIVES_BUTTON(fbutton), image);
@@ -10752,6 +10748,7 @@ boolean widget_helper_init(void) {
   lives_snprintf(LIVES_STOCK_LABEL_QUIT, 32, "%s", (_("_Quit")));
   lives_snprintf(LIVES_STOCK_LABEL_APPLY, 32, "%s", (_("_Apply")));
   lives_snprintf(LIVES_STOCK_LABEL_CLOSE, 32, "%s", (_("_Close")));
+  lives_snprintf(LIVES_STOCK_LABEL_CLOSE_WINDOW, 32, "%s", (_("_Close Window")));
   lives_snprintf(LIVES_STOCK_LABEL_REVERT, 32, "%s", (_("_Revert")));
   lives_snprintf(LIVES_STOCK_LABEL_REFRESH, 32, "%s", (_("_Refresh")));
   lives_snprintf(LIVES_STOCK_LABEL_DELETE, 32, "%s", (_("_Delete")));
@@ -10950,7 +10947,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_cursor_unref(LiVESXCursor * cursor) {
 
 
 void lives_widget_apply_theme(LiVESWidget * widget, LiVESWidgetState state) {
-  if ((palette->style & STYLE_1) && !widget_opts.apply_theme) return;
+  if (!palette || ((palette->style & STYLE_1) && !widget_opts.apply_theme)) return;
   lives_widget_set_fg_color(widget, state, &palette->normal_fore);
   lives_widget_set_bg_color(widget, state, &palette->normal_back);
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -11857,14 +11854,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean unhide_cursor(LiVESXWindow * window) {
 ///#define USE_REVEAL - not working here
 void funkify_dialog(LiVESWidget * dialog) {
   if (prefs->funky_widgets) {
-#ifdef USE_REVEAL
-    LiVESWidget *frame = gtk_revealer_new();
-    gtk_revealer_set_transition_duration(GTK_REVEALER(frame), 20000);
-    gtk_revealer_set_transition_type(GTK_REVEALER(frame), GTK_REVEALER_TRANSITION_TYPE_SLIDE_UP);
-    gtk_revealer_set_reveal_child(GTK_REVEALER(frame), FALSE);
-#else
     LiVESWidget *frame = lives_standard_frame_new(NULL, 0., FALSE);
-#endif
     LiVESWidget *box = lives_vbox_new(FALSE, 0);
     LiVESWidget *content = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
     LiVESWidget *action = lives_dialog_get_action_area(LIVES_DIALOG(dialog));

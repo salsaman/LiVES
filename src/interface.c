@@ -2924,6 +2924,11 @@ _entryw *create_rename_dialog(int type) {
       renamew->entry = lives_standard_direntry_new("", (tmp = F2U8(workdir)),
                        LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
                        (tmp2 = (_("LiVES working directory."))));
+
+      //dirbutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label)); */
+      /* lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dirbutton), FILESEL_TYPE_KEY, */
+      /* 				   LIVES_DIR_SELECTION_WORKDIR)); */
+
       lives_free(tmp);
       lives_free(workdir);
     } else {
@@ -3904,9 +3909,153 @@ static void chooser_check_dir(LiVESFileChooser * chooser, livespointer user_data
 }
 
 
-/* LIVES_INLINE void chooser_response(LiVESWidget *widget, int response, livespointer udata) { */
-/*   mainw->fc_buttonresponse = response; */
-/* } */
+/**
+   @brief callback for lives_standard filesel button
+   same callback is used for dierctory buttons
+   object_data in button refinses the behaviousr, see code for details
+
+   such buttons may be created independently (e.g for the RFX "fileread" / "filewrite" special types
+   or via lives_standard_direntry_new() / lives_standard_fileentry_new()
+*/
+void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
+  LiVESWidget *tentry = LIVES_WIDGET(user_data);
+  lives_rfx_t *rfx;
+  char **filt = NULL;
+  char *dirname = NULL, *fname, *tmp, *def_dir = NULL;
+  boolean is_dir = TRUE, free_def_dir = FALSE;
+  int filesel_type = LIVES_FILE_SELECTION_UNDEFINED;
+
+  if (button) {
+    /// various data can be set in the button object, including:
+    /// (set in lives_standard_file_button_new())
+    /// DEFDIR_KEY (char *)
+    /// ISDIR_KEY (boolean)
+    ///
+    /// FILTER_KEY (char **)
+    /// FILESEL_TYPE_KEY (int (enum))
+
+    // selects between file mode and directory mode
+    is_dir = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), ISDIR_KEY));
+
+    // default dir for directory mode
+    def_dir = (char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), DEFDIR_KEY);
+
+    /// NULL terminated array of char * filters (file extensions)
+    filt = (char **)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), FILTER_KEY);
+
+    /// fine tunes for the file selection / dir selection target
+    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), FILESEL_TYPE_KEY)) {
+      filesel_type = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), FILESEL_TYPE_KEY));
+    }
+  }
+
+  /// take the filename from the text entry widget
+  if (LIVES_IS_TEXT_VIEW(tentry)) fname = lives_text_view_get_text(LIVES_TEXT_VIEW(tentry));
+  else fname = lives_strdup(lives_entry_get_text(LIVES_ENTRY(tentry)));
+
+  /// TODO: only do this for directory mode, blank text is valid filename
+  if (is_dir) {
+  /// if no text, we look instead in def_dir (if present)
+    if (!*fname) {
+      lives_free(fname);
+      fname = def_dir;
+    }
+  }
+
+  /// can this be removed ?
+  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+
+  switch (filesel_type) {
+  case LIVES_FILE_SELECTION_UNDEFINED:
+    if (!is_dir && *fname && (!def_dir || !(*def_dir))) {
+      def_dir = get_dir(fname);
+      free_def_dir = TRUE;
+    }
+
+    dirname = choose_file(is_dir ? fname : def_dir, is_dir ? NULL : fname, filt,
+                          is_dir ? LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER :
+                          (fname == def_dir && def_dir && !lives_strcmp(def_dir, LIVES_DEVICE_DIR))
+                          ? LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE :
+                          LIVES_FILE_CHOOSER_ACTION_OPEN, NULL, NULL);
+    break;
+
+  case LIVES_DIR_SELECTION_WORKDIR:
+    dirname = choose_file(fname, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER, NULL, NULL);
+
+    if (strcmp(dirname, fname)) {
+      /// apply extra validity checks (check writeable, warn if set to home dir, etc)
+      if (check_workdir_valid(&dirname, LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))),
+			      FALSE) == LIVES_RESPONSE_RETRY) {
+	lives_free(dirname);
+	dirname = lives_strdup(fname);
+      }
+    }
+    break;
+  case LIVES_FILE_SELECTION_SAVE: {
+    char fnamex[PATH_MAX], dirnamex[PATH_MAX];
+    boolean free_filt = FALSE;
+
+    lives_snprintf(dirnamex, PATH_MAX, "%s", fname);
+    lives_snprintf(fnamex, PATH_MAX, "%s", fname);
+
+    get_dirname(dirnamex);
+    get_basename(fnamex);
+
+    if (!is_dir && !filt && strlen(fnamex)) {
+      /// for save and not is_dir, we break filename into directory, filename components
+      /// and set a filter with the filename extension (can be overridden by setting FILTER_KEY)
+      char *tmp;
+      filt = (char **)lives_malloc(2 * sizeof(char *));
+      filt[0] = lives_strdup_printf("*.%s", (tmp = get_extension(fnamex)));
+      filt[1] = NULL;
+      free_filt = TRUE;
+      lives_free(tmp);
+    }
+
+    dirname = choose_file(def_dir ? def_dir : dirnamex, fnamex, filt, LIVES_FILE_CHOOSER_ACTION_SAVE, NULL, NULL);
+
+    if (free_filt) {
+      lives_free(filt[0]);
+      lives_free(filt);
+    }
+  }
+    break;
+
+  default: {
+    /// other types get a filechooser with preview
+    LiVESWidget *chooser = choose_file_with_preview(def_dir, fname, filt, filesel_type);
+    int resp = lives_dialog_run(LIVES_DIALOG(chooser));
+
+    end_fs_preview();
+
+    if (resp == LIVES_RESPONSE_ACCEPT) {
+      dirname = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
+    }
+    lives_widget_destroy(LIVES_WIDGET(chooser));
+  }
+  }
+
+  if (fname && fname != def_dir) lives_free(fname);
+  if (free_def_dir) lives_free(def_dir);
+
+  /// we set dirname in both file mode and dir mode
+  if (!dirname) return;
+
+  /// update text widget
+  if (LIVES_IS_ENTRY(tentry)) lives_entry_set_text(LIVES_ENTRY(tentry),
+						   (tmp = lives_filename_to_utf8(dirname, -1, NULL, NULL, NULL)));
+  else lives_text_view_set_text(LIVES_TEXT_VIEW(tentry), (tmp = lives_filename_to_utf8(dirname, -1, NULL, NULL, NULL)), -1);
+  lives_free(tmp); lives_free(dirname);
+
+  if ((rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tentry), "rfx")) != NULL) {
+    /// if running inside a parameter window, reflect update in related paramter values
+    int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tentry), "param_number"));
+    after_param_text_changed(tentry, rfx);
+
+    /// set to FALSE since no unapplied edits have been made
+    rfx->params[param_number].edited = FALSE;
+  }
+}
 
 
 char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act,

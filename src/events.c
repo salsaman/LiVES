@@ -5451,7 +5451,6 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
 
       for (i = 0; propnames[i]; i++) {
         if (!strcmp(propnames[i], WEED_LEAF_TYPE) || !strcmp(propnames[i], WEED_LEAF_EVENT_TYPE) ||
-            !strcmp(propnames[i], WEED_LEAF_HINT) ||
             !lives_strcmp(propnames[i], WEED_LEAF_TIMECODE) || !strncmp(propnames[i], "host_", 5)) {
           lives_free(propnames[i]);
           continue;

@@ -174,7 +174,7 @@
 #define DLG_BUTTON_HEIGHT (widget_opts.css_min_height * 3)
 
 #define DEF_BUTTON_WIDTH ((int)(180. * widget_opts.scale))
-#define DEF_BUTTON_HEIGHT ((int)((double)widget_opts.css_min_height * 2.5))
+#define DEF_BUTTON_HEIGHT ((((widget_opts.css_min_height >> 1) + 2) >> 1) << 3)
 
 #define DEF_DIALOG_WIDTH RFX_WINSIZE_H
 #define DEF_DIALOG_HEIGHT RFX_WINSIZE_V
@@ -485,7 +485,7 @@ enum {
 
 #define LIVES_FILE_EXT_TAR "tar"
 #define LIVES_FILE_EXT_GZIP "gz"
-#define LIVES_FILE_EXT_TAR_GZ LIVES_FILE_EXT_TAR "."LIVES_FILE_EXT_GZIP
+#define LIVES_FILE_EXT_TAR_GZ LIVES_FILE_EXT_TAR "." LIVES_FILE_EXT_GZIP
 
 #define LIVES_FILE_EXT_SRT "srt"
 #define LIVES_FILE_EXT_SUB "sub"
@@ -539,12 +539,6 @@ enum {
 #define LIVES_CLIP_HEADER_OLD HEADER_LITERAL
 #define LIVES_CLIP_HEADER_OLD2 LIVES_CLIP_HEADER_OLD "2"
 
-#define FX_DEFS_FILENAME "fxdefs"
-#define FX_SIZES_FILENAME "fxsizes"
-
-#define FX_DEFS_VERSIONSTRING_1_1 "LiVES filter defaults file version 1.1"
-#define FX_SIZES_VERSIONSTRING_2 "LiVES generator default sizes file version 2"
-
 #define SUBS_FILENAME "subs"
 
 #define CLIP_ORDER_FILENAME "order"
@@ -573,23 +567,31 @@ enum {
 #define UNREC_LAYOUTS_DIR "unrecoverable_layouts"
 
 // directory names
+#define DATA_DIR "share/lives"
+#define LIVES_DEVICE_DIR "/dev/"
 #define LIVES_DEVNULL "/dev/null"
 
-#define DOC_DIR "/share/doc/lives-"
+// system-wide defaults in prefs->prefix_dir
 #define THEME_DIR "/share/lives/themes/"
 #define PLUGIN_SCRIPTS_DIR "/share/lives/plugins/"
 #define PLUGIN_COMPOUND_DIR "/share/lives/plugins/"
+#define DOC_DIR "/share/doc/lives-"
 #define PLUGIN_EXEC_DIR "/lives/plugins/"
 #define ICON_DIR "/share/lives/icons/"
 #define DESKTOP_ICON_DIR "/share/icons/hicolor/256x256/apps"
-#define DATA_DIR "/share/lives/"
-#define LIVES_RC_FILENAME ".lives"
-#define LIVES_CONFIG_DIR ".lives-dir/"
+
+// per-user defaults
+#define LOCAL_HOME_DIR ".local"
+#define LIVES_DEF_CONFIG_DATADIR DATA_DIR ///
+
+#define LIVES_DEF_CONFIG_DIR ".config" ///< in $HOME : used once to set configfile, and then discarded
+#define LIVES_DEF_CONFIG_FILE "settings" ///< in LIVES_DEF_CONFIG_DIR unless overridden
+
+#define STOCK_ICONS_DIR "stock-icons"
+
 #define LIVES_DEVICEMAP_DIR "devicemaps"
 #define LIVES_DEF_WORK_NAME "livesprojects"
 #define LIVES_RESOURCES_DIR "resources"
-
-#define LIVES_DEVICE_DIR "/dev/"
 
 #define LAYOUTS_DIRNAME "layouts"
 #define CLIPS_DIRNAME "clips"

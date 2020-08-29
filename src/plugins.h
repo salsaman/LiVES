@@ -109,21 +109,15 @@ LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex,
 #define PLUGIN_EFFECTS_WEED "weed"
 #define PLUGIN_WEED_FX_BUILTIN "effects/realtime/weed"
 
-LiVESList *get_plugin_result(const char *command, const char *delim,
-                             boolean allow_blanks, boolean strip);
+LiVESList *get_plugin_result(const char *command, const char *delim, boolean allow_blanks, boolean strip);
 LiVESList *plugin_request(const char *plugin_type, const char *plugin_name, const char *request);
-LiVESList *plugin_request_with_blanks(const char *plugin_type, const char *plugin_name,
-                                      const char *request);
-LiVESList *plugin_request_by_line(const char *plugin_type, const char *plugin_name,
-                                  const char *request);
-LiVESList *plugin_request_by_space(const char *plugin_type, const char *plugin_name,
-                                   const char *request);
-LiVESList *plugin_request_common(const char *plugin_type, const char *plugin_name,
-                                 const char *request, const char *delim,
+LiVESList *plugin_request_with_blanks(const char *plugin_type, const char *plugin_name, const char *request);
+LiVESList *plugin_request_by_line(const char *plugin_type, const char *plugin_name, const char *request);
+LiVESList *plugin_request_by_space(const char *plugin_type, const char *plugin_name, const char *request);
+LiVESList *plugin_request_common(const char *plugin_type, const char *plugin_name, const char *request, const char *delim,
                                  boolean allow_blanks);
 
-/// video playback plugins
-typedef boolean(*plugin_keyfunc)(boolean down, uint16_t unicode, uint16_t keymod);
+#define VPP_DEFS_FILE "vpp_defaults"
 
 typedef struct {
   // playback

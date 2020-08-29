@@ -39,7 +39,7 @@ extern "C"
 #define baderr_print(...)
 #endif
 
-#if defined _GNU_SOURCE
+#if defined __GNUC__
 #define ALLOW_UNUSED __attribute__((unused))
 #else
 #define ALLOW_UNUSED
@@ -273,6 +273,129 @@ typedef struct _lives_struct_def {
 // a static version may be copied to struct_def for a struct, this is like a normal copy
 
 #define SELF_STRUCT_TYPE "lives_struct_def_t"
+
+///// API ////////////////////
+
+
+/// the process works as follows:
+/// - call lsd_create, passing in the name of the struct, size, last field name (optional),
+/// and number of "special fields"
+/// special fields are any which have init / copy / delete functions
+/// If the struct has special_fields then:
+/// call make_special_field for each elemnt in lsd->special_fields
+/// for this it is necessary to make 1 instance of struct via normal means
+/// field values in the struct are irrelevant, the struct is only needed to get the field offsets
+/// fpr any special fields
+/// finally, call lives_struct_init, passing in lsd, pointer to struct and pointer to lsd field in
+/// the struct.
+/// This serves to finalise the lsd, and initialize field values in the struct + lsd in struct.
+///
+///
+/// the returned lives_struct_def_t can now be used as a "template" to make new structs
+/// lives_struct_new can take a static struct_def and return a new struct
+/// (this is just like lives_struct_copy, except that init_func is called on the fields
+/// instead of copy_func.)
+///
+
+/// NB. once support for substructs is added, it will possible for a single struct to cantain
+/// multiple lsd, each with its own size, last_field and special_fields
+
+static int lsd_free(const lives_struct_def_t *) ALLOW_UNUSED;
+static int lsd_unref(const lives_struct_def_t *) ALLOW_UNUSED;
+static int lsd_ref(const lives_struct_def_t *) ALLOW_UNUSED;
+static int lsd_get_refcount(const lives_struct_def_t *) ALLOW_UNUSED;
+
+// returns 1 if both struct defs have  same identifier, end_id, structtype,
+// structsize, last_field, class_data (i.e one is copy / instance of another)
+// (lives_struct_get_generation can provide more information)
+static int lsd_same_family(const lives_struct_def_t *lsd1, lives_struct_def_t *lsd2) ALLOW_UNUSED;
+
+// sets class data which will be copied to all instances from template
+// and from instance to copies.
+static void lives_struct_set_class_data(lives_struct_def_t *, void *class_data) ALLOW_UNUSED;
+static void *lives_struct_get_class_data(lives_struct_def_t *) ALLOW_UNUSED;
+
+static const lives_struct_def_t *lsd_create(const char *struct_type,
+    size_t struct_size, const char *last_field,
+    int nspecial) ALLOW_UNUSED;
+
+// function to define special fields, array elements returned from make_structdef
+// should be assigned via this function
+static lives_special_field_t *
+make_special_field(uint64_t flags, void *sample_struct, void *ptr_to_field,
+                   const char *field_name, size_t data_size,
+                   lives_field_init_cb init_func, lives_field_copy_cb copy_func,
+                   lives_field_delete_cb delete_func) ALLOW_UNUSED;
+
+// Finishes the initialisation of the lsd template (passed as the first parameter)
+// a sample instance of the struct should be created (using malloc / calloc, etc)
+// and passed as the second parameter. The sample should be freed afterwards using normal free.
+// All subsequent instances must be created with lives_struct_create or lives_struct_copy.
+// The function returns 0 on success, EINVAL if a paramter is invalid.
+// this version should be used when sruct has a field with type (lives_struct_def_t)
+static int lives_struct_init(const lives_struct_def_t *, void *thestruct,
+                             lives_struct_def_t *) ALLOW_UNUSED;
+
+// as above - this version should be used when lsd is of type (lives_struct_def_t *)
+static int lives_struct_init_p(const lives_struct_def_t *, void *thestruct,
+                               lives_struct_def_t **) ALLOW_UNUSED;
+
+/// creates a new instance fo struct. lsd can be one returned from create_lsd + lives_struct_init
+// or it can be lsd from inside another struct (cast to const)
+static void *lives_struct_create(const lives_struct_def_t *) ALLOW_UNUSED;
+
+// allocates and returns a copy of struct, calls copy_funcs, fills in lives_struct_def for copy
+// lsd must be within a struct, not a static template
+static void *lives_struct_copy(lives_struct_def_t *) ALLOW_UNUSED;
+
+// just calls lives_struct_unref
+static int lives_struct_free(lives_struct_def_t *) ALLOW_UNUSED;
+
+// decrements refcount, then if <=0 frees struct. Returns refcount (so value <=0 means struct freed)
+// returns -1 if parameter is NULL
+static int lives_struct_unref(lives_struct_def_t *) ALLOW_UNUSED;
+
+// increments refcount, returns new value. Returns 0 if paramter is NULL
+static int lives_struct_ref(lives_struct_def_t *) ALLOW_UNUSED;
+
+// returns current refcount, or 0 if NULL is passed
+static int lives_struct_get_refcount(lives_struct_def_t *) ALLOW_UNUSED;
+
+// set user data for an instance, reset for copies
+static void lives_struct_set_user_data(lives_struct_def_t *, void *data) ALLOW_UNUSED;
+static void *lives_struct_get_user_data(lives_struct_def_t *) ALLOW_UNUSED;
+
+// returns generation number, 0 for a template, 1 for instance created via lives_struct_new,
+// 2 for copy of instance, 3 for copy of copy, etc
+static int lives_struct_get_generation(lives_struct_def_t *) ALLOW_UNUSED;
+
+static uint64_t lives_struct_get_uid(lives_struct_def_t *) ALLOW_UNUSED;
+
+static const char *lives_struct_get_type(lives_struct_def_t *) ALLOW_UNUSED;
+
+static const char *lives_struct_get_last_field(lives_struct_def_t *) ALLOW_UNUSED;
+
+static uint64_t lives_struct_get_identifier(lives_struct_def_t *) ALLOW_UNUSED;
+
+static uint64_t lives_struct_get_end_id(lives_struct_def_t *) ALLOW_UNUSED;
+
+static size_t lives_struct_get_size(lives_struct_def_t *) ALLOW_UNUSED;
+
+/*
+  // set init_callback for a struct or instance, passed on to copies
+  // called after instance is made via lives_struct_new or lives_struct_copy
+  // parent struct is NULL for lives_struct_new
+  static void lives_struct_set_new_callback(lives_struct_def_t *, void *new_user_data) ALLOW_UNUSED; // TODO
+
+  // set copied callback for a struct or instance, passed on to copies
+  // called when copy is made of an instance
+  static void lives_struct_set_copied_callback(lives_struct_def_t *, void *copied_user_data) ALLOW_UNUSED; // TODO
+
+  // set destroy callback for a struct or instance, passed on to copies
+  // called when instance is about to be destroyed
+  static void lives_struct_set_destroy_callback(lives_struct_def_t *, void *destroy_user_data) ALLOW_UNUSED; // TODO
+*/
+
 
 ////// FUNCTION BODIES //////
 
@@ -1026,28 +1149,6 @@ static int lsd_same_family(const lives_struct_def_t *lsd1, lives_struct_def_t *l
   return 0;
 }
 
-/// the process works as follows:
-/// - call lsd_create, passing in the name of the struct, size, last field name (optional),
-/// and number of "special fields"
-/// special fields are any which have init / copy / delete functions
-/// If the struct has special_fields then:
-/// call make_special_field for each elemnt in lsd->special_fields
-/// for this it is necessary to make 1 instance of struct via normal means
-/// field values in the struct are irrelevant, the struct is only needed to get the field offsets
-/// fpr any special fields
-/// finally, call lives_struct_init, passing in lsd, pointer to struct and pointer to lsd field in
-/// the struct.
-/// This serves to finalise the lsd, and initialize field values in the struct + lsd in struct.
-///
-///
-/// the returned lives_struct_def_t can now be used as a "template" to make new structs
-/// lives_struct_new can take a static struct_def and return a new struct
-/// (this is just like lives_struct_copy, except that init_func is called on the fields
-/// instead of copy_func.)
-///
-
-/// NB. once support for substructs is added, it will possible for a single struct to cantain
-/// multiple lsd, each with its own size, last_field and special_fields
 
 static const lives_struct_def_t *lsd_create(const char *struct_type, size_t struct_size,
     const char *last_field, int nspecial) {
@@ -1122,103 +1223,6 @@ static const lives_struct_def_t *lsd_create(const char *struct_type, size_t stru
   return lsd;
 }
 
-///// API ////////////////////
-
-static int lsd_free(const lives_struct_def_t *) ALLOW_UNUSED;
-static int lsd_unref(const lives_struct_def_t *) ALLOW_UNUSED;
-static int lsd_ref(const lives_struct_def_t *) ALLOW_UNUSED;
-static int lsd_get_refcount(const lives_struct_def_t *) ALLOW_UNUSED;
-
-// returns 1 if both struct defs have  same identifier, end_id, structtype,
-// structsize, last_field, class_data (i.e one is copy / instance of another)
-// (lives_struct_get_generation can provide more information)
-static int lsd_same_family(const lives_struct_def_t *lsd1, lives_struct_def_t *lsd2) ALLOW_UNUSED;
-
-// sets class data which will be copied to all instances from template
-// and from instance to copies.
-static void lives_struct_set_class_data(lives_struct_def_t *, void *class_data) ALLOW_UNUSED;
-static void *lives_struct_get_class_data(lives_struct_def_t *) ALLOW_UNUSED;
-
-static const lives_struct_def_t *lsd_create(const char *struct_type,
-    size_t struct_size, const char *last_field,
-    int nspecial) ALLOW_UNUSED;
-
-// function to define special fields, array elements returned from make_structdef
-// should be assigned via this function
-static lives_special_field_t *
-make_special_field(uint64_t flags, void *sample_struct, void *ptr_to_field,
-                   const char *field_name, size_t data_size,
-                   lives_field_init_cb init_func, lives_field_copy_cb copy_func,
-                   lives_field_delete_cb delete_func) ALLOW_UNUSED;
-
-// Finishes the initialisation of the lsd template (passed as the first parameter)
-// a sample instance of the struct should be created (using malloc / calloc, etc)
-// and passed as the second parameter. The sample should be freed afterwards using normal free.
-// All subsequent instances must be created with lives_struct_create or lives_struct_copy.
-// The function returns 0 on success, EINVAL if a paramter is invalid.
-// this version should be used when sruct has a field with type (lives_struct_def_t)
-static int lives_struct_init(const lives_struct_def_t *, void *thestruct,
-                             lives_struct_def_t *) ALLOW_UNUSED;
-
-// as above - this version should be used when lsd is of type (lives_struct_def_t *)
-static int lives_struct_init_p(const lives_struct_def_t *, void *thestruct,
-                               lives_struct_def_t **) ALLOW_UNUSED;
-
-/// creates a new instance fo struct. lsd can be one returned from create_lsd + lives_struct_init
-// or it can be lsd from inside another struct (cast to const)
-static void *lives_struct_create(const lives_struct_def_t *) ALLOW_UNUSED;
-
-// allocates and returns a copy of struct, calls copy_funcs, fills in lives_struct_def for copy
-// lsd must be within a struct, not a static template
-static void *lives_struct_copy(lives_struct_def_t *) ALLOW_UNUSED;
-
-// just calls lives_struct_unref
-static int lives_struct_free(lives_struct_def_t *) ALLOW_UNUSED;
-
-// decrements refcount, then if <=0 frees struct. Returns refcount (so value <=0 means struct freed)
-// returns -1 if parameter is NULL
-static int lives_struct_unref(lives_struct_def_t *) ALLOW_UNUSED;
-
-// increments refcount, returns new value. Returns 0 if paramter is NULL
-static int lives_struct_ref(lives_struct_def_t *) ALLOW_UNUSED;
-
-// returns current refcount, or 0 if NULL is passed
-static int lives_struct_get_refcount(lives_struct_def_t *) ALLOW_UNUSED;
-
-// set user data for an instance, reset for copies
-static void lives_struct_set_user_data(lives_struct_def_t *, void *data) ALLOW_UNUSED;
-static void *lives_struct_get_user_data(lives_struct_def_t *) ALLOW_UNUSED;
-
-// returns generation number, 0 for a template, 1 for instance created via lives_struct_new,
-// 2 for copy of instance, 3 for copy of copy, etc
-static int lives_struct_get_generation(lives_struct_def_t *) ALLOW_UNUSED;
-
-static uint64_t lives_struct_get_uid(lives_struct_def_t *) ALLOW_UNUSED;
-
-static const char *lives_struct_get_type(lives_struct_def_t *) ALLOW_UNUSED;
-
-static const char *lives_struct_get_last_field(lives_struct_def_t *) ALLOW_UNUSED;
-
-static uint64_t lives_struct_get_identifier(lives_struct_def_t *) ALLOW_UNUSED;
-
-static uint64_t lives_struct_get_end_id(lives_struct_def_t *) ALLOW_UNUSED;
-
-static size_t lives_struct_get_size(lives_struct_def_t *) ALLOW_UNUSED;
-
-/*
-  // set init_callback for a struct or instance, passed on to copies
-  // called after instance is made via lives_struct_new or lives_struct_copy
-  // parent struct is NULL for lives_struct_new
-  static void lives_struct_set_new_callback(lives_struct_def_t *, void *new_user_data) ALLOW_UNUSED; // TODO
-
-  // set copied callback for a struct or instance, passed on to copies
-  // called when copy is made of an instance
-  static void lives_struct_set_copied_callback(lives_struct_def_t *, void *copied_user_data) ALLOW_UNUSED; // TODO
-
-  // set destroy callback for a struct or instance, passed on to copies
-  // called when instance is about to be destroyed
-  static void lives_struct_set_destroy_callback(lives_struct_def_t *, void *destroy_user_data) ALLOW_UNUSED; // TODO
-*/
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef DEBUG

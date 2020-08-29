@@ -360,13 +360,15 @@ boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, un
       lives_free(uievs);
     }
 
-    // create a "hint" leaf as a service to older versions of LiVES
-    // TODO: prompt user if they need backwards compat or not
-    weed_leaf_copy(event, WEED_LEAF_HINT, event, WEED_LEAF_EVENT_TYPE);
+    if (prefs->back_compat) {
+      // create a "hint" leaf as a service to older versions of LiVES
+      // TODO: prompt user if they need backwards compat or not
+      weed_leaf_copy(event, WEED_LEAF_HINT, event, WEED_LEAF_EVENT_TYPE);
+    }
 
     weed_plant_serialise(fd, event, mem);
 
-    weed_leaf_copy(event, WEED_LEAF_HINT, event, WEED_LEAF_EVENT_TYPE);
+    weed_leaf_delete(event, WEED_LEAF_HINT);
 
     if (WEED_EVENT_IS_FILTER_INIT(event)) {
       weed_leaf_delete(event, WEED_LEAF_EVENT_ID);

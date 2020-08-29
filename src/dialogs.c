@@ -337,7 +337,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     if (palette && widget_opts.apply_theme)
       lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_orange);
 
-    if (mainw != NULL && mainw->add_clear_ds_button) {
+    if (mainw && mainw->add_clear_ds_button) {
       mainw->add_clear_ds_button = FALSE;
       add_clear_ds_button(LIVES_DIALOG(dialog));
     }
@@ -383,8 +383,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
   case LIVES_DIALOG_ABORT_RETRY:
   case LIVES_DIALOG_ABORT_OK:
   case LIVES_DIALOG_ABORT:
-    dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0,
-                                      LIVES_MESSAGE_ERROR, LIVES_BUTTONS_NONE, NULL);
+    dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_ERROR, LIVES_BUTTONS_NONE, NULL);
 
     if (diat != LIVES_DIALOG_RETRY_CANCEL) {
       abortbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
@@ -415,7 +414,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_ERROR,
                                       LIVES_BUTTONS_NONE, NULL);
 
-    lives_window_set_title(LIVES_WINDOW(dialog), _("Missing file"));
+    lives_window_set_title(LIVES_WINDOW(dialog), _("Missing File / Directory"));
 
     cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
                    LIVES_RESPONSE_CANCEL);
@@ -433,13 +432,11 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
   default:
     cancelbutton = abortbutton; // stop compiler complaining
     return NULL;
-    break;
   }
 
   if (del_key)
     lives_signal_sync_connect(LIVES_GUI_OBJECT(dialog), LIVES_WIDGET_DESTROY_SIGNAL,
-                              LIVES_GUI_CALLBACK(del_event_cb),
-                              LIVES_INT_TO_POINTER(del_key));
+                              LIVES_GUI_CALLBACK(del_event_cb), LIVES_INT_TO_POINTER(del_key));
 
   lives_window_set_default_size(LIVES_WINDOW(dialog), MIN_MSGBOX_WIDTH, -1);
   lives_widget_set_minimum_size(dialog, MIN_MSGBOX_WIDTH, -1);
@@ -500,11 +497,10 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
   }
 
-  if (cancelbutton != NULL) {
+  if (cancelbutton) {
     lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                  LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
   }
-
 
   if (okbutton && mainw && mainw->iochan) {
     lives_button_grab_default_special(okbutton);
@@ -520,12 +516,10 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
   if (!widget_opts.non_modal)
     lives_window_set_modal(LIVES_WINDOW(dialog), TRUE);
 
-  if (prefs && prefs->present) {
-    lives_window_present(LIVES_WINDOW(dialog));
-    lives_xwindow_raise(lives_widget_get_xwindow(dialog));
+  if (!transient) {
+    char *wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
+    if (!wid || !activate_x11_window(wid)) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
   }
-
-  if (!transient) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
   if (cb_key) extra_cb(dialog, cb_key);
 
   if (mainw && mainw->add_trash_rb)
@@ -609,7 +603,7 @@ boolean do_yesno_dialog_with_check(const char *text, uint64_t warn_mask_number) 
 
 LIVES_GLOBAL_INLINE LiVESWindow *get_transient_full(void) {
   LiVESWindow *transient = NULL;
-  if (prefs == NULL) return NULL;
+  if (!prefs) return NULL;
   if (prefs->show_gui) {
     if (rdet && rdet->dialog) transient = LIVES_WINDOW(rdet->dialog);
     else if (prefsw && prefsw->prefs_dialog) transient = LIVES_WINDOW(prefsw->prefs_dialog);
@@ -1306,6 +1300,8 @@ void update_progress(boolean visible) {
     }
   }
 }
+
+#define SHOW_CACHE_PREDICTIONS
 
 #define ENABLE_PRECACHE
 static short scratch = SCRATCH_NONE;
@@ -3332,10 +3328,9 @@ LIVES_GLOBAL_INLINE void do_upgrade_error_dialog(void) {
   char *tmp;
   char *msg = lives_strdup_printf(
                 _("After upgrading/installing, you may need to adjust the <prefix_dir> setting in your %s file"),
-                (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+                (tmp = lives_filename_to_utf8(prefs->configfile, -1, NULL, NULL, NULL)));
   startup_message_info(msg);
-  lives_free(msg);
-  lives_free(tmp);
+  lives_free(msg); lives_free(tmp);
 }
 
 
@@ -3345,7 +3340,7 @@ LIVES_GLOBAL_INLINE void do_rendered_fx_dialog(void) {
                 _("\n\nLiVES could not find any rendered effect plugins.\nPlease make sure you have them installed in\n"
                   "%s%s%s\nor change the value of <lib_dir> in %s\n"),
                 prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_RENDERED_EFFECTS_BUILTIN,
-                (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+                (tmp = lives_filename_to_utf8(prefs->configfile, -1, NULL, NULL, NULL)));
   do_error_dialog_with_check(msg, WARN_MASK_RENDERED_FX);
   lives_free(msg);
   lives_free(tmp);
@@ -3422,17 +3417,48 @@ LIVES_GLOBAL_INLINE boolean do_gamma_import_warn(uint64_t fv, int gamma_type) {
 }
 
 
-LiVESResponseType do_original_lost_warning(const char *fname) {
-  char *msg = lives_strdup_printf(
-                _("\nThe original file\n%s\ncould not be found.\n"
-                  "Click Retry to try again, or Browse to browse to the new location.\n"
-                  "Otherwise click Cancel to skip loading this file.\n"), fname);
-  LiVESWidget *warning = create_message_dialog(LIVES_DIALOG_CANCEL_RETRY_BROWSE, msg, 0);
-  LiVESResponseType response = lives_dialog_run(LIVES_DIALOG(warning));
+static LiVESResponseType _do_df_notfound_dialog(const char *detail, const char *dfname, boolean is_dir) {
+  LiVESWidget *warning;
+  LiVESResponseType response;
+  char *xdetail, *msg, *whatitis, *extra;
+
+  if (detail) xdetail = (char *)detail;
+
+  if (!is_dir) {
+    if (!detail) {
+      xdetail = lives_strdup(_("The file"));
+      extra = _("could not be found.");
+    }
+    else extra = lives_strdup("");
+    whatitis = (_("this file"));
+  }
+  else {
+    if (!detail) {
+      xdetail = lives_strdup(_("The directory"));
+      extra = _("could not be found.");
+    }
+    else extra = lives_strdup("");
+    whatitis = (_("this directory"));
+  }
+  msg = lives_strdup_printf(_("\n%s\n%s\n%s\n"
+			      "Click Retry to try again, or Browse to browse to the new location.\n"
+			      "Otherwise click Cancel to skip loading %s.\n"), xdetail, dfname, extra, whatitis);
+  warning = create_message_dialog(LIVES_DIALOG_CANCEL_RETRY_BROWSE, msg, 0);
+  response = lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
   lives_widget_context_update();
-  lives_free(msg);
+  lives_free(msg); lives_free(whatitis);
+  if (xdetail != detail) lives_free(xdetail);
   return response;
+}
+
+
+LiVESResponseType do_dir_notfound_dialog(const char *detail, const char *dirname) {
+  return _do_df_notfound_dialog(detail, dirname, TRUE);
+}
+
+LiVESResponseType do_file_notfound_dialog(const char *detail, const char *filename) {
+  return _do_df_notfound_dialog(detail, filename, FALSE);
 }
 
 
@@ -4097,31 +4123,65 @@ LiVESResponseType do_header_missing_detail_error(int clip, lives_clip_details_t 
 
 
 void do_chdir_failed_error(const char *dir) {
-  char *dutf, *emsg = lives_strdup_printf("Failed directory change to\n%s", dir);
+  char *dutf, *msg, *emsg = lives_strdup_printf("Failed directory change to\n%s", dir);
   LIVES_ERROR(emsg);
   lives_free(emsg);
   dutf = lives_filename_to_utf8(dir, -1, NULL, NULL, NULL);
-  do_error_dialogf(_("\nLiVES failed to change directory to\n%s\n"
-                     "Please check your system for errors.\n"), dutf);
+  msg = lives_strdup_printf(_("\nLiVES failed to change directory to\n%s\n"
+			      "Please check your system for errors.\n"), dutf);
   lives_free(dutf);
+  do_abort_ok_dialog(msg);
+  lives_free(msg);
 }
 
 
-void do_file_perm_error(const char *file_name) {
-  do_error_dialogf(_("\nLiVES was unable to write to the file:\n%s\n"
-                     "Please check the file permissions and try again."), file_name);
+ LiVESResponseType  do_file_perm_error(const char *file_name, boolean allow_cancel) {
+  LiVESResponseType resp;
+  char *msg, *can_cancel;
+   if (allow_cancel)
+     can_cancel = (_(", click Cancel to continue regardless,\n"));
+   else
+     can_cancel = lives_strdup("");
+
+   msg = lives_strdup_printf(_("\nLiVES was unable to write to the file:\n%s\n"
+			       "Please check the file permissions and try again."
+			       "%sor click Abort to exit from LiVES"), file_name, can_cancel);
+   resp = do_abort_retry_dialog(msg);
+   if (!allow_cancel)
+     resp = do_abort_retry_dialog(msg);
+   else
+     resp = do_abort_cancel_retry_dialog(msg);
+   lives_free(msg);
+   return resp;
 }
 
 
-void do_dir_perm_error(const char *dir_name) {
-  do_error_dialogf(_("\nLiVES was unable to either create or write to the directory:\n%s\n"
-                     "Please check the directory permissions and try again."), dir_name);
-}
+LiVESResponseType do_dir_perm_error(const char *dir_name, boolean allow_cancel) {
+  LiVESResponseType resp;
+  char *msg, *can_cancel;
+   if (allow_cancel)
+     can_cancel = (_("click Cancel to continue regardless, "));
+   else
+     can_cancel = lives_strdup("");
+
+   msg = lives_strdup_printf(_("\nLiVES was unable to either create or write to the directory:\n%s\n"
+			       "Please check the directory permissions and try again,\n"
+			       "%sor click Abort to exit from LiVES"), dir_name, can_cancel);
+   lives_free(can_cancel);
+
+   if (!allow_cancel)
+     resp = do_abort_retry_dialog(msg);
+   else
+     resp = do_abort_cancel_retry_dialog(msg);
+
+   lives_free(msg);
+   return resp;
+ }
 
 
-void do_dir_perm_access_error(const char *dir_name) {
+ void do_dir_perm_access_error(const char *dir_name) {
   char *msg = lives_strdup_printf(_("\nLiVES was unable to read from the directory:\n%s\n"), dir_name);
-  do_error_dialog(msg);
+  do_abort_ok_dialog(msg);
   lives_free(msg);
 }
 
@@ -4505,12 +4565,10 @@ try_again:
       lives_free(text);
       widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
 
-      lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_REDO,
-                                         _("Retry with current version"),
+      lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_REDO, _("Retry with current version"),
                                          LIVES_RESPONSE_NO);
 
-      lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_ADD,
-                                         _("Proeceed with download"),
+      lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_ADD, _("Proeceed with download"),
                                          LIVES_RESPONSE_YES);
 
       widget_opts.expand = LIVES_EXPAND_DEFAULT;

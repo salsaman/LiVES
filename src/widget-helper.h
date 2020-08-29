@@ -1367,6 +1367,31 @@ const char *lives_textsize_to_string(int val);
 #define LIVES_TEXT_SIZE_NORMAL LIVES_TEXT_SIZE_MEDIUM
 #define N_TEXT_SIZES 7
 
+/// stock labels, these are set up in widget_helper_init()
+char LIVES_STOCK_LABEL_CANCEL[32];
+char LIVES_STOCK_LABEL_OK[32];
+char LIVES_STOCK_LABEL_YES[32];
+char LIVES_STOCK_LABEL_NO[32];
+char LIVES_STOCK_LABEL_SAVE[32];
+char LIVES_STOCK_LABEL_SAVE_AS[32];
+char LIVES_STOCK_LABEL_OPEN[32];
+char LIVES_STOCK_LABEL_QUIT[32];
+char LIVES_STOCK_LABEL_APPLY[32];
+char LIVES_STOCK_LABEL_CLOSE[32];
+char LIVES_STOCK_LABEL_CLOSE_WINDOW[32];
+char LIVES_STOCK_LABEL_REVERT[32];
+char LIVES_STOCK_LABEL_REFRESH[32];
+char LIVES_STOCK_LABEL_DELETE[32];
+char LIVES_STOCK_LABEL_SELECT_ALL[32];
+char LIVES_STOCK_LABEL_GO_FORWARD[32];
+
+char LIVES_STOCK_LABEL_MEDIA_FORWARD[32];
+char LIVES_STOCK_LABEL_MEDIA_REWIND[32];
+char LIVES_STOCK_LABEL_MEDIA_STOP[32];
+char LIVES_STOCK_LABEL_MEDIA_PLAY[32];
+char LIVES_STOCK_LABEL_MEDIA_PAUSE[32];
+char LIVES_STOCK_LABEL_MEDIA_RECORD[32];
+
 typedef struct {
   /// commonly adjusted values //////
   LiVESWidget *last_label; ///< label widget of last standard widget (spin,radio,check,entry,combo) (READONLY)

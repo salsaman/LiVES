@@ -7,7 +7,11 @@
 // functions for dealing with externalities
 
 #include <sys/statvfs.h>
+#ifdef __FreeBSD__
+#include <stdlib.h>
+#else
 #include <malloc.h>
+#endif
 #include "main.h"
 #include "callbacks.h"
 
@@ -2872,6 +2876,7 @@ boolean activate_x11_window(const char *wid) {
 #define WM_XFCE4_SSHOT "xfce4-screenshooter"
 
 #define XDG_CURRENT_DESKTOP "XDG_CURRENT_DESKTOP"
+#define XDG_SESSION_TYPE "XDG_SESSION_TYPE"
 
 boolean get_wm_caps(void) {
   char *wmname;
@@ -2891,17 +2896,19 @@ boolean get_wm_caps(void) {
 #endif
 #endif
 
+  capable->wm_type = getenv(XDG_SESSION_TYPE);
+
   wmname = getenv(XDG_CURRENT_DESKTOP);
 
   if (!wmname) {
-    if (capable->wm) wmname = capable->wm;
+    if (capable->wm_name) wmname = capable->wm_name;
   }
   if (!wmname) return FALSE;
 
   capable->has_wm_caps = TRUE;
   lives_snprintf(capable->wm_caps.wm_name, 64, "%s", wmname);
 
-  if (!strcmp(wmname, WM_XFWM4) || !strcmp(capable->wm, WM_XFWM4)) {
+  if (!strcmp(capable->wm_caps.wm_name, WM_XFWM4) || !strcmp(capable->wm_name, WM_XFWM4)) {
     lives_snprintf(capable->wm_caps.panel, 64, "%s", WM_XFCE4_PANEL);
     capable->wm_caps.pan_annoy = ANNOY_DISPLAY | ANNOY_FS;
     capable->wm_caps.pan_res = RES_HIDE | RESTYPE_ACTION;
@@ -3170,8 +3177,10 @@ double get_disk_load(const char *mp) {
 
 #define CPU_STATS_FILE "/proc/stat"
 
-uint64_t get_cpu_load(int cpun) {
-  uint64_t ret;
+int64_t get_cpu_load(int cpun) {
+  /// return reported load for CPU cpun (% * 1 million)
+  /// as a bonus, if cpun == -1, returns boot time
+  int64_t ret = -1;
   char *res, *target, *com;
   if (cpun > 0) target = lives_strdup_printf("cpu%d", --cpun);
   else if (cpun == 0) target = lives_strdup_printf("cpu");
@@ -3202,7 +3211,6 @@ uint64_t get_cpu_load(int cpun) {
       }
       lives_strfreev(array);
     }
-  return ret;
   }
-  return -1.;
+  return ret;
 }

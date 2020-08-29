@@ -54,6 +54,7 @@
 #ifdef __cplusplus
 #undef HAVE_UNICAP
 #endif
+
 //#define WEED_STARTUP_TESTS
 #define STD_STRINGFUNCS
 
@@ -1014,7 +1015,6 @@ typedef struct {
   char *xdg_session_desktop; // e.g ubuntustudio
   char *xdg_current_desktop; // e.g XFCE
   char *xdg_runtime_dir; // e.g /run/user/$uid
-  char *xdg_session_type; // e.g x11
 
   char touch_cmd[PATH_MAX];
   char rm_cmd[PATH_MAX];
@@ -1029,8 +1029,6 @@ typedef struct {
   char echo_cmd[PATH_MAX];
   char eject_cmd[PATH_MAX];
   char rmdir_cmd[PATH_MAX];
-
-  char *rcfile;
 
   /// used for returning startup messages from the backend
   char startup_msg[1024];
@@ -1067,7 +1065,8 @@ typedef struct {
   char *extra_icon_path;
   LiVESList *all_icons;
 
-  char *wm; ///<window manager name
+  char *wm_type; ///< window manager type, e.g. x11
+  char *wm_name; ///< window manager name, may be different from wm_caps.wwm_name
   boolean has_wm_caps;
   wm_caps_t wm_caps;
 
@@ -1308,15 +1307,16 @@ void do_vpp_fps_error(void);
 void do_decoder_palette_error(void);
 void do_rmem_max_error(int size);
 boolean do_gamma_import_warn(uint64_t fv, int gamma_type);
-LiVESResponseType do_original_lost_warning(const char *fname);
+LiVESResponseType do_file_notfound_dialog(const char *detail, const char *dirname);
+LiVESResponseType do_dir_notfound_dialog(const char *detail, const char *dirname);
 void do_no_decoder_error(const char *fname);
 void do_no_loadfile_error(const char *fname);
 void do_jack_noopen_warn(void);
 void do_jack_noopen_warn2(void);
 void do_jack_noopen_warn3(void);
 void do_jack_noopen_warn4(void);
-void do_file_perm_error(const char *file_name);
-void do_dir_perm_error(const char *dir_name);
+LiVESResponseType do_file_perm_error(const char *file_name, boolean allow_cancel);
+LiVESResponseType do_dir_perm_error(const char *dir_name, boolean allow_cancel);
 void do_dir_perm_access_error(const char *dir_name);
 void do_encoder_img_fmt_error(render_details *rdet);
 void do_after_crash_warning(void);
@@ -1902,7 +1902,7 @@ void break_me(const char *dtl);
 #endif
 
 #endif
-//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #else

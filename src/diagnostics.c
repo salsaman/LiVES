@@ -35,24 +35,22 @@ char *get_stats_msg(boolean calc_only) {
 
   if (CURRENT_CLIP_HAS_AUDIO) {
 #ifdef ENABLE_JACK
-    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL && mainw->jackd->in_use &&
+    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd && mainw->jackd->in_use &&
         IS_VALID_CLIP(mainw->jackd->playing_file) && mainw->files[mainw->jackd->playing_file]->arate != 0) {
       avsync = lives_jack_get_pos(mainw->jackd);
       have_avsync = TRUE;
     }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL && mainw->pulsed->in_use &&
+    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed && mainw->pulsed->in_use &&
         IS_VALID_CLIP(mainw->pulsed->playing_file) && mainw->files[mainw->pulsed->playing_file]->arate != 0) {
       avsync = (double)mainw->pulsed->seek_pos
                / (double)mainw->files[mainw->pulsed->playing_file]->arate / 4.; //lives_pulse_get_pos(mainw->pulsed);
+      avsync -= ((double)mainw->files[mainw->pulsed->playing_file]->frameno - 1.) / mainw->files[mainw->pulsed->playing_file]->fps
+                + (double)(currticks - mainw->startticks) / TICKS_PER_SECOND_DBL;
       have_avsync = TRUE;
     }
 #endif
-    if (have_avsync) {
-      avsync -= ((double)mainw->files[mainw->pulsed->playing_file]->frameno - 1.) / mainw->files[mainw->pulsed->playing_file]->fps
-                + (double)(currticks - mainw->startticks) / TICKS_PER_SECOND_DBL;
-    }
   }
   //currticks = lives_get_current_ticks();
 
@@ -76,6 +74,7 @@ char *get_stats_msg(boolean calc_only) {
   }
 
   if (calc_only) return NULL;
+
   if (have_avsync) {
     audmsg = lives_strdup_printf(_("Audio is %s video by %.4f secs.\n"),
                                  tmp = lives_strdup(avsync >= 0. ? _("ahead of") : _("behind")), fabs(avsync));
@@ -110,12 +109,10 @@ char *get_stats_msg(boolean calc_only) {
                             tmp2 = lives_strdup(prefs->pbq_adaptive ? _("adaptive") : _("fixed")),
                             get_cache_stats(),
                             cfile->hsize, cfile->vsize,
-                            fgpal, bgmsg ? bgmsg : ""
-                           );
-  lives_freep((void **)&bgmsg);
-  lives_freep((void **)&audmsg);
-  lives_freep((void **)&tmp);
-  lives_freep((void **)&tmp2);
+                            fgpal, bgmsg ? bgmsg : "");
+
+  lives_freep((void **)&bgmsg); lives_freep((void **)&audmsg);
+  lives_freep((void **)&tmp); lives_freep((void **)&tmp2);
 
   return msg;
 }

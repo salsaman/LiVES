@@ -231,7 +231,7 @@ static int _lsd_calloc_aligned_(void **memptr, size_t nmemb, size_t size) {
 #include "lsd.h"
 #undef OVERRIDE_MEMFUNCS
 
-#if defined _GNU_SOURCE
+#ifdef __GNUC__
 #define LIVES_GNU
 #define lives_malloc_auto(size) __builtin_alloc(size)
 #define lives_malloc_auto_aligned(size, align) __builtin_alloc_with_align(size, align)
@@ -580,7 +580,7 @@ boolean get_wm_caps(void);
 boolean get_distro_dets(void);
 boolean get_machine_dets(void);
 double get_disk_load(const char *mp);
-uint64_t get_cpu_load(int cpun);
+int64_t get_cpu_load(int cpun); ///< percent * 1 million
 
 char *get_systmp(const char *suff, boolean is_dir);
 char *get_worktmp(const char *prefix);

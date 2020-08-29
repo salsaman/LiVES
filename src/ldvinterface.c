@@ -32,20 +32,10 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  buttond = lives_standard_file_button_new(TRUE, NULL);
-
-  label = lives_standard_label_new_with_mnemonic_widget(_("Save _directory :"), buttond);
-  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
-
-  lives_box_pack_start(LIVES_BOX(hbox), buttond, FALSE, FALSE, widget_opts.packing_width);
-
   dvgrabw->dirname = lives_filename_to_utf8((tmp = lives_get_current_dir()), -1, NULL, NULL, NULL);
-  dvgrabw->dirent = lives_standard_entry_new(NULL, dvgrabw->dirname, -1, PATH_MAX,
-                    LIVES_BOX(hbox), NULL);
+  dvgrabw->dirent = lives_standard_direntry_new(_("Save directory:", dvgrabw->dirname, LONG_ENTRY_WIDTH, PATH_MAX,
+						  LIVES_BOX(hbox), NULL);
   lives_free(tmp);
-
-  lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
-                       (livespointer)dvgrabw->dirent);
 
   //////////////////
 
@@ -53,8 +43,7 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   dvgrabw->filent = lives_standard_entry_new(_("File_name:"), type == CAM_FORMAT_DV ? "dvgrab-" : "hdvgrab-", -1, -1,
-                    LIVES_BOX(hbox),
-                    NULL);
+                    LIVES_BOX(hbox), NULL);
 
   if (type == CAM_FORMAT_DV) label = lives_standard_label_new("%d.dv");
   else label = lives_standard_label_new("%d.mpg");
@@ -110,24 +99,28 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
   lives_widget_set_can_focus_and_default(dvgrabw->grab);
 
   label = lives_standard_label_new(
-            _("\nUse this tool to control your camera and grab clips.\nAfter grabbing your clips, you can close this window \nand then load them into LiVES.\n"));
+            _("\nUse this tool to control your camera and grab clips.\n"
+	      "After grabbing your clips, you can close this window \nand then load them into LiVES.\n"));
   lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, widget_opts.packing_height * 4);
 
-  dvgrabw->quit = lives_dialog_add_button_from_stock(LIVES_DIALOG(dvgrabw->dialog),
-                  LIVES_STOCK_CLOSE, _("_Close Window"),
-                  LIVES_RESPONSE_CLOSE);
+  dvgrabw->quit =
+    lives_dialog_add_button_from_stock(LIVES_DIALOG(dvgrabw->dialog),
+				       LIVES_STOCK_CLOSE, LIVES_STOCK_LABEL_CLOSE_WINDOW, LIVES_RESPONSE_CLOSE);
 
   lives_widget_set_can_focus_and_default(dvgrabw->quit);
 
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  lives_signal_connect(button3, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_camrew_clicked), (livespointer)cam);
-  lives_signal_connect(button4, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_camff_clicked), (livespointer)cam);
-  lives_signal_connect(dvgrabw->stop, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_camstop_clicked), (livespointer)cam);
-  lives_signal_connect(dvgrabw->play, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_camplay_clicked), (livespointer)cam);
-  lives_signal_connect(dvgrabw->grab, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_camgrab_clicked), (livespointer)cam);
-  lives_signal_connect(dvgrabw->quit, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_camquit_clicked), (livespointer)cam);
-
+  lives_signal_sync_connect(button3, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_camrew_clicked), (livespointer)cam);
+  lives_signal_sync_connect(button4, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_camff_clicked), (livespointer)cam);
+  lives_signal_sync_connect(dvgrabw->stop, LIVES_WIDGET_CLICKED_SIGNAL,
+			    LIVES_GUI_CALLBACK(on_camstop_clicked), (livespointer)cam);
+  lives_signal_sync_connect(dvgrabw->play, LIVES_WIDGET_CLICKED_SIGNAL,
+			    LIVES_GUI_CALLBACK(on_camplay_clicked), (livespointer)cam);
+  lives_signal_sync_connect(dvgrabw->grab, LIVES_WIDGET_CLICKED_SIGNAL,
+			    LIVES_GUI_CALLBACK(on_camgrab_clicked), (livespointer)cam);
+  lives_signal_sync_connect(dvgrabw->quit, LIVES_WIDGET_CLICKED_SIGNAL,
+			    LIVES_GUI_CALLBACK(on_camquit_clicked), (livespointer)cam);
   return dvgrabw;
 }
 

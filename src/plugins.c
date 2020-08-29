@@ -83,7 +83,7 @@ LiVESList *plugin_request_common(const char *plugin_type, const char *plugin_nam
 
     // some types live in the config directory...
     if (!strcmp(plugin_type, PLUGIN_RENDERED_EFFECTS_CUSTOM) || !strcmp(plugin_type, PLUGIN_RENDERED_EFFECTS_TEST)) {
-      comfile = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, plugin_type, plugin_name, NULL);
+      comfile = lives_build_filename(prefs->config_datadir, plugin_type, plugin_name, NULL);
     } else if (!strcmp(plugin_type, PLUGIN_RFX_SCRAP)) {
       // scraps are in the workdir
       comfile = lives_build_filename(prefs->workdir, plugin_name, NULL);
@@ -137,12 +137,13 @@ LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const c
              !strcmp(plugin_type, PLUGIN_COMPOUND_EFFECTS_CUSTOM)
             ) {
     // look in home
-    com = lives_strdup_printf("%s list_plugins %d 0 \"%s"LIVES_DIR_SEP"%s%s\" \"%s\"", prefs->backend_sync, allow_nonex,
-                              prefs->configdir,
-                              LIVES_CONFIG_DIR, plugin_type, ext);
+    tmp = lives_build_path(prefs->config_datadir, plugin_type, NULL);
+    com = lives_strdup_printf("%s list_plugins %d 0 \"%s\" \"%s\"", prefs->backend_sync, allow_nonex, tmp, ext);
+    lives_free(tmp);
   } else if (!strcmp(plugin_type, PLUGIN_THEMES_CUSTOM)) {
-    com = lives_strdup_printf("%s list_plugins 0 1 \"%s"LIVES_DIR_SEP"%s%s\"", prefs->backend_sync, prefs->configdir,
-                              LIVES_CONFIG_DIR, PLUGIN_THEMES);
+    tmp = lives_build_path(prefs->config_datadir, PLUGIN_THEMES, NULL);
+    com = lives_strdup_printf("%s list_plugins 0 1 \"%s\"", prefs->backend_sync, tmp);
+    lives_free(tmp);
   } else if (!strcmp(plugin_type, PLUGIN_EFFECTS_WEED)) {
     com = lives_strdup_printf("%s list_plugins 1 1 \"%s\" \"%s\"", prefs->backend_sync,
                               (tmp = lives_filename_from_utf8((char *)plugdir, -1, NULL, NULL, NULL)), ext);
@@ -1517,7 +1518,7 @@ void do_plugin_encoder_error(const char *plugin_name) {
             _("LiVES was unable to find its encoder plugins. Please make sure you have the plugins installed in\n"
               "%s%s%s\nor change the value of <lib_dir> in %s\n"),
             prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS,
-            (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+            (tmp = lives_filename_to_utf8(prefs->configfile, -1, NULL, NULL, NULL)));
     lives_free(tmp);
     widget_opts.non_modal = TRUE;
     do_error_dialog(msg);
@@ -2653,6 +2654,7 @@ void do_rfx_cleanup(lives_rfx_t *rfx) {
   char *com;
   char *dir = NULL;
 
+  /// skip cleanup if menuentry is "apply current realtime effects"
   if (rfx == &mainw->rendered_fx[0]) return;
 
   switch (rfx->status) {
@@ -2663,15 +2665,13 @@ void do_rfx_cleanup(lives_rfx_t *rfx) {
                               PLUGIN_RENDERED_EFFECTS_BUILTIN, rfx->name);
     break;
   case RFX_STATUS_CUSTOM:
-    dir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, NULL);
     com = lives_strdup_printf("%s plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"", prefs->backend_sync,
-                              cfile->handle, cfile->start, cfile->end, dir,
+                              cfile->handle, cfile->start, cfile->end, prefs->config_datadir,
                               PLUGIN_RENDERED_EFFECTS_CUSTOM, rfx->name);
     break;
   case RFX_STATUS_TEST:
-    dir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, NULL);
     com = lives_strdup_printf("%s plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"", prefs->backend_sync,
-                              cfile->handle, cfile->start, cfile->end, dir,
+                              cfile->handle, cfile->start, cfile->end, prefs->config_datadir,
                               PLUGIN_RENDERED_EFFECTS_TEST, rfx->name);
     break;
   default:
@@ -2682,7 +2682,6 @@ void do_rfx_cleanup(lives_rfx_t *rfx) {
 
   // if the command fails we just give a warning
   lives_system(com, FALSE);
-
   lives_free(com);
 }
 

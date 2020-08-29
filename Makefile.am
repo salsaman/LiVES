@@ -138,18 +138,21 @@ endif
 	cp -f "$(srcdir)/menu-entries/lives22.png" "$(DESTDIR)$(sharedir)/icons/hicolor/22x22/apps/lives.png"
 	$(MKDIR_P) "$(DESTDIR)$(sharedir)/$(PACKAGE)/devicemaps/"
 	cp -rf "$(srcdir)/resources/devicemaps" "$(DESTDIR)$(sharedir)/$(PACKAGE)"
+	cp -rf "$(srcdir)/resources/stock-icons" "$(DESTDIR)$(sharedir)/$(PACKAGE)"
 
 
 install-exec-local:
 	rm -rf "$(DESTDIR)$(bindir)/lives"
 	cp -f "$(srcdir)/smogrify" "$(DESTDIR)$(bindir)" && chmod a+rx "$(DESTDIR)$(bindir)/smogrify"
-	cp -f "$(srcdir)/midistart" "$(DESTDIR)$(bindir)" && chmod a+rx "$(DESTDIR)$(bindir)/midistart"
-	cp -f "$(srcdir)/midistop" "$(DESTDIR)$(bindir)" && chmod a+rx "$(DESTDIR)$(bindir)/midistop"
+	cp -f "$(srcdir)/midistart" "$(DESTDIR)$(bindir)" && chmod a+rx "$(DESTDIR)$(bindir)/lives-midistart"
+	cp -f "$(srcdir)/midistop" "$(DESTDIR)$(bindir)" && chmod a+rx "$(DESTDIR)$(bindir)/lives-midistop"
 	cp -f "$(srcdir)/tools/autolives.pl" "$(DESTDIR)$(bindir)" && chmod a+rx "$(DESTDIR)$(bindir)/autolives.pl"
 	cp -f "$(srcdir)/build-lives-rfx-plugin" "$(DESTDIR)$(bindir)" && chmod a+rx "$(DESTDIR)$(bindir)/build-lives-rfx-plugin"
-	cp -f "$(srcdir)/build-lives-rfx-plugin-multi" "$(DESTDIR)$(bindir)" && chmod a+rx "$(DESTDIR)$(bindir)/build-lives-rfx-plugin-multi"
+	cp -f "$(srcdir)/build-lives-rfx-plugin-multi" "$(DESTDIR)$(bindir)" \
+		&& chmod a+rx "$(DESTDIR)$(bindir)/build-lives-rfx-plugin-multi"
 	cp -f "$(srcdir)/default.keymap" "$(DESTDIR)$(datadir)/$(PACKAGE)/"
-	"$(DESTDIR)$(bindir)/build-lives-rfx-plugin-multi" builtin "$(DESTDIR)$(datadir)" "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)"
+	"$(DESTDIR)$(bindir)/build-lives-rfx-plugin-multi" builtin "$(DESTDIR)$(datadir)" "$(DESTDIR)$(libdir)" \
+		"$(DESTDIR)$(bindir)"
 	"$(top_srcdir)/po/update_with_plugins.sh" install "$(PACKAGE)" "$(prefix)" "$(DESTDIR)"
 
 install-exec-hook:

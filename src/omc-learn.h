@@ -7,10 +7,10 @@
 #ifndef HAS_LIVES_OMC_LEARN_H
 #define HAS_LIVES_OMC_LEARN_H
 
-#define OMC_DEV_MIDI (1<<0)
-#define OMC_DEV_JS (1<<1)
-#define OMC_DEV_FORCE_RAW_MIDI (1<<2)
-#define OMC_DEV_MIDI_DUMMY (1<<3)
+#define OMC_DEV_MIDI 		(1 << 0)
+#define OMC_DEV_JS		(1 << 1)
+#define OMC_DEV_FORCE_RAW_MIDI	(1 << 2)
+#define OMC_DEV_MIDI_DUMMY	(1 << 3)
 
 /** max number of macros */
 #define N_OMC_MACROS 64
@@ -57,14 +57,9 @@ typedef struct {
   char **pname;
 
   int *ptypes;
+  int *mini, *maxi, *vali;
 
-  int *mini;
-  int *maxi;
-  int *vali;
-
-  double *mind;
-  double *maxd;
-  double *vald;
+  double *mind, *maxd, *vald;
 } lives_omc_macro_t;
 
 typedef struct {
@@ -83,7 +78,8 @@ typedef struct {
   int *matchi; ///< match value
 
   // enumerated by number of params in target macro
-  int *map; ///< mapping macro parameters to variables in the input (whether we use a default or a variable) (reverse ordered, starting from the last macro parameter)
+  int *map; ///< mapping macro parameters to variables in the input (whether we use a default or a variable)
+  // (reverse ordered, starting from the last macro parameter)
   int *fvali; ///< defaults, mapping to fixed ints
   double *fvald; ///< defaults, mapping to fixed doubles
 
@@ -127,18 +123,18 @@ enum {
   OMC_NUM2_COLUMNS
 };
 
-#define OMC_INTERNAL 0
+#define OMC_INTERNAL	0
 
-#define OMC_JS 1
-#define OMC_JS_AXIS 2
-#define OMC_JS_BUTTON 3
+#define OMC_JS 		1
+#define OMC_JS_AXIS	2
+#define OMC_JS_BUTTON	3
 
-#define OMC_MIDI 128
-#define OMC_MIDI_NOTE 129
-#define OMC_MIDI_NOTE_OFF 130
-#define OMC_MIDI_CONTROLLER 131
-#define OMC_MIDI_PITCH_BEND 132
-#define OMC_MIDI_PGM_CHANGE 133
+#define OMC_MIDI		128
+#define OMC_MIDI_NOTE		129
+#define OMC_MIDI_NOTE_OFF	130
+#define OMC_MIDI_CONTROLLER	131
+#define OMC_MIDI_PITCH_BEND	132
+#define OMC_MIDI_PGM_CHANGE	133
 
 // get a macro
 const lives_omc_macro_t *get_omc_macro(int idx);

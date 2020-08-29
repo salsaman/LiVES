@@ -667,6 +667,11 @@ LIVES_GLOBAL_INLINE boolean lives_buffered_rdonly_set_reversed(int fd, boolean v
 }
 
 
+#ifndef O_DSYNC
+#define O_DSYNC O_SYNC
+#define NO_O_DSYNC
+#endif
+
 LIVES_GLOBAL_INLINE int lives_create_buffered(const char *pathname, int mode) {
   return lives_open_real_buffered(pathname, O_CREAT | O_WRONLY | O_TRUNC | O_DSYNC, mode, FALSE);
 }
@@ -675,6 +680,11 @@ LIVES_GLOBAL_INLINE int lives_create_buffered(const char *pathname, int mode) {
 int lives_open_buffered_writer(const char *pathname, int mode, boolean append) {
   return lives_open_real_buffered(pathname, O_CREAT | O_WRONLY | O_DSYNC | (append ? O_APPEND : 0), mode, FALSE);
 }
+
+#ifdef NO_O_DSYNC
+#undef O_DSYNC
+#undef NO_O_DSYNC
+#endif
 
 
 int lives_close_buffered(int fd) {
@@ -782,13 +792,13 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
   if (res < bufsize) fbuff->eof = TRUE;
   else fbuff->eof = FALSE;
 
-#if defined HAVE_POSIX_FADVISE || defined _GNU_SOURCE
+#if defined HAVE_POSIX_FADVISE || (defined _GNU_SOURCE && defined __linux__)
   if (fbuff->reversed) {
 #if defined HAVE_POSIX_FADVISE
     posix_fadvise(fbuff->fd, 0, fbuff->offset - (bufsize >> 2) * 3, POSIX_FADV_RANDOM);
     posix_fadvise(fbuff->fd, fbuff->offset - (bufsize >> 2) * 3, bufsize, POSIX_FADV_WILLNEED);
 #endif
-#ifdef _GNU_SOURCE
+#ifdef __linux__
     readahead(fbuff->fd, fbuff->offset - (bufsize >> 2) * 3, bufsize);
 #endif
   } else {
@@ -796,7 +806,7 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
     posix_fadvise(fbuff->fd, fbuff->offset, 0, POSIX_FADV_SEQUENTIAL);
     posix_fadvise(fbuff->fd, fbuff->offset, bufsize, POSIX_FADV_WILLNEED);
 #endif
-#ifdef _GNU_SOURCE
+#ifdef __linux__
     readahead(fbuff->fd, fbuff->offset, bufsize);
 #endif
   }
@@ -4226,38 +4236,45 @@ boolean check_file(const char *file_name, boolean check_existing) {
 
   mainw->error = FALSE;
 
-  // check if file exists
-  if (lives_file_test(lfile_name, LIVES_FILE_TEST_EXISTS)) {
-    if (check_existing) {
-      msg = lives_strdup_printf(_("\n%s\nalready exists.\n\nOverwrite ?\n"), file_name);
-      if (!do_warning_dialog(msg)) {
-        lives_free(msg);
-        lives_free(lfile_name);
-        return FALSE;
+  while (1) {
+    // check if file exists
+    if (lives_file_test(lfile_name, LIVES_FILE_TEST_EXISTS)) {
+      if (check_existing) {
+	msg = lives_strdup_printf(_("\n%s\nalready exists.\n\nOverwrite ?\n"), file_name);
+	if (!do_warning_dialog(msg)) {
+	  lives_free(msg);
+	  lives_free(lfile_name);
+	  return FALSE;
+	}
+	lives_free(msg);
       }
-      lives_free(msg);
+      check = open(lfile_name, O_WRONLY);
+      exists = TRUE;
     }
-    check = open(lfile_name, O_WRONLY);
-    exists = TRUE;
-  }
-  // if not, check if we can write to it
-  else {
-    check = open(lfile_name, O_CREAT | O_EXCL | O_WRONLY, DEF_FILE_PERMS);
-  }
-
-  if (check < 0) {
-    mainw->error = TRUE;
-    if (mainw != NULL && mainw->is_ready) {
-      if (errno == EACCES)
-        do_file_perm_error(lfile_name);
-      else
-        do_write_failed_error_s(lfile_name, NULL);
+    // if not, check if we can write to it
+    else {
+      check = open(lfile_name, O_CREAT | O_EXCL | O_WRONLY, DEF_FILE_PERMS);
     }
-    lives_free(lfile_name);
-    return FALSE;
-  }
 
-  close(check);
+    if (check < 0) {
+      LiVESResponseType resp = LIVES_RESPONSE_NONE;
+      mainw->error = TRUE;
+      if (mainw && mainw->is_ready) {
+	if (errno == EACCES)
+	  resp = do_file_perm_error(lfile_name, TRUE);
+	else
+	  resp = do_write_failed_error_s_with_retry(lfile_name, NULL);
+	if (resp == LIVES_RESPONSE_RETRY) {
+	  continue;
+	}
+      }
+      lives_free(lfile_name);
+      return FALSE;
+    }
+
+    close(check);
+    break;
+  }
   if (!exists) lives_rm(lfile_name);
   lives_free(lfile_name);
   return TRUE;

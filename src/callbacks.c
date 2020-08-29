@@ -279,7 +279,7 @@ void lives_exit(int signum) {
       if (mainw->memok) {
         if (mainw->write_vpp_file) {
           // save video playback plugin parameters
-          char *vpp_file = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, "vpp_defaults", NULL);
+          char *vpp_file = lives_build_filename(prefs->config_datadir, VPP_DEFS_FILE, NULL);
           save_vpp_defaults(mainw->vpp, vpp_file);
         }
       }
@@ -561,7 +561,7 @@ void lives_exit(int signum) {
 
   lives_freep((void **)&prefs->fxdefsfile);
   lives_freep((void **)&prefs->fxsizesfile);
-  lives_freep((void **)&capable->wm);
+  lives_freep((void **)&capable->wm_name);
   lives_freep((void **)&mainw->recovery_file);
 
   for (i = 0; i < NUM_LIVES_STRING_CONSTANTS; i++) lives_freep((void **)&mainw->string_constants[i]);
@@ -597,132 +597,6 @@ void lives_exit(int signum) {
 #define lives_free _lives_free
 #endif
 #endif
-
-void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
-  LiVESWidget *tentry = LIVES_WIDGET(user_data);
-
-  lives_rfx_t *rfx;
-
-  char **filt = NULL;
-
-  char *dirname = NULL;
-  char *fname;
-  char *tmp;
-
-  char *def_dir = NULL;
-
-  boolean is_dir = TRUE, free_def_dir = FALSE;
-
-  int filesel_type = LIVES_FILE_SELECTION_UNDEFINED;
-
-  if (button) {
-    def_dir = (char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), DEFDIR_KEY);
-    is_dir = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), ISDIR_KEY));
-    filt = (char **)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), FILTER_KEY);
-    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), FILESEL_TYPE_KEY)) {
-      filesel_type = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), FILESEL_TYPE_KEY));
-    }
-  }
-
-  if (LIVES_IS_TEXT_VIEW(tentry)) fname = lives_text_view_get_text(LIVES_TEXT_VIEW(tentry));
-  else fname = lives_strdup(lives_entry_get_text(LIVES_ENTRY(tentry)));
-
-  if (!(*fname)) {
-    lives_free(fname);
-    fname = def_dir;
-  }
-
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-
-  switch (filesel_type) {
-  case LIVES_FILE_SELECTION_UNDEFINED:
-    if (!is_dir && *fname && (def_dir == NULL || !(*def_dir))) {
-      def_dir = get_dir(fname);
-      free_def_dir = TRUE;
-    }
-  case LIVES_DIR_SELECTION_WORKDIR:
-    dirname = choose_file(is_dir ? fname : def_dir, is_dir ? NULL : fname, filt,
-                          is_dir ? LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER :
-                          (fname == def_dir && def_dir && !strcmp(def_dir, LIVES_DEVICE_DIR))
-                          ? LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE :
-                          LIVES_FILE_CHOOSER_ACTION_OPEN,
-                          NULL, NULL);
-
-    if (filesel_type == LIVES_DIR_SELECTION_WORKDIR) {
-      if (strcmp(dirname, fname)) {
-        if (check_workdir_valid(&dirname, LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))),
-                                FALSE) == LIVES_RESPONSE_RETRY) {
-          lives_free(dirname);
-          dirname = lives_strdup(fname);
-        }
-      }
-    }
-    if (free_def_dir) {
-      lives_free(def_dir);
-      def_dir = NULL;
-    }
-    break;
-  case LIVES_FILE_SELECTION_SAVE: {
-    char fnamex[PATH_MAX], dirnamex[PATH_MAX];
-    boolean free_filt = FALSE;
-
-    lives_snprintf(dirnamex, PATH_MAX, "%s", fname);
-    lives_snprintf(fnamex, PATH_MAX, "%s", fname);
-
-    get_dirname(dirnamex);
-    get_basename(fnamex);
-
-    if (!is_dir && filt == NULL && strlen(fnamex)) {
-      char *tmp;
-      filt = (char **)lives_malloc(2 * sizeof(char *));
-      filt[0] = lives_strdup_printf("*.%s", (tmp = get_extension(fnamex)));
-      filt[1] = NULL;
-      free_filt = TRUE;
-      lives_free(tmp);
-    }
-
-    dirname = choose_file(def_dir != NULL ? def_dir : dirnamex, fnamex, filt, LIVES_FILE_CHOOSER_ACTION_SAVE, NULL, NULL);
-
-    if (free_filt) {
-      lives_free(filt[0]);
-      lives_free(filt);
-    }
-  }
-  break;
-  default: {
-    LiVESWidget *chooser = choose_file_with_preview(def_dir, fname, filt, filesel_type);
-    int resp = lives_dialog_run(LIVES_DIALOG(chooser));
-
-    end_fs_preview();
-
-    if (resp == LIVES_RESPONSE_ACCEPT) {
-      dirname = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
-    }
-    lives_widget_destroy(LIVES_WIDGET(chooser));
-  }
-  }
-
-  if (fname && fname != def_dir) lives_free(fname);
-
-  if (dirname == NULL) return;
-
-  lives_snprintf(file_name, PATH_MAX, "%s", dirname);
-  lives_free(dirname);
-
-  if (button) {
-    if (LIVES_IS_ENTRY(tentry)) lives_entry_set_text(LIVES_ENTRY(tentry), (tmp = lives_filename_to_utf8(file_name, -1, NULL, NULL,
-          NULL)));
-    else lives_text_view_set_text(LIVES_TEXT_VIEW(tentry), (tmp = lives_filename_to_utf8(file_name, -1, NULL, NULL, NULL)), -1);
-    lives_free(tmp);
-  }
-
-  // force update to be recognized
-  if ((rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tentry), "rfx")) != NULL) {
-    int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tentry), "param_number"));
-    after_param_text_changed(tentry, rfx);
-    rfx->params[param_number].edited = FALSE;
-  }
-}
 
 
 static void open_sel_range_activate(int frames, double fps) {
@@ -1077,13 +951,17 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
       }
     }
     if (!keep_old_dir) {
+      LiVESResponseType resp;
       char *xdir = lives_build_path(tmpdir, "*", NULL);
       lives_rmdir(xdir, TRUE);
       lives_free(xdir);
-      if (!lives_make_writeable_dir(ddir)) {
-        do_dir_perm_error(ddir);
-        goto cleanup_ut;
-      }
+      do {
+	resp = LIVES_RESPONSE_NONE;
+	if (!lives_make_writeable_dir(ddir)) {
+	  resp = do_dir_perm_error(ddir, TRUE);
+	  if (resp == LIVES_RESPONSE_CANCEL) goto cleanup_ut;
+	}
+      } while (resp == LIVES_RESPONSE_RETRY);
     }
   } else ddir = req->save_dir;
 
@@ -2022,7 +1900,7 @@ void on_import_theme_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
   // check for existing dupes
 
-  themedir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, PLUGIN_THEMES, tname, NULL);
+  themedir = lives_build_filename(prefs->config_datadir, PLUGIN_THEMES, tname, NULL);
 
   if (lives_file_test(themedir, LIVES_FILE_TEST_IS_DIR)) {
     if (!do_theme_exists_warn(tname)) {
@@ -6202,7 +6080,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   char *com, *msg, *tmp;
   char *extra = lives_strdup("");
 
-  LiVESResponseType retval = LIVES_RESPONSE_NONE;
+  LiVESResponseType retval = LIVES_RESPONSE_NONE, resp;
 
   boolean gotsize = FALSE;
 
@@ -6300,10 +6178,13 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
 
   full_trashdir = lives_build_path(prefs->workdir, trashdir, NULL);
 
-  if (!check_dir_access(full_trashdir, TRUE)) {
-    do_dir_perm_error(full_trashdir);
-    goto cleanup;
-  }
+  do {
+    resp = LIVES_RESPONSE_NONE;
+    if (!lives_make_writeable_dir(full_trashdir) ||!check_dir_access(full_trashdir, TRUE)) {
+      resp = do_dir_perm_error(full_trashdir, TRUE);
+      if (resp == LIVES_RESPONSE_CANCEL) goto cleanup;
+    }
+  } while (resp == LIVES_RESPONSE_RETRY);
 
   // get space before
   fspace = get_ds_free(prefs->workdir);
@@ -6434,18 +6315,16 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
 
     button =
       lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
-                                         LIVES_STOCK_CANCEL, nitems ? NULL : mainw->string_constants
-                                         [LIVES_STRING_CONSTANT_CLOSE_WINDOW], LIVES_RESPONSE_CANCEL);
+                                         LIVES_STOCK_CANCEL, nitems ? NULL :
+                                         LIVES_STOCK_LABEL_CLOSE_WINDOW, LIVES_RESPONSE_CANCEL);
 
     lives_widget_add_accelerator(button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                  LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
     widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
     accb = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog),
-           LIVES_STOCK_EDIT,
-           nitems ? _("_Check and Filter Results")
-           : _("Show Results"),
-           LIVES_RESPONSE_BROWSE);
+           LIVES_STOCK_EDIT, nitems ? _("_Check and Filter Results")
+           : _("Show Results"), LIVES_RESPONSE_BROWSE);
 
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
     lives_button_grab_default_special(accb);

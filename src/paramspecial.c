@@ -24,9 +24,7 @@ static LiVESList *passwd_widgets;
 static boolean special_inited = FALSE;
 
 
-void reset_framedraw_preview(void) {
-  invalidate_preview(&framedraw);
-}
+void reset_framedraw_preview(void) {invalidate_preview(&framedraw);}
 
 
 void init_special(void) {
@@ -54,11 +52,7 @@ const lives_special_aspect_t *paramspecial_get_aspect() {return &aspect;}
 
 void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
   int num_widgets = get_token_count(sp_string, '|') - 2;
-  int pnum;
-
   char **array = lives_strsplit(sp_string, "|", num_widgets + 2);
-
-  register int i;
 
   // TODO - assert only one of each of these
 
@@ -75,7 +69,7 @@ void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
     mergealign.end_param = &rfx->params[atoi(array[2])];
     mergealign.rfx = rfx;
   } else if (!strcmp(array[0], "framedraw")) {
-    if (fx_dialog[1] != NULL) {
+    if (fx_dialog[1]) {
       lives_strfreev(array);
       return;
     }
@@ -87,7 +81,7 @@ void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
       framedraw.xend_param = &rfx->params[atoi(array[4])];
       framedraw.yend_param = &rfx->params[atoi(array[5])];
       framedraw.stdwidgets = 4;
-    } else if (!strcmp(array[1], "multirect") || !strcmp(array[1], "multrect")) { // allow for spelling errors in earlier draft
+    } else if (!strcmp(array[1], "multirect") || !strcmp(array[1], "multrect")) { // allow for spelling errors in earlier RFX
       framedraw.type = LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT;
       framedraw.xstart_param = &rfx->params[atoi(array[2])];
       framedraw.ystart_param = &rfx->params[atoi(array[3])];
@@ -110,11 +104,12 @@ void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
     if (num_widgets > framedraw.stdwidgets) framedraw.extra_params =
         (int *)lives_malloc(((framedraw.num_extra = (num_widgets - framedraw.stdwidgets))) * sizint);
 
-    for (i = 0; i < num_widgets; i++) {
-      pnum = atoi(array[i + 2]);
+    for (int i = 0; i < num_widgets; i++) {
+      int pnum = atoi(array[i + 2]);
       if (rfx->status == RFX_STATUS_WEED) {
-        if (mainw->multitrack != NULL) {
+        if (mainw->multitrack) {
           if (rfx->params[pnum].multi == PVAL_MULTI_PER_CHANNEL) {
+	    /// handling for "value per channel" parameters in multitrack
             if ((rfx->params[pnum].hidden & HIDDEN_MULTI) == HIDDEN_MULTI) {
               if (mainw->multitrack->track_index != -1) {
                 rfx->params[pnum].hidden ^= HIDDEN_MULTI; // multivalues allowed
@@ -126,7 +121,7 @@ void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
       if (i >= framedraw.stdwidgets) framedraw.extra_params[i - framedraw.stdwidgets] = pnum;
     }
 
-    if (mainw->multitrack != NULL) {
+    if (mainw->multitrack) {
       mainw->multitrack->framedraw = &framedraw;
       lives_widget_set_bg_color(mainw->multitrack->fd_frame, LIVES_WIDGET_STATE_NORMAL, &palette->light_red);
     }
@@ -174,9 +169,7 @@ void fd_tweak(lives_rfx_t *rfx) {
 }
 
 
-void fd_connect_spinbutton(lives_rfx_t *rfx) {
-  framedraw_connect_spinbutton(&framedraw, rfx);
-}
+void fd_connect_spinbutton(lives_rfx_t *rfx) {framedraw_connect_spinbutton(&framedraw, rfx);}
 
 
 static void passwd_toggle_vis(LiVESToggleButton * b, livespointer entry) {
@@ -198,13 +191,16 @@ static void font_set_cb(LiVESFontButton * button, livespointer data) {
   char *fname = lives_font_chooser_get_font(LIVES_FONT_CHOOSER(button));
   LingoFontDescription *lfd = lives_font_chooser_get_font_desc(LIVES_FONT_CHOOSER(button));
   int size = lingo_font_description_get_size(lfd);
+
   lives_signal_handler_block(fchooser.font_param->widgets[0], fchooser.entry_func);
   lives_entry_set_text(LIVES_ENTRY(fchooser.font_param->widgets[0]), fname);
   after_param_text_changed(fchooser.font_param->widgets[0], rfx);
   lives_signal_handler_unblock(fchooser.font_param->widgets[0], fchooser.entry_func);
+
   lives_signal_handler_block(fchooser.size_param->widgets[0], fchooser.size_paramfunc);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(fchooser.size_param->widgets[0]), size / LINGO_SCALE);
   lives_signal_handler_unblock(fchooser.size_param->widgets[0], fchooser.size_paramfunc);
+
   lives_free(fname);
   lingo_font_description_free(lfd);
 }
@@ -279,7 +275,7 @@ void check_for_special_type(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * p
   }
 
   slist = filewrite;
-  while (slist != NULL) {
+  while (slist) {
     if (param == (lives_param_t *)(slist->data)) {
       param->special_type = LIVES_PARAM_SPECIAL_TYPE_FILEWRITE;
     }
@@ -343,13 +339,13 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
     }
 
     if (framedraw.stdwidgets > 0 && !framedraw.added) {
-      if (framedraw.xstart_param != NULL && framedraw.xstart_param->widgets[0] != NULL &&
-          framedraw.ystart_param != NULL && framedraw.ystart_param->widgets[0] != NULL) {
-        if (framedraw.stdwidgets == 2 || (framedraw.stdwidgets == 3 && framedraw.scale_param != NULL &&
-                                          framedraw.scale_param->widgets[0] != NULL) || (framedraw.xend_param != NULL
-                                              && framedraw.xend_param->widgets[0] != NULL &&
-                                              framedraw.yend_param != NULL && framedraw.yend_param->widgets[0] != NULL)) {
-          if (mainw->multitrack == NULL) {
+      if (framedraw.xstart_param && framedraw.xstart_param->widgets[0] &&
+          framedraw.ystart_param && framedraw.ystart_param->widgets[0]) {
+        if (framedraw.stdwidgets == 2 || (framedraw.stdwidgets == 3 && framedraw.scale_param &&
+                                          framedraw.scale_param->widgets[0]) || (framedraw.xend_param
+                                              && framedraw.xend_param->widgets[0] &&
+                                              framedraw.yend_param && framedraw.yend_param->widgets[0])) {
+          if (!mainw->multitrack) {
             framedraw_connect(&framedraw, cfile->hsize, cfile->vsize, rfx); // turn passive preview->active
             framedraw_add_reset(LIVES_VBOX(LIVES_WIDGET(pbox)), &framedraw);
           } else {
@@ -363,16 +359,14 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
     if (param == aspect.width_param) {
       if (CURRENT_CLIP_HAS_VIDEO) lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), cfile->hsize);
       aspect.width_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                          LIVES_GUI_CALLBACK(after_aspect_width_changed),
-                          NULL);
+                          LIVES_GUI_CALLBACK(after_aspect_width_changed), NULL);
       aspect.nwidgets++;
     }
 
     if (param == aspect.height_param) {
       if (CURRENT_CLIP_HAS_VIDEO) lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), cfile->vsize);
       aspect.height_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                           LIVES_GUI_CALLBACK(after_aspect_height_changed),
-                           NULL);
+                           LIVES_GUI_CALLBACK(after_aspect_height_changed), NULL);
       aspect.nwidgets++;
     }
 
@@ -381,7 +375,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       LiVESWidget *tbox = widget;
       int idx;
       box = lives_widget_get_parent(widget);
-      while (box != NULL && !LIVES_IS_HBOX(box)) {
+      while (box && !LIVES_IS_HBOX(box)) {
         tbox = box;
         box = lives_widget_get_parent(box);
       }
@@ -402,12 +396,11 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       lives_widget_destroy_with(buttond, tbox);
 
       lives_signal_sync_connect(LIVES_GUI_OBJECT(param->widgets[1]), LIVES_WIDGET_FONT_SET_SIGNAL,
-                                LIVES_GUI_CALLBACK(font_set_cb),
-                                (livespointer)rfx);
+                                LIVES_GUI_CALLBACK(font_set_cb), (livespointer)rfx);
+
       fchooser.entry_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(widget),
                             LIVES_WIDGET_CHANGED_SIGNAL,
-                            LIVES_GUI_CALLBACK(font_entry_cb),
-                            (livespointer)rfx);
+                            LIVES_GUI_CALLBACK(font_entry_cb), (livespointer)rfx);
       if (fchooser.nwidgets == 1) {
         font_entry_cb(LIVES_ENTRY(param->widgets[0]), (livespointer)rfx);
       }
@@ -417,8 +410,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
     if (param == fchooser.size_param) {
       fchooser.size_paramfunc = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(widget),
                                 LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                                LIVES_GUI_CALLBACK(text_size_cb),
-                                (livespointer)rfx);
+                                LIVES_GUI_CALLBACK(text_size_cb), (livespointer)rfx);
       if (fchooser.nwidgets == 1) {
         font_entry_cb(LIVES_ENTRY(param->widgets[0]), (livespointer)rfx);
       }
@@ -429,13 +421,17 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
     if ((param == aspect.width_param || param == aspect.height_param) && aspect.nwidgets == 2) {
       boolean expand = widget_opts.expand == LIVES_EXPAND_EXTRA;
       char *labeltext = (_("Maintain _Aspect Ratio"));
+
       aspect.no_reset = TRUE;
       aspect.lockbutton = lives_standard_lock_button_new(TRUE, ASPECT_BUTTON_WIDTH,
                           ASPECT_BUTTON_HEIGHT, labeltext, NULL);
+      lives_free(labeltext);
+
       lives_signal_sync_connect(aspect.lockbutton, LIVES_WIDGET_CLICKED_SIGNAL,
                                 LIVES_GUI_CALLBACK(reset_aspect), (livespointer)&aspect);
+
       reset_aspect(LIVES_BUTTON(aspect.lockbutton), &aspect);
-      lives_free(labeltext);
+
 
       hbox = lives_hbox_new(FALSE, 0);
       lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
@@ -480,12 +476,10 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
         }
       }
 
-      //epos = get_box_child_index(LIVES_BOX(box), widget);
-
       param->widgets[2] = buttond = lives_standard_file_button_new(FALSE, def_dir);
       lives_free(def_dir);
       lives_box_pack_start(LIVES_BOX(box), buttond, FALSE, FALSE, widget_opts.packing_width);
-      //lives_box_reorder_child(LIVES_BOX(box), buttond, epos); // insert after label, before textbox
+
       lives_signal_sync_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
                                 (livespointer)widget);
 
@@ -495,7 +489,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
 
       if (LIVES_IS_ENTRY(widget)) {
         lives_entry_set_editable(LIVES_ENTRY(widget), FALSE);
-        if (param->widgets[1] != NULL &&
+        if (param->widgets[1] &&
             LIVES_IS_LABEL(param->widgets[1]) &&
             lives_label_get_mnemonic_widget(LIVES_LABEL(param->widgets[1])) != NULL)
           lives_label_set_mnemonic_widget(LIVES_LABEL(param->widgets[1]), buttond);
@@ -507,18 +501,18 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
   }
 
   slist = filewrite;
-  while (slist != NULL) {
+  while (slist) {
     if (param == (lives_param_t *)(slist->data)) {
 
-      if (widget == NULL) continue;
+      if (!widget) continue;
 
       box = lives_widget_get_parent(widget);
 
-      while (box != NULL && !LIVES_IS_HBOX(box)) {
+      while (box && !LIVES_IS_HBOX(box)) {
         box = lives_widget_get_parent(box);
       }
 
-      if (box == NULL) return;
+      if (!box) return;
 
       param->widgets[2] = buttond = lives_standard_file_button_new(FALSE, NULL);
 
@@ -533,7 +527,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
 
       if (LIVES_IS_ENTRY(widget)) {
         lives_entry_set_editable(LIVES_ENTRY(widget), TRUE);
-        if (param->widgets[1] != NULL &&
+        if (param->widgets[1] &&
             LIVES_IS_LABEL(param->widgets[1]) &&
             lives_label_get_mnemonic_widget(LIVES_LABEL(param->widgets[1])) != NULL)
           lives_label_set_mnemonic_widget(LIVES_LABEL(param->widgets[1]), buttond);
@@ -546,8 +540,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
 
   // password fields
 
-  slist = passwd_widgets;
-  while (slist) {
+  for (slist = passwd_widgets; slist; slist = slist->next) {
     if (param == (lives_param_t *)(slist->data)) {
       if (!widget) continue;
 
@@ -574,11 +567,8 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       lives_widget_show_all(hbox);
 
       lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                      LIVES_GUI_CALLBACK(passwd_toggle_vis),
-                                      (livespointer)widget);
-
+                                      LIVES_GUI_CALLBACK(passwd_toggle_vis), (livespointer)widget);
     }
-    slist = slist->next;
   }
 }
 
@@ -619,9 +609,9 @@ boolean check_filewrite_overwrites(void) {
   // check all writeable files which were user edited (param->edited), to make sure we don't overwrite without permission
   // if the value was set by the file button we would have checked there, and param->edited will be FALSE
 
-  if (filewrite != NULL) {
+  if (filewrite) {
     LiVESList *slist = filewrite;
-    while (slist != NULL) {
+    while (slist) {
       lives_param_t *param = (lives_param_t *)(slist->data);
       if (param->edited) {
         // check for overwrite
@@ -648,26 +638,26 @@ boolean special_cleanup(boolean is_ok) {
     mainw->framedraw = mainw->framedraw_reset = NULL;
     mainw->framedraw_spinbutton = NULL;
 
-    if (mainw->fd_layer != NULL) weed_layer_free(mainw->fd_layer);
+    if (mainw->fd_layer) weed_layer_free(mainw->fd_layer);
     mainw->fd_layer = NULL;
 
-    if (mainw->fd_layer_orig != NULL) weed_layer_free(mainw->fd_layer_orig);
+    if (mainw->fd_layer_orig) weed_layer_free(mainw->fd_layer_orig);
     mainw->fd_layer_orig = NULL;
 
     mainw->framedraw_preview = NULL;
 
-    if (framedraw.extra_params != NULL) lives_free(framedraw.extra_params);
+    if (framedraw.extra_params) lives_free(framedraw.extra_params);
     framedraw.extra_params = NULL;
 
     framedraw.type = LIVES_PARAM_SPECIAL_TYPE_NONE;
 
-    if (fileread != NULL) lives_list_free(fileread);
+    if (fileread) lives_list_free(fileread);
     fileread = NULL;
 
-    if (filewrite != NULL) lives_list_free(filewrite);
+    if (filewrite) lives_list_free(filewrite);
     filewrite = NULL;
 
-    if (passwd_widgets != NULL) lives_list_free(passwd_widgets);
+    if (passwd_widgets) lives_list_free(passwd_widgets);
     passwd_widgets = NULL;
 
     fchooser.nwidgets = 0;
@@ -693,11 +683,11 @@ void setmergealign(void) {
     cb_frames = count_resampled_frames(clipboard->frames, clipboard->fps, cfile->fps);
   }
 
-  if (cfile->end - cfile->start + 1 > (cb_frames * ((merge_opts != NULL && merge_opts->spinbutton_loops != NULL) ?
+  if (cfile->end - cfile->start + 1 > (cb_frames * ((merge_opts && merge_opts->spinbutton_loops) ?
                                        lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(merge_opts->spinbutton_loops)) : 1))
       && !merge_opts->loop_to_fit) {
     // set special transalign widgets to their default values
-    if (mergealign.start_param != NULL && mergealign.start_param->widgets[0] != NULL && LIVES_IS_SPIN_BUTTON
+    if (mergealign.start_param && mergealign.start_param->widgets[0] && LIVES_IS_SPIN_BUTTON
         (mergealign.start_param->widgets[0]) && (param = mergealign.start_param)->type == LIVES_PARAM_NUM) {
       if (param->dp) {
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), get_double_param(param->def));
@@ -705,7 +695,7 @@ void setmergealign(void) {
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), (double)get_int_param(param->def));
       }
     }
-    if (mergealign.end_param != NULL && mergealign.end_param->widgets[0] != NULL && LIVES_IS_SPIN_BUTTON
+    if (mergealign.end_param && mergealign.end_param->widgets[0] && LIVES_IS_SPIN_BUTTON
         (mergealign.end_param->widgets[0]) && (param = mergealign.end_param)->type == LIVES_PARAM_NUM) {
       if (param->dp) {
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), get_double_param(param->def));
@@ -716,26 +706,26 @@ void setmergealign(void) {
   } else {
     if (merge_opts->align_start) {
       // set special transalign widgets to min/max values
-      if (mergealign.start_param != NULL && mergealign.start_param->widgets[0] != NULL && LIVES_IS_SPIN_BUTTON
+      if (mergealign.start_param && mergealign.start_param->widgets[0] && LIVES_IS_SPIN_BUTTON
           (mergealign.start_param->widgets[0]) && (param = mergealign.start_param)->type == LIVES_PARAM_NUM) {
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), (double)param->min);
       }
-      if (mergealign.end_param != NULL && mergealign.end_param->widgets[0] != NULL && LIVES_IS_SPIN_BUTTON
+      if (mergealign.end_param && mergealign.end_param->widgets[0] && LIVES_IS_SPIN_BUTTON
           (mergealign.end_param->widgets[0]) && (param = mergealign.end_param)->type == LIVES_PARAM_NUM) {
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), (double)param->max);
       }
     } else {
       // set special transalign widgets to max/min values
-      if (mergealign.start_param != NULL && mergealign.start_param->widgets[0] != NULL && LIVES_IS_SPIN_BUTTON
+      if (mergealign.start_param && mergealign.start_param->widgets[0] && LIVES_IS_SPIN_BUTTON
           (mergealign.start_param->widgets[0]) && (param = mergealign.start_param)->type == LIVES_PARAM_NUM) {
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), (double)param->max);
       }
-      if (mergealign.end_param != NULL && mergealign.end_param->widgets[0] != NULL && LIVES_IS_SPIN_BUTTON
+      if (mergealign.end_param && mergealign.end_param->widgets[0] && LIVES_IS_SPIN_BUTTON
           (mergealign.end_param->widgets[0]) && (param = mergealign.end_param)->type == LIVES_PARAM_NUM) {
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), (double)param->min);
-      }
-    }
-  }
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-OFF*
 }
 
 

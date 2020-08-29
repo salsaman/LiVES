@@ -4121,13 +4121,12 @@ void wait_for_stop(const char *stop_command) {
 boolean save_frame_inner(int clip, int frame, const char *file_name, int width, int height, boolean from_osc) {
   // save 1 frame as an image
   // width==-1, height==-1 to use "natural" values
-
+  LiVESResponseType resp;
   lives_clip_t *sfile = mainw->files[clip];
   char full_file_name[PATH_MAX];
   char *com, *tmp;
 
   boolean allow_over = FALSE;
-  int result;
 
   if (!from_osc && strrchr(file_name, '.') == NULL) {
     lives_snprintf(full_file_name, PATH_MAX, "%s.%s", file_name,
@@ -4153,22 +4152,29 @@ boolean save_frame_inner(int clip, int frame, const char *file_name, int width, 
       }
     }
 
-    com = lives_strdup_printf("%s save_frame %s %d \"%s\" %d %d", prefs->backend_sync, sfile->handle,
-                              frame, tmp, width, height);
-    result = lives_system(com, FALSE);
-    lives_free(com);
-    lives_free(tmp);
+    do {
+      resp = LIVES_RESPONSE_NONE;
 
-    if (result == 256) {
-      d_print_file_error_failed();
-      do_file_perm_error(full_file_name);
-      return FALSE;
-    }
+      com = lives_strdup_printf("%s save_frame %s %d \"%s\" %d %d", prefs->backend_sync, sfile->handle,
+				frame, tmp, width, height);
+      lives_system(com, FALSE);
+      lives_free(com);
 
-    if (result == 0) {
-      d_print_done();
-      return TRUE;
-    }
+      if (THREADVAR(write_failed)) {
+	THREADVAR(write_failed) = 0;
+	d_print_file_error_failed();
+	resp = do_file_perm_error(tmp, TRUE);
+	if (resp == LIVES_RESPONSE_CANCEL) {
+	  lives_free(tmp);
+	  return FALSE;
+	}
+      }
+      if (!THREADVAR(com_failed)) {
+	lives_free(tmp);
+	d_print_done();
+	return TRUE;
+      }
+    } while (resp == LIVES_RESPONSE_RETRY);
   } else {
     // multitrack mode
     LiVESError *gerr = NULL;
@@ -5664,7 +5670,7 @@ boolean reload_clip(int fileno, int maxframe) {
     if ((cdata = get_decoder_cdata(fileno, prefs->disabled_decoders, fake_cdata->fps != 0. ? fake_cdata : NULL)) == NULL) {
       if (mainw->error) {
 manual_locate:
-        response = do_original_lost_warning(orig_filename);
+        response = do_file_notfound_dialog(_("The original file"), orig_filename);
         if (response == LIVES_RESPONSE_RETRY) {
           lives_freep((void **)&fake_cdata->URI);
           continue;
@@ -5690,12 +5696,10 @@ manual_locate:
             newname = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
             lives_widget_destroy(LIVES_WIDGET(chooser));
 
-            if (newname) {
-              if (strlen(newname)) {
-                char *tmp;
-                lives_snprintf(sfile->file_name, PATH_MAX, "%s", (tmp = lives_filename_to_utf8(newname, -1, NULL, NULL, NULL)));
-                lives_free(tmp);
-              }
+            if (newname && *newname) {
+	      char *tmp;
+	      lives_snprintf(sfile->file_name, PATH_MAX, "%s", (tmp = lives_filename_to_utf8(newname, -1, NULL, NULL, NULL)));
+	      lives_free(tmp);
               lives_free(newname);
             }
 
@@ -5778,7 +5782,7 @@ manual_locate:
         if (mainw->prefs_cache) {
           // update recent files -> force reload of prefs
           cached_list_free(&mainw->prefs_cache);
-          mainw->prefs_cache = cache_file_contents(capable->rcfile);
+          mainw->prefs_cache = cache_file_contents(prefs->configfile);
         }
       }
     }
@@ -5958,7 +5962,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   }
 
   if (!auto_recover) {
-    if (mainw->multitrack) {
+    if (1 || mainw->multitrack) {
       lives_widget_show_all(LIVES_MAIN_WINDOW_WIDGET);
       lives_widget_context_update();
     }
@@ -5984,7 +5988,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   }
 
   do_threaded_dialog(_("Recovering files"), FALSE);
-  d_print(_("Recovering files..."));
+  d_print(_("\nRecovering files..."));
 
   threaded_dialog_spin(0.);
 

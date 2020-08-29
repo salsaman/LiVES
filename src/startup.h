@@ -9,6 +9,8 @@
 
 #define LIVES_TEST_VIDEO_NAME "vidtest.avi"
 
+boolean build_init_config(const char *config_datadir, boolean prompt);
+
 boolean do_workdir_query(void);
 LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog *, boolean full);
 boolean do_audio_choice_dialog(short startup_phase);
@@ -21,6 +23,7 @@ void on_troubleshoot_activate(LiVESMenuItem *, livespointer);
 void explain_missing_activate(LiVESMenuItem *menuitem, livespointer user_data);
 
 void do_bad_dir_perms_error(const char *dirname);
-void dir_toolong_error(char *dirname, const char *dirtype, size_t max, boolean allow_retry);
+void dir_toolong_error(const char *dirname, const char *dirtype, size_t max, boolean can_retry);
+void filename_toolong_error(const char *fname, const char *ftype, size_t max, boolean can_retry);
 
 #endif

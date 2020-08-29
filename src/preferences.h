@@ -59,7 +59,9 @@ typedef struct {
 #define Q_SMOOTH 1
 
   char workdir[PATH_MAX];  ///< kept in locale encoding
-  char configdir[PATH_MAX];  ///< kept in locale encoding
+
+  char configfile[PATH_MAX];  ///< kept in locale encoding (config settings) [default ~/.local/config/lives)
+  char config_datadir[PATH_MAX];  ///< kept in locale encoding (general config files) (default ~/.local/share/lives)
 
   // utf8 encoding
   char def_vid_load_dir[PATH_MAX];
@@ -423,6 +425,8 @@ typedef struct {
 
   boolean noframedrop;
 
+  boolean back_compat;
+  
   char pa_start_opts[255];
   boolean pa_restart;
 
@@ -447,7 +451,7 @@ typedef struct {
   boolean rr_amicro;
   boolean rr_ramicro;
 
-  char def_author[1024];
+  char def_author[1024]; ///< TODO - add to prefs windo
 } _prefs;
 
 enum {
@@ -738,6 +742,8 @@ typedef struct {
   boolean ign_vppdefs;
   boolean ign_vjmode;
   boolean ign_dscrit;
+  boolean ign_configfile;
+  boolean ign_config_datadir;
 } _ign_opts;
 
 typedef struct {
@@ -1031,6 +1037,8 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_RRQSMOOTH "recrender_qsmooth" /// option for rendering recordings
 #define PREF_RRAMICRO "recrender_amicro" /// option for rendering recordings
 #define PREF_RRRAMICRO "recrender_rend_amicro" /// option for rendering recordings
+
+#define PREF_BACK_COMPAT "backwards_compatibility" ///< forces backwards compatibility with earlier versions
 
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"

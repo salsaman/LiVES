@@ -129,7 +129,9 @@ static int xxwidth = 0, xxheight = 0;
 static char *old_vhash = NULL;
 static int initial_startup_phase = 0;
 static boolean needs_workdir = FALSE;
-static boolean user_configdir = FALSE;
+
+
+static void do_start_messages(void);
 
 ////////////////////
 
@@ -587,15 +589,20 @@ static boolean pre_init(void) {
 
   pthread_mutexattr_t mattr;
 
-  char *msg, *tmp, *tmp2;
+  char *msg, *tmp, *tmp2, *cfgdir;
 
   boolean needs_update = FALSE;
 
-  register int i;
+  int i;
 
   /// create context data for main thread; must be called before get_capabilities()
   lives_thread_data_create(0);
 
+  // need to create directory for configfile before calling get_capabilities()
+  cfgdir = get_dir(prefs->configfile);
+  lives_make_writeable_dir(cfgdir);
+  lives_free(cfgdir);
+  
   // pre-checked conditions. We will check for these agian
   if (capable->has_perl && capable->can_write_to_workdir && capable->can_write_to_config &&
       capable->can_write_to_config_backup && capable->can_write_to_config_new && capable->can_read_from_config &&
@@ -630,7 +637,7 @@ static boolean pre_init(void) {
       msg = lives_strdup_printf(
               _("\nLiVES was unable to read from its configuration file\n%s\n\n"
                 "Please check the file permissions for this file and try again.\n"),
-              (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+              (tmp = lives_filename_to_utf8(prefs->configfile, -1, NULL, NULL, NULL)));
       lives_free(tmp);
       startup_message_fatal(msg);
     }
@@ -639,7 +646,7 @@ static boolean pre_init(void) {
       msg = lives_strdup_printf(
               _("\nAn error occured when writing to the configuration files\n%s*\n\n"
                 "Please check the file permissions for this file and directory\nand try again.\n"),
-              (tmp2 = ensure_extension((tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)),
+              (tmp2 = ensure_extension((tmp = lives_filename_to_utf8(prefs->configfile, -1, NULL, NULL, NULL)),
                                        LIVES_FILE_EXT_NEW)));
       lives_free(tmp);
       lives_free(tmp2);
@@ -651,7 +658,7 @@ static boolean pre_init(void) {
         tmp2 = lives_strdup_printf(_("Please check the %s setting in \n%s\nand try again.\n"),
                                    (mainw->old_vhash && atoi(mainw->old_vhash) != 0 && atoi(mainw->old_vhash) < 3003003)
                                    ? "<tempdir>" : "<workdir>",
-                                   (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+                                   (tmp = lives_filename_to_utf8(prefs->configfile, -1, NULL, NULL, NULL)));
         lives_free(tmp);
       } else tmp2 = lives_strdup("");
 
@@ -686,14 +693,14 @@ static boolean pre_init(void) {
   mainw->string_constants[LIVES_STRING_CONSTANT_CUSTOM] = (_("Custom"));
   // TRANSLATORS: adjective for "Test" type effects
   mainw->string_constants[LIVES_STRING_CONSTANT_TEST] = (_("Test"));
-  // TRANSLATORS: order to close dialog window
-  mainw->string_constants[LIVES_STRING_CONSTANT_CLOSE_WINDOW] = (_("Close Window"));
 
   // now we can use PREFS properly
-  mainw->prefs_cache = cache_file_contents(capable->rcfile);
+  mainw->prefs_cache = cache_file_contents(prefs->configfile);
 
   prefs->show_dev_opts = get_boolean_prefd(PREF_SHOW_DEVOPTS, FALSE);
   prefs->dev_show_dabg = prefs->dev_show_timing = FALSE;
+
+  prefs->back_compat = get_boolean_prefd(PREF_BACK_COMPAT, TRUE);
 
   future_prefs->vj_mode = get_boolean_prefd(PREF_VJMODE, FALSE);
   if (!ign_opts.ign_vjmode) prefs->vj_mode = future_prefs->vj_mode;
@@ -837,6 +844,10 @@ static boolean pre_init(void) {
 
   prefs->present = FALSE;
 
+  get_string_prefd(PREF_DEFAULT_IMAGE_TYPE, prefs->image_type, 16, LIVES_IMAGE_TYPE_PNG);
+  lives_snprintf(prefs->image_ext, 16, "%s",
+                 get_image_ext_for_type(lives_image_type_to_img_type(prefs->image_type)));
+
   /// eye candy
   prefs->extra_colours = get_boolean_prefd(PREF_EXTRA_COLOURS, TRUE);
   prefs->show_button_images = widget_opts.show_button_images =
@@ -949,13 +960,13 @@ static boolean pre_init(void) {
 
   lives_snprintf(future_prefs->theme, 64, "%s", prefs->theme);
 
-  if (!set_palette_colours(FALSE)) {
+  if (!set_palette_colours(initial_startup_phase == -1)) {
     lives_snprintf(prefs->theme, 64, LIVES_THEME_NONE);
-    set_palette_colours(FALSE);
+    set_palette_colours(initial_startup_phase != -1);
   } else if (palette->style & STYLE_1) {
     widget_opts.apply_theme = 1;
   }
-  if (!mainw->foreign && prefs->startup_phase == 0) {
+  if (!mainw->foreign && prefs->startup_phase == -1) {
     if (prefs->show_splash) splash_init();
     print_notice();
   }
@@ -1069,11 +1080,6 @@ static boolean pre_init(void) {
     mainw->alarms[i].lastcheck = 0;
   }
 
-#ifdef ENABLE_OSC
-  // create devicemaps directory in home
-  create_devicemap_directory();
-#endif
-
   if (lives_ascii_strcasecmp(prefs->theme, future_prefs->theme)) return TRUE;
   return FALSE;
 }
@@ -1149,7 +1155,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   int naudp = 0;
 
-  register int i;
+  int i;
 
   for (i = 0; i <= MAX_FILES; mainw->files[i++] = NULL);
   mainw->prefs_changed = FALSE;
@@ -1583,10 +1589,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->ext_playback = mainw->ext_audio = FALSE;
 
-  get_string_prefd(PREF_DEFAULT_IMAGE_TYPE, prefs->image_type, 16, LIVES_IMAGE_TYPE_PNG);
-  lives_snprintf(prefs->image_ext, 16, "%s",
-                 get_image_ext_for_type(lives_image_type_to_img_type(prefs->image_type)));
-
   prefs->loop_recording = TRUE;
   prefs->no_bandwidth = FALSE;
   prefs->ocp = get_int_prefd(PREF_OPEN_COMPRESSION_PERCENT, 15);
@@ -1680,11 +1682,11 @@ static void lives_init(_ign_opts *ign_opts) {
   // get window manager capabilities
 #ifdef GDK_WINDOWING_WAYLAND
   if (GDK_IS_WAYLAND_DISPLAY(mainw->mgeom[0].disp))
-    capable->wm = lives_strdup("Wayland");
+    capable->wm_name = lives_strdup("Wayland");
 #endif
 #ifdef GDK_WINDOWING_X11
   if (GDK_IS_X11_DISPLAY(mainw->mgeom[0].disp))
-    capable->wm = lives_strdup(gdk_x11_screen_get_window_manager_name(gdk_screen_get_default()));
+    capable->wm_name = lives_strdup(gdk_x11_screen_get_window_manager_name(gdk_screen_get_default()));
 #endif
 
   *capable->wm_caps.wm_name = 0;
@@ -1996,6 +1998,9 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->fxdefsfile = NULL;
     prefs->fxsizesfile = NULL;
 
+    // anything that d_prints messages should go here:
+    do_start_messages();
+    
     needs_free = FALSE;
     weed_plugin_path = getenv("WEED_PLUGIN_PATH");
     if (!weed_plugin_path) {
@@ -2251,7 +2256,172 @@ static void do_start_messages(void) {
 
   if (prefs->vj_mode) {
     d_print(_("Starting in VJ MODE: Skipping startup dependency checks\n"));
+
+    d_print(_("\nMachine details:\n"));
+
+    get_machine_dets();
+    d_print(_("OS is %s %s, running on %s\n"),
+            capable->os_name ? capable->os_name : _("unknown"),
+            capable->os_release ? capable->os_release : "?",
+            capable->os_hardware ? capable->os_hardware : "????");
+
+    d_print(_("CPU type is %s "), capable->cpu_name);
+    d_print(P_("(%d core, ", "(%d cores, ", capable->ncpus), capable->ncpus);
+
+    if (capable->byte_order == LIVES_LITTLE_ENDIAN) endian = (_("little endian"));
+    else endian = (_("big endian"));
+    d_print(_("%d bits, %s)\n"), capable->cpu_bits, endian);
+    lives_free(endian);
+
+    d_print(_("Machine name is '%s'\n"), capable->mach_name);
+  }
+  d_print(_("Number of monitors detected: %d: "), capable->nmonitors);
+
+  d_print(_("GUI screen size is %d X %d (usable: %d X %d); %d dpi.\nWidget scaling has been set to %.3f.\n"),
+          mainw->mgeom[widget_opts.monitor].phys_width, mainw->mgeom[widget_opts.monitor].phys_height,
+          GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT,
+          (int)mainw->mgeom[widget_opts.monitor].dpi,
+          widget_opts.scale);
+
+  if (get_screen_usable_size(&w, &h)) {
+    d_print(_("Actual usable size appears to be %d X %d\n"), w, h);
+  }
+
+  if (!prefs->vj_mode) {
+    get_wm_caps();
+
+    d_print(_("Window manager reports as \"%s\" (%s)"),
+            capable->wm_name ? capable->wm_name : _("UNKNOWN - please patch me !"),
+            capable->wm_caps.wm_name ? capable->wm_caps.wm_name : "unknown");
+
+    if (capable->wm_type && *capable->wm_type)
+      d_print(_(", running on %s"), capable->wm_type);
+
+    d_print(_("; compositing is %s.\n"), capable->wm_caps.is_composited ? _("supported") : _("not supported"));
+
+    get_distro_dets();
+    d_print(_("Distro is %s %s (%s)\n"), capable->distro_name ? capable->distro_name : "?????",
+            capable->distro_ver ? capable->distro_ver : "?????",
+            capable->distro_codename ? capable->distro_codename : "");
+  }
+
+  d_print("%s", _("GUI type is: "));
+
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 0, 0)
+  d_print(_("GTK+ version %d.%d.%d (compiled with %d.%d.%d)"),
+          gtk_get_major_version(), gtk_get_minor_version(),
+          gtk_get_micro_version(),
+          GTK_MAJOR_VERSION, GTK_MINOR_VERSION,
+          GTK_MICRO_VERSION
+         );
+#else
+  d_print(_("GTK+ (compiled with %d.%d.%d)"),
+          GTK_MAJOR_VERSION, GTK_MINOR_VERSION, GTK_MICRO_VERSION);
+#endif
+#endif
+
+#ifdef LIVES_PAINTER_IS_CAIRO
+  d_print(_(", with cairo support\n"));
+#else
+  d_print(_("\n"));
+#endif
+
+  if (!prefs->vj_mode) {
+    if (*capable->gui_theme_name) tmp = lives_strdup(capable->gui_theme_name);
+    else tmp = lives_strdup_printf("lives-%s-dynamic", prefs->theme);
+
+    d_print("GUI theme set to %s, icon theme set to %s\n", tmp,
+            capable->icon_theme_name);
+
+    lives_free(tmp);
+  }
+
+#ifndef RT_AUDIO
+  d_print(_("WARNING - this version of LiVES was compiled without either\njack or pulseaudio support.\n"
+            "Many audio features will be unavailable.\n"));
+# else
+#ifdef ENABLE_JACK
+  d_print(_("Compiled with jack support, good !\n"));
+#endif
+#ifdef HAVE_PULSE_AUDIO
+  d_print(_("Compiled with pulseaudio support, wonderful !\n"));
+#endif
+#endif
+
+  if (ign_opts.ign_configfile) {
+    tmp = (_("set via -configfile commandline option"));
   } else {
+    tmp = (_("default value"));
+  }
+  d_print(_("\nConfig file is %s (%s)\n"), prefs->configfile, tmp);
+  lives_free(tmp);
+
+  if (!prefs->vj_mode && (!capable->mountpoint || !*capable->mountpoint))
+    capable->mountpoint = get_mountpoint_for(prefs->workdir);
+  if (capable->mountpoint && *capable->mountpoint) tmp = lives_strdup_printf(_(", contained in volume %s"), capable->mountpoint);
+  else tmp = lives_strdup("");
+
+  d_print(_("\nWorking directory is %s%s\n"), prefs->workdir, tmp);
+  lives_free(tmp);
+
+  if (mainw->has_session_workdir) {
+    d_print(_("(Set by -workdir commandline option)\n"));
+  } else {
+    if (initial_startup_phase != -1) {
+      if (!strcmp(mainw->version_hash, mainw->old_vhash)) {
+        lives_free(old_vhash);
+        old_vhash = lives_strdup(LiVES_VERSION);
+      }
+      d_print(_("(Retrieved from %s, version %s)\n"), prefs->configfile, old_vhash);
+    } else {
+      d_print(_("(Set by user during setup phase)\n"));
+    }
+  }
+
+  if (initial_startup_phase == 0) {
+    if (strlen(mainw->old_vhash) == 0 || !strcmp(mainw->old_vhash, "0")) {
+      phase = (_("STARTUP ERROR OCCURRED - FORCED REINSTALL"));
+    } else {
+      if (atoi(mainw->old_vhash) < atoi(mainw->version_hash)) {
+        phase = lives_strdup_printf(_("upgrade from version %s. Welcome !"), mainw->old_vhash);
+      } else if (atoi(mainw->old_vhash) > atoi(mainw->version_hash)) {
+        phase = lives_strdup_printf(_("downgrade from version %s !"), mainw->old_vhash);
+      }
+    }
+  } else if (initial_startup_phase == -1) {
+    if (!strcmp(mainw->old_vhash, "0")) {
+      phase = (_("REINSTALL AFTER FAILED RECOVERY"));
+      fname = lives_strdup_printf("%s.damaged", prefs->configfile);
+      if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+        tmp = lives_strdup_printf(_("%s; check %s for possible errors before re-running LiVES"), phase, fname);
+        lives_free(phase);
+        phase = tmp;
+      }
+      lives_free(fname);
+      d_print("\n");
+    } else {
+      phase = (_("fresh install. Welcome !"));
+    }
+  } else {
+    phase = lives_strdup_printf(_("continue with installation"), initial_startup_phase);
+  }
+  if (!phase) phase = (_("normal startup"));
+  d_print(_("Initial startup phase was %d: (%s)\n"), initial_startup_phase, phase);
+  lives_free(phase);
+  lives_free(old_vhash);
+
+  if (initial_startup_phase == 0) {
+    fname = lives_strdup_printf("%s.recovery.tried.succeeded", prefs->configfile);
+    if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+      phase = lives_strdup_printf(_("%s WAS POSSIBLY RECOVERED FROM %s.recovery\n"), prefs->configfile, prefs->configfile);
+      d_print("%s", phase);
+      lives_free(phase);
+    }
+    lives_free(fname);
+  }
+
+  if (!prefs->vj_mode) {
     d_print(_("\nChecking RECOMMENDED dependencies: "));
 
     SHOWDET(mplayer);
@@ -2290,165 +2460,8 @@ static void do_start_messages(void) {
     SHOWDET(xdotool);
     SHOWDET(xwininfo);
 #endif
-  } else {
-    d_print(_("\n\nMachine details:\n"));
-
-    get_machine_dets();
-    d_print(_("OS is %s %s, running on %s\n"),
-            capable->os_name ? capable->os_name : _("unknown"),
-            capable->os_release ? capable->os_release : "?",
-            capable->os_hardware ? capable->os_hardware : "????");
-
-    d_print(_("CPU type is %s "), capable->cpu_name);
-    d_print(P_("(%d core, ", "(%d cores, ", capable->ncpus), capable->ncpus);
-
-    if (capable->byte_order == LIVES_LITTLE_ENDIAN) endian = (_("little endian"));
-    else endian = (_("big endian"));
-    d_print(_("%d bits, %s)\n"), capable->cpu_bits, endian);
-    lives_free(endian);
-
-    d_print(_("Machine name is '%s'\n"), capable->mach_name);
   }
-  d_print(_("Number of monitors detected: %d: "), capable->nmonitors);
-
-  d_print(_("GUI screen size is %d X %d (usable: %d X %d); %d dpi.\nWidget scaling has been set to %.3f.\n"),
-          mainw->mgeom[widget_opts.monitor].phys_width, mainw->mgeom[widget_opts.monitor].phys_height,
-          GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT,
-          (int)mainw->mgeom[widget_opts.monitor].dpi,
-          widget_opts.scale);
-
-  if (get_screen_usable_size(&w, &h)) {
-    d_print(_("Actual usable size appears to be %d X %d\n"), w, h);
-  }
-  if (!prefs->vj_mode) {
-    get_wm_caps();
-
-    d_print(_("Window manager reports as \"%s\" (%s)"),
-            capable->wm ? capable->wm : _("UNKNOWN - please patch me !"),
-            capable->wm_caps.wm_name ? capable->wm_caps.wm_name : "unknown");
-
-    d_print(_("; compositing is %s.\n"), capable->wm_caps.is_composited ? _("supported") : _("not supported"));
-
-    get_distro_dets();
-    d_print(_("Distro is %s %s (%s)\n"), capable->distro_name ? capable->distro_name : "?????",
-            capable->distro_ver ? capable->distro_ver : "?????",
-            capable->distro_codename ? capable->distro_codename : "");
-  }
-
-  d_print("%s", _("GUI type is: "));
-
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3, 0, 0)
-  d_print(_("GTK+ version %d.%d.%d (compiled with %d.%d.%d)"),
-          gtk_get_major_version(), gtk_get_minor_version(),
-          gtk_get_micro_version(),
-          GTK_MAJOR_VERSION, GTK_MINOR_VERSION,
-          GTK_MICRO_VERSION
-         );
-#else
-  d_print(_("GTK+ (compiled with %d.%d.%d)"),
-          GTK_MAJOR_VERSION, GTK_MINOR_VERSION, GTK_MICRO_VERSION);
-#endif
-#endif
-
-#ifdef LIVES_PAINTER_IS_CAIRO
-  d_print(_(", with cairo support\n"));
-#else
-  d_print(_("\n"));
-#endif
-  if (!prefs->vj_mode) {
-    if (*capable->gui_theme_name) tmp = lives_strdup(capable->gui_theme_name);
-    else tmp = lives_strdup_printf("lives-%s-dynamic", prefs->theme);
-
-    d_print("GUI theme set to %s, icon theme set to %s\n", tmp,
-            capable->icon_theme_name);
-
-    lives_free(tmp);
-  }
-
-#ifndef RT_AUDIO
-  d_print(_("WARNING - this version of LiVES was compiled without either\njack or pulseaudio support.\n"
-            "Many audio features will be unavailable.\n"));
-# else
-#ifdef ENABLE_JACK
-  d_print(_("Compiled with jack support, good !\n"));
-#endif
-#ifdef HAVE_PULSE_AUDIO
-  d_print(_("Compiled with pulseaudio support, wonderful !\n"));
-#endif
-#endif
-
-  if (user_configdir) {
-    tmp = (_("set via -configdir commandline option"));
-  } else {
-    tmp = (_("default value"));
-  }
-  d_print(_("\nConfig directory is %s (%s)\n"), prefs->configdir, tmp);
-  lives_free(tmp);
-
-  if (!prefs->vj_mode && (!capable->mountpoint || !*capable->mountpoint))
-    capable->mountpoint = get_mountpoint_for(prefs->workdir);
-  if (capable->mountpoint && *capable->mountpoint) tmp = lives_strdup_printf(_(", contained in volume %s"), capable->mountpoint);
-  else tmp = lives_strdup("");
-
-  d_print(_("\nWorking directory is %s%s\n"), prefs->workdir, tmp);
-  lives_free(tmp);
-
-  if (mainw->has_session_workdir) {
-    d_print(_("(Set by -workdir commandline option)\n"));
-  } else {
-    if (initial_startup_phase != -1) {
-      if (!strcmp(mainw->version_hash, mainw->old_vhash)) {
-        lives_free(old_vhash);
-        old_vhash = lives_strdup(LiVES_VERSION);
-      }
-      d_print(_("(Retrieved from %s, version %s)\n"), capable->rcfile, old_vhash);
-    } else {
-      d_print(_("(Set by user during setup phase)\n"));
-    }
-  }
-
-  if (initial_startup_phase == 0) {
-    if (strlen(mainw->old_vhash) == 0 || !strcmp(mainw->old_vhash, "0")) {
-      phase = (_("STARTUP ERROR OCCURRED - FORCED REINSTALL"));
-    } else {
-      if (atoi(mainw->old_vhash) < atoi(mainw->version_hash)) {
-        phase = lives_strdup_printf(_("upgrade from version %s. Welcome !"), mainw->old_vhash);
-      } else if (atoi(mainw->old_vhash) > atoi(mainw->version_hash)) {
-        phase = lives_strdup_printf(_("downgrade from version %s !"), mainw->old_vhash);
-      }
-    }
-  } else if (initial_startup_phase == -1) {
-    if (!strcmp(mainw->old_vhash, "0")) {
-      phase = (_("REINSTALL AFTER FAILED RECOVERY"));
-      fname = lives_strdup_printf("%s.damaged", capable->rcfile);
-      if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
-        tmp = lives_strdup_printf(_("%s; check %s for possible errors before re-running LiVES"), phase, fname);
-        lives_free(phase);
-        phase = tmp;
-      }
-      lives_free(fname);
-      d_print("\n");
-    } else {
-      phase = (_("fresh install. Welcome !"));
-    }
-  } else {
-    phase = lives_strdup_printf(_("continue with installation"), initial_startup_phase);
-  }
-  if (!phase)  phase = (_("normal startup"));
-  d_print(_("Initial startup phase was %d: (%s)\n"), initial_startup_phase, phase);
-  lives_free(phase);
-  lives_free(old_vhash);
-
-  if (initial_startup_phase == 0) {
-    fname = lives_strdup_printf("%s.recovery.tried.succeeded", capable->rcfile);
-    if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
-      phase = lives_strdup_printf(_("%s WAS POSSIBLY RECOVERED FROM %s.recovery\n"), capable->rcfile, capable->rcfile);
-      d_print("%s", phase);
-      lives_free(phase);
-    }
-    lives_free(fname);
-  }
+  d_print("\n\n");
 }
 #undef SHOWDETx
 #undef SHOWDET
@@ -2489,12 +2502,12 @@ static void set_toolkit_theme(int prefer) {
     capable->gui_theme_name = lives_concat(capable->gui_theme_name, lname);
   }
 
-  capable->extra_icon_path = lives_build_path(prefs->configdir, LIVES_CONFIG_DIR, "stock-icons", NULL);
+  capable->extra_icon_path = lives_build_path(prefs->config_datadir, STOCK_ICONS_DIR, NULL);
 
   widget_opts.icon_theme = gtk_icon_theme_new();
 
   gtk_icon_theme_set_custom_theme((LiVESIconTheme *)widget_opts.icon_theme, capable->icon_theme_name);
-  gtk_icon_theme_prepend_search_path((LiVESIconTheme *)widget_opts.icon_theme, capable->extra_icon_path);
+  //gtk_icon_theme_prepend_search_path((LiVESIconTheme *)widget_opts.icon_theme, capable->extra_icon_path);
 
   ic_dir = lives_build_path(prefs->prefix_dir, ICON_DIR, NULL);
   gtk_icon_theme_prepend_search_path((LiVESIconTheme *)widget_opts.icon_theme, ic_dir);
@@ -2659,8 +2672,7 @@ boolean set_palette_colours(boolean force_reload) {
 
   if (force_reload) {
     // check if theme is custom:
-    themedir = lives_build_path(prefs->configdir, LIVES_CONFIG_DIR, PLUGIN_THEMES,
-                                prefs->theme, NULL);
+    themedir = lives_build_path(prefs->config_datadir, PLUGIN_THEMES, prefs->theme, NULL);
     if (!lives_file_test(themedir, LIVES_FILE_TEST_IS_DIR)) {
       lives_free(themedir);
       // if not custom, check if builtin
@@ -2678,14 +2690,33 @@ boolean set_palette_colours(boolean force_reload) {
     fname = lives_strdup_printf("%s.%s", THEME_SEP_IMG_LITERAL, LIVES_FILE_EXT_JPG);
     tmp = lives_build_filename(themedir, fname, NULL);
     lives_free(fname);
-    lives_snprintf(mainw->sepimg_path, PATH_MAX, "%s", tmp);
-    lives_free(tmp);
+    if (lives_file_test(tmp, LIVES_FILE_TEST_EXISTS)) {
+      lives_snprintf(mainw->sepimg_path, PATH_MAX, "%s", tmp);
+      lives_free(tmp);
+    }
+    else {
+      fname = lives_strdup_printf("%s.%s", THEME_SEP_IMG_LITERAL, LIVES_FILE_EXT_PNG);
+      lives_free(tmp);
+      tmp = lives_build_filename(themedir, fname, NULL);
+      lives_free(fname);
+      lives_snprintf(mainw->sepimg_path, PATH_MAX, "%s", tmp);
+      lives_free(tmp);
+    }
 
     fname = lives_strdup_printf("%s.%s", THEME_FRAME_IMG_LITERAL, LIVES_FILE_EXT_JPG);
     tmp = lives_build_filename(themedir, fname, NULL);
     lives_free(fname);
-    lives_snprintf(mainw->frameblank_path, PATH_MAX, "%s", tmp);
-    lives_free(tmp);
+    if (lives_file_test(tmp, LIVES_FILE_TEST_EXISTS)) {
+      lives_snprintf(mainw->frameblank_path, PATH_MAX, "%s", tmp);
+      lives_free(tmp);
+    }
+    else {
+      fname = lives_strdup_printf("%s.%s", THEME_FRAME_IMG_LITERAL, LIVES_FILE_EXT_PNG);
+      tmp = lives_build_filename(themedir, fname, NULL);
+      lives_free(fname);
+      lives_snprintf(mainw->frameblank_path, PATH_MAX, "%s", tmp);
+      lives_free(tmp);
+    }
 
     // load from file
     themefile = lives_build_filename(themedir, THEME_HEADER, NULL);
@@ -2816,7 +2847,7 @@ boolean set_palette_colours(boolean force_reload) {
   // still experimenting...some values may need tweaking
   // suggested uses for each colour in the process of being defined
   // TODO - run a bg thread until we create GUI
-  if (!prefs->vj_mode) {
+  if (!prefs->vj_mode && initial_startup_phase == -1) {
     if (!(palette->style & STYLE_LIGHT)) {
       lmin = .05; lmax = .4;
     } else {
@@ -2946,9 +2977,9 @@ capability *get_capabilities(void) {
   get_location("cat", capable->cat_cmd, PATH_MAX);
   get_location("echo", capable->echo_cmd, PATH_MAX);
   get_location("eject", capable->eject_cmd, PATH_MAX);
-
-  capable->rcfile = lives_build_filename(prefs->configdir, LIVES_RC_FILENAME, NULL);
-  capable->wm = NULL;
+      
+  capable->wm_name = NULL;
+  capable->wm_type = NULL;
 
   capable->python_version = 0;
   capable->xstdout = STDOUT_FILENO;
@@ -2998,14 +3029,13 @@ capability *get_capabilities(void) {
   capable->has_smogrify = PRESENT;
 
   if (!mainw->has_session_workdir) {
-    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -CONFIGDIR=\"%s\" --", EXEC_PERL, capable->backend_path,
-                   prefs->configdir);
+    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -CONFIGFILE=\"%s\" --", EXEC_PERL, capable->backend_path,
+                   prefs->configfile);
     lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
   } else {
     // if the user passed a -workdir option, we will use that, and the backend won't attempt to find an existing value
-    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGDIR=\"%s\" --", EXEC_PERL,
-                   capable->backend_path,
-                   prefs->workdir, prefs->configdir);
+    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGFILE=\"%s\" --", EXEC_PERL,
+                   capable->backend_path, prefs->workdir, prefs->configfile);
     lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
   }
 
@@ -3044,8 +3074,10 @@ capability *get_capabilities(void) {
 
   lives_strfreev(array);
   capable->smog_version_correct = TRUE;
-
+  
   lives_snprintf(command, PATH_MAX * 4, "%s report -", prefs->backend_sync);
+
+  // check_settings:
 
   capable->has_smogrify = FALSE;
   lives_popen(command, TRUE, buffer, PATH_MAX * 4);
@@ -3062,22 +3094,22 @@ capability *get_capabilities(void) {
 
   if (!strcmp(array[0], "smogrify::error")) {
     LIVES_ERROR(buffer);
-    if (!strcmp(array[1], "rc_get")) {
+    if (!strcmp(array[1], "config_get")) {
       lives_strfreev(array);
       capable->can_read_from_config = FALSE;
       return capable;
     }
-    if (!strcmp(array[1], "rc_set_new")) {
+    if (!strcmp(array[1], "config_set_new")) {
       lives_strfreev(array);
       capable->can_write_to_config_new = FALSE;
       return capable;
     }
-    if (!strcmp(array[1], "rc_set_rec")) {
+    if (!strcmp(array[1], "config_set_rec")) {
       lives_strfreev(array);
       capable->can_write_to_config_backup = FALSE;
       return capable;
     }
-    if (!strcmp(array[1], "rc_set")) {
+    if (!strcmp(array[1], "config_set")) {
       lives_strfreev(array);
       capable->can_write_to_config = FALSE;
       return capable;
@@ -3103,7 +3135,7 @@ capability *get_capabilities(void) {
 
   if (!mainw->old_vhash) {
     old_vhash = lives_strdup("NULL");
-  } else if (strlen(mainw->old_vhash) == 0) {
+  } else if (!*mainw->old_vhash) {
     old_vhash = lives_strdup("not present");
   } else if (!strcmp(mainw->old_vhash, "0")) {
     old_vhash = lives_strdup("unrecoverable");
@@ -3113,12 +3145,22 @@ capability *get_capabilities(void) {
 
   lives_snprintf(dir, PATH_MAX, "%s", array[1]);
 
+  if (initial_startup_phase != 0 && initial_startup_phase < 4) {
+    /// if no configfile:
+    /// check for migration:
+    /// if $HOME/.lives exists, get the verhash from it
+    /// if < 3200000, offer to migrate .lives and .lives-dir
+    /// $HOME/.lives.* files -> $HOME/.local/config/lives/settings.*
+    /// then if $HOME/.lives-dir exists, move contents to $HOME/.local/share/lives
+    /// then goto check_settings
+  }
+
   if (!mainw->has_session_workdir) {
-    size_t dirlen = strlen(dir);
+    size_t dirlen = lives_strlen(dir);
     boolean dir_valid = TRUE;
 
-    if (dirlen > 0 && strncmp(dir, "(null)", 6)) {
-      if (!mainw->old_vhash || !(*mainw->old_vhash) || !strcmp(mainw->old_vhash, "0")) {
+    if (dirlen && strncmp(dir, "(null)", 6)) {
+      if (!mainw->old_vhash || !*mainw->old_vhash || !strcmp(mainw->old_vhash, "0")) {
         msg = lives_strdup_printf("The backend found a workdir (%s), but claimed old version was %s !", dir, old_vhash);
         LIVES_WARN(msg);
         lives_free(msg);
@@ -3134,17 +3176,15 @@ capability *get_capabilities(void) {
         }
 
         if (!lives_make_writeable_dir(dir)) {
-          do_bad_dir_perms_error(dir);
+          do_dir_perm_error(dir, FALSE);
           dir_valid = FALSE;
         }
       }
 
       if (dir_valid) {
         lives_snprintf(prefs->workdir, PATH_MAX, "%s", dir);
-
-        lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGDIR=\"%s\" --", EXEC_PERL,
-                       capable->backend_path,
-                       prefs->workdir, prefs->configdir);
+        lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGFILE=\"%s\" --", EXEC_PERL,
+                       capable->backend_path, prefs->workdir, prefs->configfile);
         lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
 
         set_string_pref_priority(PREF_WORKING_DIR, prefs->workdir);
@@ -3225,6 +3265,7 @@ capability *get_capabilities(void) {
 
 
 void print_opthelp(void) {
+  char *tmp;
   print_notice();
 
   lives_printerr(_("\nStartup syntax is: %s [OPTS] [filename [start_time] [frames]]\n"), capable->myname);
@@ -3238,10 +3279,16 @@ void print_opthelp(void) {
   fprintf(stderr, "%s", _("-workdir <workdir>\t\t: specify the working directory for the session, "
                           "overriding any value set in preferences\n"));
   fprintf(stderr, "%s", _("\t\t\t\t\t(disables any disk quota checking)"));
-  fprintf(stderr, "%s", _("-configdir <configdir>\t\t: override the default configuration directory for the session\n"));
-  fprintf(stderr, _("\t\t\t\t\t(default is %s\n"
-                    "\t\t\t\t\t with config file %s%s and directory %s%s)\n"),
-          capable->home_dir, capable->home_dir, LIVES_RC_FILENAME, capable->home_dir, LIVES_CONFIG_DIR);
+  fprintf(stderr, "%s", _("-configfile <path_to_file>\t: override the default configuration file for the session\n"));
+  tmp = lives_build_filename(capable->home_dir, LIVES_DEF_CONFIG_DIR, "lives", LIVES_DEF_CONFIG_FILE, NULL);
+  fprintf(stderr, _("\t\t\t\t\t(default is %s)\n"), tmp);
+  lives_free(tmp);
+
+  tmp = lives_build_path(capable->home_dir, LOCAL_HOME_DIR, LIVES_DEF_CONFIG_DATADIR, NULL);
+  fprintf(stderr, "%s", _("-configdatadir <dir>\t\t: override the default configuration data directory for the session\n"));
+  fprintf(stderr, _("\t\t\t\t\t(default is %s\n"), tmp);
+  lives_free(tmp);
+
   fprintf(stderr, "%s", _("-dscrit <bytes>\t\t\t: temporarily sets the free disk space critical level for workdir to <bytes>\n"));
   fprintf(stderr, "%s", _("\t\t\t\t\t(intended to allow correction of erroneous values within the app; "
                           "<= 0 disables checks)\n"));
@@ -3533,6 +3580,11 @@ static boolean lives_startup(livespointer data) {
     if (prefs->show_splash) splash_init();
   }
 
+  if (prefs->startup_phase == 3) {
+    /// CREATE prefs->config_datadir, and default items inside it
+    build_init_config(prefs->config_datadir, ign_opts.ign_config_datadir);
+  }
+
   get_string_pref(PREF_VID_PLAYBACK_PLUGIN, buff, 256);
 
   if (strlen(buff) && strcmp(buff, "(null)") && strcmp(buff, "none")) {
@@ -3631,7 +3683,7 @@ static boolean lives_startup(livespointer data) {
               "(Maybe you need to change the value of <prefix_dir> in your %s file)\n"
               "or you may be missing a custom theme.\n"), future_prefs->theme,
             (tmp = lives_filename_to_utf8(prefs->prefix_dir, -1, NULL, NULL, NULL)), THEME_DIR,
-            (tmp2 = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+            (tmp2 = lives_filename_to_utf8(prefs->configfile, -1, NULL, NULL, NULL)));
     lives_free(tmp2);
     lives_free(tmp);
     startup_message_nonfatal(msg);
@@ -3684,8 +3736,7 @@ static boolean lives_startup(livespointer data) {
                     "You will not be able to 'Save' without them.\n"
                     "You may need to change the value of <lib_dir> in %s\n"),
                   prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS,
-                  (tmp = lives_filename_to_utf8(capable->rcfile, -1,
-                                                NULL, NULL, NULL)));
+                  (tmp = lives_filename_to_utf8(prefs->configfile, -1, NULL, NULL, NULL)));
           lives_free(tmp);
           startup_message_nonfatal_dismissable(msg, WARN_MASK_NO_ENCODERS);
           lives_free(msg);
@@ -3856,9 +3907,6 @@ static boolean lives_startup2(livespointer data) {
     lives_widget_set_opacity(mainw->sep_image, 0.8);
   }
   lives_widget_queue_draw(mainw->sep_image);
-
-  // anything that d_prints messages should go here:
-  do_start_messages();
 
   if (*devmap) on_devicemap_load_activate(NULL, devmap);
 
@@ -4115,7 +4163,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   future_prefs = (_future_prefs *)lives_malloc(sizeof(_future_prefs));
   prefs->workdir[0] = '\0';
   future_prefs->workdir[0] = '\0';
-  prefs->configdir[0] = '\0';
+  prefs->config_datadir[0] = '\0';
+  prefs->configfile[0] = '\0';
 
   prefs->show_gui = TRUE;
   prefs->show_splash = FALSE;
@@ -4232,7 +4281,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         {"aplayer", 1, 0, 0},
         {"asource", 1, 0, 0},
         {"workdir", 1, 0, 0},
-        {"configdir", 1, 0, 0},
+        {"configfile", 1, 0, 0},
+        {"configdatadir", 1, 0, 0},
         {"dscrit", 1, 0, 0},
         {"set", 1, 0, 0},
         {"noset", 0, 0, 0},
@@ -4317,7 +4367,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           continue;
         }
 
-        if (!strcmp(charopt, "configdir")) {
+        if (!strcmp(charopt, "configdatadir")) {
           if (!*optarg) {
             do_abortblank_error(charopt);
             continue;
@@ -4337,17 +4387,34 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           }
           if (toolong) {
             /// FALSE => exit via startup_msg_fatal()
-            dir_toolong_error(optarg, _("configuration directory"), PATH_MAX - 64, FALSE);
+            dir_toolong_error(optarg, _("config data directory"), PATH_MAX - 64, FALSE);
           }
 
-          lives_snprintf(prefs->configdir, PATH_MAX, "%s", optarg);
+          lives_snprintf(prefs->config_datadir, PATH_MAX, "%s", optarg);
+	  ign_opts.ign_config_datadir = TRUE;
+          continue;
+        }
 
-          if (!lives_make_writeable_dir(prefs->configdir)) {
-            // abort if we cannot write to the specified configdir
-            capable->can_write_to_config = FALSE;
-            break;
+	if (!strcmp(charopt, "configfile")) {
+          if (!*optarg) {
+            do_abortblank_error(charopt);
+            continue;
           }
-          user_configdir = TRUE;
+          if (optarg[0] == '-') {
+            do_abortblank_error(charopt);
+            optind--;
+            continue;
+          }
+          if (lives_strlen(optarg) > PATH_MAX - 64) {
+            toolong = TRUE;
+          }
+          if (toolong) {
+            /// FALSE => exit via startup_msg_fatal()
+            filename_toolong_error(optarg, _("configuration file"), PATH_MAX, FALSE);
+          }
+
+          lives_snprintf(prefs->configfile, PATH_MAX, "%s", optarg);
+	  ign_opts.ign_configfile = TRUE;
           continue;
         }
 
@@ -4481,12 +4548,11 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           }
           lives_snprintf(devmap, PATH_MAX, "%s", optarg);
           devmap2 = lives_strdup(devmap);
-          dir = get_dir(devmap);
           get_basename(devmap);
           if (!strcmp(devmap, devmap2)) {
-            lives_free(dir);
-            dir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, LIVES_DEVICEMAP_DIR, NULL);
+            dir = lives_build_filename(prefs->config_datadir, LIVES_DEVICEMAP_DIR, NULL);
           }
+	  else dir = get_dir(devmap);
           lives_snprintf(devmap, PATH_MAX, "%s", (tmp = lives_build_filename(dir, devmap, NULL)));
           lives_free(tmp);
           lives_free(dir);
@@ -4730,8 +4796,16 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         }}}}
   // *INDENT-ON*
 
-  if (!*prefs->configdir) {
-    lives_snprintf(prefs->configdir, PATH_MAX, "%s", capable->home_dir);
+  if (!ign_opts.ign_configfile) {
+    tmp = lives_build_filename(capable->home_dir, LIVES_DEF_CONFIG_DIR, "lives", LIVES_DEF_CONFIG_FILE, NULL);
+    lives_snprintf(prefs->configfile, PATH_MAX, "%s", tmp);
+    lives_free(tmp);
+  }
+
+  if (!ign_opts.ign_config_datadir) {
+    tmp = lives_build_path(capable->home_dir, LOCAL_HOME_DIR, LIVES_DEF_CONFIG_DATADIR, NULL);
+    lives_snprintf(prefs->config_datadir, PATH_MAX, "%s", tmp);
+    lives_free(tmp);
   }
 
   // get capabilities and if OK set some initial prefs
@@ -4765,8 +4839,11 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   lives_memset(future_prefs->vpp_name, 0, 64);
   future_prefs->vpp_argv = NULL;
 
-  if (!ign_opts.ign_vppdefs)
-    lives_snprintf(mainw->vpp_defs_file, PATH_MAX, "%s/%svpp_defaults", prefs->configdir, LIVES_CONFIG_DIR);
+  if (!ign_opts.ign_vppdefs) {
+    tmp = lives_build_filename(prefs->config_datadir, VPP_DEFS_FILE, NULL);
+    lives_snprintf(mainw->vpp_defs_file, PATH_MAX, "%s", tmp);
+    lives_free(tmp);
+  }
 
   lives_idle_add_simple(lives_startup, NULL);
 

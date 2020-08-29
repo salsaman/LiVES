@@ -427,9 +427,9 @@ static boolean on_save_keymap_clicked(LiVESButton *button, livespointer user_dat
   LiVESList *list = NULL;
 
   char *msg, *tmp;
-  char *keymap_file = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, "default.keymap", NULL);
-  char *keymap_file2 = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, "default.keymap2", NULL);
-  char *keymap_file3 = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, "default.keymap3", NULL);
+  char *keymap_file = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE, NULL); // fx -> keys map
+  char *keymap_file2 = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE2, NULL); // perkey defs
+  char *keymap_file3 = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE3, NULL); // data connections
 
   boolean update = FALSE;
 
@@ -523,11 +523,11 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
   register int i;
 
   if (!prefs->fxdefsfile) {
-    prefs->fxdefsfile = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, FX_DEFS_FILENAME, NULL);
+    prefs->fxdefsfile = lives_build_filename(prefs->config_datadir, FX_DEFS_FILENAME, NULL);
   }
 
   if (!prefs->fxsizesfile) {
-    prefs->fxsizesfile = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, FX_SIZES_FILENAME, NULL);
+    prefs->fxsizesfile = lives_build_filename(prefs->config_datadir, FX_SIZES_FILENAME, NULL);
   }
 
   d_print(_("Saving real time effect defaults to %s..."), prefs->fxdefsfile);
@@ -620,7 +620,7 @@ void load_rte_defs(void) {
   int retval;
 
   if (!prefs->fxdefsfile) {
-    prefs->fxdefsfile = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, FX_DEFS_FILENAME, NULL);
+    prefs->fxdefsfile = lives_build_filename(prefs->config_datadir, FX_DEFS_FILENAME, NULL);
   }
 
   if (lives_file_test(prefs->fxdefsfile, LIVES_FILE_TEST_EXISTS)) {
@@ -659,7 +659,7 @@ void load_rte_defs(void) {
   }
 
   if (!prefs->fxsizesfile) {
-    prefs->fxsizesfile = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, FX_SIZES_FILENAME, NULL);
+    prefs->fxsizesfile = lives_build_filename(prefs->config_datadir, FX_SIZES_FILENAME, NULL);
   }
 
   if (lives_file_test(prefs->fxsizesfile, LIVES_FILE_TEST_EXISTS)) {
@@ -1224,9 +1224,9 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
   char *line = NULL;
   char *whashname;
 
-  char *keymap_file = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, "default.keymap", NULL); // keymap
-  char *keymap_file2 = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, "default.keymap2", NULL); // perkey defs
-  char *keymap_file3 = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, "default.keymap3", NULL); // data connections
+  char *keymap_file = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE, NULL); // keymap
+  char *keymap_file2 = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE2, NULL); // perkey defs
+  char *keymap_file3 = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE3, NULL); // data connections
 
   int *def_modes = NULL;
   uint8_t **badkeymap = NULL;
@@ -1536,7 +1536,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
     } else d_print_done();
   } else {
     if (kfd != -1) lives_close_buffered(kfd);
-    if (mainw->is_ready) d_print_done();
+    d_print_done();
   }
 
   if (update == 0) {
@@ -1568,7 +1568,6 @@ cleanup1:
   if (mainw->ce_thumbs) ce_thumbs_reset_combos();
   if (rte_window) check_clear_all_button();
 
-  d_print_done();
   return FALSE;
 }
 
@@ -2769,52 +2768,7 @@ resetdefs1:
 
 void load_default_keymap(void) {
   // called on startup
-  char *dir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, NULL);
-  char *keymap_file = lives_build_filename(dir, "default.keymap", NULL);
-  char *keymap_template = lives_build_filename(prefs->prefix_dir, DATA_DIR, "default.keymap", NULL);
-  char *tmp;
-
-  int retval;
-
-  threaded_dialog_spin(0.);
-
   if (!hash_list) hash_list = weed_get_all_names(FX_LIST_HASHNAME);
-
-  if (prefs->startup_phase != 0 && prefs->startup_phase < 4) {
-    do {
-      retval = 0;
-      if (!lives_file_test(keymap_file, LIVES_FILE_TEST_EXISTS)) {
-        if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
-          lives_mkdir_with_parents(dir, S_IRWXU);
-        }
-        lives_cp(keymap_template, keymap_file);
-      }
-      if (!lives_file_test(keymap_file, LIVES_FILE_TEST_EXISTS)) {
-        // give up
-        d_print((tmp = lives_strdup_printf
-                       (_("Unable to create default keymap file: %s\nPlease make sure the directory\n%s\nis writable.\n"),
-                        keymap_file, dir)));
-
-        retval = do_abort_cancel_retry_dialog(tmp);
-
-        lives_free(tmp);
-
-        if (retval == LIVES_RESPONSE_CANCEL) {
-          lives_free(keymap_file);
-          lives_free(keymap_template);
-          lives_free(dir);
-
-          threaded_dialog_spin(0.);
-          return;
-        }
-      }
-    } while (retval == LIVES_RESPONSE_RETRY);
-  }
-
   on_load_keymap_clicked(NULL, NULL);
-
-  lives_free(keymap_file);
-  lives_free(keymap_template);
-  lives_free(dir);
   threaded_dialog_spin(0.);
 }

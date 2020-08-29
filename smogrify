@@ -68,9 +68,7 @@ my $gid = $);
 $gid =~ s/\W.*//;
 
 if (my $DEBUG_CALLERS) {
-    #only callers are LiVES decoders, currently
-    ## they will need updating to take a workdir param, since they can no longer assume the location of configdir
-    ## to retrieve it from config
+    # only callers are LiVES decoders, currently
     if (caller) {
 	# from other scripts
 	print STDERR "yes\n";
@@ -88,15 +86,14 @@ if ($^O eq "MSWin32" || $^O eq "msys") {
     exit 1;
 }
 
-#$DEBUG_SMOGRIFY=1;
+#$DEBUG_SMOGRIFY = 1;
 
-my $rc_filename = ".lives";
-my $rcfile;
-my $rcfile_damaged;
-my $recrcfile;
-my $recrcfile_tried;
-my $recrcfile_succeeded;
-my $newrcfile;
+my $configfile;
+my $configfile_damaged;
+my $recconfigfile;
+my $recconfigfile_tried;
+my $recconfigfile_succeeded;
+my $newconfigfile;
 
 my $nulfile;
 
@@ -104,8 +101,8 @@ my $encoder;
 my $smog_composite_command;
 my $smog_convert_command;
 
-my $has_rcfile;
-my $bad_rcfile;
+my $has_configfile;
+my $bad_configfile;
 
 my $work;
 my $panic;
@@ -116,7 +113,7 @@ my $curworkdir;
 my $workdir = "";
 my $handle;
 my $statusfile;
-my $configdir = "";
+my $configfile = "";
 my $mplay_command = "";
 
 my $DEFTRASH = "_Trash";
@@ -133,13 +130,13 @@ if (defined($ARGV[0])) {
     }
 
     if (!caller) {
-	my @needs_configdir = ("report", "make_thumb", "play", "play_opening_preview", "set_pref_priority", "delete_pref",
-			       "set_pref", "get_pref",
-			       "open", "open_test", "save", "append_audio", "trim_audio", "resample_audio", "commit_audio",
-			       "cdopen", "insert", "get_details", "fill_and_redo_frames", "audioopen");
+	my @needs_configfile = ("report", "make_thumb", "play", "play_opening_preview", "set_pref_priority", "delete_pref",
+				"set_pref", "get_pref",
+				"open", "open_test", "save", "append_audio", "trim_audio", "resample_audio", "commit_audio",
+				"cdopen", "insert", "get_details", "fill_and_redo_frames", "audioopen");
 
 	if ($command eq "list_commands") {
-	    &listemall(@needs_configdir);
+	    &listemall(@needs_configfile);
 	    exit 0;
 	}
 
@@ -169,7 +166,7 @@ if (defined($ARGV[0])) {
 	if ($USE_STRICT) {
 	    no strict;
 	}
-	my $config = "$CONFIGDIR";
+	my $config = "$CONFIGFILE";
 	if ($USE_STRICT) {
 	    use strict;
 	}
@@ -179,36 +176,26 @@ if (defined($ARGV[0])) {
 	}
 
 	if ($config) {
-	    $configdir = $config;
+	    $configfile = $config;
 	}
 
-	if ($configdir eq "" && ($workdir eq "" || grep(/^$command$/, @needs_configdir) ||
+	if ($configfile eq "" && ($workdir eq "" || grep(/^$command$/, @needs_configfile) ||
 				 $command =~ /^pfxrender_/ || $command =~ /^fxrender_/)) {
-	    ## commands that require $configdir
+	    ## commands that require $configfile
 
-	    # configdir not set, try with $HOME
-	    my $home = $ENV {"HOME"};
-	    if ($home eq "") {
-		print STDERR "smogrify for $GUI_NAME v$version: configdir not defined for command \"$command\", ";
-		print STDERR "and default of \$HOME not found\n";
-		print STDERR "cannot continue. Exiting with code 98\n";
-		print STDERR "You can override the default configdir setting ";
-		print STDERR "by starting $GUI_NAME with the -configdir commandline option.\n";
-		print STDERR "smogrify for $GUI_NAME v$version: \@ARGV = " . join(" ", @ARGV) . "\n";
-		exit 98;
-	    }
-	    $configdir = $home;
+	    # configfile not set
+	    print STDERR "smogrify for $GUI_NAME v$version: configfile not defined for command \"$command\", ";
+	    print STDERR "cannot continue. Exiting with code 98\n";
+	    print STDERR "by starting $GUI_NAME with the -configfile commandline option.\n";
+	    print STDERR "smogrify for $GUI_NAME v$version: \@ARGV = " . join(" ", @ARGV) . "\n";
+	    exit 98;
 	}
 
-	if ($configdir ne "") {
-	    $rc_filename = ".lives";
-	    $rcfile = "$configdir/$rc_filename";
-	    $rcfile_damaged = "$rcfile.damaged";
-	    $recrcfile = "$rcfile.recovery";
-	    $recrcfile_tried = "$recrcfile.tried";
-	    $recrcfile_succeeded = "$recrcfile_tried.succeeded";
-	    $newrcfile = "$rcfile.new";
-	}
+	$configfile_damaged = "$configfile.damaged";
+	$recconfigfile = "$configfile.recovery";
+	$recconfigfile_tried = "$recconfigfile.tried";
+	$recconfigfile_succeeded = "$recconfigfile_tried.succeeded";
+	$newconfigfile = "$configfile.new";
 
 	$nulfile = "/dev/null";
 
@@ -216,17 +203,17 @@ if (defined($ARGV[0])) {
 	$smog_composite_command = "composite -quiet";
 	$smog_convert_command = "convert -quiet";
 
-	$has_rcfile = -1;
-	$bad_rcfile = 0;
+	$has_configfile = -1;
+	$bad_configfile = 0;
 
 	if ($command ne "set_pref" ) {
 	    if ($workdir eq "") {
-		$has_rcfile = 0 + -e $rcfile;
-		if ($has_rcfile) {
+		$has_configfile = 0 + -e $configfile;
+		if ($has_configfile) {
 		    # can exit 3 here
-		    $workdir = &rc_get("workdir");
+		    $workdir = &config_get("workdir");
 		    if ($workdir eq "") {
-			$workdir = &rc_get("tempdir");
+			$workdir = &config_get("tempdir");
 		    }
 		    if ($command ne "report") {
 			if ($workdir eq "") {
@@ -247,7 +234,7 @@ if (defined($ARGV[0])) {
 	    no strict;
 	}
 	if (defined $DEBUG_SM_CMDS) {
-	    print STDERR "configdir is $configdir\n";
+	    print STDERR "configfile is $configfile\n";
 	    print STDERR "workdir is $workdir\n";
 	    print STDERR "command is $command\n";
 	    print STDERR join(" ", @ARGV) . "\n";
@@ -283,105 +270,105 @@ if (defined($ARGV[0])) {
 	    }
 
 	    if ($upd) {
-		unlink $rcfile_damaged;
-		unlink $recrcfile_tried;
-		unlink $recrcfile_succeeded;
+		unlink $configfile_damaged;
+		unlink $recconfigfile_tried;
+		unlink $recconfigfile_succeeded;
 	    }
 
 	    my $old_version_hash = "";
 	    my $old_version = "";
 
-	    if ($has_rcfile == -1) {
-		$has_rcfile = 0 + -e $rcfile;
+	    if ($has_configfile == -1) {
+		$has_configfile = 0 + -e $configfile;
 	    }
 
-	    if (!$has_rcfile) {
+	    if (!$has_configfile) {
 		if ($upd) {
-		    $recovery_file = &recover_rcfile($rcfile);
+		    $recovery_file = &recover_configfile($configfile);
 		    if ($recovery_file ne "") {
-			$has_rcfile = 1;
+			$has_configfile = 1;
 			$old_version_hash = "0";
 		    }
 		}
 	    }
 
-	    if ($has_rcfile) {
-		# found an existing rcfile
+	    if ($has_configfile) {
+		# found an existing configfile
 		# try to get the version
-		$old_version = &rc_get("version");
+		$old_version = &config_get("version");
 		if ($old_version eq "") {
-		    #failed  to get version from rcfile
-		    $has_rcfile = 0;
+		    #failed  to get version from configfile
+		    $has_configfile = 0;
 		    if ($upd) {
 			# we only accept settings files with a valid version entry
-			my $xsize = -s $rcfile;
-			&smog_rename($rcfile, $rcfile_damaged);
-			unlink($rcfile);
-			if (0 + -e $rcfile) {
-			    $bad_rcfile = 1;
-			    &startup_error(5, "report", "remove_noversion0", "$rcfile:\@:");
+			my $xsize = -s $configfile;
+			&smog_rename($configfile, $configfile_damaged);
+			unlink($configfile);
+			if (0 + -e $configfile) {
+			    $bad_configfile = 1;
+			    &startup_error(5, "report", "remove_noversion0", "$configfile:\@:");
 			}
 
-			if ($old_version_hash eq "0" && (-s $recovery_file > 0 || $recovery_file eq $newrcfile
-							 || -s $newrcfile == 0)) {
-			    &startup_error(5, "report", "rc_recover_version0", "$rcfile:$recovery_file:$xsize:\@:");
+			if ($old_version_hash eq "0" && (-s $recovery_file > 0 || $recovery_file eq $newconfigfile
+							 || -s $newconfigfile == 0)) {
+			    &startup_error(5, "report", "config_recover_version0", "$configfile:$recovery_file:$xsize:\@:");
 			}
 			else {
-			    # failed to get version from $rcfile. Try to recover from backup
-			    $recovery_file = &recover_rcfile($rcfile);
+			    # failed to get version from $configfile. Try to recover from backup
+			    $recovery_file = &recover_configfile($configfile);
 			    if ($recovery_file ne "") {
 				# ok, got a backup, now we check again
-				$has_rcfile = 1;
+				$has_configfile = 1;
 				$old_version_hash = "0";
-				$old_version = &rc_get("version");
+				$old_version = &config_get("version");
 				if ($old_version eq "") {
 				    # still no joy
-				    &smog_rename($rcfile, $rcfile_damaged);
-				    unlink ($rcfile);
-				    if (0 + -e $rcfile) {
-					$bad_rcfile = 1;
-					&startup_error(5, "report", "remove_noversion1", "$rcfile:\@:");
+				    &smog_rename($configfile, $configfile_damaged);
+				    unlink ($configfile);
+				    if (0 + -e $configfile) {
+					$bad_configfile = 1;
+					&startup_error(5, "report", "remove_noversion1", "$configfile:\@:");
 				    }
-				    $has_rcfile = 0;
+				    $has_configfile = 0;
 				}
 				elsif (!$work) {
 				    # recovered from backup, got a version
 				    # now look for workdir or tempdir
-				    $workdir = &rc_get("workdir");
+				    $workdir = &config_get("workdir");
 				    if ($workdir eq "") {
-					$workdir = &rc_get("tempdir");
+					$workdir = &config_get("tempdir");
 				    }
 				    if ($workdir eq "") {
-					&smog_rename($rcfile, $rcfile_damaged);
-					unlink ($rcfile);
-					if (0 + -e $rcfile) {
-					    $bad_rcfile = 1;
+					&smog_rename($configfile, $configfile_damaged);
+					unlink ($configfile);
+					if (0 + -e $configfile) {
+					    $bad_configfile = 1;
 					    &startup_error(5, "report", "remove_noworkdir0",
-							   "$rcfile:\@:");
+							   "$configfile:\@:");
 					}
 					$old_version = "";
 					$old_version_hash = "0";
-					$has_rcfile = 0;
+					$has_configfile = 0;
 				    }}}}}
 
 		    else {
-			# rcfile has version
+			# configfile has version
 			if ($old_version ne "") {
 			    $old_version_hash = &version_hash($old_version);
 			    if ($old_version_hash < 3000003) {
 				if ($work eq "") {
 				    #older versions used tempdir instead of workdir
-				    my $xworkdir = &rc_get("tempdir");
+				    my $xworkdir = &config_get("tempdir");
 				    if ($xworkdir ne "") {
 					$workdir = $xworkdir;
 				    }}}}}}}
 
-	    if ($has_rcfile && $recovery_file ne "") {
+	    if ($has_configfile && $recovery_file ne "") {
 		$panic = 0;
-		&smog_copy($rcfile, $recrcfile_succeeded);
-		if ($panic || -s $recrcfile_succeeded != -s $rcfile) {
-		    unlink $recrcfile_succeeded;
-		    &startup_error(5, "report", "copyto_succeeded0", "$recrcfile_succeeded:\@:");
+		&smog_copy($configfile, $recconfigfile_succeeded);
+		if ($panic || -s $recconfigfile_succeeded != -s $configfile) {
+		    unlink $recconfigfile_succeeded;
+		    &startup_error(5, "report", "copyto_succeeded0", "$recconfigfile_succeeded:\@:");
 		}
 		else {
 		    unlink $recovery_file;
@@ -397,15 +384,15 @@ if (defined($ARGV[0])) {
 		if (!$work) {
 		    if ($old_version_hash < 3000003) {
 			#older versions used tempdir instead of workdir
-			$xworkdir = &rc_get("tempdir");
+			$xworkdir = &config_get("tempdir");
 			if ($workdir eq "") {
-			    $xworkdir = &rc_get("workdir");
+			    $xworkdir = &config_get("workdir");
 			}
 		    }
 		    else {
-			$xworkdir = &rc_get("workdir");
+			$xworkdir = &config_get("workdir");
 			if ($workdir eq "") {
-			    $xworkdir = &rc_get("tempdir");
+			    $xworkdir = &config_get("tempdir");
 			}
 		    }
 		    $workdir = $xworkdir;
@@ -414,23 +401,23 @@ if (defined($ARGV[0])) {
 
 	    my $startup_phase = -1;
 
-	    if (!$has_rcfile) {
+	    if (!$has_configfile) {
 		if ($upd) {
-		    unlink $rcfile;
-		    if (0 + -e $rcfile) {
-			&startup_error(5, "report", "remove_badrcfile0", "$rcfile:\@:");
+		    unlink $configfile;
+		    if (0 + -e $configfile) {
+			&startup_error(5, "report", "remove_badconfigfile0", "$configfile:\@:");
 		    }
 		    # set comment at start of file
-		    &rc_set("", "");
-		    &rc_set("startup_phase", -1);
+		    &config_set("", "");
+		    &config_set("startup_phase", -1);
 		}
 	    } else {
 		if ($workdir ne "") {
-		    $startup_phase = &rc_get("startup_phase");
+		    $startup_phase = &config_get("startup_phase");
 		    if ($startup_phase eq "" || $startup_phase eq "100") {
 			$startup_phase = 0;
 			if ($upd) {
-			    &rc_delete("startup_phase");
+			    &config_delete("startup_phase");
 			}}}}
 
 	    $ver_hash = &version_hash($version);
@@ -446,27 +433,26 @@ if (defined($ARGV[0])) {
 		    my $video_open_command = "\"". &get_mplayer_location . "\"";
 
 		    my $audio_player = "sox";
-		    my $audio_play_command = &rc_get_default("sox_command");
+		    my $audio_play_command = &config_get_default("sox_command");
 
 		    if ($audio_play_command eq "") {
 			$audio_player = "mplayer";
-			$audio_play_command = &rc_get_default("mplayer_audio_command");
+			$audio_play_command = &config_get_default("mplayer_audio_command");
 		    }
 
 		    if (defined($smogrify::dyneversion)) {
-			&rc_set_if_not_set("lib_dir", "/opt/$smogrify::dyneversion/lib/");
-			&rc_set_if_not_set("prefix_dir", "/opt/$smogrify::dyneversion/");
+			&config_set_if_not_set("lib_dir", "/opt/$smogrify::dyneversion/lib/");
+			&config_set_if_not_set("prefix_dir", "/opt/$smogrify::dyneversion/");
 		    }
 
 		    # NOTE: the following definitions must match with equivalent keys in preferences.h
-		    &rc_set_if_not_set("video_open_command", $video_open_command); ## backend only
-		    &rc_set_if_not_set("audio_play_command", $audio_play_command); ## backend only
+		    &config_set_if_not_set("video_open_command", $video_open_command); ## backend only
+		    &config_set_if_not_set("audio_play_command", $audio_play_command); ## backend only
 
 		    # resize action when opening images - can be either: "bound" or "none"
-		    &rc_set_if_not_set("image_resize_action", "none"); ## backend only
-		    &rc_set_if_not_set("encoder", $encoder); ## TODO: check for encoders, formats; pick best
-		    &rc_set_if_not_set("audio_effect", "none"); ## backend only, only for sox player
-		    &rc_set_if_not_set("gui_theme", "crayons"); ## TODO: check for available themes @ startup
+		    &config_set_if_not_set("image_resize_action", "none"); ## backend only
+		    &config_set_if_not_set("encoder", $encoder); ## TODO: check for encoders, formats; pick best
+		    &config_set_if_not_set("gui_theme", "crayons"); ## TODO: check for available themes @ startup
 		}
 		if ($old_version ne "") {
 		    if ($old_version_hash < $ver_hash) {
@@ -476,16 +462,17 @@ if (defined($ARGV[0])) {
 	    }
 
 
-	    if ($has_rcfile) {
-		my $convert_old_version = &rc_get("convert_version");
+	    if ($has_configfile) {
+		my $convert_old_version = &config_get("convert_version");
 		my $convert_version = &get_convert_version;
 		unless ($convert_old_version eq $convert_version) {
 		    if ($upd) {
-			&rc_set("convert_version", $convert_version);
+			&config_set("convert_version", $convert_version);
 		    }
 		    # throw a warning if using png and convert_version < 6.0.0
 		    my $convert_version_hash = &version_hash($convert_version);
-		    if ($convert_version_hash < 6000 && $convert_version_hash > 0 && &rc_get("default_image_format") ne "jpg") {
+		    if ($convert_version_hash < 6000 && $convert_version_hash > 0
+			&& &config_get("default_image_format") ne "jpg") {
 			$msg .= "You are advised to upgrade to at least version 6.0 of Image Magick if using png files\n";
 		    }
 		}
@@ -493,9 +480,9 @@ if (defined($ARGV[0])) {
 
 	    if ($upd) {
 		# bless this version
-		&rc_set_priority("version", "$version");
+		&config_set_priority("version", "$version");
 		# can exit with code 3, 4, or 5
-		&rc_deprecate("tempdir", "workdir", "3.0.3");
+		&config_deprecate("tempdir", "workdir", "3.0.3");
 	    }
 
 	    if ($gui_bootstrap_file eq "-") {
@@ -660,7 +647,7 @@ if (defined($ARGV[0])) {
 	    shift(@ARGV);
 	    shift(@ARGV);
 	    my $value = join("_", @ARGV);
-	    &rc_set($key, $value);
+	    &config_set($key, $value);
 	    exit 0;
 	}
 
@@ -670,7 +657,7 @@ if (defined($ARGV[0])) {
 	    shift(@ARGV);
 	    shift(@ARGV);
 	    my $value = join("_", @ARGV);
-	    &rc_set_priority($key, $value);
+	    &config_set_priority($key, $value);
 	    exit 0;
 	}
 
@@ -706,7 +693,7 @@ if (defined($ARGV[0])) {
 	    } else {
 		$second = $gid;
 	    }
-	    my $value = &rc_get($key, $configdir);
+	    my $value = &config_get($key, $configfile);
 	    print $value;
 	    exit 0;
 	}
@@ -714,7 +701,7 @@ if (defined($ARGV[0])) {
 
 	if ($command eq "delete_pref") {
 	    my $key = $ARGV[1];
-	    &rc_delete($key);
+	    &config_delete($key);
 	    exit 0;
 	}
 
@@ -969,7 +956,7 @@ if (defined($ARGV[0])) {
 		mkdir ($curworkdir);
 	    }
 
-	    $antialias = &rc_get("antialias");
+	    $antialias = &config_get("antialias");
 
 	    $imresact = "bound";
 	    &get_image_size($file);
@@ -1517,7 +1504,7 @@ if (defined($ARGV[0])) {
 	if ($command eq "play") {
 	    ## now only used for audio playback with "sox"
 
-	    $audio_player = &rc_get("audio_player");
+	    $audio_player = &config_get("audio_player");
 	    if ($audio_player ne "sox") {
 		unlink $pidfile;
 		exit 0;
@@ -1527,7 +1514,7 @@ if (defined($ARGV[0])) {
 
 	    $fps = $ARGV[2];
 	    if ($fps == 0) {
-		$fps = &rc_get("default_fps");
+		$fps = &config_get("default_fps");
 	    }
 
 	    $start = $ARGV[3];
@@ -1589,7 +1576,7 @@ if (defined($ARGV[0])) {
 		    $mute = " -v 0 ";
 		}
 
-		$audio_play_command = &rc_get("audio_play_command");
+		$audio_play_command = &config_get("audio_play_command");
 
 		if ($audio_play_command eq "" or $audio_play_command eq '""') {
 		    $time = ($audio_end - $audio_start);
@@ -1597,7 +1584,7 @@ if (defined($ARGV[0])) {
 		}
 
 		elsif ($audio_player eq "sox") {
-		    $audio_effect = &rc_get("audio_effect");
+		    $audio_effect = &config_get("audio_effect");
 		    $trimcom = " trim $audio_start";
 
 		    if (($audio_end > $audio_start) && $end > 0) {
@@ -1724,7 +1711,7 @@ if (defined($ARGV[0])) {
 		$mplay_command = "";
 	    }
 	    if ($mplay_command eq "") {
-		my $mp_command = &rc_get("video_open_command");
+		my $mp_command = &config_get("video_open_command");
 		if ($mp_command ne "") {
 		    my $mpc1 = (split(" ", $mp_command))[0];
 		    if ($mpc1 =~ /mpv$/ || $mpc1 =~ /mpv\"$/) {
@@ -1779,7 +1766,7 @@ if (defined($ARGV[0])) {
 	    } else {
 		## TODO: set in front end
 		if ($extra_params eq "sendbandwidth") {
-		    $bandwidth = &rc_get("dl_bandwidth_K");
+		    $bandwidth = &config_get("dl_bandwidth_K");
 		    if ($bandwidth eq "") {
 			$bandwidth = 10000000;
 		    }
@@ -1798,7 +1785,7 @@ if (defined($ARGV[0])) {
 	    }
 
 	    ## TODO: pass in the compression in the front end
-	    $compression = &rc_get("open_compression_percent");
+	    $compression = &config_get("open_compression_percent");
 	    if ($compression eq "") {
 		$compression = 15;
 	    }
@@ -1843,7 +1830,7 @@ if (defined($ARGV[0])) {
 		$aformnew = "--audio-format=s16";
 	    }
 
-	    $threads = &smog_system_direct("/bin/grep processor /proc/cpuinfo | wc -l");
+	    $threads = &smog_system_direct("/usr/bin/grep processor /proc/cpuinfo | wc -l");
 	    $threads = int($threads);
 	    if ($threads == 0) {
 		$threads = 1;
@@ -2389,8 +2376,8 @@ if (defined($ARGV[0])) {
 		exit 1;
 	    }
 
-	    our $otype = &rc_get("output_type");
-	    my $encoder = &rc_get("encoder");
+	    our $otype = &config_get("output_type");
+	    my $encoder = &config_get("encoder");
 
 	    $DEBUG_ENCODERS = 1;
 
@@ -2428,7 +2415,7 @@ if (defined($ARGV[0])) {
 			}
 
 			if ($aud_start != 0. && !($areq & 1)) {
-			    if (&rc_get("conserve_space") eq "true") {
+			    if (&config_get("conserve_space") eq "true") {
 				unlink $origaudio;
 			    }
 			    else {
@@ -2453,7 +2440,7 @@ if (defined($ARGV[0])) {
 
 	    # plugins need: $atype ($aq), $nfile,
 	    # $exe ? $otype, %img_ext,end, start, fps
-	    my $atype = &rc_get("encoder_acodec");
+	    my $atype = &config_get("encoder_acodec");
 	    our $aq = $atype;
 
 	    if (!$is_native) {
@@ -2586,7 +2573,7 @@ if (defined($ARGV[0])) {
 			}
 		    }
 		    else {
-			$smerr =  &smog_system ("/bin/ln \"$curworkdir/$from$img_ext\" " .
+			$smerr =  &smog_system ("/usr/bin/ln \"$curworkdir/$from$img_ext\" " .
 						"\"$linksdir/$name$img_ext\"");
 			if ($smerr) {
 			    &sig_system_error("Linking \"$curworkdir/$from$img_ext\" to " .
@@ -3208,7 +3195,7 @@ if (defined($ARGV[0])) {
 	    $file = $ARGV[8];
 	    $extra_params = $ARGV[9];
 	    $mplayer_command = "\"". &get_mplayer_location . "\"";
-	    $threads = &smog_system_direct("/bin/grep processor /proc/cpuinfo | wc -l");
+	    $threads = &smog_system_direct("/usr/bin/grep processor /proc/cpuinfo | wc -l");
 	    $threads = int($threads);
 	    if ($threads == 0) {
 		$threads = 1;
@@ -3396,7 +3383,7 @@ if (defined($ARGV[0])) {
 		#audio.new
 	    }
 
-	    unless(&rc_get("conserve_space") eq "true") {
+	    unless(&config_get("conserve_space") eq "true") {
 		&smog_rename($audio_out, "keep_$audio_out");
 		&backup_audio(0);
 		if ($panic) {
@@ -3548,7 +3535,7 @@ if (defined($ARGV[0])) {
 		exit 1;
 	    }
 
-	    if (&rc_get("conserve_space") eq "true" && (-s $audio_out)) {
+	    if (&config_get("conserve_space") eq "true" && (-s $audio_out)) {
 		unlink $audio_in;
 	    }
 
@@ -3698,7 +3685,7 @@ if (defined($ARGV[0])) {
 	    my $f_size = -s $audio_in;
 	    if ($f_size > 0) {
 		# wav format
-		unless(&rc_get("conserve_space") eq "true") {
+		unless(&config_get("conserve_space") eq "true") {
 		    if (-f $audio_out) {
 			$smres = &smog_rename($audio_out, $audio_bak);
 		    } else {
@@ -3727,7 +3714,7 @@ if (defined($ARGV[0])) {
 		}
 		if ($gotit || -f $audio_in) {
 		    # raw format
-		    unless(&rc_get("conserve_space") eq "true") {
+		    unless(&config_get("conserve_space") eq "true") {
 			if (-f $audio_out) {
 			    $smres = &smog_rename($audio_out, $audio_bak);
 			    #aborts on failure
@@ -4225,7 +4212,7 @@ if (defined($ARGV[0])) {
 		    &sig_error("cdda2wav or icedax is required for this function.", "Please install it first.");
 		}
 	    }
-	    $cdplay_device = &rc_get("cdplay_device");
+	    $cdplay_device = &config_get("cdplay_device");
 	    if ($cdplay_device eq "") {
 		&sig_error("You must set the CD device first in Preferences.");
 	    }
@@ -4349,7 +4336,7 @@ if (defined($ARGV[0])) {
 			# $start < 0 tells us to leave backups alone
 			$start = -$start;
 		    }
-		    $antialias = &rc_get("antialias");
+		    $antialias = &config_get("antialias");
 		}
 	    }
 
@@ -4413,7 +4400,7 @@ if (defined($ARGV[0])) {
 
 		    $audio_to = "$curworkdir/audio";
 		    &insert_audio($asamps, $achans, $asigned, $aendian, $undo_cut);
-		    if (&rc_get("conserve_space") eq "true") {
+		    if (&config_get("conserve_space") eq "true") {
 			unlink "audio.bak";
 		    }
 		    if ($panic) {
@@ -4464,7 +4451,8 @@ if (defined($ARGV[0])) {
 
 	if ($command =~ /^fxrender_(.*)/) {
 	    $curworkdir = "$workdir/$handle";
-	    my $lives_config_dir = "$configdir/.lives-dir";
+	    xyzzy; # needs config_datadir
+	    my $lives_config_dir = fooo;
 	    unlink "$curworkdir/pause";
 	    $command = $1;
 	    $status = $ARGV[2];
@@ -4753,7 +4741,7 @@ if (defined($ARGV[0])) {
 	my ($file, $leave) = @_;
 	return 1 if -f $file && -w $file;
 	return 0 if (0 + -e $file);
-	my $err = &smog_system("/bin/touch \"$file\"");
+	my $err = &smog_system("/usr/bin/touch \"$file\"");
 	if ($err) {
 	    unlink $file;
 	    return 0;
@@ -5240,7 +5228,7 @@ if (defined($ARGV[0])) {
 	## -b baclup dest files
 	## -n no clobber 
 
-	$smcomret = system("/bin/cp -f \"$smfrom\" \"$smto\"");
+	$smcomret = system("/usr/bin/cp -f \"$smfrom\" \"$smto\"");
 
 	if ($smcomret != 0 && -f $smfrom) {
 	    if ($DEBUG_SMOGRIFY) {
@@ -6564,7 +6552,7 @@ if (defined($ARGV[0])) {
 
 		if ($id_vid_form eq "") {
 		    if ($mplay_command eq "") {
-			my $mp_command = &rc_get("video_open_command");
+			my $mp_command = &config_get("video_open_command");
 			if ($mp_command ne "") {
 			    my $mpc1 = (split(" ", $mp_command))[0];
 			    if ($mpc1 =~ /mpv$/ || $mpc1 =~ /mpv\"$/) {
@@ -6754,7 +6742,7 @@ if (defined($ARGV[0])) {
 	    }
 	}
 	else {
-	    my $threads = &smog_system_direct("/bin/grep processor /proc/cpuinfo | wc -l");
+	    my $threads = &smog_system_direct("/usr/bin/grep processor /proc/cpuinfo | wc -l");
 	    $threads = int($threads);
 	    if ($threads == 0) {
 		$threads = 1;
@@ -6801,7 +6789,7 @@ if (defined($ARGV[0])) {
 	    my $aasamps = $asamps / 8;
 	    my $mp_com = "\"". &get_mplayer_location . "\"";
 	    my $format = &get_mplayer_format;
-	    my $threads = &smog_system_direct("/bin/grep processor /proc/cpuinfo | wc -l");
+	    my $threads = &smog_system_direct("/usr/bin/grep processor /proc/cpuinfo | wc -l");
 	    $threads = int($threads);
 	    if ($threads == 0) {
 		$threads = 1;
@@ -7499,7 +7487,7 @@ if (defined($ARGV[0])) {
 		# open in numeric order
 		@files = sort {byfile($a, $b)}(@files);
 		if (!defined($antialias)) {
-		    $antialias = &rc_get("antialias");
+		    $antialias = &config_get("antialias");
 		}
 	    }
 
@@ -7662,7 +7650,7 @@ if (defined($ARGV[0])) {
 
     sub get_image_size {
 	## neds global $hsize, $vsize, $bpp, $inresact, $dheight ?, $dwidth ?, $ file_exec ?
-	## needs $configdir if $imresact not defined
+	## needs $configfile if $imresact not defined
 
 	# returns $hsize,$vsize and $bpp for $1
 	my $file = shift;
@@ -7690,7 +7678,7 @@ if (defined($ARGV[0])) {
 
 	$bpp = 8; # default for images
 	if (!defined($imresact)) {
-	    $imresact = &rc_get("image_resize_action");
+	    $imresact = &config_get("image_resize_action");
 	}
 
 	# imresact can be:
@@ -8436,7 +8424,7 @@ if (defined($ARGV[0])) {
 		}
 		$sub = $1;
 		if ($lastsub) {
-		    if ($lastsub =~ /rc_get/ || $lastsub =~ /rc_set/) {
+		    if ($lastsub =~ /config_get/ || $lastsub =~ /config_set/) {
 			$usesrc = 0;
 		    }
 		    else {
@@ -8447,8 +8435,8 @@ if (defined($ARGV[0])) {
 		$usesrc = 0;
 		next;
 	    }
-	    if (($lastline || $lastsub) && ($xline =~ /rc_get/ || $xline =~ /rc_set/)) {
-		$usesrc = 1;
+	    if (($lastline || $lastsub) && ($xline =~ /config_get/ || $xline =~ /config_set/)) {
+		$usesconfig = 1;
 	    }
 	}
 	close PS;
@@ -8457,11 +8445,11 @@ if (defined($ARGV[0])) {
 	foreach my $cmd (keys %hash) {
 	    print "$cmd";
 	    if (grep(/^$cmd$/, @needc)) {
-		print " (needs configdir)";
+		print " (needs configfile)";
 	    }
 	    else {
 		if ($hash{$cmd}) {
-		    print " WARNING: MAY USE RC !\n";
+		    print " WARNING: MAY USE CONFIGFILE !\n";
 		}
 	    }
 	    print "\nreferenced from:\n";
@@ -8475,7 +8463,7 @@ if (defined($ARGV[0])) {
 	foreach my $sub (keys %subs) {
 	    print "$sub";
 	    if ($subs{$sub}) {
-		print " (MAY USE RC)\n";
+		print " (MAY USE CONFIGFILE)\n";
 	    }
 	    print "\nreferenced from:\n";
 	    print `grep -no "$sub" ./$MYNAME`;
@@ -8502,7 +8490,7 @@ if (defined($ARGV[0])) {
 		    if ($xline =~ /^sub (.*) \{/) {
 			$xsub = $1;
 			if ($lastsub) {
-			    if (!($lastsub =~ /rc_get/ || $lastsub =~ /rc_set/)) {
+			    if (!($lastsub =~ /config_get/ || $lastsub =~ /config_set/)) {
 				if ($usesrc) {
 				    $subsneed{$lastsub} = $sub;
 				    print "$lastsub calls $sub, adding it.\n";
@@ -8588,38 +8576,38 @@ if (defined($ARGV[0])) {
     }
 
 
-    sub rc_set_if_not_set {
+    sub config_set_if_not_set {
 	my ($key, $value) = @_;
 	$noreplace = 1;
-	return &rc_set($key, $value);
+	return &config_set($key, $value);
     }
 
 
-    sub rc_set_priority {
+    sub config_set_priority {
 	my ($key, $value) = @_;
 	$priority = 1;
-	return &rc_set($key, $value);
+	return &config_set($key, $value);
     }
 
 
-    sub rc_delete {
+    sub config_delete {
 	my $key = shift;
 	$delpref = 1;
-	&rc_set($key, "");
+	&config_set($key, "");
     }
 
 
-    sub rc_deprecate {
+    sub config_deprecate {
 	my ($key, $newkey, $dversion) = @_;
 	$deprecate = 1;
-	&rc_set($key, $newkey, $dversion);
+	&config_set($key, $newkey, $dversion);
     }
 
 
-    sub rc_find {
+    sub config_find {
 	my $key = shift;
 	$find = 1;
-	return &rc_get($key);
+	return &config_get($key);
     }
 
 
@@ -8631,36 +8619,36 @@ if (defined($ARGV[0])) {
     }
 
 
-    sub rc_set {
-	# set/modify/delete a value in the .rc file
+    sub config_set {
+	# set/modify/delete a value in the .config file
 	my ($key, $value, $dversion) = @_;
 
-	my $xrcfile = $rcfile;
+	my $xconfigfile = $configfile;
 
 	if (defined($prefs_file)) {
-	    $xrcfile = $prefs_file;
+	    $xconfigfile = $prefs_file;
 	}
 
-	if ($xrcfile eq "") {
-	    &startup_error(4, "rc_set", "defined_xrcfile0", "$command:$rcfile:$prefs_file:$key:\@:");
+	if ($xconfigfile eq "") {
+	    &startup_error(4, "config_set", "defined_xconfigfile0", "$command:$configfile:$prefs_file:$key:\@:");
 	}
 
-	if ($xrcfile ne $rcfile && $key eq "") {
+	if ($xconfigfile ne $configfile && $key eq "") {
 	    return 0;
 	}
 
-	my $orcsize = -s $xrcfile;
+	my $oconfigsize = -s $xconfigfile;
 
-	if ($key eq "" && $orcsize > 0) {
+	if ($key eq "" && $oconfigsize > 0) {
 	    return 0;
 	}
 
-	unlink($newrcfile);
-	if (0 + -e $newrcfile) {
-	    &startup_error(4, "rc_set_new", "remove_new0", "$newrcfile:\@:");
+	unlink($newconfigfile);
+	if (0 + -e $newconfigfile) {
+	    &startup_error(4, "config_set_new", "remove_new0", "$newconfigfile:\@:");
 	}
-	if (!defined(open OUT, ">", $newrcfile)) {
-	    &startup_error(4, "rc_set_new", "open_new0", "$newrcfile:\@:");
+	if (!defined(open OUT, ">", $newconfigfile)) {
+	    &startup_error(4, "config_set_new", "open_new0", "$newconfigfile:\@:");
 	}
 
 	# autoflush output
@@ -8670,8 +8658,8 @@ if (defined($ARGV[0])) {
 	    # strip trailing unmatched quotes
 	    $value = substr($value, 0, length($value) - 1);
 	}
-
-	my $rcfilesize = 0;
+	my $found_deprecate = 1;
+	my $configfilesize = 0;
 	my $addsize = 0;
 
 	if (!defined($delpref)) {
@@ -8687,7 +8675,11 @@ if (defined($ARGV[0])) {
 	    $deprecate = 0;
 	}
 
-	## the process here is that we read in the $rcfile a line at a time, constructing a new copy of it.
+	if ($deprecate) {
+	    $found_deprecate = 0;
+	}
+
+	## the process here is that we read in the $configfile a line at a time, constructing a new copy of it.
 	## if we find <key> in the old file, we stop copying until we reach the next non-blankspace line after the next </key>
 	## then insert <key>, value, </key>, newline
 	## then continue to the end of the file
@@ -8714,25 +8706,25 @@ if (defined($ARGV[0])) {
 	    $addsize = &printlen(OUT, "# This file was autogenerated by $GUI_NAME version $version on $date\n");
 	    if ($addsize == -1) {
 		close OUT;
-		unlink $newrcfile;
-		&startup_error(4, "rc_set_new", "write_new_header0", "$newrcfile:\@:");
+		unlink $newconfigfile;
+		&startup_error(4, "config_set_new", "write_new_header0", "$newconfigfile:\@:");
 	    }
-	    $rcfilesize += $addsize;
+	    $configfilesize += $addsize;
 	    $addsize = &printlen(OUT, "# You are STRONGLY advised to change the values only through the GUI ($GUI_NAME) ",
 				 "unless otherwise directed.\n");
 	    if ($addsize == -1) {
 		close OUT;
-		unlink $newrcfile;
-		&startup_error(4, "rc_set_new", "write_new_header1", "$newrcfile:\@:");
+		unlink $newconfigfile;
+		&startup_error(4, "config_set_new", "write_new_header1", "$newconfigfile:\@:");
 	    }
-	    $rcfilesize += $addsize;
+	    $configfilesize += $addsize;
 	}
 	else {
-	    if ($orcsize) {
-		if (!defined(open IN, "<", $xrcfile) && (0 + -e $xrcfile)) {
+	    if ($oconfigsize) {
+		if (!defined(open IN, "<", $xconfigfile) && (0 + -e $xconfigfile)) {
 		    close OUT;
-		    unlink $newrcfile;
-		    &startup_error(3, "rc_get", "rc_set_open_file", "$xrcfile:\@:");
+		    unlink $newconfigfile;
+		    &startup_error(3, "config_get", "config_set_open_file", "$xconfigfile:\@:");
 		}
 
 		## $stage defines the action applied to the line:
@@ -8740,7 +8732,8 @@ if (defined($ARGV[0])) {
 		#
 		## stage -1 = scan mode:
 		# - if it's a whitespace line, we increment $extrablanks and skip it
-		# - if it's a ^#comment and not a ^#deprecated comment, we insert $extrablanks whitespace lines, then reset $extrablanks
+		# - if it's a ^#comment and not a ^#deprecated comment, we insert $extrablanks whitespace lines,
+		#  then reset $extrablanks
 		# - copy the #comment
 		#
 		# otherwise, we insert a single newline, then proceed to stage 0
@@ -8762,7 +8755,8 @@ if (defined($ARGV[0])) {
 		# - skip whitespace
 		#
 		# otherwise:
-		# - if we are in $noreplace mode, and it wasn't EOF, we exit the subroutine after deleting $newrcfile; otherwise:
+		# - if we are in $noreplace mode, and it wasn't EOF, we exit the subroutine after deleting $newconfigfile;
+		# 	otherwise:
 		# - if we are in delpref mode, we write the line, newline and go back to stage 0; otherwise:
 		# - we output <$key>, newline, value, newline, </$key>, newline
 		# - we set $delpref to 1
@@ -8783,7 +8777,8 @@ if (defined($ARGV[0])) {
 			next;
 		    }
 
-		    if ($stage < 2 && $current =~ /^#/ && !($delpref && $stage > 0) && !($stage == -1 && $current =~ /^#deprecated/)) {
+		    if ($stage < 2 && $current =~ /^#/ && !($delpref && $stage > 0)
+			&& !($stage == -1 && $current =~ /^#deprecated/)) {
 			# handle comments
 			next if (($delpref || $deprecate) && $current =~ /^#deprecated <$key>/);
 			if ($stage == -1) {
@@ -8792,11 +8787,11 @@ if (defined($ARGV[0])) {
 				$addsize = &printlen(OUT, "\n");
 				if ($addsize == -1) {
 				    close OUT;
-				    unlink $newrcfile;
-				    &startup_error(4, "rc_set_new", "write_new0",
-						   "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:\@:");
+				    unlink $newconfigfile;
+				    &startup_error(4, "config_set_new", "write_new0",
+						   "$newconfigfile:$key:$value:$priority:$delpref:$deprecate:$dversion:\@:");
 				}
-				$rcfilesize += $addsize;
+				$configfilesize += $addsize;
 			    }
 			    $extrablanks = 0;
 			}
@@ -8804,11 +8799,11 @@ if (defined($ARGV[0])) {
 			$addsize = &printlen(OUT, "$current\n");
 			if ($addsize == -1) {
 			    close OUT;
-			    unlink $newrcfile;
-			    &startup_error(4, "rc_set_new", "write_new1",
-					   "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:\@:");
+			    unlink $newconfigfile;
+			    &startup_error(4, "config_set_new", "write_new1",
+					   "$newconfigfile:$key:$value:$priority:$delpref:$deprecate:$dversion:\@:");
 			}
-			$rcfilesize += $addsize;
+			$configfilesize += $addsize;
 			next;
 		    }
 
@@ -8818,11 +8813,11 @@ if (defined($ARGV[0])) {
 			$addsize = &printlen(OUT, "\n");
 			if ($addsize == -1) {
 			    close OUT;
-			    unlink $newrcfile;
-			    &startup_error(4, "rc_set_new", "write_new2",
-					   "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:\@:");
+			    unlink $newconfigfile;
+			    &startup_error(4, "config_set_new", "write_new2",
+					   "$newconfigfile:$key:$value:$priority:$delpref:$deprecate:$dversion:\@:");
 			}
-			$rcfilesize += $addsize;
+			$configfilesize += $addsize;
 			if (defined($priority) && $priority == 1) {
 			    # insert the key now, we already skipped excess whitespace
 			    $stage = 2;
@@ -8836,20 +8831,23 @@ if (defined($ARGV[0])) {
 			# we found <key>
 			next if $stage > 0; # if we already found key, ignore the duplicate
 			if ($deprecate) {
+			    $found_deprecate = 1;
 			    $deprecate = 0;
 			    if ($value eq "") {
 				$addsize = &printlen(OUT, "#deprecated <$key> as of $GUI_NAME version $dversion\n");
 			    }
 			    else {
-				$addsize = &printlen(OUT, "#deprecated <$key> as of $GUI_NAME version $dversion, use <$value> instead\n");
+				$addsize = &printlen(OUT, "#deprecated <$key> as of $GUI_NAME version $dversion, " .
+						     "use <$value> instead\n");
 			    }
 			    if ($addsize == -1) {
 				close OUT;
-				unlink $newrcfile;
-				&startup_error(4, "rc_set_new",
-					       "write_new3", "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:\@:");
+				unlink $newconfigfile;
+				&startup_error(4, "config_set_new",
+					       "write_new3", "$newconfigfile:$key:$value:$priority:$delpref:" .
+					       "$deprecate:$dversion:\@:");
 			    }
-			    $rcfilesize += $addsize;
+			    $configfilesize += $addsize;
 			    $delpref = 1; # should be safe as we are in stage 0, but it stops us re-adding the key at the end
 			} else {
 			    $stage = 1;
@@ -8861,10 +8859,10 @@ if (defined($ARGV[0])) {
 			    if ($noreplace) {
 				close IN;
 				close OUT;
-				unlink "$newrcfile";
-				if (0 + -e $newrcfile) {
+				unlink "$newconfigfile";
+				if (0 + -e $newconfigfile) {
 				    close OUT;
-				    &startup_error(4, "rc_set_new", "remove_new1", "$newrcfile:\@:");
+				    &startup_error(4, "config_set_new", "remove_new1", "$newconfigfile:\@:");
 				}
 				$noreplace = 0;
 				return 1;
@@ -8881,11 +8879,12 @@ if (defined($ARGV[0])) {
 			    $addsize = &printlen(OUT, "<$key>\n$value\n</$key>\n\n");
 			    if ($addsize == -1) {
 				close OUT;
-				unlink $newrcfile;
-				&startup_error(4, "rc_set_new",
-					       "write_new4", "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:\@:");
+				unlink $newconfigfile;
+				&startup_error(4, "config_set_new",
+					       "write_new4", "$newconfigfile:$key:$value:$priority:$delpref:" .
+					       "$deprecate:$dversion:\@:");
 			    }
-			    $rcfilesize += $addsize;
+			    $configfilesize += $addsize;
 			}
 			$priority = 0;
 			$delpref = 1;
@@ -8911,14 +8910,22 @@ if (defined($ARGV[0])) {
 		    $addsize = &printlen(OUT, "$current\n");
 		    if ($addsize == -1) {
 			close OUT;
-			unlink $newrcfile;
-			&startup_error(4, "rc_set_new", "write_new6",
-				       "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:\@:");
+			unlink $newconfigfile;
+			&startup_error(4, "config_set_new", "write_new6",
+				       "$newconfigfile:$key:$value:$priority:$delpref:$deprecate:$dversion:\@:");
 		    }
-		    $rcfilesize += $addsize;
+		    $configfilesize += $addsize;
 		}
 	    }
 	    close IN;
+	}
+
+	if (!$found_deprecate) {
+	    close OUT;
+	    if (-s $newconfigfile != $configfilesize) {
+		unlink $newconfigfile;
+	    }
+	    return 0;
 	}
 
 	if ($key ne "") {
@@ -8926,79 +8933,84 @@ if (defined($ARGV[0])) {
 		$addsize = &printlen(OUT, "\n");
 		if ($addsize == -1) {
 		    close OUT;
-		    unlink $newrcfile;
-		    &startup_error(4, "rc_set_new", "write_new7", "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:\@:");
+		    unlink $newconfigfile;
+		    &startup_error(4, "config_set_new", "write_new7", "$newconfigfile:$key:$value:$priority:" .
+				   "$delpref:$deprecate:$dversion:\@:");
 		}
-		$rcfilesize += $addsize;
+		$configfilesize += $addsize;
 	    }
 	    if (!$delpref) {
 		$addsize = &printlen(OUT, "<$key>\n$value\n</$key>\n\n");
 		if ($addsize == -1) {
 		    close OUT;
-		    unlink $newrcfile;
-		    &startup_error(4, "rc_set_new", "write_new8", "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:\@:");
+		    unlink $newconfigfile;
+		    &startup_error(4, "config_set_new", "write_new8", "$newconfigfile:$key:$value:$priority:" .
+				   "$delpref:$deprecate:$dversion:\@:");
 		}
-		$rcfilesize += $addsize;
+		$configfilesize += $addsize;
 	    }
 	}
 
 	close OUT;
 
-	if (-s $newrcfile != $rcfilesize) {
-	    unlink $newrcfile;
-	    &startup_error(4, "rc_set_new", "check_new_size0",
-			   "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:" . -s $newrcfile . ":$rcfilesize:\@:");
+	if (-s $newconfigfile != $configfilesize) {
+	    unlink $newconfigfile;
+	    &startup_error(4, "config_set_new", "check_new_size0",
+			   "$newconfigfile:$key:$value:$priority:$delpref:$deprecate:$dversion:" .
+			   -s $newconfigfile . ":$configfilesize:\@:");
 	}
 
-	if ($xrcfile eq $rcfile) {
-	    # attempt to backup $rcfile before replacement
-	    unlink $recrcfile;
-	    if (0 + -e $recrcfile) {
-		&startup_error(4, "rc_set_rec", "remove_recovery1", "$recrcfile:\@:");
+	if ($xconfigfile eq $configfile) {
+	    # attempt to backup $configfile before replacement
+	    unlink $recconfigfile;
+	    if (0 + -e $recconfigfile) {
+		&startup_error(4, "config_set_rec", "remove_recovery1", "$recconfigfile:\@:");
 	    }
-	    if (-s $rcfile) {
+	    if (-s $configfile) {
 		$panic = 0;
-		&smog_copy($rcfile, $recrcfile);
-		if ($panic || -s $recrcfile != $orcsize) {
-		    unlink $recrcfile;
-		    if (-s $rcfile != $orcsize) {
-			unlink $rcfile;
-			if (-s $newrcfile == $rcfilesize) {
+		&smog_copy($configfile, $recconfigfile);
+		if ($panic || -s $recconfigfile != $oconfigsize) {
+		    unlink $recconfigfile;
+		    if (-s $configfile != $oconfigsize) {
+			unlink $configfile;
+			if (-s $newconfigfile == $configfilesize) {
 			    $panic = 0;
-			    &smog_copy($newrcfile, $rcfile);
-			    if ($panic || -s $rcfile != $rcfilesize) {
-				unlink $rcfile;
-				if (-s $newrcfile != $rcfilesize) {
-				    unlink $newrcfile;
+			    &smog_copy($newconfigfile, $configfile);
+			    if ($panic || -s $configfile != $configfilesize) {
+				unlink $configfile;
+				if (-s $newconfigfile != $configfilesize) {
+				    unlink $newconfigfile;
 				}
 			    }
 			}
 		    }
-		    &startup_error(4, "rc_set_rec", "check_size_rec0", "$rcfile:$recrcfile:" . -s $recrcfile . ":$orcsize:\@:");
+		    &startup_error(4, "config_set_rec", "check_size_rec0", "$configfile:$recconfigfile:" .
+				   -s $recconfigfile . ":$oconfigsize:\@:");
 		}
 	    }
 	}
 
 	## copy new file here ###
-	&smog_copy($newrcfile, $xrcfile);
+	&smog_copy($newconfigfile, $xconfigfile);
 	##################3
 
-	my $rcsize = -s $xrcfile;
+	my $configsize = -s $xconfigfile;
 
-	if ($panic || $rcsize != $rcfilesize) {
+	if ($panic || $configsize != $configfilesize) {
 	    # copy failed
-	    if ($rcsize != $orcsize && $xrcfile eq $rcfile) {
-		unlink $rcfile;
+	    if ($configsize != $oconfigsize && $xconfigfile eq $configfile) {
+		unlink $configfile;
 	    }
-	    &startup_error(5, "rc_set", "check_size0",
-			   "$xrcfile:$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:$rcsize:$orcsize:$rcfilesize:\@:");
+	    &startup_error(5, "config_set", "check_size0",
+			   "$xconfigfile:$newconfigfile:$key:$value:$priority:$delpref:$deprecate:$dversion:" .
+			   "$configsize:$oconfigsize:$configfilesize:\@:");
 	}
 
 	$delpref = $noreplace = 0;
 
-	unlink $newrcfile;
-	if (0 + -e $newrcfile) {
-	    &startup_error(4, "rc_set_new", "remove_new2", "$newrcfile:\@:");
+	unlink $newconfigfile;
+	if (0 + -e $newconfigfile) {
+	    &startup_error(4, "config_set_new", "remove_new2", "$newconfigfile:\@:");
 	}
 
 	return 0;
@@ -9023,32 +9035,32 @@ if (defined($ARGV[0])) {
 	    unless ($text =~ /:\@:$/) {
 		print STDERR "smogrify: (Message appears to be incomplete)\n";
 	    }
-	    if ($bad_rcfile) {
-		print STDERR "smogrify: $rcfile is damaged and could not be removed.\n";
+	    if ($bad_configfile) {
+		print STDERR "smogrify: $configfile is damaged and could not be removed.\n";
 		print STDERR "smogrify: File MUST contain at least a <version> key.\n";
 	    }
-	    if (! (0 + -e $rcfile)) {
-		print STDERR "smogrify: $rcfile not present.\n";
-		if (-s $recrcfile) {
-		    print STDERR "smogrify: Recovery may be possible from $recrcfile\n";
+	    if (! (0 + -e $configfile)) {
+		print STDERR "smogrify: $configfile not present.\n";
+		if (-s $recconfigfile) {
+		    print STDERR "smogrify: Recovery may be possible from $recconfigfile\n";
 		}
-		elsif (-s $newrcfile > 0) {
-		    print STDERR "smogrify: Recovery may be possible from $newrcfile\n";
+		elsif (-s $newconfigfile > 0) {
+		    print STDERR "smogrify: Recovery may be possible from $newconfigfile\n";
 		}
 	    }
-	    if (-s $recrcfile_damaged > 0) {
-		print STDERR "smogrify: Damaged file may have been saved as $recrcfile_damaged.\n";
+	    if (-s $recconfigfile_damaged > 0) {
+		print STDERR "smogrify: Damaged file may have been saved as $recconfigfile_damaged.\n";
 		print STDERR "smogrify: File MUST contain at least a <version> key.\n";
 	    }
-	    if (-s $recrcfile_tried > 0) {
-		print STDERR "smogrify: Unsuccesfull recovery appears to have been attempted from $recrcfile_tried\n";
+	    if (-s $recconfigfile_tried > 0) {
+		print STDERR "smogrify: Unsuccesfull recovery appears to have been attempted from $recconfigfile_tried\n";
 		print STDERR "smogrify: File MUST contain at least a <version> key.\n";
 	    }
-	    if (-s $recrcfile_tried > 0) {
-		print STDERR "smogrify: Unsuccesfull recovery appears to have been attempted from $recrcfile_tried\n";
+	    if (-s $recconfigfile_tried > 0) {
+		print STDERR "smogrify: Unsuccesfull recovery appears to have been attempted from $recconfigfile_tried\n";
 	    }
-	    if (-s $recrcfile_succeeded > 0) {
-		print STDERR "smogrify: Succesfull recovery appears to have been nade from $recrcfile_succeeded\n";
+	    if (-s $recconfigfile_succeeded > 0) {
+		print STDERR "smogrify: Succesfull recovery appears to have been nade from $recconfigfile_succeeded\n";
 	    }
 	    print STDERR "smogrify: \@ARGV = " . join(" ", @ARGV) . "\n";
 	}
@@ -9058,97 +9070,97 @@ if (defined($ARGV[0])) {
     }
 
 
-    sub recover_rcfile {
-	## attempt a one-time recovery of $rcfile from $rcfile.recovery
-	#inputs: $rcfile, $recrcfile, $recrcfile_tried
+    sub recover_configfile {
+	## attempt a one-time recovery of $configfile from $configfile.recovery
+	#inputs: $configfile, $recconfigfile, $recconfigfile_tried
 
-	return "" if (0 + -e $rcfile);
+	return "" if (0 + -e $configfile);
 
-	my $xrecrcfile = $recrcfile;
-	if (! -s $recrcfile) {
-	    unlink $recrcfile;
-	    if (-s $newrcfile) {
-		$xrecrcfile = $newrcfile;
+	my $xrecconfigfile = $recconfigfile;
+	if (! -s $recconfigfile) {
+	    unlink $recconfigfile;
+	    if (-s $newconfigfile) {
+		$xrecconfigfile = $newconfigfile;
 	    }
 	}
 
-	my $size = -s $xrecrcfile;
+	my $size = -s $xrecconfigfile;
 
 	if ($size == 0) {
-	    unlink $xrecrcfile;
+	    unlink $xrecconfigfile;
 	    return "";
 	}
 
 	# try to back up the recovery file if we can
-	if (0 + -e $recrcfile_tried) {
-	    unlink $recrcfile_tried;
+	if (0 + -e $recconfigfile_tried) {
+	    unlink $recconfigfile_tried;
 	}
 
 	$panic = 0;
-	if (! (0 + -e $recrcfile_tried)) {
-	    &smog_copy($xrecrcfile, $recrcfile_tried);
-	    if (!$panic && -s $recrcfile_tried == $size) {
-		# $recrcfile succesfully renamed as $recrcfile_tried
+	if (! (0 + -e $recconfigfile_tried)) {
+	    &smog_copy($xrecconfigfile, $recconfigfile_tried);
+	    if (!$panic && -s $recconfigfile_tried == $size) {
+		# $recconfigfile succesfully renamed as $recconfigfile_tried
 		# good. This is intented to be a one-time recovery
-		# now copy it to $rcfile
-		unlink $xrecrcfile;
-		$xrecrcfile = $recrcfile_tried;
+		# now copy it to $configfile
+		unlink $xrecconfigfile;
+		$xrecconfigfile = $recconfigfile_tried;
 	    }
 	    else {
 		# copy failed...
 		$panic = 0;
-		unlink $recrcfile_tried;
-		if (-s $xrecrcfile != $size) {
+		unlink $recconfigfile_tried;
+		if (-s $xrecconfigfile != $size) {
 		    # ...recovery file damaged in the process, try to remove it; no recovery
-		    unlink $xrecrcfile;
+		    unlink $xrecconfigfile;
 		    return "";
 		}
 		# ...try with the original
 	    }
 	}
-	#print STDERR "Copy $xrecrcfile to $rcfile\n";
-	&smog_copy($xrecrcfile, $rcfile);
+	#print STDERR "Copy $xrecconfigfile to $configfile\n";
+	&smog_copy($xrecconfigfile, $configfile);
 
-	if ($panic || -s $rcfile != $size) {
+	if ($panic || -s $configfile != $size) {
 	    # copy failed !
-	    if ($xrecrcfile ne $recrcfile_tried && -s $xrecrcfile != $size) {
+	    if ($xrecconfigfile ne $recconfigfile_tried && -s $xrecconfigfile != $size) {
 		# recovery file, damaged, try to remove it unless it was a backup
-		unlink $xrecrcfile;
+		unlink $xrecconfigfile;
 	    }
-	    # try to remove rcfile; no recovery
+	    # try to remove configfile; no recovery
 	    $panic = 0;
-	    unlink $rcfile;
+	    unlink $configfile;
 	    return "";
 	}
 
 	# success !
-	if ($xrecrcfile != $recrcfile_tried) {
-	    unlink $xrecrcfile;
+	if ($xrecconfigfile != $recconfigfile_tried) {
+	    unlink $xrecconfigfile;
 	}
-	return $xrecrcfile;
+	return $xrecconfigfile;
     }
 
 
-    sub rc_get {
-	# return a value from our .rc file
+    sub config_get {
+	# return a value from our .config file
 	my $key = shift;
-	my $xrcfile = $rcfile;
+	my $xconfigfile = $configfile;
 	my $string = "";
 
 	if (defined($prefs_file)) {
-	    $xrcfile = $prefs_file;
+	    $xconfigfile = $prefs_file;
 	}
 
-	if ($xrcfile eq "") {
-	    &startup_error(3, "rc_get", "defined_xrcfile0", "$command:$rcfile:$prefs_file:$key:\@:");
+	if ($xconfigfile eq "") {
+	    &startup_error(3, "config_get", "defined_xconfigfile0", "$command:$configfile:$prefs_file:$key:\@:");
 	}
 
-	if (! -s $xrcfile) {
+	if (! -s $xconfigfile) {
 	    return $string;
 	}
 
-	unless (defined(open IN, "<", $xrcfile)) {
-	    &startup_error(3, "rc_get", "open_file0", "$xrcfile:$key:\@:");
+	unless (defined(open IN, "<", $xconfigfile)) {
+	    &startup_error(3, "config_get", "open_file0", "$xconfigfile:$key:\@:");
 	}
 
 	my $stage = 0;
@@ -9396,8 +9408,8 @@ if (defined($ARGV[0])) {
 
     # get default values
 
-    sub rc_get_default {
-	# return a value from our .rc file
+    sub config_get_default {
+	# return a value from our .config file
 	my $key = shift;
 	my $ret = "";
 
@@ -9453,31 +9465,31 @@ if (defined($ARGV[0])) {
 	if ($upd) {
 	    if ($old_version_hash < 8005) {
 		# not used now
-		&rc_delete("frontend");
-		&rc_delete("mog_auto_bak");
-		&rc_delete("plugin_dir");
+		&config_delete("frontend");
+		&config_delete("mog_auto_bak");
+		&config_delete("plugin_dir");
 	    }
 	}
 	if ($old_version_hash < 9001) {
 	    if ($upd) {
 		# convert_version is used instead now
-		&rc_deprecate("mogrify_version", "convert_version", "0.9.1");
-		&rc_delete("effects_command");
+		&config_deprecate("mogrify_version", "convert_version", "0.9.1");
+		&config_delete("effects_command");
 
-		&rc_delete("no_fast_keys");
+		&config_delete("no_fast_keys");
 
 		# changed to "open_compression_percent"
-		&rc_delete("open_quality");
+		&config_delete("open_quality");
 
-		&rc_delete("kbd_rpt_state");
-		&rc_delete("kbd_rpt_delay");
-		&rc_delete("kbd_rpt_rate");
+		&config_delete("kbd_rpt_state");
+		&config_delete("kbd_rpt_delay");
+		&config_delete("kbd_rpt_rate");
 
 		#encoder_command not used any more
-		&rc_delete("encoder_command");
+		&config_delete("encoder_command");
 
 		#encoder_acodec used instead
-		&rc_deprecate("audio_encode_quality", "encoder_acodec", "0.9.1");
+		&config_deprecate("audio_encode_quality", "encoder_acodec", "0.9.1");
 	    }
 	    #encoder plugin names changed
 	    $msg .= "Encoder names have changed since version $old_version.\n" .
@@ -9486,32 +9498,32 @@ if (defined($ARGV[0])) {
 
 	if ($upd) {
 	    if ($old_version_hash < 9006) {
-		&rc_delete("video_player");
-		&rc_delete("video_play_command");
-		&rc_delete("PAL/NTSC");
-		&rc_delete("osc_opts");
+		&config_delete("video_player");
+		&config_delete("video_play_command");
+		&config_delete("PAL/NTSC");
+		&config_delete("osc_opts");
 	    }
 
 	    if ($old_version_hash < 1001005) {
-		&rc_delete("debug_encoders");
+		&config_delete("debug_encoders");
 	    }
 
 	    if ($old_version_hash < 1002000) {
-		my $wmask = &rc_get("lives_warning_mask");
+		my $wmask = &config_get("lives_warning_mask");
 		$wmask |= 8192;
-		&rc_set("lives_warning_mask", $wmask);
+		&config_set("lives_warning_mask", $wmask);
 	    }
 
 	    if ($old_version_hash < 1003011) {
-		&rc_set("osc_port", 49999);
+		&config_set("osc_port", 49999);
 		$msg = "Default OSC port has been changed to 49999.\n" . $msg;
 	    }
 
 	    if ($old_version_hash < 3000003) {
-		&rc_deprecate("current_autotrans", "active_autotrans", "3.0.3");
-		&rc_deprecate("def_autotrans", "", "3.0.3");
-		&rc_deprecate("session_tempdir", "", "3.0.3");
-		&rc_deprecate("tempdir", "workdir", "3.0.3");
+		&config_deprecate("current_autotrans", "active_autotrans", "3.0.3");
+		&config_deprecate("def_autotrans", "", "3.0.3");
+		&config_deprecate("session_tempdir", "", "3.0.3");
+		&config_deprecate("tempdir", "workdir", "3.0.3");
 	    }
 
 	    unless (&location("build-lives-plugin-multi") eq "") {
@@ -9722,7 +9734,7 @@ if (defined($ARGV[0])) {
 			}
 		    }
 		    else {
-			&smog_system("/bin/touch $leavedir/$file");
+			&smog_system("/usr/bin/touch $leavedir/$file");
 		    }
 
 		    $nitems++;
@@ -9811,7 +9823,7 @@ if (defined($ARGV[0])) {
 			print "directory is empty and option 'Remove Empty Directories' " .
 			    "is set\n";
 			print "directory will be removed.\n";
-			&smog_system("/bin/touch $remdir/$file");
+			&smog_system("/usr/bin/touch $remdir/$file");
 			$nitems++;
 			next;
 		    }
@@ -9845,7 +9857,7 @@ if (defined($ARGV[0])) {
 					       || &is_specialdir($file))) {
 				print STDERR "Will remove $workdir/$file\n";
 				print "Will remove $workdir/$file\n";
-				&smog_system("/bin/touch $remdir/$file");
+				&smog_system("/usr/bin/touch $remdir/$file");
 				$nitems++;
 			    }
 			    else {
@@ -9856,7 +9868,7 @@ if (defined($ARGV[0])) {
 					"need to check with the user first\n";
 				    print "   - $workdir/$file/ contains header* and we " .
 					"need to check with the user first\n";
-				    &smog_system("/bin/touch $recdir/$file");
+				    &smog_system("/usr/bin/touch $recdir/$file");
 				    $nitems++;
 				    next;
 				}
@@ -9897,7 +9909,7 @@ if (defined($ARGV[0])) {
 				    "directory is no longer needed\n";
 				print "smogrify: manual cleanup may be required if this " .
 				    "directory is no longer needed\n";
-				&smog_system("/bin/touch $leavedir/$file");
+				&smog_system("/usr/bin/touch $leavedir/$file");
 				$nitems++;
 				push (@left, $file);
 			    }}}
@@ -9964,7 +9976,7 @@ if (defined($ARGV[0])) {
 		    else {
 			print STDERR "...with unknown type. Consider for manual removal\n";
 			print "...with unknown type. Consider for manual removal\n";
-			&smog_system("/bin/touch $leavedir/$file");
+			&smog_system("/usr/bin/touch $leavedir/$file");
 			$nitems++;
 			push (@left, $file);
 		    }
@@ -10006,7 +10018,7 @@ if (defined($ARGV[0])) {
 		    &smog_rename($filerem, $deftrashdir);
 		}
 		else {
-		    &smog_system("/bin/touch $remdir/$filerem");
+		    &smog_system("/usr/bin/touch $remdir/$filerem");
 		    $nitems++;
 		}
 	    }
@@ -10043,7 +10055,7 @@ if (defined($ARGV[0])) {
 		    &smog_rename($filerem, $deftrashdir);
 		}
 		else {
-		    &smog_system("/bin/touch $remdir/$filerem");
+		    &smog_system("/usr/bin/touch $remdir/$filerem");
 		    $nitems++;
 		}
 	    }
@@ -10096,7 +10108,7 @@ if (defined($ARGV[0])) {
 	make_path $linksdir;
 
 	# remove dir + any empty parents
-	&smog_system("/bin/rmdir -p \"$linksdir\" 2>$nulfile");
+	&smog_system("/usr/bin/rmdir -p \"$linksdir\" 2>$nulfile");
     }
 
 

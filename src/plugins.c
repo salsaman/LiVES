@@ -1629,7 +1629,7 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
 
   if (user_audio && future_prefs->encoder.of_allowed_acodecs == 0) best_arate = -1;
 
-  if (!*prefs->encoder.of_restrict || !strcmp(prefs->encoder.of_restrict, "none")) && best_arate > -1) {
+  if ((!*prefs->encoder.of_restrict || !strcmp(prefs->encoder.of_restrict, "none")) && best_arate > -1) {
     return TRUE;
   }
 

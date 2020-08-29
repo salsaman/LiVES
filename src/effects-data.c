@@ -158,14 +158,9 @@ void pconx_delete_all(void) {
 
   while (pconx) {
     pconx_next = pconx->next;
-    lives_free(pconx->params);
-    lives_free(pconx->nconns);
-    lives_free(pconx->last_boolval);
-    lives_free(pconx->ikey);
-    lives_free(pconx->imode);
-    lives_free(pconx->ipnum);
-    lives_free(pconx->autoscale);
-    lives_free(pconx);
+    lives_free(pconx->params); lives_free(pconx->nconns); lives_free(pconx->last_boolval);
+    lives_free(pconx->ikey); lives_free(pconx->imode); lives_free(pconx->ipnum);
+    lives_free(pconx->autoscale); lives_free(pconx);
     pconx = pconx_next;
   }
   mainw->pconx = NULL;
@@ -237,18 +232,18 @@ char *pconx_list(int okey, int omode, int opnum) {
   char *st1 = lives_strdup(""), *st2;
   lives_pconnect_t *pconx = mainw->pconx;
   int totcons = 0;
-  int i, j;
 
   while (pconx) {
     if (pconx->okey == okey && pconx->omode == omode) {
-      for (i = 0; i < pconx->nparams; i++) {
+      for (int i = 0; i < pconx->nparams; i++) {
         if (pconx->params[i] == opnum) {
-          for (j = totcons; j < totcons + pconx->nconns[i]; j++) {
+          for (int j = totcons; j < totcons + pconx->nconns[i]; j++) {
             if (!*st1)
               st2 = lives_strdup_printf("%d %d %d %d", pconx->ikey[j] + 1, pconx->imode[j] + 1, pconx->ipnum[j],
                                         pconx->autoscale[j]);
-            st2 = lives_strdup_printf("%s %d %d %d %d", st1, pconx->ikey[j] + 1, pconx->imode[j] + 1,
-                                      pconx->ipnum[j], pconx->autoscale[j]);
+	    else
+	      st2 = lives_strdup_printf("%s %d %d %d %d", st1, pconx->ikey[j] + 1, pconx->imode[j] + 1,
+					pconx->ipnum[j], pconx->autoscale[j]);
             lives_free(st1);
             st1 = st2;
           }
@@ -290,14 +285,9 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
         //g_print("rem all cons from %d %d to any param\n",okey,omode);
 
         // delete entire node
-        lives_free(pconx->params);
-        lives_free(pconx->last_boolval);
-        lives_free(pconx->nconns);
-        lives_free(pconx->ikey);
-        lives_free(pconx->imode);
-        lives_free(pconx->ipnum);
-        lives_free(pconx->autoscale);
-        lives_free(pconx);
+        lives_free(pconx->params); lives_free(pconx->last_boolval); lives_free(pconx->nconns);
+        lives_free(pconx->ikey); lives_free(pconx->imode); lives_free(pconx->ipnum);
+        lives_free(pconx->autoscale); lives_free(pconx);
         if (mainw->pconx == pconx) mainw->pconx = pconx_next;
         else pconx_prev->next = pconx_next;
         if (okey >= 0 && okey != FX_DATA_WILDCARD) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++)
@@ -362,12 +352,8 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
 
               if (pconx->nparams == 0) {
                 // delete entire node
-                lives_free(pconx->params);
-                lives_free(pconx->nconns);
-                lives_free(pconx->ikey);
-                lives_free(pconx->imode);
-                lives_free(pconx->ipnum);
-                lives_free(pconx->last_boolval);
+                lives_free(pconx->params); lives_free(pconx->nconns); lives_free(pconx->ikey);
+                lives_free(pconx->imode); lives_free(pconx->ipnum); lives_free(pconx->last_boolval);
                 lives_free(pconx->autoscale);
                 lives_free(pconx);
                 if (mainw->pconx == pconx) {
@@ -474,7 +460,7 @@ static int pconx_get_nconns(lives_pconnect_t *pconx, int pnum) {
 static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int omode, int opnum, int ikey, int imode,
     int ipnum, boolean autoscale) {
   int posn = 0, totcons = 0;
-  register int i, j;
+  int i, j;
 
   // delete any existing connection to the input param
   pconx_delete(FX_DATA_WILDCARD, FX_DATA_WILDCARD, FX_DATA_WILDCARD, ikey, imode, ipnum);
@@ -931,8 +917,6 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-          /* copyto = set_copy_to(inst, pnum, FALSE); */
-          /* if (copyto != -1) rec_param_change(inst, copyto); */
         }
 
         weed_set_double_array(dparam, WEED_LEAF_VALUE, ndvals, valsd);
@@ -963,9 +947,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
           weed_set_string_value(dparam, WEED_LEAF_VALUE, opstring);
           retval = TRUE;
         }
-        lives_free(vals);
-        lives_free(valsd);
-        lives_free(opstring);
+        lives_free(vals); lives_free(valsd); lives_free(opstring);
         return retval;
       }
 
@@ -995,8 +977,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
       lives_free(valsd);
     }
     return TRUE;
-    default:
-      break;
+    default: break;
     }
 
     break;
@@ -1026,9 +1007,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
           weed_set_string_value(dparam, WEED_LEAF_VALUE, opstring);
           retval = TRUE;
         }
-        lives_free(vals);
-        lives_free(valsi);
-        lives_free(opstring);
+        lives_free(vals); lives_free(valsi); lives_free(opstring);
         return retval;
       }
 
@@ -1046,8 +1025,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
       }
       if (!retval) {
         for (i = 0; i < ndvals; i++) lives_free(valss[i]);
-        lives_free(valss);
-        lives_free(valsi);
+        lives_free(valss); lives_free(valsi);
         return FALSE;
       }
 
@@ -1103,16 +1081,12 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-          /* copyto = set_copy_to(inst, pnum, FALSE); */
-          /* if (copyto != -1) rec_param_change(inst, copyto); */
         }
 
         weed_set_double_array(dparam, WEED_LEAF_VALUE, ndvals, valsd);
       }
-      lives_free(maxd);
-      lives_free(mind);
-      lives_free(valsi);
-      lives_free(valsd);
+      lives_free(maxd); lives_free(mind);
+      lives_free(valsi); lives_free(valsd);
     }
     return retval;
 
@@ -1160,16 +1134,12 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-          /* copyto = set_copy_to(inst, pnum, FALSE); */
-          /* if (copyto != -1) rec_param_change(inst, copyto); */
         }
 
         weed_set_int_array(dparam, WEED_LEAF_VALUE, ndvals, valsi);
       }
-      lives_free(maxi);
-      lives_free(mini);
-      lives_free(valsI);
-      lives_free(valsi);
+      lives_free(maxi); lives_free(mini);
+      lives_free(valsI); lives_free(valsi);
     }
     return retval;
     }
@@ -1211,9 +1181,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
           weed_set_string_value(dparam, WEED_LEAF_VALUE, opstring);
           retval = TRUE;
         }
-        lives_free(vals);
-        lives_free(valsb);
-        lives_free(opstring);
+        lives_free(vals); lives_free(valsb); lives_free(opstring);
         return retval;
       }
 
@@ -1244,7 +1212,6 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
     return retval;
     case WEED_SEED_DOUBLE: {
       double *valsd = weed_get_double_array(dparam, WEED_LEAF_VALUE, NULL);
-
       double *maxd = weed_get_double_array(dptmpl, WEED_LEAF_MAX, NULL);
       double *mind = weed_get_double_array(dptmpl, WEED_LEAF_MIN, NULL);
       double vald;
@@ -1271,21 +1238,16 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-          /* copyto = set_copy_to(inst, pnum, FALSE); */
-          /* if (copyto != -1) rec_param_change(inst, copyto); */
         }
 
         weed_set_double_array(dparam, WEED_LEAF_VALUE, ndvals, valsd);
       }
-      lives_free(maxd);
-      lives_free(mind);
-      lives_free(valsb);
-      lives_free(valsd);
+      lives_free(maxd); lives_free(mind);
+      lives_free(valsb); lives_free(valsd);
     }
     return retval;
     case WEED_SEED_INT: {
       int *valsi = weed_get_int_array(dparam, WEED_LEAF_VALUE, NULL);
-
       int *maxi = weed_get_int_array(dptmpl, WEED_LEAF_MAX, NULL);
       int *mini = weed_get_int_array(dptmpl, WEED_LEAF_MIN, NULL);
 
@@ -1310,16 +1272,12 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-          /* copyto = set_copy_to(inst, pnum, FALSE); */
-          /* if (copyto != -1) rec_param_change(inst, copyto); */
         }
 
         weed_set_int_array(dparam, WEED_LEAF_VALUE, ndvals, valsi);
       }
-      lives_free(maxi);
-      lives_free(mini);
-      lives_free(valsi);
-      lives_free(valsb);
+      lives_free(maxi); lives_free(mini);
+      lives_free(valsi); lives_free(valsb);
     }
     return retval;
 
@@ -1338,10 +1296,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
         if (inst && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-          /* copyto = set_copy_to(inst, pnum, FALSE); */
-          /* if (copyto != -1) rec_param_change(inst, copyto); */
         }
-
         weed_set_boolean_array(dparam, WEED_LEAF_VALUE, ndvals, valsB);
       }
       lives_free(valsb);
@@ -1352,11 +1307,9 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
       lives_free(valsb);
       break;
     }
-
     break;
   }
-  default:
-    break;
+  default: break;
   }
 
   return retval;
@@ -1538,10 +1491,6 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
 
           pflags = weed_get_int_value(inparams[i], WEED_LEAF_FLAGS, NULL);
           if (pflags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE) reinit_inst = TRUE;
-          /* if (copyto != -1) { */
-          /*   pflags = weed_get_int_value(inparams[copyto], WEED_LEAF_FLAGS, NULL); */
-          /*   if (pflags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE) reinit_inst = TRUE; */
-          /* } */
 
           if (fx_dialog[1] && !reinit_inst) {
             lives_rfx_t *rfx = fx_dialog[1]->rfx;
@@ -1590,14 +1539,9 @@ boolean pconx_chain_data_internal(weed_plant_t *inst) {
                                  WEED_LEAF_HOST_INTERNAL_CONNECTION_AUTOSCALE, NULL) == WEED_TRUE) autoscale = TRUE;
       if (pconx_convert_value_data(inst, i, -1, in_params[i], -1, weed_get_plantptr_value(in_params[i],
                                    WEED_LEAF_HOST_INTERNAL_CONNECTION, NULL), autoscale, FALSE, NULL)) {
-        //copyto = set_copy_to(inst, i, TRUE);
 
         pflags = weed_get_int_value(in_params[i], WEED_LEAF_FLAGS, NULL);
         if (pflags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE) reinit_inst = TRUE;
-        /* if (copyto != -1) { */
-        /*   pflags = weed_get_int_value(in_params[copyto], WEED_LEAF_FLAGS, NULL); */
-        /*   if (pflags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE) reinit_inst = TRUE; */
-        /* } */
       }
     }
   }
@@ -1694,7 +1638,7 @@ char *cconx_list(int okey, int omode, int ocnum) {
       for (int i = 0; i < cconx->nchans; i++) {
         if (cconx->chans[i] == ocnum) {
           for (int j = totcons; j < totcons + cconx->nconns[i]; j++) {
-            if (!*st1) st1 = lives_strdup_printf("%d %d %d", cconx->key[j] + 1, cconx->mode[j] + 1, cconx->cnum[j]);
+            if (!*st1) st2 = lives_strdup_printf("%d %d %d", cconx->ikey[j] + 1, cconx->imode[j] + 1, cconx->icnum[j]);
             else
               st2 = lives_strdup_printf("%s %d %d %d", st1, cconx->ikey[j] + 1, cconx->imode[j] + 1, cconx->icnum[j]);
             lives_free(st1);
@@ -1724,12 +1668,8 @@ void cconx_delete(int okey, int omode, int ocnum, int ikey, int imode, int icnum
     if (okey == FX_DATA_WILDCARD || (cconx->okey == okey && cconx->omode == omode)) {
       if (ikey == FX_DATA_WILDCARD) {
         // delete entire node
-        lives_free(cconx->chans);
-        lives_free(cconx->nconns);
-        lives_free(cconx->ikey);
-        lives_free(cconx->imode);
-        lives_free(cconx->icnum);
-        lives_free(cconx);
+        lives_free(cconx->chans); lives_free(cconx->nconns); lives_free(cconx->ikey);
+        lives_free(cconx->imode); lives_free(cconx->icnum); lives_free(cconx);
         if (mainw->cconx == cconx) mainw->cconx = cconx_next;
         else cconx_prev->next = cconx_next;
         return;
@@ -1775,12 +1715,8 @@ void cconx_delete(int okey, int omode, int ocnum, int ikey, int imode, int icnum
 
               if (cconx->nchans == 0) {
                 // delete entire node
-                lives_free(cconx->chans);
-                lives_free(cconx->nconns);
-                lives_free(cconx->ikey);
-                lives_free(cconx->imode);
-                lives_free(cconx->icnum);
-                lives_free(cconx);
+                lives_free(cconx->chans); lives_free(cconx->nconns); lives_free(cconx->ikey);
+                lives_free(cconx->imode); lives_free(cconx->icnum); lives_free(cconx);
                 if (mainw->cconx == cconx) {
                   mainw->cconx = cconx_next;
                   cconx = NULL;
@@ -2419,8 +2355,8 @@ static void apbutton_clicked(LiVESButton * button, livespointer user_data) {
 
   if (key == FX_DATA_KEY_OMC_MACRO) {
     // match with OMC macro
-
-
+    //
+    //
     return;
   }
 

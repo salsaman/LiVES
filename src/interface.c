@@ -4417,7 +4417,7 @@ _entryw *create_cds_dialog(int type) {
   discardbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(cdsw->dialog), LIVES_STOCK_DELETE, NULL,
                   (type == 2) ? LIVES_RESPONSE_ABORT : LIVES_RESPONSE_RETRY);
 
-  if ((type == 0 && !*mainw->multitrack->layout_name || type == 3 || type == 4)
+  if ((type == 0 && !*mainw->multitrack->layout_name) || type == 3 || type == 4)
       lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Wipe layout"));
       else if (type == 0) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Ignore changes"));
         else if (type == 1) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete clip set"));

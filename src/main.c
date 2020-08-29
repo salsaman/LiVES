@@ -3142,7 +3142,7 @@ capability *get_capabilities(void) {
   }
 
   lives_snprintf(dir, PATH_MAX, "%s", array[1]);
-
+  break_me("stph");
   if (initial_startup_phase != 0 && initial_startup_phase < 4) {
     /// if no configfile:
     /// check for migration:

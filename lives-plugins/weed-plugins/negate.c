@@ -89,14 +89,12 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
   int filter_flags = WEED_FILTER_HINT_MAY_THREAD;
   weed_plant_t *filter_class = weed_filter_class_init("negate", "salsaman", 1, filter_flags, palette_list, NULL,
-                               negate_process, NULL,
-                               in_chantmpls,
-                               out_chantmpls, NULL, NULL);
+                               negate_process, NULL, in_chantmpls, out_chantmpls, NULL, NULL);
 
   snprintf(desc, 128, "Inverts the Red, Green and Blue values of each pixel");
   weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, desc);
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+  weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;
 

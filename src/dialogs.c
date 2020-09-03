@@ -106,8 +106,7 @@ void add_warn_check(LiVESBox *box, int warn_mask_number) {
                                FALSE, LIVES_BOX(box), NULL);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_warn_mask_toggled),
-                            LIVES_INT_TO_POINTER(warn_mask_number));
+                            LIVES_GUI_CALLBACK(on_warn_mask_toggled), LIVES_INT_TO_POINTER(warn_mask_number));
 }
 
 
@@ -287,8 +286,6 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     if (palette && widget_opts.apply_theme)
       lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_orange);
 
-    widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
-
     defbutton = okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
                            LIVES_RESPONSE_OK);
 
@@ -304,8 +301,6 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
     lives_window_set_title(LIVES_WINDOW(dialog), _("Error !"));
 
-    widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
-
     defbutton = okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
                            LIVES_RESPONSE_OK);
 
@@ -320,8 +315,6 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
     if (palette && widget_opts.apply_theme)
       lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->light_green);
-
-    widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
 
     defbutton = okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
                            LIVES_RESPONSE_OK);
@@ -410,14 +403,20 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
       lives_widget_set_fg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->dark_red);
     break;
 
+  case LIVES_DIALOG_SKIP_RETRY_BROWSE:
   case LIVES_DIALOG_CANCEL_RETRY_BROWSE:
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_ERROR,
                                       LIVES_BUTTONS_NONE, NULL);
 
-    lives_window_set_title(LIVES_WINDOW(dialog), _("Missing File / Directory"));
+    lives_window_set_title(LIVES_WINDOW(dialog), _("Missing File or Directory"));
 
-    cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
-                   LIVES_RESPONSE_CANCEL);
+    if (diat == LIVES_DIALOG_CANCEL_RETRY_BROWSE)
+      cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
+							LIVES_RESPONSE_CANCEL);
+
+    if (diat == LIVES_DIALOG_SKIP_RETRY_BROWSE)
+      cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL,
+							LIVES_STOCK_LABEL_SKIP, LIVES_RESPONSE_CANCEL);
 
     okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH,
                _("_Retry"), LIVES_RESPONSE_RETRY);
@@ -1301,7 +1300,7 @@ void update_progress(boolean visible) {
   }
 }
 
-#define SHOW_CACHE_PREDICTIONS
+//#define SHOW_CACHE_PREDICTIONS
 
 #define ENABLE_PRECACHE
 static short scratch = SCRATCH_NONE;
@@ -3438,9 +3437,9 @@ static LiVESResponseType _do_df_notfound_dialog(const char *detail, const char *
     whatitis = (_("this directory"));
   }
   msg = lives_strdup_printf(_("\n%s\n%s\n%s\n"
-                              "Click Retry to try again, or Browse to browse to the new location.\n"
-                              "Otherwise click Cancel to skip loading %s.\n"), xdetail, dfname, extra, whatitis);
-  warning = create_message_dialog(LIVES_DIALOG_CANCEL_RETRY_BROWSE, msg, 0);
+                              "Click Retry to try again, Browse to browse to the new location.\n"
+                              "otherwise click Skip to skip loading %s.\n"), xdetail, dfname, extra, whatitis);
+  warning = create_message_dialog(LIVES_DIALOG_SKIP_RETRY_BROWSE, msg, 0);
   response = lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
   lives_widget_context_update();

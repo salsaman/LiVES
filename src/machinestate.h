@@ -100,7 +100,7 @@ void quick_free(void *p);
 // here we can define optimised mem ory functions to used by setting the symbols _lives_malloc, _lives_free, etc.
 // at the end of the header we check if the values have been set and update lives_malloc from _lives_malloc, etc.
 // the same values are passed into realtime fx plugins via Weed function overloading
-#ifdef HAVE_OPENCV
+#if defined (HAVE_OPENCV) || defined (HAVE_OPENCV4)
 #ifndef NO_OPENCV_MEMFUNCS
 #define _lives_malloc(sz)  alignPtr(sz, DEF_ALIGN);
 #define _lives_free    fastFree

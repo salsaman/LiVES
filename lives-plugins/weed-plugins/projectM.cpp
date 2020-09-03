@@ -254,7 +254,7 @@ bool resize_buffer(_sdata *sd) {
       } else align = 4;
     } else align = 2;
   }
-  if (sd->fbuffer != NULL) weed_free(sd->fbuffer);
+  if (sd->fbuffer) weed_free(sd->fbuffer);
   sd->fbuffer = (GLubyte *)weed_calloc(sizeof(GLubyte) * sd->rowstride * sd->height / align, align);
   if (!sd->fbuffer) return FALSE;
   return true;
@@ -868,13 +868,13 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   sd->timestamp = timestamp;
   /// update audio
 
-  if (in_channel != NULL) {
+  if (in_channel) {
     /// fill the audio buffer for the following frame(s)
     int achans;
     int adlen = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
     float **adata = (float **)weed_channel_get_audio_data(in_channel, &achans);
     pthread_mutex_lock(&sd->pcm_mutex);
-    if (adlen > 0 && adata != NULL && adata[0] != NULL) {
+    if (adlen > 0 && adata && adata[0]) {
       if (!sd->audio || (sd->abufsize < (size_t)adlen)) {
         sd->audio = (float *)weed_calloc(adlen, 4);
         if (!sd->audio) {
@@ -890,7 +890,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
     sd->audio_frames = adlen;
     sd->audio_offs = 0;
     pthread_mutex_unlock(&sd->pcm_mutex);
-    if (adata != NULL) weed_free(adata);
+    if (adata) weed_free(adata);
   }
 
   if (did_update) {
@@ -951,7 +951,7 @@ WEED_SETUP_END;
 
 
 WEED_DESETUP_START {
-  if (inited && statsd != NULL) {
+  if (inited && statsd) {
     statsd->die = true;
     if (!statsd->rendering) {
       pthread_mutex_lock(&cond_mutex);
@@ -959,9 +959,9 @@ WEED_DESETUP_START {
       pthread_mutex_unlock(&cond_mutex);
     }
     pthread_join(statsd->thread, NULL);
-    if (statsd->fbuffer != NULL) weed_free(statsd->fbuffer);
-    if (statsd->audio != NULL) weed_free(statsd->audio);
-    if (statsd->prnames != NULL) {
+    if (statsd->fbuffer) weed_free(statsd->fbuffer);
+    if (statsd->audio) weed_free(statsd->audio);
+    if (statsd->prnames) {
       for (int i = 0; i < statsd->nprs; i++) {
         free(statsd->prnames[i]);
       }

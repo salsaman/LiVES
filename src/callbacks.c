@@ -680,7 +680,7 @@ void on_open_sel_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
     fname = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
 
-    if (fname == NULL) {
+    if (!fname) {
       if (mainw->multitrack) {
         mt_sensitise(mainw->multitrack);
         maybe_add_mt_idlefunc();
@@ -1371,7 +1371,7 @@ void on_save_as_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 #ifdef LIBAV_TRANSCODE
 void on_transcode_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  if (mainw->current_file < 1 || mainw->files[mainw->current_file] == NULL) return;
+  if (CURRENT_CLIP_IS_VALID) return;
   transcode(cfile->start, cfile->end);
 }
 #endif
@@ -1414,7 +1414,7 @@ void on_close_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
     acurrent = used_in_current_layout(mainw->multitrack, mainw->current_file);
     if (acurrent) {
-      if (mainw->xlays == NULL) only_current = TRUE;
+      if (!mainw->xlays) only_current = TRUE;
       mainw->xlays = lives_list_append_unique(mainw->xlays, mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
     }
 
@@ -1470,7 +1470,7 @@ void on_close_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   if (lmap_errors && !only_current && mainw->cliplist) popup_lmap_errors(NULL, NULL);
 
-  if (mainw->cliplist == NULL && (*mainw->set_name)) {
+  if (!mainw->cliplist && *mainw->set_name) {
     boolean has_layout_map = FALSE;
 
     // check for layout maps
@@ -1509,7 +1509,7 @@ void on_import_proj_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   int current_file = mainw->current_file;
 
-  if (proj_file == NULL) return;
+  if (!proj_file) return;
   com = lives_strdup_printf("%s get_proj_set \"%s\"", prefs->backend_sync, proj_file);
   lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
   lives_free(com);
@@ -1635,7 +1635,7 @@ void on_export_proj_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   proj_file = choose_file(NULL, def_file, filt, LIVES_FILE_CHOOSER_ACTION_SAVE, NULL, NULL);
   lives_free(def_file);
 
-  if (proj_file == NULL) return;
+  if (!proj_file) return;
 
   lives_rm((tmp = lives_filename_from_utf8(proj_file, -1, NULL, NULL, NULL)));
   lives_free(tmp);
@@ -1698,7 +1698,7 @@ void on_export_theme_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
   lives_free(fname);
 
-  if (file_name == NULL) {
+  if (!file_name) {
     return;
   }
 
@@ -1846,7 +1846,7 @@ void on_import_theme_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
   theme_file = choose_file(NULL, NULL, filt, LIVES_FILE_CHOOSER_ACTION_OPEN, NULL, NULL);
 
-  if (theme_file == NULL) {
+  if (!theme_file) {
     sensitize();
     return;
   }
@@ -4015,7 +4015,8 @@ boolean check_for_layout_errors(const char *operation, int fileno, int start, in
     if ((xlays = layout_frame_is_affected(fileno, start, end, NULL)) != NULL) {
       if (sfile->tcache_dubious_from > 0) free_thumb_cache(fileno, sfile->tcache_dubious_from);
       sfile->tcache_dubious_from = start;
-      ret_mask |= WARN_MASK_LAYOUT_DELETE_FRAMES | (mask & WARN_MASK_LAYOUT_SHIFT_FRAMES) | (mask & WARN_MASK_LAYOUT_ALTER_FRAMES);
+      ret_mask |= WARN_MASK_LAYOUT_DELETE_FRAMES | (mask & WARN_MASK_LAYOUT_SHIFT_FRAMES)
+	| (mask & WARN_MASK_LAYOUT_ALTER_FRAMES);
       if ((prefs->warning_mask & WARN_MASK_LAYOUT_DELETE_FRAMES) == 0) {
         mainw->xlays = xlays;
         if (!do_warning_dialogf
@@ -4047,8 +4048,7 @@ boolean check_for_layout_errors(const char *operation, int fileno, int start, in
         }
         if (!cancelled) {
           buffer_lmap_error(LMAP_ERROR_DELETE_AUDIO, sfile->name, (livespointer)sfile->layout_map, fileno, 0,
-                            (start - 1.) / sfile->fps, (start - 1.) /
-                            sfile->fps < sfile->stored_layout_audio);
+                            (start - 1.) / sfile->fps, (start - 1.) / sfile->fps < sfile->stored_layout_audio);
         }
       }
     }
@@ -4064,7 +4064,8 @@ boolean check_for_layout_errors(const char *operation, int fileno, int start, in
         if ((prefs->warning_mask & WARN_MASK_LAYOUT_SHIFT_FRAMES) == 0) {
           mainw->xlays = xlays;
           if (!do_warning_dialogf
-              (_("%s will cause frames to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"), operation)) {
+              (_("%s will cause frames to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"),
+	       operation)) {
             cancelled = TRUE;
           }
         }
@@ -4086,7 +4087,8 @@ boolean check_for_layout_errors(const char *operation, int fileno, int start, in
           if ((prefs->warning_mask & WARN_MASK_LAYOUT_SHIFT_AUDIO)) {
             mainw->xlays = xlays;
             if (!do_warning_dialogf
-                (_("%s will cause audio to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"), operation)) {
+                (_("%s will cause audio to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"),
+		 operation)) {
               cancelled = TRUE;
             }
           }
@@ -4279,7 +4281,7 @@ void on_delete_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
 
   // menuitem is NULL if we came here from undo_insert
-  if (menuitem == NULL && !mainw->osc_auto) return;
+  if (!menuitem && !mainw->osc_auto) return;
 
   if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames)) bad_header = TRUE;
 
@@ -4928,7 +4930,7 @@ boolean clip_can_reverse(int clipno) {
     if (sfile->next_event) return FALSE;
     if (sfile->clip_type == CLIP_TYPE_FILE) {
       lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->ext_src)->cdata;
-      if (cdata == NULL || !(cdata->seek_flag & LIVES_SEEK_FAST)) return FALSE;
+      if (!cdata || !(cdata->seek_flag & LIVES_SEEK_FAST)) return FALSE;
     }
   }
   return TRUE;
@@ -5016,8 +5018,7 @@ boolean dirchange_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj
 
 void on_volch_pressed(LiVESButton * button, livespointer user_data) {
   lives_direction_t dirn = LIVES_POINTER_TO_INT(user_data);
-  if (!CURRENT_CLIP_IS_VALID || mainw->preview || (mainw->is_processing && cfile->is_loaded) ||
-      mainw->cliplist == NULL) return;
+  if (!CURRENT_CLIP_IS_VALID || mainw->preview || (mainw->is_processing && cfile->is_loaded) ||!mainw->cliplist) return;
   if (dirn == LIVES_DIRECTION_UP) cfile->vol += .01;
   else cfile->vol -= .01;
   if (cfile->vol > 2.) cfile->vol = 2.;
@@ -5088,7 +5089,7 @@ boolean prevclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
   if (mainw->go_away) return TRUE;
 
   if (!CURRENT_CLIP_IS_VALID || mainw->preview || (mainw->is_processing && cfile->is_loaded) ||
-      mainw->cliplist == NULL) return TRUE;
+      !mainw->cliplist) return TRUE;
 
   if (user_data) type = LIVES_POINTER_TO_INT(user_data);
 
@@ -5108,9 +5109,9 @@ boolean prevclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 
   do {
     if (num_tried++ == num_clips) return TRUE; // we might have only audio clips, and then we will block here
-    if (list_index == NULL || ((list_index = list_index->prev) == NULL)) list_index = lives_list_last(mainw->cliplist);
+    if (!list_index || ((list_index = list_index->prev) == NULL)) list_index = lives_list_last(mainw->cliplist);
     i = LIVES_POINTER_TO_INT(list_index->data);
-  } while ((mainw->files[i] == NULL || mainw->files[i]->opening || mainw->files[i]->restoring || i == mainw->scrap_file ||
+  } while ((!mainw->files[i] || mainw->files[i]->opening || mainw->files[i]->restoring || i == mainw->scrap_file ||
             i == mainw->ascrap_file || (!mainw->files[i]->frames && LIVES_IS_PLAYING)) &&
            i != ((type == 2 || (mainw->playing_file > 0 && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && type != 1)) ?
                  mainw->blend_file : mainw->current_file));
@@ -5134,7 +5135,7 @@ boolean nextclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
   // next clip
   // if the effect is a transition, this will change the background clip
   if (!CURRENT_CLIP_IS_VALID || mainw->preview || (mainw->is_processing && cfile->is_loaded) ||
-      mainw->cliplist == NULL) return TRUE;
+      !mainw->cliplist) return TRUE;
 
   if (user_data) type = LIVES_POINTER_TO_INT(user_data);
 
@@ -5154,9 +5155,9 @@ boolean nextclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 
   do {
     if (num_tried++ == num_clips) return TRUE; // we might have only audio clips, and then we will block here
-    if (list_index == NULL || ((list_index = list_index->next) == NULL)) list_index = mainw->cliplist;
+    if (!list_index || ((list_index = list_index->next) == NULL)) list_index = mainw->cliplist;
     i = LIVES_POINTER_TO_INT(list_index->data);
-  } while ((mainw->files[i] == NULL || mainw->files[i]->opening || mainw->files[i]->restoring || i == mainw->scrap_file ||
+  } while ((!mainw->files[i] || mainw->files[i]->opening || mainw->files[i]->restoring || i == mainw->scrap_file ||
             i == mainw->ascrap_file || (!mainw->files[i]->frames && LIVES_IS_PLAYING)) &&
            i != ((type == 2 || (mainw->playing_file > 0 && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && type != 1)) ?
                  mainw->blend_file : mainw->current_file));
@@ -5663,7 +5664,7 @@ boolean reload_set(const char *set_name) {
       lives_system(com, FALSE);
       lives_free(com);
     } else {
-      if (lives_fgets(mainw->msg, MAINW_MSG_SIZE, orderfile) == NULL) clear_mainw_msg();
+      if (!lives_fgets(mainw->msg, MAINW_MSG_SIZE, orderfile)) clear_mainw_msg();
       else lives_memset(mainw->msg + lives_strlen(mainw->msg) - 1, 0, 1);
     }
 
@@ -6827,7 +6828,7 @@ void switch_clip(int type, int newclip, boolean force) {
   // type = 2 bg only
 
   if (mainw->current_file < 1 || mainw->multitrack || mainw->preview || mainw->internal_messaging ||
-      (mainw->is_processing && cfile && cfile->is_loaded) || mainw->cliplist == NULL) return;
+      (mainw->is_processing && cfile && cfile->is_loaded) || !mainw->cliplist) return;
 
   mainw->blend_palette = WEED_PALETTE_END;
 
@@ -6879,7 +6880,7 @@ void switch_clip_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // switch clips from the clips menu
 
   register int i;
-  if (mainw->current_file < 1 || mainw->preview || (mainw->is_processing && cfile->is_loaded) || mainw->cliplist == NULL) return;
+  if (mainw->current_file < 1 || mainw->preview || (mainw->is_processing && cfile->is_loaded) || !mainw->cliplist) return;
 
   for (i = 1; i < MAX_FILES; i++) {
     if (mainw->files[i]) {
@@ -6985,7 +6986,7 @@ void help_translate_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 
 void donate_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  const char *link = lives_strdup_printf("%s%s", LIVES_DONATE_URL, user_data == NULL ? "" : (char *)user_data);
+  const char *link = lives_strdup_printf("%s%s", LIVES_DONATE_URL, !user_data ? "" : (char *)user_data);
   activate_url_inner(link);
 }
 
@@ -7137,7 +7138,7 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
         LiVESPixbuf *pixbuf = lives_pixbuf_new_from_file((tmp = lives_filename_from_utf8(thumb, -1, NULL, NULL, NULL)), &error);
         lives_free(thumb);
         lives_free(tmp);
-        if (error == NULL) {
+        if (!error) {
           lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->fs_playimg), "pixbuf", pixbuf);
           owidth = width;
           oheight = height;
@@ -7427,7 +7428,7 @@ void drag_from_outside(LiVESWidget * widget, GdkDragContext * dcon, int x, int y
   char *nfilelist, **array;
   int nfiles, i;
 
-  if (filelist == NULL) {
+  if (!filelist) {
     gtk_drag_finish(dcon, FALSE, FALSE, time);
     return;
   }
@@ -8583,7 +8584,7 @@ void on_load_subs_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   } else subfile = choose_file(NULL, NULL, filt, LIVES_FILE_CHOOSER_ACTION_OPEN, ttl, NULL);
   lives_free(ttl);
 
-  if (subfile == NULL) return; // cancelled
+  if (!subfile) return; // cancelled
 
   lives_snprintf(filename, 512, "%s", subfile);
   lives_free(subfile);
@@ -8658,7 +8659,7 @@ void on_save_subs_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   subfile = choose_file(xfname, xfname2, NULL, LIVES_FILE_CHOOSER_ACTION_SAVE, NULL, NULL);
 
-  if (subfile == NULL) return; // cancelled
+  if (!subfile) return; // cancelled
 
   lives_free(subfile);
 }
@@ -8667,7 +8668,7 @@ void on_save_subs_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 void on_erase_subs_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   char *sfname;
 
-  if (!CURRENT_CLIP_IS_VALID || cfile->subt == NULL) return;
+  if (!CURRENT_CLIP_IS_VALID || !cfile->subt) return;
 
   if (menuitem)
     if (!do_erase_subs_warning()) return;
@@ -8772,7 +8773,7 @@ void on_open_new_audio_clicked(LiVESFileChooser * chooser, livespointer user_dat
   oundo_start = cfile->undo_start;
   oundo_end = cfile->undo_end;
 
-  if (user_data == NULL) {
+  if (!user_data) {
     char *filename = lives_file_chooser_get_filename(chooser);
     lives_snprintf(file_name, PATH_MAX, "%s", (tmp = lives_filename_to_utf8(filename, -1, NULL, NULL, NULL)));
     lives_free(filename);
@@ -9329,7 +9330,7 @@ void popup_lmap_errors(LiVESMenuItem * menuitem, livespointer user_data) {
 
   unbuffer_lmap_errors(TRUE);
 
-  if (menuitem == NULL && user_data) {
+  if (!menuitem && user_data) {
     if (prefs->warning_mask & WARN_MASK_LAYOUT_POPUP) return;
     chk_mask = (uint32_t)LIVES_POINTER_TO_INT(user_data);
     if (((chk_mask ^ prefs->warning_mask) & chk_mask) == 0) return;
@@ -9429,7 +9430,7 @@ void autolives_toggle(LiVESMenuItem * menuitem, livespointer user_data) {
   }
 
   alwindow = autolives_pre_dialog();
-  if (alwindow == NULL) {
+  if (!alwindow) {
     goto autolives_fail;
   }
   if (lives_dialog_run(LIVES_DIALOG(alwindow->dialog)) == LIVES_RESPONSE_CANCEL) {
@@ -9509,7 +9510,7 @@ void on_rename_clip_name(LiVESButton * button, livespointer user_data) {
   char title[256];
   boolean bad_header = FALSE;
 
-  if (user_data == NULL) {
+  if (!user_data) {
     lives_snprintf(title, 256, "%s", lives_entry_get_text(LIVES_ENTRY(renamew->entry)));
     lives_widget_destroy(renamew->dialog);
     lives_free(renamew);
@@ -9517,7 +9518,7 @@ void on_rename_clip_name(LiVESButton * button, livespointer user_data) {
 
   if (!(strlen(title))) return;
 
-  if (user_data == NULL) {
+  if (!user_data) {
     set_main_title(title, 0);
   }
 
@@ -9896,7 +9897,7 @@ boolean all_expose_overlay(LiVESWidget * widget, lives_painter_t *creb, livespoi
     if (LIVES_IS_PLAYING) {
       if (which == 0) lives_ruler_set_value(LIVES_RULER(mainw->hruler), ptrtime);
       if (cfile->achans > 0 && cfile->is_loaded && prefs->audio_src != AUDIO_SRC_EXT) {
-        if (is_realtime_aplayer(prefs->audio_player) && (mainw->event_list == NULL || !mainw->preview)) {
+        if (is_realtime_aplayer(prefs->audio_player) && (!mainw->event_list || !mainw->preview)) {
 #ifdef ENABLE_JACK
           if (mainw->jackd && prefs->audio_player == AUD_PLAYER_JACK) {
             offset = allocwidth * ((double)mainw->jackd->seek_pos / cfile->arate / cfile->achans /
@@ -10109,7 +10110,7 @@ void on_effects_paused(LiVESButton * button, livespointer user_data) {
     }
   }
 
-  if (mainw->iochan == NULL) {
+  if (!mainw->iochan) {
     // pause during effects processing or opening
     xticks = lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs);
     if (!mainw->effects_paused) {
@@ -10478,7 +10479,7 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
 
   new_fps = lives_fix(lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton)), 3);
 
-  if (user_data == NULL && ((!cfile->play_paused && cfile->pb_fps == new_fps) || (cfile->play_paused && new_fps == 0.))) {
+  if (!user_data && ((!cfile->play_paused && cfile->pb_fps == new_fps) || (cfile->play_paused && new_fps == 0.))) {
     mainw->period = TICKS_PER_SECOND_DBL / cfile->pb_fps;
     return;
   }
@@ -10868,7 +10869,7 @@ boolean frame_context(LiVESWidget * widget, LiVESXEventButton * event, livespoin
   if (!LIVES_IS_INTERACTIVE) return FALSE;
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return FALSE;
 
-  if (mainw->multitrack && mainw->multitrack->event_list == NULL) return FALSE;
+  if (mainw->multitrack && !mainw->multitrack->event_list) return FALSE;
 
   // only accept right mouse clicks
 
@@ -11283,8 +11284,7 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
   if (!LIVES_IS_INTERACTIVE) return TRUE;
 
   if (!CURRENT_CLIP_IS_VALID || mainw->preview || (LIVES_IS_PLAYING && mainw->event_list && !mainw->record)
-      || (mainw->is_processing && cfile->is_loaded) ||
-      mainw->cliplist == NULL) return TRUE;
+      || (mainw->is_processing && cfile->is_loaded) || !mainw->cliplist) return TRUE;
 
   if (clip >= FN_KEYS - 1) {
     // last fn key will clear all
@@ -11589,7 +11589,7 @@ void on_capture2_activate(void) {
   }
 
   for (i = 1; i < MAX_FILES; i++) {
-    if (mainw->files[i] == NULL) break;
+    if (!mainw->files[i]) break;
     lives_write(capture_fd, mainw->files[i]->handle, lives_strlen(mainw->files[i]->handle), TRUE);
     lives_write(capture_fd, "|", 1, TRUE);
     lives_snprintf(buf, 32, "%d", cfile->frames);
@@ -11615,7 +11615,7 @@ void on_encoder_ofmt_changed(LiVESCombo * combo, livespointer user_data) {
   int counter, i;
   const char *new_fmt;
 
-  if (rdet == NULL) {
+  if (!rdet) {
     new_fmt = lives_combo_get_active_text(LIVES_COMBO(prefsw->ofmt_combo));
   } else {
     new_fmt = lives_combo_get_active_text(LIVES_COMBO(rdet->ofmt_combo));
@@ -11694,7 +11694,7 @@ void on_export_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
                            filt, LIVES_FILE_CHOOSER_ACTION_SAVE, _("Export Audio as..."), NULL);
   }
 
-  if (filename == NULL) return;
+  if (!filename) return;
   file_name = ensure_extension(filename, LIVES_FILE_EXT_WAV);
   lives_free(filename);
 
@@ -12032,8 +12032,8 @@ void on_fade_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     type = cfile->undo1_int;
   }
 
-  if (menuitem == NULL || !aud_d->is_sel) {
-    if (menuitem == NULL) {
+  if (!menuitem || !aud_d->is_sel) {
+    if (!menuitem) {
       endt = cfile->undo1_dbl;
       startt = cfile->undo2_dbl;
     } else {
@@ -12138,7 +12138,7 @@ boolean on_del_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
   if (!CURRENT_CLIP_IS_VALID) return FALSE;
 
-  if (menuitem == NULL) {
+  if (!menuitem) {
     // undo/redo
     start = cfile->undo1_dbl;
     end = cfile->undo2_dbl;
@@ -12248,7 +12248,7 @@ boolean on_del_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
 void on_rb_audrec_time_toggled(LiVESToggleButton * togglebutton, livespointer user_data) {
   _resaudw *resaudw = (_resaudw *)user_data;
-  if (resaudw == NULL) return;
+  if (!resaudw) return;
   if (lives_toggle_button_get_active(togglebutton)) {
     lives_widget_set_sensitive(resaudw->hour_spinbutton, TRUE);
     lives_widget_set_sensitive(resaudw->minute_spinbutton, TRUE);
@@ -12578,7 +12578,7 @@ boolean on_ins_silence_activate(LiVESMenuItem * menuitem, livespointer user_data
     has_new_audio = TRUE;
   }
 
-  if (menuitem == NULL) {
+  if (!menuitem) {
     // redo
     if (cfile->achans != cfile->undo_achans) {
       if (cfile->audio_waveform) {

@@ -1200,7 +1200,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   vpp->weed_setup = (weed_plant_t *(*)(weed_bootstrap_f))dlsym(handle, "weed_setup");
 
   if (vpp->weed_setup) {
-    weed_plant_t *plugin_info = (*vpp->weed_setup)(weed_bootstrap);
+    (*vpp->weed_setup)(weed_bootstrap);
   }
   
   vpp->get_description = (const char *(*)())dlsym(handle, "get_description");

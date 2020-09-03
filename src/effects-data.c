@@ -3373,7 +3373,7 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
 
   //lives_combo_set_active_string(LIVES_COMBO(conxwp->pcombo[ours]), "");
 
-  if (pidx == 0) if (conxwp->apbutton) lives_widget_set_sensitive(conxwp->apbutton, TRUE);
+  if (!pidx) if (conxwp->apbutton) lives_widget_set_sensitive(conxwp->apbutton, TRUE);
 
   lives_widget_set_sensitive(conxwp->pcombo[ours], TRUE);
 
@@ -4041,8 +4041,7 @@ static void ptable_row_add_variable_widgets(lives_conx_w * conxwp, int idx, int 
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(conxwp->acheck[idx]), "available", LIVES_INT_TO_POINTER(hasrange));
 
     conxwp->acheck_func[idx] = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(conxwp->acheck[idx]), LIVES_WIDGET_TOGGLED_SIGNAL,
-                               LIVES_GUI_CALLBACK(on_acheck_toggled),
-                               (livespointer)conxwp);
+                               LIVES_GUI_CALLBACK(on_acheck_toggled), (livespointer)conxwp);
 
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(conxwp->acheck[idx]), "pidx", LIVES_INT_TO_POINTER(pidx));
   }
@@ -4141,9 +4140,7 @@ static void ptable_row_add_standard_widgets(lives_conx_w * conxwp, int idx) {
 
 
 static void ctable_row_add_standard_widgets(lives_conx_w * conxwp, int idx) {
-  LiVESWidget *hbox;
-
-  hbox = lives_hbox_new(FALSE, 0);
+  LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
 
   lives_table_attach(LIVES_TABLE(conxwp->tablec), hbox, 1, 2, conxwp->trowsc - 1, conxwp->trowsc,
                      (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND), (LiVESAttachOptions)(0), 0, 0);
@@ -4172,8 +4169,7 @@ static void ctable_row_add_standard_widgets(lives_conx_w * conxwp, int idx) {
                      (LiVESAttachOptions)(0), 0, 0);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(conxwp->del_button[idx]), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(cdel_clicked),
-                            (livespointer)conxwp);
+                            LIVES_GUI_CALLBACK(cdel_clicked), (livespointer)conxwp);
 
   lives_widget_set_sensitive(conxwp->del_button[idx], FALSE);
 }

@@ -1224,7 +1224,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
   char *line = NULL;
   char *whashname;
 
-  char *keymap_file = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE, NULL); // keymap
+  char *keymap_file = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE, NULL); // only for back. compat
   char *keymap_file2 = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE2, NULL); // perkey defs
   char *keymap_file3 = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE3, NULL); // data connections
 
@@ -1244,10 +1244,10 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
   int key, mode;
   int update = 0;
 
-  register int i;
+  int i;
 
   if (lives_file_test(keymap_file2, LIVES_FILE_TEST_EXISTS)) {
-    // per key defaults ?
+    // per key defaults / newer style keymap
     lives_free(keymap_file);
     keymap_file = keymap_file2;
   } else {
@@ -1352,7 +1352,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
       line = (char *)lives_list_nth_data(list, i);
 
       if (get_token_count(line, '|') < 2) {
-        d_print(_("Invalid line %d in %s\n"), i, keymap_file);
+        d_print(_("Invalid line %d in %s\n"), i, keymap_file2 ? keymap_file2 : keymap_file);
         continue;
       }
 
@@ -1463,9 +1463,11 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
 
     if ((mode = weed_add_effectkey(key, whashname, TRUE)) == -1) {
       // could not locate effect
-      d_print((tmp = lives_strdup_printf(_("Unknown effect %s in\n%s\n"), whashname, keymap_file)));
-      LIVES_WARN(tmp);
-      lives_free(tmp);
+      if (!prefs->startup_phase) {
+	d_print((tmp = lives_strdup_printf(_("Unknown effect %s in\n%s\n"), whashname, keymap_file)));
+	LIVES_WARN(tmp);
+	lives_free(tmp);
+      }
       notfound = TRUE;
       lives_free(hashname);
       badkeymap[key - 1][def_modes[key - 1]]++;
@@ -1550,7 +1552,6 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
       check_clear_all_button();
       if (notfound) do_warning_dialog(_("\n\nSome effects could not be located.\n\n"));
     } else load_rte_defs(); // file errors shown inside
-
   }
 
 cleanup1:
@@ -1617,8 +1618,7 @@ void on_rte_info_clicked(LiVESButton * button, livespointer user_data) {
   package_name = weed_filter_get_package_name(filter);
   filter_author = weed_get_string_value(filter, WEED_LEAF_AUTHOR, &weed_error);
   if (weed_plant_has_leaf(filter, WEED_LEAF_EXTRA_AUTHORS)) filter_extra_authors = weed_get_string_value(filter,
-        WEED_LEAF_EXTRA_AUTHORS,
-        &weed_error);
+        WEED_LEAF_EXTRA_AUTHORS, &weed_error);
   if (weed_plant_has_leaf(filter, WEED_LEAF_COPYRIGHT)) {
     filter_copyright = weed_get_string_value(filter, WEED_LEAF_COPYRIGHT, &weed_error);
     has_copyright = TRUE;

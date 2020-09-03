@@ -762,7 +762,7 @@ static boolean pre_init(void) {
 
   if (!prefs->vj_mode) {
     /// start a bg thread to get diskspace used
-    if (prefs->disk_quota && !needs_workdir)
+    if (prefs->disk_quota && !needs_workdir && initial_startup_phase == 0)
       mainw->helper_procthreads[PT_LAZY_DSUSED] = disk_monitor_start(prefs->workdir);
 
     if (mainw->next_ds_warn_level > 0) {
@@ -1693,7 +1693,8 @@ static void lives_init(_ign_opts *ign_opts) {
   capable->has_wm_caps = FALSE;
   get_wm_caps();
 
-  prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);
+  //prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);
+  prefs->show_desktop_panel = TRUE;
 
   prefs->show_msgs_on_startup = get_boolean_prefd(PREF_MSG_START, TRUE);
 
@@ -1998,6 +1999,10 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->fxdefsfile = NULL;
     prefs->fxsizesfile = NULL;
 
+    if (prefs->startup_phase != 0) {
+      disk_monitor_start(prefs->workdir);
+    }
+
     // anything that d_prints messages should go here:
     do_start_messages();
 
@@ -2223,12 +2228,23 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->startup_phase = 5;
     do_startup_interface_query();
 
+    set_int_pref(PREF_STARTUP_PHASE, 6);
+    prefs->startup_phase = 6;
+
+    capable->ds_used = disk_monitor_wait_result(prefs->workdir, LIVES_DEFAULT_TIMEOUT);
+    if (capable->ds_used >= 0) run_diskspace_dialog();
+    else {
+      disk_monitor_forget();
+      prefs->show_disk_quota = TRUE;
+      mainw->helper_procthreads[PT_LAZY_DSUSED] = disk_monitor_start(prefs->workdir);
+    }
+
     set_int_pref(PREF_STARTUP_PHASE, 100); // tell backend to delete this
     prefs->startup_phase = 100;
 
-    if (prefs->show_splash) {
-      splash_init();
-    }
+    /* if (prefs->show_splash) { */
+    /*   splash_init(); */
+    /* } */
   }
 
   if (strcmp(future_prefs->theme, prefs->theme)) {
@@ -2845,7 +2861,7 @@ boolean set_palette_colours(boolean force_reload) {
   // still experimenting...some values may need tweaking
   // suggested uses for each colour in the process of being defined
   // TODO - run a bg thread until we create GUI
-  if (!prefs->vj_mode && initial_startup_phase == -1) {
+  if (!prefs->vj_mode) {
     if (!(palette->style & STYLE_LIGHT)) {
       lmin = .05; lmax = .4;
     } else {
@@ -3956,7 +3972,7 @@ static boolean lives_startup2(livespointer data) {
   else
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_MT);
 
-  if (!prefs->vj_mode) {
+  if (!prefs->vj_mode && !prefs->startup_phase) {
     mainw->helper_procthreads[PT_LAZY_RFX] =
       lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)add_rfx_effects, -1, "i", RFX_STATUS_ANY);
   }

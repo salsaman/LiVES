@@ -25,6 +25,7 @@
 #include "../../../../libweed/weed-utils.h"
 #endif
 
+#define USE_LIBWEED
 #include "videoplugin.h"
 
 #include "../../../../lives-plugins/weed-plugins/weed-plugin-utils.c"
@@ -289,27 +290,29 @@ fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0\\n\
 ";
 }
 
-#if 0
 WEED_SETUP_START(200, 200) {
-  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_END};
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_OPTIONAL, palette_list), NULL};
-  weed_plant_t *in_params[] = {weed_string_list_init("mode", "Trigger _Mode", 0, modes), weed_string_list_init("color", "_Color", 0, patterns), NULL};
-  weed_plant_t *filter_class = weed_filter_class_init("openGL player", "salsaman", 1, 0, init_screen,
-                               play_frame, exit_screen, in_chantmpls, out_chantmpls, in_params, NULL);
+  // const char *modes[] = {"Normal", "Triangle", "Rotating", "Wobbler", "Landscape", "Insider", "Cube", "Turning",
+  // 		   "Tunnel", "Particles", "Dissolve", NULL};
 
-  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  // int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_END};
+  // weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
+  // weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_OPTIONAL), NULL};
+  // weed_plant_t *in_params[] = {weed_string_list_init("mode", "Trigger _Mode", 0, modes), NULL};
+  // //weed_string_list_init("color", "_Color", 0, patterns), NULL};
+  // weed_plant_t *filter_class = weed_filter_class_init("openGL player", "salsaman", 1, 0, palette_list, init_screen,
+  //                              play_frame, exit_screen, in_chantmpls, out_chantmpls, in_params, NULL);
 
-  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+  // weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  // weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;
-#endif
 
 
 const weed_plant_t **get_play_params(weed_bootstrap_f weed_boot) {
-  if (plugin_info == NULL) {
+  if (!plugin_info) {
     plugin_info = weed_plugin_info_init(weed_boot, 200, 200, 200, 200);
   }
+#if 0
   //   // play params
   params[0] = weed_integer_init("mode", "Playback _mode", -1, -1, 10);
   weed_set_int_value(weed_paramtmpl_get_gui(params[0]), "hidden", WEED_TRUE);
@@ -332,7 +335,8 @@ const weed_plant_t **get_play_params(weed_bootstrap_f weed_boot) {
   params[6] = NULL;
 
   return (const weed_plant_t **)params;
-  //return NULL;
+#endif
+  return NULL;
 }
 
 
@@ -729,7 +733,7 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
   /* Open a connection to the X server */
   dpy = XOpenDisplay(NULL);
 
-  if (dpy == NULL) {
+  if (!dpy) {
     fprintf(stderr, "Unable to open a connection to the X server\n");
     return FALSE;
   }
@@ -846,8 +850,7 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
     XIfEvent(dpy, &event, WaitForNotify, (XPointer) xWin);
 
     /* Create a GLX context for OpenGL rendering */
-    context = glXCreateNewContext(dpy, fbConfigs[0], GLX_RGBA_TYPE,
-                                  NULL, True);
+    context = glXCreateNewContext(dpy, fbConfigs[0], GLX_RGBA_TYPE, NULL, True);
 
     /* Create a GLX window to associate the frame buffer configuration
     ** with the created X window */
@@ -2165,8 +2168,8 @@ void decode_pparams(weed_plant_t **pparams) {
 
 boolean play_frame(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
   // call the function which was set in set_palette
-  weed_plant_t **pparams = weed_get_plantptr_array(frame, WEED_LEAF_IN_PARAMETERS, NULL);
-  if (pparams != NULL) decode_pparams(pparams);
+  //weed_plant_t **pparams = weed_get_plantptr_array(frame, WEED_LEAF_IN_PARAMETERS, NULL);
+  //if (pparams) decode_pparams(pparams);
   return play_fn(frame, tc, ret);
 }
 

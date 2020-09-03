@@ -20,7 +20,7 @@ static int package_version = 1; // version of this package
 #include <weed/weed-plugin-utils.h> // optional
 #else
 #include "../../libweed/weed-plugin.h"
-#include "../../../libweed/weed-utils.h" // optional
+#include "../../libweed/weed-utils.h" // optional
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
 
@@ -55,8 +55,8 @@ static int rndlog2(int i) {
 
 static int twopow(int i) {
   // return 2**(i+1)
-  register int j, x = 2;
-  for (j = 0; j < i; j++) x *= 2;
+  int x = 2;
+  for (int j = 0; j < i; j++) x *= 2;
   return x;
 }
 
@@ -165,8 +165,7 @@ WEED_SETUP_END;
 
 
 WEED_DESETUP_START {
-  register int i;
-  for (i = 0; i < MAXPLANS; i++) {
+  for (int i = 0; i < MAXPLANS; i++) {
     fftwf_destroy_plan(plans[i]);
     fftwf_free(ins[i]);
     fftwf_free(outs[i]);

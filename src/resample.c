@@ -332,7 +332,7 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
       }
 
       resize_all(mainw->current_file, width, height, cfile->img_type, NULL, NULL);
-      realize_all_frames(mainw->current_file, _("Pullunig frames"), FALSE);
+      realize_all_frames(mainw->current_file, _("Pulling frames"), FALSE);
 
       cfile->hsize = width;
       cfile->vsize = height;

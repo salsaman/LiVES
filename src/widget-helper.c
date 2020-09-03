@@ -10737,7 +10737,7 @@ boolean widget_helper_init(void) {
   register int i;
 #endif
 
-#if GTK_CHECK_VERSION(3, 10, 0) || defined GUI_QT
+#if !defined(GUI_GTK) || GTK_CHECK_VERSION(3, 10, 0)
   lives_snprintf(LIVES_STOCK_LABEL_CANCEL, 32, "%s", (_("_Cancel")));
   lives_snprintf(LIVES_STOCK_LABEL_OK, 32, "%s", (_("_OK")));
   lives_snprintf(LIVES_STOCK_LABEL_YES, 32, "%s", (_("_Yes")));
@@ -10748,7 +10748,6 @@ boolean widget_helper_init(void) {
   lives_snprintf(LIVES_STOCK_LABEL_QUIT, 32, "%s", (_("_Quit")));
   lives_snprintf(LIVES_STOCK_LABEL_APPLY, 32, "%s", (_("_Apply")));
   lives_snprintf(LIVES_STOCK_LABEL_CLOSE, 32, "%s", (_("_Close")));
-  lives_snprintf(LIVES_STOCK_LABEL_CLOSE_WINDOW, 32, "%s", (_("_Close Window")));
   lives_snprintf(LIVES_STOCK_LABEL_REVERT, 32, "%s", (_("_Revert")));
   lives_snprintf(LIVES_STOCK_LABEL_REFRESH, 32, "%s", (_("_Refresh")));
   lives_snprintf(LIVES_STOCK_LABEL_DELETE, 32, "%s", (_("_Delete")));
@@ -10760,12 +10759,17 @@ boolean widget_helper_init(void) {
   lives_snprintf(LIVES_STOCK_LABEL_MEDIA_STOP, 32, "%s", (_("_Stop")));
   lives_snprintf(LIVES_STOCK_LABEL_MEDIA_RECORD, 32, "%s", (_("_Record")));
   lives_snprintf(LIVES_STOCK_LABEL_SELECT_ALL, 32, "%s", (_("_Select All")));
+
+  // non-standard
+  lives_snprintf(LIVES_STOCK_LABEL_CLOSE_WINDOW, 32, "%s", (_("_Close Window")));
+  lives_snprintf(LIVES_STOCK_LABEL_SKIP, 32, "%s", (_("_Skip")));
+  lives_snprintf(LIVES_STOCK_LABEL_SELECT, 32, "%s", (_("_Select")));
 #endif
 
   def_widget_opts = _def_widget_opts;
   lives_memcpy(&widget_opts, &def_widget_opts, sizeof(widget_opts_t));
 
-  // TODO: - for rtl set swap_labels
+  // TODO: - for rtl set swap_labels ?
 
 #ifdef GUI_GTK
   gtk_accel_map_add_entry("<LiVES>/save", LIVES_KEY_s, LIVES_CONTROL_MASK);

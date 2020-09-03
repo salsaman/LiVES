@@ -139,6 +139,7 @@ typedef struct {
   boolean(*play_frame)(weed_layer_t *frame, ticks_t tc, weed_layer_t *ret);
 
   // optional
+  weed_plant_t *(*weed_setup)(weed_bootstrap_f);
   boolean(*init_screen)(int width, int height, boolean fullscreen,
                         uint64_t window_id, int argc, char **argv);
   void (*exit_screen)(uint16_t mouse_x, uint16_t mouse_y);

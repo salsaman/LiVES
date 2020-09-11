@@ -407,7 +407,7 @@ void sample_move_d8_d16(short *dst, uint8_t *src,
       }
     }
 
-    /* advance the the position */
+    /* advance the position */
     src_offset_i = (int)(src_offset_f += scale) * nSrcChannels;
   }
 }
@@ -495,7 +495,7 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
         }
       }
     }
-    /* advance the the position */
+    /* advance the position */
     src_offset_i = (int)((src_offset_f += scale) + .4999) * nSrcChannels;
   }
   if (src_offset_f > tbytes) rem = src_offset_f - (float)tbytes;
@@ -553,7 +553,7 @@ void sample_move_d16_d8(uint8_t *dst, short *src,
       }
     }
 
-    /* advance the the position */
+    /* advance the position */
     src_offset_i = (int)(src_offset_f += scale) * nSrcChannels;
   }
 }

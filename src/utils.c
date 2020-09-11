@@ -1855,7 +1855,7 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   // now, we calculate the new frame from the current fps and then ensure it is in the range
   // first_frame -> last_frame
 
-  // Complications arise because we have ping-pong loop mode where the the play direction
+  // Complications arise because we have ping-pong loop mode where the play direction
   // alternates - here we need to determine how many times we have reached the start or end
   // play point. This is similar to the winding number in topological calculations.
 

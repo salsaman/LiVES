@@ -1117,7 +1117,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   if (!handle) {
     char *msg = lives_strdup_printf(_("\n\nFailed to open playback plugin %s\nError was %s\n"
                                       "Playback plugin will be disabled,\n"
-                                      "it can be re-anabled in Prefrences / Playback.\n"), plugname, dlerror());
+                                      "it can be re-enabled in Preferences / Playback.\n"), plugname, dlerror());
     if (prefs->startup_phase != 1 && prefs->startup_phase != -1) {
       if (!prefsw) widget_opts.non_modal = TRUE;
       do_error_dialog(msg);

@@ -3550,7 +3550,7 @@ static char *set_proc_label(xprocess * proc, const char *label, boolean copy_old
    these smaller chunks. If rendering audio, the final call should be with mainw->flush_audio_tc set to
    the event_list length + (1. / cfile->fps) * TICKS_PER_SECOND.
    If audio ends before this then it will padded to the end with silence.
-   When rendering to an exisitng clip, the behaviour of audio rendering is undefined.
+   When rendering to an existing clip, the behaviour of audio rendering is undefined.
 
    The following values (lives_render_error_t) may be returned:
    LIVES_RENDER_READY - returned after the initial call with reset set to TRUE

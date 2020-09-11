@@ -501,7 +501,7 @@ typedef enum {
   /// cancelled and paused
   CANCEL_USER_PAUSED,
 
-  /// an error occured, retry the operation
+  /// an error occurred, retry the operation
   CANCEL_RETRY,
 
   /// software error: e.g set mainw->current_file directly during pb instead of mainw->new_clip

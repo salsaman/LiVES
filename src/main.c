@@ -644,7 +644,7 @@ static boolean pre_init(void) {
 
     if (!capable->can_write_to_config_new || !capable->can_write_to_config_backup || !capable->can_write_to_config) {
       msg = lives_strdup_printf(
-              _("\nAn error occured when writing to the configuration files\n%s*\n\n"
+              _("\nAn error occurred when writing to the configuration files\n%s*\n\n"
                 "Please check the file permissions for this file and directory\nand try again.\n"),
               (tmp2 = ensure_extension((tmp = lives_filename_to_utf8(prefs->configfile, -1, NULL, NULL, NULL)),
                                        LIVES_FILE_EXT_NEW)));

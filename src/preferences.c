@@ -4045,6 +4045,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   //hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   widget_opts.swap_label = TRUE;
+  // xgettext:no-c-format
   lives_standard_spin_button_new(_("% of quota is used"), 90., 0., 100., 1., 5., 0,
                                  LIVES_BOX(hbox), NULL);
   widget_opts.swap_label = FALSE;

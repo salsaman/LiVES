@@ -1072,7 +1072,7 @@ retry:
           do_error_dialogf(_("Unable to download media from the requested URL:\n%s\n\n"
                              "NB: Obtaining the address by right clicking on the target itself "
                              "can sometimes work better\n\n\nAlso, please note that downloading of 'Private' videos "
-                             "from Youtube is not possible,\nthey need to be changed to'Unlisted' "
+                             "from Youtube is not possible,\nthey need to be changed to 'Unlisted' "
                              "in order for the download to succeed.\n"), req->URI);
         }
       }

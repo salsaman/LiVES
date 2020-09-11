@@ -412,11 +412,11 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
     if (diat == LIVES_DIALOG_CANCEL_RETRY_BROWSE)
       cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
-							LIVES_RESPONSE_CANCEL);
+                     LIVES_RESPONSE_CANCEL);
 
     if (diat == LIVES_DIALOG_SKIP_RETRY_BROWSE)
       cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL,
-							LIVES_STOCK_LABEL_SKIP, LIVES_RESPONSE_CANCEL);
+                     LIVES_STOCK_LABEL_SKIP, LIVES_RESPONSE_CANCEL);
 
     okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH,
                _("_Retry"), LIVES_RESPONSE_RETRY);

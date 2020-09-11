@@ -47,11 +47,11 @@ boolean build_init_config(const char *config_datadir, boolean prompt) {
         retval = LIVES_RESPONSE_NONE;
         if (!lives_file_test(keymap_template, LIVES_FILE_TEST_EXISTS)) {
           retval = do_file_notfound_dialog(_("LiVES was unable to find the default keymap file"),
-					   keymap_template);
+                                           keymap_template);
           if (retval == LIVES_RESPONSE_BROWSE) {
-	    char *dirx = lives_build_path(prefs->prefix_dir, DATA_DIR, NULL);
+            char *dirx = lives_build_path(prefs->prefix_dir, DATA_DIR, NULL);
             char *xkeymap_template = choose_file(dirx, DEF_KEYMAP_FILE2, NULL,
-						 LIVES_FILE_CHOOSER_ACTION_SELECT_FILE, NULL, NULL);
+                                                 LIVES_FILE_CHOOSER_ACTION_SELECT_FILE, NULL, NULL);
             if (xkeymap_template && *xkeymap_template) {
               lives_free(keymap_template);
               keymap_template = xkeymap_template;
@@ -62,19 +62,19 @@ boolean build_init_config(const char *config_datadir, boolean prompt) {
       } while (retval == LIVES_RESPONSE_RETRY);
 
       if (retval != LIVES_RESPONSE_CANCEL) {
-	do {
-	  retval = LIVES_RESPONSE_NONE;
-	  lives_cp(keymap_template, keymap_file);
-	  if (!lives_file_test(keymap_file, LIVES_FILE_TEST_EXISTS)) {
-	    // give up
-	    d_print((tmp = lives_strdup_printf
-		     (_("Unable to create default keymap file: %s\nPlease make sure the directory\n%s\nis writable.\n"),
-		      keymap_file, config_datadir)));
+        do {
+          retval = LIVES_RESPONSE_NONE;
+          lives_cp(keymap_template, keymap_file);
+          if (!lives_file_test(keymap_file, LIVES_FILE_TEST_EXISTS)) {
+            // give up
+            d_print((tmp = lives_strdup_printf
+                           (_("Unable to create default keymap file: %s\nPlease make sure the directory\n%s\nis writable.\n"),
+                            keymap_file, config_datadir)));
 
-	    retval = do_abort_cancel_retry_dialog(tmp);
-	  }
-	} while (retval == LIVES_RESPONSE_RETRY);
-	lives_free(keymap_template);
+            retval = do_abort_cancel_retry_dialog(tmp);
+          }
+        } while (retval == LIVES_RESPONSE_RETRY);
+        lives_free(keymap_template);
       }
     }
     lives_free(keymap_file);
@@ -84,15 +84,15 @@ boolean build_init_config(const char *config_datadir, boolean prompt) {
     if (!lives_file_test(keymap_file, LIVES_FILE_TEST_EXISTS)) {
       char *keymap_template = lives_build_filename(prefs->prefix_dir, DATA_DIR, DEF_KEYMAP_FILE3, NULL);
       retval = LIVES_RESPONSE_NONE;
-        if (lives_file_test(keymap_template, LIVES_FILE_TEST_EXISTS)) {
-	  lives_cp(keymap_template, keymap_file);
-	}
+      if (lives_file_test(keymap_template, LIVES_FILE_TEST_EXISTS)) {
+        lives_cp(keymap_template, keymap_file);
+      }
     }
     lives_free(keymap_file);
 
     devmapdir = lives_build_path(config_datadir, LIVES_DEVICEMAP_DIR, NULL);
     if (!lives_file_test(devmapdir, LIVES_FILE_TEST_IS_DIR)) {
-#ifdef ENABLE_OSC 
+#ifdef ENABLE_OSC
       char *sys_devmap_dir = lives_build_path(prefs->prefix_dir, DATA_DIR, LIVES_DEVICEMAP_DIR, NULL);
       if (mainw && mainw->splash_window) lives_widget_hide(mainw->splash_window);
       do {
@@ -134,8 +134,8 @@ boolean build_init_config(const char *config_datadir, boolean prompt) {
     if (!lives_file_test(stock_icons_dir, LIVES_FILE_TEST_IS_DIR)) {
       char *sys_stock_icons_dir = lives_build_path(prefs->prefix_dir, DATA_DIR, STOCK_ICONS_DIR, NULL);
       if (mainw && mainw->splash_window) {
-	lives_widget_hide(mainw->splash_window);
-	lives_widget_context_update();
+        lives_widget_hide(mainw->splash_window);
+        lives_widget_context_update();
       }
       do {
         retval = LIVES_RESPONSE_NONE;
@@ -357,10 +357,10 @@ boolean do_workdir_query(void) {
   /// override FILESEL_TYPE_KEY, in case it was set to WORKDIR; we will do our own checking here
   dirbutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dirbutton), FILESEL_TYPE_KEY,
-			       LIVES_INT_TO_POINTER(LIVES_DIR_SELECTION_CREATE_FOLDER));
+                               LIVES_INT_TO_POINTER(LIVES_DIR_SELECTION_CREATE_FOLDER));
 
   if (mainw->splash_window) lives_widget_hide(mainw->splash_window);
-  
+
   do {
     lives_freep((void **)&dirname);
     response = lives_dialog_run(LIVES_DIALOG(wizard->dialog));
@@ -1222,7 +1222,7 @@ void do_startup_interface_query(void) {
   }
 
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,
-						_("Set Quota Limits (Optional)"), LIVES_RESPONSE_OK);
+             _("Set Quota Limits (Optional)"), LIVES_RESPONSE_OK);
 
   lives_button_grab_default_special(okbutton);
   lives_widget_grab_focus(okbutton);

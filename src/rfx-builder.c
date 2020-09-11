@@ -900,7 +900,7 @@ static void on_code_ok(LiVESButton *button, livespointer user_data) {
                                     (char *)lives_list_nth_data(rfxbuilder->copy_params[rfxbuilder->edit_param].list,
                                           defindex));
       // *INDENT-OFF*
-  }}}
+}}}
   // *INDENT-ON*
 
   lives_general_button_clicked(button, NULL);

@@ -171,7 +171,7 @@ boolean render_audio_frame_float(float **audio, int nsamps);
 #ifdef USE_LIBWEED
 weed_plant_t *weed_setup(weed_bootstrap_f);
 #endif
-  
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

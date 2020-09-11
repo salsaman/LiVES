@@ -1464,9 +1464,9 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
     if ((mode = weed_add_effectkey(key, whashname, TRUE)) == -1) {
       // could not locate effect
       if (!prefs->startup_phase) {
-	d_print((tmp = lives_strdup_printf(_("Unknown effect %s in\n%s\n"), whashname, keymap_file)));
-	LIVES_WARN(tmp);
-	lives_free(tmp);
+        d_print((tmp = lives_strdup_printf(_("Unknown effect %s in\n%s\n"), whashname, keymap_file)));
+        LIVES_WARN(tmp);
+        lives_free(tmp);
       }
       notfound = TRUE;
       lives_free(hashname);

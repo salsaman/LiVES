@@ -2889,7 +2889,7 @@ _entryw *create_rename_dialog(int type) {
 
       dirbutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dirbutton), FILESEL_TYPE_KEY,
-      				   LIVES_INT_TO_POINTER(LIVES_DIR_SELECTION_WORKDIR));
+                                   LIVES_INT_TO_POINTER(LIVES_DIR_SELECTION_WORKDIR));
 
       lives_free(tmp);
       lives_free(workdir);
@@ -3908,7 +3908,7 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
   }
 
   g_print("FS TYPE is %d\n", filesel_type);
-  
+
   /// take the filename from the text entry widget
   if (LIVES_IS_TEXT_VIEW(tentry)) fname = lives_text_view_get_text(LIVES_TEXT_VIEW(tentry));
   else fname = lives_strdup(lives_entry_get_text(LIVES_ENTRY(tentry)));
@@ -3924,7 +3924,7 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
 
   /// can this be removed ?
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-  
+
   switch (filesel_type) {
   case LIVES_FILE_SELECTION_UNDEFINED:
     if (!is_dir && *fname && (!def_dir || !(*def_dir))) {
@@ -4056,34 +4056,32 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   if (act != LIVES_FILE_CHOOSER_ACTION_SAVE) {
     if (act == LIVES_FILE_CHOOSER_ACTION_SELECT_FILE) {
       if (LIVES_IS_INTERACTIVE) {
-	chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
-					      LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
-					      LIVES_STOCK_LABEL_SELECT, LIVES_RESPONSE_ACCEPT, NULL);
+        chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
+                                              LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
+                                              LIVES_STOCK_LABEL_SELECT, LIVES_RESPONSE_ACCEPT, NULL);
       } else
-	chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
-					      LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
-					      LIVES_STOCK_LABEL_SELECT, LIVES_RESPONSE_ACCEPT, NULL);
-    }
-    else {
+        chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
+                                              LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
+                                              LIVES_STOCK_LABEL_SELECT, LIVES_RESPONSE_ACCEPT, NULL);
+    } else {
       if (LIVES_IS_INTERACTIVE) {
-	chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
-					      LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
-					      LIVES_STOCK_LABEL_SELECT, LIVES_RESPONSE_ACCEPT, NULL);
+        chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
+                                              LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
+                                              LIVES_STOCK_LABEL_SELECT, LIVES_RESPONSE_ACCEPT, NULL);
       } else
-	chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
-					      LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
-					      LIVES_STOCK_LABEL_SELECT, LIVES_RESPONSE_ACCEPT, NULL);
+        chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
+                                              LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
+                                              LIVES_STOCK_LABEL_SELECT, LIVES_RESPONSE_ACCEPT, NULL);
     }
-  }
-  else {
+  } else {
     if (LIVES_IS_INTERACTIVE) {
       chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
-					    LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
-					    LIVES_STOCK_LABEL_OPEN, LIVES_RESPONSE_ACCEPT, NULL);
+                                            LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
+                                            LIVES_STOCK_LABEL_OPEN, LIVES_RESPONSE_ACCEPT, NULL);
     } else
       chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
-					    LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
-					    LIVES_STOCK_LABEL_OPEN, LIVES_RESPONSE_ACCEPT, NULL);
+                                            LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
+                                            LIVES_STOCK_LABEL_OPEN, LIVES_RESPONSE_ACCEPT, NULL);
   }
 
   if (dir) {
@@ -4172,7 +4170,7 @@ rundlg:
   if ((response = lives_dialog_run(LIVES_DIALOG(chooser))) != LIVES_RESPONSE_CANCEL) {
     char *tmp;
     filename = lives_filename_to_utf8((tmp = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser))),
-				      -1, NULL, NULL, NULL);
+                                      -1, NULL, NULL, NULL);
     lives_free(tmp);
   } else filename = NULL;
 
@@ -4221,10 +4219,10 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
 
   if (filesel_type == LIVES_DIR_SELECTION_CREATE_FOLDER)
     chooser = (LiVESWidget *)choose_file(dir, NULL, filt, LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER,
-					 title, LIVES_MAIN_WINDOW_WIDGET);
+                                         title, LIVES_MAIN_WINDOW_WIDGET);
   else if (filesel_type == LIVES_DIR_SELECTION_SELECT_FOLDER)
     chooser = (LiVESWidget *)choose_file(dir, NULL, filt, LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER,
-					 title, LIVES_MAIN_WINDOW_WIDGET);
+                                         title, LIVES_MAIN_WINDOW_WIDGET);
 
   chooser = (LiVESWidget *)choose_file(dir, NULL, filt, LIVES_FILE_CHOOSER_ACTION_OPEN, title, LIVES_MAIN_WINDOW_WIDGET);
 
@@ -4415,23 +4413,23 @@ _entryw *create_cds_dialog(int type) {
                   (type == 2) ? LIVES_RESPONSE_ABORT : LIVES_RESPONSE_RETRY);
 
   if ((type == 0 && !*mainw->multitrack->layout_name) || type == 3 || type == 4)
-      lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Wipe layout"));
-      else if (type == 0) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Ignore changes"));
-        else if (type == 1) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete clip set"));
-          else if (type == 2) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete layout"));
+    lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Wipe layout"));
+  else if (type == 0) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Ignore changes"));
+  else if (type == 1) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete clip set"));
+  else if (type == 2) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete layout"));
 
-            if (type != 4) savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(cdsw->dialog), LIVES_STOCK_SAVE, NULL,
-                                          (type == 2) ? LIVES_RESPONSE_RETRY : LIVES_RESPONSE_ABORT);
-              if (type == 0 || type == 3) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Save layout"));
-                else if (type == 1) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Save clip set"));
-                  else if (type == 2) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Wipe layout"));
-                    if (type == 1 || type == 2) lives_button_grab_default_special(savebutton);
+  if (type != 4) savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(cdsw->dialog), LIVES_STOCK_SAVE, NULL,
+                                (type == 2) ? LIVES_RESPONSE_RETRY : LIVES_RESPONSE_ABORT);
+  if (type == 0 || type == 3) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Save layout"));
+  else if (type == 1) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Save clip set"));
+  else if (type == 2) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Wipe layout"));
+  if (type == 1 || type == 2) lives_button_grab_default_special(savebutton);
 
-                      lives_widget_show_all(cdsw->dialog);
+  lives_widget_show_all(cdsw->dialog);
 
-                  if (type == 1) {
-                    lives_widget_grab_focus(cdsw->entry);
-                    }
+  if (type == 1) {
+    lives_widget_grab_focus(cdsw->entry);
+  }
 
   if (!LIVES_IS_INTERACTIVE) lives_widget_set_sensitive(cancelbutton, FALSE);
 
@@ -6389,7 +6387,7 @@ void run_diskspace_dialog(void) {
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   dsq->top_label = lives_layout_add_label(LIVES_LAYOUT(layout), NULL, FALSE);
   dsu_set_toplabel();
-  
+
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   widget_opts.text_size = LIVES_TEXT_SIZE_NORMAL;
 
@@ -6400,8 +6398,8 @@ void run_diskspace_dialog(void) {
     hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
     entry = lives_standard_entry_new(_("Current working directory"), prefs->workdir, -1, PATH_MAX,
-				     LIVES_BOX(hbox),
-				     H_("The directory where LiVES will save projects (sets)"));
+                                     LIVES_BOX(hbox),
+                                     H_("The directory where LiVES will save projects (sets)"));
 
     lives_entry_set_editable(LIVES_ENTRY(entry), FALSE);
 
@@ -6411,15 +6409,15 @@ void run_diskspace_dialog(void) {
     hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
     button = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("Change Directory"),
-						  DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+             DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
     lives_widget_set_focus_on_click(button, FALSE);
 
     lives_box_pack_start(LIVES_BOX(hbox), button, FALSE, TRUE, widget_opts.packing_width * 4);
 
     lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
-			 LIVES_GUI_CALLBACK(workdir_query_cb), dialog);
+                         LIVES_GUI_CALLBACK(workdir_query_cb), dialog);
   }
-  
+
   lives_layout_add_row(LIVES_LAYOUT(layout));
 
   widget_opts.text_size = LIVES_TEXT_SIZE_LARGE;
@@ -6444,7 +6442,7 @@ void run_diskspace_dialog(void) {
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, TRUE, widget_opts.packing_height >> 1);
 
   if (prefs->startup_phase) add_fill_to_box(LIVES_BOX(dialog_vbox));
-  
+
   layout = lives_layout_new(LIVES_BOX(dialog_vbox));
 
   /// dsu widget
@@ -6635,30 +6633,30 @@ void run_diskspace_dialog(void) {
 
     hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
     button = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("Clean Up Diskspace"),
-						  DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+             DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
     lives_widget_set_focus_on_click(button, FALSE);
     lives_box_pack_start(LIVES_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width * 4);
 
     lives_signal_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
-			 LIVES_GUI_CALLBACK(cleards_cb), dialog);
+                         LIVES_GUI_CALLBACK(cleards_cb), dialog);
 
     lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
     hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
     button = lives_standard_button_new_from_stock(LIVES_STOCK_PREFERENCES, _("Manage Clip Sets"),
-						  DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+             DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
     lives_widget_set_focus_on_click(button, FALSE);
 
     lives_box_pack_start(LIVES_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width * 4);
 
     lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
-			      LIVES_GUI_CALLBACK(manclips_cb),  dialog);
+                              LIVES_GUI_CALLBACK(manclips_cb),  dialog);
 
     if (mainw->num_sets == -1) {
       mainw->set_list = get_set_list(prefs->workdir, TRUE);
       if (mainw->set_list) {
-	mainw->num_sets = lives_list_length(mainw->set_list);
-	if (mainw->was_set) mainw->num_sets--;
+        mainw->num_sets = lives_list_length(mainw->set_list);
+        if (mainw->was_set) mainw->num_sets--;
       } else mainw->num_sets = 0;
     }
 
@@ -6668,7 +6666,7 @@ void run_diskspace_dialog(void) {
     hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
     button = lives_standard_button_new_from_stock(LIVES_STOCK_CLOSE, _("Close Current Clips"),
-						  DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+             DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
     lives_widget_set_focus_on_click(button, FALSE);
 
     if (!mainw->clips_available) lives_widget_set_sensitive(button, FALSE);
@@ -6696,7 +6694,7 @@ void run_diskspace_dialog(void) {
   lives_button_box_make_first(LIVES_BUTTON_BOX(aar), widget_opts.last_container);
 
   dsq->abort_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_QUIT,
-							 _("Abort"), LIVES_RESPONSE_ABORT);
+                      _("Abort"), LIVES_RESPONSE_ABORT);
 
   lives_button_uncenter(dsq->abort_button, DLG_BUTTON_WIDTH * 2.);
 
@@ -6707,10 +6705,10 @@ void run_diskspace_dialog(void) {
 
   if (prefs->startup_phase)
     okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK,
-						  _("FINISH"), LIVES_RESPONSE_OK);
+               _("FINISH"), LIVES_RESPONSE_OK);
   else
     okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK,
-						  _("Continue with current values"), LIVES_RESPONSE_OK);
+               _("Continue with current values"), LIVES_RESPONSE_OK);
 
   lives_button_uncenter(okbutton, DLG_BUTTON_WIDTH * 2.);
 
@@ -6729,8 +6727,7 @@ void run_diskspace_dialog(void) {
     char *wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
     if (!wid || !activate_x11_window(wid)) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
     lives_dialog_run(LIVES_DIALOG(dialog));
-  }
-  else lives_idle_add_simple(update_dsu, NULL);
+  } else lives_idle_add_simple(update_dsu, NULL);
 }
 
 

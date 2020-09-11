@@ -2668,7 +2668,7 @@ static lives_filter_error_t enable_disable_channels(weed_plant_t *inst, boolean 
     else layer = NULL;
 
     if (!layer || ((weed_layer_is_audio(layer) && !weed_layer_get_audio_data(layer, NULL)) ||
-		   (weed_layer_is_video(layer) && (pixdata = weed_layer_get_pixel_data(layer, NULL)) == NULL))) {
+                   (weed_layer_is_video(layer) && (pixdata = weed_layer_get_pixel_data(layer, NULL)) == NULL))) {
       // if the layer data is NULL and it maps to a repeating channel, then disable the channel temporarily
       chantmpl = weed_channel_get_template(channel);
       if (weed_chantmpl_get_max_repeats(chantmpl) != 1) {
@@ -4635,7 +4635,8 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
   const char *ladspa_blacklist[] = {"Mag's Notch Filter", "Identity (Control)", "Signal Branch (IC)",
                                     "Signal Product (ICIC)", "Signal Difference (ICMC)",
                                     "Signal Sum (ICIC)", "Signal Ratio (NCDC)",
-                                    NULL};
+                                    NULL
+                                   };
 
   char *pwd, *tmp, *msg, *filtname;
   char *filter_name = NULL, *package_name = NULL;
@@ -9723,7 +9724,7 @@ boolean rte_key_setmode(int key, int newmode) {
     }
 
     if (inst && (enabled_in_channels(inst, FALSE) > 0 || enabled_out_channels(last_inst, FALSE) == 0 ||
-                         is_pure_audio(inst, FALSE))) {
+                 is_pure_audio(inst, FALSE))) {
       // not a (video or video/audio) generator
       weed_deinit_effect(key);
     } else if (enabled_in_channels(weed_filters[key_to_fx[key][newmode]], FALSE) == 0 &&
@@ -10314,7 +10315,7 @@ boolean interpolate_param(weed_plant_t *param, void *pchain, weed_timecode_t tc)
     // must interpolate - we use linear interpolation
     if (!lpc[j] && !npc[j]) continue;
     if (lpc[j] && npc[j]) tc_diff = weed_get_int64_value((weed_plant_t *)npc[j], WEED_LEAF_TIMECODE, NULL) -
-          weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, NULL);
+                                      weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, NULL);
     switch (ptype) {
     case WEED_PARAM_FLOAT:
       if (!lpc[j]) {

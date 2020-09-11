@@ -241,9 +241,9 @@ char *pconx_list(int okey, int omode, int opnum) {
             if (!*st1)
               st2 = lives_strdup_printf("%d %d %d %d", pconx->ikey[j] + 1, pconx->imode[j] + 1, pconx->ipnum[j],
                                         pconx->autoscale[j]);
-	    else
-	      st2 = lives_strdup_printf("%s %d %d %d %d", st1, pconx->ikey[j] + 1, pconx->imode[j] + 1,
-					pconx->ipnum[j], pconx->autoscale[j]);
+            else
+              st2 = lives_strdup_printf("%s %d %d %d %d", st1, pconx->ikey[j] + 1, pconx->imode[j] + 1,
+                                        pconx->ipnum[j], pconx->autoscale[j]);
             lives_free(st1);
             st1 = st2;
           }

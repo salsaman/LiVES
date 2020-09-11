@@ -139,13 +139,14 @@ endif
 	$(MKDIR_P) "$(DESTDIR)$(sharedir)/$(PACKAGE)/devicemaps/"
 	cp -rf "$(srcdir)/resources/devicemaps" "$(DESTDIR)$(sharedir)/$(PACKAGE)"
 	cp -rf "$(srcdir)/resources/stock-icons" "$(DESTDIR)$(sharedir)/$(PACKAGE)"
-
+	cp -f "$(srcdir)/resources/fxdefs.perkey" "$(DESTDIR)$(sharedir)/$(PACKAGE)"
+	cp -f "$(srcdir)/resources/datacons.map" "$(DESTDIR)$(sharedir)/$(PACKAGE)"
 
 install-exec-local:
 	rm -rf "$(DESTDIR)$(bindir)/lives"
 	cp -f "$(srcdir)/smogrify" "$(DESTDIR)$(bindir)" && chmod a+rx "$(DESTDIR)$(bindir)/smogrify"
-	cp -f "$(srcdir)/midistart" "$(DESTDIR)$(bindir)" && chmod a+rx "$(DESTDIR)$(bindir)/lives-midistart"
-	cp -f "$(srcdir)/midistop" "$(DESTDIR)$(bindir)" && chmod a+rx "$(DESTDIR)$(bindir)/lives-midistop"
+	cp -f "$(srcdir)/midistart" "$(DESTDIR)$(bindir)/lives-midistart" && chmod a+rx "$(DESTDIR)$(bindir)/lives-midistart"
+	cp -f "$(srcdir)/midistop" "$(DESTDIR)$(bindir)/lives-midistop" && chmod a+rx "$(DESTDIR)$(bindir)/lives-midistop"
 	cp -f "$(srcdir)/tools/autolives.pl" "$(DESTDIR)$(bindir)" && chmod a+rx "$(DESTDIR)$(bindir)/autolives.pl"
 	cp -f "$(srcdir)/build-lives-rfx-plugin" "$(DESTDIR)$(bindir)" && chmod a+rx "$(DESTDIR)$(bindir)/build-lives-rfx-plugin"
 	cp -f "$(srcdir)/build-lives-rfx-plugin-multi" "$(DESTDIR)$(bindir)" \
@@ -163,8 +164,8 @@ uninstall-local:
 	rm -rf "$(bindir)/lives"
 	rm -rf "$(bindir)/lives-exe"
 	rm -rf "$(bindir)/smogrify"
-	rm -rf "$(bindir)/midistart"
-	rm -rf "$(bindir)/midistop"
+	rm -rf "$(bindir)/lives-midistart"
+	rm -rf "$(bindir)/lives-midistop"
 	rm -rf "$(bindir)/autolives.pl"
 	rm -rf "$(bindir)/build-lives-rfx-plugin"
 	rm -rf "$(bindir)/build-lives-rfx-plugin-multi"

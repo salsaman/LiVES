@@ -4016,7 +4016,7 @@ boolean check_for_layout_errors(const char *operation, int fileno, int start, in
       if (sfile->tcache_dubious_from > 0) free_thumb_cache(fileno, sfile->tcache_dubious_from);
       sfile->tcache_dubious_from = start;
       ret_mask |= WARN_MASK_LAYOUT_DELETE_FRAMES | (mask & WARN_MASK_LAYOUT_SHIFT_FRAMES)
-	| (mask & WARN_MASK_LAYOUT_ALTER_FRAMES);
+                  | (mask & WARN_MASK_LAYOUT_ALTER_FRAMES);
       if ((prefs->warning_mask & WARN_MASK_LAYOUT_DELETE_FRAMES) == 0) {
         mainw->xlays = xlays;
         if (!do_warning_dialogf
@@ -4065,7 +4065,7 @@ boolean check_for_layout_errors(const char *operation, int fileno, int start, in
           mainw->xlays = xlays;
           if (!do_warning_dialogf
               (_("%s will cause frames to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"),
-	       operation)) {
+               operation)) {
             cancelled = TRUE;
           }
         }
@@ -4088,7 +4088,7 @@ boolean check_for_layout_errors(const char *operation, int fileno, int start, in
             mainw->xlays = xlays;
             if (!do_warning_dialogf
                 (_("%s will cause audio to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"),
-		 operation)) {
+                 operation)) {
               cancelled = TRUE;
             }
           }
@@ -5018,7 +5018,7 @@ boolean dirchange_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj
 
 void on_volch_pressed(LiVESButton * button, livespointer user_data) {
   lives_direction_t dirn = LIVES_POINTER_TO_INT(user_data);
-  if (!CURRENT_CLIP_IS_VALID || mainw->preview || (mainw->is_processing && cfile->is_loaded) ||!mainw->cliplist) return;
+  if (!CURRENT_CLIP_IS_VALID || mainw->preview || (mainw->is_processing && cfile->is_loaded) || !mainw->cliplist) return;
   if (dirn == LIVES_DIRECTION_UP) cfile->vol += .01;
   else cfile->vol -= .01;
   if (cfile->vol > 2.) cfile->vol = 2.;

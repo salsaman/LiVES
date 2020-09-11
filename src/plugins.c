@@ -1202,7 +1202,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   if (vpp->weed_setup) {
     (*vpp->weed_setup)(weed_bootstrap);
   }
-  
+
   vpp->get_description = (const char *(*)())dlsym(handle, "get_description");
   vpp->get_init_rfx = (const char *(*)())dlsym(handle, "get_init_rfx");
 
@@ -1640,19 +1640,19 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
   }
 
   if (!rdet) {
-  arate = cfile->arate;
-  achans = cfile->achans;
-  asampsize = cfile->asampsize;
-} else {
-  arate = rdet->arate;
-  achans = rdet->achans;
-  asampsize = rdet->asamps;
-}
+    arate = cfile->arate;
+    achans = cfile->achans;
+    asampsize = cfile->asampsize;
+  } else {
+    arate = rdet->arate;
+    achans = rdet->achans;
+    asampsize = rdet->asamps;
+  }
 
-// audio endianness check - what should we do for big-endian machines ?
-if (((mainw->save_with_sound || rdet) && (!resaudw || resaudw->aud_checkbutton ||
+  // audio endianness check - what should we do for big-endian machines ?
+  if (((mainw->save_with_sound || rdet) && (!resaudw || resaudw->aud_checkbutton ||
        lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton))))
-        && prefs->encoder.audio_codec != AUDIO_CODEC_NONE && arate != 0 && achans != 0 && asampsize != 0) {
+      && prefs->encoder.audio_codec != AUDIO_CODEC_NONE && arate != 0 && achans != 0 && asampsize != 0) {
     if (rdet && !rdet->is_encoding) {
       if (mainw->endian != AFORM_BIG_ENDIAN && (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend))))
         swap_endian = TRUE;
@@ -1663,7 +1663,7 @@ if (((mainw->save_with_sound || rdet) && (!resaudw || resaudw->aud_checkbutton |
   }
 
   if (*prefs->encoder.of_restrict) {
-  pieces = get_token_count(prefs->encoder.of_restrict, ',');
+    pieces = get_token_count(prefs->encoder.of_restrict, ',');
     checks = lives_strsplit(prefs->encoder.of_restrict, ",", pieces);
 
     for (r = 0; r < pieces; r++) {
@@ -1913,8 +1913,8 @@ if (((mainw->save_with_sound || rdet) && (!resaudw || resaudw->aud_checkbutton |
   // if we have min or max size, make sure we fit within that
 
   if (((width != owidth || height != oheight) && width * height > 0) || (best_fps_delta > 0.) || (best_arate_delta > 0 &&
-        best_arate > 0) ||
-        best_arate < 0 || asigned != 0 || swap_endian) {
+      best_arate > 0) ||
+      best_arate < 0 || asigned != 0 || swap_endian) {
     boolean ofx1_bool = mainw->fx1_bool;
     mainw->fx1_bool = FALSE;
     if ((width != owidth || height != oheight) && width * height > 0) {

@@ -5429,8 +5429,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->check_midi = lives_standard_check_button_new
-                       (_("Midi program synch (requires the files midistart and midistop)"),
+                       ((tmp = lives_strdup_printf(_("Midi program synch (requires the files %s and %s)"), EXEC_MIDISTART, EXEC_MIDISTOP)),
                         prefs->midisynch, LIVES_BOX(hbox), NULL);
+  lives_free(tmp);
 
   lives_widget_set_sensitive(prefsw->check_midi, capable->has_midistartstop);
 

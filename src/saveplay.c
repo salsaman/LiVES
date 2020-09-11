@@ -2548,7 +2548,7 @@ void play_file(void) {
 
   if (!mainw->foreign && prefs->midisynch && !mainw->preview) {
     lives_free(com3);
-    com3 = lives_strdup("midistart");
+    com3 = lives_strdup(EXEC_MIDISTART);
   }
   com = lives_strconcat(com2, com3, NULL);
   if (*com) {
@@ -3039,7 +3039,7 @@ void play_file(void) {
   prefs->audio_opts = future_prefs->audio_opts;
 
   // TODO ***: use MIDI output port for this
-  if (!mainw->foreign && prefs->midisynch) lives_system("midistop", TRUE);
+  if (!mainw->foreign && prefs->midisynch) lives_system(EXEC_MIDISTOP, TRUE);
 
   // we could have started by playing a generator, which could've been closed
   if (!mainw->files[current_file]) current_file = mainw->current_file;

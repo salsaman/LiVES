@@ -397,8 +397,8 @@ enum {
 // optional
 #define EXEC_PYTHON "python"
 #define EXEC_AUTOLIVES_PL "autolives.pl" ///< shipped
-#define EXEC_MIDISTART "midistart" ///< shipped
-#define EXEC_MIDISTOP "midistop" ///< shipped
+#define EXEC_MIDISTART "lives-midistart" ///< shipped
+#define EXEC_MIDISTOP "lives-midistop" ///< shipped
 #define EXEC_JACKD "jackd" ///< recommended if (!have_pulseaudio)
 #define EXEC_DVGRAB "dvgrab"
 #define EXEC_CDDA2WAV "cdda2wav"

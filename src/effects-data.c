@@ -457,13 +457,15 @@ static int pconx_get_nconns(lives_pconnect_t *pconx, int pnum) {
 }
 
 
-static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int omode, int opnum, int ikey, int imode,
-    int ipnum, boolean autoscale) {
+static lives_pconnect_t *pconx_add_connection_private(int okey, int omode, int opnum, int ikey, int imode, int ipnum,
+    boolean autoscale) {
+  lives_pconnect_t *pconx;
   int posn = 0, totcons = 0;
   int i, j;
 
   // delete any existing connection to the input param
   pconx_delete(FX_DATA_WILDCARD, FX_DATA_WILDCARD, FX_DATA_WILDCARD, ikey, imode, ipnum);
+  pconx = pconx_find(okey, omode);
 
   if (ikey >= 0) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_lock(&mainw->fx_mutex[i]);
 
@@ -491,7 +493,7 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
           if (pconx->ikey[j] == ikey && pconx->imode[j] == imode && pconx->ipnum[j] == ipnum) {
             pconx->autoscale[j] = autoscale;
             if (ikey >= 0) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->fx_mutex[i]);
-            return;
+            return pconx;
           }
 
           // add in order key/mode/chan
@@ -528,7 +530,7 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
 
         if (ikey >= 0) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->fx_mutex[i]);
 
-        return;
+        return pconx;
       }
     }
 
@@ -574,7 +576,7 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
 
     if (ikey >= 0) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->fx_mutex[i]);
 
-    return;
+    return pconx;
   }
 
   // add new
@@ -608,11 +610,13 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
 #endif
 
   if (ikey >= 0) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->fx_mutex[i]);
+
+  return pconx;
 }
 
 
 void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, int ipnum, boolean autoscale) {
-  pconx_add_connection_private(pconx_find(okey, omode), okey, omode, opnum, ikey, imode, ipnum, autoscale);
+  pconx_add_connection_private(okey, omode, opnum, ikey, imode, ipnum, autoscale);
 }
 
 
@@ -1819,12 +1823,13 @@ static int cconx_get_nconns(lives_cconnect_t *cconx, int cnum) {
 }
 
 
-static void cconx_add_connection_private(lives_cconnect_t *cconx, int okey, int omode, int ocnum, int ikey, int imode,
-    int icnum) {
+static  lives_cconnect_t *cconx_add_connection_private(int okey, int omode, int ocnum, int ikey, int imode, int icnum) {
+  lives_cconnect_t *cconx;
   int posn = 0, totcons = 0, i, j;
 
   // delete any existing connection to the input channel
   cconx_delete(FX_DATA_WILDCARD, 0, 0, ikey, imode, icnum);
+  cconx = cconx_find(okey, omode);
 
   if (!cconx) {
     // add whole new node
@@ -1849,7 +1854,7 @@ static void cconx_add_connection_private(lives_cconnect_t *cconx, int okey, int 
         // if already there, do not add again
         for (j = posn; j < posn + cconx->nconns[i]; j++) {
           if (cconx->ikey[j] == ikey && cconx->imode[j] == imode && cconx->icnum[j] == icnum) {
-            return;
+            return cconx;
           }
 
           // add in order key/mode/chan
@@ -1878,7 +1883,7 @@ static void cconx_add_connection_private(lives_cconnect_t *cconx, int okey, int 
         cconx->imode[posn] = imode;
         cconx->icnum[posn] = icnum;
 
-        return;
+        return cconx;
       }
     }
 
@@ -1916,7 +1921,7 @@ static void cconx_add_connection_private(lives_cconnect_t *cconx, int okey, int 
     g_print("added another cconx from %d %d %d to %d %d %d\n", okey, omode, ocnum, ikey, imode, icnum);
 #endif
 
-    return;
+    return cconx;
   }
 
   // add new
@@ -1942,11 +1947,12 @@ static void cconx_add_connection_private(lives_cconnect_t *cconx, int okey, int 
 #ifdef DEBUG_CCONX
   g_print("added new cconx from %d %d %d to %d %d %d\n", okey, omode, ocnum, ikey, imode, icnum);
 #endif
+  return cconx;
 }
 
 
 void cconx_add_connection(int okey, int omode, int ocnum, int ikey, int imode, int icnum) {
-  cconx_add_connection_private(cconx_find(okey, omode), okey, omode, ocnum, ikey, imode, icnum);
+  cconx_add_connection_private(okey, omode, ocnum, ikey, imode, icnum);
 }
 
 
@@ -3489,9 +3495,7 @@ static void dpp_changed(LiVESWidget * combo, livespointer user_data) {
 
   int pidx, key, mode, ours = -1, ret;
   int idx = lives_combo_get_active_index(LIVES_COMBO(combo));
-  int j;
-
-  int i;
+  int i, j;
 
   nparams = pconx_get_numcons(conxwp, FX_DATA_WILDCARD);
   nchans = cconx_get_numcons(conxwp, FX_DATA_WILDCARD);
@@ -3589,6 +3593,7 @@ static void dpp_changed(LiVESWidget * combo, livespointer user_data) {
     lives_signal_handler_unblock(acheck, conxwp->acheck_func[ours]);
 
     if (hasrange) {
+      g_print("ach sens 1\n");
       lives_widget_set_sensitive(acheck, TRUE);
       if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(conxwp->allcheckc))) {
         lives_signal_handler_block(acheck, conxwp->acheck_func[ours]);
@@ -3615,16 +3620,8 @@ static void dpp_changed(LiVESWidget * combo, livespointer user_data) {
 
   lives_widget_set_sensitive(conxwp->add_button[nchans + ours], TRUE);
 
-  if (conxwp->ikeys[nchans + ours] >= 0) pconx_delete(conxwp->okey, conxwp->omode, pidx,
-        conxwp->ikeys[nchans + ours], conxwp->imodes[nchans + ours], conxwp->idx[nchans + ours]);
-
-  conxwp->pconx = pconx_find(conxwp->okey, conxwp->omode);
-
-  pconx_add_connection_private(conxwp->pconx, conxwp->okey, conxwp->omode, pidx, key > 0 ? key - 1 : key, mode, j,
-                               acheck != NULL ?
-                               lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(acheck)) : FALSE);
-
-  conxwp->pconx = pconx_find(conxwp->okey, conxwp->omode);
+  conxwp->pconx = pconx_add_connection_private(conxwp->okey, conxwp->omode, pidx, key - 1, mode, j,
+                  acheck ? lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(acheck)) : FALSE);
 
   conxwp->ikeys[nchans + ours] = key;
   conxwp->imodes[nchans + ours] = mode;
@@ -3766,13 +3763,7 @@ static void dpc_changed(LiVESWidget * combo, livespointer user_data) {
 
   if (setup) return;
 
-  if (conxwp->ikeys[ours] >= 0) cconx_delete(conxwp->okey, conxwp->omode, cidx,
-        conxwp->ikeys[ours], conxwp->imodes[ours], conxwp->idx[ours]);
-
-  conxwp->cconx = cconx_find(conxwp->okey, conxwp->omode);
-
-  cconx_add_connection_private(conxwp->cconx, conxwp->okey, conxwp->omode, cidx, key - 1, mode, j);
-  conxwp->cconx = cconx_find(conxwp->okey, conxwp->omode);
+  conxwp->cconx = cconx_add_connection_private(conxwp->okey, conxwp->omode, cidx, key - 1, mode, j);
 
   conxwp->ikeys[ours] = key;
   conxwp->imodes[ours] = mode;
@@ -3866,13 +3857,7 @@ static void on_acheck_toggled(LiVESToggleButton * acheck, livespointer user_data
   }
 
   pidx = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(acheck), "pidx"));
-
-  if (conxwp->ikeys[nchans + ours] >= 0) {
-    pconx_delete(conxwp->okey, conxwp->omode, pidx, key, mode, j);
-    conxwp->pconx = pconx_find(conxwp->okey, conxwp->omode);
-  }
-  pconx_add_connection_private(conxwp->pconx, conxwp->okey, conxwp->omode, pidx, key > 0 ? key - 1 : key, mode, j, on);
-  conxwp->pconx = pconx_find(conxwp->okey, conxwp->omode);
+  conxwp->pconx = pconx_add_connection_private(conxwp->okey, conxwp->omode, pidx, key - 1, mode, j, on);
 
   conxwp->ikeys[nchans + ours] = key;
   conxwp->imodes[nchans + ours] = mode;
@@ -4669,11 +4654,14 @@ show_ex_params:
         lives_widget_set_sensitive(conxwp->add_button[l], TRUE);
 
       if (acheck) {
-        lives_widget_set_sensitive(acheck, TRUE);
-
-        lives_signal_handler_block(acheck, conxwp->acheck_func[l]);
-        lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(acheck), pconx->autoscale[j]);
-        lives_signal_handler_unblock(acheck, conxwp->acheck_func[l]);
+        boolean hasrange = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(acheck), "available"));
+        if (hasrange) {
+          g_print("ach sens 2\n");
+          lives_widget_set_sensitive(acheck, TRUE);
+          lives_signal_handler_block(acheck, conxwp->acheck_func[l]);
+          lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(acheck), pconx->autoscale[j]);
+          lives_signal_handler_unblock(acheck, conxwp->acheck_func[l]);
+        }
       }
 
       ipnum = pconx->ipnum[j];

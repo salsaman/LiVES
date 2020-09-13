@@ -1245,21 +1245,32 @@ unsigned long lives_signal_connect_async(livespointer instance, const char *deta
   uint32_t nvals;
   GSignalQuery sigq;
 
-  if (notilen == -1) notilen = lives_strlen(LIVES_WIDGET_NOTIFY_SIGNAL);
-  if (!lives_strncmp(detailed_signal, LIVES_WIDGET_NOTIFY_SIGNAL, notilen)) {
-    return lives_signal_connect_sync(instance, detailed_signal, c_handler, data, flags);
-  }
+#if LIVES_HAS_SWITCH_WIDGET
+  boolean swtog = FALSE;
+  if (LIVES_IS_WIDGET(instance) && LIVES_IS_SWITCH(LIVES_WIDGET(instance))
+      && !strcmp(detailed_signal, LIVES_WIDGET_TOGGLED_SIGNAL)) swtog = TRUE;
+  else {
+#endif
 
-  g_signal_query(g_signal_lookup(detailed_signal, G_OBJECT_TYPE(instance)), &sigq);
-  if (sigq.return_type != 4) {
-    return lives_signal_connect_sync(instance, detailed_signal, c_handler, data, flags);
-  }
+    if (notilen == -1) notilen = lives_strlen(LIVES_WIDGET_NOTIFY_SIGNAL);
+    if (!lives_strncmp(detailed_signal, LIVES_WIDGET_NOTIFY_SIGNAL, notilen)) {
+      return lives_signal_connect_sync(instance, detailed_signal, c_handler, data, flags);
+    }
 
-  nvals = sigq.n_params + 2; // add instance, user_data
+    g_signal_query(g_signal_lookup(detailed_signal, G_OBJECT_TYPE(instance)), &sigq);
+    if (sigq.return_type != 4) {
+      return lives_signal_connect_sync(instance, detailed_signal, c_handler, data, flags);
+    }
 
-  if (nvals != 2 && nvals != 3) {
-    return lives_signal_connect_sync(instance, detailed_signal, c_handler, data, flags);
+    nvals = sigq.n_params + 2; // add instance, user_data
+
+    if (nvals != 2 && nvals != 3) {
+      return lives_signal_connect_sync(instance, detailed_signal, c_handler, data, flags);
+    }
+
+#if LIVES_HAS_SWITCH_WIDGET
   }
+#endif
 
   sigdata = (lives_sigdata_t *)lives_calloc(1, sizeof(lives_sigdata_t));
   sigdata->instance = instance;
@@ -1269,8 +1280,7 @@ unsigned long lives_signal_connect_async(livespointer instance, const char *deta
   active_sigdets = lives_list_prepend(active_sigdets, (livespointer)sigdata);
 
 #if LIVES_HAS_SWITCH_WIDGET
-  if (LIVES_IS_WIDGET(instance) && LIVES_IS_SWITCH(LIVES_WIDGET(instance))
-      && !strcmp(detailed_signal, LIVES_WIDGET_TOGGLED_SIGNAL)) {
+  if (swtog) {
     /// to make switch and checkbutton interchangeable,
     /// we substitue the "toggled" signal for a switch with "notify::active"
     /// and then redirect it back to the desired callback
@@ -1280,7 +1290,6 @@ unsigned long lives_signal_connect_async(livespointer instance, const char *deta
                                             sigdata, sigdata_free, (flags & LIVES_CONNECT_AFTER));
     return sigdata->funcid;
   }
-
 #endif
 
   sigdata->detsig = lives_strdup(detailed_signal);

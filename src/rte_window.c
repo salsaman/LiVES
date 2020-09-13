@@ -2324,8 +2324,10 @@ LiVESWidget *create_rte_window(void) {
                           DEF_BUTTON_WIDTH / 3, DEF_BUTTON_HEIGHT);
       param_buttons[idx] = lives_standard_button_new_with_label(_("Set Parameters"),
                            DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+      lives_widget_set_valign(param_buttons[idx], LIVES_ALIGN_CENTER);
       conx_buttons[idx] = lives_standard_button_new_with_label(_("Set Connections"),
                           DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+      lives_widget_set_valign(conx_buttons[idx], LIVES_ALIGN_CENTER);
       clear_buttons[idx] = lives_standard_button_new_with_label(_("Clear"),
                            DEF_BUTTON_WIDTH / 3, DEF_BUTTON_HEIGHT);
 

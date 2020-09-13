@@ -4058,7 +4058,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
 #endif
 
-  capable = (capability *)lives_malloc(sizeof(capability));
+  capable = (capability *)lives_calloc(1, sizeof(capability));
 
   // _runtime_ byte order, needed for lives_strlen and other things
   if (IS_BIG_ENDIAN)

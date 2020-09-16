@@ -948,7 +948,11 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     cfile->video_time = cfile->frames / cfile->fps;
   } else {
     add_file_info(NULL, FALSE);
-    if (cfile->f_size == 0) cfile->f_size = (size_t)sget_file_size((char *)file_name);
+    if (cfile->f_size == 0) {
+      off_t fsize = sget_file_size((char *)file_name);
+      if (fsize < 0) fsize = 0;
+      cfile->f_size = (size_t)fsize;
+    }
   }
 
   if (!cfile->ext_src) {
@@ -2028,7 +2032,9 @@ void save_file(int clip, int start, int end, const char *filename) {
 
       /// save was successful
       /// TODO - check for size < 0 !!!
-      sfile->f_size = (size_t)sget_file_size(full_file_name);
+      fsize = sget_file_size(full_file_name);
+      if (fsize < 0) fsize = 0;
+      cfile->f_size = (size_t)fsize;
 
       if (sfile->is_untitled) {
         sfile->is_untitled = FALSE;
@@ -3331,23 +3337,6 @@ void play_file(void) {
     //lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
   }
 
-  /// need to do this here, in case we want to preview with only a generator and no other clips (which will close to -1)
-  if (mainw->record) {
-    if (!mainw->preview && CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR) {
-      /// deinit the generator here, to possibly save CPU cycles in case it's running in a thread
-      weed_plant_t *inst = (weed_plant_t *)cfile->ext_src;
-      mainw->osc_block = TRUE;
-      weed_instance_ref(inst);
-      wge_inner(inst);
-      mainw->osc_block = FALSE;
-    }
-    mainw->noswitch = FALSE;
-    lives_idle_add_simple(render_choice_idle, LIVES_INT_TO_POINTER(FALSE));
-    //deal_with_render_choice(TRUE); ///< will finish closing the generator if applicable
-  }
-
-  mainw->record_paused = mainw->record_starting = mainw->record = FALSE;
-
   if (!mainw->preview && CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR) {
     mainw->osc_block = TRUE;
     weed_generator_end((weed_plant_t *)cfile->ext_src);
@@ -3364,7 +3353,6 @@ void play_file(void) {
 
   if (CURRENT_CLIP_IS_VALID) {
     if (!mainw->multitrack) {
-
       lives_ce_update_timeline(0, cfile->real_pointer_time);
       mainw->ptrtime = cfile->real_pointer_time;
       lives_widget_queue_draw(mainw->eventbox2);
@@ -3434,6 +3422,13 @@ void play_file(void) {
   }
 
   lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
+
+  /// need to do this here, in case we want to preview with only a generator and no other clips (which will close to -1)
+  if (mainw->record) {
+    lives_idle_add_simple(render_choice_idle, LIVES_INT_TO_POINTER(FALSE));
+  }
+
+  mainw->record_paused = mainw->record_starting = mainw->record = FALSE;
 
   /// re-enable generic clip switching
   mainw->noswitch = FALSE;

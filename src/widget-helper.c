@@ -1503,7 +1503,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_hide(LiVESWidget *widget) {
 }
 
 
-WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_show_all(LiVESWidget *widget) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_widget_show_all(widget);
 
@@ -1515,13 +1515,13 @@ WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_show_all(LiVESWidget *widget) {
   return FALSE;
 }
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget *widget) {
-  // run in main thread as it seems to give a smoother result
-  boolean ret;
-  main_thread_execute((lives_funcptr_t)_lives_widget_show_all, WEED_SEED_BOOLEAN, &ret, "v", widget);
-  return ret;
-  //return lives_widget_show_all(widget);
-}
+/* WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget *widget) { */
+/*   // run in main thread as it seems to give a smoother result */
+/*   boolean ret; */
+/*   main_thread_execute((lives_funcptr_t)_lives_widget_show_all, WEED_SEED_BOOLEAN, &ret, "v", widget); */
+/*   return ret; */
+/*   //return lives_widget_show_all(widget); */
+/* } */
 
 
 
@@ -1757,7 +1757,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_opacity(LiVESWidget *widget
 static LiVESResponseType _lives_dialog_run(LiVESDialog *dialog) {
 #ifdef GUI_GTK
   LiVESResponseType resp;
-  _lives_widget_show_all(LIVES_WIDGET(dialog));
+  lives_widget_show_all(LIVES_WIDGET(dialog));
   resp = gtk_dialog_run(dialog);
   return resp;
 #endif
@@ -4646,7 +4646,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_widget_set_tooltip_text(LiVESWidg
                                        SHOWALL_OVERRIDE_KEY, NULL);
           if ((cntrl = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
                        SHOWHIDE_CONTROLLER_KEY))) {
-            if (lives_widget_is_visible(cntrl)) _lives_widget_show_all(widget);
+            if (lives_widget_is_visible(cntrl)) lives_widget_show_all(widget);
           }
         }
       } else {
@@ -7855,7 +7855,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean show_warn_image(LiVESWidget * widget, const 
   if (!(warn_image = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), WARN_IMAGE_KEY))) return FALSE;
   lives_widget_set_tooltip_text(warn_image, text);
   lives_widget_set_no_show_all(warn_image, FALSE);
-  _lives_widget_show_all(warn_image);
+  lives_widget_show_all(warn_image);
   return TRUE;
 }
 
@@ -8826,7 +8826,7 @@ static void lives_widget_show_all_cb(LiVESWidget * widget, livespointer user_dat
     }
     return;
   }
-  if (!lives_widget_is_visible(widget)) _lives_widget_show_all(widget);
+  if (!lives_widget_is_visible(widget)) lives_widget_show_all(widget);
 }
 
 boolean lives_widget_set_show_hide_with(LiVESWidget * widget, LiVESWidget * other) {
@@ -11885,7 +11885,7 @@ void funkify_dialog(LiVESWidget * dialog) {
 
     lives_widget_set_margin_top(action, widget_opts.packing_height); // only works for gtk+ 3.x
 
-    _lives_widget_show_all(frame);
+    lives_widget_show_all(frame);
 
     lives_container_set_border_width(LIVES_CONTAINER(box), widget_opts.border_width * 2);
 #ifdef USE_REVEAL

@@ -1371,13 +1371,14 @@ void on_save_as_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 #ifdef LIBAV_TRANSCODE
 void on_transcode_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  if (CURRENT_CLIP_IS_VALID) return;
+  if (!CURRENT_CLIP_IS_VALID) return;
   transcode(cfile->start, cfile->end);
 }
 #endif
 
 
 void on_save_selection_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  if (!CURRENT_CLIP_IS_VALID) return;
   save_file(mainw->current_file, cfile->start, cfile->end, NULL);
 }
 

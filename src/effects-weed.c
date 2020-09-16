@@ -1364,7 +1364,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
   int dheight, height, xheight = 0, cheight;
   int nthreads = 0;
 
-  register int i, j;
+  int i, j;
 
   weed_process_f process_func = (weed_process_f)weed_get_funcptr_value(filter, WEED_LEAF_PROCESS_FUNC, NULL);
 
@@ -1421,7 +1421,10 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
       xinst[j] = weed_plant_copy(inst);
       pthread_mutex_unlock(&mainw->instance_ref_mutex);
       xchannels = (weed_plant_t **)lives_malloc(nchannels * sizeof(weed_plant_t *));
-    } else xinst[j] = inst;
+    } else {
+      xinst[j] = inst;
+      xchannels = NULL;
+    }
 
     for (i = 0; i < nchannels; i++) {
       if (j < to_use - 1) {
@@ -4746,8 +4749,9 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
     if (weed_plant_has_leaf(host_info, WEED_LEAF_PLUGIN_INFO)) {
       weed_plant_t *pi = weed_get_plantptr_value(host_info, WEED_LEAF_PLUGIN_INFO, NULL);
       if (!pi || pi != plugin_info) {
-        // filter switched the host_info...very naughty
-        msg = lives_strdup_printf("Badly behaved plugin - %s %p %p %p %p\n", plugin_path, pi, plugin_info, host_info, expected_hi);
+        // filter switched the plugin_info...very naughty
+        msg = lives_strdup_printf("Badly behaved plugin - %s %p %p %p %p\n",
+                                  plugin_path, pi, plugin_info, host_info, expected_hi);
         LIVES_WARN(msg);
         lives_free(msg);
         if (pi) weed_plant_free(pi);

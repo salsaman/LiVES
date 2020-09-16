@@ -1140,7 +1140,6 @@ void create_LiVES(void) {
 
   // add RFX plugins
   mainw->rte_separator = mainw->custom_gens_menu = mainw->custom_gens_submenu = NULL;
-  mainw->rendered_fx = NULL;
   mainw->custom_tools_menu = NULL;
 
   if (!mainw->foreign) {

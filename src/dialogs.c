@@ -41,7 +41,7 @@ static ticks_t last_open_check_ticks;
 static ticks_t last_anim_ticks;
 static uint64_t spare_cycles, last_spare_cycles;
 static ticks_t last_kbd_ticks;
-static ticks_t last_cpuload_ticks = 0;
+//static ticks_t last_cpuload_ticks = 0;
 static frames_t getahead = -1, test_getahead = -1, bungle_frames;
 
 static boolean recalc_bungle_frames = 0;
@@ -1365,10 +1365,10 @@ int process_one(boolean visible) {
     mainw->actual_frame = sfile->frameno;
   }
 
-  if (mainw->wall_ticks > last_cpuload_ticks + 10 * TICKS_PER_SECOND_DBL) {
-    g_print("CPU LOAD IS %.4f\n", (double)get_cpu_load(0) / (double)MILLIONS(1));
-    last_cpuload_ticks = mainw->wall_ticks;
-  }
+  /* if (mainw->wall_ticks > last_cpuload_ticks + 10 * TICKS_PER_SECOND_DBL) { */
+  /*   g_print("CPU LOAD IS %.4f\n", (double)get_cpu_load(0) / 10000.); */
+  /*   last_cpuload_ticks = mainw->wall_ticks; */
+  /* } */
 
   mainw->audio_stretch = 1.0;
 

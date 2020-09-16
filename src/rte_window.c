@@ -409,90 +409,32 @@ write_failed1:
 
 
 static boolean on_save_keymap_clicked(LiVESButton *button, livespointer user_data) {
-  // save as keymap type 1 file - to allow backwards compatibility with older versions of LiVES
-  // default.keymap
-
-  // format is text
-  // key|hashname
-
-  // if we have per key defaults, then we add an extra file:
-  // default.keymap2
-
   // format is binary
   // (4 bytes key) (4 bytes hlen) (hlen bytes hashname) then a dump of the weed plant default values
 
-  // if we have data connections, we will save a third file
+  // if we have data connections, we will save a second file
 
-  FILE *kfile;
-  LiVESList *list = NULL;
-
-  char *msg, *tmp;
-  char *keymap_file = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE, NULL); // fx -> keys map
   char *keymap_file2 = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE2, NULL); // perkey defs
   char *keymap_file3 = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE3, NULL); // data connections
 
-  boolean update = FALSE;
-
-  int modes = rte_getmodespk();
-  int i, j;
-  int retval;
+  LiVESResponseType retval = LIVES_RESPONSE_NONE;
 
   if (button) {
     if (!do_warning_dialog(_("\n\nClick 'OK' to save this keymap as your default\n\n"))) {
       lives_free(keymap_file3);
       lives_free(keymap_file2);
-      lives_free(keymap_file);
       return FALSE;
     }
-    d_print(_("Saving keymap to %s\n"), keymap_file);
+    d_print(_("Saving keymap to %s\n"), keymap_file2);
   } else {
-    update = TRUE;
-    list = (LiVESList *)user_data;
-    if (!list) return FALSE;
-    d_print(_("\nUpdating keymap file %s..."), keymap_file);
+    d_print(_("\nUpdating keymap file %s..."), keymap_file2);
   }
 
-  do {
-    retval = 0;
-    if (!(kfile = fopen(keymap_file, "w"))) {
-      msg = lives_strdup_printf(_("\n\nUnable to write keymap file\n%s\nError was %s\n"), keymap_file, lives_strerror(errno));
-      retval = do_abort_cancel_retry_dialog(msg);
-      lives_free(msg);
-    } else {
-      lives_fputs("LiVES keymap file version 4\n", kfile);
-
-      if (!update) {
-        for (i = 1; i <= prefs->rte_keys_virtual; i++) {
-          for (j = 0; j < modes; j++) {
-            if (rte_keymode_valid(i, j, TRUE)) {
-              // TODO: use newer version with separator
-              lives_fputs(lives_strdup_printf("%d|Weed%s\n", i,
-                                              (tmp = make_weed_hashname(rte_keymode_get_filter_idx(i, j), TRUE, FALSE, 0, FALSE))), kfile);
-              lives_free(tmp);
-            }
-          }
-        }
-      } else {
-        for (i = 0; i < lives_list_length(list); i++) {
-          lives_fputs((char *)lives_list_nth_data(list, i), kfile);
-        }
-      }
-
-      fclose(kfile);
-    }
-
-    if (THREADVAR(write_failed)) {
-      retval = do_write_failed_error_s_with_retry(keymap_file, NULL);
-    }
-  } while (retval == LIVES_RESPONSE_RETRY);
-
   // if we have default values, save them
-  if (1 || has_key_defaults()) {
-    if (!save_keymap2_file(keymap_file2)) {
-      lives_rm(keymap_file2);
-      retval = LIVES_RESPONSE_CANCEL;
-    }
-  } else lives_rm(keymap_file2);
+  if (!save_keymap2_file(keymap_file2)) {
+    lives_rm(keymap_file2);
+    retval = LIVES_RESPONSE_CANCEL;
+  }
 
   // if we have data connections, save them
   if (mainw->pconx || mainw->cconx) {
@@ -504,7 +446,6 @@ static boolean on_save_keymap_clicked(LiVESButton *button, livespointer user_dat
 
   lives_free(keymap_file3);
   lives_free(keymap_file2);
-  lives_free(keymap_file);
 
   if (retval == LIVES_RESPONSE_CANCEL) d_print_file_error_failed();
   else d_print_done();
@@ -1532,12 +1473,15 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
 
     if (update > 0) {
       d_print(_("update required.\n"));
-      on_save_keymap_clicked(NULL, new_list);
+      on_save_keymap_clicked(NULL, NULL);
       lives_list_free_all(&new_list);
       on_load_keymap_clicked(NULL, NULL);
     } else d_print_done();
   } else {
     if (kfd != -1) lives_close_buffered(kfd);
+    if (prefs->startup_phase && notfound) {
+      on_save_keymap_clicked(NULL, NULL);
+    }
     d_print_done();
   }
 

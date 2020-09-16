@@ -105,7 +105,6 @@ LIVES_GLOBAL_INLINE LiVESResponseType get_string_prefd(const char *key, char *va
 
 LIVES_GLOBAL_INLINE LiVESResponseType get_pref_from_file(const char *filename, const char *key, char *val, int maxlen) {
   /// get from non-prefs
-  g_print("fetching %s, %s, %p\n", filename, key, mainw->gen_cache);
   return get_pref_inner(filename, key, val, maxlen, mainw->gen_cache);
 }
 

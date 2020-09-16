@@ -61,7 +61,7 @@ boolean save_frame_index(int fileno) {
 
   if (fileno == 0) return TRUE;
 
-  if (sfile == NULL || sfile->frame_index == NULL) return FALSE;
+  if (!sfile || !sfile->frame_index) return FALSE;
 
   fname = lives_build_filename(prefs->workdir, sfile->handle, FRAME_INDEX_FNAME "." LIVES_FILE_EXT_BACK, NULL);
   fname_new = lives_build_filename(prefs->workdir, sfile->handle, FRAME_INDEX_FNAME, NULL);
@@ -119,9 +119,9 @@ frames_t load_frame_index(int fileno) {
   int fd, retval;
   frames_t maxframe = -1;
 
-  register int i;
+  int i;
 
-  if (sfile == NULL || sfile->frame_index != NULL) return -1;
+  if (!sfile || sfile->frame_index) return -1;
 
   lives_freep((void **)&sfile->frame_index);
 
@@ -240,12 +240,10 @@ void del_frame_index(lives_clip_t *sfile) {
 
   char *idxfile;
 
-  register int i;
-
   // cannot call check_if_non_virtual() else we end up recursing
 
-  if (sfile->frame_index != NULL) {
-    for (i = 1; i <= sfile->frames; i++) {
+  if (sfile->frame_index) {
+    for (frames_t i = 1; i <= sfile->frames; i++) {
       if (sfile->frame_index[i - 1] != -1) {
         LIVES_ERROR("deleting frame_index with virtual frames in it !");
         return;
@@ -264,7 +262,7 @@ void del_frame_index(lives_clip_t *sfile) {
 
 
 static frames_t scan_frames(lives_clip_t *sfile, frames_t vframes, frames_t last_real_frame) {
-  register frames_t i;
+  frames_t i;
   for (i = 0; i < sfile->frames; i++) {
     // assume all real frames up to last_real_frame are there
     if ((sfile->frame_index[i] == -1 && i >= last_real_frame) || (sfile->frame_index[i] > vframes)) return i;
@@ -277,7 +275,7 @@ lives_img_type_t resolve_img_type(lives_clip_t *sfile) {
   lives_img_type_t ximgtype;
   int nimty = (int)N_IMG_TYPES;
   char *fname;
-  for (int i = sfile->frames - 1; i >= 0; i--) {
+  for (frames_t i = sfile->frames - 1; i >= 0; i--) {
     if (!sfile->frame_index || sfile->frame_index[i] == -1) {
       for (int j = 1; j < nimty; j++) {
         ximgtype = (lives_img_type_t)j;
@@ -440,7 +438,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
         }
         lives_free(fname);
       } else {
-        if (cdata != NULL && fr != -1) {
+        if (cdata && fr != -1) {
           lgoodframe = fr;
           goodidx = i;
 	  // *INDENT-OFF*
@@ -567,7 +565,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
 	  lives_free(fname);
 	}}}}
   // *INDENT-ON*
-  if (cdata != NULL && (fabs(sfile->fps - (double)cdata->fps) > prefs->fps_tolerance)) {
+  if (cdata && (fabs(sfile->fps - (double)cdata->fps) > prefs->fps_tolerance)) {
     if (prefs->show_dev_opts) {
       g_printerr("fps mismtach, claimed %f, cdata said %f\n", sfile->fps, cdata->fps);
     }
@@ -627,11 +625,10 @@ frames_t first_virtual_frame(int fileno, frames_t start, frames_t end) {
   // check all franes in frame_index betweem start and end inclusive
   // if we find a virtual frame, we stop checking and return the frame number
   // if all are non - virtual we return 0
-  register frames_t i;
   lives_clip_t *sfile = mainw->files[fileno];
 
-  if (sfile->frame_index == NULL) return  0;
-  for (i = start; i <= end; i++) {
+  if (!sfile->frame_index) return  0;
+  for (frames_t i = start; i <= end; i++) {
     if (sfile->frame_index[i - 1] != -1) return i;
   }
 
@@ -647,8 +644,8 @@ boolean check_if_non_virtual(int fileno, frames_t start, frames_t end) {
 
   // also may change the clip_type and the interlace
 
-  register frames_t i;
   lives_clip_t *sfile = mainw->files[fileno];
+  frames_t i;
 
   if (sfile->clip_type != CLIP_TYPE_FILE) return TRUE;
 
@@ -690,7 +687,7 @@ static boolean save_decoded(int fileno, frames_t i, LiVESPixbuf * pixbuf, boolea
   do {
     retval = LIVES_RESPONSE_NONE;
     retb = lives_pixbuf_save(pixbuf, oname, sfile->img_type, 100 - prefs->ocp, sfile->hsize, sfile->vsize, &error);
-    if (error != NULL && !silent) {
+    if (error && !silent) {
       retval = do_write_failed_error_s_with_retry(oname, error->message);
       lives_error_free(error);
       error = NULL;
@@ -726,11 +723,11 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
 
   // return FALSE on write error
 
-  register frames_t i;
   lives_clip_t *sfile = mainw->files[sfileno];
   LiVESPixbuf *pixbuf = NULL;
   lives_proc_thread_t tinfo = THREADVAR(tinfo);
   int progress = 1, count = 0;
+  frames_t i;
 
   if (tinfo) lives_proc_thread_set_cancellable(tinfo);
 
@@ -893,10 +890,9 @@ void insert_images_in_virtual(int sfileno, frames_t where, frames_t frames, fram
 
   char *what;
   frames_t nframes = sfile->frames;
+  frames_t i, j = start - 1;
 
-  register frames_t i, j = start - 1;
-
-  if (sfile->frame_index == NULL) return;
+  if (!sfile->frame_index) return;
 
   what = (_("creating the new frame index for the clip"));
   lives_freep((void **)&sfile->frame_index_back);
@@ -907,7 +903,7 @@ void insert_images_in_virtual(int sfileno, frames_t where, frames_t frames, fram
   do {
     response = LIVES_RESPONSE_OK;
     create_frame_index(sfileno, FALSE, 0, nframes + frames);
-    if (sfile->frame_index == NULL) {
+    if (!sfile->frame_index) {
       response = do_memory_error_dialog(what, (nframes + frames) * sizeof(frames_t));
     }
   } while (response == LIVES_RESPONSE_RETRY);
@@ -921,7 +917,7 @@ void insert_images_in_virtual(int sfileno, frames_t where, frames_t frames, fram
   lives_memcpy(sfile->frame_index, sfile->frame_index_back, where * sizeof(frames_t));
 
   for (i = where; i < where + frames; i++) {
-    if (frame_index != NULL && frame_index[j] != -1) sfile->frame_index[i] = frame_index[j];
+    if (frame_index && frame_index[j] != -1) sfile->frame_index[i] = frame_index[j];
     else sfile->frame_index[i] = -1;
     if (++j >= sfile->frames) j = 0;
   }
@@ -961,7 +957,7 @@ void delete_frames_from_virtual(int sfileno, frames_t start, frames_t end) {
   do {
     response = LIVES_RESPONSE_OK;
     create_frame_index(sfileno, FALSE, 0, nframes - frames);
-    if (sfile->frame_index == NULL) {
+    if (!sfile->frame_index) {
       response = do_memory_error_dialog(what, (nframes - frames) * sizeof(frames_t));
     }
   } while (response == LIVES_RESPONSE_RETRY);
@@ -985,11 +981,10 @@ void reverse_frame_index(int sfileno) {
   // reverse order of (virtual) frames in clip (only used fro clipboard)
   lives_clip_t *sfile = mainw->files[sfileno];
   int bck;
-  register frames_t i;
 
-  if (sfile == NULL || sfile->frame_index == NULL) return;
+  if (!sfile || !sfile->frame_index) return;
 
-  for (i = 0; i < sfile->frames >> 1; i++) {
+  for (frames_t i = 0; i < sfile->frames >> 1; i++) {
     bck = sfile->frame_index[i];
     sfile->frame_index[i] = sfile->frame_index[sfile->frames - 1 - i];
     sfile->frame_index[sfile->frames - 1 - i] = bck;
@@ -1012,7 +1007,7 @@ void restore_frame_index_back(int sfileno) {
   sfile->frame_index = sfile->frame_index_back;
   sfile->frame_index_back = NULL;
 
-  if (sfile->frame_index != NULL) {
+  if (sfile->frame_index) {
     sfile->clip_type = CLIP_TYPE_FILE;
     save_frame_index(sfileno);
   } else {
@@ -1035,12 +1030,11 @@ void clean_images_from_virtual(lives_clip_t *sfile, frames_t oldsframe, frames_t
 
   // the only purpose of this is to reclaim disk space
 
-  register frames_t i;
   char *iname = NULL;
 
-  if (sfile == NULL || sfile->frame_index == NULL) return;
+  if (!sfile || !sfile->frame_index) return;
 
-  for (i = oldsframe; i <= oldframes; i++) {
+  for (frames_t i = oldsframe; i <= oldframes; i++) {
     threaded_dialog_spin(0.);
     if ((i <= sfile->frames && sfile->frame_index[i - 1] != -1) || i > sfile->frames) {
       iname = make_image_file_name(sfile, i, get_image_ext_for_type(sfile->img_type));
@@ -1071,7 +1065,7 @@ boolean is_virtual_frame(int sfileno, frames_t frame) {
 
   lives_clip_t *sfile = mainw->files[sfileno];
   if (!IS_VALID_CLIP(sfileno)) return FALSE;
-  if (sfile->frame_index == NULL) return FALSE;
+  if (!sfile->frame_index) return FALSE;
   if (frame < 1 || frame > sfile->frames) return FALSE;
   if (sfile->frame_index[frame - 1] != -1) return TRUE;
   return FALSE;
@@ -1090,11 +1084,11 @@ void insert_blank_frames(int sfileno, frames_t nframes, frames_t after, int pale
   char nname[PATH_MAX];
   char *tmp;
 
-  register frames_t i;
+  frames_t i;
 
   if (first_virtual_frame(sfileno, 1, sfile->frames) != 0) {
     for (i = after + 1; i <= sfile->frames; i++) {
-      if (sfile->frame_index == NULL || sfile->frame_index[i - 1] == -1) {
+      if (!sfile->frame_index || sfile->frame_index[i - 1] == -1) {
         tmp = make_image_file_name(sfile, i, get_image_ext_for_type(sfile->img_type));
         lives_snprintf(oname, PATH_MAX, "%s", tmp);
         lives_free(tmp);
@@ -1113,9 +1107,9 @@ void insert_blank_frames(int sfileno, frames_t nframes, frames_t after, int pale
     tmp = make_image_file_name(sfile, i + 1, get_image_ext_for_type(sfile->img_type));
     lives_snprintf(oname, PATH_MAX, "%s", tmp);
     lives_free(tmp);
-    if (blankp == NULL) blankp = lives_pixbuf_new_blank(sfile->hsize, sfile->vsize, palette);
+    if (!blankp) blankp = lives_pixbuf_new_blank(sfile->hsize, sfile->vsize, palette);
     lives_pixbuf_save(blankp, oname, sfile->img_type, 100 - prefs->ocp, sfile->hsize, sfile->vsize, &error);
-    if (error != NULL) {
+    if (error) {
       char *msg = lives_strdup_printf(_("Padding: Unable to write blank frame with size %d x %d to %s"),
                                       sfile->hsize, sfile->vsize, oname);
       LIVES_ERROR(msg);
@@ -1132,7 +1126,7 @@ void insert_blank_frames(int sfileno, frames_t nframes, frames_t after, int pale
 
   sfile->frames += nframes;
 
-  if (blankp != NULL) lives_widget_object_unref(blankp);
+  if (blankp) lives_widget_object_unref(blankp);
 }
 
 

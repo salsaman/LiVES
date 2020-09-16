@@ -938,6 +938,7 @@ off_t reget_afilesize_inner(int fileno) {
   lives_sync(1);
   filesize = sget_file_size(afile);
   lives_free(afile);
+  if (filesize < 0) filesize = 0;
   return filesize;
 }
 
@@ -3180,6 +3181,7 @@ double get_disk_load(const char *mp) {
 int64_t get_cpu_load(int cpun) {
   /// return reported load for CPU cpun (% * 1 million)
   /// as a bonus, if cpun == -1, returns boot time
+  static uint64_t lidle = 0, lsum = 0;
   int64_t ret = -1;
   char *res, *target, *com;
   if (cpun > 0) target = lives_strdup_printf("cpu%d", --cpun);
@@ -3205,9 +3207,13 @@ int64_t get_cpu_load(int cpun) {
 	uint64_t iowait = atoll(array[5]);
 	uint64_t irq = atoll(array[6]);
 	uint64_t softirq = atoll(array[7]);
-	double load =
-	  ((double)idle * 100.) / (double)(user + nice + sys + idle + iowait + irq + softirq);
-	ret = load * (double)MILLIONS(1);
+	uint64_t sum = user + nice + sys + idle + iowait + irq + softirq;
+	if (lsum) {
+	  double load = 1. - (double)(idle - lidle) / (double)(sum - lsum);
+	  ret = load * (double)MILLIONS(1);
+	}
+	lsum = sum;
+	lidle = idle;
       }
       lives_strfreev(array);
     }

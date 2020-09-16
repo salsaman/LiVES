@@ -588,6 +588,8 @@ enum {
 #define LIVES_DEF_CONFIG_DIR ".config" ///< in $HOME : used once to set configfile, and then discarded
 #define LIVES_DEF_CONFIG_FILE "settings" ///< in LIVES_DEF_CONFIG_DIR unless overridden
 
+#define LIVES_DEF_CONFIG_FILE_OLD ".lives" ///< pre 3.2.0
+
 #define STOCK_ICONS_DIR "stock-icons"
 
 #define LIVES_DEVICEMAP_DIR "devicemaps"

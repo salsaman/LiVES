@@ -2956,6 +2956,8 @@ capability *get_capabilities(void) {
   // get capabilities of backend system
   char **array;
   char *msg, *tmp;
+  char *newconfigfile = NULL;
+
   char buffer[PATH_MAX * 4];
   char command[PATH_MAX * 4];
   char dir[PATH_MAX];
@@ -2972,10 +2974,9 @@ capability *get_capabilities(void) {
   buffer[0] = '\0';
   command[0] = '\0';
 
-  capable->has_perl = FALSE;
-  if (!has_executable(EXEC_PERL))
-    return capable;
-  capable->has_perl = TRUE;
+  capable->has_perl = UNCHECKED;
+  if (!has_executable(EXEC_PERL)) return capable;
+  capable->has_perl = PRESENT;
 
   // this is _compile time_ bits, not runtime bits
   capable->cpu_bits = (sizeof(void *)) * 8;
@@ -3042,6 +3043,8 @@ capability *get_capabilities(void) {
   if (!*capable->backend_path) return capable;
   capable->has_smogrify = PRESENT;
 
+retry_configfile:
+
   if (!mainw->has_session_workdir) {
     lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -CONFIGFILE=\"%s\" --", EXEC_PERL, capable->backend_path,
                    prefs->configfile);
@@ -3053,49 +3056,51 @@ capability *get_capabilities(void) {
     lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
   }
 
-  capable->has_smogrify = UNCHECKED;
-  lives_snprintf(command, PATH_MAX * 4, "%s version", prefs->backend_sync);
+  if (!newconfigfile) {
+    capable->has_smogrify = UNCHECKED;
+    lives_snprintf(command, PATH_MAX * 4, "%s version", prefs->backend_sync);
 
-  lives_popen(command, TRUE, buffer, PATH_MAX * 4);
+    lives_popen(command, TRUE, buffer, PATH_MAX * 4);
 
-  if (THREADVAR(com_failed)) {
-    return capable;
-  }
+    if (THREADVAR(com_failed)) {
+      return capable;
+    }
 
-  xs = strlen(buffer);
-  if (xs < 5) return capable;
+    xs = lives_strlen(buffer);
+    if (xs < 5) return capable;
 
-  if (buffer[xs - 1] == '\n') buffer[xs - 1] = 0;
-  numtok = get_token_count(buffer, ' ') ;
-  if (numtok < 2) return capable;
+    lives_chomp(buffer);
+    numtok = get_token_count(buffer, ' ') ;
+    if (numtok < 2) return capable;
 
-  array = lives_strsplit(buffer, " ", numtok);
-  if (strcmp(array[0], "smogrify")) {
+    array = lives_strsplit(buffer, " ", numtok);
+    if (strcmp(array[0], "smogrify")) {
+      lives_strfreev(array);
+      return capable;
+    }
+
+    capable->has_smogrify = PRESENT;
+    capable->smog_version_correct = FALSE;
+
+    if (strcmp(array[1], LiVES_VERSION)) {
+      msg = lives_strdup_printf("Version mismatch: smogrify = %s, LiVES = %s\n", array[1], LiVES_VERSION);
+      LIVES_ERROR(msg);
+      lives_free(msg);
+      lives_strfreev(array);
+      return capable;
+    }
+
     lives_strfreev(array);
-    return capable;
+    capable->smog_version_correct = TRUE;
   }
-
-  capable->has_smogrify = PRESENT;
-  capable->smog_version_correct = FALSE;
-
-  if (strcmp(array[1], LiVES_VERSION)) {
-    msg = lives_strdup_printf("Version mismatch: smogrify = %s, LiVES = %s\n", array[1], LiVES_VERSION);
-    LIVES_ERROR(msg);
-    lives_free(msg);
-    lives_strfreev(array);
-    return capable;
-  }
-
-  lives_strfreev(array);
-  capable->smog_version_correct = TRUE;
 
   lives_snprintf(command, PATH_MAX * 4, "%s report -", prefs->backend_sync);
 
   // check_settings:
 
-  capable->has_smogrify = FALSE;
+  capable->has_smogrify = UNCHECKED;
   lives_popen(command, TRUE, buffer, PATH_MAX * 4);
-  if (THREADVAR(com_failed) || strlen(buffer) < 6) return capable;
+  if (THREADVAR(com_failed) || lives_strlen(buffer) < 6) return capable;
   capable->has_smogrify = PRESENT;
 
   numtok = get_token_count(buffer, '|');
@@ -3106,32 +3111,34 @@ capability *get_capabilities(void) {
 
   array = lives_strsplit(buffer, "|", numtok);
 
-  if (!strcmp(array[0], "smogrify::error")) {
-    LIVES_ERROR(buffer);
-    if (!strcmp(array[1], "config_get")) {
-      lives_strfreev(array);
-      capable->can_read_from_config = FALSE;
+  if (!newconfigfile) {
+    if (!strcmp(array[0], "smogrify::error")) {
+      LIVES_ERROR(buffer);
+      if (!strcmp(array[1], "config_get")) {
+        lives_strfreev(array);
+        capable->can_read_from_config = FALSE;
+        return capable;
+      }
+      if (!strcmp(array[1], "config_set_new")) {
+        lives_strfreev(array);
+        capable->can_write_to_config_new = FALSE;
+        return capable;
+      }
+      if (!strcmp(array[1], "config_set_rec")) {
+        lives_strfreev(array);
+        capable->can_write_to_config_backup = FALSE;
+        return capable;
+      }
+      if (!strcmp(array[1], "config_set")) {
+        lives_strfreev(array);
+        capable->can_write_to_config = FALSE;
+        return capable;
+      }
+      // other unspecified error
+      mainw->error = TRUE;
+      lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%s", buff);
       return capable;
     }
-    if (!strcmp(array[1], "config_set_new")) {
-      lives_strfreev(array);
-      capable->can_write_to_config_new = FALSE;
-      return capable;
-    }
-    if (!strcmp(array[1], "config_set_rec")) {
-      lives_strfreev(array);
-      capable->can_write_to_config_backup = FALSE;
-      return capable;
-    }
-    if (!strcmp(array[1], "config_set")) {
-      lives_strfreev(array);
-      capable->can_write_to_config = FALSE;
-      return capable;
-    }
-    // other unspecified error
-    mainw->error = TRUE;
-    lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%s", buff);
-    return capable;
   }
 
   // the startup phase
@@ -3141,6 +3148,22 @@ capability *get_capabilities(void) {
   // then finally gets set to 100, which instructs the backend to remove this preference, and return 0
   initial_startup_phase = prefs->startup_phase = atoi(array[2]);
 
+  if (!newconfigfile) {
+    if (initial_startup_phase == -1 && !ign_opts.ign_configfile) {
+      /// if no configfile:
+      /// check for migration:
+      /// if $HOME/.lives exists, get the verhash from it
+      char *oldconfig  = lives_build_filename(capable->home_dir, LIVES_DEF_CONFIG_FILE_OLD, NULL);
+      if (lives_file_test(oldconfig, LIVES_FILE_TEST_EXISTS)) {
+        lives_strfreev(array);
+        newconfigfile = lives_strdup(prefs->configfile);
+        lives_snprintf(prefs->configfile, PATH_MAX, "%s", oldconfig);
+        lives_free(oldconfig);
+        goto retry_configfile;
+      }
+      lives_free(oldconfig);
+    }
+  }
   // hash of last version used,
   // or 0 if rcfile existed, but we couldn't extract a version
   if (numtok > 3) {
@@ -3155,19 +3178,29 @@ capability *get_capabilities(void) {
     old_vhash = lives_strdup("unrecoverable");
   } else {
     old_vhash = lives_strdup(mainw->old_vhash);
+
+    if (newconfigfile && *newconfigfile) {
+      /// if < 3200000, offer to migrate .lives and .lives-dir
+      /// $HOME/.lives.* files -> $HOME/.local/config/lives/settings.*
+      /// then if $HOME/.lives-dir exists, move contents to $HOME/.local/share/lives
+      /// then goto check_settings
+    }
+  }
+
+  if (newconfigfile) {
+    if (*newconfigfile) {
+      lives_strfreev(array);
+      lives_snprintf(prefs->configfile, PATH_MAX, "%s", newconfigfile);
+      lives_free(newconfigfile);
+      newconfigfile = lives_strdup("");
+      goto retry_configfile;
+    } else {
+      lives_free(newconfigfile);
+      newconfigfile = NULL;
+    }
   }
 
   lives_snprintf(dir, PATH_MAX, "%s", array[1]);
-  break_me("stph");
-  if (initial_startup_phase != 0 && initial_startup_phase < 4) {
-    /// if no configfile:
-    /// check for migration:
-    /// if $HOME/.lives exists, get the verhash from it
-    /// if < 3200000, offer to migrate .lives and .lives-dir
-    /// $HOME/.lives.* files -> $HOME/.local/config/lives/settings.*
-    /// then if $HOME/.lives-dir exists, move contents to $HOME/.local/share/lives
-    /// then goto check_settings
-  }
 
   if (!mainw->has_session_workdir) {
     size_t dirlen = lives_strlen(dir);

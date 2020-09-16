@@ -1254,7 +1254,7 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
   if (!pulsed->in_use || (mainw->playing_file < 0 && prefs->audio_src == AUDIO_SRC_EXT) || mainw->effects_paused) {
     pa_stream_peek(pulsed->pstream, (const void **)&data, &rbytes);
     if (rbytes > 0) {
-      g_print("PVAL %d\n", (*(uint8_t *)data & 0x80) >> 7);
+      //g_print("PVAL %d\n", (*(uint8_t *)data & 0x80) >> 7);
       pa_stream_drop(pulsed->pstream);
     }
     prb = 0;

@@ -233,7 +233,6 @@ static int init_display(_sdata *sd) {
   sd->win = SDL_CreateWindow("projectM", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, defwidth, defheight,
                              SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN);
   sd->glCtx = SDL_GL_CreateContext(sd->win);
-
 #else
   if (resize_display(defwidth, defheight)) return 3;
 #endif
@@ -449,7 +448,7 @@ static void *worker(void *data) {
   settings.windowWidth = sd->width;
   settings.windowHeight = sd->height;
   settings.meshX = sd->width / 64;
-  settings.meshY = settings.meshX * hwratio;
+  settings.meshY = ((int)(settings.meshX * hwratio + 1) >> 1) << 1;
   settings.fps = sd->fps;
   settings.smoothPresetDuration = 2.;
   settings.presetDuration = 60;
@@ -458,8 +457,14 @@ static void *worker(void *data) {
   settings.softCutRatingsEnabled = 1;
   settings.shuffleEnabled = 0;
   settings.presetURL = "/usr/share/projectM/presets";
-  settings.menuFontURL = "/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf";
-  settings.titleFontURL = "/usr/share/fonts/truetype/ttf-dejavu/DejaVuSansMono.ttf";
+
+  if (!access("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf", R_OK)) {
+    settings.menuFontURL = "/usr/share/fonts/truetype/ttf-dejavu/DejaVuSansMono.ttf";
+    settings.titleFontURL = "/usr/share/fonts/truetype/ttf-dejavu/DejaVuSansMono.ttf";
+  } else {
+    settings.menuFontURL = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf";
+    settings.titleFontURL = "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf";
+  }
   settings.easterEgg = 1;
 
   if (sd->width >= sd->height)
@@ -927,6 +932,11 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
 
 
 WEED_SETUP_START(200, 200) {
+  if (access("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", R_OK)
+      && access("/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf", R_OK)) {
+    return NULL;
+  }
+
   int palette_list[] = {WEED_PALETTE_RGBA32, WEED_PALETTE_RGB24, WEED_PALETTE_BGRA32,
                         WEED_PALETTE_BGR24, WEED_PALETTE_END
                        };
@@ -934,7 +944,8 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *in_params[] = {weed_string_list_init("preset", "_Preset", 0, xlist), NULL};
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("In audio", WEED_CHANNEL_OPTIONAL), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
-  weed_plant_t *filter_class = weed_filter_class_init("projectM", "salsaman/projectM authors", 1, 0, palette_list, projectM_init,
+  weed_plant_t *filter_class = weed_filter_class_init("projectM", "salsaman/projectM authors", 1,
+                               WEED_FILTER_PREF_LINEAR_GAMMA, palette_list, projectM_init,
                                projectM_process, projectM_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
   weed_plant_t *gui = weed_paramtmpl_get_gui(in_params[0]);
   weed_gui_set_flags(gui, WEED_GUI_CHOICES_SET_ON_INIT);

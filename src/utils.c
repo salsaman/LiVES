@@ -57,7 +57,7 @@ static int get_hex_digit(const char c) GNU_CONST;
 **/
 char *filename_from_fd(char *val, int fd) {
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
-  if (fbuff != NULL) {
+  if (fbuff) {
     return lives_strdup(fbuff->pathname);
   } else {
     char *fdpath;
@@ -81,7 +81,7 @@ char *filename_from_fd(char *val, int fd) {
     if (stat(rfdpath, &stb1)) return val;
     if (stb0.st_dev != stb1.st_dev) return val;
     if (stb0.st_ino != stb1.st_ino) return val;
-    if (val != NULL) lives_free(val);
+    if (val) lives_free(val);
     return lives_strdup(rfdpath);
   }
 }
@@ -120,7 +120,7 @@ LIVES_GLOBAL_INLINE boolean lives_setenv(const char *name, const char *value) {
 #if IS_IRIX
   int len  = strlen(name) + strlen(value) + 2;
   char *env = malloc(len);
-  if (env != NULL) {
+  if (env) {
     strcpy(env, name);
     strcat(env, "=");
     strcat(env, val);
@@ -141,8 +141,8 @@ int lives_system(const char *com, boolean allow_error) {
   //g_print("doing: %s\n",com);
 
   if (mainw && mainw->is_ready && !mainw->is_exiting &&
-      ((mainw->multitrack == NULL && mainw->cursor_style == LIVES_CURSOR_NORMAL) ||
-       (mainw->multitrack != NULL && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL))) {
+      ((!mainw->multitrack && mainw->cursor_style == LIVES_CURSOR_NORMAL) ||
+       (mainw->multitrack && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL))) {
     cnorm = TRUE;
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
     /*   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET); */
@@ -172,7 +172,7 @@ int lives_system(const char *com, boolean allow_error) {
         LIVES_DEBUG(msg);
       }
 #endif
-      if (msg != NULL) lives_free(msg);
+      if (msg) lives_free(msg);
     }
   } while (response == LIVES_RESPONSE_RETRY);
 
@@ -212,8 +212,8 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t bu
   //g_print("doing: %s\n",com);
 
   if (mainw && mainw->is_ready && !mainw->is_exiting &&
-      ((mainw->multitrack == NULL && mainw->cursor_style == LIVES_CURSOR_NORMAL) ||
-       (mainw->multitrack != NULL && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL))) {
+      ((!mainw->multitrack && mainw->cursor_style == LIVES_CURSOR_NORMAL) ||
+       (mainw->multitrack && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL))) {
     cnorm = TRUE;
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
     //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
@@ -255,7 +255,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t bu
       THREADVAR(com_failed) = TRUE;
       if (!allow_error) {
         msg = lives_strdup_printf("lives_popen failed after %ld bytes with code %d: %s",
-                                  strg == NULL ? 0 : lives_strlen(strg), err, com);
+                                  !strg ? 0 : lives_strlen(strg), err, com);
         LIVES_ERROR(msg);
         response = do_system_failed_error(com, err, NULL, TRUE, FALSE);
       }
@@ -265,7 +265,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t bu
         LIVES_DEBUG(msg);
       }
 #endif
-      if (msg != NULL) lives_free(msg);
+      if (msg) lives_free(msg);
     }
   } while (response == LIVES_RESPONSE_RETRY);
 
@@ -331,7 +331,7 @@ ssize_t lives_write(int fd, const void *buf, ssize_t count, boolean allow_fail) 
       lives_free(ffile);
     }
 #endif
-    if (msg != NULL) lives_free(msg);
+    if (msg) lives_free(msg);
   }
   return retval;
 }
@@ -392,7 +392,7 @@ lives_file_buffer_t *find_in_file_buffers(int fd) {
   lives_file_buffer_t *fbuff;
   LiVESList *fblist = mainw->file_buffers;
 
-  while (fblist != NULL) {
+  while (fblist) {
     fbuff = (lives_file_buffer_t *)fblist->data;
     if (fbuff->fd == fd) return fbuff;
     fblist = fblist->next;
@@ -428,7 +428,7 @@ static void do_file_read_error(int fd, ssize_t errval, void *buff, ssize_t count
     msg = lives_strdup_printf("Read failed with error %"PRId64" in: %s (%s)", (int64_t)errval,
                               THREADVAR(read_failed_file),
 #ifdef HAVE_LIBEXPLAIN
-                              buff != NULL ? explain_read(fd, buff, count) : ""
+                              buff ? explain_read(fd, buff, count) : ""
 #else
                               ""
 #endif
@@ -517,7 +517,7 @@ static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
   // returns number of bytes written to file io, or error code
   ssize_t res = 0;
 
-  if (fbuff->buffer != NULL) res = lives_write(fbuff->fd, fbuff->buffer, fbuff->bytes, fbuff->allow_fail);
+  if (fbuff->buffer) res = lives_write(fbuff->fd, fbuff->buffer, fbuff->bytes, fbuff->allow_fail);
   //g_print("writing %ld bytes to %d\n", fbuff->bytes, fbuff->fd);
 
   if (!fbuff->allow_fail && res < fbuff->bytes) {
@@ -539,7 +539,7 @@ static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
 void lives_invalidate_all_file_buffers(void) {
   lives_file_buffer_t *fbuff;
   LiVESList *fbuffer = mainw->file_buffers;
-  for (; fbuffer != NULL; fbuffer = fbuffer->next) {
+  for (; fbuffer; fbuffer = fbuffer->next) {
     fbuff = (lives_file_buffer_t *)fbuffer->data;
     // if a writer, flush
     if (!fbuff->read && mainw->memok) {
@@ -771,10 +771,10 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, ssize_t min) {
   if (fbuff->reversed) delta = (bufsize >> 2) * 3;
   if (delta > fbuff->offset) delta = fbuff->offset;
   if (bufsize - delta < min) bufsize = min + delta;
-  if (fbuff->buffer != NULL && bufsize > fbuff->ptr - fbuff->buffer + fbuff->bytes) {
+  if (fbuff->buffer && bufsize > fbuff->ptr - fbuff->buffer + fbuff->bytes) {
     lives_freep((void **)&fbuff->buffer);
   }
-  if (fbuff->buffer == NULL || fbuff->ptr == NULL) {
+  if (!fbuff->buffer || !fbuff->ptr) {
     fbuff->buffer = (uint8_t *)lives_calloc_safety(bufsize >> 1, 2);
   }
   fbuff->offset -= delta;
@@ -1393,7 +1393,7 @@ int lives_chdir(const char *path, boolean no_error_dlg) {
 LIVES_GLOBAL_INLINE boolean lives_freep(void **ptr) {
   // free a pointer and nullify it, only if it is non-null to start with
   // pass the address of the pointer in
-  if (ptr != NULL && *ptr != NULL) {
+  if (ptr && *ptr) {
     lives_free(*ptr);
     *ptr = NULL;
     return TRUE;
@@ -1447,6 +1447,8 @@ LIVES_GLOBAL_INLINE uint64_t get_near2pow(uint64_t val) {
   if (high < low || (val - low < high - val)) return low;
   return high;
 }
+
+///////////////////////////////////////////////////////////
 
 static lives_time_source_t lastt = LIVES_TIME_SOURCE_NONE;
 static ticks_t delta = 0;
@@ -1507,9 +1509,9 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
 
 #ifdef ENABLE_JACK
       if (prefs->audio_player == AUD_PLAYER_JACK &&
-          ((prefs->audio_src == AUDIO_SRC_INT && mainw->jackd != NULL && mainw->jackd->in_use &&
+          ((prefs->audio_src == AUDIO_SRC_INT && mainw->jackd && mainw->jackd->in_use &&
             IS_VALID_CLIP(mainw->jackd->playing_file) && mainw->files[mainw->jackd->playing_file]->achans > 0) ||
-           (prefs->audio_src == AUDIO_SRC_EXT && mainw->jackd_read != NULL && mainw->jackd_read->in_use))) {
+           (prefs->audio_src == AUDIO_SRC_EXT && mainw->jackd_read && mainw->jackd_read->in_use))) {
         *tsource = LIVES_TIME_SOURCE_SOUNDCARD;
         if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
           current = lives_jack_get_time(mainw->jackd_read);
@@ -1520,9 +1522,9 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
 
 #ifdef HAVE_PULSE_AUDIO
       if (prefs->audio_player == AUD_PLAYER_PULSE &&
-          ((prefs->audio_src == AUDIO_SRC_INT && mainw->pulsed != NULL && mainw->pulsed->in_use &&
+          ((prefs->audio_src == AUDIO_SRC_INT && mainw->pulsed && mainw->pulsed->in_use &&
             IS_VALID_CLIP(mainw->pulsed->playing_file) && mainw->files[mainw->pulsed->playing_file]->achans > 0) ||
-           (prefs->audio_src == AUDIO_SRC_EXT && mainw->pulsed_read != NULL && mainw->pulsed_read->in_use))) {
+           (prefs->audio_src == AUDIO_SRC_EXT && mainw->pulsed_read && mainw->pulsed_read->in_use))) {
         *tsource = LIVES_TIME_SOURCE_SOUNDCARD;
         if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
           current = lives_pulse_get_time(mainw->pulsed_read);
@@ -1592,6 +1594,8 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
   return interticks + mainw->syncticks;
 }
 
+
+///////////////// alarms /////
 
 LIVES_GLOBAL_INLINE lives_alarm_t lives_alarm_reset(lives_alarm_t alarm_handle, ticks_t ticks) {
   // set to now + offset
@@ -1777,7 +1781,7 @@ static boolean check_for_audio_stop(int fileno, int first_frame, int last_frame)
   // return FALSE if audio stops playback
 
 #ifdef ENABLE_JACK
-  if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL && mainw->jackd->playing_file == fileno) {
+  if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd && mainw->jackd->playing_file == fileno) {
     if (!mainw->loop || mainw->playing_sel) {
       if (!mainw->loop_cont) {
         if (mainw->aframeno - 0.0001 < (double)first_frame + 0.0001
@@ -1796,7 +1800,7 @@ static boolean check_for_audio_stop(int fileno, int first_frame, int last_frame)
 
 #endif
 #ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL && mainw->pulsed->playing_file == fileno) {
+  if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed && mainw->pulsed->playing_file == fileno) {
     if (!mainw->loop || mainw->playing_sel) {
       if (!mainw->loop_cont) {
         if (mainw->aframeno - 0.0001 < (double)first_frame + 0.0001
@@ -1821,18 +1825,18 @@ static boolean check_for_audio_stop(int fileno, int first_frame, int last_frame)
 
 void calc_aframeno(int fileno) {
 #ifdef ENABLE_JACK
-  if (prefs->audio_player == AUD_PLAYER_JACK && ((mainw->jackd != NULL && mainw->jackd->playing_file == fileno) ||
-      (mainw->jackd_read != NULL && mainw->jackd_read->playing_file == fileno))) {
+  if (prefs->audio_player == AUD_PLAYER_JACK && ((mainw->jackd && mainw->jackd->playing_file == fileno) ||
+      (mainw->jackd_read && mainw->jackd_read->playing_file == fileno))) {
     // get seek_pos from jack
-    if (mainw->jackd_read != NULL) mainw->aframeno = lives_jack_get_pos(mainw->jackd_read) * cfile->fps + 1.;
+    if (mainw->jackd_read) mainw->aframeno = lives_jack_get_pos(mainw->jackd_read) * cfile->fps + 1.;
     else mainw->aframeno = lives_jack_get_pos(mainw->jackd) * cfile->fps + 1.;
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player == AUD_PLAYER_PULSE && ((mainw->pulsed != NULL && mainw->pulsed->playing_file == fileno) ||
-      (mainw->pulsed_read != NULL && mainw->pulsed_read->playing_file == fileno))) {
+  if (prefs->audio_player == AUD_PLAYER_PULSE && ((mainw->pulsed && mainw->pulsed->playing_file == fileno) ||
+      (mainw->pulsed_read && mainw->pulsed_read->playing_file == fileno))) {
     // get seek_pos from pulse
-    if (mainw->pulsed_read != NULL) mainw->aframeno = lives_pulse_get_pos(mainw->pulsed_read) * cfile->fps + 1.;
+    if (mainw->pulsed_read) mainw->aframeno = lives_pulse_get_pos(mainw->pulsed_read) * cfile->fps + 1.;
     else mainw->aframeno = lives_pulse_get_pos(mainw->pulsed) * cfile->fps + 1.;
   }
 #endif
@@ -1877,7 +1881,7 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   int nloops;
   int aplay_file = fileno;
 
-  if (sfile == NULL) return 0;
+  if (!sfile) return 0;
 
   cframe = sfile->last_frameno;
   if (norecurse) return cframe;
@@ -1885,12 +1889,12 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   if (sfile->achans > 0) {
 #ifdef HAVE_PULSE_AUDIO
     if (prefs->audio_player == AUD_PLAYER_PULSE) {
-      if (mainw->pulsed != NULL) aplay_file = mainw->pulsed->playing_file;
+      if (mainw->pulsed) aplay_file = mainw->pulsed->playing_file;
     }
 #endif
 #ifdef ENABLE_JACK
     if (prefs->audio_player == AUD_PLAYER_JACK) {
-      if (mainw->jackd != NULL) aplay_file = mainw->jackd->playing_file;
+      if (mainw->jackd) aplay_file = mainw->jackd->playing_file;
     }
 #endif
     if (!IS_VALID_CLIP(aplay_file)) aplay_file = -1;
@@ -1990,7 +1994,7 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
 
     if (nframe == cframe || mainw->foreign) {
       if (!mainw->foreign && fileno == mainw->playing_file &&
-          mainw->scratch == SCRATCH_JUMP && (mainw->event_list == NULL || mainw->record || mainw->record_paused) &&
+          mainw->scratch == SCRATCH_JUMP && (!mainw->event_list || mainw->record || mainw->record_paused) &&
           (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
         resync_audio(nframe);
         mainw->scratch = SCRATCH_JUMP_NORESYNC;
@@ -2239,7 +2243,7 @@ weed_plant_t *get_nth_info_message(int n) {
     m = mainw->n_messages - 1;
     msg = weed_get_plantptr_value(msg, WEED_LEAF_PREVIOUS, &error);
   }
-  if (mainw->ref_message != NULL && ABS(mainw->ref_message_n - n) < ABS(m - n)) {
+  if (mainw->ref_message && ABS(mainw->ref_message_n - n) < ABS(m - n)) {
     m = mainw->ref_message_n;
     msg = mainw->ref_message;
   }
@@ -2266,7 +2270,7 @@ char *dump_messages(int start, int end) {
   int msgno = 0;
   int error;
 
-  while (msg != NULL) {
+  while (msg) {
     msgtext = weed_get_string_value(msg, WEED_LEAF_LIVES_MESSAGE_STRING, &error);
     if (error != WEED_SUCCESS) break;
     if (msgno >= start) {
@@ -2291,7 +2295,7 @@ char *dump_messages(int start, int end) {
 static weed_plant_t *make_msg(const char *text) {
   // make single msg. text should have no newlines in it, except possibly as the last character.
   weed_plant_t *msg = weed_plant_new(WEED_PLANT_LIVES);
-  if (msg == NULL) return NULL;
+  if (!msg) return NULL;
 
   weed_set_int_value(msg, WEED_LEAF_LIVES_SUBTYPE, LIVES_WEED_SUBTYPE_MESSAGE);
   weed_set_string_value(msg, WEED_LEAF_LIVES_MESSAGE_STRING, text);
@@ -2307,31 +2311,31 @@ int free_n_msgs(int frval) {
   weed_plant_t *next, *end;
 
   if (frval <= 0) return WEED_SUCCESS;
-  if (frval > mainw->n_messages || mainw->msg_list == NULL) frval = mainw->n_messages;
+  if (frval > mainw->n_messages || !mainw->msg_list) frval = mainw->n_messages;
 
   end = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, &error); // list end
   if (error != WEED_SUCCESS) {
     return error;
   }
 
-  while (frval-- && mainw->msg_list != NULL) {
+  while (frval-- && mainw->msg_list) {
     next = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_NEXT, &error); // becomes new head
     if (error != WEED_SUCCESS) {
       return error;
     }
     weed_plant_free(mainw->msg_list);
     mainw->msg_list = next;
-    if (mainw->msg_list != NULL) {
+    if (mainw->msg_list) {
       if (mainw->msg_list == end) weed_set_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, NULL);
       else weed_set_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, end);
     }
     mainw->n_messages--;
-    if (mainw->ref_message != NULL) {
+    if (mainw->ref_message) {
       if (--mainw->ref_message_n < 0) mainw->ref_message = NULL;
     }
   }
 
-  if (mainw->msg_adj != NULL)
+  if (mainw->msg_adj)
     lives_adjustment_set_value(mainw->msg_adj, lives_adjustment_get_value(mainw->msg_adj) - 1.);
   return WEED_SUCCESS;
 }
@@ -2346,16 +2350,16 @@ int add_messages_to_list(const char *text) {
   int error, i, numlines;
 
   if (prefs->max_messages == 0) return WEED_SUCCESS;
-  if (text == NULL || !(*text)) return WEED_SUCCESS;
+  if (!text || !*text) return WEED_SUCCESS;
 
   // split text into lines
   numlines = get_token_count(text, '\n');
   lines = lives_strsplit(text, "\n", numlines);
 
   for (i = 0; i < numlines; i++) {
-    if (mainw->msg_list == NULL) {
+    if (!mainw->msg_list) {
       mainw->msg_list = make_msg(lines[i]);
-      if (mainw->msg_list == NULL) {
+      if (!mainw->msg_list) {
         mainw->n_messages = 0;
         lives_strfreev(lines);
         return WEED_ERROR_MEMORY_ALLOCATION;
@@ -2369,7 +2373,7 @@ int add_messages_to_list(const char *text) {
       lives_strfreev(lines);
       return error;
     }
-    if (end == NULL) end = mainw->msg_list;
+    if (!end) end = mainw->msg_list;
 
     if (i == 0) {
       // append first line to text of last msg
@@ -2392,14 +2396,14 @@ int add_messages_to_list(const char *text) {
         lives_strfreev(lines);
         return error;
       }
-      if (mainw->msg_list == NULL) {
+      if (!mainw->msg_list) {
         i = numlines - 2;
         continue;
       }
     }
 
     msg = make_msg(lines[i]);
-    if (msg == NULL) {
+    if (!msg) {
       lives_strfreev(lines);
       return WEED_ERROR_MEMORY_ALLOCATION;
     }
@@ -2483,8 +2487,8 @@ void d_print(const char *fmt, ...) {
   text = lives_strdup_vprintf(fmt, xargs);
   va_end(xargs);
 
-  if (mainw->current_file != mainw->last_dprint_file && mainw->current_file != 0 && mainw->multitrack == NULL &&
-      (mainw->current_file == -1 || (cfile != NULL && cfile->clip_type != CLIP_TYPE_GENERATOR)) && !mainw->no_switch_dprint) {
+  if (mainw->current_file != mainw->last_dprint_file && mainw->current_file != 0 && !mainw->multitrack &&
+      (mainw->current_file == -1 || (cfile && cfile->clip_type != CLIP_TYPE_GENERATOR)) && !mainw->no_switch_dprint) {
     if (mainw->current_file > 0) {
       char *swtext = lives_strdup_printf(_("\n==============================\nSwitched to clip %s\n"),
                                          tmp = get_menu_name(cfile,
@@ -2500,10 +2504,10 @@ void d_print(const char *fmt, ...) {
   add_messages_to_list(text);
   lives_free(text);
 
-  if (!mainw->go_away && prefs->show_gui && ((!mainw->multitrack && mainw->msg_area != NULL
-      && mainw->msg_adj != NULL)
-      || (!mainw->multitrack && mainw->multitrack->msg_area != NULL
-          && mainw->multitrack->msg_adj != NULL))) {
+  if (!mainw->go_away && prefs->show_gui && ((!mainw->multitrack && mainw->msg_area
+      && mainw->msg_adj)
+      || (!mainw->multitrack && mainw->multitrack->msg_area
+          && mainw->multitrack->msg_adj))) {
     if (mainw->multitrack) {
       msg_area_scroll_to_end(mainw->multitrack->msg_area, mainw->multitrack->msg_adj);
       lives_widget_queue_draw_if_visible(mainw->multitrack->msg_area);
@@ -2513,7 +2517,7 @@ void d_print(const char *fmt, ...) {
     }
   }
 
-  if ((mainw->current_file == -1 || (cfile != NULL && cfile->clip_type != CLIP_TYPE_GENERATOR)) &&
+  if ((mainw->current_file == -1 || (cfile && cfile->clip_type != CLIP_TYPE_GENERATOR)) &&
       (!mainw->no_switch_dprint || mainw->current_file != 0)) mainw->last_dprint_file = mainw->current_file;
 }
 
@@ -2563,9 +2567,9 @@ LIVES_GLOBAL_INLINE void d_print_enough(int frames) {
 void buffer_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer user_data, int clipno,
                        int frameno, double atime, boolean affects_current) {
   lmap_error *err = (lmap_error *)lives_malloc(sizeof(lmap_error));
-  if (err == NULL) return;
+  if (!err) return;
   err->type = lerror;
-  if (name != NULL) err->name = lives_strdup(name);
+  if (name) err->name = lives_strdup(name);
   else err->name = NULL;
   err->data = user_data;
   err->clipno = clipno;
@@ -2578,15 +2582,15 @@ void buffer_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
 
 void unbuffer_lmap_errors(boolean add) {
   LiVESList *list = mainw->new_lmap_errors;
-  while (list != NULL) {
+  while (list) {
     lmap_error *err = (lmap_error *)list->data;
     if (add) add_lmap_error(err->type, err->name, err->data, err->clipno, err->frameno, err->atime, err->current);
     else mainw->files[err->clipno]->tcache_dubious_from = 0;
-    if (err->name != NULL) lives_free(err->name);
+    if (err->name) lives_free(err->name);
     lives_free(err);
     list = list->next;
   }
-  if (mainw->new_lmap_errors != NULL) {
+  if (mainw->new_lmap_errors) {
     lives_list_free(mainw->new_lmap_errors);
     mainw->new_lmap_errors = NULL;
   }
@@ -2609,7 +2613,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
 
   lives_text_buffer_get_end_iter(LIVES_TEXT_BUFFER(mainw->layout_textbuffer), &end_iter);
 
-  if (affects_current && user_data == NULL) {
+  if (affects_current && !user_data) {
     mainw->affected_layout_marks = lives_list_append(mainw->affected_layout_marks,
                                    (livespointer)lives_text_buffer_create_mark
                                    (LIVES_TEXT_BUFFER(mainw->layout_textbuffer), NULL, &end_iter, TRUE));
@@ -2668,7 +2672,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
     break;
   }
 
-  if (affects_current && user_data != NULL) {
+  if (affects_current && user_data) {
     mainw->affected_layout_marks = lives_list_append(mainw->affected_layout_marks,
                                    (livespointer)lives_text_buffer_create_mark
                                    (LIVES_TEXT_BUFFER(mainw->layout_textbuffer), NULL, &end_iter, TRUE));
@@ -2677,7 +2681,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
   switch (lerror) {
   case LMAP_INFO_SETNAME_CHANGED:
     lmap = mainw->current_layouts_map;
-    while (lmap != NULL) {
+    while (lmap) {
       array = lives_strsplit((char *)lmap->data, "|", -1);
       text = lives_strdup_printf("%s\n", array[0]);
       lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer), &end_iter, text, -1);
@@ -2703,7 +2707,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
 
     }
     lmap = (LiVESList *)user_data;
-    while (lmap != NULL) {
+    while (lmap) {
       array = lives_strsplit((char *)lmap->data, "|", -1);
       text = lives_strdup_printf("%s\n", array[0]);
       lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer), &end_iter, text, -1);
@@ -2728,7 +2732,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
                                          NULL, &end_iter, TRUE));
     }
     lmap = (LiVESList *)user_data;
-    while (lmap != NULL) {
+    while (lmap) {
       array = lives_strsplit((char *)lmap->data, "|", -1);
       orig_fps = strtod(array[3], NULL);
       resampled_frame = count_resampled_frames(frameno, orig_fps, mainw->files[clipno]->fps);
@@ -2757,7 +2761,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
                                          NULL, &end_iter, TRUE));
     }
     lmap = (LiVESList *)user_data;
-    while (lmap != NULL) {
+    while (lmap) {
       array = lives_strsplit((char *)lmap->data, "|", -1);
       max_time = strtod(array[4], NULL);
       if (max_time > 0. && atime <= max_time) {
@@ -2773,7 +2777,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
   }
 
   lives_widget_set_sensitive(mainw->show_layout_errors, TRUE);
-  if (mainw->multitrack != NULL) lives_widget_set_sensitive(mainw->multitrack->show_layout_errors, TRUE);
+  if (mainw->multitrack) lives_widget_set_sensitive(mainw->multitrack->show_layout_errors, TRUE);
   return TRUE;
 }
 
@@ -2788,7 +2792,7 @@ void clear_lmap_errors(void) {
 
   lmap = mainw->affected_layouts_map;
 
-  while (lmap != NULL) {
+  while (lmap) {
     lives_free((livespointer)lmap->data);
     lmap = lmap->next;
   }
@@ -2796,9 +2800,9 @@ void clear_lmap_errors(void) {
 
   mainw->affected_layouts_map = NULL;
   lives_widget_set_sensitive(mainw->show_layout_errors, FALSE);
-  if (mainw->multitrack != NULL) lives_widget_set_sensitive(mainw->multitrack->show_layout_errors, FALSE);
+  if (mainw->multitrack) lives_widget_set_sensitive(mainw->multitrack->show_layout_errors, FALSE);
 
-  if (mainw->affected_layout_marks != NULL) {
+  if (mainw->affected_layout_marks) {
     remove_current_from_affected_layouts(mainw->multitrack);
   }
 }
@@ -2854,7 +2858,7 @@ boolean do_std_checks(const char *type_name, const char *type, size_t maxlen, co
   const char *reject = " /\\*\"";
   size_t slen = strlen(type_name);
 
-  if (nreject != NULL) reject = nreject;
+  if (nreject) reject = nreject;
 
   if (slen == 0) {
     msg = lives_strdup_printf(_("\n%s names may not be blank.\n"), xtype);
@@ -3063,12 +3067,12 @@ boolean lives_string_ends_with(const char *string, const char *fmt, ...) {
   size_t slen, cklen;
   boolean ret = FALSE;
 
-  if (string == NULL) return FALSE;
+  if (!string) return FALSE;
 
   va_start(xargs, fmt);
   textx = lives_strdup_vprintf(fmt, xargs);
   va_end(xargs);
-  if (textx == NULL) return FALSE;
+  if (!textx) return FALSE;
   slen = lives_strlen(string);
   cklen = lives_strlen(textx);
   if (cklen == 0 || cklen > slen) {
@@ -3135,7 +3139,7 @@ char *get_extension(const char *filename) {
   // return file extension without the "."
   char *tmp = lives_path_get_basename(filename);
   char *ptr = strrchr(tmp, '.');
-  if (ptr == NULL) {
+  if (!ptr) {
     lives_free(tmp);
     return lives_strdup("");
   } else {
@@ -3156,7 +3160,7 @@ char *ensure_extension(const char *fname, const char *ext) {
   size_t se = strlen(ext), sf;
   char *eptr = (char *)ext;
 
-  if (fname == NULL) return NULL;
+  if (!fname) return NULL;
 
   if (se == 0) return lives_strdup(fname);
 
@@ -3401,7 +3405,7 @@ uint64_t make_version_hash(const char *ver) {
   uint64_t hash;
   int ntok;
 
-  if (ver == NULL) return 0;
+  if (!ver) return 0;
 
   ntok = get_token_count((char *)ver, '.');
   array = lives_strsplit(ver, ".", ntok);
@@ -3720,7 +3724,7 @@ boolean switch_aud_to_jack(boolean set_in_prefs) {
 #ifdef ENABLE_JACK
   if (mainw->is_ready) {
     if (!mainw->jack_inited) lives_jack_init();
-    if (mainw->jackd == NULL) {
+    if (!mainw->jackd) {
       jack_audio_init();
       jack_audio_read_init();
       mainw->jackd = jack_get_driver(0, TRUE);
@@ -3737,20 +3741,20 @@ boolean switch_aud_to_jack(boolean set_in_prefs) {
 
     mainw->aplayer_broken = FALSE;
     lives_widget_show(mainw->vol_toolitem);
-    if (mainw->vol_label != NULL) lives_widget_show(mainw->vol_label);
+    if (mainw->vol_label) lives_widget_show(mainw->vol_label);
     lives_widget_show(mainw->recaudio_submenu);
     lives_widget_set_sensitive(mainw->vol_toolitem, TRUE);
 
-    if (mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL)
+    if (mainw->vpp && mainw->vpp->get_audio_fmts)
       mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
 
 #ifdef HAVE_PULSE_AUDIO
-    if (mainw->pulsed_read != NULL) {
+    if (mainw->pulsed_read) {
       pulse_close_client(mainw->pulsed_read);
       mainw->pulsed_read = NULL;
     }
 
-    if (mainw->pulsed != NULL) {
+    if (mainw->pulsed) {
       pulse_close_client(mainw->pulsed);
       mainw->pulsed = NULL;
       pulse_shutdown();
@@ -3761,7 +3765,7 @@ boolean switch_aud_to_jack(boolean set_in_prefs) {
   if (set_in_prefs) set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
   lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_JACK);
 
-  if (mainw->is_ready && mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL)
+  if (mainw->is_ready && mainw->vpp && mainw->vpp->get_audio_fmts)
     mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
 
   if (prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT) {
@@ -3787,7 +3791,7 @@ boolean switch_aud_to_pulse(boolean set_in_prefs) {
 
   if (mainw->is_ready) {
     if ((retval = lives_pulse_init(-1))) {
-      if (mainw->pulsed == NULL) {
+      if (!mainw->pulsed) {
         pulse_audio_init();
         pulse_audio_read_init();
         mainw->pulsed = pulse_get_driver(TRUE);
@@ -3798,7 +3802,7 @@ boolean switch_aud_to_pulse(boolean set_in_prefs) {
       }
       mainw->aplayer_broken = FALSE;
       lives_widget_show(mainw->vol_toolitem);
-      if (mainw->vol_label != NULL) lives_widget_show(mainw->vol_label);
+      if (mainw->vol_label) lives_widget_show(mainw->vol_label);
       lives_widget_show(mainw->recaudio_submenu);
       lives_widget_set_sensitive(mainw->vol_toolitem, TRUE);
 
@@ -3806,17 +3810,17 @@ boolean switch_aud_to_pulse(boolean set_in_prefs) {
       if (set_in_prefs) set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
       lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_PULSE);
 
-      if (mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL)
+      if (mainw->vpp && mainw->vpp->get_audio_fmts)
         mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
     }
 
 #ifdef ENABLE_JACK
-    if (mainw->jackd_read != NULL) {
+    if (mainw->jackd_read) {
       jack_close_device(mainw->jackd_read);
       mainw->jackd_read = NULL;
     }
 
-    if (mainw->jackd != NULL) {
+    if (mainw->jackd) {
       jack_close_device(mainw->jackd);
       mainw->jackd = NULL;
     }
@@ -3853,12 +3857,12 @@ boolean switch_aud_to_sox(boolean set_in_prefs) {
   if (mainw->is_ready) {
     /* //ubuntu / Unity has a hissy fit if you hide things in the menu !
       lives_widget_hide(mainw->vol_toolitem);
-      if (mainw->vol_label != NULL) lives_widget_hide(mainw->vol_label);
+      if (mainw->vol_label) lives_widget_hide(mainw->vol_label);
     */
     lives_widget_set_sensitive(mainw->vol_toolitem, FALSE);
     lives_widget_hide(mainw->recaudio_submenu);
 
-    if (mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL)
+    if (mainw->vpp && mainw->vpp->get_audio_fmts)
       mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
 
     pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE, TRUE);
@@ -3871,24 +3875,24 @@ boolean switch_aud_to_sox(boolean set_in_prefs) {
   }
 
 #ifdef ENABLE_JACK
-  if (mainw->jackd_read != NULL) {
+  if (mainw->jackd_read) {
     jack_close_device(mainw->jackd_read);
     mainw->jackd_read = NULL;
   }
 
-  if (mainw->jackd != NULL) {
+  if (mainw->jackd) {
     jack_close_device(mainw->jackd);
     mainw->jackd = NULL;
   }
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-  if (mainw->pulsed_read != NULL) {
+  if (mainw->pulsed_read) {
     pulse_close_client(mainw->pulsed_read);
     mainw->pulsed_read = NULL;
   }
 
-  if (mainw->pulsed != NULL) {
+  if (mainw->pulsed) {
     pulse_close_client(mainw->pulsed);
     mainw->pulsed = NULL;
     pulse_shutdown();
@@ -3906,12 +3910,12 @@ void switch_aud_to_none(boolean set_in_prefs) {
   if (mainw->is_ready) {
     /* //ubuntu has a hissy fit if you hide things in the menu
       lives_widget_hide(mainw->vol_toolitem);
-      if (mainw->vol_label != NULL) lives_widget_hide(mainw->vol_label);
+      if (mainw->vol_label) lives_widget_hide(mainw->vol_label);
     */
     lives_widget_set_sensitive(mainw->vol_toolitem, FALSE);
     // lives_widget_hide(mainw->recaudio_submenu);
 
-    if (mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL)
+    if (mainw->vpp && mainw->vpp->get_audio_fmts)
       mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
 
     pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE, TRUE);
@@ -3926,24 +3930,24 @@ void switch_aud_to_none(boolean set_in_prefs) {
   }
 
 #ifdef ENABLE_JACK
-  if (mainw->jackd_read != NULL) {
+  if (mainw->jackd_read) {
     jack_close_device(mainw->jackd_read);
     mainw->jackd_read = NULL;
   }
 
-  if (mainw->jackd != NULL) {
+  if (mainw->jackd) {
     jack_close_device(mainw->jackd);
     mainw->jackd = NULL;
   }
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-  if (mainw->pulsed_read != NULL) {
+  if (mainw->pulsed_read) {
     pulse_close_client(mainw->pulsed_read);
     mainw->pulsed_read = NULL;
   }
 
-  if (mainw->pulsed != NULL) {
+  if (mainw->pulsed) {
     pulse_close_client(mainw->pulsed);
     mainw->pulsed = NULL;
     pulse_shutdown();
@@ -4025,7 +4029,7 @@ boolean prepare_to_play_foreign(void) {
                            mainw->foreign_id);
 #else
 #ifdef GDK_WINDOWING_WIN32
-  if (mainw->foreign_window == NULL)
+  if (!mainw->foreign_window)
     mainw->foreign_window = gdk_win32_window_foreign_new_for_display
                             (mainw->mgeom[widget_opts.monitor].disp,
                              mainw->foreign_id);
@@ -4033,7 +4037,7 @@ boolean prepare_to_play_foreign(void) {
 
 #endif // GDK_WINDOWING
 
-  if (mainw->foreign_window != NULL) lives_xwindow_set_keep_above(mainw->foreign_window, TRUE);
+  if (mainw->foreign_window) lives_xwindow_set_keep_above(mainw->foreign_window, TRUE);
 
 #else // 3, 0, 0
   mainw->foreign_window = gdk_window_foreign_new(mainw->foreign_id);
@@ -4044,27 +4048,26 @@ boolean prepare_to_play_foreign(void) {
 #ifdef GDK_WINDOWING_X11
 #if !GTK_CHECK_VERSION(3, 0, 0)
 
-  if (mainw->foreign_visual != NULL) {
+  if (mainw->foreign_visual) {
     for (i = 0; i < capable->nmonitors; i++) {
       vissi = gdk_x11_screen_lookup_visual(mainw->mgeom[i].screen, hextodec(mainw->foreign_visual));
-      if (vissi != NULL) break;
+      if (vissi) break;
     }
   }
 
-  if (vissi == NULL) vissi = gdk_visual_get_best_with_depth(mainw->foreign_bpp);
-
-  if (vissi == NULL) return FALSE;
+  if (!vissi) vissi = gdk_visual_get_best_with_depth(mainw->foreign_bpp);
+  if (!vissi) return FALSE;
 
   mainw->foreign_cmap = gdk_x11_colormap_foreign_new(vissi,
                         gdk_x11_colormap_get_xcolormap(gdk_colormap_new(vissi, TRUE)));
 
-  if (mainw->foreign_cmap == NULL) return FALSE;
+  if (!mainw->foreign_cmap) return FALSE;
 
 #endif
 #endif
 #endif
 
-  if (mainw->foreign_window == NULL) return FALSE;
+  if (!mainw->foreign_window) return FALSE;
 
   mainw->play_start = 1;
   if (mainw->rec_vid_frames == -1) mainw->play_end = INT_MAX;
@@ -4181,7 +4184,7 @@ boolean after_foreign_play(void) {
   lives_free(capfile);
 
   add_to_clipmenu();
-  if (mainw->multitrack == NULL) switch_to_file(old_file, mainw->current_file);
+  if (!mainw->multitrack) switch_to_file(old_file, mainw->current_file);
 
   else {
     int new_file = mainw->current_file;
@@ -4209,11 +4212,11 @@ void reset_clipmenu(void) {
   // sometimes the clip menu gets messed up, e.g. after reloading a set.
   // This function will clean up the 'x's and so on.
 
-  if (mainw->current_file > 0 && cfile != NULL && cfile->menuentry != NULL) {
+  if (mainw->current_file > 0 && cfile && cfile->menuentry) {
 #ifdef GTK_RADIO_MENU_BUG
     register int i;
     for (i = 1; i < MAX_FILES; i++) {
-      if (i != mainw->current_file && mainw->files[i] != NULL && mainw->files[i]->menuentry != NULL) {
+      if (i != mainw->current_file && mainw->files[i] && mainw->files[i]->menuentry) {
         lives_signal_handler_block(mainw->files[i]->menuentry, mainw->files[i]->menuentry_func);
         lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->files[i]->menuentry), FALSE);
         lives_signal_handler_unblock(mainw->files[i]->menuentry, mainw->files[i]->menuentry_func);
@@ -4549,8 +4552,8 @@ void show_manual_section(const char *lang, const char *section) {
 
   activate_url_inner(link);
 
-  if (tmp != NULL) lives_free(tmp);
-  if (tmp2 != NULL) lives_free(tmp2);
+  if (tmp) lives_free(tmp);
+  if (tmp2) lives_free(tmp2);
 }
 
 
@@ -4578,7 +4581,7 @@ boolean create_event_space(int length) {
 
   // NOTE: this is the OLD event system, it's only used for reordering in the clip editor
 
-  if (cfile->resample_events != NULL) {
+  if (cfile->resample_events) {
     lives_free(cfile->resample_events);
   }
   if ((cfile->resample_events = (resample_event *)(lives_calloc(length, sizeof(resample_event)))) == NULL) {
@@ -4640,7 +4643,7 @@ void add_to_recent(const char *filename, double start, frames_t frames, const ch
   for (; i > 0; i--) {
     mtext = lives_menu_item_get_text(mainw->recent[i - 1]);
     lives_menu_item_set_text(mainw->recent[i], mtext, FALSE);
-    if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[i], mtext, FALSE);
+    if (mainw->multitrack) lives_menu_item_set_text(mainw->multitrack->recent[i], mtext, FALSE);
 
     prefname = lives_strdup_printf("%s%d", PREF_RECENT, i);
     get_utf8_pref(prefname, buff, PATH_MAX * 2);
@@ -4652,7 +4655,7 @@ void add_to_recent(const char *filename, double start, frames_t frames, const ch
   }
 
   lives_menu_item_set_text(mainw->recent[0], mfile, FALSE);
-  if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[0], mfile, FALSE);
+  if (mainw->multitrack) lives_menu_item_set_text(mainw->multitrack->recent[0], mfile, FALSE);
   prefname = lives_strdup_printf("%s%d", PREF_RECENT, 1);
   set_utf8_pref(prefname, file);
   lives_free(prefname);
@@ -4699,7 +4702,7 @@ void set_undoable(const char *what, boolean sensitive) {
   if (mainw->current_file > -1) {
     cfile->redoable = FALSE;
     cfile->undoable = sensitive;
-    if (!(what == NULL)) {
+    if (what) {
       char *what_safe = lives_strdelimit(lives_strdup(what), "_", ' ');
       lives_snprintf(cfile->undo_text, 32, _("_Undo %s"), what_safe);
       lives_snprintf(cfile->redo_text, 32, _("_Redo %s"), what_safe);
@@ -4728,7 +4731,7 @@ void set_redoable(const char *what, boolean sensitive) {
   if (mainw->current_file > -1) {
     cfile->undoable = FALSE;
     cfile->redoable = sensitive;
-    if (!(what == NULL)) {
+    if (what) {
       char *what_safe = lives_strdelimit(lives_strdup(what), "_", ' ');
       lives_snprintf(cfile->undo_text, 32, _("_Undo %s"), what_safe);
       lives_snprintf(cfile->redo_text, 32, _("_Redo %s"), what_safe);
@@ -4772,12 +4775,12 @@ void set_sel_label(LiVESWidget * sel_label) {
 
 
 LIVES_GLOBAL_INLINE void lives_list_free_strings(LiVESList * list) {
-  for (; list != NULL; list = list->next) lives_freep((void **)&list->data);
+  for (; list; list = list->next) lives_freep((void **)&list->data);
 }
 
 
 LIVES_GLOBAL_INLINE void lives_slist_free_all(LiVESSList **list) {
-  if (*list == NULL) return;
+  if (!list || !*list) return;
   lives_list_free_strings((LiVESList *)*list);
   lives_slist_free(*list);
   *list = NULL;
@@ -4785,7 +4788,7 @@ LIVES_GLOBAL_INLINE void lives_slist_free_all(LiVESSList **list) {
 
 
 LIVES_GLOBAL_INLINE void lives_list_free_all(LiVESList **list) {
-  if (*list == NULL) return;
+  if (!list || !*list) return;
   lives_list_free_strings(*list);
   lives_list_free(*list);
   *list = NULL;
@@ -4945,7 +4948,7 @@ char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
     key = lives_strdup("gamma_type"); break;
   default: break;
   }
-  if (maxlenp != NULL && *maxlenp == 0) *maxlenp = 256;
+  if (maxlenp && *maxlenp == 0) *maxlenp = 256;
   return key;
 }
 
@@ -5091,7 +5094,7 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
   lives_header = lives_build_filename(prefs->workdir, sfile->handle, LIVES_CLIP_HEADER, NULL);
   key = clip_detail_to_string(what, NULL);
 
-  if (key == NULL) {
+  if (!key) {
     tmp = lives_strdup_printf("Invalid detail %d added for file %s", which, lives_header);
     LIVES_ERROR(tmp);
     lives_free(tmp);
@@ -5161,7 +5164,7 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
     return FALSE;
   }
 
-  if (mainw->clip_header != NULL) {
+  if (mainw->clip_header) {
     char *keystr_start = lives_strdup_printf("<%s>\n", key);
     char *keystr_end = lives_strdup_printf("\n</%s>\n\n", key);
     lives_fputs(keystr_start, mainw->clip_header);
@@ -5321,7 +5324,7 @@ uint32_t get_signed_endian(boolean is_signed, boolean little_endian) {
 
 size_t get_token_count(const char *string, int delim) {
   size_t pieces = 1;
-  if (string == NULL) return 0;
+  if (!string) return 0;
   if (delim <= 0 || delim > 255) return 1;
 
   while ((string = strchr(string, delim)) != NULL) {
@@ -5497,7 +5500,7 @@ char *insert_newlines(const char *text, int maxwidth) {
 
   register int i;
 
-  if (text == NULL) return NULL;
+  if (!text) return NULL;
 
   if (maxwidth < 1) return lives_strdup("Bad maxwidth, dummy");
 
@@ -5634,9 +5637,9 @@ boolean lives_make_writeable_dir(const char *newdir) {
 
 
 LIVES_GLOBAL_INLINE LiVESInterpType get_interp_value(short quality, boolean low_for_mt) {
-  if ((mainw->is_rendering || (mainw->multitrack != NULL && mainw->multitrack->is_rendering)) && !mainw->preview_rendering)
+  if ((mainw->is_rendering || (mainw->multitrack && mainw->multitrack->is_rendering)) && !mainw->preview_rendering)
     return LIVES_INTERP_BEST;
-  if (low_for_mt && mainw->multitrack != NULL) return LIVES_INTERP_FAST;
+  if (low_for_mt && mainw->multitrack) return LIVES_INTERP_FAST;
   if (quality <= PB_QUALITY_LOW) return LIVES_INTERP_FAST;
   else if (quality == PB_QUALITY_MED) return LIVES_INTERP_NORMAL;
   return LIVES_INTERP_BEST;
@@ -5650,7 +5653,7 @@ LIVES_GLOBAL_INLINE LiVESList *buff_to_list(const char *buffer, const char *deli
   char *buf, **array = lives_strsplit(buffer, delim, pieces);
   boolean biglist = pieces >= BL_LIM;
   for (int i = 0; i < pieces; i++) {
-    if (array[i] != NULL) {
+    if (array[i]) {
       if (strip) buf = lives_strstrip(array[i]);
       else buf = array[i];
       if (*buf || allow_blanks) {
@@ -5660,20 +5663,20 @@ LIVES_GLOBAL_INLINE LiVESList *buff_to_list(const char *buffer, const char *deli
     }
   }
   lives_strfreev(array);
-  if (biglist && list != NULL) return lives_list_reverse(list);
+  if (biglist && list) return lives_list_reverse(list);
   return list;
 }
 
 
 LIVES_GLOBAL_INLINE LiVESList *lives_list_append_unique(LiVESList * xlist, const char *add) {
   LiVESList *list = xlist, *listlast = NULL;
-  while (list != NULL) {
+  while (list) {
     listlast = list;
     if (!lives_utf8_strcasecmp((const char *)list->data, add)) return xlist;
     list = list->next;
   }
   list = lives_list_append(listlast, lives_strdup(add));
-  if (xlist == NULL) return list;
+  if (!xlist) return list;
   return xlist;
 }
 
@@ -5681,9 +5684,9 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_append_unique(LiVESList * xlist, const
 LIVES_GLOBAL_INLINE LiVESList *lives_list_move_to_first(LiVESList * list, LiVESList * item) {
   // move item to first in list
   LiVESList *xlist = item;
-  if (xlist == list || xlist == NULL) return list;
-  if (xlist->prev != NULL) xlist->prev->next = xlist->next;
-  if (xlist->next != NULL) xlist->next->prev = xlist->prev;
+  if (xlist == list || !xlist) return list;
+  if (xlist->prev) xlist->prev->next = xlist->next;
+  if (xlist->next) xlist->next->prev = xlist->prev;
   xlist->prev = NULL;
   if ((xlist->next = list) != NULL) list->prev = xlist;
   return xlist;
@@ -5694,11 +5697,11 @@ LiVESList *lives_list_delete_string(LiVESList * list, const char *string) {
   // remove string from list, using strcmp
 
   LiVESList *xlist = list;
-  while (xlist != NULL) {
+  while (xlist) {
     if (!lives_utf8_strcasecmp((char *)xlist->data, string)) {
       lives_free((livespointer)xlist->data);
-      if (xlist->prev != NULL) xlist->prev->next = xlist->next;
-      if (xlist->next != NULL) xlist->next->prev = xlist->prev;
+      if (xlist->prev) xlist->prev->next = xlist->next;
+      if (xlist->next) xlist->next->prev = xlist->prev;
       if (list == xlist) list = xlist->next;
       lives_list_free(xlist);
       return list;
@@ -5712,7 +5715,7 @@ LiVESList *lives_list_delete_string(LiVESList * list, const char *string) {
 LIVES_GLOBAL_INLINE LiVESList *lives_list_copy_strings(LiVESList * list) {
   // copy a list, copying the strings too
   LiVESList *xlist = NULL, *olist = list;
-  while (olist != NULL) {
+  while (olist) {
     xlist = lives_list_prepend(xlist, lives_strdup((char *)olist->data));
     olist = olist->next;
   }
@@ -5732,19 +5735,18 @@ boolean string_lists_differ(LiVESList * alist, LiVESList * blist) {
   // run through alist and see if we have a mismatch
 
   plist = alist;
-  while (plist != NULL) {
+  while (plist) {
     LiVESList *qlist = rlist;
     boolean matched = TRUE;
-    while (qlist != NULL) {
+    while (qlist) {
       if (!(lives_utf8_strcasecmp((char *)plist->data, (char *)qlist->data))) {
-        if (matched) rlist = qlist;
-        else matched = TRUE;
+        if (matched) rlist = qlist->next;
         break;
       }
       matched = FALSE;
       qlist = qlist->next;
     }
-    if (qlist == NULL) return TRUE;
+    if (!qlist) return TRUE;
     plist = plist->next;
   }
 

@@ -97,10 +97,10 @@ void make_nxttab(void) {
       dcc->value = val;
       dcc->i = i;
       dcc->j = j;
-      if (preplist == NULL) dccl = preplist = lives_list_append(preplist, dcc);
+      if (!preplist) dccl = preplist = lives_list_append(preplist, dcc);
       else {
         LiVESList *dccl2 = lives_list_append(NULL, (livespointer)dcc);
-        for (; dccl != NULL; dccl = dccl->next) {
+        for (; dccl; dccl = dccl->next) {
           dcc = (struct _decomp *)dccl->data;
           if (dcc->value > val) break;
           dccl_last = dccl;
@@ -113,7 +113,7 @@ void make_nxttab(void) {
         } else {
           dccl2->next = dccl;
           dccl2->prev = dccl->prev;
-          if (dccl->prev != NULL) dccl->prev->next = dccl2;
+          if (dccl->prev) dccl->prev->next = dccl2;
           else preplist = dccl2;
           dccl->prev = dccl2;
         }
@@ -122,18 +122,18 @@ void make_nxttab(void) {
     }
     val6 *= 6;
   }
-  for (dccl = preplist; dccl != NULL; dccl = dccl->next) {
+  for (dccl = preplist; dccl; dccl = dccl->next) {
     dcc = (struct _decomp *)dccl->data;
     xi = dcc->i;
     xj = dcc->j;
     nxttbl[xi][xj].value = dcc->value;
     nxttbl[xi][xj].i = xi;
     nxttbl[xi][xj].j = xj;
-    if (dccl->prev != NULL) {
+    if (dccl->prev) {
       dcc = (struct _decomp *)dccl->prev->data;
       nxttbl[xi][xj].lower = &(nxttbl[dcc->i][dcc->j]);
     } else nxttbl[xi][xj].lower = NULL;
-    if (dccl->next != NULL) {
+    if (dccl->next) {
       dcc = (struct _decomp *)dccl->next->data;
       nxttbl[xi][xj].higher = &(nxttbl[dcc->i][dcc->j]);
     } else nxttbl[xi][xj].higher = NULL;
@@ -1558,6 +1558,7 @@ LIVES_GLOBAL_INLINE char *lives_strstop(char *st, const char term) {
 
 
 LIVES_GLOBAL_INLINE char *lives_chomp(char *buff) {
+  /// see also lives_strchomp() which removes all whitespace
   if (buff) {
     size_t xs = lives_strlen(buff);
     if (xs && buff[xs - 1] == '\n') buff[--xs] = '\0'; // remove trailing newline
@@ -1568,6 +1569,7 @@ LIVES_GLOBAL_INLINE char *lives_chomp(char *buff) {
 
 LIVES_GLOBAL_INLINE char *lives_strtrim(const char *buff) {
   /// return string with start and end newlines stripped
+  /// see also lives_strstrip() which removes all whitespace
   int i, j;
   if (!buff) return NULL;
   for (i = 0; buff[i] == '\n'; i++);
@@ -2240,7 +2242,7 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr, lives_
   }
 
   pthread_mutex_lock(&twork_mutex);
-  if (twork_first == NULL) {
+  if (!twork_first) {
     twork_first = twork_last = list;
   } else {
     if (!(attr & LIVES_THRDATTR_PRIORITY)) {
@@ -2554,7 +2556,7 @@ void reset_effort(void) {
   inited = TRUE;
   badthingcount = goodthingcount = 0;
   struggling = 0;
-  if ((mainw->is_rendering || (mainw->multitrack != NULL
+  if ((mainw->is_rendering || (mainw->multitrack
                                && mainw->multitrack->is_rendering)) && !mainw->preview_rendering)
     mainw->effort = -EFFORT_RANGE_MAX;
   else mainw->effort = 0;

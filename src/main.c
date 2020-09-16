@@ -3164,6 +3164,7 @@ retry_configfile:
       lives_free(oldconfig);
     }
   }
+
   // hash of last version used,
   // or 0 if rcfile existed, but we couldn't extract a version
   if (numtok > 3) {
@@ -3180,6 +3181,7 @@ retry_configfile:
     old_vhash = lives_strdup(mainw->old_vhash);
 
     if (newconfigfile && *newconfigfile) {
+      uint64_t oldver;
       /// if < 3200000, offer to migrate .lives and .lives-dir
       /// $HOME/.lives.* files -> $HOME/.local/config/lives/settings.*
       /// then if $HOME/.lives-dir exists, move contents to $HOME/.local/share/lives

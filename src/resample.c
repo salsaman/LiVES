@@ -347,7 +347,7 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
         set_undoable(_("Resize"), TRUE);
       }
       video_resized = TRUE;
-      if (mainw->multitrack == NULL) {
+      if (!mainw->multitrack) {
         switch_to_file((mainw->current_file = 0), current_file);
       }
     }
@@ -751,11 +751,11 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
         case WEED_EVENT_TYPE_FILTER_DEINIT:
           /// if init_event is in list, discard it + this event
           init_event = weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT, NULL);
-          for (list = init_events; list != NULL; list = list->next) {
+          for (list = init_events; list; list = list->next) {
             if (list->data == init_event) {
-              if (list->prev != NULL) list->prev->next = list->next;
+              if (list->prev) list->prev->next = list->next;
               else init_events = list->next;
-              if (list->next != NULL) list->next->prev = list->prev;
+              if (list->next) list->next->prev = list->prev;
               list->next = list->prev = NULL;
               lives_list_free(list);
               break;
@@ -777,7 +777,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           if (is_final) break;
           /// param changes just get inserted at whatever timcode, as long as their init_event isnt in the "to be added" list
           init_event = weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT, NULL);
-          for (list = init_events; list != NULL; list = list->next) {
+          for (list = init_events; list; list = list->next) {
             if (list->data == init_event) break;
           }
           if (!list) {
@@ -1185,7 +1185,7 @@ static void on_reorder_activate(int rwidth, int rheight) {
 
   if (chk_mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
 
-  if (mainw->sl_undo_mem != NULL && cfile->stored_layout_frame != 0) {
+  if (mainw->sl_undo_mem && cfile->stored_layout_frame != 0) {
     // need to invalidate undo/redo stack, in case file was used in some layout undo
     stored_event_list_free_undos();
   }
@@ -1211,7 +1211,7 @@ void on_resaudio_ok_clicked(LiVESButton * button, LiVESEntry * entry) {
   int cur_signed, cur_endian;
   int i;
 
-  if (button != NULL) {
+  if (button) {
     arps = arate = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_arate)));
     achans = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_achans)));
     asampsize = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps)));
@@ -1296,7 +1296,7 @@ void on_resaudio_ok_clicked(LiVESButton * button, LiVESEntry * entry) {
     }
   }
 
-  if (cfile->audio_waveform != NULL) {
+  if (cfile->audio_waveform) {
     for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
     lives_freep((void **)&cfile->audio_waveform);
     lives_freep((void **)&cfile->aw_sizes);
@@ -1351,7 +1351,7 @@ void on_resaudio_ok_clicked(LiVESButton * button, LiVESEntry * entry) {
 
   if (chk_mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
 
-  if (mainw->sl_undo_mem != NULL && cfile->stored_layout_audio > 0.) {
+  if (mainw->sl_undo_mem && cfile->stored_layout_audio > 0.) {
     // need to invalidate undo/redo stack, in case file was used in some layout undo
     stored_event_list_free_undos();
   }
@@ -1370,10 +1370,10 @@ static void on_resaudw_achans_changed(LiVESWidget * widg, livespointer user_data
     lives_widget_set_sensitive(resaudw->entry_arate, FALSE);
     lives_widget_set_sensitive(resaudw->entry_asamps, FALSE);
     lives_widget_set_sensitive(resaudw->entry_achans, FALSE);
-    if (prefsw != NULL) {
+    if (prefsw) {
       lives_widget_set_sensitive(prefsw->pertrack_checkbutton, FALSE);
       lives_widget_set_sensitive(prefsw->backaudio_checkbutton, FALSE);
-    } else if (rdet != NULL) {
+    } else if (rdet) {
       lives_widget_set_sensitive(rdet->pertrack_checkbutton, FALSE);
       lives_widget_set_sensitive(rdet->backaudio_checkbutton, FALSE);
     }
@@ -1385,11 +1385,11 @@ static void on_resaudw_achans_changed(LiVESWidget * widg, livespointer user_data
     lives_widget_set_sensitive(resaudw->entry_arate, TRUE);
     lives_widget_set_sensitive(resaudw->entry_asamps, TRUE);
     lives_widget_set_sensitive(resaudw->entry_achans, TRUE);
-    if (prefsw != NULL) {
+    if (prefsw) {
       lives_widget_set_sensitive(prefsw->pertrack_checkbutton, TRUE);
       lives_widget_set_sensitive(prefsw->backaudio_checkbutton, TRUE);
     }
-    if (rdet != NULL) {
+    if (rdet) {
       lives_widget_set_sensitive(rdet->backaudio_checkbutton, TRUE);
       lives_widget_set_sensitive(rdet->pertrack_checkbutton, TRUE);
     }
@@ -1440,7 +1440,7 @@ void on_resample_vid_ok(LiVESButton * button, LiVESEntry * entry) {
 
   mainw->error = FALSE;
 
-  if (button != NULL) {
+  if (button) {
     lives_general_button_clicked(button, NULL);
     if (mainw->fx1_val == 0.) mainw->fx1_val = 1.;
   } else {
@@ -1449,7 +1449,7 @@ void on_resample_vid_ok(LiVESButton * button, LiVESEntry * entry) {
 
   if (mainw->current_file < 0 || cfile->frames == 0) return;
 
-  if (mainw->fx1_val == cfile->fps && cfile->event_list == NULL) return;
+  if (mainw->fx1_val == cfile->fps && !cfile->event_list) return;
 
   real_back_list = cfile->event_list;
   what = (_("creating the event list for resampling"));
@@ -1523,7 +1523,7 @@ void on_resample_vid_ok(LiVESButton * button, LiVESEntry * entry) {
   if (cfile->frames <= 0 || mainw->cancelled != CANCEL_NONE) {
     // reordering error...
     cfile->event_list = real_back_list;
-    if (cfile->event_list_back != NULL) event_list_free(cfile->event_list_back);
+    if (cfile->event_list_back) event_list_free(cfile->event_list_back);
     cfile->event_list_back = NULL;
     cfile->frames = old_frames;
     cfile->start = ostart;
@@ -1539,7 +1539,7 @@ void on_resample_vid_ok(LiVESButton * button, LiVESEntry * entry) {
     return;
   }
 
-  if (cfile->event_list_back != NULL) event_list_free(cfile->event_list_back);
+  if (cfile->event_list_back) event_list_free(cfile->event_list_back);
   cfile->event_list_back = real_back_list;
 
   cfile->ratio_fps = ratio_fps;
@@ -1788,9 +1788,9 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
 
       resaudw->aud_checkbutton = lives_standard_check_button_new(_("_Enable audio"), FALSE, LIVES_BOX(resaudw->aud_hbox), NULL);
 
-      if (rdet != NULL) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton), rdet->achans > 0);
+      if (rdet) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton), rdet->achans > 0);
       else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton),
-                                            mainw->multitrack == NULL ? prefs->mt_def_achans > 0 : cfile->achans > 0);
+                                            !mainw->multitrack ? prefs->mt_def_achans > 0 : cfile->achans > 0);
       if (type == 4) {
         lives_signal_sync_connect(LIVES_GUI_OBJECT(resaudw->aud_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                                   LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
@@ -1818,15 +1818,15 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
     if (type < 3 || (type > 4 && type < 8) || type == 11) tmp = lives_strdup_printf("%d", (int)mainw->fx1_val);
     else if (type == 8) tmp = lives_strdup_printf("%d", DEFAULT_AUDIO_RATE);
     else if (type == 3) tmp = lives_strdup_printf("%d", rdet->arate);
-    else tmp = mainw->multitrack == NULL ||
-                 cfile->achans == 0 ? lives_strdup_printf("%d", prefs->mt_def_arate) : lives_strdup_printf("%d", cfile->arate);
-    lives_entry_set_text(LIVES_ENTRY(resaudw->entry_arate), tmp);
-    lives_free(tmp);
+    else tmp = (!mainw->multitrack || cfile->achans == 0)
+                 ? lives_strdup_printf("%d", prefs->mt_def_arate) : lives_strdup_printf("%d", cfile->arate)));
+      lives_entry_set_text(LIVES_ENTRY(resaudw->entry_arate), tmp);
+      lives_free(tmp);
 
-    if (type == 4) {
+      if (type == 4) {
       lives_signal_sync_connect(LIVES_GUI_OBJECT(combo4), LIVES_WIDGET_CHANGED_SIGNAL,
                                 LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-    }
+      }
 
     combo5 = lives_standard_combo_new((type >= 3 && type != 11 ? (_("_Channels")) : (_("Channels"))),
                                       channels, LIVES_BOX(hbox), NULL);
@@ -1837,22 +1837,22 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
     lives_entry_set_width_chars(LIVES_ENTRY(resaudw->entry_achans), 8);
 
     if (type < 3 || (type > 4 && type < 8) || type == 11) tmp = lives_strdup_printf("%d", (int)mainw->fx2_val);
-    else if (type == 8) tmp = lives_strdup_printf("%d", DEFAULT_AUDIO_CHANS);
-    else if (type == 3) tmp = lives_strdup_printf("%d", rdet->achans);
-    else tmp = lives_strdup_printf("%d", mainw->multitrack == NULL ||
-                                     cfile->achans == 0 ? (prefs->mt_def_achans == 0 ? DEFAULT_AUDIO_CHANS
-                                         : prefs->mt_def_achans) : cfile->achans);
-    lives_entry_set_text(LIVES_ENTRY(resaudw->entry_achans), tmp);
-    lives_free(tmp);
+        else if (type == 8) tmp = lives_strdup_printf("%d", DEFAULT_AUDIO_CHANS);
+          else if (type == 3) tmp = lives_strdup_printf("%d", rdet->achans);
+            else tmp = lives_strdup_printf("%d", (!mainw->multitrack || cfile->achans == 0)
+                                             ? (prefs->mt_def_achans == 0 ? DEFAULT_AUDIO_CHANS
+                                                : prefs->mt_def_achans) : cfile->achans);
+              lives_entry_set_text(LIVES_ENTRY(resaudw->entry_achans), tmp);
+              lives_free(tmp);
 
-    if (chans_fixed) {
-      lives_widget_set_sensitive(resaudw->entry_achans, FALSE);
-      lives_widget_set_sensitive(combo5, FALSE);
-    }
+              if (chans_fixed) {
+                lives_widget_set_sensitive(resaudw->entry_achans, FALSE);
+                  lives_widget_set_sensitive(combo5, FALSE);
+                }
 
     if (type == 4) {
-      lives_signal_sync_connect(LIVES_GUI_OBJECT(combo5), LIVES_WIDGET_CHANGED_SIGNAL,
-                                LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(combo5), LIVES_WIDGET_CHANGED_SIGNAL,
+                              LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
     }
 
     combo6 = lives_standard_combo_new((type >= 3 && type != 11 ? (_("_Sample Size")) : (_("Sample Size"))),
@@ -1866,21 +1866,20 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
     lives_entry_set_width_chars(LIVES_ENTRY(resaudw->entry_asamps), 8);
 
     if (type < 3 || (type > 4 && type < 8) || type == 11) tmp = lives_strdup_printf("%d", (int)mainw->fx3_val);
-    else if (type == 8) tmp = lives_strdup_printf("%d", DEFAULT_AUDIO_SAMPS);
-    else if (type == 3) tmp = lives_strdup_printf("%d", rdet->asamps);
-    else tmp = lives_strdup_printf("%d", mainw->multitrack == NULL
-                                     || cfile->achans == 0 ? prefs->mt_def_asamps : cfile->asampsize);
-    lives_entry_set_text(LIVES_ENTRY(resaudw->entry_asamps), tmp);
+      else if (type == 8) tmp = lives_strdup_printf("%d", DEFAULT_AUDIO_SAMPS);
+        else if (type == 3) tmp = lives_strdup_printf("%d", rdet->asamps);
+          else tmp = lives_strdup_printf("%d", (!mainw->multitrack || cfile->achans == 0) ? prefs->mt_def_asamps : cfile->asampsize);
+            lives_entry_set_text(LIVES_ENTRY(resaudw->entry_asamps), tmp);
 
-    if (!strcmp(tmp, "8")) is_8bit = TRUE;
-    else is_8bit = FALSE;
+            if (!strcmp(tmp, "8")) is_8bit = TRUE;
+              else is_8bit = FALSE;
 
-    lives_free(tmp);
+                lives_free(tmp);
 
-    if (type == 4) {
-      lives_signal_sync_connect(LIVES_GUI_OBJECT(combo6), LIVES_WIDGET_CHANGED_SIGNAL,
-                                LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-    }
+                if (type == 4) {
+                  lives_signal_sync_connect(LIVES_GUI_OBJECT(combo6), LIVES_WIDGET_CHANGED_SIGNAL,
+                                            LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+                  }
 
     vbox = lives_vbox_new(FALSE, 0);
     if (type != 4) lives_box_pack_start(LIVES_BOX(hbox2), vbox, FALSE, FALSE, 0);
@@ -1893,30 +1892,29 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_signed), TRUE);
     if (type == 7 || is_8bit) lives_widget_set_sensitive(resaudw->rb_signed, FALSE);
 
-    hbox = lives_hbox_new(FALSE, 0);
-    lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+      hbox = lives_hbox_new(FALSE, 0);
+      lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    resaudw->rb_unsigned = lives_standard_radio_button_new(_("Unsigned"), &s2_group, LIVES_BOX(hbox), NULL);
+      resaudw->rb_unsigned = lives_standard_radio_button_new(_("Unsigned"), &s2_group, LIVES_BOX(hbox), NULL);
 
-    if (type == 7 || !is_8bit) lives_widget_set_sensitive(resaudw->rb_unsigned, FALSE);
+      if (type == 7 || !is_8bit) lives_widget_set_sensitive(resaudw->rb_unsigned, FALSE);
 
-    if (type < 3 || (type > 4 && type < 8) || type == 11) aendian = mainw->fx4_val;
-    else if (type == 8) aendian = DEFAULT_AUDIO_SIGNED16 | ((capable->byte_order == LIVES_BIG_ENDIAN) ? AFORM_BIG_ENDIAN : 0);
-    else if (type == 3) aendian = rdet->aendian;
-    else aendian = mainw->multitrack == NULL || cfile->achans == 0 ? prefs->mt_def_signed_endian : cfile->signed_endian;
+        if (type < 3 || (type > 4 && type < 8) || type == 11) aendian = mainw->fx4_val;
+                        else if (type == 8) aendian = DEFAULT_AUDIO_SIGNED16 | ((capable->byte_order == LIVES_BIG_ENDIAN) ? AFORM_BIG_ENDIAN : 0);
+                          else if (type == 3) aendian = rdet->aendian;
+                            else aendian = (!mainw->multitrack || cfile->achans == 0) ? prefs->mt_def_signed_endian : cfile->signed_endian));
 
-    if (aendian & AFORM_UNSIGNED) {
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned), TRUE);
-    } else {
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_signed), TRUE);
-    }
+                              if (aendian & AFORM_UNSIGNED) {
+                                lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned), TRUE);
+                                } else {
+                                  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_signed), TRUE);
+                                }
 
     if (type == 4) {
-      lives_signal_sync_connect(LIVES_GUI_OBJECT(resaudw->rb_signed), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(resaudw->rb_signed), LIVES_WIDGET_TOGGLED_SIGNAL,
+                              LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
       lives_signal_sync_connect(LIVES_GUI_OBJECT(resaudw->rb_unsigned), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                                NULL);
+                                LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
     }
 
     vbox = lives_vbox_new(FALSE, 0);
@@ -1936,26 +1934,24 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
 
     if (type == 7) lives_widget_set_sensitive(resaudw->rb_bigend, FALSE);
 
-    if (aendian & AFORM_BIG_ENDIAN) {
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend), TRUE);
-    } else {
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_littleend), TRUE);
-    }
+      if (aendian & AFORM_BIG_ENDIAN) {
+        lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend), TRUE);
+        } else {
+          lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_littleend), TRUE);
+        }
 
     if (!strcmp(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps)), "8")) {
-      lives_widget_set_sensitive(resaudw->rb_littleend, FALSE);
+    lives_widget_set_sensitive(resaudw->rb_littleend, FALSE);
       lives_widget_set_sensitive(resaudw->rb_bigend, FALSE);
     }
 
     lives_signal_sync_connect(LIVES_GUI_OBJECT(resaudw->entry_asamps), LIVES_WIDGET_CHANGED_SIGNAL,
-                              LIVES_GUI_CALLBACK(on_resaudw_asamps_changed),
-                              NULL);
+                              LIVES_GUI_CALLBACK(on_resaudw_asamps_changed), NULL);
   }
 
   if (type == 4) {
     lives_signal_sync_connect(LIVES_GUI_OBJECT(resaudw->rb_littleend), LIVES_WIDGET_TOGGLED_SIGNAL,
-                              LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                              NULL);
+                              LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
     lives_signal_sync_connect(LIVES_GUI_OBJECT(resaudw->rb_bigend), LIVES_WIDGET_TOGGLED_SIGNAL,
                               LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   }
@@ -2017,7 +2013,7 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
     cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(resaudw->dialog), LIVES_STOCK_CANCEL, NULL,
                    LIVES_RESPONSE_CANCEL);
 
-    if (accel_group != NULL) lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+    if (accel_group) lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
           LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
 
@@ -2028,17 +2024,14 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
 
     if (type < 8 || type == 11) {
       lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                                LIVES_GUI_CALLBACK(lives_general_button_clicked),
-                                resaudw);
+                                LIVES_GUI_CALLBACK(lives_general_button_clicked), resaudw);
 
       if (type == 1) {
         lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                                  LIVES_GUI_CALLBACK(on_resaudio_ok_clicked),
-                                  NULL);
+                                  LIVES_GUI_CALLBACK(on_resaudio_ok_clicked), NULL);
       } else if (type == 2 || type == 11) {
         lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                                  LIVES_GUI_CALLBACK(on_ins_silence_details_clicked),
-                                  NULL);
+                                  LIVES_GUI_CALLBACK(on_ins_silence_details_clicked), NULL);
       } else if (type == 5) {
         lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                                   LIVES_GUI_CALLBACK(on_recaudclip_ok_clicked),
@@ -2053,10 +2046,9 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
 
     lives_widget_show_all(resaudw->dialog);
   } else {
-    if (resaudw->aud_checkbutton != NULL) {
+    if (resaudw->aud_checkbutton) {
       lives_signal_sync_connect_after(LIVES_GUI_OBJECT(resaudw->aud_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                      LIVES_GUI_CALLBACK(on_resaudw_achans_changed),
-                                      (livespointer)resaudw);
+                                      LIVES_GUI_CALLBACK(on_resaudw_achans_changed), (livespointer)resaudw);
       on_resaudw_achans_changed(resaudw->aud_checkbutton, (livespointer)resaudw);
     }
   }
@@ -2086,7 +2078,7 @@ void on_change_speed_ok_clicked(LiVESButton * button, livespointer user_data) {
   //int new_frames = count_resampled_frames(cfile->frames, mainw->fx1_val, cfile->fps);
 
   // change playback rate
-  if (button != NULL) {
+  if (button) {
     lives_general_button_clicked(button, NULL);
   }
 
@@ -2153,7 +2145,7 @@ void on_change_speed_ok_clicked(LiVESButton * button, livespointer user_data) {
 
   if (chk_mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
 
-  if (mainw->sl_undo_mem != NULL && cfile->stored_layout_frame != 0) {
+  if (mainw->sl_undo_mem && cfile->stored_layout_frame != 0) {
     // need to invalidate undo/redo stack, in case file was used in some layout undo
     stored_event_list_free_undos();
   }
@@ -2209,8 +2201,8 @@ int reorder_frames(int rwidth, int rheight) {
   if (cur_frames > cfile->progress_end) cfile->progress_end = cur_frames;
 
   cfile->next_event = NULL;
-  if (cfile->event_list != NULL) {
-    if (cfile->event_list_back != NULL) event_list_free(cfile->event_list_back);
+  if (cfile->event_list) {
+    if (cfile->event_list_back) event_list_free(cfile->event_list_back);
     cfile->event_list_back = cfile->event_list;
     cfile->event_list = NULL;
   }
@@ -2267,7 +2259,7 @@ int deorder_frames(int old_frames, boolean leave_bak) {
   ticks_t time_start;
   int perf_start, perf_end;
 
-  if (cfile->event_list != NULL) return cfile->frames;
+  if (cfile->event_list) return cfile->frames;
 
   cfile->event_list = cfile->event_list_back;
   cfile->event_list_back = NULL;
@@ -2293,7 +2285,7 @@ int deorder_frames(int old_frames, boolean leave_bak) {
 
   // check for EOF
 
-  if (cfile->frame_index_back != NULL) {
+  if (cfile->frame_index_back) {
     int current_frames = cfile->frames;
     cfile->frames = old_frames;
     restore_frame_index_back(mainw->current_file);

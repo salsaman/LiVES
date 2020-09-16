@@ -371,8 +371,8 @@ static boolean l2l_parse_packet_header(lives_vstream_t *lstream, int strtype, in
   char **array = lives_strsplit(hdr, " ", -1);
   int pid = -1, ptype = -1;
 
-  if (hdr == NULL || array == NULL || array[0] == NULL || array[1] == NULL || array[2] == NULL || array[3] == NULL) {
-    if (array != NULL) lives_strfreev(array);
+  if (!hdr || !array || !array[0] || !array[1] || !array[2] || !array[3]) {
+    if (array) lives_strfreev(array);
     return FALSE;
   }
 
@@ -381,7 +381,7 @@ static boolean l2l_parse_packet_header(lives_vstream_t *lstream, int strtype, in
 
   if (pid != strid || ptype != strtype) {
     // wrong stream id, or not video
-    if (array != NULL) lives_strfreev(array);
+    if (array) lives_strfreev(array);
     return FALSE;
   }
 
@@ -430,7 +430,7 @@ void lives2lives_read_stream(const char *host, int port) {
   lives_widget_set_sensitive(mainw->open_lives2lives, FALSE);
 
   lstream->handle = OpenHTMSocket(host, port, FALSE);
-  if (lstream->handle == NULL) {
+  if (!lstream->handle) {
     widget_opts.non_modal = TRUE;
     do_error_dialog(_("LiVES to LiVES stream error: Could not open port !\n"));
     widget_opts.non_modal = FALSE;
@@ -516,7 +516,7 @@ void lives2lives_read_stream(const char *host, int port) {
         lives_widget_set_sensitive(mainw->open_lives2lives, TRUE);
         return;
       }
-    } while (hdr == NULL);
+    } while (!hdr);
     // parse packet header
     done = l2l_parse_packet_header(lstream, LIVES_STREAM_TYPE_VIDEO, 0);
     if (lstream->flags & LIVES_VSTREAM_FLAGS_IS_CONTINUATION) done = FALSE;
@@ -684,10 +684,7 @@ void weed_layer_set_from_lives2lives(weed_layer_t *layer, int clip, lives_vstrea
   boolean timeout = FALSE; // TODO
   boolean done;
 
-  int myflags = 0;
-  int error;
-  int width = 0;
-  int height = 0;
+  int myflags = 0, width = 0, height = 0;
 
   while (!timeout) {
     // loop until we read all frame data, or we get a new frame
@@ -701,7 +698,7 @@ void weed_layer_set_from_lives2lives(weed_layer_t *layer, int clip, lives_vstrea
           // get packet header
           hdr = l2l_get_packet_header(lstream);
           if (mainw->cancelled) return;
-        } while (hdr == NULL && mainw->cancelled == CANCEL_NONE);
+        } while (!hdr && mainw->cancelled == CANCEL_NONE);
         if (mainw->cancelled) {
           lives_free(hdr);
           hdr = NULL;
@@ -709,7 +706,8 @@ void weed_layer_set_from_lives2lives(weed_layer_t *layer, int clip, lives_vstrea
         }
         // parse packet header
         done = l2l_parse_packet_header(lstream, LIVES_STREAM_TYPE_VIDEO, 0);
-        if (!(myflags & LIVES_VSTREAM_FLAGS_IS_CONTINUATION) && (lstream->flags & LIVES_VSTREAM_FLAGS_IS_CONTINUATION)) done = FALSE;
+        if (!(myflags & LIVES_VSTREAM_FLAGS_IS_CONTINUATION) && (lstream->flags & LIVES_VSTREAM_FLAGS_IS_CONTINUATION))
+          done = FALSE;
         if ((myflags & LIVES_VSTREAM_FLAGS_IS_CONTINUATION) && !(lstream->flags & LIVES_VSTREAM_FLAGS_IS_CONTINUATION)) {
           // we missed some continuation packets, just return what we have
           lstream->data_ready = TRUE;
@@ -738,7 +736,8 @@ void weed_layer_set_from_lives2lives(weed_layer_t *layer, int clip, lives_vstrea
           char *tmp;
           d_print(_("Detected new framerate for stream:\n"));
           mainw->files[clip]->fps = mainw->fixed_fpsd = lstream->fps;
-          d_print(_("Syncing to external framerate of %s frames per second.\n"), (tmp = remove_trailing_zeroes(mainw->fixed_fpsd)));
+          d_print(_("Syncing to external framerate of %s frames per second.\n"),
+                  (tmp = remove_trailing_zeroes(mainw->fixed_fpsd)));
           lives_free(tmp);
           has_last_delta_ticks = FALSE;
           if (clip == mainw->current_file) set_main_title(cfile->file_name, 0);
@@ -799,14 +798,14 @@ void weed_layer_set_from_lives2lives(weed_layer_t *layer, int clip, lives_vstrea
 
     width = height = 0;
 
-    if (weed_plant_has_leaf(layer, WEED_LEAF_HEIGHT)) height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
-    if (weed_plant_has_leaf(layer, WEED_LEAF_WIDTH)) width = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
+    if (weed_plant_has_leaf(layer, WEED_LEAF_HEIGHT)) height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, NULL);
+    if (weed_plant_has_leaf(layer, WEED_LEAF_WIDTH)) width = weed_get_int_value(layer, WEED_LEAF_WIDTH, NULL);
 
     if (lstream->hsize != width || lstream->vsize != height) {
       weed_layer_pixel_data_free(layer);
     }
 
-    if (!weed_plant_has_leaf(layer, WEED_LEAF_PIXEL_DATA) || weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error) == NULL) {
+    if (!weed_plant_has_leaf(layer, WEED_LEAF_PIXEL_DATA) || !weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL)) {
       weed_set_int_value(layer, WEED_LEAF_WIDTH, lstream->hsize);
       weed_set_int_value(layer, WEED_LEAF_HEIGHT, lstream->vsize);
       weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, lstream->palette);
@@ -814,7 +813,7 @@ void weed_layer_set_from_lives2lives(weed_layer_t *layer, int clip, lives_vstrea
       create_empty_pixel_data(layer, FALSE, TRUE);
     }
 
-    pixel_data = weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &error);
+    pixel_data = weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, NULL);
 
     switch (lstream->palette) {
     case WEED_PALETTE_RGB24:
@@ -903,7 +902,8 @@ void weed_layer_set_from_lives2lives(weed_layer_t *layer, int clip, lives_vstrea
       if (framedataread < (lstream->hsize * lstream->vsize * 5) >> 2) {
         target_size = ((lstream->hsize * lstream->vsize * 5) >> 2) - framedataread;
         if (target_size > lstream->dsize) target_size = lstream->dsize;
-        lives_stream_in_chunks(lstream, target_size, (uint8_t *)pixel_data[1] + framedataread - lstream->hsize * lstream->vsize, 0);
+        lives_stream_in_chunks(lstream, target_size,
+                               (uint8_t *)pixel_data[1] + framedataread - lstream->hsize * lstream->vsize, 0);
         lstream->dsize -= target_size;
         framedataread += target_size;
 #else
@@ -987,18 +987,18 @@ void on_send_lives2lives_activate(LiVESMenuItem *menuitem, livespointer user_dat
 
   int resp;
 
-  if (mainw->vpp != NULL) {
+  if (mainw->vpp) {
     lives_free(orig_name);
     orig_name = lives_strdup(mainw->vpp->name);
   }
 
-  if (mainw->vpp == NULL || strcmp(mainw->vpp->name, "lives2lives_stream")) {
+  if (!mainw->vpp || strcmp(mainw->vpp->name, "lives2lives_stream")) {
     lives_snprintf(future_prefs->vpp_name, 64, "lives2lives_stream");
   }
   vppa = on_vpp_advanced_clicked(NULL, LIVES_INT_TO_POINTER(LIVES_INTENTION_STREAM));
   resp = lives_dialog_run(LIVES_DIALOG(vppa->dialog));
 
-  if (vppa->rfx != NULL) {
+  if (vppa->rfx) {
     tmp = lives_build_filename(prefs->workdir, vppa->rfx->name, NULL);
     lives_rm(tmp);
     lives_free(tmp);
@@ -1035,7 +1035,8 @@ void on_open_lives2lives_activate(LiVESMenuItem *menuitem, livespointer user_dat
     if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(pandh->rb_anyhost))) {
       host = lives_strdup_printf("%s.%s.%s.%s", lives_entry_get_text(LIVES_ENTRY(pandh->entry1)),
                                  lives_entry_get_text(LIVES_ENTRY(pandh->entry2)),
-                                 lives_entry_get_text(LIVES_ENTRY(pandh->entry3)), lives_entry_get_text(LIVES_ENTRY(pandh->entry4)));
+                                 lives_entry_get_text(LIVES_ENTRY(pandh->entry3)),
+                                 lives_entry_get_text(LIVES_ENTRY(pandh->entry4)));
     } else host = lives_strdup("INADDR_ANY");
     port = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(pandh->port_spin));
     lives_widget_destroy(pandh->dialog);
@@ -1045,7 +1046,7 @@ void on_open_lives2lives_activate(LiVESMenuItem *menuitem, livespointer user_dat
 
   lives_widget_context_update();
 
-  if (host != NULL) {
+  if (host) {
     // start receiving
     lives2lives_read_stream(host, port);
     lives_free(host);
@@ -1091,7 +1092,8 @@ lives_pandh_w *create_pandh_dialog(int type) {
   lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   label = lives_standard_label_new(
-            _("In the source copy of LiVES, you must select Advanced/Send stream to LiVES\nor select the lives2lives_stream playback plugin in Preferences."));
+            _("In the source copy of LiVES, you must select Advanced/Send stream to LiVES\n"
+              "or select the lives2lives_stream playback plugin in Preferences."));
   lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   add_hsep_to_box(LIVES_BOX(dialog_vbox));
@@ -1118,12 +1120,10 @@ lives_pandh_w *create_pandh_dialog(int type) {
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   lives_standard_radio_button_new((tmp = (_("Accept LiVES streams only from the _specified host:"))),
-                                  &radiobutton_group,
-                                  LIVES_BOX(hbox),
+                                  &radiobutton_group, LIVES_BOX(hbox),
                                   (tmp2 = (_("Accept LiVES streams from the specified host only."))));
 
-  lives_free(tmp);
-  lives_free(tmp2);
+  lives_free(tmp); lives_free(tmp2);
 
   ////////////////////////////////////
 

@@ -2155,7 +2155,7 @@ static void lives_init(_ign_opts *ign_opts) {
                           _("\n\nManual start of jackd required. Please make sure jackd is running, \n"
                             "or else change the value of <jack_opts> in %s to 16\nand restart LiVES.\n\n"
                             "Alternatively, try to start lives with either \"lives -jackopts 16\", or "),
-                          (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+                          (tmp = lives_filename_to_utf8(prefs->configfile, -1, NULL, NULL, NULL)));
             fprintf(stderr, "%s%s\n\n", msg, otherbit);
             lives_free(msg);
             lives_free(tmp);

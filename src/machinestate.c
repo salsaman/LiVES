@@ -2763,6 +2763,7 @@ LiVESResponseType send_to_trash(const char *item) {
     /// then move / copy file or dir to files/foo1
     /// - if already exists, append .2, .3 etc.
     // see: https://specifications.freedesktop.org/trash-spec/trashspec-latest.html
+
     char *trashdir = lives_build_path(capable->xdg_data_home, "Trash", NULL);
     /// TODO...
 #endif

@@ -111,6 +111,8 @@ static boolean no_recover = FALSE, auto_recover = FALSE;
 static boolean upgrade_error = FALSE;
 static boolean info_only;
 
+static char *newconfigfile = NULL;
+
 static char start_file[PATH_MAX];
 static double start = 0.;
 static int end = 0;
@@ -2956,7 +2958,6 @@ capability *get_capabilities(void) {
   // get capabilities of backend system
   char **array;
   char *msg, *tmp;
-  char *newconfigfile = NULL;
 
   char buffer[PATH_MAX * 4];
   char command[PATH_MAX * 4];
@@ -3181,8 +3182,10 @@ retry_configfile:
     old_vhash = lives_strdup(mainw->old_vhash);
 
     if (newconfigfile && *newconfigfile) {
-      uint64_t oldver;
-      /// if < 3200000, offer to migrate .lives and .lives-dir
+      /// if < 3200000, migrate (copy) .lives and .lives-dir
+      /// this should only happen once, since version will now have been updated in .lives
+      /// after startup, we will offer to remove the old files
+      uint64_t oldver = make_version_hash(old_vhash);
       /// $HOME/.lives.* files -> $HOME/.local/config/lives/settings.*
       /// then if $HOME/.lives-dir exists, move contents to $HOME/.local/share/lives
       /// then goto check_settings
@@ -3196,9 +3199,6 @@ retry_configfile:
       lives_free(newconfigfile);
       newconfigfile = lives_strdup("");
       goto retry_configfile;
-    } else {
-      lives_free(newconfigfile);
-      newconfigfile = NULL;
     }
   }
 
@@ -4017,8 +4017,18 @@ static boolean lives_startup2(livespointer data) {
   // timer to poll for external commands: MIDI, joystick, jack transport, osc, etc.
   mainw->kb_timer = lives_timer_add_simple(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
 
-  //resize(1.);
   if (!CURRENT_CLIP_IS_VALID) lives_ce_update_timeline(0, 0.);
+
+  if (newconfig) {
+    if (do_yesno_dialog("Remove old config ?")) {
+      char *oldconfigs = lives_build_filename(capable->home_dir, LIVES_DEF_CONFIG_FILE_OLD ".*", NULL);
+      lives_rmglob(oldconfigs);
+      lives_free(oldconfigs);
+      lives_rmdir(oldconfigs, TRUE);
+      lives_free(oldconfigs);
+    }
+    lives_free(newconfig);
+  }
 
   if (prefs->interactive) set_interactive(TRUE);
 

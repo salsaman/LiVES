@@ -28,7 +28,7 @@
 #define USE_LIBWEED
 #include "videoplugin.h"
 
-#include "../../../../lives-plugins/weed-plugins/weed-plugin-utils.c"
+#include "../../../weed-plugins/weed-plugin-utils.c"
 
 ////////////////////////////////////////////////////////////////////////////////////
 
@@ -276,17 +276,16 @@ uint64_t get_capabilities(int palette) {
 
 
 const char *get_init_rfx(int intention) {
-  return
-    "<define>\\n\
-|1.7\\n\
-</define>\\n\
-<params>\\n\
-mode|_Mode|string_list|0|Normal|Triangle|Rotating|Wobbler|Landscape|Insider|Cube|Turning|Tunnel|Particles|Dissolve\\n\
-tfps|Max render _Framerate|num2|" SE(DEF_FPS_MAX) "|1.|200.\\n\
-nbuf|Number of _texture buffers (ignored)|num0|" SE(DEF_NBUF) "|1|256\\n\
-dbuf|Use _double buffering|bool|1|0\\n\
-fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0\\n\
-</params>\\n\
+  return "<define>\\n\
+|1.7\\n		     \
+</define>\\n	     \
+<params>\\n								\
+mode|_Mode|string_list|0|Normal|Triangle|Rotating|Wobbler|Landscape|Insider|Cube|Turning|Tunnel|Particles|Dissolve\\n \
+tfps|Max render _Framerate|num2|" SE(DEF_FPS_MAX) "|1.|200.\\n		\
+nbuf|Number of _texture buffers (ignored)|num0|" SE(DEF_NBUF) "|1|256\\n \
+dbuf|Use _double buffering|bool|1|0\\n					\
+fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0\\n	\
+</params>\\n								\
 ";
 }
 
@@ -309,10 +308,7 @@ WEED_SETUP_END;
 
 
 const weed_plant_t **get_play_params(weed_bootstrap_f weed_boot) {
-  if (!plugin_info) {
-    plugin_info = weed_plugin_info_init(weed_boot, 200, 200, 200, 200);
-  }
-#if 0
+
   //   // play params
   params[0] = weed_integer_init("mode", "Playback _mode", -1, -1, 10);
   weed_set_int_value(weed_paramtmpl_get_gui(params[0]), "hidden", WEED_TRUE);
@@ -335,8 +331,6 @@ const weed_plant_t **get_play_params(weed_bootstrap_f weed_boot) {
   params[6] = NULL;
 
   return (const weed_plant_t **)params;
-#endif
-  return NULL;
 }
 
 
@@ -602,7 +596,7 @@ static void render_to_gpumem_inner(int tnum, int width, int height, int type, vo
 
 
 boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
-  register int i;
+  int i;
   int rc = 0;
   struct timespec ts;
 
@@ -1008,9 +1002,9 @@ static int Upload(void) {
 
   texID = get_texture_texID(0);
 
-  if (zmode != -1) mode = zmode;
+  //if (zmode != -1) mode = zmode;
 
-  if (!return_ready && retbuf != NULL) {
+  if (!return_ready && retbuf) {
     retbuf = buffer_free(retbuf);
   }
 
@@ -1250,7 +1244,8 @@ static int Upload(void) {
         glTexCoord2f((tx + TX_PLUS) * scalex, ty * scaley);
         glVertex3f(vx + VX_PLUS, vy, vz);
 
-        vz = sin(ticks * TSPD1 + (i + 1) * XSPD1 + (j + 1) * YSPD1) * A1 + cos(ticks * TSPD2 + (i + 1) * XSPD2 + (j + 1) * YSPD2) * A2;
+        vz = sin(ticks * TSPD1 + (i + 1) * XSPD1 + (j + 1) * YSPD1) * A1
+             + cos(ticks * TSPD2 + (i + 1) * XSPD2 + (j + 1) * YSPD2) * A2;
         col = 1.0 - sin((i + 1) * 0.05 + (j + 1) * 0.06) * 1.0;
         glColor3f(col, col, col);
 
@@ -1926,12 +1921,12 @@ static int Upload(void) {
 
   if (dblbuf) glXSwapBuffers(dpy, glxWin);
 
-  if (retdata != NULL) {
+  if (retdata) {
     // copy buffer to retbuf
 
     pthread_mutex_lock(&retthread_mutex);
 
-    if (retbuf != NULL) {
+    if (retbuf) {
       buffer_free(retbuf);
     }
 
@@ -1980,7 +1975,7 @@ static void *render_thread_func(void *data) {
     Upload();
   }
 
-  if (retbuf != NULL) {
+  if (retbuf) {
     buffer_free(retbuf);
   }
 
@@ -2024,7 +2019,7 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
 
   if (rowz < imgRow) rowz = (int)((((imgRow >> 1) + typesize - 1) << 1) / typesize) * typesize;
 
-  if (return_data != NULL) {
+  if (return_data) {
     XWindowAttributes attr;
     int window_width, window_height, rc = 0;
 
@@ -2038,7 +2033,7 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
     size_t twidth = window_width * otypesize;
     uint8_t *dst, *src;
 
-    if (texturebuf != NULL) {
+    if (texturebuf) {
       weed_free((void *)texturebuf);
     }
 
@@ -2052,21 +2047,30 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
       }
     }
 
-    return_ready = FALSE;
-    dst = (uint8_t *)(retdata = (uint8_t *)return_data[0]); // host created space for return data
-
     texRow = rowz;
     texWidth = imgWidth;
     texHeight = vsize;
 
     // window size must not change here
 
-    // // wait for render thread ready
-    // while (!return_ready && rc == 0) {
-    //   pthread_mutex_lock(&cond_mutex);
-    //   rc = pthread_cond_wait(&cond, &cond_mutex);
-    //   pthread_mutex_unlock(&cond_mutex);
-    // }
+    //pthread_mutex_lock(&cond_mutex);
+    return_ready = FALSE;
+    retdata = dst = (uint8_t *)return_data[0]; // host created space for return data
+
+    pthread_mutex_lock(&cond_mutex);
+    has_new_texture = TRUE;
+    pthread_cond_signal(&cond);
+    pthread_mutex_unlock(&cond_mutex);
+
+    // wait for render thread ready
+    while (!return_ready) {
+      /// WHY DOES THIS NEVER GET SET ???
+      usleep(10);
+      /// strange...
+      //pthread_cond_wait(&cond, &cond_mutex);
+    }
+
+    //pthread_mutex_unlock(&cond_mutex);
 
     if (dblbuf) {
       pthread_mutex_lock(&retthread_mutex);
@@ -2085,7 +2089,6 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
       dst += row;
       src -= twidth;
     }
-    has_new_texture = TRUE;
     pthread_mutex_unlock(dblbuf ? &retthread_mutex : &rthread_mutex); // unlock render thread
   } else {
     if (imgRow != texRow || imgHeight != texHeight || texturebuf == NULL) {
@@ -2112,12 +2115,13 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
     pthread_mutex_unlock(&rthread_mutex); // re-enable render thread
   }
 
-  pthread_mutex_lock(&cond_mutex);
-  has_new_texture = TRUE;
-  pthread_cond_signal(&cond);
-  pthread_mutex_unlock(&cond_mutex);
+  if (!return_data) {
+    pthread_mutex_lock(&cond_mutex);
+    has_new_texture = TRUE;
+    pthread_cond_signal(&cond);
+    pthread_mutex_unlock(&cond_mutex);
+  } else weed_free(return_data);
   otypesize = typesize;
-  if (return_data != NULL) weed_free(return_data);
   return TRUE;
 }
 
@@ -2129,23 +2133,24 @@ boolean play_frame_unknown(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
 
 
 void decode_pparams(weed_plant_t **pparams) {
+  /// not yet implemented
   weed_plant_t *ptmpl;
   char *pname;
   int error, type;
 
-  register int i = 0;
+  int i = 0;
 
   zmode = 0;
   zfft0 = 0.;
-  if (zsubtitles != NULL) weed_free(zsubtitles);
+  if (zsubtitles) weed_free(zsubtitles);
   zsubtitles = NULL;
 
-  if (pparams == NULL) return;
-  while (pparams[i] != NULL) {
-    type = weed_get_int_value(pparams[i], "type", &error);
+  if (!pparams) return;
+  while (pparams[i]) {
+    type = weed_plant_get_type(pparams[i]);
 
     if (type == WEED_PLANT_PARAMETER) {
-      ptmpl = weed_get_plantptr_value(pparams[i], "template", &error);
+      ptmpl = weed_param_get_template(pparams[i]);
       pname = weed_get_string_value(ptmpl, "name", &error);
       if (pname) {
         if (!strcmp(pname, "mode")) {

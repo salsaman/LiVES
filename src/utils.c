@@ -4341,10 +4341,15 @@ int lives_cp(const char *from, const char *to) {
 }
 
 
-int lives_cp_recursive(const char *from, const char *to) {
+int lives_cp_recursive(const char *from, const char *to, boolean incl_dir) {
   // may not fail
-  char *com = lives_strdup_printf("%s -r \"%s\" \"%s\" >\"%s\" 2>&1", capable->cp_cmd, from, to, prefs->cmd_log);
-  int retval = lives_system(com, FALSE);
+  int retval;
+  char *com;
+  if (incl_dir) com = lives_strdup_printf("%s -r \"%s\" \"%s\" >\"%s\" 2>&1", capable->cp_cmd, from, to, prefs->cmd_log);
+  else com = lives_strdup_printf("%s -rf \"%s\"/* \"%s\" >\"%s\" 2>&1", capable->cp_cmd, from, to, prefs->cmd_log);
+  if (!lives_file_test(to, LIVES_FILE_TEST_EXISTS))
+    lives_mkdir_with_parents(to, capable->umask);
+  retval = lives_system(com, FALSE);
   lives_free(com);
   return retval;
 }
@@ -4465,10 +4470,9 @@ boolean check_dir_access(const char *dir, boolean leaveit) {
 
   // WARNING: may leave some parents around
   char test[5] = "1234";
-  boolean exists = lives_file_test(dir, LIVES_FILE_TEST_EXISTS);
-  //boolean is_OK = FALSE;
-  int fp;
   char *testfile;
+  boolean exists = lives_file_test(dir, LIVES_FILE_TEST_EXISTS);
+  int fp;
 
   if (!exists) lives_mkdir_with_parents(dir, capable->umask);
 

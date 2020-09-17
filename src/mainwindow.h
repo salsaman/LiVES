@@ -589,6 +589,7 @@ enum {
 #define LIVES_DEF_CONFIG_FILE "settings" ///< in LIVES_DEF_CONFIG_DIR unless overridden
 
 #define LIVES_DEF_CONFIG_FILE_OLD ".lives" ///< pre 3.2.0
+#define LIVES_DEF_CONFIG_DATADIR_OLD ".lives-dir" ///< pre 3.2.0
 
 #define STOCK_ICONS_DIR "stock-icons"
 

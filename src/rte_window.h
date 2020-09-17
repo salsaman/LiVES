@@ -12,10 +12,10 @@
 
 #define DEF_FX_KEYMODES "8" // keep as string
 
-#define DEF_KEYMAP_FILE "default.keymap"
 #define DEF_KEYMAP_FILE2 "fxdefs.perkey"
 #define DEF_KEYMAP_FILE3 "datacons.map"
 
+#define DEF_KEYMAP_FILE_OLD "default.keymap"
 #define DEF_KEYMAP_FILE2_OLD "default.keymap2"
 #define DEF_KEYMAP_FILE3_OLD "default.keymap3"
 

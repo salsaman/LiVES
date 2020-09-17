@@ -208,7 +208,7 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
 #endif
 #endif
 
-    //#define TRAP_THEME_ERRORS
+#define TRAP_THEME_ERRORS
 #define SHOW_THEME_ERRORS
 #ifndef SHOW_THEME_ERRORS
     if (prefs->show_dev_opts)
@@ -294,12 +294,11 @@ void defer_sigint(int signum) {
 //#define QUICK_EXIT
 void catch_sigint(int signum) {
   // trap for ctrl-C and others
-  if (prefs->vj_mode) {
-    if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
-        && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) &&
-        capable->wm_caps.pan_res & RESTYPE_ACTION) {
-      show_desktop_panel();
-    }
+  if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
+      && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) &&
+      capable->wm_caps.pan_res & RESTYPE_ACTION) {
+    mainw->ignore_screen_size = TRUE;
+    show_desktop_panel();
   }
 
   if (capable && !pthread_equal(capable->main_thread, pthread_self())) {
@@ -309,11 +308,6 @@ void catch_sigint(int signum) {
     g_print("Thread got signal %d\n", signum);
     sleep(3600);
     pthread_exit(NULL);
-  }
-  if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
-      && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) &&
-      capable->wm_caps.pan_res & RESTYPE_ACTION) {
-    show_desktop_panel();
   }
 #ifdef QUICK_EXIT
   /* shoatend(); */
@@ -978,9 +972,8 @@ static boolean pre_init(void) {
   prefs->warning_mask = (uint64_t)get_int64_prefd(PREF_LIVES_WARNING_MASK, DEF_WARNING_MASK);
 
   if (!ign_opts.ign_jackopts) {
-    prefs->jack_opts = future_prefs->jack_opts = get_int_prefd(PREF_JACK_OPTS, 0);
+    prefs->jack_opts = future_prefs->jack_opts = get_int_prefd(PREF_JACK_OPTS, 16);
   }
-
 
 #ifdef GUI_GTK
   if (!has_pref(PREF_SHOW_TOOLTIPS)) {
@@ -1695,8 +1688,8 @@ static void lives_init(_ign_opts *ign_opts) {
   capable->has_wm_caps = FALSE;
   get_wm_caps();
 
-  //prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);
-  prefs->show_desktop_panel = TRUE;
+  prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);
+  //prefs->show_desktop_panel = TRUE;
 
   prefs->show_msgs_on_startup = get_boolean_prefd(PREF_MSG_START, TRUE);
 
@@ -2525,7 +2518,7 @@ static void set_toolkit_theme(int prefer) {
   widget_opts.icon_theme = gtk_icon_theme_new();
 
   gtk_icon_theme_set_custom_theme((LiVESIconTheme *)widget_opts.icon_theme, capable->icon_theme_name);
-  //gtk_icon_theme_prepend_search_path((LiVESIconTheme *)widget_opts.icon_theme, capable->extra_icon_path);
+  gtk_icon_theme_prepend_search_path((LiVESIconTheme *)widget_opts.icon_theme, capable->extra_icon_path);
 
   ic_dir = lives_build_path(prefs->prefix_dir, ICON_DIR, NULL);
   gtk_icon_theme_prepend_search_path((LiVESIconTheme *)widget_opts.icon_theme, ic_dir);
@@ -3185,21 +3178,18 @@ retry_configfile:
       /// if < 3200000, migrate (copy) .lives and .lives-dir
       /// this should only happen once, since version will now have been updated in .lives
       /// after startup, we will offer to remove the old files
-      uint64_t oldver = make_version_hash(old_vhash);
-      /// $HOME/.lives.* files -> $HOME/.local/config/lives/settings.*
-      /// then if $HOME/.lives-dir exists, move contents to $HOME/.local/share/lives
-      /// then goto check_settings
+      migrate_config(old_vhash, newconfigfile);
     }
   }
 
-  if (newconfigfile) {
-    if (*newconfigfile) {
-      lives_strfreev(array);
-      lives_snprintf(prefs->configfile, PATH_MAX, "%s", newconfigfile);
-      lives_free(newconfigfile);
-      newconfigfile = lives_strdup("");
-      goto retry_configfile;
-    }
+  if (newconfigfile && *newconfigfile) {
+    lives_strfreev(array);
+    lives_snprintf(prefs->configfile, PATH_MAX, "%s", newconfigfile);
+    lives_free(newconfigfile);
+    newconfigfile = lives_strdup("");
+    lives_free(old_vhash);
+    lives_free(mainw->old_vhash);
+    goto retry_configfile;
   }
 
   lives_snprintf(dir, PATH_MAX, "%s", array[1]);
@@ -3629,7 +3619,7 @@ static boolean lives_startup(livespointer data) {
     if (prefs->show_splash) splash_init();
   }
 
-  if (prefs->startup_phase == 3) {
+  if (newconfigfile || prefs->startup_phase == 3) {
     /// CREATE prefs->config_datadir, and default items inside it
     build_init_config(prefs->config_datadir, ign_opts.ign_config_datadir);
   }
@@ -4019,15 +4009,9 @@ static boolean lives_startup2(livespointer data) {
 
   if (!CURRENT_CLIP_IS_VALID) lives_ce_update_timeline(0, 0.);
 
-  if (newconfig) {
-    if (do_yesno_dialog("Remove old config ?")) {
-      char *oldconfigs = lives_build_filename(capable->home_dir, LIVES_DEF_CONFIG_FILE_OLD ".*", NULL);
-      lives_rmglob(oldconfigs);
-      lives_free(oldconfigs);
-      lives_rmdir(oldconfigs, TRUE);
-      lives_free(oldconfigs);
-    }
-    lives_free(newconfig);
+  if (newconfigfile) {
+    cleanup_old_config();
+    lives_free(newconfigfile);
   }
 
   if (prefs->interactive) set_interactive(TRUE);

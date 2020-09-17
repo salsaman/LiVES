@@ -7814,6 +7814,7 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
       // switch from fullscreen during pb
       if (mainw->sep_win) {
         // separate window
+        mainw->ignore_screen_size = TRUE;
         if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
             && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) &&
             capable->wm_caps.pan_res & RESTYPE_ACTION) {
@@ -8127,6 +8128,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 #endif
         }
         if (mainw->fs) {
+          mainw->ignore_screen_size = TRUE;
           if (prefs->show_desktop_panel) {
             show_desktop_panel();
           }
@@ -10065,20 +10067,23 @@ boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespo
     mainw->configured = TRUE;
     return FALSE;
   }
-  if (widget == LIVES_MAIN_WINDOW_WIDGET && !mainw->ignore_screen_size) {
+  if (widget == LIVES_MAIN_WINDOW_WIDGET) {
     int scr_width, scr_height;
     scr_width = GUI_SCREEN_WIDTH;
     scr_height = GUI_SCREEN_HEIGHT;
-    get_monitors(FALSE);
-    if (scr_width != GUI_SCREEN_WIDTH || scr_height != GUI_SCREEN_HEIGHT) {
-      g_print("RESIZE %d %d -> %d %d\n", scr_width, scr_height, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
-      resize_widgets_for_monitor(FALSE);
-    }
-    if (!CURRENT_CLIP_IS_VALID) {
-      lives_ce_update_timeline(0, 0.);
-    }
-    return FALSE;
-  }
+    if (event->width != scr_width || event->height != scr_height) {
+      get_monitors(FALSE);
+      if (scr_width != GUI_SCREEN_WIDTH || scr_height != GUI_SCREEN_HEIGHT) {
+        if (!mainw->ignore_screen_size) {
+          resize_widgets_for_monitor(FALSE);
+          if (!CURRENT_CLIP_IS_VALID) {
+            lives_ce_update_timeline(0, 0.);
+	    // *INDENT-OFF*
+	  }}
+	else mainw->ignore_screen_size = FALSE;
+      }}}
+  // *INDENT-ON*
+
   return FALSE;
 }
 

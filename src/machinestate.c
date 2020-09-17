@@ -2763,8 +2763,48 @@ LiVESResponseType send_to_trash(const char *item) {
     /// then move / copy file or dir to files/foo1
     /// - if already exists, append .2, .3 etc.
     // see: https://specifications.freedesktop.org/trash-spec/trashspec-latest.html
+    int vnum = 0;
+    char *trashdir;
+    char *mp1 = get_mountpount_for(item);
+    char *mp2 = get_mountpount_for(capable->home_dir);
+    if (!lives_strcmp(mp1, mp2)) {
+      char *localshare = lives_strdup(capable->xdg_data_home);
+      if (!*localshare) {
+	lives_free(localshare);
+	localshare = lives_build_path(capable->home_dir, LOCAL_HOME_DIR, "share", NULL);
+      }
+      trashdir = lives_build_path(localshare, "Trash", NULL);
+      trashinfodir = lives_build_path(trashdir, "info", NULL);
+      trashfilesdir = lives_build_path(trashdir, "files", NULL);
+      umask = capable->umask;
+      capable->umask = 0700;
+      if (!check_dir_access(trashinfodir, TRUE)) {
+	retval = FALSE;
+	reason = lives_strdup_printf(_("Could not write to %s\n"), trashinfodir);
+      }
+      if (retval) {
+	if (!check_dir_access(trashfilesdir, TRUE)) {
+	  retval = FALSE;
+	  reason = lives_strdup_printf(_("Could not write to %s\n"), trashfilesdir);
+	}
+      }
+      capable->umask = umask;
+      if (retval) {
+	char *trashinfo;
+	int fd;
+	while (1) {
+	  if (!vnum) trashinfo = lives_strdup_printf("%s.trashinfo", basenm);
+	  else trashinfo = lives_strdup_printf("%s.%d.trashinfo", basenm, vnum);
+	  fname = lives_build_filename(trashinfodir, trashinfo, NULL);
+	  fd = lives_open2(fname, O_CREAT | O_EXCL);
+	  if (fd) break;
+	  vnum++;
+	}
+	// TODO - write stuff, close, move item
 
-    char *trashdir = lives_build_path(capable->xdg_data_home, "Trash", NULL);
+
+      }
+    }
     /// TODO...
 #endif
     if (!retval) {

@@ -15,6 +15,62 @@ static boolean allpassed;
 
 LiVESWidget *assist;
 
+static uint64_t oldver = 0;
+
+boolean migrate_config(const char *old_vhash, const char *newconfigfile) {
+  // on a fresh install, we check if there is an older config file, and if so, migrate it
+  oldver = atoll(old_vhash);
+  /// $HOME/.lives.* files -> $HOME/.local/config/lives/settings.*
+  /// then if $HOME/.lives-dir exists, move contents to $HOME/.local/share/lives
+  if (oldver > 0 && oldver < 3200000) {
+    char *ocfdir = lives_build_path(capable->home_dir, LIVES_DEF_CONFIG_DATADIR_OLD, NULL);
+    lives_cp(prefs->configfile, newconfigfile);
+    if (lives_file_test(ocfdir, LIVES_FILE_TEST_IS_DIR)) {
+      char *fname, *fname2;
+      lives_cp_recursive(ocfdir, prefs->config_datadir, FALSE);
+      lives_free(ocfdir);
+      fname = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE_OLD, NULL);
+      lives_rm(fname);
+      lives_free(fname);
+      fname = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE2_OLD, NULL); // perkey defs
+      fname2 = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE2, NULL); // perkey defs
+      lives_mv(fname, fname2);
+      lives_free(fname); lives_free(fname2);
+      fname = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE3_OLD, NULL); // data connections
+      fname2 = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE3, NULL); // data connectionsy
+      lives_mv(fname, fname2);
+      lives_free(fname); lives_free(fname2);
+    }
+    return TRUE;
+  }
+  return FALSE;
+}
+
+
+void cleanup_old_config(void) {
+  if (oldver > 0 && oldver < 3200000) {
+    char *oldconfig = lives_build_filename(capable->home_dir, LIVES_DEF_CONFIG_FILE_OLD, NULL);
+    char *oldconfigdir = lives_build_path(capable->home_dir, LIVES_DEF_CONFIG_DATADIR_OLD, NULL);
+    if (do_yesno_dialogf(_("The locations of LiVES configuration files have changed.\n"
+                           "%s is now %s\nand %s is now %s\nThe files have been copied to the new locations.\n"
+                           "\nWould you like me to remove the old files ?\n"),
+                         oldconfig, prefs->configfile, oldconfigdir, prefs->config_datadir)) {
+      lives_rm(oldconfig);
+      lives_free(oldconfig);
+      oldconfig = lives_build_filename(capable->home_dir, LIVES_DEF_CONFIG_FILE_OLD ".", NULL);
+      lives_rmglob(oldconfig);
+      lives_free(oldconfig);
+      oldconfig = lives_build_filename(capable->home_dir, LIVES_DEF_CONFIG_FILE_OLD "~", NULL);
+      lives_rm(oldconfig);
+      if (lives_file_test(oldconfigdir, LIVES_FILE_TEST_IS_DIR)) {
+        lives_rmdir(oldconfigdir, TRUE);
+      }
+    }
+    lives_free(oldconfig);
+    lives_free(oldconfigdir);
+  }
+}
+
 
 boolean build_init_config(const char *config_datadir, boolean prompt) {
   /// startup phase 3
@@ -91,7 +147,7 @@ boolean build_init_config(const char *config_datadir, boolean prompt) {
     lives_free(keymap_file);
 
     devmapdir = lives_build_path(config_datadir, LIVES_DEVICEMAP_DIR, NULL);
-    if (!lives_file_test(devmapdir, LIVES_FILE_TEST_IS_DIR)) {
+    if (1 || !lives_file_test(devmapdir, LIVES_FILE_TEST_IS_DIR)) {
 #ifdef ENABLE_OSC
       char *sys_devmap_dir = lives_build_path(prefs->prefix_dir, DATA_DIR, LIVES_DEVICEMAP_DIR, NULL);
       if (mainw && mainw->splash_window) lives_widget_hide(mainw->splash_window);
@@ -120,7 +176,7 @@ boolean build_init_config(const char *config_datadir, boolean prompt) {
         } while (retval == LIVES_RESPONSE_RETRY);
 
         if (retval != LIVES_RESPONSE_CANCEL) {
-          lives_cp_recursive(sys_devmap_dir, config_datadir);
+          lives_cp_recursive(sys_devmap_dir, config_datadir, TRUE);
         }
       }
       lives_free(sys_devmap_dir);
@@ -162,7 +218,7 @@ boolean build_init_config(const char *config_datadir, boolean prompt) {
         } while (retval == LIVES_RESPONSE_RETRY);
 
         if (retval != LIVES_RESPONSE_CANCEL) {
-          lives_cp_recursive(sys_stock_icons_dir, config_datadir);
+          lives_cp_recursive(sys_stock_icons_dir, config_datadir, TRUE);
         }
       }
       lives_free(sys_stock_icons_dir);

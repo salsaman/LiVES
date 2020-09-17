@@ -5443,8 +5443,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   prefsw->selection = lives_tree_view_get_selection(LIVES_TREE_VIEW(prefsw->prefs_list));
   lives_tree_selection_set_mode(prefsw->selection, LIVES_SELECTION_SINGLE);
 
-  lives_signal_connect(prefsw->selection, LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(on_prefs_page_changed),
-                       (livespointer)prefsw);
+  lives_signal_sync_connect(prefsw->selection, LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(on_prefs_page_changed),
+                            (livespointer)prefsw);
 
   if (!saved_dialog) {
     widget_opts.expand |= LIVES_EXPAND_EXTRA_WIDTH;

@@ -2866,9 +2866,9 @@ void play_file(void) {
   if (mainw->ext_playback) {
 #ifndef IS_MINGW
     vid_playback_plugin_exit();
-    lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+    if (mainw->play_window) lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
 #else
-    lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+    if (mainw->play_window) lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
     vid_playback_plugin_exit();
 #endif
   }
@@ -3131,13 +3131,14 @@ void play_file(void) {
   /// kill the separate play window
   if (mainw->play_window) {
     if (mainw->fs) {
+      mainw->ignore_screen_size = TRUE;
       if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
           && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) &&
           capable->wm_caps.pan_res & RESTYPE_ACTION) {
         show_desktop_panel();
       }
+      lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
     }
-    lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
     if (prefs->sepwin_type == SEPWIN_TYPE_NON_STICKY) {
       kill_play_window();
     } else {
@@ -3162,6 +3163,7 @@ void play_file(void) {
 
       if (!mainw->multitrack) {
         mainw->playing_file = -2;
+        if (mainw->fs) mainw->ignore_screen_size = TRUE;
         resize_play_window();
         mainw->playing_file = -1;
         lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
@@ -3429,6 +3431,8 @@ void play_file(void) {
   }
 
   mainw->record_paused = mainw->record_starting = mainw->record = FALSE;
+
+  mainw->ignore_screen_size = FALSE;
 
   /// re-enable generic clip switching
   mainw->noswitch = FALSE;

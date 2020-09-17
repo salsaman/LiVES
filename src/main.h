@@ -1646,7 +1646,7 @@ int lives_rmdir_with_parents(const char *dir);
 int lives_rm(const char *file);
 int lives_rmglob(const char *files);
 int lives_cp(const char *from, const char *to);
-int lives_cp_recursive(const char *from, const char *to);
+int lives_cp_recursive(const char *from, const char *to, boolean incl_dir);
 int lives_cp_keep_perms(const char *from, const char *to);
 int lives_mv(const char *from, const char *to);
 int lives_touch(const char *tfile);

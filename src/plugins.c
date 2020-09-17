@@ -1200,6 +1200,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   vpp->weed_setup = (weed_plant_t *(*)(weed_bootstrap_f))dlsym(handle, "weed_setup");
 
   if (vpp->weed_setup) {
+    weed_set_host_info_callback(host_info_cb, LIVES_INT_TO_POINTER(100));
     (*vpp->weed_setup)(weed_bootstrap);
   }
 
@@ -1321,11 +1322,10 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
     prefsw_set_rec_after_settings(vpp, prefsw);
   }
 
-  // get the play parameters (and alpha channels) if any and convert to weed params
-  /* if (vpp->get_play_params) { */
-  /*   weed_set_host_info_callback(host_info_cb, LIVES_INT_TO_POINTER(100)); */
-  /*   vpp->play_paramtmpls = (*vpp->get_play_params)(weed_bootstrap); */
-  /* } */
+  /// get the play parameters (and alpha channels) if any and convert to weed params
+  if (vpp->get_play_params) {
+    vpp->play_paramtmpls = (*vpp->get_play_params)(NULL);
+  }
 
   // create vpp->play_params
   if (vpp->play_paramtmpls) {

@@ -443,7 +443,7 @@ void create_LiVES(void) {
 
   mainw->current_file = -1;
 
-  mainw->preview_image = NULL;
+  if (!mainw->preview_box) mainw->preview_image = NULL;
   mainw->sep_image = lives_image_new_from_pixbuf(NULL);
   mainw->imframe = mainw->imsep = NULL;
 
@@ -4022,8 +4022,6 @@ static void _resize_play_window(void) {
   if (!LIVES_IS_PLAYING && !mainw->multitrack)
     lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), TRUE);
 
-  mainw->ignore_screen_size = mainw->fs;
-
   if (lives_widget_is_visible(mainw->play_window)) {
     width = lives_widget_get_allocation_width(mainw->play_window);
     height = lives_widget_get_allocation_height(mainw->play_window);
@@ -4128,6 +4126,7 @@ static void _resize_play_window(void) {
       sched_yield();
       // leave this alone * !
       if (!(mainw->vpp && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
+        mainw->ignore_screen_size = TRUE;
         if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
             && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) &&
             capable->wm_caps.pan_res & RESTYPE_ACTION) {
@@ -4358,7 +4357,6 @@ void resize_play_window(void) {
 
 static void _kill_play_window(void) {
   // plug our player back into internal window
-  mainw->ignore_screen_size = FALSE;
 
   if (mainw->ce_thumbs) {
     end_ce_thumb_mode();

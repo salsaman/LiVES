@@ -1165,7 +1165,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
   char *line = NULL;
   char *whashname;
 
-  char *keymap_file = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE, NULL); // only for back. compat
+  char *keymap_file = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE_OLD, NULL); // only for back. compat
   char *keymap_file2 = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE2, NULL); // perkey defs
   char *keymap_file3 = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE3, NULL); // data connections
 

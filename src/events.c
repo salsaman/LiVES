@@ -1712,7 +1712,7 @@ void add_init_event_to_filter_map(weed_plant_t *fmap, weed_plant_t *event, void 
 
   init_events = weed_get_voidptr_array_counted(fmap, WEED_LEAF_INIT_EVENTS, &num_inits);
 
-  if (num_inits == 0 && (!init_events || !init_events[0])) {
+  if (num_inits <= 1 && (!init_events || !init_events[0])) {
     weed_set_voidptr_value(fmap, WEED_LEAF_INIT_EVENTS, event);
     lives_free(init_events);
     return;

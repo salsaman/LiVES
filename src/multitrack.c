@@ -21033,12 +21033,11 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
         for (i = 0; i < num_init_events; i++) {
           event_id = (uint64_t)init_events[i];
           if (event_id != 0) {
-
             init_event = find_init_event_in_ttable(trans_table, event_id, TRUE);
 #ifdef DEBUG_TTABLE
             g_print("looking for %"PRIu64" in ttable, got %p\n", event_id, init_event);
 #endif
-            if (init_event == NULL) {
+            if (!init_event) {
               ebuf = rec_error_add(ebuf, "Filter_map has invalid init_event", -1, tc);
               new_init_events[i] = NULL;
             } else new_init_events[i] = init_event;
@@ -21048,7 +21047,7 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
 
         weed_leaf_delete(event, WEED_LEAF_INIT_EVENTS);
 
-        if (new_init_events == NULL) weed_set_voidptr_value(event, WEED_LEAF_INIT_EVENTS, NULL);
+        if (!new_init_events) weed_set_voidptr_value(event, WEED_LEAF_INIT_EVENTS, NULL);
         else {
           weed_set_voidptr_array(event, WEED_LEAF_INIT_EVENTS, num_init_events, new_init_events);
 

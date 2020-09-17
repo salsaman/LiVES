@@ -2763,7 +2763,8 @@ void prefsw_set_astream_settings(_vid_playback_plugin * vpp, _prefsw * prefsw) {
 
 void prefsw_set_rec_after_settings(_vid_playback_plugin * vpp, _prefsw * prefsw) {
   if (vpp && (vpp->capabilities & VPP_CAN_RETURN)) {
-    lives_widget_set_sensitive(prefsw->checkbutton_rec_after_pb, TRUE);
+    /// TODO !!!
+    //lives_widget_set_sensitive(prefsw->checkbutton_rec_after_pb, TRUE);
     //lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),future_prefs->stream_audio_out);
   } else {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_rec_after_pb), FALSE);
@@ -3790,6 +3791,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                     (tmp2 = lives_strdup
                                         (_("Record output from player instead of input to player"))));
   lives_free(tmp); lives_free(tmp2);
+
+  /// TODO !!!
+  lives_widget_set_sensitive(prefsw->checkbutton_rec_after_pb, FALSE);
 
   prefsw_set_rec_after_settings(mainw->vpp, prefsw);
 

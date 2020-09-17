@@ -11246,11 +11246,6 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
   lives_toggle_button_toggle(LIVES_TOGGLE_BUTTON(multi->insa_checkbutton));
   lives_toggle_button_toggle(LIVES_TOGGLE_BUTTON(multi->snapo_checkbutton));
 
-  if (multi->opts.hpaned_pos != -1)
-    lives_paned_set_position(LIVES_PANED(multi->hpaned), multi->opts.hpaned_pos);
-  else
-    lives_paned_set_position(LIVES_PANED(multi->hpaned), (float)lives_widget_get_allocation_width(multi->hpaned) * .8); //0 == top
-
   multi->no_expose = multi->no_expose_frame = FALSE;
 
   lives_container_child_set_shrinkable(LIVES_CONTAINER(multi->hpaned), multi->context_frame, TRUE);
@@ -11279,6 +11274,11 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
       lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
+
+  if (multi->opts.hpaned_pos != -1)
+    lives_paned_set_position(LIVES_PANED(multi->hpaned), multi->opts.hpaned_pos);
+  else
+    lives_paned_set_position(LIVES_PANED(multi->hpaned), (float)GUI_SCREEN_WIDTH / 2.);
 
   if (prefs->startup_interface == STARTUP_MT && mainw->go_away) {
     return FALSE;
@@ -17352,14 +17352,13 @@ void multitrack_playall(lives_mt * mt) {
   if (mt->context_scroll)
     lives_widget_object_unref(mt->context_scroll);
 
+  if (!pb_audio_needs_prerender) lives_widget_set_sensitive(mt->prerender_aud, FALSE);
+  if (mt->fx_base_box) lives_widget_set_sensitive(mt->fx_base_box, TRUE);
+
   if (!mt->is_rendering) {
     mt_sensitise(mt);
     if (needs_idlefunc) mt->idlefunc = mt_idle_add(mt);
   }
-
-  if (!pb_audio_needs_prerender) lives_widget_set_sensitive(mt->prerender_aud, FALSE);
-
-  if (mt->fx_base_box) lives_widget_set_sensitive(mt->fx_base_box, TRUE);
 
   mt->no_expose_frame = FALSE;
 }

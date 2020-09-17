@@ -983,7 +983,6 @@ static int Upload(void) {
 
   // scaling for particles
   float partx, party = 2. / (float)imgHeight;
-
   pthread_mutex_lock(&rthread_mutex);
   if (has_new_texture) {
     ctexture++;
@@ -994,6 +993,7 @@ static int Upload(void) {
     //set_priorities();
   }
   pthread_mutex_unlock(&rthread_mutex);
+
   aspect = (double)imgWidth / (double)imgHeight;
   scalex = (float)(imgWidth * typesize) / (float)texRow;
   scaley = (float)imgHeight / (float)texHeight;
@@ -1917,6 +1917,8 @@ static int Upload(void) {
     glDisable(GL_BLEND);
   }
   break;
+  default:
+    break;
   }
 
   if (dblbuf) glXSwapBuffers(dpy, glxWin);
@@ -2019,41 +2021,30 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
 
   if (rowz < imgRow) rowz = (int)((((imgRow >> 1) + typesize - 1) << 1) / typesize) * typesize;
 
-  if (return_data) {
-    XWindowAttributes attr;
-    int window_width, window_height, rc = 0;
 
-    XLockDisplay(dpy);
-    XGetWindowAttributes(dpy, xWin, &attr);
-    XUnlockDisplay(dpy);
-
-    window_width = attr.width;
-    window_height = attr.height;
-
-    size_t twidth = window_width * otypesize;
-    uint8_t *dst, *src;
-
+  if (imgRow != texRow || imgHeight != texHeight || !texturebuf) {
     if (texturebuf) {
       weed_free((void *)texturebuf);
     }
+    texturebuf = (uint8_t *)weed_malloc(rowz * vsize);
+  }
 
-    if (rowz == texRow && imgHeight == texHeight) {
-      texturebuf = (uint8_t *)pixel_data; // no memcpy needed, as we will not free pixel_data until render_thread has used it
-    } else {
-      texturebuf = (uint8_t *)weed_malloc(rowz * vsize);
-      for (i = 0; i < imgHeight; i++) {
-        weed_memcpy((uint8_t *)texturebuf + i * rowz, (uint8_t *)pixel_data + i * row,
-                    imgWidth * typesize);
-      }
+  texRow = rowz;
+  texWidth = hsize;
+  texHeight = vsize;
+
+  if (texRow == imgRow && texHeight >= imgHeight) {
+    weed_memcpy((void *)texturebuf, pixel_data, imgRow * imgHeight);
+  } else {
+    /// !!!!! imgRow is +2 too big after first init_screen / exit_screen !!!!!
+    for (i = 0; i < imgHeight; i++) {
+      weed_memcpy((uint8_t *)texturebuf + i * texRow, (uint8_t *)pixel_data + i * imgRow,
+                  imgWidth * typesize);
     }
+  }
 
-    texRow = rowz;
-    texWidth = imgWidth;
-    texHeight = vsize;
-
-    // window size must not change here
-
-    //pthread_mutex_lock(&cond_mutex);
+  if (return_data) {
+    uint8_t *dst, *src;
     return_ready = FALSE;
     retdata = dst = (uint8_t *)return_data[0]; // host created space for return data
 
@@ -2062,65 +2053,41 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
     pthread_cond_signal(&cond);
     pthread_mutex_unlock(&cond_mutex);
 
+    pthread_mutex_unlock(&rthread_mutex);
+
+    pthread_mutex_lock(&cond_mutex);
     // wait for render thread ready
     while (!return_ready) {
-      /// WHY DOES THIS NEVER GET SET ???
-      usleep(10);
-      /// strange...
-      //pthread_cond_wait(&cond, &cond_mutex);
+      pthread_cond_wait(&cond, &cond_mutex);
     }
-
-    //pthread_mutex_unlock(&cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
 
     if (dblbuf) {
-      pthread_mutex_lock(&retthread_mutex);
-      pthread_mutex_unlock(&rthread_mutex); // render thread - GO !
+      //pthread_mutex_lock(&retthread_mutex);
+      //pthread_mutex_unlock(&rthread_mutex); // render thread - GO !
     }
 
     retdata = NULL;
 
-    if (texturebuf == (uint8_t *)pixel_data) texturebuf = NULL;
-    src = (uint8_t *)retbuf + (window_height - 1) * twidth;
-    mwidth = twidth;
+    //if (texturebuf == (uint8_t *)pixel_data) texturebuf = NULL;
+    src = (uint8_t *)retbuf + (texHeight - 1) * texWidth;
+    mwidth = texWidth;
     if (mwidth > imgWidth * typesize) mwidth = imgWidth * typesize;
     // texture is upside-down compared to image
-    for (i = 0; i < window_height; i++) {
-      weed_memcpy(dst, src, twidth);
+    for (i = 0; i < texHeight; i++) {
+      weed_memcpy(dst, src, mwidth);
       dst += row;
-      src -= twidth;
+      src -= texWidth;
     }
-    pthread_mutex_unlock(dblbuf ? &retthread_mutex : &rthread_mutex); // unlock render thread
+    weed_free(return_data);
   } else {
-    if (imgRow != texRow || imgHeight != texHeight || texturebuf == NULL) {
-      if (texturebuf != NULL) {
-        weed_free((void *)texturebuf);
-      }
-      texturebuf = (uint8_t *)weed_malloc(rowz * vsize);
-    }
-
-    texRow = rowz;
-    texWidth = hsize;
-    texHeight = vsize;
-
-    if (texRow == imgRow && texHeight >= imgHeight) {
-      weed_memcpy((void *)texturebuf, pixel_data, imgRow * imgHeight);
-    } else {
-      /// !!!!! imgRow is +2 too big after first init_screen / exit_screen !!!!!
-      for (i = 0; i < imgHeight; i++) {
-        weed_memcpy((uint8_t *)texturebuf + i * texRow, (uint8_t *)pixel_data + i * imgRow,
-                    imgWidth * typesize);
-      }
-    }
     retdata = NULL;
     pthread_mutex_unlock(&rthread_mutex); // re-enable render thread
-  }
-
-  if (!return_data) {
     pthread_mutex_lock(&cond_mutex);
     has_new_texture = TRUE;
     pthread_cond_signal(&cond);
     pthread_mutex_unlock(&cond_mutex);
-  } else weed_free(return_data);
+  }
   otypesize = typesize;
   return TRUE;
 }

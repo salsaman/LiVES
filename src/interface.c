@@ -279,7 +279,6 @@ double lives_ce_update_timeline(int frame, double x) {
 
   show_playbar_labels(mainw->current_file);
   redraw_timeline(mainw->current_file);
-  lives_widget_queue_draw(mainw->eventbox2);
 
   last_current_file = mainw->current_file;
   return cfile->pointer_time;
@@ -6992,6 +6991,7 @@ boolean msg_area_config(LiVESWidget * widget) {
       if (height <= MIN_MSGBAR_HEIGHT) {
         height = MIN_MSGBAR_HEIGHT;
         mainw->mbar_res = height;
+        if (!LIVES_IS_PLAYING && CURRENT_CLIP_IS_VALID) redraw_timeline(mainw->current_file);
       }
 
       if (width < 0 || height < 0) return FALSE;

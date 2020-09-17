@@ -1861,8 +1861,6 @@ void create_LiVES(void) {
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->volume_scale), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                                   LIVES_GUI_CALLBACK(on_volume_slider_value_changed), NULL);
 
-  mainw->play_window = NULL;
-
   mainw->tb_hbox = lives_hbox_new(FALSE, 0);
   mainw->toolbar = lives_toolbar_new();
   lives_widget_set_no_show_all(mainw->tb_hbox, TRUE);

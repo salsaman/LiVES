@@ -1688,8 +1688,8 @@ static void lives_init(_ign_opts *ign_opts) {
   capable->has_wm_caps = FALSE;
   get_wm_caps();
 
-  prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);
-  //prefs->show_desktop_panel = TRUE;
+  //prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);
+  prefs->show_desktop_panel = TRUE;
 
   prefs->show_msgs_on_startup = get_boolean_prefd(PREF_MSG_START, TRUE);
 
@@ -8532,10 +8532,10 @@ mainw->track_decoders[i] = clone_decoder(nclip);
 
         // save to scrap_file now if we have to
         if (mainw->record && !mainw->record_paused && mainw->scrap_file != -1 && fg_file == mainw->scrap_file) {
-          //if (!rec_after_pb) {
-          check_layer_ready(mainw->frame_layer);
-          save_to_scrap_file(mainw->frame_layer);
-          //}
+          if (!rec_after_pb) {
+            check_layer_ready(mainw->frame_layer);
+            save_to_scrap_file(mainw->frame_layer);
+          }
           get_player_size(&opwidth, &opheight);
         }
 
@@ -9488,7 +9488,7 @@ lfi_done:
                   return;
 		// *INDENT-OFF*
 	      }}}}}
-      // *INDENT-ON*
+	// *INDENT-ON*
 
         // no other clips
         mainw->current_file = mainw->blend_file = -1;
@@ -9511,26 +9511,6 @@ lfi_done:
         if (!mainw->is_ready || mainw->recovering_files) return;
 
         if (LIVES_IS_PLAYING) mainw->cancelled = CANCEL_GENERATOR_END;
-
-        /* if (!LIVES_IS_PLAYING && mainw->play_window) { */
-        /*   // if the clip is loaded */
-        /*   if (mainw->preview_box == NULL) { */
-        /*     // create the preview box that shows frames... */
-        /*     make_preview_box(); */
-        /*   } */
-        /*   // add it the play window... */
-        /*   if (lives_widget_get_parent(mainw->preview_box) == NULL) { */
-        /*     lives_widget_queue_draw(mainw->play_window); */
-        /*     lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box); */
-        /*     lives_widget_grab_focus(mainw->preview_spinbutton); */
-        /*   } */
-
-        /*   lives_widget_hide(mainw->preview_controls); */
-
-        /*   // and resize it */
-        /*   resize_play_window(); */
-        /*   load_preview_image(FALSE); */
-        /* } */
 
         if (!mainw->multitrack) {
           //resize(1);

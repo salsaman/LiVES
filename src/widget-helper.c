@@ -1164,7 +1164,7 @@ static void async_sig_handler(livespointer instance, livespointer data) {
   /* ctx = lives_widget_context_get_thread_default(); */
   /* if (!gov_running && (!ctx || ctx == lives_widget_context_default())) { */
 
-  mainw->clutch = TRUE;
+  //mainw->clutch = TRUE;
   if (sigdata->swapped) {
     sigdata->proc = lives_proc_thread_create(attr, (lives_funcptr_t)sigdata->callback, -1, "vv", sigdata->user_data, instance);
   } else {

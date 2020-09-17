@@ -20,16 +20,16 @@ static boolean reorder_leave_back = FALSE;
 
 void reorder_leave_back_set(boolean val) {reorder_leave_back = val;}
 
-#define RND_ERROR (0.000000000001)
+#define RND_ERROR (0.)
 
 /////////////////////////////////////////////////////
 
 LIVES_GLOBAL_INLINE ticks_t q_gint64(ticks_t in, double fps) {
   // quantise timecode to fps
-  if (in > (ticks_t)0) return ((((double)((ticks_t)((double)in / (double)TICKS_PER_SECOND_DBL * (double)fps))) /
+  if (in > (ticks_t)0) return ((((double)((ticks_t)((double)in / (double)TICKS_PER_SECOND_DBL * (double)fps + .5))) /
                                   (double)fps) + RND_ERROR) * TICKS_PER_SECOND_DBL; // quantise to frame timing
 
-  if (in < (ticks_t)0) return ((((double)((ticks_t)((double)in / (double)TICKS_PER_SECOND_DBL * (double)fps))) /
+  if (in < (ticks_t)0) return ((((double)((ticks_t)((double)in / (double)TICKS_PER_SECOND_DBL * (double)fps - .5))) /
                                   (double)fps) - RND_ERROR) * TICKS_PER_SECOND_DBL; // quantise to frame timing
   return (ticks_t)0;
 }

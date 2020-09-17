@@ -5406,7 +5406,7 @@ int save_to_scrap_file(weed_layer_t *layer) {
 
   if (!IS_VALID_CLIP(mainw->scrap_file)) return -1;
 
-  if (!mainw->frame_layer) return scrapfile->frames;
+  if (!layer) return scrapfile->frames;
 
   if (!scrapfile->ext_src) {
     char *oname = make_image_file_name(scrapfile, 1, LIVES_FILE_EXT_SCRAP), *dirname;
@@ -5433,8 +5433,8 @@ int save_to_scrap_file(weed_layer_t *layer) {
   } else fd = LIVES_POINTER_TO_INT(scrapfile->ext_src);
 
   // serialise entire frame to scrap file
-  weed_set_int_value(mainw->frame_layer, WEED_LEAF_FRAME, ++scrapfile->frames);
-  pdata_size = weed_plant_serialise(fd, mainw->frame_layer, NULL);
+  weed_set_int_value(layer, WEED_LEAF_FRAME, ++scrapfile->frames);
+  pdata_size = weed_plant_serialise(fd, layer, NULL);
   scrapfile->f_size += pdata_size;
 
   // check free space every 256 frames or every 10 MB of audio (TODO ****)

@@ -9853,6 +9853,7 @@ if (defined($ARGV[0])) {
 				&smog_chdir("$workdir");
 			    }
 			    if (!$has_hdrs && (-f "$file/order"
+					       || (-d "$file/layouts" && ($opts & 0x04))
 					       || (int($file) > 65535 && $file =~ /^[0-9]{5,}$/)
 					       || &is_specialdir($file))) {
 				print STDERR "Will remove $workdir/$file\n";

@@ -2003,7 +2003,9 @@ void *fg_run_func(lives_proc_thread_t lpt, void *retval) {
     return (void *)pval;
   }
   /// no funcptrs or custom...yet
-  default: break;
+  default:
+    weed_plant_free(lpt);
+    break;
   }
   return NULL;
 }

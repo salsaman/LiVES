@@ -2290,7 +2290,6 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
   } else {
     event = st_event;
     st_event = NULL;
-    last_tc = get_event_timecode(event);
   }
 
   while ((st_event && event != st_event) || (!st_event && get_event_timecode(event) < fill_tc)) {
@@ -2358,8 +2357,10 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
         if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
           /// update audio state
           atstate = aframe_to_atstate(event);
-          if (!audstate) audstate = atstate;
-          else {
+          if (!audstate) {
+            audstate = atstate;
+            last_tc = get_event_timecode(event);
+          } else {
             // have an existing audio state, update with current
             weed_timecode_t delta = get_event_timecode(event) - last_tc;
             for (nfiles = 0; audstate[nfiles].afile != -1; nfiles++) {

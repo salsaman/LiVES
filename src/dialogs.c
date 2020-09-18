@@ -2277,7 +2277,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   mainw->last_display_ticks = 0;
   shown_paused_frames = FALSE;
 
-  mainw->cevent_tc = 0;
+  mainw->cevent_tc = -1;
 
   progress_count = 0;
   progress_speed = 4.;

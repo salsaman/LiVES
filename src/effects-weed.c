@@ -11251,6 +11251,7 @@ size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) {
 
   // serialise the "type" leaf first, so that we know this is a new plant when deserialising
   totsize += weed_leaf_serialise(fd, plant, WEED_LEAF_TYPE, TRUE, mem);
+  lives_free(proplist[0]);
 
   for (i = 1; (prop = proplist[i]); i++) {
     // write each leaf and key

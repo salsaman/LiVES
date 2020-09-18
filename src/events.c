@@ -3135,7 +3135,8 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
     return next_event;
   }
 
-  aseek_tc += (weed_timecode_t)((double)(tc - mainw->cevent_tc) * stored_avel);
+  if (mainw->cevent_tc != -1)
+    aseek_tc += (weed_timecode_t)((double)(tc - mainw->cevent_tc) * stored_avel);
   mainw->cevent_tc = tc;
 
   return_event = get_next_event(next_event);

@@ -355,7 +355,9 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
           last_real_frame = i;
           isfirst = FALSE;
 	  // *INDENT-OFF*
-	}}}}
+	}}
+      else lives_free(fname);
+    }}
   // *INDENT-ON*
 
   if (empirical_img_type == IMG_TYPE_UNKNOWN) {

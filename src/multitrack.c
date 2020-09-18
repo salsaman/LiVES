@@ -3397,7 +3397,10 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
   if (mainw->frame_layer) {
     LiVESPixbuf *pixbuf = NULL;
     int pwidth, pheight;//,  lb_width, lb_height;
-    int cpal = WEED_PALETTE_RGB24, layer_palette = weed_layer_get_palette(mainw->frame_layer);
+    int cpal = WEED_PALETTE_RGB24, layer_palette;
+
+    check_layer_ready(mainw->frame_layer);
+    layer_palette = weed_layer_get_palette(mainw->frame_layer);
     if (weed_palette_has_alpha(layer_palette)) cpal = WEED_PALETTE_RGBA32;
 
     pwidth = mt->play_width;
@@ -3411,7 +3414,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
 
     if (mt->framedraw) mt_framedraw(mt, mainw->frame_layer); // framedraw will free the frame_layer itself
     else {
-      if (pixbuf == NULL) {
+      if (!pixbuf) {
         pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE, TRUE);
       }
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -3421,6 +3424,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
 #endif
       lives_widget_queue_draw(mt->preview_eventbox);
       weed_plant_free(mainw->frame_layer);
+      mainw->frame_layer = NULL;
     }
   } else {
     // no frame - show blank
@@ -14104,7 +14108,7 @@ static void paint_lines(lives_mt * mt, double currtime, boolean unpaint, lives_p
   lives_widget_get_position(mt->timeline_eb, &off_x, NULL);
   offset += off_x;
 
-  if (offset > off_x && offset < ebwidth) {
+  if (offset > off_x && offset < ebwidth + off_x) {
     paint_line(mt, mt->timeline_table, offset, currtime, cr);
   }
 }
@@ -16632,7 +16636,7 @@ static void on_delblock_activate(LiVESMenuItem * menuitem, livespointer user_dat
   if (mt->current_track != -1) mt_backup(mt, MT_UNDO_DELETE_BLOCK, 0);
   else mt_backup(mt, MT_UNDO_DELETE_AUDIO_BLOCK, 0);
 
-  if (mt->block_selected == NULL) mt->block_selected = mt->putative_block;
+  if (!mt->block_selected) mt->block_selected = mt->putative_block;
   block = mt->block_selected;
   eventbox = block->eventbox;
 
@@ -16690,6 +16694,7 @@ static void on_delblock_activate(LiVESMenuItem * menuitem, livespointer user_dat
   else lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "blocks", (livespointer)block->next);
   if ((blocknext = block->next) != NULL) blocknext->prev = blockprev;
 
+  if (block == mt->block_selected) mt->block_selected = NULL;
   lives_free(block);
 
   lives_widget_queue_draw(eventbox);
@@ -16785,9 +16790,10 @@ static void on_delblock_activate(LiVESMenuItem * menuitem, livespointer user_dat
     if (prefs->mt_auto_back == 0) mt_auto_backup(mt);
   }
 
-  mt_desensitise(mt);
-  mt_sensitise(mt);
-
+  if (!mt->moving_block) {
+    mt_desensitise(mt);
+    mt_sensitise(mt);
+  }
   if (!mt->event_list) recover_layout_cancelled(FALSE);
 }
 
@@ -17702,7 +17708,7 @@ boolean multitrack_audio_insert(LiVESMenuItem * menuitem, livespointer user_data
   block = (track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "block_last");
 
   if (!did_backup) {
-    if (mt->avol_fx != -1 && block && block->next == NULL && get_first_event(mt->event_list)) {
+    if (mt->avol_fx != -1 && block && !block->next && get_first_event(mt->event_list)) {
       apply_avol_filter(mt);
     }
   }
@@ -18194,14 +18200,11 @@ static void draw_soundwave(LiVESWidget * ebox, lives_painter_surface_t *surf, in
   double secs;
   double ypos;
   double seek, vel;
-  double awid;
 
   int offset_start, offset_end; // pixel values
   int fnum;
   int width = lives_widget_get_allocation_width(ebox);
   int track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "layer_number"));
-
-  register int i;
 
   aofile = -1;
   afd = -1;
@@ -18218,19 +18221,16 @@ static void draw_soundwave(LiVESWidget * ebox, lives_painter_surface_t *surf, in
       return;
     }
 
-    offset_start = (int)((offset_startd - mt->tl_min) / tl_span * lives_widget_get_allocation_width(ebox) + .5);
-    if (width > 0 && offset_start > width) {
-      if (afd != -1) lives_close_buffered(afd);
-      return;
-    }
+    offset_start = (int)((offset_startd - mt->tl_min) / tl_span * width + .5);
+    if (offset_start < 0) offset_start = 0;
 
     offset_endd = get_event_timecode(block->end_event) / TICKS_PER_SECOND_DBL; //+1./cfile->fps;
-    offset_end = (offset_endd - mt->tl_min) / tl_span * lives_widget_get_allocation_width(ebox);
-
-    if (offset_end < mt->tl_min) {
+    if (offset_endd < mt->tl_min) {
       block = block->next;
       continue;
     }
+    if (offset_endd > mt->tl_max) offset_endd = mt->tl_max;
+    offset_end = (offset_endd - mt->tl_min) / tl_span * width;
 
     fnum = get_audio_frame_clip(block->start_event, track);
     seek = get_audio_frame_seek(block->start_event, track);
@@ -18249,8 +18249,6 @@ static void draw_soundwave(LiVESWidget * ebox, lives_painter_surface_t *surf, in
 
     // open audio file here
 
-    awid = lives_widget_get_allocation_width(ebox) / (tl_span + mt->tl_min - offset_startd * vel);
-
     if (fnum != aofile) {
       // does not make sense to use buffer reads, as we may read very sparsely from the file
       if (afd != -1) close(afd);
@@ -18260,9 +18258,11 @@ static void draw_soundwave(LiVESWidget * ebox, lives_painter_surface_t *surf, in
       aofile = fnum;
     }
 
-    for (i = offset_start; i <= offset_end; i++) {
-      secs = (double)i / awid + seek;
-      if (secs > (chnum == 0 ? mainw->files[fnum]->laudio_time : mainw->files[fnum]->raudio_time)) break;
+    for (int i = offset_start; i <= offset_end; i++) {
+      secs = (double)i / (double)width * tl_span + mt->tl_min;
+      secs -= offset_startd;
+      secs = secs * vel + seek;
+      if (secs >= (chnum == 0 ? mainw->files[fnum]->laudio_time : mainw->files[fnum]->raudio_time)) break;
 
       // seek and read
       if (afd == -1) {

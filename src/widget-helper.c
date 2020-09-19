@@ -4163,11 +4163,9 @@ LIVES_GLOBAL_INLINE boolean lives_button_set_image_from_stock(LiVESButton *butto
 #ifdef USE_SPECIAL_BUTTONS
   else {
     if (stock_id) {
-      LiVESPixbuf *pixbuf = lives_pixbuf_new_from_stock_at_size(stock_id, LIVES_ICON_SIZE_BUTTON,
-                            0, 0);
+      LiVESPixbuf *pixbuf = lives_pixbuf_new_from_stock_at_size(stock_id, LIVES_ICON_SIZE_BUTTON, 0, 0);
       if (LIVES_IS_PIXBUF(pixbuf))
-        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), SBUTT_PIXBUF_KEY,
-                                     (livespointer)pixbuf);
+        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), SBUTT_PIXBUF_KEY, (livespointer)pixbuf);
       else return FALSE;
     }
   }
@@ -10735,6 +10733,8 @@ void widget_helper_set_stock_icon_alts(LiVESIconTheme * icon_theme) {
 #if GTK_CHECK_VERSION(3, 10, 0)
   LIVES_STOCK_ALTS[STOCK_ALTS_MEDIA_PAUSE] =
     lives_icon_get_stock_alt(icon_theme, LIVES_STOCK_MEDIA_PAUSE_ALT_1, LIVES_STOCK_MEDIA_PAUSE_ALT_2, (char *)NULL);
+  LIVES_STOCK_ALTS[STOCK_ALTS_KEEP] =
+    lives_icon_get_stock_alt(icon_theme, LIVES_STOCK_KEEP_ALT_1, LIVES_STOCK_KEEP_ALT_2, (char *)NULL);
 #endif
 }
 
@@ -11646,7 +11646,7 @@ static void do_some_things(void) {
   noswitch = mainw->noswitch;
 
   /// except under very specific conditions:
-  mainw->noswitch = mainw->cs_is_permitted;
+  mainw->noswitch = !mainw->cs_is_permitted;
 
   if (mainw->multitrack && mainw->multitrack->idlefunc > 0) {
     /// remove th multitrack timer; we don't want to trigger an autosave right now

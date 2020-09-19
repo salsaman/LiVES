@@ -1156,7 +1156,7 @@ boolean check_storage_space(int clipno, boolean is_processing) {
 
 static void cancel_process(boolean visible) {
   if (visible) {
-    if (mainw->preview_box != NULL && !mainw->preview) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Play all"));
+    if (mainw->preview_box && !mainw->preview) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Play all"));
     if (accelerators_swapped) {
       if (!mainw->preview) lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play all"));
       lives_widget_remove_accelerator(mainw->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
@@ -1164,7 +1164,7 @@ static void cancel_process(boolean visible) {
                                    (LiVESXModifierType)0,
                                    LIVES_ACCEL_VISIBLE);
     }
-    if (mainw->proc_ptr != NULL) {
+    if (mainw->proc_ptr) {
       lives_widget_destroy(LIVES_WIDGET(mainw->proc_ptr->processing));
       lives_free(mainw->proc_ptr);
       mainw->proc_ptr = NULL;
@@ -2400,7 +2400,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 #endif
   last_kbd_ticks = 0;
   mainw->scratch = SCRATCH_NONE;
-  if (mainw->iochan) lives_widget_show(mainw->proc_ptr->pause_button);
+  if (mainw->iochan) lives_widget_show_all(mainw->proc_ptr->pause_button);
   display_ready = TRUE;
 
   last_time_source = LIVES_TIME_SOURCE_NONE;
@@ -2625,6 +2625,13 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       } else lives_widget_context_update();
     }
 
+    if (mainw->preview_req) {
+      mainw->preview_req = FALSE;
+      mainw->noswitch = FALSE;
+      on_preview_clicked(LIVES_BUTTON(mainw->proc_ptr->preview_button), NULL);
+      mainw->noswitch = TRUE;
+    }
+
     //    #define DEBUG
 #ifdef DEBUG
     if (*(mainw->msg)) g_print("%s msg %s\n", cfile->info_file, mainw->msg);
@@ -2635,16 +2642,17 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     if (visible && (!accelerators_swapped || cfile->opening) && cancellable
         && (!cfile->nopreview || cfile->keep_without_preview)) {
       if (!cfile->nopreview && !(cfile->opening && mainw->multitrack)) {
-        lives_widget_show(mainw->proc_ptr->preview_button);
+        lives_widget_set_no_show_all(mainw->proc_ptr->preview_button, FALSE);
+        lives_widget_show_all(mainw->proc_ptr->preview_button);
       }
 
       // show buttons
       if (cfile->opening_loc) {
         lives_widget_hide(mainw->proc_ptr->pause_button);
         if (mainw->proc_ptr->stop_button)
-          lives_widget_show(mainw->proc_ptr->stop_button);
+          lives_widget_show_all(mainw->proc_ptr->stop_button);
       } else {
-        lives_widget_show(mainw->proc_ptr->pause_button);
+        lives_widget_show_all(mainw->proc_ptr->pause_button);
         if (mainw->proc_ptr->stop_button)
           lives_widget_hide(mainw->proc_ptr->stop_button);
       }
@@ -2751,14 +2759,12 @@ finish:
     if (cfile->clip_type == CLIP_TYPE_DISK && (mainw->cancelled != CANCEL_NO_MORE_PREVIEW || !cfile->opening)) {
       lives_rm(cfile->info_file);
     }
-    if (mainw->preview_box && !mainw->preview) lives_widget_set_tooltip_text(mainw->p_playbutton,
-          _("Play all"));
+    if (mainw->preview_box && !mainw->preview) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Play all"));
     if (accelerators_swapped) {
       if (!mainw->preview) lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play all"));
       lives_widget_remove_accelerator(mainw->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
       lives_widget_add_accelerator(mainw->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, LIVES_KEY_p,
-                                   (LiVESXModifierType)0,
-                                   LIVES_ACCEL_VISIBLE);
+                                   (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE);
       accelerators_swapped = FALSE;
     }
     if (mainw->proc_ptr) {
@@ -2779,9 +2785,6 @@ finish:
       sensitize();
     }
   } else {
-
-    /*   } */
-    /* } */
     mainw->is_processing = TRUE;
   }
 
@@ -2840,7 +2843,7 @@ boolean do_auto_dialog(const char *text, int type) {
     lives_widget_hide(mainw->proc_ptr->stop_button);
 
   if (type == 2) {
-    lives_widget_show(mainw->proc_ptr->cancel_button);
+    lives_widget_show_all(mainw->proc_ptr->cancel_button);
     lives_widget_hide(mainw->proc_ptr->pause_button);
     mainw->cancel_type = CANCEL_SOFT;
   }
@@ -2861,8 +2864,8 @@ boolean do_auto_dialog(const char *text, int type) {
   } else if (type == 1) {
     // show buttons
     if (mainw->proc_ptr->stop_button)
-      lives_widget_show(mainw->proc_ptr->stop_button);
-    lives_widget_show(mainw->proc_ptr->cancel_button);
+      lives_widget_show_all(mainw->proc_ptr->stop_button);
+    lives_widget_show_all(mainw->proc_ptr->cancel_button);
 #ifdef HAVE_PULSE_AUDIO
     if (mainw->pulsed_read) {
       pulse_driver_uncork(mainw->pulsed_read);
@@ -4290,11 +4293,9 @@ boolean do_foundclips_query(void) {
   lives_free(text); lives_free(title);
   widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
   lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_CLEAR,
-                                     _("Maybe later"),
-                                     LIVES_RESPONSE_NO);
+                                     _("Maybe later"), LIVES_RESPONSE_NO);
   lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_REMOVE,
-                                     _("Try to recover them"),
-                                     LIVES_RESPONSE_YES);
+                                     _("Try to recover them"), LIVES_RESPONSE_YES);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   lives_dialog_set_button_layout(LIVES_DIALOG(dlg), LIVES_BUTTONBOX_SPREAD);

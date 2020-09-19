@@ -10091,7 +10091,7 @@ boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespo
 // these two really belong with the processing widget
 
 void on_effects_paused(LiVESButton * button, livespointer user_data) {
-  char *com = NULL;
+  char *com = NULL, *stockim;
   ticks_t xticks;
 
   if (mainw->iochan || cfile->opening) {
@@ -10132,11 +10132,13 @@ void on_effects_paused(LiVESButton * button, livespointer user_data) {
           } else {
             ltext = (_("Enough"));
           }
+          stockim = LIVES_STOCK_KEEP;
+          lives_button_set_image_from_stock(LIVES_BUTTON(mainw->proc_ptr->cancel_button), stockim);
           lives_button_set_label(LIVES_BUTTON(mainw->proc_ptr->cancel_button), ltext);
           lives_label_set_text(LIVES_LABEL(mainw->proc_ptr->label2),
                                (tmp = lives_strdup_printf
-                                      (_("\nPaused\n(click %s to keep what you have and stop)\n(click Resume to continue processing)"),
-                                       ltext)));
+                                      (_("\nPaused\n(click %s to keep what you have and stop)\n(click "
+                                         "Resume to continue processing)"), ltext)));
           lives_free(tmp);
           lives_free(ltext);
         }
@@ -10171,18 +10173,20 @@ void on_effects_paused(LiVESButton * button, livespointer user_data) {
         if (cfile->opening || !cfile->nokeep) lives_button_set_label(LIVES_BUTTON(button), _("Pause/_Enough"));
         else lives_button_set_label(LIVES_BUTTON(button), _("Paus_e"));
         lives_button_set_label(LIVES_BUTTON(mainw->proc_ptr->cancel_button), _("Cancel"));
+        stockim = LIVES_STOCK_CANCEL;
+        lives_button_set_image_from_stock(LIVES_BUTTON(mainw->proc_ptr->cancel_button), stockim);
         lives_label_set_text(LIVES_LABEL(mainw->proc_ptr->label2), _("\nPlease Wait"));
         d_print(_("resumed..."));
       }
 #ifdef ENABLE_JACK
       if (mainw->jackd && mainw->jackd_read && mainw->jackd_read->in_use)
         if (mainw->proc_ptr->stop_button)
-          lives_widget_show(mainw->proc_ptr->stop_button);
+          lives_widget_show_all(mainw->proc_ptr->stop_button);
 #endif
 #ifdef HAVE_PULSE_AUDIO
       if (mainw->pulsed && mainw->pulsed_read && mainw->pulsed_read->in_use)
         if (mainw->proc_ptr->stop_button)
-          lives_widget_show(mainw->proc_ptr->stop_button);
+          lives_widget_show_all(mainw->proc_ptr->stop_button);
 #endif
     }
 
@@ -10236,6 +10240,11 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
     // called a second time from playback loop
     // this is a special value of cancel - don't propogate it to "open"
     mainw->cancelled = CANCEL_NO_PROPOGATE;
+    return;
+  }
+
+  if (mainw->noswitch) {
+    mainw->preview_req = TRUE;
     return;
   }
 
@@ -10328,6 +10337,7 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
     if (mainw->proc_ptr) {
       lives_widget_set_sensitive(mainw->proc_ptr->pause_button, FALSE);
       lives_widget_set_sensitive(mainw->proc_ptr->cancel_button, FALSE);
+      lives_widget_hide(mainw->proc_ptr->processing);
     }
     if (!cfile->opening) {
       lives_widget_set_sensitive(mainw->showfct, FALSE);
@@ -10381,7 +10391,7 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
     if (mainw->proc_ptr) {
       // proc_ptr can be NULL if we finished loading with a bg generator running
       lives_widget_show(mainw->proc_ptr->processing);
-      lives_button_set_label(LIVES_BUTTON(button), _("Preview"));
+      if (button) lives_button_set_label(LIVES_BUTTON(button), _("Preview"));
       lives_widget_set_sensitive(mainw->proc_ptr->pause_button, TRUE);
       lives_widget_set_sensitive(mainw->proc_ptr->cancel_button, TRUE);
     }

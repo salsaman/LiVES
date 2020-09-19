@@ -1034,7 +1034,8 @@ typedef GdkInterpType                     LiVESInterpType;
 
 #if GTK_CHECK_VERSION(3, 10, 0)
 #define STOCK_ALTS_MEDIA_PAUSE 0
-#define N_STOCK_ALTS 1
+#define STOCK_ALTS_KEEP 1
+#define N_STOCK_ALTS 2
 
 #define GET_STOCK_ALT(stock_name) (lives_get_stock_icon_alt((stock_name)))
 
@@ -1083,6 +1084,10 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_STOCK_MEDIA_PAUSE_ALT_2 "media-pause"
 #define LIVES_STOCK_MEDIA_PAUSE GET_STOCK_ALT(STOCK_ALTS_MEDIA_PAUSE)
 
+#define LIVES_STOCK_KEEP_ALT_1 "gtk-jump"
+#define LIVES_STOCK_KEEP_ALT_2 "gtk-jump-to-ltr"
+#define LIVES_STOCK_KEEP GET_STOCK_ALT(STOCK_ALTS_KEEP)
+
 #else
 
 #define LIVES_STOCK_UNDO GTK_STOCK_UNDO
@@ -1092,6 +1097,7 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_STOCK_REMOVE GTK_STOCK_REMOVE
 #define LIVES_STOCK_NO GTK_STOCK_NO
 #define LIVES_STOCK_YES GTK_STOCK_YES
+#define LIVES_STOCK_KEEP GTK_STOCK_KEEP
 #define LIVES_STOCK_QUIT GTK_STOCK_QUIT
 #define LIVES_STOCK_OPEN GTK_STOCK_OPEN
 #define LIVES_STOCK_CLOSE GTK_STOCK_CLOSE

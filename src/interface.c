@@ -704,8 +704,7 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
                                            DEF_BUTTON_WIDTH * 4, DEF_BUTTON_HEIGHT);
   } else if (preview_type == LIVES_PREVIEW_TYPE_AUDIO_ONLY) {
     preview_button = lives_standard_button_new_with_label(_("Click here to _Preview the Selected "
-                     "Audio File"),
-                     DEF_BUTTON_WIDTH * 4, DEF_BUTTON_HEIGHT);
+                     "Audio File"), DEF_BUTTON_WIDTH * 4, DEF_BUTTON_HEIGHT);
   } else if (preview_type == LIVES_PREVIEW_TYPE_RANGE) {
     widget_opts.expand = LIVES_EXPAND_NONE;
     preview_button = lives_standard_button_new_with_label(_("\nClick here to _Preview the Selection\n"),
@@ -955,12 +954,10 @@ xprocess *create_processing(const char *text) {
           NULL, _("Paus_e"), LIVES_RESPONSE_ACCEPT);
     else procw->pause_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing), NULL, _("Pause/_Enough"),
                                  LIVES_RESPONSE_ACCEPT);
-    lives_widget_hide(procw->pause_button);
     lives_widget_set_can_default(procw->pause_button, TRUE);
 
     procw->preview_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing), NULL, _("_Preview"),
                             LIVES_RESPONSE_SHOW_DETAILS);
-    lives_widget_hide(procw->preview_button);
     lives_widget_set_can_default(procw->preview_button, TRUE);
   }
 
@@ -968,6 +965,7 @@ xprocess *create_processing(const char *text) {
                          LIVES_RESPONSE_CANCEL);
 
   lives_widget_set_can_default(procw->cancel_button, TRUE);
+  lives_button_grab_default_special(procw->cancel_button);
 
   lives_widget_add_accelerator(procw->cancel_button, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
@@ -983,8 +981,8 @@ xprocess *create_processing(const char *text) {
     lives_signal_connect(LIVES_GUI_OBJECT(procw->preview_button), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(multitrack_preview_clicked), mainw->multitrack);
   } else {
-    lives_signal_connect(LIVES_GUI_OBJECT(procw->preview_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_preview_clicked), NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(procw->preview_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                              LIVES_GUI_CALLBACK(on_preview_clicked), NULL);
   }
 
   lives_signal_connect(LIVES_GUI_OBJECT(procw->cancel_button), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -994,8 +992,7 @@ xprocess *create_processing(const char *text) {
   lives_widget_hide(procw->preview_button);
   lives_widget_hide(procw->pause_button);
 
-  if (procw->stop_button)
-    lives_widget_hide(procw->stop_button);
+  if (procw->stop_button) lives_widget_hide(procw->stop_button);
 
   return procw;
 }
@@ -5987,7 +5984,7 @@ boolean update_dsu(livespointer data) {
           lives_widget_set_sensitive(dsq->button, FALSE);
         if (capable->ds_free < prefs->ds_crit_level) {
           lives_widget_set_no_show_all(dsq->abort_button, FALSE);
-          lives_widget_show(dsq->abort_button);
+          lives_widget_show_all(dsq->abort_button);
         }
       }
       set_label = FALSE;

@@ -384,7 +384,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       param->widgets[1] = buttond = lives_standard_font_chooser_new();
       lives_box_pack_start(LIVES_BOX(box), buttond, TRUE, TRUE, 0);
       lives_box_reorder_child(LIVES_BOX(box), buttond, idx);
-      if (lives_widget_is_visible(widget)) lives_widget_show(buttond);
+      if (lives_widget_is_visible(widget)) lives_widget_show_all(buttond);
 
       lives_widget_object_ref(tbox);
       lives_widget_unparent(tbox);

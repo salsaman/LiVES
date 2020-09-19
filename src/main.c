@@ -2525,6 +2525,10 @@ static void set_toolkit_theme(int prefer) {
   lives_free(ic_dir);
 
   capable->all_icons = gtk_icon_theme_list_icons((LiVESIconTheme *)widget_opts.icon_theme, NULL);
+  if (0) {
+    LiVESList *list = capable->all_icons;
+    for (; list; list = list->next) if (!strncmp((char *)list->data, "gtk-", 4)) g_print("icon: %s\n", (char *)list->data);
+  }
 
   widget_helper_set_stock_icon_alts((LiVESIconTheme *)widget_opts.icon_theme);
 }
@@ -7482,8 +7486,8 @@ fndone:
       const char *img_ext = data->img_ext;
       int width = data->width, height = data->height;
       lives_free(in);
-
-      /// if loading the blend frame in clip editor, then we recall the palette details and size @ injection, and prepare it in this thread
+      /// if loading the blend frame in clip editor, then we recall the palette details and size @ injection,
+      //and prepare it in this thread
       if (mainw->blend_file != -1 && mainw->blend_palette != WEED_PALETTE_END
           && LIVES_IS_PLAYING && !mainw->multitrack && mainw->blend_file != mainw->current_file
           && weed_get_int_value(layer, WEED_LEAF_CLIP, NULL) == mainw->blend_file) {

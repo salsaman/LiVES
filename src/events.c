@@ -5920,7 +5920,7 @@ static void rdet_use_current(LiVESButton * button, livespointer user_data) {
 
     aspect = paramspecial_get_aspect();
 
-    if (aspect && aspect->lockbutton) lives_widget_show(aspect->lockbutton);
+    if (aspect && aspect->lockbutton) lives_widget_show_all(aspect->lockbutton);
 
     rdet->ratio_fps = cfile->ratio_fps;
   }

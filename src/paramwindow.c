@@ -1026,7 +1026,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
 
   char fmt_strings[MAX_FMT_STRINGS][FMT_STRING_SIZE];
 
-  size_t fmtlen, ll, llx;
+  size_t fmtlen, ll;
 
   boolean used[rfx->num_params];
   boolean has_box = FALSE;
@@ -1229,7 +1229,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
       num_tok = get_token_count(line, (unsigned int)rfx->delim[0]);
       // ignore | inside strings
       array = lives_strsplit(line, rfx->delim, num_tok);
-      if (!(*(array[num_tok - 1]))) num_tok--;
+      if (!*(array[num_tok - 1])) num_tok--;
 
       for (j = 0; j < num_tok; j++) {
         if (!strcmp(array[j], "nextfilter")) {
@@ -1280,7 +1280,9 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
               widget_opts.filler_len = wofl;
             }
 
-            if (last_label) lives_widget_set_halign(last_label, LIVES_ALIGN_START);
+            if (last_label) {
+              lives_widget_set_halign(last_label, LIVES_ALIGN_START);
+            }
             if (layoutx) hbox = lives_layout_hbox_new(LIVES_LAYOUT(layoutx));
             if (add_param_to_box(LIVES_BOX(hbox), rfx, pnum, (j == (num_tok - 1)) && !noslid)) noslid = TRUE;
           }
@@ -1328,7 +1330,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
               widget_opts.filler_len = wofl;
             } else if ((fmtlen = lives_strlen((const char *)format)) < FMT_STRING_SIZE) format[fmtlen] = -1;
           }
-        } else if (!strncmp(array[j], "\"", 1)) {
+        } else if (*array[j] == '"') {
           // add a label
           if (pass == 0) {
             if ((fmtlen = lives_strlen((const char *)format)) < FMT_STRING_SIZE) format[fmtlen] = -2;
@@ -1351,17 +1353,14 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
             widget_opts.filler_len = wofl;
           }
 
-          ll = 0;
-          llx = lives_snprintf(label_text, 256, "%s", array[j] + 1);
-          if (llx > 256) llx = 256;
-          llx--;
+          ll = lives_snprintf(label_text, 256, "%s", array[j] + 1);
+          if (ll > 255) ll = 255;
 
-          while (j < num_tok - 1 && array[j][llx - 1] == '"') {
+          while (j < num_tok - 1 && label_text[ll - 1] != '"') {
             // handle separators within label text
-            ll += llx;
-            llx = lives_strappend(label_text, 256, array[++j]);
+            ll += lives_strappend(label_text, 256, rfx->delim);
+            ll += lives_strappend(label_text, 256, array[++j]);
           }
-          ll += llx;
 
           keepsmall = TRUE;
           if (!last_label && !has_param) {
@@ -1372,12 +1371,16 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
             if (label_text[ll - 1] == '"') label_text[ll - 1] = 0;
 
             if (!keepsmall) widget_opts.justify = LIVES_JUSTIFY_CENTER;
-            else if (last_label) lives_widget_set_halign(last_label, LIVES_ALIGN_START);
+            else if (last_label) {
+              lives_widget_set_halign(last_label, LIVES_ALIGN_START);
+              lives_widget_set_hexpand(last_label, FALSE);
+            }
 
             if (layoutx) {
               last_label = lives_layout_add_label(LIVES_LAYOUT(layoutx), label_text, keepsmall);
             } else last_label = add_param_label_to_box(LIVES_BOX(hbox), !keepsmall, label_text);
             widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+            lives_widget_set_hexpand(last_label, TRUE);
           }
         }
       }

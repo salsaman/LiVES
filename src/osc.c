@@ -6123,7 +6123,7 @@ boolean lives_osc_cb_rte_get_keyfxname(void *context, int arglen, const void *va
   lives_osc_parse_int_argument(vargs, &effect_key);
   lives_osc_parse_int_argument(vargs, &mode);
   if (effect_key < 1 || effect_key > FX_MAX || mode < 1 || mode > rte_getmodespk()) return lives_osc_notify_failure();
-  lives_status_send((tmp = lives_strdup_printf("%s", rte_keymode_get_filter_name(effect_key, mode - 1, FALSE, FALSE))));
+  lives_status_send((tmp = lives_strdup_printf("%s", rte_keymode_get_filter_name(effect_key, mode - 1, FALSE))));
   lives_free(tmp);
   return TRUE;
 }

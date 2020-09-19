@@ -580,8 +580,8 @@ WEED_SETUP_START(200, 200) {
           sprintf(rfx_strings[oninps + 2 + stcount], "layout|\"Right output channel\"|");
         } else {
           if (ninchs == 1) sprintf(rfx_strings[stcount + 1], "layout|\"Left/mono channel\"");
-          else sprintf(rfx_strings[stcount + 1], "layout|\"Left channel\"");
-          sprintf(rfx_strings[oninps + 3 + stcount], "layout|\"Right channel\"");
+          else sprintf(rfx_strings[stcount + 1], "layout|\"Left channel\"|");
+          sprintf(rfx_strings[oninps + 3 + stcount], "layout|\"Right channel\"|");
         }
         sprintf(rfx_strings[oninps + stcount2 - 2 + stcount], "layout|hseparator|");
 

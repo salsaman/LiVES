@@ -980,7 +980,7 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
   uint64_t new_rte;
 
   if (mainw->go_away) return TRUE;
-  if (!LIVES_IS_INTERACTIVE && group != NULL) return TRUE;
+  if (!LIVES_IS_INTERACTIVE && group) return TRUE;
 
   mainw->fx_is_auto = FALSE;
 
@@ -1012,7 +1012,7 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
         pthread_mutex_lock(&mainw->event_list_mutex);
         if (mainw->rte & new_rte) mainw->rte ^= new_rte;
         pthread_mutex_unlock(&mainw->event_list_mutex);
-        if (rte_window != NULL) rtew_set_keych(key, FALSE);
+        if (rte_window) rtew_set_keych(key, FALSE);
         if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
         mainw->osc_block = FALSE;
         filter_mutex_unlock(key);
@@ -1024,8 +1024,19 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
         if (!(mainw->rte & new_rte)) mainw->rte |= new_rte;
         pthread_mutex_unlock(&mainw->event_list_mutex);
 
+        if (!LIVES_IS_PLAYING) {
+          // if anything is connected to ACTIVATE, the fx may be activated
+          // during playback this is checked when we play a frame
+          for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
+            if (rte_key_valid(i + 1, TRUE)) {
+              if (!rte_key_is_enabled(1 + i)) {
+                pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
+		// *INDENT-OFF*
+	      }}}}
+	// *INDENT-ON*
+
         mainw->last_grabbable_effect = key;
-        if (rte_window != NULL) rtew_set_keych(key, TRUE);
+        if (rte_window) rtew_set_keych(key, TRUE);
         if (mainw->ce_thumbs) {
           ce_thumbs_set_keych(key, TRUE);
 
@@ -1044,7 +1055,18 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
         pthread_mutex_unlock(&mainw->event_list_mutex);
       }
       filter_mutex_unlock(key);
-      if (rte_window != NULL) rtew_set_keych(key, FALSE);
+      if (!LIVES_IS_PLAYING) {
+        // if anything is connected to ACTIVATE, the fx may be de-activated
+        // during playback this is checked when we play a frame
+        for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
+          if (rte_key_valid(i + 1, TRUE)) {
+            if (rte_key_is_enabled(1 + i)) {
+              pconx_chain_data(i, rte_key_getmode(i + 1), FALSE);
+	      // *INDENT-OFF*
+	    }}}}
+      // *INDENT-ON*
+
+      if (rte_window) rtew_set_keych(key, FALSE);
       if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
     }
   }
@@ -1056,8 +1078,7 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
       if (!LIVES_IS_PLAYING
           && mainw->current_file > 0 && ((has_video_filters(FALSE) && !has_video_filters(TRUE))
                                          || (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT
-                                             && has_audio_filters(AF_TYPE_ANY)) ||
-                                         mainw->agen_key != 0)) {
+                                             && has_audio_filters(AF_TYPE_ANY)) || mainw->agen_key != 0)) {
         lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, TRUE);
       } else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, FALSE);
     }
@@ -1080,13 +1101,13 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
 }
 
 
-boolean rte_on_off_callback_hook(LiVESToggleButton *button, livespointer user_data) {
+boolean rte_on_off_callback_hook(LiVESToggleButton * button, livespointer user_data) {
   rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
   return TRUE;
 }
 
 
-boolean grabkeys_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+boolean grabkeys_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                           livespointer user_data) {
   // assign the keys to the last key-grabbable effect
   int fx = LIVES_POINTER_TO_INT(user_data);
@@ -1110,7 +1131,7 @@ boolean grabkeys_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32
 }
 
 
-boolean textparm_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+boolean textparm_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                           livespointer user_data) {
   // keyboard linked to first string parameter, until TAB is pressed
   mainw->rte_textparm = get_textparm();
@@ -1118,14 +1139,14 @@ boolean textparm_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32
 }
 
 
-boolean grabkeys_callback_hook(LiVESToggleButton *button, livespointer user_data) {
+boolean grabkeys_callback_hook(LiVESToggleButton * button, livespointer user_data) {
   if (!lives_toggle_button_get_active(button)) return TRUE;
   grabkeys_callback(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
   return TRUE;
 }
 
 
-boolean rtemode_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+boolean rtemode_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                          livespointer user_data) {
   int dirn = LIVES_POINTER_TO_INT(user_data);
   // "m" mode key
@@ -1138,7 +1159,7 @@ boolean rtemode_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_
 }
 
 
-boolean rtemode_callback_hook(LiVESToggleButton *button, livespointer user_data) {
+boolean rtemode_callback_hook(LiVESToggleButton * button, livespointer user_data) {
   int key_mode = LIVES_POINTER_TO_INT(user_data);
   int modes = rte_getmodespk();
   int key = (int)(key_mode / modes);
@@ -1151,7 +1172,7 @@ boolean rtemode_callback_hook(LiVESToggleButton *button, livespointer user_data)
 }
 
 
-boolean swap_fg_bg_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+boolean swap_fg_bg_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                             livespointer user_data) {
   int blend_file = mainw->blend_file;
 

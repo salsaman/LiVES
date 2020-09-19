@@ -1689,7 +1689,7 @@ EXPOSE_FN_END
 
 
 static char *mt_params_label(lives_mt * mt) {
-  char *fname = weed_filter_idx_get_name(mt->current_fx, FALSE, FALSE, FALSE);
+  char *fname = weed_filter_idx_get_name(mt->current_fx, FALSE, FALSE);
   char *layer_name;
   char *ltext;
 
@@ -4267,7 +4267,7 @@ static void populate_filter_box(int ninchans, lives_mt * mt, int pkgnum) {
 
       if ((nins == ninchans || (ninchans == 1000000 && nins >= ninchans)) && mandouts == 1) {
         pkgnum = 0;
-        fname = weed_filter_idx_get_name(sorted, TRUE, TRUE, TRUE);
+        fname = weed_filter_idx_get_name(sorted, TRUE, TRUE);
 
         if ((pkgstring = weed_filter_idx_get_package_name(sorted))) {
           // filter is in package
@@ -4302,7 +4302,7 @@ static void populate_filter_box(int ninchans, lives_mt * mt, int pkgnum) {
             lives_free(fname);
             continue;
           }
-          fname = weed_filter_idx_get_name(sorted, TRUE, TRUE, TRUE);
+          fname = weed_filter_idx_get_name(sorted, TRUE, TRUE);
         }
 
         xeventbox = lives_event_box_new();
@@ -4876,7 +4876,7 @@ void mouse_mode_context(lives_mt * mt) {
     add_context_label(mt, (_("Drag with mouse on timeline")));
     add_context_label(mt, (_("to select tracks and time.")));
   }
-  if (prefs->atrans_fx != -1) fname = weed_filter_idx_get_name(prefs->atrans_fx, FALSE, FALSE, FALSE);
+  if (prefs->atrans_fx != -1) fname = weed_filter_idx_get_name(prefs->atrans_fx, FALSE, FALSE);
   else fname = lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
   add_context_label(mt, (_("\nAutotransition effect is:")));
   text = lives_strdup_printf("<b>%s</b>", (tmp = lives_markup_escape_text(fname, -1)));
@@ -7245,7 +7245,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
       pkg = weed_filter_get_package_name(filter);
 
       if (enabled_in_channels(filter, TRUE) >= 1000000 && enabled_out_channels(filter, FALSE) == 1) {
-        fxname = weed_filter_idx_get_name(sorted, TRUE, TRUE, TRUE);
+        fxname = weed_filter_idx_get_name(sorted, TRUE, TRUE);
         menuitem = lives_standard_image_menu_item_new_with_label(fxname);
         lives_container_add(LIVES_CONTAINER(submenu_menu3), menuitem);
         lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "idx", LIVES_INT_TO_POINTER(sorted));
@@ -7253,7 +7253,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                              LIVES_GUI_CALLBACK(mt_add_region_effect),
                              (livespointer)mt);
       } else if (enabled_in_channels(filter, FALSE) == 1 && enabled_out_channels(filter, FALSE) == 1) {
-        fxname = weed_filter_idx_get_name(sorted, FALSE, FALSE, TRUE);
+        fxname = weed_filter_idx_get_name(sorted, FALSE, TRUE);
         // add all filter effects to submenus
         if (!is_pure_audio(filter, FALSE)) {
           if (pkg) {
@@ -7336,18 +7336,16 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
           lives_container_add(LIVES_CONTAINER(submenu), menuitem);
           lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "idx", LIVES_INT_TO_POINTER(sorted));
           lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                               LIVES_GUI_CALLBACK(mt_add_block_effect),
-                               (livespointer)mt);
+                               LIVES_GUI_CALLBACK(mt_add_block_effect), (livespointer)mt);
 
           menuitem = lives_standard_image_menu_item_new_with_label(fxname);
           lives_container_add(LIVES_CONTAINER(submenu2), menuitem);
           lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "idx", LIVES_INT_TO_POINTER(sorted));
           lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                               LIVES_GUI_CALLBACK(mt_add_region_effect),
-                               (livespointer)mt);
+                               LIVES_GUI_CALLBACK(mt_add_region_effect), (livespointer)mt);
         }
       } else if (enabled_in_channels(filter, FALSE) == 2 && enabled_out_channels(filter, FALSE) == 1) {
-        fxname = weed_filter_idx_get_name(sorted, FALSE, TRUE, TRUE);
+        fxname = weed_filter_idx_get_name(sorted, FALSE, TRUE);
         // add all transitions to submenus
         menuitem = lives_standard_image_menu_item_new_with_label(fxname);
         lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "idx", LIVES_INT_TO_POINTER(sorted));
@@ -7359,8 +7357,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
             lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem2), "idx", LIVES_INT_TO_POINTER(sorted));
 
             lives_signal_sync_connect(LIVES_GUI_OBJECT(menuitem2), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                                      LIVES_GUI_CALLBACK(mt_set_atrans_effect),
-                                      (livespointer)mt);
+                                      LIVES_GUI_CALLBACK(mt_set_atrans_effect), (livespointer)mt);
             if (sorted == mainw->def_trans_idx) {
               lives_menu_shell_prepend(LIVES_MENU_SHELL(mt->submenu_atransfx), menuitem2);
             } else lives_menu_shell_append(LIVES_MENU_SHELL(mt->submenu_atransfx), menuitem2);
@@ -7369,8 +7366,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
           } else lives_container_add(LIVES_CONTAINER(submenu_menu2a), menuitem);
         }
         lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                             LIVES_GUI_CALLBACK(mt_add_region_effect),
-                             (livespointer)mt);
+                             LIVES_GUI_CALLBACK(mt_add_region_effect), (livespointer)mt);
       }
 
       if (pkg) lives_free(pkg);
@@ -13197,7 +13193,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
             fhash = weed_get_string_value(init_event, WEED_LEAF_FILTER, NULL);
             fidx = weed_get_idx_for_hashname(fhash, TRUE);
             lives_free(fhash);
-            fname = weed_filter_idx_get_name(fidx, FALSE, FALSE, FALSE);
+            fname = weed_filter_idx_get_name(fidx, FALSE, FALSE);
 
             if (!is_input) {
               txt = lives_strdup_printf(_("%s output"), fname);
@@ -15673,7 +15669,7 @@ void mt_add_region_effect(LiVESMenuItem * menuitem, livespointer user_data) {
   mt->last_fx_type = MT_LAST_FX_REGION;
 
   // create user message
-  filter_name = weed_filter_idx_get_name(mt->current_fx, FALSE, TRUE, FALSE);
+  filter_name = weed_filter_idx_get_name(mt->current_fx, FALSE, FALSE);
   numtracks = enabled_in_channels(get_weed_filter(mt->current_fx), TRUE); // count repeated channels
   switch (numtracks) {
   case 1:
@@ -15747,7 +15743,7 @@ void mt_add_block_effect(LiVESMenuItem * menuitem, livespointer user_data) {
   mt->last_fx_type = MT_LAST_FX_BLOCK;
   add_effect_inner(mt, 1, &selected_track, 1, &selected_track, start_event, end_event);
 
-  filter_name = weed_filter_idx_get_name(mt->current_fx, FALSE, TRUE, FALSE);
+  filter_name = weed_filter_idx_get_name(mt->current_fx, FALSE, FALSE);
 
   tstart = time_to_string(QUANT_TICKS(start_tc));
   tend = time_to_string(QUANT_TICKS(end_tc + TICKS_PER_SECOND_DBL / mt->fps));
@@ -15817,7 +15813,7 @@ void on_mt_delfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_free(fhash);
 
   deinit_event = weed_get_plantptr_value(init_event, WEED_LEAF_DEINIT_EVENT, NULL);
-  filter_name = weed_filter_idx_get_name(mt->current_fx, FALSE, FALSE, FALSE);
+  filter_name = weed_filter_idx_get_name(mt->current_fx, FALSE, FALSE);
   start_tc = get_event_timecode(init_event);
   end_tc = get_event_timecode(deinit_event) + TICKS_PER_SECOND_DBL / mt->fps;
 
@@ -19222,7 +19218,7 @@ void on_del_node_clicked(LiVESWidget * button, livespointer user_data) {
     }
   }
 
-  filter_name = weed_filter_idx_get_name(mt->current_fx, FALSE, FALSE, FALSE);
+  filter_name = weed_filter_idx_get_name(mt->current_fx, FALSE, FALSE);
 
   d_print(_("Removed parameter values for effect %s at time %s\n"), filter_name, mt->timestring);
   lives_free(filter_name);
@@ -19359,8 +19355,6 @@ void on_set_pvals_clicked(LiVESWidget * button, livespointer user_data) {
   weed_plant_t *inst = (weed_plant_t *)mt->current_rfx->source;
   weed_plant_t *param, *pchange, *at_event;
 
-  int error;
-
   weed_timecode_t tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * TICKS_PER_SECOND_DBL +
                                 get_event_timecode(mt->init_event), mt->fps);
 
@@ -19376,7 +19370,7 @@ void on_set_pvals_clicked(LiVESWidget * button, livespointer user_data) {
   boolean did_backup = mt->did_backup;
   int nparams;
   int numtracks;
-  register int i;
+  int i;
 
   if (mt->current_rfx && mainw->textwidget_focus) {
     // make sure text widgets are updated if they activate the default
@@ -19445,8 +19439,8 @@ void on_set_pvals_clicked(LiVESWidget * button, livespointer user_data) {
     return;
   }
 
-  filter_name = weed_filter_idx_get_name(mt->current_fx, FALSE, FALSE, FALSE);
-  tracks = weed_get_int_array(mt->init_event, WEED_LEAF_IN_TRACKS, &error);
+  filter_name = weed_filter_idx_get_name(mt->current_fx, FALSE, FALSE);
+  tracks = weed_get_int_array(mt->init_event, WEED_LEAF_IN_TRACKS, NULL);
   numtracks = enabled_in_channels(get_weed_filter(mt->current_fx), TRUE); // count repeated channels
 
   nparams = mt->current_rfx->num_params;
@@ -20221,8 +20215,8 @@ static void **remove_nulls_from_filter_map(void **init_events, int *num_events) 
 
 void move_init_in_filter_map(lives_mt * mt, weed_plant_t *event_list, weed_plant_t *event, weed_plant_t *ifrom,
                              weed_plant_t *ito, int track, boolean after) {
-  int error, i, j;
-  weed_plant_t *deinit_event = weed_get_plantptr_value(ifrom, WEED_LEAF_DEINIT_EVENT, &error);
+  int i, j;
+  weed_plant_t *deinit_event = weed_get_plantptr_value(ifrom, WEED_LEAF_DEINIT_EVENT, NULL);
   void **events_before = NULL;
   void **events_after = NULL;
   int num_before = 0, j1;

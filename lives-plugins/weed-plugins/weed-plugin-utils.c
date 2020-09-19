@@ -123,9 +123,9 @@ static inline int weed_chantmpl_get_flags(weed_plant_t *c) {return _weed_plant_g
 static inline int weed_paramtmpl_get_flags(weed_plant_t *p) {return _weed_plant_get_flags(p);}
 static inline int weed_instance_get_flags(weed_plant_t *i) {return _weed_plant_get_flags(i);}
 static inline int weed_host_supports_linear_gamma(weed_plant_t *h)
-{return (weed_host_get_flags(h) & WEED_HOST_SUPPORTS_LINEAR_GAMMA);}
+{return (weed_host_get_flags(h) & WEED_HOST_SUPPORTS_LINEAR_GAMMA) ? 1 : 0;}
 static inline int weed_host_supports_premultiplied_alpha(weed_plant_t *h)
-{return (weed_host_get_flags(h) & WEED_HOST_SUPPORTS_PREMULTIPLIED_ALPHA);}
+{return (weed_host_get_flags(h) & WEED_HOST_SUPPORTS_PREMULTIPLIED_ALPHA) ? 1 : 0;}
 static inline weed_plant_t *weed_instance_get_filter(weed_plant_t *i)
 {weed_plant_t *f; return *((weed_plant_t **)gg(i, WEED_LEAF_FILTER_CLASS, 0, (void *)&f));}
 static inline weed_plant_t *weed_get_in_channel(weed_plant_t *i, int x)

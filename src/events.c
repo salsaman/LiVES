@@ -592,7 +592,8 @@ boolean is_init_pchange(weed_plant_t *init_event, weed_plant_t *pchange_event) {
    we check for memory allocation errors here, because we could be building a large new event_list
    on mem error we return NULL, caller should free() event_list in that case
 */
-weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_timecode_t out_tc, weed_plant_t *event_list) {
+weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_timecode_t out_tc, weed_plant_t *event_list,
+                                    weed_event_t **ret_event) {
   void **in_pchanges;
 
   weed_plant_t *event;
@@ -681,7 +682,7 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_timecode_t out_
     }
     break;
   case WEED_EVENT_TYPE_FILTER_DEINIT:
-    init_event = weed_get_voidptr_value(in_event, WEED_LEAF_INIT_EVENT, &error);
+    init_event = weed_get_voidptr_value(in_event, WEED_LEAF_INIT_EVENT, NULL);
     new_init_event = find_init_event_by_id(init_event, event);
     error = weed_set_voidptr_value(event, WEED_LEAF_INIT_EVENT, new_init_event);
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
@@ -719,9 +720,12 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_timecode_t out_
     new_init_event = find_init_event_by_id(init_event, get_last_event(event_list));
     error = weed_set_voidptr_value(event, WEED_LEAF_INIT_EVENT, new_init_event);
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
+    weed_set_voidptr_value(event, WEED_LEAF_NEXT_CHANGE, NULL);
+    weed_set_voidptr_value(event, WEED_LEAF_PREV_CHANGE, NULL);
     break;
   }
 
+  if (ret_event) *ret_event = event;
   return event_list;
 }
 
@@ -1479,7 +1483,7 @@ void remove_filter_from_event_list(weed_plant_t *event_list, weed_plant_t *init_
     void **pchain = weed_get_voidptr_array_counted(init_event, WEED_LEAF_IN_PARAMETERS, &num_params);
     for (i = 0; i < num_params; i++) {
       while (pchain[i]) {
-        pchain_next = weed_get_voidptr_value((weed_plant_t *)pchain[i], WEED_LEAF_NEXT_CHANGE, &error);
+        pchain_next = weed_get_voidptr_value((weed_plant_t *)pchain[i], WEED_LEAF_NEXT_CHANGE, NULL);
         delete_event(event_list, (weed_plant_t *)pchain[i]);
         pchain[i] = pchain_next;
       }
@@ -2901,7 +2905,6 @@ weed_plant_t *append_param_change_event(weed_plant_t *event_list, weed_timecode_
                                         weed_plant_t *param, void *init_event, void **pchain) {
   weed_plant_t *event, *prev, *xevent;
   weed_plant_t *last_pchange_event;
-  int error;
 
   if (!event_list) {
     event_list = lives_event_list_new(NULL, NULL);
@@ -2919,12 +2922,12 @@ weed_plant_t *append_param_change_event(weed_plant_t *event_list, weed_timecode_
   weed_leaf_copy(event, WEED_LEAF_VALUE, param, WEED_LEAF_VALUE);
 
   last_pchange_event = (weed_plant_t *)pchain[pnum];
-  while ((xevent = (weed_plant_t *)weed_get_voidptr_value(last_pchange_event, WEED_LEAF_NEXT_CHANGE, &error)) != NULL)
+  while ((xevent = (weed_plant_t *)weed_get_voidptr_value(last_pchange_event, WEED_LEAF_NEXT_CHANGE, NULL)) != NULL)
     last_pchange_event = xevent;
 
   if (weed_event_get_timecode(last_pchange_event) == tc && !is_init_pchange(init_event, last_pchange_event)) {
     weed_event_t *dup_event = last_pchange_event;
-    last_pchange_event = (weed_plant_t *)weed_get_voidptr_value(last_pchange_event, WEED_LEAF_PREV_CHANGE, &error);
+    last_pchange_event = (weed_plant_t *)weed_get_voidptr_value(last_pchange_event, WEED_LEAF_PREV_CHANGE, NULL);
     delete_event(event_list, dup_event);
   }
 
@@ -5561,7 +5564,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
                 case WEED_SEED_STRING:
                   if (etype == WEED_EVENT_TYPE_FILTER_INIT && (!strcmp(propnames[i], WEED_LEAF_FILTER))) {
                     ie_idx = weed_get_idx_for_hashname(string[j], TRUE);
-                    strval = weed_filter_idx_get_name(ie_idx, FALSE, FALSE, FALSE);
+                    strval = weed_filter_idx_get_name(ie_idx, FALSE, FALSE);
                   } else strval = lives_strdup(string[j]);
                   lives_free(string[j]);
                   break;
@@ -5575,7 +5578,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
                         iname = weed_get_string_value(ievent, WEED_LEAF_FILTER, NULL);
                         if (iname) {
                           ie_idx = weed_get_idx_for_hashname(iname, TRUE);
-                          fname = weed_filter_idx_get_name(ie_idx, FALSE, FALSE, FALSE);
+                          fname = weed_filter_idx_get_name(ie_idx, FALSE, FALSE);
                           strval = lives_strdup_printf("%p", voidval[j]);
                           desc = lives_strdup_printf("(%s)", fname);
                           lives_freep((void **)&fname);

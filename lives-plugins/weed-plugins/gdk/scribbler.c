@@ -238,12 +238,6 @@ static int font_compare(const void *s1, const void *s2) {
 }
 
 
-//
-//
-// now text is drawn with pixbuf/pango
-//
-//
-
 static weed_error_t scribbler_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   weed_plant_t **in_params = weed_get_in_params(inst, NULL);
   weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
@@ -379,7 +373,7 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *filter_class, *gui;
   weed_plant_t *host_info = weed_get_host_info(plugin_info);
   PangoContext *ctx;
-  int filter_flags = weed_host_supports_premultiplied_alpha(host_info);
+  int filter_flags = weed_host_supports_premultiplied_alpha(host_info) ? WEED_FILTER_PREF_PREMULTIPLIED_ALPHA : 0;
   int param_flags = 0;
 
   if (is_big_endian()) palette_list[0] = WEED_PALETTE_ARGB32;
@@ -439,8 +433,8 @@ WEED_SETUP_START(200, 200) {
     in_params[P_FONT] = weed_string_list_init("font", "_Font", 0, def_fonts);
   in_params[P_FOREGROUND] = weed_colRGBi_init("foreground", "_Foreground", 255, 255, 255);
   in_params[P_BACKGROUND] = weed_colRGBi_init("background", "_Background", 0, 0, 0);
-  in_params[P_FGALPHA] = weed_float_init("fr_alpha", "_Alpha _Foreground", 1.0, 0.0, 1.0);
-  in_params[P_BGALPHA] = weed_float_init("bg_alpha", "_Alpha _Background", 1.0, 0.0, 1.0);
+  in_params[P_FGALPHA] = weed_float_init("fr_alpha", "Alpha _Foreground", 1.0, 0.0, 1.0);
+  in_params[P_BGALPHA] = weed_float_init("bg_alpha", "Alpha _Background", 1.0, 0.0, 1.0);
   in_params[P_FONTSIZE] = weed_float_init("fontsize", "_Font Size", 20.0, 10.0, 128.0);
   in_params[P_CENTER] = weed_switch_init("center", "_Center text", WEED_TRUE);
   in_params[P_RISE] = weed_switch_init("rising", "_Rising text", WEED_TRUE);
@@ -453,12 +447,10 @@ WEED_SETUP_START(200, 200) {
   weed_set_int_value(in_params[P_FGALPHA], WEED_LEAF_COPY_VALUE_TO, P_BGALPHA);
 
   for (register int i = 1; i < 3; i++) {
-    if (i == 0) {
+    if (i == 1) {
       filter_class = weed_filter_class_init("scribbler", "Aleksej Penkov", 1, filter_flags, palette_list,
                                             scribbler_init, scribbler_process, NULL,
-                                            in_chantmpls,
-                                            out_chantmpls,
-                                            in_params, NULL);
+                                            in_chantmpls, out_chantmpls, in_params, NULL);
     } else {
       clone2 = weed_clone_plants(in_params);
       weed_plant_free(clone2[P_FONT]);
@@ -468,9 +460,7 @@ WEED_SETUP_START(200, 200) {
                                             (clone0 = weed_clone_plants(in_chantmpls)),
                                             (clone1 = weed_clone_plants(out_chantmpls)),
                                             clone2, NULL);
-      weed_free(clone0);
-      weed_free(clone1);
-      weed_free(clone2);
+      weed_free(clone0); weed_free(clone1); weed_free(clone2);
     }
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
@@ -480,12 +470,9 @@ WEED_SETUP_START(200, 200) {
     clone2[P_FONT] = weed_text_init("font", "_Font",  "serif");
 
     filter_class = weed_filter_class_init("scribbler_generator", "Aleksej Penkov", i, filter_flags, palette_list,
-                                          scribbler_init, scribbler_process, NULL,
-                                          NULL,
-                                          (clone1 = weed_clone_plants(out_chantmpls)),
-                                          clone2, NULL);
-    weed_free(clone1);
-    weed_free(clone2);
+                                          scribbler_init, scribbler_process, NULL, NULL,
+                                          (clone1 = weed_clone_plants(out_chantmpls)), clone2, NULL);
+    weed_free(clone1); weed_free(clone2);
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
   }

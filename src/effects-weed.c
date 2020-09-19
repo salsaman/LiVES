@@ -373,7 +373,6 @@ static int fg_generator_clip;
 //////////////////////////////////////////////////////////////////////
 
 static weed_plant_t **weed_filters; // array of filter_classes
-static weed_plant_t **dupe_weed_filters; // array of duplicate filter_classes (only used during loading)
 
 static LiVESList *weed_fx_sorted_list;
 
@@ -385,7 +384,6 @@ static int *key_to_fx[FX_KEYS_MAX];
 static int key_modes[FX_KEYS_MAX];
 
 static int num_weed_filters; ///< count of how many filters we have loaded
-static int num_weed_dupes; ///< number of duplicate filters (with multiple versions)
 
 
 typedef struct {
@@ -399,7 +397,6 @@ typedef lives_hashentry  lives_hashjoint[NHASH_TYPES];
 
 // 0 is TF, 1 is TT, 2 is FF, 3 is FT // then possibly repeated with spaces substituted with '_'
 static lives_hashjoint *hashnames;
-static int *dupe_hashnames;
 
 // per key/mode parameter defaults
 weed_plant_t ** *key_defaults[FX_KEYS_MAX_VIRTUAL];
@@ -3427,7 +3424,7 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
   int clip;
   int easeval = 0;
 
-  register int i;
+  int i;
 
   if (mainw->is_rendering && !(mainw->proc_ptr && mainw->preview)) {
     // rendering from multitrack
@@ -3442,7 +3439,6 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
     weed_plant_t *gui;
     for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
       if (rte_key_valid(i + 1, TRUE)) {
-
         if (!(rte_key_is_enabled(1 + i))) {
           // if anything is connected to ACTIVATE, the fx may be activated
           pconx_chain_data(i, key_modes[i], FALSE);
@@ -4590,26 +4586,26 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
 
 static void gen_hashnames(int i, int j) {
   hashnames[i][0].string = 	NULL;
-  hashnames[i][0].string = 	make_weed_hashname(j, TRUE, FALSE, 0, FALSE); // full dupes
+  hashnames[i][0].string = 	make_weed_hashname(j, TRUE, FALSE, 0, FALSE);
   hashnames[i][0].hash =  	lives_string_hash(hashnames[i][0].string);
   hashnames[i][1].string = 	NULL;
-  hashnames[i][1].string = 	make_weed_hashname(j, TRUE, TRUE, 0, FALSE);
+  hashnames[i][1].string = 	make_weed_hashname(j, TRUE, TRUE, 0, FALSE); // full dupes
   hashnames[i][1].hash =  	lives_string_hash(hashnames[i][1].string);
   hashnames[i][2].string = 	NULL;
-  hashnames[i][2].string = 	make_weed_hashname(j, FALSE, FALSE, 0, FALSE); // pdupes
+  hashnames[i][2].string = 	make_weed_hashname(j, FALSE, FALSE, 0, FALSE); // partial pdupes
   hashnames[i][2].hash =  	lives_string_hash(hashnames[i][2].string);
   hashnames[i][3].string = 	NULL;
   hashnames[i][3].string =	make_weed_hashname(j, FALSE, TRUE, 0, FALSE);
   hashnames[i][3].hash =  	lives_string_hash(hashnames[i][3].string);
 
   hashnames[i][4].string = 	NULL;
-  hashnames[i][4].string = 	make_weed_hashname(j, TRUE, FALSE, 0, TRUE); // full dupes
+  hashnames[i][4].string = 	make_weed_hashname(j, TRUE, FALSE, 0, TRUE);
   hashnames[i][4].hash =  	lives_string_hash(hashnames[i][4].string);
   hashnames[i][5].string = 	NULL;
-  hashnames[i][5].string = 	make_weed_hashname(j, TRUE, TRUE, 0, TRUE);
+  hashnames[i][5].string = 	make_weed_hashname(j, TRUE, TRUE, 0, TRUE); // full dupes
   hashnames[i][5].hash =  	lives_string_hash(hashnames[i][5].string);
   hashnames[i][6].string = 	NULL;
-  hashnames[i][6].string = 	make_weed_hashname(j, FALSE, FALSE, 0, TRUE); // pdupes
+  hashnames[i][6].string = 	make_weed_hashname(j, FALSE, FALSE, 0, TRUE); // partial pdupes
   hashnames[i][6].hash =  	lives_string_hash(hashnames[i][6].string);
   hashnames[i][7].string = 	NULL;
   hashnames[i][7].string =	make_weed_hashname(j, FALSE, TRUE, 0, TRUE);
@@ -4848,7 +4844,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
     if (host_info) weed_set_plantptr_value(filter, WEED_LEAF_HOST_INFO, host_info);
 
     if (!(reason = check_for_lives(filter, idx))) {
-      boolean dup = FALSE, pdup = FALSE;
+      boolean dup = FALSE;
       none_valid = FALSE;
       num_weed_filters++;
       weed_filters = (weed_plant_t **)lives_realloc(weed_filters, num_weed_filters * sizeof(weed_plant_t *));
@@ -4858,11 +4854,11 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
       gen_hashnames(idx, idx);
 
       for (i = 0; i < idx; i++) {
-        if (hashnames[idx][0].hash == hashnames[i][0].hash
-            && !lives_utf8_strcasecmp(hashnames[idx][0].string, hashnames[i][0].string)) {
+        if (hashnames[idx][1].hash == hashnames[i][1].hash
+            && !lives_utf8_strcasecmp(hashnames[idx][1].string, hashnames[i][1].string)) {
           // skip dups
           if (!prefs->vj_mode) {
-            msg = lives_strdup_printf(_("Found duplicate plugin %s"), hashnames[idx][0].string);
+            msg = lives_strdup_printf(_("Found duplicate plugin %s"), hashnames[idx][1].string);
             LIVES_INFO(msg);
             lives_free(msg);
           }
@@ -4872,6 +4868,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
           num_weed_filters--;
           weed_filters = (weed_plant_t **)lives_realloc(weed_filters, num_weed_filters * sizeof(weed_plant_t *));
           hashnames = (lives_hashjoint *)lives_realloc(hashnames, num_weed_filters * sizeof(lives_hashjoint));
+          lives_freep((void **)&filter_name);
           dup = TRUE;
           break;
         }
@@ -4880,39 +4877,19 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
             && !lives_utf8_strcasecmp(hashnames[i][2].string, hashnames[idx][2].string)) {
           //g_print("partial dupe: %s and %s\n",phashnames[phashes-1],phashnames[i-oidx-1]);
           // found a partial match: author and/or version differ
-          // if in the same plugin, we will use the highest version no., others become dupes
-          num_weed_dupes++;
-          dupe_weed_filters = (weed_plant_t **)lives_realloc(dupe_weed_filters, num_weed_dupes * sizeof(weed_plant_t *));
-          dupe_hashnames = (int *)lives_realloc(dupe_hashnames, num_weed_dupes * sizeof(int));
+          // hide oldder version from menus
           if (weed_get_int_value(filter, WEED_LEAF_VERSION, NULL) <
               weed_get_int_value(weed_filters[i], WEED_LEAF_VERSION, NULL)) {
-            // add idx to dupe list
-            dupe_weed_filters[num_weed_dupes - 1] = filter;
-            dupe_hashnames[num_weed_dupes - 1] = idx;
-            for (j = 0; j < NHASH_TYPES; j ++) {
-              lives_freep((void **)&hashnames[idx][j].string);
-            }
+            weed_set_boolean_value(filter, WEED_LEAF_HOST_MENU_HIDE, WEED_TRUE);
           } else {
-            // add i to dupe list
-            dupe_weed_filters[num_weed_dupes - 1] = weed_filters[i];
-            dupe_hashnames[num_weed_dupes - 1] = i;
-            weed_filters[i] = filter;
-            for (j = 0; j < NHASH_TYPES; j ++) {
-              lives_free(hashnames[i][j].string);
-              hashnames[i][j].string = hashnames[idx][j].string;
-              hashnames[i][j].hash = hashnames[i][j].hash;
-            }
+            weed_set_boolean_value(weed_filters[i], WEED_LEAF_HOST_MENU_HIDE, WEED_TRUE);
           }
-          num_weed_filters--;
-          weed_filters = (weed_plant_t **)lives_realloc(weed_filters, num_weed_filters * sizeof(weed_plant_t *));
-          hashnames = (lives_hashjoint *)lives_realloc(hashnames, num_weed_filters * sizeof(lives_hashjoint));
-          pdup = TRUE;
           break;
         }
       }
 
-      if (dup) break;
-      if (!pdup) idx++;
+      if (dup) continue;
+      idx++;
       if (prefs->show_splash) {
         msg = lives_strdup_printf(_("Loaded filter %s in plugin %s"), filter_name, plugin_name);
         splash_msg(msg, SPLASH_LEVEL_LOAD_RTE);
@@ -4947,26 +4924,6 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
 }
 
 
-static void merge_dupes(void) {
-  register int i, j;
-
-  weed_filters = (weed_plant_t **)lives_realloc(weed_filters, (num_weed_filters + num_weed_dupes) * sizeof(weed_plant_t *));
-  hashnames = (lives_hashjoint *)lives_realloc(hashnames, (num_weed_filters + num_weed_dupes) * sizeof(lives_hashjoint));
-
-  for (i = num_weed_filters; i < num_weed_filters + num_weed_dupes; i++) {
-    weed_filters[i] = dupe_weed_filters[i - num_weed_filters];
-    j = dupe_hashnames[i - num_weed_filters];
-    gen_hashnames(i, j);
-    weed_fx_sorted_list = lives_list_prepend(weed_fx_sorted_list, LIVES_INT_TO_POINTER(i));
-  }
-
-  if (dupe_weed_filters) lives_freep((void **)&dupe_weed_filters);
-  if (dupe_hashnames) lives_freep((void **)&dupe_hashnames);
-
-  num_weed_filters += num_weed_dupes;
-}
-
-
 static void make_fx_defs_menu(int num_weed_compounds) {
   weed_plant_t *filter;
 
@@ -4989,12 +4946,11 @@ static void make_fx_defs_menu(int num_weed_compounds) {
   for (i = 0; i < num_weed_filters; i++) {
     filter = weed_filters[i];
 
-    if (weed_filter_hints_unstable(filter) && !prefs->unstable_fx) continue;
-    filter_name = weed_filter_idx_get_name(i, FALSE, TRUE, FALSE); // mark dupes
+    if (weed_filter_hints_unstable(filter) && !prefs->show_dev_opts && !prefs->unstable_fx) continue;
+    filter_name = weed_filter_idx_get_name(i, FALSE, FALSE);
 
     // skip hidden filters
-    if ((weed_plant_has_leaf(filter, WEED_LEAF_HOST_MENU_HIDE) &&
-         weed_get_boolean_value(filter, WEED_LEAF_HOST_MENU_HIDE, NULL) == WEED_TRUE) ||
+    if (weed_get_boolean_value(filter, WEED_LEAF_HOST_MENU_HIDE, NULL) == WEED_TRUE ||
         (num_in_params(filter, TRUE, TRUE) == 0 && !(!has_video_chans_in(filter, FALSE) && has_video_chans_out(filter, FALSE))) ||
         (enabled_in_channels(filter, TRUE) > 2 && enabled_out_channels(filter, TRUE) > 0))
       hidden = TRUE;
@@ -5065,8 +5021,7 @@ static void make_fx_defs_menu(int num_weed_compounds) {
     }
 
     lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                         LIVES_GUI_CALLBACK(rte_set_defs_activate),
-                         LIVES_INT_TO_POINTER(i));
+                         LIVES_GUI_CALLBACK(rte_set_defs_activate), LIVES_INT_TO_POINTER(i));
 
     lives_freep((void **)&filter_name);
   }
@@ -5094,11 +5049,9 @@ void weed_load_all(void) {
   register int i, j;
 
   num_weed_filters = 0;
-  num_weed_dupes = 0;
 
-  weed_filters = dupe_weed_filters = NULL;
+  weed_filters = NULL;
   hashnames = NULL;
-  dupe_hashnames = NULL;
 
   threaded_dialog_spin(0.);
   lives_weed_plugin_path = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_WEED_FX_BUILTIN, NULL);
@@ -5223,7 +5176,6 @@ void weed_load_all(void) {
   threaded_dialog_spin(0.);
   make_fx_defs_menu(ncompounds);
   threaded_dialog_spin(0.);
-  if (num_weed_dupes > 0) merge_dupes();
   weed_fx_sorted_list = lives_list_reverse(weed_fx_sorted_list);
   fx_inited = TRUE;
 }
@@ -6634,7 +6586,7 @@ boolean weed_init_effect(int hotkey) {
       && has_audio_chans_out(filter, FALSE) && !has_video_chans_out(filter, TRUE)) {
     if (!is_realtime_aplayer(prefs->audio_player)) {
       // audio fx only with realtime players
-      char *fxname = weed_filter_idx_get_name(idx, FALSE, FALSE, FALSE);
+      char *fxname = weed_filter_idx_get_name(idx, FALSE, FALSE);
       d_print(_("Effect %s cannot be used with this audio player.\n"), fxname);
       lives_free(fxname);
       mainw->error = TRUE;
@@ -6815,8 +6767,7 @@ start1:
 deinit2:
 
         if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE))
-          next_inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE,
-                                              &error);
+          next_inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error);
         else next_inst = NULL;
 
         weed_call_deinit_func(inst);
@@ -6905,8 +6856,7 @@ deinit2:
       filter_mutex_unlock(hotkey);
       if (!mainw->multitrack) {
         if (!LIVES_IS_PLAYING) {
-          int current_file = mainw->current_file;
-          switch_to_file(mainw->current_file = 0, current_file);
+          switch_clip(1, mainw->current_file, TRUE);
         }
       }
       return FALSE;
@@ -7012,7 +6962,7 @@ deinit2:
 #endif
       }
 
-      if (mainw->playing_file > 0 && mainw->record && !mainw->record_paused && prefs->audio_src != AUDIO_SRC_EXT &&
+      if (LIVES_IS_PLAYING && mainw->record && !mainw->record_paused && prefs->audio_src != AUDIO_SRC_EXT &&
           (prefs->rec_opts & REC_AUDIO)) {
         // if recording audio, open ascrap file and add audio event
         mainw->record = FALSE;
@@ -9470,7 +9420,7 @@ weed_plant_t *rte_keymode_get_filter(int key, int mode) {
 
 #define MAX_AUTHOR_LEN 10
 
-char *weed_filter_idx_get_name(int idx, boolean add_subcats, boolean mark_dupes, boolean add_notes) {
+char *weed_filter_idx_get_name(int idx, boolean add_subcats, boolean add_notes) {
   // return value should be free'd after use
   weed_plant_t *filter;
   char *filter_name, *tmp;
@@ -9479,37 +9429,6 @@ char *weed_filter_idx_get_name(int idx, boolean add_subcats, boolean mark_dupes,
   if ((filter = weed_filters[idx]) == NULL) return lives_strdup("");
 
   filter_name = weed_filter_get_name(filter);
-
-  if (mark_dupes) {
-    weed_plant_t *dfilter;
-    char *dupe_name;
-    // if it's a dupe we add the package name; if no package, the author name
-    for (int i = 0; i < num_weed_dupes; i++) {
-      dfilter = get_weed_filter(i);
-      dupe_name = weed_get_string_value(dfilter, WEED_LEAF_NAME, NULL);
-      if (!lives_utf8_strcasecmp(filter_name, dupe_name)) {
-        char *author = weed_filter_get_package_name(filter);
-        if (!author) {
-          if (weed_plant_has_leaf(filter, WEED_LEAF_EXTRA_AUTHORS)) {
-            author = weed_get_string_value(filter, WEED_LEAF_EXTRA_AUTHORS, NULL);
-          } else if (weed_plant_has_leaf(filter, WEED_LEAF_AUTHOR))
-            author = weed_get_string_value(filter, WEED_LEAF_AUTHOR, NULL);
-          else author = lives_strdup("??????");
-        }
-        if (lives_strlen(author) > MAX_AUTHOR_LEN) {
-          author[MAX_AUTHOR_LEN - 1] = '.';
-          author[MAX_AUTHOR_LEN] = 0;
-        }
-        tmp = lives_strdup_printf("%s (%s)", filter_name, author);
-        lives_free(author);
-        lives_free(filter_name);
-        filter_name = tmp;
-        lives_free(dupe_name);
-        break;
-      }
-      lives_free(dupe_name);
-    }
-  }
 
   if (add_subcats) {
     lives_fx_cat_t cat = weed_filter_categorise(filter,
@@ -9557,12 +9476,12 @@ char *weed_instance_get_filter_name(weed_plant_t *inst, boolean get_compound_par
 }
 
 
-char *rte_keymode_get_filter_name(int key, int mode, boolean mark_dupes, boolean add_notes) {
+char *rte_keymode_get_filter_name(int key, int mode, boolean add_notes) {
   // return value should be lives_free'd after use
   // key is 1 based
   key--;
   if (!rte_keymode_valid(key + 1, mode, TRUE)) return lives_strdup("");
-  return (weed_filter_idx_get_name(key_to_fx[key][mode], FALSE, mark_dupes, add_notes));
+  return (weed_filter_idx_get_name(key_to_fx[key][mode], FALSE, add_notes));
 }
 
 
@@ -9797,7 +9716,7 @@ int weed_add_effectkey_by_idx(int key, int idx) {
       if (rte_window && !mainw->is_rendering && !mainw->multitrack) {
         // if rte window is visible add to combo box
         char *tmp;
-        rtew_combo_set_text(key, i, (tmp = rte_keymode_get_filter_name(key + 1, i, TRUE, FALSE)));
+        rtew_combo_set_text(key, i, (tmp = rte_keymode_get_filter_name(key + 1, i, FALSE)));
         lives_free(tmp);
 
         // set in ce_thumb combos
@@ -9909,7 +9828,7 @@ LiVESList *weed_get_all_names(lives_fx_list_t list_type) {
       break;
     case FX_LIST_EXTENDED_NAME: {
       // name + author (if dupe) + subcat + observations
-      string = weed_filter_idx_get_name(sorted, TRUE, TRUE, TRUE);
+      string = weed_filter_idx_get_name(sorted, TRUE, TRUE);
       list = lives_list_append(list, (livespointer)string);
     }
     break;

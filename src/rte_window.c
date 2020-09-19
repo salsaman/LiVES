@@ -1450,7 +1450,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
       int idx = (key - 1) * modes + mode;
       int fx_idx = rte_keymode_get_filter_idx(key, mode);
 
-      rtew_combo_set_text(key - 1, mode, (tmp = rte_keymode_get_filter_name(key, mode, FALSE, FALSE)));
+      rtew_combo_set_text(key - 1, mode, (tmp = rte_keymode_get_filter_name(key, mode, FALSE)));
       lives_free(tmp);
 
       if (fx_idx != -1) {
@@ -1933,7 +1933,7 @@ void fx_changed(LiVESCombo * combo, livespointer user_data) {
 
   lives_tree_model_get(model, &iter1, HASH_COLUMN, &hashname1, -1);
   if (!hashname1) {
-    lives_entry_set_text(LIVES_ENTRY(combo_entries[key_mode]), (tmp = rte_keymode_get_filter_name(key + 1, mode, FALSE, FALSE)));
+    lives_entry_set_text(LIVES_ENTRY(combo_entries[key_mode]), (tmp = rte_keymode_get_filter_name(key + 1, mode, FALSE)));
     lives_free(tmp);
     return;
   }
@@ -1956,12 +1956,12 @@ void fx_changed(LiVESCombo * combo, livespointer user_data) {
   lives_widget_grab_focus(combo_entries[key_mode]);
 
   if ((error = rte_switch_keymode(key + 1, mode, hashname1)) < 0) {
-    lives_entry_set_text(LIVES_ENTRY(combo_entries[key_mode]), (tmp = rte_keymode_get_filter_name(key + 1, mode, FALSE, FALSE)));
+    lives_entry_set_text(LIVES_ENTRY(combo_entries[key_mode]), (tmp = rte_keymode_get_filter_name(key + 1, mode, FALSE)));
     lives_free(tmp);
 
     if (error == -2) do_mix_error();
     if (error == -1) {
-      d_print(_("LiVES could not locate the effect %s.\n"), rte_keymode_get_filter_name(key + 1, mode, TRUE, FALSE));
+      d_print(_("LiVES could not locate the effect %s.\n"), rte_keymode_get_filter_name(key + 1, mode, FALSE));
     }
     return;
   }
@@ -2011,12 +2011,14 @@ static LiVESTreeModel *rte_window_fx_model(void) {
   tstore = lives_tree_store_new(NUM_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING);
   while (list) {
     weed_plant_t *filter = get_weed_filter(weed_get_idx_for_hashname((char *)phash_list->data, TRUE));
-    if ((weed_filter_hints_unstable(filter)
-         && !prefs->unstable_fx) || ((enabled_in_channels(filter, FALSE) > 1 &&
-                                      !has_video_chans_in(filter, FALSE)) ||
-                                     (weed_filter_hints_hidden(filter)
-                                      || weed_filter_is_converter(filter))
-                                     || enabled_in_channels(filter, TRUE) == 1000000)) {
+    if (!prefs->show_dev_opts && ((weed_filter_hints_unstable(filter)
+                                   && !prefs->unstable_fx) ||
+                                  weed_get_boolean_value(filter, WEED_LEAF_HOST_MENU_HIDE, NULL) == WEED_TRUE
+                                  || ((enabled_in_channels(filter, FALSE) > 1 &&
+                                       !has_video_chans_in(filter, FALSE)) ||
+                                      (weed_filter_hints_hidden(filter)
+                                       || weed_filter_is_converter(filter))
+                                      || enabled_in_channels(filter, TRUE) == 1000000))) {
       list = list->next;
       fx_idx++;
       pname_list = pname_list->next;
@@ -2301,7 +2303,7 @@ LiVESWidget *create_rte_window(void) {
 
       combo_entries[idx] = lives_combo_get_entry(LIVES_COMBO(combo));
 
-      lives_entry_set_text(LIVES_ENTRY(combo_entries[idx]), (tmp = rte_keymode_get_filter_name(i + 1, j, FALSE, FALSE)));
+      lives_entry_set_text(LIVES_ENTRY(combo_entries[idx]), (tmp = rte_keymode_get_filter_name(i + 1, j, FALSE)));
       lives_free(tmp);
 
       lives_entry_set_editable(LIVES_ENTRY(combo_entries[idx]), FALSE);

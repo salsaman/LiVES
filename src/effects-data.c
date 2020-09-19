@@ -102,7 +102,7 @@ void override_if_active_input(int hotkey) {
   int totcons;
   int imode = rte_key_getmode(hotkey);
 
-  register int i, j;
+  int i, j;
 
   while (pconx) {
     totcons = 0;
@@ -110,10 +110,10 @@ void override_if_active_input(int hotkey) {
     for (i = 0; i < pconx->nparams; i++) {
       totcons += pconx->nconns[i];
       for (; j < totcons; j++) {
-        if (pconx->ikey[j] == hotkey - 1 && pconx->imode[j] == imode && pconx->ipnum[j] == FX_DATA_PARAM_ACTIVE) {
+        if (pconx->ikey[j] == hotkey && pconx->imode[j] == imode && pconx->ipnum[j] == FX_DATA_PARAM_ACTIVE) {
           // out param is "ACTIVATED"
           // abuse "autoscale" for this
-          pconx->autoscale[i] = TRUE;
+          pconx->autoscale[j] = TRUE;
           return;
 	  // *INDENT-OFF*
         }}}
@@ -1152,7 +1152,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
   case WEED_SEED_BOOLEAN: {
     int *valsb;
     if (dparam == active_dummy) {
-      // ACTIVATE
+      // ACTIVATE / DEACTIVATE
       if (!autoscale) { // autoscale is now "user override"
         int valb = weed_get_boolean_value(sparam, WEED_LEAF_VALUE, NULL);
         if ((valb == WEED_TRUE && (mainw->rte & (GU641 << (key))) == 0) ||

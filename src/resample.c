@@ -373,16 +373,19 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
 
 //////////////////////////////////////////////////////////////////
 
-static boolean copy_with_check(weed_plant_t *event, weed_plant_t *out_list, weed_timecode_t tc, char *what, size_t bytes) {
+static weed_plant_t *copy_with_check(weed_plant_t *event, weed_plant_t *out_list, weed_timecode_t tc, char *what, size_t bytes,
+                                     weed_plant_t **ret_event) {
   LiVESResponseType response;
+  weed_plant_t *new_list;
   do {
     response = LIVES_RESPONSE_OK;
-    if (event_copy_and_insert(event, tc, out_list) == NULL) {
+    if (ret_event) *ret_event = NULL;
+    if ((new_list = event_copy_and_insert(event, tc, out_list, ret_event)) == NULL) {
       response = do_memory_error_dialog(what, bytes);
     }
   } while (response == LIVES_RESPONSE_RETRY);
-  if (response == LIVES_RESPONSE_CANCEL) return FALSE;
-  return TRUE;
+  if (response == LIVES_RESPONSE_CANCEL) return NULL;
+  return new_list;
 }
 
 #define READJ_MAX 2.
@@ -544,7 +547,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   weed_timecode_t out_tc = 0, offset_tc = 0, in_tc, laud_tc = 0, nx_tc;
   weed_timecode_t end_tc;
 
-  weed_plant_t *out_list;
+  weed_plant_t *out_list, *xout_list;
   weed_event_t *naudio_event = NULL;
   weed_event_t *frame_event = NULL, *nframe_event = NULL;
   weed_event_t *last_frame_event;
@@ -667,11 +670,12 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           }
           if ((allow_gap && marker_type == EVENT_MARKER_RECORD_START)
               || marker_type == EVENT_MARKER_BLOCK_START || marker_type == EVENT_MARKER_BLOCK_UNORDERED) {
-            if (!copy_with_check(event, out_list, out_tc, what, 0)) {
+            if (!(xout_list = copy_with_check(event, out_list, out_tc, what, 0, NULL))) {
               event_list_free(out_list);
               out_list = NULL;
               goto q_done;
             }
+            out_list = xout_list;
           }
         }
         break;
@@ -762,14 +766,18 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
             }
           }
           if (!list) {
+            weed_event_t *out_event = get_last_event(out_list);
+            init_event = weed_get_voidptr_value(out_event, WEED_LEAF_INIT_EVENT, NULL);
+            weed_leaf_dup(out_event, init_event, WEED_LEAF_IN_PARAMETERS);
             if (!is_final) deinit_events = lives_list_prepend(deinit_events, event);
             else {
               //g_print("adding deinit at %lld\n", out_tc);
-              if (!copy_with_check(event, out_list, out_tc, what, 0)) {
+              if (!(xout_list = copy_with_check(event, out_list, out_tc, what, 0, NULL))) {
                 event_list_free(out_list);
                 out_list = NULL;
                 goto q_done;
               }
+              out_list = xout_list;
             }
           }
           break;
@@ -781,11 +789,40 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
             if (list->data == init_event) break;
           }
           if (!list) {
-            if (!copy_with_check(event, out_list, in_tc - offset_tc, what, 0)) {
+            void **pchanges;
+            weed_event_t *pch_event, *init_event, *pchange, *npchange;
+            int nchanges, pnum;
+            if (!(xout_list = copy_with_check(event, out_list, in_tc - offset_tc, what, 0, &pch_event))) {
               event_list_free(out_list);
               out_list = NULL;
               goto q_done;
             }
+            // now we need to set PREV_CHANGE and NEXT_CHANGE
+            // starting at init_event, we check all init pchanges until we fins the matching INDEX
+            // then follow the NEXT_CHANGE ptrs until we get to NULL
+            // then finally set NEXT_CHANGE to point to event, and PREV_CHANGE to point backwards
+
+            out_list = xout_list;
+
+            init_event = weed_get_voidptr_value(pch_event, WEED_LEAF_INIT_EVENT, NULL);
+            pchanges = weed_get_voidptr_array_counted(init_event, WEED_LEAF_IN_PARAMETERS, &nchanges);
+            pnum = weed_get_int_value(pch_event, WEED_LEAF_INDEX, NULL);
+            g_print("updating aaaa ptrs %d %d\n", nchanges, pnum);
+            for (i = 0; i < nchanges; i++) {
+              pchange = (weed_event_t *)pchanges[i];
+              if (weed_get_int_value(pchange, WEED_LEAF_INDEX, NULL) == pnum) {
+                npchange = weed_get_voidptr_value((weed_plant_t *)pchange, WEED_LEAF_NEXT_CHANGE, NULL);
+                while (npchange) {
+                  pchange = npchange;
+                  npchange = weed_get_voidptr_value((weed_plant_t *)pchange, WEED_LEAF_NEXT_CHANGE, NULL);
+                }
+                g_print("updating ptrs\n");
+                weed_set_voidptr_value(pchange, WEED_LEAF_NEXT_CHANGE, pch_event);
+                weed_set_voidptr_value(pch_event, WEED_LEAF_PREV_CHANGE, pchange);
+                break;
+              }
+            }
+            lives_free(pchanges);
           }
           break;
         case WEED_EVENT_TYPE_FILTER_MAP:
@@ -802,30 +839,32 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
         /// insert the state
         if (init_events) {
           void **pchanges;
+          weed_event_t *xinit_event;
           int nchanges;
           // insert filter_inits + init pchanges
           for (list = init_events; list; list = list->next) {
             init_event = (weed_event_t *)list->data;
             //g_print("ins init %p\n", init_event);
-            if (!copy_with_check(init_event, out_list, out_tc, what, 0)) {
+            if (!(xout_list = copy_with_check(init_event, out_list, out_tc, what, 0, &xinit_event))) {
               event_list_free(out_list);
               out_list = NULL;
               lives_list_free(init_events);
               goto q_done;
             }
+            out_list = xout_list;
             // insert init pchanges
             pchanges = weed_get_voidptr_array_counted(init_event, WEED_LEAF_IN_PARAMETERS, &nchanges);
-            init_event = get_last_event(out_list);
+            init_event = xinit_event;
             for (i = 0; i < nchanges; i++) {
               weed_event_t *pchange = (weed_event_t *)pchanges[i];
-              if (!copy_with_check(pchange, out_list, out_tc, what, 0)) {
+              if (!(xout_list = copy_with_check(pchange, out_list, out_tc, what, 0, (weed_event_t **)&pchanges[i]))) {
                 event_list_free(out_list);
                 out_list = NULL;
                 lives_list_free(init_events);
                 lives_free(pchanges);
                 goto q_done;
               }
-              pchanges[i] = (void *)get_last_event(out_list);
+              out_list = xout_list;
             }
             weed_set_voidptr_array(init_event, WEED_LEAF_IN_PARAMETERS, nchanges, pchanges);
           }
@@ -836,14 +875,14 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
         if (filter_map && !deinit_events) {
           //g_print("ins filter map\n");
-          if (!copy_with_check(filter_map, out_list, out_tc, what, 0)) {
+          if (!(xout_list = copy_with_check(filter_map, out_list, out_tc, what, 0, NULL))) {
             event_list_free(out_list);
             out_list = NULL;
             goto q_done;
           }
+          out_list = xout_list;
           filter_map = NULL;
         }
-
         /// INSERT A FRAME AT OUT_TC
 
         tracks = weed_frame_event_get_tracks(frame_event, &clips, &frames);
@@ -1064,11 +1103,12 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           for (list = deinit_events; list; list = list->next) {
             deinit_event = (weed_event_t *)list->data;
             //g_print("ins deinit %p\n", deinit_event);
-            if (!copy_with_check(deinit_event, out_list, out_tc, what, 0)) {
+            if (!(xout_list = copy_with_check(deinit_event, out_list, out_tc, what, 0, NULL))) {
               event_list_free(out_list);
               out_list = NULL;
               goto q_done;
             }
+            out_list = xout_list;
           }
           lives_list_free(deinit_events);
           deinit_events = NULL;
@@ -1076,11 +1116,12 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
         if (filter_map) {
           //g_print("ins filter map\n");
-          if (!copy_with_check(filter_map, out_list, out_tc, what, 0)) {
+          if (!(xout_list = copy_with_check(filter_map, out_list, out_tc, what, 0, NULL))) {
             event_list_free(out_list);
             out_list = NULL;
             goto q_done;
           }
+          out_list = xout_list;
           filter_map = NULL;
         }
         if (is_final == 1) {
@@ -1093,11 +1134,12 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   //g_print("RES: %p and %ld, %ld\n", event, out_tc + tl, end_tc);
   if (filter_map) {
     // insert final filter_map
-    if (!copy_with_check(filter_map, out_list, end_tc, what, 0)) {
+    if (!(xout_list = copy_with_check(filter_map, out_list, end_tc, what, 0, NULL))) {
       event_list_free(out_list);
       out_list = NULL;
       goto q_done;
     }
+    out_list = xout_list;
   }
 
   if (!get_first_frame_event(out_list)) {

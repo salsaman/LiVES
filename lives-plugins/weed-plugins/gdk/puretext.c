@@ -285,7 +285,7 @@ static cairo_t *channel_to_cairo(sdata_t *sdata, weed_plant_t *channel) {
 
   sdata->pixel_data = pixel_data = (guchar *)weed_malloc(height * orowstride);
 
-  if (pixel_data == NULL) return NULL;
+  if (!pixel_data) return NULL;
 
   if (irowstride == orowstride) {
     weed_memcpy((void *)pixel_data, (void *)src, irowstride * height);
@@ -1116,7 +1116,7 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *in_chantmpls[2];
   weed_plant_t *out_chantmpls[2];
   weed_plant_t *host_info = weed_get_host_info(plugin_info);
-  int filter_flags = weed_host_supports_premultiplied_alpha(host_info);
+  int filter_flags = weed_host_supports_premultiplied_alpha(host_info) ? WEED_FILTER_PREF_PREMULTIPLIED_ALPHA : 0;
   int flags;
 
   if (is_big_endian())

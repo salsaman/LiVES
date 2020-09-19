@@ -156,7 +156,8 @@ int weed_frame_event_get_audio_tracks(weed_event_t *event,  int **aclips, double
 void event_list_replace_events(weed_event_t *event_list, weed_event_t *new_event_list);
 
 /// called during quantisation
-weed_event_t *event_copy_and_insert(weed_event_t *in_event, weed_timecode_t tc, weed_event_t *event_list);
+weed_event_t *event_copy_and_insert(weed_event_t *in_event, weed_timecode_t tc, weed_event_t *event_list,
+                                    weed_event_t **ret_event);
 
 /// if all_events is FALSE we only count FRAME events
 int count_events(weed_event_t *event_list, boolean all_events, ticks_t start_tc, ticks_t end_tc);

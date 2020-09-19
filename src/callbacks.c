@@ -4684,6 +4684,8 @@ void on_rewind_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   cfile->pointer_time = lives_ce_update_timeline(0, 0.);
   lives_widget_queue_draw_if_visible(mainw->hruler);
+  mainw->ptrtime = cfile->pointer_time;
+  lives_widget_queue_draw(mainw->eventbox2);
   lives_widget_set_sensitive(mainw->rewind, FALSE);
   lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
   lives_widget_set_sensitive(mainw->trim_to_pstart, FALSE);
@@ -10091,7 +10093,8 @@ boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespo
 // these two really belong with the processing widget
 
 void on_effects_paused(LiVESButton * button, livespointer user_data) {
-  char *com = NULL, *stockim;
+  char *com = NULL;
+  const char *stockim;
   ticks_t xticks;
 
   if (mainw->iochan || cfile->opening) {

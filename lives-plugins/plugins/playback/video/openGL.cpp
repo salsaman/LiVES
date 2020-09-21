@@ -851,7 +851,7 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
     glxWin = glXCreateWindow(dpy, fbConfigs[0], xWin, NULL);
 
     XFree(vInfo);
-    XFree(fbConfig);
+    XFree(fbConfigs);
 
     black.red = black.green = black.blue = 0;
 

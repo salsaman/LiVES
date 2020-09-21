@@ -1872,7 +1872,7 @@ static void lives_init(_ign_opts *ign_opts) {
       dummy_list = plugin_request("encoders", prefs->encoder.name, "init");
       lives_list_free_all(&dummy_list);
 
-      if (!((encoder_capabilities = plugin_request(PLUGIN_ENCODERS, prefs->encoder.name, "get_capabilities")) == NULL)) {
+      if (((encoder_capabilities = plugin_request(PLUGIN_ENCODERS, prefs->encoder.name, "get_capabilities")) != NULL)) {
         prefs->encoder.capabilities = atoi((char *)lives_list_nth_data(encoder_capabilities, 0));
         lives_list_free_all(&encoder_capabilities);
         if ((ofmt_all = plugin_request_by_line(PLUGIN_ENCODERS, prefs->encoder.name, "get_formats")) != NULL) {
@@ -4892,7 +4892,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   lives_idle_add_simple(lives_startup, NULL);
 
 #ifdef GUI_GTK
-  if (gtk_thread == NULL) {
+  if (!gtk_thread) {
     gtk_main();
   }
 #endif
@@ -5191,7 +5191,7 @@ void sensitize(void) {
     lives_widget_set_sensitive(mainw->select_invert, FALSE);
   }
 
-  if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && !(cfile->menuentry == NULL)) {
+  if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->menuentry) {
     lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
     lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end), 1, cfile->frames);
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
@@ -5215,8 +5215,8 @@ void sensitize(void) {
 
   // clips menu
   for (i = 1; i < MAX_FILES; i++) {
-    if (!(mainw->files[i] == NULL)) {
-      if (!(mainw->files[i]->menuentry == NULL)) {
+    if (mainw->files[i]) {
+      if (mainw->files[i]->menuentry) {
         lives_widget_set_sensitive(mainw->files[i]->menuentry, TRUE);
 	// *INDENT-OFF*
       }}}
@@ -5369,8 +5369,8 @@ void desensitize(void) {
     //  if (!cfile->opening||mainw->dvgrab_preview||mainw->preview||cfile->opening_only_audio) {
     // disable the 'clips' menu entries
     for (i = 1; i < MAX_FILES; i++) {
-      if (!(mainw->files[i] == NULL)) {
-        if (!(mainw->files[i]->menuentry == NULL)) {
+      if (mainw->files[i]) {
+        if (mainw->files[i]->menuentry) {
           if (!(i == mainw->current_file)) {
             lives_widget_set_sensitive(mainw->files[i]->menuentry, FALSE);
 	    // *INDENT-OFF*
@@ -5402,7 +5402,7 @@ void procw_desensitize(void) {
       mainw->mute = lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->mute_audio));
     }
   }
-  if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->menuentry == NULL) {
+  if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && !cfile->menuentry) {
     lives_widget_set_sensitive(mainw->rename, FALSE);
     if (cfile->opening || cfile->restoring) {
       // loading, restoring etc
@@ -6996,7 +6996,7 @@ check_prcache:
       pixbuf = NULL;
     }
 
-    if (pixbuf == NULL) {
+    if (!pixbuf) {
       ret = FALSE;
       goto fndone;
     }
@@ -7046,7 +7046,7 @@ fndone:
 
     get_subt_text(sfile, xtime);
 
-    if (sfile->subt->text == NULL) return layer;
+    if (!sfile->subt->text) return layer;
 
     size = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error) / 32;
 

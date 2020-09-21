@@ -6723,11 +6723,6 @@ boolean weed_init_effect(int hotkey) {
     weed_instance_ref(new_instance);
     update_widget_vis(NULL, hotkey, key_modes[hotkey]); // redraw our paramwindow
   } else {
-    /// for multitrack we need to create multiple channels for optional inputs, using the init_event
-    /// in_tracks / in_count
-
-
-
     new_instance = weed_instance_from_filter(filter); //adds a ref
     // if it is a key effect, set key defaults
     if (hotkey < FX_KEYS_MAX_VIRTUAL && key_defaults[hotkey][key_modes[hotkey]]) {

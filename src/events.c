@@ -5407,7 +5407,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
   else rows = count_events(event_list, TRUE, start_tc, end_tc) - count_events(event_list, FALSE, start_tc, end_tc);
 
   //event = get_first_event(event_list);
-  event = event_list;
+  event = get_first_event(event_list);
 
   winsize_h = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
   winsize_v = GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY;

@@ -1741,8 +1741,6 @@ typedef struct {
 
   boolean force_show; /// if set to TRUE during playback then a new frame (or possibly the current one) will be displayed ASAP
 
-  boolean gui_fooey; ///< set to TRUE if we expect heavy interface updates (when not playing, please) so we can increase GUI iterations
-
   /// adaptive quality settings
   ///< a roughly calibrated value that ranges from -64 (lightly loaded) -> +64 (heavily loaded)
   /// (currently only active during playback), i.e higher values represent more machine load

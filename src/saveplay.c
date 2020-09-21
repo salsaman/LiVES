@@ -94,7 +94,11 @@ boolean _start_playback(livespointer data) {
 
 LIVES_GLOBAL_INLINE boolean start_playback(int type) {return  _start_playback(LIVES_INT_TO_POINTER(type));}
 
-LIVES_GLOBAL_INLINE void start_playback_async(int type) {_start_playback(LIVES_INT_TO_POINTER(type));}
+LIVES_GLOBAL_INLINE void start_playback_async(int type) {
+  lives_idle_add(_start_playback, LIVES_INT_TO_POINTER(type));
+  //lives_proc_thread_create(0, (lives_funcptr_t)_start_playback, 0, "i", type);
+  //_start_playback(LIVES_INT_TO_POINTER(type));
+}
 
 
 boolean save_clip_values(int which) {
@@ -2454,8 +2458,7 @@ void play_file(void) {
       lives_container_remove(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
 
       mainw->pw_scroll_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_SCROLL_EVENT,
-                              LIVES_GUI_CALLBACK(on_mouse_scroll),
-                              NULL);
+                              LIVES_GUI_CALLBACK(on_mouse_scroll), NULL);
     }
   } else {
     if (mainw->sep_win) {
@@ -3176,7 +3179,6 @@ void play_file(void) {
         if (!lives_widget_get_parent(mainw->preview_box) && CURRENT_CLIP_IS_NORMAL && !mainw->is_rendering) {
           lives_widget_queue_draw(mainw->play_window);
           lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
-          lives_widget_grab_focus(mainw->preview_spinbutton);
           play_window_set_title();
           load_preview_image(FALSE);
         }
@@ -3186,6 +3188,11 @@ void play_file(void) {
             lives_window_present(LIVES_WINDOW(mainw->play_window));
             lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
             unhide_cursor(lives_widget_get_xwindow(mainw->play_window));
+            lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
+            lives_widget_show_all(mainw->preview_box);
+            lives_widget_show_now(mainw->preview_box);
+            lives_widget_grab_focus(mainw->preview_spinbutton);
+            lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
 	  // *INDENT-OFF*
 	  }}}}}
   // *INDENT-ON*
@@ -5393,6 +5400,8 @@ int save_to_scrap_file(weed_layer_t *layer) {
   // returns frame number
   // dump the raw layer (frame) data to disk
 
+  // TODO: run as bg thread
+
   size_t pdata_size;
 
   lives_clip_t *scrapfile = mainw->files[mainw->scrap_file];
@@ -5419,7 +5428,7 @@ int save_to_scrap_file(weed_layer_t *layer) {
     lives_mkdir_with_parents(dirname, capable->umask);
     lives_free(dirname);
 
-    fd = lives_create_buffered(oname, DEF_FILE_PERMS);
+    fd = lives_create_buffered_nosync(oname, DEF_FILE_PERMS);
     lives_free(oname);
 
     if (fd < 0) return scrapfile->frames;

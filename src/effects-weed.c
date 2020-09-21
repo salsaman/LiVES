@@ -7895,6 +7895,8 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   //weed_instance_ref(inst);
   //filter_mutex_lock(key);
 
+  if (LIVES_IS_PLAYING) mainw->ignore_clipswitch = TRUE;
+
   if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR && mainw->num_tr_applied == 0) {
     close_current_file(0);
     old_file = -1;
@@ -8147,6 +8149,8 @@ void weed_generator_end(weed_plant_t *inst) {
   boolean is_bg = FALSE;
   boolean clip_switched = mainw->clip_switched;
   int current_file = mainw->current_file, pre_src_file = mainw->pre_src_file;
+
+  if (LIVES_IS_PLAYING) mainw->ignore_clipswitch = TRUE;
 
   if (!inst) {
     LIVES_WARN("inst was NULL !");

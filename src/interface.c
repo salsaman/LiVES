@@ -3362,6 +3362,8 @@ void redraw_timeline(int clipno) {
   sfile = mainw->files[clipno];
   if (sfile->clip_type == CLIP_TYPE_TEMP) return;
 
+  mainw->drawsrc = clipno;
+
   if (!mainw->video_drawable) {
     mainw->video_drawable = lives_widget_create_painter_surface(mainw->video_draw);
     clear_tbar_bgs(0, 0, 0, 0, 1);
@@ -3390,8 +3392,6 @@ void redraw_timeline(int clipno) {
       update_timer_bars(0, 0, 0, 0, 3);
     }
   }
-
-  mainw->drawsrc = clipno;
 
   lives_widget_queue_draw(mainw->video_draw);
   lives_widget_queue_draw(mainw->laudio_draw);

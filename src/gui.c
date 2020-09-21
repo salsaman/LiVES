@@ -2731,9 +2731,9 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_playsel_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->playclip), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_playclip_activate), NULL);
-  lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->stop), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                             LIVES_GUI_CALLBACK(on_stop_activate),
-                             NULL);  // connect after to stop keypress propagating to removed fs window
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->stop), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                                  LIVES_GUI_CALLBACK(on_stop_activate),
+                                  NULL);  // connect after to stop keypress propagating to removed fs window
   mainw->fullscreen_cb_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->full_screen), LIVES_WIDGET_ACTIVATE_SIGNAL,
                               LIVES_GUI_CALLBACK(on_full_screen_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->sw_sound), LIVES_WIDGET_ACTIVATE_SIGNAL,

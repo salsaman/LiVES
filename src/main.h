@@ -1608,6 +1608,7 @@ size_t get_read_buff_size(int sztype);
 int lives_open_buffered_rdonly(const char *pathname);
 int lives_open_buffered_writer(const char *pathname, int mode, boolean append);
 int lives_create_buffered(const char *pathname, int mode);
+int lives_create_buffered_nosync(const char *pathname, int mode);
 int lives_close_buffered(int fd);
 off_t lives_lseek_buffered_writer(int fd, off_t offset);
 off_t lives_lseek_buffered_rdonly(int fd, off_t offset);

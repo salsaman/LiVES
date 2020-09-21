@@ -1439,9 +1439,16 @@ int process_one(boolean visible) {
   /// update value (e.g. mainw->new_clip, mainw->new_vpp)
   /// the code will enforce this so that setting the values directly will cause playback to end
 
+  // we allow an exception only when starting or stopping a generator
+
   if (mainw->current_file != old_current_file || mainw->playing_file != old_playing_file || mainw->vpp != old_vpp) {
-    mainw->cancelled = CANCEL_INTERNAL_ERROR;
-    return FALSE;
+    if (!mainw->ignore_clipswitch) {
+      mainw->cancelled = CANCEL_INTERNAL_ERROR;
+      return FALSE;
+    }
+    old_current_file = mainw->current_file;
+    old_playing_file = mainw->playing_file;
+    mainw->ignore_clipswitch = FALSE;
   }
 
   if (mainw->new_vpp) {

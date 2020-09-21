@@ -9424,6 +9424,7 @@ lfi_done:
           if (IS_VALID_CLIP(file_to_switch_to) && file_to_switch_to > 0) {
             if (!mainw->multitrack) {
               if (!LIVES_IS_PLAYING) {
+                mainw->current_file = file_to_switch_to;
                 switch_clip(1, file_to_switch_to, TRUE);
                 d_print("");
               } else {
@@ -9610,6 +9611,8 @@ lfi_done:
       // *INDENT-ON*
 
       if (mainw->play_window && cfile->is_loaded && orig_file != new_file) {
+        resize_play_window();
+
         // if the clip is loaded
         if (!mainw->preview_box) {
           // create the preview box that shows frames...
@@ -9619,14 +9622,15 @@ lfi_done:
         if (!lives_widget_get_parent(mainw->preview_box)) {
           lives_widget_queue_draw(mainw->play_window);
           lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
-          lives_widget_grab_focus(mainw->preview_spinbutton);
         }
 
-        lives_widget_show(mainw->preview_controls);
-        lives_widget_grab_focus(mainw->preview_spinbutton);
+        lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
+        lives_widget_show_all(mainw->preview_box);
+        lives_widget_show_now(mainw->preview_box);
+        lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
 
         // and resize it
-        resize_play_window();
+        lives_widget_grab_focus(mainw->preview_spinbutton);
         load_preview_image(FALSE);
       }
 
@@ -10025,9 +10029,9 @@ lfi_done:
 
       mainw->current_file = new_file;
 
+      mainw->drawsrc = mainw->current_file;
       mainw->laudio_drawable = cfile->laudio_drawable;
       mainw->raudio_drawable = cfile->raudio_drawable;
-      mainw->drawsrc = mainw->current_file;
 
       if (!mainw->fs && !mainw->faded) {
         redraw_timeline(mainw->current_file);

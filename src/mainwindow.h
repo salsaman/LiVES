@@ -1000,6 +1000,7 @@ typedef struct {
   boolean cs_permitted; ///< set to TRUE to allow overriding of noswitch in limited circumstances
   boolean cs_is_permitted; ///< set automatically when cs_permitted can update the clip
   int new_clip; ///< clip we should switch to during playback; switch will happen at the designated SWITCH POINT
+  boolean ignore_clipswitch;
   boolean preview_req;
 
   volatile short scratch;

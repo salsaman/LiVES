@@ -30,7 +30,7 @@ static int package_version = 2; // version of this package
 static int verbosity = WEED_VERBOSITY_ERROR;
 #define WORKER_TIMEOUT_SEC 30 /// how long to wait for worker thread startup
 #define MAX_AUDLEN 2048 /// this is defined by projectM itself, increasing the value above 2048 will only result in jumps in the audio
-#define DEF_SENS 1.5 /// beat sensitivity 0. -> 5.  (lower is more sensitive); too high -> less dynamic, too low - nothing w. silence
+#define DEF_SENS 1. /// beat sensitivity 0. -> 5.  (lower is more sensitive); too high -> less dynamic, too low - nothing w. silence
 /////////////////////////////////////////////////////////////
 
 #define USE_DBLBUF 1
@@ -255,7 +255,7 @@ bool resize_buffer(_sdata *sd) {
   }
   if (sd->fbuffer) weed_free(sd->fbuffer);
   sd->fbuffer = (GLubyte *)weed_calloc(sizeof(GLubyte) * sd->rowstride * sd->height / align, align);
-  if (!sd->fbuffer) return FALSE;
+  if (!sd->fbuffer) return false;
   return true;
 }
 
@@ -812,7 +812,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   if (sd->width != width || sd->height != height || sd->psize != psize || sd->rowstride != rowstride || sd->palette != palette) {
     /// we must update size / pal, this has to be done before reading the buffer
     pthread_mutex_lock(&cond_mutex);
-    sd->needs_update = TRUE;
+    sd->needs_update = true;
     /// wait for worker thread to aknowledge the update request
     while (sd->needs_update) {
       pthread_cond_wait(&cond, &cond_mutex);

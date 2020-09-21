@@ -676,6 +676,9 @@ LIVES_GLOBAL_INLINE int lives_create_buffered(const char *pathname, int mode) {
   return lives_open_real_buffered(pathname, O_CREAT | O_WRONLY | O_TRUNC | O_DSYNC, mode, FALSE);
 }
 
+LIVES_GLOBAL_INLINE int lives_create_buffered_nosync(const char *pathname, int mode) {
+  return lives_open_real_buffered(pathname, O_CREAT | O_WRONLY | O_TRUNC, mode, FALSE);
+}
 
 int lives_open_buffered_writer(const char *pathname, int mode, boolean append) {
   return lives_open_real_buffered(pathname, O_CREAT | O_WRONLY | O_DSYNC | (append ? O_APPEND : 0), mode, FALSE);

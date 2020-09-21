@@ -1119,9 +1119,9 @@ reloop:
     if (sigdata && sigdata->is_timer) {
       // this is also complicated. We are running in a timer and we need to run mainloop
       is_timer = TRUE;
-      sigdata = NULL;
       /* if (!lpttorun) */
-      /*   while (lives_widget_context_iteration(NULL, FALSE)); */
+      while (!lives_proc_thread_check(sigdata->proc) && lives_widget_context_iteration(NULL, FALSE));
+      sigdata = NULL;
       goto reloop;
     }
     if (lpttorun) lpt_recurse = TRUE;

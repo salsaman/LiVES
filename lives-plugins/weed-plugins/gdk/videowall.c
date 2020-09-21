@@ -48,13 +48,11 @@ static GdkPixbuf *pl_channel_to_pixbuf(weed_plant_t *channel) {
   GdkPixbuf *pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, weed_palette_has_alpha_channel(palette), 8, width, height);
   guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
   int orowstride = gdk_pixbuf_get_rowstride(pixbuf);
-  guchar *end = pixels + orowstride * height;
   int psize = pixel_size(palette);
   width *= psize;
 
-  for (; pixels < end; pixels += orowstride) {
-    weed_memcpy(pixels, pixel_data, width);
-    pixel_data += irowstride;
+  for (int i = 0; i < height; i++) {
+    weed_memcpy(pixels + i * orowstride, pixel_data + i * irowstride, width);
   }
   return pixbuf;
 }
@@ -62,14 +60,14 @@ static GdkPixbuf *pl_channel_to_pixbuf(weed_plant_t *channel) {
 
 static weed_error_t videowall_init(weed_plant_t *inst) {
   int width, xwidth, height, palette;
-  weed_plant_t *in_channel = weed_get_in_channel(inst, 0);
+  weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
 
   struct _sdata *sdata = weed_malloc(sizeof(struct _sdata));
   if (!sdata) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  palette = weed_channel_get_palette(in_channel);
-  width = weed_channel_get_width(in_channel);
-  height = weed_channel_get_height(in_channel);
+  palette = weed_channel_get_palette(out_channel);
+  width = weed_channel_get_width(out_channel);
+  height = weed_channel_get_height(out_channel);
   sdata->bgbuf = weed_calloc((width * height * pixel_size(palette) + 67) >> 2, 4);
 
   if (!sdata->bgbuf) {
@@ -79,7 +77,7 @@ static weed_error_t videowall_init(weed_plant_t *inst) {
 
   // set a black background
   xwidth = width * pixel_size(palette);
-  blank_frame((void **)&sdata->bgbuf, width, height, &xwidth, palette, weed_channel_get_yuv_clamping(in_channel));
+  blank_frame((void **)&sdata->bgbuf, width, height, &xwidth, palette, weed_channel_get_yuv_clamping(out_channel));
 
   sdata->count = 0;
   sdata->dir = 0;
@@ -94,7 +92,7 @@ static weed_error_t videowall_init(weed_plant_t *inst) {
 static weed_error_t videowall_deinit(weed_plant_t *inst) {
   struct _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
   if (sdata) {
-    weed_free(sdata->bgbuf);
+    if (sdata->bgbuf) weed_free(sdata->bgbuf);
     weed_free(sdata);
   }
   weed_set_voidptr_value(inst, "plugin_internal", NULL);
@@ -120,7 +118,7 @@ static weed_error_t videowall_process(weed_plant_t *inst, weed_timecode_t timest
   int mode = weed_param_get_value_int(in_params[2]);
   unsigned char *dst = weed_channel_get_pixel_data(out_channel);
   struct _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
-  register int i;
+  int i;
 
   weed_free(in_params);
 
@@ -135,7 +133,7 @@ static weed_error_t videowall_process(weed_plant_t *inst, weed_timecode_t timest
 
   out_pixbuf = gdk_pixbuf_scale_simple(in_pixbuf, pwidth, pheight, down_interp);
   g_object_unref(in_pixbuf);
-  if (out_pixbuf == NULL) return WEED_SUCCESS;
+  if (!out_pixbuf) return WEED_SUCCESS;
 
   psize = pixel_size(palette);
 
@@ -216,9 +214,7 @@ static weed_error_t videowall_process(weed_plant_t *inst, weed_timecode_t timest
 
   for (i = 0; i < pheight; i++) {
     // copy pixel_data to bgbuf
-    weed_memcpy(bdst, rpix, pwidth);
-    bdst += width;
-    rpix += prow;
+    weed_memcpy(bdst + i * width, rpix + i * prow, pwidth);
   }
 
   g_object_unref(out_pixbuf);
@@ -228,8 +224,7 @@ static weed_error_t videowall_process(weed_plant_t *inst, weed_timecode_t timest
 
   if (orow == width) weed_memcpy(dst, sdata->bgbuf, width * height);
   else for (i = 0; i < height; i++) {
-      weed_memcpy(dst, sdata->bgbuf + i * width, width);
-      dst += orow;
+      weed_memcpy(dst + i * orow, sdata->bgbuf + i * width, width);
     }
 
   return WEED_SUCCESS;

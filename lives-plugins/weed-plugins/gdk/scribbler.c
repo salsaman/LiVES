@@ -71,7 +71,7 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
   int pal;
   int error;
 
-  register int i;
+  int i;
 
   guchar *src, *dst, *pixel_data;
 
@@ -109,12 +109,9 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
   if (weed_get_boolean_value(channel, WEED_LEAF_ALPHA_PREMULTIPLIED, NULL) == WEED_FALSE)
     alpha_premult(pixel_data, widthx, height, orowstride, pal, WEED_FALSE);
 
-  surf = cairo_image_surface_create_for_data(pixel_data,
-         cform,
-         width, height,
-         orowstride);
+  surf = cairo_image_surface_create_for_data(pixel_data, cform, width, height, orowstride);
 
-  if (surf == NULL) {
+  if (!surf) {
     weed_free(pixel_data);
     return NULL;
   }
@@ -244,9 +241,11 @@ static weed_error_t scribbler_process(weed_plant_t *inst, weed_timecode_t timest
   weed_plant_t *in_channel = weed_get_in_channel(inst, 0); // maye be NULL
   weed_plant_t *filter;
   rgb_t *fg, *bg;
-  cairo_t *cairo;
+  cairo_t *cairo, *xcairo = NULL;
+  cairo_surface_t *surf = NULL;
 
   double f_alpha, b_alpha, dwidth, dheight, font_size, top;
+  double sx = 1., sy = 1.;
 
   char *text, *fontstr;
 
@@ -256,7 +255,8 @@ static weed_error_t scribbler_process(weed_plant_t *inst, weed_timecode_t timest
   int version;
   int width = weed_channel_get_width(out_channel);
   int height = weed_channel_get_height(out_channel);
-  register int i;
+  int nwidth = 0, nheight = 0;
+  int i;
 
   text = weed_param_get_value_string(in_params[P_TEXT]);
   mode = weed_param_get_value_int(in_params[P_MODE]);
@@ -289,11 +289,23 @@ static weed_error_t scribbler_process(weed_plant_t *inst, weed_timecode_t timest
 
   weed_free(in_params); // must weed free because we got an array
 
-  // THINGS TO TO WITH TEXTS AND PANGO
-  if ((!in_channel) || (in_channel == out_channel))
+  if (!in_channel || (in_channel == out_channel))
     cairo = channel_to_cairo(out_channel);
   else
     cairo = channel_to_cairo(in_channel);
+
+  // create a cairo surface using natural_size
+  if (weed_plant_has_leaf(in_channel, WEED_LEAF_NATURAL_SIZE)) {
+    int *nsize = weed_get_int_array(in_channel, WEED_LEAF_NATURAL_SIZE, NULL);
+    nwidth = nsize[0];
+    nheight = nsize[1];
+    xcairo = cairo;
+    surf = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, nwidth, nheight);
+    cairo = cairo_create(surf);
+    sx = (double)width / (double)nwidth;
+    sy = (double)height / (double)nheight;
+    cairo_scale(cairo, sx, sy);
+  }
 
   if (cairo) {
     if (text && *text) {
@@ -312,12 +324,12 @@ static weed_error_t scribbler_process(weed_plant_t *inst, weed_timecode_t timest
 
         pango_layout_set_font_description(layout, font);
         pango_layout_set_text(layout, text, -1);
-        getxypos(layout, &x_pos, &y_pos, width, height, cent, &dwidth, &dheight);
+        getxypos(layout, &x_pos, &y_pos, width / sx, height / sy, cent, &dwidth, &dheight);
 
         if (!rise) y_pos = y_text = height * top;
 
         x_text = x_pos;
-        y_text = y_pos;
+        y_text = y_pos / sy;
         if (cent) pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
         else pango_layout_set_alignment(layout, PANGO_ALIGN_LEFT);
 
@@ -349,6 +361,18 @@ static weed_error_t scribbler_process(weed_plant_t *inst, weed_timecode_t timest
         pango_font_description_free(font);
       }
     }
+
+    if (xcairo) {
+      cairo_surface_t *surface = cairo_get_target(xcairo);
+      cairo_surface_flush(surf);
+      cairo_set_source_surface(xcairo, surf, 0., 0.);
+      cairo_paint(xcairo);
+      cairo_surface_flush(surface);
+      cairo_surface_destroy(surf);
+      cairo_destroy(cairo);
+      cairo = xcairo;
+    }
+
     cairo_to_channel(cairo, out_channel);
     cairo_destroy(cairo);
   }
@@ -380,7 +404,7 @@ WEED_SETUP_START(200, 200) {
   else palette_list[0] = WEED_PALETTE_BGRA32;
   palette_list[1] = WEED_PALETTE_END;
 
-  in_chantmpls[0] = weed_channel_template_init("in channel 0", 0);
+  in_chantmpls[0] = weed_channel_template_init("in channel 0", WEED_CHANNEL_NEEDS_NATURAL_SIZE);
   in_chantmpls[1] = NULL;
 
   out_chantmpls[0] = weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE);

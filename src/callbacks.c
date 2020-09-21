@@ -8044,7 +8044,6 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (prefs->sepwin_type == SEPWIN_TYPE_STICKY && !LIVES_IS_PLAYING) {
     if (mainw->sep_win) make_play_window();
     else kill_play_window();
-    lives_widget_context_update();
     /* if (mainw->multitrack && !LIVES_IS_PLAYING) { */
     /*   activate_mt_preview(mainw->multitrack); // show frame preview */
     /* } */

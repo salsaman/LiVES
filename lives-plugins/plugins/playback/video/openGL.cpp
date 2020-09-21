@@ -514,7 +514,7 @@ static void setFullScreen(void) {
 
 
 static  uint8_t *buffer_free(volatile uint8_t *retbuf) {
-  if (retbuf == NULL) return NULL;
+  if (!retbuf) return NULL;
   weed_free((void *)retbuf);
   return NULL;
 }
@@ -788,7 +788,7 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
       fbConfigs = glXChooseFBConfig(dpy, DefaultScreen(dpy),
                                     doubleBufferAttributes, &numReturned);
 
-      if (fbConfigs == NULL) {    /* no double buffered configs available */
+      if (!fbConfigs) {    /* no double buffered configs available */
         fbConfigs = glXChooseFBConfig(dpy, DefaultScreen(dpy),
                                       singleBufferAttributess, &numReturned);
         dblbuf = 0;
@@ -851,6 +851,7 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
     glxWin = glXCreateWindow(dpy, fbConfigs[0], xWin, NULL);
 
     XFree(vInfo);
+    XFree(fbConfig);
 
     black.red = black.green = black.blue = 0;
 
@@ -1000,8 +1001,6 @@ static int Upload(void) {
   partx = 2. / (float)imgWidth;
   party = 2. / (float)imgHeight;
 
-  texID = get_texture_texID(0);
-
   //if (zmode != -1) mode = zmode;
 
   if (!return_ready && retbuf) {
@@ -1052,7 +1051,6 @@ static int Upload(void) {
     // vertex: maps texture -> screen (e.g. for letterbox, we map to a smaller part of screen)
     glClear(GL_COLOR_BUFFER_BIT);
     glBindTexture(m_TexTarget, texID);
-    glEnable(GL_TEXTURE_2D);
     glBegin(GL_QUADS);
     glTexCoord2d(0, 0);
     glVertex2d(-x_range, y_range);
@@ -1063,9 +1061,7 @@ static int Upload(void) {
     glTexCoord2d(x_stretch, 0);
     glVertex2d(x_range, y_range);
     glEnd();
-
-    glDisable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(m_TexTarget);
   }
   break;
 
@@ -2023,9 +2019,7 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
 
 
   if (imgRow != texRow || imgHeight != texHeight || !texturebuf) {
-    if (texturebuf) {
-      weed_free((void *)texturebuf);
-    }
+    if (texturebuf) weed_free((void *)texturebuf);
     texturebuf = (uint8_t *)weed_malloc(rowz * vsize);
   }
 
@@ -2157,10 +2151,7 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
     pthread_join(rthread, NULL);
   } else pthread_mutex_unlock(&cond_mutex);
 
-  if (texturebuf != NULL) {
-    if (weed_free)
-      weed_free((void *)texturebuf);
-  }
+  if (texturebuf) weed_free((void *)texturebuf);
 
   free(textures);
 

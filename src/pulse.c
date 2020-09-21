@@ -1378,7 +1378,7 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
         }
         // stream audio to video playback plugin if appropriate (probably needs retesting...)
         pthread_mutex_lock(&mainw->vpp_stream_mutex);
-        if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
+        if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float) {
           (*mainw->vpp->render_audio_frame_float)(fltbuf, xnsamples);
         }
         pthread_mutex_unlock(&mainw->vpp_stream_mutex);

@@ -8709,6 +8709,14 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
 
   if (width <= 0 || height <= 0) return FALSE;
 
+  if (!weed_plant_has_leaf(layer, WEED_LEAF_NATURAL_SIZE)) {
+    int nsize[2];
+    // set "natural_size" in case a filter needs it
+    nsize[0] = width;
+    nsize[1] = height;
+    weed_set_int_array(layer, WEED_LEAF_NATURAL_SIZE, 2, nsize);
+  }
+
   if (weed_leaf_get_flags(layer, WEED_LEAF_ROWSTRIDES) & LIVES_FLAG_MAINTAIN_VALUE) {
     /// force use of fixed rowstrides, eg. decoder plugin
     fixed_rs = weed_layer_get_rowstrides(layer, NULL);
@@ -9520,8 +9528,9 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
     }
   }
 
-  if (newdata)
-    weed_layer_free(old_layer);
+  weed_leaf_dup(layer, old_layer, WEED_LEAF_NATURAL_SIZE);
+
+  if (newdata) weed_layer_free(old_layer);
   lives_freep((void **)&npixel_data);
   lives_freep((void **)&pixel_data);
   lives_freep((void **)&orowstrides);
@@ -12032,7 +12041,7 @@ boolean compact_rowstrides(weed_layer_t *layer) {
   }
 
   old_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
-  if (old_layer == NULL) return FALSE;
+  if (!old_layer) return FALSE;
   if (!weed_layer_copy(old_layer, layer)) return FALSE;
 
   THREADVAR(rowstride_alignment_hint) = -1;
@@ -12621,12 +12630,12 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
   // old layer will hold pointers to the original pixel data for layer
   old_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
 
-  if (old_layer == NULL) return FALSE;
+  if (!old_layer) return FALSE;
   if (!weed_layer_copy(old_layer, layer)) return FALSE;
 
   pixel_data = weed_layer_get_pixel_data(old_layer, NULL);
 
-  if (pixel_data == NULL) {
+  if (!pixel_data) {
     weed_layer_free(old_layer);
     return FALSE;
   }
@@ -13313,25 +13322,26 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
 
   pd_array = weed_layer_get_pixel_data(slayer, NULL);
 
-  if (dlayer == NULL) {
+  if (!dlayer) {
     /// deep copy
     int height = weed_layer_get_height(slayer);
     int width = weed_layer_get_width(slayer);
     int palette = weed_layer_get_palette(slayer);
     int *rowstrides = weed_layer_get_rowstrides(slayer, NULL);
     if (height <= 0 || width < 0 || rowstrides == NULL || !weed_palette_is_valid(palette)) {
-      if (pd_array != NULL) lives_free(pd_array);
+      if (pd_array) lives_free(pd_array);
       return NULL;
     } else {
       layer = weed_layer_create(width, height, rowstrides, palette);
-      if (pd_array == NULL) weed_layer_nullify_pixel_data(layer);
+      if (!pd_array) weed_layer_nullify_pixel_data(layer);
       else copy_pixel_data(layer, slayer, 0);
       lives_free(rowstrides);
     }
   } else {
     /// shallow copy
-    weed_leaf_copy(layer, WEED_LEAF_ROWSTRIDES, slayer, WEED_LEAF_ROWSTRIDES);
-    weed_leaf_copy(layer, WEED_LEAF_PIXEL_DATA, slayer, WEED_LEAF_PIXEL_DATA);
+    weed_leaf_dup(layer, slayer, WEED_LEAF_ROWSTRIDES);
+    weed_leaf_dup(layer, slayer, WEED_LEAF_PIXEL_DATA);
+    weed_leaf_dup(layer, slayer, WEED_LEAF_NATURAL_SIZE);
     weed_leaf_copy_or_delete(layer, WEED_LEAF_HEIGHT, slayer);
     weed_leaf_copy_or_delete(layer, WEED_LEAF_WIDTH, slayer);
     weed_leaf_copy_or_delete(layer, WEED_LEAF_CURRENT_PALETTE, slayer);

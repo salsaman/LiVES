@@ -2276,6 +2276,18 @@ None.
 
 
 
+ * "natural_size" : WEED_SEED_INT[2]
+
+if the plugin sets the channel_template flagbit WEED_CHANNEL_NEEDS_NATURAL_SIZE, then the host should set this to the width
+and height in pixels (NOT macropixels) of the channel BEFORE without any resizing.
+This is to allow for example fixed size objects to
+be properly scaled regardless of the scaled channel size. See also the notes for the flagbit.
+
+
+
+
+
+
 '''Optional leaves for channels with audio''': [[BR]]
 
  See the weed AUDIO extension.
@@ -3521,30 +3533,19 @@ Explanation of flag bit combinations:
 
     WEED_FILTER_IS_CONVERTER on its own has no meaning However it may be combined with either or both of the other flag bits.
 
-    If the flag bit WEED_FILTER_CHANNEL_SIZES_MAY_VARY is set, then each of the input channels may have a different input size
-    (and / or rowstrides value). The number of out video channels must be either 0, 1 or equal to the number of input video channels,
-    in the latter case, if an input channel is marked optional then the corresponding output channel is assumed to be optional,
-    and if an in channel has "max_repeats" then the corresponding out channel is assumed to have the same value
-    (though it is good practice to mark these options specifically. (I.e it must be possible to match each channel to a corresponding
-    in channel; and the sizes (width * height) must match for each pair, unless WEED_FILTER_IS_CONVERTER is set.
-    Setting that flag bit allows the filter to resize between in and out channels.
+    If the flag bit WEED_FILTER_CHANNEL_SIZES_MAY_VARY is set, then each channel may have a different size
+    (and / or rowstrides value).
 
+    If the filter has 0 output video channels, then the filter is assumed to be some kind of analyser (i.e. it would normally
+    have out_parameters).
 
+    If the filter has one or more output channels then it is assumed to be some kind of compositor.
 
+    If the flag bit WEED_FILTER_IS_CONVERTER is also set then the filter is a resizer filter. In this case its sole function
+    should be to reproduce the
+    input at the selected out size(s). It MUST have exactly 1 input but may have 1 or more output channels.
 
-    If the plugin has 0 output video channels, then the plugin is assumed to be some kind of analyser.
-
-    If the plugin has exacly one output channel then it is assumed to be some kind of compositor, (the plugin may of course copy
-    and scale the inputs, but the resulting output size MUST still be equal the size of the first in channel.)
-
-    Otherwise the sizes of each output channel must be set by the host equal to the corresponding input channel.
-    I.e the plugin need never resize between input and output, UNLESS:
-
-    If the flag bit WEED_FILTER_IS_CONVERTER is also set then the plugin is a resizer plugin. In this case its sole function
-    should be resize the input channels to the corresponding out channels, or in the case of a single input channel, to reproduce the
-    input at the selected out size(s), or in the case of multiple inputs and single output, to combine the inputs and produce output
-    at the selected size. 
-    The exact resizing method is left to the plugin to decide (for example it may offer
+    The exact resizing method is left to the filter to decide (for example it may offer
     a border - or letterboxing, or scale at selectable quality values).
 
 
@@ -3563,8 +3564,8 @@ Explanation of flag bit combinations:
     between in and out palettes, UNLESS it is simply changing palettes around without any conversion of values, (e.g. RGB24 <-> BGR24,
     RGB24 <-> RGBA32 , YUV888 <-> YUV444P); in this case WEED_FILTER_IS_CONVERTER should not be set.
 
-    If the filter has multiple input channels and a single ouptut video channel, then it can be assumed that the plugin combines the
-    input channels in some way (for example a plugin which mixes two colour channels using a separate alpha layer (alpha mixer),
+    If the filter has multiple input channels and a single ouptut video channel, then it can be assumed that the filter combines the
+    input channels in some way (for example a filter which mixes two colour channels using a separate alpha layer (alpha mixer),
     could define three in channels:
     two with colour palettes (perhaps using the filter class defaults) and a third (possibly optional)
     with only alpha palettes in the channel template "palette_list"),
@@ -3580,10 +3581,10 @@ Explanation of flag bit combinations:
     practice to mark these options specifically (i.e if there is more than 1 output channel, then it must be possible to match it with a 
     corresponding in_channel to match the palettes for that pair).
     The palettes of each output channel are assumed to equal to that of the corresponding (by numeration) input channel.
-    I.e. the plugin need never change palettes between input and output - UNLESS:
+    I.e. the filter need never change palettes between input and output - UNLESS:
 
 
-    If the flag bit WEED_FILTER_IS_CONVERTER is also set, then the plugin is a palette converter and In this case its sole function
+    If the flag bit WEED_FILTER_IS_CONVERTER is also set, then the filter is a palette converter and In this case its sole function
     should be to convert from the palette of each input channel to the palette of the corresponding out channel, or in the
     case of single input channel, to duplicate the input in each of the selected output channel palettes, or in the case of multiple
     inputs and single output, to combine the inputs in some fashion (e.g adding an alpha layer). If the flag bit is set then conversion
@@ -3606,12 +3607,12 @@ Explanation of flag bit combinations:
 === filter instance flags ===
 
 * WEED_INSTANCE_UPDATE_GUI_ONLY 1
-  This filter instance flag bit may be set by the host as a counterpart to the plugin setting WEED_GUI_REINIT_ON_VALUE_CHANGE in
+  This filter instance flag bit may be set by the host as a counterpart to the filter setting WEED_GUI_REINIT_ON_VALUE_CHANGE in
   the GUI plant of a parameter_template. This indicates to the plugin that it is being reinited solely in response to a value change in
-  the corresponding parameter, and the plugin should ONLY update the GUI plants for parameters without disturbing the runniing state
+  the corresponding parameter, and the filter should ONLY update the GUI plants for parameters without disturbing the runniing state
   (e.g nothing should be freed in the deinit_func(), nothing should be reset in the init func()). The host should still call the deinit_func()
-  before (re) calling the init_func() in case the plugin does not check for this value. This is optional for the host to set, if not set
-  then the plugin should reinit as normal. A plugin which sets the GUI flag WEED_GUI_REINIT_ON_VALUE change in one or more
+  before (re) calling the init_func() in case the filter does not check for this value. This is optional for the host to set, if not set
+  then the filter should reinit as normal. A filter which sets the GUI flag WEED_GUI_REINIT_ON_VALUE change in one or more
   parameter template GUIs should check for this value in the "flags" of the instance in its init and deinit functions.
 
 
@@ -3636,28 +3637,48 @@ Explanation of flag bit combinations:
     TODO: clarify how "disabled" / repeating channels should be handled.
 
 *  WEED_CHANNEL_REINIT_ON_SIZE_CHANGE   [[BR]]
-    host must reinit the plugin before calling process_func() if the
-    channel size (height or width in (macro)pixels) is changed.
+    host must reinit the filter before calling process_func() if the
+    channel size (height or width in pixels - NOT MACROPIXELS) is changed.
+    For example, WEED_PALETTE_UYVY has a "width" measured in
+    macropixels (4 bytes), but each macropixel contains 2 RGB pixels. So if the palette were to change from RGB24 to UYVY,
+    the "width" would be halved, however the filter would not be reinited, since the "width" in pixels has not changed.
+    If this is likely to cause problems, then set either WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE
+    or WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE in addition.
 
  *  WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE   [[BR]]
-    host must reinit the plugin before calling process_func() if the channel palette is changed. For YUV palettes,
-    the host must also reinit the plugin if the clamping, subspace or sampling changes.
+    host must reinit the filter before calling process_func() if the channel palette is changed. For YUV palettes,
+    the host must also reinit the filter if the clamping, subspace or sampling changes.
 
  *  WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE    [[BR]]
-    host must reinit the plugin before calling process_func() if the
+    host must reinit the filter before calling process_func() if the
     any of the rowstrides are changed. Note that	 
     changing the palette can sometimes affect the rowstrides.
 
     Explanation:
     For example, if the input palette were to change from RGB to RGBA, then
     even though the width in pixels might be the same, the rowstrides value will change (e.g from
-    3 * width to 4 * width. So if a plugin is sensitive to frame size changes it may want to set
+    3 * width to 4 * width. So if a filter is sensitive to frame size changes it may want to set
     WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE. rather than WEED_CHANNEL_REINIT_ON_SIZE_CHANGE.
+    Also, some palettes have macropixels with mote than one pixel.
 
-    On the other hand, some plugins may not care about the rowstrides value (e.g. they store 1 byte per actual pixel)
+    On the other hand, some filters may not care about the rowstrides value (e.g. they store 1 byte per actual pixel)
     in which case they should set WEED_CHANNEL_REINIT_ON_SIZE_CHANGE.
 
     The plugin should set the appropriate flag bits to minimise the number of reinits.
+
+ * WEED_CHANNEL_NEEDS_NATURAL_SIZE
+   If this flagbit is set, the host should add an extra leaf to channels created from this template: "natural_size".
+   This is intended for filters which use fixed size objects, the object should be scaled from the natural size to
+   the actual channel size. For example, the filter could create a transparent frame internally, using the natural size,
+   draw the (opaque) object to it, rescale the internal frame, and overlay it on the scaled input to create the output.
+
+   Natural size is not restricted by the usual channel rules (maxwidth, maxheight, minwidth, minheight, hstep, vstep,
+   alignment_height), since these apply only to the scaled channel size.
+
+   In addition, if WEED_CHANNEL_REINIT_ON_SIZE_CHANGE is also set, the host need only reinit the filter when the
+   "natural_size" changes. WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE is not affected, however.
+
+   Only valid for in_channels.
 
 
 
@@ -3669,8 +3690,8 @@ Flag bits >= 30 are free to use for custom flags.
 ==== Parameter template flags ====
 
  * WEED_PARAMETER_REINIT_ON_VALUE_CHANGE
-   host must reinit the plugin if the parameter "value" is
-   changed. This is to allow the plugin to readjust its internal state depending on some paramter value (e.g a 'mode'
+   host must reinit the filter if the parameter "value" is
+   changed. This is to allow the filter to readjust its internal state depending on some paramter value (e.g a 'mode'
    setting). It is strongly recommended to set this flag bit only for parameters of type SWITCH, or INT.
  
 
@@ -3679,12 +3700,12 @@ Flag bits >= 30 are free to use for custom flags.
    plugin can set this to inform the host that the number of values in the parameter "value" leaf can vary.
    If not set, then the number of values in "value" is fixed; it must always match the number of values in "default".
 
-   If this is set, then the plugin may only use one element in each of "min" and "max" for the parameter,
+   If this is set, then the filter may only use one element in each of "min" and "max" for the parameter,
    (except for COLOR parameters which may use 3 or 4 depending on the "colorspace".)
 
    Note also that 0 is a valid number of elements. [0 elements means the leaf exists but has no value]
 
-   If this is set for an in parameter, the plugin MUST also set the "new_default" leaf for the parameter.
+   If this is set for an in parameter, the filter MUST also set the "new_default" leaf for the parameter.
 
    This flag is ASSUMED for out parameters.
 
@@ -3693,8 +3714,8 @@ Flag bits >= 30 are free to use for custom flags.
    This flag bit indicates that each element (or set of 3 or 4 elements in the case of color parameters)
    in the parameter "value" corresponds to one input channel. The mapping of values to channels includes channels created from
    repeating templates which may be temporarily disabled, but does not included optional, non repeating channels
-   which are disabled. In other words: the number of values / channels is fixed when the host calls the init_func in the plugin,
-   and may only be altered by reinitializing the plugin.
+   which are disabled. In other words: the number of values / channels is fixed when the host calls the init_func in the filter,
+   and may only be altered by reinitializing the filter.
 
 The order of channels and values is the same.
 
@@ -3740,11 +3761,11 @@ Flag bits >= 30 are free to use for custom flags.
 
 
 * WEED_GUI_REINIT_ON_VALUE_CHANGE :: hints to the host that if the "value" of the parameter created from the
-  				     	       	      	   	   parameter_template is updated, then the plugin should be reinited,
+  				     	       	      	   	   parameter_template is updated, then the filter should be reinited,
 								   and on return from init_func,
 								   the values of "hidden" and "copy_value_to" for any parameter GUI plants
 								   should be (re)checked. If the host is not currently displaying a visual interface for
-								   the plugin parameters then this flag bit may be ignored.; however,
+								   the filter parameters then this flag bit may be ignored.; however,
 
 								   This flag bit MUST be set for any parameter for which may result in a GUI change
 								   when its value is altered.
@@ -3764,15 +3785,15 @@ Flag bits >= 30 are free to use for custom flags.
 								   IMPORTANT:
 								   Before calling deinit_func() / init_func() for a filter instance, the host MAY set the flag bit
 								   WEED_INSTANCE_UPDATE_GUI_ONLY in the "flags"
-								   leaf of the filter instance, to request that the plugin ONLY update the parameter GUI plants
+								   leaf of the filter instance, to request that the filter ONLY update the parameter GUI plants
 								   during the deinit_func() / init_func.
 
 								   The host may do so IF AND ONLY IF the sole reason for reiniting
-								   the plugin is to update the GUI - i.e a change is made to one or more parameters which
+								   the filter is to update the GUI - i.e a change is made to one or more parameters which
 								   have WEED_GUI_REINIT_ON_VALUE_CHANGE set, and none of the changed parameters
 								   have WEED_PARAMETER_REINIT_ON_VALUE_CHANGE set. The plugin should still check
 								   anyway in case a WEED_PARAMETER_REINIT_ON_VALUE_CHANGE param was altered
-								   and the host overlooked this. In the latter case the plugin should still only update the GUI,
+								   and the host overlooked this. In the latter case the filter should still only update the GUI,
 								   and should then return WEED_ERROR_NEEDS_REINIT to alert the host.
 								   
 								   
@@ -3783,7 +3804,7 @@ Flag bits >= 30 are free to use for custom flags.
 
 								   This differs from the template flag WEED_PARAMETER_REINIT_ON_VALUE_CHANGE in
 								   that this flag is only a hint to reinit the instance if the host is showing a real time interface
-								   with the current parameter values, or that the plugin MAY update the GUI plants IN
+								   with the current parameter values, or that the filter MAY update the GUI plants IN
 								   ADDITION to updating the state in the case that
 								   WEED_PARAMETER_REINIT_ON_VALUE_CHANGE is also set in the template.
 
@@ -4043,12 +4064,12 @@ This means that for RGB type palettes, the component values (R, G, B) represent 
 For example, since the human eye perceives darker values more strongly than lighter values, a mid-grey in this colour space has
 an (R, G, B) value of (55, 55, 55). This colour space is used since it is much better for calculating visual brightness (luma)
 values, and for mixing (adding) and multiplying colour values perceptually. Thus all colour "pixel_data" values for RGB(A) will
-be supplied by the host or generated by the plugin using this colour space ('transfer function' to be more precise).
+be supplied by the host or generated by the filter using this colour space ('transfer function' to be more precise).
 
 In addition to the "pixel_data" values, the R, G, B VALUEs of any WEED_PARAM_COLOR type parameters will be maintained to this
 colour space by the host, although they mau be displayed differently to the user.
 
-So for example if the user entered (127, 127, 127) for a colour value in the GUI, then the plugin would
+So for example if the user entered (127, 127, 127) for a colour value in the GUI, then the filter would
 receive the values (55, 55, 55). When creating the parameter templates, the DEFAULT and NEW_DEFAULT values should also be
 in linear gamma. (For float types, the equivalent is 0.5 ~= 0.181818...).
 
@@ -4065,7 +4086,7 @@ PARAMETER_TEMPLATE's "gamma_type" leaf to WEED_GAMMA_SRGB.
 The host should then leave the VALUEs in the sRGB space and set "gamma_type" to WEED_GAMMA_SRGB for the PARAMETER instance.
 Note this applies only to paramters; individual channels cannot be overridden in this manner.
 
-N.B. This mode may be much better for plugins that want to mix / overlay channels or colour values,
+N.B. This mode may be much better for filters that want to mix / overlay channels or colour values,
 or use perceptual brightness values without any reference to absolute colour values. 
 
 

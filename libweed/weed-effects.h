@@ -110,6 +110,7 @@ typedef struct {
 #define WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE    	(1 << 2)
 #define WEED_CHANNEL_OPTIONAL                          	(1 << 3)
 #define WEED_CHANNEL_CAN_DO_INPLACE                    	(1 << 4)
+#define WEED_CHANNEL_NEEDS_NATURAL_SIZE                	(1 << 5)
 
 /* audio */
 #define WEED_CHANNEL_REINIT_ON_RATE_CHANGE	WEED_CHANNEL_REINIT_ON_SIZE_CHANGE
@@ -250,6 +251,7 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_YUV_CLAMPING "YUV_clamping"
 #define WEED_LEAF_YUV_SAMPLING "YUV_sampling"
 #define WEED_LEAF_YUV_SUBSPACE "YUV_subspace"
+#define WEED_LEAF_NATURAL_SIZE "natural_size"
 
 ///
 /* optional for filters with audio channels (maybe overriden in channel templates depending on filter_class flags) */

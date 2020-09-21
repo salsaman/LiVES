@@ -7,6 +7,8 @@
 
 #define NEED_PALETTE_UTILS
 
+#define NEED_RANDOM
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed.h>
@@ -176,7 +178,7 @@ static weed_error_t compositor_process(weed_plant_t *inst, weed_timecode_t timec
       dst2[x] = bgcol[r];
       dst2[x + 1] = bgcol[1];
       dst2[x + 2] = bgcol[b];
-      if (psize == 4) dst2[3] = 0xFF;
+      if (psize == 4) dst2[x + 3] = 0xFF;
     }
   }
 
@@ -247,10 +249,8 @@ static weed_error_t compositor_process(weed_plant_t *inst, weed_timecode_t timec
     }
   }
 
-  weed_free(offsx);
-  weed_free(offsy);
-  weed_free(scalex);
-  weed_free(scaley);
+  weed_free(offsx); weed_free(offsy);
+  weed_free(scalex); weed_free(scaley);
   weed_free(alpha);
 
   if (num_in_channels > 0) weed_free(in_channels);

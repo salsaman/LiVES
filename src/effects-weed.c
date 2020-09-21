@@ -2610,7 +2610,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     if (weed_get_boolean_value(channel, WEED_LEAF_HOST_INPLACE, NULL) == WEED_TRUE) continue;
 
-    if (weed_palette_is_alpha(weed_get_int_value(channel, WEED_LEAF_CURRENT_PALETTE, NULL))) {
+    if (weed_palette_is_alpha(weed_channel_get_palette(channel))) {
       // out chan data for alpha is freed after all fx proc - in case we need for in chans
       continue;
     }
@@ -10036,9 +10036,9 @@ void fill_param_vals_to(weed_plant_t *param, weed_plant_t *paramtmpl, int index)
   if (is_perchannel_multiw(param)) {
     int num_vals;
     int *ign_array = weed_get_boolean_array_counted(param, WEED_LEAF_IGNORE, &num_vals);
-    if (index > num_vals) {
-      ign_array = (int *)lives_realloc(ign_array, index * sizint);
-      for (i = num_vals; i < index; i++) {
+    if (vcount > num_vals) {
+      ign_array = (int *)lives_realloc(ign_array, vcount * sizint);
+      for (i = num_vals; i < vcount; i++) {
         ign_array[i] = WEED_TRUE;
       }
       weed_set_boolean_array(param, WEED_LEAF_IGNORE, vcount, ign_array);
@@ -11109,7 +11109,7 @@ static size_t weed_leaf_serialise(int fd, weed_plant_t *plant, const char *key, 
     }
     lives_free(rowstrides);
     lives_free(pixel_data);
-  }  else {
+  } else {
     // for each element, write the data size followed by the data
     for (j = 0; j < ne; j++) {
       vlen = (weed_size_t)weed_leaf_element_size(plant, key, j);

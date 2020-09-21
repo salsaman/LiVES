@@ -930,8 +930,6 @@ void on_fx_insb_clicked(LiVESWidget *button, livespointer mt);
 void on_fx_insa_clicked(LiVESWidget *button, livespointer mt);
 
 // utils
-uint32_t event_list_get_byte_size(lives_mt *, weed_plant_t *event_list,
-                                  int *num_events);  ///< returns bytes and sets num_events
 boolean event_list_rectify(lives_mt *, weed_plant_t *event_listy);
 void reset_renumbering(void);
 boolean make_backup_space(lives_mt *, size_t space_needed);

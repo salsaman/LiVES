@@ -94,6 +94,9 @@
 #define WEED_AUDIO_BIG_ENDIAN 1
 #endif
 
+/// TODO: use uint64_t
+static uint32_t event_list_get_byte_size(lives_mt *mt, weed_plant_t *event_list, boolean nxprev, int *num_events);
+
 static EXPOSE_FN_PROTOTYPE(expose_timeline_reg_event)
 static EXPOSE_FN_PROTOTYPE(mt_expose_audtrack_event)
 
@@ -360,7 +363,7 @@ boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, un
       lives_free(uievs);
     }
 
-    if (prefs->back_compat) {
+    if (!mem && prefs->back_compat) {
       // create a "hint" leaf as a service to older versions of LiVES
       // TODO: prompt user if they need backwards compat or not
       weed_leaf_copy(event, WEED_LEAF_HINT, event, WEED_LEAF_EVENT_TYPE);
@@ -1050,16 +1053,15 @@ LIVES_INLINE void set_params_unchanged(lives_mt *mt, lives_rfx_t *rfx) {
     rfx->params[i].changed = FALSE;
     if ((wparam = weed_inst_in_param(inst, i, FALSE, FALSE))) {
       if (is_perchannel_multiw(wparam)) {
-        if (weed_plant_has_leaf(wparam, WEED_LEAF_IGNORE)) {
-          int num_vals;
-          int *ign = weed_get_boolean_array_counted(wparam, WEED_LEAF_IGNORE, &num_vals);
-          for (j = 0; j < num_vals; j++) {
-            if (ign[j] == WEED_FALSE) ign[j] = WEED_TRUE;
-          }
-          weed_set_boolean_array(wparam, WEED_LEAF_IGNORE, num_vals, ign);
-          lives_free(ign);
-	  // *INDENT-OFF*
-        }}}}
+        int nvals = weed_leaf_num_elements(mt->init_event, WEED_LEAF_IN_TRACKS);
+        int *ign_array = (int *)lives_calloc(nvals, sizint);
+        for (j = 0; j < nvals; j++) {
+          ign_array[j] = WEED_TRUE;
+        }
+        weed_set_boolean_array(wparam, WEED_LEAF_IGNORE, nvals, ign_array);
+        lives_free(ign_array);
+      // *INDENT-OFF*
+      }}}
   // *INDENT-ON*
 
   lives_widget_set_sensitive(mt->apply_fx_button, FALSE);
@@ -5011,7 +5013,7 @@ static size_t estimate_space(lives_mt * mt, int undo_type) {
   case MT_UNDO_NONE:
     break;
   default:
-    needed += event_list_get_byte_size(mt, mt->event_list, NULL);
+    needed += event_list_get_byte_size(mt, mt->event_list, FALSE, NULL);
     break;
   }
   return needed;
@@ -5148,7 +5150,7 @@ void mt_backup(lives_mt * mt, int undo_type, weed_timecode_t tc) {
   mt_undo *undo;
   mt_undo *last_valid_undo;
 
-  unsigned char *memblock;
+  unsigned char *memblock, *omemblock;
 
   if (mt->did_backup) return;
 
@@ -5213,12 +5215,13 @@ void mt_backup(lives_mt * mt, int undo_type, weed_timecode_t tc) {
       do_mt_backup_space_error(mt, (int)((space_needed * 3) >> 20));
       return;
     }
-    memblock = (unsigned char *)(mt->undo_mem + mt->undo_buffer_used + sizeof(mt_undo));
   }
 
-  undo->data_len = space_needed;
-  memblock = (unsigned char *)(mt->undo_mem + mt->undo_buffer_used + sizeof(mt_undo));
+  omemblock = memblock = (unsigned char *)(mt->undo_mem + mt->undo_buffer_used + sizeof(mt_undo));
   save_event_list_inner(NULL, 0, mt->event_list, &memblock);
+  undo->data_len = memblock - omemblock;
+  space_needed = undo->data_len + sizeof(mt_undo);
+
   remove_markers(mt->event_list);
 
   lives_memcpy(mt->undo_mem + mt->undo_buffer_used, undo, sizeof(mt_undo));
@@ -5494,7 +5497,7 @@ static weed_plant_t *load_event_list_inner(lives_mt * mt, int fd, boolean show_e
 
   if (mt) mt->layout_set_properties = FALSE;
 
-  if (!event_list  || !WEED_PLANT_IS_EVENT_LIST(event_list)) {
+  if (!event_list || !WEED_PLANT_IS_EVENT_LIST(event_list)) {
     if (show_errors) d_print(_("invalid event list. Failed.\n"));
     return NULL;
   }
@@ -15008,7 +15011,7 @@ void multitrack_undo(LiVESMenuItem * menuitem, livespointer user_data) {
 
   LiVESWidget *checkbutton, *eventbox, *label;
 
-  unsigned char *memblock, *mem_end;
+  unsigned char *memblock, *omemblock, *mem_end;
 
   size_t space_avail = (size_t)(prefs->mt_undo_buf * 1024 * 1024) - mt->undo_buffer_used;
   size_t space_needed;
@@ -15059,9 +15062,10 @@ void multitrack_undo(LiVESMenuItem * menuitem, livespointer user_data) {
       new_redo = (mt_undo *)(mt->undo_mem + mt->undo_buffer_used);
       new_redo->action = last_undo->action;
 
-      memblock = (unsigned char *)(new_redo) + sizeof(mt_undo);
-      new_redo->data_len = space_needed;
+      omemblock = memblock = (unsigned char *)new_redo + sizeof(mt_undo);
       save_event_list_inner(NULL, 0, mt->event_list, &memblock);
+      new_redo->data_len = memblock - omemblock;
+      space_needed = new_redo->data_len + sizeof(mt_undo);
       mt->undo_buffer_used += space_needed;
       mt->undos = lives_list_append(mt->undos, new_redo);
       mt->undo_offset++;
@@ -15437,21 +15441,19 @@ void multitrack_view_details(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_snprintf(buff, 512, "\n  %dx%d", rfile->hsize, rfile->vsize);
   lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_size), buff, -1);
 
-  // elist time
   if (mt->event_list) {
-    bsize = event_list_get_byte_size(mt, mt->event_list, &num_events);
+    bsize = event_list_get_byte_size(mt, mt->event_list, TRUE, &num_events);
     time = event_list_get_end_secs(mt->event_list);
   }
 
-  // events
-  lives_snprintf(buff, 512, "\n  %d", num_events);
+  lives_snprintf(buff, 512, "\n  %d", (frames_t)(mt->fps * time));
   lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_frames), buff, -1);
 
-  lives_snprintf(buff, 512, "\n  %.3f sec", time);
+  lives_snprintf(buff, 512, _("\n  %.3f sec"), time);
   lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_vtime), buff, -1);
 
   // byte size
-  lives_snprintf(buff, 512, "\n  %d bytes", bsize);
+  lives_snprintf(buff, 512, _("\n  %d bytes\n%d events"), bsize, num_events);
   lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_fsize), buff, -1);
 
   if (mainw->files[mt->render_file]->achans > 0) {
@@ -15494,6 +15496,8 @@ static void add_effect_inner(lives_mt * mt, int num_in_tracks, int *in_tracks, i
       break;
     }
   }
+
+  mt_backup(mt, MT_UNDO_APPLY_FILTER, 0);
 
   // add effect_init event
   mt->event_list = append_filter_init_event(mt->event_list, start_tc, mt->current_fx, num_in_tracks, -1, NULL);
@@ -22386,13 +22390,14 @@ void mt_change_vals_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-uint32_t event_list_get_byte_size(lives_mt * mt, weed_plant_t *event_list, int *num_events) {
+static uint32_t event_list_get_byte_size(lives_mt * mt, weed_plant_t *event_list, boolean nxprev, int *num_events) {
   // return serialisation size
   int i, j;
   uint32_t tot = 0;
   weed_plant_t *event = get_first_event(event_list);
   char **leaves;
-  int ne;
+  weed_size_t ne;
+  uint32_t st;
   int tot_events = 0;
 
   // write extra bits in event_list
@@ -22405,12 +22410,14 @@ uint32_t event_list_get_byte_size(lives_mt * mt, weed_plant_t *event_list, int *
     }
     tot_events++;
     leaves = weed_plant_list_leaves(event, NULL);
-    tot += sizint; //number of leaves
+    tot += 4; //number of leaves
     for (i = 0; leaves[i]; i++) {
-      tot += sizint * 3 + strlen(leaves[i]); // key_length, seed_type, num_elements
+      if (!nxprev && (!strcmp(leaves[i], WEED_LEAF_NEXT) || !strcmp(leaves[i], WEED_LEAF_PREVIOUS))) continue;
+      tot += 4 * 3 + strlen(leaves[i]); // key_length, seed_type, num_elements
       ne = weed_leaf_num_elements(event, leaves[i]);
+      st = weed_leaf_seed_type(event, leaves[i]);
       // sum data_len + data
-      for (j = 0; j < ne; j++) tot += sizint + weed_leaf_element_size(event, leaves[i], j);
+      for (j = 0; j < ne; j++) tot += 4 + (st > 64 ? 8 : weed_leaf_element_size(event, leaves[i], j));
       lives_free(leaves[i]);
     }
     lives_free(leaves);
@@ -22419,12 +22426,13 @@ uint32_t event_list_get_byte_size(lives_mt * mt, weed_plant_t *event_list, int *
 
   event = event_list;
   leaves = weed_plant_list_leaves(event, NULL);
-  tot += sizint;
+  tot += 4;
   for (i = 0; leaves[i]; i++) {
-    tot += sizint * 3 + strlen(leaves[i]);
+    tot += 4 * 3 + strlen(leaves[i]);
     ne = weed_leaf_num_elements(event, leaves[i]);
+    st = weed_leaf_seed_type(event, leaves[i]);
     // sum data_len + data
-    for (j = 0; j < ne; j++) tot += sizint + weed_leaf_element_size(event, leaves[i], j);
+    for (j = 0; j < ne; j++) tot += 4 + (st > 64 ? 8 : weed_leaf_element_size(event, leaves[i], j));
     lives_free(leaves[i]);
   }
   lives_free(leaves);
@@ -23090,7 +23098,7 @@ void mt_do_autotransition(lives_mt * mt, track_rect * block) {
     mt->selected_tracks = lives_list_append(mt->selected_tracks, LIVES_INT_TO_POINTER(track));
     mt->selected_tracks = lives_list_append(mt->selected_tracks, LIVES_INT_TO_POINTER(i));
 
-    mt_backup(mt, MT_UNDO_APPLY_FILTER, 0);
+    //mt_backup(mt, MT_UNDO_APPLY_FILTER, 0);
 
     mt->region_start = sttc / TICKS_PER_SECOND_DBL;
     mt->region_end = endtc / TICKS_PER_SECOND_DBL;
@@ -23158,7 +23166,7 @@ void mt_do_autotransition(lives_mt * mt, track_rect * block) {
     mt->selected_tracks = lives_list_append(mt->selected_tracks, LIVES_INT_TO_POINTER(track));
     mt->selected_tracks = lives_list_append(mt->selected_tracks, LIVES_INT_TO_POINTER(i));
 
-    mt_backup(mt, MT_UNDO_APPLY_FILTER, 0);
+    //mt_backup(mt, MT_UNDO_APPLY_FILTER, 0);
 
     mt->region_start = sttc / TICKS_PER_SECOND_DBL;
     mt->region_end = endtc / TICKS_PER_SECOND_DBL;

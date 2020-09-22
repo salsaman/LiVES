@@ -6681,31 +6681,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESSList *lives_file_chooser_get_filenames(LiVESFi
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_parse_font_string(const char *string, char **font, int *size, char **stretch,
-    char **style, char **weight) {
-  if (!string) return FALSE;
-  int numtok = get_token_count(string, ' ') ;
-  char **array = lives_strsplit(string, " ", numtok);
-  //int xsize = -1;
-  if (font) {
-    *font = lives_strdup("");
-    for (int i = 0; i < numtok - 1; i++) {
-      char *tmp = lives_strdup_printf("%s %s", *font, array[i]);
-      lives_free(*font);
-      *font = tmp;
-    }
-  }
-  if (size && numtok > 1 && atoi(array[numtok - 1])) *size = atoi(array[numtok - 1]);
-  if (font && !atoi(array[numtok - 1])) {
-    char *tmp = lives_strdup_printf("%s %s", *font, array[numtok - 1]);
-    lives_free(*font);
-    *font = tmp;
-  }
-  lives_strfreev(array);
-  return TRUE;
-}
-
-
 #if GTK_CHECK_VERSION(3,2,0)
 WIDGET_HELPER_GLOBAL_INLINE char *lives_font_chooser_get_font(LiVESFontChooser *fc) {
   return gtk_font_chooser_get_font(fc);
@@ -7626,7 +7601,8 @@ LiVESWidget *lives_layout_expansion_row_new(LiVESLayout *layout, LiVESWidget *wi
     lives_layout_attach(layout, box, 0, columns, rows - 1);
     lives_widget_object_unref(LIVES_WIDGET_OBJECT(box));
   }
-  lives_widget_set_halign(box, LIVES_ALIGN_CENTER);
+  lives_widget_set_halign(box, LIVES_ALIGN_FILL);
+  //lives_widget_set_halign(widget, LIVES_ALIGN_CENTER);
   xwidgets = lives_list_prepend(xwidgets, box);
   lives_widget_object_set_data_list(LIVES_WIDGET_OBJECT(layout), EXP_LIST_KEY, xwidgets);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(box), LROW_KEY, LIVES_INT_TO_POINTER(rows) - 1);
@@ -8220,23 +8196,24 @@ LiVESWidget *lives_standard_button_new(int width, int height) {
     set_css_value_direct(button, LIVES_WIDGET_STATE_NORMAL, "", "background", "none");
     set_css_value_direct(button, LIVES_WIDGET_STATE_NORMAL, "", "border-width", "0px");
 #endif
-    da = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), pbsurf);
-    lives_widget_object_set_data_psurface(LIVES_WIDGET_OBJECT(da),
-                                          SBUTT_SURFACE_KEY, (livespointer)pbsurf);
-
-    lives_container_add(LIVES_CONTAINER(button), da);
-    lives_widget_set_show_hide_with(button, da);
-
-    lives_widget_set_can_focus_and_default(button);
-
-    lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_STATE_CHANGED_SIGNAL,
-                              LIVES_GUI_CALLBACK(sbutt_render), NULL);
-#ifdef USE_SPECIAL_BUTTONS
-    lives_widget_apply_theme(button, LIVES_WIDGET_STATE_NORMAL);
-#endif
-    lives_widget_set_app_paintable(button, TRUE);
-    lives_widget_set_app_paintable(da, TRUE);
   }
+
+  da = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(all_expose), pbsurf);
+  lives_widget_object_set_data_psurface(LIVES_WIDGET_OBJECT(da),
+                                        SBUTT_SURFACE_KEY, (livespointer)pbsurf);
+
+  lives_container_add(LIVES_CONTAINER(button), da);
+  lives_widget_set_show_hide_with(button, da);
+
+  lives_widget_set_can_focus_and_default(button);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_STATE_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(sbutt_render), NULL);
+#ifdef USE_SPECIAL_BUTTONS
+  lives_widget_apply_theme(button, LIVES_WIDGET_STATE_NORMAL);
+#endif
+  lives_widget_set_app_paintable(button, TRUE);
+  lives_widget_set_app_paintable(da, TRUE);
   lives_widget_set_size_request(button, width, height);
 
   return button;
@@ -9360,6 +9337,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
     }
 
     hbox = make_inner_hbox(LIVES_BOX(box), widget_opts.swap_label || !eventbox);
+    lives_widget_set_show_hide_with(spinbutton, hbox);
     container = widget_opts.last_container;
 
     expand = LIVES_SHOULD_EXPAND_EXTRA_FOR(hbox);
@@ -9372,7 +9350,6 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
       if (layout) {
         // pack end because box is a layout hbox
         lives_widget_set_pack_type(LIVES_BOX(box), container, LIVES_PACK_END);
-        lives_widget_set_show_hide_with(spinbutton, hbox);
         box = LIVES_BOX(lives_layout_hbox_new(LIVES_TABLE(layout)));
         hbox = make_inner_hbox(LIVES_BOX(box), TRUE);
       }
@@ -9509,7 +9486,7 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList * list, L
     if (LIVES_SHOULD_EXPAND_WIDTH) packing_width = widget_opts.packing_width;
 
     if (!widget_opts.swap_label && eventbox) {
-      lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, packing_width);
+      lives_box_pack_end(LIVES_BOX(hbox), eventbox, FALSE, FALSE, 0);
       if (layout) {
         // pack end because box is a layout hbox
         lives_widget_set_pack_type(LIVES_BOX(box), container, LIVES_PACK_END);
@@ -9534,7 +9511,7 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList * list, L
         hbox = make_inner_hbox(LIVES_BOX(box), TRUE);
         lives_widget_set_show_hide_with(combo, hbox);
       }
-      lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, packing_width);
+      lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, 0);
     }
     lives_widget_set_show_hide_parent(combo);
 
@@ -9976,6 +9953,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_font_chooser_new(void) {
   LiVESWidget *font_choo = NULL;
+  int width = DEF_BUTTON_WIDTH, height = DEF_BUTTON_HEIGHT;
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 2, 0)
   char *ttl;
@@ -9986,6 +9964,33 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_font_chooser_new(void) {
   ttl = lives_strdup_printf("%s%s", widget_opts.title_prefix, _("Choose a Font..."));
   gtk_font_button_set_title(GTK_FONT_BUTTON(font_choo), ttl);
   lives_free(ttl);
+
+  if (widget_opts.apply_theme) {
+    set_standard_widget(font_choo, TRUE);
+    lives_widget_apply_theme2(font_choo, LIVES_WIDGET_STATE_NORMAL, TRUE);
+
+#if GTK_CHECK_VERSION(3, 16, 0)
+    set_css_min_size(font_choo, width, height);
+    set_css_value_direct(font_choo, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
+
+    lives_widget_set_padding(font_choo, 0);
+    set_css_value_direct(font_choo, LIVES_WIDGET_STATE_NORMAL, "", "background", "none");
+    //set_css_value_direct(font_choo, LIVES_WIDGET_STATE_NORMAL, "", "border-width", "0px");
+
+    if (prefs->extra_colours && mainw->pretty_colours) {
+      char *tmp;
+      char *colref = gdk_rgba_to_string(&palette->nice1);
+      set_css_value_direct(LIVES_WIDGET(font_choo), LIVES_WIDGET_STATE_NORMAL, "", "border-color", colref);
+      tmp = lives_strdup_printf("0 0 0 1px %s inset", colref);
+      set_css_value_direct(LIVES_WIDGET(font_choo), LIVES_WIDGET_STATE_PRELIGHT, "", "box-shadow", tmp);
+      lives_free(tmp);
+      lives_free(colref);
+      colref = gdk_rgba_to_string(&palette->nice2);
+      set_css_value_direct(LIVES_WIDGET(font_choo), LIVES_WIDGET_STATE_NORMAL, "", "background-color", colref);
+    }
+
+#endif
+  }
 #endif
 #endif
   return font_choo;
@@ -10104,6 +10109,26 @@ LiVESWidget *lives_standard_hruler_new(void) {
 #endif
 
   return hruler;
+}
+
+
+double lives_scrolled_window_scroll_to(LiVESScrolledWindow * sw, LiVESPositionType pos) {
+  double val;
+  LiVESAdjustment *adj;
+  if (!sw) return -1.;
+  else {
+    if (pos == LIVES_POS_TOP || pos == LIVES_POS_BOTTOM) {
+      adj = lives_scrolled_window_get_vadjustment(sw);
+    } else {
+      adj = lives_scrolled_window_get_hadjustment(sw);
+    }
+
+    if (pos == LIVES_POS_TOP || pos == LIVES_POS_LEFT) val = lives_adjustment_get_lower(adj);
+    else val = lives_adjustment_get_upper(adj) - lives_adjustment_get_page_size(adj);
+    lives_adjustment_set_value(adj, val);
+  }
+  g_print("VAL is %f\n", val);
+  return val;
 }
 
 

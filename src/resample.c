@@ -807,7 +807,6 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
             init_event = weed_get_voidptr_value(pch_event, WEED_LEAF_INIT_EVENT, NULL);
             pchanges = weed_get_voidptr_array_counted(init_event, WEED_LEAF_IN_PARAMETERS, &nchanges);
             pnum = weed_get_int_value(pch_event, WEED_LEAF_INDEX, NULL);
-            g_print("updating aaaa ptrs %d %d\n", nchanges, pnum);
             for (i = 0; i < nchanges; i++) {
               pchange = (weed_event_t *)pchanges[i];
               if (weed_get_int_value(pchange, WEED_LEAF_INDEX, NULL) == pnum) {
@@ -816,7 +815,6 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
                   pchange = npchange;
                   npchange = weed_get_voidptr_value((weed_plant_t *)pchange, WEED_LEAF_NEXT_CHANGE, NULL);
                 }
-                g_print("updating ptrs\n");
                 weed_set_voidptr_value(pchange, WEED_LEAF_NEXT_CHANGE, pch_event);
                 weed_set_voidptr_value(pch_event, WEED_LEAF_PREV_CHANGE, pchange);
                 break;

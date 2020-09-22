@@ -135,21 +135,48 @@ static char *remove_first_line(char *text) {
 }
 
 
+static char *deparagraph(char *text) {
+  char *xtext = text;
+  size_t tlen;
+  int i, j = 0, nlcnt = 0;
+
+  for (i = 0; text[i]; i++) {
+    if (text[i] == '\n') {
+      if (!text[i + 1] || text[i + 1] == '\n') nlcnt++;
+    }
+  }
+  tlen = i;
+  if (nlcnt) {
+    tlen += nlcnt;
+    xtext = lives_malloc(tlen + 1);
+    for (i = 0; text[i]; i++) {
+      xtext[j++] = text[i];
+      if (text[i] == '\n') {
+        if (!text[i + 1] || text[i + 1] == '\n') xtext[j++] = ' ';
+      }
+    }
+    xtext[j] = 0;
+  }
+  if (text != xtext) lives_free(text);
+  return xtext;
+}
+
+
 void layout_to_lives_painter(LingoLayout *layout, lives_painter_t *cr, lives_text_mode_t mode, lives_colRGBA64_t *fg,
                              lives_colRGBA64_t *bg, int dwidth, int dheight, double x_bg, double y_bg, double x_text, double y_text) {
   double b_alpha = 1.;
   double f_alpha = 1.;
 
-  if (bg != NULL) b_alpha = (double)bg->alpha / 65535.;
-  if (fg != NULL) f_alpha = (double)fg->alpha / 65535.;
+  if (bg) b_alpha = (double)bg->alpha / 65535.;
+  if (fg) f_alpha = (double)fg->alpha / 65535.;
 
-  if (cr == NULL) return;
+  if (!cr) return;
 
   switch (mode) {
   case LIVES_TEXT_MODE_BACKGROUND_ONLY:
     lingo_layout_set_text(layout, "", -1);
   case LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND:
-    lives_painter_set_source_rgba(cr, (double)bg->red / 66535., (double)bg->green / 66535., (double)bg->blue / 66535., b_alpha);
+    lives_painter_set_source_rgba(cr, (double)bg->red / 65535., (double)bg->green / 65535., (double)bg->blue / 65535., b_alpha);
     fill_bckg(cr, x_bg, y_bg, dwidth, dheight);
     break;
   default:
@@ -158,7 +185,7 @@ void layout_to_lives_painter(LingoLayout *layout, lives_painter_t *cr, lives_tex
 
   lives_painter_new_path(cr);
   lives_painter_move_to(cr, x_text, y_text);
-  lives_painter_set_source_rgba(cr, (double)fg->red / 66535., (double)fg->green / 66535., (double)fg->blue / 66535., f_alpha);
+  lives_painter_set_source_rgba(cr, (double)fg->red / 65535., (double)fg->green / 65535., (double)fg->blue / 65535., f_alpha);
 }
 
 
@@ -247,6 +274,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
     lingo_layout_set_text(layout, "", -1);
     lives_widget_object_unref(layout);
     layout = lingo_layout_new(ctx);
+    testtext = deparagraph(testtext);
     lingo_layout_set_text(layout, testtext, -1);
     lingo_layout_get_size(layout, &w, &h);
 
@@ -282,6 +310,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
         lives_widget_object_unref(layout);
         layout = lingo_layout_new(ctx);
         lingo_layout_set_width(layout, width * LINGO_SCALE);
+        testtext = deparagraph(testtext);
         lingo_layout_set_text(layout, testtext, -1);
         lingo_layout_get_size(layout, NULL, &h);
         h /= LINGO_SCALE;
@@ -321,12 +350,13 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 #ifdef DEBUG_MSGS
         g_print("Retry with (%d) |%s|\n", totlines, xx);
 #endif
-        if (tmp == NULL) break;
+        if (!tmp) break;
         // check width again, just looking at new part
         lingo_layout_set_text(layout, "", -1);
         lives_widget_object_unref(layout);
         layout = lingo_layout_new(ctx);
         lives_widget_object_ref_sink(layout);
+        tmp = deparagraph(tmp);
         lingo_layout_set_text(layout, tmp, -1);
         lingo_layout_get_size(layout, &pw, NULL);
         w = pw / LINGO_SCALE;
@@ -370,7 +400,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
   // result is now in readytext
   //lingo_layout_set_text(layout, readytext, -1);
 
-  if (linecount != NULL) *linecount = totlines;
+  if (linecount) *linecount = totlines;
 
 #ifdef DEBUG_MSGS
   g_print("|%s| FINAL !!\n", readytext);
@@ -455,15 +485,15 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
   int x_pos = 0, y_pos = 0;
   double lwidth = (double)dwidth, lheight = (double) * dheight;
 
-  if (cr == NULL) return NULL;
+  if (!cr) return NULL;
 
 #ifdef GUI_GTK
-  if (widget != NULL) {
+  if (widget) {
     PangoContext *ctx = gtk_widget_get_pango_context(widget);
     layout = pango_layout_new(ctx);
   } else {
     layout = pango_cairo_create_layout(cr);
-    if (layout == NULL) return NULL;
+    if (!layout) return NULL;
 
     font = pango_font_description_new();
     pango_font_description_set_family(font, fontname);
@@ -499,7 +529,7 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
     lives_painter_clip(cr);*/
 
 #ifdef GUI_GTK
-  if (font != NULL) {
+  if (font) {
     pango_font_description_free(font);
   }
 #endif
@@ -1141,3 +1171,34 @@ boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_ti
   return TRUE;
 }
 
+
+boolean lives_parse_font_string(const char *string, char **font, int *size, char **stretch,
+                                char **style, char **weight) {
+  if (!string) return FALSE;
+  else {
+    int numtok = get_token_count(string, ' ') ;
+    char **array = lives_strsplit(string, " ", numtok);
+    //int xsize = -1;
+    if (font) {
+      *font = 0;
+      for (int i = 0; i < numtok - 1; i++) {
+        char *tmp;
+        if (*font) {
+          tmp = lives_strdup_printf("%s %s", *font, array[i]);
+          lives_free(*font);
+          *font = tmp;
+        } else *font = lives_strdup(array[i]);
+      }
+    }
+    if (size && numtok > 1 && atoi(array[numtok - 1])) *size = atoi(array[numtok - 1]);
+    if (font && !atoi(array[numtok - 1])) {
+      if (*font) {
+        char *tmp = lives_strdup_printf("%s %s", *font, array[numtok - 1]);
+        lives_free(*font);
+        *font = tmp;
+      } else *font = lives_strdup(array[numtok - 1]);
+    }
+    lives_strfreev(array);
+  }
+  return TRUE;
+}

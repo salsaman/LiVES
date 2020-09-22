@@ -40,7 +40,7 @@ extern "C"
 
 #include <string.h>
 
-#define WEED_COMPAT_VERSION 0.12.0
+#define WEED_COMPAT_VERSION 0.13.0
 
 #ifdef NEED_FOURCC_COMPAT
 
@@ -917,6 +917,42 @@ static enum AVColorTransferCharacteristic weed_gamma_to_avi_trc(int gamma_type) 
 
 #endif //avchan
 #endif //avchan
+
+#ifdef NEED_PANGO_COMPAT
+#ifdef __PANGO_FONT_H__
+
+#define HAVE_PANGO_FONT_STRETCH 1
+#define HAVE_PANGO_FONT_WEIGHT 1
+#define HAVE_PANGO_FONT_STYLE 1
+#define HAVE_PANGO_FONT_SIZE 1
+
+static int font_stretch_to_pango_stretch(const char *stretch) {
+  PangoFontDescription *pfd = pango_font_description_from_string(stretch);
+  PangoStretch pstretch = pango_font_description_get_stretch(pfd);
+  pango_font_description_free(pfd);
+  return pstretch;
+}
+
+static int font_weight_to_pango_weight(const char *weight) {
+  PangoFontDescription *pfd = pango_font_description_from_string(weight);
+  PangoWeight pweight = pango_font_description_get_weight(pfd);
+  pango_font_description_free(pfd);
+  return pweight;
+}
+
+static int font_style_to_pango_style(const char *style) {
+  PangoFontDescription *pfd = pango_font_description_from_string(style);
+  PangoStyle pstyle = pango_font_description_get_style(pfd);
+  pango_font_description_free(pfd);
+  return pstyle;
+}
+
+static int font_size_to_pango_size(int font_size) {
+  return font_size * PANGO_SCALE;
+}
+
+#endif
+#endif
 
 #ifdef __cplusplus
 }

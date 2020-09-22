@@ -1362,7 +1362,6 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
                                 boolean add_buttons) {
   // general text window
   LiVESWidget *dialog_vbox;
-  LiVESWidget *scrolledwindow;
   LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
 
   int woat;
@@ -1386,16 +1385,16 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
   woat = widget_opts.apply_theme;
   widget_opts.apply_theme = 0;
   if (textbuffer || text)
-    scrolledwindow = scrolled_textview(text, textbuffer, window_width, &textwindow->textview);
+    textwindow->scrolledwindow = scrolled_textview(text, textbuffer, window_width, &textwindow->textview);
   else {
     widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH;
     textwindow->table = lives_standard_table_new(1, 1, FALSE);
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
-    scrolledwindow = lives_standard_scrolled_window_new(window_width, RFX_WINSIZE_V, textwindow->table);
+    textwindow->scrolledwindow = lives_standard_scrolled_window_new(window_width, RFX_WINSIZE_V, textwindow->table);
   }
   widget_opts.apply_theme = woat;
 
-  lives_box_pack_start(LIVES_BOX(textwindow->vbox), scrolledwindow, TRUE, TRUE, 0);
+  lives_box_pack_start(LIVES_BOX(textwindow->vbox), textwindow->scrolledwindow, TRUE, TRUE, 0);
 
   if (add_buttons && (text || mainw->iochan || textwindow->table)) {
     if (!textwindow->table) {
@@ -6798,8 +6797,8 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
       double page_size = (double)((int)((double)height / linesize));
       //g_print("VALS3 lh = %d, nlines = %d, lsize = %f, height = %d, ps = %f\n", lh, nlines, linesize, height, page_size);
       lives_widget_object_freeze_notify(LIVES_WIDGET_OBJECT(adj));
-      lives_adjustment_set_lower(adj, page_size - 2);
-      lives_adjustment_set_upper(adj, (double)(mainw->n_messages + page_size - 1));
+      lives_adjustment_set_lower(adj, page_size);
+      lives_adjustment_set_upper(adj, (double)(mainw->n_messages + page_size - 2));
       lives_adjustment_set_page_size(adj, page_size);
       lives_adjustment_set_value(adj, (double)msgno);
       lives_widget_object_thaw_notify(LIVES_WIDGET_OBJECT(adj));
@@ -7159,7 +7158,7 @@ boolean reshow_msg_area(LiVESWidget * widget, lives_painter_t *cr, livespointer 
 
 
 LIVES_GLOBAL_INLINE void msg_area_scroll_to_end(LiVESWidget * widget, LiVESAdjustment * adj) {
-  msg_area_scroll_to(widget, mainw->n_messages - 1, TRUE, adj);
+  msg_area_scroll_to(widget, mainw->n_messages - 2, TRUE, adj);
   // expose_msg_area(widget, NULL, NULL);
 }
 

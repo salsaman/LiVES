@@ -9567,6 +9567,7 @@ if (defined($ARGV[0])) {
 
     ## EXTERNAL PLUGIN UTILLITY
     sub parse_font_string {
+	## TODO: stretch, weight, style, size
 	## returns ($fam, $stretch, $style, $weight)
 	my $fstring = shift;
 	my @parts = split / /, $fstring;
@@ -9576,6 +9577,14 @@ if (defined($ARGV[0])) {
 	my $stretch = "Normal";
 	my $fontpart = 1;
 	foreach my $word(@parts) {
+	    if ($word eq "Condensed" || $word eq "Expanded" || $word eq "ExtraCondensed"
+		|| $word eq "ExtraExpanded" || $word eq "SemiCondensed" || $word eq "SemiExpanded"
+		|| $word eq "UltraCondensed"
+		|| $word eq "UltraExpanded") {
+		$stretch = $word;
+		$fontpart = 0;
+		next;
+	    }
 	    if ($word eq "Thin" || $word eq "ExraLight" || $word eq "UltraLight" || $word eq "Light"
 		|| $word eq "Normal" || $word eq "Regular"
 		|| $word eq "Medium" || $word eq "DemiBold" || $word  eq "SemiBold" || $word eq "Bold"
@@ -9587,14 +9596,6 @@ if (defined($ARGV[0])) {
 	    }
 	    if ($word eq "Italic" || $word eq "Oblique") {
 		$style = $word;
-		$fontpart = 0;
-		next;
-	    }
-	    if ($word eq "Condensed" || $word eq "Expanded" || $word eq "ExtraCondensed"
-		|| $word eq "ExtraExpanded" || $word eq "SemiCondensed" || $word eq "SemiExpanded"
-		|| $word eq "UltraCondensed"
-		|| $word eq "UltraExpanded") {
-		$stretch = $word;
 		$fontpart = 0;
 		next;
 	    }

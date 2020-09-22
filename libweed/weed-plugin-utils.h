@@ -320,6 +320,13 @@ FN_DECL uint8_t uv_clamped_to_unclamped(uint8_t uv);
 FN_DECL void alpha_premult(unsigned char *ptr, int width, int height, int rowstride, int pal, int un);
 #endif
 
+#ifdef NEED_FONT_UTILS
+
+#include <wchar.h>
+  FN_DECL void weed_parse_font_string(const char *fontstr, char **family, char **fstretch, char **fweight,
+				    char **fstyle, int *size);
+#endif
+
 #ifdef __cplusplus
 
 #define WEED_SETUP_START(weed_api_version, filter_api_version) extern "C" { EXPORTED weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) { \

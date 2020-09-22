@@ -7,8 +7,6 @@
 
 #define NEED_PALETTE_UTILS
 
-#define NEED_RANDOM
-
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed.h>

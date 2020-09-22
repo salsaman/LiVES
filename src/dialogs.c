@@ -3330,6 +3330,8 @@ LIVES_GLOBAL_INLINE void do_messages_window(boolean is_startup) {
     lives_button_box_make_first(LIVES_BUTTON_BOX(area), widget_opts.last_container);
     lives_widget_show_all(textwindow->dialog);
   }
+  lives_widget_context_update();
+  lives_scrolled_window_scroll_to(LIVES_SCROLLED_WINDOW(textwindow->scrolledwindow), LIVES_POS_BOTTOM);
 }
 
 

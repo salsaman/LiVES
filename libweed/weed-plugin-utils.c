@@ -983,4 +983,111 @@ static uint8_t calc_luma(uint8_t *pixel, int palette, int yuv_clamping) {
 
 #endif
 
+#ifdef NEED_FONT_UTILS
+#include <wchar.h>
+static const wchar_t *fstretches[] = {L"UltraCondensed", L"ExtraCondensed", L"Condensed", L"SemiCondensed",
+				      L"SemiExpanded", L"Expanded", L"ExtraExpanded", L"UltraExpanded", NULL};
+
+static const wchar_t *fweights[] = {L"Thin", L"UltraLight", L"ExtraLight", L"Light", L"SemiLight", L"DemiLight",
+				    L"Book", L"Regular", L"Medium",
+				  L"DemiBold", L"SemiBold", L"Bold", L"ExtraBold", L"UltraBold", L"Black", L"Heavy",
+				    L"UltraHeavy", L"UltraBlack", L"ExtraBlack",NULL};
+
+static const wchar_t *fstyles[] = {L"Roman", L"Italic", L"Oblique", NULL};
+
+void weed_parse_font_string(const char *fontstr, char **family, char **fstretch, char **fweight,
+			    char **fstyle, int *size) {
+  wchar_t *token, *state, *next_token;
+  wchar_t *xfamily = L"\0";
+  wchar_t *xfstretch = L"\0";
+  wchar_t *xfweight = L"\0";
+  wchar_t *xfstyle = L"\0";
+  wchar_t *xfontstr = NULL;;
+  size_t wcs_len;
+  int i;
+
+  if (size) *size = 0;
+  if (!fontstr) goto fontdone;
+
+  wcs_len = mbstowcs(NULL, fontstr, 0) + 1;
+  xfontstr = weed_calloc(wcs_len, sizeof(wchar_t));
+  mbstowcs(xfontstr, fontstr, wcs_len);
+
+  for (token = wcstok(xfontstr, L" ", &state); token; token = next_token) {
+    if (*token == L'\0') continue;
+    do {
+      next_token = wcstok(NULL, L" ", &state);
+    } while (next_token && *next_token == L'\0');
+    if (!next_token) {
+      wchar_t *endptr;
+      uintmax_t umax = wcstoumax(token, &endptr, 10);
+      if (umax > 0 && *endptr == L'\0') {
+	if (size) *size = (int)(umax & 0x80FFFFFF);
+	goto fontdone;
+      }
+    }
+    if (*xfstretch == L'\0') {
+      for (i = 0; fstretches[i]; i++) {
+	if (!wcscasecmp(token, fstretches[i])) {
+	  xfstretch = (wchar_t *)fstretches[i];
+	  break;
+	}
+      }
+      if (*xfstyle != L'\0') continue;
+    }
+    if (*xfweight == L'\0') {
+      for (i = 0; fweights[i]; i++) {
+	if (!wcscasecmp(token, fweights[i])) {
+	  xfweight = (wchar_t *)fweights[i];
+	  break;
+	}
+      }
+      if (*xfweight != L'\0') continue;
+    }
+    if (*xfstyle == L'\0') {
+      for (i = 0; fstyles[i]; i++) {
+	if (!wcscasecmp(token, fstyles[i])) {
+	  xfstyle = (wchar_t *)fstyles[i];
+	  break;
+	}
+      }
+      if (*xfstyle != L'\0') continue;
+    }
+    if (*xfstretch == L'\0' && *xfweight == L'\0' && *xfstyle == L'\0') {
+      if (*xfamily != L'\0') {
+	wchar_t tmp[256];
+	swprintf(tmp, 256, L"%ls %ls", xfamily, token);
+	free(xfamily);
+	xfamily = wcsdup(tmp);
+      }
+      else xfamily = wcsdup(token);
+    }
+  }
+ fontdone:
+  if (family) {
+    wcs_len = wcstombs(NULL, xfamily, 0) + 1;
+    *family = weed_calloc(wcs_len, 1);
+    wcstombs(*family, xfamily, wcs_len);
+  }
+  if (fstretch) {
+    wcs_len = wcstombs(NULL, xfstretch, 0) + 1;
+    *fstretch = weed_calloc(wcs_len, 1);
+    wcstombs(*fstretch, xfstretch, wcs_len);
+  }
+  if (fweight) {
+    wcs_len = wcstombs(NULL, xfweight, 0) + 1;
+    *fweight = weed_calloc(wcs_len, 1);
+    wcstombs(*fweight, xfweight, wcs_len);
+  }
+  if (fstyle) {
+    wcs_len = wcstombs(NULL, xfstyle, 0) + 1;
+    *fstyle = weed_calloc(wcs_len, 1);
+    wcstombs(*fstyle, xfstyle, wcs_len);
+  }
+
+  if (*xfamily != L'\0') weed_free(xfamily);
+  if (xfontstr) weed_free(xfontstr);
+}
+#endif
+
 #endif // __HAVE_WEED_PLUGIN_UTILS__

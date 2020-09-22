@@ -782,10 +782,10 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
 
   if (rfx->status == RFX_STATUS_WEED && rfx->is_template) is_defaults = TRUE;
 
-  if (pbox == NULL) {
+  if (!pbox) {
     char *title, *defstr;
     if (rfx->status == RFX_STATUS_WEED || no_process || (rfx->num_in_channels == 0 &&
-        rfx->props & RFX_PROPS_BATCHG)) scrw = RFX_WINSIZE_H * 2. * widget_opts.scale;
+        rfx->props & RFX_PROPS_BATCHG)) scrw = RFX_WINSIZE_H * 3. * widget_opts.scale;
     else scrw = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
 
     fx_dialog[didx] = (_fx_dialog *)lives_malloc(sizeof(_fx_dialog));
@@ -1274,7 +1274,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
               }
               has_box = TRUE;
             } else {
-              widget_opts.filler_len >>= 1;
+              widget_opts.filler_len >>= 2;
               if (layoutx) lives_layout_add_fill(LIVES_LAYOUT(layoutx), TRUE);
               else add_fill_to_box(LIVES_BOX(hbox));
               widget_opts.filler_len = wofl;
@@ -1717,6 +1717,8 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
       lives_box_pack_start(LIVES_BOX(hbox), vbox, TRUE, TRUE, widget_opts.packing_width);
+      if (layout) lives_layout_expansion_row_new(LIVES_LAYOUT(layout), vbox);
+
       lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, widget_opts.packing_height >> 1);
 
       hbox = lives_hbox_new(FALSE, 0);

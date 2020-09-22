@@ -139,6 +139,7 @@ typedef struct {
   LiVESWidget *table;
   LiVESWidget *button;
   LiVESWidget *vbox;
+  LiVESWidget *scrolledwindow;
 } text_window;
 
 

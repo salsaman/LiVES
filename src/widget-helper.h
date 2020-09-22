@@ -853,9 +853,6 @@ LingoFontDescription *lives_font_chooser_get_font_desc(LiVESFontChooser *);
 boolean lives_font_chooser_set_font_desc(LiVESFontChooser *, LingoFontDescription *lfd);
 #endif
 
-boolean lives_parse_font_string(const char *string, char **font, int *size, char **stretch,
-                                char **style, char **weight);
-
 LiVESWidget *lives_frame_new(const char *label);
 boolean lives_frame_set_label(LiVESFrame *, const char *label);
 boolean lives_frame_set_label_align(LiVESFrame *, float xalign, float yalign);
@@ -1118,11 +1115,13 @@ boolean lives_dialog_set_button_layout(LiVESDialog *dlg, LiVESButtonBoxStyle bst
 
 LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_buttons, int width, int height);
 
-LiVESWidget *lives_dialog_add_button_from_stock(LiVESDialog *dialog, const char *stock_id, const char *label, int response_id);
+LiVESWidget *lives_dialog_add_button_from_stock(LiVESDialog *, const char *stock_id, const char *label, int response_id);
 
 LiVESWidget *lives_standard_hruler_new(void);
 
 LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidget *child);
+
+double lives_scrolled_window_scroll_to(LiVESScrolledWindow *, LiVESPositionType pos);
 
 LiVESWidget *lives_standard_expander_new(const char *labeltext, LiVESBox *parent, LiVESWidget *child);
 

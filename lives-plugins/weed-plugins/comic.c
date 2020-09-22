@@ -74,9 +74,9 @@ static weed_error_t comic_process(weed_plant_t *inst, weed_timecode_t timestamp)
   int irowstride, orowstride;
 
   uint8_t *src, *dst, *end;
-  int row0, row1, sum, scale = 384, mix = 192;
-  int yinv, ymin, ymax, nplanes;
-  register int i;
+  int row0, row1, sum, scale = 384;
+  int ymin, ymax, nplanes;
+  int i;
 
   // get the Y planes
   src = srcp[0];
@@ -97,12 +97,11 @@ static weed_error_t comic_process(weed_plant_t *inst, weed_timecode_t timestamp)
   // dst remainder after copying width
   orowstride -= width;
 
+
   if (clamping == WEED_YUV_CLAMPING_UNCLAMPED) {
-    yinv = ymax = 255;
     ymin = 0;
     ymax = 255;
   } else {
-    yinv = 251;
     ymin = 16;
     ymax = 235;
   }
@@ -128,12 +127,13 @@ static weed_error_t comic_process(weed_plant_t *inst, weed_timecode_t timestamp)
       sum = ((3 * sqrti(row0 * row0 + row1 * row1) / 2) * scale) >> 8;
 
       // clamp and invert
-      sum = yinv - (sum < ymin ? ymin : sum > ymax ? ymax : sum);
+      sum = 255 - (sum < 0 ? 0 : sum > 255 ? 255 : sum);
 
       // mix 25% effected with 75% original
-      sum = ((256 - mix) * sum + mix * (*src)) >> 8;
+      sum = (64 * sum + 192 * (*src)) >> 8;
+      if (clamping == WEED_YUV_CLAMPING_CLAMPED) sum = (double)sum / 255. * 219. + 16.;
 
-      *(dst++) = (uint8_t)(sum = (sum < ymin ? ymin : sum > ymax ? ymax : sum));
+      *(dst++) = (uint8_t)(sum < ymin ? ymin : sum > ymax ? ymax : sum);
       src++;
     }
 

@@ -63,6 +63,8 @@ void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
 #if GTK_CHECK_VERSION(3, 2, 0)
     fchooser.font_param = &rfx->params[atoi(array[1])];
     fchooser.size_param = &rfx->params[atoi(array[2])];
+    if (!*((char *)fchooser.font_param->value))
+      set_rfx_param_by_name_string(rfx, fchooser.font_param->name, widget_opts.font_name, TRUE);
 #endif
   } else if (!strcmp(array[0], "mergealign")) {
     mergealign.start_param = &rfx->params[atoi(array[1])];
@@ -216,7 +218,7 @@ static void text_size_cb(LiVESSpinButton * button, livespointer data) {
 
 static void font_entry_cb(LiVESEntry * entry, livespointer data) {
   LiVESFontButton *button = (LiVESFontButton *)fchooser.font_param->widgets[1];
-  lives_font_chooser_set_font(LIVES_FONT_CHOOSER(button), lives_entry_get_text(entry));
+  //lives_font_chooser_set_font(LIVES_FONT_CHOOSER(button), lives_entry_get_text(entry));
   text_size_cb(LIVES_SPIN_BUTTON(fchooser.size_param->widgets[0]), data);
   font_set_cb(button, data);
 }
@@ -382,6 +384,8 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       if (!box) return;
       idx = get_box_child_index(LIVES_BOX(box), tbox);
       param->widgets[1] = buttond = lives_standard_font_chooser_new();
+      lives_font_chooser_set_font(LIVES_FONT_CHOOSER(param->widgets[1]), param->value);
+
       lives_box_pack_start(LIVES_BOX(box), buttond, TRUE, TRUE, 0);
       lives_box_reorder_child(LIVES_BOX(box), buttond, idx);
       if (lives_widget_is_visible(widget)) lives_widget_show_all(buttond);
@@ -401,8 +405,13 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       fchooser.entry_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(widget),
                             LIVES_WIDGET_CHANGED_SIGNAL,
                             LIVES_GUI_CALLBACK(font_entry_cb), (livespointer)rfx);
+
       if (fchooser.nwidgets == 1) {
+        double fsize = get_double_param(fchooser.size_param);
+        lives_entry_set_text(LIVES_ENTRY(param->widgets[0]), param->value);
         font_entry_cb(LIVES_ENTRY(param->widgets[0]), (livespointer)rfx);
+        lives_spin_button_set_value(fchooser.size_param->widgets[0], fsize);
+        text_size_cb(fchooser.size_param->widgets[0], (livespointer)rfx);
       }
       fchooser.nwidgets++;
     }
@@ -412,7 +421,9 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
                                 LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                                 LIVES_GUI_CALLBACK(text_size_cb), (livespointer)rfx);
       if (fchooser.nwidgets == 1) {
-        font_entry_cb(LIVES_ENTRY(param->widgets[0]), (livespointer)rfx);
+        lives_spin_button_set_value(param->widgets[0], get_double_param(param->value));
+        text_size_cb(fchooser.size_param->widgets[0], (livespointer)rfx);
+        //font_entry_cb(LIVES_ENTRY(param->widgets[0]), (livespointer)rfx);
       }
       fchooser.nwidgets++;
     }

@@ -410,8 +410,8 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
         double fsize = get_double_param(fchooser.size_param);
         lives_entry_set_text(LIVES_ENTRY(param->widgets[0]), param->value);
         font_entry_cb(LIVES_ENTRY(param->widgets[0]), (livespointer)rfx);
-        lives_spin_button_set_value(fchooser.size_param->widgets[0], fsize);
-        text_size_cb(fchooser.size_param->widgets[0], (livespointer)rfx);
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(fchooser.size_param->widgets[0]), fsize);
+        text_size_cb(LIVES_SPIN_BUTTON(fchooser.size_param->widgets[0]), (livespointer)rfx);
       }
       fchooser.nwidgets++;
     }
@@ -421,9 +421,8 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
                                 LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                                 LIVES_GUI_CALLBACK(text_size_cb), (livespointer)rfx);
       if (fchooser.nwidgets == 1) {
-        lives_spin_button_set_value(param->widgets[0], get_double_param(param->value));
-        text_size_cb(fchooser.size_param->widgets[0], (livespointer)rfx);
-        //font_entry_cb(LIVES_ENTRY(param->widgets[0]), (livespointer)rfx);
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), get_double_param(param->value));
+        text_size_cb(LIVES_SPIN_BUTTON(fchooser.size_param->widgets[0]), (livespointer)rfx);
       }
       fchooser.nwidgets++;
     }

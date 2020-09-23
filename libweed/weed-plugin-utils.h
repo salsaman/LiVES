@@ -216,6 +216,7 @@ FN_DECL weed_plant_t **weed_get_out_channels(weed_plant_t *inst, int *nchans);
 FN_DECL weed_plant_t **weed_get_in_params(weed_plant_t *inst, int *nparams);
 FN_DECL weed_plant_t **weed_get_out_params(weed_plant_t *inst, int *nparams);
 FN_DECL int *weed_channel_get_rowstrides(weed_plant_t *channel, int *nplanes);
+FN_DECL void **weed_channel_get_pixel_data_planar(weed_plant_t *channel, int *nplanes);
 #endif
 
 /* Threading */

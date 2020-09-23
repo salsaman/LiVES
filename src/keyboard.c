@@ -31,7 +31,7 @@ static void handle_omc_events(void) {
 #ifdef OMC_JS_IMPL
   if (mainw->ext_cntl[EXT_CNTL_JS]) {
     char *string = js_mangle();
-    if (string != NULL) {
+    if (string) {
       omc_process_string(OMC_JS, string, FALSE, NULL);
       lives_free(string);
     }
@@ -48,7 +48,7 @@ static void handle_omc_events(void) {
       gotone = FALSE;
       for (i = 0; i < midi_check_rate; i++) {
         char *string = midi_mangle();
-        if (string != NULL) {
+        if (string) {
           omc_process_string(OMC_MIDI, string, FALSE, NULL);
           lives_free(string);
 #ifdef ALSA_MIDI
@@ -318,7 +318,7 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
     }
   }
 
-  if (mainw->rte_textparm != NULL) {
+  if (mainw->rte_textparm && !(keymod & (LIVES_ALT_MASK | LIVES_CONTROL_MASK))) {
     if (unicode == LIVES_KEY_Return || unicode == 13) unicode = '\n'; // CR
     if (unicode == LIVES_KEY_BackSpace) unicode = 8; // bs
     if (unicode == LIVES_KEY_Tab || unicode == 9) mainw->rte_textparm = NULL;

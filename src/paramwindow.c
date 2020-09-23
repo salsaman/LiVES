@@ -2836,9 +2836,7 @@ char *param_marshall(lives_rfx_t *rfx, boolean with_min_max) {
   char *return_pattern;
   char *tmp, *mysubst, *mysubst2;
 
-  register int i;
-
-  for (i = 0; i < rfx->num_params; i++) {
+  for (int i = 0; i < rfx->num_params; i++) {
     switch (rfx->params[i].type) {
     case LIVES_PARAM_UNKNOWN:
       continue;
@@ -2917,9 +2915,9 @@ char *param_marshall(lives_rfx_t *rfx, boolean with_min_max) {
         cb_frames = count_resampled_frames(clipboard->frames, clipboard->fps, cfile->fps);
       }
 
-      if (merge_opts->spinbutton_loops != NULL &&
-          cfile->end - cfile->start + 1 > (cb_frames * (ttl = lives_spin_button_get_value_as_int
-                                           (LIVES_SPIN_BUTTON(merge_opts->spinbutton_loops)))) &&
+      if (merge_opts->spinbutton_loops
+          && cfile->end - cfile->start + 1 > (cb_frames * (ttl = lives_spin_button_get_value_as_int
+                                              (LIVES_SPIN_BUTTON(merge_opts->spinbutton_loops)))) &&
           !merge_opts->loop_to_fit) {
         end = cb_frames * ttl;
         if (!merge_opts->align_start) {

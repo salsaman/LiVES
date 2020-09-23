@@ -662,7 +662,7 @@ static LiVESResponseType _do_abort_cancel_retry_dialog(const char *mytext, lives
       if (mainw->is_ready) {
         if (dtype == LIVES_DIALOG_ABORT || do_abort_check()) {
           if (CURRENT_CLIP_IS_VALID) {
-            if (cfile->handle != NULL) {
+            if (cfile->handle) {
               // stop any processing
               lives_kill_subprocesses(cfile->handle, TRUE);
             }
@@ -737,7 +737,7 @@ static LiVESResponseType _do_info_dialog(const char *text, const char *exp_title
   LiVESResponseType ret = LIVES_RESPONSE_NONE;
   LiVESWidget *info_box = create_message_dialog(LIVES_DIALOG_INFO, text, 0);
 
-  if (exp_list != NULL) {
+  if (exp_list) {
     LiVESWidget *dab = lives_dialog_get_content_area(LIVES_DIALOG(info_box));
     add_list_expander(LIVES_BOX(dab), exp_title, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V, exp_list);
     lives_widget_show_all(info_box);
@@ -783,7 +783,7 @@ LiVESResponseType do_error_dialog_with_check(const char *text, uint64_t warn_mas
   LiVESWidget *err_box;
   LiVESResponseType ret = LIVES_RESPONSE_NONE;
 
-  if (prefs != NULL && (prefs->warning_mask & warn_mask_number)) return ret;
+  if (prefs && (prefs->warning_mask & warn_mask_number)) return ret;
   err_box = create_message_dialog(warn_mask_number == 0 ? LIVES_DIALOG_ERROR :
                                   LIVES_DIALOG_WARN, text, warn_mask_number);
 
@@ -1002,7 +1002,7 @@ void pump_io_chan(LiVESIOChannel *iochan) {
 
   if (!iochan->is_readable) return;
   g_io_channel_read_to_end(iochan, &str_return, &retlen, &gerr);
-  if (gerr != NULL) lives_error_free(gerr);
+  if (gerr) lives_error_free(gerr);
 #endif
 
 #ifdef GUI_QT
@@ -1379,9 +1379,9 @@ int process_one(boolean visible) {
   // - unless we are controlled externally (e.g. jack transport) or system clock is forced
   if (time_source != LIVES_TIME_SOURCE_SOUNDCARD) {
 #ifdef ENABLE_JACK
-    if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL &&
+    if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd &&
         IS_VALID_CLIP(mainw->playing_file)  &&
-        sfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) &&
+        sfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack && !mainw->multitrack->is_rendering)) &&
         (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 && ((audio_ticks = lives_jack_get_time(mainw->jackd)) >
             mainw->offsetticks || audio_ticks == -1)) {
       if (audio_ticks == -1) {
@@ -1404,9 +1404,9 @@ int process_one(boolean visible) {
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL &&
+    if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed &&
         CURRENT_CLIP_IS_VALID &&
-        sfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) &&
+        sfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack && !mainw->multitrack->is_rendering)) &&
         (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 &&
         ((audio_ticks = lives_pulse_get_time(mainw->pulsed)) >
          mainw->offsetticks || audio_ticks == -1)) {
@@ -1903,7 +1903,7 @@ switch_point:
         /// we don;t know if the last audio buffer has been played or not yet, so we compensate by subtracting half the buffer length
 #ifdef ENABLE_JACK
         // note the audio seek position
-        if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
+        if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) {
           aplay_file = mainw->jackd->playing_file;
           if (IS_VALID_CLIP(aplay_file)) {
             int qnt = mainw->files[aplay_file]->achans * (mainw->files[aplay_file]->asampsize >> 3);
@@ -1918,7 +1918,7 @@ switch_point:
 
 #ifdef HAVE_PULSE_AUDIO
         // note the audio seek position
-        if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
+        if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) {
           aplay_file = mainw->pulsed->playing_file;
           if (IS_VALID_CLIP(aplay_file)) {
             int qnt = mainw->files[aplay_file]->achans * (mainw->files[aplay_file]->asampsize >> 3);
@@ -1987,7 +1987,7 @@ switch_point:
         //g_print("lfi done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
         if (mainw->last_display_ticks == 0) mainw->last_display_ticks = mainw->clock_ticks;
         else {
-          if (mainw->vpp != NULL && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.)
+          if (mainw->vpp && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.)
             mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->vpp->fixed_fpsd;
           else if (mainw->fixed_fpsd > 0.)
             mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->fixed_fpsd;
@@ -2112,7 +2112,7 @@ proc_dialog:
     boolean reload = FALSE;
     lives_rfx_t *xrfx;
 
-    if ((xrfx = (lives_rfx_t *)mainw->vrfx_update) != NULL && fx_dialog[1] != NULL) {
+    if ((xrfx = (lives_rfx_t *)mainw->vrfx_update) != NULL && fx_dialog[1]) {
       // the audio thread wants to update the parameter window
       mainw->vrfx_update = NULL;
       update_visual_params(xrfx, FALSE);
@@ -2156,7 +2156,7 @@ refresh:
 
     if (mainw->force_show) {
       mainw->force_show = FALSE;
-      if (!visible && !((mainw->vpp != NULL && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.)
+      if (!visible && !((mainw->vpp && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.)
                         || (mainw->fixed_fpsd > 0.))) {
         reload = TRUE;
         goto refresh;
@@ -2220,11 +2220,11 @@ static boolean reset_timebase(void) {
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
     boolean pa_reset = FALSE;
     if (prefs->audio_src == AUDIO_SRC_INT) {
-      if (mainw->pulsed != NULL && pa_time_reset(mainw->pulsed, 0)) {
+      if (mainw->pulsed && pa_time_reset(mainw->pulsed, 0)) {
         pa_reset = TRUE;
       }
     } else {
-      if (mainw->pulsed_read != NULL && pa_time_reset(mainw->pulsed_read, 0)) {
+      if (mainw->pulsed_read && pa_time_reset(mainw->pulsed_read, 0)) {
         pa_reset = TRUE;
       }
     }
@@ -2236,10 +2236,10 @@ static boolean reset_timebase(void) {
 #endif
 
 #ifdef ENABLE_JACK
-  if (mainw->jackd != NULL) {
+  if (mainw->jackd) {
     jack_time_reset(mainw->jackd, 0);
   }
-  if (mainw->jackd_read != NULL) {
+  if (mainw->jackd_read) {
     jack_time_reset(mainw->jackd_read, 0);
   }
 #endif

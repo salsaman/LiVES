@@ -566,6 +566,9 @@ static inline weed_plant_t **weed_get_out_params(weed_plant_t *instance, int *np
 static inline int *weed_channel_get_rowstrides(weed_plant_t *channel, int *nplanes) {
   return weed_get_int_array_counted(channel, WEED_LEAF_ROWSTRIDES, nplanes);
 }
+static inline void **weed_channel_get_pixel_data_planar(weed_plant_t *channel, int *nplanes) {
+  return weed_get_voidptr_array_counted(channel, WEED_LEAF_PIXEL_DATA, nplanes);
+}
 #endif
 
 static inline int weed_param_get_value_int(weed_plant_t *param) {return gg_i(param, WEED_LEAF_VALUE);}

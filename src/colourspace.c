@@ -524,10 +524,10 @@ static inline int32_t spc_rnd(int32_t val) {
   // if we are adding several factors we can do the conversion after the addition
   // i.e the rounding error when converting from RGB to YUV goes from 1. / 255. ~= 0.4 % to half of that, i.e 0.2 %
 
-  if (prefs->pb_quality == PB_QUALITY_LOW) {
+  if (prefs && prefs->pb_quality == PB_QUALITY_LOW) {
     return val >> FP_BITS;
   }
-  if (prefs->pb_quality == PB_QUALITY_MED) {
+  if (prefs && prefs->pb_quality == PB_QUALITY_MED) {
     uint32_t sig = val & 0x80000000;
     return (((val - (val >> 8)) >> 16) | sig);
   }
@@ -572,13 +572,13 @@ static void init_RGB_to_YUV_tables(void) {
     Y_Gc[i] = myround((1. - KR_YCBCR - KB_YCBCR) * (double)i * CLAMP_FACTOR_Y * SCALE_FACTOR);   // Kb
     Y_Bc[i] = myround((KB_YCBCR * (double)i * CLAMP_FACTOR_Y + YUV_CLAMP_MIN) * SCALE_FACTOR);
 
-    fac = (1. - KB_YCBCR) / .5; // 1. / .564
+    fac = .5 / (1. - KB_YCBCR); // .564
 
     Cb_Rc[i] = myround(-fac * KR_YCBCR * (double)i * CLAMP_FACTOR_UV  * SCALE_FACTOR); // -.16736
     Cb_Gc[i] = myround(-fac * (1. - KB_YCBCR - KR_YCBCR)  * (double)i * CLAMP_FACTOR_UV * SCALE_FACTOR); // -.331264
     Cb_Bc[i] = myround((0.5 * (double)i * CLAMP_FACTOR_UV + UV_BIAS) * SCALE_FACTOR);
 
-    fac = (1. - KR_YCBCR) / .5; // 1. / .7133
+    fac = .5 / (1. - KR_YCBCR); // .713
 
     Cr_Rc[i] = myround((0.5 * (double)i * CLAMP_FACTOR_UV + UV_BIAS) * SCALE_FACTOR);
     Cr_Gc[i] = myround(-fac * (1. - KB_YCBCR - KR_YCBCR) * (double)i * CLAMP_FACTOR_UV * SCALE_FACTOR);
@@ -590,13 +590,13 @@ static void init_RGB_to_YUV_tables(void) {
     Y_Gu[i] = myround((1. - KR_YCBCR - KB_YCBCR) * (double)i * SCALE_FACTOR);   // Kb
     Y_Bu[i] = myround(KB_YCBCR * (double)i * SCALE_FACTOR);
 
-    fac = (1. - KB_YCBCR) / .5; // .564
+    fac = .5 / (1. - KB_YCBCR); // .564
 
     Cb_Ru[i] = myround(-fac * KR_YCBCR * (double)i * SCALE_FACTOR); // -.16736
     Cb_Gu[i] = myround(-fac * (1. - KB_YCBCR - KR_YCBCR)  * (double)i * SCALE_FACTOR); // -.331264
     Cb_Bu[i] = myround((0.5 * (double)i + UV_BIAS) * SCALE_FACTOR);
 
-    fac = (1. - KR_YCBCR) / .5; // .7133
+    fac = .5 / (1. - KR_YCBCR); // .713
 
     Cr_Ru[i] = myround((0.5 * (double)i + UV_BIAS) * SCALE_FACTOR);
     Cr_Gu[i] = myround(-fac * (1. - KB_YCBCR - KR_YCBCR) * (double)i * SCALE_FACTOR);
@@ -615,13 +615,13 @@ static void init_RGB_to_YUV_tables(void) {
     HY_Gc[i] = myround((1. - KR_BT709 - KB_BT709) * (double)i * CLAMP_FACTOR_Y * SCALE_FACTOR);   // Kb
     HY_Bc[i] = myround((KB_BT709 * (double)i * CLAMP_FACTOR_Y + YUV_CLAMP_MIN) * SCALE_FACTOR);
 
-    fac = (1. - KB_BT709) / .5; // 1. / .5389
+    fac = .5 / (1. - KB_BT709);
 
     HCb_Rc[i] = myround(-fac * KR_BT709 * (double)i * CLAMP_FACTOR_UV  * SCALE_FACTOR); // -.16736
     HCb_Gc[i] = myround(-fac * (1. - KB_BT709 - KR_BT709)  * (double)i * CLAMP_FACTOR_UV * SCALE_FACTOR); // -.331264
     HCb_Bc[i] = myround((0.5 * (double)i * CLAMP_FACTOR_UV + UV_BIAS) * SCALE_FACTOR);
 
-    fac = (1. - KR_BT709) / .5; // 1. / .635
+    fac = .5 / (1. - KR_BT709);
 
     HCr_Rc[i] = myround((0.5 * (double)i * CLAMP_FACTOR_UV + UV_BIAS) * SCALE_FACTOR);
     HCr_Gc[i] = myround(-fac * (1. - KB_BT709 - KR_BT709) * (double)i * CLAMP_FACTOR_UV * SCALE_FACTOR);
@@ -633,13 +633,13 @@ static void init_RGB_to_YUV_tables(void) {
     HY_Gu[i] = myround((1. - KR_BT709 - KB_BT709) * (double)i * SCALE_FACTOR);   // Kb
     HY_Bu[i] = myround(KB_BT709 * (double)i * SCALE_FACTOR);
 
-    fac = (1. - KB_BT709) / .5; // 1. / .5389
+    fac = .5 / (1. - KB_BT709);
 
     HCb_Ru[i] = myround(-fac * KR_BT709 * (double)i * SCALE_FACTOR); // -.16736
     HCb_Gu[i] = myround(-fac * (1. - KB_BT709 - KR_BT709)  * (double)i * SCALE_FACTOR); // -.331264
     HCb_Bu[i] = myround((0.5 * (double)i + UV_BIAS) * SCALE_FACTOR);
 
-    fac = (1. - KR_BT709) / .5; // 1. / .635
+    fac = .5 / (1. - KR_BT709);
 
     HCr_Ru[i] = myround((0.5 * (double)i + UV_BIAS) * SCALE_FACTOR);
     HCr_Gu[i] = myround(-fac * (1. - KB_BT709 - KR_BT709) * (double)i * SCALE_FACTOR);
@@ -669,10 +669,13 @@ static void init_YUV_to_RGB_tables(void) {
   for (; i < UV_CLAMP_MAXI; i++) {
     R_Crc[i] = myround(2. * (1. - KR_YCBCR) * ((((double)i - YUV_CLAMP_MIN) /
                        (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kr)
+
+    G_Cbc[i] = myround(-.5 / (1. + KB_YCBCR + KR_YCBCR) * ((((double)i - YUV_CLAMP_MIN) /
+                       (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) * SCALE_FACTOR);
+
     G_Crc[i] = myround(-.5 / (1. - KR_YCBCR) * ((((double)i - YUV_CLAMP_MIN) /
                        (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) * SCALE_FACTOR);
-    G_Cbc[i] = myround(-.5 / (1. - KB_YCBCR) * ((((double)i - YUV_CLAMP_MIN) /
-                       (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) * SCALE_FACTOR);
+
     B_Cbc[i] = myround(2. * (1. - KB_YCBCR) * ((((double)i - YUV_CLAMP_MIN) /
                        (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kb)
   }
@@ -682,7 +685,7 @@ static void init_YUV_to_RGB_tables(void) {
                        (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kr)
     G_Crc[i] = myround(-.5 / (1. - KR_YCBCR) * (((UV_CLAMP_MAX - YUV_CLAMP_MIN) /
                        (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) * SCALE_FACTOR);
-    G_Cbc[i] = myround(-.5 / (1. - KB_YCBCR) * (((UV_CLAMP_MAX - YUV_CLAMP_MIN) /
+    G_Cbc[i] = myround(-.5 / (1. + KB_YCBCR + KR_YCBCR) * (((UV_CLAMP_MAX - YUV_CLAMP_MIN) /
                        (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) * SCALE_FACTOR);
     B_Cbc[i] = myround(2. * (1. - KB_YCBCR) * (((UV_CLAMP_MAX - YUV_CLAMP_MIN) /
                        (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kb)
@@ -696,7 +699,7 @@ static void init_YUV_to_RGB_tables(void) {
   for (i = 0; i <= 255; i++) {
     R_Cru[i] = myround(2. * (1. - KR_YCBCR) * ((double)i - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kr)
     G_Cru[i] = myround(-.5 / (1. - KR_YCBCR) * ((double)i - UV_BIAS) * SCALE_FACTOR);
-    G_Cbu[i] = myround(-.5 / (1. - KB_YCBCR) * ((double)i - UV_BIAS) * SCALE_FACTOR);
+    G_Cbu[i] = myround(-.5 / (1. + KB_YCBCR + KR_YCBCR) * ((double)i - UV_BIAS) * SCALE_FACTOR);
     B_Cbu[i] = myround(2. * (1. - KB_YCBCR) * ((double)i - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kb)
   }
 
@@ -720,7 +723,7 @@ static void init_YUV_to_RGB_tables(void) {
                         (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kr)
     HG_Crc[i] = myround(-.5 / (1. - KR_BT709) * ((((double)i - YUV_CLAMP_MIN) /
                         (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) * SCALE_FACTOR);
-    HG_Cbc[i] = myround(-.5 / (1. - KB_BT709) * ((((double)i - YUV_CLAMP_MIN) /
+    HG_Cbc[i] = myround(-.5 / (1. + KB_BT709 + KB_BT709) * ((((double)i - YUV_CLAMP_MIN) /
                         (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) * SCALE_FACTOR);
     HB_Cbc[i] = myround(2. * (1. - KB_BT709) * ((((double)i - YUV_CLAMP_MIN) /
                         (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kb)
@@ -729,7 +732,7 @@ static void init_YUV_to_RGB_tables(void) {
   for (; i < 256; i++) {
     HR_Crc[i] = myround(2. * (1. - KR_BT709) * (255. - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kr)
     HG_Crc[i] = myround(-.5 / (1. - KR_BT709) * (255. - UV_BIAS) * SCALE_FACTOR);
-    HG_Cbc[i] = myround(-.5 / (1. - KB_BT709) * (255. - UV_BIAS) * SCALE_FACTOR);
+    HG_Cbc[i] = myround(-.5 / (1. + KB_BT709 + KB_BT709) * (255. - UV_BIAS) * SCALE_FACTOR);
     HB_Cbc[i] = myround(2. * (1. - KB_BT709) * (255. - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kb)
   }
 
@@ -737,10 +740,10 @@ static void init_YUV_to_RGB_tables(void) {
   for (i = 0; i <= 255; i++) HRGB_Yu[i] = i * SCALE_FACTOR;
 
   for (i = 0; i <= 255; i++) {
-    HR_Crc[i] = myround(2. * (1. - KR_BT709) * ((double)i - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kr)
-    HG_Crc[i] = myround(-.5 / (1. - KR_BT709) * ((double)i - UV_BIAS) * SCALE_FACTOR);
-    HG_Cbc[i] = myround(-.5 / (1. - KB_BT709) * ((double)i - UV_BIAS) * SCALE_FACTOR);
-    HB_Cbc[i] = myround(2. * (1. - KB_BT709) * ((double)i - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kb)
+    HR_Cru[i] = myround(2. * (1. - KR_BT709) * ((double)i - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kr)
+    HG_Cru[i] = myround(-.5 / (1. - KR_BT709) * ((double)i - UV_BIAS) * SCALE_FACTOR);
+    HG_Cbu[i] = myround(-.5 / (1. + KB_BT709 + KB_BT709) * ((double)i - UV_BIAS) * SCALE_FACTOR);
+    HB_Cbu[i] = myround(2. * (1. - KB_BT709) * ((double)i - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kb)
   }
   conv_YR_inited = TRUE;
 }
@@ -986,7 +989,7 @@ static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int o
     LIVES_ERROR(errmsg);
     break;
   }
-  if (errmsg != NULL) lives_free(errmsg);
+  if (errmsg) lives_free(errmsg);
 }
 
 
@@ -1638,6 +1641,8 @@ static void init_gamma_tx(void) {
   gamma_tx[WEED_GAMMA_BT709] = (gamma_const_t) {0.099, 4.5, 0.081, 1. / .45};
 }
 
+static void rgb2yuv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v) GNU_HOT;
+static void yuv2rgb(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) GNU_HOT;
 
 void init_colour_engine(void) {
   init_RGB_to_YUV_tables();
@@ -1649,6 +1654,30 @@ void init_colour_engine(void) {
   init_conversions(LIVES_INTENTION_PLAY);
 #ifdef WEED_ADVANCED_PALETTES
   init_advanced_palettes();
+#endif
+  //#define TEST_CONV
+#ifdef TEST_CONV
+  if (1) {
+    int cr, cg, cb;
+    uint8_t r = 100, g, b, y, u, v, xr, xg, xb;;
+    set_conversion_arrays(WEED_YUV_CLAMPING_UNCLAMPED, WEED_YUV_SUBSPACE_YCBCR);
+    //prefs->pb_quality = PB_QUALITY_MED;
+    for (cr = 100; cr < 256; cr++) {
+      g = 0;
+      for (cg = 0; cg < 256; cg++) {
+        b = 0;
+        for (cb = 0; cb < 256; cb++) {
+          g_print("in: %d %d %d\n", r, g, b);
+          rgb2yuv(r, g, b, &y, &u, &v);
+          yuv2rgb(y, u, v, &xr, &xg, &xb);
+          g_print("out: %d %d %d   %d %d %d\n", y, u, v, xr, xg, xb);
+          b++;
+        }
+        g++;
+      }
+      r++;
+    }
+  }
 #endif
 }
 
@@ -1703,7 +1732,6 @@ static void *convert_swapprepost_frame_thread(void *cc_params);
 
 static void *convert_swab_frame_thread(void *cc_params);
 
-static void rgb2yuv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v) GNU_HOT;
 #if 0
 static void rgb2yuv_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v, uint8_t *lut) GNU_HOT;
 #endif
@@ -1726,7 +1754,7 @@ static void rgb2yuyv_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, 
 #endif
 static void rgb2_411(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
                      uint8_t r2, uint8_t g2, uint8_t b2, uint8_t r3, uint8_t g3, uint8_t b3, yuv411_macropixel *yuv) GNU_HOT;
-static void yuv2rgb(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) GNU_HOT;
+
 static void yuv2rgb_with_gamma(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *lut) GNU_HOT;
 static void uyvy2rgb(uyvy_macropixel *uyvy, uint8_t *r0, uint8_t *g0, uint8_t *b0,
                      uint8_t *r1, uint8_t *g1, uint8_t *b1) GNU_FLATTEN GNU_HOT;
@@ -4925,7 +4953,7 @@ static void convert_yuv_planar_to_rgb_frame(uint8_t **src, int width, int height
     for (i = prefs->nfx_threads - 1; i >= 0; i--) {
       dheight = xdheight;
 
-      if ((y + dheight * i * width) < end) {
+      if ((y + dheight * i * irowstride) < end) {
         ccparams[i].hsize = width;
 
         ccparams[i].srcp[0] = y + dheight * i * irowstride;
@@ -4982,7 +5010,7 @@ static void convert_yuv_planar_to_rgb_frame(uint8_t **src, int width, int height
     y += irowstride;
     u += irowstride;
     v += irowstride;
-    if (a != NULL) a += irowstride;
+    if (a) a += irowstride;
   }
 }
 
@@ -5007,7 +5035,7 @@ static void convert_yuv_planar_to_bgr_frame(uint8_t **src, int width, int height
   uint8_t *end = y + irowstride * height;
 
   size_t opstep = 4;
-  register int i, j;
+  int i, j;
 
   if (LIVES_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
   if (thread_id == -1)
@@ -5022,10 +5050,11 @@ static void convert_yuv_planar_to_bgr_frame(uint8_t **src, int width, int height
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
 
     xdheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
+
     for (i = prefs->nfx_threads - 1; i >= 0; i--) {
       dheight = xdheight;
 
-      if ((y + dheight * i * orowstride) < end) {
+      if ((y + dheight * i * irowstride) < end) {
         ccparams[i].hsize = width;
 
         ccparams[i].srcp[0] = y + dheight * i * irowstride;
@@ -5066,6 +5095,8 @@ static void convert_yuv_planar_to_bgr_frame(uint8_t **src, int width, int height
   orowstride -= width * opstep;
   irowstride -= width;
 
+  g_print("hh is %d %p\n", height, dest);
+
   for (i = 0; i < height; i++) {
     for (j = 0; j < width; j++) {
       yuv2bgr(*(y++), *(u++), *(v++), &dest[0], &dest[1], &dest[2]);
@@ -5080,7 +5111,7 @@ static void convert_yuv_planar_to_bgr_frame(uint8_t **src, int width, int height
     y += irowstride;
     u += irowstride;
     v += irowstride;
-    if (a != NULL) a += irowstride;
+    if (a) a += irowstride;
   }
 }
 
@@ -5122,7 +5153,7 @@ static void convert_yuv_planar_to_argb_frame(uint8_t **src, int width, int heigh
     for (i = prefs->nfx_threads - 1; i >= 0; i--) {
       dheight = xdheight;
 
-      if ((y + dheight * i * width) < end) {
+      if ((y + dheight * i * irowstride) < end) {
         ccparams[i].hsize = width;
 
         ccparams[i].srcp[0] = y + dheight * i * irowstride;
@@ -5174,7 +5205,7 @@ static void convert_yuv_planar_to_argb_frame(uint8_t **src, int width, int heigh
     y += irowstride;
     u += irowstride;
     v += irowstride;
-    if (a != NULL) a += irowstride;
+    if (a) a += irowstride;
   }
 }
 
@@ -9289,13 +9320,13 @@ LIVES_GLOBAL_INLINE int weed_layer_get_type(weed_layer_t *layer) {
 
 
 LIVES_GLOBAL_INLINE int weed_layer_is_video(weed_layer_t *layer) {
-  if (layer != NULL && WEED_IS_LAYER(layer) && weed_layer_get_type(layer) == WEED_LAYER_TYPE_VIDEO) return WEED_TRUE;
+  if (layer && WEED_IS_LAYER(layer) && weed_layer_get_type(layer) == WEED_LAYER_TYPE_VIDEO) return WEED_TRUE;
   return WEED_FALSE;
 }
 
 
 LIVES_GLOBAL_INLINE int weed_layer_is_audio(weed_layer_t *layer) {
-  if (layer != NULL && WEED_IS_LAYER(layer) && weed_layer_get_type(layer) == WEED_LAYER_TYPE_AUDIO) return WEED_TRUE;
+  if (layer && WEED_IS_LAYER(layer) && weed_layer_get_type(layer) == WEED_LAYER_TYPE_AUDIO) return WEED_TRUE;
   return WEED_FALSE;
 }
 
@@ -11521,10 +11552,10 @@ memfail:
   lives_freep((void **)&gudest_array);
   weed_layer_set_palette(layer, inpl);
   weed_layer_set_size(layer, width, height);
-  if (gusrc != NULL) {
+  if (gusrc) {
     weed_layer_set_pixel_data_packed(layer, gusrc);
     weed_layer_set_rowstride(layer, istrides[0]);
-  } else if (gusrc_array != NULL) {
+  } else if (gusrc_array) {
     weed_layer_set_pixel_data(layer, (void **)gusrc_array, nplanes);
     weed_layer_set_rowstrides(layer, istrides, nplanes);
   }
@@ -12559,7 +12590,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     threaded_dialog_spin(0.);
     new_pixbuf = lives_pixbuf_scale_simple(pixbuf, width, height, interp);
     threaded_dialog_spin(0.);
-    if (new_pixbuf != NULL) {
+    if (new_pixbuf) {
       weed_layer_set_size(layer, lives_pixbuf_get_width(new_pixbuf), lives_pixbuf_get_height(new_pixbuf));
       weed_layer_set_rowstride(layer, lives_pixbuf_get_rowstride(new_pixbuf));
     }
@@ -12582,7 +12613,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
       weed_leaf_delete(layer, WEED_LEAF_HOST_ORIG_PDATA);
   }
 
-  if (new_pixbuf != NULL) {
+  if (new_pixbuf) {
     if (!pixbuf_to_layer(layer, new_pixbuf)) lives_widget_object_unref(new_pixbuf);
   }
 
@@ -12877,7 +12908,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     }
     break;
   }
-  if (mainw->frame_layer != NULL && weed_layer_get_pixel_data_packed(mainw->frame_layer) == pixel_data[0]) {
+  if (mainw->frame_layer && weed_layer_get_pixel_data_packed(mainw->frame_layer) == pixel_data[0]) {
     /// retain pixel_data if it belongs to mainw->frame_layer
     weed_layer_nullify_pixel_data(old_layer);
   }
@@ -12909,7 +12940,7 @@ memfail2:
 
    code example:
 
-   if (pixbuf != NULL) {
+   if (pixbuf) {
    if (!pixbuf_to_layer(layer, pixbuf)) lives_widget_object_unref(pixbuf);
    else do NOT unref the pixbuf !!!!
    }
@@ -12966,7 +12997,7 @@ boolean pixbuf_to_layer(weed_layer_t *layer, LiVESPixbuf * pixbuf) {
   framesize = ALIGN_CEIL(rowstride * height, 32);
   pixel_data = lives_calloc(framesize >> 5, 32);
 
-  if (pixel_data != NULL) {
+  if (pixel_data) {
     in_pixel_data = (void *)lives_pixbuf_get_pixels_readonly(pixbuf);
     lives_memcpy(pixel_data, in_pixel_data, rowstride * (height - 1));
     // this part is needed because layers always have a memory size height*rowstride, whereas gdkpixbuf can have
@@ -13286,7 +13317,7 @@ weed_layer_t *weed_layer_create(int width, int height, int *rowstrides, int pale
 
   if (palette != WEED_PALETTE_END) {
     weed_layer_set_palette(layer, palette);
-    if (rowstrides != NULL) weed_layer_set_rowstrides(layer, rowstrides, weed_palette_get_nplanes(palette));
+    if (rowstrides) weed_layer_set_rowstrides(layer, rowstrides, weed_palette_get_nplanes(palette));
   }
   return layer;
 }
@@ -13315,7 +13346,7 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
 
   if (slayer == NULL || (!WEED_IS_LAYER(slayer) && !WEED_PLANT_IS_CHANNEL(slayer))) return NULL;
 
-  if (dlayer != NULL) {
+  if (dlayer) {
     if (!WEED_IS_LAYER(dlayer) && !WEED_PLANT_IS_CHANNEL(dlayer)) return NULL;
     layer = dlayer;
   }
@@ -13345,7 +13376,7 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
     weed_leaf_copy_or_delete(layer, WEED_LEAF_HEIGHT, slayer);
     weed_leaf_copy_or_delete(layer, WEED_LEAF_WIDTH, slayer);
     weed_leaf_copy_or_delete(layer, WEED_LEAF_CURRENT_PALETTE, slayer);
-    if (pd_array != NULL) {
+    if (pd_array) {
       weed_leaf_copy_or_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC, slayer);
       weed_leaf_copy_or_delete(layer, WEED_LEAF_HOST_ORIG_PDATA, slayer);
       weed_leaf_copy_or_delete(layer, WEED_LEAF_HOST_SURFACE_SRC, slayer);
@@ -13360,7 +13391,7 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
   weed_leaf_copy_or_delete(layer, WEED_LEAF_YUV_SAMPLING, slayer);
   weed_leaf_copy_or_delete(layer, WEED_LEAF_PIXEL_ASPECT_RATIO, slayer);
 
-  if (pd_array != NULL) lives_free(pd_array);
+  if (pd_array) lives_free(pd_array);
   return layer;
 }
 
@@ -13393,12 +13424,12 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
     if (pd_elements > 0) {
       if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC)) {
         LiVESPixbuf *pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PIXBUF_SRC, NULL);
-        if (pixbuf != NULL) lives_widget_object_unref(pixbuf);
+        if (pixbuf) lives_widget_object_unref(pixbuf);
       } else {
         if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_SURFACE_SRC)) {
           lives_painter_surface_t *surface = (lives_painter_surface_t *)weed_get_voidptr_value(layer,
                                              WEED_LEAF_HOST_SURFACE_SRC, NULL);
-          if (surface != NULL) {
+          if (surface) {
             // this is where most surfaces die, as we convert from BGRA -> RGB
             uint8_t *pdata = lives_painter_image_surface_get_data(surface);
 #ifdef DEBUG_CAIRO_SURFACE
@@ -13414,7 +13445,7 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
             pd_elements = 1;
           }
           for (int i = 0; i < pd_elements; i++) {
-            if (pixel_data[i] != NULL) lives_free(pixel_data[i]);
+            if (pixel_data[i]) lives_free(pixel_data[i]);
           }
         }
       }

@@ -29,7 +29,7 @@ static int package_version = 1; // version of this package
 /////////////////////////////////////////////////////////////
 
 static inline void make_white(unsigned char *pixel) {
-  pixel[0] = pixel[1] = pixel[2] = (unsigned char)255;
+  weed_memset(pixel, 255, 3);
 }
 
 static inline void nine_fill(unsigned char *new_data, int row, unsigned char *o) {
@@ -45,54 +45,45 @@ static inline void nine_fill(unsigned char *new_data, int row, unsigned char *o)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static weed_error_t xeffect_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL),
-                *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
-  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  weed_plant_t *in_channel = weed_get_in_channel(inst, 0),
+                *out_channel = weed_get_out_channel(inst, 0);
 
-  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL) * 3;
-  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
-  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
+  int width = weed_channel_get_width(in_channel) * 3 - 4;
+  int height = weed_channel_get_height(in_channel);
+  int palette = weed_channel_get_palette(in_channel);
 
-  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
-  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  int irowstride = weed_channel_get_stride(in_channel);
+  int orowstride = weed_channel_get_stride(out_channel);
 
-  unsigned char *end = src + height * irowstride - irowstride;
+  unsigned char *src = weed_channel_get_pixel_data(in_channel) + irowstride;
+  unsigned char *dst = weed_channel_get_pixel_data(out_channel) + orowstride;
 
-  unsigned int myluma;
-  unsigned int threshold = 10000;
+  unsigned int myluma, threshold = 10000;
   int nbr;
 
-  register int i, j, k;
-
-  src += irowstride;
-  dst += orowstride;
-  width -= 4;
-
-  for (; src < end; src += irowstride) {
-    for (i = 3; i < width; i += 3) {
-      myluma = calc_luma(&src[i], palette, 0);
+  for (int h = 1; h < height - 2; h++) {
+    for (int i = 3; i < width; i += 3) {
+      myluma = calc_luma(&src[h * irowstride + i], palette, 0);
       nbr = 0;
-      for (j = -irowstride; j <= irowstride; j += irowstride) {
-        for (k = -3; k < 4; k += 3) {
-          if ((j != 0 || k != 0) && ABS(calc_luma(&src[j + i + k], palette, 0) - myluma) > threshold) nbr++;
+      for (int j = h - 1; j <= h + 1; j++) {
+        for (int k = -3; k < 4; k += 3) {
+          if ((j != h || k != 0) && ABS(calc_luma(&src[j * irowstride + i + k], palette, 0) - myluma) > threshold) nbr++;
         }
       }
       if (nbr < 2 || nbr > 5) {
-        nine_fill(&dst[i], orowstride, &src[i]);
+        nine_fill(&dst[h * orowstride + i], orowstride, &src[h * irowstride + i]);
       } else {
         if (myluma < 12500) {
-          blank_pixel(&dst[i], palette, 0, NULL);
+          blank_pixel(&dst[h * orowstride + i], palette, 0, NULL);
         } else {
           if (myluma > 20000) {
-            make_white(&dst[i]);
+            make_white(&dst[h * orowstride + i]);
           }
         }
       }
     }
-
-    dst += orowstride;
   }
+
   return WEED_SUCCESS;
 }
 
@@ -107,8 +98,7 @@ WEED_SETUP_START(200, 200) {
                                NULL, xeffect_process, NULL, in_chantmpls, out_chantmpls, NULL, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+  weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;
 

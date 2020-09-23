@@ -123,9 +123,9 @@ static inline int weed_chantmpl_get_flags(weed_plant_t *c) {return _weed_plant_g
 static inline int weed_paramtmpl_get_flags(weed_plant_t *p) {return _weed_plant_get_flags(p);}
 static inline int weed_instance_get_flags(weed_plant_t *i) {return _weed_plant_get_flags(i);}
 static inline int weed_host_supports_linear_gamma(weed_plant_t *h)
-{return (weed_host_get_flags(h) & WEED_HOST_SUPPORTS_LINEAR_GAMMA)?1:0;}
+{return (weed_host_get_flags(h) & WEED_HOST_SUPPORTS_LINEAR_GAMMA) ? 1 : 0;}
 static inline int weed_host_supports_premultiplied_alpha(weed_plant_t *h)
-{return (weed_host_get_flags(h) & WEED_HOST_SUPPORTS_PREMULTIPLIED_ALPHA)?1:0;}
+{return (weed_host_get_flags(h) & WEED_HOST_SUPPORTS_PREMULTIPLIED_ALPHA) ? 1 : 0;}
 static inline weed_plant_t *weed_instance_get_filter(weed_plant_t *i)
 {weed_plant_t *f; return *((weed_plant_t **)gg(i, WEED_LEAF_FILTER_CLASS, 0, (void *)&f));}
 static inline weed_plant_t *weed_get_in_channel(weed_plant_t *i, int x)
@@ -566,6 +566,9 @@ static inline weed_plant_t **weed_get_out_params(weed_plant_t *instance, int *np
 static inline int *weed_channel_get_rowstrides(weed_plant_t *channel, int *nplanes) {
   return weed_get_int_array_counted(channel, WEED_LEAF_ROWSTRIDES, nplanes);
 }
+static inline void **weed_channel_get_pixel_data_planar(weed_plant_t *channel, int *nplanes) {
+  return weed_get_voidptr_array_counted(channel, WEED_LEAF_PIXEL_DATA, nplanes);
+}
 #endif
 
 static inline int weed_param_get_value_int(weed_plant_t *param) {return gg_i(param, WEED_LEAF_VALUE);}
@@ -986,17 +989,19 @@ static uint8_t calc_luma(uint8_t *pixel, int palette, int yuv_clamping) {
 #ifdef NEED_FONT_UTILS
 #include <wchar.h>
 static const wchar_t *fstretches[] = {L"UltraCondensed", L"ExtraCondensed", L"Condensed", L"SemiCondensed",
-				      L"SemiExpanded", L"Expanded", L"ExtraExpanded", L"UltraExpanded", NULL};
+                                      L"SemiExpanded", L"Expanded", L"ExtraExpanded", L"UltraExpanded", NULL
+                                     };
 
 static const wchar_t *fweights[] = {L"Thin", L"UltraLight", L"ExtraLight", L"Light", L"SemiLight", L"DemiLight",
-				    L"Book", L"Regular", L"Medium",
-				  L"DemiBold", L"SemiBold", L"Bold", L"ExtraBold", L"UltraBold", L"Black", L"Heavy",
-				    L"UltraHeavy", L"UltraBlack", L"ExtraBlack",NULL};
+                                    L"Book", L"Regular", L"Medium",
+                                    L"DemiBold", L"SemiBold", L"Bold", L"ExtraBold", L"UltraBold", L"Black", L"Heavy",
+                                    L"UltraHeavy", L"UltraBlack", L"ExtraBlack", NULL
+                                   };
 
 static const wchar_t *fstyles[] = {L"Roman", L"Italic", L"Oblique", NULL};
 
 void weed_parse_font_string(const char *fontstr, char **family, char **fstretch, char **fweight,
-			    char **fstyle, int *size) {
+                            char **fstyle, int *size) {
   wchar_t *token, *state, *next_token;
   wchar_t *xfamily = L"\0";
   wchar_t *xfstretch = L"\0";
@@ -1022,48 +1027,47 @@ void weed_parse_font_string(const char *fontstr, char **family, char **fstretch,
       wchar_t *endptr;
       uintmax_t umax = wcstoumax(token, &endptr, 10);
       if (umax > 0 && *endptr == L'\0') {
-	if (size) *size = (int)(umax & 0x80FFFFFF);
-	goto fontdone;
+        if (size) *size = (int)(umax & 0x80FFFFFF);
+        goto fontdone;
       }
     }
     if (*xfstretch == L'\0') {
       for (i = 0; fstretches[i]; i++) {
-	if (!wcscasecmp(token, fstretches[i])) {
-	  xfstretch = (wchar_t *)fstretches[i];
-	  break;
-	}
+        if (!wcscasecmp(token, fstretches[i])) {
+          xfstretch = (wchar_t *)fstretches[i];
+          break;
+        }
       }
       if (*xfstyle != L'\0') continue;
     }
     if (*xfweight == L'\0') {
       for (i = 0; fweights[i]; i++) {
-	if (!wcscasecmp(token, fweights[i])) {
-	  xfweight = (wchar_t *)fweights[i];
-	  break;
-	}
+        if (!wcscasecmp(token, fweights[i])) {
+          xfweight = (wchar_t *)fweights[i];
+          break;
+        }
       }
       if (*xfweight != L'\0') continue;
     }
     if (*xfstyle == L'\0') {
       for (i = 0; fstyles[i]; i++) {
-	if (!wcscasecmp(token, fstyles[i])) {
-	  xfstyle = (wchar_t *)fstyles[i];
-	  break;
-	}
+        if (!wcscasecmp(token, fstyles[i])) {
+          xfstyle = (wchar_t *)fstyles[i];
+          break;
+        }
       }
       if (*xfstyle != L'\0') continue;
     }
     if (*xfstretch == L'\0' && *xfweight == L'\0' && *xfstyle == L'\0') {
       if (*xfamily != L'\0') {
-	wchar_t tmp[256];
-	swprintf(tmp, 256, L"%ls %ls", xfamily, token);
-	free(xfamily);
-	xfamily = wcsdup(tmp);
-      }
-      else xfamily = wcsdup(token);
+        wchar_t tmp[256];
+        swprintf(tmp, 256, L"%ls %ls", xfamily, token);
+        free(xfamily);
+        xfamily = wcsdup(tmp);
+      } else xfamily = wcsdup(token);
     }
   }
- fontdone:
+fontdone:
   if (family) {
     wcs_len = wcstombs(NULL, xfamily, 0) + 1;
     *family = weed_calloc(wcs_len, 1);

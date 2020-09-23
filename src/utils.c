@@ -1779,23 +1779,24 @@ LIVES_GLOBAL_INLINE int calc_frame_from_time4(int filenum, double time) {
 }
 
 
-static boolean check_for_audio_stop(int fileno, int first_frame, int last_frame) {
+static boolean check_for_audio_stop(int fileno, frames_t first_frame, frames_t last_frame) {
   // this is only used for older versions with non-realtime players
   // return FALSE if audio stops playback
-
+  lives_clip_t *sfile = mainw->files[fileno];
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd && mainw->jackd->playing_file == fileno) {
     if (!mainw->loop || mainw->playing_sel) {
       if (!mainw->loop_cont) {
-        if (mainw->aframeno - 0.0001 < (double)first_frame + 0.0001
-            || mainw->aframeno + 0.0001 >= (double)last_frame - 0.0001) {
+        if ((sfile->adirection == LIVES_DIRECTION_REVERSE && mainw->aframeno - 0.0001 < (double)first_frame + 0.0001)
+            || (sfile->adirection == LIVES_DIRECTION_FORWARD && mainw->aframeno + 0.0001 >= (double)last_frame - 0.0001)) {
           return FALSE;
         }
       }
     } else {
       if (!mainw->loop_cont) {
-        if (mainw->aframeno < 0.9999 ||
-            calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.0001) >= cfile->laudio_time - 0.0001) {
+        if ((sfile->adirection == LIVES_DIRECTION_REVERSE && mainw->aframeno < 0.9999) ||
+            (sfile->adirection == LIVES_DIRECTION_FORWARD && calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.0001)
+             >= cfile->laudio_time - 0.0001)) {
           return FALSE;
 	  // *INDENT-OFF*
         }}}}
@@ -1806,16 +1807,17 @@ static boolean check_for_audio_stop(int fileno, int first_frame, int last_frame)
   if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed && mainw->pulsed->playing_file == fileno) {
     if (!mainw->loop || mainw->playing_sel) {
       if (!mainw->loop_cont) {
-        if (mainw->aframeno - 0.0001 < (double)first_frame + 0.0001
-            || mainw->aframeno + 1.0001 >= (double)last_frame - 0.0001) {
+        if ((sfile->adirection == LIVES_DIRECTION_REVERSE && mainw->aframeno - 0.0001 < (double)first_frame + 0.0001)
+            || (sfile->adirection == LIVES_DIRECTION_FORWARD && mainw->aframeno + 1.0001 >= (double)last_frame - 0.0001)) {
           return FALSE;
         }
       }
     } else {
       if (!mainw->loop_cont) {
         g_print("%f %f\n", mainw->aframeno, cfile->laudio_time);
-        if (mainw->aframeno < 0.9999 ||
-            calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.0001) >= cfile->laudio_time - 0.0001) {
+        if ((sfile->adirection == LIVES_DIRECTION_REVERSE && mainw->aframeno < 0.9999) ||
+            (sfile->adirection == LIVES_DIRECTION_FORWARD && calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.0001)
+             >= cfile->laudio_time - 0.0001)) {
           return FALSE;
 	  // *INDENT-OFF*
         }}}}

@@ -983,7 +983,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           weed_set_int_array(newframe, WEED_LEAF_AUDIO_CLIPS, natracks, naclips);
           weed_set_double_array(newframe, WEED_LEAF_AUDIO_SEEKS, natracks, naseeks);
 
-          if (0 && prefs->rr_super && prefs->rr_amicro) {
+          if (prefs->rr_super && prefs->rr_amicro) {
             /// the timecode of each audio frame is adjusted to the quantised time, and we update the seek position accordingly
             /// however, when playing back, any velocity change will come slightly later than when recorded; thus
             /// the player seek pos will be slightly off.

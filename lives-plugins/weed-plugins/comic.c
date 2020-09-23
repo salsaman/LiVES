@@ -49,8 +49,7 @@ static uint32_t sqrti(uint32_t n) {
 static void cp_chroma(unsigned char *dst, unsigned char *src, int irowstride, int orowstride, int width, int height) {
   if (irowstride == orowstride && irowstride == width) weed_memcpy(dst, src, width * height);
   else {
-    register int i;
-    for (i = 0; i < height; i++) {
+    for (int i = 0; i < height; i++) {
       weed_memcpy(dst, src, width);
       src += irowstride;
       dst += orowstride;
@@ -60,17 +59,17 @@ static void cp_chroma(unsigned char *dst, unsigned char *src, int irowstride, in
 
 
 static weed_error_t comic_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL),
-                *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
-  uint8_t **srcp = (uint8_t **)weed_get_voidptr_array(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
-  uint8_t **dstp = (uint8_t **)weed_get_voidptr_array(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  weed_plant_t *in_channel = weed_get_in_channel(inst, 0),
+                *out_channel = weed_get_out_channel(inst, 0);
+  uint8_t **srcp = (uint8_t **)weed_channel_get_pixel_data_planar(in_channel, NULL);
+  uint8_t **dstp = (uint8_t **)weed_channel_get_pixel_data_planar(out_channel, NULL);
 
-  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
-  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
-  int *irowstrides = weed_get_int_array(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
-  int *orowstrides = weed_get_int_array(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
-  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
-  int clamping = weed_get_int_value(in_channel, WEED_LEAF_YUV_CLAMPING, NULL);
+  int width = weed_channel_get_width(in_channel);
+  int height = weed_channel_get_height(in_channel);
+  int *irowstrides = weed_channel_get_rowstrides(in_channel, NULL);
+  int *orowstrides = weed_channel_get_rowstrides(out_channel, NULL);
+  int palette = weed_channel_get_palette(in_channel);
+  int clamping = weed_channel_get_yuv_clamping(in_channel);
   int irowstride, orowstride;
 
   uint8_t *src, *dst, *end;
@@ -118,11 +117,10 @@ static weed_error_t comic_process(weed_plant_t *inst, weed_timecode_t timestamp)
     // process all pixels except leftmost and rightmost
     for (i = 1; i < width; i++) {
       // do edge detect and convolve
-      row0 = (*(src + irowstride - 1) - * (src - irowstride - 1)) + ((*(src + irowstride) - * (src - irowstride)) << 1) + (*
-             (src + irowstride + 1) - *
-             (src + irowstride - 1));
-      row1 = (*(src - irowstride + 1) - * (src - irowstride - 1)) + ((*(src + 1) - * (src - 1)) << 1) + (*(src + irowstride + 1) + *
-             (src + irowstride - 1));
+      row0 = (*(src + irowstride - 1) - * (src - irowstride - 1)) + ((*(src + irowstride) - * (src - irowstride)) << 1)
+             + (*(src + irowstride + 1) - * (src + irowstride - 1));
+      row1 = (*(src - irowstride + 1) - * (src - irowstride - 1)) + ((*(src + 1) - * (src - 1)) << 1)
+             + (*(src + irowstride + 1) - * (src + irowstride - 1));
 
       sum = ((3 * sqrti(row0 * row0 + row1 * row1) / 2) * scale) >> 8;
 
@@ -178,6 +176,6 @@ WEED_SETUP_START(200, 200) {
   // set preference of unclamped
   weed_set_int_value(in_chantmpls[0], WEED_LEAF_YUV_CLAMPING, WEED_YUV_CLAMPING_UNCLAMPED);
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+  weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;

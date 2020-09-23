@@ -408,7 +408,8 @@ LiVESPixbuf *make_thumb(lives_mt *mt, int file, int width, int height, frames_t 
 
   boolean tried_all = FALSE;
   boolean needs_idlefunc = FALSE;
-  boolean did_backup = mt->did_backup;
+
+  boolean did_backup = FALSE;
 
   int nframe, oframe = frame;
 
@@ -418,6 +419,8 @@ LiVESPixbuf *make_thumb(lives_mt *mt, int file, int width, int height, frames_t 
   }
 
   if (width < 4 || height < 4) return NULL;
+
+  if (mt) did_backup = mt->did_backup;
 
   if (mt && mt->idlefunc > 0) {
     needs_idlefunc = TRUE;

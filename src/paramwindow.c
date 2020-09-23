@@ -933,7 +933,9 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
 
   // tweak some things to do with framedraw preview
   if (mainw->framedraw) fd_tweak(rfx);
-  lives_widget_show_all(fx_dialog[didx]->dialog);
+
+  if (!mainw->ce_thumbs)
+    lives_widget_show_all(fx_dialog[didx]->dialog);
 
   if (retvals) {
     // now apply visually anything we got from onchange_init
@@ -1049,7 +1051,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   int pass;
   int woph = widget_opts.packing_height;
 
-  register int i, j, k;
+  int i, j, k;
 
   char sepnpnum[1024];
   size_t sepnpnumlen;

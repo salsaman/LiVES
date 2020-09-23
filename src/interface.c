@@ -3357,6 +3357,7 @@ static void on_avolch_ok(LiVESButton * button, livespointer data) {
 void redraw_timeline(int clipno) {
   lives_clip_t *sfile;
 
+  if (mainw->ce_thumbs) return;
   if (!IS_VALID_CLIP(clipno)) return;
   sfile = mainw->files[clipno];
   if (sfile->clip_type == CLIP_TYPE_TEMP) return;

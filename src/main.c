@@ -1688,8 +1688,8 @@ static void lives_init(_ign_opts *ign_opts) {
   capable->has_wm_caps = FALSE;
   get_wm_caps();
 
-  prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);
-  //prefs->show_desktop_panel = TRUE;
+  //prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);
+  prefs->show_desktop_panel = TRUE;
 
   prefs->show_msgs_on_startup = get_boolean_prefd(PREF_MSG_START, TRUE);
 

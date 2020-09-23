@@ -3994,6 +3994,7 @@ LIVES_GLOBAL_INLINE boolean get_play_screen_size(int *opwidth, int *opheight) {
   return FALSE;
 }
 
+#define TEST_CE_THUMBS 0
 
 static void _resize_play_window(void) {
   int opwx, opwy, pmonitor = prefs->play_monitor;
@@ -4008,6 +4009,12 @@ static void _resize_play_window(void) {
   int scr_height_safety = SCR_HEIGHT_SAFETY;
 
   uint64_t xwinid = 0;
+
+  if (TEST_CE_THUMBS) {
+    lives_widget_hide(mainw->play_window);
+    start_ce_thumb_mode();
+    return;
+  }
 
   mainw->sepwin_scale = 100.;
 
@@ -4262,7 +4269,6 @@ static void _resize_play_window(void) {
         }
       }
 
-#define TEST_CE_THUMBS 0
       if (TEST_CE_THUMBS || (prefs->show_gui && prefs->ce_thumb_mode && prefs->play_monitor != widget_opts.monitor &&
                              prefs->play_monitor != 0 &&
                              capable->nmonitors > 1 && !mainw->multitrack)) {

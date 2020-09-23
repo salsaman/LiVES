@@ -28,6 +28,7 @@ static LiVESWidget **rb_clip_areas;
 static LiVESWidget **clip_boxes;
 static LiVESWidget *param_hbox;
 static LiVESWidget *top_hbox;
+
 static ulong *ch_fns;
 static ulong *combo_fns;
 static ulong *rb_clip_fns;
@@ -44,7 +45,7 @@ static void ce_thumbs_remove_param_box(int key);
 
 
 void ce_thumbs_set_interactive(boolean interactive) {
-  register int i;
+  int i;
 
   if (!interactive) {
     for (i = 0; i < rte_keys_virtual; i++) {
@@ -56,14 +57,14 @@ void ce_thumbs_set_interactive(boolean interactive) {
       lives_widget_set_sensitive(fxcombos[i], TRUE);
       if (rte_key_getmaxmode(i + 1) > 0) {
         lives_widget_set_sensitive(key_checks[i], TRUE);
-      }
-    }
-  }
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
 }
 
 
 #if LIVES_HAS_GRID_WIDGET
-static boolean switch_clip_cb(LiVESWidget *eventbox, LiVESXEventButton *event, livespointer user_data) {
+static boolean switch_clip_cb(LiVESWidget * eventbox, LiVESXEventButton * event, livespointer user_data) {
   int i = LIVES_POINTER_TO_INT(user_data);
   if (!LIVES_IS_PLAYING) return FALSE;
   if (!LIVES_IS_INTERACTIVE) return FALSE;
@@ -72,7 +73,7 @@ static boolean switch_clip_cb(LiVESWidget *eventbox, LiVESXEventButton *event, l
 }
 
 
-static void ce_thumbs_fx_changed(LiVESCombo *combo, livespointer user_data) {
+static void ce_thumbs_fx_changed(LiVESCombo * combo, livespointer user_data) {
   // callback after user switches fx via combo
   int key = LIVES_POINTER_TO_INT(user_data);
   int mode, cmode;
@@ -91,12 +92,12 @@ static void ce_thumbs_fx_changed(LiVESCombo *combo, livespointer user_data) {
 
 void ce_thumbs_set_key_check_state(void) {
   // set (delayed) keycheck state
-  register int i;
-  for (i = 0; i < prefs->rte_keys_virtual; i++) {
+  for (int i = 0; i < prefs->rte_keys_virtual; i++) {
     lives_signal_handler_block(key_checks[i], ch_fns[i]);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),
-                                   LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(key_checks[i]), "active")));
-    if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(key_checks[i])) && pscrolls[i] != NULL) ce_thumbs_remove_param_box(i);
+                                   LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(key_checks[i]),
+                                       "active")));
+    if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(key_checks[i])) && pscrolls[i]) ce_thumbs_remove_param_box(i);
     lives_signal_handler_unblock(key_checks[i], ch_fns[i]);
   }
 }
@@ -107,7 +108,7 @@ void ce_thumbs_set_keych(int key, boolean on) {
   if (key >= rte_keys_virtual) return;
   lives_signal_handler_block(key_checks[key], ch_fns[key]);
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[key]), on);
-  if (!on && pscrolls[key] != NULL) ce_thumbs_remove_param_box(key);
+  if (!on && pscrolls[key]) ce_thumbs_remove_param_box(key);
   lives_signal_handler_unblock(key_checks[key], ch_fns[key]);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(key_checks[key]), "active", LIVES_INT_TO_POINTER(on));
 }
@@ -115,8 +116,7 @@ void ce_thumbs_set_keych(int key, boolean on) {
 
 void ce_thumbs_set_mode_combo(int key, int mode) {
   // set combo from other source : need to add params after
-  if (key >= rte_keys_virtual) return;
-  if (mode < 0) return;
+  if (key >= rte_keys_virtual || mode < 0) return;
   lives_signal_handler_block(fxcombos[key], combo_fns[key]);
   lives_combo_set_active_index(LIVES_COMBO(fxcombos[key]), mode);
   ce_thumbs_remove_param_box(key);
@@ -124,7 +124,7 @@ void ce_thumbs_set_mode_combo(int key, int mode) {
 }
 
 
-static void pin_toggled(LiVESToggleButton *t, livespointer pkey) {
+static void pin_toggled(LiVESToggleButton * t, livespointer pkey) {
   int key = LIVES_POINTER_TO_INT(pkey);
   boolean state = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[key]), "pinned"));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pscrolls[key]), "pinned", LIVES_INT_TO_POINTER(!state));
@@ -132,7 +132,7 @@ static void pin_toggled(LiVESToggleButton *t, livespointer pkey) {
 
 #if LIVES_HAS_GRID_WIDGET
 
-static void clip_area_toggled(LiVESToggleButton *t, livespointer parea) {
+static void clip_area_toggled(LiVESToggleButton * t, livespointer parea) {
   int area = LIVES_POINTER_TO_INT(parea);
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(rb_clip_areas[area]))) {
     mainw->active_sa_clips = area;
@@ -176,7 +176,7 @@ void start_ce_thumb_mode(void) {
 
   int count = -1, rcount = 0;
 
-  register int i, j;
+  int i, j;
 
   rte_keys_virtual = prefs->rte_keys_virtual;
   n_screen_areas = mainw->n_screen_areas;
@@ -192,9 +192,12 @@ void start_ce_thumb_mode(void) {
   // dual monitor mode, the gui monitor can show clip thumbnails
 
   top_hbox = lives_hbox_new(FALSE, 0);
-  lives_widget_show(top_hbox);
+  lives_widget_object_ref(mainw->top_vbox);
+  lives_widget_unparent(mainw->top_vbox);
 
-  lives_box_pack_start(LIVES_BOX(mainw->top_vbox), top_hbox, TRUE, TRUE, 0);
+  lives_container_add(LIVES_CONTAINER(LIVES_MAIN_WINDOW_WIDGET), top_hbox);
+  lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
+  //lives_box_pack_start(LIVES_BOX(mainw->top_vbox), top_hbox, TRUE, TRUE, 0);
 
   if (palette->style & STYLE_1) lives_widget_set_bg_color(top_hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
@@ -245,12 +248,12 @@ void start_ce_thumb_mode(void) {
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(key_checks[i]), "active",
                                  LIVES_INT_TO_POINTER(lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(key_checks[i]))));
 
-    ch_fns[i] = lives_signal_connect_after(LIVES_GUI_OBJECT(key_checks[i]), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                           LIVES_GUI_CALLBACK(rte_on_off_callback_hook), LIVES_INT_TO_POINTER(i + 1));
+    ch_fns[i] = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(key_checks[i]), LIVES_WIDGET_TOGGLED_SIGNAL,
+                LIVES_GUI_CALLBACK(rte_on_off_callback_hook), LIVES_INT_TO_POINTER(i + 1));
 
     fxcombos[i] = lives_standard_combo_new(NULL, fxlist, LIVES_BOX(hbox), NULL);
 
-    if (fxlist != NULL) {
+    if (fxlist) {
       lives_list_free_all(&fxlist);
       lives_combo_set_active_index(LIVES_COMBO(fxcombos[i]), rte_key_getmode(i + 1));
     } else {
@@ -261,9 +264,8 @@ void start_ce_thumb_mode(void) {
 
     lives_entry_set_editable(LIVES_ENTRY(combo_entries[i]), FALSE);
 
-    combo_fns[i] = lives_signal_connect(LIVES_GUI_OBJECT(fxcombos[i]), LIVES_WIDGET_CHANGED_SIGNAL,
-                                        LIVES_GUI_CALLBACK(ce_thumbs_fx_changed), LIVES_INT_TO_POINTER(i));
-
+    combo_fns[i] = lives_signal_sync_connect(LIVES_GUI_OBJECT(fxcombos[i]), LIVES_WIDGET_CHANGED_SIGNAL,
+                   LIVES_GUI_CALLBACK(ce_thumbs_fx_changed), LIVES_INT_TO_POINTER(i));
   }
 
   add_vsep_to_box(LIVES_BOX(top_hbox));
@@ -327,10 +329,8 @@ void start_ce_thumb_mode(void) {
                               mainw->screen_areas[i].name)));
     lives_free(tmp);
 
-    rb_clip_fns[i] = lives_signal_connect(LIVES_GUI_OBJECT(rb_clip_areas[i]), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                          LIVES_GUI_CALLBACK(clip_area_toggled),
-                                          LIVES_INT_TO_POINTER(i));
-
+    rb_clip_fns[i] = lives_signal_sync_connect(LIVES_GUI_OBJECT(rb_clip_areas[i]), LIVES_WIDGET_TOGGLED_SIGNAL,
+                     LIVES_GUI_CALLBACK(clip_area_toggled), LIVES_INT_TO_POINTER(i));
   }
 
   add_vsep_to_box(LIVES_BOX(hbox2));
@@ -346,7 +346,7 @@ void start_ce_thumb_mode(void) {
   param_hbox = lives_hbox_new(FALSE, 0);
 
   tscroll = lives_standard_scrolled_window_new(width, height, param_hbox);
-  lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(tscroll), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_NEVER);
+  lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(tscroll), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_AUTOMATIC);
 
   lives_box_pack_start(LIVES_BOX(vbox2), tscroll, TRUE, TRUE, 0);
 
@@ -360,7 +360,7 @@ void start_ce_thumb_mode(void) {
 
   // add thumbs to grid
 
-  while (cliplist != NULL) {
+  while (cliplist) {
     count++;
 
     i = LIVES_POINTER_TO_INT(cliplist->data);
@@ -390,7 +390,7 @@ void start_ce_thumb_mode(void) {
 
     thumb_image = lives_image_new();
     lives_image_set_from_pixbuf(LIVES_IMAGE(thumb_image), thumbnail);
-    if (thumbnail != NULL) lives_widget_object_unref(thumbnail);
+    if (thumbnail) lives_widget_object_unref(thumbnail);
     lives_container_add(LIVES_CONTAINER(clip_boxes[count]), align);
 
     if (rcount > 0) {
@@ -418,9 +418,8 @@ void start_ce_thumb_mode(void) {
 
     rcount++;
 
-    lives_signal_connect(LIVES_GUI_OBJECT(clip_boxes[count]), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                         LIVES_GUI_CALLBACK(switch_clip_cb),
-                         LIVES_INT_TO_POINTER(i));
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(clip_boxes[count]), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+                              LIVES_GUI_CALLBACK(switch_clip_cb), LIVES_INT_TO_POINTER(i));
 
     cliplist = cliplist->next;
   }
@@ -444,17 +443,12 @@ void end_ce_thumb_mode(void) {
   mainw->ce_thumbs = FALSE;
   ce_thumbs_remove_param_boxes(TRUE);
   lives_widget_destroy(top_hbox);
+  lives_container_add(LIVES_CONTAINER(LIVES_MAIN_WINDOW_WIDGET), mainw->top_vbox);
   lives_widget_show(mainw->eventbox);
   lives_widget_show(mainw->message_box);
-  lives_free(fxcombos);
-  lives_free(pscrolls);
-  lives_free(combo_entries);
-  lives_free(key_checks);
-  lives_free(rb_fx_areas);
-  lives_free(rb_clip_areas);
-  lives_free(clip_boxes);
-  lives_free(ch_fns);
-  lives_free(rb_clip_fns);
+  lives_free(fxcombos); lives_free(pscrolls); lives_free(combo_entries);
+  lives_free(key_checks); lives_free(rb_fx_areas); lives_free(rb_clip_areas);
+  lives_free(clip_boxes); lives_free(ch_fns); lives_free(rb_clip_fns);
   lives_free(rb_fx_fns);
 }
 
@@ -514,11 +508,11 @@ void ce_thumbs_add_param_box(int key, boolean remove) {
   /* TRANSLATORS - "pin" as in "pinned to window" */
   pin_check = lives_standard_check_button_new((tmp = (_("_Pin"))), FALSE, LIVES_BOX(hbox),
               (tmp2 = (_("Pin the parameter box to the window"))));
-  lives_free(tmp);
-  lives_free(tmp2);
 
-  lives_signal_connect_after(LIVES_GUI_OBJECT(pin_check), LIVES_WIDGET_TOGGLED_SIGNAL,
-                             LIVES_GUI_CALLBACK(pin_toggled), LIVES_INT_TO_POINTER(key));
+  lives_free(tmp); lives_free(tmp2);
+
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(pin_check), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(pin_toggled), LIVES_INT_TO_POINTER(key));
 
   on_fx_pre_activate(rfx, TRUE, vbox);
 
@@ -536,7 +530,7 @@ static void ce_thumbs_remove_param_box(int key) {
   // remove a single param box from the param_hbox
   lives_rfx_t *rfx;
   if (key >= rte_keys_virtual) return;
-  if (pscrolls[key] == NULL) return;
+  if (!pscrolls[key]) return;
   rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[key]), RFX_KEY);
   on_paramwindow_button_clicked(NULL, rfx); // free rfx and unref the inst (must be done before destroying the pscrolls[key]
   lives_widget_destroy(pscrolls[key]);
@@ -547,9 +541,8 @@ static void ce_thumbs_remove_param_box(int key) {
 
 static void ce_thumbs_remove_param_boxes(boolean remove_pinned) {
   // remove all param boxes, (except any which are "pinned")
-  register int i;
-  for (i = 0; i < rte_keys_virtual; i++) {
-    if (pscrolls[i] != NULL) {
+  for (int i = 0; i < rte_keys_virtual; i++) {
+    if (pscrolls[i]) {
       if (remove_pinned || !LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[i]), "pinned")))
         ce_thumbs_remove_param_box(i);
     }
@@ -559,7 +552,7 @@ static void ce_thumbs_remove_param_boxes(boolean remove_pinned) {
 
 void ce_thumbs_register_rfx_change(int key, int mode) {
   // register a param box to be updated visually, from an asynchronous source - either from a A->V data connection or from osc
-  if (key >= rte_keys_virtual || pscrolls[key] == NULL) return;
+  if (key >= rte_keys_virtual || !pscrolls[key]) return;
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pscrolls[key]), "update", LIVES_INT_TO_POINTER(TRUE));
 }
 
@@ -567,26 +560,25 @@ void ce_thumbs_register_rfx_change(int key, int mode) {
 void ce_thumbs_apply_rfx_changes(void) {
   // apply asynch updates
   lives_rfx_t *rfx;
-  register int i;
 
-  for (i = 0; i < rte_keys_virtual; i++) {
-    if (pscrolls[i] != NULL) {
+  for (int i = 0; i < rte_keys_virtual; i++) {
+    if (pscrolls[i]) {
       if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[i]), "update"))) {
         lives_widget_object_set_data(LIVES_WIDGET_OBJECT(pscrolls[i]), "update", LIVES_INT_TO_POINTER(FALSE));
         rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[i]), RFX_KEY);
         update_visual_params(rfx, FALSE);
-      }
-    }
-  }
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
 }
 
 
-void ce_thumbs_update_params(int key, int i, LiVESList *list) {
+void ce_thumbs_update_params(int key, int i, LiVESList * list) {
   // called only from weed_set_blend_factor() and from setting param in rte_window
   lives_rfx_t *rfx;
   if (key >= rte_keys_virtual) return;
 
-  if (pscrolls[key] != NULL) {
+  if (pscrolls[key]) {
     rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[key]), RFX_KEY);
     mainw->block_param_updates = TRUE;
     set_param_from_list(list, &rfx->params[key], 0, TRUE, TRUE);
@@ -600,7 +592,7 @@ void ce_thumbs_update_visual_params(int key) {
   lives_rfx_t *rfx;
   if (key >= rte_keys_virtual) return;
 
-  if (pscrolls[key] != NULL) {
+  if (pscrolls[key]) {
     rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[key]), RFX_KEY);
     update_visual_params(rfx, FALSE);
   }
@@ -609,9 +601,8 @@ void ce_thumbs_update_visual_params(int key) {
 
 void ce_thumbs_check_for_rte(lives_rfx_t *rfx, lives_rfx_t *rte_rfx, int key) {
   // param change in ce_thumbs, update rte_window
-  register int i;
-  for (i = 0; i < rte_keys_virtual; i++) {
-    if (pscrolls[i] != NULL && i == key &&
+  for (int i = 0; i < rte_keys_virtual; i++) {
+    if (pscrolls[i] && i == key &&
         rfx == (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[key]), RFX_KEY)) {
       update_visual_params(rte_rfx, FALSE);
       break;
@@ -626,14 +617,12 @@ void ce_thumbs_reset_combo(int key) {
   LiVESList *fxlist = NULL;
   int mode;
 
-  register int j;
-
   if (key >= rte_keys_virtual) return;
-  for (j = 0; j <= rte_key_getmaxmode(key + 1); j++) {
+  for (int j = 0; j <= rte_key_getmaxmode(key + 1); j++) {
     fxlist = lives_list_append(fxlist, rte_keymode_get_filter_name(key + 1, j, FALSE));
   }
   lives_combo_populate(LIVES_COMBO(fxcombos[key]), fxlist);
-  if (fxlist != NULL) {
+  if (fxlist) {
     weed_plant_t *inst;
     lives_widget_set_sensitive(key_checks[key], TRUE);
     lives_list_free_all(&fxlist);
@@ -652,15 +641,14 @@ void ce_thumbs_reset_combo(int key) {
 
 void ce_thumbs_reset_combos(void) {
   // called from rte_window when the mapping is cleared
-  register int i;
-  for (i = 0; i < rte_keys_virtual; i++) {
+  for (int i = 0; i < rte_keys_virtual; i++) {
     ce_thumbs_reset_combo(i);
   }
 }
 
 
 void ce_thumbs_set_clip_area(void) {
-  register int i;
+  int i;
   for (i = 0; i < n_screen_areas; i++) lives_signal_handler_block(rb_clip_areas[i], rb_clip_fns[i]);
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(rb_clip_areas[mainw->active_sa_clips]), TRUE);
   for (i = 0; i < n_screen_areas; i++) lives_signal_handler_unblock(rb_clip_areas[i], rb_clip_fns[i]);
@@ -686,10 +674,9 @@ void ce_thumbs_highlight_current_clip(void) {
   // unprelight all clip boxes, prelight current clip (fg or bg)
   boolean match = FALSE;
   int clipno;
-  register int i;
 
-  for (i = 0; i < n_clip_boxes; i++) {
-    if (clip_boxes[i] == NULL) break;
+  for (int i = 0; i < n_clip_boxes; i++) {
+    if (!clip_boxes[i]) break;
     if (!match) {
       clipno = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(clip_boxes[i]), "clipno"));
       switch (mainw->active_sa_clips) {
@@ -700,8 +687,7 @@ void ce_thumbs_highlight_current_clip(void) {
         if (clipno == mainw->blend_file) match = TRUE;
         if (mainw->blend_file == -1 && clipno == mainw->current_file) match = TRUE;
         break;
-      default:
-        break;
+      default: break;
       }
       if (match) {
         lives_widget_set_state(clip_boxes[i], LIVES_WIDGET_STATE_PRELIGHT);

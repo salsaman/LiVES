@@ -11726,6 +11726,7 @@ boolean lives_widget_context_update(void) {
         //LiVESXEvent *ev = lives_widgets_get_current_event();
         //if (ev) g_print("ev was %d\n", ev->type);
         //else g_print("NULL event\n");
+        if (g_source_get_priority(g_main_current_source()) >= G_PRIORITY_DEFAULT_IDLE) break;
         lives_widget_context_iteration(NULL, FALSE);
         lives_nanosleep(NSLEEP_TIME);
         sched_yield();

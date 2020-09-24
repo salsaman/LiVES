@@ -74,7 +74,7 @@
 #define COMBOWIDTHCHARS 12
 
 /// char width of framecounter
-#define FCWIDTHCHARS 18
+#define FCWIDTHCHARS 22
 
 /// char width of preview spinbutton
 #define PREVSBWIDTHCHARS 8
@@ -1174,6 +1174,7 @@ typedef struct {
   LiVESWidget *export_allaudio;
   LiVESWidget *export_selaudio;
   LiVESWidget *append_audio;
+  LiVESWidget *normalize_audio;
   LiVESWidget *trim_submenu;
   LiVESWidget *trim_audio;
   LiVESWidget *trim_to_pstart;

@@ -5112,6 +5112,7 @@ void sensitize(void) {
     lives_widget_set_sensitive(mainw->export_submenu, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_AUDIO));
     lives_widget_set_sensitive(mainw->export_selaudio, (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO));
     lives_widget_set_sensitive(mainw->export_allaudio, CURRENT_CLIP_HAS_AUDIO);
+    lives_widget_set_sensitive(mainw->normalize_audio, CURRENT_CLIP_HAS_AUDIO);
     lives_widget_set_sensitive(mainw->recaudio_submenu, TRUE);
     lives_widget_set_sensitive(mainw->recaudio_sel, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
     lives_widget_set_sensitive(mainw->append_audio, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
@@ -5337,6 +5338,7 @@ void desensitize(void) {
   lives_widget_set_sensitive(mainw->voladj, FALSE);
   lives_widget_set_sensitive(mainw->fade_aud_in, FALSE);
   lives_widget_set_sensitive(mainw->fade_aud_out, FALSE);
+  lives_widget_set_sensitive(mainw->normalize_audio, FALSE);
   lives_widget_set_sensitive(mainw->ins_silence, FALSE);
   lives_widget_set_sensitive(mainw->loop_video, is_realtime_aplayer(prefs->audio_player));
   if (!is_realtime_aplayer(prefs->audio_player)) lives_widget_set_sensitive(mainw->mute_audio, FALSE);
@@ -5466,6 +5468,7 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
   lives_painter_t *cr;
   int cx, cy;
   int rwidth, rheight, width, height, owidth, oheight;
+  int border = 0;
 
   if (!surface || !widget) return;
 
@@ -5523,8 +5526,9 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
     /// x, y values are offset of top / left of image in drawing area
     lives_painter_set_source_pixbuf(cr, pixbuf, cx + 2, cy);
 
+    if (mainw->multitrack && widget != mainw->preview_image) border = 16;
     /// clipping area for image
-    lives_painter_rectangle(cr, cx + 2, cy, rwidth, rheight);
+    lives_painter_rectangle(cr, cx + 2, cy, rwidth - border, rheight);
   } else {
     lives_widget_set_opacity(widget, 0.);
     clear_widget_bg(widget, surface);
@@ -7970,7 +7974,7 @@ else resync_audio(mainw->actual_frame);
 if (mainw->opening_loc || !CURRENT_CLIP_IS_NORMAL) {
 framecount = lives_strdup_printf("%9d", mainw->actual_frame);
 } else {
-framecount = lives_strdup_printf("%9d/%d", mainw->actual_frame, cfile->frames);
+framecount = lives_strdup_printf("%9d / %d", mainw->actual_frame, cfile->frames);
 }
 
 /////////////////////////////////////////////////
@@ -8104,12 +8108,12 @@ mainw->rec_aclip = -1;
 pthread_mutex_unlock(&mainw->event_list_mutex);
 
 /* TRANSLATORS: rec(ord) */
-framecount = lives_strdup_printf(_("rec %9d/%d"), mainw->actual_frame,
+framecount = lives_strdup_printf(_("rec %9d / %d"), mainw->actual_frame,
 cfile->frames > mainw->actual_frame ? cfile->frames : mainw->actual_frame);
 } else {
 pthread_mutex_unlock(&mainw->event_list_mutex);
 /* TRANSLATORS: out of memory (rec(ord)) */
-(framecount = lives_strdup_printf(_("!rec %9d/%d"), mainw->actual_frame, cfile->frames));
+(framecount = lives_strdup_printf(_("!rec %9d / %d"), mainw->actual_frame, cfile->frames));
 }
 lives_free(clips);
 lives_free(frames);
@@ -8164,7 +8168,7 @@ fname_next = make_image_file_name(cfile, frame + 1, get_image_ext_for_type(cfile
 if (!mainw->fs && !prefs->hide_framebar && !mainw->is_rendering) {
 lives_freep((void **)&framecount);
 if (CURRENT_CLIP_HAS_VIDEO && cfile->frames != 123456789) {
-framecount = lives_strdup_printf("%9d/%d", frame, cfile->frames);
+framecount = lives_strdup_printf("%9d / %d", frame, cfile->frames);
 } else {
 framecount = lives_strdup_printf("%9d", frame);
 }
@@ -9128,7 +9132,8 @@ mainw->track_decoders[i] = clone_decoder(nclip);
           return;
         }
 
-        lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), (tmp = lives_strdup_printf("%9d/%9d", frame, mainw->rec_vid_frames)));
+        lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), (tmp = lives_strdup_printf("%9d / %9d",
+                             frame, mainw->rec_vid_frames)));
         lives_widget_queue_draw(mainw->framecounter);
         lives_free(tmp);
       }

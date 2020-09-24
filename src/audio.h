@@ -48,6 +48,8 @@
 
 #define AUD_WRITE_CHECK 0xFFFFFFFFF4000000 ///< after recording this many bytes we check disk space (default 128MB)
 
+#define WEED_LEAF_HOST_KEEP_ADATA "keep_adata" /// set to WEED_TRUE in layer if doing zero-copy audio porcessing
+
 /////////////////////////////////////
 /// asynch msging
 
@@ -147,7 +149,9 @@ typedef enum lives_audio_loop {
 } lives_audio_loop_t;
 
 float get_float_audio_val_at_time(int fnum, int afd, double secs, int chnum, int chans) GNU_HOT;
-boolean audiofile_is_silent(int fnum, double start, double end);
+float audiofile_get_maxvol(int fnum, double start, double end, float thresh);
+
+boolean normalise_audio(int fnum, double start, double end, float thresh);
 
 void sample_silence_dS(float *dst, uint64_t nsamples);
 

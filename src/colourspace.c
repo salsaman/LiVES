@@ -5095,8 +5095,6 @@ static void convert_yuv_planar_to_bgr_frame(uint8_t **src, int width, int height
   orowstride -= width * opstep;
   irowstride -= width;
 
-  g_print("hh is %d %p\n", height, dest);
-
   for (i = 0; i < height; i++) {
     for (j = 0; j < width; j++) {
       yuv2bgr(*(y++), *(u++), *(v++), &dest[0], &dest[1], &dest[2]);

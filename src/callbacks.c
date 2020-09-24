@@ -2365,7 +2365,6 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
       if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ASIGNED, &asigned)) bad_header = TRUE;
     }
 
-    reget_afilesize(mainw->current_file);
     showclipimgs();
 
     if (bad_header) do_header_write_error(mainw->current_file);
@@ -2546,7 +2545,6 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
       cfile->undo_action == UNDO_FADE_AUDIO || cfile->undo_action == UNDO_AUDIO_VOL ||
       cfile->undo_action == UNDO_TRIM_AUDIO || cfile->undo_action == UNDO_APPEND_AUDIO ||
       (cfile->undo_action == UNDO_ATOMIC_RESAMPLE_RESIZE && cfile->arate != cfile->undo1_int)) {
-    lives_rm(cfile->info_file);
     com = lives_strdup_printf("%s undo_audio \"%s\"", prefs->backend_sync, cfile->handle);
     mainw->cancelled = CANCEL_NONE;
     mainw->error = FALSE;
@@ -2597,8 +2595,6 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     if (!save_clip_value(mainw->current_file, CLIP_DETAILS_AENDIAN, &aendian)) bad_header = TRUE;
     if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ASIGNED, &asigned)) bad_header = TRUE;
 
-    reget_afilesize(mainw->current_file);
-
     if (bad_header) do_header_write_error(mainw->current_file);
   }
 
@@ -2631,8 +2627,6 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     cfile->arps = cfile->undo_arps;
     cfile->asampsize = cfile->undo_asampsize;
     cfile->signed_endian = cfile->undo_signed_endian;
-
-    reget_afilesize(mainw->current_file);
 
     asigned = !(cfile->signed_endian & AFORM_UNSIGNED);
     aendian = cfile->signed_endian & AFORM_BIG_ENDIAN;
@@ -2746,6 +2740,11 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     deal_with_render_choice(FALSE);
   }
   mainw->osc_block = FALSE;
+
+  if (!mainw->multitrack) {
+    reget_afilesize(mainw->current_file);
+    if (CURRENT_CLIP_HAS_AUDIO) redraw_timeline(mainw->current_file);
+  }
 }
 
 
@@ -9916,6 +9915,8 @@ boolean all_expose_overlay(LiVESWidget * widget, lives_painter_t *creb, livespoi
 #endif
         } else offset = allocwidth * (mainw->aframeno - .5) / cfile->fps / CURRENT_CLIP_TOTAL_TIME;
       }
+    } else {
+      offset = cfile->real_pointer_time / CURRENT_CLIP_TOTAL_TIME * allocwidth;
     }
 
     if (cfile->achans > 0) {
@@ -11765,6 +11766,61 @@ void on_export_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) 
     get_dirname(mainw->audio_dir);
   }
   lives_free(file_name);
+}
+
+
+void on_normalise_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  char *com;
+
+  if (!CURRENT_CLIP_HAS_AUDIO) return;
+
+  d_print(_("Normalising audio..."));
+
+  desensitize();
+  do_threaded_dialog(_("Normalizing audio..."), TRUE);
+
+  threaded_dialog_spin(0.);
+
+  if (!prefs->conserve_space) {
+    com = lives_strdup_printf("%s backup_audio \"%s\"", prefs->backend_sync, cfile->handle);
+    lives_system(com, FALSE);
+    lives_free(com);
+    if (THREADVAR(com_failed)) {
+      end_threaded_dialog();
+      d_print_failed();
+      sensitize();
+      return;
+    }
+  }
+  normalise_audio(mainw->current_file, 0., 0., .95);
+
+  if (THREADVAR(write_failed) || THREADVAR(read_failed)) {
+    THREADVAR(read_failed) = THREADVAR(write_failed) = 0;
+    end_threaded_dialog();
+    d_print_failed();
+    return;
+  }
+
+  if (mainw->cancelled != CANCEL_NONE) {
+    com = lives_strdup_printf("%s undo_audio \"%s\"", prefs->backend_sync, cfile->handle);
+    mainw->cancelled = CANCEL_NONE;
+    lives_system(com, FALSE);
+    lives_free(com);
+    end_threaded_dialog();
+    d_print_cancelled();
+    return;
+  }
+
+  cfile->changed = TRUE;
+  reget_afilesize(mainw->current_file);
+
+  if (!prefs->conserve_space) {
+    set_undoable(_("Normalise audio"), TRUE);
+    cfile->undo_action = UNDO_AUDIO_VOL;
+  }
+  sensitize();
+  end_threaded_dialog();
+  d_print_done();
 }
 
 

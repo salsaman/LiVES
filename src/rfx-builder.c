@@ -120,6 +120,7 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
 
   LiVESWidget *dialog_vbox;
   LiVESWidget *hbox;
+  LiVESWidget *layout;
   LiVESWidget *label;
   LiVESWidget *okbutton;
   LiVESWidget *cancelbutton;
@@ -218,15 +219,17 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
   rfxbuilder->type_utility_radiobutton = lives_standard_radio_button_new(_("utility"), &radiobutton_type_group, LIVES_BOX(hbox),
                                          NULL);
 
+  layout = lives_layout_new(LIVES_BOX(top_vbox));
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
   // name
 
   rfxbuilder->name_entry = lives_standard_entry_new((tmp = (_("Name:          "))), NULL, -1, -1,
-                           LIVES_BOX(top_vbox), (tmp2 = (_("The name of the plugin. No spaces allowed."))));
+                           LIVES_BOX(hbox), (tmp2 = (_("The name of the plugin. No spaces allowed."))));
   lives_free(tmp); lives_free(tmp2);
 
   // version
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   rfxbuilder->spinbutton_version = lives_standard_spin_button_new((tmp = (_("Version:       "))),
                                    rfxbuilder->plugin_version, rfxbuilder->plugin_version, 1000000., 1., 1., 0,
@@ -234,23 +237,24 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
   lives_free(tmp); lives_free(tmp2);
 
   // author
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   rfxbuilder->author_entry = lives_standard_entry_new((tmp = (_("    Author:       "))), NULL, -1, -1,
                              LIVES_BOX(hbox), (tmp2 = (_("The script author."))));
   lives_free(tmp); lives_free(tmp2);
 
   // URL
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   rfxbuilder->url_entry = lives_standard_entry_new((tmp = (_("    URL (optional):       "))), NULL, -1, -1,
-                          LIVES_BOX(top_vbox), (tmp2 = (_("URL for the plugin maintainer."))));
+                          LIVES_BOX(hbox), (tmp2 = (_("URL for the plugin maintainer."))));
   lives_free(tmp); lives_free(tmp2);
 
   // menu entry
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   rfxbuilder->menu_text_entry = lives_standard_entry_new((tmp = (_("Menu text:    "))), NULL, -1, -1,
-                                LIVES_BOX(top_vbox), (tmp2 = (_("The text to show in the menu."))));
+                                LIVES_BOX(hbox), (tmp2 = (_("The text to show in the menu."))));
   lives_free(tmp); lives_free(tmp2);
 
   rfxbuilder->action_desc_hsep = add_hsep_to_box(LIVES_BOX(top_vbox));

@@ -305,6 +305,8 @@ void on_encoder_ofmt_changed(LiVESCombo *, livespointer);
 
 void on_ok_export_audio_clicked(LiVESButton *, livespointer);
 
+void on_normalise_audio_activate(LiVESMenuItem *, livespointer);
+
 void on_append_audio_activate(LiVESMenuItem *, livespointer);
 
 void on_rb_audrec_time_toggled(LiVESToggleButton *, livespointer);

@@ -347,9 +347,7 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
     lives_widget_set_base_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_NORMAL, colb);
     lives_widget_set_base_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_INSENSITIVE, colb);
     lives_widget_set_text_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_NORMAL, colf);
-    lives_widget_set_text_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_INSENSITIVE, colf);
     lives_widget_set_text_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_NORMAL, colf);
-    lives_widget_set_text_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_INSENSITIVE, colf);
   }
 
   lives_widget_set_fg_color(mainw->sel_label, LIVES_WIDGET_STATE_NORMAL, colf);
@@ -1288,9 +1286,9 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->resample_audio);
   lives_widget_set_sensitive(mainw->resample_audio, FALSE);
 
-  //mainw->normalize_audio = lives_standard_menu_item_new_with_label(_("_Normalize Audio..."));
-  //lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->normalize_audio);
-  //lives_widget_set_sensitive(mainw->normalize_audio, FALSE);
+  mainw->normalize_audio = lives_standard_menu_item_new_with_label(_("_Normalize Audio"));
+  lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->normalize_audio);
+  lives_widget_set_sensitive(mainw->normalize_audio, FALSE);
 
   //mainw->adj_audio_sync = lives_standard_menu_item_new_with_label(_("_Adjust Audio Sync..."));
   //lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->adj_audio_sync);
@@ -1548,7 +1546,7 @@ void create_LiVES(void) {
 
   mainw->toy_tv = lives_standard_check_menu_item_new_with_label(_("_LiVES TV (broadband)"), FALSE);
 
-  if (!prefs->vj_mode)
+  if (0 && !prefs->vj_mode)
     lives_container_add(LIVES_CONTAINER(mainw->toys_menu), mainw->toy_tv);
 
   menuitem = lives_standard_menu_item_new_with_label(_("_Help"));
@@ -2153,6 +2151,10 @@ void create_LiVES(void) {
   widget_opts.packing_width = dpw;
   widget_opts.apply_theme = woat;
 
+  if (woat) {
+    set_css_value_direct(mainw->spinbutton_start, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
+    set_css_value_direct(mainw->spinbutton_start, LIVES_WIDGET_STATE_INSENSITIVE, "button", "opacity", "0.5");
+  }
   lives_entry_set_width_chars(LIVES_ENTRY(mainw->spinbutton_start), 10);
   lives_widget_set_halign(mainw->spinbutton_start, LIVES_ALIGN_CENTER);
   add_spring_to_box(LIVES_BOX(mainw->hbox3), 0);
@@ -2210,6 +2212,10 @@ void create_LiVES(void) {
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   widget_opts.packing_width = dpw;
   widget_opts.apply_theme = woat;
+  if (woat) {
+    set_css_value_direct(mainw->spinbutton_end, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
+    set_css_value_direct(mainw->spinbutton_end, LIVES_WIDGET_STATE_INSENSITIVE, "button", "opacity", "0.5");
+  }
 
   add_spring_to_box(LIVES_BOX(mainw->hbox3), 0.);
   lives_entry_set_width_chars(LIVES_ENTRY(mainw->spinbutton_end), 10);
@@ -2786,6 +2792,8 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_export_audio_activate), LIVES_INT_TO_POINTER(1));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->append_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_append_audio_activate), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->normalize_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_normalise_audio_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->trim_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_trim_audio_activate), LIVES_INT_TO_POINTER(0));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->trim_to_pstart), LIVES_WIDGET_ACTIVATE_SIGNAL,

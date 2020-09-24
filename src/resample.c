@@ -553,7 +553,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   weed_event_t *last_frame_event;
   weed_event_t *event, *newframe = NULL;
   weed_event_t *init_event, *filter_map = NULL, *deinit_event;
-  weed_event_t *prev_aframe, *xprev_aframe, *last_out_frame = NULL;
+  weed_event_t *prev_aframe, *xprev_aframe;
   weed_timecode_t recst_tc = 0;
 
   LiVESResponseType response;
@@ -991,7 +991,8 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
             /// arriving at the current audio frame
             double amicro_lim = 4. / qfps;
             prev_aframe = get_prev_audio_frame_event(newframe);
-            while (prev_aframe && out_tc - get_event_timecode(prev_aframe) <= amicro_lim) {
+            if ((double)(out_tc - get_event_timecode(prev_aframe)) / TICKS_PER_SECOND_DBL <= amicro_lim) {
+              //while (prev_aframe && (double)(out_tc - get_event_timecode(prev_aframe)) / TICKS_PER_SECOND_DBL <= amicro_lim) {
               for (i = 0; i < natracks; i += 2) {
                 // check each track in natracks (currently active) to see if it is also in xatracks (all active)
                 boolean gottrack = FALSE;
@@ -1010,7 +1011,8 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
                 /// find the prior audio frame for the track
                 xprev_aframe = prev_aframe;
-                while (gottrack && xprev_aframe) {
+                if (1) {
+                  //while (gottrack && xprev_aframe) {
                   weed_timecode_t ptc = get_event_timecode(xprev_aframe);
                   int *paclips;
                   double *paseeks;
@@ -1022,44 +1024,47 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
                   for (j = 0; j < patracks; j += 2) {
                     if (paclips[j] == naclips[i]) {
                       if (paclips[j + 1] == naclips[i + 1]) {
-                        if (paseeks[j + 1] > 0.) {
+                        if (paseeks[j + 1] != 0.) {
                           double dt = (double)(out_tc - ptc) / TICKS_PER_SECOND_DBL;
-                          if (dt > amicro_lim) continue;
-                          else {
-                            double dtl = (double)(out_tc - get_event_timecode(last_out_frame)) / TICKS_PER_SECOND_DBL;
+                          //if (dt > amicro_lim) continue;
+                          //else {
+                          if (1) {
                             /// what we will do here is insert an extra audio event at the previous out_frame.
                             /// the seek will be calculated from old_val, and we will adjust the velocity
                             /// so we hit the seek value at this frame
                             /// adjust velocity by seek_delta / frame_duration
                             int in_arate = mainw->files[naclips[i + 1]]->arps;
-                            double seek = paseeks[j] + paseeks[j + 1] * (dt - dtl);
-                            double nvel = (naseeks[i] - seek) / dtl;
+                            double nvel = (naseeks[i] - paseeks[j]) / dt, seek;
 
-                            /// velocity should be close to seek_time / clock_time, else this was a jump
-                            if ((paseeks[j + 1] < naseeks[i + 1] && nvel > paseeks[j + 1] * (1. - SKJUMP_THRESH_RATIO)
-                                 && nvel <= naseeks[i + 1] * (1. + SKJUMP_THRESH_RATIO))
-                                || (paseeks[j + 1] > naseeks[i + 1] && nvel < paseeks[j + 1]
-                                    * (1. + SKJUMP_THRESH_RATIO) && nvel >= naseeks[i + 1] * (1. - SKJUMP_THRESH_RATIO))) {
-                              insert_audio_event_at(last_out_frame, paclips[j], paclips[j + 1], seek, nvel);
+                            if (nvel * paseeks[j + 1] < 0.) break;
+
+                            if (nvel > paseeks[j + 1]) {
+                              if (nvel / paseeks[j + 1] > SKJUMP_THRESH_RATIO) nvel = paseeks[j + 1] * SKJUMP_THRESH_RATIO;
                             } else {
-                              // if velocity change is too great then we may adjust the seek a little instead
-                              if (fabs(naseeks[i] - (seek + paseeks[j + 1] * dtl)) < SKJUMP_THRESH_SECS) {
-                                naseeks[i] = quant_aseek(paseeks[j] + paseeks[j + 1] * dt, in_arate);
-                                weed_set_double_array(newframe, WEED_LEAF_AUDIO_SEEKS, natracks, naseeks);
-				// *INDENT-OFF*
-			      }}}}
-			else break; // different audio on track
-		      }}
-		    // *INDENT-ON*
-                    lives_freep((void **)&paclips);
-                    lives_freep((void **)&paseeks);
-                    if (j == patracks) xprev_aframe = get_prev_audio_frame_event(xprev_aframe);
-                    else {
-                      gottrack = FALSE;
-                      break;
-                    }
-		    // *INDENT-OFF*
-		  }}}}}
+                              if (paseeks[j + 1] / nvel > SKJUMP_THRESH_RATIO) nvel = paseeks[j + 1]  / SKJUMP_THRESH_RATIO;
+                            }
+
+                            insert_audio_event_at(xprev_aframe, paclips[j], paclips[j + 1], paseeks[j], nvel);
+                            //} else {
+                            // if velocity change is too great then we may adjust the seek a little instead
+                            seek = paseeks[j] + nvel * dt;
+
+                            if (naseeks[i] > seek) {
+                              if (naseeks[i] > seek + SKJUMP_THRESH_SECS) seek = naseeks[i] + SKJUMP_THRESH_SECS;
+                            } else {
+                              if (naseeks[i] < seek - SKJUMP_THRESH_SECS) seek = naseeks[i] - SKJUMP_THRESH_SECS;
+                            }
+                            naseeks[i] = quant_aseek(seek, in_arate);
+                            weed_set_double_array(newframe, WEED_LEAF_AUDIO_SEEKS, natracks, naseeks);
+                          }
+                          break;
+			  // *INDENT-OFF*
+			}}}}
+		  // *INDENT-ON*
+                  lives_freep((void **)&paclips);
+                  lives_freep((void **)&paseeks);
+		  // *INDENT-OFF*
+		}}}}
 	  // *INDENT-ON*
 
           /// merge natracks with xatracks
@@ -1090,9 +1095,6 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
         lives_freep((void **)&frames);
         lives_freep((void **)&clips);
-
-        if (prefs->rr_super && prefs->rr_ramicro)
-          last_out_frame = newframe;
 
         /// frame insertion done
 

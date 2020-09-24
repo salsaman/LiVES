@@ -3474,8 +3474,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                        prefs->mt_exit_render, LIVES_BOX(hbox), NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  label = lives_standard_label_new(_("Auto backup layouts"));
-  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, TRUE, widget_opts.packing_width * 2);
+  label = lives_standard_label_new(_("Auto backup layouts:"));
+  lives_box_pack_end(LIVES_BOX(hbox), label, FALSE, TRUE, widget_opts.packing_width * 2);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   int wopw = widget_opts.packing_width;
@@ -3888,7 +3888,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   ACTIVE(checkbutton_parestart, TOGGLED);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  tmp = lives_strdup_printf(_("Pulseaudio restart command: %s -k "), EXEC_PULSEAUDIO);
+  tmp = lives_strdup_printf(_("Pulseaudio restart command: %s -k"), EXEC_PULSEAUDIO);
   prefsw->audio_command_entry = lives_standard_entry_new(tmp, prefs->pa_start_opts, SHORT_ENTRY_WIDTH, PATH_MAX * 2,
                                 LIVES_BOX(hbox), NULL);
   ACTIVE(audio_command_entry, CHANGED);
@@ -4334,16 +4334,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->frei0r_entry = lives_standard_direntry_new(_("Frei0r plugin path"), prefs->frei0r_path,
-                         LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
-
-  widget_opts.packing_height = woph;
-  widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  lives_layout_add_label(LIVES_LAYOUT(layout),
-                         _("(Frei0r directories should be separated by ':', "
-                           "ordered from lowest to highest priority)"), FALSE);
-  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
-
-  lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
+                         LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
+                         (tmp = H_("(Frei0r directories should be separated by ':',\n"
+                                   "ordered from lowest to highest priority)")));
+  lives_free(tmp);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->ladspa_entry = lives_standard_direntry_new(_("LADSPA plugin path"), prefs->ladspa_path, LONG_ENTRY_WIDTH, PATH_MAX,
@@ -5104,7 +5098,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_net), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->spinbutton_bwidth = lives_standard_spin_button_new(_("Download bandwidth (Kb/s)       "),
+  prefsw->spinbutton_bwidth = lives_standard_spin_button_new(_("Download bandwidth (Kb/s)"),
                               prefs->dl_bandwidth, 0, 100000000., 1, 10, 0, LIVES_BOX(hbox), NULL);
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_net));
@@ -5126,7 +5120,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_widget_set_sensitive(prefsw->enable_OSC, FALSE);
 #endif
 
-  prefsw->spinbutton_osc_udp = lives_standard_spin_button_new(_("UDP port:       "),
+  prefsw->spinbutton_osc_udp = lives_standard_spin_button_new(_("UDP port"),
                                prefs->osc_udp_port, 1., 65535., 1., 10., 0, LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -5307,7 +5301,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   prefsw->omc_js_entry = lives_standard_fileentry_new((tmp = (_("_Joystick device")))
                          , prefs->omc_js_fname, LIVES_DEVICE_DIR, LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
-                         (tmp2 = (_("The joystick device, e.g. /dev/input/js0"))));
+                         (tmp2 = (H_("The joystick device, e.g. /dev/input/js0\n"
+                                     "Leave blank to use defaults"))));
   lives_free(tmp); lives_free(tmp2);
 
 #ifdef OMC_MIDI_IMPL

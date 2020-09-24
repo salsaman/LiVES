@@ -184,7 +184,7 @@ void create_merge_dialog(void) {
 
   retvals = do_onchange_init(rfx);
 
-  if (retvals != NULL) {
+  if (retvals) {
     // now apply visually anything we got from onchange_init
     //param_demarshall (rfx,retvals,TRUE,TRUE);
     lives_list_free_all(&retvals);
@@ -280,7 +280,7 @@ void on_merge_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 void on_merge_cancel_clicked(LiVESButton *button, livespointer user_data) {
   lives_rfx_t *rfx = (lives_rfx_t *)user_data;
   on_paramwindow_button_clicked(NULL, rfx);
-  if (merge_opts->spinbutton_loops != NULL)
+  if (merge_opts->spinbutton_loops)
     mainw->last_transition_loops = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(merge_opts->spinbutton_loops));
   lives_widget_destroy(merge_opts->merge_dialog);
   lives_widget_context_update();
@@ -314,7 +314,7 @@ void on_merge_ok_clicked(LiVESButton *button, livespointer user_data) {
 
   rfx = &mainw->rendered_fx[mainw->last_transition_idx];
 
-  if (rfx != NULL && mainw->textwidget_focus != NULL) {
+  if (rfx && mainw->textwidget_focus) {
     // make sure text widgets are updated if they activate the default
     LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus),
                               TEXTWIDGET_KEY);
@@ -329,7 +329,7 @@ void on_merge_ok_clicked(LiVESButton *button, livespointer user_data) {
 
   mainw->textwidget_focus = NULL;
 
-  if (merge_opts->spinbutton_loops != NULL)
+  if (merge_opts->spinbutton_loops)
     mainw->last_transition_loops = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(merge_opts->spinbutton_loops));
 
   mainw->last_transition_loop_to_fit = merge_opts->loop_to_fit;
@@ -348,7 +348,7 @@ void on_merge_ok_clicked(LiVESButton *button, livespointer user_data) {
     }
   }
 
-  if (merge_opts->spinbutton_loops != NULL)
+  if (merge_opts->spinbutton_loops)
     times_to_loop = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(merge_opts->spinbutton_loops));
   else
     times_to_loop = 1;

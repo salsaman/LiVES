@@ -239,6 +239,8 @@ lives_colRGB48_t *lives_painter_set_source_rgb_from_lives_rgb(lives_painter_t *,
 LiVESWidgetColor *lives_painter_set_source_rgb_from_lives_widget_color(lives_painter_t *, LiVESWidgetColor *);
 
 boolean clear_widget_bg(LiVESWidget *widget, lives_painter_surface_t *);
+boolean clear_widget_bg_area(LiVESWidget *widget, lives_painter_surface_t *s,
+                             double x, double y, double width, double height);
 
 boolean lives_rgba_equal(lives_colRGBA64_t *col1, lives_colRGBA64_t *col2);
 lives_colRGBA64_t *lives_rgba_copy(lives_colRGBA64_t *col1, lives_colRGBA64_t *col2);

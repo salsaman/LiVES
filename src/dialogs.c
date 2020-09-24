@@ -2651,6 +2651,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       if (!cfile->nopreview && !(cfile->opening && mainw->multitrack)) {
         lives_widget_set_no_show_all(mainw->proc_ptr->preview_button, FALSE);
         lives_widget_show_all(mainw->proc_ptr->preview_button);
+        lives_button_grab_default_special(mainw->proc_ptr->preview_button);
       }
 
       // show buttons
@@ -2704,7 +2705,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
           }
           lives_strfreev(array);
         } else {
-          if (mainw->msg[lives_strlen(mainw->msg) - 1] == '%')
+          if (*mainw->msg && mainw->msg[lives_strlen(mainw->msg) - 1] == '%')
             mainw->proc_ptr->frac_done = atof(mainw->msg);
           else
             mainw->proc_ptr->frames_done = atoi(mainw->msg);

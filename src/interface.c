@@ -188,18 +188,18 @@ void clear_tbar_bgs(int posx, int posy, int width, int height, int which) {
 
   if (which == 0 || which == 2) {
     if (mainw->laudio_drawable) {
-      clear_widget_bg(mainw->laudio_draw, mainw->laudio_drawable);
+      clear_widget_bg_area(mainw->laudio_draw, mainw->laudio_drawable, posx, posy, width, height);
     }
   }
 
   if (which == 0 || which == 3) {
     if (mainw->raudio_drawable) {
-      clear_widget_bg(mainw->raudio_draw, mainw->raudio_drawable);
+      clear_widget_bg_area(mainw->raudio_draw, mainw->raudio_drawable, posx, posy, width, height);
     }
   }
 
   if (which == 0 || which == 1) {
-    clear_widget_bg(mainw->video_draw, mainw->video_drawable);
+    clear_widget_bg_area(mainw->video_draw, mainw->video_drawable, posx, posy, width, height);
   }
 }
 
@@ -255,7 +255,7 @@ double lives_ce_update_timeline(int frame, double x) {
 
   if (prefs->show_gui && !prefs->hide_framebar && cfile->frames > 0) {
     char *framecount;
-    if (cfile->frames > 0) framecount = lives_strdup_printf("%9d/%d", frame, cfile->frames);
+    if (cfile->frames > 0) framecount = lives_strdup_printf("%9d / %d", frame, cfile->frames);
     else framecount = lives_strdup_printf("%9d", frame);
     lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount);
     lives_freep((void **)&framecount);
@@ -333,7 +333,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
   // draw timer bars
   // first the background
-  //clear_tbar_bgs(posx, posy, width, height, which);
+  clear_tbar_bgs(posx, posy, width, height, which);
 
   // empirically we need to draw wider
   posx -= OVERDRAW_MARGIN;
@@ -821,6 +821,7 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
 
       lives_widget_add_accelerator(enoughbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                    LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+      lives_button_uncenter(enoughbutton, DLG_BUTTON_WIDTH);
     } else {
       procw->cancel_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing), LIVES_STOCK_CANCEL, NULL,
                              LIVES_RESPONSE_CANCEL);
@@ -831,6 +832,7 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
 
       lives_signal_sync_connect(LIVES_GUI_OBJECT(procw->cancel_button), LIVES_WIDGET_CLICKED_SIGNAL,
                                 LIVES_GUI_CALLBACK(on_dth_cancel_clicked), LIVES_INT_TO_POINTER(0));
+      lives_button_uncenter(procw->cancel_button, DLG_BUTTON_WIDTH);
     }
   }
 
@@ -3366,7 +3368,6 @@ void redraw_timeline(int clipno) {
 
   if (!mainw->video_drawable) {
     mainw->video_drawable = lives_widget_create_painter_surface(mainw->video_draw);
-    clear_tbar_bgs(0, 0, 0, 0, 1);
   }
   update_timer_bars(0, 0, 0, 0, 1);
 

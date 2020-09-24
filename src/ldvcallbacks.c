@@ -13,16 +13,16 @@ void on_camgrab_clicked(LiVESButton *button, livespointer user_data) {
 
   char *msg;
 
-  if (dvgrabw->filename != NULL) lives_free(dvgrabw->filename);
+  if (dvgrabw->filename) lives_free(dvgrabw->filename);
   dvgrabw->filename = find_free_camfile(cam->format);
-  if (dvgrabw->filename == NULL) return;
+  if (!dvgrabw->filename) return;
 
   lives_widget_set_sensitive(dvgrabw->grab, FALSE);
   lives_set_cursor_style(LIVES_CURSOR_BUSY, dvgrabw->dialog);
 
   if (!dvgrabw->playing) on_camplay_clicked(NULL, user_data);
 
-  if (dvgrabw->dirname != NULL) lives_free(dvgrabw->dirname);
+  if (dvgrabw->dirname) lives_free(dvgrabw->dirname);
   dvgrabw->dirname = lives_strdup(lives_entry_get_text(LIVES_ENTRY(dvgrabw->dirent)));
 
   msg = lives_strdup_printf(_("Recording to %s/%s"), dvgrabw->dirname, dvgrabw->filename);
@@ -98,14 +98,14 @@ void on_camquit_clicked(LiVESButton *button, livespointer user_data) {
   on_camstop_clicked(button, user_data);
   //if (cam->format==CAM_FORMAT_HDV) close_raw1394(cam->rec_handle);
   lives_widget_destroy(dvgrabw->dialog);
-  if (dvgrabw->cursor != NULL) lives_cursor_unref(dvgrabw->cursor);
-  if (dvgrabw->filename != NULL) lives_free(dvgrabw->filename);
-  if (dvgrabw->dirname != NULL) lives_free(dvgrabw->dirname);
+  if (dvgrabw->cursor) lives_cursor_unref(dvgrabw->cursor);
+  if (dvgrabw->filename) lives_free(dvgrabw->filename);
+  if (dvgrabw->dirname) lives_free(dvgrabw->dirname);
   if (cam->grabbed_clips) do_error_dialog_with_check
     (_("\nClips grabbed from the device can now be loaded with File|Open File/Directory.\n"),
      WARN_MASK_AFTER_DVGRAB);
 
-  if (mainw->multitrack != NULL) {
+  if (mainw->multitrack) {
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }

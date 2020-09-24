@@ -46,8 +46,8 @@ size_t quant_asamps(double seek, int arate);
 double quant_aseek(double seek, int arate);
 off_t quant_abytes(double seek, int arate, int achans, int asampsize);
 
-#define SKJUMP_THRESH_RATIO 0.2 /// if fabs(recorded_vel / predicted_vel) < 1.0 +- SKJUMP_THRESH_RATIO then smooth the velocity
-#define SKJUMP_THRESH_SECS 0.05 /// if fabs(rec_seek - predicted_seek) < SKJUMP_THRESH_SECS then smooth the seek time
+#define SKJUMP_THRESH_RATIO 1.025 /// if fabs(recorded_vel / predicted_vel) < 1.0 +- SKJUMP_THRESH_RATIO then smooth the velocity
+#define SKJUMP_THRESH_SECS 0.25 /// if fabs(rec_seek - predicted_seek) < SKJUMP_THRESH_SECS then smooth the seek time
 
 weed_plant_t *quantise_events(weed_plant_t *in_list, double new_fps,
                               boolean allow_gap) WARN_UNUSED;  ///< quantise frame events for a single clip

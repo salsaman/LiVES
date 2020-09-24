@@ -301,7 +301,7 @@ static boolean open_vdev_inner(unicap_device_t *device) {
   unicap_open(&ldev->handle, device);
 
   //check return value and take appropriate action
-  if (ldev->handle == NULL) {
+  if (!ldev->handle) {
     LIVES_ERROR("vdev input: cannot open device");
     lives_free(ldev);
     return FALSE;
@@ -311,7 +311,7 @@ static boolean open_vdev_inner(unicap_device_t *device) {
 
   format = lvdev_get_best_format(formats, ldev, WEED_PALETTE_END, DEF_GEN_WIDTH, DEF_GEN_HEIGHT);
 
-  if (format == NULL) {
+  if (!format) {
     LIVES_INFO("No useful formats found");
     unicap_unlock_stream(ldev->handle);
     unicap_close(ldev->handle);
@@ -406,12 +406,12 @@ static boolean open_vdev_inner(unicap_device_t *device) {
 
 
 void lives_vdev_free(lives_vdev_t *ldev) {
-  if (ldev == NULL) return;
+  if (!ldev) return;
   unicap_stop_capture(ldev->handle);
   unicap_unlock_stream(ldev->handle);
   unicap_close(ldev->handle);
-  if (ldev->buffer1.data != NULL) lives_free(ldev->buffer1.data);
-  if (ldev->buffer2.data != NULL) lives_free(ldev->buffer2.data);
+  if (ldev->buffer1.data) lives_free(ldev->buffer1.data);
+  if (ldev->buffer2.data) lives_free(ldev->buffer2.data);
 }
 
 
@@ -453,14 +453,14 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
   }
 
-  if (user_data == NULL) {
+  if (!user_data) {
     for (i = 0; i < dev_count; i++) {
       if (!unicap_is_stream_locked(&devices[i])) {
         devlist = lives_list_prepend(devlist, devices[i].identifier);
       }
     }
 
-    if (devlist == NULL) {
+    if (!devlist) {
       do_locked_in_vdevs_error();
       return FALSE;
     }

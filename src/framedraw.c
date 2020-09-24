@@ -122,7 +122,7 @@ static void start_preview(LiVESButton *button, lives_rfx_t *rfx) {
 
 
 static void framedraw_redraw_cb(LiVESWidget *widget, lives_special_framedraw_rect_t *framedraw) {
-  if (mainw->multitrack != NULL) return;
+  if (mainw->multitrack) return;
   framedraw_redraw(framedraw, mainw->fd_layer_orig);
 }
 
@@ -839,7 +839,7 @@ boolean on_framedraw_enter(LiVESWidget * widget, LiVESXEventCrossing * event, li
 }
 
 boolean on_framedraw_leave(LiVESWidget * widget, LiVESXEventCrossing * event, lives_special_framedraw_rect_t *framedraw) {
-  if (framedraw == NULL) return FALSE;
+  if (!framedraw) return FALSE;
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, mainw->framedraw);
   return FALSE;
 }
@@ -1263,10 +1263,10 @@ void after_framedraw_widget_changed(LiVESWidget * widget, lives_special_framedra
 
   // redraw mask when spin values change
   framedraw_redraw(framedraw, mainw->fd_layer_orig);
-  if (mainw->framedraw_reset != NULL) {
+  if (mainw->framedraw_reset) {
     lives_widget_set_sensitive(mainw->framedraw_reset, TRUE);
   }
-  if (mainw->framedraw_preview != NULL) {
+  if (mainw->framedraw_preview) {
     lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
   }
 }

@@ -9528,7 +9528,14 @@ static track_rect *add_block_start_point(LiVESWidget * eventbox, weed_timecode_t
   // note: filenum is unused and may be removed in future
 
   track_rect *block = (track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "blocks");
-  track_rect *new_block = (track_rect *)lives_malloc(sizeof(track_rect));
+  track_rect *new_block;
+
+  for (; block && get_event_timecode(block->start_event) <= tc; block = block->next) {
+    if (block->start_event == event) return NULL;
+    if (!block->next) break;
+  }
+
+  new_block = (track_rect *)lives_malloc(sizeof(track_rect));
 
   new_block->uid = lives_random();
   new_block->next = new_block->prev = NULL;
@@ -9541,7 +9548,7 @@ static track_rect *add_block_start_point(LiVESWidget * eventbox, weed_timecode_t
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "block_last", (livespointer)new_block);
 
-  while (block) {
+  if (block) {
     if (get_event_timecode(block->start_event) > tc) {
       // found a block after insertion point
       if (block->prev) {
@@ -9552,15 +9559,11 @@ static track_rect *add_block_start_point(LiVESWidget * eventbox, weed_timecode_t
       else lives_widget_object_set_data(LIVES_WIDGET_OBJECT(eventbox), "blocks", (livespointer)new_block);
       new_block->next = block;
       block->prev = new_block;
-      break;
-    }
-    if (!block->next) {
+    } else {
       // add as last block
       block->next = new_block;
       new_block->prev = block;
-      break;
     }
-    block = block->next;
   }
 
   // there were no blocks there
@@ -9776,8 +9779,8 @@ void mt_init_tracks(lives_mt * mt, boolean set_min_max) {
     int *block_marker_tracks = NULL;
     int tracks[MAX_VIDEO_TRACKS]; // TODO - use linked list
 
-    boolean forced_end;
-    boolean ordered;
+    boolean forced_end = FALSE;
+    boolean ordered = TRUE;
     boolean shown_audio_warn = FALSE;
 
     int block_marker_uo_num_tracks = 0;
@@ -9938,9 +9941,9 @@ void mt_init_tracks(lives_mt * mt, boolean set_min_max) {
         weed_set_int64_array(event, WEED_LEAF_FRAMES, num_tracks, new_frame_index);
 
         lives_free(clip_index);
-        lives_free(new_clip_index);
         lives_free(frame_index);
-        lives_free(new_frame_index);
+
+        next_frame_event = get_next_frame_event(event);
 
         if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
           // audio starts or stops here
@@ -9954,26 +9957,40 @@ void mt_init_tracks(lives_mt * mt, boolean set_min_max) {
                   do_mt_audchan_error(WARN_MASK_MT_ACHANS);
                 }
               } else {
-                if (aclips[i] == -1) audio_draw = (LiVESWidget *)mt->audio_draws->data;
-                else audio_draw = (LiVESWidget *)lives_list_nth_data(mt->audio_draws, aclips[i] + mt->opts.back_audio_tracks);
-                if (avels[aclips[i] + 1] != 0.) {
-                  add_block_end_point(audio_draw, event);
-                }
-                //if (renumbered_clips[clip_index[aclips[i+1]]]>0) {
-                avels[aclips[i] + 1] = aseeks[i + 1];
-                //}
-                if (avels[aclips[i] + 1] != 0.) {
-                  add_block_start_point(audio_draw, tc, renumbered_clips[aclips[i + 1]],
-                                        aseeks[i]*TICKS_PER_SECOND_DBL, event, TRUE);
-                }
-              }
-            }
+                if (ordered) {
+                  if (aclips[i] == -1) audio_draw = (LiVESWidget *)mt->audio_draws->data;
+                  else audio_draw = (LiVESWidget *)lives_list_nth_data(mt->audio_draws, aclips[i] + mt->opts.back_audio_tracks);
+                  if (avels[aclips[i] + 1] != 0.) {
+                    add_block_end_point(audio_draw, event);
+                    if (!forced_end && tracks[aclips[i]] > 0 && next_frame_event && get_next_frame_event(next_frame_event)) {
+                      add_block_end_point(LIVES_WIDGET(lives_list_nth_data(mt->video_draws, aclips[i])), last_event);
+                    }
+                  }
+                  //if (renumbered_clips[clip_index[aclips[i+1]]]>0) {
+                  avels[aclips[i] + 1] = aseeks[i + 1];
+                  //}
+                  if (ordered) {
+                    if (avels[aclips[i] + 1] != 0.) {
+                      add_block_start_point(audio_draw, tc, renumbered_clips[aclips[i + 1]],
+                                            aseeks[i]*TICKS_PER_SECOND_DBL, event, TRUE);
+                      if (!forced_end && tracks[aclips[i]] > 0 && next_frame_event && get_next_frame_event(next_frame_event)) {
+                        offset_start = calc_time_from_frame(new_clip_index[aclips[i]],
+                                                            (int)new_frame_index[aclips[i]]) * TICKS_PER_SECOND_DBL;
+                        add_block_start_point(LIVES_WIDGET(lives_list_nth_data(mt->video_draws, aclips[i])), tc,
+                                              new_clip_index[aclips[i]], offset_start, event, ordered);
+		      // *INDENT-OFF*
+		    }}}}}}
+	    // *INDENT-ON*
+
             if (aclips[i + 1] > 0) aclips[i + 1] = renumbered_clips[aclips[i + 1]];
           }
           weed_set_int_array(event, WEED_LEAF_AUDIO_CLIPS, num_aclips, aclips);
           lives_free(aseeks);
           lives_free(aclips);
         }
+
+        lives_free(new_clip_index);
+        lives_free(new_frame_index);
 
         slist = mt->audio_draws;
         for (i = mt->opts.back_audio_tracks + 1; --i > 0; slist = slist->next);
@@ -9993,8 +10010,6 @@ void mt_init_tracks(lives_mt * mt, boolean set_min_max) {
               }}}}
 	  // *INDENT-ON*
 
-        next_frame_event = get_next_frame_event(event);
-
         if (!next_frame_event) {
           // this is the last FRAME event, so close all our rectangles
           j = 0;
@@ -10005,7 +10020,8 @@ void mt_init_tracks(lives_mt * mt, boolean set_min_max) {
           }
           j = 0;
           for (slist = mt->audio_draws; slist; slist = slist->next) {
-            if (mainw->files[mt->render_file]->achans > 0 && avels[j++] != 0.) add_block_end_point((LiVESWidget *)slist->data, event);
+            if (mainw->files[mt->render_file]->achans > 0 && avels[j++] != 0.)
+              add_block_end_point((LiVESWidget *)slist->data, event);
           }
         }
         last_event = event;
@@ -11764,7 +11780,7 @@ static void update_in_image(lives_mt * mt) {
                 &height);
 
   thumb = make_thumb(mt, filenum,
-                     width - ((widget_opts.border_width + 2) >> 1),
+                     width - 2 - ((widget_opts.border_width + 2) >> 1),
                      height - ((widget_opts.border_width + 2) >> 1),
                      frame_start, get_interp_value(prefs->pb_quality, FALSE), FALSE);
   set_drawing_area_from_pixbuf(mt->in_image, thumb, mt->insurface);

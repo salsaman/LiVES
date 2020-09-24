@@ -2721,10 +2721,12 @@ void play_file(void) {
 
             // reset because audio sync may have set it
             if (mainw->multitrack) mainw->jackd->abufs[0]->arate = cfile->arate;
+            else mainw->jackd->abufs[0]->arate = mainw->jackd->sample_out_rate;
             fill_abuffer_from(mainw->jackd->abufs[0], mainw->event_list, pb_start_event, exact_preview);
             for (i = 1; i < prefs->num_rtaudiobufs; i++) {
               // reset because audio sync may have set it
               if (mainw->multitrack) mainw->jackd->abufs[i]->arate = cfile->arate;
+              else mainw->jackd->abufs[i]->arate = mainw->jackd->sample_out_rate;
               fill_abuffer_from(mainw->jackd->abufs[i], mainw->event_list, NULL, FALSE);
             }
 
@@ -2743,12 +2745,19 @@ void play_file(void) {
 
             /// fill our audio buffers now
             /// this will also get our effects state
+
+            /// this is the IN rate, everything is resampled to this rate and then to output rate
             if (mainw->multitrack) mainw->pulsed->abufs[0]->arate = cfile->arate;
             else mainw->pulsed->abufs[0]->arate = mainw->pulsed->out_arate;
+
+            /// need to set asamps, in case padding with silence is needed
+            mainw->pulsed->abufs[0]->out_asamps = mainw->pulsed->out_asamps;
+
             fill_abuffer_from(mainw->pulsed->abufs[0], mainw->event_list, pb_start_event, exact_preview);
             for (i = 1; i < prefs->num_rtaudiobufs; i++) {
               if (mainw->multitrack) mainw->pulsed->abufs[i]->arate = cfile->arate;
-              else mainw->pulsed->abufs[1]->arate = mainw->pulsed->out_arate;
+              else mainw->pulsed->abufs[i]->arate = mainw->pulsed->out_arate;
+              mainw->pulsed->abufs[i]->out_asamps = mainw->pulsed->out_asamps;
               fill_abuffer_from(mainw->pulsed->abufs[i], mainw->event_list, NULL, FALSE);
             }
 

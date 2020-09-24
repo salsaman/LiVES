@@ -2924,7 +2924,8 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
     layer = layers[out_tracks[i] + nbtracks];
     if (weed_plant_has_leaf(channel, WEED_LEAF_AUDIO_DATA)) {
       /// free any old audio data in the layer, unless it's INPLACE
-      if (weed_get_boolean_value(layer, WEED_LEAF_HOST_INPLACE, NULL) == WEED_FALSE) {
+      if (weed_get_boolean_value(layer, WEED_LEAF_HOST_INPLACE, NULL) == WEED_FALSE
+          && weed_get_boolean_value(layer, WEED_LEAF_HOST_KEEP_ADATA, NULL) == WEED_FALSE) {
         adata = (float **)weed_get_voidptr_array_counted(layer, WEED_LEAF_AUDIO_DATA, &nchans);
         for (j = 0; j < nchans; j++) lives_freep((void **)&adata[j]);
         lives_freep((void **)&adata);

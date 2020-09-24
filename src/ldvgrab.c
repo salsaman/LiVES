@@ -238,7 +238,7 @@ char *find_free_camfile(int format) {
       tmp = NULL;
     }
   }
-  if (tmp != NULL) lives_free(tmp);
+  if (tmp) lives_free(tmp);
   lives_free(filename);
 
   return fname;
@@ -312,7 +312,7 @@ void on_open_fw_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   cam = camready();
-  if (cam == NULL) return;
+  if (!cam) return;
 
   /*  if (type==CAM_FORMAT_HDV) {
     cam->rec_handle=open_raw1394();
@@ -321,7 +321,7 @@ void on_open_fw_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     else*/
   cam->rec_handle = NULL;
 
-  if (mainw->multitrack != NULL) {
+  if (mainw->multitrack) {
     if (mainw->multitrack->idlefunc > 0) {
       lives_source_remove(mainw->multitrack->idlefunc);
       mainw->multitrack->idlefunc = 0;

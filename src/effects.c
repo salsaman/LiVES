@@ -194,14 +194,14 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   if (!mainw->keep_pre) lives_rm(cfile->info_file);
 
   if (!mainw->internal_messaging && !mainw->keep_pre) {
-    if (cfile->frame_index_back != NULL) {
+    if (cfile->frame_index_back) {
       lives_free(cfile->frame_index_back);
       cfile->frame_index_back = NULL;
     }
     lives_system(fxcommand, FALSE);
     lives_free(fxcommand);
   } else {
-    if (mainw->num_tr_applied > 0 && mainw->blend_file > 0 && mainw->files[mainw->blend_file] != NULL &&
+    if (mainw->num_tr_applied > 0 && mainw->blend_file > 0 && mainw->files[mainw->blend_file] &&
         mainw->files[mainw->blend_file]->clip_type != CLIP_TYPE_GENERATOR) {
       mainw->files[mainw->blend_file]->frameno = mainw->files[mainw->blend_file]->start - 1;
     }
@@ -344,7 +344,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     mainw->is_generating = FALSE;
     mainw->no_switch_dprint = FALSE;
 
-    if (mainw->multitrack != NULL) {
+    if (mainw->multitrack) {
       mainw->pre_src_file = -1;
     }
 
@@ -459,7 +459,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
         mainw->current_file = current_file;
         mainw->last_dprint_file = ldfile;
 
-        if (mainw->multitrack != NULL) {
+        if (mainw->multitrack) {
           mainw->current_file = mainw->multitrack->render_file;
         }
       }
@@ -520,7 +520,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
       }
       mainw->last_dprint_file = ldfile;
       mainw->no_switch_dprint = FALSE;
-      if (mainw->multitrack != NULL) mainw->current_file = mainw->multitrack->render_file;
+      if (mainw->multitrack) mainw->current_file = mainw->multitrack->render_file;
       return FALSE;
     }
 
@@ -555,7 +555,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 
         if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
 
-        if (mainw->multitrack != NULL) {
+        if (mainw->multitrack) {
           mt_init_clips(mainw->multitrack, mainw->current_file, TRUE);
           mt_clip_select(mainw->multitrack, TRUE);
         }
@@ -567,7 +567,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   }
 
   if (!mainw->gen_to_clipboard) cfile->changed = TRUE;
-  if (mainw->multitrack == NULL) {
+  if (!mainw->multitrack) {
     if (new_file != -1) {
       lives_sync(1);
       switch_clip(1, new_file, TRUE);
@@ -616,7 +616,7 @@ lives_render_error_t realfx_progress(boolean reset) {
     clear_mainw_msg();
 
     if (cfile->clip_type == CLIP_TYPE_FILE) {
-      if (cfile->frame_index_back != NULL) lives_free(cfile->frame_index_back);
+      if (cfile->frame_index_back) lives_free(cfile->frame_index_back);
       cfile->frame_index_back = frame_index_copy(cfile->frame_index, cfile->frames, 0);
     }
     write_error = LIVES_RENDER_ERROR_NONE;
@@ -630,7 +630,7 @@ lives_render_error_t realfx_progress(boolean reset) {
   // load, effect, save frame
 
   // skip resizing virtual frames
-  if (resize_instance != NULL && is_virtual_frame(mainw->current_file, i)) {
+  if (resize_instance && is_virtual_frame(mainw->current_file, i)) {
     if (++i > cfile->end) {
       mainw->internal_messaging = FALSE;
       lives_snprintf(mainw->msg, 9, "completed");
@@ -639,7 +639,7 @@ lives_render_error_t realfx_progress(boolean reset) {
     return LIVES_RENDER_PROCESSING;
   }
 
-  if (has_video_filters(FALSE) || resize_instance != NULL) {
+  if (has_video_filters(FALSE) || resize_instance) {
     frameticks = (i - cfile->start + 1.) / cfile->fps * TICKS_PER_SECOND;
     THREADVAR(rowstride_alignment_hint) = 4;
     layer = lives_layer_new_for_frame(mainw->current_file, i);
@@ -651,10 +651,10 @@ lives_render_error_t realfx_progress(boolean reset) {
 
     layer = on_rte_apply(layer, 0, 0, (weed_timecode_t)frameticks);
 
-    if (!has_video_filters(TRUE) || resize_instance != NULL) {
+    if (!has_video_filters(TRUE) || resize_instance) {
       layer_palette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &weed_error);
 
-      if (resize_instance == NULL) resize_layer(layer, cfile->hsize, cfile->vsize, LIVES_INTERP_BEST, layer_palette, 0);
+      if (!resize_instance) resize_layer(layer, cfile->hsize, cfile->vsize, LIVES_INTERP_BEST, layer_palette, 0);
       if (cfile->img_type == IMG_TYPE_JPEG && layer_palette != WEED_PALETTE_RGB24 && layer_palette != WEED_PALETTE_RGBA32) {
         convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
         layer_palette = WEED_PALETTE_RGB24;
@@ -674,7 +674,7 @@ lives_render_error_t realfx_progress(boolean reset) {
         retval = 0;
         lives_pixbuf_save(pixbuf, oname, cfile->img_type, 100, cfile->hsize, cfile->vsize, &error);
 
-        if (error != NULL) {
+        if (error) {
           retval = do_write_failed_error_s_with_retry(oname, error->message);
           lives_error_free(error);
           error = NULL;
@@ -696,7 +696,7 @@ lives_render_error_t realfx_progress(boolean reset) {
   }
 
   if (++i > cfile->end) {
-    if (resize_instance != NULL || (has_video_filters(FALSE) && !has_video_filters(TRUE))) {
+    if (resize_instance || (has_video_filters(FALSE) && !has_video_filters(TRUE))) {
       mainw->error = FALSE;
       mainw->cancelled = CANCEL_NONE;
       com = lives_strdup_printf("%s mv_mgk \"%s\" %d %d \"%s\"", prefs->backend, cfile->handle, cfile->start,
@@ -804,8 +804,7 @@ void on_realfx_activate(LiVESMenuItem *menuitem, livespointer xrfx) {
   // type can be 0 - apply current realtime effects
   // 1 - resize (using weed filter) [menuitem == NULL]
 
-
-  if (menuitem != NULL) {
+  if (menuitem) {
     int i;
     for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
       if (rte_key_valid(i + 1, TRUE)) {
@@ -850,7 +849,7 @@ weed_plant_t *on_rte_apply(weed_layer_t *layer, int opwidth, int opheight, weed_
   layers[2] = NULL;
   layers[0] = layer;
 
-  if (mainw->blend_file > -1 && mainw->num_tr_applied > 0 && (mainw->files[mainw->blend_file] == NULL ||
+  if (mainw->blend_file > -1 && mainw->num_tr_applied > 0 && (!mainw->files[mainw->blend_file] ||
       (mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_DISK &&
        (!mainw->files[mainw->blend_file]->frames ||
         !mainw->files[mainw->blend_file]->is_loaded)))) {
@@ -859,11 +858,11 @@ weed_plant_t *on_rte_apply(weed_layer_t *layer, int opwidth, int opheight, weed_
   }
 
   if (mainw->num_tr_applied && mainw->blend_file != mainw->current_file &&
-      IS_VALID_CLIP(mainw->blend_file) && resize_instance == NULL) {
+      IS_VALID_CLIP(mainw->blend_file) && !resize_instance) {
     layers[1] = get_blend_layer(tc);
   } else layers[1] = NULL;
 
-  if (resize_instance != NULL) {
+  if (resize_instance) {
     lives_filter_error_t ret;
     weed_plant_t *init_event = weed_plant_new(WEED_PLANT_EVENT);
     weed_set_int_value(init_event, WEED_LEAF_IN_TRACKS, 0);
@@ -878,7 +877,7 @@ weed_plant_t *on_rte_apply(weed_layer_t *layer, int opwidth, int opheight, weed_
   }
 
   // all our pixel_data will have been free'd already
-  for (i = 0; layers[i] != NULL; i++) {
+  for (i = 0; layers[i]; i++) {
     if (layers[i] != retlayer) weed_layer_free(layers[i]);
   }
   lives_free(layers);
@@ -923,7 +922,7 @@ deint1:
   weed_call_deinit_func(deint_instance);
   weed_instance_unref(deint_instance);
 
-  if (next_inst != NULL) {
+  if (next_inst) {
     deint_instance = next_inst;
     goto deint1;
   }
@@ -941,7 +940,7 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
   lives_clip_t *blend_file;
   weed_timecode_t ntc = tc;
 
-  if (mainw->blend_file == -1 || mainw->files[mainw->blend_file] == NULL) return NULL;
+  if (!IS_VALID_CLIP(mainw->blend_file)) return NULL;
   blend_file = mainw->files[mainw->blend_file];
 
   if (mainw->blend_file != mainw->last_blend_file) {
@@ -1116,8 +1115,8 @@ boolean grabkeys_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
   }
   mainw->rte_keys = mainw->last_grabbable_effect;
   mainw->osc_block = TRUE;
-  if (rte_window != NULL) {
-    if (group != NULL) rtew_set_keygr(mainw->rte_keys);
+  if (rte_window) {
+    if (group) rtew_set_keygr(mainw->rte_keys);
   }
   if (mainw->rte_keys == -1) {
     mainw->osc_block = FALSE;
@@ -1176,9 +1175,8 @@ boolean swap_fg_bg_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
                             livespointer user_data) {
   int blend_file = mainw->blend_file;
 
-  if (mainw->playing_file < 1 || mainw->num_tr_applied == 0 || mainw->blend_file == -1 ||
-      mainw->blend_file == mainw->current_file || mainw->files[mainw->blend_file] == NULL || mainw->preview ||
-      (mainw->is_processing && cfile->is_loaded)) {
+  if (mainw->playing_file < 1 || mainw->num_tr_applied == 0 || !IS_VALID_CLIP(mainw->blend_file)
+      || mainw->blend_file == mainw->current_file || mainw->preview || (mainw->is_processing && cfile->is_loaded)) {
     return TRUE;
   }
 

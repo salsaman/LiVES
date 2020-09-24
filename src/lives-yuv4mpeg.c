@@ -27,7 +27,7 @@ static LiVESList *fw_cards = NULL;
 
 static lives_yuv4m_t *lives_yuv4mpeg_alloc(void) {
   lives_yuv4m_t *yuv4mpeg = (lives_yuv4m_t *) malloc(sizeof(lives_yuv4m_t));
-  if (yuv4mpeg == NULL) return NULL;
+  if (!yuv4mpeg) return NULL;
   yuv4mpeg->sar = y4m_sar_UNKNOWN;
   yuv4mpeg->dar = y4m_dar_4_3;
   y4m_init_stream_info(&(yuv4mpeg->streaminfo));
@@ -120,9 +120,9 @@ static boolean lives_yuv_stream_start_read(lives_clip_t *sfile) {
 
   y4data thread_data;
 
-  register int i;
+  int i;
 
-  if (filename == NULL) return FALSE;
+  if (!filename) return FALSE;
 
   if (yuv4mpeg->fd == -1) {
     // create a thread to open the fifo
@@ -237,12 +237,12 @@ void lives_yuv_stream_stop_read(lives_yuv4m_t *yuv4mpeg) {
   yuv4mpeg->dar = y4m_dar_4_3;
   if (yuv4mpeg->fd != -1) close(yuv4mpeg->fd);
 
-  if (yuv4mpeg->filename != NULL) {
+  if (yuv4mpeg->filename) {
     lives_rm(yuv4mpeg->filename);
     lives_free(yuv4mpeg->filename);
   }
 
-  if (yuv4mpeg->name != NULL) lives_free(yuv4mpeg->name);
+  if (yuv4mpeg->name) lives_free(yuv4mpeg->name);
 
   if (yuv4mpeg->type == YUV4_TYPE_FW) fw_cards = lives_list_remove(fw_cards, LIVES_INT_TO_POINTER(yuv4mpeg->cardno));
   if (yuv4mpeg->type == YUV4_TYPE_TV) mainw->videodevs = lives_list_remove(mainw->videodevs,
@@ -374,7 +374,7 @@ void on_open_yuv4m_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (!strlen(prefs->yuvin)) {
     filename = choose_file(NULL, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_OPEN, _("Open _yuv4mpeg stream (fifo)"), NULL);
-    if (filename == NULL) return;
+    if (!filename) return;
   } else filename = lives_strdup(prefs->yuvin);
 
   mkfifo(filename, S_IRUSR | S_IWUSR);
@@ -463,7 +463,7 @@ boolean lives_yuv_stream_start_write(lives_yuv4m_t *yuv4mpeg, const char *filena
   }
   mainw->fixed_fpsd = fps;
 
-  if (filename == NULL) filename = lives_strdup_printf("%s/streamout.yuv", prefs->workdir);
+  if (!filename) filename = lives_strdup_printf("%s/streamout.yuv", prefs->workdir);
 
   // TODO - do_threaded_dialog
   if ((yuvout = creat(filename, O_CREAT)) < 0) {

@@ -1622,7 +1622,6 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
 
   LiVESWidget *dialog_vbox = NULL;
   LiVESWidget *vboxx;
-  LiVESWidget *vbox2;
   LiVESWidget *frame;
   LiVESWidget *combo_entry2;
   LiVESWidget *combo_entry3;
@@ -1821,12 +1820,12 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
     if (type == 4) lives_box_pack_start(LIVES_BOX(vboxx), frame, FALSE, FALSE, widget_opts.packing_height);
     else lives_box_pack_start(LIVES_BOX(vboxx), frame, FALSE, TRUE, 0);
 
-    vbox2 = lives_vbox_new(FALSE, 0);
-    lives_container_add(LIVES_CONTAINER(frame), vbox2);
+    resaudw->vbox = lives_vbox_new(FALSE, 0);
+    lives_container_add(LIVES_CONTAINER(frame), resaudw->vbox);
 
     if (type > 2 && type < 5 && !chans_fixed) {
       resaudw->aud_hbox = lives_hbox_new(FALSE, 0);
-      lives_box_pack_start(LIVES_BOX(vbox2), resaudw->aud_hbox, FALSE, FALSE, 0);
+      lives_box_pack_start(LIVES_BOX(resaudw->vbox), resaudw->aud_hbox, FALSE, FALSE, 0);
 
       resaudw->aud_checkbutton = lives_standard_check_button_new(_("_Enable audio"), FALSE, LIVES_BOX(resaudw->aud_hbox), NULL);
 
@@ -1840,7 +1839,7 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
     }
 
     hbox2 = lives_hbox_new(FALSE, 0);
-    lives_box_pack_start(LIVES_BOX(vbox2), hbox2, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start(LIVES_BOX(resaudw->vbox), hbox2, FALSE, FALSE, widget_opts.packing_height);
     lives_container_set_border_width(LIVES_CONTAINER(hbox2), widget_opts.border_width);
 
     vbox = lives_vbox_new(FALSE, 0);

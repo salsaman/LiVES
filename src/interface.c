@@ -935,7 +935,7 @@ xprocess *create_processing(const char *text) {
     lives_standard_expander_new(_("Show Details"), LIVES_BOX(vbox3), procw->scrolledwindow);
   }
 
-  procw->stop_button = NULL;
+  procw->stop_button = procw->preview_button = procw->pause_button = NULL;
 
   if (CURRENT_CLIP_IS_VALID) {
     if (cfile->opening_loc
@@ -991,8 +991,8 @@ xprocess *create_processing(const char *text) {
                        LIVES_GUI_CALLBACK(on_cancel_keep_button_clicked), NULL);
 
   if (mainw->show_procd) lives_widget_show_all(procw->processing);
-  lives_widget_hide(procw->preview_button);
-  lives_widget_hide(procw->pause_button);
+  if (procw->preview_button) lives_widget_hide(procw->preview_button);
+  if (procw->pause_button) lives_widget_hide(procw->pause_button);
 
   if (procw->stop_button) lives_widget_hide(procw->stop_button);
 

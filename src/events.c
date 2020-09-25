@@ -4529,6 +4529,7 @@ boolean render_to_clip(boolean new_clip) {
   // this function is called to actually start rendering mainw->event_list to a new/current clip
   char *com, *tmp, *clipname = NULL;
   boolean retval = TRUE, rendaud = TRUE, response;
+  boolean norm_after = FALSE;
   int xachans = 0, xarate = 0, xasamps = 0, xse = 0;
   int current_file = mainw->current_file;
 
@@ -4556,6 +4557,7 @@ boolean render_to_clip(boolean new_clip) {
 
       // do we render audio ?
       rendaud = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton));
+      norm_after = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(rdet->norm_after));
 
       if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
         xse = AFORM_UNSIGNED;
@@ -4774,6 +4776,7 @@ boolean render_to_clip(boolean new_clip) {
         save_frame_index(mainw->current_file);
       }
     }
+    if (norm_after) on_normalise_audio_activate(NULL, NULL);
   } else {
     retval = FALSE; // cancelled or error, so show the dialog again
     if (new_clip && !mainw->multitrack) {
@@ -6044,9 +6047,8 @@ render_details *create_render_details(int type) {
     height /= 2;
   }
 
-
   widget_opts.expand = LIVES_EXPAND_NONE;
-  rdet->dialog = lives_standard_dialog_new(title, FALSE, 8., 8.);
+  rdet->dialog = lives_standard_dialog_new(title, FALSE, width, height);
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   lives_free(title);
@@ -6125,6 +6127,14 @@ render_details *create_render_details(int type) {
   if (type == 3 || type == 2) resaudw = create_resaudw(3, rdet, top_vbox); // enter mt, render to clip
   else if (type == 4 && cfile->achans != 0) {
     resaudw = create_resaudw(10, rdet, top_vbox); // change during mt. Channels fixed.
+  }
+
+  if (type == 2) {
+    hbox = lives_hbox_new(FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(resaudw->vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+    rdet->norm_after = lives_standard_check_button_new(_("_Normalise audio after rendering"),
+                       TRUE, LIVES_BOX(hbox), NULL);
+    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton), rdet->norm_after, FALSE);
   }
 
   if (type == 3) {

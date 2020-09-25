@@ -2655,6 +2655,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         lives_widget_set_no_show_all(mainw->proc_ptr->preview_button, FALSE);
         lives_widget_show_all(mainw->proc_ptr->preview_button);
         lives_button_grab_default_special(mainw->proc_ptr->preview_button);
+        lives_widget_grab_focus(mainw->proc_ptr->preview_button);
       }
 
       // show buttons
@@ -2670,6 +2671,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
       if (!cfile->opening && !cfile->nopreview) {
         lives_button_grab_default_special(mainw->proc_ptr->preview_button);
+        lives_widget_grab_focus(mainw->proc_ptr->preview_button);
         if (mainw->preview_box) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Preview"));
         lives_widget_set_tooltip_text(mainw->m_playbutton, _("Preview"));
         lives_widget_remove_accelerator(mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);

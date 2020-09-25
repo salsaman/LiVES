@@ -11780,7 +11780,7 @@ void on_normalise_audio_activate(LiVESMenuItem * menuitem, livespointer user_dat
 
   d_print(_("Normalising audio..."));
 
-  desensitize();
+  if (menuitem) desensitize();
   do_threaded_dialog(_("Normalizing audio..."), TRUE);
 
   threaded_dialog_spin(0.);
@@ -11792,7 +11792,7 @@ void on_normalise_audio_activate(LiVESMenuItem * menuitem, livespointer user_dat
     if (THREADVAR(com_failed)) {
       end_threaded_dialog();
       d_print_failed();
-      sensitize();
+      if (menuitem) sensitize();
       return;
     }
   }
@@ -11802,6 +11802,7 @@ void on_normalise_audio_activate(LiVESMenuItem * menuitem, livespointer user_dat
     THREADVAR(read_failed) = THREADVAR(write_failed) = 0;
     end_threaded_dialog();
     d_print_failed();
+    if (menuitem) sensitize();
     return;
   }
 
@@ -11812,17 +11813,18 @@ void on_normalise_audio_activate(LiVESMenuItem * menuitem, livespointer user_dat
     lives_free(com);
     end_threaded_dialog();
     d_print_cancelled();
+    if (menuitem) sensitize();
     return;
   }
 
-  cfile->changed = TRUE;
+  if (menuitem) cfile->changed = TRUE;
   reget_afilesize(mainw->current_file);
 
   if (!prefs->conserve_space) {
     set_undoable(_("Normalise audio"), TRUE);
     cfile->undo_action = UNDO_AUDIO_VOL;
   }
-  sensitize();
+  if (menuitem) sensitize();
   end_threaded_dialog();
   d_print_done();
 }

@@ -31,6 +31,7 @@ typedef struct __resaudw {
   LiVESWidget *fps_spinbutton;
   LiVESWidget *aud_checkbutton;
   LiVESWidget *aud_hbox;
+  LiVESWidget *vbox;
 } _resaudw;
 
 

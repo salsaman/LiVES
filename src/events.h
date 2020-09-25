@@ -232,6 +232,7 @@ typedef struct {
   LiVESWidget *always_checkbutton;
   LiVESWidget *always_hbox;
   LiVESWidget *debug;
+  LiVESWidget *norm_after;
   ulong encoder_name_fn;
   ulong encoder_ofmt_fn;
   boolean enc_changed;

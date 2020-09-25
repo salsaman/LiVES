@@ -466,6 +466,9 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       }
     }
 
+    if (!mainw->audio_seek_ready && pulsed->playing_file != mainw->playing_file)
+      mainw->audio_seek_ready = TRUE;
+
     if (!mainw->audio_seek_ready) {
       double dqnt;
       size_t qnt;
@@ -652,7 +655,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                 }
               }
               pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos - qnt, qnt);
-              pulsed->real_seek_pos = pulsed->seek_pos;
+              fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos;
               if (mainw->record && !mainw->record_paused) pulse_set_rec_avals(pulsed);
             }
           }
@@ -715,7 +718,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                 }
               }
               pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos - qnt, qnt);
-              pulsed->real_seek_pos = pulsed->seek_pos;
+              fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos;
               if (mainw->record && !mainw->record_paused) pulse_set_rec_avals(pulsed);
             }
 
@@ -1623,7 +1626,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   if (pdriver->is_output) {
     pa_battr.maxlength = LIVES_PA_BUFF_MAXLEN;
     pa_battr.tlength = LIVES_PA_BUFF_TARGET;
-    pa_battr.minreq = LIVES_PA_BUFF_MINREQ;
+    pa_battr.minreq = LIVES_PA_BUFF_MINREQ * 2;
 
     /// TODO: kick off a thread to call the audio loop peridically (to receive command messages), on audio_seek == FALSE,
     // seek and fill the prefbuffer, then kill the thread loop and let pa take over. Must do the same on underflow though

@@ -21,6 +21,7 @@
 boolean _start_playback(livespointer data) {
   int new_file, old_file;
   int play_type = LIVES_POINTER_TO_INT(data);
+  if (mainw->noswitch) return TRUE;
   switch (play_type) {
   case 8: case 6: case 0:
     /// normal play
@@ -5484,6 +5485,7 @@ int save_to_scrap_file(weed_layer_t *layer) {
 
   /// check every 64 frames for quota overrun, because its a background task
   check_for_disk_space((scrapfile->frames & 0x3F) ? TRUE : FALSE);
+
   return scrapfile->frames;
 }
 

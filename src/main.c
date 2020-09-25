@@ -3424,6 +3424,7 @@ boolean render_choice_idle(livespointer data) {
   boolean rec_recovered = FALSE;
   boolean is_recovery = LIVES_POINTER_TO_INT(data);
   if (norecurse) return FALSE;
+  if (mainw->noswitch) return TRUE;
   norecurse = TRUE;
   if (!is_recovery || mt_load_recovery_layout(NULL)) {
     if (mainw->event_list) {

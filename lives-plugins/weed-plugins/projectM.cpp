@@ -663,7 +663,7 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
       sd->prnames = NULL;
       sd->worker_ready = false;
       sd->worker_active = false;
-      sd->rendering = false;
+
       sd->die = sd->failed = false;
       sd->rendering = false;
       sd->width = width;
@@ -741,9 +741,6 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
     sd->bad_prog = false;
     sd->timer = 0.;
     sd->timestamp = 0.;
-
-    pthread_mutex_lock(&sd->mutex);
-    pthread_mutex_unlock(&sd->mutex);
 
     pthread_mutex_lock(&cond_mutex);
     pthread_cond_signal(&cond);

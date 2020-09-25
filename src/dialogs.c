@@ -1612,7 +1612,10 @@ switch_point:
     // and requested_frame is set to the frame to show. By default this is the frame we show, but we may vary
     // this depending on the cached frame
 
-    sfile->frameno = requested_frame = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);
+    requested_frame = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);
+    if (requested_frame < 1 || requested_frame > sfile->frames) requested_frame = sfile->frameno;
+    else sfile->frameno = requested_frame;
+
     if (mainw->scratch != SCRATCH_NONE) scratch  = mainw->scratch;
     mainw->scratch = SCRATCH_NONE;
 

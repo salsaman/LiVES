@@ -10157,7 +10157,6 @@ double lives_scrolled_window_scroll_to(LiVESScrolledWindow * sw, LiVESPositionTy
     else val = lives_adjustment_get_upper(adj) - lives_adjustment_get_page_size(adj);
     lives_adjustment_set_value(adj, val);
   }
-  g_print("VAL is %f\n", val);
   return val;
 }
 
@@ -11754,6 +11753,7 @@ static void do_more_stuff(void) {
 
 
 boolean lives_widget_context_update(void) {
+  volatile boolean clutch;
   static pthread_mutex_t ctx_mutex = PTHREAD_MUTEX_INITIALIZER;
   if (timer_running) return FALSE;
   if (mainw->no_context_update) return FALSE;
@@ -11762,10 +11762,11 @@ boolean lives_widget_context_update(void) {
     LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
     do_some_things();
     if (ctx && ctx != lives_widget_context_default() && gov_running) {
-      mainw->clutch = FALSE;
-      while (!mainw->clutch && !mainw->is_exiting) {
+      clutch = mainw->clutch = FALSE;
+      while (!clutch && !mainw->is_exiting) {
         lives_nanosleep(NSLEEP_TIME);
         sched_yield();
+        clutch = mainw->clutch;
       }
     } else {
       int count = 0;

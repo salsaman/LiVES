@@ -1027,6 +1027,8 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_IS_FILE_CHOOSER(widget) GTK_IS_FILE_CHOOSER(widget)
 #define LIVES_IS_BUTTON_BOX(widget) GTK_IS_BUTTON_BOX(widget)
 
+#define LIVES_IS_ADJUSTMENT(adj) GTK_IS_ADJUSTMENT(adj)
+
 // (image resize) interpolation types
 #define LIVES_INTERP_BEST   GDK_INTERP_HYPER
 #define LIVES_INTERP_NORMAL GDK_INTERP_BILINEAR

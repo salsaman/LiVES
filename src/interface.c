@@ -7168,7 +7168,9 @@ LIVES_GLOBAL_INLINE void msg_area_scroll_to_end(LiVESWidget * widget, LiVESAdjus
 void msg_area_scroll(LiVESAdjustment * adj, livespointer userdata) {
   // scrollbar callback
   LiVESWidget *widget = (LiVESWidget *)userdata;
-  double val = lives_adjustment_get_value(adj);
+  double val;
+  if (!LIVES_IS_ADJUSTMENT(adj)) return;
+  val = lives_adjustment_get_value(adj);
   //g_print("val is %f rnd %d\n", val, (int)(val + .5));
   if (msg_area_scroll_to(widget, (int)(val + .5), FALSE, adj))
     lives_widget_queue_draw(widget);

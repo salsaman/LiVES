@@ -432,6 +432,7 @@ void create_LiVES(void) {
     LIVES_MAIN_WINDOW_WIDGET = lives_window_new(LIVES_WINDOW_TOPLEVEL);
     lives_container_set_border_width(LIVES_CONTAINER(LIVES_MAIN_WINDOW_WIDGET), 0);
     lives_window_set_monitor(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), widget_opts.monitor);
+    lives_widget_add_events(LIVES_MAIN_WINDOW_WIDGET, LIVES_KEY_PRESS_MASK | LIVES_KEY_RELEASE_MASK);
     mainw->config_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET),
                          LIVES_WIDGET_CONFIGURE_EVENT, LIVES_GUI_CALLBACK(config_event), NULL);
   }
@@ -3815,8 +3816,10 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
     need_mt = TRUE;
   }
 
-  lives_widget_unparent(mainw->top_vbox);
-  lives_widget_context_update();
+  if (LIVES_IS_WIDGET(mainw->top_vbox)) {
+    lives_widget_destroy(mainw->top_vbox);
+    lives_widget_context_update();
+  }
 
   create_LiVES();
 
@@ -3900,7 +3903,8 @@ static void _make_play_window(void) {
   if (prefs->show_gui) {
     lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), get_transient_full());
   }
-  lives_widget_set_events(mainw->play_window, LIVES_SCROLL_MASK | LIVES_SMOOTH_SCROLL_MASK);
+  lives_widget_set_events(mainw->play_window, LIVES_SCROLL_MASK | LIVES_SMOOTH_SCROLL_MASK |
+                          LIVES_KEY_PRESS_MASK | LIVES_KEY_RELEASE_MASK);
 
   // cannot do this or it forces showing on the GUI monitor
   //gtk_window_set_position(LIVES_WINDOW(mainw->play_window),GTK_WIN_POS_CENTER_ALWAYS);

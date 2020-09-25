@@ -10071,19 +10071,23 @@ boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespo
   }
   if (widget == LIVES_MAIN_WINDOW_WIDGET) {
     int scr_width, scr_height;
-    scr_width = GUI_SCREEN_WIDTH;
-    scr_height = GUI_SCREEN_HEIGHT;
+    scr_width = GUI_SCREEN_PHYS_WIDTH;
+    scr_height = GUI_SCREEN_PHYS_HEIGHT;
     if (event->width != scr_width || event->height != scr_height) {
       get_monitors(FALSE);
-      if (scr_width != GUI_SCREEN_WIDTH || scr_height != GUI_SCREEN_HEIGHT) {
+      if (scr_width != GUI_SCREEN_PHYS_WIDTH || scr_height != GUI_SCREEN_PHYS_HEIGHT) {
         if (!mainw->ignore_screen_size) {
+          if (prefs->show_dev_opts) {
+            g_printerr("VALLS %d %d   %d %d   %d %d\n", event->width, event->height, scr_width, scr_height,
+                       GUI_SCREEN_PHYS_WIDTH, GUI_SCREEN_PHYS_HEIGHT);
+          }
           resize_widgets_for_monitor(FALSE);
           if (!CURRENT_CLIP_IS_VALID) {
             lives_ce_update_timeline(0, 0.);
 	    // *INDENT-OFF*
-	  }}
+	  }}}
 	else mainw->ignore_screen_size = FALSE;
-      }}}
+      }}
   // *INDENT-ON*
 
   return FALSE;

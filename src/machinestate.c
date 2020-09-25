@@ -2570,6 +2570,9 @@ void update_effort(int nthings, boolean badthings) {
   short pb_quality = prefs->pb_quality;
   if (!inited) reset_effort();
   if (!nthings) return;
+
+  if (nthings > EFFORT_RANGE_MAX) nthings = EFFORT_RANGE_MAX;
+
   //g_print("VALS %d %d %d %d %d\n", nthings, badthings, mainw->effort, badthingcount, goodthingcount);
   if (badthings)  {
     badthingcount += nthings;

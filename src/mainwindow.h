@@ -98,6 +98,8 @@
 // a few GUI specific settings
 #define GUI_SCREEN_WIDTH (mainw->mgeom[widget_opts.monitor].width)
 #define GUI_SCREEN_HEIGHT (mainw->mgeom[widget_opts.monitor].height)
+#define GUI_SCREEN_PHYS_WIDTH (mainw->mgeom[widget_opts.monitor].phys_width)
+#define GUI_SCREEN_PHYS_HEIGHT (mainw->mgeom[widget_opts.monitor].phys_height)
 #define GUI_SCREEN_X (mainw->mgeom[widget_opts.monitor].x)
 #define GUI_SCREEN_Y (mainw->mgeom[widget_opts.monitor].y)
 

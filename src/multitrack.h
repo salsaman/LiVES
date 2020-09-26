@@ -259,6 +259,7 @@ struct _mt {
   LiVESWidget *view_clips;
   LiVESWidget *view_in_out;
   LiVESWidget *view_effects;
+  LiVESWidget *show_quota;
   LiVESWidget *avel_box;
   LiVESWidget *checkbutton_avel_reverse;
   LiVESWidget *spinbutton_avel;

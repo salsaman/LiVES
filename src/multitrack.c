@@ -7723,6 +7723,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   show_messages = lives_standard_image_menu_item_new_with_label(_("Show _Messages"));
   lives_container_add(LIVES_CONTAINER(mt->view_menu), show_messages);
 
+  mt->show_quota = lives_standard_image_menu_item_new_with_label(_("Show / Edit Disk _Quota Settings"));
+  lives_container_add(LIVES_CONTAINER(mt->view_menu), mt->show_quota);
+
   mt->aparam_separator = lives_standard_menu_item_new();
   lives_container_add(LIVES_CONTAINER(mt->view_menu), mt->aparam_separator);
   lives_widget_set_sensitive(mt->aparam_separator, FALSE);
@@ -7879,8 +7882,10 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(multitrack_view_clips), (livespointer)mt);
   lives_signal_connect(LIVES_GUI_OBJECT(mt->view_in_out), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(multitrack_view_in_out), (livespointer)mt);
-  lives_signal_connect(LIVES_GUI_OBJECT(show_messages), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_show_messages_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(show_messages), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_show_messages_activate), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mt->show_quota), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(run_diskspace_dialog_cb), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->stop), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_stop_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->rewind), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -16953,6 +16958,7 @@ void mt_desensitise(lives_mt * mt) {
   lives_widget_set_sensitive(mt->remove_first_gaps, FALSE);
   lives_widget_set_sensitive(mt->undo, FALSE);
   lives_widget_set_sensitive(mt->redo, FALSE);
+  lives_widget_set_sensitive(mt->show_quota, FALSE);
   lives_widget_set_sensitive(mt->jumpback, FALSE);
   lives_widget_set_sensitive(mt->jumpnext, FALSE);
   lives_widget_set_sensitive(mt->mark_jumpback, FALSE);
@@ -17037,6 +17043,7 @@ void mt_sensitise(lives_mt * mt) {
   lives_widget_set_sensitive(mt->quit, TRUE);
   lives_widget_set_sensitive(mt->clear_ds, TRUE);
   lives_widget_set_sensitive(mt->open_menu, TRUE);
+  lives_widget_set_sensitive(mt->show_quota, TRUE);
 #ifdef HAVE_WEBM
   lives_widget_set_sensitive(mt->open_loc_menu, TRUE);
 #endif

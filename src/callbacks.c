@@ -2194,6 +2194,7 @@ void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
           }
           lives_free(set_name);
           mainw->only_close = mainw->is_exiting = FALSE;
+          if (mainw->cs_manage) lives_idle_add_simple(run_diskspace_dialog_idle, NULL);
           return;
         }
         resp = LIVES_RESPONSE_RETRY;

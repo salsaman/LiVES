@@ -2404,9 +2404,9 @@ static char *mkszlabel(const char *set, ssize_t size, int ccount, int lcount) {
   char *szstr, *label, *laystr, *clpstr;
   if (size < 0) szstr = lives_strdup(_("Calculating..."));
   else szstr = lives_format_storage_space_string(size);
-  if (ccount == -1) clpstr = (_("Couning..."));
+  if (ccount == -1) clpstr = (_("couning..."));
   else clpstr = lives_strdup_printf("%d", ccount);
-  if (lcount == -1) laystr = (_("Couning..."));
+  if (lcount == -1) laystr = (_("couning..."));
   else laystr = lives_strdup_printf("%d", lcount);
   bit2 = lives_strdup_printf(_("Total size = %s\tclips: %s\tlayouts: %s"), szstr, clpstr, laystr);
   label = lives_strdup_printf("%s\n%s\n", bit1, bit2);
@@ -2734,13 +2734,13 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
     while (lives_expander_get_expanded(LIVES_EXPANDER(exp)) && totsize == -1) {
       if (lives_proc_thread_check(sizinfo)) {
         totsize = lives_proc_thread_join_int64(sizinfo);
-        txt = mkszlabel(set, totsize, ccount, lcount);
-        lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
-        lives_free(txt);
       }
       if (lives_expander_get_expanded(LIVES_EXPANDER(exp))) lives_widget_process_updates(renamew->dialog);
       if (lives_expander_get_expanded(LIVES_EXPANDER(exp))) lives_nanosleep(1000);
     }
+    txt = mkszlabel(set, totsize, ccount, lcount);
+    lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
+    lives_free(txt);
     if (lives_expander_get_expanded(LIVES_EXPANDER(exp))) lives_widget_process_updates(renamew->dialog);
   }
 
@@ -5666,6 +5666,11 @@ void run_diskspace_dialog_cb(LiVESWidget * w, livespointer data) {
   run_diskspace_dialog();
 }
 
+boolean run_diskspace_dialog_idle(livespointer data) {
+  run_diskspace_dialog();
+  return NULL;
+}
+
 ///////
 
 static void manclips_del(LiVESWidget * button, _entryw * renamew) {
@@ -5721,13 +5726,14 @@ static void manclips_reload(LiVESWidget * button, _entryw * renamew) {
   }
   if (mainw->cliplist) {
     do_info_dialog(_("The current clips must be saved before reloading another set"));
-    mainw->no_exit = mainw->only_close = TRUE;
+    mainw->only_close = TRUE;
     if (!on_save_set_activate(button, NULL)) return;
-    mainw->no_exit = mainw->only_close = FALSE;
+    mainw->only_close = FALSE;
   }
 
   do_info_dialog(_("After reloading the Set you can inspect it and use it as normal.\n"
-                   "Should you decide to delete it or re-save it, click on Files | Save / Close all Clips\n"
+                   "Should you decide to delete it or re-save it, click on\nFile | Close/Save all Clips"
+                   "in the menu of the Clip Editor\n"
                    "You will then be returned to the Manage Sets dialog,\n"
                    "where you may choose to continue this process further\n"));
   lives_widget_destroy(renamew->dialog);
@@ -6685,7 +6691,8 @@ void run_diskspace_dialog(void) {
              DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
     lives_widget_set_focus_on_click(button, FALSE);
 
-    if (!mainw->clips_available) lives_widget_set_sensitive(button, FALSE);
+    //if (!mainw->clips_available) lives_widget_set_sensitive(button, FALSE);
+    lives_widget_set_sensitive(button, FALSE); // TODO
 
     lives_box_pack_start(LIVES_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width * 4);
 
@@ -6744,6 +6751,10 @@ void run_diskspace_dialog(void) {
     if (!wid || !activate_x11_window(wid)) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
     lives_dialog_run(LIVES_DIALOG(dialog));
   } else lives_idle_add_simple(update_dsu, NULL);
+  if (mainw->cs_manage && mainw->num_sets) {
+    mainw->cs_manage = FALSE;
+    manclips_cb(NULL, dialog);
+  } else mainw->cs_manage = FALSE;
 }
 
 

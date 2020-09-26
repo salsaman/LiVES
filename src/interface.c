@@ -5702,7 +5702,7 @@ static void manclips_reload(LiVESWidget * button, _entryw * renamew) {
   if (mainw->cliplist) {
     do_info_dialog(_("The current clips must be saved before reloading another set"));
     mainw->no_exit = mainw->only_close = TRUE;
-    on_save_set_activate(button, NULL);
+    if (!on_save_set_activate(button, NULL)) return;
     mainw->no_exit = mainw->only_close = FALSE;
   }
 

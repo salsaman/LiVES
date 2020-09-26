@@ -500,7 +500,7 @@ WEED_GLOBAL_INLINE int weed_channel_get_naudchans(weed_plant_t *channel) {
   return weed_get_int_value(channel, WEED_LEAF_AUDIO_CHANNELS, NULL);
 }
 
-WEED_GLOBAL_INLINE int weed_channel_get_audio_data_length(weed_plant_t *channel) {
+WEED_GLOBAL_INLINE int weed_channel_get_audio_length(weed_plant_t *channel) {
   if (!WEED_PLANT_IS_CHANNEL(channel)) return 0;
   return weed_get_int_value(channel, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
 }

@@ -873,7 +873,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   if (in_channel) {
     /// fill the audio buffer for the following frame(s)
     int achans;
-    int adlen = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
+    int adlen = weed_channel_get_audio_length(in_channel);
     float **adata = (float **)weed_channel_get_audio_data(in_channel, &achans);
     pthread_mutex_lock(&sd->pcm_mutex);
     if (adlen > 0 && adata && adata[0]) {

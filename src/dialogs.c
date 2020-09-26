@@ -2966,8 +2966,7 @@ boolean do_save_clipset_warn(void) {
 
   msg = lives_strdup_printf(
           _("Saving the set will cause copies of all loaded clips to remain on the disk%s.\n\n"
-            "Please press 'Cancel' if that is not what you want.\n"),
-          extra);
+            "Please press 'Cancel' if that is not what you want.\n"), extra);
   lives_free(extra);
 
   if (!do_warning_dialog_with_check(msg, WARN_MASK_SAVE_SET)) {

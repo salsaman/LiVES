@@ -5517,7 +5517,12 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
     if ((!mainw->multitrack || widget != mainw->play_image) && widget != mainw->preview_image) {
       if (prefs->funky_widgets) {
         lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->frame_surround);
-        lives_painter_rectangle(cr, cx - 1, cy - 1, width + 2, height + 2);
+        if (widget == mainw->start_image || widget == mainw->end_image || widget == mainw->play_image) {
+          lives_painter_move_to(cr, 0, 0);
+          lives_painter_line_to(cr, rwidth, 0);
+          lives_painter_move_to(cr, 0, rheight);
+          lives_painter_line_to(cr, rwidth, rheight);
+        } else lives_painter_rectangle(cr, cx - 1, cy - 1, width + 2, height + 2);
         // frame
         lives_painter_stroke(cr);
         cx += 2;
@@ -5525,11 +5530,11 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
     }
 
     /// x, y values are offset of top / left of image in drawing area
-    lives_painter_set_source_pixbuf(cr, pixbuf, cx + 2, cy);
+    lives_painter_set_source_pixbuf(cr, pixbuf, cx, cy);
 
     if (mainw->multitrack && widget != mainw->preview_image) border = 16;
     /// clipping area for image
-    lives_painter_rectangle(cr, cx + 2, cy, rwidth - border, rheight);
+    lives_painter_rectangle(cr, cx, cy, rwidth - border, rheight);
   } else {
     lives_widget_set_opacity(widget, 0.);
     clear_widget_bg(widget, surface);

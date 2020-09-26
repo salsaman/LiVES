@@ -4307,9 +4307,10 @@ weed_error_t weed_leaf_delete_host(weed_plant_t *plant, const char *key) {
   weed_error_t err;
   if (!plant) return WEED_ERROR_NOSUCH_PLANT;
   err = _weed_leaf_delete(plant, key);
-  if (err == WEED_FLAG_UNDELETABLE) {
+  if (err == WEED_ERROR_UNDELETABLE) {
     weed_leaf_clear_flagbits(plant, key, WEED_FLAG_UNDELETABLE);
-    return _weed_leaf_delete(plant, key);
+    err = _weed_leaf_delete(plant, key);
+    if (err != WEED_SUCCESS) abort();
   }
   return err;
 }

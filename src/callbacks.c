@@ -416,7 +416,7 @@ void lives_exit(int signum) {
         lives_free(cwd);
       }
 
-      if (!mainw->leave_files && (*mainw->set_name) && !mainw->leave_recovery) {
+      if (!mainw->leave_files && *mainw->set_name && !mainw->leave_recovery) {
         char *set_layout_dir = lives_build_filename(prefs->workdir, mainw->set_name,
                                LAYOUTS_DIRNAME, NULL);
         if (!lives_file_test(set_layout_dir, LIVES_FILE_TEST_IS_DIR)) {
@@ -1626,7 +1626,7 @@ void on_export_proj_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   if (!mainw->was_set) {
     mainw->no_exit = TRUE;
-    on_save_set_activate(NULL, mainw->set_name);
+    if (!on_save_set_activate((LiVESWidget *)1, mainw->set_name)) return;
     mainw->no_exit = FALSE;
     mainw->was_set = TRUE;
     if (mainw->multitrack && !mainw->multitrack->changed) recover_layout_cancelled(FALSE);
@@ -2203,7 +2203,6 @@ void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
         //mainw->add_trash_rb = FALSE;
       }
     } while (resp == LIVES_RESPONSE_ABORT);
-
 
     lives_widget_destroy(cdsw->dialog);
     lives_free(cdsw);
@@ -5292,7 +5291,7 @@ boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
   // TODO - caller to do end_threaded_dialog()
 
   /////////////////
-  /// IMPORTANT !!!  mainw->no_wxit must be set. otherwise the app will exit
+  /// IMPORTANT !!!  mainw->no_exit must be set. otherwise the app will exit
   ////////////
 
   char new_set_name[MAX_SET_NAME_LEN] = {0};

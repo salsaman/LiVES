@@ -3658,6 +3658,7 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
   int alen;
 
   int i;
+
   if (abuf->samples_filled == 0) {
     weed_layer_set_audio_data(achan, NULL, 0, 0, 0);
     return FALSE;
@@ -3674,10 +3675,12 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
 
   if (!has_audio_chans_out(filter, FALSE)) {
     int maxlen = weed_chantmpl_get_max_audio_length(ctmpl);
-    if (abuf->in_interleaf) maxlen *= abuf->in_achans;
-    if (maxlen < samps) {
-      offs = samps - maxlen;
-      samps = maxlen;
+    if (maxlen > 0) {
+      if (abuf->in_interleaf) maxlen *= abuf->in_achans;
+      if (maxlen < samps) {
+        offs = samps - maxlen;
+        samps = maxlen;
+      }
     }
   }
 
@@ -3702,7 +3705,6 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
 
   // plugin will get float, so we first convert to that
   if (!abuf->bufferf) {
-
     // try 8 bit -> 16
     if (abuf->buffer8 && !abuf->buffer16) {
       int swap = 0;
@@ -3724,12 +3726,14 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
         if (!abuf->in_interleaf) {
           abuf->bufferf[i] = (float *)lives_calloc_safety(abuf->samples_filled, sizeof(float));
           sample_move_d16_float(abuf->bufferf[i], &abuf->buffer16[0][offs], samps, 1,
-                                (abuf->s16_signed ? AFORM_SIGNED : AFORM_UNSIGNED), abuf->swap_endian, lives_vol_from_linear(cfile->vol));
+                                (abuf->s16_signed ? AFORM_SIGNED : AFORM_UNSIGNED),
+                                abuf->swap_endian, lives_vol_from_linear(cfile->vol));
           offs += abuf->samples_filled;
         } else {
           abuf->bufferf[i] = (float *)lives_calloc_safety(samps / abuf->out_achans, sizeof(float));
           sample_move_d16_float(abuf->bufferf[i], &abuf->buffer16[0][i], samps / abuf->in_achans, abuf->in_achans,
-                                (abuf->s16_signed ? AFORM_SIGNED : AFORM_UNSIGNED), abuf->swap_endian, lives_vol_from_linear(cfile->vol));
+                                (abuf->s16_signed ? AFORM_SIGNED : AFORM_UNSIGNED),
+                                abuf->swap_endian, lives_vol_from_linear(cfile->vol));
         }
       }
       abuf->out_interleaf = FALSE;

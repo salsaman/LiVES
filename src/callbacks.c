@@ -336,12 +336,15 @@ void lives_exit(int signum) {
             if (cfile->laudio_drawable) {
               if (mainw->laudio_drawable == cfile->laudio_drawable) mainw->laudio_drawable = NULL;
               lives_painter_surface_destroy(cfile->laudio_drawable);
+              cfile->laudio_drawable = NULL;
             }
 
             if (cfile->raudio_drawable) {
               if (mainw->raudio_drawable == cfile->raudio_drawable) mainw->raudio_drawable = NULL;
               lives_painter_surface_destroy(cfile->raudio_drawable);
+              cfile->raudio_drawable = NULL;
             }
+            if (mainw->drawsrc == mainw->current_file) mainw->drawsrc = -1;
 
             if (IS_NORMAL_CLIP(i) && mainw->files[i]->ext_src && mainw->files[i]->ext_src_type == LIVES_EXT_SRC_DECODER) {
               // must do this before we move it
@@ -2090,6 +2093,7 @@ void del_current_set(boolean exit_after) {
     lives_memset(mainw->set_name, 0, 1);
   }
   mainw->only_close = moc;
+  end_threaded_dialog();
 }
 
 
@@ -2156,6 +2160,8 @@ void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       lives_widget_show_all(cdsw->dialog);
       resp = lives_dialog_run(LIVES_DIALOG(cdsw->dialog));
 
+      if (resp == LIVES_RESPONSE_RETRY) continue;
+
       if (resp == LIVES_RESPONSE_CANCEL) {
         lives_widget_destroy(cdsw->dialog);
         lives_free(cdsw);
@@ -2167,7 +2173,7 @@ void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
         mainw->only_close = mainw->is_exiting = FALSE;
         return;
       }
-      if (resp == LIVES_RESPONSE_ABORT) { /// TODO
+      if (resp == LIVES_RESPONSE_ACCEPT) {
         // save set
         if ((legal_set_name = is_legal_set_name((set_name = U82F(lives_entry_get_text(LIVES_ENTRY(cdsw->entry)))),
                                                 TRUE, FALSE))) {
@@ -2190,19 +2196,30 @@ void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
           mainw->only_close = mainw->is_exiting = FALSE;
           return;
         }
-        legal_set_name = FALSE;
+        resp = LIVES_RESPONSE_RETRY;
         lives_widget_hide(cdsw->dialog);
         lives_free(set_name);
       }
-      if (mainw->was_set && legal_set_name) {
+      if (resp == LIVES_RESPONSE_RESET) {
+        char *what, *expl;
         // TODO
         //if (check_for_executable(&capable->has_gio, EXEC_GIO)) mainw->add_trash_rb = TRUE;
-        if (!do_warning_dialog(_("\n\nSet will be deleted from the disk.\nAre you sure ?\n"))) {
+        if (mainw->was_set) {
+          what = lives_strdup_printf(_("Set '%s'"), mainw->set_name);
+          expl = lives_strdup("");
+        } else {
+          what = (_("All currently open clips"));
+          expl = (_("<b>(Note: original source material will NOT be affected !)</b>"));
+          widget_opts.use_markup = TRUE;
+        }
+        if (!do_warning_dialogf(_("\n\n%s will be permanently deleted from the disk.\nAre you sure ?\n\n%s"), what, expl)) {
           resp = LIVES_RESPONSE_ABORT;
         }
+        widget_opts.use_markup = FALSE;
+        lives_free(what); lives_free(expl);
         //mainw->add_trash_rb = FALSE;
       }
-    } while (resp == LIVES_RESPONSE_ABORT);
+    } while (resp == LIVES_RESPONSE_ABORT || resp == LIVES_RESPONSE_RETRY);
 
     lives_widget_destroy(cdsw->dialog);
     lives_free(cdsw);

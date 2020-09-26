@@ -4423,16 +4423,20 @@ _entryw *create_cds_dialog(int type) {
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   discardbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(cdsw->dialog), LIVES_STOCK_DELETE, NULL,
-                  (type == 2) ? LIVES_RESPONSE_ABORT : LIVES_RESPONSE_RETRY);
+                  (type == 2) ? LIVES_RESPONSE_ABORT : LIVES_RESPONSE_RESET);
 
   if ((type == 0 && !*mainw->multitrack->layout_name) || type == 3 || type == 4)
     lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Wipe layout"));
   else if (type == 0) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Ignore changes"));
-  else if (type == 1) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete clip set"));
-  else if (type == 2) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete layout"));
+  else if (type == 1) {
+    if (mainw->was_set)
+      lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete clip set"));
+    else
+      lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Discard all clips"));
+  } else if (type == 2) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete layout"));
 
   if (type != 4) savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(cdsw->dialog), LIVES_STOCK_SAVE, NULL,
-                                (type == 2) ? LIVES_RESPONSE_RETRY : LIVES_RESPONSE_ABORT);
+                                (type == 2) ? LIVES_RESPONSE_RETRY : LIVES_RESPONSE_ACCEPT);
   if (type == 0 || type == 3) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Save layout"));
   else if (type == 1) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Save clip set"));
   else if (type == 2) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Wipe layout"));

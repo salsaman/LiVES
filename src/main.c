@@ -5374,7 +5374,7 @@ void desensitize(void) {
     for (i = 1; i < MAX_FILES; i++) {
       if (mainw->files[i]) {
         if (mainw->files[i]->menuentry) {
-          if (!(i == mainw->current_file)) {
+          if (i != mainw->current_file) {
             lives_widget_set_sensitive(mainw->files[i]->menuentry, FALSE);
 	    // *INDENT-OFF*
           }}}}}
@@ -9301,7 +9301,7 @@ lfi_done:
 
       //update the bar text
       if (CURRENT_CLIP_IS_VALID) {
-        register int i;
+        int i;
         if (cfile->clip_type == CLIP_TYPE_TEMP) {
           close_temp_handle(file_to_switch_to);
           return;

@@ -643,7 +643,7 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
 
     if (!inited) {
       int rc = 0;
-      sd = (_sdata *)weed_malloc(sizeof(_sdata));
+      sd = (_sdata *)weed_calloc(1, sizeof(_sdata));
       if (!sd) return WEED_ERROR_MEMORY_ALLOCATION;
 
       sd->error = WEED_SUCCESS;
@@ -676,6 +676,11 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
 
       clock_gettime(CLOCK_REALTIME, &ts);
       ts.tv_sec += WORKER_TIMEOUT_SEC;
+
+      //#define DEBUG
+#ifdef DEBUG
+      ts.tv_sec *= 100;
+#endif
 
       // wait for worker thread ready
       pthread_mutex_lock(&cond_mutex);

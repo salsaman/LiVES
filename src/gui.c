@@ -2728,7 +2728,7 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_select_last_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->lock_selwidth), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_lock_selwidth_activate), NULL);
-  mainw->record_perf_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->record_perf), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  mainw->record_perf_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->record_perf), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_record_perf_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->playall), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_playall_activate), NULL);
@@ -2755,24 +2755,24 @@ void create_LiVES(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->ccpd_sound), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_boolean_toggled),
                        &mainw->ccpd_with_sound); // TODO - make pref
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->dsize), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_double_size_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->dsize), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_double_size_activate), NULL);
   mainw->sepwin_cb_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->sepwin), LIVES_WIDGET_ACTIVATE_SIGNAL,
                           LIVES_GUI_CALLBACK(on_sepwin_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->fade), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_fade_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->loop_video), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_loop_video_activate), NULL);
-  mainw->loop_cont_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->loop_continue), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->loop_video), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_loop_video_activate), NULL);
+  mainw->loop_cont_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->loop_continue), LIVES_WIDGET_ACTIVATE_SIGNAL,
                           LIVES_GUI_CALLBACK(on_loop_cont_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->loop_ping_pong), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_ping_pong_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->loop_ping_pong), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_ping_pong_activate), NULL);
   mainw->mute_audio_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->mute_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
                            LIVES_GUI_CALLBACK(on_mute_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->sticky), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_sticky_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->showfct), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_showfct_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->sticky), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_sticky_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->showfct), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_showfct_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->preferences), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_preferences_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->change_speed), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -2896,14 +2896,15 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_devicemap_load_activate), NULL);
 #endif
 
-  mainw->toy_func_none = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->toy_none), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  mainw->toy_func_none = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->toy_none), LIVES_WIDGET_ACTIVATE_SIGNAL,
                          LIVES_GUI_CALLBACK(on_toy_activate), NULL);
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->autolives), LIVES_WIDGET_ACTIVATE_SIGNAL,
                              LIVES_GUI_CALLBACK(autolives_toggle), NULL);
 
-  mainw->toy_func_random_frames = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->toy_random_frames),
-                                  LIVES_WIDGET_ACTIVATE_SIGNAL, LIVES_GUI_CALLBACK(on_toy_activate),
+  mainw->toy_func_random_frames = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->toy_random_frames),
+                                  LIVES_WIDGET_ACTIVATE_SIGNAL,
+                                  LIVES_GUI_CALLBACK(on_toy_activate),
                                   LIVES_INT_TO_POINTER(LIVES_TOY_MAD_FRAMES));
 
   mainw->toy_func_lives_tv = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->toy_tv), LIVES_WIDGET_ACTIVATE_SIGNAL,

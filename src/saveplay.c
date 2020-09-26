@@ -2902,7 +2902,7 @@ void play_file(void) {
 #ifdef ENABLE_JACK
   if (audio_player == AUD_PLAYER_JACK && (mainw->jackd || mainw->jackd_read)) {
     if (mainw->jackd_read || mainw->aud_rec_fd != -1)
-      jack_rec_audio_end(!(prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT), TRUE);
+      jack_rec_audio_end(!(prefs->perm_audio_reader && future_prefs->audio_src == AUDIO_SRC_EXT), TRUE);
 
     // send jack transport stop
     if (!mainw->preview && !mainw->foreign) jack_pb_stop();
@@ -2931,7 +2931,7 @@ void play_file(void) {
     if (audio_player == AUD_PLAYER_PULSE && (mainw->pulsed || mainw->pulsed_read)) {
 
       if (mainw->pulsed_read || mainw->aud_rec_fd != -1)
-        pulse_rec_audio_end(!(prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT), TRUE);
+        pulse_rec_audio_end(!(prefs->perm_audio_reader && future_prefs->audio_src == AUDIO_SRC_EXT), TRUE);
 
       if (mainw->pulsed_read) {
         mainw->pulsed_read->in_use = FALSE;

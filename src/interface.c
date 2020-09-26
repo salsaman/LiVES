@@ -2587,8 +2587,6 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
 
     // clips
     renamew->clips_layout = lives_layout_new(LIVES_BOX(renamew->exp_vbox));
-    lives_layout_add_fill(LIVES_LAYOUT(renamew->clips_layout), FALSE);
-    lives_layout_add_fill(LIVES_LAYOUT(renamew->clips_layout), FALSE);
     widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
     widget_opts.justify = LIVES_JUSTIFY_CENTER;
     lives_layout_add_label(LIVES_LAYOUT(renamew->clips_layout), _("Clips"), FALSE);
@@ -5668,7 +5666,7 @@ void run_diskspace_dialog_cb(LiVESWidget * w, livespointer data) {
 
 boolean run_diskspace_dialog_idle(livespointer data) {
   run_diskspace_dialog();
-  return NULL;
+  return FALSE;
 }
 
 ///////

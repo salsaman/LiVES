@@ -182,9 +182,9 @@ retry:
 void pulse_get_rec_avals(pulse_driver_t *pulsed) {
   mainw->rec_aclip = pulsed->playing_file;
   if (mainw->rec_aclip != -1) {
-    mainw->rec_aseek = fabs((double)(fwd_seek_pos / (afile->achans * afile->asampsize / 8)) / (double)afile->arps)
-                       + (mainw->startticks - mainw->currticks) / TICKS_PER_SECOND_DBL;
-    mainw->rec_avel = fabs((double)pulsed->in_arate / (double)afile->arps) * afile->adirection;
+    mainw->rec_aseek = fabs((double)(fwd_seek_pos / (double)(afile->achans * afile->asampsize / 8)) / (double)afile->arps)
+                       + (double)(mainw->startticks - mainw->currticks) / TICKS_PER_SECOND_DBL;
+    mainw->rec_avel = fabs((double)pulsed->in_arate / (double)afile->arps) * (double)afile->adirection;
     //g_print("RECSEEK is %f %ld\n", mainw->rec_aseek, pulsed->real_seek_pos);
   }
 }
@@ -448,7 +448,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         }
       }
 
-      if (IS_VALID_CLIP(pulsed->playing_file) && !mainw->multitrack && pulsed->seek_pos > afile->afilesize && pulsed->in_arate < 0) {
+      if (IS_VALID_CLIP(pulsed->playing_file) && !mainw->multitrack
+          && pulsed->seek_pos > afile->afilesize && pulsed->in_arate < 0) {
         pulsed->seek_pos += (pulsed->in_arate / pulsed->out_arate) * nsamples * pulsed->in_achans * pulsed->in_asamps / 8;
         pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos - qnt, qnt);
         if (pulsed->seek_pos < afile->afilesize) {
@@ -561,7 +562,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           in_framesd = fabs((double)shrink_factor * (double)pulseFramesAvailable);
 
           // add in a small random factor so on longer timescales we arent losing or gaining samples
-          in_bytes = (int)(in_framesd + ((double)fastrand() / (double)LIVES_MAXUINT64)) * pulsed->in_achans * (pulsed->in_asamps >> 3);
+          in_bytes = (int)(in_framesd + ((double)fastrand() / (double)LIVES_MAXUINT64))
+                     * pulsed->in_achans * (pulsed->in_asamps >> 3);
 
 #ifdef DEBUG_PULSE
           in_frames = in_bytes / pulsed->in_achans * (pulsed->in_asamps >> 3);

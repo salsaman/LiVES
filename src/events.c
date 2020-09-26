@@ -4897,7 +4897,7 @@ void event_list_add_end_events(weed_event_t *event_list, boolean is_final) {
 #ifdef ENABLE_JACK
             if (prefs->audio_player == AUD_PLAYER_JACK) {
               if (mainw->jackd)
-                jack_get_rec_avals(mainw->pulsed);
+                jack_get_rec_avals(mainw->jackd);
             }
 #endif
 #ifdef HAVE_PULSE_AUDIO

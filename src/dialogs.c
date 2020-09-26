@@ -1911,7 +1911,7 @@ switch_point:
           if (IS_VALID_CLIP(aplay_file)) {
             int qnt = mainw->files[aplay_file]->achans * (mainw->files[aplay_file]->asampsize >> 3);
             mainw->files[aplay_file]->aseek_pos =
-              (double)((off_t)((double) mainw->pulsed->seek_pos / (double)mainw->files[aplay_file]->arps
+              (double)((off_t)((double) mainw->jackd->seek_pos / (double)mainw->files[aplay_file]->arps
                                / (mainw->files[aplay_file]->achans * mainw->files[aplay_file]->asampsize / 8)
                                * mainw->files[aplay_file]->fps + .5)) / mainw->files[aplay_file]->fps
               * mainw->files[aplay_file]->arps * qnt;

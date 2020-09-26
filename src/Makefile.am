@@ -69,12 +69,12 @@ ldvgrab_LDADD = -lavc1394 -lraw1394 -lrom1394
 endif
 
 if ENABLE_JACK
-jack_CFLAGS = -DENABLE_JACK
+jack_CFLAGS = -DENABLE_JACK=1 @JACK_CFLAGS@
 jack_SOURCES = jack.c jack.h
-jack_LDADD = -ljack
+jack_LDADD = @JACK_LIBS@ @JACK_SERVER_LIBS@
 
 if ENABLE_JACK_TRANSPORT
-jack_CFLAGS += -DENABLE_JACK_TRANSPORT
+jack_CFLAGS += -DENABLE_JACK_TRANSPORT=1
 endif
 endif
 

@@ -901,7 +901,7 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
       if (prefs->perm_audio_reader) {
 #ifdef ENABLE_JACK
         if (prefs->audio_player == AUD_PLAYER_JACK) {
-          jack_rec_audio_end(TRUE, TRUE);
+          jack_rec_audio_end(FALSE, TRUE);
         }
 #endif
 #ifdef HAVE_PULSE_AUDIO

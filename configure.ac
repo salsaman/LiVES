@@ -210,6 +210,7 @@ AC_CHECK_HEADERS(linux/joystick.h, HAVE_LINUX_JOYSTICK_H=true, HAVE_LINUX_JOYSTI
 AM_CONDITIONAL(HAVE_LINUX_JOYSTICK_H, $HAVE_LINUX_JOYSTICK_H)
 
 HAVE_JACK=false
+HAVE_JACK_SERVER=false
 HAVE_JACK_TRANSPORT=false
 
 AC_ARG_ENABLE(jack, [  --disable-jack     Disable jack support.] , disable_jack=yes)
@@ -219,14 +220,41 @@ if test "x$disable_jack" != "xyes" ; then
 
 dnl check for jack
 
-dnl PKG_CHECK_MODULES(JACK, [jack >= 0.100.0], HAVE_JACK=true, HAVE_JACK=false)
+PKG_CHECK_MODULES(JACK, [jack >= 0.100.0], HAVE_JACK=true, HAVE_JACK=false)
+
+if test "$HAVE_JACK" = "true" ; then
+
+JACK_SERVER_LIBS=`$PKG_CONFIG --variable=server_libs jack`
+
+if test "$JACK_SERVER_LIBS" != ""; then
+HAVE_JACK_SERVER=true
+echo jack server libs found
+else
+echo jack server libs not found
+fi
+
+else
 
 AC_CHECK_LIB(jack,jack_get_client_name,have_jacklib=true,have_jacklib=false)
 if test "$have_jacklib" = "true"; then
 
 AC_CHECK_HEADERS(jack/jack.h, HAVE_JACK=true, HAVE_JACK=false)
+AC_CHECK_HEADERS(jack/control.h, HAVE_JACK_SERVER=true, HAVE_JACK_SERVER=false)
+
+JACK_CFLAGS=
+JACK_LIBS=-ljack
+JACK_SERVER_LIBS=-ljackserver
+
+fi
+fi
 
 if test "$HAVE_JACK" != "false"; then
+if test "$HAVE_JACK_SERVER" != "false"; then
+
+AC_SUBST(JACK_CFLAGS)
+AC_SUBST(JACK_LIBS)
+AC_SUBST(JACK_SERVER_LIBS)
+
 if test "x$disable_jack_transport" != "xyes" ; then
 
 dnl check for jack-transport

@@ -11626,10 +11626,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_box_pack_top(LiVESBox * box, LiVESWidg
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_container_child_set_shrinkable(LiVESContainer * c, LiVESWidget * child, boolean val) {
 #ifdef GUI_GTK
-  GValue bool = G_VALUE_INIT;
-  g_value_init(&bool, G_TYPE_BOOLEAN);
-  g_value_set_boolean(&bool, val);
-  gtk_container_child_set_property(c, child, "shrink", &bool);
+  GValue xbool = G_VALUE_INIT;
+  g_value_init(&xbool, G_TYPE_BOOLEAN);
+  g_value_set_boolean(&xbool, val);
+  gtk_container_child_set_property(c, child, "shrink", &xbool);
   return TRUE;
 #endif
   return FALSE;

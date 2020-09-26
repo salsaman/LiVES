@@ -6567,7 +6567,7 @@ boolean lives_osc_cb_saveset(void *context, int arglen, const void *vargs, OSCTi
 
   if (!*setname) {
     mainw->only_close = TRUE;
-    ret = on_save_set_activate((LiVESWidget *)1, NULL);
+    ret = on_save_set_activate(NULL, NULL);
     mainw->only_close = FALSE;
     if (ret) return lives_osc_notify_success(NULL);
     else return lives_osc_notify_failure();

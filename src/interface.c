@@ -735,8 +735,8 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
   if (LIVES_IS_FILE_CHOOSER(widget) && preview_type != LIVES_PREVIEW_TYPE_RANGE) {
     lives_widget_set_sensitive(preview_button, FALSE);
 
-    lives_signal_connect(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_SELECTION_CHANGED_SIGNAL,
-                         LIVES_GUI_CALLBACK(pv_sel_changed), (livespointer)preview_button);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_SELECTION_CHANGED_SIGNAL,
+                              LIVES_GUI_CALLBACK(pv_sel_changed), (livespointer)preview_button);
   }
 }
 
@@ -2384,8 +2384,8 @@ _entryw *create_location_dialog(void) {
              LIVES_RESPONSE_OK);
   lives_button_grab_default_special(okbutton);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(lives_general_button_clicked), locw);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(lives_general_button_clicked), locw);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_location_select), NULL);
@@ -2399,14 +2399,19 @@ _entryw *create_location_dialog(void) {
 }
 
 
-static char *mkszlabel(const char *set, ssize_t size) {
+static char *mkszlabel(const char *set, ssize_t size, int ccount, int lcount) {
   char *bit1 = lives_strdup_printf(_("Contents of Set %s"), set), *bit2;
-  char *szstr, *label;
+  char *szstr, *label, *laystr, *clpstr;
   if (size < 0) szstr = lives_strdup(_("Calculating..."));
   else szstr = lives_format_storage_space_string(size);
-  bit2 = lives_strdup_printf(_("Total size = %s"), szstr);
+  if (ccount == -1) clpstr = (_("Couning..."));
+  else clpstr = lives_strdup_printf("%d", ccount);
+  if (lcount == -1) laystr = (_("Couning..."));
+  else laystr = lives_strdup_printf("%d", lcount);
+  bit2 = lives_strdup_printf(_("Total size = %s\tclips: %s\tlayouts: %s"), szstr, clpstr, laystr);
   label = lives_strdup_printf("%s\n%s\n", bit1, bit2);
   lives_free(bit1); lives_free(bit2);
+  lives_free(laystr); lives_free(clpstr);
   return label;
 }
 
@@ -2436,12 +2441,13 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
     lives_file_dets_t *filedets;
     const char *set = lives_entry_get_text(LIVES_ENTRY(renamew->entry));
     LiVESList *list;
+    ssize_t totsize = -1;
     char *txt, *dtxt;
     char *setdir = lives_build_path(prefs->workdir, set, NULL);
     char *ldirname = lives_build_path(setdir, LAYOUTS_DIRNAME, NULL);
     char *ordfilename = lives_build_filename(setdir, CLIP_ORDER_FILENAME, NULL);
     int woat = widget_opts.apply_theme;
-    ssize_t totsize = -1;
+    int lcount = 0, ccount = 0;
 
     sizinfo = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)get_dir_size, WEED_SEED_INT64, "s",
                                        setdir);
@@ -2458,7 +2464,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
                               | EXTRA_DETAILS_CHECK_MISSING);
 
     if (lives_proc_thread_check(sizinfo)) totsize = lives_proc_thread_join_int64(sizinfo);
-    txt = mkszlabel(set, totsize);
+    txt = mkszlabel(set, totsize, -1, -1);
     lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
     lives_free(txt);
 
@@ -2486,7 +2492,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
 
     if (totsize == -1) {
       if (lives_proc_thread_check(sizinfo)) totsize = lives_proc_thread_join_int64(sizinfo);
-      txt = mkszlabel(set, totsize);
+      txt = mkszlabel(set, totsize, -1, -1);
       lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
       lives_free(txt);
     }
@@ -2494,7 +2500,11 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
     list = *laylist;
     if (!list->data) {
       // NONE label
-      lives_layout_add_label(LIVES_LAYOUT(renamew->layouts_layout), mainw->string_constants[LIVES_STRING_CONSTANT_NONE], FALSE);
+      //lives_layout_add_label(LIVES_LAYOUT(renamew->layouts_layout), mainw->string_constants[LIVES_STRING_CONSTANT_NONE], FALSE);
+      lives_widget_hide(renamew->layouts_layout);
+      txt = mkszlabel(set, totsize, -1, 0);
+      lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
+      lives_free(txt);
     } else {
       widget_opts.apply_theme = 2;
       lives_layout_add_row(LIVES_LAYOUT(renamew->layouts_layout));
@@ -2503,7 +2513,10 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
       lives_layout_add_label(LIVES_LAYOUT(renamew->layouts_layout), _("Name"), TRUE);
       widget_opts.apply_theme = woat;
 
+      lives_widget_show_all(renamew->layouts_layout);
+
       while (list->data && lives_expander_get_expanded(LIVES_EXPANDER(exp))) {
+        lcount++;
         filedets = (lives_file_dets_t *)(list->data);
         do {
           // wait for size
@@ -2513,7 +2526,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
             if (totsize == -1) {
               if (lives_proc_thread_check(sizinfo)) {
                 totsize = lives_proc_thread_join_int64(sizinfo);
-                txt = mkszlabel(set, totsize);
+                txt = mkszlabel(set, totsize, -1, lcount);
                 lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
                 lives_free(txt);
               }
@@ -2538,7 +2551,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
             if (totsize == -1) {
               if (lives_proc_thread_check(sizinfo)) {
                 totsize = lives_proc_thread_join_int64(sizinfo);
-                txt = mkszlabel(set, totsize);
+                txt = mkszlabel(set, totsize, -1, lcount);
                 lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
                 lives_free(txt);
                 lives_widget_process_updates(renamew->dialog);
@@ -2560,7 +2573,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
         if (totsize == -1) {
           if (lives_proc_thread_check(sizinfo)) {
             totsize = lives_proc_thread_join_int64(sizinfo);
-            txt = mkszlabel(set, totsize);
+            txt = mkszlabel(set, totsize, lcount, -1);
             lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
             lives_free(txt);
             lives_widget_process_updates(renamew->dialog);
@@ -2601,6 +2614,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
         filedets = (lives_file_dets_t *)(list->data);
 
         if (!pass) {
+          ccount++;
           lives_layout_add_row(LIVES_LAYOUT(renamew->clips_layout));
           if (!filedets->mtime_sec) dtxt = txt = lives_strdup("????");
           else {
@@ -2701,7 +2715,7 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
           if (totsize == -1) {
             if (lives_proc_thread_check(sizinfo)) {
               totsize = lives_proc_thread_join_int64(sizinfo);
-              txt = mkszlabel(set, totsize);
+              txt = mkszlabel(set, totsize, ccount, lcount);
               lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
               lives_free(txt);
               lives_widget_process_updates(renamew->dialog);
@@ -2711,14 +2725,16 @@ static void on_set_exp(LiVESWidget * exp, _entryw * renamew) {
 
         if (!lives_expander_get_expanded(LIVES_EXPANDER(exp))) goto thrdjoin;
         list = list->next;
-        if (!list->data && needs_more) list = *clipslist;
-        pass++;
+        if (!list->data && needs_more) {
+          list = *clipslist;
+          pass++;
+        }
       }
     }
     while (lives_expander_get_expanded(LIVES_EXPANDER(exp)) && totsize == -1) {
       if (lives_proc_thread_check(sizinfo)) {
         totsize = lives_proc_thread_join_int64(sizinfo);
-        txt = mkszlabel(set, totsize);
+        txt = mkszlabel(set, totsize, ccount, lcount);
         lives_label_set_text(LIVES_LABEL(renamew->exp_label), txt);
         lives_free(txt);
       }
@@ -2925,8 +2941,8 @@ _entryw *create_rename_dialog(int type) {
     widget_opts.justify = LIVES_JUSTIFY_CENTER;
     renamew->expander = lives_standard_expander_new(NULL, LIVES_BOX(dialog_vbox), vbox);
     widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
-    lives_signal_connect_after(LIVES_GUI_OBJECT(renamew->expander), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                               LIVES_GUI_CALLBACK(on_set_exp), renamew);
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(renamew->expander), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                                    LIVES_GUI_CALLBACK(on_set_exp), renamew);
     on_set_exp(renamew->expander, renamew);
     add_fill_to_box(LIVES_BOX(dialog_vbox));
     add_fill_to_box(LIVES_BOX(dialog_vbox));
@@ -2939,8 +2955,8 @@ _entryw *create_rename_dialog(int type) {
 
     checkbutton = lives_standard_check_button_new(_("Save extended colors"), FALSE, LIVES_BOX(hbox), NULL);
 
-    lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                               LIVES_GUI_CALLBACK(on_boolean_toggled), &mainw->fx1_bool);
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(on_boolean_toggled), &mainw->fx1_bool);
   }
 
   lives_entry_set_width_chars(LIVES_ENTRY(renamew->entry), MEDIUM_ENTRY_WIDTH);
@@ -3283,8 +3299,8 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
     lives_widget_show_all(hbox);
     lives_box_pack_start(LIVES_BOX(tvcardw->adv_vbox), hbox, TRUE, FALSE, 0);
 
-    lives_signal_connect(LIVES_GUI_OBJECT(tvcardw->advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_liveinp_advanced_clicked), tvcardw);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(tvcardw->advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                              LIVES_GUI_CALLBACK(on_liveinp_advanced_clicked), tvcardw);
 
     lives_widget_hide(tvcardw->adv_vbox);
 
@@ -3568,15 +3584,15 @@ void create_new_pb_speed(short type) {
   lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(lives_general_button_clicked), NULL);
   if (type == 1) {
-    lives_signal_connect(LIVES_GUI_OBJECT(change_pb_ok), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_change_speed_ok_clicked), NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(change_pb_ok), LIVES_WIDGET_CLICKED_SIGNAL,
+                              LIVES_GUI_CALLBACK(on_change_speed_ok_clicked), NULL);
   } else if (type == 2) {
     lives_signal_connect(LIVES_GUI_OBJECT(change_pb_ok), LIVES_WIDGET_CLICKED_SIGNAL,
                          LIVES_GUI_CALLBACK(on_resample_vid_ok), NULL);
 
   } else if (type == 3) {
-    lives_signal_connect(LIVES_GUI_OBJECT(change_pb_ok), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_avolch_ok), NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(change_pb_ok), LIVES_WIDGET_CLICKED_SIGNAL,
+                              LIVES_GUI_CALLBACK(on_avolch_ok), NULL);
   }
 
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(spinbutton_pb_speed), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -4365,7 +4381,7 @@ _entryw *create_cds_dialog(int type) {
                     "What do you wish to do ?"));
   }
 
-  cdsw->dialog = create_question_dialog(_("Cancel/Discard/Save"), labeltext);
+  cdsw->dialog = create_question_dialog(_("Save or Delete Set"), labeltext);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(cdsw->dialog));
 
@@ -5744,7 +5760,6 @@ static void manclips_ok(LiVESWidget * button, LiVESWidget * dialog) {
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(manclips_del), renamew);
-
 
   // reaload will exit dlg and set mainw->cs_managed, after close/save all we come back here
   button = lives_dialog_add_button_from_stock(LIVES_DIALOG(renamew->dialog), LIVES_STOCK_OPEN,

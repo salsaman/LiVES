@@ -1201,26 +1201,29 @@ void *_item_to_file_details(LiVESList **listp, const char *item,
     const char *ofname = item;
 
     if (!(orderfile = fopen(ofname, "r"))) return NULL;
-    if (lives_proc_thread_cancelled(tinfo) || !orderfile) {
-      if (lives_proc_thread_cancelled(tinfo)) return NULL;
-      break;
-    }
-    if (!lives_fgets(buff, PATH_MAX, orderfile)) {
-      fclose(orderfile);
-      break;
-    }
-    lives_chomp(buff);
+    while (1) {
+      if (lives_proc_thread_cancelled(tinfo) || !orderfile) {
+        if (orderfile) {
+          fclose(orderfile);
+        }
+        return NULL;
+      }
+      if (!lives_fgets(buff, PATH_MAX, orderfile)) {
+        fclose(orderfile);
+        break;
+      }
+      lives_chomp(buff);
 
-    fdets = (lives_file_dets_t *)struct_from_template(LIVES_STRUCT_FILE_DETS_T);
+      fdets = (lives_file_dets_t *)struct_from_template(LIVES_STRUCT_FILE_DETS_T);
 
-    fdets->name = lives_strdup(buff);
-    fdets->size = -1;
-    *listp = lives_list_append(*listp, fdets);
-    if (lives_proc_thread_cancelled(tinfo)) {
-      fclose(orderfile);
-      return NULL;
+      fdets->name = lives_strdup(buff);
+      fdets->size = -1;
+      *listp = lives_list_append(*listp, fdets);
+      if (lives_proc_thread_cancelled(tinfo)) {
+        fclose(orderfile);
+        return NULL;
+      }
     }
-    fclose(orderfile);
     break;
   }
   default: return NULL;

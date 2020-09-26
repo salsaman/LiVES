@@ -1626,7 +1626,7 @@ void on_export_proj_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   if (!mainw->was_set) {
     mainw->no_exit = TRUE;
-    if (!on_save_set_activate((LiVESWidget *)1, mainw->set_name)) return;
+    if (!on_save_set_activate(NULL, NULL)) return;
     mainw->no_exit = FALSE;
     mainw->was_set = TRUE;
     if (mainw->multitrack && !mainw->multitrack->changed) recover_layout_cancelled(FALSE);
@@ -5312,14 +5312,14 @@ boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
   if (!mainw->cliplist) return FALSE;
 
   // warn the user what will happen
-  if (widget && !do_save_clipset_warn()) return FALSE;
+  if (!user_data && !do_save_clipset_warn()) return FALSE;
 
   if (mainw->stored_event_list && mainw->stored_event_list_changed) {
     // if we have a current layout, give the user the chance to change their mind
     if (!check_for_layout_del(NULL, FALSE)) return FALSE;
   }
 
-  if (widget) {
+  if (!user_data) {
     // this was called from the GUI
     do {
       // prompt for a set name, advise user to save set

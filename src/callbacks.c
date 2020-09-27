@@ -5932,6 +5932,7 @@ boolean reload_set(const char *set_name) {
     cfile->saved_frameno = cfile->frameno;
     if (cfile->frameno > cfile->frames && cfile->frameno > 1) cfile->frameno = cfile->frames;
     cfile->last_frameno = cfile->frameno;
+
     cfile->pointer_time = cfile->real_pointer_time = calc_time_from_frame(mainw->current_file, cfile->frameno);
     if (cfile->real_pointer_time > CLIP_TOTAL_TIME(mainw->current_file))
       cfile->real_pointer_time = CLIP_TOTAL_TIME(mainw->current_file);
@@ -11188,7 +11189,7 @@ boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32
         }
       }
       if (cfile->play_paused) jack_pb_stop();
-      else jack_pb_start();
+      else jack_pb_start(-1.);
     }
 #endif
 #ifdef HAVE_PULSE_AUDIO

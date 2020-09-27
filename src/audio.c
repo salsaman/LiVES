@@ -3146,7 +3146,7 @@ static void *cache_my_audio(void *arg) {
     // read from file
     cbuffer->_cbytesize = lives_read_buffered(cbuffer->_fd, cbuffer->_filebuffer, cbuffer->bytesize, TRUE);
 
-    if (cbuffer->_cbytesize < 0) {
+    if (cbuffer->_cbytesize <= 0) {
       // there is not much we can do if we get a read error, since we are running in a realtime thread here
       // just mark it as 0 channels, 0 bytes
       cbuffer->bytesize = cbuffer->_cbytesize = 0;

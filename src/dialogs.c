@@ -1547,8 +1547,6 @@ switch_point:
       ticks_t transtc = q_gint64(jack_transport_get_time() * TICKS_PER_SECOND_DBL, cfile->fps);
       mainw->multitrack->pb_start_event = get_frame_event_at(mainw->multitrack->event_list, transtc, NULL, TRUE);
       if (mainw->cancelled == CANCEL_NONE) mainw->cancelled = CANCEL_EVENT_LIST_END;
-
-
 #endif
     } else {
       if (mainw->multitrack) mainw->currticks += mainw->offsetticks; // add the offset of playback start time
@@ -1953,7 +1951,8 @@ switch_point:
 #ifdef SHOW_CACHE_PREDICTIONS
         g_print("playing frame %d / %d at %ld (%ld : %ld) %.2f %ld %ld\n", sfile->frameno, requested_frame, mainw->currticks,
                 mainw->startticks, new_ticks, (mainw->pulsed->in_use && IS_VALID_CLIP(mainw->pulsed->playing_file)
-                                               && mainw->files[mainw->pulsed->playing_file]->arate != 0) ? (double)mainw->pulsed->seek_pos
+                                               && mainw->files[mainw->pulsed->playing_file]->arate != 0)
+                ? (double)mainw->pulsed->seek_pos
                 / (double)mainw->files[mainw->pulsed->playing_file]->arate / 4. * sfile->fps + 1. : 0. * sfile->fps + 1,
                 lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs), mainw->pulsed->seek_pos);
         last_seek_pos = mainw->pulsed->seek_pos;
@@ -2433,27 +2432,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     // video playback
     if (mainw->event_list || !CLIP_HAS_VIDEO(mainw->playing_file)) mainw->video_seek_ready = TRUE;
     if (mainw->event_list || !CLIP_HAS_AUDIO(mainw->playing_file)) mainw->audio_seek_ready = TRUE;
-
-#ifdef ENABLE_JACK_TRANSPORT
-    if (mainw->jack_can_stop && !mainw->multitrack && (prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT) &&
-        !(mainw->record && !(prefs->rec_opts & REC_FRAMES) && !cfile->next_event)) {
-      // calculate the start position from jack transport
-
-      ticks_t ntc = jack_transport_get_time() * TICKS_PER_SECOND_DBL;
-      boolean noframedrop = prefs->noframedrop;
-      prefs->noframedrop = FALSE;
-      cfile->last_frameno = 1;
-      if (prefs->jack_opts & JACK_OPTS_TIMEBASE_START) {
-        mainw->play_start = calc_new_playback_position(mainw->current_file, 0, &ntc);
-      }
-      prefs->noframedrop = noframedrop;
-      if (prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) {
-        // timebase client - follows jack transport position
-        mainw->startticks = ntc;
-      }
-      mainw->currticks = ntc;
-    }
-#endif
     cfile->last_frameno = cfile->frameno = mainw->play_start;
   }
 

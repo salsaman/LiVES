@@ -198,6 +198,7 @@ typedef struct {
 #define JACK_OPTS_TIMEBASE_CLIENT	(1 << 6)    ///< full timebase client
 #define JACK_OPTS_TIMEBASE_MASTER	(1 << 7)   ///< timebase master (not implemented yet)
 #define JACK_OPTS_NO_READ_AUTOCON	(1 << 8)   ///< do not auto con. rd clients when playing ext aud
+#define JACK_OPTS_TIMEBASE_LSTART	(1 << 9)    ///< LiVES sets play start position
 
   char jack_tserver[PATH_MAX];
   char jack_aserver[PATH_MAX];
@@ -653,6 +654,7 @@ typedef struct {
   LiVESWidget *checkbutton_jack_master;
   LiVESWidget *checkbutton_jack_client;
   LiVESWidget *checkbutton_jack_tb_start;
+  LiVESWidget *checkbutton_jack_mtb_start;
   LiVESWidget *checkbutton_jack_tb_client;
   LiVESWidget *checkbutton_jack_pwp;
   LiVESWidget *checkbutton_jack_read_autocon;

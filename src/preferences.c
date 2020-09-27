@@ -1477,13 +1477,14 @@ boolean apply_prefs(boolean skip_warn) {
   boolean jack_master = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_master));
   boolean jack_client = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_client));
   boolean jack_tb_start = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start));
+  boolean jack_mtb_start = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_mtb_start));
   boolean jack_tb_client = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_client));
 #else
 #ifdef ENABLE_JACK
   boolean jack_tstart = FALSE;
   boolean jack_master = FALSE;
   boolean jack_client = FALSE;
-  boolean jack_tb_start = FALSE;
+  boolean jack_tb_start = FALSE, jack_mtb_start = FALSE;
   boolean jack_tb_client = FALSE;
 #endif
 #endif
@@ -1495,6 +1496,7 @@ boolean apply_prefs(boolean skip_warn) {
   uint32_t jack_opts = (JACK_OPTS_TRANSPORT_CLIENT * jack_client + JACK_OPTS_TRANSPORT_MASTER * jack_master +
                         JACK_OPTS_START_TSERVER * jack_tstart + JACK_OPTS_START_ASERVER * jack_astart +
                         JACK_OPTS_NOPLAY_WHEN_PAUSED * !jack_pwp + JACK_OPTS_TIMEBASE_START * jack_tb_start +
+                        JACK_OPTS_TIMEBASE_LSTART * jack_mtb_start +
                         JACK_OPTS_TIMEBASE_CLIENT * jack_tb_client + JACK_OPTS_NO_READ_AUTOCON * !jack_read_autocon);
 #endif
 
@@ -2561,7 +2563,6 @@ static void on_mtbackevery_toggled(LiVESToggleButton *tbutton, livespointer user
 
 #ifdef ENABLE_JACK_TRANSPORT
 static void after_jack_client_toggled(LiVESToggleButton *tbutton, livespointer user_data) {
-
   if (!lives_toggle_button_get_active(tbutton)) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start), FALSE);
     lives_widget_set_sensitive(prefsw->checkbutton_jack_tb_start, FALSE);
@@ -2581,6 +2582,17 @@ static void after_jack_tb_start_toggled(LiVESToggleButton *tbutton, livespointer
     lives_widget_set_sensitive(prefsw->checkbutton_jack_tb_client, TRUE);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_client),
                                    (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) ? TRUE : FALSE);
+  }
+}
+
+static void after_jack_master_toggled(LiVESToggleButton *tbutton, livespointer user_data) {
+  if (!lives_toggle_button_get_active(tbutton)) {
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_mtb_start), FALSE);
+    lives_widget_set_sensitive(prefsw->checkbutton_jack_mtb_start, FALSE);
+  } else {
+    lives_widget_set_sensitive(prefsw->checkbutton_jack_mtb_start, TRUE);
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_mtb_start),
+                                   (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_LSTART) ? TRUE : FALSE);
   }
 }
 #endif
@@ -5149,6 +5161,17 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                     (future_prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER) ? TRUE : FALSE,
                                     LIVES_BOX(hbox), NULL);
 
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_master), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(after_jack_master_toggled), NULL);
+
+  prefsw->checkbutton_jack_mtb_start = lives_standard_check_button_new(_("LiVES can set start position"),
+                                       (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_LSTART) ?
+                                       (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_master)))
+                                       : FALSE, LIVES_BOX(hbox), NULL);
+
+  lives_widget_set_sensitive(prefsw->checkbutton_jack_mtb_start,
+                             lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_master)));
+
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
@@ -5159,10 +5182,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_client), LIVES_WIDGET_TOGGLED_SIGNAL,
                                   LIVES_GUI_CALLBACK(after_jack_client_toggled), NULL);
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
-
-  prefsw->checkbutton_jack_tb_start = lives_standard_check_button_new(_("Jack transport sets start position"),
+  prefsw->checkbutton_jack_tb_start = lives_standard_check_button_new(_("Jack transport can set start position"),
                                       (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_START) ?
                                       (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_client)))
                                       : FALSE, LIVES_BOX(hbox), NULL);
@@ -5173,7 +5193,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_tb_start), LIVES_WIDGET_TOGGLED_SIGNAL,
                                   LIVES_GUI_CALLBACK(after_jack_tb_start_toggled), NULL);
 
-  add_fill_to_box(LIVES_BOX(hbox));
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  //add_fill_to_box(LIVES_BOX(hbox));
 
   prefsw->checkbutton_jack_tb_client = lives_standard_check_button_new(_("Jack transport timebase slave"),
                                        (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) ?
@@ -5635,6 +5658,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   ACTIVE(checkbutton_jack_master, TOGGLED);
   ACTIVE(checkbutton_jack_client, TOGGLED);
   ACTIVE(checkbutton_jack_tb_start, TOGGLED);
+  ACTIVE(checkbutton_jack_mtb_start, TOGGLED);
   ACTIVE(checkbutton_jack_tb_client, TOGGLED);
 #endif
 

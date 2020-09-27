@@ -22,7 +22,7 @@ void lives_jack_end(void);
 
 int lives_start_ready_callback(jack_transport_state_t state, jack_position_t *pos, void *arg);
 
-void jack_pb_start(void);  /** start playback transport master */
+void jack_pb_start(double pbtime);  /** start playback transport master */
 void jack_pb_stop(void);  /** pause playback transport master */
 
 ////////////////////////////////////////////////////////////////////////////

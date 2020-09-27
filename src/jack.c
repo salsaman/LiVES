@@ -267,10 +267,14 @@ void lives_jack_end(void) {
 }
 
 
-void jack_pb_start(void) {
+void jack_pb_start(double pbtime) {
   // call this ASAP, then in load_frame_image; we will wait for sync from other clients (and ourself !)
 #ifdef ENABLE_JACK_TRANSPORT
-  if (prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER) jack_transport_start(jack_transport_client);
+  if (prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER) {
+    if (pbtime >= 0. && !mainw->jack_can_stop && (prefs->jack_opts & JACK_OPTS_TIMEBASE_LSTART))
+      jack_transport_locate(jack_transport_client, pbtime * jack_get_sample_rate(jack_transport_client));
+    jack_transport_start(jack_transport_client);
+  }
 #endif
 }
 
@@ -441,7 +445,7 @@ static int audio_process(nframes_t nframes, void *arg) {
       if (jackd->playing_file != new_file) {
         jackd->playing_file = new_file;
       }
-      fwd_seek_pos = jackd->seek_pos = jackd->real_seek_pos = 0;
+      jackd->seek_pos = jackd->real_seek_pos = 0;
       break;
     case ASERVER_CMD_FILE_CLOSE:
       jackd->playing_file = -1;
@@ -453,7 +457,7 @@ static int audio_process(nframes_t nframes, void *arg) {
       xseek = atol((char *)msg->data);
       xseek = ALIGN_CEIL64(xseek, afile->achans * (afile->asampsize >> 3));
       if (xseek < 0) xseek = 0;
-      jackd->seek_pos = jackd->real_seek_pos = xseek;
+      jackd->seek_pos = jackd->real_seek_pos = afile->aseek_pos = xseek;
       push_cache_buffer(cache_buffer, jackd, 0, 0, 1.);
       jackd->in_use = TRUE;
       break;
@@ -1862,14 +1866,16 @@ int64_t jack_audio_seek_bytes(jack_driver_t *jackd, int64_t bytes, lives_clip_t 
     return 0;
   }
 
-  do {
-    jmsg = jack_get_msgq(jackd);
-  } while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jmsg && jmsg->command != ASERVER_CMD_FILE_SEEK);
-  lives_alarm_clear(alarm_handle);
-  if (timeout == 0 || jackd->playing_file == -1) {
-    if (timeout == 0) LIVES_WARN("Jack connect timed out");
-    seek_err = TRUE;
-    return 0;
+  if (jackd->in_use) {
+    do {
+      jmsg = jack_get_msgq(jackd);
+    } while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jmsg && jmsg->command != ASERVER_CMD_FILE_SEEK);
+    lives_alarm_clear(alarm_handle);
+    if (timeout == 0 || jackd->playing_file == -1) {
+      if (timeout == 0) LIVES_WARN("Jack connect timed out");
+      seek_err = TRUE;
+      return 0;
+    }
   }
 
   seekstart = ((int64_t)(bytes / sfile->achans / (sfile->asampsize / 8))) * sfile->achans * (sfile->asampsize / 8);

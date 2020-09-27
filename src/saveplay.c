@@ -2217,6 +2217,8 @@ void play_file(void) {
 #endif
 
   double fps_med = 0.;
+  double pointer_time = cfile->pointer_time;
+  double real_pointer_time = cfile->real_pointer_time;
 
   short audio_player = prefs->audio_player;
 
@@ -2247,8 +2249,13 @@ void play_file(void) {
   if (!is_realtime_aplayer(audio_player)) mainw->aud_file_to_kill = mainw->current_file;
   else mainw->aud_file_to_kill = -1;
 
-#ifdef ENABLE_JACK
-  if (!mainw->preview && !mainw->foreign) jack_pb_start();
+#ifdef ENABLE_JACK_TRANSPORT
+  if (!mainw->preview && !mainw->foreign) {
+    if (!mainw->multitrack)
+      jack_pb_start(cfile->achans > 0 ? cfile->real_pointer_time : cfile->pointer_time);
+    else
+      jack_pb_start(mainw->multitrack->pb_start_time);
+  }
 #endif
 
   mainw->ext_playback = FALSE;
@@ -2313,9 +2320,20 @@ void play_file(void) {
     //lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
   }
 
-  /// note, here our start is in frames, in save_file it is in seconds !
-  // TODO - check if we can change it to seconds here too
+#ifdef ENABLE_JACK_TRANSPORT
+  if (mainw->jack_can_stop && !mainw->event_list && !mainw->preview
+      && (prefs->jack_opts & (JACK_OPTS_TIMEBASE_START | JACK_OPTS_TIMEBASE_CLIENT))) {
+    // calculate the start position from jack transport
+    double sttime = jack_transport_get_time();
+    cfile->pointer_time = cfile->real_pointer_time = sttime;
+    if (cfile->real_pointer_time > CLIP_TOTAL_TIME(mainw->current_file))
+      cfile->real_pointer_time = CLIP_TOTAL_TIME(mainw->current_file);
+    if (cfile->pointer_time > cfile->video_time) cfile->pointer_time = 0.;
+    mainw->play_start = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
+  }
+#endif
 
+  /// these values are only relevant for non-realtime audio players (e.g. sox)
   mainw->audio_start = mainw->audio_end = 0;
 
   if (cfile->achans > 0) {
@@ -2898,6 +2916,12 @@ void play_file(void) {
 
   if (mainw->loop_locked) unlock_loop_lock();
   lives_widget_set_size_request(mainw->message_box, -1, MIN_MSGBAR_HEIGHT);
+
+  mainw->jack_can_stop = FALSE;
+  if ((mainw->current_file == current_file) && CURRENT_CLIP_IS_VALID) {
+    cfile->pointer_time = pointer_time;
+    cfile->real_pointer_time = real_pointer_time;
+  }
 
 #ifdef ENABLE_JACK
   if (audio_player == AUD_PLAYER_JACK && (mainw->jackd || mainw->jackd_read)) {

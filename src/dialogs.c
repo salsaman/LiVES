@@ -1541,11 +1541,14 @@ switch_point:
     // playing an event_list
     if (mainw->scratch != SCRATCH_NONE && mainw->multitrack) {
 #ifdef ENABLE_JACK_TRANSPORT
+
       // handle transport jump in multitrack : end current playback and restart it from the new position
       // TODO: retest this and enable in the clip_editor
       ticks_t transtc = q_gint64(jack_transport_get_time() * TICKS_PER_SECOND_DBL, cfile->fps);
       mainw->multitrack->pb_start_event = get_frame_event_at(mainw->multitrack->event_list, transtc, NULL, TRUE);
       if (mainw->cancelled == CANCEL_NONE) mainw->cancelled = CANCEL_EVENT_LIST_END;
+
+
 #endif
     } else {
       if (mainw->multitrack) mainw->currticks += mainw->offsetticks; // add the offset of playback start time
@@ -2476,8 +2479,10 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->jackd
       && mainw->jackd->playing_file > -1) {
     if (!jack_audio_seek_frame(mainw->jackd, mainw->aframeno)) {
-      if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, mainw->aframeno);
-      else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+      if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
+      return FALSE;
+      /* if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, mainw->aframeno); */
+      /* else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE; */
     }
 
     if (!(mainw->record && (prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0 || mainw->agen_needs_reinit)))
@@ -2487,8 +2492,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       mainw->rec_avel = 1.;
       mainw->rec_aseek = 0;
     }
-    if (prefs->audio_src == AUDIO_SRC_INT)
-      mainw->jackd->in_use = TRUE;
+    /* if (prefs->audio_src == AUDIO_SRC_INT) */
+    /*   mainw->jackd->in_use = TRUE; */
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO

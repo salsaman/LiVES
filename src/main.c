@@ -294,6 +294,8 @@ void defer_sigint(int signum) {
 //#define QUICK_EXIT
 void catch_sigint(int signum) {
   // trap for ctrl-C and others
+  //if (mainw->jackd) lives_jack_end();
+
   if (prefs->show_desktop_panel && (capable->wm_caps.pan_annoy & ANNOY_DISPLAY)
       && (capable->wm_caps.pan_annoy & ANNOY_FS) && (capable->wm_caps.pan_res & RES_HIDE) &&
       capable->wm_caps.pan_res & RESTYPE_ACTION) {
@@ -2107,7 +2109,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
       // audio startup
 #ifdef ENABLE_JACK
-      if (prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER || prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT ||
+      if (1 || prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER || prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT ||
           prefs->jack_opts & JACK_OPTS_START_ASERVER ||
           prefs->jack_opts & JACK_OPTS_START_TSERVER) {
         // start jack transport polling
@@ -2173,7 +2175,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
           jack_write_driver_activate(mainw->jackd);
 
-          if (prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT) {
+          if (prefs->perm_audio_reader) {
             // create reader connection now, if permanent
             jack_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
 	    // *INDENT-OFF*
@@ -2208,7 +2210,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
         pulse_driver_activate(mainw->pulsed);
 
-        if (prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT) {
+        if (prefs->perm_audio_reader) {
           // create reader connection now, if permanent
           pulse_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
 	  // *INDENT-OFF*
@@ -5083,9 +5085,9 @@ void sensitize(void) {
                     || mainw->agen_key != 0)) {
               lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, TRUE);
             } else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, FALSE);
-          }
-        }
-      }
+	    // *INDENT-OFF*
+          }}}
+      // *INDENT-ON*
 
       if (mainw->num_rendered_effects_test > 0) {
         lives_widget_set_sensitive(mainw->run_test_rfx_submenu, TRUE);

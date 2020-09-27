@@ -186,11 +186,9 @@ void init_audio_frame_buffers(short aplayer) {
       if (mainw->jackd_read && mainw->jackd_read->in_use) {
         abuf->in_achans = abuf->out_achans = mainw->jackd_read->num_input_channels;
         abuf->arate = mainw->jackd_read->sample_in_rate;
-        abuf->in_achans = abuf->out_achans = mainw->jackd_read->num_input_channels;
       } else if (mainw->jackd) {
         abuf->in_achans = abuf->out_achans = mainw->jackd->num_output_channels;
         abuf->arate = mainw->jackd->sample_out_rate;
-        abuf->in_achans = abuf->out_achans = mainw->jackd->num_output_channels;
       }
       break;
 #endif
@@ -1822,15 +1820,16 @@ void preview_audio(void) {
     if (mainw->current_file == 0 && cfile->arate < 0) cfile->aseek_pos = cfile->afilesize;
   }
   // start up our audio player (jack or pulse)
-  if (prefs->audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
+  if (prefs->audio_player == AUD_PLAYER_JACK) {
     if (mainw->jackd) jack_aud_pb_ready(mainw->current_file);
-#endif
-  } else if (prefs->audio_player == AUD_PLAYER_PULSE) {
-#ifdef HAVE_PULSE_AUDIO
-    if (mainw->pulsed) pulse_aud_pb_ready(mainw->current_file);
-#endif
   }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+  if (prefs->audio_player == AUD_PLAYER_PULSE) {
+    if (mainw->pulsed) pulse_aud_pb_ready(mainw->current_file);
+  }
+#endif
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK) {
     mainw->write_abuf = 0;
@@ -2120,7 +2119,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
     mainw->current_file = current_file;
   }
   mainw->cancel_type = CANCEL_KILL;
-  jack_rec_audio_end(!(prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT), TRUE);
+  jack_rec_audio_end(!prefs->perm_audio_reader, TRUE);
 }
 
 
@@ -2282,7 +2281,7 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
     mainw->current_file = current_file;
   }
   mainw->cancel_type = CANCEL_KILL;
-  pulse_rec_audio_end(!(prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT), TRUE);
+  pulse_rec_audio_end(!prefs->perm_audio_reader, TRUE);
 }
 
 
@@ -3285,8 +3284,13 @@ void audio_cache_end(void) {
   xcache_buffer = cache_buffer;
   cache_buffer = NULL;
   lives_free(xcache_buffer);
-}
 
+#ifdef ENABLE_JACK
+  if (prefs->audio_player == AUD_PLAYER_JACK) {
+    jack_pb_end();
+  }
+#endif
+}
 
 LIVES_GLOBAL_INLINE lives_audio_buf_t *audio_cache_get_buffer(void) {
   return cache_buffer;
@@ -3826,13 +3830,13 @@ boolean start_audio_stream(void) {
 #endif
   }
 
-  if (prefs->audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
+  if (prefs->audio_player == AUD_PLAYER_JACK) {
     arate = (int)mainw->jackd->sample_out_rate;
     // TODO - chans, samps, signed, endian
 
-#endif
   }
+#endif
 
   astreamer = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_AUDIO_STREAM, playername, NULL);
   com = lives_strdup_printf("%s play %d \"%s\" \"%s\" %d", astreamer, mainw->vpp->audio_codec, astream_name, astream_name_out,
@@ -3857,11 +3861,11 @@ boolean start_audio_stream(void) {
 #endif
   }
 
-  if (prefs->audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
+  if (prefs->audio_player == AUD_PLAYER_JACK) {
     mainw->jackd->astream_fd = afd;
-#endif
   }
+#endif
 
   lives_free(astream_name);
   lives_free(astream_name_out);
@@ -3886,18 +3890,18 @@ void stop_audio_stream(void) {
     lives_free(astname);
     lives_free(astname_out);
 
-    if (prefs->audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
+    if (prefs->audio_player == AUD_PLAYER_PULSE) {
       if (mainw->pulsed->astream_fd > -1) close(mainw->pulsed->astream_fd);
       mainw->pulsed->astream_fd = -1;
-#endif
     }
-    if (prefs->audio_player == AUD_PLAYER_JACK) {
+#endif
 #ifdef ENABLE_JACK
+    if (prefs->audio_player == AUD_PLAYER_JACK) {
       if (mainw->jackd->astream_fd > -1) close(mainw->jackd->astream_fd);
       mainw->jackd->astream_fd = -1;
-#endif
     }
+#endif
 
     lives_killpg(astream_pgid, LIVES_SIGKILL);
     lives_rm(astream_name);

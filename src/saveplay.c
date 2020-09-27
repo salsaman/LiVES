@@ -2736,7 +2736,7 @@ void play_file(void) {
             mainw->abufs_to_fill = 0;
             pthread_mutex_unlock(&mainw->abuf_mutex);
             if (mainw->event_list)
-              mainw->jackd->is_paused = mainw->jackd->in_use = TRUE;
+              mainw->jackd->in_use = TRUE;
           }
 #endif
 #ifdef HAVE_PULSE_AUDIO
@@ -2902,7 +2902,11 @@ void play_file(void) {
 #ifdef ENABLE_JACK
   if (audio_player == AUD_PLAYER_JACK && (mainw->jackd || mainw->jackd_read)) {
     if (mainw->jackd_read || mainw->aud_rec_fd != -1)
-      jack_rec_audio_end(!(prefs->perm_audio_reader && future_prefs->audio_src == AUDIO_SRC_EXT), TRUE);
+      jack_rec_audio_end(!prefs->perm_audio_reader, TRUE);
+
+    if (mainw->jackd_read) {
+      mainw->jackd_read->in_use = FALSE;
+    }
 
     // send jack transport stop
     if (!mainw->preview && !mainw->foreign) jack_pb_stop();
@@ -2924,14 +2928,19 @@ void play_file(void) {
       jack_message.next = NULL;
       mainw->jackd->msgq = &jack_message;
       if (timeout == 0) handle_audio_timeout();
+      else {
+        while (mainw->jackd->playing_file > -1) {
+          sched_yield();
+          lives_usleep(prefs->sleep_time);
+        }
+      }
     }
   } else {
 #endif
 #ifdef HAVE_PULSE_AUDIO
     if (audio_player == AUD_PLAYER_PULSE && (mainw->pulsed || mainw->pulsed_read)) {
-
       if (mainw->pulsed_read || mainw->aud_rec_fd != -1)
-        pulse_rec_audio_end(!(prefs->perm_audio_reader && future_prefs->audio_src == AUDIO_SRC_EXT), TRUE);
+        pulse_rec_audio_end(!prefs->perm_audio_reader, TRUE);
 
       if (mainw->pulsed_read) {
         mainw->pulsed_read->in_use = FALSE;

@@ -37,7 +37,10 @@ char *get_stats_msg(boolean calc_only) {
 #ifdef ENABLE_JACK
     if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd && mainw->jackd->in_use &&
         IS_VALID_CLIP(mainw->jackd->playing_file) && mainw->files[mainw->jackd->playing_file]->arate != 0) {
-      avsync = lives_jack_get_pos(mainw->jackd);
+      avsync = (double)mainw->jackd->seek_pos
+               / (double)mainw->files[mainw->jackd->playing_file]->arate / 4.; //lives_pulse_get_pos(mainw->jackd);
+      avsync -= ((double)mainw->files[mainw->jackd->playing_file]->frameno - 1.) / mainw->files[mainw->jackd->playing_file]->fps
+                + (double)(currticks - mainw->startticks) / TICKS_PER_SECOND_DBL;
       have_avsync = TRUE;
     }
 #endif

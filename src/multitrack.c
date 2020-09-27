@@ -3164,7 +3164,7 @@ static weed_timecode_t set_play_position(lives_mt * mt) {
         return 0;
       }
     }
-    tc %= end_tc;
+    if (end_tc > 0) tc %= end_tc;
     mt->is_paused = FALSE;
   } else {
 #endif

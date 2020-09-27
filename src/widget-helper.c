@@ -1019,6 +1019,7 @@ static lives_sigdata_t *tasks_running(void) {
 }
 
 static boolean governor_loop(livespointer data) {
+  volatile boolean clutch;
   static boolean lpt_recurse = FALSE;
   static boolean lpt_recurse2 = FALSE;
   boolean is_timer = FALSE;
@@ -1027,8 +1028,10 @@ static boolean governor_loop(livespointer data) {
   /// this loop runs in the main thread while callbacks are being run in bg.
 reloop:
 
-  if (g_main_depth() > 1) return TRUE;
-
+  if (g_main_depth() > 2) {
+    mainw->clutch = TRUE;
+    return TRUE;
+  }
   if (mainw->is_exiting) return FALSE;
 
   if (lpt_recurse2) return TRUE;
@@ -1094,7 +1097,8 @@ reloop:
         goto reloop;
       }
 
-      while (task_list && !lpttorun && mainw->clutch && !mainw->is_exiting && !(sigdata = tasks_running())) {
+      clutch = mainw->clutch;
+      while (task_list && !lpttorun && clutch && !mainw->is_exiting && !(sigdata = tasks_running())) {
         // while any signal handler is running in the bg, we just loop here until either:
         // the task completes, the task wants to run a main loop cycle, or the app exits
         lives_nanosleep(NSLEEP_TIME);
@@ -1103,6 +1107,7 @@ reloop:
         /*           lives_proc_thread_signalled(sigdata->proc)); */
         /* } */
         //sched_yield();
+        clutch = mainw->clutch;
       }
     }
   }

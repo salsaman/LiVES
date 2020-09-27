@@ -223,6 +223,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t bu
     char *strg = NULL;
     response = LIVES_RESPONSE_NONE;
     THREADVAR(com_failed) = FALSE;
+    fflush(NULL);
     fp = popen(com, "r");
     if (!fp) {
       err = errno;
@@ -242,7 +243,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t bu
           if (slen >= buflen - 1) break;
         }
       }
-      fclose(fp);
+      pclose(fp);
     }
 
     if (tbuff) {

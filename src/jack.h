@@ -148,6 +148,7 @@ void jack_close_device(jack_driver_t *);
 boolean jack_try_reconnect(void);
 
 void jack_aud_pb_ready(int fileno);
+void jack_pb_end(void);
 
 size_t jack_flush_read_data(size_t rbytes, void *data);
 

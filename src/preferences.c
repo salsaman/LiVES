@@ -866,49 +866,16 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     boolean rec_ext_audio = newval;
     if (rec_ext_audio && prefs->audio_src == AUDIO_SRC_INT) {
       prefs->audio_src = AUDIO_SRC_EXT;
-
       if (permanent) {
         set_int_pref(PREF_AUDIO_SRC, AUDIO_SRC_EXT);
         future_prefs->audio_src = prefs->audio_src;
       }
-
-      if (prefs->audio_player == AUD_PLAYER_JACK) {
-#ifdef ENABLE_JACK
-        if (prefs->perm_audio_reader) {
-          // create reader connection now, if permanent
-          jack_rec_audio_to_clip(-1, -1, RECA_MONITOR);
-        }
-#endif
-      }
-      if (prefs->audio_player == AUD_PLAYER_PULSE) {
-#ifdef HAVE_PULSE_AUDIO
-        if (prefs->perm_audio_reader) {
-          // create reader connection now, if permanent
-          pulse_rec_audio_to_clip(-1, -1, RECA_MONITOR);
-        }
-#endif
-      }
       success = TRUE;
     } else if (!rec_ext_audio && prefs->audio_src == AUDIO_SRC_EXT) {
       prefs->audio_src = AUDIO_SRC_INT;
-
       if (permanent) {
         set_int_pref(PREF_AUDIO_SRC, AUDIO_SRC_INT);
         future_prefs->audio_src = prefs->audio_src;
-      }
-
-      mainw->aud_rec_fd = -1;
-      if (prefs->perm_audio_reader) {
-#ifdef ENABLE_JACK
-        if (prefs->audio_player == AUD_PLAYER_JACK) {
-          jack_rec_audio_end(FALSE, TRUE);
-        }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-        if (prefs->audio_player == AUD_PLAYER_PULSE) {
-          pulse_rec_audio_end(TRUE, TRUE);
-        }
-#endif
       }
       success = TRUE;
     }

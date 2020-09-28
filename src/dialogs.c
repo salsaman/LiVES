@@ -2311,6 +2311,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   if (!mainw->preview || cfile->opening) mainw->timeout_ticks = 0;
 
   if (visible) {
+    mainw->noswitch = TRUE;
     mainw->is_processing = TRUE;
     desensitize();
     procw_desensitize();
@@ -2545,6 +2546,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       // returns a code if pb stopped
       int ret;
       if ((ret = process_one(visible))) {
+        if (visible) mainw->noswitch = FALSE;
         //g_print("pb stopped, reason %d\n", ret);
         lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 #ifdef USE_GDK_FRAME_CLOCK
@@ -2711,6 +2713,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         }
 #endif
         if ((mainw->disk_mon & MONITOR_QUOTA) && prefs->disk_quota) disk_monitor_forget();
+        if (visible) mainw->noswitch = FALSE;
         return FALSE;
       }
 
@@ -2791,20 +2794,24 @@ finish:
   if (!strncmp(mainw->msg, "error", 5)) {
     handle_backend_errors(FALSE);
     if (mainw->cancelled || mainw->error) {
+      if (visible) mainw->noswitch = FALSE;
       return FALSE;
     }
   } else {
     if (!check_storage_space(mainw->current_file, FALSE)) {
+      if (visible) mainw->noswitch = FALSE;
       return FALSE;
     }
   }
 
   if (got_err) {
+    if (visible) mainw->noswitch = FALSE;
     return FALSE;
   }
 #ifdef DEBUG
   g_print("exiting progress dialog\n");
 #endif
+  if (visible) mainw->noswitch = FALSE;
   return TRUE;
 }
 

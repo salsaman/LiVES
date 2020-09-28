@@ -4297,6 +4297,7 @@ static void populate_filter_box(int ninchans, lives_mt * mt, int pkgnum) {
               continue;
             }
           }
+          lives_free(fname);
           // pkg matched
         }
 
@@ -22444,7 +22445,10 @@ static uint32_t event_list_get_byte_size(lives_mt * mt, weed_plant_t *event_list
     leaves = weed_plant_list_leaves(event, NULL);
     tot += 4; //number of leaves
     for (i = 0; leaves[i]; i++) {
-      if (!nxprev && (!strcmp(leaves[i], WEED_LEAF_NEXT) || !strcmp(leaves[i], WEED_LEAF_PREVIOUS))) continue;
+      if (!nxprev && (!strcmp(leaves[i], WEED_LEAF_NEXT) || !strcmp(leaves[i], WEED_LEAF_PREVIOUS))) {
+        lives_free(leaves[i]);
+        continue;
+      }
       tot += 4 * 3 + strlen(leaves[i]); // key_length, seed_type, num_elements
       ne = weed_leaf_num_elements(event, leaves[i]);
       st = weed_leaf_seed_type(event, leaves[i]);

@@ -991,7 +991,9 @@ static volatile void *lpt_retval = NULL;
 static void sigdata_free(livespointer data, LiVESWidgetClosure *cl) {
   lives_sigdata_t *sigdata = (lives_sigdata_t *)data;
   if (cl) active_sigdets = lives_list_remove(active_sigdets, sigdata);
-  if (sigdata->proc) weed_plant_free(sigdata->proc);
+
+  //if (sigdata->proc) weed_plant_free(sigdata->proc);
+
   if (sigdata->detsig) lives_free(sigdata->detsig);
   lives_free(sigdata);
 }
@@ -1013,6 +1015,7 @@ static lives_sigdata_t *tasks_running(void) {
     list->data = NULL;
     lives_list_free(list);
     if (!task_list) return sigdata;
+    if (sigdata->proc) lives_proc_thread_dontcare(sigdata->proc);
     sigdata_free(sigdata, NULL);
   }
   return NULL;
@@ -1150,7 +1153,10 @@ reloop:
   if (sigdata->is_timer) {
     if (sigdata) sigdata->swapped = TRUE;
     /// timer handler will free sigdata
-  } else sigdata_free(sigdata, NULL);
+  } else {
+    lives_proc_thread_dontcare(sigdata->proc);
+    sigdata_free(sigdata, NULL);
+  }
   return FALSE;
 }
 
@@ -1217,6 +1223,7 @@ static boolean async_timer_handler(livespointer data) {
     while (1) {
       int count = 0;
       if (!governor_loop(sigdata->added ? NULL : (livespointer)sigdata)) {
+        if (sigdata->proc) lives_proc_thread_dontcare(sigdata->proc);
         sigdata_free(sigdata, NULL);
         break;
       }
@@ -1225,6 +1232,7 @@ static boolean async_timer_handler(livespointer data) {
         // task finished
         // get bool result and return
         boolean res = lives_proc_thread_join_boolean(sigdata->proc);
+        if (sigdata->proc) weed_plant_free(sigdata->proc);
         sigdata_free(sigdata, NULL);
         return res;
       }

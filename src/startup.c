@@ -649,12 +649,20 @@ boolean do_audio_choice_dialog(short startup_phase) {
     return LIVES_RESPONSE_CANCEL;
   }
 
+  if (mainw->splash_window) {
+    lives_widget_hide(mainw->splash_window);
+  }
+
   wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
   if (!wid || !activate_x11_window(wid)) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
 
   response = lives_dialog_run(LIVES_DIALOG(dialog));
 
   lives_widget_destroy(dialog);
+
+  if (mainw->splash_window) {
+    lives_widget_show(mainw->splash_window);
+  }
 
   if (!is_realtime_aplayer(prefs->audio_player)) {
     lives_widget_hide(mainw->vol_toolitem);
@@ -835,6 +843,9 @@ boolean do_startup_tests(boolean tshoot) {
 
   if (!tshoot) {
     char *wid;
+    if (mainw->splash_window) {
+      lives_widget_hide(mainw->splash_window);
+    }
     gtk_window_set_urgency_hint(LIVES_WINDOW(dialog), TRUE);
     lives_widget_show_all(dialog);
     lives_widget_show_now(dialog);
@@ -1242,6 +1253,10 @@ jpgdone:
   lives_widget_destroy(dialog);
   mainw->suppress_dprint = FALSE;
 
+  if (mainw->splash_window) {
+    lives_widget_show(mainw->splash_window);
+  }
+
   if (mainw->multitrack) {
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
@@ -1317,6 +1332,10 @@ void do_startup_interface_query(void) {
   wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
   if (!wid || !activate_x11_window(wid)) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
 
+  if (mainw->splash_window) {
+    lives_widget_hide(mainw->splash_window);
+  }
+
   resp = lives_dialog_run(LIVES_DIALOG(dialog));
   if (resp == LIVES_RESPONSE_SHOW_DETAILS) prefs->show_disk_quota = TRUE;
   else prefs->show_disk_quota = FALSE;
@@ -1327,6 +1346,9 @@ void do_startup_interface_query(void) {
   set_int_pref(PREF_STARTUP_INTERFACE, prefs->startup_interface);
 
   lives_widget_destroy(dialog);
+  if (mainw->splash_window) {
+    lives_widget_show(mainw->splash_window);
+  }
 }
 
 

@@ -1009,7 +1009,7 @@ static void giw_timeline_draw_pos(GiwTimeline *timeline) {
 #else
     cairo_destroy(cr);
 #endif
-
+    cairo_region_destroy(reg);
     timeline->xsrc = x;
     timeline->ysrc = y;
   }

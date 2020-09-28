@@ -3060,6 +3060,7 @@ boolean get_frames_sizes(int fileno, int frame, int *hsize, int *vsize) {
     lives_free(fname);
     return FALSE;
   }
+  lives_free(fname);
   *hsize = weed_layer_get_width(layer);
   *vsize = weed_layer_get_height(layer);
   weed_layer_free(layer);

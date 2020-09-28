@@ -2109,7 +2109,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
       // audio startup
 #ifdef ENABLE_JACK
-      if (1 || prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER || prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT ||
+      if (prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER || prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT ||
           prefs->jack_opts & JACK_OPTS_START_ASERVER ||
           prefs->jack_opts & JACK_OPTS_START_TSERVER) {
         // start jack transport polling
@@ -5683,8 +5683,8 @@ check_stcache:
       else mainw->st_fcache = mainw->en_fcache;
       goto check_stcache;
     }
-    if (fname) lives_free(fname);
   }
+  lives_freep((void **)&fname);
 
   tc = ((frame - 1.)) / cfile->fps * TICKS_PER_SECOND;
 
@@ -5957,8 +5957,9 @@ check_encache:
       else mainw->en_fcache = mainw->st_fcache;
       goto check_encache;
     }
-    if (fname) lives_free(fname);
   }
+
+  lives_freep((void **)&fname);
 
   tc = (frame - 1.) / cfile->fps * TICKS_PER_SECOND;
 
@@ -6157,6 +6158,7 @@ check_encache:
         mainw->camframe = lives_pixbuf_new_from_file(tmp, &error);
         if (mainw->camframe) lives_pixbuf_saturate_and_pixelate(mainw->camframe, mainw->camframe, 0.0, FALSE);
         lives_free(tmp); lives_free(fname);
+        fname = NULL;
       }
       pixbuf = lives_pixbuf_scale_simple(mainw->camframe, mainw->pwidth, mainw->pheight, LIVES_INTERP_BEST);
       set_drawing_area_from_pixbuf(mainw->preview_image, pixbuf, mainw->pi_surface);
@@ -6253,8 +6255,8 @@ check_prcache:
           else mainw->pr_fcache = mainw->en_fcache;
           goto check_prcache;
         }
-        if (fname) lives_free(fname);
       }
+      lives_freep((void **)&fname);
 
       // if we are not playing, and it would be slow to seek to the frame, convert it to an image
       if (!LIVES_IS_PLAYING && !layer && cfile->clip_type == CLIP_TYPE_FILE &&

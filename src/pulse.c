@@ -1869,9 +1869,10 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
 double lives_pulse_get_pos(pulse_driver_t *pulsed) {
   // get current time position (seconds) in audio file
   //return (double)pulsed->real_seek_pos / (double)(afile->arps * afile->achans * afile->asampsize / 8);
-  if (mainw->pulsed->playing_file > -1)
+  if (pulsed->playing_file > -1) {
     return (double)(fwd_seek_pos)
            / (double)(afile->arps * afile->achans * afile->asampsize / 8);
+  }
   // from memory
   return (double)pulsed->frames_written / (double)pulsed->out_arate;
 }

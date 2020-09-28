@@ -1490,6 +1490,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
   lives_freep((void **)&procvals);
   lives_freep((void **)&xinst);
   lives_freep((void **)&dthreads);
+  lives_freep((void **)&out_channels);
   weed_leaf_delete(inst, WEED_LEAF_HOST_UNUSED);
 
   if (plugin_invalid) return FILTER_ERROR_INVALID_PLUGIN;
@@ -2663,7 +2664,7 @@ static lives_filter_error_t enable_disable_channels(weed_plant_t *inst, boolean 
   // handle case where in_channels > than num layers
   // either we temporarily disable the channel, or we can't apply the filter
   weed_plant_t *filter = weed_instance_get_filter(inst, FALSE);
-  weed_plant_t *channel, **channels, *chantmpl, **ctmpls, *layer;
+  weed_plant_t *channel, **channels, *chantmpl, **ctmpls = NULL, *layer;
   int maxcheck = num_tracks, i, j, num_ctmpls, num_channels;
   void **pixdata = NULL;
   boolean *mand;
@@ -2696,6 +2697,7 @@ static lives_filter_error_t enable_disable_channels(weed_plant_t *inst, boolean 
       } else {
         lives_free(channels);
         lives_freep((void **)&pixdata);
+        lives_freep((void **)&ctmpls);
         return FILTER_ERROR_MISSING_LAYER;
       }
     }
@@ -2728,14 +2730,18 @@ static lives_filter_error_t enable_disable_channels(weed_plant_t *inst, boolean 
         lives_freep((void **)&ctmpls);
         lives_freep((void **)&mand);
         lives_free(channels);
+        lives_freep((void **)&ctmpls);
         return FILTER_ERROR_MISSING_LAYER;
       }
     lives_freep((void **)&ctmpls);
     lives_freep((void **)&mand);
   } else {
     lives_free(channels);
+    lives_freep((void **)&ctmpls);
     return FILTER_ERROR_TEMPLATE_MISMATCH;
   }
+
+  lives_freep((void **)&ctmpls);
   lives_free(channels);
   return FILTER_SUCCESS;
 }

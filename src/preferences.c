@@ -2203,7 +2203,7 @@ boolean apply_prefs(boolean skip_warn) {
   pref_factory_string(PREF_AUDIO_PLAYER, audio_player, TRUE);
 
 #ifdef ENABLE_JACK
-  if (future_prefs->jack_opts != jack_opts) {
+  if (prefs->jack_opts != jack_opts) {
     set_int_pref(PREF_JACK_OPTS, jack_opts);
     future_prefs->jack_opts = prefs->jack_opts = jack_opts;
   }
@@ -2578,10 +2578,12 @@ static void after_jack_tb_start_toggled(LiVESToggleButton *tbutton, livespointer
   if (!lives_toggle_button_get_active(tbutton)) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_client), FALSE);
     lives_widget_set_sensitive(prefsw->checkbutton_jack_tb_client, FALSE);
+    future_prefs->jack_opts |= JACK_OPTS_TIMEBASE_START;
   } else {
     lives_widget_set_sensitive(prefsw->checkbutton_jack_tb_client, TRUE);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_client),
                                    (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) ? TRUE : FALSE);
+    future_prefs->jack_opts &= ~JACK_OPTS_TIMEBASE_START;
   }
 }
 
@@ -3654,9 +3656,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
       (tmp = lives_strdup_printf(_("_Enable adaptive quality (%s)"),
                                  mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED])),
       prefs->pbq_adaptive, LIVES_BOX(hbox),
-      (tmp2 = (_(
-                 "#If enabled, quality will be automatically adjusted during playback\n"
-                 "in order to maintain a smooth frame rate"))));
+      (tmp2 = (H_("If enabled, quality will be automatically adjusted during playback\n"
+                  "in order to maintain a smooth frame rate"))));
   lives_free(tmp);
   lives_free(tmp2);
 
@@ -4870,7 +4871,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   prefsw->checkbutton_extra_colours =
     lives_standard_check_button_new(_("Invent interface colours"),
                                     prefs->extra_colours, LIVES_BOX(hbox),
-                                    (tmp = lives_strdup("#Make the interface more interesting "
+                                    (tmp = H_("Make the interface more interesting "
                                         "by adding harmonious colours")));
   lives_free(tmp);
 
@@ -5201,7 +5202,11 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   prefsw->checkbutton_jack_tb_client = lives_standard_check_button_new(_("Jack transport timebase slave"),
                                        (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) ?
                                        (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start)))
-                                       : FALSE, LIVES_BOX(hbox), NULL);
+                                       : FALSE, LIVES_BOX(hbox),
+                                       (tmp = H_("If playback is triggered by jack transport,\n"
+                                           "then LiVES will attempt to sync with transport"
+                                           "\nuntil playback finishes.")));
+  lives_free(tmp);
 
   lives_widget_set_sensitive(prefsw->checkbutton_jack_tb_client,
                              lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start)));
@@ -5978,6 +5983,8 @@ void on_prefs_revert_clicked(LiVESButton * button, livespointer user_data) {
 
   lives_widget_destroy(prefsw->dialog_hpaned);
   lives_freep((void **)&prefsw);
+
+  future_prefs->jack_opts = prefs->jack_opts;
 
   on_preferences_activate(NULL, saved_dialog);
 

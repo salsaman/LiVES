@@ -409,8 +409,6 @@ void create_LiVES(void) {
 
   LiVESAdjustment *adj;
 
-  LiVESPixbuf *pixbuf;
-
   char buff[32768];
 
   char *tmp;
@@ -1622,14 +1620,10 @@ void create_LiVES(void) {
   tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_SEPWIN,
                      lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
 
-  if (tmp_toolbar_icon) {
-    pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
-    lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
-  }
-
   mainw->m_sepwinbutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
                           _("Show the play window (s)"));
   lives_widget_set_focus_on_click(mainw->m_sepwinbutton, FALSE);
+  lives_widget_set_opacity(mainw->m_sepwinbutton, .75);
 
   tmp_toolbar_icon = lives_image_new_from_stock(LIVES_STOCK_MEDIA_REWIND,
                      lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
@@ -1665,25 +1659,18 @@ void create_LiVES(void) {
 
   tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_LOOP,
                      lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
-  if (tmp_toolbar_icon) {
-    pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
-    lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
-  }
 
   mainw->m_loopbutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
                         _("Switch continuous looping on (o)"));
+  lives_widget_set_opacity(mainw->m_loopbutton, .75);
   lives_widget_set_focus_on_click(mainw->m_loopbutton, FALSE);
 
   tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_VOLUME_MUTE,
                      lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
 
-  if (tmp_toolbar_icon) {
-    pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
-    lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
-  }
-
   mainw->m_mutebutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
                         _("Mute the audio (z)"));
+  lives_widget_set_opacity(mainw->m_mutebutton, .75);
   lives_widget_set_focus_on_click(mainw->m_mutebutton, FALSE);
 
   for (i = 0; i < 3; i++) {
@@ -1886,36 +1873,27 @@ void create_LiVES(void) {
 
   tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_SEPWIN,
                      lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->toolbar)));
-  if (LIVES_IS_IMAGE(tmp_toolbar_icon) && !mainw->sep_win) {
-    pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
-    lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
-  }
 
   mainw->t_sepwin = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar), LIVES_TOOL_ITEM(mainw->t_sepwin), 2);
   lives_widget_set_tooltip_text(mainw->t_sepwin, _("Play in separate window (s)"));
+  lives_widget_set_opacity(mainw->t_sepwin, .75);
 
   tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_ZOOM_IN,
                      lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->toolbar)));
-  if (LIVES_IS_IMAGE(tmp_toolbar_icon) && !mainw->double_size) {
-    pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
-    lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
-  }
+
   mainw->t_double = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
   lives_widget_set_tooltip_text(mainw->t_double, _("Double size (d)"));
-
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar), LIVES_TOOL_ITEM(mainw->t_double), 3);
+  lives_widget_set_opacity(mainw->t_double, .75);
 
   tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_FULLSCREEN,
                      lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->toolbar)));
-  if (LIVES_IS_IMAGE(tmp_toolbar_icon)) {
-    pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
-    lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
-  }
 
   mainw->t_fullscreen = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar), LIVES_TOOL_ITEM(mainw->t_fullscreen), 4);
   lives_widget_set_tooltip_text(mainw->t_fullscreen, _("Fullscreen playback (f)"));
+  lives_widget_set_opacity(mainw->t_fullscreen, .75);
 
   tmp_toolbar_icon = lives_image_new_from_stock(LIVES_STOCK_REMOVE, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->toolbar)));
 
@@ -3678,30 +3656,18 @@ void make_preview_box(void) {
   lives_widget_set_tooltip_text(mainw->p_loopbutton, _("Loop On/Off"));
   lives_widget_set_sensitive(mainw->p_loopbutton, TRUE);
   lives_widget_set_focus_on_click(mainw->p_loopbutton, FALSE);
-  if (LIVES_IS_IMAGE(loop_img)) {
-    LiVESPixbuf *pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(loop_img));
-    if (pixbuf) {
-      LiVESPixbuf *pixbuf2 = lives_pixbuf_copy(pixbuf);
-      if (!mainw->loop_cont) {
-        lives_pixbuf_saturate_and_pixelate(pixbuf2, pixbuf2, 0.2, FALSE);
-      }
-      lives_image_set_from_pixbuf(LIVES_IMAGE(loop_img), pixbuf2);
-    }
-  }
+  lives_widget_set_opacity(mainw->p_loopbutton, .75);
 
   lives_standard_button_set_image(LIVES_BUTTON(mainw->p_loopbutton), loop_img);
 
   mainw->p_mute_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_VOLUME_MUTE,
                       LIVES_ICON_SIZE_LARGE_TOOLBAR);
-  if (LIVES_IS_IMAGE(mainw->p_mute_img) && !mainw->mute) {
-    LiVESPixbuf *pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(mainw->p_mute_img));
-    lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
-  }
 
   mainw->p_mutebutton = lives_standard_button_new(DEF_BUTTON_WIDTH / 2, DEF_BUTTON_HEIGHT);
   lives_standard_button_set_image(LIVES_BUTTON(mainw->p_mutebutton), mainw->p_mute_img);
   lives_box_pack_start(LIVES_BOX(hbox_buttons), mainw->p_mutebutton, TRUE, TRUE, 0);
   lives_widget_set_focus_on_click(mainw->p_mutebutton, FALSE);
+  lives_widget_set_opacity(mainw->p_mutebutton, .75);
 
   if (!mainw->mute) lives_widget_set_tooltip_text(mainw->p_mutebutton, _("Mute the audio (z)"));
   else lives_widget_set_tooltip_text(mainw->p_mutebutton, _("Unmute the audio (z)"));

@@ -258,11 +258,10 @@ static void giw_timeline_get_property(GObject *object, guint prop_id, GValue *va
 GtkWidget *giw_timeline_new(GtkOrientation orientation, GtkAdjustment *adjustment) {
   GiwTimeline *timeline;
 
-  timeline = (GiwTimeline *)g_object_new(GIW_TYPE_TIMELINE,
-                                         "orientation", orientation,
-                                         NULL);
+  timeline = (GiwTimeline *)g_object_new(GIW_TYPE_TIMELINE, "orientation", orientation, NULL);
 
-  if (adjustment != NULL) giw_timeline_set_adjustment(timeline, adjustment);
+  if (adjustment) giw_timeline_set_adjustment(timeline, adjustment);
+
   return GTK_WIDGET(timeline);
 }
 
@@ -291,23 +290,28 @@ void giw_timeline_set_adjustment(GiwTimeline *timeline, GtkAdjustment *adjustmen
 #if GTK_CHECK_VERSION(3, 0, 0)
     g_signal_handler_disconnect((gpointer)(timeline->adjustment), timeline->chsig);
     g_signal_handler_disconnect((gpointer)(timeline->adjustment), timeline->vchsig);
+    g_signal_handler_disconnect((gpointer)(timeline->adjustment), timeline->tchsig);
 #else
-    gtk_signal_disconnect_by_data(LIVES_GUI_OBJECT(timeline->adjustment), (gpointer) timeline);
+    gtk_signal_disconnect_by_data(G_OBJECT(timeline->adjustment), (gpointer) timeline);
 #endif
     g_object_unref(G_OBJECT(timeline->adjustment));
     timeline->adjustment = NULL;
   }
 
   timeline->adjustment = adjustment;
-  g_object_ref(LIVES_GUI_OBJECT(timeline->adjustment));
+  g_object_ref(G_OBJECT(timeline->adjustment));
 
-  timeline->chsig = g_signal_connect(LIVES_GUI_OBJECT(adjustment), "changed",
+  timeline->chsig = g_signal_connect(G_OBJECT(adjustment), "changed",
                                      (GCallback) giw_timeline_adjustment_changed,
                                      (gpointer) timeline);
 
-  timeline->vchsig = g_signal_connect(LIVES_GUI_OBJECT(adjustment), "value_changed",
+  timeline->vchsig = g_signal_connect(G_OBJECT(adjustment), "value_changed",
                                       (GCallback) giw_timeline_adjustment_value_changed,
                                       (gpointer) timeline);
+
+  timeline->tchsig = g_signal_connect_swapped(G_OBJECT(timeline), "value_changed",
+                     (GCallback) giw_timeline_adjustment_value_changed,
+                     (gpointer)adjustment);
 
 #if !GTK_CHECK_VERSION(3,18,0)
   gtk_adjustment_value_changed(timeline->adjustment);
@@ -529,7 +533,7 @@ static void giw_timeline_realize(GtkWidget *widget) {
   gtk_style_context_set_state(stylecon, GTK_STATE_FLAG_ACTIVE);
 
   gdk_window_set_user_data(gtk_widget_get_window(GTK_WIDGET(timeline)), timeline);
-  g_object_ref(LIVES_GUI_OBJECT(gtk_widget_get_window(GTK_WIDGET(timeline))));
+  g_object_ref(G_OBJECT(gtk_widget_get_window(GTK_WIDGET(timeline))));
 
   giw_timeline_make_pixmap(timeline);
 }

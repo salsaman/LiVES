@@ -70,7 +70,7 @@ static boolean check_zero_buff(size_t check_size) {
 
 boolean lives_jack_init(void) {
   char *jt_client = lives_strdup_printf("LiVES-%d", capable->mainpid);
-  jack_options_t options = 0;//JackServerName;
+  jack_options_t options = JackServerName;
   jack_status_t status;
 #ifdef USE_JACKCTL
   jackctl_driver_t *driver = NULL;
@@ -135,7 +135,7 @@ boolean lives_jack_init(void) {
 
   mainw->jack_inited = TRUE;
 
-  options = 0;//(jack_options_t)((int)options | (int)JackNoStartServer);
+  options = (jack_options_t)((int)options | (int)JackNoStartServer);
 
 #else
 
@@ -190,10 +190,9 @@ boolean lives_jack_init(void) {
 // transport handling
 
 
-ticks_t jack_transport_get_time(void) {
+ticks_t jack_transport_get_current_ticks(void) {
 #ifdef ENABLE_JACK_TRANSPORT
-  ticks_t val;
-
+  double val;
   jack_nframes_t srate;
   jack_position_t pos;
 
@@ -201,9 +200,10 @@ ticks_t jack_transport_get_time(void) {
 
   srate = jack_get_sample_rate(jack_transport_client);
   val = (double)pos.frame / (double)srate;
-  if (val > 0.) return val;
+
+  if (val > 0.) return val * TICKS_PER_SECOND_DBL;
 #endif
-  return 0.;
+  return -1;
 }
 
 
@@ -1098,6 +1098,22 @@ int lives_start_ready_callback(jack_transport_state_t state, jack_position_t *po
 
   if (!(prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT)) return TRUE;
   if (!jack_transport_client) return TRUE;
+
+  if (!LIVES_IS_PLAYING && state == JackTransportStopped) {
+    if (prefs->jack_opts && JACK_OPTS_TIMEBASE_CLIENT) {
+      double trtime = (double)jack_transport_get_current_ticks() / TICKS_PER_SECOND_DBL;
+      if (!mainw->multitrack) {
+#ifndef ENABLE_GIW_3
+        lives_ruler_set_value(LIVES_RULER(mainw->hruler), x);
+        lives_widget_queue_draw_if_visible(mainw->hruler);
+#else
+        lives_adjustment_set_value(giw_timeline_get_adjustment(GIW_TIMELINE(mainw->hruler)), trtime);
+#endif
+      } else mt_tl_move(mainw->multitrack, trtime);
+    }
+    return TRUE;
+  }
+
   if (state != JackTransportStarting) return TRUE;
 
   if (LIVES_IS_PLAYING && prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) {
@@ -1360,8 +1376,7 @@ static void jack_error_func(const char *desc) {
 boolean jack_create_client_writer(jack_driver_t *jackd) {
   const char *client_name = "LiVES_audio_out";
   const char *server_name = JACK_DEFAULT_SERVER_NAME;
-  //jack_options_t options = 0;//(jack_options_t)((int)JackServerName | (int)JackNoStartServer);
-  jack_options_t options = 0;//(int)JackNoStartServer;
+  jack_options_t options = (jack_options_t)((int)JackServerName | (int)JackNoStartServer);
   jack_status_t status;
   boolean needs_sigs = FALSE;
   lives_alarm_t alarm_handle;
@@ -1450,7 +1465,7 @@ boolean jack_create_client_reader(jack_driver_t *jackd) {
   // open a device to read audio from jack
   const char *client_name = "LiVES_audio_in";
   const char *server_name = JACK_DEFAULT_SERVER_NAME;
-  jack_options_t options = 0;//(jack_options_t)((int)JackServerName | (int)JackNoStartServer);
+  jack_options_t options = (jack_options_t)((int)JackServerName | (int)JackNoStartServer);
   jack_status_t status;
   int i;
 

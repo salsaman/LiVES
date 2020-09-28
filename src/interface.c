@@ -1325,10 +1325,12 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
     okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
                LIVES_RESPONSE_OK);
   } else {
+    widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
     lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), NULL, _("Keep _my settings"),
                                        LIVES_RESPONSE_CANCEL);
     okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), NULL, _("Use _recommended settings"),
                LIVES_RESPONSE_OK);
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
   }
 
   lives_button_grab_default_special(okbutton);
@@ -2821,10 +2823,13 @@ _entryw *create_rename_dialog(int type) {
   }
 
   if (type == 6 && !mainw->is_ready) {
+    tmp = lives_big_and_bold(_("Welcome to LiVES !"));
     widget_opts.justify = LIVES_JUSTIFY_CENTER;
-    label = lives_standard_label_new
-            (_("Welcome to LiVES !"));
+    widget_opts.use_markup = TRUE;
+    label = lives_standard_label_new(tmp);
+    widget_opts.use_markup = FALSE;
     widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+    lives_free(tmp);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
     label = lives_standard_label_new

@@ -1363,6 +1363,7 @@ int process_one(boolean visible) {
     last_req_frame = sfile->frameno - 1;
     getahead = test_getahead = -1;
     mainw->actual_frame = sfile->frameno;
+    mainw->offsetticks -= mainw->currticks;
   }
 
   /* if (mainw->wall_ticks > last_cpuload_ticks + 10 * TICKS_PER_SECOND_DBL) { */
@@ -1544,7 +1545,7 @@ switch_point:
 
       // handle transport jump in multitrack : end current playback and restart it from the new position
       // TODO: retest this and enable in the clip_editor
-      ticks_t transtc = q_gint64(jack_transport_get_time() * TICKS_PER_SECOND_DBL, cfile->fps);
+      ticks_t transtc = q_gint64(jack_transport_get_current_ticks(), cfile->fps);
       mainw->multitrack->pb_start_event = get_frame_event_at(mainw->multitrack->event_list, transtc, NULL, TRUE);
       if (mainw->cancelled == CANCEL_NONE) mainw->cancelled = CANCEL_EVENT_LIST_END;
 #endif
@@ -1595,7 +1596,8 @@ switch_point:
   }
 
   new_ticks = mainw->currticks;
-  if (new_ticks < mainw->startticks) new_ticks = mainw->startticks;
+  if (mainw->scratch != SCRATCH_JUMP)
+    if (new_ticks < mainw->startticks) new_ticks = mainw->startticks;
 
   show_frame = FALSE;
   requested_frame = sfile->frameno;

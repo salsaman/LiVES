@@ -2324,7 +2324,7 @@ void play_file(void) {
   if (mainw->jack_can_stop && !mainw->event_list && !mainw->preview
       && (prefs->jack_opts & (JACK_OPTS_TIMEBASE_START | JACK_OPTS_TIMEBASE_CLIENT))) {
     // calculate the start position from jack transport
-    double sttime = jack_transport_get_time();
+    double sttime = (double)jack_transport_get_current_ticks() / TICKS_PER_SECOND_DBL;
     cfile->pointer_time = cfile->real_pointer_time = sttime;
     if (cfile->real_pointer_time > CLIP_TOTAL_TIME(mainw->current_file))
       cfile->real_pointer_time = CLIP_TOTAL_TIME(mainw->current_file);

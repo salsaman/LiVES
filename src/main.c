@@ -131,7 +131,7 @@ static int xxwidth = 0, xxheight = 0;
 static char *old_vhash = NULL;
 static int initial_startup_phase = 0;
 static boolean needs_workdir = FALSE;
-
+static boolean ran_ds_dlg = FALSE;
 
 static void do_start_messages(void);
 
@@ -745,7 +745,7 @@ static boolean pre_init(void) {
   prefs->ds_warn_level = (uint64_t)get_int64_prefd(PREF_DS_WARN_LEVEL, DEF_DS_WARN_LEVEL);
   if (prefs->ds_warn_level < prefs->ds_crit_level) prefs->ds_warn_level = prefs->ds_crit_level;
   mainw->next_ds_warn_level = prefs->ds_warn_level;
-  prefs->show_disk_quota = get_boolean_prefd(PREF_SHOW_QUOTA, FALSE);
+  prefs->show_disk_quota = get_boolean_prefd(PREF_SHOW_QUOTA, prefs->show_disk_quota);
   prefs->disk_quota = get_int64_prefd(PREF_DISK_QUOTA, 0);
   if (prefs->disk_quota < 0) prefs->disk_quota = 0;
 
@@ -2229,11 +2229,13 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->startup_phase = 6;
 
     capable->ds_used = disk_monitor_wait_result(prefs->workdir, LIVES_DEFAULT_TIMEOUT);
-    if (capable->ds_used >= 0) run_diskspace_dialog();
-    else {
+    if (capable->ds_used >= 0) {
+      ran_ds_dlg = TRUE;
+      run_diskspace_dialog();
+    } else {
       disk_monitor_forget();
-      prefs->show_disk_quota = TRUE;
-      mainw->helper_procthreads[PT_LAZY_DSUSED] = disk_monitor_start(prefs->workdir);
+      if (prefs->show_disk_quota)
+        mainw->helper_procthreads[PT_LAZY_DSUSED] = disk_monitor_start(prefs->workdir);
     }
 
     set_int_pref(PREF_STARTUP_PHASE, 100); // tell backend to delete this
@@ -3490,6 +3492,7 @@ boolean lazy_startup_checks(void *data) {
   }
   if (!dqshown) {
     boolean do_show_quota = prefs->show_disk_quota;
+    if (ran_ds_dlg) do_show_quota = FALSE;
     dqshown = TRUE;
     if (mainw->helper_procthreads[PT_LAZY_DSUSED]) {
       if (disk_monitor_running(prefs->workdir)) {
@@ -3551,6 +3554,8 @@ boolean resize_message_area(livespointer data) {
   static boolean isfirst = TRUE;
   int bx, by;
 
+  if (data) isfirst = TRUE;
+
   if (!prefs->show_gui || LIVES_IS_PLAYING || mainw->is_processing || mainw->is_rendering || !prefs->show_msg_area) {
     mainw->assumed_height = mainw->assumed_width = -1;
     mainw->idlemax = 0;
@@ -3591,6 +3596,8 @@ boolean resize_message_area(livespointer data) {
     lives_widget_queue_draw_if_visible(mainw->msg_area);
     isfirst = FALSE;
   }
+  resize(1.);
+  lives_widget_queue_draw(mainw->LiVES);
   return FALSE;
 }
 
@@ -3675,7 +3682,7 @@ static boolean lives_startup(livespointer data) {
   } else {
 #endif
 #ifdef ENABLE_JACK
-    if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_jackd) {
+    if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_jackd && prefs->audio_player == -1) {
       prefs->audio_player = AUD_PLAYER_JACK;
       lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_JACK);
       set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);

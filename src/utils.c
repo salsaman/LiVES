@@ -1491,7 +1491,7 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
         (prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT) && !(mainw->record && !(prefs->rec_opts & REC_FRAMES))) {
       // calculate the time from jack transport
       *tsource = LIVES_TIME_SOURCE_EXTERNAL;
-      current = jack_transport_get_time() * TICKS_PER_SECOND_DBL;
+      current = jack_transport_get_current_ticks();
     }
 #endif
   }

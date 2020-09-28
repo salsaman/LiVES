@@ -47,7 +47,7 @@ void jack_pb_stop(void);  /** pause playback transport master */
 
 #define ERR_PORT_NOT_FOUND 10
 
-#define JACK_DEFAULT_SERVER_NAME "(default)"
+#define JACK_DEFAULT_SERVER_NAME "default"
 
 typedef jack_nframes_t nframes_t;
 
@@ -162,7 +162,7 @@ size_t jack_get_buffsize(jack_driver_t *);
 
 void jack_get_rec_avals(jack_driver_t *);
 
-ticks_t jack_transport_get_time(void);
+ticks_t jack_transport_get_current_ticks(void);
 
 double lives_jack_get_pos(jack_driver_t *);
 

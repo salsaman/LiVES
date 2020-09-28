@@ -408,14 +408,21 @@ boolean do_workdir_query(void) {
   LiVESResponseType response;
   char *dirname = NULL, *mp;
   _entryw *wizard = create_rename_dialog(6);
-  gtk_window_set_urgency_hint(LIVES_WINDOW(wizard->dialog), TRUE); // dont know if this actually does anything...
 
   /// override FILESEL_TYPE_KEY, in case it was set to WORKDIR; we will do our own checking here
   dirbutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dirbutton), FILESEL_TYPE_KEY,
                                LIVES_INT_TO_POINTER(LIVES_DIR_SELECTION_CREATE_FOLDER));
 
-  if (mainw->splash_window) lives_widget_hide(mainw->splash_window);
+  if (mainw->splash_window) {
+    char *wid;
+    lives_widget_hide(mainw->splash_window);
+    lives_widget_show_all(wizard->dialog);
+    lives_widget_show_now(wizard->dialog);
+    gtk_window_set_urgency_hint(LIVES_WINDOW(wizard->dialog), TRUE); // dont know if this actually does anything...
+    wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(wizard->dialog)));
+    if (!wid || !activate_x11_window(wid)) lives_window_set_keep_above(LIVES_WINDOW(wizard->dialog), TRUE);
+  }
 
   do {
     lives_freep((void **)&dirname);
@@ -484,7 +491,7 @@ static void on_init_aplayer_toggled(LiVESToggleButton * tbutton, livespointer us
 
 
 boolean do_audio_choice_dialog(short startup_phase) {
-  LiVESWidget *dialog, *dialog_vbox, *radiobutton2, *label;
+  LiVESWidget *dialog, *dialog_vbox, *radiobutton2 = NULL, *label;
   LiVESWidget *okbutton, *cancelbutton;
   LiVESWidget *hbox;
 
@@ -567,58 +574,61 @@ boolean do_audio_choice_dialog(short startup_phase) {
 #ifdef HAVE_PULSE_AUDIO
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-
   radiobutton0 = lives_standard_radio_button_new(_("Use _pulseaudio player"), &radiobutton_group, LIVES_BOX(hbox), NULL);
-
   if (prefs->audio_player == -1) prefs->audio_player = AUD_PLAYER_PULSE;
-
-  if (prefs->audio_player == AUD_PLAYER_PULSE) {
-    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton0), TRUE);
-    set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
-  }
-
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton0), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
-                            LIVES_INT_TO_POINTER(AUD_PLAYER_PULSE));
-
 #endif
 
 #ifdef ENABLE_JACK
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-
   radiobutton1 = lives_standard_radio_button_new(_("Use _jack audio player"), &radiobutton_group, LIVES_BOX(hbox), NULL);
-
-  if (prefs->audio_player == AUD_PLAYER_JACK || !capable->has_pulse_audio || prefs->audio_player == -1) {
-    prefs->audio_player = AUD_PLAYER_JACK;
-    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton1), TRUE);
-    set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
-  }
-
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton1), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
-                            LIVES_INT_TO_POINTER(AUD_PLAYER_JACK));
-
 #endif
 
   if (capable->has_sox_play) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-
     radiobutton2 = lives_standard_radio_button_new(_("Use _sox audio player"), &radiobutton_group, LIVES_BOX(hbox), NULL);
-
     if (prefs->audio_player == -1) prefs->audio_player = AUD_PLAYER_SOX;
+  }
 
+#ifdef HAVE_PULSE_AUDIO
+  if (prefs->audio_player == AUD_PLAYER_PULSE || (!capable->has_pulse_audio && prefs->audio_player == -1)) {
+    prefs->audio_player = AUD_PLAYER_PULSE;
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton0), TRUE);
+    set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
+  }
+#endif
+#ifdef ENABLE_JACK
+  if (prefs->audio_player == AUD_PLAYER_JACK || !capable->has_pulse_audio || prefs->audio_player == -1) {
+    prefs->audio_player = AUD_PLAYER_JACK;
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton1), TRUE);
+    set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
+  }
+#endif
+  if (capable->has_sox_play) {
     if (prefs->audio_player == AUD_PLAYER_SOX) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton2), TRUE);
       set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_SOX);
     }
+  }
 
+#ifdef HAVE_PULSE_AUDIO
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton0), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
+                            LIVES_INT_TO_POINTER(AUD_PLAYER_PULSE));
+#endif
+
+#ifdef ENABLE_JACK
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton1), LIVES_WIDGET_TOGGLED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
+                            LIVES_INT_TO_POINTER(AUD_PLAYER_JACK));
+#endif
+
+  if (capable->has_sox_play) {
     lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton2), LIVES_WIDGET_TOGGLED_SIGNAL,
                               LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
                               LIVES_INT_TO_POINTER(AUD_PLAYER_SOX));
   }
-
   cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
                  LIVES_RESPONSE_CANCEL);
 
@@ -628,16 +638,16 @@ boolean do_audio_choice_dialog(short startup_phase) {
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD, _("_Next"),
              LIVES_RESPONSE_OK);
 
+  lives_widget_show_all(dialog);
   lives_button_grab_default_special(okbutton);
+
+  lives_widget_show_now(dialog);
   lives_widget_grab_focus(okbutton);
 
   if (prefs->audio_player == -1) {
     do_no_mplayer_sox_error();
     return LIVES_RESPONSE_CANCEL;
   }
-
-  lives_widget_show_now(dialog);
-  lives_widget_grab_focus(okbutton);
 
   wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
   if (!wid || !activate_x11_window(wid)) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
@@ -823,8 +833,18 @@ boolean do_startup_tests(boolean tshoot) {
   table = lives_table_new(10, 4, FALSE);
   lives_container_add(LIVES_CONTAINER(dialog_vbox), table);
 
-  gtk_window_set_urgency_hint(LIVES_WINDOW(dialog), TRUE);
-  lives_widget_show_all(dialog);
+  if (!tshoot) {
+    char *wid;
+    gtk_window_set_urgency_hint(LIVES_WINDOW(dialog), TRUE);
+    lives_widget_show_all(dialog);
+    lives_widget_show_now(dialog);
+    lives_widget_context_update();
+
+    gtk_window_set_urgency_hint(LIVES_WINDOW(dialog), TRUE); // dont know if this actually does anything...
+    wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
+    if (!wid || !activate_x11_window(wid)) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
+  }
+
   lives_widget_context_update();
 
   // check for sox presence
@@ -1233,11 +1253,12 @@ jpgdone:
 
 void do_startup_interface_query(void) {
   // prompt for startup ce or startup mt
-
   LiVESWidget *dialog, *dialog_vbox, *radiobutton, *label;
-  LiVESWidget *okbutton;
+  /* LiVESWidget *okbutton; */
+  /* LiVESWidget *quotabutton; */
   LiVESWidget *hbox;
   LiVESSList *radiobutton_group = NULL;
+  LiVESResponseType resp;
   char *txt1, *txt2, *txt3, *msg, *wid;
 
   txt1 = (_("\n\nFinally, you can choose the default startup interface for LiVES.\n"));
@@ -1277,11 +1298,18 @@ void do_startup_interface_query(void) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), TRUE);
   }
 
-  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,
-             _("Set Quota Limits (Optional)"), LIVES_RESPONSE_OK);
+  add_fill_to_box(LIVES_BOX(dialog_vbox));
 
-  lives_button_grab_default_special(okbutton);
-  lives_widget_grab_focus(okbutton);
+  widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), NULL,
+                                     _("Set Quota Limits (Optional)"), LIVES_RESPONSE_SHOW_DETAILS);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,
+                                     _("Finish"), LIVES_RESPONSE_OK);
+
+  /* lives_button_grab_default_special(okbutton); */
+  /* lives_widget_grab_focus(okbutton); */
 
   lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
   lives_widget_show_now(dialog);
@@ -1289,7 +1317,9 @@ void do_startup_interface_query(void) {
   wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
   if (!wid || !activate_x11_window(wid)) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
 
-  lives_dialog_run(LIVES_DIALOG(dialog));
+  resp = lives_dialog_run(LIVES_DIALOG(dialog));
+  if (resp == LIVES_RESPONSE_SHOW_DETAILS) prefs->show_disk_quota = TRUE;
+  else prefs->show_disk_quota = FALSE;
 
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton)))
     future_prefs->startup_interface = prefs->startup_interface = STARTUP_MT;

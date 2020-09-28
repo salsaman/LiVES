@@ -5960,6 +5960,7 @@ boolean reload_set(const char *set_name) {
     }
 
     if (mainw->multitrack && mainw->multitrack->is_ready) {
+      new_file = mainw->current_file;
       mainw->current_file = mainw->multitrack->render_file;
       mt_init_clips(mainw->multitrack, new_file, TRUE);
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
@@ -7780,7 +7781,6 @@ void on_full_screen_pressed(LiVESButton * button, livespointer user_data) {
 
 
 static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  LiVESWidget *fs_img;
 
   // ignore if audio only clip
   if (CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_HAS_VIDEO && LIVES_IS_PLAYING && !mainw->multitrack) return;
@@ -7791,19 +7791,13 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
   }
   mainw->blend_palette = WEED_PALETTE_END;
 
-  // update the button icon
-  fs_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_FULLSCREEN,
-                                      lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
-  lives_widget_show(fs_img);
   if (!mainw->fs) {
-    if (LIVES_IS_IMAGE(fs_img)) {
-      LiVESPixbuf *pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(fs_img));
-      lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
-    }
     lives_widget_set_tooltip_text(mainw->t_fullscreen, _("Fullscreen playback (f)"));
-  } else lives_widget_set_tooltip_text(mainw->t_fullscreen, _("Fullscreen playback off (f)"));
-
-  lives_tool_button_set_icon_widget(LIVES_TOOL_BUTTON(mainw->t_fullscreen), fs_img);
+    lives_widget_set_opacity(mainw->t_fullscreen, .75);
+  } else {
+    lives_widget_set_tooltip_text(mainw->t_fullscreen, _("Fullscreen playback off (f)"));
+    lives_widget_set_opacity(mainw->t_fullscreen, 1.);
+  }
 
   if (LIVES_IS_PLAYING) {
     if (mainw->fs) {
@@ -7938,7 +7932,6 @@ void on_double_size_pressed(LiVESButton * button, livespointer user_data) {
 
 
 void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  LiVESWidget *sngl_img;
 
   if (mainw->multitrack || (CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_HAS_VIDEO && !user_data)) return;
 
@@ -7952,22 +7945,10 @@ void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (user_data) {
     // change the blank window icons
     if (!mainw->double_size) {
-      sngl_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_ZOOM_IN,
-                                            lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
-      lives_widget_set_tooltip_text(mainw->t_double, _("Double size (d)"));
+      lives_widget_set_opacity(mainw->t_double, .75);
     } else {
-      sngl_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_ZOOM_OUT,
-                                            lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
-      lives_widget_set_tooltip_text(mainw->t_double, _("Single size (d)"));
+      lives_widget_set_opacity(mainw->t_double, 1.);
     }
-
-    if (LIVES_IS_IMAGE(sngl_img)) {
-      LiVESPixbuf *pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(sngl_img));
-      if (pixbuf) lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
-    }
-
-    lives_widget_show(sngl_img);
-    lives_tool_button_set_icon_widget(LIVES_TOOL_BUTTON(mainw->t_double), sngl_img);
   }
 
   mainw->opwx = mainw->opwy = -1;
@@ -8018,8 +7999,6 @@ void on_sepwin_pressed(LiVESButton * button, livespointer user_data) {
 
 
 void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  LiVESWidget *sep_img;
-  LiVESWidget *sep_img2;
 
   if (mainw->go_away) return;
 
@@ -8034,29 +8013,17 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     mainw->multitrack->redraw_block = FALSE;
   }
 
-  sep_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_SEPWIN,
-                                       lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
-  sep_img2 = lives_image_new_from_stock(LIVES_LIVES_STOCK_SEPWIN,
-                                        lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
-
   if (mainw->sep_win) {
     lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Hide the play window (s)"));
     lives_widget_set_tooltip_text(mainw->t_sepwin, _("Hide the play window (s)"));
+    lives_widget_set_opacity(mainw->m_sepwinbutton, 1.);
+    lives_widget_set_opacity(mainw->t_sepwin, 1.);
   } else {
-    if (LIVES_IS_IMAGE(sep_img)) {
-      LiVESPixbuf *pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(sep_img));
-      if (pixbuf) lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
-      pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(sep_img2));
-      if (pixbuf) lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
-    }
     lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Show the play window (s)"));
     lives_widget_set_tooltip_text(mainw->t_sepwin, _("Play in separate window (s)"));
+    lives_widget_set_opacity(mainw->m_sepwinbutton, .75);
+    lives_widget_set_opacity(mainw->t_sepwin, .75);
   }
-
-  lives_widget_show(sep_img);
-  lives_widget_show(sep_img2);
-  lives_tool_button_set_icon_widget(LIVES_TOOL_BUTTON(mainw->m_sepwinbutton), sep_img);
-  lives_tool_button_set_icon_widget(LIVES_TOOL_BUTTON(mainw->t_sepwin), sep_img2);
 
   if (prefs->sepwin_type == SEPWIN_TYPE_STICKY && !LIVES_IS_PLAYING) {
     if (mainw->sep_win) make_play_window();
@@ -8296,42 +8263,26 @@ void on_loop_button_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 
 void on_loop_cont_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  LiVESWidget *loop_img;
 
   mainw->loop_cont = !mainw->loop_cont;
 
-  loop_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_LOOP, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
   if (mainw->loop_cont) {
     lives_widget_set_tooltip_text(mainw->m_loopbutton, _("Switch continuous looping off (o)"));
+    lives_widget_set_opacity(mainw->m_loopbutton, 1.);
   } else {
-    LiVESPixbuf *pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(loop_img));
-    if (pixbuf) lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
     lives_widget_set_tooltip_text(mainw->m_loopbutton, _("Switch continuous looping on (o)"));
+    lives_widget_set_opacity(mainw->m_loopbutton, .75);
   }
-
-  lives_widget_show(loop_img);
-  lives_tool_button_set_icon_widget(LIVES_TOOL_BUTTON(mainw->m_loopbutton), loop_img);
 
   lives_widget_set_sensitive(mainw->playclip, clipboard != NULL);
   if (mainw->current_file > -1) find_when_to_stop();
   else mainw->whentostop = NEVER_STOP;
 
   if (mainw->preview_box) {
-    loop_img = lives_image_new_from_stock(LIVES_STOCK_LOOP, LIVES_ICON_SIZE_LARGE_TOOLBAR);
-    if (!loop_img) loop_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_LOOP,
-                                LIVES_ICON_SIZE_LARGE_TOOLBAR);
-    if (LIVES_IS_IMAGE(loop_img)) {
-      LiVESPixbuf *pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(loop_img));
-      if (pixbuf) {
-        LiVESPixbuf *pixbuf2 = lives_pixbuf_copy(pixbuf);
-        if (!mainw->loop_cont) {
-          lives_pixbuf_saturate_and_pixelate(pixbuf2, pixbuf2, 0.2, FALSE);
-        }
-        lives_image_set_from_pixbuf(LIVES_IMAGE(loop_img), pixbuf2);
-        lives_standard_button_set_image(LIVES_BUTTON(mainw->p_loopbutton), loop_img);
-        //lives_widget_object_unref(pixbuf);
-      }
-    }
+    if (mainw->loop_cont)
+      lives_widget_set_opacity(mainw->p_loopbutton, 1.);
+    else
+      lives_widget_set_opacity(mainw->p_loopbutton, .75);
   }
 
 #ifdef ENABLE_JACK
@@ -8345,6 +8296,11 @@ void on_loop_cont_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 #endif
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
+    if (mainw->pulsed && (mainw->loop_cont || mainw->whentostop == NEVER_STOP)) {
+      if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
+        mainw->pulsed->loop = AUDIO_LOOP_PINGPONG;
+      else mainw->pulsed->loop = AUDIO_LOOP_FORWARD;
+    } else if (mainw->pulsed) mainw->pulsed->loop = AUDIO_LOOP_NONE;
   }
 #endif
 }
@@ -8390,18 +8346,16 @@ boolean mute_audio_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
 
 
 void on_mute_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  LiVESWidget *mute_img;
-  LiVESWidget *mute_img2 = NULL;
 
   mainw->mute = !mainw->mute;
 
   // change the mute icon
-  mute_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_VOLUME_MUTE,
-                                        lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
-  if (mainw->preview_box) mute_img2 = lives_image_new_from_stock_at_size(LIVES_LIVES_STOCK_VOLUME_MUTE,
-                                        LIVES_ICON_SIZE_CUSTOM, 24, 24);
 
   if (mainw->mute) {
+    lives_widget_set_opacity(mainw->m_mutebutton, 1.);
+    if (mainw->preview_box) {
+      lives_widget_set_opacity(mainw->p_mutebutton, 1.);
+    }
 #ifdef ENABLE_JACK
     if (mainw->jackd && prefs->audio_player == AUD_PLAYER_JACK) {
       if (LIVES_IS_PLAYING) {
@@ -8451,40 +8405,26 @@ void on_mute_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       }
     }
 #endif
-    if (LIVES_IS_IMAGE(mute_img)) {
-      LiVESPixbuf *pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(mute_img));
-      if (pixbuf) lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
-      if (mainw->preview_box) {
-        pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(mute_img2));
-        if (pixbuf) lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
-      }
+    lives_widget_set_opacity(mainw->m_mutebutton, .75);
+    if (mainw->preview_box) {
+      lives_widget_set_opacity(mainw->p_mutebutton, .75);
     }
+
     lives_widget_set_tooltip_text(mainw->m_mutebutton, _("Mute the audio (z)"));
     if (mainw->preview_box) lives_widget_set_tooltip_text(mainw->p_mutebutton, _("Mute the audio (z)"));
-  }
-
-  lives_widget_show(mute_img);
-  lives_tool_button_set_icon_widget(LIVES_TOOL_BUTTON(mainw->m_mutebutton), mute_img);
-
-  if (mainw->preview_box) {
-    lives_widget_show(mute_img2);
-    lives_button_set_image(LIVES_BUTTON(mainw->p_mutebutton), mute_img2); // doesn't work (gtk+ bug ?)
-    lives_widget_queue_draw(mainw->p_mutebutton);
-    lives_widget_queue_draw(mute_img2);
-  }
 
 #ifdef ENABLE_JACK
-  if (prefs->audio_player == AUD_PLAYER_JACK && LIVES_IS_PLAYING && mainw->jackd) {
-    mainw->jackd->mute = mainw->mute;
-  }
+    if (prefs->audio_player == AUD_PLAYER_JACK && LIVES_IS_PLAYING && mainw->jackd) {
+      mainw->jackd->mute = mainw->mute;
+    }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player == AUD_PLAYER_PULSE && LIVES_IS_PLAYING && mainw->pulsed) {
-    mainw->pulsed->mute = mainw->mute;
-  }
+    if (prefs->audio_player == AUD_PLAYER_PULSE && LIVES_IS_PLAYING && mainw->pulsed) {
+      mainw->pulsed->mute = mainw->mute;
+    }
 #endif
+  }
 }
-
 
 #define GEN_SPB_LINK(n, bit) case n: mainw->fx##n##_##bit = \
     lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton)); break
@@ -10779,7 +10719,6 @@ boolean on_mouse_sel_start(LiVESWidget * widget, LiVESXEventButton * event, live
 
 #ifdef ENABLE_GIW_3
 void on_hrule_value_changed(LiVESWidget * widget, livespointer user_data) {
-
   if (!LIVES_IS_INTERACTIVE) return;
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return;
 
@@ -11188,8 +11127,10 @@ boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32
           jack_get_rec_avals(mainw->jackd);
         }
       }
+#ifdef ENABLE_JACK_TRANSPORT
       if (cfile->play_paused) jack_pb_stop();
       else jack_pb_start(-1.);
+#endif
     }
 #endif
 #ifdef HAVE_PULSE_AUDIO

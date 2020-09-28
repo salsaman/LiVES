@@ -40,7 +40,7 @@ char *get_stats_msg(boolean calc_only) {
       avsync = (double)mainw->jackd->seek_pos
                / (double)mainw->files[mainw->jackd->playing_file]->arate / 4.; //lives_pulse_get_pos(mainw->jackd);
       avsync -= ((double)mainw->files[mainw->jackd->playing_file]->frameno - 1.) / mainw->files[mainw->jackd->playing_file]->fps
-                + (double)(currticks - mainw->startticks) / TICKS_PER_SECOND_DBL;
+                + (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL;
       have_avsync = TRUE;
     }
 #endif
@@ -50,7 +50,7 @@ char *get_stats_msg(boolean calc_only) {
       avsync = (double)mainw->pulsed->seek_pos
                / (double)mainw->files[mainw->pulsed->playing_file]->arate / 4.; //lives_pulse_get_pos(mainw->pulsed);
       avsync -= ((double)mainw->files[mainw->pulsed->playing_file]->frameno - 1.) / mainw->files[mainw->pulsed->playing_file]->fps
-                + (double)(currticks - mainw->startticks) / TICKS_PER_SECOND_DBL;
+                + (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL;
       have_avsync = TRUE;
     }
 #endif
@@ -67,7 +67,7 @@ char *get_stats_msg(boolean calc_only) {
   if (currticks > last_curr_tc + STATS_TC) {
     if (mainw->fps_mini_ticks == last_mini_ticks) {
       inst_fps = (double)(mainw->fps_mini_measure - last_mm
-                          + (double)(currticks - mainw->startticks) / TICKS_PER_SECOND_DBL / cfile->pb_fps)
+                          + (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL / cfile->pb_fps)
                  / ((double)(currticks - last_curr_tc) / TICKS_PER_SECOND_DBL);
       mainw->inst_fps = inst_fps;
     }

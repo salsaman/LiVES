@@ -3157,7 +3157,7 @@ static weed_timecode_t set_play_position(lives_mt * mt) {
   if (mainw->jack_can_stop && (prefs->jack_opts & JACK_OPTS_TIMEBASE_START) && (prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT)) {
     mt->pb_loop_event = get_first_frame_event(mt->event_list);
     has_pb_loop_event = TRUE;
-    tc = q_gint64(TICKS_PER_SECOND_DBL * jack_transport_get_time(), mainw->files[mt->render_file]->fps);
+    tc = q_gint64(jack_transport_get_current_ticks(), mainw->files[mt->render_file]->fps);
     if (!mainw->loop_cont) {
       if (tc > end_tc) {
         mainw->cancelled = CANCEL_VID_END;
@@ -4572,9 +4572,9 @@ static void do_clip_context(lives_mt * mt, LiVESXEventButton * event, lives_clip
   }
 
   edit_clipedit = lives_standard_menu_item_new_with_label(_("_Edit/Encode in Clip Editor"));
-  lives_signal_connect(LIVES_GUI_OBJECT(edit_clipedit), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(multitrack_end_cb),
-                       (livespointer)mt);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(edit_clipedit), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(multitrack_end_cb),
+                            (livespointer)mt);
 
   lives_container_add(LIVES_CONTAINER(menu), edit_clipedit);
 
@@ -6686,11 +6686,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->top_vpaned = lives_standard_vpaned_new();
   lives_box_pack_start(LIVES_BOX(mt->top_vbox), mt->top_vpaned, TRUE, TRUE, 0);
-  lives_paned_set_position(LIVES_PANED(mt->top_vpaned), GUI_SCREEN_HEIGHT * 2 / 3);
   lives_widget_set_vexpand(mt->top_vpaned, TRUE);
 
   mt->xtravbox = lives_vbox_new(FALSE, 0);
-  lives_paned_pack(1, LIVES_PANED(mt->top_vpaned), mt->xtravbox, TRUE, FALSE);
   lives_widget_set_vexpand(mt->xtravbox, TRUE);
 
   mt->menubar = lives_menu_bar_new();
@@ -8366,7 +8364,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   // poly box is first page in notebook
 
   // notebook goes in paned: so we have paned -> nb-> poly_box
-  lives_paned_pack(1, LIVES_PANED(mt->hpaned), mt->nb, TRUE, FALSE);
+  lives_paned_pack(1, LIVES_PANED(mt->hpaned), mt->nb, FALSE, FALSE);
 
   // poly clip scroll
   mt->clip_scroll = lives_scrolled_window_new(NULL, NULL);
@@ -8739,7 +8737,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->vpaned = lives_vbox_new(FALSE, 0);
 
-  lives_paned_pack(2, LIVES_PANED(mt->top_vpaned), mt->vpaned, TRUE, FALSE);
   lives_widget_set_hexpand(mt->vpaned, FALSE);
 
   lives_container_set_border_width(LIVES_CONTAINER(mt->tlx_vbox), 0);
@@ -8943,6 +8940,10 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_widget_set_can_focus(mt->message_box, TRUE);
   lives_widget_grab_focus(mt->message_box);
+
+  lives_paned_pack(1, LIVES_PANED(mt->top_vpaned), mt->xtravbox, FALSE, FALSE);
+  lives_paned_pack(2, LIVES_PANED(mt->top_vpaned), mt->vpaned, TRUE, FALSE);
+  lives_paned_set_position(LIVES_PANED(mt->top_vpaned), GUI_SCREEN_HEIGHT * 2 / 3);
 
   return mt;
 }
@@ -9468,24 +9469,27 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
     load_start_image(0);
     load_end_image(0);
   }
-  if (prefs->show_msg_area) {
-    prefs->msg_textsize = future_prefs->msg_textsize;
-    if (mainw->idlemax == 0)
-      lives_idle_add_simple(resize_message_area, NULL);
-    mainw->idlemax = DEF_IDLE_MAX;
-  }
 
   pref_factory_int(PREF_SEPWIN_TYPE, future_prefs->sepwin_type, FALSE);
 
   lives_free(mt);
-
-  lives_idle_add_simple(redraw_tl_idle, NULL);
 
   if (prefs->sepwin_type == SEPWIN_TYPE_STICKY && mainw->sep_win) {
     make_play_window();
   }
 
   if (!mainw->recoverable_layout) sensitize();
+
+  lives_widget_set_vexpand(mainw->play_image, FALSE);
+
+  lives_idle_add_simple(redraw_tl_idle, NULL);
+
+  if (prefs->show_msg_area) {
+    prefs->msg_textsize = future_prefs->msg_textsize;
+    if (mainw->idlemax == 0)
+      lives_idle_add_simple(resize_message_area, NULL);
+    mainw->idlemax = DEF_IDLE_MAX;
+  }
 
   d_print(_("====== Switched to Clip Edit mode ======\n"));
 
@@ -10847,7 +10851,7 @@ void mt_init_clips(lives_mt * mt, int orig_file, boolean add) {
   while (add || cliplist) {
     if (add) i = orig_file;
     else i = LIVES_POINTER_TO_INT(cliplist->data);
-    if (!IS_NORMAL_CLIP(i)) {
+    if (0 && !IS_NORMAL_CLIP(i)) {
       if (cliplist) {
         cliplist = cliplist->next;
         continue;
@@ -11282,9 +11286,6 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
     pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE, FALSE);
   }
 
-  lives_signal_connect(LIVES_GUI_OBJECT(multi->hpaned), LIVES_WIDGET_NOTIFY_SIGNAL "position",
-                       LIVES_GUI_CALLBACK(hpaned_position), (livespointer)multi);
-
   if (prefs->show_msg_area) {
     if (mainw->idlemax == 0)
       lives_idle_add_simple(resize_message_area, NULL);
@@ -11306,6 +11307,11 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
     lives_paned_set_position(LIVES_PANED(multi->hpaned), multi->opts.hpaned_pos);
   else
     lives_paned_set_position(LIVES_PANED(multi->hpaned), (float)GUI_SCREEN_WIDTH / 2.);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(multi->hpaned), LIVES_WIDGET_NOTIFY_SIGNAL "position",
+                       LIVES_GUI_CALLBACK(hpaned_position), (livespointer)multi);
+
+  lives_paned_set_position(LIVES_PANED(multi->top_vpaned), GUI_SCREEN_HEIGHT * 2 / 3);
 
   if (prefs->startup_interface == STARTUP_MT && mainw->go_away) {
     return FALSE;

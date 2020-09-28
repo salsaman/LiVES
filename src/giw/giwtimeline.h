@@ -66,6 +66,7 @@ struct _GiwTimeline {
   gint button;
 
   gulong chsig;
+  gulong tchsig;
   gulong vchsig;
 
   // Policy of mouse (GIW_TIMELINE_MOUSE_DISABLED, GIW_TIMELINE_MOUSE_AUTOMATIC, GIW_TIMELINE_MOUSE_DELAYED)

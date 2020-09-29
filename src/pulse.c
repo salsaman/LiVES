@@ -1815,7 +1815,6 @@ LIVES_GLOBAL_INLINE volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *p
 boolean pa_time_reset(pulse_driver_t *pulsed, ticks_t offset) {
   int64_t usec;
   pa_operation *pa_op;
-  int err;
 
   if (!pulsed->pstream) return FALSE;
 
@@ -1828,9 +1827,9 @@ boolean pa_time_reset(pulse_driver_t *pulsed, ticks_t offset) {
   pa_operation_unref(pa_op);
   pa_mloop_unlock();
 
-  do {
-    err = pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec);
-  }  while (err == -PA_ERR_NODATA);
+  while (pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec) < 0) {
+    lives_nanosleep(10000);
+  }
   pulsed->usec_start = usec - offset  / USEC_TO_TICKS;
   pulsed->frames_written = 0;
   return TRUE;
@@ -1859,7 +1858,9 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   if (!CLIP_HAS_AUDIO(pulsed->playing_file) && !(LIVES_IS_PLAYING && pulsed->read_abuf > -1)) {
     return -1;
   }
-  pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec);
+  while (pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec) < 0) {
+    lives_nanosleep(10000);
+  }
   retval = (ticks_t)((usec - pulsed->usec_start) * USEC_TO_TICKS);
   if (retval == -1) retval = 0;
   return retval;

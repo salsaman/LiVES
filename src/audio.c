@@ -3945,7 +3945,8 @@ LIVES_GLOBAL_INLINE lives_cancel_t handle_audio_timeout(void) {
                lives_strdup("");
 
   char *msg = lives_strdup_printf(
-                _("LiVES was unable to connect to %s.\nPlease check your audio settings and restart %s\nand LiVES if necessary.\n%s"),
+                _("LiVES was unable to connect to %s.\nPlease check your audio settings and restart %s\n"
+                  "and LiVES if necessary.\n%s"),
                 audio_player_get_display_name(prefs->aplayer),
                 audio_player_get_display_name(prefs->aplayer), msg2);
   if (prefs->audio_player == AUD_PLAYER_PULSE) {

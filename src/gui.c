@@ -2662,9 +2662,9 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_import_theme_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->clear_ds), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_cleardisk_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->quit), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_quit_activate),
-                       LIVES_INT_TO_POINTER(0));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->quit), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_quit_activate),
+                            LIVES_INT_TO_POINTER(0));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->vj_save_set), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_quit_activate),
                        LIVES_INT_TO_POINTER(1));
@@ -4140,8 +4140,8 @@ static void _resize_play_window(void) {
 
       // init the playback plugin, unless the player cannot resize and there is a possibility of
       // wrongly sized frames (i.e. during a preview), or we are previewing and it's a remote display
-      if (mainw->vpp && (!mainw->preview || (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)) &&
-          (mainw->multitrack || (mainw->vpp->capabilities & VPP_CAN_RESIZE))) {
+      if (mainw->vpp && (!mainw->preview || ((mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) &&
+                                             (mainw->multitrack || (mainw->vpp->capabilities & VPP_CAN_RESIZE))))) {
         mainw->ptr_x = mainw->ptr_y = -1;
         if (pmonitor == 0) {
           // fullscreen playback on all screens (of first display)
@@ -4161,8 +4161,8 @@ static void _resize_play_window(void) {
         if (mainw->vpp->fheight > -1 && mainw->vpp->fwidth > -1) {
           // fixed o/p size for stream
           if (mainw->vpp->fwidth * mainw->vpp->fheight == 0) {
-            mainw->vpp->fwidth = DEF_VPP_HSIZE;
-            mainw->vpp->fheight = DEF_VPP_VSIZE;
+            mainw->vpp->fwidth = cfile->hsize;//DEF_VPP_HSIZE;
+            mainw->vpp->fheight = cfile->vsize;//DEF_VPP_VSIZE;
           }
           if (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)) {
             mainw->pwidth = mainw->vpp->fwidth;
@@ -4458,6 +4458,7 @@ void add_to_playframe(void) {
   }
   resize(1);
   if (LIVES_IS_PLAYING) lives_widget_set_opacity(mainw->playframe, 1.);
+  clear_widget_bg(mainw->play_image, mainw->play_surface);
 }
 
 

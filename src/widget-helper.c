@@ -1031,7 +1031,7 @@ static boolean governor_loop(livespointer data) {
   /// this loop runs in the main thread while callbacks are being run in bg.
 reloop:
 
-  if (g_main_depth() > 2) {
+  if (g_main_depth() > 1) {
     mainw->clutch = TRUE;
     return TRUE;
   }
@@ -1135,6 +1135,7 @@ reloop:
       goto reloop;
     }
     if (lpttorun) lpt_recurse = TRUE;
+    while (!(sigdata && lives_proc_thread_check(sigdata->proc)) && lives_widget_context_iteration(NULL, FALSE));
     lives_idle_add_simple(governor_loop, NULL);
     gov_running = FALSE;
     return FALSE;

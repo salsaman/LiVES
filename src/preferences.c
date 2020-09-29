@@ -3748,8 +3748,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   }
   lives_list_free_all(&vid_playback_plugins);
 
-  lives_signal_connect_after(LIVES_WIDGET_OBJECT(pp_combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                             LIVES_GUI_CALLBACK(after_vpp_changed), (livespointer) advbutton);
+  lives_signal_sync_connect_after(LIVES_WIDGET_OBJECT(pp_combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(after_vpp_changed), (livespointer) advbutton);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 

@@ -173,16 +173,17 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
   // Note: we match first by palette, then by size
 
   int format_count, i;
-  unicap_status_t status = STATUS_SUCCESS;
+  unicap_format_t *format;
   int f = -1;
   int bestp = WEED_PALETTE_END;
   int bestw = 0, besth = 0;
   int cpal;
 
   // get details
-  for (format_count = 0; SUCCESS(status) && (format_count < MAX_FORMATS); format_count++) {
-    unicap_format_t *format = (unicap_format_t *)(&formats[format_count]);
-    status = unicap_enumerate_formats(ldev->handle, NULL, (unicap_format_t *)format, format_count);
+  for (format_count = 0;
+       SUCCESS(unicap_enumerate_formats(ldev->handle, NULL, (unicap_format_t *)&formats[format_count], format_count))
+       && (format_count < MAX_FORMATS); format_count++) {
+    format = (unicap_format_t *)&formats[format_count];
 
     // TODO - check if we need to free format->sizes
 
@@ -217,7 +218,8 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
       if (width >= format->min_size.width && height >= format->min_size.height) {
         if (format->h_stepping > 0 && format->v_stepping > 0) {
 #ifdef DEBUG_UNICAP
-          lives_printerr("Can set any size with step %d and %d; min %d x %d, max %d x %d\n", format->h_stepping, format->v_stepping,
+          lives_printerr("Can set any size with step %d and %d; min %d x %d, max %d x %d\n",
+                         format->h_stepping, format->v_stepping,
                          format->min_size.width, format->min_size.height, format->max_size.width, format->max_size.height);
 #endif
           // can set exact size (within stepping limits)
@@ -247,8 +249,8 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
 
             if ((format->size.width > bestw || format->size.height > besth) && (bestw < width || besth < height)) {
               // this format supports a better size match
-              bestw = format->size.width = format->size.width;
-              besth = format->size.height = format->size.height;
+              bestw = format->size.width;
+              besth = format->size.height;
               f = format_count;
 #ifdef DEBUG_UNICAP
               lives_printerr("Size is best so far\n");
@@ -347,7 +349,6 @@ static boolean open_vdev_inner(unicap_device_t *device) {
     lives_free(ldev);
     return FALSE;
   }
-
 
   g_print("ALLX %ld %d %d %d %d\n", format->buffer_size, format->size.width, format->size.height,
           weed_palette_get_bits_per_macropixel(
@@ -468,8 +469,8 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     mainw->fx1_val = 0;
     mainw->open_deint = FALSE;
     card_dialog = create_combo_dialog(1, (livespointer)devlist);
-    lives_list_free(devlist);
     response = lives_dialog_run(LIVES_DIALOG(card_dialog));
+    lives_list_free(devlist); /// free only after runniong dialog !!!
     if (response == LIVES_RESPONSE_CANCEL) {
       return FALSE;
     }
@@ -494,7 +495,7 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     mainw->fx1_val--;
   }
 
-  if (strlen(devices[devno].device)) fname = lives_strdup(devices[devno].device);
+  if (*devices[devno].device) fname = lives_strdup(devices[devno].device);
   else fname = lives_strdup(devices[devno].identifier);
 
   if (!get_new_handle(new_file, fname)) {
@@ -506,6 +507,8 @@ boolean on_open_vdev_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   cfile->clip_type = CLIP_TYPE_VIDEODEV;
 
   d_print(""); ///< force switchtext
+
+  g_print("checking formats for %s\n", fname);
 
   if (!open_vdev_inner(&devices[devno])) {
     d_print(_("Unable to open device %s\n"), fname);

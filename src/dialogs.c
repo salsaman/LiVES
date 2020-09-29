@@ -386,6 +386,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
         lives_window_set_title(LIVES_WINDOW(dialog), _("File Error"));
         cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
                        LIVES_RESPONSE_CANCEL);
+        okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH,
+                   _("_Retry"), LIVES_RESPONSE_RETRY);
       }
       if (diat == LIVES_DIALOG_ABORT_OK) {
         okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
@@ -3752,9 +3754,11 @@ static void _threaded_dialog_spin(double fraction) {
 void threaded_dialog_spin(double fraction) {
   if (!mainw->threaded_dialog || mainw->splash_window || !mainw->proc_ptr
       || !mainw->is_ready || !prefs->show_gui) return;
-  if (THREADVAR(no_gui)) return;
-  main_thread_execute((lives_funcptr_t)_threaded_dialog_spin, 0,
-                      NULL, "d", fraction);
+  if (!mainw->is_exiting) {
+    if (THREADVAR(no_gui)) return;
+    main_thread_execute((lives_funcptr_t)_threaded_dialog_spin, 0,
+                        NULL, "d", fraction);
+  } else _threaded_dialog_spin(fraction);
 }
 
 static void _do_threaded_dialog(const char *trans_text, boolean has_cancel) {
@@ -3776,8 +3780,11 @@ static void _do_threaded_dialog(const char *trans_text, boolean has_cancel) {
 void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
   if (!prefs->show_gui) return;
   if (mainw->threaded_dialog || !prefs->show_gui) return;
-  main_thread_execute((lives_funcptr_t)_do_threaded_dialog, 0,
-                      NULL, "sb", trans_text, has_cancel);
+  if (!mainw->is_exiting)
+    main_thread_execute((lives_funcptr_t)_do_threaded_dialog, 0,
+                        NULL, "sb", trans_text, has_cancel);
+  else
+    _do_threaded_dialog(trans_text, has_cancel);
 }
 
 
@@ -3806,7 +3813,9 @@ static void _end_threaded_dialog(void) {
 void end_threaded_dialog(void) {
   if (THREADVAR(no_gui)) return;
   if (!mainw->threaded_dialog) return;
-  main_thread_execute((lives_funcptr_t)_end_threaded_dialog, 0, NULL, "");
+  if (!mainw->is_exiting)
+    main_thread_execute((lives_funcptr_t)_end_threaded_dialog, 0, NULL, "");
+  else _end_threaded_dialog();
 }
 
 

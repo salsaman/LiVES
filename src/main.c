@@ -5516,11 +5516,12 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
       }
       rwidth = lives_widget_get_allocation_width(p);
       rheight = lives_widget_get_allocation_height(p);
-      lives_painter_render_background(widget, cr, 0., 0., rwidth, rheight);
+      lives_painter_render_background(p, cr, 0., 0., rwidth, rheight);
     }
 
     lives_widget_set_opacity(widget, 1.);
     cx = (rwidth - width) >> 1;
+    if (cx < 0) cx = 0;
     cy = (rheight - height) >> 1;
 
     if ((!mainw->multitrack || widget != mainw->play_image) && widget != mainw->preview_image) {
@@ -7636,6 +7637,7 @@ return pull_lives_pixbuf_at_size(clip, frame, image_ext, tc, 0, 0, LIVES_INTERP_
 
 void get_player_size(int *opwidth, int *opheight) {
 // calc output size for display
+int rwidth, rheight;
 
 ///// external playback plugin
 if (mainw->ext_playback) {
@@ -7669,6 +7671,13 @@ if (mainw->play_window) {
 // use values set in resize_play_window
 *opwidth = mainw->pwidth;
 *opheight = mainw->pheight;
+if (!mainw->multitrack && prefs->letterbox) {
+rwidth = *opwidth;
+rheight = *opheight;
+*opwidth = cfile->hsize;
+*opheight = cfile->vsize;
+calc_maxspect(rwidth, rheight, opwidth, opheight);
+}
 goto align;
 }
 
@@ -7696,20 +7705,9 @@ goto align;
 
 if (!mainw->fs) {
 // embedded player
-#if GTK_CHECK_VERSION(3, 0, 0)
-int rwidth = mainw->ce_frame_width;
-int rheight = mainw->ce_frame_height - V_RESIZE_ADJUST * 2;
+rwidth = lives_widget_get_allocation_width(mainw->playframe);// - H_RESIZE_ADJUST;
+rheight = lives_widget_get_allocation_height(mainw->play_image);// - V_RESIZE_ADJUST;
 
-if (mainw->double_size && !mainw->fs) {
-// ce_frame_* was set to half for the first / last frames
-// so we multiply by 4 to get double size
-rwidth *= 4;
-rheight *= 4;
-}
-#else
-int rwidth = lives_widget_get_allocation_width(mainw->playframe);// - H_RESIZE_ADJUST;
-int rheight = lives_widget_get_allocation_height(mainw->play_image) - V_RESIZE_ADJUST;
-#endif
 if (prefs->letterbox) {
 *opwidth = cfile->hsize;
 *opheight = cfile->vsize;
@@ -8716,7 +8714,7 @@ mainw->track_decoders[i] = clone_decoder(nclip);
         if ((player_v2 && !(*mainw->vpp->play_frame)(frame_layer, mainw->currticks - mainw->stream_ticks, return_layer))
             || (!player_v2 && !(*mainw->vpp->render_frame)(lwidth, weed_layer_get_height(frame_layer),
                 mainw->currticks - mainw->stream_ticks, pd_array, retdata, mainw->vpp->play_params))) {
-          vid_playback_plugin_exit();
+          //vid_playback_plugin_exit();
           if (return_layer) {
             weed_layer_free(return_layer);
             lives_free(retdata);
@@ -8981,12 +8979,13 @@ mainw->track_decoders[i] = clone_decoder(nclip);
                   weed_layer_get_height(frame_layer),
                   mainw->currticks - mainw->stream_ticks, pd_array, retdata,
                   mainw->vpp->play_params))) {
-            vid_playback_plugin_exit();
+            //vid_playback_plugin_exit();
             if (return_layer) {
               weed_layer_free(return_layer);
               lives_free(retdata);
               return_layer = NULL;
             }
+            goto lfi_done;
           } else success = TRUE;
           lives_free(pd_array);
           if (prefs->dev_show_timing)
@@ -10236,20 +10235,8 @@ lfi_done:
               if (mainw->camframe) lives_pixbuf_saturate_and_pixelate(mainw->camframe, mainw->camframe, 0.0, FALSE);
               lives_free(tmp); lives_free(fname);
             }
-            if (!mainw->camframe) {
-              hsize = mainw->def_width - H_RESIZE_ADJUST;
-              vsize = mainw->def_height - V_RESIZE_ADJUST;
-            } else {
-              hsize = lives_pixbuf_get_width(mainw->camframe);
-              vsize = lives_pixbuf_get_height(mainw->camframe);
-            }
           }
         }
-
-        /* if (LIVES_IS_PLAYING && mainw->fs && !mainw->sep_win && CURRENT_CLIP_HAS_VIDEO) { */
-        /*   hsize = mainw->ce_frame_width = w; */
-        /*   vsize = mainw->ce_frame_height = h - lives_widget_get_allocation_height(mainw->btoolbar); */
-        /* } */
 
         // THE SIZES OF THE FRAME CONTAINERS
         lives_widget_set_size_request(mainw->frame1, mainw->ce_frame_width, mainw->ce_frame_height);

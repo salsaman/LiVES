@@ -2503,7 +2503,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         height = weed_get_int_value(chantmpl, WEED_LEAF_HOST_HEIGHT, NULL);
       } else {
         // NB. in future if we add more out channels, if (svary) this should be the ith in_channel.
-        width = weed_channel_get_width_pixels(def_channel);
+        width = weed_channel_get_width(def_channel);
         height = weed_channel_get_height(def_channel);
       }
 

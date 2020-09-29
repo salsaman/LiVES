@@ -1815,7 +1815,6 @@ static boolean check_for_audio_stop(int fileno, frames_t first_frame, frames_t l
       }
     } else {
       if (!mainw->loop_cont) {
-        g_print("%f %f\n", mainw->aframeno, cfile->laudio_time);
         if ((sfile->adirection == LIVES_DIRECTION_REVERSE && mainw->aframeno < 0.9999) ||
             (sfile->adirection == LIVES_DIRECTION_FORWARD && calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.0001)
              >= cfile->laudio_time - 0.0001)) {

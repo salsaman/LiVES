@@ -14,10 +14,11 @@
 #include <stdlib.h>
 #include <sys/ioctl.h>
 
+#define _IGN_RET(a) ((void)((a) + 1))
 
 /////////////////////////////////////////////////////////////////
 
-static char plugin_version[64] = "LiVES vloopback2 output client 1.0.0";
+static char plugin_version[64] = "LiVES vloopback2 output client 1.0.1";
 static int palette_list[4];
 static int clampings[3];
 static int mypalette;
@@ -34,13 +35,21 @@ static int vdevfd;
 
 static char *vdevname;
 
-static char *workdir;
+static char *audfile;
 
 static char xfile[PATH_MAX];
 
 static int aforms[2];
 
 //////////////////////////////////////////////
+
+static int xioctl(int fh, int request, void *arg) {
+  int r;
+  do {
+    r = ioctl(fh, request, arg);
+  } while (-1 == r && EINTR == errno);
+  return r;
+}
 
 
 static int file_filter(const struct dirent *a) {
@@ -92,16 +101,15 @@ static char **get_vloopback2_devices(void) {
   n = scandir("/dev", &namelist, file_filter, alphasort);
   if (n < 0) return devnames;
 
-
   for (i = 0; i < n && ndevices < MAX_DEVICES - 1; i++) {
     sprintf(devname, "/dev/%s", namelist[i]->d_name);
 
-    if ((fd = open(devname, O_RDWR | O_NONBLOCK)) == -1) {
+    if ((fd = open(devname, O_RDWR)) == -1) {
       // could not open device
       continue;
     }
 
-    if (ioctl(fd, VIDIOC_QUERYCAP, &vid_caps) < 0) {
+    if (xioctl(fd, VIDIOC_QUERYCAP, &vid_caps) < 0) {
       // not a video device
       close(fd);
       continue;
@@ -117,6 +125,7 @@ static char **get_vloopback2_devices(void) {
     devnames[ndevices++] = strdup(devname);
     //fprintf(stderr,"got %s\n",devname);
   }
+
   devnames[ndevices] = NULL;
 
   for (i = 0; i < n; free(namelist[i++]));
@@ -126,45 +135,44 @@ static char **get_vloopback2_devices(void) {
 }
 
 
-
 ///////////////////////////////////////////////////
-
 
 const char *module_check_init(void) {
   char **vdevs = get_vloopback2_devices();
 
   FILE *fp;
   char buffer[PATH_MAX];
-  const char *dummy;
 
+  int i = 0;
 
-  register int i = 0;
-
-  if (vdevs[0] == NULL) {
+  if (!vdevs[0]) {
     free(vdevs);
-    return "No vloopback2 devices were found\nInstall vloopback2 and then try: sudo modprobe v4l2loopback\nAlso check the device permissions for /dev/video*.\n";
+    return "No vloopback2 devices were found\nInstall vloopback2 and then try: sudo modprobe v4l2loopback\n"
+           "Also check the device permissions for /dev/video*.\n";
   }
 
-  while (vdevs[i] != NULL) free(vdevs[i++]);
+  while (vdevs[i]) free(vdevs[i++]);
   free(vdevs);
 
-  // get tempdir
-  fp = popen("smogrify get_workdir", "r");
-  dummy = fgets(buffer, PATH_MAX, fp);
+  fp = popen("echo -n $(mktemp --tmpdir -q lives-v4l2-audio-XXXXXXXXXX)", "r");
+  _IGN_RET(fgets(buffer, PATH_MAX, fp));
   pclose(fp);
-  workdir = strdup(buffer);
-  dummy = dummy;
+  audfile = strdup(buffer);
 
   return NULL;
 }
+
 
 const char *version(void) {
   return plugin_version;
 }
 
+
 const char *get_description(void) {
-  return "The vloopback2 playback plugin makes LiVES appear as a video device in /dev.\nIt requires the vloopback2 kernel module which can be downloaded from\nhttps://github.com/umlaeute/v4l2loopback\n";
+  return "The vloopback2 playback plugin makes LiVES appear as a video device in /dev.\n"
+         "It requires the vloopback2 kernel module which can be downloaded from\nhttps://github.com/umlaeute/v4l2loopback\n";
 }
+
 
 uint64_t get_capabilities(int palette) {
   return 0;
@@ -172,15 +180,17 @@ uint64_t get_capabilities(int palette) {
 
 
 const int *get_audio_fmts() {
-  // this is not yet documented, but is an optional function to get a list of audio formats. If the user chooses to stream audio then it will be sent to a fifo file in the tempdir called livesaudio.stream, in one of the supported formats
+  // this is not yet documented, but is an optional function to get a list of audio formats.
+  // If the user chooses to stream audio then it will be sent to a fifo file in the tempdir called livesaudio.stream,
+  // in one of the supported formats
   aforms[0] = 1; // pcm
   aforms[1] = -1; // end
 
   return aforms;
 }
 
-const char rfx[32768];
 
+const char rfx[32768];
 
 const char *get_init_rfx(int intention) {
   char **vdevs = get_vloopback2_devices();
@@ -188,16 +198,17 @@ const char *get_init_rfx(int intention) {
 
   size_t slen = 0;
 
-  register int i = 0;
+  int i = 0;
 
-  if (vdevs[0] == NULL) {
+  if (!vdevs[0]) {
     free(vdevs);
-    return "No vloopback2 devices were found\nInstall vloopback2 and then try: sudo modprobe webcamstudio\nAlso check the device permissions.\n";
+    return "No vloopback2 devices were found\nInstall vloopback2 and then try: sudo modprobe webcamstudio\n"
+           "Also check the device permissions.\n";
   }
 
   memset(devstr, 0, 1);
 
-  while (vdevs[i] != NULL) {
+  while (vdevs[i]) {
     snprintf(devstr + slen, 30000 - slen, "%s|", vdevs[i]);
     slen += strlen(vdevs[i]) + 1;
     free(vdevs[i++]);
@@ -215,7 +226,7 @@ const char *get_init_rfx(int intention) {
 vdevname|Video _device|string_list|0|",
            devstr,
            "\\n\
-afname|Send _audio to|string|", workdir, "/audio.wav|1024|\\n\
+afname|Send _audio to|string|", audfile, "/audio.wav|1024|\\n\
 </params> \\n\
 <param_window> \\n\
 </param_window> \\n\
@@ -255,6 +266,7 @@ boolean set_palette(int palette) {
   return FALSE;
 }
 
+
 const int *get_yuv_palette_clamping(int palette) {
   if (palette == WEED_PALETTE_RGB24 || palette == WEED_PALETTE_RGBA32) clampings[0] = -1;
   else {
@@ -271,8 +283,9 @@ boolean set_yuv_palette_clamping(int clamping_type) {
   return TRUE;
 }
 
+
 static void make_path(const char *fname, int pid, const char *ext) {
-  snprintf(xfile, PATH_MAX, "%s/%s-%d.%s", workdir, fname, pid, ext);
+  snprintf(xfile, PATH_MAX, "%s/%s-%d.%s", audfile, fname, pid, ext);
 }
 
 
@@ -283,8 +296,6 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   int afd, audio = 0;
 
   int mypid = getpid();
-
-  int dummyvar;
 
   char cmd[PATH_MAX * 2];
 
@@ -301,23 +312,23 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   if (argc > 1) audfile = argv[1];
 
   vdevs = get_vloopback2_devices();
-  if (vdevs[idx] != NULL) {
+  if (vdevs[idx]) {
     vdevname = strdup(vdevs[idx]);
   } else vdevname = NULL;
 
-  while (vdevs[i] != NULL) free(vdevs[i++]);
+  while (vdevs[i]) free(vdevs[i++]);
   free(vdevs);
 
-  if (vdevname == NULL) return FALSE;
+  if (!vdevname) return FALSE;
 
-  vdevfd = open(vdevname, O_WRONLY);
+  vdevfd = open(vdevname, O_RDWR);
 
   if (vdevfd == -1) {
     fprintf(stderr, "vloopback2 output: cannot open %s %s\n", vdevname, strerror(errno));
     return FALSE;
   }
 
-  ret_code = ioctl(vdevfd, VIDIOC_QUERYCAP, &vid_caps);
+  ret_code = xioctl(vdevfd, VIDIOC_QUERYCAP, &vid_caps);
 
   if (ret_code) {
     fprintf(stderr, "vloopback2 output: cannot ioct failed for %s\n", vdevname);
@@ -325,6 +336,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   }
 
   vid_format.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+  ret_code = xioctl(vdevfd, VIDIOC_G_FMT, &vid_format);
 
   vid_format.fmt.pix.width = width;
   vid_format.fmt.pix.height = height;
@@ -347,8 +359,8 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     break;
   }
 
-  vid_format.fmt.pix.field = V4L2_FIELD_NONE;
-  vid_format.fmt.pix.priv = 0;
+  //vid_format.fmt.pix.field = V4L2_FIELD_NONE;
+  //vid_format.fmt.pix.priv = 0;
 
   if (mypalette == WEED_PALETTE_UYVY) {
     if (mysubspace == WEED_YUV_SUBSPACE_BT709)
@@ -360,26 +372,24 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     }
   } else vid_format.fmt.pix.colorspace = V4L2_COLORSPACE_SRGB;
 
-  ret_code = ioctl(vdevfd, VIDIOC_S_FMT, &vid_format);
+  ret_code = xioctl(vdevfd, VIDIOC_S_FMT, &vid_format);
 
   make_path("livesaudio", mypid, "stream");
 
-  if (audfile != NULL) {
-    afd = open(xfile, O_RDONLY | O_NONBLOCK);
-    if (afd != -1) {
-      audio = 1;
-      close(afd);
-    }
+  /* if (audfile) { */
+  /*   afd = open(xfile, O_RDONLY | O_NONBLOCK); */
+  /*   if (afd != -1) { */
+  /*     audio = 1; */
+  /*     close(afd); */
+  /*   } */
 
-    if (audio) {
-      snprintf(cmd, PATH_MAX * 2, "/bin/cat %s > \"%s\" &", xfile, audfile);
-      dummyvar = system(cmd);
-    }
-    dummyvar = dummyvar; // keep compiler happy
-  }
+  /*   if (audio) { */
+  /*     snprintf(cmd, PATH_MAX * 2, "/bin/cat %s > \"%s\" &", xfile, audfile); */
+  /*     _IGN_RET(system(cmd)); */
+  /*   } */
+  /* } */
   return TRUE;
 }
-
 
 
 boolean render_frame(int hsize, int vsize, int64_t tc, void **pixel_data, void **rd, void **pp) {
@@ -388,22 +398,23 @@ boolean render_frame(int hsize, int vsize, int64_t tc, void **pixel_data, void *
 
   if (mypalette == WEED_PALETTE_RGB24 || mypalette == WEED_PALETTE_BGR24)
     frame_size = hsize * vsize * 3;
-  else frame_size = hsize * vsize * 4;
+  else frame_size = hsize * vsize * 2;
 
   bytes = write(vdevfd, pixel_data[0], frame_size);
 
   if (bytes != frame_size) {
-    fprintf(stderr, "Error %s writing frame to %s\n", strerror(errno), vdevname);
+    fprintf(stderr, "Error %s writing frame of %ld bytes to %s\n", strerror(errno), frame_size, vdevname);
     return FALSE;
   }
 
   return TRUE;
 }
 
+
 void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   int xval = 0;
   if (vdevfd != -1) xval = close(vdevfd);
-  if (vdevname != NULL) free(vdevname);
+  if (vdevname) free(vdevname);
   xval = xval;
 }
 

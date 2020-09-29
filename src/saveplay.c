@@ -2526,17 +2526,17 @@ void play_file(void) {
       else resize(1);
     }
 
-    if (mainw->vpp && mainw->vpp->fheight > -1 && mainw->vpp->fwidth > -1) {
-      // fixed o/p size for stream
-      if (mainw->vpp->fwidth * mainw->vpp->fheight == 0) {
-        mainw->vpp->fwidth = DEF_VPP_HSIZE;
-        mainw->vpp->fheight = DEF_VPP_VSIZE;
-      }
-      if (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)) {
-        mainw->pwidth = mainw->vpp->fwidth;
-        mainw->pheight = mainw->vpp->fheight;
-      }
-    }
+    /* if (mainw->vpp && mainw->vpp->fheight > -1 && mainw->vpp->fwidth > -1) { */
+    /*   // fixed o/p size for stream */
+    /*   if (mainw->vpp->fwidth * mainw->vpp->fheight == 0) { */
+    /*     mainw->vpp->fwidth = DEF_VPP_HSIZE; */
+    /*     mainw->vpp->fheight = DEF_VPP_VSIZE; */
+    /*   } */
+    /*   if (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)) { */
+    /*     mainw->pwidth = mainw->vpp->fwidth; */
+    /*     mainw->pheight = mainw->vpp->fheight; */
+    /*   } */
+    /* } */
 
     if (mainw->fs && !mainw->sep_win && cfile->frames > 0) {
       fullscreen_internal();
@@ -3189,11 +3189,11 @@ void play_file(void) {
       kill_play_window();
     } else {
       /// or resize it back to single size
-      if (mainw->current_file > -1 && cfile->is_loaded && cfile->frames > 0 && !mainw->is_rendering &&
+      if (CURRENT_CLIP_IS_VALID && cfile->is_loaded && cfile->frames > 0 && !mainw->is_rendering &&
           (cfile->clip_type != CLIP_TYPE_GENERATOR)) {
         if (mainw->preview_controls) {
           /// create the preview in the sepwin
-          if (CURRENT_CLIP_IS_VALID && cfile->is_loaded && prefs->show_gui) {
+          if (prefs->show_gui) {
             lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
             lives_widget_show_all(mainw->preview_controls);
             lives_widget_set_no_show_all(mainw->preview_controls, TRUE);

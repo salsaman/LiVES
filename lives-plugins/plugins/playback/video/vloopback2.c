@@ -398,7 +398,7 @@ boolean render_frame(int hsize, int vsize, int64_t tc, void **pixel_data, void *
 
   if (mypalette == WEED_PALETTE_RGB24 || mypalette == WEED_PALETTE_BGR24)
     frame_size = hsize * vsize * 3;
-  else frame_size = hsize * vsize * 2;
+  else frame_size = hsize * vsize * 4;
 
   bytes = write(vdevfd, pixel_data[0], frame_size);
 

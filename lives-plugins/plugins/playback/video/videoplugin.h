@@ -106,6 +106,7 @@ uint64_t get_capabilities(int palette);
 #define VPP_LINEAR_GAMMA			(1<<3)   ///< input RGB data should be in linear gamma (not v. useful)
 #define VPP_CAN_RESIZE_WINDOW          (1<<4)   ///< can resize the play window on the fly (without init_screen / exit_screen)
 #define VPP_CAN_LETTERBOX                  (1<<5)   ///< player can center at xoffset, yoffset (values set in frame in play_frame)
+#define VPP_CAN_CHANGE_PALETTE                  (1<<6)   ///< host can switch palette overriding settings
 // bit combinations: 0 & 5: can resize and letterbox; 5 without 0: cannot resize image, but it can offset the top left pixel
 
 /// ready the screen to play (optional)

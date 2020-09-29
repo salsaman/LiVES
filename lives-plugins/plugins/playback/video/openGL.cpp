@@ -271,7 +271,7 @@ const char *get_description(void) {
 
 
 uint64_t get_capabilities(int palette) {
-  return VPP_CAN_RESIZE | VPP_CAN_RETURN | VPP_LOCAL_DISPLAY | VPP_CAN_LETTERBOX;
+  return VPP_CAN_RESIZE | VPP_CAN_RETURN | VPP_LOCAL_DISPLAY | VPP_CAN_LETTERBOX | VPP_CAN_CHANGE_PALETTE;
 }
 
 

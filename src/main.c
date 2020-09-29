@@ -8590,7 +8590,8 @@ mainw->track_decoders[i] = clone_decoder(nclip);
           goto lfi_done;
         }
 
-        if (mainw->vpp->palette != layer_palette) vpp_try_match_palette(mainw->vpp, mainw->frame_layer);
+        if ((mainw->vpp->capabilities & VPP_CAN_CHANGE_PALETTE)
+            && mainw->vpp->palette != layer_palette) vpp_try_match_palette(mainw->vpp, mainw->frame_layer);
 
         if (!(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) &&
             ((weed_palette_is_rgb(layer_palette) &&
@@ -8781,7 +8782,8 @@ mainw->track_decoders[i] = clone_decoder(nclip);
         layer_palette = weed_layer_get_palette(mainw->frame_layer);
         if (!weed_palette_is_valid(layer_palette)) goto lfi_done;
 
-        if (mainw->vpp->palette != layer_palette) vpp_try_match_palette(mainw->vpp, mainw->frame_layer);
+        if ((mainw->vpp->capabilities & VPP_CAN_CHANGE_PALETTE)
+            && mainw->vpp->palette != layer_palette) vpp_try_match_palette(mainw->vpp, mainw->frame_layer);
         interp = get_interp_value(prefs->pb_quality, TRUE);
 
         if (mainw->fs && (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)) {
@@ -8956,67 +8958,68 @@ mainw->track_decoders[i] = clone_decoder(nclip);
             gamma_convert_sub_layer(tgamma, 1.0, frame_layer, (pwidth - lb_width) / 2, (pheight - lb_height) / 2,
                                     lb_width, lb_height, TRUE);
           }
+        }
 
-          if (return_layer) weed_layer_set_gamma(return_layer, weed_layer_get_gamma(frame_layer));
+        if (return_layer) weed_layer_set_gamma(return_layer, weed_layer_get_gamma(frame_layer));
 
-          if (!avsync_check()) goto lfi_done;
+        if (!avsync_check()) goto lfi_done;
 
-          pd_array = weed_layer_get_pixel_data(frame_layer, NULL);
+        pd_array = weed_layer_get_pixel_data(frame_layer, NULL);
 
-          if (player_v2) {
-            weed_set_double_value(frame_layer, "x_range", 1.0);
-            weed_set_double_value(frame_layer, "y_range", 1.0);
-          }
+        if (player_v2) {
+          weed_set_double_value(frame_layer, "x_range", 1.0);
+          weed_set_double_value(frame_layer, "y_range", 1.0);
+        }
 
-          if (tgamma == WEED_GAMMA_SRGB && prefs->use_screen_gamma) {
-            // TODO - do conversion before letterboxing
-            gamma_convert_layer(WEED_GAMMA_MONITOR, frame_layer);
-          }
+        if (tgamma == WEED_GAMMA_SRGB && prefs->use_screen_gamma) {
+          // TODO - do conversion before letterboxing
+          gamma_convert_layer(WEED_GAMMA_MONITOR, frame_layer);
+        }
 
-          if ((player_v2 && !(*mainw->vpp->play_frame)(frame_layer,
-               mainw->currticks - mainw->stream_ticks, return_layer))
-              || (!player_v2 && !(*mainw->vpp->render_frame)(weed_layer_get_width(frame_layer),
-                  weed_layer_get_height(frame_layer),
-                  mainw->currticks - mainw->stream_ticks, pd_array, retdata,
-                  mainw->vpp->play_params))) {
-            //vid_playback_plugin_exit();
-            if (return_layer) {
-              weed_layer_free(return_layer);
-              lives_free(retdata);
-              return_layer = NULL;
-            }
-            goto lfi_done;
-          } else success = TRUE;
-          lives_free(pd_array);
-          if (prefs->dev_show_timing)
-            g_printerr("rend done  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-
+        if ((player_v2 && !(*mainw->vpp->play_frame)(frame_layer,
+             mainw->currticks - mainw->stream_ticks, return_layer))
+            || (!player_v2 && !(*mainw->vpp->render_frame)(weed_layer_get_width(frame_layer),
+                weed_layer_get_height(frame_layer),
+                mainw->currticks - mainw->stream_ticks, pd_array, retdata,
+                mainw->vpp->play_params))) {
+          //vid_playback_plugin_exit();
           if (return_layer) {
-            int width = MIN(weed_layer_get_width(mainw->frame_layer)
-                            * weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer)),
-                            weed_layer_get_width(return_layer)
-                            * weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(return_layer)));
-            int height = MIN(weed_layer_get_height(mainw->frame_layer), weed_layer_get_height(return_layer));
-            if (resize_layer(return_layer, width, height, LIVES_INTERP_FAST, WEED_PALETTE_END, 0)) {
-              if (tgamma == WEED_GAMMA_SRGB && prefs->use_screen_gamma) {
-                // TODO - save w. screen_gamma
-                gamma_convert_layer(WEED_GAMMA_SRGB, frame_layer);
-              }
-              save_to_scrap_file(return_layer);
-            }
             weed_layer_free(return_layer);
             lives_free(retdata);
             return_layer = NULL;
           }
+          goto lfi_done;
+        } else success = TRUE;
+        lives_free(pd_array);
+        if (prefs->dev_show_timing)
+          g_printerr("rend done  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
-          if (frame_layer != mainw->frame_layer) {
-            weed_layer_free(frame_layer);
+        if (return_layer) {
+          int width = MIN(weed_layer_get_width(mainw->frame_layer)
+                          * weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer)),
+                          weed_layer_get_width(return_layer)
+                          * weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(return_layer)));
+          int height = MIN(weed_layer_get_height(mainw->frame_layer), weed_layer_get_height(return_layer));
+          if (resize_layer(return_layer, width, height, LIVES_INTERP_FAST, WEED_PALETTE_END, 0)) {
+            if (tgamma == WEED_GAMMA_SRGB && prefs->use_screen_gamma) {
+              // TODO - save w. screen_gamma
+              gamma_convert_layer(WEED_GAMMA_SRGB, frame_layer);
+            }
+            save_to_scrap_file(return_layer);
           }
-
-          // frame display was handled by a playback plugin, skip the rest
-          if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) goto lfi_done;
+          weed_layer_free(return_layer);
+          lives_free(retdata);
+          return_layer = NULL;
         }
+
+        if (frame_layer != mainw->frame_layer) {
+          weed_layer_free(frame_layer);
+        }
+
+        // frame display was handled by a playback plugin, skip the rest
+        if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) goto lfi_done;
       }
+
       ////////////////////////////////////////////////////////
       // local display - either we are playing with no playback plugin, or else the playback plugin has no
       // local display of its own

@@ -243,14 +243,14 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   if (argc > 0) idx = atoi(argv[0]);
 
   vdevs = get_vloopback_devices();
-  if (vdevs[idx] != NULL) {
+  if (vdevs[idx]) {
     vdevname = strdup(vdevs[idx]);
   } else vdevname = NULL;
 
-  while (vdevs[i] != NULL) free(vdevs[i++]);
+  while (vdevs[i]) free(vdevs[i++]);
   free(vdevs);
 
-  if (vdevname == NULL) return FALSE;
+  if (!vdevname) return FALSE;
 
   vdevfd = open(vdevname, O_WRONLY);
 

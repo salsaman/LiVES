@@ -68,8 +68,9 @@ typedef enum {
 #define VPP_CAN_RETURN    (1<<1)
 #define VPP_LOCAL_DISPLAY (1<<2)
 #define VPP_LINEAR_GAMMA  (1<<3)
-#define VPP_CAN_RESIZE_WINDOW          (1<<4)   /// can resize the image to fit the play window
-#define VPP_CAN_LETTERBOX                  (1<<5)
+#define VPP_CAN_RESIZE_WINDOW          		(1<<4)   /// can resize the image to fit the play window
+#define VPP_CAN_LETTERBOX                  	(1<<5)
+#define VPP_CAN_CHANGE_PALETTE			(1<<6)
 
 typedef struct {
   uint64_t intent;

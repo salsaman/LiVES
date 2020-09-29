@@ -1792,84 +1792,94 @@ LIVES_GLOBAL_INLINE void init_conversions(int intent) {
 #define avg_chroma_1_3f(x, y) ((uint8_t)(avg_chromaf(avg_chromaf(x, y), y)))
 
 LIVES_INLINE void rgb2yuv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v) {
-  register short a;
-  if ((a = spc_rnd(Y_R[r0] + Y_G[g0] + Y_B[b0])) > max_Y) a = max_Y;
-  *y = a < min_Y ? min_Y : a;
-  if ((a = spc_rnd(Cb_R[r0] + Cb_G[g0] + Cb_B[b0])) > max_UV) a = max_UV;
-  *u = a < min_UV ? min_UV : a;
-  if ((a = spc_rnd(Cr_R[r0] + Cr_G[g0] + Cr_B[b0])) > max_UV) a = max_UV;
-  *v = a < min_UV ? min_UV : a;
+  short a;
+  if ((a = spc_rnd(Y_R[r0] + Y_G[g0] + Y_B[b0])) > max_Y) * y = max_Y;
+  else *y = a < min_Y ? min_Y : a;
+  if ((a = spc_rnd(Cb_R[r0] + Cb_G[g0] + Cb_B[b0])) > max_UV) * u = max_UV;
+  else *u = a < min_UV ? min_UV : a;
+  if ((a = spc_rnd(Cr_R[r0] + Cr_G[g0] + Cr_B[b0])) > max_UV) * v = max_UV;
+  else *v = a < min_UV ? min_UV : a;
 }
 
 #define bgr2yuv(b0, g0, r0, y, u, v) rgb2yuv(r0, g0, b0, y, u, v)
 
-#if 0
+
 LIVES_INLINE void rgb2yuv_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v, uint8_t *lut) {
-  register short a;
-  if ((a = spc_rnd(Y_R[(r0 = lut[r0])] + Y_G[(g0 = lut[g0])] + Y_B[(b0 = lut[b0])])) > max_Y) a = max_Y;
-  *y = a < min_Y ? min_Y : a;
-  if ((a = spc_rnd(Cb_R[r0] + Cb_G[g0] + Cb_B[b0])) > max_UV) a = max_UV;
-  *u = a < min_UV ? min_UV : a;
-  if ((a = spc_rnd(Cr_R[r0] + Cr_G[g0] + Cr_B[b0])) > max_UV) a = max_UV;
-  *v = a < min_UV ? min_UV : a;
+  short a;
+  if ((a = spc_rnd(Y_R[(r0 = lut[r0])] + Y_G[(g0 = lut[g0])] + Y_B[(b0 = lut[b0])])) > max_Y) * y = max_Y;
+  else *y = a < min_Y ? min_Y : a;
+  if ((a = spc_rnd(Cb_R[r0] + Cb_G[g0] + Cb_B[b0])) > max_UV) * u = max_UV;
+  else *u = a < min_UV ? min_UV : a;
+  if ((a = spc_rnd(Cr_R[r0] + Cr_G[g0] + Cr_B[b0])) > max_UV) * v = max_UV;
+  else *v = a < min_UV ? min_UV : a;
 }
-#endif
+
 
 #define bgr2yuv_with_gamma(b0, g0, r0, y, u, v) rgb2yuv(r0, g0, b0, y, u, v, lut)
 
 LIVES_INLINE void rgb2uyvy(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1, uyvy_macropixel *uyvy) {
-  register short a;
+  short a;
+  if ((a = spc_rnd(Cb_R[r0] + Cb_G[g0] + Cb_B[b0])) > max_UV) uyvy->u0 = max_UV;
+  else uyvy->u0 = a < min_UV ? min_UV : a;
+
   if ((a = spc_rnd(Y_R[r0] + Y_G[g0] + Y_B[b0])) > max_Y) uyvy->y0 = max_Y;
   else uyvy->y0 = a < min_Y ? min_Y : a;
+
+  if ((a = spc_rnd(Cr_R[r1] + Cr_G[g1] + Cr_B[b1])) > max_UV) uyvy->v0 = max_UV;
+  else uyvy->v0 = a < min_UV ? min_UV : a;
+
   if ((a = spc_rnd(Y_R[r1] + Y_G[g1] + Y_B[b1])) > max_Y) uyvy->y1 = max_Y;
   else uyvy->y1 = a < min_Y ? min_Y : a;
-
-  uyvy->u0 = avg_chroma_3_1f(Cb_R[r0] + Cb_G[g0] + Cb_B[b0],
-                             Cb_R[r1] + Cb_G[g1] + Cb_B[b1]);
-
-  uyvy->v0 = avg_chroma_1_3f(Cr_R[r0] + Cr_G[g0] + Cr_B[b0],
-                             Cr_R[r1] + Cr_G[g1] + Cr_B[b1]);
 }
 
 LIVES_INLINE void rgb2uyvy_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
-                                      uyvy_macropixel *uyvy,
-                                      uint8_t *lut) {
-  register short a;
-  if ((a = spc_rnd(Y_R[(r0 = lut[r0])] + Y_G[(g0 = lut[g0])] + Y_B[(b0 = lut[b0])])) > max_Y) uyvy->y0 = max_Y;
+                                      uyvy_macropixel *uyvy, uint8_t *lut) {
+  short a;
+  if ((a = spc_rnd(Cb_R[(r0 = lut[r0])] + Cb_G[(g0 = lut[g0])] + Cb_B[(b0 = lut[b0])])) > max_UV) uyvy->u0 = max_UV;
+  else uyvy->u0 = a < min_UV ? min_UV : a;
+
+  if ((a = spc_rnd(Y_R[r0] + Y_G[g0] + Y_B[b0])) > max_Y) uyvy->y0 = max_Y;
   else uyvy->y0 = a < min_Y ? min_Y : a;
+
+  if ((a = spc_rnd(Cr_R[(r1 = lut[r1])] + Cr_G[(g1 = lut[g1])] + Cr_B[(b1 = lut[b1])])) > max_UV) uyvy->v0 = max_UV;
+  else uyvy->v0 = a < min_UV ? min_UV : a;
+
   if ((a = spc_rnd(Y_R[r1] + Y_G[g1] + Y_B[b1])) > max_Y) uyvy->y1 = max_Y;
   else uyvy->y1 = a < min_Y ? min_Y : a;
-
-  uyvy->u0 = avg_chroma_3_1f(Cb_R[r0] + Cb_G[g0] + Cb_B[b0],
-                             Cb_R[r1] + Cb_G[g1] + Cb_B[b1]);
-
-  uyvy->v0 = avg_chroma_1_3f(Cr_R[r0] + Cr_G[g0] + Cr_B[b0],
-                             Cr_R[r1] + Cr_G[g1] + Cr_B[b1]);
 }
 
 LIVES_INLINE void rgb2yuyv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1, yuyv_macropixel *yuyv) {
-  register short a;
+  short a;
   if ((a = spc_rnd(Y_R[r0] + Y_G[g0] + Y_B[b0])) > max_Y) yuyv->y0 = max_Y;
   else yuyv->y0 = a < min_Y ? min_Y : a;
+
+  if ((a = spc_rnd(Cb_R[r0] + Cb_G[g0] + Cb_B[b0])) > max_UV) yuyv->u0 = max_UV;
+  yuyv->u0 = a < min_UV ? min_UV : a;
+
   if ((a = spc_rnd(Y_R[r1] + Y_G[g1] + Y_B[b1])) > max_Y) yuyv->y1 = max_Y;
   else yuyv->y1 = a < min_Y ? min_Y : a;
-  yuyv->u0 = avg_chroma_3_1f(Cb_R[r0] + Cb_G[g0] + Cb_B[b0], Cb_R[r1] + Cb_G[g1] + Cb_B[b1]);
-  yuyv->v0 = avg_chroma_1_3f(Cr_R[r0] + Cr_G[g0] + Cr_B[b0], Cr_R[r1] + Cr_G[g1] + Cr_B[b1]);
+
+  if ((a = spc_rnd(Cr_R[r1] + Cr_G[g1] + Cr_B[b1])) > max_UV) yuyv->v0 = max_UV;
+  yuyv->v0 = a < min_UV ? min_UV : a;
 }
 
-#if 0
+
 LIVES_INLINE void rgb2yuyv_with_gamma(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
-                                      yuyv_macropixel *yuyv,
-                                      uint8_t *lut) {
-  register short a;
+                                      yuyv_macropixel *yuyv, uint8_t *lut) {
+  short a;
   if ((a = spc_rnd(Y_R[(r0 = lut[r0])] + Y_G[(g0 = lut[g0])] + Y_B[(b0 = lut[b0])])) > max_Y) yuyv->y0 = max_Y;
   else yuyv->y0 = a < min_Y ? min_Y : a;
-  if ((a = spc_rnd(Y_R[r1] + Y_G[g1] + Y_B[b1])) > max_Y) yuyv->y1 = max_Y;
+
+  if ((a = spc_rnd(Cb_R[r0] + Cb_G[g0] + Cb_B[b0])) > max_UV) yuyv->u0 = max_UV;
+  else yuyv->u0 = a < min_UV ? min_UV : a;
+
+  if ((a = spc_rnd(Y_R[(r1 = lut[r1])] + Y_G[(g1 = lut[g1])] + Y_B[(b1 = lut[b1])])) > max_Y) yuyv->y1 = max_Y;
   else yuyv->y1 = a < min_Y ? min_Y : a;
-  yuyv->u0 = avg_chroma_3_1f(Cb_R[r0] + Cb_G[g0] + Cb_B[b0], Cb_R[r1] + Cb_G[g1] + Cb_B[b1]);
-  yuyv->v0 = avg_chroma_1_3f(Cr_R[r0] + Cr_G[g0] + Cr_B[b0], Cr_R[r1] + Cr_G[g1] + Cr_B[b1]);
+
+  if ((a = spc_rnd(Cr_R[r1] + Cr_G[g1] + Cr_B[b1])) > max_UV) yuyv->v0  = max_UV;
+  else yuyv->v0 = a < min_UV ? min_UV : a;
 }
-#endif
+
 
 LIVES_INLINE void rgb16_2uyvy(uint16_t r0, uint16_t g0, uint16_t b0, uint16_t r1, uint16_t g1, uint16_t b1,
                               uyvy_macropixel *uyvy) {
@@ -3006,15 +3016,17 @@ static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
   ipsize2 = ipsize * 2;
   hs3 = hsize * ipsize;
-  orowstride = orowstride / 4 - hsize;
-  for (; rgbdata < end; rgbdata += rowstride) {
+  orowstride = orowstride / 2 - hsize;
+  for (int k = 0; k < vsize; k++) {
     for (i = 0; i < hs3; i += ipsize2) {
       // convert 6 RGBRGB bytes to 4 UYVY bytes
       if (gamma_lut)
-        rgb2uyvy_with_gamma(rgbdata[i], rgbdata[i + 1], rgbdata[i + 2], rgbdata[i + x], rgbdata[i + y], rgbdata[i + z], u++, gamma_lut);
+        rgb2uyvy_with_gamma(rgbdata[i], rgbdata[i + 1], rgbdata[i + 2], rgbdata[i + x], rgbdata[i + y],
+                            rgbdata[i + z], u++, gamma_lut);
       else
         rgb2uyvy(rgbdata[i], rgbdata[i + 1], rgbdata[i + 2], rgbdata[i + x], rgbdata[i + y], rgbdata[i + z], u++);
     }
+    rgbdata += rowstride;
     u += orowstride;
   }
 }
@@ -3095,11 +3107,15 @@ static void convert_rgb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
   ipsize2 = ipsize * 2;
   hs3 = hsize * ipsize;
-  orowstride = orowstride / 4 - hsize;
+  orowstride = orowstride / 2 - hsize;
 
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < hs3; i += ipsize2) {
       // convert 6 RGBRGB bytes to 4 YUYV bytes
+      /* if (gamma_lut) */
+      /* 	rgb2yuyv_with_gamma(rgbdata[i], rgbdata[i + 1], rgbdata[i + 2], rgbdata[i + x], rgbdata[i + y], */
+      /* 			    rgbdata[i + z], u++, gamma_lut); */
+      /* else */
       rgb2yuyv(rgbdata[i], rgbdata[i + 1], rgbdata[i + 2], rgbdata[i + x], rgbdata[i + y], rgbdata[i + z], u++);
     }
     u += orowstride;
@@ -3181,11 +3197,15 @@ static void convert_bgr_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
   ipsize2 = ipsize * 2;
   hs3 = hsize * ipsize;
-  orowstride = orowstride / 4 - hsize;
+  orowstride = orowstride / 2 - hsize;
 
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < hs3; i += ipsize2) {
       // convert 6 RGBRGB bytes to 4 UYVY bytes
+      /* if (gamma_lut) */
+      /* 	rgb2uyvy_with_gamma(rgbdata[i + 2], rgbdata[i + 1], rgbdata[i], rgbdata[i + z], rgbdata[i + y], */
+      /* 			    rgbdata[i + x], u++, gamma_lut); */
+      /* else */
       rgb2uyvy(rgbdata[i + 2], rgbdata[i + 1], rgbdata[i], rgbdata[i + z], rgbdata[i + y], rgbdata[i + x], u++);
     }
     u += orowstride;
@@ -3269,11 +3289,15 @@ static void convert_bgr_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
   ipsize2 = ipsize * 2;
   hs3 = hsize * ipsize;
-  orowstride = orowstride / 4 - hsize;
+  orowstride = orowstride / 2 - hsize;
 
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < hs3; i += ipsize2) {
       // convert 6 RGBRGB bytes to 4 UYVY bytes
+      /* if (gamma_lut) */
+      /* 	rgb2yuyv_with_gamma(rgbdata[i + 2], rgbdata[i + 1], rgbdata[i], rgbdata[i + z], rgbdata[i + y], */
+      /* 			    rgbdata[i + x], u++, gamma_lut); */
+      /* else */
       rgb2yuyv(rgbdata[i + 2], rgbdata[i + 1], rgbdata[i], rgbdata[i + z], rgbdata[i + y], rgbdata[i + x], u++);
     }
     u += orowstride;
@@ -3347,11 +3371,15 @@ static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, i
 
   ipsize2 = ipsize * 2;
   hs3 = hsize * ipsize;
-  orowstride = orowstride / 4 - hsize;
+  orowstride = orowstride / 2 - hsize;
 
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < hs3; i += ipsize2) {
       // convert 6 RGBRGB bytes to 4 UYVY bytes
+      /* if (gamma_lut) */
+      /* 	rgb2uyvy_with_gamma(rgbdata[i + 1], rgbdata[i + 2], rgbdata[i + 3], rgbdata[i + 5], rgbdata[i + 6], */
+      /* 			    rgbdata[i + 7], u++, gamma_lut); */
+      /* else */
       rgb2uyvy(rgbdata[i + 1], rgbdata[i + 2], rgbdata[i + 3], rgbdata[i + 5], rgbdata[i + 6], rgbdata[i + 7], u++);
     }
     u += orowstride;
@@ -3425,10 +3453,14 @@ static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, i
 
   ipsize2 = ipsize * 2;
   hs3 = hsize * ipsize;
-  orowstride = orowstride / 4 - hsize;
+  orowstride = orowstride / 2 - hsize;
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < hs3; i += ipsize2) {
       // convert 6 RGBRGB bytes to 4 UYVY bytes
+      /* if (gamma_lut) */
+      /* 	rgb2yuyv_with_gamma(rgbdata[i + 1], rgbdata[i + 2], rgbdata[i + 3], rgbdata[i + 5], rgbdata[i + 6], */
+      /* 			    rgbdata[i + 7], u++, gamma_lut); */
+      /* else */
       rgb2yuyv(rgbdata[i + 1], rgbdata[i + 2], rgbdata[i + 3], rgbdata[i + 5], rgbdata[i + 6], rgbdata[i + 7], u++);
     }
     u += orowstride;
@@ -9816,7 +9848,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   width = weed_layer_get_width(layer);
   height = weed_layer_get_height(layer);
 
-  //#define DEBUG_PCONV
+  //  #define DEBUG_PCONV
 #ifdef DEBUG_PCONV
   g_print("converting %d X %d palette %s(%s) to %s(%s)\n", width, height, weed_palette_get_name(inpl),
           weed_yuv_clamping_get_name(iclamping),
@@ -12175,7 +12207,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     lives_free(msg);
     return FALSE;
   }
-  //#define DEBUG_RESIZE
+  //  #define DEBUG_RESIZE
 #ifdef DEBUG_RESIZE
   g_print("resizing layer size %d X %d with palette %s to %d X %d, hinted %s\n", iwidth, iheight,
           weed_palette_get_name_full(palette,

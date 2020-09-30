@@ -1954,8 +1954,8 @@ void preview_audio(void) {
         pulse_driver_cork(mainw->pulsed);
       }
     }
-#endif
   }
+#endif
 }
 
 

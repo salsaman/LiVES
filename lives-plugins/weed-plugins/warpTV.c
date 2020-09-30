@@ -29,7 +29,7 @@ static int package_version = 1; // version of this package
 #include <weed/weed-plugin-utils.h> // optional
 #else
 #include "../../libweed/weed-plugin.h"
-#include "../../../libweed/weed-utils.h" // optional
+#include "../../libweed/weed-utils.h" // optional
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
 

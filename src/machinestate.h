@@ -228,6 +228,13 @@ static void (*_lsd_free)(void *ptr) = rpfree;
 static int _lsd_calloc_aligned_(void **memptr, size_t nmemb, size_t size) {
   return !memptr ? 0 : (!(*memptr = (rpaligned_calloc)(64, nmemb, size))) ? ENOMEM : 0;
 }
+
+void lives_get_randbytes(void *ptr, size_t size);
+
+#if !HAVE_GETENTROPY
+#define LSD_RANDFUNC(ptr, size) (lives_get_randbytes((ptr), (size)))
+#endif
+
 #include "lsd.h"
 #undef OVERRIDE_MEMFUNCS
 

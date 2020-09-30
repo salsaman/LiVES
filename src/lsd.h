@@ -400,12 +400,11 @@ static size_t lives_struct_get_size(lives_struct_def_t *) ALLOW_UNUSED;
 ////// FUNCTION BODIES //////
 
 #ifndef LSD_RANDFUNC
-#define _LSD_IGN_RET(a) ((void)((a) + 1))
 #ifdef HAVE_GETENTROPY
+#define _LSD_IGN_RET(a) ((void)((a) + 1))
 #define LSD_RANDFUNC(ptr, size) _LSD_IGN_RET(getentropy(ptr, size))
 #else
-#include <stdlib.h>
-#define LSD_RANDFUNC(ptr, size)
+error("LSD_RANDFUNC(ptr, size) must be defined");
 #endif
 #endif
 

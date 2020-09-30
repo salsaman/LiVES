@@ -37,11 +37,18 @@ LIVES_GLOBAL_INLINE void lives_srandom(unsigned int seed) {srandom(seed);}
 
 LIVES_GLOBAL_INLINE uint64_t lives_random(void) {return random();}
 
+void lives_get_randbytes(void *ptr, size_t size) {
+  if (size <= 8) {
+    uint64_t rbytes = gen_unique_id();
+    lives_memcpy(ptr, &rbytes, size);
+  }
+}
+
 
 uint64_t gen_unique_id(void) {
   static uint64_t last_rnum = 0;
   uint64_t rnum;
-#ifdef HAVE_GETENTROPY
+#if HAVE_GETENTROPY
   int randres = getentropy(&rnum, 8);
 #else
   int randres = 1;

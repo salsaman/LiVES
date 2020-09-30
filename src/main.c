@@ -6475,7 +6475,8 @@ check_prcache:
 #endif
 
     if (prefs->show_dev_opts && mask != 0) {
-      g_printerr("enabling png opts %lu\n", mask);
+      uint64_t xmask = (uint64_t)mask;
+      g_printerr("enabling png opts %lu\n", xmask);
     }
 
     if (!mask) png_flagstate = -1;

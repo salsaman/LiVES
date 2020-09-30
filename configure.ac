@@ -139,6 +139,9 @@ AC_CHECK_FUNCS(posix_fadvise)
 dnl Check for posix_fallocate
 AC_CHECK_FUNCS(posix_fallocate)
 
+dnl Check for getentropy
+AC_CHECK_FUNCS(getentropy)
+
 AC_PATH_PROGS(PERL, perl perl5)
 
 dnl check for profiling

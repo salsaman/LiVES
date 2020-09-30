@@ -1469,8 +1469,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
                          ((capable->byte_order == LIVES_LITTLE_ENDIAN && obuf->swap_endian == SWAP_L_TO_X)
                           || (capable->byte_order == LIVES_LITTLE_ENDIAN && obuf->swap_endian != SWAP_L_TO_X)));
       }
+      obuf->samples_filled += tsamples;
     }
-    obuf->samples_filled += tsamples;
     return tsamples;
   }
 

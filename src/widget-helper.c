@@ -8809,15 +8809,21 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_sensitive_with(LiVESWidget 
 
 
 static void lives_widget_show_all_cb(LiVESWidget * widget, livespointer user_data) {
-  if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), SHOWALL_OVERRIDE_KEY)) return;
-  if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_HIDE_KEY)) {
-    if (prefs->show_tooltips) {
-      lives_widget_set_no_show_all(widget, FALSE);
-      lives_widget_show(widget);
+  if (LIVES_IS_WIDGET_OBJECT(widget)) {
+    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), SHOWALL_OVERRIDE_KEY)) return;
+    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_HIDE_KEY)) {
+      if (prefs->show_tooltips) {
+        lives_widget_set_no_show_all(widget, FALSE);
+        lives_widget_show(widget);
+      }
+      return;
     }
-    return;
   }
-  if (!lives_widget_is_visible(widget)) lives_widget_show_all(widget);
+  widget = (LiVESWidget *)user_data;
+  if (!lives_widget_is_visible(widget)) {
+    lives_widget_show_all(widget);
+    g_print("SHOW !!\n");
+  }
 }
 
 boolean lives_widget_set_show_hide_with(LiVESWidget * widget, LiVESWidget * other) {

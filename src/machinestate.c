@@ -2917,10 +2917,15 @@ boolean activate_x11_window(const char *wid) {
 #ifndef GDK_WINDOWING_X11
   return FALSE;
 #endif
-  if (check_for_executable(&capable->has_xdotool, EXEC_XDOTOOL))
-    cmd = lives_strdup_printf("%s windowactivate \"%s\"", EXEC_XDOTOOL, wid);
-  else if (check_for_executable(&capable->has_wmctrl, EXEC_WMCTRL))
-    cmd = lives_strdup_printf("%s -Fa \"%s\"", EXEC_WMCTRL, wid);
+  if (capable->has_xdotool != MISSING) {
+    if (check_for_executable(&capable->has_xdotool, EXEC_XDOTOOL))
+      cmd = lives_strdup_printf("%s windowactivate \"%s\"", EXEC_XDOTOOL, wid);
+  }
+  else if (capable->has_wmctrl != MISSING) {
+    if (check_for_executable(&capable->has_wmctrl, EXEC_WMCTRL))
+      cmd = lives_strdup_printf("%s -Fa \"%s\"", EXEC_WMCTRL, wid);
+  }
+  else return FALSE;
   return mini_run(cmd);
 }
 
@@ -3035,7 +3040,7 @@ boolean get_x11_visible(const char *wname) {
 #ifndef GDK_WINDOWING_X11
   return FALSE;
 #endif
-  if (0 && check_for_executable(&capable->has_xwininfo, EXEC_XWININFO)) {
+  if (check_for_executable(&capable->has_xwininfo, EXEC_XWININFO)) {
     char *state;
     cmd = lives_strdup_printf("%s -name \"%s\"", EXEC_XWININFO, wname);
     state = grep_in_cmd(cmd, 2, -1, "Map State:", 4, 1);

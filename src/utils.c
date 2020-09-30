@@ -3364,12 +3364,15 @@ boolean check_for_executable(lives_checkstatus_t *cap, const char *exec) {
       if (cap) *cap = PRESENT;
       return TRUE;
     } else {
-      do_please_install(exec);
+      if (!lives_strcmp(exec, EXEC_XDOTOOL) || !lives_strcmp(exec, EXEC_WMCTRL)) {
+        if (cap) *cap = MISSING;
+      }
+      //do_please_install(exec);
       if (has_executable(exec) != PRESENT) {
 #ifdef HAS_MISSING_PRESENCE
         if (cap) *cap = MISSING;
 #endif
-        do_program_not_found_error(exec);
+        //do_program_not_found_error(exec);
         return FALSE;
       }
       if (cap) *cap = PRESENT;

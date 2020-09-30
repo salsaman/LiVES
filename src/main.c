@@ -954,6 +954,9 @@ static boolean pre_init(void) {
   add_messages_to_list(_("Starting...\n"));
 
   get_string_pref(PREF_GUI_THEME, prefs->theme, 64);
+
+  g_print("THEME was %s\n", prefs->theme);
+
   if (!(*prefs->theme)) {
     lives_snprintf(prefs->theme, 64, LIVES_THEME_NONE);
   }
@@ -3098,7 +3101,10 @@ retry_configfile:
     capable->smog_version_correct = TRUE;
   }
 
-  lives_snprintf(command, PATH_MAX * 4, "%s report -", prefs->backend_sync);
+  if (!newconfigfile)
+    lives_snprintf(command, PATH_MAX * 4, "%s report -", prefs->backend_sync);
+  else
+    lives_snprintf(command, PATH_MAX * 4, "%s report", prefs->backend_sync);
 
   // check_settings:
 
@@ -4178,6 +4184,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   _weed_leaf_get_flags = weed_leaf_get_flags;
   _weed_leaf_set_flags = weed_leaf_set_flags;
 
+  mainw = (mainwindow *)(lives_calloc(1, sizeof(mainwindow)));
   init_random();
 
 #ifdef ENABLE_DIAGNOSTICS
@@ -4235,7 +4242,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   prefs->yuvin[0] = '\0';
 #endif
 
-  mainw = (mainwindow *)(lives_calloc(1, sizeof(mainwindow)));
   mainw->version_hash = lives_strdup_printf("%d", verhash(LiVES_VERSION));
   mainw->mgeom = NULL;
   mainw->msg[0] = '\0';

@@ -859,9 +859,7 @@ typedef struct {
 } lives_tcache_entry_t;
 
 typedef enum {
-#ifdef HAS_MISSING_PRESENCE
   MISSING = -1, ///< not yet implemented (TODO)
-#endif
   UNCHECKED = 0,
   PRESENT
 } lives_presence_t;

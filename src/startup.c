@@ -30,16 +30,24 @@ boolean migrate_config(const char *old_vhash, const char *newconfigfile) {
       lives_cp_recursive(ocfdir, prefs->config_datadir, FALSE);
       lives_free(ocfdir);
       fname = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE_OLD, NULL);
-      lives_rm(fname);
+      if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+        lives_rm(fname);
+      }
       lives_free(fname);
       fname = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE2_OLD, NULL); // perkey defs
-      fname2 = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE2, NULL); // perkey defs
-      lives_mv(fname, fname2);
-      lives_free(fname); lives_free(fname2);
+      if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+        fname2 = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE2, NULL); // perkey defs
+        lives_mv(fname, fname2);
+        lives_free(fname2);
+      }
+      lives_free(fname);
       fname = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE3_OLD, NULL); // data connections
-      fname2 = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE3, NULL); // data connectionsy
-      lives_mv(fname, fname2);
-      lives_free(fname); lives_free(fname2);
+      if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+        fname2 = lives_build_filename(prefs->config_datadir, DEF_KEYMAP_FILE3, NULL); // data connections
+        lives_mv(fname, fname2);
+        lives_free(fname2);
+      }
+      lives_free(fname);
     }
     return TRUE;
   }

@@ -519,7 +519,10 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
   if (!transient) {
     char *wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
-    if (!wid || !activate_x11_window(wid)) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
+
+    /// MUST check if execs are MISSING, else we can get stuck in a loop of warning dialogs !!!
+    if (!wid || (capable->has_xdotool == MISSING && capable->has_wmctrl == MISSING) || !activate_x11_window(wid))
+      lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
   }
   if (cb_key) extra_cb(dialog, cb_key);
 

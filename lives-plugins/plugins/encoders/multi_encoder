@@ -50,13 +50,13 @@ mng = 'lives_mng_encoder'
 gif = 'lives_gif_encoder'
 
 usage = \
-      """
+    """
 multi_encoder -h
 multi_encoder [directive [args]]
       """
 
 help = \
-     """
+    """
 SUMMARY (ver. %s):
 
 LiVES plugin which calls one of the following programs:
@@ -132,7 +132,7 @@ def run(command):
 
     if verbose:
         print >> sys.stderr, 'Running: \n' + command + '\n=== ... ==='
-    os.system(command)
+        os.system(command)
 
 
 def which(command):
@@ -144,7 +144,7 @@ def which(command):
 
     if command[0] == '/':
         if os.path.isfile(command) and \
-               os.access(command, os.X_OK):
+           os.access(command, os.X_OK):
             command_found = True
             abs_command = command
     else:
@@ -172,26 +172,25 @@ def is_installed(prog):
     if wprog == '':
         if verbose:
             print >> sys.stderr, prog + ': command not found'
-        found = 0
+            found = 0
     else:
         if verbose:
             print >> sys.stderr, wprog + ': found'
-        found  = 1
+            found  = 1
 
     if found:
 	if hassubproc:	
-		p = subprocess.Popen(['python', wprog, '-C'],stdout=subprocess.PIPE)
-		std_out_err=p.stdout
+	    p = subprocess.Popen(['python', wprog, '-C'],stdout=subprocess.PIPE)
+	    std_out_err=p.stdout
 
 	else:
-        	(std_in, std_out_err) = os.popen4('python ' + wprog  + ' -C')
-        	std_in.close()
-	
+            (std_in, std_out_err) = os.popen4('python ' + wprog  + ' -C')
+            std_in.close()
 
         if 'command not found' in std_out_err.read():
             if verbose:
                 print >> sys.stderr, prog + ': missing dependencies'
-            found = 0
+                found = 0
 
     return found
 
@@ -209,7 +208,7 @@ def clear():
         try:
             if verbose:
                 print >> sys.stderr, 'Deleting ' + link
-            os.remove(link)
+                os.remove(link)
         except:
             if verbose:
                 print >> sys.stderr, 'Tried deleting ' + link
@@ -218,7 +217,7 @@ def clear():
         try:
             if verbose:
                 print >> sys.stderr, 'Deleting ' + bmp
-            os.remove(link)
+                os.remove(link)
         except:
             if verbose: 
                 print >> sys.stderr, 'Tried deleting ' + bmp
@@ -258,7 +257,7 @@ if __name__ == '__main__':
 
     try:
         (opts, args) = getopt.getopt(sys.argv[1:], \
-                                         'hvV')
+                                     'hvV')
     except:
         print >> sys.stderr, "Something's wrong. Try the '-h' flag."
         raise SystemExit
@@ -303,9 +302,9 @@ if __name__ == '__main__':
 
     if dir == 'init':
         installed = is_installed(mpeg) + is_installed(ogm) + \
-                    is_installed(mkv) + is_installed(ogg) + \
-                    is_installed(drc) + is_installed(gif) + \
-                    is_installed(mng) + is_installed(avi)
+            is_installed(mkv) + is_installed(ogg) + \
+            is_installed(drc) + is_installed(gif) + \
+            is_installed(mng) + is_installed(avi)
         if installed < 1:
             print 'No encoders found!'
             raise SystemExit, 1
@@ -320,11 +319,11 @@ if __name__ == '__main__':
     if dir == 'get_formats':
 
        # define AUDIO_CODEC_MP3 0
-       # define AUDIO_CODEC_PCM 1
-       # define AUDIO_CODEC_MP2 2
-       # define AUDIO_CODEC_VORBIS 3
-       # define AUDIO_CODEC_AC3 4
-       # define AUDIO_CODEC_MAX 31
+        # define AUDIO_CODEC_PCM 1
+        # define AUDIO_CODEC_MP2 2
+        # define AUDIO_CODEC_VORBIS 3
+        # define AUDIO_CODEC_AC3 4
+        # define AUDIO_CODEC_MAX 31
 
        fps = 'fps=24000:1001;24;25;30000:1001;30;50;60000:1001;60'
        ntscfps = 'fps=30000:1001'
@@ -356,7 +355,7 @@ if __name__ == '__main__':
            # For DVD the encoder will resample the sound rate to 48000
            print 'pdvd-mpeg|DVD-compatible MPG (PAL)' + specs
            print 'spdvd-mpeg|Strictly DVD-compatible MPG (PAL)' + specs
-       sr = 'arate=8000;11025;12000;16000;22050;24000;32000;44100;48000'
+           sr = 'arate=8000;11025;12000;16000;22050;24000;32000;44100;48000'
        if is_installed(ogm):
            specs = '|8|%s,%s,%s,%s|ogm|' % (ar, hb, vb, sr)
            print 'lo_d-ogm|Low Quality OGM (DIVX 4:5/VORBIS)' + specs
@@ -443,7 +442,7 @@ if __name__ == '__main__':
 
         if debug == '1':
             verbose = True
-        
+
         fpst = 0.0005
         if abs(24000.0/1001.0 - locale.atof(fps)) < fpst: fpsc = '1'
         elif abs(24 - locale.atof(fps)) < fpst: fpsc = '2'
@@ -492,17 +491,17 @@ if __name__ == '__main__':
             rxenc = which(xenc)
 
             encode_command = ' '.join(['python','"' + rxenc + '"', '-o', \
-                                           outfile, '-w', '"' + tempdir + '"', '-a', arc, \
-                                           '-f', fpsc, quiet, '-t', \
-                                           type, '-s ./audiodump.wav', \
-                                           start, end, tonull])
+                                       outfile, '-w', '"' + tempdir + '"', '-a', arc, \
+                                       '-f', fpsc, quiet, '-t', \
+                                       type, '-s ./audiodump.wav', \
+                                       start, end, tonull])
 
         else:
             encode_command = ' '.join(['lives_' + prog + '_encoder', '-o', \
-                                           outfile, '-w', '"' + tempdir + '"', '-a', arc, \
-                                           '-f', fpsc, quiet, '-t', \
-                                           type, '-s ./audiodump.wav', \
-                                           start, end, tonull])
+                                       outfile, '-w', '"' + tempdir + '"', '-a', arc, \
+                                       '-f', fpsc, quiet, '-t', \
+                                       type, '-s ./audiodump.wav', \
+                                       start, end, tonull])
 
 
 

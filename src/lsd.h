@@ -405,7 +405,7 @@ static size_t lives_struct_get_size(lives_struct_def_t *) ALLOW_UNUSED;
 #define LSD_RANDFUNC(ptr, size) _LSD_IGN_RET(getentropy(ptr, size))
 #else
 #include <stdlib.h>
-#define LSD_RANDFUNC(ptr, size) 
+#define LSD_RANDFUNC(ptr, size)
 #endif
 #endif
 
@@ -532,7 +532,7 @@ static int _lsd_auto_delete(void *ptr, uint64_t flags, size_t bsize) {
     }
   }
   if (flags & LIVES_FIELD_FLAG_FREE_ALL_ON_DELETE) {
-    void **vptr = *((void ***)ptr);
+    void **vptr = *((void ** *)ptr);
     if (vptr) {
       if ((flags & LIVES_FIELD_FLAG_ALLOC_AND_COPY) && !bsize) {
         for (int j = 0; vptr[j]; j++) if (vptr[j])(*_lsd_string_free)(vptr[j]);
@@ -648,7 +648,7 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
     // copy / create n elements or strings
     if (!bsize) {
       // copy N strings or create empty strings, source field is char **
-      char **cptr = (*(char ***)src_field), **dptr;
+      char **cptr = (*(char ** *)src_field), **dptr;
       if (cptr) {
         while (cptr[count]) count++;
         if ((*_lsd_calloc_aligned)((void **)&dptr, count + 1, sizeof(char *))) {
@@ -666,7 +666,7 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
           }
         }
         dptr[j] = NULL; /// final element must always be NULL
-        (*(char ***)dst_field) = dptr;
+        (*(char ** *)dst_field) = dptr;
       }
 
       if (!cptr) {
@@ -700,7 +700,7 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
       if (spcf->flags & (LIVES_FIELD_FLAG_ALLOC_AND_COPY
                          | LIVES_FIELD_FLAG_ZERO_ON_COPY)) {
         /// alloc and copy elements of size bsize
-        void **vptr = (*(void ***)src_field), **dptr;
+        void **vptr = (*(void ** *)src_field), **dptr;
         if (vptr) {
           count = 0;
           while (vptr[count]) count++;

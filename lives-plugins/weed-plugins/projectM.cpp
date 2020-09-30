@@ -578,7 +578,7 @@ static void *worker(void *data) {
   sd->worker_active = false;
   pthread_mutex_unlock(&sd->mutex);
 
-  if (sd->globalPM) delete (sd->globalPM);
+  if (sd->globalPM) delete(sd->globalPM);
   sd->globalPM = NULL;
   SDL_Quit();
 

@@ -999,6 +999,7 @@ char *get_mountpoint_for(const char *dir) {
 
 off_t get_dir_size(const char *dirname) {
   off_t dirsize = -1;
+  if (!dirname || !*dirname) return -1;
   if (check_for_executable(&capable->has_du, EXEC_DU)) {
     char buff[PATH_MAX * 2];
     char *com = lives_strdup_printf("%s -sb0 \"%s\"", EXEC_DU, dirname);

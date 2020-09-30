@@ -762,10 +762,10 @@ static boolean pre_init(void) {
 
   if (!prefs->vj_mode) {
     /// start a bg thread to get diskspace used
-    if (prefs->disk_quota && !needs_workdir && initial_startup_phase == 0)
+    if (!needs_workdir && prefs->disk_quota && !needs_workdir && initial_startup_phase == 0)
       mainw->helper_procthreads[PT_LAZY_DSUSED] = disk_monitor_start(prefs->workdir);
 
-    if (mainw->next_ds_warn_level > 0) {
+    if (!needs_workdir && mainw->next_ds_warn_level > 0) {
       int64_t dsval = disk_monitor_check_result(prefs->workdir);
       if (dsval > 0) capable->ds_used = dsval;
       else dsval = capable->ds_used;
@@ -1999,7 +1999,7 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->fxdefsfile = NULL;
     prefs->fxsizesfile = NULL;
 
-    if (prefs->startup_phase != 0) {
+    if (!needs_workdir && initial_startup_phase == 0) {
       disk_monitor_start(prefs->workdir);
     }
 
@@ -2231,14 +2231,21 @@ static void lives_init(_ign_opts *ign_opts) {
     set_int_pref(PREF_STARTUP_PHASE, 6);
     prefs->startup_phase = 6;
 
-    capable->ds_used = disk_monitor_wait_result(prefs->workdir, LIVES_DEFAULT_TIMEOUT);
-    if (capable->ds_used >= 0) {
-      ran_ds_dlg = TRUE;
-      run_diskspace_dialog();
+    if (prefs->show_disk_quota && !prefs->vj_mode) {
+      if (!disk_monitor_running(prefs->workdir))
+        disk_monitor_start(prefs->workdir);
+
+      capable->ds_used = disk_monitor_wait_result(prefs->workdir, LIVES_DEFAULT_TIMEOUT);
+      if (capable->ds_used >= 0) {
+        ran_ds_dlg = TRUE;
+        run_diskspace_dialog();
+      } else {
+        disk_monitor_forget();
+        if (prefs->show_disk_quota)
+          mainw->helper_procthreads[PT_LAZY_DSUSED] = disk_monitor_start(prefs->workdir);
+      }
     } else {
       disk_monitor_forget();
-      if (prefs->show_disk_quota)
-        mainw->helper_procthreads[PT_LAZY_DSUSED] = disk_monitor_start(prefs->workdir);
     }
 
     set_int_pref(PREF_STARTUP_PHASE, 100); // tell backend to delete this
@@ -2273,26 +2280,34 @@ static void do_start_messages(void) {
   char *tmp, *endian, *fname, *phase = NULL;
 
   if (prefs->vj_mode) {
-    d_print(_("Starting in VJ MODE: Skipping startup dependency checks\n"));
-
-    d_print(_("\nMachine details:\n"));
-
-    get_machine_dets();
-    d_print(_("OS is %s %s, running on %s\n"),
-            capable->os_name ? capable->os_name : _("unknown"),
-            capable->os_release ? capable->os_release : "?",
-            capable->os_hardware ? capable->os_hardware : "????");
-
-    d_print(_("CPU type is %s "), capable->cpu_name);
-    d_print(P_("(%d core, ", "(%d cores, ", capable->ncpus), capable->ncpus);
-
-    if (capable->byte_order == LIVES_LITTLE_ENDIAN) endian = (_("little endian"));
-    else endian = (_("big endian"));
-    d_print(_("%d bits, %s)\n"), capable->cpu_bits, endian);
-    lives_free(endian);
-
-    d_print(_("Machine name is '%s'\n"), capable->mach_name);
+    d_print(_("Starting in VJ MODE: Skipping most startup checks\n"));
+#ifndef IS_MINGW
+    SHOWDET(wmctrl);
+    SHOWDET(xdotool);
+    SHOWDET(xwininfo);
+#endif
+    d_print("\n\n");
+    return;
   }
+
+  d_print(_("\nMachine details:\n"));
+
+  get_machine_dets();
+  d_print(_("OS is %s %s, running on %s\n"),
+          capable->os_name ? capable->os_name : _("unknown"),
+          capable->os_release ? capable->os_release : "?",
+          capable->os_hardware ? capable->os_hardware : "????");
+
+  d_print(_("CPU type is %s "), capable->cpu_name);
+  d_print(P_("(%d core, ", "(%d cores, ", capable->ncpus), capable->ncpus);
+
+  if (capable->byte_order == LIVES_LITTLE_ENDIAN) endian = (_("little endian"));
+  else endian = (_("big endian"));
+  d_print(_("%d bits, %s)\n"), capable->cpu_bits, endian);
+  lives_free(endian);
+
+  d_print(_("Machine name is '%s'\n"), capable->mach_name);
+
   d_print(_("Number of monitors detected: %d: "), capable->nmonitors);
 
   d_print(_("GUI screen size is %d X %d (usable: %d X %d); %d dpi.\nWidget scaling has been set to %.3f.\n"),
@@ -2305,23 +2320,21 @@ static void do_start_messages(void) {
     d_print(_("Actual usable size appears to be %d X %d\n"), w, h);
   }
 
-  if (!prefs->vj_mode) {
-    get_wm_caps();
+  get_wm_caps();
 
-    d_print(_("Window manager reports as \"%s\" (%s)"),
-            capable->wm_name ? capable->wm_name : _("UNKNOWN - please patch me !"),
-            capable->wm_caps.wm_name ? capable->wm_caps.wm_name : "unknown");
+  d_print(_("Window manager reports as \"%s\" (%s)"),
+          capable->wm_name ? capable->wm_name : _("UNKNOWN - please patch me !"),
+          capable->wm_caps.wm_name ? capable->wm_caps.wm_name : "unknown");
 
-    if (capable->wm_type && *capable->wm_type)
-      d_print(_(", running on %s"), capable->wm_type);
+  if (capable->wm_type && *capable->wm_type)
+    d_print(_(", running on %s"), capable->wm_type);
 
-    d_print(_("; compositing is %s.\n"), capable->wm_caps.is_composited ? _("supported") : _("not supported"));
+  d_print(_("; compositing is %s.\n"), capable->wm_caps.is_composited ? _("supported") : _("not supported"));
 
-    get_distro_dets();
-    d_print(_("Distro is %s %s (%s)\n"), capable->distro_name ? capable->distro_name : "?????",
-            capable->distro_ver ? capable->distro_ver : "?????",
-            capable->distro_codename ? capable->distro_codename : "");
-  }
+  get_distro_dets();
+  d_print(_("Distro is %s %s (%s)\n"), capable->distro_name ? capable->distro_name : "?????",
+          capable->distro_ver ? capable->distro_ver : "?????",
+          capable->distro_codename ? capable->distro_codename : "");
 
   d_print("%s", _("GUI type is: "));
 
@@ -2345,15 +2358,14 @@ static void do_start_messages(void) {
   d_print(_("\n"));
 #endif
 
-  if (!prefs->vj_mode) {
-    if (*capable->gui_theme_name) tmp = lives_strdup(capable->gui_theme_name);
-    else tmp = lives_strdup_printf("lives-%s-dynamic", prefs->theme);
+  if (*capable->gui_theme_name) tmp = lives_strdup(capable->gui_theme_name);
+  else tmp = lives_strdup_printf("lives-%s-dynamic", prefs->theme);
 
-    d_print("GUI theme set to %s, icon theme set to %s\n", tmp,
-            capable->icon_theme_name);
+  d_print("GUI theme set to %s, icon theme set to %s\n", tmp,
+          capable->icon_theme_name);
 
-    lives_free(tmp);
-  }
+  lives_free(tmp);
+
 
 #ifndef RT_AUDIO
   d_print(_("WARNING - this version of LiVES was compiled without either\njack or pulseaudio support.\n"
@@ -2375,7 +2387,7 @@ static void do_start_messages(void) {
   d_print(_("\nConfig file is %s (%s)\n"), prefs->configfile, tmp);
   lives_free(tmp);
 
-  if (!prefs->vj_mode && (!capable->mountpoint || !*capable->mountpoint))
+  if (!capable->mountpoint || !*capable->mountpoint)
     capable->mountpoint = get_mountpoint_for(prefs->workdir);
   if (capable->mountpoint && *capable->mountpoint) tmp = lives_strdup_printf(_(", contained in volume %s"), capable->mountpoint);
   else tmp = lives_strdup("");
@@ -2439,46 +2451,38 @@ static void do_start_messages(void) {
     lives_free(fname);
   }
 
-  if (!prefs->vj_mode) {
-    d_print(_("\nChecking RECOMMENDED dependencies: "));
 
-    SHOWDET(mplayer);
-    if (!capable->has_mplayer) {
-      SHOWDET(mplayer2);
-      if (!capable->has_mplayer2) {
-        SHOWDET(mpv);
-      }
+  d_print(_("\nChecking RECOMMENDED dependencies: "));
+
+  SHOWDET(mplayer);
+  if (!capable->has_mplayer) {
+    SHOWDET(mplayer2);
+    if (!capable->has_mplayer2) {
+      SHOWDET(mpv);
     }
-    //SHOWDET(file);
-    SHOWDET(identify);
-    if (!capable->has_jackd)
-      SHOWDETx(pulse_audio, EXEC_PULSEAUDIO);
-    SHOWDETx(sox_sox, EXEC_SOX);
-    SHOWDET(convert);
-    SHOWDET(composite);
-    SHOWDET(ffprobe);
-    SHOWDET(gzip);
-    SHOWDET(md5sum);
-    SHOWDETx(youtube_dl, EXEC_YOUTUBE_DL);
-
-    d_print(_("\n\nChecking OPTIONAL dependencies: "));
-    SHOWDET(jackd);
-    SHOWDET(python);
-    SHOWDET(xwininfo);
-    SHOWDETx(cdda2wav, "cdda2wav/icedax");
-    SHOWDET(dvgrab);
-    SHOWDET(gdb);
-    SHOWDETx(gconftool_2, EXEC_GCONFTOOL_2);
-    SHOWDETx(xdg_screensaver, EXEC_XDG_SCREENSAVER);
   }
+  //SHOWDET(file);
+  SHOWDET(identify);
+  if (!capable->has_jackd)
+    SHOWDETx(pulse_audio, EXEC_PULSEAUDIO);
+  SHOWDETx(sox_sox, EXEC_SOX);
+  SHOWDET(convert);
+  SHOWDET(composite);
+  SHOWDET(ffprobe);
+  SHOWDET(gzip);
+  SHOWDET(md5sum);
+  SHOWDETx(youtube_dl, EXEC_YOUTUBE_DL);
 
-  if (prefs->vj_mode) {
-#ifndef IS_MINGW
-    SHOWDET(wmctrl);
-    SHOWDET(xdotool);
-    SHOWDET(xwininfo);
-#endif
-  }
+  d_print(_("\n\nChecking OPTIONAL dependencies: "));
+  SHOWDET(jackd);
+  SHOWDET(python);
+  SHOWDET(xwininfo);
+  SHOWDETx(cdda2wav, "cdda2wav/icedax");
+  SHOWDET(dvgrab);
+  SHOWDET(gdb);
+  SHOWDETx(gconftool_2, EXEC_GCONFTOOL_2);
+  SHOWDETx(xdg_screensaver, EXEC_XDG_SCREENSAVER);
+
   d_print("\n\n");
 }
 #undef SHOWDETx
@@ -3271,6 +3275,10 @@ retry_configfile:
           }}}}}
   // *INDENT-ON*
 
+  if ((prefs->startup_phase == 1 || prefs->startup_phase == -1)) {
+    needs_workdir = TRUE;
+  }
+
   lives_strfreev(array);
 
   ///////////////////////////////////////////////////////
@@ -3616,10 +3624,6 @@ static boolean lives_startup(livespointer data) {
   char *tmp, *tmp2, *msg;
 
   // check the working directory
-  if ((prefs->startup_phase == 1 || prefs->startup_phase == -1)) {
-    needs_workdir = TRUE;
-  }
-
   if (needs_workdir) {
     // get initial workdir
     if (!do_workdir_query()) {

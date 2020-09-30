@@ -398,7 +398,8 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   lives_widget_show_all(vbox);
 
   if (add_preview_button) {
-    lives_widget_show(mainw->framedraw_preview);
+    lives_widget_set_no_show_all(mainw->framedraw_preview, FALSE);
+    lives_widget_show_all(mainw->framedraw_preview);
   }
 
   lives_widget_hide(mainw->framedraw_maskbox);

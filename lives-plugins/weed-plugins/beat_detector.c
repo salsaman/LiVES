@@ -159,202 +159,205 @@ static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   weed_plant_t *in_channel = weed_get_in_channel(inst, 0);
   float **src = (float **)weed_channel_get_audio_data(in_channel, &chans);
 
-  weed_plant_t **in_params = weed_get_in_params(inst, NULL);
-  weed_plant_t **out_params = weed_get_out_params(inst, NULL);
+  if (chans) {
+    weed_plant_t **in_params = weed_get_in_params(inst, NULL);
+    weed_plant_t **out_params = weed_get_out_params(inst, NULL);
 
-  int reset = weed_param_get_value_boolean(in_params[0]);
-  double avlim = weed_param_get_value_double(in_params[1]);
-  double varlim = weed_param_get_value_double(in_params[2]);
-  int hamming = weed_param_get_value_boolean(in_params[3]);
+    int reset = weed_param_get_value_boolean(in_params[0]);
+    double avlim = weed_param_get_value_double(in_params[1]);
+    double varlim = weed_param_get_value_double(in_params[2]);
+    int hamming = weed_param_get_value_boolean(in_params[3]);
 
-  int beat_pulse = WEED_FALSE, beat_hold = weed_param_get_value_boolean(out_params[1]);
-  int has_data = WEED_FALSE;
-  int kmin, kmax, okmin, rkmin, rkmax;
+    int beat_pulse = WEED_FALSE, beat_hold = weed_param_get_value_boolean(out_params[1]);
+    int has_data = WEED_FALSE;
+    int kmin, kmax, okmin, rkmin, rkmax;
 
-  _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_data", NULL);
+    _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_data", NULL);
 
-  double var, av;
-  float tot = 0., totx;
-  register int i, j, s;
+    double var, av;
+    float tot = 0., totx;
+    int i, j, s;
 
-  weed_free(in_params);
+    weed_free(in_params);
 
-  if (beat_hold == WEED_TRUE) beat_hold = !reset;
+    if (beat_hold == WEED_TRUE) beat_hold = !reset;
 
-  onsamps = weed_channel_get_audio_length(in_channel);
+    onsamps = weed_channel_get_audio_length(in_channel);
 
-  if (onsamps < 2) {
-    beat_pulse = beat_hold = WEED_FALSE;
-    goto done;
-  }
-
-  rate = weed_channel_get_audio_rate(in_channel);
-
-  // have we buffered enough data ?
-  if ((float)sdata->totsamps / (float)rate * 1000. >= STIME) {
-    sdata->totsamps -= sdata->bufsize[0];
-    // shift all values up
-
-    for (i = 0; i < NSLICES; i++) {
-      sdata->av[i] = 0.;
-      for (j = 0; j < sdata->bufidx; j++) {
-        sdata->buf[i][j] = sdata->buf[i][j + 1];
-        if (sdata->buf[i][j] != -1.) sdata->av[i] += (double)sdata->buf[i][j];
-      }
+    if (onsamps < 2) {
+      beat_pulse = beat_hold = WEED_FALSE;
+      goto done;
     }
-    has_data = WEED_TRUE;
-  } else {
-    sdata->bufidx++;
-    if (sdata->bufidx == BUFMAX) {
-      //fprintf(stderr,"OVERFLOW\n");
-      sdata->bufidx--;
-    }
-  }
 
-  sdata->totsamps += onsamps;
+    rate = weed_channel_get_audio_rate(in_channel);
 
-  for (j = 0; j < sdata->bufidx; j++) {
-    sdata->bufsize[j] = sdata->bufsize[j + 1];
-  }
+    // have we buffered enough data ?
+    if ((float)sdata->totsamps / (float)rate * 1000. >= STIME) {
+      sdata->totsamps -= sdata->bufsize[0];
+      // shift all values up
 
-  sdata->bufsize[sdata->bufidx] = onsamps;
-
-  for (s = 0; s < NSLICES; s++) {
-    sdata->buf[s][sdata->bufidx] = 0.;
-  }
-
-  base = rndlog2(onsamps);
-  nsamps = twopow(base);
-
-  for (i = 0; i < chans; i++) {
-    // do transform for each channel
-
-    // copy in data to sdata->in
-    if (hamming == WEED_TRUE) {
-      for (j = 0; j < nsamps; j++) {
-        ins[base][j] = src[i][j] * (0.54f - 0.46f * cosf(TWO_PI * (float)j / (float)(nsamps - 1.)));
+      for (i = 0; i < NSLICES; i++) {
+        sdata->av[i] = 0.;
+        for (j = 0; j < sdata->bufidx; j++) {
+          sdata->buf[i][j] = sdata->buf[i][j + 1];
+          if (sdata->buf[i][j] != -1.) sdata->av[i] += (double)sdata->buf[i][j];
+        }
       }
+      has_data = WEED_TRUE;
     } else {
-      weed_memcpy(ins[base], src[i], nsamps * sizf);
+      sdata->bufidx++;
+      if (sdata->bufidx == BUFMAX) {
+        //fprintf(stderr,"OVERFLOW\n");
+        sdata->bufidx--;
+      }
     }
 
-    //fprintf(stderr,"executing plan of size %d\n",sdata->size);
-    fftwf_execute(plans[base]);
+    sdata->totsamps += onsamps;
 
-    okmin = kmin = 0;
+    for (j = 0; j < sdata->bufidx; j++) {
+      sdata->bufsize[j] = sdata->bufsize[j + 1];
+    }
+
+    sdata->bufsize[sdata->bufidx] = onsamps;
 
     for (s = 0; s < NSLICES; s++) {
-      // which element do we want for output ?
-      // out array goes from 0 to (nsamps/2 + 1) [div b y 2 rounded down]
+      sdata->buf[s][sdata->bufidx] = 0.;
+    }
 
-      // nyquist freq is rate / 2
-      // so the freq. of the kth element is: f  =  k/nsamps * rate
-      // therefore k = f/rate * nsamps
-      tot = 0.;
+    base = rndlog2(onsamps);
+    nsamps = twopow(base);
 
-      kmax = freq[s] / (double)rate * (double)nsamps;
+    for (i = 0; i < chans; i++) {
+      // do transform for each channel
 
-      if (kmax >= (nsamps >> 1)) {
-        // frequency invalid - too high for this sample packet
-        tot = -1.;
-        sdata->buf[s][sdata->bufidx] = tot;
-      } else {
-        // use an overlap
-        rkmin = kmin - ((kmin - okmin) >> 1);
-        if (s < NSLICES - 1) {
-          rkmax = kmax + (freq[s + 1] - freq[s]) / 2. / (double)rate * (double)nsamps;
-          if (rkmax >= (nsamps >> 1)) {
-            rkmax = kmax;
-          }
-        } else rkmax = kmax;
-
-        totx = 0.;
-
-        for (k = rkmin; k <= rkmax; k++) {
-          // sum values over range
-          // average over range
-          totx += sqrtf(outs[base][k][0] * outs[base][k][0] + outs[base][k][1] * outs[base][k][1]);
+      // copy in data to sdata->in
+      if (hamming == WEED_TRUE) {
+        for (j = 0; j < nsamps; j++) {
+          ins[base][j] = src[i][j] * (0.54f - 0.46f * cosf(TWO_PI * (float)j / (float)(nsamps - 1.)));
         }
-
-        // average over bandwidth
-        totx /= ((float)rkmax - (float)rkmin + 1.);
-
-        // boost lower freq
-        totx /= ((float)rkmax - (float)rkmin + 1.);
-
-        // store this value in the buffer
-
-        sdata->buf[s][sdata->bufidx] += totx / (float)chans;
-
-        okmin = kmin;
-        kmin = kmax;
+      } else {
+        weed_memcpy(ins[base], src[i], nsamps * sizf);
       }
-    } // done for all slices
-  } // done for all channels
 
-  weed_free(src);
+      //fprintf(stderr,"executing plan of size %d\n",sdata->size);
+      fftwf_execute(plans[base]);
 
-  if (!has_data) {
-    // need to buffer more data
-    beat_pulse = beat_hold = WEED_FALSE;
-    goto done;
-  }
+      okmin = kmin = 0;
 
-  // now we have the current value in sdata->buf, and the buffered total in sdata->av
-  // we can calculate the variance, and then use a formula:
-  // if curr > C * av && curr > V * var : trigger a beat
+      for (s = 0; s < NSLICES; s++) {
+        // which element do we want for output ?
+        // out array goes from 0 to (nsamps/2 + 1) [div b y 2 rounded down]
+
+        // nyquist freq is rate / 2
+        // so the freq. of the kth element is: f  =  k/nsamps * rate
+        // therefore k = f/rate * nsamps
+        tot = 0.;
+
+        kmax = freq[s] / (double)rate * (double)nsamps;
+
+        if (kmax >= (nsamps >> 1)) {
+          // frequency invalid - too high for this sample packet
+          tot = -1.;
+          sdata->buf[s][sdata->bufidx] = tot;
+        } else {
+          // use an overlap
+          rkmin = kmin - ((kmin - okmin) >> 1);
+          if (s < NSLICES - 1) {
+            rkmax = kmax + (freq[s + 1] - freq[s]) / 2. / (double)rate * (double)nsamps;
+            if (rkmax >= (nsamps >> 1)) {
+              rkmax = kmax;
+            }
+          } else rkmax = kmax;
+
+          totx = 0.;
+
+          for (k = rkmin; k <= rkmax; k++) {
+            // sum values over range
+            // average over range
+            totx += sqrtf(outs[base][k][0] * outs[base][k][0] + outs[base][k][1] * outs[base][k][1]);
+          }
+
+          // average over bandwidth
+          totx /= ((float)rkmax - (float)rkmin + 1.);
+
+          // boost lower freq
+          totx /= ((float)rkmax - (float)rkmin + 1.);
+
+          // store this value in the buffer
+
+          /// crash ???
+          sdata->buf[s][sdata->bufidx] += totx / (float)chans;
+
+          okmin = kmin;
+          kmin = kmax;
+        }
+      } // done for all slices
+    } // done for all channels
+
+    weed_free(src);
+
+    if (!has_data) {
+      // need to buffer more data
+      beat_pulse = beat_hold = WEED_FALSE;
+      goto done;
+    }
+
+    // now we have the current value in sdata->buf, and the buffered total in sdata->av
+    // we can calculate the variance, and then use a formula:
+    // if curr > C * av && curr > V * var : trigger a beat
 
 #define ONSET_WINDOW 5
 
-  var = 0.;
+    var = 0.;
 
-  for (i = 0; i < NSLICES; i++) {
-    // for the variance:
-    //av=sdata->av[i]/(double)sdata->bufidx;
+    for (i = 0; i < NSLICES; i++) {
+      // for the variance:
+      //av=sdata->av[i]/(double)sdata->bufidx;
 
-    if (sdata->bufidx > ONSET_WINDOW) {
-      float val1, val2, varx;
-      for (j = sdata->bufidx - ONSET_WINDOW; j <= sdata->bufidx; j++) {
-        if (
-          (val1 = sdata->buf[i][j]) != -1. &&
-          (val2 = sdata->buf[i][j - 1]) != -1.
-        ) {
-          varx = (val1 - val2);
-          if (varx < 0.) varx = 0.;
-          if (varx > 1000.) varx = 0.; // ignore invalid value
-          var += (double)varx / (double)ONSET_WINDOW;
+      if (sdata->bufidx > ONSET_WINDOW) {
+        float val1, val2, varx;
+        for (j = sdata->bufidx - ONSET_WINDOW; j <= sdata->bufidx; j++) {
+          if (
+            (val1 = sdata->buf[i][j]) != -1. &&
+            (val2 = sdata->buf[i][j - 1]) != -1.
+          ) {
+            varx = (val1 - val2);
+            if (varx < 0.) varx = 0.;
+            if (varx > 1000.) varx = 0.; // ignore invalid value
+            var += (double)varx / (double)ONSET_WINDOW;
+          }
         }
       }
     }
-  }
 
-  //if (i==0) fprintf(stderr,"%f %f %f  ",var,av,sdata->buf[i][sdata->bufidx]);
+    //if (i==0) fprintf(stderr,"%f %f %f  ",var,av,sdata->buf[i][sdata->bufidx]);
 
-  var /= (double)NSLICES;
+    var /= (double)NSLICES;
 
-  for (i = 0; i < NSLICES; i++) {
-    av = sdata->av[i] / (double)sdata->bufidx;
-    //if (i==0) printf("VALS %.2f %.2f %.2f %.2f %.2f %d %d %d %d %d\n",var,varlim,
-    //sdata->buf[i][sdata->bufidx],avlim*av,sdata->av[i],sdata->bufidx,sdata->totsamps,onsamps,base,rndlog2(onsamps));
+    for (i = 0; i < NSLICES; i++) {
+      av = sdata->av[i] / (double)sdata->bufidx;
+      //if (i==0) printf("VALS %.2f %.2f %.2f %.2f %.2f %d %d %d %d %d\n",var,varlim,
+      //sdata->buf[i][sdata->bufidx],avlim*av,sdata->av[i],sdata->bufidx,sdata->totsamps,onsamps,base,rndlog2(onsamps));
 
-    if (var >= varlim && sdata->buf[i][sdata->bufidx] >= (avlim * av)) {
-      // got a beat !
-      beat_pulse = beat_hold = WEED_TRUE;
-      if (verbosity > WEED_VERBOSITY_WARN)
-        fprintf(stderr, "PULSE !\n");
-      break;
+      if (var >= varlim && sdata->buf[i][sdata->bufidx] >= (avlim * av)) {
+        // got a beat !
+        beat_pulse = beat_hold = WEED_TRUE;
+        if (verbosity > WEED_VERBOSITY_WARN)
+          fprintf(stderr, "PULSE !\n");
+        break;
+      }
     }
-  }
 
-  //fprintf(stderr,"\n\n");
+    //fprintf(stderr,"\n\n");
 
 done:
-  //if (beat_hold) printf("BEAT %p !\n",out_params[1]);
-  //else printf("NOBEAT %.2f\n",osrc!=NULL?osrc[0]:1.23);
+    //if (beat_hold) printf("BEAT %p !\n",out_params[1]);
+    //else printf("NOBEAT %.2f\n",osrc!=NULL?osrc[0]:1.23);
 
-  weed_set_boolean_value(out_params[0], WEED_LEAF_VALUE, beat_pulse);
-  weed_set_boolean_value(out_params[1], WEED_LEAF_VALUE, beat_hold);
-  weed_free(out_params);
+    weed_set_boolean_value(out_params[0], WEED_LEAF_VALUE, beat_pulse);
+    weed_set_boolean_value(out_params[1], WEED_LEAF_VALUE, beat_hold);
+    weed_free(out_params);
+  }
   return WEED_SUCCESS;
 }
 

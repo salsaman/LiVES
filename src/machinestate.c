@@ -41,7 +41,11 @@ LIVES_GLOBAL_INLINE uint64_t lives_random(void) {return random();}
 uint64_t gen_unique_id(void) {
   static uint64_t last_rnum = 0;
   uint64_t rnum;
+#ifdef HAVE_GETENTROPY
   int randres = getentropy(&rnum, 8);
+#else
+  int randres = 1;
+#endif
   if (randres) {
     fastrand_val = lives_random();
     fastrand();
@@ -49,7 +53,7 @@ uint64_t gen_unique_id(void) {
     rnum = fastrand();
   }
   /// if we have a genuine RNG for 64 bits, then the probability of generating
-  // a numbr < 1 billion is approx. 2 ^ 30 / 2 ^ 64 or about 1 chance in 17 trillion
+  // a number < 1 billion is approx. 2 ^ 30 / 2 ^ 64 or about 1 chance in 17 trillion
   // the chance of it happening the first time is thus minscule
   // and the chance of it happening twice by chance is so unlikely we should discount it
   if (rnum < BILLIONS(1) && last_rnum < BILLIONS(1)) abort();
@@ -60,7 +64,11 @@ uint64_t gen_unique_id(void) {
 
 void init_random() {
   uint32_t rseed;
+#ifdef HAVE_GETENTROPY
   if (getentropy(&rseed, 4)) rseed = (gen_unique_id() & 0xFFFFFFFF);
+#else
+  rseed = (gen_unique_id() & 0xFFFFFFFF);
+#endif
   lives_srandom(rseed);
   fastrand_val = gen_unique_id();
 }

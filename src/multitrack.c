@@ -1608,7 +1608,7 @@ static EXPOSE_FN_DECL(expose_track_event, eventbox, user_data) {
 
 draw1:
 #if !GTK_CHECK_VERSION(3, 22, 0)
-  if (!cairo) cr = lives_painter_create_from_surface(ebox_surf);
+  if (!cairo) cr = lives_painter_create_from_surface(bgimage);
   else cr = cairo;
 #else
   cr = cairo;

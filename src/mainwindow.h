@@ -353,7 +353,9 @@ typedef struct {
   LiVESXDevice *mouse_device; ///< unused for gtk+ < 3.0.0
   LiVESXDisplay *disp;
   LiVESXScreen *screen;
+#if GTK_CHECK_VERSION(3, 22, 0)
   LiVESXMonitor *monitor;
+#endif
   double dpi;
   double scale;
   boolean primary;

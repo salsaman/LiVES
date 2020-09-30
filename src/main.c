@@ -399,7 +399,9 @@ void get_monitors(boolean reset) {
 #ifdef GUI_GTK
   GdkDisplay *disp;
   GdkScreen *screen;
+#if GTK_CHECK_VERSION(3, 22, 0)
   GdkMonitor *moni;
+#endif
   GdkRectangle rect;
   GdkDevice *device;
   double scale, dpi;
@@ -6444,7 +6446,7 @@ check_prcache:
 #endif
 
     if (prefs->show_dev_opts && mask != 0) {
-      g_printerr("enabling png opts %u\n", mask);
+      g_printerr("enabling png opts %lu\n", mask);
     }
 
     if (!mask) png_flagstate = -1;
@@ -6520,7 +6522,7 @@ check_prcache:
 
     boolean is16bit = FALSE;
 
-    uint32_t xwidth, xheight;
+    png_uint_32 xwidth, xheight;
 
     int width, height;
     int color_type, bit_depth;
@@ -6540,7 +6542,7 @@ check_prcache:
 
 #if defined(PNG_LIBPNG_VER) && (PNG_LIBPNG_VER >= 10200)
     if (!png_flagstate) png_init(png_ptr);
-#if PNG_ASSEMBLER_CODE_SUPPORTED
+#ifdef PNG_ASSEMBLER_CODE_SUPPORTED
     if (png_flagstate == 1) png_set_asm_flags(png_ptr, png_flags);
 #endif
 #endif

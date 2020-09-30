@@ -401,7 +401,12 @@ static size_t lives_struct_get_size(lives_struct_def_t *) ALLOW_UNUSED;
 
 #ifndef LSD_RANDFUNC
 #define _LSD_IGN_RET(a) ((void)((a) + 1))
+#ifdef HAVE_GETENTROPY
 #define LSD_RANDFUNC(ptr, size) _LSD_IGN_RET(getentropy(ptr, size))
+#else
+#include <stdlib.h>
+#define LSD_RANDFUNC(ptr, size) 
+#endif
 #endif
 
 static void _lsd_init_copy(void *, void *, const char *, const char *, void *) ALLOW_UNUSED;

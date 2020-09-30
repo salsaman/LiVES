@@ -316,7 +316,9 @@ typedef GdkEventKey                       	LiVESXEventKey;
 typedef GdkEvent                          		LiVESXEventDelete;
 typedef GdkDisplay                        		LiVESXDisplay;
 typedef GdkScreen                         		LiVESXScreen;
-typedef GdkMonitor                         		LiVESXMonitor;
+#if GTK_CHECK_VERSION(3, 22, 0)
+typedef GdkMonitor                             	LiVESXMonitor;
+#endif
 typedef GdkDevice                         		LiVESXDevice;
 
 #define LIVES_KEY_RELEASE GDK_KEY_RELEASE

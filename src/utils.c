@@ -4534,7 +4534,7 @@ boolean check_dir_access(const char *dir, boolean leaveit) {
 void activate_url_inner(const char *link) {
 #if GTK_CHECK_VERSION(2, 14, 0)
   LiVESError *err = NULL;
-#if GTK_CHECK_VERSION(2, 14, 0)
+#if GTK_CHECK_VERSION(3, 22, 0)
   gtk_show_uri_on_window(NULL, link, GDK_CURRENT_TIME, &err);
 #else
   gtk_show_uri(NULL, link, GDK_CURRENT_TIME, &err);

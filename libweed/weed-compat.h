@@ -28,7 +28,7 @@
    Carlo Prelz - http://www2.fluido.as:8080/
 */
 
-/* (C) G. Finch, 2005 - 2019 */
+/* (C) G. Finch, 2005 - 2020 */
 
 #ifndef __WEED_COMPAT_H__
 #define __WEED_COMPAT_H__
@@ -56,6 +56,12 @@ extern "C"
 #define WEED_FOURCC_COMPAT
 #endif
 
+#if defined __GNUC__
+#define ALLOW_UNUSED __attribute__((unused))
+#else
+#define ALLOW_UNUSED
+#endif
+  
 static int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *sampling,
 			    int *sspace, int *clamping) {
   // inputs are fourcc and bpp

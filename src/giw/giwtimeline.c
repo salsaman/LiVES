@@ -1009,7 +1009,10 @@ static void giw_timeline_draw_pos(GiwTimeline *timeline) {
 #else
     cairo_destroy(cr);
 #endif
+
+#if GTK_CHECK_VERSION(3, 22, 0)
     cairo_region_destroy(reg);
+#endif
     timeline->xsrc = x;
     timeline->ysrc = y;
   }

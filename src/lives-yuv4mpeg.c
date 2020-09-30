@@ -628,7 +628,7 @@ void on_live_tvcard_activate(LiVESMenuItem *menuitem, livespointer user_data) {
                               devstr, fifofile);
   } else {
     double fps = 0.;
-    char *driver = NULL, *outfmt = NULL;
+    const char *driver = NULL, *outfmt = NULL;
     int width = 0, height = 0;
     int input = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(tvcardw->spinbuttoni));
 
@@ -644,8 +644,6 @@ void on_live_tvcard_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     com = lives_strdup_printf("%s open_tv_card \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %.3f \"%s\" \"%s\"",
                               prefs->backend, cfile->handle, chanstr,
                               devstr, fifofile, input, width, height, fps, driver, outfmt);
-    lives_free(driver);
-    lives_free(outfmt);
   }
   lives_widget_destroy(card_dialog);
   lives_free(tvcardw);

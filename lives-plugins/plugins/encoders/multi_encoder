@@ -166,7 +166,6 @@ def is_installed(prog):
     """
     See whether "prog" is installed with all dependencies
     """
-
     wprog = which(prog)
 
     if wprog == '':
@@ -318,7 +317,7 @@ if __name__ == '__main__':
 
     if dir == 'get_formats':
 
-       # define AUDIO_CODEC_MP3 0
+        # define AUDIO_CODEC_MP3 0
         # define AUDIO_CODEC_PCM 1
         # define AUDIO_CODEC_MP2 2
         # define AUDIO_CODEC_VORBIS 3

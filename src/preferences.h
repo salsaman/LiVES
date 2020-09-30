@@ -372,6 +372,7 @@ typedef struct {
   char weed_plugin_path[PATH_MAX];
   char frei0r_path[PATH_MAX];
   char ladspa_path[PATH_MAX];
+  char libvis_path[PATH_MAX];
 
   boolean present;
 
@@ -720,6 +721,7 @@ typedef struct {
   LiVESWidget *wpp_entry;
   LiVESWidget *frei0r_entry;
   LiVESWidget *ladspa_entry;
+  LiVESWidget *libvis_entry;
   LiVESWidget *cdda_hbox;
   LiVESWidget *midi_hbox;
   LiVESWidget *frameblank_entry;
@@ -871,6 +873,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_LADSPA_PATH "ladspa_path"
 #define PREF_WEED_PLUGIN_PATH "weed_plugin_path"
 #define PREF_FREI0R_PATH "frei0r_path"
+#define PREF_LIBVISUAL_PATH "libvis_path"
 
 #define PREF_VID_PLAYBACK_PLUGIN "vid_playback_plugin"
 

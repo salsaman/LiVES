@@ -1958,7 +1958,7 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
 #endif
       break;
     case GTK_STATE_FLAG_INSENSITIVE:
-#if GTK_CHECK_VERSION(3, 18, 0)
+#if GTK_CHECK_VERSION(3, 24, 0)
       state_str = ":disabled";
 #else
       state_str = ":insensitive";
@@ -1986,10 +1986,15 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
 
     if (!selector || !(*selector)) selstr = lives_strdup("");
     else selstr = lives_strdup_printf(" %s", selector);
-    if (widget)
+    if (widget) {
+#if GTK_CHECK_VERSION(3, 24, 0)
       wname = lives_strdup_printf("#%s%s%s", widget_name, state_str, selstr);
-    else
+#else
+      wname = lives_strdup_printf("#%s%s%s", widget_name, selstr, state_str);
+#endif
+    } else {
       wname = lives_strdup_printf("%s%s%s", widget_name, selstr, state_str);
+    }
     lives_free(selstr);
     if (selector && selector != xselector) lives_free(selector);
 
@@ -2036,6 +2041,13 @@ boolean set_css_value(LiVESWidget *widget, LiVESWidgetState state, const char *d
 boolean set_css_value_direct(LiVESWidget *widget, LiVESWidgetState state, const char *selector, const char *detail,
                              const char *value) {
 #if GTK_CHECK_VERSION(3, 16, 0)
+
+#if !GTK_CHECK_VERSION(3, 24, 0)
+  if (!lives_strcmp(detail, "min-width")
+      || !lives_strcmp(detail, "min-height")
+      || !lives_strcmp(detail, "caret-color"))
+    return FALSE;
+#endif
   return set_css_value_for_state_flag(widget, state, selector, detail, value);
 #endif
   return FALSE;
@@ -8556,7 +8568,7 @@ LiVESWidget *lives_standard_label_new(const char *text) {
   lives_widget_set_halign(label, lives_justify_to_align(widget_opts.justify));
   if (widget_opts.apply_theme) {
     set_standard_widget(label, TRUE);
-#if !GTK_CHECK_VERSION(3, 16, 0)
+#if !GTK_CHECK_VERSION(3, 24, 0)
     // non functional in gtk 3.18
     set_child_dimmed_colour(label, BUTTON_DIM_VAL);
     set_child_colour(label, TRUE);
@@ -8698,8 +8710,11 @@ LiVESWidget *lives_standard_frame_new(const char *labeltext, float xalign, boole
     lives_widget_apply_theme(frame, LIVES_WIDGET_STATE_NORMAL);
     lives_widget_set_text_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
-#if !GTK_CHECK_VERSION(3, 16, 0)
-    lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+#if !GTK_CHECK_VERSION(3, 24, 0)
+    if (prefs->extra_colours && mainw->pretty_colours)
+      lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->nice1);
+    else
+      lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
 #else
     if (prefs->extra_colours && mainw->pretty_colours) {
       char *colref = gdk_rgba_to_string(&palette->nice1);

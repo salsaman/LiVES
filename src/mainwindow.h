@@ -130,7 +130,7 @@
 #define DEF_FRAME_VSIZE_GUI (((int)(DEF_FRAME_VSIZE_43S_UNSCALED * widget_opts.scale) >> 1) << 1)
 
 // min screen height to show the message area
-#define MIN_MSGBAR_HEIGHT (widget_opts.scale >= 1. ? ((int)46. * widget_opts.scale) : 46)
+#define MIN_MSGBAR_HEIGHT (widget_opts.scale >= 1. ? ((int)32. * widget_opts.scale) : 46)
 #define MIN_MSG_AREA_SCRNHEIGHT (DEF_FRAME_HSIZE_GUI + CE_TIMELINE_HSPACE - MIN_MSGBAR_HEIGHT)
 #define MIN_MSGBOX_LLINES 2
 
@@ -390,6 +390,7 @@ enum {
 #define EXEC_COMPOSITE "composite"
 #define EXEC_IDENTIFY "identify"
 #define EXEC_FFPROBE "ffprobe"
+#define EXEC_FFMPEG "ffmpeg"
 #define EXEC_FILE "file"
 #define EXEC_YOUTUBE_DL "youtube-dl"
 #define EXEC_MD5SUM "md5sum"

@@ -1313,6 +1313,7 @@ boolean apply_prefs(boolean skip_warn) {
   const char *def_proj_dir = lives_entry_get_text(LIVES_ENTRY(prefsw->proj_dir_entry));
   const char *wp_path = lives_entry_get_text(LIVES_ENTRY(prefsw->wpp_entry));
   const char *frei0r_path = lives_entry_get_text(LIVES_ENTRY(prefsw->frei0r_entry));
+  const char *libvis_path = lives_entry_get_text(LIVES_ENTRY(prefsw->libvis_entry));
   const char *ladspa_path = lives_entry_get_text(LIVES_ENTRY(prefsw->ladspa_entry));
 
   const char *sepimg_path = lives_entry_get_text(LIVES_ENTRY(prefsw->sepimg_entry));
@@ -1834,11 +1835,19 @@ boolean apply_prefs(boolean skip_warn) {
   if (lives_strcmp(frei0r_path, prefs->frei0r_path)) {
     set_string_pref(PREF_FREI0R_PATH, frei0r_path);
     lives_snprintf(prefs->frei0r_path, PATH_MAX, "%s", frei0r_path);
+    lives_setenv("FREI0R_PATH", frei0r_path);
+  }
+
+  if (lives_strcmp(libvis_path, prefs->libvis_path)) {
+    set_string_pref(PREF_LIBVISUAL_PATH, libvis_path);
+    lives_snprintf(prefs->libvis_path, PATH_MAX, "%s", libvis_path);
+    lives_setenv("VISUAL_PLUGIN_PATH", libvis_path);
   }
 
   if (lives_strcmp(ladspa_path, prefs->ladspa_path)) {
     set_string_pref(PREF_LADSPA_PATH, ladspa_path);
     lives_snprintf(prefs->ladspa_path, PATH_MAX, "%s", ladspa_path);
+    lives_setenv("LADSPA_PATH", ladspa_path);
   }
 
   if (lives_strcmp(sepimg_path, mainw->sepimg_path)) {
@@ -4308,7 +4317,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_effects));
 
-  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Changing these values will only take effect after a retart of LiVES:"), FALSE);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->wpp_entry = lives_standard_direntry_new(_("Weed plugin path"), prefs->weed_plugin_path,
                       LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
 
@@ -4321,6 +4332,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->ladspa_entry = lives_standard_direntry_new(_("LADSPA plugin path"), prefs->ladspa_path, LONG_ENTRY_WIDTH, PATH_MAX,
+                         LIVES_BOX(hbox), NULL);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  prefsw->libvis_entry = lives_standard_direntry_new(_("libvisual plugin path"), prefs->libvis_path, LONG_ENTRY_WIDTH, PATH_MAX,
                          LIVES_BOX(hbox), NULL);
 
   widget_opts.packing_height = woph;
@@ -5484,6 +5499,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   ACTIVE(wpp_entry, CHANGED);
   ACTIVE(frei0r_entry, CHANGED);
+  ACTIVE(libvis_entry, CHANGED);
   ACTIVE(ladspa_entry, CHANGED);
 
   ACTIVE(fs_max_check, TOGGLED);

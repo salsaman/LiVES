@@ -208,13 +208,15 @@ boolean vpp_try_match_palette(_vid_playback_plugin *vpp, weed_layer_t *layer);
 
 #define DEFAULT_VPP "openGL"
 
-#define DEF_VPP_HSIZE 1024
-#define DEF_VPP_VSIZE 768
+#define DEF_VPP_HSIZE DEF_FRAME_HSIZE_UNSCALED
+#define DEF_VPP_VSIZE DEF_FRAME_VSIZE_UNSCALED
 
 const weed_plant_t *pp_get_param(weed_plant_t **pparams, int idx);
 const weed_plant_t *pp_get_chan(weed_plant_t **pparams, int idx);
 
 // encoder plugins
+
+#define FFMPEG_ENCODER_NAME "ffmpeg_encoder"
 
 #define MULTI_ENCODER_NAME "multi_encoder"
 #define MULTI_ENCODER3_NAME "multi_encoder3"

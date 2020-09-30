@@ -173,7 +173,6 @@ void *gtk_thread_wrapper(void *data) {
 #ifdef USE_GLIB
 static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, const char *message,  livespointer data) {
   if (prefs && prefs->vj_mode) return;
-
   if (level & LIVES_LOG_FATAL_MASK) {
 #ifndef IGNORE_FATAL_ERRORS
     raise(LIVES_SIGSEGV);
@@ -190,15 +189,15 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
 #ifdef LIVES_NO_DEBUG
     if (xlevel >= LIVES_LOG_LEVEL_DEBUG) return;
 #endif
-#define SHOW_INFO_ERRORS
+    //efine SHOW_INFO_ERRORS
 #ifndef SHOW_INFO_ERRORS
     if (xlevel == LIVES_LOG_LEVEL_INFO) return;
 #endif
-#define SHOW_MSG_ERRORS
+    //efine SHOW_MSG_ERRORS
 #ifndef SHOW_MSG_ERRORS
     if (xlevel == LIVES_LOG_LEVEL_MESSAGE) return;
 #endif
-    //#define NO_WARN_ERRORS
+#define NO_WARN_ERRORS
 #ifdef NO_WARN_ERRORS
     if (xlevel == LIVES_LOG_LEVEL_WARNING) return;
 #endif
@@ -208,7 +207,7 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
 #endif
 #endif
 
-#define TRAP_THEME_ERRORS
+    //efine TRAP_THEME_ERRORS
 #define SHOW_THEME_ERRORS
 #ifndef SHOW_THEME_ERRORS
     if (prefs->show_dev_opts)
@@ -1149,6 +1148,7 @@ static void lives_init(_ign_opts *ign_opts) {
   char *weed_plugin_path;
   char *frei0r_path;
   char *ladspa_path;
+  char *libvis_path;
   char *msg;
 
   boolean needs_free;
@@ -1815,11 +1815,14 @@ static void lives_init(_ign_opts *ign_opts) {
     if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_encoder_plugins && capable->has_python) {
       LiVESList *ofmt_all = NULL;
       char **array;
-      if (capable->python_version >= 3000000)
-        lives_snprintf(prefs->encoder.name, 64, "%s", MULTI_ENCODER3_NAME);
-      else
-        lives_snprintf(prefs->encoder.name, 64, "%s", MULTI_ENCODER_NAME);
-
+      if (has_executable(EXEC_FFMPEG)) {
+        lives_snprintf(prefs->encoder.name, 64, "%s", FFMPEG_ENCODER_NAME);
+      } else {
+        if (capable->python_version >= 3000000)
+          lives_snprintf(prefs->encoder.name, 64, "%s", MULTI_ENCODER3_NAME);
+        else
+          lives_snprintf(prefs->encoder.name, 64, "%s", MULTI_ENCODER_NAME);
+      }
       // need to change the output format
 
       if ((ofmt_all = plugin_request_by_line(PLUGIN_ENCODERS, prefs->encoder.name, "get_formats")) != NULL) {
@@ -2016,12 +2019,13 @@ static void lives_init(_ign_opts *ign_opts) {
       lives_setenv("WEED_PLUGIN_PATH", weed_plugin_path);
       needs_free = TRUE;
     }
+    if (!weed_plugin_path) weed_plugin_path = "";
     lives_snprintf(prefs->weed_plugin_path, PATH_MAX, "%s", weed_plugin_path);
     if (needs_free) lives_free(weed_plugin_path);
 
     needs_free = FALSE;
     frei0r_path = getenv("FREI0R_PATH");
-    if (!frei0r_path) {
+    if (!frei0r_path || !*frei0r_path) {
       get_string_pref(PREF_FREI0R_PATH, prefs->frei0r_path, PATH_MAX);
       if (!*prefs->frei0r_path) frei0r_path =
           lives_strdup_printf("/usr/lib/frei0r-1:/usr/local/lib/frei0r-1:%s/frei0r-1",
@@ -2030,6 +2034,7 @@ static void lives_init(_ign_opts *ign_opts) {
       lives_setenv("FREI0R_PATH", frei0r_path);
       needs_free = TRUE;
     }
+    if (!frei0r_path) frei0r_path = "";
     lives_snprintf(prefs->frei0r_path, PATH_MAX, "%s", frei0r_path);
     if (needs_free) lives_free(frei0r_path);
 
@@ -2042,8 +2047,21 @@ static void lives_init(_ign_opts *ign_opts) {
       lives_setenv("LADSPA_PATH", ladspa_path);
       needs_free = TRUE;
     }
-    lives_snprintf(prefs->ladspa_path, PATH_MAX, "%s", ladspa_path);
+    if (!ladspa_path) ladspa_path = "";
+    if (!*prefs->ladspa_path && *ladspa_path)
+      lives_snprintf(prefs->ladspa_path, PATH_MAX, "%s", ladspa_path);
     if (needs_free) lives_free(ladspa_path);
+
+    needs_free = FALSE;
+    libvis_path = getenv("VISUAL_PLUGIN_PATH");
+    if (!libvis_path || !*libvis_path) {
+      get_string_pref(PREF_LIBVISUAL_PATH, prefs->libvis_path, PATH_MAX);
+      if (*prefs->libvis_path) lives_setenv("VISUAL_PLUGIN_PATH", prefs->libvis_path);
+    }
+    if (!libvis_path) libvis_path = "";
+    if (!*prefs->libvis_path && *libvis_path)
+      lives_snprintf(prefs->libvis_path, PATH_MAX, "%s", libvis_path);
+
     splash_msg(_("Loading realtime effect plugins..."), SPLASH_LEVEL_LOAD_RTE);
     weed_load_all();
 
@@ -3016,6 +3034,7 @@ capability *get_capabilities(void) {
   capable->has_mpv = UNCHECKED;
   capable->has_convert = UNCHECKED;
   capable->has_ffprobe = UNCHECKED;
+  capable->has_ffmpeg = UNCHECKED;
   capable->has_composite = UNCHECKED;
   capable->has_identify = UNCHECKED;
   capable->has_sox_play = UNCHECKED;

@@ -20,6 +20,7 @@ static int package_version = 2; // version of this package
 //////////////////////////////////////////////////////////////////
 
 #define NEED_ALPHA_SORT
+#define NEED_AUDIO
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
@@ -41,9 +42,7 @@ static int package_version = 2; // version of this package
 #include <dirent.h>
 #include <string.h>
 
-#include <libvisual/lv_actor.h>
-#include <libvisual/lv_input.h>
-#include <libvisual/lv_libvisual.h>
+#include <libvisual/libvisual.h>
 
 #include <pthread.h>
 
@@ -194,11 +193,12 @@ static void store_audio(weed_libvis_t *libvis, weed_plant_t *in_channel) {
   register int i;
 
   if (in_channel != NULL) {
-    int adlen = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
-    float **adata = (float **)weed_get_voidptr_array(in_channel, WEED_LEAF_AUDIO_DATA, NULL);
+    int achans;
+    int adlen = weed_channel_get_audio_length(in_channel);
+    float **adata = (float **)weed_channel_get_audio_data(in_channel, &achans);
     if (adlen > 0 && adata != NULL) {
       size_t sdf, offset = 0, overflow;
-      int achans = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_CHANNELS, NULL);
+
       pthread_mutex_lock(&libvis->pcm_mutex);
 
       /// we want to send 256 samples of left, followed by 256 samples of right / monoe
@@ -260,13 +260,13 @@ WEED_SETUP_START(200, 200) {
 
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("In audio", WEED_CHANNEL_OPTIONAL), NULL};
 
-  char *lpp = getenv("VISUAL_PLUGIN_PATH");
+  char *xlpp = getenv("VISUAL_PLUGIN_PATH"), *lpp;
 
   char *vdir;
 
   int filter_flags = 0;
 
-  if (lpp == NULL) return NULL;
+  if (!xlpp || !*xlpp) return NULL;
 
   weed_set_string_value(plugin_info, WEED_LEAF_PACKAGE_NAME, "libvisual");
 
@@ -282,31 +282,31 @@ WEED_SETUP_START(200, 200) {
   if (VISUAL_PLUGIN_API_VERSION < 2) return NULL;
   visual_log_set_verboseness(VISUAL_LOG_VERBOSENESS_NONE);
 
+  lpp = strdup(xlpp);
+  vdir = strtok(lpp, ":");
+
+  // add lpp paths
+  while (vdir) {
+    if (!*vdir) continue;
+
+    curvdir = opendir(vdir);
+    if (!curvdir) continue;
+    closedir(curvdir);
+
+    visual_init_path_add(strdup(vdir));
+    vdir = strtok(NULL, ":");
+  }
+  weed_free(lpp);
+
   if (visual_init(NULL, NULL) < 0) {
     fprintf(stderr, "Libvis : Unable to init libvisual plugins\n");
     return NULL;
   }
 
-  vdir = strtok(lpp, ":");
-
-  // add lpp paths
-  while (vdir != NULL) {
-    if (!strlen(vdir)) continue;
-
-    curvdir = opendir(vdir);
-    if (curvdir == NULL) {
-      continue;
-    }
-
-    visual_init_path_add(vdir);
-    closedir(curvdir);
-    vdir = strtok(NULL, ":");
-  }
-
   in_params[1] = NULL;
   out_chantmpls[1] = NULL;
 
-  while ((name = (char *)visual_actor_get_next_by_name_nogl(name)) != NULL) {
+  while ((name = (char *)visual_actor_get_next_by_name_nogl(name))) {
     snprintf(fullname, PATH_MAX, "%s", name);
     in_params[0] = weed_string_list_init("listener", "Audio _listener", 5, listeners);
     weed_set_int_value(in_params[0], WEED_LEAF_FLAGS, WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);

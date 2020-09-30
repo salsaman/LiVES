@@ -983,6 +983,7 @@ typedef struct {
   lives_checkstatus_t has_composite;
   lives_checkstatus_t has_identify;
   lives_checkstatus_t has_ffprobe;
+  lives_checkstatus_t has_ffmpeg;
   lives_checkstatus_t has_cdda2wav;
   lives_checkstatus_t has_icedax;
   lives_checkstatus_t has_midistartstop;
@@ -1902,7 +1903,7 @@ void break_me(const char *dtl);
 #endif
 
 #endif
-//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #else

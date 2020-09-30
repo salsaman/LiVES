@@ -2995,6 +2995,8 @@ capability *get_capabilities(void) {
   capable->mainpid = lives_getpid();
 
   get_location("cp", capable->cp_cmd, PATH_MAX);
+  capable->sysbindir = get_dir(capable->cp_cmd);
+
   get_location("mv", capable->mv_cmd, PATH_MAX);
   get_location("ln", capable->ln_cmd, PATH_MAX);
   get_location("chmod", capable->chmod_cmd, PATH_MAX);

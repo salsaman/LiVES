@@ -1083,6 +1083,7 @@ typedef struct {
 
   int dclick_time;
   int dclick_dist;
+  char *sysbindir;
 } capability;
 
 /// some shared structures

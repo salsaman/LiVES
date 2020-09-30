@@ -67,8 +67,10 @@ my $uid = $ >;
 my $gid = $);
 $gid =~ s/\W.*//;
 
-$SYSBIN = "/bin";
-#$SYSBIN = "/usr/bin";
+my $SYSBIN = "";
+
+#my $SYSBIN = "/bin";
+#my $SYSBIN = "/usr/bin";
 
 if (my $DEBUG_CALLERS) {
     # only callers are LiVES decoders, currently
@@ -1833,7 +1835,7 @@ if (defined($ARGV[0])) {
 		$aformnew = "--audio-format=s16";
 	    }
 
-	    $threads = &smog_system_direct("$SYSBIN/grep processor /proc/cpuinfo | wc -l");
+	    $threads = &smog_system_direct("$SYSBIN" . "grep processor /proc/cpuinfo | wc -l");
 	    $threads = int($threads);
 	    if ($threads == 0) {
 		$threads = 1;
@@ -2576,7 +2578,7 @@ if (defined($ARGV[0])) {
 			}
 		    }
 		    else {
-			$smerr =  &smog_system ("$SYSBIN/ln \"$curworkdir/$from$img_ext\" " .
+			$smerr =  &smog_system ("$SYSBIN" . "ln \"$curworkdir/$from$img_ext\" " .
 						"\"$linksdir/$name$img_ext\"");
 			if ($smerr) {
 			    &sig_system_error("Linking \"$curworkdir/$from$img_ext\" to " .
@@ -3198,7 +3200,7 @@ if (defined($ARGV[0])) {
 	    $file = $ARGV[8];
 	    $extra_params = $ARGV[9];
 	    $mplayer_command = "\"". &get_mplayer_location . "\"";
-	    $threads = &smog_system_direct("$SYSBIN/grep processor /proc/cpuinfo | wc -l");
+	    $threads = &smog_system_direct("$SYSBIN" . "grep processor /proc/cpuinfo | wc -l");
 	    $threads = int($threads);
 	    if ($threads == 0) {
 		$threads = 1;
@@ -4744,7 +4746,7 @@ if (defined($ARGV[0])) {
 	my ($file, $leave) = @_;
 	return 1 if -f $file && -w $file;
 	return 0 if (0 + -e $file);
-	my $err = &smog_system("$SYSBIN/touch \"$file\"");
+	my $err = &smog_system("$SYSBIN" . "touch \"$file\"");
 	if ($err) {
 	    unlink $file;
 	    return 0;
@@ -5231,7 +5233,7 @@ if (defined($ARGV[0])) {
 	## -b baclup dest files
 	## -n no clobber 
 
-	$smcomret = system("$SYSBIN/cp -f \"$smfrom\" \"$smto\"");
+	$smcomret = system("$SYSBIN" . "cp -f \"$smfrom\" \"$smto\"");
 
 	if ($smcomret != 0 && -f $smfrom) {
 	    if ($DEBUG_SMOGRIFY) {
@@ -6745,7 +6747,7 @@ if (defined($ARGV[0])) {
 	    }
 	}
 	else {
-	    my $threads = &smog_system_direct("$SYSBIN/grep processor /proc/cpuinfo | wc -l");
+	    my $threads = &smog_system_direct("$SYSBIN" . "grep processor /proc/cpuinfo | wc -l");
 	    $threads = int($threads);
 	    if ($threads == 0) {
 		$threads = 1;
@@ -6792,7 +6794,7 @@ if (defined($ARGV[0])) {
 	    my $aasamps = $asamps / 8;
 	    my $mp_com = "\"". &get_mplayer_location . "\"";
 	    my $format = &get_mplayer_format;
-	    my $threads = &smog_system_direct("$SYSBIN/grep processor /proc/cpuinfo | wc -l");
+	    my $threads = &smog_system_direct("$SYSBIN" . "grep processor /proc/cpuinfo | wc -l");
 	    $threads = int($threads);
 	    if ($threads == 0) {
 		$threads = 1;
@@ -8378,7 +8380,7 @@ if (defined($ARGV[0])) {
     sub location {
 	# return the location of an executable
 	my $command = shift;
-	my $location = smog_system_direct("which \"$command\" 2>$nulfile");
+	my $location = &smog_system_direct("which \"$command\" 2>$nulfile");
 	chomp($location);
 	$location;
     }
@@ -9738,7 +9740,7 @@ if (defined($ARGV[0])) {
 			}
 		    }
 		    else {
-			&smog_system("$SYSBIN/touch $leavedir/$file");
+			&smog_system("$SYSBIN" . "touch $leavedir/$file");
 		    }
 
 		    $nitems++;
@@ -9827,7 +9829,7 @@ if (defined($ARGV[0])) {
 			print "directory is empty and option 'Remove Empty Directories' " .
 			    "is set\n";
 			print "directory will be removed.\n";
-			&smog_system("$SYSBIN/touch $remdir/$file");
+			&smog_system("$SYSBIN" . "touch $remdir/$file");
 			$nitems++;
 			next;
 		    }
@@ -9862,7 +9864,7 @@ if (defined($ARGV[0])) {
 					       || &is_specialdir($file))) {
 				print STDERR "Will remove $workdir/$file\n";
 				print "Will remove $workdir/$file\n";
-				&smog_system("$SYSBIN/touch $remdir/$file");
+				&smog_system("$SYSBIN" . "touch $remdir/$file");
 				$nitems++;
 			    }
 			    else {
@@ -9873,7 +9875,7 @@ if (defined($ARGV[0])) {
 					"need to check with the user first\n";
 				    print "   - $workdir/$file/ contains header* and we " .
 					"need to check with the user first\n";
-				    &smog_system("$SYSBIN/touch $recdir/$file");
+				    &smog_system("$SYSBIN" . "touch $recdir/$file");
 				    $nitems++;
 				    next;
 				}
@@ -9914,7 +9916,7 @@ if (defined($ARGV[0])) {
 				    "directory is no longer needed\n";
 				print "smogrify: manual cleanup may be required if this " .
 				    "directory is no longer needed\n";
-				&smog_system("$SYSBIN/touch $leavedir/$file");
+				&smog_system("$SYSBIN" . "touch $leavedir/$file");
 				$nitems++;
 				push (@left, $file);
 			    }}}
@@ -9981,7 +9983,7 @@ if (defined($ARGV[0])) {
 		    else {
 			print STDERR "...with unknown type. Consider for manual removal\n";
 			print "...with unknown type. Consider for manual removal\n";
-			&smog_system("$SYSBIN/touch $leavedir/$file");
+			&smog_system("$SYSBIN" . "touch $leavedir/$file");
 			$nitems++;
 			push (@left, $file);
 		    }
@@ -10023,7 +10025,7 @@ if (defined($ARGV[0])) {
 		    &smog_rename($filerem, $deftrashdir);
 		}
 		else {
-		    &smog_system("$SYSBIN/touch $remdir/$filerem");
+		    &smog_system("$SYSBIN" . "touch $remdir/$filerem");
 		    $nitems++;
 		}
 	    }
@@ -10060,7 +10062,7 @@ if (defined($ARGV[0])) {
 		    &smog_rename($filerem, $deftrashdir);
 		}
 		else {
-		    &smog_system("$SYSBIN/touch $remdir/$filerem");
+		    &smog_system("$SYSBIN" . "touch $remdir/$filerem");
 		    $nitems++;
 		}
 	    }
@@ -10113,7 +10115,7 @@ if (defined($ARGV[0])) {
 	make_path $linksdir;
 
 	# remove dir + any empty parents
-	&smog_system("$SYSBIN/rmdir -p \"$linksdir\" 2>$nulfile");
+	&smog_system("$SYSBIN" . "rmdir -p \"$linksdir\" 2>$nulfile");
     }
 
 

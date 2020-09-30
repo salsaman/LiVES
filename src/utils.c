@@ -390,30 +390,38 @@ size_t lives_fread_string(char *buff, size_t stlen, const char *fname) {
 
 
 lives_file_buffer_t *find_in_file_buffers(int fd) {
-  lives_file_buffer_t *fbuff;
-  LiVESList *fblist = mainw->file_buffers;
+  lives_file_buffer_t *fbuff = NULL;
+  LiVESList *fblist;
 
-  while (fblist) {
+  pthread_mutex_lock(&mainw->fbuffer_mutex);
+
+  for (fblist = mainw->file_buffers; fblist; fblist = fblist->next) {
     fbuff = (lives_file_buffer_t *)fblist->data;
-    if (fbuff->fd == fd) return fbuff;
-    fblist = fblist->next;
+    if (fbuff->fd == fd) break;
+    fbuff = NULL;
   }
 
-  return NULL;
+  pthread_mutex_unlock(&mainw->fbuffer_mutex);
+
+  return fbuff;
 }
 
 
 lives_file_buffer_t *find_in_file_buffers_by_pathname(const char *pathname) {
-  lives_file_buffer_t *fbuff;
-  LiVESList *fblist = mainw->file_buffers;
+  lives_file_buffer_t *fbuff = NULL;
+  LiVESList *fblist;
 
-  while (fblist) {
+  pthread_mutex_lock(&mainw->fbuffer_mutex);
+
+  for (fblist = mainw->file_buffers; fblist; fblist = fblist->next) {
     fbuff = (lives_file_buffer_t *)fblist->data;
-    if (!lives_strcmp(fbuff->pathname, pathname)) return fbuff;
-    fblist = fblist->next;
+    if (!lives_strcmp(fbuff->pathname, pathname)) break;
+    fbuff = NULL;
   }
 
-  return NULL;
+  pthread_mutex_unlock(&mainw->fbuffer_mutex);
+
+  return fbuff;
 }
 
 
@@ -538,10 +546,13 @@ static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
 
 
 void lives_invalidate_all_file_buffers(void) {
-  lives_file_buffer_t *fbuff;
-  LiVESList *fbuffer = mainw->file_buffers;
-  for (; fbuffer; fbuffer = fbuffer->next) {
-    fbuff = (lives_file_buffer_t *)fbuffer->data;
+  lives_file_buffer_t *fbuff = NULL;
+  LiVESList *fblist;
+
+  pthread_mutex_lock(&mainw->fbuffer_mutex);
+
+  for (fblist = mainw->file_buffers; fblist; fblist = fblist->next) {
+    fbuff = (lives_file_buffer_t *)fblist->data;
     // if a writer, flush
     if (!fbuff->read && mainw->memok) {
       file_buffer_flush(fbuff);
@@ -550,6 +561,8 @@ void lives_invalidate_all_file_buffers(void) {
       fbuff->invalid = TRUE;
     }
   }
+
+  pthread_mutex_unlock(&mainw->fbuffer_mutex);
 }
 
 

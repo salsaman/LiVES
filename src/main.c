@@ -955,8 +955,6 @@ static boolean pre_init(void) {
 
   get_string_pref(PREF_GUI_THEME, prefs->theme, 64);
 
-  g_print("THEME was %s\n", prefs->theme);
-
   if (!(*prefs->theme)) {
     lives_snprintf(prefs->theme, 64, LIVES_THEME_NONE);
   }

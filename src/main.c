@@ -8557,6 +8557,7 @@ mainw->track_decoders[i] = clone_decoder(nclip);
           size_ok = FALSE;
         }
       }
+
       if (size_ok) {
         // if frame size is OK we apply real time effects
         if ((mainw->rte != 0 || (mainw->is_rendering && !mainw->event_list))

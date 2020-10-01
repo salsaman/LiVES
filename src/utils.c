@@ -1966,6 +1966,10 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   else
     nframe = cframe + (frames_t)((double)dtc / TICKS_PER_SECOND_DBL * fps - .00001);
 
+  if (nframe != cframe && !IS_NORMAL_CLIP(fileno)) {
+    return 1;
+  }
+
   if (fileno == mainw->playing_file) {
     /// if we are scratching we do the following:
     /// the time since the last call is considered to have happened at an increased fps (fwd or back)
@@ -2045,7 +2049,8 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   while (IS_NORMAL_CLIP(fileno) && (nframe < first_frame || nframe > last_frame)) {
     // get our frame back to within bounds:
     // define even parity (0) as backwards, odd parity (1) as forwards
-    // we subtract the lower bound from the new frame, and divide the result by the selection length, rounding towards zero. (nloops)
+    // we subtract the lower bound from the new frame, and divide the result by the selection length,
+    // rounding towards zero. (nloops)
     // in ping mode this is then added to the original direction, and the resulting parity gives the new direction
     // the remainder after doing the division is then either added to the selection start (forwards)
     /// or subtracted from the selection end (backwards) [if we started backwards then the boundary crossing will be with the

@@ -225,7 +225,6 @@ static void extra_cb(LiVESWidget *dialog, int key) {
     lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
                               LIVES_GUI_CALLBACK(scan_for_sets), entry);
 
-
     layout = lives_layout_new(LIVES_BOX(dialog_vbox));
     widget_opts.justify = LIVES_JUSTIFY_CENTER;
     widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;

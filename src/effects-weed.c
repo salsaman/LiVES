@@ -2082,10 +2082,14 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         }
       }
     }
+    if (prefs->dev_show_timing)
+      g_printerr("nsw pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     if (channel_flags & WEED_CHANNEL_NEEDS_NATURAL_SIZE) {
       lives_nanosleep_until_nonzero(weed_plant_has_leaf(layer, WEED_LEAF_NATURAL_SIZE));
       weed_leaf_dup(channel, layer, WEED_LEAF_NATURAL_SIZE);
     }
+    if (prefs->dev_show_timing)
+      g_printerr("nsw post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     i++;
   }
 
@@ -2140,8 +2144,12 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     inpalette = weed_channel_get_palette(channel);
     if (weed_palette_is_alpha(inpalette)) continue;
 
+    if (prefs->dev_show_timing)
+      g_printerr("clrfx pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     layer = layers[in_tracks[i]];
     check_layer_ready(layer);
+    if (prefs->dev_show_timing)
+      g_printerr("clrfx post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
     cpalette = opalette = weed_layer_get_palette(layer);
     if (weed_palette_is_alpha(opalette)) continue;
@@ -2383,11 +2391,15 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       needs_reinit = TRUE;
 
     if (tgamma != WEED_GAMMA_UNKNOWN) {
+      if (prefs->dev_show_timing)
+        g_printerr("gamma1 pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
       if (letterboxed)
         gamma_convert_sub_layer(tgamma, 1.0, layer, (cpixwidth - xwidth) / 2, (height - xheight) / 2,
                                 xwidth, xheight, TRUE);
       else
         gamma_convert_layer(tgamma, layer);
+      if (prefs->dev_show_timing)
+        g_printerr("gamma1 post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     }
 
     /// since layers and channels are interchangeable, we just call weed_layer_copy(channel, layer)

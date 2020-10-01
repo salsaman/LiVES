@@ -297,8 +297,6 @@ int64_t disk_monitor_check_result(const char *dir);
 int64_t disk_monitor_wait_result(const char *dir, ticks_t timeout);
 void disk_monitor_forget(void);
 
-#define MOUNTINFO "/proc/mounts"
-
 char *get_mountpoint_for(const char *dir);
 
 ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t orignsecs);

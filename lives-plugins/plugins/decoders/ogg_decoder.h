@@ -3,11 +3,9 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-
 // ogg
 
 #define PAGE_HEADER_BYTES 27
-
 
 typedef struct {
   int fd;
@@ -28,8 +26,6 @@ typedef struct {
   int uv_width;
 } ogg_t;
 
-
-
 typedef struct {
   uint32_t fourcc_priv;
   ogg_stream_state os;
@@ -42,9 +38,6 @@ typedef struct {
   int keyframe_granule_shift;
 } stream_priv_t;
 
-
-
-
 // theora
 #define FOURCC_THEORA    MK_FOURCC('T', 'H', 'R', 'A')
 
@@ -56,7 +49,6 @@ typedef struct {
 } theora_priv_t;
 #endif
 
-
 #ifdef HAVE_DIRAC
 typedef struct {
   SchroDecoder *schrodec;
@@ -66,15 +58,11 @@ typedef struct {
 
 #define LIVES_TIMESTAMP_UNDEFINED 0x8000000000000000LL
 
-
 // vorbis
 #define FOURCC_VORBIS    MK_FOURCC('V', 'B', 'I', 'S')
 
-
-
 // dirac
 #define FOURCC_DIRAC    MK_FOURCC('D', 'R', 'A', 'C')
-
 
 typedef struct lives_stream_s {
   int type;
@@ -94,10 +82,8 @@ typedef struct lives_stream_s {
   size_t ext_size;
 } lives_in_stream;
 
-
 #define LIVES_STREAM_AUDIO 1
 #define LIVES_STREAM_VIDEO 2
-
 
 #define BYTES_TO_READ 8500
 
@@ -113,7 +99,6 @@ struct _index_entry {
   int64_t pagepos_end; // only used for dirac
 };
 
-
 typedef struct {
   index_entry *idx;
 
@@ -121,8 +106,6 @@ typedef struct {
   lives_clip_data_t **clients;
   pthread_mutex_t mutex;
 } index_container_t;
-
-
 
 typedef struct {
   ogg_t *opriv;
@@ -155,12 +138,7 @@ typedef struct {
   index_container_t *idxc;
 } lives_ogg_priv_t;
 
-
-
-
 // bitstream functions from vlc
-
-
 
 typedef struct bs_s {
   uint8_t *p_start;

@@ -5,6 +5,8 @@
 
 // NOTE: interlace is bottom first
 
+#define NEED_CLONEFUNC
+
 #include "decplugin.h"
 
 ///////////////////////////////////////////////////////
@@ -19,6 +21,9 @@
 
 #include "dv_decoder.h"
 
+static const char *plname = "lives_dv";
+static int vmaj = 1;
+static int vmin = 3;
 const char *plugin_version = "LiVES dv decoder version 1.3";
 
 static FILE *nulfile;
@@ -185,20 +190,22 @@ const char *version(void) {
 }
 
 
-static lives_clip_data_t *init_cdata(void) {
-  register int i;
+static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
+  int i;
   lives_dv_priv_t *priv;
-  lives_clip_data_t *cdata = (lives_clip_data_t *)malloc(sizeof(lives_clip_data_t));
+  lives_clip_data_t *cdata;
 
-  cdata->palettes = malloc(4 * sizeof(int));
+  if (!data) {
+    cdata = cdata_new(NULL);
+    cdata->palettes = malloc(4 * sizeof(int));
 
-  // plugin allows a choice of palettes; we set these in order of preference
-  cdata->palettes[0] = WEED_PALETTE_YUYV8888;
-  cdata->palettes[1] = WEED_PALETTE_RGB24;
-  cdata->palettes[2] = WEED_PALETTE_BGR24;
-  cdata->palettes[3] = WEED_PALETTE_END;
-
-  cdata->URI = NULL;
+    // plugin allows a choice of palettes; we set these in order of preference
+    cdata->palettes[0] = WEED_PALETTE_YUYV8888;
+    cdata->palettes[1] = WEED_PALETTE_RGB24;
+    cdata->palettes[2] = WEED_PALETTE_BGR24;
+    cdata->palettes[3] = WEED_PALETTE_END;
+    cdata_stamp(cdata, plname, vmaj, vmin);
+  } else cdata = data;
 
   cdata->priv = priv = malloc(sizeof(lives_dv_priv_t));
 
@@ -206,74 +213,73 @@ static lives_clip_data_t *init_cdata(void) {
     priv->audio_buffers[i] = NULL;
   }
 
-  priv->audio = NULL;
   priv->audio_fd = -1;
-  priv->inited = FALSE;
 
   cdata->seek_flag = LIVES_SEEK_FAST;
-
-  cdata->sync_hint = 0;
-
-  memset(cdata->author, 0, 1);
-  memset(cdata->title, 0, 1);
-  memset(cdata->comment, 0, 1);
 
   return cdata;
 }
 
 
 static lives_clip_data_t *dv_clone(lives_clip_data_t *cdata) {
-  lives_clip_data_t *clone = init_cdata();
-
+  lives_clip_data_t *clone = clone_cdata(cdata);
   lives_dv_priv_t *dpriv, *spriv;
 
-  // copy from cdata to clone, with a new context for clone
-  clone->URI = strdup(cdata->URI);
-  clone->nclips = cdata->nclips;
-  snprintf(clone->container_name, 512, "%s", cdata->container_name);
-  clone->current_clip = cdata->current_clip;
-  clone->width = cdata->width;
-  clone->height = cdata->height;
-  clone->nframes = cdata->nframes;
-  clone->interlace = cdata->interlace;
-  clone->offs_x = cdata->offs_x;
-  clone->offs_y = cdata->offs_y;
-  clone->frame_width = cdata->frame_width;
-  clone->frame_height = cdata->frame_height;
-  clone->par = cdata->par;
-  clone->frame_gamma = WEED_GAMMA_UNKNOWN;
-  clone->fps = cdata->fps;
-  clone->current_palette = cdata->current_palette;
-  clone->YUV_sampling = cdata->YUV_sampling;
-  clone->YUV_clamping = cdata->YUV_clamping;
-  snprintf(clone->video_name, 512, "%s", cdata->video_name);
-  clone->arate = cdata->arate;
-  clone->achans = cdata->achans;
-  clone->asamps = cdata->asamps;
-  clone->asigned = cdata->asigned;
-  clone->ainterleaf = cdata->ainterleaf;
-  snprintf(clone->audio_name, 512, "%s", cdata->audio_name);
-  clone->seek_flag = cdata->seek_flag;
-  clone->sync_hint = cdata->sync_hint;
-  clone->video_start_time = cdata->video_start_time;
-
-  snprintf(clone->author, 256, "%s", cdata->author);
-  snprintf(clone->title, 256, "%s", cdata->title);
-  snprintf(clone->comment, 256, "%s", cdata->comment);
+  cdata_stamp(clone, plname, vmaj, vmin);
 
   // create "priv" elements
-  dpriv = clone->priv;
   spriv = cdata->priv;
 
-  if (spriv != NULL) dpriv->inited = TRUE;
+  if (spriv) {
+    clone->priv = dpriv = (lives_dv_priv_t *)calloc(1, sizeof(lives_dv_priv_t));
+    dpriv->inited = TRUE;
+  } else {
+    clone = init_cdata(clone);
+    dpriv = clone->priv;
+  }
+
+  if (!clone->palettes) {
+    clone->palettes = malloc(4 * sizeof(int));
+
+    // plugin allows a choice of palettes; we set these in order of preference
+    cdata->palettes[0] = WEED_PALETTE_YUYV8888;
+    cdata->palettes[1] = WEED_PALETTE_RGB24;
+    cdata->palettes[2] = WEED_PALETTE_BGR24;
+    cdata->palettes[3] = WEED_PALETTE_END;
+  }
 
   if (!attach_stream(clone, TRUE)) {
-    free(clone->URI);
-    clone->URI = NULL;
     clip_data_free(clone);
     return NULL;
   }
 
+  if (!spriv) {
+    clone->nclips = 1;
+
+    ///////////////////////////////////////////////////////////
+
+    sprintf(clone->container_name, "%s", "mkv");
+
+    // clone->height was set when we attached the stream
+
+    if (clone->frame_width == 0 || clone->frame_width < clone->width) clone->frame_width = clone->width;
+    else {
+      clone->offs_x = (clone->frame_width - clone->width) / 2;
+    }
+
+    if (clone->frame_height == 0 || clone->frame_height < clone->height) clone->frame_height = clone->height;
+    else {
+      clone->offs_y = (clone->frame_height - clone->height) / 2;
+    }
+
+    clone->frame_width = clone->width + clone->offs_x * 2;
+    clone->frame_height = clone->height + clone->offs_y * 2;
+
+    ////////////////////////////////////////////////////////////////////
+
+    clone->asigned = TRUE;
+    clone->ainterleaf = TRUE;
+  }
   return clone;
 }
 
@@ -285,31 +291,28 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   // if the host wants a different URI or a different current_clip, this must be called again with the same
   // cdata as the second parameter
 
-  if (URI == NULL && cdata != NULL) {
+  if (!URI && cdata) {
     // create a clone of cdata
     return dv_clone(cdata);
   }
 
-  if (cdata != NULL && cdata->current_clip > 0) {
+  if (cdata && cdata->current_clip > 0) {
     // currently we only support one clip per container
-
     clip_data_free(cdata);
     return NULL;
   }
 
-  if (cdata == NULL) {
-    cdata = init_cdata();
+  if (!cdata) {
+    cdata = init_cdata(NULL);
   }
 
-  if (cdata->URI == NULL || strcmp(URI, cdata->URI)) {
-    if (cdata->URI != NULL) {
+  if (!cdata->URI || strcmp(URI, cdata->URI)) {
+    if (cdata->URI) {
       detach_stream(cdata);
       free(cdata->URI);
     }
     cdata->URI = strdup(URI);
     if (!attach_stream(cdata, FALSE)) {
-      free(cdata->URI);
-      cdata->URI = NULL;
       clip_data_free(cdata);
       return NULL;
     }
@@ -589,15 +592,10 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
 
 void clip_data_free(lives_clip_data_t *cdata) {
-  if (cdata->URI != NULL) {
+  if (cdata->URI) {
     detach_stream(cdata);
-    free(cdata->URI);
   }
-
-  free(cdata->priv);
-
-  free(cdata->palettes);
-  free(cdata);
+  lives_struct_free(&cdata->lsd);
 }
 
 

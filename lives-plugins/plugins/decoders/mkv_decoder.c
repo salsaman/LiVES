@@ -1768,7 +1768,6 @@ static void idxc_release(lives_clip_data_t *cdata) {
   }
 
   pthread_mutex_unlock(&indices_mutex);
-
 }
 
 
@@ -1790,23 +1789,23 @@ static void detach_stream(lives_clip_data_t *cdata) {
 
   if (priv->s) matroska_read_close(cdata);
 
-  if (priv->ctx != NULL) {
+  if (priv->ctx) {
     avcodec_close(priv->ctx);
     av_free(priv->ctx);
   }
 
   if (priv->vidst) avcodec_close(priv->vidst->codec);
 
-  if (priv->picture != NULL) av_frame_unref(priv->picture);
+  if (priv->picture) av_frame_unref(priv->picture);
 
   priv->ctx = NULL;
   priv->codec = NULL;
   priv->picture = NULL;
 
-  if (cdata->palettes != NULL) free(cdata->palettes);
+  if (cdata->palettes) free(cdata->palettes);
   cdata->palettes = NULL;
 
-  if (priv->avpkt.data != NULL) {
+  if (priv->avpkt.data) {
     free(priv->avpkt.data);
     priv->avpkt.data = NULL;
     priv->avpkt.size = 0;
@@ -2182,7 +2181,7 @@ static lives_clip_data_t *mkv_clone(lives_clip_data_t *cdata) {
   // create "priv" elements
   spriv = cdata->priv;
 
-  if (spriv != NULL) {
+  if (spriv) {
     clone->priv = dpriv = (lives_mkv_priv_t *)calloc(1, sizeof(lives_mkv_priv_t));
     dpriv->filesize = spriv->filesize;
     dpriv->inited = TRUE;
@@ -2201,7 +2200,7 @@ static lives_clip_data_t *mkv_clone(lives_clip_data_t *cdata) {
     return NULL;
   }
 
-  if (spriv == NULL) {
+  if (!spriv) {
     clone->nclips = 1;
 
     ///////////////////////////////////////////////////////////
@@ -2232,7 +2231,7 @@ static lives_clip_data_t *mkv_clone(lives_clip_data_t *cdata) {
     clone->ainterleaf = TRUE;
   }
 
-  if (dpriv->picture != NULL) av_frame_unref(dpriv->picture);
+  if (dpriv->picture) av_frame_unref(dpriv->picture);
   dpriv->picture = NULL;
 
   dpriv->last_frame = -1;
@@ -2275,8 +2274,8 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
     cdata = init_cdata(NULL);
   }
 
-  if (cdata->URI == NULL || strcmp(URI, cdata->URI)) {
-    if (cdata->URI != NULL) {
+  if (!cdata->URI || strcmp(URI, cdata->URI)) {
+    if (cdata->URI) {
       detach_stream(cdata);
       free(cdata->URI);
     }
@@ -2320,7 +2319,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   cdata->asigned = TRUE;
   cdata->ainterleaf = TRUE;
 
-  if (priv->picture != NULL) av_frame_unref(priv->picture);
+  if (priv->picture) av_frame_unref(priv->picture);
   priv->picture = NULL;
 
   return cdata;
@@ -2976,7 +2975,7 @@ void clip_data_free(lives_clip_data_t *cdata) {
   if (priv->idxc != NULL) idxc_release(cdata);
   priv->idxc = NULL;
 
-  if (cdata->URI) {
+  if (cdata->URIy) {
     detach_stream(cdata);
   }
   lives_struct_free(&cdata->lsd);

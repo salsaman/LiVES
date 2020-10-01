@@ -794,9 +794,8 @@ static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
     cdata_stamp(cdata, plname, vmaj, vmin);
     cdata->palettes = malloc(2 * sizeof(int));
     cdata->palettes[1] = WEED_PALETTE_END;
+    cdata->priv = priv = calloc(1, sizeof(lives_av_priv_t));
   } else cdata = data;
-
-  cdata->priv = priv = calloc(1, sizeof(lives_av_priv_t));
 
   priv->astream = -1;
   priv->vstream = -1;

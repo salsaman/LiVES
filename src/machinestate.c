@@ -15,6 +15,27 @@
 #include "main.h"
 #include "callbacks.h"
 
+#ifdef CPU_CHECKS
+static void cpuid(unsigned int ax, unsigned int *p) {
+  __asm __volatile
+  ("movl %%ebx, %%esi\n\tcpuid\n\txchgl %%ebx, %%esi"
+   : "=a"(p[0]), "=S"(p[1]), "=c"(p[2]), "=d"(p[3])
+   : "0"(ax));
+}
+
+static int get_cacheline_size(void) {
+  unsigned int cacheline = -1;
+  unsigned int regs[4], regs2[4];
+  cpuid(0x00000000, regs);
+  if (regs[0] >= 0x00000001) {
+    cpuid(0x00000001, regs2);
+    cacheline = ((regs2[1] >> 8) & 0xFF) * 8;
+    has_sse2 = (regs2[3] & 0x4000000) ? TRUE : FALSE;
+  }
+  return cacheline;
+}
+#endif
+
 static uint64_t fastrand_val = 0;
 
 LIVES_GLOBAL_INLINE uint64_t fastrand(void) {

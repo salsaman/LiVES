@@ -7770,7 +7770,7 @@ matchvals:
         xheight != weed_channel_get_height(channel)) {
       int nplanes;
       void **pd = weed_channel_get_pixel_data_planar(channel, &nplanes);
-      for (register int i = 0; i < nplanes; i++) lives_free(pd[i]);
+      for (int j = 0; j < nplanes; j++) lives_free(pd[j]);
       lives_free(pd);
       weed_set_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, NULL);
 

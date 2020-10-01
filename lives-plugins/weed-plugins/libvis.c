@@ -46,6 +46,8 @@ static int package_version = 2; // version of this package
 
 #include <pthread.h>
 
+#define LIBVIS_ABUF_SIZE 512
+
 static int libvis_host_audio_callback(VisInput *, VisAudio *, void *user_data);
 
 typedef struct {
@@ -74,6 +76,7 @@ static weed_error_t libvis_init(weed_plant_t *inst) {
   char *ainput = NULL;
 
   int palette, listener;
+  int width, height, rowstride;
 
   param = weed_get_in_param(inst, 0);
   listener = weed_param_get_value_int(param);
@@ -82,20 +85,15 @@ static weed_error_t libvis_init(weed_plant_t *inst) {
 
   switch (listener) {
   case 1:
-    ainput = "alsa";
-    break;
+    ainput = "alsa"; break;
   case 2:
-    ainput = "esd";
-    break;
+    ainput = "esd"; break;
   case 3:
-    ainput = "jack";
-    break;
+    ainput = "jack"; break;
   case 4:
-    ainput = "mplayer";
-    break;
+    ainput = "mplayer"; break;
   case 5:
-    ainput = "auto";
-    break;
+    ainput = "auto"; break;
   default:
     ainput = NULL; // no audio input
     break;
@@ -132,12 +130,13 @@ static weed_error_t libvis_init(weed_plant_t *inst) {
 
   out_channel = weed_get_out_channel(inst, 0);
   palette = weed_channel_get_palette(out_channel);
+  rowstride = weed_channel_get_stride(out_channel);
+  width = weed_channel_get_width(out_channel);
+  height = weed_channel_get_height(out_channel);
 
-  if (palette == WEED_PALETTE_RGB24) visual_video_set_depth(libvis->video, VISUAL_VIDEO_DEPTH_24BIT);
-  else visual_video_set_depth(libvis->video, VISUAL_VIDEO_DEPTH_32BIT);
-
-  visual_video_set_dimension(libvis->video, weed_channel_get_width(out_channel),
-                             weed_channel_get_height(out_channel));
+  visual_video_set_attributes(libvis->video, width, height, rowstride,
+                              palette == WEED_PALETTE_RGB24 ? VISUAL_VIDEO_DEPTH_24BIT
+                              : VISUAL_VIDEO_DEPTH_32BIT);
 
   filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, NULL);
   if (!strncmp(filter_name, "libvisual: ", 11)) filtname = filter_name + 11;
@@ -150,7 +149,8 @@ static weed_error_t libvis_init(weed_plant_t *inst) {
   visual_actor_video_negotiate(libvis->actor, 0, FALSE, FALSE);
   visual_input_realize(libvis->input);
 
-  libvis->audio = (short *)weed_calloc(512, sizeof(short));
+  libvis->audio = (short *)weed_calloc(LIBVIS_ABUF_SIZE * 2, sizeof(short));
+  if (!libvis->audio) return WEED_ERROR_MEMORY_ALLOCATION;
   libvis->audio_frames = 0;
   libvis->instance = instances;
 
@@ -200,15 +200,15 @@ static void store_audio(weed_libvis_t *libvis, weed_plant_t *in_channel) {
 
       pthread_mutex_lock(&libvis->pcm_mutex);
 
-      /// we want to send 512 samples of left, followed by 512 samples of right / mono
+      /// we want to send LIBVIS_ABUF_SIZE samples of left, followed by LIBVIS_ABUF_SIZE samples of right / mono
       /// so we use the buffer like two sliding windows
       sdf = libvis->audio_frames;
-      overflow = sdf + adlen - 512;
-      if (overflow > 512) {
-        /// adlen >= 512, write the last 512 samples from buffer
+      overflow = sdf + adlen - LIBVIS_ABUF_SIZE;
+      if (overflow > LIBVIS_ABUF_SIZE) {
+        /// adlen >= LIBVIS_ABUF_SIZE, write the last LIBVIS_ABUF_SIZE samples from buffer
         libvis->audio_frames = 0;
-        offset = adlen - 512;
-        adlen = 512;
+        offset = adlen - LIBVIS_ABUF_SIZE;
+        adlen = LIBVIS_ABUF_SIZE;
       } else if (overflow > 0) {
         /// make space by shifting the old audio
         weed_memmove((void *)libvis->audio, (void *)libvis->audio + overflow  * sizeof(short), (sdf - overflow) * sizeof(short));
@@ -217,9 +217,9 @@ static void store_audio(weed_libvis_t *libvis, weed_plant_t *in_channel) {
       for (int i = 0; i < adlen; i ++) {
         libvis->audio[libvis->audio_frames + i] = 32767. * adata[0][offset + i];
         if (achans == 2)
-          libvis->audio[libvis->audio_frames + 512 + i] = 32767. * adata[1][offset + i];
+          libvis->audio[libvis->audio_frames + LIBVIS_ABUF_SIZE + i] = 32767. * adata[1][offset + i];
         else
-          libvis->audio[libvis->audio_frames + 512 + i] = libvis->audio[libvis->audio_frames + i];
+          libvis->audio[libvis->audio_frames + LIBVIS_ABUF_SIZE + i] = libvis->audio[libvis->audio_frames + i];
       }
       libvis->audio_frames += adlen;
       //libvis->audio_frames += adlen * achans;
@@ -241,6 +241,7 @@ static weed_error_t libvis_process(weed_plant_t *inst, weed_timecode_t timestamp
   visual_input_run(libvis->input);
   visual_video_set_buffer(libvis->video, pixel_data);
   visual_actor_run(libvis->actor, libvis->input->audio);
+
   return WEED_SUCCESS;
 }
 
@@ -271,8 +272,8 @@ WEED_SETUP_START(200, 200) {
 
   // set hints for host
   weed_set_int_value(in_chantmpls[0], WEED_LEAF_AUDIO_RATE, 44100);
-  weed_set_int_value(in_chantmpls[0], WEED_LEAF_MAX_AUDIO_LENGTH, 512);
-  weed_set_int_value(in_chantmpls[0], WEED_LEAF_MIN_AUDIO_LENGTH, 512);
+  weed_set_int_value(in_chantmpls[0], WEED_LEAF_MAX_AUDIO_LENGTH, LIBVIS_ABUF_SIZE);
+  weed_set_int_value(in_chantmpls[0], WEED_LEAF_MIN_AUDIO_LENGTH, LIBVIS_ABUF_SIZE);
 
   instances = 0;
   old_input = NULL;
@@ -309,10 +310,11 @@ WEED_SETUP_START(200, 200) {
     snprintf(fullname, PATH_MAX, "%s", name);
     in_params[0] = weed_string_list_init("listener", "Audio _listener", 5, listeners);
     weed_paramtmpl_set_flags(in_params[0], WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
-    out_chantmpls[0] = weed_channel_template_init("out channel 0", 0);
-    filter_class = weed_filter_class_init(fullname, "Team libvisual", 1, filter_flags, palette_list, libvis_init, libvis_process,
-                                          libvis_deinit,
-                                          in_chantmpls, out_chantmpls, in_params, NULL);
+    out_chantmpls[0] = weed_channel_template_init("out channel 0",
+                       WEED_CHANNEL_REINIT_ON_SIZE_CHANGE | WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE);
+    filter_class = weed_filter_class_init(fullname, "Team libvisual", 1, filter_flags, palette_list,
+                                          libvis_init, libvis_process, libvis_deinit, in_chantmpls,
+                                          out_chantmpls, in_params, NULL);
     weed_set_double_value(filter_class, WEED_LEAF_PREFERRED_FPS, 50.); // set reasonable default fps
 
     list = add_to_list_sorted(list, filter_class, (const char *)name);
@@ -329,7 +331,7 @@ WEED_SETUP_END;
 
 static int libvis_host_audio_callback(VisInput *input, VisAudio *audio, void *user_data) {
   // audio_data is 16bit signed, little endian
-  // two channels non-interlaced, ideally 512 samples in length
+  // two channels non-interlaced, ideally LIBVIS_ABUF_SIZE samples in length
   // a rate of 44100Hz is recommended
 
   // return -1 on failure, 0 on success

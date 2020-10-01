@@ -4246,8 +4246,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   widget_opts.title_prefix = lives_strdup_printf("%s-%s: - ", lives_get_application_name(), LiVES_VERSION);
 
   // init prefs
-  prefs = (_prefs *)lives_malloc(sizeof(_prefs));
-  future_prefs = (_future_prefs *)lives_malloc(sizeof(_future_prefs));
+  prefs = (_prefs *)lives_calloc(1, sizeof(_prefs));
+  future_prefs = (_future_prefs *)lives_calloc(1, sizeof(_future_prefs));
   prefs->workdir[0] = '\0';
   future_prefs->workdir[0] = '\0';
   prefs->config_datadir[0] = '\0';
@@ -4258,6 +4258,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   prefs->show_playwin = TRUE;
   prefs->show_dev_opts = FALSE;
   prefs->interactive = TRUE;
+  prefs->show_disk_quota = FALSE;
 
   lives_snprintf(prefs->cmd_log, PATH_MAX, LIVES_DEVNULL);
 

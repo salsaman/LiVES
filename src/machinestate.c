@@ -1035,11 +1035,11 @@ off_t get_dir_size(const char *dirname) {
   if (!dirname || !*dirname || !lives_file_test(dirname, LIVES_FILE_TEST_IS_DIR)) return -1;
   if (check_for_executable(&capable->has_du, EXEC_DU)) {
     char buff[PATH_MAX * 2];
-    char *com = lives_strdup_printf("%s -s -B 1 \"%s\"", EXEC_DU, dirname);
+    char *com = lives_strdup_printf("%s -sB 512 \"%s\"", EXEC_DU, dirname);
     lives_popen(com, TRUE, buff, PATH_MAX * 2);
     lives_free(com);
     if (THREADVAR(com_failed)) THREADVAR(com_failed) = FALSE;
-    else dirsize = atol(buff);
+    else dirsize = atol(buff) / 512l;
   }
   return dirsize;
 }

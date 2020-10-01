@@ -382,25 +382,24 @@ LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog * dialog, boo
           return LIVES_RESPONSE_RETRY;
         }
         widget_opts.transient = NULL;
+      } else {
+        if (!prompt_existing_dir(*pdirname, 0, FALSE)) {
+          return LIVES_RESPONSE_RETRY;
+        }
       }
     } else {
-      if (!prompt_existing_dir(*pdirname, 0, FALSE)) {
-        return LIVES_RESPONSE_RETRY;
-      }
-    }
-  } else {
-    if (is_writeable_dir(*pdirname)) {
-      freesp = get_ds_free(*pdirname);
-      if (!prompt_new_dir(*pdirname, freesp, TRUE)) {
-        lives_rmdir(*pdirname, FALSE);
-        return LIVES_RESPONSE_RETRY;
-      }
-    } else {
-      if (!prompt_new_dir(*pdirname, 0, FALSE)) {
-        lives_rmdir(*pdirname, FALSE);
-        return LIVES_RESPONSE_RETRY;
-	// *INDENT-OFF*
-        }}}
+      if (is_writeable_dir(*pdirname)) {
+        freesp = get_ds_free(*pdirname);
+        if (!prompt_new_dir(*pdirname, freesp, TRUE)) {
+          lives_rmdir(*pdirname, FALSE);
+          return LIVES_RESPONSE_RETRY;
+        }
+      } else {
+        if (!prompt_new_dir(*pdirname, 0, FALSE)) {
+          lives_rmdir(*pdirname, FALSE);
+          return LIVES_RESPONSE_RETRY;
+	  // *INDENT-OFF*
+        }}}}
   // *INDENT-ON*
 
   if (!lives_make_writeable_dir(*pdirname)) {

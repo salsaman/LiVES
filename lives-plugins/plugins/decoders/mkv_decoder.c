@@ -2975,7 +2975,7 @@ void clip_data_free(lives_clip_data_t *cdata) {
   if (priv->idxc != NULL) idxc_release(cdata);
   priv->idxc = NULL;
 
-  if (cdata->URIy) {
+  if (cdata->URI) {
     detach_stream(cdata);
   }
   lives_struct_free(&cdata->lsd);

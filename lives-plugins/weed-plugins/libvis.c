@@ -46,6 +46,15 @@ static int package_version = 2; // version of this package
 
 #include <pthread.h>
 
+
+#ifndef PATH_MAX
+#ifdef MAX_PATH
+#define PATH_MAX MAX_PATH
+#else
+#define PATH_MAX 4096
+#endif
+#endif
+
 #define LIBVIS_ABUF_SIZE 512
 
 static int libvis_host_audio_callback(VisInput *, VisAudio *, void *user_data);

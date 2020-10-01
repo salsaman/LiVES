@@ -411,11 +411,11 @@ void get_monitors(boolean reset) {
 #if LIVES_HAS_DEVICE_MANAGER
   GdkDeviceManager *devman;
   LiVESList *devlist;
-  register int k;
+  int k;
 #endif
-  register int i, j;
+  int i, j;
 #endif
-  register int idx = 0;
+  int idx = 0;
 
   if (mainw->ignore_screen_size) return;
 
@@ -555,7 +555,7 @@ void get_monitors(boolean reset) {
   mainw->old_scr_width = GUI_SCREEN_WIDTH;
   mainw->old_scr_height = GUI_SCREEN_HEIGHT;
 
-  prefs->screen_scale = get_double_pref(PREF_SCREEN_SCALE);
+  prefs->screen_scale = get_double_prefd(PREF_SCREEN_SCALE, 0.);
   if (prefs->screen_scale == 0.) {
     prefs->screen_scale = (double)GUI_SCREEN_WIDTH / (double)SCREEN_SCALE_DEF_WIDTH;
     prefs->screen_scale = (prefs->screen_scale - 1.) * 1.5 + 1.;
@@ -2350,9 +2350,13 @@ static void do_start_messages(void) {
   d_print(_("; compositing is %s.\n"), capable->wm_caps.is_composited ? _("supported") : _("not supported"));
 
   get_distro_dets();
-  d_print(_("Distro is %s %s (%s)\n"), capable->distro_name ? capable->distro_name : "?????",
-          capable->distro_ver ? capable->distro_ver : "?????",
-          capable->distro_codename ? capable->distro_codename : "");
+
+  if (capable->distro_codename) tmp = lives_strdup_printf(" (%s)", capable->distro_codename);
+  else tmp = lives_strdup("");
+
+  d_print(_("Distro is %s %s %s\n"), capable->distro_name ? capable->distro_name : "?????",
+          capable->distro_ver ? capable->distro_ver : "?????", tmp);
+  lives_free(tmp);
 
   d_print("%s", _("GUI type is: "));
 
@@ -3327,19 +3331,7 @@ retry_configfile:
     capable->has_midistartstop = has_executable(EXEC_MIDISTOP);
   }
 
-#ifdef IS_DARWIN
-  kerr = host_processor_info(mach_host_self(), PROCESSOR_BASIC_INFO, &numProcessors, &processorInfo, &numProcessorInfo);
-  if (kerr == KERN_SUCCESS) {
-    vm_deallocate(mach_task_self(), (vm_address_t) processorInfo, numProcessorInfo * sizint);
-  }
-  capable->ncpus = (int)numProcessors;
-#else
-  lives_snprintf(command, PATH_MAX, "%s /proc/cpuinfo 2>/dev/null | %s processor 2>/dev/null | %s -l 2>/dev/null",
-                 capable->cat_cmd, capable->grep_cmd, capable->wc_cmd);
-  lives_popen(command, TRUE, buffer, 1024);
-  capable->ncpus = atoi(buffer);
-#endif
-
+  capable->ncpus = get_num_cpus();
   if (capable->ncpus == 0) capable->ncpus = 1;
 
   return capable;
@@ -3490,10 +3482,18 @@ boolean lazy_startup_checks(void *data) {
   static boolean dqshown = FALSE;
   static boolean tlshown = FALSE;
   static boolean extra_caps = FALSE;
+  static boolean is_first = TRUE;
 
   if (LIVES_IS_PLAYING) {
     dqshown = mwshown = tlshown = TRUE;
     return FALSE;
+  }
+
+  if (is_first) {
+    if (prefs->open_maximised && prefs->show_gui)
+      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    is_first = FALSE;
+    return TRUE;
   }
 
   if (!tlshown) {
@@ -3623,7 +3623,9 @@ boolean resize_message_area(livespointer data) {
   //#endif
   if (isfirst) {
     lives_widget_set_vexpand(mainw->msg_area, TRUE);
-    lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    if (prefs->open_maximised && prefs->show_gui) {
+      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    }
     if (!CURRENT_CLIP_IS_VALID) {
       d_print("");
     }
@@ -4133,6 +4135,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
 
   capable = (capability *)lives_calloc(1, sizeof(capability));
+  capable->cacheline_size = sizeof(void *) * 8;
 
   // _runtime_ byte order, needed for lives_strlen and other things
   if (IS_BIG_ENDIAN)
@@ -5641,12 +5644,12 @@ void load_start_image(int frame) {
     int bx, by, hsize, vsize;
     int scr_width = GUI_SCREEN_WIDTH;
     int scr_height = GUI_SCREEN_HEIGHT;
-    int hspace = get_hspace();
+    int vspace = get_vspace();
     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
     if (by > MENU_HIDE_LIM)
       lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
     hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
-    vsize = scr_height - (CE_TIMELINE_HSPACE + hspace + by + mainw->mbar_res);
+    vsize = scr_height - (CE_TIMELINE_VSPACE + vspace + by + mainw->mbar_res);
     if (LIVES_IS_PLAYING && mainw->double_size) {
       hsize /= 2;
       vsize /= 2;
@@ -5915,12 +5918,12 @@ void load_end_image(int frame) {
     int bx, by, hsize, vsize;
     int scr_width = GUI_SCREEN_WIDTH;
     int scr_height = GUI_SCREEN_HEIGHT;
-    int hspace = get_hspace();
+    int vspace = get_vspace();
     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
     if (by > MENU_HIDE_LIM)
       lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
     hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
-    vsize = scr_height - (CE_TIMELINE_HSPACE + hspace + by + mainw->mbar_res);
+    vsize = scr_height - (CE_TIMELINE_VSPACE + vspace + by + mainw->mbar_res);
     if (LIVES_IS_PLAYING && mainw->double_size) {
       hsize /= 2;
       vsize /= 2;
@@ -10197,7 +10200,7 @@ lfi_done:
       LiVESXWindow *xwin;
       double oscale = scale;
 
-      int xsize, hspace;
+      int xsize, vspace;
       int bx, by;
 
       // height of the separator imeage
@@ -10209,7 +10212,7 @@ lfi_done:
       int scr_height = GUI_SCREEN_HEIGHT;
 
       if (!prefs->show_gui || mainw->multitrack) return;
-      hspace = get_hspace();
+      vspace = get_vspace();
 
       get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
       bx *= 2;
@@ -10233,7 +10236,9 @@ lfi_done:
       //if (mainw->play_window) return;
 
       hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
-      vsize = scr_height - (CE_TIMELINE_HSPACE + hspace + by + mainw->mbar_res);
+      vsize = scr_height - (CE_TIMELINE_VSPACE / sqrt(widget_opts.scale) + vspace + by
+                            + (prefs->show_msg_area ? mainw->mbar_res : 0)
+                            + widget_opts.border_width * 2);
 
       if (scale < 0.) {
         // foreign capture

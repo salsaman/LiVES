@@ -13,8 +13,7 @@
 #include <sys/time.h>
 #include <time.h>
 
-#define DEF_ALIGN 64
-#define EXTRA_BYTES 64
+#define EXTRA_BYTES DEF_ALIGN
 
 typedef void *(*malloc_f)(size_t);
 typedef void (*free_f)(void *);
@@ -586,6 +585,7 @@ int get_window_stack_level(LiVESXWindow *, int *nwins);
 boolean get_wm_caps(void);
 boolean get_distro_dets(void);
 boolean get_machine_dets(void);
+int get_num_cpus(void);
 double get_disk_load(const char *mp);
 int64_t get_cpu_load(int cpun); ///< percent * 1 million
 

@@ -51,13 +51,13 @@ static LiVESWidgetClosure *ping_pong_closure;
 
 static boolean pb_added = FALSE;
 
-LIVES_GLOBAL_INLINE int get_hspace(void) {
-  static int hspace = -1;
-  if (hspace == -1) {
+LIVES_GLOBAL_INLINE int get_vspace(void) {
+  static int vspace = -1;
+  if (vspace == -1) {
     LiVESPixbuf *sepbuf = lives_image_get_pixbuf(LIVES_IMAGE(mainw->sep_image));
-    hspace = (sepbuf != NULL ? lives_pixbuf_get_height(sepbuf) : 0);
+    vspace = (sepbuf ? lives_pixbuf_get_height(sepbuf) : 0);
   }
-  return hspace;
+  return vspace;
 }
 
 
@@ -2054,7 +2054,8 @@ void create_LiVES(void) {
   lives_widget_set_margin_right(mainw->playframe, widget_opts.packing_width);
 
   lives_container_add(LIVES_CONTAINER(mainw->playframe), mainw->pl_eventbox);
-  lives_widget_set_size_request(mainw->playframe, -1, DEF_FRAME_VSIZE_GUI);
+  lives_widget_set_size_request(mainw->playframe, -1, DEF_FRAME_VSIZE_GUI
+                                - widget_opts.border_width * 2);
   lives_widget_set_hexpand(mainw->pl_eventbox, FALSE);
 
   mainw->playarea = lives_event_box_new();

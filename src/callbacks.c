@@ -2151,7 +2151,9 @@ void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   /// do not popup warning if set name is changed
   mainw->suppress_layout_warnings = TRUE;
 
-  if (mainw->clips_available > 0) {
+  if (!mainw->clips_available) {
+    lives_exit(0);
+  } else {
     char *set_name;
     _entryw *cdsw = create_cds_dialog(1);
     LiVESResponseType resp;
@@ -2187,12 +2189,14 @@ void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
           on_save_set_activate(NULL, (tmp = U82F(set_name)));
           lives_free(tmp);
+          lives_free(set_name);
+
+          if (!mainw->no_exit) lives_exit(0);
 
           if (mainw->multitrack) {
             mt_sensitise(mainw->multitrack);
             maybe_add_mt_idlefunc();
           }
-          lives_free(set_name);
           mainw->only_close = mainw->is_exiting = FALSE;
           if (mainw->cs_manage) lives_idle_add_simple(run_diskspace_dialog_idle, NULL);
           return;

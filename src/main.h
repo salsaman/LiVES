@@ -384,6 +384,242 @@ weed_leaf_delete_f _weed_leaf_delete;
 #include "weed-effects-utils.h"
 #include "support.h"
 #include "widget-helper.h"
+
+typedef enum {
+  MISSING = -1, ///< not yet implemented (TODO)
+  UNCHECKED = 0,
+  PRESENT
+} lives_presence_t;
+
+#ifdef NEW_CHECKSTATUS
+typedef enum {
+  CONFLICTING = -1,
+  MANDATORY,
+  RECOMMENDED,
+  OPTIONAL,
+  NECESSARY
+} lives_importance_t;
+
+typedef struct {
+  lives_presence_t present;
+  lives_importance_t import;
+} lives_checkstatus_t;
+
+#define XCAPABLE(foo, EXE_FOO) ((capable->has_##foo->present == UNCHECKED \
+				 ? ((capable->has_##foo->present =	\
+							 (has_executable(EXE_FOO) ? PRESENT : MISSING))) : \
+				 capable->has_##foo->present) == PRESENT)
+#define GET_EXE(foo) QUOTEME(foo)
+#define PRESENT(foo) (XCAPABLE(foo, GET_EXE(foo)) == PRESENT)
+#define MISSING(foo) (XCAPABLE(foo, GET_EXE(foo)) == MISSING)
+//TODO:
+// #define GET_EXE(mplayer) EXEC_MPLAYER
+// etc.
+// then: if (capable->has_mplayer) => if (PRESENT(mplayer)) etc.
+// and even:
+
+//#define IS_SHOW_STOPPER(foo) ((MISSING(foo) && MANDATORY(foo)))
+
+#else
+typedef lives_presence_t lives_checkstatus_t;
+#endif
+
+typedef struct {
+  char wm_name[64];
+  uint64_t ver_major;
+  uint64_t ver_minor;
+  uint64_t ver_micro;
+
+  LiVESXWindow *root_window;
+  boolean is_composited;
+
+#define ANNOY_DISPLAY      	(1ul << 0)
+#define ANNOY_DISK		(1ul << 1)
+#define ANNOY_PROC		(1ul << 2)
+#define ANNOY_NETWORK		(1ul << 3)
+#define ANNOY_SOUNDS		(1ul << 4)
+#define ANNOY_DEV		(1ul << 5)
+#define ANNOY_OTHER		(1ul << 6)
+
+#define ANNOY_FS		(1ul << 32)
+#define ANNOY_CONT		(1ul << 33)
+#define ANNOY_PERIOD		(1ul << 34)
+#define ANNOY_SPONT		(1ul << 35)
+#define ANNOY_TIMED		(1ul << 36)
+#define ANNOY_LOCK		(1ul << 37)
+
+#define RES_HIDE		(1ul << 0)
+#define RES_SUSPEND		(1ul << 1)
+#define RES_STOP		(1ul << 2)
+#define RES_BLOCK		(1ul << 3)
+#define RES_MUTE		(1ul << 4)
+
+#define RESTYPE_ACTION		(1ul << 16)
+#define RESTYPE_CONFIG		(1ul << 17)
+#define RESTYPE_SIGNAL		(1ul << 18)
+#define RESTYPE_CMD		(1ul << 19)
+#define RESTYPE_LOCKOUT		(1ul << 20)
+#define RESTYPE_TIMED		(1ul << 21)
+#define RESTYPE_MONITOR		(1ul << 22)
+
+  char panel[64];
+  uint64_t pan_annoy;
+  uint64_t pan_res;
+  char ssave[64];
+  uint64_t ssave_annoy;
+  uint64_t ssave_res;
+  char other[64];
+  uint64_t oth_annoy;
+  uint64_t oth_res;
+
+  char color_settings[64];
+  char display_settings[64];
+  char ssv_settings[64];
+  char pow_settings[64];
+  char settings[64];
+  char term[64];
+  char taskmgr[64];
+  char sshot[64];
+} wm_caps_t;
+
+
+typedef struct {
+  // the following can be assumed TRUE / PRESENT, they are checked on startup
+  boolean smog_version_correct;
+  boolean can_read_from_config;
+
+  boolean can_write_to_config;
+  boolean can_write_to_config_new;
+
+  boolean can_write_to_config_backup;
+  boolean can_write_to_workdir;
+
+  lives_checkstatus_t has_smogrify;
+
+  // the following may need checking before use
+  lives_checkstatus_t has_perl;
+  lives_checkstatus_t has_file;
+  lives_checkstatus_t has_dvgrab;
+  lives_checkstatus_t has_sox_play;
+  lives_checkstatus_t has_sox_sox;
+  lives_checkstatus_t has_autolives;
+  lives_checkstatus_t has_mplayer;
+  lives_checkstatus_t has_mplayer2;
+  lives_checkstatus_t has_mpv;
+  lives_checkstatus_t has_convert;
+  lives_checkstatus_t has_composite;
+  lives_checkstatus_t has_identify;
+  lives_checkstatus_t has_ffprobe;
+  lives_checkstatus_t has_ffmpeg;
+  lives_checkstatus_t has_cdda2wav;
+  lives_checkstatus_t has_icedax;
+  lives_checkstatus_t has_midistartstop;
+  lives_checkstatus_t has_jackd;
+  lives_checkstatus_t has_pulse_audio;
+  lives_checkstatus_t has_xwininfo;
+  lives_checkstatus_t has_gdb;
+  lives_checkstatus_t has_gzip;
+  lives_checkstatus_t has_gconftool_2;
+  lives_checkstatus_t has_xdg_screensaver;
+  lives_checkstatus_t has_wmctrl;
+  lives_checkstatus_t has_xdotool;
+  lives_checkstatus_t has_youtube_dl;
+  lives_checkstatus_t has_du;
+  lives_checkstatus_t has_md5sum;
+  lives_checkstatus_t has_gio;
+  lives_checkstatus_t has_wget;
+  lives_checkstatus_t has_curl;
+  lives_checkstatus_t has_mktemp;
+  lives_checkstatus_t has_snap;
+
+  /// home directory - default location for config file - locale encoding
+  char home_dir[PATH_MAX];
+
+  char backend_path[PATH_MAX];
+
+  char *xdg_data_home; // e.g $HOME/.local/share
+  char *xdg_session_desktop; // e.g ubuntustudio
+  char *xdg_current_desktop; // e.g XFCE
+  char *xdg_runtime_dir; // e.g /run/user/$uid
+
+  char touch_cmd[PATH_MAX];
+  char rm_cmd[PATH_MAX];
+  char mv_cmd[PATH_MAX];
+  char cp_cmd[PATH_MAX];
+  char ln_cmd[PATH_MAX];
+  char chmod_cmd[PATH_MAX];
+  char cat_cmd[PATH_MAX];
+  char grep_cmd[PATH_MAX];
+  char sed_cmd[PATH_MAX];
+  char wc_cmd[PATH_MAX];
+  char echo_cmd[PATH_MAX];
+  char eject_cmd[PATH_MAX];
+  char rmdir_cmd[PATH_MAX];
+
+  /// used for returning startup messages from the backend
+  char startup_msg[1024];
+
+  // plugins
+  lives_checkstatus_t has_encoder_plugins;
+
+  lives_checkstatus_t has_python;
+  uint64_t python_version;
+
+  int ncpus;
+  int byte_order;
+
+  char *myname_full;
+  char *myname;
+
+  char *cpu_name;
+  short cpu_bits;
+  int cacheline_size;
+
+  int64_t boot_time;
+  int xstdout;
+  int nmonitors;
+  int primary_monitor;
+
+  pid_t mainpid;
+  pthread_t main_thread;
+  pthread_t gui_thread;
+
+  char *username;
+
+  mode_t umask;
+
+  char *gui_theme_name;
+  char *icon_theme_name;
+  char *extra_icon_path;
+  LiVESList *all_icons;
+
+  char *wm_type; ///< window manager type, e.g. x11
+  char *wm_name; ///< window manager name, may be different from wm_caps.wwm_name
+  boolean has_wm_caps;
+  wm_caps_t wm_caps;
+
+  int64_t ds_used, ds_free, ds_tot;
+  char *mountpoint;  ///< utf-8
+
+  char *os_name;
+  char *os_release;
+  char *os_hardware;
+
+  char *distro_name;
+  char *distro_ver;
+  char *distro_codename;
+
+  char *mach_name;
+
+  int dclick_time;
+  int dclick_dist;
+  char *sysbindir;
+} capability;
+
+capability *capable;
+
+#define DEF_ALIGN (sizeof(void *) * 8)
+
 #include "machinestate.h"
 #include "lsd-tab.h"
 
@@ -858,237 +1094,7 @@ typedef struct {
   LiVESPixbuf *pixbuf;
 } lives_tcache_entry_t;
 
-typedef enum {
-  MISSING = -1, ///< not yet implemented (TODO)
-  UNCHECKED = 0,
-  PRESENT
-} lives_presence_t;
-
-#ifdef NEW_CHECKSTATUS
-typedef enum {
-  CONFLICTING = -1,
-  MANDATORY,
-  RECOMMENDED,
-  OPTIONAL,
-  NECESSARY
-} lives_importance_t;
-
-typedef struct {
-  lives_presence_t present;
-  lives_importance_t import;
-} lives_checkstatus_t;
-
-#define XCAPABLE(foo, EXE_FOO) ((capable->has_##foo->present == UNCHECKED \
-				 ? ((capable->has_##foo->present =	\
-							 (has_executable(EXE_FOO) ? PRESENT : MISSING))) : \
-				 capable->has_##foo->present) == PRESENT)
-#define GET_EXE(foo) QUOTEME(foo)
-#define PRESENT(foo) (XCAPABLE(foo, GET_EXE(foo)) == PRESENT)
-#define MISSING(foo) (XCAPABLE(foo, GET_EXE(foo)) == MISSING)
-//TODO:
-// #define GET_EXE(mplayer) EXEC_MPLAYER
-// etc.
-// then: if (capable->has_mplayer) => if (PRESENT(mplayer)) etc.
-// and even:
-
-//#define IS_SHOW_STOPPER(foo) ((MISSING(foo) && MANDATORY(foo)))
-
-#else
-typedef lives_presence_t lives_checkstatus_t;
-#endif
-
-typedef struct {
-  char wm_name[64];
-  uint64_t ver_major;
-  uint64_t ver_minor;
-  uint64_t ver_micro;
-
-  LiVESXWindow *root_window;
-  boolean is_composited;
-
-#define ANNOY_DISPLAY      	(1ul << 0)
-#define ANNOY_DISK		(1ul << 1)
-#define ANNOY_PROC		(1ul << 2)
-#define ANNOY_NETWORK		(1ul << 3)
-#define ANNOY_SOUNDS		(1ul << 4)
-#define ANNOY_DEV		(1ul << 5)
-#define ANNOY_OTHER		(1ul << 6)
-
-#define ANNOY_FS		(1ul << 32)
-#define ANNOY_CONT		(1ul << 33)
-#define ANNOY_PERIOD		(1ul << 34)
-#define ANNOY_SPONT		(1ul << 35)
-#define ANNOY_TIMED		(1ul << 36)
-#define ANNOY_LOCK		(1ul << 37)
-
-#define RES_HIDE		(1ul << 0)
-#define RES_SUSPEND		(1ul << 1)
-#define RES_STOP		(1ul << 2)
-#define RES_BLOCK		(1ul << 3)
-#define RES_MUTE		(1ul << 4)
-
-#define RESTYPE_ACTION		(1ul << 16)
-#define RESTYPE_CONFIG		(1ul << 17)
-#define RESTYPE_SIGNAL		(1ul << 18)
-#define RESTYPE_CMD		(1ul << 19)
-#define RESTYPE_LOCKOUT		(1ul << 20)
-#define RESTYPE_TIMED		(1ul << 21)
-#define RESTYPE_MONITOR		(1ul << 22)
-
-  char panel[64];
-  uint64_t pan_annoy;
-  uint64_t pan_res;
-  char ssave[64];
-  uint64_t ssave_annoy;
-  uint64_t ssave_res;
-  char other[64];
-  uint64_t oth_annoy;
-  uint64_t oth_res;
-
-  char color_settings[64];
-  char display_settings[64];
-  char ssv_settings[64];
-  char pow_settings[64];
-  char settings[64];
-  char term[64];
-  char taskmgr[64];
-  char sshot[64];
-} wm_caps_t;
-
-
-typedef struct {
-  // the following can be assumed TRUE / PRESENT, they are checked on startup
-  boolean smog_version_correct;
-  boolean can_read_from_config;
-
-  boolean can_write_to_config;
-  boolean can_write_to_config_new;
-
-  boolean can_write_to_config_backup;
-  boolean can_write_to_workdir;
-
-  lives_checkstatus_t has_smogrify;
-
-  // the following may need checking before use
-  lives_checkstatus_t has_perl;
-  lives_checkstatus_t has_file;
-  lives_checkstatus_t has_dvgrab;
-  lives_checkstatus_t has_sox_play;
-  lives_checkstatus_t has_sox_sox;
-  lives_checkstatus_t has_autolives;
-  lives_checkstatus_t has_mplayer;
-  lives_checkstatus_t has_mplayer2;
-  lives_checkstatus_t has_mpv;
-  lives_checkstatus_t has_convert;
-  lives_checkstatus_t has_composite;
-  lives_checkstatus_t has_identify;
-  lives_checkstatus_t has_ffprobe;
-  lives_checkstatus_t has_ffmpeg;
-  lives_checkstatus_t has_cdda2wav;
-  lives_checkstatus_t has_icedax;
-  lives_checkstatus_t has_midistartstop;
-  lives_checkstatus_t has_jackd;
-  lives_checkstatus_t has_pulse_audio;
-  lives_checkstatus_t has_xwininfo;
-  lives_checkstatus_t has_gdb;
-  lives_checkstatus_t has_gzip;
-  lives_checkstatus_t has_gconftool_2;
-  lives_checkstatus_t has_xdg_screensaver;
-  lives_checkstatus_t has_wmctrl;
-  lives_checkstatus_t has_xdotool;
-  lives_checkstatus_t has_youtube_dl;
-  lives_checkstatus_t has_du;
-  lives_checkstatus_t has_md5sum;
-  lives_checkstatus_t has_gio;
-  lives_checkstatus_t has_wget;
-  lives_checkstatus_t has_curl;
-  lives_checkstatus_t has_mktemp;
-  lives_checkstatus_t has_snap;
-
-  /// home directory - default location for config file - locale encoding
-  char home_dir[PATH_MAX];
-
-  char backend_path[PATH_MAX];
-
-  char *xdg_data_home; // e.g $HOME/.local/share
-  char *xdg_session_desktop; // e.g ubuntustudio
-  char *xdg_current_desktop; // e.g XFCE
-  char *xdg_runtime_dir; // e.g /run/user/$uid
-
-  char touch_cmd[PATH_MAX];
-  char rm_cmd[PATH_MAX];
-  char mv_cmd[PATH_MAX];
-  char cp_cmd[PATH_MAX];
-  char ln_cmd[PATH_MAX];
-  char chmod_cmd[PATH_MAX];
-  char cat_cmd[PATH_MAX];
-  char grep_cmd[PATH_MAX];
-  char sed_cmd[PATH_MAX];
-  char wc_cmd[PATH_MAX];
-  char echo_cmd[PATH_MAX];
-  char eject_cmd[PATH_MAX];
-  char rmdir_cmd[PATH_MAX];
-
-  /// used for returning startup messages from the backend
-  char startup_msg[1024];
-
-  // plugins
-  lives_checkstatus_t has_encoder_plugins;
-
-  lives_checkstatus_t has_python;
-  uint64_t python_version;
-
-  int ncpus;
-  int byte_order;
-
-  char *myname_full;
-  char *myname;
-
-  char *cpu_name;
-  short cpu_bits;
-  int64_t boot_time;
-  int xstdout;
-  int nmonitors;
-  int primary_monitor;
-
-  pid_t mainpid;
-  pthread_t main_thread;
-  pthread_t gui_thread;
-
-  char *username;
-
-  mode_t umask;
-
-  char *gui_theme_name;
-  char *icon_theme_name;
-  char *extra_icon_path;
-  LiVESList *all_icons;
-
-  char *wm_type; ///< window manager type, e.g. x11
-  char *wm_name; ///< window manager name, may be different from wm_caps.wwm_name
-  boolean has_wm_caps;
-  wm_caps_t wm_caps;
-
-  int64_t ds_used, ds_free, ds_tot;
-  char *mountpoint;  ///< utf-8
-
-  char *os_name;
-  char *os_release;
-  char *os_hardware;
-
-  char *distro_name;
-  char *distro_ver;
-  char *distro_codename;
-
-  char *mach_name;
-
-  int dclick_time;
-  int dclick_dist;
-  char *sysbindir;
-} capability;
-
 /// some shared structures
-capability *capable;
 
 #define USE_MPV (!capable->has_mplayer && !capable->has_mplayer2 && capable->has_mpv)
 #define HAS_EXTERNAL_PLAYER (capable->has_mplayer || capable->has_mplayer2 || capable->has_mpv)
@@ -1523,7 +1529,7 @@ void set_preview_box_colours(void);
 void load_theme_images(void);
 void set_interactive(boolean interactive);
 char *get_menu_name(lives_clip_t *sfile, boolean add_set);
-int get_hspace(void);
+int get_vspace(void);
 void enable_record(void);
 void toggle_record(void);
 void disable_record(void);

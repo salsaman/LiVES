@@ -15,7 +15,6 @@
 #include "main.h"
 #include "callbacks.h"
 
-#ifdef CPU_CHECKS
 static void cpuid(unsigned int ax, unsigned int *p) {
   __asm __volatile
   ("movl %%ebx, %%esi\n\tcpuid\n\txchgl %%ebx, %%esi"
@@ -30,11 +29,11 @@ static int get_cacheline_size(void) {
   if (regs[0] >= 0x00000001) {
     cpuid(0x00000001, regs2);
     cacheline = ((regs2[1] >> 8) & 0xFF) * 8;
-    has_sse2 = (regs2[3] & 0x4000000) ? TRUE : FALSE;
+    //has_sse2 = (regs2[3] & 0x4000000) ? TRUE : FALSE;
   }
   return cacheline;
 }
-#endif
+
 
 static uint64_t fastrand_val = 0;
 
@@ -1027,10 +1026,10 @@ char *get_mountpoint_for(const char *dir) {
 
 off_t get_dir_size(const char *dirname) {
   off_t dirsize = -1;
-  if (!dirname || !*dirname) return -1;
+  if (!dirname || !*dirname || !lives_file_test(dirname, LIVES_FILE_TEST_IS_DIR)) return -1;
   if (check_for_executable(&capable->has_du, EXEC_DU)) {
     char buff[PATH_MAX * 2];
-    char *com = lives_strdup_printf("%s -sb0 \"%s\"", EXEC_DU, dirname);
+    char *com = lives_strdup_printf("%s -s -B 1 \"%s\"", EXEC_DU, dirname);
     lives_popen(com, TRUE, buff, PATH_MAX * 2);
     lives_free(com);
     if (THREADVAR(com_failed)) THREADVAR(com_failed) = FALSE;
@@ -3186,8 +3185,12 @@ boolean check_snap(const char *prog) {
 }
 
 
-#define LSB_OS_FILE "/etc/lsb-release"
 boolean get_distro_dets(void) {
+#ifndef IS_LINUX
+  capable->distro_name = lives_strdup(capable->os_name);
+  capable->distro_ver = lives_strdup(capable->os_release);
+#else
+#define LSB_OS_FILE "/etc/lsb-release"
   char *com = lives_strdup_printf("%s %s", capable->cat_cmd, LSB_OS_FILE), *ret;
   if ((ret = mini_popen(com))) {
     int xlen = get_token_count(ret, '=');
@@ -3206,24 +3209,60 @@ boolean get_distro_dets(void) {
     lives_strfreev(array);
     return TRUE;
   }
+#endif
   return FALSE;
 }
 
 
+int get_num_cpus(void) {
+#ifdef IS_DARWIN
+  kerr = host_processor_info(mach_host_self(), PROCESSOR_BASIC_INFO, &numProcessors, &processorInfo, &numProcessorInfo);
+  if (kerr == KERN_SUCCESS) {
+    vm_deallocate(mach_task_self(), (vm_address_t) processorInfo, numProcessorInfo * sizint);
+  }
+  return numProcessors;
+#else
+  char buffer[1024];
+  char command[PATH_MAX];
+#ifdef IS_FREEBSD
+  lives_snprintf(command, PATH_MAX, "sysctl -n kern.smp.cpus");
+#else
+  lives_snprintf(command, PATH_MAX, "%s processor /proc/cpuinfo 2>/dev/null | %s -l 2>/dev/null",
+                 capable->grep_cmd, capable->wc_cmd);
+#endif
+  lives_popen(command, TRUE, buffer, 1024);
+  return atoi(buffer);
+#endif
+}
+
+
 boolean get_machine_dets(void) {
+#ifdef IS_FREEBSD
+  char *com = lives_strdup("sysctl -n hw.model");
+#else
   char *com = lives_strdup_printf("%s -m1 \"^model name\" /proc/cpuinfo | %s -e \"s/.*: //\" -e \"s:\\s\\+:/:g\"",
 				  capable->grep_cmd, capable->sed_cmd);
+#endif
   capable->cpu_name = mini_popen(com);
+
   com = lives_strdup("uname -o");
   capable->os_name = mini_popen(com);
+
   com = lives_strdup("uname -r");
   capable->os_release = mini_popen(com);
+
   com = lives_strdup("uname -m");
   capable->os_hardware = mini_popen(com);
+
+  capable->cacheline_size = capable->cpu_bits * 8;
+  if (!strcmp(capable->os_hardware, "x86)64")) capable->cacheline_size = get_cacheline_size();
+
   com = lives_strdup("uname -n");
   capable->mach_name = mini_popen(com);
+
   com = lives_strdup("whoami");
   capable->username = mini_popen(com);
+
   if (THREADVAR(com_failed)) {
     THREADVAR(com_failed) = FALSE;
     return FALSE;

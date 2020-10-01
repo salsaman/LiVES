@@ -48,9 +48,11 @@ fi
 IS_DARWIN="false"
 IS_IRIX="false"
 IS_SOLARIS="false"
+IS_LINUX="false"
 IS_LINUX_GNU="false"
 IS_LINUX_MUSL="false"
 IS_MINGW="false"
+IS_FREEBSD="false"
 
 case "{$target_os}" in
  *darwin*)
@@ -60,10 +62,15 @@ case "{$target_os}" in
    IS_IRIX="true"
   ;;
  *linux-gnu*)
+   IS_LINUX="true"
    IS_LINUX_GNU="true"
   ;;
  *linux-musl*)
+   IS_LINUX="true"
    IS_LINUX_MUSL="true"
+  ;;
+ *freebsd*)
+   IS_FREEBSD="true"
   ;;
  *solaris*)
    IS_SOLARIS="true"

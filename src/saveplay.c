@@ -3416,10 +3416,13 @@ void play_file(void) {
     //lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
   }
 
+  g_print("valsss %d %d\n", lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET), GUI_SCREEN_HEIGHT);
+
+
   if (prefs->show_gui && ((mainw->multitrack  && mainw->double_size) ||
                           (lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET) > GUI_SCREEN_HEIGHT ||
                            lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET) > GUI_SCREEN_WIDTH))) {
-    if (prefs->gui_monitor == 0) lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, 0);
+    //if (prefs->gui_monitor == 0) lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, 0);
     if (prefs->open_maximised)
       lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);

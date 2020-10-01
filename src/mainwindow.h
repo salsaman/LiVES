@@ -68,7 +68,7 @@
 
 // space to reserve for the CE timeline
 // IMPORTANT to fine tune this - TODO
-#define CE_TIMELINE_HSPACE ((int)(420. * widget_opts.scale))
+#define CE_TIMELINE_VSPACE ((int)(420. * widget_opts.scale))
 
 /// char width of combo entries (default)
 #define COMBOWIDTHCHARS 12
@@ -131,7 +131,7 @@
 
 // min screen height to show the message area
 #define MIN_MSGBAR_HEIGHT (widget_opts.scale >= 1. ? ((int)32. * widget_opts.scale) : 46)
-#define MIN_MSG_AREA_SCRNHEIGHT (DEF_FRAME_HSIZE_GUI + CE_TIMELINE_HSPACE - MIN_MSGBAR_HEIGHT)
+#define MIN_MSG_AREA_SCRNHEIGHT (DEF_FRAME_VSIZE_GUI + CE_TIMELINE_VSPACE - MIN_MSGBAR_HEIGHT)
 #define MIN_MSGBOX_LLINES 2
 
 #define DEF_FRAME_HSIZE_UNSCALED ((GUI_SCREEN_WIDTH >= SCREEN_169_MIN_WIDTH) ? DEF_FRAME_HSIZE_169_UNSCALED : \

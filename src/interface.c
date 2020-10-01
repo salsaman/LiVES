@@ -1373,7 +1373,8 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
 
   textwindow = (text_window *)lives_malloc(sizeof(text_window));
 
-  if (LIVES_SHOULD_EXPAND_EXTRA_WIDTH) window_width = RFX_WINSIZE_H * 2;
+  if (LIVES_SHOULD_EXPAND_EXTRA_WIDTH) window_width
+      = RFX_WINSIZE_H * 1.5 * widget_opts.scale;
 
   textwindow->dialog = lives_standard_dialog_new(title, FALSE, window_width,
                        LIVES_SHOULD_EXPAND_HEIGHT ? DEF_DIALOG_HEIGHT
@@ -7049,7 +7050,6 @@ boolean msg_area_config(LiVESWidget * widget) {
           lives_container_child_set_shrinkable(LIVES_CONTAINER(mainw->multitrack->top_vpaned),
                                                mainw->multitrack->vpaned, FALSE);
           lives_paned_set_position(LIVES_PANED(mainw->multitrack->top_vpaned), pos);
-
         } else
           lives_container_child_set_shrinkable(LIVES_CONTAINER(mainw->multitrack->top_vpaned),
                                                mainw->multitrack->vpaned, TRUE);

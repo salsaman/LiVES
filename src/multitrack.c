@@ -6120,6 +6120,9 @@ void set_mt_colours(lives_mt * mt) {
   if (palette->style & STYLE_1) {
     lives_widget_apply_theme2(mt->menubar, LIVES_WIDGET_STATE_NORMAL, TRUE);
     lives_widget_apply_theme2(mt->menu_hbox, LIVES_WIDGET_STATE_NORMAL, TRUE);
+  } else {
+    lives_widget_apply_theme(mt->menubar, LIVES_WIDGET_STATE_NORMAL);
+    lives_widget_apply_theme(mt->menu_hbox, LIVES_WIDGET_STATE_NORMAL);
   }
 
   lives_widget_apply_theme(mt->eventbox, LIVES_WIDGET_STATE_NORMAL);
@@ -8121,14 +8124,15 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   */
 
   mt->btoolbarx = lives_toolbar_new();
-  lives_box_pack_start(LIVES_BOX(hbox), mt->btoolbarx, FALSE, FALSE, widget_opts.packing_width * 2);
+  lives_box_pack_start(LIVES_BOX(hbox), mt->btoolbarx, TRUE, TRUE,
+                       widget_opts.packing_width * 2);
 
   lives_toolbar_set_show_arrow(LIVES_TOOLBAR(mt->btoolbarx), FALSE);
 
   lives_toolbar_set_style(LIVES_TOOLBAR(mt->btoolbarx), LIVES_TOOLBAR_TEXT);
 
   mt->btoolbar3 = lives_toolbar_new();
-  lives_box_pack_start(LIVES_BOX(hbox), mt->btoolbar3, FALSE, FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(mt->menu_hbox), mt->btoolbar3, FALSE, FALSE, 0);
 
   lives_toolbar_set_show_arrow(LIVES_TOOLBAR(mt->btoolbar3), FALSE);
 
@@ -8944,8 +8948,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_paned_pack(1, LIVES_PANED(mt->top_vpaned), mt->xtravbox, FALSE, FALSE);
   lives_paned_pack(2, LIVES_PANED(mt->top_vpaned), mt->vpaned, TRUE, FALSE);
-  lives_paned_set_position(LIVES_PANED(mt->top_vpaned), GUI_SCREEN_HEIGHT * 2 / 3);
-
+  lives_paned_set_position(LIVES_PANED(mt->top_vpaned),
+                           (double)GUI_SCREEN_HEIGHT * 2. / 3. * widget_opts.scale);
   return mt;
 }
 

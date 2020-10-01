@@ -1446,7 +1446,7 @@ if (1) {
 		}
 		my $deftrashdir = "$workdir/.$DEFTRASH";
 		if (! -d $deftrashdir) {
-		    make_path $deftrashdir, {mode => 1777};
+		    make_path $deftrashdir, {mode => 01777};
 		}
 		remove_tree($deftrashdir, {keep_root => 1});
 		if ($handle ne ".") {
@@ -8144,7 +8144,7 @@ sub clean_old {
     if ($movetotrash) {
 	my $deftrashdir = "$workdir/.$DEFTRASH";
 	if (! -d $deftrashdir) {
-	    make_path $deftrashdir, {mode => 1777};
+	    make_path $deftrashdir, {mode => 01777};
 	}
 	if (-d $deftrashdir && -w $deftrashdir) {
 	    $use_trash = 1;
@@ -10024,7 +10024,7 @@ sub clean_workdir {
 	print "\n(can be overriden by disabling 'Remove Misc Files')\n";
 	if ($new_work) {
 	    if (! -d $deftrashdir) {
-		make_path $deftrashdir, {mode => 1777};
+		make_path $deftrashdir, {mode => 01777};
 	    }
 	}
 	for $filerem(glob "rfx.* keep_layout**") {
@@ -10061,7 +10061,7 @@ sub clean_workdir {
 	#print "\n(can be overriden with option 0x40)\n";
 	if ($new_work) {
 	    if (! -d $deftrashdir) {
-		make_path $deftrashdir, {mode => 1777};
+		make_path $deftrashdir, {mode => 01777};
 	    }
 	}
 	for $filerem(glob "recorded-layout*") {

@@ -15,6 +15,8 @@
 #include "main.h"
 #include "callbacks.h"
 
+LIVES_LOCAL_INLINE char *mini_popen(char *cmd);
+
 static void cpuid(unsigned int ax, unsigned int *p) {
   __asm __volatile
   ("movl %%ebx, %%esi\n\tcpuid\n\txchgl %%ebx, %%esi"
@@ -996,30 +998,34 @@ boolean is_empty_dir(const char *dirname) {
 
 
 char *get_mountpoint_for(const char *dir) {
-  FILE *mountinfo;
-  char **array;
-  char *mp = NULL, *tmp;
+  char *mp = NULL, *tmp, *com, *res;
   size_t lmatch = 0, slen;
-  char buff[65536];
   int j;
 
   if (!dir) return NULL;
   slen = lives_strlen(dir);
 
-  if (!(mountinfo = fopen(MOUNTINFO, "r"))) return lives_strdup("??????");
-  while (lives_fgets(buff, 65536, mountinfo)) {
-    array = lives_strsplit(buff, " ", 3);
-    for (j = 0; array[1][j] && j < slen; j++) if (array[1][j] != dir[j]) break;
-    if (j > lmatch && !array[1][j]) {
-      lmatch = j;
-      if (mp) lives_free(mp);
-      tmp = lives_strdup(array[0]);
-      mp = lives_filename_to_utf8(tmp, -1, NULL, NULL, NULL);
-      lives_free(tmp);
+  com = lives_strdup("df --output=source,target");
+  if ((res = mini_popen(com))) {
+    int lcount = get_token_count(res, '\n');
+    char **array0 = lives_strsplit(res, "\n", lcount);
+    for (int l = 0; l < lcount; l++) {
+      int pccount = get_token_count(array0[l], ' ');
+      char **array1 = lives_strsplit(array0[l], " ", pccount);
+      lives_chomp(array1[pccount - 1]);
+      for (j = 0; array1[pccount - 1][j] && j < slen; j++) if (array1[pccount - 1][j] != dir[j]) break;
+      if (j > lmatch && !array1[pccount - 1][j]) {
+        lmatch = j;
+        if (mp) lives_free(mp);
+        tmp = lives_strdup(array1[0]);
+        mp = lives_filename_to_utf8(tmp, -1, NULL, NULL, NULL);
+        lives_free(tmp);
+      }
+      lives_strfreev(array1);
     }
-    lives_strfreev(array);
+    lives_strfreev(array0);
+    lives_free(res);
   }
-  fclose(mountinfo);
   return mp;
 }
 

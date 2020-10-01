@@ -1030,16 +1030,22 @@ char *get_mountpoint_for(const char *dir) {
 }
 
 
+#ifdef IS_FREEBSD
+#define DU_BLOCKSIZE 512
+#else
+#define DU_BLOCKSIZE 1
+#endif
+
 off_t get_dir_size(const char *dirname) {
   off_t dirsize = -1;
   if (!dirname || !*dirname || !lives_file_test(dirname, LIVES_FILE_TEST_IS_DIR)) return -1;
   if (check_for_executable(&capable->has_du, EXEC_DU)) {
     char buff[PATH_MAX * 2];
-    char *com = lives_strdup_printf("%s -sB 512 \"%s\"", EXEC_DU, dirname);
+    char *com = lives_strdup_printf("%s -sB %d \"%s\"", EXEC_DU, DU_BLOCKSIZE, dirname);
     lives_popen(com, TRUE, buff, PATH_MAX * 2);
     lives_free(com);
     if (THREADVAR(com_failed)) THREADVAR(com_failed) = FALSE;
-    else dirsize = atol(buff) / 512l;
+    else dirsize = atol(buff) / DU_BLOCKSIZE;
   }
   return dirsize;
 }

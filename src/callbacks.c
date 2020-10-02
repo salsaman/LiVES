@@ -914,6 +914,7 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
   int keep_frags = 0;
   int manage_ds = 0;
   int current_file = mainw->current_file;
+  int audchoice = 0;
 
   mainw->no_switch_dprint = TRUE;
 
@@ -999,10 +1000,12 @@ retry:
     // for now, we dont't pass req->desired_fps or req->audchoice
     // also we could send req->sub_lang...
 
+    if (!mainw->save_with_sound) audchoice = -1;
+
     com = lives_strdup_printf("%s download_clip \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d \"%s\" %d "
-                              "%d %d%s", prefs->backend, cfile->handle, req->URI, ddir,
+                              "%d %d %d %s", prefs->backend, cfile->handle, req->URI, ddir,
                               req->fname, req->format, req->desired_width, req->desired_height,
-                              req->matchsize, req->vidchoice, keep_frags,
+                              req->matchsize, req->vidchoice, audchoice, keep_frags,
                               req->do_update, prefs->show_dev_opts,
                               overrdkey ? (tmp = lives_strdup_printf(" %s", overrdkey))
                               : (tmp = lives_strdup("")));

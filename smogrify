@@ -3779,9 +3779,10 @@ if (1) {
 	    my $desheight = int($ARGV[7]);
 	    my $matchsize = int($ARGV[8]);
 	    my $vidchoice = $ARGV[9];
-	    my $keep_frags = $ARGV[10];
-	    my $do_update = int($ARGV[11]);
-	    my $debug = $ARGV[12];
+	    my $audchoice = $ARGV[10];
+	    my $keep_frags = $ARGV[11];
+	    my $do_update = int($ARGV[12]);
+	    my $debug = $ARGV[13];
 
 	    ##print STDERR "DO UPDATE is $do_update\n";
 	    my $YTDL_URL = "https://yt-dl.org/downloads/latest/youtube-dl";
@@ -3803,7 +3804,7 @@ if (1) {
 		$opts = "-o";
 	    }
 
-	    if ($ARGV[13] eq "forceddownload") {
+	    if ($ARGV[14] eq "forceddownload") {
 		$islocal = 1;
 		if (! -d $local_bindir) {
 		    make_path $local_bindir;
@@ -3851,7 +3852,7 @@ if (1) {
 		    }
 		    &sig_system_error(
 			$com, $line, "_ASKPERM_|DOWNLOADLOCAL|youtube-dl|" .
-			"13|forceddownload|" .
+			"14|forceddownload|" .
 			"$dlprog https://yt-dl.org/downloads/latest/youtube-dl " .
 			"$opts'$local_bindir/$youtube_dl'\nchmod u+x " .
 			"'$local_bindir/$youtube_dl'"
@@ -3878,7 +3879,7 @@ if (1) {
 			}
 			&sig_system_error(
 			    $com, $2, "_ASKPERM_|DOWNLOADLOCAL|youtube-dl|" .
-			    "13|forceddownload|" .
+			    "14|forceddownload|" .
 			    "$dlprog https://yt-dl.org/downloads/latest/youtube-dl " .
 			    "$opts '$local_bindir/$youtube_dl'\nchmod u+x " .
 			    "'$local_bindir/$youtube_dl'"
@@ -3900,7 +3901,7 @@ if (1) {
 			    print STDERR "returning ERROR\n\n";
 			    &sig_system_error(
 				$com, $errnum, "_TRY_SUDO_, _ASKPERM_|DOWNLOADLOCAL|youtube-dl|" .
-				"13|forceddownload|" .
+				"14|forceddownload|" .
 				"$dlprog https://yt-dl.org/downloads/latest/youtube-dl " .
 				"$opts '$local_bindir/$youtube_dl'\nchmod u+x " .
 				"'$local_bindir/$youtube_dl'"
@@ -3935,13 +3936,17 @@ if (1) {
 	    }
 	    my $bestaudio = "";
 	    my $xdfile = "$ddir/$dfile.$formreq";
+	    my $noaudio;
 
-	    if ($audchoice ne "") {
+	    if ($audchoice ne "0") {
 		$bestaudio = $audchoice;
+		if ($audchoice eq "-1") {
+		    $noaudio = 1;
+		}
 	    }
 	    my $xbestaudio = "";
 
-	    if ($vidchoice eq "" || $audchoice eq "") {
+	    if ($vidchoice eq "" || $audchoice eq "-1" || $audchoide eq "0") {
 		## next, list all the formats and select the we want (or return them)
 		my $best = "(best)";
 		my $video_only = "video only";
@@ -3974,7 +3979,7 @@ if (1) {
 
 		    ## filter by extension, type
 		    if ($reso eq "audio") {
-			if ($audchoice eq "") {
+			if ($audchoice eq "0") {
 			    if ($isbest) {
 				$bestaudio = $fcode;
 			    }
@@ -3995,7 +4000,7 @@ if (1) {
 			$vidonly = 1;
 		    }
 
-		    if ($vidchoice eq $fcode && $audchoice eq "" && !$vidonly) {
+		    if ($vidchoice eq $fcode && $audchoice eq "0" && !$vidonly) {
 			## bestaudio doesn't always work, so if the video has an audio track, use that
 			## to be safe
 			$xbestaudio = "";
@@ -4146,7 +4151,11 @@ if (1) {
 		exit 3;
 	    }
 
-	    if ($bestaudio ne "") {
+	    if ($noaudio) {
+		$xbestaudeo = "";
+	    }
+
+	    elsif ($bestaudio ne "") {
 		$xbestaudio = "+$bestaudio";
 	    }
 
@@ -4164,7 +4173,7 @@ if (1) {
 		#$extra = "--merge-output-format mp4";
 		$dfile = $xdfile;
 	    } elsif ($formreq eq "webm") {
-		if ($bestaudio eq "") {
+		if ($bestaudio eq "" || $noaudio) {
 		    $dfile = $xdfile;
 		}
 	    }

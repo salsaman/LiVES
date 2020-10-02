@@ -3920,7 +3920,6 @@ static void _make_play_window(void) {
       lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
     }
     load_preview_image(FALSE);
-    lives_widget_queue_draw(mainw->play_window);
   }
 
   lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Hide Play Window"));
@@ -3933,8 +3932,6 @@ static void _make_play_window(void) {
                             LIVES_GUI_CALLBACK(key_press_or_release), NULL);
 
   lives_widget_set_sensitive(mainw->play_window, TRUE);
-
-  clear_widget_bg(mainw->preview_image, mainw->pi_surface);
 }
 
 void make_play_window(void) {
@@ -3987,6 +3984,7 @@ static void _resize_play_window(void) {
   int scr_height = GUI_SCREEN_HEIGHT;
   int scr_width_safety = SCR_WIDTH_SAFETY;
   int scr_height_safety = SCR_HEIGHT_SAFETY;
+  int bx, by;
 
   uint64_t xwinid = 0;
 
@@ -4003,6 +4001,11 @@ static void _resize_play_window(void) {
 #endif
 
   if (!mainw->play_window) return;
+
+  get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+
+  scr_width_safety += 2 * bx;
+  scr_height_safety += 2 * by;
 
   if (!LIVES_IS_PLAYING && !mainw->multitrack)
     lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), TRUE);
@@ -4304,15 +4307,15 @@ static void _resize_play_window(void) {
 
     pmonitor = prefs->play_monitor;
     if (pmonitor == 0 || !LIVES_IS_PLAYING) {
-      while (nwidth > GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY / 2 ||
-             nheight > GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY / 2) {
+      while (nwidth > GUI_SCREEN_WIDTH - scr_width_safety ||
+             nheight > GUI_SCREEN_HEIGHT - scr_height_safety) {
         nheight = (nheight >> 2) << 1;
         nwidth = (nwidth >> 2) << 1;
         mainw->sepwin_scale /= 2.;
       }
     } else {
-      while (nwidth > mainw->mgeom[pmonitor - 1].width - SCR_WIDTH_SAFETY / 2 ||
-             nheight > mainw->mgeom[pmonitor - 1].height - SCR_HEIGHT_SAFETY / 2) {
+      while (nwidth > mainw->mgeom[pmonitor - 1].width - scr_width_safety ||
+             nheight > mainw->mgeom[pmonitor - 1].height - scr_height_safety) {
         nheight = (nheight >> 2) << 1;
         nwidth = (nwidth >> 2) << 1;
         mainw->sepwin_scale /= 2.;
@@ -4331,6 +4334,7 @@ static void _resize_play_window(void) {
     }
     play_window_set_title();
   }
+  clear_widget_bg(mainw->play_image, mainw->play_surface);
 }
 
 

@@ -10423,21 +10423,21 @@ void vj_mode_toggled(LiVESCheckMenuItem * menuitem, livespointer user_data) {
   if (lives_check_menu_item_get_active(menuitem) && (prefs->warning_mask & WARN_MASK_VJMODE_ENTER) == 0) {
     if (!(do_yesno_dialog_with_check(_("VJ Mode is specifically designed to make LiVES ready for realtime presentation.\n"
                                        "Enabling VJ restart will have the following effects:\n"
-                                       "\n\n - On startup, audio source will be set to external.\n"
+                                       "\n\n - On startup, audio source will be set to external. "
                                        "Clips willl reload without audio (although the audio files will remain on the disk).\n"
-                                       "Additionally, when playing external audio, iVES to use the system clock for frame timings\n"
+                                       "Additionally, when playing external audio, LiVES uses the system clock for frame timings "
                                        "(rather than the soundcard) which may allow for slighly smoother playback.\n"
                                        "\n - only the lightest of checks will be done when reloading clips (unless a problem is detected "
                                        "during the reload.)\n\n"
-                                       "Startup  will be almost instantaneous, however in the rare occurance of corruption to\n"
-                                       "           a clip audio file, this will not be detected, as the file will not be loaded.\n"
-                                       "\nOn startup, LiVES will grab the keyboard and screen focus if it can,\n"
-                                       "\n - Shutdown will be slightly more rapid as no cleanup of the working directory will be attempted\n"
-                                       "\n - Rendered effects will not be loaded, which willl further reduce the startup time.\n"
+                                       "Startup  will be almost instantaneous, however in the rare occurance of corruption to "
+                                       "a clip audio file, this will not be detected, as the file will not be loaded."
+                                       "\nOn startup, LiVES will grab the keyboard and screen focus if it can,"
+                                       "\n - Shutdown will be slightly more rapid as no cleanup of the working directory will be attempted"
+                                       "\n - Rendered effects will not be loaded, which willl further reduce the startup time."
                                        "(Realtime effects will still be loaded as usual)\n"
-                                       "\n - Any crash recovery files will be auto reloaded\n"
-                                       "      making it convenient to  terminate  LiVES using ctrl-c or simply shutting down the machine\n"
-                                       "\n - Continuous looping of video will be enabled automatically on startup\n"),
+                                       "\n - Any crash recovery files will be auto reloaded "
+                                       "making it convenient to  terminate  LiVES using ctrl-c or simply shutting down the machine\n"
+                                       "\n - Continuous looping of video will be enabled automatically on startup"),
                                      WARN_MASK_VJMODE_ENTER))) {
       lives_signal_handler_block(mainw->vj_mode, mainw->vj_mode_func);
       lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->vj_mode), FALSE);

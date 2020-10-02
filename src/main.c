@@ -5579,7 +5579,7 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
 
     if (mainw->multitrack && widget != mainw->preview_image) border = 16;
     /// clipping area for image
-    lives_painter_rectangle(cr, cx, cy, rwidth - border, rheight);
+    lives_painter_rectangle(cr, cx, cy, rwidth - border, rheight + 2);
   } else {
     lives_widget_set_opacity(widget, 0.);
     clear_widget_bg(widget, surface);

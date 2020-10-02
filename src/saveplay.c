@@ -3236,6 +3236,8 @@ void play_file(void) {
             lives_widget_show_now(mainw->preview_box);
             lives_widget_grab_focus(mainw->preview_spinbutton);
             lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
+            lives_window_center(LIVES_WINDOW(mainw->play_window));
+            clear_widget_bg(mainw->play_image, mainw->play_surface);
 	  // *INDENT-OFF*
 	  }}}}}
   // *INDENT-ON*
@@ -3415,9 +3417,6 @@ void play_file(void) {
   if (!mainw->multitrack) {
     //lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
   }
-
-  g_print("valsss %d %d\n", lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET), GUI_SCREEN_HEIGHT);
-
 
   if (prefs->show_gui && ((mainw->multitrack  && mainw->double_size) ||
                           (lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET) > GUI_SCREEN_HEIGHT ||

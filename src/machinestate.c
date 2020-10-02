@@ -1005,7 +1005,7 @@ char *get_mountpoint_for(const char *dir) {
   if (!dir) return NULL;
   slen = lives_strlen(dir);
 
-  com = lives_strdup("df --output=source,target");
+  com = lives_strdup("df -P");
   if ((res = mini_popen(com))) {
     int lcount = get_token_count(res, '\n');
     char **array0 = lives_strsplit(res, "\n", lcount);
@@ -1031,7 +1031,7 @@ char *get_mountpoint_for(const char *dir) {
 
 
 #ifdef IS_FREEBSD
-#define DU_BLOCKSIZE 512
+#define DU_BLOCKSIZE 1024
 #else
 #define DU_BLOCKSIZE 1
 #endif

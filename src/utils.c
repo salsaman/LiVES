@@ -5728,16 +5728,16 @@ LiVESList *lives_list_delete_string(LiVESList * list, const char *string) {
   // remove string from list, using strcmp
 
   LiVESList *xlist = list;
-  while (xlist) {
+  for (; xlist; xlist = xlist->next) {
     if (!lives_utf8_strcasecmp((char *)xlist->data, string)) {
       lives_free((livespointer)xlist->data);
       if (xlist->prev) xlist->prev->next = xlist->next;
+      else list = xlist;
       if (xlist->next) xlist->next->prev = xlist->prev;
-      if (list == xlist) list = xlist->next;
+      xlist->next = xlist->prev = NULL;
       lives_list_free(xlist);
       return list;
     }
-    xlist = xlist->next;
   }
   return list;
 }

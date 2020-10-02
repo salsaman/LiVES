@@ -94,21 +94,16 @@ static void cleanup_set_dir(const char *set_name) {
   // - when the last clip in a set is closed
 
   char *lfiles, *ofile, *sdir;
-  char *cdir = lives_build_filename(prefs->workdir, set_name, CLIPS_DIRNAME, NULL);
 
-  do {
-    // keep trying until backend has deleted the clip
-    lives_rmdir(cdir, TRUE);
-    if (lives_file_test(cdir, LIVES_FILE_TEST_IS_DIR)) {
-      if (mainw->threaded_dialog) threaded_dialog_spin(0.);
-      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
-      lives_usleep(prefs->sleep_time);
-    }
-  } while (lives_file_test(cdir, LIVES_FILE_TEST_IS_DIR));
+  sdir = lives_build_path(prefs->workdir, set_name, LAYOUTS_DIRNAME, NULL);
+  if (lives_file_test(sdir, LIVES_FILE_TEST_IS_DIR))
+    lives_rmdir(sdir, FALSE);
+  lives_free(sdir);
 
-  THREADVAR(com_failed) = FALSE;
-
-  lives_free(cdir);
+  sdir = lives_build_filename(prefs->workdir, set_name, CLIPS_DIRNAME, NULL);
+  if (lives_file_test(sdir, LIVES_FILE_TEST_IS_DIR))
+    lives_rmdir(sdir, FALSE);
+  lives_free(sdir);
 
   // remove any stale lockfiles
   lfiles = SET_LOCK_FILES(set_name);
@@ -119,13 +114,14 @@ static void cleanup_set_dir(const char *set_name) {
   lives_rm(ofile);
   lives_free(ofile);
 
-  ofile = lives_build_filename(prefs->workdir, set_name, CLIP_ORDER_FILENAME "." LIVES_FILE_EXT_NEW, NULL);
+  ofile = lives_build_filename(prefs->workdir, set_name,
+                               CLIP_ORDER_FILENAME "." LIVES_FILE_EXT_NEW, NULL);
   lives_rm(ofile);
   lives_free(ofile);
 
   lives_sync(1);
 
-  sdir = lives_build_filename(prefs->workdir, set_name, NULL);
+  sdir = lives_build_path(prefs->workdir, set_name, NULL);
   lives_rmdir(sdir, FALSE); // set to FALSE in case the user placed extra files there
   lives_free(sdir);
 
@@ -134,7 +130,9 @@ static void cleanup_set_dir(const char *set_name) {
     lives_memset(prefs->ar_clipset_name, 0, 1);
     set_string_pref(PREF_AR_CLIPSET, "");
   }
+  mainw->set_list = lives_list_delete_string(mainw->set_list, set_name);
 }
+
 
 #ifndef VALGRIND_ON
 #ifdef _lives_free
@@ -144,7 +142,7 @@ static void cleanup_set_dir(const char *set_name) {
 #endif
 
 void lives_exit(int signum) {
-  char *cwd, *tmp, *com;
+  char *tmp, *com;
   int i;
 
   if (!mainw) _exit(0);
@@ -319,160 +317,139 @@ void lives_exit(int signum) {
         mainw->suppress_dprint = TRUE;
       }
 
-      cwd = lives_get_current_dir();
+      for (i = 1; i <= MAX_FILES; i++) {
+        if (mainw->files[i]) {
+          mainw->current_file = i;
+          threaded_dialog_spin(0.);
+          if (cfile->event_list_back) event_list_free(cfile->event_list_back);
+          if (cfile->event_list) event_list_free(cfile->event_list);
 
-      if (mainw->memok) {
-        for (i = 1; i <= MAX_FILES; i++) {
-          if (mainw->files[i]) {
-            mainw->current_file = i;
-            threaded_dialog_spin(0.);
-            if (cfile->event_list_back) event_list_free(cfile->event_list_back);
-            if (cfile->event_list) event_list_free(cfile->event_list);
+          cfile->event_list = cfile->event_list_back = NULL;
 
-            cfile->event_list = cfile->event_list_back = NULL;
+          lives_list_free_all(&cfile->layout_map);
 
-            lives_list_free_all(&cfile->layout_map);
-
-            if (cfile->laudio_drawable) {
-              if (mainw->laudio_drawable == cfile->laudio_drawable) mainw->laudio_drawable = NULL;
-              lives_painter_surface_destroy(cfile->laudio_drawable);
-              cfile->laudio_drawable = NULL;
-            }
-
-            if (cfile->raudio_drawable) {
-              if (mainw->raudio_drawable == cfile->raudio_drawable) mainw->raudio_drawable = NULL;
-              lives_painter_surface_destroy(cfile->raudio_drawable);
-              cfile->raudio_drawable = NULL;
-            }
-            if (mainw->drawsrc == mainw->current_file) mainw->drawsrc = -1;
-
-            if (IS_NORMAL_CLIP(i) && mainw->files[i]->ext_src && mainw->files[i]->ext_src_type == LIVES_EXT_SRC_DECODER) {
-              // must do this before we move it
-              close_clip_decoder(i);
-              threaded_dialog_spin(0.);
-            }
-            lives_freep((void **)&mainw->files[i]->frame_index);
-            cfile->layout_map = NULL;
+          if (cfile->laudio_drawable) {
+            if (mainw->laudio_drawable == cfile->laudio_drawable) mainw->laudio_drawable = NULL;
+            lives_painter_surface_destroy(cfile->laudio_drawable);
+            cfile->laudio_drawable = NULL;
           }
 
-          if (mainw->files[i]) {
-            if ((!mainw->leave_files && !prefs->crash_recovery && !(*mainw->set_name)) ||
-                (!mainw->only_close && (i == 0 || !IS_NORMAL_CLIP(i))) ||
-                (i == mainw->scrap_file && (!mainw->leave_recovery || !prefs->rr_crash)) ||
-                (i == mainw->ascrap_file && (!mainw->leave_recovery || !prefs->rr_crash)) ||
-                (mainw->multitrack && i == mainw->multitrack->render_file)) {
-              char *permitname;
-              // close all open clips, except for ones we want to retain
+          if (cfile->raudio_drawable) {
+            if (mainw->raudio_drawable == cfile->raudio_drawable) mainw->raudio_drawable = NULL;
+            lives_painter_surface_destroy(cfile->raudio_drawable);
+            cfile->raudio_drawable = NULL;
+          }
+          if (mainw->drawsrc == mainw->current_file) mainw->drawsrc = -1;
+
+          if (IS_NORMAL_CLIP(i) && mainw->files[i]->ext_src && mainw->files[i]->ext_src_type == LIVES_EXT_SRC_DECODER) {
+            // must do this before we move it
+            close_clip_decoder(i);
+            threaded_dialog_spin(0.);
+          }
+          lives_freep((void **)&mainw->files[i]->frame_index);
+          cfile->layout_map = NULL;
+        }
+
+        if (mainw->files[i]) {
+          /// physically remove:
+          /// - "device" clips, generators, etc.
+          /// - scrap files, if we are not closing or crash recovery is disabled
+          /// - "normal" clips, unless crash recovery is in effect, or
+          /// - we are no exiting and it's the clipboard, or the mt render file
+          if (!IS_NORMAL_CLIP(i) || (i == 0 && !mainw->only_close)
+              || (i == mainw->scrap_file && (mainw->only_close ||
+                                             !mainw->leave_recovery || !prefs->rr_crash))
+              || (i == mainw->ascrap_file && (mainw->only_close ||
+                                              !mainw->leave_recovery || !prefs->rr_crash))
+              || (i > 0 && !mainw->leave_files && !mainw->leave_recovery
+                  && !(mainw->only_close && mainw->multitrack
+                       && i == mainw->multitrack->render_file))) {
+            char *permitname;
+            // extra cleanup for "device" files
 #ifdef HAVE_YUV4MPEG
-              if (mainw->files[i]->clip_type == CLIP_TYPE_YUV4MPEG) {
-                lives_yuv_stream_stop_read((lives_yuv4m_t *)mainw->files[i]->ext_src);
-                lives_free(mainw->files[i]->ext_src);
-              }
+            if (mainw->files[i]->clip_type == CLIP_TYPE_YUV4MPEG) {
+              lives_yuv_stream_stop_read((lives_yuv4m_t *)mainw->files[i]->ext_src);
+              lives_free(mainw->files[i]->ext_src);
+            }
 #endif
 #ifdef HAVE_UNICAP
-              if (mainw->files[i]->clip_type == CLIP_TYPE_VIDEODEV) {
-                lives_vdev_free((lives_vdev_t *)mainw->files[i]->ext_src);
-                lives_free(mainw->files[i]->ext_src);
-              }
+            if (mainw->files[i]->clip_type == CLIP_TYPE_VIDEODEV) {
+              lives_vdev_free((lives_vdev_t *)mainw->files[i]->ext_src);
+              lives_free(mainw->files[i]->ext_src);
+            }
 #endif
-              threaded_dialog_spin(0.);
-              lives_kill_subprocesses(mainw->files[i]->handle, TRUE);
-              permitname = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
-                                                TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
-              lives_touch(permitname);
-              lives_free(permitname);
-              com = lives_strdup_printf("%s close \"%s\"", prefs->backend, mainw->files[i]->handle);
-              lives_system(com, FALSE);
-              lives_free(com);
-              threaded_dialog_spin(0.);
-            } else {
-              threaded_dialog_spin(0.);
-              // or just clean them up -
-              // remove the following: "*.mgk *.bak *.pre *.tmp pause audio.* audiodump* audioclip";
-              if (!prefs->vj_mode) {
-                if (prefs->autoclean) {
-                  com = lives_strdup_printf("%s clear_tmp_files \"%s\"",
-                                            prefs->backend_sync, mainw->files[i]->handle);
-                  lives_system(com, FALSE);
-                  threaded_dialog_spin(0.);
-                  lives_free(com);
-                }
-                if (IS_NORMAL_CLIP(i)) {
-                  char *fname = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
-                                                     TOTALSAVE_NAME, NULL);
-                  int fd = lives_create_buffered(fname, DEF_FILE_PERMS);
-                  lives_write_buffered(fd, (const char *)mainw->files[i], sizeof(lives_clip_t), TRUE);
-                  lives_close_buffered(fd);
-                }
+            threaded_dialog_spin(0.);
+            lives_kill_subprocesses(mainw->files[i]->handle, TRUE);
+            permitname = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
+                                              TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
+            lives_touch(permitname);
+            lives_free(permitname);
+            com = lives_strdup_printf("%s close \"%s\"", prefs->backend, mainw->files[i]->handle);
+            lives_system(com, FALSE);
+            lives_free(com);
+            threaded_dialog_spin(0.);
+          } else {
+            threaded_dialog_spin(0.);
+            // or just clean them up -
+            // remove the following: "*.mgk *.bak *.pre *.tmp pause audio.* audiodump* audioclip";
+            if (!prefs->vj_mode) {
+              if (prefs->autoclean) {
+                com = lives_strdup_printf("%s clear_tmp_files \"%s\"",
+                                          prefs->backend_sync, mainw->files[i]->handle);
+                lives_system(com, FALSE);
+                threaded_dialog_spin(0.);
+                lives_free(com);
               }
-              if (mainw->files[i]->frameno != mainw->files[i]->saved_frameno) {
-                save_clip_value(i, CLIP_DETAILS_PB_FRAMENO, &mainw->files[i]->frameno);
-		// *INDENT-OFF*
-              }}}}
-	// *INDENT-ON*
-        if (prefs->autoclean) {
-          com = lives_strdup_printf("%s empty_trash . general", prefs->backend);
-          lives_system(com, FALSE);
-          lives_free(com);
-        }
-
-        lives_free(cwd);
-      }
-
-      if (!mainw->leave_files && *mainw->set_name && !mainw->leave_recovery) {
-        char *set_layout_dir = lives_build_filename(prefs->workdir, mainw->set_name,
-                               LAYOUTS_DIRNAME, NULL);
-        if (!lives_file_test(set_layout_dir, LIVES_FILE_TEST_IS_DIR)) {
-          char *sdname = lives_build_filename(prefs->workdir, mainw->set_name, NULL);
-
-          // note, FORCE is FALSE
-          lives_rmdir(sdname, FALSE);
-          lives_free(sdname);
-          threaded_dialog_spin(0.);
-        } else {
-          char *dname = lives_build_filename(prefs->workdir, mainw->set_name, CLIPS_DIRNAME, NULL);
-
-          // note, FORCE is FALSE
-          lives_rmdir(dname, FALSE);
-          lives_free(dname);
-          threaded_dialog_spin(0.);
-
-          dname = lives_build_filename(prefs->workdir, mainw->set_name, CLIP_ORDER_FILENAME, NULL);
-          lives_rm(dname);
-          lives_free(dname);
-          threaded_dialog_spin(0.);
-        }
-        lives_free(set_layout_dir);
+              if (IS_NORMAL_CLIP(i)) {
+                char *fname = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
+                                                   TOTALSAVE_NAME, NULL);
+                int fd = lives_create_buffered(fname, DEF_FILE_PERMS);
+                lives_write_buffered(fd, (const char *)mainw->files[i], sizeof(lives_clip_t), TRUE);
+                lives_close_buffered(fd);
+              }
+            }
+            if (mainw->files[i]->frameno != mainw->files[i]->saved_frameno) {
+              save_clip_value(i, CLIP_DETAILS_PB_FRAMENO, &mainw->files[i]->frameno);
+	      // *INDENT-OFF*
+	    }}}}
+      // *INDENT-ON*
+      if (prefs->autoclean) {
+        com = lives_strdup_printf("%s empty_trash . general", prefs->backend);
+        lives_system(com, FALSE);
+        lives_free(com);
       }
 
       if (*mainw->set_name) {
-        threaded_dialog_spin(0.);
-      }
+        /// if a set was loaded:
+        /// - if we are only closing them in the app, leave the frames on disk
+        if (mainw->only_close) {
+          mainw->suppress_dprint = TRUE;
+          mainw->close_keep_frames = TRUE;
+          mainw->is_processing = TRUE; ///< stop multitrack from sensitizing too soon
+          for (i = 1; i <= MAX_FILES; i++) {
+            if (IS_NORMAL_CLIP(i) && (!mainw->multitrack || i != mainw->multitrack->render_file)) {
+              mainw->current_file = i;
+              close_current_file(0);
+              threaded_dialog_spin(0.);
+            }
+          }
+          mainw->close_keep_frames = FALSE;
+        }
 
-      // closes in memory clips
-      if (mainw->only_close) {
-        mainw->suppress_dprint = TRUE;
-        mainw->close_keep_frames = TRUE;
-        mainw->is_processing = TRUE; ///< stop multitrack from sensitizing too soon
-        for (i = 1; i <= MAX_FILES; i++) {
-          if (IS_NORMAL_CLIP(i) && (!mainw->multitrack || i != mainw->multitrack->render_file)) {
-            mainw->current_file = i;
-            close_current_file(0);
-            threaded_dialog_spin(0.);
+        if (*mainw->set_name) {
+          if (!mainw->leave_files && !mainw->leave_recovery) {
+            // delete the current set (this is for DELETE_SET)
+            cleanup_set_dir(mainw->set_name);
+            lives_memset(mainw->set_name, 0, 1);
+            mainw->was_set = FALSE;
+            lives_widget_set_sensitive(mainw->vj_load_set, TRUE);
+          } else {
+            unlock_set_file(mainw->set_name);
           }
         }
-        mainw->close_keep_frames = FALSE;
+      }
 
-        if (!mainw->leave_files) {
-          // delete the current set (this is for DELETE_SET)
-          cleanup_set_dir(mainw->set_name);
-          lives_memset(mainw->set_name, 0, 1);
-          mainw->was_set = FALSE;
-          lives_widget_set_sensitive(mainw->vj_load_set, TRUE);
-        } else {
-          unlock_set_file(mainw->set_name);
-        }
-
+      if (mainw->only_close) {
         mainw->suppress_dprint = FALSE;
         if (!mainw->multitrack) resize(1);
         mainw->was_set = FALSE;
@@ -505,11 +482,8 @@ void lives_exit(int signum) {
         mainw->is_processing = FALSE; ///< mt may now sensitize...
         return;
       }
-
       save_future_prefs();
     }
-
-    unlock_set_file(mainw->set_name);
 
     // stop valgrind from complaining
 #ifdef VALGRIND_ON
@@ -519,80 +493,79 @@ void lives_exit(int signum) {
       mainw->frame_layer = NULL;
     }
 #endif
-
     if (mainw->sep_win && (LIVES_IS_PLAYING || prefs->sepwin_type == SEPWIN_TYPE_STICKY)) {
       threaded_dialog_spin(0.);
       kill_play_window();
       threaded_dialog_spin(0.);
     }
-  }
 
-  weed_unload_all();
+    weed_unload_all();
 
 #ifdef VALGRIND_ON
-  lives_list_free_all(&mainw->current_layouts_map);
+    lives_list_free_all(&mainw->current_layouts_map);
 
-  if (capable->has_encoder_plugins) {
-    LiVESList *dummy_list = plugin_request("encoders", prefs->encoder.name, "finalise");
-    lives_list_free_all(&dummy_list);
-  }
-  threaded_dialog_spin(0.);
-  rfx_free_all();
-  threaded_dialog_spin(0.);
+    if (capable->has_encoder_plugins) {
+      LiVESList *dummy_list = plugin_request("encoders", prefs->encoder.name, "finalise");
+      lives_list_free_all(&dummy_list);
+    }
+    threaded_dialog_spin(0.);
+    rfx_free_all();
+    threaded_dialog_spin(0.);
 #endif
 
 #ifdef ENABLE_OSC
-  if (prefs->osc_udp_started) lives_osc_end();
+    if (prefs->osc_udp_started) lives_osc_end();
 #endif
-  mainw->is_ready = FALSE;
+    mainw->is_ready = FALSE;
 
 #ifdef VALGRIND_ON
-  pconx_delete_all();
-  cconx_delete_all();
+    pconx_delete_all();
+    cconx_delete_all();
 
-  mainw->msg_adj = NULL;
-  free_n_msgs(mainw->n_messages);
+    mainw->msg_adj = NULL;
+    free_n_msgs(mainw->n_messages);
 
-  if (mainw->multitrack) {
-    event_list_free_undos(mainw->multitrack);
+    if (mainw->multitrack) {
+      event_list_free_undos(mainw->multitrack);
 
-    if (mainw->multitrack->event_list) {
-      event_list_free(mainw->multitrack->event_list);
-      mainw->multitrack->event_list = NULL;
+      if (mainw->multitrack->event_list) {
+        event_list_free(mainw->multitrack->event_list);
+        mainw->multitrack->event_list = NULL;
+      }
     }
-  }
 
-  lives_freep((void **)&prefs->fxdefsfile);
-  lives_freep((void **)&prefs->fxsizesfile);
-  lives_freep((void **)&capable->wm_name);
-  lives_freep((void **)&mainw->recovery_file);
+    lives_freep((void **)&prefs->fxdefsfile);
+    lives_freep((void **)&prefs->fxsizesfile);
+    lives_freep((void **)&capable->wm_name);
+    lives_freep((void **)&mainw->recovery_file);
 
-  for (i = 0; i < NUM_LIVES_STRING_CONSTANTS; i++) lives_freep((void **)&mainw->string_constants[i]);
-  for (i = 0; i < mainw->n_screen_areas; i++) lives_freep((void **)&mainw->screen_areas[i].name);
+    for (i = 0; i < NUM_LIVES_STRING_CONSTANTS; i++) lives_freep((void **)&mainw->string_constants[i]);
+    for (i = 0; i < mainw->n_screen_areas; i++) lives_freep((void **)&mainw->screen_areas[i].name);
 
-  lives_freep((void **)&mainw->foreign_visual);
-  lives_freep((void **)&THREADVAR(read_failed_file));
-  lives_freep((void **)&THREADVAR(write_failed_file));
-  lives_freep((void **)&THREADVAR(bad_aud_file));
+    lives_freep((void **)&mainw->foreign_visual);
+    lives_freep((void **)&THREADVAR(read_failed_file));
+    lives_freep((void **)&THREADVAR(write_failed_file));
+    lives_freep((void **)&THREADVAR(bad_aud_file));
 
-  lives_freep((void **)&mainw->old_vhash);
-  lives_freep((void **)&mainw->version_hash);
-  lives_freep((void **)&mainw->multitrack);
-  lives_freep((void **)&mainw->mgeom);
-  lives_list_free_all(&prefs->disabled_decoders);
-  if (mainw->fonts_array) lives_strfreev(mainw->fonts_array);
+    lives_freep((void **)&mainw->old_vhash);
+    lives_freep((void **)&mainw->version_hash);
+    lives_freep((void **)&mainw->multitrack);
+    lives_freep((void **)&mainw->mgeom);
+    lives_list_free_all(&prefs->disabled_decoders);
+    if (mainw->fonts_array) lives_strfreev(mainw->fonts_array);
 #ifdef ENABLE_NLS
-  //lives_freep((void **)&trString);
+    //lives_freep((void **)&trString);
 #endif
 #endif
-  unload_decoder_plugins();
-
+    unload_decoder_plugins();
+  }
   tmp = lives_strdup_printf("signal: %d", signum);
   lives_notify(LIVES_OSC_NOTIFY_QUIT, tmp);
   lives_free(tmp);
 
   exit(0);
 }
+
 
 #ifndef VALGRIND_ON
 #ifdef _lives_free
@@ -1599,7 +1572,7 @@ void on_export_proj_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   char *proj_file;
   char *com, *tmp;
 
-  if (!(*mainw->set_name)) {
+  if (!*mainw->set_name) {
     int response;
     char new_set_name[MAX_SET_NAME_LEN];
     do {
@@ -2135,9 +2108,9 @@ void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
           maybe_add_mt_idlefunc();
         }
         return;
-      }
-    }
-  }
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
 
   if (mainw->stored_event_list && mainw->stored_event_list_changed) {
     if (!check_for_layout_del(NULL, FALSE)) {
@@ -2151,7 +2124,7 @@ void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   /// do not popup warning if set name is changed
   mainw->suppress_layout_warnings = TRUE;
 
-  if (!mainw->clips_available) {
+  if (!mainw->clips_available || future_prefs->vj_mode) {
     lives_exit(0);
   } else {
     char *set_name;
@@ -2184,7 +2157,7 @@ void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
           if (prefs->ar_clipset) set_string_pref(PREF_AR_CLIPSET, set_name);
           else set_string_pref(PREF_AR_CLIPSET, "");
-          mainw->no_exit = FALSE;
+
           mainw->leave_recovery = FALSE;
 
           on_save_set_activate(NULL, (tmp = U82F(set_name)));
@@ -2199,6 +2172,7 @@ void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
           }
           mainw->only_close = mainw->is_exiting = FALSE;
           if (mainw->cs_manage) lives_idle_add_simple(run_diskspace_dialog_idle, NULL);
+          end_threaded_dialog();
           return;
         }
         resp = LIVES_RESPONSE_RETRY;
@@ -5244,7 +5218,7 @@ static LiVESResponseType rewrite_orderfile(boolean is_append, boolean add, boole
           if (strcmp(new_handle, mainw->files[i]->handle)) {
             if (!add) continue;
 
-            new_dir = lives_build_filename(prefs->workdir, new_handle, NULL);
+            new_dir = lives_build_path(prefs->workdir, new_handle, NULL);
             if (lives_file_test(new_dir, LIVES_FILE_TEST_IS_DIR)) {
               // get a new unique handle
               get_temp_handle(i);
@@ -5322,6 +5296,7 @@ boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
   char *layout_map_file, *layout_map_dir, *new_clips_dir, *current_clips_dir;
   //char *tmp;
   char *text;
+
   char *tmp;
   char *osetn, *nsetn, *dfile;
 
@@ -5450,10 +5425,11 @@ boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
   }
 
   if (mainw->num_sets > -1) mainw->num_sets++;
+  if (!*old_set) mainw->set_list = lives_list_prepend(mainw->set_list, mainw->set_name);
 
-  if (got_new_handle && !strlen(old_set)) migrate_layouts(NULL, mainw->set_name);
+  if (got_new_handle && !*old_set) migrate_layouts(NULL, mainw->set_name);
 
-  if (*old_set && strcmp(old_set, mainw->set_name)) {
+  if (*old_set && lives_strcmp(old_set, mainw->set_name)) {
     layout_map_dir = lives_build_path(prefs->workdir, old_set, LAYOUTS_DIRNAME, NULL);
     layout_map_file = lives_build_filename(layout_map_dir, LAYOUT_MAP_FILENAME, NULL);
     // update details for layouts - needs_set, current_layout_map and affected_layout_map
@@ -5520,18 +5496,14 @@ boolean on_save_set_activate(LiVESWidget * widget, livespointer user_data) {
   lives_notify(LIVES_OSC_NOTIFY_CLIPSET_SAVED, old_set);
 
   lives_free(old_set);
-  if (!mainw->no_exit) {
-    mainw->leave_files = TRUE;
-    if (mainw->multitrack && !mainw->only_close) mt_memory_free();
-    else if (mainw->multitrack) wipe_layout(mainw->multitrack);
+  mainw->leave_files = TRUE;
+  if (mainw->multitrack && !mainw->only_close) mt_memory_free();
+  else if (mainw->multitrack) wipe_layout(mainw->multitrack);
 
-    // do a lot of cleanup here, but leave files
-    lives_exit(0);
-    mainw->leave_files = FALSE;
-  } else {
-    unlock_set_file(old_set);
-    end_threaded_dialog();
-  }
+  // do a lot of cleanup here, but leave files
+  lives_exit(0);
+  mainw->leave_files = FALSE;
+  //end_threaded_dialog();
 
   lives_widget_set_sensitive(mainw->vj_load_set, TRUE);
   return TRUE;

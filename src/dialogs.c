@@ -3791,6 +3791,7 @@ void do_threaded_dialog(const char *trans_text, boolean has_cancel) {
 
 
 static void _end_threaded_dialog(void) {
+  if (!mainw->threaded_dialog) return;
   mainw->cancel_type = CANCEL_KILL;
 
   if (mainw->proc_ptr && mainw->proc_ptr->processing) lives_widget_destroy(mainw->proc_ptr->processing);

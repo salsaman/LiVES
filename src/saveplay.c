@@ -5634,7 +5634,7 @@ void recover_layout_map(int numclips) {
           /// check for missing frames and audio in layouts
           // TODO: -- needs checking ----
           mask = 0;
-          mainw->xlays = layout_frame_is_affected(i, sfile->frames, 0, mainw->xlays);
+          mainw->xlays = layout_frame_is_affected(i, sfile->frames + 1, 0, mainw->xlays);
           if (mainw->xlays) {
             add_lmap_error(LMAP_ERROR_DELETE_FRAMES, sfile->name, (livespointer)sfile->layout_map, i,
                            sfile->frames, 0., FALSE);

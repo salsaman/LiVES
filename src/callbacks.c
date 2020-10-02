@@ -5560,11 +5560,15 @@ char *on_load_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 void lock_set_file(const char *set_name) {
   // function is called when a set is opened, to prevent multiple acces to the same set
-  char *set_lock_file = lives_strdup_printf("%s.%d", SET_LOCK_FILENAME, capable->mainpid);
-  char *set_locker = SET_LOCK_FILE(set_name, set_lock_file);
-  lives_touch(set_locker);
-  lives_free(set_locker);
-  lives_free(set_lock_file);
+  char *setdir = lives_build_path(prefs->workdir, set_name, NULL);
+  if (lives_file_test(setdir, LIVES_FILE_TEST_IS_DIR)) {
+    char *set_lock_file = lives_strdup_printf("%s.%d", SET_LOCK_FILENAME, capable->mainpid);
+    char *set_locker = SET_LOCK_FILE(set_name, set_lock_file);
+    lives_touch(set_locker);
+    lives_free(set_locker);
+    lives_free(set_lock_file);
+  }
+  lives_free(setdir);
 }
 
 

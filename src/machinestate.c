@@ -3148,7 +3148,7 @@ static char *get_systmp_inner(const char *suff, boolean is_dir, const char *xpre
 
     if (is_dir) dirflg = "d";
     else dirflg = "";
-    if (!prefix) tmpdir = lives_strdup("");
+    if (!xprefix) tmpdir = lives_strdup("");
     else tmpdir = lives_strdup_printf("='%s'", prefs->workdir);
     com = lives_strdup_printf("%s -n $(%s --tmpdir%s -q%s %s)", capable->echo_cmd, EXEC_MKTEMP, tmpdir, dirflg, tmp);
     lives_free(tmp); lives_free(tmpdir);

@@ -3123,8 +3123,8 @@ boolean get_x11_visible(const char *wname) {
 
 
 static char *get_systmp_inner(const char *suff, boolean is_dir, const char *xprefix) {
-  /// create a file or dir in /tmp
-  /// check the name returned has the lenght we expect
+  /// create a file or dir in /tmp or prefs->workdir
+  /// check the name returned has the length we expect
   /// check it was created
   /// ensure it is not a symlink
   /// if a directory, ensure we have rw access
@@ -3182,7 +3182,13 @@ char *get_systmp(const char *suff, boolean is_dir) {
 }
 
 char *get_worktmp(const char *prefix) {
-  return get_systmp_inner(NULL, TRUE, prefix);
+  char *dirname = NULL;
+  char *tmpdir = get_systmp_inner(NULL, TRUE, prefix);
+  if (tmpdir) {
+    dirname = lives_path_get_basename(tmpdir);
+    lives_free(tmpdir);
+  }
+  return dirname;
 }
 
 

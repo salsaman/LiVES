@@ -800,7 +800,7 @@ static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
   priv = (lives_av_priv_t *)cdata->priv;
 
   if (!priv) cdata->priv = priv = calloc(1, sizeof(lives_av_priv_t));
-  
+
   priv->astream = -1;
   priv->vstream = -1;
 

@@ -590,8 +590,8 @@ static boolean read_file_details_generic(const char *fname) {
   /// make a tmpdir in case we need to open images for example
   char *tmpdir, *dirname, *com;
   const char *prefix = "fsp";
-  tmpdir = get_worktmp(prefix);
-  if (tmpdir) dirname = lives_path_get_basename(tmpdir);
+  dirname = get_worktmp(prefix);
+  if (dirname) tmpdir = lives_build_path(prefs->workdir, dirname, NULL);
   else {
     dirname = lives_strdup_printf("%s%lu", prefix, gen_unique_id());
     tmpdir = lives_build_path(prefs->workdir, dirname, NULL);
@@ -607,7 +607,10 @@ static boolean read_file_details_generic(const char *fname) {
   com = lives_strdup_printf("%s get_details %s \"%s\" \"%s\" %d", prefs->backend_sync,
                             dirname, fname, prefs->image_ext, 0);
   lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
-  lives_free(com);
+  lives_free(com); lives_free(dirname);
+
+  lives_rmdir(tmpdir, TRUE);
+  lives_free(tmpdir);
 
   if (THREADVAR(com_failed)) {
     THREADVAR(com_failed) = FALSE;
@@ -2021,7 +2024,7 @@ void mt_memory_free(void) {
 
 void del_current_set(boolean exit_after) {
   char *msg;
-  boolean moc = mainw->only_close;
+  boolean moc = mainw->only_close, crec;
   mainw->only_close = !exit_after;
   set_string_pref(PREF_AR_CLIPSET, "");
   prefs->ar_clipset = FALSE;
@@ -2058,11 +2061,12 @@ void del_current_set(boolean exit_after) {
     do_threaded_dialog(_("Deleting set"), FALSE);
   }
 
+  crec = prefs->crash_recovery;
   prefs->crash_recovery = FALSE;
 
   // do a lot of cleanup, delete files
   lives_exit(0);
-  prefs->crash_recovery = TRUE;
+  prefs->crash_recovery = crec;
 
   if (*mainw->set_name) {
     d_print(_("Set %s was permanently deleted from the disk.\n"), mainw->set_name);
@@ -2127,7 +2131,7 @@ void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   /// do not popup warning if set name is changed
   mainw->suppress_layout_warnings = TRUE;
 
-  if (!mainw->clips_available || future_prefs->vj_mode) {
+  if (!mainw->clips_available || (future_prefs->vj_mode && !mainw->no_exit)) {
     lives_exit(0);
   } else {
     char *set_name;
@@ -7003,7 +7007,8 @@ static boolean fs_preview_idle(void *data) {
   LiVESWidget *widget = (LiVESWidget *)data;
   FILE *ifile;
 
-  if ((!(ifile = fopen(fsp_info_file, "r"))) && mainw->in_fs_preview && mainw->fc_buttonresponse == LIVES_RESPONSE_NONE) {
+  if (!(ifile = fopen(fsp_info_file, "r")) && mainw->in_fs_preview && mainw->fc_buttonresponse
+      == LIVES_RESPONSE_NONE) {
     return TRUE;
   }
 
@@ -7028,7 +7033,6 @@ static boolean fs_preview_idle(void *data) {
 }
 
 
-
 void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
   // file selector preview
   double start_time = 0.;
@@ -7042,13 +7046,13 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
   int height = 0, width = 0;
   int fwidth = -1, fheight = -1;
   int owidth, oheight, npieces, border = 0;
+  boolean with_audio = mainw->save_with_sound;
 
   pid_t pid = capable->mainpid;
 
   char *thm_dir;
   char *tmp, *tmp2;
   char *com;
-  char *dfile;
   char *type;
 
   file_open_params = NULL;
@@ -7196,9 +7200,13 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
     return;
   }
 
+  check_for_executable(&capable->has_mplayer, EXEC_MPLAYER);
+  check_for_executable(&capable->has_mplayer2, EXEC_MPLAYER2);
+  check_for_executable(&capable->has_mpv, EXEC_MPV);
+
   if (!HAS_EXTERNAL_PLAYER) {
     char *msg;
-    if (capable->has_identify) {
+    if (!check_for_executable(&capable->has_identify, EXEC_IDENTIFY)) {
       msg = (_("\n\nYou need to install mplayer, mplayer2 or mpv to be able to preview this file.\n"));
     } else {
       msg = (_("\n\nYou need to install mplayer, mplayer2, mpv or imageMagick to be able to preview this file.\n"));
@@ -7209,17 +7217,15 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
     return;
   }
 
-  dfile = lives_strdup_printf("%s" LIVES_DIR_SEP "fsp%d" LIVES_DIR_SEP, prefs->workdir, capable->mainpid);
+  mainw->fsp_tmpdir = get_worktmp("fsp");
 
-  if (!lives_make_writeable_dir(dfile)) {
+  if (!mainw->fsp_tmpdir) {
     workdir_warning();
-    lives_free(dfile);
     lives_widget_set_sensitive(widget, TRUE);
     return;
   }
 
-  fsp_info_file = lives_strdup_printf("%s%s", dfile, LIVES_STATUS_FILE_NAME);
-  lives_free(dfile);
+  fsp_info_file = lives_build_filename(mainw->fsp_tmpdir, LIVES_STATUS_FILE_NAME, NULL);
 
   mainw->in_fs_preview = TRUE;
 
@@ -7264,10 +7270,10 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
   }  else preview_frames = -1;
 
   if (!USE_MPV) {
-    if (prefs->audio_player == AUD_PLAYER_JACK) {
+    if (with_audio && prefs->audio_player == AUD_PLAYER_JACK) {
       file_open_params = lives_strdup_printf("%s %s -ao jack", mainw->file_open_params != NULL ?
                                              mainw->file_open_params : "", get_deinterlace_string());
-    } else if (prefs->audio_player == AUD_PLAYER_PULSE) {
+    } else if (with_audio && prefs->audio_player == AUD_PLAYER_PULSE) {
       file_open_params = lives_strdup_printf("%s %s -ao pulse", mainw->file_open_params != NULL ?
                                              mainw->file_open_params : "", get_deinterlace_string());
     } else {
@@ -7275,10 +7281,10 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
                                              mainw->file_open_params : "", get_deinterlace_string());
     }
   } else {
-    if (prefs->audio_player == AUD_PLAYER_JACK) {
+    if (with_audio && prefs->audio_player == AUD_PLAYER_JACK) {
       file_open_params = lives_strdup_printf("%s %s --ao=jack", mainw->file_open_params != NULL ?
                                              mainw->file_open_params : "", get_deinterlace_string());
-    } else if (prefs->audio_player == AUD_PLAYER_PULSE) {
+    } else if (with_audio && prefs->audio_player == AUD_PLAYER_PULSE) {
       file_open_params = lives_strdup_printf("%s %s --ao=pulse", mainw->file_open_params != NULL ?
                                              mainw->file_open_params : "", get_deinterlace_string());
     } else {
@@ -7298,12 +7304,12 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
   }
 
   if (file_open_params) {
-    com = lives_strdup_printf("%s fs_preview fsp%d %"PRIu64" %d %d %.2f %d %d \"%s\" \"%s\"", prefs->backend, capable->mainpid,
+    com = lives_strdup_printf("%s fs_preview %s %"PRIu64" %d %d %.2f %d %d \"%s\" \"%s\"", prefs->backend, mainw->fsp_tmpdir,
                               xwin, width, height, start_time, preview_frames, (int)(prefs->volume * 100.),
                               (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)), file_open_params);
 
   } else {
-    com = lives_strdup_printf("%s fs_preview fsp%d %"PRIu64" %d %d %.2f %d %d \"%s\"", prefs->backend, capable->mainpid,
+    com = lives_strdup_printf("%s fs_preview %s %"PRIu64" %d %d %.2f %d %d \"%s\"", prefs->backend, mainw->fsp_tmpdir,
                               xwin, width, height, start_time, preview_frames, (int)(prefs->volume * 100.),
                               (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)));
   }
@@ -7490,7 +7496,11 @@ void on_opensel_range_ok_clicked(LiVESButton * button, livespointer user_data) {
 void end_fs_preview(void) {
   // clean up if we were playing a preview - should be called from all callbacks
   // where there is a possibility of fs preview still playing
+  static boolean singleton = FALSE;
   char *com;
+
+  if (singleton) return;
+  singleton = TRUE;
 
   lives_widget_set_bg_color(mainw->fs_playframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
@@ -7511,18 +7521,21 @@ void end_fs_preview(void) {
   }
 
   if (mainw->in_fs_preview) {
-    char *tmp = lives_strdup_printf("fsp%d", capable->mainpid);
-    char *permitname = lives_build_filename(prefs->workdir, tmp, TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
-    lives_kill_subprocesses(tmp, TRUE);
-    lives_touch(permitname);
-    lives_free(permitname);
-    com = lives_strdup_printf("%s close \"%s\"", prefs->backend, tmp);
-    lives_free(tmp);
-    lives_system(com, TRUE);
-    lives_free(com);
+    if (mainw->fsp_tmpdir) {
+      char *permitname = lives_build_filename(prefs->workdir, mainw->fsp_tmpdir,
+                                              TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
+      lives_kill_subprocesses(mainw->fsp_tmpdir, TRUE);
+      lives_touch(permitname);
+      lives_free(permitname);
+      com = lives_strdup_printf("%s close \"%s\"", prefs->backend, mainw->fsp_tmpdir);
+      lives_freep((void **)&mainw->fsp_tmpdir);
+      lives_system(com, TRUE);
+      lives_free(com);
+    }
     mainw->in_fs_preview = FALSE;
   }
   if (mainw->fs_playframe) lives_widget_queue_draw(mainw->fs_playframe);
+  singleton = FALSE;
 }
 
 

@@ -2108,7 +2108,7 @@ skip_probe:
   }
 
   cdata->nframes = dts_to_frame(cdata, ldts) + 2;
-  fprintf(stderr, "FRAMES %ld\n", cdata->nframes);
+
   // double check, sometimes we can be out by one or two frames
   while (1) {
     priv->expect_eof = TRUE;

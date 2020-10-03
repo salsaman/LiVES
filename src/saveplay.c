@@ -6571,13 +6571,15 @@ boolean check_for_recovery_files(boolean auto_recover) {
                                           lgid, recpid)), auto_recover);
   lives_free(recovery_file);
 
-  if (prefs->vj_mode) return TRUE;
-
-  if (!retval) {
+  if (!retval || prefs->vj_mode) {
     com = lives_strdup_printf("%s clean_recovery_files %d %d \"%s\" %d", prefs->backend_sync, luid, lgid, capable->myname,
                               capable->mainpid);
     lives_system(com, FALSE);
     lives_free(com);
+    if (prefs->vj_mode) {
+      rewrite_recovery_file();
+      return TRUE;
+    }
     return FALSE;
   }
 

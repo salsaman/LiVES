@@ -729,8 +729,8 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
     add_deinterlace_checkbox(for_deint);
   }
 
-  lives_signal_connect(LIVES_GUI_OBJECT(preview_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_fs_preview_clicked), LIVES_INT_TO_POINTER(preview_type));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(preview_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_fs_preview_clicked), LIVES_INT_TO_POINTER(preview_type));
 
   if (LIVES_IS_FILE_CHOOSER(widget) && preview_type != LIVES_PREVIEW_TYPE_RANGE) {
     lives_widget_set_sensitive(preview_button, FALSE);

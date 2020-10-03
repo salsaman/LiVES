@@ -1375,7 +1375,7 @@ LIVES_LOCAL_INLINE boolean is_yuvchan(uint16_t ctype) {
 }
 
 LIVES_GLOBAL_INLINE size_t pixel_size(int pal) {
-  /// This is actually the MACRO pixel size om bytes, to get the real pixel size, divide by weed_palette_pixles_per_macropixel()
+  /// This is actually the MACRO pixel size om bytes, to get the real pixel size, divide by weed_palette_pixels_per_macropixel()
   const weed_macropixel_t *mpx = get_advanced_palette(pal);
   if (!mpx) return 0;
   else {
@@ -12207,7 +12207,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     lives_free(msg);
     return FALSE;
   }
-  //  #define DEBUG_RESIZE
+  //#define DEBUG_RESIZE
 #ifdef DEBUG_RESIZE
   g_print("resizing layer size %d X %d with palette %s to %d X %d, hinted %s\n", iwidth, iheight,
           weed_palette_get_name_full(palette,

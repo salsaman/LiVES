@@ -216,10 +216,11 @@ frames_t load_frame_index(int fileno) {
             sfile->frame_index_back = sfile->frame_index;
             sfile->frame_index = f_index;
             if (sfile->frame_index_back) {
+              LiVESList *xlist;
               sfile->old_frames = count;
               count = 0;
-              for (; list; list = list->next) {
-                sfile->frame_index_back[count++] = LIVES_POINTER_TO_INT(list->data);
+              for (xlist = list; xlist; xlist = xlist->next) {
+                sfile->frame_index_back[count++] = LIVES_POINTER_TO_INT(xlist->data);
 		// *INDENT-OFF*
 	      }}}
 	  if (list) lives_list_free(list);

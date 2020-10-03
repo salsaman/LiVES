@@ -191,7 +191,7 @@ static boolean all_outs_alpha(weed_plant_t *filt, boolean ign_opt) {
   int nouts;
   register int i;
   weed_plant_t **ctmpls = weed_filter_get_out_chantmpls(filt, &nouts);
-  if (!nouts) return FALSE;
+  if (!ctmpls) return FALSE;
   if (!ctmpls[0]) {
     lives_freep((void **)&ctmpls);
     return FALSE;
@@ -332,14 +332,14 @@ int num_alpha_channels(weed_plant_t *filter, boolean out) {
 
   if (out) {
     ctmpls = weed_filter_get_out_chantmpls(filter, &nchans);
-    if (!nchans) return FALSE;
+    if (!ctmpls) return FALSE;
     for (i = 0; i < nchans; i++) {
       if (has_non_alpha_palette(ctmpls[i], filter)) continue;
       count++;
     }
   } else {
     ctmpls = weed_filter_get_in_chantmpls(filter, &nchans);
-    if (!nchans) return FALSE;
+    if (!ctmpls) return FALSE;
     for (i = 0; i < nchans; i++) {
       if (has_non_alpha_palette(ctmpls[i], filter)) continue;
       count++;
@@ -603,7 +603,7 @@ weed_plant_t *get_audio_channel_in(weed_plant_t *inst, int achnum) {
   weed_plant_t *ctmpl, *achan;
 
   in_chans = weed_instance_get_in_channels(inst, &nchans);
-  if (!nchans) return NULL;
+  if (!in_chans) return NULL;
 
   for (register int i = 0; i < nchans; i++) {
     ctmpl = weed_channel_get_template(in_chans[i]);
@@ -627,7 +627,7 @@ boolean has_video_chans_in(weed_plant_t *filter, boolean count_opt) {
   weed_plant_t **in_ctmpls;
 
   in_ctmpls = weed_filter_get_in_chantmpls(filter, &nchans);
-  if (!nchans) return FALSE;
+  if (!in_ctmpls) return FALSE;
 
   for (register int i = 0; i < nchans; i++) {
     if (!count_opt && weed_chantmpl_is_optional(in_ctmpls[i])) continue;
@@ -644,8 +644,8 @@ boolean has_video_chans_in(weed_plant_t *filter, boolean count_opt) {
 boolean has_audio_chans_in(weed_plant_t *filter, boolean count_opt) {
   int nchans = 0;
   weed_plant_t **in_ctmpls = weed_filter_get_in_chantmpls(filter, &nchans);
-  if (!nchans) return FALSE;
-  for (register int i = 0; i < nchans; i++) {
+  if (!in_ctmpls) return FALSE;
+  for (int i = 0; i < nchans; i++) {
     if (!count_opt && weed_chantmpl_is_optional(in_ctmpls[i])) continue;
     if (weed_chantmpl_is_audio(in_ctmpls[i])) {
       lives_free(in_ctmpls);
@@ -682,9 +682,9 @@ boolean has_video_chans_out(weed_plant_t *filter, boolean count_opt) {
   int nchans = 0;
 
   out_ctmpls = weed_filter_get_out_chantmpls(filter, &nchans);
-  if (!nchans) return FALSE;
+  if (!out_ctmpls) return FALSE;
 
-  for (register int i = 0; i < nchans; i++) {
+  for (int i = 0; i < nchans; i++) {
     if (!count_opt && weed_chantmpl_is_optional(out_ctmpls[i])) continue;
     if (weed_chantmpl_is_audio(out_ctmpls[i]) == WEED_TRUE) continue;
     lives_free(out_ctmpls);
@@ -701,9 +701,9 @@ boolean has_audio_chans_out(weed_plant_t *filter, boolean count_opt) {
   int nchans = 0;
 
   out_ctmpls = weed_filter_get_out_chantmpls(filter, &nchans);
-  if (!nchans) return FALSE;
+  if (!out_ctmpls) return FALSE;
 
-  for (register int i = 0; i < nchans; i++) {
+  for (int i = 0; i < nchans; i++) {
     if (!count_opt && weed_chantmpl_is_optional(out_ctmpls[i])) continue;
     if (weed_chantmpl_is_audio(out_ctmpls[i]) == WEED_FALSE) continue;
     lives_free(out_ctmpls);
@@ -1968,9 +1968,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         }
       }
       if (maxinwidth == 4 || inwidth < maxinwidth)
-        if (inwidth > 4) maxinwidth = inwidth;
+        maxinwidth = inwidth;
       if (maxinheight == 4 || inheight < maxinheight)
-        if (inheight > 4) maxinheight = inheight;
+        maxinheight = inheight;
     }
     j++;
   }
@@ -4141,7 +4141,6 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
             char *filtname = weed_filter_get_name(filter);
             char *pkgstring = weed_filter_get_package_name(filter);
             char *msg, *pkstr;
-            lives_freep((void **)&array);
             if (pkgstring) pkstr = lives_strdup_printf(" from package %s ", pkgstring);
             else pkstr = lives_strdup("");
             msg = lives_strdup_printf("Cannot use filter %s%s\n"
@@ -4151,6 +4150,7 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
             LIVES_INFO(msg);
             lives_free(msg);
           }
+          lives_freep((void **)&array);
           return 7;
         }
       }
@@ -6416,7 +6416,7 @@ void add_param_connections(weed_plant_t *inst) {
   register int i;
 
   in_ptmpls = weed_get_plantptr_array_counted(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &nptmpls);
-  if (!nptmpls) return;
+  if (!in_ptmpls) return;
 
   for (i = 0; i < nptmpls; i++) {
     if (weed_plant_has_leaf(in_ptmpls[i], WEED_LEAF_HOST_INTERNAL_CONNECTION)) {
@@ -7773,7 +7773,6 @@ matchvals:
       for (int j = 0; j < nplanes; j++) lives_free(pd[j]);
       lives_free(pd);
       weed_set_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, NULL);
-
       set_channel_size(filter, channel, xwidth, xheight);
     }
   }
@@ -7785,6 +7784,7 @@ matchvals:
   /// store original values (width / height)
   xwidth = width;
   xheight = height;
+
   width = weed_channel_get_width(channel);
   //cpalette = weed_channel_get_palette(channel);
   //width /= weed_palette_get_pixels_per_macropixel(cpalette); // convert width to channel macropixels
@@ -11874,7 +11874,7 @@ boolean write_filter_defaults(int fd, int idx) {
   int ntowrite = 0;
 
   ptmpls = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &num_params);
-  if (num_params == 0) return TRUE;
+  if (!ptmpls) return TRUE;
 
   for (i = 0; i < num_params; i++) {
     if (weed_plant_has_leaf(ptmpls[i], WEED_LEAF_HOST_DEFAULT)) {

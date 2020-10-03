@@ -119,7 +119,6 @@ static float rquad;
 static pthread_t rthread;
 static pthread_mutex_t rthread_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t retthread_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t dpy_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static pthread_cond_t cond;
 static pthread_mutex_t cond_mutex;
@@ -1973,6 +1972,9 @@ static void *render_thread_func(void *data) {
     Upload();
   }
 
+  glXMakeContextCurrent(dpy, 0, 0, 0);
+  glXDestroyContext(dpy, context);
+
   if (retbuf) {
     buffer_free(retbuf);
   }
@@ -2163,13 +2165,9 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
 
   XFlush(dpy);
 
-  pthread_mutex_lock(&dpy_mutex);
-  glXMakeContextCurrent(dpy, 0, 0, 0);
-  glXDestroyContext(dpy, context);
   XUnlockDisplay(dpy);
   XCloseDisplay(dpy);
   dpy = NULL;
-  pthread_mutex_unlock(&dpy_mutex);
 
   pthread_mutex_destroy(&cond_mutex);
   pthread_cond_destroy(&cond);

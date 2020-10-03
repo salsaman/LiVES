@@ -4994,26 +4994,25 @@ boolean startup_message_nonfatal_dismissable(const char *msg, uint64_t warning_m
 ///////////////////////////////// GUI section - TODO: move into another file //////////////////////////////////////
 
 void set_main_title(const char *file, int untitled) {
-  char *title, *tmp;
+  char *title, *tmp, *tmp2;
   char short_file[256];
 
   if (file && CURRENT_CLIP_IS_VALID) {
     if (untitled) {
-      title = lives_strdup_printf(_("<%s> %dx%d : %d frames %d bpp %.3f fps"), (tmp = get_untitled_name(untitled)),
+      title = lives_strdup_printf((tmp = _("<%s> %dx%d : %d frames %d bpp %.3f fps")), (tmp2 = get_untitled_name(untitled)),
                                   cfile->hsize, cfile->vsize, cfile->frames, cfile->bpp, cfile->fps);
-      lives_free(tmp);
     } else {
       lives_snprintf(short_file, 256, "%s", file);
       if (cfile->restoring || (cfile->opening && cfile->frames == 123456789)) {
-        title = lives_strdup_printf(_("<%s> %dx%d : ??? frames ??? bpp %.3f fps"),
-                                    (tmp = lives_path_get_basename(file)), cfile->hsize, cfile->vsize, cfile->fps);
+        title = lives_strdup_printf((tmp = _("<%s> %dx%d : ??? frames ??? bpp %.3f fps")),
+                                    (tmp2 = lives_path_get_basename(file)), cfile->hsize, cfile->vsize, cfile->fps);
       } else {
-        title = lives_strdup_printf(_("<%s> %dx%d : %d frames %d bpp %.3f fps"),
-                                    cfile->clip_type != CLIP_TYPE_VIDEODEV ? (tmp = lives_path_get_basename(file))
-                                    : (tmp = lives_strdup(file)), cfile->hsize, cfile->vsize, cfile->frames, cfile->bpp, cfile->fps);
+        title = lives_strdup_printf((tmp = _("<%s> %dx%d : %d frames %d bpp %.3f fps")),
+                                    cfile->clip_type != CLIP_TYPE_VIDEODEV ? (tmp2 = lives_path_get_basename(file))
+                                    : (tmp2 = lives_strdup(file)), cfile->hsize, cfile->vsize, cfile->frames, cfile->bpp, cfile->fps);
       }
-      lives_free(tmp);
     }
+    lives_free(tmp); lives_free(tmp2);
   } else {
     title = (_("<No File>"));
   }
@@ -8159,13 +8158,14 @@ mainw->rec_aclip = -1;
 pthread_mutex_unlock(&mainw->event_list_mutex);
 
 /* TRANSLATORS: rec(ord) */
-framecount = lives_strdup_printf(_("rec %9d / %d"), mainw->actual_frame,
+framecount = lives_strdup_printf((tmp = _("rec %9d / %d")), mainw->actual_frame,
 cfile->frames > mainw->actual_frame ? cfile->frames : mainw->actual_frame);
 } else {
 pthread_mutex_unlock(&mainw->event_list_mutex);
 /* TRANSLATORS: out of memory (rec(ord)) */
-(framecount = lives_strdup_printf(_("!rec %9d / %d"), mainw->actual_frame, cfile->frames));
+framecount = lives_strdup_printf((tmp = _("!rec %9d / %d")), mainw->actual_frame, cfile->frames);
 }
+lives_free(tmp);
 lives_free(clips);
 lives_free(frames);
 } else {

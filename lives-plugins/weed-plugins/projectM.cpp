@@ -166,7 +166,9 @@ static int resize_display(int width, int height) {
 
 static int change_size(_sdata *sdata) {
   int ret = 0;
-  sdata->globalPM->projectM_resetGL(sdata->width, sdata->height);
+  int newsize = sdata->width;
+  if (sdata->height > newsize) newsize = sdata->height;
+  sdata->globalPM->projectM_resetGL(sdata->width, sdata->height); //1
 
   // TODO: can we change the texture size ?
   //settings.textureSize = sd->width;
@@ -175,6 +177,12 @@ static int change_size(_sdata *sdata) {
 #else
   ret = resize_display(sdata->width, sdata->height);
 #endif
+
+  //sdata->globalPM->projectM_resetTextures(); // 2
+  std::cerr << "Set new size to " << newsize << std::endl;
+  sdata->globalPM->changeTextureSize(newsize); // 3
+  sdata->textureHandle = sdata->globalPM->initRenderToTexture();
+
   return ret;
 }
 
@@ -276,6 +284,7 @@ static int render_frame(_sdata *sd) {
       pthread_mutex_unlock(&cond_mutex);
       sd->set_update = false;
       if (sd->update_size) {
+        glFlush();
         change_size(sd);
         sd->update_size = false;
       }

@@ -9807,6 +9807,10 @@ lfi_done:
           }
 
           if (mainw->jackd->playing_file > 0) {
+            if (!CLIP_HAS_AUDIO(new_file)) {
+              jack_get_rec_avals(mainw->jackd);
+              mainw->rec_avel = 0.;
+            }
             jack_message.command = ASERVER_CMD_FILE_CLOSE;
             jack_message.data = NULL;
             jack_message.next = NULL;
@@ -9881,8 +9885,6 @@ lfi_done:
                                            / (mainw->files[new_file]->achans * mainw->files[new_file]->asampsize / 8))
                                   / (double)mainw->files[new_file]->arps);
         } else {
-          jack_get_rec_avals(mainw->jackd);
-          mainw->rec_avel = 0.;
           mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
         }
         /* event = get_last_frame_event(mainw->event_list); */
@@ -9918,6 +9920,10 @@ lfi_done:
           }
 
           if (mainw->pulsed->fd > 0) {
+            if (!CLIP_HAS_AUDIO(new_file)) {
+              pulse_get_rec_avals(mainw->pulsed);
+              mainw->rec_avel = 0.;
+            }
             pulse_message.command = ASERVER_CMD_FILE_CLOSE;
             pulse_message.data = NULL;
             pulse_message.next = NULL;
@@ -9993,8 +9999,6 @@ lfi_done:
                                              / (mainw->files[new_file]->achans * mainw->files[new_file]->asampsize / 8))
                                     / (double)mainw->files[new_file]->arps);
           } else {
-            pulse_get_rec_avals(mainw->pulsed);
-            mainw->rec_avel = 0.;
             mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
           }
         }

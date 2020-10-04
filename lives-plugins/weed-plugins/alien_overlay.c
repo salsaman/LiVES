@@ -41,7 +41,7 @@ static weed_error_t alien_over_init(weed_plant_t *inst) {
   int height = weed_channel_get_height(in_channel);
   static_data *sdata = (static_data *)weed_malloc(sizeof(static_data));
 
-  if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
+  if (!sdata) return WEED_ERROR_MEMORY_ALLOCATION;
 
   sdata->old_pixel_data = (unsigned char *)weed_malloc(height * width);
   if (sdata->old_pixel_data == NULL) {
@@ -64,7 +64,7 @@ static weed_error_t alien_over_init(weed_plant_t *inst) {
 
 static weed_error_t alien_over_deinit(weed_plant_t *inst) {
   static_data *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
-  if (sdata != NULL) {
+  if (sdata) {
     weed_free(sdata->inited);
     weed_free(sdata->old_pixel_data);
     weed_free(sdata);
@@ -91,7 +91,9 @@ static weed_error_t alien_over_process(weed_plant_t *inst, weed_timecode_t times
   int inplace = (src == dst);
   int offs = rgb_offset(pal);
   int row = 0;
-  register int j, k;
+  int j, k;
+
+  if (!sdata) return WEED_ERROR_REINIT_NEEDED;
 
   old_pixel_data = sdata->old_pixel_data;
 

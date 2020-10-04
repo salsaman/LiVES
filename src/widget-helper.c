@@ -1124,6 +1124,7 @@ reloop:
   }
 
   if (lpttorun || (!mainw->clutch && !sigdata)) {
+    int count = 0;
     // a thread wants to wiggle the widgets...
     if (task_list) sigdata = (lives_sigdata_t *)lives_list_last(task_list)->data;
     if (sigdata && sigdata->is_timer) {
@@ -1135,7 +1136,8 @@ reloop:
       goto reloop;
     }
     if (lpttorun) lpt_recurse = TRUE;
-    while (!(sigdata && lives_proc_thread_check(sigdata->proc)) && lives_widget_context_iteration(NULL, FALSE));
+    while (count++ < EV_LIM && !(sigdata && lives_proc_thread_check(sigdata->proc))
+           && lives_widget_context_iteration(NULL, FALSE));
     lives_idle_add_simple(governor_loop, NULL);
     gov_running = FALSE;
     return FALSE;
@@ -1245,7 +1247,6 @@ static boolean async_timer_handler(livespointer data) {
         //else g_print("NULL event\n");
         lives_widget_context_iteration(NULL, FALSE);
         lives_nanosleep(NSLEEP_TIME);
-        sched_yield();
       }
       timer_running = FALSE;
     }
@@ -1676,7 +1677,6 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget *wi
     if (!mainw->is_exiting) {
       while (!mainw->clutch) {
         lives_nanosleep(NSLEEP_TIME);
-        sched_yield();
       }
     }
   }
@@ -1810,7 +1810,6 @@ void *lives_fg_run(lives_proc_thread_t lpt, void *retval) {
     }
     while (lpttorun || (waitgov && !mainw->clutch)) {
       lives_nanosleep(NSLEEP_TIME);
-      sched_yield();
     }
     ret = (void *)lpt_result;
   }
@@ -11800,7 +11799,6 @@ boolean lives_widget_context_update(void) {
       clutch = mainw->clutch = FALSE;
       while (!clutch && !mainw->is_exiting) {
         lives_nanosleep(NSLEEP_TIME);
-        sched_yield();
         clutch = mainw->clutch;
       }
     } else {
@@ -11811,7 +11809,6 @@ boolean lives_widget_context_update(void) {
         //else g_print("NULL event\n");
         lives_widget_context_iteration(NULL, FALSE);
         lives_nanosleep(NSLEEP_TIME);
-        sched_yield();
       }
     }
     do_more_stuff();

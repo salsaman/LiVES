@@ -62,11 +62,11 @@ static weed_free_f _free_func = free;
 
 void weed_utils_set_custom_memfuncs(weed_malloc_f malloc_func, weed_calloc_f calloc_func, weed_memcpy_f memcpy_func,
                                     weed_memcmp_f memcmp_func, weed_free_f free_func) {
-  if (malloc_func != NULL) _malloc_func = malloc_func;
-  if (calloc_func != NULL) _calloc_func = calloc_func;
-  if (memcpy_func != NULL) _memcpy_func = memcpy_func;
-  if (memcmp_func != NULL) _memcmp_func = memcmp_func;
-  if (free_func != NULL) _free_func = free_func;
+  if (malloc_func) _malloc_func = malloc_func;
+  if (calloc_func) _calloc_func = calloc_func;
+  if (memcpy_func) _memcpy_func = memcpy_func;
+  if (memcmp_func) _memcmp_func = memcmp_func;
+  if (free_func) _free_func = free_func;
 }
 
 
@@ -746,7 +746,7 @@ weed_plant_t *weed_plant_copy(weed_plant_t *src) {
 
 
 static inline weed_leaf_t *weed_find_leaf(weed_plant_t *leaf, const char *key) {
-  for (; leaf != NULL; leaf = leaf->next) {
+  for (; leaf; leaf = leaf->next) {
     if (!strcmp((char *)leaf->key, (char *)key)) return leaf;
   }
   return NULL;
@@ -950,25 +950,25 @@ weed_plant_t *weed_bootstrap(weed_default_getter_f * value,
     return NULL;
   }
 
-  if (weedmalloc != NULL) {
+  if (weedmalloc) {
     if (weed_set_funcptr_value(host_info, WEED_LEAF_MALLOC_FUNC, (weed_funcptr_t)weedmalloc) != WEED_SUCCESS) {
       if (host_info) weed_plant_free(host_info);
       return NULL;
     }
   }
-  if (weedfree != NULL) {
+  if (weedfree) {
     if (weed_set_funcptr_value(host_info, WEED_LEAF_FREE_FUNC, (weed_funcptr_t)weedfree) != WEED_SUCCESS) {
       if (host_info) weed_plant_free(host_info);
       return NULL;
     }
   }
-  if (weedmemset != NULL) {
+  if (weedmemset) {
     if (weed_set_funcptr_value(host_info, WEED_LEAF_MEMSET_FUNC, (weed_funcptr_t)weedmemset) != WEED_SUCCESS) {
       if (host_info) weed_plant_free(host_info);
       return NULL;
     }
   }
-  if (weedmemcpy != NULL) {
+  if (weedmemcpy) {
     if (weed_set_funcptr_value(host_info, WEED_LEAF_MEMCPY_FUNC, (weed_funcptr_t)weedmemcpy) != WEED_SUCCESS) {
       if (host_info) weed_plant_free(host_info);
       return NULL;
@@ -977,19 +977,19 @@ weed_plant_t *weed_bootstrap(weed_default_getter_f * value,
 
 #if WEED_ABI_CHECK_VERSION(200)
   if (plugin_max_weed_abi_version >= 200) {
-    if (weedmemmove != NULL) {
+    if (weedmemmove) {
       if (weed_set_funcptr_value(host_info, WEED_LEAF_MEMMOVE_FUNC, (weed_funcptr_t)weedmemmove) != WEED_SUCCESS) {
         if (host_info) weed_plant_free(host_info);
         return NULL;
       }
     }
-    if (weedrealloc != NULL) {
+    if (weedrealloc) {
       if (weed_set_funcptr_value(host_info, WEED_LEAF_REALLOC_FUNC, (weed_funcptr_t)weedrealloc) != WEED_SUCCESS) {
         if (host_info) weed_plant_free(host_info);
         return NULL;
       }
     }
-    if (weedcalloc != NULL) {
+    if (weedcalloc) {
       if (weed_set_funcptr_value(host_info, WEED_LEAF_CALLOC_FUNC, (weed_funcptr_t)weedcalloc) != WEED_SUCCESS) {
         if (host_info) weed_plant_free(host_info);
         return NULL;
@@ -999,62 +999,62 @@ weed_plant_t *weed_bootstrap(weed_default_getter_f * value,
 
 #endif
 
-  if (wpn != NULL) {
+  if (wpn) {
     if (weed_set_funcptr_value(host_info, WEED_PLANT_NEW_FUNC, (weed_funcptr_t)wpn) != WEED_SUCCESS) {
       if (host_info) weed_plant_free(host_info);
       return NULL;
     }
   }
-  if (wlg != NULL) {
+  if (wlg) {
     if (weed_set_funcptr_value(host_info, WEED_LEAF_GET_FUNC, (weed_funcptr_t)wlg) != WEED_SUCCESS) {
       if (host_info) weed_plant_free(host_info);
       return NULL;
     }
   }
-  if (wls != NULL) {
+  if (wls) {
     if (weed_set_funcptr_value(host_info, WEED_LEAF_SET_FUNC, (weed_funcptr_t)wls) != WEED_SUCCESS) {
       if (host_info) weed_plant_free(host_info);
       return NULL;
     }
   }
-  if (wlst != NULL) {
+  if (wlst) {
     if (weed_set_funcptr_value(host_info, WEED_LEAF_SEED_TYPE_FUNC, (weed_funcptr_t)wlst) != WEED_SUCCESS) {
       if (host_info) weed_plant_free(host_info);
       return NULL;
     }
   }
-  if (wlne != NULL) {
+  if (wlne) {
     if (weed_set_funcptr_value(host_info, WEED_LEAF_NUM_ELEMENTS_FUNC, (weed_funcptr_t)wlne) != WEED_SUCCESS) {
       if (host_info) weed_plant_free(host_info);
       return NULL;
     }
   }
-  if (wles != NULL) {
+  if (wles) {
     if (weed_set_funcptr_value(host_info, WEED_LEAF_ELEMENT_SIZE_FUNC, (weed_funcptr_t)wles) != WEED_SUCCESS) {
       if (host_info) weed_plant_free(host_info);
       return NULL;
     }
   }
-  if (wpll != NULL) {
+  if (wpll) {
     if (weed_set_funcptr_value(host_info, WEED_PLANT_LIST_LEAVES_FUNC, (weed_funcptr_t)wpll) != WEED_SUCCESS) {
       if (host_info) weed_plant_free(host_info);
       return NULL;
     }
   }
-  if (wlgf != NULL) {
+  if (wlgf) {
     if (weed_set_funcptr_value(host_info, WEED_LEAF_GET_FLAGS_FUNC, (weed_funcptr_t)wlgf) != WEED_SUCCESS) {
       if (host_info) weed_plant_free(host_info);
       return NULL;
     }
   }
   if (plugin_max_filter_api_version >= 200) {
-    if (wpf != NULL) {
+    if (wpf) {
       if (weed_set_funcptr_value(host_info, WEED_PLANT_FREE_FUNC, (weed_funcptr_t)wpf) != WEED_SUCCESS) {
         if (host_info) weed_plant_free(host_info);
         return NULL;
       }
     }
-    if (wld != NULL) {
+    if (wld) {
       if (weed_set_funcptr_value(host_info, WEED_LEAF_DELETE_FUNC, (weed_funcptr_t)wld) != WEED_SUCCESS) {
         if (host_info) weed_plant_free(host_info);
         return NULL;
@@ -1095,7 +1095,7 @@ weed_plant_t *weed_bootstrap(weed_default_getter_f * value,
     return NULL;
   }
 
-  if (host_info_callback != NULL) {
+  if (host_info_callback) {
     // if host set a callback function, we call it so it can examine and adjust the host_info plant
     // including setting memory functions and checking the weed and filter api values if it wishes
     // host can also substitute its own host_info

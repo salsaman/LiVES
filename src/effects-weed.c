@@ -4502,7 +4502,7 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
   suspect = TRUE;
 
   ncbcalls++;
-  if (ncbcalls > 1) {
+  if (id != 100 && ncbcalls > 1) {
     return NULL;
   }
 
@@ -4579,7 +4579,7 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
 
 #ifndef USE_STD_MEMFUNCS
   // let's override some plugin functions...
-  if (id == 6666100) {
+  if (id == 100) {
     weed_set_funcptr_value(xhost_info, WEED_LEAF_MALLOC_FUNC, (weed_funcptr_t)_ext_malloc);
     weed_set_funcptr_value(xhost_info, WEED_LEAF_FREE_FUNC, (weed_funcptr_t)_ext_free);
     weed_set_funcptr_value(xhost_info, WEED_LEAF_REALLOC_FUNC, (weed_funcptr_t)_ext_realloc);

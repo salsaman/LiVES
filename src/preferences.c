@@ -4317,7 +4317,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_effects));
 
-  lives_layout_add_label(LIVES_LAYOUT(layout), _("Changing these values will only take effect after a retart of LiVES:"), FALSE);
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Changing these values will only take effect after a restart of LiVES:"), FALSE);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->wpp_entry = lives_standard_direntry_new(_("Weed plugin path"), prefs->weed_plugin_path,

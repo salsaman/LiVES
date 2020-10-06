@@ -6865,7 +6865,7 @@ void switch_clip(int type, int newclip, boolean force) {
   mainw->blend_palette = WEED_PALETTE_END;
 
   if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1
-                    && !(!IS_NORMAL_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file))) {
+                    && !(mainw->blend_file != -1 && !IS_NORMAL_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file))) {
     if (mainw->num_tr_applied < 1 || newclip == mainw->blend_file) return;
 
     // switch bg clip

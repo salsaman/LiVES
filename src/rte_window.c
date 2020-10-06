@@ -2393,8 +2393,8 @@ LiVESWidget *create_rte_window(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(irte_window), LIVES_WIDGET_DELETE_EVENT,
                        LIVES_GUI_CALLBACK(on_rtew_ok_clicked), NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_rtew_ok_clicked), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(ok_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_rtew_ok_clicked), NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(save_keymap_button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_save_keymap_clicked), NULL);

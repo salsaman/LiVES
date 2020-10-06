@@ -1197,7 +1197,7 @@ retry:
         do {
           resp = LIVES_RESPONSE_NONE;
           if (!lives_file_test(dest, LIVES_FILE_TEST_EXISTS)) {
-            char *errtxt = lives_strdup_printf(_("Failed to move %s to $\n"), from, dest);
+            char *errtxt = lives_strdup_printf(_("Failed to move %s to %s\n"), from, dest);
             resp = do_write_failed_error_s_with_retry(dest, errtxt);
             lives_free(errtxt);
           }

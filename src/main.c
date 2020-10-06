@@ -7767,7 +7767,7 @@ mainw->pheight = *opheight;
 
 
 void init_track_decoders(void) {
-register int i;
+int i;
 for (i = 0; i < MAX_TRACKS; i++) {
 mainw->track_decoders[i] = NULL;
 mainw->old_active_track_list[i] = mainw->active_track_list[i] = 0;
@@ -7777,7 +7777,7 @@ for (i = 0; i < MAX_FILES; i++) mainw->ext_src_used[i] = FALSE;
 
 
 LIVES_GLOBAL_INLINE void free_track_decoders(void) {
-for (register int i = 0; i < MAX_TRACKS; i++) {
+for (int i = 0; i < MAX_TRACKS; i++) {
 if (mainw->track_decoders[i] &&
 (mainw->active_track_list[i] <= 0 || mainw->track_decoders[i] != mainw->files[mainw->active_track_list[i]]->ext_src))
 close_decoder_plugin(mainw->track_decoders[i]);

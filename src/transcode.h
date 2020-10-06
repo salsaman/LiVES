@@ -17,7 +17,14 @@
 
 #define TRANSCODE_PARAM_FILENAME "fname"
 
-boolean transcode(int start, int end);
+// stages for internal transcoding
+boolean transcode_prep(void);
+
+// if this returns FALSE, transcode_cleanup(mainw->vpp) must be called
+boolean transcode_get_params(char **fnameptr);
+void transcode_cleanup(_vid_playback_plugin *vpp);
+
+boolean transcode_clip(int start, int end, boolean internal, char *def_pname);
 
 #endif // HAS_LIVES_TRANSCODE_H
 

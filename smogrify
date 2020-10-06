@@ -322,7 +322,7 @@ if (1) {
 			# we only accept settings files with a valid version entry
 			my $xsize = -s $configfile;
 			&smog_rename($configfile, $configfile_damaged);
-			unlink($configfile);
+			unlink $configfile;
 			if (0 + -e $configfile) {
 			    $bad_configfile = 1;
 			    &startup_error(5, "report", "remove_noversion0", "$configfile:\@:");
@@ -343,7 +343,7 @@ if (1) {
 				if ($old_version eq "") {
 				    # still no joy
 				    &smog_rename($configfile, $configfile_damaged);
-				    unlink ($configfile);
+				    unlink $configfile;
 				    if (0 + -e $configfile) {
 					$bad_configfile = 1;
 					&startup_error(5, "report", "remove_noversion1", "$configfile:\@:");
@@ -359,7 +359,7 @@ if (1) {
 				    }
 				    if ($workdir eq "") {
 					&smog_rename($configfile, $configfile_damaged);
-					unlink ($configfile);
+					unlink $configfile;
 					if (0 + -e $configfile) {
 					    $bad_configfile = 1;
 					    &startup_error(5, "report", "remove_noworkdir0",
@@ -8664,7 +8664,7 @@ sub config_set {
 	return 0;
     }
 
-    unlink($newconfigfile);
+    unlink $newconfigfile;
     if (0 + -e $newconfigfile) {
 	&startup_error(4, "config_set_new", "remove_new0", "$newconfigfile:\@:");
     }
@@ -9658,10 +9658,17 @@ sub get_convert_version_hash {
 sub is_specialdir {
     my $dirname = shift;
 
-    if (-d "$workdir/$dirname"
-	&& ($dirname =~ /^scrap[0-9]+$/ || $dirname =~ /^ascrap[0-9]+$/|| $dirname =~ /^thm[0-9]+$/
-	    || $dirname =~ /^fsp[0-9]+$/)) {
-	return 1;
+    if (-d "$workdir/$dirname") {
+	if ($dirname =~ /^_/) {
+	    if ($dirname =~ /^_scrap/ || $dirname =~ /^_ascrap/ || $dirname =~ /^_thm/
+		|| $dirname =~ /^_fsp/) {
+		return 1;
+	    }
+	}
+	elsif ($dirname =~ /^scrap[0-9]+$/ || $dirname =~ /^ascrap[0-9]+$/|| $dirname =~ /^thm[0-9]+$/
+	    || $dirname =~ /^fsp[0-9]+$/) {
+	    return 1;
+	}
     }
     return 0;
 }
@@ -9704,6 +9711,7 @@ sub clean_workdir {
     my @left;
 
     my $nitems = 0;
+    my $index;
 
     my $trashdir = "$workdir/$trashsubdir";
     my $remdir = "$trashdir/remove";   ## names of things to be removed by default
@@ -9993,8 +10001,8 @@ sub clean_workdir {
 		}}
 	    else {
 		if (&is_special_file($file)) {
-		    print STDERR "...with known type. Ignoring/\n";
-		    print "...with known type. Ignoring/\n";
+		    print STDERR "...with known type. Ignoring\n";
+		    print "...with known type. Ignoring\n";
 		}
 		else {
 		    print STDERR "...with unknown type. Consider for manual removal\n";
@@ -10041,6 +10049,13 @@ sub clean_workdir {
 		&smog_rename($filerem, $deftrashdir);
 	    }
 	    else {
+		if (-f "$leavedir/$filerem") {
+		    unlink "$leavedir/$filerem";
+		    $index = 0;
+		    $index++ until $left[$index] eq "$leavedir/$filerem" || $index == $nitems;
+		    splice(@left, $index, 1);
+		    $nitems--;
+		}
 		&smog_system("$SYSBIN" . "touch $remdir/$filerem");
 		$nitems++;
 	    }
@@ -10078,6 +10093,13 @@ sub clean_workdir {
 		&smog_rename($filerem, $deftrashdir);
 	    }
 	    else {
+		if (-f "$leavedir/$filerem") {
+		    unlink "$leavedir/$filerem";
+		    $index = 0;
+		    $index++ until $left[$index] eq "$leavedir/$filerem" || $index == $nitems;
+		    splice(@left, $index, 1);
+		    $nitems--;
+		}
 		&smog_system("$SYSBIN" . "touch $remdir/$filerem");
 		$nitems++;
 	    }

@@ -25,7 +25,7 @@ if ($USE_WARNINGS) {
     use warnings;
 }
 
-my $builder_version = "3.0.3-pre";
+my $builder_version = "3.2.0-pre";
 my $rfx_version = "1.8.3";
 my ($section, $file);
 
@@ -602,13 +602,13 @@ sub gen_array {
 
 
 sub rc_read {
-    # return an array value from our .rc file
-    my ($key, $rcfile) = @_;
+    # return an array value from script file
+    my ($key, $scriptfile) = @_;
     my $string = "";
     my (@result, $part);
 
-    unless (defined(open IN, "$rcfile")) {
-	print STDERR "Error:  - Unable to read values from script file,  $rcfile\n";
+    unless (defined(open IN, "$scriptfile")) {
+	print STDERR "Error:  - Unable to read values from script file,  $scriptfile\n";
 	exit 2;
     }
     $part = 0;

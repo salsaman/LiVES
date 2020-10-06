@@ -158,6 +158,7 @@ void event_list_replace_events(weed_event_t *event_list, weed_event_t *new_event
 /// called during quantisation
 weed_event_t *event_copy_and_insert(weed_event_t *in_event, weed_timecode_t tc, weed_event_t *event_list,
                                     weed_event_t **ret_event);
+void reset_ttable(void);
 
 /// if all_events is FALSE we only count FRAME events
 int count_events(weed_event_t *event_list, boolean all_events, ticks_t start_tc, ticks_t end_tc);
@@ -276,9 +277,11 @@ LiVESWidget *add_audio_options(LiVESWidget **cbbackaudio, LiVESWidget **cbpertra
 ////////////////////////////////////////////////////////////////
 /// rendering
 
-boolean render_to_clip(boolean new_clip);  ///< render to clip
-boolean start_render_effect_events(weed_plant_t *event_list);  ///< render to clip
-lives_render_error_t render_events(boolean reset);
+boolean render_to_clip(boolean new_clip, boolean transcode);
+boolean start_render_effect_events(weed_plant_t *event_list, boolean render_vid, boolean render_aud);
+
+lives_render_error_t render_events(boolean reset, boolean rend_video, boolean rend_audio);
+lives_render_error_t render_events_cb(boolean dummy);
 
 // effect insertion/updating
 void insert_filter_init_event_at(weed_plant_t *event_list, weed_plant_t *at_event, weed_plant_t *event);

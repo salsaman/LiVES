@@ -1170,6 +1170,7 @@ q_done:
   lives_list_free(init_events);
   lives_list_free(deinit_events);
   lives_free(what);
+  reset_ttable();
   return out_list;
 }
 

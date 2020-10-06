@@ -703,6 +703,7 @@ boolean lives_widget_remove_accelerator(LiVESWidget *, LiVESAccelGroup *, uint32
 boolean lives_widget_get_preferred_size(LiVESWidget *, LiVESRequisition *min_size, LiVESRequisition *nat_size);
 
 boolean lives_widget_set_no_show_all(LiVESWidget *, boolean set);
+boolean lives_widget_get_no_show_all(LiVESWidget *);
 
 boolean lives_container_remove(LiVESContainer *, LiVESWidget *);
 boolean lives_container_add(LiVESContainer *, LiVESWidget *);

@@ -16191,13 +16191,12 @@ boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 	  }}}}
     // *INDENT-ON*
 
-  if (render_to_clip(FALSE)) {
+  if (render_to_clip(FALSE, FALSE)) {
     // rendering was successful
 
 #if 0
     if (mt->pr_audio) {
       mt->pr_audio = FALSE;
-      d_print_done();
       lives_widget_set_sensitive(mt->render_vid, TRUE);
       lives_widget_set_sensitive(mt->render_aud, TRUE);
       lives_widget_set_sensitive(mt->normalise_aud, TRUE);
@@ -20206,9 +20205,8 @@ static int get_next_tt_key(ttable * trans_table) {
 }
 
 
-static void *find_init_event_in_ttable(ttable * trans_table, uint64_t in, boolean normal) {
-  int i;
-  for (i = 0; i < FX_KEYS_MAX - FX_KEYS_MAX_VIRTUAL; i++) {
+void *find_init_event_in_ttable(ttable * trans_table, uint64_t in, boolean normal) {
+  for (int i = 0; i < FX_KEYS_MAX - FX_KEYS_MAX_VIRTUAL; i++) {
     if (normal && trans_table[i].in == in) return trans_table[i].out;
 
     /// reverse lookup for past filter_map check

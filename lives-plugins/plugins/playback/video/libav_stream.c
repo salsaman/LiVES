@@ -494,6 +494,8 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   int acodec_id;
   int ret;
 
+  uri[0] = 0;
+
   fprintf(stderr, "init_screen %d x %d %d\n", width, height, argc);
 
   ostv.frame = osta.frame = NULL;
@@ -506,12 +508,19 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     fprintf(stderr, "libav stream plugin error: No palette was set !\n");
     return FALSE;
   }
-
-  fmtstring = "flv";
+  if (intent == LIVES_INTENTION_STREAM)
+    fmtstring = "flv";
+  else
+    fmtstring = "mp4";
   vcodec_id = AV_CODEC_ID_H264;
-
   acodec_id = AV_CODEC_ID_MP3;
   maxvbitrate = 500000;
+
+  if (argc == 1) {
+    snprintf(uri, PATH_MAX, "%s", argv[0]);
+    snprintf(uri + strlen(argv[0]), PATH_MAX, ".%s", fmtstring);
+    argc = 0;
+  }
 
   if (argc > 0) {
     switch (atoi(argv[0])) {
@@ -549,7 +558,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     }
   }
 
-  if (strlen(uri) == 0) {
+  if (!*uri) {
     fprintf(stderr, "No output location set\n");
     return FALSE;
   }
@@ -617,7 +626,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     av_opt_set(encctx->priv_data, "profile", "main", 0);
     av_opt_set(encctx->priv_data, "crf", "1", 0);
 
-    if (!atoi(argv[6])) {
+    if (!argc || !atoi(argv[6])) {
       // lower q, about half the size
       vStream->codec->qmin = 10;
       vStream->codec->qmax = 51;

@@ -1746,6 +1746,7 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
 #define FUNCSIG_PLANTP_VOIDP_INT64 		        		0X00000ED5
   // 4p
 #define FUNCSIG_STRING_STRING_VOIDP_INT					0X000044D1
+#define FUNCSIG_INT_INT_BOOL_VOIDP					0X0000113D
   // 5p
 #define FUNCSIG_INT_INT_INT_BOOL_VOIDP					0X0001113D
 #define FUNCSIG_VOIDP_STRING_STRING_INT64_INT			       	0X000D4451
@@ -1843,6 +1844,12 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
     switch (ret_type) {
     case WEED_SEED_STRING: CALL_4(string, string, string, voidptr, int); break;
     default: CALL_VOID_4(string, string, voidptr, int); break;
+    }
+    break;
+  case FUNCSIG_INT_INT_BOOL_VOIDP:
+    switch (ret_type) {
+    case WEED_SEED_BOOLEAN: CALL_4(boolean, int, int, boolean, voidptr); break;
+    default: CALL_VOID_4(int, int, boolean, voidptr); break;
     }
     break;
   case FUNCSIG_VOIDP_STRING_STRING_INT64_INT:
@@ -3121,8 +3128,9 @@ boolean get_x11_visible(const char *wname) {
   return FALSE;
 }
 
+#define XTEMP "XXXXXXXXXX"
 
-static char *get_systmp_inner(const char *suff, boolean is_dir, const char *xprefix) {
+static char *get_systmp_inner(const char *suff, boolean is_dir, const char *prefix) {
   /// create a file or dir in /tmp or prefs->workdir
   /// check the name returned has the length we expect
   /// check it was created
@@ -3134,31 +3142,36 @@ static char *get_systmp_inner(const char *suff, boolean is_dir, const char *xpre
   else {
     size_t slen;
     char *tmp, *com;
-    char *prefix, *tmpdir;
-    const char *dirflg;
-    if (xprefix) prefix = (char *)xprefix;
-    else prefix = "lives-";
-    if (suff) {
-      tmp = lives_strdup_printf("%sXXXXXXXXXX-%s", prefix, suff);
+    const char *dirflg, *tmpopt;
+    if (!prefix) {
+      // no prefix, create in $TMPDIR
+      if (suff) tmp = lives_strdup_printf("lives-%s-%s", XTEMP, suff);
+      else tmp = lives_strdup_printf("lives-%s", XTEMP);
+      tmpopt = "t";
+      slen = lives_strlen(tmp) + 2;
     }
-    else
-      tmp = lives_strdup_printf("%sXXXXXXXXXX", prefix);
-
-    slen = lives_strlen(tmp);
+    else {
+      /// suff here is the directory name
+      char *tmpfile = lives_strdup_printf("%s%s", prefix, XTEMP);
+      tmp = lives_build_filename(suff, tmpfile, NULL);
+      lives_free(tmpfile);
+      tmpopt = "";
+      slen = lives_strlen(tmp);
+    }
 
     if (is_dir) dirflg = "d";
     else dirflg = "";
-    if (!xprefix) tmpdir = lives_strdup("");
-    else tmpdir = lives_strdup_printf("='%s'", prefs->workdir);
-    com = lives_strdup_printf("%s -n $(%s --tmpdir%s -q%s %s)", capable->echo_cmd, EXEC_MKTEMP, tmpdir, dirflg, tmp);
-    lives_free(tmp); lives_free(tmpdir);
+
+    com = lives_strdup_printf("%s -n $(%s -q%s%s \"%s\")", capable->echo_cmd, EXEC_MKTEMP, tmpopt,
+			      dirflg, tmp);
+    lives_free(tmp);
     res = mini_popen(com);
     if (!res) return NULL;
     if (THREADVAR(com_failed)) {
       lives_free(res);
       return NULL;
     }
-    if (lives_strlen(res) < slen + 2) {
+    if (lives_strlen(res) < slen) {
       lives_free(res);
       return NULL;
     }
@@ -3181,14 +3194,24 @@ char *get_systmp(const char *suff, boolean is_dir) {
   return get_systmp_inner(suff, is_dir, NULL);
 }
 
-char *get_worktmp(const char *prefix) {
+static char *_get_worktmp(const char *prefix, boolean is_dir) {
   char *dirname = NULL;
-  char *tmpdir = get_systmp_inner(NULL, TRUE, prefix);
+  char *tmpdir = get_systmp_inner(prefs->workdir, is_dir, prefix);
   if (tmpdir) {
     dirname = lives_path_get_basename(tmpdir);
     lives_free(tmpdir);
   }
   return dirname;
+}
+
+char *get_worktmp(const char *prefix) {
+  if (!prefix) return NULL;
+  return _get_worktmp(prefix, TRUE);
+}
+
+char *get_worktmpfile(const char *prefix) {
+  if (!prefix) return NULL;
+  return _get_worktmp(prefix, FALSE);
 }
 
 

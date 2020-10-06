@@ -416,9 +416,11 @@ void on_vppa_cancel_clicked(LiVESButton *button, livespointer user_data) {
     close_vid_playback_plugin(vpp);
   }
 
-  if (vppw->rfx && !vppw->keep_rfx) {
-    rfx_free(vppw->rfx);
-    lives_free(vppw->rfx);
+  if (vppw->rfx) {
+    if (!vppw->keep_rfx) {
+      rfx_free(vppw->rfx);
+      lives_free(vppw->rfx);
+    }
   }
 
   lives_free(vppw);
@@ -786,7 +788,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   else {
     // LIVES_INTENTION_TRANSCODE
     title = (_("Quick Transcoding"));
-    wscale = 2.5;
+    wscale = 2. * widget_opts.scale;
     hscale = 1.5;
   }
 
@@ -807,8 +809,11 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     }
   }
   if (intention == LIVES_INTENTION_TRANSCODE) {
-    label = lives_standard_label_new(
-              _("Quick transcode provides a rapid, high quality preview of the selected frames and audio.\n"));
+    tmp = lives_big_and_bold("%s", _("Quick transcode provides a rapid, high quality preview of the selected frames and audio."));
+    widget_opts.use_markup = TRUE;
+    label = lives_standard_label_new(tmp);
+    widget_opts.use_markup = FALSE;
+    lives_free(tmp);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
   }
 
@@ -857,7 +862,8 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
     add_fill_to_box(LIVES_BOX(hbox));
 
-    hsize = tmpvpp->fwidth > 0 ? tmpvpp->fwidth : DEF_VPP_HSIZE;
+    hsize = tmpvpp->fwidth > 0 ? tmpvpp->fwidth :
+            intention == LIVES_INTENTION_TRANSCODE ? cfile->hsize : DEF_VPP_HSIZE;
 
     vppa->spinbuttonw = lives_standard_spin_button_new(_("_Width"),
                         hsize,
@@ -865,22 +871,26 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
     add_fill_to_box(LIVES_BOX(hbox));
 
-    vsize = tmpvpp->fheight > 0 ? tmpvpp->fheight : DEF_VPP_VSIZE;
+    vsize = tmpvpp->fheight > 0 ? tmpvpp->fheight :
+            intention == LIVES_INTENTION_TRANSCODE ? cfile->vsize : DEF_VPP_VSIZE;
 
     vppa->spinbuttonh = lives_standard_spin_button_new(_("_Height"),
                         vsize,
                         4., MAX_FRAME_HEIGHT, 4., 16., 0, LIVES_BOX(hbox), NULL);
 
     if (intention == LIVES_INTENTION_TRANSCODE) {
-      // add aspect ratio butto
-      lives_special_aspect_t *aspect;
-      hbox = lives_hbox_new(FALSE, 0);
-      lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-
-      aspect = (lives_special_aspect_t *)add_aspect_ratio_button(LIVES_SPIN_BUTTON(vppa->spinbuttonw),
-               LIVES_SPIN_BUTTON(vppa->spinbuttonh), LIVES_BOX(hbox));
-      // don't reset the aspect params when we make_param_box
-      aspect->no_reset = TRUE;
+      if (mainw->event_list) {
+        lives_widget_set_no_show_all(hbox, TRUE);
+      } else {
+        // add aspect ratio butto
+        lives_special_aspect_t *aspect;
+        /* hbox = lives_hbox_new(FALSE, 0); */
+        /* lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height); */
+        aspect = (lives_special_aspect_t *)add_aspect_ratio_button(LIVES_SPIN_BUTTON(vppa->spinbuttonw),
+                 LIVES_SPIN_BUTTON(vppa->spinbuttonh), LIVES_BOX(hbox));
+        // don't reset the aspect params when we make_param_box
+        aspect->no_reset = TRUE;
+      }
     }
     add_fill_to_box(LIVES_BOX(hbox));
   }
@@ -926,6 +936,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   if (intention == LIVES_INTENTION_TRANSCODE) {
     vppa->apply_fx = lives_standard_check_button_new(_("Apply current realtime effects"),
                      FALSE, LIVES_BOX(dialog_vbox), NULL);
+    if (mainw->event_list) lives_widget_set_no_show_all(widget_opts.last_container, TRUE);
   }
 
   // extra params
@@ -3667,6 +3678,15 @@ LiVESList *get_external_window_hints(lives_rfx_t *rfx) {
 }
 
 
+void rfx_clean_exe(lives_rfx_t *rfx) {
+  if (rfx) {
+    char *fnamex = lives_build_filename(prefs->workdir, rfx->name, NULL);
+    if (lives_file_test(fnamex, LIVES_FILE_TEST_EXISTS)) lives_rm(fnamex);
+    lives_free(fnamex);
+  }
+}
+
+
 /**
    @brief create an interface window for a plugin; possibly run it, and return the parameters
 
@@ -3705,8 +3725,8 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox * vbox, lives_rf
   lives_rfx_t *rfx = (lives_rfx_t *)lives_calloc(1, sizeof(lives_rfx_t));
 
   char *string;
-  char *rfx_scrapname = lives_strdup_printf("rfx.%d", capable->mainpid);
-  char *rfxfile = lives_strdup_printf("%s/.%s.%s", prefs->workdir, rfx_scrapname, LIVES_FILE_EXT_RFX_SCRIPT);
+  char *rfx_scrapname, *rfx_scriptname;
+  char *rfxfile;
   char *com;
   char *fnamex = NULL;
   char *res_string = NULL;
@@ -3714,6 +3734,22 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox * vbox, lives_rf
 
   int res;
   int retval;
+
+  if (!check_for_executable(&capable->has_mktemp, EXEC_MKTEMP)) {
+    do_program_not_found_error(EXEC_MKTEMP);
+    return NULL;
+  }
+
+  rfx_scrapname = get_worktmpfile("rfx.");
+  if (!rfx_scrapname) {
+    workdir_warning();
+    return NULL;
+  }
+
+  rfx_scriptname = lives_strdup_printf("%s.%s", rfx_scrapname, LIVES_FILE_EXT_RFX_SCRIPT);
+
+  rfxfile = lives_build_path(prefs->workdir, rfx_scriptname, NULL);
+  lives_free(rfx_scriptname);
 
   rfx->name = NULL;
 
@@ -3779,6 +3815,7 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox * vbox, lives_rf
 
     fnamex = lives_build_filename(prefs->workdir, rfx_scrapname, NULL);
     com = lives_strdup_printf("\"%s\" get_define", fnamex);
+    lives_free(fnamex);
 
     if (!lives_popen(com, TRUE, buff, 32)) {
       THREADVAR(com_failed) = TRUE;
@@ -3787,8 +3824,7 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox * vbox, lives_rf
 
     // command to get_define failed
     if (THREADVAR(com_failed)) {
-      lives_rm(fnamex);
-      lives_free(fnamex);
+      rfx_clean_exe(rfx);
       return NULL;
     }
 
@@ -3843,11 +3879,10 @@ prpw_done:
     if (ret_rfx) {
       *ret_rfx = rfx;
     } else {
-      lives_rm(fnamex);
+      rfx_clean_exe(rfx);
       rfx_free(rfx);
       lives_free(rfx);
     }
-    lives_free(fnamex);
   } else {
     if (ret_rfx) {
       *ret_rfx = NULL;

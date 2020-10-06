@@ -114,7 +114,7 @@ static void add_clear_ds_button(LiVESDialog *dialog) {
   LiVESWidget *button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CLEAR, _("_Recover disk space"),
                         LIVES_RESPONSE_RETRY);
   if (mainw->tried_ds_recover) lives_widget_set_sensitive(button, FALSE);
-  lives_dialog_make_widget_first(LIVES_DIALOG(dialog), widget_opts.last_container);
+  lives_dialog_make_widget_first(LIVES_DIALOG(dialog), button);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_cleardisk_activate), (livespointer)button);

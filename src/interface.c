@@ -899,7 +899,7 @@ xprocess *create_processing(const char *text) {
   }
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  if (mainw->internal_messaging && mainw->rte != 0) {
+  if (mainw->internal_messaging && mainw->rte != 0 && !mainw->transrend_proc) {
     procw->label2 = lives_standard_label_new(_("\n\nPlease Wait\n\nRemember to switch off effects (ctrl-0) afterwards !"));
   } else procw->label2 = lives_standard_label_new(_("\nPlease Wait"));
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
@@ -987,8 +987,8 @@ xprocess *create_processing(const char *text) {
                               LIVES_GUI_CALLBACK(on_preview_clicked), NULL);
   }
 
-  lives_signal_connect(LIVES_GUI_OBJECT(procw->cancel_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_cancel_keep_button_clicked), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(procw->cancel_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_cancel_keep_button_clicked), NULL);
 
   if (mainw->show_procd) lives_widget_show_all(procw->processing);
   if (procw->preview_button) lives_widget_hide(procw->preview_button);
@@ -4725,7 +4725,8 @@ void do_keys_window(void) {
                "ctrl-space, ctrl-enter, or switching clips clears)"));
   ADD_KEYDEF(_("ctrl-backspace"), _("freeze frame (foreground and background)"));
   ADD_KEYDEF(_("ctrl-alt-backspace"), _("freeze frame (background clip only)"));
-  ADD_KEYDEF("a", _("audio lock ON: lock audio to the current foreground clip;\nignore video clip switches"));
+  ADD_KEYDEF("a",
+             _("audio lock ON: lock audio to the current foreground clip;\nignore video clip switches and rate / direction changes"));
   ADD_KEYDEF("A", _("audio lock OFF; audio follows the foreground video clip\n(unless overridden in Preferences)"));
   ADD_KEYDEF("n", _("nervous mode"));
   ADD_KEYDEF(_("ctrl-page-up"), _("previous clip"));

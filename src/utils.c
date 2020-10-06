@@ -4994,7 +4994,21 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   if (!IS_VALID_CLIP(which)) return FALSE;
 
   if (!mainw->hdrs_cache) {
-    lives_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle, LIVES_CLIP_HEADER, NULL);
+    /// ascrap_file now uses a different header name; this is to facilitate diskspace cleanup
+    /// otherwise it may be wrongly classified as a recoverable clip
+    /// (here this is largely academic, since the values are only read during crash recovery,
+    /// and the header should have been cached)
+    if (which == mainw->ascrap_file) {
+      lives_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle,
+                                          LIVES_ACLIP_HEADER, NULL);
+      if (!lives_file_test(lives_header, LIVES_FILE_TEST_EXISTS)) {
+        lives_free(lives_header);
+        lives_header = NULL;
+      }
+    }
+    if (!lives_header)
+      lives_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle,
+                                          LIVES_CLIP_HEADER, NULL);
     if (!sfile->checked_for_old_header) {
       struct stat mystat;
       time_t old_time = 0, new_time = 0;
@@ -5107,7 +5121,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
 
 
 boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
-  lives_clip_t *sfile = mainw->files[which];
+  lives_clip_t *sfile;
   char *lives_header;
   char *com, *tmp;
   char *myval;
@@ -5122,7 +5136,15 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
 
   if (!IS_VALID_CLIP(which)) return FALSE;
 
-  lives_header = lives_build_filename(prefs->workdir, sfile->handle, LIVES_CLIP_HEADER, NULL);
+  sfile = mainw->files[which];
+
+  /// ascrap_file now uses a different header name; this is to facilitate diskspace cleanup
+  /// otherwise it may be wrongly classified as a recoverable clip
+  if (which == mainw->ascrap_file)
+    lives_header = lives_build_filename(prefs->workdir, sfile->handle, LIVES_ACLIP_HEADER, NULL);
+  else
+    lives_header = lives_build_filename(prefs->workdir, sfile->handle, LIVES_CLIP_HEADER, NULL);
+
   key = clip_detail_to_string(what, NULL);
 
   if (!key) {

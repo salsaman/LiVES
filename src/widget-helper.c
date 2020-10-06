@@ -4863,6 +4863,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_no_show_all(LiVESWidget *wi
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_get_no_show_all(LiVESWidget *widget) {
+#ifdef GUI_GTK
+  return gtk_widget_get_no_show_all(widget);
+#endif
+  return FALSE;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_is_sensitive(LiVESWidget *widget) {
   // return TRUE is widget + parent is sensitive
 #ifdef GUI_GTK
@@ -8822,21 +8830,39 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_sensitive_with(LiVESWidget 
 }
 
 
-static void lives_widget_show_all_cb(LiVESWidget * widget, livespointer user_data) {
-  if (LIVES_IS_WIDGET_OBJECT(widget)) {
-    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), SHOWALL_OVERRIDE_KEY)) return;
-    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_HIDE_KEY)) {
+static void lives_widget_show_all_cb(LiVESWidget * other, livespointer user_data) {
+  LiVESWidget *controller;
+
+  if (LIVES_IS_WIDGET_OBJECT(other)) {
+    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(other), SHOWALL_OVERRIDE_KEY)) return;
+    controller = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(other),
+                 SHOWHIDE_CONTROLLER_KEY);
+    if (controller) {
+      if (lives_widget_get_no_show_all(controller)) {
+        lives_widget_set_no_show_all(other, TRUE);
+        lives_widget_hide(other);
+        return;
+      }
+    }
+    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(other), TTIPS_HIDE_KEY)) {
       if (prefs->show_tooltips) {
-        lives_widget_set_no_show_all(widget, FALSE);
-        lives_widget_show(widget);
+        lives_widget_set_no_show_all(other, FALSE);
+        lives_widget_show(other);
       }
       return;
     }
-  }
-  widget = (LiVESWidget *)user_data;
-  if (!lives_widget_is_visible(widget)) {
-    lives_widget_show_all(widget);
-    g_print("SHOW !!\n");
+
+    if (controller && !lives_widget_get_no_show_all(controller)) {
+      if (lives_widget_get_no_show_all(other)) {
+        lives_widget_set_no_show_all(other, FALSE);
+      }
+    }
+    /* if (!lives_widget_is_visible(widget)) { */
+    /*   lives_widget_show_all(widget); */
+    /* } */
+    if (!lives_widget_is_visible(other)) {
+      lives_widget_show_all(other);
+    }
   }
 }
 
@@ -8846,6 +8872,10 @@ boolean lives_widget_set_show_hide_with(LiVESWidget * widget, LiVESWidget * othe
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(other),
                                SHOWHIDE_CONTROLLER_KEY, widget);
   if (!widget_opts.no_gui) {
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(other), LIVES_WIDGET_SHOW_SIGNAL,
+                              LIVES_GUI_CALLBACK(lives_widget_show_all_cb),
+                              (livespointer)(widget));
+
     lives_signal_sync_connect_swapped(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_SHOW_SIGNAL,
                                       LIVES_GUI_CALLBACK(lives_widget_show_all_cb),
                                       (livespointer)(other));
@@ -9370,6 +9400,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
 
     if (labeltext) {
       eventbox = make_label_eventbox(labeltext, spinbutton);
+      lives_widget_set_show_hide_with(spinbutton, eventbox);
     }
 
     hbox = make_inner_hbox(LIVES_BOX(box), widget_opts.swap_label || !eventbox);

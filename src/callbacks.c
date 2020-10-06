@@ -589,7 +589,7 @@ static void open_sel_range_activate(int frames, double fps) {
 static boolean read_file_details_generic(const char *fname) {
   /// make a tmpdir in case we need to open images for example
   char *tmpdir, *dirname, *com;
-  const char *prefix = "fsp";
+  const char *prefix = "_fsp";
   dirname = get_worktmp(prefix);
   if (dirname) tmpdir = lives_build_path(prefs->workdir, dirname, NULL);
   else {
@@ -774,8 +774,15 @@ void on_open_loc_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 void on_open_utube_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   /// get a system tmpdir
-  char *tmpdir = get_systmp("ytdl", TRUE);
+
   lives_remote_clip_request_t *req = NULL, *req2;
+  char *tmpdir;
+  if (!check_for_executable(&capable->has_mktemp, EXEC_MKTEMP)) {
+    do_program_not_found_error(EXEC_MKTEMP);
+    return;
+  }
+  tmpdir = get_systmp("ytdl", TRUE);
+  if (!tmpdir) return;
 
   mainw->mt_needs_idlefunc = FALSE;
 
@@ -1354,7 +1361,7 @@ void on_save_as_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 #ifdef LIBAV_TRANSCODE
 void on_transcode_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (!CURRENT_CLIP_IS_VALID) return;
-  transcode(cfile->start, cfile->end);
+  transcode_clip(cfile->start, cfile->end, FALSE, NULL);
 }
 #endif
 
@@ -4564,8 +4571,7 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
       if ((prefs->rec_opts & REC_AUDIO) && (mainw->agen_key != 0 || mainw->agen_needs_reinit
                                             || prefs->audio_src == AUDIO_SRC_EXT) &&
-          ((prefs->audio_player == AUD_PLAYER_JACK) ||
-           (prefs->audio_player == AUD_PLAYER_PULSE))) {
+          (prefs->audio_player == AUD_PLAYER_JACK || prefs->audio_player == AUD_PLAYER_PULSE)) {
         if (mainw->ascrap_file == -1) {
           open_ascrap_file();
         }
@@ -4981,6 +4987,24 @@ boolean dirchange_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
 }
 
 
+/**
+   @brief set in / out points for video looping
+   during free playback, it is possible to set in / out points for video looping
+   after setting both points, the video becomes "loop locked", i.e when one point
+   is reached, it will jump to the other point (if the clip can reversee the it will instead
+   ping-pong between the 2 points, ie. when one end point is reached,, the playdirection will flip)
+
+   loop lock can be disabled by any of the following:
+   switching to another clip
+   chaging clip direction manually
+   triggering a bookmark
+   ending playback
+   when loop lock is released, the original play direction from before entering the lock is
+   applied, if the lock was ended by triggering a direction change then the actual
+   direction change is ignored
+
+   If both are already set, then triggering this again will reduce the loop length
+*/
 boolean dirchange_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                                 livespointer area_enum) {
 
@@ -7048,9 +7072,7 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
   int owidth, oheight, npieces, border = 0;
   boolean with_audio = mainw->save_with_sound;
 
-  pid_t pid = capable->mainpid;
-
-  char *thm_dir;
+  char *thm_dir = NULL;
   char *tmp, *tmp2;
   char *com;
   char *type;
@@ -7063,11 +7085,11 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
   }
   fsp_ltext = NULL;
 
-  /* if (mainw->in_fs_preview) { */
-  /*   dfile = lives_strdup_printf("thm%d", pid); */
-  /*   lives_kill_subprocesses(dfile, TRUE); */
-  /*   lives_free(dfile); */
-  /* } */
+  if (!check_for_executable(&capable->has_mktemp, EXEC_MKTEMP)) {
+    do_program_not_found_error(EXEC_MKTEMP);
+    lives_widget_set_sensitive(widget, TRUE);
+    return;
+  }
 
   if (preview_type == LIVES_PREVIEW_TYPE_RANGE) {
     // open selection
@@ -7101,20 +7123,20 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
   lives_strfreev(array);
 
   if (!strcmp(type, "image") || !strcmp(type, prefs->image_type)) {
-    /* info_file = lives_strdup_printf("%s/thm%d/%s", prefs->workdir, capable->mainpid, LIVES_STATUS_FILE_NAME); */
-    /* lives_rm(info_file); */
-
     if (preview_type == LIVES_PREVIEW_TYPE_VIDEO_AUDIO || preview_type == LIVES_PREVIEW_TYPE_IMAGE_ONLY) {
       clear_mainw_msg();
 
-      if (capable->has_identify) {
+      thm_dir = get_worktmp("_thm");
+
+      if (thm_dir && capable->has_identify) {
         mainw->error = FALSE;
 
         fwidth = lives_widget_get_allocation_width(mainw->fs_playalign) - 20;
         fheight = lives_widget_get_allocation_height(mainw->fs_playalign) - 20;
 
         // make thumb from any image file
-        com = lives_strdup_printf("%s make_thumb thm%d %d %d \"%s\" \"%s\"", prefs->backend_sync, pid, fwidth,
+
+        com = lives_strdup_printf("%s make_thumb %s %d %d \"%s\" \"%s\"", prefs->backend_sync, thm_dir, fwidth,
                                   fheight, prefs->image_ext, (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)));
         lives_free(tmp);
 
@@ -7142,8 +7164,10 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
         // draw image
         LiVESXWindow *xwin;
         LiVESError *error = NULL;
-        char *thumb = lives_strdup_printf("%s/thm%d/%08d.%s", prefs->workdir, pid, 1, prefs->image_ext);
+        char *thumbfile = lives_strdup_printf("%08d.%s", 1, prefs->image_ext);
+        char *thumb = lives_build_filename(prefs->workdir, thm_dir, thumbfile, NULL);
         LiVESPixbuf *pixbuf = lives_pixbuf_new_from_file((tmp = lives_filename_from_utf8(thumb, -1, NULL, NULL, NULL)), &error);
+        lives_free(thumbfile);
         lives_free(thumb);
         lives_free(tmp);
         if (!error) {
@@ -7189,9 +7213,10 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
         }
       }
 
-      thm_dir = lives_strdup_printf("%s/thm%d", prefs->workdir, capable->mainpid);
-      lives_rmdir(thm_dir, TRUE);
-      lives_free(thm_dir);
+      if (thm_dir) {
+        lives_rmdir(thm_dir, TRUE);
+        lives_free(thm_dir);
+      }
       if (height > 0 || width > 0 || preview_type == LIVES_PREVIEW_TYPE_IMAGE_ONLY) {
         lives_widget_set_sensitive(widget, TRUE);
         return;
@@ -7217,7 +7242,7 @@ void on_fs_preview_clicked(LiVESWidget * widget, livespointer user_data) {
     return;
   }
 
-  mainw->fsp_tmpdir = get_worktmp("fsp");
+  mainw->fsp_tmpdir = get_worktmp("_fsp");
 
   if (!mainw->fsp_tmpdir) {
     workdir_warning();
@@ -10107,7 +10132,7 @@ void on_effects_paused(LiVESButton * button, livespointer user_data) {
             mainw->multitrack->opts.render_audp)) {
           // render audio up to current tc
           mainw->flush_audio_tc = q_gint64((double)cfile->undo_end / cfile->fps * TICKS_PER_SECOND_DBL, cfile->fps);
-          render_events(FALSE);
+          render_events_cb(FALSE);
           mainw->flush_audio_tc = 0;
           cfile->afilesize = reget_afilesize_inner(mainw->current_file);
           cfile->laudio_time = (double)(cfile->afilesize / (cfile->asampsize >> 3) / cfile->achans) / (double)cfile->arate;
@@ -10270,7 +10295,7 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
         if (mainw->is_processing && mainw->is_rendering && prefs->render_audio) {
           // render audio up to current tc
           mainw->flush_audio_tc = q_gint64((double)cfile->undo_end / cfile->fps * TICKS_PER_SECOND_DBL, cfile->fps);
-          render_events(FALSE);
+          render_events_cb(FALSE);
           mainw->flush_audio_tc = 0;
           cfile->afilesize = reget_afilesize_inner(mainw->current_file);
           cfile->laudio_time = (double)(cfile->afilesize / (cfile->asampsize >> 3) / cfile->achans) / (double)cfile->arate;
@@ -11161,6 +11186,15 @@ boolean nervous_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint3
 }
 
 
+/**
+   @brief lock or unlock audio track changes in free playback
+   if lock is switched on then the prefs to follow video clip changes and rate / direction changes
+   are overriden, in addition  the audio is ismmediately synced to the current video track
+
+   switching off audio lock re-enables these prefs settings
+
+   if LiVES is not playing, or the audio player is non-realtime then there is no effect
+*/
 boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                           livespointer statep) {
   boolean state = LIVES_POINTER_TO_INT(statep);
@@ -11170,10 +11204,9 @@ boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 
   if (!state) {
     // lock OFF
-    prefs->audio_opts |= (AUDIO_OPTS_FOLLOW_CLIPS & future_prefs->audio_opts);
+    prefs->audio_opts = future_prefs->audio_opts;
     return TRUE;
   }
-  prefs->audio_opts = ((prefs->audio_opts | AUDIO_OPTS_FOLLOW_CLIPS) ^ AUDIO_OPTS_FOLLOW_CLIPS);
   if (switch_audio_clip(mainw->current_file, TRUE)) {
     if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
       mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
@@ -11181,6 +11214,7 @@ boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
       changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), LIVES_INT_TO_POINTER(TRUE));
     }
   }
+  prefs->audio_opts &= ~(AUDIO_OPTS_FOLLOW_FPS | AUDIO_OPTS_FOLLOW_CLIPS);
   return TRUE;
 }
 
@@ -11252,7 +11286,11 @@ boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
   return FALSE;
 }
 
-
+/**
+   @brief jump to a stored clip / frame position during free playback
+   clip number and frame position can be stored and later triggered
+   during playback
+*/
 boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                            livespointer clip_number) {
   // ctrl-fn key will store a clip for higher switching
@@ -11295,6 +11333,7 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
       cfile->real_pointer_time = (mainw->clipstore[clip][1] - 1.) / cfile->fps;
       lives_ce_update_timeline(0, cfile->real_pointer_time);
     }
+    if (mainw->loop_locked) unlock_loop_lock();
   }
   return TRUE;
 }

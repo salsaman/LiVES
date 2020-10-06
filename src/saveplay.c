@@ -2628,9 +2628,8 @@ void play_file(void) {
   if (mainw->record) mainw->record_paused = TRUE;
 
   // if recording, set up recorder (jack or pulse)
-  if (!mainw->preview && (prefs->audio_src == AUDIO_SRC_EXT || (mainw->record && mainw->agen_key != 0)) &&
-      ((audio_player == AUD_PLAYER_JACK) ||
-       (audio_player == AUD_PLAYER_PULSE))) {
+  if (!mainw->preview && (prefs->audio_src == AUDIO_SRC_EXT || (mainw->record && mainw->agen_key != 0))
+      && (audio_player == AUD_PLAYER_JACK || audio_player == AUD_PLAYER_PULSE)) {
     mainw->rec_samples = -1; // record unlimited
     if (mainw->record) {
       // create temp clip
@@ -4467,7 +4466,7 @@ boolean read_headers(int fileno, const char *dir, const char *file_name) {
   char buff[1024];
   char version[32];
   char *com, *tmp;
-  char *old_hdrfile, *lives_header;
+  char *old_hdrfile, *lives_header = NULL;
 
   off_t header_size;
   int version_hash;
@@ -4479,6 +4478,7 @@ boolean read_headers(int fileno, const char *dir, const char *file_name) {
   lives_clip_details_t detail;
 
   boolean retval, retvala;
+  boolean is_ascrap = FALSE;
 
   off_t sizhead = 28; //8 * 4 + 8 + 8;
 
@@ -4492,7 +4492,18 @@ boolean read_headers(int fileno, const char *dir, const char *file_name) {
   sfile = mainw->files[fileno];
 
   old_hdrfile = lives_build_filename(dir, LIVES_CLIP_HEADER_OLD, NULL);
-  lives_header = lives_build_filename(dir, LIVES_CLIP_HEADER, NULL);
+
+  if (fileno == mainw->ascrap_file) {
+    is_ascrap = TRUE;
+    /// ascrap_file now uses a different header name; this is to facilitate diskspace cleanup
+    /// otherwise it may be wrongly classified as a recoverable clip
+    lives_header = lives_build_filename(dir, LIVES_ACLIP_HEADER, NULL);
+    if (!lives_file_test(lives_header, LIVES_FILE_TEST_EXISTS)) {
+      lives_free(lives_header);
+      lives_header = NULL;
+    }
+  }
+  if (!lives_header) lives_header = lives_build_filename(dir, LIVES_CLIP_HEADER, NULL);
 
   sfile->checked_for_old_header = TRUE;
   sfile->img_type = IMG_TYPE_UNKNOWN;
@@ -4514,7 +4525,7 @@ boolean read_headers(int fileno, const char *dir, const char *file_name) {
       threaded_dialog_spin(0.);
     }
 
-    restore_clip_binfmt(fileno);
+    if (!is_ascrap) restore_clip_binfmt(fileno);
 
     do {
       do {
@@ -4539,7 +4550,7 @@ boolean read_headers(int fileno, const char *dir, const char *file_name) {
 
       if (retval2 == LIVES_RESPONSE_CANCEL) goto rhd_failed;
 
-      if (mainw->ascrap_file != -1 && fileno == mainw->ascrap_file) goto get_avals;
+      if (is_ascrap) goto get_avals;
 
       detail = CLIP_DETAILS_FRAMES;
       retval = get_clip_value(fileno, detail, &sfile->frames, 0);
@@ -4645,13 +4656,15 @@ get_avals:
           retval2 = do_header_read_error_with_retry(fileno);
         }
       } else {
-        get_clip_value(fileno, CLIP_DETAILS_TITLE, sfile->title, 1024);
-        get_clip_value(fileno, CLIP_DETAILS_AUTHOR, sfile->author, 1024);
-        get_clip_value(fileno, CLIP_DETAILS_COMMENT, sfile->comment, 1024);
-        get_clip_value(fileno, CLIP_DETAILS_KEYWORDS, sfile->keywords, 1024);
-        get_clip_value(fileno, CLIP_DETAILS_INTERLACE, &sfile->interlace, 0);
-        // user must have selected this:
-        if (sfile->interlace != LIVES_INTERLACE_NONE) sfile->deinterlace = TRUE;
+        if (!is_ascrap) {
+          get_clip_value(fileno, CLIP_DETAILS_TITLE, sfile->title, 1024);
+          get_clip_value(fileno, CLIP_DETAILS_AUTHOR, sfile->author, 1024);
+          get_clip_value(fileno, CLIP_DETAILS_COMMENT, sfile->comment, 1024);
+          get_clip_value(fileno, CLIP_DETAILS_KEYWORDS, sfile->keywords, 1024);
+          get_clip_value(fileno, CLIP_DETAILS_INTERLACE, &sfile->interlace, 0);
+          // user must have selected this:
+          if (sfile->interlace != LIVES_INTERLACE_NONE) sfile->deinterlace = TRUE;
+        }
         lives_free(old_hdrfile);
         lives_free(lives_header);
         if (!prefs->vj_mode) {
@@ -5217,8 +5230,22 @@ boolean open_scrap_file(void) {
   char *dir;
   char *handle, *scrap_handle;
 
-  handle = lives_strdup_printf("scrap%d", capable->mainpid);
-  if (!create_cfile(-1, handle, FALSE)) return FALSE;
+  if (!check_for_executable(&capable->has_mktemp, EXEC_MKTEMP)) {
+    do_program_not_found_error(EXEC_MKTEMP);
+    return FALSE;
+  }
+
+  handle = get_worktmp("_scrap");
+  if (!handle) {
+    workdir_warning();
+    return FALSE;
+  }
+  if (!create_cfile(-1, handle, FALSE)) {
+    dir = lives_build_path(prefs->workdir, cfile->handle, NULL);
+    lives_rmdir(dir, FALSE);
+    lives_free(dir); lives_free(handle);
+    return FALSE;
+  }
   lives_free(handle);
 
   mainw->scrap_file = mainw->current_file;
@@ -5233,8 +5260,7 @@ boolean open_scrap_file(void) {
   mainw->cliplist = lives_list_append(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file));
   pthread_mutex_unlock(&mainw->clip_list_mutex);
 
-  dir = lives_build_filename(prefs->workdir, cfile->handle, NULL);
-  lives_mkdir_with_parents(dir, capable->umask);
+  dir = lives_build_path(prefs->workdir, cfile->handle, NULL);
   free_mb = (double)get_ds_free(dir) / (double)ONE_MILLION;
   lives_free(dir);
 
@@ -5252,8 +5278,22 @@ boolean open_ascrap_file(void) {
   char *dir;
   char *handle, *ascrap_handle;
 
-  handle = lives_strdup_printf("ascrap%d", capable->mainpid);
-  if (!create_cfile(-1, handle, FALSE)) return FALSE;
+  if (!check_for_executable(&capable->has_mktemp, EXEC_MKTEMP)) {
+    do_program_not_found_error(EXEC_MKTEMP);
+    return FALSE;
+  }
+
+  handle = get_worktmp("_ascrap");
+  if (!handle) {
+    workdir_warning();
+    return FALSE;
+  }
+  if (!create_cfile(-1, handle, FALSE)) {
+    dir = lives_build_path(prefs->workdir, cfile->handle, NULL);
+    lives_rmdir(dir, FALSE);
+    lives_free(dir); lives_free(handle);
+    return FALSE;
+  }
   lives_free(handle);
 
   mainw->ascrap_file = mainw->current_file;
@@ -5302,8 +5342,7 @@ boolean open_ascrap_file(void) {
   mainw->cliplist = lives_list_append(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file));
   pthread_mutex_unlock(&mainw->clip_list_mutex);
 
-  dir = lives_build_filename(prefs->workdir, cfile->handle, NULL);
-  lives_mkdir_with_parents(dir, capable->umask);
+  dir = lives_build_path(prefs->workdir, cfile->handle, NULL);
   free_mb = (double)get_ds_free(dir) / (double)ONE_MILLION;
   lives_free(dir);
 
@@ -5976,22 +6015,19 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   char buff[256], *buffptr;
   char *clipdir;
 
-  int retval;
+  LiVESResponseType resp;
+
   int clipnum = 0;
   int maxframe;
   int last_good_file = -1, ngoodclips;
 
-  boolean is_scrap;
-  boolean is_ascrap;
+  boolean is_scrap, is_ascrap;
   boolean did_set_check = FALSE;
-  boolean is_ready = mainw->is_ready;
-  boolean mt_is_ready = FALSE;
+  boolean is_ready = mainw->is_ready, mt_is_ready = FALSE;
   boolean mt_needs_idlefunc = FALSE;
-  boolean retb = TRUE;
+  boolean retb = TRUE, retval;
   boolean load_from_set = TRUE;
   boolean rec_cleanup = FALSE;
-
-  //splash_end();
 
   // setting is_ready allows us to get the correct transient window for dialogs
   // otherwise the dialogs will appear behind the main interface
@@ -6025,16 +6061,16 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
   if (recovery_file) {
     do {
-      retval = 0;
+      resp = LIVES_RESPONSE_NONE;
       rfile = fopen(recovery_file, "r");
       if (!rfile) {
-        retval = do_read_failed_error_s_with_retry(recovery_file, lives_strerror(errno));
-        if (retval == LIVES_RESPONSE_CANCEL) {
+        resp = do_read_failed_error_s_with_retry(recovery_file, lives_strerror(errno));
+        if (resp == LIVES_RESPONSE_CANCEL) {
           retb = FALSE;
           goto recovery_done;
         }
       }
-    } while (retval == LIVES_RESPONSE_RETRY);
+    } while (resp == LIVES_RESPONSE_RETRY);
   }
 
   do_threaded_dialog(_("Recovering files"), FALSE);
@@ -6174,65 +6210,23 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
         continue;
       }
 
-      if (!is_ascrap) {
-        /// get file details; this will cache the header in mainw->hdrs_cache
-        // we need to keep this around for open_set_file(), below.
-        char *clipdir = lives_build_path(prefs->workdir, cfile->handle, NULL);
-        read_headers(mainw->current_file, clipdir, NULL);
-        lives_free(clipdir);
-      } else {
-        lives_clip_details_t detail;
-        int asigned = 0, aendian = LIVES_LITTLE_ENDIAN;
+      if (is_ascrap) {
+        mainw->ascrap_file = mainw->current_file;
         cfile->opening = FALSE;
         lives_snprintf(cfile->type, 40, "ascrap");
-        detail = CLIP_DETAILS_ACHANS;
-        retval = get_clip_value(mainw->current_file, detail, &cfile->achans, 0);
-        if (!retval) cfile->achans = 0;
-        if (cfile->achans == 0) retval = FALSE;
-        else retval = TRUE;
+      }
 
-        if (retval) {
-          detail = CLIP_DETAILS_ARATE;
-          retval = get_clip_value(mainw->current_file, detail, &cfile->arps, 0);
-        }
+      /// get file details; this will cache the header in mainw->hdrs_cache
+      // we need to keep this around for open_set_file(), below.
+      clipdir = lives_build_path(prefs->workdir, cfile->handle, NULL);
+      retval = read_headers(mainw->current_file, clipdir, NULL);
+      lives_free(clipdir);
 
-        if (!retval) cfile->arps = cfile->achans = cfile->arate = cfile->asampsize = 0;
-
-        cfile->arate = cfile->arps;
-
-        if (retval) {
-          detail = CLIP_DETAILS_PB_ARATE;
-          retval = get_clip_value(mainw->current_file, detail, &cfile->arate, 0);
-        }
-        if (!retval) cfile->arate = cfile->arps;
-        else {
-          if (cfile->arps == 0) cfile->arps = cfile->arate;
-        }
-
-        if (retval) {
-          detail = CLIP_DETAILS_ASIGNED;
-          retval = get_clip_value(mainw->current_file, detail, &asigned, 0);
-        }
-        if (retval) {
-          detail = CLIP_DETAILS_AENDIAN;
-          retval = get_clip_value(mainw->current_file, detail, &aendian, 0);
-        }
-
-        cfile->signed_endian = asigned + aendian;
-
-        if (retval) {
-          detail = CLIP_DETAILS_ASAMPS;
-          retval = get_clip_value(mainw->current_file, detail, &cfile->asampsize, 0);
-        }
-
+      if (is_ascrap) {
         if (!retval) {
           mainw->first_free_file = mainw->current_file;
-          continue;
+          mainw->ascrap_file = -1;
         }
-        if (!prefs->vj_mode) {
-          cfile->afilesize = reget_afilesize_inner(mainw->current_file);
-        }
-        mainw->ascrap_file = mainw->current_file;
         continue;
       }
 
@@ -6466,9 +6460,7 @@ boolean rewrite_recovery_file(void) {
   boolean wrote_set_entry = FALSE;
 
   int recovery_fd = -1;
-  int retval;
-
-  register int i;
+  LiVESResponseType retval;
 
   if (!clist || !prefs->crash_recovery) {
     lives_rm(mainw->recovery_file);
@@ -6478,13 +6470,13 @@ boolean rewrite_recovery_file(void) {
   temp_recovery_file = lives_strdup_printf("%s.%s", mainw->recovery_file, LIVES_FILE_EXT_TMP);
 
   do {
-    retval = LIVES_RESPONSE_INVALID;
+    retval = LIVES_RESPONSE_NONE;
     THREADVAR(write_failed) = FALSE;
     opened = FALSE;
     recovery_fd = -1;
 
-    while (clist) {
-      i = LIVES_POINTER_TO_INT(clist->data);
+    for (; clist; clist = clist->next) {
+      int i = LIVES_POINTER_TO_INT(clist->data);
       if (IS_NORMAL_CLIP(i)) {
         lives_clip_t *sfile = mainw->files[i];
         if (i == mainw->scrap_file) {
@@ -6496,10 +6488,7 @@ boolean rewrite_recovery_file(void) {
             if (!wrote_set_entry) {
               recovery_entry = lives_build_filename(mainw->set_name, "*\n", NULL);
               wrote_set_entry = TRUE;
-            } else {
-              clist = clist->next;
-              continue;
-            }
+            } else continue;
           } else recovery_entry = lives_strdup_printf("%s\n", sfile->handle);
         }
 
@@ -6513,7 +6502,6 @@ boolean rewrite_recovery_file(void) {
         lives_free(recovery_entry);
       }
       if (THREADVAR(write_failed)) break;
-      clist = clist->next;
     }
   } while (retval == LIVES_RESPONSE_RETRY);
 

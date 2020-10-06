@@ -932,6 +932,7 @@ void on_fx_insa_clicked(LiVESWidget *button, livespointer mt);
 
 // utils
 boolean event_list_rectify(lives_mt *, weed_plant_t *event_listy);
+void *find_init_event_in_ttable(ttable *trans_table, uint64_t in, boolean normal);
 void reset_renumbering(void);
 boolean make_backup_space(lives_mt *, size_t space_needed);
 void activate_mt_preview(lives_mt *); ///< sensitize Show Preview and Apply buttons

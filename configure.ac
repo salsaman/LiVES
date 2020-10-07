@@ -803,7 +803,7 @@ AM_CONDITIONAL(HAVE_VORBIS,$HAVE_VORBIS)
 
 HAVE_DIRAC=false
 dnl check for dirac
-echo "Checking for Dirac (schroedinger)..."
+echo -n "checking for Dirac (schroedinger): "
 PKG_CHECK_MODULES(DIRAC,schroedinger-1.0,HAVE_DIRAC=true,HAVE_DIRAC=false)
 AC_SUBST(DIRAC_CFLAGS)
 AC_SUBST(DIRAC_LIBS)
@@ -943,18 +943,29 @@ fi
 fi
 AM_CONDITIONAL(ENABLE_LDVGRAB,$HAVE_LDVGRAB)
 
+AC_ARG_ENABLE(system-weed, [  --disable-system-weed Disable check system weed.] , disable_system_weed=yes)
+if test "$IS_MINGW" = "false"; then
+
+if test "x$disable_system_weed" != "xyes"; then
 NEED_LOCAL_WEED=false
 NEED_LOCAL_WEED_GSLICE=false
 NEED_LOCAL_WEED_UTILS=false
 NEED_LOCAL_WEED_COMPAT=false
 NEED_LOCAL_WEED_PLUGIN=false
-
-AC_ARG_ENABLE(weed, [  --disable-system-weed Disable check system weed.] , disable_system_weed=yes)
-if test "$IS_MINGW" = "false"; then
-if test "x$disable_system_weed" != "xyes"; then
+else
+NEED_LOCAL_WEED=true
+NEED_LOCAL_WEED_GSLICE=true
+NEED_LOCAL_WEED_UTILS=true
+NEED_LOCAL_WEED_COMPAT=true
+NEED_LOCAL_WEED_PLUGIN=true
+fi
 
 if test "$DISABLE_GSLICE" = "false"; then
+if test "x$disable_system_weed" != "xyes"; then
 PKG_CHECK_MODULES(WEED_GSLICE, libweed_gslice >= 2.0.0, NEED_LOCAL_WEED_GSLICE=false, NEED_LOCAL_WEED_GSLICE=true)
+else
+echo "Check for system libweed_gslice is disabled"
+fi
 
 if test "$NEED_LOCAL_WEED_GSLICE" = "true"; then
 echo "...will try to build from included sources"
@@ -966,7 +977,11 @@ AC_SUBST(WEED_GSLICE_LIBS)
 else
 echo "gslice allocator disabled, so..."
 
+if test "x$disable_system_weed" != "xyes"; then
 PKG_CHECK_MODULES(WEED, libweed >= 2.0.0, NEED_LOCAL_WEED=false, NEED_LOCAL_WEED=true)
+else
+echo "Check for system libweed is disabled"
+fi
 
 if test "$NEED_LOCAL_WEED" = "true"; then
 echo "...will try to build from included sources"
@@ -978,7 +993,11 @@ fi
 
 AC_SUBST(WEED_CFLAGS)
 
+if test "x$disable_system_weed" != "xyes"; then
 PKG_CHECK_MODULES(WEED_UTILS, libweed-utils >= 2.0.0, NEED_LOCAL_WEED_UTILS=false, NEED_LOCAL_WEED_UTILS=true)
+else
+echo "Check for system libweed-utils is disabled"
+fi
 
 if test "$NEED_LOCAL_WEED_UTILS" = "true"; then
 echo "...will try to build from included sources"
@@ -987,7 +1006,11 @@ fi
 AC_SUBST(WEED_UTILS_CFLAGS)
 AC_SUBST(WEED_UTILS_LIBS)
 
+if test "x$disable_system_weed" != "xyes"; then
 PKG_CHECK_MODULES(WEED_COMPAT, libweed-compat >= 0.13.0, NEED_LOCAL_WEED_COMPAT=false, NEED_LOCAL_WEED_COMPAT=true)
+else
+echo "Check for system libweed-compat is disabled"
+fi
 
 if test "$NEED_LOCAL_WEED_COMPAT" = "true"; then
 echo "...will use version from included sources"
@@ -996,7 +1019,11 @@ fi
 AC_SUBST(WEED_COMPAT_CFLAGS)
 AC_SUBST(WEED_COMPAT_LIBS)
 
+if test "x$disable_system_weed" != "xyes"; then
 PKG_CHECK_MODULES(WEED_PLUGIN, libweed-plugin >= 2.0.0, NEED_LOCAL_WEED_PLUGIN=false, NEED_LOCAL_WEED_PLUGIN=true)
+else
+echo "Check for system libweed-plugin is disabled"
+fi
 
 if test "$NEED_LOCAL_WEED_PLUGIN" = "true"; then
 echo "...plugins will be compiled with included sources"
@@ -1005,7 +1032,6 @@ fi
 AC_SUBST(WEED_PLUGIN_CFLAGS)
 AC_SUBST(WEED_PLUGIN_LIBS)
 
-fi
 fi
 
 AM_CONDITIONAL(NEED_LOCAL_WEED,         $NEED_LOCAL_WEED)

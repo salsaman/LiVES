@@ -3593,7 +3593,6 @@ static void dpp_changed(LiVESWidget * combo, livespointer user_data) {
     lives_signal_handler_unblock(acheck, conxwp->acheck_func[ours]);
 
     if (hasrange) {
-      g_print("ach sens 1\n");
       lives_widget_set_sensitive(acheck, TRUE);
       if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(conxwp->allcheckc))) {
         lives_signal_handler_block(acheck, conxwp->acheck_func[ours]);
@@ -4656,7 +4655,6 @@ show_ex_params:
       if (acheck) {
         boolean hasrange = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(acheck), "available"));
         if (hasrange) {
-          g_print("ach sens 2\n");
           lives_widget_set_sensitive(acheck, TRUE);
           lives_signal_handler_block(acheck, conxwp->acheck_func[l]);
           lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(acheck), pconx->autoscale[j]);

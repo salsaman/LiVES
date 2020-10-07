@@ -490,7 +490,7 @@ lives_decoder_t *clone_decoder(int fileno);
 
 /// special widgets
 #define WIDGET_RB_IN 			16
-#define WIDGET_RB_OUT 		17
+#define WIDGET_RB_OUT	 		17
 #define WIDGET_RB_DUMMY 		18
 
 /// length of max string (not including terminating NULL) for LiVES-perl
@@ -542,13 +542,21 @@ typedef struct {
   char *label;
   int flags;
   boolean use_mnemonic;
-  int hidden;
+  uint32_t hidden;
 
   // reason(s) for hiding [bitmap]
-#define HIDDEN_GUI (1<<0)
-#define HIDDEN_MULTI (1<<1)
-#define HIDDEN_NEEDS_REINIT (1<<2)
-#define HIDDEN_COMPOUND_INTERNAL (1<<3)
+  /// structural (permanent)
+#define HIDDEN_UNDISPLAYABLE		(1 << 0)
+#define HIDDEN_GUI_PERM			(1 << 1)
+#define HIDDEN_MULTI			(1 << 2)
+
+#define HIDDEN_STRUCTURAL (0x00FF)
+
+  /// non-structural (temporary)
+#define HIDDEN_NEEDS_REINIT 		(1 << 16)
+#define HIDDEN_GUI_TEMP			(1 << 17)
+
+#define HIDDEN_TEMPORARY (0xFF00)
 
   double step_size;
   //int copy_to;

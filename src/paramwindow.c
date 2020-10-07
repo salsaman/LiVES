@@ -950,15 +950,25 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
 
 static void check_hidden_gui(weed_plant_t *inst, lives_param_t *param, int idx) {
   weed_plant_t *wparam;
-  if ((param->reinit & REINIT_FUNCTIONAL) && (weed_get_int_value(inst, WEED_LEAF_HOST_REFS, NULL) == 2)) {
-    // effect is running and user is editing the params, we should hide reinit params so as not to disturb the karma
+  if (param->type == LIVES_PARAM_UNDISPLAYABLE || param->type == LIVES_PARAM_UNKNOWN)
+    param->hidden |= HIDDEN_UNDISPLAYABLE;
+  if ((param->reinit & REINIT_FUNCTIONAL)
+      && weed_get_int_value(inst, WEED_LEAF_HOST_REFS, NULL) >= 2) {
+    // effect is running and user is editing the params, we should hide reinit params
+    // so as not to disturb the flow !
     param->hidden |= HIDDEN_NEEDS_REINIT;
-  } else if (param->hidden & HIDDEN_NEEDS_REINIT) param->hidden ^= HIDDEN_NEEDS_REINIT;
+  } else param->hidden &= ~HIDDEN_NEEDS_REINIT;
+
+  if (is_hidden_param(inst, idx)) param->hidden |= HIDDEN_GUI_PERM;
 
   wparam = weed_inst_in_param(inst, idx, FALSE, FALSE);
-  if (wparam && weed_param_is_hidden(wparam))
-    param->hidden |= HIDDEN_GUI;
-  else if (param->hidden & HIDDEN_GUI) param->hidden ^= HIDDEN_GUI;
+
+  if (wparam) {
+    if (weed_param_is_hidden(wparam, WEED_FALSE) == WEED_FALSE) {
+      if (weed_param_is_hidden(wparam, WEED_TRUE)) param->hidden |= HIDDEN_GUI_TEMP;
+      else param->hidden &= ~HIDDEN_GUI_TEMP;
+    }
+  }
 }
 
 
@@ -1260,8 +1270,10 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
           if (!chk_params && !(rfx->flags & RFX_FLAGS_NO_RESET)) {
             rfx->params[pnum].changed = FALSE;
           }
-          if (rfx->source_type == LIVES_RFX_SOURCE_WEED) check_hidden_gui((weed_plant_t *)rfx->source, param, pnum);
-          if (param->type == LIVES_PARAM_UNDISPLAYABLE || param->type == LIVES_PARAM_UNKNOWN) continue;
+          if (rfx->source_type == LIVES_RFX_SOURCE_WEED) {
+            check_hidden_gui((weed_plant_t *)rfx->source, param, pnum);
+            if (param->hidden & HIDDEN_STRUCTURAL) continue;
+          }
 
           has_param = TRUE;
 
@@ -1423,8 +1435,10 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
         }
       } else if (pass == 0) break;
 
-      if (rfx->source_type == LIVES_RFX_SOURCE_WEED) check_hidden_gui((weed_plant_t *)rfx->source, &rfx->params[i], i);
-      if (rfx->params[i].type == LIVES_PARAM_UNDISPLAYABLE || rfx->params[i].type == LIVES_PARAM_UNKNOWN) continue;
+      if (rfx->source_type == LIVES_RFX_SOURCE_WEED) {
+        check_hidden_gui((weed_plant_t *)rfx->source, &rfx->params[i], i);
+        if (rfx->params[i].hidden & HIDDEN_STRUCTURAL) continue;
+      }
 
       if (chk_params) return TRUE;
 
@@ -1634,6 +1648,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
         if (layout) {
           hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
           lives_layout_pack(LIVES_HBOX(hbox), scale);
+          lives_widget_set_show_hide_with(spinbutton, hbox);
         } else
           lives_box_pack_start(LIVES_BOX(hbox), scale, FALSE, FALSE, widget_opts.packing_width >> 1);
         if (param->desc) lives_widget_set_tooltip_text(scale, param->desc);
@@ -1644,13 +1659,14 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       }
 #endif
 
-      if (add_slider && !param->wrap) {
+      if (add_slider && !param->wrap && (param->dp || param->transition)) {
         spinbutton_adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(spinbutton));
         scale = lives_standard_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
         lives_widget_set_size_request(scale, DEF_SLIDER_WIDTH, -1);
         if (layout) {
           hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
           lives_layout_pack(LIVES_HBOX(hbox), scale);
+          lives_widget_set_show_hide_with(spinbutton, hbox);
         } else {
           lives_box_pack_start(LIVES_BOX(hbox), scale, TRUE, TRUE, widget_opts.packing_width >> 1);
           if (!LIVES_IS_HBOX(LIVES_WIDGET(box))) add_fill_to_box(LIVES_BOX(hbox));
@@ -1891,15 +1907,16 @@ boolean update_widget_vis(lives_rfx_t *rfx, int key, int mode) {
     }
   }
 
-  if ((fx_dialog[1] == NULL && mainw->multitrack == NULL) || rfx == NULL || rfx->status != RFX_STATUS_WEED) return FALSE;
+  if ((!fx_dialog[1] && !mainw->multitrack) || !rfx || rfx->status != RFX_STATUS_WEED) return FALSE;
   inst = (weed_plant_t *)rfx->source;
   for (int i = 0; i < rfx->num_params; i++) {
     param = &rfx->params[i];
     if ((wparam = weed_inst_in_param(inst, i, FALSE, FALSE)) != NULL) {
       check_hidden_gui(inst, param, i);
+      if (param->hidden & HIDDEN_STRUCTURAL) continue;
       for (int j = 0; j < RFX_MAX_NORM_WIDGETS; j++) {
-        if (param->type == LIVES_PARAM_COLRGB24 && j == 3 && param->widgets[j] == NULL) continue;
-        if (param->widgets[j] == NULL) break;
+        if (param->type == LIVES_PARAM_COLRGB24 && j == 3 && !param->widgets[j]) continue;
+        if (!param->widgets[j]) break;
         if (param->hidden) {
           lives_widget_hide(param->widgets[j]);
           lives_widget_set_no_show_all(param->widgets[j], TRUE);
@@ -3387,9 +3404,8 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
   if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
 
   for (i = 0; i < num_params; i++) {
-    if (!is_hidden_param(inst, i) || update_hidden) {
+    if (!is_hidden_param(inst, i) || (!(rfx->params[i].hidden & HIDDEN_STRUCTURAL) && update_hidden)) {
       // by default we dont update hidden or reinit params
-
       in_param = in_params[i];
       paramtmpl = weed_param_get_template(in_param);
       param_type = weed_paramtmpl_get_type(paramtmpl);

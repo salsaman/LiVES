@@ -5535,7 +5535,9 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
     owidth = width = lives_pixbuf_get_width(pixbuf);
     oheight = height = lives_pixbuf_get_height(pixbuf);
 
-    if (widget == mainw->start_image || widget == mainw->end_image) {// || (widget == mainw->play_window && !mainw->fs)) {
+    if (widget == mainw->start_image || widget == mainw->end_image
+        || (mainw->multitrack && widget == mainw->preview_image)
+       ) {// || (widget == mainw->play_window && !mainw->fs)) {
       LiVESWidget *p = lives_widget_get_parent(widget);
       if (prefs->ce_maxspect) {
         calc_maxspect(rwidth, rheight, &width, &height);

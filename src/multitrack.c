@@ -7870,10 +7870,10 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(multitrack_audio_insert), (livespointer)mt);
   lives_signal_connect(LIVES_GUI_OBJECT(mt->adjust_start_end), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(multitrack_adj_start_end), (livespointer)mt);
-  lives_signal_connect(LIVES_GUI_OBJECT(mt->view_events), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(multitrack_view_events), (livespointer)mt);
-  lives_signal_connect(LIVES_GUI_OBJECT(mt->view_sel_events), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(multitrack_view_sel_events), (livespointer)mt);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->view_events), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(multitrack_view_events), (livespointer)mt);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->view_sel_events), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(multitrack_view_sel_events), (livespointer)mt);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->clear_marks), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(multitrack_clear_marks), (livespointer)mt);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(view_mt_details), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -8894,7 +8894,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                          (livespointer)mt->msg_adj);
 
     lives_widget_set_size_request(mainw->message_box, -1, MIN_MSGBAR_HEIGHT);
-
   } else {
     mt->msg_area = mt->msg_scrollbar = NULL;
     mt->msg_adj = NULL;
@@ -17838,10 +17837,10 @@ void insert_frames(int filenum, weed_timecode_t offset_start, weed_timecode_t of
 
   mainw->current_file = render_file;
 
-  while (((direction == LIVES_DIRECTION_FORWARD &&
-           (offset_start = q_gint64(last_tc - start_tc + offset_start_tc, mt->fps)) < offset_end)
-          || (direction == LIVES_DIRECTION_BACKWARD &&
-              (offset_start = q_gint64(last_tc + offset_start_tc - start_tc, mt->fps)) >= offset_end))) {
+  while ((direction == LIVES_DIRECTION_FORWARD &&
+          (offset_start = q_gint64(last_tc - start_tc + offset_start_tc, mt->fps)) < offset_end)
+         || (direction == LIVES_DIRECTION_BACKWARD &&
+             (offset_start = q_gint64(last_tc + offset_start_tc - start_tc, mt->fps)) >= offset_end)) {
     numframes = 0;
     clips = rep_clips = NULL;
     frames = rep_frames = NULL;
@@ -17946,7 +17945,9 @@ void insert_frames(int filenum, weed_timecode_t offset_start, weed_timecode_t of
       last_tc += TICKS_PER_SECOND_DBL / mt->fps + 1;
       last_tc = q_gint64(last_tc, mt->fps);
     } else {
-      if (last_tc < TICKS_PER_SECOND_DBL / mt->fps) break;
+      if (last_tc < TICKS_PER_SECOND_DBL / mt->fps) {
+        break;
+      }
       last_tc -= TICKS_PER_SECOND_DBL / mt->fps;
       last_tc = q_gint64(last_tc, mt->fps);
     }
@@ -19068,7 +19069,7 @@ static boolean check_can_resetp(lives_mt * mt) {
 
   /// check for variance
   for (i = 0; i < nparams; i++) {
-    if (weed_param_is_hidden(in_params[i])) continue;
+    if (weed_param_is_hidden(in_params[i], WEED_TRUE)) continue;
     if (is_perchannel_multiw(in_params[i])) {
       /// if param is "value_per_channel", leave the other channels unaltered
       fill_param_vals_to(def_params[i], weed_param_get_template(def_params[i]), mt->track_index);
@@ -19119,7 +19120,7 @@ void on_resetp_clicked(LiVESWidget * button, livespointer user_data) {
   /// set params to the default value,
   /// and if any change we'll sensitize the "Apply Button"
   for (i = 0; i < nparams; i++) {
-    if (weed_param_is_hidden(in_params[i])) continue;
+    if (weed_param_is_hidden(in_params[i], WEED_TRUE)) continue;
     if (is_perchannel_multiw(in_params[i])) {
       /// if param is "value_per_channel", leave the other channels unaltered
       fill_param_vals_to(def_params[i], weed_param_get_template(def_params[i]), mt->track_index);

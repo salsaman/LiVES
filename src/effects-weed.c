@@ -8575,23 +8575,25 @@ setgui1:
 //////////////////////////////////////////////////////////////////////////////
 // weed parameter functions
 
-
-/// TODO *** sort out the mess of hidden params (i.e combine is_hidden_param, weed_param_is_hidden, check_hidden_gui)
-
+/// returns the permanent (structural) state
+/// c.f check_hidden_gui() which sets flag values for params linked to an rfx extension
 boolean is_hidden_param(weed_plant_t *plant, int i) {
   // find out if in_param i is visible or not for plant. Plant can be an instance or a filter
-  /// - needs rewriting
   weed_plant_t **wtmpls;
   weed_plant_t *filter, *pgui = NULL;
-  weed_plant_t *wtmpl, *param = NULL;
+  weed_plant_t *wtmpl;
   boolean visible = TRUE;
   int num_params = 0;
 
   if (WEED_PLANT_IS_FILTER_INSTANCE(plant)) {
+    weed_plant_t *param = weed_inst_in_param(plant, i, FALSE, FALSE);
+    if (param) {
+      if (weed_param_is_hidden(param, WEED_FALSE) == WEED_TRUE) {
+        return TRUE;
+      }
+      pgui = weed_param_get_gui(param, FALSE);
+    }
     filter = weed_instance_get_filter(plant, TRUE);
-    param = weed_inst_in_param(plant, i, FALSE, FALSE);
-    if (param && weed_param_is_hidden(param) == WEED_TRUE) return TRUE;
-    pgui = weed_param_get_gui(param, FALSE);
   } else filter = plant;
 
   wtmpls = weed_filter_get_in_paramtmpls(filter, &num_params);
@@ -8844,10 +8846,10 @@ int get_nth_simple_param(weed_plant_t *plant, int pnum) {
 
   // -1 is returned if no such parameter is found
 
-  int i, ptype, flags, nparams;
   weed_plant_t **in_ptmpls;
   weed_plant_t *tparamtmpl;
   weed_plant_t *gui;
+  int i, ptype, flags, nparams;
 
   if (WEED_PLANT_IS_FILTER_INSTANCE(plant)) plant = weed_instance_get_filter(plant, TRUE);
 

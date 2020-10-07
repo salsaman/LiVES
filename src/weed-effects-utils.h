@@ -165,7 +165,10 @@ int weed_paramtmpl_hints_hidden(weed_plant_t *paramtmpl);
 int weed_paramtmpl_value_irrelevant(weed_plant_t *paramtmpl);
 
 // params
-int weed_param_is_hidden(weed_plant_t *param);
+
+// if temporary is WEED_TRUE, then we return the current state,
+// otherwise we return the permanent (structural) state
+int weed_param_is_hidden(weed_plant_t *param, int temporary);
 weed_plant_t *weed_param_get_gui(weed_plant_t *param, int create_if_not_exists);
 weed_plant_t *weed_param_get_template(weed_plant_t *param);
 int weed_param_get_type(weed_plant_t *param);

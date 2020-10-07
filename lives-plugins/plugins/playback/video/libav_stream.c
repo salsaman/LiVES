@@ -40,7 +40,7 @@ static int palette_list[3];
 static int avpalette;
 
 static int clampings[3];
-static int myclamp = WEED_YUV_CLAMPING_CLAMPED;
+static int myclamp = WEED_YUV_CLAMPING_UNCLAMPED;
 
 static char plugin_version[64] = "LiVES libav stream engine version 1.1";
 
@@ -237,7 +237,7 @@ init|$p5 = (split(/\\./,$p5))[0]; if ($p0 == 0) {$p5 .= \".mp4\";} elsif ($p0 ==
 
 const int *get_yuv_palette_clamping(int palette) {
   if (palette == WEED_PALETTE_YUV420P) {
-    clampings[0] = WEED_YUV_CLAMPING_CLAMPED;
+    clampings[0] = WEED_YUV_CLAMPING_UNCLAMPED;
     clampings[1] = -1;
   } else clampings[0] = -1;
   return clampings;

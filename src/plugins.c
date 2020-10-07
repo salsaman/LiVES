@@ -3205,7 +3205,6 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
   char **list;
   LiVESList *gtk_list = NULL;
   char *string;
-  int error;
   int vali;
   double vald;
   weed_plant_t *gui = NULL;
@@ -3232,7 +3231,7 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
       // handling for compound fx
       poffset += nwpars;
       if (wpars) lives_free(wpars);
-      inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error);
+      inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, NULL);
       wpars = weed_instance_get_in_params(inst, &nwpars);
       i--;
       continue;
@@ -3242,11 +3241,11 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
       lives_free(rpar);
       return NULL;
     }
-    wpar = wpars[i - poffset];
-    wtmpl = weed_get_plantptr_value(wpar, WEED_LEAF_TEMPLATE, &error);
 
-    if (weed_plant_has_leaf(wtmpl, WEED_LEAF_FLAGS)) flags = weed_get_int_value(wtmpl, WEED_LEAF_FLAGS, &error);
-    else flags = 0;
+    wpar = wpars[i - poffset];
+    wtmpl = weed_param_get_template(wpar);
+
+    flags = weed_paramtmpl_get_flags(wtmpl);
 
     rpar[i].flags = flags;
 
@@ -3278,10 +3277,10 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
     } else rpar[i].multi = PVAL_MULTI_NONE;
 
     chann = get_enabled_channel(inst, 0, TRUE);
-    ctmpl = weed_get_plantptr_value(chann, WEED_LEAF_TEMPLATE, &error);
+    ctmpl = weed_get_plantptr_value(chann, WEED_LEAF_TEMPLATE, NULL);
 
     if (weed_plant_has_leaf(ctmpl, WEED_LEAF_IS_AUDIO)
-        && weed_get_boolean_value(ctmpl, WEED_LEAF_IS_AUDIO, &error) == WEED_TRUE) {
+        && weed_get_boolean_value(ctmpl, WEED_LEAF_IS_AUDIO, NULL) == WEED_TRUE) {
       // dont hide multivalued params for audio effects
       rpar[i].hidden = 0;
     }
@@ -3299,9 +3298,6 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
 
     if (!show_reinits && rpar[i].reinit != 0) rpar[i].hidden |= HIDDEN_NEEDS_REINIT;
 
-    // hide internally connected params for compound fx
-    if (weed_plant_has_leaf(wpar, WEED_LEAF_HOST_INTERNAL_CONNECTION)) rpar[i].hidden |= HIDDEN_COMPOUND_INTERNAL;
-
     ///////////////////////////////
     param_type = weed_paramtmpl_get_type(wtmpl);
 
@@ -3314,14 +3310,14 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
       rpar[i].value = lives_malloc(sizint);
       rpar[i].def = lives_malloc(sizint);
       if (!weed_paramtmpl_value_irrelevant(wtmpl) && weed_plant_has_leaf(wtmpl, WEED_LEAF_HOST_DEFAULT))
-        vali = weed_get_boolean_value(wtmpl, WEED_LEAF_HOST_DEFAULT, &error);
+        vali = weed_get_boolean_value(wtmpl, WEED_LEAF_HOST_DEFAULT, NULL);
       else if (weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 0)
-        vali = weed_get_boolean_value(wtmpl, WEED_LEAF_DEFAULT, &error);
-      else vali = weed_get_boolean_value(wtmpl, WEED_LEAF_NEW_DEFAULT, &error);
+        vali = weed_get_boolean_value(wtmpl, WEED_LEAF_DEFAULT, NULL);
+      else vali = weed_get_boolean_value(wtmpl, WEED_LEAF_NEW_DEFAULT, NULL);
       set_int_param(rpar[i].def, vali);
-      vali = weed_get_boolean_value(wpar, WEED_LEAF_VALUE, &error);
+      vali = weed_get_boolean_value(wpar, WEED_LEAF_VALUE, NULL);
       set_int_param(rpar[i].value, vali);
-      if (weed_plant_has_leaf(wtmpl, WEED_LEAF_GROUP)) rpar[i].group = weed_get_int_value(wtmpl, WEED_LEAF_GROUP, &error);
+      if (weed_plant_has_leaf(wtmpl, WEED_LEAF_GROUP)) rpar[i].group = weed_get_int_value(wtmpl, WEED_LEAF_GROUP, NULL);
       break;
     case WEED_PARAM_INTEGER:
       if (weed_plant_has_leaf(wtmpl, WEED_LEAF_DEFAULT) && weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 1) {
@@ -3331,20 +3327,20 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
       rpar[i].value = lives_malloc(sizint);
       rpar[i].def = lives_malloc(sizint);
       if (!weed_paramtmpl_value_irrelevant(wtmpl) && weed_plant_has_leaf(wtmpl, WEED_LEAF_HOST_DEFAULT)) {
-        vali = weed_get_int_value(wtmpl, WEED_LEAF_HOST_DEFAULT, &error);
+        vali = weed_get_int_value(wtmpl, WEED_LEAF_HOST_DEFAULT, NULL);
       } else if (weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 0)
-        vali = weed_get_int_value(wtmpl, WEED_LEAF_DEFAULT, &error);
-      else vali = weed_get_int_value(wtmpl, WEED_LEAF_NEW_DEFAULT, &error);
+        vali = weed_get_int_value(wtmpl, WEED_LEAF_DEFAULT, NULL);
+      else vali = weed_get_int_value(wtmpl, WEED_LEAF_NEW_DEFAULT, NULL);
       set_int_param(rpar[i].def, vali);
-      vali = weed_get_int_value(wpar, WEED_LEAF_VALUE, &error);
+      vali = weed_get_int_value(wpar, WEED_LEAF_VALUE, NULL);
       set_int_param(rpar[i].value, vali);
-      rpar[i].min = (double)weed_get_int_value(wtmpl, WEED_LEAF_MIN, &error);
-      rpar[i].max = (double)weed_get_int_value(wtmpl, WEED_LEAF_MAX, &error);
+      rpar[i].min = (double)weed_get_int_value(wtmpl, WEED_LEAF_MIN, NULL);
+      rpar[i].max = (double)weed_get_int_value(wtmpl, WEED_LEAF_MAX, NULL);
       if (weed_paramtmpl_does_wrap(wtmpl)) rpar[i].wrap = TRUE;
       if (gui) {
         if (weed_plant_has_leaf(gui, WEED_LEAF_CHOICES)) {
           listlen = weed_leaf_num_elements(gui, WEED_LEAF_CHOICES);
-          list = weed_get_string_array(gui, WEED_LEAF_CHOICES, &error);
+          list = weed_get_string_array(gui, WEED_LEAF_CHOICES, NULL);
           for (j = 0; j < listlen; j++) {
             gtk_list = lives_list_append(gtk_list, list[j]);
           }
@@ -3355,7 +3351,7 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
           rpar[i].type = LIVES_PARAM_STRING_LIST;
           rpar[i].max = listlen;
         } else if (weed_plant_has_leaf(gui, WEED_LEAF_STEP_SIZE))
-          rpar[i].step_size = (double)weed_get_int_value(gui, WEED_LEAF_STEP_SIZE, &error);
+          rpar[i].step_size = (double)weed_get_int_value(gui, WEED_LEAF_STEP_SIZE, NULL);
         if (rpar[i].step_size == 0.) rpar[i].step_size = 1.;
       }
       break;
@@ -3367,23 +3363,23 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
       rpar[i].value = lives_malloc(sizdbl);
       rpar[i].def = lives_malloc(sizdbl);
       if (!weed_paramtmpl_value_irrelevant(wtmpl) && weed_plant_has_leaf(wtmpl, WEED_LEAF_HOST_DEFAULT))
-        vald = weed_get_double_value(wtmpl, WEED_LEAF_HOST_DEFAULT, &error);
+        vald = weed_get_double_value(wtmpl, WEED_LEAF_HOST_DEFAULT, NULL);
       else if (weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 0)
-        vald = weed_get_double_value(wtmpl, WEED_LEAF_DEFAULT, &error);
-      else vald = weed_get_double_value(wtmpl, WEED_LEAF_NEW_DEFAULT, &error);
+        vald = weed_get_double_value(wtmpl, WEED_LEAF_DEFAULT, NULL);
+      else vald = weed_get_double_value(wtmpl, WEED_LEAF_NEW_DEFAULT, NULL);
       set_double_param(rpar[i].def, vald);
-      vald = weed_get_double_value(wpar, WEED_LEAF_VALUE, &error);
+      vald = weed_get_double_value(wpar, WEED_LEAF_VALUE, NULL);
       set_double_param(rpar[i].value, vald);
-      rpar[i].min = weed_get_double_value(wtmpl, WEED_LEAF_MIN, &error);
-      rpar[i].max = weed_get_double_value(wtmpl, WEED_LEAF_MAX, &error);
+      rpar[i].min = weed_get_double_value(wtmpl, WEED_LEAF_MIN, NULL);
+      rpar[i].max = weed_get_double_value(wtmpl, WEED_LEAF_MAX, NULL);
       if (weed_paramtmpl_does_wrap(wtmpl)) rpar[i].wrap = TRUE;
       rpar[i].step_size = 0.;
       rpar[i].dp = 2;
       if (gui) {
         if (weed_plant_has_leaf(gui, WEED_LEAF_STEP_SIZE))
-          rpar[i].step_size = weed_get_double_value(gui, WEED_LEAF_STEP_SIZE, &error);
+          rpar[i].step_size = weed_get_double_value(gui, WEED_LEAF_STEP_SIZE, NULL);
         if (weed_plant_has_leaf(gui, WEED_LEAF_DECIMALS))
-          rpar[i].dp = weed_get_int_value(gui, WEED_LEAF_DECIMALS, &error);
+          rpar[i].dp = weed_get_int_value(gui, WEED_LEAF_DECIMALS, NULL);
       }
       if (rpar[i].step_size == 0.) {
         if (rpar[i].max - rpar[i].min > 1.) rpar[i].step_size = 1.;
@@ -3396,21 +3392,21 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
       }
       rpar[i].type = LIVES_PARAM_STRING;
       if (!weed_paramtmpl_value_irrelevant(wtmpl) && weed_plant_has_leaf(wtmpl, WEED_LEAF_HOST_DEFAULT))
-        string = weed_get_string_value(wtmpl, WEED_LEAF_HOST_DEFAULT, &error);
+        string = weed_get_string_value(wtmpl, WEED_LEAF_HOST_DEFAULT, NULL);
       else if (weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 0)
-        string = weed_get_string_value(wtmpl, WEED_LEAF_DEFAULT, &error);
-      else string = weed_get_string_value(wtmpl, WEED_LEAF_NEW_DEFAULT, &error);
+        string = weed_get_string_value(wtmpl, WEED_LEAF_DEFAULT, NULL);
+      else string = weed_get_string_value(wtmpl, WEED_LEAF_NEW_DEFAULT, NULL);
       rpar[i].def = string;
-      string = weed_get_string_value(wpar, WEED_LEAF_VALUE, &error);
+      string = weed_get_string_value(wpar, WEED_LEAF_VALUE, NULL);
       rpar[i].value = string;
       rpar[i].max = 0.;
       if (gui && weed_plant_has_leaf(gui, WEED_LEAF_MAXCHARS)) {
-        rpar[i].max = (double)weed_get_int_value(gui, WEED_LEAF_MAXCHARS, &error);
+        rpar[i].max = (double)weed_get_int_value(gui, WEED_LEAF_MAXCHARS, NULL);
         if (rpar[i].max < 0.) rpar[i].max = 0.;
       }
       break;
     case WEED_PARAM_COLOR:
-      cspace = weed_get_int_value(wtmpl, WEED_LEAF_COLORSPACE, &error);
+      cspace = weed_get_int_value(wtmpl, WEED_LEAF_COLORSPACE, NULL);
       switch (cspace) {
       case WEED_COLORSPACE_RGB:
         if (weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 3) {
@@ -3422,22 +3418,22 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
 
         if (weed_leaf_seed_type(wtmpl, WEED_LEAF_DEFAULT) == WEED_SEED_INT) {
           if (!weed_paramtmpl_value_irrelevant(wtmpl) && weed_plant_has_leaf(wtmpl, WEED_LEAF_HOST_DEFAULT)) {
-            cols = weed_get_int_array(wtmpl, WEED_LEAF_HOST_DEFAULT, &error);
+            cols = weed_get_int_array(wtmpl, WEED_LEAF_HOST_DEFAULT, NULL);
           } else if (weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 0)
-            cols = weed_get_int_array(wtmpl, WEED_LEAF_DEFAULT, &error);
-          else cols = weed_get_int_array(wtmpl, WEED_LEAF_NEW_DEFAULT, &error);
+            cols = weed_get_int_array(wtmpl, WEED_LEAF_DEFAULT, NULL);
+          else cols = weed_get_int_array(wtmpl, WEED_LEAF_NEW_DEFAULT, NULL);
           if (weed_leaf_num_elements(wtmpl, WEED_LEAF_MAX) == 1) {
-            red_max = green_max = blue_max = weed_get_int_value(wtmpl, WEED_LEAF_MAX, &error);
+            red_max = green_max = blue_max = weed_get_int_value(wtmpl, WEED_LEAF_MAX, NULL);
           } else {
-            maxi = weed_get_int_array(wtmpl, WEED_LEAF_MAX, &error);
+            maxi = weed_get_int_array(wtmpl, WEED_LEAF_MAX, NULL);
             red_max = maxi[0];
             green_max = maxi[1];
             blue_max = maxi[2];
           }
           if (weed_leaf_num_elements(wtmpl, WEED_LEAF_MIN) == 1) {
-            red_min = green_min = blue_min = weed_get_int_value(wtmpl, WEED_LEAF_MIN, &error);
+            red_min = green_min = blue_min = weed_get_int_value(wtmpl, WEED_LEAF_MIN, NULL);
           } else {
-            mini = weed_get_int_array(wtmpl, WEED_LEAF_MIN, &error);
+            mini = weed_get_int_array(wtmpl, WEED_LEAF_MIN, NULL);
             red_min = mini[0];
             green_min = mini[1];
             blue_min = mini[2];
@@ -3454,22 +3450,22 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
           col_int = TRUE;
         } else {
           if (!weed_paramtmpl_value_irrelevant(wtmpl) && weed_plant_has_leaf(wtmpl, WEED_LEAF_HOST_DEFAULT))
-            colsd = weed_get_double_array(wtmpl, WEED_LEAF_HOST_DEFAULT, &error);
+            colsd = weed_get_double_array(wtmpl, WEED_LEAF_HOST_DEFAULT, NULL);
           else if (weed_leaf_num_elements(wtmpl, WEED_LEAF_DEFAULT) > 0)
-            colsd = weed_get_double_array(wtmpl, WEED_LEAF_DEFAULT, &error);
-          else colsd = weed_get_double_array(wtmpl, WEED_LEAF_DEFAULT, &error);
+            colsd = weed_get_double_array(wtmpl, WEED_LEAF_DEFAULT, NULL);
+          else colsd = weed_get_double_array(wtmpl, WEED_LEAF_DEFAULT, NULL);
           if (weed_leaf_num_elements(wtmpl, WEED_LEAF_MAX) == 1) {
-            red_maxd = green_maxd = blue_maxd = weed_get_double_value(wtmpl, WEED_LEAF_MAX, &error);
+            red_maxd = green_maxd = blue_maxd = weed_get_double_value(wtmpl, WEED_LEAF_MAX, NULL);
           } else {
-            maxd = weed_get_double_array(wtmpl, WEED_LEAF_MAX, &error);
+            maxd = weed_get_double_array(wtmpl, WEED_LEAF_MAX, NULL);
             red_maxd = maxd[0];
             green_maxd = maxd[1];
             blue_maxd = maxd[2];
           }
           if (weed_leaf_num_elements(wtmpl, WEED_LEAF_MIN) == 1) {
-            red_mind = green_mind = blue_mind = weed_get_double_value(wtmpl, WEED_LEAF_MIN, &error);
+            red_mind = green_mind = blue_mind = weed_get_double_value(wtmpl, WEED_LEAF_MIN, NULL);
           } else {
-            mind = weed_get_double_array(wtmpl, WEED_LEAF_MIN, &error);
+            mind = weed_get_double_array(wtmpl, WEED_LEAF_MIN, NULL);
             red_mind = mind[0];
             green_mind = mind[1];
             blue_mind = mind[2];
@@ -3490,7 +3486,7 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
 
         if (col_int) {
           lives_free(cols);
-          cols = weed_get_int_array(wpar, WEED_LEAF_VALUE, &error);
+          cols = weed_get_int_array(wpar, WEED_LEAF_VALUE, NULL);
           if (cols[0] < red_min) cols[0] = red_min;
           if (cols[1] < green_min) cols[1] = green_min;
           if (cols[2] < blue_min) cols[2] = blue_min;
@@ -3501,7 +3497,7 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
           cols[1] = (double)(cols[1] - green_min) / (double)(green_max - green_min) * 255. + .49999;
           cols[2] = (double)(cols[2] - blue_min) / (double)(blue_max - blue_min) * 255. + .49999;
         } else {
-          colsd = weed_get_double_array(wpar, WEED_LEAF_VALUE, &error);
+          colsd = weed_get_double_array(wpar, WEED_LEAF_VALUE, NULL);
           if (colsd[0] < red_mind) colsd[0] = red_mind;
           if (colsd[1] < green_mind) colsd[1] = green_mind;
           if (colsd[2] < blue_mind) colsd[2] = blue_mind;
@@ -3527,27 +3523,27 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
       rpar[i].type = LIVES_PARAM_UNKNOWN; // TODO - try to get default
     }
 
-    string = weed_get_string_value(wtmpl, WEED_LEAF_NAME, &error);
+    string = weed_get_string_value(wtmpl, WEED_LEAF_NAME, NULL);
     rpar[i].name = string;
     rpar[i].label = lives_strdup(string);
 
     if (weed_plant_has_leaf(wtmpl, WEED_LEAF_DESCRIPTION)) {
-      string = weed_get_string_value(wtmpl, WEED_LEAF_DESCRIPTION, &error);
+      string = weed_get_string_value(wtmpl, WEED_LEAF_DESCRIPTION, NULL);
       rpar[i].desc = string;
     } else rpar[i].desc = NULL;
+
+    if (is_hidden_param(inst, i)) rpar[i].hidden |= HIDDEN_GUI_PERM;
 
     // gui part /////////////////////
 
     if (gui) {
       if (weed_plant_has_leaf(gui, WEED_LEAF_LABEL)) {
-        string = weed_get_string_value(gui, WEED_LEAF_LABEL, &error);
+        string = weed_get_string_value(gui, WEED_LEAF_LABEL, NULL);
         lives_free(rpar[i].label);
         rpar[i].label = string;
       }
-      if (weed_plant_has_leaf(gui, WEED_LEAF_USE_MNEMONIC))
-        rpar[i].use_mnemonic = weed_get_boolean_value(gui, WEED_LEAF_USE_MNEMONIC, &error);
-      if (weed_plant_has_leaf(gui, WEED_LEAF_HIDDEN)) {
-        rpar[i].hidden |= ((weed_get_boolean_value(gui, WEED_LEAF_HIDDEN, &error) == WEED_TRUE) * HIDDEN_GUI);
+      if (weed_plant_has_leaf(gui, WEED_LEAF_USE_MNEMONIC)) {
+        rpar[i].use_mnemonic = weed_get_boolean_value(gui, WEED_LEAF_USE_MNEMONIC, NULL);
       }
     }
 
@@ -3566,13 +3562,12 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
 lives_rfx_t *weed_to_rfx(weed_plant_t *plant, boolean show_reinits) {
   // return an RFX for a weed effect; set rfx->source to an INSTANCE of the filter (first instance for compound fx)
   // instance should be refcounted
-  int error;
   weed_plant_t *filter, *inst;
 
   char *string;
   lives_rfx_t *rfx = (lives_rfx_t *)lives_calloc(1, sizeof(lives_rfx_t));
   rfx->is_template = FALSE;
-  if (weed_get_int_value(plant, WEED_LEAF_TYPE, &error) == WEED_PLANT_FILTER_INSTANCE) {
+  if (weed_get_int_value(plant, WEED_LEAF_TYPE, NULL) == WEED_PLANT_FILTER_INSTANCE) {
     filter = weed_instance_get_filter(plant, TRUE);
     inst = plant;
   } else {
@@ -3585,7 +3580,7 @@ lives_rfx_t *weed_to_rfx(weed_plant_t *plant, boolean show_reinits) {
     rfx->is_template = TRUE;
   }
 
-  string = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
+  string = weed_get_string_value(filter, WEED_LEAF_NAME, NULL);
   rfx->name = string;
   rfx->menu_text = lives_strdup(string);
   rfx->action_desc = lives_strdup("no action");
@@ -3622,33 +3617,31 @@ LiVESList *get_external_window_hints(lives_rfx_t *rfx) {
   LiVESList *hints = NULL;
 
   if (rfx->status == RFX_STATUS_WEED) {
-    int nfilters, error;
-    int num_hints;
     weed_plant_t *gui;
     weed_plant_t *inst = (weed_plant_t *)rfx->source;
     weed_plant_t *filter = weed_instance_get_filter(inst, TRUE);
     int *filters = NULL;
     char *string, **rfx_strings, *delim;
-
-    register int i;
+    int nfilters;
+    int num_hints;
+    int i;
 
     if ((nfilters = num_compound_fx(filter)) > 1) {
       // handle compound fx
-      filters = weed_get_int_array(filter, WEED_LEAF_HOST_FILTER_LIST, &error);
+      filters = weed_get_int_array(filter, WEED_LEAF_HOST_FILTER_LIST, NULL);
     }
 
     for (i = 0; i < nfilters; i++) {
-
       if (filters) {
         filter = get_weed_filter(filters[i]);
       }
 
       if (!weed_plant_has_leaf(filter, WEED_LEAF_GUI)) continue;
-      gui = weed_get_plantptr_value(filter, WEED_LEAF_GUI, &error);
+      gui = weed_get_plantptr_value(filter, WEED_LEAF_GUI, NULL);
 
       if (!weed_plant_has_leaf(gui, WEED_LEAF_LAYOUT_SCHEME)) continue;
 
-      string = weed_get_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, &error);
+      string = weed_get_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, NULL);
       if (strcmp(string, "RFX")) {
         lives_free(string);
         continue;
@@ -3656,12 +3649,12 @@ LiVESList *get_external_window_hints(lives_rfx_t *rfx) {
       lives_free(string);
 
       if (!weed_plant_has_leaf(gui, WEED_LEAF_RFX_DELIM)) continue;
-      delim = weed_get_string_value(gui, WEED_LEAF_RFX_DELIM, &error);
+      delim = weed_get_string_value(gui, WEED_LEAF_RFX_DELIM, NULL);
       lives_snprintf(rfx->delim, 2, "%s", delim);
       lives_free(delim);
 
       rfx_strings = weed_get_string_array_counted(gui, WEED_LEAF_RFX_STRINGS, &num_hints);
-      if (num_hints == 0) continue;
+      if (!num_hints) continue;
 
       for (i = 0; i < num_hints; i++) {
         hints = lives_list_append(hints, rfx_strings[i]);

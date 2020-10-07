@@ -788,7 +788,8 @@ weed_plant_t *get_frame_event_at(weed_plant_t *event_list, weed_timecode_t tc, w
   while (event) {
     next_event = get_next_event(event);
     if (next_event) next_tc = get_event_timecode(next_event);
-    if (((tc == (xtc = get_event_timecode(event))) || ((next_tc > tc || !next_event) && !exact)) &&
+    xtc = get_event_timecode(event);
+    if ((labs(tc - xtc) <= 10 || ((next_tc > tc || !next_event) && !exact)) &&
         WEED_EVENT_IS_FRAME(event)) {
       return event;
     }

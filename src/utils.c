@@ -118,17 +118,24 @@ LIVES_GLOBAL_INLINE void lives_sync(int times) {
 LIVES_GLOBAL_INLINE boolean lives_setenv(const char *name, const char *value) {
   // ret TRUE on success
 #if IS_IRIX
-  int len  = strlen(name) + strlen(value) + 2;
-  char *env = malloc(len);
-  if (env) {
-    strcpy(env, name);
-    strcat(env, "=");
-    strcat(env, val);
-    return !putenv(env);
-  }
-}
+  char *env = lives_strdup_printf("%s=%s", name, val);
+  boolean ret = !putenv(env);
+  lives_free(env);
+  return ret;
 #else
   return !setenv(name, value, 1);
+#endif
+}
+
+LIVES_GLOBAL_INLINE boolean lives_unsetenv(const char *name) {
+  // ret TRUE on success
+#if IS_IRIX
+  char *env = lives_strdup_printf("%s=", name);
+  boolean ret = !putenv(env);
+  lives_free(env);
+  return ret;
+#else
+  return !unsetenv(name);
 #endif
 }
 

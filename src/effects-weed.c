@@ -1417,7 +1417,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
       pthread_mutex_lock(&mainw->instance_ref_mutex);
       xinst[j] = weed_plant_copy(inst);
       pthread_mutex_unlock(&mainw->instance_ref_mutex);
-      xchannels = (weed_plant_t **)lives_malloc(nchannels * sizeof(weed_plant_t *));
+      xchannels = (weed_plant_t **)lives_calloc(nchannels, sizeof(weed_plant_t *));
     } else {
       xinst[j] = inst;
       xchannels = NULL;
@@ -1726,12 +1726,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
   if (!init_event) {
     num_in_tracks = enabled_in_channels(inst, FALSE);
-    in_tracks = (int *)lives_malloc(2 * sizint);
-    in_tracks[0] = 0;
+    in_tracks = (int *)lives_calloc(2, sizint);
     in_tracks[1] = 1;
     num_out_tracks = enabled_out_channels(inst, FALSE);
-    out_tracks = (int *)lives_malloc(sizint);
-    out_tracks[0] = 0;
+    out_tracks = (int *)lives_calloc(1, sizint);
   } else {
     in_tracks = weed_get_int_array_counted(init_event, WEED_LEAF_IN_TRACKS, &num_in_tracks);
     out_tracks = weed_get_int_array_counted(init_event, WEED_LEAF_OUT_TRACKS, &num_out_tracks);
@@ -1825,9 +1823,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   /// ensure all chantmpls NOT marked "optional" have at least one corresponding enabled channel
   /// e.g. we could have disabled all channels from a template with "max_repeats" that is not optional
   in_ctmpls = weed_get_plantptr_array_counted(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, &num_ctmpl);
-  mand = (int *)lives_malloc(num_ctmpl * sizint);
-  for (j = 0; j < num_ctmpl; j++) mand[j] = 0;
-
+  mand = (int *)lives_calloc(num_ctmpl, sizint);
 
   for (i = 0; i < num_inc + num_in_alpha; i++) {
     /// skip disabled in channels
@@ -2724,8 +2720,7 @@ static lives_filter_error_t enable_disable_channels(weed_plant_t *inst, boolean 
 
   if (num_ctmpls > 0) {
     // step through all the active channels and mark the template as fulfilled
-    mand = (int *)lives_malloc(num_ctmpls * sizint);
-    for (j = 0; j < num_ctmpls; j++) mand[j] = FALSE;
+    mand = (int *)lives_calloc(num_ctmpls, sizint);
     for (i = 0; i < num_channels; i++) {
       if (weed_channel_is_disabled(channels[i]) ||
           weed_get_boolean_value(channels[i], WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE) continue;
@@ -2843,14 +2838,12 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
 
   if (!init_event) {
     num_in_tracks = enabled_in_channels(inst, FALSE);
-    in_tracks = (int *)lives_malloc(2 * sizint);
-    in_tracks[0] = 0;
+    in_tracks = (int *)lives_calloc(2, sizint);
     in_tracks[1] = 1;
     if (!get_enabled_channel(inst, 0, FALSE)) num_out_tracks = 0;
     else {
       num_out_tracks = 1;
-      out_tracks = (int *)lives_malloc(sizint);
-      out_tracks[0] = 0;
+      out_tracks = (int *)lives_calloc(1, sizint);
     }
   } else {
     in_tracks = weed_get_int_array_counted(init_event, WEED_LEAF_IN_TRACKS, &num_in_tracks);
@@ -2903,7 +2896,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
       /* g_print("setting dfff ad for channel %p from chan %p, eg %f \n", weed_get_voidptr_value(channel, "audio_data", NULL), weed_get_voidptr_value(inchan, "audio_data", NULL), ((float *)(weed_get_voidptr_value(layer, "audio_data", NULL)))[0]); */
     } else {
       nchans = weed_layer_get_naudchans(layer);
-      adata = (float **)lives_malloc(nchans * sizeof(float *));
+      adata = (float **)lives_calloc(nchans, sizeof(float *));
       nsamps = weed_layer_get_audio_length(layer);
       for (i = 0; i < nchans; i++) {
         adata[i] = lives_calloc(nsamps, sizeof(float));
@@ -3051,11 +3044,8 @@ lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, weed_la
     // set init_event to NULL before passing it to the inner function
     init_event = NULL;
 
-    in_tracks = (int *)lives_malloc(sizint);
-    in_tracks[0] = 0;
-
-    out_tracks = (int *)lives_malloc(sizint);
-    out_tracks[0] = 0;
+    in_tracks = (int *)lives_calloc(1, sizint);
+    out_tracks = (int *)lives_calloc(1, sizint);
   } else {
     // when processing an event list, we pass an init_event
     was_init_event = TRUE;
@@ -5085,11 +5075,10 @@ void weed_load_all(void) {
   // get list of plugins from directory and create our fx
   LiVESList *weed_plugin_list, *weed_plugin_sublist;
   char **dirs;
-  char *lives_weed_plugin_path, *weed_plugin_path, *weed_p_path;
   char *subdir_path, *subdir_name, *plugin_path, *plugin_name;
-
+  int max_modes = prefs->max_modes_per_key;
   int numdirs, ncompounds;
-  register int i, j;
+  int i, j;
 
   num_weed_filters = 0;
 
@@ -5097,7 +5086,6 @@ void weed_load_all(void) {
   hashnames = NULL;
 
   threaded_dialog_spin(0.);
-  lives_weed_plugin_path = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_WEED_FX_BUILTIN, NULL);
 
 #ifdef DEBUG_WEED
   lives_printerr("In weed init\n");
@@ -5107,29 +5095,24 @@ void weed_load_all(void) {
   bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
 
   for (i = 0; i < FX_KEYS_MAX; i++) {
-    if (i < FX_KEYS_MAX_VIRTUAL) key_to_instance[i] = (weed_plant_t **)
-          malloc(prefs->max_modes_per_key * sizeof(weed_plant_t *));
-    else key_to_instance[i] = (weed_plant_t **)malloc(sizeof(weed_plant_t *));
+    if (i == FX_KEYS_MAX_VIRTUAL) max_modes = 1;
 
-    key_to_instance_copy[i] = (weed_plant_t **)malloc(sizeof(weed_plant_t *));
+    key_to_instance[i] = (weed_plant_t **)lives_calloc(max_modes, sizeof(weed_plant_t *));
 
-    if (i < FX_KEYS_MAX_VIRTUAL) key_to_fx[i] = (int *)malloc(prefs->max_modes_per_key * sizint);
-    else key_to_fx[i] = (int *)malloc(sizint);
+    key_to_instance_copy[i] = (weed_plant_t **)lives_calloc(1, sizeof(weed_plant_t *));
+
+    key_to_fx[i] = (int *)lives_calloc(max_modes, sizint);
 
     if (i < FX_KEYS_MAX_VIRTUAL)
-      key_defaults[i] = (weed_plant_t ** *)malloc(prefs->max_modes_per_key * sizeof(weed_plant_t **));
+      key_defaults[i] = (weed_plant_t ***)lives_calloc(max_modes, sizeof(weed_plant_t **));
 
     key_modes[i] = 0; // current active mode of each key
     filter_map[i] = NULL; // maps effects in order of application for multitrack rendering
-    for (j = 0; j < prefs->max_modes_per_key; j++) {
-      if (i < FX_KEYS_MAX_VIRTUAL || j == 0) {
-        if (i < FX_KEYS_MAX_VIRTUAL) key_defaults[i][j] = NULL;
-        key_to_instance[i][j] = NULL;
-        key_to_fx[i][j] = -1;
-      } else break;
-    }
+    for (j = 0; j < max_modes; j++) key_to_fx[i][j] = -1;
   }
+
   filter_map[FX_KEYS_MAX + 1] = NULL;
+
   for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     pchains[i] = NULL;
     init_events[i] = NULL;
@@ -5138,25 +5121,14 @@ void weed_load_all(void) {
   next_free_key = FX_KEYS_MAX_VIRTUAL;
 
   threaded_dialog_spin(0.);
-  weed_p_path = getenv("WEED_PLUGIN_PATH");
-  if (!weed_p_path) weed_plugin_path = lives_strdup("");
-  else weed_plugin_path = lives_strdup(weed_p_path);
-
-  if (!strstr(weed_plugin_path, lives_weed_plugin_path)) {
-    char *tmp = lives_strconcat(strcmp(weed_plugin_path, "") ? ":" : "", lives_weed_plugin_path, NULL);
-    lives_free(weed_plugin_path);
-    weed_plugin_path = tmp;
-    lives_setenv("WEED_PLUGIN_PATH", weed_plugin_path);
-  }
-  lives_free(lives_weed_plugin_path);
 
   // first we parse the weed_plugin_path
 #ifndef IS_MINGW
-  numdirs = get_token_count(weed_plugin_path, ':');
-  dirs = lives_strsplit(weed_plugin_path, ":", numdirs);
+  numdirs = get_token_count(prefs->weed_plugin_path, ':');
+  dirs = lives_strsplit(prefs->weed_plugin_path, ":", numdirs);
 #else
-  numdirs = get_token_count(weed_plugin_path, ';');
-  dirs = lives_strsplit(weed_plugin_path, ";", numdirs);
+  numdirs = get_token_count(prefs->weed_plugin_path, ';');
+  dirs = lives_strsplit(prefs->weed_plugin_path, ";", numdirs);
 #endif
   threaded_dialog_spin(0.);
 
@@ -5210,7 +5182,6 @@ void weed_load_all(void) {
   }
 
   lives_strfreev(dirs);
-  lives_free(weed_plugin_path);
 
   d_print(_("Successfully loaded %d Weed filters\n"), num_weed_filters);
 
@@ -12249,10 +12220,7 @@ boolean read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
   if (xnparams > maxparams) maxparams = xnparams;
   if (!maxparams) return FALSE;
 
-  key_defs = (weed_plant_t **)lives_malloc(maxparams * sizeof(weed_plant_t *));
-  for (i = 0; i < maxparams; i++) {
-    key_defs[i] = NULL;
-  }
+  key_defs = (weed_plant_t **)lives_calloc(maxparams, sizeof(weed_plant_t *));
 
   for (i = 0; i < nparams; i++) {
     if (key < 0 || i < xnparams) {

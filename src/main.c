@@ -2010,57 +2010,57 @@ static void lives_init(_ign_opts *ign_opts) {
     do_start_messages();
 
     needs_free = FALSE;
-    weed_plugin_path = getenv("WEED_PLUGIN_PATH");
-    if (!weed_plugin_path) {
-      get_string_pref(PREF_WEED_PLUGIN_PATH, prefs->weed_plugin_path, PATH_MAX);
-      if (!*prefs->weed_plugin_path) weed_plugin_path = lives_build_path(prefs->lib_dir, PLUGIN_EXEC_DIR,
-            PLUGIN_WEED_FX_BUILTIN, NULL);
-      else weed_plugin_path = lives_strdup(prefs->weed_plugin_path);
-      lives_setenv("WEED_PLUGIN_PATH", weed_plugin_path);
-      needs_free = TRUE;
+    get_string_pref(PREF_WEED_PLUGIN_PATH, prefs->weed_plugin_path, PATH_MAX);
+    if (!*prefs->weed_plugin_path) {
+      weed_plugin_path = getenv("WEED_PLUGIN_PATH");
+      if (!weed_plugin_path) {
+        weed_plugin_path = lives_build_path(prefs->lib_dir, PLUGIN_EXEC_DIR,
+                                            PLUGIN_WEED_FX_BUILTIN, NULL);
+        needs_free = TRUE;
+      }
+      lives_snprintf(prefs->weed_plugin_path, PATH_MAX, "%s", weed_plugin_path);
+      if (needs_free) lives_free(weed_plugin_path);
+      set_string_pref(PREF_WEED_PLUGIN_PATH, prefs->weed_plugin_path);
     }
-    if (!weed_plugin_path) weed_plugin_path = "";
-    lives_snprintf(prefs->weed_plugin_path, PATH_MAX, "%s", weed_plugin_path);
-    if (needs_free) lives_free(weed_plugin_path);
 
     needs_free = FALSE;
-    frei0r_path = getenv("FREI0R_PATH");
-    if (!frei0r_path || !*frei0r_path) {
-      get_string_pref(PREF_FREI0R_PATH, prefs->frei0r_path, PATH_MAX);
-      if (!*prefs->frei0r_path) frei0r_path =
+    get_string_pref(PREF_FREI0R_PATH, prefs->frei0r_path, PATH_MAX);
+    if (!*prefs->frei0r_path) {
+      frei0r_path = getenv("FREI0R_PATH");
+      if (!*frei0r_path) {
+        frei0r_path =
           lives_strdup_printf("/usr/lib/frei0r-1:/usr/local/lib/frei0r-1:%s/frei0r-1",
                               capable->home_dir);
-      else frei0r_path = lives_strdup(prefs->frei0r_path);
-      lives_setenv("FREI0R_PATH", frei0r_path);
-      needs_free = TRUE;
+        needs_free = TRUE;
+      }
+      lives_snprintf(prefs->frei0r_path, PATH_MAX, "%s", frei0r_path);
+      if (needs_free) lives_free(frei0r_path);
+      set_string_pref(PREF_FREI0R_PATH, prefs->frei0r_path);
     }
-    if (!frei0r_path) frei0r_path = "";
-    lives_snprintf(prefs->frei0r_path, PATH_MAX, "%s", frei0r_path);
-    if (needs_free) lives_free(frei0r_path);
 
     needs_free = FALSE;
-    ladspa_path = getenv("LADSPA_PATH");
-    if (!ladspa_path || !*ladspa_path) {
-      get_string_pref(PREF_LADSPA_PATH, prefs->ladspa_path, PATH_MAX);
-      if (!*prefs->ladspa_path) ladspa_path = lives_build_filename(prefs->lib_dir, "ladspa", NULL);
-      else ladspa_path = lives_strdup(prefs->ladspa_path);
-      lives_setenv("LADSPA_PATH", ladspa_path);
-      needs_free = TRUE;
-    }
-    if (!ladspa_path) ladspa_path = "";
-    if (!*prefs->ladspa_path && *ladspa_path)
+    get_string_pref(PREF_LADSPA_PATH, prefs->ladspa_path, PATH_MAX);
+    if (!*prefs->ladspa_path) {
+      ladspa_path = getenv("LADSPA_PATH");
+      if (!*ladspa_path) {
+        ladspa_path = lives_build_path(prefs->lib_dir, "ladspa", NULL);
+        needs_free = TRUE;
+      }
       lives_snprintf(prefs->ladspa_path, PATH_MAX, "%s", ladspa_path);
-    if (needs_free) lives_free(ladspa_path);
+      if (needs_free) lives_free(ladspa_path);
+      set_string_pref(PREF_LADSPA_PATH, prefs->ladspa_path);
+    }
 
     needs_free = FALSE;
-    libvis_path = getenv("VISUAL_PLUGIN_PATH");
-    if (!libvis_path || !*libvis_path) {
-      get_string_pref(PREF_LIBVISUAL_PATH, prefs->libvis_path, PATH_MAX);
-      if (*prefs->libvis_path) lives_setenv("VISUAL_PLUGIN_PATH", prefs->libvis_path);
-    }
-    if (!libvis_path) libvis_path = "";
-    if (!*prefs->libvis_path && *libvis_path)
+    get_string_pref(PREF_LIBVISUAL_PATH, prefs->libvis_path, PATH_MAX);
+    if (!*prefs->libvis_path) {
+      libvis_path = getenv("VISUAL_PLUGIN_PATH");
+      if (!libvis_path) {
+        libvis_path = "";
+      }
       lives_snprintf(prefs->libvis_path, PATH_MAX, "%s", libvis_path);
+      set_string_pref(PREF_LIBVISUAL_PATH, prefs->libvis_path);
+    }
 
     splash_msg(_("Loading realtime effect plugins..."), SPLASH_LEVEL_LOAD_RTE);
     weed_load_all();

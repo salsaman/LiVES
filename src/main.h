@@ -1646,6 +1646,7 @@ int lives_kill(lives_pid_t pid, int sig);
 int lives_killpg(lives_pgid_t pgrp, int sig);
 ssize_t lives_readlink(const char *path, char *buf, size_t bufsiz);
 boolean lives_setenv(const char *name, const char *value);
+boolean lives_unsetenv(const char *name);
 boolean lives_fsync(int fd);
 void lives_sync(int times);
 int lives_rmdir(const char *dir, boolean force);

@@ -1835,19 +1835,16 @@ boolean apply_prefs(boolean skip_warn) {
   if (lives_strcmp(frei0r_path, prefs->frei0r_path)) {
     set_string_pref(PREF_FREI0R_PATH, frei0r_path);
     lives_snprintf(prefs->frei0r_path, PATH_MAX, "%s", frei0r_path);
-    lives_setenv("FREI0R_PATH", frei0r_path);
   }
 
   if (lives_strcmp(libvis_path, prefs->libvis_path)) {
     set_string_pref(PREF_LIBVISUAL_PATH, libvis_path);
     lives_snprintf(prefs->libvis_path, PATH_MAX, "%s", libvis_path);
-    lives_setenv("VISUAL_PLUGIN_PATH", libvis_path);
   }
 
   if (lives_strcmp(ladspa_path, prefs->ladspa_path)) {
     set_string_pref(PREF_LADSPA_PATH, ladspa_path);
     lives_snprintf(prefs->ladspa_path, PATH_MAX, "%s", ladspa_path);
-    lives_setenv("LADSPA_PATH", ladspa_path);
   }
 
   if (lives_strcmp(sepimg_path, mainw->sepimg_path)) {

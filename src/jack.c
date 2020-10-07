@@ -111,7 +111,6 @@ boolean lives_jack_init(void) {
     drivers = jackctl_server_get_drivers_list(jackserver);
     while (drivers) {
       driver = (jackctl_driver_t *)drivers->data;
-      g_print("DRIVER %s\n", jackctl_driver_get_name(driver));
       if (!strcmp(jackctl_driver_get_name(driver), JACK_DRIVER_NAME)) {
         break;
       }
@@ -140,8 +139,9 @@ boolean lives_jack_init(void) {
 #else
 
   if ((prefs->jack_opts & JACK_OPTS_START_TSERVER) || (prefs->jack_opts & JACK_OPTS_START_ASERVER)) {
-    unsetenv("JACK_NO_START_SERVER");
-    setenv("JACK_START_SERVER", "1", 0);
+    // TODO: check if still needed
+    lives_unsetenv("JACK_NO_START_SERVER");
+    lives_setenv("JACK_START_SERVER", "1");
 
     if (!lives_file_test(prefs->jack_aserver, LIVES_FILE_TEST_EXISTS)) {
       char *com;
@@ -154,10 +154,9 @@ boolean lives_jack_init(void) {
         lives_chmod(prefs->jack_aserver, "o+x");
       }
     }
-
   } else {
-    unsetenv("JACK_START_SERVER");
-    setenv("JACK_NO_START_SERVER", "1", 0);
+    lives_unsetenv("JACK_START_SERVER");
+    lives_setenv("JACK_NO_START_SERVER", "1");
     options = (jack_options_t)((int)options | (int)JackNoStartServer);
   }
 

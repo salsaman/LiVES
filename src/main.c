@@ -5229,7 +5229,7 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->show_clipboard_info, !(clipboard == NULL));
   lives_widget_set_sensitive(mainw->capture, TRUE);
   lives_widget_set_sensitive(mainw->vj_save_set, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID);
-  lives_widget_set_sensitive(mainw->vj_load_set, !mainw->was_set);
+  lives_widget_set_sensitive(mainw->vj_load_set, !*mainw->set_name);
   lives_widget_set_sensitive(mainw->vj_reset, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID);
   lives_widget_set_sensitive(mainw->vj_realize, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID &&
                              cfile->frame_index != NULL);

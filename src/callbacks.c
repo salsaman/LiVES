@@ -357,6 +357,7 @@ void lives_exit(int signum) {
           /// - "normal" clips, unless crash recovery is in effect, or
           /// - we are no exiting and it's the clipboard, or the mt render file
           if (!IS_NORMAL_CLIP(i) || (i == 0 && !mainw->only_close)
+              || (!mainw->leave_files && !mainw->leave_recovery)
               || (i == mainw->scrap_file && (mainw->only_close ||
                                              !mainw->leave_recovery || !prefs->rr_crash))
               || (i == mainw->ascrap_file && (mainw->only_close ||
@@ -364,30 +365,36 @@ void lives_exit(int signum) {
               || (i > 0 && !mainw->only_close && mainw->multitrack
                   && i == mainw->multitrack->render_file && !CLIP_HAS_VIDEO(i)
                   && !CLIP_HAS_AUDIO(i))) {
-            char *permitname;
-            // extra cleanup for "device" files
+            if (mainw->only_close) {
+              int current_file = mainw->current_file;
+              mainw->current_file = i;
+              close_current_file(current_file);
+            } else {
+              char *permitname;
+              // extra cleanup for "device" files
 #ifdef HAVE_YUV4MPEG
-            if (mainw->files[i]->clip_type == CLIP_TYPE_YUV4MPEG) {
-              lives_yuv_stream_stop_read((lives_yuv4m_t *)mainw->files[i]->ext_src);
-              lives_free(mainw->files[i]->ext_src);
-            }
+              if (mainw->files[i]->clip_type == CLIP_TYPE_YUV4MPEG) {
+                lives_yuv_stream_stop_read((lives_yuv4m_t *)mainw->files[i]->ext_src);
+                lives_free(mainw->files[i]->ext_src);
+              }
 #endif
 #ifdef HAVE_UNICAP
-            if (mainw->files[i]->clip_type == CLIP_TYPE_VIDEODEV) {
-              lives_vdev_free((lives_vdev_t *)mainw->files[i]->ext_src);
-              lives_free(mainw->files[i]->ext_src);
-            }
+              if (mainw->files[i]->clip_type == CLIP_TYPE_VIDEODEV) {
+                lives_vdev_free((lives_vdev_t *)mainw->files[i]->ext_src);
+                lives_free(mainw->files[i]->ext_src);
+              }
 #endif
-            threaded_dialog_spin(0.);
-            lives_kill_subprocesses(mainw->files[i]->handle, TRUE);
-            permitname = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
-                                              TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
-            lives_touch(permitname);
-            lives_free(permitname);
-            com = lives_strdup_printf("%s close \"%s\"", prefs->backend, mainw->files[i]->handle);
-            lives_system(com, FALSE);
-            lives_free(com);
-            threaded_dialog_spin(0.);
+              threaded_dialog_spin(0.);
+              lives_kill_subprocesses(mainw->files[i]->handle, TRUE);
+              permitname = lives_build_filename(prefs->workdir, mainw->files[i]->handle,
+                                                TEMPFILE_MARKER "." LIVES_FILE_EXT_TMP, NULL);
+              lives_touch(permitname);
+              lives_free(permitname);
+              com = lives_strdup_printf("%s close \"%s\"", prefs->backend, mainw->files[i]->handle);
+              lives_system(com, FALSE);
+              lives_free(com);
+              threaded_dialog_spin(0.);
+            }
           } else {
             threaded_dialog_spin(0.);
             // or just clean them up -

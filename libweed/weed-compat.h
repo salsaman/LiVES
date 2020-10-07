@@ -55,14 +55,8 @@ extern "C"
 #ifndef WEED_FOURCC_COMPAT
 #define WEED_FOURCC_COMPAT
 #endif
-
-#if defined __GNUC__
-#define ALLOW_UNUSED __attribute__((unused))
-#else
-#define ALLOW_UNUSED
-#endif
   
-static int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *sampling,
+inline int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *sampling,
 			    int *sspace, int *clamping) {
   // inputs are fourcc and bpp
   // returns int weed_palette
@@ -74,10 +68,10 @@ static int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *
 
   // data from http://www.fourcc.org
 
-  if (clamping != NULL) *clamping = WEED_YUV_CLAMPING_CLAMPED;
-  if (interlaced != NULL) *interlaced = 0;
-  if (sspace != NULL) *sspace = WEED_YUV_SUBSPACE_YCBCR;
-  if (sampling != NULL) *sampling = WEED_YUV_SAMPLING_DEFAULT;
+  if (clamping) *clamping = WEED_YUV_CLAMPING_CLAMPED;
+  if (interlaced) *interlaced = 0;
+  if (sspace) *sspace = WEED_YUV_SUBSPACE_YCBCR;
+  if (sampling) *sampling = WEED_YUV_SAMPLING_DEFAULT;
 
   switch (fourcc) {
   // RGB formats
@@ -100,11 +94,14 @@ static int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *
   case 0x41424752: // RGBA
     if (bpp == 32) return WEED_PALETTE_RGBA32;
     break;
+  case 0x42475241: /* ARGB, not sure if exists */
+    if (bpp == 32) return WEED_PALETTE_ARGB32;
+    break;
 
   // YUV packed formats
 
   case 0x56595549: // IUYV
-    if (interlaced != NULL) *interlaced = 1;
+    if (interlaced) *interlaced = 1;
     return WEED_PALETTE_UYVY;
   case 0x31555949: // IYU1
   case 0x31313459: // Y411
@@ -112,19 +109,19 @@ static int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *
   case 0x32555949: // IYU2
     return WEED_PALETTE_YUV888;
   case 0x43594448: // HDYC
-    if (sspace != NULL) *sspace = WEED_YUV_SUBSPACE_BT709;
+    if (sspace) *sspace = WEED_YUV_SUBSPACE_BT709;
     return WEED_PALETTE_UYVY;
   case 0x564E5955: // UYNV
   case 0x59565955: // UYVY
   case 0x32323459: // Y422
-  case 0x76757963: // cyuv - ???
+  case 0x76757963: // cyuv
     return WEED_PALETTE_UYVY;
   case 0x32595559: // YUY2
   case 0x56595559: // YUYV
   case 0x564E5559: // YUNV
     return WEED_PALETTE_YUYV;
   case 0x59455247: // grey
-    if (clamping != NULL) *clamping = WEED_YUV_CLAMPING_UNCLAMPED;
+    if (clamping) *clamping = WEED_YUV_CLAMPING_UNCLAMPED;
   case 0x30303859: // Y800
   case 0x20203859: // Y8
     return WEED_PALETTE_A8;
@@ -136,24 +133,24 @@ static int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *
   case 0x34343449: // I444
     return WEED_PALETTE_YUV444P;
     break;
-  case 0x50323234: // 422P ??
+  case 0x50323234: // 422P
     return WEED_PALETTE_YUV422P;
     break;
   case 0x32315659: // YV12
     return WEED_PALETTE_YVU420P;
   case 0x30323449: // I420
   case 0x56555949: // IYUV
-  case 0x32315559: // YU12 ??
+  case 0x32315559: // YU12
     return WEED_PALETTE_YUV420P;
 
   case 0x3032344a: // J420
-    if (clamping != NULL) *clamping = WEED_YUV_CLAMPING_UNCLAMPED;
+    if (clamping) *clamping = WEED_YUV_CLAMPING_UNCLAMPED;
     return WEED_PALETTE_YUV420P;
   case 0x3232344a: // J422
-    if (clamping != NULL) *clamping = WEED_YUV_CLAMPING_UNCLAMPED;
+    if (clamping) *clamping = WEED_YUV_CLAMPING_UNCLAMPED;
     return WEED_PALETTE_YUV422P;
   case 0x3434344a: // J444
-    if (clamping != NULL) *clamping = WEED_YUV_CLAMPING_UNCLAMPED;
+    if (clamping) *clamping = WEED_YUV_CLAMPING_UNCLAMPED;
     return WEED_PALETTE_YUV444P;
 
   // known formats we cannot use
@@ -582,7 +579,7 @@ static const AVCodecTag codec_bmp_tags[] = {
 
 #if defined FF_API_PIX_FMT ||  defined AVUTIL_PIXFMT_H
 
-static int avi_color_range_to_weed_clamping(enum AVColorRange range) {
+inline int avi_color_range_to_weed_clamping(enum AVColorRange range) {
   switch (range) {
   case AVCOL_RANGE_MPEG:
     return WEED_YUV_CLAMPING_CLAMPED;
@@ -594,7 +591,7 @@ static int avi_color_range_to_weed_clamping(enum AVColorRange range) {
   return WEED_YUV_CLAMPING_CLAMPED;
 }
 
-static enum AVColorRange weed_clamping_to_avi_color_range(int clamping) {
+inline enum AVColorRange weed_clamping_to_avi_color_range(int clamping) {
   switch (clamping) {
   case WEED_YUV_CLAMPING_CLAMPED:
         return AVCOL_RANGE_MPEG;
@@ -606,7 +603,7 @@ static enum AVColorRange weed_clamping_to_avi_color_range(int clamping) {
 
 #ifndef AVUTIL_PIXFMT_H
 
-static int avi_pix_fmt_to_weed_palette(enum PixelFormat pix_fmt, int *clamped) {
+inline int avi_pix_fmt_to_weed_palette(enum PixelFormat pix_fmt, int *clamped) {
   // clamped may be set to NULL if you are not interested in the value
   switch (pix_fmt) {
   case PIX_FMT_RGB24:
@@ -656,7 +653,7 @@ static int avi_pix_fmt_to_weed_palette(enum PixelFormat pix_fmt, int *clamped) {
   }
 }
 
-static enum PixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
+inline enum PixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
   switch (pal) {
   case WEED_PALETTE_RGB24:
         return PIX_FMT_RGB24;
@@ -703,7 +700,7 @@ static enum PixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
 
 #else
 
-static int avi_pix_fmt_to_weed_palette(enum AVPixelFormat pix_fmt, int *clamped) {
+inline int avi_pix_fmt_to_weed_palette(enum AVPixelFormat pix_fmt, int *clamped) {
   // clamped may be set to NULL if you are not interested in the value
   switch (pix_fmt) {
   case AV_PIX_FMT_RGB24:
@@ -750,7 +747,7 @@ static int avi_pix_fmt_to_weed_palette(enum AVPixelFormat pix_fmt, int *clamped)
   }
 }
 
-static enum AVPixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
+inline enum AVPixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
   switch (pal) {
   case WEED_PALETTE_RGB24:
         return AV_PIX_FMT_RGB24;
@@ -795,7 +792,7 @@ static enum AVPixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
 #endif // avutil
 #endif // pix fmts
 
-static int avi_trc_to_weed_gamma(enum AVColorTransferCharacteristic trc) {
+inline int avi_trc_to_weed_gamma(enum AVColorTransferCharacteristic trc) {
   switch (trc) {
   case AVCOL_TRC_BT709:
     return WEED_GAMMA_BT709;
@@ -809,7 +806,7 @@ static int avi_trc_to_weed_gamma(enum AVColorTransferCharacteristic trc) {
   return WEED_GAMMA_UNKNOWN;
 }
 
-static enum AVColorTransferCharacteristic weed_gamma_to_avi_trc(int gamma_type) {
+inline enum AVColorTransferCharacteristic weed_gamma_to_avi_trc(int gamma_type) {
   switch (gamma_type) {
   case WEED_GAMMA_BT709:
         return AVCOL_TRC_BT709;
@@ -839,27 +836,27 @@ static enum AVColorTransferCharacteristic weed_gamma_to_avi_trc(int gamma_type) 
 #define WEED_CH_FRONT_LEFT	 			AV_CH_FRONT_LEFT
 #define WEED_CH_FRONT_RIGHT	 			AV_CH_FRONT_RIGHT
 #define WEED_CH_FRONT_CENTER 				AV_CH_FRONT_CENTER
-#define WEED_CH_LOW_FREQUENCY 			AV_CH_LOW_FREQUENCY
+#define WEED_CH_LOW_FREQUENCY 				AV_CH_LOW_FREQUENCY
 #define WEED_CH_BACK_LEFT 				AV_CH_BACK_LEFT
 #define WEED_CH_BACK_RIGHT				AV_CH_BACK_RIGHT
-#define WEED_CH_FRONT_LEFT_OF_CENTER  		AV_CH_FRONT_LEFT_OF_CENTER
-#define WEED_CH_FRONT_RIGHT_OF_CENTER 	AV_CH_FRONT_RIGHT_OF_CENTER
+#define WEED_CH_FRONT_LEFT_OF_CENTER  			AV_CH_FRONT_LEFT_OF_CENTER
+#define WEED_CH_FRONT_RIGHT_OF_CENTER			AV_CH_FRONT_RIGHT_OF_CENTER
 #define WEED_CH_BACK_CENTER 				AV_CH_BACK_CENTER
-#define WEED_CH_SIDE_LEFT 					AV_CH_SIDE_LEFT
+#define WEED_CH_SIDE_LEFT				AV_CH_SIDE_LEFT
 #define WEED_CH_SIDE_RIGHT 				AV_CH_SIDE_RIGHT
 #define WEED_CH_TOP_CENTER 				AV_CH_TOP_CENTER
-#define WEED_CH_TOP_FRONT_LEFT 			AV_CH_TOP_FRONT_LEFT
+#define WEED_CH_TOP_FRONT_LEFT				AV_CH_TOP_FRONT_LEFT
 #define WEED_CH_TOP_FRONT_CENTER 			AV_CH_TOP_FRONT_CENTER
 #define WEED_CH_TOP_FRONT_RIGHT 			AV_CH_TOP_FRONT_RIGHT
-#define WEED_CH_TOP_BACK_LEFT 			AV_CH_TOP_BACK_LEFT
+#define WEED_CH_TOP_BACK_LEFT				AV_CH_TOP_BACK_LEFT
 #define WEED_CH_TOP_BACK_CENTER 			AV_CH_TOP_BACK_CENTER
-#define WEED_CH_TOP_BACK_RIGHT 			AV_CH_TOP_BACK_RIGHT
+#define WEED_CH_TOP_BACK_RIGHT 				AV_CH_TOP_BACK_RIGHT
 #define WEED_CH_STEREO_LEFT 				AV_CH_STEREO_LEFT
 #define WEED_CH_STEREO_RIGHT 				AV_CH_STEREO_RIGHT
 #define WEED_CH_WIDE_LEFT 				AV_CH_WIDE_LEFT
 #define WEED_CH_WIDE_RIGHT 				AV_CH_WIDE_RIGHT
-#define WEED_CH_SURROUND_DIRECT_LEFT     	AV_CH_SURROUND_DIRECT_LEFT
-#define WEED_CH_SURROUND_DIRECT_RIGHT 	AV_CH_SURROUND_DIRECT_RIGHT
+#define WEED_CH_SURROUND_DIRECT_LEFT     		AV_CH_SURROUND_DIRECT_LEFT
+#define WEED_CH_SURROUND_DIRECT_RIGHT 			AV_CH_SURROUND_DIRECT_RIGHT
 #define WEED_CH_LOW_FREQUENCY_2 			AV_CH_LOW_FREQUENCY_2
 
 #ifdef WEED_CH_LAYOUT_MONO
@@ -870,23 +867,23 @@ static enum AVColorTransferCharacteristic weed_gamma_to_avi_trc(int gamma_type) 
 #undef WEED_CH_LAYOUT_STEREO
 #endif
 
-#define WEED_CH_LAYOUT_MONO 					AV_CH_LAYOUT_MONO
+#define WEED_CH_LAYOUT_MONO				AV_CH_LAYOUT_MONO
 #define WEED_CH_LAYOUT_STEREO 				AV_CH_LAYOUT_STEREO
 #define WEED_CH_LAYOUT_2POINT1 				AV_CH_LAYOUT_2POINT1
-#define WEED_CH_LAYOUT_2_1 					AV_CH_LAYOUT_2_1
-#define WEED_CH_LAYOUT_SURROUND 				AV_CH_LAYOUT_SURROUND
+#define WEED_CH_LAYOUT_2_1				AV_CH_LAYOUT_2_1
+#define WEED_CH_LAYOUT_SURROUND				AV_CH_LAYOUT_SURROUND
 #define WEED_CH_LAYOUT_3POINT1 				AV_CH_LAYOUT_3POINT1
 #define WEED_CH_LAYOUT_4POINT0 				AV_CH_LAYOUT_4POINT0
 #define WEED_CH_LAYOUT_4POINT1 				AV_CH_LAYOUT_4POINT1
-#define WEED_CH_LAYOUT_2_2 					AV_CH_LAYOUT_2_2
-#define WEED_CH_LAYOUT_QUAD 					AV_CH_LAYOUT_QUAD
+#define WEED_CH_LAYOUT_2_2				AV_CH_LAYOUT_2_2
+#define WEED_CH_LAYOUT_QUAD				AV_CH_LAYOUT_QUAD
 #define WEED_CH_LAYOUT_5POINT0 				AV_CH_LAYOUT_5POINT0
 #define WEED_CH_LAYOUT_5POINT1 				AV_CH_LAYOUT_5POINT1
 #define WEED_CH_LAYOUT_5POINT0_BACK 			AV_CH_LAYOUT_5POINT0_BACK
 #define WEED_CH_LAYOUT_5POINT1_BACK 			AV_CH_LAYOUT_5POINT1_BACK
 #define WEED_CH_LAYOUT_6POINT0 				AV_CH_LAYOUT_6POINT0
 #define WEED_CH_LAYOUT_6POINT0_FRONT 			AV_CH_LAYOUT_6POINT0_FRONT
-#define WEED_CH_LAYOUT_HEXAGONAL 				AV_CH_LAYOUT_HEXAGONAL
+#define WEED_CH_LAYOUT_HEXAGONAL			AV_CH_LAYOUT_HEXAGONAL
 #define WEED_CH_LAYOUT_6POINT1 				AV_CH_LAYOUT_6POINT1
 #define WEED_CH_LAYOUT_6POINT1_BACK 			AV_CH_LAYOUT_6POINT1_BACK
 #define WEED_CH_LAYOUT_6POINT1_FRONT 			AV_CH_LAYOUT_6POINT1_FRONT
@@ -896,8 +893,8 @@ static enum AVColorTransferCharacteristic weed_gamma_to_avi_trc(int gamma_type) 
 #define WEED_CH_LAYOUT_7POINT1_WIDE 			AV_CH_LAYOUT_7POINT1_WIDE
 #define WEED_CH_LAYOUT_7POINT1_WIDE_BACK		AV_CH_LAYOUT_7POINT1_WIDE_BACK
 #define WEED_CH_LAYOUT_OCTAGONAL 			AV_CH_LAYOUT_OCTAGONAL
-#define WEED_CH_LAYOUT_HEXADECAGONAL 		AV_CH_LAYOUT_HEXADECAGONAL
-#define WEED_CH_LAYOUT_STEREO_DOWNMIX 		AV_CH_LAYOUT_STEREO_DOWNMIX
+#define WEED_CH_LAYOUT_HEXADECAGONAL			AV_CH_LAYOUT_HEXADECAGONAL
+#define WEED_CH_LAYOUT_STEREO_DOWNMIX			AV_CH_LAYOUT_STEREO_DOWNMIX
 
 #ifndef WEED_CH_LAYOUT_DEFAULT_1
 #define WEED_CH_LAYOUT_DEFAULT_1 WEED_CH_LAYOUT_MONO
@@ -932,28 +929,28 @@ static enum AVColorTransferCharacteristic weed_gamma_to_avi_trc(int gamma_type) 
 #define HAVE_PANGO_FONT_STYLE 1
 #define HAVE_PANGO_FONT_SIZE 1
 
-static int font_stretch_to_pango_stretch(const char *stretch) {
+inline int font_stretch_to_pango_stretch(const char *stretch) {
   PangoFontDescription *pfd = pango_font_description_from_string(stretch);
   PangoStretch pstretch = pango_font_description_get_stretch(pfd);
   pango_font_description_free(pfd);
   return pstretch;
 }
 
-static int font_weight_to_pango_weight(const char *weight) {
+inline int font_weight_to_pango_weight(const char *weight) {
   PangoFontDescription *pfd = pango_font_description_from_string(weight);
   PangoWeight pweight = pango_font_description_get_weight(pfd);
   pango_font_description_free(pfd);
   return pweight;
 }
 
-static int font_style_to_pango_style(const char *style) {
+inline int font_style_to_pango_style(const char *style) {
   PangoFontDescription *pfd = pango_font_description_from_string(style);
   PangoStyle pstyle = pango_font_description_get_style(pfd);
   pango_font_description_free(pfd);
   return pstyle;
 }
 
-static int font_size_to_pango_size(int font_size) {
+inline int font_size_to_pango_size(int font_size) {
   return font_size * PANGO_SCALE;
 }
 

@@ -2027,7 +2027,7 @@ static void lives_init(_ign_opts *ign_opts) {
     get_string_pref(PREF_FREI0R_PATH, prefs->frei0r_path, PATH_MAX);
     if (!*prefs->frei0r_path) {
       frei0r_path = getenv("FREI0R_PATH");
-      if (!*frei0r_path) {
+      if (!frei0r_path) {
         frei0r_path =
           lives_strdup_printf("/usr/lib/frei0r-1:/usr/local/lib/frei0r-1:%s/frei0r-1",
                               capable->home_dir);
@@ -2042,7 +2042,7 @@ static void lives_init(_ign_opts *ign_opts) {
     get_string_pref(PREF_LADSPA_PATH, prefs->ladspa_path, PATH_MAX);
     if (!*prefs->ladspa_path) {
       ladspa_path = getenv("LADSPA_PATH");
-      if (!*ladspa_path) {
+      if (!ladspa_path) {
         ladspa_path = lives_build_path(prefs->lib_dir, "ladspa", NULL);
         needs_free = TRUE;
       }

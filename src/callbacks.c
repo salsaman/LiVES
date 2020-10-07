@@ -361,9 +361,9 @@ void lives_exit(int signum) {
                                              !mainw->leave_recovery || !prefs->rr_crash))
               || (i == mainw->ascrap_file && (mainw->only_close ||
                                               !mainw->leave_recovery || !prefs->rr_crash))
-              || (i > 0 && !mainw->leave_files && !mainw->leave_recovery
-                  && !(mainw->only_close && mainw->multitrack
-                       && i == mainw->multitrack->render_file))) {
+              || (i > 0 && !(mainw->only_close && mainw->multitrack
+                             && i == mainw->multitrack->render_file && !CLIP_HAS_VIDEO(i)
+                             && !CLIP_HAS_AUDIO(i)))) {
             char *permitname;
             // extra cleanup for "device" files
 #ifdef HAVE_YUV4MPEG

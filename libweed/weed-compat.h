@@ -950,9 +950,8 @@ inline int font_style_to_pango_style(const char *style) {
   return pstyle;
 }
 
-inline int font_size_to_pango_size(int font_size) {
-  return font_size * PANGO_SCALE;
-}
+  // int font_size_to_pango_size(int font_size)
+#define font_size_to_pango_size(font_size) ((font_size) * PANGO_SCALE)
 
 #endif
 #endif

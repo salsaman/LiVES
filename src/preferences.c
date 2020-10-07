@@ -1777,7 +1777,6 @@ boolean apply_prefs(boolean skip_warn) {
     set_boolean_pref(PREF_MOUSE_SCROLL_CLIPS, mouse_scroll);
   }
 
-
   pref_factory_bool(PREF_RRCRASH, lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rr_crash)), TRUE);
   pref_factory_bool(PREF_RRSUPER, lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rr_super)), TRUE);
   pref_factory_bool(PREF_RRPRESMOOTH, lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rr_pre_smooth)), TRUE);
@@ -1830,22 +1829,32 @@ boolean apply_prefs(boolean skip_warn) {
   if (lives_strcmp(wp_path, prefs->weed_plugin_path)) {
     set_string_pref(PREF_WEED_PLUGIN_PATH, wp_path);
     lives_snprintf(prefs->weed_plugin_path, PATH_MAX, "%s", wp_path);
+    lives_setenv("WEED_PLUGIN_PATH", wp_path);
   }
 
+#ifdef HAVE_FREI0R
   if (lives_strcmp(frei0r_path, prefs->frei0r_path)) {
     set_string_pref(PREF_FREI0R_PATH, frei0r_path);
     lives_snprintf(prefs->frei0r_path, PATH_MAX, "%s", frei0r_path);
+    lives_setenv("FREI0R_PATH", frei0r_path);
   }
+#endif
 
+#ifdef HAVE_LIBVISUAL
   if (lives_strcmp(libvis_path, prefs->libvis_path)) {
     set_string_pref(PREF_LIBVISUAL_PATH, libvis_path);
     lives_snprintf(prefs->libvis_path, PATH_MAX, "%s", libvis_path);
+    lives_setenv("VISDUAL_PLUGIN_PATH", libvis_path);
   }
+#endif
 
+#ifdef HAVE_LADSPA
   if (lives_strcmp(ladspa_path, prefs->ladspa_path)) {
     set_string_pref(PREF_LADSPA_PATH, ladspa_path);
     lives_snprintf(prefs->ladspa_path, PATH_MAX, "%s", ladspa_path);
+    lives_setenv("LADSPA_PATH", ladspa_path);
   }
+#endif
 
   if (lives_strcmp(sepimg_path, mainw->sepimg_path)) {
     lives_snprintf(mainw->sepimg_path, PATH_MAX, "%s", sepimg_path);
@@ -4327,15 +4336,29 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                    "ordered from lowest to highest priority)")));
   lives_free(tmp);
 
+#ifndef HAVE_FREI0R
+  lives_widget_set_sensitive(prefsw->frei0r_entry, FALSE);
+  show_warn_image(prefsw->frei0r_entry, _("LiVES was compiled without frei0r support"));
+#endif
+
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->ladspa_entry = lives_standard_direntry_new(_("LADSPA plugin path"), prefs->ladspa_path, LONG_ENTRY_WIDTH, PATH_MAX,
                          LIVES_BOX(hbox), NULL);
+#ifndef HAVE_LADSPA
+  lives_widget_set_sensitive(prefsw->ladspa_entry, FALSE);
+  show_warn_image(prefsw->ladspa_entry, _("LiVES was compiled without LADSPA support"));
+#endif
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->libvis_entry = lives_standard_direntry_new(_("libvisual plugin path"), prefs->libvis_path, LONG_ENTRY_WIDTH, PATH_MAX,
                          LIVES_BOX(hbox), NULL);
 
   widget_opts.packing_height = woph;
+
+#ifndef HAVE_LIBVISUAL
+  lives_widget_set_sensitive(prefsw->libvis_entry, FALSE);
+  show_warn_image(prefsw->libvis_entry, _("LiVES was compiled without libvisual support"));
+#endif
 
   pixbuf_effects = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_EFFECTS, LIVES_ICON_SIZE_CUSTOM, -1, -1);
 

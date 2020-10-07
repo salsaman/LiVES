@@ -1146,9 +1146,15 @@ static void lives_init(_ign_opts *ign_opts) {
   char mppath[PATH_MAX];
 
   char *weed_plugin_path;
+#ifdef HAVE_FREI0R
   char *frei0r_path;
+#endif
+#ifdef HAVE_LADSPA
   char *ladspa_path;
+#endif
+#ifdef HAVE_LIBVISUAL
   char *libvis_path;
+#endif
   char *msg;
 
   boolean needs_free;
@@ -2022,7 +2028,9 @@ static void lives_init(_ign_opts *ign_opts) {
       if (needs_free) lives_free(weed_plugin_path);
       set_string_pref(PREF_WEED_PLUGIN_PATH, prefs->weed_plugin_path);
     }
+    lives_setenv("WEED_PLUGIN_PATH", prefs->weed_plugin_path);
 
+#ifdef HAVE_FREI0R
     needs_free = FALSE;
     get_string_pref(PREF_FREI0R_PATH, prefs->frei0r_path, PATH_MAX);
     if (!*prefs->frei0r_path) {
@@ -2037,20 +2045,28 @@ static void lives_init(_ign_opts *ign_opts) {
       if (needs_free) lives_free(frei0r_path);
       set_string_pref(PREF_FREI0R_PATH, prefs->frei0r_path);
     }
+    lives_setenv("FREI0R_PATH", prefs->frei0r_path);
+#endif
 
+#if HAVE_LADSPA
     needs_free = FALSE;
     get_string_pref(PREF_LADSPA_PATH, prefs->ladspa_path, PATH_MAX);
     if (!*prefs->ladspa_path) {
       ladspa_path = getenv("LADSPA_PATH");
+      g_print("get to %s\n", ladspa_path);
       if (!ladspa_path) {
         ladspa_path = lives_build_path(prefs->lib_dir, "ladspa", NULL);
+        g_print("set to %s\n", ladspa_path);
         needs_free = TRUE;
       }
       lives_snprintf(prefs->ladspa_path, PATH_MAX, "%s", ladspa_path);
       if (needs_free) lives_free(ladspa_path);
       set_string_pref(PREF_LADSPA_PATH, prefs->ladspa_path);
     }
+    lives_setenv("LADSPA_PATH", prefs->ladspa_path);
+#endif
 
+#if HAVE_LIBVISUAL
     needs_free = FALSE;
     get_string_pref(PREF_LIBVISUAL_PATH, prefs->libvis_path, PATH_MAX);
     if (!*prefs->libvis_path) {
@@ -2061,6 +2077,8 @@ static void lives_init(_ign_opts *ign_opts) {
       lives_snprintf(prefs->libvis_path, PATH_MAX, "%s", libvis_path);
       set_string_pref(PREF_LIBVISUAL_PATH, prefs->libvis_path);
     }
+    lives_setenv("VISUAL_PLUGIN_PATH", prefs->libvis_path);
+#endif
 
     splash_msg(_("Loading realtime effect plugins..."), SPLASH_LEVEL_LOAD_RTE);
     weed_load_all();

@@ -7865,6 +7865,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean show_warn_image(LiVESWidget * widget, const 
   lives_widget_set_tooltip_text(warn_image, text);
   lives_widget_set_no_show_all(warn_image, FALSE);
   lives_widget_show_all(warn_image);
+  lives_widget_set_sensitive(warn_image, TRUE);
   return TRUE;
 }
 

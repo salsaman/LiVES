@@ -5668,7 +5668,9 @@ void load_start_image(int frame) {
     if (by > MENU_HIDE_LIM)
       lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
     hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
-    vsize = scr_height - (CE_TIMELINE_VSPACE + vspace + by + mainw->mbar_res);
+    vsize = scr_height - (CE_TIMELINE_VSPACE * 1.01 / sqrt(widget_opts.scale) + vspace + by
+                          + (prefs->show_msg_area ? mainw->mbar_res : 0)
+                          + widget_opts.border_width * 2);
     if (LIVES_IS_PLAYING && mainw->double_size) {
       hsize /= 2;
       vsize /= 2;
@@ -5942,7 +5944,9 @@ void load_end_image(int frame) {
     if (by > MENU_HIDE_LIM)
       lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), TRUE);
     hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
-    vsize = scr_height - (CE_TIMELINE_VSPACE + vspace + by + mainw->mbar_res);
+    vsize = scr_height - (CE_TIMELINE_VSPACE * 1.01 / sqrt(widget_opts.scale) + vspace + by
+                          + (prefs->show_msg_area ? mainw->mbar_res : 0)
+                          + widget_opts.border_width * 2);
     if (LIVES_IS_PLAYING && mainw->double_size) {
       hsize /= 2;
       vsize /= 2;
@@ -10260,7 +10264,7 @@ lfi_done:
       //if (mainw->play_window) return;
 
       hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
-      vsize = scr_height - (CE_TIMELINE_VSPACE / sqrt(widget_opts.scale) + vspace + by
+      vsize = scr_height - (CE_TIMELINE_VSPACE * 1.01 / sqrt(widget_opts.scale) + vspace + by
                             + (prefs->show_msg_area ? mainw->mbar_res : 0)
                             + widget_opts.border_width * 2);
 

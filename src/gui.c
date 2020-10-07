@@ -2054,8 +2054,7 @@ void create_LiVES(void) {
   lives_widget_set_margin_right(mainw->playframe, widget_opts.packing_width);
 
   lives_container_add(LIVES_CONTAINER(mainw->playframe), mainw->pl_eventbox);
-  lives_widget_set_size_request(mainw->playframe, -1, DEF_FRAME_VSIZE_GUI
-                                - widget_opts.border_width * 2);
+  //lives_widget_set_size_request(mainw->playframe, -1, GUI_SCREEN_HEIGHT / 4);
   lives_widget_set_hexpand(mainw->pl_eventbox, FALSE);
 
   mainw->playarea = lives_event_box_new();
@@ -2878,8 +2877,8 @@ void create_LiVES(void) {
   mainw->toy_func_none = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->toy_none), LIVES_WIDGET_ACTIVATE_SIGNAL,
                          LIVES_GUI_CALLBACK(on_toy_activate), NULL);
 
-  lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->autolives), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                             LIVES_GUI_CALLBACK(autolives_toggle), NULL);
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->autolives), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                                  LIVES_GUI_CALLBACK(autolives_toggle), NULL);
 
   mainw->toy_func_random_frames = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->toy_random_frames),
                                   LIVES_WIDGET_ACTIVATE_SIGNAL,

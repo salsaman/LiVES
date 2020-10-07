@@ -6389,7 +6389,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   LiVESWidget *hseparator;
   LiVESWidget *menuitem;
   LiVESWidget *menuitem2;
-  LiVESWidget *menuitemsep;
   LiVESWidget *menuitem_menu;
   LiVESWidget *selcopy_menu;
 #if LIVES_HAS_IMAGE_MENU_ITEM
@@ -8132,16 +8131,11 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_toolbar_set_style(LIVES_TOOLBAR(mt->btoolbarx), LIVES_TOOLBAR_TEXT);
 
   mt->btoolbar3 = lives_toolbar_new();
-  lives_box_pack_start(LIVES_BOX(mt->menu_hbox), mt->btoolbar3, FALSE, FALSE, 0);
+  lives_box_pack_end(LIVES_BOX(mt->menu_hbox), mt->btoolbar3, FALSE, FALSE, 0);
 
   lives_toolbar_set_show_arrow(LIVES_TOOLBAR(mt->btoolbar3), FALSE);
 
   lives_toolbar_set_style(LIVES_TOOLBAR(mt->btoolbar3), LIVES_TOOLBAR_TEXT);
-
-  //lives_separator_tool_item_new();
-  //lives_toolbar_insert(LIVES_TOOLBAR(mt->btoolbar3), mt->sep1, -1);
-
-  lives_toolbar_insert_space(LIVES_TOOLBAR(mt->btoolbar3));
 
   mt->grav_menuitem = LIVES_WIDGET(lives_standard_menu_tool_button_new(NULL, NULL));
   lives_tool_button_set_use_underline(LIVES_TOOL_BUTTON(mt->grav_menuitem), TRUE);
@@ -8180,14 +8174,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   if (mainw->mgeom[widget_opts.monitor].width > MENUBAR_MIN) in_menubar = FALSE;
 
-  if (in_menubar) {
-    menuitemsep = lives_standard_menu_item_new_with_label("|");
-    lives_widget_set_sensitive(menuitemsep, FALSE);
-    lives_container_add(LIVES_CONTAINER(mt->menubar), menuitemsep);
-  } else {
-    lives_toolbar_insert_space(LIVES_TOOLBAR(mt->btoolbar3));
-  }
-
   mt->mm_submenu = lives_menu_new();
   mt->mm_move = lives_standard_check_menu_item_new_with_label(_("Mouse Mode: _Move"), mt->opts.mouse_mode == MOUSE_MODE_MOVE);
   mt->mm_label = NULL;
@@ -8220,14 +8206,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(on_mouse_mode_changed), (livespointer)mt);
 
   lives_widget_show_all(mt->mm_submenu); // needed
-
-  if (in_menubar) {
-    menuitemsep = lives_standard_menu_item_new_with_label("|");
-    lives_widget_set_sensitive(menuitemsep, FALSE);
-    lives_container_add(LIVES_CONTAINER(mt->menubar), menuitemsep);
-  } else {
-    lives_toolbar_insert_space(LIVES_TOOLBAR(mt->btoolbar3));
-  }
 
   mt->ins_submenu = lives_menu_new();
   mt->ins_normal = lives_standard_check_menu_item_new_with_label(_("Insert Mode: _Normal"),

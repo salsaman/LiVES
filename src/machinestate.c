@@ -7,7 +7,7 @@
 // functions for dealing with externalities
 
 #include <sys/statvfs.h>
-#ifdef __FreeBSD__
+#ifdef IS_FREEBSD
 #include <stdlib.h>
 #else
 #include <malloc.h>

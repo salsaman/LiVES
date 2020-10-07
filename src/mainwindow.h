@@ -397,7 +397,11 @@ enum {
 #define EXEC_FFMPEG "ffmpeg"
 #define EXEC_FILE "file"
 #define EXEC_YOUTUBE_DL "youtube-dl"
+#ifdef IS_FREEBSD
+#define EXEC_MD5SUM "md5"
+#else
 #define EXEC_MD5SUM "md5sum"
+#endif
 #define EXEC_GZIP "gzip"
 #define EXEC_DU "du"
 #define EXEC_WGET "wget"

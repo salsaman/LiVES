@@ -436,8 +436,8 @@ static weed_error_t haar_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   int height = weed_channel_get_height(channel);
   int pal = weed_channel_get_palette(channel);
   int irowstride = weed_channel_get_stride(channel);
-  weed_plant_t **out_params = weed_get_out_params(inst);
-  weed_plant_t **in_params = weed_get_in_params(inst);
+  weed_plant_t **out_params = weed_get_out_params(inst, NULL);
+  weed_plant_t **in_params = weed_get_in_params(inst, NULL);
 
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
@@ -570,6 +570,6 @@ WEED_SETUP_START(200, 200) {
   weed_paramtmpl_set_flags(out_params[2], WEED_PARAMETER_VARIABLE_SIZE);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-  weed_plugin_se_Tpackage_version(plugin_info, package_version);
+  weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;

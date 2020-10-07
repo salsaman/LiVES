@@ -7,11 +7,6 @@
 // functions for dealing with externalities
 
 #include <sys/statvfs.h>
-#ifdef IS_FREEBSD
-#include <stdlib.h>
-#else
-#include <malloc.h>
-#endif
 #include "main.h"
 #include "callbacks.h"
 
@@ -247,7 +242,6 @@ uint64_t nxtval(uint64_t val, uint64_t lim, boolean less) {
 
 static const char *get_tunert(int idx) {
   switch (idx) {
-  case 1: return "mallopt arenas"; /// disused
   case 2: return "orc_memcpy cutoff";
   case 3: return "read buffer size (small)";
   case 4: return "read buffer size (small / medium)";

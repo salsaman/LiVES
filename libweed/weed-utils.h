@@ -244,7 +244,7 @@ FN_TYPE weed_error_t __weed_get_values__(weed_plant_t *plant, const char *key, s
 FN_TYPE weed_voidptr_t __weed_get_arrayx__(weed_plant_t *plant, const char *key, uint32_t seed_type, weed_size_t typelen,
 					   weed_error_t *error, int *nvals) {
   weed_error_t err, *perr = (error ? error : &err); char *retvals = NULL;
-  if (*perr = __weed_leaf_check__(plant, key, seed_type) != WEED_SUCCESS) return NULL;
+  if ((*perr = __weed_leaf_check__(plant, key, seed_type)) != WEED_SUCCESS) return NULL;
   *perr = __weed_get_values__(plant, key, typelen, (char **)&retvals, nvals); return retvals;}
 
 #define _ARRAY_COUNT_(ctype, stype) \
@@ -265,7 +265,7 @@ FN_TYPE int64_t *weed_get_int64_array_counted(weed_plant_t *plant, const char *k
 FN_TYPE int64_t *weed_get_int64_array(weed_plant_t *plant, const char *key, weed_error_t *error) {_ARRAY_NORM_(int64_t, INT64)}
 
 FN_TYPE char **__weed_get_string_array__(weed_plant_t *plant, const char *key, weed_error_t *error, int *count) {
-  weed_size_t num_elems; char **retvals = NULL; weed_error_t err, *perr = (error ? error : &err); register int i;
+  weed_size_t num_elems; char **retvals = NULL; weed_error_t err, *perr = (error ? error : &err); uint32_t i;
   if (count) *count = 0;
   if ((*perr = __weed_leaf_check__(plant, key, WEED_SEED_STRING)) != WEED_SUCCESS
       || !(num_elems = weed_leaf_num_elements(plant, key))) return NULL;
@@ -283,7 +283,7 @@ FN_TYPE char **__weed_get_string_array__(weed_plant_t *plant, const char *key, w
   return retvals;
 
 __cleanup:
-  while (i > 0) weed_free(retvals[--i]); weed_free(retvals); return NULL;
+  while (i > 0) {weed_free(retvals[--i]);} weed_free(retvals); return NULL;
 }
 
 FN_TYPE char **weed_get_string_array_counted(weed_plant_t *plant, const char *key, int *count) {

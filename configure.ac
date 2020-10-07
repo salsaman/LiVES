@@ -91,6 +91,7 @@ AM_CONDITIONAL(IS_LINUX_GNU,$IS_LINUX_GNU)
 AM_CONDITIONAL(IS_LINUX_MUSL,$IS_LINUX_MUSL)
 AM_CONDITIONAL(IS_SOLARIS,$IS_SOLARIS)
 AM_CONDITIONAL(IS_MINGW,$IS_MINGW)
+AM_CONDITIONAL(IS_FREEBSD,$IS_FREEBSD)
 
 if test "$IS_MINGW" = "false"; then
 AC_CHECK_FILE(lives-plugins/Makefile.am,,[
@@ -643,7 +644,7 @@ TURBO_CFLAGS=""
 AC_ARG_ENABLE(turbo, [  --enable-turbo     Most optimised compile. Do NOT use if making binaries for general distribution.] , TURBO=true, TURBO=false)
 
 if test "$TURBO" = "true" ; then
-TURBO_CFLAGS="-Ofast -O3 -march=native -mtune=native -ffast-math -fno-math-errno -ftree-vectorizer-verbose=y"
+TURBO_CFLAGS="-Ofast -O3 -march=native -mtune=native -ffast-math -fno-math-errno"
 echo "Turbo enabled"
 echo TURBO_CFLAGS set to $TURBO_CFLAGS
 fi

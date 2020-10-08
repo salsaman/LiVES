@@ -795,6 +795,8 @@ typedef enum {
 
 #define CLIP_NAME_MAXLEN 256
 
+#define AV_TRACK_MIN_DIFF 0.001 ///< ignore track time differences < this (seconds)
+
 #define IS_VALID_CLIP(clip) (clip >= 0 && clip <= MAX_FILES && mainw->files[clip])
 #define CURRENT_CLIP_IS_VALID IS_VALID_CLIP(mainw->current_file)
 
@@ -1398,6 +1400,7 @@ void wait_for_bg_audio_sync(int fileno);
 ulong deduce_file(const char *filename, double start_time, int end);
 ulong open_file(const char *filename);
 ulong open_file_sel(const char *file_name, double start_time, int frames);
+void pad_init_silence(void);
 void open_fw_device(void);
 char *get_untitled_name(int number);
 boolean get_new_handle(int index, const char *name);

@@ -1620,7 +1620,16 @@ switch_point:
     // this depending on the cached frame
 
     requested_frame = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);
-    if (requested_frame < 1 || requested_frame > sfile->frames) requested_frame = sfile->frameno;
+    if (mainw->foreign) {
+      if (requested_frame > sfile->frameno) {
+        load_frame_image(sfile->frameno++);
+      }
+      lives_widget_context_update();
+      if (mainw->cancelled != CANCEL_NONE) return mainw->cancelled;
+      return 0;
+    }
+    if (requested_frame < 1 || requested_frame > sfile->frames)
+      requested_frame = sfile->frameno;
     else sfile->frameno = requested_frame;
 
     if (mainw->scratch != SCRATCH_NONE) scratch  = mainw->scratch;
@@ -2229,14 +2238,14 @@ static boolean reset_timebase(void) {
 
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
-    boolean pa_reset = FALSE;
+    boolean pa_reset = TRUE;
     if (prefs->audio_src == AUDIO_SRC_INT) {
-      if (mainw->pulsed && pa_time_reset(mainw->pulsed, 0)) {
-        pa_reset = TRUE;
+      if (mainw->pulsed && !pa_time_reset(mainw->pulsed, 0)) {
+        pa_reset = FALSE;
       }
     } else {
-      if (mainw->pulsed_read && pa_time_reset(mainw->pulsed_read, 0)) {
-        pa_reset = TRUE;
+      if (mainw->pulsed_read && !pa_time_reset(mainw->pulsed_read, 0)) {
+        pa_reset = FALSE;
       }
     }
     if (!pa_reset) {
@@ -2270,6 +2279,9 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   char *mytext = NULL;
   frames_t frames_done, frames;
   boolean got_err = FALSE;
+  boolean markup = widget_opts.use_markup;
+
+  widget_opts.use_markup = FALSE;
 
   // translation issues
   if (visible && text) mytext = lives_strdup(text);
@@ -2321,6 +2333,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     procw_desensitize();
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
 
+    widget_opts.use_markup = markup;
     mainw->proc_ptr = create_processing(mytext);
     mainw->proc_ptr->owner = mainw->current_file;
 

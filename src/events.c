@@ -3607,7 +3607,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
   static weed_plant_t *event, *eventnext;
   static boolean r_audio, r_video;
 
-  weed_timecode_t tc, next_out_tc, dtc = atc;
+  weed_timecode_t tc, next_out_tc = 0l, dtc = atc;
   void *init_event;
 
   LiVESPixbuf *pixbuf = NULL;
@@ -4024,12 +4024,13 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
         lives_freep((void **)&aclips);
       }
 
-      if (!r_video) break;
-
-      if (!pixbuf) break;
-      if (!next_frame_event && is_blank) break; // don't render final blank frame
       next_out_tc = (weed_timecode_t)(out_frame / cfile->fps
                                       * TICKS_PER_SECOND_DBL - rec_delta_tc); // calculate tc of next out frame */
+      next_out_tc = q_gint64(next_out_tc, cfile->fps);
+
+      if (!r_video) break;
+      if (!pixbuf) break;
+      if (!next_frame_event && is_blank) break; // don't render final blank frame
 
       if (next_frame_event) {
         weed_timecode_t next_tc = get_event_timecode(next_frame_event);
@@ -4374,7 +4375,12 @@ filterinit2:
       }
     } else lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "completed");
 
-    if (r_audio) cfile->afilesize = reget_afilesize_inner(mainw->current_file);
+    if (r_audio) {
+      render_audio_segment(1, NULL, mainw->multitrack != NULL
+                           ? mainw->multitrack->render_file : mainw->current_file,
+                           NULL, NULL, atc, next_out_tc, chvols, 0., 0., NULL);
+      cfile->afilesize = reget_afilesize_inner(mainw->current_file);
+    }
     mainw->filter_map = NULL;
     mainw->afilter_map = NULL;
     completed = TRUE;
@@ -4483,7 +4489,7 @@ boolean start_render_effect_events(weed_plant_t *event_list, boolean render_vid,
 int count_events(weed_plant_t *event_list, boolean all_events, weed_timecode_t start_tc, weed_timecode_t end_tc) {
   weed_plant_t *event;
   weed_timecode_t tc;
-  register int i = 0;
+  int i = 0;
 
   if (!event_list) return 0;
   event = get_first_event(event_list);
@@ -4691,6 +4697,8 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
       cfile->pb_fps = cfile->fps = old_fps;
       cfile->ratio_fps = FALSE;
     }
+
+    if (!rendaud) cfile->achans = cfile->arate = cfile->asampsize = 0;
 
     cfile->bpp = cfile->img_type == IMG_TYPE_JPEG ? 24 : 32;
     cfile->is_loaded = TRUE;

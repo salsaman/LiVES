@@ -13257,7 +13257,7 @@ boolean lives_painter_to_layer(lives_painter_t *cr, weed_layer_t *layer) {
 
 int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, int *nbad, int *nmiss) {
   LiVESPixbuf *pixbuf;
-  LiVESError *error;
+  LiVESError *error = NULL;
   lives_clip_t *sfile;
   lives_img_type_t ximgtype;
   weed_layer_t *layer;
@@ -13298,6 +13298,7 @@ int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, int 
       miss++;
       continue;
     }
+
     if (weed_layer_get_width(layer) == width
         && weed_layer_get_height(layer) == height) {
       weed_layer_free(layer);
@@ -13327,8 +13328,8 @@ int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, int 
     }
     lives_free(fname);
   }
-  *nbad = bad;
-  *nmiss = miss;
+  if (nbad) *nbad = bad;
+  if (nmiss) *nmiss = miss;
   return nres;
 }
 

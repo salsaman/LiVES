@@ -11461,7 +11461,7 @@ void on_capture_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   prefs->show_gui = FALSE;
 
   if (!(do_warning_dialog(
-          _("Capture an External Window:\n\nClick on 'OK', then click on any window to capture it\n"
+          _("Capture an External Window:\n\nClick on 'OK', then click on any desktop window to select it\n"
             "Click 'Cancel' to cancel\n\n")))) {
     if (sgui) {
       prefs->show_gui = TRUE;
@@ -11509,7 +11509,11 @@ void on_capture_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     return;
   }
 
-  do_progress_dialog(TRUE, FALSE, _("Click on a Window to Capture it\nPress 'q' to stop recording"));
+  do_progress_dialog(TRUE, FALSE, _("Click on any desktop window to capture it\n"
+                                    "When a blank LiVES window appears behind it, "
+                                    "then it is being recorded.\n\n"
+                                    "<b><big>To end recording, switch focus to the LiVES window,\n"
+                                    "and press the 'q' key.</big></b>\n"));
 
   if (get_token_count(mainw->msg, '|') < 6) {
     close_temp_handle(curr_file);

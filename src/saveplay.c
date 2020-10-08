@@ -16,8 +16,6 @@
 #include "cvirtual.h"
 #include "interface.h"
 
-#define AV_TRACK_MIN_DIFF 0.001 ///< ignore track time differences < this (seconds)
-
 boolean _start_playback(livespointer data) {
   int new_file, old_file;
   int play_type = LIVES_POINTER_TO_INT(data);
@@ -282,6 +280,20 @@ static boolean rip_audio_cancelled(int old_file, weed_plant_t *mt_pb_start_event
   lives_freep((void **)&mainw->file_open_params);
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   return FALSE;
+}
+
+
+void pad_init_silence(void) {
+  cfile->undo1_dbl = 0.;
+  cfile->undo2_dbl = CLIP_TOTAL_TIME(mainw->current_file) - cfile->laudio_time;
+  cfile->undo_arate = cfile->arate;
+  cfile->undo_signed_endian = cfile->signed_endian;
+  cfile->undo_achans = cfile->achans;
+  cfile->undo_asampsize = cfile->asampsize;
+  cfile->undo_arps = cfile->arps;
+  d_print(_("Auto padding with %.4f seconds of silence at start..."), cfile->undo2_dbl);
+  if (on_ins_silence_activate(NULL, NULL)) d_print_done();
+  else d_print("\n");
 }
 
 
@@ -623,16 +635,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
             if (!mainw->effects_paused && cfile->afilesize > 0 && cfile->achans > 0
                 && CLIP_TOTAL_TIME(mainw->current_file) > cfile->laudio_time + AV_TRACK_MIN_DIFF) {
               if (cdata->sync_hint & SYNC_HINT_AUDIO_PAD_START) {
-                cfile->undo1_dbl = 0.;
-                cfile->undo2_dbl = CLIP_TOTAL_TIME(mainw->current_file) - cfile->laudio_time;
-                cfile->undo_arate = cfile->arate;
-                cfile->undo_signed_endian = cfile->signed_endian;
-                cfile->undo_achans = cfile->achans;
-                cfile->undo_asampsize = cfile->asampsize;
-                cfile->undo_arps = cfile->arps;
-                d_print(_("Auto padding with %f seconds of silence at start..."), cfile->undo2_dbl);
-                if (on_ins_silence_activate(NULL, NULL)) d_print_done();
-                else d_print("\n");
+                pad_init_silence();
                 cfile->changed = FALSE;
               }
               if (cdata->sync_hint & SYNC_HINT_AUDIO_PAD_END) {
@@ -2874,22 +2877,24 @@ void play_file(void) {
   mainw->playing_file = -1;
   mainw->abufs_to_fill = 0;
 
-  /// deinit any active real time effects
-  if (prefs->allow_easing && !mainw->multitrack) {
-    // any effects which were "easing out" should be deinited now
-    deinit_easing_effects();
-  }
+  if (!mainw->foreign) {
+    /// deinit any active real time effects
+    if (prefs->allow_easing && !mainw->multitrack) {
+      // any effects which were "easing out" should be deinited now
+      deinit_easing_effects();
+    }
 
-  /// not sure if this is still the case (it may have been due to other bugs...)
-  /// we need to deinit generators BEFORE exiting the playback plugin, else the generator can grab window manager
-  /// events when we restart the plugin, leaving it hanging waiting for a response which never arrives
-  if (mainw->blend_file != -1 && mainw->blend_file != mainw->current_file && mainw->files[mainw->blend_file] &&
-      mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
-    weed_call_deinit_func(mainw->files[mainw->blend_file]->ext_src);
-  }
-  if (CURRENT_CLIP_IS_VALID) {
-    if (mainw->current_file >= 1 && cfile->clip_type == CLIP_TYPE_GENERATOR) {
-      weed_call_deinit_func(cfile->ext_src);
+    /// not sure if this is still the case (it may have been due to other bugs...)
+    /// we need to deinit generators BEFORE exiting the playback plugin, else the generator can grab window manager
+    /// events when we restart the plugin, leaving it hanging waiting for a response which never arrives
+    if (mainw->blend_file != -1 && mainw->blend_file != mainw->current_file && mainw->files[mainw->blend_file] &&
+        mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
+      weed_call_deinit_func(mainw->files[mainw->blend_file]->ext_src);
+    }
+    if (CURRENT_CLIP_IS_VALID) {
+      if (mainw->current_file >= 1 && cfile->clip_type == CLIP_TYPE_GENERATOR) {
+        weed_call_deinit_func(cfile->ext_src);
+      }
     }
   }
 

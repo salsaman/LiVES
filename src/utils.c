@@ -1943,7 +1943,7 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
 	}}}}
   // *INDENT-ON*
 
-  if (sfile->frames == 0) {
+  if (sfile->frames == 0 && !mainw->foreign) {
     if (fileno == mainw->playing_file) mainw->scratch = SCRATCH_NONE;
     return 0;
   }
@@ -1973,8 +1973,11 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   else
     nframe = cframe + (frames_t)((double)dtc / TICKS_PER_SECOND_DBL * fps - .00001);
 
-  if (nframe != cframe && !IS_NORMAL_CLIP(fileno)) {
-    return 1;
+  if (nframe != cframe) {
+    if (!IS_NORMAL_CLIP(fileno)) {
+      return 1;
+    }
+    if (mainw->foreign) return sfile->frameno + 1;
   }
 
   if (fileno == mainw->playing_file) {
@@ -4132,25 +4135,22 @@ boolean prepare_to_play_foreign(void) {
 
 boolean after_foreign_play(void) {
   // read details from capture file
-  int capture_fd;
+  int capture_fd = -1;
   char *capfile = lives_strdup_printf("%s/.capture.%d", prefs->workdir, capable->mainpid);
   char capbuf[256];
   ssize_t length;
   int new_frames = 0;
   int old_file = mainw->current_file;
 
-  char *com;
   char **array;
-  char file_name[PATH_MAX];
 
   // assume for now we only get one clip passed back
-  if ((capture_fd = open(capfile, O_RDONLY)) > -1) {
+  if ((capture_fd = lives_open2(capfile, O_RDONLY)) > -1) {
     lives_memset(capbuf, 0, 256);
     if ((length = read(capture_fd, capbuf, 256))) {
       if (get_token_count(capbuf, '|') > 2) {
         array = lives_strsplit(capbuf, "|", 3);
         new_frames = atoi(array[1]);
-
         if (new_frames > 0) {
           create_cfile(-1, array[0], FALSE);
           lives_strfreev(array);
@@ -4165,6 +4165,9 @@ boolean after_foreign_play(void) {
           cfile->hsize = CEIL(mainw->foreign_width, 4);
           cfile->vsize = CEIL(mainw->foreign_height, 4);
 
+          cfile->img_type = IMG_TYPE_BEST;
+          cfile->changed = TRUE;
+
           if (mainw->rec_achans > 0) {
             cfile->arate = cfile->arps = mainw->rec_arate;
             cfile->achans = mainw->rec_achans;
@@ -4172,40 +4175,27 @@ boolean after_foreign_play(void) {
             cfile->signed_endian = mainw->rec_signed_endian;
           }
 
-          // TODO - dirsep
+          save_clip_values(mainw->current_file);
+          if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
 
-          lives_snprintf(file_name, PATH_MAX, "%s/%s/", prefs->workdir, cfile->handle);
-
-          com = lives_strdup_printf("%s fill_and_redo_frames \"%s\" %d %d %d \"%s\" %.4f %d %d %d %d %d",
-                                    prefs->backend,
-                                    cfile->handle, cfile->frames, cfile->hsize, cfile->vsize,
-                                    get_image_ext_for_type(cfile->img_type), cfile->fps, cfile->arate,
-                                    cfile->achans, cfile->asampsize, !(cfile->signed_endian & AFORM_UNSIGNED),
-                                    !(cfile->signed_endian & AFORM_BIG_ENDIAN));
-          lives_rm(cfile->info_file);
-          lives_system(com, FALSE);
-
-          cfile->nopreview = TRUE;
-          cfile->keep_without_preview = TRUE;
-          mainw->cancel_type = CANCEL_SOFT;
-          if (THREADVAR(com_failed) || !do_progress_dialog(TRUE, TRUE, _("Cleaning up clip"))) {
-            if (mainw->cancelled == CANCEL_KEEP) {
-              mainw->cancelled = CANCEL_NONE;
-              d_print_enough(new_frames);
-              cfile->end = cfile->frames = new_frames;
-            } else {
-              // cancelled cleanup
-              new_frames = 0;
-              close_current_file(old_file);
-            }
+          close(capture_fd);
+          lives_rm(capfile);
+          capture_fd = -1;
+          do_threaded_dialog(_("Cleaning up clip"), FALSE);
+          lives_widget_show_all(mainw->proc_ptr->processing);
+          resize_all(mainw->current_file, cfile->hsize, cfile->vsize, cfile->img_type, NULL, NULL);
+          end_threaded_dialog();
+          if (cfile->afilesize > 0 && cfile->achans > 0
+              && CLIP_TOTAL_TIME(mainw->current_file) > cfile->laudio_time + AV_TRACK_MIN_DIFF) {
+            pad_init_silence();
           }
-          lives_free(com);
-          mainw->cancel_type = CANCEL_KILL;
-        } else lives_strfreev(array);
-      }
-      close(capture_fd);
-      lives_rm(capfile);
-    }
+	  // *INDENT-OFF*
+	}}}}
+  // *INDENT-ON*
+
+  if (capture_fd > -1) {
+    close(capture_fd);
+    lives_rm(capfile);
   }
 
   if (new_frames == 0) {
@@ -4229,8 +4219,6 @@ boolean after_foreign_play(void) {
 
   cfile->is_loaded = TRUE;
   cfile->changed = TRUE;
-  save_clip_values(mainw->current_file);
-  if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
   lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
   return TRUE;
 }
@@ -5099,9 +5087,9 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     break;
   case CLIP_DETAILS_UNIQUE_ID:
     if (capable->cpu_bits == 32) {
-      *(int64_t *)retval = atoll(val);
+      *(uint64_t *)retval = (uint64_t)atoll(val);
     } else {
-      *(int64_t *)retval = atol(val);
+      *(uint64_t *)retval = (uint64_t)atol(val);
     }
     break;
   case CLIP_DETAILS_AENDIAN:
@@ -5180,7 +5168,7 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
   case CLIP_DETAILS_HEIGHT:
     myval = lives_strdup_printf("%d", *(int *)val); break;
   case CLIP_DETAILS_UNIQUE_ID:
-    myval = lives_strdup_printf("%"PRId64, *(int64_t *)val); break;
+    myval = lives_strdup_printf("%"PRIu64, *(uint64_t *)val); break;
   case CLIP_DETAILS_ARATE:
     myval = lives_strdup_printf("%d", *(int *)val); break;
   case CLIP_DETAILS_PB_ARATE:

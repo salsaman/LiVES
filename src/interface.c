@@ -861,6 +861,9 @@ xprocess *create_processing(const char *text) {
   xprocess *procw = (xprocess *)(lives_malloc(sizeof(xprocess)));
 
   char tmp_label[256];
+  boolean markup = widget_opts.use_markup;
+
+  widget_opts.use_markup = FALSE;
 
   procw->frac_done = -1.;
 
@@ -882,7 +885,9 @@ xprocess *create_processing(const char *text) {
   vbox3 = lives_vbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox2), vbox3, TRUE, TRUE, 0);
 
+  widget_opts.use_markup = markup;
   lives_snprintf(tmp_label, 256, "%s...\n", text);
+  widget_opts.use_markup = FALSE;
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   widget_opts.mnemonic_label = FALSE;
   procw->label = lives_standard_label_new(tmp_label);

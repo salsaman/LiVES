@@ -753,6 +753,13 @@ AC_SUBST(UNICAP_LIBS)
 
 AM_CONDITIONAL(HAVE_UNICAP,$HAVE_UNICAP)
 
+HAVE_LIBv4l1=false
+
+AC_CHECK_HEADERS(linux/videodev2.h, HAVE_LIBv4l2=true, HAVE_LIBv4l2=false)
+AM_CONDITIONAL(HAVE_LIBv4l2,$HAVE_LIBv4l2)
+
+if test HAVE_LIBv4l2 = "false"; then
+
 dnl Check of -lv4l1
 AC_CHECK_HEADERS(linux/videodev.h, HAVE_LIBv4l1=true, HAVE_LIBv4l1=false)
 if test "$HAVE_LIBv4l1" = "true"; then
@@ -764,11 +771,11 @@ v4l1_INCFILE=2
 fi
 fi
 
+fi
+
 AM_CONDITIONAL(HAVE_LIBv4l1,$HAVE_LIBv4l1)
 AC_SUBST(v4l1_INCFILE)
 
-AC_CHECK_HEADERS(linux/videodev2.h, HAVE_LIBv4l2=true, HAVE_LIBv4l2=false)
-AM_CONDITIONAL(HAVE_LIBv4l2,$HAVE_LIBv4l2)
 
 HAVE_LIBDV=false
 dnl check for libdv

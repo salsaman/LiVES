@@ -3212,6 +3212,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
   boolean internal_messaging = mainw->internal_messaging;
   boolean needs_idlefunc = FALSE;
   boolean did_backup = mt->did_backup;
+  static boolean lastblank = TRUE;
 
   //if (mt->play_width == 0 || mt->play_height == 0) return;
   if (mt->no_frame_update) return;
@@ -3419,6 +3420,10 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
 
     if (mt->framedraw) mt_framedraw(mt, mainw->frame_layer); // framedraw will free the frame_layer itself
     else {
+      if (lastblank) {
+        clear_widget_bg(mainw->play_image, mainw->play_surface);
+        lastblank = FALSE;
+      }
       if (!pixbuf) {
         pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE, TRUE);
       }
@@ -3433,6 +3438,11 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
     }
   } else {
     // no frame - show blank
+    if (!lastblank) {
+      clear_widget_bg(mainw->play_image, mainw->play_surface);
+      lastblank = TRUE;
+    }
+
 #if GTK_CHECK_VERSION(3, 0, 0)
     // set frame_pixbuf, this gets painted in in expose_event
     mt->frame_pixbuf = mainw->imframe;

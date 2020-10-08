@@ -389,7 +389,8 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   if (!(rfx->props & RFX_PROPS_MAY_RESIZE)) {
     gtk_range_set_show_fill_level(GTK_RANGE(mainw->framedraw_scale), TRUE);
     gtk_range_set_restrict_to_fill_level(GTK_RANGE(mainw->framedraw_scale), TRUE);
-    gtk_range_set_fill_level(GTK_RANGE(mainw->framedraw_scale), (double)start);
+    gtk_range_set_fill_level(GTK_RANGE(mainw->framedraw_scale), end > start ? (double)start + 1. :
+                             (double)start);
     lives_widget_set_sensitive(mainw->framedraw_spinbutton, FALSE);
     lives_widget_set_sensitive(mainw->framedraw_scale, FALSE);
   }

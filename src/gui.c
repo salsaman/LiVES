@@ -2652,14 +2652,14 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_save_selection_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->close), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_close_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->import_proj), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_import_proj_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->export_proj), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_export_proj_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->export_theme), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_export_theme_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->import_theme), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_import_theme_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->import_proj), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_import_proj_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->export_proj), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_export_proj_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->export_theme), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_export_theme_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->import_theme), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_import_theme_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->clear_ds), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_cleardisk_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->quit), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -2721,18 +2721,18 @@ void create_LiVES(void) {
                                   NULL);  // connect after to stop keypress propagating to removed fs window
   mainw->fullscreen_cb_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->full_screen), LIVES_WIDGET_ACTIVATE_SIGNAL,
                               LIVES_GUI_CALLBACK(on_full_screen_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->sw_sound), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_boolean_toggled),
-                       &mainw->save_with_sound); // TODO - make pref
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->showsubs), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_showsubs_toggled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->letter), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(toggle_sets_pref), PREF_LETTERBOX);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->aload_subs), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_boolean_toggled), &prefs->autoload_subs);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->ccpd_sound), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_boolean_toggled),
-                       &mainw->ccpd_with_sound); // TODO - make pref
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->sw_sound), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_boolean_toggled),
+                            &mainw->save_with_sound); // TODO - make pref
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->showsubs), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_showsubs_toggled), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->letter), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(toggle_sets_pref), PREF_LETTERBOX);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->aload_subs), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_boolean_toggled), &prefs->autoload_subs);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->ccpd_sound), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_boolean_toggled),
+                            &mainw->ccpd_with_sound); // TODO - make pref
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->dsize), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_double_size_activate), NULL);
   mainw->sepwin_cb_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->sepwin), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -2757,20 +2757,20 @@ void create_LiVES(void) {
                             LIVES_GUI_CALLBACK(on_change_speed_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->resample_video), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_resample_video_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->load_subs), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_load_subs_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->load_subs), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_load_subs_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->erase_subs), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_erase_subs_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->capture), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_capture_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->rev_clipboard), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_rev_clipboard_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->export_selaudio), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_export_audio_activate), LIVES_INT_TO_POINTER(0));
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->export_allaudio), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_export_audio_activate), LIVES_INT_TO_POINTER(1));
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->append_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_append_audio_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->export_selaudio), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_export_audio_activate), LIVES_INT_TO_POINTER(0));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->export_allaudio), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_export_audio_activate), LIVES_INT_TO_POINTER(1));
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->append_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_append_audio_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->normalize_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_normalise_audio_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->trim_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -2797,8 +2797,8 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_resample_audio_activate), NULL);
   /* lives_signal_connect(LIVES_GUI_OBJECT(mainw->adj_audio_sync), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_adj_audio_sync_activate), NULL);*/
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->load_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_load_audio_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->load_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_load_audio_activate), NULL);
   if (capable->has_cdda2wav) {
     lives_signal_connect(LIVES_GUI_OBJECT(mainw->load_cdtrack), LIVES_WIDGET_ACTIVATE_SIGNAL,
                          LIVES_GUI_CALLBACK(on_load_cdtrack_activate), NULL);
@@ -2807,12 +2807,12 @@ void create_LiVES(void) {
                          LIVES_GUI_CALLBACK(on_eject_cd_activate), NULL);
   }
 
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->show_file_info), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_show_file_info_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->show_file_comments), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_show_file_comments_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->show_clipboard_info), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_show_clipboard_info_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->show_file_info), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_show_file_info_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->show_file_comments), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_show_file_comments_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->show_clipboard_info), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_show_clipboard_info_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->show_messages), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_show_messages_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->show_layout_errors), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -2855,23 +2855,23 @@ void create_LiVES(void) {
 
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->vj_load_set), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_load_set_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->vj_show_keys), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_show_keys_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->vj_show_keys), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_show_keys_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(assign_rte_keys), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_assign_rte_keys_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->save_rte_defs), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_save_rte_defs_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->vj_reset), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_vj_reset_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->save_rte_defs), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_save_rte_defs_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->vj_reset), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_vj_reset_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->vj_realize), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_vj_realize_activate), NULL);
 #ifdef ENABLE_OSC
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->midi_learn), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_midi_learn_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->midi_save), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_devicemap_save_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(midi_load), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_devicemap_load_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->midi_save), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_devicemap_save_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(midi_load), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_devicemap_load_activate), NULL);
 #endif
 
   mainw->toy_func_none = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->toy_none), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -2888,14 +2888,14 @@ void create_LiVES(void) {
   mainw->toy_func_lives_tv = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->toy_tv), LIVES_WIDGET_ACTIVATE_SIGNAL,
                              LIVES_GUI_CALLBACK(on_toy_activate), LIVES_INT_TO_POINTER(LIVES_TOY_TV));
 
-  lives_signal_connect(LIVES_GUI_OBJECT(about), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_about_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(about), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_about_activate), NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->troubleshoot), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_troubleshoot_activate), NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->expl_missing), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(explain_missing_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->expl_missing), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                            LIVES_GUI_CALLBACK(explain_missing_activate), NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(show_manual), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(show_manual_activate), NULL);
@@ -2918,6 +2918,7 @@ void create_LiVES(void) {
   mainw->spin_start_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->spinbutton_start),
                            LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                            LIVES_GUI_CALLBACK(on_spinbutton_start_value_changed), NULL);
+
   mainw->spin_end_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->spinbutton_end),
                          LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                          LIVES_GUI_CALLBACK(on_spinbutton_end_value_changed), NULL);

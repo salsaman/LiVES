@@ -171,18 +171,18 @@ def is_installed(prog):
     if wprog == '':
         if verbose:
             print >> sys.stderr, prog + ': command not found'
-            found = 0
+        found = 0
     else:
         if verbose:
             print >> sys.stderr, wprog + ': found'
-            found  = 1
+        found  = 1
 
     if found:
-	if hassubproc:	
-	    p = subprocess.Popen(['python', wprog, '-C'],stdout=subprocess.PIPE)
-	    std_out_err=p.stdout
+        if hassubproc:
+            p = subprocess.Popen(['python', wprog, '-C'],stdout=subprocess.PIPE)
+            std_out_err=p.stdout
 
-	else:
+        else:
             (std_in, std_out_err) = os.popen4('python ' + wprog  + ' -C')
             std_in.close()
 

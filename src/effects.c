@@ -339,6 +339,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     } else {
       mainw->current_file = current_file;
       do_rfx_cleanup(rfx);
+      if (!mainw->multitrack) showclipimgs();
     }
 
     mainw->is_generating = FALSE;
@@ -378,7 +379,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     if (numtok > 1) {
       char **array = lives_strsplit(mainw->msg, "|", numtok);
       // [0] is "completed"
-      cfile->end = cfile->progress_end = cfile->start + atoi(array[4]) - 1;
+      if (numtok > 4) cfile->end = cfile->progress_end = cfile->start + atoi(array[4]) - 1;
       if (rfx->props & RFX_PROPS_MAY_RESIZE || rfx->num_in_channels == 0) {
         // get new frame size
         uint64_t verhash = make_version_hash(rfx->rfx_version);

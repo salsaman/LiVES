@@ -173,11 +173,11 @@ def is_installed(prog):
     if wprog == '':
         if verbose:
             print(prog + ': command not found', file=sys.stderr)
-            found = 0
+        found = 0
     else:
         if verbose:
             print(wprog + ': found', file=sys.stderr)
-            found  = 1
+        found  = 1
 
     if found:
         if hassubproc:  

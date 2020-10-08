@@ -4073,13 +4073,17 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 
 #ifdef GUI_GTK
   if (act != LIVES_FILE_CHOOSER_ACTION_SAVE) {
+    const char *stocklabel;
+    if (act == LIVES_FILE_CHOOSER_ACTION_OPEN) {
+      stocklabel = LIVES_STOCK_LABEL_OPEN;
+    } else stocklabel = LIVES_STOCK_LABEL_SELECT;
     chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
                                           LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
-                                          LIVES_STOCK_LABEL_SELECT, LIVES_RESPONSE_ACCEPT, NULL);
+                                          stocklabel, LIVES_RESPONSE_ACCEPT, NULL);
   } else {
     chooser = gtk_file_chooser_dialog_new(mytitle, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), (LiVESFileChooserAction)act,
                                           LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
-                                          LIVES_STOCK_LABEL_OPEN, LIVES_RESPONSE_ACCEPT, NULL);
+                                          LIVES_STOCK_LABEL_SAVE, LIVES_RESPONSE_ACCEPT, NULL);
   }
 
   if (dir) {
@@ -4113,18 +4117,18 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
     }
   }
 
-  if (extra_widget && extra_widget != LIVES_MAIN_WINDOW_WIDGET) {
-    gtk_file_chooser_set_extra_widget(LIVES_FILE_CHOOSER(chooser), extra_widget);
-    if (palette->style & STYLE_1) {
-      LiVESWidget *parent = lives_widget_get_parent(extra_widget);
+  /* if (extra_widget && extra_widget != LIVES_MAIN_WINDOW_WIDGET) { */
+  /*   gtk_file_chooser_set_extra_widget(LIVES_FILE_CHOOSER(chooser), extra_widget); */
+  /*   if (palette->style & STYLE_1) { */
+  /*     LiVESWidget *parent = lives_widget_get_parent(extra_widget); */
 
-      while (parent) {
-        lives_widget_set_fg_color(parent, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-        lives_widget_set_bg_color(parent, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-        parent = lives_widget_get_parent(parent);
-      }
-    }
-  }
+  /*     while (parent) { */
+  /*       lives_widget_set_fg_color(parent, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore); */
+  /*       lives_widget_set_bg_color(parent, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back); */
+  /*       parent = lives_widget_get_parent(parent); */
+  /*     } */
+  /*   } */
+  /* } */
 
   if (mainw->is_ready && palette->style & STYLE_1) {
     lives_widget_set_bg_color(chooser, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -4163,8 +4167,6 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   }
 
 rundlg:
-  lives_widget_show_now(chooser);
-  lives_widget_context_update();
   if ((response = lives_dialog_run(LIVES_DIALOG(chooser))) != LIVES_RESPONSE_CANCEL) {
     char *tmp;
     filename = lives_filename_to_utf8((tmp = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser))),
@@ -4172,7 +4174,7 @@ rundlg:
     lives_free(tmp);
   } else filename = NULL;
 
-  if (filename && act == LIVES_FILE_CHOOSER_ACTION_SAVE) {
+  if (response && filename && act == LIVES_FILE_CHOOSER_ACTION_SAVE) {
     if (!check_file(filename, TRUE)) {
       lives_free(filename);
       filename = NULL;

@@ -3860,8 +3860,9 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox * vbox, lives_rf
         res_string = param_marshall(rfx, FALSE);
       }
 
+      lives_widget_destroy(dialog);
+
       if (fx_dialog[1]) {
-        lives_widget_destroy(fx_dialog[1]->dialog);
         lives_freep((void **)&fx_dialog[1]);
       }
     } else {

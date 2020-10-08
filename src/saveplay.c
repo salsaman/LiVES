@@ -1373,8 +1373,8 @@ void save_file(int clip, int start, int end, const char *filename) {
     char *ttl = (_("Save Clip"));
     do {
       lives_freep((void **)&n_file_name);
-      n_file_name = choose_file(mainw->vid_save_dir, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_SAVE, ttl, hbox);
-      if (!n_file_name) return;
+      n_file_name = choose_file_bg(mainw->vid_save_dir, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_SAVE, ttl, hbox);
+      if (mainw->fc_buttonresponse == LIVES_RESPONSE_CANCEL) return;
     } while (!*n_file_name);
     lives_snprintf(mainw->vid_save_dir, PATH_MAX, "%s", n_file_name);
     get_dirname(mainw->vid_save_dir);

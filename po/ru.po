@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2020-10-07 18:10-0300\n"
+"POT-Creation-Date: 2020-10-07 22:02-0300\n"
 "PO-Revision-Date: 2015-04-06 05:53+0000\n"
 "Last-Translator: ☠Jay ZDLin☠ <Unknown>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -5296,7 +5296,7 @@ msgstr ""
 
 #: src/gui.c:922 src/multitrack.c:7029
 msgid "_Play"
-msgstr "_Играть"
+msgstr "Прос_мотр"
 
 #: src/gui.c:928
 msgid "_Play All"
@@ -5368,7 +5368,7 @@ msgstr ""
 
 #: src/gui.c:1075 src/multitrack.c:7105
 msgid "Effect_s"
-msgstr "Воздейст_вие"
+msgstr "_Эффекты"
 
 #: src/gui.c:1078
 msgid "Effects are applied to the current selection."
@@ -12121,7 +12121,7 @@ msgstr ""
 
 #: src/multitrack.c:7403
 msgid "_Tracks"
-msgstr "_Композиции"
+msgstr "_Дорожки"
 
 #: src/multitrack.c:7414
 #, fuzzy
@@ -12231,7 +12231,7 @@ msgstr ""
 
 #: src/multitrack.c:7645
 msgid "_Render"
-msgstr "_Применить"
+msgstr "_Рендер"
 
 #: src/multitrack.c:7651
 msgid "_Render All to New Clip"
@@ -13595,8 +13595,9 @@ msgid "Add noise"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+#, fuzzy
 msgid "Adjust contrast"
-msgstr ""
+msgstr "Добавление изображения..."
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 #, fuzzy

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2020-10-07 18:10-0300\n"
+"POT-Creation-Date: 2020-10-07 22:02-0300\n"
 "PO-Revision-Date: 2015-04-20 18:32+0000\n"
 "Last-Translator: Miguel Anxo Bouzada <mbouzada@gmail.com>\n"
 "Language-Team: Galician <proxecto@trasno.net>\n"
@@ -13155,16 +13155,19 @@ msgid "Centre _Y"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+#, fuzzy
 msgid "Changing brightness of"
-msgstr ""
+msgstr "O directorio temporal é %s\n"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+#, fuzzy
 msgid "Changing gamma of"
-msgstr ""
+msgstr "O directorio temporal é %s\n"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#, fuzzy
 msgid "Changing hue of"
-msgstr ""
+msgstr "O directorio temporal é %s\n"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 #, fuzzy
@@ -13717,8 +13720,11 @@ msgid "Splicing"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "Spread"
 msgstr ""
+"\n"
+"  Apertura..."
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
@@ -14384,8 +14390,11 @@ msgid "spin"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "spread"
 msgstr ""
+"\n"
+"  Apertura..."
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy

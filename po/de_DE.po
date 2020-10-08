@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Lives 0.9.5\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2020-10-07 18:10-0300\n"
+"POT-Creation-Date: 2020-10-07 22:02-0300\n"
 "PO-Revision-Date: 2015-04-05 16:14+0000\n"
 "Last-Translator: Michael Kohl <rolf.michael.kohl@googlemail.com>\n"
 "Language-Team: Herbert U. Hübner <herbert.u.huebner@friendglow.net>\n"
@@ -13385,8 +13385,9 @@ msgid "Splicing"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "Spread"
-msgstr ""
+msgstr "LiVES: - Verarbeiten..."
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
@@ -14046,8 +14047,9 @@ msgid "spin"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "spread"
-msgstr ""
+msgstr "LiVES: - Verarbeiten..."
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy

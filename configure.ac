@@ -921,8 +921,9 @@ if test "x$disable_frei0r" != "xyes" ; then
 
 dnl check for frei0r
 AC_CHECK_HEADERS(frei0r.h, HAVE_FREI0R=true, HAVE_FREI0R=false)
-AM_CONDITIONAL(HAVE_FREI0R,$HAVE_FREI0R)
 fi
+
+AM_CONDITIONAL(HAVE_FREI0R,$HAVE_FREI0R)
 
 HAVE_LDVGRAB=false
 

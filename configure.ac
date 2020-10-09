@@ -838,19 +838,6 @@ fi
 
 AM_CONDITIONAL(HAVE_THEORA,$HAVE_THEORA)
 
-HAVE_VORBIS=false
-dnl check for libvorbis
-
-AC_ARG_ENABLE(vorbis, [  --disable-vorbis     Disable vorbis support.] , disable_vorbis=yes)
-if test "$disable_vorbis" != "xyes" ; then
-
-PKG_CHECK_MODULES(VORBIS,vorbis,HAVE_VORBIS=true,HAVE_VORBIS=false)
-AC_SUBST(VORBIS_CFLAGS)
-AC_SUBST(VORBIS_LIBS)
-fi
-
-AM_CONDITIONAL(HAVE_VORBIS,$HAVE_VORBIS)
-
 HAVE_DIRAC=false
 
 dnl check for dirac

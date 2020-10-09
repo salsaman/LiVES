@@ -859,6 +859,7 @@ boolean mt_auto_backup(livespointer user_data) {
 
   lives_mt *mt = (lives_mt *)user_data;
 
+  if (!mt->idlefunc) return FALSE;
   if (!mainw->multitrack) return FALSE;
 
   if (prefs->mt_auto_back == 0) mt->auto_changed = TRUE;
@@ -5492,7 +5493,9 @@ void set_mt_play_sizes_cfg(lives_mt * mt) {
     height = (height >> 2) << 2;
 
     mt->play_width = width;
-    mt->play_height = height;
+
+    // allow for height of label
+    mt->play_height = height - 48;
   }
 }
 
@@ -11746,6 +11749,7 @@ static void set_in_out_spin_ranges(lives_mt * mt, weed_timecode_t start_tc, weed
 
   if (avel > 0.) {
     lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_out), out_start_range, real_out_end_range);
+    g_print("set to %f and %f\n", out_start_range, real_out_end_range);
     lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_in), real_in_start_range, in_end_range);
   } else {
     lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_in), out_start_range, real_out_end_range);
@@ -12441,7 +12445,7 @@ void in_out_end_changed(LiVESWidget * widget, livespointer user_data) {
       mt->idlefunc = mt_idle_add(mt);
     }
   }
-  lives_widget_set_sensitive(mt->spinbutton_out, FALSE);
+  lives_widget_set_sensitive(mt->spinbutton_out, TRUE);
 }
 
 

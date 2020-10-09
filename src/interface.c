@@ -2764,6 +2764,11 @@ static void close_expander(LiVESWidget * button, _entryw * renamew) {
     lives_expander_set_expanded(LIVES_EXPANDER(renamew->expander), FALSE);
 }
 
+static void renamew_entry_changed(LiVESEntry * entry, LiVESWidget * other) {
+  if (!*(lives_entry_get_text(entry))) lives_widget_set_sensitive(other, FALSE);
+  else lives_widget_set_sensitive(other, TRUE);
+}
+
 _entryw *create_rename_dialog(int type) {
   // type 1 = rename clip in menu
   // type 2 = save clip set
@@ -2955,6 +2960,9 @@ _entryw *create_rename_dialog(int type) {
     on_set_exp(renamew->expander, renamew);
     add_fill_to_box(LIVES_BOX(dialog_vbox));
     add_fill_to_box(LIVES_BOX(dialog_vbox));
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(renamew->entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(renamew_entry_changed), renamew->expander);
+    renamew_entry_changed(LIVES_ENTRY(renamew->entry), renamew->expander);
   }
 
   if (type == 8) {

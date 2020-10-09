@@ -6160,7 +6160,7 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
     lives_free(tmp);
     lives_free(extra);
     mainw->next_ds_warn_level = ds_warn_level;
-    return;
+    goto end;
   }
   widget_opts.use_markup = FALSE;
   lives_free(extra);
@@ -6646,6 +6646,8 @@ cleanup:
       sensitize();
     }
 
+
+end:
     if (mainw->multitrack) {
       if (!mainw->is_processing && !LIVES_IS_PLAYING) {
         mt_sensitise(mainw->multitrack);

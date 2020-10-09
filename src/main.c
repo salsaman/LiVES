@@ -5555,10 +5555,19 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
     owidth = width = lives_pixbuf_get_width(pixbuf);
     oheight = height = lives_pixbuf_get_height(pixbuf);
 
+    cx = (rwidth - width) >> 1;
+    if (cx < 0) cx = 0;
+    cy = (rheight - height) >> 1;
+    if (cy < 0) cy = 0;
+
     if (widget == mainw->start_image || widget == mainw->end_image
         || (mainw->multitrack && widget == mainw->preview_image)
        ) {// || (widget == mainw->play_window && !mainw->fs)) {
       LiVESWidget *p = lives_widget_get_parent(widget);
+
+      if (!mainw->multitrack)
+        p = lives_widget_get_parent(p);
+
       if (prefs->ce_maxspect) {
         calc_maxspect(rwidth, rheight, &width, &height);
 
@@ -5576,9 +5585,6 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
     }
 
     lives_widget_set_opacity(widget, 1.);
-    cx = (rwidth - width) >> 1;
-    if (cx < 0) cx = 0;
-    cy = (rheight - height) >> 1;
 
     if ((!mainw->multitrack || widget != mainw->play_image) && widget != mainw->preview_image) {
       if (prefs->funky_widgets) {
@@ -5592,15 +5598,20 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
         // frame
         lives_painter_stroke(cr);
         cx += 2;
+        cy += 4;
       }
     }
+
+    /* if (widget == mainw->start_image || widget == mainw->end_image || widget == mainw->play_image) { */
+    /*   if (cx < 4) cx = 4; */
+    /*   if (cy < 4) cy = 4; */
+    /* } */
 
     /// x, y values are offset of top / left of image in drawing area
     lives_painter_set_source_pixbuf(cr, pixbuf, cx, cy);
 
     if (mainw->multitrack && widget != mainw->preview_image) border = 16;
-    /// clipping area for image
-    lives_painter_rectangle(cr, cx, cy, rwidth - border, rheight + 2);
+    lives_painter_rectangle(cr, cx, cy, rwidth - border - cx * 2, rheight + 2 - cy * 2);
   } else {
     lives_widget_set_opacity(widget, 0.);
     clear_widget_bg(widget, surface);
@@ -5812,7 +5823,7 @@ check_stcache:
 
 #if GTK_CHECK_VERSION(3, 0, 0)
     rwidth = mainw->ce_frame_width;
-    rheight = mainw->ce_frame_height - V_RESIZE_ADJUST * 2;
+    rheight = mainw->ce_frame_height;// - V_RESIZE_ADJUST * 2;
 #else
     rwidth = lives_widget_get_allocation_width(mainw->start_image);
     rheight = lives_widget_get_allocation_height(mainw->start_image);
@@ -6086,7 +6097,7 @@ check_encache:
 
 #if GTK_CHECK_VERSION(3, 0, 0)
     rwidth = mainw->ce_frame_width;
-    rheight = mainw->ce_frame_height - V_RESIZE_ADJUST * 2;
+    rheight = mainw->ce_frame_height;// - V_RESIZE_ADJUST * 2;
 #else
     rwidth = lives_widget_get_allocation_width(mainw->end_image);
     rheight = lives_widget_get_allocation_height(mainw->end_image);

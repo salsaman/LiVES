@@ -213,7 +213,10 @@ fi
 fi
 
 dnl prctl
+AC_ARG_ENABLE(prctl, [  --disable-prctl     Disable prctl support.] , disable_prctl=yes)
+if test "$disable_prctl" != "xyes" ; then
 AC_CHECK_HEADERS(sys/prctl.h, HAVE_PRCTL=true, HAVE_PRCTL=false)
+fi
 AM_CONDITIONAL(HAVE_PRCTL, $HAVE_PRCTL)
 
 dnl js_header
@@ -227,7 +230,7 @@ HAVE_JACK_TRANSPORT=false
 AC_ARG_ENABLE(jack, [  --disable-jack     Disable jack support.] , disable_jack=yes)
 AC_ARG_ENABLE(jack-transport, [  --disable-jack-transport     Disable jack transport support.] , disable_jack_transport=yes)
 
-if test "x$disable_jack" != "xyes" ; then
+if test "$disable_jack" != "xyes" ; then
 
 dnl check for jack
 
@@ -302,16 +305,21 @@ AC_SUBST(X11_LIBS)
 
 AM_CONDITIONAL(HAVE_X11,$HAVE_X11)
 
+AC_ARG_ENABLE(wayland, [  --disable-wayland     Disable wayland support.] , disable_wayland=yes)
+if test "$disable_wayland" != "xyes" ; then
 PKG_CHECK_MODULES(WAYLAND,gdk-wayland-3.0,HAVE_WAYLAND=true,HAVE_WAYLAND=false)
 AC_SUBST(WAYLAND_CFLAGS)
 AC_SUBST(WAYLAND_LIBS)
-
+fi
 AM_CONDITIONAL(HAVE_WAYLAND,$HAVE_WAYLAND)
 
+
+AC_ARG_ENABLE(xrender, [  --disable-xrender     Disable xrender support.] , disable_xrender=yes)
+if test "$disable_xrender" != "xyes" ; then
 PKG_CHECK_MODULES(XRENDER,xrender,HAVE_XRENDER=true,HAVE_XRENDER=false)
 AC_SUBST(XRENDER_CFLAGS)
 AC_SUBST(XRENDER_LIBS)
-
+fi
 AM_CONDITIONAL(HAVE_XRENDER,$HAVE_XRENDER)
 
 HAVE_GTK_VERSION3=false
@@ -582,6 +590,9 @@ HAVE_OPENCV4=false
 
 dnl check for opencv
 
+AC_ARG_ENABLE(opencv, [  --disable-opencv     Disable opencv support.] , disable_opencv=yes)
+if test "$disable_opencv" != "xyes" ; then
+
 PKG_CHECK_MODULES(OPENCV, opencv >= 2.3.1, HAVE_OPENCV=true, HAVE_OPENCV=false)
 
 if test "$HAVE_OPENCV" = "false" ; then
@@ -606,22 +617,26 @@ AC_SUBST(OPENCV4_CFLAGS)
 AC_SUBST(OPENCV4_LIBS_ONLY_L)
 AC_SUBST(OPENCV4_LIBS_ONLY_OTHER)
 
-AM_CONDITIONAL(HAVE_OPENCV4,$HAVE_OPENCV4)
-
 AC_SUBST(OPENCV_CFLAGS)
 AC_SUBST(OPENCV_LIBS_ONLY_L)
 AC_SUBST(OPENCV_LIBS_ONLY_OTHER)
+fi
 
+AM_CONDITIONAL(HAVE_OPENCV4,$HAVE_OPENCV4)
 AM_CONDITIONAL(HAVE_OPENCV,$HAVE_OPENCV)
 
 HAVE_FFTW3F=false
 
 dnl check for fftw3f
 
+AC_ARG_ENABLE(fftw3f, [  --disable-fftw3     Disable fftw3 support.] , disable_fftw3=yes)
+if test "$disable_fftw3" != "xyes" ; then
+
 PKG_CHECK_MODULES(FFTW3F, fftw3f, HAVE_FFTW3F=true, HAVE_FFTW3F=false)
 
 AC_SUBST(FFTW3F_CFLAGS)
 AC_SUBST(FFTW3F_LIBS)
+fi
 
 AM_CONDITIONAL(HAVE_FFTW3F,$HAVE_FFTW3F)
 
@@ -725,9 +740,14 @@ AC_SUBST(LIBBZ_LIBS)
 AM_CONDITIONAL(CONFIG_BZLIB,$HAVE_LIBBZ)
 
 HAVE_LIBEXPLAIN=false
+
+AC_ARG_ENABLE(explain, [  --disable-libexplain     Disable libexplain support.] , disable_libexplain=yes)
+if test "$disable_libexplain" != "xyes" ; then
+
 PKG_CHECK_MODULES(LIBEXPLAIN, libexplain, HAVE_LIBEXPLAIN=true, HAVE_LIBEXPLAIN=false)
 AC_SUBST(LIBEXPLAIN_CFLAGS)
 AC_SUBST(LIBEXPLAIN_LIBS)
+fi
 
 AM_CONDITIONAL(HAVE_LIBEXPLAIN, $HAVE_LIBEXPLAIN)
 
@@ -755,6 +775,9 @@ AM_CONDITIONAL(HAVE_UNICAP,$HAVE_UNICAP)
 
 HAVE_LIBv4l1=false
 
+AC_ARG_ENABLE(v4l, [  --disable-v4l     Disable v4l1 / v4l2 support.] , disable_v4l=yes)
+if test "$disable_v4l" != "xyes" ; then
+
 AC_CHECK_HEADERS(linux/videodev2.h, HAVE_LIBv4l2=true, HAVE_LIBv4l2=false)
 AM_CONDITIONAL(HAVE_LIBv4l2,$HAVE_LIBv4l2)
 
@@ -770,51 +793,76 @@ if test "$HAVE_LIBv4l1" = "true"; then
 v4l1_INCFILE=2
 fi
 fi
+AC_SUBST(v4l1_INCFILE)
 
 fi
-
+fi
 AM_CONDITIONAL(HAVE_LIBv4l1,$HAVE_LIBv4l1)
-AC_SUBST(v4l1_INCFILE)
 
 
 HAVE_LIBDV=false
 dnl check for libdv
+
+AC_ARG_ENABLE(v4l, [  --disable-libdv     Disable libdv support.] , disable_libdv=yes)
+if test "$disable_libdv" != "xyes" ; then
+
 PKG_CHECK_MODULES(LIBDV,libdv,HAVE_LIBDV=true,HAVE_LIBDV=false)
 AC_SUBST(LIBDV_CFLAGS)
 AC_SUBST(LIBDV_LIBS)
-
+fi
 AM_CONDITIONAL(HAVE_LIBDV,$HAVE_LIBDV)
 
 HAVE_OGG=false
 dnl check for ogg
+
+AC_ARG_ENABLE(ogg, [  --disable-ogg     Disable ogg support.] , disable_ogg=yes)
+if test "$disable_ogg" != "xyes" ; then
+
 PKG_CHECK_MODULES(OGG,ogg,HAVE_OGG=true,HAVE_OGG=false)
 AC_SUBST(OGG_CFLAGS)
 AC_SUBST(OGG_LIBS)
+fi
 
 AM_CONDITIONAL(HAVE_OGG,$HAVE_OGG)
 
 HAVE_THEORA=false
 dnl check for libtheora
+
+AC_ARG_ENABLE(theora, [  --disable-theora     Disable theora support.] , disable_theora=yes)
+if test "$disable_theora" != "xyes" ; then
+
 PKG_CHECK_MODULES(THEORA,theora,HAVE_THEORA=true,HAVE_THEORA=false)
 AC_SUBST(THEORA_CFLAGS)
 AC_SUBST(THEORA_LIBS)
+fi
 
 AM_CONDITIONAL(HAVE_THEORA,$HAVE_THEORA)
 
 HAVE_VORBIS=false
 dnl check for libvorbis
+
+AC_ARG_ENABLE(vorbis, [  --disable-vorbis     Disable vorbis support.] , disable_vorbis=yes)
+if test "$disable_vorbis" != "xyes" ; then
+
 PKG_CHECK_MODULES(VORBIS,vorbis,HAVE_VORBIS=true,HAVE_VORBIS=false)
 AC_SUBST(VORBIS_CFLAGS)
 AC_SUBST(VORBIS_LIBS)
+fi
 
 AM_CONDITIONAL(HAVE_VORBIS,$HAVE_VORBIS)
 
 HAVE_DIRAC=false
+
 dnl check for dirac
+
+AC_ARG_ENABLE(dirac, [  --disable-dirac     Disable dirac (schroedinger) support.] , disable_dirac=yes)
+if test "$disable_dirac" != "xyes" ; then
+
 echo -n "checking for Dirac (schroedinger): "
 PKG_CHECK_MODULES(DIRAC,schroedinger-1.0,HAVE_DIRAC=true,HAVE_DIRAC=false)
 AC_SUBST(DIRAC_CFLAGS)
 AC_SUBST(DIRAC_LIBS)
+fi
 
 AM_CONDITIONAL(HAVE_DIRAC,$HAVE_DIRAC)
 

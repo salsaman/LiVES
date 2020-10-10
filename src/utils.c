@@ -1392,14 +1392,6 @@ int lives_chdir(const char *path, boolean no_error_dlg) {
   /// returns 0 on success
   /// on failure pops up an error dialog, unless no_error_dlg is TRUE
   int retval = chdir(path);
-  if (!retval) {
-    /// double check to be sure
-    char *cwd = lives_get_current_dir();
-    if (strcmp(cwd, path)) {
-      retval = -123456;
-    }
-    lives_free(cwd);
-  }
 
   if (retval) {
     char *msg = lives_strdup_printf("Chdir failed to: %s", path);

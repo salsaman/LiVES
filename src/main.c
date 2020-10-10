@@ -5563,10 +5563,19 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
     if (widget == mainw->start_image || widget == mainw->end_image
         || (mainw->multitrack && widget == mainw->preview_image)
        ) {// || (widget == mainw->play_window && !mainw->fs)) {
+      int xrwidth, xrheight;
       LiVESWidget *p = lives_widget_get_parent(widget);
 
-      if (!mainw->multitrack)
-        p = lives_widget_get_parent(p);
+      p = lives_widget_get_parent(p);
+
+      xrwidth = lives_widget_get_allocation_width(p);
+      xrheight = lives_widget_get_allocation_height(p);
+      lives_painter_render_background(p, cr, 0., 0., xrwidth, xrheight);
+
+      if (mainw->multitrack) {
+        rwidth = xrwidth;
+        rheight = xrheight;
+      }
 
       if (prefs->ce_maxspect) {
         calc_maxspect(rwidth, rheight, &width, &height);
@@ -5579,9 +5588,13 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
           height = oheight;
         }
       }
-      rwidth = lives_widget_get_allocation_width(p);
-      rheight = lives_widget_get_allocation_height(p);
-      lives_painter_render_background(p, cr, 0., 0., rwidth, rheight);
+
+      if (mainw->multitrack) {
+        cx = (rwidth - width) >> 1;
+        if (cx < 0) cx = 0;
+        cy = (rheight - height) >> 1;
+        if (cy < 0) cy = 0;
+      }
     }
 
     lives_widget_set_opacity(widget, 1.);
@@ -5602,15 +5615,12 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
       }
     }
 
-    /* if (widget == mainw->start_image || widget == mainw->end_image || widget == mainw->play_image) { */
-    /*   if (cx < 4) cx = 4; */
-    /*   if (cy < 4) cy = 4; */
-    /* } */
-
+    if (mainw->multitrack && widget != mainw->preview_image) {
+      border = 0;
+      cx += border >> 1;
+    }
     /// x, y values are offset of top / left of image in drawing area
     lives_painter_set_source_pixbuf(cr, pixbuf, cx, cy);
-
-    if (mainw->multitrack && widget != mainw->preview_image) border = 16;
     lives_painter_rectangle(cr, cx, cy, rwidth - border - cx * 2, rheight + 2 - cy * 2);
   } else {
     lives_widget_set_opacity(widget, 0.);
@@ -5821,13 +5831,9 @@ check_stcache:
 
     // TODO *** - if width*height==0, show broken frame image
 
-#if GTK_CHECK_VERSION(3, 0, 0)
-    rwidth = mainw->ce_frame_width;
-    rheight = mainw->ce_frame_height;// - V_RESIZE_ADJUST * 2;
-#else
     rwidth = lives_widget_get_allocation_width(mainw->start_image);
     rheight = lives_widget_get_allocation_height(mainw->start_image);
-#endif
+
     calc_maxspect(rwidth, rheight, &width, &height);
     width = (width >> 2) << 2;
     height = (height >> 2) << 2;
@@ -6095,13 +6101,9 @@ check_encache:
     width = cfile->hsize;
     height = cfile->vsize;
 
-#if GTK_CHECK_VERSION(3, 0, 0)
-    rwidth = mainw->ce_frame_width;
-    rheight = mainw->ce_frame_height;// - V_RESIZE_ADJUST * 2;
-#else
     rwidth = lives_widget_get_allocation_width(mainw->end_image);
     rheight = lives_widget_get_allocation_height(mainw->end_image);
-#endif
+
     calc_maxspect(rwidth, rheight, &width, &height);
     width = (width >> 2) << 2;
     height = (height >> 2) << 2;
@@ -7777,7 +7779,7 @@ goto align;
 
 if (!mainw->fs) {
 // embedded player
-rwidth = lives_widget_get_allocation_width(mainw->playframe);// - H_RESIZE_ADJUST;
+rwidth = lives_widget_get_allocation_width(mainw->play_image);// - H_RESIZE_ADJUST;
 rheight = lives_widget_get_allocation_height(mainw->play_image);// - V_RESIZE_ADJUST;
 
 if (prefs->letterbox) {

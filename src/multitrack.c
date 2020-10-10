@@ -11749,7 +11749,6 @@ static void set_in_out_spin_ranges(lives_mt * mt, weed_timecode_t start_tc, weed
 
   if (avel > 0.) {
     lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_out), out_start_range, real_out_end_range);
-    g_print("set to %f and %f\n", out_start_range, real_out_end_range);
     lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_in), real_in_start_range, in_end_range);
   } else {
     lives_spin_button_set_range(LIVES_SPIN_BUTTON(mt->spinbutton_in), out_start_range, real_out_end_range);

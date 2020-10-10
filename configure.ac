@@ -230,7 +230,7 @@ HAVE_JACK_TRANSPORT=false
 AC_ARG_ENABLE(jack, [  --disable-jack     Disable jack support.] , disable_jack=yes)
 AC_ARG_ENABLE(jack-transport, [  --disable-jack-transport     Disable jack transport support.] , disable_jack_transport=yes)
 
-if test "$disable_jack" != "xyes" ; then
+if test "x$disable_jack" != "xyes" ; then
 
 dnl check for jack
 
@@ -247,7 +247,7 @@ else
 echo jack server libs not found
 fi
 
-else
+else dnl HAVE_JACK
 
 AC_CHECK_LIB(jack,jack_get_client_name,have_jacklib=true,have_jacklib=false)
 if test "$have_jacklib" = "true"; then
@@ -259,8 +259,8 @@ JACK_CFLAGS=
 JACK_LIBS=-ljack
 JACK_SERVER_LIBS=-ljackserver
 
-fi
-fi
+fi dnl HAVE_JACKLIB
+fi dnl HAVE_JACK
 
 if test "$HAVE_JACK" != "false"; then
 if test "$HAVE_JACK_SERVER" != "false"; then
@@ -274,9 +274,10 @@ if test "x$disable_jack_transport" != "xyes" ; then
 dnl check for jack-transport
 AC_CHECK_HEADERS(jack/transport.h, HAVE_JACK_TRANSPORT=true, HAVE_JACK_TRANSPORT=false)
 
-fi
-fi
-fi
+fi dnl JACK_TRANS.
+fi dnl HAVER_JACK_SERVER
+fi dnl HAVE_JACK
+
 else
 echo not checking for jack
 fi

@@ -11,6 +11,8 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
+#define NEED_PALETTE_UTILS
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-utils.h> // optional
@@ -30,11 +32,8 @@ static int package_version = 1; // version of this package
 
 /////////////////////////////////////////////
 
-typedef unsigned int RGB32;
-#define PIXEL_SIZE (sizeof(RGB32))
-
 typedef struct {
-  RGB32 *map;
+  uint8_t *map;
 } static_data;
 
 //static int video_width_margin;
@@ -42,17 +41,16 @@ typedef struct {
 
 static weed_error_t edge_init(weed_plant_t *inst) {
   weed_plant_t *in_channel;
-  int height, width;
-
+  int width, height;
   static_data *sdata = (static_data *)weed_malloc(sizeof(static_data));
-  if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
+  if (!sdata) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
-  height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
-  width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
+  in_channel = weed_get_in_channel(inst, 0);
+  width = weed_channel_get_width(in_channel);
+  height = weed_channel_get_height(in_channel);
 
-  sdata->map = weed_calloc(width * height, PIXEL_SIZE * 2);
-  if (sdata->map == NULL) {
+  sdata->map = weed_calloc(height, width * 3);
+  if (!sdata->map) {
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
@@ -63,7 +61,7 @@ static weed_error_t edge_init(weed_plant_t *inst) {
 
 static weed_error_t edge_deinit(weed_plant_t *inst) {
   static_data *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
-  if (sdata != NULL) {
+  if (sdata) {
     weed_free(sdata->map);
     weed_free(sdata);
   }
@@ -72,103 +70,132 @@ static weed_error_t edge_deinit(weed_plant_t *inst) {
 }
 
 
-static inline RGB32 copywalpha(RGB32 *dest, size_t doffs, RGB32 *src, size_t offs, RGB32 val) {
+static inline void copywalpha(uint8_t *dest, size_t doffs, uint8_t *src,
+                              size_t offs, uint8_t red, uint8_t green, uint8_t blue) {
   // copy alpha from src, and RGB from val; return val
-  dest[doffs] = (src[offs] & 0xff000000) | (val & 0xffffff);
-  return val;
+  dest[doffs] = (((red * src[0]) >> 7) + red) >> 1;
+  // dest[doffs + 1] = (((green * src[1]) >> 7) + green) >> 1;
+  dest[doffs + 1] = green;
+  dest[doffs + 2] = (((blue * src[2]) >> 7) + blue) >> 1;
+  dest[doffs + 3] = src[offs + 3];
 }
 
 
 static weed_error_t  edge_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   static_data *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL),
-                *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  weed_plant_t *in_channel = weed_get_in_channel(inst, 0),
+                *out_channel = weed_get_out_channel(inst, 0);
 
-  RGB32 *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
-  RGB32 *dest = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL), *odest;
-  RGB32 *map = sdata->map;
-  RGB32 p, q;
-  RGB32 v0, v1, v2, v3;
+  uint8_t *src = (uint8_t *)weed_channel_get_pixel_data(in_channel);
+  uint8_t *dest = (uint8_t *)weed_channel_get_pixel_data(out_channel);
+  uint8_t *map = sdata->map;
+  uint8_t *p, *q;
 
-  int video_width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
-  int video_height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
-  int irow = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL) / 4; // get val in pixels
-  int orow = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL) / 4;
-  int r, g, b;
-
-  int map_width = video_width / 2;
-  int map_height = video_height;
-
-  register int x, y;
-
-  odest = dest;
+  int width = weed_channel_get_width(in_channel), hwidth = width >> 1, w3 = width * 3;
+  int height = weed_channel_get_height(in_channel);
+  int pal = weed_channel_get_palette(in_channel);
+  int irow = weed_channel_get_stride(in_channel);
+  int orow = weed_channel_get_stride(out_channel);
+  short r, g, b, a;
+  int x, y;
+  int psize = pixel_size(pal);
+  int red = 0, green = 1, blue = 2;
+  uint8_t r0, r1, r2, r3, g0, g1, g2, g3, b0, b1, b2, b3;
 
   src += irow;
   dest += orow;
 
-  for (y = 1; y < map_height - 4; y++) {
-    for (x = 0; x < map_width; x++) {
-      p = *src;
-      q = *(src + 1);
+  for (y = 1; y < height - 4; y++) {
+    int x6 = 0;
+    for (x = 0; x < hwidth; x++, x6 += 6) {
+      p = src;
+      q = src + psize;
 
       /* difference between the current pixel and right neighbor. */
-      r = ((int)(p & 0xff0000) - (int)(q & 0xff0000)) >> 16;
-      g = ((int)(p & 0x00ff00) - (int)(q & 0x00ff00)) >> 8;
-      b = ((int)(p & 0x0000ff) - (int)(q & 0x0000ff));
+      r = p[red] - q[red];
+      g = p[green] - q[green];
+      b = p[blue] - q[blue];
+
       r *= r; /* Multiply itself and divide it by 16, instead of */
       g *= g; /* using abs(). */
       b *= b;
-      r >>= 5; /* To lack the lower bit for saturated addition,  */
-      g >>= 5; /* divide the value by 32, instead of 16. It is */
-      b >>= 4; /* the same as `v2 &= 0xfefeff' */
+
+      r >>= 4; /* To lack the lower bit for saturated addition,  */
+      g >>= 4; /* divide the value by 32, instead of 16. It is */
+      b >>= 5; /* the same as `v2 &= 0xfefeff' */
+
       if (r > 127) r = 127;
       if (g > 127) g = 127;
       if (b > 255) b = 255;
-      v2 = (r << 17) | (g << 9) | b;
+
+      r2 = map[y * w3 + x6] = r;
+      g2 = map[y * w3 + x6 + 1] = g;
+      b2 = map[y * w3 + x6 + 2] = b;
 
       /* difference between the current pixel and upper neighbor. */
-      q = *(src - irow * 2);
-      r = ((int)(p & 0xff0000) - (int)(q & 0xff0000)) >> 16;
-      g = ((int)(p & 0x00ff00) - (int)(q & 0x00ff00)) >> 8;
-      b = ((int)(p & 0x0000ff) - (int)(q & 0x0000ff));
+      q = src - irow;
+      r = p[red] - q[red];
+      g = p[green] - q[green];
+      b = p[blue] - q[blue];
+
       r *= r;
       g *= g;
       b *= b;
-      r >>= 5;
-      g >>= 5;
-      b >>= 4;
+
+      r >>= 4;
+      g >>= 4;
+      b >>= 5;
 
       if (r > 127) r = 127;
       if (g > 127) g = 127;
       if (b > 255) b = 255;
-      v3 = (r << 17) | (g << 9) | b;
 
-      map[y * video_width + x * 2 + 2] = v3;
-      map[y * video_width * 2 + x * 2] = v2;
+      r3 = map[y * w3 + x6 + 3] = r;
+      g3 = map[y * w3 + x6 + 4] = g;
+      b3 = map[y * w3 + x6 + 5] = b;
 
-      v0 = map[(y - 1) * video_width * 2 + x * 2];
-      v1 = map[y * video_width * 2 + x * 2 + 2];
+      r0 = map[(y - 1) * w3 + x6];
+      g0 = map[(y - 1) * w3 + x6 + 1];
+      b0 = map[(y - 1) * w3 + x6 + 2];
 
-      g = (r = v0 + v1) & 0x01010100;
-      copywalpha(dest, 0, src, 0, r | (g - (g >> 8)));
-      g = (r = v0 + v3) & 0x01010100;
-      copywalpha(dest, 0, src, 1, r | (g - (g >> 8)));
-      g = (r = v2 + v1) & 0x01010100;
-      copywalpha(dest, orow, src, irow, r | (g - (g >> 8)));
-      g = (r = v2 + v3) & 0x01010100;
-      copywalpha(dest, orow + 1, src, irow + 1, r | (g - (g >> 8)));
+      r1 = map[(y - 1) * w3 + x6 + 3];
+      g1 = map[(y - 1) * w3 + x6 + 4];
+      b1 = map[(y - 1) * w3 + x6 + 5];
 
-      src += 2; // jump 4 pixels
-      dest += 2; // jump 4 pixels
+      a = (b0 + b1);
+      b2 = a > 255 ? 255 : a;
+
+      g1 = g2 = (g0 + g1) & 0xFF;
+      a = (g2 | (g2 - b2)) & 0xFF;
+      g2 = a < 0 ? 0 : a & 0xFF;
+
+      a = (r0 + r1);
+      r2 = a > 255 ? 255 : a;
+
+      copywalpha(dest, 0, src, 0, r2, g2, b2);
+
+      a = (b0 + b3);
+      b2 = a > 255 ? 255 : a;
+
+      g2 = (g0 + g3) & 0xFF;
+      a = (g2 | (g2 - b2)) & 0xFF;
+      g2 = a < 0 ? 0 : a & 0xFF;
+
+      a = (r0 + r3);
+      r2 = a > 255 ? 255 : a;
+
+      copywalpha(dest, psize, src, psize, r2, g2, b2);
+      src += psize * 2; // jump 2 pixels
+      dest += psize * 2; // jump 2 pixels
     }
 
-    src += irow - map_width * 2;
-    dest += orow - map_width * 2;
+    src += irow - width * psize;
+    dest += orow - width * psize;
   }
 
   for (y = 0; y < 2; y++) {
-    for (x = 0; x < video_width; x++) copywalpha(odest++, 0, src, 0, 0);
-    odest += orow - video_width;
+    for (x = 0; x < width; x++) copywalpha(dest++, 0, src, 0, 0, 0, 0);
+    dest += orow - width;
   }
 
   return WEED_SUCCESS;
@@ -176,7 +203,7 @@ static weed_error_t  edge_process(weed_plant_t *inst, weed_timecode_t timestamp)
 
 
 WEED_SETUP_START(200, 200) {
-  int palette_list[] = {WEED_PALETTE_BGRA32, WEED_PALETTE_END};
+  int palette_list[] = {WEED_PALETTE_RGBA32, WEED_PALETTE_END};
 
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
@@ -185,7 +212,7 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+  weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;
 

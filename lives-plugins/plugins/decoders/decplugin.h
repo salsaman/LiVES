@@ -250,8 +250,6 @@ void module_unload(void);
 #define get_le32int(p) ((get_le16int(p + 2) << 16) | get_le16int(p))
 #define get_le64int(p) (int64_t)(((uint64_t)(get_le32int(p + 4)) << 32) | (uint64_t)(get_le32int(p)))
 
-#define MK_FOURCC(a, b, c, d) ((a << 24) | (b << 16) | (c << 8) | d)
-
 #define ABS(a) ((a) >= 0. ? (a) : -(a))
 
 double get_fps(const char *uri);

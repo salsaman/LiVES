@@ -38,9 +38,6 @@ typedef struct {
   int keyframe_granule_shift;
 } stream_priv_t;
 
-// theora
-#define FOURCC_THEORA    MK_FOURCC('T', 'H', 'R', 'A')
-
 #ifdef HAVE_THEORA
 typedef struct {
   theora_info    ti;
@@ -57,12 +54,6 @@ typedef struct {
 #endif
 
 #define LIVES_TIMESTAMP_UNDEFINED 0x8000000000000000LL
-
-// vorbis
-#define FOURCC_VORBIS    MK_FOURCC('V', 'B', 'I', 'S')
-
-// dirac
-#define FOURCC_DIRAC    MK_FOURCC('D', 'R', 'A', 'C')
 
 typedef struct lives_stream_s {
   int type;

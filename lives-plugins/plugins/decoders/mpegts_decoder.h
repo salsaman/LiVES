@@ -345,6 +345,7 @@ typedef struct {
   index_container_t *idxc;
   boolean got_eof;
   boolean expect_eof;
+  boolean ext_memfuncs;
 } lives_mpegts_priv_t;
 
 #endif /* LIVES_MPEGTS_H */

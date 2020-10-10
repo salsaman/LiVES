@@ -78,7 +78,6 @@ if ($command eq "init") {
 }
 
 
-
 if ($command eq "get_capabilities") {
     # bit 0 - takes extra parameters (using RFX request)
     # bit 1 - unused
@@ -87,7 +86,6 @@ if ($command eq "get_capabilities") {
     print "0\n";
     exit 0;
 }
-
 
 
 if ($command eq "get_formats") {
@@ -172,7 +170,6 @@ if ($command eq "finalise") {
 
 
 ###### subroutines #######
-
 
 sub location {
     # return the location of an executable

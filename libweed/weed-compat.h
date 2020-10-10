@@ -44,6 +44,10 @@ extern "C"
 
 #ifdef NEED_FOURCC_COMPAT
 
+#ifndef WEED_FOURCC_COMPAT
+#define WEED_FOURCC_COMPAT
+#endif
+
 #ifndef __WEED_PALETTES_H__
 #ifdef NEED_LOCAL_WEED
 #include "weed-palettes.h"
@@ -52,10 +56,35 @@ extern "C"
 #endif
 #endif // WEED_PALETTES_H
 
-#ifndef WEED_FOURCC_COMPAT
-#define WEED_FOURCC_COMPAT
+#ifndef MK_FOURCC
+#define MK_FOURCC(a, b, c, d) ((a << 24) | (b << 16) | (c << 8) | d)
 #endif
-  
+
+#ifndef VLC_FOURCC
+#define VLC_FOURCC(a, b, c, d) MK_FOURCC(a, b, c, d)
+#endif
+
+#ifndef FOURCC_THEORA
+#define FOURCC_THEORA	(MK_FOURCC('T', 'H', 'R', 'A'))
+#endif
+
+#ifndef FOURCC_VORBIS
+#define FOURCC_VORBIS	(MK_FOURCC('V', 'B', 'I', 'S'))
+#endif
+
+#ifndef FOURCC_DIRAC
+#define FOURCC_DIRAC    (MK_FOURCC('D', 'R', 'A', 'C'))
+#endif
+
+#ifndef FOURCC_DVR
+#define FOURCC_DVR	(MK_FOURCC('D', 'V', 'R', ' '))
+#endif
+
+#ifndef FOURCC_UNDEF
+#define FOURCC_UNDEF	(MK_FOURCC( 'u', 'n', 'd', 'f' ))
+#endif
+
+
 inline int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *sampling,
 			    int *sspace, int *clamping) {
   // inputs are fourcc and bpp
@@ -75,101 +104,104 @@ inline int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *
 
   switch (fourcc) {
   // RGB formats
-  case 0x32524742: // BGR3
-  case 0x33524742: // BGR3 - tested and OK
-  case 0x34524742: // BGR4
+  case MK_FOURCC('B', 'G', 'R', '2'):
+  case MK_FOURCC('B', 'G', 'R', '3'):
+  case MK_FOURCC('B', 'G', 'R', '4'):
     if (bpp == 24) return WEED_PALETTE_BGR24;
     if (bpp == 32) return WEED_PALETTE_BGRA32;
     break;
 
   case 0x00000000: // BI_RGB - RGB or BGR ???
-  case 0x32776172: // raw2 - RGB or BGR ???
+  case MK_FOURCC('r', 'a', 'w', '2'): // raw2 - RGB or BGR ???
 
-  case 0x32424752: // RGB2
-  case 0x33424752: // RGB3
-  case 0x34424752: // RGB4
+  case MK_FOURCC('R', 'G', 'B', '2'):
+  case MK_FOURCC('R', 'G', 'B', '3'):
+  case MK_FOURCC('R', 'G', 'B', '4'):
     if (bpp == 24) return WEED_PALETTE_RGB24;
     if (bpp == 32) return WEED_PALETTE_RGBA32;
     break;
-  case 0x41424752: // RGBA
+
+  case MK_FOURCC('R', 'G', 'B', 'A'):
     if (bpp == 32) return WEED_PALETTE_RGBA32;
     break;
-  case 0x42475241: /* ARGB, not sure if exists */
+  case MK_FOURCC('A', 'R', 'G', 'B'): /* ARGB, not sure if exists */
     if (bpp == 32) return WEED_PALETTE_ARGB32;
     break;
 
   // YUV packed formats
 
-  case 0x56595549: // IUYV
+  case MK_FOURCC('I', 'U', 'Y', 'B'):
     if (interlaced) *interlaced = 1;
     return WEED_PALETTE_UYVY;
-  case 0x31555949: // IYU1
-  case 0x31313459: // Y411
+  case MK_FOURCC('I', 'Y', 'U', '1'):
+  case MK_FOURCC('Y', '4', '1', '1'):
     return WEED_PALETTE_YUV411;
-  case 0x32555949: // IYU2
+  case MK_FOURCC('I', 'Y', 'U', '2'):
     return WEED_PALETTE_YUV888;
+  case MK_FOURCC('H', 'D', 'Y', 'C'):
   case 0x43594448: // HDYC
     if (sspace) *sspace = WEED_YUV_SUBSPACE_BT709;
     return WEED_PALETTE_UYVY;
-  case 0x564E5955: // UYNV
-  case 0x59565955: // UYVY
-  case 0x32323459: // Y422
-  case 0x76757963: // cyuv
+  case MK_FOURCC('U', 'Y', 'N', 'V'):
+  case MK_FOURCC('U', 'Y', 'V', 'Y'):
+  case MK_FOURCC('Y', '4', '2', '2'):
+  case MK_FOURCC('c', 'y', 'u', 'v'):
     return WEED_PALETTE_UYVY;
-  case 0x32595559: // YUY2
-  case 0x56595559: // YUYV
-  case 0x564E5559: // YUNV
+  case MK_FOURCC('Y', 'U', 'Y', '2'):
+  case MK_FOURCC('Y', 'U', 'Y', 'V'):
+  case MK_FOURCC('Y', 'U', 'N', 'V'):
     return WEED_PALETTE_YUYV;
-  case 0x59455247: // grey
+  case MK_FOURCC('g', 'r', 'e', 'y'):
     if (clamping) *clamping = WEED_YUV_CLAMPING_UNCLAMPED;
-  case 0x30303859: // Y800
-  case 0x20203859: // Y8
+  case MK_FOURCC('Y', '8', '0', '0'):
+  case MK_FOURCC('Y', '8', ' ', ' '):
     return WEED_PALETTE_A8;
 
   // YUV planar formats
-  case 0x41565559: // YUVA
+  case MK_FOURCC('Y', 'U', 'V', 'A'):
     return WEED_PALETTE_YUVA4444P;
     break;
-  case 0x34343449: // I444
+  case MK_FOURCC('I', '4', '4', '4'):
     return WEED_PALETTE_YUV444P;
     break;
-  case 0x50323234: // 422P
+  case MK_FOURCC('4', '2', '2', 'P'):
     return WEED_PALETTE_YUV422P;
     break;
-  case 0x32315659: // YV12
+  case MK_FOURCC('Y', 'V', '1', '2'):
     return WEED_PALETTE_YVU420P;
-  case 0x30323449: // I420
-  case 0x56555949: // IYUV
-  case 0x32315559: // YU12
+  case MK_FOURCC('I', '4', '2', '0'):
+  case MK_FOURCC('I', 'Y', 'U', 'V'):
+  case MK_FOURCC('Y', 'U', '1', '2'):
     return WEED_PALETTE_YUV420P;
 
-  case 0x3032344a: // J420
+  case MK_FOURCC('J', '4', '2', '0'):
     if (clamping) *clamping = WEED_YUV_CLAMPING_UNCLAMPED;
     return WEED_PALETTE_YUV420P;
-  case 0x3232344a: // J422
+  case MK_FOURCC('J', '4', '2', '2'):
     if (clamping) *clamping = WEED_YUV_CLAMPING_UNCLAMPED;
     return WEED_PALETTE_YUV422P;
-  case 0x3434344a: // J444
+  case MK_FOURCC('J', '4', '4', '4'):
     if (clamping) *clamping = WEED_YUV_CLAMPING_UNCLAMPED;
     return WEED_PALETTE_YUV444P;
 
   // known formats we cannot use
-  case 0x50424752: // RGBP - palettised RGB
-  case 0x4f424752: // RGB0 - 15 or 16 bit RGB
-  case 0x51424752: // RGBQ - 15 or 16 bit RGB
-  case 0x52424752: // RGBR - ???
+  case MK_FOURCC('R', 'G', 'B', 'P'): // RGBP - palettised RGB
+  case MK_FOURCC('R', 'G', 'B', '0'): // RGB0 - 15 or 16 bit RGB
+  case MK_FOURCC('R', 'G', 'B', 'Q'): // RGBQ - 15 or 16 bit RGB
+  case MK_FOURCC('R', 'G', 'B', 'R'): // RGBR - ???
 
-  case 0x3231564e: // NV12 - planar Y, packed UV
-  case 0x30313276: // v210 - 10 bit 422, packed
+  case MK_FOURCC('N', 'V', '1', '2'): // NV12 - planar Y, packed UV
+  case MK_FOURCC('v', '2', '1', '0'): // v210 - 10 bit 422, packed
 
-  case 0x39565559: // YUV9 - 410 planar palette
-  case 0x30313449: // I410 - 410 planar palette
-  case 0x31313259: // Y211 - ???
+  case MK_FOURCC('Y', 'U', 'V', '9'): // YUV9 - 410 planar palette
+  case MK_FOURCC('I', '4', '1', '0'): // I410 - 410 planar palette
+  case MK_FOURCC('Y', '2', '1', '1'): // Y211 - ???
 
-  case 0x31313449: // I411 - 411 planar palette
-  case 0x30343449: // I440 - 440 planar palette
-  case 0x30343450: // J440 - 440 planar palette unclamped
-  case 0x56555941: // - YUVA8888 but with alpha first, ie. AYUV8888
+  case MK_FOURCC('I', '4', '1', '1'): // I411 - 411 planar palette
+  case MK_FOURCC('I', '4', '4', '0'): // I440 - 440 planar palette
+  case MK_FOURCC('J', '4', '4', '0'): // J440 - 440 planar palette unclamped
+  case MK_FOURCC('A', 'Y', 'U', 'V'): // - YUVA8888 but with alpha first, ie. AYUV8888
+
   // no match
   default:
     return WEED_PALETTE_END;
@@ -576,6 +608,74 @@ static const AVCodecTag codec_bmp_tags[] = {
   { AV_CODEC_ID_SP5X,         MKTAG('S', 'P', '5', '4') },
   { AV_CODEC_ID_NONE,         0 }
 };
+
+#ifdef NEED_AV_STREAM_TYPES
+
+typedef struct {
+  uint32_t stream_type;
+  enum AVMediaType codec_type;
+  enum AVCodecID codec_id;
+} StreamType;
+
+static const StreamType ISO_types[] = {
+  { 0x01, AVMEDIA_TYPE_VIDEO, AV_CODEC_ID_MPEG2VIDEO },
+  { 0x02, AVMEDIA_TYPE_VIDEO, AV_CODEC_ID_MPEG2VIDEO },
+  { 0x03, AVMEDIA_TYPE_AUDIO,        AV_CODEC_ID_MP3 },
+  { 0x04, AVMEDIA_TYPE_AUDIO,        AV_CODEC_ID_MP3 },
+  { 0x0f, AVMEDIA_TYPE_AUDIO,        AV_CODEC_ID_AAC },
+  { 0x10, AVMEDIA_TYPE_VIDEO,      AV_CODEC_ID_MPEG4 },
+  /* Makito encoder sets stream type 0x11 for AAC,
+     so auto-detect LOAS/LATM instead of hardcoding it. */
+  //  { 0x11, AVMEDIA_TYPE_AUDIO,   AV_CODEC_ID_AAC_LATM }, /* LATM syntax */
+  { 0x1b, AVMEDIA_TYPE_VIDEO,       AV_CODEC_ID_H264 },
+  { 0xd1, AVMEDIA_TYPE_VIDEO,      AV_CODEC_ID_DIRAC },
+  { 0xea, AVMEDIA_TYPE_VIDEO,        AV_CODEC_ID_VC1 },
+  { 0 },
+};
+
+static const StreamType HDMV_types[] = {
+  { 0x80, AVMEDIA_TYPE_AUDIO, AV_CODEC_ID_PCM_BLURAY },
+  { 0x81, AVMEDIA_TYPE_AUDIO, AV_CODEC_ID_AC3 },
+  { 0x82, AVMEDIA_TYPE_AUDIO, AV_CODEC_ID_DTS },
+  { 0x83, AVMEDIA_TYPE_AUDIO, AV_CODEC_ID_TRUEHD },
+  { 0x84, AVMEDIA_TYPE_AUDIO, AV_CODEC_ID_EAC3 },
+  { 0x85, AVMEDIA_TYPE_AUDIO, AV_CODEC_ID_DTS }, /* DTS HD */
+  { 0x86, AVMEDIA_TYPE_AUDIO, AV_CODEC_ID_DTS }, /* DTS HD MASTER*/
+  { 0xa1, AVMEDIA_TYPE_AUDIO, AV_CODEC_ID_EAC3 }, /* E-AC3 Secondary Audio */
+  { 0xa2, AVMEDIA_TYPE_AUDIO, AV_CODEC_ID_DTS },  /* DTS Express Secondary Audio */
+  { 0x90, AVMEDIA_TYPE_SUBTITLE, AV_CODEC_ID_HDMV_PGS_SUBTITLE },
+  { 0 },
+};
+
+/* ATSC ? */
+static const StreamType MISC_types[] = {
+  { 0x81, AVMEDIA_TYPE_AUDIO,   AV_CODEC_ID_AC3 },
+  { 0x8a, AVMEDIA_TYPE_AUDIO,   AV_CODEC_ID_DTS },
+  { 0 },
+};
+
+static const StreamType REGD_types[] = {
+  { MKTAG('d', 'r', 'a', 'c'), AVMEDIA_TYPE_VIDEO, AV_CODEC_ID_DIRAC },
+  { MKTAG('A', 'C', '-', '3'), AVMEDIA_TYPE_AUDIO,   AV_CODEC_ID_AC3 },
+  { MKTAG('B', 'S', 'S', 'D'), AVMEDIA_TYPE_AUDIO, AV_CODEC_ID_S302M },
+  { MKTAG('D', 'T', 'S', '1'), AVMEDIA_TYPE_AUDIO,   AV_CODEC_ID_DTS },
+  { MKTAG('D', 'T', 'S', '2'), AVMEDIA_TYPE_AUDIO,   AV_CODEC_ID_DTS },
+  { MKTAG('D', 'T', 'S', '3'), AVMEDIA_TYPE_AUDIO,   AV_CODEC_ID_DTS },
+  { MKTAG('V', 'C', '-', '1'), AVMEDIA_TYPE_VIDEO,   AV_CODEC_ID_VC1 },
+  { 0 },
+};
+
+/* descriptor present */
+static const StreamType DESC_types[] = {
+  { 0x6a, AVMEDIA_TYPE_AUDIO,             AV_CODEC_ID_AC3 }, /* AC-3 descriptor */
+  { 0x7a, AVMEDIA_TYPE_AUDIO,            AV_CODEC_ID_EAC3 }, /* E-AC-3 descriptor */
+  { 0x7b, AVMEDIA_TYPE_AUDIO,             AV_CODEC_ID_DTS },
+  { 0x56, AVMEDIA_TYPE_SUBTITLE, AV_CODEC_ID_DVB_TELETEXT },
+  { 0x59, AVMEDIA_TYPE_SUBTITLE, AV_CODEC_ID_DVB_SUBTITLE }, /* subtitling descriptor */
+  { 0 },
+};
+
+#endif
 
 #if defined FF_API_PIX_FMT ||  defined AVUTIL_PIXFMT_H
 

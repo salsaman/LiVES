@@ -54,6 +54,8 @@ const char *plugin_version = "LiVES asf/wmv decoder version 1.1";
 #include <libavcodec/version.h>
 #include <libavutil/mem.h>
 
+#define NEED_FOURCC_COMPAT
+
 #ifdef NEED_LOCAL_WEED_COMPAT
 #include "../../../libweed/weed-compat.h"
 #else
@@ -1463,7 +1465,7 @@ seek_skip:
           priv->st->codec->codec_tag = tag1;
           priv->st->codec->codec_id = ff_codec_get_id((const AVCodecTag *)(codec_bmp_tags), tag1);
 
-          if (tag1 == MK_FOURCC('D', 'V', 'R', ' '))
+          if (tag1 == FOURCC_DVR)
             priv->st->need_parsing = AVSTREAM_PARSE_FULL;
         }
       }

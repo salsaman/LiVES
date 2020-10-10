@@ -59,6 +59,14 @@
 
 #include "ogg_decoder.h"
 
+#define NEED_FOURCC_COMPAT
+
+#ifdef NEED_LOCAL_WEED
+#include "../../../libweed/weed-compat.h"
+#else
+#include <weed/weed-compat.h>
+#endif
+
 static boolean ogg_data_process(lives_clip_data_t *cdata, void *yuvbuffer, boolean cont);
 
 static const char *plname = "lives_ogg";

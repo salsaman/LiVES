@@ -14,7 +14,6 @@
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
-
 // codec types - it would be very nice if the ffmpeg devs would put this in a header...
 
 // based on code (c) FFMpeg team

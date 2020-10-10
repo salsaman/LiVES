@@ -71,13 +71,14 @@ static weed_error_t edge_deinit(weed_plant_t *inst) {
 
 
 static inline void copywalpha(uint8_t *dest, size_t doffs, uint8_t *src,
-                              size_t offs, uint8_t red, uint8_t green, uint8_t blue) {
+                              size_t offs, uint8_t red, uint8_t green, uint8_t blue, int aoffs, int inplace) {
   // copy alpha from src, and RGB from val; return val
+  if (aoffs == 1 && !inplace) dest[doffs++] = src[offs]; // ARGB
   dest[doffs] = (((red * src[0]) >> 7) + red) >> 1;
-  // dest[doffs + 1] = (((green * src[1]) >> 7) + green) >> 1;
   dest[doffs + 1] = green;
   dest[doffs + 2] = (((blue * src[2]) >> 7) + blue) >> 1;
-  dest[doffs + 3] = src[offs + 3];
+  if (aoffs != 0 || inplace) return;
+  dest[doffs + 3] = src[offs + 3]; // RGBA / BGRA
 }
 
 
@@ -87,7 +88,7 @@ static weed_error_t  edge_process(weed_plant_t *inst, weed_timecode_t timestamp)
                 *out_channel = weed_get_out_channel(inst, 0);
 
   uint8_t *src = (uint8_t *)weed_channel_get_pixel_data(in_channel);
-  uint8_t *dest = (uint8_t *)weed_channel_get_pixel_data(out_channel);
+  uint8_t *dest = (uint8_t *)weed_channel_get_pixel_data(out_channel), *odest = dest;
   uint8_t *map = sdata->map;
   uint8_t *p, *q;
 
@@ -97,43 +98,32 @@ static weed_error_t  edge_process(weed_plant_t *inst, weed_timecode_t timestamp)
   int irow = weed_channel_get_stride(in_channel);
   int orow = weed_channel_get_stride(out_channel);
   short r, g, b, a;
-  int x, y;
-  int psize = pixel_size(pal);
-  int red = 0, green = 1, blue = 2;
+  int x, y, irowp, orowp;
+  int psize = pixel_size(pal), psize2 = psize << 1;
+  int red = 0, green = 1, blue = 2, offs = 0;
+  int inplace = (src == dest);
+  int y3, y3m, x6;
   uint8_t r0, r1, r2, r3, g0, g1, g2, g3, b0, b1, b2, b3;
 
-  src += irow;
-  dest += orow;
+  if (pal == WEED_PALETTE_BGRA32 || pal == WEED_PALETTE_BGR24) {
+    red = 2;
+    blue = 0;
+  }
 
-  for (y = 1; y < height - 4; y++) {
-    int x6 = 0;
+  if (pal == WEED_PALETTE_ARGB32) offs = 1;
+  if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) offs = -1;
+
+  irowp = irow - width * psize;
+  orowp = orow - width * psize;
+
+  for (y = 0; y < height - 1; y++) {
+    y3m = y3;
+    x6 = 0, y3 = y * w3;
     for (x = 0; x < hwidth; x++, x6 += 6) {
       p = src;
       q = src + psize;
 
       /* difference between the current pixel and right neighbor. */
-      r = p[red] - q[red];
-      g = p[green] - q[green];
-      b = p[blue] - q[blue];
-
-      r *= r; /* Multiply itself and divide it by 16, instead of */
-      g *= g; /* using abs(). */
-      b *= b;
-
-      r >>= 4; /* To lack the lower bit for saturated addition,  */
-      g >>= 4; /* divide the value by 32, instead of 16. It is */
-      b >>= 5; /* the same as `v2 &= 0xfefeff' */
-
-      if (r > 127) r = 127;
-      if (g > 127) g = 127;
-      if (b > 255) b = 255;
-
-      r2 = map[y * w3 + x6] = r;
-      g2 = map[y * w3 + x6 + 1] = g;
-      b2 = map[y * w3 + x6 + 2] = b;
-
-      /* difference between the current pixel and upper neighbor. */
-      q = src - irow;
       r = p[red] - q[red];
       g = p[green] - q[green];
       b = p[blue] - q[blue];
@@ -150,63 +140,86 @@ static weed_error_t  edge_process(weed_plant_t *inst, weed_timecode_t timestamp)
       if (g > 127) g = 127;
       if (b > 255) b = 255;
 
-      r3 = map[y * w3 + x6 + 3] = r;
-      g3 = map[y * w3 + x6 + 4] = g;
-      b3 = map[y * w3 + x6 + 5] = b;
+      r2 = map[y3 + x6] = r;
+      g2 = map[y3 + x6 + 1] = g;
+      b2 = map[y3 + x6 + 2] = b;
 
-      r0 = map[(y - 1) * w3 + x6];
-      g0 = map[(y - 1) * w3 + x6 + 1];
-      b0 = map[(y - 1) * w3 + x6 + 2];
+      /* difference between the current pixel and lower neighbor. */
+      q = src + irow;
+      r = p[red] - q[red];
+      g = p[green] - q[green];
+      b = p[blue] - q[blue];
 
-      r1 = map[(y - 1) * w3 + x6 + 3];
-      g1 = map[(y - 1) * w3 + x6 + 4];
-      b1 = map[(y - 1) * w3 + x6 + 5];
+      r *= r;
+      g *= g;
+      b *= b;
 
-      a = (b0 + b1);
-      b2 = a > 255 ? 255 : a;
+      r >>= 4;
+      g >>= 4;
+      b >>= 5;
 
-      g1 = g2 = (g0 + g1) & 0xFF;
-      a = (g2 | (g2 - b2)) & 0xFF;
-      g2 = a < 0 ? 0 : a & 0xFF;
+      if (r > 127) r = 127;
+      if (g > 127) g = 127;
+      if (b > 255) b = 255;
 
-      a = (r0 + r1);
-      r2 = a > 255 ? 255 : a;
+      r3 = map[y3 + x6 + 3] = r;
+      g3 = map[y3 + x6 + 4] = g;
+      b3 = map[y3 + x6 + 5] = b;
 
-      copywalpha(dest, 0, src, 0, r2, g2, b2);
+      if (y > 0) {
+        r0 = map[y3m + x6];
+        g0 = map[y3m + x6 + 1];
+        b0 = map[y3m + x6 + 2];
 
-      a = (b0 + b3);
-      b2 = a > 255 ? 255 : a;
+        r1 = map[y3m + x6 + 3];
+        g1 = map[y3m + x6 + 4];
+        b1 = map[y3m + x6 + 5];
 
-      g2 = (g0 + g3) & 0xFF;
-      a = (g2 | (g2 - b2)) & 0xFF;
-      g2 = a < 0 ? 0 : a & 0xFF;
+        a = (b0 + b1);
+        b2 = a > 255 ? 255 : a;
 
-      a = (r0 + r3);
-      r2 = a > 255 ? 255 : a;
+        g1 = g2 = (g0 + g1) & 0xFF;
+        a = (g2 | (g2 - b2)) & 0xFF;
+        g2 = a < 0 ? 0 : a & 0xFF;
 
-      copywalpha(dest, psize, src, psize, r2, g2, b2);
-      src += psize * 2; // jump 2 pixels
-      dest += psize * 2; // jump 2 pixels
+        a = (r0 + r1);
+        r2 = a > 255 ? 255 : a;
+
+        copywalpha(dest, 0, src, 0, r2, g2, b2, offs, inplace);
+
+        a = (b0 + b3);
+        b2 = a > 255 ? 255 : a;
+
+        g2 = (g0 + g3) & 0xFF;
+        a = (g2 | (g2 - b2)) & 0xFF;
+        g2 = a < 0 ? 0 : a & 0xFF;
+
+        a = (r0 + r3);
+        r2 = a > 255 ? 255 : a;
+
+        copywalpha(dest, psize, src, psize, r2, g2, b2, offs, inplace);
+      }
+      src += psize2; // jump 2 pixels
+      dest += psize2; // jump 2 pixels
     }
-
-    src += irow - width * psize;
-    dest += orow - width * psize;
+    src += irowp;
+    dest += orowp;
   }
-
-  for (y = 0; y < 2; y++) {
-    for (x = 0; x < width; x++) copywalpha(dest++, 0, src, 0, 0, 0, 0);
-    dest += orow - width;
+  for (x = 0; x < width * psize; x += psize) {
+    copywalpha(dest, x, src, x, 0, 0, 0, offs, inplace);
   }
-
+  for (x = 0; x < width * psize; x += psize) {
+    copywalpha(odest, x, src, x, 0, 0, 0, offs, inplace);
+  }
   return WEED_SUCCESS;
 }
 
 
 WEED_SETUP_START(200, 200) {
-  int palette_list[] = {WEED_PALETTE_RGBA32, WEED_PALETTE_END};
+  int palette_list[] = ALL_RGB_PALETTES;
 
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
   weed_plant_t *filter_class = weed_filter_class_init("edge detect", "effectTV", 1, WEED_FILTER_PREF_LINEAR_GAMMA,
                                palette_list, edge_init, edge_process, edge_deinit, in_chantmpls, out_chantmpls, NULL, NULL);
 

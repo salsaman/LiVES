@@ -3076,6 +3076,7 @@ capability *get_capabilities(void) {
   capable->has_python = UNCHECKED;
   capable->has_gconftool_2 = UNCHECKED;
   capable->has_xdg_screensaver = UNCHECKED;
+  //  capable->has_xdg_open = UNCHECKED;
   capable->has_file = UNCHECKED;
   capable->has_md5sum = UNCHECKED;
   capable->has_gio = UNCHECKED;

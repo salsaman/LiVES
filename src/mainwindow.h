@@ -420,6 +420,7 @@ enum {
 #define EXEC_XWININFO "xwininfo"
 #define EXEC_GCONFTOOL_2 "gconftool-2"
 #define EXEC_XDG_SCREENSAVER "xdg-screensaver"
+//#define EXEC_XDG_OPEN "xdg-open"
 #define EXEC_WMCTRL "wmctrl"
 #define EXEC_XDOTOOL "xdotool"
 #define EXEC_PLAY "play"

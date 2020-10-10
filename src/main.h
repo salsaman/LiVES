@@ -521,6 +521,7 @@ typedef struct {
   lives_checkstatus_t has_gzip;
   lives_checkstatus_t has_gconftool_2;
   lives_checkstatus_t has_xdg_screensaver;
+  //lives_checkstatus_t has_xdg_open;
   lives_checkstatus_t has_wmctrl;
   lives_checkstatus_t has_xdotool;
   lives_checkstatus_t has_youtube_dl;

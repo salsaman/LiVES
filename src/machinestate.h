@@ -580,6 +580,31 @@ boolean get_x11_visible(const char *wname);
 
 int get_window_stack_level(LiVESXWindow *, int *nwins);
 
+#define WM_XFWM4 "Xfwm4"
+#define WM_XFCE4_PANEL "xfce4-panel"
+#define WM_XFCE4_SSAVE "xfce4-ssave"
+#define WM_XFCE4_COLOR "xfce4-color-settings"
+#define WM_XFCE4_DISP "xfce4-display-settings"
+#define WM_XFCE4_POW "xfce4-power-manager-settings"
+#define WM_XFCE4_SETTINGS "xfce4-settings"
+#define WM_XFCE4_TERMINAL "xfce4-terminal"
+#define WM_XFCE4_TASKMGR "xfce4-taskmanager"
+#define WM_XFCE4_SSHOT "xfce4-screenshooter"
+
+#define WM_KWIN "KWin"
+#define WM_KWIN_PANEL "xfce4-panel"
+#define WM_KWIN_SSAVE "xfce4-ssave"
+#define WM_KWIN_COLOR "xfce4-color-settings"
+#define WM_KWIN_DISP "xfce4-display-settings"
+#define WM_KWIN_POW "xfce4-power-manager-settings"
+#define WM_KWIN_SETTINGS "xfce4-settings"
+#define WM_KWIN_TERMINAL "xfce4-terminal"
+#define WM_KWIN_TASKMGR "xfce4-taskmanager"
+#define WM_KWIN_SSHOT "xfce4-screenshooter"
+
+#define XDG_CURRENT_DESKTOP "XDG_CURRENT_DESKTOP"
+#define XDG_SESSION_TYPE "XDG_SESSION_TYPE"
+
 boolean get_wm_caps(void);
 boolean get_distro_dets(void);
 boolean get_machine_dets(void);

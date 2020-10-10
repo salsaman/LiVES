@@ -2883,6 +2883,8 @@ char *get_wid_for_name(const char *wname) {
   return NULL;
 #else
   char *wid = NULL, *cmd;
+  if (!wname || !*wname) return NULL;
+
   if (check_for_executable(&capable->has_wmctrl, EXEC_WMCTRL)) {
     cmd = lives_strdup_printf("%s -l", EXEC_WMCTRL);
     wid = grep_in_cmd(cmd, 3, 4, wname, 0, 1);
@@ -2937,9 +2939,12 @@ boolean hide_x11_window(const char *wid) {
 #ifndef GDK_WINDOWING_X11
   return NULL;
 #endif
-  if (check_for_executable(&capable->has_xdotool, EXEC_XDOTOOL))
+  if (!wid) return FALSE;
+  if (check_for_executable(&capable->has_xdotool, EXEC_XDOTOOL)) {
     cmd = lives_strdup_printf("%s windowminimize \"%s\"", EXEC_XDOTOOL, wid);
-  return mini_run(cmd);
+    return mini_run(cmd);
+  }
+  return FALSE;
 }
 
 
@@ -2948,6 +2953,7 @@ boolean unhide_x11_window(const char *wid) {
 #ifndef GDK_WINDOWING_X11
   return FALSE;
 #endif
+  if (!wid) return FALSE;
   if (check_for_executable(&capable->has_xdotool, EXEC_XDOTOOL))
     cmd = lives_strdup_printf("%s windowmap \"%s\"", EXEC_XDOTOOL, wid);
   return mini_run(cmd);
@@ -2958,6 +2964,8 @@ boolean activate_x11_window(const char *wid) {
 #ifndef GDK_WINDOWING_X11
   return FALSE;
 #endif
+  if (!wid) return FALSE;
+
   if (capable->has_xdotool != MISSING) {
     if (check_for_executable(&capable->has_xdotool, EXEC_XDOTOOL))
       cmd = lives_strdup_printf("%s windowactivate \"%s\"", EXEC_XDOTOOL, wid);
@@ -2970,19 +2978,6 @@ boolean activate_x11_window(const char *wid) {
   return mini_run(cmd);
 }
 
-#define WM_XFWM4 "Xfwm4"
-#define WM_XFCE4_PANEL "xfce4-panel"
-#define WM_XFCE4_SSAVE "xfce4-ssave"
-#define WM_XFCE4_COLOR "xfce4-color-settings"
-#define WM_XFCE4_DISP "xfce4-display-settings"
-#define WM_XFCE4_POW "xfce4-power-manager-settings"
-#define WM_XFCE4_SETTINGS "xfce4-settings"
-#define WM_XFCE4_TERMINAL "xfce4-terminal"
-#define WM_XFCE4_TASKMGR "xfce4-taskmanager"
-#define WM_XFCE4_SSHOT "xfce4-screenshooter"
-
-#define XDG_CURRENT_DESKTOP "XDG_CURRENT_DESKTOP"
-#define XDG_SESSION_TYPE "XDG_SESSION_TYPE"
 
 boolean get_wm_caps(void) {
   char *wmname;
@@ -3081,6 +3076,7 @@ boolean get_x11_visible(const char *wname) {
 #ifndef GDK_WINDOWING_X11
   return FALSE;
 #endif
+  if (!wname || !*wname) return FALSE;
   if (check_for_executable(&capable->has_xwininfo, EXEC_XWININFO)) {
     char *state;
     cmd = lives_strdup_printf("%s -name \"%s\"", EXEC_XWININFO, wname);

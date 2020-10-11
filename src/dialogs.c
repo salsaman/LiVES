@@ -1561,17 +1561,12 @@ switch_point:
             get_event_timecode(cfile->next_event) / TICKS_PER_SECOND_DBL >=
             mainw->multitrack->region_end) mainw->cancelled = CANCEL_EVENT_LIST_END;
         else {
-          ticks_t ldt = mainw->last_display_ticks;
           mainw->noswitch = FALSE;
           cfile->next_event = process_events(cfile->next_event, FALSE, mainw->currticks);
           mainw->noswitch = TRUE;
           if (!cfile->next_event) mainw->cancelled = CANCEL_EVENT_LIST_END;
-          else if (prefs->pbq_adaptive && mainw->last_display_ticks != ldt) {
-            update_effort(spare_cycles + 1, FALSE);
-            spare_cycles = 0ul;
-          }
         }
-      } else spare_cycles++;
+      }
     }
 
     lives_widget_context_update();
@@ -2129,7 +2124,6 @@ proc_dialog:
   }
 
   if (LIVES_LIKELY(mainw->cancelled == CANCEL_NONE)) {
-    boolean reload = FALSE;
     lives_rfx_t *xrfx;
 
     if ((xrfx = (lives_rfx_t *)mainw->vrfx_update) != NULL && fx_dialog[1]) {
@@ -2147,16 +2141,8 @@ proc_dialog:
       old_current_file = mainw->current_file;
     }
 
-refresh:
-    //if (show_frame) g_print("lwcu start @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     // a segfault here can indicate memory corruption in an FX plugin
-
-    //if (mainw->currticks - last_anim_ticks > ANIM_LIMIT)
-
     lives_widget_context_update();
-
-    //last_anim_ticks = mainw->currticks;
-    //if (show_frame) g_print("lwcu end @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
     /// if we did switch clips then cancel the dialog without cancelling the background process
     if (mainw->cs_is_permitted) {
@@ -2173,22 +2159,6 @@ refresh:
       cancel_process(visible);
       return ONE_MILLION + mainw->cancelled;
     }
-
-    if (mainw->force_show) {
-      mainw->force_show = FALSE;
-      if (!visible && !((mainw->vpp && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.)
-                        || (mainw->fixed_fpsd > 0.))) {
-        reload = TRUE;
-        goto refresh;
-      }
-    }
-
-    if (reload) {
-      reload = FALSE;
-      load_frame_image(cfile->frameno);
-      goto refresh;
-    }
-
     return 0;
   }
 

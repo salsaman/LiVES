@@ -1998,7 +1998,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     int mtwidth = mainw->files[mainw->multitrack->render_file]->hsize;
     int mtheight = mainw->files[mainw->multitrack->render_file]->vsize;
     if (!prefs->letterbox_mt) {
-      if (opwidth > mtwidth)opwidth = mtwidth;
+      if (opwidth > mtwidth) opwidth = mtwidth;
       if (opheight > mtheight) opheight = mtheight;
     } else {
       if (opwidth > mtwidth || opheight > mtheight)

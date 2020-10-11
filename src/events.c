@@ -3096,7 +3096,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
 
   static double stored_avel = 0.;
 
-  static int dframes = 0;
+  static int dframes = 0, spare_cycles = 0;
 
   int *in_count = NULL;
 
@@ -3123,7 +3123,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
   int key, idx;
   int easing;
 
-  register int i;
+  int i;
 
   if (!next_event) {
     aseek_tc = 0;
@@ -3141,8 +3141,12 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
            (curr_tc - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->vpp->fixed_fpsd)) {
         // ...but playing at fixed fps, which is faster than mt fps
         mainw->pchains = pchains;
-        update_effort(dframes, TRUE);
-        dframes = 0;
+        if (prefs->pbq_adaptive) {
+          if (dframes > 0) update_effort(dframes, TRUE);
+          else update_effort(spare_cycles, FALSE);
+          dframes = 0;
+          spare_cycles = 0;
+        }
         load_frame_image(cfile->last_frameno >= 1 ? cfile->last_frameno : cfile->start);
         if (prefs->show_player_stats) {
           mainw->fps_measure++;
@@ -3156,7 +3160,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
           else mainw->last_display_ticks = curr_tc;
         }
         mainw->pchains = NULL;
-      } else dframes++;
+      } else spare_cycles++;
     }
     return next_event;
   }
@@ -3191,7 +3195,10 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
     if ((next_frame_event = get_next_frame_event(next_event))) {
       next_tc = get_event_timecode(next_frame_event);
       // drop frame if it is too far behind
-      if (LIVES_IS_PLAYING && !prefs->noframedrop && next_tc <= curr_tc) break;
+      if (LIVES_IS_PLAYING && next_tc <= curr_tc) {
+        if (prefs->pbq_adaptive) dframes++;
+        if (!prefs->noframedrop) break;
+      }
       if (!mainw->fs && !prefs->hide_framebar && !mainw->multitrack) {
         lives_signal_handler_block(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
@@ -3223,7 +3230,11 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
           (mainw->vpp && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback &&
            (curr_tc - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->vpp->fixed_fpsd)) {
         mainw->pchains = pchains;
-        update_effort(dframes, TRUE);
+        if (prefs->pbq_adaptive) {
+          update_effort(dframes, TRUE);
+          dframes = 0;
+          spare_cycles = 0;
+        }
         load_frame_image(cfile->frameno);
         if (prefs->show_player_stats) {
           mainw->fps_measure++;
@@ -3237,7 +3248,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
           else mainw->last_display_ticks = curr_tc;
         }
         mainw->pchains = NULL;
-      } else dframes++;
+      } else spare_cycles++;
     } else {
       if (mainw->num_tracks > 1) {
         mainw->blend_file = mainw->clip_index[1];
@@ -3263,9 +3274,11 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
 
       // handle case where new_file==-1: we must somehow create a blank frame in load_frame_image
       if (new_file == -1) new_file = mainw->current_file;
-      update_effort(dframes, TRUE);
-      dframes = 0;
-
+      if (prefs->pbq_adaptive) {
+        if (dframes > 0) update_effort(dframes, TRUE);
+        else update_effort(spare_cycles, FALSE);
+        dframes = 0;
+      }
       if (!mainw->urgency_msg && weed_plant_has_leaf(next_event, WEED_LEAF_OVERLAY_TEXT)) {
         mainw->urgency_msg = weed_get_string_value(next_event, WEED_LEAF_OVERLAY_TEXT, NULL);
       }

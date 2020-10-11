@@ -48,6 +48,7 @@ static LiVESWidgetClosure *rec_closure;
 static LiVESWidgetClosure *mute_audio_closure;
 static LiVESWidgetClosure *ping_pong_closure;
 
+static void _resize_play_window(void);
 
 static boolean pb_added = FALSE;
 
@@ -2928,8 +2929,8 @@ void create_LiVES(void) {
                             LIVES_GUI_CALLBACK(on_sepwin_pressed), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->m_playbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_playall_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->m_stopbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_stop_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->m_stopbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_stop_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->m_playselbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_playsel_activate), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->m_rewindbutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -3889,7 +3890,7 @@ static void _make_play_window(void) {
     if (!(mainw->fs && LIVES_IS_PLAYING && mainw->vpp)) {
       lives_widget_show_all(mainw->play_window);
     }
-    resize_play_window();
+    _resize_play_window();
   }
 
   if (!mainw->play_window) return;

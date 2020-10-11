@@ -3403,7 +3403,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
 
   if (mainw->frame_layer) {
     LiVESPixbuf *pixbuf = NULL;
-    int pwidth, pheight;//,  lb_width, lb_height;
+    int pwidth, pheight, lb_width, lb_height;
     int cpal = WEED_PALETTE_RGB24, layer_palette;
 
     check_layer_ready(mainw->frame_layer);
@@ -3412,6 +3412,15 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
 
     pwidth = mt->play_width;
     pheight = mt->play_height;
+
+    if (prefs->letterbox_mt) {
+      lb_width = weed_layer_get_width_pixels(mainw->frame_layer);
+      lb_height = weed_layer_get_height(mainw->frame_layer);
+      calc_maxspect(pwidth, pheight, &lb_width, &lb_height);
+      pwidth = lb_width;
+      pheight = lb_height;
+    }
+
     resize_layer(mainw->frame_layer, pwidth, pheight, LIVES_INTERP_BEST, cpal, 0);
 
     convert_layer_palette_full(mainw->frame_layer, cpal, 0, 0, 0, WEED_GAMMA_SRGB);
@@ -4822,9 +4831,8 @@ void mt_init_start_end_spins(lives_mt * mt) {
 
   if (!mainw->files[mt->render_file]->achans || !mt->opts.pertrack_audio) lives_widget_set_sensitive(mt->amixer_button, FALSE);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(mt->amixer_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(amixer_show),
-                       (livespointer)mt);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->amixer_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(amixer_show), (livespointer)mt);
 
   mt->bleedthru = lives_glowing_check_button_new((tmp = _("  Bleedthru  ")), LIVES_BOX(hbox),
                   (tmp2 = H_("When active, all layers will be audible regardless of visibility")),
@@ -5478,7 +5486,7 @@ void set_mt_play_sizes_cfg(lives_mt * mt) {
   if (!CURRENT_CLIP_IS_VALID) return;
   else {
     int rwidth = lives_widget_get_allocation_width(mt->preview_frame);
-    int rheight = lives_widget_get_allocation_height(mt->preview_frame);
+    int rheight = lives_widget_get_allocation_height(mt->preview_frame) - 48;
     int width = mainw->files[mt->render_file]->hsize;
     int height = mainw->files[mt->render_file]->vsize;
 
@@ -5493,9 +5501,7 @@ void set_mt_play_sizes_cfg(lives_mt * mt) {
     height = (height >> 2) << 2;
 
     mt->play_width = width;
-
-    // allow for height of label
-    mt->play_height = height - 48;
+    mt->play_height = height;
   }
 }
 
@@ -6296,7 +6302,7 @@ void set_mt_colours(lives_mt * mt) {
     lives_widget_apply_theme(lives_bin_get_child(LIVES_BIN(mt->context_scroll)), LIVES_WIDGET_STATE_NORMAL);
   }
 
-  if (mt->context_box) {
+  if (mt->context_box && LIVES_IS_WIDGET_OBJECT(mt->context_box)) {
     lives_widget_apply_theme(mt->context_box, LIVES_WIDGET_STATE_NORMAL);
     set_child_colour(mt->context_box, TRUE);
   }
@@ -7872,10 +7878,10 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                             LIVES_GUI_CALLBACK(on_boolean_toggled), &prefs->autoload_subs);
   lives_signal_connect(LIVES_GUI_OBJECT(mt->clipedit), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(multitrack_end_cb), (livespointer)mt);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->playall), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_playall_activate), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->playsel), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                            LIVES_GUI_CALLBACK(multitrack_play_sel), (livespointer)mt);
+  lives_signal_connect(LIVES_GUI_OBJECT(mt->playall), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_playall_activate), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mt->playsel), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(multitrack_play_sel), (livespointer)mt);
   lives_signal_connect(LIVES_GUI_OBJECT(mt->insert), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(multitrack_insert), (livespointer)mt);
   lives_signal_connect(LIVES_GUI_OBJECT(mt->audio_insert), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -17178,6 +17184,9 @@ void mt_swap_play_pause(lives_mt * mt, boolean put_pause) {
     lives_widget_set_tooltip_text(mainw->m_playbutton, _("Pause (p)"));
     lives_widget_set_sensitive(mt->playall, TRUE);
     lives_widget_set_sensitive(mainw->m_playbutton, TRUE);
+    lives_signal_handlers_disconnect_by_func(mainw->m_playbutton, LIVES_GUI_CALLBACK(on_playall_activate), NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->m_playbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                              LIVES_GUI_CALLBACK(on_playall_activate), NULL);
     lives_accel_group_connect(LIVES_ACCEL_GROUP(mt->accel_group), LIVES_KEY_BackSpace,
                               (LiVESXModifierType)LIVES_CONTROL_MASK,
                               (LiVESAccelFlags)0, freeze_closure);
@@ -17186,6 +17195,9 @@ void mt_swap_play_pause(lives_mt * mt, boolean put_pause) {
     tmp_img = lives_image_new_from_stock(LIVES_STOCK_MEDIA_PLAY, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mt->btoolbar2)));
     lives_menu_item_set_text(mt->playall, _("_Play from Timeline Position"), TRUE);
     lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play all (p)"));
+    lives_signal_handlers_disconnect_by_func(mainw->m_playbutton, LIVES_GUI_CALLBACK(on_playall_activate), NULL);
+    lives_signal_connect(LIVES_GUI_OBJECT(mainw->m_playbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                         LIVES_GUI_CALLBACK(on_playall_activate), NULL);
     lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mt->accel_group), freeze_closure);
     freeze_closure = NULL;
   }
@@ -17224,7 +17236,7 @@ void mt_prepare_for_playback(lives_mt * mt) {
   lives_widget_set_sensitive(mt->stop, TRUE);
   lives_widget_set_sensitive(mt->rewind, FALSE);
   lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
-  //if (!mt->is_paused&&!mt->playing_sel) mt->ptr_time=lives_ruler_get_value(LIVES_RULER(mt->timeline));
+  lives_widget_context_update();
 }
 
 
@@ -22474,7 +22486,6 @@ static uint32_t event_list_get_byte_size(lives_mt * mt, weed_plant_t *event_list
 
 void on_amixer_close_clicked(LiVESButton * button, lives_mt * mt) {
   lives_amixer_t *amixer = mt->amixer;
-  int i;
   double val;
 
   if (!LIVES_IS_INTERACTIVE) return;
@@ -22483,7 +22494,7 @@ void on_amixer_close_clicked(LiVESButton * button, lives_mt * mt) {
 
   // set vols from slider vals
 
-  for (i = 0; i < amixer->nchans; i++) {
+  for (int i = 0; i < amixer->nchans; i++) {
 #if ENABLE_GIW
     if (prefs->lamp_buttons) {
       val = giw_vslider_get_value(GIW_VSLIDER(amixer->ch_sliders[i]));
@@ -22498,7 +22509,7 @@ void on_amixer_close_clicked(LiVESButton * button, lives_mt * mt) {
     set_mixer_track_vol(mt, i, val);
   }
 
-  lives_general_button_clicked(button, NULL);
+  lives_widget_destroy(amixer->window);
   lives_free(amixer->ch_sliders);
   lives_free(amixer->ch_slider_fns);
   lives_free(amixer);
@@ -22721,6 +22732,11 @@ void amixer_show(LiVESButton * button, livespointer user_data) {
 
   if (nachans == 0) return;
 
+  if (mt->amixer) {
+    on_amixer_close_clicked(NULL, mt);
+    return;
+  }
+
   mt->audio_vols_back = lives_list_copy(mt->audio_vols);
 
   amixer = mt->amixer = (lives_amixer_t *)lives_malloc(sizeof(lives_amixer_t));
@@ -22729,7 +22745,7 @@ void amixer_show(LiVESButton * button, livespointer user_data) {
   amixer->ch_sliders = (LiVESWidget **)lives_malloc(nachans * sizeof(LiVESWidget *));
   amixer->ch_slider_fns = (ulong *)lives_malloc(nachans * sizeof(ulong));
 
-  amixerw = lives_window_new(LIVES_WINDOW_TOPLEVEL);
+  amixer->window = amixerw = lives_window_new(LIVES_WINDOW_TOPLEVEL);
   if (palette->style & STYLE_1) {
     lives_widget_set_bg_color(amixerw, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_fg_color(amixerw, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);

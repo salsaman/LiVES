@@ -3024,6 +3024,19 @@ boolean get_wm_caps(void) {
     lives_snprintf(capable->wm_caps.sshot, 64, "%s", WM_XFCE4_SSHOT);
     return TRUE;
   }
+  if (!strcmp(capable->wm_caps.wm_name, WM_KWIN) || !strcmp(capable->wm_name, WM_KWIN)) {
+    lives_snprintf(capable->wm_caps.panel, 64, "%s", WM_KWIN_PANEL);
+    lives_snprintf(capable->wm_caps.ssave, 64, "%s", WM_KWIN_SSAVE);
+    lives_snprintf(capable->wm_caps.color_settings, 64, "%s", WM_KWIN_COLOR);
+    lives_snprintf(capable->wm_caps.display_settings, 64, "%s", WM_KWIN_DISP);
+    lives_snprintf(capable->wm_caps.ssv_settings, 64, "%s", WM_KWIN_SSAVE);
+    lives_snprintf(capable->wm_caps.pow_settings, 64, "%s", WM_KWIN_POW);
+    lives_snprintf(capable->wm_caps.settings, 64, "%s", WM_KWIN_SETTINGS);
+    lives_snprintf(capable->wm_caps.term, 64, "%s", WM_KWIN_TERMINAL);
+    lives_snprintf(capable->wm_caps.taskmgr, 64, "%s", WM_KWIN_TASKMGR);
+    lives_snprintf(capable->wm_caps.sshot, 64, "%s", WM_KWIN_SSHOT);
+    return TRUE;
+  }
   return FALSE;
 }
 

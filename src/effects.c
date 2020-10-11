@@ -1198,6 +1198,8 @@ boolean swap_fg_bg_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
                            || mainw->active_sa_clips == SCREEN_AREA_FOREGROUND))
     ce_thumbs_highlight_current_clip();
 
+  mainw->blend_palette = WEED_PALETTE_END;
+
   return TRUE;
 
   // **TODO - for weed, invert all transition parameters for any active effects

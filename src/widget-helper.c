@@ -16,7 +16,7 @@
 
 // static defns
 
-#define EV_LIM 1024
+#define EV_LIM 64
 
 static void set_child_colour_internal(LiVESWidget *, livespointer set_allx);
 static void set_child_alt_colour_internal(LiVESWidget *, livespointer set_allx);
@@ -1246,7 +1246,7 @@ static boolean async_timer_handler(livespointer data) {
         //if (ev) g_print("ev was %d\n", ev->type);
         //else g_print("NULL event\n");
         lives_widget_context_iteration(NULL, FALSE);
-        lives_nanosleep(NSLEEP_TIME);
+        //lives_nanosleep(NSLEEP_TIME);
       }
       timer_running = FALSE;
     }
@@ -11846,7 +11846,7 @@ boolean lives_widget_context_update(void) {
         //if (ev) g_print("ev was %d\n", ev->type);
         //else g_print("NULL event\n");
         lives_widget_context_iteration(NULL, FALSE);
-        lives_nanosleep(NSLEEP_TIME);
+        //lives_nanosleep(NSLEEP_TIME);
       }
     }
     do_more_stuff();

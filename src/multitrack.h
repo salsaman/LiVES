@@ -696,6 +696,7 @@ typedef struct {
 } mt_undo;
 
 struct _lives_amixer_t {
+  LiVESWidget *window;
   LiVESWidget *main_hbox;
   LiVESWidget **ch_sliders;
   LiVESWidget *gang_checkbutton;

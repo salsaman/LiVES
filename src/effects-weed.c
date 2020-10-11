@@ -178,11 +178,10 @@ boolean has_alpha_palette(weed_plant_t *ctmpl, weed_plant_t *filter) {
 
 
 weed_plant_t *weed_instance_get_filter(weed_plant_t *inst, boolean get_compound_parent) {
-  int error;
   if (get_compound_parent &&
       (weed_plant_has_leaf(inst, WEED_LEAF_HOST_COMPOUND_CLASS)))
-    return weed_get_plantptr_value(inst, WEED_LEAF_HOST_COMPOUND_CLASS, &error);
-  return weed_get_plantptr_value(inst, WEED_LEAF_FILTER_CLASS, &error);
+    return weed_get_plantptr_value(inst, WEED_LEAF_HOST_COMPOUND_CLASS, NULL);
+  return weed_get_plantptr_value(inst, WEED_LEAF_FILTER_CLASS, NULL);
 }
 
 
@@ -191,23 +190,20 @@ static boolean all_outs_alpha(weed_plant_t *filt, boolean ign_opt) {
   int nouts;
   register int i;
   weed_plant_t **ctmpls = weed_filter_get_out_chantmpls(filt, &nouts);
-  if (!ctmpls) return FALSE;
+  if (!nouts) return FALSE;
   if (!ctmpls[0]) {
     lives_freep((void **)&ctmpls);
     return FALSE;
   }
-  if (nouts > 0) {
-    for (i = 0; i < nouts; i++) {
-      if (ign_opt && weed_chantmpl_is_optional(ctmpls[i])) continue;
-      if (has_non_alpha_palette(ctmpls[i], filt)) {
-        lives_free(ctmpls);
-        return FALSE;
-      }
+  for (i = 0; i < nouts; i++) {
+    if (ign_opt && weed_chantmpl_is_optional(ctmpls[i])) continue;
+    if (has_non_alpha_palette(ctmpls[i], filt)) {
+      lives_free(ctmpls);
+      return FALSE;
     }
-    lives_freep((void **)&ctmpls);
-    return TRUE;
   }
-  return FALSE;
+  lives_freep((void **)&ctmpls);
+  return TRUE;
 }
 
 
@@ -255,14 +251,14 @@ lives_fx_cat_t weed_filter_categorise(weed_plant_t *pl, int in_channels, int out
   boolean all_in_alpha = TRUE;
   boolean has_in_alpha = FALSE;
 
-  int filter_flags, error;
+  int filter_flags;
 
   if (WEED_PLANT_IS_FILTER_INSTANCE(pl)) filt = weed_instance_get_filter(pl, TRUE);
 
   all_out_alpha = all_outs_alpha(filt, TRUE);
   all_in_alpha = all_ins_alpha(filt, TRUE);
 
-  filter_flags = weed_get_int_value(filt, WEED_LEAF_FLAGS, &error);
+  filter_flags = weed_get_int_value(filt, WEED_LEAF_FLAGS, NULL);
   if (weed_plant_has_leaf(filt, WEED_LEAF_OUT_PARAMETER_TEMPLATES)) has_out_params = TRUE;
   if (weed_plant_has_leaf(filt, WEED_LEAF_IN_PARAMETER_TEMPLATES)) has_in_params = TRUE;
   if (filter_flags & WEED_FILTER_IS_CONVERTER) return LIVES_FX_CAT_CONVERTER;
@@ -504,9 +500,9 @@ static weed_plant_t *get_enabled_channel_inner(weed_plant_t *inst, int which, bo
   weed_plant_t **channels = NULL;
   weed_plant_t *retval, *ctmpl = NULL;
 
-  int error, nchans = 3;
+  int nchans = 3;
 
-  register int i = 0;
+  int i = 0;
 
   if (!WEED_PLANT_IS_FILTER_INSTANCE(inst)) return NULL;
 
@@ -519,7 +515,7 @@ static weed_plant_t *get_enabled_channel_inner(weed_plant_t *inst, int which, bo
   if (!nchans) return NULL;
 
   while (1) {
-    if (weed_get_boolean_value(channels[i], WEED_LEAF_DISABLED, &error) == WEED_FALSE) {
+    if (weed_get_boolean_value(channels[i], WEED_LEAF_DISABLED, NULL) == WEED_FALSE) {
       if (audio_only) ctmpl = weed_channel_get_template(channels[i]);
       if (!audio_only || (audio_only && weed_chantmpl_is_audio(ctmpl) == WEED_TRUE)) {
         which--;
@@ -728,8 +724,7 @@ boolean is_pure_audio(weed_plant_t *plant, boolean count_opt) {
 boolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_plant_t *ptmpl) {
   /** see if param has variable elements, using the strictest check */
   weed_plant_t **chans, *ctmpl;
-  int error, i;
-  int flags = weed_get_int_value(ptmpl, WEED_LEAF_FLAGS, &error);
+  int flags = weed_get_int_value(ptmpl, WEED_LEAF_FLAGS, NULL);
   int nchans;
 
   if (flags & WEED_PARAMETER_VARIABLE_SIZE) return TRUE;
@@ -741,12 +736,12 @@ boolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_pla
   if ((nchans = weed_leaf_num_elements(inst, WEED_LEAF_IN_CHANNELS)) == 0)
     return FALSE;
 
-  chans = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, &error);
+  chans = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, NULL);
 
-  for (i = 0; i < nchans; i++) {
-    if (weed_get_boolean_value(chans[i], WEED_LEAF_DISABLED, &error) == WEED_TRUE) continue; //ignore disabled channels
-    ctmpl = weed_get_plantptr_value(chans[i], WEED_LEAF_TEMPLATE, &error);
-    if (weed_plant_has_leaf(ctmpl, WEED_LEAF_MAX_REPEATS) && weed_get_int_value(ctmpl, WEED_LEAF_MAX_REPEATS, &error) != 1) {
+  for (int i = 0; i < nchans; i++) {
+    if (weed_get_boolean_value(chans[i], WEED_LEAF_DISABLED, NULL) == WEED_TRUE) continue; //ignore disabled channels
+    ctmpl = weed_get_plantptr_value(chans[i], WEED_LEAF_TEMPLATE, NULL);
+    if (weed_plant_has_leaf(ctmpl, WEED_LEAF_MAX_REPEATS) && weed_get_int_value(ctmpl, WEED_LEAF_MAX_REPEATS, NULL) != 1) {
       lives_free(chans);
       return TRUE;
     }
@@ -1154,10 +1149,9 @@ char *cd_to_plugin_dir(weed_plant_t *filter) {
   weed_plant_t *plugin_info;
   char *ppath;
   char *ret;
-  int error;
   if (WEED_PLANT_IS_PLUGIN_INFO(filter)) plugin_info = filter; // on shutdown the filters are freed.
-  else plugin_info = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, &error);
-  ppath = weed_get_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_PATH, &error);
+  else plugin_info = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, NULL);
+  ppath = weed_get_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_PATH, NULL);
   ret = lives_get_current_dir();
   // allow this to fail -it's not that important - it just means any plugin data files wont be found
   // besides, we dont want to show warnings at 50 fps
@@ -1343,7 +1337,6 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
   weed_plant_t **xinst = NULL;
   weed_plant_t **xchannels, *xchan;
   weed_plant_t *filter = weed_instance_get_filter(inst, FALSE);
-  weed_error_t error;
   weed_error_t retval;
   int nchannels;
   int pal;
@@ -1367,7 +1360,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
 
   filter = weed_instance_get_filter(inst, TRUE);
   if (weed_plant_has_leaf(filter, WEED_LEAF_VSTEP)) {
-    minh = weed_get_int_value(filter, WEED_LEAF_VSTEP, &error);
+    minh = weed_get_int_value(filter, WEED_LEAF_VSTEP, NULL);
     if (minh > vstep) vstep = minh;
   }
 
@@ -1502,16 +1495,13 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
 
 static lives_filter_error_t check_cconx(weed_plant_t *inst, int nchans, boolean *needs_reinit) {
   weed_plant_t **in_channels;
-  int error;
-
-  register int i;
 
   // we stored original key/mode to use here
   if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) {
     // pull from alpha chain
-    int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error), mode;
+    int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL), mode;
     if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_MODE)) {
-      mode = weed_get_int_value(inst, WEED_LEAF_HOST_MODE, &error);
+      mode = weed_get_int_value(inst, WEED_LEAF_HOST_MODE, NULL);
     } else mode = key_modes[key];
 
     // need to do this AFTER setting in-channel size
@@ -1524,19 +1514,19 @@ static lives_filter_error_t check_cconx(weed_plant_t *inst, int nchans, boolean 
   // make sure we have pixel_data for all mandatory in alpha channels (from alpha chains)
   // if not, if the ctmpl is optnl mark as host_temp_disabled; else return with error
 
-  in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, &error);
+  in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, NULL);
 
-  for (i = 0; i < nchans; i++) {
-    if (!weed_palette_is_alpha(weed_get_int_value(in_channels[i], WEED_LEAF_CURRENT_PALETTE, &error))) continue;
+  for (int i = 0; i < nchans; i++) {
+    if (!weed_palette_is_alpha(weed_get_int_value(in_channels[i], WEED_LEAF_CURRENT_PALETTE, NULL))) continue;
 
     if (weed_plant_has_leaf(in_channels[i], WEED_LEAF_HOST_INTERNAL_CONNECTION)) {
       if (cconx_chain_data_internal(in_channels[i])) *needs_reinit = TRUE;
     }
 
-    if (!weed_get_voidptr_value(in_channels[i], WEED_LEAF_PIXEL_DATA, &error)) {
-      weed_plant_t *chantmpl = weed_get_plantptr_value(in_channels[i], WEED_LEAF_TEMPLATE, &error);
+    if (!weed_get_voidptr_value(in_channels[i], WEED_LEAF_PIXEL_DATA, NULL)) {
+      weed_plant_t *chantmpl = weed_get_plantptr_value(in_channels[i], WEED_LEAF_TEMPLATE, NULL);
       if (weed_plant_has_leaf(chantmpl, WEED_LEAF_MAX_REPEATS) || (weed_chantmpl_is_optional(chantmpl)))
-        if (weed_get_boolean_value(in_channels[i], WEED_LEAF_DISABLED, &error) == WEED_FALSE)
+        if (weed_get_boolean_value(in_channels[i], WEED_LEAF_DISABLED, NULL) == WEED_FALSE)
           weed_set_boolean_value(in_channels[i], WEED_LEAF_HOST_TEMP_DISABLED, WEED_TRUE);
         else weed_set_boolean_value(in_channels[i], WEED_LEAF_HOST_TEMP_DISABLED, WEED_FALSE);
       // WEED_LEAF_DISABLED will serve instead
@@ -2653,8 +2643,10 @@ done_video:
     weed_plant_t *dupe;
     check_layer_ready(layers[in_tracks[i]]);
     dupe = weed_get_plantptr_value(layers[in_tracks[i]], WEED_LEAF_DUPLICATE, NULL);
-    if (dupe) weed_layer_nullify_pixel_data(dupe);
-    weed_layer_free(dupe);
+    if (dupe) {
+      weed_layer_nullify_pixel_data(dupe);
+      weed_layer_free(dupe);
+    }
   }
 
   lives_freep((void **)&in_tracks);
@@ -3311,22 +3303,20 @@ static void weed_apply_filter_map(weed_plant_t **layers, weed_plant_t *filter_ma
   void **init_events;
 
   weed_error_t filter_error;
-  int key, num_inst, error;
+  int key, num_inst;
 
   boolean needs_reinit;
 
-  register int i;
-
   if (!filter_map || !weed_plant_has_leaf(filter_map, WEED_LEAF_INIT_EVENTS) ||
-      !weed_get_voidptr_value(filter_map, WEED_LEAF_INIT_EVENTS, &error)) return;
+      !weed_get_voidptr_value(filter_map, WEED_LEAF_INIT_EVENTS, NULL)) return;
 
   init_events = weed_get_voidptr_array_counted(filter_map, WEED_LEAF_INIT_EVENTS, &num_inst);
 
-  for (i = 0; i < num_inst; i++) {
+  for (int i = 0; i < num_inst; i++) {
     init_event = (weed_plant_t *)init_events[i];
 
     if (weed_plant_has_leaf(init_event, WEED_LEAF_HOST_TAG)) {
-      keystr = weed_get_string_value(init_event, WEED_LEAF_HOST_TAG, &error);
+      keystr = weed_get_string_value(init_event, WEED_LEAF_HOST_TAG, NULL);
       key = atoi(keystr);
       lives_free(keystr);
       if (rte_key_valid(key + 1, FALSE)) {

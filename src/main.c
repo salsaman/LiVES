@@ -310,6 +310,7 @@ void catch_sigint(int signum) {
     sleep(3600);
     pthread_exit(NULL);
   }
+  if (mainw->record) backup_recording(NULL, NULL);
 #ifdef QUICK_EXIT
   /* shoatend(); */
   /* fprintf(stderr, "shoatt end"); */

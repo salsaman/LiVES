@@ -196,7 +196,7 @@ static int chain_lock_upgrade(weed_leaf_t *leaf, int have_rdlock, int is_del) {
   // return 0 if we got the write lock, otherwise
   if (leaf) {
     if (!have_rdlock) {
-      // try to lock the leaf
+      // lock the leaf (plant)
       structure_mutex_lock(leaf);
     }
     else chain_lock_unlock(leaf);

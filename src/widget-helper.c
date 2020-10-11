@@ -12530,7 +12530,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidgetColor *lives_rgba_to_widget_color(LiVESWi
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_rgba_equal(lives_colRGBA64_t *col1, lives_colRGBA64_t *col2) {
-  return lives_memcmp(col1, col2, sizeof(lives_colRGBA64_t));
+  return !lives_memcmp(col1, col2, sizeof(lives_colRGBA64_t));
 }
 
 

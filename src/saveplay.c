@@ -113,7 +113,10 @@ boolean save_clip_values(int which) {
 
   asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
   endian = sfile->signed_endian & AFORM_BIG_ENDIAN;
-  lives_header_new = lives_build_filename(prefs->workdir, sfile->handle, LIVES_CLIP_HEADER_NEW, NULL);
+  if (which == mainw->ascrap_file)
+    lives_header_new = lives_build_filename(prefs->workdir, sfile->handle, LIVES_ACLIP_HEADER_NEW, NULL);
+  else
+    lives_header_new = lives_build_filename(prefs->workdir, sfile->handle, LIVES_CLIP_HEADER_NEW, NULL);
 
   do {
     THREADVAR(com_failed) = THREADVAR(write_failed) = FALSE;
@@ -174,7 +177,11 @@ boolean save_clip_values(int which) {
       if (!all_ok) {
         retval = do_write_failed_error_s_with_retry(lives_header_new, NULL);
       } else {
-        char *lives_header = lives_build_filename(prefs->workdir, sfile->handle, LIVES_CLIP_HEADER, NULL);
+        char *lives_header;
+        if (which == mainw->ascrap_file)
+          lives_header = lives_build_filename(prefs->workdir, sfile->handle, LIVES_ACLIP_HEADER, NULL);
+        else
+          lives_header = lives_build_filename(prefs->workdir, sfile->handle, LIVES_CLIP_HEADER, NULL);
         // TODO - check the sizes before and after
         lives_cp(lives_header_new, lives_header);
         lives_free(lives_header);
@@ -6565,8 +6572,8 @@ boolean check_for_recovery_files(boolean auto_recover) {
   lives_free(recovery_file);
 
   if (!retval || prefs->vj_mode) {
-    com = lives_strdup_printf("%s clean_recovery_files %d %d \"%s\" %d", prefs->backend_sync, luid, lgid, capable->myname,
-                              capable->mainpid);
+    com = lives_strdup_printf("%s clean_recovery_files %d %d \"%s\" %d %d", prefs->backend_sync, luid, lgid, capable->myname,
+                              capable->mainpid, prefs->vj_mode);
     lives_system(com, FALSE);
     lives_free(com);
     if (prefs->vj_mode) {
@@ -6655,7 +6662,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
     return FALSE;
   }
 
-  com = lives_strdup_printf("%s clean_recovery_files %d %d \"%s\" %d", prefs->backend_sync, luid, lgid, capable->myname,
+  com = lives_strdup_printf("%s clean_recovery_files %d %d \"%s\" %d 0", prefs->backend_sync, luid, lgid, capable->myname,
                             capable->mainpid);
   lives_system(com, FALSE);
   lives_free(com);

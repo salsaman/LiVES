@@ -293,14 +293,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   // width in pixels
 
   int i = 0, idx = 0, ret_code;
-  int afd, audio = 0;
-
   int mypid = getpid();
-
-  char cmd[PATH_MAX * 2];
-
-  char *audfile = NULL;
-
   char **vdevs;
 
   struct v4l2_capability vid_caps;

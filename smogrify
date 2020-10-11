@@ -1145,17 +1145,21 @@ if (1) {
 	    my $gid = $ARGV[2];
 	    my $exename = $ARGV[3];
 	    my $pid = "";
+	    my $leave_reco = 0;
 	    if (defined($ARGV[4])) {
 		$pid = $ARGV[4];
+	    }
+	    if (defined($ARGV[5])) {
+		$leave_reco = $ARGV[5];
 	    }
 
 	    opendir DIR, $workdir;
 	    &smog_chdir($workdir);
 
 	    while (my $file = readdir(DIR)) {
-		if ($file =~ /^recovery\.$uid\.$gid\.(.*)/ || $file =~ /^layout\.$uid\.$gid\.(.*)/ ||
-		    $file =~ /^recorded-layout\.$uid\.$gid\.(.*)/ ||
-		    $file =~ /^layout_numbering\.$uid\.$gid\.(.*)/) {
+		if ($file =~ /^recovery\.$uid\.$gid\.(.*)/ || $file =~ /^layout\.$uid\.$gid\.(.*)/ || (!$leave_reco &&
+		    ($file =~ /^recorded-layout\.$uid\.$gid\.(.*)/ ||
+		    $file =~ /^recorded_layout_numbering\.$uid\.$gid\.(.*)/)) {
 		    if ($pid eq "" || $pid ne $1) {
 			my $exe = readlink "/proc/$1/exe";
 			next if ($exe ne "" && &my_basename($exe) eq $exename);

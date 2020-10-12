@@ -103,6 +103,31 @@ typedef void *(*realloc_f)(void *, size_t);
 typedef void *(*calloc_f)(size_t, size_t);
 typedef void *(*memmove_f)(void *, const void *, size_t);
 
+#ifndef HAVE_GETENTROPY
+
+#include <sys/time.h>
+#include <string.h>
+
+#define myfastrand1(fval) ((fval) ^ ((fval) << 13))
+#define myfastrand2(fval) ((fval) ^ ((fval) >> 7))
+#define myfastrand3(fval) ((fval) ^ ((fval) << 17))
+#define myfastrand0(fval) (myfastrand3(myfastrand2(myfastrand1((fval)))))
+
+static inline void myrand(void *ptr, size_t size) {
+  static uint64_t fval = 0;
+  if (fval == 0) {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    fval = 0xAAAAAAAAAAAAAAAA;
+    fval ^= (tv.tv_sec << 32) | ((tv.tv_usec & 0xFFFFFFFF00000000) >> 32);
+  }
+  fval = myfastrand0(fval);
+  memcpy(ptr, &fval, size);
+}
+
+#define LSD_RANDFUNC(ptr, size) myrand(ptr, size)
+#endif
+
 #include "../../../src/lsd.h"
 
 #define PLUGIN_TYPE_DECODER			"decoder"

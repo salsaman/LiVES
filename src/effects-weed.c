@@ -395,7 +395,9 @@ typedef lives_hashentry  lives_hashjoint[NHASH_TYPES];
 static lives_hashjoint *hashnames;
 
 // per key/mode parameter defaults
-weed_plant_t ** *key_defaults[FX_KEYS_MAX_VIRTUAL];
+// *INDENT-OFF*
+weed_plant_t ***key_defaults[FX_KEYS_MAX_VIRTUAL];
+// *INDENT-ON*
 
 /////////////////// LiVES event system /////////////////
 
@@ -5094,7 +5096,9 @@ void weed_load_all(void) {
     key_to_fx[i] = (int *)lives_calloc(max_modes, sizint);
 
     if (i < FX_KEYS_MAX_VIRTUAL)
+      // *INDENT-OFF*
       key_defaults[i] = (weed_plant_t ***)lives_calloc(max_modes, sizeof(weed_plant_t **));
+    // *INDENT-ON*
 
     key_modes[i] = 0; // current active mode of each key
     filter_map[i] = NULL; // maps effects in order of application for multitrack rendering

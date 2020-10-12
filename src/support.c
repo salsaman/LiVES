@@ -14,6 +14,8 @@
 #define LIVES_LOCAL_INLINE
 #endif
 
+#include <stdlib.h> // for free()
+
 #include "support.h"
 
 #ifndef NO_GTK

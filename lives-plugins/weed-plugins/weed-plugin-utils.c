@@ -1019,7 +1019,10 @@ void weed_parse_font_string(const char *fontstr, char **family, char **fstretch,
   mbstowcs(xfontstr, fontstr, wcs_len);
 
   for (token = wcstok(xfontstr, L" ", &state); token; token = next_token) {
-    if (*token == L'\0') continue;
+    if (*token == L'\0') {
+      next_token = wcstok(NULL, L" ", &state);
+      continue;
+    }
     do {
       next_token = wcstok(NULL, L" ", &state);
     } while (next_token && *next_token == L'\0');

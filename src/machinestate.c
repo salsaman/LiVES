@@ -785,6 +785,7 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t o
 #ifdef USE_MONOTONIC_TIME
   ret = (lives_get_monotonic_time() - orignsecs) / 10;
 #else
+  struct timeval tv;
   gettimeofday(&tv, NULL);
   ret = ((tv.tv_sec * ONE_MILLLION + tv.tv_usec) - (origsecs * ONE_MILLION + orignsecs / 1000)) * USEC_TO_TICKS;
 #endif

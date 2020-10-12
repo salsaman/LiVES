@@ -1103,7 +1103,7 @@ void set_theme_colour_pref(const char *themefile, const char *key, lives_colRGBA
 boolean apply_prefs(boolean skip_warnings);
 void save_future_prefs(void);
 
-void set_palette_prefs(void);
+void set_palette_prefs(boolean save);
 
 void toggle_sets_pref(LiVESWidget *widget, livespointer prefidx);
 

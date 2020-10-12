@@ -2055,10 +2055,8 @@ static void lives_init(_ign_opts *ign_opts) {
     get_string_pref(PREF_LADSPA_PATH, prefs->ladspa_path, PATH_MAX);
     if (!*prefs->ladspa_path) {
       ladspa_path = getenv("LADSPA_PATH");
-      g_print("get to %s\n", ladspa_path);
       if (!ladspa_path) {
         ladspa_path = lives_build_path(prefs->lib_dir, "ladspa", NULL);
-        g_print("set to %s\n", ladspa_path);
         needs_free = TRUE;
       }
       lives_snprintf(prefs->ladspa_path, PATH_MAX, "%s", ladspa_path);
@@ -2587,6 +2585,59 @@ static void set_toolkit_theme(int prefer) {
 }
 
 
+#ifndef VALGRIND_ON
+static void pick_custom_colours(void) {
+  double lmin, lmax;
+  uint8_t ncr, ncg, ncb;
+  if (!(palette->style & STYLE_LIGHT)) {
+    lmin = .05; lmax = .4;
+  } else {
+    lmin = .6; lmax = .8;
+  }
+  ncr = palette->menu_and_bars.red * 255.;
+  ncg = palette->menu_and_bars.green * 255.;
+  ncb = palette->menu_and_bars.blue * 255.;
+  prefs->pb_quality = PB_QUALITY_HIGH;
+  if (pick_nice_colour(palette->normal_back.red * 255., palette->normal_back.green * 255.,
+                       palette->normal_back.blue * 255., &ncr, &ncg, &ncb, 1.5, .25, .75)) {
+    // nice1 - used for outlines
+    palette->nice1.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
+    palette->nice1.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
+    palette->nice1.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
+    palette->nice1.alpha = 1.;
+
+    ncr = palette->menu_and_bars.red * 255.;
+    ncg = palette->menu_and_bars.green * 255.;
+    ncb = palette->menu_and_bars.blue * 255.;
+
+    if (pick_nice_colour(palette->nice1.red * 255., palette->nice1.green * 255.,
+                         palette->nice1.blue * 255., &ncr, &ncg, &ncb, 1., lmin, lmax)) {
+      // nice2 - alt for menu_and_bars
+      // insensitive colour ?
+      palette->nice2.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
+      palette->nice2.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
+      palette->nice2.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
+      palette->nice2.alpha = 1.;
+      mainw->pretty_colours = TRUE;
+
+      if (!(palette->style & STYLE_LIGHT)) {
+        lmin = .6; lmax = .8;
+      } else {
+        lmin = .2; lmax = .4;
+      }
+      pick_nice_colour(palette->normal_fore.red * 255., palette->normal_fore.green * 255.,
+                       palette->normal_fore.blue * 255., &ncr, &ncg, &ncb, 1., lmin, lmax);
+      // nice3 - alt for menu_and_bars_fore
+      palette->nice3.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
+      palette->nice3.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
+      palette->nice3.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
+      palette->nice3.alpha = 1.;
+    }
+  }
+}
+#endif
+
+
 boolean set_palette_colours(boolean force_reload) {
   // force_reload should only be set when the theme changes in prefs.
   lives_colRGBA64_t lcol;
@@ -2597,11 +2648,6 @@ boolean set_palette_colours(boolean force_reload) {
 
   boolean is_OK = TRUE;
   boolean cached = FALSE;
-
-#ifndef VALGRIND_ON
-  double lmin, lmax;
-  uint8_t ncr, ncg, ncb;
-#endif
 
   lcol.alpha = 65535;
 
@@ -2677,7 +2723,7 @@ boolean set_palette_colours(boolean force_reload) {
   if (!lives_ascii_strcasecmp(future_prefs->theme, LIVES_THEME_NONE)) {
     set_toolkit_theme(0);
     return TRUE;
-  } else if (get_colour_pref(THEME_DETAIL_STYLE, &lcol)) {
+  } else if (!get_colour_pref(THEME_DETAIL_STYLE, &lcol)) {
     force_reload = TRUE;
   } else {
     // pull our colours from normal prefs
@@ -2905,7 +2951,7 @@ boolean set_palette_colours(boolean force_reload) {
     lives_free(themefile);
 
     // set details in prefs
-    set_palette_prefs();
+    set_palette_prefs(force_reload);
   }
 
 #ifndef VALGRIND_ON
@@ -2914,51 +2960,8 @@ boolean set_palette_colours(boolean force_reload) {
   // suggested uses for each colour in the process of being defined
   // TODO - run a bg thread until we create GUI
   if (!prefs->vj_mode) {
-    if (!(palette->style & STYLE_LIGHT)) {
-      lmin = .05; lmax = .4;
-    } else {
-      lmin = .6; lmax = .8;
-    }
-    ncr = palette->menu_and_bars.red * 255.;
-    ncg = palette->menu_and_bars.green * 255.;
-    ncb = palette->menu_and_bars.blue * 255.;
-    prefs->pb_quality = PB_QUALITY_HIGH;
-    if (pick_nice_colour(palette->normal_back.red * 255., palette->normal_back.green * 255.,
-                         palette->normal_back.blue * 255., &ncr, &ncg, &ncb, 1.5, .25, .75)) {
-      // nice1 - used for outlines
-      palette->nice1.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
-      palette->nice1.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
-      palette->nice1.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
-      palette->nice1.alpha = 1.;
-
-      ncr = palette->menu_and_bars.red * 255.;
-      ncg = palette->menu_and_bars.green * 255.;
-      ncb = palette->menu_and_bars.blue * 255.;
-
-      if (pick_nice_colour(palette->nice1.red * 255., palette->nice1.green * 255.,
-                           palette->nice1.blue * 255., &ncr, &ncg, &ncb, 1., lmin, lmax)) {
-        // nice2 - alt for menu_and_bars
-        // insensitive colour ?
-        palette->nice2.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
-        palette->nice2.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
-        palette->nice2.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
-        palette->nice2.alpha = 1.;
-        mainw->pretty_colours = TRUE;
-
-        if (!(palette->style & STYLE_LIGHT)) {
-          lmin = .6; lmax = .8;
-        } else {
-          lmin = .2; lmax = .4;
-        }
-        pick_nice_colour(palette->normal_fore.red * 255., palette->normal_fore.green * 255.,
-                         palette->normal_fore.blue * 255., &ncr, &ncg, &ncb, 1., lmin, lmax);
-        // nice3 - alt for menu_and_bars_fore
-        palette->nice3.red = LIVES_WIDGET_COLOR_SCALE_255(ncr);
-        palette->nice3.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
-        palette->nice3.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
-        palette->nice3.alpha = 1.;
-      }
-    }
+    /// create thread to pick custom colours
+    lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)pick_custom_colours, 0, "");
   }
 #endif
   /// set global values

@@ -409,58 +409,69 @@ int set_colour_pref(const char *key, lives_colRGBA64_t *lcol) {
 }
 
 
-void set_palette_prefs(void) {
+void set_palette_prefs(boolean save) {
   lives_colRGBA64_t lcol;
 
   lcol.red = palette->style;
   lcol.green = lcol.blue = lcol.alpha = 0;
 
-  if (set_colour_pref(THEME_DETAIL_STYLE, &lcol)) return;
+  if (save) {
+    if (set_colour_pref(THEME_DETAIL_STYLE, &lcol)) return;
 
-  if (set_string_pref(THEME_DETAIL_SEPWIN_IMAGE, mainw->sepimg_path)) return;
-  if (set_string_pref(THEME_DETAIL_FRAMEBLANK_IMAGE, mainw->frameblank_path)) return;
+    if (set_string_pref(THEME_DETAIL_SEPWIN_IMAGE, mainw->sepimg_path)) return;
+    if (set_string_pref(THEME_DETAIL_FRAMEBLANK_IMAGE, mainw->frameblank_path)) return;
+  }
 
   widget_color_to_lives_rgba(&lcol, &palette->normal_fore);
-  if (set_colour_pref(THEME_DETAIL_NORMAL_FORE, &lcol)) return;
+  if (save)
+    if (set_colour_pref(THEME_DETAIL_NORMAL_FORE, &lcol)) return;
 
   widget_color_to_lives_rgba(&lcol, &palette->normal_back);
-  if (set_colour_pref(THEME_DETAIL_NORMAL_BACK, &lcol)) return;
+  if (save)
+    if (set_colour_pref(THEME_DETAIL_NORMAL_BACK, &lcol)) return;
 
   widget_color_to_lives_rgba(&lcol, &palette->menu_and_bars_fore);
-  if (set_colour_pref(THEME_DETAIL_ALT_FORE, &lcol)) return;
+  if (save)
+    if (set_colour_pref(THEME_DETAIL_ALT_FORE, &lcol)) return;
 
   widget_color_to_lives_rgba(&lcol, &palette->menu_and_bars);
-  if (set_colour_pref(THEME_DETAIL_ALT_BACK, &lcol)) return;
+  if (save)
+    if (set_colour_pref(THEME_DETAIL_ALT_BACK, &lcol)) return;
 
   widget_color_to_lives_rgba(&lcol, &palette->info_text);
-  if (set_colour_pref(THEME_DETAIL_INFO_TEXT, &lcol)) return;
+  if (save)
+    if (set_colour_pref(THEME_DETAIL_INFO_TEXT, &lcol)) return;
 
   widget_color_to_lives_rgba(&lcol, &palette->info_base);
-  if (set_colour_pref(THEME_DETAIL_INFO_BASE, &lcol)) return;
+  if (save)
+    if (set_colour_pref(THEME_DETAIL_INFO_BASE, &lcol)) return;
 
   widget_color_to_lives_rgba(&lcol, &palette->mt_timecode_fg);
-  if (set_colour_pref(THEME_DETAIL_MT_TCFG, &lcol)) return;
+  if (save)
+    if (set_colour_pref(THEME_DETAIL_MT_TCFG, &lcol)) return;
 
   widget_color_to_lives_rgba(&lcol, &palette->mt_timecode_bg);
-  if (set_colour_pref(THEME_DETAIL_MT_TCBG, &lcol)) return;
+  if (save)
+    if (set_colour_pref(THEME_DETAIL_MT_TCBG, &lcol)) return;
 
-  if (set_colour_pref(THEME_DETAIL_AUDCOL, &palette->audcol)) return;
-  if (set_colour_pref(THEME_DETAIL_VIDCOL, &palette->vidcol)) return;
-  if (set_colour_pref(THEME_DETAIL_FXCOL, &palette->fxcol)) return;
+  if (save) {
+    if (set_colour_pref(THEME_DETAIL_AUDCOL, &palette->audcol)) return;
+    if (set_colour_pref(THEME_DETAIL_VIDCOL, &palette->vidcol)) return;
+    if (set_colour_pref(THEME_DETAIL_FXCOL, &palette->fxcol)) return;
 
-  if (set_colour_pref(THEME_DETAIL_MT_TLREG, &palette->mt_timeline_reg)) return;
-  if (set_colour_pref(THEME_DETAIL_MT_MARK, &palette->mt_mark)) return;
-  if (set_colour_pref(THEME_DETAIL_MT_EVBOX, &palette->mt_evbox)) return;
+    if (set_colour_pref(THEME_DETAIL_MT_TLREG, &palette->mt_timeline_reg)) return;
+    if (set_colour_pref(THEME_DETAIL_MT_MARK, &palette->mt_mark)) return;
+    if (set_colour_pref(THEME_DETAIL_MT_EVBOX, &palette->mt_evbox)) return;
 
-  if (set_colour_pref(THEME_DETAIL_FRAME_SURROUND, &palette->frame_surround)) return;
+    if (set_colour_pref(THEME_DETAIL_FRAME_SURROUND, &palette->frame_surround)) return;
 
-  if (set_colour_pref(THEME_DETAIL_CE_SEL, &palette->ce_sel)) return;
-  if (set_colour_pref(THEME_DETAIL_CE_UNSEL, &palette->ce_unsel)) return;
+    if (set_colour_pref(THEME_DETAIL_CE_SEL, &palette->ce_sel)) return;
+    if (set_colour_pref(THEME_DETAIL_CE_UNSEL, &palette->ce_unsel)) return;
 
-  if (set_string_pref(THEME_DETAIL_SEPWIN_IMAGE, mainw->sepimg_path)) return;
-  if (set_string_pref(THEME_DETAIL_FRAMEBLANK_IMAGE, mainw->frameblank_path)) return;
+    if (set_string_pref(THEME_DETAIL_SEPWIN_IMAGE, mainw->sepimg_path)) return;
+    if (set_string_pref(THEME_DETAIL_FRAMEBLANK_IMAGE, mainw->frameblank_path)) return;
+  }
 }
-
 
 void set_vpp(boolean set_in_prefs) {
   // Video Playback Plugin
@@ -5886,7 +5897,7 @@ void on_prefs_apply_clicked(LiVESButton * button, livespointer user_data) {
        (mainw->prefs_changed & PREFS_XCOLOURS_CHANGED) ||
        (mainw->prefs_changed & PREFS_COLOURS_CHANGED))) {
     // set details in prefs
-    set_palette_prefs();
+    set_palette_prefs(TRUE);
     if (mainw->prefs_changed & PREFS_IMAGES_CHANGED) {
       load_theme_images();
     }

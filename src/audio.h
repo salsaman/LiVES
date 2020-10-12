@@ -161,19 +161,19 @@ boolean pad_with_silence(int out_fd, void *buff, off64_t oins_size, int64_t ins_
                          boolean big_endian);
 
 void sample_move_d8_d16(short *dst, uint8_t *src,
-                        uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign) GNU_HOT;
+                        uint64_t nsamples, size_t tbytes, double scale, int nDstChannels, int nSrcChannels, int swap_sign) GNU_HOT;
 
 void sample_move_d16_d16(short *dst, short *src,
-                         uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_endian,
+                         uint64_t nsamples, size_t tbytes, double scale, int nDstChannels, int nSrcChannels, int swap_endian,
                          int swap_sign) GNU_HOT;
 
 void sample_move_d16_d8(uint8_t *dst, short *src,
-                        uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign) GNU_HOT;
+                        uint64_t nsamples, size_t tbytes, double scale, int nDstChannels, int nSrcChannels, int swap_sign) GNU_HOT;
 
 float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t src_skip, int is_unsigned, boolean rev_endian,
                             float vol) GNU_HOT;
 
-int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps,
+int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, double scale, int chans, int asamps,
                               int usigned,
                               boolean swap_endian, boolean float_interleaved, float vol) GNU_HOT; ///< returns frames output
 
@@ -181,7 +181,7 @@ int64_t sample_move_abuf_float(float **obuf, int nchans, int nsamps, int out_ara
 
 int64_t sample_move_abuf_int16(short *obuf, int nchans, int nsamps, int out_arate) GNU_HOT;
 
-void sample_move_float_float(float *dst, float *src, uint64_t nsamples, float scale, int dst_skip) GNU_HOT;
+void sample_move_float_float(float *dst, float *src, uint64_t nsamples, double scale, int dst_skip) GNU_HOT;
 
 boolean float_deinterleave(float *fbuffer, int nsamps, int nchans) GNU_HOT;
 boolean float_interleave(float *fbuffer, int nsamps, int nchans) GNU_HOT;

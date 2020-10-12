@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2020-10-12 01:48-0300\n"
+"POT-Creation-Date: 2020-10-12 02:11-0300\n"
 "PO-Revision-Date: 2019-07-22 18:27+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -15022,12 +15022,12 @@ msgstr "Хвиля"
 msgid "Waving"
 msgstr "Вигинання"
 
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "_Background Colour"
 msgstr "Колір _тла"
 
@@ -15196,8 +15196,8 @@ msgstr "_Кінцевий радіус"
 msgid "_Radius start"
 msgstr "Початковий _радіус"
 
-#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 msgid "_Radius"
 msgstr "_Радіус"

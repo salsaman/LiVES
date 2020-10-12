@@ -17,7 +17,7 @@ static boolean storedfdsset = FALSE;
 
 
 static void audio_reset_stored_fnames(void) {
-  for (register int i = 0; i < NSTOREDFDS; i++) {
+  for (int i = 0; i < NSTOREDFDS; i++) {
     storedfnames[i] = NULL;
     storedfds[i] = -1;
   }
@@ -101,7 +101,7 @@ void append_to_audio_bufferf(float *src, uint64_t nsamples, int channum) {
 
   channum++;
   if (channum > abuf->out_achans) {
-    register int i;
+    int i;
     abuf->bufferf = (float **)lives_realloc(abuf->bufferf, channum * sizeof(float *));
     for (i = abuf->out_achans; i < channum; i++) {
       abuf->bufferf[i] = NULL;
@@ -135,7 +135,7 @@ void append_to_audio_buffer16(void *src, uint64_t nsamples, int channum) {
   nsampsize = (abuf->samples_filled + nsamples);
   channum++;
   if (!abuf->buffer16 || channum > abuf->out_achans) {
-    register int i;
+    int i;
     abuf->buffer16 = (int16_t **)lives_calloc(channum, sizeof(short *));
     for (i = abuf->out_achans; i < channum; i++) {
       abuf->buffer16[i] = NULL;
@@ -154,7 +154,7 @@ void append_to_audio_buffer16(void *src, uint64_t nsamples, int channum) {
 
 void init_audio_frame_buffers(short aplayer) {
   // function should be called when the first video generator with audio input is enabled
-  register int i;
+  int i;
   pthread_mutex_lock(&mainw->abuf_mutex);
 
   for (i = 0; i < 2; i++) {
@@ -209,7 +209,7 @@ void init_audio_frame_buffers(short aplayer) {
 void free_audio_frame_buffer(lives_audio_buf_t *abuf) {
   // function should be called to clear samples
   // cannot use lives_freep
-  register int i;
+  int i;
   if (abuf) {
     if (abuf->bufferf) {
       for (i = 0; i < abuf->out_achans; i++) lives_free(abuf->bufferf[i]);
@@ -459,17 +459,18 @@ void sample_silence_stream(int nchans, int64_t nframes) {
 
 // TODO: going from >1 channels to 1, we should average
 void sample_move_d8_d16(short *dst, uint8_t *src,
-                        uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign) {
+                        uint64_t nsamples, size_t tbytes, double scale,
+                        int nDstChannels, int nSrcChannels, int swap_sign) {
   // convert 8 bit audio to 16 bit audio
 
   // endianess will be machine endian
-
-  register int nSrcCount, nDstCount;
-  register float src_offset_f = 0.f;
-  register int src_offset_i = 0;
-  register int ccount;
+  static double rem = 0.f;
+  double src_offset_d = rem;
   unsigned char *ptr;
   unsigned char *src_end;
+  off_t src_offset_i = 0;
+  int ccount;
+  int nSrcCount, nDstCount;
 
   // take care of rounding errors
   src_end = src + tbytes - nSrcChannels;
@@ -477,8 +478,8 @@ void sample_move_d8_d16(short *dst, uint8_t *src,
   if (!nSrcChannels) return;
 
   if (scale < 0.f) {
-    src_offset_f = ((float)(nsamples) * (-scale) - 1.f);
-    src_offset_i = (int)src_offset_f * nSrcChannels;
+    src_offset_d = ((double)nsamples * (-scale) - 1.f - rem);
+    src_offset_i = (off_t)src_offset_d * nSrcChannels;
   }
 
   while (nsamples--) {
@@ -508,7 +509,13 @@ void sample_move_d8_d16(short *dst, uint8_t *src,
     }
 
     /* advance the position */
-    src_offset_i = (int)(src_offset_f += scale) * nSrcChannels;
+    src_offset_i = (off_t)((src_offset_d += scale) + .4999) * nSrcChannels;
+  }
+  rem = 0.f;
+  if (scale > 0.f) {
+    if (src_offset_d > src_offset_i) rem = src_offset_d - (double)src_offset_i;
+  } else {
+    if (src_offset_d < src_offset_i) rem = (double)src_offset_i - src_offset_d;
   }
 }
 
@@ -517,31 +524,30 @@ void sample_move_d8_d16(short *dst, uint8_t *src,
    @brief convert from any number of source channels to any number of destination channels - both interleaved
 */
 void sample_move_d16_d16(int16_t *dst, int16_t *src,
-                         uint64_t nsamples, size_t tbytes, float scale, int nDstChannels,
+                         uint64_t nsamples, size_t tbytes, double scale, int nDstChannels,
                          int nSrcChannels, int swap_endian, int swap_sign) {
   // TODO: going from >1 channels to 1, we should average
-  register int nSrcCount, nDstCount;
-  register int src_offset_i = 0;
-  register int ccount = 0;
-  static float rem = 0.;
-  register float src_offset_f = rem;
+  static double rem = 0.f;
+  double src_offset_d = rem;
   int16_t *ptr;
   int16_t *src_end;
+  int nSrcCount, nDstCount;
+  off_t src_offset_i = 0;
+  int ccount = 0;
 
   if (!nSrcChannels) return;
 
   if (scale < 0.f) {
-    src_offset_f = ((float)(nsamples) * (-scale) - 1.f - rem);
-    src_offset_i = (int)src_offset_f * nSrcChannels;
+    src_offset_d = ((double)nsamples * (-scale) - 1.f - rem);
+    src_offset_i = (off_t)src_offset_d * nSrcChannels;
   }
-
 
   // take care of rounding errors
   src_end = src + tbytes / 2 - nSrcChannels;
 
-  if ((size_t)((fabsf(scale) * (float)nsamples) + rem) * nSrcChannels * 2 > tbytes)
-    scale = scale > 0. ? ((float)(tbytes  / nSrcChannels / 2) - rem) / (float)nsamples
-            :  -(((float)(tbytes  / nSrcChannels / 2) - rem) / (float)nsamples);
+  if ((off_t)((fabs(scale) * (double)nsamples) + rem) * nSrcChannels * 2 > tbytes)
+    scale = scale > 0. ? ((double)(tbytes  / nSrcChannels / 2) - rem) / (double)nsamples
+            :  -(((double)(tbytes  / nSrcChannels / 2) - rem) / (double)nsamples);
 
   while (nsamples--) {
     if ((nSrcCount = nSrcChannels) == (nDstCount = nDstChannels) && !swap_endian && !swap_sign) {
@@ -554,7 +560,6 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
 
       ptr = src + src_offset_i;
       ptr = ptr > src ? (ptr < src_end ? ptr : src_end) : src;
-
       lives_memcpy(dst, ptr, nSrcChannels * 2);
       dst += nDstCount;
     } else {
@@ -597,10 +602,14 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
       }
     }
     /* advance the position */
-    src_offset_i = (int)((src_offset_f += scale) + .4999) * nSrcChannels;
+    src_offset_i = (off_t)((src_offset_d += scale) + .4999) * nSrcChannels;
   }
-  if (src_offset_f > tbytes) rem = src_offset_f - (float)tbytes;
-  else rem = 0.;
+  rem = 0.f;
+  if (scale > 0.f) {
+    if (src_offset_d > src_offset_i) rem = src_offset_d - (double)src_offset_i;
+  } else {
+    if (src_offset_d < src_offset_i) rem = (double)src_offset_i - src_offset_d;
+  }
 }
 
 
@@ -608,20 +617,21 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
    @brief convert from any number of source channels to any number of destination channels - 8 bit output
 */
 void sample_move_d16_d8(uint8_t *dst, short *src,
-                        uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign) {
+                        uint64_t nsamples, size_t tbytes, double scale, int nDstChannels, int nSrcChannels, int swap_sign) {
   // TODO: going from >1 channels to 1, we should average
-  register int nSrcCount, nDstCount;
-  register float src_offset_f = 0.f;
-  register int src_offset_i = 0;
-  register int ccount = 0;
+  double rem = 0.f;
+  double src_offset_d = rem;
   short *ptr;
   short *src_end;
+  off_t src_offset_i = 0;
+  int ccount = 0;
+  int nSrcCount, nDstCount;
 
   if (!nSrcChannels) return;
 
   if (scale < 0.f) {
-    src_offset_f = ((float)(nsamples) * (-scale) - 1.f);
-    src_offset_i = (int)src_offset_f * nSrcChannels;
+    src_offset_d = ((double)nsamples * (-scale) - 1.f - rem);
+    src_offset_i = (off_t)src_offset_d * nSrcChannels;
   }
 
   src_end = src + tbytes / sizeof(short) - nSrcChannels;
@@ -655,7 +665,13 @@ void sample_move_d16_d8(uint8_t *dst, short *src,
     }
 
     /* advance the position */
-    src_offset_i = (int)(src_offset_f += scale) * nSrcChannels;
+    src_offset_i = (off_t)((src_offset_d += scale) + .4999) * nSrcChannels;
+  }
+  rem = 0.f;
+  if (scale > 0.f) {
+    if (src_offset_d > src_offset_i) rem = src_offset_d - (double)src_offset_i;
+  } else {
+    if (src_offset_d < src_offset_i) rem = (double)src_offset_i - src_offset_d;
   }
 }
 
@@ -666,7 +682,7 @@ float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t 
 
   // returns abs(maxvol heard)
 
-  register float svolp, svoln;
+  float svolp, svoln;
 
 #ifdef ENABLE_OIL
   float val = 0.; // set a value to stop valgrind complaining
@@ -674,9 +690,9 @@ float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t 
   double xn, xp, xa;
   double y = 0.f;
 #else
-  register float val;
-  register float maxval = 0.;
-  register short valss;
+  float val;
+  float maxval = 0.;
+  short valss;
 #endif
 
   uint8_t srcx[2];
@@ -728,11 +744,17 @@ float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t 
 }
 
 
-void sample_move_float_float(float *dst, float *src, uint64_t nsamples, float scale, int dst_skip) {
+void sample_move_float_float(float *dst, float *src, uint64_t nsamples, double scale, int dst_skip) {
   // copy one channel of float to a buffer, applying the scale (scale 2.0 to double the rate, etc)
-  size_t offs = 0;
-  float offs_f = 0.;
-  register int i;
+  static double rem = 0.f;
+  double offs_d = rem;
+  off_t offs = 0;
+  int i;
+
+  if (scale < 0.f) {
+    offs_d = ((double)nsamples * (-scale) - 1.f - rem);
+    offs = (off_t)offs_d;
+  }
 
   if (scale == 1.f && dst_skip == 1) {
     lives_memcpy((void *)dst, (void *)src, nsamples * sizeof(float));
@@ -742,7 +764,13 @@ void sample_move_float_float(float *dst, float *src, uint64_t nsamples, float sc
   for (i = 0; i < nsamples; i++) {
     *dst = src[offs];
     dst += dst_skip;
-    offs = (size_t)(offs_f += scale);
+    offs = (off_t)((offs_d += scale) + .4999);
+  }
+  rem = 0.f;
+  if (scale > 0.f) {
+    if (offs_d > offs) rem = offs_d - (double)offs;
+  } else {
+    if (offs_d < offs) rem = (double)offs - offs_d;
   }
 }
 
@@ -764,12 +792,13 @@ void sample_move_float_float(float *dst, float *src, uint64_t nsamples, float sc
    --> clip = (clip * CLIP_DECAY) + (1.0 - CLIP_DECAY)
    --> clip *= CLIP_DECAY; clip += (1.0 - CLIP_DECAY)
 */
-int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps,
+int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, double scale, int chans, int asamps,
                               int usigned, boolean rev_endian, boolean interleaved, float vol) {
   int64_t frames_out = 0l;
-  register int i;
-  register int offs = 0, coffs = 0, lcoffs = -1;
-  static float coffs_f = 0.f;
+  int i;
+  off_t offs = 0, coffs = 0, lcoffs = -1;
+
+  static double coffs_d = 0.f;
   const double add = (1.0 - CLIP_DECAY);
 
   short *hbuffs = (short *)holding_buff;
@@ -779,7 +808,7 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
   unsigned short valu[chans];
   static float clip = 1.0;
   float ovalf[chans], valf[chans], fval;
-  double volx = (double)vol, ovolx = -1.;
+  float volx = vol, ovolx = -1.;
   boolean checklim = FALSE;
 
   asamps >>= 3;
@@ -790,12 +819,12 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
     frames_out++;
     if (checklim) {
       if (clip > 1.0)  {
-        clip = (float)((double)clip * CLIP_DECAY + add);
-        volx = ((double)vol / (double)clip);
+        clip = clip * CLIP_DECAY + add;
+        volx = vol / clip;
       } else {
         checklim = FALSE;
         clip = 1.0;
-        volx = (double)vol;
+        volx = vol;
       }
     }
 
@@ -804,7 +833,7 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
         if ((fval = fabsf((ovalf[i] = *(float_buffer[i] + (interleaved ? (coffs * chans) : coffs))))) > clip) {
           clip = fval;
           checklim = TRUE;
-          volx = ((double)vol / (double)clip);
+          volx = (vol / clip);
           i = -1;
           continue;
         }
@@ -837,9 +866,9 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
       offs++;
     }
     lcoffs = coffs;
-    coffs = (int)(coffs_f += scale);
+    coffs = (off_t)((coffs_d += scale) + .4999);
   }
-  coffs_f -= (float)coffs;
+  coffs_d -= (double)coffs;
   if (prefs->show_dev_opts) {
     if (frames_out != nsamps) {
       char *msg = lives_strdup_printf("audio float -> int: buffer mismatch of %ld samples\n", frames_out - nsamps);
@@ -867,14 +896,14 @@ int64_t sample_move_abuf_float(float **obuf, int nchans, int nsamps, int out_ara
 
   lives_audio_buf_t *abuf;
   int in_arate;
-  register size_t offs = 0, ioffs, xchan;
+  off_t offs = 0, ioffs, xchan;
 
-  register float src_offset_f = 0.f;
-  register int src_offset_i = 0;
+  double src_offset_d = 0.f;
+  off_t src_offset_i = 0;
 
-  register int i, j;
+  int i, j;
 
-  register double scale;
+  double scale;
 
   size_t curval;
 
@@ -900,7 +929,7 @@ int64_t sample_move_abuf_float(float **obuf, int nchans, int nsamps, int out_ara
     samps = 0;
 
     src_offset_i = 0;
-    src_offset_f = 0.;
+    src_offset_d = 0.;
 
     for (i = 0; i < nsamps; i++) {
       // process each sample
@@ -923,7 +952,7 @@ int64_t sample_move_abuf_float(float **obuf, int nchans, int nsamps, int out_ara
         xchan++;
       }
       // resample on the fly
-      src_offset_i = (int)(src_offset_f += scale);
+      src_offset_i = (off_t)((src_offset_d += scale) + .4999);
       samps++;
       samples_out++;
     }
@@ -972,15 +1001,15 @@ int64_t sample_move_abuf_int16(short *obuf, int nchans, int nsamps, int out_arat
 
   lives_audio_buf_t *abuf;
   int in_arate, nsampsx;
-  size_t offs = 0, ioffs, xchan;
+  ssize_t offs = 0, ioffs, xchan;
 
-  float src_offset_f = 0.f;
-  int src_offset_i = 0;
+  double src_offset_d = 0.f;
+  ssize_t src_offset_i = 0;
 
   int i, j;
 
   double scale;
-  size_t curval;
+  ssize_t curval;
 
   pthread_mutex_lock(&mainw->abuf_mutex);
   if (mainw->pulsed->read_abuf == -1) {
@@ -1005,7 +1034,7 @@ int64_t sample_move_abuf_int16(short *obuf, int nchans, int nsamps, int out_arat
     samps = 0;
 
     src_offset_i = 0;
-    src_offset_f = 0.;
+    src_offset_d = 0.;
     nsampsx = nsamps * nchans;
 
     for (i = 0; i < nsampsx; i += nchans) {
@@ -1028,7 +1057,7 @@ int64_t sample_move_abuf_int16(short *obuf, int nchans, int nsamps, int out_arat
         pthread_mutex_unlock(&mainw->abuf_mutex);
         xchan++;
       }
-      src_offset_i = (int)(src_offset_f += scale);
+      src_offset_i = (ssize_t)((src_offset_d += scale) + .4999);
       samps++;
     }
 
@@ -1410,6 +1439,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       /// this is not the velocity we will use for reading, but we need to estimate how many bytes we will read in
       /// so we can calculate how many buffers to allocate
       zavel = avels[track] * (double)in_arate[track] / (double)out_arate * in_asamps[track] * in_achans[track];
+
       if (fabs(zavel) > zavel_max) zavel_max = fabs(zavel);
 
       infilename = lives_get_audio_file_name(from_files[track]);
@@ -1599,6 +1629,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
           if (reverse_buffer(in_buff, tbytes, in_achans[track] * 2))
             zavel = -zavel;
         }
+        g_print("VALS %f, %ld, %ld\n", zavel, nframes, tbytes);
         sample_move_d16_d16(holding_buff, (short *)in_buff, nframes, tbytes, zavel, out_achans,
                             in_achans[track], in_reverse_endian[track] ? SWAP_X_TO_L : 0, 0);
       }
@@ -3661,12 +3692,12 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
 
   weed_plant_t *ctmpl;
 
-  float scale;
+  double scale;
 
   size_t samps, offs = 0;
   boolean rvary = FALSE, lvary = FALSE;
   int trate, tchans, xnchans, flags;
-  int alen;
+  size_t alen;
 
   int i;
 
@@ -3761,8 +3792,8 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
   alen = samps;
 
   if (abuf->arate == 0) return FALSE;
-  scale = (float)trate / (float)abuf->arate;
-  alen = (int)((float)alen * scale);
+  scale = (double)trate / (double)abuf->arate;
+  alen = (size_t)(fabs(((double)alen * scale)));
 
   // malloc audio_data
   dst = (float **)lives_calloc(tchans, sizeof(float *));

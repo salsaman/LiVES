@@ -183,7 +183,8 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
   } else {
     vpp = mainw->vpp;
     mainw->transrend_ready = TRUE;
-    lives_nanosleep_until_nonzero(!mainw->transrend_ready);
+    lives_nanosleep_until_nonzero(!mainw->transrend_ready
+                                  || lives_proc_thread_cancelled(mainw->transrend_proc));
     if (lives_proc_thread_cancelled(mainw->transrend_proc)) goto tr_err2;
   }
 
@@ -317,7 +318,8 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
         frame_layer = on_rte_apply(frame_layer, cfile->hsize, cfile->vsize, (weed_timecode_t)currticks);
       }
     } else {
-      lives_nanosleep_until_nonzero(mainw->transrend_ready);
+      lives_nanosleep_until_nonzero(mainw->transrend_ready
+                                    || lives_proc_thread_cancelled(mainw->transrend_proc));
       if (lives_proc_thread_cancelled(mainw->transrend_proc)) goto tr_err;
       frame_layer = mainw->transrend_layer;
     }

@@ -4808,16 +4808,17 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
 
   if (start_render_effect_events(mainw->event_list, TRUE, rendaud)) { // re-render, applying effects
     // and reordering/resampling/resizing if necessary
-
-    if (!mainw->multitrack && mainw->event_list) {
-      if (!new_clip) {
-        // this is needed in case we render to same clip, and then undo ///////
-        if (cfile->event_list_back) event_list_free(cfile->event_list_back);
-        cfile->event_list_back = mainw->event_list;
-        ///////////////////////////////////////////////////////////////////////
-      } else event_list_free(mainw->event_list);
+    if (!mainw->transrend_proc) {
+      if (!mainw->multitrack && mainw->event_list) {
+        if (!new_clip) {
+          // this is needed in case we render to same clip, and then undo ///////
+          if (cfile->event_list_back) event_list_free(cfile->event_list_back);
+          cfile->event_list_back = mainw->event_list;
+          ///////////////////////////////////////////////////////////////////////
+        } else event_list_free(mainw->event_list);
+      }
+      mainw->event_list = NULL;
     }
-    mainw->event_list = NULL;
     if (mainw->scrap_pixbuf) {
       lives_widget_object_unref(mainw->scrap_pixbuf);
       mainw->scrap_pixbuf = NULL;
@@ -5195,20 +5196,21 @@ boolean deal_with_render_choice(boolean add_deinit) {
         lives_proc_thread_join(info);
         info = NULL;
       }
-      if (!render_to_clip(TRUE, transcode)) render_choice = RENDER_CHOICE_PREVIEW;
+      if (!render_to_clip(TRUE, transcode) || render_choice == RENDER_CHOICE_TRANSCODE)
+        render_choice = RENDER_CHOICE_PREVIEW;
       else {
         close_scrap_file(TRUE);
         close_ascrap_file(TRUE);
+        prefs->mt_def_width = dw;
+        prefs->mt_def_height = dh;
+        prefs->mt_def_fps = df;
+        prefs->mt_def_arate = dar;
+        prefs->mt_def_achans = dac;
+        prefs->mt_def_asamps = das;
+        prefs->mt_def_signed_endian = dse;
+        mainw->is_rendering = FALSE;
+        new_clip = TRUE;
       }
-      prefs->mt_def_width = dw;
-      prefs->mt_def_height = dh;
-      prefs->mt_def_fps = df;
-      prefs->mt_def_arate = dar;
-      prefs->mt_def_achans = dac;
-      prefs->mt_def_asamps = das;
-      prefs->mt_def_signed_endian = dse;
-      mainw->is_rendering = FALSE;
-      new_clip = TRUE;
       break;
     case RENDER_CHOICE_SAME_CLIP:
       cfile->undo_start = mainw->play_start = oplay_start; ///< same clip frames start where recording started

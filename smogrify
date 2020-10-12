@@ -1157,9 +1157,10 @@ if (1) {
 	    &smog_chdir($workdir);
 
 	    while (my $file = readdir(DIR)) {
-		if ($file =~ /^recovery\.$uid\.$gid\.(.*)/ || $file =~ /^layout\.$uid\.$gid\.(.*)/ || (!$leave_reco &&
+		if ($file =~ /^recovery\.$uid\.$gid\.(.*)/ || $file =~ /^layout\.$uid\.$gid\.(.*)/
+		    || (!$leave_reco &&
 		    ($file =~ /^recorded-layout\.$uid\.$gid\.(.*)/ ||
-		    $file =~ /^recorded_layout_numbering\.$uid\.$gid\.(.*)/)) {
+		     $file =~ /^recorded_layout_numbering\.$uid\.$gid\.(.*)/))) {
 		    if ($pid eq "" || $pid ne $1) {
 			my $exe = readlink "/proc/$1/exe";
 			next if ($exe ne "" && &my_basename($exe) eq $exename);
@@ -1177,12 +1178,13 @@ if (1) {
 	    # clips on the disk that have the marker file "set.$name"
 	    # only relevant for pre 0.9.6 versions
 
-	    $last = $ARGV[1];
-	    $setname = $ARGV[2];
-	    $pid = $ARGV[3];
+	    my $last = $ARGV[1];
+	    my $setname = $ARGV[2];
+	    my $pid = $ARGV[3];
+	    my $found;
 
 	    opendir DIR, $workdir;
-	    @allfiles = readdir(DIR);
+	    my @allfiles = readdir(DIR);
 	    closedir DIR;
 
 	    foreach my $subdir(@allfiles) {
@@ -1201,10 +1203,10 @@ if (1) {
 		$found = "none";
 	    }
 
-	    $infofile = "$workdir/.info.$pid";
 	    &smog_system_sync();
 
 	    if (-d $workdir) {
+		my $infofile = "$workdir/.info.$pid";
 		open OUT, ">", $infofile;
 		print OUT $found;
 		close OUT;

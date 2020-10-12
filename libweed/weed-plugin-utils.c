@@ -673,13 +673,13 @@ static weed_plant_t **weed_clone_plants(weed_plant_t **plants) {
         leaves2 = weed_plant_list_leaves(gui, NULL);
         for (k = 0; leaves2[k] != NULL; k++) {
           _weed_clone_leaf(gui, leaves2[k], gui2);
-          weed_free(leaves2[k]);
+          free(leaves2[k]);
         }
-        weed_free(leaves2);
+        free(leaves2);
       } else _weed_clone_leaf(plants[i], leaves[j], ret[i]);
-      weed_free(leaves[j]);
+      free(leaves[j]);
     }
-    weed_free(leaves);
+    free(leaves);
   }
   ret[i] = NULL;
   return ret;
@@ -1019,7 +1019,10 @@ void weed_parse_font_string(const char *fontstr, char **family, char **fstretch,
   mbstowcs(xfontstr, fontstr, wcs_len);
 
   for (token = wcstok(xfontstr, L" ", &state); token; token = next_token) {
-    if (*token == L'\0') continue;
+    if (*token == L'\0') {
+      next_token = wcstok(NULL, L" ", &state);
+      continue;
+    }
     do {
       next_token = wcstok(NULL, L" ", &state);
     } while (next_token && *next_token == L'\0');

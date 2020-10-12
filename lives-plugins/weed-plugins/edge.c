@@ -74,9 +74,9 @@ static inline void copywalpha(uint8_t *dest, size_t doffs, uint8_t *src,
                               size_t offs, uint8_t red, uint8_t green, uint8_t blue, int aoffs, int inplace) {
   // copy alpha from src, and RGB from val; return val
   if (aoffs == 1 && !inplace) dest[doffs++] = src[offs]; // ARGB
-  dest[doffs] = (((red * src[0]) >> 7) + red) >> 1;
+  dest[doffs] = (((red * src[0]) >> 7) + red + green) >> 2;
   dest[doffs + 1] = green;
-  dest[doffs + 2] = (((blue * src[2]) >> 7) + blue) >> 1;
+  dest[doffs + 2] = (((blue * src[2]) >> 7) + blue + green) >> 2;
   if (aoffs != 0 || inplace) return;
   dest[doffs + 3] = src[offs + 3]; // RGBA / BGRA
 }

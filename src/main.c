@@ -967,8 +967,8 @@ static boolean pre_init(void) {
   } else if (palette->style & STYLE_1) {
     widget_opts.apply_theme = 1;
   }
-  if (!mainw->foreign && prefs->startup_phase == -1) {
-    if (prefs->show_splash) splash_init();
+  if (!mainw->foreign) {
+    if (prefs->startup_phase == -1 && prefs->show_splash) splash_init();
     print_notice();
   }
 

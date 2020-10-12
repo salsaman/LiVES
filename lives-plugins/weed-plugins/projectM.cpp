@@ -61,7 +61,6 @@ static int verbosity = WEED_VERBOSITY_ERROR;
 
 #define PREF_FPS 50.
 #define MESHSIZE 128
-#define DEF_TEXTURESIZE 1024
 
 static int copies = 0;
 
@@ -168,21 +167,22 @@ static int change_size(_sdata *sdata) {
   int ret = 0;
   int newsize = sdata->width;
   if (sdata->height > newsize) newsize = sdata->height;
-  sdata->globalPM->projectM_resetGL(sdata->width, sdata->height); //1
+  //std::cerr << "Set new size to " << newsize << std::endl;
 
-  // TODO: can we change the texture size ?
-  //settings.textureSize = sd->width;
+  // must be done in this exact order, else projectM (SOIL) crashes...
+
+  sdata->globalPM->projectM_resetGL(sdata->width, sdata->height);
+
 #ifdef HAVE_SDL2
   SDL_SetWindowSize(sdata->win, sdata->width, sdata->height);
 #else
   ret = resize_display(sdata->width, sdata->height);
 #endif
+  sdata->texsize = newsize;
 
-  //sdata->globalPM->projectM_resetTextures(); // 2
-  std::cerr << "Set new size to " << newsize << std::endl;
-  sdata->globalPM->changeTextureSize(newsize); // 3
+  sdata->globalPM->changeTextureSize(newsize);
+  sdata->globalPM->projectM_resetTextures();
   sdata->textureHandle = sdata->globalPM->initRenderToTexture();
-
   return ret;
 }
 

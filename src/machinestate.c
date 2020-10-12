@@ -434,8 +434,9 @@ livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n
   static pthread_mutex_t tuner_mutex = PTHREAD_MUTEX_INITIALIZER;
   boolean haslock = FALSE;
   if (n == 0) return dest;
+  if (n < 32) return memcpy(dest, src, n);
 
-  if (!mainw->multitrack) {
+  if (!mainw->multitrack && !LIVES_IS_PLAYING) {
     if (!tuned && !tuner) tuner = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 2);
     if (tuner) {
       if (!pthread_mutex_trylock(&tuner_mutex)) {
@@ -481,11 +482,42 @@ livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n
 
 #ifdef ENABLE_OIL
 livespointer lives_oil_memcpy(livespointer dest, livesconstpointer src, size_t n) {
-  if (n >= 32 && n <= OIL_MEMCPY_MAX_BYTES) {
+  static size_t maxbytes = OIL_MEMCPY_MAX_BYTES;
+  static weed_plant_t *tuner = NULL;
+  static boolean tuned = FALSE;
+  static pthread_mutex_t tuner_mutex = PTHREAD_MUTEX_INITIALIZER;
+  boolean haslock = FALSE;
+  if (n == 0) return dest;
+  if (n < 32) return memcpy(dest, src, n);
+
+  if (!mainw->multitrack && !LIVES_IS_PLAYING) {
+    if (!tuned && !tuner) tuner = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 2);
+    if (tuner) {
+      if (!pthread_mutex_trylock(&tuner_mutex)) {
+        haslock = TRUE;
+      }
+    }
+  }
+
+  if (maxbytes > 0 ? n <= maxbytes : n >= -maxbytes) {
+    if (haslock) autotune_u64(tuner, -1024 * 1024, 1024 * 1024, 32, 1. / (double)n);
     oil_memcpy((uint8_t *)dest, (const uint8_t *)src, n);
+
+    if (haslock) {
+      maxbytes = autotune_u64_end(&tuner, maxbytes);
+      if (!tuner) tuned = TRUE;
+      pthread_mutex_unlock(&tuner_mutex);
+    }
     return dest;
   }
-  return memcpy(dest, src, n);
+  if (haslock) autotune_u64(tuner, -1024 * 1024, 1024 * 1024, 128, -1. / (double)n);
+  memcpy(dest, src, n);
+  if (haslock) {
+    maxbytes = autotune_u64_end(&tuner, maxbytes);
+    if (!tuner) tuned = TRUE;
+    pthread_mutex_unlock(&tuner_mutex);
+  }
+  return dest;
 }
 #endif
 

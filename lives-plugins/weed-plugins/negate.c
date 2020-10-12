@@ -38,7 +38,7 @@ static weed_error_t negate_process(weed_plant_t *inst, weed_timecode_t timestamp
   int pal = weed_channel_get_palette(in_channel);
   int irowstride = weed_channel_get_stride(in_channel);
   int orowstride = weed_channel_get_stride(out_channel);
-  int psize = 4, start = 0, alpha = 3;
+  int psize = 4, start = 0;//, alpha = 3;
 
   unsigned char *end = src + height * irowstride;
 
@@ -47,7 +47,7 @@ static weed_error_t negate_process(weed_plant_t *inst, weed_timecode_t timestamp
   if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) psize = 3;
   if (pal == WEED_PALETTE_ARGB32) {
     start = 1;
-    alpha = -1;
+    //alpha = -1;
   }
   width *= psize;
 

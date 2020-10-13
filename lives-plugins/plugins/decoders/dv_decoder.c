@@ -215,7 +215,7 @@ static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
 
   priv->audio_fd = -1;
 
-  cdata->seek_flag = LIVES_SEEK_FAST;
+  cdata->seek_flag = LIVES_SEEK_FAST | LIVES_SEEK_FAST_REV;
 
   return cdata;
 }

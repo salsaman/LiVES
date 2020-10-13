@@ -182,7 +182,7 @@ static int change_size(_sdata *sdata) {
 
   sdata->globalPM->changeTextureSize(newsize);
   sdata->globalPM->projectM_resetTextures();
-  sdata->textureHandle = sdata->globalPM->initRenderToTexture();
+  //sdata->textureHandle = sdata->globalPM->initRenderToTexture();
   return ret;
 }
 
@@ -956,7 +956,7 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("In audio", WEED_CHANNEL_OPTIONAL), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
   weed_plant_t *filter_class = weed_filter_class_init("projectM", "salsaman/projectM authors", 1,
-                               WEED_FILTER_PREF_LINEAR_GAMMA, palette_list, projectM_init,
+                               0, palette_list, projectM_init,
                                projectM_process, projectM_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
   weed_plant_t *gui = weed_paramtmpl_get_gui(in_params[0]);
   weed_gui_set_flags(gui, WEED_GUI_CHOICES_SET_ON_INIT);

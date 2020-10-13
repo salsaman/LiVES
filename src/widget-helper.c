@@ -34,7 +34,7 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
                              const char *detail, const char *value);
 #endif
 
-#define NSLEEP_TIME 5000
+#define NSLEEP_TIME 500
 
 /// internal data keys
 #define STD_KEY "_wh_is_standard"

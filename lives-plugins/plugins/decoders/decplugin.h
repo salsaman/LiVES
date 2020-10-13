@@ -89,10 +89,11 @@ typedef struct {
 
 /// good
 #define LIVES_SEEK_FAST (1<<0)
+#define LIVES_SEEK_FAST_REV (1<<1)
 
 /// not so good
-#define LIVES_SEEK_NEEDS_CALCULATION (1<<1)
-#define LIVES_SEEK_QUALITY_LOSS (1<<2)
+#define LIVES_SEEK_NEEDS_CALCULATION (1<<2)
+#define LIVES_SEEK_QUALITY_LOSS (1<<3)
 
 // memfuncs
 typedef void *(*malloc_f)(size_t);

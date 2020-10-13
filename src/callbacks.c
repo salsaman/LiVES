@@ -4934,7 +4934,7 @@ boolean clip_can_reverse(int clipno) {
     if (sfile->next_event) return FALSE;
     if (sfile->clip_type == CLIP_TYPE_FILE) {
       lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->ext_src)->cdata;
-      if (!cdata || !(cdata->seek_flag & LIVES_SEEK_FAST)) return FALSE;
+      if (!cdata || !(cdata->seek_flag & LIVES_SEEK_FAST_REV)) return FALSE;
     }
   }
   return TRUE;

@@ -88,6 +88,9 @@ static index_container_t **indices;
 static int nidxc;
 static pthread_mutex_t indices_mutex;
 
+#define FAST_SEEK_LIMIT 50 // milliseconds (default 0.05 sec)
+#define NO_SEEK_LIMIT 2000 // milliseconds (default 2 seconds)
+#define LNO_SEEK_LIMIT 10000 // milliseconds (default 10 seconds)
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -1915,7 +1918,7 @@ skip_probe:
     return FALSE;
   }
 
-  cdata->seek_flag = LIVES_SEEK_FAST | LIVES_SEEK_NEEDS_CALCULATION;
+  cdata->seek_flag = LIVES_SEEK_FAST | LIVES_SEEK_FAST_REV | LIVES_SEEK_NEEDS_CALCULATION;
 
   cdata->offs_x = 0;
   cdata->offs_y = 0;
@@ -2158,7 +2161,7 @@ static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
 
   cdata->priv = calloc(1, sizeof(lives_mkv_priv_t));
 
-  cdata->seek_flag = LIVES_SEEK_FAST;
+  cdata->seek_flag = LIVES_SEEK_FAST | LIVES_SEEK_FAST_REV;
 
   cdata->interlace = LIVES_INTERLACE_NONE;
   cdata->frame_gamma = WEED_GAMMA_UNKNOWN;
@@ -2730,9 +2733,10 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   int rescan_limit = 16; // pick some arbitrary value
   boolean got_picture = FALSE;
   boolean did_seek = FALSE;
+  boolean rev = FALSE;
   unsigned char *dst, *src;
   index_entry *idx;
-  register int i, p;
+  int i, p;
 
   got_eof = FALSE;
 
@@ -2742,7 +2746,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   // calc frame width and height, including any border
 
-  if (pixel_data != NULL) {
+  if (pixel_data) {
     if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P
         || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P) nplanes = 3;
     else if (pal == WEED_PALETTE_YUVA4444P) nplanes = 4;
@@ -2768,11 +2772,11 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     }
   }
   ////////////////////////////////////////////////////////////////////
-
-  if (tframe == priv->last_frame && priv->picture != NULL) goto framedone;
+  if (tframe == priv->last_frame && priv->picture) goto framedone;
   else {
-    if (priv->last_frame == -1 || (tframe < priv->last_frame) || priv->picture == NULL ||
-        (tframe - priv->last_frame > rescan_limit)) {
+    if (tframe < priv->last_frame) rev = TRUE;
+    if (priv->last_frame == -1 || rev || !priv->picture ||
+        tframe - priv->last_frame > rescan_limit) {
       timex = -get_current_ticks();
       pthread_mutex_lock(&priv->idxc->mutex);
       idx = matroska_read_seek(cdata, target_pts);
@@ -2780,12 +2784,11 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       nextframe = dts_to_frame(cdata, idx->dts);
       if (got_eof) goto cleanup;
 
-      if ((priv->last_frame == -1 || (tframe < priv->last_frame) || priv->picture == NULL ||
-           (tframe - priv->last_frame > rescan_limit)) && priv->picture != NULL) {
+      if (priv->picture) {
         avcodec_flush_buffers(priv->ctx);
       }
 #ifdef DEBUG_KFRAMES
-      if (idx != NULL) printf("got kframe %ld for frame %ld\n", dts_to_frame(cdata, idx->dts), tframe);
+      if (idx) printf("got kframe %ld for frame %ld\n", dts_to_frame(cdata, idx->dts), tframe);
 #endif
       did_seek = TRUE;
     } else nextframe = priv->last_frame + 1;
@@ -2793,7 +2796,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
     //priv->ctx->skip_frame=AVDISCARD_NONREF;
     priv->last_frame = tframe;
-    if (priv->picture == NULL) priv->picture = av_frame_alloc();
+    if (!priv->picture) priv->picture = av_frame_alloc();
 
     // do this until we reach target frame //////////////
 
@@ -2801,7 +2804,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       got_picture = FALSE;
 
       while (!got_picture) {
-        if (priv->avpkt.data != NULL) {
+        if (priv->avpkt.data) {
           free(priv->avpkt.data);
           priv->avpkt.data = NULL;
           priv->avpkt.size = 0;
@@ -2848,23 +2851,31 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
         }
       }
     } while (nextframe <= tframe);
+
     timex += get_current_ticks();
+
     if (timex && loops) {
       double mdf = (double)(1000000 * loops) / (double)timex;
+      if (timex > FAST_SEEK_LIMIT * 1000) {
+        if (rev)((lives_clip_data_t *)cdata)->seek_flag &= ~LIVES_SEEK_FAST_REV;
+        else ((lives_clip_data_t *)cdata)->seek_flag = LIVES_SEEK_NEEDS_CALCULATION;
+      } else {
+        ((lives_clip_data_t *)cdata)->seek_flag &= ~LIVES_SEEK_NEEDS_CALCULATION;
+        if (rev)((lives_clip_data_t *)cdata)->seek_flag |= LIVES_SEEK_FAST_REV;
+        else
+          ((lives_clip_data_t *)cdata)->seek_flag |= LIVES_SEEK_FAST;
+      }
       ((lives_clip_data_t *)cdata)->max_decode_fps = (((lives_clip_data_t *)cdata)->max_decode_fps + mdf) / 2.;
-      /* fprintf(stderr, "mkv_dec: vplay of %d frames took %ld usec (%ld per frame / %.4f / %.4f fps)\n", loops, timex, */
-      /* 	      timex / loops, mdf, cdata->max_decode_fps); */
+      /////////////////////////////////////////////////////
     }
-    /////////////////////////////////////////////////////
   }
-
 framedone:
   priv->last_frame = tframe;
 
 #ifdef TEST_CACHING
 framedone2:
 #endif
-  if (priv->picture == NULL || pixel_data == NULL) goto cleanup;
+  if (!priv->picture || !pixel_data) goto cleanup;
 
   // we are allowed to cast away const-ness for
   // yuv_subspace, yuv_clamping, yuv_sampling, frame_gamma and interlace

@@ -6559,12 +6559,10 @@ typedef struct {
 } resl_priv_data;
 
 
-static lives_proc_thread_t resthread = NULL;
-
 static void res_thrdfunc(void *arg) {
   resl_priv_data *priv = (resl_priv_data *)arg;
   resize_layer(priv->layer, priv->width, priv->height, priv->interp, priv->pal, priv->clamp);
-  //weed_set_voidptr_value(priv->layer, WEED_LEAF_RESIZE_THREAD, NULL);
+  weed_set_voidptr_value(priv->layer, WEED_LEAF_RESIZE_THREAD, NULL);
   lives_free(priv);
 }
 
@@ -6572,7 +6570,7 @@ static void res_thrdfunc(void *arg) {
 static void reslayer_thread(weed_layer_t *layer, int twidth, int theight, LiVESInterpType interp,
                             int tpalette, int clamp, double file_gamma) {
   resl_priv_data *priv = (resl_priv_data *)lives_malloc(sizeof(resl_priv_data));
-  //lives_thread_t *res_thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
+  lives_proc_thread_t resthread;
   weed_set_double_value(layer, "file_gamma", file_gamma);
   priv->layer = layer;
   priv->width = twidth;
@@ -6581,8 +6579,7 @@ static void reslayer_thread(weed_layer_t *layer, int twidth, int theight, LiVESI
   priv->pal = tpalette;
   priv->clamp = clamp;
   resthread = lives_proc_thread_create(LIVES_THRDATTR_NO_GUI, (lives_funcptr_t)res_thrdfunc, -1, "v", priv);
-  //weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, res_thread);
-  // res_proc = lives_proc_thread_create(res_thread, LIVES_THRDATTR_NONE, res_thrdfunc, (void *)priv);
+  weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, resthread);
 }
 
 
@@ -6609,8 +6606,6 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
   int color_type, bit_depth;
   int rowstride;
   int flags, privflags;
-
-  register int i = 0;
 
   png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, (png_voidp)NULL, NULL, NULL);
 
@@ -6779,48 +6774,46 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
   // read updated info with the new palette
   png_read_update_info(png_ptr, info_ptr);
 
-  if (i == 0) {
-    width = png_get_image_width(png_ptr, info_ptr);
-    height = png_get_image_height(png_ptr, info_ptr);
+  width = png_get_image_width(png_ptr, info_ptr);
+  height = png_get_image_height(png_ptr, info_ptr);
 
-    weed_set_int_value(layer, WEED_LEAF_WIDTH, width);
-    weed_set_int_value(layer, WEED_LEAF_HEIGHT, height);
+  weed_set_int_value(layer, WEED_LEAF_WIDTH, width);
+  weed_set_int_value(layer, WEED_LEAF_HEIGHT, height);
 
-    if (weed_palette_is_rgb(tpalette)) {
-      weed_layer_set_palette(layer, tpalette);
+  if (weed_palette_is_rgb(tpalette)) {
+    weed_layer_set_palette(layer, tpalette);
+  } else {
+    if (color_type == PNG_COLOR_TYPE_RGB_ALPHA) {
+      weed_layer_set_palette(layer, WEED_PALETTE_RGBA32);
     } else {
-      if (color_type == PNG_COLOR_TYPE_RGB_ALPHA) {
-        weed_layer_set_palette(layer, WEED_PALETTE_RGBA32);
-      } else {
-        weed_layer_set_palette(layer, WEED_PALETTE_RGB24);
-      }
-    }
-
-    weed_layer_pixel_data_free(layer);
-
-    if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
-      create_blank_layer(layer, LIVES_FILE_EXT_PNG, 4, 4, weed_layer_get_palette(layer));
-#ifndef PNG_BIO
-      fclose(fp);
-#endif
-      return FALSE;
-    }
-
-    // TODO: rowstride must be at least png_get_rowbytes(png_ptr, info_ptr)
-
-    rowstride = weed_layer_get_rowstride(layer);
-    ptr = weed_layer_get_pixel_data_packed(layer);
-
-    // libpng needs pointers to each row
-    row_ptrs = (unsigned char **)lives_malloc(height * sizeof(unsigned char *));
-    for (int j = 0; j < height; j++) {
-      row_ptrs[j] = ptr;
-      ptr += rowstride;
+      weed_layer_set_palette(layer, WEED_PALETTE_RGB24);
     }
   }
 
-  if (0 && (weed_threadsafe && twidth * theight != 0 && (twidth != width || theight != height) &&
-            !png_get_interlace_type(png_ptr, info_ptr))) {
+  weed_layer_pixel_data_free(layer);
+
+  if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
+    create_blank_layer(layer, LIVES_FILE_EXT_PNG, 4, 4, weed_layer_get_palette(layer));
+#ifndef PNG_BIO
+    fclose(fp);
+#endif
+    return FALSE;
+  }
+
+  // TODO: rowstride must be at least png_get_rowbytes(png_ptr, info_ptr)
+
+  rowstride = weed_layer_get_rowstride(layer);
+  ptr = weed_layer_get_pixel_data_packed(layer);
+
+  // libpng needs pointers to each row
+  row_ptrs = (unsigned char **)lives_malloc(height * sizeof(unsigned char *));
+  for (int j = 0; j < height; j++) {
+    row_ptrs[j] = ptr;
+    ptr += rowstride;
+  }
+
+  if (weed_threadsafe && twidth * theight != 0 && (twidth != width || theight != height) &&
+      !png_get_interlace_type(png_ptr, info_ptr)) {
     weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 1);
     reslayer_thread(layer, twidth, theight, get_interp_value(prefs->pb_quality, TRUE),
                     tpalette, weed_layer_get_yuv_clamping(layer),
@@ -6829,7 +6822,7 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
       png_read_row(png_ptr, row_ptrs[j], NULL);
       weed_set_int_value(layer, WEED_LEAF_PROGSCAN, j + 1);
     }
-    //weed_set_int_value(layer, WEED_LEAF_PROGSCAN, -1);
+    weed_set_int_value(layer, WEED_LEAF_PROGSCAN, -1);
   } else {
     png_read_image(png_ptr, row_ptrs);
   }
@@ -6853,6 +6846,7 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
   } else weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
 
   if (is16bit) {
+    lives_proc_thread_t resthread;
     int clamping, sampling, subspace;
     weed_layer_get_palette_yuv(layer, &clamping, &sampling, &subspace);
     weed_set_int_value(layer, WEED_LEAF_PIXEL_BITS, 16);
@@ -6860,11 +6854,9 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
     else {
       if (tpalette != WEED_PALETTE_YUV420P) tpalette = WEED_PALETTE_YUV444P;
     }
-    //if ((resl_thrd = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL))) {
-    if (resthread) {
-      lives_nanosleep_until_nonzero(lives_proc_thread_check(resthread));
+    if ((resthread = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL))) {
       lives_proc_thread_join(resthread);
-      resthread = NULL;
+      weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL);
     }
     // convert RGBA -> YUVA4444P or RGB -> 444P or 420
     // 16 bit conversion
@@ -7398,23 +7390,14 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
         // pull frame from decoded images
         boolean ret;
         char *fname = make_image_file_name(sfile, frame, image_ext);
-        /* if (height * width == 0) { */
-        /*   ret = weed_layer_create_from_file_progressive(layer, fname, 0, 0, target_palette, image_ext); */
-        /* } else { */
-        //lives_thread_t *resl_thrd;
+        lives_proc_thread_t resthread;
         if (!*image_ext) image_ext = get_image_ext_for_type(sfile->img_type);
         ret = weed_layer_create_from_file_progressive(layer, fname, width, height, target_palette, image_ext);
-        if (resthread) {
-          lives_nanosleep_until_nonzero(lives_proc_thread_check(resthread));
+
+        if ((resthread = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL))) {
           lives_proc_thread_join(resthread);
-          resthread = NULL;
+          weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL);
         }
-        /* if ((resl_thrd = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL))) { */
-        /*   lives_thread_join(*resl_thrd, NULL); */
-        /*   weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL); */
-        /*   lives_free(resl_thrd); */
-        /* } */
-        //}
 
         lives_free(fname);
         mainw->osc_block = FALSE;
@@ -7535,6 +7518,7 @@ boolean check_layer_ready(weed_layer_t *layer) {
   boolean ready = TRUE;
   lives_clip_t *sfile;
   lives_thread_t *thrd;
+  lives_proc_thread_t resthread;
 
   if (!layer) return FALSE;
 
@@ -7545,11 +7529,11 @@ boolean check_layer_ready(weed_layer_t *layer) {
     weed_leaf_delete(layer, WEED_LEAF_HOST_PTHREAD);
     lives_free(thrd);
   }
-  if (resthread) {
+
+  if ((resthread = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL))) {
     ready = FALSE;
-    lives_nanosleep_until_nonzero(lives_proc_thread_check(resthread));
     lives_proc_thread_join(resthread);
-    resthread = NULL;
+    weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL);
   }
 
   if (ready) return TRUE;

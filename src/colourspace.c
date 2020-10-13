@@ -12172,6 +12172,7 @@ boolean compact_rowstrides(weed_layer_t *layer) {
 #if USE_THREADS
 static void *swscale_threadfunc(void *arg) {
   lives_sw_params *swparams = (lives_sw_params *)arg;
+#ifdef USE_RESTHREAD
   int scan = 0;
   if (swparams->layer) {
     int last = swparams->iheight * (swparams->thread_id + 1);
@@ -12180,10 +12181,11 @@ static void *swscale_threadfunc(void *arg) {
       lives_nanosleep(100);
     }
   }
+#endif
   swparams->ret = sws_scale(swparams->swscale, (const uint8_t *const *)swparams->ipd, swparams->irw,
                             0, swparams->iheight, (uint8_t *const *)swparams->opd, swparams->orw);
 
-  if (scan && swparams->file_gamma != 1.) {
+  if (swparams->file_gamma != 1.) {
     gamma_convert_sub_layer(WEED_GAMMA_SRGB, 1. / swparams->file_gamma, swparams->layer, 0, 0, swparams->width,
                             swparams->ret, FALSE);
   }
@@ -12226,8 +12228,10 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
   boolean resolved = FALSE;
   int xpalette, xopal_hint;
 #endif
+#ifdef USE_RESTHREAD
   boolean progscan = FALSE;
   if (weed_get_int_value(layer, WEED_LEAF_PROGSCAN, NULL) > 0) progscan = TRUE;
+#endif
   if (!weed_plant_has_leaf(layer, WEED_LEAF_PIXEL_DATA)) {
     weed_layer_set_size(layer, width / weed_palette_get_pixels_per_macropixel(opal_hint), height);
     weed_layer_set_palette(layer, opal_hint);
@@ -12545,11 +12549,11 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
       if (!swparams[sl].swscale) {
         LIVES_DEBUG("swscale is NULL !!");
       } else {
-        if (progscan) {
-          swparams[sl].layer = layer;
-          swparams[sl].file_gamma = weed_get_double_value(layer, "file_gamma", NULL);
-          if (swparams[sl].file_gamma == 0.) swparams[sl].file_gamma = 1.;
-        } else swparams[sl].layer = NULL;
+        //if (progscan) {
+	swparams[sl].layer = layer;
+	swparams[sl].file_gamma = weed_get_double_value(layer, "file_gamma", NULL);
+	if (swparams[sl].file_gamma == 0.) swparams[sl].file_gamma = 1.;
+	//} else swparams[sl].layer = NULL;
         sws_setColorspaceDetails(swparams[sl].swscale,
                                  sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
                                      ? SWS_CS_ITU709 : SWS_CS_ITU601), iclamping,
@@ -12589,9 +12593,11 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     lives_free(swparams);
 
 #else
+#ifdef USE_RESTHREAD
     if (progscan)
       while ((scan = weed_get_int_value(layer, WEED_LEAF_PROGSCAN, NULL)) > 0 && scan < iheight)
         lives_nanosleep(100);
+#endif
     height = sws_scale(swscale, (const uint8_t *const *)ipd, irw, 0, iheight,
                        (uint8_t *const *)opd, orw);
   }

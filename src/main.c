@@ -6559,6 +6559,7 @@ typedef struct {
 } resl_priv_data;
 
 
+#ifdef USE_RESTHREAD
 static void res_thrdfunc(void *arg) {
   resl_priv_data *priv = (resl_priv_data *)arg;
   resize_layer(priv->layer, priv->width, priv->height, priv->interp, priv->pal, priv->clamp);
@@ -6581,6 +6582,7 @@ static void reslayer_thread(weed_layer_t *layer, int twidth, int theight, LiVESI
   resthread = lives_proc_thread_create(LIVES_THRDATTR_NO_GUI, (lives_funcptr_t)res_thrdfunc, -1, "v", priv);
   weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, resthread);
 }
+#endif
 
 
 boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int tpalette, boolean prog) {
@@ -6635,7 +6637,9 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
 
   if (setjmp(png_jmpbuf(png_ptr))) {
     // libpng will longjump to here on error
+#ifdef USE_RESTHREAD
     weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 0);
+#endif
     png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
 #ifndef PNG_BIO
     fclose(fp);
@@ -6812,6 +6816,7 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
     ptr += rowstride;
   }
 
+#ifdef USE_RESTHREAD
   if (weed_threadsafe && twidth * theight != 0 && (twidth != width || theight != height) &&
       !png_get_interlace_type(png_ptr, info_ptr)) {
     weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 1);
@@ -6823,9 +6828,10 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
       weed_set_int_value(layer, WEED_LEAF_PROGSCAN, j + 1);
     }
     weed_set_int_value(layer, WEED_LEAF_PROGSCAN, -1);
-  } else {
+  } else
+#endif
     png_read_image(png_ptr, row_ptrs);
-  }
+
   //png_read_end(png_ptr, NULL);
 
   // end read
@@ -6846,7 +6852,9 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
   } else weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
 
   if (is16bit) {
+#ifdef USE_RESTHREAD
     lives_proc_thread_t resthread;
+#endif
     int clamping, sampling, subspace;
     weed_layer_get_palette_yuv(layer, &clamping, &sampling, &subspace);
     weed_set_int_value(layer, WEED_LEAF_PIXEL_BITS, 16);
@@ -6854,10 +6862,12 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
     else {
       if (tpalette != WEED_PALETTE_YUV420P) tpalette = WEED_PALETTE_YUV444P;
     }
+#ifdef USE_RESTHREAD
     if ((resthread = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL))) {
       lives_proc_thread_join(resthread);
       weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL);
     }
+#endif
     // convert RGBA -> YUVA4444P or RGB -> 444P or 420
     // 16 bit conversion
     convert_layer_palette_full(layer, tpalette, clamping, sampling, subspace, WEED_GAMMA_UNKNOWN);
@@ -7390,14 +7400,18 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
         // pull frame from decoded images
         boolean ret;
         char *fname = make_image_file_name(sfile, frame, image_ext);
+#ifdef USE_RESTHREAD
         lives_proc_thread_t resthread;
+#endif
         if (!*image_ext) image_ext = get_image_ext_for_type(sfile->img_type);
         ret = weed_layer_create_from_file_progressive(layer, fname, width, height, target_palette, image_ext);
 
+#ifdef USE_RESTHREAD
         if ((resthread = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL))) {
           lives_proc_thread_join(resthread);
           weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL);
         }
+#endif
 
         lives_free(fname);
         mainw->osc_block = FALSE;
@@ -7518,8 +7532,9 @@ boolean check_layer_ready(weed_layer_t *layer) {
   boolean ready = TRUE;
   lives_clip_t *sfile;
   lives_thread_t *thrd;
+#ifdef USE_RESTHREAD
   lives_proc_thread_t resthread;
-
+#endif
   if (!layer) return FALSE;
 
   thrd = (lives_thread_t *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PTHREAD, NULL);
@@ -7530,11 +7545,13 @@ boolean check_layer_ready(weed_layer_t *layer) {
     lives_free(thrd);
   }
 
+#ifdef USE_RESTHREAD
   if ((resthread = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL))) {
     ready = FALSE;
     lives_proc_thread_join(resthread);
     weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL);
   }
+#endif
 
   if (ready) return TRUE;
 

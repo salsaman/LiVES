@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2020-10-12 02:11-0300\n"
+"POT-Creation-Date: 2020-10-13 20:17-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Finnish <fi@li.org>\n"
@@ -942,23 +942,23 @@ msgid "<No File>"
 msgstr "LiVES-%s: <Ei tiedostoa>"
 
 #. TRANSLATORS: rec(ord)
-#: src/main.c:8209
+#: src/main.c:8210
 #, fuzzy, c-format
 msgid "rec %9d / %d"
 msgstr "rec %9d/%d"
 
 #. TRANSLATORS: out of memory (rec(ord))
-#: src/main.c:8214
+#: src/main.c:8215
 #, fuzzy, c-format
 msgid "!rec %9d / %d"
 msgstr "rec %9d/%d"
 
-#: src/main.c:8539 src/main.c:8540 src/gui.c:2044 src/gui.c:3344
+#: src/main.c:8540 src/main.c:8541 src/gui.c:2044 src/gui.c:3344
 #: src/saveplay.c:2378
 msgid "Play"
 msgstr "Toista"
 
-#: src/main.c:9267
+#: src/main.c:9268
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -966,17 +966,17 @@ msgstr ""
 "LiVES ei pystynyt kaappaamaan tätä kuvaa\n"
 "\n"
 
-#: src/main.c:9396
+#: src/main.c:9397
 #, fuzzy, c-format
 msgid "Closed clip %s\n"
 msgstr "Tiedosto %s suljettiin\n"
 
-#: src/main.c:9606 src/gui.c:771 src/utils.c:4731 src/utils.c:4760
+#: src/main.c:9607 src/gui.c:771 src/utils.c:4731 src/utils.c:4760
 #: src/saveplay.c:3794 src/multitrack.c:5099 src/multitrack.c:6913
 msgid "_Undo"
 msgstr "Kum_oa"
 
-#: src/main.c:9607 src/gui.c:785 src/utils.c:4732 src/utils.c:4761
+#: src/main.c:9608 src/gui.c:785 src/utils.c:4732 src/utils.c:4761
 #: src/saveplay.c:3795 src/multitrack.c:5118 src/multitrack.c:6934
 msgid "_Redo"
 msgstr "_Tee uudestaan"

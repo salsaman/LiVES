@@ -7,19 +7,18 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2020-10-12 02:11-0300\n"
-"PO-Revision-Date: 2015-04-06 05:53+0000\n"
-"Last-Translator: ☠Jay ZDLin☠ <Unknown>\n"
+"POT-Creation-Date: 2020-10-13 20:17-0300\n"
+"PO-Revision-Date: 2020-10-08 01:06+0000\n"
+"Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2015-05-03 15:41+0000\n"
-"X-Generator: Launchpad (build 17474)\n"
+"X-Launchpad-Export-Date: 2020-10-12 19:52+0000\n"
+"X-Generator: Launchpad (build 781851f4dc11c93bc506eb54e6a0d35c919a1ce6)\n"
 
 #: src/main.c:152
-#, fuzzy
 msgid ""
 "Attention Translators !\n"
 "This message is intended for you, so please do not translate it.\n"
@@ -27,38 +26,24 @@ msgid ""
 "All translators should read the LiVES translation notes at\n"
 "http://lives-video.com/TRANS-README.txt"
 msgstr ""
-"Внимание переводчик !\n"
-"Данное сообщение предназначено для вас, поэтому не переводите его.\n"
-"\n"
-"Все переводчики должны прочитать заметки по переводу LiVES на\n"
-"http://lives.sourceforge.net/TRANS-README.txt"
 
 #: src/main.c:333
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Unfortunately LiVES crashed.\n"
 "Please report this bug at %s\n"
 "Thanks. Recovery should be possible if you restart LiVES.\n"
 msgstr ""
-"\n"
-"К сожалению,  LiVES аварийно завершен.\n"
-"Пожалуйста, сообщите об этой проблеме по адресу http://sourceforge.net/"
-"tracker/?group_id=64341&atid=507139\n"
-"Спасибо. Для восстановления перезапустите LiVES.\n"
 
 #: src/main.c:335
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "\n"
 "When reporting crashes, please include details of your operating system, "
 "distribution, and the LiVES version (%s)\n"
 msgstr ""
-"\n"
-"\n"
-"В отчете об ошибке, пожалуйста, сообщите о вашей операционной системе, "
-"дистрибутиве, а также версию LiVES ("
 
 #: src/main.c:339
 msgid ""
@@ -69,15 +54,11 @@ msgstr ""
 "\n"
 
 #: src/main.c:340
-#, fuzzy
 msgid ""
 "Please try running LiVES with the -debug option to collect more "
 "information.\n"
 "\n"
 msgstr ""
-"Пожалуйста, установите gdb и затем запустите LiVES с параметром -debug , "
-"чтобы собрать больше информации.\n"
-"\n"
 
 #: src/main.c:342
 msgid ""
@@ -94,7 +75,6 @@ msgid "Preserving set.\n"
 msgstr "Сохранение сборки.\n"
 
 #: src/main.c:619
-#, fuzzy
 msgid ""
 "\n"
 "Perl must be installed and in your path.\n"
@@ -104,13 +84,6 @@ msgid ""
 "\n"
 "Thankyou.\n"
 msgstr ""
-"\n"
-"В указанном каталоге обнаружена непригодная версия smogrify.\n"
-"\n"
-"Изучите файл README, входящий в этот пакет,\n"
-"перед запуском LiVES.\n"
-"\n"
-"Спасибо.\n"
 
 #: src/main.c:625
 msgid ""
@@ -160,7 +133,7 @@ msgstr ""
 "Пожалуйста, проверьте разрешения файла и повторите снова.\n"
 
 #: src/main.c:647
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "An error occurred when writing to the configuration files\n"
@@ -169,26 +142,17 @@ msgid ""
 "Please check the file permissions for this file and directory\n"
 "and try again.\n"
 msgstr ""
-"\n"
-"LiVES не может выполнить запись в собственный файл настроек\n"
-"%s\n"
-"\n"
-"Пожалуйста, проверьте разрешения файла и каталога,\n"
-"затем повторите снова.\n"
 
 #: src/main.c:658
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Please check the %s setting in \n"
 "%s\n"
 "and try again.\n"
 msgstr ""
-"Пожалуйста, проверьте параметр <tempdir> в \n"
-"%s\n"
-"и повторите снова.\n"
 
 #: src/main.c:665
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to use the working directory\n"
@@ -196,11 +160,6 @@ msgid ""
 "\n"
 "%s"
 msgstr ""
-"\n"
-"LiVES не может использовать временный каталог\n"
-"%s\n"
-"\n"
-"%s"
 
 #: src/main.c:671
 #, c-format
@@ -259,9 +218,8 @@ msgid "Resizing"
 msgstr "Масштабирование"
 
 #: src/main.c:1113
-#, fuzzy
 msgid "_Resize All Frames..."
-msgstr "_Масштабировать все кадры"
+msgstr ""
 
 #: src/main.c:1463
 msgid "Foreground"
@@ -294,9 +252,8 @@ msgid "Starting jack transport server..."
 msgstr "Запуск передающего сервера jack..."
 
 #: src/main.c:2160
-#, fuzzy
 msgid "Connecting to jack server..."
-msgstr "Подключение к передающему jack-серверу..."
+msgstr ""
 
 #: src/main.c:2191
 #, c-format
@@ -320,30 +277,28 @@ msgstr ""
 "jackopts 16\" или "
 
 #: src/main.c:2228
-#, fuzzy
 msgid "Starting pulseaudio server..."
-msgstr "Запуск сервера pulse audio..."
+msgstr ""
 
 #: src/main.c:2306
-#, fuzzy, c-format
+#, c-format
 msgid "%s...detected... "
-msgstr "mplayer...обнаружен..."
+msgstr ""
 
 #: src/main.c:2307
-#, fuzzy, c-format
+#, c-format
 msgid "%s...NOT DETECTED... "
-msgstr "mplayer...НЕ ОБНАРУЖЕН..."
+msgstr ""
 
 #: src/main.c:2319
 msgid "Starting in VJ MODE: Skipping most startup checks\n"
 msgstr ""
 
 #: src/main.c:2329
-#, fuzzy
 msgid ""
 "\n"
 "Machine details:\n"
-msgstr "Показать сведения"
+msgstr ""
 
 #: src/main.c:2332
 #, c-format
@@ -355,9 +310,9 @@ msgid "unknown"
 msgstr "неизвестный"
 
 #: src/main.c:2337
-#, fuzzy, c-format
+#, c-format
 msgid "CPU type is %s "
-msgstr "Тип графической оболочки: "
+msgstr ""
 
 #: src/main.c:2340 src/multitrack.c:5476
 msgid "little endian"
@@ -368,9 +323,9 @@ msgid "big endian"
 msgstr ""
 
 #: src/main.c:2342
-#, fuzzy, c-format
+#, c-format
 msgid "%d bits, %s)\n"
-msgstr "(%d бит, %s)\n"
+msgstr ""
 
 #: src/main.c:2345
 #, c-format
@@ -378,9 +333,9 @@ msgid "Machine name is '%s'\n"
 msgstr ""
 
 #: src/main.c:2347
-#, fuzzy, c-format
+#, c-format
 msgid "Number of monitors detected: %d: "
-msgstr "обнаружено мониторов: %d\n"
+msgstr ""
 
 #: src/main.c:2349
 #, c-format
@@ -395,21 +350,18 @@ msgid "Actual usable size appears to be %d X %d\n"
 msgstr ""
 
 #: src/main.c:2361
-#, fuzzy, c-format
+#, c-format
 msgid "Window manager reports as \"%s\" (%s)"
 msgstr ""
-"\n"
-"\n"
-"Менеджер интерфейса определен как \"%s\"; "
 
 #: src/main.c:2362
 msgid "UNKNOWN - please patch me !"
 msgstr ""
 
 #: src/main.c:2366
-#, fuzzy, c-format
+#, c-format
 msgid ", running on %s"
-msgstr "%s Внимание: %s\n"
+msgstr ""
 
 #: src/main.c:2368
 #, c-format
@@ -425,9 +377,9 @@ msgid "not supported"
 msgstr ""
 
 #: src/main.c:2375
-#, fuzzy, c-format
+#, c-format
 msgid "Distro is %s %s %s\n"
-msgstr "Временный каталог: %s\n"
+msgstr ""
 
 #: src/main.c:2379
 msgid "GUI type is: "
@@ -439,54 +391,47 @@ msgid "GTK+ version %d.%d.%d (compiled with %d.%d.%d)"
 msgstr "GTK+ версии %d.%d.%d (сборка %d.%d.%d)"
 
 #: src/main.c:2390
-#, fuzzy, c-format
+#, c-format
 msgid "GTK+ (compiled with %d.%d.%d)"
-msgstr "GTK+ версии %d.%d.%d (сборка %d.%d.%d)"
+msgstr ""
 
 #: src/main.c:2396
-#, fuzzy
 msgid ", with cairo support\n"
-msgstr ", с поддержкой cairo"
+msgstr ""
 
 #: src/main.c:2398
 msgid "\n"
 msgstr ""
 
 #: src/main.c:2411
-#, fuzzy
 msgid ""
 "WARNING - this version of LiVES was compiled without either\n"
 "jack or pulseaudio support.\n"
 "Many audio features will be unavailable.\n"
 msgstr ""
-"ВНИМАНИЕ - эта версия LiVES была скомпилирована\n"
-"без поддержки jack или pulse audio.\n"
-"Многие аудиофункции будут недоступны.\n"
 
 #: src/main.c:2415
 msgid "Compiled with jack support, good !\n"
 msgstr "Скомпилировано с поддержкой jack, отлично!\n"
 
 #: src/main.c:2418
-#, fuzzy
 msgid "Compiled with pulseaudio support, wonderful !\n"
-msgstr "Скомпоновано с поддержкой pulse audio, замечательно !\n"
+msgstr ""
 
 #: src/main.c:2423
 msgid "set via -configfile commandline option"
 msgstr ""
 
 #: src/main.c:2425
-#, fuzzy
 msgid "default value"
-msgstr "_Сброс значений"
+msgstr ""
 
 #: src/main.c:2427
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Config file is %s (%s)\n"
-msgstr "Временный каталог: %s\n"
+msgstr ""
 
 #: src/main.c:2432
 #, c-format
@@ -494,11 +439,11 @@ msgid ", contained in volume %s"
 msgstr ""
 
 #: src/main.c:2435
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Working directory is %s%s\n"
-msgstr "Временный каталог: %s\n"
+msgstr ""
 
 #: src/main.c:2439
 msgid "(Set by -workdir commandline option)\n"
@@ -545,9 +490,8 @@ msgid "continue with installation"
 msgstr ""
 
 #: src/main.c:2479
-#, fuzzy
 msgid "normal startup"
-msgstr "_Начать"
+msgstr ""
 
 #: src/main.c:2480
 #, c-format
@@ -560,38 +504,32 @@ msgid "%s WAS POSSIBLY RECOVERED FROM %s.recovery\n"
 msgstr ""
 
 #: src/main.c:2495
-#, fuzzy
 msgid ""
 "\n"
 "Checking RECOMMENDED dependencies: "
-msgstr "Проверка опциональных зависимостей:"
+msgstr ""
 
 #: src/main.c:2516
-#, fuzzy
 msgid ""
 "\n"
 "\n"
 "Checking OPTIONAL dependencies: "
-msgstr "Проверка опциональных зависимостей:"
+msgstr ""
 
 #: src/main.c:3279 src/main.c:4469
-#, fuzzy
 msgid "working directory"
-msgstr "Временный каталог: %s\n"
+msgstr ""
 
 #: src/main.c:3369
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Startup syntax is: %s [OPTS] [filename [start_time] [frames]]\n"
 msgstr ""
-"\n"
-"Синтаксис запуска: %s [opts] [filename [start_time] [frames]]\n"
 
 #: src/main.c:3370
-#, fuzzy
 msgid "Where: filename is the name of a media file or backup file to import\n"
-msgstr "Где: filename - это имя медиафайла или резервной копии файла.\n"
+msgstr ""
 
 #: src/main.c:3371
 msgid "start_time : filename start time in seconds\n"
@@ -602,40 +540,32 @@ msgid "frames : maximum number of frames to open\n"
 msgstr "frames : максимальное количество кадров, которые будут открыты\n"
 
 #: src/main.c:3374
-#, fuzzy
 msgid "OPTS can be:\n"
-msgstr "opts могут быть следующие:\n"
+msgstr ""
 
 #: src/main.c:3375
-#, fuzzy
 msgid "-help | --help \t\t\t: print this help text on stderr and exit\n"
-msgstr "-help : показать этот текст помощи и выйти\n"
+msgstr ""
 
 #: src/main.c:3376
 msgid "-version | --version\t\t: print the LiVES version on stderr and exit\n"
 msgstr ""
 
 #: src/main.c:3377
-#, fuzzy
 msgid ""
 "-workdir <workdir>\t\t: specify the working directory for the session, "
 "overriding any value set in preferences\n"
 msgstr ""
-"-tmpdir <tempdir>: использовать другой рабочий каталог (например /var/"
-"ramdisk)\n"
 
 #: src/main.c:3379
 msgid "\t\t\t\t\t(disables any disk quota checking)"
 msgstr ""
 
 #: src/main.c:3380
-#, fuzzy
 msgid ""
 "-configfile <path_to_file>\t: override the default configuration file for "
 "the session\n"
 msgstr ""
-"-tmpdir <tempdir>: использовать другой рабочий каталог (например /var/"
-"ramdisk)\n"
 
 #: src/main.c:3382
 #, c-format
@@ -643,13 +573,10 @@ msgid "\t\t\t\t\t(default is %s)\n"
 msgstr ""
 
 #: src/main.c:3386
-#, fuzzy
 msgid ""
 "-configdatadir <dir>\t\t: override the default configuration data directory "
 "for the session\n"
 msgstr ""
-"-tmpdir <tempdir>: использовать другой рабочий каталог (например /var/"
-"ramdisk)\n"
 
 #: src/main.c:3387
 #, c-format
@@ -669,15 +596,13 @@ msgid ""
 msgstr ""
 
 #: src/main.c:3393
-#, fuzzy
 msgid "-set <setname>\t\t\t: autoload clip set <setname>\n"
-msgstr "-set <setname>   : автоматическая загрузка сборки <setname>\n"
+msgstr ""
 
 #: src/main.c:3394
-#, fuzzy
 msgid ""
 "-noset\t\t\t\t: do not reload any clip set on startup (overrides -set)\n"
-msgstr "-noset           : не загружать какую-либо сборку при запуске\n"
+msgstr ""
 
 #: src/main.c:3395
 msgid ""
@@ -686,18 +611,16 @@ msgid ""
 msgstr ""
 
 #: src/main.c:3397
-#, fuzzy
 msgid ""
 "-nolayout\t\t\t: do not reload any multitrack layout on startup (overrides -"
 "layout)\n"
-msgstr "-noset           : не загружать какую-либо сборку при запуске\n"
+msgstr ""
 
 #: src/main.c:3398
-#, fuzzy
 msgid ""
 "-norecover\t\t\t: force non-loading of crash recovery files (overrides -"
 "recover / -autorecover)\n"
-msgstr "-norecover       : загрузка без режима восстановления после сбоя\n"
+msgstr ""
 
 #: src/main.c:3400
 msgid ""
@@ -706,23 +629,20 @@ msgid ""
 msgstr ""
 
 #: src/main.c:3401
-#, fuzzy
 msgid ""
 "-nogui\t\t\t\t: do not show the gui (still shows the play window when "
 "active)\n"
-msgstr "-nogui: не показывать графический интерфейс\n"
+msgstr ""
 
 #: src/main.c:3402
-#, fuzzy
 msgid "-nosplash\t\t\t: do not show the splash window\n"
-msgstr "-nosplash        : не показывать заставку программы\n"
+msgstr ""
 
 #: src/main.c:3404
-#, fuzzy
 msgid ""
 "-noplaywin\t\t\t: do not show the play window (still shows the internal "
 "player; intended for remote streaming)\n"
-msgstr "-noplaywin       : не показывать окно воспроизведения\n"
+msgstr ""
 
 #: src/main.c:3406
 msgid ""
@@ -731,14 +651,12 @@ msgid ""
 msgstr ""
 
 #: src/main.c:3407
-#, fuzzy
 msgid "-startup-ce\t\t\t: start in clip editor mode (overrides -startup-mt)\n"
-msgstr "-startup-ce : запуск в режиме редактора\n"
+msgstr ""
 
 #: src/main.c:3408
-#, fuzzy
 msgid "-startup-mt\t\t\t: start in multitrack mode\n"
-msgstr "-startup-mt      : запуск в режиме multitrack\n"
+msgstr ""
 
 #: src/main.c:3409
 msgid ""
@@ -753,17 +671,16 @@ msgid ""
 msgstr ""
 
 #: src/main.c:3414
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "-oscstart <port>\t\t: start OSC listener on UDP port <port> (default is %d)\n"
-msgstr "-oscstart <port> : запуск демона OSC на UDP порту <port>\n"
+msgstr ""
 
 #: src/main.c:3416
-#, fuzzy
 msgid ""
 "-nooscstart\t\t\t: do not start the OSC listener (the default, unless set in "
 "preferences)\n"
-msgstr "-nooscstart      : не запускать OSC демон\n"
+msgstr ""
 
 #: src/main.c:3419
 msgid ""
@@ -777,15 +694,11 @@ msgid "\t\t\t\t\t(only valid for %s and %s players)\n"
 msgstr ""
 
 #: src/main.c:3421
-#, fuzzy
 msgid ""
 "-aplayer <ap>\t\t\t: start with the selected audio player (<ap> can be: "
 msgstr ""
-"-aplayer <ap> : запускать вместе с выбранным аудиоплеером. <ap> можно "
-"указать mplayer"
 
 #: src/main.c:3433
-#, fuzzy
 msgid ""
 "-jackopts <opts>\t\t: opts is a bitmap of jackd startup / playback options "
 "(default is 16, unless set in Preferences)\n"
@@ -799,28 +712,21 @@ msgid ""
 "\t\t\t\t\t16 = start/stop jack audio server on LiVES startup / shutdown\n"
 "\t\t\t\t\t\t(only if audio player is jack)) \n"
 msgstr ""
-"-jackopts <opts>    : <opts> это переключатель режимов jack при запуске [1 = "
-"jack транспорт клиент, 2 = jack транспорт мастер, 4 = запустить jack "
-"транспорт сервер, 8 = остановить звук когда остановлено видео, 16 = "
-"запустить звуковой jack сервер] \n"
 
 #: src/main.c:3448
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' or "
-msgstr " или sox\n"
+msgstr ""
 
 #: src/main.c:3451
-#, fuzzy
 msgid " or "
-msgstr " или sox\n"
+msgstr ""
 
 #: src/main.c:3455
-#, fuzzy
 msgid ""
 "-devicemap <mapname>\t\t: autoload devicemap <mapname> (for MIDI / joystick "
 "control)\n"
 msgstr ""
-"-devicemap <mapname>          : автоматическая загрузка карты устройств\n"
 
 #: src/main.c:3456
 msgid ""
@@ -838,17 +744,15 @@ msgid "\t\t\t\t\t(only valid in clip edit startup mode)\n"
 msgstr ""
 
 #: src/main.c:3462
-#, fuzzy
 msgid "-debug\t\t\t\t: try to debug crashes (requires 'gdb' to be installed)\n"
 msgstr ""
-"-debug : использовать для отладки ошибок (требуется установленный 'gdb')\n"
 
 #: src/main.c:3767 src/gui.c:1144
 msgid "Starting GUI..."
 msgstr "Запуск графической оболочки..."
 
 #: src/main.c:3791
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "\n"
@@ -858,23 +762,13 @@ msgid ""
 "(Maybe you need to change the value of <prefix_dir> in your %s file)\n"
 "or you may be missing a custom theme.\n"
 msgstr ""
-"\n"
-"\n"
-"Запрошенная вами тема не найдена. Пожалуйста, убедитесь, что вы темы "
-"установлены в\n"
-"%s/%s.\n"
-"(Возможно вам необходимо изменить значение <prefix_dir> в файле %s)\n"
 
 #: src/main.c:3818
-#, fuzzy
 msgid ""
 "\n"
 "LiVES was unable to locate 'mplayer','mplayer2' or 'mpv'. You may wish to "
 "install one of these to use LiVES more fully.\n"
 msgstr ""
-"\n"
-"LiVES не обнаружила 'mplayer'. Для полноценного использования LiVES "
-"желательно установить mplayer.\n"
 
 #: src/main.c:3824
 msgid ""
@@ -933,15 +827,11 @@ msgid "Autoloading set %s..."
 msgstr "Загрузка сборки %s..."
 
 #: src/main.c:4028
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Welcome to LiVES version %s%s !\n"
 msgstr ""
-"\n"
-"\n"
-"Добро пожаловать в LiVES версии %s !\n"
-"\n"
 
 #. TRANSLATORS: localised name may be used here
 #: src/main.c:4272
@@ -954,14 +844,12 @@ msgid "Invalid option %s on commandline\n"
 msgstr ""
 
 #: src/main.c:4506
-#, fuzzy
 msgid "config data directory"
-msgstr "Временный каталог: %s\n"
+msgstr ""
 
 #: src/main.c:4529
-#, fuzzy
 msgid "configuration file"
-msgstr "Временный каталог: %s\n"
+msgstr ""
 
 #: src/main.c:4574
 msgid "Must have mjpegtools installed for -yuvin to work"
@@ -972,57 +860,55 @@ msgid "Abort and retry or continue ?"
 msgstr ""
 
 #: src/main.c:4743
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid audio player %s"
-msgstr "Непригодный аудиоплеер %s\n"
+msgstr ""
 
 #: src/main.c:4762
 msgid "external"
 msgstr ""
 
 #: src/main.c:4765
-#, fuzzy
 msgid "internal"
-msgstr "_Указатель"
+msgstr ""
 
 #: src/main.c:4766
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid audio source %s\n"
-msgstr "Непригодный аудиоплеер %s\n"
+msgstr ""
 
 #: src/main.c:5028 src/main.c:5036
-#, fuzzy, c-format
+#, c-format
 msgid "<%s> %dx%d : %d frames %d bpp %.3f fps"
-msgstr "LiVES-%s: <%s> %dx%d : %d кадров %d bpp %.3f fps"
+msgstr ""
 
 #: src/main.c:5033
-#, fuzzy, c-format
+#, c-format
 msgid "<%s> %dx%d : ??? frames ??? bpp %.3f fps"
-msgstr "LiVES-%s: <%s> %dx%d : ??? кадров ??? bpp %.3f fps"
+msgstr ""
 
 #: src/main.c:5043
-#, fuzzy
 msgid "<No File>"
-msgstr "LiVES-%s: <Нет файла>"
+msgstr ""
 
 #. TRANSLATORS: rec(ord)
-#: src/main.c:8209
+#: src/main.c:8210
 #, c-format
 msgid "rec %9d / %d"
 msgstr ""
 
 #. TRANSLATORS: out of memory (rec(ord))
-#: src/main.c:8214
+#: src/main.c:8215
 #, c-format
 msgid "!rec %9d / %d"
 msgstr ""
 
-#: src/main.c:8539 src/main.c:8540 src/gui.c:2044 src/gui.c:3344
+#: src/main.c:8540 src/main.c:8541 src/gui.c:2044 src/gui.c:3344
 #: src/saveplay.c:2378
 msgid "Play"
 msgstr "Воспроизвести"
 
-#: src/main.c:9267
+#: src/main.c:9268
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -1030,17 +916,17 @@ msgstr ""
 "LiVES не может загрузить это изображение\n"
 "\n"
 
-#: src/main.c:9396
-#, fuzzy, c-format
+#: src/main.c:9397
+#, c-format
 msgid "Closed clip %s\n"
-msgstr "Закрыть файл %s\n"
+msgstr ""
 
-#: src/main.c:9606 src/gui.c:771 src/utils.c:4731 src/utils.c:4760
+#: src/main.c:9607 src/gui.c:771 src/utils.c:4731 src/utils.c:4760
 #: src/saveplay.c:3794 src/multitrack.c:5099 src/multitrack.c:6913
 msgid "_Undo"
 msgstr "_Отменить"
 
-#: src/main.c:9607 src/gui.c:785 src/utils.c:4732 src/utils.c:4761
+#: src/main.c:9608 src/gui.c:785 src/utils.c:4732 src/utils.c:4761
 #: src/saveplay.c:3795 src/multitrack.c:5118 src/multitrack.c:6934
 msgid "_Redo"
 msgstr "_Вернуть"
@@ -1064,46 +950,25 @@ msgid ""
 msgstr ""
 
 #: src/startup.c:113
-#, fuzzy
 msgid "LiVES was unable to find the default keymap file"
 msgstr ""
-"LiVES не может загрузить это изображение\n"
-"\n"
 
 #: src/startup.c:135
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Unable to create default keymap file: %s\n"
 "Please make sure the directory\n"
 "%s\n"
 "is writable.\n"
 msgstr ""
-"\n"
-"LiVES не может выполнить запись в собственный файл настроек\n"
-"%s\n"
-"\n"
-"Пожалуйста, проверьте разрешения файла и каталога,\n"
-"затем повторите снова.\n"
 
 #: src/startup.c:165
-#, fuzzy
 msgid "LiVES was unable to find its default device maps in\n"
 msgstr ""
-"\n"
-"LiVES не может использовать временный каталог\n"
-"%s\n"
-"\n"
-"%s"
 
 #: src/startup.c:207
-#, fuzzy
 msgid "LiVES was unable to find its default icons in\n"
 msgstr ""
-"\n"
-"LiVES не может использовать временный каталог\n"
-"%s\n"
-"\n"
-"%s"
 
 #: src/startup.c:250
 msgid ""
@@ -1130,7 +995,7 @@ msgstr ""
 "(Свободно = %s)\n"
 
 #: src/startup.c:264
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "A directory named\n"
 "%s\n"
@@ -1138,12 +1003,6 @@ msgid ""
 "However, LiVES could not write to this directory or read its free space.\n"
 "Click Abort to exit from LiVES, or Retry to select another location.\n"
 msgstr ""
-"Каталог с названием\n"
-"%s\n"
-"уже существует.\n"
-"LiVES не имеет разрешения записи в этот каталог или получить сведения о "
-"свободном месте.\n"
-"Пожалуйста, выберите другое расположение.\n"
 
 #: src/startup.c:280
 #, c-format
@@ -1222,15 +1081,11 @@ msgstr ""
 "\n"
 
 #: src/startup.c:536
-#, fuzzy
 msgid ""
 ", but you do not have pulseaudio installed on your system.\n"
 " You are advised to install pulseaudio first before running LiVES.\n"
 "\n"
 msgstr ""
-", но в вашей системе не установлен pulse audio.\n"
-" Перед тем, как начать пользоваться LiVES, следует установить pulse audio.\n"
-"\n"
 
 #: src/startup.c:541
 msgid "JACK audio is recommended for pro users"
@@ -1255,18 +1110,12 @@ msgstr ""
 "\n"
 
 #: src/startup.c:550
-#, fuzzy
 msgid ""
 ", but may prevent LiVES from starting on some systems.\n"
 "If LiVES will not start with jack,you can restart and try with another audio "
 "player instead.\n"
 "\n"
 msgstr ""
-", но на некоторых системах это может привести к тому, что LiVES не "
-"запустится.\n"
-"Если LiVES не запустится с jack, вы можете перезапустить его и попробовать с "
-"другим аудиоплеером.\n"
-"\n"
 
 #: src/startup.c:555
 msgid "SOX may be used if neither of the preceding players work, "
@@ -1274,13 +1123,10 @@ msgstr ""
 "SOX обычно используется, если ни один из вышеуказанных плееров не работает, "
 
 #: src/startup.c:558
-#, fuzzy
 msgid ""
 "but many audio features will be disabled.\n"
 "\n"
 msgstr ""
-"но некоторые аудиофункции не будут работать.\n"
-"\n"
 
 #: src/startup.c:560
 msgid ""
@@ -1293,14 +1139,12 @@ msgstr ""
 "\n"
 
 #: src/startup.c:569
-#, fuzzy
 msgid "Choose an audio player"
-msgstr "LiVES: - Выберите аудиоплеер"
+msgstr ""
 
 #: src/startup.c:584
-#, fuzzy
 msgid "Use _pulseaudio player"
-msgstr "Использовать аудиоплеер _pulse"
+msgstr ""
 
 #: src/startup.c:591
 msgid "Use _jack audio player"
@@ -1327,14 +1171,12 @@ msgid "Failed"
 msgstr "Ошибка"
 
 #: src/startup.c:814
-#, fuzzy
 msgid "Testing Configuration"
-msgstr "LiVES: - Тестирование настроек"
+msgstr ""
 
 #: src/startup.c:816
-#, fuzzy
 msgid "Troubleshoot"
-msgstr "Устранение _неполадок"
+msgstr ""
 
 #: src/startup.c:828
 msgid "LiVES will now run some basic configuration tests\n"
@@ -1355,9 +1197,9 @@ msgid "Checking if sox can convert audio"
 msgstr "Проверка возможностей sox для конвертации звука"
 
 #: src/startup.c:904
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to allocate %d bytes memory."
-msgstr "Невозможно выделить 176400 байт памяти."
+msgstr ""
 
 #: src/startup.c:915
 #, c-format
@@ -1374,38 +1216,33 @@ msgid "You should install sox_fmt_all or similar"
 msgstr "Вы должны установить sox_fmt_all или аналогичное"
 
 #: src/startup.c:980
-#, fuzzy
 msgid "Checking for \"mplayer\", \"mplayer2\" or \"mpv\" presence"
-msgstr "Проверка представлений для \"mplayer\""
+msgstr ""
 
 #: src/startup.c:984
-#, fuzzy
 msgid ""
 "You should install mplayer, mplayer2 or mpv to be able to use all the "
 "decoding features in LiVES"
 msgstr ""
-"Вы должны установить mplayer для возможности использовать все видеоэффекты в "
-"LiVES"
 
 #: src/startup.c:1023
-#, fuzzy, c-format
+#, c-format
 msgid "Checking if %s can convert audio"
-msgstr "Проверка возможностей sox для конвертации звука"
+msgstr ""
 
 #: src/startup.c:1046
-#, fuzzy
 msgid "You should install mplayer,mplayer2 or mpv with pcm/wav support"
-msgstr "Вы должны утановить mplayer с поддержкой pcm/wav"
+msgstr ""
 
 #: src/startup.c:1059
-#, fuzzy, c-format
+#, c-format
 msgid "Checking if %s can decode to png"
-msgstr "Проверка возможностей mplayer декодирования в jpeg"
+msgstr ""
 
 #: src/startup.c:1061
-#, fuzzy, c-format
+#, c-format
 msgid "Checking if %s can decode to png/alpha"
-msgstr "Проверка возможностей mplayer декодирования в png/alpha"
+msgstr ""
 
 #: src/startup.c:1069
 #, c-format
@@ -1417,33 +1254,33 @@ msgid "Checking less rigorously"
 msgstr ""
 
 #: src/startup.c:1137
-#, fuzzy, c-format
+#, c-format
 msgid "You may wish to upgrade %s to a newer version"
-msgstr "Вы можете обновить mplayer на новую версию"
+msgstr ""
 
 #: src/startup.c:1165
-#, fuzzy, c-format
+#, c-format
 msgid "Checking if %s can decode to jpeg"
-msgstr "Проверка возможностей mplayer декодирования в jpeg"
+msgstr ""
 
 #: src/startup.c:1172
 msgid "Already checked"
 msgstr ""
 
 #: src/startup.c:1205
-#, fuzzy, c-format
+#, c-format
 msgid "You should install %s with either png or jpeg support"
-msgstr "Вы должны установить mplayer с поддержкой png/alpha или jpeg"
+msgstr ""
 
 #: src/startup.c:1207
-#, fuzzy, c-format
+#, c-format
 msgid "You should install %s with either png/alpha or jpeg support"
-msgstr "Вы должны установить mplayer с поддержкой png/alpha или jpeg"
+msgstr ""
 
 #: src/startup.c:1212
-#, fuzzy, c-format
+#, c-format
 msgid "You may wish to add jpeg output support to %s"
-msgstr "Вы можете добавить поддержку вывода jpeg в mplayer"
+msgstr ""
 
 #: src/startup.c:1223
 msgid "Checking for \"convert\" presence"
@@ -1454,30 +1291,20 @@ msgid "Install imageMagick to be able to use all of the rendered effects"
 msgstr "Установите imageMagick для возможности использовать все рендер-эффекты"
 
 #: src/startup.c:1247
-#, fuzzy
 msgid ""
 "\n"
 "\n"
 "\tImage decoding type has been switched to jpeg. You can revert this in "
 "Preferences/Decoding.\t\n"
 msgstr ""
-"\n"
-"\n"
-"    Тип преобразования изображения был изменён на jpeg. Вы можете внести "
-"изменение в Параметры/Декодирование.    \n"
 
 #: src/startup.c:1253
-#, fuzzy
 msgid ""
 "\n"
 "\n"
 "\tClick Cancel to exit and install any missing components, or Next to "
 "continue\t\n"
 msgstr ""
-"\n"
-"\n"
-"    Нажмиет Отмена для выхода и устанвоки всех недостающих компонентов, или "
-"Далее чтобы продолжить    \n"
 
 #: src/startup.c:1286
 msgid ""
@@ -1511,9 +1338,8 @@ msgstr ""
 "Умолчания можно изменить позднее в меню Предпочтения.\n"
 
 #: src/startup.c:1294
-#, fuzzy
 msgid "Choose the Startup Interface"
-msgstr "LiVES: - Выберите начальный интерфейс"
+msgstr ""
 
 #: src/startup.c:1305
 msgid "Start in _Clip Edit mode"
@@ -1540,9 +1366,8 @@ msgid "Set Quota Limits (Optional)"
 msgstr ""
 
 #: src/startup.c:1331
-#, fuzzy
 msgid "Finish"
-msgstr "_Завершить"
+msgstr ""
 
 #: src/startup.c:1366
 #, c-format
@@ -1675,9 +1500,8 @@ msgid "(No video)"
 msgstr "(Без видео)"
 
 #: src/interface.c:109
-#, fuzzy
 msgid "[opening...]"
-msgstr "Видео [открытие...]"
+msgstr ""
 
 #: src/interface.c:114 src/interface.c:144 src/interface.c:157
 #, c-format
@@ -1685,9 +1509,9 @@ msgid "%s %s"
 msgstr ""
 
 #: src/interface.c:121 src/interface.c:146 src/interface.c:159
-#, fuzzy, c-format
+#, c-format
 msgid "%s [%.2f sec]"
-msgstr "моно [%.2f с.]"
+msgstr ""
 
 #: src/interface.c:125
 msgid "(Undefined)"
@@ -1705,33 +1529,26 @@ msgid "Preview"
 msgstr "Предпросмотр"
 
 #: src/interface.c:702
-#, fuzzy
 msgid "Click here to _Preview the Selected Video, Image or Audio File"
 msgstr ""
-"Кликните сюда для _Предпросмотра выбранного видео, графического или "
-"звукового файла"
 
 #: src/interface.c:706
-#, fuzzy
 msgid "Click here to _Preview the Selected Audio File"
-msgstr "Кликните сюда для _Предпросмотра выбранного звукового файла"
+msgstr ""
 
 #: src/interface.c:710
-#, fuzzy
 msgid ""
 "\n"
 "Click here to _Preview the Selection\n"
-msgstr "Кликните сюда для _Предпросмотра видео"
+msgstr ""
 
 #: src/interface.c:717
-#, fuzzy
 msgid "Click here to _Preview the file"
-msgstr "Кликните сюда для _Предпросмотра видео"
+msgstr ""
 
 #: src/interface.c:765 src/interface.c:870
-#, fuzzy
 msgid "Processing..."
-msgstr "LiVES: - Обработка..."
+msgstr ""
 
 #: src/interface.c:794 src/interface.c:909 src/callbacks.c:10095
 #: src/callbacks.c:10160
@@ -1777,9 +1594,8 @@ msgid "_Preview"
 msgstr "_Предпросмотр"
 
 #: src/interface.c:1059
-#, fuzzy
 msgid "Multitrack Details"
-msgstr "LiVES: - Сведения о нескольких дорожках"
+msgstr ""
 
 #: src/interface.c:1083 src/interface.c:5492
 msgid "Format"
@@ -1790,23 +1606,20 @@ msgid "FPS"
 msgstr "FPS"
 
 #: src/interface.c:1107
-#, fuzzy
 msgid "Frame Size"
-msgstr "Размер кадра"
+msgstr ""
 
 #: src/interface.c:1120
 msgid "Frames"
 msgstr "Кадры"
 
 #: src/interface.c:1131
-#, fuzzy
 msgid "File Size"
-msgstr "Размер файла"
+msgstr ""
 
 #: src/interface.c:1144
-#, fuzzy
 msgid "Total Time"
-msgstr "Общая продолжительность"
+msgstr ""
 
 #: src/interface.c:1156 src/resample.c:1812
 msgid "Audio"
@@ -1827,9 +1640,8 @@ msgid "_Close Window"
 msgstr "_Закрыть окно"
 
 #: src/interface.c:1283
-#, fuzzy
 msgid "Encoding Options"
-msgstr "LiVES: - Настройки кодирования"
+msgstr ""
 
 #: src/interface.c:1287
 msgid "<------------- (Check the box to re_size as suggested)"
@@ -1868,9 +1680,8 @@ msgid "_Insert to fit audio"
 msgstr "_Вставить по совпадению звука"
 
 #: src/interface.c:1487
-#, fuzzy
 msgid "_Insert from selection end to audio end"
-msgstr "Удалить _выделенные звуковые данные..."
+msgstr ""
 
 #: src/interface.c:1499
 msgid "Insert _before selection"
@@ -1889,9 +1700,8 @@ msgid "Insert clipboard after selected frames"
 msgstr "Вставить содержимое буфера обмена после выделенных кадров"
 
 #: src/interface.c:1531
-#, fuzzy
 msgid "Insert _with silence"
-msgstr "Вставить _со звуком"
+msgstr ""
 
 #: src/interface.c:1534
 msgid "Insert _with sound"
@@ -1910,9 +1720,8 @@ msgid "Delete"
 msgstr "Удалить"
 
 #: src/interface.c:1746
-#, fuzzy
 msgid "Recover"
-msgstr "Записывается"
+msgstr ""
 
 #: src/interface.c:1748
 msgid "Leave"
@@ -1923,27 +1732,24 @@ msgid "All"
 msgstr ""
 
 #: src/interface.c:1771
-#, fuzzy
 msgid "Action"
-msgstr "выделения"
+msgstr ""
 
 #: src/interface.c:1775 src/interface.c:2521
 msgid "Name"
 msgstr ""
 
 #: src/interface.c:1777 src/interface.c:2520 src/interface.c:2614
-#, fuzzy
 msgid "Size"
-msgstr "Размер файла"
+msgstr ""
 
 #: src/interface.c:1779 src/interface.c:2519 src/interface.c:2613
 msgid "Modified Date"
 msgstr ""
 
 #: src/interface.c:1783 src/interface.c:2615
-#, fuzzy
 msgid "Details"
-msgstr "Показать сведения"
+msgstr ""
 
 #: src/interface.c:1924
 #, c-format
@@ -1951,9 +1757,9 @@ msgid "\tFile\t\t:\t%s"
 msgstr ""
 
 #: src/interface.c:1927
-#, fuzzy, c-format
+#, c-format
 msgid "\tDirectory\t\t:\t%s"
-msgstr "Каталоги"
+msgstr ""
 
 #: src/interface.c:1930
 #, c-format
@@ -1965,18 +1771,17 @@ msgid "Disk Cleanup"
 msgstr ""
 
 #: src/interface.c:2001
-#, fuzzy
 msgid "_Reset"
-msgstr "_Сбросить значения"
+msgstr ""
 
 #: src/interface.c:2006
 msgid "_Accept and Continue"
 msgstr ""
 
 #: src/interface.c:2028
-#, fuzzy, c-format
+#, c-format
 msgid "Analysis of directory: %s"
-msgstr "Сохранить в _каталог : "
+msgstr ""
 
 #: src/interface.c:2044
 msgid "Possibly Recoverable Clips"
@@ -1991,9 +1796,8 @@ msgid "Items for Manual Removal"
 msgstr ""
 
 #: src/interface.c:2226
-#, fuzzy
 msgid "Open Selection"
-msgstr "_Копировать выделенное"
+msgstr ""
 
 #: src/interface.c:2242
 msgid "Selection start time (sec)"
@@ -2014,12 +1818,10 @@ msgid "[ maximum =  %d ]"
 msgstr ""
 
 #: src/interface.c:2344
-#, fuzzy
 msgid "Open Location"
-msgstr "LiVES: - Открыть путь"
+msgstr ""
 
 #: src/interface.c:2358
-#, fuzzy
 msgid ""
 "\n"
 "\n"
@@ -2028,13 +1830,6 @@ msgid ""
 "Also make sure you have set your bandwidth in Preferences|Streaming\n"
 "\n"
 msgstr ""
-"\n"
-"\n"
-"Чтобы открыть поток, убедитесь, что в mplayer содержатся правильные "
-"библиотеки.\n"
-"Также убедитесь, что выставили правильный диапазон в меню Параметры - "
-"Потоки\n"
-"\n"
 
 #: src/interface.c:2369
 msgid "URL : "
@@ -2054,14 +1849,12 @@ msgid "Contents of Set %s"
 msgstr ""
 
 #: src/interface.c:2413
-#, fuzzy
 msgid "Calculating..."
-msgstr "Изменить исходящий звук"
+msgstr ""
 
 #: src/interface.c:2415 src/interface.c:2417
-#, fuzzy
 msgid "couning..."
-msgstr "Видео [открытие...]"
+msgstr ""
 
 #: src/interface.c:2419
 #, c-format
@@ -2069,52 +1862,44 @@ msgid "Total size = %s\tclips: %s\tlayouts: %s"
 msgstr ""
 
 #: src/interface.c:2436
-#, fuzzy
 msgid "<b>Show Contents</b>"
-msgstr "Показать сведения"
+msgstr ""
 
 #: src/interface.c:2464
 msgid "<b>Hide Contents</b>"
 msgstr ""
 
 #: src/interface.c:2487
-#, fuzzy
 msgid "Layouts"
-msgstr "ошибка размещения"
+msgstr ""
 
 #: src/interface.c:2600 src/ce_thumbs.c:296 src/multitrack.c:6078
 msgid "Clips"
 msgstr ""
 
 #: src/interface.c:2798
-#, fuzzy
 msgid "Rename Clip"
-msgstr "Вставить"
+msgstr ""
 
 #: src/interface.c:2800
-#, fuzzy
 msgid "Enter Set Name to Save as"
-msgstr "LiVES: - Введите имя набора"
+msgstr ""
 
 #: src/interface.c:2802
-#, fuzzy
 msgid "Enter a Set Name to Reload"
-msgstr "LiVES: - Введите имя набора"
+msgstr ""
 
 #: src/interface.c:2804
-#, fuzzy
 msgid "Choose a Working Directory"
-msgstr "LiVES: - Выберите рабочий каталог"
+msgstr ""
 
 #: src/interface.c:2806 src/multitrack.c:7428
-#, fuzzy
 msgid "Rename Current Track"
-msgstr "LiVES: - Переименовать текущую дорожку"
+msgstr ""
 
 #: src/interface.c:2808
-#, fuzzy
 msgid "Enter a Name for Your Theme"
-msgstr "LiVES: - Введите имя набора"
+msgstr ""
 
 #: src/interface.c:2822
 msgid ""
@@ -2139,31 +1924,20 @@ msgstr ""
 "Оно так же будет использовано для имени проекта.\n"
 
 #: src/interface.c:2837
-#, fuzzy
 msgid "Welcome to LiVES !"
 msgstr ""
-"Добро пожаловать в LiVES версии %s.\n"
-"\n"
 
 #: src/interface.c:2847
-#, fuzzy
 msgid ""
 "This startup wizard will guide you through the\n"
 "initial install so that you can get the most from this application."
 msgstr ""
-"Добро пожаловать в LiVES !\n"
-"Мастер ознакомит вас с начальными настройками,\n"
-"таким образом вы сможете полноценно пользоваться программой.\n"
 
 #: src/interface.c:2852
-#, fuzzy
 msgid ""
 "First of all you need to choose a working directory for LiVES.\n"
 "This should be a directory with plenty of disk space available."
 msgstr ""
-"\n"
-"Первоначально, вам необходимо выбрать рабочий каталог для LiVES.\n"
-"Это должен быть каталог с достаточным свободным местом.\n"
 
 #: src/interface.c:2858
 msgid ""
@@ -2181,9 +1955,8 @@ msgid "Set name "
 msgstr "Имя набора "
 
 #: src/interface.c:2878
-#, fuzzy
 msgid "Theme name "
-msgstr "Новое имя "
+msgstr ""
 
 #: src/interface.c:2915
 msgid "LiVES working directory."
@@ -2203,38 +1976,32 @@ msgid "_Advanced"
 msgstr "_Дополнительно"
 
 #: src/interface.c:3083
-#, fuzzy
 msgid "Select input device"
-msgstr "Выберите устройство ввода"
+msgstr ""
 
 #: src/interface.c:3092
 msgid "Select input device:"
 msgstr "Выберите устройство ввода"
 
 #: src/interface.c:3150
-#, fuzzy
 msgid "Load CD Track"
-msgstr "Загрузить дорожку _компакт-диска"
+msgstr ""
 
 #: src/interface.c:3152
-#, fuzzy
 msgid "Select DVD Title/Chapter"
-msgstr "LiVES:- Выбрать на DVD название или главу"
+msgstr ""
 
 #: src/interface.c:3154
-#, fuzzy
 msgid "Select VCD Title"
-msgstr "LiVES:- Выбрать на VCD название"
+msgstr ""
 
 #: src/interface.c:3156
-#, fuzzy
 msgid "Change Maximum Visible Tracks"
-msgstr "LiVES:- Изменить максимальное количество видимых треков"
+msgstr ""
 
 #: src/interface.c:3158
-#, fuzzy
 msgid "Device details"
-msgstr "LiVES:- Сведения об устройстве"
+msgstr ""
 
 #: src/interface.c:3173
 #, c-format
@@ -2298,14 +2065,12 @@ msgid "_Output format"
 msgstr "Формат _вывода"
 
 #: src/interface.c:3367
-#, fuzzy
 msgid "Changing the audio volume"
-msgstr "Очистка буфера обмена"
+msgstr ""
 
 #: src/interface.c:3371
-#, fuzzy
 msgid "Adjusting clip volume..."
-msgstr "Добавление изображения..."
+msgstr ""
 
 #: src/interface.c:3379
 msgid "Volume Adjustment"
@@ -2317,14 +2082,12 @@ msgid "clip volume adjusted by a factor of %.2f\n"
 msgstr ""
 
 #: src/interface.c:3473
-#, fuzzy
 msgid "Change Playback Speed"
-msgstr "_Изменить скорость воспроизведения/сохранения"
+msgstr ""
 
 #: src/interface.c:3475
-#, fuzzy
 msgid "Resample Video"
-msgstr "Размер"
+msgstr ""
 
 #: src/interface.c:3477
 msgid "Adjust Clip Volume"
@@ -2369,14 +2132,12 @@ msgid "Change the _audio speed as well"
 msgstr ""
 
 #: src/interface.c:3658
-#, fuzzy
 msgid "Fade Audio In"
-msgstr "Изменить входящий звук"
+msgstr ""
 
 #: src/interface.c:3660
-#, fuzzy
 msgid "Fade Audio Out"
-msgstr "Изменить исходящий звук"
+msgstr ""
 
 #: src/interface.c:3673
 msgid "Fade in over  "
@@ -2403,19 +2164,18 @@ msgid "selection"
 msgstr "выделения"
 
 #: src/interface.c:3735
-#, fuzzy
 msgid " (Optional)"
-msgstr "_Параметры"
+msgstr ""
 
 #: src/interface.c:3738
-#, fuzzy, c-format
+#, c-format
 msgid "File Comments%s"
-msgstr "LiVES: - Комментарии к файлу (не обязательно)"
+msgstr ""
 
 #: src/interface.c:3749
-#, fuzzy, c-format
+#, c-format
 msgid "File Name: %s"
-msgstr "Название/Имя : "
+msgstr ""
 
 #: src/interface.c:3762
 msgid "Title/Name : "
@@ -2446,14 +2206,14 @@ msgid "_Options"
 msgstr "_Параметры"
 
 #: src/interface.c:4073
-#, fuzzy, c-format
+#, c-format
 msgid "%sChoose a Device"
-msgstr "LiVES: - выберите устройство"
+msgstr ""
 
 #: src/interface.c:4076
-#, fuzzy, c-format
+#, c-format
 msgid "%sChoose a Directory"
-msgstr "LiVES: - выберите папку"
+msgstr ""
 
 #: src/interface.c:4078
 #, c-format
@@ -2461,9 +2221,8 @@ msgid "%sChoose a File"
 msgstr ""
 
 #: src/interface.c:4321
-#, fuzzy
 msgid "_Autoreload next time"
-msgstr "_Автоматически загрузить в следующий раз"
+msgstr ""
 
 #: src/interface.c:4350
 msgid ""
@@ -2512,24 +2271,17 @@ msgstr ""
 "Что вы хотите сделать?\n"
 
 #: src/interface.c:4370
-#, fuzzy
 msgid ""
 "The current layout has *NOT BEEN CHANGED* since it was last saved.\n"
 "What would you like to do ?\n"
 msgstr ""
-"Макет не был сохранён.\n"
-"Что вы хотите сделать?\n"
 
 #: src/interface.c:4375
-#, fuzzy
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout contains generated frames and cannot be retained.\n"
 "What do you wish to do ?"
 msgstr ""
-"Вы собираетесь оставить многодорожечный режим.\n"
-"Текущая схема размещения не была сохранена.\n"
-"Что вы хотите сделать?\n"
 
 #: src/interface.c:4380
 msgid "Save or Delete Set"
@@ -2568,27 +2320,24 @@ msgid "_Save clip set"
 msgstr "_Сохранить набор клипов"
 
 #: src/interface.c:4472
-#, fuzzy
 msgid "Disk Recovery Options"
-msgstr "LiVES: - Параметры восстановления диска"
+msgstr ""
 
 #: src/interface.c:4488
 msgid "Check for Lost Clips"
 msgstr ""
 
 #: src/interface.c:4502
-#, fuzzy
 msgid "Remove Empty Directories"
-msgstr "Каталоги"
+msgstr ""
 
 #: src/interface.c:4515
 msgid "Delete _Orphaned Clips"
 msgstr ""
 
 #: src/interface.c:4529
-#, fuzzy
 msgid "Clear Useless  _Backup Files from Clips"
-msgstr "Очистить _резервные файлы из закрытых фрагментов"
+msgstr ""
 
 #: src/interface.c:4539
 msgid "Remove Sets which have _Layouts but no Clips"
@@ -2635,18 +2384,16 @@ msgid "ctrl-up"
 msgstr ""
 
 #: src/interface.c:4728
-#, fuzzy
 msgid "play faster"
-msgstr "Воспроизведение видео быстро"
+msgstr ""
 
 #: src/interface.c:4729
 msgid "ctrl-down"
 msgstr ""
 
 #: src/interface.c:4729
-#, fuzzy
 msgid "play slower"
-msgstr "Воспроизведение видео медленный"
+msgstr ""
 
 #: src/interface.c:4730
 msgid "ctrl-shift-up"
@@ -2661,9 +2408,8 @@ msgid "ctrl-shift-down"
 msgstr ""
 
 #: src/interface.c:4731
-#, fuzzy
 msgid "background clip play slower"
-msgstr "Фон"
+msgstr ""
 
 #: src/interface.c:4732
 msgid "ctrl-alt-up"
@@ -2686,36 +2432,32 @@ msgid "ctrl-enter"
 msgstr ""
 
 #: src/interface.c:4734
-#, fuzzy
 msgid "reset frame rate / resync audio (foreground clip)"
-msgstr "Обратное направление воспроизведения"
+msgstr ""
 
 #: src/interface.c:4735
 msgid "ctrl-shift-enter"
 msgstr ""
 
 #: src/interface.c:4735
-#, fuzzy
 msgid "reset frame rate (background clip)"
-msgstr "Обратное направление воспроизведения"
+msgstr ""
 
 #: src/interface.c:4736 src/interface.c:4813
 msgid "ctrl-space"
 msgstr ""
 
 #: src/interface.c:4736
-#, fuzzy
 msgid "reverse direction (foreground clip)"
-msgstr "Обратное направление воспроизведения"
+msgstr ""
 
 #: src/interface.c:4737
 msgid "ctrl-shift-space"
 msgstr ""
 
 #: src/interface.c:4737
-#, fuzzy
 msgid "reverse direction (background clip)"
-msgstr "Обратное направление воспроизведения"
+msgstr ""
 
 #: src/interface.c:4738
 msgid "ctrl-alt-space"
@@ -2733,18 +2475,16 @@ msgid "ctrl-backspace"
 msgstr ""
 
 #: src/interface.c:4741
-#, fuzzy
 msgid "freeze frame (foreground and background)"
-msgstr "Обратное направление воспроизведения"
+msgstr ""
 
 #: src/interface.c:4742
 msgid "ctrl-alt-backspace"
 msgstr ""
 
 #: src/interface.c:4742
-#, fuzzy
 msgid "freeze frame (background clip only)"
-msgstr "Обратное направление воспроизведения"
+msgstr ""
 
 #: src/interface.c:4744
 msgid ""
@@ -2775,27 +2515,24 @@ msgid "ctrl-page-down"
 msgstr ""
 
 #: src/interface.c:4748
-#, fuzzy
 msgid "next clip"
-msgstr "В_ыбор"
+msgstr ""
 
 #: src/interface.c:4750
 msgid "ctrl-1"
 msgstr ""
 
 #: src/interface.c:4750
-#, fuzzy
 msgid "toggle real-time effect 1"
-msgstr "Загрузка плагина эффектов реального времени..."
+msgstr ""
 
 #: src/interface.c:4751
 msgid "ctrl-2"
 msgstr ""
 
 #: src/interface.c:4751
-#, fuzzy
 msgid "toggle real-time effect 2"
-msgstr "Загрузка плагина эффектов реального времени..."
+msgstr ""
 
 #: src/interface.c:4752 src/interface.c:4764 src/interface.c:4769
 msgid "...etc..."
@@ -2806,36 +2543,32 @@ msgid "ctrl-9"
 msgstr ""
 
 #: src/interface.c:4753
-#, fuzzy
 msgid "toggle real-time effect 9"
-msgstr "Загрузка плагина эффектов реального времени..."
+msgstr ""
 
 #: src/interface.c:4754
 msgid "ctrl-0"
 msgstr ""
 
 #: src/interface.c:4754
-#, fuzzy
 msgid "real-time effects (1 - 9) OFF"
-msgstr "Загрузка плагина эффектов реального времени..."
+msgstr ""
 
 #: src/interface.c:4755 src/interface.c:4815
 msgid "ctrl-minus"
 msgstr ""
 
 #: src/interface.c:4755
-#, fuzzy
 msgid "toggle real-time effect 10 (unaffected by ctrl-0)"
-msgstr "Загрузка плагина эффектов реального времени..."
+msgstr ""
 
 #: src/interface.c:4756
 msgid "ctrl-equals"
 msgstr ""
 
 #: src/interface.c:4756
-#, fuzzy
 msgid "toggle real-time effect 11 (unaffected by ctrl-0)"
-msgstr "Загрузка плагина эффектов реального времени..."
+msgstr ""
 
 #: src/interface.c:4757
 msgid "swap background / foreground clips"
@@ -2908,33 +2641,28 @@ msgid "clear function keys (bookmarks)"
 msgstr ""
 
 #: src/interface.c:4772
-#, fuzzy
 msgid "Other playback keys"
-msgstr "Остановка воспроизведения (Q)"
+msgstr ""
 
 #: src/interface.c:4773
-#, fuzzy
 msgid "play all"
-msgstr "Слушать все"
+msgstr ""
 
 #: src/interface.c:4774
-#, fuzzy
 msgid "play selection"
-msgstr "Воспроизвести выделенное"
+msgstr ""
 
 #: src/interface.c:4775
 msgid "stop"
 msgstr ""
 
 #: src/interface.c:4776
-#, fuzzy
 msgid "fullscreen"
-msgstr "_Полный экран"
+msgstr ""
 
 #: src/interface.c:4777
-#, fuzzy
 msgid "separate window"
-msgstr "Проигрывать в отдельном окне (s)"
+msgstr ""
 
 #: src/interface.c:4778
 msgid "double sized playarea (only in clip edit mode)"
@@ -2949,9 +2677,8 @@ msgid "blank / unblank the interface background (clip editor only)"
 msgstr ""
 
 #: src/interface.c:4781
-#, fuzzy
 msgid "activate / deactivate continuous looping"
-msgstr "Режим непрывного выполнения цикла включен (o)"
+msgstr ""
 
 #: src/interface.c:4782
 msgid "enable / disable ping pong looping"
@@ -3020,83 +2747,72 @@ msgid "ctrl-up-arrow"
 msgstr ""
 
 #: src/interface.c:4809
-#, fuzzy
 msgid "move current track up"
-msgstr "LiVES: - Переименовать текущую дорожку"
+msgstr ""
 
 #: src/interface.c:4810
 msgid "ctrl-down-arrow"
 msgstr ""
 
 #: src/interface.c:4810
-#, fuzzy
 msgid "move current track down"
-msgstr "LiVES: - Переименовать текущую дорожку"
+msgstr ""
 
 #: src/interface.c:4811
-#, fuzzy
 msgid "select previous clip"
-msgstr "В_ыбор"
+msgstr ""
 
 #: src/interface.c:4812
-#, fuzzy
 msgid "select next clip"
-msgstr "В_ыбор"
+msgstr ""
 
 #: src/interface.c:4813
-#, fuzzy
 msgid "select/deselect current track"
-msgstr "_Выберите Текущий трек"
+msgstr ""
 
 #: src/interface.c:4814
 msgid "ctrl-plus"
 msgstr ""
 
 #: src/interface.c:4814
-#, fuzzy
 msgid "zoom in"
-msgstr "_Увеличить"
+msgstr ""
 
 #: src/interface.c:4815
-#, fuzzy
 msgid "zoom out"
-msgstr "_Уменьшить"
+msgstr ""
 
 #: src/interface.c:4816
 msgid "make a mark on the timeline (during playback)"
 msgstr ""
 
 #: src/interface.c:4817
-#, fuzzy
 msgid "rewind to play start."
-msgstr "Перейти к началу (w)"
+msgstr ""
 
 #: src/interface.c:4819
 msgid "For other keys, see the menus.\n"
 msgstr ""
 
 #: src/interface.c:4846
-#, fuzzy
 msgid "Autolives Options"
-msgstr "LiVES: - Настройки кодирования"
+msgstr ""
 
 #: src/interface.c:4850
 msgid "Trigger"
 msgstr ""
 
 #: src/interface.c:4860
-#, fuzzy
 msgid "Timed:"
-msgstr "Время"
+msgstr ""
 
 #: src/interface.c:4862
 msgid "Trigger a change based on time"
 msgstr ""
 
 #: src/interface.c:4866
-#, fuzzy
 msgid "change time (seconds)"
-msgstr "Сроки (в секундах)"
+msgstr ""
 
 #: src/interface.c:4871
 msgid "OMC"
@@ -3107,9 +2823,8 @@ msgid "Trigger a change based on receiving an OSC message"
 msgstr ""
 
 #: src/interface.c:4887
-#, fuzzy
 msgid "Playback start:"
-msgstr "Воспроизведение"
+msgstr ""
 
 #: src/interface.c:4894
 msgid "Automatic"
@@ -3146,9 +2861,8 @@ msgid "Show debug output on stderr."
 msgstr ""
 
 #: src/interface.c:5085
-#, fuzzy
 msgid "Open Online Clip"
-msgstr "Oткрыть фрагмент из _Youtube..."
+msgstr ""
 
 #: src/interface.c:5095
 #, c-format
@@ -3163,24 +2877,18 @@ msgid "<--- Auto update %s ?"
 msgstr ""
 
 #: src/interface.c:5113
-#, fuzzy
 msgid ""
 "Enter the URL of the clip below.\n"
 "E.g: http://www.youtube.com/watch?v=WCR6f6WzjP8"
 msgstr ""
-"Введите веб-адрес фрагмента ниже.\n"
-"Например: http://www.youtube.com/watch?v=WCR6f6WzjP8\n"
-"\n"
 
 #: src/interface.c:5122
-#, fuzzy
 msgid "Clip URL : "
-msgstr "URL: "
+msgstr ""
 
 #: src/interface.c:5134
-#, fuzzy
 msgid "Format selection:"
-msgstr "выделения"
+msgstr ""
 
 #: src/interface.c:5139
 msgid "_Free (eg. vp9 / opus / webm)"
@@ -3191,9 +2899,8 @@ msgid "Download clip using Free codecs and support the community"
 msgstr ""
 
 #: src/interface.c:5147
-#, fuzzy
 msgid "_File Name : "
-msgstr "Название/Имя : "
+msgstr ""
 
 #: src/interface.c:5163
 msgid "_Non-free (eg. h264 / aac / mp4)"
@@ -3204,14 +2911,12 @@ msgid "Download clip using non-free codecs and support commercial interests"
 msgstr ""
 
 #: src/interface.c:5181
-#, fuzzy
 msgid "_Directory to save to: "
-msgstr "Имя директории слишком длинное !"
+msgstr ""
 
 #: src/interface.c:5189
-#, fuzzy
 msgid "Desired frame size:"
-msgstr "Размер кадра"
+msgstr ""
 
 #: src/interface.c:5195
 msgid "- Approximately:"
@@ -3242,9 +2947,8 @@ msgid "_Width"
 msgstr "_Ширина"
 
 #: src/interface.c:5231
-#, fuzzy
 msgid "X\t_Height"
-msgstr "_Высота"
+msgstr ""
 
 #: src/interface.c:5238
 msgid "\tpixels"
@@ -3283,9 +2987,8 @@ msgid "_Other options (e.g audio, subtitles)..."
 msgstr ""
 
 #: src/interface.c:5313
-#, fuzzy
 msgid "Please enter the name of the file to save the downloaded clip as.\n"
-msgstr "Введите имя файла, под которым сохранить фрагмент.\n"
+msgstr ""
 
 #: src/interface.c:5321
 msgid "Please enter a valid URL for the download.\n"
@@ -3309,46 +3012,38 @@ msgid "ID"
 msgstr ""
 
 #: src/interface.c:5499
-#, fuzzy
 msgid "Resolution"
-msgstr "LiVES: - Вопрос"
+msgstr ""
 
 #: src/interface.c:5506
 msgid "Notes"
 msgstr ""
 
 #: src/interface.c:5648
-#, fuzzy
 msgid ""
 "\n"
 "Directory was not changed\n"
-msgstr "Имя директории слишком длинное !"
+msgstr ""
 
 #: src/interface.c:5682
-#, fuzzy
 msgid "current set"
-msgstr "Текущий"
+msgstr ""
 
 #: src/interface.c:5684
-#, fuzzy, c-format
+#, c-format
 msgid "set %s"
-msgstr "Сохранение сборки %s"
+msgstr ""
 
 #: src/interface.c:5686
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The %s will be permanently deleted from the disk.\n"
 "Are you sure ?"
 msgstr ""
-"\n"
-"\n"
-"Сборка будет удалена с диска.\n"
-"Вы уверены ?\n"
 
 #: src/interface.c:5700
-#, fuzzy
 msgid "All Sets have been erased from the disk"
-msgstr "Сборка %s была полностью удалена с диска.\n"
+msgstr ""
 
 #: src/interface.c:5721
 #, c-format
@@ -3373,11 +3068,8 @@ msgid "_Reload"
 msgstr ""
 
 #: src/interface.c:5790
-#, fuzzy
 msgid " including the current set."
 msgstr ""
-",\n"
-" - включая текущую раскладку - "
 
 #: src/interface.c:5793
 #, c-format
@@ -3393,9 +3085,8 @@ msgid ""
 msgstr ""
 
 #: src/interface.c:5804
-#, fuzzy
 msgid "Manage Clipsets"
-msgstr "_Сохранить набор клипов"
+msgstr ""
 
 #: src/interface.c:5809
 msgid "Go back"
@@ -3440,21 +3131,17 @@ msgid "LiVES can help limit the amount of diskspace used by projects (sets)."
 msgstr ""
 
 #: src/interface.c:5975
-#, fuzzy
 msgid "Value not set"
-msgstr "Текущий"
+msgstr ""
 
 #: src/interface.c:5976
-#, fuzzy
 msgid "Calculating...."
-msgstr "Изменить исходящий звук"
+msgstr ""
 
 #: src/interface.c:6060
-#, fuzzy, c-format
+#, c-format
 msgid "%.2f%% used"
 msgstr ""
-"\n"
-"  %.2f сек."
 
 #: src/interface.c:6062
 #, c-format
@@ -3467,33 +3154,29 @@ msgid "LiVES is currently using over %d%% of its available quota"
 msgstr ""
 
 #: src/interface.c:6075
-#, fuzzy, c-format
+#, c-format
 msgid "Calculating %% used"
-msgstr "Изменить исходящий звук"
+msgstr ""
 
 #: src/interface.c:6155
-#, fuzzy
 msgid "<b>Full _Details</b>"
-msgstr "Показать сведения"
+msgstr ""
 
 #: src/interface.c:6161
-#, fuzzy
 msgid "<b>Hide _Details</b>"
-msgstr "Показать сведения"
+msgstr ""
 
 #: src/interface.c:6167
-#, fuzzy
 msgid "Working directory"
-msgstr "Временный каталог: %s\n"
+msgstr ""
 
 #: src/interface.c:6171
 msgid "Mount point"
 msgstr ""
 
 #: src/interface.c:6176
-#, fuzzy
 msgid "Total size"
-msgstr "Общая продолжительность"
+msgstr ""
 
 #: src/interface.c:6184
 msgid "Disk space free"
@@ -3508,14 +3191,12 @@ msgid "Free diskspace is below the warning level"
 msgstr ""
 
 #: src/interface.c:6200
-#, fuzzy
 msgid "Used by other applications"
-msgstr "Попробуйте закрыть некоторые открытые приложения\n"
+msgstr ""
 
 #: src/interface.c:6211 src/interface.c:6502
-#, fuzzy
 msgid "Used by LiVES"
-msgstr "Сведения о LiVES"
+msgstr ""
 
 #: src/interface.c:6221
 msgid "Sets on disk"
@@ -3539,9 +3220,8 @@ msgid "Unused quota"
 msgstr ""
 
 #: src/interface.c:6277
-#, fuzzy
 msgid "Disk warning level"
-msgstr "Изменить входящий звук"
+msgstr ""
 
 #: src/interface.c:6287
 msgid "Disk critical level"
@@ -3571,14 +3251,12 @@ msgid "Disk Space Quota"
 msgstr ""
 
 #: src/interface.c:6419
-#, fuzzy
 msgid "Current working directory"
-msgstr "Временный каталог: %s\n"
+msgstr ""
 
 #: src/interface.c:6430
-#, fuzzy
 msgid "Change Directory"
-msgstr "LiVES: - выберите папку"
+msgstr ""
 
 #: src/interface.c:6444
 msgid "<b>Disk space used by LiVES:</b>"
@@ -3602,9 +3280,8 @@ msgid "Free space"
 msgstr ""
 
 #: src/interface.c:6526
-#, fuzzy
 msgid "Warn level"
-msgstr "Изменить входящий звук"
+msgstr ""
 
 #: src/interface.c:6534
 msgid "Critical level"
@@ -3639,38 +3316,32 @@ msgid "Unlimited"
 msgstr "Неограниченно"
 
 #: src/interface.c:6616
-#, fuzzy
 msgid "Value:"
-msgstr "значение"
+msgstr ""
 
 #: src/interface.c:6646
-#, fuzzy
 msgid "Diskspace Management Options"
-msgstr "LiVES: - Параметры восстановления диска"
+msgstr ""
 
 #: src/interface.c:6654
-#, fuzzy
 msgid "Clean Up Diskspace"
-msgstr "Очистить место на диске (_u)"
+msgstr ""
 
 #: src/interface.c:6665
-#, fuzzy
 msgid "Manage Clip Sets"
-msgstr "_Сохранить набор клипов"
+msgstr ""
 
 #: src/interface.c:6687
-#, fuzzy
 msgid "Close Current Clips"
-msgstr "Закрыть текущий клип (_C)"
+msgstr ""
 
 #: src/interface.c:6707
 msgid "Show this dialog on startup"
 msgstr ""
 
 #: src/interface.c:6717
-#, fuzzy
 msgid "Abort"
-msgstr "Пре_рвать"
+msgstr ""
 
 #: src/interface.c:6728
 msgid "FINISH"
@@ -3752,12 +3423,11 @@ msgid ""
 msgstr ""
 
 #: src/callbacks.c:1194
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to move %s to %s\n"
-msgstr "Невозможно ваыполнить запись: %s"
+msgstr ""
 
 #: src/callbacks.c:1212
-#, fuzzy
 msgid ""
 "\n"
 "LiVES was unable to download the clip.\n"
@@ -3765,15 +3435,11 @@ msgid ""
 "the latest youtube-dl installed.\n"
 "(Note: try right-clicking on the clip itself to copy its address)\n"
 msgstr ""
-"\n"
-"LiVES не может загрузить фрагмент.\n"
-"Пожалуйста, проверьте правильность ссылки, а также, \n"
-" установлена ли последняя версия youtube-dl.\n"
 
 #: src/callbacks.c:1375
-#, fuzzy, c-format
+#, c-format
 msgid "Layouts were removed for set %s.\n"
-msgstr "Субтитры сохранены как %s\n"
+msgstr ""
 
 #: src/callbacks.c:1409
 msgid "This file"
@@ -3866,33 +3532,32 @@ msgid "Exporting project"
 msgstr "Экспорт проекта"
 
 #: src/callbacks.c:1676 src/callbacks.c:1878
-#, fuzzy
 msgid "Theme"
-msgstr "Новое имя "
+msgstr ""
 
 #: src/callbacks.c:1681
 msgid "Choose a directory to export to"
 msgstr ""
 
 #: src/callbacks.c:1767
-#, fuzzy, c-format
+#, c-format
 msgid "Exporting theme as %s..."
-msgstr "Экспорт звука как %s..."
+msgstr ""
 
 #: src/callbacks.c:1876
-#, fuzzy, c-format
+#, c-format
 msgid "Importing theme \"%s\" from %s..."
-msgstr "Экспорт звука как %s..."
+msgstr ""
 
 #: src/callbacks.c:1951
-#, fuzzy, c-format
+#, c-format
 msgid "Backup as %s File"
-msgstr "Сохранить резервную копию в файл .lv1"
+msgstr ""
 
 #: src/callbacks.c:1973
-#, fuzzy, c-format
+#, c-format
 msgid "Restore %s File"
-msgstr "Восстановить файл .lv1"
+msgstr ""
 
 #: src/callbacks.c:2056
 #, c-format
@@ -3918,16 +3583,15 @@ msgid "Set '%s'"
 msgstr ""
 
 #: src/callbacks.c:2198
-#, fuzzy
 msgid "All currently open clips"
-msgstr "Закрыть текущий клип (_C)"
+msgstr ""
 
 #: src/callbacks.c:2199
 msgid "<b>(Note: original source material will NOT be affected !)</b>"
 msgstr ""
 
 #: src/callbacks.c:2202
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "\n"
@@ -3936,10 +3600,6 @@ msgid ""
 "\n"
 "%s"
 msgstr ""
-"\n"
-"\n"
-"Сборка будет удалена с диска.\n"
-"Вы уверены ?\n"
 
 #: src/callbacks.c:2261 src/callbacks.c:12751 src/resample.c:1703
 msgid "Insert Silence"
@@ -3950,9 +3610,8 @@ msgid "Undoing"
 msgstr "Отмена операции"
 
 #: src/callbacks.c:2413 src/callbacks.c:2615
-#, fuzzy
 msgid "Restoring audio"
-msgstr "Восстановление аудио..."
+msgstr ""
 
 #: src/callbacks.c:2428
 msgid "Clearing frame images"
@@ -3977,32 +3636,30 @@ msgid "Redoing"
 msgstr "Возврат операции"
 
 #: src/callbacks.c:2952
-#, fuzzy, c-format
+#, c-format
 msgid "Copying frames %d to %d (with sound) to the clipboard..."
-msgstr "Копирование кадров в буфер обмена: с %d по %d%s..."
+msgstr ""
 
 #: src/callbacks.c:2954
-#, fuzzy, c-format
+#, c-format
 msgid "Copying frames %d to %d to the clipboard..."
-msgstr "Копирование кадров в буфер обмена: с %d по %d%s..."
+msgstr ""
 
 #: src/callbacks.c:3010
 msgid "Copying to the clipboard"
 msgstr "Копировать в буфер обмена"
 
 #: src/callbacks.c:3073
-#, fuzzy
 msgid "Cutting"
-msgstr "Вставить"
+msgstr ""
 
 #: src/callbacks.c:3092
 msgid "Cut"
 msgstr "Вырезать"
 
 #: src/callbacks.c:3133 src/callbacks.c:3569 src/callbacks.c:8502
-#, fuzzy
 msgid "Pulling frames from clipboard..."
-msgstr "Вставка кадров из буфера"
+msgstr ""
 
 #: src/callbacks.c:3154
 #, c-format
@@ -4051,9 +3708,8 @@ msgstr ""
 "Пожалуйста установите 'sox', и попробуйте снова."
 
 #: src/callbacks.c:3389
-#, fuzzy
 msgid "Insertion"
-msgstr "Вставка"
+msgstr ""
 
 #: src/callbacks.c:3492 src/callbacks.c:3523
 msgid "Resampling clipboard audio"
@@ -4106,46 +3762,32 @@ msgid "Cancelling"
 msgstr "Отмена"
 
 #: src/callbacks.c:4026
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "%s will cause missing frames in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
-"\n"
-"Удаление приведет к потери кадров в размещении некоторых мультитрековых "
-"дорожек.\n"
-"Вы уверены, что хотите продолжить ?\n"
 
 #: src/callbacks.c:4048
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "%s will cause missing audio in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
-"\n"
-"Удаление приведет к потери звука в размещении некоторых мультитрековых "
-"дорожек.\n"
-"Вы уверены, что хотите продолжить ?\n"
 
 #: src/callbacks.c:4070
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "%s will cause frames to shift in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
-"\n"
-"Вставка кадров приведет к сдвигу в размещении мультитрековых дорожек.\n"
-"Вы уверены, что хотите продолжить ?\n"
 
 #: src/callbacks.c:4093
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "%s will cause audio to shift in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
-"\n"
-"Вставка звука приведет к сдвигу в размещении мультитрековых дорожек.\n"
-"Вы уверены, что хотите продолжить ?\n"
 
 #: src/callbacks.c:4175
 msgid ""
@@ -4158,9 +3800,8 @@ msgstr ""
 "Вы уверены ?"
 
 #: src/callbacks.c:4181 src/callbacks.c:12020
-#, fuzzy
 msgid "Deletion"
-msgstr "Удаление"
+msgstr ""
 
 #: src/callbacks.c:4203
 #, c-format
@@ -4220,9 +3861,9 @@ msgstr ""
 "Плагин, возможно, поврежден или неправильно установлен."
 
 #: src/callbacks.c:5049
-#, fuzzy, c-format
+#, c-format
 msgid "Clip volume: %.2f"
-msgstr "Громкость звука (%.2f)"
+msgstr ""
 
 #: src/callbacks.c:5398
 #, c-format
@@ -4257,9 +3898,8 @@ msgid "Ignore"
 msgstr ""
 
 #: src/callbacks.c:6029
-#, fuzzy
 msgid "Delete them"
-msgstr "Удалить"
+msgstr ""
 
 #: src/callbacks.c:6032
 msgid "Move them"
@@ -4278,7 +3918,7 @@ msgid ""
 msgstr ""
 
 #: src/callbacks.c:6142
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "LiVES will attempt to recover some disk space.\n"
 "Unnecessary files will be removed from %s\n"
@@ -4287,10 +3927,6 @@ msgid ""
 "%s\n"
 "Click OK to proceed.\n"
 msgstr ""
-"LiVES требуется место на диске для восстановления.\n"
-"Вы должны запускать это ТОЛЬКО если нет других запущенных копий LiVES на "
-"этой машине.\n"
-"Нажмите OK для запуска.\n"
 
 #: src/callbacks.c:6159
 msgid "Cleaning up disk space..."
@@ -4321,23 +3957,20 @@ msgid "No items to be removed or recovered were detected.\n"
 msgstr ""
 
 #: src/callbacks.c:6336 src/callbacks.c:6580
-#, fuzzy
 msgid "Show _Log"
-msgstr "Показать _сообщения"
+msgstr ""
 
 #: src/callbacks.c:6353
 msgid "_Check and Filter Results"
 msgstr ""
 
 #: src/callbacks.c:6354
-#, fuzzy
 msgid "Show Results"
-msgstr "Показать сведения"
+msgstr ""
 
 #: src/callbacks.c:6519
-#, fuzzy
 msgid "Clearing Disk"
-msgstr "Очищение изображений кадра"
+msgstr ""
 
 #: src/callbacks.c:6565
 #, c-format
@@ -4351,14 +3984,12 @@ msgid ""
 msgstr ""
 
 #: src/callbacks.c:6608
-#, fuzzy
 msgid "Show _Remaining Items"
-msgstr "Показать _сообщения"
+msgstr ""
 
 #: src/callbacks.c:6673
-#, fuzzy
 msgid "Pre-decoding all frames in this clip..."
-msgstr "Выделить _все кадры"
+msgstr ""
 
 #: src/callbacks.c:6697
 msgid "Resetting frame rates and frame values..."
@@ -4385,14 +4016,11 @@ msgid ""
 msgstr ""
 
 #: src/callbacks.c:6759 src/callbacks.c:6777 src/callbacks.c:6793
-#, fuzzy
 msgid ""
 "\n"
 "\n"
 "  Opening..."
 msgstr ""
-"\n"
-"  Открывание..."
 
 #: src/callbacks.c:6765
 #, c-format
@@ -4413,24 +4041,19 @@ msgstr ""
 "(%d декодированный)"
 
 #: src/callbacks.c:6779
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "\n"
 "  %.2f sec."
 msgstr ""
-"\n"
-"  %.2f сек."
 
 #: src/callbacks.c:6787
-#, fuzzy
 msgid ""
 "\n"
 "\n"
 "  Unknown"
 msgstr ""
-"\n"
-"  Неизвестно"
 
 #: src/callbacks.c:6795 src/callbacks.c:6828
 #, c-format
@@ -4458,14 +4081,12 @@ msgid "little-endian"
 msgstr "little-endian"
 
 #: src/callbacks.c:6805 src/callbacks.c:6819
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "  %d Hz %d bit\n"
 "%s %s"
 msgstr ""
-"  %d Гц %d бит\n"
-"%s %s"
 
 #: src/callbacks.c:6826
 msgid ""
@@ -4506,10 +4127,11 @@ msgstr ""
 "Launchpad Contributions:\n"
 "  Alexander Litvinov https://launchpad.net/~aleclitvinov1980\n"
 "  Alexey Ivanov https://launchpad.net/~alexey-ivanov\n"
-"  Eugene Marshal https://launchpad.net/~lowrider\n"
+"  Eugene Roskin https://launchpad.net/~lowrider\n"
 "  Georgiy https://launchpad.net/~g-trofimof\n"
 "  Guybrush88 https://launchpad.net/~guybrush\n"
 "  Sergey Sedov https://launchpad.net/~serg-sedov\n"
+"  salsaman https://launchpad.net/~salsaman\n"
 "  ☠Jay ZDLin☠ https://launchpad.net/~black-buddha666"
 
 #: src/callbacks.c:6980
@@ -4527,37 +4149,26 @@ msgid ""
 msgstr ""
 
 #: src/callbacks.c:7231
-#, fuzzy
 msgid ""
 "\n"
 "\n"
 "You need to install mplayer, mplayer2 or mpv to be able to preview this "
 "file.\n"
 msgstr ""
-"\n"
-"\n"
-"Чтобы выполнить предварительный просмотр этого файла, установите mplayer или "
-"imageMagick.\n"
 
 #: src/callbacks.c:7233
-#, fuzzy
 msgid ""
 "\n"
 "\n"
 "You need to install mplayer, mplayer2, mpv or imageMagick to be able to "
 "preview this file.\n"
 msgstr ""
-"\n"
-"\n"
-"Чтобы выполнить предварительный просмотр этого файла, установите mplayer или "
-"imageMagick.\n"
 
 #: src/callbacks.c:7352
-#, fuzzy
 msgid ""
 "\n"
 "Stop Preview\n"
-msgstr "Предпросмотр"
+msgstr ""
 
 #: src/callbacks.c:7608
 #, c-format
@@ -4569,9 +4180,8 @@ msgstr ""
 "%s\n"
 
 #: src/callbacks.c:7785
-#, fuzzy
 msgid "Encoder Debug Output"
-msgstr "LiVES: - Вывод отладки кодировщика"
+msgstr ""
 
 #: src/callbacks.c:7812 src/gui.c:1896
 msgid "Fullscreen playback (f)"
@@ -4618,9 +4228,8 @@ msgid "Reversing clipboard"
 msgstr "Изменение буфера обмена"
 
 #: src/callbacks.c:8558
-#, fuzzy
 msgid "Load Subtitles"
-msgstr "Показать субтитры"
+msgstr ""
 
 #: src/callbacks.c:8617 src/saveplay.c:1011
 #, c-format
@@ -4632,14 +4241,12 @@ msgid "Subtitles were erased.\n"
 msgstr "Субтитры были стёрты.\n"
 
 #: src/callbacks.c:8699
-#, fuzzy
 msgid "Select Audio File"
-msgstr "LiVES: - Выберите звуковой файл"
+msgstr ""
 
 #: src/callbacks.c:8734 src/callbacks.c:9063
-#, fuzzy
 msgid "Loading new audio"
-msgstr "Записать новый звук"
+msgstr ""
 
 #: src/callbacks.c:8820
 #, c-format
@@ -4678,9 +4285,8 @@ msgid "Error loading CD track\n"
 msgstr "Ошибка загрузки CD трэка\n"
 
 #: src/callbacks.c:9318
-#, fuzzy
 msgid "Layout Errors"
-msgstr "ошибка размещения"
+msgstr ""
 
 #: src/callbacks.c:9335
 msgid "Clear _Errors"
@@ -4769,14 +4375,12 @@ msgid ""
 msgstr ""
 
 #: src/callbacks.c:10893 src/multitrack.c:13671
-#, fuzzy
 msgid "Selected Frame"
-msgstr "Выделить _все кадры"
+msgstr ""
 
 #: src/callbacks.c:10901
-#, fuzzy
 msgid "_Save Frame as..."
-msgstr "_Сохранить кадр как..."
+msgstr ""
 
 #: src/callbacks.c:11265
 #, c-format
@@ -4896,24 +4500,20 @@ msgid "Exporting audio"
 msgstr "Экспортирование звука"
 
 #: src/callbacks.c:11775
-#, fuzzy
 msgid "Normalising audio..."
-msgstr "Изменение звука..."
+msgstr ""
 
 #: src/callbacks.c:11778
-#, fuzzy
 msgid "Normalizing audio..."
-msgstr "Изменение звука..."
+msgstr ""
 
 #: src/callbacks.c:11818
-#, fuzzy
 msgid "Normalise audio"
-msgstr "Масштабирование"
+msgstr ""
 
 #: src/callbacks.c:11852
-#, fuzzy
 msgid "Append Audio File"
-msgstr "Добавить звук"
+msgstr ""
 
 #: src/callbacks.c:11907
 #, c-format
@@ -4977,9 +4577,8 @@ msgid "Fading audio..."
 msgstr "Изменение звука..."
 
 #: src/callbacks.c:12221
-#, fuzzy
 msgid "Deleting all audio"
-msgstr "Удаление всего звука..."
+msgstr ""
 
 #: src/callbacks.c:12230
 msgid ""
@@ -5001,9 +4600,8 @@ msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr "Удаление звука с %.2f по %.2f секунды..."
 
 #: src/callbacks.c:12243
-#, fuzzy
 msgid "Deleting audio"
-msgstr "Удаление звука"
+msgstr ""
 
 #: src/callbacks.c:12280
 msgid "Deleting Audio"
@@ -5018,9 +4616,8 @@ msgid "Record new audio"
 msgstr "Записать новый звук"
 
 #: src/callbacks.c:12692
-#, fuzzy
 msgid "Inserting silence"
-msgstr "Вставка тишины"
+msgstr ""
 
 #: src/callbacks.c:12705
 #, c-format
@@ -5115,9 +4712,8 @@ msgid "Play Remote _Stream..."
 msgstr ""
 
 #: src/gui.c:588
-#, fuzzy
 msgid "Open _Online Clip..."
-msgstr "Oткрыть фрагмент из _Youtube..."
+msgstr ""
 
 #: src/gui.c:594
 msgid "Download from _Youtube or other site..."
@@ -5152,9 +4748,8 @@ msgid "_Add Webcam/TV card..."
 msgstr "_Добавить веб-камеру или тв-карту..."
 
 #: src/gui.c:630
-#, fuzzy
 msgid "Add Webcam"
-msgstr "_Добавить веб-камеру или тв-карту..."
+msgstr ""
 
 #: src/gui.c:631
 msgid "Add Live _Firewire Device"
@@ -5193,14 +4788,14 @@ msgid "_Close This Clip"
 msgstr "Закрыть текущий клип (_C)"
 
 #: src/gui.c:727
-#, fuzzy, c-format
+#, c-format
 msgid "_Backup Clip as .%s..."
-msgstr "Сохранить клип как *.lv1 (_B) ..."
+msgstr ""
 
 #: src/gui.c:736
-#, fuzzy, c-format
+#, c-format
 msgid "_Restore Clip from .%s..."
-msgstr "Восстановить клип из *.lv1 (_R) ..."
+msgstr ""
 
 #: src/gui.c:746
 msgid "Encode/Load/Backup _with Sound"
@@ -5211,9 +4806,8 @@ msgid "Auto load subtitles"
 msgstr "Автоматическая загрузка субтитров"
 
 #: src/gui.c:759
-#, fuzzy
 msgid "Clean _up Diskspace / Recover Missing Clips"
-msgstr "Очистить место на диске (_u)"
+msgstr ""
 
 #: src/gui.c:765 src/multitrack.c:6907
 msgid "_Edit"
@@ -5276,9 +4870,8 @@ msgid "Select to _Last Frame"
 msgstr ""
 
 #: src/gui.c:904
-#, fuzzy
 msgid "Select to _Audio End"
-msgstr "Выберите устройство ввода"
+msgstr ""
 
 #: src/gui.c:907
 msgid "Select Last Insertion/_Merge"
@@ -5381,9 +4974,8 @@ msgid "Custom _Tools"
 msgstr ""
 
 #: src/gui.c:1090
-#, fuzzy
 msgid "Loading..."
-msgstr "Изменение звука..."
+msgstr ""
 
 #: src/gui.c:1094
 msgid "Rendered effects disabled in VJ Mode"
@@ -5526,9 +5118,8 @@ msgid "_Resample Audio..."
 msgstr ""
 
 #: src/gui.c:1289
-#, fuzzy
 msgid "_Normalize Audio"
-msgstr "Масштабирование"
+msgstr ""
 
 #: src/gui.c:1297
 msgid "_Info"
@@ -5615,38 +5206,36 @@ msgid "Re_build test RFX plugins"
 msgstr ""
 
 #: src/gui.c:1401
-#, fuzzy
 msgid "Receive _LiVES Stream from..."
-msgstr "Загрузить поток _LiVES из..."
+msgstr ""
 
 #: src/gui.c:1405
-#, fuzzy
 msgid "_Send LiVES Stream to..."
-msgstr "_Отправить LiVES поток..."
+msgstr ""
 
 #: src/gui.c:1411
 msgid "Open _yuv4mpeg stream..."
 msgstr ""
 
 #: src/gui.c:1427
-#, fuzzy, c-format
+#, c-format
 msgid "_Import Project (.%s)..."
-msgstr "Импортировать проект *.lv2 (_I) ..."
+msgstr ""
 
 #: src/gui.c:1432
-#, fuzzy, c-format
+#, c-format
 msgid "E_xport Project (.%s)..."
-msgstr "Экспортировать проект *.lv2 (_x)..."
+msgstr ""
 
 #: src/gui.c:1440
-#, fuzzy, c-format
+#, c-format
 msgid "_Import Custom Theme (.%s)..."
-msgstr "Импортировать проект *.lv2 (_I) ..."
+msgstr ""
 
 #: src/gui.c:1445
-#, fuzzy, c-format
+#, c-format
 msgid "E_xport Theme (.%s)..."
-msgstr "Экспортировать проект *.lv2 (_x)..."
+msgstr ""
 
 #: src/gui.c:1453
 msgid "_VJ"
@@ -5679,9 +5268,8 @@ msgid ""
 msgstr ""
 
 #: src/gui.c:1480
-#, fuzzy
 msgid "_Pre-decode all frames (unlocks reverse playback)"
-msgstr "Выделить _все кадры"
+msgstr ""
 
 #: src/gui.c:1483
 msgid ""
@@ -5691,9 +5279,8 @@ msgid ""
 msgstr ""
 
 #: src/gui.c:1488
-#, fuzzy
 msgid "_Reset All Playback Speeds and Positions"
-msgstr "_Сбросить все скорости воспроизведения и позиции"
+msgstr ""
 
 #: src/gui.c:1491
 msgid ""
@@ -5701,33 +5288,28 @@ msgid ""
 msgstr ""
 
 #: src/gui.c:1494
-#, fuzzy
 msgid "_MIDI/Joystick Interface"
-msgstr "_MIDI/джойстик Интерфейс"
+msgstr ""
 
 #: src/gui.c:1503
-#, fuzzy
 msgid "_MIDI/Joystick Learner..."
-msgstr "_MIDI/джойстик учащегося..."
+msgstr ""
 
 #: src/gui.c:1507
-#, fuzzy
 msgid "_Save Device Mapping..."
-msgstr "_Сохранить раскладку устройства..."
+msgstr ""
 
 #: src/gui.c:1512
-#, fuzzy
 msgid "_Load Device Mapping..."
-msgstr "_Загрузить раскладку устройства..."
+msgstr ""
 
 #: src/gui.c:1518
 msgid "Show VJ _Keys"
 msgstr ""
 
 #: src/gui.c:1523
-#, fuzzy
 msgid "Restart in _VJ Mode"
-msgstr "Запустить в режиме фрагментного редактирования"
+msgstr ""
 
 #: src/gui.c:1530
 msgid "_Automatic Mode (autolives)..."
@@ -5758,29 +5340,24 @@ msgid "_Manual (opens in browser)"
 msgstr "_Руководства (открывается в браузере)"
 
 #: src/gui.c:1564 src/multitrack.c:7834
-#, fuzzy
 msgid "_Donate to the Project !"
-msgstr "_жертвовать к проекту !"
+msgstr ""
 
 #: src/gui.c:1568 src/multitrack.c:7837
-#, fuzzy
 msgid "_Email the Author"
-msgstr "_Электронная почта автора"
+msgstr ""
 
 #: src/gui.c:1572
-#, fuzzy
 msgid "Report a _Bug"
-msgstr "_Сообщить об ошибке"
+msgstr ""
 
 #: src/gui.c:1576 src/multitrack.c:7843
-#, fuzzy
 msgid "Suggest a _Feature"
-msgstr "Предложить новую _возможность"
+msgstr ""
 
 #: src/gui.c:1580 src/multitrack.c:7846
-#, fuzzy
 msgid "Assist with _Translating"
-msgstr "Предложить перевод программы"
+msgstr ""
 
 #: src/gui.c:1586 src/multitrack.c:7851
 msgid "Enable Developer Options"
@@ -5823,19 +5400,16 @@ msgid "Play selection (y)"
 msgstr "Воспроизвести выделенное (y)"
 
 #: src/gui.c:1680
-#, fuzzy
 msgid "Audio Source:    "
-msgstr "Аудио кодек"
+msgstr ""
 
 #: src/gui.c:1712
-#, fuzzy
 msgid "  Internal"
-msgstr "_Указатель"
+msgstr ""
 
 #: src/gui.c:1753
-#, fuzzy
 msgid "  External"
-msgstr "_Указатель"
+msgstr ""
 
 #: src/gui.c:1826
 msgid "Volume"
@@ -5884,9 +5458,8 @@ msgid ""
 msgstr ""
 
 #: src/gui.c:1968
-#, fuzzy
 msgid "Video playback speed (frames per second)"
-msgstr "     Скорость воспроизведения видео (кадры в секунду)        "
+msgstr ""
 
 #: src/gui.c:1973
 msgid "Vary the video speed"
@@ -5905,14 +5478,12 @@ msgid "The first selected frame in this clip"
 msgstr ""
 
 #: src/gui.c:2172
-#, fuzzy
 msgid "Select all Frames"
-msgstr "Выделить _все кадры"
+msgstr ""
 
 #: src/gui.c:2174
-#, fuzzy
 msgid "Select all frames in this clip"
-msgstr "Выделить _все кадры"
+msgstr ""
 
 #: src/gui.c:2191
 msgid "The last selected frame in this clip"
@@ -5999,9 +5570,9 @@ msgid "Streaming"
 msgstr ""
 
 #: src/gui.c:3742
-#, fuzzy, c-format
+#, c-format
 msgid "Play Window%s"
-msgstr "Скрыть окно воспроизведения"
+msgstr ""
 
 #: src/gui.c:3840
 #, c-format
@@ -6017,16 +5588,14 @@ msgid "Show Play Window"
 msgstr "Показать окно воспроизведения"
 
 #: src/gui.c:4541
-#, fuzzy, c-format
+#, c-format
 msgid "'LiVES opened the file' '%s'"
 msgstr ""
-"LiVES не может загрузить это изображение\n"
-"\n"
 
 #: src/gui.c:4560
-#, fuzzy, c-format
+#, c-format
 msgid "'LiVES closed the file' '%s'"
-msgstr "LiVES: - выберите файл"
+msgstr ""
 
 #: src/ce_thumbs.c:243
 #, c-format
@@ -6174,14 +5743,11 @@ msgid ""
 msgstr ""
 
 #: src/utils.c:2889
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "%s names may not be blank.\n"
 msgstr ""
-"\n"
-"\n"
-"Параметр не должен быть пустым.\n"
 
 #: src/utils.c:2897
 #, c-format
@@ -6191,14 +5757,11 @@ msgid ""
 msgstr ""
 
 #: src/utils.c:2905
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "%s names may not contain spaces or the characters%s.\n"
 msgstr ""
-"\n"
-"\n"
-"Название не должно содержать пробелов.\n"
 
 #: src/utils.c:2914
 #, c-format
@@ -6225,20 +5788,16 @@ msgid ""
 msgstr ""
 
 #: src/utils.c:2967
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "The set %s already exists.\n"
 "Do you want to add the current clips to the existing set ?.\n"
 msgstr ""
-"\n"
-"Этот файл уже имеет загруженные субтитры.\n"
-"Вы действительно хотите заменить существующие субтитры ?\n"
 
 #: src/utils.c:3454
-#, fuzzy
 msgid "'Unknown'"
-msgstr "Неизвестно"
+msgstr ""
 
 #: src/utils.c:3533
 #, c-format
@@ -6306,9 +5865,8 @@ msgid " without sound"
 msgstr " без звука"
 
 #: src/saveplay.c:451 src/cvirtual.c:167
-#, fuzzy
 msgid "creating the frame index for the clip"
-msgstr "Выделить _все кадры"
+msgstr ""
 
 #: src/saveplay.c:481
 #, c-format
@@ -6316,9 +5874,9 @@ msgid "Opening audio for %s"
 msgstr "Открытие звука для %s"
 
 #: src/saveplay.c:526 src/saveplay.c:763
-#, fuzzy, c-format
+#, c-format
 msgid "Forcing audio channels to %d\n"
-msgstr "Экспорт звука кадров с %d по %d как %s..."
+msgstr ""
 
 #: src/saveplay.c:627
 #, c-format
@@ -6336,16 +5894,11 @@ msgid "Auto padding with %.4f seconds of silence at end..."
 msgstr ""
 
 #: src/saveplay.c:686
-#, fuzzy
 msgid ""
 "\n"
 "LiVES cannot Instant Open this file, it may take some time to load.\n"
 "Are you sure you wish to continue ?"
 msgstr ""
-"\n"
-"Список событий будет очень объёмный\n"
-"и может занять длительное время для отображения.\n"
-"Вы действительно хотите просмотреть его ?\n"
 
 #: src/saveplay.c:701
 msgid " - please be patient."
@@ -6365,15 +5918,11 @@ msgstr ""
 "терминала.\n"
 
 #: src/saveplay.c:928
-#, fuzzy
 msgid ""
 "\n"
 "\n"
 "You may need to install mplayer, mplayer2 or mpv to open this file.\n"
 msgstr ""
-"\n"
-"\n"
-"Вам может потребоваться установка MPlayer, чтобы открыть этот файл.\n"
 
 #: src/saveplay.c:939
 msgid ""
@@ -6403,25 +5952,22 @@ msgid "Subtitles were saved as %s\n"
 msgstr "Субтитры сохранены как %s\n"
 
 #: src/saveplay.c:1199
-#, fuzzy, c-format
+#, c-format
 msgid "Save Frame %d"
-msgstr "_Сохранить кадр как..."
+msgstr ""
 
 #: src/saveplay.c:1202
-#, fuzzy
 msgid "Save Frame"
-msgstr "Последний кадр"
+msgstr ""
 
 #: src/saveplay.c:1380
-#, fuzzy
 msgid "Save Clip"
-msgstr "Вставить"
+msgstr ""
 
 #: src/saveplay.c:1511 src/saveplay.c:1644 src/saveplay.c:1719
 #: src/saveplay.c:4321
-#, fuzzy
 msgid "Pulling frames from clip..."
-msgstr "Извлечение кадров из клипа"
+msgstr ""
 
 #: src/saveplay.c:1571 src/saveplay.c:1686
 msgid "Linking selection"
@@ -6666,9 +6212,8 @@ msgid "rec ?? MB"
 msgstr ""
 
 #: src/saveplay.c:5774
-#, fuzzy
 msgid "The original file"
-msgstr "Этот файл"
+msgstr ""
 
 #: src/saveplay.c:6068
 msgid ""
@@ -6682,11 +6227,10 @@ msgid "Recovering files"
 msgstr ""
 
 #: src/saveplay.c:6089
-#, fuzzy
 msgid ""
 "\n"
 "Recovering files..."
-msgstr "_Последние файлы..."
+msgstr ""
 
 #: src/saveplay.c:6137
 msgid ""
@@ -6695,9 +6239,8 @@ msgid ""
 msgstr ""
 
 #: src/saveplay.c:6387
-#, fuzzy
 msgid "No clips were recovered.\n"
-msgstr "%s свободного места на диске было восстановлено.\n"
+msgstr ""
 
 #: src/saveplay.c:6391
 msgid "from the previous session.\n"
@@ -6708,9 +6251,8 @@ msgid "from previous sessions.\n"
 msgstr ""
 
 #: src/dialogs.c:97
-#, fuzzy
 msgid "Show affected _layouts"
-msgstr "Удалить затронутые слои размещения (_D)"
+msgstr ""
 
 #: src/dialogs.c:105
 msgid ""
@@ -6729,9 +6271,8 @@ msgid " _Advanced Settings >>"
 msgstr " _Дополнительные настройки >>"
 
 #: src/dialogs.c:149
-#, fuzzy
 msgid "_Show complete details"
-msgstr "Показать сведения"
+msgstr ""
 
 #: src/dialogs.c:155
 #, c-format
@@ -6750,18 +6291,16 @@ msgid ""
 msgstr ""
 
 #: src/dialogs.c:208
-#, fuzzy
 msgid "Sets detected: "
-msgstr "mplayer...обнаружен..."
+msgstr ""
 
 #: src/dialogs.c:209
 msgid "0"
 msgstr ""
 
 #: src/dialogs.c:218
-#, fuzzy
 msgid "Scan other directory"
-msgstr "LiVES: - выберите папку"
+msgstr ""
 
 #: src/dialogs.c:231
 msgid ""
@@ -6771,47 +6310,40 @@ msgid ""
 msgstr ""
 
 #: src/dialogs.c:283 src/dialogs.c:337
-#, fuzzy
 msgid "Warning !"
-msgstr "Предупреждения"
+msgstr ""
 
 #: src/dialogs.c:301
-#, fuzzy
 msgid "Error !"
-msgstr "LiVES: - Ошибка файла"
+msgstr ""
 
 #: src/dialogs.c:313
-#, fuzzy
 msgid "Information"
-msgstr "LiVES: - Открыть путь"
+msgstr ""
 
 #: src/dialogs.c:353
-#, fuzzy
 msgid "Question"
-msgstr "LiVES: - Вопрос"
+msgstr ""
 
 #: src/dialogs.c:382
 msgid "_Abort"
 msgstr "Пре_рвать"
 
 #: src/dialogs.c:385
-#, fuzzy
 msgid "File Error"
-msgstr "Убрать ошибки (_E)"
+msgstr ""
 
 #: src/dialogs.c:389 src/dialogs.c:397 src/dialogs.c:423
 msgid "_Retry"
 msgstr "_Повторить"
 
 #: src/dialogs.c:412
-#, fuzzy
 msgid "Missing File or Directory"
-msgstr "Открыть файл/директорию (_O)"
+msgstr ""
 
 #: src/dialogs.c:426
-#, fuzzy
 msgid "_Browse"
-msgstr "Обзор…"
+msgstr ""
 
 #: src/dialogs.c:487
 msgid "Show _Details"
@@ -6886,13 +6418,11 @@ msgid "Processing has been paused."
 msgstr "Выполнение было приостановлено."
 
 #: src/dialogs.c:1206
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "%d%% done. Time remaining: %u sec\n"
 msgstr ""
-"\n"
-"%s%d%% готово. Оставшееся время: %u с.%s\n"
 
 #: src/dialogs.c:1276
 #, c-format
@@ -6951,7 +6481,7 @@ msgstr ""
 "Пожалуйста, закройте файл и затем попробуйте снова."
 
 #: src/dialogs.c:2967
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "LiVES was unable to write to its working directory.\n"
 "\n"
@@ -6961,46 +6491,27 @@ msgid ""
 "\n"
 "Please make sure you can write to this directory."
 msgstr ""
-"LiVES не может выполнить запись во временный каталог.\n"
-"\n"
-"Текущий временный каталог:\n"
-"\n"
-"%s\n"
-"\n"
-"Пожалуйста, проверьте разрешения на запись в этот каталог."
 
 #: src/dialogs.c:2979
-#, fuzzy
 msgid ""
 "\n"
 "LiVES currently requires either 'mplayer', 'mplayer2', or 'sox' to function. "
 "Please install one or other of these, and try again.\n"
 msgstr ""
-"\n"
-"Для работы LiVES требуется 'mplayer' или 'sox'. Установите любой из этих "
-"пакетов и повторите ещё раз.\n"
 
 #: src/dialogs.c:2986
-#, fuzzy
 msgid ""
 "\n"
 "This function requires either mplayer or mplayer2 to operate.\n"
 "You may wish to install one or other of these and try again.\n"
 msgstr ""
-"\n"
-"Для работы LiVES требуется 'mplayer' или 'sox'. Установите любой из этих "
-"пакетов и повторите ещё раз.\n"
 
 #: src/dialogs.c:2993
-#, fuzzy
 msgid ""
 "\n"
 "This function requires either mplayer, mplayer2 or mpv to operate.\n"
 "You may wish to install one or other of these and try again.\n"
 msgstr ""
-"\n"
-"Для работы LiVES требуется 'mplayer' или 'sox'. Установите любой из этих "
-"пакетов и повторите ещё раз.\n"
 
 #: src/dialogs.c:2999
 msgid ""
@@ -7192,9 +6703,8 @@ msgid "Message History"
 msgstr "Журнал сообщений"
 
 #: src/dialogs.c:3309
-#, fuzzy
 msgid "Show messages on startup"
-msgstr "Показать _сообщения"
+msgstr ""
 
 #: src/dialogs.c:3325
 #, c-format
@@ -7267,31 +6777,27 @@ msgid ""
 msgstr ""
 
 #: src/dialogs.c:3424
-#, fuzzy
 msgid "The file"
-msgstr "Этот файл"
+msgstr ""
 
 #: src/dialogs.c:3425 src/dialogs.c:3431
 msgid "could not be found."
 msgstr ""
 
 #: src/dialogs.c:3427
-#, fuzzy
 msgid "this file"
-msgstr "Этот файл"
+msgstr ""
 
 #: src/dialogs.c:3430
-#, fuzzy
 msgid "The directory"
-msgstr "LiVES: - выберите папку"
+msgstr ""
 
 #: src/dialogs.c:3433
-#, fuzzy
 msgid "this directory"
-msgstr "Временный каталог: %s\n"
+msgstr ""
 
 #: src/dialogs.c:3435
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "%s\n"
@@ -7300,13 +6806,6 @@ msgid ""
 "Click Retry to try again, Browse to browse to the new location.\n"
 "otherwise click Skip to skip loading %s.\n"
 msgstr ""
-"\n"
-"Исходный файл\n"
-"%s\n"
-"не найден.\n"
-"Если этот файл был перемещён, нажмите 'OK', чтобы просмотреть новое "
-"расположение.\n"
-"В противном случае, нажмите Отмена, чтобы пропустить загрузку этого файла.\n"
 
 #: src/dialogs.c:3460
 #, c-format
@@ -7458,17 +6957,11 @@ msgid ""
 msgstr ""
 
 #: src/dialogs.c:3560
-#, fuzzy
 msgid ""
 "Multitrack audio preview is only available with the\n"
 "\"jack\" or \"pulseaudio\" audio player.\n"
 "You can set this in Tools|Preferences|Playback."
 msgstr ""
-"\n"
-"\n"
-"Запись звука возможно только при использовании\n"
-"звукового проигрывателя \"jack\" или \"pulse audio\".\n"
-"Вам необходимо назначить это в Сервис/Параметры/Воспроизведение.\n"
 
 #: src/dialogs.c:3568
 msgid ""
@@ -7491,34 +6984,22 @@ msgid ""
 msgstr ""
 
 #: src/dialogs.c:3586
-#, fuzzy
 msgid ""
 "LiVES currently requires composite from ImageMagick to do letterboxing.\n"
 "Please install 'imagemagick' and try again."
 msgstr ""
-"\n"
-"Для обеспечение работоспособности, LiVES необходимы 'mplayer' и 'sox'. "
-"Пожалуйста, установите их и повторите снова.\n"
 
 #: src/dialogs.c:3593
-#, fuzzy
 msgid ""
 "LiVES currently requires convert from ImageMagick to do letterboxing.\n"
 "Please install 'imagemagick' and try again."
 msgstr ""
-"\n"
-"Для обеспечение работоспособности, LiVES необходимы 'mplayer' и 'sox'. "
-"Пожалуйста, установите их и повторите снова.\n"
 
 #: src/dialogs.c:3600
-#, fuzzy
 msgid ""
 "LiVES currently requires convert from ImageMagick resize frames.\n"
 "Please install 'imagemagick' and try again."
 msgstr ""
-"\n"
-"Для обеспечение работоспособности, LiVES необходимы 'mplayer' и 'sox'. "
-"Пожалуйста, установите их и повторите снова.\n"
 
 #: src/dialogs.c:3606
 #, c-format
@@ -7568,7 +7049,6 @@ msgstr ""
 "Чтобы использовать эту возможность, необходимо установить 'dvgrab'.\n"
 
 #: src/dialogs.c:3637
-#, fuzzy
 msgid ""
 "\n"
 "\n"
@@ -7576,11 +7056,6 @@ msgid ""
 "the \"jack\" or the \"pulseaudio\" audio player.\n"
 "You may need to select one of these in Tools/Preferences/Playback.\n"
 msgstr ""
-"\n"
-"\n"
-"Запись звука возможно только при использовании\n"
-"звукового проигрывателя \"jack\" или \"pulse audio\".\n"
-"Вам необходимо назначить это в Сервис/Параметры/Воспроизведение.\n"
 
 #: src/dialogs.c:3644
 msgid "Video playback plugin failed to initialise palette !\n"
@@ -7645,7 +7120,7 @@ msgid ""
 msgstr ""
 
 #: src/dialogs.c:3863
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES failed doing the following:\n"
@@ -7653,11 +7128,6 @@ msgid ""
 "Please check your system for errors.\n"
 "%s%s%s"
 msgstr ""
-"\n"
-"Произошла неполадка в LiVES во время:\n"
-"%s\n"
-"Пожалуйста, проверьте систему на ошибки.\n"
-"%s%s%s"
 
 #: src/dialogs.c:3928 src/dialogs.c:4006
 #, c-format
@@ -7680,7 +7150,7 @@ msgid ""
 msgstr ""
 
 #: src/dialogs.c:4011
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to write to the file\n"
@@ -7689,11 +7159,6 @@ msgid ""
 "%s.\n"
 "%s"
 msgstr ""
-"\n"
-"LiVES не может использовать временный каталог\n"
-"%s\n"
-"\n"
-"%s"
 
 #: src/dialogs.c:4045
 #, c-format
@@ -7733,7 +7198,7 @@ msgid ", click Cancel to continue regardless,\n"
 msgstr ""
 
 #: src/dialogs.c:4146
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to write to the file:\n"
@@ -7741,19 +7206,13 @@ msgid ""
 "Please check the file permissions and try again.%sor click Abort to exit "
 "from LiVES"
 msgstr ""
-"\n"
-"LiVES не может выполнить запись в собственный файл настроек\n"
-"%s\n"
-"\n"
-"Пожалуйста, проверьте разрешения файла и каталога,\n"
-"затем повторите снова.\n"
 
 #: src/dialogs.c:4163
 msgid "click Cancel to continue regardless, "
 msgstr ""
 
 #: src/dialogs.c:4167
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to either create or write to the directory:\n"
@@ -7761,11 +7220,6 @@ msgid ""
 "Please check the directory permissions and try again,\n"
 "%sor click Abort to exit from LiVES"
 msgstr ""
-"\n"
-"LiVES не может выполнить чтение собственного файл настроек\n"
-"%s\n"
-"\n"
-"Пожалуйста, проверьте разрешения файла и повторите снова.\n"
 
 #: src/dialogs.c:4183
 #, c-format
@@ -7825,13 +7279,10 @@ msgstr ""
 "Вы действительно хотите заменить существующие субтитры ?\n"
 
 #: src/dialogs.c:4221
-#, fuzzy
 msgid ""
 "\n"
 "LiVES currently only supports subtitles of type"
 msgstr ""
-"\n"
-"В настоящее время LiVES поддерживает только субтитры формата .srt и .sub.\n"
 
 #: src/dialogs.c:4247
 msgid ""
@@ -7868,7 +7319,7 @@ msgstr ""
 "(Если не уверены, щёлкните Да)\n"
 
 #: src/dialogs.c:4271
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Warning - the set %s\n"
@@ -7878,12 +7329,6 @@ msgid ""
 ".\n"
 "Click No to cancel loading the set.\n"
 msgstr ""
-"\n"
-"Внимание - группа %s\n"
-"используется другой копией LiVES.\n"
-"Настоятельно рекомендуется закрыть другую копию, перед нажатием на кнопку "
-"продолжения - OK\n"
-"."
 
 #: src/dialogs.c:4280
 #, c-format
@@ -7991,7 +7436,7 @@ msgstr ""
 
 #. TRANSLATORS: make sure the menu text matches what is in gui.c
 #: src/dialogs.c:4405
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Welcome to LiVES version %s\n"
@@ -8000,12 +7445,6 @@ msgid ""
 "\n"
 "Files -> Clean up Diskspace\n"
 msgstr ""
-"\n"
-"Добро пожаловать в LiVES версии %s\n"
-"\n"
-"После обновления, *настоятельно* рекомендуется выполнить:\n"
-"\n"
-"Файл -> Очистить диск\n"
 
 #: src/dialogs.c:4413
 #, c-format
@@ -8331,9 +7770,8 @@ msgid "video analyser"
 msgstr ""
 
 #: src/effects.c:114
-#, fuzzy
 msgid "Video Analysers"
-msgstr "только видео"
+msgstr ""
 
 #: src/effects.c:116
 msgid "audio analyser"
@@ -8395,13 +7833,11 @@ msgid ""
 msgstr ""
 
 #: src/effects-weed.c:4706
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Unable to load plugin %s\n"
 "Error was: %s\n"
 msgstr ""
-"сведения: Невозможно загрузить надстройку %s\n"
-"Ошибка: %s\n"
 
 #: src/effects-weed.c:4712
 #, c-format
@@ -8589,9 +8025,9 @@ msgid "Failed to start instance %s, (%s)\n"
 msgstr ""
 
 #: src/effects-weed.c:6849
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to start generator %s (error code: %d)\n"
-msgstr "Невозможно ваыполнить запись: %s"
+msgstr ""
 
 #: src/effects-weed.c:8344
 #, c-format
@@ -8619,14 +8055,14 @@ msgid "Out param %d"
 msgstr ""
 
 #: src/effects-data.c:82
-#, fuzzy, c-format
+#, c-format
 msgid "In channel %d"
-msgstr "Канал  "
+msgstr ""
 
 #: src/effects-data.c:83
-#, fuzzy, c-format
+#, c-format
 msgid "Out channel %d"
-msgstr "Канал  "
+msgstr ""
 
 #: src/effects-data.c:3284
 #, c-format
@@ -8748,9 +8184,8 @@ msgid "Mask: opacity"
 msgstr ""
 
 #: src/framedraw.c:363
-#, fuzzy
 msgid "color"
-msgstr "Масштабирование"
+msgstr ""
 
 #: src/framedraw.c:370
 msgid "_Frame"
@@ -8773,9 +8208,8 @@ msgid "Click to set the transition parameter to show only the front frame"
 msgstr ""
 
 #: src/paramwindow.c:392
-#, fuzzy
 msgid "_Crossfade audio"
-msgstr "Изменить входящий звук"
+msgstr ""
 
 #: src/paramwindow.c:396
 msgid ""
@@ -8911,9 +8345,8 @@ msgid "Colourspace input to the plugin.\n"
 msgstr ""
 
 #: src/plugins.c:937
-#, fuzzy
 msgid "Apply current realtime effects"
-msgstr "Загрузка плагина эффектов реального времени..."
+msgstr ""
 
 #: src/plugins.c:973
 msgid "Save settings to an alternate file.\n"
@@ -9019,9 +8452,8 @@ msgid "/unknown"
 msgstr ""
 
 #: src/plugins.c:2598
-#, fuzzy
 msgid "Decoder Plugins"
-msgstr "Декодирование"
+msgstr ""
 
 #: src/plugins.c:2608
 msgid "Enabled Video Decoders (uncheck to disable)"
@@ -9195,14 +8627,12 @@ msgid ""
 msgstr ""
 
 #: src/rfx-builder.c:546
-#, fuzzy
 msgid "RFX Requirements"
-msgstr "_Требования..."
+msgstr ""
 
 #: src/rfx-builder.c:549
-#, fuzzy
 msgid "RFX Parameters"
-msgstr "Параметры моделирования"
+msgstr ""
 
 #: src/rfx-builder.c:552
 msgid "RFX Parameter Window Hints"
@@ -9233,9 +8663,8 @@ msgid "Move _Down"
 msgstr "В_низ"
 
 #: src/rfx-builder.c:995
-#, fuzzy
 msgid "RFX Properties"
-msgstr "_Параметры..."
+msgstr ""
 
 #: src/rfx-builder.c:1000
 msgid "_Slow (hint to GUI)"
@@ -9263,14 +8692,12 @@ msgid ""
 msgstr ""
 
 #: src/rfx-builder.c:1905
-#, fuzzy
 msgid "New RFX Parameter"
-msgstr "Параметры моделирования"
+msgstr ""
 
 #: src/rfx-builder.c:1907
-#, fuzzy
 msgid "Edit RFX Parameter"
-msgstr "Параметры моделирования"
+msgstr ""
 
 #: src/rfx-builder.c:1919
 msgid "_Name:    "
@@ -9396,9 +8823,8 @@ msgid "Row:    "
 msgstr "Ряд:    "
 
 #: src/rfx-builder.c:2557
-#, fuzzy
 msgid "Linked parameter:    "
-msgstr "Неверный параметр"
+msgstr ""
 
 #: src/rfx-builder.c:2565
 #, c-format
@@ -9569,14 +8995,12 @@ msgid "Rebuilding RFX scripts"
 msgstr ""
 
 #: src/rfx-builder.c:3641
-#, fuzzy
 msgid "Rebuilding custom RFX scripts..."
-msgstr "_Удалить настроенный сценарий RFX..."
+msgstr ""
 
 #: src/rfx-builder.c:3647
-#, fuzzy
 msgid "Rebuilding test RFX scripts..."
-msgstr "_Удалить настроенный сценарий RFX..."
+msgstr ""
 
 #: src/rfx-builder.c:3656
 msgid "recreating dynamic menu entries..."
@@ -9643,9 +9067,8 @@ msgid ""
 msgstr ""
 
 #: src/rfx-builder.c:3830
-#, fuzzy
 msgid "Export Script"
-msgstr "Экспорт проекта"
+msgstr ""
 
 #: src/rfx-builder.c:3837 src/rfx-builder.c:3903
 #, c-format
@@ -9653,9 +9076,8 @@ msgid "Copying %s to %s..."
 msgstr ""
 
 #: src/rfx-builder.c:3856
-#, fuzzy
 msgid "Import Script"
-msgstr "Импорт проекта"
+msgstr ""
 
 #: src/rfx-builder.c:3897
 #, c-format
@@ -9668,46 +9090,40 @@ msgid ""
 msgstr ""
 
 #: src/rfx-builder.c:3983
-#, fuzzy
 msgid "Copy RFX Script"
-msgstr "_Удалить настроенный сценарий RFX..."
+msgstr ""
 
 #: src/rfx-builder.c:3985
 msgid "_From type:    "
 msgstr ""
 
 #: src/rfx-builder.c:3992
-#, fuzzy
 msgid "Rename Test RFX Script"
-msgstr "_Удалить настроенный сценарий RFX..."
+msgstr ""
 
 #: src/rfx-builder.c:3993
 msgid "From script: "
 msgstr ""
 
 #: src/rfx-builder.c:3997
-#, fuzzy
 msgid "RFX Script Name"
-msgstr "Имя сценария: "
+msgstr ""
 
 #: src/rfx-builder.c:3998
 msgid "Script name: "
 msgstr "Имя сценария: "
 
 #: src/rfx-builder.c:4004
-#, fuzzy
 msgid "Script:"
-msgstr "Имя сценария: "
+msgstr ""
 
 #: src/rfx-builder.c:4014
-#, fuzzy
 msgid "New name:"
-msgstr "Новое имя: "
+msgstr ""
 
 #: src/rfx-builder.c:4014
-#, fuzzy
 msgid "New script name:"
-msgstr "Имя сценария: "
+msgstr ""
 
 #: src/rfx-builder.c:4078
 msgid ""
@@ -9808,9 +9224,8 @@ msgid "Text size may be too large for the screen size"
 msgstr ""
 
 #: src/preferences.c:3088
-#, fuzzy
 msgid "Preferences"
-msgstr "_Параметры..."
+msgstr ""
 
 #: src/preferences.c:3185
 msgid "Open file selection maximised"
@@ -9845,9 +9260,8 @@ msgid "Hide framebar when not playing"
 msgstr ""
 
 #: src/preferences.c:3226
-#, fuzzy
 msgid "Show tooltips"
-msgstr "Показать сведения"
+msgstr ""
 
 #: src/preferences.c:3234
 msgid "Show audio source in toolbar"
@@ -9867,9 +9281,8 @@ msgstr ""
 
 #: src/preferences.c:3254 src/preferences.c:4228 src/preferences.c:4809
 #: src/preferences.c:4819 src/preferences.c:4832
-#, fuzzy
 msgid "Disabled in VJ mode"
-msgstr "Запустить в режиме фрагментного редактирования"
+msgstr ""
 
 #: src/preferences.c:3273
 msgid "Multi-head support"
@@ -9880,9 +9293,8 @@ msgid "Monitor number for LiVES interface"
 msgstr ""
 
 #: src/preferences.c:3285
-#, fuzzy
 msgid "Monitor number for playback"
-msgstr "Остановка воспроизведения видео"
+msgstr ""
 
 #: src/preferences.c:3298
 msgid "Force single monitor"
@@ -9897,14 +9309,12 @@ msgid "Show clip thumbnails during playback"
 msgstr ""
 
 #: src/preferences.c:3331
-#, fuzzy
 msgid "Number of _Info Messages to Buffer"
-msgstr "Количество кадров для открытия"
+msgstr ""
 
 #: src/preferences.c:3337
-#, fuzzy
 msgid "_Unlimited"
-msgstr "Неограниченно"
+msgstr ""
 
 #: src/preferences.c:3348
 msgid "Message Area _Font Size"
@@ -9963,9 +9373,8 @@ msgid "_Never"
 msgstr "_Никогда"
 
 #: src/preferences.c:3481
-#, fuzzy
 msgid "Maximum number of visible tracks"
-msgstr "Максимальное количество показываемых треков"
+msgstr ""
 
 #: src/preferences.c:3487
 msgid "Multitrack/Render"
@@ -10078,14 +9487,12 @@ msgid "Use letterboxing by default:"
 msgstr ""
 
 #: src/preferences.c:3688
-#, fuzzy
 msgid "In Clip Edit Mode"
-msgstr "Запустить в режиме фрагментного редактирования"
+msgstr ""
 
 #: src/preferences.c:3692
-#, fuzzy
 msgid "In Multitrack Mode"
-msgstr "Запустить в режиме с _несколькими дорожками"
+msgstr ""
 
 #: src/preferences.c:3696
 msgid "Monitor gamma setting:"
@@ -10199,14 +9606,12 @@ msgid "_Audio (requires jack or pulseaudio player)"
 msgstr ""
 
 #: src/preferences.c:3998
-#, fuzzy
 msgid "Pause recording if:"
-msgstr "Начать запись"
+msgstr ""
 
 #: src/preferences.c:4002
-#, fuzzy
 msgid "Free disk space falls below"
-msgstr "%s свободного места на диске было восстановлено.\n"
+msgstr ""
 
 #. TRANSLATORS: gigabytes
 #: src/preferences.c:4007
@@ -10223,18 +9628,16 @@ msgid "% of quota is used"
 msgstr ""
 
 #: src/preferences.c:4024
-#, fuzzy
 msgid "Disk space warning level is passed"
-msgstr "%s свободного места на диске было восстановлено.\n"
+msgstr ""
 
 #: src/preferences.c:4026
 msgid "Recording is always paused if the disk space critical level is reached"
 msgstr ""
 
 #: src/preferences.c:4035
-#, fuzzy
 msgid "External Audio Source"
-msgstr "Аудио кодек"
+msgstr ""
 
 #: src/preferences.c:4041
 msgid "Delay recording playback start until external audio volume reaches "
@@ -10261,14 +9664,12 @@ msgid "Prioritize Audio rate"
 msgstr ""
 
 #: src/preferences.c:4081
-#, fuzzy
 msgid "Prioritize Frame rate"
-msgstr "Первый кадр"
+msgstr ""
 
 #: src/preferences.c:4082
-#, fuzzy
 msgid "Render mode:"
-msgstr "Размер"
+msgstr ""
 
 #: src/preferences.c:4093
 msgid "Enable pre-quantisation frame smoothing"
@@ -10287,9 +9688,8 @@ msgid "Apply effects state at adjusted time"
 msgstr ""
 
 #: src/preferences.c:4108
-#, fuzzy
 msgid "When re-aligning frames"
-msgstr "Удаление избыточных кадров"
+msgstr ""
 
 #: src/preferences.c:4114
 msgid "Enable audio micro-adjustments during quantisation"
@@ -10324,9 +9724,8 @@ msgid "Encoding"
 msgstr "Кодирование"
 
 #: src/preferences.c:4224
-#, fuzzy
 msgid "Load rendered effects on startup"
-msgstr "Загрузка надстроек готовых эффектов"
+msgstr ""
 
 #: src/preferences.c:4230
 msgid "Use _antialiasing when resizing"
@@ -10379,11 +9778,8 @@ msgid "Frei0r plugin path"
 msgstr ""
 
 #: src/preferences.c:4311
-#, fuzzy
 msgid "LiVES was compiled without frei0r support"
 msgstr ""
-", но данная версия LiVES была скомпонована без поддержки pulse audio.\n"
-"\n"
 
 #: src/preferences.c:4315
 msgid "LADSPA plugin path"
@@ -10398,11 +9794,8 @@ msgid "libvisual plugin path"
 msgstr ""
 
 #: src/preferences.c:4330
-#, fuzzy
 msgid "LiVES was compiled without libvisual support"
 msgstr ""
-", но данная версия LiVES была скомпонована без поддержки pulse audio.\n"
-"\n"
 
 #: src/preferences.c:4351
 msgid "Video load directory (default)"
@@ -10425,9 +9818,8 @@ msgid "Backup/Restore directory (default)"
 msgstr ""
 
 #: src/preferences.c:4377
-#, fuzzy
 msgid "<b>Work directory</b>"
-msgstr "Временный каталог: %s\n"
+msgstr ""
 
 #: src/preferences.c:4402 src/preferences.c:4425
 msgid "The default directory for saving encoded clips to"
@@ -10476,9 +9868,8 @@ msgid "Reduced checking in VJ mode"
 msgstr ""
 
 #: src/preferences.c:4556 src/preferences.c:4575
-#, fuzzy
 msgid "MB"
-msgstr " МБ"
+msgstr ""
 
 #: src/preferences.c:4566
 msgid "Disk space critical level"
@@ -10603,21 +9994,17 @@ msgid "Show a warning if a loaded layout has incompatible gamma settings."
 msgstr ""
 
 #: src/preferences.c:4739
-#, fuzzy
 msgid ""
 "Show a warning when the menu option Restart in VJ Mode becomes activated."
 msgstr ""
-"Показать предупреждение при многодорожечной заканчивается резервного "
-"пространства."
 
 #: src/preferences.c:4744
 msgid "Warnings"
 msgstr "Предупреждения"
 
 #: src/preferences.c:4759
-#, fuzzy
 msgid "When inserting/merging frames:"
-msgstr "Удаление избыточных кадров"
+msgstr ""
 
 #: src/preferences.c:4764
 msgid "_Speed Up/Slow Down Insertion"
@@ -10628,9 +10015,8 @@ msgid "_Resample Insertion"
 msgstr ""
 
 #: src/preferences.c:4773
-#, fuzzy
 msgid "CD device"
-msgstr "Устройство чтения           "
+msgstr ""
 
 #: src/preferences.c:4776
 msgid "LiVES can load audio tracks from this CD"
@@ -10683,39 +10069,32 @@ msgid "Invent interface colours"
 msgstr ""
 
 #: src/preferences.c:4883
-#, fuzzy
 msgid "Main Theme Details"
-msgstr "Показать сведения"
+msgstr ""
 
 #: src/preferences.c:4895
-#, fuzzy
 msgid "_Foreground Color"
-msgstr "Фон"
+msgstr ""
 
 #: src/preferences.c:4901
-#, fuzzy
 msgid "_Background Color"
-msgstr "Фон"
+msgstr ""
 
 #: src/preferences.c:4907
-#, fuzzy
 msgid "_Alt Foreground Color"
-msgstr "Фон"
+msgstr ""
 
 #: src/preferences.c:4913
-#, fuzzy
 msgid "_Alt Background Color"
-msgstr "Фон"
+msgstr ""
 
 #: src/preferences.c:4919
-#, fuzzy
 msgid "Info _Text Color"
-msgstr "          _Высота      "
+msgstr ""
 
 #: src/preferences.c:4925
-#, fuzzy
 msgid "Info _Base Color"
-msgstr "          _Высота      "
+msgstr ""
 
 #: src/preferences.c:4931
 msgid "Theme is _light"
@@ -10734,9 +10113,8 @@ msgid "Highlight horizontal separators in multitrack"
 msgstr ""
 
 #: src/preferences.c:4957
-#, fuzzy
 msgid "Frame blank image"
-msgstr "Удаление избыточных кадров"
+msgstr ""
 
 #: src/preferences.c:4962
 msgid "The frame image which is shown when there is no clip loaded."
@@ -10783,9 +10161,8 @@ msgid "Timeline mark (multitrack)"
 msgstr ""
 
 #: src/preferences.c:5039
-#, fuzzy
 msgid "Timeline selection (multitrack)"
-msgstr "Сроки (в секундах)"
+msgstr ""
 
 #: src/preferences.c:5046
 msgid "Timecode background (multitrack)"
@@ -10796,14 +10173,12 @@ msgid "Timecode foreground (multitrack)"
 msgstr ""
 
 #: src/preferences.c:5058
-#, fuzzy
 msgid "Frame surround"
-msgstr "Передний план"
+msgstr ""
 
 #: src/preferences.c:5071
-#, fuzzy
 msgid "Themes/Colors"
-msgstr "Темы"
+msgstr ""
 
 #: src/preferences.c:5086
 msgid "Download bandwidth (Kb/s)"
@@ -10818,9 +10193,8 @@ msgid "OMC remote control enabled"
 msgstr ""
 
 #: src/preferences.c:5108
-#, fuzzy
 msgid "UDP port"
-msgstr "    Автор:       "
+msgstr ""
 
 #: src/preferences.c:5114
 msgid "Start OMC on startup"
@@ -11053,9 +10427,8 @@ msgid "Resizing/letterboxing frames 1 to %d"
 msgstr ""
 
 #: src/resample.c:333
-#, fuzzy
 msgid "Pulling frames"
-msgstr "клипы и кадры"
+msgstr ""
 
 #: src/resample.c:345
 msgid "Resize"
@@ -11121,9 +10494,8 @@ msgid "Resample"
 msgstr "Размер"
 
 #: src/resample.c:1705
-#, fuzzy
 msgid "New Clip Audio"
-msgstr "Новый звук"
+msgstr ""
 
 #: src/resample.c:1707
 msgid "External Clip Settings"
@@ -11162,9 +10534,8 @@ msgid "Big Endian"
 msgstr ""
 
 #: src/resample.c:1813
-#, fuzzy
 msgid "New Audio Details"
-msgstr "Новый звук"
+msgstr ""
 
 #: src/resample.c:1814
 msgid "New"
@@ -11211,9 +10582,8 @@ msgid "Click OK to begin recording, or Cancel to quit."
 msgstr ""
 
 #: src/resample.c:2131
-#, fuzzy
 msgid "Changing the clip fps"
-msgstr "Очистка буфера обмена"
+msgstr ""
 
 #: src/resample.c:2147
 msgid "Speed Change"
@@ -11297,9 +10667,8 @@ msgid "Saving real time effect defaults to %s..."
 msgstr ""
 
 #: src/rte_window.c:479 src/rte_window.c:541
-#, fuzzy
 msgid "Saving real time effect defaults..."
-msgstr "Загрузка плагина эффектов реального времени..."
+msgstr ""
 
 #: src/rte_window.c:483
 #, c-format
@@ -11407,9 +10776,9 @@ msgid "Plugin name: %s"
 msgstr ""
 
 #: src/rte_window.c:1609
-#, fuzzy, c-format
+#, c-format
 msgid "Package name: %s"
-msgstr "Название/Имя : "
+msgstr ""
 
 #: src/rte_window.c:1614
 #, c-format
@@ -11748,9 +11117,8 @@ msgid "to select a time region.\n"
 msgstr ""
 
 #: src/multitrack.c:4584
-#, fuzzy
 msgid "Selected Clip"
-msgstr "В_ыбор"
+msgstr ""
 
 #: src/multitrack.c:4587
 msgid "_Adjust Start and End Points"
@@ -11761,19 +11129,16 @@ msgid "_Edit/Encode in Clip Editor"
 msgstr ""
 
 #: src/multitrack.c:4602
-#, fuzzy
 msgid "_Show Clip Information"
-msgstr "Показать сведения _о файле"
+msgstr ""
 
 #: src/multitrack.c:4609
-#, fuzzy
 msgid "_Close this Clip"
-msgstr "Закрыть текущий клип (_C)"
+msgstr ""
 
 #: src/multitrack.c:4824
-#, fuzzy
 msgid "Open Audio _Mixer"
-msgstr "Аудио микшеры"
+msgstr ""
 
 #: src/multitrack.c:4837
 msgid "  Bleedthru  "
@@ -11953,9 +11318,9 @@ msgid "Layout was wiped.\n"
 msgstr ""
 
 #: src/multitrack.c:5969
-#, fuzzy, c-format
+#, c-format
 msgid "Multitrack %dx%d : %d bpp %.3f fps"
-msgstr "LiVES-%s: <%s> %dx%d : %d кадров %d bpp %.3f fps"
+msgstr ""
 
 #: src/multitrack.c:6080
 msgid "In/out"
@@ -12002,24 +11367,20 @@ msgid "_Import from Device"
 msgstr "Импортривать с устройства (_I)"
 
 #: src/multitrack.c:6824
-#, fuzzy
 msgid "_Close the Selected Clip"
-msgstr "В_ыбор"
+msgstr ""
 
 #: src/multitrack.c:6861
-#, fuzzy
 msgid "_Save Layout as..."
-msgstr "_Сохранить раскладку, как ..."
+msgstr ""
 
 #: src/multitrack.c:6868
-#, fuzzy
 msgid "_Load Layout..."
-msgstr "_Нагрузка макет ..."
+msgstr ""
 
 #: src/multitrack.c:6872
-#, fuzzy
 msgid "_Wipe/Delete Layout..."
-msgstr "_Удалить макет"
+msgstr ""
 
 #: src/multitrack.c:6882
 msgid "Clean _up Diskspace"
@@ -12030,9 +11391,8 @@ msgid "_Ignore Width, Height and Audio Values from Loaded Layouts"
 msgstr ""
 
 #: src/multitrack.c:6894
-#, fuzzy
 msgid "Auto Load _Subtitles with Clips"
-msgstr "Автоматическая загрузка субтитров"
+msgstr ""
 
 #: src/multitrack.c:6957
 msgid "_CLIP EDITOR"
@@ -12047,14 +11407,12 @@ msgid "_Insert selected clip"
 msgstr ""
 
 #: src/multitrack.c:6981
-#, fuzzy
 msgid "_Insert Selected Clip Audio"
-msgstr "Удалить _выделенные звуковые данные..."
+msgstr ""
 
 #: src/multitrack.c:6989
-#, fuzzy
 msgid "_Delete Selected Block"
-msgstr "Удалить _выделенные звуковые данные..."
+msgstr ""
 
 #: src/multitrack.c:7000
 msgid "_Jump to Previous Block Boundary"
@@ -12073,9 +11431,8 @@ msgid "_Jump to Next Timeline Mark"
 msgstr ""
 
 #: src/multitrack.c:7037
-#, fuzzy
 msgid "Clear _Marks from Timeline"
-msgstr "Очистить _резервные файлы из закрытых фрагментов"
+msgstr ""
 
 #: src/multitrack.c:7043
 msgid "Ignore Selection Limits when Inserting"
@@ -12086,14 +11443,12 @@ msgid "_Play from Timeline Position"
 msgstr ""
 
 #: src/multitrack.c:7066
-#, fuzzy
 msgid "Pla_y Selected Time Only"
-msgstr "Во_спроизвести выделенное"
+msgstr ""
 
 #: src/multitrack.c:7130
-#, fuzzy
 msgid "_Move Effects with Blocks"
-msgstr "_Выберите этот блок"
+msgstr ""
 
 #: src/multitrack.c:7139
 msgid "Select _Autotransition Effect..."
@@ -12104,14 +11459,12 @@ msgid "Crossfade Audio with Autotransition"
 msgstr ""
 
 #: src/multitrack.c:7151
-#, fuzzy
 msgid "View/_Edit Selected Effect"
-msgstr "LiVES: Выбранный эффекта"
+msgstr ""
 
 #: src/multitrack.c:7155
-#, fuzzy
 msgid "_Delete Selected Effect"
-msgstr "LiVES: Выбранный эффекта"
+msgstr ""
 
 #: src/multitrack.c:7163
 msgid "Apply Effect to _Block..."
@@ -12126,9 +11479,8 @@ msgid "_Tracks"
 msgstr "_Дорожки"
 
 #: src/multitrack.c:7433
-#, fuzzy
 msgid "Make _Backing Audio Current Track"
-msgstr "LiVES: - Переименовать текущую дорожку"
+msgstr ""
 
 #: src/multitrack.c:7441
 msgid "Add Video Track at _Rear"
@@ -12139,19 +11491,16 @@ msgid "Add Video Track at _Front"
 msgstr ""
 
 #: src/multitrack.c:7456
-#, fuzzy
 msgid "_Split Current Track at Cursor"
-msgstr "_Выберите Текущий трек"
+msgstr ""
 
 #: src/multitrack.c:7466
-#, fuzzy
 msgid "_Split Selected Video Tracks"
-msgstr "Экспортировать выбранный звук как..."
+msgstr ""
 
 #: src/multitrack.c:7475
-#, fuzzy
 msgid "Insert Gap in Selected Tracks/Time"
-msgstr "Вставить содержимое буфера обмена после выделенных кадров"
+msgstr ""
 
 #: src/multitrack.c:7482
 msgid "Insert Gap in Current Track/Selected Time"
@@ -12166,37 +11515,32 @@ msgid "Se_lection"
 msgstr "В_ыбор"
 
 #: src/multitrack.c:7517
-#, fuzzy
 msgid "_Lock Time Selection"
-msgstr "_Копировать выделенное"
+msgstr ""
 
 #: src/multitrack.c:7523
 msgid "_Select Current Track"
 msgstr "_Выберите Текущий трек"
 
 #: src/multitrack.c:7529
-#, fuzzy
 msgid "Select _All Video Tracks"
-msgstr "Выделить _все кадры"
+msgstr ""
 
 #: src/multitrack.c:7535
-#, fuzzy
 msgid "Select _No Video Tracks"
-msgstr "_Выберите Текущий трек"
+msgstr ""
 
 #: src/multitrack.c:7541
-#, fuzzy
 msgid "Select All _Time"
-msgstr "Выделить _все кадры"
+msgstr ""
 
 #: src/multitrack.c:7550
 msgid "Select from _Zero Time"
 msgstr ""
 
 #: src/multitrack.c:7556
-#, fuzzy
 msgid "Select to _End Time"
-msgstr "Выберите устройство ввода"
+msgstr ""
 
 #: src/multitrack.c:7562
 msgid "_Copy..."
@@ -12219,9 +11563,8 @@ msgid "_Region End to Timecode"
 msgstr ""
 
 #: src/multitrack.c:7597
-#, fuzzy
 msgid "Select/Deselect Block at Current Track/Time"
-msgstr "_Выберите Текущий трек"
+msgstr ""
 
 #: src/multitrack.c:7615
 msgid "_Change Width, Height and Audio Values..."
@@ -12240,79 +11583,68 @@ msgid "_Render All to New Clip"
 msgstr ""
 
 #: src/multitrack.c:7684
-#, fuzzy
 msgid "Render _Video"
-msgstr "Размер"
+msgstr ""
 
 #: src/multitrack.c:7689
-#, fuzzy
 msgid "Render _Audio"
-msgstr "Добавить звук"
+msgstr ""
 
 #: src/multitrack.c:7698
 msgid "_Normalise Rendered Audio"
 msgstr ""
 
 #: src/multitrack.c:7703
-#, fuzzy
 msgid "_Pre-render Audio"
-msgstr "Добавить звук"
+msgstr ""
 
 #: src/multitrack.c:7710
 msgid "_View"
 msgstr "_Вид"
 
 #: src/multitrack.c:7716
-#, fuzzy
 msgid "Show Info Box"
-msgstr "Показать сведения _о файле"
+msgstr ""
 
 #: src/multitrack.c:7729
 msgid "Block _In/Out Points"
 msgstr ""
 
 #: src/multitrack.c:7737
-#, fuzzy
 msgid "_Effects at Current"
-msgstr "_Воздействие на текущий"
+msgstr ""
 
 #: src/multitrack.c:7753
-#, fuzzy
 msgid "Audio Parameters"
-msgstr "Параметры звука"
+msgstr ""
 
 #: src/multitrack.c:7759
 msgid "Show Backing _Audio Track"
 msgstr ""
 
 #: src/multitrack.c:7762
-#, fuzzy
 msgid "Maximum Tracks to Display..."
-msgstr "Максимальное количество показываемых треков"
+msgstr ""
 
 #: src/multitrack.c:7767
 msgid "Scroll to Follow Playback"
 msgstr ""
 
 #: src/multitrack.c:7770
-#, fuzzy
 msgid "_Center on Cursor"
-msgstr "_Центр по курсором"
+msgstr ""
 
 #: src/multitrack.c:7776
-#, fuzzy
 msgid "_Zoom In"
-msgstr "_Увеличить"
+msgstr ""
 
 #: src/multitrack.c:7787
-#, fuzzy
 msgid "_Zoom Out"
-msgstr "_Уменьшить"
+msgstr ""
 
 #: src/multitrack.c:7796
-#, fuzzy
 msgid "Multitrack _Details"
-msgstr "LiVES: - Сведения о нескольких дорожках"
+msgstr ""
 
 #: src/multitrack.c:7805
 msgid "_Event Window"
@@ -12327,9 +11659,8 @@ msgid "_Show FRAME Events in Event Window"
 msgstr ""
 
 #: src/multitrack.c:7824
-#, fuzzy
 msgid "_Show Multitrack Keys"
-msgstr "LiVES: - Сведения о нескольких дорожках"
+msgstr ""
 
 #: src/multitrack.c:7840
 msgid "Report a _bug"
@@ -12340,9 +11671,8 @@ msgid "Check for Missing Features"
 msgstr ""
 
 #: src/multitrack.c:8103
-#, fuzzy
 msgid "  Insert with _Audio  "
-msgstr "_Вставить по совпадению звука"
+msgstr ""
 
 #: src/multitrack.c:8104
 msgid ""
@@ -12350,9 +11680,8 @@ msgid ""
 msgstr ""
 
 #: src/multitrack.c:8120
-#, fuzzy
 msgid "  Select _Overlap  "
-msgstr "Выберите трек"
+msgstr ""
 
 #: src/multitrack.c:8121
 msgid ""
@@ -12385,28 +11714,24 @@ msgid "Insert Mode: _Normal"
 msgstr ""
 
 #: src/multitrack.c:8455
-#, fuzzy
 msgid "Apply"
-msgstr "_Применить"
+msgstr ""
 
 #: src/multitrack.c:8476
 msgid "Time"
 msgstr "Время"
 
 #: src/multitrack.c:8484
-#, fuzzy
 msgid "Preview _Solo"
-msgstr "Предпросмотр"
+msgstr ""
 
 #: src/multitrack.c:8485
-#, fuzzy
 msgid "Preview only the selected effect"
-msgstr "LiVES: Выбранный эффекта"
+msgstr ""
 
 #: src/multitrack.c:8491
-#, fuzzy
 msgid "_Reset  To Defaults"
-msgstr "По _умолчанию"
+msgstr ""
 
 #: src/multitrack.c:8498
 msgid "_Del. node"
@@ -12449,12 +11774,8 @@ msgid "Scroll"
 msgstr "Прокрутка"
 
 #: src/multitrack.c:9495
-#, fuzzy
 msgid "====== Switched to Clip Edit mode ======\n"
 msgstr ""
-"\n"
-"==============================\n"
-"Перешли на Clip режиме редактирования\n"
 
 #: src/multitrack.c:9671
 msgid "Timeline (seconds)"
@@ -12502,24 +11823,20 @@ msgid " %s"
 msgstr " %s"
 
 #: src/multitrack.c:10550
-#, fuzzy
 msgid "Selected Effect"
-msgstr "LiVES: Выбранный эффекта"
+msgstr ""
 
 #: src/multitrack.c:10557
-#, fuzzy
 msgid "_View/Edit this Effect"
-msgstr "_Открыть этот эффект"
+msgstr ""
 
 #: src/multitrack.c:10559
-#, fuzzy
 msgid "_View this Effect"
-msgstr "_Открыть этот эффект"
+msgstr ""
 
 #: src/multitrack.c:10567
-#, fuzzy
 msgid "_Delete this Effect"
-msgstr "_Удалить этот эффект"
+msgstr ""
 
 #: src/multitrack.c:10620
 msgid "Cannot insert after this effect"
@@ -12530,9 +11847,9 @@ msgid "This effect cannot be moved"
 msgstr ""
 
 #: src/multitrack.c:10701
-#, fuzzy, c-format
+#, c-format
 msgid "%d to %d selected"
-msgstr "%d видеодорожек выбран.\n"
+msgstr ""
 
 #: src/multitrack.c:10704 src/multitrack.c:10929
 #, c-format
@@ -12644,24 +11961,20 @@ msgid ""
 msgstr ""
 
 #: src/multitrack.c:13590
-#, fuzzy
 msgid "Selected Block/Frame"
-msgstr "LiVES: Выбранный блок / кадр"
+msgstr ""
 
 #: src/multitrack.c:13592
-#, fuzzy
 msgid "_Select this Block"
-msgstr "_Выберите этот блок"
+msgstr ""
 
 #: src/multitrack.c:13599
-#, fuzzy
 msgid "_Split Block At Cursor"
-msgstr "_Выберите Текущий трек"
+msgstr ""
 
 #: src/multitrack.c:13613
-#, fuzzy
 msgid "List _Effects Here"
-msgstr "_Пользовательские"
+msgstr ""
 
 #: src/multitrack.c:13621 src/multitrack.c:13693
 #, c-format
@@ -12669,24 +11982,21 @@ msgid "_Adjust %s"
 msgstr ""
 
 #: src/multitrack.c:13633
-#, fuzzy
 msgid "_Delete this Block"
-msgstr "_Удалить этот блок"
+msgstr ""
 
 #: src/multitrack.c:13677
-#, fuzzy
 msgid "_Insert Here"
-msgstr "_Вставьте здесь"
+msgstr ""
 
 #: src/multitrack.c:13682
-#, fuzzy
 msgid "_Insert Audio Here"
-msgstr "_Вставьте аудио здесь"
+msgstr ""
 
 #: src/multitrack.c:14974
-#, fuzzy, c-format
+#, c-format
 msgid "Inserted gap in selected tracks from time %s to time %s\n"
-msgstr "Вставить содержимое буфера обмена после выделенных кадров"
+msgstr ""
 
 #: src/multitrack.c:15017
 #, c-format
@@ -12710,13 +12020,11 @@ msgid ""
 msgstr ""
 
 #: src/multitrack.c:15483
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "  %.3f sec"
 msgstr ""
-"\n"
-"  %.2f сек."
 
 #: src/multitrack.c:15487
 #, c-format
@@ -12752,9 +12060,9 @@ msgid "Added effect %s to track %s from time %s to time %s\n"
 msgstr ""
 
 #: src/multitrack.c:15884
-#, fuzzy, c-format
+#, c-format
 msgid "Deleted %s %s from %s from time %s to time %s\n"
-msgstr "Удаление звука с %.2f по %.2f секунды..."
+msgstr ""
 
 #: src/multitrack.c:16213
 #, c-format
@@ -12766,14 +12074,14 @@ msgid "Cleaning up..."
 msgstr "Очистка..."
 
 #: src/multitrack.c:16742
-#, fuzzy, c-format
+#, c-format
 msgid "Deleted frames from time %s to time %s on track %s\n"
-msgstr "Удаление звука с %.2f по %.2f секунды..."
+msgstr ""
 
 #: src/multitrack.c:16744
-#, fuzzy, c-format
+#, c-format
 msgid "Deleted audio from time %s to time %s on track %s\n"
-msgstr "Удаление звука с %.2f по %.2f секунды..."
+msgstr ""
 
 #: src/multitrack.c:17183
 msgid "_Pause"
@@ -12852,12 +12160,11 @@ msgid ""
 msgstr ""
 
 #: src/multitrack.c:18567
-#, fuzzy
 msgid ""
 "\n"
 "\n"
 "Effects are applied in order from top to bottom.\n"
-msgstr "Эффекты применены к текущему выделению."
+msgstr ""
 
 #: src/multitrack.c:18569
 msgid ""
@@ -12980,9 +12287,8 @@ msgid ""
 msgstr ""
 
 #: src/multitrack.c:22754
-#, fuzzy
 msgid "Multitrack Audio Mixer"
-msgstr "Аудио микшеры"
+msgstr ""
 
 #: src/multitrack.c:22779
 msgid "_Reset values"
@@ -13052,9 +12358,8 @@ msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr ""
 
 #: src/pulse.c:1950
-#, fuzzy
 msgid "Resetting pulseaudio connection..."
-msgstr "Запуск сервера pulse audio..."
+msgstr ""
 
 #: src/pulse.c:1981
 msgid ""
@@ -13063,9 +12368,8 @@ msgid ""
 msgstr ""
 
 #: src/cvirtual.c:525
-#, fuzzy
 msgid "Resizing all frames\n"
-msgstr "_Масштабировать все кадры"
+msgstr ""
 
 #: src/cvirtual.c:544
 msgid "Correcting Image Formats\n"
@@ -13546,26 +12850,21 @@ msgid ""
 msgstr ""
 
 #: src/machinestate.c:2832
-#, fuzzy, c-format
+#, c-format
 msgid "%s was not found\n"
-msgstr " (без звука)\n"
+msgstr ""
 
 #: src/machinestate.c:2873 src/machinestate.c:2878
-#, fuzzy, c-format
+#, c-format
 msgid "Could not write to %s\n"
-msgstr "Невозможно ваыполнить запись: %s"
+msgstr ""
 
 #: src/machinestate.c:2901
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "LiVES was unable to send the item to trash.\n"
 "%s"
 msgstr ""
-"\n"
-"LiVES не может использовать временный каталог\n"
-"%s\n"
-"\n"
-"%s"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid " _Top  "
@@ -13574,7 +12873,7 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #, fuzzy
 msgid "180 _degrees             "
-msgstr "Устройство чтения           "
+msgstr "Новые темы:           "
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "90 degrees _Anticlockwise"
@@ -13597,19 +12896,16 @@ msgid "Add noise"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "Adjust contrast"
-msgstr "Добавление изображения..."
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "Adjusting contrast of"
-msgstr "Добавление изображения..."
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-#, fuzzy
 msgid "Adjusting noise on"
-msgstr "Добавление изображения..."
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Applying charcoal to"
@@ -13705,24 +13001,20 @@ msgid "Centre _Y"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
-#, fuzzy
 msgid "Changing brightness of"
-msgstr "Очистка буфера обмена"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Changing gamma of"
-msgstr "Очистка буфера обмена"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Changing hue of"
-msgstr "Очистка буфера обмена"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Changing saturation of"
-msgstr "Очистка буфера обмена"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Charcoal"
@@ -13749,9 +13041,8 @@ msgid "Clipboard _under selection"
 msgstr "_ Объединить содержимое буфера обмена с выделенным..."
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "Colorize"
-msgstr "Масштабирование"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
@@ -13759,29 +13050,24 @@ msgid "Colorizing"
 msgstr "Масштабирование"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Colour cycle"
-msgstr "Масштабирование"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Colour cycling"
-msgstr "Масштабирование"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "Colour filter"
-msgstr "Масштабирование"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "Colour filtering"
-msgstr "Масштабирование"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "Colour replace"
-msgstr "Удаление избыточных кадров"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Constant noise level"
@@ -13793,14 +13079,12 @@ msgid "Cycle _Step"
 msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
-#, fuzzy
 msgid "Deinterlace"
-msgstr "_Указатель"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
-#, fuzzy
 msgid "Deinterlacing"
-msgstr "_Указатель"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
 msgid "Despeckle"
@@ -13824,14 +13108,12 @@ msgid "E_nd %"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
-#, fuzzy
 msgid "Edge detect"
-msgstr "mplayer...обнаружен..."
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
-#, fuzzy
 msgid "Edge detecting"
-msgstr "mplayer...обнаружен..."
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "Emboss"
@@ -13910,7 +13192,7 @@ msgstr "Изменение входящего звука"
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
 msgid "Fina_l frame"
-msgstr "Конечный кадр"
+msgstr "Первый кадр"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 #, fuzzy
@@ -13926,9 +13208,8 @@ msgid "Flop horizontally"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "Frame Calculator"
-msgstr "Изменить исходящий звук"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
@@ -13938,22 +13219,20 @@ msgstr "Изменить исходящий звук"
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #, fuzzy
 msgid "Frame _in frame position of clipboard..."
-msgstr "Копирование кадров в буфер обмена: с %d по %d%s..."
+msgstr "Будут вставлены %d%s кадров из буфера обмена..."
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
 msgid "Frame _in frame position of top frame..."
-msgstr "Копирование кадров в буфер обмена: с %d по %d%s..."
+msgstr "Будут вставлены %d%s кадров из буфера обмена..."
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "Frames _per second (FPS)"
-msgstr "Сроки (в секундах)"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma _end"
-msgstr "_Начать"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
@@ -14014,9 +13293,8 @@ msgid "Horizontal shifting"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue _end"
-msgstr "Изменить входящий звук"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
@@ -14029,9 +13307,8 @@ msgid "Hue change"
 msgstr "_Игнорировать изменения"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Hue end"
-msgstr "Изменить входящий звук"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -14039,9 +13316,8 @@ msgid "Hue start"
 msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#, fuzzy
 msgid "Image overlay"
-msgstr "Выберите трек"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Init _Alpha:"
@@ -14080,9 +13356,8 @@ msgid "Making monochrome"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Modulate (BSH)"
-msgstr "Вставить"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -14112,9 +13387,8 @@ msgid "Noisify"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
-#, fuzzy
 msgid "Normalize"
-msgstr "Масштабирование"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
 #, fuzzy
@@ -14177,7 +13451,7 @@ msgstr "Повторный выбор буфера обмена звука"
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
 #, fuzzy
 msgid "Resize All Frames"
-msgstr "_Масштабировать все кадры"
+msgstr "Выделить _все кадры"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #, fuzzy
@@ -14196,29 +13470,24 @@ msgid "S_tart %"
 msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation _end"
-msgstr "Переходы состояний"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation _start"
-msgstr "Переходы состояний"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation change"
-msgstr "Переходы состояний"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Saturation end"
-msgstr "Переходы состояний"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Saturation start"
-msgstr "Переходы состояний"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Sepia"
@@ -14246,9 +13515,8 @@ msgid "Skip forward"
 msgstr "Слушать Вперед"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "Solarize"
-msgstr "Масштабирование"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
@@ -14284,14 +13552,14 @@ msgstr "Остановить запись"
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
 msgid "Step _Value"
-msgstr "Стартовый кадр"
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #, fuzzy
 msgid "Step per _Frame"
-msgstr "Стартовый кадр"
+msgstr "Выделить _все кадры"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
@@ -14299,24 +13567,20 @@ msgid "Swirl _start"
 msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirl s_tep"
-msgstr "_Начать"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirl"
-msgstr "_Начать"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirling"
-msgstr "_Начать"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
-#, fuzzy
 msgid "Text Overlay"
-msgstr "Выберите трек"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Thres_hold"
@@ -14392,9 +13656,8 @@ msgid "_Bottom"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "_Calculate"
-msgstr "Изменить исходящий звук"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
@@ -14427,13 +13690,12 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
 msgid "_End amount"
-msgstr "Конечный кадр"
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
-#, fuzzy
 msgid "_Fade level"
-msgstr "Изменить входящий звук"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
@@ -14453,9 +13715,8 @@ msgid "_First frame"
 msgstr "Первый кадр"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "_Flash for"
-msgstr "Изменить исходящий звук"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
@@ -14468,9 +13729,8 @@ msgid "_Frames"
 msgstr "Кадры"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "_Hold for"
-msgstr "Изменить исходящий звук"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Horizontal segments"
@@ -14547,9 +13807,8 @@ msgid "_Point size"
 msgstr "_Указатель"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Radius end"
-msgstr "_Начать"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
@@ -14559,9 +13818,8 @@ msgstr "_Начать"
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
-#, fuzzy
 msgid "_Radius"
-msgstr "_Начать"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
@@ -14628,12 +13886,12 @@ msgstr "_Начать"
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #, fuzzy
 msgid "_Start Value"
-msgstr "Стартовый кадр"
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
 msgid "_Start amount"
-msgstr "Стартовый кадр"
+msgstr "_Начать"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
@@ -14675,9 +13933,8 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#, fuzzy
 msgid "_Wrap Around"
-msgstr "Передний план"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_X Center"
@@ -14742,33 +13999,28 @@ msgid "charcoal"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "colorize"
-msgstr "Масштабирование"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "colour_filter"
-msgstr "Масштабирование"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "colour_replace"
-msgstr "Удаление избыточных кадров"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "contrast"
-msgstr "Добавление изображения..."
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "cycle"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
-#, fuzzy
 msgid "deinterlace"
-msgstr "_Указатель"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
 msgid "despeckle"
@@ -14779,9 +14031,8 @@ msgid "dream"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
-#, fuzzy
 msgid "edge_detect"
-msgstr "mplayer...обнаружен..."
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "emboss"
@@ -14815,14 +14066,12 @@ msgid "flop"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "frame_calculator"
-msgstr "Изменить исходящий звук"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "gamma_change"
-msgstr "_Игнорировать изменения"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
@@ -14849,36 +14098,32 @@ msgid "hue_change"
 msgstr "_Игнорировать изменения"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#, fuzzy
 msgid "image_overlay"
-msgstr "Выберите трек"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "jumble"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "modulate"
-msgstr "Вставить"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "monochrome"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "negate"
-msgstr "Вставить"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "noisify"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
-#, fuzzy
 msgid "normalize"
-msgstr "Масштабирование"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "photo_still"
@@ -14935,9 +14180,8 @@ msgid "skip_forwards"
 msgstr "Слушать Вперед"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "solarize"
-msgstr "Масштабирование"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "spin"
@@ -14949,14 +14193,12 @@ msgid "spread"
 msgstr "Остановить запись"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "swirl"
-msgstr "_Начать"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
-#, fuzzy
 msgid "textover"
-msgstr "Записывается"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
@@ -15027,14 +14269,12 @@ msgid "bad trashdir $ARGV[3]"
 msgstr ""
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "$file"
-msgstr "Этот файл"
+msgstr ""
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "could not be found"
-msgstr "Невозможно ваыполнить запись: %s"
+msgstr ""
 
 #: /usr/bin/smogrify:0
 #, fuzzy
@@ -15072,9 +14312,8 @@ msgstr ""
 "\n"
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "LiVES audio error."
-msgstr "LiVES: - Ошибка файла"
+msgstr ""
 
 #: /usr/bin/smogrify:0
 #, fuzzy
@@ -15086,11 +14325,8 @@ msgid "The requested URL"
 msgstr ""
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "could not be opened with the desired format."
 msgstr ""
-"LiVES не может загрузить это изображение\n"
-"\n"
 
 #: /usr/bin/smogrify:0
 msgid "Could not remove existing file $xdfile"
@@ -15122,662 +14358,3 @@ msgstr ""
 #~ msgstr ""
 #~ "Кликните на окне для его захвата\n"
 #~ "Нажмите 'q' для остановки записи"
-
-#, fuzzy
-#~ msgid "Total size = %s"
-#~ msgstr "Общая продолжительность"
-
-#, fuzzy
-#~ msgid "Cancel/Discard/Save"
-#~ msgstr "LiVES: - Отменить/Сбросить изменения/Сохранить"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "Set will be deleted from the disk.\n"
-#~ "Are you sure ?\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "Сборка будет удалена с диска.\n"
-#~ "Вы уверены ?\n"
-
-#~ msgid "Single size (d)"
-#~ msgstr "Стандартный размер (d)"
-
-#~ msgid "The joystick device, e.g. /dev/input/js0"
-#~ msgstr "Джойстиком устройства, например /dev/input/js0"
-
-#, fuzzy
-#~ msgid "Close Window"
-#~ msgstr "_Закрыть окно"
-
-#, fuzzy
-#~ msgid ""
-#~ "LiVES could not write to the directory\n"
-#~ "%s\n"
-#~ "Please check permissions for the directory.\n"
-#~ "Click Abort to exit immediately from LiVES, or Retry to select a "
-#~ "different directory.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "LiVES не может выполнить запись в собственный файл настроек\n"
-#~ "%s\n"
-#~ "\n"
-#~ "Пожалуйста, проверьте разрешения файла и каталога,\n"
-#~ "затем повторите снова.\n"
-
-#, fuzzy
-#~ msgid "Missing file"
-#~ msgstr "Этот файл"
-
-#~ msgid "Number of CPUs detected: %d "
-#~ msgstr "Количество обнаруженных ЦПУ: %d "
-
-#, fuzzy
-#~ msgid "Welcome to LiVES version %s.\n"
-#~ msgstr ""
-#~ "Добро пожаловать в LiVES версии %s.\n"
-#~ "\n"
-
-#, fuzzy
-#~ msgid "-vjmode                     : start in VJ mode\n"
-#~ msgstr "-startup-mt      : запуск в режиме multitrack\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "\n"
-#~ "Please try again."
-#~ msgstr ""
-#~ "\n"
-#~ "Подождите"
-
-#~ msgid "%s Fatal error: %s\n"
-#~ msgstr "%s Неисправимая ошибка: %s\n"
-
-#~ msgid "%s Critical error: %s\n"
-#~ msgstr "%s Критическая ошибка: %s\n"
-
-#, fuzzy
-#~ msgid "%s (Unknown level %u error: %s\n"
-#~ msgstr "%s Неисправимая ошибка: %s\n"
-
-#, fuzzy
-#~ msgid "#Permanently erase items from the disk"
-#~ msgstr "Сборка %s была полностью удалена с диска.\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "#Delete any clips which are not currently loaded or part of a set\n"
-#~ "If 'Check for Lost Clips' is set, LiVES will try to recover them first"
-#~ msgstr "Удалить все незагруженные в данный момент фрагменты"
-
-#, fuzzy
-#~ msgid "#value can be set in Preferences . Warnings"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "Умолчания можно изменить позднее в меню Предпочтения.\n"
-
-#, fuzzy
-#~ msgid "#These settings can also be changed in Preferences / Warnings"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "Умолчания можно изменить позднее в меню Предпочтения.\n"
-
-#~ msgid "Recovering disk space"
-#~ msgstr "Восстановление свободного места на диске"
-
-#, fuzzy
-#~ msgid " Select All Frames  "
-#~ msgstr "Выделить _все кадры"
-
-#, fuzzy
-#~ msgid "  Audio Mixer (ctrl-m)  "
-#~ msgstr "Аудио микшеры"
-
-#~ msgid "%d video tracks selected.\n"
-#~ msgstr "%d видеодорожек выбран.\n"
-
-#, fuzzy
-#~ msgid "skip forwards"
-#~ msgstr "Слушать Вперед"
-
-#, fuzzy
-#~ msgid "reverse direction"
-#~ msgstr "Обратное направление воспроизведения"
-
-#, fuzzy
-#~ msgid "freeze frame"
-#~ msgstr "Первый кадр"
-
-#, fuzzy
-#~ msgid "double size"
-#~ msgstr "_Удвоенный размер"
-
-#, fuzzy
-#~ msgid "X        _Height"
-#~ msgstr "_Высота"
-
-#, fuzzy
-#~ msgid ""
-#~ "Audio is %s video by %.4f secs.\n"
-#~ "at frame %d / %d, with fps %.3f (target: %.3f)\n"
-#~ "Current effort = %d / %d, quality = %d (%s)\n"
-#~ "%s\n"
-#~ "Clock ratio = %.5f"
-#~ msgstr ""
-#~ "Звук опережает видео на %.4f c. с кадра %d с частотой кадров/с. %.4f\n"
-
-#, fuzzy
-#~ msgid "Frame _height"
-#~ msgstr "Размер кадра"
-
-#, fuzzy
-#~ msgid "Frame _width"
-#~ msgstr "Размер кадра"
-
-#, fuzzy
-#~ msgid "Number of _frames"
-#~ msgstr "Количество кадров для открытия"
-
-#, fuzzy
-#~ msgid "_Frames per second"
-#~ msgstr "Сроки (в секундах)"
-
-#, fuzzy
-#~ msgid "_Number of frames"
-#~ msgstr "Количество кадров для открытия"
-
-#~ msgid "Byte size"
-#~ msgstr "Размер в байтах"
-
-#~ msgid "Events"
-#~ msgstr "События"
-
-#, fuzzy
-#~ msgid "$error"
-#~ msgstr "Убрать ошибки (_E)"
-
-#, fuzzy
-#~ msgid "-recover                    : force loading of crash recovery\n"
-#~ msgstr "-recover         : загрузка в режиме восстановления после сбоя\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "LiVES was unable to perform this operation due to unsufficient memory.\n"
-#~ "Please try closing some other applications first.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "LiVES не может выполнить эту операцию, так как недостаточно памяти.\n"
-#~ "Пожалуйста, попробуйте закрыть другие открытые приложения.\n"
-
-#, fuzzy
-#~ msgid "Undeletable property"
-#~ msgstr "Неверный параметр"
-
-#, fuzzy
-#~ msgid "Invalid element"
-#~ msgstr "Неверный параметр"
-
-#, fuzzy
-#~ msgid "Invalid property"
-#~ msgstr "Неверный параметр"
-
-#, fuzzy
-#~ msgid "No error"
-#~ msgstr "Убрать ошибки (_E)"
-
-#, fuzzy
-#~ msgid ""
-#~ "You can work around this by switching to jpeg output in Preferences/"
-#~ "Decoding."
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "    Тип преобразования изображения был изменён на jpeg. Вы можете внести "
-#~ "изменение в Параметры/Декодирование.    \n"
-
-#, fuzzy
-#~ msgid ""
-#~ "\n"
-#~ "LiVES was unable to write a small file to %s\n"
-#~ "Please make sure you have write access to the directory and try again.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "LiVES не может выполнить запись небольшого файла в %s\n"
-#~ "Пожалуйста, убедитесь, что у вас есть разрешение на запись в %s и "
-#~ "повторите снова.\n"
-
-#, fuzzy
-#~ msgid "Please check the file name and try again."
-#~ msgstr ""
-#~ "Пожалуйста, проверьте параметр <tempdir> в \n"
-#~ "%s\n"
-#~ "и повторите снова.\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "-nothreaddialog  : does nothing - retained for backwards compatibility\n"
-#~ msgstr ""
-#~ "-nothreaddialog  : ничего не делать, сохранено для обратной "
-#~ "совместимости\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "\n"
-#~ "LiVES currently requires 'mplayer', 'mplayer2', 'mpv' or 'sox' to "
-#~ "function. Please install one or other of these, and try again.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Для работы LiVES требуется 'mplayer' или 'sox'. Установите любой из этих "
-#~ "пакетов и повторите ещё раз.\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Deletion will cause frames to shift in some multitrack layouts.\n"
-#~ "Are you sure you wish to continue ?\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Удаление приведет к сдвигу в размещении кадров некоторых мультитрековых "
-#~ "дорожек.\n"
-#~ "Вы уверены, что хотите продолжить ?\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Deletion will cause audio to shift in some multitrack layouts.\n"
-#~ "Are you sure you wish to continue ?\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Удаление приведет к сдвигу в размещении звука некоторых мультитрековых "
-#~ "дорожек.\n"
-#~ "Вы уверены, что хотите продолжить ?\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Loading new audio may cause missing audio in some multitrack layouts.\n"
-#~ "Are you sure you wish to continue ?\n"
-#~ "."
-#~ msgstr ""
-#~ "\n"
-#~ "Загрузка нового звука может вызвать потерю звука в размещении некоторых "
-#~ "мультитрековых дорожек.\n"
-#~ "Вы уверены, что хотите продолжить ?\n"
-#~ "."
-
-#, fuzzy
-#~ msgid "_Adjust Audio Sync..."
-#~ msgstr "_Добавить звук..."
-
-#, fuzzy
-#~ msgid ""
-#~ "\n"
-#~ "LiVES was unable to locate 'mplayer' or 'mplayer2'. You may wish to "
-#~ "install one of these to use LiVES more fully.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "LiVES не обнаружила 'mplayer'. Для полноценного использования LiVES "
-#~ "желательно установить mplayer.\n"
-
-#, fuzzy
-#~ msgid "Checking for \"mplayer\" or \"mplayer2\" presence"
-#~ msgstr "Проверка представлений для \"mplayer\""
-
-#, fuzzy
-#~ msgid ""
-#~ "You should install mplayer or mplayer2 to be able to use all the decoding "
-#~ "features in LiVES"
-#~ msgstr ""
-#~ "Вы должны установить mplayer для возможности использовать все "
-#~ "видеоэффекты в LiVES"
-
-#, fuzzy
-#~ msgid "You should install mplayer or mplayer2 with pcm/wav support"
-#~ msgstr "Вы должны утановить mplayer с поддержкой pcm/wav"
-
-#~ msgid "Click here to _Preview the video"
-#~ msgstr "Кликните сюда для _Предпросмотра видео"
-
-#~ msgid ""
-#~ "\n"
-#~ "LiVES is not currently optimised for larger file sizes.\n"
-#~ "You are advised (for now) to start with a smaller file, or to use the "
-#~ "'Open File Selection' option.\n"
-#~ "(Filesize=%s)\n"
-#~ "\n"
-#~ "Are you sure you wish to continue ?"
-#~ msgstr ""
-#~ "\n"
-#~ "В настоящее время LiVES не оптимизирован для работы с файлами больших "
-#~ "размеров.\n"
-#~ "На данный момент рекомендуется начать с небольшого файла или использовать "
-#~ "параметр 'Открыть выбор файла'.\n"
-#~ "(Размер файла=%s)\n"
-#~ "\n"
-#~ "Вы действительно хотите продолжить ?"
-
-#~ msgid "   Script:    "
-#~ msgstr "   Сценарист:    "
-
-#~ msgid "%d frames are enough !\n"
-#~ msgstr "%d кадров достаточно !\n"
-
-#, fuzzy
-#~ msgid "LiVES: - "
-#~ msgstr "LiVES: - %s"
-
-#~ msgid "Windows version %04X"
-#~ msgstr "Версия Windows %04X"
-
-#, fuzzy
-#~ msgid ""
-#~ "\n"
-#~ "LiVES currently requires both 'mplayer' or 'mplayer2' and 'sox' to "
-#~ "function. Please install these, and try again.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Для обеспечение работоспособности, LiVES необходимы 'mplayer' и 'sox'. "
-#~ "Пожалуйста, установите их и повторите снова.\n"
-
-#~ msgid ", pulse"
-#~ msgstr ", pulse"
-
-#~ msgid ", sox or jack\n"
-#~ msgstr ", sox или jack\n"
-
-#~ msgid "Left Audio"
-#~ msgstr "Левый звуковой канал"
-
-#~ msgid "Right Audio"
-#~ msgstr "Правый звуковой канал"
-
-#, fuzzy
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "LiVES cannot switch clips whilst opening if the audio player is set to "
-#~ "mplayer or mplayer2.\n"
-#~ "Please adjust the playback options in Preferences and try again.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "LiVES не может переключать клипы при открытии, если в качестве "
-#~ "аудиоплеера выбран mplayer.\n"
-#~ "Измените параметры просмотра в меню Настройки и повторите ещё раз.\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "The MPLAYER/MPLAYER2 audio player is only recommended for testing "
-#~ "purposes.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Плеер MPLAYER рекомендуется использовать исключительно для тестирования.\n"
-#~ "\n"
-
-#~ msgid "Use _mplayer audio player"
-#~ msgstr "Использовать аудиоплеер _mplayer"
-
-#, fuzzy
-#~ msgid "Use _mplayer2 audio player"
-#~ msgstr "Использовать аудиоплеер _mplayer"
-
-#~ msgid "_Cancel"
-#~ msgstr "_Отмена"
-
-#~ msgid "Youtube URL : "
-#~ msgstr "Веб-ссылка Youtube : "
-
-#~ msgid "Video [%.2f sec]"
-#~ msgstr "Видео [%.2f с.]"
-
-#~ msgid "Mono  [opening...]"
-#~ msgstr "моно [открытие...]"
-
-#, fuzzy
-#~ msgid "        _Foreground Color"
-#~ msgstr "Фон"
-
-#, fuzzy
-#~ msgid "        _Background Color"
-#~ msgstr "Фон"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "To open a clip from Youtube, LiVES will first download it with youtube-"
-#~ "dl.\n"
-#~ "Please make sure you have the latest version of that tool installed.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "Чтобы открыть фрагмент из Youtube, первоначально LiVES загрузит его "
-#~ "используя youtube-dl.\n"
-#~ "Пожалуйста, убедитесь, что у вас установлена последняя версия этой "
-#~ "программы.\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "Enter the URL of the clip below.\n"
-#~ "E.g: http://www.youtube.com/watch?v=WCR6f6WzjP8\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Введите веб-адрес фрагмента ниже.\n"
-#~ "Например: http://www.youtube.com/watch?v=WCR6f6WzjP8\n"
-#~ "\n"
-
-#~ msgid "Download to _Directory : "
-#~ msgstr "Сохранить в _каталог : "
-
-#~ msgid "Download _File Name : "
-#~ msgstr "Имя загружаемого _файла : "
-
-#, fuzzy
-#~ msgid "mask color"
-#~ msgstr "Изменить исходящий звук"
-
-#~ msgid ".webm"
-#~ msgstr ".webm"
-
-#, fuzzy
-#~ msgid "Audio source:"
-#~ msgstr "Аудио кодек"
-
-#, fuzzy
-#~ msgid "Compact View"
-#~ msgstr "Компактный список"
-
-#~ msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
-#~ msgstr "LiVES-%s: <Неизвестный%d> %dx%d : %d кадров %d bpp %.3f fps"
-
-#~ msgid "mplayer...detected..."
-#~ msgstr "mplayer...обнаружен..."
-
-#~ msgid "mplayer...NOT DETECTED..."
-#~ msgstr "mplayer...НЕ ОБНАРУЖЕН..."
-
-#, fuzzy
-#~ msgid "mplayer2...detected..."
-#~ msgstr "mplayer...обнаружен..."
-
-#, fuzzy
-#~ msgid "mplayer2...NOT DETECTED..."
-#~ msgstr "mplayer...НЕ ОБНАРУЖЕН..."
-
-#~ msgid "convert...detected..."
-#~ msgstr "convert...обнаружен..."
-
-#~ msgid "convert...NOT DETECTED..."
-#~ msgstr "convert...НЕ ОБНАРУЖЕН..."
-
-#~ msgid "composite...detected..."
-#~ msgstr "composite...обнаружен..."
-
-#~ msgid "composite...NOT DETECTED..."
-#~ msgstr "composite...НЕ ОБНАРУЖЕН..."
-
-#~ msgid "sox...detected\n"
-#~ msgstr "sox...обнаружен...\n"
-
-#~ msgid "sox...NOT DETECTED\n"
-#~ msgstr "sox...НЕ ОБНАРУЖЕН...\n"
-
-#, fuzzy
-#~ msgid "cdda2wav/icedax...detected..."
-#~ msgstr "cdda2wav...обнаружен..."
-
-#, fuzzy
-#~ msgid "cdda2wav/icedax...NOT DETECTED..."
-#~ msgstr "cdda2wav...НЕ ОБНАРУЖЕН..."
-
-#~ msgid "jackd...detected..."
-#~ msgstr "jackd...обнаружен..."
-
-#~ msgid "jackd...NOT DETECTED..."
-#~ msgstr "jackd...НЕ ОБНАРУЖЕН..."
-
-#~ msgid "pulse audio...detected..."
-#~ msgstr "pulse audio...обнаружен..."
-
-#~ msgid "pulse audio...NOT DETECTED..."
-#~ msgstr "pulse audio...НЕ ОБНАРУЖЕН..."
-
-#~ msgid "python...detected..."
-#~ msgstr "python...обнаружен..."
-
-#~ msgid "python...NOT DETECTED..."
-#~ msgstr "python...НЕ ОБНАРУЖЕН..."
-
-#~ msgid "dvgrab...detected..."
-#~ msgstr "dvgrab...обнаружен..."
-
-#~ msgid "dvgrab...NOT DETECTED..."
-#~ msgstr "dvgrab...НЕ ОБНАРУЖЕН..."
-
-#~ msgid "xwininfo...detected..."
-#~ msgstr "xwininfo...обнаружен..."
-
-#~ msgid "xwininfo...NOT DETECTED..."
-#~ msgstr "xwininfo...НЕ ОБНАРУЖЕН..."
-
-#, fuzzy
-#~ msgid ""
-#~ "\n"
-#~ "LiVES currently requires either 'mplayer', 'mplayer2', 'mpv', or 'sox' to "
-#~ "function. Please install one or other of these, and try again.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Для работы LiVES требуется 'mplayer' или 'sox'. Установите любой из этих "
-#~ "пакетов и повторите ещё раз.\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "\n"
-#~ "LiVES was unable to locate 'mplayer','mplayer2' or 'mpv'. "
-#~ msgstr ""
-#~ "\n"
-#~ "LiVES не обнаружила 'mplayer'. Для полноценного использования LiVES "
-#~ "желательно установить mplayer.\n"
-
-#~ msgid "Checking if mplayer can convert audio"
-#~ msgstr "Проверка возможностей mplayer для конвертации звука"
-
-#~ msgid "Right audio"
-#~ msgstr "Правый звуковой канал"
-
-#~ msgid "mplayer"
-#~ msgstr "mplayer"
-
-#, fuzzy
-#~ msgid "mplayer2"
-#~ msgstr "mplayer"
-
-#~ msgid "LiVES: - Play Window"
-#~ msgstr "LiVES: - Окно проигрывателя"
-
-#~ msgid "LiVES: - Troubleshoot"
-#~ msgstr "LiVES: - Проблемы"
-
-#~ msgid "LiVES: - Insert"
-#~ msgstr "LiVES: - Вставить"
-
-#~ msgid "LiVES: - Open Selection"
-#~ msgstr "LiVES: - Открыть выбранное"
-
-#~ msgid "LiVES: - Open Youtube Clip"
-#~ msgstr "LiVES: - Oткрыть фрагмент из Youtube"
-
-#~ msgid "LiVES: - Rename Clip"
-#~ msgstr "LiVES: - Переименовать клип"
-
-#~ msgid "LiVES:- Select input device"
-#~ msgstr "LiVES:- Выберите устройство ввода"
-
-#~ msgid "LiVES:- Load CD Track"
-#~ msgstr "LiVES:- Загрузить трек с CD"
-
-#~ msgid "LiVES:- Fade Audio In"
-#~ msgstr "LiVES:- Усилить звук"
-
-#~ msgid "LiVES:- Fade Audio Out"
-#~ msgstr "LiVES:- Приглушить звук"
-
-#~ msgid "LiVES: - Play Window%s"
-#~ msgstr "LiVES: - Окно воспроизведения %s"
-
-#~ msgid "LiVES: Load subtitles from..."
-#~ msgstr "LiVES: Загрузить субтитры из..."
-
-#~ msgid "LiVES: Selected frame"
-#~ msgstr "LiVES: Выбранный кадр"
-
-#~ msgid "LiVES: - Append Audio File"
-#~ msgstr "LiVES: - Добавить звуковой файл"
-
-#~ msgid "LiVES: - Merge"
-#~ msgstr "LiVES: - Замещение"
-
-#~ msgid "LiVES: Save Clip as..."
-#~ msgstr "LiVES: Сохранить фрагмент как..."
-
-#~ msgid "LiVES: - Warning !"
-#~ msgstr "LiVES: - Внимание !"
-
-#~ msgid "LiVES: - File Error"
-#~ msgstr "LiVES: - Ошибка файла"
-
-#~ msgid "LiVES: - Select Colour"
-#~ msgstr "LiVES: - Выберите цвет"
-
-#~ msgid "Click to set the colour"
-#~ msgstr "Нажмите, чтобы установить цвета"
-
-#~ msgid "The red value (0 - 255)"
-#~ msgstr "Красный значения (0 - 255)"
-
-#~ msgid "The green value (0 - 255)"
-#~ msgstr "Зеленый значения (0 - 255)"
-
-#~ msgid "_Width           "
-#~ msgstr "_Ширина           "
-
-#~ msgid "_Accept"
-#~ msgstr "_Принять"
-
-#~ msgid "Close _Window"
-#~ msgstr "Закрыть окно (_W)"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "You need to install mplayer to be able to preview this file.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "Вам нужно установить mplayer для предварительного просмотра этого файла.\n"
-
-#~ msgid "Pause"
-#~ msgstr "Приостановить"

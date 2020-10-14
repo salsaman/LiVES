@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2020-10-13 22:15-0300\n"
+"POT-Creation-Date: 2020-10-13 23:00-0300\n"
 "PO-Revision-Date: 2020-05-16 15:42+0000\n"
 "Last-Translator: Jean-Marc <Unknown>\n"
 "Language-Team: Français <kwizart@gmail.com>\n"
@@ -13408,8 +13408,9 @@ msgid "Hue change"
 msgstr "Changement d'images"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Hue end"
-msgstr ""
+msgstr "Fondu audio entrée"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -13678,8 +13679,9 @@ msgid "Swirl s_tep"
 msgstr "_Début"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "Swirl"
-msgstr ""
+msgstr "_Début"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 msgid "Swirling"
@@ -13842,8 +13844,9 @@ msgid "_Frames"
 msgstr "Images"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "_Hold for"
-msgstr ""
+msgstr "Fondu audio sortie"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Horizontal segments"

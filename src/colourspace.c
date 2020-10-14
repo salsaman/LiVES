@@ -12550,10 +12550,10 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
         LIVES_DEBUG("swscale is NULL !!");
       } else {
         //if (progscan) {
-	swparams[sl].layer = layer;
-	swparams[sl].file_gamma = weed_get_double_value(layer, "file_gamma", NULL);
-	if (swparams[sl].file_gamma == 0.) swparams[sl].file_gamma = 1.;
-	//} else swparams[sl].layer = NULL;
+        swparams[sl].layer = layer;
+        swparams[sl].file_gamma = weed_get_double_value(layer, "file_gamma", NULL);
+        if (swparams[sl].file_gamma == 0.) swparams[sl].file_gamma = 1.;
+        //} else swparams[sl].layer = NULL;
         sws_setColorspaceDetails(swparams[sl].swscale,
                                  sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
                                      ? SWS_CS_ITU709 : SWS_CS_ITU601), iclamping,

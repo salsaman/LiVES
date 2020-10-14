@@ -2412,9 +2412,9 @@ static char *mkszlabel(const char *set, ssize_t size, int ccount, int lcount) {
   char *szstr, *label, *laystr, *clpstr;
   if (size < 0) szstr = lives_strdup(_("Calculating..."));
   else szstr = lives_format_storage_space_string(size);
-  if (ccount == -1) clpstr = (_("couning..."));
+  if (ccount == -1) clpstr = (_("counting..."));
   else clpstr = lives_strdup_printf("%d", ccount);
-  if (lcount == -1) laystr = (_("couning..."));
+  if (lcount == -1) laystr = (_("counting..."));
   else laystr = lives_strdup_printf("%d", lcount);
   bit2 = lives_strdup_printf(_("Total size = %s\tclips: %s\tlayouts: %s"), szstr, clpstr, laystr);
   label = lives_strdup_printf("%s\n%s\n", bit1, bit2);
@@ -5729,7 +5729,7 @@ static void manclips_reload(LiVESWidget * button, _entryw * renamew) {
   }
 
   do_info_dialog(_("After reloading the Set you can inspect it and use it as normal.\n"
-                   "Should you decide to delete it or re-save it, click on\nFile | Close/Save all Clips"
+                   "Should you decide to delete it or re-save it, click on\nFile | Close/Save all Clips "
                    "in the menu of the Clip Editor\n"
                    "You will then be returned to the Manage Sets dialog,\n"
                    "where you may choose to continue this process further\n"));

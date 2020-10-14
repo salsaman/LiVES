@@ -8766,13 +8766,8 @@ mainw->track_decoders[i] = clone_decoder(nclip);
 
       if (return_layer) weed_leaf_dup(return_layer, frame_layer, WEED_LEAF_GAMMA_TYPE);
       pd_array = weed_layer_get_pixel_data(frame_layer, NULL);
-      if (prefs->pb_quality == PB_QUALITY_LOW && !mainw->multitrack) {
-        lb_width = cfile->hsize;
-        lb_height = cfile->vsize;
-      } else {
-        lb_width = lwidth = weed_layer_get_width(frame_layer);
-        lb_height = lheight = weed_layer_get_height(frame_layer);
-      }
+      lb_width = lwidth = weed_layer_get_width_pixels(frame_layer);
+      lb_height = lheight = weed_layer_get_height(frame_layer);
       pwidth = mainw->pwidth;
       pheight = mainw->pheight;
       if (player_v2) {
@@ -9136,8 +9131,7 @@ mainw->track_decoders[i] = clone_decoder(nclip);
       g_printerr("res start @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     if ((!mainw->multitrack && prefs->letterbox) || (mainw->multitrack && prefs->letterbox_mt)) {
       /// letterbox internal
-      lb_width = weed_layer_get_width(mainw->frame_layer) *
-                 weed_palette_get_pixels_per_macropixel(layer_palette);
+      lb_width = weed_layer_get_width_pixels(mainw->frame_layer);
       lb_height = weed_layer_get_height(mainw->frame_layer);
       get_letterbox_sizes(&pwidth, &pheight, &lb_width, &lb_height, FALSE);
       if (!letterbox_layer(mainw->frame_layer, pwidth, pheight, lb_width, lb_height, interp, cpal, 0)) goto lfi_done;

@@ -1617,7 +1617,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   int outwidth, outheight;
   int numplanes = 0, width, height, xwidth, xheight, cpixwidth;
   int nchr;
-  int maxinwidth = 4, maxinheight = 4;
+  int maxinwidth = 4, maxinheight = 4, mininwidth = -1, mininheight = -1;
   int iclamping, isampling, isubspace;
   int clip = -1;
   frames_t frame;
@@ -1924,62 +1924,71 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (filter_flags & WEED_FILTER_CHANNEL_SIZES_MAY_VARY) svary = TRUE;
     if (filter_flags & WEED_FILTER_IS_CONVERTER) is_converter = TRUE;
 
-    if (pb_quality != PB_QUALITY_LOW) {
-      if (maxinwidth == 4 && inwidth > 4) maxinwidth = inwidth;
-      if (maxinheight == 4 && inheight > 4) maxinheight = inheight;
+    if (maxinwidth == 4 && inwidth > 4) maxinwidth = inwidth;
+    if (maxinheight == 4 && inheight > 4) maxinheight = inheight;
 
-      if (!svary) {
-        if ((mainw->multitrack && prefs->letterbox_mt) || (prefs->letterbox && !mainw->multitrack)) {
-          /// manual adjustment for letterboxing. We want to avoid the situation where some layers are letterboxing in
-          /// one dimension and others are letterboxing in the other, however this is unavoidable with frames of different sizes.
-          /// the best we can do is to make sure that one layer sets the collective size and the others will get letterboxed to that size.
-          /// thus -
-          /// if this layer is the first, or it engulfs all of the previous layers, then we let it set the width and height
-          // otherwise, we will aspect ratio it to fit the max size. Since we know at least one of the dimensions was
-          // within the current bounds (otherwise it would engulf), we will end up with 2 edges touching and two letterboxed
-          if (inwidth >= maxinwidth && inheight >= maxinheight) {
-            maxinwidth = inwidth;
-            maxinheight = inheight;
-          }
-        } else {
-          if (inwidth > maxinwidth) maxinwidth = inwidth;
-          if (inheight > maxinheight) maxinheight = inheight;
-        }
-      }
-    } else {
-      // for low quality we pick the smallest dimensions
+    if (!svary) {
       if ((mainw->multitrack && prefs->letterbox_mt) || (prefs->letterbox && !mainw->multitrack)) {
-        // for letterboxing this works in reverse: both dimensions must be smaller
-        if ((inwidth >= maxinwidth || inheight >= maxinheight) && maxinwidth > 4 && maxinheight > 4) {
-          j++;
-          continue;
+        /// manual adjustment for letterboxing. We want to avoid the situation where some layers are letterboxing in
+        /// one dimension and others are letterboxing in the other, however this is unavoidable with frames of different sizes.
+        /// the best we can do is to make sure that one layer sets the collective size and the others will get letterboxed to that size.
+        /// thus -
+        /// if this layer is the first, or it engulfs all of the previous layers, then we let it set the width and height
+        // otherwise, we will aspect ratio it to fit the max size. Since we know at least one of the dimensions was
+        // within the current bounds (otherwise it would engulf), we will end up with 2 edges touching and two letterboxed
+        if (inwidth >= maxinwidth && inheight >= maxinheight) {
+          maxinwidth = inwidth;
+          maxinheight = inheight;
         }
+      } else {
+        if (inwidth > maxinwidth) maxinwidth = inwidth;
+        if (inheight > maxinheight) maxinheight = inheight;
       }
-      if (maxinwidth == 4 || inwidth < maxinwidth)
-        maxinwidth = inwidth;
-      if (maxinheight == 4 || inheight < maxinheight)
-        maxinheight = inheight;
+      if (prefs->pb_quality == PB_QUALITY_LOW) {
+        // for low quality we pick the smallest dimensions
+        if (mininwidth == -1 || inwidth < mininwidth) mininwidth = inwidth;
+        if (mininheight == -1 || inheight < mininheight) mininheight = inheight;
+      }
     }
     j++;
   }
 
-  if (!svary || !is_converter) {
+  if (!svary || prefs->pb_quality == PB_QUALITY_LOW || !is_converter) {
     if (pb_quality != PB_QUALITY_HIGH) {
       if (opwidth < maxinwidth && opwidth != 0) maxinwidth = opwidth;
       if (opheight < maxinheight && opheight != 0) maxinheight = opheight;
     }
-    opwidth = maxinwidth;
-    opheight = maxinheight;
-    if (pb_quality == PB_QUALITY_LOW) {
-      if (((!mainw->multitrack && prefs->letterbox) || (mainw->multitrack && prefs->letterbox_mt))
-          && CURRENT_CLIP_IS_VALID) {
-        int lbwidth = cfile->hsize;
-        int lbheight = cfile->vsize;
-        calc_maxspect(opwidth, opheight, &lbwidth, &lbheight);
-        opwidth = lbwidth;
-        opheight = lbheight;
+    if (prefs->pb_quality == PB_QUALITY_LOW) {
+      // for low quality we pick the smallest dimensions
+      // but maybe maintain aspect ratio of enveloping frame
+      if ((mainw->multitrack && prefs->letterbox_mt) || (prefs->letterbox && !mainw->multitrack)) {
+        double aspect = (double)mininwidth / (double)mininheight, scale = 1.;
+        if (opwidth > mininwidth || opheight > mininheight) {
+          scale = (double)opwidth / (double)mininwidth;
+          if ((double)opheight / scale / aspect < mininheight) {
+            scale = (double)opheight / (double)mininheight;
+          }
+          opwidth = (double)opwidth / scale;
+          opheight = (double)opheight / scale;
+        }
+      } else {
+        opwidth = mininwidth;
+        opheight = mininheight;
       }
+    } else {
+      opwidth = maxinwidth;
+      opheight = maxinheight;
     }
+    /* if (pb_quality == PB_QUALITY_LOW) { */
+    /*   if (((!mainw->multitrack && prefs->letterbox) || (mainw->multitrack && prefs->letterbox_mt)) */
+    /*       && CURRENT_CLIP_IS_VALID) { */
+    /*     int lbwidth = cfile->hsize; */
+    /*     int lbheight = cfile->vsize; */
+    /*     calc_maxspect(opwidth, opheight, &lbwidth, &lbheight); */
+    /*     opwidth = lbwidth; */
+    /*     opheight = lbheight; */
+    /*   } */
+    /* } */
   }
 
   opwidth = (opwidth >> 1) << 1;
@@ -2288,8 +2297,11 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     /// check if we need to resize the layer
     /// get the pixel widths to compare
     /// the channel has the sizes we set in pass1
-    width = weed_channel_get_width(channel);
-    height = weed_channel_get_height(channel);
+    /* width = weed_channel_get_width(channel); */
+    /* height = weed_channel_get_height(channel); */
+
+    width = opwidth;
+    height = opheight;
 
     inwidth = weed_layer_get_width(layer);
     inheight = weed_layer_get_height(layer);

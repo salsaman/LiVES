@@ -1722,27 +1722,27 @@ boolean apply_prefs(boolean skip_warn) {
   pref_factory_string_choice(PREF_MSG_TEXTSIZE, ulist, msgtextsize, TRUE);
   lives_list_free_all(&ulist);
 
-  if (fsize_to_warn != (prefs->warn_file_size)) {
+  if (fsize_to_warn != prefs->warn_file_size) {
     prefs->warn_file_size = fsize_to_warn;
     set_int_pref(PREF_WARN_FILE_SIZE, fsize_to_warn);
   }
 
-  if (dl_bwidth != (prefs->dl_bandwidth)) {
+  if (dl_bwidth != prefs->dl_bandwidth) {
     prefs->dl_bandwidth = dl_bwidth;
     set_int_pref(PREF_DL_BANDWIDTH_K, dl_bwidth);
   }
 
-  if (ocp != (prefs->ocp)) {
+  if (ocp != prefs->ocp) {
     prefs->ocp = ocp;
     set_int_pref(PREF_OPEN_COMPRESSION_PERCENT, ocp);
   }
 
-  if (show_tool != (future_prefs->show_tool)) {
-    future_prefs->show_tool = prefs->show_tool = show_tool;
+  if (show_tool != prefs->show_tool) {
+    prefs->show_tool = show_tool;
     set_boolean_pref(PREF_SHOW_TOOLBAR, show_tool);
   }
 
-  if (mouse_scroll != (prefs->mouse_scroll_clips)) {
+  if (mouse_scroll != prefs->mouse_scroll_clips) {
     prefs->mouse_scroll_clips = mouse_scroll;
     set_boolean_pref(PREF_MOUSE_SCROLL_CLIPS, mouse_scroll);
   }
@@ -1771,21 +1771,21 @@ boolean apply_prefs(boolean skip_warn) {
     pref_factory_string(PREF_PASTARTOPTS, lives_entry_get_text(LIVES_ENTRY(prefsw->audio_command_entry)), TRUE);
 #endif
 
-  if (show_asrc != (prefs->show_asrc)) {
+  if (show_asrc != prefs->show_asrc) {
     pref_factory_bool(PREF_SHOW_ASRC, show_asrc, TRUE);
   }
 
 #if GTK_CHECK_VERSION(2, 12, 0)
-  if (show_ttips != (prefs->show_tooltips)) {
+  if (show_ttips != prefs->show_tooltips) {
     pref_factory_bool(PREF_SHOW_TOOLTIPS, show_ttips, TRUE);
   }
 #endif
 
-  if (hfbwnp != (prefs->hfbwnp)) {
+  if (hfbwnp != prefs->hfbwnp) {
     pref_factory_bool(PREF_HFBWNP, hfbwnp, TRUE);
   }
 
-  if (ce_maxspect != (prefs->ce_maxspect)) {
+  if (ce_maxspect != prefs->ce_maxspect) {
     prefs->ce_maxspect = ce_maxspect;
     set_boolean_pref(PREF_CE_MAXSPECT, ce_maxspect);
     if (mainw->multitrack == NULL) {
@@ -2396,9 +2396,6 @@ void save_future_prefs(void) {
   if ((*future_prefs->workdir)) {
     set_string_pref_priority(PREF_WORKING_DIR, future_prefs->workdir);
     set_string_pref(PREF_WORKING_DIR_OLD, future_prefs->workdir);
-  }
-  if (prefs->show_tool != future_prefs->show_tool) {
-    set_boolean_pref(PREF_SHOW_TOOLBAR, future_prefs->show_tool);
   }
 }
 
@@ -3202,7 +3199,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   prefsw->show_tool =
-    lives_standard_check_button_new(_("Show toolbar when background is blanked"), future_prefs->show_tool, LIVES_BOX(hbox), NULL);
+    lives_standard_check_button_new(_("Show toolbar when background is blanked"), prefs->show_tool, LIVES_BOX(hbox), NULL);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 

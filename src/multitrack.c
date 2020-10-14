@@ -3218,6 +3218,8 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
   //if (mt->play_width == 0 || mt->play_height == 0) return;
   if (mt->no_frame_update) return;
 
+  set_mt_play_sizes_cfg(mt);
+
   if (mt->idlefunc > 0) {
     lives_source_remove(mt->idlefunc);
     mt->idlefunc = 0;
@@ -3243,8 +3245,8 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
       lives_widget_set_bg_color(mainw->playarea, LIVES_WIDGET_STATE_NORMAL, &palette->black);
       mainw->sep_win = FALSE;
       add_to_playframe();
-      set_mt_play_sizes_cfg(mt);
       lives_widget_show_all(mainw->playarea);
+      set_mt_play_sizes_cfg(mt);
       mainw->sep_win = sep_win;
     }
   }
@@ -3405,6 +3407,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
     LiVESPixbuf *pixbuf = NULL;
     int pwidth, pheight, lb_width, lb_height;
     int cpal = WEED_PALETTE_RGB24, layer_palette;
+    boolean was_letterboxed = FALSE;
 
     check_layer_ready(mainw->frame_layer);
     layer_palette = weed_layer_get_palette(mainw->frame_layer);
@@ -3413,15 +3416,22 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
     pwidth = mt->play_width;
     pheight = mt->play_height;
 
-    if (prefs->letterbox_mt) {
-      lb_width = weed_layer_get_width_pixels(mainw->frame_layer);
-      lb_height = weed_layer_get_height(mainw->frame_layer);
-      calc_maxspect(pwidth, pheight, &lb_width, &lb_height);
-      pwidth = lb_width;
-      pheight = lb_height;
-    }
+    if (weed_get_boolean_value(mainw->frame_layer, "letterboxed", NULL) == WEED_FALSE) {
 
-    resize_layer(mainw->frame_layer, pwidth, pheight, LIVES_INTERP_BEST, cpal, 0);
+      if (prefs->letterbox_mt) {
+	lb_width = weed_layer_get_width_pixels(mainw->frame_layer);
+	lb_height = weed_layer_get_height(mainw->frame_layer);
+	calc_maxspect(pwidth, pheight, &lb_width, &lb_height);
+	pwidth = lb_width;
+	pheight = lb_height;
+	if (!letterbox_layer(mainw->frame_layer, pwidth, pheight, lb_width, lb_height,
+			     LIVES_INTERP_BEST, cpal, 0))
+	  return;
+	was_letterboxed = TRUE;
+      }
+    }
+    
+    if (!was_letterboxed) resize_layer(mainw->frame_layer, pwidth, pheight, LIVES_INTERP_BEST, cpal, 0);
 
     convert_layer_palette_full(mainw->frame_layer, cpal, 0, 0, 0, WEED_GAMMA_SRGB);
 
@@ -4216,10 +4226,10 @@ static void add_to_listbox(lives_mt * mt, LiVESWidget * xeventbox, char *fname, 
   if (add_top) lives_box_pack_top(LIVES_BOX(mt->fx_list_vbox), xeventbox, FALSE, FALSE, 0);
   else lives_box_pack_start(LIVES_BOX(mt->fx_list_vbox), xeventbox, TRUE, FALSE, 0);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(xeventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(xeventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
                        LIVES_GUI_CALLBACK(filter_ebox_pressed), (livespointer)mt);
-  lives_signal_connect(LIVES_GUI_OBJECT(xeventbox), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
-                       LIVES_GUI_CALLBACK(on_drag_filter_end), (livespointer)mt);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(xeventbox), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
+			    LIVES_GUI_CALLBACK(on_drag_filter_end), (livespointer)mt);
 }
 
 
@@ -5485,8 +5495,8 @@ static char *mt_set_vals_string(void) {
 void set_mt_play_sizes_cfg(lives_mt * mt) {
   if (!CURRENT_CLIP_IS_VALID) return;
   else {
-    int rwidth = lives_widget_get_allocation_width(mt->preview_frame);
-    int rheight = lives_widget_get_allocation_height(mt->preview_frame) - 48;
+    int rwidth = lives_widget_get_allocation_width(mainw->play_image);
+    int rheight = lives_widget_get_allocation_height(mainw->play_image);// - 48;
     int width = mainw->files[mt->render_file]->hsize;
     int height = mainw->files[mt->render_file]->vsize;
 
@@ -8698,7 +8708,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_signal_handler_block(mt->spinbutton_out, mt->spin_out_func);
 
   lives_signal_connect(LIVES_GUI_OBJECT(mt->nb), LIVES_WIDGET_SWITCH_PAGE_SIGNAL,
-                       LIVES_GUI_CALLBACK(notebook_page), (livespointer)mt);
+		       LIVES_GUI_CALLBACK(notebook_page), (livespointer)mt);
   ///////////////////////////////////////////////
 
   mt->poly_state = POLY_NONE;
@@ -8827,8 +8837,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_box_pack_start(LIVES_BOX(hbox), mt->time_scrollbar, TRUE, TRUE, widget_opts.packing_width);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(mt->time_scrollbar), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(scroll_time_by_scrollbar), (livespointer)mt);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->time_scrollbar), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+			    LIVES_GUI_CALLBACK(scroll_time_by_scrollbar), (livespointer)mt);
 
   mt->num_video_tracks = 0;
 
@@ -13275,8 +13285,8 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
               set_child_colour(xeventbox, TRUE);
             }
 
-            lives_signal_connect(LIVES_GUI_OBJECT(xeventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                                 LIVES_GUI_CALLBACK(fx_ebox_pressed), (livespointer)mt);
+            lives_signal_sync_connect(LIVES_GUI_OBJECT(xeventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+				      LIVES_GUI_CALLBACK(fx_ebox_pressed), (livespointer)mt);
           }
         }
         lives_free(init_events);

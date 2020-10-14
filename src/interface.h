@@ -235,7 +235,7 @@ const lives_special_aspect_t *add_aspect_ratio_button(LiVESSpinButton *sp_width,
 #define MIN_MSGBOX_WIDTH ((int)(620. * widget_opts.scale))
 
 // textboxes for clip info
-#define TB_WIDTH ((int)(200. * widget_opts.scale))
+#define TB_WIDTH ((int)(300. * widget_opts.scale))
 #define TB_HEIGHT_VID ((int)(80. * widget_opts.scale))
 #define TB_HEIGHT_AUD ((int)(50. * widget_opts.scale))
 

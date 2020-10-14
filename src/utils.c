@@ -1977,9 +1977,13 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     /// the time since the last call is considered to have happened at an increased fps (fwd or back)
     /// we recalculate the frame at ntc as if we were at the faster framerate.
 
-    if (mainw->scratch == SCRATCH_FWD || mainw->scratch == SCRATCH_BACK) {
-      if (mainw->scratch == SCRATCH_BACK) mainw->deltaticks -= ddtc * KEY_RPT_INTERVAL * prefs->scratchback_amount
+    if (mainw->scratch == SCRATCH_FWD || mainw->scratch == SCRATCH_BACK
+	|| mainw->scratch == SCRATCH_FWD_EXTRA || mainw->scratch == SCRATCH_BACK_EXTRA) {
+      if (mainw->scratch == SCRATCH_FWD_EXTRA || mainw->scratch == SCRATCH_BACK_EXTRA) ddtc *= 4;
+      if (mainw->scratch == SCRATCH_BACK || mainw->scratch == SCRATCH_BACK_EXTRA) {
+	mainw->deltaticks -= ddtc * KEY_RPT_INTERVAL * prefs->scratchback_amount
             * USEC_TO_TICKS / TICKS_PER_SECOND_DBL;
+      }
       else mainw->deltaticks += ddtc * KEY_RPT_INTERVAL * prefs->scratchback_amount
                                   * USEC_TO_TICKS / TICKS_PER_SECOND_DBL;
       // dtc is delta ticks, quantise this to the frame rate and round down
@@ -4116,8 +4120,6 @@ boolean prepare_to_play_foreign(void) {
   mainw->faded = TRUE;
   mainw->double_size = FALSE;
 
-  lives_widget_hide(mainw->t_double);
-  lives_widget_hide(mainw->t_bckground);
   lives_widget_hide(mainw->t_sepwin);
   lives_widget_hide(mainw->t_infobutton);
 

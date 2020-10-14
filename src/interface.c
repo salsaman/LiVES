@@ -1014,6 +1014,8 @@ static LiVESWidget *vid_text_view_new(void) {
   if (palette->style & STYLE_3) {
     lives_widget_set_bg_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
+  lives_text_view_set_bottom_margin(LIVES_TEXT_VIEW(textview), TB_HEIGHT_VID >> 2);
+  lives_text_view_set_top_margin(LIVES_TEXT_VIEW(textview), TB_HEIGHT_VID >> 2);
   return textview;
 }
 
@@ -1027,6 +1029,8 @@ static LiVESWidget *aud_text_view_new(void) {
   if (palette->style & STYLE_3) {
     lives_widget_set_bg_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
+  lives_text_view_set_bottom_margin(LIVES_TEXT_VIEW(textview), TB_HEIGHT_AUD >> 2);
+  lives_text_view_set_top_margin(LIVES_TEXT_VIEW(textview), TB_HEIGHT_AUD >> 2);
   return textview;
 }
 
@@ -1068,11 +1072,12 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
   lives_window_add_accel_group(LIVES_WINDOW(filew->dialog), accel_group);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(filew->dialog));
-
+  lives_container_set_border_width(LIVES_CONTAINER(dialog_vbox), 2);
+ 
   if (cfile->frames > 0 || is_mt) {
     vidframe = lives_standard_frame_new(_("Video"), 0., FALSE);
 
-    lives_box_pack_start(LIVES_BOX(dialog_vbox), vidframe, TRUE, TRUE, widget_opts.packing_height);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), vidframe, TRUE, TRUE, 0);
 
     vbox = lives_vbox_new(FALSE, 0);
     lives_container_add(LIVES_CONTAINER(vidframe), vbox);
@@ -1088,6 +1093,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
     filew->textview_type = vid_text_view_new();
     hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
     lives_layout_pack(LIVES_HBOX(hbox), filew->textview_type);
+    lives_widget_set_valign(filew->textview_type, LIVES_ALIGN_FILL);
 
     widget_opts.expand |= LIVES_EXPAND_EXTRA_WIDTH;
     lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
@@ -1125,6 +1131,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
     filew->textview_frames = vid_text_view_new();
     hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
     lives_layout_pack(LIVES_HBOX(hbox), filew->textview_frames);
+    lives_widget_set_valign(filew->textview_frames, LIVES_ALIGN_FILL);
 
     lives_layout_add_row(LIVES_LAYOUT(layout));
 
@@ -1158,7 +1165,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
     laudframe = lives_standard_frame_new(tmp, 0., FALSE);
     lives_free(tmp);
 
-    lives_box_pack_start(LIVES_BOX(dialog_vbox), laudframe, TRUE, TRUE, widget_opts.packing_height);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), laudframe, TRUE, TRUE, 0);
 
     table = lives_table_new(1, 4, TRUE);
 
@@ -1179,6 +1186,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
     filew->textview_lrate = aud_text_view_new();
     lives_table_attach(LIVES_TABLE(table), filew->textview_lrate, 1 + offset, 2 + offset, 0, 1,
                        (LiVESAttachOptions)(0), (LiVESAttachOptions)(0), 0, 0);
+    lives_widget_set_valign(filew->textview_lrate, LIVES_ALIGN_FILL);
 
     if (!is_mt) {
       label = lives_standard_label_new(_("Total time"));
@@ -1199,7 +1207,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
     raudframe = lives_standard_frame_new(tmp, 0., FALSE);
     lives_free(tmp);
 
-    lives_box_pack_start(LIVES_BOX(dialog_vbox), raudframe, TRUE, TRUE, widget_opts.packing_height);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), raudframe, TRUE, TRUE, 0);
 
     table = lives_table_new(1, 4, TRUE);
 
@@ -1221,6 +1229,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
     filew->textview_rrate = aud_text_view_new();
     lives_table_attach(LIVES_TABLE(table), filew->textview_rrate, 1 + offset, 2 + offset, 0, 1,
                        (LiVESAttachOptions)(0), (LiVESAttachOptions)(0), 0, 0);
+    lives_widget_set_valign(filew->textview_rrate, LIVES_ALIGN_FILL);
 
     if (!is_mt) {
       label = lives_standard_label_new(_("Total time"));

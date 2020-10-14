@@ -1866,12 +1866,6 @@ void create_LiVES(void) {
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar), LIVES_TOOL_ITEM(mainw->t_stopbutton), 0);
   lives_widget_set_tooltip_text(mainw->t_stopbutton, _("Stop playback (q)"));
 
-  tmp_toolbar_icon = lives_image_new_from_stock(LIVES_STOCK_UNDO, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->toolbar)));
-
-  mainw->t_bckground = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
-  lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar), LIVES_TOOL_ITEM(mainw->t_bckground), 1);
-  lives_widget_set_tooltip_text(mainw->t_bckground, _("Unblank background (b)"));
-
   tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_SEPWIN,
                      lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->toolbar)));
 
@@ -1879,14 +1873,6 @@ void create_LiVES(void) {
   lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar), LIVES_TOOL_ITEM(mainw->t_sepwin), 2);
   lives_widget_set_tooltip_text(mainw->t_sepwin, _("Play in separate window (s)"));
   lives_widget_set_opacity(mainw->t_sepwin, .75);
-
-  tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_ZOOM_IN,
-                     lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->toolbar)));
-
-  mainw->t_double = LIVES_WIDGET(lives_tool_button_new(LIVES_WIDGET(tmp_toolbar_icon), ""));
-  lives_widget_set_tooltip_text(mainw->t_double, _("Double size (d)"));
-  lives_toolbar_insert(LIVES_TOOLBAR(mainw->toolbar), LIVES_TOOL_ITEM(mainw->t_double), 3);
-  lives_widget_set_opacity(mainw->t_double, .75);
 
   tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_FULLSCREEN,
                      lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->toolbar)));
@@ -2941,20 +2927,16 @@ void create_LiVES(void) {
                             LIVES_GUI_CALLBACK(on_loop_button_activate), NULL);
 
   // these are 'invisible' buttons for the key accelerators
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_stopbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_stop_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_bckground), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_fade_pressed), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->t_stopbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+			    LIVES_GUI_CALLBACK(on_stop_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->t_sepwin), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_sepwin_pressed), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->t_double), LIVES_WIDGET_CLICKED_SIGNAL,
-                            LIVES_GUI_CALLBACK(on_double_size_pressed), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->t_fullscreen), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_full_screen_pressed), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_infobutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_show_file_info_activate), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_hide), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_toolbar_hide), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->t_infobutton), LIVES_WIDGET_CLICKED_SIGNAL,
+			    LIVES_GUI_CALLBACK(on_show_file_info_activate), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->t_hide), LIVES_WIDGET_CLICKED_SIGNAL,
+			    LIVES_GUI_CALLBACK(on_toolbar_hide), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->t_slower), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_slower_pressed),
                             LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
@@ -3249,8 +3231,10 @@ void fade_background(void) {
     lives_widget_hide(mainw->frame1);
     lives_widget_hide(mainw->frame2);
   }
-  if (!mainw->foreign && future_prefs->show_tool) {
-    lives_widget_show(mainw->tb_hbox);
+  if (!mainw->foreign && prefs->show_tool) {
+    lives_widget_set_no_show_all(mainw->tb_hbox, FALSE);
+    lives_widget_show_all(mainw->tb_hbox);
+    lives_widget_set_no_show_all(mainw->tb_hbox, TRUE);
   }
 
   lives_widget_hide(mainw->menu_hbox);
@@ -3270,8 +3254,6 @@ void fade_background(void) {
     lives_widget_show(mainw->t_faster);
     lives_widget_show(mainw->t_fullscreen);
     lives_widget_show(mainw->t_sepwin);
-    lives_widget_show(mainw->t_bckground);
-    lives_widget_show(mainw->t_double);
   }
 
   // since the hidden menu buttons are not activatable on some window managers
@@ -3464,8 +3446,6 @@ void fullscreen_internal(void) {
 
     lives_frame_set_label(LIVES_FRAME(mainw->playframe), NULL);
 
-    lives_widget_hide(mainw->t_bckground);
-    lives_widget_hide(mainw->t_double);
     lives_widget_hide(mainw->message_box);
 
     //lives_widget_context_update();
@@ -3487,7 +3467,7 @@ void fullscreen_internal(void) {
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
     // this and pf_grid should be the only other widgets still visible
-    if (future_prefs->show_tool) height -= lives_widget_get_allocation_height(mainw->tb_hbox);
+    if (prefs->show_tool) height -= lives_widget_get_allocation_height(mainw->tb_hbox);
 
     // image loading size in some cases
     mainw->ce_frame_width = width;
@@ -3727,11 +3707,13 @@ void disable_record(void) {
 void play_window_set_title(void) {
   char *xtrabit;
   char *title = NULL;
+  double sepwin_scale = sqrt(mainw->pwidth * mainw->pwidth + mainw->pheight * mainw->pheight) /
+    sqrt(cfile->hsize * cfile->hsize + cfile->vsize * cfile->vsize);
   if (mainw->multitrack) return;
   if (!mainw->play_window) return;
 
   if (!LIVES_IS_PLAYING)
-    xtrabit = lives_strdup_printf(_(" (%d %% scale)"), (int)mainw->sepwin_scale);
+    xtrabit = lives_strdup_printf(_(" (%.0f %% scale)"), sepwin_scale * 100.);
   else
     xtrabit = lives_strdup("");
 
@@ -3743,12 +3725,8 @@ void play_window_set_title(void) {
       lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
     }
   } else {
-    char *otit = widget_opts.title_prefix;
-    title = lives_strdup_printf("%s%s", lives_window_get_title(LIVES_WINDOW((LIVES_MAIN_WINDOW_WIDGET))),
-                                xtrabit);
-    widget_opts.title_prefix = "";
+    title = lives_strdup_printf(_("Preview Window%s"), xtrabit);
     lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
-    widget_opts.title_prefix = otit;
   }
 
   if (title) lives_free(title);
@@ -3995,8 +3973,6 @@ static void _resize_play_window(void) {
     return;
   }
 
-  mainw->sepwin_scale = 100.;
-
 #ifdef DEBUG_HANGS
   fullscreen = FALSE;
 #endif
@@ -4030,8 +4006,8 @@ static void _resize_play_window(void) {
     }
   } else {
     if (!mainw->multitrack) {
-      mainw->pwidth = cfile->hsize;
-      mainw->pheight = cfile->vsize;
+      mainw->pwidth = width;//cfile->hsize;
+      mainw->pheight = height;//cfile->vsize;
     } else {
       mainw->pwidth = mainw->files[mainw->multitrack->render_file]->hsize;
       mainw->pheight = mainw->files[mainw->multitrack->render_file]->vsize;
@@ -4054,7 +4030,6 @@ static void _resize_play_window(void) {
           (mainw->pwidth > scr_width - scr_width_safety ||
            mainw->pheight > scr_height - scr_height_safety)) {
         calc_maxspect(scr_width - scr_width_safety, scr_height - scr_height_safety, &mainw->pwidth, &mainw->pheight);
-        mainw->sepwin_scale = (float)mainw->pwidth / (float)cfile->hsize * 100.;
       }
     } else {
       if ((((mainw->double_size || mainw->multitrack) && (!mainw->fs || !LIVES_IS_PLAYING))) ||
@@ -4063,7 +4038,6 @@ static void _resize_play_window(void) {
         calc_maxspect(mainw->mgeom[pmonitor - 1].width - scr_width_safety,
                       mainw->mgeom[pmonitor - 1].height - scr_height_safety,
                       &mainw->pwidth, &mainw->pheight);
-        mainw->sepwin_scale = (float)mainw->pwidth / (float)cfile->hsize * 100.;
       }
     }
   }
@@ -4312,14 +4286,12 @@ static void _resize_play_window(void) {
              nheight > GUI_SCREEN_HEIGHT - scr_height_safety) {
         nheight = (nheight >> 2) << 1;
         nwidth = (nwidth >> 2) << 1;
-        mainw->sepwin_scale /= 2.;
       }
     } else {
       while (nwidth > mainw->mgeom[pmonitor - 1].width - scr_width_safety ||
              nheight > mainw->mgeom[pmonitor - 1].height - scr_height_safety) {
         nheight = (nheight >> 2) << 1;
         nwidth = (nwidth >> 2) << 1;
-        mainw->sepwin_scale /= 2.;
       }
     }
   }

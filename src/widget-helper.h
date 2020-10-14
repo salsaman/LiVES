@@ -598,6 +598,8 @@ boolean lives_text_view_set_accepts_tab(LiVESTextView *, boolean setting);
 boolean lives_text_view_set_cursor_visible(LiVESTextView *, boolean setting);
 boolean lives_text_view_set_wrap_mode(LiVESTextView *, LiVESWrapMode wrapmode);
 boolean lives_text_view_set_justification(LiVESTextView *, LiVESJustification justify);
+boolean lives_text_view_set_top_margin(LiVESTextView *, int margin);
+boolean lives_text_view_set_bottom_margin(LiVESTextView *, int margin);
 
 LiVESTextBuffer *lives_text_buffer_new(void);
 char *lives_text_buffer_get_text(LiVESTextBuffer *, LiVESTextIter *start,

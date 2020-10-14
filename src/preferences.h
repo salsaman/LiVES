@@ -778,7 +778,6 @@ typedef struct {
   _encoder encoder;
 
   boolean show_recent;
-  boolean show_tool;
 
   boolean osc_start;
   int startup_interface;

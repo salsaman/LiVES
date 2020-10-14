@@ -445,6 +445,13 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
   width = cfile->hsize;
   height = cfile->vsize;
 
+  if (mainw->multitrack && prefs->letterbox_mt) {
+    fd_width = mainw->files[mainw->multitrack->render_file]->hsize;
+    fd_height = mainw->files[mainw->multitrack->render_file]->vsize;
+    calc_maxspect(mainw->multitrack->play_width, mainw->multitrack->play_height,
+		  &fd_width, &fd_height);
+  }
+
   if (fd_width > width) fd_width = width;
   if (fd_height > height) fd_height = height;
 

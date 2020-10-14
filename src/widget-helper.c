@@ -4011,6 +4011,28 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_view_set_justification(LiVESTextV
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_view_set_top_margin(LiVESTextView *tview, int margin) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 18, 0)
+  gtk_text_view_set_top_margin(tview, margin);
+  return TRUE;
+#endif
+#endif
+  return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_view_set_bottom_margin(LiVESTextView *tview, int margin) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 18, 0)
+  gtk_text_view_set_bottom_margin(tview, margin);
+  return TRUE;
+#endif
+#endif
+  return FALSE;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE LiVESTextBuffer *lives_text_buffer_new(void) {
   LiVESTextBuffer *tbuff = NULL;
 #ifdef GUI_GTK
@@ -11912,7 +11934,7 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget * widget) {
     } else return;
   } else window = lives_widget_get_xwindow(widget);
 
-  if (!LIVES_IS_XWINDOW(window)) return;
+  if (!window || !LIVES_IS_XWINDOW(window)) return;
 
   switch (cstyle) {
   case LIVES_CURSOR_NORMAL:

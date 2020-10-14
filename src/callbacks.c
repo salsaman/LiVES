@@ -6734,7 +6734,7 @@ void on_show_file_info_activate(LiVESMenuItem * menuitem, livespointer user_data
 
   if (cfile->frames > 0) {
     // type
-    lives_snprintf(buff, 512, _("\n\nExternal: %s\nInternal: %s (%d bpp) / %s"), cfile->type,
+    lives_snprintf(buff, 512, _("External: %s\nInternal: %s (%d bpp) / %s"), cfile->type,
                    (tmp = lives_strdup((cfile->clip_type == CLIP_TYPE_YUV4MPEG ||
                                         cfile->clip_type == CLIP_TYPE_VIDEODEV) ? (_("buffered")) :
                                        (cfile->img_type == IMG_TYPE_JPEG ? LIVES_IMAGE_TYPE_JPEG : LIVES_IMAGE_TYPE_PNG))),
@@ -6749,17 +6749,17 @@ void on_show_file_info_activate(LiVESMenuItem * menuitem, livespointer user_data
     }
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_type), buff, -1);
     // fps
-    lives_snprintf(buff, 512, "\n\n  %.3f%s", cfile->fps, cfile->ratio_fps ? "..." : "");
+    lives_snprintf(buff, 512, "  %.3f%s", cfile->fps, cfile->ratio_fps ? "..." : "");
 
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_fps), buff, -1);
     // image size
-    lives_snprintf(buff, 512, "\n\n  %dx%d", cfile->hsize, cfile->vsize);
+    lives_snprintf(buff, 512, "  %dx%d", cfile->hsize, cfile->vsize);
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_size), buff, -1);
     // frames
     if ((cfile->opening && !cfile->opening_audio && cfile->frames == 0) || cfile->frames == 123456789) {
-      lives_snprintf(buff, 512, "%s", _("\n\n  Opening..."));
+      lives_snprintf(buff, 512, "%s", _("  Opening..."));
     } else {
-      lives_snprintf(buff, 512, "\n  %d", cfile->frames);
+      lives_snprintf(buff, 512, "  %d", cfile->frames);
 
       if (cfile->frame_index) {
         int fvirt = count_virtual_frames(cfile->frame_index, 1, cfile->frames);
@@ -6775,25 +6775,25 @@ void on_show_file_info_activate(LiVESMenuItem * menuitem, livespointer user_data
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_frames), buff, -1);
     // video time
     if ((cfile->opening && !cfile->opening_audio && cfile->frames == 0) || cfile->frames == 123456789) {
-      lives_snprintf(buff, 512, "%s", _("\n\n  Opening..."));
+      lives_snprintf(buff, 512, "%s", _("  Opening..."));
     } else {
-      lives_snprintf(buff, 512, _("\n\n  %.2f sec."), cfile->video_time);
+      lives_snprintf(buff, 512, _("  %.2f sec."), cfile->video_time);
     }
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_vtime), buff, -1);
     // file size
     if (cfile->f_size > 0l) {
       char *file_ds = lives_format_storage_space_string((uint64_t)cfile->f_size);
-      lives_snprintf(buff, 512, "\n\n  %s", file_ds);
+      lives_snprintf(buff, 512, "  %s", file_ds);
       lives_free(file_ds);
-    } else lives_snprintf(buff, 512, "%s", _("\n\n  Unknown"));
+    } else lives_snprintf(buff, 512, "%s", _("  Unknown"));
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_fsize), buff, -1);
   }
 
   if (cfile->achans > 0) {
     if (cfile->opening) {
-      lives_snprintf(buff, 512, "%s", _("\n\n  Opening..."));
+      lives_snprintf(buff, 512, "%s", _("  Opening..."));
     } else {
-      lives_snprintf(buff, 512, _("\n  %.2f sec."), cfile->laudio_time);
+      lives_snprintf(buff, 512, _("  %.2f sec."), cfile->laudio_time);
     }
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_ltime), buff, -1);
 
@@ -6803,7 +6803,7 @@ void on_show_file_info_activate(LiVESMenuItem * menuitem, livespointer user_data
     if (cfile->signed_endian & AFORM_BIG_ENDIAN) ends = (_("big-endian"));
     else ends = (_("little-endian"));
 
-    lives_snprintf(buff, 512, _("\n  %d Hz %d bit\n%s %s"), cfile->arate, cfile->asampsize, sigs, ends);
+    lives_snprintf(buff, 512, _("  %d Hz %d bit\n%s %s"), cfile->arate, cfile->asampsize, sigs, ends);
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_lrate), buff, -1);
 
     lives_free(sigs);
@@ -6817,16 +6817,16 @@ void on_show_file_info_activate(LiVESMenuItem * menuitem, livespointer user_data
     if (cfile->signed_endian & AFORM_BIG_ENDIAN) ends = (_("big-endian"));
     else ends = (_("little-endian"));
 
-    lives_snprintf(buff, 512, _("\n  %d Hz %d bit\n%s %s"), cfile->arate, cfile->asampsize, sigs, ends);
+    lives_snprintf(buff, 512, _("  %d Hz %d bit\n%s %s"), cfile->arate, cfile->asampsize, sigs, ends);
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_rrate), buff, -1);
 
     lives_free(sigs);
     lives_free(ends);
 
     if (cfile->opening) {
-      lives_snprintf(buff, 512, "%s", _("\n  Opening..."));
+      lives_snprintf(buff, 512, "%s", _("  Opening..."));
     } else {
-      lives_snprintf(buff, 512, _("\n  %.2f sec."), cfile->raudio_time);
+      lives_snprintf(buff, 512, _("  %.2f sec."), cfile->raudio_time);
     }
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_rtime), buff, -1);
   }
@@ -7912,9 +7912,6 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
 
           lives_widget_set_sensitive(mainw->fade, TRUE);
           lives_widget_set_sensitive(mainw->dsize, TRUE);
-
-          lives_widget_show(mainw->t_bckground);
-          lives_widget_show(mainw->t_double);
 	    // *INDENT-OFF*
 	}}
       if (!mainw->multitrack && !mainw->faded) {
@@ -7959,15 +7956,6 @@ void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   if (!CURRENT_CLIP_IS_VALID) return;
   mainw->blend_palette = WEED_PALETTE_END;
-
-  if (user_data) {
-    // change the blank window icons
-    if (!mainw->double_size) {
-      lives_widget_set_opacity(mainw->t_double, .75);
-    } else {
-      lives_widget_set_opacity(mainw->t_double, 1.);
-    }
-  }
 
   mainw->opwx = mainw->opwy = -1;
 
@@ -8142,9 +8130,6 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
         if (!mainw->multitrack) {
           lives_widget_show_all(mainw->playframe);
           if (!mainw->fs) {
-            lives_widget_show(mainw->t_bckground);
-            lives_widget_show(mainw->t_double);
-
             if (!mainw->double_size) {
               lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
               resize(1.);
@@ -10953,7 +10938,7 @@ void on_slower_pressed(LiVESButton * button, livespointer user_data) {
   if (sfile->next_event) return;
 
   change *= prefs->fpschange_amount / TICKS_PER_SECOND_DBL * (double)KEY_RPT_INTERVAL * sfile->pb_fps;
-
+  if (button) change *= 4.;
   if (sfile->pb_fps == 0.) return;
   if (sfile->pb_fps > 0.) {
     if (sfile->pb_fps < 0.1 || sfile->pb_fps < change) sfile->pb_fps = change;
@@ -11010,6 +10995,7 @@ void on_faster_pressed(LiVESButton * button, livespointer user_data) {
 
   change *= prefs->fpschange_amount / TICKS_PER_SECOND_DBL * (double)KEY_RPT_INTERVAL
             * (sfile->pb_fps == 0. ? 1. : sfile->pb_fps);
+  if (button) change *= 4.;
 
   if (sfile->pb_fps >= 0.) {
     if (sfile->pb_fps == FPS_MAX) return;
@@ -11049,7 +11035,8 @@ void on_back_pressed(LiVESButton * button, livespointer user_data) {
     if (type == SCREEN_AREA_BACKGROUND) return; // TODO: implement scratch play for the blend file
   }
 
-  mainw->scratch = SCRATCH_BACK;
+  if (button) mainw->scratch |= SCRATCH_BACK_EXTRA;
+  else mainw->scratch = SCRATCH_BACK;
 }
 
 
@@ -11075,7 +11062,8 @@ void on_forward_pressed(LiVESButton * button, livespointer user_data) {
     if (type == SCREEN_AREA_BACKGROUND) return; // TODO: implement scratch play for the blend file
   }
 
-  mainw->scratch = SCRATCH_FWD;
+  if (button) mainw->scratch = SCRATCH_FWD_EXTRA;
+  else mainw->scratch = SCRATCH_FWD;
 }
 
 
@@ -11339,7 +11327,8 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
 void on_toolbar_hide(LiVESButton * button, livespointer user_data) {
   lives_widget_hide(mainw->tb_hbox);
   fullscreen_internal();
-  future_prefs->show_tool = FALSE;
+  prefs->show_tool = FALSE;
+  set_boolean_pref(PREF_SHOW_TOOLBAR, FALSE);
 }
 
 

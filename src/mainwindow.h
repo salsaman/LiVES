@@ -1026,8 +1026,11 @@ typedef struct {
 #define SCRATCH_BACK -1
 #define SCRATCH_FWD 1
 #define SCRATCH_REV 2 ///< set on direction change (video)
-#define SCRATCH_JUMP 3  ///< jump and resybc audio
+#define SCRATCH_JUMP 3  ///< jump and resync audio
 #define SCRATCH_JUMP_NORESYNC 4 ///< jump with no audio resync
+
+#define SCRATCH_FWD_EXTRA 255
+#define SCRATCH_BACK_EXTRA 257
 
   /////
 
@@ -1330,17 +1333,14 @@ typedef struct {
 
   // toolbar buttons
   LiVESWidget *t_stopbutton;
-  LiVESWidget *t_bckground;
   LiVESWidget *t_fullscreen;
   LiVESWidget *t_sepwin;
-  LiVESWidget *t_double;
   LiVESWidget *t_infobutton;
 
   LiVESWidget *t_slower;
   LiVESWidget *t_faster;
   LiVESWidget *t_forward;
   LiVESWidget *t_back;
-
   LiVESWidget *t_hide;
 
   LiVESWidget *toolbar;
@@ -1666,7 +1666,6 @@ typedef struct {
   lives_cconnect_t *cconx; ///< list of out -> in alpha channel connections
 
   int sepwin_minwidth, sepwin_minheight;
-  float sepwin_scale;
 
   uint32_t signal_caught;
   boolean signals_deferred;

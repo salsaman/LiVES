@@ -886,6 +886,11 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
 
   if (in_channel) {
     /// fill the audio buffer for the following frame(s)
+#define NORM_AUDIO
+#ifdef NORM_AUDIO
+    float maxvol = 0., myvol;
+    int i;
+#endif
     int achans;
     int adlen = weed_channel_get_audio_length(in_channel);
     float **adata = (float **)weed_channel_get_audio_data(in_channel, &achans);
@@ -901,7 +906,22 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
         }
       }
       sd->abufsize = adlen;
-      weed_memcpy(sd->audio, adata[0], adlen * 4);
+#ifdef NORM_AUDIO
+      for (i = 0; i < adlen; i++) {
+	if ((myvol = fabsf(adata[0][i])) > maxvol) maxvol = myvol;
+	if (maxvol > .8) break;
+      }
+      if (i == adlen && maxvol > 0.05) {
+	float *abuf = (float *)weed_calloc(adlen, 4);
+	for (i = 0; i < adlen; i++) {
+	  abuf[i] = adata[0][i] / maxvol;
+	}
+	weed_memcpy(sd->audio, abuf, adlen * 4);
+	weed_free(abuf);
+      }
+      else
+#endif
+	weed_memcpy(sd->audio, adata[0], adlen * 4);
     } else adlen = 0;
     sd->audio_frames = adlen;
     sd->audio_offs = 0;

@@ -33,6 +33,7 @@ static uint8_t prbuf[PULSE_READ_BYTES * 2];
 static size_t prb = 0;
 
 static boolean seek_err;
+static boolean sync_ready = FALSE;
 
 static volatile int lock_count = 0;
 
@@ -205,9 +206,27 @@ LIVES_GLOBAL_INLINE size_t pulse_get_buffsize(pulse_driver_t *pulsed) {return pu
 static void pulse_buff_free(void *ptr) {lives_free(ptr);}
 #endif
 
+static void sync_ready_ok(pulse_driver_t *pulsed, size_t nbytes) {
+  if (nbytes >= 8192) {
+    mainw->syncticks += ((double)nbytes / (double)(pulsed->out_arate) * 1000000.
+			 / (double)(pulsed->out_achans * pulsed->out_asamps >> 3) + .5) * USEC_TO_TICKS;
+  } else {
+    mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
+  }
+  mainw->fps_mini_measure = 0;
+  mainw->fps_mini_ticks = mainw->currticks;
+  pthread_mutex_lock(&mainw->avseek_mutex);
+  mainw->audio_seek_ready = TRUE;
+  pthread_cond_signal(&mainw->avseek_cond);
+  pthread_mutex_unlock(&mainw->avseek_mutex);
+}
+
+
 static void sample_silence_pulse(pulse_driver_t *pulsed, size_t nbytes, size_t xbytes) {
   uint8_t *buff;
   int nsamples;
+
+  if (sync_ready) sync_ready_ok(pulsed, xbytes > 0 ? xbytes : 0);
 
   if (xbytes <= 0) return;
   if (mainw->aplayer_broken) return;
@@ -261,6 +280,7 @@ static void sample_silence_pulse(pulse_driver_t *pulsed, size_t nbytes, size_t x
     afile->aseek_pos = pulsed->seek_pos;
 }
 
+
 #define NBYTES_LIMIT (65536 * 4)
 
 static short *shortbuffer = NULL;
@@ -309,6 +329,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
   int new_file;
 
+  sync_ready = FALSE;
+  
   //pa_thread_make_realtime(50);
   //g_print("PA\n");
   pulsed->real_seek_pos = pulsed->seek_pos;
@@ -422,7 +444,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     float shrink_factor = 1.f;
     int swap_sign;
     int qnt = 1;
-    boolean sync_ready = FALSE;
 
     if (IS_VALID_CLIP(pulsed->playing_file)) qnt = afile->achans * (afile->asampsize >> 3);
 
@@ -1003,20 +1024,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
     // buffer is reused here, it's what we'll actually push to pulse
 
-    if (sync_ready) {
-      if (nbytes >= 8192) {
-        mainw->syncticks += ((double)nbytes / (double)(pulsed->out_arate) * 1000000.
-                             / (double)(pulsed->out_achans * pulsed->out_asamps >> 3) + .5) * USEC_TO_TICKS;
-      } else {
-        mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
-      }
-      mainw->fps_mini_measure = 0;
-      mainw->fps_mini_ticks = mainw->currticks;
-      pthread_mutex_lock(&mainw->avseek_mutex);
-      mainw->audio_seek_ready = TRUE;
-      pthread_cond_signal(&mainw->avseek_cond);
-      pthread_mutex_unlock(&mainw->avseek_mutex);
-    }
+    if (sync_ready) sync_ready_ok(pulsed, nbytes);
 
     while (nbytes > 0) {
       if (nbytes < xbytes) xbytes = nbytes;

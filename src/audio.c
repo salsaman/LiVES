@@ -1629,7 +1629,6 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
           if (reverse_buffer(in_buff, tbytes, in_achans[track] * 2))
             zavel = -zavel;
         }
-        g_print("VALS %f, %ld, %ld\n", zavel, nframes, tbytes);
         sample_move_d16_d16(holding_buff, (short *)in_buff, nframes, tbytes, zavel, out_achans,
                             in_achans[track], in_reverse_endian[track] ? SWAP_X_TO_L : 0, 0);
       }

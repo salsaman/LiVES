@@ -425,7 +425,6 @@ static int audio_process(nframes_t nframes, void *arg) {
   boolean wait_cache_buffer = FALSE;
   boolean pl_error = FALSE; ///< flag tells if we had an error during plugin processing
   size_t nbytes, rbytes;
-  boolean sync_ready = FALSE;
 
   int i;
 #define DEBUG_JACK
@@ -564,9 +563,6 @@ static int audio_process(nframes_t nframes, void *arg) {
       mainw->fps_mini_ticks = mainw->currticks;
       mainw->fps_mini_measure = 0;
 
-      /* g_print("@ SYNC %d seek pos %ld = %f  ct %ld   st %ld\n", mainw->actual_frame, jackd->seek_pos, */
-      /* 	      ((double)jackd->seek_pos / (double)afile->arps / 4. * afile->fps + 1.), mainw->currticks, mainw->startticks); */
-
       pthread_mutex_lock(&mainw->avseek_mutex);
       mainw->audio_seek_ready = TRUE;
       pthread_cond_signal(&mainw->avseek_cond);
@@ -601,19 +597,6 @@ static int audio_process(nframes_t nframes, void *arg) {
         }
         if (jackd->seek_end == 0 || ((jackd->playing_file == mainw->ascrap_file && !mainw->preview) && IS_VALID_CLIP(playfile)
                                      && mainw->files[playfile]->achans > 0)) jackd->seek_end = INT64_MAX;
-
-        /* if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && IS_VALID_CLIP(jackd->playing_file)) { */
-        /*   if (mainw->playing_sel) { */
-        /*     jackd->seek_end = (int64_t)((double)(mainw->play_end - 1.) / afile->fps * afile->arps) */
-        /*                       * afile->achans * (afile->asampsize / 8); */
-        /*     if (jackd->seek_end > afile->afilesize) jackd->seek_end = afile->afilesize; */
-        /*   } else jackd->seek_end = afile->afilesize; */
-        /* } */
-        /* if (jackd->seek_end == 0 || ((jackd->playing_file == mainw->ascrap_file && !mainw->preview) && playfile >= -1 */
-        /*                              && mainw->files[playfile] && mainw->files[playfile]->achans > 0)) { */
-        /*   jackd->seek_end = INT64_MAX; */
-        /* } */
-
         in_bytes = ABS((in_frames = ((double)jackd->sample_in_rate / (double)jackd->sample_out_rate *
                                      (double)jackFramesAvailable + ((double)fastrand() / (double)LIVES_MAXUINT64))))
                    * jackd->num_input_channels * jackd->bytes_per_channel;
@@ -750,21 +733,6 @@ static int audio_process(nframes_t nframes, void *arg) {
 
       // playback from memory or file
       vol = lives_vol_from_linear(future_prefs->volume * cfile->vol);
-
-      if (sync_ready) {
-        /* if (nbytes >= 8192) { */
-        /*   mainw->syncticks += ((double)nbytes / (double)(jackd->out_arate) * 1000000. */
-        /* 		       / (double)(jackd->out_achans * jackd->out_asamps >> 3) + .5) * USEC_TO_TICKS; */
-        /* } else { */
-        mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
-        //}
-        mainw->fps_mini_measure = 0;
-        mainw->fps_mini_ticks = mainw->currticks;
-        pthread_mutex_lock(&mainw->avseek_mutex);
-        mainw->audio_seek_ready = TRUE;
-        pthread_cond_signal(&mainw->avseek_cond);
-        pthread_mutex_unlock(&mainw->avseek_mutex);
-      }
 
       if (numFramesToWrite > 0) {
         if (!from_memory) {

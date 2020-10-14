@@ -3950,7 +3950,6 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
 
       // sanity check handle against status file
       // (this should never happen...)
-      g_print("VLAX %s and %s\n", check_handle, array[1]);
       if (strcmp(check_handle, array[1])) {
         LIVES_ERROR("Handle!=statusfile !");
         mesg = lives_strdup_printf(_("\nError getting file info for clip %s.\nBad things may happen with this clip.\n"),

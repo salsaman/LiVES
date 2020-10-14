@@ -4178,7 +4178,7 @@ static boolean on_drag_filter_end(LiVESWidget * widget, LiVESXEventButton * even
     nb_ignore = FALSE;
     // apply to block
     mt->putative_block = NULL;
-    lives_timer_add_simple(0, mt_add_block_effect_idle, mt); // work around issue in gtk+
+    lives_timer_add(0, mt_add_block_effect_idle, mt); // work around issue in gtk+
   } else if (nins == 2) {
     // transition
     if (lives_list_length(mt->selected_tracks) == 2 && mt->region_start != mt->region_end) {

@@ -985,15 +985,16 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
   // do minimal ds checking until we hit full download
   forcecheck = FALSE;
 
-  while (1) {
-    if (!get_temp_handle(-1)) {
-      // we failed because we ran out of file handles; this hsould almost never happen
-      // we wil do only minimal ds checks
-      d_print_failed();
-      goto cleanup_ut;
-    }
+  if (!get_temp_handle(-1)) {
+    // we failed because we ran out of file handles; this hsould almost never happen
+    // we wil do only minimal ds checks
+    d_print_failed();
+    goto cleanup_ut;
+  }
 
+  while (1) {
 retry:
+    lives_rm(cfile->info_file);
 
     if (mainw->permmgr && mainw->permmgr->key) {
       overrdkey = mainw->permmgr->key;
@@ -1010,7 +1011,7 @@ retry:
                               "%d %d %d %s", prefs->backend, cfile->handle, req->URI, ddir,
                               req->fname, req->format, req->desired_width, req->desired_height,
                               req->matchsize, req->vidchoice, audchoice, keep_frags,
-                              req->do_update, prefs->show_dev_opts,
+                              req->do_update, req->debug,
                               overrdkey ? (tmp = lives_strdup_printf(" %s", overrdkey))
                               : (tmp = lives_strdup("")));
     lives_free(tmp);
@@ -1094,7 +1095,7 @@ retry:
       goto cleanup_ut;
     }
 
-    if (req->matchsize == LIVES_MATCH_CHOICE && strlen(req->vidchoice) == 0)  {
+    if (req->matchsize == LIVES_MATCH_CHOICE && !*req->vidchoice)  {
       // show a list of the video formats and let the user pick one
       if (!youtube_select_format(req)) {
         goto cleanup_ut;

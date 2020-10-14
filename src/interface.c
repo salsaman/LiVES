@@ -5046,6 +5046,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   LiVESWidget *name_entry;
   LiVESWidget *dir_entry;
   LiVESWidget *checkbutton_update;
+  LiVESWidget *cb_debug = NULL;
 #ifdef ALLOW_NONFREE_CODECS
   LiVESWidget *radiobutton_free;
   LiVESWidget *radiobutton_nonfree;
@@ -5074,6 +5075,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 
   LiVESResponseType response;
   boolean only_free = TRUE;
+  boolean debug = FALSE;
   static boolean firsttime = TRUE;
 
   if (!check_for_executable(&capable->has_youtube_dl, EXEC_YOUTUBE_DL)) return NULL;
@@ -5081,6 +5083,8 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 #ifdef ALLOW_NONFREE_CODECS
   if (req) only_free = !req->allownf;
 #endif
+
+  if (req) debug = req->debug;
 
   title = (_("Open Online Clip"));
 
@@ -5181,6 +5185,15 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   dir_entry = lives_standard_direntry_new(_("_Directory to save to: "),
                                           req ? req->save_dir : mainw->vid_dl_dir,
                                           LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
+
+  if (prefs->show_dev_opts) {
+    cb_debug = lives_standard_check_button_new("Debug mode", debug,
+               LIVES_BOX(hbox), NULL);
+    hbox = lives_hbox_new(FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height * 3);
+    toggle_toggles_var(LIVES_TOGGLE_BUTTON(cb_debug), &debug, FALSE);
+  }
+
   add_hsep_to_box(LIVES_BOX(dialog_vbox));
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -5339,7 +5352,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   lives_snprintf(mainw->vid_dl_dir, PATH_MAX, "%s", dirname);
 
   if (!req) {
-    req = (lives_remote_clip_request_t *)lives_malloc(sizeof(lives_remote_clip_request_t));
+    req = (lives_remote_clip_request_t *)lives_calloc(1, sizeof(lives_remote_clip_request_t));
     if (!req) {
       lives_widget_destroy(dialog);
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
@@ -5350,6 +5363,8 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
     }
     req->allownf = !only_free;
   }
+
+  req->debug = debug;
 
   mainw->error = FALSE;
   d_print(_("Downloading %s to %s..."), url, dfile);

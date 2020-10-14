@@ -3584,6 +3584,11 @@ static int get_next_free_file(void) {
 boolean get_temp_handle(int index) {
   boolean is_unique, create = FALSE;
 
+  if (CURRENT_CLIP_IS_TEMP) {
+    break_me("temp clip in temp clip !!");
+    return TRUE;
+  }
+
   if (index < -1 || index > MAX_FILES) {
     char *msg = lives_strdup_printf("Attempt to create invalid new temp clip %d\n", index);
     LIVES_WARN(msg);

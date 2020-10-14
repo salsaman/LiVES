@@ -3841,7 +3841,7 @@ if (1) {
 		## if there is a local copy of ytdl we try to use that
 		if (-x $prog && ! -z $prog) {
 		    if ($debug) {
-			print STDERR "found local copy of $youtube-dl at $prog\n";
+			print STDERR "found local copy of $youtube_dl at $prog\n";
 		    }
 		    $islocal = 1;
 		}
@@ -3950,9 +3950,8 @@ if (1) {
 		    $noaudio = 1;
 		}
 	    }
-	    my $xbestaudio = "";
 
-	    if ($vidchoice eq "" || $audchoice eq "-1" || $audchoide eq "0") {
+	    if ($vidchoice eq "" || $audchoice eq "-1" || $audchoice eq "0") {
 		## next, list all the formats and select the we want (or return them)
 		my $best = "(best)";
 		my $video_only = "video only";
@@ -3994,7 +3993,7 @@ if (1) {
 				    $bestaudio = "bestaudio[ext=webm]";
 				}
 				else {
-				    $bestaudio = "bestaudio";
+				    $bestaudio = "bestaudio[ext=m4a]";
 				}}}
 			next;
 		    }
@@ -4005,7 +4004,7 @@ if (1) {
 		    else {
 			$vidonly = 1;
 		    }
-
+		    print STDERR "OK $vidchoice and $fcode and $audchoice && $vidonly\n";
 		    if ($vidchoice eq $fcode && $audchoice eq "0" && !$vidonly) {
 			## bestaudio doesn't always work, so if the video has an audio track, use that
 			## to be safe
@@ -4157,13 +4156,25 @@ if (1) {
 		exit 3;
 	    }
 
+
 	    if ($noaudio) {
 		$xbestaudeo = "";
 	    }
 
-	    elsif ($bestaudio ne "") {
-		$xbestaudio = "+$bestaudio";
+	    else {
+		if ($bestaudio eq "") {
+		    if ($formreq eq "webm") {
+			$xbestaudio = "+bestaudio[ext=webm]";
+		    }
+		    else {
+			$xbestaudio = "+bestaudio";
+		    }}
+		else {
+		    $xbestaudio = "+$bestaudio";
+		}
 	    }
+
+	    print STDERR "HERE $noaudio and .$bestaudio.\n";
 
 	    my $kf = "";
 	    if ($keep_frags) {
@@ -4214,11 +4225,6 @@ if (1) {
 
 		if (-f $xdfile) {
 		    unlink $xdfile;
-		}
-		if ($formreq eq "mp4") {
-		    #unlink "$dfile.f$bestfmt.mp4";
-		    #unlink "$ddir/$dfile.temp.mp4";
-		    ##unlink "$dfile.mp4.f$audfmt"; ## need actual audfmt
 		}
 		if ($debug) {
 		    print STDERR "\nDownload failed ! Error was $res\n\n";

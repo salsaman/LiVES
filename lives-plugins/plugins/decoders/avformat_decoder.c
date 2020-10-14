@@ -30,6 +30,7 @@
 #endif
 
 #define NEED_CLONEFUNC
+#define NEED_TIMING
 #include "decplugin.h"
 
 ///////////////////////////////////////////////////////
@@ -63,6 +64,7 @@ static const char *plugin_version = "LiVES avformat decoder version 1.1";
 static pthread_mutex_t avcodec_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #define FAST_SEEK_LIMIT 50 // milliseconds (default 0.05 sec)
+#define FAST_SEEK_REV_LIMIT 200 // milliseconds (default 0.2 sec)
 #define NO_SEEK_LIMIT 2000 // milliseconds (default 2 seconds)
 #define LNO_SEEK_LIMIT 10000 // milliseconds (default 10 seconds)
 
@@ -96,13 +98,6 @@ void get_samps_and_signed(enum AVSampleFormat sfmt, int *asamps, boolean *asigne
   default:
     *asigned = TRUE;
   }
-}
-
-
-static inline int64_t get_current_ticks(void) {
-  struct timespec ts;
-  clock_gettime(CLOCK_MONOTONIC, &ts);
-  return ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
 }
 
 
@@ -880,7 +875,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
     return cdata;
   }
 
-  if (cdata != NULL && cdata->current_clip > 0) {
+  if (cdata && cdata->current_clip > 0) {
     // currently we only support one clip per container
     clip_data_free(cdata);
     return NULL;
@@ -890,14 +885,13 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
     cdata = init_cdata(NULL);
   }
 
-  if (cdata->URI == NULL || strcmp(URI, cdata->URI)) {
-    if (cdata->URI != NULL) {
+  if (!cdata->URI || strcmp(URI, cdata->URI)) {
+    if (cdata->URI) {
       detach_stream(cdata);
       free(cdata->URI);
     }
     cdata->URI = strdup(URI);
     if (!attach_stream(cdata, FALSE)) {
-      detach_stream(cdata);
       clip_data_free(cdata);
       return NULL;
     }
@@ -917,7 +911,6 @@ rescan:
     if (real_frames <= 0) {
       fprintf(stderr,
               "avformat_decoder: ERROR - could not find the last frame\navformat_decoder: I will pass on this file as it may be broken.\n");
-      detach_stream(cdata);
       clip_data_free(cdata);
       return NULL;
     }
@@ -927,7 +920,6 @@ rescan:
               "avformat_decoder: ERROR - could only seek to %ld frames out of %ld\navformat_decoder: "
               "I will pass on this file as it may be broken.\n",
               real_frames, cdata->nframes);
-      detach_stream(cdata);
       clip_data_free(cdata);
       return NULL;
     }
@@ -941,7 +933,7 @@ rescan:
 
   cdata->nframes = real_frames;
 
-  if (priv->pFrame != NULL) av_frame_unref(priv->pFrame);
+  if (priv->pFrame) av_frame_unref(priv->pFrame);
   priv->pFrame = NULL;
 
   return cdata;
@@ -1288,7 +1280,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
         ((lives_clip_data_t *)cdata)->fwd_seek_time = (cdata->fwd_seek_time + timex) / 2;
         loops = 0;
         did_seek = FALSE;
-        if (cdata->max_decode_fps && tframe > priv->last_frame) {
+        if (cdata->max_decode_fps != 0. && tframe > priv->last_frame) {
           int64_t jump_limit = (double)cdata->fwd_seek_time / cdata->max_decode_fps;
           if (jump_limit < 2) jump_limit = 2;
           ((lives_clip_data_t *)cdata)->jump_limit = jump_limit;
@@ -1304,20 +1296,24 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   timex += get_current_ticks();
   if (timex && loops) {
     double mdf = (double)(1000000 * loops) / (double)timex;
-    if (timex > FAST_SEEK_LIMIT * 1000) {
+    if ((!rev && timex > FAST_SEEK_LIMIT * 1000) || (rev && timex > FAST_SEEK_REV_LIMIT * 1000)) {
       if (rev)((lives_clip_data_t *)cdata)->seek_flag &= ~LIVES_SEEK_FAST_REV;
-      else ((lives_clip_data_t *)cdata)->seek_flag = LIVES_SEEK_NEEDS_CALCULATION;
+      else {
+        ((lives_clip_data_t *)cdata)->seek_flag |= LIVES_SEEK_NEEDS_CALCULATION;
+        ((lives_clip_data_t *)cdata)->seek_flag &= ~LIVES_SEEK_FAST;
+      }
     } else {
       ((lives_clip_data_t *)cdata)->seek_flag &= ~LIVES_SEEK_NEEDS_CALCULATION;
-      if (rev)
-        ((lives_clip_data_t *)cdata)->seek_flag |= LIVES_SEEK_FAST_REV;
-      else
-        ((lives_clip_data_t *)cdata)->seek_flag |= LIVES_SEEK_FAST;
+      if (rev)((lives_clip_data_t *)cdata)->seek_flag |= LIVES_SEEK_FAST_REV;
+      else ((lives_clip_data_t *)cdata)->seek_flag |= LIVES_SEEK_FAST;
     }
-    ((lives_clip_data_t *)cdata)->max_decode_fps = (((lives_clip_data_t *)cdata)->max_decode_fps + mdf) / 2.;
-    /* fprintf(stderr, "avformat_dec: vplay of %d frames took %ld usec (%ld per frame / %.4f / %.4f fps)\n", loops, timex, */
-    /* 	    timex / loops, mdf, cdata->max_decode_fps); */
+    if (cdata->max_decode_fps != 0.)
+      ((lives_clip_data_t *)cdata)->max_decode_fps = (((lives_clip_data_t *)cdata)->max_decode_fps + mdf) / 2.;
+    else
+      ((lives_clip_data_t *)cdata)->max_decode_fps = mdf;
+    /////////////////////////////////////////////////////
   }
+
 framedone:
   priv->last_frame = tframe;
 
@@ -1421,7 +1417,7 @@ framedone2:
   return TRUE;
 
 cleanup:
-  if (priv->packet.data != NULL)
+  if (priv->packet.data)
     if (priv->packet.data) av_packet_unref(&priv->packet);
   priv->packet.data = NULL;
   priv->packet.size = 0;
@@ -1431,6 +1427,9 @@ cleanup:
 
 
 void clip_data_free(lives_clip_data_t *cdata) {
+  if (cdata->URI) {
+    detach_stream(cdata);
+  }
   lives_struct_free(&cdata->lsd);
 }
 

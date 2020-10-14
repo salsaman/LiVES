@@ -2673,7 +2673,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   int btop = cdata->offs_y, bbot = xheight - 1 - btop;
   int bleft = cdata->offs_x, bright = cdata->frame_width - cdata->width - bleft;
 
-  if (pixel_data != NULL) {
+  if (pixel_data) {
     if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P) {
       nplanes = 3;
       black[0] = y_black;
@@ -2758,7 +2758,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       // need to find a new kframe
       pthread_mutex_lock(&priv->idxc->mutex);
       fidx = get_bounds_for((lives_clip_data_t *)cdata, tframe, &ppos_lower, &ppos_upper);
-      if (fidx == NULL) {
+      if (!fidx) {
         //printf("pt a\n");
         int64_t last_ret_frame = priv->last_frame;
         pthread_mutex_unlock(&priv->idxc->mutex);
@@ -2794,7 +2794,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       priv->input_position = priv->current_pos;
       //printf("CONTINUING %ld %ld %ld %ld\n",tframe,priv->last_frame,kframe,priv->last_kframe);
     } else {
-      if (fidx == NULL || priv->vstream->stpriv->fourcc_priv == FOURCC_THEORA) {
+      if (!fidx || priv->vstream->stpriv->fourcc_priv == FOURCC_THEORA) {
         if (priv->vstream->stpriv->fourcc_priv == FOURCC_THEORA) {
           pthread_mutex_lock(&priv->idxc->mutex);
           get_bounds_for((lives_clip_data_t *)cdata, kframe - 1, &ppos_lower, &ppos_upper);

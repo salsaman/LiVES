@@ -801,6 +801,9 @@ typedef enum {
 #define IS_VALID_CLIP(clip) (clip >= 0 && clip <= MAX_FILES && mainw->files[clip])
 #define CURRENT_CLIP_IS_VALID IS_VALID_CLIP(mainw->current_file)
 
+#define IS_TEMP_CLIP(clip) (IS_VALID_CLIP(clip) && mainw->files[clip]->clip_type == CLIP_TYPE_TEMP)
+#define CURRENT_CLIP_IS_TEMP IS_TEMP_CLIP(mainw->current_file)
+
 #define CLIP_HAS_VIDEO(clip) (IS_VALID_CLIP(clip) ? mainw->files[clip]->frames > 0 : FALSE)
 #define CURRENT_CLIP_HAS_VIDEO CLIP_HAS_VIDEO(mainw->current_file)
 

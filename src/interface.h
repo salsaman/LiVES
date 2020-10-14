@@ -262,6 +262,7 @@ typedef struct {
   lives_size_match_t matchsize;
   boolean do_update;
   boolean allownf;
+  boolean debug;
   char vidchoice[512];
   char audchoice[512];
   // TODO: add audio bitrate ?, audio_lang, get_sub, sub_format, sub_language, etc.

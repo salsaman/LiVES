@@ -104,9 +104,32 @@ typedef void *(*realloc_f)(void *, size_t);
 typedef void *(*calloc_f)(size_t, size_t);
 typedef void *(*memmove_f)(void *, const void *, size_t);
 
+
+#if defined NEED_TIMING || !defined HAVE_GETENTROPY
+
+#ifdef _POSIX_TIMERS
+#include <time.h>
+#else
+#include <sys/time.h>
+#endif
+
+static inline int64_t get_current_ticks(void) {
+  int64_t ret;
+#if _POSIX_TIMERS
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  ret = ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
+#else
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  ret = tv.tv_sec * 1000000 + tv.tv_usec;
+#endif
+  return ret;
+}
+#endif
+
 #ifndef HAVE_GETENTROPY
 
-#include <sys/time.h>
 #include <string.h>
 
 #define myfastrand1(fval) ((fval) ^ ((fval) << 13))
@@ -117,10 +140,7 @@ typedef void *(*memmove_f)(void *, const void *, size_t);
 static inline void myrand(void *ptr, size_t size) {
   static uint64_t fval = 0;
   if (fval == 0) {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    fval = 0xAAAAAAAAAAAAAAAA;
-    fval ^= (tv.tv_sec << 32) | ((tv.tv_usec & 0xFFFFFFFF00000000) >> 32);
+    fval = 0xAAAAAAAAAAAAAAAA ^ (get_current_ticks() >> 17);
   }
   fval = myfastrand0(fval);
   memcpy(ptr, &fval, size);

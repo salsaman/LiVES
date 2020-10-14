@@ -67,6 +67,7 @@ const char *plugin_version = "LiVES mkv decoder version 1.4";
 #endif
 
 #define NEED_CLONEFUNC
+#define NEED_TIMING
 #include "decplugin.h"
 
 #include <libavutil/intreadwrite.h>
@@ -89,17 +90,11 @@ static int nidxc;
 static pthread_mutex_t indices_mutex;
 
 #define FAST_SEEK_LIMIT 50 // milliseconds (default 0.05 sec)
+#define FAST_SEEK_REV_LIMIT 200 // milliseconds (default 0.2 sec)
 #define NO_SEEK_LIMIT 2000 // milliseconds (default 2 seconds)
 #define LNO_SEEK_LIMIT 10000 // milliseconds (default 10 seconds)
 
 ////////////////////////////////////////////////////////////////////////////
-
-static int64_t get_current_ticks(void) {
-  struct timespec ts;
-  clock_gettime(CLOCK_REALTIME, &ts);
-  return ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
-}
-
 
 static double lives_int2dbl(int64_t v) {
   if ((uint64_t)v + v > 0xFFEULL << 52)
@@ -2169,7 +2164,7 @@ static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
   cdata->ext_memcpy = &ext_memcpy;
 
   errval = 0;
-
+  cdata->max_decode_fps = 0.;
   cdata->sync_hint = SYNC_HINT_AUDIO_PAD_START | SYNC_HINT_AUDIO_TRIM_END;
   return cdata;
 }
@@ -2844,7 +2839,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
         loops = 0;
         did_seek = FALSE;
         timex = - now;
-        if (cdata->max_decode_fps && tframe > priv->last_frame) {
+        if (cdata->max_decode_fps != 0. && tframe > priv->last_frame) {
           int64_t jump_limit = cdata->fwd_seek_time / cdata->max_decode_fps;
           if (jump_limit < 2) jump_limit = 2;
           ((lives_clip_data_t *)cdata)->jump_limit = jump_limit;
@@ -2856,16 +2851,21 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
     if (timex && loops) {
       double mdf = (double)(1000000 * loops) / (double)timex;
-      if (timex > FAST_SEEK_LIMIT * 1000) {
+      if ((!rev && timex > FAST_SEEK_LIMIT * 1000) || (rev && timex > FAST_SEEK_REV_LIMIT * 1000)) {
         if (rev)((lives_clip_data_t *)cdata)->seek_flag &= ~LIVES_SEEK_FAST_REV;
-        else ((lives_clip_data_t *)cdata)->seek_flag = LIVES_SEEK_NEEDS_CALCULATION;
+        else {
+          ((lives_clip_data_t *)cdata)->seek_flag |= LIVES_SEEK_NEEDS_CALCULATION;
+          ((lives_clip_data_t *)cdata)->seek_flag &= ~LIVES_SEEK_FAST;
+        }
       } else {
         ((lives_clip_data_t *)cdata)->seek_flag &= ~LIVES_SEEK_NEEDS_CALCULATION;
         if (rev)((lives_clip_data_t *)cdata)->seek_flag |= LIVES_SEEK_FAST_REV;
-        else
-          ((lives_clip_data_t *)cdata)->seek_flag |= LIVES_SEEK_FAST;
+        else ((lives_clip_data_t *)cdata)->seek_flag |= LIVES_SEEK_FAST;
       }
-      ((lives_clip_data_t *)cdata)->max_decode_fps = (((lives_clip_data_t *)cdata)->max_decode_fps + mdf) / 2.;
+      if (cdata->max_decode_fps != 0.)
+        ((lives_clip_data_t *)cdata)->max_decode_fps = (((lives_clip_data_t *)cdata)->max_decode_fps + mdf) / 2.;
+      else
+        ((lives_clip_data_t *)cdata)->max_decode_fps = mdf;
       /////////////////////////////////////////////////////
     }
   }
@@ -2972,7 +2972,7 @@ framedone2:
   return TRUE;
 
 cleanup:
-  if (priv->avpkt.data != NULL) {
+  if (priv->avpkt.data) {
     free(priv->avpkt.data);
     priv->avpkt.data = NULL;
     priv->avpkt.size = 0;
@@ -2983,7 +2983,7 @@ cleanup:
 
 void clip_data_free(lives_clip_data_t *cdata) {
   lives_mkv_priv_t *priv = cdata->priv;
-  if (priv->idxc != NULL) idxc_release(cdata);
+  if (priv->idxc) idxc_release(cdata);
   priv->idxc = NULL;
 
   if (cdata->URI) {

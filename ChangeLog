@@ -24,6 +24,8 @@ Preview quality can now be set to "adaptive", allowing the playback quality to a
 A / V sync drift has been reduced to around .01 second, the fps play rate (jitter) is accurate to within
 	0.002 % in most cases.
 Fixed several screen / window sizing issues.
+Start and end frames are now cached for each clip, preventing multiple reloads in the GUI. Clip
+	thumbnails are also cached in multitrack mode.
 The renderer now uses a separate thread for saving frames to disk, making rendering much faster.
 The openGL playback plugin can now handle letterboxing itself, reducing the overhead when playing fullscreen with letterboxing.
 Audio caching for multitrack is now done via a separate dedicated,

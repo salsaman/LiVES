@@ -4327,7 +4327,6 @@ static void populate_filter_box(int ninchans, lives_mt * mt, int pkgnum) {
               continue;
             }
           }
-          lives_free(fname);
           // pkg matched
         }
 
@@ -4338,6 +4337,7 @@ static void populate_filter_box(int ninchans, lives_mt * mt, int pkgnum) {
             lives_free(fname);
             continue;
           }
+          lives_free(fname);
           fname = weed_filter_idx_get_name(sorted, TRUE, TRUE);
         }
 
@@ -4346,6 +4346,7 @@ static void populate_filter_box(int ninchans, lives_mt * mt, int pkgnum) {
         lives_widget_object_set_data(LIVES_WIDGET_OBJECT(xeventbox), "pkgnum", LIVES_INT_TO_POINTER(pkgnum));
 
         //add_to_listbox(mt, xeventbox, fname, (pkgnum != 0 || get_transition_param(filter, FALSE) == -1 || !has_video_chans_in(filter, FALSE)));
+
         add_to_listbox(mt, xeventbox, fname, FALSE);
         lives_free(fname);
       }
@@ -5495,8 +5496,8 @@ static char *mt_set_vals_string(void) {
 void set_mt_play_sizes_cfg(lives_mt * mt) {
   if (!CURRENT_CLIP_IS_VALID) return;
   else {
-    int rwidth = lives_widget_get_allocation_width(mainw->play_image);
-    int rheight = lives_widget_get_allocation_height(mainw->play_image);// - 48;
+    int rwidth = lives_widget_get_allocation_width(mt->preview_eventbox);
+    int rheight = lives_widget_get_allocation_height(mt->preview_eventbox);
     int width = mainw->files[mt->render_file]->hsize;
     int height = mainw->files[mt->render_file]->vsize;
 
@@ -5505,7 +5506,8 @@ void set_mt_play_sizes_cfg(lives_mt * mt) {
       rheight = GUI_SCREEN_HEIGHT / PEB_HRATIO;
     }
 
-    calc_maxspect(rwidth, rheight, &width, &height);
+    if (prefs->letterbox_mt)
+      calc_maxspect(rwidth, rheight, &width, &height);
 
     width = (width >> 2) << 2;
     height = (height >> 2) << 2;

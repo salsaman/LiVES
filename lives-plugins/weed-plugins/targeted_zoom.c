@@ -103,7 +103,7 @@ static weed_error_t tzoom_process(weed_plant_t *inst, weed_timecode_t timecode) 
 
 
 WEED_SETUP_START(200, 200) {
-  int palette_list[] = ALL_PACKED_PALETTES_PLUS;
+  int palette_list[] = ALL_PACKED_PALETTES;
 
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};

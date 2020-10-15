@@ -5582,7 +5582,7 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
         rheight = xrheight;
       }
 
-      if (prefs->ce_maxspect) {
+      if (!mainw->multitrack && prefs->ce_maxspect) {
         calc_maxspect(rwidth, rheight, &width, &height);
 
         width = (width >> 1) << 1;

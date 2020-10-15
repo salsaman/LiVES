@@ -8296,6 +8296,7 @@ static void convert_quad_chroma(uint8_t **src, int width, int height, int *istri
     }
     d_u += ostride;
     d_v += ostride;
+    
   }
   if (i > lastrow) {
     // TRUE if we finished on an even row
@@ -8362,17 +8363,17 @@ static void convert_quad_chroma_packed(uint8_t **src, int width, int height, int
           dest[j + 2] = avg_chroma_3_1f(s_v[uv_offs - 1], s_v[uv_offs]);
         }
         if (add_alpha) dest[j + 3] = 255;
-      } else if (i ^ 1) { // i >= 3
+      } else if (i > 1 && (i & 1)) { // i >= 3
         // on odd rows we average row - 1 with row - 3  ==> row - 2
         int jj = j - (ostride << 1);
         dest[j] = *(s_y++);
-        dest[jj + 1] = avg_chromaf(dest[jj + 1 + ostride], dest[jj + 1 - ostride]);
-        dest[jj + 2] = avg_chromaf(dest[jj + 2 + ostride], dest[jj + 2 - ostride]);
+        dest[jj + 1] = (double)(dest[jj + 1 + ostride] + dest[jj + 1 - ostride]) / 2.;
+        dest[jj + 2] = (double)(dest[jj + 2 + ostride] + dest[jj + 2 - ostride]) / 2.;
         jj += opsize;
         j += opsize;
         dest[j] = *(s_y++);
-        dest[jj + 1] = avg_chromaf(dest[jj + 1 + ostride], dest[jj + 1 - ostride]);
-        dest[jj + 2] = avg_chromaf(dest[jj + 2 + ostride], dest[jj + 2 - ostride]);
+        dest[jj + 1] = (double)(dest[jj + 1 + ostride] + dest[jj + 1 - ostride]) / 2.;
+        dest[jj + 2] = (double)(dest[jj + 2 + ostride] + dest[jj + 2 - ostride]) / 2.;
       }
     }
 
@@ -8388,8 +8389,8 @@ static void convert_quad_chroma_packed(uint8_t **src, int width, int height, int
     // TRUE if we finished on an even row
     for (j = 0; j < width; j += opsize) {
       int jj = j - (ostride << 1);
-      dest[jj + 1] = avg_chromaf(dest[jj + 1 + ostride], dest[jj + 1 - ostride]);
-      dest[jj + 2] = avg_chromaf(dest[jj + 2 + ostride], dest[jj + 2 - ostride]);
+      dest[jj + 1] = (double)(dest[jj + 1 + ostride] + dest[jj + 1 - ostride]) / 2.;
+      dest[jj + 2] = (double)(dest[jj + 2 + ostride] + dest[jj + 2 - ostride]) / 2.;
     }
   }
 }
@@ -8914,7 +8915,8 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       rowstride = width;
       if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
     }
-    framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE);
+    if (fixed_rs) framesize = rowstride * height;
+    else framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE);
     rowstrides = (int *)lives_malloc(sizint * 3);
     if (fixed_rs) {
       rowstrides[0] = fixed_rs[0];
@@ -8926,7 +8928,8 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       rowstrides[1] = rowstrides[2] = rowstride;
     }
     //if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
-    framesize2 = ALIGN_CEIL(rowstride * (height >> 1), ALIGN_SIZE);
+    if (fixed_rs) framesize2 = rowstride * (height >> 1);
+    else framesize2 = ALIGN_CEIL(rowstride * (height >> 1), ALIGN_SIZE);
     weed_set_int_array(layer, WEED_LEAF_ROWSTRIDES, 3, rowstrides);
     lives_free(rowstrides);
 
@@ -8934,18 +8937,21 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
 
     if (!may_contig) {
       weed_leaf_delete(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS);
-      pd_array[0] = (uint8_t *)lives_calloc((framesize + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+      if (fixed_rs) pd_array[0] = (uint8_t *)lives_calloc(1, framesize);
+      else pd_array[0] = (uint8_t *)lives_calloc((framesize + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
       if (!pd_array[0]) {
         lives_free(pd_array);
         return FALSE;
       }
-      pd_array[1] = (uint8_t *)lives_calloc((framesize2 + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+      if (fixed_rs) pd_array[1] = (uint8_t *)lives_calloc(1, framesize2);
+      else pd_array[1] = (uint8_t *)lives_calloc((framesize2 + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
       if (!pd_array[1]) {
         lives_free(pd_array[0]);
         lives_free(pd_array);
         return FALSE;
       }
-      pd_array[2] = (uint8_t *)lives_calloc((framesize2  + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+      if (fixed_rs) pd_array[2] = (uint8_t *)lives_calloc(1, framesize2);
+      else pd_array[2] = (uint8_t *)lives_calloc((framesize2  + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
       if (!pd_array[2]) {
         lives_free(pd_array[1]);
         lives_free(pd_array[0]);
@@ -9749,8 +9755,7 @@ void alpha_unpremult(weed_layer_t *layer, boolean un) {
     }
   }
 
-  if (weed_plant_has_leaf(layer, WEED_LEAF_FLAGS))
-    flags = weed_get_int_value(layer, WEED_LEAF_FLAGS, &error);
+  flags = weed_layer_get_flags(layer);
 
   if (!un) flags |= WEED_LAYER_ALPHA_PREMULT;
   else if (flags & WEED_LAYER_ALPHA_PREMULT) flags ^= WEED_LAYER_ALPHA_PREMULT;
@@ -9861,7 +9866,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   width = weed_layer_get_width(layer);
   height = weed_layer_get_height(layer);
 
-  //  #define DEBUG_PCONV
+    #define DEBUG_PCONV
 #ifdef DEBUG_PCONV
   g_print("converting %d X %d palette %s(%s) to %s(%s)\n", width, height, weed_palette_get_name(inpl),
           weed_yuv_clamping_get_name(iclamping),
@@ -11569,7 +11574,6 @@ conv_done:
 
   if (orig_layer) weed_layer_free(orig_layer);
 
-
   if (new_gamma_type != WEED_GAMMA_UNKNOWN && can_inline_gamma(inpl, outpl)) {
     weed_layer_set_gamma(layer, new_gamma_type);
   }
@@ -12245,7 +12249,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     lives_free(msg);
     return FALSE;
   }
-  //#define DEBUG_RESIZE
+  #define DEBUG_RESIZE
 #ifdef DEBUG_RESIZE
   g_print("resizing layer size %d X %d with palette %s to %d X %d, hinted %s\n", iwidth, iheight,
           weed_palette_get_name_full(palette,
@@ -13196,9 +13200,7 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
     }
 
     if (weed_palette_has_alpha(pal)) {
-      int flags = 0;
-      if (weed_plant_has_leaf(layer, WEED_LEAF_FLAGS))
-        flags = weed_get_int_value(layer, WEED_LEAF_FLAGS, NULL);
+      int flags = weed_get_int_value(layer, WEED_LEAF_FLAGS, NULL);
       if (!(flags & WEED_LAYER_ALPHA_PREMULT)) {
         // if we have post-multiplied alpha, pre multiply
         alpha_unpremult(layer, FALSE);
@@ -13448,6 +13450,10 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
       weed_leaf_copy_or_delete(layer, WEED_LEAF_HOST_ORIG_PDATA, slayer);
       weed_leaf_copy_or_delete(layer, WEED_LEAF_HOST_SURFACE_SRC, slayer);
       weed_leaf_copy_or_delete(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, slayer);
+    }
+    if (pd_array) {
+      if (weed_leaf_set_flags(layer, WEED_LEAF_PIXEL_DATA,
+			      weed_leaf_get_flags(slayer, WEED_LEAF_PIXEL_DATA)));
     }
   }
 

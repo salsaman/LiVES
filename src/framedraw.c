@@ -237,7 +237,8 @@ static void redraw_framedraw_image(weed_layer_t *layer) {
   width = cfile->hsize;
   height = cfile->vsize;
 
-  calc_maxspect(fd_width, fd_height, &width, &height);
+  if (!mainw->multitrack || prefs->letterbox_mt) 
+    calc_maxspect(fd_width, fd_height, &width, &height);
 
   // resize to correct size
   resize_layer(layer, width, height, LIVES_INTERP_BEST,
@@ -445,17 +446,8 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
   width = cfile->hsize;
   height = cfile->vsize;
 
-  if (mainw->multitrack && prefs->letterbox_mt) {
-    fd_width = mainw->files[mainw->multitrack->render_file]->hsize;
-    fd_height = mainw->files[mainw->multitrack->render_file]->vsize;
-    calc_maxspect(mainw->multitrack->play_width, mainw->multitrack->play_height,
-		  &fd_width, &fd_height);
-  }
-
-  if (fd_width > width) fd_width = width;
-  if (fd_height > height) fd_height = height;
-
-  calc_maxspect(fd_width, fd_height, &width, &height);
+  if (!mainw->multitrack || prefs->letterbox_mt) 
+    calc_maxspect(fd_width, fd_height, &width, &height);
 
   // copy from orig, resize
 
@@ -899,7 +891,8 @@ boolean on_framedraw_mouse_start(LiVESWidget * widget, LiVESXEventButton * event
   fd_width = lives_widget_get_allocation_width(widget);
   fd_height = lives_widget_get_allocation_height(widget);
 
-  calc_maxspect(fd_width, fd_height, &width, &height);
+  if (!mainw->multitrack || prefs->letterbox_mt) 
+    calc_maxspect(fd_width, fd_height, &width, &height);
 
   xstart = (double)xstarti - (double)(fd_width - width) / 2.;
   ystart = (double)ystarti - (double)(fd_height - height) / 2.;
@@ -998,7 +991,8 @@ boolean on_framedraw_mouse_update(LiVESWidget * widget, LiVESXEventMotion * even
   fd_width = lives_widget_get_allocation_width(widget);
   fd_height = lives_widget_get_allocation_height(widget);
 
-  calc_maxspect(fd_width, fd_height, &width, &height);
+  if (!mainw->multitrack || prefs->letterbox_mt) 
+    calc_maxspect(fd_width, fd_height, &width, &height);
 
   xcurrent = (double)xcurrenti - (fd_width - width) / 2.;
   ycurrent = (double)ycurrenti - (fd_height - height) / 2.;
@@ -1164,7 +1158,8 @@ boolean on_framedraw_mouse_reset(LiVESWidget * widget, LiVESXEventButton * event
   fd_width = lives_widget_get_allocation_width(widget);
   fd_height = lives_widget_get_allocation_height(widget);
 
-  calc_maxspect(fd_width, fd_height, &width, &height);
+  if (!mainw->multitrack || prefs->letterbox_mt) 
+    calc_maxspect(fd_width, fd_height, &width, &height);
 
   xcurrent = (double)xcurrenti - (fd_width - width) / 2.;
   ycurrent = (double)ycurrenti - (fd_height - height) / 2.;

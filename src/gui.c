@@ -4430,8 +4430,10 @@ void add_to_playframe(void) {
     lives_widget_set_halign(mainw->play_image, LIVES_ALIGN_CENTER);
     if (mainw->multitrack) {
       lives_widget_set_vexpand(mainw->play_image, TRUE); // centers it in mt
+      lives_widget_set_hexpand(mainw->play_image, TRUE); // centers it in mt
     } else {
       lives_widget_set_vexpand(mainw->play_image, FALSE);
+      lives_widget_set_hexpand(mainw->play_image, FALSE);
     }
   }
   resize(1);

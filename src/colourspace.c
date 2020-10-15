@@ -8915,8 +8915,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       rowstride = width;
       if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
     }
-    if (fixed_rs) framesize = rowstride * height;
-    else framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE);
+    framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE);
     rowstrides = (int *)lives_malloc(sizint * 3);
     if (fixed_rs) {
       rowstrides[0] = fixed_rs[0];
@@ -8928,8 +8927,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       rowstrides[1] = rowstrides[2] = rowstride;
     }
     //if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
-    if (fixed_rs) framesize2 = rowstride * (height >> 1);
-    else framesize2 = ALIGN_CEIL(rowstride * (height >> 1), ALIGN_SIZE);
+    framesize2 = ALIGN_CEIL(rowstride * (height >> 1), ALIGN_SIZE);
     weed_set_int_array(layer, WEED_LEAF_ROWSTRIDES, 3, rowstrides);
     lives_free(rowstrides);
 
@@ -8937,21 +8935,18 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
 
     if (!may_contig) {
       weed_leaf_delete(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS);
-      if (fixed_rs) pd_array[0] = (uint8_t *)lives_calloc(1, framesize);
-      else pd_array[0] = (uint8_t *)lives_calloc((framesize + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+      pd_array[0] = (uint8_t *)lives_calloc((framesize + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
       if (!pd_array[0]) {
         lives_free(pd_array);
         return FALSE;
       }
-      if (fixed_rs) pd_array[1] = (uint8_t *)lives_calloc(1, framesize2);
-      else pd_array[1] = (uint8_t *)lives_calloc((framesize2 + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+      pd_array[1] = (uint8_t *)lives_calloc((framesize2 + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
       if (!pd_array[1]) {
         lives_free(pd_array[0]);
         lives_free(pd_array);
         return FALSE;
       }
-      if (fixed_rs) pd_array[2] = (uint8_t *)lives_calloc(1, framesize2);
-      else pd_array[2] = (uint8_t *)lives_calloc((framesize2  + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+      pd_array[2] = (uint8_t *)lives_calloc((framesize2  + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
       if (!pd_array[2]) {
         lives_free(pd_array[1]);
         lives_free(pd_array[0]);

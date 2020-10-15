@@ -1956,7 +1956,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     }
     j++;
   }
-  
+
   if (!svary || prefs->pb_quality == PB_QUALITY_LOW || !is_converter) {
     switch (pb_quality) {
     case PB_QUALITY_HIGH:
@@ -1965,20 +1965,18 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       break;
     case PB_QUALITY_MED:
       if (!mainw->multitrack) {
-	if (maxinwidth > opwidth || maxinheight > opheight) {
-	  calc_maxspect(opwidth, opheight, &maxinwidth, &maxinheight);
-	  opwidth = maxinwidth;
-	  opheight = maxinheight;
-	}
-	else {
-	  calc_maxspect(maxinwidth, maxinheight, &opwidth, &opheight);
-	}
-      }
-      else {
-	if (maxinwidth > opwidth) maxinwidth = opwidth;
-	if (maxinheight > opheight) maxinheight = opheight;
-	opwidth = maxinwidth;
-	opheight = maxinheight;
+        if (maxinwidth > opwidth || maxinheight > opheight) {
+          calc_maxspect(opwidth, opheight, &maxinwidth, &maxinheight);
+          opwidth = maxinwidth;
+          opheight = maxinheight;
+        } else {
+          calc_maxspect(maxinwidth, maxinheight, &opwidth, &opheight);
+        }
+      } else {
+        if (maxinwidth > opwidth) maxinwidth = opwidth;
+        if (maxinheight > opheight) maxinheight = opheight;
+        opwidth = maxinwidth;
+        opheight = maxinheight;
       }
       break;
     default:
@@ -1998,18 +1996,16 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       /* 	if (mininheight < opheight) opheight = mininheight; */
       /* } */
       if (!mainw->multitrack) {
-	if (mininwidth < opwidth || mininheight < opheight) {
-	  calc_maxspect(mininwidth, mininheight, &opwidth, &opheight);
-	}
-	else {
-	  calc_maxspect(opwidth, opheight, &mininwidth, &mininheight);
-	  opwidth = mininwidth;
-	  opheight = mininheight;
-	}
-      }
-      else {
-	if (mininwidth < opwidth) opwidth = mininwidth;
-	if (mininheight < opheight) opheight = mininheight;
+        if (mininwidth < opwidth || mininheight < opheight) {
+          calc_maxspect(mininwidth, mininheight, &opwidth, &opheight);
+        } else {
+          calc_maxspect(opwidth, opheight, &mininwidth, &mininheight);
+          opwidth = mininwidth;
+          opheight = mininheight;
+        }
+      } else {
+        if (mininwidth < opwidth) opwidth = mininwidth;
+        if (mininheight < opheight) opheight = mininheight;
       }
       break;
     }
@@ -3423,9 +3419,9 @@ apply_inst2:
           }
         }
 
-	//if (LIVES_IS_PLAYING)
-	filter_error = weed_apply_instance(instance, init_event, layers, mainw->pwidth, mainw->pheight, tc);
-	
+        //if (LIVES_IS_PLAYING)
+        filter_error = weed_apply_instance(instance, init_event, layers, mainw->pwidth, mainw->pheight, tc);
+
         //filter_error = weed_apply_instance(instance, init_event, layers, 0, 0, tc);
 
         if (filter_error == WEED_SUCCESS && (instance = get_next_compound_inst(instance)) != NULL) goto apply_inst2;

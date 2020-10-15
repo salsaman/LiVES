@@ -1073,7 +1073,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(filew->dialog));
   lives_container_set_border_width(LIVES_CONTAINER(dialog_vbox), 2);
- 
+
   if (cfile->frames > 0 || is_mt) {
     vidframe = lives_standard_frame_new(_("Video"), 0., FALSE);
 

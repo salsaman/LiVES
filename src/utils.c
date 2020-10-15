@@ -1978,14 +1978,13 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     /// we recalculate the frame at ntc as if we were at the faster framerate.
 
     if (mainw->scratch == SCRATCH_FWD || mainw->scratch == SCRATCH_BACK
-	|| mainw->scratch == SCRATCH_FWD_EXTRA || mainw->scratch == SCRATCH_BACK_EXTRA) {
+        || mainw->scratch == SCRATCH_FWD_EXTRA || mainw->scratch == SCRATCH_BACK_EXTRA) {
       if (mainw->scratch == SCRATCH_FWD_EXTRA || mainw->scratch == SCRATCH_BACK_EXTRA) ddtc *= 4;
       if (mainw->scratch == SCRATCH_BACK || mainw->scratch == SCRATCH_BACK_EXTRA) {
-	mainw->deltaticks -= ddtc * KEY_RPT_INTERVAL * prefs->scratchback_amount
-            * USEC_TO_TICKS / TICKS_PER_SECOND_DBL;
-      }
-      else mainw->deltaticks += ddtc * KEY_RPT_INTERVAL * prefs->scratchback_amount
-                                  * USEC_TO_TICKS / TICKS_PER_SECOND_DBL;
+        mainw->deltaticks -= ddtc * KEY_RPT_INTERVAL * prefs->scratchback_amount
+                             * USEC_TO_TICKS / TICKS_PER_SECOND_DBL;
+      } else mainw->deltaticks += ddtc * KEY_RPT_INTERVAL * prefs->scratchback_amount
+                                    * USEC_TO_TICKS / TICKS_PER_SECOND_DBL;
       // dtc is delta ticks, quantise this to the frame rate and round down
       mainw->deltaticks = q_gint64_floor(mainw->deltaticks, fps * 4);
     }

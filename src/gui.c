@@ -2928,15 +2928,15 @@ void create_LiVES(void) {
 
   // these are 'invisible' buttons for the key accelerators
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->t_stopbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-			    LIVES_GUI_CALLBACK(on_stop_activate), NULL);
+                            LIVES_GUI_CALLBACK(on_stop_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->t_sepwin), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_sepwin_pressed), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->t_fullscreen), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_full_screen_pressed), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->t_infobutton), LIVES_WIDGET_CLICKED_SIGNAL,
-			    LIVES_GUI_CALLBACK(on_show_file_info_activate), NULL);
+                            LIVES_GUI_CALLBACK(on_show_file_info_activate), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->t_hide), LIVES_WIDGET_CLICKED_SIGNAL,
-			    LIVES_GUI_CALLBACK(on_toolbar_hide), NULL);
+                            LIVES_GUI_CALLBACK(on_toolbar_hide), NULL);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->t_slower), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_slower_pressed),
                             LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
@@ -3708,7 +3708,7 @@ void play_window_set_title(void) {
   char *xtrabit;
   char *title = NULL;
   double sepwin_scale = sqrt(mainw->pwidth * mainw->pwidth + mainw->pheight * mainw->pheight) /
-    sqrt(cfile->hsize * cfile->hsize + cfile->vsize * cfile->vsize);
+                        sqrt(cfile->hsize * cfile->hsize + cfile->vsize * cfile->vsize);
   if (mainw->multitrack) return;
   if (!mainw->play_window) return;
 

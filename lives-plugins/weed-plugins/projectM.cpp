@@ -908,20 +908,19 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
       sd->abufsize = adlen;
 #ifdef NORM_AUDIO
       for (i = 0; i < adlen; i++) {
-	if ((myvol = fabsf(adata[0][i])) > maxvol) maxvol = myvol;
-	if (maxvol > .8) break;
+        if ((myvol = fabsf(adata[0][i])) > maxvol) maxvol = myvol;
+        if (maxvol > .8) break;
       }
       if (i == adlen && maxvol > 0.05) {
-	float *abuf = (float *)weed_calloc(adlen, 4);
-	for (i = 0; i < adlen; i++) {
-	  abuf[i] = adata[0][i] / maxvol;
-	}
-	weed_memcpy(sd->audio, abuf, adlen * 4);
-	weed_free(abuf);
-      }
-      else
+        float *abuf = (float *)weed_calloc(adlen, 4);
+        for (i = 0; i < adlen; i++) {
+          abuf[i] = adata[0][i] / maxvol;
+        }
+        weed_memcpy(sd->audio, abuf, adlen * 4);
+        weed_free(abuf);
+      } else
 #endif
-	weed_memcpy(sd->audio, adata[0], adlen * 4);
+        weed_memcpy(sd->audio, adata[0], adlen * 4);
     } else adlen = 0;
     sd->audio_frames = adlen;
     sd->audio_offs = 0;

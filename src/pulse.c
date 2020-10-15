@@ -209,7 +209,7 @@ static void pulse_buff_free(void *ptr) {lives_free(ptr);}
 static void sync_ready_ok(pulse_driver_t *pulsed, size_t nbytes) {
   if (nbytes >= 8192) {
     mainw->syncticks += ((double)nbytes / (double)(pulsed->out_arate) * 1000000.
-			 / (double)(pulsed->out_achans * pulsed->out_asamps >> 3) + .5) * USEC_TO_TICKS;
+                         / (double)(pulsed->out_achans * pulsed->out_asamps >> 3) + .5) * USEC_TO_TICKS;
   } else {
     mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
   }
@@ -330,7 +330,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
   int new_file;
 
   sync_ready = FALSE;
-  
+
   //pa_thread_make_realtime(50);
   //g_print("PA\n");
   pulsed->real_seek_pos = pulsed->seek_pos;

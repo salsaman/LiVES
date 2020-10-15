@@ -237,7 +237,7 @@ static void redraw_framedraw_image(weed_layer_t *layer) {
   width = cfile->hsize;
   height = cfile->vsize;
 
-  if (!mainw->multitrack || prefs->letterbox_mt) 
+  if (!mainw->multitrack || prefs->letterbox_mt)
     calc_maxspect(fd_width, fd_height, &width, &height);
 
   // resize to correct size
@@ -446,7 +446,7 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
   width = cfile->hsize;
   height = cfile->vsize;
 
-  if (!mainw->multitrack || prefs->letterbox_mt) 
+  if (!mainw->multitrack || prefs->letterbox_mt)
     calc_maxspect(fd_width, fd_height, &width, &height);
 
   // copy from orig, resize
@@ -891,7 +891,7 @@ boolean on_framedraw_mouse_start(LiVESWidget * widget, LiVESXEventButton * event
   fd_width = lives_widget_get_allocation_width(widget);
   fd_height = lives_widget_get_allocation_height(widget);
 
-  if (!mainw->multitrack || prefs->letterbox_mt) 
+  if (!mainw->multitrack || prefs->letterbox_mt)
     calc_maxspect(fd_width, fd_height, &width, &height);
 
   xstart = (double)xstarti - (double)(fd_width - width) / 2.;
@@ -991,7 +991,7 @@ boolean on_framedraw_mouse_update(LiVESWidget * widget, LiVESXEventMotion * even
   fd_width = lives_widget_get_allocation_width(widget);
   fd_height = lives_widget_get_allocation_height(widget);
 
-  if (!mainw->multitrack || prefs->letterbox_mt) 
+  if (!mainw->multitrack || prefs->letterbox_mt)
     calc_maxspect(fd_width, fd_height, &width, &height);
 
   xcurrent = (double)xcurrenti - (fd_width - width) / 2.;
@@ -1158,7 +1158,7 @@ boolean on_framedraw_mouse_reset(LiVESWidget * widget, LiVESXEventButton * event
   fd_width = lives_widget_get_allocation_width(widget);
   fd_height = lives_widget_get_allocation_height(widget);
 
-  if (!mainw->multitrack || prefs->letterbox_mt) 
+  if (!mainw->multitrack || prefs->letterbox_mt)
     calc_maxspect(fd_width, fd_height, &width, &height);
 
   xcurrent = (double)xcurrenti - (fd_width - width) / 2.;

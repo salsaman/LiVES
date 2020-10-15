@@ -5567,7 +5567,7 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
 
     if (widget == mainw->start_image || widget == mainw->end_image
         || (mainw->multitrack && widget == mainw->play_image)
-	|| (widget == mainw->play_window && !mainw->fs)) {
+        || (widget == mainw->play_window && !mainw->fs)) {
       int xrwidth, xrheight;
       LiVESWidget *p = lives_widget_get_parent(widget);
 
@@ -6369,7 +6369,7 @@ check_prcache:
         if (layer) pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
       }
     }
-    
+
     if (LIVES_IS_PIXBUF(pixbuf)) {
       LiVESPixbuf *pr_pixbuf = NULL;
       if (lives_pixbuf_get_width(pixbuf) == mainw->pwidth && lives_pixbuf_get_height(pixbuf) == mainw->pheight)
@@ -7799,7 +7799,7 @@ calc_maxspect(rwidth, rheight, opwidth, opheight);
 // try to get exact inner size of the main window
 lives_window_get_inner_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), opwidth, opheight);
 //*opheight -= 2; // necessary, or screen expands too much (!?)
- if (prefs->show_tool) *opheight -= lives_widget_get_allocation_height(mainw->btoolbar);
+if (prefs->show_tool) *opheight -= lives_widget_get_allocation_height(mainw->btoolbar);
 }
 
 align:
@@ -8610,7 +8610,7 @@ mainw->track_decoders[i] = clone_decoder(nclip);
       // if frame size is OK we apply real time effects
       if ((mainw->rte != 0 || (mainw->is_rendering && !mainw->event_list))
           && (mainw->current_file != mainw->scrap_file || mainw->multitrack)) {
-	mainw->frame_layer = on_rte_apply(mainw->frame_layer, lb_width, lb_height, (weed_timecode_t)mainw->currticks);
+        mainw->frame_layer = on_rte_apply(mainw->frame_layer, lb_width, lb_height, (weed_timecode_t)mainw->currticks);
       }
     }
 
@@ -9114,22 +9114,23 @@ mainw->track_decoders[i] = clone_decoder(nclip);
     lb_height = weed_layer_get_height(mainw->frame_layer);
 
     if ((lb_width != pwidth || lb_height != pheight)
-	|| weed_get_boolean_value(mainw->frame_layer, "letterboxed", NULL) == WEED_FALSE) {
+        || weed_get_boolean_value(mainw->frame_layer, "letterboxed", NULL) == WEED_FALSE) {
       if ((!mainw->multitrack && prefs->letterbox) || (mainw->multitrack && prefs->letterbox_mt)) {
-	/// letterbox internal
-	get_letterbox_sizes(&pwidth, &pheight, &lb_width, &lb_height, FALSE);
-	if (!letterbox_layer(mainw->frame_layer, pwidth, pheight, lb_width, lb_height, interp, cpal, 0)) goto lfi_done;
-	was_letterboxed = TRUE;
-	weed_set_boolean_value(mainw->frame_layer, "letterboxed", WEED_TRUE);
-	lb_width = pwidth;
-	lb_height = pheight;
+        /// letterbox internal
+        get_letterbox_sizes(&pwidth, &pheight, &lb_width, &lb_height, FALSE);
+        if (!letterbox_layer(mainw->frame_layer, pwidth, pheight, lb_width, lb_height, interp, cpal, 0)) goto lfi_done;
+        was_letterboxed = TRUE;
+        weed_set_boolean_value(mainw->frame_layer, "letterboxed", WEED_TRUE);
+        lb_width = pwidth;
+        lb_height = pheight;
       }
     }
 
-    if (lb_width != pwidth || lb_height != pheight || weed_get_boolean_value(mainw->frame_layer, "letterboxed", NULL) == WEED_FALSE) {
+    if (lb_width != pwidth || lb_height != pheight ||
+        weed_get_boolean_value(mainw->frame_layer, "letterboxed", NULL) == WEED_FALSE) {
       if (weed_layer_get_width_pixels(mainw->frame_layer) != pwidth ||
-	  weed_layer_get_height(mainw->frame_layer) != pheight) {
-	if (!resize_layer(mainw->frame_layer, pwidth, pheight, interp, cpal, 0)) goto lfi_done;
+          weed_layer_get_height(mainw->frame_layer) != pheight) {
+        if (!resize_layer(mainw->frame_layer, pwidth, pheight, interp, cpal, 0)) goto lfi_done;
       }
     }
     if (prefs->dev_show_timing)

@@ -2916,7 +2916,7 @@ framedone2:
     dst = pixel_data[p];
     src = priv->picture->data[p];
 
-    if (src == NULL) {
+    if (!src) {
       fprintf(stderr, "avformat decoder: src pixel data was NULL for frame %ld plane %d\n", tframe, p);
       goto cleanup;
     }

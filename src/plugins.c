@@ -3279,8 +3279,7 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
     chann = get_enabled_channel(inst, 0, TRUE);
     ctmpl = weed_get_plantptr_value(chann, WEED_LEAF_TEMPLATE, NULL);
 
-    if (weed_plant_has_leaf(ctmpl, WEED_LEAF_IS_AUDIO)
-        && weed_get_boolean_value(ctmpl, WEED_LEAF_IS_AUDIO, NULL) == WEED_TRUE) {
+    if (weed_get_boolean_value(ctmpl, WEED_LEAF_IS_AUDIO, NULL) == WEED_TRUE) {
       // dont hide multivalued params for audio effects
       rpar[i].hidden = 0;
     }

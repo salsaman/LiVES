@@ -3552,7 +3552,7 @@ void make_preview_box(void) {
   lives_widget_set_vexpand(mainw->preview_box, TRUE);
 
   mainw->preview_controls = lives_vbox_new(FALSE, 0);
-  lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
+  add_hsep_to_box(LIVES_BOX(mainw->preview_controls));
 
   lives_box_pack_start(LIVES_BOX(mainw->preview_box), mainw->preview_controls, FALSE, FALSE, 0);
   lives_widget_set_vexpand(mainw->preview_controls, FALSE);
@@ -3685,6 +3685,8 @@ void make_preview_box(void) {
   if (palette->style & STYLE_1) set_preview_box_colours();
 
   lives_widget_show_all(mainw->preview_box);
+  lives_widget_hide(mainw->preview_controls);
+  lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
 }
 
 
@@ -3895,7 +3897,8 @@ static void _make_play_window(void) {
     }
     if (CURRENT_CLIP_IS_VALID && cfile->is_loaded && prefs->show_gui) {
       lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
-      lives_widget_show_all(mainw->preview_controls);
+      lives_widget_show_all(mainw->preview_box);
+      lives_widget_show_now(mainw->preview_box);
       lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
     }
     load_preview_image(FALSE);
@@ -4006,8 +4009,8 @@ static void _resize_play_window(void) {
     }
   } else {
     if (!mainw->multitrack) {
-      mainw->pwidth = width;//cfile->hsize;
-      mainw->pheight = height;//cfile->vsize;
+      mainw->pwidth = cfile->hsize;
+      mainw->pheight = cfile->vsize;
     } else {
       mainw->pwidth = mainw->files[mainw->multitrack->render_file]->hsize;
       mainw->pheight = mainw->files[mainw->multitrack->render_file]->vsize;
@@ -4299,6 +4302,8 @@ static void _resize_play_window(void) {
   if (!LIVES_IS_PLAYING || !mainw->fs) {
     lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
     lives_window_resize(LIVES_WINDOW(mainw->play_window), nwidth, nheight);
+    mainw->pwidth = nwidth;
+    mainw->pheight = nheight;
   }
 
   if (!LIVES_IS_PLAYING) {

@@ -32,6 +32,8 @@
 
 #include "main.h"
 
+#define STRANGE_BUG 1
+
 boolean weed_palette_is_sane(int pal);
 
 #define USE_THREADS 1 ///< set to 0 to disable threading for pixbuf operations, 1 to enable. Other values are invalid.
@@ -8317,9 +8319,9 @@ static void convert_quad_chroma_packed(uint8_t **src, int width, int height, int
 
   // e.g: 420p to 888(8)
 
-  register int i, j;
-  uint8_t *s_y = src[0], *s_u = src[1], *s_v = src[2];
+  int i, j;
   int irow = istrides[0] - width;
+  uint8_t *s_y = src[0], *s_u = src[1], *s_v = src[2];
   int opsize = 3, uv_offs;
   int lastrow = (height >> 1) << 1; // height if even, height - 1 if odd
 
@@ -8367,13 +8369,13 @@ static void convert_quad_chroma_packed(uint8_t **src, int width, int height, int
         // on odd rows we average row - 1 with row - 3  ==> row - 2
         int jj = j - (ostride << 1);
         dest[j] = *(s_y++);
-        dest[jj + 1] = (double)(dest[jj + 1 + ostride] + dest[jj + 1 - ostride]) / 2.;
-        dest[jj + 2] = (double)(dest[jj + 2 + ostride] + dest[jj + 2 - ostride]) / 2.;
+        dest[jj + 1] = avg_chromaf(dest[jj + 1 + ostride], dest[jj + 1 - ostride]);
+        dest[jj + 2] = avg_chromaf(dest[jj + 2 + ostride], dest[jj + 2 - ostride]);
         jj += opsize;
         j += opsize;
         dest[j] = *(s_y++);
-        dest[jj + 1] = (double)(dest[jj + 1 + ostride] + dest[jj + 1 - ostride]) / 2.;
-        dest[jj + 2] = (double)(dest[jj + 2 + ostride] + dest[jj + 2 - ostride]) / 2.;
+        dest[jj + 1] = avg_chromaf(dest[jj + 1 + ostride], dest[jj + 1 - ostride]);
+        dest[jj + 2] = avg_chromaf(dest[jj + 2 + ostride], dest[jj + 2 - ostride]);
       }
     }
 
@@ -8382,15 +8384,18 @@ static void convert_quad_chroma_packed(uint8_t **src, int width, int height, int
       s_u += istrides[1];
       s_v += istrides[2];
     }
-    s_y += irow;
+#ifdef STRANGE_BUG
+    if (i > 0)
+#endif
+      s_y += irow;
     dest += ostride;
   }
   if (i > lastrow) {
     // TRUE if we finished on an even row
     for (j = 0; j < width; j += opsize) {
       int jj = j - (ostride << 1);
-      dest[jj + 1] = (double)(dest[jj + 1 + ostride] + dest[jj + 1 - ostride]) / 2.;
-      dest[jj + 2] = (double)(dest[jj + 2 + ostride] + dest[jj + 2 - ostride]) / 2.;
+      dest[jj + 1] = avg_chromaf(dest[jj + 1 + ostride], dest[jj + 1 - ostride]);
+      dest[jj + 2] = avg_chromaf(dest[jj + 2 + ostride], dest[jj + 2 - ostride]);
     }
   }
 }
@@ -8405,7 +8410,7 @@ static void convert_double_chroma_packed(uint8_t **src, int width, int height, i
 
   // e.g 422p to 888(8)
 
-  register int i, j;
+  int i, j;
   uint8_t *s_y = src[0], *s_u = src[1], *s_v = src[2];
   int irow = istrides[0] - width;
   int opsize = 3, uv_offs;
@@ -8741,6 +8746,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
   int rowstride, *rowstrides;
   int *fixed_rs = NULL;
 
+  uint32_t pflags;
   int clamping = WEED_YUV_CLAMPING_CLAMPED;
   boolean compact = FALSE;
 
@@ -8795,6 +8801,11 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
   if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_SURFACE_SRC)) {
     weed_leaf_delete(layer, WEED_LEAF_HOST_SURFACE_SRC);
   }
+  if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_SURFACE_SRC)) {
+    weed_leaf_delete(layer, WEED_LEAF_HOST_SURFACE_SRC);
+  }
+  pflags = weed_leaf_get_flags(layer, WEED_LEAF_PIXEL_DATA);
+  weed_leaf_set_flags(layer, WEED_LEAF_PIXEL_DATA, pflags & ~LIVES_FLAG_MAINTAIN_VALUE);
 
   if (black_fill) {
     if (weed_plant_has_leaf(layer, WEED_LEAF_YUV_CLAMPING))
@@ -9523,8 +9534,8 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
   int width = weed_layer_get_width(layer);
   int height = weed_layer_get_height(layer);
   int psize = pixel_size(pal);
+  int i = numplanes, j;
   boolean newdata = FALSE;
-  register int i = numplanes, j;
 
   if (alignment != 0 && !old_layer) {
     while (i > 0) if (orowstrides[--i] % alignment != 0) i = -1;
@@ -9861,7 +9872,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   width = weed_layer_get_width(layer);
   height = weed_layer_get_height(layer);
 
-  //#define DEBUG_PCONV
+  //  #define DEBUG_PCONV
 #ifdef DEBUG_PCONV
   g_print("converting %d X %d palette %s(%s) to %s(%s)\n", width, height, weed_palette_get_name(inpl),
           weed_yuv_clamping_get_name(iclamping),
@@ -12244,7 +12255,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     lives_free(msg);
     return FALSE;
   }
-  //  #define DEBUG_RESIZE
+  //    #define DEBUG_RESIZE
 #ifdef DEBUG_RESIZE
   g_print("resizing layer size %d X %d with palette %s to %d X %d, hinted %s\n", iwidth, iheight,
           weed_palette_get_name_full(palette,

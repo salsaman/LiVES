@@ -2040,10 +2040,7 @@ boolean move_event_right(weed_plant_t *event_list, weed_plant_t *event, boolean 
 
   boolean all_ok = FALSE;
 
-  int error;
-  int num_owners = 0, num_clips;
-
-  register int i;
+  int num_owners = 0, num_clips, i;
 
   if (WEED_EVENT_IS_FILTER_INIT(event)) {
     owners = weed_get_int_array_counted(event, WEED_LEAF_IN_TRACKS, &num_owners);
@@ -2080,7 +2077,7 @@ boolean move_event_right(weed_plant_t *event_list, weed_plant_t *event, boolean 
   // now we have xevent, new_tc
 
   if (WEED_EVENT_IS_FILTER_INIT(event)) {
-    weed_plant_t *deinit_event = weed_get_plantptr_value(event, WEED_LEAF_DEINIT_EVENT, &error);
+    weed_plant_t *deinit_event = weed_get_plantptr_value(event, WEED_LEAF_DEINIT_EVENT, NULL);
     if (!xevent || get_event_timecode(deinit_event) < new_tc) {
       // if we are moving a filter_init past its deinit event, remove it, remove deinit, remove param_change events,
       // remove from all filter_maps, and check for duplicate filter maps
@@ -2090,8 +2087,8 @@ boolean move_event_right(weed_plant_t *event_list, weed_plant_t *event, boolean 
     move_filter_init_event(event_list, new_tc, event, fps);
   } else {
     // otherwise, for a param_change, just insert it at new_tc
-    weed_plant_t *init_event = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT, &error);
-    weed_plant_t *deinit_event = weed_get_plantptr_value(init_event, WEED_LEAF_DEINIT_EVENT, &error);
+    weed_plant_t *init_event = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT, NULL);
+    weed_plant_t *deinit_event = weed_get_plantptr_value(init_event, WEED_LEAF_DEINIT_EVENT, NULL);
     if (!xevent || get_event_timecode(deinit_event) < new_tc) {
       delete_event(event_list, event);
       return FALSE;
@@ -2117,13 +2114,10 @@ boolean move_event_left(weed_plant_t *event_list, weed_plant_t *event, boolean c
 
   boolean all_ok = FALSE;
 
-  int error;
-  int num_owners = 0, num_clips;
-
-  register int i;
+  int num_owners = 0, num_clips, i;
 
   if (WEED_EVENT_IS_FILTER_DEINIT(event))
-    init_event = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT, &error);
+    init_event = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT, NULL);
   else return TRUE;
 
   owners = weed_get_int_array_counted(init_event, WEED_LEAF_IN_TRACKS, &num_owners);
@@ -2665,8 +2659,7 @@ void **filter_init_add_pchanges(weed_plant_t *event_list, weed_plant_t *plant, w
 
   boolean is_inst = FALSE;
 
-  int num_params;
-  register int i;
+  int num_params, i;
 
   if (WEED_PLANT_IS_FILTER_INSTANCE(plant)) {
     filter = weed_instance_get_filter(plant, TRUE);
@@ -2745,7 +2738,6 @@ weed_plant_t *append_filter_init_event(weed_plant_t *event_list, weed_timecode_t
   int e_in_channels, e_out_channels, e_ins, e_outs;
   int total_in_channels = 0;
   int total_out_channels = 0;
-  weed_error_t error;
   int my_in_tracks = 0;
 
   int i;
@@ -2770,7 +2762,7 @@ weed_plant_t *append_filter_init_event(weed_plant_t *event_list, weed_timecode_t
   if (total_in_channels > 0) {
     int count[total_in_channels];
     for (i = 0; i < total_in_channels; i++) {
-      if (weed_get_boolean_value(ctmpl[i], WEED_LEAF_HOST_DISABLED, &error) == WEED_FALSE) {
+      if (weed_get_boolean_value(ctmpl[i], WEED_LEAF_HOST_DISABLED, NULL) == WEED_FALSE) {
         count[i] = 1;
         my_in_tracks++;
         weed_set_int_value(ctmpl[i], WEED_LEAF_HOST_REPEATS, 1);
@@ -2783,7 +2775,7 @@ weed_plant_t *append_filter_init_event(weed_plant_t *event_list, weed_timecode_t
       // we need to use some repeated channels
       for (i = 0; i < total_in_channels; i++) {
         if (weed_plant_has_leaf(ctmpl[i], WEED_LEAF_MAX_REPEATS) && (count[i] > 0 || has_usable_palette(ctmpl[i]))) {
-          repeats = weed_get_int_value(ctmpl[i], WEED_LEAF_MAX_REPEATS, &error);
+          repeats = weed_get_int_value(ctmpl[i], WEED_LEAF_MAX_REPEATS, NULL);
           if (repeats == 0) {
             count[i] += num_in_tracks - my_in_tracks;
 
@@ -2814,10 +2806,10 @@ weed_plant_t *append_filter_init_event(weed_plant_t *event_list, weed_timecode_t
 
   if (total_out_channels > 0) {
     int count[total_out_channels];
-    ctmpl = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &error);
+    ctmpl = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, NULL);
     for (i = 0; i < total_out_channels; i++) {
       if (!weed_plant_has_leaf(ctmpl[i], WEED_LEAF_HOST_DISABLED) ||
-          weed_get_boolean_value(ctmpl[i], WEED_LEAF_HOST_DISABLED, &error) != WEED_TRUE) count[i] = 1;
+          weed_get_boolean_value(ctmpl[i], WEED_LEAF_HOST_DISABLED, NULL) != WEED_TRUE) count[i] = 1;
       else count[i] = 0;
     }
     lives_free(ctmpl);
@@ -2837,7 +2829,7 @@ weed_plant_t *append_filter_init_event(weed_plant_t *event_list, weed_timecode_t
 
     // handling for compound fx
     while (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE)) inst = weed_get_plantptr_value(inst,
-          WEED_LEAF_HOST_NEXT_INSTANCE, &error);
+          WEED_LEAF_HOST_NEXT_INSTANCE, NULL);
 
     for (i = 0; i < e_outs; i++) {
       chan = get_enabled_channel(inst, i, FALSE);

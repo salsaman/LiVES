@@ -2950,7 +2950,7 @@ framedone2:
       ((lives_clip_data_t *)cdata)->rec_rowstrides[p] = priv->picture->linesize[p];
     }
 
-    if (rowstride == priv->picture->linesize[p]) {
+    if (rowstride == priv->picture->linesize[p] && bleft == bright && bleft == 0) {
       (*cdata->ext_memcpy)(dst, src, rowstride * xheight);
     } else {
       for (i = 0; i < xheight; i++) {

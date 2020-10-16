@@ -58,6 +58,12 @@ typedef struct {
 #define ASPECT_BUTTON_WIDTH ((int)(250. * widget_opts.scale))
 #define ASPECT_BUTTON_HEIGHT DEF_BUTTON_HEIGHT
 
+#define WEED_LEAF_HOST_VALUE_SPECIAL "host_valspec"
+#define LIVES_VALUE_LETTERBOX_OFFSX (1 << 0) // def val. == param_max * lb_offs_x / width
+#define LIVES_VALUE_LETTERBOX_OFFSY (1 << 1)
+#define LIVES_VALUE_LETTERBOX_WIDTH (1 << 2) // def val == param_max * lb_width / width
+#define LIVES_VALUE_LETTERBOX_HEIGHT (1 << 3)
+
 #include "multitrack.h"
 
 void init_special(void);

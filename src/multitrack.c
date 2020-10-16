@@ -1064,7 +1064,7 @@ LIVES_INLINE void set_params_unchanged(lives_mt *mt, lives_rfx_t *rfx) {
         }
         weed_set_boolean_array(wparam, WEED_LEAF_IGNORE, nvals, ign_array);
         lives_free(ign_array);
-      // *INDENT-OFF*
+	// *INDENT-OFF*
       }}}
   // *INDENT-ON*
 
@@ -1871,12 +1871,9 @@ static boolean get_track_index(lives_mt * mt, weed_timecode_t tc) {
 
   int num_in_tracks;
   int opwidth, opheight;
-
   int track_index = mt->track_index;
+  int chindx, i;
 
-  int chindx;
-
-  register int i;
 
   mt->track_index = -1;
 
@@ -2070,80 +2067,83 @@ void track_select(lives_mt * mt) {
 #ifdef ENABLE_GIW
            )
 #endif
-        {
-          // set other widgets
-          if (lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mt->select_track))) {
-            lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->select_track), FALSE);
-          } else on_seltrack_activate(LIVES_MENU_ITEM(mt->select_track), mt);
-        } else {
-          if (!lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mt->select_track)))
-            lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->select_track), TRUE);
-          else on_seltrack_activate(LIVES_MENU_ITEM(mt->select_track), mt);
+#if 0
         }
+#endif
+      {
+        // set other widgets
+        if (lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mt->select_track))) {
+          lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->select_track), FALSE);
+        } else on_seltrack_activate(LIVES_MENU_ITEM(mt->select_track), mt);
       } else {
-        if (palette->style & STYLE_1) {
-          if (labelbox) {
-            lives_widget_set_bg_color(labelbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-            lives_widget_set_fg_color(labelbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-          }
-          if (ahbox) {
-            lives_widget_set_bg_color(ahbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-            lives_widget_set_fg_color(ahbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-          }
-          lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-          lives_widget_set_fg_color(arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-          lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-          lives_widget_set_bg_color(arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-          lives_widget_set_bg_color(checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-          lives_widget_set_bg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+        if (!lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mt->select_track)))
+          lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->select_track), TRUE);
+        else on_seltrack_activate(LIVES_MENU_ITEM(mt->select_track), mt);
+      }
+    } else {
+      if (palette->style & STYLE_1) {
+        if (labelbox) {
+          lives_widget_set_bg_color(labelbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+          lives_widget_set_fg_color(labelbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+        }
+        if (ahbox) {
+          lives_widget_set_bg_color(ahbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+          lives_widget_set_fg_color(ahbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+        }
+        lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+        lives_widget_set_fg_color(arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+        lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+        lives_widget_set_bg_color(arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+        lives_widget_set_bg_color(checkbutton, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+        lives_widget_set_bg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 	  // *INDENT-OFF*
         }}}}
-    // *INDENT-ON*
+  // *INDENT-ON*
 
-  if (mt->poly_state == POLY_FX_STACK) polymorph(mt, POLY_FX_STACK);
-  else if (mt->current_rfx && mt->init_event && mt->poly_state == POLY_PARAMS &&
-           weed_plant_has_leaf(mt->init_event, WEED_LEAF_IN_TRACKS)) {
-    boolean xx;
-    boolean interp = TRUE;
-    weed_timecode_t init_tc = get_event_timecode(mt->init_event);
-    tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * TICKS_PER_SECOND_DBL + init_tc, mt->fps);
+if (mt->poly_state == POLY_FX_STACK) polymorph(mt, POLY_FX_STACK);
+else if (mt->current_rfx && mt->init_event && mt->poly_state == POLY_PARAMS &&
+         weed_plant_has_leaf(mt->init_event, WEED_LEAF_IN_TRACKS)) {
+  boolean xx;
+  boolean interp = TRUE;
+  weed_timecode_t init_tc = get_event_timecode(mt->init_event);
+  tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * TICKS_PER_SECOND_DBL + init_tc, mt->fps);
 
-    // must be done in this order: interpolate, update, preview
-    xx = get_track_index(mt, tc);
-    if (mt->track_index != -1) {
-      for (i = 0; i < mt->current_rfx->num_params; i++) {
-        // if we are just switching tracks within the same effect, without changing the time,
-        // and we have unapplied changes, we don't want to interpolate
-        // otherwise we will lose those changes
-        if (mt->current_rfx->params[i].changed) {
-          interp = FALSE;
-          break;
-        }
+  // must be done in this order: interpolate, update, preview
+  xx = get_track_index(mt, tc);
+  if (mt->track_index != -1) {
+    for (i = 0; i < mt->current_rfx->num_params; i++) {
+      // if we are just switching tracks within the same effect, without changing the time,
+      // and we have unapplied changes, we don't want to interpolate
+      // otherwise we will lose those changes
+      if (mt->current_rfx->params[i].changed) {
+        interp = FALSE;
+        break;
       }
-      if (mt->current_track >= 0) {
-        // interpolate values ONLY if there are no unapplied changes (e.g. the time was altered)
-        if (interp) interpolate_params((weed_plant_t *)mt->current_rfx->source, pchain, tc);
-      }
-      if (!xx) {
-        // the param box was redrawn
-        boolean aprev = mt->opts.fx_auto_preview;
-        //mt->opts.fx_auto_preview = FALSE;
-        mainw->block_param_updates = TRUE;
+    }
+    if (mt->current_track >= 0) {
+      // interpolate values ONLY if there are no unapplied changes (e.g. the time was altered)
+      if (interp) interpolate_params((weed_plant_t *)mt->current_rfx->source, pchain, tc);
+    }
+    if (!xx) {
+      // the param box was redrawn
+      boolean aprev = mt->opts.fx_auto_preview;
+      //mt->opts.fx_auto_preview = FALSE;
+      mainw->block_param_updates = TRUE;
+      mt->current_rfx->needs_reinit = FALSE;
+      mt->current_rfx->flags |= RFX_FLAGS_NO_RESET;
+      update_visual_params(mt->current_rfx, FALSE);
+      mainw->block_param_updates = FALSE;
+      if (mt->current_rfx->needs_reinit) {
+        weed_reinit_effect(mt->current_rfx->source, TRUE);
         mt->current_rfx->needs_reinit = FALSE;
-        mt->current_rfx->flags |= RFX_FLAGS_NO_RESET;
-        update_visual_params(mt->current_rfx, FALSE);
-        mainw->block_param_updates = FALSE;
-        if (mt->current_rfx->needs_reinit) {
-          weed_reinit_effect(mt->current_rfx->source, TRUE);
-          mt->current_rfx->needs_reinit = FALSE;
-        }
-        mt->current_rfx->flags ^= RFX_FLAGS_NO_RESET;
-        mt->opts.fx_auto_preview = aprev;
-        activate_mt_preview(mt);
-      } else
-        mt_show_current_frame(mt, FALSE);
-    } else polymorph(mt, POLY_FX_STACK);
-  }
+      }
+      mt->current_rfx->flags ^= RFX_FLAGS_NO_RESET;
+      mt->opts.fx_auto_preview = aprev;
+      activate_mt_preview(mt);
+    } else
+      mt_show_current_frame(mt, FALSE);
+  } else polymorph(mt, POLY_FX_STACK);
+}
 }
 
 
@@ -7005,8 +7005,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   // TODO
   /*
     lives_widget_add_accelerator (mt->delblock, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
-                              LIVES_KEY_d, LIVES_CONTROL_MASK,
-                              LIVES_ACCEL_VISIBLE);
+    LIVES_KEY_d, LIVES_CONTROL_MASK,
+    LIVES_ACCEL_VISIBLE);
   */
 
   mt->jumpback = lives_standard_image_menu_item_new_with_label(_("_Jump to Previous Block Boundary"));
@@ -8148,9 +8148,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   // add toolbar
 
   /*  volind=LIVES_WIDGET(gtk_tool_item_new());
-    mainw->volind_hbox=lives_hbox_new(TRUE,0);
-    lives_container_add(LIVES_CONTAINER(volind),mainw->volind_hbox);
-    lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->vol_label),7);
+      mainw->volind_hbox=lives_hbox_new(TRUE,0);
+      lives_container_add(LIVES_CONTAINER(volind),mainw->volind_hbox);
+      lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->vol_label),7);
   */
 
   mt->btoolbarx = lives_toolbar_new();
@@ -9328,9 +9328,9 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
   lives_widget_object_unref(mainw->m_stopbutton);
 
   /*  lives_widget_object_ref(mainw->m_playselbutton);
-    lives_widget_unparent(mainw->m_playselbutton);
-    lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->m_playselbutton),4);
-    lives_widget_object_unref(mainw->m_playselbutton);*/
+      lives_widget_unparent(mainw->m_playselbutton);
+      lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar),LIVES_TOOL_ITEM(mainw->m_playselbutton),4);
+      lives_widget_object_unref(mainw->m_playselbutton);*/
 
   lives_widget_object_ref(mainw->m_loopbutton);
   lives_widget_unparent(mainw->m_loopbutton);
@@ -10000,8 +10000,8 @@ void mt_init_tracks(lives_mt * mt, boolean set_min_max) {
                                                             (int)new_frame_index[aclips[i]]) * TICKS_PER_SECOND_DBL;
                         add_block_start_point(LIVES_WIDGET(lives_list_nth_data(mt->video_draws, aclips[i])), tc,
                                               new_clip_index[aclips[i]], offset_start, event, ordered);
-		      // *INDENT-OFF*
-		    }}}}}}
+			// *INDENT-OFF*
+		      }}}}}}
 	    // *INDENT-ON*
 
             if (aclips[i + 1] > 0) aclips[i + 1] = renumbered_clips[aclips[i + 1]];
@@ -10030,7 +10030,7 @@ void mt_init_tracks(lives_mt * mt, boolean set_min_max) {
                 add_block_start_point(audio_draw, tc, -1, offset_start, event, TRUE);
 		// *INDENT-OFF*
               }}}}
-	  // *INDENT-ON*
+	// *INDENT-ON*
 
         if (!next_frame_event) {
           // this is the last FRAME event, so close all our rectangles
@@ -11634,7 +11634,7 @@ void unselect_all(lives_mt * mt) {
 }
 
 
-void clear_context(lives_mt * mt) {
+static void _clear_context(lives_mt * mt) {
   if (!prefs->mt_show_ctx) return;
 
   if (mt->context_scroll) {
@@ -11664,6 +11664,11 @@ void clear_context(lives_mt * mt) {
   if (prefs->mt_show_ctx) {
     lives_widget_show_all(mt->context_frame);
   }
+}
+
+void clear_context(lives_mt * mt) {
+
+
 }
 
 
@@ -16195,9 +16200,9 @@ boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
         if (!is_empty_track(LIVES_WIDGET_OBJECT(list->data))) {
           // set to 1.0
           set_mixer_track_vol(mt, i++, 1.0);
-	    // *INDENT-OFF*
-	  }}}}
-    // *INDENT-ON*
+	  // *INDENT-OFF*
+	}}}}
+  // *INDENT-ON*
 
   if (render_to_clip(FALSE, FALSE)) {
     // rendering was successful
@@ -19073,7 +19078,7 @@ static boolean check_can_resetp(lives_mt * mt) {
   if (mt->init_event) {
     int num_in_tracks;
     int *in_tracks = weed_get_int_array_counted(mt->init_event, WEED_LEAF_IN_TRACKS, &num_in_tracks);
-    if (num_in_tracks > 0) {
+    if (in_tracks) {
       for (i = 0; i < num_in_tracks; i++) {
         if (in_tracks[i] == mt->current_track) {
           mt->track_index = i;
@@ -20953,7 +20958,7 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
                       lives_free(outct);
                       lives_free(ctmpls);
                     }}}}}
-	  // *INDENT-ON*
+	    // *INDENT-ON*
           } else {
             lives_printerr("Layout contains unknown filter %s\n", filter_hash);
             ebuf = rec_error_add(ebuf, "Layout contains unknown filter", -1, tc);
@@ -21000,7 +21005,7 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
               lives_free(in_pchanges);
 	      // *INDENT-OFF*
             }}}}
-	  // *INDENT-ON*
+      // *INDENT-ON*
 
       break;
     case WEED_EVENT_TYPE_FILTER_DEINIT:

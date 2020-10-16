@@ -29,20 +29,19 @@ static int package_version = 2; // version of this package
 
 
 static weed_error_t tzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  weed_plant_t *in_channel = weed_get_in_channel(inst, 0);
+  weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
 
-  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL), *osrc = src;
-  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  unsigned char *src = weed_channel_get_pixel_data(in_channel), *osrc = src;
+  unsigned char *dst = weed_channel_get_pixel_data(out_channel);
 
-  int pal = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
+  int pal = weed_channel_get_palette(in_channel);
 
-  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL), widthx;
-  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
+  int width = weed_channel_get_width(in_channel), widthx;
+  int height = weed_channel_get_height(in_channel);
 
-  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
-  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
-  //int palette=weed_get_int_value(out_channel,WEED_LEAF_CURRENT_PALETTE,NULL);
+  int irowstride = weed_channel_get_stride(in_channel);
+  int orowstride = weed_channel_get_stride(out_channel);
 
   weed_plant_t **in_params;
 
@@ -51,20 +50,15 @@ static weed_error_t tzoom_process(weed_plant_t *inst, weed_timecode_t timecode) 
   int dx, dy;
 
   int offset = 0, dheight = height;
+  int x, y, psize = pixel_size(pal);
 
-  int psize;
+  in_params = weed_get_in_params(inst, NULL);
 
-  register int x, y;
-
-  psize = pixel_size(pal);
-
-  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
-
-  scale = weed_get_double_value(in_params[0], WEED_LEAF_VALUE, NULL);
+  scale = weed_param_get_value_double(in_params[0]);
   if (scale < 1.) scale = 1.;
 
-  offsx = weed_get_double_value(in_params[1], WEED_LEAF_VALUE, NULL) - 0.5 / scale;
-  offsy = weed_get_double_value(in_params[2], WEED_LEAF_VALUE, NULL) - 0.5 / scale;
+  offsx = weed_param_get_value_double(in_params[1]) - 0.5 / scale;
+  offsy = weed_param_get_value_double(in_params[2]) - 0.5 / scale;
   weed_free(in_params);
 
   if (offsx < 0.) offsx = 0.;
@@ -97,7 +91,6 @@ static weed_error_t tzoom_process(weed_plant_t *inst, weed_timecode_t timecode) 
     }
     dst += orowstride;
   }
-
   return WEED_SUCCESS;
 }
 
@@ -130,7 +123,6 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
-
+  weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;

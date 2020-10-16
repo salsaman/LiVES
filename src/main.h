@@ -1757,6 +1757,8 @@ int calc_frame_from_time4(int filenum, double time);  ///<  nearest frame, no ma
 boolean check_for_ratio_fps(double fps);
 double get_ratio_fps(const char *string);
 void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight);
+void calc_midspect(int rwidth, int rheight, int *cwidth, int *cheight);
+void calc_minspect(int rwidth, int rheight, int *cwidth, int *cheight);
 
 char *remove_trailing_zeroes(double val);
 

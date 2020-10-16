@@ -62,9 +62,9 @@ static GdkPixbuf *pl_gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alp
 
 
 static GdkPixbuf *pl_data_to_pixbuf(int palette, int width, int height, int irowstride,
-                                    guchar *pixel_data) {
+                                    guchar *pixel_data, int xoffs, int yoffs) {
   GdkPixbuf *pixbuf;
-  int rowstride, orowstride;
+  int orowstride;
   gboolean cheat = FALSE;
   gint n_channels;
   guchar *pixels, *end;
@@ -72,7 +72,7 @@ static GdkPixbuf *pl_data_to_pixbuf(int palette, int width, int height, int irow
   switch (palette) {
   case WEED_PALETTE_RGB24:
   case WEED_PALETTE_BGR24:
-    if (irowstride == pl_gdk_rowstride_value(width * 3)) {
+    if (!xoffs && !yoffs && irowstride == pl_gdk_rowstride_value(width * 3)) {
       pixbuf = pl_gdk_pixbuf_cheat(GDK_COLORSPACE_RGB, FALSE, 8, width, height, pixel_data);
       cheat = TRUE;
     } else pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, FALSE, 8, width, height);
@@ -80,7 +80,7 @@ static GdkPixbuf *pl_data_to_pixbuf(int palette, int width, int height, int irow
     break;
   case WEED_PALETTE_RGBA32:
   case WEED_PALETTE_BGRA32:
-    if (irowstride == pl_gdk_rowstride_value(width * 4)) {
+    if (!xoffs && !yoffs && irowstride == pl_gdk_rowstride_value(width * 4)) {
       pixbuf = pl_gdk_pixbuf_cheat(GDK_COLORSPACE_RGB, TRUE, 8, width, height, pixel_data);
       cheat = TRUE;
     } else pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, TRUE, 8, width, height);
@@ -92,19 +92,20 @@ static GdkPixbuf *pl_data_to_pixbuf(int palette, int width, int height, int irow
   pixels = gdk_pixbuf_get_pixels(pixbuf);
   orowstride = gdk_pixbuf_get_rowstride(pixbuf);
 
-  if (irowstride > orowstride) rowstride = orowstride;
-  else rowstride = irowstride;
   end = pixels + orowstride * height;
 
   if (!cheat) {
     gboolean done = FALSE;
+    int widthx = width * n_channels;
+    pixel_data += yoffs * irowstride;
+    pixel_data += xoffs * n_channels;
     for (; pixels < end && !done; pixels += orowstride) {
       if (pixels + orowstride >= end) {
-        orowstride = rowstride = pl_gdk_last_rowstride_value(width, n_channels);
+        orowstride = pl_gdk_last_rowstride_value(width, n_channels);
         done = TRUE;
       }
-      weed_memcpy(pixels, pixel_data, rowstride);
-      if (rowstride < orowstride) weed_memset(pixels + rowstride, 0, orowstride - rowstride);
+      weed_memcpy(pixels, pixel_data, widthx);
+      if (widthx < orowstride) weed_memset(pixels + widthx, 0, orowstride - widthx);
       pixel_data += irowstride;
     }
   }
@@ -152,7 +153,9 @@ static weed_error_t compositor_process(weed_plant_t *inst, weed_timecode_t timec
   int down_interp = GDK_INTERP_BILINEAR;
   int r = 0, b = 2;
   int psize = pixel_size(pal);
-  register int x, y, z;
+  int x, y, z;
+  int lbwidth, lbheight;
+  int cuttop = 0, cutleft = 0;
 
   in_channels = weed_get_in_channels(inst, &num_in_channels);
   in_params = weed_get_in_params(inst, NULL);
@@ -215,13 +218,44 @@ static weed_error_t compositor_process(weed_plant_t *inst, weed_timecode_t timec
     out_height = (((int)(oheight * myscaley + 1.)) >> 1) << 1;
 
     if (out_width * out_height >= 16) {
-      in_width = weed_channel_get_width(in_channels[z]);
-      in_height = weed_channel_get_height(in_channels[z]);
+      lbwidth = in_width = weed_channel_get_width(in_channels[z]);
+      lbheight = in_height = weed_channel_get_height(in_channels[z]);
       irowstride = weed_channel_get_stride(in_channels[z]);
 
       // scale image to new size
+      if (weed_plant_has_leaf(in_channels[z], WEED_LEAF_INNER_SIZE)) {
+        /// LETTERBOXING
+        int *lbvals = weed_get_int_array(in_channels[z], WEED_LEAF_INNER_SIZE, NULL);
+        int lbx = lbvals[0];
+        int lby = lbvals[1];
 
-      in_pixbuf = pl_data_to_pixbuf(pal, in_width, in_height, irowstride, (guchar *)src);
+        lbwidth = lbvals[2] / myscalex;
+        lbheight = lbvals[3] / myscaley;
+
+        if (lbwidth < in_width) {
+          /// instead of upscaling, just cut some letterboxing from left and right
+          int totlbw = in_width - lbvals[2];
+          double lbscale = (double)(in_width - lbwidth) / (double)totlbw;
+          int extra = (double)(in_width - lbx - lbvals[2]) * lbscale + .5;
+          cutleft = (double)lbx * (1. - lbscale) + .5;
+          in_width = lbx - cutleft + lbvals[2] + extra;
+        } else {
+          cutleft = lbx;
+          in_width = lbvals[2];
+        }
+        if (lbheight < in_height) {
+          int totlbh = in_height - lbvals[3];
+          double lbscale = ((double)in_height - (double)lbheight) / (double)totlbh;
+          int extra = (double)(in_height - lby - lbvals[3]) * lbscale + .5;
+          cuttop = (double)lby * (1. - lbscale) + .5;
+          in_height = lby - cuttop + lbvals[3] + extra;
+        } else {
+          cuttop = lby;
+          in_height = lbvals[3];
+        }
+      }
+
+      in_pixbuf = pl_data_to_pixbuf(pal, in_width, in_height, irowstride, (guchar *)src, cutleft, cuttop);
 
       if (out_width > in_width || out_height > in_height) {
         out_pixbuf = gdk_pixbuf_scale_simple(in_pixbuf, out_width, out_height, up_interp);

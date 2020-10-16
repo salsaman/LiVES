@@ -7960,9 +7960,6 @@ void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   mainw->opwx = mainw->opwy = -1;
 
   if ((LIVES_IS_PLAYING && !mainw->fs) || (!LIVES_IS_PLAYING && mainw->play_window)) {
-    //mainw->pwidth = DEF_FRAME_HSIZE - H_RESIZE_ADJUST;
-    //mainw->pheight = DEF_FRAME_VSIZE - V_RESIZE_ADJUST;
-
     if (mainw->play_window) {
       resize_play_window();
       sched_yield();

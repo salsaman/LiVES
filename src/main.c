@@ -199,7 +199,10 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
 #endif
 #define NO_WARN_ERRORS
 #ifdef NO_WARN_ERRORS
-    if (xlevel == LIVES_LOG_LEVEL_WARNING) return;
+    if (xlevel == LIVES_LOG_LEVEL_WARNING) {
+      break_me("warn");
+      return;
+    }
 #endif
     //#define NO_CRITICAL_ERRORS
 #ifdef NO_CRITICAL_ERRORS
@@ -1702,7 +1705,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   if (*capable->wm_caps.panel)
     prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);
-  //prefs->show_desktop_panel = TRUE;
+  prefs->show_desktop_panel = TRUE;
 
   prefs->show_msgs_on_startup = get_boolean_prefd(PREF_MSG_START, TRUE);
 
@@ -5582,7 +5585,7 @@ void set_drawing_area_from_pixbuf(LiVESWidget * widget, LiVESPixbuf * pixbuf,
         rheight = xrheight;
       }
 
-      if (!mainw->multitrack && prefs->ce_maxspect) {
+      if (!mainw->multitrack && (prefs->ce_maxspect || prefs->letterbox)) {
         calc_maxspect(rwidth, rheight, &width, &height);
 
         width = (width >> 1) << 1;
@@ -5770,7 +5773,7 @@ check_stcache:
 
   tc = ((frame - 1.)) / cfile->fps * TICKS_PER_SECOND;
 
-  if (!prefs->ce_maxspect) {
+  if (!prefs->ce_maxspect && !prefs->letterbox) {
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
     if (!LIVES_IS_PLAYING && !layer && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame) &&
         cfile->ext_src) {
@@ -6043,7 +6046,7 @@ check_encache:
 
   tc = (frame - 1.) / cfile->fps * TICKS_PER_SECOND;
 
-  if (!prefs->ce_maxspect) {
+  if (!prefs->ce_maxspect && !prefs->letterbox) {
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
     if (!LIVES_IS_PLAYING && !layer && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame) &&
         cfile->ext_src) {
@@ -6222,6 +6225,7 @@ void load_preview_image(boolean update_always) {
   frames_t xpf = -1;
   int tries = 2;
   int preview_frame;
+  int width, height;
 
   if (!prefs->show_gui) return;
   if (LIVES_IS_PLAYING) return;
@@ -6347,14 +6351,24 @@ check_prcache:
       }
     }
 
+    width = cfile->hsize;
+    height = cfile->vsize;
+    if (prefs->ce_maxspect && !prefs->letterbox) {
+      width = mainw->pwidth;
+      height = mainw->pheight;
+    }
+    if (prefs->letterbox) {
+      calc_maxspect(mainw->pwidth, mainw->pheight, &width, &height);
+    }
+
     if (!layer && !pixbuf) {
       layer = lives_layer_new_for_frame(mainw->current_file, mainw->preview_frame);
       tc = ((mainw->preview_frame - 1.)) / cfile->fps * TICKS_PER_SECOND;
-      if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, mainw->pwidth, mainw->pheight,
+      if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, width, height,
                              WEED_PALETTE_RGB24)) {
         LiVESInterpType interp = get_interp_value(prefs->pb_quality, TRUE);
         check_layer_ready(layer);
-        if (!resize_layer(layer, mainw->pwidth, mainw->pheight, interp, WEED_PALETTE_RGB24, 0) ||
+        if (!resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0) ||
             !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
           weed_layer_free(layer);
           if (xmd5sum) lives_free(xmd5sum);
@@ -6372,13 +6386,13 @@ check_prcache:
 
     if (LIVES_IS_PIXBUF(pixbuf)) {
       LiVESPixbuf *pr_pixbuf = NULL;
-      if (lives_pixbuf_get_width(pixbuf) == mainw->pwidth && lives_pixbuf_get_height(pixbuf) == mainw->pheight)
+      if (lives_pixbuf_get_width(pixbuf) == width && lives_pixbuf_get_height(pixbuf) == height)
         pr_pixbuf = pixbuf;
       else {
-        pr_pixbuf = lives_pixbuf_scale_simple(pixbuf, mainw->pwidth, mainw->pheight, LIVES_INTERP_BEST);
+        pr_pixbuf = lives_pixbuf_scale_simple(pixbuf, width, height, LIVES_INTERP_BEST);
       }
       if (LIVES_IS_PIXBUF(pr_pixbuf)) {
-        lives_widget_set_size_request(mainw->preview_image, MAX(mainw->pwidth, mainw->sepwin_minwidth), mainw->pheight);
+        lives_widget_set_size_request(mainw->preview_image, MAX(width, mainw->sepwin_minwidth), height);
         set_drawing_area_from_pixbuf(mainw->preview_image, pr_pixbuf, mainw->pi_surface);
         if (pr_pixbuf != pixbuf) lives_widget_object_unref(pr_pixbuf);
         if (!layer || !cache_it || weed_layer_get_pixel_data_packed(layer) || !(pixbuf_to_layer(layer, pixbuf)))
@@ -6396,7 +6410,8 @@ check_prcache:
       if (!is_virtual_frame(mainw->current_file, mainw->preview_frame)) {
         if (cfile->clip_type == CLIP_TYPE_DISK && capable->has_md5sum) {
           if (!xmd5sum) {
-            char *fname = make_image_file_name(cfile, mainw->preview_frame, get_image_ext_for_type(cfile->img_type));
+            char *fname = make_image_file_name(cfile, mainw->preview_frame,
+                                               get_image_ext_for_type(cfile->img_type));
             xmd5sum = get_md5sum(fname);
             lives_free(fname);
           }
@@ -7651,8 +7666,8 @@ void pull_frame_threaded(weed_layer_t *layer, const char *img_ext, weed_timecode
             sfile->alt_src_types[0] = LIVES_EXT_SRC_DECODER;
 	    // *INDENT-OFF*
 	  }}}}}
-  // *INDENT-ON*
 #endif
+  // *INDENT-ON*
   weed_set_boolean_value(layer, WEED_LEAF_THREAD_PROCESSING, WEED_TRUE);
   if (1) {
     lives_thread_attr_t attr = LIVES_THRDATTR_PRIORITY;
@@ -7670,7 +7685,6 @@ void pull_frame_threaded(weed_layer_t *layer, const char *img_ext, weed_timecode
   }
 #endif
 }
-
 
 LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ext, weed_timecode_t tc,
 int width, int height, LiVESInterpType interp, boolean fordisp) {
@@ -7750,13 +7764,13 @@ if (mainw->play_window) {
 // use values set in resize_play_window
 *opwidth = mainw->pwidth;
 *opheight = mainw->pheight;
-/* if (!mainw->multitrack && prefs->letterbox) { */
-/*   rwidth = *opwidth; */
-/*   rheight = *opheight; */
-/*   *opwidth = cfile->hsize; */
-/*   *opheight = cfile->vsize; */
-/*   calc_maxspect(rwidth, rheight, opwidth, opheight); */
-/* } */
+if (mainw->multitrack && prefs->letterbox_mt) {
+rwidth = *opwidth;
+rheight = *opheight;
+*opwidth = cfile->hsize;
+*opheight = cfile->vsize;
+calc_maxspect(rwidth, rheight, opwidth, opheight);
+}
 goto align;
 }
 
@@ -8610,6 +8624,8 @@ mainw->track_decoders[i] = clone_decoder(nclip);
       // if frame size is OK we apply real time effects
       if ((mainw->rte != 0 || (mainw->is_rendering && !mainw->event_list))
           && (mainw->current_file != mainw->scrap_file || mainw->multitrack)) {
+        if (prefs->dev_show_timing)
+          g_printerr("rte start @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
         mainw->frame_layer = on_rte_apply(mainw->frame_layer, lb_width, lb_height, (weed_timecode_t)mainw->currticks);
       }
     }
@@ -9191,7 +9207,7 @@ mainw->track_decoders[i] = clone_decoder(nclip);
     if (pixbuf) lives_widget_object_unref(pixbuf);
     success = TRUE;
     if (prefs->dev_show_timing)
-      g_print("paint @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+      g_print("paint @ %f\n\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     goto lfi_done;
   }
 

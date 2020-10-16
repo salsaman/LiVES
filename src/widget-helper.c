@@ -3306,9 +3306,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_hseparator_new(void) {
 #else
   hsep = gtk_hseparator_new();
 #endif
-#endif
-#ifdef GUI_QT
-  hsep = new LiVESHSeparator;
+  lives_widget_set_size_request(hsep, -1, 1);
 #endif
   return hsep;
 }
@@ -3322,9 +3320,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_vseparator_new(void) {
 #else
   vsep = gtk_vseparator_new();
 #endif
-#endif
-#ifdef GUI_QT
-  vsep = new LiVESVSeparator;
+  lives_widget_set_size_request(vsep, 1, -11);
 #endif
   return vsep;
 }
@@ -3338,9 +3334,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_hbutton_box_new(void) {
 #else
   bbox = gtk_hbutton_box_new();
 #endif
-#ifdef GUI_QT
-  bbox = new LiVESButtonBox(LIVES_ORIENTATION_HORIZONTAL);
-#endif
 #endif
   return bbox;
 }
@@ -3353,9 +3346,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_vbutton_box_new(void) {
   bbox = gtk_button_box_new(LIVES_ORIENTATION_VERTICAL);
 #else
   bbox = gtk_vbutton_box_new();
-#endif
-#ifdef GUI_QT
-  bbox = new LiVESButtonBox(LIVES_ORIENTATION_VERTICAL);
 #endif
 #endif
   return bbox;
@@ -12289,16 +12279,37 @@ void lives_general_button_clicked(LiVESButton * button, livespointer data_to_fre
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_hseparator_new(void) {
   LiVESWidget *hseparator = lives_hseparator_new();
-  if (prefs->extra_colours && mainw->pretty_colours)
-    lives_widget_set_bg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->nice1);
-  else
-    lives_widget_set_bg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  lives_widget_set_fg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  if (widget_opts.apply_theme) {
+    if (prefs->extra_colours && mainw->pretty_colours) {
+      lives_widget_set_bg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->nice1);
+    } else {
+      lives_widget_set_bg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    }
+    lives_widget_set_fg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  }
   if (LIVES_SHOULD_EXPAND_HEIGHT)
     lives_widget_set_margin_top(hseparator, widget_opts.packing_height);
   if (LIVES_SHOULD_EXPAND_EXTRA_HEIGHT)
     lives_widget_set_margin_bottom(hseparator, widget_opts.packing_height);
   return hseparator;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_vseparator_new(void) {
+  LiVESWidget *vseparator = lives_vseparator_new();
+  if (widget_opts.apply_theme) {
+    if (prefs->extra_colours && mainw->pretty_colours) {
+      lives_widget_set_bg_color(vseparator, LIVES_WIDGET_STATE_NORMAL, &palette->nice1);
+    } else {
+      lives_widget_set_bg_color(vseparator, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    }
+    lives_widget_set_fg_color(vseparator, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  }
+  if (LIVES_SHOULD_EXPAND_WIDTH)
+    lives_widget_set_margin_left(vseparator, widget_opts.packing_width);
+  if (LIVES_SHOULD_EXPAND_EXTRA_WIDTH)
+    lives_widget_set_margin_right(vseparator, widget_opts.packing_width);
+  return vseparator;
 }
 
 
@@ -12313,12 +12324,12 @@ LiVESWidget *add_hsep_to_box(LiVESBox * box) {
 
 
 LiVESWidget *add_vsep_to_box(LiVESBox * box) {
-  LiVESWidget *vseparator = lives_vseparator_new();
+  LiVESWidget *vseparator = lives_standard_vseparator_new();
   int packing_width = widget_opts.packing_width >> 1;
   if (LIVES_SHOULD_EXPAND_EXTRA_FOR(box)) packing_width *= 2;
-  lives_box_pack_start(box, vseparator, FALSE, FALSE, packing_width);
-  lives_widget_apply_theme(vseparator, LIVES_WIDGET_STATE_NORMAL);
-  lives_widget_set_bg_color(vseparator, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+  if (LIVES_IS_VBOX(box)) packing_width = 0;
+  lives_box_pack_start(box, vseparator, LIVES_IS_VBOX(box)
+                       || LIVES_SHOULD_EXPAND_EXTRA_FOR(box), TRUE, packing_width);
   return vseparator;
 }
 

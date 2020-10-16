@@ -3209,7 +3209,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   prefsw->checkbutton_ce_maxspect =
-    lives_standard_check_button_new(_("Shrink previews to fit in interface"), prefs->ce_maxspect, LIVES_BOX(hbox), NULL);
+    lives_standard_check_button_new(_("Shrink previews to fit in interface"), prefs->ce_maxspect, LIVES_BOX(hbox),
+                                    (tmp = H_("Setting is assumed automatically if letterbox playback is enabled")));
+  lives_free(tmp);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 

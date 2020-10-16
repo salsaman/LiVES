@@ -2278,12 +2278,12 @@ None.
 
  * "natural_size" : WEED_SEED_INT[2]
 
-if the plugin sets the channel_template flagbit WEED_CHANNEL_NEEDS_NATURAL_SIZE, then the host should set this to the width
+if the plugin sets the channel_template flagbit WEED_CHANNEL_NEEDS_NATURAL_SIZE, then the host
+should set this to the width
 and height in pixels (NOT macropixels) of the channel BEFORE without any resizing.
 This is to allow for example fixed size objects to
 be properly scaled regardless of the scaled channel size. See also the notes for the flagbit.
-
-
+If the leaf is not set, then it should be assumed that the current size is also the natural size.
 
 
 
@@ -2753,6 +2753,12 @@ possible, and process video accordingly:
 
 '''Optional leaves for channel plants with video''': [[BR]]
 
+
+ * "inner_size" : WEED_SEED_INT[4] : if the host "letterboxes" the image, this leaf may be set.
+   The 4 integer values represent (x_offset, y_offset, width, height). Offsets are measured from
+   top left, and width and height are in pixels (NOT macropixels). Plugins may use this to cut
+   blank borders for example when resizing an image to overlay it.
+   If the leaf is absent then no letterboxing has been done.
 
  * "pixel_aratio"   : WEED_SEED_DOUBLE : physical aspect ratio of the display device that the host is using to display
    			    		       the corresponding out_channel. par = pixel_width / pixel_height.
@@ -3668,9 +3674,12 @@ Explanation of flag bit combinations:
 
  * WEED_CHANNEL_NEEDS_NATURAL_SIZE
    If this flagbit is set, the host should add an extra leaf to channels created from this template: "natural_size".
-   This is intended for filters which use fixed size objects, the object should be scaled from the natural size to
-   the actual channel size. For example, the filter could create a transparent frame internally, using the natural size,
-   draw the (opaque) object to it, rescale the internal frame, and overlay it on the scaled input to create the output.
+   This is intended for filters which use fixed size objects (e.g. text);
+   the object should be scaled proportionally using the ratio  actual channel size / natural size.
+   (In simple terms, if the image has been stretched, then the fixed size object should be stretched accordingly).
+
+   In order to function properly, the plugin should look at the "inner_size" leaf set by the host and
+   use the letterboxed width and height as the "actual size".
 
    Natural size is not restricted by the usual channel rules (maxwidth, maxheight, minwidth, minheight, hstep, vstep,
    alignment_height), since these apply only to the scaled channel size.

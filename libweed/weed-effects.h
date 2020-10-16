@@ -252,6 +252,7 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_YUV_SAMPLING "YUV_sampling"
 #define WEED_LEAF_YUV_SUBSPACE "YUV_subspace"
 #define WEED_LEAF_NATURAL_SIZE "natural_size"
+#define WEED_LEAF_INNER_SIZE "inner_size"
 
 ///
 /* optional for filters with audio channels (maybe overriden in channel templates depending on filter_class flags) */

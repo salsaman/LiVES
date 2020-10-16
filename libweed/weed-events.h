@@ -83,6 +83,8 @@ extern "C"
 #define WEED_LEAF_TRACK_LABEL_TRACKS "track_label_tracks"
 #define WEED_LEAF_TRACK_LABEL_VALUES "track_label_values"
 
+#define WEED_LEAF_KEEP_ASPECT "keep_aspect"
+
 #define WEED_LEAF_EVENT_TYPE "event_type"
 #define WEED_LEAF_TIMECODE "timecode"
 

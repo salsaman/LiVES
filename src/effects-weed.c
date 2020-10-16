@@ -1628,7 +1628,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   int nmandout = 0;
   int lcount = 0;
   int key = -1;
-  register int i, j, k;
+  int i, j, k;
+
+  if (prefs->dev_show_timing)
+    g_printerr("apply inst @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
   if (weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, NULL) == WEED_FALSE) needs_reinit = TRUE;
 
@@ -1980,21 +1983,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       }
       break;
     default:
-      /* if (letterbox) { */
-      /*   double aspect = (double)mininwidth / (double)mininheight, scale = 1.; */
-      /*   if (opwidth > mininwidth || opheight > mininheight) { */
-      /*     scale = (double)opwidth / (double)mininwidth; */
-      /*     if ((double)opheight / scale / aspect < mininheight) { */
-      /*       scale = (double)opheight / (double)mininheight; */
-      /*     } */
-      /*     opwidth = (double)opwidth / scale; */
-      /*     opheight = (double)opheight / scale; */
-      /*   } */
-      /* } */
-      /* else { */
-      /* 	if (mininwidth < opwidth) opwidth = mininwidth; */
-      /* 	if (mininheight < opheight) opheight = mininheight; */
-      /* } */
+      // PB_QUALITY_LOW
       if (!mainw->multitrack) {
         if (mininwidth < opwidth || mininheight < opheight) {
           calc_maxspect(mininwidth, mininheight, &opwidth, &opheight);
@@ -2013,6 +2002,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
   opwidth = (opwidth >> 1) << 1;
   opheight = (opheight >> 1) << 1;
+
+  if (pb_quality < PB_QUALITY_HIGH && mainw->multitrack && prefs->letterbox_mt) {
+    calc_midspect(cfile->hsize, cfile->vsize, &opwidth, &opheight);
+  }
 
   /// pass 1, we try to set channel sizes to opwidth X opheight
   /// channel may have restrictions (e.g fixed size or step values) so we will set it as near as we can
@@ -2319,7 +2312,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     // which will be width * pixels_per_macropixel of the original channel palette, which is the divisor we used when
     // setting the channel width. resize_layer() will handle conversion of the macropixel sizes between layer palette
     // and opalette
-    if (inwidth != width || inheight != height) {
+    if ((!svary && (inwidth != width || inheight != height))
+        || (svary && (inwidth > width || inheight > height || letterbox))) {
       short interp = get_interp_value(pb_quality, TRUE);
       if (letterbox) {
         // if we are letterboxing, as well as letterboxing the final output in the player, we will also letterbox each layer into its channel
@@ -2332,6 +2326,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         // another alternative would be to resize all of the layers, and ignore letterboxing for the intermediate stages,
         //// but for now we assume if the user wants letterboxing then it applies
         // to all layers
+        int lbvals[4];
         calc_maxspect(width, height, &xwidth, &xheight);
 
         if (xwidth != width || height != xheight) {
@@ -2340,6 +2335,12 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
             goto done_video;
           }
           resized = TRUE;
+          lbvals[0] = (width - xwidth) >> 1;
+          lbvals[1] = (height - xheight) >> 1;
+          lbvals[2] = xwidth;
+          lbvals[3] = xheight;
+          g_print("VALS HERE %d and %d\n", width, xwidth);
+          weed_set_int_array(channel, WEED_LEAF_INNER_SIZE, 4, lbvals);
           if (!mainw->multitrack && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
             mainw->blend_palette = weed_layer_get_palette_yuv(layer, &mainw->blend_clamping, &mainw->blend_sampling,
                                    &mainw->blend_subspace);
@@ -2350,6 +2351,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         }
       }
       if (!resized) {
+        if (weed_plant_has_leaf(channel, WEED_LEAF_INNER_SIZE))
+          weed_leaf_delete(channel, WEED_LEAF_INNER_SIZE);
         if (!resize_layer(layer, width, height, interp, opalette, oclamping)) {
           retval = FILTER_ERROR_UNABLE_TO_RESIZE;
           goto done_video;
@@ -2362,6 +2365,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
           mainw->blend_gamma = weed_layer_get_gamma(layer);
         }
       }
+    } else {
+      if (weed_plant_has_leaf(channel, WEED_LEAF_INNER_SIZE))
+        weed_leaf_delete(channel, WEED_LEAF_INNER_SIZE);
     }
 
     // check palette again in case it changed during resize
@@ -4936,7 +4942,8 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
       if (dup) continue;
       idx++;
       if (prefs->show_splash) {
-        msg = lives_strdup_printf(_("Loaded filter %s in plugin %s"), filter_name, plugin_name);
+        msg = lives_strdup_printf((tmp = _("Loaded filter %s in plugin %s")), filter_name, plugin_name);
+        lives_free(tmp);
         splash_msg(msg, SPLASH_LEVEL_LOAD_RTE);
         lives_free(msg);
       }
@@ -9874,9 +9881,8 @@ LiVESList *weed_get_all_names(lives_fx_list_t list_type) {
 }
 
 
-LIVES_GLOBAL_INLINE int rte_get_numfilters(void) {
-  return num_weed_filters;
-}
+int rte_get_numfilters(void) {return num_weed_filters;}
+
 
 ///////////////////
 // parameter interpolation

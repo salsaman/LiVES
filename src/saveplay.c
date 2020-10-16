@@ -3206,7 +3206,8 @@ void play_file(void) {
           /// create the preview in the sepwin
           if (prefs->show_gui) {
             lives_widget_set_no_show_all(mainw->preview_controls, FALSE);
-            lives_widget_show_all(mainw->preview_controls);
+            lives_widget_show_all(mainw->preview_box);
+            lives_widget_show_now(mainw->preview_box);
             lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
             //lives_widget_grab_focus(mainw->preview_spinbutton);
           }
@@ -3247,6 +3248,7 @@ void play_file(void) {
             lives_widget_show_now(mainw->preview_box);
             lives_widget_grab_focus(mainw->preview_spinbutton);
             lives_widget_set_no_show_all(mainw->preview_controls, TRUE);
+            lives_widget_process_updates(mainw->play_window);
             lives_window_center(LIVES_WINDOW(mainw->play_window));
             clear_widget_bg(mainw->play_image, mainw->play_surface);
 	  // *INDENT-OFF*

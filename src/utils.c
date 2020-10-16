@@ -18,6 +18,8 @@
 #include "callbacks.h"
 #include "cvirtual.h"
 
+#define ASPECT_ALLOWANCE 0.005
+
 typedef struct {
   uint32_t hash;
   char *key;
@@ -2186,8 +2188,51 @@ void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight) {
     *cheight = rheight;
     *cwidth = (double)(*cheight) * aspect;
   }
+  *cwidth = ((*cwidth + 1) >> 1) << 1;
+  *cheight = ((*cheight + 1) >> 1) << 1;
 }
 
+
+void calc_minspect(int rwidth, int rheight, int *cwidth, int *cheight) {
+  // calculate minspect (maximum size which conforms to aspect ratio of
+  // of rwidth, rheight) - given restrictions cwidth * cheight
+
+  double aspect, dheight;
+
+  if (*cwidth <= 0 || *cheight <= 0 || rwidth <= 0 || rheight <= 0) return;
+
+  aspect = (double)(rwidth) / (double)(rheight);
+  dheight = (double)(*cwidth) / aspect;
+
+  if (dheight <= ((double)(*cheight) * (1. + ASPECT_ALLOWANCE)))
+    *cheight = (int)dheight;
+  else
+    *cwidth = (int)((double)(*cheight * aspect));
+
+  *cwidth = ((*cwidth + 1) >> 1) << 1;
+  *cheight = ((*cheight + 1) >> 1) << 1;
+}
+
+
+void calc_midspect(int rwidth, int rheight, int *cwidth, int *cheight) {
+  // calculate midspect (minimum size which conforms to aspect ratio of
+  // of rwidth, rheight) - which contains cwidth, cheight
+
+  double aspect, dheight;
+
+  if (*cwidth <= 0 || *cheight <= 0 || rwidth <= 0 || rheight <= 0) return;
+
+  aspect = (double)(rwidth) / (double)(rheight);
+  dheight = (double)(*cwidth) / aspect;
+
+  if (dheight >= ((double)(*cheight) * (1. - ASPECT_ALLOWANCE)))
+    *cheight = (int)dheight;
+  else
+    *cwidth = (int)((double)(*cheight * aspect));
+
+  *cwidth = ((*cwidth + 1) >> 1) << 1;
+  *cheight = ((*cheight + 1) >> 1) << 1;
+}
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -3680,8 +3725,6 @@ void find_when_to_stop(void) {
   else mainw->whentostop = STOP_ON_VID_END; // tada...
 }
 
-
-#define ASPECT_ALLOWANCE 0.005
 
 void minimise_aspect_delta(double aspect, int hblock, int vblock, int hsize, int vsize, int *width, int *height) {
   // we will use trigonometry to calculate the smallest difference between a given

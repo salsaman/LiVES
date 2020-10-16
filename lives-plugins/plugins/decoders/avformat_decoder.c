@@ -1394,7 +1394,8 @@ framedone2:
     if (cdata->rec_rowstrides) {
       ((lives_clip_data_t *)cdata)->rec_rowstrides[p] = priv->pFrame->linesize[p];
     }
-    if (rowstride == priv->pFrame->linesize[p] && (bleft = bright == 0)) {
+
+    if (rowstride == priv->pFrame->linesize[p] && bleft == bright && bleft == 0) {
       (*cdata->ext_memcpy)(dst, src, rowstride * xheight);
     } else {
       for (i = 0; i < xheight; i++) {

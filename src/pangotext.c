@@ -624,11 +624,14 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
     /// if possible just render the slice which contains the text
     if (top * height + lheight < height) {
       boolean rbswapped = FALSE;
+
+      // adjust pixel_data and height, then copy-by-ref to layer_slice
       src = weed_layer_get_pixel_data_packed(layer);
       weed_layer_set_pixel_data_packed(layer, src + (int)(top * height) * row);
       weed_layer_set_height(layer, lheight);
-
       layer_slice = weed_layer_copy(NULL, layer);
+
+      // restore original values
       weed_layer_set_height(layer, height);
       weed_layer_set_pixel_data_packed(layer, src);
 
@@ -659,9 +662,11 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
       weed_leaf_set_flagbits(layer_slice, WEED_LEAF_PIXEL_DATA, LIVES_FLAG_MAINTAIN_VALUE);
       convert_layer_palette(layer_slice, pal, 0);
       weed_leaf_clear_flagbits(layer_slice, WEED_LEAF_PIXEL_DATA, LIVES_FLAG_MAINTAIN_VALUE);
+
       pd = weed_layer_get_pixel_data_packed(layer_slice);
       lives_memcpy(src + (int)(top * height) * row, pd, lheight * row);
       weed_layer_free(layer_slice);
+
       if (rbswapped) {
         lives_colRGBA64_t col;
         col.red = fg_col->red;
@@ -673,6 +678,7 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
       }
     }
   }
+
   if (!cr) {
     cr = layer_to_lives_painter(layer);
     if (!cr) return layer; ///< error occurred

@@ -127,7 +127,9 @@ or may be serialised for offline storage / interchange, etc.
 
 * "track_label_values" : WEED_SEED_STRING : an array of (short) track labels. Mapping of the values to tracks is done via "track_label_tracks".
 
-
+* "keep_aspect" : WEED_SEED_BOOLEAN : if set to WEED_TRUE, then when resizing component frames,
+  an attempt should be made to retain the original aspect ratio (e.g by "letterboxing"),
+  otherwise, components may be resized without reference to the original aspect ratio.
 
 
 == PLANT TYPE EVENT ==

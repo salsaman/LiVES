@@ -839,13 +839,23 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     if (prefs->letterbox == newval) goto fail2;
     prefs->letterbox = newval;
     if (prefsw) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_lb), newval);
+    if (mainw->multitrack) {
+      lives_signal_handler_block(mainw->letter, mainw->lb_func);
+      lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->letter), newval);
+      lives_signal_handler_unblock(mainw->letter, mainw->lb_func);
+    }
     goto success2;
   }
 
   if (!lives_strcmp(prefidx, PREF_LETTERBOXMT)) {
-    if (prefs->letterbox_mt == newval) goto fail2;
     prefs->letterbox_mt = newval;
-    if (prefsw) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_lbmt), newval);
+    if (permanent) {
+      if (prefs->letterbox_mt == newval) goto fail2;
+      future_prefs->letterbox_mt = newval;
+      if (prefsw) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_lbmt), newval);
+    }
+    if (mainw->multitrack && mainw->multitrack->event_list)
+      mt_show_current_frame(mainw->multitrack, FALSE);
     goto success2;
   }
 
@@ -1411,6 +1421,7 @@ boolean apply_prefs(boolean skip_warn) {
   boolean warn_no_pulse = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_no_pulse));
   boolean warn_layout_wipe = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_wipe));
   boolean warn_layout_gamma = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_gamma));
+  boolean warn_layout_lb = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_lb));
   boolean warn_vjmode_enter = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_vjmode_enter));
 
   boolean midisynch = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->check_midi));
@@ -1695,7 +1706,8 @@ boolean apply_prefs(boolean skip_warn) {
               WARN_MASK_LAYOUT_POPUP + !warn_yuv4m_open * WARN_MASK_OPEN_YUV4M + !warn_mt_backup_space *
               WARN_MASK_MT_BACKUP_SPACE + !warn_after_crash * WARN_MASK_CLEAN_AFTER_CRASH
               + !warn_no_pulse * WARN_MASK_NO_PULSE_CONNECT
-              + !warn_layout_wipe * WARN_MASK_LAYOUT_WIPE + !warn_layout_gamma * WARN_MASK_LAYOUT_GAMMA + !warn_vjmode_enter *
+              + !warn_layout_wipe * WARN_MASK_LAYOUT_WIPE + !warn_layout_gamma * WARN_MASK_LAYOUT_GAMMA + !warn_layout_lb *
+              WARN_MASK_LAYOUT_LB + !warn_vjmode_enter *
               WARN_MASK_VJMODE_ENTER;
 
   if (warn_mask != prefs->warning_mask) {
@@ -3689,7 +3701,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_lbmt = lives_standard_check_button_new(_("In Multitrack Mode"),
-                             prefs->letterbox_mt, LIVES_BOX(hbox), NULL);
+                             future_prefs->letterbox_mt, LIVES_BOX(hbox),
+                             (tmp = H_("This setting only affects newly created layouts.\nTo change the current layout, use menu option\n'Tools' / 'Change Width, Height and Audio Values'\nin the multitrack window")));
+  lives_free(tmp);
 
   lives_layout_add_row(LIVES_LAYOUT(layout));
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Monitor gamma setting:"), TRUE);
@@ -4050,7 +4064,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_recording));
 
   layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_recording));
-  lives_layout_add_label(LIVES_LAYOUT(layout), _("Rendering Options (for Recording)"), FALSE);
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Rendering Options (post Recording)"), FALSE);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->rr_crash = lives_standard_check_button_new(_("Enable Crash Recovery for recordings"), prefs->rr_crash,
@@ -4732,6 +4746,11 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   prefsw->checkbutton_warn_layout_gamma = lives_standard_check_button_new
                                           (_("Show a warning if a loaded layout has incompatible gamma settings."),
                                               !(prefs->warning_mask & WARN_MASK_LAYOUT_GAMMA), LIVES_BOX(hbox), NULL);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  prefsw->checkbutton_warn_layout_lb = lives_standard_check_button_new
+                                       (_("Show a warning if a loaded layout has incompatible letterbox settings."),
+                                        !(prefs->warning_mask & WARN_MASK_LAYOUT_LB), LIVES_BOX(hbox), NULL);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_warn_vjmode_enter = lives_standard_check_button_new
@@ -5638,6 +5657,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   ACTIVE(checkbutton_warn_yuv4m_open, TOGGLED);
 #endif
   ACTIVE(checkbutton_warn_layout_gamma, TOGGLED);
+  ACTIVE(checkbutton_warn_layout_lb, TOGGLED);
   ACTIVE(checkbutton_warn_layout_wipe, TOGGLED);
   ACTIVE(checkbutton_warn_no_pulse, TOGGLED);
   ACTIVE(checkbutton_warn_after_crash, TOGGLED);

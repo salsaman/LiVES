@@ -483,40 +483,39 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
   LingoLayout *layout;
 
   int x_pos = 0, y_pos = 0;
-  double lwidth = (double)dwidth, lheight = (double) * dheight;
+  double lwidth = (double)dwidth, lheight = (double)(*dheight);
 
   if (!cr) return NULL;
 
 #ifdef GUI_GTK
   if (widget) {
-    PangoContext *ctx = gtk_widget_get_pango_context(widget);
-    layout = pango_layout_new(ctx);
+    LingoContext *ctx = gtk_widget_get_pango_context(widget);
+    layout = lingo_layout_new(ctx);
   } else {
     layout = pango_cairo_create_layout(cr);
     if (!layout) return NULL;
 
-    font = pango_font_description_new();
+    font = lingo_font_description_new();
     pango_font_description_set_family(font, fontname);
-    pango_font_description_set_absolute_size(font, size * PANGO_SCALE);
-
+    pango_font_description_set_absolute_size(font, size * LINGO_SCALE);
     pango_layout_set_font_description(layout, font);
   }
 
-  pango_layout_set_markup(layout, text, -1);
-#endif
-
-#ifdef GUI_QT
-  layout = new LingoLayout(text, fontname, size);
+  lingo_layout_set_markup(layout, text, -1);
 #endif
 
   if (center) lingo_layout_set_alignment(layout, LINGO_ALIGN_CENTER);
   else lingo_layout_set_alignment(layout, LINGO_ALIGN_LEFT);
 
-#ifndef GUI_QT
-  if (rising || center || mode == LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND)
-#endif
-
+  getxypos(layout, &x_pos, &y_pos, dwidth, *dheight, center, &lwidth, &lheight);
+  if (lwidth > dwidth) {
+    lingo_layout_set_width(layout, dwidth * LINGO_SCALE);
+    /// may cause text to wrap, so call this again
+    x_pos = y_pos = 0;
+    lwidth = (double)dwidth;
+    lheight = (double)(*dheight);
     getxypos(layout, &x_pos, &y_pos, dwidth, *dheight, center, &lwidth, &lheight);
+  }
 
   if (!rising) y_pos = (double) * dheight * *top;
   if (!center) {
@@ -528,11 +527,7 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
     lives_painter_rectangle(cr,offs_x,0,width,height);
     lives_painter_clip(cr);*/
 
-#ifdef GUI_GTK
-  if (font) {
-    pango_font_description_free(font);
-  }
-#endif
+  if (font) lingo_font_description_free(font);
 
   if (mode == LIVES_TEXT_MODE_PRECALCULATE) {
     *dheight = lheight;
@@ -623,13 +618,18 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
 
     /// if possible just render the slice which contains the text
     if (top * height + lheight < height) {
+      uint8_t *xsrc;
       boolean rbswapped = FALSE;
 
       // adjust pixel_data and height, then copy-by-ref to layer_slice
       src = weed_layer_get_pixel_data_packed(layer);
-      weed_layer_set_pixel_data_packed(layer, src + (int)(top * height) * row);
+      xsrc = src + (int)(top * height) * row;
+      weed_layer_set_pixel_data_packed(layer, xsrc);
       weed_layer_set_height(layer, lheight);
-      layer_slice = weed_layer_copy(NULL, layer);
+
+      layer_slice = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+      weed_layer_copy(layer_slice, layer);
+      weed_leaf_set_flagbits(layer_slice, WEED_LEAF_PIXEL_DATA, LIVES_FLAG_MAINTAIN_VALUE);
 
       // restore original values
       weed_layer_set_height(layer, height);
@@ -659,12 +659,13 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
       lives_painter_to_layer(cr, layer_slice);
       /// make sure our slice isnt freed, since it is actually part of the image
       /// which we will overwrite
-      weed_leaf_set_flagbits(layer_slice, WEED_LEAF_PIXEL_DATA, LIVES_FLAG_MAINTAIN_VALUE);
+
       convert_layer_palette(layer_slice, pal, 0);
       weed_leaf_clear_flagbits(layer_slice, WEED_LEAF_PIXEL_DATA, LIVES_FLAG_MAINTAIN_VALUE);
 
       pd = weed_layer_get_pixel_data_packed(layer_slice);
-      lives_memcpy(src + (int)(top * height) * row, pd, lheight * row);
+      if (pd != xsrc) lives_memcpy(src + (int)(top * height) * row, pd, lheight * row);
+      else weed_layer_nullify_pixel_data(layer_slice);
       weed_layer_free(layer_slice);
 
       if (rbswapped) {

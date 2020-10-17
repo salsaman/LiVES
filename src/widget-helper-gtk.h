@@ -586,9 +586,9 @@ typedef GtkEditable                       LiVESEditable;
 #if GTK_CHECK_VERSION(3, 0, 0)
 #define LIVES_WIDGET_COLOR_HAS_ALPHA (1)
 #define LIVES_WIDGET_COLOR_SCALE(x) (x) ///< macro to get 0. to 1. from widget colour
-#define LIVES_WIDGET_COLOR_STRETCH(x) (x*65535.) ///< macro to get 0. to 65535. from widget colour
-#define LIVES_WIDGET_COLOR_SCALE_65535(x) ((double)x/65535.) ///< macro to convert from (0. - 65535.) to widget color
-#define LIVES_WIDGET_COLOR_SCALE_255(x) ((double)x/255.) ///< macro to convert from (0. - 255.) to widget color
+#define LIVES_WIDGET_COLOR_STRETCH(x) (x * 65535.) ///< macro to get 0. to 65535. from widget colour
+#define LIVES_WIDGET_COLOR_SCALE_65535(x) ((double)x / 65535.) ///< macro to convert from (0. - 65535.) to widget color
+#define LIVES_WIDGET_COLOR_SCALE_255(x) ((double)x / 255.) ///< macro to convert from (0. - 255.) to widget color
 typedef GdkRGBA                           LiVESWidgetColor; ///< component values are 0. to 1.
 
 typedef GtkStateFlags LiVESWidgetState;

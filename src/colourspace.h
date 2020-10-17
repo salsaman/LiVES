@@ -207,6 +207,9 @@ void init_conversions(int intent);
 
 void init_colour_engine(void);
 
+double get_luma8(uint8_t r, uint8_t g, uint8_t b);
+double get_luma16(uint16_t r, uint16_t g, uint16_t b);
+
 /////////////////////////////////////// LAYERS ///////////////////////////////////////
 
 #define WEED_PLANT_LAYER 128

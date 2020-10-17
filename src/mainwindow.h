@@ -1072,6 +1072,7 @@ typedef struct {
   ulong sepwin_cb_func;
   ulong fsp_func; ///< fileselector preview expose (for image thumbnails)
   ulong vj_mode_func;
+  ulong lb_func;
 
   lives_painter_surface_t *fsp_surface;
 

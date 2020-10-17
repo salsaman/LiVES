@@ -51,8 +51,6 @@ typedef struct {
 #define W_BORDER_WIDTH   10 // default border width
 #define W_FILL_LENGTH    (W_PACKING_WIDTH * 4) // default extra fill size
 
-#define ulong_random() lives_random()
-
 #if defined (GUI_GTK) || defined (LIVES_PAINTER_IS_CAIRO)
 #include "widget-helper-gtk.h"
 #endif
@@ -95,9 +93,10 @@ typedef PangoFontDescription LingoFontDescription;
 #define lingo_layout_get_size(a, b, c) pango_layout_get_size(a, b, c)
 #define lingo_layout_new(a) pango_layout_new(a)
 #define lingo_layout_set_markup(a, b, c) pango_layout_set_markup(a, b, c)
+#define lingo_layout_set_width(a, b) pango_layout_set_width(a, b)
 #define lingo_layout_set_height(a, b) pango_layout_set_height(a, b)
-#define lingo_layout_set_width(a, b) pango_layout_set_height(a, b)
 
+#define lingo_font_description_new(a) pango_font_description_new()
 #define lingo_font_description_get_size(a) pango_font_description_get_size(a)
 #define lingo_font_description_set_size(a, b) pango_font_description_set_size(a, b)
 #define lingo_font_description_free(a) pango_font_description_free(a)
@@ -348,6 +347,7 @@ boolean lives_widget_get_sensitive(LiVESWidget *);
 boolean lives_widget_show(LiVESWidget *);
 boolean lives_widget_show_now(LiVESWidget *);
 boolean lives_widget_show_all(LiVESWidget *);
+boolean lives_widget_show_all_from_bg(LiVESWidget *);
 boolean lives_widget_hide(LiVESWidget *);
 boolean lives_widget_destroy(LiVESWidget *);
 boolean lives_widget_realize(LiVESWidget *);

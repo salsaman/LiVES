@@ -174,6 +174,8 @@ void framedraw_connect(lives_special_framedraw_rect_t *framedraw, int width, int
                        LIVES_GUI_CALLBACK(on_framedraw_enter), framedraw);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->framedraw), LIVES_WIDGET_LEAVE_NOTIFY_EVENT,
                        LIVES_GUI_CALLBACK(on_framedraw_leave), framedraw);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->framedraw), LIVES_WIDGET_SCROLL_EVENT,
+                            LIVES_GUI_CALLBACK(on_framedraw_scroll), NULL);
 
   framedraw_connect_spinbutton(framedraw, rfx);
 
@@ -221,6 +223,7 @@ static void redraw_framedraw_image(weed_layer_t *layer) {
   // changes 'layer' itself
 
   lives_painter_t *cr, *cr2;
+  LiVESWidget *fd_widget;
 
   int fd_width, fd_height;
   int width, height, cx, cy;
@@ -229,10 +232,13 @@ static void redraw_framedraw_image(weed_layer_t *layer) {
 
   if (!CURRENT_CLIP_IS_VALID) return;
 
-  if (!LIVES_IS_WIDGET(mainw->framedraw)) return;
+  if (mainw->multitrack) fd_widget = mainw->multitrack->preview_eventbox;
+  else fd_widget = mainw->framedraw;
 
-  fd_width = lives_widget_get_allocation_width(mainw->framedraw);
-  fd_height = lives_widget_get_allocation_height(mainw->framedraw);
+  if (!LIVES_IS_WIDGET(fd_widget)) return;
+
+  fd_width = lives_widget_get_allocation_width(fd_widget);
+  fd_height = lives_widget_get_allocation_height(fd_widget);
 
   width = cfile->hsize;
   height = cfile->vsize;
@@ -257,7 +263,7 @@ static void redraw_framedraw_image(weed_layer_t *layer) {
   lives_painter_destroy(cr2);
 
   lives_painter_to_layer(cr, layer);
-  lives_widget_queue_draw(mainw->framedraw);
+  lives_widget_queue_draw(fd_widget);
 }
 
 
@@ -425,21 +431,26 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
   // mainw->fd_layer is drawn over, resized, gamma corrected and painted
   // the output layer is also returned (mainw->fd_layer)
 
-  int fd_height;
-  int fd_width;
-  int width, height;
+  lives_painter_t *cr;
+  LiVESWidget *fd_widget;
 
   double xstartf, ystartf, xendf, yendf;
 
-  lives_painter_t *cr;
+  int fd_height;
+  int fd_width;
+  int width, height;
 
   if (!CURRENT_CLIP_IS_VALID) return NULL;
 
   if (framedraw->rfx->source_type == LIVES_RFX_SOURCE_RFX)
     if (noupdate) return NULL; // static volatile
 
-  fd_width = lives_widget_get_allocation_width(mainw->framedraw);
-  fd_height = lives_widget_get_allocation_height(mainw->framedraw);
+  if (mainw->multitrack) fd_widget = mainw->multitrack->preview_eventbox;
+  else fd_widget = mainw->framedraw;
+  if (!LIVES_IS_WIDGET(fd_widget)) return NULL;
+
+  fd_width = lives_widget_get_allocation_width(fd_widget);
+  fd_height = lives_widget_get_allocation_height(fd_widget);
 
   if (fd_width < 4 || fd_height < 4) return NULL;
 
@@ -650,6 +661,8 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
       mainw->multitrack->frame_pixbuf = NULL;
     }
   }
+
+  lives_widget_queue_draw(fd_widget);
   // update the widget
   return mainw->fd_layer;
 }
@@ -840,8 +853,15 @@ boolean on_framedraw_enter(LiVESWidget * widget, LiVESXEventCrossing * event, li
 }
 
 boolean on_framedraw_leave(LiVESWidget * widget, LiVESXEventCrossing * event, lives_special_framedraw_rect_t *framedraw) {
+  LiVESWidget *fd_widget;
   if (!framedraw) return FALSE;
-  lives_set_cursor_style(LIVES_CURSOR_NORMAL, mainw->framedraw);
+
+  if (mainw->multitrack) fd_widget = mainw->multitrack->preview_eventbox;
+  else fd_widget = mainw->framedraw;
+
+  if (!LIVES_IS_WIDGET(fd_widget)) return FALSE;
+
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL, fd_widget);
   return FALSE;
 }
 
@@ -891,8 +911,7 @@ boolean on_framedraw_mouse_start(LiVESWidget * widget, LiVESXEventButton * event
   fd_width = lives_widget_get_allocation_width(widget);
   fd_height = lives_widget_get_allocation_height(widget);
 
-  if (!mainw->multitrack || prefs->letterbox_mt)
-    calc_maxspect(fd_width, fd_height, &width, &height);
+  calc_maxspect(fd_width, fd_height, &width, &height);
 
   xstart = (double)xstarti - (double)(fd_width - width) / 2.;
   ystart = (double)ystarti - (double)(fd_height - height) / 2.;
@@ -991,8 +1010,7 @@ boolean on_framedraw_mouse_update(LiVESWidget * widget, LiVESXEventMotion * even
   fd_width = lives_widget_get_allocation_width(widget);
   fd_height = lives_widget_get_allocation_height(widget);
 
-  if (!mainw->multitrack || prefs->letterbox_mt)
-    calc_maxspect(fd_width, fd_height, &width, &height);
+  calc_maxspect(fd_width, fd_height, &width, &height);
 
   xcurrent = (double)xcurrenti - (fd_width - width) / 2.;
   ycurrent = (double)ycurrenti - (fd_height - height) / 2.;
@@ -1158,8 +1176,7 @@ boolean on_framedraw_mouse_reset(LiVESWidget * widget, LiVESXEventButton * event
   fd_width = lives_widget_get_allocation_width(widget);
   fd_height = lives_widget_get_allocation_height(widget);
 
-  if (!mainw->multitrack || prefs->letterbox_mt)
-    calc_maxspect(fd_width, fd_height, &width, &height);
+  calc_maxspect(fd_width, fd_height, &width, &height);
 
   xcurrent = (double)xcurrenti - (fd_width - width) / 2.;
   ycurrent = (double)ycurrenti - (fd_height - height) / 2.;

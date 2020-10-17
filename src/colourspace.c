@@ -344,6 +344,7 @@ static uint8_t UVunclamped_to_UVclamped[256];
 
 static boolean conv_YY_inited = FALSE;
 
+
 // gamma correction
 
 /// linear -> gamma:
@@ -499,7 +500,7 @@ static inline void lives_gamma_lut_free(uint8_t *lut) {
 }
 
 
-static inline int32_t spc_rnd(int32_t val) {
+static inline int32_t _spc_rnd(int32_t val, short quality) {
   // if USE_EXTEND is defined,
   // instead of shifting right by 16 bits, we multiplied x by scale_factor, ie., 0xFF -> 0xFFFFFF
   // to convert back we can either shift right 16 bits (less accurate), or divide by scale_factor
@@ -526,10 +527,10 @@ static inline int32_t spc_rnd(int32_t val) {
   // if we are adding several factors we can do the conversion after the addition
   // i.e the rounding error when converting from RGB to YUV goes from 1. / 255. ~= 0.4 % to half of that, i.e 0.2 %
 
-  if (prefs && prefs->pb_quality == PB_QUALITY_LOW) {
+  if (quality == PB_QUALITY_LOW) {
     return val >> FP_BITS;
   }
-  if (prefs && prefs->pb_quality == PB_QUALITY_MED) {
+  if (quality == PB_QUALITY_MED) {
     uint32_t sig = val & 0x80000000;
     return (((val - (val >> 8)) >> 16) | sig);
   }
@@ -537,8 +538,25 @@ static inline int32_t spc_rnd(int32_t val) {
 }
 
 
+#define spc_rnd(val) (_spc_rnd((val), prefs ? prefs->pb_quality : PB_QUALITY_HIGH))
+
+
 LIVES_GLOBAL_INLINE int32_t round_special(int32_t val) {
   return spc_rnd(val);
+}
+
+
+double get_luma8(uint8_t r, uint8_t g, uint8_t b) {
+  /// return luma value between 0. (black) and 1. (white)
+  short a = _spc_rnd(Y_Ru[r] + Y_Gu[g] + Y_Bu[b], PB_QUALITY_HIGH);
+  if (a > 255) a = 255;
+  return a < 0 ? 0. : (double)a / 255.;
+}
+
+
+double get_luma16(uint16_t r, uint16_t g, uint16_t b) {
+  /// return luma value between 0. (black) and 1. (white)
+  return get_luma8(r >> 8, g >> 8, b >> 8);
 }
 
 
@@ -1167,10 +1185,7 @@ boolean pick_nice_colour(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *r1, uint8_
     db = cdist94(*r1, *g1, *b1, xr, xg, xb);
     if (da * rat * lmax > db || db * rat > da * lmax) continue;
     else {
-      volatile double l;
-      register short a;
-      if ((a = spc_rnd(Y_Ru[xr] + Y_Gu[xg] + Y_Bu[xb])) > 255) a = 255;
-      l = (double)(a < 0 ? 0 : a) / 255.;
+      double l = get_luma8(xr, xg, xb);
       if (l < lmin || l > lmax) continue;
       *r1 = xr; *g1 = xg; *b1 = xb;
       return TRUE;

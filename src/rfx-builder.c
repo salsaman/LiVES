@@ -4554,7 +4554,10 @@ void add_rfx_effects2(lives_rfx_status_t status) {
     mainw->custom_utilities_separator = lives_menu_add_separator(LIVES_MENU(mainw->utilities_menu));
 
     mainw->gens_menu = lives_standard_menu_new();
-    lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->gens_submenu), mainw->gens_menu);
+    if (!mainw->multitrack)
+      lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->gens_submenu), mainw->gens_menu);
+    else
+      lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->multitrack->gens_submenu), mainw->gens_menu);
 
     mainw->custom_gens_menu = lives_standard_menu_new();
     lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->custom_gens_submenu), mainw->custom_gens_menu);
@@ -4712,8 +4715,9 @@ void update_rfx_menus(void) {
 
     if (mainw->has_custom_gens) {
       lives_widget_set_no_show_all(mainw->custom_gens_submenu, FALSE);
-      lives_widget_show_all(mainw->gens_submenu);
     }
+    lives_widget_show_all(mainw->gens_submenu);
+    if (mainw->multitrack) lives_widget_show_all(mainw->multitrack->gens_submenu);
   }
 
   if (mainw->num_rendered_effects_custom > 0) {

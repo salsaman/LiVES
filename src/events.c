@@ -4798,9 +4798,14 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
 
   init_track_decoders();
 
+  if (transcode) {
+    cfile->progress_start = 0;
+    cfile->progress_end = cfile->frames;
+  }
+
   if (start_render_effect_events(mainw->event_list, TRUE, rendaud)) { // re-render, applying effects
     // and reordering/resampling/resizing if necessary
-    if (!mainw->transrend_proc) {
+    if (!transcode) {
       if (!mainw->multitrack && mainw->event_list) {
         if (!new_clip) {
           // this is needed in case we render to same clip, and then undo ///////
@@ -4819,7 +4824,7 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
       char *tmp;
       int old_file = current_file;
 
-      if (mainw->transrend_proc) {
+      if (transcode) {
         mainw->transrend_ready = TRUE;
         lives_proc_thread_cancel(mainw->transrend_proc);
         mainw->transrend_proc = NULL;
@@ -4906,7 +4911,7 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
     if (!new_clip) d_print_done();
   } else {
     retval = FALSE; // cancelled or error, so show the dialog again
-    if (mainw->transrend_proc) {
+    if (transcode) {
       mainw->transrend_ready = TRUE;
       lives_proc_thread_cancel(mainw->transrend_proc);
       mainw->transrend_proc = NULL;
@@ -5234,7 +5239,9 @@ boolean deal_with_render_choice(boolean add_deinit) {
         lives_proc_thread_join(info);
         info = NULL;
       }
+      prefs->letterbox_mt = prefs->letterbox;
       if (on_multitrack_activate(NULL, (weed_plant_t *)mainw->event_list)) {
+        prefs->letterbox_mt = future_prefs->letterbox_mt;
         mainw->event_list = NULL;
         new_clip = TRUE;
       } else render_choice = RENDER_CHOICE_PREVIEW;
@@ -6106,6 +6113,7 @@ render_details *create_render_details(int type) {
   LiVESWidget *cancelbutton;
   LiVESWidget *alabel;
   LiVESWidget *daa;
+  LiVESWidget *cb_letter;
   LiVESWidget *spillover;
 
   LiVESAccelGroup *rdet_accel_group;
@@ -6216,8 +6224,18 @@ render_details *create_render_details(int type) {
 
   lives_free(tmp); lives_free(tmp2);
 
+  if (type == 4) {
+    hbox = lives_hbox_new(FALSE, 0);
+    cb_letter = lives_standard_check_button_new(_("Apply letterboxing"), prefs->letterbox_mt,
+                LIVES_BOX(hbox), (tmp = H_("Defines whether black borders will be added when resizing frames\n"
+                                           "in order to preserve the original aspect ratio")));
+    lives_free(tmp);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(cb_letter), LIVES_WIDGET_TOGGLED_SIGNAL,
+                              LIVES_GUI_CALLBACK(toggle_sets_pref), (livespointer)PREF_LETTERBOXMT);
+  } else hbox = NULL;
+
   frame = add_video_options(&rdet->spinbutton_width, rdet->width, &rdet->spinbutton_height, rdet->height, &rdet->spinbutton_fps,
-                            rdet->fps, NULL, 0., TRUE, NULL);
+                            rdet->fps, NULL, 0., TRUE, hbox);
   lives_box_pack_start(LIVES_BOX(top_vbox), frame, FALSE, TRUE, 0);
 
   if (type == 1) gtk_widget_set_no_show_all(frame, TRUE);

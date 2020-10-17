@@ -2339,7 +2339,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
           lbvals[1] = (height - xheight) >> 1;
           lbvals[2] = xwidth;
           lbvals[3] = xheight;
-          g_print("VALS HERE %d and %d\n", width, xwidth);
           weed_set_int_array(channel, WEED_LEAF_INNER_SIZE, 4, lbvals);
           if (!mainw->multitrack && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
             mainw->blend_palette = weed_layer_get_palette_yuv(layer, &mainw->blend_clamping, &mainw->blend_sampling,

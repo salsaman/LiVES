@@ -563,7 +563,11 @@ boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number
   int response = 1;
   char *mytext;
 
-  if (prefs->warning_mask & warn_mask_number) return TRUE;
+  if (warn_mask_number >= (1ul << 48)) {
+    if (!(prefs->warning_mask & warn_mask_number)) return TRUE;
+  } else {
+    if (prefs->warning_mask & warn_mask_number) return TRUE;
+  }
 
   mytext = lives_strdup(text); // must copy this because of translation issues
 
@@ -585,8 +589,10 @@ boolean do_yesno_dialog_with_check(const char *text, uint64_t warn_mask_number) 
   int response = 1;
   char *mytext;
 
-  if (prefs->warning_mask & warn_mask_number) {
-    return TRUE;
+  if (warn_mask_number >= (1ul << 48)) {
+    if (!(prefs->warning_mask & warn_mask_number)) return TRUE;
+  } else {
+    if (prefs->warning_mask & warn_mask_number) return TRUE;
   }
 
   mytext = lives_strdup(text); // must copy this because of translation issues
@@ -787,7 +793,12 @@ LiVESResponseType do_error_dialog_with_check(const char *text, uint64_t warn_mas
   LiVESWidget *err_box;
   LiVESResponseType ret = LIVES_RESPONSE_NONE;
 
-  if (prefs && (prefs->warning_mask & warn_mask_number)) return ret;
+  if (warn_mask_number >= (1ul << 48)) {
+    if (!(prefs->warning_mask & warn_mask_number)) return TRUE;
+  } else {
+    if (prefs->warning_mask & warn_mask_number) return TRUE;
+  }
+
   err_box = create_message_dialog(warn_mask_number == 0 ? LIVES_DIALOG_ERROR :
                                   LIVES_DIALOG_WARN, text, warn_mask_number);
 

@@ -1532,13 +1532,13 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget *widget) {
   return FALSE;
 }
 
-/* WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget *widget) { */
-/*   // run in main thread as it seems to give a smoother result */
-/*   boolean ret; */
-/*   main_thread_execute((lives_funcptr_t)_lives_widget_show_all, WEED_SEED_BOOLEAN, &ret, "v", widget); */
-/*   return ret; */
-/*   //return lives_widget_show_all(widget); */
-/* } */
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all_from_bg(LiVESWidget *widget) {
+  // run in main thread as it seems to give a smoother result
+  boolean ret;
+  main_thread_execute((lives_funcptr_t)lives_widget_show_all, WEED_SEED_BOOLEAN, &ret, "v", widget);
+  return ret;
+  //return lives_widget_show_all(widget);
+}
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_now(LiVESWidget *widget) {
@@ -7736,7 +7736,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_new(LiVESBox * box) {
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), WADDED_KEY, LIVES_INT_TO_POINTER(0));
   lives_widget_object_set_data_list(LIVES_WIDGET_OBJECT(layout), EXP_LIST_KEY, NULL);
   lives_table_set_col_spacings(LIVES_TABLE(layout), 0);
-  if (0 && LIVES_SHOULD_EXPAND_HEIGHT)
+  if (LIVES_SHOULD_EXPAND_HEIGHT)
     lives_table_set_row_spacings(LIVES_TABLE(layout), widget_opts.packing_height);
   if (LIVES_SHOULD_EXPAND_EXTRA_WIDTH)
     lives_table_set_col_spacings(LIVES_TABLE(layout), widget_opts.packing_width);
@@ -8928,6 +8928,7 @@ LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, Li
   return lives_standard_check_button_new(labeltext, active, box, tooltip);
 #else
   LiVESWidget *eventbox = NULL;
+  LiVESWidget *container = NULL;
   LiVESWidget *hbox;
   LiVESWidget *img_tips = NULL;
 
@@ -8949,10 +8950,12 @@ LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, Li
 
     if (labeltext) {
       eventbox = make_label_eventbox(labeltext, swtch);
+      lives_widget_set_show_hide_with(swtch, eventbox);
     }
 
     hbox = make_inner_hbox(LIVES_BOX(box), !widget_opts.swap_label);
     lives_widget_set_show_hide_parent(swtch);
+    container = widget_opts.last_container;
 
     expand = LIVES_SHOULD_EXPAND_EXTRA_FOR(hbox);
     if (LIVES_SHOULD_EXPAND_WIDTH) packing_width = widget_opts.packing_width;
@@ -9016,6 +9019,7 @@ LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, Li
 #endif
   }
   lives_switch_set_active(LIVES_SWITCH(swtch), active);
+  widget_opts.last_container = container;
 #endif
   return swtch;
 }
@@ -9026,6 +9030,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
   LiVESWidget *checkbutton = NULL;
   LiVESWidget *eventbox = NULL;
   LiVESWidget *hbox;
+  LiVESWidget *container = NULL;
   LiVESWidget *img_tips = NULL;
 
 #if GTK_CHECK_VERSION(3, 14, 0)
@@ -9050,10 +9055,12 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
 
     if (labeltext) {
       eventbox = make_label_eventbox(labeltext, checkbutton);
+      lives_widget_set_show_hide_with(checkbutton, eventbox);
     }
 
     hbox = make_inner_hbox(LIVES_BOX(box), !widget_opts.swap_label);
     lives_widget_set_show_hide_parent(checkbutton);
+    container = widget_opts.last_container;
 
     expand = LIVES_SHOULD_EXPAND_EXTRA_FOR(hbox);
     if (LIVES_SHOULD_EXPAND_WIDTH) packing_width = widget_opts.packing_width;
@@ -9128,6 +9135,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
   }
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), active);
+  widget_opts.last_container = container;
   return checkbutton;
 }
 

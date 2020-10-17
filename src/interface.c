@@ -1014,8 +1014,14 @@ static LiVESWidget *vid_text_view_new(void) {
   if (palette->style & STYLE_3) {
     lives_widget_set_bg_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
-  lives_text_view_set_bottom_margin(LIVES_TEXT_VIEW(textview), TB_HEIGHT_VID >> 2);
-  lives_text_view_set_top_margin(LIVES_TEXT_VIEW(textview), TB_HEIGHT_VID >> 2);
+  if (mainw->multitrack) {
+    lives_text_view_set_top_margin(LIVES_TEXT_VIEW(textview), 2);
+    lives_text_view_set_bottom_margin(LIVES_TEXT_VIEW(textview), 20);
+    lives_widget_set_valign(textview, LIVES_ALIGN_FILL);
+  } else {
+    lives_text_view_set_bottom_margin(LIVES_TEXT_VIEW(textview), TB_HEIGHT_VID >> 2);
+    lives_text_view_set_top_margin(LIVES_TEXT_VIEW(textview), TB_HEIGHT_VID >> 2);
+  }
   return textview;
 }
 
@@ -1029,8 +1035,12 @@ static LiVESWidget *aud_text_view_new(void) {
   if (palette->style & STYLE_3) {
     lives_widget_set_bg_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
-  lives_text_view_set_bottom_margin(LIVES_TEXT_VIEW(textview), TB_HEIGHT_AUD >> 2);
-  lives_text_view_set_top_margin(LIVES_TEXT_VIEW(textview), TB_HEIGHT_AUD >> 2);
+  if (mainw->multitrack) {
+    lives_text_view_set_bottom_margin(LIVES_TEXT_VIEW(textview), 20);
+  } else {
+    lives_text_view_set_bottom_margin(LIVES_TEXT_VIEW(textview), TB_HEIGHT_AUD >> 2);
+    lives_text_view_set_top_margin(LIVES_TEXT_VIEW(textview), TB_HEIGHT_AUD >> 2);
+  }
   return textview;
 }
 
@@ -1156,6 +1166,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
     filew->textview_vtime = vid_text_view_new();
     hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
     lives_layout_pack(LIVES_HBOX(hbox), filew->textview_vtime);
+    if (mainw->multitrack) lives_text_view_set_top_margin(LIVES_TEXT_VIEW(filew->textview_vtime), 10);
   }
 
   if (audio_channels > 0) {

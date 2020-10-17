@@ -44,14 +44,16 @@ Added optional "author", "title", "comments", "created_version" and "edited_vers
 
 15/08/2020
 clarify that audio "seek" position is relevent even when "velocity" is set to 0.
-API updated to 122 to facilitate this change.
+API updated to 123 to facilitate this change.
 
+16/10/2020
+Add optional "keep_aspect" for event_list. API version updated to 123.
 
 
 (C) Gabriel "Salsaman" Finch 2005 - 2020
 
 == WEED_EVENT_API_VERSION ==
-This is defined as 122 for this version of the specification. This
+This is defined as 123 for this version of the specification. This
 number will be increased for future revisions of the spec. if a
 function or a symbol is changed or added.
 
@@ -74,7 +76,7 @@ or may be serialised for offline storage / interchange, etc.
 '''Mandatory leaves''':[[BR]]
  
  * "weed_event_api_version" : WEED_SEED_INT : API version of this
-   spec. (currently 122)
+   spec. (currently 123)
 
  * "fps" : WEED_SEED_DOUBLE : framerate of timeline; all events in the
    timeline MUST be quantised to this rate. An "fps" of 0 indicates
@@ -129,8 +131,9 @@ or may be serialised for offline storage / interchange, etc.
 
 * "keep_aspect" : WEED_SEED_BOOLEAN : if set to WEED_TRUE, then when resizing component frames,
   an attempt should be made to retain the original aspect ratio (e.g by "letterboxing"),
-  otherwise, components may be resized without reference to the original aspect ratio.
-
+  if set to WEED_FALSE, components should be resized without reference to the original aspect ratio.
+  If absent then either method may be used at the user's discretion.
+  [added in API version 123]
 
 == PLANT TYPE EVENT ==
 
@@ -165,10 +168,10 @@ should be:
 
 == EVENT TYPES ==
 
-(N.B. prior to Event API 122, the name of this leaf was "hint". This was changed to avoid possible confusion, since the value
+(N.B. prior to Event API 123, the name of this leaf was "hint". This was changed to avoid possible confusion, since the value
 is not simply a hint, but changes the function of the event.
 There may be some legacy applications still using the old name of the leaf,
-thus if the "event_type" leaf is absent for an event, and the event_list Event API is absent or < 122,
+thus if the "event_type" leaf is absent for an event, and the event_list Event API is absent or < 123,
 the prescence of a "hint" leaf should be checked for)
 
 
@@ -410,7 +413,7 @@ Format shall be little endian for all types (except string).
 == definitions ==
 The weed-events.h header currently contains the following definitions:
 
-#define WEED_EVENT_API_VERSION 122
+#define WEED_EVENT_API_VERSION 123
 
 
 Summary:

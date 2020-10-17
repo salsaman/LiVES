@@ -2713,8 +2713,8 @@ void create_LiVES(void) {
                             &mainw->save_with_sound); // TODO - make pref
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->showsubs), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_showsubs_toggled), NULL);
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->letter), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                            LIVES_GUI_CALLBACK(toggle_sets_pref), PREF_LETTERBOX);
+  mainw->lb_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->letter), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                   LIVES_GUI_CALLBACK(toggle_sets_pref), PREF_LETTERBOX);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->aload_subs), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_boolean_toggled), &prefs->autoload_subs);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->ccpd_sound), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -3649,10 +3649,14 @@ void make_preview_box(void) {
   lives_standard_button_set_image(LIVES_BUTTON(mainw->p_mutebutton), mainw->p_mute_img);
   lives_box_pack_start(LIVES_BOX(hbox_buttons), mainw->p_mutebutton, TRUE, TRUE, 0);
   lives_widget_set_focus_on_click(mainw->p_mutebutton, FALSE);
-  lives_widget_set_opacity(mainw->p_mutebutton, .75);
 
-  if (!mainw->mute) lives_widget_set_tooltip_text(mainw->p_mutebutton, _("Mute the audio (z)"));
-  else lives_widget_set_tooltip_text(mainw->p_mutebutton, _("Unmute the audio (z)"));
+  if (!mainw->mute) {
+    lives_widget_set_tooltip_text(mainw->p_mutebutton, _("Mute the audio (z)"));
+    lives_widget_set_opacity(mainw->p_mutebutton, .75);
+  } else {
+    lives_widget_set_tooltip_text(mainw->p_mutebutton, _("Unmute the audio (z)"));
+    lives_widget_set_opacity(mainw->p_mutebutton, 1.);
+  }
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton_free), LIVES_WIDGET_TOGGLED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_prv_link_toggled),

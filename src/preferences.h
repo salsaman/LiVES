@@ -79,50 +79,91 @@ typedef struct {
 
   uint64_t warning_mask;
 
-  /// bits 19,18,13,11 and 10 (off by default)
-#define DEF_WARNING_MASK 0x000C2C04
+  /// bits 10, 11, 13, 18 and 19 set (off by default)
+  // (should have been done by reversing the sense of these bits, but it is too late now
+#define DEF_WARNING_MASK 0x000C2C04ul
 
   // if these bits are set, we do not show the warning
-#define WARN_MASK_FPS 	       					(1 << 0)
-#define WARN_MASK_FSIZE 	       				(1 << 1)
-#define WARN_MASK_UNUSED1 	       				(1 << 2)  ///< was "save_quality"
-#define WARN_MASK_SAVE_SET 		       			(1 << 3)
-#define WARN_MASK_NO_MPLAYER 			       		(1 << 4)
-#define WARN_MASK_RENDERED_FX 					(1 << 5)
-#define WARN_MASK_NO_ENCODERS 					(1 << 6)
-#define WARN_MASK_LAYOUT_MISSING_CLIPS 				(1 << 7)
-#define WARN_MASK_LAYOUT_CLOSE_FILE 				(1 << 8)
-#define WARN_MASK_LAYOUT_DELETE_FRAMES 				(1 << 9)
+#define WARN_MASK_FPS 	       					(1ul << 0)
+#define WARN_MASK_FSIZE 	       				(1ul << 1)
+#define WARN_MASK_UNUSED1ul 	       				(1ul << 2)  ///< was "save_quality"
+#define WARN_MASK_SAVE_SET 		       			(1ul << 3)
+#define WARN_MASK_NO_MPLAYER 			       		(1ul << 4)
+#define WARN_MASK_RENDERED_FX 					(1ul << 5)
+#define WARN_MASK_NO_ENCODERS 					(1ul << 6)
+#define WARN_MASK_LAYOUT_MISSING_CLIPS 				(1ul << 7)
+#define WARN_MASK_LAYOUT_CLOSE_FILE 				(1ul << 8)
+#define WARN_MASK_LAYOUT_DELETE_FRAMES 				(1ul << 9)
 
   /** off by default on a fresh install */
-#define WARN_MASK_LAYOUT_SHIFT_FRAMES 				(1 << 10)
+#define WARN_MASK_LAYOUT_SHIFT_FRAMES 				(1ul << 10)
 
   /** off by default on a fresh install */
-#define WARN_MASK_LAYOUT_ALTER_FRAMES 				(1 << 11)
-#define WARN_MASK_DUPLICATE_SET        				(1 << 12)
+#define WARN_MASK_LAYOUT_ALTER_FRAMES 				(1ul << 11)
+#define WARN_MASK_DUPLICATE_SET        				(1ul << 12)
 
   /** off by default on a fresh install */
-#define WARN_MASK_EXIT_MT 		       			(1 << 13)
-#define WARN_MASK_DISCARD_SET 					(1 << 14)
-#define WARN_MASK_AFTER_DVGRAB 					(1 << 15)
-#define WARN_MASK_MT_ACHANS 			       		(1 << 16)
-#define WARN_MASK_LAYOUT_DELETE_AUDIO 				(1 << 17)
+#define WARN_MASK_EXIT_MT 		       			(1ul << 13)
+#define WARN_MASK_DISCARD_SET 					(1ul << 14)
+#define WARN_MASK_AFTER_DVGRAB 					(1ul << 15)
+#define WARN_MASK_MT_ACHANS 			       		(1ul << 16)
+#define WARN_MASK_LAYOUT_DELETE_AUDIO 				(1ul << 17)
 
   /** off by default on a fresh install */
-#define WARN_MASK_LAYOUT_SHIFT_AUDIO 				(1 << 18)
+#define WARN_MASK_LAYOUT_SHIFT_AUDIO 				(1ul << 18)
 
   /** off by default on a fresh install */
-#define WARN_MASK_LAYOUT_ALTER_AUDIO 				(1 << 19)
-#define WARN_MASK_MT_NO_JACK 			       		(1 << 20)
-#define WARN_MASK_OPEN_YUV4M 					(1 << 21)
-#define WARN_MASK_MT_BACKUP_SPACE 				(1 << 22)
-#define WARN_MASK_LAYOUT_POPUP 					(1 << 23)
-#define WARN_MASK_CLEAN_AFTER_CRASH 				(1 << 24)
-#define WARN_MASK_NO_PULSE_CONNECT 				(1 << 25)
-#define WARN_MASK_LAYOUT_WIPE 					(1 << 26)
-#define WARN_MASK_LAYOUT_GAMMA 					(1 << 27)
-#define WARN_MASK_VJMODE_ENTER 					(1 << 28)
-#define WARN_MASK_CLEAN_INVALID 		       		(1 << 29)
+#define WARN_MASK_LAYOUT_ALTER_AUDIO 				(1ul << 19)
+
+#define WARN_MASK_MT_NO_JACK 			       		(1ul << 20)
+#define WARN_MASK_OPEN_YUV4M 					(1ul << 21)
+#define WARN_MASK_MT_BACKUP_SPACE 				(1ul << 22)
+#define WARN_MASK_LAYOUT_POPUP 					(1ul << 23)
+#define WARN_MASK_CLEAN_AFTER_CRASH 				(1ul << 24)
+#define WARN_MASK_NO_PULSE_CONNECT 				(1ul << 25)
+#define WARN_MASK_LAYOUT_WIPE 					(1ul << 26)
+#define WARN_MASK_LAYOUT_GAMMA 					(1ul << 27)
+#define WARN_MASK_VJMODE_ENTER 					(1ul << 28)
+#define WARN_MASK_CLEAN_INVALID 		       		(1ul << 29)
+#define WARN_MASK_LAYOUT_LB	 		       		(1ul << 30)
+
+  // reserved (on / unset by default)
+#define WARN_MASK_RSVD_16					(1ul << 31)
+#define WARN_MASK_RSVD_15					(1ul << 32)
+#define WARN_MASK_RSVD_14					(1ul << 33)
+#define WARN_MASK_RSVD_13					(1ul << 34)
+#define WARN_MASK_RSVD_12					(1ul << 35)
+#define WARN_MASK_RSVD_11					(1ul << 36)
+#define WARN_MASK_RSVD_10					(1ul << 37)
+#define WARN_MASK_RSVD_9					(1ul << 38)
+#define WARN_MASK_RSVD_8					(1ul << 39)
+#define WARN_MASK_RSVD_7					(1ul << 40)
+#define WARN_MASK_RSVD_6					(1ul << 41)
+#define WARN_MASK_RSVD_5					(1ul << 42)
+#define WARN_MASK_RSVD_4					(1ul << 43)
+#define WARN_MASK_RSVD_3					(1ul << 44)
+#define WARN_MASK_RSVD_2					(1ul << 45)
+#define WARN_MASK_RSVD_1					(1ul << 46)
+#define WARN_MASK_RSVD_0					(1ul << 47)
+
+  // for bits 48 - 63, the sense will be reversed, in case we need anything else off
+  // by default
+#define WARN_MASK_RSVD_OFF_15					(1ul << 48)
+#define WARN_MASK_RSVD_OFF_14					(1ul << 49)
+#define WARN_MASK_RSVD_OFF_13					(1ul << 50)
+#define WARN_MASK_RSVD_OFF_12					(1ul << 51)
+#define WARN_MASK_RSVD_OFF_11					(1ul << 52)
+#define WARN_MASK_RSVD_OFF_10					(1ul << 53)
+#define WARN_MASK_RSVD_OFF_9					(1ul << 54)
+#define WARN_MASK_RSVD_OFF_8					(1ul << 55)
+#define WARN_MASK_RSVD_OFF_7					(1ul << 56)
+#define WARN_MASK_RSVD_OFF_6					(1ul << 57)
+#define WARN_MASK_RSVD_OFF_5					(1ul << 58)
+#define WARN_MASK_RSVD_OFF_4					(1ul << 59)
+#define WARN_MASK_RSVD_OFF_3					(1ul << 60)
+#define WARN_MASK_RSVD_OFF_2					(1ul << 61)
+#define WARN_MASK_RSVD_OFF_1					(1ul << 62)
+#define WARN_MASK_RSVD_OFF_0					(1ul << 63)
 
   char cmd_log[PATH_MAX];
   char effect_command[PATH_MAX * 2];
@@ -599,6 +640,7 @@ typedef struct {
   LiVESWidget *checkbutton_warn_no_pulse;
   LiVESWidget *checkbutton_warn_layout_wipe;
   LiVESWidget *checkbutton_warn_layout_gamma;
+  LiVESWidget *checkbutton_warn_layout_lb;
   LiVESWidget *checkbutton_warn_vjmode_enter;
   LiVESWidget *checkbutton_show_stats;
   LiVESWidget *checkbutton_warn_fsize;
@@ -799,6 +841,7 @@ typedef struct {
 
   int msg_textsize;
   boolean pref_trash; ///< user prefers trash to delete (future / present swapped)
+  boolean letterbox_mt;
 } _future_prefs;
 
 _prefs *prefs;

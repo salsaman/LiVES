@@ -7116,7 +7116,7 @@ boolean msg_area_config(LiVESWidget * widget) {
       reqheight = height;
     }
 
-    lives_widget_show_all(mainw->message_box);
+    if (prefs->show_msg_area) lives_widget_show_all(mainw->message_box);
 
     if (!prefs->open_maximised)
       lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), posx, posy);
@@ -7192,6 +7192,9 @@ boolean reshow_msg_area(LiVESWidget * widget, lives_painter_t *cr, livespointer 
   lives_painter_t *cr2;
   LingoLayout *layout;
   LiVESWidgetState state = lives_widget_get_state(widget);
+
+  if (!prefs->show_msg_area) return TRUE;
+
   if (state & LIVES_WIDGET_STATE_BACKDROP) return TRUE;
 
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
@@ -7221,6 +7224,7 @@ boolean reshow_msg_area(LiVESWidget * widget, lives_painter_t *cr, livespointer 
 
 
 LIVES_GLOBAL_INLINE void msg_area_scroll_to_end(LiVESWidget * widget, LiVESAdjustment * adj) {
+  if (!prefs->show_msg_area) return;
   msg_area_scroll_to(widget, mainw->n_messages - 2, TRUE, adj);
   // expose_msg_area(widget, NULL, NULL);
 }
@@ -7230,6 +7234,7 @@ void msg_area_scroll(LiVESAdjustment * adj, livespointer userdata) {
   // scrollbar callback
   LiVESWidget *widget = (LiVESWidget *)userdata;
   double val;
+  if (!prefs->show_msg_area) return;
   if (!LIVES_IS_ADJUSTMENT(adj)) return;
   val = lives_adjustment_get_value(adj);
   //g_print("val is %f rnd %d\n", val, (int)(val + .5));

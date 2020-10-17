@@ -3353,17 +3353,20 @@ static void weed_apply_filter_map(weed_plant_t **layers, weed_plant_t *filter_ma
 
         orig_inst = instance;
 
-        if (!LIVES_IS_PLAYING && mainw->multitrack && mainw->multitrack->solo_inst) {
-          if (instance == mainw->multitrack->solo_inst) {
+        if (!LIVES_IS_PLAYING && mainw->multitrack && mainw->multitrack->current_rfx
+            && mainw->multitrack->current_rfx->source
+            && (mainw->multitrack->solo_inst || instance == mainw->multitrack->current_rfx->source)) {
+          if (instance == mainw->multitrack->current_rfx->source) {
             void **pchain = mt_get_pchain();
-
             // interpolation can be switched of by setting mainw->no_interp
             if (!mainw->no_interp && pchain) {
               interpolate_params(instance, pchain, tc); // interpolate parameters for preview
             }
           } else {
-            weed_instance_unref(instance);
-            continue;
+            if (mainw->multitrack->solo_inst) {
+              weed_instance_unref(instance);
+              continue;
+            }
           }
         } else {
           int idx;

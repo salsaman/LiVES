@@ -1114,9 +1114,10 @@ LiVESToolItem *lives_menu_tool_button_new(LiVESWidget *icon, const char *label);
 LiVESWidget *lives_standard_lock_button_new(boolean is_locked, int width, int height,
     const char *label, const char *tooltip);
 
-boolean lives_lock_button_get_locked(LiVESButton *lockbutton);
+boolean lives_lock_button_get_locked(LiVESButton *);
+boolean lives_lock_button_toggle(LiVESButton *);
 
-boolean lives_dialog_set_button_layout(LiVESDialog *dlg, LiVESButtonBoxStyle bstyle);
+boolean lives_dialog_set_button_layout(LiVESDialog *, LiVESButtonBoxStyle bstyle);
 
 LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_buttons, int width, int height);
 
@@ -1151,15 +1152,15 @@ void set_button_image_border_colour(LiVESButton *, LiVESWidgetState state, LiVES
 
 // THEME COLOURS (will be done more logically in the future)
 void lives_widget_apply_theme(LiVESWidget *, LiVESWidgetState state); // normal theme colours
-void lives_widget_apply_theme_dimmed(LiVESWidget *widget, LiVESWidgetState state, int dimval); // dimmed normal theme
-void set_child_dimmed_colour(LiVESWidget *widget, int dim); // dimmed normal theme for children (insensitive state only)
+void lives_widget_apply_theme_dimmed(LiVESWidget *, LiVESWidgetState state, int dimval); // dimmed normal theme
+void set_child_dimmed_colour(LiVESWidget *, int dim); // dimmed normal theme for children (insensitive state only)
 
 // if set_all, set the widget itself (labels always set_all; buttons are ignored if set_all is FALSE)
 void set_child_colour(LiVESWidget *, boolean set_all); // normal theme, sensitive and insensitive
 
 void lives_widget_apply_theme2(LiVESWidget *, LiVESWidgetState state, boolean set_fg); // menu and bars colours
-void lives_widget_apply_theme_dimmed2(LiVESWidget *widget, LiVESWidgetState state, int dimval);
-void set_child_dimmed_colour2(LiVESWidget *widget, int dim); // dimmed m & b for children (insensitive state only)
+void lives_widget_apply_theme_dimmed2(LiVESWidget *, LiVESWidgetState state, int dimval);
+void set_child_dimmed_colour2(LiVESWidget *, int dim); // dimmed m & b for children (insensitive state only)
 
 // like set_child_colour, but with menu and bars colours
 void set_child_alt_colour(LiVESWidget *, boolean set_all);
@@ -1177,7 +1178,7 @@ LiVESPixbuf *lives_pixbuf_new_from_stock_at_size(const char *stock_id, LiVESIcon
 LiVESWidget *lives_image_new_from_stock_at_size(const char *stock_id, LiVESIconSize size, int x, int y);
 
 boolean lives_widget_queue_draw_if_visible(LiVESWidget *);
-boolean lives_widget_queue_draw_and_update(LiVESWidget *widget);
+boolean lives_widget_queue_draw_and_update(LiVESWidget *);
 
 boolean global_recent_manager_add(const char *file_name);
 
@@ -1189,8 +1190,8 @@ boolean lives_widget_context_update(void);
 
 LiVESWidget *lives_menu_add_separator(LiVESMenu *);
 
-void lives_menu_item_set_text(LiVESWidget *menuitem, const char *text, boolean use_mnemonic);
-const char *lives_menu_item_get_text(LiVESWidget *menuitem);
+void lives_menu_item_set_text(LiVESWidget *, const char *text, boolean use_mnemonic);
+const char *lives_menu_item_get_text(LiVESWidget *);
 
 boolean lives_widget_get_fg_color(LiVESWidget *, LiVESWidgetColor *);
 
@@ -1217,7 +1218,7 @@ boolean lives_spin_button_configure(LiVESSpinButton *, double value, double lowe
 
 size_t calc_spin_button_width(double min, double max, int dp);
 
-double lives_spin_button_get_snapval(LiVESSpinButton *button, double val);
+double lives_spin_button_get_snapval(LiVESSpinButton *, double val);
 
 int get_box_child_index(LiVESBox *, LiVESWidget *child);
 
@@ -1229,15 +1230,15 @@ boolean lives_container_child_set_shrinkable(LiVESContainer *, LiVESWidget *chil
 boolean set_submenu_colours(LiVESMenu *, LiVESWidgetColor *colf, LiVESWidgetColor *colb);
 
 /// set callbacks
-boolean toggle_sets_sensitive(LiVESToggleButton *tb, LiVESWidget *widget, boolean invert);
-boolean toggle_toolbutton_sets_sensitive(LiVESToggleToolButton *tb, LiVESWidget *widget, boolean invert);
-boolean menu_sets_sensitive(LiVESCheckMenuItem *mi, LiVESWidget *widget,  boolean invert);
-boolean toggle_sets_visible(LiVESToggleButton *tb, LiVESWidget *widget, boolean invert);
-boolean toggle_toolbutton_sets_visible(LiVESToggleToolButton *tb, LiVESWidget *widget, boolean invert);
-boolean menu_sets_visible(LiVESCheckMenuItem *mi, LiVESWidget *widget,  boolean invert);
-boolean toggle_sets_sensitive_cond(LiVESToggleButton *tb, LiVESWidget *widget,
+boolean toggle_sets_sensitive(LiVESToggleButton *, LiVESWidget *, boolean invert);
+boolean toggle_toolbutton_sets_sensitive(LiVESToggleToolButton *, LiVESWidget *, boolean invert);
+boolean menu_sets_sensitive(LiVESCheckMenuItem *, LiVESWidget *,  boolean invert);
+boolean toggle_sets_visible(LiVESToggleButton *, LiVESWidget *, boolean invert);
+boolean toggle_toolbutton_sets_visible(LiVESToggleToolButton *, LiVESWidget *, boolean invert);
+boolean menu_sets_visible(LiVESCheckMenuItem *, LiVESWidget *,  boolean invert);
+boolean toggle_sets_sensitive_cond(LiVESToggleButton *, LiVESWidget *,
                                    livespointer condsens, livespointer condinsens, boolean invert);
-boolean toggle_toggles_var(LiVESToggleButton *tbut, boolean *var, boolean invert);
+boolean toggle_toggles_var(LiVESToggleButton *, boolean *var, boolean invert);
 
 // callbacks
 boolean label_act_toggle(LiVESWidget *, LiVESXEventButton *, LiVESWidget *);
@@ -1255,7 +1256,7 @@ void lives_cool_toggled(LiVESWidget *tbutton, livespointer);
 boolean unhide_cursor(LiVESXWindow *);
 void hide_cursor(LiVESXWindow *);
 
-boolean set_tooltips_state(LiVESWidget *widget, boolean state);
+boolean set_tooltips_state(LiVESWidget *, boolean state);
 
 boolean get_border_size(LiVESWidget *win, int *bx, int *by);
 boolean lives_window_get_inner_size(LiVESWindow *, int *x, int *y);
@@ -1281,7 +1282,7 @@ boolean lives_accel_path_disconnect(LiVESAccelGroup *, const char *path);
 boolean lives_widget_get_mod_mask(LiVESWidget *, LiVESXModifierType *modmask);
 
 boolean lives_widget_nullify_with(LiVESWidget *, void **);
-boolean lives_widget_destroy_with(LiVESWidget *widget, LiVESWidget *dieplease);
+boolean lives_widget_destroy_with(LiVESWidget *, LiVESWidget *dieplease);
 
 void *lives_fg_run(weed_plant_t *lpt, void *retval);
 
@@ -1425,6 +1426,7 @@ typedef struct {
   /// rarely changed values /////
   int css_min_width;
   int css_min_height;
+  int icon_size; ///< icon size for tooltips image, warn image, toolbar img, etc.
   char *font_name; ///< readonly for now
   int font_size; ///< ditto
   boolean no_gui; ///< show nothing !
@@ -1464,6 +1466,7 @@ const widget_opts_t _def_widget_opts = {
 
   W_CSS_MIN_WIDTH, ///< css_min_width
   W_CSS_MIN_HEIGHT, ///< css_min_height
+  LIVES_ICON_SIZE_LARGE_TOOLBAR, ///< icon_size
   NULL, ///< font name
   -1, ///< font size
   FALSE, ///< no_gui

@@ -1319,6 +1319,7 @@ void do_vpp_fps_error(void);
 void do_decoder_palette_error(void);
 void do_rmem_max_error(int size);
 boolean do_gamma_import_warn(uint64_t fv, int gamma_type);
+boolean do_mt_lb_warn(boolean lb);
 LiVESResponseType do_file_notfound_dialog(const char *detail, const char *dirname);
 LiVESResponseType do_dir_notfound_dialog(const char *detail, const char *dirname);
 void do_no_decoder_error(const char *fname);

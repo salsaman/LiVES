@@ -2577,10 +2577,11 @@ void d_print(const char *fmt, ...) {
   add_messages_to_list(text);
   lives_free(text);
 
-  if (!mainw->go_away && prefs->show_gui && ((!mainw->multitrack && mainw->msg_area
-      && mainw->msg_adj)
-      || (!mainw->multitrack && mainw->multitrack->msg_area
-          && mainw->multitrack->msg_adj))) {
+  if (!mainw->go_away && prefs->show_gui && prefs->show_msg_area
+      && ((!mainw->multitrack && mainw->msg_area
+           && mainw->msg_adj)
+          || (!mainw->multitrack && mainw->multitrack->msg_area
+              && mainw->multitrack->msg_adj))) {
     if (mainw->multitrack) {
       msg_area_scroll_to_end(mainw->multitrack->msg_area, mainw->multitrack->msg_adj);
       lives_widget_queue_draw_if_visible(mainw->multitrack->msg_area);

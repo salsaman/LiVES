@@ -19,7 +19,7 @@
 boolean _start_playback(livespointer data) {
   int new_file, old_file;
   int play_type = LIVES_POINTER_TO_INT(data);
-  if (mainw->noswitch) return TRUE;
+  if (play_type != 8 && mainw->noswitch) return TRUE;
   switch (play_type) {
   case 8: case 6: case 0:
     /// normal play
@@ -2453,7 +2453,7 @@ void play_file(void) {
     mainw->record_starting = TRUE;
   }
 
-  if (mainw->double_size && !mainw->multitrack) {
+  if (prefs->show_msg_area && mainw->double_size && !mainw->multitrack) {
     lives_widget_hide(mainw->message_box);
   }
 
@@ -2926,7 +2926,9 @@ void play_file(void) {
   mainw->osc_auto = 0;
 
   if (mainw->loop_locked) unlock_loop_lock();
-  lives_widget_set_size_request(mainw->message_box, -1, MIN_MSGBAR_HEIGHT);
+  if (prefs->show_msg_area) {
+    lives_widget_set_size_request(mainw->message_box, -1, MIN_MSGBAR_HEIGHT);
+  }
 
   mainw->jack_can_stop = FALSE;
   if ((mainw->current_file == current_file) && CURRENT_CLIP_IS_VALID) {

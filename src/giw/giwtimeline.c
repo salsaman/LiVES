@@ -755,8 +755,7 @@ static void giw_timeline_draw_ticks(GiwTimeline *timeline) {
 
   giw_timeline_get_range(timeline, &lower, &upper, &max_size);
 
-  if ((upper - lower) == 0)
-    goto out;
+  if ((upper - lower) == 0.) goto out;
 
   increment = (gdouble) width / (upper - lower);
 

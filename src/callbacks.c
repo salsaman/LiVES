@@ -7892,7 +7892,7 @@ static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user
             if (mainw->double_size) {
               lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
               lives_widget_hide(mainw->sep_image);
-              lives_widget_hide(mainw->message_box);
+              if (prefs->show_msg_area) lives_widget_hide(mainw->message_box);
             } else lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
             unfade_background();
           } else {
@@ -7971,7 +7971,7 @@ void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
           if (palette->style & STYLE_1) {
             lives_widget_hide(mainw->sep_image);
           }
-          lives_widget_hide(mainw->message_box);
+          if (prefs->show_msg_area) lives_widget_hide(mainw->message_box);
         }
         lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
         resize(2.);
@@ -7982,7 +7982,7 @@ void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
           if (palette->style & STYLE_1) {
             lives_widget_show_all(mainw->sep_image);
           }
-          lives_widget_show_all(mainw->message_box);
+          if (prefs->show_msg_area) lives_widget_show_all(mainw->message_box);
 	  // *INDENT-OFF*
         }}}}
   // *INDENT-ON*
@@ -8072,7 +8072,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
                   if (palette->style & STYLE_1) {
                     lives_widget_show(mainw->sep_image);
                   }
-                  lives_widget_show_all(mainw->message_box);
+                  if (prefs->show_msg_area) lives_widget_show_all(mainw->message_box);
 		// *INDENT-OFF*
                 }}}}}
 	// *INDENT-ON*
@@ -8134,7 +8134,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
               if (palette->style & STYLE_1) {
                 lives_widget_hide(mainw->sep_image);
               }
-              lives_widget_hide(mainw->message_box);
+              if (prefs->show_msg_area) lives_widget_hide(mainw->message_box);
               lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
               resize(2.);
             }
@@ -9940,9 +9940,15 @@ boolean expose_laud_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer
 
 boolean config_laud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
   lives_painter_surface_t *surf = lives_widget_create_painter_surface(widget);
+  lives_painter_surface_t *laudio_drawable;
+
   clear_widget_bg(widget, surf);
-  if (mainw->laudio_drawable) lives_painter_surface_destroy(mainw->laudio_drawable);
-  mainw->laudio_drawable = surf;
+  laudio_drawable = mainw->laudio_drawable;
+
+  if (laudio_drawable) {
+    mainw->laudio_drawable = surf;
+    lives_painter_surface_destroy(laudio_drawable);
+  }
   if (IS_VALID_CLIP(mainw->drawsrc)) {
     mainw->files[mainw->drawsrc]->laudio_drawable = mainw->laudio_drawable;
   }
@@ -9960,9 +9966,15 @@ boolean expose_raud_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer
 
 boolean config_raud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
   lives_painter_surface_t *surf = lives_widget_create_painter_surface(widget);
+  lives_painter_surface_t *raudio_drawable;
+
   clear_widget_bg(widget, surf);
-  if (mainw->raudio_drawable) lives_painter_surface_destroy(mainw->raudio_drawable);
-  mainw->raudio_drawable = surf;
+  raudio_drawable = mainw->raudio_drawable;
+
+  if (raudio_drawable) {
+    mainw->raudio_drawable = surf;
+    lives_painter_surface_destroy(raudio_drawable);
+  }
   if (IS_VALID_CLIP(mainw->drawsrc)) {
     mainw->files[mainw->drawsrc]->raudio_drawable = mainw->raudio_drawable;
   }

@@ -1803,7 +1803,6 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
 
     lives_widget_set_sensitive(radiobutton_b1, FALSE);
     lives_widget_set_sensitive(radiobutton_l1, FALSE);
-
   }
 
   resaudw->aud_checkbutton = NULL;

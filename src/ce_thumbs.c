@@ -351,7 +351,7 @@ void start_ce_thumb_mode(void) {
   lives_box_pack_start(LIVES_BOX(vbox2), tscroll, TRUE, TRUE, 0);
 
   lives_widget_hide(mainw->eventbox);
-  lives_widget_hide(mainw->message_box);
+  if (prefs->show_msg_area) lives_widget_hide(mainw->message_box);
   lives_widget_show_all(top_hbox);
 
   lives_widget_context_update(); // need size of cscroll to fit thumbs
@@ -445,7 +445,7 @@ void end_ce_thumb_mode(void) {
   lives_widget_destroy(top_hbox);
   lives_container_add(LIVES_CONTAINER(LIVES_MAIN_WINDOW_WIDGET), mainw->top_vbox);
   lives_widget_show(mainw->eventbox);
-  lives_widget_show(mainw->message_box);
+  if (prefs->show_msg_area) lives_widget_show(mainw->message_box);
   lives_free(fxcombos); lives_free(pscrolls); lives_free(combo_entries);
   lives_free(key_checks); lives_free(rb_fx_areas); lives_free(rb_clip_areas);
   lives_free(clip_boxes); lives_free(ch_fns); lives_free(rb_clip_fns);

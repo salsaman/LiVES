@@ -4614,7 +4614,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_check_button_new_with_label(const
 
 static LiVESWidget *make_ttips_image_for(LiVESWidget *widget, const char *text) {
   LiVESWidget *ttips_image = lives_image_new_from_stock("livestock-help-info",
-                             LIVES_ICON_SIZE_LARGE_TOOLBAR);
+                             widget_opts.icon_size);
   if (ttips_image) {
 #if GTK_CHECK_VERSION(3, 16, 0)
     if (widget_opts.apply_theme) {
@@ -5297,9 +5297,11 @@ WIDGET_HELPER_GLOBAL_INLINE double lives_ruler_set_upper(LiVESRuler *ruler, doub
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
 #ifdef ENABLE_GIW_3
-  if (GIW_IS_TIMELINE(ruler))
-    giw_timeline_set_range(GIW_TIMELINE(ruler), 0., value, giw_timeline_get_max_size(GIW_TIMELINE(ruler)));
-  else
+  if (GIW_IS_TIMELINE(ruler)) {
+    LiVESAdjustment *adj = giw_timeline_get_adjustment(GIW_TIMELINE(ruler));
+    double lower = lives_adjustment_get_lower(adj);
+    giw_timeline_set_range(GIW_TIMELINE(ruler), lower, value, giw_timeline_get_max_size(GIW_TIMELINE(ruler)));
+  } else
 #endif
     gtk_adjustment_set_upper(gtk_range_get_adjustment(GTK_RANGE(ruler)), value);
 #else
@@ -5313,7 +5315,14 @@ WIDGET_HELPER_GLOBAL_INLINE double lives_ruler_set_upper(LiVESRuler *ruler, doub
 WIDGET_HELPER_GLOBAL_INLINE double lives_ruler_set_lower(LiVESRuler *ruler, double value) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
-  gtk_adjustment_set_lower(gtk_range_get_adjustment(GTK_RANGE(ruler)), value);
+#ifdef ENABLE_GIW_3
+  if (GIW_IS_TIMELINE(ruler)) {
+    LiVESAdjustment *adj = giw_timeline_get_adjustment(GIW_TIMELINE(ruler));
+    double upper = lives_adjustment_get_upper(adj);
+    giw_timeline_set_range(GIW_TIMELINE(ruler), value, upper, giw_timeline_get_max_size(GIW_TIMELINE(ruler)));
+  } else
+#endif
+    gtk_adjustment_set_lower(gtk_range_get_adjustment(GTK_RANGE(ruler)), value);
 #else
   ruler->lower = value;
 #endif
@@ -7856,7 +7865,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_add_separator(LiVESLayout 
 ////////////////////////////////////////////////////////////////////
 
 static LiVESWidget *add_warn_image(LiVESWidget * widget, LiVESWidget * hbox) {
-  LiVESWidget *warn_image = lives_image_new_from_stock(LIVES_STOCK_DIALOG_WARNING, LIVES_ICON_SIZE_LARGE_TOOLBAR);
+  LiVESWidget *warn_image = lives_image_new_from_stock(LIVES_STOCK_DIALOG_WARNING,
+                            widget_opts.icon_size);
   if (hbox) lives_box_pack_start(LIVES_BOX(hbox), warn_image, FALSE, FALSE, 4);
   lives_widget_set_no_show_all(warn_image, TRUE);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(warn_image), TTIPS_OVERRIDE_KEY, warn_image);
@@ -10159,7 +10169,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_toolbar_new(void) {
   LiVESWidget *toolbar = lives_toolbar_new();
   lives_toolbar_set_show_arrow(LIVES_TOOLBAR(toolbar), TRUE);
   lives_toolbar_set_style(LIVES_TOOLBAR(toolbar), LIVES_TOOLBAR_ICONS);
-  lives_toolbar_set_icon_size(LIVES_TOOLBAR(toolbar), LIVES_ICON_SIZE_LARGE_TOOLBAR);
+  lives_toolbar_set_icon_size(LIVES_TOOLBAR(toolbar), widget_opts.icon_size);
   if (widget_opts.apply_theme) {
 #if GTK_CHECK_VERSION(3, 0, 0)
     set_css_min_size(toolbar, widget_opts.css_min_width, widget_opts.css_min_height);
@@ -10481,6 +10491,12 @@ boolean label_act_lockbutton(LiVESWidget * widget, LiVESXEventButton * event, Li
   if (!lives_widget_is_sensitive(LIVES_WIDGET(lockbutton))) return FALSE;
   _on_lock_button_clicked(lockbutton, NULL);
   return FALSE;
+}
+
+
+boolean lives_lock_button_toggle(LiVESButton * button) {
+  _on_lock_button_clicked(button, NULL);
+  return lives_lock_button_get_locked(button);
 }
 
 

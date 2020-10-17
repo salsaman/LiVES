@@ -3217,27 +3217,35 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
 
     // if we are in multitrack mode, we will just set up NULL layers and let the effects pull our frames
     if (mainw->multitrack) {
-      if ((mainw->fixed_fpsd <= 0. && (!mainw->vpp || mainw->vpp->fixed_fpsd <= 0. || !mainw->ext_playback))
-          || (mainw->fixed_fpsd > 0. && (curr_tc - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->fixed_fpsd) ||
-          (mainw->vpp && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback &&
-           (curr_tc - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->vpp->fixed_fpsd)) {
+
+      if (!LIVES_IS_PLAYING || ((mainw->fixed_fpsd <= 0. && (!mainw->vpp || mainw->vpp->fixed_fpsd <= 0. || !mainw->ext_playback))
+                                || (mainw->fixed_fpsd > 0. && (curr_tc - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->fixed_fpsd) ||
+                                (mainw->vpp && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback &&
+                                 (curr_tc - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->vpp->fixed_fpsd))) {
         mainw->pchains = pchains;
-        if (prefs->pbq_adaptive) {
-          update_effort(dframes, TRUE);
-          dframes = 0;
-          spare_cycles = 0;
+
+        if (LIVES_IS_PLAYING) {
+          if (prefs->pbq_adaptive) {
+            update_effort(dframes, TRUE);
+            dframes = 0;
+            spare_cycles = 0;
+          }
         }
+
         load_frame_image(cfile->frameno);
-        if (prefs->show_player_stats) {
-          mainw->fps_measure++;
-        }
-        if (mainw->last_display_ticks == 0) mainw->last_display_ticks = curr_tc;
-        else {
-          if (mainw->vpp && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.)
-            mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->vpp->fixed_fpsd;
-          else if (mainw->fixed_fpsd > 0.)
-            mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->fixed_fpsd;
-          else mainw->last_display_ticks = curr_tc;
+
+        if (LIVES_IS_PLAYING) {
+          if (prefs->show_player_stats) {
+            mainw->fps_measure++;
+          }
+          if (mainw->last_display_ticks == 0) mainw->last_display_ticks = curr_tc;
+          else {
+            if (mainw->vpp && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.)
+              mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->vpp->fixed_fpsd;
+            else if (mainw->fixed_fpsd > 0.)
+              mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->fixed_fpsd;
+            else mainw->last_display_ticks = curr_tc;
+          }
         }
         mainw->pchains = NULL;
       } else spare_cycles++;
@@ -6237,6 +6245,14 @@ render_details *create_render_details(int type) {
   frame = add_video_options(&rdet->spinbutton_width, rdet->width, &rdet->spinbutton_height, rdet->height, &rdet->spinbutton_fps,
                             rdet->fps, NULL, 0., TRUE, hbox);
   lives_box_pack_start(LIVES_BOX(top_vbox), frame, FALSE, TRUE, 0);
+
+  if (type == 4) {
+    const lives_special_aspect_t *aspect = paramspecial_get_aspect();
+    if (aspect && aspect->lockbutton) {
+      if (lives_lock_button_get_locked(LIVES_BUTTON(aspect->lockbutton)))
+        lives_lock_button_toggle(LIVES_BUTTON(aspect->lockbutton));
+    }
+  }
 
   if (type == 1) gtk_widget_set_no_show_all(frame, TRUE);
 

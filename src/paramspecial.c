@@ -442,7 +442,6 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
 
       reset_aspect(LIVES_BUTTON(aspect.lockbutton), &aspect);
 
-
       hbox = lives_hbox_new(FALSE, 0);
       lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
 

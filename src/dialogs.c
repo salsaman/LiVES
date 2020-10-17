@@ -1869,9 +1869,9 @@ switch_point:
 #endif
                   cache_misses++;
                 }
-		// *INDENT-OFF*
-	      }}}}
-	// *INDENT-ON*
+		  // *INDENT-OFF*
+		}}}}
+	  // *INDENT-ON*
 
         if (sfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->playing_file, sfile->frameno))
           sfile->last_vframe_played = sfile->frameno;
@@ -2042,9 +2042,9 @@ switch_point:
         mainw->pred_frame = 0;
         mainw->pred_clip = 0;
         cleanup_preload = FALSE;
-	// *INDENT-OFF*
-      }}}
-  // *INDENT-ON*
+	  // *INDENT-OFF*
+	}}}
+    // *INDENT-ON*
 #endif
 
   // paused
@@ -2099,16 +2099,16 @@ switch_point:
                 mainw->pred_frame = -getahead;
                 mainw->force_show = TRUE;
               }
-	      // *INDENT-OFF*
-	    }}
-	  else mainw->pred_frame = 0;
-	}}
+		// *INDENT-OFF*
+	      }}
+	    else mainw->pred_frame = 0;
+	  }}
 #ifdef SHOW_CACHE_PREDICTIONS
-      //g_print("frame %ld already in cache\n", mainw->pred_frame);
+	//g_print("frame %ld already in cache\n", mainw->pred_frame);
 #endif
 #endif
-    }}
-  // *INDENT-ON*
+      }}
+    // *INDENT-ON*
 
 proc_dialog:
 
@@ -2184,6 +2184,9 @@ proc_dialog:
 
   return 2000000 + mainw->cancelled;
 }
+#if 0
+}
+#endif
 
 #ifdef USE_GDK_FRAME_CLOCK
 static boolean using_gdk_frame_clock;
@@ -3419,6 +3422,31 @@ LIVES_GLOBAL_INLINE boolean do_gamma_import_warn(uint64_t fv, int gamma_type) {
                                    "Opening it with the current version may result in a loss of quality\n"
                                    "Do you wish to continue ?"), weed_gamma_get_name(gamma_type), fvx);
   lives_free(fvx);
+  return ret;
+}
+
+
+boolean do_mt_lb_warn(boolean lb) {
+  char *tmp, *msg, *endis, *endised;
+  boolean ret;
+
+  if (lb) {
+    endis = _("enable");
+    endised = _("enabled");
+  } else {
+    endis = _("disable");
+    endised = _("disabled");
+  }
+  msg = lives_strdup_printf((tmp = _("This layout was saved with letterboxing %s\n"
+                                     "To preserve the original appearance, I can override\n"
+                                     "the current setting and %s letterboxing for this layout\n\n"
+                                     "Click 'Yes' to proceed, or 'No' to keep the current setting\n\n"
+                                     "(Note: the value for the current layout can be modified at any time\n"
+                                     "via the menu option 'Tools' / 'Change Width, Height and Audio Values')\n")),
+                            endised, endis);
+  lives_free(tmp); lives_free(endised); lives_free(endis);
+  ret = do_yesno_dialog_with_check(msg, WARN_MASK_LAYOUT_LB);
+  lives_free(msg);
   return ret;
 }
 

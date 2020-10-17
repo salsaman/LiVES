@@ -333,9 +333,10 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
   lives_widget_set_base_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame2)), LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_base_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame2)), LIVES_WIDGET_STATE_NORMAL, colb);
 
-  lives_widget_set_fg_color(mainw->message_box, LIVES_WIDGET_STATE_NORMAL, colf);
-
-  lives_widget_set_bg_color(mainw->msg_scrollbar, LIVES_WIDGET_STATE_NORMAL, colb2);
+  if (prefs->show_msg_area) {
+    lives_widget_set_fg_color(mainw->message_box, LIVES_WIDGET_STATE_NORMAL, colf);
+    lives_widget_set_bg_color(mainw->msg_scrollbar, LIVES_WIDGET_STATE_NORMAL, colb2);
+  }
 
   lives_widget_set_fg_color(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL, colb);
 
@@ -2292,35 +2293,34 @@ void create_LiVES(void) {
   lives_widget_set_hexpand(mainw->raudio_draw, TRUE);
   lives_box_pack_start(LIVES_BOX(vbox2), mainw->raudio_draw, FALSE, FALSE, 0);
 
-  mainw->message_box = lives_hbox_new(FALSE, 0);
-  lives_widget_set_app_paintable(mainw->message_box, TRUE);
-  //lives_widget_set_vexpand(mainw->message_box, TRUE);
-  if (prefs->show_msg_area)
+  if (prefs->show_msg_area) {
+    mainw->message_box = lives_hbox_new(FALSE, 0);
+    lives_widget_set_app_paintable(mainw->message_box, TRUE);
+    //lives_widget_set_vexpand(mainw->message_box, TRUE);
     lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->message_box, FALSE, TRUE, 0);
-  else lives_widget_object_ref_sink(mainw->message_box);
 
-  mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(reshow_msg_area), &mainw->msg_surface);
+    mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(reshow_msg_area), &mainw->msg_surface);
 
-  if (prefs->show_msg_area) {
     lives_widget_add_events(mainw->msg_area, LIVES_SMOOTH_SCROLL_MASK | LIVES_SCROLL_MASK);
-  }
 
-  //lives_widget_set_vexpand(mainw->msg_area, TRUE);
-  lives_container_set_border_width(LIVES_CONTAINER(mainw->message_box), 0);
-  lives_widget_apply_theme3(mainw->msg_area, LIVES_WIDGET_STATE_NORMAL);
-  lives_box_pack_start(LIVES_BOX(mainw->message_box), mainw->msg_area, TRUE, TRUE, 0);
+    //lives_widget_set_vexpand(mainw->msg_area, TRUE);
+    lives_container_set_border_width(LIVES_CONTAINER(mainw->message_box), 0);
+    lives_widget_apply_theme3(mainw->msg_area, LIVES_WIDGET_STATE_NORMAL);
+    lives_box_pack_start(LIVES_BOX(mainw->message_box), mainw->msg_area, TRUE, TRUE, 0);
 
-  mainw->msg_scrollbar = lives_vscrollbar_new(NULL);
-  lives_box_pack_end(LIVES_BOX(mainw->message_box), mainw->msg_scrollbar, FALSE, TRUE, 0);
+    mainw->msg_scrollbar = lives_vscrollbar_new(NULL);
+    lives_box_pack_end(LIVES_BOX(mainw->message_box), mainw->msg_scrollbar, FALSE, TRUE, 0);
 
-  mainw->msg_adj = lives_range_get_adjustment(LIVES_RANGE(mainw->msg_scrollbar));
+    mainw->msg_adj = lives_range_get_adjustment(LIVES_RANGE(mainw->msg_scrollbar));
 
-  if (prefs->show_msg_area) {
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(mainw->msg_adj), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                                     LIVES_GUI_CALLBACK(msg_area_scroll), (livespointer)mainw->msg_area);
 
     lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->msg_area), LIVES_WIDGET_SCROLL_EVENT,
                               LIVES_GUI_CALLBACK(on_msg_area_scroll), (livespointer)mainw->msg_adj);
+  } else {
+    mainw->message_box = mainw->msg_area = mainw->msg_scrollbar = NULL;
+    mainw->msg_adj = NULL;
   }
 
   // accel keys
@@ -2981,8 +2981,11 @@ void create_LiVES(void) {
 
   lives_window_add_accel_group(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->accel_group);
   mainw->plug = NULL;
-  lives_widget_set_can_focus(mainw->message_box, TRUE);
-  if (new_lives) if (prefs->show_msg_area) lives_widget_grab_focus(mainw->message_box); // TODO !prefs->show_msg_area
+
+  if (prefs->show_msg_area) {
+    lives_widget_set_can_focus(mainw->message_box, TRUE);
+    if (new_lives) lives_widget_grab_focus(mainw->message_box); // TODO !prefs->show_msg_area
+  }
 
   if (RFX_LOADED) {
     if (mainw->ldg_menuitem) {
@@ -3245,7 +3248,7 @@ void fade_background(void) {
   lives_widget_hide(mainw->hseparator);
   lives_widget_hide(mainw->sep_image);
   lives_widget_hide(mainw->eventbox2);
-  lives_widget_hide(mainw->message_box);
+  if (prefs->show_msg_area) lives_widget_hide(mainw->message_box);
 
   if (!mainw->foreign) {
     lives_widget_show(mainw->t_forward);
@@ -3344,7 +3347,7 @@ void unfade_background(void) {
       lives_widget_show_all(mainw->sep_image);
     }
     lives_widget_show_all(mainw->hseparator);
-    lives_widget_show_all(mainw->message_box);
+    if (prefs->show_msg_area) lives_widget_show_all(mainw->message_box);
   }
 
   lives_widget_show_all(mainw->eventbox2);
@@ -3446,7 +3449,7 @@ void fullscreen_internal(void) {
 
     lives_frame_set_label(LIVES_FRAME(mainw->playframe), NULL);
 
-    lives_widget_hide(mainw->message_box);
+    if (prefs->show_msg_area) lives_widget_hide(mainw->message_box);
 
     //lives_widget_context_update();
 

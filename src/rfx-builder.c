@@ -4675,7 +4675,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
 
   if (status != RFX_STATUS_ANY) {
     threaded_dialog_spin(0.);
-    if (CURRENT_CLIP_IS_VALID && !LIVES_IS_PLAYING) sensitize();
+    if (CURRENT_CLIP_IS_VALID && !LIVES_IS_PLAYING) sensitize_rfx();
     threaded_dialog_spin(0.);
   }
 }

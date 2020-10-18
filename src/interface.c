@@ -985,8 +985,8 @@ xprocess *create_processing(const char *text) {
                             LIVES_GUI_CALLBACK(on_effects_paused), NULL);
 
   if (mainw->multitrack && mainw->multitrack->is_rendering) {
-    lives_signal_connect(LIVES_GUI_OBJECT(procw->preview_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(multitrack_preview_clicked), mainw->multitrack);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(procw->preview_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                              LIVES_GUI_CALLBACK(multitrack_preview_clicked), mainw->multitrack);
   } else {
     lives_signal_sync_connect(LIVES_GUI_OBJECT(procw->preview_button), LIVES_WIDGET_CLICKED_SIGNAL,
                               LIVES_GUI_CALLBACK(on_preview_clicked), NULL);

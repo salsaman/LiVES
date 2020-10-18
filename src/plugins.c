@@ -3381,7 +3381,10 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
           rpar[i].dp = weed_get_int_value(gui, WEED_LEAF_DECIMALS, NULL);
       }
       if (rpar[i].step_size == 0.) {
-        if (rpar[i].max - rpar[i].min > 1.) rpar[i].step_size = 1.;
+        if (rpar[i].max - rpar[i].min > 10. && !(rpar[i].min >= -10. && rpar[i].max <= 10.))
+          rpar[i].step_size = 1.;
+        else if (rpar[i].max - rpar[i].min > 1. && !(rpar[i].min >= -1. && rpar[i].max <= 1.))
+          rpar[i].step_size = .1;
         else rpar[i].step_size = 1. / (double)lives_10pow(rpar[i].dp);
       }
       break;

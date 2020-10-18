@@ -3698,9 +3698,6 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
     /// set the highest quality palette conversions
     init_conversions(LIVES_INTENTION_RENDER);
 
-    /// set the 'effort' to as low as possible; if using adaptive quality this ensures we render at the highest settings
-    mainw->effort = -EFFORT_RANGE_MAX;
-
     if (cfile->frames < out_frame) out_frame = cfile->frames + 1;
     cfile->undo_start = out_frame;
 

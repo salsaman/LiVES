@@ -65,45 +65,39 @@ static void add_bg_pixel(unsigned char *ptr, int pal, int clamping, int trans) {
 
 
 static void add_bg_row(unsigned char *ptr, int xwidth, int pal, int clamping, int trans) {
-  register int i;
-  int psize = 4;
-  if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_YUV888) psize = 3;
-  for (i = 0; i < xwidth; i += psize) add_bg_pixel(ptr + i, pal, clamping, trans);
+  int psize = pixel_size(pal);
+  for (int i = 0; i < xwidth; i += psize) add_bg_pixel(ptr + i, pal, clamping, trans);
 }
 
 
 static weed_error_t shift_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL),
-                *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  weed_plant_t *in_channel = weed_get_in_channel(inst, 0),
+                *out_channel = weed_get_out_channel(inst, 0);
+  weed_plant_t **in_params = weed_get_in_params(inst, NULL);
 
-  unsigned char *src = (unsigned char *)weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
-  unsigned char *dst = (unsigned char *)weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  unsigned char *src = (unsigned char *)weed_channel_get_pixel_data(in_channel);
+  unsigned char *dst = (unsigned char *)weed_channel_get_pixel_data(out_channel);
 
-  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
-  int sheight = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
-  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
-  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  int width = weed_channel_get_width(in_channel);
+  int sheight = weed_channel_get_height(in_channel);
+  int irowstride = weed_channel_get_stride(in_channel);
+  int orowstride = weed_channel_get_stride(out_channel);
 
   unsigned char *dend;
 
   size_t send = irowstride * sheight;
 
-  int x = (int)(weed_get_double_value(in_params[0], WEED_LEAF_VALUE, NULL) * (double)width + .5);
-  int y = (int)(weed_get_double_value(in_params[1], WEED_LEAF_VALUE, NULL) * (double)sheight + .5) * irowstride;
-  int trans = weed_get_boolean_value(in_params[2], WEED_LEAF_VALUE, NULL);
+  int x = (int)(weed_param_get_value_double(in_params[0]) * (double)width + .5);
+  int y = (int)(weed_param_get_value_double(in_params[1]) * (double)sheight + .5) * irowstride;
+  int trans = weed_param_get_value_boolean(in_params[2]);
 
   int offset = 0;
-  int dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL); // may differ because of threading
+  int dheight = weed_channel_get_height(out_channel); // may differ because of threading
 
-  int pal = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
-
+  int pal = weed_channel_get_palette(in_channel);
   int psize = 4;
-
   int sx, sy, ypos;
-
   int istart, iend;
-
   int clamping = WEED_YUV_CLAMPING_CLAMPED;
 
   weed_free(in_params);
@@ -120,8 +114,7 @@ static weed_error_t shift_process(weed_plant_t *inst, weed_timecode_t timestamp)
 
   psize = pixel_size(pal);
 
-  if (pal == WEED_PALETTE_YUV888 || pal == WEED_PALETTE_YUVA8888)
-    clamping = weed_get_int_value(in_channel, WEED_LEAF_YUV_CLAMPING, NULL);
+  if (weed_palette_is_yuv(pal)) clamping = weed_channel_get_yuv_clamping(in_channel);
 
   x *= psize;
   width *= psize;
@@ -174,12 +167,10 @@ WEED_SETUP_START(200, 200) {
                               };
 
   weed_plant_t *filter_class = weed_filter_class_init("shift", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, palette_list,
-                               NULL, shift_process, NULL,
-                               in_chantmpls, out_chantmpls, in_params, NULL);
+                               NULL, shift_process, NULL, in_chantmpls, out_chantmpls, in_params, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+  weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;
 

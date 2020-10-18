@@ -1516,6 +1516,7 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int width, int height, int t
 void wait_for_cleaner(void);
 void load_frame_image(int frame);
 void sensitize(void);
+void sensitize_rfx(void);
 void desensitize(void);
 void procw_desensitize(void);
 void close_current_file(int file_to_switch_to);   ///< close current file, and try to switch to file_to_switch_to

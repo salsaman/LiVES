@@ -367,18 +367,6 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_width);
 
-  // dummy radiobutton so we can have neither in nor out set
-  radiobutton_dummy = lives_standard_radio_button_new(NULL, &radiobutton_group, LIVES_BOX(hbox), NULL);
-  lives_widget_set_no_show_all(radiobutton_dummy, TRUE);
-
-  radiobutton_in = lives_standard_radio_button_new((tmp = (_("Transition _In"))),
-                   &radiobutton_group, LIVES_BOX(hbox),
-                   (tmp2 = (_("Click to set the transition parameter to show only the front frame"))));
-  lives_free(tmp); lives_free(tmp2);
-
-  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(radiobutton_in), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                  LIVES_GUI_CALLBACK(transition_in_pressed), (livespointer)rfx);
-
   if (add_audio_check) {
     int error;
 
@@ -406,6 +394,10 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
     after_transaudio_toggled(LIVES_TOGGLE_BUTTON(checkbutton), (livespointer)rfx);
   }
 
+  // dummy radiobutton so we can have neither in nor out set
+  radiobutton_dummy = lives_standard_radio_button_new(NULL, &radiobutton_group, LIVES_BOX(hbox), NULL);
+  lives_widget_set_no_show_all(radiobutton_dummy, TRUE);
+
   widget_opts.pack_end = TRUE;
   radiobutton_out = lives_standard_radio_button_new((tmp = (_("Transition _Out"))),
                     &radiobutton_group, LIVES_BOX(hbox),
@@ -414,12 +406,19 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
   lives_free(tmp);
   lives_free(tmp2);
 
-  widget_opts.pack_end = FALSE;
-
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(radiobutton_out), LIVES_WIDGET_TOGGLED_SIGNAL,
                                   LIVES_GUI_CALLBACK(transition_out_pressed),
                                   (livespointer)rfx);
 
+  radiobutton_in = lives_standard_radio_button_new((tmp = (_("Transition _In"))),
+                   &radiobutton_group, LIVES_BOX(hbox),
+                   (tmp2 = (_("Click to set the transition parameter to show only the front frame"))));
+  lives_free(tmp); lives_free(tmp2);
+
+  lives_signal_sync_connect_after(LIVES_GUI_OBJECT(radiobutton_in), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(transition_in_pressed), (livespointer)rfx);
+
+  widget_opts.pack_end = FALSE;
 
   if (palette->style & STYLE_1) {
     lives_widget_set_fg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);

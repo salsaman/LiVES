@@ -167,6 +167,7 @@ boolean expose_pim(LiVESWidget * widget, lives_painter_t *cr, livespointer user_
 
 void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetColor * colf2,
                  LiVESWidgetColor * colb2, LiVESWidgetColor * colt, LiVESWidgetColor * coli) {
+  LiVESWidget *label;
   lives_widget_apply_theme(LIVES_MAIN_WINDOW_WIDGET, LIVES_WIDGET_STATE_NORMAL);
 
   if (palette->style & STYLE_1) {
@@ -324,8 +325,11 @@ void set_colours(LiVESWidgetColor * colf, LiVESWidgetColor * colb, LiVESWidgetCo
 
   lives_widget_set_bg_color(mainw->playframe, LIVES_WIDGET_STATE_NORMAL, colb);
 
-  lives_widget_set_base_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->playframe)), LIVES_WIDGET_STATE_NORMAL, colb);
-  lives_widget_set_text_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->playframe)), LIVES_WIDGET_STATE_NORMAL, colf);
+  label = lives_frame_get_label_widget(LIVES_FRAME(mainw->playframe));
+  if (label) {
+    lives_widget_set_base_color(label, LIVES_WIDGET_STATE_NORMAL, colb);
+    lives_widget_set_text_color(label, LIVES_WIDGET_STATE_NORMAL, colf);
+  }
 
   lives_widget_set_text_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame1)), LIVES_WIDGET_STATE_NORMAL, colf);
   lives_widget_set_text_color(lives_frame_get_label_widget(LIVES_FRAME(mainw->frame2)), LIVES_WIDGET_STATE_NORMAL, colf);
@@ -4286,7 +4290,8 @@ static void _resize_play_window(void) {
   nwidth = mainw->pwidth;
   nheight += mainw->pheight;
 
-  if (!(LIVES_IS_PLAYING && mainw->fs)) {
+  if (!(LIVES_IS_PLAYING && mainw->fs) && !mainw->double_size) {
+    int xnwidth, xnheight;
     if (!LIVES_IS_PLAYING && CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_IS_NORMAL)
       nwidth = MAX(mainw->pwidth, mainw->sepwin_minwidth);
 
@@ -4302,6 +4307,22 @@ static void _resize_play_window(void) {
              nheight > mainw->mgeom[pmonitor - 1].height - scr_height_safety) {
         nheight = (nheight >> 2) << 1;
         nwidth = (nwidth >> 2) << 1;
+      }
+    }
+    xnwidth = nwidth;
+    xnheight = nheight;
+    calc_midspect(mainw->pwidth, mainw->pheight, &xnwidth, &xnheight);
+    if (pmonitor == 0 || !LIVES_IS_PLAYING) {
+      if (xnwidth <= GUI_SCREEN_WIDTH - scr_width_safety &&
+          xnheight <= GUI_SCREEN_HEIGHT - scr_height_safety) {
+        nwidth = xnwidth;
+        nheight = xnheight;
+      }
+    } else {
+      if (xnwidth <= mainw->mgeom[pmonitor - 1].width - scr_width_safety &&
+          nheight <= mainw->mgeom[pmonitor - 1].height - scr_height_safety) {
+        nwidth = xnwidth;
+        nheight = xnheight;
       }
     }
   }

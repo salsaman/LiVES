@@ -9939,17 +9939,17 @@ boolean expose_laud_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer
 }
 
 boolean config_laud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
-  lives_painter_surface_t *surf = lives_widget_create_painter_surface(widget);
-  lives_painter_surface_t *laudio_drawable;
-
-  clear_widget_bg(widget, surf);
-  laudio_drawable = mainw->laudio_drawable;
-
-  if (laudio_drawable) {
-    mainw->laudio_drawable = surf;
-    lives_painter_surface_destroy(laudio_drawable);
-  }
   if (IS_VALID_CLIP(mainw->drawsrc)) {
+    lives_painter_surface_t *surf = lives_widget_create_painter_surface(widget);
+    lives_painter_surface_t *laudio_drawable;
+
+    clear_widget_bg(widget, surf);
+    laudio_drawable = mainw->laudio_drawable;
+    mainw->laudio_drawable = surf;
+
+    if (laudio_drawable) {
+      lives_painter_surface_destroy(laudio_drawable);
+    }
     mainw->files[mainw->drawsrc]->laudio_drawable = mainw->laudio_drawable;
   }
   return TRUE;
@@ -9965,17 +9965,17 @@ boolean expose_raud_draw(LiVESWidget * widget, lives_painter_t *cr, livespointer
 }
 
 boolean config_raud_draw(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
-  lives_painter_surface_t *surf = lives_widget_create_painter_surface(widget);
-  lives_painter_surface_t *raudio_drawable;
-
-  clear_widget_bg(widget, surf);
-  raudio_drawable = mainw->raudio_drawable;
-
-  if (raudio_drawable) {
-    mainw->raudio_drawable = surf;
-    lives_painter_surface_destroy(raudio_drawable);
-  }
   if (IS_VALID_CLIP(mainw->drawsrc)) {
+    lives_painter_surface_t *surf = lives_widget_create_painter_surface(widget);
+    lives_painter_surface_t *raudio_drawable;
+
+    clear_widget_bg(widget, surf);
+    raudio_drawable = mainw->raudio_drawable;
+    mainw->raudio_drawable = surf;
+
+    if (raudio_drawable) {
+      lives_painter_surface_destroy(raudio_drawable);
+    }
     mainw->files[mainw->drawsrc]->raudio_drawable = mainw->raudio_drawable;
   }
   return TRUE;
@@ -10021,7 +10021,9 @@ boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespoin
   else if (mainw->multitrack) {
     if (widget == mainw->multitrack->timeline_reg)
       draw_region(mainw->multitrack);
-    else if (widget == mainw->play_image) {
+    else if (widget == mainw->multitrack->in_image || widget == mainw->multitrack->out_image) {
+      show_in_out_images(mainw->multitrack);
+    } else if (widget == mainw->play_image) {
       lives_idle_add_simple(mt_idle_show_current_frame, (livespointer)mainw->multitrack);
       //lives_widget_queue_draw(mainw->multitrack->preview_frame);
       //set_mt_play_sizes_cfg(mainw->multitrack);
@@ -10294,7 +10296,7 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
             cfile->raudio_time = cfile->laudio_time;
           }
         }
-        mainw->play_start = calc_frame_from_time(mainw->current_file, event_list_get_start_secs(cfile->event_list));
+        mainw->play_start = calc_frame_from_time(mainw->current_file, event_list_get_start_secs(mainw->event_list));
         mainw->play_end = INT_MAX;
       }
     }
@@ -10344,11 +10346,14 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
         mainw->files[current_file]->next_event = cfile->next_event;
         cfile->next_event = NULL;
         mainw->current_file = current_file;
-        init_conversions(LIVES_INTENTION_RENDER);
-        mainw->effort = -EFFORT_RANGE_MAX;
       } else if (!mainw->multitrack) {
         switch_to_file((mainw->current_file = 0), current_file);
       }
+    }
+
+    if (mainw->is_rendering) {
+      init_conversions(LIVES_INTENTION_RENDER);
+      mainw->effort = -EFFORT_RANGE_MAX;
     }
 
     if (cfile->opening) mainw->effects_paused = FALSE;

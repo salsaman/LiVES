@@ -5059,6 +5059,48 @@ void set_main_title(const char *file, int untitled) {
 }
 
 
+void sensitize_rfx(void) {
+  if (!mainw->foreign) {
+    if (mainw->rendered_fx) {
+      for (int i = 1; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
+           mainw->num_rendered_effects_test; i++)
+        if (mainw->rendered_fx[i].menuitem && mainw->rendered_fx[i].min_frames >= 0)
+          lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+      if (mainw->rendered_fx[0].menuitem && LIVES_IS_WIDGET(mainw->rendered_fx[0].menuitem)) {
+        if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID
+            && ((has_video_filters(FALSE) && !has_video_filters(TRUE)) ||
+                (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT
+                 && has_audio_filters(AF_TYPE_ANY))
+                || mainw->agen_key != 0)) {
+          lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, TRUE);
+        } else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, FALSE);
+	// *INDENT-OFF*
+      }}
+    // *INDENT-ON*
+
+    if (mainw->num_rendered_effects_test > 0) {
+      lives_widget_set_sensitive(mainw->run_test_rfx_submenu, TRUE);
+    }
+
+    if (mainw->has_custom_gens) {
+      lives_widget_set_sensitive(mainw->custom_gens_submenu, TRUE);
+    }
+
+    if (mainw->has_custom_tools) {
+      lives_widget_set_sensitive(mainw->custom_tools_submenu, TRUE);
+    }
+
+    if (mainw->has_custom_effects) {
+      lives_widget_set_sensitive(mainw->custom_effects_submenu, TRUE);
+    }
+
+    if (mainw->resize_menuitem) {
+      lives_widget_set_sensitive(mainw->resize_menuitem, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+    }
+  }
+}
+
+
 void sensitize(void) {
   // sensitize main window controls
   // READY MODE
@@ -5147,43 +5189,7 @@ void sensitize(void) {
 
   if (!prefs->vj_mode) {
     if (RFX_LOADED) {
-      if (!mainw->foreign) {
-        if (mainw->rendered_fx) {
-          for (i = 1; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
-               mainw->num_rendered_effects_test; i++)
-            if (mainw->rendered_fx[i].menuitem && mainw->rendered_fx[i].min_frames >= 0)
-              lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
-          if (mainw->rendered_fx[0].menuitem && LIVES_IS_WIDGET(mainw->rendered_fx[0].menuitem)) {
-            if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID
-                && ((has_video_filters(FALSE) && !has_video_filters(TRUE)) ||
-                    (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT
-                     && has_audio_filters(AF_TYPE_ANY))
-                    || mainw->agen_key != 0)) {
-              lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, TRUE);
-            } else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, FALSE);
-	    // *INDENT-OFF*
-          }}}
-      // *INDENT-ON*
-
-      if (mainw->num_rendered_effects_test > 0) {
-        lives_widget_set_sensitive(mainw->run_test_rfx_submenu, TRUE);
-      }
-
-      if (mainw->has_custom_gens) {
-        lives_widget_set_sensitive(mainw->custom_gens_submenu, TRUE);
-      }
-
-      if (mainw->has_custom_tools) {
-        lives_widget_set_sensitive(mainw->custom_tools_submenu, TRUE);
-      }
-
-      if (mainw->has_custom_effects) {
-        lives_widget_set_sensitive(mainw->custom_effects_submenu, TRUE);
-      }
-    }
-
-    if (mainw->resize_menuitem) {
-      lives_widget_set_sensitive(mainw->resize_menuitem, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+      sensitize_rfx();
     }
   }
   lives_widget_set_sensitive(mainw->record_perf, TRUE);
@@ -8079,7 +8085,7 @@ void load_frame_image(int frame) {
 
       // normal play
 
-      if (LIVES_UNLIKELY(mainw->nervous)) {
+      if (LIVES_UNLIKELY(mainw->nervous) && clip_can_reverse(mainw->playing_file)) {
         // nervous mode
         if ((mainw->actual_frame += (-10 + (int)(21.*rand() / (RAND_MAX + 1.0)))) > cfile->frames ||
             mainw->actual_frame < 1) mainw->actual_frame = frame;

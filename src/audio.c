@@ -3229,7 +3229,7 @@ static void *cache_my_audio(void *arg) {
 
 
 void wake_audio_thread(void) {
-  cache_buffer->is_ready = FALSE;
+  if (cache_buffer) cache_buffer->is_ready = FALSE;
   pthread_mutex_lock(&cond_mutex);
   pthread_cond_signal(&cond);
   pthread_mutex_unlock(&cond_mutex);

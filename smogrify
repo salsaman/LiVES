@@ -9796,10 +9796,10 @@ sub clean_workdir {
 			    unless (-f "$file/.noclean") {
 				print STDERR "smogrify: doing some careful cleaning " .
 				    "of directory\n";
-				print STDERR "\nsmogrify: (can be overriden with option 0x02)\n";
+				print STDERR "\nsmogrify: (can be overridden with option 0x02)\n";
 				print "doing some careful cleaning " .
 				    "of directory\n";
-				print "(can be overriden by disabling option " .
+				print "(can be overridden by disabling option " .
 				    "'Clear Useless Backup Files'\n";
 				&prune($file, 0);
 			    }
@@ -9832,10 +9832,10 @@ sub clean_workdir {
 			unless (-f "$file/.noclean") {
 			    print STDERR "smogrify: removing unnecessary files from " .
 				"$workdir/$file\n";
-			    print STDERR "\nsmogrify: (can be overriden with option 0x02)\n";
+			    print STDERR "\nsmogrify: (can be overridden with option 0x02)\n";
 			    print "removing unnecessary files from " .
 				"$workdir/$file\n";
-			    print "(can be overriden by disabling option " .
+			    print "(can be overridden by disabling option " .
 				"'Clear Useless Backup Files'\n";
 			    &prune($file, 0);
 			}
@@ -9843,10 +9843,10 @@ sub clean_workdir {
 		    unless ($opts & 0x08) {
 			print STDERR "smogrify: removing lock.* files from " .
 			    "$workdir/$file\n";
-			print STDERR "\nsmogrify: (can be overriden with option 0x08)\n";
+			print STDERR "\nsmogrify: (can be overridden with option 0x08)\n";
 			print "removing lock.* files from " .
 			    "$workdir/$file\n";
-			print "(can be overriden by disabling option 'Remove Lock Files')\n";
+			print "(can be overridden by disabling option 'Remove Lock Files')\n";
 			unlink glob "$file/lock.*";
 		    }
 		    move($file, $new_work) or die $!;
@@ -9965,14 +9965,14 @@ sub clean_workdir {
 			unless (-f "$file/.noclean") {
 			    print STDERR "smogrify: removing unnecessary files " .
 				"from directory\n";
-			    print STDERR "\nsmogrify: (can be overriden with option 0x02)\n";
+			    print STDERR "\nsmogrify: (can be overridden with option 0x02)\n";
 			    print "removing unnecessary files " .
 				"from directory\n";
-			    print "(can be overriden by disabling option " .
+			    print "(can be overridden by disabling option " .
 				"'Remove Useless Backup files')\n";
 			    #print "removing unnecessary files " .
 			    #	"from directory\n";
-			    #   print "(can be overriden with option 0x02)\n";
+			    #   print "(can be overridden with option 0x02)\n";
 			    &prune($file, 0);
 			}
 		    }
@@ -9994,10 +9994,10 @@ sub clean_workdir {
 	    unless ($opts & 0x08) {
 		print STDERR "smogrify: removing temporary marker file " .
 		    ".noclean from $workdir/$file\n";
-		print STDERR "\nsmogrify: (can be overriden with option 0x08)\n";
+		print STDERR "\nsmogrify: (can be overridden with option 0x08)\n";
 		print "removing temporary marker file " .
 		    ".noclean from $workdir/$file\n";
-		print "(can be overriden by disabling option 'Remove Misc Files')\n";
+		print "(can be overridden by disabling option 'Remove Misc Files')\n";
 		unlink "$workdir/$file/.noclean";
 	    }
 	}
@@ -10048,15 +10048,15 @@ sub clean_workdir {
 	}
 	print STDERR "\nsmogrify: removing rfx.* *" .
 	    "and keep_layout* from $workdir";
-	print STDERR "\nsmogrify: (can be overriden with option 0x10)\n";
-	print "\nremoving rfx.* keep_layout* from $workdir";
-	print "\n(can be overriden by disabling 'Remove Misc Files')\n";
+	print STDERR "\nsmogrify: (can be overridden with option 0x10)\n";
+	print "\nremoving rfx.* keep_layout* layout_numbering.* from $workdir";
+	print "\n(can be overridden by disabling 'Remove Misc Files')\n";
 	if ($new_work) {
 	    if (! -d $deftrashdir) {
 		make_path $deftrashdir, {mode => 01777};
 	    }
 	}
-	for $filerem(glob "rfx.* keep_layout**") {
+	for $filerem(glob "rfx.* keep_layout* layout_numbering.*") {
 	    if ($new_work) {
 		&smog_rename($filerem, $deftrashdir);
 	    }
@@ -10092,9 +10092,9 @@ sub clean_workdir {
 	    }
 	}
 	print STDERR "\nsmogrify: removing stale recovery files recorded-layout* from $workdir\n";
-	#print STDERR "\nsmogrify: (can be overriden with option 0x40)\n";
+	#print STDERR "\nsmogrify: (can be overridden with option 0x40)\n";
 	print "\nremoving stale recovery files recorded-layout* from $workdir\n";
-	#print "\n(can be overriden with option 0x40)\n";
+	#print "\n(can be overridden with option 0x40)\n";
 	if ($new_work) {
 	    if (! -d $deftrashdir) {
 		make_path $deftrashdir, {mode => 01777};

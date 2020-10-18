@@ -104,6 +104,7 @@ typedef struct {
   void *srcp[4];
   size_t hsize;
   size_t vsize;
+  boolean is_bottom;
   size_t psize;
   size_t xoffset;
   int irowstrides[4];
@@ -119,6 +120,7 @@ typedef struct {
   int in_sampling;
   int out_sampling;
   boolean alpha_first;
+  boolean is_422;
   void *lut;
   int thread_id;
 } lives_cc_params;

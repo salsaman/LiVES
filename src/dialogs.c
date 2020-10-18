@@ -3905,6 +3905,7 @@ LiVESResponseType do_system_failed_error(const char *com, int retval, const char
 
   lives_free(xcom); lives_free(xbit); lives_free(xaddbit); lives_free(xsudomsg);
   emsg = lives_strdup_printf("Command failed doing\n%s\n%s%s", com, bit, addbit);
+  d_print("\n"); d_print(emsg);
   LIVES_ERROR(emsg);
   lives_free(emsg);
 
@@ -3962,6 +3963,8 @@ void do_write_failed_error_s(const char *s, const char *addinfo) {
   else addbit = lives_strdup("");
 
   xsutf = lives_markup_escape_text(sutf, -1);
+  lives_free(sutf);
+
   xaddbit = lives_markup_escape_text(addbit, -1);
 
   msg = lives_strdup_printf(_("\nLiVES was unable to write to the file\n%s\n"
@@ -3970,8 +3973,8 @@ void do_write_failed_error_s(const char *s, const char *addinfo) {
   lives_free(xsutf); lives_free(xaddbit);
 
   emsg = lives_strdup_printf("Unable to write to file\n%s\n%s", s, addbit);
-
-  lives_free(sutf);
+  lives_free(addbit);
+  d_print("\n"); d_print(emsg);
 
   LIVES_ERROR(emsg);
   lives_free(emsg);
@@ -3995,6 +3998,7 @@ void do_read_failed_error_s(const char *s, const char *addinfo) {
                               "Please check for possible error causes.\n%s"),
                             sutf, addbit);
   emsg = lives_strdup_printf("Unable to read from the file\n%s\n%s", s, addbit);
+  d_print("\n"); d_print(emsg);
 
   LIVES_ERROR(emsg);
   lives_free(emsg);

@@ -2379,11 +2379,16 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       else
         tgamma = cfile->gamma_type;
     }
+
     if (cpalette != opalette) {
+      if (prefs->dev_show_timing)
+        g_printerr("clpal1 pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
       if (!convert_layer_palette_full(layer, opalette, oclamping, osampling, osubspace, tgamma)) {
         retval = FILTER_ERROR_INVALID_PALETTE_CONVERSION;
         goto done_video;
       }
+      if (prefs->dev_show_timing)
+        g_printerr("clpal1 post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     }
 
     /// check if the plugin needs reinit

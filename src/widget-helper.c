@@ -7867,7 +7867,12 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_add_separator(LiVESLayout 
 static LiVESWidget *add_warn_image(LiVESWidget * widget, LiVESWidget * hbox) {
   LiVESWidget *warn_image = lives_image_new_from_stock(LIVES_STOCK_DIALOG_WARNING,
                             widget_opts.icon_size);
-  if (hbox) lives_box_pack_start(LIVES_BOX(hbox), warn_image, FALSE, FALSE, 4);
+  if (hbox) {
+    if (!widget_opts.pack_end)
+      lives_box_pack_start(LIVES_BOX(hbox), warn_image, FALSE, FALSE, 4);
+    else
+      lives_box_pack_end(LIVES_BOX(hbox), warn_image, FALSE, FALSE, 4);
+  }
   lives_widget_set_no_show_all(warn_image, TRUE);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(warn_image), TTIPS_OVERRIDE_KEY, warn_image);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), WARN_IMAGE_KEY, warn_image);
@@ -7919,7 +7924,12 @@ static LiVESWidget *make_inner_hbox(LiVESBox * box, boolean start) {
   else lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
   if (LIVES_IS_HBOX(box)) {
     widget_opts.last_container = hbox;
-    lives_box_pack_start(LIVES_BOX(box), hbox, LIVES_SHOULD_EXPAND_EXTRA_WIDTH,
+    if (!widget_opts.pack_end)
+      lives_box_pack_start(LIVES_BOX(box), hbox, LIVES_SHOULD_EXPAND_EXTRA_WIDTH,
+                           LIVES_SHOULD_EXPAND_WIDTH, LIVES_SHOULD_EXPAND_FOR(box)
+                           ? widget_opts.packing_width : 0);
+    else
+      lives_box_pack_end(LIVES_BOX(box), hbox, LIVES_SHOULD_EXPAND_EXTRA_WIDTH,
                          LIVES_SHOULD_EXPAND_WIDTH, LIVES_SHOULD_EXPAND_FOR(box)
                          ? widget_opts.packing_width : 0);
   } else {
@@ -8327,6 +8337,7 @@ static LiVESWidget *_lives_standard_button_set_full(LiVESWidget * sbutt, LiVESBo
 
     lives_widget_set_hexpand(sbutt, FALSE);
     lives_widget_set_valign(sbutt, LIVES_ALIGN_CENTER);
+
     lives_box_pack_start(LIVES_BOX(hbox), sbutt, LIVES_SHOULD_EXPAND_WIDTH,
                          expand, packing_width);
 
@@ -8334,7 +8345,6 @@ static LiVESWidget *_lives_standard_button_set_full(LiVESWidget * sbutt, LiVESBo
     lives_widget_set_show_hide_parent(sbutt);
 
     add_warn_image(sbutt, hbox);
-
     if (img_tips) {
       lives_box_pack_start(LIVES_BOX(hbox), img_tips, FALSE, FALSE, widget_opts.packing_width >> 1);
     }

@@ -772,6 +772,7 @@ void mt_desensitise(lives_mt *);
 void mt_sensitise(lives_mt *);
 void set_mt_play_sizes_cfg(lives_mt *);
 boolean mt_idle_show_current_frame(livespointer mt);
+boolean show_in_out_images(livespointer mt);
 
 void add_aparam_menuitems(lives_mt *);
 

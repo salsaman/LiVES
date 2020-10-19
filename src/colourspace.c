@@ -2601,7 +2601,7 @@ static void *convert_yuva8888_to_bgra_frame_thread(void *data) {
 
 static void convert_yuv888_to_argb_frame(uint8_t *src, int hsize, int vsize, int irowstride,
     int orowstride, uint8_t *dest, int clamping, int subspace, int thread_id) {
-  register int x, y, i;
+  int x, y, i;
   size_t offs = 4;
 
   if (LIVES_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
@@ -2677,7 +2677,7 @@ static void *convert_yuv888_to_argb_frame_thread(void *data) {
 
 static void convert_yuva8888_to_argb_frame(uint8_t *src, int hsize, int vsize, int irowstride,
     int orowstride, uint8_t *dest, int clamping, int subspace, int thread_id) {
-  register int x, y, i;
+  int x, y, i;
 
   size_t offs = 4;
 
@@ -2760,8 +2760,8 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, b
   int opsize = 3;
   int irow = istrides[0] - width;
   boolean even = TRUE;
-  uint8_t y, u, v, next_u, next_v, last_u, last_v;
   size_t uv_offs = 0;
+  uint8_t y, u, v, next_u, next_v, last_u, last_v;
 
   if (thread_id == -1) {
     if (LIVES_UNLIKELY(!conv_YR_inited)) init_YUV_to_RGB_tables();
@@ -2793,8 +2793,9 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, b
           }
 
           ccparams[i].vsize = dheight;
-          if (i == prefs->nfx_threads - 1) ccparams->is_bottom = TRUE;
-
+          if (i == prefs->nfx_threads - 1) {
+            ccparams[i].is_bottom = TRUE;
+          }
           ccparams[i].irowstrides[0] = istrides[0];
           ccparams[i].irowstrides[1] = istrides[1];
           ccparams[i].irowstrides[2] = istrides[2];
@@ -2848,10 +2849,10 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, b
         last_v = next_v;
       } else {
         if (even) {
-          next_u = u = s_u[uv_offs];
-          next_v = v = s_v[uv_offs];
+          last_u = next_u = u = s_u[uv_offs];
+          last_v = next_v = v = s_v[uv_offs];
         } else {
-          if (i == height - 1 && is_bottom) {
+          if (is_bottom && i == height - 1) {
             next_u = u = s_u[uv_offs];
             next_v = v = s_v[uv_offs];
           } else {
@@ -2869,20 +2870,21 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, b
       // second RGB pixel
       j += opsize;
       y = *(s_y++);
+
       last_u = next_u;
       last_v = next_v;
 
       if (j < width - 1) {
-        uv_offs++;
         if (even) {
           /// even row, normal
           next_u = s_u[uv_offs];
           next_v = s_v[uv_offs];
         } else {
-          if (i == height - 1 && is_bottom) {
+          if (is_bottom && i == height - 1) {
             next_u = u = s_u[uv_offs];
             next_v = v = s_v[uv_offs];
           } else {
+            //g_print("vals %ld and %d %d %d\n", uv_offs, istrides[2], i, j);
             next_u = u = avg_chromaf(s_u[uv_offs], s_u[uv_offs + istrides[1]]);
             next_v = v = avg_chromaf(s_v[uv_offs], s_v[uv_offs + istrides[2]]);
           }
@@ -2899,6 +2901,8 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, b
       else
         yuv2rgb(y, u, v, &dest[j], &dest[j + 1], &dest[j + 2]);
       if (add_alpha) dest[j + 3] = 255;
+
+      uv_offs++;
     }
     s_y += irow;
     dest += orowstride;
@@ -9938,7 +9942,7 @@ void alpha_unpremult(weed_layer_t *layer, boolean un) {
 
   boolean clamped;
 
-  register int i, j, p;
+  int i, j, p;
 
   if (!unal_inited) init_unal();
 
@@ -11888,7 +11892,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
 #ifdef WEED_ADVANCED_PALETTES
 conv_done:
 #endif
-
+  
   lives_freep((void **)&ostrides);
   lives_freep((void **)&gusrc_array);
 
@@ -13806,7 +13810,7 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
 void weed_layer_pixel_data_free(weed_layer_t *layer) {
   void **pixel_data;
   int pd_elements;
-
+  g_print("PDF\n");
   if (!layer) return;
 
   if (weed_leaf_get_flags(layer, WEED_LEAF_PIXEL_DATA) & LIVES_FLAG_MAINTAIN_VALUE)
@@ -13847,6 +13851,7 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
       lives_free(pixel_data);
       weed_layer_nullify_pixel_data(layer);
     }
+    g_print("PDF2\n")l
   }
 
   weed_leaf_delete(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS);
@@ -13863,7 +13868,11 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
 */
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
+  g_print("WLF\n");
+  int refs = weed_get_int_value(layer, WEED_LEAF_HOST_REFS, NULL);
+  if (refs > 1) break_me("unr\n");
   if (weed_layer_unref(layer)) return layer;
+  g_print("WLF cnd\n");
   return NULL;
 }
 
@@ -13871,7 +13880,11 @@ int weed_layer_unref(weed_layer_t *layer) {
   int refs;
   if (!layer) return 0;
   refs = weed_get_int_value(layer, WEED_LEAF_HOST_REFS, NULL);
-  if (--refs > 0) return refs;
+  g_print("GO REFS %d\n", refs);
+  if (--refs > 0) {
+    break_me("unrrr\n")
+    return refs;
+  }
   weed_layer_pixel_data_free(layer);
   weed_plant_free(layer);
   return 0;

@@ -2134,7 +2134,7 @@ boolean cconx_chain_data(int key, int mode) {
 
   boolean needs_reinit = FALSE;
 
-  register int i = 0;
+  int i = 0;
 
   if (key > -1) {
     if (mainw->is_rendering) {
@@ -2158,7 +2158,7 @@ boolean cconx_chain_data(int key, int mode) {
       filter_mutex_unlock(key);
     }
   }
-  if (inst) weed_instance_unref(inst);
+  //if (inst) weed_instance_unref(inst);
   return needs_reinit;
 }
 

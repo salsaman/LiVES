@@ -11892,7 +11892,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
 #ifdef WEED_ADVANCED_PALETTES
 conv_done:
 #endif
-  
+
   lives_freep((void **)&ostrides);
   lives_freep((void **)&gusrc_array);
 
@@ -12843,7 +12843,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     swparams = (lives_sw_params *)lives_calloc(nthrds, sizeof(lives_sw_params));
 #else
     // TODO - can we set the gamma ?
-    g_print("iht is %d, height = %d\n", iheight, height);
+    //g_print("iht is %d, height = %d\n", iheight, height);
     swscale = sws_getCachedContext(swscale, iwidth, iheight, ipixfmt, width, height, opixfmt, flags, NULL, NULL, NULL);
     sws_setColorspaceDetails(swscale, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
                              ? SWS_CS_ITU709 : SWS_CS_ITU601), iclamping,
@@ -13810,7 +13810,7 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
 void weed_layer_pixel_data_free(weed_layer_t *layer) {
   void **pixel_data;
   int pd_elements;
-  g_print("PDF\n");
+
   if (!layer) return;
 
   if (weed_leaf_get_flags(layer, WEED_LEAF_PIXEL_DATA) & LIVES_FLAG_MAINTAIN_VALUE)
@@ -13851,7 +13851,6 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
       lives_free(pixel_data);
       weed_layer_nullify_pixel_data(layer);
     }
-    g_print("PDF2\n")l
   }
 
   weed_leaf_delete(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS);
@@ -13868,11 +13867,9 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
 */
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
-  g_print("WLF\n");
   int refs = weed_get_int_value(layer, WEED_LEAF_HOST_REFS, NULL);
   if (refs > 1) break_me("unr\n");
   if (weed_layer_unref(layer)) return layer;
-  g_print("WLF cnd\n");
   return NULL;
 }
 
@@ -13880,11 +13877,7 @@ int weed_layer_unref(weed_layer_t *layer) {
   int refs;
   if (!layer) return 0;
   refs = weed_get_int_value(layer, WEED_LEAF_HOST_REFS, NULL);
-  g_print("GO REFS %d\n", refs);
-  if (--refs > 0) {
-    break_me("unrrr\n")
-    return refs;
-  }
+  if (--refs > 0) return refs;
   weed_layer_pixel_data_free(layer);
   weed_plant_free(layer);
   return 0;

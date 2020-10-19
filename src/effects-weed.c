@@ -2276,6 +2276,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
           }}}}
     // *INDENT-ON*
 
+    orig_layer = NULL;
+
     // cpalette is layer palette here, opalette is now channel palette
     if (cpalette != opalette || (weed_palette_is_yuv(opalette) && weed_palette_is_yuv(cpalette)
                                  && weed_get_int_value(layer, WEED_LEAF_YUV_CLAMPING, NULL) != oclamping)) {
@@ -2315,7 +2317,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if ((!svary && (inwidth != width || inheight != height))
         || (svary && (inwidth > width || inheight > height || letterbox))) {
       short interp = get_interp_value(pb_quality, TRUE);
-      if (letterbox) {
+      if (letterbox && !orig_layer) {
         // if we are letterboxing, as well as letterboxing the final output in the player, we will also letterbox each layer into its channel
         // if we only have 1 layer this is irrelevant since the channel size == layer size, (or in high quality, channel size == player size,
         /// but the player size would have been adjusted to the letterboxed size in any case).
@@ -2672,10 +2674,7 @@ done_video:
     weed_plant_t *dupe;
     check_layer_ready(layers[in_tracks[i]]);
     dupe = weed_get_plantptr_value(layers[in_tracks[i]], WEED_LEAF_DUPLICATE, NULL);
-    if (dupe) {
-      weed_layer_nullify_pixel_data(dupe);
-      weed_layer_free(dupe);
-    }
+    if (dupe) weed_layer_free(dupe);
   }
 
   lives_freep((void **)&in_tracks);

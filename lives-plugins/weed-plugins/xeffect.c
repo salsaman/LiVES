@@ -43,31 +43,61 @@ static inline void nine_fill(unsigned char *new_data, int row, unsigned char *o)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
+static weed_error_t xeffect_init(weed_plant_t *inst) {
+  weed_plant_t *in_channel = weed_get_in_channel(inst, 0);
+  int width = weed_channel_get_width(in_channel);
+  int height = weed_channel_get_height(in_channel);
+  uint8_t *map = weed_malloc(width * height);
+  if (!map) return WEED_ERROR_MEMORY_ALLOCATION;
+  weed_set_voidptr_value(inst, "plugin_map", map);
+  return WEED_SUCCESS;
+}
+
+
+static weed_error_t xeffect_deinit(weed_plant_t *inst) {
+  uint8_t *map = weed_get_voidptr_value(inst, "plugin_map", NULL);
+  if (map) weed_free(map);
+  weed_set_voidptr_value(inst, "plugin_map", NULL);
+  return WEED_SUCCESS;
+}
+
 
 static weed_error_t xeffect_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+  uint8_t *map = weed_get_voidptr_value(inst, "plugin_map", NULL);
   weed_plant_t *in_channel = weed_get_in_channel(inst, 0),
                 *out_channel = weed_get_out_channel(inst, 0);
-
-  int width = weed_channel_get_width(in_channel) * 3 - 4;
-  int height = weed_channel_get_height(in_channel);
   int palette = weed_channel_get_palette(in_channel);
+
+  int nbr, psize = pixel_size(palette);
+  int width = weed_channel_get_width(in_channel);
+  int widthp = (width - 1) * psize;
+  int height = weed_channel_get_height(in_channel);
 
   int irowstride = weed_channel_get_stride(in_channel);
   int orowstride = weed_channel_get_stride(out_channel);
 
-  unsigned char *src = weed_channel_get_pixel_data(in_channel) + irowstride;
-  unsigned char *dst = weed_channel_get_pixel_data(out_channel) + orowstride;
+  unsigned char *src = weed_channel_get_pixel_data(in_channel);
+  unsigned char *dst = weed_channel_get_pixel_data(out_channel);
 
   unsigned int myluma, threshold = 10000;
-  int nbr;
 
+  if (!map) return WEED_ERROR_REINIT_NEEDED;
+
+  for (int h = 0; h < height; h++) {
+    for (int i = 0; i < width; i ++) {
+      map[h * width + i] = calc_luma(&src[h * irowstride  + i * psize], palette, 0);
+    }
+  }
+  src += irowstride;
+  dst += orowstride;
   for (int h = 1; h < height - 2; h++) {
-    for (int i = 3; i < width; i += 3) {
-      myluma = calc_luma(&src[h * irowstride + i], palette, 0);
+    for (int i = psize; i < widthp; i += psize) {
+      myluma = map[h * width + i / psize];
       nbr = 0;
       for (int j = h - 1; j <= h + 1; j++) {
-        for (int k = -3; k < 4; k += 3) {
-          if ((j != h || k != 0) && ABS(calc_luma(&src[j * irowstride + i + k], palette, 0) - myluma) > threshold) nbr++;
+        for (int k = -1; k < 2; k++) {
+          if ((j != h || k != 0) &&
+              ABS(map[j * width + i / psize + k] - myluma) > threshold) nbr++;
         }
       }
       if (nbr < 2 || nbr > 5) {
@@ -89,13 +119,13 @@ static weed_error_t xeffect_process(weed_plant_t *inst, weed_timecode_t timestam
 
 
 WEED_SETUP_START(200, 200) {
-  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_END};
+  int palette_list[] = ALL_RGB_PALETTES;
 
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
 
   weed_plant_t *filter_class = weed_filter_class_init("graphic novel", "salsaman", 1, 0, palette_list,
-                               NULL, xeffect_process, NULL, in_chantmpls, out_chantmpls, NULL, NULL);
+                               xeffect_init, xeffect_process, xeffect_deinit, in_chantmpls, out_chantmpls, NULL, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_plugin_set_package_version(plugin_info, package_version);

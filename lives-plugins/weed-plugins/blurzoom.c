@@ -239,12 +239,12 @@ static weed_error_t blurzoom_init(weed_plant_t *inst) {
   weed_plant_t *in_channel;
 
   sdata = weed_malloc(sizeof(struct _sdata));
-  if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
+  if (!sdata) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  in_channel = weed_get_in_channel(inst, 0);
 
-  video_height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
-  video_width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
+  video_width = weed_channel_get_width(in_channel);
+  video_height = weed_channel_get_height(in_channel);
   video_area = video_width * video_height;
 
   sdata->buf_width_blocks = (video_width / 32);
@@ -257,20 +257,20 @@ static weed_error_t blurzoom_init(weed_plant_t *inst) {
   buf_area = sdata->buf_width * sdata->buf_height;
 
   sdata->blurzoombuf = (unsigned char *)weed_calloc(buf_area * 2, 1);
-  if (sdata->blurzoombuf == NULL) {
+  if (!sdata->blurzoombuf) {
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
   sdata->blurzoomx = (int *)weed_calloc(sdata->buf_width, sizeof(int));
-  if (sdata->blurzoomx == NULL) {
+  if (!sdata->blurzoomx) {
     weed_free(sdata->blurzoombuf);
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
   sdata->blurzoomy = (int *)weed_calloc(sdata->buf_height, sizeof(int));
-  if (sdata->blurzoomy == NULL) {
+  if (!sdata->blurzoomy) {
     weed_free(sdata->blurzoombuf);
     weed_free(sdata->blurzoomx);
     weed_free(sdata);
@@ -282,7 +282,7 @@ static weed_error_t blurzoom_init(weed_plant_t *inst) {
   sdata->threshold = MAGIC_THRESHOLD * 7;
 
   sdata->snapframe = (RGB32 *)weed_calloc(video_area, PIXEL_SIZE);
-  if (sdata->snapframe == NULL) {
+  if (!sdata->snapframe) {
     weed_free(sdata->blurzoombuf);
     weed_free(sdata->blurzoomy);
     weed_free(sdata->blurzoomx);
@@ -291,7 +291,7 @@ static weed_error_t blurzoom_init(weed_plant_t *inst) {
   }
 
   sdata->background = (short *)weed_calloc(video_height * video_width, sizeof(short));
-  if (sdata->background == NULL) {
+  if (!sdata->background) {
     weed_free(sdata->blurzoombuf);
     weed_free(sdata->blurzoomy);
     weed_free(sdata->blurzoomx);
@@ -301,7 +301,7 @@ static weed_error_t blurzoom_init(weed_plant_t *inst) {
   }
 
   sdata->diff = (unsigned char *)weed_calloc(video_height * video_width, 4 * sizeof(unsigned char));
-  if (sdata->diff == NULL) {
+  if (!sdata->diff) {
     weed_free(sdata->background);
     weed_free(sdata->blurzoombuf);
     weed_free(sdata->blurzoomy);
@@ -325,7 +325,7 @@ static weed_error_t blurzoom_init(weed_plant_t *inst) {
 
 static weed_error_t blurzoom_deinit(weed_plant_t *inst) {
   struct _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
-  if (sdata != NULL) {
+  if (sdata) {
     weed_free(sdata->diff);
     weed_free(sdata->background);
     weed_free(sdata->blurzoombuf);
@@ -346,28 +346,28 @@ static weed_error_t blurzoom_process(weed_plant_t *inst, weed_timecode_t timecod
   size_t snap_offs = 0, src_offs = 0;
   int video_width, video_height, irow, orow;
   int mode = 0, pattern;
-  register int x, y;
-  register RGB32 a, b;
-  register unsigned char *diff, *p;
+  int x, y;
+  RGB32 a, b;
+  unsigned char *diff, *p;
 
   sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
-  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
-  out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  in_channel = weed_get_in_channel(inst, 0);
+  out_channel = weed_get_out_channel(inst, 0);
 
-  src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
-  dest = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  src = weed_channel_get_pixel_data(in_channel);
+  dest = weed_channel_get_pixel_data(out_channel);
 
-  video_width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
-  video_height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
+  video_width = weed_channel_get_width(in_channel);
+  video_height = weed_channel_get_height(in_channel);
 
-  irow = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL) / 4;
-  orow = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL) / 4;
+  irow = weed_channel_get_stride(in_channel) / 4;
+  orow = weed_channel_get_stride(out_channel) / 4;
 
   diff = sdata->diff;
 
-  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
-  mode = weed_get_int_value(in_params[0], WEED_LEAF_VALUE, NULL);
-  pattern = weed_get_int_value(in_params[1], WEED_LEAF_VALUE, NULL);
+  in_params = weed_get_in_params(inst, NULL);
+  mode = weed_param_get_value_int(in_params[0]);
+  pattern = weed_param_get_value_int(in_params[1]);
   weed_free(in_params);
 
   if (mode != 2 || sdata->snapTime <= 0) {
@@ -447,7 +447,7 @@ WEED_SETUP_START(200, 200) {
                                out_chantmpls, in_params, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+  weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;
 

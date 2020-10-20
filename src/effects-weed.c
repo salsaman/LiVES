@@ -188,14 +188,13 @@ weed_plant_t *weed_instance_get_filter(weed_plant_t *inst, boolean get_compound_
 static boolean all_outs_alpha(weed_plant_t *filt, boolean ign_opt) {
   // check (mandatory) output chans, see if any are non-alpha
   int nouts;
-  register int i;
   weed_plant_t **ctmpls = weed_filter_get_out_chantmpls(filt, &nouts);
   if (!nouts) return FALSE;
   if (!ctmpls[0]) {
     lives_freep((void **)&ctmpls);
     return FALSE;
   }
-  for (i = 0; i < nouts; i++) {
+  for (int i = 0; i < nouts; i++) {
     if (ign_opt && weed_chantmpl_is_optional(ctmpls[i])) continue;
     if (has_non_alpha_palette(ctmpls[i], filt)) {
       lives_free(ctmpls);
@@ -211,7 +210,6 @@ static boolean all_ins_alpha(weed_plant_t *filt, boolean ign_opt) {
   // check mandatory input chans, see if any are non-alpha
   // if there are no mandatory inputs, we check optional (even if ign_opt is TRUE)
   boolean has_mandatory_in = FALSE;
-  register int i;
   int nins;
   weed_plant_t **ctmpls = weed_filter_get_in_chantmpls(filt, &nins);
   if (nins == 0) return FALSE;
@@ -219,7 +217,7 @@ static boolean all_ins_alpha(weed_plant_t *filt, boolean ign_opt) {
     lives_free(ctmpls);
     return FALSE;
   }
-  for (i = 0; i < nins; i++) {
+  for (int i = 0; i < nins; i++) {
     if (ign_opt && weed_chantmpl_is_optional(ctmpls[i])) continue;
     has_mandatory_in = TRUE;
     if (has_non_alpha_palette(ctmpls[i], filt)) {
@@ -228,7 +226,7 @@ static boolean all_ins_alpha(weed_plant_t *filt, boolean ign_opt) {
     }
   }
   if (!has_mandatory_in) {
-    for (i = 0; i < nins; i++) {
+    for (int i = 0; i < nins; i++) {
       if (has_non_alpha_palette(ctmpls[i], filt)) {
         lives_free(ctmpls);
         return FALSE;
@@ -2627,7 +2625,13 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     channel = get_enabled_channel(inst, k, TRUE);
     if (weed_palette_is_alpha(weed_channel_get_palette(channel))) {
       // free pdata for all alpha in channels, unless orig pdata was passed from a prior fx
+      layer = layers[in_tracks[k]];
       weed_layer_pixel_data_free(channel);
+      if (!weed_channel_get_pixel_data(channel)) {
+        weed_layer_t *dupe = weed_get_plantptr_value(layers[in_tracks[i]], WEED_LEAF_DUPLICATE, NULL);
+        if (dupe) weed_layer_nullify_pixel_data(dupe);
+        else weed_layer_nullify_pixel_data(layer);
+      }
     }
   }
 
@@ -2672,9 +2676,13 @@ done_video:
 
   for (i = 0; i < num_in_tracks; i++) {
     weed_plant_t *dupe;
-    check_layer_ready(layers[in_tracks[i]]);
-    dupe = weed_get_plantptr_value(layers[in_tracks[i]], WEED_LEAF_DUPLICATE, NULL);
-    if (dupe) weed_layer_free(dupe);
+    layer = layers[in_tracks[i]];
+    check_layer_ready(layer);
+    dupe = weed_get_plantptr_value(layer, WEED_LEAF_DUPLICATE, NULL);
+    if (dupe) {
+      weed_layer_free(dupe);
+      weed_leaf_delete(layer, WEED_LEAF_DUPLICATE);
+    }
   }
 
   lives_freep((void **)&in_tracks);

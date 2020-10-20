@@ -304,7 +304,6 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   if (!do_progress_dialog(TRUE, TRUE, effectstring) || mainw->error) {
     if (cfile->pumper) {
       lives_nanosleep_until_nonzero(lives_proc_thread_cancel(cfile->pumper));
-      weed_plant_free(cfile->pumper);
       cfile->pumper = NULL;
     }
     mainw->last_dprint_file = ldfile;

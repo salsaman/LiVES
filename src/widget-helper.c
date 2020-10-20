@@ -3320,7 +3320,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_vseparator_new(void) {
 #else
   vsep = gtk_vseparator_new();
 #endif
-  lives_widget_set_size_request(vsep, 1, -11);
+  lives_widget_set_size_request(vsep, 1, -1);
 #endif
   return vsep;
 }

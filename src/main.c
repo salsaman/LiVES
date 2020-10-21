@@ -2644,6 +2644,8 @@ static void pick_custom_colours(void) {
 
     tmp = lives_strdup_printf("0 -3px %s inset", colref);
     set_css_value_direct(NULL, LIVES_WIDGET_STATE_CHECKED, "notebook header tabs *", "box-shadow", tmp);
+    set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "menuitem", "box-shadow", tmp);
+    set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "menu menuitem", "box-shadow", "none");
     lives_free(tmp);
 
     set_css_value_direct(NULL, LIVES_WIDGET_STATE_ACTIVE, "scrollbar slider", "background-color", colref);
@@ -4093,6 +4095,12 @@ static boolean lives_startup2(livespointer data) {
     cleanup_old_config();
     lives_free(newconfigfile);
   }
+
+  if (!mainw->mute) {
+    lives_widget_set_opacity(mainw->m_mutebutton, .75);
+  }
+  lives_widget_set_opacity(mainw->m_sepwinbutton, .75);
+  lives_widget_set_opacity(mainw->m_loopbutton, .75);
 
   if (prefs->interactive) set_interactive(TRUE);
 

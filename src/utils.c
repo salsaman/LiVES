@@ -2176,7 +2176,6 @@ void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight) {
   // of cwidth, cheight - given restrictions rwidth * rheight
 
   double aspect;
-
   if (*cwidth <= 0 || *cheight <= 0 || rwidth <= 0 || rheight <= 0) return;
 
   aspect = (double)(*cwidth) / (double)(*cheight);

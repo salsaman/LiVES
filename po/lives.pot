@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives 3.2.0-pre\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2020-10-19 23:56-0300\n"
+"POT-Creation-Date: 2020-10-20 18:21-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -484,189 +484,189 @@ msgid ""
 "Checking OPTIONAL dependencies: "
 msgstr ""
 
-#: src/main.c:3288 src/main.c:4478
+#: src/main.c:3290 src/main.c:4480
 msgid "working directory"
 msgstr ""
 
-#: src/main.c:3378
+#: src/main.c:3380
 #, c-format
 msgid ""
 "\n"
 "Startup syntax is: %s [OPTS] [filename [start_time] [frames]]\n"
 msgstr ""
 
-#: src/main.c:3379
+#: src/main.c:3381
 msgid "Where: filename is the name of a media file or backup file to import\n"
 msgstr ""
 
-#: src/main.c:3380
+#: src/main.c:3382
 msgid "start_time : filename start time in seconds\n"
 msgstr ""
 
-#: src/main.c:3381
+#: src/main.c:3383
 msgid "frames : maximum number of frames to open\n"
 msgstr ""
 
-#: src/main.c:3383
+#: src/main.c:3385
 msgid "OPTS can be:\n"
 msgstr ""
 
-#: src/main.c:3384
+#: src/main.c:3386
 msgid "-help | --help \t\t\t: print this help text on stderr and exit\n"
 msgstr ""
 
-#: src/main.c:3385
+#: src/main.c:3387
 msgid "-version | --version\t\t: print the LiVES version on stderr and exit\n"
 msgstr ""
 
-#: src/main.c:3386
+#: src/main.c:3388
 msgid ""
 "-workdir <workdir>\t\t: specify the working directory for the session, "
 "overriding any value set in preferences\n"
 msgstr ""
 
-#: src/main.c:3388
+#: src/main.c:3390
 msgid "\t\t\t\t\t(disables any disk quota checking)"
 msgstr ""
 
-#: src/main.c:3389
+#: src/main.c:3391
 msgid ""
 "-configfile <path_to_file>\t: override the default configuration file for "
 "the session\n"
 msgstr ""
 
-#: src/main.c:3391
+#: src/main.c:3393
 #, c-format
 msgid "\t\t\t\t\t(default is %s)\n"
 msgstr ""
 
-#: src/main.c:3395
+#: src/main.c:3397
 msgid ""
 "-configdatadir <dir>\t\t: override the default configuration data directory "
 "for the session\n"
 msgstr ""
 
-#: src/main.c:3396
+#: src/main.c:3398
 #, c-format
 msgid "\t\t\t\t\t(default is %s\n"
 msgstr ""
 
-#: src/main.c:3399
+#: src/main.c:3401
 msgid ""
 "-dscrit <bytes>\t\t\t: temporarily sets the free disk space critical level "
 "for workdir to <bytes>\n"
 msgstr ""
 
-#: src/main.c:3400
+#: src/main.c:3402
 msgid ""
 "\t\t\t\t\t(intended to allow correction of erroneous values within the app; "
 "<= 0 disables checks)\n"
 msgstr ""
 
-#: src/main.c:3402
+#: src/main.c:3404
 msgid "-set <setname>\t\t\t: autoload clip set <setname>\n"
 msgstr ""
 
-#: src/main.c:3403
+#: src/main.c:3405
 msgid ""
 "-noset\t\t\t\t: do not reload any clip set on startup (overrides -set)\n"
 msgstr ""
 
-#: src/main.c:3404
+#: src/main.c:3406
 msgid ""
 "-layout <layout_name>\t\t: autoload multitrack layout <layout_name> (if "
 "successful, overrides -startup-ce)\n"
 msgstr ""
 
-#: src/main.c:3406
+#: src/main.c:3408
 msgid ""
 "-nolayout\t\t\t: do not reload any multitrack layout on startup (overrides -"
 "layout)\n"
 msgstr ""
 
-#: src/main.c:3407
+#: src/main.c:3409
 msgid ""
 "-norecover\t\t\t: force non-loading of crash recovery files (overrides -"
 "recover / -autorecover)\n"
 msgstr ""
 
-#: src/main.c:3409
+#: src/main.c:3411
 msgid ""
 "-recover | -autorecover\t\t: force reloading of any crash recovery files "
 "(may override -noset and -nolayout)\n"
 msgstr ""
 
-#: src/main.c:3410
+#: src/main.c:3412
 msgid ""
 "-nogui\t\t\t\t: do not show the gui (still shows the play window when "
 "active)\n"
 msgstr ""
 
-#: src/main.c:3411
+#: src/main.c:3413
 msgid "-nosplash\t\t\t: do not show the splash window\n"
 msgstr ""
 
-#: src/main.c:3413
+#: src/main.c:3415
 msgid ""
 "-noplaywin\t\t\t: do not show the play window (still shows the internal "
 "player; intended for remote streaming)\n"
 msgstr ""
 
-#: src/main.c:3415
+#: src/main.c:3417
 msgid ""
 "-noninteractive\t\t\t: disable menu interactivity (intended for scripting "
 "applications, e.g liblives)\n"
 msgstr ""
 
-#: src/main.c:3416
+#: src/main.c:3418
 msgid "-startup-ce\t\t\t: start in clip editor mode (overrides -startup-mt)\n"
 msgstr ""
 
-#: src/main.c:3417
+#: src/main.c:3419
 msgid "-startup-mt\t\t\t: start in multitrack mode\n"
 msgstr ""
 
-#: src/main.c:3418
+#: src/main.c:3420
 msgid ""
 "-vjmode\t\t\t\t: start in VJ mode (implicitly sets -startup-ce -autorecover -"
 "nolayout -asource external)\n"
 msgstr ""
 
-#: src/main.c:3421
+#: src/main.c:3423
 msgid ""
 "-fxmodesmax <n>\t\t\t: allow <n> modes per effect key (overrides any value "
 "set in preferences; minimum is 1)\n"
 msgstr ""
 
-#: src/main.c:3423
+#: src/main.c:3425
 #, c-format
 msgid ""
 "-oscstart <port>\t\t: start OSC listener on UDP port <port> (default is %d)\n"
 msgstr ""
 
-#: src/main.c:3425
+#: src/main.c:3427
 msgid ""
 "-nooscstart\t\t\t: do not start the OSC listener (the default, unless set in "
 "preferences)\n"
 msgstr ""
 
-#: src/main.c:3428
+#: src/main.c:3430
 msgid ""
 "-asource <source>\t\t: set the initial audio source (<source> can be "
 "'internal' or 'external')\n"
 msgstr ""
 
-#: src/main.c:3429
+#: src/main.c:3431
 #, c-format
 msgid "\t\t\t\t\t(only valid for %s and %s players)\n"
 msgstr ""
 
-#: src/main.c:3430
+#: src/main.c:3432
 msgid ""
 "-aplayer <ap>\t\t\t: start with the selected audio player (<ap> can be: "
 msgstr ""
 
-#: src/main.c:3442
+#: src/main.c:3444
 msgid ""
 "-jackopts <opts>\t\t: opts is a bitmap of jackd startup / playback options "
 "(default is 16, unless set in Preferences)\n"
@@ -681,45 +681,45 @@ msgid ""
 "\t\t\t\t\t\t(only if audio player is jack)) \n"
 msgstr ""
 
-#: src/main.c:3457
+#: src/main.c:3459
 #, c-format
 msgid "'%s' or "
 msgstr ""
 
-#: src/main.c:3460
+#: src/main.c:3462
 msgid " or "
 msgstr ""
 
-#: src/main.c:3464
+#: src/main.c:3466
 msgid ""
 "-devicemap <mapname>\t\t: autoload devicemap <mapname> (for MIDI / joystick "
 "control)\n"
 msgstr ""
 
-#: src/main.c:3465
+#: src/main.c:3467
 msgid ""
 "-vppdefaults <file>\t\t: load defaults for video playback plugin from "
 "<file>\n"
 "\t\t\t\t\t(Note: only affects the plugin settings, not the plugin type)\n"
 msgstr ""
 
-#: src/main.c:3468
+#: src/main.c:3470
 msgid "-yuvin <fifo>\t\t\t: autoplay yuv4mpeg from stream <fifo> on startup\n"
 msgstr ""
 
-#: src/main.c:3469
+#: src/main.c:3471
 msgid "\t\t\t\t\t(only valid in clip edit startup mode)\n"
 msgstr ""
 
-#: src/main.c:3471
+#: src/main.c:3473
 msgid "-debug\t\t\t\t: try to debug crashes (requires 'gdb' to be installed)\n"
 msgstr ""
 
-#: src/main.c:3776 src/gui.c:1149
+#: src/main.c:3778 src/gui.c:1149
 msgid "Starting GUI..."
 msgstr ""
 
-#: src/main.c:3800
+#: src/main.c:3802
 #, c-format
 msgid ""
 "\n"
@@ -731,35 +731,35 @@ msgid ""
 "or you may be missing a custom theme.\n"
 msgstr ""
 
-#: src/main.c:3827
+#: src/main.c:3829
 msgid ""
 "\n"
 "LiVES was unable to locate 'mplayer','mplayer2' or 'mpv'. You may wish to "
 "install one of these to use LiVES more fully.\n"
 msgstr ""
 
-#: src/main.c:3833
+#: src/main.c:3835
 msgid ""
 "\n"
 "LiVES was unable to locate 'convert'. You should install convert and image-"
 "magick if you want to use rendered effects.\n"
 msgstr ""
 
-#: src/main.c:3840
+#: src/main.c:3842
 msgid ""
 "\n"
 "LiVES was unable to locate 'composite'. You should install composite and "
 "image-magick if you want to use the merge function.\n"
 msgstr ""
 
-#: src/main.c:3847
+#: src/main.c:3849
 msgid ""
 "\n"
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
 "should install 'sox'.\n"
 msgstr ""
 
-#: src/main.c:3853
+#: src/main.c:3855
 #, c-format
 msgid ""
 "\n"
@@ -770,16 +770,16 @@ msgid ""
 "You may need to change the value of <lib_dir> in %s\n"
 msgstr ""
 
-#: src/main.c:3879
+#: src/main.c:3881
 msgid "Loading rendered effect plugins..."
 msgstr ""
 
-#: src/main.c:3982
+#: src/main.c:3984
 #, c-format
 msgid "Autoloading set %s..."
 msgstr ""
 
-#: src/main.c:4037
+#: src/main.c:4039
 #, c-format
 msgid ""
 "\n"
@@ -787,97 +787,97 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: localised name may be used here
-#: src/main.c:4281
+#: src/main.c:4283
 msgid "LiVES"
 msgstr ""
 
-#: src/main.c:4456
+#: src/main.c:4458
 #, c-format
 msgid "Invalid option %s on commandline\n"
 msgstr ""
 
-#: src/main.c:4515
+#: src/main.c:4517
 msgid "config data directory"
 msgstr ""
 
-#: src/main.c:4538
+#: src/main.c:4540
 msgid "configuration file"
 msgstr ""
 
-#: src/main.c:4583
+#: src/main.c:4585
 msgid "Must have mjpegtools installed for -yuvin to work"
 msgstr ""
 
-#: src/main.c:4626
+#: src/main.c:4628
 msgid "Abort and retry or continue ?"
 msgstr ""
 
-#: src/main.c:4752
+#: src/main.c:4754
 #, c-format
 msgid "Invalid audio player %s"
 msgstr ""
 
-#: src/main.c:4771
+#: src/main.c:4773
 msgid "external"
 msgstr ""
 
-#: src/main.c:4774
+#: src/main.c:4776
 msgid "internal"
 msgstr ""
 
-#: src/main.c:4775
+#: src/main.c:4777
 #, c-format
 msgid "Invalid audio source %s\n"
 msgstr ""
 
-#: src/main.c:5037 src/main.c:5045
+#: src/main.c:5039 src/main.c:5047
 #, c-format
 msgid "<%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr ""
 
-#: src/main.c:5042
+#: src/main.c:5044
 #, c-format
 msgid "<%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr ""
 
-#: src/main.c:5052
+#: src/main.c:5054
 msgid "<No File>"
 msgstr ""
 
 #. TRANSLATORS: rec(ord)
-#: src/main.c:8232
+#: src/main.c:8234
 #, c-format
 msgid "rec %9d / %d"
 msgstr ""
 
 #. TRANSLATORS: out of memory (rec(ord))
-#: src/main.c:8237
+#: src/main.c:8239
 #, c-format
 msgid "!rec %9d / %d"
 msgstr ""
 
-#: src/main.c:8562 src/main.c:8563 src/gui.c:2035 src/gui.c:3333
+#: src/main.c:8564 src/main.c:8565 src/gui.c:2035 src/gui.c:3333
 #: src/saveplay.c:2378
 msgid "Play"
 msgstr ""
 
-#: src/main.c:9281
+#: src/main.c:9283
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
 msgstr ""
 
-#: src/main.c:9410
+#: src/main.c:9412
 #, c-format
 msgid "Closed clip %s\n"
 msgstr ""
 
-#: src/main.c:9620 src/gui.c:776 src/utils.c:4776 src/utils.c:4805
+#: src/main.c:9622 src/gui.c:776 src/utils.c:4776 src/utils.c:4805
 #: src/saveplay.c:3803 src/multitrack.c:5130 src/multitrack.c:6953
 msgid "_Undo"
 msgstr ""
 
-#: src/main.c:9621 src/gui.c:790 src/utils.c:4777 src/utils.c:4806
+#: src/main.c:9623 src/gui.c:790 src/utils.c:4777 src/utils.c:4806
 #: src/saveplay.c:3804 src/multitrack.c:5149 src/multitrack.c:6974
 msgid "_Redo"
 msgstr ""
@@ -7487,220 +7487,220 @@ msgstr ""
 msgid "%s frames %d to %d"
 msgstr ""
 
-#: src/effects.c:445 src/effects.c:513
+#: src/effects.c:444 src/effects.c:512
 msgid ""
 "\n"
 "No frames were generated.\n"
 msgstr ""
 
-#: src/effects-weed.c:4738
+#: src/effects-weed.c:4746
 #, c-format
 msgid ""
 "Unable to load plugin %s\n"
 "Error was: %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4744
+#: src/effects-weed.c:4752
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr ""
 
-#: src/effects-weed.c:4776
+#: src/effects-weed.c:4784
 #, c-format
 msgid ""
 "No usable filters found in plugin:\n"
 "%s\n"
 msgstr ""
 
-#: src/effects-weed.c:4861
+#: src/effects-weed.c:4869
 #, c-format
 msgid "Plugin %s returned an empty filter !"
 msgstr ""
 
-#: src/effects-weed.c:4890
+#: src/effects-weed.c:4898
 #, c-format
 msgid "%sskipping blacklisted filter %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4918
+#: src/effects-weed.c:4926
 #, c-format
 msgid "Found duplicate plugin %s"
 msgstr ""
 
-#: src/effects-weed.c:4951
+#: src/effects-weed.c:4959
 #, c-format
 msgid "Loaded filter %s in plugin %s"
 msgstr ""
 
-#: src/effects-weed.c:4974 src/effects-weed.c:6041
+#: src/effects-weed.c:4982 src/effects-weed.c:6049
 msgid "Some plugin directories"
 msgstr ""
 
 #. TRANSLATORS: example " - LADSPA plugins -"
-#: src/effects-weed.c:5032 src/rte_window.c:2052
+#: src/effects-weed.c:5040 src/rte_window.c:2052
 #, c-format
 msgid " - %s plugins -"
 msgstr ""
 
-#: src/effects-weed.c:5213
+#: src/effects-weed.c:5221
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr ""
 
-#: src/effects-weed.c:5330
+#: src/effects-weed.c:5338
 #, c-format
 msgid "Invalid compound effect %s - has conflicting target_fps\n"
 msgstr ""
 
-#: src/effects-weed.c:5350
+#: src/effects-weed.c:5358
 #, c-format
 msgid "Invalid compound effect %s - has multiple transition parameters\n"
 msgstr ""
 
-#: src/effects-weed.c:5367
+#: src/effects-weed.c:5375
 #, c-format
 msgid "Invalid compound effect %s - has multiple master volume parameters\n"
 msgstr ""
 
-#: src/effects-weed.c:5487
+#: src/effects-weed.c:5495
 #, c-format
 msgid "Invalid compound effect %s - must have >1 sub filters\n"
 msgstr ""
 
-#: src/effects-weed.c:5509
+#: src/effects-weed.c:5517
 #, c-format
 msgid "Invalid effect %s found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5527
+#: src/effects-weed.c:5535
 #, c-format
 msgid "Invalid default found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5540
+#: src/effects-weed.c:5548
 #, c-format
 msgid "Invalid filter %d for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5557
+#: src/effects-weed.c:5565
 #, c-format
 msgid "Invalid param %d for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5587
+#: src/effects-weed.c:5595
 #, c-format
 msgid ""
 "Invalid number of values for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5624
+#: src/effects-weed.c:5632
 #, c-format
 msgid ""
 "Invalid non-boolean value for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5659
+#: src/effects-weed.c:5667
 #, c-format
 msgid "Invalid param link found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5673
+#: src/effects-weed.c:5681
 #, c-format
 msgid ""
 "Invalid out filter %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5694
+#: src/effects-weed.c:5702
 #, c-format
 msgid ""
 "Invalid out param %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5709
+#: src/effects-weed.c:5717
 #, c-format
 msgid ""
 "Invalid non-boolean value for autoscale found in compound effect %s, line "
 "%d\n"
 msgstr ""
 
-#: src/effects-weed.c:5722
+#: src/effects-weed.c:5730
 #, c-format
 msgid ""
 "Invalid in filter %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5739
+#: src/effects-weed.c:5747
 #, c-format
 msgid ""
 "Invalid in param %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5771
+#: src/effects-weed.c:5779
 #, c-format
 msgid "Invalid channel link found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5785
+#: src/effects-weed.c:5793
 #, c-format
 msgid ""
 "Invalid out filter %d for link channels found in compound effect %s, line "
 "%d\n"
 msgstr ""
 
-#: src/effects-weed.c:5806
+#: src/effects-weed.c:5814
 #, c-format
 msgid ""
 "Invalid out channel %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5819
+#: src/effects-weed.c:5827
 #, c-format
 msgid ""
 "Invalid in filter %d for link channels found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5840
+#: src/effects-weed.c:5848
 #, c-format
 msgid ""
 "Invalid in channel %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5878
+#: src/effects-weed.c:5886
 #, c-format
 msgid "Compound:%s"
 msgstr ""
 
-#: src/effects-weed.c:5937
+#: src/effects-weed.c:5945
 #, c-format
 msgid "Successfully loaded %d compound filters\n"
 msgstr ""
 
-#: src/effects-weed.c:6631
+#: src/effects-weed.c:6639
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:6798
+#: src/effects-weed.c:6806
 #, c-format
 msgid "Failed to start instance %s, (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:6882
+#: src/effects-weed.c:6890
 #, c-format
 msgid "Unable to start generator %s (error code: %d)\n"
 msgstr ""
 
-#: src/effects-weed.c:8377
+#: src/effects-weed.c:8385
 #, c-format
 msgid "Failed to start generator %s (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:8493
+#: src/effects-weed.c:8501
 #, c-format
 msgid "Failed to start generator %s, (%s)\n"
 msgstr ""
 
-#: src/effects-weed.c:9491
+#: src/effects-weed.c:9499
 #, c-format
 msgid "%s [unstable]"
 msgstr ""
@@ -12553,6 +12553,10 @@ msgstr ""
 msgid "Adjusting noise on"
 msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
+msgid "Applying GMIC"
+msgstr ""
+
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Applying charcoal to"
 msgstr ""
@@ -12843,6 +12847,10 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "Frames _per second (FPS)"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
+msgid "GMIC generic"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
@@ -13241,6 +13249,10 @@ msgstr ""
 msgid "_Calculate"
 msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
+msgid "_Command to be applied"
+msgstr ""
+
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "_Cycle Start"
 msgstr ""
@@ -13636,6 +13648,10 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "gen_text"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/gmic.script:0
+msgid "gmic"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0

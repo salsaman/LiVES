@@ -4403,7 +4403,6 @@ void kill_play_window(void) {
 */
 void get_letterbox_sizes(int *pwidth, int *pheight, int *lb_width, int *lb_height, boolean player_can_upscale) {
   float frame_aspect, player_aspect;
-
   if (!player_can_upscale) {
     calc_maxspect(*pwidth, *pheight, lb_width, lb_height);
     return;

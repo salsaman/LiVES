@@ -6500,8 +6500,10 @@ render_details *create_render_details(int type) {
   if (!(prefs->startup_interface == STARTUP_MT && !mainw->is_ready)) {
     if (type == 2 || type == 3) {
       if (CURRENT_CLIP_HAS_VIDEO && mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file) {
+        widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT | LIVES_EXPAND_EXTRA_WIDTH;
         rdet->usecur_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(rdet->dialog),
                               NULL, _("_Set to current clip values"), LIVES_RESPONSE_RESET);
+        widget_opts.expand = LIVES_EXPAND_DEFAULT;
         lives_signal_sync_connect(rdet->usecur_button, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(rdet_use_current),
                                   (livespointer)rdet);
       }

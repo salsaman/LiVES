@@ -2061,6 +2061,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     if (owidth != width || oheight != height) {
       set_channel_size(filter, channel, width, height);
+      opwidth = weed_channel_get_width(channel);
+      opheight = weed_channel_get_height(channel);
       if (channel_flags & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE) {
         boolean oneeds_reinit = needs_reinit;
         needs_reinit = TRUE;
@@ -2356,6 +2358,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
           retval = FILTER_ERROR_UNABLE_TO_RESIZE;
           goto done_video;
         }
+
         if (!mainw->multitrack && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
           mainw->blend_palette = weed_layer_get_palette_yuv(layer, &mainw->blend_clamping, &mainw->blend_sampling,
                                  &mainw->blend_subspace);

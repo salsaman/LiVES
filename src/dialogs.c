@@ -1320,6 +1320,8 @@ void update_progress(boolean visible) {
 #define ENABLE_PRECACHE
 static short scratch = SCRATCH_NONE;
 
+#define ANIM_LIM 1000000
+
 int process_one(boolean visible) {
   // INTERNAL PLAYER
   static frames_t last_req_frame = 0;
@@ -1379,6 +1381,7 @@ int process_one(boolean visible) {
     getahead = test_getahead = -1;
     mainw->actual_frame = sfile->frameno;
     mainw->offsetticks -= mainw->currticks;
+    last_anim_ticks = mainw->currticks;
   }
 
   /* if (mainw->wall_ticks > last_cpuload_ticks + 10 * TICKS_PER_SECOND_DBL) { */
@@ -2152,8 +2155,11 @@ proc_dialog:
       old_current_file = mainw->current_file;
     }
 
-    // a segfault here can indicate memory corruption in an FX plugin
-    lives_widget_context_update();
+    if (mainw->currticks - last_anim_ticks > ANIM_LIM) {
+      // a segfault here can indicate memory corruption in an FX plugin
+      last_anim_ticks = mainw->currticks;
+      lives_widget_context_update();
+    }
 
     /// if we did switch clips then cancel the dialog without cancelling the background process
     if (mainw->cs_is_permitted) {

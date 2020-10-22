@@ -3620,7 +3620,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
   static weed_plant_t *event, *eventnext;
   static boolean r_audio, r_video;
 
-  weed_timecode_t tc, next_out_tc = 0l, dtc = atc;
+  weed_timecode_t tc, next_out_tc = 0l, out_tc, dtc = atc;
   void *init_event;
 
   LiVESPixbuf *pixbuf = NULL;
@@ -3663,6 +3663,13 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
   static double chvols[MAX_AUDIO_TRACKS];
   static double xaseek[MAX_AUDIO_TRACKS], xavel[MAX_AUDIO_TRACKS], atime;
 
+#ifdef VFADE_RENDER
+  static weed_timecode_t vfade_in_end;
+  static weed_timecode_t vfade_out_start;
+  static lives_colRGBA64_t vfade_in_col;
+  static lives_colRGBA64_t vfade_out_col;
+#endif
+
   static lives_render_error_t read_write_error;
 
   static char nlabel[128];
@@ -3671,7 +3678,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
   char *key_string, *com;
   char *filter_name;
 
-  register int i;
+  int i;
 
   if (reset) {
     LiVESList *list = NULL;
@@ -3716,6 +3723,22 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
     mainw->audio_event = event;
     old_scrap_frame = -1;
     rec_delta_tc = 0;
+    /* end_tc */
+    /*   = get_event_timecode(get_last_frame_event(mainw->event_list)) */
+    /*   + TICKS_PER_SECOND_DBL / cfile->fps; */
+
+#ifdef VFADE_RENDER
+    if (r_video) {
+      if (mainw->vfade_in_secs > 0.) {
+        vfade_in_end = q_gint64(mainw->vfade_in_secs * TICKS_PER_SECOND_DBL, cfile->fps);
+        vfade_in_col = mainw->vfade_in_col;
+      } else vfade_in_end = 0;
+      if (mainw->vfade_out_secs > 0.) {
+        vfade_out_start = q_gint64(end_tc - mainw->vfade_out_secs * TICKS_PER_SECOND_DBL, cfile->fps);
+        vfade_out_col = mainw->vfade_out_col;
+      } else vfade_out_start = end_tc;
+    }
+#endif
 
     if (r_audio) {
       /// define the number of backing audio tracks (i.e tracks with audio but no video)
@@ -3777,6 +3800,12 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
     }
     break;
     case WEED_EVENT_TYPE_FRAME:
+      out_tc = (weed_timecode_t)((out_frame - 1) / cfile->fps
+                                 * TICKS_PER_SECOND_DBL - rec_delta_tc); // calculate tc of next out frame */
+      out_tc = q_gint64(out_tc, cfile->fps);
+      next_out_tc = (weed_timecode_t)(out_frame / cfile->fps
+                                      * TICKS_PER_SECOND_DBL - rec_delta_tc); // calculate tc of next out frame */
+      next_out_tc = q_gint64(next_out_tc, cfile->fps);
       if (mainw->flush_audio_tc == 0) {
         tc = get_event_timecode(event);
 
@@ -3897,7 +3926,25 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
             }
             lives_free(layers);
           }
-
+#ifdef VFADE_RENDER
+          if (layer) {
+            double fadeamt;
+            if (out_tc < vfade_in_end) {
+              fadeamt = (double)(vfade_in_end - out_tc) / (double)vfade_in_end;
+              weed_set_int_value(layer, "red_adjust", (double)vfade_in_col.red / 255.);
+              weed_set_int_value(layer, "green_adjust", (double)vfade_in_col.green / 255.);
+              weed_set_int_value(layer, "blue_adjust", (double)vfade_in_col.blue / 255.);
+              weed_set_double_value(layer, "colorize", fadeamt);
+            }
+            if (out_tc > vfade_out_start) {
+              fadeamt = (double)(out_tc - vfade_out_start) / (double)(end_tc - vfade_out_start);
+              weed_set_int_value(layer, "red_adjust", (double)vfade_in_col.red / 255.);
+              weed_set_int_value(layer, "green_adjust", (double)vfade_in_col.green / 255.);
+              weed_set_int_value(layer, "blue_adjust", (double)vfade_in_col.blue / 255.);
+              weed_set_double_value(layer, "colorize", fadeamt);
+            }
+          }
+#endif
           if (layer) {
             int lpal, width, height;
             boolean was_lbox = FALSE;
@@ -4033,10 +4080,6 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
         lives_freep((void **)&aseeks);
         lives_freep((void **)&aclips);
       }
-
-      next_out_tc = (weed_timecode_t)(out_frame / cfile->fps
-                                      * TICKS_PER_SECOND_DBL - rec_delta_tc); // calculate tc of next out frame */
-      next_out_tc = q_gint64(next_out_tc, cfile->fps);
 
       if (!r_video) break;
       if (!pixbuf) break;
@@ -4594,6 +4637,12 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
   char *pname = NULL;
   char *com, *tmp, *clipname = NULL;
   double old_fps = 0.;
+  double afade_in_secs = 0., afade_out_secs = 0.;
+#ifdef VFADE_RENDER
+  double vfade_in_secs = 0., vfade_out_secs = 0.;
+  LiVESWidgetColor fadecol;
+  lives_colRGBA64_t vfade_rgb;
+#endif
   boolean retval = TRUE, rendaud = TRUE, response;
   boolean norm_after = FALSE;
   int xachans = 0, xarate = 0, xasamps = 0, xse = 0;
@@ -4624,6 +4673,18 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
       // do we render audio ?
       rendaud = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton));
       norm_after = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(rdet->norm_after));
+      if (lives_widget_is_sensitive(rdet->afade_in))
+        afade_in_secs = lives_spin_button_get_value(LIVES_SPIN_BUTTON(rdet->afade_in));
+      if (lives_widget_is_sensitive(rdet->afade_out))
+        afade_out_secs = lives_spin_button_get_value(LIVES_SPIN_BUTTON(rdet->afade_out));
+
+      /* if (lives_widget_is_sensitive(rdet->vfade_in)) */
+      /* 	vfade_in_secs = lives_spin_button_get_value(LIVES_SPIN_BUTTON(rdet->vfade_in)); */
+      /* if (lives_widget_is_sensitive(rdet->vfade_out)) */
+      /* 	vfade_out_secs = lives_spin_button_get_value(LIVES_SPIN_BUTTON(rdet->vfade_out)); */
+
+      /* lives_color_button_get_color(LIVES_COLOR_BUTTON(rdet->vfade_col), &fadecol); */
+      /* widget_color_to_lives_rgba(&vfade_rgb, &fadecol); */
 
       if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
         xse = AFORM_UNSIGNED;
@@ -4751,6 +4812,7 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
   mainw->effects_paused = FALSE;
 
   if (new_clip) cfile->img_type = IMG_TYPE_BEST; // override the pref
+  mainw->vfade_in_secs = mainw->vfade_out_secs = 0.;
 
 #ifdef LIBAV_TRANSCODE
   if (transcode) {
@@ -4787,9 +4849,33 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
         goto rtc_done;
       }
       if (norm_after) on_normalise_audio_activate(NULL, NULL);
+      if (afade_in_secs > 0.) {
+        cfile->undo1_int = 0; // fade in
+        cfile->undo2_dbl = 0.;
+        cfile->undo1_dbl = afade_in_secs;
+        on_fade_audio_activate(NULL, NULL);
+      }
+      if (afade_out_secs > 0.) {
+        cfile->undo1_int = 1; // fade out
+        cfile->undo2_dbl = cfile->laudio_time - afade_out_secs;
+        cfile->undo1_dbl = cfile->laudio_time;
+        on_fade_audio_activate(NULL, NULL);
+      }
       d_print_done();
       rendaud = FALSE;
     }
+#ifdef VFADE_RENDER
+    // temp fix until a better system emerges
+    if (vfade_in_secs > 0.) {
+      mainw->vfade_in_secs = vfade_in_secs;
+      mainw->vfade_in_col = vfade_rgb;
+    }
+    // temp fix until a better system emerges
+    if (vfade_out_secs > 0.) {
+      mainw->vfade_out_secs = vfade_out_secs;
+      mainw->vfade_out_col = vfade_rgb;
+    }
+#endif
     mainw->transrend_ready = FALSE;
   }
 #endif
@@ -4932,6 +5018,7 @@ rtc_done:
   free_track_decoders();
   deinit_render_effects();
   audio_free_fnames();
+  mainw->vfade_in_secs = mainw->vfade_out_secs = 0.;
   return retval;
 }
 
@@ -6033,6 +6120,67 @@ LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget 
 }
 
 
+static void add_fade_elements(render_details * rdet, LiVESWidget * hbox, boolean is_video) {
+  LiVESWidget *cb;
+  LiVESWidget *vbox = NULL;
+  if (is_video) {
+    vbox = lives_vbox_new(FALSE, widget_opts.packing_height >> 1);
+    lives_box_pack_start(LIVES_BOX(hbox), vbox, FALSE, TRUE, 0);
+    hbox = lives_hbox_new(FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, 0);
+  }
+  add_fill_to_box(LIVES_BOX(hbox));
+
+  cb = lives_standard_check_button_new(_("Fade in over"), FALSE, LIVES_BOX(hbox), NULL);
+
+  widget_opts.swap_label = TRUE;
+  if (!is_video) {
+    rdet->afade_in = lives_standard_spin_button_new(_("seconds"),
+                     10., 0., 1000., 1., 1., 2,
+                     LIVES_BOX(hbox), NULL);
+    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(cb), rdet->afade_in, FALSE);
+  } else {
+    rdet->vfade_in = lives_standard_spin_button_new(_("seconds"),
+                     10., 0., 1000., 1., 1., 2,
+                     LIVES_BOX(hbox), NULL);
+    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(cb), rdet->vfade_in, FALSE);
+  }
+  widget_opts.swap_label = FALSE;
+
+  add_fill_to_box(LIVES_BOX(hbox));
+
+  cb = lives_standard_check_button_new(_("Fade out over"), FALSE, LIVES_BOX(hbox), NULL);
+
+  widget_opts.swap_label = TRUE;
+  if (!is_video) {
+    rdet->afade_out = lives_standard_spin_button_new(_("seconds"),
+                      10., 0., 1000., 1., 1., 2,
+                      LIVES_BOX(hbox), NULL);
+    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(cb), rdet->afade_out, FALSE);
+  } else {
+    rdet->vfade_out = lives_standard_spin_button_new(_("seconds"),
+                      10., 0., 1000., 1., 1., 2,
+                      LIVES_BOX(hbox), NULL);
+    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(cb), rdet->vfade_out, FALSE);
+  }
+  widget_opts.swap_label = FALSE;
+
+  add_fill_to_box(LIVES_BOX(hbox));
+
+  if (is_video) {
+    lives_colRGBA64_t rgba;
+    LiVESWidget *sp_red, *sp_green, *sp_blue;
+    rgba.red = rgba.green = rgba.blue = 0;
+    hbox = lives_hbox_new(FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, 0);
+    add_fill_to_box(LIVES_BOX(hbox));
+    rdet->vfade_col = lives_standard_color_button_new(LIVES_BOX(hbox), _("Fade Color"),
+                      FALSE, &rgba, &sp_red,
+                      &sp_green, &sp_blue, NULL);
+  }
+}
+
+
 LiVESWidget *add_audio_options(LiVESWidget **cbbackaudio, LiVESWidget **cbpertrack) {
   LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
 
@@ -6106,7 +6254,7 @@ render_details *create_render_details(int type) {
   // type == 2 :: render to new clip (!specified)
   // type == 3 :: enter multitrack (!specified)
   // type == 4 :: change during multitrack (!specified)
-  // type == 5 :: transcode clip (!specified)
+  // type == 5 :: transcode clip (!specified) -> becomes type 2
 
   LiVESWidget *label;
   LiVESWidget *top_vbox;
@@ -6268,6 +6416,12 @@ render_details *create_render_details(int type) {
                              (tmp3 = (_("The name to give the clip in the Clips menu"))));
       lives_free(tmp); lives_free(tmp2); lives_free(tmp3);
     }
+
+    /* add_fill_to_box(LIVES_BOX(lives_bin_get_child(LIVES_BIN(frame)))); */
+    /* hbox = lives_hbox_new(FALSE, 0); */
+    /* lives_container_add(LIVES_CONTAINER(lives_bin_get_child(LIVES_BIN(frame))), hbox); */
+    /* add_fill_to_box(LIVES_BOX(hbox)); */
+    /* add_fade_elements(rdet, hbox, TRUE); */
   }
   // call these here since adding the widgets may have altered their values
   rdetw_spinw_changed(LIVES_SPIN_BUTTON(rdet->spinbutton_width), (livespointer)rdet);
@@ -6295,11 +6449,17 @@ render_details *create_render_details(int type) {
   }
 
   if (type == 2) {
+    add_fill_to_box(LIVES_BOX(resaudw->vbox));
+
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(resaudw->vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
     rdet->norm_after = lives_standard_check_button_new(_("_Normalise audio after rendering"),
                        TRUE, LIVES_BOX(hbox), NULL);
     toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton), rdet->norm_after, FALSE);
+
+    hbox = lives_hbox_new(FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(resaudw->vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+    add_fade_elements(rdet, hbox, FALSE);
   }
 
   if (type == 3) {

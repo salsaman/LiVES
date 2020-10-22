@@ -828,11 +828,8 @@ static void init_average(void) {
 
 static void init_unal(void) {
   // premult to postmult and vice-versa
-
-  register int i, j;
-
-  for (i = 0; i < 256; i++) { //alpha val
-    for (j = 0; j < 256; j++) { // val to be converted
+  for (int i = 0; i < 256; i++) { //alpha val
+    for (int j = 0; j < 256; j++) { // val to be converted
       unal[i][j] = (float)j * 255. / (float)i;
       al[i][j] = (float)j * (float)i / 255.;
 
@@ -13705,7 +13702,7 @@ int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, int 
 /**
    @brief create a layer, setting the most important properties */
 weed_layer_t *weed_layer_create(int width, int height, int *rowstrides, int palette) {
-  weed_layer_t *layer = weed_plant_new(WEED_PLANT_LAYER);
+  weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
 
   weed_layer_set_width(layer, width);
   weed_layer_set_height(layer, height);
@@ -13795,6 +13792,14 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
 }
 
 
+LIVES_GLOBAL_INLINE int weed_layer_count_refs(weed_layer_t *layer) {
+  int refs;
+  if (!layer) return 0;
+  refs = weed_get_int_value(layer, WEED_LEAF_HOST_REFS, NULL);
+  return refs;
+}
+
+
 /**
    @brief free pixel_data from layer
 
@@ -13818,6 +13823,11 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
 
   if (weed_get_boolean_value(layer, WEED_LEAF_HOST_ORIG_PDATA, NULL) == WEED_TRUE)
     return;
+
+  if (weed_layer_count_refs(layer) > 1) {
+    weed_layer_nullify_pixel_data(layer);
+    return;
+  }
 
   if ((pixel_data = weed_layer_get_pixel_data(layer, &pd_elements)) != NULL) {
     if (pd_elements > 0) {
@@ -13867,8 +13877,6 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
 */
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
-  int refs = weed_get_int_value(layer, WEED_LEAF_HOST_REFS, NULL);
-  if (refs > 1) break_me("unr\n");
   if (weed_layer_unref(layer)) return layer;
   return NULL;
 }
@@ -13876,8 +13884,9 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
 int weed_layer_unref(weed_layer_t *layer) {
   int refs;
   if (!layer) return 0;
-  refs = weed_get_int_value(layer, WEED_LEAF_HOST_REFS, NULL);
-  if (--refs > 0) return refs;
+  refs = weed_get_int_value(layer, WEED_LEAF_HOST_REFS, NULL) - 1;
+  weed_set_int_value(layer, WEED_LEAF_HOST_REFS, refs);
+  if (refs > 0) return refs;
   weed_layer_pixel_data_free(layer);
   weed_plant_free(layer);
   return 0;

@@ -2553,11 +2553,7 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
       if (n == 0) pkt->flags = is_keyframe;
 
       pkt->stream_index = st->index;
-
-      if (track->ms_compat)
-        pkt->dts = timecode;
-      else
-        pkt->pts = timecode;
+      pkt->dts = pkt->pts = timecode;
       pkt->pos = pos;
 
       if (st->codec->codec_id == AV_CODEC_ID_TEXT)

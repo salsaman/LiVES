@@ -1808,6 +1808,8 @@ typedef struct {
   weed_layer_t *transrend_layer;
   lives_proc_thread_t transrend_proc;
   boolean pr_audio;
+  double vfade_in_secs, vfade_out_secs;
+  lives_colRGBA64_t vfade_in_col, vfade_out_col;
 } mainwindow;
 
 /// interface colour settings

@@ -86,12 +86,12 @@ void append_to_audio_bufferf(float *src, uint64_t nsamples, int channum) {
 
   if (!prefs->push_audio_to_gens) return;
 
-  pthread_mutex_lock(&mainw->abuf_mutex);
+  pthread_mutex_lock(&mainw->abuf_frame_mutex);
 
   abuf = (lives_audio_buf_t *)mainw->audio_frame_buffer; // this is a pointer to either mainw->afb[0] or mainw->afb[1]
 
   if (!abuf) {
-    pthread_mutex_unlock(&mainw->abuf_mutex);
+    pthread_mutex_unlock(&mainw->abuf_frame_mutex);
     return;
   }
 
@@ -111,7 +111,7 @@ void append_to_audio_bufferf(float *src, uint64_t nsamples, int channum) {
   channum--;
   abuf->bufferf[channum] = (float *)lives_realloc(abuf->bufferf[channum], nsampsize * sizeof(float) + EXTRA_BYTES);
   lives_memcpy(&abuf->bufferf[channum][abuf->samples_filled], src, nsamples * sizeof(float));
-  pthread_mutex_unlock(&mainw->abuf_mutex);
+  pthread_mutex_unlock(&mainw->abuf_frame_mutex);
 }
 
 
@@ -122,12 +122,12 @@ void append_to_audio_buffer16(void *src, uint64_t nsamples, int channum) {
 
   if (!prefs->push_audio_to_gens) return;
 
-  pthread_mutex_lock(&mainw->abuf_mutex);
+  pthread_mutex_lock(&mainw->abuf_frame_mutex);
 
   abuf = (lives_audio_buf_t *)mainw->audio_frame_buffer; // this is a pointer to either mainw->afb[0] or mainw->afb[1]
 
   if (!abuf) {
-    pthread_mutex_unlock(&mainw->abuf_mutex);
+    pthread_mutex_unlock(&mainw->abuf_frame_mutex);
     return;
   }
   if (!abuf->buffer16) free_audio_frame_buffer(abuf);
@@ -148,14 +148,13 @@ void append_to_audio_buffer16(void *src, uint64_t nsamples, int channum) {
 #ifdef DEBUG_AFB
   g_print("append16 to afb\n");
 #endif
-  pthread_mutex_unlock(&mainw->abuf_mutex);
+  pthread_mutex_unlock(&mainw->abuf_frame_mutex);
 }
 
 
 void init_audio_frame_buffers(short aplayer) {
   // function should be called when the first video generator with audio input is enabled
   int i;
-  pthread_mutex_lock(&mainw->abuf_mutex);
 
   for (i = 0; i < 2; i++) {
     lives_audio_buf_t *abuf;
@@ -198,7 +197,6 @@ void init_audio_frame_buffers(short aplayer) {
   }
 
   mainw->audio_frame_buffer = mainw->afb[0];
-  pthread_mutex_unlock(&mainw->abuf_mutex);
 
 #ifdef DEBUG_AFB
   g_print("init afb\n");
@@ -1354,8 +1352,9 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   if (!storedfdsset) audio_reset_stored_fnames();
 
-  if (!(is_fade) && (!mainw->event_list || (!mainw->multitrack && nfiles == 1 && from_files &&
-                     from_files && from_files[0] == mainw->ascrap_file))) render_block_size *= 100;
+  if (!is_fade && (!mainw->event_list || (!mainw->multitrack && nfiles == 1 && from_files &&
+                                          from_files && from_files[0] == mainw->ascrap_file)))
+    render_block_size *= 100;
 
   if (to_file > -1) {
     // prepare outfile stuff

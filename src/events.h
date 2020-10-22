@@ -234,6 +234,11 @@ typedef struct {
   LiVESWidget *always_hbox;
   LiVESWidget *debug;
   LiVESWidget *norm_after;
+  LiVESWidget *afade_in;
+  LiVESWidget *afade_out;
+  LiVESWidget *vfade_in;
+  LiVESWidget *vfade_out;
+  LiVESWidget *vfade_col;
   ulong encoder_name_fn;
   ulong encoder_ofmt_fn;
   boolean enc_changed;

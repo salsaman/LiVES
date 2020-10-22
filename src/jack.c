@@ -387,13 +387,11 @@ static void output_silence(size_t offset, nframes_t nframes, jack_driver_t *jack
     if (!jackd->is_silent) {
       sample_silence_dS(out_buffer[i] + offset, nframes);
     }
-    pthread_mutex_lock(&mainw->abuf_frame_mutex);
     if (mainw->audio_frame_buffer && prefs->audio_src != AUDIO_SRC_EXT) {
       // audio to be sent to video generator plugins
       append_to_audio_bufferf(out_buffer[i] + offset, nframes, i);
       if (i == jackd->num_output_channels - 1) mainw->audio_frame_buffer->samples_filled += nframes;
     }
-    pthread_mutex_unlock(&mainw->abuf_frame_mutex);
   }
   if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float) {
     // audio to be sent to video playback plugin
@@ -758,13 +756,11 @@ static int audio_process(nframes_t nframes, void *arg) {
               } else {
                 for (i = 0; i < jackd->num_output_channels; i++) {
                   // push non-interleaved audio in fbuffer to jack
-                  pthread_mutex_lock(&mainw->abuf_frame_mutex);
                   if (mainw->audio_frame_buffer && prefs->audio_src != AUDIO_SRC_EXT) {
                     // we will push the pre-effected audio to any audio reactive generators
                     append_to_audio_bufferf(out_buffer[i], numFramesToWrite, i);
                     if (i == jackd->num_output_channels - 1) mainw->audio_frame_buffer->samples_filled += numFramesToWrite;
                   }
-                  pthread_mutex_unlock(&mainw->abuf_frame_mutex);
                 }
               }
               //}
@@ -823,13 +819,11 @@ static int audio_process(nframes_t nframes, void *arg) {
                   jackd->abs_maxvol_heard = sample_move_d16_float(out_buffer[i], cache_buffer->buffer16[0] + i, numFramesToWrite,
                                             jackd->num_input_channels, afile->signed_endian & AFORM_UNSIGNED, FALSE, vol);
 
-                  pthread_mutex_lock(&mainw->abuf_frame_mutex);
                   if (mainw->audio_frame_buffer && prefs->audio_src != AUDIO_SRC_EXT) {
                     // we will push the pre-effected audio to any audio reactive generators
                     append_to_audio_bufferf(out_buffer[i], numFramesToWrite, i);
                     if (i == jackd->num_output_channels - 1) mainw->audio_frame_buffer->samples_filled += numFramesToWrite;
                   }
-                  pthread_mutex_unlock(&mainw->abuf_frame_mutex);
                 }
                 pthread_mutex_unlock(&mainw->cache_buffer_mutex);
 
@@ -1222,12 +1216,10 @@ static int audio_read(nframes_t nframes, void *arg) {
 
       if (mainw->audio_frame_buffer && prefs->audio_src == AUDIO_SRC_EXT) {
         // if we have audio triggered gens., push audio to it
-        pthread_mutex_lock(&mainw->abuf_frame_mutex);
         for (i = 0; i < jackd->num_input_channels; i++) {
           append_to_audio_bufferf(in_buffer[i], nframes, i);
         }
         mainw->audio_frame_buffer->samples_filled += nframes;
-        pthread_mutex_unlock(&mainw->abuf_frame_mutex);
       }
       // apply any audio effects with in_channels and no out_channels
       weed_layer_set_audio_data(layer, in_buffer, jackd->sample_in_rate, jackd->num_output_channels, nframes);

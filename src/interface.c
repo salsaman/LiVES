@@ -3689,6 +3689,8 @@ aud_dialog_t *create_audfade_dialog(int type) {
   hbox = lives_hbox_new(FALSE, TB_HEIGHT_AUD);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
+
+
   if (type == 0) {
     label_text = (_("Fade in over  "));
     label_text2 = (_("first"));

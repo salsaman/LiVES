@@ -3736,8 +3736,6 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
   boolean needs_reinit;
   int nsamps, arate, nchans;
 
-  register int i;
-
   // free playback: apply any audio filters or analysers (but not generators)
   // Effects are applied in key order
 
@@ -3747,7 +3745,7 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
   arate = weed_layer_get_audio_rate(alayer);
   nsamps = weed_layer_get_audio_length(alayer);
 
-  for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
+  for (int i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if (rte_key_valid(i + 1, TRUE)) {
       if (!(rte_key_is_enabled(1 + i))) {
         // if anything is connected to ACTIVATE, the fx may be activated
@@ -6150,20 +6148,25 @@ LIVES_GLOBAL_INLINE int _weed_instance_unref(weed_plant_t *inst) {
   // return new refcount
   // return value of -1 indicates the instance was freed
   // -2 if the inst was NULL
-  int error, nrefs;
+  int nrefs;
   if (!inst) return -2;
+
   pthread_mutex_lock(&mainw->instance_ref_mutex);
-  if (!weed_plant_has_leaf(inst, WEED_LEAF_HOST_REFS)) nrefs = -1;
-  else nrefs = weed_get_int_value(inst, WEED_LEAF_HOST_REFS, &error);
+  nrefs = weed_get_int_value(inst, WEED_LEAF_HOST_REFS, NULL) - 1;
+
   if (nrefs <= -1) {
-    char *msg = lives_strdup_printf("unref of filter instance (%p) with nrefs == %d\n", inst, nrefs);
+    char *msg;
     pthread_mutex_unlock(&mainw->instance_ref_mutex);
-    LIVES_ERROR(msg);
-    break_me("invalid filt inst unref");
+    if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_REFS)) {
+      msg = lives_strdup_printf("unref of filter instance (%p) with nrefs == %d\n", inst, nrefs);
+      LIVES_ERROR(msg);
+      break_me("invalid filt inst unref");
+    }
     return nrefs;
   }
-  nrefs--;
   weed_set_int_value(inst, WEED_LEAF_HOST_REFS, nrefs);
+  pthread_mutex_unlock(&mainw->instance_ref_mutex);
+
 #ifdef DEBUG_REFCOUNT
   g_print("unref %p, nrefs==%d\n", inst, nrefs);
 #endif
@@ -6173,7 +6176,6 @@ LIVES_GLOBAL_INLINE int _weed_instance_unref(weed_plant_t *inst) {
 #endif
     lives_free_instance(inst);
   }
-  pthread_mutex_unlock(&mainw->instance_ref_mutex);
   return nrefs;
 }
 
@@ -6181,13 +6183,12 @@ LIVES_GLOBAL_INLINE int _weed_instance_unref(weed_plant_t *inst) {
 int _weed_instance_ref(weed_plant_t *inst) {
   // return refcount after the operation
   // or 0 if the inst was NULL
-  int error, nrefs;
+  int nrefs;
 
   if (!inst) return 0;
 
   pthread_mutex_lock(&mainw->instance_ref_mutex);
-  if (!weed_plant_has_leaf(inst, WEED_LEAF_HOST_REFS)) nrefs = 0;
-  else nrefs = weed_get_int_value(inst, WEED_LEAF_HOST_REFS, &error);
+  nrefs = weed_get_int_value(inst, WEED_LEAF_HOST_REFS, NULL);
   weed_set_int_value(inst, WEED_LEAF_HOST_REFS, ++nrefs);
 #ifdef DEBUG_REFCOUNT
   g_print("ref %p, nrefs==%d\n", inst, nrefs);
@@ -7425,8 +7426,7 @@ void weed_deinit_all(boolean shutdown) {
           pthread_mutex_lock(&mainw->event_list_mutex);
           mainw->rte ^= (GU641 << i);
           pthread_mutex_unlock(&mainw->event_list_mutex);
-        }
-        weed_instance_unref(instance);
+        } else weed_instance_unref(instance);
       }
     }
     filter_mutex_unlock(i);
@@ -7450,13 +7450,13 @@ static int register_audio_channels(int nchannels) {
     return -1;
   }
   if (nchannels <= 0) return mainw->afbuffer_clients;
+  pthread_mutex_lock(&mainw->abuf_frame_mutex);
   if (mainw->afbuffer_clients == 0) {
-    pthread_mutex_lock(&mainw->abuf_frame_mutex);
     init_audio_frame_buffers(prefs->audio_player);
     mainw->afbuffer_clients_read = 0;
-    pthread_mutex_unlock(&mainw->abuf_frame_mutex);
   }
   mainw->afbuffer_clients += nchannels;
+  pthread_mutex_unlock(&mainw->abuf_frame_mutex);
   return mainw->afbuffer_clients;
 }
 
@@ -7504,14 +7504,15 @@ static boolean fill_audio_channel(weed_plant_t *filter, weed_plant_t *achan) {
   }
 
   // lock the buffers
-  pthread_mutex_lock(&mainw->abuf_frame_mutex);
 
   if (mainw->afbuffer_clients_read == 0) {
     /// when the first client reads, we grab the audio frame buffer and swap the other for writing
     // cast away the (volatile)
+    pthread_mutex_lock(&mainw->abuf_frame_mutex);
     audbuf = (lives_audio_buf_t *)mainw->audio_frame_buffer;
     if (audbuf == mainw->afb[0]) mainw->audio_frame_buffer = mainw->afb[1];
     else mainw->audio_frame_buffer = mainw->afb[0];
+    pthread_mutex_unlock(&mainw->abuf_frame_mutex);
   }
 
   // push read buffer to channel
@@ -7526,7 +7527,6 @@ static boolean fill_audio_channel(weed_plant_t *filter, weed_plant_t *achan) {
     mainw->afbuffer_clients_read = 0;
   }
 
-  pthread_mutex_unlock(&mainw->abuf_frame_mutex);
   return TRUE;
 }
 
@@ -8157,7 +8157,6 @@ void wge_inner(weed_plant_t *inst) {
   while (inst) {
     next_inst = get_next_compound_inst(inst);
     weed_call_deinit_func(inst);
-    weed_instance_unref(inst);
     inst = next_inst;
   }
 }
@@ -8325,8 +8324,7 @@ void weed_bg_generator_end(weed_plant_t *inst) {
 
   /// ref the isntance so it isn't deleted
   weed_instance_ref(inst);
-  weed_generator_end(inst);
-  weed_instance_unref(inst);
+  weed_generator_end(inst); // unrefs inst
   bg_gen_to_start = bg_gen_key;
 }
 

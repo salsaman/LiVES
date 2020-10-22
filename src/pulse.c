@@ -256,7 +256,6 @@ static void sample_silence_pulse(pulse_driver_t *pulsed, size_t nbytes, size_t x
       sample_silence_stream(pulsed->out_achans, nsamples);
     }
 
-    pthread_mutex_lock(&mainw->abuf_frame_mutex);
     if (mainw->audio_frame_buffer && prefs->audio_src != AUDIO_SRC_EXT
         && (!mainw->event_list || mainw->record || mainw->record_paused))  {
       // buffer audio for any generators
@@ -264,7 +263,6 @@ static void sample_silence_pulse(pulse_driver_t *pulsed, size_t nbytes, size_t x
       append_to_audio_buffer16(buff, nsamples * pulsed->out_achans, 0);
       mainw->audio_frame_buffer->samples_filled += nsamples * pulsed->out_achans;
     }
-    pthread_mutex_unlock(&mainw->abuf_frame_mutex);
 #if !HAVE_PA_STREAM_BEGIN_WRITE
     pa_stream_write(pulsed->pstream, buff, xbytes, pulse_buff_free, 0, PA_SEEK_RELATIVE);
 #else
@@ -1068,12 +1066,10 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
       /// we may also stream to a fifo, as well as possibly caching the audio for any video filters to utilize
       if (pulsed->astream_fd != -1) audio_stream(buffer, xbytes, pulsed->astream_fd);
-      pthread_mutex_lock(&mainw->abuf_frame_mutex);
       if (mainw->audio_frame_buffer && prefs->audio_src != AUDIO_SRC_EXT) {
         append_to_audio_buffer16(buffer, xbytes / 2, 0);
         mainw->audio_frame_buffer->samples_filled += xbytes / 2;
       }
-      pthread_mutex_unlock(&mainw->abuf_frame_mutex);
 
       /// Finally... we actually write to pulse buffers
 #if !HAVE_PA_STREAM_BEGIN_WRITE
@@ -1360,13 +1356,11 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
         pulsed->abs_maxvol_heard
           = sample_move_d16_float(fltbuf[i], (short *)(data) + i, xnsamples, pulsed->in_achans, FALSE, FALSE, 1.0);
 
-        pthread_mutex_lock(&mainw->abuf_frame_mutex);
         if (mainw->audio_frame_buffer && prefs->audio_src == AUDIO_SRC_EXT) {
           // if we have audio triggered gens., push audio to it
           append_to_audio_bufferf(fltbuf[i], xnsamples, i);
           if (i == pulsed->in_achans - 1) mainw->audio_frame_buffer->samples_filled += xnsamples;
         }
-        pthread_mutex_unlock(&mainw->abuf_frame_mutex);
       }
 
       if (memok) {

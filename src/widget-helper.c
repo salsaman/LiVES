@@ -10491,8 +10491,13 @@ static void _on_lock_button_clicked(LiVESButton * button, livespointer user_data
   int locked = !(LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button),
                                       ISLOCKED_KEY)));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), ISLOCKED_KEY, LIVES_INT_TO_POINTER(locked));
-  if (locked) image = lives_image_new_from_stock(LIVES_LIVES_STOCK_LOCKED, LIVES_ICON_SIZE_BUTTON);
-  else image = lives_image_new_from_stock(LIVES_LIVES_STOCK_UNLOCKED, LIVES_ICON_SIZE_BUTTON);
+  if (locked) {
+    image = lives_image_new_from_stock(LIVES_LIVES_STOCK_LOCKED, LIVES_ICON_SIZE_BUTTON);
+    lives_widget_set_opacity(LIVES_WIDGET(button), 1.0);
+  } else {
+    image = lives_image_new_from_stock(LIVES_LIVES_STOCK_UNLOCKED, LIVES_ICON_SIZE_BUTTON);
+    lives_widget_set_opacity(LIVES_WIDGET(button), .75);
+  }
   lives_standard_button_set_image(LIVES_BUTTON(button), image);
 }
 

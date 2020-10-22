@@ -2890,19 +2890,6 @@ void play_file(void) {
       // any effects which were "easing out" should be deinited now
       deinit_easing_effects();
     }
-
-    /// not sure if this is still the case (it may have been due to other bugs...)
-    /// we need to deinit generators BEFORE exiting the playback plugin, else the generator can grab window manager
-    /// events when we restart the plugin, leaving it hanging waiting for a response which never arrives
-    if (mainw->blend_file != -1 && mainw->blend_file != mainw->current_file && mainw->files[mainw->blend_file] &&
-        mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
-      weed_call_deinit_func(mainw->files[mainw->blend_file]->ext_src);
-    }
-    if (CURRENT_CLIP_IS_VALID) {
-      if (mainw->current_file >= 1 && cfile->clip_type == CLIP_TYPE_GENERATOR) {
-        weed_call_deinit_func(cfile->ext_src);
-      }
-    }
   }
 
   if (mainw->ext_playback) {
@@ -3019,7 +3006,7 @@ void play_file(void) {
     } else {
 #endif
       if (!is_realtime_aplayer(audio_player) && stopcom) {
-        // kill sound(if still playing)
+        // kill sound (if still playing)
         lives_system(stopcom, TRUE);
         mainw->aud_file_to_kill = -1;
         lives_free(stopcom);
@@ -3287,9 +3274,7 @@ void play_file(void) {
     mainw->current_file = xcurrent_file;
   }
 
-  mainw->filter_map = NULL;
-  mainw->afilter_map = NULL;
-  mainw->audio_event = NULL;
+  mainw->filter_map = mainw->afilter_map = mainw->audio_event = NULL;
 
   /// disable the freeze key
   lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), freeze_closure);
@@ -3402,8 +3387,6 @@ void play_file(void) {
   if (!mainw->multitrack && CURRENT_CLIP_HAS_VIDEO) {
     lives_widget_set_sensitive(mainw->spinbutton_start, TRUE);
     lives_widget_set_sensitive(mainw->spinbutton_end, TRUE);
-    //lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
-    //lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
   }
 
   if (!mainw->preview && CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR) {
@@ -5500,7 +5483,7 @@ boolean check_for_disk_space(boolean fullcheck) {
 }
 
 
-int save_to_scrap_file(weed_layer_t *layer) {
+static void _save_to_scrap_file(weed_layer_t *layer) {
   // returns frame number
   // dump the raw layer (frame) data to disk
 
@@ -5517,10 +5500,6 @@ int save_to_scrap_file(weed_layer_t *layer) {
   //int flags = O_WRONLY | O_CREAT | O_TRUNC;
   int fd;
 
-  if (!IS_VALID_CLIP(mainw->scrap_file)) return -1;
-
-  if (!layer) return scrapfile->frames;
-
   if (!scrapfile->ext_src) {
     char *oname = make_image_file_name(scrapfile, 1, LIVES_FILE_EXT_SCRAP), *dirname;
 
@@ -5535,8 +5514,10 @@ int save_to_scrap_file(weed_layer_t *layer) {
     fd = lives_create_buffered_nosync(oname, DEF_FILE_PERMS);
     lives_free(oname);
 
-    if (fd < 0) return scrapfile->frames;
-
+    if (fd < 0) {
+      weed_layer_free(layer);
+      return;
+    }
     scrapfile->ext_src = LIVES_INT_TO_POINTER(fd);
     scrapfile->ext_src_type = LIVES_EXT_SRC_FILE_BUFF;
 
@@ -5545,9 +5526,11 @@ int save_to_scrap_file(weed_layer_t *layer) {
 #endif
   } else fd = LIVES_POINTER_TO_INT(scrapfile->ext_src);
 
+
   // serialise entire frame to scrap file
-  weed_set_int_value(layer, WEED_LEAF_FRAME, ++scrapfile->frames);
   pdata_size = weed_plant_serialise(fd, layer, NULL);
+  weed_layer_free(layer);
+
   scrapfile->f_size += pdata_size;
 
   // check free space every 256 frames or every 10 MB of audio (TODO ****)
@@ -5579,15 +5562,33 @@ int save_to_scrap_file(weed_layer_t *layer) {
 
   /// check every 64 frames for quota overrun, because its a background task
   check_for_disk_space((scrapfile->frames & 0x3F) ? TRUE : FALSE);
-
-  return scrapfile->frames;
 }
 
+static lives_proc_thread_t scrap_file_procthrd = NULL;
+
+int save_to_scrap_file(weed_layer_t *layer) {
+  weed_layer_t *orig_layer;
+  lives_clip_t *scrapfile = mainw->files[mainw->scrap_file];
+  if (!IS_VALID_CLIP(mainw->scrap_file)) return -1;
+  if (!layer) return scrapfile->frames;
+  orig_layer = weed_layer_copy(NULL, layer);
+  if (scrap_file_procthrd) {
+    lives_proc_thread_join(scrap_file_procthrd);
+  }
+  scrap_file_procthrd = lives_proc_thread_create(LIVES_THRDATTR_NONE,
+                        (lives_funcptr_t)_save_to_scrap_file, -1, "V", orig_layer);
+  return scrapfile->frames;
+}
 
 void close_scrap_file(boolean remove) {
   int current_file = mainw->current_file;
 
   if (!IS_VALID_CLIP(mainw->scrap_file)) return;
+
+  if (scrap_file_procthrd) {
+    lives_proc_thread_join(scrap_file_procthrd);
+    scrap_file_procthrd = NULL;
+  }
 
   mainw->current_file = mainw->scrap_file;
   if (cfile->ext_src && cfile->ext_src_type == LIVES_EXT_SRC_FILE_BUFF)

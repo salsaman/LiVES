@@ -5100,7 +5100,10 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   boolean debug = FALSE;
   static boolean firsttime = TRUE;
 
-  if (!check_for_executable(&capable->has_youtube_dl, EXEC_YOUTUBE_DL)) return NULL;
+  if (!check_for_executable(&capable->has_youtube_dl, EXEC_YOUTUBE_DL)) {
+    do_please_install(EXEC_YOUTUBE_DL);
+    return NULL;
+  }
 
 #ifdef ALLOW_NONFREE_CODECS
   if (req) only_free = !req->allownf;
@@ -5420,8 +5423,13 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   else if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton_choose)))
     req->matchsize = LIVES_MATCH_CHOICE;
   if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(checkbutton_update))) req->do_update = FALSE;
-  else req->do_update = TRUE;
-
+  else {
+    if (!check_for_executable(&capable->has_pip, EXEC_PIP)) {
+      do_please_install(EXEC_PIP);
+      return NULL;
+    }
+    req->do_update = TRUE;
+  }
   *req->vidchoice = 0;
   *req->audchoice = 0;
 

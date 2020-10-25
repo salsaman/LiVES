@@ -4623,7 +4623,9 @@ try_again:
       lives_widget_destroy(dlg);
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
-      if (ret == LIVES_RESPONSE_NO) {
+      if (ret == LIVES_RESPONSE_YES) {
+#if 0
+        // TODO : check for alt downloader, e.g. pip
         if (!check_for_executable(&capable->has_wget, EXEC_WGET)
             && !check_for_executable(&capable->has_curl, EXEC_CURL)) {
           do_please_install_either(EXEC_WGET, EXEC_CURL);
@@ -4631,8 +4633,10 @@ try_again:
               || (check_for_executable(&capable->has_wget, EXEC_WGET))) retry = TRUE;
           else do_program_not_found_error(EXEC_WGET);
         }
+#endif
         lives_freep((void **)&mainw->permmgr->key);
       }
+
       if (retry) {
         lives_free(mainw->permmgr);
         mainw->permmgr = NULL;

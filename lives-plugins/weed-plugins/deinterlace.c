@@ -10,6 +10,7 @@
 static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
+#define NEED_PALETTE_UTILS
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
@@ -39,25 +40,25 @@ static inline unsigned char *mix(unsigned char *a, unsigned char *b, int pcpy) {
 
 
 static weed_error_t  deinterlace_process(weed_plant_t *inst, weed_timecode_t tc) {
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL),
-                *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
-  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  weed_plant_t *in_channel = weed_get_in_channel(inst, 0),
+                *out_channel = weed_get_out_channel(inst, 0);
+  unsigned char *src = weed_channel_get_pixel_data(in_channel);
+  unsigned char *dst = weed_channel_get_pixel_data(out_channel);
 
-  unsigned char **src_array = (unsigned char **)weed_get_voidptr_array(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
-  unsigned char **dst_array = (unsigned char **)weed_get_voidptr_array(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  unsigned char **src_array = (unsigned char **)weed_channel_get_pixel_data_planar(in_channel, NULL);
+  unsigned char **dst_array = (unsigned char **)weed_channel_get_pixel_data_planar(out_channel, NULL);
 
   int inplace = (src == dst);
 
-  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
-  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
-  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
-  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
-  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL), orowstride2 = orowstride * 2;
-  int *irowstrides = weed_get_int_array(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
-  int *orowstrides = weed_get_int_array(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  int width = weed_channel_get_width(in_channel);
+  int height = weed_channel_get_height(in_channel);
+  int palette = weed_channel_get_palette(in_channel);
+  int irowstride = weed_channel_get_stride(in_channel);
+  int orowstride = weed_channel_get_stride(out_channel), orowstride2 = orowstride * 2;
+  int *irowstrides = weed_channel_get_rowstrides(in_channel, NULL);
+  int *orowstrides = weed_channel_get_rowstrides(out_channel, NULL);
 
-  register int x;
+  int x;
 
   unsigned char *val1a, *val2a, *val3a, *val4a;
   unsigned char *val2b, *val3b, *val4b;
@@ -85,13 +86,7 @@ static weed_error_t  deinterlace_process(weed_plant_t *inst, weed_timecode_t tc)
 
   int green_offs = 0;
 
-  if (palette == WEED_PALETTE_UYVY || palette == WEED_PALETTE_YUYV) width >>= 1; // 2 pixels per macropixel
-
-  if (palette == WEED_PALETTE_ARGB32 || palette == WEED_PALETTE_RGBA32 || palette == WEED_PALETTE_BGRA32 ||
-      palette == WEED_PALETTE_YUVA8888 || palette == WEED_PALETTE_UYVY || palette == WEED_PALETTE_YUYV) psize = 4;
-
-  if (palette == WEED_PALETTE_YUV444P || palette == WEED_PALETTE_YUVA4444P || palette == WEED_PALETTE_YUV420P ||
-      palette == WEED_PALETTE_YVU420P || palette == WEED_PALETTE_YUV422P) psize = 1;
+  psize = pixel_size(palette);
 
   if (palette == WEED_PALETTE_RGBA32 || palette == WEED_PALETTE_BGRA32 ||
       palette == WEED_PALETTE_RGB24 || palette == WEED_PALETTE_BGR24) green_offs = 1;
@@ -104,7 +99,6 @@ static weed_error_t  deinterlace_process(weed_plant_t *inst, weed_timecode_t tc)
 
   src += irowstride;
   dst += orowstride;
-
 
   if (palette == WEED_PALETTE_YUV444P || palette == WEED_PALETTE_YUVA4444P) {
     for (int i = 1; i < 3; i++) {

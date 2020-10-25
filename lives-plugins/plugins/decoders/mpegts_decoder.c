@@ -2539,7 +2539,7 @@ static int mpegts_read_close(lives_clip_data_t *cdata) {
 
 static int64_t dts_to_frame(const lives_clip_data_t *cdata, int64_t dts) {
   // use ADJUSTED dts (subtract priv->start_dts from it)
-  return (int64_t)((double)dts / 90000.*cdata->fps + .5);
+  return (int64_t)((double)dts / 90000. * cdata->fps + .5);
 }
 
 static int64_t frame_to_dts(const lives_clip_data_t *cdata, int64_t frame) {
@@ -3197,7 +3197,7 @@ skip_det:
 
   if (ctx->ticks_per_frame == 2) {
     // TODO - needs checking
-    cdata->fps /= 2.;
+    //cdata->fps /= 2.;
     cdata->interlace = LIVES_INTERLACE_BOTTOM_FIRST;
   }
 
@@ -3328,7 +3328,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   lives_mpegts_priv_t *priv;
 
-  if (!URI && !cdata) {
+  if (!URI && cdata) {
     // create a clone of cdata - we also need to be able to handle a "fake" clone with only URI, nframes and fps set (priv == NULL)
     return mpegts_clone(cdata);
   }
@@ -3532,7 +3532,11 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     if (priv->last_frame == -1 || (tframe < priv->last_frame) || (tframe - priv->last_frame > rescan_limit)) {
       idx = mpegts_read_seek(cdata, target_pts);
 
-      nextframe = dts_to_frame(cdata, idx->dts);
+      if (idx)
+        nextframe = dts_to_frame(cdata, idx->dts);
+      else {
+        nextframe = priv->last_frame + 1;
+      }
 
       if (priv->input_position == priv->filesize) return FALSE;
       mpegts_read_packet((lives_clip_data_t *)cdata, &priv->avpkt);

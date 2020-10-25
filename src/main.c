@@ -1705,7 +1705,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   if (*capable->wm_caps.panel)
     prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);
-  //prefs->show_desktop_panel = TRUE;
+  prefs->show_desktop_panel = TRUE;
 
   prefs->show_msgs_on_startup = get_boolean_prefd(PREF_MSG_START, TRUE);
 
@@ -3039,7 +3039,6 @@ capability *get_capabilities(void) {
   buffer[0] = '\0';
   command[0] = '\0';
 
-  capable->has_perl = UNCHECKED;
   if (!has_executable(EXEC_PERL)) return capable;
   capable->has_perl = PRESENT;
 
@@ -3065,47 +3064,6 @@ capability *get_capabilities(void) {
 
   capable->python_version = 0;
   capable->xstdout = STDOUT_FILENO;
-
-  // optional
-  capable->has_mplayer = UNCHECKED;
-  capable->has_mplayer2 = UNCHECKED;
-  capable->has_mpv = UNCHECKED;
-  capable->has_convert = UNCHECKED;
-  capable->has_ffprobe = UNCHECKED;
-  capable->has_ffmpeg = UNCHECKED;
-  capable->has_composite = UNCHECKED;
-  capable->has_identify = UNCHECKED;
-  capable->has_sox_play = UNCHECKED;
-  capable->has_sox_sox = UNCHECKED;
-  capable->has_dvgrab = UNCHECKED;
-  capable->has_cdda2wav = UNCHECKED;
-  capable->has_autolives = UNCHECKED;
-  capable->has_jackd = UNCHECKED;
-  capable->has_gdb = UNCHECKED;
-  capable->has_icedax = UNCHECKED;
-  capable->has_du = UNCHECKED;
-  capable->has_pulse_audio = UNCHECKED;
-  capable->has_xwininfo = UNCHECKED;
-  capable->has_midistartstop = UNCHECKED;
-  capable->has_encoder_plugins = UNCHECKED;
-  capable->has_python = UNCHECKED;
-  capable->has_gconftool_2 = UNCHECKED;
-  capable->has_xdg_screensaver = UNCHECKED;
-  //  capable->has_xdg_open = UNCHECKED;
-  capable->has_file = UNCHECKED;
-  capable->has_md5sum = UNCHECKED;
-  capable->has_gio = UNCHECKED;
-  capable->has_xdotool = UNCHECKED;
-  capable->has_wmctrl = UNCHECKED;
-
-  // not checked at startup
-  capable->has_gzip = UNCHECKED;
-  capable->has_wget = UNCHECKED;
-  capable->has_curl = UNCHECKED;
-  capable->has_mktemp = UNCHECKED;
-  capable->has_snap = UNCHECKED;
-
-  capable->has_smogrify = UNCHECKED;
 
   lives_snprintf(capable->backend_path, PATH_MAX, "%s", (tmp = lives_find_program_in_path(BACKEND_NAME)));
   lives_free(tmp);
@@ -8514,6 +8472,11 @@ void load_frame_image(int frame) {
             if (!got_preload) {
               pull_frame_threaded(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks, 0, 0);
               //pull_frame(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks);
+            }
+            if ((mainw->rte != 0 || (mainw->is_rendering && !mainw->event_list))
+                && (mainw->current_file != mainw->scrap_file || mainw->multitrack)) {
+              /// will set mainw->blend_layer
+              get_blend_layer((weed_timecode_t)mainw->currticks);
             }
           }
         }

@@ -525,6 +525,7 @@ typedef struct {
   lives_checkstatus_t has_wmctrl;
   lives_checkstatus_t has_xdotool;
   lives_checkstatus_t has_youtube_dl;
+  lives_checkstatus_t has_pip;
   lives_checkstatus_t has_du;
   lives_checkstatus_t has_md5sum;
   lives_checkstatus_t has_gio;

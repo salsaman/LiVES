@@ -2898,7 +2898,6 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, b
       else
         yuv2rgb(y, u, v, &dest[j], &dest[j + 1], &dest[j + 2]);
       if (add_alpha) dest[j + 3] = 255;
-
       uv_offs++;
     }
     s_y += irow;
@@ -3043,7 +3042,6 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **src, int width, int height, b
       last_v = next_v;
 
       if (j < width - 1) {
-        uv_offs++;
         if (even) {
           /// even row, normal
           next_u = s_u[uv_offs];
@@ -3069,6 +3067,7 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **src, int width, int height, b
       else
         yuv2bgr(y, u, v, &dest[j], &dest[j + 1], &dest[j + 2]);
       if (add_alpha) dest[j + 3] = 255;
+      uv_offs++;
     }
     s_y += irow;
     dest += orowstride;
@@ -3100,7 +3099,7 @@ static void convert_yuv420p_to_argb_frame(uint8_t **src, int width, int height, 
   int opsize = 4;
   int irow = istrides[0] - width;
   boolean even = TRUE;
-  uint8_t y, u, v, next_u, next_v, last_u, last_v;
+  uint8_t y, u, v, next_u = 0, next_v = 0, last_u = 0, last_v = 0;
   size_t uv_offs = 0;
 
   if (thread_id == -1) {
@@ -3212,7 +3211,6 @@ static void convert_yuv420p_to_argb_frame(uint8_t **src, int width, int height, 
       dest[j] = 255;
 
       if (j < width - 1) {
-        uv_offs++;
         if (even) {
           /// even row, normal
           next_u = s_u[uv_offs];
@@ -3237,6 +3235,7 @@ static void convert_yuv420p_to_argb_frame(uint8_t **src, int width, int height, 
         yuv2rgb_with_gamma(y, u, v, &dest[j + 1], &dest[j + 2], &dest[j + 3], gamma_lut);
       else
         yuv2rgb(y, u, v, &dest[j + 1], &dest[j + 2], &dest[j + 3]);
+      uv_offs++;
     }
     s_y += irow;
     dest += orowstride;

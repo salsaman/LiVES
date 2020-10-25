@@ -832,6 +832,50 @@ void on_realfx_activate(LiVESMenuItem *menuitem, livespointer xrfx) {
 }
 
 
+static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
+  static weed_timecode_t blend_tc = 0;
+  lives_clip_t *blend_file;
+  weed_timecode_t ntc = tc;
+
+  if (!IS_VALID_CLIP(mainw->blend_file)) return NULL;
+  blend_file = mainw->files[mainw->blend_file];
+
+  if (mainw->blend_file != mainw->last_blend_file) {
+    // mainw->last_blend_file is set to -1 on playback start
+    mainw->last_blend_file = mainw->blend_file;
+    blend_file->last_frameno = blend_file->frameno;
+    blend_tc = tc;
+  }
+
+  if (!cfile->play_paused) {
+    blend_file->frameno = calc_new_playback_position(mainw->blend_file, blend_tc, (ticks_t *)&ntc);
+    blend_file->last_frameno = blend_file->frameno;
+    blend_tc = ntc;
+  }
+
+  mainw->blend_layer = lives_layer_new_for_frame(mainw->blend_file, blend_file->frameno);
+  pull_frame_threaded(mainw->blend_layer, get_image_ext_for_type(blend_file->img_type), blend_tc, 0, 0);
+  return mainw->blend_layer;
+}
+
+void get_blend_layer(weed_timecode_t tc) {
+  /// will set mainw->blend_layer
+  if (mainw->blend_file > -1 && mainw->num_tr_applied > 0
+      && (!mainw->files[mainw->blend_file] ||
+          (mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_DISK &&
+           (!mainw->files[mainw->blend_file]->frames ||
+            !mainw->files[mainw->blend_file]->is_loaded)))) {
+    // invalid blend file
+    mainw->blend_file = mainw->current_file;
+  }
+
+  if (mainw->num_tr_applied && mainw->blend_file != mainw->current_file &&
+      IS_VALID_CLIP(mainw->blend_file) && !resize_instance) {
+    get_blend_layer_inner(tc);
+  }
+}
+
+
 weed_plant_t *on_rte_apply(weed_layer_t *layer, int opwidth, int opheight, weed_timecode_t tc) {
   // apply realtime effects to a layer
   // mainw->filter_map is used as a guide
@@ -846,21 +890,9 @@ weed_plant_t *on_rte_apply(weed_layer_t *layer, int opwidth, int opheight, weed_
   if (mainw->foreign) return NULL;
 
   layers = (weed_plant_t **)lives_malloc(3 * sizeof(weed_plant_t *));
-  layers[2] = NULL;
   layers[0] = layer;
-
-  if (mainw->blend_file > -1 && mainw->num_tr_applied > 0 && (!mainw->files[mainw->blend_file] ||
-      (mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_DISK &&
-       (!mainw->files[mainw->blend_file]->frames ||
-        !mainw->files[mainw->blend_file]->is_loaded)))) {
-    // invalid blend file
-    mainw->blend_file = mainw->current_file;
-  }
-
-  if (mainw->num_tr_applied && mainw->blend_file != mainw->current_file &&
-      IS_VALID_CLIP(mainw->blend_file) && !resize_instance) {
-    layers[1] = get_blend_layer(tc);
-  } else layers[1] = NULL;
+  layers[1] = mainw->blend_layer;
+  layers[2] = NULL;
 
   if (resize_instance) {
     lives_filter_error_t ret;
@@ -934,35 +966,6 @@ deint1:
   lives_free(layers);
 }
 
-
-weed_plant_t *get_blend_layer(weed_timecode_t tc) {
-  static weed_timecode_t blend_tc = 0;
-  lives_clip_t *blend_file;
-  weed_timecode_t ntc = tc;
-
-  if (!IS_VALID_CLIP(mainw->blend_file)) return NULL;
-  blend_file = mainw->files[mainw->blend_file];
-
-  if (mainw->blend_file != mainw->last_blend_file) {
-    // mainw->last_blend_file is set to -1 on playback start
-    mainw->last_blend_file = mainw->blend_file;
-    blend_file->last_frameno = blend_file->frameno;
-    blend_tc = tc;
-  }
-
-  if (!cfile->play_paused) {
-    blend_file->frameno = calc_new_playback_position(mainw->blend_file, blend_tc, (ticks_t *)&ntc);
-    blend_file->last_frameno = blend_file->frameno;
-    blend_tc = ntc;
-  }
-
-  /* if (is_virtual_frame(mainw->blend_file, blend_file->frameno)) */
-  /*   mainw->blend_layer = lives_layer_new_for_frame(mainw->blend_file, blend_file->frame_index[blend_file->frameno]); */
-  /* else */
-  mainw->blend_layer = lives_layer_new_for_frame(mainw->blend_file, blend_file->frameno);
-  pull_frame_threaded(mainw->blend_layer, get_image_ext_for_type(blend_file->img_type), blend_tc, 0, 0);
-  return mainw->blend_layer;
-}
 
 ////////////////////////////////////////////////////////////////////
 // keypresses

@@ -904,6 +904,7 @@ void on_location_select(LiVESButton * button, livespointer user_data) {
   }
 }
 
+#define USE_YTDL
 
 //ret updated req if fmt sel. needs change
 lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, const char *tmpdir) {
@@ -1032,6 +1033,10 @@ retry:
       d_print_failed();
       goto cleanup_ut;
     }
+
+#ifndef USE_YTDL
+    break;
+#endif
 
     // we expect to get back a list of available formats
     // or the selected format

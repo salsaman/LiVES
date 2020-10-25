@@ -1657,7 +1657,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
 
   if (is_pure_audio(filter, TRUE)) {
-    g_print("IS AUD %p\n", filter);
     /// we process audio effects elsewhere
     lives_freep((void **)&out_channels);
     return FILTER_ERROR_IS_AUDIO;
@@ -1795,7 +1794,11 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     if (!weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL)) {
       /// wait for thread to pull layer pixel_data
+      if (prefs->dev_show_timing)
+        g_printerr("fx clr pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
       check_layer_ready(layer);
+      if (prefs->dev_show_timing)
+        g_printerr("fx clr post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
       frame = weed_get_int_value(layer, WEED_LEAF_FRAME, NULL);
       if (frame == 0) {
         /// temp disable channels if we can
@@ -1900,9 +1903,13 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       /* /// wait for thread to pull layer pixel_data */
       if (!is_layer_ready(layer)) {
 #define FX_WAIT_LIM 10000 // microseconds * 10
+        if (prefs->dev_show_timing)
+          g_printerr("fx clr2 pre @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
         for (register int tt = 0; tt < FX_WAIT_LIM && !is_layer_ready(layer); tt++) {
           lives_nanosleep(10000);
         }
+        if (prefs->dev_show_timing)
+          g_printerr("fx clr2 post @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
         if (!is_layer_ready(layer)) {
           retval = FILTER_ERROR_MISSING_FRAME;
           goto done_video;
@@ -2070,7 +2077,11 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
           int *nsizes = weed_get_int_array(channel, WEED_LEAF_NATURAL_SIZE, NULL);
           if (nsizes) {
             int *lnsizes;
+            if (prefs->dev_show_timing)
+              g_printerr("nsw pre2 @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
             lives_nanosleep_until_nonzero(weed_plant_has_leaf(layer, WEED_LEAF_NATURAL_SIZE));
+            if (prefs->dev_show_timing)
+              g_printerr("nsw post2 @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
             lnsizes = weed_get_int_array(layer, WEED_LEAF_NATURAL_SIZE, NULL);
             if (nsizes[0] == lnsizes[0] && nsizes[1] == lnsizes[1]) needs_reinit = oneeds_reinit;
             lives_free(lnsizes);
@@ -8177,7 +8188,6 @@ void weed_generator_end(weed_plant_t *inst) {
 
   if (!inst) {
     LIVES_WARN("inst was NULL !");
-    //return;
   }
 
   if (mainw->blend_file != -1 && mainw->blend_file != current_file && mainw->files[mainw->blend_file] &&
@@ -8217,21 +8227,16 @@ void weed_generator_end(weed_plant_t *inst) {
 
   if (is_bg) {
     if (mainw->blend_layer) check_layer_ready(mainw->blend_layer);
-    //filter_mutex_lock(bg_generator_key);
     key_to_instance[bg_generator_key][bg_generator_mode] = NULL;
-    //filter_mutex_unlock(bg_generator_key);
     pthread_mutex_lock(&mainw->event_list_mutex);
     if (rte_key_is_enabled(1 + bg_generator_key)) mainw->rte ^= (GU641 << bg_generator_key);
     pthread_mutex_unlock(&mainw->event_list_mutex);
     bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
     pre_src_file = mainw->pre_src_file;
     mainw->pre_src_file = mainw->current_file;
-    //mainw->new_clip = mainw->blend_file;
   } else {
     if (mainw->frame_layer) check_layer_ready(mainw->frame_layer);
-    //filter_mutex_lock(fg_generator_key);
     key_to_instance[fg_generator_key][fg_generator_mode] = NULL;
-    //filter_mutex_unlock(fg_generator_key);
     pthread_mutex_lock(&mainw->event_list_mutex);
     if (rte_key_is_enabled(1 + fg_generator_key)) mainw->rte ^= (GU641 << fg_generator_key);
     pthread_mutex_unlock(&mainw->event_list_mutex);
@@ -8268,7 +8273,6 @@ void weed_generator_end(weed_plant_t *inst) {
   if (is_bg) {
     mainw->pre_src_file = mainw->current_file;
     mainw->current_file = mainw->blend_file;
-    mainw->rte ^= (GU641 << bg_generator_key);
     mainw->blend_file = mainw->new_blend_file;
     mainw->new_blend_file = -1;
     // close generator file and switch to original file if possible
@@ -8280,14 +8284,10 @@ void weed_generator_end(weed_plant_t *inst) {
       cfile->ext_src = NULL;
       cfile->ext_src_type = LIVES_EXT_SRC_NONE;
       close_current_file(mainw->pre_src_file);
-      /* if (mainw->playing_file != mainw->pre_src_file) { */
-      /*   mainw->scratch = SCRATCH_JUMP; */
-      /* } */
     }
     if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) ce_thumbs_update_current_clip();
   } else {
     // close generator file and switch to original file if possible
-    //mainw->rte ^= (GU641 << fg_generator_key);
     if (!cfile || cfile->clip_type != CLIP_TYPE_GENERATOR) {
       LIVES_WARN("Close non-generator file 1");
     } else {

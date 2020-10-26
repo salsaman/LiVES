@@ -524,7 +524,8 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
         threaded_dialog_push();
         do_threaded_dialog(_("Resizing all frames\n"), TRUE);
         lives_widget_show_all(mainw->proc_ptr->processing);
-        if (resize_all(fileno, sfile->hsize, sfile->vsize, empirical_img_type, &nbadsized, &missing)) {
+        if (resize_all(fileno, sfile->hsize, sfile->vsize, empirical_img_type, FALSE,
+                       &nbadsized, &missing)) {
           g_printerr("resize detected %d bad sized, %d missing \n", nbadsized, missing);
           if (missing) has_missing_frames = TRUE;
           if (mainw->cancelled == CANCEL_NONE) bad_imgfmts = FALSE;
@@ -542,7 +543,8 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
       int missing = 0, nbadsized = 0;
       threaded_dialog_push();
       do_threaded_dialog(_("Correcting Image Formats\n"), TRUE);
-      if (resize_all(fileno, sfile->hsize, sfile->vsize, empirical_img_type, &nbadsized, &missing)) {
+      if (resize_all(fileno, sfile->hsize, sfile->vsize, empirical_img_type, FALSE,
+                     &nbadsized, &missing)) {
         g_printerr("change fmts detected %d bad sized, %d missing \n", nbadsized, missing);
         if (missing) has_missing_frames = TRUE;
         if (mainw->cancelled == CANCEL_NONE) bad_imgfmts = FALSE;

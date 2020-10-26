@@ -268,6 +268,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
   LiVESAccelGroup *accel_group = NULL;
   LiVESWindow *transient = widget_opts.transient;
 
+  char *colref;
+
   int cb_key = extra_cb_key;
   int del_key = del_cb_key;
   extra_cb_key = 0;
@@ -461,7 +463,10 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
   label = lives_standard_formatted_label_new(text);
   widget_opts.last_label = label;
-
+  colref = gdk_rgba_to_string(&palette->normal_back);
+  set_css_value_direct(label, LIVES_WIDGET_STATE_NORMAL, "",
+                       "caret-color", colref);
+  lives_free(colref);
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
   lives_box_pack_start(LIVES_BOX(dialog_vbox), label, TRUE, TRUE, 0);
   lives_label_set_selectable(LIVES_LABEL(label), TRUE);
@@ -533,8 +538,12 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
 
 LIVES_GLOBAL_INLINE LiVESWidget *create_question_dialog(const char *title, const char *text) {
-  LiVESWidget *dialog = create_message_dialog(LIVES_DIALOG_QUESTION, text, 0);
-  lives_window_set_title(LIVES_WINDOW(dialog), title);
+  LiVESWidget *dialog;
+  char *xtitle = (char *)title;
+  if (!xtitle) xtitle = _("Question");
+  dialog = create_message_dialog(LIVES_DIALOG_QUESTION, text, 0);
+  lives_window_set_title(LIVES_WINDOW(dialog), xtitle);
+  if (xtitle != title) lives_free(xtitle);
   return dialog;
 }
 
@@ -962,8 +971,11 @@ LiVESResponseType handle_backend_errors(boolean can_retry) {
         /// ask for them and then return either LIVES_RESPONSE_CANCEL
         /// or LIVES_RESPONSE_ACCEPT, as well as setting mainw->perm_idx and mainw->perm_key
         if (lives_ask_permission(array, numtok, 5)) response = LIVES_RESPONSE_ACCEPT;
-        else response = LIVES_RESPONSE_CANCEL;
-        goto handled;
+        else {
+          response = LIVES_RESPONSE_CANCEL;
+          mainw->cancelled = CANCEL_USER;
+          goto handled;
+        }
       } else {
         boolean trysudo = FALSE;
         if (addinfo && strstr(addinfo, "_TRY_SUDO_")) trysudo = TRUE;
@@ -3640,16 +3652,38 @@ LIVES_GLOBAL_INLINE void do_lb_convert_error(void) {
 }
 
 
-LIVES_GLOBAL_INLINE void do_ra_convert_error(void) {
-  do_error_dialog(
-    _("LiVES currently requires convert from ImageMagick resize frames.\n"
-      "Please install 'imagemagick' and try again."));
-}
+LIVES_GLOBAL_INLINE boolean do_please_install(const char *exec, uint64_t gflags) {
+  char *extra = lives_strdup(""), *msg;
+  if (gflags & INSTALL_CANLOCAL) {
+    lives_free(extra);
+    extra = lives_strdup(_("\n\nAlternately, LiVES may be able to install\na local user copy "
+                           "of the program.\n"));
+  }
 
+  msg = lives_strdup_printf(_("'%s' is necessary for this feature to work.\n"
+                              "If possible, kindly install it before continuing.%s"), exec, extra);
 
-LIVES_GLOBAL_INLINE void do_please_install(const char *exec) {
-  do_info_dialogf(_("'%s'\nis necessary for this feature to work.\n"
-                    "If possible, kindly install it before continuing."), exec);
+  if (gflags & INSTALL_CANLOCAL) {
+    LiVESWidget *dlg = create_question_dialog(NULL, msg);
+    LiVESResponseType ret;
+    lives_free(msg);
+    widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+    lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_CANCEL,
+                                       _("Cancel / Install Later"), LIVES_RESPONSE_CANCEL);
+    lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_ADD,
+                                       _("Continue"), LIVES_RESPONSE_YES);
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
+
+    lives_dialog_set_button_layout(LIVES_DIALOG(dlg), LIVES_BUTTONBOX_SPREAD);
+
+    ret = lives_dialog_run(LIVES_DIALOG(dlg));
+    lives_widget_destroy(dlg);
+    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+    return (ret == LIVES_RESPONSE_YES);
+  }
+  do_info_dialog(msg);
+  lives_free(msg);
+  return FALSE;
 }
 
 
@@ -4567,14 +4601,16 @@ boolean ask_permission_dialog_complex(int what, char **argv, int argc, int offs,
   if (prefs->show_gui) {
     LiVESWidget *dlg;
     LiVESResponseType ret;
-    char *text, *title, *prname, *errtxt, *xsudt;
+    char *text, *title, *prname, *errtxt, *errtxt2, *xsudt;
+    char *tmp, *action, *verb;
     int nrem = argc - offs;
-    boolean retry;
+    //boolean retry;
 
-try_again:
-    retry = FALSE;
+    //try_again:
+    //retry = FALSE;
     switch (what) {
     case LIVES_PERM_DOWNLOAD_LOCAL:
+    case LIVES_PERM_COPY_LOCAL:
       // argv (starting at offs) should have: name_of_package_bin, grant_idx, grant_key,
       // cmds to run, future consequences.
       if (nrem < 4) return FALSE; /// badly formed request, ignore it
@@ -4582,8 +4618,8 @@ try_again:
       mainw->permmgr = (lives_permmgr_t *)lives_calloc(1, sizeof(lives_permmgr_t));
       mainw->permmgr->idx = atoi(argv[offs + 1]);
       mainw->permmgr->key = lives_strdup(argv[offs + 2]);
-      if (nrem >= 5) mainw->permmgr->cmdlist = argv[offs + 4];
-      if (nrem >= 6) mainw->permmgr->futures = argv[offs + 5];
+      if (nrem >= 4) mainw->permmgr->cmdlist = argv[offs + 3];
+      if (nrem >= 5) mainw->permmgr->futures = argv[offs + 4];
 
       if (sudocom) {
         char *sudotext = lives_strdup_printf(_("Alternately, you can try running\n"
@@ -4596,14 +4632,31 @@ try_again:
       prname = lives_markup_escape_text(argv[offs], -1);
       errtxt = lives_markup_escape_text(argv[3], -1);
 
-      text = lives_strdup_printf(_("The following error occurred when running %s:"
-                                   "\n\n'%s'\n\n"
-                                   "<b>It may be possible to fix this "
-                                   "by downloading an individual copy of the program\n%s</b>\n"
+      if (errtxt && *errtxt)
+        errtxt2 = lives_strdup_printf(_("The following error occurred when running %s:"
+                                        "\n\n'%s'\n\n"), prname, errtxt);
+      else
+        errtxt2 = lives_strdup_printf(_("LiVES was not able to run the programe %s\n"), prname);
+
+      lives_free(errtxt);
+
+      if (what == LIVES_PERM_DOWNLOAD_LOCAL) {
+        verb = _("download");
+        action = _("by downloading");
+      } else {
+        verb = _("copying");
+        action = lives_strdup(_("by creating"));
+      }
+
+      text = lives_strdup_printf(_("%sYou may need to reinstall or update %s\n\n"
+                                   "<b>Alternately, it may be possible to fix this "
+                                   "%s an individual copy of the program\n%s to your "
+                                   "home directory</b>\n"
                                    "Please consider the options "
                                    "and then decide how to proceed.\n"),
-                                 prname, errtxt, xsudt);
-      lives_free(prname); lives_free(errtxt); lives_free(xsudt);
+                                 errtxt2, prname, action, prname);
+
+      lives_free(prname); lives_free(xsudt); lives_free(errtxt2); lives_free(action);
       title = (_("Problem Detected"));
       widget_opts.use_markup = TRUE;
       dlg = create_question_dialog(title, text);
@@ -4612,37 +4665,23 @@ try_again:
       lives_free(text);
       widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
 
-      lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_REDO, _("Retry with current version"),
-                                         LIVES_RESPONSE_NO);
+      lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_CANCEL, NULL,
+                                         LIVES_RESPONSE_CANCEL);
 
-      lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_ADD, _("Proceed with download"),
+      lives_dialog_add_button_from_stock(LIVES_DIALOG(dlg), LIVES_STOCK_ADD,
+                                         (tmp = lives_strdup_printf(_("Proceed with %s"), verb)),
                                          LIVES_RESPONSE_YES);
-
+      lives_free(tmp); lives_free(verb);
       widget_opts.expand = LIVES_EXPAND_DEFAULT;
       ret = lives_dialog_run(LIVES_DIALOG(dlg));
       lives_widget_destroy(dlg);
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
-      if (ret == LIVES_RESPONSE_YES) {
-#if 0
-        // TODO : check for alt downloader, e.g. pip
-        if (!check_for_executable(&capable->has_wget, EXEC_WGET)
-            && !check_for_executable(&capable->has_curl, EXEC_CURL)) {
-          do_please_install_either(EXEC_WGET, EXEC_CURL);
-          if (check_for_executable(&capable->has_wget, EXEC_WGET)
-              || (check_for_executable(&capable->has_wget, EXEC_WGET))) retry = TRUE;
-          else do_program_not_found_error(EXEC_WGET);
-        }
-#endif
+      if (ret == LIVES_RESPONSE_CANCEL) {
         lives_freep((void **)&mainw->permmgr->key);
+        return FALSE;
       }
-
-      if (retry) {
-        lives_free(mainw->permmgr);
-        mainw->permmgr = NULL;
-        goto try_again;
-      }
-      return FALSE;
+      return TRUE;
     default:
       break;
     }

@@ -264,7 +264,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t bu
       char *msg = NULL;
       THREADVAR(com_failed) = TRUE;
       if (!allow_error) {
-        msg = lives_strdup_printf("lives_popen failed after %ld bytes with code %d: %s",
+        msg = lives_strdup_printf("lives_popen failed p after %ld bytes with code %d: %s",
                                   !strg ? 0 : lives_strlen(strg), err, com);
         LIVES_ERROR(msg);
         response = do_system_failed_error(com, err, NULL, TRUE, FALSE);
@@ -3050,12 +3050,17 @@ LIVES_GLOBAL_INLINE lives_img_type_t lives_image_type_to_img_type(const char *li
 }
 
 
-LIVES_GLOBAL_INLINE char *make_image_file_name(lives_clip_t *sfile, frames_t frame, const char *img_ext) {
+LIVES_GLOBAL_INLINE char *make_image_file_name(lives_clip_t *sfile, frames_t frame,
+    const char *img_ext) {
+  char *fname, *ret;
   if (!*img_ext) {
     sfile->img_type = resolve_img_type(sfile);
     img_ext = get_image_ext_for_type(sfile->img_type);
   }
-  return lives_strdup_printf("%s/%s/%08d.%s", prefs->workdir, sfile->handle, frame, img_ext);
+  fname = lives_strdup_printf("%08d.%s", frame, img_ext);
+  ret = lives_build_filename(prefs->workdir, sfile->handle, fname, NULL);
+  lives_free(fname);
+  return ret;
 }
 
 
@@ -4219,7 +4224,7 @@ boolean after_foreign_play(void) {
           capture_fd = -1;
           do_threaded_dialog(_("Cleaning up clip"), FALSE);
           lives_widget_show_all(mainw->proc_ptr->processing);
-          resize_all(mainw->current_file, cfile->hsize, cfile->vsize, cfile->img_type, NULL, NULL);
+          resize_all(mainw->current_file, cfile->hsize, cfile->vsize, cfile->img_type, FALSE, NULL, NULL);
           end_threaded_dialog();
           if (cfile->afilesize > 0 && cfile->achans > 0
               && CLIP_TOTAL_TIME(mainw->current_file) > cfile->laudio_time + AV_TRACK_MIN_DIFF) {

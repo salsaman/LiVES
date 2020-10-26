@@ -3522,8 +3522,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   advbutton = lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES, _("_Advanced"),
               DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT, LIVES_BOX(hbox), TRUE, NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_decplug_advanced_clicked), NULL);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_decplug_advanced_clicked), NULL);
 
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_instant_open), advbutton, FALSE);
 
@@ -6020,6 +6020,7 @@ void on_prefs_revert_clicked(LiVESButton * button, livespointer user_data) {
 static int text_to_lives_perm(const char *text) {
   if (!text || !*text) return LIVES_PERM_INVALID;
   if (!strcmp(text, "DOWNLOADLOCAL")) return LIVES_PERM_DOWNLOAD_LOCAL;
+  if (!strcmp(text, "COPYLOCAL")) return LIVES_PERM_COPY_LOCAL;
   return LIVES_PERM_INVALID;
 }
 
@@ -6036,6 +6037,7 @@ boolean lives_ask_permission(char **argv, int argc, int offs) {
   case LIVES_PERM_OSC_PORTS:
     return ask_permission_dialog(what);
   case LIVES_PERM_DOWNLOAD_LOCAL:
+  case LIVES_PERM_COPY_LOCAL:
     if (argc >= 5 && strstr(argv[4], "_TRY_SUDO_")) sudocom = (const char *)argv[2];
     ret = ask_permission_dialog_complex(what, argv, argc, ++offs, sudocom);
     return ret;

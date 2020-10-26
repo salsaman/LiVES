@@ -3813,9 +3813,8 @@ if (1) {
 	    }
 
 	    ##print STDERR "DO UPDATE is $do_update\n";
-	    my $YTDL_URL = "https://yt-dl.org/downloads/latest/youtube-dl";
-
 	    my $youtube_dl = "youtube-dl";
+	    my $line;
 
 	    my $islocal = 0;
 	    my $com;
@@ -3824,8 +3823,11 @@ if (1) {
 	    my $home = $ENV {"HOME"};
 	    my $local_bindir = "$home/.local/bin";
 	    my $prog = "$local_bindir/$youtube_dl";
+	    my $localprog = $prog;
 
-	    if ($ARGV[14] eq "forceddownload") {
+	    if (0 && $ARGV[14] eq "forceddownload") {
+		## user chose to install local copy
+		## this is no longer run
 		$islocal = 1;
 		if (! -d $local_bindir) {
 		    make_path $local_bindir;
@@ -3833,7 +3835,7 @@ if (1) {
 		if ($debug) {
 		    print STDERR "commencing install of binary $youtube_dl\n";
 		}
-		$com = "pip install --upgrade'$youtube_dl'";
+		$com = "pip install --upgrade '$youtube_dl'";
 		$smerr = &smog_system($com);
 		if ($debug) {
 		    print STDERR "ran command: $com\nresult was $smerr\n";
@@ -3866,23 +3868,38 @@ if (1) {
 		if ($prog eq "") {
 		    $com = $youtube_dl;
 		    open (my $fh, "$com 2>&1 |");
-		    my $line = <$fh>;
+		    if ($fh) {
+			$line = <$fh>;
+			close $fh;
+		    }
 		    if ($debug) {
 			print STDERR "unable to run: $com,\nerror was $line\n";
 			print STDERR "exiting\n\n";
 		    }
+		    if (!$line) {
+			if (!$OK) {
+			    $line = "Command not found";
+			}
+			else {
+			    $line = "Unknown error";
+			}
+		    }
+		    my $cmd1 = "";
+		    if (!$islocal) {
+			$cmd1 = "cp $prog $local_prog\n";
+		    }
 		    &sig_system_error(
-			$com, $line, "_ASKPERM_|DOWNLOADLOCAL|youtube-dl|" .
-			"14|forceddownload|" .
-			"pip install --update $youtube_dl");
+			$com, $line, "_ASKPERM_|COPYLOCAL|youtube-dl|" .
+			"14|forceddownload|" . $cmd1 .
+			"pip install --upgrade $youtube_dl");
 		    exit 1;
 		}
 	    }
 
 	    ## first of all deal with update
 
-	    if ($do_update) {
-		$com = "pip install --upgrade $youtube_dl";
+	    if ($do_update && $islocal) {
+		$com = "pip install --upgrade '$youtube_dl'";
 		#$com = "'$prog' -U";
 		if ($debug) {
 		    print STDERR "\n\nUPDATING $prog WITH $com\n";
@@ -3891,16 +3908,6 @@ if (1) {
 		while (defined(my $line = <$fh>)) {
 		    if ($debug) {
 			print STDERR "got line: $line\n";
-		    }
-		    if (!$islocal && $line =~ /^youtube-dl:(.*)error:(.*)/) {
-			if ($debug) {
-			    print STDERR "returning ERROR\n\n";
-			}
-			&sig_system_error(
-			    $com, $2, "_ASKPERM_|DOWNLOADLOCAL|$youtube-dl|" .
-			    "14|forceddownload|" .
-			    "pip install --update $youtube_dl");
-			exit 1;
 		    }
 		}
 		close $fh;
@@ -3912,27 +3919,15 @@ if (1) {
 		    if ($debug) {
 			print STDERR "Update failed !\n";
 		    }
-		    if (!$islocal) {
-			if ($debug) {
-			    print STDERR "returning ERROR\n\n";
-			}
-			&sig_system_error(
-			    $com, $errnum, "_TRY_SUDO_, _ASKPERM_|DOWNLOADLOCAL|youtube-dl|" .
-			    "14|forceddownload|" .
-			    "-H pip install --update $youtube_dl");
-			exit 1;
-			}
-		    else {
-			if ($debug) {
-			    print STDERR "unknown ERROR. Exiting\n";
-			}
-			&sig_error("Unknown error");
-			exit 1;
+		    if ($debug) {
+			print STDERR "unknown ERROR. Exiting\n";
 		    }
+		    &sig_error("Unknown error");
+		    exit 1;
 		}
 	    }
 
-	    ## get list of files for select format type
+	    ## get list of files for selected format type
 	    ## also note if there are files in alternate format(s)
 	    my $vb = "";
 	    if ($debug) {
@@ -3969,152 +3964,188 @@ if (1) {
 		    print STDERR "DOING: '$prog' $vb --no-playlist -F '$url'\n";
 		}
 
-		open (my $fh, "'$prog' $vb --no-playlist -F '$url' |");
-		while (defined(my $line = <$fh>)) {
-		    if ($debug) {
-			print STDERR "WE GOT $line.";
-		    }
-		    my ($fcode, $ext, $reso, @notes) = split ' ', $line;
-		    my $note = join(" ", @notes);
-		    next if ($reso eq "downloading" || $reso eq "Downloading");
+		my $OK = open(my $fh, "'$prog' $vb --no-playlist -F '$url' |");
+		if ($OK) {
+		    while (defined($line = <$fh>)) {
+			if ($debug) {
+			    print STDERR "WE GOT $line.";
+			}
+			my ($fcode, $ext, $reso, @notes) = split ' ', $line;
+			my $note = join(" ", @notes);
+			next if ($reso eq "downloading" || $reso eq "Downloading");
 
-		    if ($formreq eq "webm" && $ext ne $formreq) {
-		        $hasalts = 1;
-		    }
+			if ($formreq eq "webm" && $ext ne $formreq) {
+			    $hasalts = 1;
+			}
 
-		    if (index($note, $best) != -1) {
-			$isbest = 1;
-		    }
-		    else {
-			$isbest = 0;
-		    }
+			if (index($note, $best) != -1) {
+			    $isbest = 1;
+			}
+			else {
+			    $isbest = 0;
+			}
 
-		    ## filter by extension, type
-		    if ($reso eq "audio") {
-			if ($audchoice eq "0") {
-			    if ($isbest) {
-				$bestaudio = $fcode;
-			    }
-			    elsif ($bestaudio eq "") {
-				if ($formreq eq "webm") {
-				    $bestaudio = "bestaudio[ext=webm]";
+			## filter by extension, type
+			if ($reso eq "audio") {
+			    if ($audchoice eq "0") {
+				if ($isbest) {
+				    $bestaudio = $fcode;
 				}
-				else {
-				    $bestaudio = "bestaudio[ext=m4a]";
-				}}}
-			next;
-		    }
+				elsif ($bestaudio eq "") {
+				    if ($formreq eq "webm") {
+					$bestaudio = "bestaudio[ext=webm]";
+				    }
+				    else {
+					$bestaudio = "bestaudio[ext=m4a]";
+				    }}}
+			    next;
+			}
 
-		    if (index($note, $video_only) == -1) {
-			$vidonly = 0;
-		    }
-		    else {
-			$vidonly = 1;
-		    }
-		    if ($vidchoice eq $fcode && $audchoice eq "0" && !$vidonly) {
-			## bestaudio doesn't always work, so if the video has an audio track, use that
-			## to be safe
-			$xbestaudio = "";
-			$bestaudio = $fcode;
-			last;
-		    }
+			if (index($note, $video_only) == -1) {
+			    $vidonly = 0;
+			}
+			else {
+			    $vidonly = 1;
+			}
+			if ($vidchoice eq $fcode && $audchoice eq "0" && !$vidonly) {
+			    ## bestaudio doesn't always work, so if the video has an audio track, use that
+			    ## to be safe
+			    $xbestaudio = "";
+			    $bestaudio = $fcode;
+			    last;
+			}
 
-		    next if ($vidchoice ne "");
-		    next if ($formreq ne "" && $ext ne $formreq);
+			next if ($vidchoice ne "");
+			next if ($formreq ne "" && $ext ne $formreq);
 
-		    $count++;
+			$count++;
 
-		    if ($reso eq "unknown") {
-			if ($matchsize == 6) {
+			if ($reso eq "unknown") {
+			    if ($matchsize == 6) {
+				push (@lines, $line);
+			    }
+			    if ($bestvideo eq "") {
+				$bestvideo = $fcode;
+				if ($matchsize == 4) {
+				    $tdiag--;
+				}
+				elsif ($matchsize == 5) {
+				    $tdiag++;
+				}
+			    }
+			    next;
+			}
+
+			## then examine the frame size, note which is best fit
+			my ($width, $height) = split 'x', $reso;
+			my $idiag = sqrt($width * $width + $height * $height);
+
+			if ($matchsize == 1) {
+			    ## nearest
+			    if ($ddelta == -1 || abs($idiag - $tdiag) <= $ddelta) {
+				if ($ddelta == -1 ||abs($idiag - $tdiag) < $ddelta || $isbest) {
+				    $ddelta = abs($idiag - $tdiag);
+				    $bestvideo = $fcode;
+				    if ($isbest && !$vidonly) {
+					$xbestaudio = $bestvideo;
+				    }
+				    else {
+					$xbestaudio = "";
+				    }}}}
+
+			elsif ($matchsize == 2) {
+			    ## atleast
+			    if ($idiag >= $tdiag && ($ddelta == -1 || $idiag - $tdiag <= $ddelta)) {
+				if ($ddelta == -1 || $idiag - $tdiag < $ddelta || $isbest) {
+				    $ddelta = $idiag - $tdiag;
+				    $bestvideo = $fcode;
+				    if ($isbest && !$vidonly) {
+					$xbestaudio = $bestvideo;
+				    }
+				    else {
+					$xbestaudio = "";
+				    }}}}
+
+			elsif ($matchsize == 3) {
+			    ## atmost
+			    if ($idiag <= $tdiag && ($ddelta == -1 || $tdiag - $idiag <= $ddelta)) {
+				if ($ddelta == -1 || abs($idiag - $tdiag) < $ddelta || $isbest) {
+				    $ddelta = $tdiag - $idiag;
+				    $bestvideo = $fcode;
+				    if ($isbest && !$vidonly) {
+					$xbestaudio = $bestvideo;
+				    }
+				    else {
+					$xbestaudio = "";
+				    }}}}
+
+			elsif ($matchsize == 4) {
+			    ## largest
+			    if ($idiag >= $tdiag) {
+				if ($bestvideo eq "" || $idiag > $tdiag || $isbest) {
+				    $tdiag = $idiag;
+				    $bestvideo = $fcode;
+				    if ($isbest && !$vidonly) {
+					$xbestaudio = $bestvideo;
+				    }
+				    else {
+					$xbestaudio = "";
+				    }}}}
+
+			elsif ($matchsize == 5) {
+			    ## smallest
+			    if ($idiag <= $tdiag) {
+				if ($bestvideo eq "" || $idiag < $tdiag || $isbest) {
+				    $tdiag = $idiag;
+				    $bestvideo = $fcode;
+				    if ($isbest && !$vidonly) {
+					$xbestaudio = $bestvideo;
+				    }
+				    else {
+					$xbestaudio = "";
+				    }}}}
+
+			elsif ($matchsize == 6) {
+			    ## choose
 			    push (@lines, $line);
 			}
-			if ($bestvideo eq "") {
-			    $bestvideo = $fcode;
-			    if ($matchsize == 4) {
-				$tdiag--;
-			    }
-			    elsif ($matchsize == 5) {
-				$tdiag++;
-			    }
-			}
-			next;
 		    }
-
-		    ## then examine the frame size, note which is best fit
-		    my ($width, $height) = split 'x', $reso;
-		    my $idiag = sqrt($width * $width + $height * $height);
-
-		    if ($matchsize == 1) {
-			## nearest
-			if ($ddelta == -1 || abs($idiag - $tdiag) <= $ddelta) {
-			    if ($ddelta == -1 ||abs($idiag - $tdiag) < $ddelta || $isbest) {
-				$ddelta = abs($idiag - $tdiag);
-				$bestvideo = $fcode;
-				if ($isbest && !$vidonly) { 
-				    $xbestaudio = $bestvideo;
-				}
-				else {
-				    $xbestaudio = "";
-				}}}}
-
-		    elsif ($matchsize == 2) {
-			## atleast
-			if ($idiag >= $tdiag && ($ddelta == -1 || $idiag - $tdiag <= $ddelta)) {
-			    if ($ddelta == -1 || $idiag - $tdiag < $ddelta || $isbest) {
-				$ddelta = $idiag - $tdiag;
-				$bestvideo = $fcode;
-				if ($isbest && !$vidonly) { 
-				    $xbestaudio = $bestvideo;
-				}
-				else {
-				    $xbestaudio = "";
-				}}}}
-
-		    elsif ($matchsize == 3) {
-			## atmost
-			if ($idiag <= $tdiag && ($ddelta == -1 || $tdiag - $idiag <= $ddelta)) {
-			    if ($ddelta == -1 || abs($idiag - $tdiag) < $ddelta || $isbest) {
-				$ddelta = $tdiag - $idiag;
-				$bestvideo = $fcode;
-				if ($isbest && !$vidonly) { 
-				    $xbestaudio = $bestvideo;
-				}
-				else {
-				    $xbestaudio = "";
-				}}}}
-
-		    elsif ($matchsize == 4) {
-			## largest
-			if ($idiag >= $tdiag) {
-			    if ($bestvideo eq "" || $idiag > $tdiag || $isbest) {
-				$tdiag = $idiag;
-				$bestvideo = $fcode;
-				if ($isbest && !$vidonly) { 
-				    $xbestaudio = $bestvideo;
-				}
-				else {
-				    $xbestaudio = "";
-				}}}}
-
-		    elsif ($matchsize == 5) {
-			## smallest
-			if ($idiag <= $tdiag) {
-			    if ($bestvideo eq "" || $idiag < $tdiag || $isbest) {
-				$tdiag = $idiag;
-				$bestvideo = $fcode;
-				if ($isbest && !$vidonly) { 
-				    $xbestaudio = $bestvideo;
-				}
-				else {
-				    $xbestaudio = "";
-				}}}}
-
-		    elsif ($matchsize == 6) {
-			## choose
-			push (@lines, $line);
-		    }
+		    close $fh;
 		}
-		close $fh;
+
+		if ($OK) {
+		    $res = $? >> 8;
+		}
+		else {
+		    $res = 0;
+		}
+
+		if (!$OK || $res || (!$count && $vidchoice eq "")) {
+		    if ($debug) {
+			print STDERR "unable to run: command,\nerror was $line\n";
+			print STDERR "exiting\n\n";
+		    }
+		    if (!$line) {
+			if (!$OK) {
+			    $line = "Command not found";
+			}
+			else {
+			    $line = "Unknown error";
+			}
+		    }
+		    if (!$islocal) {
+		    my $cmd1 = "cp $prog $localprog\n";
+
+		    &sig_system_error(
+			$com, $line, "_ASKPERM_|COPYLOCAL|youtube-dl|" .
+			"14|forceddownload|" . $cmd1 .
+			"pip install --upgrade $youtube_dl");
+		    }
+		    else {
+			&sig_system_error($com, $line);
+		    }
+		    exit 1;
+		}
 
 		if ($matchsize == 6 && $count > 0) {
 		    if ($debug) {

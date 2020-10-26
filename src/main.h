@@ -385,6 +385,9 @@ weed_leaf_delete_f _weed_leaf_delete;
 #include "support.h"
 #include "widget-helper.h"
 
+/// install guidance flags
+#define INSTALL_CANLOCAL (1ul << 0)
+
 typedef enum {
   MISSING = -1, ///< not yet implemented (TODO)
   UNCHECKED = 0,
@@ -1295,7 +1298,6 @@ void do_layout_ascrap_file_error(void);
 void do_program_not_found_error(const char *progname);
 void do_lb_composite_error(void);
 void do_lb_convert_error(void);
-void do_ra_convert_error(void);
 void do_set_load_lmap_error(void);
 boolean do_set_duplicate_warning(const char *new_set);
 boolean do_set_rename_old_layouts_warning(const char *new_set);
@@ -1709,7 +1711,7 @@ void cached_list_free(LiVESList **list);
 void get_location(const char *exe, char *val, int maxlen);
 lives_presence_t has_executable(const char *exe);
 boolean check_for_executable(lives_checkstatus_t *cap, const char *exec);
-void do_please_install(const char *exec);
+boolean do_please_install(const char *exec, uint64_t guidance_flags);
 void do_please_install_either(const char *exec, const char *exec2);
 
 /// lives_image_type can be a string, lives_img_type_t is an enumeration

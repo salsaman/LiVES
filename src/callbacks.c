@@ -997,10 +997,36 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
   while (1) {
 retry:
     lives_rm(cfile->info_file);
+    if (req->do_update) {
+      if (!check_for_executable(&capable->has_pip, EXEC_PIP)) {
+        /// check we can update locally
+        do_please_install(EXEC_PIP, 0);
+        capable->has_pip = UNCHECKED;
+        d_print_failed();
+        goto cleanup_ut;
+      } else {
+        /// copy system binary to $HOME/.local/bin
+        char *todir = lives_build_path(capable->home_dir, LOCAL_HOME_DIR, "bin", NULL);
+        char *to = lives_build_filename(todir, EXEC_YOUTUBE_DL, NULL);
+        if (!lives_file_test(to, LIVES_FILE_TEST_IS_EXECUTABLE)) {
+          char from[PATH_MAX];
+          get_location(EXEC_YOUTUBE_DL, from, PATH_MAX);
+          if (lives_strlen(from) > 10) {
+            if (check_dir_access(todir, TRUE)) {
+              lives_cp(from, to);
+            }
+          }
+        }
+        lives_free(todir); lives_free(to);
+      }
+    }
 
-    if (mainw->permmgr && mainw->permmgr->key) {
+#ifdef YTDL_URL
+    if (mainw->permmgr && mainw->permmgr->key && req->do_update) {
+      /// force fresh install of local youtube-dl
       overrdkey = mainw->permmgr->key;
     }
+#endif
 
     // get format list
 
@@ -1031,6 +1057,11 @@ retry:
 
     if (THREADVAR(com_failed)) {
       d_print_failed();
+      mainw->error = FALSE;
+      req->allownf = TRUE;
+      reqout = req;
+      reqout->do_update = TRUE;
+      mainw->cancelled = CANCEL_RETRY;
       goto cleanup_ut;
     }
 
@@ -1043,18 +1074,24 @@ retry:
     if (*(req->vidchoice)) break;
 
     if (!do_auto_dialog(_("Getting format list"), 2)) {
+      if (mainw->cancelled == CANCEL_ERROR) {
+        mainw->cancelled = CANCEL_NONE;
+        mainw->error = TRUE;
+      }
       if (mainw->cancelled) d_print_cancelled();
       else if (mainw->error) {
         d_print_failed();
         /* /// need to check here if backend returned a specific reason */
         /* LiVESResponseType resp = handle_backend_errors(FALSE, NULL); */
         if (mainw->permmgr)  {
-          if (mainw->permmgr->key && *mainw->permmgr->key) {
+          if (mainw->cancelled == CANCEL_NONE &&
+              mainw->permmgr->key && *mainw->permmgr->key) {
             req->do_update = TRUE;
             mainw->error = FALSE;
             mainw->cancelled = CANCEL_NONE;
             goto retry;
           } else {
+            req->do_update = FALSE;
             lives_free(mainw->permmgr);
             mainw->permmgr = NULL;
           }
@@ -1065,9 +1102,11 @@ retry:
                              "from Youtube is not possible,\nthey need to be changed to 'Unlisted' "
                              "in order for the download to succeed.\n"), req->URI);
         }
+        if (reqout) reqout->do_update = TRUE;
       }
       mainw->error = FALSE;
       mainw->cancelled = CANCEL_RETRY;
+      reqout = req;
       goto cleanup_ut;
     }
 

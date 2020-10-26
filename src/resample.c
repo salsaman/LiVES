@@ -81,7 +81,8 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
                              int asigned, boolean swap_endian) {
   // do a block atomic: resample audio, then resample video/resize or joint resample/resize
 
-  char *com, *msg = NULL;
+  // TODO: check if we still need to letterbox here, or if the encoders handle that now
+
   int current_file = mainw->current_file;
   boolean audio_resampled = FALSE;
   boolean video_resampled = FALSE;
@@ -127,108 +128,21 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
     if ((width != cfile->hsize || height != cfile->vsize) && width * height > 0) {
       // CHANGING SIZE..
 
-      // TODO: check if we have convert / composite installed
-
       if (fps > cfile->fps) {
-        boolean rs_builtin;
-        lives_rfx_t *resize_rfx;
-
         // we will have more frames...
         // ...do resize first
-        if (mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate == -1 || prefs->enc_letterbox) {
-          if (prefs->enc_letterbox && LETTERBOX_NEEDS_COMPOSITE && !capable->has_composite) {
-            do_lb_composite_error();
-            on_undo_activate(NULL, NULL);
-            return FALSE;
-          }
+        cfile->ohsize = cfile->hsize;
+        cfile->ovsize = cfile->vsize;
 
-          if (prefs->enc_letterbox && LETTERBOX_NEEDS_CONVERT && !capable->has_convert) {
-            do_lb_convert_error();
-            on_undo_activate(NULL, NULL);
-            return FALSE;
-          }
-
-          if (!prefs->enc_letterbox && RESIZE_ALL_NEEDS_CONVERT && !capable->has_convert) {
-            do_ra_convert_error();
-            on_undo_activate(NULL, NULL);
-            return FALSE;
-          }
-
-          cfile->ohsize = cfile->hsize;
-          cfile->ovsize = cfile->vsize;
-
-          if (cfile->clip_type == CLIP_TYPE_FILE) {
-            cfile->fx_frame_pump = 1;
-          }
-
-          if (!prefs->enc_letterbox) {
-            com = lives_strdup_printf("%s resize_all \"%s\" %d %d %d \"%s\"", prefs->backend,
-                                      cfile->handle, cfile->frames, width, height,
-                                      get_image_ext_for_type(cfile->img_type));
-            msg = lives_strdup_printf(_("Resizing frames 1 to %d"), cfile->frames);
-          } else {
-            int iwidth = cfile->hsize, iheight = cfile->vsize;
-            calc_maxspect(width, height, &iwidth, &iheight);
-
-            if (iwidth == cfile->hsize && iheight == cfile->vsize) {
-              iwidth = -iwidth;
-              iheight = -iheight;
-            }
-
-            reorder_leave_back = TRUE;
-            com = lives_strdup_printf("%s resize_all \"%s\" %d %d %d \"%s\" %d %d", prefs->backend, cfile->handle,
-                                      cfile->frames, width, height,
-                                      get_image_ext_for_type(cfile->img_type), iwidth, iheight);
-            msg = lives_strdup_printf(_("Resizing/letterboxing frames 1 to %d"), cfile->frames);
-          }
-
-          cfile->progress_start = 1;
-          cfile->progress_end = cfile->frames;
-
-          lives_rm(cfile->info_file);
-          lives_system(com, FALSE);
-          lives_free(com);
-
-          if (THREADVAR(com_failed)) return FALSE;
-
-          mainw->resizing = TRUE;
-          rs_builtin = TRUE;
-        } else {
-          // use resize plugin
-          int error;
-          weed_plant_t *first_out;
-          weed_plant_t *ctmpl;
-
-          rs_builtin = FALSE;
-          resize_rfx = mainw->fx_candidates[FX_CANDIDATE_RESIZER].rfx;
-          first_out = get_enabled_channel((weed_plant_t *)resize_rfx->source, 0, FALSE);
-          ctmpl = weed_get_plantptr_value(first_out, WEED_LEAF_TEMPLATE, &error);
-          weed_set_int_value(ctmpl, WEED_LEAF_HOST_WIDTH, width);
-          weed_set_int_value(ctmpl, WEED_LEAF_HOST_HEIGHT, height);
+        if (prefs->enc_letterbox) {
+          int iwidth = cfile->hsize, iheight = cfile->vsize;
+          calc_maxspect(width, height, &iwidth, &iheight);
+          width = iwidth;
+          height = iheight;
         }
 
-        cfile->nokeep = TRUE;
-
-        if ((rs_builtin && !do_progress_dialog(TRUE, TRUE, msg)) || (!rs_builtin && !on_realfx_activate_inner(1, resize_rfx))) {
-          mainw->resizing = FALSE;
-          lives_free(msg);
-          cfile->undo_action = UNDO_ATOMIC_RESAMPLE_RESIZE;
-
-          cfile->hsize = width;
-          cfile->vsize = height;
-
-          cfile->undo1_dbl = cfile->fps;
-          cfile->undo_start = 1;
-          cfile->undo_end = cfile->frames;
-          cfile->fx_frame_pump = 0;
-          on_undo_activate(NULL, NULL);
-          cfile->nokeep = FALSE;
-          return FALSE;
-        }
-        lives_free(msg);
-
-        mainw->resizing = FALSE;
-        cfile->fx_frame_pump = 0;
+        resize_all(mainw->current_file, width, height, cfile->img_type, TRUE, NULL, NULL);
+        realize_all_frames(mainw->current_file, _("Pulling frames"), FALSE);
 
         cfile->hsize = width;
         cfile->vsize = height;
@@ -315,8 +229,6 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
       video_resampled = TRUE;
     }
   } else {
-    /* boolean rs_builtin = TRUE; */
-    /* lives_rfx_t *resize_rfx; */
     // NO FPS CHANGE
     if ((width != cfile->hsize || height != cfile->vsize) && width * height > 0) {
       // no fps change - just a normal resize
@@ -329,7 +241,7 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
         height = iheight;
       }
 
-      resize_all(mainw->current_file, width, height, cfile->img_type, NULL, NULL);
+      resize_all(mainw->current_file, width, height, cfile->img_type, TRUE, NULL, NULL);
       realize_all_frames(mainw->current_file, _("Pulling frames"), FALSE);
 
       cfile->hsize = width;

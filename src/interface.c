@@ -5041,13 +5041,23 @@ static void utsense(LiVESToggleButton * togglebutton, livespointer user_data) {
 
 static void dl_url_changed(LiVESWidget * urlw, livespointer user_data) {
   LiVESWidget *namew = (LiVESWidget *)user_data;
+  static size_t oldlen = 0;
+  size_t ulen = lives_strlen(lives_entry_get_text(LIVES_ENTRY(urlw)));
   if (!(*(lives_entry_get_text(LIVES_ENTRY(namew))))) {
-    char *defname = lives_strstop(lives_path_get_basename(lives_entry_get_text(LIVES_ENTRY(urlw))), '.');
-    lives_entry_set_text(LIVES_ENTRY(namew), lives_strstop(defname, '?'));
-    lives_free(defname);
+    if (ulen > oldlen + 1) lives_widget_grab_focus(namew);
   }
+  oldlen = ulen;
 }
 
+
+static void on_utupinfo_clicked(LiVESWidget * b, livespointer data) {
+  do_info_dialogf(_("LiVES will only update %s if you have a local user copy installed.\n"
+                    "Otherwise you may need to update it manually when prompted\n\n"
+                    "Checking the button for the first time will cause the program to be copied\n"
+                    "to your home directory.\n"
+                    "After this it can be updated without needing root priveleges.\n"),
+                  EXEC_YOUTUBE_DL);
+}
 
 // prompt for the following:
 // - URL
@@ -5079,6 +5089,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   LiVESWidget *radiobutton_smallest;
   LiVESWidget *radiobutton_largest;
   LiVESWidget *radiobutton_choose;
+  LiVESWidget *button;
 
   double width_step = 4.;
   double height_step = 4.;
@@ -5094,15 +5105,33 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   char *dfile = NULL, *url = NULL;
 
   char dirname[PATH_MAX];
+  uint64_t gflags = 0;
 
   LiVESResponseType response;
   boolean only_free = TRUE;
   boolean debug = FALSE;
   static boolean firsttime = TRUE;
 
-  if (!check_for_executable(&capable->has_youtube_dl, EXEC_YOUTUBE_DL)) {
-    do_please_install(EXEC_YOUTUBE_DL);
-    return NULL;
+  if (!req || !req->do_update) {
+#ifdef YTDL_URL
+    /// thanks RIAA
+    gflags |= INSTALL_CANLOCAL
+#endif
+    if (!check_for_executable(&capable->has_youtube_dl, EXEC_YOUTUBE_DL)) {
+      if (!do_please_install(EXEC_YOUTUBE_DL, gflags)) {
+        capable->has_youtube_dl = UNCHECKED;
+        return NULL;
+      }
+    }
+    if (check_for_executable(&capable->has_youtube_dl, EXEC_YOUTUBE_DL)) {
+      /// seems like user installed it manually, so try without update
+      firsttime = FALSE;
+    }
+  } else if (firsttime) {
+    if (!check_for_executable(&capable->has_pip, EXEC_PIP)) {
+      /// requirement is missing, if the user does set it checked, we will warn
+      firsttime = FALSE;
+    }
   }
 
 #ifdef ALLOW_NONFREE_CODECS
@@ -5133,9 +5162,21 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 
   add_spring_to_box(LIVES_BOX(hbox), 0);
 
-  msg = lives_strdup_printf(_("<--- Auto update %s ?"), EXEC_YOUTUBE_DL);
-  checkbutton_update = lives_standard_check_button_new(msg, firsttime, LIVES_BOX(hbox), NULL);
+  msg = lives_big_and_bold(_("<--- Install or Update loal copy of %s ?"), EXEC_YOUTUBE_DL);
+  widget_opts.use_markup = TRUE;
+  checkbutton_update = lives_standard_check_button_new(msg, firsttime || (req && req->do_update),
+                       LIVES_BOX(hbox),
+                       H_("If checked then LiVES will attempt to update\n"
+                          "it to the most recent version\n"
+                          "before attempting the download."));
+  widget_opts.use_markup = FALSE;
   lives_free(msg);
+
+  button = lives_standard_button_new_from_stock_full(LIVES_STOCK_DIALOG_INFO, _("_Info"),
+           DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT, LIVES_BOX(hbox), TRUE, NULL);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_utupinfo_clicked), NULL);
 
   add_spring_to_box(LIVES_BOX(hbox), 0);
 
@@ -5424,10 +5465,6 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
     req->matchsize = LIVES_MATCH_CHOICE;
   if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(checkbutton_update))) req->do_update = FALSE;
   else {
-    if (!check_for_executable(&capable->has_pip, EXEC_PIP)) {
-      do_please_install(EXEC_PIP);
-      return NULL;
-    }
     req->do_update = TRUE;
   }
   *req->vidchoice = 0;

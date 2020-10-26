@@ -13619,7 +13619,7 @@ boolean lives_painter_to_layer(lives_painter_t *cr, weed_layer_t *layer) {
 #endif
 
 
-int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, int *nbad, int *nmiss) {
+int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, boolean do_back, int *nbad, int *nmiss) {
   LiVESPixbuf *pixbuf;
   LiVESError *error = NULL;
   lives_clip_t *sfile;
@@ -13679,6 +13679,11 @@ int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, int 
     pixbuf = layer_to_pixbuf(layer, TRUE, FALSE);
     weed_layer_free(layer);
     if (pixbuf) {
+      if (do_back) {
+        char *fname_bak = make_image_file_name(sfile, i + 1, LIVES_FILE_EXT_BAK);
+        if (lives_file_test(fname_bak, LIVES_FILE_TEST_EXISTS)) lives_rm(fname_bak);
+        lives_mv(fname, fname_bak);
+      }
       lives_pixbuf_save(pixbuf, fname, ximgtype, 100 - prefs->ocp, width, height, &error);
       lives_widget_object_unref(pixbuf);
       if (error) {

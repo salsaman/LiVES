@@ -391,21 +391,23 @@ weed_leaf_delete_f _weed_leaf_delete;
 typedef enum {
   MISSING = -1, ///< not yet implemented (TODO)
   UNCHECKED = 0,
-  PRESENT
+  PRESENT,
+  LOCAL
 } lives_presence_t;
 
 #ifdef NEW_CHECKSTATUS
 typedef enum {
   CONFLICTING = -1,
-  MANDATORY,
+  MANDATORY, ///< mandatory for application
   RECOMMENDED,
   OPTIONAL,
-  NECESSARY
+  NECESSARY ///< necessary for the funtion in question
 } lives_importance_t;
 
 typedef struct {
   lives_presence_t present;
   lives_importance_t import;
+  uint64_t flags;
 } lives_checkstatus_t;
 
 #define XCAPABLE(foo, EXE_FOO) ((capable->has_##foo->present == UNCHECKED \
@@ -1709,7 +1711,6 @@ char *get_val_from_cached_list(const char *key, size_t maxlen, LiVESList *cache)
 void cached_list_free(LiVESList **list);
 
 void get_location(const char *exe, char *val, int maxlen);
-lives_presence_t has_executable(const char *exe);
 boolean check_for_executable(lives_checkstatus_t *cap, const char *exec);
 boolean do_please_install(const char *exec, uint64_t guidance_flags);
 void do_please_install_either(const char *exec, const char *exec2);

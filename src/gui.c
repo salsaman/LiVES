@@ -1197,7 +1197,8 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->load_cdtrack);
   lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->eject_cd);
 
-  if (!capable->has_cdda2wav) {
+  if (!check_for_executable(&capable->has_cdda2wav, EXEC_CDDA2WAV)
+      && !check_for_executable(&capable->has_icedax, EXEC_ICEDAX)) {
     lives_widget_set_sensitive(mainw->load_cdtrack, FALSE);
     lives_widget_set_sensitive(mainw->eject_cd, FALSE);
   }
@@ -2790,7 +2791,8 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_adj_audio_sync_activate), NULL);*/
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->load_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
                             LIVES_GUI_CALLBACK(on_load_audio_activate), NULL);
-  if (capable->has_cdda2wav) {
+  if (check_for_executable(&capable->has_cdda2wav, EXEC_CDDA2WAV)
+      || check_for_executable(&capable->has_icedax, EXEC_ICEDAX)) {
     lives_signal_connect(LIVES_GUI_OBJECT(mainw->load_cdtrack), LIVES_WIDGET_ACTIVATE_SIGNAL,
                          LIVES_GUI_CALLBACK(on_load_cdtrack_activate), NULL);
 

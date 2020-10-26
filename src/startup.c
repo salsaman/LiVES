@@ -1397,7 +1397,7 @@ static char *explain_missing(const char *exe) {
 void explain_missing_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   char *title = (_("What is missing ?")), *text = lives_strdup("");
 
-  if (capable->has_file == UNCHECKED) capable->has_file = has_executable(EXEC_FILE);
+  check_for_executable(&capable->has_file, EXEC_FILE);
 
   ADD_TO_TEXT(file, EXEC_FILE);
   ADD_TO_TEXT(du,  EXEC_DU);

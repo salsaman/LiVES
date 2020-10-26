@@ -3418,7 +3418,7 @@ void get_location(const char *exe, char *val, int maxlen) {
 }
 
 
-LIVES_GLOBAL_INLINE lives_presence_t has_executable(const char *exe) {
+LIVES_LOCAL_INLINE lives_presence_t has_executable(const char *exe) {
   char *loc;
   if ((loc = lives_find_program_in_path(exe)) != NULL) {
     lives_free(loc);
@@ -3432,7 +3432,22 @@ LIVES_GLOBAL_INLINE lives_presence_t has_executable(const char *exe) {
 // check if executable is present, missing or unchecked
 // if unchecked, check for it, and if not found ask the user politely to install it
 boolean check_for_executable(lives_checkstatus_t *cap, const char *exec) {
+#ifdef NEW_CHECKSTATUS
+  if (!cap || (*cap)->present == UNCHECKED) {
+    if (!cap || ((*cap)->flags & INSTALL_CANLOCAL)) {
+      /// TODO (next version)
+#else
   if (!cap || *cap == UNCHECKED) {
+    if (!lives_strcmp(exec, EXEC_YOUTUBE_DL)) {
+#endif
+      char *localv = lives_build_filename(capable->home_dir, LOCAL_HOME_DIR, "bin", exec, NULL);
+      if (lives_file_test(localv, LIVES_FILE_TEST_IS_EXECUTABLE)) {
+        lives_free(localv);
+        if (cap) *cap = LOCAL;
+        return TRUE;
+      }
+      lives_free(localv);
+    }
     if (has_executable(exec)) {
       if (cap) *cap = PRESENT;
       return TRUE;
@@ -3440,19 +3455,20 @@ boolean check_for_executable(lives_checkstatus_t *cap, const char *exec) {
       if (!lives_strcmp(exec, EXEC_XDOTOOL) || !lives_strcmp(exec, EXEC_WMCTRL)) {
         if (cap) *cap = MISSING;
       }
+      //if (importance == necessary)
       //do_please_install(exec);
-      if (has_executable(exec) != PRESENT) {
 #ifdef HAS_MISSING_PRESENCE
-        if (cap) *cap = MISSING;
+      if (cap) *cap = MISSING;
 #endif
-        //do_program_not_found_error(exec);
-        return FALSE;
-      }
-      if (cap) *cap = PRESENT;
-      return TRUE;
+      //do_program_not_found_error(exec);
+      return FALSE;
     }
   }
-  return (*cap == PRESENT);
+#if 0
+}
+}
+#endif
+return (*cap == PRESENT || *cap == LOCAL);
 }
 
 

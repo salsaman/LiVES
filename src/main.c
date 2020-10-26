@@ -716,16 +716,16 @@ static boolean pre_init(void) {
 #endif
 
   if (!prefs->vj_mode) {
-    capable->has_mplayer = has_executable(EXEC_MPLAYER);
-    capable->has_mplayer2 = has_executable(EXEC_MPLAYER2);
-    capable->has_mpv = has_executable(EXEC_MPV);
+    check_for_executable(&capable->has_mplayer, EXEC_MPLAYER);
+    check_for_executable(&capable->has_mplayer2, EXEC_MPLAYER2);
+    check_for_executable(&capable->has_mpv, EXEC_MPV);
 
-    capable->has_convert = has_executable(EXEC_CONVERT);
-    capable->has_composite = has_executable(EXEC_COMPOSITE);
-    capable->has_identify = has_executable(EXEC_IDENTIFY);
+    check_for_executable(&capable->has_convert, EXEC_CONVERT);
+    check_for_executable(&capable->has_composite, EXEC_COMPOSITE);
+    check_for_executable(&capable->has_identify, EXEC_IDENTIFY);
 
-    capable->has_gzip = has_executable(EXEC_GZIP);
-    capable->has_gdb = has_executable(EXEC_GDB);
+    check_for_executable(&capable->has_gzip, EXEC_GZIP);
+    check_for_executable(&capable->has_gdb, EXEC_GDB);
   }
 
   /// kick off the thread pool ////////////////////////////////
@@ -790,9 +790,9 @@ static boolean pre_init(void) {
   prefs->gui_monitor = -1;
 
   if (prefs->vj_mode) {
-    capable->has_wmctrl = has_executable(EXEC_WMCTRL);
-    capable->has_xwininfo = has_executable(EXEC_XWININFO);
-    capable->has_xdotool = has_executable(EXEC_XDOTOOL);
+    check_for_executable(&capable->has_wmctrl, EXEC_WMCTRL);
+    check_for_executable(&capable->has_xwininfo, EXEC_XWININFO);
+    check_for_executable(&capable->has_xdotool, EXEC_XDOTOOL);
   }
   mainw->mgeom = NULL;
 
@@ -1826,7 +1826,7 @@ static void lives_init(_ign_opts *ign_opts) {
     if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_encoder_plugins && capable->has_python) {
       LiVESList *ofmt_all = NULL;
       char **array;
-      if (has_executable(EXEC_FFMPEG)) {
+      if (check_for_executable(&capable->has_ffmpeg, EXEC_FFMPEG)) {
         lives_snprintf(prefs->encoder.name, 64, "%s", FFMPEG_ENCODER_NAME);
       } else {
         if (capable->python_version >= 3000000)
@@ -3039,8 +3039,7 @@ capability *get_capabilities(void) {
   buffer[0] = '\0';
   command[0] = '\0';
 
-  if (!has_executable(EXEC_PERL)) return capable;
-  capable->has_perl = PRESENT;
+  if (!check_for_executable(&capable->has_perl, EXEC_PERL)) return capable;
 
   // this is _compile time_ bits, not runtime bits
   capable->cpu_bits = (sizeof(void *)) * 8;
@@ -3301,27 +3300,32 @@ retry_configfile:
 
   ///////////////////////////////////////////////////////
 
-  capable->has_md5sum = has_executable(EXEC_MD5SUM);
-  capable->has_du = has_executable(EXEC_DU);
-  capable->has_ffprobe = has_executable(EXEC_FFPROBE); ///< backend only
-  capable->has_sox_play = has_executable(EXEC_PLAY);
-  //}
-  capable->has_youtube_dl = has_executable(EXEC_YOUTUBE_DL);
-  capable->has_sox_sox = has_executable(EXEC_SOX);
-  capable->has_dvgrab = has_executable(EXEC_DVGRAB);
-  if (!(capable->has_cdda2wav = has_executable(EXEC_CDDA2WAV))) {
-    capable->has_cdda2wav = has_executable(EXEC_ICEDAX);
+  check_for_executable(&capable->has_md5sum, EXEC_MD5SUM);
+  check_for_executable(&capable->has_du, EXEC_DU);
+  check_for_executable(&capable->has_ffprobe, EXEC_FFPROBE);
+  check_for_executable(&capable->has_sox_play, EXEC_PLAY);
+
+  check_for_executable(&capable->has_youtube_dl, EXEC_YOUTUBE_DL);
+  check_for_executable(&capable->has_sox_sox, EXEC_SOX);
+  check_for_executable(&capable->has_dvgrab, EXEC_DVGRAB);
+
+  if (!check_for_executable(&capable->has_cdda2wav, EXEC_CDDA2WAV)) {
+    check_for_executable(&capable->has_icedax, EXEC_ICEDAX);
   }
-  capable->has_jackd = has_executable(EXEC_JACKD);
-  capable->has_pulse_audio = has_executable(EXEC_PULSEAUDIO);
-  if ((capable->has_python = has_executable(EXEC_PYTHON))) {
+
+  check_for_executable(&capable->has_jackd, EXEC_JACKD);
+  check_for_executable(&capable->has_pulse_audio, EXEC_PULSEAUDIO);
+
+  if (check_for_executable(&capable->has_python, EXEC_PYTHON)) {
     capable->python_version = get_version_hash(EXEC_PYTHON " -V 2>&1", " ", 1);
   }
-  capable->has_xwininfo = has_executable(EXEC_XWININFO);
-  capable->has_gconftool_2 = has_executable(EXEC_GCONFTOOL_2);
-  capable->has_xdg_screensaver = has_executable(EXEC_XDG_SCREENSAVER);
-  if (has_executable(EXEC_MIDISTART)) {
-    capable->has_midistartstop = has_executable(EXEC_MIDISTOP);
+
+  check_for_executable(&capable->has_xwininfo, EXEC_XWININFO);
+  check_for_executable(&capable->has_gconftool_2, EXEC_GCONFTOOL_2);
+  check_for_executable(&capable->has_xdg_screensaver, EXEC_XDG_SCREENSAVER);
+
+  if (check_for_executable(NULL, EXEC_MIDISTART)) {
+    check_for_executable(&capable->has_midistartstop, EXEC_MIDISTOP);
   }
 
   capable->ncpus = get_num_cpus();
@@ -5191,7 +5195,9 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->load_audio, TRUE);
   lives_widget_set_sensitive(mainw->load_subs, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->erase_subs, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->subt != NULL);
-  if (capable->has_cdda2wav && *prefs->cdplay_device) lives_widget_set_sensitive(mainw->load_cdtrack, TRUE);
+  if ((check_for_executable(&capable->has_cdda2wav, EXEC_CDDA2WAV)
+       || check_for_executable(&capable->has_icedax, EXEC_ICEDAX))
+      && *prefs->cdplay_device) lives_widget_set_sensitive(mainw->load_cdtrack, TRUE);
   lives_widget_set_sensitive(mainw->rename, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && !cfile->opening);
   lives_widget_set_sensitive(mainw->change_speed, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   if (!prefs->vj_mode)

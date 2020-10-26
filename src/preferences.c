@@ -2843,7 +2843,8 @@ void on_prefs_page_changed(LiVESTreeSelection * widget, _prefsw * prefsw) {
       case LIST_ENTRY_MISC:
         lives_widget_show_all(prefsw->scrollw_right_misc);
         prefsw->right_shown = prefsw->scrollw_right_misc;
-        if (!capable->has_cdda2wav) {
+        if (!check_for_executable(&capable->has_cdda2wav, EXEC_CDDA2WAV)
+            && !check_for_executable(&capable->has_icedax, EXEC_ICEDAX)) {
           lives_widget_hide(prefsw->cdda_hbox);
         }
         break;
@@ -4807,7 +4808,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   prefs_add_to_list(prefsw->prefs_list, pixbuf_misc, _("Misc"), LIST_ENTRY_MISC);
   lives_container_add(LIVES_CONTAINER(dialog_table), prefsw->scrollw_right_misc);
 
-  if (!capable->has_cdda2wav) {
+  if (!check_for_executable(&capable->has_cdda2wav, EXEC_CDDA2WAV)
+      && !check_for_executable(&capable->has_icedax, EXEC_ICEDAX)) {
     lives_widget_hide(prefsw->cdda_hbox);
   }
 

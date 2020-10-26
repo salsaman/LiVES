@@ -5114,8 +5114,8 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 
   if (!req || !req->do_update) {
 #ifdef YTDL_URL
-    /// thanks RIAA
-    gflags |= INSTALL_CANLOCAL
+    /// thanks RIAA...
+    gflags |= INSTALL_CANLOCAL;
 #endif
     if (!check_for_executable(&capable->has_youtube_dl, EXEC_YOUTUBE_DL)) {
       if (!do_please_install(EXEC_YOUTUBE_DL, gflags)) {
@@ -5123,8 +5123,8 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
         return NULL;
       }
     }
-    if (check_for_executable(&capable->has_youtube_dl, EXEC_YOUTUBE_DL)) {
-      /// seems like user installed it manually, so try without update
+    if (capable->has_youtube_dl != LOCAL) {
+      /// local version not found, so try first with system version
       firsttime = FALSE;
     }
   } else if (firsttime) {

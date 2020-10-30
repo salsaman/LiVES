@@ -189,18 +189,17 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
 #ifdef LIVES_NO_DEBUG
     if (xlevel >= LIVES_LOG_LEVEL_DEBUG) return;
 #endif
-    //efine SHOW_INFO_ERRORS
+    //#define SHOW_INFO_ERRORS
 #ifndef SHOW_INFO_ERRORS
     if (xlevel == LIVES_LOG_LEVEL_INFO) return;
 #endif
-    //efine SHOW_MSG_ERRORS
+    //#define SHOW_MSG_ERRORS
 #ifndef SHOW_MSG_ERRORS
     if (xlevel == LIVES_LOG_LEVEL_MESSAGE) return;
 #endif
 #define NO_WARN_ERRORS
 #ifdef NO_WARN_ERRORS
     if (xlevel == LIVES_LOG_LEVEL_WARNING) {
-      break_me("warn");
       return;
     }
 #endif
@@ -210,8 +209,8 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
 #endif
 #endif
 
-    //efine TRAP_THEME_ERRORS
-#define SHOW_THEME_ERRORS
+    //#define TRAP_THEME_ERRORS
+    //#define SHOW_THEME_ERRORS
 #ifndef SHOW_THEME_ERRORS
     if (prefs->show_dev_opts)
       if (!strncmp(message, "Theme parsing", strlen("Theme parsing"))) {

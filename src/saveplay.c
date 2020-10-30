@@ -3224,7 +3224,6 @@ void play_file(void) {
           lives_widget_queue_draw(mainw->play_window);
           lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
           play_window_set_title();
-          load_preview_image(FALSE);
         }
 
         if (mainw->play_window) {
@@ -3240,6 +3239,7 @@ void play_file(void) {
             lives_widget_process_updates(mainw->play_window);
             lives_window_center(LIVES_WINDOW(mainw->play_window));
             clear_widget_bg(mainw->play_image, mainw->play_surface);
+            load_preview_image(FALSE);
 	  // *INDENT-OFF*
 	  }}}}}
   // *INDENT-ON*

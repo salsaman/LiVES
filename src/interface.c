@@ -5055,7 +5055,7 @@ static void on_utupinfo_clicked(LiVESWidget * b, livespointer data) {
                     "Otherwise you may need to update it manually when prompted\n\n"
                     "Checking the button for the first time will cause the program to be copied\n"
                     "to your home directory.\n"
-                    "After this it can be updated without needing root priveleges.\n"),
+                    "After this it can be updated without needing root privileges.\n"),
                   EXEC_YOUTUBE_DL);
 }
 

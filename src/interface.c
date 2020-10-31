@@ -5162,7 +5162,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 
   add_spring_to_box(LIVES_BOX(hbox), 0);
 
-  msg = lives_big_and_bold(_("<--- Install or Update loal copy of %s ?"), EXEC_YOUTUBE_DL);
+  msg = lives_big_and_bold(_("<--- Install or Update local copy of %s ?"), EXEC_YOUTUBE_DL);
   widget_opts.use_markup = TRUE;
   checkbutton_update = lives_standard_check_button_new(msg, firsttime || (req && req->do_update),
                        LIVES_BOX(hbox),

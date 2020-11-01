@@ -1018,7 +1018,10 @@ retry:
           char *to = lives_build_filename(todir, EXEC_YOUTUBE_DL, NULL);
           if (!lives_file_test(to, LIVES_FILE_TEST_IS_EXECUTABLE)) {
             char from[PATH_MAX];
-            get_location(EXEC_YOUTUBE_DL, from, PATH_MAX);
+            if (check_for_executable(&capable->has_youtube_dlc, EXEC_YOUTUBE_DLC))
+              get_location(EXEC_YOUTUBE_DLC, from, PATH_MAX);
+            else
+              get_location(EXEC_YOUTUBE_DL, from, PATH_MAX);
             if (lives_strlen(from) > 10) {
               if (check_dir_access(todir, TRUE)) {
                 lives_cp(from, to);

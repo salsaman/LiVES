@@ -530,6 +530,7 @@ typedef struct {
   lives_checkstatus_t has_wmctrl;
   lives_checkstatus_t has_xdotool;
   lives_checkstatus_t has_youtube_dl;
+  lives_checkstatus_t has_youtube_dlc;
   lives_checkstatus_t has_pip;
   lives_checkstatus_t has_du;
   lives_checkstatus_t has_md5sum;
@@ -1713,7 +1714,7 @@ void cached_list_free(LiVESList **list);
 void get_location(const char *exe, char *val, int maxlen);
 boolean check_for_executable(lives_checkstatus_t *cap, const char *exec);
 boolean do_please_install(const char *exec, uint64_t guidance_flags);
-void do_please_install_either(const char *exec, const char *exec2);
+boolean do_please_install_either(const char *exec, const char *exec2);
 
 /// lives_image_type can be a string, lives_img_type_t is an enumeration
 char *make_image_file_name(lives_clip_t *clip, frames_t frame, const char *img_ext);

@@ -3687,10 +3687,11 @@ LIVES_GLOBAL_INLINE boolean do_please_install(const char *exec, uint64_t gflags)
 }
 
 
-LIVES_GLOBAL_INLINE void do_please_install_either(const char *exec, const char *exec2) {
+LIVES_GLOBAL_INLINE boolean do_please_install_either(const char *exec, const char *exec2) {
   do_info_dialogf(_("Either '%s' or '%s' must be installed for this feature to work.\n"
                     "If possible, kindly install one or other of these before continuing\n"),
                   exec, exec2);
+  return FALSE;
 }
 
 

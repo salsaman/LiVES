@@ -2513,7 +2513,10 @@ static void do_start_messages(void) {
   SHOWDET(ffprobe);
   SHOWDET(gzip);
   SHOWDET(md5sum);
-  SHOWDETx(youtube_dl, EXEC_YOUTUBE_DL);
+  if (!check_for_executable(&capable->has_youtube_dl, EXEC_YOUTUBE_DL)
+      && check_for_executable(&capable->has_youtube_dlc, EXEC_YOUTUBE_DLC)) {
+    SHOWDETx(youtube_dlc, EXEC_YOUTUBE_DLC);
+  } else SHOWDETx(youtube_dl, EXEC_YOUTUBE_DL);
 
   d_print(_("\n\nChecking OPTIONAL dependencies: "));
   SHOWDET(jackd);
@@ -3304,7 +3307,9 @@ retry_configfile:
   check_for_executable(&capable->has_ffprobe, EXEC_FFPROBE);
   check_for_executable(&capable->has_sox_play, EXEC_PLAY);
 
-  check_for_executable(&capable->has_youtube_dl, EXEC_YOUTUBE_DL);
+  if (!check_for_executable(&capable->has_youtube_dl, EXEC_YOUTUBE_DL)) {
+    check_for_executable(&capable->has_youtube_dlc, EXEC_YOUTUBE_DLC);
+  }
   check_for_executable(&capable->has_sox_sox, EXEC_SOX);
   check_for_executable(&capable->has_dvgrab, EXEC_DVGRAB);
 

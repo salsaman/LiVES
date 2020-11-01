@@ -5105,7 +5105,9 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   char *dfile = NULL, *url = NULL;
 
   char dirname[PATH_MAX];
+#ifdef YTDL_URL
   uint64_t gflags = 0;
+#endif
 
   LiVESResponseType response;
   boolean only_free = TRUE;
@@ -5117,9 +5119,11 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
     /// thanks RIAA...
     gflags |= INSTALL_CANLOCAL;
 #endif
-    if (!check_for_executable(&capable->has_youtube_dl, EXEC_YOUTUBE_DL)) {
-      if (!do_please_install(EXEC_YOUTUBE_DL, gflags)) {
-        capable->has_youtube_dl = UNCHECKED;
+    if (!check_for_executable(&capable->has_youtube_dl, EXEC_YOUTUBE_DL) &&
+        !check_for_executable(&capable->has_youtube_dlc, EXEC_YOUTUBE_DLC)
+       ) {
+      if (!do_please_install_either(EXEC_YOUTUBE_DL, EXEC_YOUTUBE_DLC)) {
+        capable->has_youtube_dl = capable->has_youtube_dlc = UNCHECKED;
         return NULL;
       }
     }

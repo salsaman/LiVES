@@ -3864,6 +3864,9 @@ if (1) {
 		}
 		else {
 		    $prog = &location($youtube_dl);
+		    if ($prog eq "") {
+			$prog = &location($youtube_dl . "c");
+		    }
 		}
 		if ($prog eq "") {
 		    $com = $youtube_dl;

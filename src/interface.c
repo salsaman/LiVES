@@ -5055,7 +5055,7 @@ static void on_utupinfo_clicked(LiVESWidget * b, livespointer data) {
                     "Otherwise you may need to update it manually when prompted\n\n"
                     "Checking the button for the first time will cause the program to be copied\n"
                     "to your home directory.\n"
-                    "After this it can be updated without needing root priveleges.\n"),
+                    "After this it can be updated without needing root privileges.\n"),
                   EXEC_YOUTUBE_DL);
 }
 
@@ -5166,7 +5166,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 
   add_spring_to_box(LIVES_BOX(hbox), 0);
 
-  msg = lives_big_and_bold(_("<--- Install or Update loal copy of %s ?"), EXEC_YOUTUBE_DL);
+  msg = lives_big_and_bold(_("<--- Install or Update local copy of %s ?"), EXEC_YOUTUBE_DL);
   widget_opts.use_markup = TRUE;
   checkbutton_update = lives_standard_check_button_new(msg, firsttime || (req && req->do_update),
                        LIVES_BOX(hbox),

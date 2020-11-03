@@ -1390,7 +1390,7 @@ static char *explain_missing(const char *exe) {
 }
 
 
-#define ADD_TO_TEXT(what, exec)   if (!capable->has_##what) {	\
+#define ADD_TO_TEXT(what, exec)   if (capable->has_##what) {	\
     text = lives_concat(text, explain_missing(exec)) ;\
 }
 

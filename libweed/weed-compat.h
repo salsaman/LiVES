@@ -677,7 +677,7 @@ static const StreamType DESC_types[] = {
 
 #endif
 
-#if defined FF_API_PIX_FMT ||  defined AVUTIL_PIXFMT_H
+#if defined FF_API_PIX_FMT || defined AVUTIL_PIXFMT_H
 
 inline int avi_color_range_to_weed_clamping(enum AVColorRange range) {
   switch (range) {

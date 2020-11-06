@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2020-11-03 02:35-0300\n"
+"POT-Creation-Date: 2020-11-06 00:43-0300\n"
 "PO-Revision-Date: 2020-09-28 06:30+0000\n"
 "Last-Translator: Guybrush88 <Unknown>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -13376,70 +13376,70 @@ msgid "Opened device %s\n"
 msgstr "Aperto il dispositivo %s\n"
 
 #. TRANSLATORS: Exabytes
-#: src/machinestate.c:666
+#: src/machinestate.c:669
 #, c-format
 msgid "%.2f EB"
 msgstr "%.2f EB"
 
 #. TRANSLATORS: Petabytes
-#: src/machinestate.c:669
+#: src/machinestate.c:672
 #, c-format
 msgid "%.2f PB"
 msgstr "%.2f PB"
 
 #. TRANSLATORS: Terabytes
-#: src/machinestate.c:672
+#: src/machinestate.c:675
 #, c-format
 msgid "%.2f TB"
 msgstr "%.2f TB"
 
 #. TRANSLATORS: Gigabytes
-#: src/machinestate.c:675
+#: src/machinestate.c:678
 #, c-format
 msgid "%.2f GB"
 msgstr "%.2f GB"
 
 #. TRANSLATORS: Megabytes
-#: src/machinestate.c:678
+#: src/machinestate.c:681
 #, c-format
 msgid "%.2f MB"
 msgstr "%.2f MB"
 
 #. TRANSLATORS: Kilobytes (1024 bytes)
-#: src/machinestate.c:681
+#: src/machinestate.c:684
 #, c-format
 msgid "%.2f KiB"
 msgstr "%.2f KiB"
 
-#: src/machinestate.c:683
+#: src/machinestate.c:686
 #, c-format
 msgid "%d bytes"
 msgstr "%d byte"
 
-#: src/machinestate.c:847
+#: src/machinestate.c:850
 #, c-format
 msgid "Today %s"
 msgstr "Oggi %s"
 
-#: src/machinestate.c:849
+#: src/machinestate.c:852
 #, c-format
 msgid "Yesterday %s"
 msgstr "Ieri %s"
 
-#: src/machinestate.c:1142
+#: src/machinestate.c:1145
 msgid "(empty)"
 msgstr "(vuoto)"
 
-#: src/machinestate.c:1170
+#: src/machinestate.c:1173
 #, c-format
 msgid "Source: %s, frames: %d, size: %d X %d, fps: %.3f"
 msgstr "Sorgente: %s, fotogrammi: %d, dimensione: %d X %d, fps: %.3f"
 
-#: src/machinestate.c:1208
+#: src/machinestate.c:1211
 msgid "(ABSENT)"
 msgstr "(ASSENTE)"
 
-#: src/machinestate.c:1399
+#: src/machinestate.c:1402
 msgid ""
 "Your version of mplayer/ffmpeg may be broken !\n"
 "See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071\n"
@@ -13450,17 +13450,17 @@ msgid ""
 "Try running Help/Troubleshoot for more information."
 msgstr ""
 
-#: src/machinestate.c:2832
+#: src/machinestate.c:2835
 #, c-format
 msgid "%s was not found\n"
 msgstr "%s non è stato trovato.\n"
 
-#: src/machinestate.c:2873 src/machinestate.c:2878
+#: src/machinestate.c:2876 src/machinestate.c:2881
 #, c-format
 msgid "Could not write to %s\n"
 msgstr ""
 
-#: src/machinestate.c:2901
+#: src/machinestate.c:2904
 #, c-format
 msgid ""
 "LiVES was unable to send the item to trash.\n"

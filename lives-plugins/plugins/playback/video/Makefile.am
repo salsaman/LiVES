@@ -8,8 +8,8 @@ if IS_DARWIN
 shared_ldflags =  -dynamiclib -module -avoid-version --tag=disable-static
 shared_cflags = -fno-common -DIS_DARWIN=1
 else
-shared_ldflags =  -shared -fPIC -DPIC -module -Wno-unused-function -avoid-version --tag=disable-static
-shared_cflags =  -fPIC -DPIC @TURBO_CFLAGS@
+shared_ldflags =  -shared -fPIC -DPIC -module -avoid-version --tag=disable-static
+shared_cflags =  -fPIC -DPIC @TURBO_CFLAGS@ -Wno-unused-variable
 endif
 
 if IS_IRIX

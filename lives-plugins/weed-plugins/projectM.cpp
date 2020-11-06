@@ -327,12 +327,29 @@ static int render_frame(_sdata *sd) {
 
   glViewport(0, 0, sd->width, sd->height);
 
+#define NORM_AUDIO
+
   if (sd->needs_more || sd->audio_frames > sd->audio_offs) {
     size_t audlen = MAX_AUDLEN;
+#ifdef NORM_AUDIO
+    float maxvol = 0., myvol;
+    size_t i;
+#endif
     pthread_mutex_lock(&sd->pcm_mutex);
     if (sd->audio_frames - sd->audio_offs < audlen)
       audlen = sd->audio_frames - sd->audio_offs;
     if (audlen) {
+#ifdef NORM_AUDIO
+      for (i = 0; i < audlen; i++) {
+        if ((myvol = fabsf(sd->audio[sd->audio_offs + i]) > maxvol)) maxvol = myvol;
+        if (maxvol > .8) break;
+      }
+      if (i == audlen && maxvol > 0.05) {
+        for (i = 0; i < audlen; i++) {
+          sd->audio[sd->audio_offs + i] /= maxvol;
+        }
+      }
+#endif
       sd->globalPM->pcm()->addPCMfloat(sd->audio + sd->audio_offs, audlen);
       sd->audio_offs += audlen;
     }
@@ -886,17 +903,13 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
 
   if (in_channel) {
     /// fill the audio buffer for the following frame(s)
-#define NORM_AUDIO
-#ifdef NORM_AUDIO
-    float maxvol = 0., myvol;
-    int i;
-#endif
     int achans;
     int adlen = weed_channel_get_audio_length(in_channel);
     float **adata = (float **)weed_channel_get_audio_data(in_channel, &achans);
     pthread_mutex_lock(&sd->pcm_mutex);
     if (adlen > 0 && adata && adata[0]) {
       if (!sd->audio || (sd->abufsize < (size_t)adlen)) {
+        if (sd->audio) weed_free(sd->audio);
         sd->audio = (float *)weed_calloc(adlen, 4);
         if (!sd->audio) {
           sd->error = WEED_ERROR_MEMORY_ALLOCATION;

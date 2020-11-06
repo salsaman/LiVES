@@ -85,7 +85,7 @@ extern "C"
 #endif
 
 
-inline int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *sampling,
+static inline int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *sampling,
 			    int *sspace, int *clamping) {
   // inputs are fourcc and bpp
   // returns int weed_palette
@@ -679,7 +679,7 @@ static const StreamType DESC_types[] = {
 
 #if defined FF_API_PIX_FMT || defined AVUTIL_PIXFMT_H
 
-inline int avi_color_range_to_weed_clamping(enum AVColorRange range) {
+static inline int avi_color_range_to_weed_clamping(enum AVColorRange range) {
   switch (range) {
   case AVCOL_RANGE_MPEG:
     return WEED_YUV_CLAMPING_CLAMPED;
@@ -691,7 +691,7 @@ inline int avi_color_range_to_weed_clamping(enum AVColorRange range) {
   return WEED_YUV_CLAMPING_CLAMPED;
 }
 
-inline enum AVColorRange weed_clamping_to_avi_color_range(int clamping) {
+static inline enum AVColorRange weed_clamping_to_avi_color_range(int clamping) {
   switch (clamping) {
   case WEED_YUV_CLAMPING_CLAMPED:
         return AVCOL_RANGE_MPEG;
@@ -703,7 +703,7 @@ inline enum AVColorRange weed_clamping_to_avi_color_range(int clamping) {
 
 #ifndef AVUTIL_PIXFMT_H
 
-inline int avi_pix_fmt_to_weed_palette(enum PixelFormat pix_fmt, int *clamped) {
+static inline int avi_pix_fmt_to_weed_palette(enum PixelFormat pix_fmt, int *clamped) {
   // clamped may be set to NULL if you are not interested in the value
   switch (pix_fmt) {
   case PIX_FMT_RGB24:
@@ -753,7 +753,7 @@ inline int avi_pix_fmt_to_weed_palette(enum PixelFormat pix_fmt, int *clamped) {
   }
 }
 
-inline enum PixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
+static inline enum PixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
   switch (pal) {
   case WEED_PALETTE_RGB24:
         return PIX_FMT_RGB24;
@@ -800,7 +800,7 @@ inline enum PixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
 
 #else
 
-inline int avi_pix_fmt_to_weed_palette(enum AVPixelFormat pix_fmt, int *clamped) {
+static inline int avi_pix_fmt_to_weed_palette(enum AVPixelFormat pix_fmt, int *clamped) {
   // clamped may be set to NULL if you are not interested in the value
   switch (pix_fmt) {
   case AV_PIX_FMT_RGB24:
@@ -847,7 +847,7 @@ inline int avi_pix_fmt_to_weed_palette(enum AVPixelFormat pix_fmt, int *clamped)
   }
 }
 
-inline enum AVPixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
+static inline enum AVPixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
   switch (pal) {
   case WEED_PALETTE_RGB24:
         return AV_PIX_FMT_RGB24;
@@ -892,7 +892,7 @@ inline enum AVPixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
 #endif // avutil
 #endif // pix fmts
 
-inline int avi_trc_to_weed_gamma(enum AVColorTransferCharacteristic trc) {
+static inline int avi_trc_to_weed_gamma(enum AVColorTransferCharacteristic trc) {
   switch (trc) {
   case AVCOL_TRC_BT709:
     return WEED_GAMMA_BT709;
@@ -906,7 +906,7 @@ inline int avi_trc_to_weed_gamma(enum AVColorTransferCharacteristic trc) {
   return WEED_GAMMA_UNKNOWN;
 }
 
-inline enum AVColorTransferCharacteristic weed_gamma_to_avi_trc(int gamma_type) {
+static inline enum AVColorTransferCharacteristic weed_gamma_to_avi_trc(int gamma_type) {
   switch (gamma_type) {
   case WEED_GAMMA_BT709:
         return AVCOL_TRC_BT709;
@@ -1029,21 +1029,21 @@ inline enum AVColorTransferCharacteristic weed_gamma_to_avi_trc(int gamma_type) 
 #define HAVE_PANGO_FONT_STYLE 1
 #define HAVE_PANGO_FONT_SIZE 1
 
-inline int font_stretch_to_pango_stretch(const char *stretch) {
+static inline int font_stretch_to_pango_stretch(const char *stretch) {
   PangoFontDescription *pfd = pango_font_description_from_string(stretch);
   PangoStretch pstretch = pango_font_description_get_stretch(pfd);
   pango_font_description_free(pfd);
   return pstretch;
 }
 
-inline int font_weight_to_pango_weight(const char *weight) {
+static inline int font_weight_to_pango_weight(const char *weight) {
   PangoFontDescription *pfd = pango_font_description_from_string(weight);
   PangoWeight pweight = pango_font_description_get_weight(pfd);
   pango_font_description_free(pfd);
   return pweight;
 }
 
-inline int font_style_to_pango_style(const char *style) {
+static inline int font_style_to_pango_style(const char *style) {
   PangoFontDescription *pfd = pango_font_description_from_string(style);
   PangoStyle pstyle = pango_font_description_get_style(pfd);
   pango_font_description_free(pfd);

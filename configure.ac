@@ -104,6 +104,18 @@ exit
 ])
 fi
 
+IS_X86_64="false"
+
+case "{$target_cpu}" in
+ *x86_64*)
+   IS_X86_64="true"
+  ;;
+ *)
+  ;;
+esac
+
+AM_CONDITIONAL(IS_X86_64,$IS_X86_64)
+
 GETTEXT_PACKAGE=lives
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [gtp])

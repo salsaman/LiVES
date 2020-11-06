@@ -12,6 +12,8 @@
 
 LIVES_LOCAL_INLINE char *mini_popen(char *cmd);
 
+#if IS_X86_64
+
 static void cpuid(unsigned int ax, unsigned int *p) {
   __asm __volatile
   ("movl %%ebx, %%esi\n\tcpuid\n\txchgl %%ebx, %%esi"
@@ -31,6 +33,7 @@ static int get_cacheline_size(void) {
   return cacheline;
 }
 
+#endif
 
 static uint64_t fastrand_val = 0;
 
@@ -3332,7 +3335,10 @@ boolean get_machine_dets(void) {
   capable->os_hardware = mini_popen(com);
 
   capable->cacheline_size = capable->cpu_bits * 8;
-  if (!strcmp(capable->os_hardware, "x86)64")) capable->cacheline_size = get_cacheline_size();
+
+#if IS_X86_64
+  if (!strcmp(capable->os_hardware, "x86_64")) capable->cacheline_size = get_cacheline_size();
+#endif
 
   com = lives_strdup("uname -n");
   capable->mach_name = mini_popen(com);

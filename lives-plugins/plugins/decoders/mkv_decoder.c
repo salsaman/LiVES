@@ -1981,7 +1981,7 @@ skip_probe:
   pts = priv->avpkt.pts;
   dts = priv->avpkt.dts;
 
-  if (priv->avpkt.data != NULL) {
+  if (priv->avpkt.data) {
     free(priv->avpkt.data);
     priv->avpkt.data = NULL;
     priv->avpkt.size = 0;
@@ -2692,7 +2692,7 @@ static int matroska_read_close(const lives_clip_data_t *cdata) {
   for (n = 0; n < matroska->tracks.nb_elem; n++)
     if (tracks[n].type == MATROSKA_TRACK_TYPE_AUDIO)
       av_free(tracks[n].audio.buf);
-  ebml_free(matroska_segment, matroska);
+  if (cdata->nframes) ebml_free(matroska_segment, matroska);
 
   return 0;
 }

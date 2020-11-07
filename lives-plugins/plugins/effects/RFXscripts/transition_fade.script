@@ -55,7 +55,7 @@ special|mergealign|0|1|
 </language_code>
 
 <pre>
-$antialias=&rc_get("antialias");
+$antialias = &config_get("antialias", $configfile);
 if ($p6) {
     $x=$p4-int($p2/2+.5);
     $y=$p5-int($p3/2+.5);

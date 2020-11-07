@@ -58,7 +58,7 @@ special|aspect|5|6|
 </language_code>
 
 <pre>
-$antialias = &rc_get("antialias");
+$antialias = &config_get("antialias", $configfile);
 $resize_ext = $out_ext;
 $resize_prefix = $out_prefix;
 $input_ext = $img_ext;

@@ -2608,6 +2608,10 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         // this is for encoder output
         pump_io_chan(mainw->iochan);
       }
+      if (!mainw->internal_messaging) {
+        // background processing (e.g. rendered effects)
+        progbar_pulse_or_fraction(cfile, mainw->proc_ptr->frames_done, mainw->proc_ptr->frac_done);
+      }
     }
 
     if (!mainw->internal_messaging) {

@@ -42,7 +42,7 @@ layout|p0|"frame(s) from clipboard, "|p1|"frame(s) from selection"|
 </language_code>
 
 <pre>
-$antialias=&rc_get("antialias");
+$antialias = &config_get("antialias", $configfile);
 $resize_ext=$out_ext;
 $input_ext=".tmp";
 $resize_prefix=$out_prefix;

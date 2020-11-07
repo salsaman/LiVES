@@ -63,7 +63,7 @@ layout|p9|fill|p2|p3|fill|
 $cstring=&RGB24_to_string($p10_red,$p10_green,$p10_blue);
 
 # for zoom_frame
-$antialias=&rc_get("antialias");
+$antialias = &config_get("antialias", $configfile);
 
 # this is for resize_frame
 $resize_ext=".mgk2";

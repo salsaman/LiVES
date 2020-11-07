@@ -63,7 +63,7 @@ layout|"To maintain original frame size, use the "spin" effect."
 # pre loop code
 <pre>
 $cstring = &RGB24_to_string($p5_red, $p5_green, $p5_blue);
-$antialias = &rc_get("antialias");
+$antialias = &config_get("antialias", $configfile);
 $nwidth = $width;
 $nheight = $height;
 

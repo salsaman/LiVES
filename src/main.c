@@ -203,7 +203,7 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
       return;
     }
 #endif
-    //#define NO_CRITICAL_ERRORS
+    #define NO_CRITICAL_ERRORS
 #ifdef NO_CRITICAL_ERRORS
     if (xlevel == LIVES_LOG_LEVEL_CRITICAL) return;
 #endif

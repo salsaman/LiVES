@@ -1,5 +1,5 @@
-Version 3.2.0
-------------------
+Version 3.2.0 (08 nov 2020)
+--------------------------
 Rewrote inital startup, streamlining it and making it more robust.
 Updated gtk+ support to 3.24, fixing numerous interface / threading issues.
 Interface element updates, including a total rewrite of buttons, a new font chooser element based on gtkfontchooser.
@@ -63,7 +63,7 @@ Added two more keyboard effect keys (ctrl-minus and ctrl-equals). Effects on the
 Ensure audio is always rendered when it should be after recording.
 Audio can now be normalised after rendering.
 Added the option to produce a quick transcode preview of recordings, eliminating the need to
-	render them first.
+	render them first (with options to normalise audio, and auto fade in / out).
 Fix minor error in YUV unclamped -> RGB palette conversions.
 Fix rowstrides error in YUV(A) non-planar to planar conversions.
 Fix rowstride alignment issues for YUV420 frames.

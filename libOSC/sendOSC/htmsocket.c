@@ -38,7 +38,6 @@
 #include <netinet/in.h>
 #include <sys/time.h>
 
-#include <rpc/rpc.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/times.h>
@@ -69,7 +68,6 @@
 #if IS_SOLARIS
 #include <sys/filio.h>
 #endif
-
 
 #include <ctype.h>
 #include <signal.h>

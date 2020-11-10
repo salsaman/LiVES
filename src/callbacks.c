@@ -10038,7 +10038,7 @@ autolives_fail:
   }
 
 
-  /// genric func. to create surfaces
+  /// generic func. to create surfaces
   boolean all_config(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer ppsurf) {
     lives_painter_surface_t **psurf = (lives_painter_surface_t **)ppsurf;
     if (mainw->no_configs) return TRUE;

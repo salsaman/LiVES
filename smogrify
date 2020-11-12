@@ -58,7 +58,7 @@ my $MYNAME = $0;
 # Do not change these except for testing !
 
 my $background = 1;
-my $version = "3.2.0";
+my $version = "3.2.1-pre";
 #my $dyneversion="LIVES-20091209";
 
 ###################################################################

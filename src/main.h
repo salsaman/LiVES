@@ -1406,7 +1406,7 @@ boolean save_file_comments(int fileno);
 void set_default_comment(lives_clip_t *sfile, const char *extrat);
 boolean restore_clip_binfmt(int clipno);
 lives_clip_t *clip_forensic(int clipno);
-boolean reload_clip(int fileno, int maxframe);
+boolean reload_clip(int fileno, frames_t maxframe);
 void wait_for_bg_audio_sync(int fileno);
 ulong deduce_file(const char *filename, double start_time, int end);
 ulong open_file(const char *filename);
@@ -1420,12 +1420,12 @@ int close_temp_handle(int new_clip);
 boolean get_handle_from_info_file(int index);
 lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded);
 int create_nullvideo_clip(const char *handle);
-void save_file(int clip, int start, int end, const char *filename);
+void save_file(int clip, frames_t start, frames_t end, const char *filename);
 void play_file(void);
 void start_playback_async(int type);
 boolean start_playback(int type);
 void play_start_timer(int type);
-void save_frame(LiVESMenuItem *menuitem, livespointer user_data);
+void save_frame(LiVESMenuItem *, livespointer user_data);
 boolean save_frame_inner(int clip, int frame, const char *file_name, int width, int height, boolean from_osc);
 void wait_for_stop(const char *stop_command);
 boolean save_clip_values(int which_file);
@@ -1452,8 +1452,8 @@ void open_set_file(int clipnum);
 // saveplay.c scrap file
 boolean open_scrap_file(void);
 boolean open_ascrap_file(void);
-int save_to_scrap_file(weed_layer_t *layer);
-boolean load_from_scrap_file(weed_layer_t *layer, int frame);
+int save_to_scrap_file(weed_layer_t *);
+boolean load_from_scrap_file(weed_layer_t *, int frame);
 void close_ascrap_file(boolean remove);
 void close_scrap_file(boolean remove);
 void add_to_ascrap_mb(uint64_t bytes);
@@ -1474,9 +1474,9 @@ boolean startup_message_nonfatal_dismissable(const char *msg, uint64_t warning_m
 capability *get_capabilities(void);
 void get_monitors(boolean reset);
 void replace_with_delegates(void);
-void set_drawing_area_from_pixbuf(LiVESWidget *darea, LiVESPixbuf *pixbuf, lives_painter_surface_t *);
-void load_start_image(int frame);
-void load_end_image(int frame);
+void set_drawing_area_from_pixbuf(LiVESWidget *darea, LiVESPixbuf *, lives_painter_surface_t *);
+void load_start_image(frames_t frame);
+void load_end_image(frames_t frame);
 void showclipimgs(void);
 void load_preview_image(boolean update_always);
 boolean resize_message_area(livespointer data);
@@ -1485,19 +1485,19 @@ boolean lazy_startup_checks(void *data);
 #define is_layer_ready(layer) (weed_get_boolean_value((layer), WEED_LEAF_THREAD_PROCESSING, NULL) == WEED_FALSE \
 			       && weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL) == NULL)
 
-boolean pull_frame(weed_layer_t *layer, const char *image_ext, ticks_t tc);
-void pull_frame_threaded(weed_layer_t *layer, const char *img_ext, ticks_t tc, int width, int height);
-boolean check_layer_ready(weed_layer_t *layer);
-boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, ticks_t tc,
+boolean pull_frame(weed_layer_t *, const char *image_ext, ticks_t tc);
+void pull_frame_threaded(weed_layer_t *, const char *img_ext, ticks_t tc, int width, int height);
+boolean check_layer_ready(weed_layer_t *);
+boolean pull_frame_at_size(weed_layer_t *, const char *image_ext, ticks_t tc,
                            int width, int height, int target_palette);
 LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ext, ticks_t tc,
                                        int width, int height, LiVESInterpType interp, boolean fordisp);
 LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const char *image_ext, ticks_t tc);
 
-boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, const char *fname, int width,
+boolean weed_layer_create_from_file_progressive(weed_layer_t *, const char *fname, int width,
     int height, int tpalette, const char *img_ext);
 
-boolean lives_pixbuf_save(LiVESPixbuf *pixbuf, char *fname, lives_img_type_t imgtype, int quality,
+boolean lives_pixbuf_save(LiVESPixbuf *, char *fname, lives_img_type_t imgtype, int quality,
                           int width, int height, LiVESError **gerrorptr);
 
 typedef struct {

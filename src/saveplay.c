@@ -1257,7 +1257,7 @@ LIVES_GLOBAL_INLINE void set_default_comment(lives_clip_t *sfile, const char *ex
 }
 
 
-void save_file(int clip, int start, int end, const char *filename) {
+void save_file(int clip, frames_t start, frames_t end, const char *filename) {
   // save clip from frame start to frame end
   lives_clip_t *sfile = mainw->files[clip], *nfile = NULL;
   double aud_start = 0., aud_end = 0.;
@@ -1274,11 +1274,12 @@ void save_file(int clip, int start, int end, const char *filename) {
   char *clipdir;
   char *cwd;
 
+  frames_t startframe = 1;
+
   boolean recheck_name = FALSE;
 
   int new_stderr = -1;
   int retval;
-  int startframe = 1;
   int current_file = mainw->current_file;
   int asigned = !(sfile->signed_endian & AFORM_UNSIGNED); // 1 is signed (in backend)
   int aendian = (sfile->signed_endian & AFORM_BIG_ENDIAN); // 2 is bigend

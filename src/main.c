@@ -203,7 +203,7 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
       return;
     }
 #endif
-    #define NO_CRITICAL_ERRORS
+#define NO_CRITICAL_ERRORS
 #ifdef NO_CRITICAL_ERRORS
     if (xlevel == LIVES_LOG_LEVEL_CRITICAL) return;
 #endif
@@ -5647,7 +5647,7 @@ void showclipimgs(void) {
 }
 
 
-void load_start_image(int frame) {
+void load_start_image(frames_t frame) {
   LiVESPixbuf *start_pixbuf = NULL;
   LiVESPixbuf *orig_pixbuf = NULL;
   weed_layer_t *layer = NULL;
@@ -5919,7 +5919,7 @@ check_stcache:
 }
 
 
-void load_end_image(int frame) {
+void load_end_image(frames_t frame) {
   LiVESPixbuf *end_pixbuf = NULL;
   LiVESPixbuf *orig_pixbuf = NULL;
   weed_layer_t *layer = NULL;

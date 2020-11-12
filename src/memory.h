@@ -5,7 +5,8 @@
 
 // functions for dealing with externalities
 
-#include <stddef.h>
+#ifndef _MEMORY_H_
+#define _MEMORY_H_
 
 #define EXTRA_BYTES DEF_ALIGN
 
@@ -159,4 +160,6 @@ static inline int _lsd_calloc_aligned_(void **memptr, size_t nmemb, size_t size)
 #define LIVES_GNU
 #define lives_malloc_auto(size) __builtin_alloc(size)
 #define lives_malloc_auto_aligned(size, align) __builtin_alloc_with_align(size, align)
+#endif
+
 #endif

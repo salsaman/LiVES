@@ -11,10 +11,6 @@
 
 void lives_exit(int signum);
 
-void lives_notify(int msgnumber, const char *msgstring);
-
-void lives_notify_int(int msgnumber, int msgint);
-
 void play_all(boolean from_menu);
 void play_sel(void);
 

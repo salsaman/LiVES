@@ -59,6 +59,8 @@ extern "C" {
 
 // >= 65536 reserved for custom
 
+void lives_notify(int msgnumber, const char *msgstring);
+void lives_notify_int(int msgnumber, int msgint);
 
 #ifdef __cplusplus
 }

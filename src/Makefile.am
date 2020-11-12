@@ -232,6 +232,7 @@ lives_exe_SOURCES = \
 	startup.c startup.h \
 	pangotext.c pangotext.h \
 	memory.c memory.h \
+	threading.c threading.h \
 	machinestate.c machinestate.h \
 	weed-effects-utils.c weed-effects-utils.h \
 	diagnostics.c diagnostics.h \

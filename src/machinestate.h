@@ -5,8 +5,6 @@
 
 // functions for dealing with externalities
 
-/// TODO - split into: memory, files, sysops, threads
-
 #ifndef _MACHINESTATE_H_
 #define _MACHINESTATE_H_
 

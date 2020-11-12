@@ -234,6 +234,7 @@ lives_exe_SOURCES = \
 	memory.c memory.h \
 	threading.c threading.h \
 	machinestate.c machinestate.h \
+	filesystem.c filesystem.h \
 	weed-effects-utils.c weed-effects-utils.h \
 	diagnostics.c diagnostics.h \
 	$(transcode_SOURCES) \

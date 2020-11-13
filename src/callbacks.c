@@ -26,6 +26,7 @@
 #include "ce_thumbs.h"
 #include "startup.h"
 #include "diagnostics.h"
+#include "multitrack-gui.h"
 
 #ifdef LIBAV_TRANSCODE
 #include "transcode.h"
@@ -4941,22 +4942,6 @@ close_done:
     }
 
 
-    boolean clip_can_reverse(int clipno) {
-      if (!LIVES_IS_PLAYING || mainw->internal_messaging || mainw->is_rendering || mainw->is_processing
-          || !IS_VALID_CLIP(clipno) || mainw->preview) return FALSE;
-      else {
-        lives_clip_t *sfile = mainw->files[clipno];
-        if (sfile->clip_type == CLIP_TYPE_DISK) return TRUE;
-        if (sfile->next_event) return FALSE;
-        if (sfile->clip_type == CLIP_TYPE_FILE) {
-          lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->ext_src)->cdata;
-          if (!cdata || !(cdata->seek_flag & LIVES_SEEK_FAST_REV)) return FALSE;
-        }
-      }
-      return TRUE;
-    }
-
-
     boolean dirchange_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                                livespointer area_enum) {
       int area = LIVES_POINTER_TO_INT(area_enum);
@@ -8025,7 +8010,7 @@ end:
 
     if (mainw->multitrack) {
       if (!LIVES_IS_PLAYING) return;
-      unpaint_lines(mainw->multitrack);
+      mt_unpaint_lines(mainw->multitrack);
       mainw->multitrack->redraw_block = TRUE; // stop pb cursor from updating
       mt_show_current_frame(mainw->multitrack, FALSE);
       mainw->multitrack->redraw_block = FALSE;

@@ -25,9 +25,8 @@ typedef struct {
   char *data;
 } lives_speed_cache_t;
 
-static boolean  omute,  osepwin,  ofs,  ofaded,  odouble;
 
-static int get_hex_digit(const char c) GNU_CONST;
+static boolean omute, osepwin, ofs, ofaded, odouble;
 
 
 LIVES_GLOBAL_INLINE boolean lives_setenv(const char *name, const char *value) {
@@ -219,8 +218,6 @@ lives_pgid_t lives_fork(const char *com) {
 }
 
 
-/////////////////////////////////////////////
-
 int lives_chdir(const char *path, boolean no_error_dlg) {
   /// returns 0 on success
   /// on failure pops up an error dialog, unless no_error_dlg is TRUE
@@ -239,18 +236,6 @@ int lives_chdir(const char *path, boolean no_error_dlg) {
 }
 
 
-LIVES_GLOBAL_INLINE boolean lives_freep(void **ptr) {
-  // free a pointer and nullify it, only if it is non-null to start with
-  // pass the address of the pointer in
-  if (ptr && *ptr) {
-    lives_free(*ptr);
-    *ptr = NULL;
-    return TRUE;
-  }
-  return FALSE;
-}
-
-
 LIVES_GLOBAL_INLINE int lives_kill(lives_pid_t pid, int sig) {
   if (pid == 0) {
     LIVES_ERROR("Tried to kill pid 0");
@@ -265,324 +250,7 @@ LIVES_GLOBAL_INLINE int lives_killpg(lives_pgid_t pgrp, int sig) {return killpg(
 
 LIVES_GLOBAL_INLINE void clear_mainw_msg(void) {lives_memset(mainw->msg, 0, MAINW_MSG_SIZE);}
 
-
-LIVES_GLOBAL_INLINE uint64_t lives_10pow(int pow) {
-  register int i;
-  uint64_t res = 1;
-  for (i = 0; i < pow; i++) res *= 10;
-  return res;
-}
-
-
-LIVES_GLOBAL_INLINE double lives_fix(double val, int decimals) {
-  double factor = (double)lives_10pow(decimals);
-  if (val >= 0.) return (double)((int)(val * factor + 0.5)) / factor;
-  return (double)((int)(val * factor - 0.5)) / factor;
-}
-
-
-LIVES_GLOBAL_INLINE uint32_t get_approx_ln(uint32_t x) {
-  x |= (x >> 1); x |= (x >> 2); x |= (x >> 4); x |= (x >> 8); x |= (x >> 16);
-  return (++x) >> 1;
-}
-
-LIVES_GLOBAL_INLINE uint64_t get_approx_ln64(uint64_t x) {
-  x |= (x >> 1); x |= (x >> 2); x |= (x >> 4); x |= (x >> 8); x |= (x >> 16); x |= (x >> 32);
-  return (++x) >> 1;
-}
-
-LIVES_GLOBAL_INLINE uint64_t get_near2pow(uint64_t val) {
-  uint64_t low = get_approx_ln64(val), high = low * 2;
-  if (high < low || (val - low < high - val)) return low;
-  return high;
-}
-
 ///////////////////////////////////////////////////////////
-
-static lives_time_source_t lastt = LIVES_TIME_SOURCE_NONE;
-static ticks_t delta = 0;
-
-void reset_playback_clock(void) {
-  mainw->cadjticks = mainw->adjticks = mainw->syncticks = 0;
-  lastt = LIVES_TIME_SOURCE_NONE;
-  delta = 0;
-}
-
-
-ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, lives_time_source_t *time_source) {
-  // get the time using a variety of methods
-  // time_source may be NULL or LIVES_TIME_SOURCE_NONE to set auto
-  // or another value to force it (EXTERNAL cannot be forced)
-  lives_time_source_t *tsource, xtsource = LIVES_TIME_SOURCE_NONE;
-  ticks_t clock_ticks, current = -1;
-  static ticks_t lclock_ticks, interticks;
-
-  if (time_source) tsource = time_source;
-  else tsource = &xtsource;
-
-  clock_ticks = lives_get_relative_ticks(origsecs, orignsecs);
-  mainw->clock_ticks = clock_ticks;
-
-  if (*tsource == LIVES_TIME_SOURCE_EXTERNAL) *tsource = LIVES_TIME_SOURCE_NONE;
-
-  if (mainw->foreign || prefs->force_system_clock || (prefs->vj_mode && (prefs->audio_src == AUDIO_SRC_EXT))) {
-    *tsource = LIVES_TIME_SOURCE_SYSTEM;
-    current = clock_ticks;
-  }
-
-  if (*tsource == LIVES_TIME_SOURCE_NONE) {
-#ifdef ENABLE_JACK_TRANSPORT
-    if (mainw->jack_can_stop && (prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) &&
-        (prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT) && !(mainw->record && !(prefs->rec_opts & REC_FRAMES))) {
-      // calculate the time from jack transport
-      *tsource = LIVES_TIME_SOURCE_EXTERNAL;
-      current = jack_transport_get_current_ticks();
-    }
-#endif
-  }
-
-  if (is_realtime_aplayer(prefs->audio_player) && (*tsource == LIVES_TIME_SOURCE_NONE ||
-      *tsource == LIVES_TIME_SOURCE_SOUNDCARD)) {
-    if ((!mainw->is_rendering || (mainw->multitrack && !cfile->opening && !mainw->multitrack->is_rendering)) &&
-        (!(mainw->fixed_fpsd > 0. || (mainw->vpp && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback)))) {
-      // get time from soundcard
-      // this is done so as to synch video stream with the audio
-      // we do this in two cases:
-      // - for internal audio, playing back a clip with audio (writing)
-      // - or when audio source is set to external (reading) and we are recording, no internal audio generator is running
-
-      // we ignore this if we are running with a playback plugin which requires a fixed framerate (e.g a streaming plugin)
-      // in that case we will adjust the audio rate to fit the system clock
-
-      // or if we are rendering
-
-#ifdef ENABLE_JACK
-      if (prefs->audio_player == AUD_PLAYER_JACK &&
-          ((prefs->audio_src == AUDIO_SRC_INT && mainw->jackd && mainw->jackd->in_use &&
-            IS_VALID_CLIP(mainw->jackd->playing_file) && mainw->files[mainw->jackd->playing_file]->achans > 0) ||
-           (prefs->audio_src == AUDIO_SRC_EXT && mainw->jackd_read && mainw->jackd_read->in_use))) {
-        *tsource = LIVES_TIME_SOURCE_SOUNDCARD;
-        if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
-          current = lives_jack_get_time(mainw->jackd_read);
-        else
-          current = lives_jack_get_time(mainw->jackd);
-      }
-#endif
-
-#ifdef HAVE_PULSE_AUDIO
-      if (prefs->audio_player == AUD_PLAYER_PULSE &&
-          ((prefs->audio_src == AUDIO_SRC_INT && mainw->pulsed && mainw->pulsed->in_use &&
-            IS_VALID_CLIP(mainw->pulsed->playing_file) && mainw->files[mainw->pulsed->playing_file]->achans > 0) ||
-           (prefs->audio_src == AUDIO_SRC_EXT && mainw->pulsed_read && mainw->pulsed_read->in_use))) {
-        *tsource = LIVES_TIME_SOURCE_SOUNDCARD;
-        if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
-          current = lives_pulse_get_time(mainw->pulsed_read);
-        else current = lives_pulse_get_time(mainw->pulsed);
-      }
-#endif
-    }
-  }
-
-  if (*tsource == LIVES_TIME_SOURCE_NONE || current == -1) {
-    *tsource = LIVES_TIME_SOURCE_SYSTEM;
-    current = clock_ticks;
-  }
-
-  //if (lastt != *tsource) {
-  /* g_print("t1 = %ld, t2 = %ld cadj =%ld, adj = %ld del =%ld %ld %ld\n", clock_ticks, current, mainw->cadjticks, mainw->adjticks, */
-  /*         delta, clock_ticks + mainw->cadjticks, current + mainw->adjticks); */
-  //}
-
-  /// synchronised timing
-  /// it can be helpful to imagine a virtual clock which is at currrent time:
-  /// clock time - cadjticks = virtual time = other time + adjticks
-  /// cadjticks and adjticks are only set when we switch from one source to another, i.e the virtual clock will run @ different rates
-  /// depending on the source. This is fine as it enables sync with the clock source, provided the time doesn't jump when moving
-  /// from one source to another.
-  /// when the source changes we then alter either cadjticks or adjticks so that the initial timing matches
-  /// e.g when switching to clock source, cadjticks and adjticks will have diverged. So we want to set new cadjtick s.t:
-  /// clock ticks - cadjticks == source ticks + adjticks. i.e cadjticks = clock ticks - (source ticks + adjticks).
-  /// we use the delta calculated the last time, since the other source may longer be available.
-  /// this should not be a concern since this function is called very frequently
-  /// recalling cadjticks_new = clock_ticks - (source_ticks + adjticks), and substituting for delta we get:
-  // cadjticks_new = clock_ticks - (source_ticks + adjticks) = delta + cadjticks_old
-  /// conversely, when switching from clock to source, adjticks_new = clock_ticks - cadjticks - source_ticks
-  /// again, this just delta + adjticks; in this case we can use current delta since it is assumed that the system clock is always available
-
-  /// this scheme does, however introduce a small problem, which is that when the sources are switched, we assume that the
-  /// time on both clocks is equivalent. This can lead to a problem when switching clips, since temporarily we switch to system
-  /// time and then back to soundcard. However, this can cause some updates to the timer to be missed, i.e the audio is playing but the
-  /// samples are not counted, however we cannot simply add these to the soundcard timer, as they will be lost due to the resync.
-  /// hence we need mainw->syncticks --> a global adjustment which is independant of the clock source. This is similar to
-  /// mainw->deltaticks for the player, however, deltaticks is a temporary impulse, whereas syncticks is a permanent adjustment.
-
-  if (*tsource == LIVES_TIME_SOURCE_SYSTEM)  {
-    if (lastt != LIVES_TIME_SOURCE_SYSTEM && lastt != LIVES_TIME_SOURCE_NONE) {
-      // current + adjt == clock_ticks - cadj /// interticks == lcurrent + adj
-      // current - ds + adjt == clock_ticks - dc - cadj /// interticks == lcurrent + adj
-
-      // cadj = clock_ticks - interticks + (current - lcurrent) - since we may not have current
-      // we have to approximate with clock_ticks - lclock_ticks
-      mainw->cadjticks = clock_ticks - interticks - (clock_ticks - lclock_ticks);
-    }
-    interticks = clock_ticks - mainw->cadjticks;
-  } else {
-    if (lastt == LIVES_TIME_SOURCE_SYSTEM) {
-      // current - ds + adjt == clock_ticks - dc - cadj /// iinterticks == lclock_ticks - cadj ///
-      mainw->adjticks = interticks - current + (clock_ticks - lclock_ticks);
-    }
-    interticks = current + mainw->adjticks;
-  }
-
-  /* if (lastt != *tsource) { */
-  /*   g_print("aft t1 = %ld, t2 = %ld cadj =%ld, adj = %ld del =%ld %ld %ld\n", clock_ticks, current, mainw->cadjticks, */
-  /*           mainw->adjticks, delta, clock_ticks + mainw->cadjticks, current + mainw->adjticks); */
-  /* } */
-  lclock_ticks = clock_ticks;
-  lastt = *tsource;
-  return interticks + mainw->syncticks;
-}
-
-
-///////////////// alarms /////
-
-LIVES_GLOBAL_INLINE lives_alarm_t lives_alarm_reset(lives_alarm_t alarm_handle, ticks_t ticks) {
-  // set to now + offset
-  // invalid alarm number
-  lives_timeout_t *alarm;
-  if (alarm_handle <= 0 || alarm_handle > LIVES_MAX_ALARMS) {
-    LIVES_WARN("Invalid alarm handle");
-    break_me("inv alarm handle in lives_alarm_reset");
-    return -1;
-  }
-
-  // offset of 1 was added for caller
-  alarm = &mainw->alarms[--alarm_handle];
-
-  alarm->lastcheck = lives_get_current_ticks();
-  alarm->tleft = ticks;
-  return ++alarm_handle;
-}
-
-
-/** set alarm for now + delta ticks (10 nanosec)
-   param ticks (10 nanoseconds) is the offset when we want our alarm to trigger
-   returns int handle or -1
-   call lives_get_alarm(handle) to test if time arrived
-*/
-
-lives_alarm_t lives_alarm_set(ticks_t ticks) {
-  int i;
-
-  // we will assign [this] next
-  lives_alarm_t ret;
-
-  pthread_mutex_lock(&mainw->alarmlist_mutex);
-
-  ret = mainw->next_free_alarm;
-
-  if (ret > LIVES_MAX_USER_ALARMS) ret--;
-  else {
-    // no alarm slots left
-    if (mainw->next_free_alarm == ALL_USED) {
-      pthread_mutex_unlock(&mainw->alarmlist_mutex);
-      LIVES_WARN("No alarms left");
-      return ALL_USED;
-    }
-  }
-
-  // system alarms
-  if (ret >= LIVES_MAX_USER_ALARMS) {
-    lives_alarm_reset(++ret, ticks);
-    pthread_mutex_unlock(&mainw->alarmlist_mutex);
-    return ret;
-  }
-
-  i = ++mainw->next_free_alarm;
-
-  // find free slot for next time
-  while (mainw->alarms[i].lastcheck != 0 && i < LIVES_MAX_USER_ALARMS) i++;
-
-  if (i == LIVES_MAX_USER_ALARMS) mainw->next_free_alarm = ALL_USED; // no more alarm slots
-  else mainw->next_free_alarm = i; // OK
-  lives_alarm_reset(++ret, ticks);
-  pthread_mutex_unlock(&mainw->alarmlist_mutex);
-
-  return ret;
-}
-
-
-/*** check if alarm time passed yet, if so clear that alarm and return TRUE
-   else return FALSE
-*/
-ticks_t lives_alarm_check(lives_alarm_t alarm_handle) {
-  ticks_t curticks;
-  lives_timeout_t *alarm;
-
-  // invalid alarm number
-  if (alarm_handle <= 0 || alarm_handle > LIVES_MAX_ALARMS) {
-    LIVES_WARN("Invalid alarm handle");
-    break_me("inv alarm handle in lives_alarm_check");
-    return -1;
-  }
-
-  // offset of 1 was added for caller
-  alarm = &mainw->alarms[--alarm_handle];
-
-  // alarm time was never set !
-  if (alarm->lastcheck == 0) {
-    LIVES_WARN("Alarm time not set");
-    return 0;
-  }
-
-  curticks = lives_get_current_ticks();
-
-  if (prefs->show_dev_opts) {
-    /// guard against long interrupts (when debugging for example)
-    // if the last check was > 5 seconds ago, we ignore the time jump, updating the check time but not reducing the time left
-    if (curticks - alarm->lastcheck > 5 * TICKS_PER_SECOND) {
-      alarm->lastcheck = curticks;
-      return alarm->tleft;
-    }
-  }
-
-  alarm->tleft -= curticks - alarm->lastcheck;
-
-  if (alarm->tleft <= 0) {
-    // reached alarm time, free up this timer and return TRUE
-    alarm->lastcheck = 0;
-    LIVES_DEBUG("Alarm reached");
-    return 0;
-  }
-  alarm->lastcheck = curticks;
-  // alarm time not reached yet
-  return alarm->tleft;
-}
-
-
-boolean lives_alarm_clear(lives_alarm_t alarm_handle) {
-  if (alarm_handle <= 0 || alarm_handle > LIVES_MAX_ALARMS) {
-    LIVES_WARN("Invalid clear alarm handle");
-    return FALSE;
-  }
-
-  mainw->alarms[--alarm_handle].lastcheck = 0;
-
-  if (alarm_handle < LIVES_MAX_USER_ALARMS
-      && (mainw->next_free_alarm == ALL_USED || alarm_handle < mainw->next_free_alarm)) {
-    mainw->next_free_alarm = alarm_handle;
-  }
-  return TRUE;
-}
-
-
-
-/* convert to/from a big endian 32 bit float for internal use */
-LIVES_GLOBAL_INLINE float LEFloat_to_BEFloat(float f) {
-  if (capable->byte_order == LIVES_LITTLE_ENDIAN) swab4(&f, &f, 1);
-  return f;
-}
-
 
 LIVES_GLOBAL_INLINE double calc_time_from_frame(int clip, int frame) {return (frame - 1.) / mainw->files[clip]->fps;}
 
@@ -622,383 +290,6 @@ LIVES_GLOBAL_INLINE int calc_frame_from_time4(int filenum, double time) {
   if (time < 0.) return mainw->files[filenum]->frames ? 1 : 0;
   frame = (int)(time * mainw->files[filenum]->fps + 1.49999);
   return frame;
-}
-
-
-static boolean check_for_audio_stop(int fileno, frames_t first_frame, frames_t last_frame) {
-  // this is only used for older versions with non-realtime players
-  // return FALSE if audio stops playback
-  lives_clip_t *sfile = mainw->files[fileno];
-#ifdef ENABLE_JACK
-  if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd && mainw->jackd->playing_file == fileno) {
-    if (!mainw->loop || mainw->playing_sel) {
-      if (!mainw->loop_cont) {
-        if ((sfile->adirection == LIVES_DIRECTION_REVERSE && mainw->aframeno - 0.0001 < (double)first_frame + 0.0001)
-            || (sfile->adirection == LIVES_DIRECTION_FORWARD && mainw->aframeno + 0.0001 >= (double)last_frame - 0.0001)) {
-          return FALSE;
-        }
-      }
-    } else {
-      if (!mainw->loop_cont) {
-        if ((sfile->adirection == LIVES_DIRECTION_REVERSE && mainw->aframeno < 0.9999) ||
-            (sfile->adirection == LIVES_DIRECTION_FORWARD && calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.0001)
-             >= cfile->laudio_time - 0.0001)) {
-          return FALSE;
-	  // *INDENT-OFF*
-        }}}}
-  // *INDENT-ON*
-
-#endif
-#ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed && mainw->pulsed->playing_file == fileno) {
-    if (!mainw->loop || mainw->playing_sel) {
-      if (!mainw->loop_cont) {
-        if ((sfile->adirection == LIVES_DIRECTION_REVERSE && mainw->aframeno - 0.0001 < (double)first_frame + 0.0001)
-            || (sfile->adirection == LIVES_DIRECTION_FORWARD && mainw->aframeno + 1.0001 >= (double)last_frame - 0.0001)) {
-          return FALSE;
-        }
-      }
-    } else {
-      if (!mainw->loop_cont) {
-        if ((sfile->adirection == LIVES_DIRECTION_REVERSE && mainw->aframeno < 0.9999) ||
-            (sfile->adirection == LIVES_DIRECTION_FORWARD && calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.0001)
-             >= cfile->laudio_time - 0.0001)) {
-          return FALSE;
-	  // *INDENT-OFF*
-        }}}}
-  // *INDENT-ON*
-
-#endif
-  return TRUE;
-}
-
-
-void calc_aframeno(int fileno) {
-#ifdef ENABLE_JACK
-  if (prefs->audio_player == AUD_PLAYER_JACK && ((mainw->jackd && mainw->jackd->playing_file == fileno) ||
-      (mainw->jackd_read && mainw->jackd_read->playing_file == fileno))) {
-    // get seek_pos from jack
-    if (mainw->jackd_read) mainw->aframeno = lives_jack_get_pos(mainw->jackd_read) * cfile->fps + 1.;
-    else mainw->aframeno = lives_jack_get_pos(mainw->jackd) * cfile->fps + 1.;
-  }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player == AUD_PLAYER_PULSE && ((mainw->pulsed && mainw->pulsed->playing_file == fileno) ||
-      (mainw->pulsed_read && mainw->pulsed_read->playing_file == fileno))) {
-    // get seek_pos from pulse
-    if (mainw->pulsed_read) mainw->aframeno = lives_pulse_get_pos(mainw->pulsed_read) * cfile->fps + 1.;
-    else mainw->aframeno = lives_pulse_get_pos(mainw->pulsed) * cfile->fps + 1.;
-  }
-#endif
-}
-
-
-frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
-  // returns a frame number (floor) using sfile->last_frameno and ntc-otc
-  // takes into account looping modes
-
-  // the range is first_frame -> last_frame
-
-  // which is generally 1 -> sfile->frames, unless we are playing a selection
-
-  // in case the frame is out of range and playing, returns 0 and sets mainw->cancelled
-
-  // ntc is adjusted backwards to timecode of the new frame
-
-  // the basic operation is quite simple, given the time difference between the last frame and
-  // now, we calculate the new frame from the current fps and then ensure it is in the range
-  // first_frame -> last_frame
-
-  // Complications arise because we have ping-pong loop mode where the play direction
-  // alternates - here we need to determine how many times we have reached the start or end
-  // play point. This is similar to the winding number in topological calculations.
-
-  // caller should check return value of ntc, and if it differs from otc, show the frame
-
-  // note we also calculate the audio "frame" and position for realtime audio players
-  // this is done so we can check here if audio limits stopped playback
-
-  static boolean norecurse = FALSE;
-  static ticks_t last_ntc = 0;
-
-  ticks_t ddtc = *ntc - last_ntc;
-  ticks_t dtc = *ntc - otc;
-  int64_t first_frame, last_frame, selrange;
-  lives_clip_t *sfile = mainw->files[fileno];
-  double fps;
-  lives_direction_t dir;
-  frames_t cframe, nframe, fdelta;
-  int nloops;
-  int aplay_file = fileno;
-
-  if (!sfile) return 0;
-
-  cframe = sfile->last_frameno;
-  if (norecurse) return cframe;
-
-  if (sfile->achans > 0) {
-#ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player == AUD_PLAYER_PULSE) {
-      if (mainw->pulsed) aplay_file = mainw->pulsed->playing_file;
-    }
-#endif
-#ifdef ENABLE_JACK
-    if (prefs->audio_player == AUD_PLAYER_JACK) {
-      if (mainw->jackd) aplay_file = mainw->jackd->playing_file;
-    }
-#endif
-    if (!IS_VALID_CLIP(aplay_file)) aplay_file = -1;
-    else {
-      if (fileno != aplay_file) {
-        off64_t aseek_pos_delta = (off64_t)((double)dtc / TICKS_PER_SECOND_DBL * (double)(sfile->arate))
-                                  * sfile->achans * sfile->asampsize / 8;
-        if (sfile->adirection == LIVES_DIRECTION_FORWARD) sfile->aseek_pos += aseek_pos_delta;
-        else sfile->aseek_pos -= aseek_pos_delta;
-        if (sfile->aseek_pos < 0 || sfile->aseek_pos > sfile->afilesize) {
-          nloops = sfile->aseek_pos / sfile->afilesize;
-          if (mainw->ping_pong && (sfile->adirection == LIVES_DIRECTION_REVERSE || clip_can_reverse(fileno))) {
-            sfile->adirection += nloops;
-            sfile->adirection &= 1;
-            if (sfile->adirection == LIVES_DIRECTION_BACKWARD && !clip_can_reverse(fileno))
-              sfile->adirection = LIVES_DIRECTION_REVERSE;
-          }
-          sfile->aseek_pos -= nloops * sfile->afilesize;
-          if (sfile->adirection == LIVES_DIRECTION_REVERSE) sfile->aseek_pos = sfile->afilesize - sfile->aseek_pos;
-	  // *INDENT-OFF*
-	}}}}
-  // *INDENT-ON*
-
-  if (sfile->frames == 0 && !mainw->foreign) {
-    if (fileno == mainw->playing_file) mainw->scratch = SCRATCH_NONE;
-    return 0;
-  }
-
-  fps = sfile->pb_fps;
-  if (!LIVES_IS_PLAYING || (fps < 0.001 && fps > -0.001 && mainw->scratch != SCRATCH_NONE)) fps = sfile->fps;
-
-  if (fps < 0.001 && fps > -0.001) {
-    *ntc = otc;
-    if (fileno == mainw->playing_file) {
-      mainw->scratch = SCRATCH_NONE;
-      if (prefs->audio_src == AUDIO_SRC_INT) calc_aframeno(fileno);
-    }
-    return cframe;
-  }
-
-  // dtc is delta ticks (last frame time - current time), quantise this to the frame rate and round down
-  dtc = q_gint64_floor(dtc, fps);
-
-  // ntc is the time when the next frame should be / have been played, or if dtc is zero we just set it to otc - the last frame time
-  *ntc = otc + dtc;
-
-  // nframe is our new frame; convert dtc to sencods, and multiply by the frame rate, then add or subtract from current frame number
-  // the small constant is just to account for rounding errors
-  if (fps >= 0.)
-    nframe = cframe + (frames_t)((double)dtc / TICKS_PER_SECOND_DBL * fps + .00001);
-  else
-    nframe = cframe + (frames_t)((double)dtc / TICKS_PER_SECOND_DBL * fps - .00001);
-
-  if (nframe != cframe) {
-    if (!IS_NORMAL_CLIP(fileno)) {
-      return 1;
-    }
-    if (mainw->foreign) return sfile->frameno + 1;
-  }
-
-  if (fileno == mainw->playing_file) {
-    /// if we are scratching we do the following:
-    /// the time since the last call is considered to have happened at an increased fps (fwd or back)
-    /// we recalculate the frame at ntc as if we were at the faster framerate.
-
-    if (mainw->scratch == SCRATCH_FWD || mainw->scratch == SCRATCH_BACK
-        || mainw->scratch == SCRATCH_FWD_EXTRA || mainw->scratch == SCRATCH_BACK_EXTRA) {
-      if (mainw->scratch == SCRATCH_FWD_EXTRA || mainw->scratch == SCRATCH_BACK_EXTRA) ddtc *= 4;
-      if (mainw->scratch == SCRATCH_BACK || mainw->scratch == SCRATCH_BACK_EXTRA) {
-        mainw->deltaticks -= ddtc * KEY_RPT_INTERVAL * prefs->scratchback_amount
-                             * USEC_TO_TICKS / TICKS_PER_SECOND_DBL;
-      } else mainw->deltaticks += ddtc * KEY_RPT_INTERVAL * prefs->scratchback_amount
-                                    * USEC_TO_TICKS / TICKS_PER_SECOND_DBL;
-      // dtc is delta ticks, quantise this to the frame rate and round down
-      mainw->deltaticks = q_gint64_floor(mainw->deltaticks, fps * 4);
-    }
-
-    if (nframe != cframe) {
-      int delval = (ticks_t)((double)mainw->deltaticks / TICKS_PER_SECOND_DBL * fps + .5);
-      if (delval <= -1 || delval >= 1) {
-        /// the frame number changed, but we will recalulate the value using mainw->deltaticks
-        frames64_t xnframe = cframe + (int64_t)delval;
-        frames64_t dframes = xnframe - nframe;
-
-        if (xnframe != nframe) {
-          nframe = xnframe;
-          /// retain the fractional part for next time
-          mainw->deltaticks -= (ticks_t)((double)delval / fps * TICKS_PER_SECOND_DBL);
-          if (nframe != cframe) {
-            sfile->last_frameno += dframes;
-            if (fps < 0. && mainw->scratch == SCRATCH_FWD) sfile->last_frameno--;
-            if (fps > 0. &&  mainw->scratch == SCRATCH_BACK) sfile->last_frameno++;
-            mainw->scratch = SCRATCH_JUMP_NORESYNC;
-          } else mainw->scratch = SCRATCH_NONE;
-        }
-      }
-    }
-    last_ntc = *ntc;
-  }
-
-  last_frame = sfile->frames;
-  first_frame = 1;
-
-  if (fileno == mainw->playing_file) {
-    // calculate audio "frame" from the number of samples played
-    if (prefs->audio_src == AUDIO_SRC_INT) calc_aframeno(fileno);
-
-    if (nframe == cframe || mainw->foreign) {
-      if (!mainw->foreign && fileno == mainw->playing_file &&
-          mainw->scratch == SCRATCH_JUMP && (!mainw->event_list || mainw->record || mainw->record_paused) &&
-          (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
-        resync_audio(nframe);
-        mainw->scratch = SCRATCH_JUMP_NORESYNC;
-      }
-      return nframe;
-    }
-
-    if (!mainw->clip_switched && (mainw->scratch == SCRATCH_NONE || mainw->scratch == SCRATCH_REV)) {
-      last_frame = mainw->playing_sel ? sfile->end : mainw->play_end;
-      if (last_frame > sfile->frames) last_frame = sfile->frames;
-      first_frame = mainw->playing_sel ? sfile->start : mainw->loop_video ? mainw->play_start : 1;
-      if (first_frame > sfile->frames) first_frame = sfile->frames;
-    }
-
-    if (sfile->frames > 1 && prefs->noframedrop && (mainw->scratch == SCRATCH_NONE || mainw->scratch == SCRATCH_REV)) {
-      // if noframedrop is set, we may not skip any frames
-      // - the usual situation is that we are allowed to drop late frames
-      // in this mode we may be forced to play at a reduced framerate
-      if (nframe > cframe + 1) {
-        // update this so the player can calculate 'dropped' frames correctly
-        cfile->last_frameno -= (nframe - cframe - 1);
-        nframe = cframe + 1;
-      } else if (nframe < cframe - 1) {
-        cfile->last_frameno += (cframe - 1 - nframe);
-        nframe = cframe - 1;
-      }
-    }
-  }
-
-  while (IS_NORMAL_CLIP(fileno) && (nframe < first_frame || nframe > last_frame)) {
-    // get our frame back to within bounds:
-    // define even parity (0) as backwards, odd parity (1) as forwards
-    // we subtract the lower bound from the new frame, and divide the result by the selection length,
-    // rounding towards zero. (nloops)
-    // in ping mode this is then added to the original direction, and the resulting parity gives the new direction
-    // the remainder after doing the division is then either added to the selection start (forwards)
-    /// or subtracted from the selection end (backwards) [if we started backwards then the boundary crossing will be with the
-    // lower bound and nloops and the remainder will be negative, so we subtract and add the negatvie value instead]
-    // we must also set
-
-    if (fileno == mainw->playing_file) {
-      // check if video stopped playback
-      if (mainw->whentostop == STOP_ON_VID_END) {
-        mainw->cancelled = CANCEL_VID_END;
-        mainw->scratch = SCRATCH_NONE;
-        return 0;
-      }
-      // we need to set this for later in the function
-      mainw->scratch = SCRATCH_JUMP;
-    }
-
-    if (first_frame == last_frame) {
-      nframe = first_frame;
-      break;
-    }
-
-    if (fps < 0.) dir = LIVES_DIRECTION_BACKWARD; // 0, and even parity
-    else dir = LIVES_DIRECTION_FORWARD; // 1, and odd parity
-
-    if (dir == LIVES_DIRECTION_FORWARD && nframe < first_frame) {
-      // if FWD and before lower bound, just jump to lower bound
-      nframe = first_frame;
-      sfile->last_frameno = first_frame;
-      break;
-    }
-
-    if (dir == LIVES_DIRECTION_BACKWARD && nframe  > last_frame) {
-      // if BACK and after upper bound, just jump to upper bound
-      nframe = last_frame;
-      sfile->last_frameno = last_frame;
-      break;
-    }
-
-    fdelta = ABS(sfile->frameno - sfile->last_frameno);
-    nframe -= first_frame;
-    selrange = (1 + last_frame - first_frame);
-    if (nframe < 0) nframe = -nframe;
-    nloops = nframe / selrange;
-    if (mainw->ping_pong && (dir == LIVES_DIRECTION_BACKWARD || (clip_can_reverse(fileno)))) {
-      dir += nloops + dir + 1;
-      dir = LIVES_DIRECTION_PAR(dir);
-      if (dir == LIVES_DIRECTION_BACKWARD && !clip_can_reverse(fileno))
-        dir = LIVES_DIRECTION_FORWARD;
-    }
-
-    nframe -= nloops * selrange;
-
-    if (dir == LIVES_DIRECTION_FORWARD) {
-      nframe += first_frame;
-      sfile->last_frameno = nframe - fdelta;
-      if (fps < 0.) {
-        // backwards -> forwards
-        if (fileno == mainw->playing_file) {
-          /// must set norecurse, otherwise we can end up in an infinite loop since dirchange_callback calls this function
-          norecurse = TRUE;
-          dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
-                             LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
-          norecurse = FALSE;
-        } else sfile->pb_fps = -sfile->pb_fps;
-      }
-    }
-
-    else {
-      nframe = last_frame - nframe;
-      sfile->last_frameno = nframe + fdelta;
-      if (fps > 0.) {
-        // forwards -> backwards
-        if (fileno == mainw->playing_file) {
-          norecurse = TRUE;
-          dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
-                             LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
-          norecurse = FALSE;
-        } else sfile->pb_fps = -sfile->pb_fps;
-      }
-    }
-    break;
-  }
-
-  if (fileno == mainw->playing_file && prefs->audio_src == AUDIO_SRC_INT && fileno == aplay_file && sfile->achans > 0
-      && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
-      && (mainw->scratch != SCRATCH_NONE && mainw->scratch != SCRATCH_JUMP_NORESYNC)) {
-    if (mainw->whentostop == STOP_ON_AUD_END) {
-      // check if audio stopped playback. The audio player will also be checking this, BUT: we have to check here too
-      // before doing any resync, otherwise the video can loop and if the audio is then resynced it may never reach the end
-      calc_aframeno(fileno);
-      if (!check_for_audio_stop(fileno, first_frame + 1, last_frame - 1)) {
-        mainw->cancelled = CANCEL_AUD_END;
-        mainw->scratch = SCRATCH_NONE;
-        return 0;
-      }
-      resync_audio(nframe);
-      if (mainw->scratch == SCRATCH_JUMP) {
-        mainw->video_seek_ready = TRUE;   /// ????
-        mainw->scratch = SCRATCH_JUMP_NORESYNC;
-      }
-    }
-  }
-  if (fileno == mainw->playing_file) {
-    if (mainw->scratch != SCRATCH_NONE) {
-      sfile->last_frameno = nframe;
-      mainw->scratch = SCRATCH_JUMP_NORESYNC;
-    }
-  }
-  return nframe;
 }
 
 
@@ -1131,341 +422,6 @@ void init_clipboard(void) {
   clipboard->cb_src = current_file;
 }
 
-
-weed_plant_t *get_nth_info_message(int n) {
-  weed_plant_t *msg = mainw->msg_list;
-  const char *leaf;
-  weed_error_t error;
-  int m = 0;
-
-  if (n < 0) return NULL;
-
-  if (n >= mainw->n_messages) n = mainw->n_messages - 1;
-
-  if (n >= (mainw->n_messages >> 1)) {
-    m = mainw->n_messages - 1;
-    msg = weed_get_plantptr_value(msg, WEED_LEAF_PREVIOUS, &error);
-  }
-  if (mainw->ref_message && ABS(mainw->ref_message_n - n) < ABS(m - n)) {
-    m = mainw->ref_message_n;
-    msg = mainw->ref_message;
-  }
-
-  if (m > n) leaf = WEED_LEAF_PREVIOUS;
-  else leaf = WEED_LEAF_NEXT;
-
-  while (m != n) {
-    msg = weed_get_plantptr_value(msg, leaf, &error);
-    if (error != WEED_SUCCESS) return NULL;
-    if (m > n) m--;
-    else m++;
-  }
-  mainw->ref_message = msg;
-  mainw->ref_message_n = n;
-  return msg;
-}
-
-
-char *dump_messages(int start, int end) {
-  weed_plant_t *msg = mainw->msg_list;
-  char *text = lives_strdup(""), *tmp, *msgtext;
-  boolean needs_newline = FALSE;
-  int msgno = 0;
-  int error;
-
-  while (msg) {
-    msgtext = weed_get_string_value(msg, WEED_LEAF_LIVES_MESSAGE_STRING, &error);
-    if (error != WEED_SUCCESS) break;
-    if (msgno >= start) {
-#ifdef SHOW_MSG_LINENOS
-      tmp = lives_strdup_printf("%s%s(%d)%s", text, needs_newline ? "\n" : "", msgno, msgtext);
-#else
-      tmp = lives_strdup_printf("%s%s%s", text, needs_newline ? "\n" : "", msgtext);
-#endif
-      lives_free(text);
-      text = tmp;
-      needs_newline = TRUE;
-    }
-    lives_free(msgtext);
-    if (++msgno > end) if (end > -1) break;
-    msg = weed_get_plantptr_value(msg, WEED_LEAF_NEXT, &error);
-    if (error != WEED_SUCCESS) break;
-  }
-  return text;
-}
-
-
-static weed_plant_t *make_msg(const char *text) {
-  // make single msg. text should have no newlines in it, except possibly as the last character.
-  weed_plant_t *msg = weed_plant_new(WEED_PLANT_LIVES);
-  if (!msg) return NULL;
-
-  weed_set_int_value(msg, WEED_LEAF_LIVES_SUBTYPE, LIVES_WEED_SUBTYPE_MESSAGE);
-  weed_set_string_value(msg, WEED_LEAF_LIVES_MESSAGE_STRING, text);
-
-  weed_set_plantptr_value(msg, WEED_LEAF_NEXT, NULL);
-  weed_set_plantptr_value(msg, WEED_LEAF_PREVIOUS, NULL);
-  return msg;
-}
-
-
-int free_n_msgs(int frval) {
-  int error;
-  weed_plant_t *next, *end;
-
-  if (frval <= 0) return WEED_SUCCESS;
-  if (frval > mainw->n_messages || !mainw->msg_list) frval = mainw->n_messages;
-
-  end = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, &error); // list end
-  if (error != WEED_SUCCESS) {
-    return error;
-  }
-
-  while (frval-- && mainw->msg_list) {
-    next = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_NEXT, &error); // becomes new head
-    if (error != WEED_SUCCESS) {
-      return error;
-    }
-    weed_plant_free(mainw->msg_list);
-    mainw->msg_list = next;
-    if (mainw->msg_list) {
-      if (mainw->msg_list == end) weed_set_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, NULL);
-      else weed_set_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, end);
-    }
-    mainw->n_messages--;
-    if (mainw->ref_message) {
-      if (--mainw->ref_message_n < 0) mainw->ref_message = NULL;
-    }
-  }
-
-  if (mainw->msg_adj)
-    lives_adjustment_set_value(mainw->msg_adj, lives_adjustment_get_value(mainw->msg_adj) - 1.);
-  return WEED_SUCCESS;
-}
-
-
-int add_messages_to_list(const char *text) {
-  // append text to our message list, splitting it into lines
-  // if we hit the max message limit then free the oldest one
-  // returns a weed error
-  weed_plant_t *msg, *end;;
-  char **lines;
-  int error, i, numlines;
-
-  if (prefs->max_messages == 0) return WEED_SUCCESS;
-  if (!text || !*text) return WEED_SUCCESS;
-
-  // split text into lines
-  numlines = get_token_count(text, '\n');
-  lines = lives_strsplit(text, "\n", numlines);
-
-  for (i = 0; i < numlines; i++) {
-    if (!mainw->msg_list) {
-      mainw->msg_list = make_msg(lines[i]);
-      if (!mainw->msg_list) {
-        mainw->n_messages = 0;
-        lives_strfreev(lines);
-        return WEED_ERROR_MEMORY_ALLOCATION;
-      }
-      mainw->n_messages = 1;
-      continue;
-    }
-
-    end = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, &error);
-    if (error != WEED_SUCCESS) {
-      lives_strfreev(lines);
-      return error;
-    }
-    if (!end) end = mainw->msg_list;
-
-    if (i == 0) {
-      // append first line to text of last msg
-      char *strg2, *strg = weed_get_string_value(end, WEED_LEAF_LIVES_MESSAGE_STRING, &error);
-      if (error != WEED_SUCCESS) {
-        lives_strfreev(lines);
-        return error;
-      }
-      strg2 = lives_strdup_printf("%s%s", strg, lines[0]);
-      weed_set_string_value(end, WEED_LEAF_LIVES_MESSAGE_STRING, strg2);
-      lives_free(strg);
-      lives_free(strg2);
-      continue;
-    }
-
-    if (prefs->max_messages > 0 && mainw->n_messages + 1 > prefs->max_messages) {
-      // retire the oldest if we reached the limit
-      error = free_n_msgs(1);
-      if (error != WEED_SUCCESS) {
-        lives_strfreev(lines);
-        return error;
-      }
-      if (!mainw->msg_list) {
-        i = numlines - 2;
-        continue;
-      }
-    }
-
-    msg = make_msg(lines[i]);
-    if (!msg) {
-      lives_strfreev(lines);
-      return WEED_ERROR_MEMORY_ALLOCATION;
-    }
-
-    mainw->n_messages++;
-
-    // head will get new previous (us)
-    weed_set_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, msg);
-    // we will get new previous (end)
-    weed_set_plantptr_value(msg, WEED_LEAF_PREVIOUS, end);
-    // end will get new next (us)
-    weed_set_plantptr_value(end, WEED_LEAF_NEXT, msg);
-  }
-  lives_strfreev(lines);
-  return WEED_SUCCESS;
-}
-
-
-boolean d_print_urgency(double timeout, const char *fmt, ...) {
-  // overlay emergency message on playback frame
-  va_list xargs;
-  char *text;
-
-  va_start(xargs, fmt);
-  text = lives_strdup_vprintf(fmt, xargs);
-  va_end(xargs);
-
-  d_print(text);
-
-  if (LIVES_IS_PLAYING && prefs->show_urgency_msgs) {
-    int nfa = mainw->next_free_alarm;
-    mainw->next_free_alarm = LIVES_URGENCY_ALARM;
-    lives_freep((void **)&mainw->urgency_msg);
-    lives_alarm_set(timeout * TICKS_PER_SECOND_DBL);
-    mainw->next_free_alarm = nfa;
-    mainw->urgency_msg = lives_strdup(text);
-    lives_free(text);
-    return TRUE;
-  }
-  lives_free(text);
-  return FALSE;
-}
-
-
-boolean d_print_overlay(double timeout, const char *fmt, ...) {
-  // overlay a message on playback frame
-  va_list xargs;
-  char *text;
-  va_start(xargs, fmt);
-  text = lives_strdup_vprintf(fmt, xargs);
-  va_end(xargs);
-  if (LIVES_IS_PLAYING && prefs->show_overlay_msgs && !(mainw->urgency_msg && prefs->show_urgency_msgs)) {
-    lives_freep((void **)&mainw->overlay_msg);
-    mainw->overlay_msg = lives_strdup(text);
-    lives_free(text);
-    lives_alarm_reset(mainw->overlay_alarm, timeout * TICKS_PER_SECOND_DBL);
-    return TRUE;
-  }
-  lives_free(text);
-  return FALSE;
-}
-
-
-void d_print(const char *fmt, ...) {
-  // collect output for the main message area (and info log)
-
-  // there are several small tweaks for this:
-
-  // mainw->suppress_dprint :: TRUE - dont print anything, return (for silencing noisy message blocks)
-  // mainw->no_switch_dprint :: TRUE - disable printing of switch message when maine->current_file changes
-
-  // mainw->last_dprint_file :: clip number of last mainw->current_file;
-  va_list xargs;
-
-  char *tmp, *text;
-
-  if (!prefs->show_gui) return;
-  if (mainw->suppress_dprint) return;
-
-  va_start(xargs, fmt);
-  text = lives_strdup_vprintf(fmt, xargs);
-  va_end(xargs);
-
-  if (mainw->current_file != mainw->last_dprint_file && mainw->current_file != 0 && !mainw->multitrack &&
-      (mainw->current_file == -1 || (cfile && cfile->clip_type != CLIP_TYPE_GENERATOR)) && !mainw->no_switch_dprint) {
-    if (mainw->current_file > 0) {
-      char *swtext = lives_strdup_printf(_("\n==============================\nSwitched to clip %s\n"),
-                                         tmp = get_menu_name(cfile,
-                                             TRUE));
-      lives_free(tmp);
-      add_messages_to_list(swtext);
-      lives_free(swtext);
-    } else {
-      add_messages_to_list(_("\n==============================\nSwitched to empty clip\n"));
-    }
-  }
-
-  add_messages_to_list(text);
-  lives_free(text);
-
-  if (!mainw->go_away && prefs->show_gui && prefs->show_msg_area
-      && ((!mainw->multitrack && mainw->msg_area
-           && mainw->msg_adj)
-          || (!mainw->multitrack && mainw->multitrack->msg_area
-              && mainw->multitrack->msg_adj))) {
-    if (mainw->multitrack) {
-      msg_area_scroll_to_end(mainw->multitrack->msg_area, mainw->multitrack->msg_adj);
-      lives_widget_queue_draw_if_visible(mainw->multitrack->msg_area);
-    } else {
-      msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
-      lives_widget_queue_draw_if_visible(mainw->msg_area);
-    }
-  }
-
-  if ((mainw->current_file == -1 || (cfile && cfile->clip_type != CLIP_TYPE_GENERATOR)) &&
-      (!mainw->no_switch_dprint || mainw->current_file != 0)) mainw->last_dprint_file = mainw->current_file;
-}
-
-
-static void d_print_utility(const char *text, int osc_note, const char *osc_detail) {
-  boolean nsdp = mainw->no_switch_dprint;
-  mainw->no_switch_dprint = TRUE;
-  d_print(text);
-  if (osc_note != LIVES_OSC_NOTIFY_NONE) lives_notify(osc_note, osc_detail);
-  if (!nsdp) {
-    mainw->no_switch_dprint = FALSE;
-    d_print("");
-  }
-}
-
-
-LIVES_GLOBAL_INLINE void d_print_cancelled(void) {
-  d_print_utility(_("cancelled.\n"), LIVES_OSC_NOTIFY_CANCELLED, "");
-}
-
-
-LIVES_GLOBAL_INLINE void d_print_failed(void) {
-  d_print_utility(_("failed.\n"), LIVES_OSC_NOTIFY_FAILED, "");
-}
-
-
-LIVES_GLOBAL_INLINE void d_print_done(void) {
-  d_print_utility(_("done.\n"), 0, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE void d_print_file_error_failed(void) {
-  d_print_utility(_("error in file. Failed.\n"), 0, NULL);
-}
-
-
-LIVES_GLOBAL_INLINE void d_print_enough(int frames) {
-  if (frames == 0) d_print_cancelled();
-  else {
-    char *msg = lives_strdup_printf(P_("%d frame is enough !\n", "%d frames are enough !\n", frames), frames);
-    d_print_utility(msg, 0, NULL);
-    lives_free(msg);
-  }
-}
 
 
 void buffer_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer user_data, int clipno,
@@ -2387,7 +1343,7 @@ char *repl_workdir(const char *entry, boolean fwd) {
 }
 
 
-void remove_layout_files(LiVESList * map) {
+void remove_layout_files(LiVESList *map) {
   // removes a LiVESList of layouts from the set layout map
 
   // removes from: - global layouts map
@@ -3112,12 +2068,6 @@ boolean after_foreign_play(void) {
 }
 
 
-LIVES_GLOBAL_INLINE boolean int_array_contains_value(int *array, int num_elems, int value) {
-  for (int i = 0; i < num_elems; i++) if (array[i] == value) return TRUE;
-  return FALSE;
-}
-
-
 void reset_clipmenu(void) {
   // sometimes the clip menu gets messed up, e.g. after reloading a set.
   // This function will clean up the 'x's and so on.
@@ -3688,27 +2638,6 @@ void set_sel_label(LiVESWidget * sel_label) {
 }
 
 
-LIVES_GLOBAL_INLINE void lives_list_free_strings(LiVESList * list) {
-  for (; list; list = list->next) lives_freep((void **)&list->data);
-}
-
-
-LIVES_GLOBAL_INLINE void lives_slist_free_all(LiVESSList **list) {
-  if (!list || !*list) return;
-  lives_list_free_strings((LiVESList *)*list);
-  lives_slist_free(*list);
-  *list = NULL;
-}
-
-
-LIVES_GLOBAL_INLINE void lives_list_free_all(LiVESList **list) {
-  if (!list || !*list) return;
-  lives_list_free_strings(*list);
-  lives_list_free(*list);
-  *list = NULL;
-}
-
-
 LIVES_GLOBAL_INLINE void cached_list_free(LiVESList **list) {
   lives_speed_cache_t *speedy;
   for (LiVESList *xlist = *list; xlist; xlist = xlist->next) {
@@ -3808,330 +2737,6 @@ char *get_val_from_cached_list(const char *key, size_t maxlen, LiVESList * cache
 }
 
 
-char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
-  char *key = NULL;
-
-  switch (what) {
-  case CLIP_DETAILS_HEADER_VERSION:
-    key = lives_strdup("header_version"); break;
-  case CLIP_DETAILS_BPP:
-    key = lives_strdup("bpp"); break;
-  case CLIP_DETAILS_FPS:
-    key = lives_strdup("fps"); break;
-  case CLIP_DETAILS_PB_FPS:
-    key = lives_strdup("pb_fps"); break;
-  case CLIP_DETAILS_WIDTH:
-    key = lives_strdup("width"); break;
-  case CLIP_DETAILS_HEIGHT:
-    key = lives_strdup("height"); break;
-  case CLIP_DETAILS_UNIQUE_ID:
-    key = lives_strdup("unique_id"); break;
-  case CLIP_DETAILS_ARATE:
-    key = lives_strdup("audio_rate"); break;
-  case CLIP_DETAILS_PB_ARATE:
-    key = lives_strdup("pb_audio_rate"); break;
-  case CLIP_DETAILS_ACHANS:
-    key = lives_strdup("audio_channels"); break;
-  case CLIP_DETAILS_ASIGNED:
-    key = lives_strdup("audio_signed"); break;
-  case CLIP_DETAILS_AENDIAN:
-    key = lives_strdup("audio_endian"); break;
-  case CLIP_DETAILS_ASAMPS:
-    key = lives_strdup("audio_sample_size"); break;
-  case CLIP_DETAILS_FRAMES:
-    key = lives_strdup("frames"); break;
-  case CLIP_DETAILS_TITLE:
-    key = lives_strdup("title"); break;
-  case CLIP_DETAILS_AUTHOR:
-    key = lives_strdup("author"); break;
-  case CLIP_DETAILS_COMMENT:
-    key = lives_strdup("comment"); break;
-  case CLIP_DETAILS_KEYWORDS:
-    key = lives_strdup("keywords"); break;
-  case CLIP_DETAILS_PB_FRAMENO:
-    key = lives_strdup("pb_frameno"); break;
-  case CLIP_DETAILS_CLIPNAME:
-    key = lives_strdup("clipname"); break;
-  case CLIP_DETAILS_FILENAME:
-    key = lives_strdup("filename"); break;
-  case CLIP_DETAILS_INTERLACE:
-    key = lives_strdup("interlace"); break;
-  case CLIP_DETAILS_DECODER_NAME:
-    key = lives_strdup("decoder"); break;
-  case CLIP_DETAILS_GAMMA_TYPE:
-    key = lives_strdup("gamma_type"); break;
-  default: break;
-  }
-  if (maxlenp && *maxlenp == 0) *maxlenp = 256;
-  return key;
-}
-
-
-boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_t maxlen) {
-  lives_clip_t *sfile = mainw->files[which];
-  char *lives_header = NULL;
-  char *val, *key, *tmp;
-
-  int retval2 = LIVES_RESPONSE_NONE;
-
-  if (!IS_VALID_CLIP(which)) return FALSE;
-
-  if (!mainw->hdrs_cache) {
-    /// ascrap_file now uses a different header name; this is to facilitate diskspace cleanup
-    /// otherwise it may be wrongly classified as a recoverable clip
-    /// (here this is largely academic, since the values are only read during crash recovery,
-    /// and the header should have been cached)
-    if (which == mainw->ascrap_file) {
-      lives_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle,
-                                          LIVES_ACLIP_HEADER, NULL);
-      if (!lives_file_test(lives_header, LIVES_FILE_TEST_EXISTS)) {
-        lives_free(lives_header);
-        lives_header = NULL;
-      }
-    }
-    if (!lives_header)
-      lives_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle,
-                                          LIVES_CLIP_HEADER, NULL);
-    if (!sfile->checked_for_old_header) {
-      struct stat mystat;
-      time_t old_time = 0, new_time = 0;
-      char *old_header = lives_build_filename(prefs->workdir, sfile->handle, LIVES_CLIP_HEADER_OLD, NULL);
-      sfile->checked_for_old_header = TRUE;
-      if (!lives_file_test(old_header, LIVES_FILE_TEST_EXISTS)) {
-        if (!stat(old_header, &mystat)) old_time = mystat.st_mtime;
-        if (!stat(lives_header, &mystat)) new_time = mystat.st_mtime;
-        if (old_time > new_time) {
-          sfile->has_old_header = TRUE;
-          lives_free(lives_header);
-          return FALSE; // clip has been edited by an older version of LiVES
-        }
-      }
-      lives_free(old_header);
-    }
-  }
-
-  //////////////////////////////////////////////////
-  key = clip_detail_to_string(what, &maxlen);
-
-  if (!key) {
-    tmp = lives_strdup_printf("Invalid detail %d requested from file %s", which, lives_header);
-    LIVES_ERROR(tmp);
-    lives_free(tmp);
-    lives_free(lives_header);
-    return FALSE;
-  }
-
-  if (mainw->hdrs_cache) {
-    val = get_val_from_cached_list(key, maxlen, mainw->hdrs_cache);
-    lives_free(key);
-    if (!val) return FALSE;
-  } else {
-    val = (char *)lives_malloc(maxlen);
-    if (!val) return FALSE;
-    retval2 = get_pref_from_file(lives_header, key, val, maxlen);
-    lives_free(lives_header);
-    lives_free(key);
-  }
-
-  if (retval2 == LIVES_RESPONSE_CANCEL) {
-    lives_free(val);
-    return FALSE;
-  }
-
-  switch (what) {
-  case CLIP_DETAILS_BPP:
-  case CLIP_DETAILS_WIDTH:
-  case CLIP_DETAILS_HEIGHT:
-  case CLIP_DETAILS_ARATE:
-  case CLIP_DETAILS_ACHANS:
-  case CLIP_DETAILS_ASAMPS:
-  case CLIP_DETAILS_FRAMES:
-  case CLIP_DETAILS_GAMMA_TYPE:
-  case CLIP_DETAILS_HEADER_VERSION:
-    *(int *)retval = atoi(val); break;
-  case CLIP_DETAILS_ASIGNED:
-    *(int *)retval = 0;
-    if (sfile->header_version == 0) *(int *)retval = atoi(val);
-    if (*(int *)retval == 0 && (!strcasecmp(val, "false"))) *(int *)retval = 1; // unsigned
-    break;
-  case CLIP_DETAILS_PB_FRAMENO:
-    *(int *)retval = atoi(val);
-    if (retval == 0) *(int *)retval = 1;
-    break;
-  case CLIP_DETAILS_PB_ARATE:
-    *(int *)retval = atoi(val);
-    if (retval == 0) *(int *)retval = sfile->arps;
-    break;
-  case CLIP_DETAILS_INTERLACE:
-    *(int *)retval = atoi(val);
-    break;
-  case CLIP_DETAILS_FPS:
-    *(double *)retval = strtod(val, NULL);
-    if (*(double *)retval == 0.) *(double *)retval = prefs->default_fps;
-    break;
-  case CLIP_DETAILS_PB_FPS:
-    *(double *)retval = strtod(val, NULL);
-    if (*(double *)retval == 0.) *(double *)retval = sfile->fps;
-    break;
-  case CLIP_DETAILS_UNIQUE_ID:
-    if (capable->cpu_bits == 32) {
-      *(uint64_t *)retval = (uint64_t)atoll(val);
-    } else {
-      *(uint64_t *)retval = (uint64_t)atol(val);
-    }
-    break;
-  case CLIP_DETAILS_AENDIAN:
-    *(int *)retval = atoi(val) * 2; break;
-  case CLIP_DETAILS_TITLE:
-  case CLIP_DETAILS_AUTHOR:
-  case CLIP_DETAILS_COMMENT:
-  case CLIP_DETAILS_CLIPNAME:
-  case CLIP_DETAILS_KEYWORDS:
-    lives_snprintf((char *)retval, maxlen, "%s", val);
-    break;
-  case CLIP_DETAILS_FILENAME:
-  case CLIP_DETAILS_DECODER_NAME:
-    lives_snprintf((char *)retval, maxlen, "%s", (tmp = F2U8(val)));
-    lives_free(tmp);
-    break;
-  default:
-    lives_free(val);
-    return FALSE;
-  }
-  lives_free(val);
-  return TRUE;
-}
-
-
-boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
-  lives_clip_t *sfile;
-  char *lives_header;
-  char *com, *tmp;
-  char *myval;
-  char *key;
-
-  boolean needs_sigs = FALSE;
-
-  THREADVAR(write_failed) = 0;
-  THREADVAR(com_failed) = FALSE;
-
-  if (which == 0 || which == mainw->scrap_file) return FALSE;
-
-  if (!IS_VALID_CLIP(which)) return FALSE;
-
-  sfile = mainw->files[which];
-
-  /// ascrap_file now uses a different header name; this is to facilitate diskspace cleanup
-  /// otherwise it may be wrongly classified as a recoverable clip
-  if (which == mainw->ascrap_file)
-    lives_header = lives_build_filename(prefs->workdir, sfile->handle, LIVES_ACLIP_HEADER, NULL);
-  else
-    lives_header = lives_build_filename(prefs->workdir, sfile->handle, LIVES_CLIP_HEADER, NULL);
-
-  key = clip_detail_to_string(what, NULL);
-
-  if (!key) {
-    tmp = lives_strdup_printf("Invalid detail %d added for file %s", which, lives_header);
-    LIVES_ERROR(tmp);
-    lives_free(tmp);
-    lives_free(lives_header);
-    return FALSE;
-  }
-
-  switch (what) {
-  case CLIP_DETAILS_BPP:
-    myval = lives_strdup_printf("%d", *(int *)val);
-    break;
-  case CLIP_DETAILS_FPS:
-    if (!sfile->ratio_fps) myval = lives_strdup_printf("%.3f", *(double *)val);
-    else myval = lives_strdup_printf("%.8f", *(double *)val);
-    break;
-  case CLIP_DETAILS_PB_FPS:
-    if (sfile->ratio_fps && (sfile->pb_fps == sfile->fps))
-      myval = lives_strdup_printf("%.8f", *(double *)val);
-    else myval = lives_strdup_printf("%.3f", *(double *)val);
-    break;
-  case CLIP_DETAILS_WIDTH:
-    myval = lives_strdup_printf("%d", *(int *)val); break;
-  case CLIP_DETAILS_HEIGHT:
-    myval = lives_strdup_printf("%d", *(int *)val); break;
-  case CLIP_DETAILS_UNIQUE_ID:
-    myval = lives_strdup_printf("%"PRIu64, *(uint64_t *)val); break;
-  case CLIP_DETAILS_ARATE:
-    myval = lives_strdup_printf("%d", *(int *)val); break;
-  case CLIP_DETAILS_PB_ARATE:
-    myval = lives_strdup_printf("%d", *(int *)val); break;
-  case CLIP_DETAILS_ACHANS:
-    myval = lives_strdup_printf("%d", *(int *)val); break;
-  case CLIP_DETAILS_ASIGNED:
-    if ((*(int *)val) == 1) myval = lives_strdup("true");
-    else myval = lives_strdup("false");
-    break;
-  case CLIP_DETAILS_AENDIAN:
-    myval = lives_strdup_printf("%d", (*(int *)val) / 2);
-    break;
-  case CLIP_DETAILS_ASAMPS:
-    myval = lives_strdup_printf("%d", *(int *)val); break;
-  case CLIP_DETAILS_FRAMES:
-    myval = lives_strdup_printf("%d", *(int *)val); break;
-  case CLIP_DETAILS_GAMMA_TYPE:
-    myval = lives_strdup_printf("%d", *(int *)val); break;
-  case CLIP_DETAILS_INTERLACE:
-    myval = lives_strdup_printf("%d", *(int *)val); break;
-  case CLIP_DETAILS_TITLE:
-    myval = lives_strdup((char *)val); break;
-  case CLIP_DETAILS_AUTHOR:
-    myval = lives_strdup((char *)val); break;
-  case CLIP_DETAILS_COMMENT:
-    myval = lives_strdup((const char *)val); break;
-  case CLIP_DETAILS_KEYWORDS:
-    myval = lives_strdup((const char *)val); break;
-  case CLIP_DETAILS_PB_FRAMENO:
-    myval = lives_strdup_printf("%d", *(int *)val); break;
-  case CLIP_DETAILS_CLIPNAME:
-    myval = lives_strdup((char *)val); break;
-  case CLIP_DETAILS_FILENAME:
-    myval = U82F((const char *)val); break;
-  case CLIP_DETAILS_DECODER_NAME:
-    myval = U82F((const char *)val); break;
-  case CLIP_DETAILS_HEADER_VERSION:
-    myval = lives_strdup_printf("%d", *(int *)val); break;
-  default:
-    return FALSE;
-  }
-
-  if (mainw->clip_header) {
-    char *keystr_start = lives_strdup_printf("<%s>\n", key);
-    char *keystr_end = lives_strdup_printf("\n</%s>\n\n", key);
-    lives_fputs(keystr_start, mainw->clip_header);
-    lives_fputs(myval, mainw->clip_header);
-    lives_fputs(keystr_end, mainw->clip_header);
-    lives_free(keystr_start);
-    lives_free(keystr_end);
-  } else {
-    if (!mainw->signals_deferred) {
-      set_signal_handlers((SignalHandlerPointer)defer_sigint);
-      needs_sigs = TRUE;
-    }
-    com = lives_strdup_printf("%s set_clip_value \"%s\" \"%s\" \"%s\"", prefs->backend_sync, lives_header, key, myval);
-    lives_system(com, FALSE);
-    if (mainw->signal_caught) catch_sigint(mainw->signal_caught);
-    if (needs_sigs) set_signal_handlers((SignalHandlerPointer)catch_sigint);
-    lives_free(com);
-  }
-
-  lives_free(lives_header);
-  lives_free(myval);
-  lives_free(key);
-
-  if (mainw->clip_header && THREADVAR(write_failed) == fileno(mainw->clip_header) + 1) {
-    THREADVAR(write_failed) = 0;
-    return FALSE;
-  }
-  if (THREADVAR(com_failed)) return FALSE;
-  return TRUE;
-}
-
 
 LiVESList *get_set_list(const char *dir, boolean utf8) {
   // get list of sets in top level dir
@@ -4209,6 +2814,7 @@ boolean check_for_ratio_fps(double fps) {
 
 double get_ratio_fps(const char *string) {
   // return a ratio (8dp) fps from a string with format num:denom
+  // inverse of calc_ratio_fps
   double fps;
   char *fps_string;
   char **array = lives_strsplit(string, ":", 2);
@@ -4220,6 +2826,62 @@ double get_ratio_fps(const char *string) {
   fps = lives_strtod(fps_string, NULL);
   lives_free(fps_string);
   return fps;
+}
+
+
+/**
+   @brief return ratio fps (TRUE) or FALSE
+   we want to see if we can express fps as n : m
+   where n and m are integers, and m is close to a power of 10.
+
+   step 1: fps' = fps / (fps + 1.)
+   step 2: start with the number line 0. / 1. to 1. / 1. (a = 0., b = 1., c = 1., d = 1.)
+   step 3: take the fraction (a + c) / (b + d), if this is > fpsr, then this becomes new max
+           if this is < fps', then this becomes new min
+	   otherwise if equal to fps' then this is our estimate fraction
+	   otherwise timeout (cycles) will return FALSE
+
+	   fps' ~= x / y
+
+   step 4: find next power of 10 (curt) above x. mpy by (fps + 1.)
+           since fps / (fps + 1.) = x / y, y = x * (fps + 1.) / fps = x / fps'
+   step 5: return TRUE and values (fps + 1) * curt : curt / fps'
+*/
+boolean calc_ratio_fps(double fps, int *numer, int *denom) {
+  // inverse of get_ratio_fps
+
+  double res, fpsr;
+  double curt = 10., diff;
+  int a = 0, b = 1, c = 1, d = 1, m, n, i;
+
+  fpsr = (double)((int)(fps + 1.));
+  fps /= fpsr;
+
+  for (i = 0; i < 10000; i++) {
+    m = a + b;
+    n = c + d;
+    res = (double)m / (double)n;
+    if (fabs(res - fps) < 0.00000001) break;
+    if (res > fps) {
+      b = m;
+      d = n;
+    } else {
+      a = m;
+      c = n;
+    }
+  }
+  // now we have our answer, m / n, e.g 999 / 1000 ( * 30. = fps)
+  // but we want m to be a power of 10 (and it must be close, within say 1%)
+  while (1) {
+    diff = (double)m / curt;
+    if (diff >= 0.99 && diff <= 1.01) {
+      if (numer) *numer = (int)(fpsr * curt);
+      if (denom) *denom = (int)(curt / res);
+      return TRUE;
+    }
+    if (curt > (double)m) return FALSE;
+    curt *= 10.;
+  }
 }
 
 
@@ -4299,13 +2961,6 @@ int lives_utf8_strcasecmp(const char *s1, const char *s2) {
 
 LIVES_GLOBAL_INLINE int lives_utf8_strcmp(const char *s1, const char *s2) {
   return lives_utf8_collate(s1, s2);
-}
-
-
-LIVES_GLOBAL_INLINE LiVESList *lives_list_sort_alpha(LiVESList * list, boolean fwd) {
-  /// stable sort, so input list should NOT be freed
-  /// handles utf-8 strings
-  return lives_list_sort_with_data(list, lives_utf8_strcmpfunc, LIVES_INT_TO_POINTER(fwd));
 }
 
 
@@ -4434,7 +3089,7 @@ char *insert_newlines(const char *text, int maxwidth) {
 
   boolean needsnl = FALSE;
 
-  register int i;
+  int i;
 
   if (!text) return NULL;
 
@@ -4509,46 +3164,6 @@ char *insert_newlines(const char *text, int maxwidth) {
 }
 
 
-static int get_hex_digit(const char c) {
-  switch (c) {
-  case 'a': case 'A': return 10;
-  case 'b': case 'B': return 11;
-  case 'c': case 'C': return 12;
-  case 'd': case 'D': return 13;
-  case 'e': case 'E': return 14;
-  case 'f': case 'F': return 15;
-  default: return c - 48;
-  }
-}
-
-
-LIVES_GLOBAL_INLINE int hextodec(const char *string) {
-  int tot = 0;
-  for (char c = *string; c; c = *(++string)) tot = (tot << 4) + get_hex_digit(c);
-  return tot;
-}
-
-
-boolean is_writeable_dir(const char *dir) {
-  // return FALSE if we cannot create / write to dir
-  // dir should be in locale encoding
-  // WARNING: this will actually create the directory (since we dont know if its parents are needed)
-
-  struct statvfs sbuf;
-  if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
-    lives_mkdir_with_parents(dir, capable->umask);
-    if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
-      return FALSE;
-    }
-  }
-
-  // use statvfs to get fs details
-  if (statvfs(dir, &sbuf) == -1) return FALSE;
-  if (sbuf.f_flag & ST_RDONLY) return FALSE;
-  return TRUE;
-}
-
-
 boolean lives_make_writeable_dir(const char *newdir) {
   /// create a directory (including parents)
   /// and ensure we can actually write to it
@@ -4579,115 +3194,5 @@ LIVES_GLOBAL_INLINE LiVESInterpType get_interp_value(short quality, boolean low_
   if (quality <= PB_QUALITY_LOW) return LIVES_INTERP_FAST;
   else if (quality == PB_QUALITY_MED) return LIVES_INTERP_NORMAL;
   return LIVES_INTERP_BEST;
-}
-
-
-#define BL_LIM 128
-LIVES_GLOBAL_INLINE LiVESList *buff_to_list(const char *buffer, const char *delim, boolean allow_blanks, boolean strip) {
-  LiVESList *list = NULL;
-  int pieces = get_token_count(buffer, delim[0]);
-  char *buf, **array = lives_strsplit(buffer, delim, pieces);
-  boolean biglist = pieces >= BL_LIM;
-  for (int i = 0; i < pieces; i++) {
-    if (array[i]) {
-      if (strip) buf = lives_strstrip(array[i]);
-      else buf = array[i];
-      if (*buf || allow_blanks) {
-        if (biglist) list = lives_list_prepend(list, lives_strdup(buf));
-        else list = lives_list_append(list, lives_strdup(buf));
-      }
-    }
-  }
-  lives_strfreev(array);
-  if (biglist && list) return lives_list_reverse(list);
-  return list;
-}
-
-
-LIVES_GLOBAL_INLINE LiVESList *lives_list_append_unique(LiVESList * xlist, const char *add) {
-  LiVESList *list = xlist, *listlast = NULL;
-  while (list) {
-    listlast = list;
-    if (!lives_utf8_strcasecmp((const char *)list->data, add)) return xlist;
-    list = list->next;
-  }
-  list = lives_list_append(listlast, lives_strdup(add));
-  if (!xlist) return list;
-  return xlist;
-}
-
-
-LIVES_GLOBAL_INLINE LiVESList *lives_list_move_to_first(LiVESList * list, LiVESList * item) {
-  // move item to first in list
-  LiVESList *xlist = item;
-  if (xlist == list || !xlist) return list;
-  if (xlist->prev) xlist->prev->next = xlist->next;
-  if (xlist->next) xlist->next->prev = xlist->prev;
-  xlist->prev = NULL;
-  if ((xlist->next = list) != NULL) list->prev = xlist;
-  return xlist;
-}
-
-
-LiVESList *lives_list_delete_string(LiVESList * list, const char *string) {
-  // remove string from list, using strcmp
-
-  LiVESList *xlist = list;
-  for (; xlist; xlist = xlist->next) {
-    if (!lives_utf8_strcasecmp((char *)xlist->data, string)) {
-      lives_free((livespointer)xlist->data);
-      if (xlist->prev) xlist->prev->next = xlist->next;
-      else list = xlist;
-      if (xlist->next) xlist->next->prev = xlist->prev;
-      xlist->next = xlist->prev = NULL;
-      lives_list_free(xlist);
-      return list;
-    }
-  }
-  return list;
-}
-
-
-LIVES_GLOBAL_INLINE LiVESList *lives_list_copy_strings(LiVESList * list) {
-  // copy a list, copying the strings too
-  LiVESList *xlist = NULL, *olist = list;
-  while (olist) {
-    xlist = lives_list_prepend(xlist, lives_strdup((char *)olist->data));
-    olist = olist->next;
-  }
-  return lives_list_reverse(xlist);
-}
-
-
-boolean string_lists_differ(LiVESList * alist, LiVESList * blist) {
-  // compare 2 lists of strings and see if they are different (ignoring ordering)
-  // for long lists this would be quicker if we sorted the lists first; however this function
-  // is designed to deal with short lists only
-
-  LiVESList *plist, *rlist = blist;
-
-  if (lives_list_length(alist) != lives_list_length(blist)) return TRUE; // check the simple case first
-
-  // run through alist and see if we have a mismatch
-
-  plist = alist;
-  while (plist) {
-    LiVESList *qlist = rlist;
-    boolean matched = TRUE;
-    while (qlist) {
-      if (!(lives_utf8_strcasecmp((char *)plist->data, (char *)qlist->data))) {
-        if (matched) rlist = qlist->next;
-        break;
-      }
-      matched = FALSE;
-      qlist = qlist->next;
-    }
-    if (!qlist) return TRUE;
-    plist = plist->next;
-  }
-
-  // since both lists were of the same length, there is no need to check blist
-
-  return FALSE;
 }
 

@@ -1890,7 +1890,7 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
 
     // setting context provider for screen is VERY slow, so this should be used sparingly
     gtk_style_context_add_provider_for_screen(mainw->mgeom[widget_opts.monitor].screen, GTK_STYLE_PROVIDER
-        (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 10000);
+        (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
   } else {
     if (!LIVES_IS_WIDGET(widget)) return FALSE;
     selector = (char *)xselector;
@@ -1898,7 +1898,7 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
     ctx = gtk_widget_get_style_context(widget);
     provider = gtk_css_provider_new();
     gtk_style_context_add_provider(ctx, GTK_STYLE_PROVIDER
-                                   (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 10000);
+                                   (provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
     widget_name = lives_strdup(gtk_widget_get_name(widget));
 

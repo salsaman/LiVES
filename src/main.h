@@ -260,58 +260,11 @@ typedef int lives_pgid_t;
 
 #define strip_ext(fname) lives_strdup((char *)(fname ? strrchr(fname, '.') ? lives_memset(strrchr(fname, '.'), 0, 1) \
 					       ? fname : fname : fname : NULL))
-
-// math macros / functions
-
-#define squared(a) ((a) * (a))
-
-#define sig(a) ((a) < 0. ? -1.0 : 1.0)
-
-// round to nearest integer
-#define ROUND_I(a) ((int)((double)(a) + .5))
-
-// clamp a between 0 and b; both values rounded to nearest int
-#define NORMAL_CLAMP(a, b) (ROUND_I((a))  < 0 ? 0 : ROUND_I((a)) > ROUND_I((b)) ? ROUND_I((b)) : ROUND_I((a)))
-
-// clamp a between 1 and b; both values rounded to nearest int; if rounded value of a is <= 0, return rounded b
-#define UTIL_CLAMP(a, b) (NORMAL_CLAMP((a), (b)) <= 0 ? ROUND_I((b)) : ROUND_I((a)))
-
-// normal integer clamp
-#define INT_CLAMP(i, min, max) ((i) < (min) ? (min) : (i) > (max) ? (max) : (i))
-
-// round a up double / float a to  next multiple of int b
-#define CEIL(a, b) ((int)(((double)(a) + (double)(b) - .000000001) / ((double)(b))) * (b))
-
-// round int a up to next multiple of int b, unless a is already a multiple of b
-#define ALIGN_CEIL(a, b) (((int)(((a) + (b) - 1.) / (b))) * (b))
-
-// round int a up to next multiple of int b, unless a is already a multiple of b
-#define ALIGN_CEIL64(a, b) ((((int64_t)(a) + (int64_t)(b) - 1) / (int64_t)(b)) * (int64_t)(b))
-
-// round float / double a down to nearest multiple of int b
-#define FLOOR(a, b) ((int)(((double)(a) - .000000001) / ((double)(b))) * (b))
-
-// floating point division, maintains the sign of the dividend, regardless of the sign of the divisor
-#define SIGNED_DIVIDE(a, b) ((a) < 0. ? -fabs((a) / (b)) : fabs((a) / (b)))
-
-// using signed ints, the first part will be 1 iff -a < b, the second iff a > b, equivalent to abs(a) > b
-#define ABS_THRESH(a, b) (((a) + (b)) >> 31) | (((b) - (a)) >> 31)
-
-#define myround(n) ((n) >= 0. ? (int)((n) + 0.5) : (int)((n) - 0.5))
-
 #ifdef NEED_ENDIAN_TEST
 #undef NEED_ENDIAN_TEST
 static const int32_t testint = 0x12345678;
 #define IS_BIG_ENDIAN (((char *)&testint)[0] == 0x12)  // runtime test only !
 #endif
-
-// utils.c math functions
-float LEFloat_to_BEFloat(float f) GNU_CONST;
-uint64_t lives_10pow(int pow) GNU_CONST;
-double lives_fix(double val, int decimals) GNU_CONST;
-uint32_t get_approx_ln(uint32_t val) GNU_CONST;
-uint64_t get_approx_ln64(uint64_t x)GNU_CONST;
-uint64_t get_near2pow(uint64_t val) GNU_CONST;
 
 typedef struct {
   uint16_t red;
@@ -383,6 +336,7 @@ weed_leaf_delete_f _weed_leaf_delete;
 
 #include "weed-effects-utils.h"
 #include "support.h"
+#include "maths.h"
 #include "widget-helper.h"
 
 #include "filesystem.h"
@@ -630,6 +584,8 @@ capability *capable;
 
 #define DEF_ALIGN (sizeof(void *) * 8)
 
+#include "lists.h"
+#include "alarms.h"
 #include "machinestate.h"
 #include "lsd-tab.h"
 
@@ -1133,72 +1089,12 @@ extern mainwindow *mainw;
 
 #define BACKEND_NAME EXEC_SMOGRIFY
 
-// internal player clock
-#include <sys/time.h>
-struct timeval tv;
+#include "player.h"
+#include "cliphandler.h"
+#include "messaging.h"
 
 /// type sizes
 extern ssize_t sizint, sizdbl, sizshrt;
-
-typedef enum {
-  CLIP_DETAILS_BPP,
-  CLIP_DETAILS_FPS,
-  CLIP_DETAILS_PB_FPS,
-  CLIP_DETAILS_WIDTH,
-  CLIP_DETAILS_HEIGHT,
-  CLIP_DETAILS_UNIQUE_ID,
-  CLIP_DETAILS_ARATE,
-  CLIP_DETAILS_PB_ARATE,
-  CLIP_DETAILS_ACHANS,
-  CLIP_DETAILS_ASIGNED,
-  CLIP_DETAILS_AENDIAN,
-  CLIP_DETAILS_ASAMPS,
-  CLIP_DETAILS_FRAMES,
-  CLIP_DETAILS_TITLE,
-  CLIP_DETAILS_AUTHOR,
-  CLIP_DETAILS_COMMENT,
-  CLIP_DETAILS_PB_FRAMENO,
-  CLIP_DETAILS_FILENAME,
-  CLIP_DETAILS_CLIPNAME,
-  CLIP_DETAILS_HEADER_VERSION,
-  CLIP_DETAILS_KEYWORDS,
-  CLIP_DETAILS_INTERLACE,
-  CLIP_DETAILS_DECODER_NAME,
-  CLIP_DETAILS_GAMMA_TYPE,
-  CLIP_DETAILS_MD5SUM, // for future use
-  CLIP_DETAILS_CACHE_OBJECTS, // for future use
-  CLIP_DETAILS_RESERVED30,
-  CLIP_DETAILS_RESERVED29,
-  CLIP_DETAILS_RESERVED28,
-  CLIP_DETAILS_RESERVED27,
-  CLIP_DETAILS_RESERVED26,
-  CLIP_DETAILS_RESERVED25,
-  CLIP_DETAILS_RESERVED24,
-  CLIP_DETAILS_RESERVED23,
-  CLIP_DETAILS_RESERVED22,
-  CLIP_DETAILS_RESERVED21,
-  CLIP_DETAILS_RESERVED20,
-  CLIP_DETAILS_RESERVED19,
-  CLIP_DETAILS_RESERVED18,
-  CLIP_DETAILS_RESERVED17,
-  CLIP_DETAILS_RESERVED16,
-  CLIP_DETAILS_RESERVED15,
-  CLIP_DETAILS_RESERVED14,
-  CLIP_DETAILS_RESERVED13,
-  CLIP_DETAILS_RESERVED12,
-  CLIP_DETAILS_RESERVED11,
-  CLIP_DETAILS_RESERVED10,
-  CLIP_DETAILS_RESERVED9,
-  CLIP_DETAILS_RESERVED8,
-  CLIP_DETAILS_RESERVED7,
-  CLIP_DETAILS_RESERVED6,
-  CLIP_DETAILS_RESERVED5,
-  CLIP_DETAILS_RESERVED4,
-  CLIP_DETAILS_RESERVED3,
-  CLIP_DETAILS_RESERVED2,
-  CLIP_DETAILS_RESERVED1,
-  CLIP_DETAILS_RESERVED0
-} lives_clip_details_t;
 
 // some useful functions
 
@@ -1380,23 +1276,6 @@ void response_ok(LiVESButton *button, livespointer user_data);
 void pump_io_chan(LiVESIOChannel *iochan);
 
 void do_splash_progress(void);
-
-// message collection
-void d_print(const char *fmt, ...);
-char *dump_messages(int start, int end); // utils.c
-weed_plant_t *get_nth_info_message(int n); // utils.c
-int add_messages_to_list(const char *text);
-int free_n_msgs(int frval);
-
-// d_print shortcuts
-void d_print_cancelled(void);
-void d_print_failed(void);
-void d_print_done(void);
-void d_print_enough(int frames);
-void d_print_file_error_failed(void);
-
-boolean d_print_urgency(double timeout_seconds, const char *fmt, ...);
-boolean d_print_overlay(double timeout_seconds, const char *fmt, ...);
 
 // general
 void do_text_window(const char *title, const char *text);
@@ -1580,7 +1459,6 @@ int lives_chdir(const char *path, boolean no_error_dlg);
 pid_t lives_getpid(void);
 int lives_getgid(void);
 int lives_getuid(void);
-boolean lives_freep(void **ptr);
 void lives_kill_subprocesses(const char *dirname, boolean kill_parent);
 void lives_suspend_resume_process(const char *dirname, boolean suspend);
 int lives_kill(lives_pid_t pid, int sig);
@@ -1603,16 +1481,8 @@ int lives_ln(const char *from, const char *to);
 
 int lives_utf8_strcasecmp(const char *s1, const char *s2);
 int lives_utf8_strcmp(const char *s1, const char *s2);
-LiVESList *lives_list_sort_alpha(LiVESList *list, boolean fwd);
 
 boolean lives_string_ends_with(const char *string, const char *fmt, ...);
-
-void reset_playback_clock(void);
-ticks_t lives_get_current_playback_ticks(ticks_t origsecs, ticks_t origusecs, lives_time_source_t *time_source);
-
-lives_alarm_t lives_alarm_set(ticks_t ticks);
-ticks_t lives_alarm_check(lives_alarm_t alarm_handle);
-boolean lives_alarm_clear(lives_alarm_t alarm_handle);
 
 void get_dirname(char *filename);
 char *get_dir(const char *filename);
@@ -1663,7 +1533,6 @@ boolean after_foreign_play(void);
 boolean check_file(const char *file_name, boolean check_exists);  ///< check if file exists
 boolean check_dir_access(const char *dir, boolean leaveit);
 boolean lives_make_writeable_dir(const char *newdir);
-boolean is_writeable_dir(const char *dir);
 boolean ensure_isdir(char *fname);
 boolean dirs_equal(const char *dira, const char *dirb);
 char *ensure_extension(const char *fname, const char *ext) WARN_UNUSED;
@@ -1684,6 +1553,8 @@ int calc_frame_from_time4(int filenum, double time);  ///<  nearest frame, no ma
 
 boolean check_for_ratio_fps(double fps);
 double get_ratio_fps(const char *string);
+boolean calc_ratio_fps(double fps, int *numer, int *denom);
+
 void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight);
 void calc_midspect(int rwidth, int rheight, int *cwidth, int *cheight);
 void calc_minspect(int rwidth, int rheight, int *cwidth, int *cheight);
@@ -1702,18 +1573,11 @@ boolean prompt_remove_layout_files(void);
 boolean do_std_checks(const char *type_name, const char *type, size_t maxlen, const char *nreject);
 boolean is_legal_set_name(const char *set_name, boolean allow_dupes, boolean leeway);
 char *repl_workdir(const char *entry, boolean fwd);
-char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp);
-boolean get_clip_value(int which, lives_clip_details_t, void *retval, size_t maxlen);
-boolean save_clip_value(int which, lives_clip_details_t, void *val);
 boolean check_frame_count(int idx, boolean last_chkd);
-int get_frame_count(int idx, int xsize);
+frames_t get_frame_count(int idx, int xsize);
 boolean get_frames_sizes(int fileno, int frame_to_test, int *hsize, int *vsize);
-int count_resampled_frames(int in_frames, double orig_fps, double resampled_fps);
-boolean int_array_contains_value(int *array, int num_elems, int value);
+frames_t count_resampled_frames(frames_t in_frames, double orig_fps, double resampled_fps);
 boolean check_for_lock_file(const char *set_name, int type);
-void lives_list_free_strings(LiVESList *);
-void lives_list_free_all(LiVESList **);
-void lives_slist_free_all(LiVESSList **);
 
 boolean create_event_space(int length_in_eventsb);
 void add_to_recent(const char *filename, double start, int frames, const char *file_open_params);
@@ -1726,27 +1590,20 @@ void clear_mainw_msg(void);
 size_t get_token_count(const char *string, int delim);
 LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette);
 void find_when_to_stop(void);
-frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc);
-void calc_aframeno(int fileno);
+
 void minimise_aspect_delta(double allowed_aspect, int hblock, int vblock, int hsize, int vsize, int *width, int *height);
 LiVESInterpType get_interp_value(short quality, boolean low_for_mt);
-
-LiVESList *lives_list_move_to_first(LiVESList *list, LiVESList *item) WARN_UNUSED;
-LiVESList *lives_list_delete_string(LiVESList *, const char *string) WARN_UNUSED;
-LiVESList *lives_list_copy_strings(LiVESList *list);
-boolean string_lists_differ(LiVESList *, LiVESList *);
-LiVESList *lives_list_append_unique(LiVESList *xlist, const char *add);
-LiVESList *buff_to_list(const char *buffer, const char *delim, boolean allow_blanks, boolean strip);
-int lives_list_strcmp_index(LiVESList *list, livesconstpointer data, boolean case_sensitive);
 
 LiVESList *get_set_list(const char *dir, boolean utf8);
 
 char *subst(const char *string, const char *from, const char *to);
 char *insert_newlines(const char *text, int maxwidth);
 
-int hextodec(const char *string);
-
 boolean get_screen_usable_size(int *w, int *h);
+
+// multitrack-gui.c
+void mt_desensitise(lives_mt *);
+void mt_sensitise(lives_mt *);
 
 #include "osc_notify.h"
 

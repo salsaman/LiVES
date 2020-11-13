@@ -11,6 +11,8 @@ char *filename_from_fd(char *val, int fd);
 
 ssize_t lives_readlink(const char *path, char *buf, size_t bufsiz);
 
+boolean is_writeable_dir(const char *dir);
+
 boolean lives_fsync(int fd);
 void lives_sync(int times);
 

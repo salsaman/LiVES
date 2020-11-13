@@ -4029,9 +4029,10 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
       lives_free(tmp);
     }
 
-    dirname = choose_file(def_dir ? def_dir : dirnamex, fnamex, filt, LIVES_FILE_CHOOSER_ACTION_SAVE, NULL, NULL);
-
-    if (filesel_type == LIVES_FILE_SELECTION_OPEN);
+    if (filesel_type == LIVES_FILE_SELECTION_OPEN)
+      dirname = choose_file(def_dir ? def_dir : dirnamex, fnamex, filt, LIVES_FILE_CHOOSER_ACTION_OPEN, NULL, NULL);
+    else
+      dirname = choose_file(def_dir ? def_dir : dirnamex, fnamex, filt, LIVES_FILE_CHOOSER_ACTION_SAVE, NULL, NULL);
 
     if (free_filt) {
       lives_free(filt[0]);

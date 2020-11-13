@@ -28,6 +28,8 @@ typedef void (*unmalloc_and_copy_f)(size_t, void *);
 #include "rpmalloc.h"
 #endif
 
+boolean lives_freep(void **ptr);
+
 void *lives_free_and_return(void *p);
 void *lives_calloc_safety(size_t nmemb, size_t xsize) GNU_ALIGNED(DEF_ALIGN);
 void *lives_recalloc(void *p, size_t nmemb, size_t omemb, size_t xsize) GNU_ALIGNED(DEF_ALIGN);

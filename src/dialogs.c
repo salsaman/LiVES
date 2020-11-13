@@ -176,7 +176,7 @@ static void scan_for_sets(LiVESWidget *button, livespointer data) {
   LiVESWidget *entry = (LiVESWidget *)data;
   LiVESWidget *label =
     (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "disp_label");
-  LiVESList *list;
+  LiVESList *list = NULL;
   char *txt;
   const char *dir = lives_entry_get_text(LIVES_ENTRY(entry));
   if (dir) list = get_set_list(dir, TRUE);
@@ -681,7 +681,7 @@ static LiVESResponseType _do_abort_cancel_retry_dialog(const char *mytext, lives
       if (mainw->is_ready) {
         if (dtype == LIVES_DIALOG_ABORT || do_abort_check()) {
           if (CURRENT_CLIP_IS_VALID) {
-            if (cfile->handle) {
+            if (*cfile->handle) {
               // stop any processing
               lives_kill_subprocesses(cfile->handle, TRUE);
             }

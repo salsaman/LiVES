@@ -4,6 +4,7 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
+#include <sys/statvfs.h>
 #include "main.h"
 
 #ifdef HAVE_LIBEXPLAIN
@@ -95,6 +96,26 @@ LIVES_GLOBAL_INLINE boolean lives_fsync(int fd) {
 
 LIVES_GLOBAL_INLINE void lives_sync(int times) {
   for (int i = 0; i < times; i++) sync();
+}
+
+
+boolean is_writeable_dir(const char *dir) {
+  // return FALSE if we cannot create / write to dir
+  // dir should be in locale encoding
+  // WARNING: this will actually create the directory (since we dont know if its parents are needed)
+
+  struct statvfs sbuf;
+  if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
+    lives_mkdir_with_parents(dir, capable->umask);
+    if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
+      return FALSE;
+    }
+  }
+
+  // use statvfs to get fs details
+  if (statvfs(dir, &sbuf) == -1) return FALSE;
+  if (sbuf.f_flag & ST_RDONLY) return FALSE;
+  return TRUE;
 }
 
 

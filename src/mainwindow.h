@@ -688,13 +688,6 @@ typedef struct {
   int z_index; // for future use
 } lives_screen_area_t;
 
-typedef struct {
-  ticks_t tleft;
-  volatile ticks_t lastcheck;
-} lives_timeout_t;
-
-typedef int lives_alarm_t;
-
 /// where do we add the builtin tools in the tools menu
 #define RFX_TOOL_MENU_POSN 2
 
@@ -1628,16 +1621,8 @@ typedef struct {
 
   int log_fd; ///
 
-  /// lives_alarms
-#define LIVES_NO_ALARM 0
-#define LIVES_MAX_ALARMS 1024
-#define LIVES_MAX_USER_ALARMS 512
-
-#define LIVES_URGENCY_ALARM LIVES_MAX_ALARMS // this is fine since we will subtract 1
-#define URGENCY_MSG_TIMEOUT 10. // seconds
-
   lives_timeout_t alarms[LIVES_MAX_ALARMS]; ///< reserve 1 for emergency msgs
-  int next_free_alarm;
+  lives_alarm_t next_free_alarm;
 
   /// OSD
   char *urgency_msg;

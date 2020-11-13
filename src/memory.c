@@ -8,6 +8,17 @@
 
 #include "main.h"
 
+LIVES_GLOBAL_INLINE boolean lives_freep(void **ptr) {
+  // free a pointer and nullify it, only if it is non-null to start with
+  // pass the address of the pointer in
+  if (ptr && *ptr) {
+    lives_free(*ptr);
+    *ptr = NULL;
+    return TRUE;
+  }
+  return FALSE;
+}
+
 #define OIL_MEMCPY_MAX_BYTES 12288 // this can be tuned to provide optimal performance
 
 #ifdef ENABLE_ORC

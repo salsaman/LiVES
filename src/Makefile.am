@@ -92,6 +92,10 @@ jack_LDADD = @JACK_LIBS@ @JACK_SERVER_LIBS@
 if ENABLE_JACK_TRANSPORT
 jack_CFLAGS += -DENABLE_JACK_TRANSPORT=1
 endif
+
+if JACK_V2
+jack_CFLAGS += -DJACK_V2=1
+endif
 endif
 
 if ENABLE_LIBOIL
@@ -195,6 +199,9 @@ lives_exe_SOURCES = \
 	rpmalloc.c rpmalloc.h \
 	widget-helper.c widget-helper.h \
 	widget-helper-gtk.h widget-helper-qt.h \
+	alarms.c alarms.h \
+	messaging.c messaging.h \
+	maths.c maths.h \
 	main.c\
 	support.c support.h \
 	effects.c\
@@ -214,7 +221,9 @@ lives_exe_SOURCES = \
 	ce_thumbs.c ce_thumbs.h \
 	htmsocket.c htmsocket.h \
 	merge.c merge.h \
+	cliphandler.c cliphandler.h \
 	dialogs.c saveplay.c \
+	player.c player.h \
 	audio.c audio.h \
 	events.c events.h \
 	resample.c resample.h \
@@ -227,6 +236,7 @@ lives_exe_SOURCES = \
         mainwindow.h \
         effects.h \
 	multitrack.h multitrack.c \
+	multitrack-gui.h multitrack-gui.c \
 	stream.h stream.c \
 	cvirtual.c cvirtual.h \
 	startup.c startup.h \
@@ -235,6 +245,7 @@ lives_exe_SOURCES = \
 	threading.c threading.h \
 	machinestate.c machinestate.h \
 	filesystem.c filesystem.h \
+	lists.c lists.h \
 	weed-effects-utils.c weed-effects-utils.h \
 	diagnostics.c diagnostics.h \
 	$(transcode_SOURCES) \

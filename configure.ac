@@ -240,6 +240,7 @@ AM_CONDITIONAL(HAVE_LINUX_JOYSTICK_H, $HAVE_LINUX_JOYSTICK_H)
 HAVE_JACK=false
 HAVE_JACK_SERVER=false
 HAVE_JACK_TRANSPORT=false
+JACK_V2=false
 
 AC_ARG_ENABLE(jack, [  --disable-jack     Disable jack support.] , disable_jack=yes)
 AC_ARG_ENABLE(jack-transport, [  --disable-jack-transport     Disable jack transport support.] , disable_jack_transport=yes)
@@ -252,10 +253,20 @@ PKG_CHECK_MODULES(JACK, [jack >= 0.100.0], HAVE_JACK=true, HAVE_JACK=false)
 
 if test "$HAVE_JACK" = "true" ; then
 
+PKG_CHECK_MODULES(JACK_V2, [jack >= 1.0.0], JACK_V2=true, JACK_V2=false)
+
+if test "$JACK_V2" = "true"; then
 JACK_SERVER_LIBS=`$PKG_CONFIG --variable=server_libs jack`
 
 if test "$JACK_SERVER_LIBS" != ""; then
 HAVE_JACK_SERVER=true
+fi
+
+else
+AC_CHECK_HEADERS(jack/control.h, HAVE_JACK_SERVER=true, HAVE_JACK_SERVER=false)
+fi
+
+if test "$HAVE_JACK_SERVER" = "true"; then
 echo jack server libs found
 else
 echo jack server libs not found
@@ -308,6 +319,7 @@ HAVE_JACK_VIDEO=true
 AM_CONDITIONAL(ENABLE_JACK,$HAVE_JACK)
 AM_CONDITIONAL(ENABLE_JACK_TRANSPORT,$HAVE_JACK_TRANSPORT)
 AM_CONDITIONAL(ENABLE_VJACK,$HAVE_JACK_VIDEO)
+AM_CONDITIONAL(JACK_V2,$JACK_V2)
 
 PKG_CHECK_MODULES(X11,x11,HAVE_X11=true,HAVE_X11=false)
 

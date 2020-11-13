@@ -121,6 +121,7 @@ boolean lives_jack_init(void) {
       return FALSE;
     }
 
+#ifdef JACK_V2
     if (!jackctl_server_open(jackserver, driver)) {
       LIVES_ERROR("Could not create the driver for jack");
       return FALSE;
@@ -130,6 +131,12 @@ boolean lives_jack_init(void) {
       LIVES_ERROR("Could not start the jack server");
       return FALSE;
     }
+#else
+    if (!jackctl_server_start(jackserver, driver)) {
+      LIVES_ERROR("Could not create / start the driver for jack");
+      return FALSE;
+    }
+#endif
   }
 
   mainw->jack_inited = TRUE;
@@ -1061,7 +1068,7 @@ int lives_start_ready_callback(jack_transport_state_t state, jack_position_t *po
   if (!jack_transport_client) return TRUE;
 
   if (!LIVES_IS_PLAYING && state == JackTransportStopped) {
-    if (prefs->jack_opts && JACK_OPTS_TIMEBASE_CLIENT) {
+    if (prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) {
       double trtime = (double)jack_transport_get_current_ticks() / TICKS_PER_SECOND_DBL;
       if (!mainw->multitrack) {
 #ifndef ENABLE_GIW_3
@@ -1077,7 +1084,7 @@ int lives_start_ready_callback(jack_transport_state_t state, jack_position_t *po
 
   if (state != JackTransportStarting) return TRUE;
 
-  if (LIVES_IS_PLAYING && prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) {
+  if (LIVES_IS_PLAYING && (prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT)) {
     // trigger audio resync
     mainw->scratch = SCRATCH_JUMP;
   }

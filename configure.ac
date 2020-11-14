@@ -264,6 +264,9 @@ fi
 
 else
 AC_CHECK_HEADERS(jack/control.h, HAVE_JACK_SERVER=true, HAVE_JACK_SERVER=false)
+if test "$HAVE_JACK_SERVER" = "true"; then
+JACK_SERVER_LIBS=-ljackserver
+fi
 fi
 
 if test "$HAVE_JACK_SERVER" = "true"; then

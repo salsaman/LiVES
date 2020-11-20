@@ -2802,12 +2802,6 @@ lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc
   lives_filter_error_t retval = FILTER_SUCCESS;
   boolean did_thread = FALSE;
   int filter_flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, NULL);
-#ifdef PLMEMCHECK
-  int npl;
-  weed_plant_t *och = weed_instance_get_out_channels(instance, &npl);
-  if (och)
-    weed_mem_chkreg(wee_channel_get_pdt, rs, ht, npl);
-#endif
 
   // see if we can multithread
   if ((prefs->nfx_threads = future_prefs->nfx_threads) > 1 &&
@@ -2830,9 +2824,6 @@ lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc
     } else retval = FILTER_ERROR_INVALID_PLUGIN;
     weed_leaf_delete(instance, WEED_LEAF_HOST_UNUSED);
   }
-#ifdef PLMEMCHECK
-  weed_mem_chkreg(NULL, NULL, 0, 0);
-#endif
   return retval;
 }
 
@@ -4390,11 +4381,6 @@ weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, uint32_t s
 }
 
 
-/* weed_error_t weed_leaf_set_plugin(weed_plant_t *plant, const char *key, uint32_t seed_type, weed_size_t num_elems, void *values) { */
-/*   fprintf(stderr, "pl setting %s\n", key); */
-/*   return _weed_leaf_set(plant, key, seed_type, num_elems, values); */
-/* } */
-
 static void upd_statsplant(const char *key) {
   int freq;
   if (mainw->is_exiting) return;
@@ -4440,36 +4426,6 @@ weed_error_t weed_leaf_get_monitor(weed_plant_t *plant, const char *key, int32_t
   /* } */
   upd_statsplant(key);
   return err;
-}
-
-#if 0
-static void **dta = NULL;
-static int *rws = NULL;
-static int ht = 0;
-static int npls = 0;
-
-void weed_mem_chkreg(void **data, int *rs, int height, int nplanes) {
-  dta = data;
-  rws = rs;
-  ht = height;
-  npls = npanes
-}
-
-
-void *lives_memcpy_monitor(void *d, const void *s, size_t sz) {
-  if (dta) {
-    for (int i = 0; i < npls; i++) {
-      void *end = dta[i] + rws[i] * ht;
-      if (d > end && d - end < 8) fprintf(stderr, "pl overwrite\n");
-    }
-    return lives_memcpy(d, s, sz);
-  }
-}
-#endif
-
-weed_size_t weed_leaf_num_elements_monitor(weed_plant_t *plant, const char *key) {
-  upd_statsplant(key);
-  return _weed_leaf_num_elements(plant, key);
 }
 
 

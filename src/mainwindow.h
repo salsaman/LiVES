@@ -387,6 +387,13 @@ enum {
 #define EXEC_MPLAYER2 "mplayer2"
 #define EXEC_MPV "mpv"
 
+#define EXEC_TOUCH "touch"
+#define EXEC_RM "rm"
+#define EXEC_RMDIR "rmdir"
+#define EXEC_SED "sed"
+#define EXEC_GREP "grep"
+#define EXEC_WC "wc"
+
 // recommended
 #define EXEC_SOX "sox"
 #define EXEC_PULSEAUDIO "pulseaudio"

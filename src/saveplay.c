@@ -4168,7 +4168,7 @@ void wait_for_stop(const char *stop_command) {
 }
 
 
-boolean save_frame_inner(int clip, int frame, const char *file_name, int width, int height, boolean from_osc) {
+boolean save_frame_inner(int clip, frames_t frame, const char *file_name, int width, int height, boolean from_osc) {
   // save 1 frame as an image
   // width==-1, height==-1 to use "natural" values
   LiVESResponseType resp;
@@ -6070,10 +6070,8 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   }
 
   if (!auto_recover) {
-    if (1 || mainw->multitrack) {
-      lives_widget_show_all(LIVES_MAIN_WINDOW_WIDGET);
-      lives_widget_context_update();
-    }
+    lives_widget_show_all(LIVES_MAIN_WINDOW_WIDGET);
+    lives_widget_context_update();
     if (!do_yesno_dialog
         (_("\nFiles from a previous run of LiVES were found.\nDo you want to attempt to recover them ?\n"))) {
       retb = FALSE;

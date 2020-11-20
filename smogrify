@@ -3417,19 +3417,22 @@ if (1) {
 		    exit 1;
 		}
 		&smog_rename("keep_$audio_out", $audio_out);
+
+		&smog_copy("audio.bak", "audiodump");
+		if ($panic) {
+		    unlink $pidfile;
+		    exit 1;
+		}
+	    }
+	    else {
+		&smog_rename("audio", "audiodump");
 	    }
 
 	    # append audio audio.new -> audiodump
-	    $fdd_in = "$curworkdir/audio";
+	    $fdd_in = "$curworkdir/audio.new";
 	    $fdd_out = "$curworkdir/audiodump";
 	    $size = -s $fdd_in;
-	    &fast_dd($size, 0, 0);
-	    return if ($panic);
 
-
-	    $fdd_in = "$curworkdir/audio,new";
-	    $fdd_out = "$curworkdir/audiodump";
-	    $size = -s $fdd_in;
 	    &fast_dd($size, 0, -s $fdd_out);
 	    return if ($panic);
 
@@ -3732,6 +3735,7 @@ if (1) {
 		}
 	    } else {
 		$audio_in = "audiodump";
+
 		if (! -f $audio_in) {
 		    $audio_in = "audiodump.pcm";
 		} else {
@@ -3750,7 +3754,7 @@ if (1) {
 			    }
 			}
 		    }
-		    &smog_rename($audio_in, $audio_outs);
+		    &smog_rename($audio_in, $audio_out);
 		    # dummy values, the GUI should know these
 		    $arate = $achans = $asamps = 0;
 		    $signed = $endian = 1;
@@ -7966,10 +7970,8 @@ sub ogg_open {
 
 
 sub wav_open {
-    $curtmpfile = "$curworkdir/.temp";
-
     if (-f $audio_in) {
-	unlink "$audio_in";
+	unlink $audio_in;
     }
 
     &smog_copy($file, $audio_in);
@@ -9286,6 +9288,7 @@ sub fast_dd {
 	$size = -$size;
 	$nobs = 0;
     }
+
     return if ($size <= 0);
 
     my ($data, $i);
@@ -9375,6 +9378,7 @@ sub fast_dd {
 	    return;
 	}
     }
+
     while ($size > 0) {
 	$bs = $blocksize;
 	if ($size < $bs) {

@@ -1264,7 +1264,8 @@ boolean do_layout_recover_dialog(void);
 void do_no_sets_dialog(const char *dir);
 void add_resnn_label(LiVESDialog *dialog);
 
-int process_one(boolean visible);
+void cancel_process(boolean visible);
+
 void update_progress(boolean visible);
 void do_threaded_dialog(const char *translated_text, boolean has_cancel);
 void end_threaded_dialog(void);
@@ -1307,7 +1308,7 @@ void start_playback_async(int type);
 boolean start_playback(int type);
 void play_start_timer(int type);
 void save_frame(LiVESMenuItem *, livespointer user_data);
-boolean save_frame_inner(int clip, int frame, const char *file_name, int width, int height, boolean from_osc);
+boolean save_frame_inner(int clip, frames_t frame, const char *file_name, int width, int height, boolean from_osc);
 void wait_for_stop(const char *stop_command);
 boolean save_clip_values(int which_file);
 void add_to_recovery_file(const char *handle);
@@ -1392,16 +1393,11 @@ typedef struct {
 
 void *lives_pixbuf_save_threaded(void *saveargs);
 
-void init_track_decoders(void);
-void free_track_decoders(void);
-
 #ifdef USE_LIBPNG
 boolean layer_from_png(int fd, weed_layer_t *layer, int width, int height, int tpalette, boolean prog);
 //boolean save_to_png(FILE *fp, weed_layer_t *layer, int comp);
 #endif
 
-void wait_for_cleaner(void);
-void load_frame_image(int frame);
 void sensitize(void);
 void sensitize_rfx(void);
 void desensitize(void);
@@ -1414,7 +1410,6 @@ void resize(double scale);
 boolean set_palette_colours(boolean force_reload);
 void set_main_title(const char *filename, int or_untitled_number);
 void set_record(void);
-void get_player_size(int *opwidth, int *opheight);
 
 //gui.c
 void  create_LiVES(void);

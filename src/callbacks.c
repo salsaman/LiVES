@@ -1105,8 +1105,8 @@ retry:
               mainw->cancelled = CANCEL_RETRY;
               req->allownf = TRUE;
               reqout = req;
-#endif
             }
+#endif
           }
           goto cleanup_ut;
         }
@@ -7102,7 +7102,7 @@ end:
         lives_free(tmp2);
       }
 
-      // get file detaisl
+      // get file details
       if (!read_file_details_generic(file_name)) return;
 
       npieces = get_token_count(mainw->msg, '|');
@@ -7947,7 +7947,6 @@ end:
 
 
   void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-
     if (mainw->multitrack || (CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_HAS_VIDEO && !user_data)) return;
 
     if (!user_data) {
@@ -7985,7 +7984,7 @@ end:
             if (prefs->show_msg_area) lives_widget_show_all(mainw->message_box);
 	  // *INDENT-OFF*
         }}}}
-  // *INDENT-ON*
+    // *INDENT-ON*
     if (LIVES_IS_PLAYING && !mainw->fs) mainw->force_show = TRUE;
   }
 

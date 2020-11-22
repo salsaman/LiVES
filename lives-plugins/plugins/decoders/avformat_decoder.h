@@ -21,6 +21,7 @@ typedef struct  {
   AVCodecContext *ctx;
   AVFrame *pFrame;
   AVPacket packet;
+  uint8_t *ovpdata;
 
   boolean fps_avg;
   boolean inited;

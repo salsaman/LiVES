@@ -29,6 +29,11 @@
 #include <weed/weed-compat.h>
 #endif
 
+/// this is unreliable for libav, it appears to leak memory after each seek
+/// but only when using send_packet / receive_frame
+/// using the deprecated method does not cause the leak
+#undef HAVE_AVCODEC_SEND_PACKET
+
 #define NEED_CLONEFUNC
 #define NEED_TIMING
 #include "decplugin.h"
@@ -806,6 +811,7 @@ static lives_clip_data_t *init_cdata(lives_clip_data_t *data) {
   cdata->jump_limit = JUMP_FRAMES_FAST;
 
 #ifdef TEST_CACHING
+  // TODO: needs to have refcounting enabled
   priv->cachemax = 128;
   priv->cache = NULL;
 #endif
@@ -1059,6 +1065,9 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   boolean hit_target = FALSE;
   boolean did_seek = FALSE;
   boolean rev = FALSE;
+#ifdef HAVE_AVCODEC_SEND_PACKET
+  boolean snderr;
+#endif
   int gotFrame;
 
   int xheight = cdata->frame_height, pal = cdata->current_palette, nplanes = 1, dstwidth = cdata->width, psize = 1;
@@ -1175,8 +1184,11 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 #endif
     if (priv->pkt_inited) {
       // seems to be necessary before flushing buffers, but after doing seek
-      if (priv->packet.data) av_packet_unref(&priv->packet);
-      priv->packet.data = NULL;
+      if (priv->ovpdata) {
+        priv->packet.data = priv->ovpdata;
+        av_packet_unref(&priv->packet);
+      }
+      priv->ovpdata = priv->packet.data = NULL;
       priv->packet.size = 0;
     }
 
@@ -1190,55 +1202,93 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     if (cdata->fps)
       MyPts = (double)(priv->last_frame + 1) / cdata->fps * (double)AV_TIME_BASE;
   }
-
+#ifdef HAVE_AVCODEC_SEND_PACKET
+  snderr = FALSE;
+#endif
   //
   timex = -get_current_ticks();
   do {
-    if (priv->needs_packet) {
-      if (!priv->pkt_inited) {
-        av_init_packet(&priv->packet);
-        priv->pkt_inited = TRUE;
-      }
-      //if (priv->packet.data) av_packet_unref(&priv->packet);
-      do {
-        ret = av_read_frame(priv->ic, &priv->packet);
-
-#ifdef DEBUG
-        fprintf(stderr, "ret was %d for tframe %ld\n", ret, tframe);
-#endif
-        if (ret < 0) {
-          priv->last_frame = tframe;
-          goto cleanup;
+    while (1) {
+      if (priv->needs_packet) {
+        if (!priv->pkt_inited) {
+          av_init_packet(&priv->packet);
+          priv->pkt_inited = TRUE;
         }
-      } while (priv->packet.stream_index != priv->vstream);
-    }
+        do {
+          if (priv->ovpdata) {
+            priv->packet.data = priv->ovpdata;
+            av_packet_unref(&priv->packet);
+          }
+          priv->ovpdata = priv->packet.data = NULL;
+          priv->packet.size = 0;
 
-    if (MyPts == -1) {
-      MyPts = priv->packet.pts;
-      MyPts = av_rescale_q(MyPts, s->time_base, AV_TIME_BASE_Q) - priv->ic->start_time;
-      priv->found_pts = MyPts; // PTS of start of frame, set so start_time is zero
-    }
+          ret = av_read_frame(priv->ic, &priv->packet);
+          priv->ovpdata = priv->packet.data;
 
 #ifdef DEBUG
-    fprintf(stderr, "pt b1 %ld %ld %ld\n", MyPts, target_pts, seek_target);
+          fprintf(stderr, "ret was %d for tframe %ld\n", ret, tframe);
 #endif
-    // decode any frames from this packet
-    if (!priv->pFrame) priv->pFrame = av_frame_alloc();
+          if (ret < 0) {
+            priv->last_frame = tframe;
+            goto cleanup;
+          }
+        } while (priv->packet.stream_index != priv->vstream);
+        priv->needs_packet = FALSE;
+      }
+
+      if (MyPts == -1) {
+        MyPts = priv->packet.pts;
+        MyPts = av_rescale_q(MyPts, s->time_base, AV_TIME_BASE_Q) - priv->ic->start_time;
+        priv->found_pts = MyPts; // PTS of start of frame, set so start_time is zero
+      }
+
+#ifdef DEBUG
+      fprintf(stderr, "pt b1 %ld %ld %ld\n", MyPts, target_pts, seek_target);
+#endif
+      // decode any frames from this packet
+      if (!priv->pFrame) priv->pFrame = av_frame_alloc();
+
+#ifdef HAVE_AVCODEC_SEND_PACKET
+      ret = avcodec_send_packet(cc, &priv->packet);
+      priv->needs_packet = TRUE;
+      if (!ret || (!snderr && ret == AVERROR(EAGAIN))) {
+        ret = avcodec_receive_frame(cc, priv->pFrame);
+        if (ret && ret != AVERROR(EAGAIN)) {
+          //avcodec_flush_buffers(cc);
+          continue;
+        }
+        gotFrame = TRUE;
+        snderr = FALSE;
+        if (ret) priv->needs_packet = FALSE;
+      } else {
+        if (!ret || ret == AVERROR(EAGAIN)) snderr = FALSE;
+        else {
+          snderr = TRUE;
+          //avcodec_flush_buffers(cc);
+        }
+        continue;
+      }
+#else
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-    ret = avcodec_decode_video2(cc, priv->pFrame, &gotFrame, &priv->packet);
-    if (ret < 0) {
-      fprintf(stderr, "avcode_decode_video2 returned %d for frame %ld !\n", ret, tframe);
-      goto cleanup;
-    }
-    ret = FFMIN(ret, priv->packet.size);
-    priv->packet.data += ret;
-    priv->packet.size -= ret;
+      ret = avcodec_decode_video2(cc, priv->pFrame, &gotFrame, &priv->packet);
+      if (ret < 0) {
+        fprintf(stderr, "avcode_decode_video2 returned %d for frame %ld !\n", ret, tframe);
+        goto cleanup;
+      }
+      ret = FFMIN(ret, priv->packet.size);
+      priv->packet.data += ret;
+      priv->packet.size -= ret;
 #else
-    ret = avcodec_decode_video(cc, priv->pFrame, &gotFrame, priv->packet.data, priv->packet.size);
-    priv->packet.size = 0;
+      ret = avcodec_decode_video(cc, priv->pFrame, &gotFrame, priv->packet.data, priv->packet.size);
+      priv->packet.size = 0;
 #endif
-
+      if (priv->packet.size == 0) {
+        priv->needs_packet = TRUE;
+      }
+#endif
+      if (gotFrame) break;
+    }
 #ifdef DEBUG
     fprintf(stderr, "pt 1 %ld %d %ld %ld %d %d\n", tframe, gotFrame, MyPts, gotFrame ? priv->pFrame->best_effort_timestamp : 0,
             priv->pFrame->color_trc, priv->pFrame->color_range);
@@ -1250,10 +1300,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       fprintf(stderr, "adding to cache: %ld %p %p\n", MyPts, priv->pFrame, priv->pFrame->data);
     }
 #endif
-
-    if (priv->packet.size == 0) {
-      priv->needs_packet = TRUE;
-    }
 
     //fprintf(stderr, "VALS %ld -> %ld, %d\n", MyPts, target_pts, gotFrame);
     if (MyPts >= target_pts - 1) hit_target = TRUE;
@@ -1320,7 +1366,7 @@ framedone:
 #ifdef TEST_CACHING
 framedone2:
 #endif
-  if (priv->pFrame == NULL || pixel_data == NULL) return TRUE;
+  if (!priv->pFrame || !pixel_data) return TRUE;
 
   // we are allowed to cast away const-ness for
   // yuv_subspace, yuv_clamping, yuv_sampling, frame_gamma and interlace
@@ -1417,9 +1463,11 @@ framedone2:
   return TRUE;
 
 cleanup:
-  if (priv->packet.data)
-    if (priv->packet.data) av_packet_unref(&priv->packet);
-  priv->packet.data = NULL;
+  if (priv->ovpdata) {
+    priv->packet.data = priv->ovpdata;
+    av_packet_unref(&priv->packet);
+  }
+  priv->ovpdata = priv->packet.data = NULL;
   priv->packet.size = 0;
   priv->needs_packet = TRUE;
   return FALSE;

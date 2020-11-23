@@ -1080,6 +1080,8 @@ typedef struct {
   AVCodecContext *ctx;
   AVFrame *picture;
   AVPacket avpkt;
+  uint8_t *ovpdata;
+  boolean needs_pkt;
   int64_t last_frame; ///< last frame displayed
   index_container_t *idxc;
   boolean expect_eof;

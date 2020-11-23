@@ -55,6 +55,8 @@ const char *plugin_version = "LiVES mkv decoder version 1.4";
 #define HAVE_AVCODEC
 #define HAVE_AVUTIL
 
+//#undef HAVE_AVCODEC_SEND_PACKET
+
 #include <libavformat/avformat.h>
 #include <libavutil/avstring.h>
 #include <libavcodec/version.h>
@@ -212,10 +214,11 @@ static int ebml_read_num(const lives_clip_data_t *cdata, uint8_t *data,
      return 0, but since that's not a valid first ebmlID byte, we can
      use it safely here to catch EOS. */
 
-  if (data == NULL) {
+  if (!data) {
     if (read(priv->fd, buffer, 1) < 1) {
-      if (!priv->expect_eof)
+      if (!priv->expect_eof) {
         fprintf(stderr, "mkv_decoder: error in stream header reading num for %s\n", cdata->URI);
+      }
       got_eof = TRUE;
       return 0;
     }
@@ -1178,6 +1181,7 @@ static uint32_t calc_dts_delta(const lives_clip_data_t *cdata) {
 
     matroska_read_packet(cdata, &priv->avpkt);
     priv->ovpdata = priv->avpkt.data;
+    priv->needs_pkt = TRUE;
 
     if (got_eof) {
       got_eof = FALSE;
@@ -1906,6 +1910,7 @@ skip_probe:
   priv->ovpdata = priv->avpkt.data = NULL;
   priv->avpkt.size = 0;
   priv->ctx = NULL;
+  priv->needs_pkt = TRUE;
 
   if (lives_mkv_read_header(cdata)) {
     close(priv->fd);
@@ -2007,6 +2012,7 @@ skip_probe:
   }
   priv->ovpdata = priv->avpkt.data = NULL;
   priv->avpkt.size = 0;
+  priv->needs_pkt = TRUE;
 
   cdata->YUV_clamping = WEED_YUV_CLAMPING_UNCLAMPED;
   if (ctx->color_range == AVCOL_RANGE_MPEG) cdata->YUV_clamping = WEED_YUV_CLAMPING_CLAMPED;
@@ -2766,6 +2772,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       bleft = bright = 0;
     }
   }
+
   ////////////////////////////////////////////////////////////////////
   if (tframe == priv->last_frame && priv->picture) goto framedone;
   else {
@@ -2785,6 +2792,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       }
       priv->ovpdata = priv->avpkt.data = NULL;
       priv->avpkt.size = 0;
+      priv->needs_pkt = TRUE;
 
       if (priv->picture) avcodec_flush_buffers(priv->ctx);
 
@@ -2807,10 +2815,10 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     do {
       while (1) {
 #ifndef HAVE_AVCODEC_SEND_PACKET
-        if (priv->avpkt.size == 0) got_picture = FALSE;
-        else got_picture = TRUE;
+        if (priv->avpkt.size == 0) priv->needs_pkt = TRUE;
+        else priv->needs_pkt = FALSE;
 #endif
-        if (!got_picture) {
+        if (priv->needs_pkt) {
           if (priv->ovpdata) {
             priv->avpkt.data = priv->ovpdata;
             av_packet_unref(&priv->avpkt);
@@ -2820,8 +2828,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
           matroska_read_packet(cdata, &priv->avpkt);
           priv->ovpdata = priv->avpkt.data;
-
           if (got_eof) goto cleanup;
+          priv->needs_pkt = FALSE;
         }
 
         got_picture = FALSE;
@@ -2830,7 +2838,14 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
 #ifdef HAVE_AVCODEC_SEND_PACKET
         ret = avcodec_send_packet(priv->ctx, &priv->avpkt);
+        priv->needs_pkt = TRUE;
+        if (ret == AVERROR_EOF) {
+          got_eof = TRUE;
+          goto cleanup;
+        }
+
         if (!ret || (!snderr && ret == AVERROR(EAGAIN))) {
+          if (ret) priv->needs_pkt = FALSE;
           ret = avcodec_receive_frame(priv->ctx, priv->picture);
           if (ret) {
             //avcodec_flush_buffers(priv->ctx);
@@ -2986,10 +3001,10 @@ framedone2:
     }
 
     if (rowstride == priv->picture->linesize[p] && bleft == bright && bleft == 0) {
-      memcpy(dst, src, rowstride * xheight);
+      (*cdata->ext_memcpy)(dst, src, rowstride * xheight);
     } else {
       for (i = 0; i < xheight; i++) {
-        memcpy(dst, src, dstwidth);
+        (*cdata->ext_memcpy)(dst, src, dstwidth);
         dst += rowstride;
         src += priv->picture->linesize[p];
       }

@@ -2407,7 +2407,7 @@ static lives_clip_data_t *asf_clone(lives_clip_data_t *cdata) {
   // copy from cdata to clone, with a new context for clone
   spriv = cdata->priv;
 
-  if (spriv != NULL) {
+  if (spriv) {
     clone->priv = dpriv = (lives_asf_priv_t *)calloc(1, sizeof(lives_asf_priv_t));
     dpriv->filesize = spriv->filesize;
     dpriv->inited = TRUE;
@@ -2428,7 +2428,7 @@ static lives_clip_data_t *asf_clone(lives_clip_data_t *cdata) {
 
   asf_reset_header(dpriv->s);
 
-  if (spriv != NULL) {
+  if (spriv) {
     dpriv->def_packet_size = spriv->def_packet_size;
     dpriv->start_dts = spriv->start_dts;
     dpriv->have_start_dts = TRUE;
@@ -2459,7 +2459,7 @@ static lives_clip_data_t *asf_clone(lives_clip_data_t *cdata) {
     clone->ainterleaf = TRUE;
   }
 
-  if (dpriv->picture != NULL) av_frame_unref(dpriv->picture);
+  if (dpriv->picture) av_frame_unref(dpriv->picture);
   dpriv->picture = NULL;
 
   return clone;
@@ -2484,7 +2484,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
     return asf_clone(cdata);
   }
 
-  if (cdata != NULL && cdata->current_clip > 0) {
+  if (cdata && cdata->current_clip > 0) {
     // currently we only support one clip per container
     clip_data_free(cdata);
     return NULL;
@@ -2494,8 +2494,8 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
     cdata = init_cdata(NULL);
   }
 
-  if (cdata->URI == NULL || strcmp(URI, cdata->URI)) {
-    if (cdata->URI != NULL) {
+  if (!cdata->URI || strcmp(URI, cdata->URI)) {
+    if (cdata->URI) {
       detach_stream(cdata);
       free(cdata->URI);
     }

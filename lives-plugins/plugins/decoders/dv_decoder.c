@@ -71,7 +71,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   if (!isclone) {
     ext = rindex(cdata->URI, '.');
 
-    if (ext == NULL || (strncmp(ext, ".dv", 3) && strncmp(ext, ".avi", 4))) return FALSE;
+    if (!ext || (strncmp(ext, ".dv", 3) && strncmp(ext, ".avi", 4))) return FALSE;
 
     if (!strncmp(ext, ".avi", 4)) {
       //needs further analysis
@@ -242,10 +242,10 @@ static lives_clip_data_t *dv_clone(lives_clip_data_t *cdata) {
     clone->palettes = malloc(4 * sizeof(int));
 
     // plugin allows a choice of palettes; we set these in order of preference
-    cdata->palettes[0] = WEED_PALETTE_YUYV8888;
-    cdata->palettes[1] = WEED_PALETTE_RGB24;
-    cdata->palettes[2] = WEED_PALETTE_BGR24;
-    cdata->palettes[3] = WEED_PALETTE_END;
+    clone->palettes[0] = WEED_PALETTE_YUYV8888;
+    clone->palettes[1] = WEED_PALETTE_RGB24;
+    clone->palettes[2] = WEED_PALETTE_BGR24;
+    clone->palettes[3] = WEED_PALETTE_END;
   }
 
   if (!attach_stream(clone, TRUE)) {

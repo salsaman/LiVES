@@ -2242,6 +2242,9 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList * disable
 
     dplug->cdata = (dpsys->get_clip_data)(file_name, fake_cdata);
 
+    // use fake_cdata only on first (reloaded)
+    fake_cdata = NULL;
+
     if (dplug->cdata) {
       // check for sanity
       //g_print("Checking return data from %s\n", dpsys->name);
@@ -2303,6 +2306,8 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList * disabled, con
 
   char decplugname[PATH_MAX];
 
+  boolean use_fake_cdata = FALSE;
+
   mainw->error = FALSE;
 
   if (!lives_file_test(sfile->file_name, LIVES_FILE_TEST_EXISTS)) {
@@ -2329,8 +2334,9 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList * disabled, con
       xdisabled = lives_list_remove(xdisabled, decplugname);
       while (decoder_plugin) {
         lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)decoder_plugin->data;
-        if (!strcmp(dpsys->name, decplugname)) {
+        if (!lives_strcmp(dpsys->name, decplugname)) {
           mainw->decoder_list = lives_list_move_to_first(mainw->decoder_list, decoder_plugin);
+          use_fake_cdata = TRUE;
           break;
         }
         decoder_plugin = decoder_plugin->next;
@@ -2339,7 +2345,8 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList * disabled, con
   }
 
   /// TODO: background thread so we can animate GUI
-  dplug = try_decoder_plugins(fake_cdata == NULL ? sfile->file_name : NULL, xdisabled, fake_cdata);
+  dplug = try_decoder_plugins((!fake_cdata || !use_fake_cdata) ? sfile->file_name
+                              : NULL, xdisabled, use_fake_cdata ? fake_cdata : NULL);
 
   if (xdisabled) lives_list_free(xdisabled);
 

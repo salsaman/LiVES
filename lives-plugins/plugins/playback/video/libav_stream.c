@@ -817,37 +817,61 @@ static void copy_yuv_image(AVFrame *pict, int width, int height, const uint8_t *
 
 static AVFrame *get_video_frame(const uint8_t *const *pixel_data, int hsize, int vsize) {
   AVCodecContext *c = ostv.enc;
-  static int istrides[3];
+  int istrides[4], ostrides[4];
+  const uint8_t *ipd[4];
+  const uint8_t *opd[4];
 
-  if (ostv.sws_ctx != NULL && (hsize != ohsize || vsize != ovsize)) {
+  if (ostv.sws_ctx && (hsize != ohsize || vsize != ovsize)) {
     sws_freeContext(ostv.sws_ctx);
     ostv.sws_ctx = NULL;
   }
 
-  if (hsize != c->width || vsize != c->height || mypalette != avpalette || ostv.sws_ctx == NULL) {
-    if (ostv.sws_ctx == NULL) {
+  if (hsize != c->width || vsize != c->height || mypalette != avpalette || !ostv.sws_ctx) {
+    if (!ostv.sws_ctx) {
       ostv.sws_ctx = sws_getContext(hsize, vsize,
                                     weed_palette_to_avi_pix_fmt(mypalette, &myclamp),
                                     c->width, c->height,
                                     avpalette,
                                     SCALE_FLAGS, NULL, NULL, NULL);
-      if (ostv.sws_ctx == NULL) {
+      if (!ostv.sws_ctx) {
         fprintf(stderr,
                 "libav_stream: Could not initialize the conversion context\n");
         return NULL;
       }
       ohsize = hsize;
       ovsize = vsize;
-      if (mypalette == WEED_PALETTE_YUV420P) {
-        istrides[0] = hsize;
-        istrides[1] = istrides[2] = hsize >> 1;
-      } else {
-        istrides[0] = hsize * 3;
-      }
     }
+    ipd[0] = pixel_data[0];
+    if (mypalette == WEED_PALETTE_YUV420P) {
+      istrides[0] = hsize;
+      istrides[1] = istrides[2] = hsize >> 1;
+      ipd[1] = pixel_data[1];
+      ipd[2] = pixel_data[2];
+    } else {
+      istrides[0] = hsize * 3;
+      istrides[1] = istrides[2] = 0;
+      ipd[1] = ipd[2] = NULL;
+    }
+    istrides[3] = 0;
+    ipd[3] = NULL;
+
+    opd[0] = ostv.frame->data[0];
+    ostrides[0] = ostv.frame->linesize[0];
+    if (avpalette == WEED_PALETTE_YUV420P) {
+      ostrides[1] = ostv.frame->linesize[1];
+      ostrides[2] = ostv.frame->linesize[2];
+      opd[1] = ostv.frame->data[1];
+      opd[2] = ostv.frame->data[2];
+    } else {
+      ostrides[1] = ostrides[2] = 0;
+      opd[1] = opd[2] = NULL;
+    }
+    ostrides[3] = 0;
+    opd[3] = NULL;
+
     sws_scale(ostv.sws_ctx,
-              (const uint8_t *const *)pixel_data, istrides,
-              0, vsize, ostv.frame->data, ostv.frame->linesize);
+              (const uint8_t *const *)ipd, istrides,
+              0, vsize, (uint8_t *const *)opd, ostrides);
   } else {
     copy_yuv_image(ostv.frame, hsize, vsize, pixel_data);
   }
@@ -864,13 +888,13 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
   float *abuff[in_nchans];
 
   int ret;
-  int got_packet;
+  int got_packet = 0;
   int nb_samples;
   int i;
 
   av_init_packet(&pkt);
 
-  if (audio == NULL || nsamps == 0) {
+  if (!audio || nsamps == 0) {
     // flush buffers
     ret = avcodec_encode_audio2(c, &pkt, NULL, &got_packet);
     if (ret < 0) {

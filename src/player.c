@@ -352,6 +352,7 @@ void load_frame_image(frames_t frame) {
         if ((mainw->actual_frame += (-10 + (int)(21.*rand() / (RAND_MAX + 1.0)))) > cfile->frames ||
             mainw->actual_frame < 1) mainw->actual_frame = frame;
         else resync_audio(mainw->actual_frame);
+        mainw->record_frame = mainw->actual_frame;
       }
 
       if (mainw->opening_loc || !CURRENT_CLIP_IS_NORMAL) {

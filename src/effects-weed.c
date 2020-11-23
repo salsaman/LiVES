@@ -6121,7 +6121,7 @@ LIVES_GLOBAL_INLINE int _weed_instance_unref(weed_plant_t *inst) {
   pthread_mutex_lock(&mainw->instance_ref_mutex);
   nrefs = weed_get_int_value(inst, WEED_LEAF_HOST_REFS, NULL) - 1;
 
-  if (nrefs <= -1) {
+  if (nrefs < -1) {
     char *msg;
     pthread_mutex_unlock(&mainw->instance_ref_mutex);
     if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_REFS)) {

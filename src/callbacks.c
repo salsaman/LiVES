@@ -548,13 +548,16 @@ static void open_sel_range_activate(int frames, double fps) {
 
 static boolean read_file_details_generic(const char *fname) {
   /// make a tmpdir in case we need to open images for example
-  char *tmpdir, *dirname, *com;
+  char *tmpdir = NULL, *dirname, *com;
   const char *prefix = "_fsp";
   dirname = get_worktmp(prefix);
   if (dirname) tmpdir = lives_build_path(prefs->workdir, dirname, NULL);
   else {
-    dirname = lives_strdup_printf("%s%lu", prefix, gen_unique_id());
-    tmpdir = lives_build_path(prefs->workdir, dirname, NULL);
+    do {
+      dirname = lives_strdup_printf("%s%lu", prefix, gen_unique_id());
+      if (tmpdir)lives_free(tmpdir);
+      tmpdir = lives_build_path(prefs->workdir, dirname, NULL);
+    } while (lives_file_test(tmpdir, LIVES_FILE_TEST_EXISTS));
     if (!lives_make_writeable_dir(tmpdir)) {
       workdir_warning();
       lives_free(tmpdir); lives_free(dirname);

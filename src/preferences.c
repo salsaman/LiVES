@@ -1333,12 +1333,15 @@ boolean apply_prefs(boolean skip_warn) {
   const char *def_image_dir = lives_entry_get_text(LIVES_ENTRY(prefsw->image_dir_entry));
   const char *def_proj_dir = lives_entry_get_text(LIVES_ENTRY(prefsw->proj_dir_entry));
   const char *wp_path = lives_entry_get_text(LIVES_ENTRY(prefsw->wpp_entry));
+#ifdef HAVE_FREI0R
   const char *frei0r_path = lives_entry_get_text(LIVES_ENTRY(prefsw->frei0r_entry));
+#endif
 #ifdef HAVE_LIBVISUAL
   const char *libvis_path = lives_entry_get_text(LIVES_ENTRY(prefsw->libvis_entry));
 #endif
+#ifdef HAVE_LADSPA
   const char *ladspa_path = lives_entry_get_text(LIVES_ENTRY(prefsw->ladspa_entry));
-
+#endif
   const char *sepimg_path = lives_entry_get_text(LIVES_ENTRY(prefsw->sepimg_entry));
   const char *frameblank_path = lives_entry_get_text(LIVES_ENTRY(prefsw->frameblank_entry));
 

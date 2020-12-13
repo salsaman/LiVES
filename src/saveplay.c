@@ -16,7 +16,7 @@
 #include "cvirtual.h"
 #include "interface.h"
 
-boolean _start_playback(livespointer data) {
+static boolean _start_playback(livespointer data) {
   int new_file, old_file;
   int play_type = LIVES_POINTER_TO_INT(data);
   if (play_type != 8 && mainw->noswitch) return TRUE;
@@ -5307,6 +5307,8 @@ boolean open_ascrap_file(void) {
 
   cfile->achans = 2;
   cfile->arate = cfile->arps = DEFAULT_AUDIO_RATE;
+
+  // float audio :: TODO
   cfile->asampsize = 16;
   cfile->signed_endian = 0; // ???
 

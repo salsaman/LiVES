@@ -512,7 +512,7 @@ static void setFullScreen(void) {
 }
 
 
-static  uint8_t *buffer_free(volatile uint8_t *retbuf) {
+static uint8_t *buffer_free(volatile uint8_t *retbuf) {
   if (!retbuf) return NULL;
   weed_free((void *)retbuf);
   return NULL;
@@ -554,7 +554,7 @@ static uint8_t *render_to_mainmem(int type, int row, int window_width, int windo
   return xretbuf;
 }
 
-static int next_pot(int val) {for (register int i = 2;; i *= 2) if (i >= val) return i;;}
+static int next_pot(int val) {for (int i = 2;; i *= 2) if (i >= val) return i;}
 
 static void render_to_gpumem_inner(int tnum, int width, int height, int type, volatile uint8_t *texturebuf) {
   int mipMapLevel = 0;
@@ -2018,7 +2018,6 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
   }
 
   if (rowz < imgRow) rowz = (int)((((imgRow >> 1) + typesize - 1) << 1) / typesize) * typesize;
-
 
   if (imgRow != texRow || imgHeight != texHeight || !texturebuf) {
     if (texturebuf) weed_free((void *)texturebuf);

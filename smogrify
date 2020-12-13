@@ -1371,9 +1371,11 @@ if (1) {
 		exit 1;
 	    }
 
-	    if ($asamps == 32) {
-		# cant handle this yet, so we will resample on open
-		$asamps = 16;
+	    if (!$ALLOW_AUDIO32) {
+		if ($asamps == 32) {
+		    # cant handle this yet, so we will resample on open
+		    $asamps = 16;
+		}
 	    }
 
 	    if ($scan_type == 4) {
@@ -1840,19 +1842,21 @@ if (1) {
 	    }
 
 	    $aformnew = "";
-	    if ($asamps == 32) {
-		# cannot handle this yet, need to resample to s16
-		if ($endian == 1) {
-		    $aformnew = "-format s16le";
-		}
-		else {
-		    $aformnew = "-format s16be";
-		}
-		$asamps=16;
-	    }
+	    if (!$ALLOW_AUDIO32) {
+		if ($asamps == 32) {
+		    # cannot handle this yet, need to resample to s16
+		    if ($endian == 1) {
+			$aformnew = "-format s16le";
+		    }
+		    else {
+			$aformnew = "-format s16be";
+		    }
+		    $asamps=16;
 
-	    if ($is_mpv) {
-		$aformnew = "--audio-format=s16";
+		    if ($is_mpv) {
+			$aformnew = "--audio-format=s16";
+		    }
+		}
 	    }
 
 	    $threads = &smog_system_direct("$SYSBIN" . "grep processor /proc/cpuinfo | wc -l");
@@ -5885,8 +5889,10 @@ sub get_mpv_info {
 	    }
 	    if ($VERBOSE > 1) {
 		print STDERR "mpv got asamps $asamps, signed $signed, endian $endian\n";
-		if ($asamps == 32) {
-		    print STDERR "32 bit audio input not yet supported, will downsample to 16 bit (patchme)\n";
+		if (!$ALLOW_AUDIO32) {
+		    if ($asamps == 32) {
+			print STDERR "32 bit audio input not yet supported, will downsample to 16 bit (patchme)\n";
+		    }
 		}
 	    }
 	    next;
@@ -6404,8 +6410,10 @@ sub get_mplayer_info {
 	    }
 	    if ($VERBOSE > 1) {
 		print STDERR "mplayer got asamps $asamps, signed $signed, endian $endian\n";
-		if ($asamps == 32) {
-		    print STDERR "32 bit audio input not yet supported, will downsample to 16 bit (patchme)\n";
+		if (!$ALLOW_AUDIO32) {
+		    if ($asamps == 32) {
+			print STDERR "32 bit audio input not yet supported, will downsample to 16 bit (patchme)\n";
+		    }
 		}
 	    }
 	    next;
@@ -7064,7 +7072,7 @@ sub get_ext {
 
 
 sub insert_audio {
-    ## called from: lin_frames. trim_audio, insert_audio
+    ## called from: link_frames. trim_audio, insert_audio
 
     #what we are going to do:
     # 1) copy the end of the audio (after insertion) to a new file [$where to $to_end]
@@ -7743,7 +7751,7 @@ sub get_image_size {
     }
     else {
 	#identify hangs if the file extension is ".avi" or ".mp4"...maybe more...
-	my $file_ext = &get_ext("$file");
+	my $file_ext = &get_ext($file);
 
 	if ($file_ext eq ".avi" || $file_ext eq ".mp4" || $file_ext eq ".mpg" || $file_ext eq ".mpeg") {
 	    $height = $width = $bpp = 0;
@@ -7880,7 +7888,7 @@ sub get_next_frame {
 
 sub mp3_open {
     if (-f $audio_in) {
-	unlink "$audio_in";
+	unlink $audio_in;
     }
     $f_size = 0;
 
@@ -7930,12 +7938,12 @@ sub ogg_open {
     $f_size = 0;
 
     if (-f $audio_in) {
-	unlink "$audio_in";
+	unlink $audio_in;
     }
 
     unless (&location("ogg123") eq "") {
-	smog_system("ogg123 -d wav -f \"$audio_in\" \"$file\" >$nulfile 2>&1");
-	$f_size= -s $audio_in;
+	&smog_system("ogg123 -d wav -f \"$audio_in\" \"$file\" >$nulfile 2>&1");
+	$f_size = -s $audio_in;
     }
 
     if ($f_size == 0) {
@@ -7963,8 +7971,8 @@ sub ogg_open {
 	$aendian = &get_endian;
     }
 
-    if ($f_size==0) {
-	$f_size= -s $audio_in;
+    if ($f_size == 0) {
+	$f_size = -s $audio_in;
     }
 }
 
@@ -7997,8 +8005,8 @@ sub wav_open {
 	$aendian = &get_endian;
     }
 
-    if ($f_size==0) {
-	$f_size= -s $audio_in;
+    if ($f_size == 0) {
+	$f_size = -s $audio_in;
     }
 }
 
@@ -8010,7 +8018,7 @@ sub othera_open {
     $aendian = &get_endian;
     $asigned = 1;
 
-    $mplayer_command = "\"". &get_mplayer_location . "\"";
+    $mplayer_command = "\"" . &get_mplayer_location . "\"";
     $format = &get_mplayer_format;
 
     if ($is_mpv && $format eq "") {
@@ -8056,7 +8064,7 @@ sub othera_open {
     }
 
     if ($f_size == 0) {
-	$f_size= -s $audio_in;
+	$f_size = -s $audio_in;
     }
 }
 

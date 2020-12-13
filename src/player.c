@@ -2167,7 +2167,9 @@ int process_one(boolean visible) {
   // INTERNAL PLAYER
   static frames_t last_req_frame = 0;
   static int last_pwidth = 0, last_pheight = 0;
+#ifdef HAVE_PULSE_AUDIO
   static int64_t last_seek_pos = 0;
+#endif
   lives_clip_t *sfile = cfile;
   _vid_playback_plugin *old_vpp;
   ticks_t new_ticks;
@@ -2820,6 +2822,8 @@ switch_point:
                 ? (double)mainw->pulsed->seek_pos
                 / (double)mainw->files[mainw->pulsed->playing_file]->arate / 4. * sfile->fps + 1. : 0. * sfile->fps + 1,
                 lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs), mainw->pulsed->seek_pos);
+#endif
+#ifdef HAVE_PULSE_AUDIO
         last_seek_pos = mainw->pulsed->seek_pos;
 #endif
 

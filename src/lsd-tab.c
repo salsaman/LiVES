@@ -135,7 +135,7 @@ uint64_t lsd_check_struct(lives_struct_def_t *lsd) {
   uint64_t err = 0;
   if (!lsd) {
     errprint("lsd_check: lsd1 is NULL\n");
-    err |= (1ul << 0);
+    err |= (1ull << 0);
     return err;
   }
 
@@ -176,18 +176,18 @@ uint64_t lsd_check_match(lives_struct_def_t *lsd1, lives_struct_def_t *lsd2) {
   uint64_t err = 0;
   if (!lsd1) {
     errprint("lsd_check: lsd1 is NULL\n");
-    err |= (1ul << 0);
+    err |= (1ull << 0);
   }
   if (!lsd1) {
     errprint("lsd_check: lsd1 is NULL\n");
-    err |= (1ul << 24);
+    err |= (1ull << 24);
   }
   if (err) return err;
 
   if (!lives_structs_same_type(lsd1, lsd2)) {
     errprint("lsd_check: lsd1 type is %s but lsd2 type is %s\n",
              lives_struct_get_type(lsd1), lives_struct_get_type(lsd2));
-    err |= (1ul << 48);
+    err |= (1ull << 48);
   }
 
   sz1 = lives_struct_get_size(lsd1);
@@ -195,15 +195,15 @@ uint64_t lsd_check_match(lives_struct_def_t *lsd1, lives_struct_def_t *lsd2) {
   if (sz1 != sz2) {
     errprint("lsd_check: lsd1 (%p) size is %lu but lsd2 (%p) size is %lu\n",
              lsd1, sz1, lsd2, sz2);
-    if (sz1 > sz2) err |= (1ul << 49);
-    else err |= (1ul << 50);
+    if (sz1 > sz2) err |= (1ull << 49);
+    else err |= (1ull << 50);
   }
   if (lives_strcmp(lives_struct_get_last_field(lsd1), lives_struct_get_last_field(lsd2))) {
     errprint("lsd_check: lsd1 (%p) last field [%s]\n"
              "is not the same as lsd2 (%p) last field [%s]\n",
              lsd1, lives_struct_get_last_field(lsd1),
              lsd2, lives_struct_get_last_field(lsd2));
-    err |= (1ul << 51);
+    err |= (1ull << 51);
   }
 
   /// TODO - check special_fields and self_fields

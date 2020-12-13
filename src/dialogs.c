@@ -541,7 +541,7 @@ boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number
   int response = 1;
   char *mytext;
 
-  if (warn_mask_number >= (1ul << 48)) {
+  if (warn_mask_number >= (1ull << 48)) {
     if (!(prefs->warning_mask & warn_mask_number)) return TRUE;
   } else {
     if (prefs->warning_mask & warn_mask_number) return TRUE;
@@ -567,7 +567,7 @@ boolean do_yesno_dialog_with_check(const char *text, uint64_t warn_mask_number) 
   int response = 1;
   char *mytext;
 
-  if (warn_mask_number >= (1ul << 48)) {
+  if (warn_mask_number >= (1ull << 48)) {
     if (!(prefs->warning_mask & warn_mask_number)) return TRUE;
   } else {
     if (prefs->warning_mask & warn_mask_number) return TRUE;
@@ -771,7 +771,7 @@ LiVESResponseType do_error_dialog_with_check(const char *text, uint64_t warn_mas
   LiVESWidget *err_box;
   LiVESResponseType ret = LIVES_RESPONSE_NONE;
 
-  if (warn_mask_number >= (1ul << 48)) {
+  if (warn_mask_number >= (1ull << 48)) {
     if (!(prefs->warning_mask & warn_mask_number)) return TRUE;
   } else {
     if (prefs->warning_mask & warn_mask_number) return TRUE;

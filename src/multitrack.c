@@ -347,8 +347,7 @@ boolean write_backup_layout_numbering(lives_mt *mt) {
   double vald;
   int fd, i, vali, hdlsize;
   char *asave_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, lives_getuid(),
-                                         lives_getgid(),
-                                         capable->mainpid);
+                                         lives_getgid(), capable->mainpid);
   LiVESList *clist = mainw->cliplist;
 
   fd = lives_create_buffered(asave_file, DEF_FILE_PERMS);
@@ -409,14 +408,12 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
 
   if (mt) {
     aload_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME,
-                                     lives_getuid(), lives_getgid(),
-                                     capable->mainpid);
+                                     lives_getuid(), lives_getgid(), capable->mainpid);
     // ensure file layouts are updated
     upd_layout_maps(NULL);
   } else {
     aload_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME,
-                                     lives_getuid(), lives_getgid(),
-                                     capable->mainpid);
+                                     lives_getuid(), lives_getgid(), capable->mainpid);
   }
 
   fd = lives_open_buffered_rdonly(aload_file);

@@ -441,32 +441,32 @@ enum {
 #define EXEC_SUDO "sudo"
 
 // file types
-#define LIVES_FILE_TYPE_UNKNOWN					(0ul)
+#define LIVES_FILE_TYPE_UNKNOWN					(0ull)
 
-#define LIVES_FILE_TYPE_FIFO					(1ul << 0)
-#define LIVES_FILE_TYPE_CHAR_DEV				(1ul << 1)
-#define LIVES_FILE_TYPE_DIRECTORY				(1ul << 2)
-#define LIVES_FILE_TYPE_BLOCK_DEV 				((1ul << 1) | (1ul << 2))
-#define LIVES_FILE_TYPE_FILE					(1ul << 3)
-#define LIVES_FILE_TYPE_SYMLINK					(1ul << 4)
-#define LIVES_FILE_TYPE_SOCKET					(1ul << 5)
+#define LIVES_FILE_TYPE_FIFO					(1ull << 0)
+#define LIVES_FILE_TYPE_CHAR_DEV				(1ull << 1)
+#define LIVES_FILE_TYPE_DIRECTORY				(1ull << 2)
+#define LIVES_FILE_TYPE_BLOCK_DEV 				((1ull << 1) | (1ull << 2))
+#define LIVES_FILE_TYPE_FILE					(1ull << 3)
+#define LIVES_FILE_TYPE_SYMLINK					(1ull << 4)
+#define LIVES_FILE_TYPE_SOCKET					(1ull << 5)
 
-#define LIVES_FILE_TYPE_PIPE					(1ul << 6)
-#define LIVES_FILE_TYPE_STREAM_LOCAL				(1ul << 7)
-#define LIVES_FILE_TYPE_STREAM_REMOTE				(1ul << 8)
+#define LIVES_FILE_TYPE_PIPE					(1ull << 6)
+#define LIVES_FILE_TYPE_STREAM_LOCAL				(1ull << 7)
+#define LIVES_FILE_TYPE_STREAM_REMOTE				(1ull << 8)
 
 #define LIVES_FILE_TYPE_MASK					(0xFFFF)
 
-#define LIVES_FILE_TYPE_FLAG_SYMLINK				(1ul << 32)
-#define LIVES_FILE_TYPE_FLAG_EXECUTABLE				(1ul << 33)
-#define LIVES_FILE_TYPE_FLAG_UNWRITEABLE	       		(1ul << 34)
-#define LIVES_FILE_TYPE_FLAG_INACCESSIBLE		       	(1ul << 35)
+#define LIVES_FILE_TYPE_FLAG_SYMLINK				(1ull << 32)
+#define LIVES_FILE_TYPE_FLAG_EXECUTABLE				(1ull << 33)
+#define LIVES_FILE_TYPE_FLAG_UNWRITEABLE	       		(1ull << 34)
+#define LIVES_FILE_TYPE_FLAG_INACCESSIBLE		       	(1ull << 35)
 
-#define LIVES_FILE_TYPE_FLAG_EMPTY				(1ul << 59)
-#define LIVES_FILE_TYPE_FLAG_MISSING				(1ul << 60)
-#define LIVES_FILE_TYPE_FLAG_DAMAGED				(1ul << 61)
-#define LIVES_FILE_TYPE_FLAG_INCOMPLETE		       		(1ul << 62)
-#define LIVES_FILE_TYPE_FLAG_SPECIAL				(1ul << 63)
+#define LIVES_FILE_TYPE_FLAG_EMPTY				(1ull << 59)
+#define LIVES_FILE_TYPE_FLAG_MISSING				(1ull << 60)
+#define LIVES_FILE_TYPE_FLAG_DAMAGED				(1ull << 61)
+#define LIVES_FILE_TYPE_FLAG_INCOMPLETE		       		(1ull << 62)
+#define LIVES_FILE_TYPE_FLAG_SPECIAL				(1ull << 63)
 
 #define LIVES_FILE_IS_FILE(ftype)		((ftype & LIVES_FILE_TYPE_FILE) ? TRUE : FALSE)
 #define LIVES_FILE_IS_DIRECTORY(ftype)		((ftype & LIVES_FILE_TYPE_DIRECTORY) ? TRUE : FALSE)

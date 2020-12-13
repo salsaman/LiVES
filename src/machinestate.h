@@ -167,17 +167,17 @@ boolean compress_files_in_dir(const char *dir, int method, void *data);
 LiVESResponseType send_to_trash(const char *item);
 
 /// extras we can check for, may consume more time
-#define EXTRA_DETAILS_CHECK_MISSING	       	(1ul << 0)
-#define EXTRA_DETAILS_DIRSIZE			(1ul << 1)
-#define EXTRA_DETAILS_EMPTY_DIRS	       	(1ul << 2)
-#define EXTRA_DETAILS_SYMLINK		       	(1ul << 3)
-#define EXTRA_DETAILS_ACCESSIBLE	       	(1ul << 4)
-#define EXTRA_DETAILS_WRITEABLE			(1ul << 5)
-#define EXTRA_DETAILS_EXECUTABLE       		(1ul << 6)
-#define EXTRA_DETAILS_CLIPHDR			(1ul << 7)
+#define EXTRA_DETAILS_CHECK_MISSING	       	(1ull << 0)
+#define EXTRA_DETAILS_DIRSIZE			(1ull << 1)
+#define EXTRA_DETAILS_EMPTY_DIRS	       	(1ull << 2)
+#define EXTRA_DETAILS_SYMLINK		       	(1ull << 3)
+#define EXTRA_DETAILS_ACCESSIBLE	       	(1ull << 4)
+#define EXTRA_DETAILS_WRITEABLE			(1ull << 5)
+#define EXTRA_DETAILS_EXECUTABLE       		(1ull << 6)
+#define EXTRA_DETAILS_CLIPHDR			(1ull << 7)
 
 /// derived values
-#define EXTRA_DETAILS_MD5SUM			(1ul << 33)
+#define EXTRA_DETAILS_MD5SUM			(1ull << 33)
 
 typedef struct {
   ///< if we can retrieve some kind of uinque id, we set it here

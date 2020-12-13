@@ -16,6 +16,9 @@ extern "C"
 
 //#define DEBUG
 
+
+
+
 #ifdef DEBUG
 #include <stdio.h>
 #define debug_print(...) fprintf(stderr, __VA_ARGS__)
@@ -26,7 +29,7 @@ extern "C"
 #ifndef SILENT_ENOMEM
 #include <stdio.h>
 #define memerr_print(size, name, struct) fprintf(stderr, "WARNING: memory failure allocating " \
-						 "%lu bytes for field %s in struct %s", \
+						 "%" PRIu64 " bytes for field %s in struct %s", \
 						 size, name, struct)
 #else
 #define memerr_print(a, b, c)
@@ -50,6 +53,7 @@ extern "C"
 #define LSD_MAX_ALLOC 65535
 #define LIVES_STRUCT_ID 0x4C7C56332D2D3035  /// 1st 8 bytes - L|V3--05 (be) or 50--3V|L (le)
 
+#include <stdint.h>
 #include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
@@ -105,7 +109,7 @@ static char *_lsd_proxy_strdup(char *str) {
 /// copy flags
 ///< alloc and copy on copy. If bytesize is set that will be the alocated size,
 /// if 0 then we do a strdup. Fixed size is ignored for arrays.
-#define LIVES_FIELD_FLAG_ALLOC_AND_COPY (1l << 0)
+#define LIVES_FIELD_FLAG_ALLOC_AND_COPY (1ull << 0)
 
 ///< if bytesize is 0, field will be set to NULL in lives_struct_copy,
 /// if ALLOC_AND_COPY is also set, will be set to empty string
@@ -116,15 +120,15 @@ static char *_lsd_proxy_strdup(char *str) {
 /// however, since a NULL element marks the end of a NULLT_ARRAY,
 /// the combination ALLOC_AND_COPY | ZERO_ON_COPY | IS_NULLT_ARRAY may interfere with
 /// subsequent copying
-#define LIVES_FIELD_FLAG_ZERO_ON_COPY (1l << 1)
+#define LIVES_FIELD_FLAG_ZERO_ON_COPY (1ull << 1)
 
 // delete flags
 ///< field wiill be freed in lives_struct_delete
 /// free(struct->field)
-#define LIVES_FIELD_FLAG_FREE_ON_DELETE (1l << 16)
+#define LIVES_FIELD_FLAG_FREE_ON_DELETE (1ull << 16)
 
 /// for (i = 0; struct->field[i], i++) free(struct->field[i];
-#define LIVES_FIELD_FLAG_FREE_ALL_ON_DELETE (1l << 17) ///< combined with IS_NULLT_ARRAY, frees all elements, combine with FREE_ON_DELETE to free elemnt after
+#define LIVES_FIELD_FLAG_FREE_ALL_ON_DELETE (1ull << 17) ///< combined with IS_NULLT_ARRAY, frees all elements, combine with FREE_ON_DELETE to free elemnt after
 
 /// flags giving extra info about the field (affects copy and delete)
 
@@ -133,12 +137,12 @@ static char *_lsd_proxy_strdup(char *str) {
 /// sequence matching LIVES_STRUCT_ID in its identifier field
 /// lives_struct_copy(struct->field
 /// if this is set, all other flag bits are ignored for the field
-#define LIVES_FIELD_FLAG_IS_SUBSTRUCT (1l << 32)
+#define LIVES_FIELD_FLAG_IS_SUBSTRUCT (1ull << 32)
 
 ///< field is an array of elements of size bytelen, last element has all bytes set to zero
 /// if bytesize is zero, it is an array of NUL terminated char
 /// may be combined with ALLOC_AND_COPY, FREE_ON_DELETE, FREE_ALL_ON_DELETE
-#define LIVES_FIELD_FLAG_IS_NULLT_ARRAY (1l << 33)
+#define LIVES_FIELD_FLAG_IS_NULLT_ARRAY (1ull << 33)
 
 // combinations:
 // Z : bytesize == 0 :: set any * to NULL
@@ -507,7 +511,7 @@ static void *_lsd_get_field(char *top, int is_self_field,
               spfields[i]->name, top);
   if (is_self_field) {
     top += spfields[0]->offset_to_field;
-    debug_print("lsd field is at offset %lu, %p\n",
+    debug_print("lsd field is at offset %" PRIu64 ", %p\n",
                 spfields[0]->offset_to_field, top);
     if (spfields[0]->bytesize) {
       if (!i) return top;
@@ -516,7 +520,7 @@ static void *_lsd_get_field(char *top, int is_self_field,
                   top);
     }
   }
-  debug_print("adding field offset of %lu, final ptr is %p\n",
+  debug_print("adding field offset of %" PRIu64 ", final ptr is %p\n",
               spfields[i]->offset_to_field, top + spfields[i]->offset_to_field);
   return top + spfields[i]->offset_to_field;
 }
@@ -545,10 +549,10 @@ static int _lsd_auto_delete(void *ptr, uint64_t flags, size_t bsize) {
     if (vptr) {
       if ((flags & LIVES_FIELD_FLAG_ALLOC_AND_COPY) && !bsize
           && !(flags & LIVES_FIELD_FLAG_FREE_ALL_ON_DELETE)) {
-        //g_print("flags !!! %lu %lu\n", flags, sizee);
+        //g_print("flags !!! %" PRIu64 " %" PRIu64 "\n", flags, sizee);
         (*_lsd_string_free)(vptr);
       } else {
-        //g_print("flags %lu %lu\n", flags, sizee);
+        //g_print("flags %" PRIu64 " %" PRIu64 "\n", flags, sizee);
         (*_lsd_free)(vptr);
       }
     }
@@ -564,10 +568,10 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
     if (spcf->flags & LIVES_FIELD_FLAG_ALLOC_AND_COPY) {
       if (bsize) {
         if (bsize > LSD_MAX_ALLOC) {
-          debug_print("error: memory request too large (%lu > %lu)\n", bsize, LSD_MAX_ALLOC);
+          debug_print("error: memory request too large (%" PRIu64 " > %" PRIu64 ")\n", bsize, LSD_MAX_ALLOC);
           return;
         } else {
-          debug_print("allocating %lu bytes...", bsize);
+          debug_print("allocating %" PRIu64 " bytes...", bsize);
           if (spcf->flags & LIVES_FIELD_FLAG_ZERO_ON_COPY) {
             if (!(*_lsd_calloc_aligned)((void **)dst_field, 1, bsize)) {
               debug_print("and set to zero.\n");
@@ -621,7 +625,7 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
     if (spcf->flags & LIVES_FIELD_FLAG_ZERO_ON_COPY) {
       if (bsize) {
         (*_lsd_memset)(dst_field, 0, bsize);
-        debug_print("zeroed %lu bytes\n", bsize);
+        debug_print("zeroed %" PRIu64 " bytes\n", bsize);
       } else {
         *((char **)dst_field) = NULL;
         debug_print("set string to NULL\n");
@@ -725,10 +729,10 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
           debug_print("value is NULL, not copying\n");
         } else {
           if (spcf->flags & LIVES_FIELD_FLAG_ZERO_ON_COPY) {
-            debug_print("created %d pointers to empty elements of size %lu "
+            debug_print("created %d pointers to empty elements of size %" PRIu64 " "
                         "(+ terminating NULL)\n", count, bsize);
           } else {
-            debug_print("duplicated %d pointers to elements of size %lu "
+            debug_print("duplicated %d pointers to elements of size %" PRIu64 " "
                         "(+ terminating NULL)\n",
                         count, bsize);
           }
@@ -762,7 +766,7 @@ static void _lsd_auto_copy(void *dst_field, void *src_field, lives_special_field
         if (!ptr) {
           debug_print("value is NULL, not copying\n");
         } else {
-          debug_print("- copied %d values of size %ld (including final 0's)\n",
+          debug_print("- copied %d values of size %" PRId64 " (including final 0's)\n",
                       count, bsize);
         }
         if (!(spcf->flags & LIVES_FIELD_FLAG_FREE_ON_DELETE)) {
@@ -871,7 +875,7 @@ static void *_lsd_struct_copy(lives_struct_def_t *lsd, void *new_struct) {
       memerr_print(lsd->structsize, "ALL FIELDS", lsd->structtype);
       return NULL;
     }
-    debug_print("copying struct of type: %s, %p -> %p, with size %lu\n", lsd->structtype,
+    debug_print("copying struct of type: %s, %p -> %p, with size %" PRIu64 "\n", lsd->structtype,
                 parent, new_struct,
                 lsd->structsize);
     parent = lsd->top;

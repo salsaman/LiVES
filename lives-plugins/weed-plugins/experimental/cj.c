@@ -68,7 +68,7 @@ static cjMethod_t booleanMethods[] = {
 
 /*
    Connect to JVM using arguments in pJVM.  If failure, clean up.
-   Returns CJ_ERR_SUCCESS if sucessful.
+   Returns CJ_ERR_SUCCESS if successful.
 */
 int cjJVMConnect(cjJVM_t *pJVM) {
   long jret = 0;
@@ -116,7 +116,7 @@ int cjJVMConnect(cjJVM_t *pJVM) {
 }
 
 /*
-   Destroys JVM.  Returns CJ_ERR_SUCCESS if sucessful
+   Destroys JVM.  Returns CJ_ERR_SUCCESS if successful
 */
 int cjJVMDisconnect(cjJVM_t *pJVM) {
   // Disconnect from JVM

@@ -35,7 +35,7 @@ static int package_version = 1; // version of this package
    The first in channel can be inplaced with the out channel.
 
    The plugin utilizes a few special features of Weed. First it sets the filter flag bit:
-   WEED_FILTER_IS_CONVERTER. This allows it to mix multipl input streams into one output,
+   WEED_FILTER_IS_CONVERTER. This allows it to mix multiple input streams into one output,
    and also permits remapping of channels within the layout (i.e. swap left / right).
 
    It also sets the filter flag WEED_FILTER_HINT_PROCESS_LAST, so the host should place it as near to the end of

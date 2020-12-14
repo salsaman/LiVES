@@ -2913,7 +2913,7 @@ void on_prefs_page_changed(LiVESTreeSelection * widget, _prefsw * prefsw) {
 */
 void apply_button_set_enabled(LiVESWidget * widget, livespointer func_data) {
   if (prefsw->ignore_apply) return;
-  lives_button_grab_default_special(prefsw->applybutton); // need to do this first or the button doesnt get its colour
+  lives_button_grab_default_special(prefsw->applybutton); // need to do this first or the button doesn't get its colour
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->applybutton), TRUE);
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->revertbutton), TRUE);
   lives_widget_set_sensitive(LIVES_WIDGET(prefsw->closebutton), FALSE);
@@ -4186,7 +4186,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   }
 
   if (capable->has_encoder_plugins) {
-    // reqest formats from the encoder plugin
+    // request formats from the encoder plugin
     if ((ofmt_all = plugin_request_by_line(PLUGIN_ENCODERS, prefs->encoder.name, "get_formats"))) {
       for (i = 0; i < lives_list_length(ofmt_all); i++) {
         if (get_token_count((char *)lives_list_nth_data(ofmt_all, i), '|') > 2) {
@@ -5429,7 +5429,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   prefsw->spinbutton_midirpt = lives_standard_spin_button_new((tmp = (_("MIDI repeat"))),
                                prefs->midi_rpt, 1., 10000., 10., 100., 0, LIVES_BOX(hbox),
-                               (tmp2 = (_("Number of non-reads allowed between succesive reads."))));
+                               (tmp2 = (_("Number of non-reads allowed between successive reads."))));
 
   lives_free(tmp); lives_free(tmp2);
 

@@ -3149,7 +3149,7 @@ void mt_swap_play_pause(lives_mt * mt, boolean put_pause) {
 }
 
 
-// AUDIO MIXER FUCNTIONS ////
+// AUDIO MIXER FUNCTIONS ////
 
 void on_amixer_close_clicked(LiVESButton * button, lives_mt * mt) {
   lives_amixer_t *amixer = mt->amixer;

@@ -861,7 +861,7 @@ giw_vslider_set_major_ticks_number(GiwVSlider *vslider,
 
     vslider->major_ticks = number;
 
-    // Now, there are diferent legends, so, we have to create them
+    // Now, there are different legends, so, we have to create them
     vslider_build_legends(vslider);
 
     vslider_calculate_sizes(vslider);
@@ -930,13 +930,13 @@ vslider_calculate_sizes(GiwVSlider *vslider) {
   vslider->x = vslider->legend_width;
   vslider->y = vslider->legend_height / 2;
 
-  // If the legends are too small, or inexistant, it has to be some space left fot the button (when it's on he edge)
+  // If the legends are too small, or nonexistent, there has to be some space left for the button (when it's on the edge)
   if (vslider->y < vslider->button_h / 2) {
     vslider->height = lives_widget_get_allocation_height(widget) - vslider->button_h;
     vslider->y = vslider->button_h / 2;
   }
 
-  /* The height of the vslider is the widget's height less a half of legend height (beacause a half of the legends are drawn outside the vslider's area .
+  /* The height of the vslider is the widget's height less a half of legend height (because a half of the legends are drawn outside the vslider's area .
      If there are no legends the temometer width is the widget's width, is there are legends, the width of the vslider is the space left by the legends.*/
 
   vslider->major_dy = (gdouble)vslider->height / (gdouble)(vslider->major_ticks - 1);
@@ -950,7 +950,7 @@ void
 vslider_calculate_button(GiwVSlider *vslider) {
   g_return_if_fail(vslider != NULL);
 
-  // Getting button's positon and dimensions
+  // Getting button's position and dimensions
   vslider->button_x = vslider->x + 5;
   vslider->button_y = vslider->y + vslider->height - vslider->height *
                       ((gtk_adjustment_get_value(vslider->adjustment) - lives_adjustment_get_lower(vslider->adjustment)) /
@@ -963,7 +963,7 @@ void
 vslider_calculate_phantom_button(GiwVSlider *vslider) {
   g_return_if_fail(vslider != NULL);
 
-  // Getting phantom button's positon and dimensions
+  // Getting phantom button's position and dimensions
   vslider->pbutton_x = vslider->x + 5;
   vslider->pbutton_y = vslider->y + vslider->height - vslider->height *
                        ((vslider->phantom_value - lives_adjustment_get_lower(vslider->adjustment)) /

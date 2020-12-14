@@ -2,7 +2,7 @@ GIW - GTK INSTRUMENTATION WIDGETS
 
 1- GENERAL
   The GIW is a library with widgets for instrumentation applications, or any kind of 
-  scientific application. The avaliable widgets can display and receive data in varius 
+  scientific application. The available widgets can display and receive data in various 
   forms. Those widgets were built using the GTK library.
   
   GIW is hosted at http://tesla.eletrica.ufpr.br/giw

@@ -158,7 +158,7 @@ typedef enum {
 typedef enum {
   LIVES_AUDIO_PLAYER_UNKNOWN = -1, ///< Unknown / invalid
   LIVES_AUDIO_PLAYER_PULSE, ///< Audio playback is through PulseAudio
-  LIVES_AUDIO_PLAYER_JACK, ///< Audio playback is thorugh Jack
+  LIVES_AUDIO_PLAYER_JACK, ///< Audio playback is through Jack
   LIVES_AUDIO_PLAYER_SOX, ///< Audio playback is through Sox
   LIVES_AUDIO_PLAYER_MPLAYER, ///< Audio playback is through mplayer
   LIVES_AUDIO_PLAYER_MPLAYER2 ///< Audio playback is through mplayer2

@@ -494,7 +494,7 @@ typedef struct {
   boolean rr_amicro;
   boolean rr_ramicro;
 
-  char def_author[1024]; ///< TODO - add to prefs windo
+  char def_author[1024]; ///< TODO - add to prefs window
 } _prefs;
 
 enum {

@@ -41,7 +41,7 @@ void weed_plugin_info_add_filter_class (weed_plant_t *plugin_info, weed_plant_t 
 weed_plant_t *weed_parameter_template_get_gui (weed_plant_t *paramt);
 
 
-// get gui plant fot filter_class
+// get gui plant for filter_class
 
 weed_plant_t *weed_filter_class_get_gui (weed_plant_t *filter);
 

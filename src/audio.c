@@ -461,7 +461,7 @@ void sample_move_d8_d16(short *dst, uint8_t *src,
                         int nDstChannels, int nSrcChannels, int swap_sign) {
   // convert 8 bit audio to 16 bit audio
 
-  // endianess will be machine endian
+  // endianness will be machine endian
   static double rem = 0.f;
   double src_offset_d = rem;
   unsigned char *ptr;
@@ -1720,7 +1720,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
               float **adata = (weed_layer_get_audio_data(layers[x], NULL));
               for (y = 0; y < out_achans; y++) {
                 if (chunk_float_buffer[x * out_achans + y] != adata[y]) {
-                  /// non-inplace, audio was replaced so wee need to copy to float_buffer and free
+                  /// non-inplace, audio was replaced so we need to copy to float_buffer and free
                   lives_memcpy(chunk_float_buffer[x * out_achans + y], adata[y], weed_layer_get_audio_length(layers[x])
                                * sizeof(float));
                   lives_free(adata[y]);
@@ -3001,7 +3001,7 @@ static void *cache_my_audio(void *arg) {
         // channels or samp_space changed
 
         if ((cbuffer->out_interleaf ? 1 : cbuffer->out_achans) > (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans)) {
-          // ouput channels increased
+          // output channels increased
           cbuffer->buffer16 = (short **)
                               lives_realloc(cbuffer->buffer16,
                                             (cbuffer->out_interleaf ? 1 : cbuffer->out_achans) * sizeof(short *));
@@ -3044,7 +3044,7 @@ static void *cache_my_audio(void *arg) {
         // channels or samp_space changed
 
         if ((cbuffer->in_interleaf ? 1 : cbuffer->out_achans) > (cbuffer->_cin_interleaf ? 1 : cbuffer->_cachans)) {
-          // ouput channels increased
+          // output channels increased
           cbuffer->buffer16 = (short **)
                               lives_realloc(cbuffer->buffer16,
                                             (cbuffer->in_interleaf ? 1 : cbuffer->out_achans) * sizeof(short *));
@@ -3080,7 +3080,7 @@ static void *cache_my_audio(void *arg) {
         // channels or samp_space changed
 
         if ((cbuffer->out_interleaf ? 1 : cbuffer->out_achans) > (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans)) {
-          // ouput channels increased
+          // output channels increased
           cbuffer->bufferf = (float **)
                              lives_realloc(cbuffer->bufferf,
                                            (cbuffer->out_interleaf ? 1 : cbuffer->out_achans) * sizeof(float *));

@@ -1,5 +1,5 @@
 // weed-effects-utils.c
-// - will probaly become libweed-effects-utils or something
+// - will probably become libweed-effects-utils or something
 // LiVES
 // (c) G. Finch 2003 - 2019 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
@@ -425,7 +425,7 @@ WEED_GLOBAL_INLINE void weed_channel_set_width(weed_plant_t *channel, int width)
 }
 
 WEED_GLOBAL_INLINE int weed_channel_get_width_pixels(weed_plant_t *channel) {
-  /// width in pixels: only relevant when comparing widths of diferrent palettes
+  /// width in pixels: only relevant when comparing widths of different palettes
   return  weed_channel_get_width(channel) * weed_palette_get_pixels_per_macropixel(weed_channel_get_palette(channel));
 }
 

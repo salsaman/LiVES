@@ -4080,7 +4080,7 @@ static void _resize_play_window(void) {
       get_play_screen_size(&mainw->pwidth, &mainw->pheight);
 
       if (lives_widget_is_visible(mainw->play_window)) {
-        // store old postion of window
+        // store old position of window
         lives_window_get_position(LIVES_WINDOW(mainw->play_window), &opwx, &opwy);
         if (opwx * opwy > 0) {
           mainw->opwx = opwx;
@@ -4362,7 +4362,7 @@ static void _kill_play_window(void) {
     if (mainw->preview_box && lives_widget_get_parent(mainw->preview_box)) {
       // preview_box is refed, so it will survive
       if (mainw->pi_surface) {
-        /// invalid the preview windo surface (IMPORTANT !)
+        /// invalid the preview window surface (IMPORTANT !)
         lives_painter_surface_destroy(mainw->pi_surface);
         mainw->pi_surface = NULL;
       }
@@ -4395,9 +4395,9 @@ void kill_play_window(void) {
 
     if the player can resize, then we only need to consider the aspect ratio.
     we will embed the image in a black rectangle to give it the same aspect ratio
-    as the player; thus when it gets stretched to the player size the inner image wil not be distorted
+    as the player; thus when it gets stretched to the player size the inner image will not be distorted
     so here we check: if we keep the same height, and then set the width to the player a.r, does it increase ?
-    if so then our outer rectangle will be wider, othewise it will be higher (or the same, in which case we dont do anything)
+    if so then our outer rectangle will be wider, otherwise it will be higher (or the same, in which case we dont do anything)
     - if either dimension ends up larger, then our outer rectangle is the player size, and we scale the inner image down so both
     width and height fit
 

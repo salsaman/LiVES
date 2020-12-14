@@ -6,7 +6,7 @@ FAQ
  Does LiVES require a working copy of mplayer (or mplayer2) ?
 It is no longer a requirement to run LiVES, but without it you will not be able to open SOME movie clips* or see previews in the file open dialog.
 
-* in current versions of LiVES almost all clips can be opened instantly via plugins, howver mplayer is used as a fallback in cases 
+* in current versions of LiVES almost all clips can be opened instantly via plugins, however mplayer is used as a fallback in cases 
 where the plugins fail.
 
 
@@ -36,7 +36,7 @@ only way you can damage your original material is by saving over it,
 but LiVES will warn you if you try to do this.
 
 * this is no longer always true. For files which are opened instantly (dv or ogg/theora), 
-the original file is required until all frames have been chenged or copied.
+the original file is required until all frames have been changed or copied.
 
 
 
@@ -62,7 +62,7 @@ Saving, resizing, merging, and applying some effects. Cut and paste do not.
 Neither do backup, restore, resample or reorder (though reorder/resample may lose whole frames).
 
  Can I run several copies of LiVES at once ?
-Yes, you can have multiple copies of the LiVES open, and you can edit video in each without interferance. However, a particular Set can only be opened in one copy of LiVES at a time.
+Yes, you can have multiple copies of the LiVES open, and you can edit video in each without interference. However, a particular Set can only be opened in one copy of LiVES at a time.
 
 
  What are the default directories in Preferences for ?

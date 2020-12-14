@@ -63,7 +63,7 @@ SUMMARY (ver. %s):
 Encodes a series of PNG or JPG images into an MPEG-1 or MPEG-2
 stream. It behaves mostly as a simplified front-end to mjpegtools,
 although it is also capable of performing some simple image
-enhacements using ImageMagick. The images and audio are assumed to
+enhancements using ImageMagick. The images and audio are assumed to
 be in an uncompressed LiVES format, hence making this encoder
 more suitable to be used within a LiVES plugin (but can also
 be used directly on a LiVES temporary directory).

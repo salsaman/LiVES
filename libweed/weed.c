@@ -425,7 +425,7 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key, 
     if (!hash_ret) {
       /// grab rwt mutex
       /// if we get a readlock, then remove it at end
-      /// othewise check flagbits, if op. is !SET, run in checking mode
+      /// otherwise check flagbits, if op. is !SET, run in checking mode
       if (chain_lock_try_readlock(plant)) {
 	// another thread has writelock
 	if (plant->flags & WEED_FLAG_OP_DELETE) checkmode = 1;

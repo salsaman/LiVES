@@ -121,12 +121,12 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 /// hsize and vsize are width and height of the pixel data (in macropixels)
 /// no extra padding (rowstrides) is allowed
 /// play_params should be cast to weed_plant_t ** (if the plugin exports get_play_paramtmpls() )
-/// otherwise it can be ignored (deprectaed)
+/// otherwise it can be ignored (deprecated)
 boolean render_frame(int hsize, int vsize, int64_t timecode, void **pixel_data, void **return_data,
                      void **play_params);
 
 /// updated version of render_frame: input is a weed_layer and timecode, if ret is non NULL, return pixel_data in ret
-/// any player params are now in paramters for the layer, which acts like a filter channel
+/// any player params are now in parameters for the layer, which acts like a filter channel
 boolean play_frame(weed_layer_t *frame, int64_t tc, weed_layer_t *ret);
 
 /// destroy the screen, return mouse to original posn., allow the host GUI to take over (optional)

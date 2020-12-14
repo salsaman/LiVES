@@ -186,7 +186,7 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
 
   if (button)
     if (dialog) {
-      // prevent a gtk+ crash by removing the focus before detroying the dialog
+      // prevent a gtk+ crash by removing the focus before destroying the dialog
       LiVESWidget *content_area = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
       lives_container_set_focus_child(LIVES_CONTAINER(content_area), NULL);
     }
@@ -1484,7 +1484,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
 boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_slider) {
   // box here is vbox inside top_hbox inside top_dialog
 
-  // add paramter pnum for rfx to box
+  // add parameter pnum for rfx to box
 
   LiVESWidget *label;
   LiVESWidget *checkbutton;
@@ -2606,7 +2606,7 @@ void after_param_alpha_changed(LiVESSpinButton * spinbutton, lives_rfx_t *rfx) {
 boolean after_param_text_focus_changed(LiVESWidget * hbox, LiVESWidget * child, lives_rfx_t *rfx) {
   // for non realtime effects
   // we don't usually want to run the trigger every single time the user presses a key in a text widget
-  // so we only update when the user clicks OK or focusses out of the widget
+  // so we only update when the user clicks OK or focuses out of the widget
 
   LiVESWidget *textwidget;
 

@@ -4068,7 +4068,7 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
   lives_free(tmp); lives_free(dirname);
 
   if ((rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tentry), "rfx")) != NULL) {
-    /// if running inside a parameter window, reflect update in related paramter values
+    /// if running inside a parameter window, reflect update in related parameter values
     int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tentry), "param_number"));
     after_param_text_changed(tentry, rfx);
 
@@ -4511,7 +4511,7 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   checkbutton = lives_standard_check_button_new((tmp = (_("Check for Lost Clips"))),
                 !(prefs->clear_disk_opts & LIVES_CDISK_REMOVE_ORPHAN_CLIPS), LIVES_BOX(hbox),
                 (tmp2 = (H_("Enable attempted recovery of potential lost clips before deleting them.\n"
-                            "Can be overriden after disk analysis."))));
+                            "Can be overridden after disk analysis."))));
 
   lives_free(tmp); lives_free(tmp2);
 

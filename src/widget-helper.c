@@ -177,12 +177,12 @@ static boolean widget_state_cb(LiVESWidgetObject *object, livespointer pspec, li
   // This callback is here because:
   //
   // a) cannot alter the text colour of a button after the initial draw of a button
-  // this is because it doesnt have a proper label widget
+  // this is because it doesn't have a proper label widget
   // we can only change the background colour, so here we change the border colour via updating the parent container
 
-  // note: if we need a button with changable text colour we must use a toolbar button instead !
+  // note: if we need a button with changeable text colour we must use a toolbar button instead !
   //
-  // b) CSS appears broken in gtk+ 3.18.9 and possibly other versions, preventing seeting of colours for
+  // b) CSS appears broken in gtk+ 3.18.9 and possibly other versions, preventing setting of colours for
   // non-default states (e.g. insensitive)
   // thus we need to set a callback to listen to "sensitive" changes, and update the colours in response
   //
@@ -903,7 +903,7 @@ unsigned long lives_signal_connect_sync(livespointer instance, const char *detai
   if (LIVES_IS_WIDGET(instance) && LIVES_IS_SWITCH(LIVES_WIDGET(instance))
       && !strcmp(detailed_signal, LIVES_WIDGET_TOGGLED_SIGNAL)) {
     /// to make switch and checkbutton interchangeable,
-    /// we substitue the "toggled" signal for a switch with "notify::active"
+    /// we substitute the "toggled" signal for a switch with "notify::active"
     /// and then redirect it back to the desired callback
     lives_sigdata_t *sigdata = lives_calloc(1, sizeof(lives_sigdata_t));
     sigdata->instance = instance;
@@ -1299,7 +1299,7 @@ unsigned long lives_signal_connect_async(livespointer instance, const char *deta
 #if LIVES_HAS_SWITCH_WIDGET
   if (swtog) {
     /// to make switch and checkbutton interchangeable,
-    /// we substitue the "toggled" signal for a switch with "notify::active"
+    /// we substitute the "toggled" signal for a switch with "notify::active"
     /// and then redirect it back to the desired callback
     sigdata->detsig = lives_strdup(LIVES_WIDGET_TOGGLED_SIGNAL);
     sigdata->funcid = g_signal_connect_data(instance, LIVES_WIDGET_NOTIFY_SIGNAL "active",
@@ -1339,7 +1339,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handlers_sync_disconnect_by_fun
 #if LIVES_HAS_SWITCH_WIDGET
   if (LIVES_IS_WIDGET(instance) && LIVES_IS_SWITCH(LIVES_WIDGET(instance))) {
     /// to make switch and checkbutton interchangeable,
-    /// we substitue the "toggled" signal for a switch with "notify::active"
+    /// we substitute the "toggled" signal for a switch with "notify::active"
     /// and then redirect it back to the desired callback
     lives_sigdata_t *sigdata = find_sigdata(instance, LIVES_GUI_CALLBACK(func), data);
     if (sigdata) {
@@ -1360,7 +1360,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handlers_sync_block_by_func(liv
 #if LIVES_HAS_SWITCH_WIDGET
   if (LIVES_IS_WIDGET(instance) && LIVES_IS_SWITCH(LIVES_WIDGET(instance))) {
     /// to make switch and checkbutton interchangeable,
-    /// we substitue the "toggled" signal for a switch with "notify::active"
+    /// we substitute the "toggled" signal for a switch with "notify::active"
     /// and then redirect it back to the desired callback
     lives_sigdata_t *sigdata = find_sigdata(instance, LIVES_GUI_CALLBACK(func), data);
     if (sigdata) {
@@ -1381,7 +1381,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handlers_sync_unblock_by_func(l
 #if LIVES_HAS_SWITCH_WIDGET
   if (LIVES_IS_WIDGET(instance) && LIVES_IS_SWITCH(LIVES_WIDGET(instance))) {
     /// to make switch and checkbutton interchangeable,
-    /// we substitue the "toggled" signal for a switch with "notify::active"
+    /// we substitute the "toggled" signal for a switch with "notify::active"
     /// and then redirect it back to the desired callback
     lives_sigdata_t *sigdata = find_sigdata(instance, LIVES_GUI_CALLBACK(func), data);
     if (sigdata) {
@@ -3210,9 +3210,9 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESAdjustment *lives_adjustment_new(double value, 
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_box_set_homogeneous(LiVESBox *box, boolean homogenous) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_box_set_homogeneous(LiVESBox *box, boolean homogeneous) {
 #ifdef GUI_GTK
-  gtk_box_set_homogeneous(box, homogenous);
+  gtk_box_set_homogeneous(box, homogeneous);
   return TRUE;
 #endif
 #ifdef GUI_QT
@@ -9546,7 +9546,7 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList * list, L
   // pack a themed combo box into box
 
   // seems like it is not possible to set the arrow colours
-  // nor the entireity of the background for the popup list
+  // nor the entirety of the background for the popup list
 
   LiVESWidget *eventbox = NULL;
   LiVESWidget *container = NULL;
@@ -11834,7 +11834,7 @@ static boolean noswitch = FALSE;
 static boolean re_add_idlefunc = FALSE;
 
 static void do_some_things(void) {
-  // som old junk that may or may not be relevant now
+  // some old junk that may or may not be relevant now
 
   /// clip switching is not permitted during these "artificial" context updates
   noswitch = mainw->noswitch;

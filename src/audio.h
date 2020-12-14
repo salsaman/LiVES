@@ -19,7 +19,7 @@
 #define SWAP_X_TO_L 1  ///< other to local
 #define SWAP_L_TO_X 2 ///< local to other
 
-/// defaults for when not specifed
+/// defaults for when not specified
 # define DEFAULT_AUDIO_RATE 44100
 # define DEFAULT_AUDIO_CHANS 2
 # define DEFAULT_AUDIO_SAMPS 16
@@ -48,7 +48,7 @@
 
 #define AUD_WRITE_CHECK 0xFFFFFFFFF4000000 ///< after recording this many bytes we check disk space (default 128MB)
 
-#define WEED_LEAF_HOST_KEEP_ADATA "keep_adata" /// set to WEED_TRUE in layer if doing zero-copy audio porcessing
+#define WEED_LEAF_HOST_KEEP_ADATA "keep_adata" /// set to WEED_TRUE in layer if doing zero-copy audio processing
 
 /////////////////////////////////////
 /// asynch msging

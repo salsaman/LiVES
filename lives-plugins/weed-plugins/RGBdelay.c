@@ -226,7 +226,7 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
       sdata->is_bgr[i] = sdata->is_bgr[i - 1];
     }
 
-    // normalise the blend strength for each colour channel, so the total doesnt exceed 1.0
+    // normalise the blend strength for each colour channel, so the total doesn't exceed 1.0
     // tstr_* hold the overall totals
     if (weed_param_get_value_boolean(in_params[RED_ON(i)]) == WEED_TRUE) {
       tstr_red += weed_param_get_value_double(in_params[STRENGTH(i)]);

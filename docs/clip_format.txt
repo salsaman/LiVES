@@ -54,7 +54,7 @@ integer: number of audio channels (0,1 or 2). 0 means no audio
 </audio_channels>
 
 <audio_rate>
-integer: audio rate (Hz). May be ommitted or 0 if audio_channels is 0
+integer: audio rate (Hz). May be omitted or 0 if audio_channels is 0
 </audio_rate>
 
 <pb_audio_rate>
@@ -62,15 +62,15 @@ integer: audio rate (Hz). May be ommitted or 0 if audio_channels is 0
 </pb_audio_rate>
 
 <audio_sample_size>
-integer: audio sample size in bits (16 or 8). May be ommitted or 0 if audio_channels is 0
+integer: audio sample size in bits (16 or 8). May be omitted or 0 if audio_channels is 0
 </audio_sample_size>
 
 <audio_signed>
-boolean: if audio is signed, value is "true", otherwise "false". May be ommitted if audio_channels is 0
+boolean: if audio is signed, value is "true", otherwise "false". May be omitted if audio_channels is 0
 </audio_signed>
 
 <audio_endian>
-integer: 0 means little-endian, 1 means big-endian. May be ommitted if audio_sample_size is 8, or if audio_channels is 0
+integer: 0 means little-endian, 1 means big-endian. May be omitted if audio_sample_size is 8, or if audio_channels is 0
 </audio_endian>
 
 <clipname>

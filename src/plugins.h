@@ -62,7 +62,7 @@ typedef enum {
   LIVES_INTENTION_OTHER = 65536
 } lives_intention_t;
 
-/// type sepcific caps
+/// type specific caps
 // vpp
 #define VPP_CAN_RESIZE    (1<<0)
 #define VPP_CAN_RETURN    (1<<1)
@@ -431,7 +431,7 @@ typedef struct {
   /// frame starts at 0 in these functions; height is height of primary plane
   boolean(*get_frame)(const lives_clip_data_t *, int64_t frame, int *rowstrides, int height, void **pixel_data);
 
-  /// free buffers when we arent playing sequentially / on standby
+  /// free buffers when we aren't playing sequentially / on standby
   boolean(*chill_out)(const lives_clip_data_t *);
 
   /// call this for each cdata before unloading the module

@@ -605,7 +605,7 @@ static boolean pre_init(void) {
   lives_make_writeable_dir(cfgdir);
   lives_free(cfgdir);
 
-  // pre-checked conditions. We will check for these agian
+  // pre-checked conditions. We will check for these again
   if (capable->has_perl && capable->can_write_to_workdir && capable->can_write_to_config &&
       capable->can_write_to_config_backup && capable->can_write_to_config_new && capable->can_read_from_config &&
       capable->has_smogrify && capable->smog_version_correct) {
@@ -4931,7 +4931,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // format is:
   // lives [opts] [filename [start_time] [frames]]
 
-  // need to do this here, before lives_startup but afer setting ign_opts
+  // need to do this here, before lives_startup but after setting ign_opts
   mainw->new_vpp = NULL;
   mainw->vpp = NULL;
   lives_memset(future_prefs->vpp_name, 0, 64);
@@ -6839,7 +6839,7 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
   png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 
   /// it seems that if no gAMA is set then libpng (rather wastefully) always tries to convert to linear
-  /// assuming a file gamma of approx. 1.2* (this is not accurate since sRGB -> linear doesnt use a power law)
+  /// assuming a file gamma of approx. 1.2* (this is not accurate since sRGB -> linear doesn't use a power law)
   /// if gAMA is set, then we (correctly) need to convert to linear using the file gamma
   /// *I think this comes from 0.5 (approx linear to sRGB) * 2,4 (guessed display gamma)
 
@@ -7504,14 +7504,14 @@ LIVES_GLOBAL_INLINE boolean pull_frame(weed_layer_t *layer, const char *image_ex
 
 /**
    @brief block until layer pixel_data is ready.
-   This function should always be called for threaded layers, prior to freeing the layer, reading it's  properites, pixel data,
+   This function should always be called for threaded layers, prior to freeing the layer, reading it's  properties, pixel data,
    resizing etc.
 
    We may also deinterlace and overlay subs here
    for the blend layer, we may also resize, convert palette, apply gamma in preparation for combining with the main layer
 
    if effects were applied then the frame_layer can depend on other layers, however
-   these wil have been checked already when the effects were applied
+   these will have been checked already when the effects were applied
 
    see also MACRO: is_layer_ready(layer) which can be called first to avoid the block, e.g.
 

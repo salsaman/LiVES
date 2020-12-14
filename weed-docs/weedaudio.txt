@@ -35,7 +35,7 @@ Generally, the following rules apply:
 
   The filter must not: alter the audio rate, apply an overall volume adjustment (unless it is part of its general processing - e.g
       	     	       	     	 to avoid clipping), or change the channel layout,
-      	     	       	     	 at the ouput (i.e they must all be the same values as the input) unless specific flags / leaves are set.
+      	     	       	     	 at the output (i.e they must all be the same values as the input) unless specific flags / leaves are set.
 
   Everything else which follows is OPTIONAL.
 
@@ -43,9 +43,9 @@ Generally, the following rules apply:
 
 - mixing video and audio within a single channel_template is not permitted. However, filters may contain any combination of video and
   audio channels, provided the video and audiio channels have separate templates. The host should follow the same rules
-  for creating channels (ordering and number) regardles of whether a channel contains video or audio.
+  for creating channels (ordering and number) regardless of whether a channel contains video or audio.
 
- The only major difference is the timing of procesing cycles:
+ The only major difference is the timing of processing cycles:
 
 - the process_func() of purely audio filters is usually called more frequently and at different times than for filters with video channels
 
@@ -404,7 +404,7 @@ T,B,D
 
 Notes:
 
-Audio data should be passed to and from the host as an arrary of WEED_SEED_VOIDPTR
+Audio data should be passed to and from the host as an array of WEED_SEED_VOIDPTR
 (cast from float *), with each channel's data in a separate element.
 
 In the case that the host has no audio for a Weed channel, it can pass NULL for the data and 0 for the size.
@@ -459,7 +459,7 @@ This implies that the parameter has multiple values and that each value maps dir
 I.E one value per stream, NOT one value per audio channel within the streams.)
 
 If the filter has repeating channels ("max_repeats"), then the flag WEED_PARAMETER_VARIABLE_SIZE should also be set to
-allow the number of values to increase or decrease according to the number of channels created from tha template.
+allow the number of values to increase or decrease according to the number of channels created from thet template.
 
 An audio filter may also set the flag WEED_FILTER_HINT_PROCESS_LAST, which would imply that it may be run (for example) as the final
 mixing filter before the resulting audio is sent to the audio player, or perhaps to overlay a commentary which ought not to

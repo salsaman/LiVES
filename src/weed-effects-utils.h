@@ -1,5 +1,5 @@
 // weed-effects-utils.c
-// - will probaly become libweed-effects-utils or something
+// - will probably become libweed-effects-utils or something
 // LiVES
 // (c) G. Finch 2003 - 2019 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
@@ -140,7 +140,7 @@ void weed_channel_set_palette(weed_plant_t *channel, int palette);
 /// only sets value; no conversion of pixel_data done
 weed_plant_t *weed_channel_set_gamma_type(weed_plant_t *channel, int gamma_type);
 
-/// width in pixels: only relevant when comparing widths of diferrent palettes
+/// width in pixels: only relevant when comparing widths of different palettes
 int weed_channel_get_width_pixels(weed_plant_t *channel);
 
 // audio channels

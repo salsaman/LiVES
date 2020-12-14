@@ -357,7 +357,7 @@ typedef enum {
   MANDATORY, ///< mandatory for application
   RECOMMENDED,
   OPTIONAL,
-  NECESSARY ///< necessary for the funtion in question
+  NECESSARY ///< necessary for the function in question
 } lives_importance_t;
 
 typedef struct {
@@ -1285,7 +1285,7 @@ void do_text_window(const char *title, const char *text);
 boolean read_file_details(const char *file_name, boolean only_check_for_audio, boolean open_image);
 boolean add_file_info(const char *check_handle, boolean aud_only);
 boolean save_file_comments(int fileno);
-void set_default_comment(lives_clip_t *sfile, const char *extrat);
+void set_default_comment(lives_clip_t *sfile, const char *extract);
 boolean restore_clip_binfmt(int clipno);
 lives_clip_t *clip_forensic(int clipno);
 boolean reload_clip(int fileno, frames_t maxframe);

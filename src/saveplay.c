@@ -1248,10 +1248,10 @@ static void save_log_file(const char *prefix) {
 }
 
 
-LIVES_GLOBAL_INLINE void set_default_comment(lives_clip_t *sfile, const char *extrat) {
+LIVES_GLOBAL_INLINE void set_default_comment(lives_clip_t *sfile, const char *extract) {
   if (!*sfile->comment)
     lives_snprintf(sfile->comment, 1024, "Created with LiVES version %s.\nSee: %s\n%s",
-                   LiVES_VERSION, LIVES_WEBSITE, extrat);
+                   LiVES_VERSION, LIVES_WEBSITE, extract);
   if (!*sfile->author && *prefs->def_author)
     lives_snprintf(sfile->author, 1024, "%s", prefs->def_author);
 }
@@ -3828,7 +3828,7 @@ boolean get_new_handle(int index, const char *name) {
   // or update mainw->clips_available
 
   // differences from get_temp_handle:
-  // - here we dont't switch clips;
+  // - here we don't switch clips;
   // - index is normally passed in rather than generated (pulled from next_free_file) - this allows
   //     the caller to know the index number and do preconfig before calling
   // - we set name and file_name from the name parameter, or if name is NULL, we set an untitled name
@@ -6152,7 +6152,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
 
       /** dont write an entry yet, in case of the unklikely chance we were assigned the same pid as the recovery file,
         otherwise we will end up in am endless loop of reloading the same set and appending it to the recovery file
-        in any case, the old file is still there and we will create a fresh recovery file after a succesful reload */
+        in any case, the old file is still there and we will create a fresh recovery file after a successful reload */
       prefs->crash_recovery = FALSE;
 
       if (!reload_set(buff)) {

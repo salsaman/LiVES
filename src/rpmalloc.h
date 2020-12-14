@@ -61,7 +61,7 @@ extern "C" {
 //! Flag to rpaligned_realloc to not preserve content in reallocation
 #define RPMALLOC_NO_PRESERVE    1
 //! Flag to rpaligned_realloc to fail and return null pointer if grow cannot be done in-place,
-//  in which case the original pointer is still valid (just like a call to realloc which failes to allocate
+//  in which case the original pointer is still valid (just like a call to realloc which fails to allocate
 //  a new block).
 #define RPMALLOC_GROW_OR_FAIL   2
 
@@ -284,7 +284,7 @@ rpmalloc_usable_size(void *ptr);
 typedef struct heap_t rpmalloc_heap_t;
 
 //! Acquire a new heap. Will reuse existing released heaps or allocate memory for a new heap
-//  if none available. Heap API is imlemented with the strict assumption that only one single
+//  if none available. Heap API is implemented with the strict assumption that only one single
 //  thread will call heap functions for a given heap at any given time, no functions are thread safe.
 RPMALLOC_EXPORT rpmalloc_heap_t *
 rpmalloc_heap_acquire(void);

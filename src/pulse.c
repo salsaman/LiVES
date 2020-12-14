@@ -580,7 +580,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           shrink_factor = (float)pulsed->in_arate / (float)pulsed->out_arate / mainw->audio_stretch;
           in_framesd = fabs((double)shrink_factor * (double)pulseFramesAvailable);
 
-          // add in a small random factor so on longer timescales we arent losing or gaining samples
+          // add in a small random factor so on longer timescales we aren't losing or gaining samples
           in_bytes = (int)(in_framesd + ((double)fastrand() / (double)LIVES_MAXUINT64))
                      * pulsed->in_achans * (pulsed->in_asamps >> 3);
 
@@ -1649,7 +1649,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 
   pdriver->pstream = pa_stream_new_with_proplist(pdriver->con, pa_clientname, &pa_spec, &pa_map, pdriver->pa_props);
 
-  /// TODO: try to set volume and mute state from sever reather then the other way round
+  /// TODO: try to set volume and mute state from sever rather then the other way round
 
   if (pdriver->is_output) {
     pa_volume_t pavol;

@@ -1975,7 +1975,7 @@ boolean omc_process_string(int supertype, const char *string, boolean learn, omc
   // only need to set omclw if learn is TRUE
 
   // returns TRUE if we learn new, or if we carry out an action
-  // retruns FALSE otherwise
+  // returns FALSE otherwise
 
   boolean ret = FALSE;
   int type = -1, idx = -1;

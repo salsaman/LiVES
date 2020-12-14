@@ -144,7 +144,7 @@ boolean weed_layer_set_from_lvdev(weed_layer_t *layer, lives_clip_t *sfile, doub
     }
   }
 
-  // shouldnt be necessary since we specified black_fill in create_empty_pixel_data()
+  // shouldn't be necessary since we specified black_fill in create_empty_pixel_data()
 
   /* if (ldev->is_really_grey) { */
   /*   // y contains our greyscale data */

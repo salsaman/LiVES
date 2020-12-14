@@ -8411,7 +8411,7 @@ static void *convert_swapprepost_frame_thread(void *data) {
 
 
 //////////////////////////
-// genric YUV
+// generic YUV
 
 static void convert_swab_frame(uint8_t *src, int width, int height, int irow, int orow, uint8_t *dest, int thread_id) {
   register int i;
@@ -8625,7 +8625,7 @@ static void convert_quad_chroma_packed(uint8_t **src, int width, int height, int
                                        uint8_t *dest, boolean add_alpha, int sampling, int clamping) {
   // width and height here are width and height of dest chroma planes, in bytes
   // stretch (double) the chroma samples vertically and horizontally, with interpolation
-  // ouput to packed pixels
+  // output to packed pixels
 
   // e.g: 420p to 888(8)
 
@@ -12930,7 +12930,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 #endif
 
 #ifdef DEBUG_RESIZE
-    g_print("after resize with swscale: layer size %d X %d, palette %s (assumed succesful)\n",
+    g_print("after resize with swscale: layer size %d X %d, palette %s (assumed successful)\n",
             width, height, weed_palette_get_name_full(opal_hint, oclamp_hint, 0));
 #endif
     //if (store_ctx) swscale_add_context(iwidth, iheight, width, height, ipixfmt, opixfmt, flags, swscale);
@@ -13078,7 +13078,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
   nheight = weed_layer_get_height(layer);
 
   if (nwidth < width || nheight < height || !new_pixel_data) {
-    /// this shouldnt happen, but if  the outer rectangle is smaller than the inner we have to abort
+    /// this shouldn't happen, but if  the outer rectangle is smaller than the inner we have to abort
     goto memfail2;
   }
 

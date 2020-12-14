@@ -657,7 +657,7 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
       }
       // frees pd
       lives_painter_to_layer(cr, layer_slice);
-      /// make sure our slice isnt freed, since it is actually part of the image
+      /// make sure our slice isn't freed, since it is actually part of the image
       /// which we will overwrite
 
       convert_layer_palette(layer_slice, pal, 0);

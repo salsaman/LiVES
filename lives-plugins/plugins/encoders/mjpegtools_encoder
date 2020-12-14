@@ -332,12 +332,12 @@ if ($command eq "encode") {
     }
 
     if (!defined($vid_bitrate)) {
-	# allow overide of default video bitrate
+	# allow override of default video bitrate
 	$vid_bitrate=$dvid_bitrate;
     }
 
     if (!defined($aud_bitrate)) {
-	# allow overide of default audio bitrate
+	# allow override of default audio bitrate
 	$aud_bitrate=$daud_bitrate;
     }
 

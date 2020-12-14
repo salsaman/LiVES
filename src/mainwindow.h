@@ -199,7 +199,7 @@
 #define FX_KEYS_PHYSICAL_EXTRA FX_KEYS_PHYSICAL + 2
 
 /// must be >= FX_KEYS_PHYSICAL, and <=64 (number of bits in a 64bit int mask)
-/// (max number of keys accesible through rte window or via OSC)
+/// (max number of keys accessible through rte window or via OSC)
 #define FX_KEYS_MAX_VIRTUAL 64 ///< the "metaphysical" keys
 
 /// the rest of the keys are accessible through the multitrack renderer (must, be > FX_KEYS_MAX_VIRTUAL)
@@ -210,8 +210,8 @@
 
 #define MAX_FX_THREADS 1024 ///< may be increased if necessary
 
-#define LIVES_DEF_DCLICK_TIME 400 ///< default double click time (milliseconds), can be overriden by system settings
-#define LIVES_DEF_DCLICK_DIST 5 ///< default double click dist. (pixels), can be overriden by system settings
+#define LIVES_DEF_DCLICK_TIME 400 ///< default double click time (milliseconds), can be overridden by system settings
+#define LIVES_DEF_DCLICK_DIST 5 ///< default double click dist. (pixels), can be overridden by system settings
 
 /// external control types
 typedef enum {
@@ -847,7 +847,7 @@ typedef struct {
 
   /// some VJ effects / toys
   boolean nervous;
-  int swapped_clip; ///< maintains the current cliplist postion even if we swap fg and bg clips
+  int swapped_clip; ///< maintains the current cliplist position even if we swap fg and bg clips
   lives_toy_t toy_type;
   boolean toy_go_wild; ///< some silliness
 
@@ -1004,7 +1004,7 @@ typedef struct {
   ticks_t wall_ticks; /// wall clock time, updated whenever lives_get_*_ticks is called
   volatile ticks_t currticks; ///< current playback ticks (relative)
   ticks_t deltaticks; ///< deltaticks for scratching
-  ticks_t adjticks; ///< used to equalise the timecode between alternate timer sources (souce -> clock adjustment)
+  ticks_t adjticks; ///< used to equalise the timecode between alternate timer sources (source -> clock adjustment)
   ticks_t cadjticks; ///< used to equalise the timecode between alternate timer sources (clock -> source adjustment)
   ticks_t firstticks; ///< ticks when audio started playing (for non-realtime audio plugins)
   ticks_t syncticks; ///< adjustment to compensate for missed clock updates when switching time sources
@@ -1586,7 +1586,7 @@ typedef struct {
 
   boolean midi_channel_lock;
 
-  weed_plant_t *rte_textparm; ///< send keyboard input to this paramter (usually NULL)
+  weed_plant_t *rte_textparm; ///< send keyboard input to this parameter (usually NULL)
 
   int write_abuf; ///< audio buffer number to write to (for multitrack)
   volatile int abufs_to_fill;

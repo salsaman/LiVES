@@ -32,7 +32,7 @@ yend|_Y End|num0|0|0|10000|4|
 kc|Keep _Centered|bool|0|
 w|_Width|num0|0|0|10000|4|
 h|_Height|num0|0|0|10000|4|
-bord|Add _Border|bool|0|
+border|Add _Border|bool|0|
 offsx|_Offset X|num0|0|0|10000|
 offsy|_Offset Y|num0|0|0|10000|
 bordc|Border _Colour|colRGB24|0|0|0|

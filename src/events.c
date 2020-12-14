@@ -613,7 +613,7 @@ boolean is_init_pchange(weed_plant_t *init_event, weed_plant_t *pchange_event) {
    for effect_deinit, effect_map, param_change, we change the "init_event(s)" property to point to our copy effect_init
 
    we don't need to make pchain array here, provided we later call event_list_rectify()
-   (this only applies to multitrack, since we interpolate parameters there; in clip editor the paramter changes are applied
+   (this only applies to multitrack, since we interpolate parameters there; in clip editor the parameter changes are applied
    as recorded, with no interpolation)
 
    we check for memory allocation errors here, because we could be building a large new event_list
@@ -2412,7 +2412,7 @@ void event_list_close_gaps(weed_event_t *event_list) {
         tc_delta += tc - rec_end_tc;
 
         if (!mainw->clip_switched) {
-          /// if this is > clip length we cannnot render to same clip
+          /// if this is > clip length we cannot render to same clip
           last_rec_start_tc = tc + tc_start;
           // if rendering to same clip, we will pick up this value and add it to the out frame tc
           weed_set_int64_value(event, WEED_LEAF_TCDELTA, tc_delta + tc_start);
@@ -3570,11 +3570,11 @@ static char *set_proc_label(xprocess * proc, const char *label, boolean copy_old
    up to the preview end point.
 
    the resulting output may be to an existing clip or a new one. When rendering to an existing clip (cfile->old_frames > 0)
-   each call may overwrite an existing frame or extend it by (at most) one frame (measured in ouput fps). On this case rec_tc_delta
+   each call may overwrite an existing frame or extend it by (at most) one frame (measured in output fps). On this case rec_tc_delta
    is used to offset input timecodes to output. When outputting to a new clip, rec_tc_delta is ignored and each frame is appended ar
    the next frame timecode
 
-   The event_list is resampled in place, so that out frames coincide with the ouput frame rate (frames may be dropped or duplicated)
+   The event_list is resampled in place, so that out frames coincide with the output frame rate (frames may be dropped or duplicated)
    - generally the list would have been pre-quantised using quantise_events() so that this process is smoothed out. In multitrack, in and
    out frame rates always match so this is not a concern there.
 
@@ -3582,7 +3582,7 @@ static char *set_proc_label(xprocess * proc, const char *label, boolean copy_old
    must be set first.
 
    the event_list is rendered as-is, with the exception that param changes are not applied if rendering in multitrack, since these are
-   interpolated separately. Otherwise, effect inits / deinits, param changes and filter maps are all updated. Seperate filter map pointers
+   interpolated separately. Otherwise, effect inits / deinits, param changes and filter maps are all updated. Separate filter map pointers
    are maintained for video and audio and only filters for that stream are updated.
 
    When rendering audio it is most efficient to render
@@ -3880,7 +3880,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
                     if (mainw->track_decoders[i] != (lives_decoder_t *)mainw->files[oclip]->ext_src) {
                       // remove the clone for oclip
                       close_decoder_plugin(mainw->track_decoders[i]);
-                    } else chill_decoder_plugin(oclip); /// free bufferes to relesae memory
+                    } else chill_decoder_plugin(oclip); /// free buffers to relesae memory
                     mainw->track_decoders[i] = NULL;
                   }
                 }
@@ -5392,7 +5392,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
    @brief calculate the "visibility" of each track at timecode tc
 
      that is to say, only the front track is visible, except if we have a transition and WEED_LEAF_HOST_AUDIO_TRANSITION is set
-     - in which case the track visibilty is proportional to the transition parameter
+     - in which case the track visibility is proportional to the transition parameter
 
      to do this, we need a filter map and a frame/clip stack
 
@@ -6555,7 +6555,7 @@ render_details *create_render_details(int type) {
     } else {
       add_fill_to_box(LIVES_BOX(vbox));
       if (capable->has_encoder_plugins) {
-        // reqest formats from the encoder plugin
+        // request formats from the encoder plugin
         if ((ofmt_all = plugin_request_by_line(PLUGIN_ENCODERS, prefs->encoder.name, "get_formats")) != NULL) {
           for (i = 0; i < lives_list_length(ofmt_all); i++) {
             if (get_token_count((char *)lives_list_nth_data(ofmt_all, i), '|') > 2) {

@@ -340,7 +340,7 @@ LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog * dialog, boo
     return LIVES_RESPONSE_RETRY;
   }
 
-  // append a dirsep to the end if there isnt one
+  // append a dirsep to the end if there isn't one
   lives_snprintf(cdir, PATH_MAX, "%s", *pdirname);
   ensure_isdir(cdir);
 

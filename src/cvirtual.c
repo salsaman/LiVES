@@ -627,7 +627,7 @@ mismatch:
 
 
 frames_t first_virtual_frame(int fileno, frames_t start, frames_t end) {
-  // check all franes in frame_index betweem start and end inclusive
+  // check all franes in frame_index between start and end inclusive
   // if we find a virtual frame, we stop checking and return the frame number
   // if all are non - virtual we return 0
   lives_clip_t *sfile = mainw->files[fileno];
@@ -983,7 +983,7 @@ void delete_frames_from_virtual(int sfileno, frames_t start, frames_t end) {
 
 
 void reverse_frame_index(int sfileno) {
-  // reverse order of (virtual) frames in clip (only used fro clipboard)
+  // reverse order of (virtual) frames in clip (only used for clipboard)
   lives_clip_t *sfile = mainw->files[sfileno];
   int bck;
 

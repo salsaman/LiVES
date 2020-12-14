@@ -307,7 +307,7 @@ static FORCEINLINE int     atomic_cas_ptr_acquire(atomicptr_t *dst, void *val, v
 #define MEDIUM_SIZE_LIMIT         (SMALL_SIZE_LIMIT + (MEDIUM_GRANULARITY * MEDIUM_CLASS_COUNT))
 //! Maximum size of a large block
 #define LARGE_SIZE_LIMIT          ((LARGE_CLASS_COUNT * _memory_span_size) - SPAN_HEADER_SIZE)
-//! ABA protection size in orhpan heap list (also becomes limit of smallest page size)
+//! ABA protection size in orphan heap list (also becomes limit of smallest page size)
 #define HEAP_ORPHAN_ABA_SIZE      512
 //! Size of a span header (must be a multiple of SMALL_GRANULARITY and a power of two)
 #define SPAN_HEADER_SIZE          128

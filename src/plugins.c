@@ -2211,7 +2211,7 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList * disable
   // we pass this to each decoder in turn and check what it returns. If the values look sane then we use that decoder,
   // otherwise we try the next one.
 
-  // when reloading clips we try the decoder which last opened them first, othwerwise they could get picked up by another
+  // when reloading clips we try the decoder which last opened them first, otherwise they could get picked up by another
   // decoder and the frames could come out different
 
   lives_decoder_t *dplug = (lives_decoder_t *)lives_calloc(1, sizeof(lives_decoder_t));
@@ -3713,7 +3713,7 @@ void rfx_clean_exe(lives_rfx_t *rfx) {
     If <onchange> exists then the init | trigger will be run
     to let the plugin update default values (for vpps only currently)
 
-    The onchange code is currently run by generating a perl scrap and runing that. In future the code could
+    The onchange code is currently run by generating a perl scrap and running that. In future the code could
     be run in different languages or internally by using a simple parser like the one in the data_processor plugin.
 
 

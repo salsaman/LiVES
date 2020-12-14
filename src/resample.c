@@ -371,7 +371,7 @@ void pre_analyse(weed_plant_t *elist) {
       double dtime = (double)(etc - stc) / TICKS_PER_SECOND_DBL;
 
       if (dtime <= READJ_MAX && dtime >= READJ_MIN) {
-        /// for older lists we didnt set the seek point at audio off, so ignore those
+        /// for older lists we didn't set the seek point at audio off, so ignore those
         double tpos = ststate[0].seek + ststate[0].vel * dtime;
         double ratio = fabs(enstate[0].seek - ststate[0].seek) / fabs(tpos - ststate[0].seek);
         double dtime;
@@ -388,7 +388,7 @@ void pre_analyse(weed_plant_t *elist) {
         offs += ntc - otc;
       }
     }
-    /// offs is what we will add to remianing events when we hit the end
+    /// offs is what we will add to remaining events when we hit the end
     lives_free(ststate);
     ststate = enstate;
     last = event;
@@ -627,7 +627,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
             for (i = 0; i < atracks; i += 2) {
               for (j = 0; j < natracks; j += 2) {
                 if (naclips[j] == aclips[i]) {
-                  // replace (superceded)
+                  // replace (superseded)
                   naclips[j + 1] = aclips[i + 1];
                   naseeks[j] = aseeks[i];
                   naseeks[j + 1] = aseeks[i + 1];
@@ -693,7 +693,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           break;
         case WEED_EVENT_TYPE_PARAM_CHANGE:
           if (is_final) break;
-          /// param changes just get inserted at whatever timcode, as long as their init_event isnt in the "to be added" list
+          /// param changes just get inserted at whatever timcode, as long as their init_event isn't in the "to be added" list
           init_event = weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT, NULL);
           for (list = init_events; list; list = list->next) {
             if (list->data == init_event) break;
@@ -906,7 +906,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
               for (i = 0; i < natracks; i += 2) {
                 // check each track in natracks (currently active) to see if it is also in xatracks (all active)
                 boolean gottrack = FALSE;
-                ///< audio was off, older lists didnt store the offset
+                ///< audio was off, older lists didn't store the offset
                 if (naseeks[i + 1] == 0. && ev_api < 122) continue;
                 for (k = 0; k < xatracks; k += 2) {
                   if (xaclips[k] == naclips[i]) {

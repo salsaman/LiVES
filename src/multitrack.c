@@ -397,7 +397,7 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
 
   // layout_numbering simply maps our clip handle to clip numbers in the current layout
   // (it would have been better to use the unique_id, but for backwards compatibility that is not possible)
-  // we assume the order hasnt changed (it cant), but there may be gaps in the numbering
+  // we assume the order hasn't changed (it cant), but there may be gaps in the numbering
   // the numbering may have changed (for example we started last time in mt mode, this time in ce mode)
 
   double vard;
@@ -455,7 +455,7 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
 static void save_mt_autoback(lives_mt *mt) {
   // auto backup of the current layout
 
-  // this is called from an idle funtion - if the specified amount of time has passed and
+  // this is called from an idle function - if the specified amount of time has passed and
   // the clip has been altered
 
   struct timeval otv;
@@ -582,7 +582,7 @@ uint32_t mt_idle_add(lives_mt *mt) {
 
   set_signal_handlers((SignalHandlerPointer)defer_sigint);
 
-  // TODO: last param is a destroy notify, so we can check if something re-adds it or removes it when it shouldnt
+  // TODO: last param is a destroy notify, so we can check if something re-adds it or removes it when it shouldn't
   retval = lives_timer_add_simple(1001, mt_auto_backup, mt);
 
   if (mainw->signal_caught) catch_sigint(mainw->signal_caught);
@@ -13946,7 +13946,7 @@ void update_filter_events(lives_mt * mt, weed_plant_t *first_event, weed_timecod
             (nins = weed_leaf_num_elements(event, WEED_LEAF_IN_TRACKS)) <= 2) {
           int *in_tracks = weed_get_int_array(event, WEED_LEAF_IN_TRACKS, NULL);
           if (in_tracks[0] == track || (nins == 2 && in_tracks[1] == track)) {
-            // if the event wasnt moved (either because user chose not to, or block was deleted, or it had 2 tracks)
+            // if the event wasn't moved (either because user chose not to, or block was deleted, or it had 2 tracks)
             // move the init_event to the right until we find frames from all tracks. If we pass the deinit_event then
             // the effect is removed.
             // Effects with one in_track which is other, or effects with >2 in tracks, do not suffer this fate.
@@ -16319,7 +16319,7 @@ void activate_mt_preview(lives_mt * mt) {
 
   if (mt->poly_state == POLY_PARAMS) {
     if (mt->opts.fx_auto_preview) {
-      mainw->no_interp = TRUE; // no interpolation - parameter is in an uncommited state
+      mainw->no_interp = TRUE; // no interpolation - parameter is in an uncommitted state
       mt_show_current_frame(mt, FALSE);
       mainw->no_interp = FALSE;
     }

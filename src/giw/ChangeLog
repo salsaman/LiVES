@@ -1,5 +1,5 @@
 * Tue Sep 11, 2007 -- James Scott <skoona@users.sourceforge.net>
-- Public release verion 0.2.4
+- Public release version 0.2.4
  
   François Galea provided a patch to fix one bug 
   and solved some Glib warnings when using giwxyplot.
@@ -16,7 +16,7 @@
   *gdk_draw_lines was called even if data is not available.
  
 * Sat Feb 3, 2007 -- James Scott <skoona@users.sourceforge.net>
-- Public release verion 0.2.3
+- Public release version 0.2.3
 - Removed -ansi -pedantic from compile cflags, this broke the compile mainly
   from the use of // as a comment prefix.
 - fixup the makefile for the library or build directory
@@ -31,7 +31,7 @@
 - Created an rpm of the library giw-0.2.3-fc6.{i686,src}.rpm
 
 * Sat Dec 9, 2006 -- James Scott <skoona@users.sourceforge.net>
-- Public release verion 0.2.2
+- Public release version 0.2.2
 - Added support for creating the library - libgiw.so 
   and the pkg-config pc file - giw.pc .
 - Changed all the examples to compile using this library
@@ -40,7 +40,7 @@
 - changed to LGPL from GPL
 
 * Sat Dec 9, 2006 -- James Scott <skoona@users.sourceforge.net>
-- Public release verion 0.2.1
+- Public release version 0.2.1
 - Added autoconf scripts to basic codeset
 - added GNU_SOURCE to correct strange compile errors in math.h
 - added -lm to all link library lists

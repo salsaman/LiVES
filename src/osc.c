@@ -7102,7 +7102,7 @@ void lives_osc_dump(void) {OSCPrintWholeAddressSpace();}
 static int lives_osc_get_packet(lives_osc * o) {
   //OSCTimeTag tag;
 
-  /* see if there is something to read , this is effectivly NetworkPacketWaiting */
+  /* see if there is something to read , this is effectively NetworkPacketWaiting */
   // if(ioctl( o->sockfd, FIONREAD, &bytes,0 ) == -1) return 0;
   // if(bytes==0) return 0;
   if (NetworkPacketWaiting(o->packet)) {

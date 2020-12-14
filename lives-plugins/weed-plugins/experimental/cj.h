@@ -6,7 +6,7 @@
 // TODO - multi-threaded
 
 /**
-   CJ is a C API that works in conjuction with a Java package to
+   CJ is a C API that works in conjunction with a Java package to
    simplify the C-to-Java interface of the JNI.  On the C side, CJ
    wraps the invocation API's creation and destruction of the JVM.,
    and hides the complexity of JNI calls, JNI garbage collection

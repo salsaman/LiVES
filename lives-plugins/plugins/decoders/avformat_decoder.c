@@ -1024,7 +1024,7 @@ int begin_caching(const lives_clip_data_t *cdata, int maxframes) {
 
 boolean chill_out(const lives_clip_data_t *cdata) {
   // free buffers because we are going to chill out for a while
-  // (seriously, host can call this to free any buffers when we arent palying sequentially)
+  // (seriously, host can call this to free any buffers when we aren't palying sequentially)
   if (cdata != NULL) {
     lives_av_priv_t *priv = cdata->priv;
     if (priv != NULL) {

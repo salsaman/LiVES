@@ -337,7 +337,7 @@ ssize_t lives_read_le(int fd, void *buf, ssize_t count, boolean allow_less) {
 
 // in this case fbuff->bytes holds the number of bytes written to fbuff->buffer, fbuff->offset contains the offset in the underlying fil
 
-// in append mode, seek is first tthe end of the file. In creat mode any existing file is truncated and overwritten.
+// in append mode, seek is first the end of the file. In creat mode any existing file is truncated and overwritten.
 
 // in write mode, if we have fallocate, then we preallocate the buffer size on disk.
 // When the file is closed we truncate any remaining bytes. Thus CAUTION because the file size as read directly will include the

@@ -230,7 +230,7 @@ static weed_error_t farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
       z more accurate flow than with a box filter, at the cost of lower speed. Normally, winsize for a
       Gaussian window should be set to a larger value to achieve the same level of robustness.
 
-      The function finds an optical flow for each prevImg pixel using the [Farneback2003] alorithm so that
+      The function finds an optical flow for each prevImg pixel using the [Farneback2003] algorithm so that
 
       prevImg (y,x) = nextImg ( y + flow (y,x)[1], x + flow (y,x)[0])
 

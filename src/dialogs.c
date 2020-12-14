@@ -224,7 +224,7 @@ static void del_event_cb(LiVESWidget *dialog, livespointer data) {
 //Warning or yes/no dialog
 
 // the type of message box here is with 2 or more buttons (e.g. OK/CANCEL, YES/NO, ABORT/CANCEL/RETRY)
-// if a single OK button is needed, use create_message_dialog() in inteface.c instead
+// if a single OK button is needed, use create_message_dialog() in interface.c instead
 
 LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int warn_mask_number) {
   LiVESWidget *dialog;
@@ -1676,7 +1676,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       if ((visible && !mainw->internal_messaging)
           || (LIVES_IS_PLAYING && CURRENT_CLIP_IS_VALID && cfile->play_paused)) lives_usleep(prefs->sleep_time);
 
-      // normal playback, wth realtime audio player
+      // normal playback, with realtime audio player
       if (!visible && (mainw->whentostop != STOP_ON_AUD_END || is_realtime_aplayer(prefs->audio_player))) continue;
 
       if (mainw->iochan && !progress_count) {

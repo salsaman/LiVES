@@ -332,7 +332,7 @@ WEED_SETUP_START(200, 200) {
   snprintf(desc, 2048,
            "This plugin takes as input 1 video frame and two equally sized (width * height) float alpha frames.\n"
            "The plugin treats each alpha frame as a 2 dimensional float array, with the first frame containing x values"
-           "and the second, corresponging y values\n\n"
+           "and the second, corresponding y values\n\n"
            "The plugin has two modes of operation, the choice of which is fixed at compile time (PATCHME !)"
            "In 'grid' mode, the frames are divided into 20 X 20 equally sized rectangles\n"
            "The centre of each rectangle forms the base of an arrow which vector_visualiser overlays on the video frame.\n"

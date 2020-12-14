@@ -288,7 +288,7 @@ FN_DECL double weed_palette_get_plane_ratio_horizontal(int pal, int plane);
 FN_DECL double weed_palette_get_plane_ratio_vertical(int pal, int plane);
 
 // set src to non-null to preserve the alpha channel (if applicable)
-// othwerwise alpha will be set to 255
+// otherwise alpha will be set to 255
 // yuv_clamping is ignored fo non-yuv palettes
 // only valid for non-planar (packed) palettes: RGB24, BGR24, RGBA32, BGRA32, ARGB32, UYVY8888, YUYV8888, YUV888, YUVA8888, and YUV411
 FN_DECL size_t blank_pixel(uint8_t *dst, int pal, int yuv_clamping, uint8_t *src);
@@ -317,7 +317,7 @@ FN_DECL uint8_t y_unclamped_to_clamped(uint8_t y);
 FN_DECL uint8_t y_clamped_to_unclamped(uint8_t y);
 FN_DECL uint8_t uv_clamped_to_unclamped(uint8_t uv);
 
-/* pre multiply or un-pre-multiply alpha for a frame: if un is set to WEED_TRUE we un-pre-multiply, othewise pre-multiply */
+/* pre multiply or un-pre-multiply alpha for a frame: if un is set to WEED_TRUE we un-pre-multiply, otherwise pre-multiply */
 FN_DECL void alpha_premult(unsigned char *ptr, int width, int height, int rowstride, int pal, int un);
 #endif
 

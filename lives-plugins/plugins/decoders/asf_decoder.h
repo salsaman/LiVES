@@ -292,7 +292,7 @@ typedef struct {
 
 typedef struct {
   int fd; ///< file handle 208 477373 22415 108fat32
-  int64_t input_position; /// current or next input postion
+  int64_t input_position; /// current or next input position
   int64_t data_start; ///< offset of data start in file
   int64_t hdr_start;  ///< file offset of current asf packet
   int64_t start_dts;  ///< first video dts

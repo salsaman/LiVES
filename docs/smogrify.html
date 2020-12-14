@@ -58,7 +58,7 @@ you must wait for the file <br>
       <span style="font-style: italic;">/tempdir/handle/.status<br>
       </span>to be created.<br>
       <br>
-This file is delimeted by "|". When the operation is finished, the
+This file is delimited by "|". When the operation is finished, the
 first field will either be "completed" or "error".<br>
       <br>
 Some operations return a progress count in this file, so you <span
@@ -69,7 +69,7 @@ with 'completed|' or 'error|' .<br>
       <td style="vertical-align: top;">Items in {} are optional
 parameters.<br>
       <br>
-Unless specifed otherwise, all functions return 0 on success, 1 on
+Unless specified otherwise, all functions return 0 on success, 1 on
 failure.<br>
       </td>
     </tr>
@@ -236,7 +236,7 @@ window, then returns: <span style="color: rgb(0, 0, 153);">window_id</span>,
  style="color: rgb(0, 0, 153);">width</span> and colour depth (<span
  style="color: rgb(0, 0, 153);">bpp</span>).<br>
 Information is returned in the file: <span style="font-style: italic;">/tempdir/handle/.status</span>,
-and is delimeted by "|"<br>
+and is delimited by "|"<br>
       <br>
       </td>
     </tr>
@@ -328,7 +328,7 @@ $<span style="color: rgb(0, 0, 153);">achans</span>,$<span
       <br>
       </span>Information is returned in the file: <span
  style="font-style: italic;">/tempdir/handle/.status</span>,
-and is delimeted by "|"<br>
+and is delimited by "|"<br>
       <br>
       </td>
     </tr>
@@ -369,7 +369,7 @@ $<span style="color: rgb(0, 0, 153);">achans</span>,$<span
  style="color: rgb(0, 0, 153);">af_size</span><br>
       <br>
 Information is returned in the file: <span style="font-style: italic;">/tempdir/handle/.status</span>,
-and is delimeted by "|"<br>
+and is delimited by "|"<br>
       <br>
 Filename can be a video file, a URL, or a directory.<br>
       <br>
@@ -461,7 +461,7 @@ file size</span>, <span style="color: rgb(0, 0, 153);">audio file size</span>,
 and <span style="color: rgb(0, 0, 153);">number of frames</span>.<br>
       <br>
 Information is returned in the file: <span style="font-style: italic;">/tempdir/handle/.status</span>,
-and is delimeted by "|"<br>
+and is delimited by "|"<br>
       <br>
       </td>
     </tr>
@@ -537,7 +537,7 @@ height<br>
  style="color: rgb(0, 0, 153);">Where</span> is the insertion point
 (frames are always inserted after this, so it can be 0). From frames is
 the number of frames in <span style="color: rgb(0, 153, 0);">handle</span>).
-Times is an optional paramter, if it is omitted, it defaults to 1.<br>
+Times is an optional parameter, if it is omitted, it defaults to 1.<br>
       </td>
     </tr>
     <tr>
@@ -666,7 +666,7 @@ the file extension.<br>
       <td style="vertical-align: top;">Removes gaps in frames and makes
 sure they begin with frame 1.<br>
       <span style="color: rgb(0, 0, 153);">Pre-cut</span> is an
-optional paramter. If set, frames up to and including <span
+optional parameter. If set, frames up to and including <span
  style="color: rgb(0, 0, 153);">pre-cut</span> (before reordering) will
 be cut from the beginning.<br>
       <br>

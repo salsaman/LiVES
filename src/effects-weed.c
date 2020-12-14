@@ -1039,7 +1039,7 @@ static boolean get_fixed_channel_size(weed_plant_t *template, int *width, int *h
 
     we take the restrictions from the filter class owning the channel template from which the channel was modelled,
     unless the filter flag WEED_FILTER_CHANNEL_SIZES_MAY_VARY, in which case the filter defaults may be
-    overriden by values in the channel template
+    overridden by values in the channel template
 
     function is called with dummy values when we first create the channels, and then with real values before we process a frame
 */
@@ -2029,7 +2029,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       /// currently, alpha channels don't come in layers, we add them like data directly to the channel
       /// plus, we ignore the display size (it doesn't make sense to resize an alpha channel)
       /// so if the filter allows varying channel sizes we are OK
-      /// else if its not the first channel and the size differs and the filter doesnt allow varying sizes then we're in trouble !
+      /// else if its not the first channel and the size differs and the filter doesn't allow varying sizes then we're in trouble !
       if (!svary && def_channel != channel && (weed_channel_get_width(def_channel) != weed_channel_get_width(channel)
           || weed_channel_get_width(def_channel) != weed_channel_get_width(channel))) {
         retval = FILTER_ERROR_UNABLE_TO_RESIZE;
@@ -2123,7 +2123,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     There are two points where we can alter the palette: when the instance has just been inited (we can reinit with near zero cost)
     and if we are going to reinit anyway due to some other factor (e.g size change).
 
-    IF the template has WEED_FILTER_REINIT_ON_ROWSTRIDES_CHANGE then similar rules apply excpet we will look at the macropixel
+    IF the template has WEED_FILTER_REINIT_ON_ROWSTRIDES_CHANGE then similar rules apply except we will look at the macropixel
     sizes.
 
     Once the channel palette is set then we'll do a palette conversion / resize of the layer.
@@ -3055,7 +3055,7 @@ lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, weed_la
 
     if (!in_channels) {
       if (!out_channels && weed_plant_has_leaf(instance, WEED_LEAF_OUT_PARAMETERS)) {
-        // plugin has no in channels and no out channels, but if it has out paramters then it must be a data processing module
+        // plugin has no in channels and no out channels, but if it has out parameters then it must be a data processing module
 
         // if the data feeds into audio effects then we run it now, otherwise we will run it during the video cycle
         if (!feeds_to_audio_filters(key, rte_key_getmode(key + 1))) return FILTER_ERROR_NO_IN_CHANNELS;
@@ -3474,7 +3474,7 @@ apply_inst2:
 
 weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map, weed_timecode_t tc,
                                  int opwidth, int opheight, void ***pchains) {
-  // given a stack of layers, a filter map, a timecode and possibly paramater chains
+  // given a stack of layers, a filter map, a timecode and possibly parameter chains
   // apply the effects in the filter map, and return a single layer as the result
 
   // if all goes wrong we return a blank 4x4 RGB24 layer (TODO - return a NULL ?)
@@ -5318,7 +5318,7 @@ static weed_plant_t *create_compound_filter(char *plugin_name, int nfilts, int *
     if (weed_plant_has_leaf(xfilter, WEED_LEAF_IN_PARAMETER_TEMPLATES)) {
       tparam = get_transition_param(xfilter, FALSE);
 
-      // TODO *** - ignore transtion params if they are connected to themselves
+      // TODO *** - ignore transition params if they are connected to themselves
 
       if (tparam != -1) {
         if (txparam != -1) {
@@ -7342,7 +7342,7 @@ void deinit_easing_effects(void) {
     if ((instance = key_to_instance[i][key_modes[i]]) != NULL) {
       weed_plant_t *gui = weed_instance_get_gui(instance, FALSE);
       if (weed_plant_has_leaf(gui, WEED_LEAF_EASE_OUT)) {
-        // no mutex needed since we are rendering. and since we arent playing it will get deinited now
+        // no mutex needed since we are rendering. and since we aren't playing it will get deinited now
         weed_deinit_effect(i);
         /// if recording, the deinit_event won't be recorded, since we are not playing now,
         /// this will be handled in deal_with_render_choice() so it need not concern us
@@ -7625,11 +7625,11 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
     else
     - if the gen. is fg,  check the filters to be applied, If 1st filter has reinit on pal. change then try to match its palette
     - otherwise check the longest running palette, ie. intersection of gen. palette(s), filter_n  palettes, filter_n+1 pal. list untiil
-    either the intersection of our remaing palettes with filter palettes is the empty set. or we pass all palettes,
-    then take intersection with player. Any filters with reinit on pal. change, we first try the current palette, if that doesnt work then
+    either the intersection of our remaining palettes with filter palettes is the empty set. or we pass all palettes,
+    then take intersection with player. Any filters with reinit on pal. change, we first try the current palette, if that doesn't work then
     we check its full palette list as we will be forced to reinit it.
     - if it is bg we will use mainw->blend_palette
-    TODO: we should finde the transition where the gen. joins, and work backwards and forwards from there
+    TODO: we should find the transition where the gen. joins, and work backwards and forwards from there
 
 
     IF the template has WEED_FILTER_REINIT_ON_ROWSTRIDES_CHANGE or WEED_FILTER_REINIT_ON_SIZE_CHANGE
@@ -8131,7 +8131,7 @@ void wge_inner(weed_plant_t *inst) {
 
 void weed_generator_end(weed_plant_t *inst) {
   // generator has stopped for one of the following reasons:
-  // efect was de-inited; clip (bg/fg) was changed; playback stopped with fg
+  // effect was de-inited; clip (bg/fg) was changed; playback stopped with fg
 
   // during playback, MUST be called with filter_mutex locked
 
@@ -8278,7 +8278,7 @@ void weed_bg_generator_end(weed_plant_t *inst) {
 
   // filter_mutex unlocked
 
-  /// ref the isntance so it isn't deleted
+  /// ref the instance so it isn't deleted
   weed_instance_ref(inst);
   weed_generator_end(inst); // unrefs inst
   bg_gen_to_start = bg_gen_key;
@@ -11266,7 +11266,7 @@ static int realign_typeleaf(int fd, weed_plant_t *plant) {
 
 /**
    @brief deserialise a weed leaf
-   returns "type" on succes or a -ve error code on failure
+   returns "type" on success or a -ve error code on failure
 
    WEED_LEAF_HOST_DEFAULT and WEED_LEAF_TYPE sets key; otherwise we leave it as NULL to get the next
 

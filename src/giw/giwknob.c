@@ -1115,7 +1115,7 @@ knob_calculate_sizes(GiwKnob *knob) {
   }
 
   // The distance between the radius and the widget limits is the bigger dimension of the legends plus the major_ticks_size,
-  // so it's the half of size, less the bigger dimension of the legends less the major_ticks size (wich depends of the radius),
+  // so it's the half of size, less the bigger dimension of the legends less the major_ticks size (which depends of the radius),
   // then, with some algebra, it results in this equation:
   knob->radius = 8 * ((knob->size / 2) - sqrt(knob->legend_width * knob->legend_width + knob->legend_height *
                       knob->legend_height)) / 9;
@@ -1285,7 +1285,7 @@ knob_build_title(GiwKnob *knob) {
 
   widget = GTK_WIDGET(knob);
 
-  if (knob->title_str == NULL) // Return if there is no title (the layout will be keeped, but not drawed)
+  if (knob->title_str == NULL) // Return if there is no title (the layout will be keeped, but not drawn)
     return;
 
   if (knob->title)

@@ -1184,7 +1184,7 @@ boolean swap_fg_bg_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
   }
 
   if (mainw->swapped_clip == -1) {
-    // this is to avoid an annoying situation in VJ playback, where the cliplist postion
+    // this is to avoid an annoying situation in VJ playback, where the cliplist position
     // can keep getting reset each time we swap the fg and bg
     if (CURRENT_CLIP_IS_NORMAL)
       mainw->swapped_clip = mainw->current_file;

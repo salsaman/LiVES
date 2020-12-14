@@ -64,7 +64,7 @@ struct _GiwLed {
 struct _GiwLedClass {
   GtkWidgetClass parent_class;
 
-  void (* mode_changed)(GiwLed *led);  //Signal emited when the mode is chaged (on to off, or off to on)
+  void (* mode_changed)(GiwLed *led);  //Signal emitted when the mode is changed (on to off, or off to on)
 };
 
 

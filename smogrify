@@ -3810,7 +3810,7 @@ if (1) {
 		    if ($debug) {
 			print STDERR "returning ERROR\n\n";
 		    }
-		    &sig_system_error("A download error occured");
+		    &sig_system_error("A download error occurred");
 		    exit 1;
 		}
 		if ($debug) {
@@ -4065,7 +4065,7 @@ if (1) {
 				    }}}}
 
 			elsif ($matchsize == 2) {
-			    ## atleast
+			    ## at least
 			    if ($idiag >= $tdiag && ($ddelta == -1 || $idiag - $tdiag <= $ddelta)) {
 				if ($ddelta == -1 || $idiag - $tdiag < $ddelta || $isbest) {
 				    $ddelta = $idiag - $tdiag;
@@ -5283,7 +5283,7 @@ sub smog_system_direct {
 
 sub smog_rename {
     # CAUTION: return value of 0 is error here
-    # move should be used if there is the possibilty of traversing filesystems
+    # move should be used if there is the possibility of traversing filesystems
     my ($smfrom, $smto) = @_;
     my $smcomret = rename $smfrom, $smto;
 
@@ -5782,7 +5782,7 @@ sub get_mpv_info {
     open (my $fh, "$com |");
     while (defined(my $line = <$fh>)) {
 	if ($line =~ /^XDATA:duration=(.*)/ || $line =~ /^XDATA:length=(.*)/) {
-	    next if ($lenght);
+	    next if ($length);
 	    next if ($1 eq "");
 	    $length = $1;
 	    if ($VERBOSE > 1) {
@@ -6304,7 +6304,7 @@ sub get_mplayer_info {
     open (my $fh, "$com |");
     while (defined(my $line = <$fh>)) {
 	if ($line =~ /^ID_LENGTH=(.*)/) {
-	    next if ($lenght);
+	    next if ($length);
 	    next if ($1 eq "");
 	    $length = $1;
 	    if ($VERBOSE > 1) {
@@ -7083,7 +7083,7 @@ sub insert_audio {
 
     ## optimisations:
     # if start is 0, then we rename instead of copy for step 1
-    # when performing multple insertions, after two insertions we insert from the output file
+    # when performing multiple insertions, after two insertions we insert from the output file
     #
     ## if insert gap is >= eof - end, then we can do step 1 inplace and skip step 5
     #
@@ -8823,7 +8823,7 @@ sub config_set {
 	    ## stage 0 = copy mode:
 	    # - we just copy the lines verbatim, re-adding the newline, until:
 	    # if we match ^<$key>, then we proceed to stage 1
-	    # - if $deprecate is 1 and the last line wasnt a ^#deprecated comment, we insert the #deprecated comment
+	    # - if $deprecate is 1 and the last line wasn't a ^#deprecated comment, we insert the #deprecated comment
 	    #
 	    ## stage 1 = look for end:
 	    # - in deprecate mode we output the line, newline
@@ -8844,7 +8844,7 @@ sub config_set {
 	    # - we set $priority to 0
 	    # - if the line ends with </$key> we skip it, go to stage 0
 	    # - otherwise, if the line starts with <$key> we skip it and go back to stage 1 (now with $delpref set)
-	    # - otherwise, we ouptut a newline, the line, newline, and go back to stage 0
+	    # - otherwise, we output a newline, the line, newline, and go back to stage 0
 
 	    while (<IN>) {
 		$current = $_;
@@ -9134,14 +9134,14 @@ sub startup_error {
 	    print STDERR "smogrify: File MUST contain at least a <version> key.\n";
 	}
 	if (-s $recconfigfile_tried > 0) {
-	    print STDERR "smogrify: Unsuccesfull recovery appears to have been attempted from $recconfigfile_tried\n";
+	    print STDERR "smogrify: Unsuccessful recovery appears to have been attempted from $recconfigfile_tried\n";
 	    print STDERR "smogrify: File MUST contain at least a <version> key.\n";
 	}
 	if (-s $recconfigfile_tried > 0) {
-	    print STDERR "smogrify: Unsuccesfull recovery appears to have been attempted from $recconfigfile_tried\n";
+	    print STDERR "smogrify: Unsuccessful recovery appears to have been attempted from $recconfigfile_tried\n";
 	}
 	if (-s $recconfigfile_succeeded > 0) {
-	    print STDERR "smogrify: Succesfull recovery appears to have been nade from $recconfigfile_succeeded\n";
+	    print STDERR "smogrify: Successful recovery appears to have been nade from $recconfigfile_succeeded\n";
 	}
 	print STDERR "smogrify: \@ARGV = " . join(" ", @ARGV) . "\n";
     }
@@ -9181,8 +9181,8 @@ sub recover_configfile {
     if (! (0 + -e $recconfigfile_tried)) {
 	&smog_copy($xrecconfigfile, $recconfigfile_tried);
 	if (!$panic && -s $recconfigfile_tried == $size) {
-	    # $recconfigfile succesfully renamed as $recconfigfile_tried
-	    # good. This is intented to be a one-time recovery
+	    # $recconfigfile successfully renamed as $recconfigfile_tried
+	    # good. This is intended to be a one-time recovery
 	    # now copy it to $configfile
 	    unlink $xrecconfigfile;
 	    $xrecconfigfile = $recconfigfile_tried;

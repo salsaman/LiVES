@@ -411,7 +411,7 @@ void load_frame_image(frames_t frame) {
 #ifdef ENABLE_JACK
           if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd &&
               (prefs->rec_opts & REC_AUDIO) && prefs->audio_src == AUDIO_SRC_INT && mainw->rec_aclip != mainw->ascrap_file) {
-            // get current seek postion
+            // get current seek position
             alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
 
             while ((audio_timed_out = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd) != NULL) {
@@ -430,7 +430,7 @@ void load_frame_image(frames_t frame) {
 #ifdef HAVE_PULSE_AUDIO
           if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed &&
               (prefs->rec_opts & REC_AUDIO) && prefs->audio_src == AUDIO_SRC_INT && mainw->rec_aclip != mainw->ascrap_file) {
-            // get current seek postion
+            // get current seek position
             alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
             while ((audio_timed_out = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed) != NULL) {
               // wait for audio player message queue clearing
@@ -928,7 +928,7 @@ void load_frame_image(frames_t frame) {
     if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE)
         && ((((!prefs->letterbox && !mainw->multitrack) || (mainw->multitrack && !prefs->letterbox_mt)))
             || (mainw->vpp->capabilities & VPP_CAN_LETTERBOX))) {
-      // here we are outputing video through a video playback plugin which can resize: thus we just send whatever we have
+      // here we are outputting video through a video playback plugin which can resize: thus we just send whatever we have
       // we need only to convert the palette to whatever was agreed with the plugin when we called set_palette()
       // in plugins.c
       //
@@ -1680,7 +1680,7 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
   //}
 
   /// synchronised timing
-  /// it can be helpful to imagine a virtual clock which is at currrent time:
+  /// it can be helpful to imagine a virtual clock which is at current time:
   /// clock time - cadjticks = virtual time = other time + adjticks
   /// cadjticks and adjticks are only set when we switch from one source to another, i.e the virtual clock will run @ different rates
   /// depending on the source. This is fine as it enables sync with the clock source, provided the time doesn't jump when moving
@@ -1699,7 +1699,7 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t orignsecs, li
   /// time on both clocks is equivalent. This can lead to a problem when switching clips, since temporarily we switch to system
   /// time and then back to soundcard. However, this can cause some updates to the timer to be missed, i.e the audio is playing but the
   /// samples are not counted, however we cannot simply add these to the soundcard timer, as they will be lost due to the resync.
-  /// hence we need mainw->syncticks --> a global adjustment which is independant of the clock source. This is similar to
+  /// hence we need mainw->syncticks --> a global adjustment which is independent of the clock source. This is similar to
   /// mainw->deltaticks for the player, however, deltaticks is a temporary impulse, whereas syncticks is a permanent adjustment.
 
   if (*tsource == LIVES_TIME_SOURCE_SYSTEM)  {
@@ -1930,7 +1930,7 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     if (nframe != cframe) {
       int delval = (ticks_t)((double)mainw->deltaticks / TICKS_PER_SECOND_DBL * fps + .5);
       if (delval <= -1 || delval >= 1) {
-        /// the frame number changed, but we will recalulate the value using mainw->deltaticks
+        /// the frame number changed, but we will recalculate the value using mainw->deltaticks
         frames64_t xnframe = cframe + (int64_t)delval;
         frames64_t dframes = xnframe - nframe;
 
@@ -2398,7 +2398,7 @@ switch_point:
   /// end SWITCH POINT
 
   // playing back an event_list
-  // here we need to add mainw->offsetticks, to get the correct position whe playing back in multitrack
+  // here we need to add mainw->offsetticks, to get the correct position when playing back in multitrack
   if (!mainw->proc_ptr && cfile->next_event) {
     // playing an event_list
     if (mainw->scratch != SCRATCH_NONE && mainw->multitrack) {
@@ -2511,7 +2511,7 @@ switch_point:
         if (recalc_bungle_frames) {
           /// we want to avoid the condition where we are constantly seeking ahead and because the seek may take a while
           /// to happen, we immediately need to seek again. This will cause the video stream to stutter. So to try to avoid this
-          /// we will do an an EXTRA jump forwads which ideally will give the player a chance to catch up
+          /// we will do an an EXTRA jump forwards which ideally will give the player a chance to catch up
           /// - in this condition, instead of showing the reqiested frame we will do the following:
           /// - if we have a cached frame, we will show that; otherwise we will advance the frame by 1 from the last frame.
           ///   and show that, since we can decode it quickly.
@@ -2520,7 +2520,7 @@ switch_point:
           /// (A future update will implement a more flexible caching system which will enable the possibility
           /// of caching further frames while we waut)
           /// - if we did not advance enough, we show the getahead frame and then do a larger jump.
-          // ..'bungle frames' is a rough estimate of how far ahead we need to jump so that we land exaclty
+          // ..'bungle frames' is a rough estimate of how far ahead we need to jump so that we land exactly
           /// on the player's frame. 'getahead' is the target frame.
           /// after a jump, we adjust bungle_frames to try to jump more acurately the next tine
           /// however, it is impossible to get it right 100% of the time, as the actual value can vary unpredictably
@@ -2612,7 +2612,7 @@ switch_point:
                   getahead = -1;
                   mainw->pred_frame = 0;
                   cleanup_preload = TRUE;
-                  if (sfile->pb_fps > 0.)  /// not sure why yet but this doesnt work for rev. pb
+                  if (sfile->pb_fps > 0.)  /// not sure why yet but this doesn't work for rev. pb
                     sfile->last_frameno = requested_frame;
                   drop_off = FALSE;
                 }

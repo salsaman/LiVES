@@ -197,8 +197,8 @@ typedef struct {
   uint64_t mtime_nsec;
   uint64_t ctime_sec;
   uint64_t ctime_nsec;
-  char *md5sum; /// only filled if EXTRA_DETAILS_MD5 is set, otherwis NULL
-  char *extra_details;  /// intialized to NULL, set to at least ""
+  char *md5sum; /// only filled if EXTRA_DETAILS_MD5 is set, otherwise NULL
+  char *extra_details;  /// initialized to NULL, set to at least ""
   LiVESWidget *widgets[16]; ///< caller set widgets for presentation, e.g. labels, spinners. final entry must be followed by NULL
 } lives_file_dets_t;
 

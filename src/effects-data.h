@@ -162,7 +162,7 @@ typedef struct {
   int trowsc;
   int trowsp;
 
-  // # dislay rows for each param/channel
+  // # display rows for each param/channel
   int *dispc;
   int *dispp;
 

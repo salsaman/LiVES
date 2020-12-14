@@ -956,7 +956,7 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
   forcecheck = FALSE;
 
   if (!get_temp_handle(-1)) {
-    // we failed because we ran out of file handles; this hsould almost never happen
+    // we failed because we ran out of file handles; this should almost never happen
     d_print_failed();
     goto cleanup_ut;
   }
@@ -1005,7 +1005,7 @@ retry:
 
         // get format list
 
-        // for now, we dont't pass req->desired_fps or req->audchoice
+        // for now, we don't pass req->desired_fps or req->audchoice
         // also we could send req->sub_lang...
 
         if (!mainw->save_with_sound) audchoice = -1;
@@ -1255,7 +1255,7 @@ cleanup_ut:
         capable->ds_free = dsu;
         THREADVAR(com_failed) = FALSE;
         if (dstat != LIVES_STORAGE_STATUS_NORMAL) {
-          // Houston, we hava problem !
+          // Houston, we have a problem !
           if (!forcecheck) recheck = TRUE;
           if (tmpdir) {
             /// remove tmpdir and re-check
@@ -2311,7 +2311,7 @@ close_done:
             com = lives_strdup_printf("%s undo_audio \"%s\"", prefs->backend_sync, cfile->handle);
           }
           // undo delete selected audio
-          // (set with with_audio==2 [audio only],therfore start,end,where are in secs.; times==-1)
+          // (set with with_audio==2 [audio only],therefore start,end,where are in secs.; times==-1)
           else com = lives_strdup_printf("%s insert \"%s\" \"%s\" %.8f 0. %.8f \"%s\" 2 0 0 0 0 %d %d %d %d %d -1",
                                            prefs->backend,
                                            cfile->handle, get_image_ext_for_type(cfile->img_type), cfile->undo1_dbl,
@@ -4994,7 +4994,7 @@ close_done:
 
        loop lock can be disabled by any of the following:
        switching to another clip
-       chaging clip direction manually
+       changing clip direction manually
        triggering a bookmark
        ending playback
        when loop lock is released, the original play direction from before entering the lock is
@@ -5588,7 +5588,7 @@ close_done:
 
 
     void lock_set_file(const char *set_name) {
-      // function is called when a set is opened, to prevent multiple acces to the same set
+      // function is called when a set is opened, to prevent multiple access to the same set
       char *setdir = lives_build_path(prefs->workdir, set_name, NULL);
       if (lives_file_test(setdir, LIVES_FILE_TEST_IS_DIR)) {
         char *set_lock_file = lives_strdup_printf("%s.%d", SET_LOCK_FILENAME, capable->mainpid);
@@ -5858,7 +5858,7 @@ close_done:
           }
           if (cfile->clip_type == CLIP_TYPE_FILE && cfile->header_version >= 102) cfile->fps = cfile->pb_fps;
 
-          /** if the image type is still unkown it means either there were no decoded frames, or the final decoded frame was absent
+          /** if the image type is still unknown it means either there were no decoded frames, or the final decoded frame was absent
             so we count the virtual frames. If all are virtual then we set img_type to prefs->img_type and assume all is OK
             (or at least we recovered as many frames as we could using frame_index),
             and we'll accept whatever the decoder returns if there is a divergence with the clip metadata */
@@ -5885,7 +5885,7 @@ close_done:
           cfile->checked = TRUE;
           /** here we do a simple check: make sure the final frame is present and frame + 1 isn't
             if either check fails then we count all the frames (since we don't have a frame_index to guide us),
-            - this can be pretty slow so we wan't to avoid it unless  we detected a problem. */
+            - this can be pretty slow so we want to avoid it unless  we detected a problem. */
           if (!check_frame_count(mainw->current_file, isok)) {
             cfile->frames = get_frame_count(mainw->current_file, 1);
             if (cfile->frames == -1) {
@@ -7646,7 +7646,7 @@ end:
       mt_sensitise(mainw->multitrack);
       maybe_add_mt_idlefunc();
     }
-    lives_menu_item_activate(LIVES_MENU_ITEM(mainw->open_sel)); // returm to the fileselector
+    lives_menu_item_activate(LIVES_MENU_ITEM(mainw->open_sel)); // return to the fileselector
   }
 
 
@@ -10219,7 +10219,7 @@ autolives_fail:
 
     if (in_preview_func) {
       // called a second time from playback loop
-      // this is a special value of cancel - don't propogate it to "open"
+      // this is a special value of cancel - don't propagate it to "open"
       mainw->cancelled = CANCEL_NO_PROPOGATE;
       return;
     }
@@ -10439,12 +10439,12 @@ autolives_fail:
       if (!(do_yesno_dialog_with_check(_("VJ Mode is specifically designed to make LiVES ready for realtime presentation.\n"
                                          "Enabling VJ restart will have the following effects:\n"
                                          "\n\n - On startup, audio source will be set to external. "
-                                         "Clips willl reload without audio (although the audio files will remain on the disk).\n"
+                                         "Clips will reload without audio (although the audio files will remain on the disk).\n"
                                          "Additionally, when playing external audio, LiVES uses the system clock for frame timings "
                                          "(rather than the soundcard) which may allow for slightly smoother playback.\n"
                                          "\n - only the lightest of checks will be done when reloading clips (unless a problem is detected "
                                          "during the reload.)\n\n"
-                                         "Startup  will be almost instantaneous, however in the rare occurence of corruption to "
+                                         "Startup  will be almost instantaneous, however in the rare occurrence of corruption to "
                                          "a clip audio file, this will not be detected, as the file will not be loaded."
                                          "\nOn startup, LiVES will grab the keyboard and screen focus if it can,"
                                          "\n - Shutdown will be slightly more rapid as no cleanup of the working directory will be attempted"
@@ -11190,7 +11190,7 @@ autolives_fail:
   /**
      @brief lock or unlock audio track changes in free playback
      if lock is switched on then the prefs to follow video clip changes and rate / direction changes
-     are overriden, in addition  the audio is ismmediately synced to the current video track
+     are overridden, in addition  the audio is ismmediately synced to the current video track
 
      switching off audio lock re-enables these prefs settings
 

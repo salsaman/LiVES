@@ -3,7 +3,7 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-// lsd.h :: implemntation of LiVES Struct Definition (LSD)
+// lsd.h :: implementation of LiVES Struct Definition (LSD)
 // functions for auto copy and auto free of structs
 
 #ifndef __STRUCTDEFS_H__
@@ -107,7 +107,7 @@ static char *_lsd_proxy_strdup(char *str) {
 /// AUTONATION FLAGS
 
 /// copy flags
-///< alloc and copy on copy. If bytesize is set that will be the alocated size,
+///< alloc and copy on copy. If bytesize is set that will be the allocated size,
 /// if 0 then we do a strdup. Fixed size is ignored for arrays.
 #define LIVES_FIELD_FLAG_ALLOC_AND_COPY (1ull << 0)
 
@@ -116,7 +116,7 @@ static char *_lsd_proxy_strdup(char *str) {
 /// if bytesize > 0 and not IS_NULLT_ARRAY
 /// then field will will be filled with bytesize zeros
 /// dest->field = NULL or memset(dets->field, 0, bytesize)
-/// for ARRAYS, the process will be appied to each element in turn
+/// for ARRAYS, the process will be applied to each element in turn
 /// however, since a NULL element marks the end of a NULLT_ARRAY,
 /// the combination ALLOC_AND_COPY | ZERO_ON_COPY | IS_NULLT_ARRAY may interfere with
 /// subsequent copying
@@ -128,7 +128,7 @@ static char *_lsd_proxy_strdup(char *str) {
 #define LIVES_FIELD_FLAG_FREE_ON_DELETE (1ull << 16)
 
 /// for (i = 0; struct->field[i], i++) free(struct->field[i];
-#define LIVES_FIELD_FLAG_FREE_ALL_ON_DELETE (1ull << 17) ///< combined with IS_NULLT_ARRAY, frees all elements, combine with FREE_ON_DELETE to free elemnt after
+#define LIVES_FIELD_FLAG_FREE_ALL_ON_DELETE (1ull << 17) ///< combined with IS_NULLT_ARRAY, frees all elements, combine with FREE_ON_DELETE to free element after
 
 /// flags giving extra info about the field (affects copy and delete)
 
@@ -236,7 +236,7 @@ typedef struct _lives_special_field {
   /// must be set when creating the struct
   off_t offset_to_field;
   char name[LSD_NAMELEN]; /// optional unless flags == 0 or any of the functions below are defined.
-  size_t bytesize; /// defines the elemnt size for
+  size_t bytesize; /// defines the element size for
   lives_field_init_cb init_func; ///< will be called from lives_struct_new
   lives_field_copy_cb copy_func; ///< will be called from lives_struct_copy
   lives_field_delete_cb delete_func; ///< called from lives_struct_free
@@ -244,7 +244,7 @@ typedef struct _lives_special_field {
 
 typedef struct _lives_struct_def {
   uint64_t identifier;  /// default: LIVES_STRUCT_ID
-  uint64_t unique_id; /// randomly generted id, unique to each instance
+  uint64_t unique_id; /// randomly generated id, unique to each instance
 
   int32_t refcount; ///< refcount, set to 1 on creation, free unrefs and only frees when 0.
   uint32_t generation; ///< initialized as 1 and incremented on each copy
@@ -286,7 +286,7 @@ typedef struct _lives_struct_def {
 /// and number of "special fields"
 /// special fields are any which have init / copy / delete functions
 /// If the struct has special_fields then:
-/// call make_special_field for each elemnt in lsd->special_fields
+/// call make_special_field for each element in lsd->special_fields
 /// for this it is necessary to make 1 instance of struct via normal means
 /// field values in the struct are irrelevant, the struct is only needed to get the field offsets
 /// fpr any special fields
@@ -335,7 +335,7 @@ make_special_field(uint64_t flags, void *sample_struct, void *ptr_to_field,
 // a sample instance of the struct should be created (using malloc / calloc, etc)
 // and passed as the second parameter. The sample should be freed afterwards using normal free.
 // All subsequent instances must be created with lives_struct_create or lives_struct_copy.
-// The function returns 0 on success, EINVAL if a paramter is invalid.
+// The function returns 0 on success, EINVAL if a parameter is invalid.
 // this version should be used when sruct has a field with type (lives_struct_def_t)
 static int lives_struct_init(const lives_struct_def_t *, void *thestruct,
                              lives_struct_def_t *) ALLOW_UNUSED;
@@ -359,7 +359,7 @@ static int lives_struct_free(lives_struct_def_t *) ALLOW_UNUSED;
 // returns -1 if parameter is NULL
 static int lives_struct_unref(lives_struct_def_t *) ALLOW_UNUSED;
 
-// increments refcount, returns new value. Returns 0 if paramter is NULL
+// increments refcount, returns new value. Returns 0 if parameter is NULL
 static int lives_struct_ref(lives_struct_def_t *) ALLOW_UNUSED;
 
 // returns current refcount, or 0 if NULL is passed
@@ -1100,7 +1100,7 @@ static int lives_struct_init_p(const lives_struct_def_t *lsd, void *thestruct,
 static int lives_struct_init(const lives_struct_def_t *lsd, void *thestruct,
                              lives_struct_def_t *lsd_in_struct) {
   // in other cases a bytesize of zero indicates a string, but in this case it is not relevant
-  // since flags is also zero. In the unforseen case that flags ever needs setting, then care
+  // since flags is also zero. In the unforeseen case that flags ever needs setting, then care
   // needs to be taken in callbacks to use memcpy rather than strdup, etc.
   return _lsd_struct_init(lsd, thestruct, &lsd_in_struct, 0);
 }

@@ -30,7 +30,7 @@
 #define	NUM_PIXELS		128
 /* Totals pixels in a square image. */
 #define NUM_PIXELS_SQUARED	(NUM_PIXELS * NUM_PIXELS)
-/* Number of Haar coeffients we retain as signature for an image. */
+/* Number of Haar coefficients we retain as signature for an image. */
 #define NUM_COEFS		40
 
 #define UNIT_IS_DOUBLE

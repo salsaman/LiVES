@@ -1461,7 +1461,7 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
 
       if (toggle_fx) {
         if (is_audio_thread) {
-          // in the audio thread, don't activate / dectivate video fx. It could cause an underflow if it takes too long
+          // in the audio thread, don't activate / deactivate video fx. It could cause an underflow if it takes too long
           // let the video thread handle it
           weed_plant_t *filter = rte_keymode_get_filter(key + 1, rte_key_getmode(key + 1));
           if (!is_pure_audio(filter, FALSE)) {

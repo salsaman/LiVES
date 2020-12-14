@@ -241,7 +241,7 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_VSTEP "vstep"
 #define WEED_LEAF_ALIGNMENT_HINT "alignment_hint"
 
-/* optional for filters with video channels (may be overriden in channel templates depending on filter_class flags) */
+/* optional for filters with video channels (may be overridden in channel templates depending on filter_class flags) */
 #define WEED_LEAF_WIDTH "width"
 #define WEED_LEAF_HEIGHT "height"
 #define WEED_LEAF_MAXWIDTH "maxwidth"
@@ -255,7 +255,7 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_INNER_SIZE "inner_size"
 
 ///
-/* optional for filters with audio channels (maybe overriden in channel templates depending on filter_class flags) */
+/* optional for filters with audio channels (maybe overridden in channel templates depending on filter_class flags) */
 #define WEED_LEAF_AUDIO_RATE "audio_rate"
 #define WEED_LEAF_MAX_AUDIO_CHANNELS "max_audio_chans"
 #define WEED_LEAF_MIN_AUDIO_LENGTH "min_audio_len"

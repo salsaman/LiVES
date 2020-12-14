@@ -416,7 +416,7 @@ void on_open_yuv4m_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (!LIVES_IS_PLAYING) {
     // temp kludge, symlink audiodump.pcm to wav file, then pretend we are playing
     // an opening preview . Doesn't work with fifo.
-    // and we dont really care if it doesnt work
+    // and we dont really care if it doesn't work
 
     // but what it means is, if we have an audio file or stream at
     // "prefs->workdir/audiodump.pcm" we will try to play it

@@ -98,8 +98,8 @@ void *main_thread_execute(lives_funcptr_t func, int return_type, void *retval, c
 
 static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
   /// funcsigs define the signature of any function we may wish to call via lives_proc_thread
-  /// however since there are almost 3 quadrillion posibilities (nargs < 16 * all return types)
-  /// it is not feasable to add every one; new funcsigs can be added as needed; then the only remaining thing is to
+  /// however since there are almost 3 quadrillion possibilities (nargs < 16 * all return types)
+  /// it is not feasible to add every one; new funcsigs can be added as needed; then the only remaining thing is to
   /// ensure the matching case is handled in the switch statement
   uint32_t ret_type = weed_leaf_seed_type(info, _RV_);
   allfunc_t *thefunc = (allfunc_t *)lives_malloc(sizeof(allfunc_t));

@@ -2661,7 +2661,7 @@ void print_cache(LiVESList * cache) {
   g_print("dumping cache %p\n", cache);
   for (; ll; ll = ll->next) {
     speedy = (lives_speed_cache_t *)ll->data;
-    g_print("cach dets: %s = %s\n", speedy->key, speedy->data);
+    g_print("cache dets: %s = %s\n", speedy->key, speedy->data);
   }
 }
 
@@ -3075,7 +3075,7 @@ char *subst(const char *xstring, const char *from, const char *to) {
 
 
 char *insert_newlines(const char *text, int maxwidth) {
-  // crude formating of strings, ensure a newline after every run of maxwidth chars
+  // crude formatting of strings, ensure a newline after every run of maxwidth chars
   // does not take into account for example utf8 multi byte chars
 
   wchar_t utfsym;

@@ -41,7 +41,7 @@ typedef int bool;
 void *OpenHTMSocket(char *host, int portnumber);
 
 /* send a buffer of data over htm socket, returns TRUE on success.
-  Note that udp sends rarely fail. UNIX sends fail if a kernal buffer overflows */
+  Note that udp sends rarely fail. UNIX sends fail if a kernel buffer overflows */
 bool SendHTMSocket(void *htmsendhandle, int length_in_bytes, void *buffer);
 
 /* close the socket(2) and release memory associated with it */

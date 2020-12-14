@@ -43,7 +43,7 @@ Added optional "author", "title", "comments", "created_version" and "edited_vers
 "frames" changed from int to int64. "hint" changed to "event_type"
 
 15/08/2020
-clarify that audio "seek" position is relevent even when "velocity" is set to 0.
+clarify that audio "seek" position is relevant even when "velocity" is set to 0.
 API updated to 123 to facilitate this change.
 
 16/10/2020
@@ -365,7 +365,7 @@ Optional leaves
 
 === WEED_EVENT_TYPE_MARKER ===
 
-This is a host specfic marker event. Leaves can vary from host to
+This is a host specific marker event. Leaves can vary from host to
 host. Markers which are not recognised should be removed from the event_list.
 
 

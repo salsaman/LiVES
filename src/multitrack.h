@@ -78,7 +78,7 @@ typedef enum {
   INSERT_MODE_NORMAL,  ///< the default (only insert if it fits)
 
   // not implemented yet
-  INSERT_MODE_OVERWRITE, ///< overwite existing blocks
+  INSERT_MODE_OVERWRITE, ///< overwrite existing blocks
   INSERT_MODE_FLEX, ///< stretch first gap to fit block
   INSERT_MODE_FILL, ///< insert enough to fill gap (from selection start or end depending on gravity)
 } lives_mt_insert_mode_t;

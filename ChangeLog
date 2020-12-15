@@ -5,6 +5,7 @@ Minor optimisations for mkv_decoder and avformat_decoder.
 Fix a few issues with record / playback of generators with no clips loaded.
 Patch to allow use of jack1 (as well as jack2).
 Fix some refcounting issues when deiniting real time effects.
+Fix bug with timecode position in multitrack (regression).
 Refactor code, splitting large source files into several smaller more focused ones (in progress).
 Trivial fixes and spelling corrections.
 Remove some unecessary dependencies from config (rpc.h and libGLU).

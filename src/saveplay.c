@@ -5359,7 +5359,7 @@ boolean open_ascrap_file(void) {
 }
 
 
-boolean load_from_scrap_file(weed_layer_t *layer, int frame) {
+boolean load_from_scrap_file(weed_layer_t *layer, frames_t frame) {
   // load raw frame data from scrap file
 
   // this will also set cfile width and height - for letterboxing etc.
@@ -5534,6 +5534,7 @@ static void _save_to_scrap_file(weed_layer_t *layer) {
   weed_layer_free(layer);
 
   scrapfile->f_size += pdata_size;
+  scrapfile->frames++;
 
   // check free space every 256 frames or every 10 MB of audio (TODO ****)
   if ((scrapfile->frames & 0xFF) == 0) {

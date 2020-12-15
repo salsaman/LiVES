@@ -1335,7 +1335,7 @@ void open_set_file(int clipnum);
 boolean open_scrap_file(void);
 boolean open_ascrap_file(void);
 int save_to_scrap_file(weed_layer_t *);
-boolean load_from_scrap_file(weed_layer_t *, int frame);
+boolean load_from_scrap_file(weed_layer_t *, frames_t frame);
 void close_ascrap_file(boolean remove);
 void close_scrap_file(boolean remove);
 void add_to_ascrap_mb(uint64_t bytes);

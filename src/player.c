@@ -626,8 +626,7 @@ void load_frame_image(frames_t frame) {
           /*   } */
           /* } */
         } else {
-          int oclip, nclip;
-          register int i;
+          int oclip, nclip, i;
           weed_plant_t **layers = (weed_plant_t **)lives_calloc((mainw->num_tracks + 1), sizeof(weed_plant_t *));
           // get list of active tracks from mainw->filter map
           get_active_track_list(mainw->clip_index, mainw->num_tracks, mainw->filter_map);

@@ -5297,9 +5297,9 @@ boolean deal_with_render_choice(boolean add_deinit) {
         prefs->mt_def_achans = dac;
         prefs->mt_def_asamps = das;
         prefs->mt_def_signed_endian = dse;
-        mainw->is_rendering = FALSE;
         new_clip = TRUE;
       }
+      mainw->is_rendering = FALSE;
       break;
     case RENDER_CHOICE_SAME_CLIP:
       cfile->undo_start = mainw->play_start = oplay_start; ///< same clip frames start where recording started

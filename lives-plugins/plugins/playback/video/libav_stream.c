@@ -35,7 +35,7 @@
 static int intent;
 
 static int mypalette = WEED_PALETTE_END;
-static int palette_list[3];
+static int palette_list[4];
 
 static int avpalette;
 
@@ -139,8 +139,9 @@ const char *get_description(void) {
 
 const int *get_palette_list(void) {
   palette_list[0] = WEED_PALETTE_RGB24;
-  palette_list[1] = WEED_PALETTE_YUV420P;
-  palette_list[2] = WEED_PALETTE_END;
+  palette_list[1] = WEED_PALETTE_YUV444P;
+  palette_list[2] = WEED_PALETTE_YUV420P;
+  palette_list[3] = WEED_PALETTE_END;
   return palette_list;
 }
 
@@ -246,7 +247,7 @@ const int *get_yuv_palette_clamping(int palette) {
 
 boolean set_yuv_palette_clamping(int clamping_type) {
   myclamp = clamping_type;
-  avpalette = weed_palette_to_avi_pix_fmt(WEED_PALETTE_YUV420P, &myclamp);
+  avpalette = weed_palette_to_avi_pix_fmt(avi_pix_fmt_to_weed_palette(avpalette, NULL), &myclamp);
   return TRUE;
 }
 
@@ -343,7 +344,7 @@ static boolean open_audio() {
   }
   out_sample_rate = c->sample_rate;
 
-  c->channels        = av_get_channel_layout_nb_channels(c->channel_layout);
+  c->channels = av_get_channel_layout_nb_channels(c->channel_layout);
   c->channel_layout = (out_nchans == 2 ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO);
   if (codec->channel_layouts) {
     c->channel_layout = codec->channel_layouts[0];
@@ -623,26 +624,24 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     av_opt_set(encctx->priv_data, "preset", "ultrafast", 0);
     //av_opt_set(encctx->priv_data, "crf", "0", 0);
     av_opt_set(encctx->priv_data, "qscale", "1", 0);
-    av_opt_set(encctx->priv_data, "profile", "main", 0);
     av_opt_set(encctx->priv_data, "crf", "1", 0);
 
     if (!argc || !atoi(argv[6])) {
       // lower q, about half the size
       vStream->codec->qmin = 10;
       vStream->codec->qmax = 51;
+      av_opt_set(encctx->priv_data, "profile", "main", 0);
+    } else {
+      // highq mode
+      avpalette = weed_palette_to_avi_pix_fmt(WEED_PALETTE_YUV420P, &myclamp);
+      av_opt_set(encctx->priv_data, "profile", "high444", 0);
+      /* // highest quality - may break compliance */
+      /* vStream->codec->me_subpel_quality = 11; */
+      /* vStream->codec->trellis = 2; */
+
+      /* // 3 for black enhance */
+      /* av_opt_set(encctx->priv_data, "aq-mode", "2", 0); */
     }
-
-    /* // highest quality - may break compliance */
-    /* vStream->codec->me_subpel_quality = 11; */
-    /* vStream->codec->trellis = 2; */
-
-    /* // 3 for black enhance */
-    /* av_opt_set(encctx->priv_data, "aq-mode", "2", 0); */
-
-    /* if (mypalette == WEED_PALETTE_YUV444P) */
-    /*   av_opt_set(encctx->priv_data, "profile", "high444", 0); */
-    /* else */
-    /*   av_opt_set(encctx->priv_data, "profile", "main", 0); */
   }
 
   //vStream->codec->gop_size = 10; // maybe only streaming, breaks whatsapp
@@ -749,7 +748,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   /* create (container) libav video frame */
   ostv.frame = alloc_picture(avpalette, width, height);
-  if (ostv.frame == NULL) {
+  if (!ostv.frame) {
     fprintf(stderr, "Could not allocate video frame\n");
     avformat_free_context(fmtctx);
     fmtctx = NULL;
@@ -817,9 +816,11 @@ static void copy_yuv_image(AVFrame *pict, int width, int height, const uint8_t *
 
 static AVFrame *get_video_frame(const uint8_t *const *pixel_data, int hsize, int vsize) {
   AVCodecContext *c = ostv.enc;
-  int istrides[4], ostrides[4];
   const uint8_t *ipd[4];
   const uint8_t *opd[4];
+  static int istrides[4];
+  int ostrides[4];
+  int avp;
 
   if (ostv.sws_ctx && (hsize != ohsize || vsize != ovsize)) {
     sws_freeContext(ostv.sws_ctx);
@@ -840,24 +841,28 @@ static AVFrame *get_video_frame(const uint8_t *const *pixel_data, int hsize, int
       }
       ohsize = hsize;
       ovsize = vsize;
+      if (mypalette == WEED_PALETTE_YUV420P) {
+        istrides[0] = hsize;
+        istrides[1] = istrides[2] = hsize >> 1;
+      } else {
+        istrides[0] = hsize * 3;
+        istrides[1] = istrides[2] = 0;
+      }
+      istrides[3] = 0;
     }
     ipd[0] = pixel_data[0];
     if (mypalette == WEED_PALETTE_YUV420P) {
-      istrides[0] = hsize;
-      istrides[1] = istrides[2] = hsize >> 1;
       ipd[1] = pixel_data[1];
       ipd[2] = pixel_data[2];
     } else {
-      istrides[0] = hsize * 3;
-      istrides[1] = istrides[2] = 0;
       ipd[1] = ipd[2] = NULL;
     }
-    istrides[3] = 0;
     ipd[3] = NULL;
 
     opd[0] = ostv.frame->data[0];
     ostrides[0] = ostv.frame->linesize[0];
-    if (avpalette == WEED_PALETTE_YUV420P) {
+    avp = avi_pix_fmt_to_weed_palette(avpalette, NULL);
+    if (avp == WEED_PALETTE_YUV420P || avp == WEED_PALETTE_YUV444P) {
       ostrides[1] = ostv.frame->linesize[1];
       ostrides[2] = ostv.frame->linesize[2];
       opd[1] = ostv.frame->data[1];
@@ -985,7 +990,7 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
     spb_len = 0;
 
     if (out_nb_samples == 0) {
-      if (osta.frame != NULL) av_frame_unref(osta.frame);
+      if (osta.frame) av_frame_unref(osta.frame);
       osta.frame = NULL;
       in_nb_samples = 0;
       return TRUE;
@@ -1047,7 +1052,7 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
 
   int i;
 
-  if (fmtctx != NULL) {
+  if (fmtctx) {
     if (!stream_encode && !(fmtctx->oformat->flags & AVFMT_NOFILE)) {
 
       if (in_sample_rate != 0) {
@@ -1109,32 +1114,31 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
     avio_closep(&fmtctx->pb);
   }
 
-
-  if (vStream != NULL) {
+  if (vStream) {
     avcodec_close(vStream->codec);
     vStream = NULL;
   }
 
-  if (aStream != NULL) {
+  if (aStream) {
     avcodec_close(aStream->codec);
     aStream = NULL;
   }
 
-  if (fmtctx != NULL) {
+  if (fmtctx) {
     avformat_free_context(fmtctx);
     fmtctx = NULL;
   }
 
-  if (ostv.frame != NULL) av_frame_unref(ostv.frame);
-  if (osta.frame != NULL) av_frame_unref(osta.frame);
+  if (ostv.frame) av_frame_unref(ostv.frame);
+  if (osta.frame) av_frame_unref(osta.frame);
 
-  if (ostv.sws_ctx != NULL) sws_freeContext(ostv.sws_ctx);
-  if (osta.swr_ctx != NULL) swr_free(&(osta.swr_ctx));
+  if (ostv.sws_ctx) sws_freeContext(ostv.sws_ctx);
+  if (osta.swr_ctx) swr_free(&(osta.swr_ctx));
 
   ostv.sws_ctx = NULL;
   osta.swr_ctx = NULL;
 
-  if (spill_buffers != NULL) {
+  if (spill_buffers) {
     for (i = 0; i < in_nchans; i++) {
       free(spill_buffers[i]);
     }
@@ -1147,8 +1151,7 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
 
 
 void module_unload(void) {
-  if (inited)
-    avformat_network_deinit();
+  if (inited) avformat_network_deinit();
   pthread_mutex_destroy(&write_mutex);
   inited = 0;
 }

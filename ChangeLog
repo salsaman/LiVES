@@ -6,6 +6,7 @@ Fix a few issues with record / playback of generators.
 Patch to allow use of jack1 (as well as jack2).
 Fix some refcounting issues when deiniting real time effects.
 Fix bug with timecode position in multitrack (regression).
+Fix handling issue for opening invalid media files.
 Prevent possible crashes with setting gtkentry in background threads.
 Refactor code, splitting large source files into several smaller more focused ones (in progress).
 Trivial fixes and spelling corrections.

@@ -1705,7 +1705,7 @@ if (1) {
 	    # - the user chooses to disable instant opening
 	    # - all of the decoder plugins fail
 	    # - opening the audio track
-	    #$DEBUG_OPEN = 1;
+	    $DEBUG_OPEN = 1;
 
 	    unlink "$curworkdir/pause";
 
@@ -2063,8 +2063,10 @@ if (1) {
 		    }
 
 		    if (!$has_aud && !$has_vid) {
-			unlink $pidfile;
-			exit 1;
+			&sig_error("This file does not appear to be a valid video, audio " .
+				   "or image file\n",
+				   "The file may be damaged or broken, or in an unrecognised format.\n",
+				   "$GUI_NAME was unable to open it.");
 		    }
 		}
 
@@ -2117,8 +2119,8 @@ if (1) {
 		    $imresact = "none";
 		    &get_image_size("$name$img_ext");
 		    if ($panic || $hsize==-1) {
-			unlink $pidfile;
-			&sig_error("This does not appear to be a valid video or image file\n",
+			&sig_error("This file does not appear to be a valid video, audio " .
+				   "or image file\n",
 				   "The file may be damaged or broken, or in an unrecognised format.\n",
 				   "$GUI_NAME was unable to open it.");
 		    }

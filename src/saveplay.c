@@ -5485,6 +5485,8 @@ boolean check_for_disk_space(boolean fullcheck) {
 }
 
 
+static boolean sf_writeable = TRUE;
+
 static void _save_to_scrap_file(weed_layer_t *layer) {
   // returns frame number
   // dump the raw layer (frame) data to disk
@@ -5494,10 +5496,6 @@ static void _save_to_scrap_file(weed_layer_t *layer) {
   size_t pdata_size;
 
   lives_clip_t *scrapfile = mainw->files[mainw->scrap_file];
-
-  boolean writeable = TRUE;
-
-  char *framecount;
 
   //int flags = O_WRONLY | O_CREAT | O_TRUNC;
   int fd;
@@ -5540,27 +5538,8 @@ static void _save_to_scrap_file(weed_layer_t *layer) {
   if ((scrapfile->frames & 0xFF) == 0) {
     char *dir = lives_build_filename(prefs->workdir, scrapfile->handle, NULL);
     free_mb = (double)get_ds_free(dir) / 1000000.;
-    if (free_mb == 0) writeable = is_writeable_dir(dir);
+    if (free_mb == 0) sf_writeable = is_writeable_dir(dir);
     lives_free(dir);
-  }
-
-  if ((!mainw->fs || (prefs->play_monitor != widget_opts.monitor + 1 && capable->nmonitors > 1)) && !prefs->hide_framebar &&
-      !mainw->faded) {
-    double scrap_mb = (double)scrapfile->f_size / 1000000.;
-    if ((scrap_mb + ascrap_mb) < (double)free_mb * .75) {
-      // TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-      framecount = lives_strdup_printf(_("rec %.2f MB"), scrap_mb + ascrap_mb);
-    } else {
-      // warn if scrap_file > 3/4 of free space
-      // TRANSLATORS: !rec(ord) %.2f M(ega)B(ytes)
-      if (writeable)
-        framecount = lives_strdup_printf(_("!rec %.2f MB"), scrap_mb + ascrap_mb);
-      else
-        // TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-        framecount = (_("rec ?? MB"));
-    }
-    lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount);
-    lives_free(framecount);
   }
 
   /// check every 64 frames for quota overrun, because its a background task
@@ -5572,11 +5551,30 @@ static lives_proc_thread_t scrap_file_procthrd = NULL;
 int save_to_scrap_file(weed_layer_t *layer) {
   weed_layer_t *orig_layer;
   lives_clip_t *scrapfile = mainw->files[mainw->scrap_file];
+  char *framecount;
   if (!IS_VALID_CLIP(mainw->scrap_file)) return -1;
   if (!layer) return scrapfile->frames;
   orig_layer = weed_layer_copy(NULL, layer);
   if (scrap_file_procthrd) {
     lives_proc_thread_join(scrap_file_procthrd);
+    if ((!mainw->fs || (prefs->play_monitor != widget_opts.monitor + 1 && capable->nmonitors > 1)) && !prefs->hide_framebar &&
+        !mainw->faded) {
+      double scrap_mb = (double)scrapfile->f_size / 1000000.;
+      if ((scrap_mb + ascrap_mb) < (double)free_mb * .75) {
+        // TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
+        framecount = lives_strdup_printf(_("rec %.2f MB"), scrap_mb + ascrap_mb);
+      } else {
+        // warn if scrap_file > 3/4 of free space
+        // TRANSLATORS: !rec(ord) %.2f M(ega)B(ytes)
+        if (sf_writeable)
+          framecount = lives_strdup_printf(_("!rec %.2f MB"), scrap_mb + ascrap_mb);
+        else
+          // TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
+          framecount = (_("rec ?? MB"));
+      }
+      lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount);
+      lives_free(framecount);
+    }
   }
   scrap_file_procthrd = lives_proc_thread_create(LIVES_THRDATTR_NONE,
                         (lives_funcptr_t)_save_to_scrap_file, -1, "V", orig_layer);

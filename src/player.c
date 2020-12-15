@@ -1582,7 +1582,7 @@ lfi_done:
       mainw->ptrtime = ptrtime;
       lives_widget_queue_draw(mainw->eventbox2);
     }
-    if (mainw->multitrack && !cfile->opening) animate_multitrack(mainw->multitrack);
+    if (LIVES_IS_PLAYING && mainw->multitrack && !cfile->opening) animate_multitrack(mainw->multitrack);
   }
 }
 

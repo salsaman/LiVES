@@ -523,14 +523,6 @@ void load_frame_image(frames_t frame) {
           }
         }
       }
-
-      if ((!mainw->fs || (prefs->play_monitor != widget_opts.monitor && capable->nmonitors > 1) ||
-           (mainw->ext_playback && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)))
-          && !prefs->hide_framebar) {
-        lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount);
-        //lives_widget_queue_draw(mainw->framecounter);
-      }
-      lives_freep((void **)&framecount);
     }
 
     if (was_preview) {
@@ -557,9 +549,8 @@ void load_frame_image(frames_t frame) {
           } else {
             framecount = lives_strdup_printf("%9d", frame);
           }
-          lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount);
-          lives_widget_queue_draw(mainw->framecounter);
-          lives_freep((void **)&framecount);
+          /* lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount); */
+          /* lives_freep((void **)&framecount); */
         }
         if (mainw->toy_type != LIVES_TOY_NONE) {
           // TODO - move into toys.c
@@ -921,6 +912,7 @@ void load_frame_image(frames_t frame) {
       if (!rec_after_pb) {
         check_layer_ready(mainw->frame_layer);
         save_to_scrap_file(mainw->frame_layer);
+        lives_freep((void **)&framecount);
       }
       get_player_size(&opwidth, &opheight);
     }
@@ -1094,6 +1086,7 @@ void load_frame_image(frames_t frame) {
             gamma_convert_layer(WEED_GAMMA_SRGB, return_layer);
           }
           save_to_scrap_file(return_layer);
+          lives_freep((void **)&framecount);
         }
         weed_layer_free(return_layer);
         lives_free(retdata);
@@ -1356,6 +1349,7 @@ void load_frame_image(frames_t frame) {
             gamma_convert_layer(WEED_GAMMA_SRGB, frame_layer);
           }
           save_to_scrap_file(return_layer);
+          lives_freep((void **)&framecount);
         }
         weed_layer_free(return_layer);
         lives_free(retdata);
@@ -1513,7 +1507,6 @@ void load_frame_image(frames_t frame) {
 
       lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), (tmp = lives_strdup_printf("%9d / %9d",
                            frame, mainw->rec_vid_frames)));
-      lives_widget_queue_draw(mainw->framecounter);
       lives_free(tmp);
     }
 
@@ -1566,6 +1559,15 @@ lfi_done:
   /* 	weed_plant_free(cleaner); */
   /* 	cleaner = NULL; */
   /* } */
+
+  if (framecount) {
+    if ((!mainw->fs || (prefs->play_monitor != widget_opts.monitor && capable->nmonitors > 1) ||
+         (mainw->ext_playback && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)))
+        && !prefs->hide_framebar) {
+      lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount);
+    }
+    lives_freep((void **)&framecount);
+  }
 
   do_cleanup(mainw->frame_layer, success);
   mainw->frame_layer = NULL;

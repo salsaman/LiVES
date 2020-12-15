@@ -6208,7 +6208,7 @@ WIDGET_HELPER_GLOBAL_INLINE const char *lives_entry_get_text(LiVESEntry *entry) 
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_entry_set_text(LiVESEntry *entry, const char *text) {
+static boolean _lives_entry_set_text(LiVESEntry *entry, const char *text) {
 #ifdef GUI_GTK
   if (widget_opts.justify == LIVES_JUSTIFY_START) lives_entry_set_alignment(entry, 0.);
   else if (widget_opts.justify == LIVES_JUSTIFY_CENTER) lives_entry_set_alignment(entry, 0.5);
@@ -6217,6 +6217,13 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_entry_set_text(LiVESEntry *entry, cons
   return TRUE;
 #endif
   return FALSE;
+}
+
+boolean lives_entry_set_text(LiVESEntry *entry, const char *text) {
+  boolean ret;
+  main_thread_execute((lives_funcptr_t)_lives_entry_set_text, WEED_SEED_BOOLEAN, &ret, "vs",
+                      entry, text);
+  return ret;
 }
 
 
@@ -9704,7 +9711,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
 
   if (tooltip) img_tips = lives_widget_set_tooltip_text(entry, tooltip);
 
-  if (txt) lives_entry_set_text(LIVES_ENTRY(entry), txt);
+  if (txt) _lives_entry_set_text(LIVES_ENTRY(entry), txt);
 
   if (dispwidth != -1) lives_entry_set_width_chars(LIVES_ENTRY(entry), dispwidth);
   else {
@@ -12288,7 +12295,7 @@ boolean get_border_size(LiVESWidget * win, int *bx, int *by) {
 
 //   Set active string to the combo box
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_set_active_string(LiVESCombo * combo, const char *active_str) {
-  return lives_entry_set_text(LIVES_ENTRY(lives_bin_get_child(LIVES_BIN(combo))), active_str);
+  return _lives_entry_set_text(LIVES_ENTRY(lives_bin_get_child(LIVES_BIN(combo))), active_str);
 }
 
 

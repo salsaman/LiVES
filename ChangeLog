@@ -1,3 +1,17 @@
+Version 3.2.1
+-------------
+Fix "append audio" function (regression).
+Minor optimisations for mkv_decoder and avformat_decoder.
+Fix a few issues with record / playback of generators with no clips loaded.
+Patch to allow use of jack1 (as well as jack2).
+Fix some refcounting issues when deiniting real time effects.
+Refactor code, splitting large source files into several smaller more focused ones (in progress).
+Trivial fixes and spelling corrections.
+Remove some unecessary dependencies from config (rpc.h and libGLU).
+
+
+
+
 Version 3.2.0 (08 nov 2020)
 --------------------------
 Rewrote initial startup, streamlining it and making it more robust.

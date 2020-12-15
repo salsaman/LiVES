@@ -2399,8 +2399,7 @@ void play_file(void) {
     }
 
     if ((!mainw->sep_win || (!mainw->faded && (prefs->sepwin_type != SEPWIN_TYPE_STICKY)))
-        && (cfile->frames > 0 ||
-            mainw->foreign)) {
+        && (cfile->frames > 0 || mainw->preview_rendering || mainw->foreign)) {
       /// show the frame in the main window
       lives_widget_set_opacity(mainw->playframe, 1.);
       lives_widget_show_all(mainw->playframe);

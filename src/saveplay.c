@@ -2210,6 +2210,109 @@ char *prep_audio_player(char *com2, char *com3, frames_t audio_end, int arate, i
 }
 
 
+static double fps_med = 0.;
+
+static void post_playback(void) {
+  if (prefs->show_player_stats) {
+    if (mainw->fps_measure > 0) {
+      d_print(_("Average FPS was %.4f (%d frames in clock time of %f)\n"), fps_med, mainw->fps_measure,
+              (double)lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs) / TICKS_PER_SECOND_DBL);
+    }
+  }
+
+  if (mainw->new_vpp) {
+    mainw->noswitch = FALSE;
+    mainw->vpp = open_vid_playback_plugin(mainw->new_vpp, TRUE);
+    mainw->new_vpp = NULL;
+    mainw->noswitch = TRUE;
+  }
+
+  if (!mainw->multitrack && CURRENT_CLIP_HAS_VIDEO) {
+    lives_widget_set_sensitive(mainw->spinbutton_start, TRUE);
+    lives_widget_set_sensitive(mainw->spinbutton_end, TRUE);
+  }
+
+  if (!mainw->preview && CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR) {
+    mainw->osc_block = TRUE;
+    weed_generator_end((weed_plant_t *)cfile->ext_src);
+    mainw->osc_block = FALSE;
+  } else {
+    if (mainw->current_file > -1) {
+      if (mainw->toy_type == LIVES_TOY_MAD_FRAMES && !cfile->opening) {
+        showclipimgs();
+        if (!mainw->multitrack)
+          redraw_timeline(mainw->current_file);
+      }
+    }
+  }
+
+  if (CURRENT_CLIP_IS_VALID) {
+    if (!mainw->multitrack) {
+      lives_ce_update_timeline(0, cfile->real_pointer_time);
+      mainw->ptrtime = cfile->real_pointer_time;
+      lives_widget_queue_draw(mainw->eventbox2);
+      lives_widget_queue_draw_if_visible(mainw->framecounter);
+    }
+  }
+
+  if (!mainw->multitrack) {
+    //lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
+  }
+
+  if (prefs->show_gui && ((mainw->multitrack  && mainw->double_size) ||
+                          (lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET) > GUI_SCREEN_HEIGHT ||
+                           lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET) > GUI_SCREEN_WIDTH))) {
+    //if (prefs->gui_monitor == 0) lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, 0);
+    if (prefs->open_maximised)
+      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
+  }
+
+  if (!mainw->preview && (mainw->current_file == -1 || (CURRENT_CLIP_IS_VALID && !cfile->opening))) {
+    sensitize();
+  }
+
+  if (CURRENT_CLIP_IS_VALID && cfile->opening) {
+    lives_widget_set_sensitive(mainw->mute_audio, cfile->achans > 0);
+    lives_widget_set_sensitive(mainw->loop_continue, TRUE);
+    lives_widget_set_sensitive(mainw->loop_video, cfile->achans > 0 && cfile->frames > 0);
+  }
+
+  if (mainw->cancelled != CANCEL_USER_PAUSED) {
+    lives_widget_set_sensitive(mainw->stop, FALSE);
+    lives_widget_set_sensitive(mainw->m_stopbutton, FALSE);
+  }
+
+  lives_widget_set_sensitive(mainw->spinbutton_pb_fps, FALSE);
+
+  if (!mainw->multitrack) {
+    /// update screen for internal players
+    if (prefs->hfbwnp) {
+      lives_widget_hide(mainw->framebar);
+    }
+    set_drawing_area_from_pixbuf(mainw->play_image, NULL, mainw->play_surface);
+    lives_widget_set_opacity(mainw->play_image, 0.);
+  }
+
+  if (!mainw->multitrack) mainw->osc_block = FALSE;
+
+  reset_clipmenu();
+
+  lives_menu_item_set_accel_path(LIVES_MENU_ITEM(mainw->quit), LIVES_ACCEL_PATH_QUIT);
+
+  if (!mainw->multitrack && CURRENT_CLIP_IS_VALID)
+    set_main_title(cfile->name, 0);
+
+  if (!mainw->multitrack && !mainw->foreign && CURRENT_CLIP_IS_VALID && (!cfile->opening ||
+      cfile->clip_type == CLIP_TYPE_FILE)) {
+    showclipimgs();
+    redraw_timeline(mainw->current_file);
+  }
+
+  lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
+}
+
+
 /// play the current clip from 'mainw->play_start' to 'mainw->play_end'
 void play_file(void) {
   LiVESWidgetClosure *freeze_closure, *bg_freeze_closure;
@@ -2227,7 +2330,6 @@ void play_file(void) {
   char *tmp;
 #endif
 
-  double fps_med = 0.;
   double pointer_time = cfile->pointer_time;
   double real_pointer_time = cfile->real_pointer_time;
 
@@ -3364,107 +3466,14 @@ void play_file(void) {
   }
 #endif
 
-  if (prefs->show_player_stats) {
-    if (mainw->fps_measure > 0) {
-      d_print(_("Average FPS was %.4f (%d frames in clock time of %f)\n"), fps_med, mainw->fps_measure,
-              (double)lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs) / TICKS_PER_SECOND_DBL);
-    }
-  }
-
   if (THREADVAR(bad_aud_file)) {
     /// we got an error recording audio
     do_write_failed_error_s(THREADVAR(bad_aud_file), NULL);
     lives_freep((void **)&THREADVAR(bad_aud_file));
   }
 
-  if (mainw->new_vpp) {
-    mainw->noswitch = FALSE;
-    mainw->vpp = open_vid_playback_plugin(mainw->new_vpp, TRUE);
-    mainw->new_vpp = NULL;
-    mainw->noswitch = TRUE;
-  }
-
-  if (!mainw->multitrack && CURRENT_CLIP_HAS_VIDEO) {
-    lives_widget_set_sensitive(mainw->spinbutton_start, TRUE);
-    lives_widget_set_sensitive(mainw->spinbutton_end, TRUE);
-  }
-
-  if (!mainw->preview && CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR) {
-    mainw->osc_block = TRUE;
-    weed_generator_end((weed_plant_t *)cfile->ext_src);
-    mainw->osc_block = FALSE;
-  } else {
-    if (mainw->current_file > -1) {
-      if (mainw->toy_type == LIVES_TOY_MAD_FRAMES && !cfile->opening) {
-        showclipimgs();
-        if (!mainw->multitrack)
-          redraw_timeline(mainw->current_file);
-      }
-    }
-  }
-
-  if (CURRENT_CLIP_IS_VALID) {
-    if (!mainw->multitrack) {
-      lives_ce_update_timeline(0, cfile->real_pointer_time);
-      mainw->ptrtime = cfile->real_pointer_time;
-      lives_widget_queue_draw(mainw->eventbox2);
-      lives_widget_queue_draw_if_visible(mainw->framecounter);
-    }
-  }
-
-  if (!mainw->multitrack) {
-    //lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
-  }
-
-  if (prefs->show_gui && ((mainw->multitrack  && mainw->double_size) ||
-                          (lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET) > GUI_SCREEN_HEIGHT ||
-                           lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET) > GUI_SCREEN_WIDTH))) {
-    //if (prefs->gui_monitor == 0) lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, 0);
-    if (prefs->open_maximised)
-      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-    lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
-  }
-
-  if (!mainw->preview && (mainw->current_file == -1 || (CURRENT_CLIP_IS_VALID && !cfile->opening))) {
-    sensitize();
-  }
-
-  if (CURRENT_CLIP_IS_VALID && cfile->opening) {
-    lives_widget_set_sensitive(mainw->mute_audio, cfile->achans > 0);
-    lives_widget_set_sensitive(mainw->loop_continue, TRUE);
-    lives_widget_set_sensitive(mainw->loop_video, cfile->achans > 0 && cfile->frames > 0);
-  }
-
-  if (mainw->cancelled != CANCEL_USER_PAUSED) {
-    lives_widget_set_sensitive(mainw->stop, FALSE);
-    lives_widget_set_sensitive(mainw->m_stopbutton, FALSE);
-  }
-
-  lives_widget_set_sensitive(mainw->spinbutton_pb_fps, FALSE);
-
-  if (!mainw->multitrack) {
-    /// update screen for internal players
-    if (prefs->hfbwnp) {
-      lives_widget_hide(mainw->framebar);
-    }
-    set_drawing_area_from_pixbuf(mainw->play_image, NULL, mainw->play_surface);
-    lives_widget_set_opacity(mainw->play_image, 0.);
-  }
-
-  if (!mainw->multitrack) mainw->osc_block = FALSE;
-
-  reset_clipmenu();
-
-  lives_menu_item_set_accel_path(LIVES_MENU_ITEM(mainw->quit), LIVES_ACCEL_PATH_QUIT);
-
-  if (!mainw->multitrack && CURRENT_CLIP_IS_VALID)
-    set_main_title(cfile->name, 0);
-
-  if (!mainw->multitrack && !mainw->foreign && CURRENT_CLIP_IS_VALID && (!cfile->opening ||
-      cfile->clip_type == CLIP_TYPE_FILE)) {
-    showclipimgs();
-    redraw_timeline(mainw->current_file);
-  }
+  //////
+  main_thread_execute((lives_funcptr_t)post_playback, -1, NULL, "");
 
   if (prefs->show_msg_area) {
     if (mainw->idlemax == 0) {
@@ -3472,8 +3481,6 @@ void play_file(void) {
     }
     mainw->idlemax = DEF_IDLE_MAX;
   }
-
-  lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
 
   /// need to do this here, in case we want to preview with only a generator and no other clips (which will close to -1)
   if (mainw->record) {

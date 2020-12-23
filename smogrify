@@ -1714,7 +1714,7 @@ if (1) {
 	    # - the user chooses to disable instant opening
 	    # - all of the decoder plugins fail
 	    # - opening the audio track
-	    $DEBUG_OPEN = 1;
+	    #$DEBUG_OPEN = 1;
 
 	    unlink "$curworkdir/pause";
 

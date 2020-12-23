@@ -8,6 +8,8 @@ Fix some refcounting issues when deiniting real time effects.
 Fix bug with timecode position in multitrack (regression).
 Fix handling issue for opening invalid media files.
 Prevent possible crashes with setting gtkentry in background threads.
+Improved progress dialog, also now shows progress when downloading an online clip.
+'Delete frames' now has a Cancel option.
 Refactor code, splitting large source files into several smaller more focused ones (in progress).
 Trivial fixes and spelling corrections.
 Remove some unecessary dependencies from config (rpc.h and libGLU).

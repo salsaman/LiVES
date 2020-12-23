@@ -7115,7 +7115,6 @@ sub insert_audio {
     # which should contain the cut section
 
     my ($xxsamps, $xxchans, $xxsigned, $xxendian, $undo_cut) = @_;
-
     if ($achans == 0) {
 	return;
     }
@@ -7184,7 +7183,7 @@ sub insert_audio {
 		$fdd_out = $audio_to;
 		&fast_dd($size, $wpos, $wpos + $isize);
 		return if $panic;
-		$fsize += $size;
+		$fsize += $isize;
 		if (-s $audio_to != $fsize) {
 		    $panic = &sig_write_error($audio_to);
 		    return;

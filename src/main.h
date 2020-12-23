@@ -1580,6 +1580,7 @@ int verhash(char *version);
 void set_undoable(const char *what, boolean sensitive);
 void set_redoable(const char *what, boolean sensitive);
 void zero_spinbuttons(void);
+void set_start_end_spins(int clipno);
 void set_sel_label(LiVESWidget *label);
 void clear_mainw_msg(void);
 size_t get_token_count(const char *string, int delim);

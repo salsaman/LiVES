@@ -1520,7 +1520,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_hide(LiVESWidget *widget) {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget *widget) {
+WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_show_all(LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_widget_show_all(widget);
 
@@ -1532,10 +1532,18 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget *widget) {
   return FALSE;
 }
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget *widget) {
+#ifdef GUI_GTK
+  if (!mainw || !mainw->is_ready) return _lives_widget_show_all(widget);
+  return lives_widget_show_all_from_bg(widget);
+#endif
+  return FALSE;
+}
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all_from_bg(LiVESWidget *widget) {
   // run in main thread as it seems to give a smoother result
   boolean ret;
-  main_thread_execute((lives_funcptr_t)lives_widget_show_all, WEED_SEED_BOOLEAN, &ret, "v", widget);
+  main_thread_execute((lives_funcptr_t)_lives_widget_show_all, WEED_SEED_BOOLEAN, &ret, "v", widget);
   return ret;
   //return lives_widget_show_all(widget);
 }
@@ -5052,12 +5060,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_progress_bar_pulse(LiVESProgressBar *p
   }
   gtk_entry_progress_pulse(pbar);
   if (is_standard_widget(LIVES_WIDGET(pbar)) && widget_opts.apply_theme) {
-    char *tmp = lives_strdup_printf("%dpx", widget_opts.css_min_height);
     set_css_value_direct(LIVES_WIDGET(pbar), LIVES_WIDGET_STATE_NORMAL, "progress",
-                         "border-top-width", tmp);
-    set_css_value_direct(LIVES_WIDGET(pbar), LIVES_WIDGET_STATE_NORMAL, "progress",
-                         "border-bottom-width", tmp);
-    lives_free(tmp);
+                         "border-width", "0px");
   }
 #else
   gtk_progress_bar_pulse(pbar);

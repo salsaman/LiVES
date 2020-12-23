@@ -253,7 +253,7 @@ float audiofile_get_maxvol(int fnum, double start, double end, float thresh) {
     char *filename = lives_get_audio_file_name(mainw->current_file);
     int afd = lives_open_buffered_rdonly(filename);
     float xx = 0., xf;
-    int c;
+    int c, count = 0;
     lives_free(filename);
     if (end == 0. || end > afile->laudio_time) end = afile->laudio_time;
     while (atime <= end) {
@@ -270,6 +270,8 @@ float audiofile_get_maxvol(int fnum, double start, double end, float thresh) {
         }
       }
       atime += 1. / afile->arps;
+      if (count == afile->arps) count = 0;
+      if (!count++) threaded_dialog_spin((atime - start) / 2. / (end - start));
     }
     lives_close_buffered(afd);
     return xx;
@@ -315,13 +317,12 @@ boolean normalise_audio(int fnum, double start, double end, float thresh) {
         swap_endian = TRUE;
 
       lives_lseek_buffered_writer(afd2, quant_abytes(start, afile->arps, afile->achans, afile->asampsize));
-      threaded_dialog_spin(0.);
 
       if (end == 0. || end > afile->laudio_time) end = afile->laudio_time;
       while (atime <= end) {
         if (mainw->cancelled != CANCEL_NONE) break;
         if (count == afile->arps) count = 0;
-        if (!count++) threaded_dialog_spin((atime - start) / (end - start));
+        if (!count++) threaded_dialog_spin(.5 + (atime - start) / 2. / (end - start));
         for (c = 0; c < afile->achans; c++) {
           xx = get_float_audio_val_at_time(fnum, afd, atime, c, afile->achans) * fact;
           if (THREADVAR(read_failed)) break;

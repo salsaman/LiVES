@@ -2256,11 +2256,7 @@ close_done:
       if (mainw->multitrack) return;
 
       lives_widget_set_sensitive(mainw->undo, FALSE);
-      lives_widget_set_sensitive(mainw->redo, TRUE);
-      cfile->undoable = FALSE;
-      cfile->redoable = TRUE;
-      lives_widget_hide(mainw->undo);
-      lives_widget_show(mainw->redo);
+      set_redoable("", TRUE);
 
       mainw->osc_block = TRUE;
 
@@ -2781,12 +2777,8 @@ close_done:
 
       mainw->osc_block = TRUE;
 
-      cfile->undoable = TRUE;
-      cfile->redoable = FALSE;
-      lives_widget_hide(mainw->redo);
-      lives_widget_show(mainw->undo);
-      lives_widget_set_sensitive(mainw->undo, TRUE);
       lives_widget_set_sensitive(mainw->redo, FALSE);
+      set_undoable("", TRUE);
 
       d_print("");
 
@@ -3919,15 +3911,7 @@ close_done:
         if (bad_header) do_header_write_error(mainw->current_file);
       }
 
-      lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
-      lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->frames == 0 ? 0 : 1, cfile->frames);
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
-      lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
-
-      lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
-      lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->frames == 0 ? 0 : 1, cfile->frames);
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
-      lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
+      set_start_end_spins(mainw->current_file);
 
       set_undoable(_("Insert"), TRUE);
       cfile->undo1_boolean = with_sound;
@@ -4241,8 +4225,9 @@ close_done:
       cfile->progress_start = cfile->start;
       cfile->progress_end = cfile->frames;
 
-      // show a progress dialog, not cancellable
-      do_progress_dialog(TRUE, FALSE, _("Deleting"));
+      cfile->nopreview = TRUE;
+      do_progress_dialog(TRUE, menuitem || mainw->osc_auto, _("Deleting"));
+      cfile->nopreview = FALSE;
 
       if (cfile->clip_type == CLIP_TYPE_FILE) {
         delete_frames_from_virtual(mainw->current_file, cfile->start, cfile->end);
@@ -4255,6 +4240,18 @@ close_done:
       cfile->undo_achans = cfile->achans;
       cfile->undo_asampsize = cfile->asampsize;
       cfile->undo_arps = cfile->arps;
+
+      if (mainw->cancelled != CANCEL_NONE) {
+        mainw->cancelled = CANCEL_NONE;
+        cfile->undo_action = UNDO_DELETE;
+        on_undo_activate(NULL, NULL);
+        set_redoable(NULL, FALSE);
+        cfile->start = start;
+        cfile->end = end;
+        showclipimgs();
+        redraw_timeline(mainw->current_file);
+        return;
+      }
 
       if (mainw->ccpd_with_sound) {
         reget_afilesize(mainw->current_file);
@@ -4293,15 +4290,7 @@ close_done:
         }
       }
 
-      lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
-      lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->frames == 0 ? 0 : 1, cfile->frames);
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
-      lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
-
-      lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
-      lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->frames == 0 ? 0 : 1, cfile->frames);
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
-      lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
+      set_start_end_spins(mainw->current_file);
 
       // menuitem is NULL if we came here from undo_insert
       if (!menuitem && !mainw->osc_auto) return;

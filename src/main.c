@@ -1704,7 +1704,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   if (*capable->wm_caps.panel)
     prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);
-  //prefs->show_desktop_panel = TRUE;
+  prefs->show_desktop_panel = TRUE;
 
   prefs->show_msgs_on_startup = get_boolean_prefd(PREF_MSG_START, TRUE);
 
@@ -5254,15 +5254,7 @@ void sensitize(void) {
   }
 
   if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->menuentry) {
-    lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
-    lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end), 1, cfile->frames);
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
-    lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
-
-    lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
-    lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start), 1, cfile->frames);
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
-    lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
+    set_start_end_spins(mainw->current_file);
 
     if (LIVES_IS_INTERACTIVE) {
       lives_widget_set_sensitive(mainw->spinbutton_start, TRUE);
@@ -8598,15 +8590,7 @@ void do_quick_switch(int new_file) {
 
   if (CURRENT_CLIP_HAS_VIDEO) {
     if (!mainw->fs && !mainw->faded) {
-      lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
-      lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end), 1, cfile->frames);
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
-      lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
-
-      lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
-      lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start), 1, cfile->frames);
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
-      lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
+      set_start_end_spins(mainw->current_file);
 
       if (!mainw->play_window && mainw->double_size) {
         //frame_size_update();

@@ -1077,15 +1077,8 @@ img_load:
       cfile->frames++;
       cfile->end++;
 
-      lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
-      lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->frames == 0 ? 0 : 1, cfile->frames);
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
-      lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
+      set_start_end_spins(mainw->current_file);
 
-      lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
-      lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->frames == 0 ? 0 : 1, cfile->frames);
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
-      lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
       lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
       return 0;
     }

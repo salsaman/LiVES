@@ -1224,8 +1224,8 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done, doub
   double timesofar;
 
   if ((progress_count++ * progress_speed) >= PROG_LOOP_VAL) {
-    if (frames_done <= mainw->proc_ptr->progress_end && mainw->proc_ptr->progress_end > 0 && !mainw->effects_paused &&
-        frames_done > 0) {
+    if (fraction_done > 0. || (frames_done <= mainw->proc_ptr->progress_end && mainw->proc_ptr->progress_end > 0
+                               && !mainw->effects_paused && frames_done > 0)) {
       timesofar = (lives_get_current_ticks() - proc_start_ticks - mainw->timeout_ticks) / TICKS_PER_SECOND_DBL;
       if (fraction_done < 0.)
         fraction_done = (double)(frames_done - mainw->proc_ptr->progress_start)
@@ -1245,7 +1245,7 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done, doub
 
 void update_progress(boolean visible) {
   double fraction_done, timesofar;
-  static double est_time = 0., frac_done = -1;
+  static double est_time = 0.;
   char *prog_label;
 
   if (cfile->opening && cfile->clip_type == CLIP_TYPE_DISK && !cfile->opening_only_audio &&
@@ -1288,13 +1288,13 @@ void update_progress(boolean visible) {
     }
     shown_paused_frames = mainw->effects_paused;
   } else {
-    if (visible && mainw->proc_ptr->frames_done >= mainw->proc_ptr->progress_start) {
-      if (progress_count == 0) check_storage_space(mainw->current_file, TRUE);
-      // display progress fraction or pulse bar
-      progbar_pulse_or_fraction(cfile, mainw->proc_ptr->frames_done, frac_done);
-      //sched_yield();
-      lives_usleep(prefs->sleep_time);
-    }
+    /* if (visible && mainw->proc_ptr->frames_done >= mainw->proc_ptr->progress_start) { */
+    /*   if (progress_count == 0) check_storage_space(mainw->current_file, TRUE); */
+    /*   // display progress fraction or pulse bar */
+    /*   progbar_pulse_or_fraction(cfile, mainw->proc_ptr->frames_done, frac_done); */
+    /*   //sched_yield(); */
+    /*   lives_usleep(prefs->sleep_time); */
+    //}
   }
 }
 
@@ -1710,8 +1710,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
           mainw->proc_ptr->frac_done = atof(mainw->msg);
         else
           mainw->proc_ptr->frames_done = atoi(mainw->msg);
-      } else
-        mainw->proc_ptr->frames_done = 0;
+      } //else mainw->proc_ptr->frames_done = 0;
       if (!mainw->effects_paused) {
         if (prog_fs_check-- <= 0) {
           check_storage_space(mainw->current_file, TRUE);
@@ -1782,7 +1781,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         // get progress count from backend
         if (numtok > 1) {
           char **array = lives_strsplit(mainw->msg, "|", numtok);
-          mainw->proc_ptr->frames_done = atoi(array[0]);
+          int frames_done = atoi(array[0]);
+          if (frames_done > 0) mainw->proc_ptr->frames_done = frames_done;
           if (numtok == 2 && *(array[1])) cfile->progress_end = atoi(array[1]);
           else if (numtok == 5 && *(array[4])) {
             // rendered generators
@@ -1797,9 +1797,11 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
           lives_strfreev(array);
         } else {
           if (*mainw->msg && mainw->msg[lives_strlen(mainw->msg) - 1] == '%')
-            mainw->proc_ptr->frac_done = atof(mainw->msg);
-          else
-            mainw->proc_ptr->frames_done = atoi(mainw->msg);
+            mainw->proc_ptr->frac_done = atof(mainw->msg) / 100.;
+          else {
+            int frames_done = atoi(mainw->msg);
+            if (frames_done > 0) mainw->proc_ptr->frames_done = frames_done;
+          }
         }
       }
 

@@ -202,11 +202,20 @@ if (1) {
 				  $command =~ /^pfxrender_/ || $command =~ /^fxrender_/)) {
 	    ## commands that require $configfile
 
-	    # configfile not set
-	    print STDERR "smogrify for $GUI_NAME v$version: configfile not defined for command \"$command\", ";
+	    # configfile / workdir not set
+	    my $filenot = "CONFIGFILE";
+	    if (!$workdir) {
+		$filenot = "WORKDIR";
+	    }
+	    print STDERR "smogrify for $GUI_NAME v$version: Error\n$filenot not defined for command \"$command\", ";
 	    print STDERR "cannot continue. Exiting with code 98\n";
-	    print STDERR "by starting $GUI_NAME with the -configfile commandline option.\n";
-	    print STDERR "smogrify for $GUI_NAME v$version: \@ARGV = " . join(" ", @ARGV) . "\n";
+	    if (!$workdir) {
+		print STDERR "retry with 'perl -s smogrify -$filenot=<PATH_TO_$filenot> -- " . join(" ", @ARGV) . "'\n";
+	    }
+	    else {
+		print STDERR "retry with 'perl -s smogrify -WORKDIR=\"$workdir\" -$filenot=<PATH_TO_$filenot> -- " .
+		    join(" ", @ARGV) . "'\n";
+	    }
 	    exit 98;
 	}
 
@@ -4243,7 +4252,7 @@ if (1) {
 		}
 	    }
 
-	    $com = "'$prog' $vb --audio-quality 0 --no-mark-watched $kf --no-playlist $kf -o \"$xdfile\" $extra " .
+	    $com = "'$prog' $vb --newline --audio-quality 0 --no-mark-watched $kf --no-playlist $kf -o \"$xdfile\" $extra " .
 		"--no-part --no-cache-dir -f '$bestvideo$xbestaudio' \"$url\"";
 	    
 	    if ($debug) {
@@ -4258,9 +4267,12 @@ if (1) {
 
 	    if (open (my $fh, "$com |")) {
 		while (defined(my $line = <$fh>)) {
-		    print STDERR "output: $line\n";
-		    if ($line =~ /\ (.*)%\ /) {
-			&sig_progress($1);
+		    if ($debug) {
+			print STDERR "output: $line\n";
+		    }
+		    if ($line =~ /.\ (.*)%\ /) {
+			my $pct = 0. + $1;
+			&sig_progress("$pct%");
 		    }
 		}
 		close $fh;
@@ -8536,7 +8548,7 @@ sub listemall {
 	    }
 	}
 	print "\nreferenced from:\n";
-	print `grep -no "%s $cmd " src/*.c`;
+	print `grep -no "%s $cmd" src/*.c`;
 	print "\n";
     }
 
@@ -10098,17 +10110,17 @@ sub clean_workdir {
 		&sig_error("Bad default trashdir");
 	    }
 	}
-	print STDERR "\nsmogrify: removing rfx.* *" .
+	print STDERR "\nsmogrify: removing .info.* rfx.* layout_numbering.*" .
 	    "and keep_layout* from $workdir";
 	print STDERR "\nsmogrify: (can be overridden with option 0x10)\n";
-	print "\nremoving rfx.* keep_layout* layout_numbering.* from $workdir";
+	print "\nremoving rfx.* .info.*  keep_layout* layout_numbering.* from $workdir";
 	print "\n(can be overridden by disabling 'Remove Misc Files')\n";
 	if ($new_work) {
 	    if (! -d $deftrashdir) {
 		make_path $deftrashdir, {mode => 01777};
 	    }
 	}
-	for $filerem(glob "rfx.* keep_layout* layout_numbering.*") {
+	for $filerem(glob "rfx.* keep_layout* .info.* layout_numbering.*") {
 	    if ($new_work) {
 		&smog_rename($filerem, $deftrashdir);
 	    }

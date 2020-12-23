@@ -76,11 +76,34 @@ static int count = 0;
 static int pcount = 0;
 static int blanks = 0;
 
+static int texwidth;
+static int texheight;
+
+static bool rerand = true;
+
+// class myProjectM : public projectM {
+
+// public:
+//   myProjectM(std::string config_file, int flags = FLAG_NONE) :
+//     projectM(config_file, flags) {
+//   } ;
+
+//   myProjectM(Settings settings, int flags = FLAG_NONE) :
+//     projectM(settings, flags) {
+//   };
+
+//   void presetSwitchedEvent(bool isHardCut, unsigned int index) const {
+//     // after switching, select the next program and queue it
+//     rerand = true;
+//   }
+// };
+
+
 typedef struct {
   projectM *globalPM;
   GLubyte *fbuffer;
   int textureHandle;
-  int width, height, texsize;
+  int texsize;
   int palette, psize;
   int rowstride;
   volatile bool worker_ready;
@@ -165,31 +188,34 @@ static int resize_display(int width, int height) {
 
 static int change_size(_sdata *sdata) {
   int ret = 0;
-  int newsize = sdata->width;
-  if (sdata->height > newsize) newsize = sdata->height;
-  //std::cerr << "Set new size to " << newsize << std::endl;
+  int newsize = texwidth;
+  if (texheight > newsize) newsize = texheight;
+  //std::cerr << "CHANGED SIZE to " << texwidth << " X " << texheight << std::endl;
 
   // must be done in this exact order, else projectM (SOIL) crashes...
 
-  sdata->globalPM->projectM_resetGL(sdata->width, sdata->height);
+  sdata->globalPM->projectM_resetGL(texwidth, texheight);
 
 #ifdef HAVE_SDL2
-  SDL_SetWindowSize(sdata->win, sdata->width, sdata->height);
+  SDL_SetWindowSize(sdata->win, texwidth, texheight);
 #else
-  ret = resize_display(sdata->width, sdata->height);
+  ret = resize_display(texwidth, texheight);
 #endif
   sdata->texsize = newsize;
 
   sdata->globalPM->changeTextureSize(newsize);
   sdata->globalPM->projectM_resetTextures();
-  //sdata->textureHandle = sdata->globalPM->initRenderToTexture();
+
+  // need some way to get the new handle without actually calling reset
+  // - the following crashes
+  // sdata->textureHandle = sdata->globalPM->initRenderToTexture();
   return ret;
 }
 
 
 static int init_display(_sdata *sd) {
-  int defwidth = sd->width;
-  int defheight = sd->height;
+  int defwidth = texwidth;
+  int defheight = texheight;
 
   /* First, initialize SDL's video subsystem. */
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -262,15 +288,15 @@ bool resize_buffer(_sdata *sd) {
     } else align = 2;
   }
   if (sd->fbuffer) weed_free(sd->fbuffer);
-  sd->fbuffer = (GLubyte *)weed_calloc(sizeof(GLubyte) * sd->rowstride * sd->height / align, align);
+  sd->fbuffer = (GLubyte *)weed_calloc(sizeof(GLubyte) * sd->rowstride * texheight / align, align);
   if (!sd->fbuffer) return false;
   return true;
 }
 
 
 static int render_frame(_sdata *sd) {
-  float yscale = (float)sd->height / sd->texsize * 2.;
-  float xscale = (float)sd->width / sd->texsize * 2.;
+  float yscale = (float)texheight / sd->texsize * 2.;
+  float xscale = (float)texwidth / sd->texsize * 2.;
   bool checked_audio = false;
 
   if (sd->needs_update || !sd->got_first) {
@@ -325,7 +351,7 @@ static int render_frame(_sdata *sd) {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_BLEND);
 
-  glViewport(0, 0, sd->width, sd->height);
+  glViewport(0, 0, texwidth, texheight);
 
 #define NORM_AUDIO
 
@@ -397,7 +423,7 @@ static int render_frame(_sdata *sd) {
 #endif
 #endif
     pthread_mutex_lock(&buffer_mutex);
-    glReadPixels(0, 0, sd->rowstride / sd->psize, sd->height, sd->psize == 4
+    glReadPixels(0, 0, sd->rowstride / sd->psize, texheight, sd->psize == 4
                  ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, sd->fbuffer);
     sd->needs_more = false;
     pthread_mutex_unlock(&buffer_mutex);
@@ -412,13 +438,13 @@ static int render_frame(_sdata *sd) {
       /// check for blank frames: if the first and second from a new program are both blank, mark the program as "bad"
       /// and pick another (not sure why the blank frames happen, but generally if the first two come back blank, so do all the
       /// rest. Possibly we need an image texture to load, which we don't have; more investigation needed).
-      register int i;
-      ssize_t frmsize = sd->rowstride * sd->height;
+      int i = 0;
+      ssize_t frmsize = sd->rowstride * texheight;
       if (sd->psize == 4) {
-        for (i = 0; i < frmsize;
-             i += sd->psize) if (((sd->fbuffer[i] | sd->fbuffer[i + 1] | sd->fbuffer[i + 2]) & sd->fbuffer[i + 3]) > 0) break;
+        for (i = 0; i < frmsize; i += sd->psize)
+          if ((sd->fbuffer[i] | sd->fbuffer[i + 1] | sd->fbuffer[i + 2]) && sd->fbuffer[i + 3]) break;
       } else {
-        for (i = 0; i < frmsize; i += sd->psize) if ((sd->fbuffer[i] | sd->fbuffer[i + 1] | sd->fbuffer[i + 2]) > 0) break;
+        while (i < frmsize && !sd->fbuffer[i++]);
       }
       if (i >= frmsize) blanks++;
       else {
@@ -452,9 +478,8 @@ static void do_exit(void) {
 static void *worker(void *data) {
   std::string prname;
   projectM::Settings settings;
-  bool rerand = true;
   _sdata *sd = (_sdata *)data;
-  float hwratio = (float)sd->height / (float)sd->width;
+  float hwratio = (float)texheight / (float)texwidth;
   //  int new_stdout, new_stderr;
 
   if (init_display(sd)) {
@@ -471,9 +496,9 @@ static void *worker(void *data) {
 
   atexit(do_exit);
 
-  settings.windowWidth = sd->width;
-  settings.windowHeight = sd->height;
-  settings.meshX = sd->width / 64;
+  settings.windowWidth = texwidth;
+  settings.windowHeight = texheight;
+  settings.meshX = texwidth / 64;
   settings.meshY = ((int)(settings.meshX * hwratio + 1) >> 1) << 1;
   settings.fps = sd->fps;
   settings.smoothPresetDuration = 2.;
@@ -493,10 +518,11 @@ static void *worker(void *data) {
   }
   settings.easterEgg = 1;
 
-  if (sd->width >= sd->height)
-    settings.textureSize = sd->texsize = sd->width;
+  //std::cerr << "SIZE is " << texwidth << " X " << texheight << std::endl;
+  if (texwidth >= texheight)
+    settings.textureSize = sd->texsize = texwidth;
   else
-    settings.textureSize = sd->texsize = sd->height;
+    settings.textureSize = sd->texsize = texheight;
 
   if (sd->failed) {
     // can happen if the host is overloaded and the caller timed out
@@ -510,6 +536,7 @@ static void *worker(void *data) {
   // can fail here
   sd->globalPM = new projectM(settings, 0);
   sd->globalPM->setPresetLock(true);
+
   sd->textureHandle = sd->globalPM->initRenderToTexture();
   sd->nprs = sd->globalPM->getPlaylistSize() + 1;
   sd->checkforblanks = true;
@@ -572,9 +599,13 @@ static void *worker(void *data) {
           sd->program = fastrand_int(sd->nprs - 2);
           if (sd->bad_programs[sd->program] != 1) {
             sd->globalPM->selectPreset(sd->program, sd->bad_prog);
+
+            // unfortunately queuePreset seems to be only available in certain versions,
+            // otherwise we could get a better effect by queuing the next preset and allowing projectM
+            // to do the change
+            //sd->globalPM->queuePreset(sd->program);
             break;
           }
-          //sd->globalPM->selectRandom(true);
         }
         rerand = false;
         sd->bad_prog = false;
@@ -692,8 +723,8 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
 
       sd->die = sd->failed = false;
       sd->rendering = false;
-      sd->width = width;
-      sd->height = height;
+      texwidth = width;
+      texheight = height;
       sd->rowstride = rowstride;
       sd->bad_programs = NULL;
 
@@ -740,7 +771,7 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
 
     sd->rendering = false;
 
-    if (!sd->fbuffer || sd->height != height || sd->rowstride != rowstride) {
+    if (!sd->fbuffer || texheight != height || sd->rowstride != rowstride) {
       if (!resize_buffer(sd) && sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
         projectM_deinit(inst);
         return WEED_ERROR_MEMORY_ALLOCATION;
@@ -755,8 +786,8 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
     sd->abufsize = 4096;
 
     sd->got_first = false;
-    sd->width = width;
-    sd->height = height;
+    //texwidth = width;
+    //texheight = height;
     sd->psize = psize;
     sd->palette = palette;
     sd->rowstride = 0;
@@ -837,7 +868,9 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   if (width > maxwidth) width = maxwidth;
   if (height > maxheight) height = maxheight;
 
-  if (sd->width != width || sd->height != height || sd->psize != psize || sd->rowstride != rowstride || sd->palette != palette) {
+  //std::cerr << texwidth << " X " << texheight << " and " << width << " X " << height << std::endl;
+
+  if (texwidth != width || texheight != height || sd->psize != psize || sd->rowstride != rowstride || sd->palette != palette) {
     /// we must update size / pal, this has to be done before reading the buffer
     pthread_mutex_lock(&cond_mutex);
     sd->needs_update = true;
@@ -848,9 +881,9 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
     pthread_mutex_unlock(&cond_mutex);
     //sd->updating = true;
     /// now we can set new values
-    if (sd->width != width || sd->height != height) {
-      sd->height = height;
-      sd->width = width;
+    if (texwidth != width || texheight != height) {
+      texheight = height;
+      texwidth = width;
       sd->update_size = true;
     }
     if (sd->palette != palette || sd->rowstride != rowstride || sd->psize != psize) {
@@ -874,6 +907,13 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   // 0 - 9, we just use the value - 1
   // else val % (nprs - 1) .e.g 9 mod 9 is 0, 10 mod 9 is 1, etc
   sd->pidx = (weed_param_get_value_int(inparam) - 1) % (sd->nprs - 1);
+
+  // if (sd->pidx != -1) {
+  //   sd->globalPM->setPresetLock(true);
+  // }
+  // else {
+  //   sd->globalPM->setPresetLock(false);
+  // }
 
   if (0) {
     /// TODO - we can control the player with fake keystrokes

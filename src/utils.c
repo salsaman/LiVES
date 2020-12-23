@@ -1603,6 +1603,24 @@ void zero_spinbuttons(void) {
 }
 
 
+void set_start_end_spins(int clipno) {
+  if (IS_VALID_CLIP(clipno)) {
+    lives_clip_t *sfile = mainw->files[clipno];
+    lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end),
+                                sfile->frames == 0 ? 0. : 1., (double)sfile->frames);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), (double)sfile->end);
+    lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
+
+    lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start),
+                                sfile->frames == 0 ? 0. : 1., (double)sfile->frames);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), (double)sfile->start);
+    lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
+  } else zero_spinbuttons();
+}
+
+
 boolean switch_aud_to_jack(boolean set_in_prefs) {
 #ifdef ENABLE_JACK
   if (mainw->is_ready) {
@@ -2566,19 +2584,21 @@ void set_undoable(const char *what, boolean sensitive) {
   if (mainw->current_file > -1) {
     cfile->redoable = FALSE;
     cfile->undoable = sensitive;
-    if (what) {
-      char *what_safe = lives_strdelimit(lives_strdup(what), "_", ' ');
-      lives_snprintf(cfile->undo_text, 32, _("_Undo %s"), what_safe);
-      lives_snprintf(cfile->redo_text, 32, _("_Redo %s"), what_safe);
-      lives_free(what_safe);
-    } else {
-      cfile->undoable = FALSE;
-      cfile->undo_action = UNDO_NONE;
-      lives_snprintf(cfile->undo_text, 32, "%s", _("_Undo"));
-      lives_snprintf(cfile->redo_text, 32, "%s", _("_Redo"));
+    if (!what || *what) {
+      if (what) {
+        char *what_safe = lives_strdelimit(lives_strdup(what), "_", ' ');
+        lives_snprintf(cfile->undo_text, 32, _("_Undo %s"), what_safe);
+        lives_snprintf(cfile->redo_text, 32, _("_Redo %s"), what_safe);
+        lives_free(what_safe);
+      } else {
+        cfile->undoable = FALSE;
+        cfile->undo_action = UNDO_NONE;
+        lives_snprintf(cfile->undo_text, 32, "%s", _("_Undo"));
+        lives_snprintf(cfile->redo_text, 32, "%s", _("_Redo"));
+      }
+      lives_menu_item_set_text(mainw->undo, cfile->undo_text, TRUE);
+      lives_menu_item_set_text(mainw->redo, cfile->redo_text, TRUE);
     }
-    lives_menu_item_set_text(mainw->undo, cfile->undo_text, TRUE);
-    lives_menu_item_set_text(mainw->redo, cfile->redo_text, TRUE);
   }
 
   lives_widget_hide(mainw->redo);
@@ -2595,21 +2615,22 @@ void set_redoable(const char *what, boolean sensitive) {
   if (mainw->current_file > -1) {
     cfile->undoable = FALSE;
     cfile->redoable = sensitive;
-    if (what) {
-      char *what_safe = lives_strdelimit(lives_strdup(what), "_", ' ');
-      lives_snprintf(cfile->undo_text, 32, _("_Undo %s"), what_safe);
-      lives_snprintf(cfile->redo_text, 32, _("_Redo %s"), what_safe);
-      lives_free(what_safe);
-    } else {
-      cfile->redoable = FALSE;
-      cfile->undo_action = UNDO_NONE;
-      lives_snprintf(cfile->undo_text, 32, "%s", _("_Undo"));
-      lives_snprintf(cfile->redo_text, 32, "%s", _("_Redo"));
+    if (!what || *what) {
+      if (what) {
+        char *what_safe = lives_strdelimit(lives_strdup(what), "_", ' ');
+        lives_snprintf(cfile->undo_text, 32, _("_Undo %s"), what_safe);
+        lives_snprintf(cfile->redo_text, 32, _("_Redo %s"), what_safe);
+        lives_free(what_safe);
+      } else {
+        cfile->redoable = FALSE;
+        cfile->undo_action = UNDO_NONE;
+        lives_snprintf(cfile->undo_text, 32, "%s", _("_Undo"));
+        lives_snprintf(cfile->redo_text, 32, "%s", _("_Redo"));
+      }
+      lives_menu_item_set_text(mainw->undo, cfile->undo_text, TRUE);
+      lives_menu_item_set_text(mainw->redo, cfile->redo_text, TRUE);
     }
-    lives_menu_item_set_text(mainw->undo, cfile->undo_text, TRUE);
-    lives_menu_item_set_text(mainw->redo, cfile->redo_text, TRUE);
   }
-
   lives_widget_hide(mainw->undo);
   lives_widget_show(mainw->redo);
   lives_widget_set_sensitive(mainw->redo, sensitive);

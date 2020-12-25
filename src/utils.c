@@ -1604,7 +1604,7 @@ void zero_spinbuttons(void) {
 
 
 void set_start_end_spins(int clipno) {
-  if (IS_VALID_CLIP(clipno)) {
+  if (CLIP_HAS_VIDEO(clipno)) {
     lives_clip_t *sfile = mainw->files[clipno];
     lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
     lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end),

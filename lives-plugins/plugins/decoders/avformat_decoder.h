@@ -34,7 +34,7 @@ typedef struct  {
 
   int64_t found_pts;
 
-  int last_frame;
+  int64_t last_frame;
 
   size_t pkt_offs;
 #ifdef TEST_CACHING

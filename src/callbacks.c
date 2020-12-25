@@ -3263,6 +3263,8 @@ close_done:
       mainw->last_dprint_file = old_file;
       d_print(""); // force switchtext
 
+      sensitize();
+
       lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
       check_storage_space(-1, FALSE);
     }

@@ -694,12 +694,12 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   clear_mainw_msg();
   THREADVAR(write_failed) = FALSE;
 
-  if (cfile->clip_type == CLIP_TYPE_FILE && cfile->fx_frame_pump && !cfile->pumper) {
-    // pull frames in background
-    cfile->pumper = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)virtual_to_images,
-                    -1, "iiibV", mainw->current_file,
-                    cfile->undo_start, cfile->undo_end, FALSE, NULL);
-  }
+  /* if (cfile->clip_type == CLIP_TYPE_FILE && cfile->fx_frame_pump && !cfile->pumper) { */
+  /*   // pull frames in background */
+  /*   cfile->pumper = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)virtual_to_images, */
+  /*                   -1, "iiibV", mainw->current_file, */
+  /*                   cfile->undo_start, cfile->undo_end, FALSE, NULL); */
+  /* } */
 
   if (mainw->cancelled) {
     if (cfile->pumper) {

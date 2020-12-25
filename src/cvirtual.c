@@ -607,7 +607,7 @@ mismatch:
         }
       } else if (binf->frames <= sfile->frames) sfile->frames = binf->frames;
     }
-    if (binf->fps == cdata->fps)  {
+    if (cdata && binf->fps == cdata->fps)  {
       ((lives_clip_data_t *)cdata)->fps =  sfile->pb_fps = sfile->fps;
     }
   }
@@ -726,7 +726,7 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
 
   // if pbr is non-null, it will be set to point to the pulled pixbuf
 
-  // return FALSE on write error
+  // return index of last frame decoded, (negaive value on error)
 
   lives_clip_t *sfile = mainw->files[sfileno];
   LiVESPixbuf *pixbuf = NULL;
@@ -741,7 +741,13 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
   for (i = sframe; i <= eframe; i++) {
     if (i > sfile->frames) break;
 
-    if (sfile->pumper && lives_proc_thread_cancelled(sfile->pumper)) break;
+    if (sfile->pumper) {
+      if (mainw->effects_paused || mainw->preview) {
+        lives_nanosleep_until_nonzero((!mainw->effects_paused && !mainw->preview)
+                                      || lives_proc_thread_cancelled(sfile->pumper));
+      }
+      if (lives_proc_thread_cancelled(sfile->pumper)) break;
+    }
 
     if (update_progress) {
       threaded_dialog_spin((double)(i - sframe) / (double)(eframe - sframe + 1));
@@ -778,7 +784,7 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
         lives_widget_context_update();
       }
 
-      if (mainw->cancelled != CANCEL_NONE) {
+      if (mainw->cancelled != CANCEL_NONE && !(sfile->pumper && mainw->preview)) {
         if (!check_if_non_virtual(sfileno, 1, sfile->frames)) save_frame_index(sfileno);
         if (pbr) *pbr = pixbuf;
         return i;
@@ -1132,14 +1138,4 @@ void insert_blank_frames(int sfileno, frames_t nframes, frames_t after, int pale
   sfile->frames += nframes;
 
   if (blankp) lives_widget_object_unref(blankp);
-}
-
-
-boolean pull_frame_idle(livespointer data) {
-  if (cfile->fx_frame_pump >= cfile->end) return FALSE;
-  if (virtual_to_images(mainw->current_file, cfile->fx_frame_pump, cfile->fx_frame_pump, FALSE, NULL) <= 0) {
-    return FALSE;
-  }
-  cfile->fx_frame_pump++;
-  return TRUE;
 }

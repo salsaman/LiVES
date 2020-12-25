@@ -1,7 +1,9 @@
 Version 3.2.1
 -------------
 Fix "append audio" function (regression).
-Minor optimisations for mkv_decoder and avformat_decoder.
+Fix bug in undo delete audio.
+Sensitize GUI after "paste as new"
+Minor optimisations / fixes for mkv_decoder and avformat_decoder.
 Fix a few issues with record / playback of generators.
 Patch to allow use of jack1 (as well as jack2).
 Fix some refcounting issues when deiniting real time effects.

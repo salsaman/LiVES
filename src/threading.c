@@ -119,7 +119,9 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
 #define FUNCSIG_VOIDP_STRING 				       		0X000000D4
 #define FUNCSIG_VOIDP_DOUBLE 				       		0X000000D2
 #define FUNCSIG_PLANTP_BOOL 				       		0X000000E3
+  // 3p
 #define FUNCSIG_VOIDP_VOIDP_VOIDP 		        		0X00000DDD
+#define FUNCSIG_BOOL_BOOL_STRING 		        		0X00000334
 #define FUNCSIG_PLANTP_VOIDP_INT64 		        		0X00000ED5
   // 4p
 #define FUNCSIG_STRING_STRING_VOIDP_INT					0X000044D1
@@ -215,6 +217,12 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
     switch (ret_type) {
     case WEED_SEED_BOOLEAN: CALL_3(boolean, voidptr, voidptr, voidptr); break;
     default: CALL_VOID_3(voidptr, voidptr, voidptr); break;
+    }
+    break;
+  case FUNCSIG_BOOL_BOOL_STRING:
+    switch (ret_type) {
+    case WEED_SEED_BOOLEAN: CALL_3(boolean, boolean, boolean, string); break;
+    default: CALL_VOID_3(boolean, boolean, string); break;
     }
     break;
   case FUNCSIG_PLANTP_VOIDP_INT64:

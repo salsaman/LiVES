@@ -3737,7 +3737,6 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->unique_id = gen_unique_id();
   cfile->layout_map = NULL;
   cfile->frame_index = cfile->frame_index_back = NULL;
-  cfile->fx_frame_pump = 0;
   cfile->pumper = NULL;
   cfile->stored_layout_frame = 0;
   cfile->stored_layout_audio = 0.;
@@ -5966,10 +5965,10 @@ static lives_clip_t *_restore_binfmt(int clipno, boolean forensic) {
         if (bytes < 8 || lives_memcmp(loaded->binfmt_check.chars, CLIP_BINFMT_CHECK, 8)) badsize = TRUE;
         else {
           bytes += lives_read_buffered(fd, xloaded + 8, 16, TRUE);
-          if (bytes < 16) badsize = TRUE;
+          if (bytes < 24) badsize = TRUE;
           else {
             dsize = loaded->binfmt_bytes.num;
-            if (dsize < cursize) badsize = TRUE;
+            if (dsize < cursize || dsize > fsize) badsize = TRUE;
             else {
               if (dsize > cursize && dsize < DSIZE_MAX) {
                 xloaded = lives_realloc(xloaded, dsize);
@@ -5987,7 +5986,7 @@ static lives_clip_t *_restore_binfmt(int clipno, boolean forensic) {
 
       if (badsize) {
         lives_free(xloaded);
-        return FALSE;
+        return NULL;
       }
 
       THREADVAR(com_failed) = FALSE;

@@ -32,10 +32,12 @@ yend|_Y End|num0|0|0|10000|4|
 kc|Keep _Centered|bool|0|
 w|_Width|num0|0|0|10000|4|
 h|_Height|num0|0|0|10000|4|
-border|Add _Border|bool|0|
+border|Add _Border|bool|0|1|
 offsx|_Offset X|num0|0|0|10000|
 offsy|_Offset Y|num0|0|0|10000|
 bordc|Border _Colour|colRGB24|0|0|0|
+ks|_Maintain Original Size|bool|1|1|
+tsize|Use _Trimmed Size|bool|0|1|
 </params>
 
 <param_window>
@@ -44,6 +46,8 @@ layout|p2|p3|
 layout|p4|
 special|framedraw|rectdemask|0|1|2|3|
 layout|hseparator|
+layout|p12|
+layout|p11|
 layout|p7|fill|p5|p6|
 layout|"Offset of frame within border"|p8|p9|
 special|aspect|5|6|
@@ -77,19 +81,25 @@ if ($height < 1 || $height > $oheight) {
    &sig_error("New height is invalid.");
 }
 
+$rwidth = $xwidth = $width;
+$rheight = $xheight = $height;
 
 if ($p7) {
-    $xwidth = $width;
-    $xheight = $height;
     $width = $p5;
     $height = $p6;
     $cstring1 = &RGB24_to_string($p10_red, $p10_green, $p10_blue);
     system("$convert_command -size $width\\!x$height\\! xc:$cstring1 $img_prefix" . "blank$img_ext");
 }
+
+if ($p11) {
+   $width = $rwidth = $owidth;
+   $height = $rheight = $oheight;
+}
+
 </pre>
 
 <loop>
-&trim_frame($name, $owidth, $oheight, $p0, $p1, $width, $height);
+&trim_frame($name, $owidth, $oheight, $p0, $p1, $xwidth, $xheight, $rwidth, $rheight);
 if ($p7) {	
     system("$composite_command -compose plus -dissolve 100 -geometry $xwidth\\!x$xheight\\!+$p8\\!+$p9\\! $out_prefix$out -size " .
     "$width\\!x$height\\! $img_prefix" . "blank$img_ext $out");

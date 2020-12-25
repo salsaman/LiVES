@@ -2975,12 +2975,12 @@ proc_dialog:
 
     frames_done = mainw->proc_ptr->frames_done;
 
-    if (cfile->clip_type == CLIP_TYPE_FILE && cfile->fx_frame_pump > 0) {
-      if (virtual_to_images(mainw->current_file, cfile->fx_frame_pump, cfile->fx_frame_pump, FALSE, NULL) > 0) {
-        cfile->fx_frame_pump++;
-      } else mainw->cancelled = CANCEL_ERROR;
-      if (cfile->fx_frame_pump >= cfile->end) cfile->fx_frame_pump = 0; // all frames were realised
-    }
+    /* if (cfile->clip_type == CLIP_TYPE_FILE && cfile->fx_frame_pump > 0) { */
+    /*   if (virtual_to_images(mainw->current_file, cfile->fx_frame_pump, cfile->fx_frame_pump, FALSE, NULL) > 0) { */
+    /*     cfile->fx_frame_pump++; */
+    /*   } else mainw->cancelled = CANCEL_ERROR; */
+    /*   if (cfile->fx_frame_pump >= cfile->end) cfile->fx_frame_pump = 0; // all frames were realised */
+    /* } */
   }
 
   if (LIVES_LIKELY(mainw->cancelled == CANCEL_NONE)) {

@@ -995,11 +995,17 @@ xprocess *create_processing(const char *text) {
   lives_signal_sync_connect(LIVES_GUI_OBJECT(procw->cancel_button), LIVES_WIDGET_CLICKED_SIGNAL,
                             LIVES_GUI_CALLBACK(on_cancel_keep_button_clicked), NULL);
 
-  if (mainw->show_procd) lives_widget_show_all(procw->processing);
-  if (procw->preview_button) lives_widget_hide(procw->preview_button);
-  if (procw->pause_button) lives_widget_hide(procw->pause_button);
+  if (mainw->show_procd) {
+    if (procw->preview_button) lives_widget_set_no_show_all(procw->preview_button, TRUE);
+    if (procw->pause_button) lives_widget_set_no_show_all(procw->pause_button, TRUE);
+    if (procw->stop_button) lives_widget_set_no_show_all(procw->stop_button, TRUE);
 
-  if (procw->stop_button) lives_widget_hide(procw->stop_button);
+    lives_widget_show_all(procw->processing);
+
+    if (procw->preview_button) lives_widget_set_no_show_all(procw->preview_button, FALSE);
+    if (procw->pause_button) lives_widget_set_no_show_all(procw->pause_button, FALSE);
+    if (procw->stop_button) lives_widget_set_no_show_all(procw->stop_button, FALSE);
+  }
 
   return procw;
 }

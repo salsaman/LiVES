@@ -1015,7 +1015,6 @@ typedef struct _lives_clip_t {
   uint64_t *cache_objects; ///< for future use
 
   lives_proc_thread_t pumper;
-  frames_t fx_frame_pump; ///< rfx frame pump for virtual clips (CLIP_TYPE_FILE)
 
 #define IMG_BUFF_SIZE 262144  ///< 256 * 1024 < chunk size for reading images
 

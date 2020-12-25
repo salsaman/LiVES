@@ -5499,11 +5499,11 @@ sub resize_frame {
     # TODO ****  !!! provide alternate if imagemagick is not available
 
     if ($antialias eq "false") {
-	$com = "$smog_convert_command +antialias -size $width" . "x$height $input_prefix\"$name$input_ext\" -scale $width"
-	    . "x$height\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
+	$com = "$smog_convert_command +antialias -size $width" . "x$height $input_prefix\"$name$input_ext\" -scale $width" .
+	    "x$height\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
     } else {
-	$com = "$smog_convert_command -size $width" . "x$height $input_prefix\"$name$input_ext\" -resize $width"
-	    . "x$height\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
+	$com = "$smog_convert_command -size $width" . "x$height $input_prefix\"$name$input_ext\" -resize $width" .
+	    "x$height\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
     }
 
     $smerr = &smog_system($com);
@@ -5599,11 +5599,11 @@ sub zoom_frame {
     my $nheight = $bottom - $top + 1;
 
     if ($antialias eq "false") {
-	$com = "$smog_convert_command -antialias -size $width"."x$height $input_prefix\"$name$input_ext\" -crop $nwidth"
-	    ."x$nheight\\!+$left\\!+$top\\! -resize $width"."x$height\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
+	$com = "$smog_convert_command -antialias -size $width" . "x$height $input_prefix\"$name$input_ext\" -crop $nwidth" .
+	    "x$nheight\\!+$left\\!+$top\\! -scale $width" . "x$height\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
     } else {
-	$com = "$smog_convert_command +antialias -size $width"."x$height $input_prefix\"$name$input_ext\" -crop $nwidth"
-	    ."x$nheight\\!+$left\\!+$top\\! -resize $width"."x$height\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
+	$com = "$smog_convert_command +antialias -size $width" . "x$height $input_prefix\"$name$input_ext\" -crop $nwidth" .
+	    "x$nheight\\!+$left\\!+$top\\! -resize $width" . "x$height\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
     }
 
     $smerror = &smog_system($com);
@@ -5616,7 +5616,7 @@ sub zoom_frame {
 
 
 sub trim_frame {
-    my ($name, $width, $height, $x, $y, $nwidth, $nheight) = @_;
+    my ($name, $width, $height, $x, $y, $nwidth, $nheight, $rwidth, $rheight) = @_;
 
     if (!defined($input_ext)) {
 	$input_ext = $img_ext;
@@ -5631,11 +5631,11 @@ sub trim_frame {
 	$antialias = "false";
     }
     if ($antialias eq "false") {
-	$com = "$smog_convert_command +antialias -size $width"."x$height $input_prefix\"$name$input_ext\" -crop $nwidth"
-	    ."x$nheight\\!+$x\\!+$y\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
+	$com = "$smog_convert_command +antialias -size $width" . "x$height $input_prefix\"$name$input_ext\" -crop $nwidth" .
+	    "x$nheight\\!+$x\\!+$y\\! -scale $rwidth" . "x$rheight\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
     } else {
-	$com = "$smog_convert_command -antialias -size $width"."x$height $input_prefix\"$name$input_ext\" -crop $nwidth"
-	    ."x$nheight\\!+$x\\!+$y\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
+	$com = "$smog_convert_command -antialias -size $width" . "x$height $input_prefix\"$name$input_ext\" -crop $nwidth" .
+	    "x$nheight\\!+$x\\!+$y\\! -resize $rwidth" . "x$rheight\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
     }
 
     $smerror = &smog_system($com);
@@ -5693,8 +5693,8 @@ sub trim_center {
 	}
 
 	$com = "$smog_composite_command -compose plus -dissolve 100 -geometry $hsize" .
-	    "x$vsize\\!+$xstart\\!+$ystart\\! "
-	    ."$input_prefix\"$name$input_ext\" $input_prefix".
+	    "x$vsize\\!+$xstart\\!+$ystart\\! " .
+	    "$input_prefix\"$name$input_ext\" $input_prefix" .
 	    "blank$input_ext $input_prefix\"$name$input_ext\" >$nulfile 2>&1";
 
 	$smerror = &smog_system($com);

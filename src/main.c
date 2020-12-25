@@ -8184,9 +8184,7 @@ void switch_to_file(int old_file, int new_file) {
     } else set_main_title(cfile->file_name, 0);
   }
 
-  if (cfile->frames == 0) {
-    zero_spinbuttons();
-  }
+  set_start_end_spins(mainw->current_file);
 
   resize(1);
   if (!mainw->go_away) {

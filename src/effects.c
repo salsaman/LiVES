@@ -210,13 +210,12 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 
   if (cfile->clip_type == CLIP_TYPE_FILE && rfx->status != RFX_STATUS_WEED) {
     // start decoding frames for the rendered effect plugins to start processing
-    cfile->fx_frame_pump = cfile->start;
     if (!cfile->pumper) {
       cfile->pumper = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)virtual_to_images,
                       -1, "iiibV", mainw->current_file,
                       cfile->undo_start, cfile->undo_end, FALSE, NULL);
     }
-  } else cfile->fx_frame_pump = 0;
+  }
 
   if (is_preview) {
     cfile->undo_start = oundo_start;
@@ -324,7 +323,6 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     mainw->internal_messaging = FALSE;
     mainw->resizing = FALSE;
     cfile->nokeep = FALSE;
-    cfile->fx_frame_pump = 0;
 
     if (cfile->start == 0) {
       cfile->start = 1;
@@ -360,7 +358,6 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 
   mainw->resizing = FALSE;
   cfile->nokeep = FALSE;
-  cfile->fx_frame_pump = 0;
 
   if (!mainw->gen_to_clipboard) {
     lives_widget_set_sensitive(mainw->undo, TRUE);

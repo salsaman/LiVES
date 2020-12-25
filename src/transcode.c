@@ -432,6 +432,8 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
     if (error) goto tr_err;
     if (!internal) {
       // update progress dialog with fraction done
+      // (for internal, the frames would be passed from the player, calling render_events
+      // so there is a normal progress dialog which is updated in the player)
       threaded_dialog_spin(1. - (double)(cfile->end - i) / (double)(cfile->end - cfile->start + 1.));
     } else {
       weed_layer_free(frame_layer);

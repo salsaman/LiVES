@@ -1710,7 +1710,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
           mainw->proc_ptr->frac_done = atof(mainw->msg);
         else
           mainw->proc_ptr->frames_done = atoi(mainw->msg);
-      } //else mainw->proc_ptr->frames_done = 0;
+      }
       if (!mainw->effects_paused) {
         if (prog_fs_check-- <= 0) {
           check_storage_space(mainw->current_file, TRUE);

@@ -3954,6 +3954,8 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               if (lives_proc_thread_check(mainw->transrend_proc)) return LIVES_RENDER_ERROR;
               mainw->transrend_layer = layer;
               mainw->transrend_ready = TRUE;
+              // sig_progress...
+              lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%d", progress++);
               break;
             }
             check_layer_ready(layer);

@@ -3013,7 +3013,7 @@ close_done:
       }
 
       // we need to set this to look at the right info_file
-      mainw->current_file = 0;
+      mainw->current_file = CLIPBOARD_FILE;
       cfile->progress_start = clipboard->start = 1;
       cfile->progress_end = clipboard->end = end - start + 1;
 
@@ -3027,7 +3027,7 @@ close_done:
 
         // close clipboard, it is invalid
         mainw->current_file = CLIPBOARD_FILE;
-        close_temp_handle(current_file);
+        close_current_file(current_file);
 
         sensitize();
         mainw->cancelled = CANCEL_USER;

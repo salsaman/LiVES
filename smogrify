@@ -9954,6 +9954,12 @@ sub clean_workdir {
 			    @files = glob("header*");
 			    if (@files) {
 				$has_hdrs = 1;
+				if (! -f "header.lives" && -f "header.lives.bak") {
+				    &smog_copy("header.lives.bak", "header.lives");
+				    if ($panic) {
+					$panic = 0;
+				    }
+				}
 			    }
 			    &smog_chdir("$workdir");
 			}

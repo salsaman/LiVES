@@ -3364,6 +3364,7 @@ int close_temp_handle(int new_clip) {
   if (cfile->clip_type != CLIP_TYPE_TEMP
       && mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file) {
     close_current_file(new_clip);
+    return new_clip;
   }
 
   permit_close(mainw->current_file);

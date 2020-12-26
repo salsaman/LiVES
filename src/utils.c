@@ -2165,38 +2165,47 @@ boolean check_file(const char *file_name, boolean check_existing) {
 int lives_rmdir(const char *dir, boolean force) {
   // if force is TRUE, removes non-empty dirs, otherwise leaves them
   // may fail
-  char *com, *cmd;
-  int retval;
+  if (lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
+    char *com, *cmd;
+    int retval;
 
-  if (force) {
-    cmd = lives_strdup_printf("%s -rf", capable->rm_cmd);
-  } else {
-    cmd = lives_strdup(capable->rmdir_cmd);
+    if (force) {
+      cmd = lives_strdup_printf("%s -rf", capable->rm_cmd);
+    } else {
+      cmd = lives_strdup(capable->rmdir_cmd);
+    }
+
+    com = lives_strdup_printf("%s \"%s/\" >\"%s\" 2>&1", cmd, dir, prefs->cmd_log);
+    retval = lives_system(com, TRUE);
+    lives_free(com);
+    lives_free(cmd);
+    return retval;
   }
-
-  com = lives_strdup_printf("%s \"%s/\" >\"%s\" 2>&1", cmd, dir, prefs->cmd_log);
-  retval = lives_system(com, TRUE);
-  lives_free(com);
-  lives_free(cmd);
-  return retval;
+  return 1;
 }
 
 
 int lives_rmdir_with_parents(const char *dir) {
-  // may fail, will not remove empty dirs
-  char *com = lives_strdup_printf("%s -p \"%s\" >\"%s\" 2>&1", capable->rmdir_cmd, dir, prefs->cmd_log);
-  int retval = lives_system(com, TRUE);
-  lives_free(com);
-  return retval;
+  // may fail, will not remove (non ?) empty dirs
+  if (lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
+    char *com = lives_strdup_printf("%s -p \"%s\" >\"%s\" 2>&1", capable->rmdir_cmd, dir, prefs->cmd_log);
+    int retval = lives_system(com, TRUE);
+    lives_free(com);
+    return retval;
+  }
+  return 1;
 }
 
 
 int lives_rm(const char *file) {
-  // may fail
-  char *com = lives_strdup_printf("%s -f \"%s\" >\"%s\" 2>&1", capable->rm_cmd, file, prefs->cmd_log);
-  int retval = lives_system(com, TRUE);
-  lives_free(com);
-  return retval;
+  // may fail - will not remove directories or symlinks
+  if (lives_file_test(file, LIVES_FILE_TEST_IS_REGULAR)) {
+    char *com = lives_strdup_printf("%s -f \"%s\" >\"%s\" 2>&1", capable->rm_cmd, file, prefs->cmd_log);
+    int retval = lives_system(com, TRUE);
+    lives_free(com);
+    return retval;
+  }
+  return 1;
 }
 
 

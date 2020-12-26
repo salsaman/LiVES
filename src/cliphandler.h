@@ -67,7 +67,24 @@ typedef enum {
 } lives_clip_details_t;
 
 char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp);
+
 boolean get_clip_value(int which, lives_clip_details_t, void *retval, size_t maxlen);
 boolean save_clip_value(int which, lives_clip_details_t, void *val);
+boolean save_clip_values(int which_file);
+
+boolean read_file_details(const char *file_name, boolean only_check_for_audio, boolean open_image);
+
+boolean restore_clip_binfmt(int clipno);
+lives_clip_t *clip_forensic(int clipno);
+
+int save_event_frames(void);
+
+void remove_old_headers(int clipno);
+boolean write_headers(int clipno);
+boolean read_headers(int clipno, const char *dir, const char *file_name);
+
+char *get_clip_dir(int clipno);
+
+void permit_close(int clipno);
 
 #endif

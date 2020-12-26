@@ -1281,12 +1281,9 @@ void do_splash_progress(void);
 void do_text_window(const char *title, const char *text);
 
 // saveplay.c
-boolean read_file_details(const char *file_name, boolean only_check_for_audio, boolean open_image);
 boolean add_file_info(const char *check_handle, boolean aud_only);
 boolean save_file_comments(int fileno);
 void set_default_comment(lives_clip_t *sfile, const char *extract);
-boolean restore_clip_binfmt(int clipno);
-lives_clip_t *clip_forensic(int clipno);
 boolean reload_clip(int fileno, frames_t maxframe);
 void wait_for_bg_audio_sync(int fileno);
 ulong deduce_file(const char *filename, double start_time, int end);
@@ -1309,7 +1306,6 @@ void play_start_timer(int type);
 void save_frame(LiVESMenuItem *, livespointer user_data);
 boolean save_frame_inner(int clip, frames_t frame, const char *file_name, int width, int height, boolean from_osc);
 void wait_for_stop(const char *stop_command);
-boolean save_clip_values(int which_file);
 void add_to_recovery_file(const char *handle);
 boolean rewrite_recovery_file(void);
 boolean check_for_recovery_files(boolean auto_recover);
@@ -1320,12 +1316,9 @@ void reload_subs(int fileno);
 
 // saveplay.c backup
 void backup_file(int clip, int start, int end, const char *filename);
-int save_event_frames(void);
-boolean write_headers(lives_clip_t *file);
 
 // saveplay.c restore
 ulong restore_file(const char *filename);
-boolean read_headers(int clipno, const char *dir, const char *file_name);
 
 // saveplay.c sets
 void open_set_file(int clipnum);

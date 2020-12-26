@@ -1474,6 +1474,28 @@ cleanup:
 }
 
 
+#if 0
+double estimate_delay(const lives_clip_data_t *cdata, int64_t tframe) {
+  // return as accurate as we can, an estimate of the time (seconds) to decode and return frame tframe
+  // - for the calculation we start by looking at priv->last_frame
+  // then, determine if we can reach target by decoding frames in sequence, or if we need to seek first
+  // if we need to seek then try to guess the keyframe we will seek to, then add the decode time from keyframe to target
+  // for the former, the calculation is just delta X decode_time
+  // for the latter, we have seek time (may depend on direction and distance)
+  // then delta_from_keyframe * decode_time
+  // notes: time for decoding a keyframe may be different from decoding and I or B frame, almost certainly after a seek
+  // relevant values: k_decode_seq, i_decode, seek_fwd (per frame delta), seek_back (per frame delta)
+  // k_decode_seek, memcpy_time
+
+  // if we cannot calculate an estimate, we return a value < 0.
+  lives_av_priv_t *priv = cdata->priv;
+  int64_t delta = tframe - priv->last_frame;
+
+  return -1.;
+}
+#endif
+
+
 void clip_data_free(lives_clip_data_t *cdata) {
   if (cdata->URI) {
     detach_stream(cdata);

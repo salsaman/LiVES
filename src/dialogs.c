@@ -1182,13 +1182,45 @@ void cancel_process(boolean visible) {
 }
 
 
+static char *remtime_string(double timerem) {
+  char *fmtstr, *tstr;
+  if (timerem < 0.) {
+    tstr = lives_strdup(_("unknown"));
+  } else {
+    int rtime = (int)(timerem + .5);
+    int hrs = rtime / 3600, mins, sec;
+    rtime -= hrs * 3600;
+    mins = rtime / 60;
+    sec = rtime - mins * 60;
+
+    if (hrs > 0) {
+      // TRANSLATORS: h(ours) min(utes)
+      tstr = lives_strdup_printf(_("%d h %d min"), hrs, mins);
+    } else {
+      if (mins >= 5) {
+        // TRANSLATORS: min(utes)
+        tstr = lives_strdup_printf(_("%d min"), mins);
+      } else {
+        if (mins > 0) {
+          tstr = lives_strdup_printf(_("%d min %d sec"), mins, sec);
+        } else {
+          tstr = lives_strdup_printf(_("%d sec"), sec);
+        }
+      }
+    }
+  }
+  fmtstr = lives_strdup_printf(_("Time remaining: %s"), tstr);
+  lives_free(tstr);
+  return fmtstr;
+}
+
+
 static void disp_fraction(double fraction_done, double timesofar, xprocess * proc) {
   // display fraction done and estimated time remaining
 #ifdef PROGBAR_IS_ENTRY
   char *tmp;
 #endif
-  char *prog_label;
-  double est_time;
+  char *prog_label, *remtstr;
 
   if (fraction_done > 1.) fraction_done = 1.;
   if (fraction_done < 0.) fraction_done = 0.;
@@ -1196,9 +1228,9 @@ static void disp_fraction(double fraction_done, double timesofar, xprocess * pro
   if (fraction_done > disp_fraction_done + .0001)
     lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(proc->progressbar), fraction_done);
 
-  est_time = timesofar / fraction_done - timesofar;
-  prog_label = lives_strdup_printf(_("\n%d%% done. Time remaining: %u sec\n"), (int)(fraction_done * 100.),
-                                   (uint32_t)(est_time + .5));
+  remtstr = remtime_string(timesofar / fraction_done - timesofar);
+  prog_label = lives_strdup_printf(_("\n%d%% done. %s\n"), (int)(fraction_done * 100.), remtstr);
+  lives_free(remtstr);
 #ifdef PROGBAR_IS_ENTRY
   tmp = lives_strtrim(prog_label);
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
@@ -1267,9 +1299,13 @@ void update_progress(boolean visible) {
             est_time = timesofar / fraction_done - timesofar;
           }
           lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar), fraction_done);
-          if (est_time != -1.) prog_label = lives_strdup_printf(_("\n%d/%d frames opened. Time remaining %u sec.\n"),
-                                              cfile->opening_frames - 1, cfile->frames, (uint32_t)(est_time + .5));
-          else prog_label = lives_strdup_printf(_("\n%d/%d frames opened.\n"), cfile->opening_frames - 1, cfile->frames);
+
+          if (est_time != -1.) {
+            char *remtstr = remtime_string(est_time);
+            prog_label = lives_strdup_printf(_("\n%d/%d frames opened. %s\n"),
+                                             cfile->opening_frames - 1, cfile->frames, remtstr);
+            lives_free(remtstr);
+          } else prog_label = lives_strdup_printf(_("\n%d/%d frames opened.\n"), cfile->opening_frames - 1, cfile->frames);
         } else {
           lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
           prog_label = lives_strdup_printf(_("\n%d frames opened.\n"), cfile->opening_frames - 1);
@@ -1288,22 +1324,15 @@ void update_progress(boolean visible) {
     }
     shown_paused_frames = mainw->effects_paused;
   } else {
-    /* if (visible && mainw->proc_ptr->frames_done >= mainw->proc_ptr->progress_start) { */
-    /*   if (progress_count == 0) check_storage_space(mainw->current_file, TRUE); */
-    /*   // display progress fraction or pulse bar */
-    /*   progbar_pulse_or_fraction(cfile, mainw->proc_ptr->frames_done, frac_done); */
-    /*   //sched_yield(); */
-    /*   lives_usleep(prefs->sleep_time); */
-    //}
+    lives_usleep(prefs->sleep_time);
   }
 }
+
 
 #ifdef USE_GDK_FRAME_CLOCK
 static boolean using_gdk_frame_clock;
 static GdkFrameClock *gclock;
-static void clock_upd(GdkFrameClock * clock, gpointer user_data) {
-  display_ready = TRUE;
-}
+static void clock_upd(GdkFrameClock * clock, gpointer user_data) {display_ready = TRUE;}
 #endif
 
 
@@ -1931,7 +1960,7 @@ boolean do_auto_dialog(const char *text, int type) {
   char *label_text;
   char *mytext = lives_strdup(text);
 
-  int time_rem, last_time_rem = 10000000;
+  double time_rem, last_time_rem = 10000000.;
   lives_alarm_t alarm_handle = 0;
 
   mainw->cancelled = CANCEL_NONE;
@@ -1978,7 +2007,6 @@ boolean do_auto_dialog(const char *text, int type) {
     }
 #endif
     if (mainw->rec_samples != 0) {
-
       lives_usleep(prefs->sleep_time);
     }
   }
@@ -1986,7 +2014,6 @@ boolean do_auto_dialog(const char *text, int type) {
   while (mainw->cancelled == CANCEL_NONE && !(infofile = fopen(cfile->info_file, "r"))) {
     lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
     lives_widget_context_update();
-    //lives_widget_process_updates(mainw->proc_ptr->processing);
     lives_usleep(prefs->sleep_time);
     if (type == 1 && mainw->rec_end_time != -1.) {
       time = lives_get_current_ticks();
@@ -1994,9 +2021,11 @@ boolean do_auto_dialog(const char *text, int type) {
       // subtract start time
       time -= stime;
 
-      time_rem = (int)(mainw->rec_end_time - (double)time / TICKS_PER_SECOND_DBL + .5);
-      if (time_rem >= 0 && time_rem < last_time_rem) {
-        label_text = lives_strdup_printf(_("\nTime remaining: %d sec"), time_rem);
+      time_rem = mainw->rec_end_time - (double)time / TICKS_PER_SECOND_DBL;
+      if (time_rem >= 0. && time_rem < last_time_rem) {
+        char *remtstr = remtime_string(time_rem);
+        label_text = lives_strdup_printf(_("\n%s"), remtstr);
+        lives_free(remtstr);
         lives_label_set_text(LIVES_LABEL(mainw->proc_ptr->label2), label_text);
         lives_free(label_text);
         last_time_rem = time_rem;

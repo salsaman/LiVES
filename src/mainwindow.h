@@ -561,8 +561,7 @@ enum {
 
 #define LIVES_CLIP_HEADER HEADER_LITERAL ".lives"
 #define LIVES_ACLIP_HEADER AHEADER_LITERAL ".lives"
-#define LIVES_CLIP_HEADER_NEW HEADER_LITERAL "." LIVES_FILE_EXT_NEW
-#define LIVES_ACLIP_HEADER_NEW AHEADER_LITERAL "." LIVES_FILE_EXT_NEW
+
 #define LIVES_CLIP_HEADER_OLD HEADER_LITERAL
 #define LIVES_CLIP_HEADER_OLD2 LIVES_CLIP_HEADER_OLD "2"
 
@@ -579,6 +578,8 @@ enum {
 #define LAYOUT_NUMBERING_FILENAME LAYOUT_FILENAME "_numbering"
 
 #define TEMPFILE_MARKER "can_remove"
+
+#define COMMENT_FILENAME ".comment"
 
 // trash removal
 #define LIVES_FILENAME_NOREMOVE ".noremove"
@@ -634,7 +635,7 @@ enum {
 #define MAKE_CLIPS_DIRNAME(set, handle) lives_build_filename(prefs->workdir, set, CLIPS_DIRNAME, handle, NULL);
 
 // directory of a clip in the current set
-#define CLIPDIR(handle) MAKE_CLIPS_DIRNAME(mainw->set_name, handle)
+#define SET_CLIPDIR(handle) MAKE_CLIPS_DIRNAME(mainw->set_name, handle)
 
 // directory for all clips in set
 #define CLIPS_DIR(set) MAKE_CLIPS_DIRNAME(set, NULL)

@@ -2135,8 +2135,6 @@ static double jitter = 0.;
 
 static weed_timecode_t event_start = 0;
 
-static frames_t frames_done;
-
 void ready_player_one(weed_timecode_t estart) {
   event_start = 0;
   cleanup_preload = FALSE;
@@ -2406,7 +2404,6 @@ switch_point:
 #ifdef ENABLE_JACK_TRANSPORT
 
       // handle transport jump in multitrack : end current playback and restart it from the new position
-      // TODO: retest this and enable in the clip_editor
       ticks_t transtc = q_gint64(jack_transport_get_current_ticks(), cfile->fps);
       mainw->multitrack->pb_start_event = get_frame_event_at(mainw->multitrack->event_list, transtc, NULL, TRUE);
       if (mainw->cancelled == CANCEL_NONE) mainw->cancelled = CANCEL_EVENT_LIST_END;
@@ -2527,7 +2524,7 @@ switch_point:
           /// however, it is impossible to get it right 100% of the time, as the actual value can vary unpredictably
           /// 'test_getahead' is used so that we can sometimes recalibrate without actually jumping the frame
           /// in future, we could also get a more accurate estimate by integrating statistics from the decoder.
-          /// - useful values would be the frame decode time, keyframe positions, seek time to keyframe,  keyframe decode time.
+          /// - useful values would be the frame decode time, keyframe positions, seek time to keyframe, keyframe decode time.
           int dir = sig(sfile->pb_fps);
           delta = (test_getahead - requested_frame) * dir;
 #ifdef SHOW_CACHE_PREDICTIONS
@@ -2972,15 +2969,6 @@ proc_dialog:
       // set the progress bar %
       update_progress(visible);
     }
-
-    frames_done = mainw->proc_ptr->frames_done;
-
-    /* if (cfile->clip_type == CLIP_TYPE_FILE && cfile->fx_frame_pump > 0) { */
-    /*   if (virtual_to_images(mainw->current_file, cfile->fx_frame_pump, cfile->fx_frame_pump, FALSE, NULL) > 0) { */
-    /*     cfile->fx_frame_pump++; */
-    /*   } else mainw->cancelled = CANCEL_ERROR; */
-    /*   if (cfile->fx_frame_pump >= cfile->end) cfile->fx_frame_pump = 0; // all frames were realised */
-    /* } */
   }
 
   if (LIVES_LIKELY(mainw->cancelled == CANCEL_NONE)) {

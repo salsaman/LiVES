@@ -127,7 +127,7 @@ enum {
 
 using namespace cv;
 
-#define DEBUG_PRINT(a) fprintf(stderr, "%s\n", a)
+#define DEBUG_PRINT(a) std::cerr << a << std::endl;
 
 //////////////////////////////////////////////////////////
 
@@ -288,14 +288,12 @@ private:
 
 template <typename VecT>
 int phatch_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
-  int error;
-
   int const type = retimg.type();
   Size const size = retimg.size();
 
-  float const angle = weed_get_int_value(in_params[PARAMa_ANGLE], WEED_LEAF_VALUE, &error);
-  float const length = weed_get_double_value(in_params[PARAMa_LENGTH], WEED_LEAF_VALUE, &error) * size.height;
-  float const attenuation = weed_get_double_value(in_params[PARAMa_ATTENUATION], WEED_LEAF_VALUE, &error);
+  float const angle = (float)weed_param_get_value_int(in_params[PARAMa_ANGLE]);
+  float const length = (float)weed_param_get_value_double(in_params[PARAMa_LENGTH]) * size.height;
+  float const attenuation = (float)weed_param_get_value_double(in_params[PARAMa_ATTENUATION]);
 
   // snp noise based on grayscale
   Mat noise(size, CV_MAKETYPE(CV_MAT_DEPTH(type), 1));
@@ -320,7 +318,6 @@ int phatch_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
     default:
       break;
     }
-
 
     float const norm_const = 1.0f / std::numeric_limits<uchar>::max();
 
@@ -403,25 +400,24 @@ template <typename VecT>
 int lglare_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
   using value_type = typename VecT::value_type;
 
-  int error;
-  int psize = 4;
+  int psize;
 
   Size const size = retimg.size();
 
   // init parameters
-  float const gamma = weed_get_double_value(in_params[PARAMb_GAMMA], WEED_LEAF_VALUE, &error);
-  float const exposure = weed_get_double_value(in_params[PARAMb_EXPOSURE], WEED_LEAF_VALUE, &error);
-  float const gain = weed_get_double_value(in_params[PARAMb_GAIN], WEED_LEAF_VALUE, &error);
+  float const gamma = (float)weed_param_get_value_double(in_params[PARAMb_GAMMA]);
+  float const exposure = (float)weed_param_get_value_double(in_params[PARAMb_EXPOSURE]);
+  float const gain = (float)weed_param_get_value_double(in_params[PARAMb_GAIN]);
 
-  float const radius = weed_get_double_value(in_params[PARAMb_RADIUS], WEED_LEAF_VALUE, &error) * size.height;
-  float const attenuation = weed_get_double_value(in_params[PARAMb_ATTENUATION], WEED_LEAF_VALUE, &error);
+  float const radius = (float)weed_param_get_value_double(in_params[PARAMb_RADIUS]) * size.height;
+  float const attenuation = (float)weed_param_get_value_double(in_params[PARAMb_ATTENUATION]);
 
-  int const number = weed_get_int_value(in_params[PARAMb_NUMBER], WEED_LEAF_VALUE, &error);
-  int const angle = weed_get_int_value(in_params[PARAMb_ANGLE], WEED_LEAF_VALUE, &error);
+  int const number = weed_param_get_value_int(in_params[PARAMb_NUMBER]);
+  int const angle = weed_param_get_value_int(in_params[PARAMb_ANGLE]);
 
   Mat src(size, CV_32FC3);
 
-  if (palette == WEED_PALETTE_RGB24 || palette == WEED_PALETTE_BGR24) psize = 3;
+  psize = pixel_size(palette);
 
   Size const local_size = in.size();
   Mat local(src, Rect(0, 0, local_size.width, local_size.height)); // not sure that this is right...
@@ -502,17 +498,17 @@ int lglare_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
 template <typename VecT>
 int lbloom_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
   using value_type = typename VecT::value_type;
-  int psize = 4;
+  int psize;
 
   Size const size = retimg.size();
 
   // init parameters
-  float const gamma = weed_get_double_value(in_params[PARAMd_GAMMA], WEED_LEAF_VALUE, NULL);
-  float const exposure = weed_get_double_value(in_params[PARAMd_EXPOSURE], WEED_LEAF_VALUE, NULL);
-  float const gain = weed_get_double_value(in_params[PARAMd_GAIN], WEED_LEAF_VALUE, NULL);
+  float const gamma = (float)weed_param_get_value_double(in_params[PARAMd_GAMMA]);
+  float const exposure = (float)weed_param_get_value_double(in_params[PARAMd_EXPOSURE]);
+  float const gain = (float)weed_param_get_value_double(in_params[PARAMd_GAIN]);
 
-  int const radius = weed_get_int_value(in_params[PARAMd_RADIUS], WEED_LEAF_VALUE, NULL);
-  int const level = weed_get_int_value(in_params[PARAMd_LEVEL], WEED_LEAF_VALUE, NULL);
+  int const radius = weed_param_get_value_int(in_params[PARAMd_RADIUS]);
+  int const level = weed_param_get_value_int(in_params[PARAMd_LEVEL]);
 
   Mat src(size, CV_32FC3);
   psize = pixel_size(palette);
@@ -576,7 +572,6 @@ template <typename VecT>
 int paraffin_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
   using value_type = typename VecT::value_type;
 
-  int error;
   int psize = 4;
 
   Size const size = retimg.size();
@@ -585,10 +580,10 @@ int paraffin_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params)
   // Params
   //
   // geometry
-  float const d = weed_get_double_value(in_params[PARAMe_DISTANCE], WEED_LEAF_VALUE, NULL) * size.height;
-  float const a = (float)(weed_get_int_value(in_params[PARAMe_THETA], WEED_LEAF_VALUE, NULL)) / 360.*TWO_PI;
+  float const d = (float)weed_param_get_value_double(in_params[PARAMe_DISTANCE]) * size.height;
+  float const a = (float)weed_param_get_value_int(in_params[PARAMe_THETA]) / 360. * TWO_PI;
 
-  int const s = (int)(weed_get_double_value(in_params[PARAMe_RADIUS], WEED_LEAF_VALUE, NULL) * size.height * 0.5) * 2 + 1;
+  int const s = (int)((float)weed_param_get_value_double(in_params[PARAMe_RADIUS]) * size.height * 0.5) * 2 + 1;
 
   double *cvals = weed_get_double_array(in_params[PARAMe_COLOR], WEED_LEAF_VALUE, NULL);
 
@@ -671,33 +666,30 @@ int paraffin_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params)
 
 
 static weed_error_t common_process(weed_plant_t *inst, weed_timecode_t tc, int filter_type) {
-  int error;
-
   Mat srcMat, mixMat, destMat;
 
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  weed_plant_t *in_channel = weed_get_in_channel(inst, 0);
+  weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
 
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  weed_plant_t **in_params = weed_get_in_params(inst, NULL);
 
-  uint8_t *src = (uint8_t *)weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
-  uint8_t *dst = (uint8_t *)weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  uint8_t *src = (uint8_t *)weed_channel_get_pixel_data(in_channel);
+  uint8_t *dst = (uint8_t *)weed_channel_get_pixel_data(out_channel);
 
-  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
-  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
-  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
+  int width = weed_channel_get_width(in_channel);
+  int height = weed_channel_get_height(in_channel);
+  int palette = weed_channel_get_palette(in_channel);
 
-  int irow = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
-  int orow = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  int irow = weed_channel_get_stride(in_channel);
+  int orow = weed_channel_get_stride(out_channel);
 
-  int psize = 4;
+  int psize = pixel_size(palette);
 
   switch (palette) {
   case WEED_PALETTE_RGB24:
   case WEED_PALETTE_BGR24:
     srcMat = mixMat = Mat(height, width, CV_8UC3, src, irow);
     destMat = Mat(height, width, CV_8UC3, dst, orow);
-    psize = 3;
     break;
   case WEED_PALETTE_BGRA32:
   case WEED_PALETTE_RGBA32:
@@ -774,18 +766,18 @@ int cnoise_compute(Mat &retimg, weed_plant_t **in_params, double sec) {
   try {
     cv::Size const size = retimg.size();
 
-    int const time = weed_get_int_value(in_params[PARAMc_TIME], WEED_LEAF_VALUE, NULL);
-    int const time_limit = weed_get_int_value(in_params[PARAMc_TIME_LIMIT], WEED_LEAF_VALUE, NULL) - 1;
-    float const alpha = weed_get_double_value(in_params[PARAMc_ALPHA], WEED_LEAF_VALUE, NULL);
-    float const gain = weed_get_double_value(in_params[PARAMc_GAIN], WEED_LEAF_VALUE, NULL);
-    float const bias = weed_get_double_value(in_params[PARAMc_BIAS], WEED_LEAF_VALUE, NULL);
+    int const time = weed_param_get_value_int(in_params[PARAMc_TIME]);
+    int const time_limit = weed_param_get_value_int(in_params[PARAMc_TIME_LIMIT]);
+    float const alpha = (float)weed_param_get_value_double(in_params[PARAMc_ALPHA]);
+    float const gain = (float)weed_param_get_value_double(in_params[PARAMc_GAIN]);
+    float const bias = (float)weed_param_get_value_double(in_params[PARAMc_BIAS]);
 
     std::array<float, 5> const amp = {
-      (float)weed_get_double_value(in_params[PARAMc_AMP0], WEED_LEAF_VALUE, NULL),
-      (float)weed_get_double_value(in_params[PARAMc_AMP1], WEED_LEAF_VALUE, NULL),
-      (float)weed_get_double_value(in_params[PARAMc_AMP2], WEED_LEAF_VALUE, NULL),
-      (float)weed_get_double_value(in_params[PARAMc_AMP3], WEED_LEAF_VALUE, NULL),
-      (float)weed_get_double_value(in_params[PARAMc_AMP4], WEED_LEAF_VALUE, NULL)
+      (float)weed_param_get_value_double(in_params[PARAMc_AMP0]),
+      (float)weed_param_get_value_double(in_params[PARAMc_AMP1]),
+      (float)weed_param_get_value_double(in_params[PARAMc_AMP2]),
+      (float)weed_param_get_value_double(in_params[PARAMc_AMP3]),
+      (float)weed_param_get_value_double(in_params[PARAMc_AMP4])
     };
 
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -827,16 +819,15 @@ int cnoise_compute(Mat &retimg, weed_plant_t **in_params, double sec) {
 static weed_error_t cnoise_process(weed_plant_t *inst, weed_timecode_t tc) {
   Mat destMat;
 
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
+  weed_plant_t **in_params = weed_get_in_params(inst, NULL);
 
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  float *dst = (float *)weed_channel_get_pixel_data(out_channel);
 
-  float *dst = (float *)weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  int width = weed_channel_get_width(out_channel);
+  int height = weed_channel_get_height(out_channel);
 
-  int width = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, NULL);
-  int height = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL);
-
-  int orow = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  int orow = weed_channel_get_stride(out_channel);
 
   destMat = Mat(height, width, CV_32FC1, dst, orow);
 
@@ -847,6 +838,7 @@ static weed_error_t cnoise_process(weed_plant_t *inst, weed_timecode_t tc) {
   return WEED_SUCCESS;
 }
 
+
 ///////////////////////////////
 
 WEED_SETUP_START(200, 200) {
@@ -855,8 +847,8 @@ WEED_SETUP_START(200, 200) {
 
   int opalette_list[] = {WEED_PALETTE_AFLOAT, WEED_PALETTE_END};
 
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel", 0, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel", 0, palette_list), NULL};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel", 0), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel", 0), NULL};
 
   weed_plant_t *in_paramsa[] = {weed_integer_init("angle", "_Angle", 0, 0, 360), weed_float_init("length", "_Length", 0.01, 0., 1.),
                                 weed_float_init("attenuation", "A_ttenuation", 0.9, 0., 1.), NULL
@@ -953,7 +945,7 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+  weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;
 

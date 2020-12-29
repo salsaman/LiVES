@@ -11036,15 +11036,22 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_and_update(LiVESWidg
 int lives_utf8_strcmpfunc(livesconstpointer a, livesconstpointer b, livespointer fwd) {
   // do not inline !
   int ret;
-  char *tmp1, *tmp2;
-  if (LIVES_POINTER_TO_INT(fwd))
-    ret = lives_strcmp_ordered((tmp1 = lives_utf8_collate_key(a, -1)),
-                               (tmp2 = lives_utf8_collate_key(b, -1)));
-  else
-    ret = lives_strcmp_ordered((tmp1 = lives_utf8_collate_key(b, -1)),
-                               (tmp2 = lives_utf8_collate_key(a, -1)));
-  lives_free(tmp1);
-  lives_free(tmp2);
+  char *tmp1 = NULL, *tmp2 = NULL;
+
+  if (LIVES_POINTER_TO_INT(fwd)) {
+    if (*(char *)a == '!' && *(char *)b != '!') ret = -1;
+    else if (*(char *)b == '!' && *(char *)a != '!') ret = 1;
+    else
+      ret = lives_strcmp_ordered((tmp1 = lives_utf8_collate_key(a, -1)),
+                                 (tmp2 = lives_utf8_collate_key(b, -1)));
+  } else {
+    if (*(char *)a == '!' && *(char *)b != '!') ret = 1;
+    else if (*(char *)b == '!' && *(char *)a != '!') ret = -1;
+    else ret = lives_strcmp_ordered((tmp1 = lives_utf8_collate_key(b, -1)),
+                                      (tmp2 = lives_utf8_collate_key(a, -1)));
+  }
+  if (tmp1) lives_free(tmp1);
+  if (tmp2) lives_free(tmp2);
   return ret;
 }
 

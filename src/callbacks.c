@@ -6743,7 +6743,7 @@ end:
       char buff[512];
       lives_clipinfo_t *filew;
 
-      char *sigs, *ends, *tmp;
+      char *sigs, *ends, *tmp, *tstr;
 
       if (!CURRENT_CLIP_IS_VALID) return;
 
@@ -6794,7 +6794,9 @@ end:
         if ((cfile->opening && !cfile->opening_audio && cfile->frames == 0) || cfile->frames == 123456789) {
           lives_snprintf(buff, 512, "%s", _("  Opening..."));
         } else {
-          lives_snprintf(buff, 512, _("  %.2f sec."), cfile->video_time);
+          tstr = format_tstr(cfile->video_time, 0);
+          lives_snprintf(buff, 512, _(" %s"), tstr);
+          lives_free(tstr);
         }
         lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_vtime), buff, -1);
         // file size
@@ -6810,7 +6812,9 @@ end:
         if (cfile->opening) {
           lives_snprintf(buff, 512, "%s", _("  Opening..."));
         } else {
-          lives_snprintf(buff, 512, _("  %.2f sec."), cfile->laudio_time);
+          tstr = format_tstr(cfile->laudio_time, 0);
+          lives_snprintf(buff, 512, _(" %s"), tstr);
+          lives_free(tstr);
         }
         lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_ltime), buff, -1);
 
@@ -6843,7 +6847,9 @@ end:
         if (cfile->opening) {
           lives_snprintf(buff, 512, "%s", _("  Opening..."));
         } else {
-          lives_snprintf(buff, 512, _("  %.2f sec."), cfile->raudio_time);
+          tstr = format_tstr(cfile->raudio_time, 0);
+          lives_snprintf(buff, 512, _(" %s"), tstr);
+          lives_free(tstr);
         }
         lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_rtime), buff, -1);
       }
@@ -10865,7 +10871,6 @@ autolives_fail:
 
     mainw->ptrtime = cfile->pointer_time;
     lives_widget_queue_draw(mainw->eventbox2);
-    g_print("HRSET\n");
     return TRUE;
   }
 

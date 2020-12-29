@@ -2646,6 +2646,37 @@ void set_redoable(const char *what, boolean sensitive) {
 }
 
 
+char *format_tstr(double xtime, int minlim) {
+  char *tstr;
+  int hrs = (int64_t)xtime / 3600, min;
+  xtime -= hrs * 3600;
+  min = (int64_t)xtime / 60;
+  xtime -= min * 60;
+
+  if (hrs > 0) {
+    // TRANSLATORS: h(ours) min(utes)
+    if (minlim) tstr = lives_strdup_printf(_("%d h %d min"), hrs, min);
+    // TRANSLATORS: h(ours) min(utes) sec(onds)
+    else tstr = lives_strdup_printf("%d h %d min %.2f sec", hrs, min, xtime);
+  } else {
+    if (min > 0) {
+      if (minlim) {
+        // TRANSLATORS: min(utes)
+        if (min >= minlim) tstr = lives_strdup_printf(_("%d min"), min);
+        // TRANSLATORS: min(utes) sec(onds)
+        else tstr = lives_strdup_printf("%d min %d sec", min, (int)(xtime + .5));
+      }
+      // TRANSLATORS: min(utes) sec(onds)
+      else tstr = lives_strdup_printf("%d min %.2f sec", min, xtime);
+    } else {
+      if (minlim) tstr = lives_strdup_printf("%d sec", (int)(xtime + .5));
+      else tstr = lives_strdup_printf("%.2f sec", xtime);
+    }
+  }
+  return tstr;
+}
+
+
 void set_sel_label(LiVESWidget * sel_label) {
   char *tstr, *frstr, *tmp;
   char *sy, *sz;
@@ -2653,13 +2684,15 @@ void set_sel_label(LiVESWidget * sel_label) {
   if (mainw->current_file == -1 || !cfile->frames || mainw->multitrack) {
     lives_label_set_text(LIVES_LABEL(sel_label), _("-------------Selection------------"));
   } else {
-    tstr = lives_strdup_printf("%.2f", calc_time_from_frame(mainw->current_file, cfile->end + 1) -
-                               calc_time_from_frame(mainw->current_file, cfile->start));
+    double xtime = calc_time_from_frame(mainw->current_file, cfile->end + 1) -
+                   calc_time_from_frame(mainw->current_file, cfile->start);
+    tstr = format_tstr(xtime, 0);
+
     frstr = lives_strdup_printf("%d", cfile->end - cfile->start + 1);
 
     // TRANSLATORS: - try to keep the text of the middle part the same length, by deleting "-" if necessary
     lives_label_set_text(LIVES_LABEL(sel_label),
-                         (tmp = lives_strconcat("---------- [ ", tstr, (sy = ((_(" sec ] ----------Selection---------- [ ")))),
+                         (tmp = lives_strconcat("---------- [ ", tstr, (sy = ((_("] ----------Selection---------- [ ")))),
                                 frstr, (sz = (_(" frames ] ----------"))), NULL)));
     lives_free(sy); lives_free(sz);
     lives_free(tmp); lives_free(frstr); lives_free(tstr);

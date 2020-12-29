@@ -765,40 +765,40 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
                                          q_gint64((i - 1.) / sfile->fps, sfile->fps), sfile->hsize,
                                          sfile->vsize, LIVES_INTERP_BEST, FALSE);
       if (!pixbuf) {
-	retval = -i;
-	break;
+        retval = -i;
+        break;
       }
 
       if (!saver_thread) {
-	saveargs = (savethread_priv_t *)lives_calloc(1, sizeof(savethread_priv_t));
-	saveargs->img_type = sfile->img_type;
-	saveargs->compression = 100 - prefs->ocp;
-	saveargs->width = sfile->hsize;
-	saveargs->height = sfile->vsize;
-	saver_thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
+        saveargs = (savethread_priv_t *)lives_calloc(1, sizeof(savethread_priv_t));
+        saveargs->img_type = sfile->img_type;
+        saveargs->compression = 100 - prefs->ocp;
+        saveargs->width = sfile->hsize;
+        saveargs->height = sfile->vsize;
+        saver_thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
       } else {
-	lives_thread_join(*saver_thread, NULL);
-	while (saveargs->error) {
-	  check_storage_space(-1, TRUE);
-	  retval = do_write_failed_error_s_with_retry(saveargs->fname, saveargs->error->message);
-	  lives_error_free(saveargs->error);
-	  saveargs->error = NULL;
-	  if (retval != LIVES_RESPONSE_RETRY) {
-	    if (saveargs->pixbuf) lives_widget_object_unref(saveargs->pixbuf);
-	    if (pixbuf) lives_widget_object_unref(pixbuf);
-	    lives_free(saveargs->fname);
-	    lives_free(saveargs);
-	    return -(i - 1);
-	  }
-	  lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression,
-			    saveargs->width, saveargs->height, &saveargs->error);
-	}
-	if (saveargs->pixbuf && saveargs->pixbuf != pixbuf) {
-	  lives_widget_object_unref(saveargs->pixbuf);
-	  saveargs->pixbuf = NULL;
-	}
-	lives_free(saveargs->fname);
-	saveargs->fname = NULL;
+        lives_thread_join(*saver_thread, NULL);
+        while (saveargs->error) {
+          check_storage_space(-1, TRUE);
+          retval = do_write_failed_error_s_with_retry(saveargs->fname, saveargs->error->message);
+          lives_error_free(saveargs->error);
+          saveargs->error = NULL;
+          if (retval != LIVES_RESPONSE_RETRY) {
+            if (saveargs->pixbuf) lives_widget_object_unref(saveargs->pixbuf);
+            if (pixbuf) lives_widget_object_unref(pixbuf);
+            lives_free(saveargs->fname);
+            lives_free(saveargs);
+            return -(i - 1);
+          }
+          lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression,
+                            saveargs->width, saveargs->height, &saveargs->error);
+        }
+        if (saveargs->pixbuf && saveargs->pixbuf != pixbuf) {
+          lives_widget_object_unref(saveargs->pixbuf);
+          saveargs->pixbuf = NULL;
+        }
+        lives_free(saveargs->fname);
+        saveargs->fname = NULL;
       }
 
       saveargs->fname = make_image_file_name(sfile, i, get_image_ext_for_type(sfile->img_type));
@@ -806,7 +806,7 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
       lives_thread_create(saver_thread, LIVES_THRDATTR_NONE, lives_pixbuf_save_threaded, saveargs);
 
       if (++count == STRG_CHECK) {
-	if (!check_storage_space(-1, TRUE)) break;
+        if (!check_storage_space(-1, TRUE)) break;
       }
 
       // another thread may have called check_if_non_virtual - TODO : use a mutex
@@ -814,14 +814,14 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
       sfile->frame_index[i - 1] = -1;
 
       if (update_progress) {
-	// sig_progress...
-	lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%d", progress++);
-	threaded_dialog_spin((double)(i - sframe) / (double)(eframe - sframe + 1));
-	lives_widget_context_update();
+        // sig_progress...
+        lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%d", progress++);
+        threaded_dialog_spin((double)(i - sframe) / (double)(eframe - sframe + 1));
+        lives_widget_context_update();
       }
 
       if (mainw->cancelled != CANCEL_NONE && !(sfile->pumper && mainw->preview)) {
-	break;
+        break;
       }
     }
   }
@@ -919,7 +919,7 @@ frames_t realize_all_frames(int clipno, const char *msg, boolean enough, frames_
 
   if (end <= 0) end = mainw->files[clipno]->frames + end;
   if (end < start) return 0;
-  
+
   if (!check_if_non_virtual(clipno, start, end)) {
     mainw->current_file = clipno;
     cfile->progress_start = start;

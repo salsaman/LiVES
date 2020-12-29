@@ -128,12 +128,14 @@ void create_merge_dialog(void) {
     label = lives_standard_label_new(_("What to do with extra clipboard frames -"));
     lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
 
-    merge_opts->ins_frame_button = lives_standard_radio_button_new(_("_Insert Frames"), &radiobutton_insdrop_group, LIVES_BOX(hbox), NULL);
+    merge_opts->ins_frame_button = lives_standard_radio_button_new(_("_Insert Frames"), &radiobutton_insdrop_group, LIVES_BOX(hbox),
+                                   NULL);
 
     merge_opts->ins_frame_function = lives_signal_connect(LIVES_GUI_OBJECT(merge_opts->ins_frame_button),
                                      LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(on_ins_frames_toggled), NULL);
 
-    merge_opts->drop_frame_button = lives_standard_radio_button_new(_("_Drop Frames"), &radiobutton_insdrop_group, LIVES_BOX(hbox), NULL);
+    merge_opts->drop_frame_button = lives_standard_radio_button_new(_("_Drop Frames"), &radiobutton_insdrop_group, LIVES_BOX(hbox),
+                                    NULL);
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(merge_opts->drop_frame_button), !mainw->last_transition_ins_frames);
   } else if ((cfile->end - cfile->start + 1) > cb_frames) {
@@ -197,7 +199,7 @@ void create_merge_dialog(void) {
   lives_button_grab_default_special(okbutton);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_merge_cancel_clicked), rfx);
+                            LIVES_GUI_CALLBACK(on_merge_cancel_clicked), rfx);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
@@ -206,10 +208,10 @@ void create_merge_dialog(void) {
                        LIVES_GUI_CALLBACK(on_merge_ok_clicked), rfx);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(transition_combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_trans_method_changed), NULL);
+                            LIVES_GUI_CALLBACK(on_trans_method_changed), NULL);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(align_start_button), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_align_start_end_toggled), rfx);
+                            LIVES_GUI_CALLBACK(on_align_start_end_toggled), rfx);
 
   if (prefs->show_gui) {
     lives_widget_show_all(merge_opts->merge_dialog);
@@ -476,7 +478,7 @@ void on_merge_ok_clicked(LiVESButton *button, livespointer user_data) {
     }
     lives_free(msg);
   }
-  
+
   // do the actual merge
   if (!do_effect(rfx, FALSE)) {
     // cancelled

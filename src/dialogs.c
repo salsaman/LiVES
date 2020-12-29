@@ -1190,27 +1190,7 @@ static char *remtime_string(double timerem) {
   if (timerem < 0.) {
     tstr = lives_strdup(_("unknown"));
   } else {
-    int rtime = (int)(timerem + .5);
-    int hrs = rtime / 3600, mins, sec;
-    rtime -= hrs * 3600;
-    mins = rtime / 60;
-    sec = rtime - mins * 60;
-
-    if (hrs > 0) {
-      // TRANSLATORS: h(ours) min(utes)
-      tstr = lives_strdup_printf(_("%d h %d min"), hrs, mins);
-    } else {
-      if (mins >= 5) {
-        // TRANSLATORS: min(utes)
-        tstr = lives_strdup_printf(_("%d min"), mins);
-      } else {
-        if (mins > 0) {
-          tstr = lives_strdup_printf(_("%d min %d sec"), mins, sec);
-        } else {
-          tstr = lives_strdup_printf(_("%d sec"), sec);
-        }
-      }
-    }
+    tstr = format_tstr(timerem, 5);
   }
   fmtstr = lives_strdup_printf(_("Time remaining: %s"), tstr);
   lives_free(tstr);

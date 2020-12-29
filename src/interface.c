@@ -1569,8 +1569,8 @@ _insertw *create_insert_dialog(void) {
   insertw->without_sound = lives_standard_radio_button_new(_("Insert with_out sound"),
                            &radiobutton2_group, LIVES_BOX(hbox), NULL);
 
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(insertw->with_sound),
-                                 (cfile->achans > 0 || clipboard->achans > 0) && mainw->ccpd_with_sound);
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(insertw->without_sound),
+                                 (cfile->achans == 0 && clipboard->achans == 0) || !mainw->ccpd_with_sound);
 
   lives_table_attach(LIVES_TABLE(table), hbox, 2, 3, 1, 2,
                      (LiVESAttachOptions)(LIVES_FILL),

@@ -566,15 +566,19 @@ void load_frame_image(frames_t frame) {
         }
       } else {
         if (mainw->is_rendering || mainw->is_generating) {
-          fname_next = make_image_file_name(cfile, frame + 1, get_image_ext_for_type(cfile->img_type));
+          if (cfile->old_frames > 0) {
+            img_ext = LIVES_FILE_EXT_MGK;
+          } else {
+            img_ext = get_image_ext_for_type(cfile->img_type);
+          }
         } else {
           if (!mainw->keep_pre) {
             img_ext = LIVES_FILE_EXT_MGK;
           } else {
             img_ext = LIVES_FILE_EXT_PRE;
           }
-          fname_next = make_image_file_name(cfile, frame + 1, img_ext);
         }
+        fname_next = make_image_file_name(cfile, frame + 1, img_ext);
       }
       mainw->actual_frame = frame;
 

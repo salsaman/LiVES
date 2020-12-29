@@ -1532,11 +1532,11 @@ void show_manual_section(const char *lang, const char *section);
 void maybe_add_mt_idlefunc(void);
 boolean render_choice_idle(livespointer data);
 
-double calc_time_from_frame(int clip, int frame);
-int calc_frame_from_time(int filenum, double time);   ///< nearest frame [1, frames]
-int calc_frame_from_time2(int filenum, double time);  ///< nearest frame [1, frames+1]
-int calc_frame_from_time3(int filenum, double time);  ///< nearest frame rounded down, [1, frames+1]
-int calc_frame_from_time4(int filenum, double time);  ///<  nearest frame, no maximum
+double calc_time_from_frame(int clip, frames_t frame);
+frames_t calc_frame_from_time(int filenum, double time);   ///< nearest frame [1, frames]
+frames_t calc_frame_from_time2(int filenum, double time);  ///< nearest frame [1, frames+1]
+frames_t calc_frame_from_time3(int filenum, double time);  ///< nearest frame rounded down, [1, frames+1]
+frames_t calc_frame_from_time4(int filenum, double time);  ///<  nearest frame, no maximum
 
 boolean check_for_ratio_fps(double fps);
 double get_ratio_fps(const char *string);
@@ -1562,7 +1562,7 @@ boolean is_legal_set_name(const char *set_name, boolean allow_dupes, boolean lee
 char *repl_workdir(const char *entry, boolean fwd);
 boolean check_frame_count(int idx, boolean last_chkd);
 frames_t get_frame_count(int idx, int xsize);
-boolean get_frames_sizes(int fileno, int frame_to_test, int *hsize, int *vsize);
+boolean get_frames_sizes(int fileno, frames_t frame_to_test, int *hsize, int *vsize);
 frames_t count_resampled_frames(frames_t in_frames, double orig_fps, double resampled_fps);
 boolean check_for_lock_file(const char *set_name, int type);
 

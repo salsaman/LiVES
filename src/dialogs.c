@@ -432,10 +432,13 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
 
   label = lives_standard_formatted_label_new(text);
   widget_opts.last_label = label;
-  colref = gdk_rgba_to_string(&palette->normal_back);
-  set_css_value_direct(label, LIVES_WIDGET_STATE_NORMAL, "",
-                       "caret-color", colref);
-  lives_free(colref);
+
+  if (palette) {
+    colref = gdk_rgba_to_string(&palette->normal_back);
+    set_css_value_direct(label, LIVES_WIDGET_STATE_NORMAL, "",
+                         "caret-color", colref);
+    lives_free(colref);
+  }
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
   lives_box_pack_start(LIVES_BOX(dialog_vbox), label, TRUE, TRUE, 0);
   lives_label_set_selectable(LIVES_LABEL(label), TRUE);
@@ -1546,7 +1549,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   }
 #endif
   mainw->scratch = SCRATCH_NONE;
-  if (mainw->iochan) lives_widget_show_all(mainw->proc_ptr->pause_button);
+  if (mainw->iochan && mainw->proc_ptr) lives_widget_show_all(mainw->proc_ptr->pause_button);
   display_ready = TRUE;
 
   /////////////////////////
@@ -1567,7 +1570,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     cfile->last_frameno = cfile->frameno = mainw->play_start;
   }
 
-  if (!mainw->playing_sel) mainw->play_start = 1;
+  if (!mainw->playing_sel && (mainw->multitrack || !mainw->event_list)) mainw->play_start = 1;
 
   if (mainw->multitrack && !mainw->multitrack->is_rendering) {
     // playback start from middle of multitrack
@@ -1713,13 +1716,13 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         // this is for encoder output
         pump_io_chan(mainw->iochan);
       }
-      if (!mainw->internal_messaging) {
+      if (!mainw->internal_messaging && mainw->proc_ptr) {
         // background processing (e.g. rendered effects)
         progbar_pulse_or_fraction(cfile, mainw->proc_ptr->frames_done, mainw->proc_ptr->frac_done);
       }
     }
 
-    if (!mainw->internal_messaging) {
+    if (!mainw->internal_messaging && mainw->proc_ptr) {
       // background processing (e.g. rendered effects)
       lives_fread_string(mainw->msg, MAINW_MSG_SIZE, cfile->info_file);
       progbar_pulse_or_fraction(cfile, mainw->proc_ptr->frames_done, mainw->proc_ptr->frac_done);
@@ -1734,7 +1737,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       }
 
       // display progress fraction or pulse bar
-      if (*mainw->msg && (frames_done = atoi(mainw->msg)) > 0) {
+      if (*mainw->msg && (frames_done = atoi(mainw->msg)) > 0 && mainw->proc_ptr) {
         if (mainw->msg[lives_strlen(mainw->msg) - 1] == '%')
           mainw->proc_ptr->frac_done = atof(mainw->msg);
         else
@@ -1745,14 +1748,14 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
           check_storage_space(mainw->current_file, TRUE);
           prog_fs_check = PROG_LOOP_VAL;
         }
-        progbar_pulse_or_fraction(cfile, mainw->proc_ptr->frames_done, mainw->proc_ptr->frac_done);
+        if (mainw->proc_ptr) progbar_pulse_or_fraction(cfile, mainw->proc_ptr->frames_done, mainw->proc_ptr->frac_done);
       } else lives_widget_context_update();
     }
 
     if (mainw->preview_req) {
       mainw->preview_req = FALSE;
       mainw->noswitch = FALSE;
-      on_preview_clicked(LIVES_BUTTON(mainw->proc_ptr->preview_button), NULL);
+      if (mainw->proc_ptr) on_preview_clicked(LIVES_BUTTON(mainw->proc_ptr->preview_button), NULL);
       mainw->noswitch = TRUE;
     }
 
@@ -1763,7 +1766,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
     // we got a message from the backend...
 
-    if (visible && (!accelerators_swapped || cfile->opening) && cancellable
+    if (visible && mainw->proc_ptr && (!accelerators_swapped || cfile->opening) && cancellable
         && (!cfile->nopreview || cfile->keep_without_preview)) {
       if (!cfile->nopreview && !(cfile->opening && mainw->multitrack)) {
         lives_widget_set_no_show_all(mainw->proc_ptr->preview_button, FALSE);
@@ -1811,7 +1814,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         if (numtok > 1) {
           char **array = lives_strsplit(mainw->msg, "|", numtok);
           int frames_done = atoi(array[0]);
-          if (frames_done > 0) mainw->proc_ptr->frames_done = frames_done;
+          if (frames_done > 0 && mainw->proc_ptr) mainw->proc_ptr->frames_done = frames_done;
           if (numtok == 2 && *(array[1])) cfile->progress_end = atoi(array[1]);
           else if (numtok == 5 && *(array[4])) {
             // rendered generators
@@ -1825,11 +1828,13 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
           }
           lives_strfreev(array);
         } else {
-          if (*mainw->msg && mainw->msg[lives_strlen(mainw->msg) - 1] == '%')
-            mainw->proc_ptr->frac_done = atof(mainw->msg) / 100.;
-          else {
-            int frames_done = atoi(mainw->msg);
-            if (frames_done > 0) mainw->proc_ptr->frames_done = frames_done;
+          if (mainw->proc_ptr) {
+            if (*mainw->msg && mainw->msg[lives_strlen(mainw->msg) - 1] == '%')
+              mainw->proc_ptr->frac_done = atof(mainw->msg) / 100.;
+            else {
+              int frames_done = atoi(mainw->msg);
+              if (frames_done > 0 && mainw->proc_ptr) mainw->proc_ptr->frames_done = frames_done;
+            }
           }
         }
       }
@@ -1893,7 +1898,8 @@ finish:
     if (mainw->preview_box && !mainw->preview) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Play all"));
     if (accelerators_swapped) {
       if (!mainw->preview) lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play all"));
-      lives_widget_remove_accelerator(mainw->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
+      if (mainw->proc_ptr) lives_widget_remove_accelerator(mainw->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p,
+            (LiVESXModifierType)0);
       lives_widget_add_accelerator(mainw->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, LIVES_KEY_p,
                                    (LiVESXModifierType)0, LIVES_ACCEL_VISIBLE);
       accelerators_swapped = FALSE;

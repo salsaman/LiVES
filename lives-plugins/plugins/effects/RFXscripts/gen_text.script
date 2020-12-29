@@ -26,8 +26,8 @@ convert
 
 <params>
 text|_Text|string|LiVES|1024|
-xoffs|_X offset|num0|0|0|10000|
-yoffs|_Y offset|num0|0|0|10000|
+xoffs|_X offset|num0|0|-10000|10000|
+yoffs|_Y offset|num0|0|-10000|10000|
 fcol|_Fill colour|colRGB24|255|255|255|
 scol|_Stroke colour|colRGB24|255|255|255|
 psize|_Point size|num0|64|10|240|

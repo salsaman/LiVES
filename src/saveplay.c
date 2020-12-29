@@ -2249,6 +2249,8 @@ void play_file(void) {
 #endif
   }
 
+  mainw->clip_switched = FALSE;
+
   // reinit all active effects
   if (!mainw->preview && !mainw->is_rendering && !mainw->foreign) weed_reinit_all();
 
@@ -2262,7 +2264,6 @@ void play_file(void) {
     } else {
       d_print(_("Recording performance..."));
       needsadone = TRUE;
-      mainw->clip_switched = FALSE;
       // TODO
       if (mainw->current_file > 0 && (cfile->undo_action == UNDO_RESAMPLE || cfile->undo_action == UNDO_RENDER)) {
         lives_widget_set_sensitive(mainw->undo, FALSE);

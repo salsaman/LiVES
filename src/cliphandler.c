@@ -1149,9 +1149,11 @@ rhd_failed:
 
 
 LIVES_GLOBAL_INLINE char *get_clip_dir(int clipno) {
-  if (IS_NORMAL_CLIP(clipno)) {
+  if (IS_VALID_CLIP(clipno)) {
     lives_clip_t *sfile = mainw->files[clipno];
-    return lives_build_path(prefs->workdir, sfile->handle, NULL);
+    if (IS_NORMAL_CLIP(clipno) || sfile->clip_type == CLIP_TYPE_TEMP) {
+      return lives_build_path(prefs->workdir, sfile->handle, NULL);
+    }
   }
   return NULL;
 }

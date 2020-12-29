@@ -751,6 +751,8 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_timecode_t out_
     weed_set_voidptr_value(event, WEED_LEAF_NEXT_CHANGE, NULL);
     weed_set_voidptr_value(event, WEED_LEAF_PREV_CHANGE, NULL);
     break;
+  default:
+    break;
   }
 
   if (ret_event) *ret_event = event;
@@ -2220,7 +2222,9 @@ LiVESWidget *events_rec_dialog(void) {
                             LIVES_INT_TO_POINTER(RENDER_CHOICE_PREVIEW));
 
   if (!mainw->clip_switched && CURRENT_CLIP_IS_NORMAL && !mainw->recording_recovered
-      && (last_rec_start_tc == -1 || ((double)last_rec_start_tc / TICKS_PER_SECOND_DBL) < (cfile->frames - 1.) / cfile->fps)) {
+      && (last_rec_start_tc == -1
+          || (double)last_rec_start_tc / TICKS_PER_SECOND_DBL
+          < (cfile->frames - 1.) / cfile->fps)) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
 
@@ -2362,18 +2366,18 @@ boolean event_list_to_block(weed_plant_t *event_list, int num_events) {
 }
 
 
-void event_list_close_gaps(weed_event_t *event_list) {
+static void event_list_close_gaps(weed_event_t *event_list, frames_t play_start) {
   // close gap at start of event list, and between record_end and record_start markers
   weed_event_t *event, *next_event, *first_event;
   weed_timecode_t tc = 0, tc_delta = 0, rec_end_tc = 0, tc_start = 0, tc_offs = 0, last_tc = 0;
   int marker_type;
 
+  if (!event_list) return;
+
   if (!mainw->clip_switched) {
     /// offset of recording in clip
-    tc_start = calc_time_from_frame(mainw->current_file, mainw->play_start) * TICKS_PER_SECOND_DBL;
+    tc_start = calc_time_from_frame(mainw->current_file, play_start) * TICKS_PER_SECOND_DBL;
   }
-
-  if (!event_list) return;
 
   event = get_first_event(event_list);
   if (WEED_PLANT_IS_EVENT_LIST(event)) event = get_next_event(event);
@@ -2381,6 +2385,7 @@ void event_list_close_gaps(weed_event_t *event_list) {
   first_event = event;
 
   if (event) tc_offs = get_event_timecode(event);
+  tc_start += tc_offs;
 
   while (event) {
     next_event = get_next_event(event);
@@ -2389,6 +2394,7 @@ void event_list_close_gaps(weed_event_t *event_list) {
     if (tc < 0) tc = 0;
 
     if (weed_plant_has_leaf(event, WEED_LEAF_TC_ADJUSTMENT)) {
+      // handle the case where we crashed partway thru
       if (next_event) {
         if (!weed_plant_has_leaf(next_event, WEED_LEAF_TC_ADJUSTMENT)) {
           weed_timecode_t ntc = get_event_timecode(next_event);
@@ -2408,7 +2414,7 @@ void event_list_close_gaps(weed_event_t *event_list) {
         event = next_event;
         continue;
       } else if (marker_type == EVENT_MARKER_RECORD_START) {
-        // squash gaps in recording, bu we note the gap for output to same clip
+        // squash gaps in recording, but we note the gap for output to same clip
         tc_delta += tc - rec_end_tc;
 
         if (!mainw->clip_switched) {
@@ -3698,8 +3704,8 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
     }
 
     /// set audio and video start positions
-    atc = q_gint64(get_event_timecode(event), cfile->fps);
-    atime = (double)(atc + rec_delta_tc) / TICKS_PER_SECOND_DBL;
+    atc = q_gint64(get_event_timecode(event) + rec_delta_tc, cfile->fps);
+    atime = (double)atc / TICKS_PER_SECOND_DBL;
     out_frame = calc_frame_from_time4(mainw->current_file, atime);
 
     /// set the highest quality palette conversions
@@ -3777,7 +3783,8 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
     if (event) etype = get_event_type(event);
     else etype = WEED_EVENT_TYPE_FRAME;
     if (mainw->flush_audio_tc == 0) {
-      is_blank = FALSE;
+      if (!(!mainw->multitrack && mainw->is_rendering && cfile->old_frames > 0 && out_frame <= cfile->frames))
+        is_blank = FALSE;
       eventnext = get_next_event(event);
     } else {
       if (etype != WEED_EVENT_TYPE_MARKER)
@@ -3792,8 +3799,10 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
         /// tc delta is only used if we are rendering to an existing clip; otherwise resampling should have removed the event
         /// but just in case, we ignore it
         if (cfile->old_frames > 0) {
+          ticks_t ztc;
           rec_delta_tc = weed_get_int64_value(event, WEED_LEAF_TCDELTA, NULL);
-          atime = (double)(get_event_timecode(event) + rec_delta_tc) / TICKS_PER_SECOND_DBL;
+          ztc = q_gint64(get_event_timecode(event) + rec_delta_tc, cfile->fps);
+          atime = (double)ztc / TICKS_PER_SECOND_DBL;
           out_frame = calc_frame_from_time4(mainw->current_file, atime);
         }
       }
@@ -4412,7 +4421,6 @@ filterinit2:
 
     if (cfile->old_frames == 0) cfile->undo_start = cfile->undo_end = 0;
     if (r_video) {
-
       com = lives_strdup_printf("%s mv_mgk \"%s\" %d %d \"%s\"", prefs->backend, cfile->handle, cfile->undo_start,
                                 cfile->undo_end, get_image_ext_for_type(cfile->img_type));
 
@@ -4492,6 +4500,7 @@ boolean start_render_effect_events(weed_plant_t *event_list, boolean render_vid,
   lives_free(com);
 
   if (!mainw->transrend_proc) mainw->disk_mon = MONITOR_QUOTA;
+  if (cfile->old_frames > 0) cfile->nopreview = TRUE; /// FIXME...
 
   // play back the file as fast as possible, each time calling render_events()
   if ((!do_progress_dialog(TRUE, TRUE, render_vid ? (!mainw->transrend_proc ? _("Rendering")
@@ -4502,6 +4511,7 @@ boolean start_render_effect_events(weed_plant_t *event_list, boolean render_vid,
     mainw->disk_mon = 0;
     mainw->cancel_type = CANCEL_KILL;
     mainw->cancelled = CANCEL_NONE;
+    cfile->nopreview = FALSE;
 
     if (mainw->error) {
       widget_opts.non_modal = TRUE;
@@ -4519,6 +4529,7 @@ boolean start_render_effect_events(weed_plant_t *event_list, boolean render_vid,
     return FALSE;
   }
 
+  cfile->nopreview = FALSE;
   mainw->disk_mon = 0;
   mainw->cancel_type = CANCEL_KILL;
   mainw->cancelled = CANCEL_NONE;
@@ -5177,7 +5188,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
   boolean new_clip = FALSE, transcode;
 
   int dh, dw, dar, das, dac, dse;
-  int oplay_start;
+  frames_t oplay_start = 1;
 
   render_choice = RENDER_CHOICE_NONE;
 
@@ -5209,10 +5220,15 @@ boolean deal_with_render_choice(boolean add_deinit) {
 
   last_rec_start_tc = -1;
 
-  event_list_close_gaps(mainw->event_list);
+  if (!mainw->recording_recovered) {
+    // need to retain play_start for rendering to same clip
+    oplay_start = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
+    if (mainw->playing_sel && (oplay_start < cfile->start || oplay_start > cfile->end)) {
+      oplay_start = cfile->start;
+    }
+  }
 
-  // need to retain play_start for rendering to same clip
-  oplay_start = mainw->play_start;
+  event_list_close_gaps(mainw->event_list, oplay_start);
 
   check_storage_space(-1, FALSE);
 
@@ -5304,7 +5320,8 @@ boolean deal_with_render_choice(boolean add_deinit) {
       mainw->is_rendering = FALSE;
       break;
     case RENDER_CHOICE_SAME_CLIP:
-      cfile->undo_start = mainw->play_start = oplay_start; ///< same clip frames start where recording started
+      //cfile->undo_end = cfile->undo_start = oplay_start; ///< same clip frames start where recording started
+      cfile->undo_end = cfile->undo_start = -1;
       if (info) {
         lives_proc_thread_join(info);
         info = NULL;

@@ -252,43 +252,43 @@ LIVES_GLOBAL_INLINE void clear_mainw_msg(void) {lives_memset(mainw->msg, 0, MAIN
 
 ///////////////////////////////////////////////////////////
 
-LIVES_GLOBAL_INLINE double calc_time_from_frame(int clip, int frame) {return (frame - 1.) / mainw->files[clip]->fps;}
+LIVES_GLOBAL_INLINE double calc_time_from_frame(int clip, frames_t frame) {return ((double)frame - 1.) / mainw->files[clip]->fps;}
 
 
-LIVES_GLOBAL_INLINE int calc_frame_from_time(int filenum, double time) {
+LIVES_GLOBAL_INLINE frames_t calc_frame_from_time(int filenum, double time) {
   // return the nearest frame (rounded) for a given time, max is cfile->frames
-  int frame = 0;
+  frames_t frame = 0;
   if (time < 0.) return mainw->files[filenum]->frames ? 1 : 0;
-  frame = (int)(time * mainw->files[filenum]->fps + 1.49999);
+  frame = (frames_t)(time * mainw->files[filenum]->fps + 1.49999);
   return (frame < mainw->files[filenum]->frames) ? frame : mainw->files[filenum]->frames;
 }
 
 
-LIVES_GLOBAL_INLINE int calc_frame_from_time2(int filenum, double time) {
+LIVES_GLOBAL_INLINE frames_t calc_frame_from_time2(int filenum, double time) {
   // return the nearest frame (rounded) for a given time
   // allow max (frames+1)
-  int frame = 0;
+  frames_t frame = 0;
   if (time < 0.) return mainw->files[filenum]->frames ? 1 : 0;
-  frame = (int)(time * mainw->files[filenum]->fps + 1.49999);
+  frame = (frames_t)(time * mainw->files[filenum]->fps + 1.49999);
   return (frame < mainw->files[filenum]->frames + 1) ? frame : mainw->files[filenum]->frames + 1;
 }
 
 
-LIVES_GLOBAL_INLINE int calc_frame_from_time3(int filenum, double time) {
+LIVES_GLOBAL_INLINE frames_t calc_frame_from_time3(int filenum, double time) {
   // return the nearest frame (floor) for a given time
   // allow max (frames+1)
-  int frame = 0;
+  frames_t frame = 0;
   if (time < 0.) return mainw->files[filenum]->frames ? 1 : 0;
-  frame = (int)(time * mainw->files[filenum]->fps + 1.);
+  frame = (frames_t)(time * mainw->files[filenum]->fps + 1.);
   return (frame < mainw->files[filenum]->frames + 1) ? frame : mainw->files[filenum]->frames + 1;
 }
 
 
-LIVES_GLOBAL_INLINE int calc_frame_from_time4(int filenum, double time) {
+LIVES_GLOBAL_INLINE frames_t calc_frame_from_time4(int filenum, double time) {
   // return the nearest frame (rounded) for a given time, no maximum
-  int frame = 0;
+  frames_t frame = 0;
   if (time < 0.) return mainw->files[filenum]->frames ? 1 : 0;
-  frame = (int)(time * mainw->files[filenum]->fps + 1.49999);
+  frame = (frames_t)(time * mainw->files[filenum]->fps + 1.49999);
   return frame;
 }
 
@@ -893,7 +893,7 @@ boolean check_frame_count(int idx, boolean last_checked) {
    calls smogrify which physically finds the last frame using a (fast) O(log n) binary search method
    for CLIP_TYPE_DISK only
    (CLIP_TYPE_FILE should use the decoder plugin frame count) */
-int get_frame_count(int idx, int start) {
+frames_t get_frame_count(int idx, int start) {
   ssize_t bytes;
   char *com = lives_strdup_printf("%s count_frames \"%s\" %s %d", prefs->backend_sync, mainw->files[idx]->handle,
                                   get_image_ext_for_type(mainw->files[idx]->img_type), start);
@@ -908,7 +908,7 @@ int get_frame_count(int idx, int start) {
 }
 
 
-boolean get_frames_sizes(int fileno, int frame, int *hsize, int *vsize) {
+boolean get_frames_sizes(int fileno, frames_t frame, int *hsize, int *vsize) {
   // get the actual physical frame size
   lives_clip_t *sfile = mainw->files[fileno];
   weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);

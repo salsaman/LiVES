@@ -6919,6 +6919,7 @@ deinit2:
 
   if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS) && !is_gen) {
     ticks_t actual_ticks = mainw->startticks; ///< use the "thoretical" time
+    //ticks_t actual_ticks = mainw->clock_ticks; ///< use the "thoretical" time
     uint64_t rteval, new_rte;
     pthread_mutex_lock(&mainw->event_list_mutex);
     event_list = append_filter_init_event(mainw->event_list, actual_ticks, idx, -1, hotkey, inst);

@@ -484,7 +484,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   int is_final = 0;
   int ev_api = 100;
 
-  register int i, j, k;
+  int i, j, k;
 
   if (!in_list) return NULL;
   if (qfps < 1.) return NULL;

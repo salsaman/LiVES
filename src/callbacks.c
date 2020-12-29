@@ -3079,6 +3079,7 @@ close_done:
 
     void on_cut_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       uint32_t chk_mask = 0;
+      boolean bad_header = FALSE;
       int current_file = mainw->current_file;
 
       if (menuitem) {
@@ -3100,10 +3101,31 @@ close_done:
       }
 
       on_delete_activate(NULL, user_data);
+
+      if (!save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames)) bad_header = TRUE;
+
+      showclipimgs();
+
+      get_play_times();
+
+      if (bad_header) do_header_write_error(mainw->current_file);
+
+      // mark new file size as 'Unknown'
+      cfile->f_size = 0l;
+      cfile->changed = TRUE;
+
+      if (mainw->sl_undo_mem && (cfile->stored_layout_frame != 0 || (mainw->ccpd_with_sound &&
+                                 cfile->stored_layout_audio != 0.))) {
+        // need to invalidate undo/redo stack, in case file was used in some layout undo
+        stored_event_list_free_undos();
+      }
+
       if (mainw->current_file == current_file) {
         set_undoable(_("Cut"), TRUE);
         cfile->undo_action = UNDO_CUT;
       }
+
+      d_print_done();
 
       if (chk_mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
     }
@@ -4510,7 +4532,8 @@ close_done:
 
       play_file();
 
-      mainw->playing_sel = FALSE;
+      // leave this for render to same clip
+      //mainw->playing_sel = FALSE;
       lives_ce_update_timeline(0, cfile->real_pointer_time);
 
       // in case we are rendering and previewing, in case we now have audio
@@ -10262,9 +10285,6 @@ autolives_fail:
 
       if (user_data) {
         // called from multitrack
-        /* if (mainw->play_window) { */
-        /*   resize_play_window(); */
-        /* } */
         if (mainw->multitrack && mainw->multitrack->is_rendering) {
           mainw->play_start = 1;
           mainw->play_end = cfile->frames;
@@ -10284,12 +10304,16 @@ autolives_fail:
             render_events_cb(FALSE);
             mainw->flush_audio_tc = 0;
             cfile->afilesize = reget_afilesize_inner(mainw->current_file);
-            cfile->laudio_time = (double)(cfile->afilesize / (cfile->asampsize >> 3) / cfile->achans) / (double)cfile->arate;
-            if (cfile->achans > 1) {
-              cfile->raudio_time = cfile->laudio_time;
+            if (cfile->afilesize > 0.) {
+              cfile->laudio_time = (double)(cfile->afilesize / (cfile->asampsize >> 3)
+                                            / cfile->achans) / (double)cfile->arate;
+              if (cfile->achans > 1) {
+                cfile->raudio_time = cfile->laudio_time;
+              }
             }
           }
-          mainw->play_start = calc_frame_from_time(mainw->current_file, event_list_get_start_secs(mainw->event_list));
+          if (cfile->old_frames) mainw->play_start = cfile->undo_start;
+          else mainw->play_start = 1;
           mainw->play_end = INT_MAX;
         }
       }

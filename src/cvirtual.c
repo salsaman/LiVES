@@ -680,41 +680,8 @@ boolean check_if_non_virtual(int fileno, frames_t start, frames_t end) {
   return TRUE;
 }
 
-#define DS_SPACE_CHECK_FRAMES 100
 
-static boolean save_decoded(int fileno, frames_t i, LiVESPixbuf * pixbuf, boolean silent, int progress) {
-  lives_clip_t *sfile = mainw->files[fileno];
-  boolean retb;
-  int retval;
-  LiVESError *error = NULL;
-  char *oname = make_image_file_name(sfile, i, get_image_ext_for_type(sfile->img_type));
-
-  do {
-    retval = LIVES_RESPONSE_NONE;
-    retb = lives_pixbuf_save(pixbuf, oname, sfile->img_type, 100 - prefs->ocp, sfile->hsize, sfile->vsize, &error);
-    if (error && !silent) {
-      retval = do_write_failed_error_s_with_retry(oname, error->message);
-      lives_error_free(error);
-      error = NULL;
-    } else if (!retb) {
-      retval = do_write_failed_error_s_with_retry(oname, NULL);
-    }
-  } while (retval == LIVES_RESPONSE_RETRY);
-
-  lives_freep((void **)&oname);
-
-  if (progress % DS_SPACE_CHECK_FRAMES == 1) {
-    if (!check_storage_space(fileno, FALSE)) {
-      retval = LIVES_RESPONSE_CANCEL;
-    }
-  }
-
-  if (retval == LIVES_RESPONSE_CANCEL) return FALSE;
-  return TRUE;
-}
-
-
-#define STRG_CHECK 1000
+#define STRG_CHECK 100
 
 frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolean update_progress, LiVESPixbuf **pbr) {
   // pull frames from a clip to images
@@ -731,7 +698,10 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
   lives_clip_t *sfile = mainw->files[sfileno];
   LiVESPixbuf *pixbuf = NULL;
   lives_proc_thread_t tinfo = THREADVAR(tinfo);
+  savethread_priv_t *saveargs = NULL;
+  lives_thread_t *saver_thread = NULL;
   int progress = 1, count = 0;
+  frames_t retval = sframe;
   frames_t i;
 
   if (tinfo) lives_proc_thread_set_cancellable(tinfo);
@@ -740,6 +710,8 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
 
   for (i = sframe; i <= eframe; i++) {
     if (i > sfile->frames) break;
+
+    retval = i;
 
     if (sfile->pumper) {
       if (mainw->effects_paused || mainw->preview) {
@@ -759,18 +731,49 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
       pixbuf = pull_lives_pixbuf_at_size(sfileno, i, get_image_ext_for_type(sfile->img_type),
                                          q_gint64((i - 1.) / sfile->fps, sfile->fps), sfile->hsize,
                                          sfile->vsize, LIVES_INTERP_BEST, FALSE);
+      if (!pixbuf) {
+	retval = -i;
+	break;
+      }
 
-      if (!pixbuf) return -i;
-      if (!save_decoded(sfileno, i, pixbuf, pbr != NULL, progress)) {
-        check_storage_space(-1, TRUE);
-        return -i;
+      if (!saver_thread) {
+	saveargs = (savethread_priv_t *)lives_calloc(1, sizeof(savethread_priv_t));
+	saveargs->img_type = sfile->img_type;
+	saveargs->compression = 100 - prefs->ocp;
+	saveargs->width = sfile->hsize;
+	saveargs->height = sfile->vsize;
+	saver_thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
+      } else {
+	lives_thread_join(*saver_thread, NULL);
+	while (saveargs->error) {
+	  check_storage_space(-1, TRUE);
+	  retval = do_write_failed_error_s_with_retry(saveargs->fname, saveargs->error->message);
+	  lives_error_free(saveargs->error);
+	  saveargs->error = NULL;
+	  if (retval != LIVES_RESPONSE_RETRY) {
+	    if (saveargs->pixbuf) lives_widget_object_unref(saveargs->pixbuf);
+	    if (pixbuf) lives_widget_object_unref(pixbuf);
+	    lives_free(saveargs->fname);
+	    lives_free(saveargs);
+	    return -(i - 1);
+	  }
+	  lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression,
+			    saveargs->width, saveargs->height, &saveargs->error);
+	}
+	if (saveargs->pixbuf && saveargs->pixbuf != pixbuf) {
+	  lives_widget_object_unref(saveargs->pixbuf);
+	  saveargs->pixbuf = NULL;
+	}
+	lives_free(saveargs->fname);
+	saveargs->fname = NULL;
       }
-      if (!pbr) {
-        if (pixbuf) lives_widget_object_unref(pixbuf);
-        pixbuf = NULL;
-      }
+
+      saveargs->fname = make_image_file_name(sfile, i, get_image_ext_for_type(sfile->img_type));
+      saveargs->pixbuf = pixbuf;
+      lives_thread_create(saver_thread, LIVES_THRDATTR_NONE, lives_pixbuf_save_threaded, saveargs);
+
       if (++count == STRG_CHECK) {
-        if (!check_storage_space(-1, TRUE)) break;
+	if (!check_storage_space(-1, TRUE)) break;
       }
 
       // another thread may have called check_if_non_virtual - TODO : use a mutex
@@ -778,26 +781,38 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
       sfile->frame_index[i - 1] = -1;
 
       if (update_progress) {
-        // sig_progress...
-        lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%d", progress++);
-        threaded_dialog_spin((double)(i - sframe) / (double)(eframe - sframe + 1));
-        lives_widget_context_update();
+	// sig_progress...
+	lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%d", progress++);
+	threaded_dialog_spin((double)(i - sframe) / (double)(eframe - sframe + 1));
+	lives_widget_context_update();
       }
 
       if (mainw->cancelled != CANCEL_NONE && !(sfile->pumper && mainw->preview)) {
-        if (!check_if_non_virtual(sfileno, 1, sfile->frames)) save_frame_index(sfileno);
-        if (pbr) *pbr = pixbuf;
-        return i;
+	break;
       }
     }
   }
 
-  if (pbr) *pbr = pixbuf;
+  if (pbr) {
+    if (retval > 0) *pbr = pixbuf;
+    else *pbr = NULL;
+  }
   if (!check_if_non_virtual(sfileno, 1, sfile->frames) && !save_frame_index(sfileno)) {
     check_storage_space(-1, FALSE);
-    return -i;
+    retval = -i;
   }
-  return i;
+
+  if (saver_thread) {
+    lives_thread_join(*saver_thread, NULL);
+    if (saveargs->pixbuf && saveargs->pixbuf != pixbuf) {
+      lives_widget_object_unref(saveargs->pixbuf);
+    }
+    lives_free(saveargs->fname);
+    saveargs->fname = NULL;
+    lives_free(saveargs);
+  }
+
+  return retval;
 }
 
 
@@ -852,29 +867,35 @@ static void restore_gamma_cb(int gamma_type) {
 }
 
 
-frames_t realize_all_frames(int clipno, const char *msg, boolean enough) {
+frames_t realize_all_frames(int clipno, const char *msg, boolean enough, frames_t start, frames_t end) {
   // if enough is set, we show Enough button instead of Cancel.
   frames_t ret;
   int current_file = mainw->current_file;
   mainw->cancelled = CANCEL_NONE;
   if (!IS_VALID_CLIP(clipno)) return 0;
 
-  // if its the clipboard and we have exotic gamma types we need to do a special thing
-  // - fix the gamma_type of the clipboard existing frames before inserting in cfile
-  if (clipno == 0 && prefs->btgamma && CURRENT_CLIP_HAS_VIDEO && cfile->gamma_type
+  // in future we may have several versions of the clipboard each with a different gamma type
+  // (sRGB, bt.701, etc)
+  // here we would restore the version of the clipboard which has gamma type matching the target (current) clip
+  // this will avoid quality loss due to constantly converting gamma in the clippboard
+  // - This needs further testing before we can allow clips with "native" bt.701 gamma, etc.
+  if (clipno == CLIPBOARD_FILE && prefs->btgamma && CURRENT_CLIP_HAS_VIDEO && cfile->gamma_type
       != clipboard->gamma_type) {
     restore_gamma_cb(cfile->gamma_type);
   }
 
-  if (!check_if_non_virtual(clipno, 1, mainw->files[clipno]->frames)) {
+  if (end <= 0) end = mainw->files[clipno]->frames + end;
+  if (end < start) return 0;
+  
+  if (!check_if_non_virtual(clipno, start, end)) {
     mainw->current_file = clipno;
-    cfile->progress_start = 1;
-    cfile->progress_end = count_virtual_frames(cfile->frame_index, 1, cfile->frames);
+    cfile->progress_start = start;
+    cfile->progress_end = count_virtual_frames(cfile->frame_index, start, end);
     if (enough) mainw->cancel_type = CANCEL_SOFT; // force "Enough" button to be shown
     do_threaded_dialog((char *)msg, TRUE);
     lives_widget_show_all(mainw->proc_ptr->processing);
     mainw->cancel_type = CANCEL_KILL;
-    ret = virtual_to_images(mainw->current_file, 1, cfile->frames, TRUE, NULL);
+    ret = virtual_to_images(mainw->current_file, start, end, TRUE, NULL);
     end_threaded_dialog();
     mainw->current_file = current_file;
 
@@ -884,7 +905,7 @@ frames_t realize_all_frames(int clipno, const char *msg, boolean enough) {
     }
     if (ret <= 0) return ret;
   }
-  return mainw->files[clipno]->frames;
+  return end;
 }
 
 

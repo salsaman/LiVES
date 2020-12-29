@@ -803,7 +803,11 @@ typedef enum {
 
 #define CURRENT_CLIP_TOTAL_TIME CLIP_TOTAL_TIME(mainw->current_file)
 
-#define CURRENT_CLIP_IS_CLIPBOARD (mainw->current_file == 0)
+#define CLIPBOARD_FILE 0
+
+#define clipboard mainw->files[CLIPBOARD_FILE]
+
+#define CURRENT_CLIP_IS_CLIPBOARD (mainw->current_file == CLIPBOARD_FILE)
 
 /// use REVERSE / FORWARD when a sign is used, BACKWARD / FORWARD when a parity is used
 typedef enum {
@@ -1597,8 +1601,6 @@ void mt_sensitise(lives_mt *);
 
 // inlines
 #define cfile mainw->files[mainw->current_file]
-#define CLIPBOARD_FILE 0
-#define clipboard mainw->files[CLIPBOARD_FILE]
 
 #define LIVES_TV_CHANNEL1 "http://www.serverwillprovide.com/sorteal/livestvclips/livestv.ogm"
 

@@ -1571,7 +1571,7 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
     if (sfile->clip_type == CLIP_TYPE_FILE) {
       frames_t ret;
       char *msg = (_("Pulling frames from clip..."));
-      if ((ret = realize_all_frames(clip, msg, FALSE)) < sfile->frames) {
+      if ((ret = realize_all_frames(clip, msg, FALSE, 1, 0)) < sfile->frames) {
         lives_free(msg);
         lives_freep((void **)&mainw->subt_save_file);
         if (ret > 0) d_print_cancelled();
@@ -4176,7 +4176,7 @@ void backup_file(int clip, int start, int end, const char *file_name) {
   if (sfile->clip_type == CLIP_TYPE_FILE) {
     frames_t ret;
     char *msg = (_("Pulling frames from clip..."));
-    if ((ret = realize_all_frames(clip, msg, FALSE)) < sfile->frames) {
+    if ((ret = realize_all_frames(clip, msg, FALSE, 1, sfile->frames)) < sfile->frames) {
       lives_free(msg);
       if (ret > 0) d_print_cancelled();
       return;

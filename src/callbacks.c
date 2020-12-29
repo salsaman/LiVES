@@ -3166,7 +3166,7 @@ close_done:
 #ifndef VIRT_PASTE
       msg = (_("Pulling frames from clipboard..."));
 
-      if ((lframe = realize_all_frames(0, msg, TRUE)) < cbframes) {
+      if ((lframe = realize_all_frames(0, msg, TRUE, 1, cbframes)) < cbframes) {
         if (!paste_enough_dlg(lframe - 1)) {
           lives_free(msg);
           close_current_file(old_file);
@@ -3603,7 +3603,7 @@ close_done:
 
       if (!virtual_ins) {
         char *msg = (_("Pulling frames from clipboard..."));
-        if (realize_all_frames(0, msg, FALSE) <= 0) {
+        if (realize_all_frames(CLIPBOARD_FILE, msg, FALSE, 1, 0) <= 0) {
           lives_free(msg);
           sensitize();
           unbuffer_lmap_errors(FALSE);
@@ -6693,7 +6693,7 @@ end:
 
       desensitize();
 
-      ret = realize_all_frames(mainw->current_file, msg, TRUE);
+      ret = realize_all_frames(mainw->current_file, msg, TRUE, 1, 0);
       lives_free(msg);
       if (ret <= 0) d_print_failed();
       else if (ret < cfile->frames) d_print_enough(ret);
@@ -8500,7 +8500,7 @@ end:
       lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
       char *msg = (_("Pulling frames from clipboard..."));
       if (!(cdata->seek_flag & LIVES_SEEK_FAST)) {
-        if (realize_all_frames(0, msg, FALSE) <= 0) {
+        if (realize_all_frames(0, msg, FALSE, 1, 0) <= 0) {
           mainw->current_file = current_file;
           lives_free(msg);
           sensitize();

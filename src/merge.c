@@ -11,6 +11,7 @@
 #include "effects.h"
 #include "resample.h"
 #include "callbacks.h"
+#include "cvirtual.h"
 
 _merge_opts *merge_opts;
 
@@ -44,7 +45,7 @@ void create_merge_dialog(void) {
   int cb_frames = clipboard->frames;
   int defstart = 0;
 
-  register int i;
+  int i;
 
   merge_opts = (_merge_opts *)(lives_malloc(sizeof(_merge_opts)));
   merge_opts->list_to_rfx_index = (int *)lives_malloc(sizint * (mainw->num_rendered_effects_builtin +
@@ -80,8 +81,7 @@ void create_merge_dialog(void) {
   height = GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY;
 
   merge_opts->merge_dialog = lives_standard_dialog_new(_("Merge"), FALSE, width, height);
-  lives_signal_handlers_disconnect_by_func(merge_opts->merge_dialog, LIVES_GUI_CALLBACK(return_true),
-      NULL);
+  lives_signal_handlers_disconnect_by_func(merge_opts->merge_dialog, LIVES_GUI_CALLBACK(return_true), NULL);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(merge_opts->merge_dialog), accel_group);
@@ -128,14 +128,12 @@ void create_merge_dialog(void) {
     label = lives_standard_label_new(_("What to do with extra clipboard frames -"));
     lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
 
-    merge_opts->ins_frame_button = lives_standard_radio_button_new(_("_Insert Frames"), &radiobutton_insdrop_group, LIVES_BOX(hbox),
-                                   NULL);
+    merge_opts->ins_frame_button = lives_standard_radio_button_new(_("_Insert Frames"), &radiobutton_insdrop_group, LIVES_BOX(hbox), NULL);
 
     merge_opts->ins_frame_function = lives_signal_connect(LIVES_GUI_OBJECT(merge_opts->ins_frame_button),
                                      LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(on_ins_frames_toggled), NULL);
 
-    merge_opts->drop_frame_button = lives_standard_radio_button_new(_("_Drop Frames"), &radiobutton_insdrop_group, LIVES_BOX(hbox),
-                                    NULL);
+    merge_opts->drop_frame_button = lives_standard_radio_button_new(_("_Drop Frames"), &radiobutton_insdrop_group, LIVES_BOX(hbox), NULL);
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(merge_opts->drop_frame_button), !mainw->last_transition_ins_frames);
   } else if ((cfile->end - cfile->start + 1) > cb_frames) {
@@ -147,16 +145,14 @@ void create_merge_dialog(void) {
     lives_widget_set_sensitive(merge_opts->spinbutton_loops, !mainw->last_transition_loop_to_fit);
 
     lives_signal_connect_after(LIVES_GUI_OBJECT(merge_opts->spinbutton_loops), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                               LIVES_GUI_CALLBACK(after_spinbutton_loops_changed),
-                               NULL);
+                               LIVES_GUI_CALLBACK(after_spinbutton_loops_changed), NULL);
 
     fit_button = lives_standard_check_button_new(_("_Loop Clipboard to Fit Selection"), mainw->last_transition_loop_to_fit,
                  LIVES_BOX(hbox), NULL);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(fit_button), mainw->last_transition_loop_to_fit);
 
     lives_signal_connect(LIVES_GUI_OBJECT(fit_button), LIVES_WIDGET_TOGGLED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_fit_toggled),
-                         NULL);
+                         LIVES_GUI_CALLBACK(on_fit_toggled), NULL);
   }
 
   add_hsep_to_box(LIVES_BOX(vbox));
@@ -200,23 +196,20 @@ void create_merge_dialog(void) {
 
   lives_button_grab_default_special(okbutton);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_merge_cancel_clicked),
-                       rfx);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_merge_cancel_clicked), rfx);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_merge_ok_clicked),
-                       rfx);
+                       LIVES_GUI_CALLBACK(on_merge_ok_clicked), rfx);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(transition_combo), LIVES_WIDGET_CHANGED_SIGNAL,
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(transition_combo), LIVES_WIDGET_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_trans_method_changed), NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(align_start_button), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_align_start_end_toggled),
-                       rfx);
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(align_start_button), LIVES_WIDGET_TOGGLED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_align_start_end_toggled), rfx);
 
   if (prefs->show_gui) {
     lives_widget_show_all(merge_opts->merge_dialog);
@@ -290,6 +283,7 @@ void on_merge_cancel_clicked(LiVESButton *button, livespointer user_data) {
   lives_list_free_all(&merge_opts->trans_list);
   lives_free(merge_opts->list_to_rfx_index);
   lives_free(merge_opts);
+  sensitize();
 }
 
 
@@ -324,6 +318,7 @@ void on_merge_ok_clicked(LiVESButton *button, livespointer user_data) {
   if (!special_cleanup(TRUE)) {
     // check for file overwrites with special type "filewrite"
     // if user declines, will return with LIVES_RESPONSE_RETRY
+    sensitize();
     return;
   }
 
@@ -344,6 +339,7 @@ void on_merge_ok_clicked(LiVESButton *button, livespointer user_data) {
       lives_list_free(merge_opts->trans_list);
       lives_free(merge_opts->list_to_rfx_index);
       lives_free(merge_opts);
+      sensitize();
       return;
     }
   }
@@ -362,7 +358,10 @@ void on_merge_ok_clicked(LiVESButton *button, livespointer user_data) {
 
   // if pref is set, resample clipboard video
   if (prefs->ins_resample && cfile->fps != clipboard->fps) {
-    if (!resample_clipboard(cfile->fps)) return;
+    if (!resample_clipboard(cfile->fps)) {
+      sensitize();
+      return;
+    }
   }
 
   if ((cfile->end - cfile->start + 1) <= clipboard->frames) {
@@ -405,9 +404,11 @@ void on_merge_ok_clicked(LiVESButton *button, livespointer user_data) {
     on_insert_activate(NULL, NULL);
     if (mainw->error) {
       d_print_failed();
+      sensitize();
       return;
     }
     if (mainw->cancelled) {
+      sensitize();
       return;
     }
   }
@@ -464,6 +465,18 @@ void on_merge_ok_clicked(LiVESButton *button, livespointer user_data) {
     cfile->progress_end = cfile->end;
   }
 
+  /// pull frames for clipboard
+  if (!check_if_non_virtual(CLIPBOARD_FILE, cb_start, cb_end)) {
+    char *msg = (_("Pulling frames from clipboard..."));
+    if (realize_all_frames(CLIPBOARD_FILE, msg, FALSE, cb_start, cb_end) <= 0) {
+      lives_free(msg);
+      d_print_cancelled();
+      sensitize();
+      return;
+    }
+    lives_free(msg);
+  }
+  
   // do the actual merge
   if (!do_effect(rfx, FALSE)) {
     // cancelled

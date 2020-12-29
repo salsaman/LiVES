@@ -99,7 +99,7 @@ static int realloc_cache(_sdata *sdata, int newsize, int width, int height) {
 
 
 static weed_error_t RGBd_init(weed_plant_t *inst) {
-  weed_plant_t **in_params = weed_get_in_params(inst, WEED_LEAF_IN_PARAMETERS, NULL), *gui;
+  weed_plant_t **in_params = weed_get_in_params(inst, NULL), *gui;
   int maxcache = weed_param_get_value_int(in_params[0]);
   int i;
 

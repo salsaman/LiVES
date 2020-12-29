@@ -7918,7 +7918,7 @@ void close_current_file(int file_to_switch_to) {
       mt_delete_clips(mainw->multitrack, mainw->current_file);
     }
 
-    if (mainw->first_free_file == ALL_USED || mainw->first_free_file > mainw->current_file)
+    if ((mainw->first_free_file == ALL_USED || mainw->first_free_file > mainw->current_file) && mainw->current_file > 0)
       mainw->first_free_file = mainw->current_file;
 
     if (!mainw->only_close) {

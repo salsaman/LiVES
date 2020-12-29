@@ -680,6 +680,39 @@ boolean check_if_non_virtual(int fileno, frames_t start, frames_t end) {
   return TRUE;
 }
 
+#define DS_SPACE_CHECK_FRAMES 100
+
+static boolean save_decoded(int fileno, frames_t i, LiVESPixbuf * pixbuf, boolean silent, int progress) {
+  lives_clip_t *sfile = mainw->files[fileno];
+  boolean retb;
+  int retval;
+  LiVESError *error = NULL;
+  char *oname = make_image_file_name(sfile, i, get_image_ext_for_type(sfile->img_type));
+
+  do {
+    retval = LIVES_RESPONSE_NONE;
+    retb = lives_pixbuf_save(pixbuf, oname, sfile->img_type, 100 - prefs->ocp, sfile->hsize, sfile->vsize, &error);
+    if (error && !silent) {
+      retval = do_write_failed_error_s_with_retry(oname, error->message);
+      lives_error_free(error);
+      error = NULL;
+    } else if (!retb) {
+      retval = do_write_failed_error_s_with_retry(oname, NULL);
+    }
+  } while (retval == LIVES_RESPONSE_RETRY);
+
+  lives_freep((void **)&oname);
+
+  if (progress % DS_SPACE_CHECK_FRAMES == 1) {
+    if (!check_storage_space(fileno, FALSE)) {
+      retval = LIVES_RESPONSE_CANCEL;
+    }
+  }
+
+  if (retval == LIVES_RESPONSE_CANCEL) return FALSE;
+  return TRUE;
+}
+
 
 #define STRG_CHECK 100
 

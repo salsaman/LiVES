@@ -85,12 +85,21 @@ lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t attr, lives_fun
 
 
 void *main_thread_execute(lives_funcptr_t func, int return_type, void *retval, const char *args_fmt, ...) {
+  void *dcmutex;
+  LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
   lives_proc_thread_t lpt;
   va_list xargs;
   void *ret;
   va_start(xargs, args_fmt);
   lpt = _lives_proc_thread_create(LIVES_THRDATTR_FG_THREAD, func, return_type, args_fmt, xargs);
-  ret = lives_fg_run(lpt, retval);
+  dcmutex = weed_get_voidptr_value(lpt, WEED_LEAF_DONTCARE_MUTEX, NULL);
+  if (dcmutex) lives_free(dcmutex);
+  if (!ctx || ctx == lives_widget_context_default()) {
+    // run direct
+    ret = fg_run_func(lpt, retval);
+  } else {
+    ret = lives_fg_run(lpt, retval);
+  }
   va_end(xargs);
   return ret;
 }
@@ -152,113 +161,159 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
     default: CALL_VOID_0(); break;
     }
     break;
-  case FUNCSIG_INT:
+  case FUNCSIG_INT: {
+    int p0;
     switch (ret_type) {
     default: CALL_VOID_1(int); break;
     }
     break;
-  case FUNCSIG_DOUBLE:
+  }
+  case FUNCSIG_DOUBLE: {
+    double p0;
     switch (ret_type) {
     default: CALL_VOID_1(double); break;
     }
     break;
-  case FUNCSIG_STRING:
+  }
+  case FUNCSIG_STRING: {
+    char *p0;
     switch (ret_type) {
     case WEED_SEED_STRING: CALL_1(string, string); break;
     case WEED_SEED_INT64: CALL_1(int64, string); break;
     default: CALL_VOID_1(string); break;
     }
+    lives_free(p0);
     break;
-  case FUNCSIG_VOIDP:
+  }
+  case FUNCSIG_VOIDP: {
+    void *p0;
     switch (ret_type) {
     case WEED_SEED_BOOLEAN: CALL_1(boolean, voidptr); break;
     case WEED_SEED_INT: CALL_1(int, voidptr); break;
     default: CALL_VOID_1(voidptr); break;
     }
     break;
-  case FUNCSIG_INT_INT64:
+  }
+  case FUNCSIG_INT_INT64: {
+    int p0; int64_t p1;
     switch (ret_type) {
     default: CALL_VOID_2(int, int64); break;
     }
     break;
-  case FUNCSIG_STRING_INT:
+  }
+  case FUNCSIG_STRING_INT: {
+    char *p0; int p1;
     switch (ret_type) {
     default: CALL_VOID_2(string, int); break;
     }
+    lives_free(p0);
     break;
-  case FUNCSIG_STRING_BOOL:
+  }
+  case FUNCSIG_STRING_BOOL: {
+    char *p0; int p1;
     switch (ret_type) {
     default: CALL_VOID_2(string, boolean); break;
     }
+    lives_free(p0);
     break;
-  case FUNCSIG_VOIDP_DOUBLE:
+  }
+  case FUNCSIG_VOIDP_DOUBLE: {
+    void *p0; double p1;
     switch (ret_type) {
     default: CALL_VOID_2(voidptr, double); break;
     }
     break;
-  case FUNCSIG_VOIDP_VOIDP:
+  }
+  case FUNCSIG_VOIDP_VOIDP: {
+    void *p0, *p1;
     switch (ret_type) {
     case WEED_SEED_BOOLEAN: CALL_2(boolean, voidptr, voidptr); break;
     default: CALL_VOID_2(voidptr, voidptr); break;
     }
     break;
-  case FUNCSIG_VOIDP_STRING:
+  }
+  case FUNCSIG_VOIDP_STRING: {
+    void *p0; char *p1;
     switch (ret_type) {
     case WEED_SEED_BOOLEAN: CALL_2(boolean, voidptr, string); break;
     default: CALL_VOID_2(voidptr, string); break;
     }
+    lives_free(p1);
     break;
-  case FUNCSIG_PLANTP_BOOL:
+  }
+  case FUNCSIG_PLANTP_BOOL: {
+    weed_plant_t *p0; int p1;
     switch (ret_type) {
     default: CALL_VOID_2(plantptr, boolean); break;
     }
     break;
-  case FUNCSIG_VOIDP_VOIDP_VOIDP:
+  }
+  case FUNCSIG_VOIDP_VOIDP_VOIDP: {
+    void *p0, *p1, *p2;
     switch (ret_type) {
     case WEED_SEED_BOOLEAN: CALL_3(boolean, voidptr, voidptr, voidptr); break;
     default: CALL_VOID_3(voidptr, voidptr, voidptr); break;
     }
     break;
-  case FUNCSIG_BOOL_BOOL_STRING:
+  }
+  case FUNCSIG_BOOL_BOOL_STRING: {
+    int p0, p1; char *p2;
     switch (ret_type) {
     case WEED_SEED_BOOLEAN: CALL_3(boolean, boolean, boolean, string); break;
     default: CALL_VOID_3(boolean, boolean, string); break;
     }
+    lives_free(p2);
     break;
-  case FUNCSIG_PLANTP_VOIDP_INT64:
+  }
+  case FUNCSIG_PLANTP_VOIDP_INT64: {
+    weed_plant_t *p0; void *p1; int64_t p2;
     switch (ret_type) {
     case WEED_SEED_BOOLEAN: CALL_3(boolean, plantptr, voidptr, int64); break;
     default: CALL_VOID_3(plantptr, voidptr, int64); break;
     }
     break;
-  case FUNCSIG_STRING_STRING_VOIDP_INT:
+  }
+  case FUNCSIG_STRING_STRING_VOIDP_INT: {
+    char *p0, *p1; void *p2; int p3;
     switch (ret_type) {
     case WEED_SEED_STRING: CALL_4(string, string, string, voidptr, int); break;
     default: CALL_VOID_4(string, string, voidptr, int); break;
     }
+    lives_free(p0); lives_free(p1);
     break;
-  case FUNCSIG_INT_INT_BOOL_VOIDP:
+  }
+  case FUNCSIG_INT_INT_BOOL_VOIDP: {
+    int p0, p1, p2; void *p3;
     switch (ret_type) {
     case WEED_SEED_BOOLEAN: CALL_4(boolean, int, int, boolean, voidptr); break;
     default: CALL_VOID_4(int, int, boolean, voidptr); break;
     }
     break;
-  case FUNCSIG_VOIDP_STRING_STRING_INT64_INT:
+  }
+  case FUNCSIG_VOIDP_STRING_STRING_INT64_INT: {
+    void *p0; char *p1, *p2; int64_t p3; int p4;
     switch (ret_type) {
     default: CALL_VOID_5(voidptr, string, string, int64, int); break;
     }
+    lives_free(p1); lives_free(p2);
     break;
-  case FUNCSIG_INT_INT_INT_BOOL_VOIDP:
+  }
+  case FUNCSIG_INT_INT_INT_BOOL_VOIDP: {
+    int p0, p1, p2, p3; void *p4;
     switch (ret_type) {
     default: CALL_VOID_5(int, int, int, boolean, voidptr); break;
     }
     break;
-  case FUNCSIG_STRING_STRING_VOIDP_INT_STRING_VOIDP:
+  }
+  case FUNCSIG_STRING_STRING_VOIDP_INT_STRING_VOIDP: {
+    char *p0, *p1, *p4; void *p2, *p5; int p3;
     switch (ret_type) {
     case WEED_SEED_STRING: CALL_6(string, string, string, voidptr, int, string, voidptr); break;
     default: CALL_VOID_6(string, string, voidptr, int, string, voidptr); break;
     }
+    lives_free(p0); lives_free(p1); lives_free(p4);
     break;
+  }
   default:
     msg = lives_strdup_printf("Unknown funcsig with tyte 0x%016lX called", sig);
     LIVES_FATAL(msg);
@@ -592,6 +647,8 @@ boolean do_something_useful(lives_thread_data_t *tdata) {
   pthread_mutex_lock(&twork_count_mutex);
   ntasks--;
   pthread_mutex_unlock(&twork_count_mutex);
+
+  rpmalloc_thread_collect();
   return TRUE;
 }
 

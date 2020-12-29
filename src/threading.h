@@ -94,18 +94,18 @@ typedef weed_funcptr_t(*funcptr_funcptr_t)();
 typedef void *(*funcptr_voidptr_t)();
 typedef weed_plant_t(*funcptr_plantptr_t)();
 
-#define GETARG(type, n) WEED_LEAF_GET(info, _WEED_LEAF_THREAD_PARAM(n), type)
+#define GETARG(type, n, m) (p##m = WEED_LEAF_GET(info, _WEED_LEAF_THREAD_PARAM(n), type))
 
-#define ARGS1(t1) GETARG(t1, "0")
-#define ARGS2(t1, t2) ARGS1(t1), GETARG(t2, "1")
-#define ARGS3(t1, t2, t3) ARGS2(t1, t2), GETARG(t3, "2")
-#define ARGS4(t1, t2, t3, t4) ARGS3(t1, t2, t3), GETARG(t4, "3")
-#define ARGS5(t1, t2, t3, t4, t5) ARGS4(t1, t2, t3, t4), GETARG(t5, "4")
-#define ARGS6(t1, t2, t3, t4, t5, t6) ARGS5(t1, t2, t3, t4, t5), GETARG(t6, "5")
-#define ARGS7(t1, t2, t3, t4, t5, t6, t7) ARGS6(t1, t2, t3, t4, t5, t6), GETARG(t7, "6")
-#define ARGS8(t1, t2, t3, t4, t5, t6, t7, t8) ARGS7(t1, t2, t3, t4, t5, t6, t7), GETARG(t8, "7")
-#define ARGS9(t1, t2, t3, t4, t5, t6, t7, t8, t9) ARGS8(t1, t2, t3, t4, t5, t6, t7. t8), GETARG(t9, "8")
-#define ARGS10(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10) ARGS9(t1, t2, t3, t4, t5, t6, t7, t8, t9), GETARG(t10, "9")
+#define ARGS1(t1) GETARG(t1, "0", 0)
+#define ARGS2(t1, t2) ARGS1(t1), GETARG(t2, "1", 1)
+#define ARGS3(t1, t2, t3) ARGS2(t1, t2), GETARG(t3, "2", 2)
+#define ARGS4(t1, t2, t3, t4) ARGS3(t1, t2, t3), GETARG(t4, "3", 3)
+#define ARGS5(t1, t2, t3, t4, t5) ARGS4(t1, t2, t3, t4), GETARG(t5, "4", 4)
+#define ARGS6(t1, t2, t3, t4, t5, t6) ARGS5(t1, t2, t3, t4, t5), GETARG(t6, "5", 5)
+#define ARGS7(t1, t2, t3, t4, t5, t6, t7) ARGS6(t1, t2, t3, t4, t5, t6), GETARG(t7, "6", 6)
+#define ARGS8(t1, t2, t3, t4, t5, t6, t7, t8) ARGS7(t1, t2, t3, t4, t5, t6, t7), GETARG(t8, "7", 7)
+#define ARGS9(t1, t2, t3, t4, t5, t6, t7, t8, t9) ARGS8(t1, t2, t3, t4, t5, t6, t7. t8), GETARG(t9, "8", 8)
+#define ARGS10(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10) ARGS9(t1, t2, t3, t4, t5, t6, t7, t8, t9), GETARG(t10, "9", 9)
 
 #define CALL_VOID_10(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10) (*thefunc->func)(ARGS10(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10))
 #define CALL_VOID_9(t1, t2, t3, t4, t5, t6, t7, t8, t9) (*thefunc->func)(ARGS9(t1, t2, t3, t4, t5, t6, t7, t8, t9))

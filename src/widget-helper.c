@@ -1796,32 +1796,22 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dial
 
 
 void *lives_fg_run(lives_proc_thread_t lpt, void *retval) {
-  void *ret = NULL;
   boolean waitgov = FALSE;
-#ifdef GUI_GTK
-  LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
-  if (!ctx || ctx == lives_widget_context_default()) {
-    // run direct
-    ret = fg_run_func(lpt, retval);
-  } else {
-    lpttorun = lpt;
-    lpt_retval = (volatile void *)retval;
-    if (!gov_running) {
-      lives_idle_add_simple(governor_loop, NULL);
-      while (!gov_running) {
-        lives_nanosleep(NSLEEP_TIME);
-      }
-    } else {
-      waitgov = TRUE;
-      mainw->clutch = FALSE;
-    }
-    while (lpttorun || (waitgov && !mainw->clutch)) {
+  lpttorun = lpt;
+  lpt_retval = (volatile void *)retval;
+  if (!gov_running) {
+    lives_idle_add_simple(governor_loop, NULL);
+    while (!gov_running) {
       lives_nanosleep(NSLEEP_TIME);
     }
-    ret = (void *)lpt_result;
+  } else {
+    waitgov = TRUE;
+    mainw->clutch = FALSE;
   }
-#endif
-  return ret;
+  while (lpttorun || (waitgov && !mainw->clutch)) {
+    lives_nanosleep(NSLEEP_TIME);
+  }
+  return (void *)lpt_result;
 }
 
 

@@ -11493,6 +11493,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
 
           lives_free(rs);
 
+          weed_layer_pixel_data_free(layer);
           values[0] = lives_calloc(ALIGN_CEIL(vlen64_tot + EXTRA_BYTES, 16) / 16, 16);
 
           if (!values[0]) {

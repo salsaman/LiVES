@@ -1569,7 +1569,6 @@ lfi_done:
         && !prefs->hide_framebar) {
       lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount);
     }
-    lives_freep((void **)&framecount);
   }
 
   do_cleanup(mainw->frame_layer, success);

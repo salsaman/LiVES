@@ -110,6 +110,7 @@ typedef struct {
   volatile bool worker_active;
   int pidx, opidx;
   int nprs;
+  int ctime;
   char **prnames;
   uint8_t *bad_programs;
   int program;
@@ -501,7 +502,7 @@ static void *worker(void *data) {
   settings.meshX = texwidth / 64;
   settings.meshY = ((int)(settings.meshX * hwratio + 1) >> 1) << 1;
   settings.fps = sd->fps;
-  settings.smoothPresetDuration = 2.;
+  settings.smoothPresetDuration = 10.;
   settings.presetDuration = 60;
   settings.beatSensitivity = DEF_SENS;
   settings.aspectCorrection = 1;
@@ -588,25 +589,29 @@ static void *worker(void *data) {
     }
 
     sd->worker_active = true;
-    if (sd->timer > 10.) {
+    if (sd->ctime && sd->timer > (double)sd->ctime) {
       sd->timer = 0.;
       rerand = true;
     }
     if (sd->pidx == -1) {
       if (rerand) {
         sd->cycadj = 0;
-        while (1) {
+        for (int rr = 0; rr < 4; rr++) {
           sd->program = fastrand_int(sd->nprs - 2);
-          if (sd->bad_programs[sd->program] != 1) {
-            sd->globalPM->selectPreset(sd->program, sd->bad_prog);
 
-            // unfortunately queuePreset seems to be only available in certain versions,
-            // otherwise we could get a better effect by queuing the next preset and allowing projectM
-            // to do the change
-            //sd->globalPM->queuePreset(sd->program);
-            break;
+          // mkae it 4 times more likely to select a known good program than an untested one
+          if (sd->bad_programs[sd->program] == 2) break;
+          if (sd->bad_programs[sd->program] == 1) {
+            rr--;
+            continue;
           }
         }
+        sd->globalPM->selectPreset(sd->program, sd->bad_prog || sd->bad_programs[sd->program] == 0);
+
+        // unfortunately queuePreset seems to be only available in certain versions,
+        // otherwise we could get a better effect by queuing the next preset and allowing projectM
+        // to do the change
+        //sd->globalPM->queuePreset(sd->program);
         rerand = false;
         sd->bad_prog = false;
         blanks = 0;
@@ -617,6 +622,7 @@ static void *worker(void *data) {
       sd->globalPM->selectPreset(sd->pidx);
     }
 
+    if (sd->die) break;
     sd->opidx = sd->pidx;
 
     if (sd->needs_update || sd->needs_more || !sd->got_first || sd->ncycs > 1.) {
@@ -818,6 +824,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
   weed_plant_t **inparams = weed_get_in_params(inst, NULL);
   weed_plant_t *inparam = inparams[0];
+  int ctime = weed_param_get_value_int(inparams[1]);
   unsigned char *dst = (unsigned char *)weed_channel_get_pixel_data(out_channel);
 
   int width = weed_channel_get_width(out_channel);
@@ -907,6 +914,8 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   // 0 - 9, we just use the value - 1
   // else val % (nprs - 1) .e.g 9 mod 9 is 0, 10 mod 9 is 1, etc
   sd->pidx = (weed_param_get_value_int(inparam) - 1) % (sd->nprs - 1);
+
+  sd->ctime = ctime;
 
   // if (sd->pidx != -1) {
   //   sd->globalPM->setPresetLock(true);
@@ -1010,7 +1019,7 @@ WEED_SETUP_START(200, 200) {
                         WEED_PALETTE_BGR24, WEED_PALETTE_END
                        };
   const char *xlist[3] = {"- Random -", "Choose...", NULL};
-  weed_plant_t *in_params[] = {weed_string_list_init("preset", "_Preset", 0, xlist), NULL};
+  weed_plant_t *in_params[] = {weed_string_list_init("preset", "_Preset", 0, xlist), weed_integer_init("ctime", "_Random pattern hold time (seconds - 0 for never change)", 20, 0, 100000), NULL};
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("In audio", WEED_CHANNEL_OPTIONAL), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
   weed_plant_t *filter_class = weed_filter_class_init("projectM", "salsaman/projectM authors", 1,

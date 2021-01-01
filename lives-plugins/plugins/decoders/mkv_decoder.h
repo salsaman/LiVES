@@ -1047,23 +1047,6 @@ const AVCodecTag codec_movvideo_tags[] = {
 
 // TODO - this is a lazy implementation - for speed we should use bi-directional skip-lists
 
-typedef struct _index_entry index_entry;
-
-struct _index_entry {
-  index_entry *next; ///< ptr to next entry
-  int64_t dts; ///< dts of keyframe
-  uint64_t offs;  ///< offset in file
-};
-
-typedef struct {
-  index_entry *idxhh;  ///< head of head list
-  index_entry *idxht; ///< tail of head list
-
-  int nclients;
-  lives_clip_data_t **clients;
-  pthread_mutex_t mutex;
-} index_container_t;
-
 typedef struct {
   int fd;
   boolean inited;
@@ -1102,5 +1085,3 @@ static index_entry *matroska_read_seek(const lives_clip_data_t *cdata, int64_t t
 static int matroska_read_close(const lives_clip_data_t *cdata);
 
 static void matroska_clear_queue(MatroskaDemuxContext *matroska);
-
-static index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, int64_t pts);

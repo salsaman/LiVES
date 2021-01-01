@@ -3722,12 +3722,16 @@ void disable_record(void) {
 void play_window_set_title(void) {
   char *xtrabit;
   char *title = NULL;
-  double sepwin_scale = sqrt(mainw->pwidth * mainw->pwidth + mainw->pheight * mainw->pheight) /
-                        sqrt(cfile->hsize * cfile->hsize + cfile->vsize * cfile->vsize);
+  double sepwin_scale = 0.;
+
+  if (CURRENT_CLIP_IS_VALID) {
+    sepwin_scale = sqrt(mainw->pwidth * mainw->pwidth + mainw->pheight * mainw->pheight) /
+                   sqrt(cfile->hsize * cfile->hsize + cfile->vsize * cfile->vsize);
+  }
   if (mainw->multitrack) return;
   if (!mainw->play_window) return;
 
-  if (!LIVES_IS_PLAYING)
+  if (!LIVES_IS_PLAYING && sepwin_scale > 0.)
     xtrabit = lives_strdup_printf(_(" (%.0f %% scale)"), sepwin_scale * 100.);
   else
     xtrabit = lives_strdup("");

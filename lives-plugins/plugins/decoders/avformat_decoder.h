@@ -41,5 +41,6 @@ typedef struct  {
   int cachemax;
   priv_cache_t *cache;
 #endif
+  index_container_t *idxc;
 } lives_av_priv_t;
 

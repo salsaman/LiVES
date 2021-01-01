@@ -2501,6 +2501,8 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
                      dlsym(dplug->handle, "rip_audio");
   dplug->rip_audio_cleanup = (void (*)(const lives_clip_data_t *))dlsym(dplug->handle, "rip_audio_cleanup");
 
+  dplug->estimate_delay = (double (*)(const lives_clip_data_t *, int64_t))dlsym(dplug->handle, "estimate_delay");
+
   if (dplug->module_check_init) {
     err = (*dplug->module_check_init)();
 

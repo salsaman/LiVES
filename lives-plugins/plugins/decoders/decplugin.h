@@ -62,29 +62,13 @@ typedef struct {
   /// In this case, calculations involving this quantity should be avoided, as the result cannot be determined.
 
   double ctiming_ratio; // dynamic multiplier for timing info, depends on machine load and other factors.
-  double idecode_time; /// avg time to decode inter frame
-  double kdecode_time; /// avg time to decode keyframe
-  double buffer_flush_time; /// time to flush buffers after a seek
-  double kframe_nseek_time; /// avg time to seek to following keyframe (const)
-  double kframe_delay_time; /// avg extra time per iframe to arrive at following kframe
+  double const_time; /// avg const time apart from seek / decode (e.g. memcpy)
+  double ib_time; /// avg time to decode inter / b frame
+  double k_time; /// avg time to decode keyframe
+  double ks_time; /// avg time to decode keyframe following seek / flush
+  double seekback_time; /// avg extra time per iframe to arrive at backwd kframe
 
-  double kframe_kframe_time; /// avg time to seek from keyframe to keyframe (const) :: default == 0. (use kframe_nseek_time)
-  double kframe_inter_time; /// extra time to seek from kframe to kframe per iframe between them :: default == kframe_delay_time
-  double kframe_extra_time; /// extra time to seek from kframe to kframe per kframe between them :: default == kframe_inter_time
-
-  // examples:
-  // iframe to next kframe with decode: kframe_nseek_time + n * kframe_delay_time + buffer_flush_tome + kdecode_time
-  // where n is the number of iframes skipped over
-
-  // seek from iframe to another iframe, passing over several kframes, decoding frames from final kframe to target
-
-  /// kframe_nseek_time + A * kframe_delay_time + kframe_kframe_time + B * kframe_inter_time * C * kframe_extra_time +
-  /// kdecode_time + D * idecode_time
-  /// where A == nframes between origin and next kframe, B == iframes between kframse, C == kframes between kframes,
-  /// D = iframes after target kframe
-  /// this can approximated as: kframe_nseek_time + (A + B + C) * kframe_delay_time + kdecode_time + D * idecode_time
-
-  double xvals[64];  /// extra values which may be
+  double xvals[64];  /// extra values which may be stored depending on codec
 } adv_timing_t;
 
 /// good
@@ -256,6 +240,8 @@ typedef struct _lives_clip_data {
 
   int sync_hint;
 
+  adv_timing_t adv_timing;
+
 } lives_clip_data_t;
 
 // std functions
@@ -291,6 +277,8 @@ void rip_audio_cleanup(const lives_clip_data_t *);
 
 void module_unload(void);
 
+double estimate_delay(const lives_clip_data_t *cdata, int64_t tframe);
+
 // little-endian
 #define get_le16int(p) (*(p + 1) << 8 | *(p))
 #define get_le32int(p) ((get_le16int(p + 2) << 16) | get_le16int(p))
@@ -312,7 +300,7 @@ enum LiVESMediaType {
 static const lives_struct_def_t *cdata_lsd = NULL;
 
 static void make_acid(void) {
-  cdata_lsd = lsd_create("lives_clip_data_t", sizeof(lives_clip_data_t), "sync_hint", 6);
+  cdata_lsd = lsd_create("lives_clip_data_t", sizeof(lives_clip_data_t), "adv_timing", 6);
   if (!cdata_lsd) return;
   else {
     lives_special_field_t **specf = cdata_lsd->special_fields;
@@ -370,6 +358,207 @@ static lives_clip_data_t *clone_cdata(const lives_clip_data_t *cdata) {
   if (!cdata_lsd) make_acid();
   return lives_struct_copy((void *)&cdata->lsd);
 }
+#endif
+
+
+/////////////////////////////////////////////////////
+
+#ifdef NEED_INDEX
+
+#include <pthread.h>
+
+static pthread_mutex_t indices_mutex;
+static int nidxc;
+
+typedef struct _index_entry index_entry;
+
+struct _index_entry {
+  index_entry *next; ///< ptr to next entry
+  int64_t dts; ///< dts of keyframe
+  uint64_t offs;  ///< offset in file
+};
+
+typedef struct {
+  index_entry *idxhh;  ///< head of head list
+  index_entry *idxht; ///< tail of head list
+
+  int nclients;
+  lives_clip_data_t **clients;
+  pthread_mutex_t mutex;
+} index_container_t;
+
+static index_container_t **indices;
+
+static void index_free(index_entry *idx) {
+  index_entry *cidx = idx, *next;
+
+  while (cidx) {
+    next = cidx->next;
+    free(cidx);
+    cidx = next;
+  }
+}
+
+/// here we assume that pts of interframes > pts of previous keyframe
+// should be true for most formats (except eg. dirac)
+
+// we further assume that pts == dts for all frames
+
+static index_entry *index_walk(index_entry *idx, int64_t pts) {
+  index_entry *xidx = idx;
+  while (xidx) {
+    //fprintf(stderr, "VALS %ld %ld\n", pts, xidx->dts);
+    //if (xidx->next)
+    //fprintf(stderr, "VALS2 %ld\n", xidx->next->dts);
+    if (!xidx->next || (pts >= xidx->dts && pts < xidx->next->dts)) return xidx;
+    xidx = xidx->next;
+  }
+  /// oops. something went wrong
+  return NULL;
+}
+
+static index_entry *index_add(index_container_t *idxc, uint64_t offset, int64_t pts) {
+  //lives_mkv_priv_t *priv = cdata->priv;
+  index_entry *nidx;
+  index_entry *nentry;
+
+  nidx = idxc->idxht;
+
+  nentry = malloc(sizeof(index_entry));
+
+  nentry->dts = pts;
+  nentry->offs = offset;
+  nentry->next = NULL;
+
+  if (!nidx) {
+    // first entry in list
+    idxc->idxhh = idxc->idxht = nentry;
+    return nentry;
+  }
+
+  if (nidx->dts < pts) {
+    // last entry in list
+    nidx->next = nentry;
+    idxc->idxht = nentry;
+    return nentry;
+  }
+
+  if (idxc->idxhh->dts > pts) {
+    // before head
+    nentry->next = idxc->idxhh;
+    idxc->idxhh = nentry;
+    return nentry;
+  }
+
+  nidx = index_walk(idxc->idxhh, pts);
+
+  // after nidx in list
+
+  nentry->next = nidx->next;
+  nidx->next = nentry;
+
+  return nentry;
+}
+
+static inline index_entry *index_get(index_container_t *idxc, int64_t pts) {
+  return index_walk(idxc->idxhh, pts);
+}
+
+///////////////////////////////////////////////////////
+
+static index_container_t *idxc_for(lives_clip_data_t *cdata) {
+  // check all idxc for string match with URI
+  index_container_t *idxc;
+  int i;
+
+  pthread_mutex_lock(&indices_mutex);
+
+  for (i = 0; i < nidxc; i++) {
+    if (indices[i]->clients[0]->current_clip == cdata->current_clip &&
+        !strcmp(indices[i]->clients[0]->URI, cdata->URI)) {
+      idxc = indices[i];
+      // append cdata to clients
+      idxc->clients = (lives_clip_data_t **)realloc(idxc->clients, (idxc->nclients + 1) * sizeof(lives_clip_data_t *));
+      idxc->clients[idxc->nclients] = cdata;
+      idxc->nclients++;
+      //
+      pthread_mutex_unlock(&indices_mutex);
+      return idxc;
+    }
+  }
+
+  indices = (index_container_t **)realloc(indices, (nidxc + 1) * sizeof(index_container_t *));
+
+  // match not found, create a new index container
+  idxc = (index_container_t *)malloc(sizeof(index_container_t));
+
+  idxc->idxhh = NULL;
+  idxc->idxht = NULL;
+
+  idxc->nclients = 1;
+  idxc->clients = (lives_clip_data_t **)malloc(sizeof(lives_clip_data_t *));
+  idxc->clients[0] = cdata;
+  pthread_mutex_init(&idxc->mutex, NULL);
+
+  indices[nidxc] = idxc;
+  pthread_mutex_unlock(&indices_mutex);
+
+  nidxc++;
+
+  return idxc;
+}
+
+static void idxc_release(lives_clip_data_t *cdata, index_container_t *idxc) {
+  int i, j;
+
+  if (!idxc) return;
+
+  pthread_mutex_lock(&indices_mutex);
+
+  if (idxc->nclients == 1) {
+    // remove this index
+    index_free(idxc->idxhh);
+    free(idxc->clients);
+    for (i = 0; i < nidxc; i++) {
+      if (indices[i] == idxc) {
+        nidxc--;
+        for (j = i; j < nidxc; j++) {
+          indices[j] = indices[j + 1];
+        }
+        free(idxc);
+        if (nidxc == 0) {
+          free(indices);
+          indices = NULL;
+        } else indices = (index_container_t **)realloc(indices, nidxc * sizeof(index_container_t *));
+        break;
+      }
+    }
+  } else {
+    // reduce client count by 1
+    for (i = 0; i < idxc->nclients; i++) {
+      if (idxc->clients[i] == cdata) {
+        // remove this entry
+        idxc->nclients--;
+        for (j = i; j < idxc->nclients; j++) {
+          idxc->clients[j] = idxc->clients[j + 1];
+        }
+        idxc->clients = (lives_clip_data_t **)realloc(idxc->clients, idxc->nclients * sizeof(lives_clip_data_t *));
+        break;
+      }
+    }
+  }
+  pthread_mutex_unlock(&indices_mutex);
+}
+
+static void idxc_release_all(void) {
+  for (int i = 0; i < nidxc; i++) {
+    index_free(indices[i]->idxhh);
+    free(indices[i]->clients);
+    free(indices[i]);
+  }
+  nidxc = 0;
+}
+
 #endif
 
 #ifdef __cplusplus

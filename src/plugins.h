@@ -276,29 +276,13 @@ typedef struct {
   /// In this case, calculations involving this quantity should be avoided, as the result cannot be determined.
 
   double ctiming_ratio; // dynamic multiplier for timing info, depends on machine load and other factors.
-  double idecode_time; /// avg time to decode inter frame
-  double kdecode_time; /// avg time to decode keyframe
-  double buffer_flush_time; /// time to flush buffers after a seek
-  double kframe_nseek_time; /// avg time to seek to following keyframe (const)
-  double kframe_delay_time; /// avg extra time per iframe to arrive at following kframe
+  double const_time; /// avg const time apart from seek / decode (e.g. memcpy)
+  double ib_time; /// avg time to decode inter / b frame
+  double k_time; /// avg time to decode keyframe
+  double ks_time; /// avg time to decode keyframe following seek / flush
+  double seekback_time; /// avg extra time per iframe to arrive at backwd kframe
 
-  double kframe_kframe_time; /// avg time to seek from keyframe to keyframe (const) :: default == 0. (use kframe_nseek_time)
-  double kframe_inter_time; /// extra time to seek from kframe to kframe per iframe between them :: default == kframe_delay_time
-  double kframe_extra_time; /// extra time to seek from kframe to kframe per kframe between them :: default == kframe_inter_time
-
-  // examples:
-  // iframe to next kframe with decode: kframe_nseek_time + n * kframe_delay_time + buffer_flush_tome + kdecode_time
-  // where n is the number of iframes skipped over
-
-  // seek from iframe to another iframe, passing over several kframes, decoding frames from final kframe to target
-
-  /// kframe_nseek_time + A * kframe_delay_time + kframe_kframe_time + B * kframe_inter_time * C * kframe_extra_time +
-  /// kdecode_time + D * idecode_time
-  /// where A == nframes between origin and next kframe, B == iframes between kframse, C == kframes between kframes,
-  /// D = iframes after target kframe
-  /// this can approximated as: kframe_nseek_time + (A + B + C) * kframe_delay_time + kdecode_time + D * idecode_time
-
-  double xvals[64];  /// extra values which may be
+  double xvals[64];  /// extra values which may be stored depending on codec
 } adv_timing_t;
 
 // defined in plugins.c for the whole app
@@ -406,6 +390,8 @@ typedef struct _lives_clip_data {
 
   int sync_hint;
 
+  adv_timing_t adv_timing;
+
 } lives_clip_data_t;
 
 
@@ -442,8 +428,9 @@ typedef struct {
   boolean(*set_palette)(lives_clip_data_t *);
   int64_t (*rip_audio)(const lives_clip_data_t *, const char *fname, int64_t stframe, int64_t nframes,
                        unsigned char **abuff);
-  void (*rip_audio_cleanup)(const lives_clip_data_t *cdata);
+  void (*rip_audio_cleanup)(const lives_clip_data_t *);
   void (*module_unload)(void);
+  double (*estimate_delay)(const lives_clip_data_t *, int64_t tframe);
 } lives_decoder_sys_t;
 
 typedef struct {

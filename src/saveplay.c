@@ -4803,7 +4803,7 @@ boolean check_for_disk_space(boolean fullcheck) {
 
 static boolean sf_writeable = TRUE;
 
-static void _save_to_scrap_file(weed_layer_t *layer) {
+static int64_t _save_to_scrap_file(weed_layer_t *layer) {
   // returns frame number
   // dump the raw layer (frame) data to disk
 
@@ -4832,7 +4832,7 @@ static void _save_to_scrap_file(weed_layer_t *layer) {
 
     if (fd < 0) {
       weed_layer_free(layer);
-      return;
+      return scrapfile->f_size;
     }
     scrapfile->ext_src = LIVES_INT_TO_POINTER(fd);
     scrapfile->ext_src_type = LIVES_EXT_SRC_FILE_BUFF;
@@ -4847,9 +4847,6 @@ static void _save_to_scrap_file(weed_layer_t *layer) {
   pdata_size = weed_plant_serialise(fd, layer, NULL);
   weed_layer_free(layer);
 
-  scrapfile->f_size += pdata_size;
-  scrapfile->frames++;
-
   // check free space every 256 frames or every 10 MB of audio (TODO ****)
   if ((scrapfile->frames & 0xFF) == 0) {
     char *dir = get_clip_dir(mainw->scrap_file);
@@ -4860,6 +4857,7 @@ static void _save_to_scrap_file(weed_layer_t *layer) {
 
   /// check every 64 frames for quota overrun, because its a background task
   check_for_disk_space((scrapfile->frames & 0x3F) ? TRUE : FALSE);
+  return pdata_size;
 }
 
 static lives_proc_thread_t scrap_file_procthrd = NULL;
@@ -4872,8 +4870,9 @@ int save_to_scrap_file(weed_layer_t *layer) {
   if (!layer) return scrapfile->frames;
   orig_layer = weed_layer_copy(NULL, layer);
   if (scrap_file_procthrd) {
-    lives_proc_thread_join(scrap_file_procthrd);
-    if ((!mainw->fs || (prefs->play_monitor != widget_opts.monitor + 1 && capable->nmonitors > 1)) && !prefs->hide_framebar &&
+    scrapfile->f_size += lives_proc_thread_join_int64(scrap_file_procthrd);
+    if ((!mainw->fs || (prefs->play_monitor != widget_opts.monitor + 1 && capable->nmonitors > 1))
+        && !prefs->hide_framebar &&
         !mainw->faded) {
       double scrap_mb = (double)scrapfile->f_size / 1000000.;
       if ((scrap_mb + ascrap_mb) < (double)free_mb * .75) {
@@ -4893,8 +4892,8 @@ int save_to_scrap_file(weed_layer_t *layer) {
     }
   }
   scrap_file_procthrd = lives_proc_thread_create(LIVES_THRDATTR_NONE,
-                        (lives_funcptr_t)_save_to_scrap_file, -1, "V", orig_layer);
-  return scrapfile->frames;
+                        (lives_funcptr_t)_save_to_scrap_file, WEED_SEED_INT64, "P", orig_layer);
+  return ++scrapfile->frames;
 }
 
 void close_scrap_file(boolean remove) {
@@ -4903,7 +4902,7 @@ void close_scrap_file(boolean remove) {
   if (!IS_VALID_CLIP(mainw->scrap_file)) return;
 
   if (scrap_file_procthrd) {
-    lives_proc_thread_join(scrap_file_procthrd);
+    mainw->files[mainw->scrap_file]->f_size += lives_proc_thread_join_int64(scrap_file_procthrd);
     scrap_file_procthrd = NULL;
   }
 

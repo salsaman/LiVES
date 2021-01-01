@@ -1609,7 +1609,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   boolean is_converter = FALSE, pvary = FALSE, svary = FALSE;
   boolean resized = FALSE, letterboxed = FALSE;
   boolean letterbox = FALSE;
-
+#ifdef NEW_SCRAPFILE
+  boolean save_to_scrap = FALSE;
+#endif
   int num_palettes, num_in_tracks = 0, num_out_tracks;
   int inwidth, inheight, inpalette, outpalette, opalette, channel_flags, filter_flags = 0;
   int palette, cpalette, def_palette = 0;
@@ -2320,6 +2322,16 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     resized = FALSE;
     letterboxed = FALSE;
 
+#ifdef NEW_SCRAPFILE
+    if (mainw->record && !mainw->scrap_saved && !mainw->record_paused && mainw->scrap_file != -1
+        && weed_layer_get_clip(layer) == mainw->scrap_file) {
+      if ((prefs->rec_opts & REC_AFTER_PB) && mainw->ext_playback &&
+          (mainw->vpp->capabilities & VPP_CAN_RETURN)) {
+        save_to_scrap = TRUE;
+      }
+    }
+#endif
+
     // we are comparing the macropixel sizes which is fine because that won't change
     // regardless of the channel / layer palette, but for resize_layer we need the pixel size,
     // which will be width * pixels_per_macropixel of the original channel palette, which is the divisor we used when
@@ -2343,6 +2355,20 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         calc_maxspect(width, height, &xwidth, &xheight);
 
         if (xwidth != width || height != xheight) {
+
+#ifdef NEW_SCRAPFILE
+          if (save_to_scrap) {
+            if (xwidth < xxwidth && xheight < xxheight) {
+              if (!resize_layer(layer, xwidth, xheight, interp, opalette, oclamping)) {
+                retval = FILTER_ERROR_UNABLE_TO_RESIZE;
+                goto done_video;
+              }
+            }
+            save_to_scrap_file(layer);
+            mainw->scrap_saved = TRUE;
+            save_to_scrap = FALSE;
+          }
+#endif
           if (!letterbox_layer(layer, width, height, xwidth, xheight, interp, opalette, oclamping)) {
             retval = FILTER_ERROR_UNABLE_TO_RESIZE;
             goto done_video;
@@ -2363,12 +2389,31 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         }
       }
       if (!resized) {
+
+#ifdef NEW_SCRAPFILE
+        if (save_to_scrap) {
+          if (width > xxwidth || height > xxheight) {
+            save_to_scrap_file(layer);
+            mainw->scrap_saved = TRUE;
+            save_to_scrap = FALSE;
+          }
+        }
+#endif
+
         if (weed_plant_has_leaf(channel, WEED_LEAF_INNER_SIZE))
           weed_leaf_delete(channel, WEED_LEAF_INNER_SIZE);
         if (!resize_layer(layer, width, height, interp, opalette, oclamping)) {
           retval = FILTER_ERROR_UNABLE_TO_RESIZE;
           goto done_video;
         }
+
+#ifdef NEW_SCRAPFILE
+        if (save_to_scrap) {
+          save_to_scrap_file(layer);
+          mainw->scrap_saved = TRUE;
+          save_to_scrap = FALSE;
+        }
+#endif
 
         if (!mainw->multitrack && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
           mainw->blend_palette = weed_layer_get_palette_yuv(layer, &mainw->blend_clamping, &mainw->blend_sampling,
@@ -2379,6 +2424,13 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         }
       }
     } else {
+#ifdef NEW_SCRAPFILE
+      if (save_to_scrap) {
+        save_to_scrap_file(layer);
+        mainw->scrap_saved = TRUE;
+        save_to_scrap = FALSE;
+      }
+#endif
       if (weed_plant_has_leaf(channel, WEED_LEAF_INNER_SIZE))
         weed_leaf_delete(channel, WEED_LEAF_INNER_SIZE);
     }

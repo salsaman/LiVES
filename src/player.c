@@ -913,8 +913,10 @@ void load_frame_image(frames_t frame) {
     // save to scrap_file now if we have to
     if (mainw->record && !mainw->record_paused && mainw->scrap_file != -1 && fg_file == mainw->scrap_file) {
       if (!rec_after_pb) {
+#ifndef NEW_SCRAPFILE
         check_layer_ready(mainw->frame_layer);
         save_to_scrap_file(mainw->frame_layer);
+#endif
         lives_freep((void **)&framecount);
       }
       get_player_size(&opwidth, &opheight);

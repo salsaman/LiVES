@@ -30,7 +30,7 @@ static int package_version = 2; // version of this package
 static int verbosity = WEED_VERBOSITY_ERROR;
 #define WORKER_TIMEOUT_SEC 30 /// how long to wait for worker thread startup
 #define MAX_AUDLEN 2048 /// this is defined by projectM itself, increasing the value above 2048 will only result in jumps in the audio
-#define DEF_SENS 1. /// beat sensitivity 0. -> 5.  (lower is more sensitive); too high -> less dynamic, too low - nothing w. silence
+#define DEF_SENS 1.5 /// beat sensitivity 0. -> 5.  (lower is more sensitive); too high -> less dynamic, too low - nothing w. silence
 /////////////////////////////////////////////////////////////
 
 #define USE_DBLBUF 1
@@ -504,8 +504,8 @@ static void *worker(void *data) {
   settings.meshX = texwidth / 64;
   settings.meshY = ((int)(settings.meshX * hwratio + 1) >> 1) << 1;
   settings.fps = sd->fps;
-  settings.smoothPresetDuration = 10.;
-  settings.presetDuration = 60;
+  settings.smoothPresetDuration = 30.;
+  settings.presetDuration = 60; /// ignored
   settings.beatSensitivity = DEF_SENS;
   settings.aspectCorrection = 1;
   settings.softCutRatingsEnabled = 1;

@@ -264,6 +264,8 @@ static int init_display(_sdata *sd) {
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, USE_DBLBUF);
 
+  SDL_GL_SetSwapInterval(0);
+
 #ifdef HAVE_SDL2
   sd->win = SDL_CreateWindow("projectM", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, defwidth, defheight,
                              SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN);
@@ -641,6 +643,7 @@ static void *worker(void *data) {
   sd->worker_active = false;
   pthread_mutex_unlock(&sd->mutex);
 
+  SDL_GL_DeleteContext(sd->glCtx);
   if (sd->globalPM) delete (sd->globalPM);
   sd->globalPM = NULL;
   SDL_Quit();

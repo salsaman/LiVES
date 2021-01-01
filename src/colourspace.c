@@ -2850,7 +2850,7 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, b
           last_u = next_u = u = s_u[istrides[1] * r2 + uv_offs];
           last_v = next_v = v = s_v[istrides[2] * r2 + uv_offs];
         } else {
-          if (is_bottom && i == height - 1) {
+          if (is_bottom && i >= height - 3) {
             next_u = u = s_u[istrides[1] * r2 + uv_offs];
             next_v = v = s_v[istrides[2] * r2 + uv_offs];
           } else {
@@ -2879,7 +2879,7 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, b
           next_u = s_u[istrides[1] * r2 + uv_offs];
           next_v = s_v[istrides[2] * r2 + uv_offs];
         } else {
-          if (is_bottom && i == height - 1) {
+          if (is_bottom && i >= height - 3) {
             next_u = u = s_u[istrides[1] * r2 + uv_offs];
             next_v = v = s_v[istrides[2] * r2 + uv_offs];
           } else {
@@ -3019,7 +3019,7 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **src, int width, int height, b
           next_u = u = s_u[uv_offs];
           next_v = v = s_v[uv_offs];
         } else {
-          if (i == height - 1 && is_bottom) {
+          if (i >= height - 3 && is_bottom) {
             next_u = u = s_u[uv_offs];
             next_v = v = s_v[uv_offs];
           } else {
@@ -3046,7 +3046,7 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **src, int width, int height, b
           next_u = s_u[uv_offs];
           next_v = s_v[uv_offs];
         } else {
-          if (i == height - 1 && is_bottom) {
+          if (i >= height - 3 && is_bottom) {
             next_u = u = s_u[uv_offs];
             next_v = v = s_v[uv_offs];
           } else {
@@ -3188,7 +3188,7 @@ static void convert_yuv420p_to_argb_frame(uint8_t **src, int width, int height, 
           next_u = u = s_u[uv_offs];
           next_v = v = s_v[uv_offs];
         } else {
-          if (i == height - 1 && is_bottom) {
+          if (i >= height - 3 && is_bottom) {
             next_u = u = s_u[uv_offs];
             next_v = v = s_v[uv_offs];
           } else {
@@ -3215,7 +3215,7 @@ static void convert_yuv420p_to_argb_frame(uint8_t **src, int width, int height, 
           next_u = s_u[uv_offs];
           next_v = s_v[uv_offs];
         } else {
-          if (i == height - 1 && is_bottom) {
+          if (i >= height - 3 && is_bottom) {
             next_u = u = s_u[uv_offs];
             next_v = v = s_v[uv_offs];
           } else {

@@ -5767,9 +5767,9 @@ static void convert_yuvp_to_yuv420_frame(uint8_t **src, int width, int height, i
 
   // y-plane should be copied before entering here
 
-  register int i, j;
+  int i, j;
   uint8_t *d_u, *d_v, *s_u = src[1], *s_v = src[2];
-  register short x_u, x_v;
+  short x_u, x_v;
   boolean chroma = FALSE;
 
   int hwidth = width >> 1;
@@ -7822,11 +7822,11 @@ static void *convert_swap3prealpha_frame_thread(void *data) {
 static void convert_addpost_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
                                   uint8_t *dest, uint8_t *gamma_lut, int thread_id) {
   // add post alpha
-  uint8_t *end = src + height * irowstride;
-  register int i;
+  int i, end = height * irowstride, j = 0;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
     lives_thread_t threads[prefs->nfx_threads];
+    uint8_t *end = src + height * irowstride;
     int nthreads = 1;
     int dheight, xdheight;
     lives_cc_params *ccparams = (lives_cc_params *)lives_calloc(prefs->nfx_threads, sizeof(lives_cc_params));
@@ -7875,33 +7875,32 @@ static void convert_addpost_frame(uint8_t *src, int width, int height, int irows
       return;
     }
 #endif
-    for (; src < end; src += 3) {
+    for (i = 0; i < end; i += 3) {
       if (!gamma_lut) {
-        lives_memcpy(dest, src, 3);
-        dest += 3;
+        lives_memcpy(&dest[j], &src[i], 3);
+        j += 3;
       } else {
-        *(dest++) = gamma_lut[src[0]];
-        *(dest++) = gamma_lut[src[1]];
-        *(dest++) = gamma_lut[src[2]];
+        dest[j++] = gamma_lut[src[i]];
+        dest[j++] = gamma_lut[src[i + 1]];
+        dest[j++] = gamma_lut[src[i + 2]];
       }
-      *(dest++) = 255; // alpha
+      dest[j++] = 255; // alpha
     }
   } else {
     int width3 = width * 3;
-    orowstride -= width * 4;
-    for (; src < end; src += irowstride) {
+    for (int k = 0; k < height; k++) {
+      j = 0;
       for (i = 0; i < width3; i += 3) {
         if (!gamma_lut) {
-          lives_memcpy(dest, src + i, 3);
-          dest += 3;
+          lives_memcpy(&dest[orowstride * k + i], &src[irowstride * k + i], 3);
+          j += 3;
         } else {
-          *(dest++) = gamma_lut[src[i]];
-          *(dest++) = gamma_lut[src[i + 1]];
-          *(dest++) = gamma_lut[src[i + 2]];
+          dest[orowstride * k + j++] = gamma_lut[src[irowstride + k + i]];
+          dest[orowstride * k + j++] = gamma_lut[src[irowstride + k + i + 1]];
+          dest[orowstride * k + j++] = gamma_lut[src[irowstride + k + i + 2]];
         }
-        *(dest++) = 255; // alpha
+        dest[orowstride * k + j++] = 255; // alpha
       }
-      dest += orowstride;
     }
   }
 }
@@ -7994,10 +7993,10 @@ static void *convert_addpre_frame_thread(void *data) {
 static void convert_swap3delpost_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
                                        uint8_t *dest, int thread_id) {
   // swap 3 bytes, delete post alpha
-  uint8_t *end = src + height * irowstride;
-  register int i;
+  int i, end = height * irowstride, j = 0;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
+    uint8_t *end = src + height * irowstride;
     lives_thread_t threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
@@ -8039,21 +8038,20 @@ static void convert_swap3delpost_frame(uint8_t *src, int width, int height, int 
 
   if ((irowstride == width * 4) && (orowstride == width * 3)) {
     // quick version
-    for (; src < end; src += 4) {
-      *(dest++) = src[2]; // red
-      *(dest++) = src[1]; // green
-      *(dest++) = src[0]; // blue
+    for (i = 0; i < end; i += 4) {
+      dest[j++] = src[i + 2]; // red
+      dest[j++] = src[i + 1]; // green
+      dest[j++] = src[i]; // blue
     }
   } else {
     int width4 = width * 4;
-    orowstride -= width * 3;
-    for (; src < end; src += irowstride) {
+    for (int k = 0; k < height; k++) {
+      j = 0;
       for (i = 0; i < width4; i += 4) {
-        *(dest++) = src[i + 2]; // red
-        *(dest++) = src[i + 1]; // green
-        *(dest++) = src[i]; // blue
+        dest[orowstride * k + j++] = src[irowstride * k + i + 2]; // red
+        dest[orowstride * k + j++] = src[irowstride * k + i + 1]; // green
+        dest[orowstride * k + j++] = src[irowstride * k + i]; // blue
       }
-      dest += orowstride;
     }
   }
 }
@@ -8070,10 +8068,10 @@ static void *convert_swap3delpost_frame_thread(void *data) {
 static void convert_delpost_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
                                   uint8_t *dest, uint8_t *gamma_lut, int thread_id) {
   // delete post alpha
-  uint8_t *end = src + height * irowstride;
-  register int i;
+  int i, end = height * irowstride, j = 0;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
+    uint8_t *end = src + height * irowstride;
     lives_thread_t threads[prefs->nfx_threads];
     int nthreads = 1;
     int dheight, xdheight;
@@ -8117,31 +8115,36 @@ static void convert_delpost_frame(uint8_t *src, int width, int height, int irows
 
   if ((irowstride == width * 4) && (orowstride == width * 3)) {
     // quick version
-    for (; src < end; src += 4) {
-      if (!gamma_lut) {
-        lives_memcpy(dest, src, 3);
-        dest += 3;
-      } else {
-        *(dest++) = gamma_lut[src[0]];
-        *(dest++) = gamma_lut[src[1]];
-        *(dest++) = gamma_lut[src[2]];
+    if (!gamma_lut) {
+      for (i = 0; i < end; i += 4) {
+        lives_memcpy(&dest[j], &src[i], 3);
+        j += 3;
+      }
+    } else {
+      int width4 = width * 4;
+      for (int k = 0; k < height; k++) {
+        j = 0;
+        for (i = 0; i < width4; i += 4) {
+          dest[orowstride * k + j++] = gamma_lut[src[irowstride * k + i]];
+          dest[orowstride * k + j++] = gamma_lut[src[irowstride * k + i + 1]];
+          dest[orowstride * k + j++] = gamma_lut[src[irowstride * k + i + 2]];
+        }
       }
     }
   } else {
     int width4 = width * 4;
-    orowstride -= width * 3;
-    for (; src < end; src += irowstride) {
+    for (int k = 0; k < height; k++) {
+      j = 0;
       for (i = 0; i < width4; i += 4) {
         if (!gamma_lut) {
-          lives_memcpy(dest, src + i, 3);
-          dest += 3;
+          lives_memcpy(&dest[orowstride * k + j], &src[irowstride * k + i], 3);
+          j += 3;
         } else {
-          *(dest++) = gamma_lut[src[i]];
-          *(dest++) = gamma_lut[src[i + 1]];
-          *(dest++) = gamma_lut[src[i + 2]];
+          dest[orowstride * k + j++] = gamma_lut[src[irowstride * k + i]];
+          dest[orowstride * k + j++] = gamma_lut[src[irowstride * k + i + 1]];
+          dest[orowstride * k + j++] = gamma_lut[src[irowstride * k + i + 2]];
         }
       }
-      dest += orowstride;
     }
   }
 }
@@ -8483,32 +8486,27 @@ static void convert_halve_chroma(uint8_t **src, int width, int height, int *istr
 
   // TODO : handle different sampling methods in and out
 
-  register int i, j;
+  int i, j, i2 = 0;
   uint8_t *d_u = dest[1], *d_v = dest[2], *s_u = src[1], *s_v = src[2];
   boolean chroma = FALSE;
 
   set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
 
   for (i = 0; i < height; i++) {
-    for (j = 0; j < width; j++) {
-      if (!chroma) {
-        // pass 1, copy row
-        lives_memcpy(d_u, s_u, width);
-        lives_memcpy(d_v, s_v, width);
-      } else {
+    if (!chroma) {
+      // pass 1, copy row
+      lives_memcpy(&d_u[ostrides[1] * i2], &s_u[istrides[1] * i], width);
+      lives_memcpy(&d_v[ostrides[2] * i2], &s_v[istrides[2] * i], width);
+    } else {
+      for (j = 0; j < width; j++) {
         // pass 2
         // average two dest rows
-        d_u[j] = avg_chromaf(d_u[j], s_u[j]);
-        d_v[j] = avg_chromaf(d_v[j], s_v[j]);
+        d_u[ostrides[1] * i2 + j] = avg_chromaf(d_u[ostrides[1] * i2 + j], s_u[istrides[1] * i + j]);
+        d_v[ostrides[2] * i2 + j] = avg_chromaf(d_v[ostrides[2] * i2 + j], s_v[istrides[2] * i + j]);
       }
     }
-    if (chroma) {
-      d_u += ostrides[1];
-      d_v += ostrides[2];
-    }
+    if (chroma) i2++;
     chroma = !chroma;
-    s_u += istrides[1];
-    s_v += istrides[2];
   }
 }
 
@@ -8518,7 +8516,7 @@ static void convert_double_chroma(uint8_t **src, int width, int height, int *ist
   // width and height here are width and height of src *chroma* planes, in bytes
   // double two chroma planes vertically, with interpolation: eg: 420p to 422p
 
-  register int i, j;
+  int i, j, i2 = 0;
   uint8_t *d_u = dest[1], *d_v = dest[2], *s_u = src[1], *s_v = src[2];
   boolean chroma = FALSE;
   int height2 = height << 1;
@@ -8526,24 +8524,18 @@ static void convert_double_chroma(uint8_t **src, int width, int height, int *ist
   set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
 
   for (i = 0; i < height2; i++) {
-    for (j = 0; j < width; j++) {
-      lives_memcpy(d_u, s_u, width);
-      lives_memcpy(d_v, s_v, width);
-
-      if (!chroma && i > 0) {
+    lives_memcpy(&d_u[ostrides[1] * i], &s_u[istrides[1] * i2], width);
+    lives_memcpy(&d_v[ostrides[2] * i], &s_v[istrides[2] * i2], width);
+    if (!chroma && i > 0) {
+      for (j = 0; j < width; j++) {
         // pass 2
         // average two src rows
-        d_u[j - ostrides[1]] = avg_chromaf(s_u[j], d_u[j - ostrides[1]]);
-        d_v[j - ostrides[2]] = avg_chromaf(s_v[j], d_v[j - ostrides[2]]);
+        d_u[ostrides[1] * (i - 1) + j] = avg_chromaf(d_u[ostrides[1] * (i - 1) + j], d_u[ostrides[1] * i + j]);
+        d_v[ostrides[2] * (i - 1) + j] = avg_chromaf(d_v[ostrides[2] * (i - 1) + j], d_v[ostrides[2] * i + j]);
       }
     }
-    if (chroma) {
-      s_u += istrides[1];
-      s_v += istrides[2];
-    }
+    if (chroma) i2++;
     chroma = !chroma;
-    d_u += ostrides[1];
-    d_v += ostrides[2];
   }
 }
 
@@ -9016,17 +9008,12 @@ static void switch_yuv_clamping_and_subspace(weed_layer_t *layer, int oclamping,
    psize is sizeof(bpix), width, height and rowstride are the dimensions of the target plane
 */
 LIVES_INLINE void fill_plane(uint8_t *ptr, int psize, int width, int height, int rowstride, unsigned char *bpix) {
-  register int i, j;
-  uint8_t *ptr2 = ptr;
-  for (j = width; j > 0; j--) {
-    lives_memcpy(ptr2, bpix, psize);
-    ptr2 += psize;
+  int j, widthp = width * psize;
+  for (j = 0; j < width; j++) {
+    lives_memcpy(&ptr[psize * j], bpix, psize);
   }
-  ptr2 += rowstride - width * psize;
-  for (i = height - 1; i > 0; i--) {
-    lives_memcpy(ptr2, ptr, rowstride);
-    ptr += rowstride;
-    ptr2 += rowstride;
+  for (j = 1; j < height; j++) {
+    lives_memcpy(&ptr[rowstride * j], &ptr[rowstride * (j - 1)], widthp);
   }
 }
 
@@ -9898,9 +9885,7 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
       uint8_t *src = (uint8_t *)pixel_data[i];
       xwidth = width * psize * weed_palette_get_plane_ratio_horizontal(pal, i);
       for (j = 0; j < xheight; j++) {
-        lives_memcpy(dst, src, xwidth);
-        src += orowstrides[i];
-        dst += rowstrides[i];
+        lives_memcpy(&dst[rowstrides[i] * j], &src[orowstrides[i] * j], xwidth);
       }
     }
   }
@@ -12213,7 +12198,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
 
   LiVESPixbuf *pixbuf;
 
-  uint8_t *pixel_data, *pixels, *end;
+  uint8_t *pixel_data, *pixels;
 
   boolean cheat = FALSE, done;
 
@@ -12246,7 +12231,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
     width = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(palette);
     height = weed_layer_get_height(layer);
     irowstride = weed_layer_get_rowstride(layer);
-    pixel_data = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL);
+    pixel_data = (uint8_t *)weed_layer_get_pixel_data_packed(layer);
     done = TRUE;
     xpalette = palette;
     if (realpalette) {
@@ -12314,23 +12299,23 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
 
   if (!cheat && LIVES_IS_PIXBUF(pixbuf)) {
     // copy the pixel data
-    boolean done = FALSE;
+    int k;
+    pixel_data = (uint8_t *)weed_layer_get_pixel_data_packed(layer);
     pixels = lives_pixbuf_get_pixels(pixbuf);
     orowstride = lives_pixbuf_get_rowstride(pixbuf);
 
     if (irowstride > orowstride) rowstride = orowstride;
     else rowstride = irowstride;
-    end = pixels + orowstride * height;
 
-    for (; pixels < end && !done; pixels += orowstride) {
-      if (pixels + orowstride >= end) {
-        orowstride = rowstride = get_last_pixbuf_rowstride_value(width, n_channels);
-        done = TRUE;
-      }
-      lives_memcpy(pixels, pixel_data, rowstride);
-      if (rowstride < orowstride) lives_memset(pixels + rowstride, 255, orowstride - rowstride);
-      pixel_data += irowstride;
+    height--;
+
+    for (k = 0; k < height; k++) {
+      lives_memcpy(&pixels[orowstride * k], &pixel_data[irowstride * k], rowstride);
+      if (rowstride < orowstride) lives_memset(&pixels[orowstride * k + rowstride], 255, orowstride - rowstride);
     }
+    rowstride = get_last_pixbuf_rowstride_value(width, n_channels);
+    lives_memcpy(&pixels[orowstride * k], &pixel_data[irowstride * k], rowstride);
+
     weed_layer_pixel_data_free(layer);
   }
 
@@ -13094,9 +13079,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     dst = (uint8_t *)new_pixel_data[0] + offs_y * rowstrides[0] + offs_x * 3;
     src = (uint8_t *)pixel_data[0];
     for (i = 0; i < height; i++) {
-      lives_memcpy(dst, src, width);
-      dst += rowstrides[0];
-      src += irowstrides[0];
+      lives_memcpy(&dst[rowstrides[0] * i], &src[irowstrides[0] * i], width);
     }
     break;
 
@@ -13115,9 +13098,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     dst = (uint8_t *)new_pixel_data[0] + offs_y * rowstrides[0] + offs_x * 4;
     src = (uint8_t *)pixel_data[0];
     for (i = 0; i < height; i++) {
-      lives_memcpy(dst, src, width);
-      dst += rowstrides[0];
-      src += irowstrides[0];
+      lives_memcpy(&dst[rowstrides[0] * i], &src[irowstrides[0] * i], width);
     }
     break;
 
@@ -13126,9 +13107,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     dst = (uint8_t *)new_pixel_data[0] + offs_y * rowstrides[0] + offs_x * 6;
     src = (uint8_t *)pixel_data[0];
     for (i = 0; i < height; i++) {
-      lives_memcpy(dst, src, width);
-      dst += rowstrides[0];
-      src += irowstrides[0];
+      lives_memcpy(&dst[rowstrides[0] * i], &src[irowstrides[0] * i], width);
     }
     break;
 
@@ -13136,23 +13115,17 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     dst = (uint8_t *)new_pixel_data[0] + offs_y * rowstrides[0] + offs_x;
     src = (uint8_t *)pixel_data[0];
     for (i = 0; i < height; i++) {
-      lives_memcpy(dst, src, width);
-      dst += rowstrides[0];
-      src += irowstrides[0];
+      lives_memcpy(&dst[rowstrides[0] * i], &src[irowstrides[0] * i], width);
     }
     dst = (uint8_t *)new_pixel_data[1] + offs_y * rowstrides[1] + offs_x;
     src = (uint8_t *)pixel_data[1];
     for (i = 0; i < height; i++) {
-      lives_memcpy(dst, src, width);
-      dst += rowstrides[1];
-      src += irowstrides[1];
+      lives_memcpy(&dst[rowstrides[1] * i], &src[irowstrides[1] * i], width);
     }
     dst = (uint8_t *)new_pixel_data[2] + offs_y * rowstrides[2] + offs_x;
     src = (uint8_t *)pixel_data[2];
     for (i = 0; i < height; i++) {
-      lives_memcpy(dst, src, width);
-      dst += rowstrides[2];
-      src += irowstrides[2];
+      lives_memcpy(&dst[rowstrides[2] * i], &src[irowstrides[2] * i], width);
     }
     break;
 
@@ -13160,30 +13133,22 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     dst = (uint8_t *)new_pixel_data[0] + offs_y * rowstrides[0] + offs_x;
     src = (uint8_t *)pixel_data[0];
     for (i = 0; i < height; i++) {
-      lives_memcpy(dst, src, width);
-      dst += rowstrides[0];
-      src += irowstrides[0];
+      lives_memcpy(&dst[rowstrides[0] * i], &src[irowstrides[0] * i], width);
     }
     dst = (uint8_t *)new_pixel_data[1] + offs_y * rowstrides[1] + offs_x;
     src = (uint8_t *)pixel_data[1];
     for (i = 0; i < height; i++) {
-      lives_memcpy(dst, src, width);
-      dst += rowstrides[1];
-      src += irowstrides[1];
+      lives_memcpy(&dst[rowstrides[1] * i], &src[irowstrides[1] * i], width);
     }
     dst = (uint8_t *)new_pixel_data[2] + offs_y * rowstrides[2] + offs_x;
     src = (uint8_t *)pixel_data[2];
     for (i = 0; i < height; i++) {
-      lives_memcpy(dst, src, width);
-      dst += rowstrides[2];
-      src += irowstrides[2];
+      lives_memcpy(&dst[rowstrides[2] * i], &src[irowstrides[2] * i], width);
     }
     dst = (uint8_t *)new_pixel_data[3] + offs_y * rowstrides[3] + offs_x;
     src = (uint8_t *)pixel_data[3];
     for (i = 0; i < height; i++) {
-      lives_memcpy(dst, src, width);
-      dst += rowstrides[3];
-      src += irowstrides[3];
+      lives_memcpy(&dst[rowstrides[3] * i], &src[irowstrides[3] * i], width);
     }
     break;
 
@@ -13191,25 +13156,19 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     dst = (uint8_t *)new_pixel_data[0] + offs_y * rowstrides[0] + offs_x;
     src = (uint8_t *)pixel_data[0];
     for (i = 0; i < height; i++) {
-      lives_memcpy(dst, src, width);
-      dst += rowstrides[0];
-      src += irowstrides[0];
+      lives_memcpy(&dst[rowstrides[0] * i], &src[irowstrides[0] * i], width);
     }
     height >>= 1;
     offs_x >>= 1;
     dst = (uint8_t *)new_pixel_data[1] + offs_y * rowstrides[1] + offs_x;
     src = (uint8_t *)pixel_data[1];
     for (i = 0; i < height; i++) {
-      lives_memcpy(dst, src, width);
-      dst += rowstrides[1];
-      src += irowstrides[1];
+      lives_memcpy(&dst[rowstrides[1] * i], &src[irowstrides[1] * i], width);
     }
     dst = (uint8_t *)new_pixel_data[2] + offs_y * rowstrides[2] + offs_x;
     src = (uint8_t *)pixel_data[2];
     for (i = 0; i < height; i++) {
-      lives_memcpy(dst, src, width);
-      dst += rowstrides[2];
-      src += irowstrides[2];
+      lives_memcpy(&dst[rowstrides[2] * i], &src[irowstrides[2] * i], width);
     }
     break;
 
@@ -13218,9 +13177,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     dst = (uint8_t *)new_pixel_data[0] + offs_y * rowstrides[0] + offs_x;
     src = (uint8_t *)pixel_data[0];
     for (i = 0; i < height; i++) {
-      lives_memcpy(dst, src, width);
-      dst += rowstrides[0];
-      src += irowstrides[0];
+      lives_memcpy(&dst[rowstrides[0] * i], &src[irowstrides[0] * i], width);
     }
     height >>= 1;
     offs_x >>= 1;
@@ -13229,16 +13186,12 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     dst = (uint8_t *)new_pixel_data[1] + offs_y * rowstrides[1] + offs_x;
     src = (uint8_t *)pixel_data[1];
     for (i = 0; i < height; i++) {
-      lives_memcpy(dst, src, width);
-      dst += rowstrides[1];
-      src += irowstrides[1];
+      lives_memcpy(&dst[rowstrides[1] * i], &src[irowstrides[1] * i], width);
     }
     dst = (uint8_t *)new_pixel_data[2] + offs_y * rowstrides[2] + offs_x;
     src = (uint8_t *)pixel_data[2];
     for (i = 0; i < height; i++) {
-      lives_memcpy(dst, src, width);
-      dst += rowstrides[2];
-      src += irowstrides[2];
+      lives_memcpy(&dst[rowstrides[2] * i], &src[irowstrides[2] * i], width);
     }
     break;
 
@@ -13247,9 +13200,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     dst = (uint8_t *)new_pixel_data[0] + offs_y * rowstrides[0] + offs_x * 3 * sizeof(float);
     src = (uint8_t *)pixel_data[0];
     for (i = 0; i < height; i++) {
-      lives_memcpy(dst, src, width);
-      dst += rowstrides[0];
-      src += irowstrides[0];
+      lives_memcpy(&dst[rowstrides[0] * i], &src[irowstrides[0] * i], width);
     }
     break;
 
@@ -13258,9 +13209,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     dst = (uint8_t *)new_pixel_data[0] + offs_y * rowstrides[0] + offs_x * 4 * sizeof(float);
     src = (uint8_t *)pixel_data[0];
     for (i = 0; i < height; i++) {
-      lives_memcpy(dst, src, width);
-      dst += rowstrides[0];
-      src += irowstrides[0];
+      lives_memcpy(&dst[rowstrides[0] * i], &src[irowstrides[0] * i], width);
     }
     break;
 
@@ -13269,9 +13218,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     dst = (uint8_t *)new_pixel_data[0] + offs_y * rowstrides[0] + offs_x * sizeof(float);
     src = (uint8_t *)pixel_data[0];
     for (i = 0; i < height; i++) {
-      lives_memcpy(dst, src, width);
-      dst += rowstrides[0];
-      src += irowstrides[0];
+      lives_memcpy(&dst[rowstrides[0] * i], &src[irowstrides[0] * i], width);
     }
     break;
 
@@ -13279,9 +13226,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     dst = (uint8_t *)new_pixel_data[0] + offs_y * rowstrides[0] + offs_x;
     src = (uint8_t *)pixel_data[0];
     for (i = 0; i < height; i++) {
-      lives_memcpy(dst, src, width);
-      dst += rowstrides[0];
-      src += irowstrides[0];
+      lives_memcpy(&dst[rowstrides[0] * i], &src[irowstrides[0] * i], width);
     }
     break;
 
@@ -13291,9 +13236,7 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     dst = (uint8_t *)new_pixel_data[0] + offs_y * rowstrides[0] + (offs_x >> 3);
     src = (uint8_t *)pixel_data[0];
     for (i = 0; i < height; i++) {
-      lives_memcpy(dst, src, width);
-      dst += rowstrides[0];
-      src += irowstrides[0];
+      lives_memcpy(&dst[rowstrides[0] * i], &src[irowstrides[0] * i], width);
     }
     break;
   }
@@ -13510,9 +13453,7 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
       dst = pixel_data = (uint8_t *)lives_calloc(1, height * orowstride);
       if (!pixel_data) return NULL;
       for (i = 0; i < height; i++) {
-        lives_memcpy(dst, src, widthx);
-        dst += orowstride;
-        src += irowstride;
+        lives_memcpy(&dst[orowstride * i], &src[irowstride * i], widthx);
       }
       weed_layer_pixel_data_free(layer);
       weed_layer_set_pixel_data_packed(layer, pixel_data);

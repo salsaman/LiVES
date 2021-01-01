@@ -585,7 +585,7 @@ int paraffin_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params)
 
   int const s = (int)((float)weed_param_get_value_double(in_params[PARAMe_RADIUS]) * size.height * 0.5) * 2 + 1;
 
-  double *cvals = weed_get_double_array(in_params[PARAMe_COLOR], WEED_LEAF_VALUE, NULL);
+  double *cvals = weed_param_get_array_double(in_params[PARAMe_COLOR], NULL);
 
   float r, g = cvals[1], b;
 

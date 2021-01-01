@@ -2671,7 +2671,7 @@ switch_point:
                         } else {
                           if (new_pred_frame == sfile->frameno) new_pred_frame = sfile->frameno - 1;
                         }
-                        g_print("EST %d -> %ld\n", getahead, new_pred_frame);
+                        //g_print("EST %d -> %ld\n", getahead, new_pred_frame);
                         if (new_pred_frame == getahead) break;
                         getahead = new_pred_frame;
                       }

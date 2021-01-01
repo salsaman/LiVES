@@ -87,8 +87,6 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
   int orowstride = weed_channel_get_stride(out_channel);
   int inplace = (src1 == dst);
 
-  uint8_t *end = dst + height * orowstride;
-
   if (pal == WEED_PALETTE_ARGB32) start = 1;
 
   in_param = weed_get_in_param(inst, 0);
@@ -102,7 +100,6 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
     src1 += offset * irowstride1;
     src2 += offset * irowstride2;
     dst += offset * orowstride;
-    end += offset * orowstride;
   }
 
   if (type == 0) {
@@ -116,50 +113,52 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
     }
   }
 
-  for (; dst < end; dst += orowstride) {
+  for (int i = 0; i < height; i++) {
     for (int j = start; j < width; j += psize) {
       switch (type) {
       case 0:
         // chroma blend
-        dst[j] = sdata->blend[src2[j]][src1[j]];
-        dst[j + 1] = sdata->blend[src2[j + 1]][src1[j + 1]];
-        dst[j + 2] = sdata->blend[src2[j + 2]][src1[j + 2]];
+        dst[orowstride * i + j] = sdata->blend[src2[irowstride2 * i + j]][src1[irowstride1 * i + j]];
+        dst[orowstride * i + j + 1] = sdata->blend[src2[irowstride2 * i + j + 1]][src1[irowstride1 * i + j + 1]];
+        dst[orowstride * i + j + 2] = sdata->blend[src2[irowstride2 * i + j + 2]][src1[irowstride1 * i + j + 2]];
         break;
       case 4:
         // avg luma overlay
         if (j > start && j < width - 1 && row > 0 && row < height - 1) {
-          uint8_t av_luma = (calc_luma(&src1[j], pal, 0) + calc_luma(&src1[j - 1], pal, 0)
-                             + calc_luma(&src1[j + 1], pal, 0)
-                             + calc_luma(&src1[j - irowstride1], pal, 0)
-                             + calc_luma(&src1[j - 1 - irowstride1], pal, 0)
-                             + calc_luma(&src1[j + 1 - irowstride1], pal, 0)
-                             + calc_luma(&src1[j + irowstride1], pal, 0)
-                             + calc_luma(&src1[j - 1 + irowstride1], pal, 0)
-                             + calc_luma(&src1[j + 1 + irowstride1], pal, 0)) / 9;
-          if (av_luma < (blend_factor)) weed_memcpy(&dst[j], &src2[j], 3);
-          else if (!inplace) weed_memcpy(&dst[j], &src1[j], 3);
+          uint8_t av_luma = (calc_luma(&src1[irowstride1 * i + j], pal, 0)
+                             + calc_luma(&src1[irowstride1 * i + j - 1], pal, 0)
+                             + calc_luma(&src1[irowstride1 * i + j + 1], pal, 0)
+                             + calc_luma(&src1[irowstride1 * i + j - irowstride1], pal, 0)
+                             + calc_luma(&src1[irowstride1 * i + j - 1 - irowstride1], pal, 0)
+                             + calc_luma(&src1[irowstride1 * i + j + 1 - irowstride1], pal, 0)
+                             + calc_luma(&src1[irowstride1 * i + j + irowstride1], pal, 0)
+                             + calc_luma(&src1[irowstride1 * i + j - 1 + irowstride1], pal, 0)
+                             + calc_luma(&src1[irowstride1 * i + j + 1 + irowstride1], pal, 0)) / 9;
+          if (av_luma < (blend_factor)) weed_memcpy(&dst[orowstride * i + j], &src2[irowstride2 * i + j], 3);
+          else if (!inplace) weed_memcpy(&dst[orowstride * i + j], &src1[irowstride1 * i + j], 3);
           row++;
           break;
         }
       case 1:
         // luma overlay
-        if (calc_luma(&src1[j], pal, 0) < (blend_factor)) weed_memcpy(&dst[j], &src2[j], 3);
-        else if (!inplace) weed_memcpy(&dst[j], &src1[j], 3);
+        if (calc_luma(&src1[irowstride1 * i + j], pal, 0) < (blend_factor)) weed_memcpy(&dst[orowstride * i + j],
+              &src2[irowstride2 * i + j], 3);
+        else if (!inplace) weed_memcpy(&dst[orowstride * i + j], &src1[irowstride1 * i + j], 3);
         break;
       case 2:
         // luma underlay
-        if (calc_luma(&src2[j], pal, 0) > (blendneg)) weed_memcpy(&dst[j], &src2[j], 3);
-        else if (!inplace) weed_memcpy(&dst[j], &src1[j], 3);
+        if (calc_luma(&src2[irowstride2 * i + j], pal, 0) > (blendneg)) weed_memcpy(&dst[orowstride * i + j],
+              &src2[irowstride2 * i + j], 3);
+        else if (!inplace) weed_memcpy(&dst[orowstride * i + j], &src1[irowstride1 * i + j], 3);
         break;
       case 3:
         // neg lum overlay
-        if (calc_luma(&src1[j], pal, 0) > (blendneg)) weed_memcpy(&dst[j], &src2[j], 3);
-        else if (!inplace) weed_memcpy(&dst[j], &src1[j], 3);
+        if (calc_luma(&src1[irowstride1 * i + j], pal, 0) > (blendneg)) weed_memcpy(&dst[orowstride * i + j],
+              &src2[irowstride2 * i + j], 3);
+        else if (!inplace) weed_memcpy(&dst[orowstride * i + j], &src1[irowstride1 * i + j], 3);
         break;
       }
     }
-    src1 += irowstride1;
-    src2 += irowstride2;
   }
   weed_free(in_channels);
   return WEED_SUCCESS;

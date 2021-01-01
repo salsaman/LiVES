@@ -16,7 +16,7 @@
 
 // static defns
 
-#define EV_LIM 64
+#define EV_LIM 256
 
 static void set_child_colour_internal(LiVESWidget *, livespointer set_allx);
 static void set_child_alt_colour_internal(LiVESWidget *, livespointer set_allx);
@@ -34,7 +34,7 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
                              const char *detail, const char *value);
 #endif
 
-#define NSLEEP_TIME 500
+#define NSLEEP_TIME 5000
 
 /// internal data keys
 #define STD_KEY "_wh_is_standard"

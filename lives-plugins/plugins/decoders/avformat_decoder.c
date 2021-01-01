@@ -1440,9 +1440,7 @@ framedone2:
       (*cdata->ext_memcpy)(dst, src, rowstride * xheight);
     } else {
       for (i = 0; i < xheight; i++) {
-        (*cdata->ext_memcpy)(dst, src, dstwidth);
-        dst += rowstride;
-        src += priv->pFrame->linesize[p];
+        (*cdata->ext_memcpy)(&dst[rowstride * i], &src[priv->pFrame->linesize[p] * i], dstwidth);
       }
     }
     if (p == 0 && (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P)) {

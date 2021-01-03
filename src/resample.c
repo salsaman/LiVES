@@ -744,6 +744,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
         if (event) event = get_next_event(event);
       } else {
         weed_timecode_t frame_tc;
+        if (is_final == 2 && !event) break;
         /// insert the state
         if (init_events) {
           void **pchanges;
@@ -829,11 +830,8 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
         }
 
         /// now we insert the frame
-        //g_print("frame with %d tracks %d %d  going in at %ld\n", tracks, clips[0], frames[0], out_tc);
+        //g_print("frame with %d tracks %d %ld  going in at %ld\n", tracks, clips[0], frames[0], out_tc);
         out_list = append_frame_event(out_list, out_tc, tracks, clips, frames);
-        /* if (!insert_frame_event_at(out_list, out_tc, tracks, clips, frames, &newframe)) { */
-        /*   response = do_memory_error_dialog(what, 0); */
-        /* } */
         newframe = get_last_event(out_list);
         if (response == LIVES_RESPONSE_CANCEL) {
           event_list_free(out_list);

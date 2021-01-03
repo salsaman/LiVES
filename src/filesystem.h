@@ -94,4 +94,6 @@ boolean lives_read_buffered_eof(int fd);
 lives_file_buffer_t *get_file_buffer(int fd);
 void lives_buffered_rdonly_slurp(int fd, off_t skip);
 
+off_t lives_buffered_flush(int fd);
+
 #endif

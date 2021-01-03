@@ -802,7 +802,7 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
         nbytes = fbuff->orig_size - fbuff->bytes;
         if (nbytes == 0) goto rd_exit;
       } else {
-        while ((nbytes = fbuff->offset - fbuff->bytes) < count) {
+        while ((nbytes = fbuff->offset - fbuff->bytes) < count && !fbuff->eof) {
           lives_nanosleep(1000);
         }
       }
@@ -1200,3 +1200,26 @@ size_t lives_buffered_orig_size(int fd) {
   return fbuff->orig_size;
 }
 
+
+off_t lives_buffered_flush(int fd) {
+  lives_file_buffer_t *fbuff;
+
+  if ((fbuff = find_in_file_buffers(fd)) == NULL) {
+    LIVES_DEBUG("lives_lseek_buffered_writer: no file buffer found");
+    return 0;
+  }
+
+  if (fbuff->read) {
+    LIVES_ERROR("lives_lseek_buffered_writer: wrong buffer type");
+    return 0;
+  }
+
+  if (fbuff->bytes > 0) {
+    ssize_t res = file_buffer_flush(fbuff);
+    if (res < 0) return res;
+    if (res < fbuff->bytes && !fbuff->allow_fail) {
+      fbuff->eof = TRUE;
+    }
+  }
+  return fbuff->offset;
+}

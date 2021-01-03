@@ -1728,7 +1728,10 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
           check_storage_space(mainw->current_file, TRUE);
           prog_fs_check = PROG_LOOP_VAL;
         }
-        if (mainw->proc_ptr) progbar_pulse_or_fraction(cfile, mainw->proc_ptr->frames_done, mainw->proc_ptr->frac_done);
+        if (mainw->proc_ptr) {
+          progress_speed = 1000000.;
+          progbar_pulse_or_fraction(cfile, mainw->proc_ptr->frames_done, mainw->proc_ptr->frac_done);
+        }
       } else lives_widget_context_update();
     }
 

@@ -60,7 +60,7 @@ LiVESList *lives_list_delete_string(LiVESList *list, const char *string) {
     if (!lives_utf8_strcasecmp((char *)xlist->data, string)) {
       lives_free((livespointer)xlist->data);
       if (xlist->prev) xlist->prev->next = xlist->next;
-      else list = xlist;
+      else list = xlist->next;
       if (xlist->next) xlist->next->prev = xlist->prev;
       xlist->next = xlist->prev = NULL;
       lives_list_free(xlist);

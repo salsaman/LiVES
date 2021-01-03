@@ -3798,8 +3798,8 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
   dst = (float **)lives_calloc(tchans, sizeof(float *));
 
   // copy data from abuf->bufferf[] to "audio_data"
+  pthread_mutex_lock(&mainw->abuf_mutex);
   for (i = 0; i < tchans; i++) {
-    pthread_mutex_lock(&mainw->abuf_mutex);
     src = abuf->bufferf[i % abuf->out_achans];
     if (src) {
       dst[i] = lives_calloc(alen, sizeof(float));
@@ -3810,8 +3810,8 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
         sample_move_float_float(dst[i], src, alen, scale, 1);
       }
     } else dst[i] = NULL;
-    pthread_mutex_unlock(&mainw->abuf_mutex);
   }
+  pthread_mutex_unlock(&mainw->abuf_mutex);
 
   // set channel values
   weed_channel_set_audio_data(achan, dst, trate, tchans, alen);

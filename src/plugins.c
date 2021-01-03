@@ -2624,35 +2624,30 @@ void on_decplug_advanced_clicked(LiVESButton * button, livespointer user_data) {
     ltext = lives_strdup_printf("%s   (%s)", dpsys->name, (*dpsys->version)());
 
     widget_opts.mnemonic_label = FALSE;
-    checkbutton = lives_standard_check_button_new(ltext, lives_list_strcmp_index(future_prefs->disabled_decoders, dpsys->name,
-                  FALSE) == -1,
-                  LIVES_BOX(hbox), NULL);
+    checkbutton = lives_standard_check_button_new(ltext, lives_list_strcmp_index(future_prefs->disabled_decoders,
+                  dpsys->name,
+                  FALSE) == -1, LIVES_BOX(hbox), NULL);
     widget_opts.mnemonic_label = TRUE;
 
     lives_free(ltext);
 
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                    LIVES_GUI_CALLBACK(on_dpa_cb_toggled),
-                                    (livespointer)dpsys->name);
+                                    LIVES_GUI_CALLBACK(on_dpa_cb_toggled), (livespointer)dpsys->name);
 
     decoder_plugin = decoder_plugin->next;
   }
 
-  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
-                 LIVES_RESPONSE_CANCEL);
+  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL, LIVES_RESPONSE_CANCEL);
 
-  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
-             LIVES_RESPONSE_OK);
+  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL, LIVES_RESPONSE_OK);
 
   lives_button_grab_default_special(okbutton);
 
   lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(dpa_cancel_clicked),
-                       NULL);
+                       LIVES_GUI_CALLBACK(dpa_cancel_clicked), NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(dpa_ok_clicked),
-                       NULL);
+                       LIVES_GUI_CALLBACK(dpa_ok_clicked), NULL);
 
   lives_widget_show_all(dialog);
   lives_window_present(LIVES_WINDOW(dialog));

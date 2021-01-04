@@ -202,8 +202,8 @@ typedef struct _lives_clip_data {
   int64_t fwd_seek_time;
   int64_t jump_limit; ///< for internal use
 
-  int64_t kframe_start; /// frame number of first keyframe (usually 0)
-  int64_t kframe_dist; /// number forames from one keyframe to the next, 0 if unknown
+  int64_t kframe_dist; /// number of frames from one keyframe to the next, for fixed gop only, 0 if unknown
+  int64_t kframe_dist_max; /// max number of frames fdetected rom one keyframe to the next, 0 if unknown
   //////////////////////////////////
 
   int *palettes; ///< list of palettes which the format supports, terminated with WEED_PALETTE_END
@@ -241,7 +241,6 @@ typedef struct _lives_clip_data {
   int sync_hint;
 
   adv_timing_t adv_timing;
-
 } lives_clip_data_t;
 
 // std functions
@@ -410,6 +409,7 @@ static index_entry *index_walk(index_entry *idx, int64_t pts) {
     //fprintf(stderr, "VALS %ld %ld\n", pts, xidx->dts);
     //if (xidx->next)
     //fprintf(stderr, "VALS2 %ld\n", xidx->next->dts);
+    //if (xidx->next) fprintf(stderr, "WALK: %ld %ld %ld\n", xidx->dts, pts, xidx->next->dts);
     if (!xidx->next || (pts >= xidx->dts && pts < xidx->next->dts)) return xidx;
     xidx = xidx->next;
   }

@@ -1069,6 +1069,7 @@ typedef struct {
   index_container_t *idxc;
   boolean expect_eof;
   boolean ext_memfuncs;
+  int index_scale;
 } lives_mkv_priv_t;
 
 #define ERR_NOMEM         1

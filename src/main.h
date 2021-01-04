@@ -968,6 +968,8 @@ typedef struct _lives_clip_t {
 
   double pb_fps;  ///< current playback rate, may vary from fps, can be 0. or negative
 
+  double img_decode_time;
+
   char info_file[PATH_MAX]; ///< used for asynch communication with externals
 
   LiVESWidget *menuentry;
@@ -1385,13 +1387,15 @@ typedef struct {
   lives_img_type_t img_type;
   int compression;
   int width, height;
+  weed_layer_t *layer;
 } savethread_priv_t;
 
 void *lives_pixbuf_save_threaded(void *saveargs);
 
 #ifdef USE_LIBPNG
 boolean layer_from_png(int fd, weed_layer_t *layer, int width, int height, int tpalette, boolean prog);
-//boolean save_to_png(FILE *fp, weed_layer_t *layer, int comp);
+boolean save_to_png(int fd, weed_layer_t *layer, int comp);
+void *save_to_png_threaded(void *args);
 #endif
 
 void sensitize(void);

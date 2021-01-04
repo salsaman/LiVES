@@ -1492,7 +1492,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->crash_possible = 0;
 
-  mainw->scrap_pixbuf = NULL;
+  //mainw->scrap_pixbuf = NULL;
+  mainw->scrap_layer = NULL;
 
   mainw->close_keep_frames = FALSE;
 
@@ -1704,7 +1705,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   if (*capable->wm_caps.panel)
     prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);
-  //prefs->show_desktop_panel = TRUE;
+  prefs->show_desktop_panel = TRUE;
 
   prefs->show_msgs_on_startup = get_boolean_prefd(PREF_MSG_START, TRUE);
 
@@ -6691,8 +6692,7 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
 
   if (!gval) {
     // b > a, brighter
-    //png_set_gamma(png_ptr, 1.0, .45455); /// default, seemingly
-    //png_set_gamma(png_ptr, 1. / .45455, 1.0); /// too bright
+    //png_set_gamma(png_ptr, 1.0, .45455); /// default, seemingly: sRGB -> linear
     png_set_gamma(png_ptr, 1.0, 1.0);
   }
 
@@ -6830,14 +6830,9 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
 
   png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 
-  /// it seems that if no gAMA is set then libpng (rather wastefully) always tries to convert to linear
-  /// assuming a file gamma of approx. 1.2* (this is not accurate since sRGB -> linear doesn't use a power law)
-  /// if gAMA is set, then we (correctly) need to convert to linear using the file gamma
-  /// *I think this comes from 0.5 (approx linear to sRGB) * 2,4 (guessed display gamma)
 
   if (gval == PNG_INFO_gAMA) {
-    /// img needs gamma converting
-    /// TODO: can we do this using png_set_gamma ?
+    /// if gAMA is set, then we need to convert to *linear* using the file gamma
     weed_layer_set_gamma(layer, WEED_GAMMA_LINEAR);
   } else weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
 
@@ -6869,8 +6864,29 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
 }
 
 
-// unused
-boolean save_to_png(FILE * fp, weed_layer_t *layer, int comp) {
+static void png_write_func(png_structp png_ptr, png_bytep data, png_size_t length) {
+  int fd = LIVES_POINTER_TO_INT(png_get_io_ptr(png_ptr));
+  if (lives_write_buffered(fd, (const char *)data, length, TRUE) < length) {
+    png_error(png_ptr, "write_fn error");
+  }
+}
+
+static void png_flush_func(png_structp png_ptr) {
+  int fd = LIVES_POINTER_TO_INT(png_get_io_ptr(png_ptr));
+  if (lives_buffered_flush(fd) < 0) {
+    png_error(png_ptr, "flush_fn error");
+  }
+}
+
+void *save_to_png_threaded(void *args) {
+  savethread_priv_t *saveargs = (savethread_priv_t *)args;
+  int fd = lives_create_buffered(saveargs->fname, DEF_FILE_PERMS);
+  save_to_png(fd, saveargs->layer, saveargs->compression);
+  lives_close_buffered(fd);
+  return saveargs;
+}
+
+boolean save_to_png(int fd, weed_layer_t *layer, int comp) {
   // comp is 0 (none) - 9 (full)
   png_structp png_ptr;
   png_infop info_ptr;
@@ -6883,12 +6899,13 @@ boolean save_to_png(FILE * fp, weed_layer_t *layer, int comp) {
 #endif
   int rowstride;
 
-  register int i;
+  int i;
+
+  int compr = (int)((100. - (double)comp + 5.) / 10.);
 
   png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, (png_voidp)NULL, NULL, NULL);
 
   if (!png_ptr) {
-    fclose(fp);
     return FALSE;
   }
 
@@ -6896,7 +6913,6 @@ boolean save_to_png(FILE * fp, weed_layer_t *layer, int comp) {
 
   if (!info_ptr) {
     png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
-    fclose(fp);
     return FALSE;
   }
 
@@ -6907,7 +6923,7 @@ boolean save_to_png(FILE * fp, weed_layer_t *layer, int comp) {
     return FALSE;
   }
 
-  png_init_io(png_ptr, fp);
+  png_set_write_fn(png_ptr, LIVES_INT_TO_POINTER(fd), png_write_func, png_flush_func);
 
   width = weed_layer_get_width(layer);
   height = weed_layer_get_height(layer);
@@ -6937,9 +6953,7 @@ boolean save_to_png(FILE * fp, weed_layer_t *layer, int comp) {
     break;
   }
 
-  png_set_compression_level(png_ptr, comp);
-
-  //png_set_write_status_fn(png_ptr, png_row_callback);
+  png_set_compression_level(png_ptr, compr);
 
 #if PNG_LIBPNG_VER >= 10504
   flags = weed_layer_get_flags(layer);
@@ -6952,8 +6966,6 @@ boolean save_to_png(FILE * fp, weed_layer_t *layer, int comp) {
 
   if (weed_layer_get_gamma(layer) == WEED_GAMMA_LINEAR)
     png_set_gAMA(png_ptr, info_ptr, 1.0);
-  else
-    png_set_gAMA(png_ptr, info_ptr, 0.45455);
 
   png_write_info(png_ptr, info_ptr);
 
@@ -6961,8 +6973,7 @@ boolean save_to_png(FILE * fp, weed_layer_t *layer, int comp) {
 
   // Write image data
   for (i = 0 ; i < height ; i++) {
-    png_write_row(png_ptr, ptr);
-    ptr += rowstride;
+    png_write_row(png_ptr, &ptr[rowstride * i]);
   }
 
   // end write
@@ -6970,8 +6981,6 @@ boolean save_to_png(FILE * fp, weed_layer_t *layer, int comp) {
 
   if (info_ptr) png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
   png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
-
-  fflush(fp);
 
   return TRUE;
 }
@@ -7388,12 +7397,14 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
         return res;
       } else {
         // pull frame from decoded images
+        int64_t timex = lives_get_current_ticks();
         boolean ret;
         char *fname = make_image_file_name(sfile, frame, image_ext);
 #ifdef USE_RESTHREAD
         lives_proc_thread_t resthread;
 #endif
         if (!*image_ext) image_ext = get_image_ext_for_type(sfile->img_type);
+
         ret = weed_layer_create_from_file_progressive(layer, fname, width, height, target_palette, image_ext);
 
 #ifdef USE_RESTHREAD
@@ -7410,6 +7421,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
           create_blank_layer(layer, image_ext, width, height, target_palette);
           return FALSE;
         }
+        sfile->img_decode_time = (double)(lives_get_current_ticks() - timex) / TICKS_PER_SECOND_DBL;
       }
     }
     break;
@@ -7773,7 +7785,7 @@ boolean lives_pixbuf_save(LiVESPixbuf * pixbuf, char *fname, lives_img_type_t im
    The renderer uses this now so that it can be saving the current output frame
    at the same time as it prepares the following frame
 */
-void  *lives_pixbuf_save_threaded(void *args) {
+void *lives_pixbuf_save_threaded(void *args) {
   savethread_priv_t *saveargs = (savethread_priv_t *)args;
   lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression, saveargs->width,
                     saveargs->height, &saveargs->error);

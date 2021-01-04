@@ -2654,36 +2654,52 @@ switch_point:
               if (dropped > 0 && delta <= 0 && ((sfile->pb_fps < 0. && (!clip_can_reverse(mainw->current_file)))
                                                 || (abs(sfile->frameno - sfile->last_vframe_played) >= JUMPFRAME_TRIGGER)
                                                 || dropped >= DROPFRAME_TRIGGER)) {
+                lives_decoder_t *dplug = NULL;
+                lives_decoder_sys_t *dpsys = NULL;
+                int64_t pred_frame;
+
                 getahead = test_getahead;
+                bungle_frames -= getahead;
+                pred_frame = getahead;
+                //pred_frame = requested_frame;
 
                 if (sfile->clip_type == CLIP_TYPE_FILE) {
-                  lives_decoder_t *dplug = (lives_decoder_t *)sfile->ext_src;
-                  if (dplug) {
-                    lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->decoder;
-                    //lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
-                    //g_print("VALS: %ld %f %f\n", cdata->kframe_dist, cdata->adv_timing.seekback_time, 1. / cdata->max_decode_fps);
-                    if (dpsys && dpsys->estimate_delay) {
-                      for (int zz = 0; zz < 5; zz++) {
-                        int64_t new_pred_frame;
-                        double est_time = (*dpsys->estimate_delay)(dplug->cdata, getahead);
-                        if (est_time <= 0.) break;
-                        new_pred_frame = sfile->frameno + est_time * sfile->pb_fps;
-                        if (sfile->pb_fps > 0.) {
-                          if (new_pred_frame == sfile->frameno) new_pred_frame = sfile->frameno + 1;
-                        } else {
-                          if (new_pred_frame == sfile->frameno) new_pred_frame = sfile->frameno - 1;
-                        }
-                        //g_print("EST %d -> %ld\n", getahead, new_pred_frame);
-                        if (new_pred_frame == getahead) break;
-                        getahead = new_pred_frame;
-                      }
-                      //g_print("EST time is %f\n", est_time);
-                    }
-                  }
+                  dplug = (lives_decoder_t *)sfile->ext_src;
+                  if (dplug) dpsys = (lives_decoder_sys_t *)dplug->decoder;
                 }
 
+                //g_print("st EST %ld\n", pred_frame);
+                for (int zz = 0; zz < 6; zz++) {
+                  int64_t new_pred_frame;
+                  double est_time;
+
+                  if (is_virtual_frame(mainw->playing_file, pred_frame)) {
+                    if (!dpsys || !dpsys->estimate_delay) break;
+                    est_time = (*dpsys->estimate_delay)(dplug->cdata, pred_frame - 1);
+                  } else {
+                    // img timings
+                    est_time = sfile->img_decode_time;
+                  }
+
+                  if (est_time <= 0.) break;
+                  new_pred_frame = sfile->frameno + (frames_t)(est_time * sfile->pb_fps + .9999);
+                  if (sfile->pb_fps > 0.) {
+                    if (new_pred_frame < requested_frame) break;
+                  } else {
+                    if (new_pred_frame > requested_frame) break;
+                  }
+                  //g_print("EST %ld -> %ld\n", pred_frame, new_pred_frame);
+                  if (new_pred_frame == pred_frame) break;
+                  pred_frame = new_pred_frame;
+                }
+                getahead = pred_frame;
                 if (getahead < 1) getahead = 1;
                 if (getahead > sfile->frames) getahead = sfile->frames;
+
+                bungle_frames += getahead;
+                if (bungle_frames < 1) bungle_frames = 1;
+
+                //g_print("xxxEST %d\n", getahead);
 
                 if (mainw->pred_frame > 0 && (mainw->pred_frame - mainw->actual_frame) * dir > 0
                     && mainw->frame_layer_preload && is_layer_ready(mainw->frame_layer_preload))
@@ -2944,36 +2960,48 @@ switch_point:
           mainw->pred_clip = mainw->playing_file;
           if (getahead > -1) mainw->pred_frame = getahead;
           else {
+            lives_decoder_t *dplug = NULL;
+            lives_decoder_sys_t *dpsys = NULL;
+            int64_t pred_frame = mainw->pred_frame;
+            double last_est_time = -1.;
+
             if (sfile->pb_fps > 0.)
-              mainw->pred_frame = sfile->frameno + 1 + dropped;
+              pred_frame = sfile->frameno + 1 + dropped;
             else
-              mainw->pred_frame = sfile->frameno - 1 - dropped;
+              pred_frame = sfile->frameno - 1 - dropped;
 
             if (sfile->clip_type == CLIP_TYPE_FILE) {
-              lives_decoder_t *dplug = (lives_decoder_t *)sfile->ext_src;
-              if (dplug) {
-                lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->decoder;
-                //lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
-                //g_print("VALS: %ld %f %f\n", cdata->kframe_dist, cdata->adv_timing.seekback_time, 1. / cdata->max_decode_fps);
-                if (dpsys && dpsys->estimate_delay) {
-                  for (int zz = 0; zz < 5; zz++) {
-                    int64_t new_pred_frame;
-                    double est_time = (*dpsys->estimate_delay)(dplug->cdata, mainw->pred_frame);
-                    if (est_time <= 0.) break;
-                    new_pred_frame = sfile->frameno + est_time * sfile->pb_fps;
-                    if (sfile->pb_fps > 0.) {
-                      if (new_pred_frame == sfile->frameno) new_pred_frame = sfile->frameno + 1;
-                    } else {
-                      if (new_pred_frame == sfile->frameno) new_pred_frame = sfile->frameno - 1;
-                    }
-                    g_print("EST %ld -> %ld\n", mainw->pred_frame, new_pred_frame);
-                    if (new_pred_frame == mainw->pred_frame) break;
-                    mainw->pred_frame = new_pred_frame;
-                  }
-                  //g_print("EST time is %f\n", est_time);
-                }
-              }
+              dplug = (lives_decoder_t *)sfile->ext_src;
+              if (dplug) dpsys = (lives_decoder_sys_t *)dplug->decoder;
             }
+
+            for (int zz = 0; zz < 6; zz++) {
+              int64_t new_pred_frame;
+              double est_time;
+
+              if (is_virtual_frame(mainw->playing_file, pred_frame)) {
+                if (!dpsys || !dpsys->estimate_delay) break;
+                est_time = (*dpsys->estimate_delay)(dplug->cdata, pred_frame - 1);
+              } else {
+                // png timings
+                est_time = sfile->img_decode_time;
+              }
+
+              if (est_time <= 0.) break;
+              if (last_est_time > -1. && est_time > last_est_time) break;
+              new_pred_frame = sfile->frameno + (frames_t)(est_time * sfile->pb_fps + .9999);
+
+              if (sfile->pb_fps > 0.) {
+                if (new_pred_frame == sfile->frameno) new_pred_frame++;
+              } else {
+                if (new_pred_frame == sfile->frameno) new_pred_frame--;
+              }
+              if (new_pred_frame == pred_frame) break;
+              pred_frame = new_pred_frame;
+              //if (est_time < last_est_time) break;
+              last_est_time = est_time;
+            }
+            mainw->pred_frame = pred_frame;
           }
 
           if (mainw->pred_frame > 0 && mainw->pred_frame < sfile->frames) {

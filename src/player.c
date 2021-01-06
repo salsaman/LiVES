@@ -2800,8 +2800,6 @@ switch_point:
       //g_print("dropped = %d, %d scyc = %ld %d %d\n", dropped, mainw->effort, spare_cycles, requested_frame, sfile->frameno);
 #endif
       drop_off = FALSE;
-      last_pwidth = mainw->pwidth;
-      last_pheight = mainw->pheight;
       if (mainw->force_show || ((sfile->frameno != mainw->actual_frame || (sfile->frames == 1 && sfile->frameno == 1)
                                  || (mainw->playing_sel && sfile->start == sfile->end))
 #ifdef ENABLE_PRECACHE

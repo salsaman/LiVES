@@ -864,11 +864,8 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
     }
 
     if (est_time > 0.) {
-      g_print("vals %ld %ld and %f %d\n", tc, ntc, est_time, frameno);
       ntc = tc + est_time * TICKS_PER_SECOND_DBL;
-      g_print("vals2 %ld %ld and %f %d\n", tc, ntc, est_time, frameno);
       frameno = calc_new_playback_position(mainw->blend_file, blend_tc, (ticks_t *)&ntc);
-      g_print("vals3 %ld %ld and %f %d\n", tc, ntc, est_time, frameno);
     }
 
     blend_file->last_frameno = blend_file->frameno = frameno;

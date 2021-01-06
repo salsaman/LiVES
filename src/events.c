@@ -3665,6 +3665,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
   boolean is_blank = TRUE;
   boolean completed = FALSE;
+  boolean intimg = FALSE;
 
   static double chvols[MAX_AUDIO_TRACKS];
   static double xaseek[MAX_AUDIO_TRACKS], xavel[MAX_AUDIO_TRACKS], atime;
@@ -3779,6 +3780,11 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
   if (mainw->effects_paused) return LIVES_RENDER_EFFECTS_PAUSED;
 
+#ifdef USE_LIBPNG
+  // use internal image saver if we can
+  if (cfile->img_type == IMG_TYPE_PNG) intimg = TRUE;
+#endif
+
   if (mainw->flush_audio_tc != 0 || event) {
     if (event) etype = get_event_type(event);
     else etype = WEED_EVENT_TYPE_FRAME;
@@ -3842,14 +3848,14 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
             /* if (mainw->frame_index[scrap_track] == old_scrap_frame && mainw->scrap_pixbuf) { */
             /*   pixbuf = mainw->scrap_pixbuf; */
             if (mainw->frame_index[scrap_track] == old_scrap_frame) {
-              if (cfile->img_type == IMG_TYPE_PNG) {
+              if (intimg) {
                 if (mainw->scrap_layer) out_layer = mainw->scrap_layer;
               } else {
                 if (mainw->scrap_pixbuf) pixbuf = mainw->scrap_pixbuf;
               }
             } else {
               //if (mainw->scrap_pixbuf) {
-              if (cfile->img_type == IMG_TYPE_PNG) {
+              if (intimg) {
                 if (mainw->scrap_layer) {
 #ifndef SAVE_THREAD
                   weed_layer_free(mainw->scrap_layer);
@@ -4029,7 +4035,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               render_text_overlay(layer, texto);
               lives_free(texto);
             }
-            if (cfile->img_type == IMG_TYPE_PNG)
+            if (intimg)
               out_layer = layer;
             else {
               pixbuf = layer_to_pixbuf(layer, TRUE, FALSE);
@@ -4123,7 +4129,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
       if (!r_video) break;
 
-      if (cfile->img_type == IMG_TYPE_PNG) {
+      if (intimg) {
         if (!out_layer) break;
       } else {
         if (!pixbuf) break;
@@ -4173,21 +4179,26 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
         }
       } else {
         lives_thread_join(*saver_thread, NULL);
-        while (saveargs->error) {
-          retval = do_write_failed_error_s_with_retry(saveargs->fname, saveargs->error->message);
-          lives_error_free(saveargs->error);
-          saveargs->error = NULL;
+        while (saveargs->error || THREADVAR(write_failed)) {
+          if (saveargs->error) {
+            retval = do_write_failed_error_s_with_retry(saveargs->fname, saveargs->error->message);
+            lives_error_free(saveargs->error);
+            saveargs->error = NULL;
+          } else {
+            retval = do_write_failed_error_s_with_retry(saveargs->fname, NULL);
+          }
+          THREADVAR(write_failed) = 0;
           if (retval != LIVES_RESPONSE_RETRY) {
             read_write_error = LIVES_RENDER_ERROR_WRITE_FRAME;
             break;
           }
-          if (cfile->img_type == IMG_TYPE_PNG) save_to_png_threaded((void *)saveargs);
+          if (intimg) save_to_png_threaded((void *)saveargs);
           else {
             lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression,
                               saveargs->width, saveargs->height, &saveargs->error);
           }
         }
-        if (cfile->img_type == IMG_TYPE_PNG) {
+        if (intimg) {
           if (saveargs->layer && saveargs->layer != out_layer) {
             if (saveargs->layer == mainw->scrap_layer) mainw->scrap_layer = NULL;
             weed_layer_free(saveargs->layer);
@@ -4211,7 +4222,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
           saveargs->fname = make_image_file_name(cfile, out_frame, get_image_ext_for_type(cfile->img_type));
         }
 
-        if (cfile->img_type == IMG_TYPE_PNG) {
+        if (intimg) {
           saveargs->layer = out_layer;
           lives_thread_create(saver_thread, LIVES_THRDATTR_NONE, save_to_png_threaded, saveargs);
         } else {
@@ -4234,7 +4245,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
       // if our pixbuf came from scrap file, and next frame is also from scrap file with same frame number,
       // save the pixbuf and re-use it
       if (scrap_track != -1) {
-        if (cfile->img_type == IMG_TYPE_PNG)
+        if (intimg)
           mainw->scrap_layer = layer;
         else
           mainw->scrap_pixbuf = pixbuf;
@@ -4464,14 +4475,14 @@ filterinit2:
         saveargs->error = NULL;
         if (retval != LIVES_RESPONSE_RETRY) read_write_error = LIVES_RENDER_ERROR_WRITE_FRAME;
         else {
-          if (cfile->img_type == IMG_TYPE_PNG) save_to_png_threaded((void *)saveargs);
+          if (intimg) save_to_png_threaded((void *)saveargs);
           else {
             lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression,
                               saveargs->width, saveargs->height, &saveargs->error);
           }
         }
       }
-      if (cfile->img_type == IMG_TYPE_PNG) {
+      if (intimg) {
         if (saveargs->layer) {
           weed_layer_free(saveargs->layer);
           if (saveargs->layer == mainw->scrap_layer) mainw->scrap_layer = NULL;

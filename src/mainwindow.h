@@ -1714,7 +1714,7 @@ typedef struct {
 
   int crash_possible; // TODO - check this
 
-  //LiVESPixbuf *scrap_pixbuf; ///< cached image for speeding up rendering
+  LiVESPixbuf *scrap_pixbuf; ///< cached image for speeding up rendering
   weed_layer_t *scrap_layer; ///< cached image for speeding up rendering
 
   boolean no_context_update; ///< may be set temporarily to block wodget context updates

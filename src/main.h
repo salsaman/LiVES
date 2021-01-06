@@ -1381,20 +1381,26 @@ boolean lives_pixbuf_save(LiVESPixbuf *, char *fname, lives_img_type_t imgtype, 
                           int width, int height, LiVESError **gerrorptr);
 
 typedef struct {
+  char *fname;
+
+  // for pixbuf (e.g. jpeg)
   LiVESPixbuf *pixbuf;
   LiVESError *error;
-  char *fname;
   lives_img_type_t img_type;
-  int compression;
   int width, height;
+
+  // for layer (e.g. png) (may also set TGREADVAR(write_failed)
   weed_layer_t *layer;
+  boolean success;
+
+  int compression;
 } savethread_priv_t;
 
 void *lives_pixbuf_save_threaded(void *saveargs);
 
 #ifdef USE_LIBPNG
 boolean layer_from_png(int fd, weed_layer_t *layer, int width, int height, int tpalette, boolean prog);
-boolean save_to_png(int fd, weed_layer_t *layer, int comp);
+boolean save_to_png(weed_layer_t *layer, const char *fname, int comp);
 void *save_to_png_threaded(void *args);
 #endif
 

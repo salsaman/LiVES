@@ -3629,7 +3629,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
   weed_timecode_t tc, next_out_tc = 0l, out_tc, dtc = atc;
   void *init_event;
 
-  //LiVESPixbuf *pixbuf = NULL;
+  LiVESPixbuf *pixbuf = NULL;
 
   weed_plant_t *filter;
   weed_plant_t **citmpl = NULL, **cotmpl = NULL;
@@ -3841,16 +3841,30 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
             // do not apply fx, just pull frame
             /* if (mainw->frame_index[scrap_track] == old_scrap_frame && mainw->scrap_pixbuf) { */
             /*   pixbuf = mainw->scrap_pixbuf; */
-            if (mainw->frame_index[scrap_track] == old_scrap_frame && mainw->scrap_layer) {
-              out_layer = mainw->scrap_layer;
+            if (mainw->frame_index[scrap_track] == old_scrap_frame) {
+              if (cfile->img_type == IMG_TYPE_PNG) {
+                if (mainw->scrap_layer) out_layer = mainw->scrap_layer;
+              } else {
+                if (mainw->scrap_pixbuf) pixbuf = mainw->scrap_pixbuf;
+              }
             } else {
               //if (mainw->scrap_pixbuf) {
-              if (mainw->scrap_layer) {
+              if (cfile->img_type == IMG_TYPE_PNG) {
+                if (mainw->scrap_layer) {
 #ifndef SAVE_THREAD
-                lives_widget_object_unref(mainw->scrap_pixbuf);
+                  weed_layer_free(mainw->scrap_layer);
 #endif
-                //mainw->scrap_pixbuf = NULL;
-                mainw->scrap_layer = NULL;
+                  //mainw->scrap_pixbuf = NULL;
+                  mainw->scrap_layer = NULL;
+                }
+              } else {
+                if (mainw->scrap_pixbuf) {
+#ifndef SAVE_THREAD
+                  lives_widget_object_unref(mainw->scrap_pixbuf);
+#endif
+                  //mainw->scrap_pixbuf = NULL;
+                  mainw->scrap_pixbuf = NULL;
+                }
               }
               old_scrap_frame = mainw->frame_index[scrap_track];
               layer = lives_layer_new_for_frame(mainw->clip_index[scrap_track], mainw->frame_index[scrap_track]);
@@ -4015,9 +4029,12 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               render_text_overlay(layer, texto);
               lives_free(texto);
             }
-            /* pixbuf = layer_to_pixbuf(layer, TRUE, FALSE); */
-            /* weed_layer_free(layer); */
-            out_layer = layer;
+            if (cfile->img_type == IMG_TYPE_PNG)
+              out_layer = layer;
+            else {
+              pixbuf = layer_to_pixbuf(layer, TRUE, FALSE);
+              weed_layer_free(layer);
+            }
           }
           mainw->blend_file = blend_file;
         }
@@ -4105,10 +4122,12 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
       }
 
       if (!r_video) break;
-      //if (!pixbuf) break;
-      if (!out_layer) break;
 
-      g_print("RNDR %d %p, %d %d %ld\n", out_frame, next_frame_event, is_blank, mainw->clip_index[0], mainw->frame_index[0]);
+      if (cfile->img_type == IMG_TYPE_PNG) {
+        if (!out_layer) break;
+      } else {
+        if (!pixbuf) break;
+      }
 
       if (!next_frame_event && is_blank) {
         next_out_tc = out_tc;
@@ -4120,7 +4139,6 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
         if (next_tc < next_out_tc || next_tc - next_out_tc < next_out_tc - tc) break;
       } else if (next_out_tc > tc) break;
 
-      g_print("RNDRzzz %d %p, %d\n", out_frame, next_frame_event, is_blank);
 #ifndef SAVE_THREAD
       if (cfile->old_frames > 0) {
         tmp = make_image_file_name(cfile, out_frame, LIVES_FILE_EXT_MGK);
@@ -4132,6 +4150,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
       do {
         retval = LIVES_RESPONSE_NONE;
+        xyzzy;
         lives_pixbuf_save(pixbuf, oname, cfile->img_type, 100 - prefs->ocp, cfile->hsize, cfile->vsize, NULL);
 
         if (error) {
@@ -4162,20 +4181,24 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
             read_write_error = LIVES_RENDER_ERROR_WRITE_FRAME;
             break;
           }
-          /* lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression, */
-          /*                   saveargs->width, saveargs->height, &saveargs->error); */
-          save_to_png_threaded((void *)saveargs);
+          if (cfile->img_type == IMG_TYPE_PNG) save_to_png_threaded((void *)saveargs);
+          else {
+            lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression,
+                              saveargs->width, saveargs->height, &saveargs->error);
+          }
         }
-
-        /* if (saveargs->pixbuf && saveargs->pixbuf != pixbuf) { */
-        /*   if (saveargs->pixbuf == mainw->scrap_pixbuf) mainw->scrap_pixbuf = NULL; */
-        /*   lives_widget_object_unref(saveargs->pixbuf); */
-        /*   saveargs->pixbuf = NULL; */
-        /* } */
-        if (saveargs->layer && saveargs->layer != out_layer) {
-          if (saveargs->layer == mainw->scrap_layer) mainw->scrap_layer = NULL;
-          weed_layer_free(saveargs->layer);
-          saveargs->layer = NULL;
+        if (cfile->img_type == IMG_TYPE_PNG) {
+          if (saveargs->layer && saveargs->layer != out_layer) {
+            if (saveargs->layer == mainw->scrap_layer) mainw->scrap_layer = NULL;
+            weed_layer_free(saveargs->layer);
+            saveargs->layer = NULL;
+          }
+        } else {
+          if (saveargs->pixbuf && saveargs->pixbuf != pixbuf) {
+            if (saveargs->pixbuf == mainw->scrap_pixbuf) mainw->scrap_pixbuf = NULL;
+            lives_widget_object_unref(saveargs->pixbuf);
+            saveargs->pixbuf = NULL;
+          }
         }
         lives_free(saveargs->fname);
         saveargs->fname = NULL;
@@ -4188,11 +4211,13 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
           saveargs->fname = make_image_file_name(cfile, out_frame, get_image_ext_for_type(cfile->img_type));
         }
 
-        /* saveargs->pixbuf = pixbuf; */
-        /* lives_thread_create(saver_thread, LIVES_THRDATTR_NONE, lives_pixbuf_save_threaded, saveargs); */
-
-        saveargs->layer = out_layer;
-        lives_thread_create(saver_thread, LIVES_THRDATTR_NONE, save_to_png_threaded, saveargs);
+        if (cfile->img_type == IMG_TYPE_PNG) {
+          saveargs->layer = out_layer;
+          lives_thread_create(saver_thread, LIVES_THRDATTR_NONE, save_to_png_threaded, saveargs);
+        } else {
+          saveargs->pixbuf = pixbuf;
+          lives_thread_create(saver_thread, LIVES_THRDATTR_NONE, lives_pixbuf_save_threaded, saveargs);
+        }
       }
 #endif
 
@@ -4208,8 +4233,12 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
       // if our pixbuf came from scrap file, and next frame is also from scrap file with same frame number,
       // save the pixbuf and re-use it
-      //if (scrap_track != -1) mainw->scrap_pixbuf = pixbuf;
-      if (scrap_track != -1) mainw->scrap_layer = layer;
+      if (scrap_track != -1) {
+        if (cfile->img_type == IMG_TYPE_PNG)
+          mainw->scrap_layer = layer;
+        else
+          mainw->scrap_pixbuf = pixbuf;
+      }
       break;
 
     case WEED_EVENT_TYPE_FILTER_INIT:
@@ -4434,16 +4463,24 @@ filterinit2:
         lives_error_free(saveargs->error);
         saveargs->error = NULL;
         if (retval != LIVES_RESPONSE_RETRY) read_write_error = LIVES_RENDER_ERROR_WRITE_FRAME;
-        else lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression,
-                                 saveargs->width, saveargs->height, &saveargs->error);
+        else {
+          if (cfile->img_type == IMG_TYPE_PNG) save_to_png_threaded((void *)saveargs);
+          else {
+            lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression,
+                              saveargs->width, saveargs->height, &saveargs->error);
+          }
+        }
       }
-      /* if (saveargs->pixbuf) { */
-      /*   lives_widget_object_unref(saveargs->pixbuf); */
-      /*   if (saveargs->pixbuf == mainw->scrap_pixbuf) mainw->scrap_pixbuf = NULL; */
-      /* } */
-      if (saveargs->layer) {
-        weed_layer_free(saveargs->layer);
-        if (saveargs->layer == mainw->scrap_layer) mainw->scrap_layer = NULL;
+      if (cfile->img_type == IMG_TYPE_PNG) {
+        if (saveargs->layer) {
+          weed_layer_free(saveargs->layer);
+          if (saveargs->layer == mainw->scrap_layer) mainw->scrap_layer = NULL;
+        }
+      } else {
+        if (saveargs->pixbuf) {
+          lives_widget_object_unref(saveargs->pixbuf);
+          if (saveargs->pixbuf == mainw->scrap_pixbuf) mainw->scrap_pixbuf = NULL;
+        }
       }
       lives_freep((void **)&saveargs->fname);
       lives_free(saveargs);
@@ -4958,10 +4995,10 @@ boolean render_to_clip(boolean new_clip, boolean transcode) {
       weed_layer_free(mainw->scrap_layer);
       mainw->scrap_layer = NULL;
     }
-    /* if (mainw->scrap_pixbuf) { */
-    /*   lives_widget_object_unref(mainw->scrap_pixbuf); */
-    /*   mainw->scrap_pixbuf = NULL; */
-    /* } */
+    if (mainw->scrap_pixbuf) {
+      lives_widget_object_unref(mainw->scrap_pixbuf);
+      mainw->scrap_pixbuf = NULL;
+    }
     if (new_clip) {
       char *tmp;
       int old_file = current_file;

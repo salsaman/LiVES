@@ -1492,7 +1492,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->crash_possible = 0;
 
-  //mainw->scrap_pixbuf = NULL;
+  mainw->scrap_pixbuf = NULL;
   mainw->scrap_layer = NULL;
 
   mainw->close_keep_frames = FALSE;
@@ -6830,7 +6830,6 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
 
   png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 
-
   if (gval == PNG_INFO_gAMA) {
     /// if gAMA is set, then we need to convert to *linear* using the file gamma
     weed_layer_set_gamma(layer, WEED_GAMMA_LINEAR);
@@ -6878,15 +6877,7 @@ static void png_flush_func(png_structp png_ptr) {
   }
 }
 
-void *save_to_png_threaded(void *args) {
-  savethread_priv_t *saveargs = (savethread_priv_t *)args;
-  int fd = lives_create_buffered(saveargs->fname, DEF_FILE_PERMS);
-  save_to_png(fd, saveargs->layer, saveargs->compression);
-  lives_close_buffered(fd);
-  return saveargs;
-}
-
-boolean save_to_png(int fd, weed_layer_t *layer, int comp) {
+static boolean save_to_png_inner(int fd, weed_layer_t *layer, int comp) {
   // comp is 0 (none) - 9 (full)
   png_structp png_ptr;
   png_infop info_ptr;
@@ -6920,6 +6911,7 @@ boolean save_to_png(int fd, weed_layer_t *layer, int comp) {
     // libpng will longjump to here on error
     if (info_ptr) png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
     png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
+    THREADVAR(write_failed) = fd + 1;
     return FALSE;
   }
 
@@ -6984,7 +6976,21 @@ boolean save_to_png(int fd, weed_layer_t *layer, int comp) {
 
   return TRUE;
 }
-#endif
+
+boolean save_to_png(weed_layer_t *layer, const char *fname, int comp) {
+  int fd = lives_create_buffered(fname, DEF_FILE_PERMS);
+  boolean ret = save_to_png_inner(fd, layer, comp);
+  lives_close_buffered(fd);
+  return ret;
+}
+
+void *save_to_png_threaded(void *args) {
+  savethread_priv_t *saveargs = (savethread_priv_t *)args;
+  saveargs->success = save_to_png(saveargs->layer, saveargs->fname, saveargs->compression);
+  return saveargs;
+}
+
+#endif // USE_LIBPNG
 
 
 boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, const char *fname, int width,
@@ -7014,8 +7020,7 @@ boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, const char 
   if (fd < 0) return FALSE;
 #ifndef VALGRIND_ON
   if (is_png) lives_buffered_rdonly_slurp(fd, 8);
-  else
-    lives_buffered_rdonly_slurp(fd, 0);
+  else lives_buffered_rdonly_slurp(fd, 0);
 #endif
 #else
   fd = lives_open2(fname, O_RDONLY);
@@ -7339,9 +7344,11 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
 
         //static int last = -1;
         // try to pull frame from decoder plugin
-        //if (sfile->frame_index[frame - 1] == last) break_me();
-        //last = sfile->frame_index[frame - 1];
-        if (!(*dplug->decoder->get_frame)(dplug->cdata, (int64_t)(sfile->frame_index[frame - 1]),
+
+        /* g_print("GF %d\n", frame); */
+        /* int64_t timex = lives_get_current_ticks(); */
+        /* double est_time = (*dplug->decoder->estimate_delay)(dplug->cdata, (int64_t)get_indexed_frame(clip, frame)); */
+        if (!(*dplug->decoder->get_frame)(dplug->cdata, (int64_t)get_indexed_frame(clip, frame),
                                           rowstrides, sfile->vsize, pixel_data)) {
 
 #ifdef USE_REC_RS
@@ -7359,6 +7366,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
           }
           res = FALSE;
         }
+        //g_print("ACT %f EST %f\n",  (double)(lives_get_current_ticks() - timex) / TICKS_PER_SECOND_DBL, est_time);
 
         lives_free(pixel_data);
         lives_free(rowstrides);
@@ -7398,6 +7406,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
       } else {
         // pull frame from decoded images
         int64_t timex = lives_get_current_ticks();
+        double img_decode_time;
         boolean ret;
         char *fname = make_image_file_name(sfile, frame, image_ext);
 #ifdef USE_RESTHREAD
@@ -7421,7 +7430,9 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
           create_blank_layer(layer, image_ext, width, height, target_palette);
           return FALSE;
         }
-        sfile->img_decode_time = (double)(lives_get_current_ticks() - timex) / TICKS_PER_SECOND_DBL;
+        img_decode_time = (double)(lives_get_current_ticks() - timex) / TICKS_PER_SECOND_DBL;
+        if (!sfile->img_decode_time) sfile->img_decode_time = img_decode_time;
+        else sfile->img_decode_time = (sfile->img_decode_time + img_decode_time) / 2.;
       }
     }
     break;

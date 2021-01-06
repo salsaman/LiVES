@@ -4084,33 +4084,46 @@ boolean save_frame_inner(int clip, frames_t frame, const char *file_name, int wi
   } else {
     // multitrack mode
     LiVESError *gerr = NULL;
-    LiVESPixbuf *pixbuf;
-    int retval;
+    LiVESPixbuf *pixbuf = NULL;
+    LiVESResponseType retval;
+
+    boolean internal = FALSE;
+
+#ifdef USE_LIBPNG
+    if (sfile->img_type == IMG_TYPE_PNG) internal = TRUE;
+#endif
 
     mt_show_current_frame(mainw->multitrack, TRUE);
     resize_layer(mainw->frame_layer, sfile->hsize, sfile->vsize, LIVES_INTERP_BEST, WEED_PALETTE_RGB24, 0);
     convert_layer_palette(mainw->frame_layer, WEED_PALETTE_RGB24, 0);
-    weed_set_int_value(mainw->frame_layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
-    pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE, FALSE);
-    weed_plant_free(mainw->frame_layer);
-    mainw->frame_layer = NULL;
+
+    if (!internal) {
+      pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE, FALSE);
+    }
 
     do {
-      retval = 0;
-      if (sfile->img_type == IMG_TYPE_JPEG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_JPEG, 100,
-            sfile->hsize, sfile->vsize, &gerr);
-      else if (sfile->img_type == IMG_TYPE_PNG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_PNG, 100,
-            sfile->hsize, sfile->vsize, &gerr);
-
-      if (gerr) {
-        retval = do_write_failed_error_s_with_retry(full_file_name, gerr->message);
-        lives_error_free(gerr);
-        gerr = NULL;
+      retval = LIVES_RESPONSE_NONE;
+      if (internal) {
+        save_to_png(mainw->frame_layer, tmp, 100 - prefs->ocp);
+        if (THREADVAR(write_failed)) {
+          THREADVAR(write_failed) = 0;
+          retval = do_write_failed_error_s_with_retry(full_file_name, NULL);
+        }
+      } else {
+        lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_JPEG, 100, sfile->hsize, sfile->vsize, &gerr);
+        if (gerr) {
+          retval = do_write_failed_error_s_with_retry(full_file_name, gerr->message);
+          lives_error_free(gerr);
+          gerr = NULL;
+        }
       }
     } while (retval == LIVES_RESPONSE_RETRY);
 
+    weed_plant_free(mainw->frame_layer);
+    mainw->frame_layer = NULL;
+
     free(tmp);
-    lives_widget_object_unref(pixbuf);
+    if (pixbuf) lives_widget_object_unref(pixbuf);
   }
 
   // some other error condition

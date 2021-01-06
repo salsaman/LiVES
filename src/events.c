@@ -6254,7 +6254,7 @@ static void add_fade_elements(render_details * rdet, LiVESWidget * hbox, boolean
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  cb = lives_standard_check_button_new(_("Fade out over"), FALSE, LIVES_BOX(hbox), NULL);
+  cb = lives_standard_check_button_new(_("Fade out over"), TRUE, LIVES_BOX(hbox), NULL);
 
   widget_opts.swap_label = TRUE;
   if (!is_video) {
@@ -6280,8 +6280,7 @@ static void add_fade_elements(render_details * rdet, LiVESWidget * hbox, boolean
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, 0);
     add_fill_to_box(LIVES_BOX(hbox));
     rdet->vfade_col = lives_standard_color_button_new(LIVES_BOX(hbox), _("Fade Color"),
-                      FALSE, &rgba, &sp_red,
-                      &sp_green, &sp_blue, NULL);
+                      FALSE, &rgba, &sp_red, &sp_green, &sp_blue, NULL);
   }
 }
 

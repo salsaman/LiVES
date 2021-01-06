@@ -3403,14 +3403,17 @@ Defined in weed-effects.h
 
  *  WEED_ERROR_PLUGIN_INVALID    (Any plugin function)   [severity = FATAL]
     May be returned from any plugin function.
-    The plugin encountered a fatal error and should no longer be used. The host should call deinit_func() for any active instances
+    The plugin encountered a fatal error and should no longer be used. The host should call deinit_func() for any other
+    active instances created from filters in the plugin,
     and then the desetup function for the plugin, and refrain from using it further.
 
  *  WEED_ERROR_FILTER_INVALID    (init_func() or process_func())    [severity = CRITICAL]
     May be returned from init_func() or process_func(). Only applies to plugins which create multiple filters (e.g. wrapper
     plugins.) The filter_class from which this instance was created from is no longer valid.
-    The host should call deinit_func() for any active instances created from the corresponding filter class, and refrain from
-    using them further. The host may still use other, valid filters in the plugin.
+    The host should call deinit_func() for any other active instances created from the corresponding filter class,
+    and refrain from
+    using them further. The host may still use other, valid filters in the plugin; in addition, the host may unload and
+    reload the plugin and retry the operation, should it so desire.
 
  *  WEED_ERROR_TOO_MANY_INSTANCES   (init_func() only)   [severity = MAJOR]        
     If a plugin allows only a limited number of filter instances, it may return this from the init_func().

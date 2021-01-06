@@ -845,8 +845,33 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
   }
 
   if (!cfile->play_paused) {
-    blend_file->frameno = calc_new_playback_position(mainw->blend_file, blend_tc, (ticks_t *)&ntc);
-    blend_file->last_frameno = blend_file->frameno;
+    lives_decoder_t *dplug = NULL;
+    lives_decoder_sys_t *dpsys = NULL;
+    double est_time = 0.;
+    frames_t frameno = calc_new_playback_position(mainw->blend_file, blend_tc, (ticks_t *)&ntc);
+
+    if (blend_file->clip_type == CLIP_TYPE_FILE) {
+      dplug = (lives_decoder_t *)blend_file->ext_src;
+      if (dplug) dpsys = (lives_decoder_sys_t *)dplug->decoder;
+    }
+
+    if (is_virtual_frame(mainw->blend_file, blend_file->frameno)) {
+      if (dpsys && dpsys->estimate_delay)
+        est_time = (*dpsys->estimate_delay)(dplug->cdata, get_indexed_frame(mainw->blend_file, blend_file->frameno));
+    } else {
+      // img timings
+      est_time = blend_file->img_decode_time;
+    }
+
+    if (est_time > 0.) {
+      g_print("vals %ld %ld and %f %d\n", tc, ntc, est_time, frameno);
+      ntc = tc + est_time * TICKS_PER_SECOND_DBL;
+      g_print("vals2 %ld %ld and %f %d\n", tc, ntc, est_time, frameno);
+      frameno = calc_new_playback_position(mainw->blend_file, blend_tc, (ticks_t *)&ntc);
+      g_print("vals3 %ld %ld and %f %d\n", tc, ntc, est_time, frameno);
+    }
+
+    blend_file->last_frameno = blend_file->frameno = frameno;
     blend_tc = ntc;
   }
 

@@ -1250,6 +1250,8 @@ reinit:
         lives_chdir(cwd, FALSE);
         lives_free(cwd);
         if (key != -1) filter_mutex_unlock(key);
+        if (retval == WEED_ERROR_PLUGIN_INVALID) return FILTER_ERROR_INVALID_PLUGIN;
+        if (retval == WEED_ERROR_FILTER_INVALID) return FILTER_ERROR_INVALID_FILTER;
         return FILTER_ERROR_COULD_NOT_REINIT;
       }
 
@@ -1308,7 +1310,10 @@ void weed_reinit_all(void) {
           weed_instance_unref(instance);
           continue;
         }
-        if ((retval = weed_reinit_effect(instance, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
+        retval = weed_reinit_effect(instance, FALSE);
+        if (retval == FILTER_ERROR_COULD_NOT_REINIT
+            || retval == FILTER_ERROR_INVALID_PLUGIN
+            || retval == FILTER_ERROR_INVALID_FILTER) {
           weed_instance_unref(instance);
           continue;
         }
@@ -2651,7 +2656,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   /// all channels now set up
 
   if (needs_reinit) {
-    if ((retval = weed_reinit_effect(inst, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
+    retval = weed_reinit_effect(inst, FALSE);
+    if (retval == FILTER_ERROR_COULD_NOT_REINIT
+        || retval == FILTER_ERROR_INVALID_PLUGIN
+        || retval == FILTER_ERROR_INVALID_FILTER) {
       goto done_video;
     }
   }
@@ -3487,7 +3495,10 @@ apply_inst2:
           // chain any internal data pipelines for compound fx
           needs_reinit = pconx_chain_data_internal(instance);
           if (needs_reinit) {
-            if ((retval = weed_reinit_effect(instance, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
+            retval = weed_reinit_effect(instance, FALSE);
+            if (retval == FILTER_ERROR_COULD_NOT_REINIT
+                || retval == FILTER_ERROR_INVALID_PLUGIN
+                || retval == FILTER_ERROR_INVALID_FILTER) {
               weed_instance_unref(orig_inst);
               if (!LIVES_IS_PLAYING && mainw->multitrack && mainw->multitrack->solo_inst &&
                   orig_inst == mainw->multitrack->solo_inst) break;
@@ -3503,7 +3514,10 @@ apply_inst2:
 
         if (filter_error == WEED_SUCCESS && (instance = get_next_compound_inst(instance)) != NULL) goto apply_inst2;
         if (filter_error == WEED_ERROR_REINIT_NEEDED) {
-          if ((retval = weed_reinit_effect(instance, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
+          retval = weed_reinit_effect(instance, FALSE);
+          if (retval == FILTER_ERROR_COULD_NOT_REINIT
+              || retval == FILTER_ERROR_INVALID_PLUGIN
+              || retval == FILTER_ERROR_INVALID_FILTER) {
             weed_instance_unref(orig_inst);
             if (!LIVES_IS_PLAYING && mainw->multitrack && mainw->multitrack->solo_inst &&
                 orig_inst == mainw->multitrack->solo_inst) break;
@@ -3625,7 +3639,10 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
               weed_instance_unref(instance);
               instance = instance2;
               if (needs_reinit) {
-                if ((filter_error = weed_reinit_effect(instance, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
+                filter_error = weed_reinit_effect(instance, FALSE);
+                if (filter_error == FILTER_ERROR_COULD_NOT_REINIT
+                    || filter_error == FILTER_ERROR_INVALID_PLUGIN
+                    || filter_error == FILTER_ERROR_INVALID_FILTER) {
                   weed_instance_unref(instance);
                   continue;
 		// *INDENT-OFF*
@@ -3640,7 +3657,10 @@ apply_inst3:
             // chain any internal data pipelines for compound fx
             needs_reinit = pconx_chain_data_internal(instance);
             if (needs_reinit) {
-              if ((filter_error = weed_reinit_effect(instance, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
+              filter_error = weed_reinit_effect(instance, FALSE);
+              if (filter_error == FILTER_ERROR_COULD_NOT_REINIT
+                  || filter_error == FILTER_ERROR_INVALID_PLUGIN
+                  || filter_error == FILTER_ERROR_INVALID_FILTER) {
                 weed_instance_unref(instance);
                 continue;
 		// *INDENT-OFF*
@@ -3848,7 +3868,10 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
           instance = new_inst;
 
           if (needs_reinit) {
-            if ((filter_error = weed_reinit_effect(instance, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
+            filter_error = weed_reinit_effect(instance, FALSE);
+            if (filter_error == FILTER_ERROR_COULD_NOT_REINIT
+                || filter_error == FILTER_ERROR_INVALID_PLUGIN
+                || filter_error == FILTER_ERROR_INVALID_FILTER) {
               weed_instance_unref(instance);
               continue;
 		// *INDENT-OFF*
@@ -3863,7 +3886,10 @@ apply_audio_inst2:
           // chain any internal data pipelines for compound fx
           needs_reinit = pconx_chain_data_internal(instance);
           if (needs_reinit) {
-            if ((filter_error = weed_reinit_effect(instance, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
+            filter_error = weed_reinit_effect(instance, FALSE);
+            if (filter_error == FILTER_ERROR_COULD_NOT_REINIT
+                || filter_error == FILTER_ERROR_INVALID_PLUGIN
+                || filter_error == FILTER_ERROR_INVALID_FILTER) {
               weed_instance_unref(instance);
               continue;
             }
@@ -7839,7 +7865,10 @@ matchvals:
     weed_channel_set_gamma_type(channel, cfile->gamma_type);
 
   if (needs_reinit) {
-    if ((retval = weed_reinit_effect(inst, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
+    retval = weed_reinit_effect(inst, FALSE);
+    if (retval == FILTER_ERROR_COULD_NOT_REINIT
+        || retval == FILTER_ERROR_INVALID_PLUGIN
+        || retval == FILTER_ERROR_INVALID_FILTER) {
       lives_free(out_channels);
       weed_instance_unref(inst);
       return NULL;
@@ -7900,7 +7929,10 @@ procfunc1:
       weed_instance_unref(inst);
       return channel;
     }
-    if ((retval = weed_reinit_effect(inst, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
+    retval = weed_reinit_effect(inst, FALSE);
+    if (retval == FILTER_ERROR_COULD_NOT_REINIT
+        || retval == FILTER_ERROR_INVALID_PLUGIN
+        || retval == FILTER_ERROR_INVALID_FILTER) {
       weed_instance_unref(inst);
       return channel;
     }

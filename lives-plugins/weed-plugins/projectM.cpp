@@ -138,6 +138,8 @@ typedef struct {
   weed_error_t error;
   double timer;
   weed_timecode_t timestamp;
+  volatile bool busy;
+  volatile bool silent;
 } _sdata;
 
 static _sdata *statsd;
@@ -361,7 +363,7 @@ static int render_frame(_sdata *sd) {
   if (sd->needs_more || sd->audio_frames > sd->audio_offs) {
     size_t audlen = MAX_AUDLEN;
 #ifdef NORM_AUDIO
-    float maxvol = 0., myvol;
+    float maxvol = 1., myvol;
     size_t i;
 #endif
     pthread_mutex_lock(&sd->pcm_mutex);
@@ -379,8 +381,12 @@ static int render_frame(_sdata *sd) {
         }
       }
 #endif
-      sd->globalPM->pcm()->addPCMfloat(sd->audio + sd->audio_offs, audlen);
-      sd->audio_offs += audlen;
+      if (maxvol == 0.) sd->silent = true;
+      else {
+        sd->silent = false;
+        sd->globalPM->pcm()->addPCMfloat(sd->audio + sd->audio_offs, audlen);
+        sd->audio_offs += audlen;
+      }
     }
     pthread_mutex_unlock(&sd->pcm_mutex);
     checked_audio = true;
@@ -572,6 +578,8 @@ static void *worker(void *data) {
   pthread_cond_signal(&cond);
   pthread_mutex_unlock(&cond_mutex);
 
+  rerand = true;
+
   while (!sd->die) {
     if (!sd->rendering) {
       // deinit() will only exit once the mutex is unlocked, we need to make sure we are idling
@@ -597,13 +605,15 @@ static void *worker(void *data) {
     }
     if (sd->pidx == -1) {
       if (rerand) {
+        sd->busy = true;
         sd->cycadj = 0;
         for (int rr = 0; rr < 4; rr++) {
           sd->program = fastrand_int(sd->nprs - 2);
 
           // mkae it 4 times more likely to select a known good program than an untested one
+          // values can be: 0 - unchecked, 1 - known bad, 2 - known good, 3 - bad if silent
           if (sd->bad_programs[sd->program] == 2) break;
-          if (sd->bad_programs[sd->program] == 1) {
+          if (sd->bad_programs[sd->program] == 1 || (sd->silent && sd->bad_programs[sd->program] == 3)) {
             rr--;
             continue;
           }
@@ -618,6 +628,7 @@ static void *worker(void *data) {
         sd->bad_prog = false;
         blanks = 0;
         if (sd->bad_programs[sd->program] == 0) sd->checkforblanks = true;
+        sd->busy = false;
       }
     } else if (sd->pidx != sd->opidx) {
       sd->globalPM->setPresetLock(true);
@@ -634,7 +645,8 @@ static void *worker(void *data) {
         }
       } else if (sd->pidx == -1) {
         if (sd->bad_prog) {
-          sd->bad_programs[sd->program] = 1;
+          if (sd->silent) sd->bad_programs[sd->program] = 3;
+          else sd->bad_programs[sd->program] = 1;
           rerand = true;
         }
       }
@@ -776,6 +788,10 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
     } else {
       sd = statsd;
       weed_set_voidptr_value(inst, "plugin_internal", sd);
+      if (texwidth != width || texheight != height) {
+        projectM_deinit(inst);
+        return WEED_ERROR_FILTER_INVALID;
+      }
     }
 
     sd->rendering = false;
@@ -812,6 +828,8 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
     sd->bad_prog = false;
     sd->timer = 0.;
     sd->timestamp = 0.;
+    sd->busy = false;
+    sd->silent = false;
 
     pthread_mutex_lock(&cond_mutex);
     pthread_cond_signal(&cond);
@@ -867,6 +885,8 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   }
 
   if (sd->die) return WEED_ERROR_REINIT_NEEDED;
+
+  if (sd->busy) goto copytodest;
 
   while (!sd->worker_active) {
     sd->rendering = true;
@@ -998,6 +1018,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   /// optionally we could return WEED_ERROR_NOT_READY if there is no new frame
   //if (!sd->got_first) return WEED_ERROR_NOT_READY;
 
+copytodest:
   pthread_mutex_lock(&buffer_mutex);
   weed_memcpy(dst, sd->fbuffer, rowstride * height);
   sd->needs_more = true;

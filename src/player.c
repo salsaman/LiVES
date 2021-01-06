@@ -758,7 +758,7 @@ void load_frame_image(frames_t frame) {
                 if (delta < 0) g_printerr("cached frame    TOO LATE, got %ld, wanted %d !!!\n",
                                             labs(mainw->pred_frame), mainw->actual_frame);
               }
-              //if (delta > 0) g_print("    waiting...\n");
+              if (delta > 0) g_print("    waiting...\n");
             }
             if (!got_preload) {
               pull_frame_threaded(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks, 0, 0);
@@ -2170,7 +2170,6 @@ const char *get_cache_stats(void) {
 int process_one(boolean visible) {
   // INTERNAL PLAYER
   static frames_t last_req_frame = 0;
-  static int last_pwidth = 0, last_pheight = 0;
 #ifdef HAVE_PULSE_AUDIO
   static int64_t last_seek_pos = 0;
 #endif
@@ -2473,7 +2472,6 @@ switch_point:
     // which will be <= the current time
     // and requested_frame is set to the frame to show. By default this is the frame we show, but we may vary
     // this depending on the cached frame
-
     requested_frame = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);
     if (mainw->foreign) {
       if (requested_frame > sfile->frameno) {
@@ -2483,9 +2481,9 @@ switch_point:
       if (mainw->cancelled != CANCEL_NONE) return mainw->cancelled;
       return 0;
     }
-    if (requested_frame < 1 || requested_frame > sfile->frames)
+    if (requested_frame < 1 || requested_frame > sfile->frames) {
       requested_frame = sfile->frameno;
-    else sfile->frameno = requested_frame;
+    } else sfile->frameno = requested_frame;
 
     if (mainw->scratch != SCRATCH_NONE) scratch  = mainw->scratch;
     mainw->scratch = SCRATCH_NONE;
@@ -2513,7 +2511,8 @@ switch_point:
       if (test_getahead > 0) {
         if (recalc_bungle_frames) {
           /// we want to avoid the condition where we are constantly seeking ahead and because the seek may take a while
-          /// to happen, we immediately need to seek again. This will cause the video stream to stutter. So to try to avoid this
+          /// to happen, we immediately need to seek again. This will cause the video stream to stutter.
+          /// So to try to avoid this
           /// we will do an an EXTRA jump forwards which ideally will give the player a chance to catch up
           /// - in this condition, instead of showing the reqiested frame we will do the following:
           /// - if we have a cached frame, we will show that; otherwise we will advance the frame by 1 from the last frame.
@@ -2675,7 +2674,7 @@ switch_point:
 
                   if (is_virtual_frame(mainw->playing_file, pred_frame)) {
                     if (!dpsys || !dpsys->estimate_delay) break;
-                    est_time = (*dpsys->estimate_delay)(dplug->cdata, pred_frame - 1);
+                    est_time = (*dpsys->estimate_delay)(dplug->cdata, get_indexed_frame(mainw->playing_file, pred_frame));
                   } else {
                     // img timings
                     est_time = sfile->img_decode_time;
@@ -2800,12 +2799,6 @@ switch_point:
 #ifdef SHOW_CACHE_PREDICTIONS
       //g_print("dropped = %d, %d scyc = %ld %d %d\n", dropped, mainw->effort, spare_cycles, requested_frame, sfile->frameno);
 #endif
-      if (mainw->pwidth != last_pwidth || mainw->pheight != last_pheight) {
-        mainw->pred_frame = 0;
-        cleanup_preload = TRUE;
-        getahead = -1;
-      }
-
       drop_off = FALSE;
       last_pwidth = mainw->pwidth;
       last_pheight = mainw->pheight;
@@ -2981,7 +2974,7 @@ switch_point:
 
               if (is_virtual_frame(mainw->playing_file, pred_frame)) {
                 if (!dpsys || !dpsys->estimate_delay) break;
-                est_time = (*dpsys->estimate_delay)(dplug->cdata, pred_frame - 1);
+                est_time = (*dpsys->estimate_delay)(dplug->cdata, get_indexed_frame(mainw->playing_file, pred_frame));
               } else {
                 // png timings
                 est_time = sfile->img_decode_time;

@@ -1014,7 +1014,7 @@ static void matroska_add_index_entries(const lives_clip_data_t *cdata) {
         pthread_mutex_lock(&priv->idxc->mutex);
         index_add(priv->idxc, pos[j].pos + matroska->segment_start, (int64_t)(index[i].time / priv->index_scale));
         pthread_mutex_unlock(&priv->idxc->mutex);
-        fprintf(stderr, "ADD INDEX %ld %ld\n", pos[j].pos + matroska->segment_start, index[i].time / priv->index_scale);
+        //fprintf(stderr, "ADD INDEX %ld %ld\n", pos[j].pos + matroska->segment_start, index[i].time / priv->index_scale);
       }
     }
   }
@@ -2673,6 +2673,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     xtimex = get_current_ticks();
 
     //priv->ctx->skip_frame=AVDISCARD_NONREF;
+
+    //fprintf(stderr, "SET lf to %ld\n", tframe);
     priv->last_frame = tframe;
     if (!priv->picture) priv->picture = av_frame_alloc();
 
@@ -2771,7 +2773,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
             ((lives_clip_data_t *)cdata)->adv_timing.ks_time = (double)xtimex;
         } else {
           if (cdata->adv_timing.ib_time > 0.)
-            ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (cdata->adv_timing.ib_time + (double)xtimex) / 2.;
+            ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (cdata->adv_timing.ib_time * 3. + (double)xtimex) / 4.;
           else
             ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (double)xtimex;
         }
@@ -2783,7 +2785,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
             ((lives_clip_data_t *)cdata)->adv_timing.k_time = (double)xtimex;
         } else {
           if (cdata->adv_timing.ib_time > 0.)
-            ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (cdata->adv_timing.ib_time + (double)xtimex) / 2.;
+            ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (cdata->adv_timing.ib_time * 3. + (double)xtimex) / 4.;
           else
             ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (double)xtimex;
         }
@@ -2999,48 +3001,55 @@ double estimate_delay(const lives_clip_data_t *xcdata, int64_t tframe) {
 
   // if we cannot calculate an estimate, we return a value < 0.
   lives_clip_data_t *cdata = (lives_clip_data_t *)xcdata;
+  lives_mkv_priv_t *priv;
   double est = -1.;
 
   est_noseek = 0.;
-  //dump_kframes(cdata);
 
-  if (cdata && cdata->fps) {
-    lives_mkv_priv_t *priv = cdata->priv;
-    double sbtime, ibtime, ktime, kstime;
-    int64_t delta = tframe - priv->last_frame, kf;
+  if (!cdata) return est;
+  priv = cdata->priv;
+  if (tframe == priv->last_frame && priv->picture) est = cdata->adv_timing.const_time;
+  else {
+    if (cdata->fps) {
+      double sbtime, ibtime, ktime, kstime;
+      int64_t delta = tframe - priv->last_frame, kf;
 
-    cdata->adv_timing.ctiming_ratio = 1.;
-    ibtime = cdata->adv_timing.ib_time;
-    ktime = cdata->adv_timing.k_time;
-    kstime = cdata->adv_timing.ks_time;
-    if (cdata->max_decode_fps >= 0.) {
-      if (ibtime <= 0.) ibtime = 1000000. / cdata->max_decode_fps;
-      if (ktime <= 0.) ktime = 1000000. / cdata->max_decode_fps;
-      if (kstime <= 0.) kstime = 1000000. / cdata->max_decode_fps;
-    }
-    if ((sbtime = cdata->adv_timing.seekback_time) <= 0.) sbtime = (double)cdata->fwd_seek_time;
+      cdata->adv_timing.ctiming_ratio = 1.;
+      ibtime = cdata->adv_timing.ib_time;
+      ktime = cdata->adv_timing.k_time;
+      kstime = cdata->adv_timing.ks_time;
 
-    //if (delta < 0 || priv->last_frame == -1 || do_seek) {
-    // estimate with seek
-    kf = kf_before(cdata, tframe);
-    if (kf >= 0) {
-      est = cdata->adv_timing.const_time + kstime + (tframe - kf) * ibtime;
-      if (delta > 0) est += (double)cdata->fwd_seek_time;
-      else est += sbtime;
-      /* fprintf(stderr, "ESTIMa is %f %f %f %ld %f %ld %f\n", est, cdata->adv_timing.const_time, kstime, */
-      /* 	      tframe - kf, ibtime, cdata->fwd_seek_time, sbtime); */
-      if (priv->last_frame != -1 && delta > 0) {
-        int nks = 0;
-        if (cdata->kframe_dist) nks = (tframe + 1) / cdata->kframe_dist - (priv->last_frame + 1) / cdata->kframe_dist;
-        else nks = count_kframes(cdata, priv->last_frame, tframe);
-        est_noseek = cdata->adv_timing.const_time + nks * ktime + (delta - nks) * ibtime;
-        //fprintf(stderr, "ESTIMb is %f\n", est_noseek);
-        if (est_noseek < est) est = est_noseek;
-        est_noseek *= cdata->adv_timing.ctiming_ratio / 1000000.;
+      if (cdata->max_decode_fps >= 0.) {
+        if (ibtime <= 0.) ibtime = 1000000. / cdata->max_decode_fps;
+        if (ktime <= 0.) ktime = 1000000. / cdata->max_decode_fps;
+        if (kstime <= 0.) kstime = 1000000. / cdata->max_decode_fps;
+      }
+      if ((sbtime = cdata->adv_timing.seekback_time) <= 0.) sbtime = (double)cdata->fwd_seek_time;
+
+      //if (delta < 0 || priv->last_frame == -1 || do_seek) {
+      // estimate with seek
+      kf = kf_before(cdata, tframe);
+      if (kf >= 0) {
+        est = cdata->adv_timing.const_time + kstime + (tframe - kf) * ibtime;
+        if (delta > 0) est += (double)cdata->fwd_seek_time;
+        else est += sbtime;
+        /* fprintf(stderr, "ESTIMa is %f %f %f %ld %f %ld %f\n", est, cdata->adv_timing.const_time, kstime, */
+        /* 	tframe - kf, ibtime, cdata->fwd_seek_time, sbtime); */
+        /* fprintf(stderr, "VALXX %ld and %ld\n", priv->last_frame, delta); */
+        if (priv->last_frame != -1 && delta > 0) {
+          int nks = 0;
+          if (cdata->kframe_dist) nks = (tframe + 1) / cdata->kframe_dist - (priv->last_frame + 1) / cdata->kframe_dist;
+          else nks = count_kframes(cdata, priv->last_frame, tframe);
+          est_noseek = cdata->adv_timing.const_time + nks * ktime + (delta - nks) * ibtime;
+          //fprintf(stderr, "ESTIMb is %f %f %d %f %ld %f\n", est_noseek, cdata->adv_timing.const_time, nks, ktime, delta-nks, ibtime);
+          if (est_noseek < est) est = est_noseek;
+          est_noseek *= cdata->adv_timing.ctiming_ratio / 1000000.;
+        }
       }
     }
   }
   if (est > 0.) est *= cdata->adv_timing.ctiming_ratio / 1000000.;
+  if (priv) fprintf(stderr, "PKT = %d\n", priv->avpkt.size);
   //fprintf(stderr, "ESTIM is %f\n", est);
   return est;
 }

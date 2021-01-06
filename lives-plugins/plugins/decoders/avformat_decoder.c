@@ -1298,7 +1298,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
           ((lives_clip_data_t *)cdata)->adv_timing.ks_time = (double)xtimex;
       } else {
         if (cdata->adv_timing.ib_time > 0.)
-          ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (cdata->adv_timing.ib_time + (double)xtimex) / 2.;
+          ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (cdata->adv_timing.ib_time * 3. + (double)xtimex) / 4.;
         else
           ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (double)xtimex;
       }
@@ -1310,7 +1310,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
           ((lives_clip_data_t *)cdata)->adv_timing.k_time = (double)xtimex;
       } else {
         if (cdata->adv_timing.ib_time > 0.)
-          ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (cdata->adv_timing.ib_time + (double)xtimex) / 2.;
+          ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (cdata->adv_timing.ib_time * 3. + (double)xtimex) / 4.;
         else
           ((lives_clip_data_t *)cdata)->adv_timing.ib_time = (double)xtimex;
       }
@@ -1610,51 +1610,56 @@ double estimate_delay(const lives_clip_data_t *xcdata, int64_t tframe) {
   // if we cannot calculate an estimate, we return a value < 0.
 
   lives_clip_data_t *cdata = (lives_clip_data_t *)xcdata;
+  lives_av_priv_t *priv;
   double est = -1.;
 
   est_noseek = 0.;
-  //dump_kframes(cdata);
-  if (cdata && cdata->fps) {
-    lives_av_priv_t *priv = cdata->priv;
-    double sbtime, ibtime, ktime, kstime;
-    int64_t delta = tframe - priv->last_frame, kf, kfd;
 
-    cdata->adv_timing.ctiming_ratio = 1.;
-    ibtime = cdata->adv_timing.ib_time;
-    ktime = cdata->adv_timing.k_time;
-    kstime = cdata->adv_timing.ks_time;
+  if (!cdata) return est;
+  priv = cdata->priv;
+  if (tframe == priv->last_frame && priv->pFrame) est = cdata->adv_timing.const_time;
+  else {
+    if (cdata && cdata->fps) {
+      double sbtime, ibtime, ktime, kstime;
+      int64_t delta = tframe - priv->last_frame, kf, kfd;
 
-    if (ibtime <= 0. && cdata->max_decode_fps >= 0.) ibtime = 1000000. / cdata->max_decode_fps;
-    if (ktime <= 0. && cdata->max_decode_fps >= 0.) ktime = 1000000. / cdata->max_decode_fps;
-    if (kstime <= 0. && cdata->max_decode_fps >= 0.) kstime = 1000000. / cdata->max_decode_fps;
+      cdata->adv_timing.ctiming_ratio = 1.;
+      ibtime = cdata->adv_timing.ib_time;
+      ktime = cdata->adv_timing.k_time;
+      kstime = cdata->adv_timing.ks_time;
 
-    if ((sbtime = cdata->adv_timing.seekback_time) <= 0.) sbtime = (double)cdata->fwd_seek_time;
+      if (ibtime <= 0. && cdata->max_decode_fps >= 0.) ibtime = 1000000. / cdata->max_decode_fps;
+      if (ktime <= 0. && cdata->max_decode_fps >= 0.) ktime = 1000000. / cdata->max_decode_fps;
+      if (kstime <= 0. && cdata->max_decode_fps >= 0.) kstime = 1000000. / cdata->max_decode_fps;
 
-    //estimate with seek
-    kf = kf_before(cdata, tframe);
-    //fprintf(stderr, "KF is %ld for %ld %ld\n", kf, tframe, cdata->kframe_dist_max);
-    if (kf < 0) {
-      if (tframe < cdata->kframe_dist_max) kfd = tframe;
-      else kfd = cdata->kframe_dist_max;
-      //fprintf(stderr, "KFD1 is %ld\n", kfd);
-    } else {
-      kfd = tframe - kf;
-      if (kfd > cdata->kframe_dist_max) kfd = cdata->kframe_dist_max;
-      //fprintf(stderr, "KFD2 is %ld\n", kfd);
-    }
+      if ((sbtime = cdata->adv_timing.seekback_time) <= 0.) sbtime = (double)cdata->fwd_seek_time;
 
-    est = cdata->adv_timing.const_time + kstime + kfd * ibtime;
-    if (delta > 0) est += (double)cdata->fwd_seek_time;
-    else est += sbtime;
-    /* fprintf(stderr, "ESTIMa is %f %f %f %ld %f %ld %f\n", est, cdata->adv_timing.const_time, kstime, */
-    /* 	    kfd, ibtime, cdata->fwd_seek_time, sbtime); */
-    if (priv->last_frame != -1 && delta > 0) {
-      int nks = 0;
-      if (cdata->kframe_dist) nks = (tframe + 1) / cdata->kframe_dist - (priv->last_frame + 1) / cdata->kframe_dist;
-      est_noseek = cdata->adv_timing.const_time + nks * ktime + (delta - nks) * ibtime;
-      //fprintf(stderr, "ESTIMb is %f\n", est_noseek);
-      if (est_noseek < est) est = est_noseek;
-      est_noseek *= cdata->adv_timing.ctiming_ratio / 1000000.;
+      //estimate with seek
+      kf = kf_before(cdata, tframe);
+      //fprintf(stderr, "KF is %ld for %ld %ld\n", kf, tframe, cdata->kframe_dist_max);
+      if (kf < 0) {
+        if (tframe < cdata->kframe_dist_max) kfd = tframe;
+        else kfd = cdata->kframe_dist_max;
+        //fprintf(stderr, "KFD1 is %ld\n", kfd);
+      } else {
+        kfd = tframe - kf;
+        if (kfd > cdata->kframe_dist_max) kfd = cdata->kframe_dist_max;
+        //fprintf(stderr, "KFD2 is %ld\n", kfd);
+      }
+
+      est = cdata->adv_timing.const_time + kstime + kfd * ibtime;
+      if (delta > 0) est += (double)cdata->fwd_seek_time;
+      else est += sbtime;
+      /* fprintf(stderr, "ESTIMa is %f %f %f %ld %f %ld %f\n", est, cdata->adv_timing.const_time, kstime, */
+      /* 	    kfd, ibtime, cdata->fwd_seek_time, sbtime); */
+      if (priv->last_frame != -1 && delta > 0) {
+        int nks = 0;
+        if (cdata->kframe_dist) nks = (tframe + 1) / cdata->kframe_dist - (priv->last_frame + 1) / cdata->kframe_dist;
+        est_noseek = cdata->adv_timing.const_time + nks * ktime + (delta - nks) * ibtime;
+        //fprintf(stderr, "ESTIMb is %f\n", est_noseek);
+        if (est_noseek < est) est = est_noseek;
+        est_noseek *= cdata->adv_timing.ctiming_ratio / 1000000.;
+      }
     }
   }
   if (est > 0.) est *= cdata->adv_timing.ctiming_ratio / 1000000.;

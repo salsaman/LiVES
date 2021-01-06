@@ -837,12 +837,16 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
 
   if (saver_thread) {
     lives_thread_join(*saver_thread, NULL);
-    if (saveargs->pixbuf && saveargs->pixbuf != pixbuf) {
+    if (saveargs->pixbuf && saveargs->pixbuf != pixbuf && (!pbr || *pbr != saveargs->pixbuf)) {
       lives_widget_object_unref(saveargs->pixbuf);
     }
     lives_free(saveargs->fname);
     saveargs->fname = NULL;
     lives_free(saveargs);
+  }
+
+  if (pixbuf && (!pbr || *pbr != pixbuf)) {
+    lives_widget_object_unref(pixbuf);
   }
 
   return retval;

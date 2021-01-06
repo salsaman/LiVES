@@ -12773,14 +12773,14 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     int irw[4], orw[4];
 
     int i;
+    swsctx_block *ctxblock;
+    int offset;
 #if USE_THREADS
     lives_sw_params *swparams;
     lives_thread_t threads[prefs->nfx_threads];
-    swsctx_block *ctxblock;
-    int offset;
     int nthrds = 1;
 #else
-    int scan;
+    struct SwsContext *swscale;
 #endif
     int subspace = WEED_YUV_SUBSPACE_YUV;
     int inplanes, oplanes;
@@ -12883,7 +12883,11 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 #else
     // TODO - can we set the gamma ?
     //g_print("iht is %d, height = %d\n", iheight, height);
-    swscale = sws_getCachedContext(swscale, iwidth, iheight, ipixfmt, width, height, opixfmt, flags, NULL, NULL, NULL);
+    ctxblock = sws_getblock(1, iwidth, iheight, irw, ipixfmt, width, height, orw, opixfmt, flags,
+                            subspace, iclamping, oclamp_hint);
+    offset = ctxblock->offset;
+    swscale = swscalep[offset] = sws_getCachedContext(swscalep[offset], iwidth, iheight, ipixfmt,
+                                 width, height, opixfmt, flags, NULL, NULL, NULL);
     sws_setColorspaceDetails(swscale, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
                              ? SWS_CS_ITU709 : SWS_CS_ITU601), iclamping,
                              sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)

@@ -461,7 +461,7 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
   int retval;
   int numfx;
 
-  register int i;
+  int i;
 
   if (!prefs->fxdefsfile) {
     prefs->fxdefsfile = lives_build_filename(prefs->config_datadir, FX_DEFS_FILENAME, NULL);
@@ -548,6 +548,10 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
 
   d_print_done();
   end_threaded_dialog();
+
+  do_info_dialog(_("Global effect defaults have been saved in the config directory.\n\n"
+                   "Any dfaults already set in the key mapper are not affected by this,\n"
+                   "only newly mapped filters are affected.\n"));
 
   return;
 }
@@ -2545,11 +2549,8 @@ void rte_set_key_defs(LiVESButton * button, lives_rfx_t *rfx) {
 
 
 void rte_set_defs_ok(LiVESButton * button, lives_rfx_t *rfx) {
-  weed_plant_t *ptmpl, *filter;
-
-  lives_colRGB48_t *rgbp;
-
-  register int i;
+  weed_plant_t *ptmpl, *filter, *inst;
+  lives_filter_error_t retval;
 
   if (mainw->textwidget_focus) {
     LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus),
@@ -2557,9 +2558,11 @@ void rte_set_defs_ok(LiVESButton * button, lives_rfx_t *rfx) {
     after_param_text_changed(textwidget, rfx);
   }
 
+  filter = weed_instance_get_filter((weed_plant_t *)rfx->source, TRUE);
+
   if (rfx->num_params > 0) {
-    filter = weed_instance_get_filter((weed_plant_t *)rfx->source, TRUE);
-    for (i = 0; i < rfx->num_params; i++) {
+    lives_colRGB48_t *rgbp;
+    for (int i = 0; i < rfx->num_params; i++) {
       ptmpl = weed_filter_in_paramtmpl(filter, i, FALSE);
       if (weed_paramtmpl_value_irrelevant(ptmpl)) continue;
       switch (rfx->params[i].type) {
@@ -2587,6 +2590,20 @@ void rte_set_defs_ok(LiVESButton * button, lives_rfx_t *rfx) {
 	// *INDENT-OFF*
       }}}
   // *INDENT-ON*
+
+  /// check if we might need a restart
+  inst = weed_instance_from_filter(filter);
+  retval = weed_reinit_effect(inst, TRUE);
+  weed_instance_unref(inst);
+  if (retval == FILTER_ERROR_INVALID_FILTER) {
+    // TODO: get plugin for filter, go through all filters for that plugin
+    // deinit any active instances for each filter
+    // unload the plugin, reload it, replace filters with new ones
+
+    do_info_dialog(_("LiVES must be restarted before the new defaults can be applied.\n"
+                     "Please ensure that you save the new defaults before quitting the program.\n"
+                     "(Menu option VJ / Save realtime effect defaults"));
+  }
 }
 
 

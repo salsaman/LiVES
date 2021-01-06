@@ -799,12 +799,11 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
     size_t nbytes;
     if (fbuff->slurping) {
       if (fbuff->orig_size - fbuff->bytes < count) {
-        nbytes = fbuff->orig_size - fbuff->bytes;
-        if (nbytes == 0) goto rd_exit;
-      } else {
-        while ((nbytes = fbuff->offset - fbuff->bytes) < count && !fbuff->eof) {
-          lives_nanosleep(1000);
-        }
+        count = fbuff->orig_size - fbuff->bytes;
+        if (!count) goto rd_exit;
+      }
+      while ((nbytes = fbuff->offset - fbuff->bytes) < count  && !fbuff->eof) {
+        lives_nanosleep(1000);
       }
     } else nbytes = fbuff->bytes;
     if (nbytes > count) nbytes = count;
@@ -901,11 +900,11 @@ ssize_t lives_read_buffered(int fd, void *buf, ssize_t count, boolean allow_less
       retval = res;
       goto rd_done;
     }
-    if (res < count) fbuff->eof = TRUE;
     fbuff->offset += res;
     count -= res;
     retval += res;
     fbuff->totbytes += res;
+    if (res < count) fbuff->eof = TRUE;
   }
 
 rd_done:

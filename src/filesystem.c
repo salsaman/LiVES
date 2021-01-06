@@ -455,11 +455,12 @@ boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
   off_t fsize = get_file_size(fd) - skip, bufsize = smbytes, res;
   if (fsize > 0) {
-    lseek(fd, skip, SEEK_SET);
     fbuff->orig_size = fsize + skip;
+    lseek(fd, skip, SEEK_SET);
     fbuff->buffer = fbuff->ptr = lives_calloc(1, fsize);
     //g_printerr("slurp for %d, %s with size %ld\n", fd, fbuff->pathname, fsize);
     while (fsize > 0) {
+      if (!fbuff->slurping) break; // file was closed
       if (bufsize > fsize) bufsize = fsize;
       res = lives_read(fbuff->fd, fbuff->buffer + fbuff->offset, bufsize, TRUE);
       //g_printerr("slurp for %d, %s with size %ld, read %lu bytes, remain\n", fd, fbuff->pathname, res, fsize);
@@ -487,7 +488,7 @@ void lives_buffered_rdonly_slurp(int fd, off_t skip) {
   fbuff->slurping = TRUE;
   fbuff->bytes = fbuff->offset = 0;
   lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)_lives_buffered_rdonly_slurp, 0, "iI", fd, skip);
-  lives_nanosleep_until_nonzero(fbuff->offset | fbuff->eof);
+  lives_nanosleep_until_nonzero(fbuff->orig_size | fbuff->eof);
 }
 
 
@@ -563,7 +564,10 @@ int lives_close_buffered(int fd) {
 #endif
   }
 
-  if (fbuff->slurping) lives_nanosleep_until_nonzero(fbuff->eof);
+  if (fbuff->slurping) {
+    fbuff->slurping = FALSE;
+    lives_nanosleep_until_nonzero(fbuff->eof);
+  }
   if (should_close && fbuff->fd >= 0) ret = close(fbuff->fd);
 
   lives_free(fbuff->pathname);

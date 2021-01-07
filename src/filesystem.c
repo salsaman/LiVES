@@ -568,11 +568,11 @@ int lives_close_buffered(int fd) {
     fbuff->slurping = FALSE;
     lives_nanosleep_until_nonzero(fbuff->eof);
   }
-  if (should_close && fbuff->fd >= 0) ret = close(fbuff->fd);
 
   lives_free(fbuff->pathname);
 
   pthread_mutex_lock(&mainw->fbuffer_mutex);
+  if (should_close && fbuff->fd >= 0) ret = close(fbuff->fd);
   mainw->file_buffers = lives_list_remove(mainw->file_buffers, (livesconstpointer)fbuff);
   pthread_mutex_unlock(&mainw->fbuffer_mutex);
 

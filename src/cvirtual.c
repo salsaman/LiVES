@@ -730,19 +730,27 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
 
   lives_clip_t *sfile = mainw->files[sfileno];
   LiVESPixbuf *pixbuf = NULL;
+  weed_layer_t *layer = NULL;
   lives_proc_thread_t tinfo = THREADVAR(tinfo);
   savethread_priv_t *saveargs = NULL;
   lives_thread_t *saver_thread = NULL;
   int progress = 1, count = 0;
   frames_t retval = sframe;
   frames_t i;
+  boolean intimg = FALSE;
 
   if (tinfo) lives_proc_thread_set_cancellable(tinfo);
+
+#ifdef USE_LIBPNG
+  // use internal image saver if we can
+  if (sfile->img_type == IMG_TYPE_PNG) intimg = TRUE;
+#endif
 
   if (sframe < 1) sframe = 1;
 
   for (i = sframe; i <= eframe; i++) {
     if (i > sfile->frames) break;
+    if (lives_proc_thread_cancelled(tinfo)) break;
 
     retval = i;
 
@@ -760,15 +768,33 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
 
     if (sfile->frame_index[i - 1] >= 0) {
       if (pbr && pixbuf) lives_widget_object_unref(pixbuf);
-
-      pixbuf = pull_lives_pixbuf_at_size(sfileno, i, get_image_ext_for_type(sfile->img_type),
-                                         q_gint64((i - 1.) / sfile->fps, sfile->fps), sfile->hsize,
-                                         sfile->vsize, LIVES_INTERP_BEST, FALSE);
-      if (!pixbuf) {
-        retval = -i;
-        break;
+      if (intimg) {
+        int palette, tpal;
+        layer = lives_layer_new_for_frame(sfileno, i);
+        if (!pull_frame(layer, get_image_ext_for_type(sfile->img_type), 0)) {
+          retval = -i;
+          break;
+        }
+        palette = weed_layer_get_palette(layer);
+        if (weed_palette_has_alpha(palette)) {
+          tpal = WEED_PALETTE_RGBA32;
+        } else {
+          tpal = WEED_PALETTE_RGB24;
+        }
+        if (!convert_layer_palette_full(layer, tpal, 0, 0, 0, WEED_GAMMA_SRGB)) {
+          retval = -i;
+          break;
+        }
+        gamma_convert_layer(WEED_GAMMA_SRGB, layer);
+      } else {
+        pixbuf = pull_lives_pixbuf_at_size(sfileno, i, get_image_ext_for_type(sfile->img_type),
+                                           q_gint64((i - 1.) / sfile->fps, sfile->fps), sfile->hsize,
+                                           sfile->vsize, LIVES_INTERP_BEST, FALSE);
+        if (!pixbuf) {
+          retval = -i;
+          break;
+        }
       }
-
       if (!saver_thread) {
         saveargs = (savethread_priv_t *)lives_calloc(1, sizeof(savethread_priv_t));
         saveargs->img_type = sfile->img_type;
@@ -778,32 +804,54 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
         saver_thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
       } else {
         lives_thread_join(*saver_thread, NULL);
-        while (saveargs->error) {
+        while (saveargs->error || THREADVAR(write_failed)) {
+          THREADVAR(write_failed) = 0;
           check_storage_space(-1, TRUE);
-          retval = do_write_failed_error_s_with_retry(saveargs->fname, saveargs->error->message);
-          lives_error_free(saveargs->error);
-          saveargs->error = NULL;
+          retval = do_write_failed_error_s_with_retry(saveargs->fname, saveargs->error ? saveargs->error->message
+                   : NULL);
+          if (saveargs->error) {
+            lives_error_free(saveargs->error);
+            saveargs->error = NULL;
+          }
           if (retval != LIVES_RESPONSE_RETRY) {
-            if (saveargs->pixbuf) lives_widget_object_unref(saveargs->pixbuf);
-            if (pixbuf) lives_widget_object_unref(pixbuf);
+            if (intimg) {
+              if (saveargs->layer) weed_layer_free(saveargs->layer);
+            } else {
+              if (saveargs->pixbuf) lives_widget_object_unref(saveargs->pixbuf);
+              if (pixbuf) lives_widget_object_unref(pixbuf);
+            }
             lives_free(saveargs->fname);
             lives_free(saveargs);
             return -(i - 1);
           }
-          lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression,
-                            saveargs->width, saveargs->height, &saveargs->error);
+          if (intimg)
+            save_to_png(saveargs->layer, saveargs->fname, 100 - prefs->ocp);
+          else
+            lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression,
+                              saveargs->width, saveargs->height, &saveargs->error);
         }
-        if (saveargs->pixbuf && saveargs->pixbuf != pixbuf) {
-          lives_widget_object_unref(saveargs->pixbuf);
-          saveargs->pixbuf = NULL;
+
+        if (intimg) {
+          if (saveargs->layer) weed_layer_free(saveargs->layer);
+          saveargs->layer = NULL;
+        } else {
+          if (saveargs->pixbuf && saveargs->pixbuf != pixbuf) {
+            lives_widget_object_unref(saveargs->pixbuf);
+            saveargs->pixbuf = NULL;
+          }
         }
         lives_free(saveargs->fname);
         saveargs->fname = NULL;
       }
 
       saveargs->fname = make_image_file_name(sfile, i, get_image_ext_for_type(sfile->img_type));
-      saveargs->pixbuf = pixbuf;
-      lives_thread_create(saver_thread, LIVES_THRDATTR_NONE, lives_pixbuf_save_threaded, saveargs);
+      if (intimg) {
+        saveargs->layer = layer;
+        lives_thread_create(saver_thread, LIVES_THRDATTR_NONE, save_to_png_threaded, saveargs);
+      } else {
+        saveargs->pixbuf = pixbuf;
+        lives_thread_create(saver_thread, LIVES_THRDATTR_NONE, lives_pixbuf_save_threaded, saveargs);
+      }
 
       if (++count == STRG_CHECK) {
         if (!check_storage_space(-1, TRUE)) break;
@@ -826,28 +874,39 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
     }
   }
 
-  if (pbr) {
-    if (retval > 0) *pbr = pixbuf;
-    else *pbr = NULL;
-  }
-  if (!check_if_non_virtual(sfileno, 1, sfile->frames) && !save_frame_index(sfileno)) {
-    check_storage_space(-1, FALSE);
-    retval = -i;
-  }
-
   if (saver_thread) {
     lives_thread_join(*saver_thread, NULL);
-    if (saveargs->pixbuf && saveargs->pixbuf != pixbuf && (!pbr || *pbr != saveargs->pixbuf)) {
-      lives_widget_object_unref(saveargs->pixbuf);
+    if (intimg) {
+      if (saveargs->layer != layer)
+        weed_layer_free(saveargs->layer);
+    } else {
+      if (saveargs->pixbuf && saveargs->pixbuf != pixbuf && (!pbr || *pbr != saveargs->pixbuf)) {
+        lives_widget_object_unref(saveargs->pixbuf);
+      }
     }
     lives_free(saveargs->fname);
     saveargs->fname = NULL;
     lives_free(saveargs);
   }
 
-  if (pixbuf && (!pbr || *pbr != pixbuf)) {
-    lives_widget_object_unref(pixbuf);
+  if (pbr) {
+    if (retval > 0) {
+      if (intimg) {
+        *pbr = layer_to_pixbuf(layer, TRUE, FALSE);
+      } else *pbr = pixbuf;
+    } else *pbr = NULL;
   }
+
+  if (!check_if_non_virtual(sfileno, 1, sfile->frames) && !save_frame_index(sfileno)) {
+    check_storage_space(-1, FALSE);
+    retval = -i;
+  }
+
+  if (!intimg) {
+    if (pixbuf && (!pbr || *pbr != pixbuf)) {
+      lives_widget_object_unref(pixbuf);
+    }
+  } else if (layer) weed_layer_free(layer);
 
   return retval;
 }

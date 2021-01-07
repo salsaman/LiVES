@@ -12310,14 +12310,12 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
     case WEED_PALETTE_RGB24:
     case WEED_PALETTE_BGR24:
     case WEED_PALETTE_YUV888:
-#ifndef GUI_QT
       if (irowstride == get_pixbuf_rowstride_value(width * 3)) {
         // rowstrides are OK, we can just steal the pixel_data
         pixbuf = lives_pixbuf_cheat(FALSE, width, height, pixel_data);
         weed_layer_nullify_pixel_data(layer);
         cheat = TRUE;
       } else {
-#endif
         // otherwise we need to copy the data
         pixbuf = lives_pixbuf_new(FALSE, width, height);
       }
@@ -12328,19 +12326,14 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
 #ifdef USE_SWSCALE
     case WEED_PALETTE_ARGB32:
 #else
-#ifdef GUI_QT
-    case WEED_PALETTE_ARGB32:
-#endif
 #endif
     case WEED_PALETTE_YUVA8888:
-#ifndef GUI_QT
       if (irowstride == get_pixbuf_rowstride_value(width * 4)) {
         // rowstrides are OK, we can just steal the pixel_data
         pixbuf = lives_pixbuf_cheat(TRUE, width, height, pixel_data);
         weed_layer_nullify_pixel_data(layer);
         cheat = TRUE;
       } else
-#endif
         // otherwise we need to copy the data
         pixbuf = lives_pixbuf_new(TRUE, width, height);
       n_channels = 4;

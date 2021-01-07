@@ -6800,10 +6800,9 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
   ptr = weed_layer_get_pixel_data_packed(layer);
 
   // libpng needs pointers to each row
-  row_ptrs = (unsigned char **)lives_malloc(height * sizeof(unsigned char *));
+  row_ptrs = (unsigned char **)lives_calloc(height,  sizeof(unsigned char *));
   for (int j = 0; j < height; j++) {
-    row_ptrs[j] = ptr;
-    ptr += rowstride;
+    row_ptrs[j] = &ptr[rowstride * j];
   }
 
 #ifdef USE_RESTHREAD
@@ -6882,6 +6881,7 @@ static boolean save_to_png_inner(int fd, weed_layer_t *layer, int comp) {
   png_structp png_ptr;
   png_infop info_ptr;
 
+  unsigned char **row_ptrs;
   unsigned char *ptr;
 
   int width, height, palette;
@@ -6889,8 +6889,6 @@ static boolean save_to_png_inner(int fd, weed_layer_t *layer, int comp) {
   int flags = 0;
 #endif
   int rowstride;
-
-  int i;
 
   int compr = (int)((100. - (double)comp + 5.) / 10.);
 
@@ -6964,9 +6962,17 @@ static boolean save_to_png_inner(int fd, weed_layer_t *layer, int comp) {
   ptr = (unsigned char *)weed_layer_get_pixel_data_packed(layer);
 
   // Write image data
-  for (i = 0 ; i < height ; i++) {
-    png_write_row(png_ptr, &ptr[rowstride * i]);
+
+  /* for (i = 0 ; i < height ; i++) { */
+  /*   png_write_row(png_ptr, &ptr[rowstride * i]); */
+  /* } */
+
+  row_ptrs = (unsigned char **)lives_calloc(height, sizeof(unsigned char *));
+  for (int j = 0; j < height; j++) {
+    row_ptrs[j] = &ptr[rowstride * j];
   }
+  png_write_image(png_ptr, row_ptrs);
+  lives_free(row_ptrs);
 
   // end write
   png_write_end(png_ptr, (png_infop)NULL);

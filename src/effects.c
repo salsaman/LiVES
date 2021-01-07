@@ -176,7 +176,8 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
                                      clipboard->start, prefs->workdir, clipboard->handle);
     } else {
       pdefault = lives_strdup_printf("%s %d %d %d %d %d %s %f", cfile->handle, rfx->status, cfile->progress_start,
-                                     cfile->progress_end, cfile->hsize, cfile->vsize, get_image_ext_for_type(cfile->img_type), cfile->fps);
+                                     cfile->progress_end, cfile->hsize, cfile->vsize,
+                                     get_image_ext_for_type(cfile->img_type), cfile->fps);
     }
     // and append params
     if (is_preview) {

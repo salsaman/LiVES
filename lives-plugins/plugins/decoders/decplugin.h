@@ -410,7 +410,7 @@ static index_entry *index_walk(index_entry *idx, int64_t pts) {
     //if (xidx->next)
     //fprintf(stderr, "VALS2 %ld\n", xidx->next->dts);
     //if (xidx->next) fprintf(stderr, "WALK: %ld %ld %ld\n", xidx->dts, pts, xidx->next->dts);
-    if (!xidx->next || (pts >= xidx->dts && pts < xidx->next->dts)) return xidx;
+    if (pts >= xidx->dts && (!xidx->next || pts < xidx->next->dts)) return xidx;
     xidx = xidx->next;
   }
   /// oops. something went wrong

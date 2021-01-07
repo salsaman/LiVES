@@ -1585,7 +1585,10 @@ static int64_t kf_before(const lives_clip_data_t *cdata, int64_t tframe) {
   if (idx->offs >= tframe) {
     xtime = (double)idx->dts / (double)AV_TIME_BASE;
     kf = (int64_t)(xtime * cdata->fps - .5);
-    if (kf > tframe) abort();
+    if (kf > tframe) {
+      fprintf(stderr, "KF %ld %ld %ld\n", kf, tframe, idx->offs);
+      abort();
+    }
   } else if ((reg = kf_regular(cdata))) {
     kf = (int64_t)(tframe / reg) * reg;
     if (kf > tframe) abort();

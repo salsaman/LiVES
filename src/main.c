@@ -8219,6 +8219,9 @@ void switch_to_file(int old_file, int new_file) {
     open_file(cfile->file_name);
   } else {
     showclipimgs();
+
+    // redraw_tl can delay, so force upd.
+    lives_widget_context_update();
     redraw_timeline(mainw->current_file);
     lives_ce_update_timeline(0, cfile->pointer_time);
     mainw->ptrtime = cfile->pointer_time;
@@ -8558,11 +8561,6 @@ void do_quick_switch(int new_file) {
   mainw->drawsrc = mainw->current_file;
   mainw->laudio_drawable = cfile->laudio_drawable;
   mainw->raudio_drawable = cfile->raudio_drawable;
-
-  if (!mainw->fs && !mainw->faded) {
-    redraw_timeline(mainw->current_file);
-    show_playbar_labels(mainw->current_file);
-  }
 
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), mainw->files[new_file]->pb_fps);
   changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), LIVES_INT_TO_POINTER(1));

@@ -751,6 +751,8 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
     rfx->source_type = LIVES_RFX_SOURCE_NEWCLIP;
     rfx->source = cfile;
 
+    cfile->img_type = IMG_TYPE_BEST; // override the pref
+
     cfile->ohsize = cfile->hsize;
     cfile->ovsize = cfile->vsize;
     cfile->pb_fps = cfile->fps;

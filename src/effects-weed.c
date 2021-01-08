@@ -1614,9 +1614,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   boolean is_converter = FALSE, pvary = FALSE, svary = FALSE;
   boolean resized = FALSE, letterboxed = FALSE;
   boolean letterbox = FALSE;
-#ifdef NEW_SCRAPFILE
-  boolean save_to_scrap = FALSE;
-#endif
   int num_palettes, num_in_tracks = 0, num_out_tracks;
   int inwidth, inheight, inpalette, outpalette, opalette, channel_flags, filter_flags = 0;
   int palette, cpalette, def_palette = 0;
@@ -2327,16 +2324,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     resized = FALSE;
     letterboxed = FALSE;
 
-#ifdef NEW_SCRAPFILE
-    if (mainw->record && !mainw->scrap_saved && !mainw->record_paused && mainw->scrap_file != -1
-        && weed_layer_get_clip(layer) == mainw->scrap_file) {
-      if ((prefs->rec_opts & REC_AFTER_PB) && mainw->ext_playback &&
-          (mainw->vpp->capabilities & VPP_CAN_RETURN)) {
-        save_to_scrap = TRUE;
-      }
-    }
-#endif
-
     // we are comparing the macropixel sizes which is fine because that won't change
     // regardless of the channel / layer palette, but for resize_layer we need the pixel size,
     // which will be width * pixels_per_macropixel of the original channel palette, which is the divisor we used when
@@ -2360,20 +2347,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         calc_maxspect(width, height, &xwidth, &xheight);
 
         if (xwidth != width || height != xheight) {
-
-#ifdef NEW_SCRAPFILE
-          if (save_to_scrap) {
-            if (xwidth < xxwidth && xheight < xxheight) {
-              if (!resize_layer(layer, xwidth, xheight, interp, opalette, oclamping)) {
-                retval = FILTER_ERROR_UNABLE_TO_RESIZE;
-                goto done_video;
-              }
-            }
-            save_to_scrap_file(layer);
-            mainw->scrap_saved = TRUE;
-            save_to_scrap = FALSE;
-          }
-#endif
           if (!letterbox_layer(layer, width, height, xwidth, xheight, interp, opalette, oclamping)) {
             retval = FILTER_ERROR_UNABLE_TO_RESIZE;
             goto done_video;
@@ -2394,31 +2367,12 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         }
       }
       if (!resized) {
-
-#ifdef NEW_SCRAPFILE
-        if (save_to_scrap) {
-          if (width > xxwidth || height > xxheight) {
-            save_to_scrap_file(layer);
-            mainw->scrap_saved = TRUE;
-            save_to_scrap = FALSE;
-          }
-        }
-#endif
-
         if (weed_plant_has_leaf(channel, WEED_LEAF_INNER_SIZE))
           weed_leaf_delete(channel, WEED_LEAF_INNER_SIZE);
         if (!resize_layer(layer, width, height, interp, opalette, oclamping)) {
           retval = FILTER_ERROR_UNABLE_TO_RESIZE;
           goto done_video;
         }
-
-#ifdef NEW_SCRAPFILE
-        if (save_to_scrap) {
-          save_to_scrap_file(layer);
-          mainw->scrap_saved = TRUE;
-          save_to_scrap = FALSE;
-        }
-#endif
 
         if (!mainw->multitrack && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
           mainw->blend_palette = weed_layer_get_palette_yuv(layer, &mainw->blend_clamping, &mainw->blend_sampling,
@@ -2429,13 +2383,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         }
       }
     } else {
-#ifdef NEW_SCRAPFILE
-      if (save_to_scrap) {
-        save_to_scrap_file(layer);
-        mainw->scrap_saved = TRUE;
-        save_to_scrap = FALSE;
-      }
-#endif
       if (weed_plant_has_leaf(channel, WEED_LEAF_INNER_SIZE))
         weed_leaf_delete(channel, WEED_LEAF_INNER_SIZE);
     }
@@ -7671,7 +7618,7 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
   weed_instance_ref(inst);
 
   out_channels = weed_get_plantptr_array_counted(inst, WEED_LEAF_OUT_CHANNELS, &num_channels);
-  if (num_channels  == 0) {
+  if (!num_channels) {
     weed_instance_unref(inst);
     return NULL;
   }
@@ -7709,7 +7656,6 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
     we check its full palette list as we will be forced to reinit it.
     - if it is bg we will use mainw->blend_palette
     TODO: we should find the transition where the gen. joins, and work backwards and forwards from there
-
 
     IF the template has WEED_FILTER_REINIT_ON_ROWSTRIDES_CHANGE or WEED_FILTER_REINIT_ON_SIZE_CHANGE
     then similar rules apply for those values
@@ -7944,6 +7890,19 @@ procfunc1:
 
   lives_chdir(cwd, FALSE);
   lives_free(cwd);
+
+#ifdef NEW_SCRAPFILE
+  // TODO: it would be better perhaps to save the original input frame(s) to the (a) scrapfile
+  // so that rendering could be done at higher quality and with more continuity,
+  // however we would need one file per 'ephemeral' input, and disk throughput becomes an even bigger issue
+  if (mainw->record && !mainw->record_paused) {
+    if (!((prefs->rec_opts & REC_AFTER_PB) && mainw->ext_playback &&
+          (mainw->vpp->capabilities & VPP_CAN_RETURN))) {
+      save_to_scrap_file(channel, clipno);
+      /// need to record scrap_file offset for the input clip
+    }
+  }
+#endif
 
   return channel;
 }

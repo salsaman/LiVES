@@ -13616,12 +13616,14 @@ boolean lives_painter_to_layer(lives_painter_t *cr, weed_layer_t *layer) {
 
 
 int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, boolean do_back, int *nbad, int *nmiss) {
-  LiVESPixbuf *pixbuf;
+  LiVESPixbuf *pixbuf = NULL;
   LiVESError *error = NULL;
   lives_clip_t *sfile;
   lives_img_type_t ximgtype;
   weed_layer_t *layer;
   char *fname;
+  short pbq = prefs->pb_quality;
+  boolean intimg = FALSE;
   int miss = 0, bad = 0;
   int nimty = (int)N_IMG_TYPES;
   int j, nres = 0;
@@ -13629,9 +13631,19 @@ int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, bool
   mainw->cancelled = CANCEL_NONE;
   if (!IS_VALID_CLIP(fileno)) return 0;
   sfile = mainw->files[fileno];
+  prefs->pb_quality = PB_QUALITY_BEST;
+
+#ifdef USE_LIBPNG
+  // use internal image saver if we can
+  if (sfile->img_type == IMG_TYPE_PNG) intimg = TRUE;
+#endif
+
   for (int i = 0; i < sfile->frames; i++) {
     threaded_dialog_spin((double)i / (double)sfile->frames);
-    if (mainw->cancelled) return nres;
+    if (mainw->cancelled) {
+      prefs->pb_quality = pbq;
+      return nres;
+    }
     if (sfile->frame_index && sfile->frame_index[i] != -1) continue;
     ximgtype = imgtype;
     fname = make_image_file_name(sfile, i + 1, get_image_ext_for_type(ximgtype));
@@ -13672,19 +13684,29 @@ int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, bool
       lives_free(fname);
       continue;
     }
-    pixbuf = layer_to_pixbuf(layer, TRUE, FALSE);
-    weed_layer_free(layer);
-    if (pixbuf) {
+    if (!intimg) {
+      pixbuf = layer_to_pixbuf(layer, TRUE, FALSE);
+      weed_layer_free(layer);
+    }
+    if (intimg || pixbuf) {
       if (do_back) {
         char *fname_bak = make_image_file_name(sfile, i + 1, LIVES_FILE_EXT_BAK);
         if (lives_file_test(fname_bak, LIVES_FILE_TEST_EXISTS)) lives_rm(fname_bak);
         lives_mv(fname, fname_bak);
       }
-      lives_pixbuf_save(pixbuf, fname, ximgtype, 100 - prefs->ocp, width, height, &error);
-      lives_widget_object_unref(pixbuf);
-      if (error) {
-        lives_error_free(error);
-        error = NULL;
+      if (!intimg) {
+        lives_pixbuf_save(pixbuf, fname, ximgtype, 100 - prefs->ocp, width, height, &error);
+        lives_widget_object_unref(pixbuf);
+      } else {
+        save_to_png(layer, fname, 100 - prefs->ocp);
+        weed_layer_free(layer);
+      }
+      if (error || THREADVAR(write_failed)) {
+        THREADVAR(write_failed) = 0;
+        if (error) {
+          lives_error_free(error);
+          error = NULL;
+        }
         lives_free(fname);
         miss++;
         continue;
@@ -13693,6 +13715,7 @@ int resize_all(int fileno, int width, int height, lives_img_type_t imgtype, bool
     }
     lives_free(fname);
   }
+  prefs->pb_quality = pbq;
   if (nbad) *nbad = bad;
   if (nmiss) *nmiss = miss;
   return nres;

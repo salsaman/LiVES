@@ -6925,15 +6925,19 @@ static boolean save_to_png_inner(int fd, weed_layer_t *layer, int comp) {
     return FALSE;
   }
 
+  if (palette == WEED_PALETTE_ARGB32) png_set_swap_alpha(png_ptr);
+
   switch (palette) {
-  case WEED_PALETTE_RGB24:
   case WEED_PALETTE_BGR24:
+    png_set_bgr(png_ptr);
+  case WEED_PALETTE_RGB24:
     png_set_IHDR(png_ptr, info_ptr, width, height,
                  8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
                  PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
     break;
-  case WEED_PALETTE_RGBA32:
   case WEED_PALETTE_BGRA32:
+    png_set_bgr(png_ptr);
+  case WEED_PALETTE_RGBA32:
     png_set_IHDR(png_ptr, info_ptr, width, height,
                  8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
                  PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);

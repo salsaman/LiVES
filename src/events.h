@@ -109,6 +109,7 @@ typedef enum {
   LIVES_RENDER_ERROR_READ_AUDIO,
   LIVES_RENDER_ERROR_WRITE_AUDIO,
   LIVES_RENDER_ERROR_WRITE_FRAME,
+  LIVES_RENDER_ERROR_MEMORY
 } lives_render_error_t;
 
 weed_event_t *append_frame_event(weed_event_t *event_list, ticks_t tc, int numframes,

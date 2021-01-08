@@ -137,14 +137,14 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   double old_pb_fps = cfile->pb_fps;
 
   char *text;
-  char *fxcommand = NULL, *cmd;
+  char *fxcommand = NULL, *cmd, *tmp;
   int current_file = mainw->current_file;
 
   int new_file = current_file;
   int ldfile;
 
   boolean got_no_frames = FALSE;
-  char *tmp;
+  boolean internal_messaging = mainw->internal_messaging;
 
   if (!CURRENT_CLIP_IS_VALID) return FALSE;
 
@@ -293,11 +293,10 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   if (rfx->props & RFX_PROPS_MAY_RESIZE || rfx->num_in_channels == 0) {
     if (rfx->status == RFX_STATUS_WEED) {
       // set out_channel dimensions for resizers / generators
-      int error;
       weed_plant_t *first_out = get_enabled_channel((weed_plant_t *)rfx->source, 0, FALSE);
-      weed_plant_t *first_ot = weed_get_plantptr_value(first_out, WEED_LEAF_TEMPLATE, &error);
-      weed_set_int_value(first_out, WEED_LEAF_WIDTH, weed_get_int_value(first_ot, WEED_LEAF_HOST_WIDTH, &error));
-      weed_set_int_value(first_out, WEED_LEAF_HEIGHT, weed_get_int_value(first_ot, WEED_LEAF_HOST_HEIGHT, &error));
+      weed_plant_t *first_ot = weed_channel_get_template(first_out);
+      weed_set_int_value(first_out, WEED_LEAF_WIDTH, weed_get_int_value(first_ot, WEED_LEAF_HOST_WIDTH, NULL));
+      weed_set_int_value(first_out, WEED_LEAF_HEIGHT, weed_get_int_value(first_ot, WEED_LEAF_HOST_HEIGHT, NULL));
     }
   }
 
@@ -321,7 +320,9 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
       cfile->undo_end = oundo_end;
     }
     cfile->pb_fps = old_pb_fps;
+
     mainw->internal_messaging = FALSE;
+
     mainw->resizing = FALSE;
     cfile->nokeep = FALSE;
 
@@ -401,11 +402,12 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
       cfile->progress_end = cfile->frames;
     }
   } else {
-    int error;
-    weed_plant_t *first_out = get_enabled_channel((weed_plant_t *)rfx->source, 0, FALSE);
-    weed_plant_t *first_ot = weed_get_plantptr_value(first_out, WEED_LEAF_TEMPLATE, &error);
-    cfile->hsize = weed_get_int_value(first_ot, WEED_LEAF_HOST_WIDTH, &error);
-    cfile->vsize = weed_get_int_value(first_ot, WEED_LEAF_HOST_HEIGHT, &error);
+    if (!internal_messaging || resize_instance) {
+      weed_plant_t *first_out = get_enabled_channel((weed_plant_t *)rfx->source, 0, FALSE);
+      weed_plant_t *first_ot = weed_channel_get_template(first_out);
+      cfile->hsize = weed_get_int_value(first_ot, WEED_LEAF_HOST_WIDTH, NULL);
+      cfile->vsize = weed_get_int_value(first_ot, WEED_LEAF_HOST_HEIGHT, NULL);
+    }
   }
 
   if (rfx->num_in_channels > 0) {
@@ -601,11 +603,12 @@ lives_render_error_t realfx_progress(boolean reset) {
 
   char *com, *tmp;
 
+  short pbq = prefs->pb_quality;
+
   static int i;
 
-  int weed_error;
   int layer_palette;
-  int retval;
+  LiVESResponseType retval;
 
   // this is called periodically from do_processing_dialog for internal effects
 
@@ -637,6 +640,8 @@ lives_render_error_t realfx_progress(boolean reset) {
     return LIVES_RENDER_PROCESSING;
   }
 
+  prefs->pb_quality = PB_QUALITY_BEST;
+
   if (has_video_filters(FALSE) || resize_instance) {
     frameticks = (i - cfile->start + 1.) / cfile->fps * TICKS_PER_SECOND;
     THREADVAR(rowstride_alignment_hint) = 4;
@@ -644,49 +649,77 @@ lives_render_error_t realfx_progress(boolean reset) {
     if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), frameticks)) {
       // do_read_failed_error_s() cannot be used here as we dont know the filename
       lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "error|missing image %d", i);
+      prefs->pb_quality = pbq;
       return LIVES_RENDER_WARNING_READ_FRAME;
     }
 
     layer = on_rte_apply(layer, 0, 0, (weed_timecode_t)frameticks);
 
     if (!has_video_filters(TRUE) || resize_instance) {
-      layer_palette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &weed_error);
+      boolean intimg = FALSE;
+#ifdef USE_LIBPNG
+      // use internal image saver if we can
+      if (cfile->img_type == IMG_TYPE_PNG) intimg = TRUE;
+#endif
+
+      layer_palette = weed_layer_get_palette(layer);
 
       if (!resize_instance) resize_layer(layer, cfile->hsize, cfile->vsize, LIVES_INTERP_BEST, layer_palette, 0);
-      if (cfile->img_type == IMG_TYPE_JPEG && layer_palette != WEED_PALETTE_RGB24 && layer_palette != WEED_PALETTE_RGBA32) {
-        convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
-        layer_palette = WEED_PALETTE_RGB24;
-      } else if (cfile->img_type == IMG_TYPE_PNG && layer_palette != WEED_PALETTE_RGBA32) {
-        convert_layer_palette(layer, WEED_PALETTE_RGBA32, 0);
-        layer_palette = WEED_PALETTE_RGBA32;
+      if (weed_palette_has_alpha(layer_palette)) {
+        if (!convert_layer_palette(layer, WEED_PALETTE_RGBA32, 0)) {
+          prefs->pb_quality = pbq;
+          weed_layer_free(layer);
+          return LIVES_RENDER_ERROR_MEMORY;
+        }
+      } else {
+        if (!convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
+          prefs->pb_quality = pbq;
+          weed_layer_free(layer);
+          return LIVES_RENDER_ERROR_MEMORY;
+        }
       }
 
-      pixbuf = layer_to_pixbuf(layer, TRUE, FALSE);
-      weed_plant_free(layer);
+      layer_palette = weed_layer_get_palette(layer);
+
+      if (!intimg) {
+        pixbuf = layer_to_pixbuf(layer, TRUE, FALSE);
+        weed_plant_free(layer);
+      }
 
       tmp = make_image_file_name(cfile, i, LIVES_FILE_EXT_MGK);
       lives_snprintf(oname, PATH_MAX, "%s", tmp);
       lives_free(tmp);
 
       do {
-        retval = 0;
-        lives_pixbuf_save(pixbuf, oname, cfile->img_type, 100, cfile->hsize, cfile->vsize, &error);
+        retval = LIVES_RESPONSE_NONE;
 
-        if (error) {
-          retval = do_write_failed_error_s_with_retry(oname, error->message);
-          lives_error_free(error);
-          error = NULL;
+        if (!intimg)
+          lives_pixbuf_save(pixbuf, oname, cfile->img_type, 100, cfile->hsize, cfile->vsize, &error);
+        else
+          save_to_png(layer, oname, 100 - prefs->ocp);
+
+        if (error || THREADVAR(write_failed)) {
+          THREADVAR(write_failed) = 0;
+          retval = do_write_failed_error_s_with_retry(oname, error ? error->message : NULL);
+          if (error) {
+            lives_error_free(error);
+            error = NULL;
+          }
           if (retval != LIVES_RESPONSE_RETRY) write_error = LIVES_RENDER_ERROR_WRITE_FRAME;
         }
       } while (retval == LIVES_RESPONSE_RETRY);
 
-      lives_widget_object_unref(pixbuf);
+      if (!intimg)
+        lives_widget_object_unref(pixbuf);
+      else
+        weed_layer_free(layer);
 
       if (cfile->clip_type == CLIP_TYPE_FILE) {
         cfile->frame_index[i - 1] = -1;
       }
     } else weed_plant_free(layer);
   }
+  prefs->pb_quality = pbq;
   if (apply_audio_fx) {
     if (!apply_rte_audio((double)cfile->arate / (double)cfile->fps + (double)rand() / .5 / (double)(RAND_MAX))) {
       return LIVES_RENDER_ERROR_WRITE_AUDIO;

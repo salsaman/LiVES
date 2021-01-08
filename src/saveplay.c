@@ -4071,14 +4071,12 @@ boolean save_frame_inner(int clip, frames_t frame, const char *file_name, int wi
         d_print_file_error_failed();
         resp = do_file_perm_error(tmp, TRUE);
         if (resp == LIVES_RESPONSE_CANCEL) {
-          lives_free(tmp);
           return FALSE;
         }
       }
       if (!THREADVAR(com_failed)) {
         lives_free(tmp);
         d_print_done();
-        return TRUE;
       }
     } while (resp == LIVES_RESPONSE_RETRY);
   } else {
@@ -4086,12 +4084,14 @@ boolean save_frame_inner(int clip, frames_t frame, const char *file_name, int wi
     LiVESError *gerr = NULL;
     LiVESPixbuf *pixbuf = NULL;
     LiVESResponseType retval;
-
+    short pbq = prefs->pb_quality;
     boolean internal = FALSE;
 
 #ifdef USE_LIBPNG
     if (sfile->img_type == IMG_TYPE_PNG) internal = TRUE;
 #endif
+
+    prefs->pb_quality = PB_QUALITY_BEST;
 
     mt_show_current_frame(mainw->multitrack, TRUE);
     resize_layer(mainw->frame_layer, sfile->hsize, sfile->vsize, LIVES_INTERP_BEST, WEED_PALETTE_RGB24, 0);
@@ -4119,15 +4119,15 @@ boolean save_frame_inner(int clip, frames_t frame, const char *file_name, int wi
       }
     } while (retval == LIVES_RESPONSE_RETRY);
 
+    prefs->pb_quality = pbq;
+
     weed_plant_free(mainw->frame_layer);
     mainw->frame_layer = NULL;
 
     free(tmp);
     if (pixbuf) lives_widget_object_unref(pixbuf);
   }
-
-  // some other error condition
-  return FALSE;
+  return TRUE;
 }
 
 

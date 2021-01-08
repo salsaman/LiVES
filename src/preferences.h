@@ -33,6 +33,8 @@ typedef struct {
 #define PB_QUALITY_MED 2  ///< default
 #define PB_QUALITY_HIGH 3
 
+#define PB_QUALITY_BEST PB_QUALITY_HIGH
+
   boolean pbq_adaptive;
 
   _encoder encoder; ///< from main.h

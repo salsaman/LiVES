@@ -738,8 +738,11 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
   frames_t retval = sframe;
   frames_t i;
   boolean intimg = FALSE;
+  short pbq = prefs->pb_quality;
 
   if (tinfo) lives_proc_thread_set_cancellable(tinfo);
+
+  prefs->pb_quality = PB_QUALITY_BEST;
 
 #ifdef USE_LIBPNG
   // use internal image saver if we can
@@ -896,6 +899,8 @@ frames_t virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolea
       } else *pbr = pixbuf;
     } else *pbr = NULL;
   }
+
+  prefs->pb_quality = pbq;
 
   if (!check_if_non_virtual(sfileno, 1, sfile->frames) && !save_frame_index(sfileno)) {
     check_storage_space(-1, FALSE);

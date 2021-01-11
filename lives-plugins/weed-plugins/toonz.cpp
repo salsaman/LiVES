@@ -59,16 +59,17 @@ static int package_version = 1; // version of this package
 
 /////////////////////////////////////////////////////////////
 
+#include <iostream>
 #include <array>
 #include <random>
 
 #define TWO_PI (M_PI * 2.)
+
 enum {
   PARAMa_ANGLE,
   PARAMa_LENGTH,
   PARAMa_ATTENUATION,
 }; // pencil_hatching
-
 
 enum {
   PARAMb_GAMMA,
@@ -79,7 +80,6 @@ enum {
   PARAMb_NUMBER,
   PARAMb_ANGLE,
 }; // light_glare
-
 
 enum {
   PARAMc_TIME,
@@ -757,7 +757,6 @@ static weed_error_t phatch_process(weed_plant_t *inst, weed_timecode_t tc) {
 static weed_error_t paraffin_process(weed_plant_t *inst, weed_timecode_t tc) {
   return common_process(inst, tc, FILTER_PARAFFIN);
 }
-
 
 
 ///////////////////////////////////////

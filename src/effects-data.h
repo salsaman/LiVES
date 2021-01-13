@@ -1,8 +1,13 @@
 // effects-data.h
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2012 (salsaman@gmail.com)
+// (c) G. Finch 2005 - 2021 (salsaman@gmail.com)
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
+
+#ifndef HAS_EFFECTS_DATA_H
+#define HAS_EFFECTS_DATA_H
+
+#define RANGE_DISP_MAX 1000000.
 
 #define FX_DATA_WILDCARD -1000000
 #define FX_DATA_WILDCARD_KEEP_ACTIVATED -1000001
@@ -173,6 +178,7 @@ typedef struct {
   ulong *dpc_func;
   ulong *dpp_func;
   ulong *acheck_func;
+  ulong ascale_func;
 } lives_conx_w;
 
 LiVESWidget *make_datacon_window(int key, int mode);
@@ -189,3 +195,4 @@ int cconx_check_connection(int ikey, int imode, int icnum, boolean setup, weed_p
 boolean feeds_to_video_filters(int okey, int omode);
 boolean feeds_to_audio_filters(int okey, int omode);
 
+#endif

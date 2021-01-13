@@ -3348,17 +3348,27 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
           array_type = lives_strdup_printf("[%d]", defelems);
         else array_type = lives_strdup("");
 
+        range = lives_strdup("");
+
         if (weed_plant_has_leaf(param, WEED_LEAF_MAX) && weed_plant_has_leaf(param, WEED_LEAF_MIN)) {
           if (stype == WEED_SEED_INT) {
-            range = lives_strdup_printf("Range: %d to %d",
-                                        weed_get_int_value(param, WEED_LEAF_MIN, NULL), weed_get_int_value(param,
-                                            WEED_LEAF_MAX, NULL));
+            if ((double)weed_get_int_value(param, WEED_LEAF_MAX, NULL) < RANGE_DISP_MAX
+                && (double)weed_get_int_value(param, WEED_LEAF_MIN, NULL) > -RANGE_DISP_MAX) {
+              lives_free(range);
+              range = lives_strdup_printf(_("Range: %d to %d"),
+                                          weed_get_int_value(param, WEED_LEAF_MIN, NULL),
+                                          - weed_get_int_value(param, WEED_LEAF_MAX, NULL));
+            }
           } else if (stype == WEED_SEED_DOUBLE) {
-            range = lives_strdup_printf("Range: %f to %f",
-                                        weed_get_double_value(param, WEED_LEAF_MIN, NULL), weed_get_double_value(param,
-                                            WEED_LEAF_MAX, NULL));
-          } else range = lives_strdup("");
-        } else range = lives_strdup("");
+            if (weed_get_double_value(param, WEED_LEAF_MAX, NULL) < RANGE_DISP_MAX
+                && weed_get_double_value(param, WEED_LEAF_MIN, NULL) > -RANGE_DISP_MAX) {
+              lives_free(range);
+              range = lives_strdup_printf(_("Range: %f to %f"),
+                                          weed_get_double_value(param, WEED_LEAF_MIN, NULL),
+                                          weed_get_double_value(param, WEED_LEAF_MAX, NULL));
+            }
+          }
+        }
 
         text = lives_strdup_printf("%s\n (%s%s) %s", paramname, ptype, array_type, range);
         lives_free(paramname);
@@ -4171,13 +4181,13 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
   char *ptype, *range;
   char *array_type, *text, *tmp;
 
-  boolean isfirst;
+  boolean isfirst, no_autoscale = FALSE;
 
   int defelems, pflags, stype;
 
   int totchans, totparams, nconns;
 
-  register int i, j = 0, x = 0;
+  int i, j = 0, x = 0;
 
   for (i = 0; i < conxwp->num_alpha; i++) {
     nconns = cconx_get_nconns(conxwp->cconx, i);
@@ -4309,6 +4319,8 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
 
     conxwp->acheck = (LiVESWidget **)lives_malloc(totparams * sizeof(LiVESWidget *));
 
+    widget_opts.mnemonic_label = FALSE;
+
     tmp = lives_big_and_bold("%s - Parameter Data Connections", fname);
 
     widget_opts.use_markup = TRUE;
@@ -4337,9 +4349,10 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
     conxwp->allcheckc = lives_standard_check_button_new(_("Autoscale All"), TRUE, LIVES_BOX(hbox), NULL);
     conxwp->allcheck_label = widget_opts.last_label;
 
-    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(conxwp->allcheckc), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                    LIVES_GUI_CALLBACK(on_allcheck_toggled),
-                                    (livespointer)conxwp);
+    conxwp->ascale_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(conxwp->allcheckc),
+                          LIVES_WIDGET_TOGGLED_SIGNAL,
+                          LIVES_GUI_CALLBACK(on_allcheck_toggled),
+                          (livespointer)conxwp);
 
     if (EXTRA_PARAMS_OUT > 0) {
       lives_table_resize(LIVES_TABLE(conxwp->tablep), ++conxwp->trowsp, 7);
@@ -4405,19 +4418,27 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
             array_type = lives_strdup_printf("[%d]", defelems);
           else array_type = lives_strdup("");
 
+          range = lives_strdup("");
+
           if (weed_plant_has_leaf(param, WEED_LEAF_MAX) && weed_plant_has_leaf(param, WEED_LEAF_MIN)) {
             if (stype == WEED_SEED_INT) {
-              range = lives_strdup_printf("Range: %d to %d", weed_get_int_value(param, WEED_LEAF_MIN, NULL),
-                                          weed_get_int_value(param,
-                                              WEED_LEAF_MAX,
-                                              NULL));
+              if ((double)weed_get_int_value(param, WEED_LEAF_MAX, NULL) < RANGE_DISP_MAX
+                  && (double)weed_get_int_value(param, WEED_LEAF_MIN, NULL) > -RANGE_DISP_MAX) {
+                lives_free(range);
+                range = lives_strdup_printf("Range: %d to %d",
+                                            weed_get_int_value(param, WEED_LEAF_MIN, NULL),
+                                            weed_get_int_value(param, WEED_LEAF_MAX, NULL));
+              } else no_autoscale = TRUE;
             } else if (stype == WEED_SEED_DOUBLE) {
-              range = lives_strdup_printf("Range: %f to %f", weed_get_double_value(param, WEED_LEAF_MIN, NULL),
-                                          weed_get_double_value(param,
-                                              WEED_LEAF_MAX,
-                                              NULL));
-            } else range = lives_strdup("");
-          } else range = lives_strdup("");
+              if (weed_get_double_value(param, WEED_LEAF_MAX, NULL) < RANGE_DISP_MAX
+                  && weed_get_double_value(param, WEED_LEAF_MIN, NULL) > -RANGE_DISP_MAX) {
+                lives_free(range);
+                range = lives_strdup_printf("Range: %f to %f",
+                                            weed_get_double_value(param, WEED_LEAF_MIN, NULL),
+                                            weed_get_double_value(param, WEED_LEAF_MAX, NULL));
+              } else no_autoscale = TRUE;
+            }
+          }
 
           text = lives_strdup_printf("%s\n (%s%s) %s", pname, ptype, array_type, range);
           widget_opts.mnemonic_label = FALSE;
@@ -4442,6 +4463,14 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
   }
 
   lives_free(fname);
+
+  if (no_autoscale) {
+    lives_signal_handler_block(conxwp->allcheckc, conxwp->ascale_func);
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(conxwp->allcheckc), FALSE);
+    lives_signal_handler_unblock(conxwp->allcheckc, conxwp->ascale_func);
+  }
+
+  widget_opts.mnemonic_label = TRUE;
 
   return scrolledwindow;
 }

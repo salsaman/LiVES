@@ -874,7 +874,7 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
       }
     }
 
-    if (fx_dialog[didx]->cancelbutton == NULL) {
+    if (!fx_dialog[didx]->cancelbutton) {
       fx_dialog[didx]->cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]->dialog), LIVES_STOCK_CLOSE,
                                       _("_Close Window"), LIVES_RESPONSE_CANCEL);
     }
@@ -1523,8 +1523,9 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
   lives_colRGBA64_t rgba;
 
   char *name;
-  char *txt;//, *tmp;
-  //char *disp_string;
+  char *txt;
+
+  double pval;
 
   int wcount = 0;
 
@@ -1586,7 +1587,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       radiobutton = lives_standard_radio_button_new(name, &rbgroup, LIVES_BOX(hbox), param->desc);
       widget_opts.mnemonic_label = TRUE;
 
-      if (group == NULL) {
+      if (!group) {
         if (rfx->status == RFX_STATUS_WEED) {
           usrgrp_to_livesgrp[1] = add_usrgrp_to_livesgrp(usrgrp_to_livesgrp[1],
                                   rbgroup, param->group);
@@ -1622,15 +1623,21 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
 
     widget_opts.mnemonic_label = use_mnemonic;
     if (param->dp) {
-      spinbutton = lives_standard_spin_button_new(name, get_double_param(param->value), param->min,
-                   param->max, param->step_size, param->step_size, param->dp,
+      spinbutton = lives_standard_spin_button_new(name, (pval = get_double_param(param->value)),
+                   param->min, param->max, param->step_size,
+                   param->step_size, param->dp,
                    (LiVESBox *)hbox, param->desc);
     } else {
-      spinbutton = lives_standard_spin_button_new(name, (double)get_int_param(param->value), param->min,
-                   param->max, param->step_size, param->step_size, param->dp,
+      spinbutton = lives_standard_spin_button_new(name, (pval = (double)get_int_param(param->value)),
+                   param->min, param->max, param->step_size,
+                   param->step_size, param->dp,
                    (LiVESBox *)hbox, param->desc);
     }
     widget_opts.mnemonic_label = TRUE;
+
+    if (param->max - param->min >= NOSLID_RANGE_LIM && fabs(pval) <= NOSLID_VALUE_LIM) {
+      add_scalers = add_slider = FALSE;
+    }
 
     lives_spin_button_set_wrap(LIVES_SPIN_BUTTON(spinbutton), param->wrap);
 
@@ -1770,7 +1777,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       widget_opts.expand = LIVES_EXPAND_DEFAULT;
       widget_opts.apply_theme = woat;
 
-      if (mainw->multitrack == NULL)
+      if (!mainw->multitrack)
         lives_widget_apply_theme3(textview, LIVES_WIDGET_STATE_NORMAL);
       else
         lives_widget_apply_theme2(textview, LIVES_WIDGET_STATE_NORMAL, TRUE);
@@ -1902,7 +1909,7 @@ boolean update_widget_vis(lives_rfx_t *rfx, int key, int mode) {
   int keyw, modew;
   lives_param_t *param;
 
-  if (mainw->multitrack == NULL) {
+  if (!mainw->multitrack) {
     if (fx_dialog[1]) {
       rfx = fx_dialog[1]->rfx;
       if (!rfx->is_template) {
@@ -2617,7 +2624,7 @@ boolean after_param_text_focus_changed(LiVESWidget * hbox, LiVESWidget * child, 
 
   LiVESWidget *textwidget;
 
-  if (rfx == NULL) return FALSE;
+  if (!rfx) return FALSE;
 
   if (mainw->multitrack) {
     if (child)
@@ -2650,7 +2657,7 @@ void after_param_text_changed(LiVESWidget * textwidget, lives_rfx_t *rfx) {
   boolean needs_update = FALSE;
   int param_number;
 
-  if (rfx == NULL || rfx->params == NULL || textwidget == NULL) return;
+  if (!rfx || !rfx->params || !textwidget) return;
 
 
   param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(textwidget), PARAM_NUMBER_KEY));
@@ -3018,7 +3025,6 @@ char *reconstruct_string(LiVESList * plist, int start, int *offs) {
 
 
 void param_demarshall(lives_rfx_t *rfx, LiVESList * plist, boolean with_min_max, boolean upd) {
-  int i;
   int pnum = 0;
   lives_param_t *param;
 
@@ -3026,9 +3032,9 @@ void param_demarshall(lives_rfx_t *rfx, LiVESList * plist, boolean with_min_max,
 
   // param->widgets[n] are only valid if upd==TRUE
 
-  if (plist == NULL) return;
+  if (!plist) return;
 
-  for (i = 0; i < rfx->num_params; i++) {
+  for (int i = 0; i < rfx->num_params; i++) {
     param = &rfx->params[i];
     pnum = set_param_from_list(plist, param, pnum, with_min_max, upd);
   }

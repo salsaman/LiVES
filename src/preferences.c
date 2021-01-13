@@ -3521,8 +3521,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                                     prefs->instant_open, LIVES_BOX(hbox),
                                     (tmp2 = (H_("Enable instant opening of some file types using decoder plugins"))));
 
-  lives_free(tmp);
-  lives_free(tmp2);
+  lives_free(tmp); lives_free(tmp2);
 
   // advanced instant opening
   advbutton = lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES, _("_Advanced"),
@@ -3591,22 +3590,21 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->checkbutton_auto_deint = lives_standard_check_button_new((tmp = lives_strdup(
-                                     _("Enable automatic deinterlacing when possible"))),
+  prefsw->checkbutton_auto_deint = lives_standard_check_button_new((tmp =
+                                     _("Enable automatic deinterlacing when possible")),
                                    prefs->auto_deint, LIVES_BOX(hbox),
-                                   (tmp2 = (_("Automatically deinterlace frames when a plugin suggests it"))));
-  lives_free(tmp);
-  lives_free(tmp2);
+                                   (tmp2 = (H_("Automatically deinterlace frames when a decoder plugin suggests it"))));
+  lives_free(tmp); lives_free(tmp2);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->checkbutton_auto_trim = lives_standard_check_button_new((tmp = lives_strdup(
-                                    _("Automatic trimming / padding of audio when possible"))),
+  prefsw->checkbutton_auto_trim = lives_standard_check_button_new((tmp =
+                                    _("Automatic trimming / padding of audio when possible")),
                                   prefs->auto_trim_audio, LIVES_BOX(hbox),
-                                  (tmp2 = (_("Automatically trim or pad audio when a plugin suggests it"))));
-  lives_free(tmp);
-  lives_free(tmp2);
+                                  (tmp2 = (H_("Automatically trim or pad audio to try to keep it in synch with video.\n"
+                                          "This operation can be reversed after loading the clip, if so desired."))));
+  lives_free(tmp); lives_free(tmp2);
 
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -3614,9 +3612,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   prefsw->checkbutton_nobord = lives_standard_check_button_new((tmp = (_("Ignore blank borders when possible"))),
                                prefs->auto_nobord, LIVES_BOX(hbox),
-                               (tmp2 = (_("Clip any blank borders from frames where possible"))));
-  lives_free(tmp);
-  lives_free(tmp2);
+                               (tmp2 = (H_("Clip any blank borders from frames if they are detected"))));
+  lives_free(tmp); lives_free(tmp2);
 
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_decoding));
@@ -3624,9 +3621,11 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->checkbutton_concat_images = lives_standard_check_button_new(
-                                        _("When opening multiple files, concatenate images into one clip"),
-                                        prefs->concat_images, LIVES_BOX(hbox), NULL);
+  prefsw->checkbutton_concat_images
+    = lives_standard_check_button_new((tmp = _("When opening multiple files, concatenate images into one clip")),
+                                      prefs->concat_images, LIVES_BOX(hbox),
+                                      (tmp2 = H_("Choose whether multiple images are opened as separate clips or "
+                                          "combined into a single clip.\n")));
 
   pixbuf_decoding = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_DECODING, LIVES_ICON_SIZE_CUSTOM, -1, -1);
 

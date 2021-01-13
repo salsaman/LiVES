@@ -5123,7 +5123,6 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 
   if (!req || !req->do_update) {
 #ifdef YTDL_URL
-    /// thanks RIAA...
     gflags |= INSTALL_CANLOCAL;
 #endif
     if (!check_for_executable(&capable->has_youtube_dl, EXEC_YOUTUBE_DL) &&
@@ -5262,10 +5261,10 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   dir_entry = lives_standard_direntry_new(_("_Directory to save to: "),
                                           req ? req->save_dir : mainw->vid_dl_dir,
                                           LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
+  lives_entry_set_editable(LIVES_ENTRY(dir_entry), TRUE);
 
   if (prefs->show_dev_opts) {
-    cb_debug = lives_standard_check_button_new("Debug mode", debug,
-               LIVES_BOX(hbox), NULL);
+    cb_debug = lives_standard_check_button_new("Debug mode", debug, LIVES_BOX(hbox), NULL);
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height * 3);
     toggle_toggles_var(LIVES_TOGGLE_BUTTON(cb_debug), &debug, FALSE);
@@ -5478,8 +5477,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   else {
     req->do_update = TRUE;
   }
-  *req->vidchoice = 0;
-  *req->audchoice = 0;
+  *req->vidchoice = *req->audchoice = 0;
 
   lives_widget_destroy(dialog);
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);

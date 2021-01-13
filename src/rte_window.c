@@ -1596,8 +1596,10 @@ void on_rte_info_clicked(LiVESButton * button, livespointer user_data) {
   vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
+  widget_opts.mnemonic_label = FALSE;
   label = lives_standard_label_new((tmp = lives_strdup_printf(_("Effect name: %s"), filter_name)));
   lives_free(tmp);
+  widget_opts.mnemonic_label = TRUE;
   lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
 
   label = lives_standard_label_new((tmp = lives_strdup_printf(_("Type: %s"), type)));

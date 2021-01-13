@@ -26,6 +26,9 @@ typedef struct {
 
 #define DEF_SLIDER_WIDTH ((int)(200.*widget_opts.scale))
 
+#define NOSLID_RANGE_LIM 1000000.
+#define NOSLID_VALUE_LIM 100.
+
 void on_paramwindow_button_clicked(LiVESButton *, lives_rfx_t *);
 
 void on_render_fx_pre_activate(LiVESMenuItem *, lives_rfx_t *);

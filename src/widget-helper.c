@@ -9976,14 +9976,6 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
   dialog = lives_dialog_new();
 
-  /* set_css_value_direct(dialog, LIVES_WIDGET_STATE_NORMAL, "", "opacity", "1."); */
-  /* set_css_value_direct(dialog, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0."); */
-  /* set_css_value_direct(dialog,  LIVES_WIDGET_STATE_INSENSITIVE, "", */
-  /* 		       "transition-duration", "4s"); */
-  /* set_css_value_direct(dialog,  LIVES_WIDGET_STATE_NORMAL, "", */
-  /* 		       "transition-duration", "4s"); */
-  /* lives_widget_set_sensitive(dialog, FALSE); */
-
   if (width <= 0) width = 8;
   if (height <= 0) height = 8;
 
@@ -10012,10 +10004,6 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
   if (LIVES_SHOULD_EXPAND_WIDTH) lives_widget_set_hexpand(dialog, TRUE);
   if (LIVES_SHOULD_EXPAND_HEIGHT) lives_widget_set_vexpand(dialog, TRUE);
-
-  /* #if !GTK_CHECK_VERSION(3, 0, 0) */
-  /*   lives_dialog_set_has_separator(LIVES_DIALOG(dialog), FALSE); */
-  /* #endif */
 
   if (widget_opts.apply_theme) {
     lives_widget_apply_theme(dialog, LIVES_WIDGET_STATE_NORMAL);
@@ -10069,11 +10057,10 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   lives_signal_sync_connect(LIVES_GUI_OBJECT(dialog), LIVES_WIDGET_DELETE_EVENT,
                             LIVES_GUI_CALLBACK(return_true), NULL);
 
-  if (!widget_opts.non_modal)
+  if (!widget_opts.non_modal) {
     lives_window_set_modal(LIVES_WINDOW(dialog), TRUE);
-
-  if (!widget_opts.non_modal)
     lives_window_set_resizable(LIVES_WINDOW(dialog), FALSE);
+  }
 
   return dialog;
 }
@@ -10128,8 +10115,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_font_chooser_new(void) {
 extern void on_filesel_button_clicked(LiVESButton *, livespointer);
 
 static LiVESWidget *lives_standard_dfentry_new(const char *labeltext, const char *txt, const char *defdir, int dispwidth,
-    int maxchars,
-    LiVESBox * box, const char *tooltip, boolean isdir) {
+    int maxchars, LiVESBox * box, const char *tooltip, boolean isdir) {
   LiVESWidget *direntry = NULL;
   LiVESWidget *buttond;
   LiVESWidget *img_tips;
@@ -10144,7 +10130,6 @@ static LiVESWidget *lives_standard_dfentry_new(const char *labeltext, const char
   buttond = lives_standard_file_button_new(isdir, defdir);
   if (widget_opts.last_label) lives_label_set_mnemonic_widget(LIVES_LABEL(widget_opts.last_label), buttond);
   lives_box_pack_start(LIVES_BOX(lives_widget_get_parent(direntry)), buttond, FALSE, FALSE, widget_opts.packing_width);
-
 
   if ((warn_img = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(direntry), WARN_IMAGE_KEY))) {
     lives_box_reorder_child(LIVES_BOX(lives_widget_get_parent(direntry)), buttond,
@@ -10163,15 +10148,13 @@ static LiVESWidget *lives_standard_dfentry_new(const char *labeltext, const char
 
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_direntry_new(const char *labeltext, const char *txt, int dispwidth,
-    int maxchars,
-    LiVESBox * box, const char *tooltip) {
+    int maxchars, LiVESBox * box, const char *tooltip) {
   return lives_standard_dfentry_new(labeltext, txt, txt, dispwidth, maxchars, box, tooltip, TRUE);
 }
 
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_fileentry_new(const char *labeltext, const char *txt,
-    const char *defdir,
-    int dispwidth, int maxchars, LiVESBox * box, const char *tooltip) {
+    const char *defdir, int dispwidth, int maxchars, LiVESBox * box, const char *tooltip) {
   return lives_standard_dfentry_new(labeltext, txt, defdir, dispwidth, maxchars, box, tooltip, FALSE);
 }
 

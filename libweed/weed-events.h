@@ -47,6 +47,10 @@ extern "C"
 #define WEED_AUDIO_BIG_ENDIAN 1
 #endif
 
+#ifndef WEED_TICKS_PER_SECOND
+#define WEED_TICKS_PER_SECOND 100000000
+#endif
+
 // event_list
 #define WEED_LEAF_WEED_EVENT_API_VERSION "weed_event_api_version"
 #define WEED_LEAF_AUTHOR "author"

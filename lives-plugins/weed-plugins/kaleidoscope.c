@@ -40,26 +40,11 @@ static int package_version = 1; // version of this package
 #define ONE_PI2 1.57079632679f
 #define ONE_PI3 1.0471975512f
 
+#define RT2 1.41421356237f
 #define RT3  1.73205080757f //sqrt(3)
 #define RT32 0.86602540378f //sqrt(3)/2
 
 #define RT322 0.43301270189f
-
-static float calc_angle(float y, float x) {
-  if (x > 0.) {
-    if (y >= 0.) return atanf(y / x);
-    return TWO_PI + atanf(y / x);
-  }
-  if (x < -0.) {
-    return atanf(y / x) + M_PI;
-  }
-  if (y > 0.) return ONE_PI2;
-  return THREE_PI2;
-}
-
-static float calc_dist(float x, float y) {
-  return sqrtf(x * x + y * y);
-}
 
 typedef struct {
   float angle;
@@ -69,6 +54,14 @@ typedef struct {
   int oheight;
 } sdata;
 
+
+#define calc_angle(y, x) ((x) > 0. ? ((y) >= 0. ? atanf((y) / (x)) : TWO_PI + atanf((y) / (x))) \
+			  : ((x) < 0. ? atanf((y) / (x)) + M_PI : ((y) > 0. ? ONE_PI2 : THREE_PI2)))
+
+
+#define calc_dist(x, y) (sqrtf((x) * (x) + (y) * (y)))
+
+
 static void calc_center(float side, float j, float i, float *x, float *y) {
   // find nearest hex center
   int gridx, gridy;
@@ -76,11 +69,11 @@ static void calc_center(float side, float j, float i, float *x, float *y) {
   float secx, secy;
 
   float sidex = side * RT3; // 2 * side * cos(30)
-  float sidey = side * 1.5; // side + sin(30)
+  float sidey = side * 1.5; // side + side * sin(30)
 
   float hsidex = sidex / 2., hsidey = sidey / 2.;
 
-  i -= side / 5.3;
+  i -= side / FIVE_PI3;
 
   if (i > 0.) i += hsidey;
   else i -= hsidey;
@@ -103,10 +96,10 @@ static void calc_center(float side, float j, float i, float *x, float *y) {
 
   if (!(gridy & 1)) {
     // even row (inverted Y)
-    if (secy > (sidey - (hsidex - secx)*RT322)) {
+    if (secy > (sidey - (hsidex - secx) * RT322)) {
       *y += sidey;
       *x -= hsidex;
-    } else if (secy > sidey - (secx - hsidex)*RT322) {
+    } else if (secy > sidey - (secx - hsidex) * RT322) {
       *y += sidey;
       *x += hsidex;
     }
@@ -117,7 +110,7 @@ static void calc_center(float side, float j, float i, float *x, float *y) {
         *x -= hsidex;
       } else *y += sidey;
     } else {
-      if (secy < sidey - (sidex - secx)*RT322) {
+      if (secy < sidey - (sidex - secx) * RT322) {
         *x += hsidex;
       } else *y += sidey;
     }
@@ -125,7 +118,7 @@ static void calc_center(float side, float j, float i, float *x, float *y) {
 }
 
 
-static void rotate(float r, float theta, float angle, float *x, float *y) {
+static inline void rotate(float r, float theta, float angle, float *x, float *y) {
   theta += angle;
   if (theta < 0.) theta += TWO_PI;
   else if (theta >= TWO_PI) theta -= TWO_PI;
@@ -134,7 +127,7 @@ static void rotate(float r, float theta, float angle, float *x, float *y) {
 }
 
 
-static int put_pixel(void *src, void *dst, int psize, float angle, float theta, float r, int irowstride, int hheight,
+static int put_pixel(uint8_t *src, uint8_t *dst, int psize, float angle, float theta, float r, int irowstride, int hheight,
                      int hwidth) {
   // dest point is at i,j; r tells us which point to copy, and theta related to angle gives us the transform
 
@@ -189,35 +182,37 @@ static int put_pixel(void *src, void *dst, int psize, float angle, float theta, 
     return 0;
   }
 
-  weed_memcpy(dst, src - sy * irowstride + sx * psize, psize);
+  weed_memcpy(dst, &src[sx * psize - sy * irowstride], psize);
   return 1;
 }
 
 
 static weed_error_t kal_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL),
-                *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
-  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
-
   sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  float xangle = sdata->angle;
+  weed_timecode_t old_tc = sdata->old_tc;
 
-  float theta, r, xangle;
+  weed_plant_t *in_channel = weed_get_in_channel(inst, 0),
+                *out_channel = weed_get_out_channel(inst, 0);
+  weed_plant_t **in_params = weed_get_in_params(inst, NULL);
+  unsigned char *src = weed_channel_get_pixel_data(in_channel);
+  unsigned char *dst = weed_channel_get_pixel_data(out_channel);
 
-  float x, y, a, b;
+  float theta, r, delta, last_theta = 0., last_r = 0.;
+
+  float x, y, a, b, last_x = 0., last_y = 0.;
 
   float side, fi, fj;
 
   float anglerot = 0.;
   double dtime, sfac, angleoffs;
 
-  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL), hwidth = width >> 1;
-  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL), hheight = height >> 1;
-  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
-  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
-  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
-  int psize = 4;
+  int width = weed_channel_get_width(in_channel), hwidth = width >> 1;
+  int height = weed_channel_get_height(in_channel), hheight = height >> 1;
+  int palette = weed_channel_get_palette(in_channel);
+  int irowstride = weed_channel_get_stride(in_channel);
+  int orowstride = weed_channel_get_stride(out_channel);
+  int psize = pixel_size(palette);
 
   int sizerev;
 
@@ -225,32 +220,33 @@ static weed_error_t kal_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   int upd = 1;
 
-  register int i, j;
+  int i, j, jj;
 
   if (width < height) side = width / 2. / RT32;
   else side = height / 2.;
-  sfac = log(weed_get_double_value(in_params[0], WEED_LEAF_VALUE, NULL)) / 2.;
+  sfac = log(weed_param_get_value_double(in_params[0])) / 2.;
 
-  angleoffs = weed_get_double_value(in_params[1], WEED_LEAF_VALUE, NULL);
+  angleoffs = weed_param_get_value_double(in_params[1]);
 
-  if (sdata->old_tc != 0 && timestamp > sdata->old_tc) {
-    anglerot = (float)weed_get_double_value(in_params[2], WEED_LEAF_VALUE, NULL);
-    dtime = (double)(timestamp - sdata->old_tc) / 100000000.;
+  if (old_tc != 0 && timestamp > old_tc) {
+    anglerot = (float)weed_param_get_value_double(in_params[2]);
+    dtime = (double)(timestamp - old_tc) / (double)WEED_TICKS_PER_SECOND;
     anglerot *= (float)dtime;
     while (anglerot >= TWO_PI) anglerot -= TWO_PI;
   }
 
-  if (weed_get_boolean_value(in_params[4], WEED_LEAF_VALUE, NULL) == WEED_TRUE) anglerot = -anglerot;
+  if (weed_param_get_value_boolean(in_params[4]) == WEED_FALSE) anglerot = -anglerot;
 
-  sizerev = weed_get_boolean_value(in_params[5], WEED_LEAF_VALUE, NULL);
+  sizerev = weed_param_get_value_boolean(in_params[5]);
 
   weed_free(in_params);
 
-  xangle = sdata->angle + (float)angleoffs / 360.*TWO_PI;
+  xangle += (float)angleoffs / 360. * TWO_PI;
   if (xangle >= TWO_PI) xangle -= TWO_PI;
 
   if (sdata->owidth != width || sdata->oheight != height) {
-    if (sizerev && sdata->owidth != 0 && sdata->oheight != 0) sdata->revrot = 1 - sdata->revrot;
+    if (sizerev == WEED_TRUE && sdata->owidth != 0 && sdata->oheight != 0)
+      sdata->revrot = 1 - sdata->revrot;
     sdata->owidth = width;
     sdata->oheight = height;
   }
@@ -259,62 +255,74 @@ static weed_error_t kal_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   side *= (float)sfac;
 
-  if (palette == WEED_PALETTE_RGB24 || palette == WEED_PALETTE_BGR24) psize = 3;
-
   src += hheight * irowstride + hwidth * psize;
 
-  start = hheight;
-  end = -hheight;
+  start = -hheight;
+  end = hheight;
 
   // new threading arch
-  if (weed_plant_has_leaf(out_channel, WEED_LEAF_OFFSET)) {
-    int offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, NULL);
-    int dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL);
+  if (weed_is_threading(inst)) {
+    int offset = weed_channel_get_offset(out_channel);
+    int dheight = weed_channel_get_height(out_channel);
 
     if (offset > 0) upd = 0;
 
-    start -= offset;
+    start += offset;
     dst += offset * orowstride;
-    end = start - dheight;
+    end = start + dheight;
   }
 
-  orowstride -= psize * (hwidth << 1);
+  delta = xangle - ONE_PI2;
 
-  for (i = start; i > end; i--) {
-    for (j = -hwidth; j < hwidth; j++) {
-      // rotate point to line up with hex grid
-      theta = calc_angle((fi = (float)i), (fj = (float)j)); // get angle of this point from origin
+  for (i = start; end - i > 0; i++) {
+    fi = (float)i;
+    jj = orowstride * (i - start);
+    last_x = last_y = 0;
+    last_theta = last_r = 0.;
+    for (j = -hwidth; hwidth - j > 0; j++) {
+      // first find the nearest hex center to our input point
+      // hexes are rotating about the origin, this is equivalent to the point rotating
+      // in the opposite sense
+      fj = (float)j;
+      theta = calc_angle(fi, fj); // get angle of this point from origin
       r = calc_dist(fi, fj); // get dist of point from origin
-      rotate(r, theta, -xangle + ONE_PI2, &a, &b); // since our central hex has rotated by xangle, so has the hex grid - so compensate
+      rotate(r, theta, -delta, &a, &b); // rotate point around origin
 
       // find nearest hex center and angle to it
       calc_center(side, a, b, &x, &y);
 
-      // rotate hex center about itself
-      theta = calc_angle(y, x);
-      r = calc_dist(x, y);
-      rotate(r, theta, xangle - ONE_PI2, &a, &b);
+      // the hexes turn as they orbit, so calculating the angle to the center, we add the
+      // rotation amount to get the final mapping
+      if (x == last_x && y == last_y) {
+        theta = last_theta;
+        r = last_r;
+      } else {
+        last_x = x;
+        last_y = y;
+        last_theta = theta = calc_angle(y, x);
+        last_r = r = calc_dist(x, y);
+      }
+
+      rotate(r, theta, delta, &a, &b);
 
       theta = calc_angle(fi - b, fj - a);
       r = calc_dist(b - fi, a - fj);
 
       if (r < 10.) r = 10.;
 
-      if (!put_pixel(src, dst, psize, xangle, theta, r, irowstride, hheight, hwidth)) {
+      if (!put_pixel(src, &dst[jj], psize, xangle, theta, r, irowstride, hheight, hwidth)) {
         if (palette == WEED_PALETTE_RGB24 || palette == WEED_PALETTE_BGR24) {
-          weed_memset(dst, 0, 3);
+          weed_memset(&dst[jj], 0, 3);
         } else if (palette == WEED_PALETTE_RGBA32 || palette == WEED_PALETTE_BGRA32) {
-          weed_memset(dst, 0, 3);
-          dst[3] = 255;
+          weed_memset(&dst[jj], 0, 3);
+          dst[jj + 3] = 255;
         } else if (palette == WEED_PALETTE_ARGB32) {
-          weed_memset(dst + 1, 0, 3);
-          dst[0] = 255;
+          dst[jj] = 255;
+          weed_memset(&dst[jj + 1], 0, 3);
         }
       }
-
-      dst += psize;
+      jj += psize;
     }
-    dst += orowstride;
   }
 
   if (upd) {
@@ -330,7 +338,7 @@ static weed_error_t kal_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
 static weed_error_t kal_init(weed_plant_t *inst) {
   sdata *sd = (sdata *)weed_malloc(sizeof(sdata));
-  if (sd == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
+  if (!sd) return WEED_ERROR_MEMORY_ALLOCATION;
 
   sd->angle = 0.;
   sd->old_tc = 0;
@@ -345,10 +353,8 @@ static weed_error_t kal_init(weed_plant_t *inst) {
 
 static weed_error_t kal_deinit(weed_plant_t *inst) {
   sdata *sd = weed_get_voidptr_value(inst, "plugin_internal", NULL);
-  if (sd) {
-    weed_free(sd);
-    weed_set_voidptr_value(inst, "plugin_internal", NULL);
-  }
+  if (sd) weed_free(sd);
+  weed_set_voidptr_value(inst, "plugin_internal", NULL);
   return WEED_SUCCESS;
 }
 
@@ -380,7 +386,7 @@ WEED_SETUP_START(200, 200) {
   weed_set_double_value(gui, WEED_LEAF_STEP_SIZE, .1);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+  weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END
 

@@ -555,11 +555,12 @@ WEED_SETUP_START(200, 200) {
 
   weed_set_int_value(in_params[P_FGALPHA], WEED_LEAF_COPY_VALUE_TO, P_BGALPHA);
 
-  for (register int i = 1; i < 3; i++) {
+  for (int i = 1; i < 3; i++) {
     if (i == 1) {
       filter_class = weed_filter_class_init("scribbler", "Aleksej Penkov", 1, filter_flags, palette_list,
                                             scribbler_init, scribbler_process, NULL,
                                             in_chantmpls, out_chantmpls, in_params, NULL);
+      weed_set_string_value(filter_class, WEED_LEAF_EXTRA_AUTHORS, "salsaman");
     } else {
       clone2 = weed_clone_plants(in_params);
       weed_plant_free(clone2[P_FONT]);
@@ -575,6 +576,7 @@ WEED_SETUP_START(200, 200) {
       weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, "RFX");
       weed_set_string_value(gui, "layout_rfx_delim", "|");
       weed_set_string_array(gui, "layout_rfx_strings", 3, (char **)rfxstrings);
+      weed_set_string_value(filter_class, WEED_LEAF_EXTRA_AUTHORS, "salsaman");
     }
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
@@ -587,6 +589,7 @@ WEED_SETUP_START(200, 200) {
                                           scribbler_init, scribbler_process, i == 1 ? NULL : scribbler_deinit, NULL,
                                           (clone1 = weed_clone_plants(out_chantmpls)), clone2, NULL);
     weed_free(clone1); weed_free(clone2);
+    weed_set_string_value(filter_class, WEED_LEAF_EXTRA_AUTHORS, "salsaman");
 
     if (i > 1) {
       gui = weed_filter_get_gui(filter_class);
@@ -596,7 +599,7 @@ WEED_SETUP_START(200, 200) {
     }
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
   }
-  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+  weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;
 

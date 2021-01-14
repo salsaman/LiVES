@@ -194,7 +194,7 @@ static weed_error_t frei0r_process(weed_plant_t *inst, weed_timecode_t timestamp
   weed_plant_t *out_channel, *in_channel, *filter;
   int f0r_plugin_type;
 
-  double time = timestamp / 100000000.;
+  double time = (double)timestamp / (double)WEED_TICKS_PER_SECOND;
 
   filter = weed_instance_get_filter(inst);
   f0r_inst = weed_get_voidptr_value(inst, "plugin_f0r_inst", NULL);

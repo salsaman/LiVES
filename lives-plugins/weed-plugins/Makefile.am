@@ -191,6 +191,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	comic.la \
 	data_processor.la \
 	data_unpacker.la \
+	timer.la \
 	deinterlace.la \
 	edge.la \
 	fg_bg_removal.la \

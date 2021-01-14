@@ -145,6 +145,10 @@ typedef struct {
 
 typedef int64_t weed_timecode_t;
 
+#ifndef WEED_TICKS_PER_SECOND
+#define WEED_TICKS_PER_SECOND 100000000
+#endif
+
 // allows the plugin to get the plugin_info before weed_leaf_get() is defined
 typedef weed_error_t (*weed_default_getter_f)(weed_plant_t *plant, const char *key, void *value);
 

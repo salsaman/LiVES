@@ -1617,15 +1617,16 @@ void on_rte_info_clicked(LiVESButton * button, livespointer user_data) {
     lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
   }
 
-  label = lives_standard_label_new((tmp = lives_strdup_printf(_("Author: %s"), filter_author)));
-  lives_free(tmp);
-  lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
-
   if (filter_extra_authors) {
-    label = lives_standard_label_new((tmp = lives_strdup_printf(_("and: %s"), filter_extra_authors)));
+    label = lives_standard_label_new((tmp = lives_strdup_printf(_("Authors: %s and %s"), filter_author,
+                                            filter_extra_authors)));
     lives_free(tmp);
-    lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
+  } else {
+    label = lives_standard_label_new((tmp = lives_strdup_printf(_("Author: %s"), filter_author)));
+    lives_free(tmp);
   }
+
+  lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
 
   if (has_url) {
     label = lives_standard_label_new((tmp = lives_strdup_printf(_("URL: %s"), url)));

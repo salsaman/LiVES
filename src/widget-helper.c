@@ -8818,8 +8818,7 @@ static LiVESWidget *_make_label_eventbox(const char *labeltext, LiVESWidget * wi
 
   if (widget && (LIVES_IS_TOGGLE_BUTTON(widget) || LIVES_IS_TOGGLE_TOOL_BUTTON(widget))) {
     lives_signal_sync_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                              LIVES_GUI_CALLBACK(label_act_toggle),
-                              widget);
+                              LIVES_GUI_CALLBACK(label_act_toggle), widget);
   }
   if (add_sens) {
     lives_widget_set_sensitive_with(widget, eventbox);

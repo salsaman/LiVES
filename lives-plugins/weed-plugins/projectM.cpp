@@ -966,7 +966,8 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   if (sd->fps) {
     sd->timer += 1. / sd->fps;
   } else {
-    if (sd->timestamp > 0) sd->timer += (double)(timestamp - sd->timestamp) / 100000000.;
+    if (sd->timestamp > 0) sd->timer += (double)(timestamp - sd->timestamp)
+                                          / (double)WEED_TICKS_PER_SECOND;
   }
   timer = sd->timer;
   if (sd->timer < timer) sd->timer = timer;

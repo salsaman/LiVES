@@ -3574,12 +3574,14 @@ static void dpp_changed(LiVESWidget * combo, livespointer user_data) {
   ret = pconx_check_connection(conxwp->filter, pidx, key, mode, idx, setup, &iparam, &j, &okey, &omode, &opnum);
 
   if (ret == -2) {
-    do_param_incompatible_error(conxwp);
-    lives_combo_set_active_string(LIVES_COMBO(combo), "");
-    return;
+    if (!setup) {
+      do_param_incompatible_error(conxwp);
+      lives_combo_set_active_string(LIVES_COMBO(combo), "");
+      return;
+    }
   }
   if (ret == -1) {
-    if (!do_param_connected_query(conxwp, okey, omode, opnum, conxwp->okey == okey)) {
+    if (!setup && !do_param_connected_query(conxwp, okey, omode, opnum, conxwp->okey == okey)) {
       lives_combo_set_active_string(LIVES_COMBO(combo), "");
       return;
     } else {

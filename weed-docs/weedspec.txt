@@ -1483,7 +1483,8 @@ The host may call this as often as it wishes after calling the init_func (if app
 Host calls this for each processing cycle; the plugin should process the in parameters and non-disabled in channels (if they exist) and
 produce data in the non-disabled out channels and optionally the out parameters (if they exist).
 
-Timestamp is nominally in units of 10 ^ -8 (100 millionth) of a second 'since playback started'.
+Timestamp is nominally in units of 10 ^ -8 (100 millionth) of a second (WEED_TICKS_PER_SECOND)
+'since playback started'.
 Normally it will increase monotonically for each frame but that is not guaranteed,
 although hosts should attempt to keep it so between calling init_func() and deinit_func(). In case the filter cannot handle
 non-monotonic timecodes, it may return WEED_ERROR_NEEDS_REINIT if such an event occurs.

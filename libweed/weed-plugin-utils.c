@@ -1097,4 +1097,8 @@ fontdone:
 }
 #endif
 
+#ifndef WEED_TICKS_PER_SECOND
+#define WEED_TICKS_PER_SECOND 100000000
+#endif
+
 #endif // __HAVE_WEED_PLUGIN_UTILS__

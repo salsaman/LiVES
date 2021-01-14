@@ -830,7 +830,7 @@ static weed_error_t cnoise_process(weed_plant_t *inst, weed_timecode_t tc) {
 
   destMat = Mat(height, width, CV_32FC1, dst, orow);
 
-  cnoise_compute(destMat, in_params, (double)tc / 100000000.);
+  cnoise_compute(destMat, in_params, (double)tc / (double)WEED_TICKS_PER_SECOND);
 
   weed_free(in_params);
 

@@ -959,6 +959,7 @@ weed_plant_t *on_rte_apply(weed_layer_t *layer, int opwidth, int opheight, weed_
     weed_plant_free(init_event);
   } else {
     retlayer = weed_apply_effects(layers, mainw->filter_map, tc, opwidth, opheight, mainw->pchains);
+    if (!retlayer) retlayer = layers[0];
   }
 
   // all our pixel_data will have been free'd already
@@ -1047,7 +1048,8 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
   }
 
   if (key == EFFECT_NONE) {
-    // switch up/down keys to default (fps change)
+    // switch off real time effects
+    // also switch up/down keys to default (fps change)
     weed_deinit_all(FALSE);
   } else {
     // the idea here is this gets set if a generator starts play, because in weed_init_effect() we will run playback

@@ -736,8 +736,8 @@ void mt_draw_block(lives_mt * mt, lives_painter_t *cairo,
               if (!(thumbnail = get_from_thumb_cache(filenum, framenum, range))) {
                 if (mainw->files[filenum]->frames > 0 && mainw->files[filenum]->clip_type == CLIP_TYPE_FILE) {
                   lives_clip_data_t *cdata = ((lives_decoder_t *)mainw->files[filenum]->ext_src)->cdata;
-                  if (cdata && !(cdata->seek_flag & LIVES_SEEK_FAST) &&
-                      is_virtual_frame(filenum, framenum)) {
+                  if (cdata && !((cdata->seek_flag & LIVES_SEEK_FAST) &&
+                                 is_virtual_frame(filenum, framenum))) {
                     thumbnail = make_thumb_fast_between(mt, filenum, width, height,
                                                         framenum, last_framenum == -1 ? 0
                                                         : framenum - last_framenum);
@@ -1026,6 +1026,8 @@ static EXPOSE_FN_DECL(expose_track_event, eventbox, user_data) {
   int hidden;
 
   if (mt->no_expose) return TRUE;
+
+  if (LIVES_IS_PLAYING && mainw->fs && mainw->play_window) return TRUE;
 
   if (event) {
     if (event->count > 0) {

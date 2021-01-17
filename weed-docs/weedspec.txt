@@ -2949,6 +2949,64 @@ rely on setting "copy_value_to" to force the host to set identical
  * "flags" : WEED_SEED_INT : bitmap of WEED_GUI_* flags. (See below).
 
 
+
+
+ * "display_func" : WEED_SEED_FUNCPTR : a pointer to a function of type
+ weed_error_t (*display_func)(weed_plant_t *instance, weed_plant_t *param, int inverse)
+
+The function may be called from the host for any parameter created from this template.
+The parameter must be one of the in_parameters of instance, which in turn must have been initialized
+if it has an init_func. Note that if the host re-initializes the filter instance, then the current
+display values may no longer be valid; the host should therefore update them after calling init_func().
+
+The plugin should examine the "value" leaf of the parameter and may set an optional "display_value"
+leaf in the parameter GUI, with a suggested value to be displayed to the user in place of the actual
+value. The SEED_TYPE of the "display_value" MUST be the same as the SEED_TYPE of "value" and have the
+appropriate number of elements for the parameter type (e.g. 3 elements for COLOUR / RGB).
+
+If "display_value" is valid then the plugin should return WEED_SUCCESS. If WEED_ERROR_NOTREADY
+is returned, then the host should ignore the "display_value" and simply use the "value" as normal.
+
+The plugin may also return any of the following standard error codes:-
+WEED_ERROR_MEMORY_ALLOCATION,
+WEED_ERROR_NOSUCH_LEAF (in case the parameter has no 'value'),
+WEED_ERROR_REINIT_NEEDED (in case the host neglected to call init_func()),
+WEED_ERROR_PLUGIN_INVALID,
+WEED_ERROR_FILTER_INVALID,
+WEED_ERROR_WRONG_SEED_TYPE (if for some reason "display_value" already exists with a
+non-matching seed type).
+
+
+IMPORTANT: the plugin MUST provide both a forwards and a reverse transformation. This is so that
+the user can enter values in the display domain and have them converted to the real values.
+
+If the host sets "inverse" to WEED_TRUE, then "display_value" should be set using an inverse transform
+of "value"; for example suppose the transform is: display_value = 2 * value
+then the inverse would be: display_value = value / 2
+
+In case the inverse transform is undefined for the given value, then the plugin may return
+WEED_ERROR_NOT_READY.
+
+
+Note that the plugin still sets "display_value" for the inverse transform (plugins are not allowed
+to set the "value" for in_parameters),
+
+thus the host needs to do something like:
+- set the parameter "value" temporarily to the displayed value
+- call the display_func with inverse set to WEED_TRUE
+- get the resulting "display_value" from the GUI
+- set the "display_value" retrieved as the actual "value" of the parameter.
+
+
+
+
+
+TODO: WEED_LEAF_DISPLAY_FUNC and WEED_LEAF_DISPLAY_VALUE will be defined in a future Weed Effects API
+version. as well as weed_display_func_f.
+
+
+
+
 ///////// (the following leaf may also be set by the plugin in a parameter GUI during init_func())
 
 
@@ -3033,6 +3091,8 @@ plugin is setting up the templates in weed_setup(), (unless WEED_PARAMETER_REINI
 it would be redundant).
 This is explained in more detail below, along with an explanation of the counterpart to this in the host.
 
+Exception: the "display_value" leaf has its own rules, see "display_func" leaf in the parameter
+template GUI.
 
 
 
@@ -3125,8 +3185,6 @@ parameter GUI plants, and may show or hide parameters in the interface according
 				     selected by the host.
 
 
-
-== parameter_instance GUI =====
 
 
 == Filter Easing ==

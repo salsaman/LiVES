@@ -791,6 +791,7 @@ double lives_adjustment_get_upper(LiVESAdjustment *);
 double lives_adjustment_get_lower(LiVESAdjustment *);
 double lives_adjustment_get_page_size(LiVESAdjustment *);
 double lives_adjustment_get_step_increment(LiVESAdjustment *);
+double lives_adjustment_get_page_increment(LiVESAdjustment *);
 double lives_adjustment_get_value(LiVESAdjustment *);
 
 boolean lives_adjustment_set_upper(LiVESAdjustment *, double upper);
@@ -802,6 +803,7 @@ boolean lives_adjustment_set_value(LiVESAdjustment *, double value);
 boolean lives_adjustment_clamp_page(LiVESAdjustment *, double lower, double upper);
 
 LiVESAdjustment *lives_range_get_adjustment(LiVESRange *);
+boolean lives_range_set_adjustment(LiVESRange *, LiVESAdjustment *);
 boolean lives_range_set_value(LiVESRange *, double value);
 boolean lives_range_set_range(LiVESRange *, double min, double max);
 boolean lives_range_set_increments(LiVESRange *, double step, double page);
@@ -1009,6 +1011,8 @@ void lives_layout_label_set_text(LiVESLabel *, const char *text);
 LiVESWidget *lives_layout_add_fill(LiVESLayout *, boolean horizontal);
 LiVESWidget *lives_layout_add_separator(LiVESLayout *, boolean horizontal);
 LiVESWidget *lives_layout_expansion_row_new(LiVESLayout *, LiVESWidget *widget);
+
+LiVESAdjustment *lives_adjustment_copy(LiVESAdjustment *adj);
 
 boolean lives_button_grab_default_special(LiVESWidget *);
 boolean lives_button_ungrab_default_special(LiVESWidget *);

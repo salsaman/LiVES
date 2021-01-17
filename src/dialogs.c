@@ -21,6 +21,7 @@
 #include "paramwindow.h"
 #include "ce_thumbs.h"
 #include "callbacks.h"
+#include "effects-weed.h"
 #include "diagnostics.h"
 
 extern void reset_frame_and_clip_index(void);
@@ -1166,6 +1167,7 @@ void cancel_process(boolean visible) {
                                    LIVES_ACCEL_VISIBLE);
     }
     if (mainw->proc_ptr) {
+      lives_freep((void **)&mainw->proc_ptr->text);
       lives_widget_destroy(LIVES_WIDGET(mainw->proc_ptr->processing));
       lives_free(mainw->proc_ptr);
       mainw->proc_ptr = NULL;
@@ -1198,8 +1200,11 @@ static char *remtime_string(double timerem) {
 }
 
 
+#define MIN_NOTIFY_TIME 300.
+
 static void disp_fraction(double fraction_done, double timesofar, xprocess * proc) {
   // display fraction done and estimated time remaining
+  double remtime;
 #ifdef PROGBAR_IS_ENTRY
   char *tmp;
 #endif
@@ -1211,7 +1216,12 @@ static void disp_fraction(double fraction_done, double timesofar, xprocess * pro
   if (fraction_done > disp_fraction_done + .0001)
     lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(proc->progressbar), fraction_done);
 
-  remtstr = remtime_string(timesofar / fraction_done - timesofar);
+  remtime = timesofar / fraction_done - timesofar;
+  remtstr = remtime_string(remtime);
+  if (remtime > MIN_NOTIFY_TIME && mainw->proc_ptr->notify_cb) {
+    lives_widget_set_opacity(mainw->proc_ptr->notify_cb, 1.);
+    lives_widget_set_sensitive(mainw->proc_ptr->notify_cb, TRUE);
+  }
   prog_label = lives_strdup_printf(_("\n%d%% done. %s\n"), (int)(fraction_done * 100.), remtstr);
   lives_free(remtstr);
 #ifdef PROGBAR_IS_ENTRY
@@ -1233,25 +1243,28 @@ static int progress_count;
 static double progress_speed;
 static int prog_fs_check;
 
-#define PROG_LOOP_VAL 200
+#define PROG_LOOP_VAL 100
 
 static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done, double fraction_done) {
+  static double last_fraction_done = -1.;
   double timesofar;
 
-  if ((progress_count++ * progress_speed) >= PROG_LOOP_VAL) {
+  if (progress_count++ * progress_speed >= PROG_LOOP_VAL) {
     if (fraction_done > 0. || (frames_done <= mainw->proc_ptr->progress_end && mainw->proc_ptr->progress_end > 0
-                               && !mainw->effects_paused && frames_done > 0)) {
+                               && !mainw->effects_paused && frames_done
+                               > mainw->proc_ptr->progress_start)) {
       timesofar = (lives_get_current_ticks() - proc_start_ticks - mainw->timeout_ticks) / TICKS_PER_SECOND_DBL;
       if (fraction_done < 0.)
         fraction_done = (double)(frames_done - mainw->proc_ptr->progress_start)
                         / (double)(mainw->proc_ptr->progress_end - mainw->proc_ptr->progress_start + 1.);
       disp_fraction(fraction_done, timesofar, mainw->proc_ptr);
-      progress_count = 0;
+      if (fabs(fraction_done - last_fraction_done) < 1.) progress_count = 0;
       progress_speed = 4.;
+      last_fraction_done = fraction_done;
     } else {
       lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
       progress_count = 0;
-      if (!mainw->is_rendering)  progress_speed = 2.;
+      if (!mainw->is_rendering) progress_speed = 2.;
     }
   }
   lives_widget_context_update();
@@ -1890,7 +1903,18 @@ finish:
     if (mainw->proc_ptr) {
       const char *btext = NULL;
       if (mainw->iochan) btext = lives_text_view_get_text(mainw->optextview);
-      if (mainw->proc_ptr->processing) lives_widget_destroy(mainw->proc_ptr->processing);
+      if (mainw->proc_ptr->processing) {
+        if (mainw->proc_ptr->rte_off_cb
+            && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->rte_off_cb))) {
+          weed_deinit_all(FALSE);
+        }
+        if (mainw->proc_ptr->notify_cb
+            && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mainw->proc_ptr->notify_cb))) {
+          notify_user(mainw->proc_ptr->text);
+        }
+        lives_freep((void **)&mainw->proc_ptr->text);
+        lives_widget_destroy(mainw->proc_ptr->processing);
+      }
       lives_free(mainw->proc_ptr);
       mainw->proc_ptr = NULL;
       if (btext) {
@@ -2046,6 +2070,7 @@ boolean do_auto_dialog(const char *text, int type) {
 
   if (mainw->proc_ptr) {
     lives_widget_destroy(mainw->proc_ptr->processing);
+    lives_freep((void **)&mainw->proc_ptr->text);
     lives_free(mainw->proc_ptr);
     mainw->proc_ptr = NULL;
   }
@@ -2912,7 +2937,6 @@ static void _threaded_dialog_spin(double fraction) {
   }
   // necessary
   lives_widget_context_update();
-  //lives_widget_process_updates(mainw->proc_ptr->processing);
 }
 
 
@@ -2957,11 +2981,14 @@ static void _end_threaded_dialog(void) {
   if (!mainw->threaded_dialog) return;
   mainw->cancel_type = CANCEL_KILL;
 
-  if (mainw->proc_ptr && mainw->proc_ptr->processing) lives_widget_destroy(mainw->proc_ptr->processing);
+  if (mainw->proc_ptr && mainw->proc_ptr->processing) {
+    lives_widget_destroy(mainw->proc_ptr->processing);
+  }
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
 
+  lives_freep((void **)&mainw->proc_ptr->text);
   lives_freep((void **)&mainw->proc_ptr);
 
   mainw->threaded_dialog = FALSE;

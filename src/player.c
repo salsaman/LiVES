@@ -2118,7 +2118,7 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
 #define ENABLE_PRECACHE
 static short scratch = SCRATCH_NONE;
 
-#define ANIM_LIM 1000000
+#define ANIM_LIM 500000
 
 // processing
 static ticks_t last_anim_ticks;

@@ -11,6 +11,7 @@
 #include "effects.h"
 #include "cvirtual.h"
 #include "framedraw.h"
+#include "paramwindow.h"
 
 // set by mouse button press
 static double xstart, ystart;
@@ -1267,13 +1268,16 @@ boolean on_framedraw_scroll(LiVESWidget * widget, LiVESXEventScroll * event,
   if (mainw->multitrack && mainw->multitrack->track_index == -1) return FALSE;
 
   if (framedraw->type == LIVES_PARAM_SPECIAL_TYPE_SCALEDPOINT) {
-    LiVESSpinButton *spb = (LiVESSpinButton *)framedraw->scale_param->widgets[0];
-    LiVESAdjustment *adj = lives_spin_button_get_adjustment(spb);
+    int slpnum = get_param_widget_by_type(framedraw->scale_param, LIVES_PARAM_WIDGET_SLIDER);
+    int pnum = slpnum >= 0 ? slpnum : 0;
+    LiVESWidget *widget = framedraw->scale_param->widgets[pnum];
+    LiVESAdjustment *adj = slpnum >= 0 ? lives_range_get_adjustment(LIVES_RANGE(widget))
+                           : lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(widget));
     double step = lives_adjustment_get_step_increment(adj);
-    double scale = lives_spin_button_get_value(spb);
+    double scale = lives_adjustment_get_value(adj);
     if (lives_get_scroll_direction(event) == LIVES_SCROLL_UP) scale += step;
     if (lives_get_scroll_direction(event) == LIVES_SCROLL_DOWN) scale -= step;
-    lives_spin_button_set_value(spb, scale);
+    lives_adjustment_set_value(adj, scale);
   }
   return FALSE;
 }

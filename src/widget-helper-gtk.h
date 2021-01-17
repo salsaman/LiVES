@@ -1028,6 +1028,7 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_IS_CHECK_MENU_ITEM(widget) GTK_IS_CHECK_MENU_ITEM(widget)
 #define LIVES_IS_FILE_CHOOSER(widget) GTK_IS_FILE_CHOOSER(widget)
 #define LIVES_IS_BUTTON_BOX(widget) GTK_IS_BUTTON_BOX(widget)
+#define LIVES_IS_SCALE(widget) GTK_IS_SCALE(widget)
 
 #define LIVES_IS_ADJUSTMENT(adj) GTK_IS_ADJUSTMENT(adj)
 

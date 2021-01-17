@@ -485,6 +485,19 @@ boolean lives_osc_cb_playsel(void *context, int arglen, const void *vargs, OSCTi
 }
 
 
+boolean lives_osc_cb_play_reverse_soft(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                       NetworkReturnAddressPtr ra) {
+  // same as normal reverse except it will skip clips which do not play well backwards
+  if (mainw->multitrack) return lives_osc_notify_failure();
+
+  if (!CURRENT_CLIP_IS_NORMAL || !LIVES_IS_PLAYING)
+    return lives_osc_notify_failure();
+  if (cfile->pb_fps >= 0. && !clip_can_reverse(mainw->current_file)) return lives_osc_notify_failure();
+  dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
+  return lives_osc_notify_success(NULL);
+}
+
+
 boolean lives_osc_cb_play_reverse(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->multitrack) return lives_osc_notify_failure();
 
@@ -6686,6 +6699,7 @@ static struct {
   { "/clip/foreground/fps/ratio/get",	"get",	(osc_cb)lives_osc_cb_get_fps_ratio,			64	},
   { "/clip/background/fps/ratio/set",	"set",	(osc_cb)lives_osc_cb_bgset_fps_ratio,			66	},
   { "/clip/background/fps/ratio/get",	"get",	(osc_cb)lives_osc_cb_bgget_fps_ratio,			66	},
+  { "/video/play/reverse/soft",		"soft",	(osc_cb)lives_osc_cb_play_reverse_soft,		167	},
   { "/video/play/reverse",		"reverse",	(osc_cb)lives_osc_cb_play_reverse,		36	},
   { "/clip/foreground/fps/reverse",	"reverse",	(osc_cb)lives_osc_cb_play_reverse,		61	},
   { "/clip/background/fps/reverse",	"reverse",	(osc_cb)lives_osc_cb_bgplay_reverse,		63	},
@@ -6859,6 +6873,7 @@ static struct {
   {	"/video/fps/ratio/",	 	"ratio",	 65, 40, 0   	},
   {	"/video/play/ start video playback",	 	"play",	         36, 5, 0   	},
   {	"/video/play/time",	 	"time",	         67, 36, 0   	},
+  {	"/video/play/reverse",	 	"reverse",	         167, 36, 0   	},
   {	"/video/play/parameter",	 	"parameter",	         69, 36, 0   	},
   {	"/video/play/parameter/value",	 	"value",	         140, 69, 0   	},
   {	"/video/play/parameter/flags",	 	"flags",	         141, 69, 0   	},

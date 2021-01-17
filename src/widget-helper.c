@@ -1031,13 +1031,17 @@ static boolean governor_loop(livespointer data) {
   /// this loop runs in the main thread while callbacks are being run in bg.
 reloop:
 
-  if (g_main_depth() > 1) {
+  if (g_main_depth() > 1 && !lpttorun) {
     mainw->clutch = TRUE;
+    //g_print("gov1\n");
     return TRUE;
   }
   if (mainw->is_exiting) return FALSE;
 
-  if (lpt_recurse2) return TRUE;
+  if (lpt_recurse2) {
+    //g_print("gov2\n");
+    return TRUE;
+  }
 
   if (!new_sigdata) {
     // here we ar either re-entering as an idlefunc, or we are in a timer and looped back
@@ -1049,10 +1053,12 @@ reloop:
         lpttorun = NULL;
         lpt_recurse2 = FALSE;
         if (!lpt_recurse) {
+          //g_print("gov3\n");
           return FALSE;
         } else {
           //gov_running = FALSE;
           lpt_recurse = FALSE;
+          //g_print("gov4\n");
           return TRUE;
         }
       }
@@ -1065,6 +1071,7 @@ reloop:
 
     if (timer_running) {
       mainw->clutch = FALSE;
+      //g_print("gov5\n");
       return TRUE;
     }
   }
@@ -1085,6 +1092,7 @@ reloop:
           // this is complicated, We need to return to caller so it can exit with correct value
           // but we need to return to run the new task
           lives_idle_add_simple(governor_loop, new_sigdata);
+          //g_print("gov6\n");
           return FALSE;
         }
       }
@@ -1120,12 +1128,13 @@ reloop:
 
   if (!task_list && !lpttorun && !sigdata) {
     gov_running = FALSE;
+    //g_print("gov7\n");
     return FALSE;
   }
 
   if (lpttorun || (!mainw->clutch && !sigdata)) {
     int count = 0;
-    // a thread wants to wiggle the widgets...
+    // we have a foreground task request
     if (task_list) sigdata = (lives_sigdata_t *)lives_list_last(task_list)->data;
     if (sigdata && sigdata->is_timer) {
       // this is also complicated. We are running in a timer and we need to run mainloop
@@ -1135,11 +1144,16 @@ reloop:
       sigdata = NULL;
       goto reloop;
     }
+
+    // if not running a timer, update the context, then add ourself again as an idle function
+    // set lpt_recurse which will trigger the fg task
     if (lpttorun) lpt_recurse = TRUE;
-    while (count++ < EV_LIM && !(sigdata && lives_proc_thread_check(sigdata->proc))
-           && lives_widget_context_iteration(NULL, FALSE));
+    while (count++ < EV_LIM && lives_widget_context_iteration(NULL, FALSE)
+           && !(sigdata && lives_proc_thread_check(sigdata->proc)));
+
     lives_idle_add_simple(governor_loop, NULL);
     gov_running = FALSE;
+    //g_print("gov8\n");
     return FALSE;
   }
 
@@ -1160,6 +1174,7 @@ reloop:
     lives_proc_thread_dontcare(sigdata->proc);
     sigdata_free(sigdata, NULL);
   }
+  //g_print("gov9\n");
   return FALSE;
 }
 
@@ -5566,6 +5581,19 @@ WIDGET_HELPER_GLOBAL_INLINE double lives_adjustment_get_step_increment(LiVESAdju
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE double lives_adjustment_get_page_increment(LiVESAdjustment *adj) {
+  double page_increment = 0.;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2, 14, 0)
+  page_increment = gtk_adjustment_get_page_increment(adj);
+#else
+  page_increment = adj->page_increment;
+#endif
+#endif
+  return page_increment;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE double lives_adjustment_get_value(LiVESAdjustment *adj) {
   double value = 0.;
 #ifdef GUI_GTK
@@ -5651,6 +5679,15 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESAdjustment *lives_range_get_adjustment(LiVESRan
   adj = gtk_range_get_adjustment(range);
 #endif
   return adj;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_range_set_adjustment(LiVESRange *range, LiVESAdjustment *adj) {
+#ifdef GUI_GTK
+  gtk_range_set_adjustment(range, adj);
+  return TRUE;
+#endif
+  return FALSE;
 }
 
 
@@ -9391,6 +9428,17 @@ size_t calc_spin_button_width(double min, double max, int dp) {
   if (dp > 0) maxlen += dp + 1;
   if (maxlen < MIN_SPINBUTTON_SIZE) return MIN_SPINBUTTON_SIZE;
   return maxlen;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESAdjustment *lives_adjustment_copy(LiVESAdjustment * adj) {
+  LiVESAdjustment *adj2 = lives_adjustment_new(lives_adjustment_get_value(adj),
+                          lives_adjustment_get_lower(adj),
+                          lives_adjustment_get_upper(adj),
+                          lives_adjustment_get_step_increment(adj),
+                          lives_adjustment_get_page_increment(adj),
+                          lives_adjustment_get_page_size(adj));
+  return adj2;
 }
 
 

@@ -78,7 +78,7 @@ int lives_open_buffered_rdonly(const char *pathname);
 int lives_open_buffered_writer(const char *pathname, int mode, boolean append);
 int lives_create_buffered(const char *pathname, int mode);
 int lives_create_buffered_nosync(const char *pathname, int mode);
-int lives_close_buffered(int fd);
+ssize_t lives_close_buffered(int fd);
 off_t lives_lseek_buffered_writer(int fd, off_t offset);
 off_t lives_lseek_buffered_rdonly(int fd, off_t offset);
 off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset);

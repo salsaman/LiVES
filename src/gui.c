@@ -581,8 +581,7 @@ void create_LiVES(void) {
   mainw->open = lives_standard_menu_item_new_with_label(_("_Open File/Directory"));
   lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->open);
   lives_widget_add_accelerator(mainw->open, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
-                               LIVES_KEY_o, LIVES_CONTROL_MASK,
-                               LIVES_ACCEL_VISIBLE);
+                               LIVES_KEY_o, LIVES_CONTROL_MASK, LIVES_ACCEL_VISIBLE);
 
   mainw->open_sel = lives_standard_menu_item_new_with_label(_("O_pen Part of File..."));
 
@@ -3974,7 +3973,6 @@ LIVES_GLOBAL_INLINE boolean get_play_screen_size(int *opwidth, int *opheight) {
 
 static void _resize_play_window(void) {
   int opwx, opwy, pmonitor = prefs->play_monitor;
-
   boolean fullscreen = TRUE;
   boolean ext_audio = FALSE;
 
@@ -4259,7 +4257,7 @@ static void _resize_play_window(void) {
       }
       if (pmonitor > 0 && pmonitor != widget_opts.monitor + 1)
         lives_window_set_monitor(LIVES_WINDOW(mainw->play_window), pmonitor - 1);
-      lives_window_center(LIVES_WINDOW(mainw->play_window));
+      //lives_window_center(LIVES_WINDOW(mainw->play_window));
     }
     if (prefs->show_playwin) {
       lives_window_present(LIVES_WINDOW(mainw->play_window));
@@ -4305,14 +4303,18 @@ static void _resize_play_window(void) {
     if (pmonitor == 0 || !LIVES_IS_PLAYING) {
       while (nwidth > GUI_SCREEN_WIDTH - scr_width_safety ||
              nheight > GUI_SCREEN_HEIGHT - scr_height_safety) {
-        nheight = (nheight >> 2) << 1;
-        nwidth = (nwidth >> 2) << 1;
+        nheight <<= 3;
+        nheight /= 10;
+        nwidth <<= 3;
+        nwidth /= 10;
       }
     } else {
       while (nwidth > mainw->mgeom[pmonitor - 1].width - scr_width_safety ||
              nheight > mainw->mgeom[pmonitor - 1].height - scr_height_safety) {
-        nheight = (nheight >> 2) << 1;
-        nwidth = (nwidth >> 2) << 1;
+        nheight <<= 3;
+        nheight /= 10;
+        nwidth <<= 3;
+        nwidth /= 10;
       }
     }
     xnwidth = nwidth;
@@ -4336,6 +4338,7 @@ static void _resize_play_window(void) {
   if (!LIVES_IS_PLAYING || !mainw->fs) {
     lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
     lives_window_resize(LIVES_WINDOW(mainw->play_window), nwidth, nheight);
+    lives_window_center(LIVES_WINDOW(mainw->play_window));
     mainw->pwidth = nwidth;
     mainw->pheight = nheight;
   }
@@ -4570,10 +4573,9 @@ void remove_from_clipmenu(void) {
 #ifdef TEST_NOTIFY
   char *fname = get_menu_name(cfile);
   char *detail = lives_strdup_printf(_("'LiVES closed the file' '%s'"), fname);
-  char *tmp = lives_strdup_printf("notify-send %s", detail);
-  if (!CURRENT_CLIP_IS_VALID) return;
-  lives_system(tmp, TRUE);
-  lives_free(tmp);
+
+  notify_user(detail);
+
   lives_free(fname);
   lives_free(detail);
 #endif
@@ -4723,12 +4725,8 @@ void splash_end(void) {
 
   mainw->threaded_dialog = FALSE;
   mainw->splash_window = NULL;
-  //if (mainw && LIVES_MAIN_WINDOW_WIDGET && prefs && prefs->startup_phase != 0) lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
-  //lives_widget_context_update();
 
   if (prefs->startup_interface == STARTUP_MT && prefs->startup_phase == 0 && !mainw->multitrack) {
-    // realize the window so it gets added to wm toplevels
-    //lives_widget_realize(LIVES_MAIN_WINDOW_WIDGET);
     on_multitrack_activate(NULL, NULL);
     mainw->is_ready = TRUE;
   }

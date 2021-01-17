@@ -273,6 +273,8 @@ char *get_systmp(const char *suff, boolean is_dir);
 char *get_worktmp(const char *prefix);
 char *get_worktmpfile(const char *prefix);
 
+boolean notify_user(const char *detail);
+
 boolean check_snap(const char *prog);
 
 #endif

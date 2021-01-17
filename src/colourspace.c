@@ -44,6 +44,8 @@ typedef enum PixelFormat swpixfmt;
 typedef enum AVPixelFormat swpixfmt;
 #endif
 
+static pthread_mutex_t layer_reflock = PTHREAD_MUTEX_INITIALIZER;
+
 #if USE_THREADS
 #include <pthread.h>
 typedef struct {
@@ -9701,7 +9703,6 @@ LIVES_GLOBAL_INLINE boolean rowstrides_differ(int n1, int *n1_array, int n2, int
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_new(int layer_type) {
   weed_layer_t *layer = weed_plant_new(WEED_PLANT_LAYER);
   weed_set_int_value(layer, WEED_LEAF_LAYER_TYPE, layer_type);
-  weed_set_int_value(layer, WEED_LEAF_HOST_REFS, 1);
   return layer;
 }
 
@@ -13816,10 +13817,8 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
 
 
 LIVES_GLOBAL_INLINE int weed_layer_count_refs(weed_layer_t *layer) {
-  int refs;
-  if (!layer) return 0;
-  refs = weed_get_int_value(layer, WEED_LEAF_HOST_REFS, NULL);
-  return refs;
+  if (!layer) return -2;
+  return weed_get_int_value(layer, WEED_LEAF_HOST_REFS, NULL);
 }
 
 
@@ -13847,8 +13846,11 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
   if (weed_get_boolean_value(layer, WEED_LEAF_HOST_ORIG_PDATA, NULL) == WEED_TRUE)
     return;
 
-  if (weed_layer_count_refs(layer) > 1) {
-    weed_layer_nullify_pixel_data(layer);
+  if (weed_layer_count_refs(layer) > 0) {
+    if (weed_layer_get_pixel_data(layer, NULL)) {
+      break_me("nullifying refcounted pixel_data, possible memory leak !");
+      weed_layer_nullify_pixel_data(layer);
+    }
     return;
   }
 
@@ -13906,20 +13908,24 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_free(weed_layer_t *layer) {
 
 int weed_layer_unref(weed_layer_t *layer) {
   int refs;
-  if (!layer) return 0;
-  refs = weed_get_int_value(layer, WEED_LEAF_HOST_REFS, NULL) - 1;
-  weed_set_int_value(layer, WEED_LEAF_HOST_REFS, refs);
-  if (refs > 0) return refs;
+  if (!layer) return -2;
+  pthread_mutex_lock(&layer_reflock);
+  refs = weed_get_int_value(layer, WEED_LEAF_HOST_REFS, NULL);
+  weed_set_int_value(layer, WEED_LEAF_HOST_REFS, --refs);
+  pthread_mutex_unlock(&layer_reflock);
+  if (refs >= 0) return refs;
   weed_layer_pixel_data_free(layer);
   weed_plant_free(layer);
-  return 0;
+  return -1;
 }
 
 LIVES_GLOBAL_INLINE int weed_layer_ref(weed_layer_t *layer) {
   int refs;
-  if (!layer) return 0;
+  if (!layer) return -2;
+  pthread_mutex_lock(&layer_reflock);
   refs = weed_get_int_value(layer, WEED_LEAF_HOST_REFS, NULL);
   weed_set_int_value(layer, WEED_LEAF_HOST_REFS, ++refs);
+  pthread_mutex_unlock(&layer_reflock);
   return refs;
 }
 

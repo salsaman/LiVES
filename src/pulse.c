@@ -853,7 +853,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           if ((has_audio_filters(AF_TYPE_ANY) || mainw->ext_audio) && (pulsed->playing_file != mainw->ascrap_file)) {
             boolean memok = TRUE;
             float **fltbuf = (float **)lives_calloc(pulsed->out_achans, sizeof(float *));
-            register int i;
+            int i;
             /// we have audio filters... convert to float, pass through any audio filters, then back to s16
             for (i = 0; i < pulsed->out_achans; i++) {
               // convert s16 to non-interleaved float

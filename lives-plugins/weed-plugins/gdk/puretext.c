@@ -72,7 +72,8 @@ typedef enum {
   PT_SPIRAL_TEXT = 0,
   PT_SPINNING_LETTERS,
   PT_LETTER_STARFIELD,
-  PT_WORD_COALESCE
+  PT_WORD_COALESCE,
+  PT_TERMINAL
 } pt_op_mode_t;
 
 // for future use
@@ -189,6 +190,12 @@ static size_t utf8offs(char *text, int xoffs) {
     xoffs--;
   }
   return toffs;
+}
+
+
+static inline gboolean char_equal(sdata_t *sdata, int idx, const char *c) {
+  if (sdata->text_type == TEXT_TYPE_ASCII) return (sdata->text[idx -1] == *c);
+  return !strncmp(&sdata->text[utf8offs(sdata->text, idx)], c, 1);
 }
 
 
@@ -605,7 +612,6 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
         anim_letter(ldt);
 
         colour_copy(&sdata->fg, &ldt->colour);
-
       } else pango_layout_set_text(layout, "", -1);
     }
 
@@ -625,7 +631,7 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
 
       ldt->xaccel = ldt->yaccel = ldt->zaccel = ldt->rotaccel = 0.;
 
-      if (sdata->length == 0 || !strncmp(&sdata->text[utf8offs(sdata->text, sdata->length)], " ", 1)) {
+      if (sdata->length == 0 || char_equal(sdata, sdata->length, " ")) {
         ldt->colour.red = getrandi(60, 255);
         ldt->colour.green = getrandi(60, 255);
         ldt->colour.blue = getrandi(60, 255);
@@ -633,6 +639,56 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
         colour_copy(&ldt->colour, &(sdata->letter_data[sdata->length - 1].colour));
       }
 
+      sdata->length++;
+
+      if (sdata->length < sdata->tlength) pt_set_alarm(sdata, 400); // milliseconds
+      else pt_set_alarm(sdata, -1);
+    }
+
+    break;
+
+  case (PT_TERMINAL):
+    // LETTER MODE
+    // this is called for each letter from sdata->start to sdata->start + sdata->length - 1
+    // letters are placed LTR (sorry), a newline will incerement y and reset x
+    // the letters gradually fade the further they are from the end.
+    // a cursor is placed after the last letter
+
+    if (sdata->timer == 0.) {
+      sdata->start = 0;
+      sdata->length = 0;
+      sdata->tmode = PT_LETTER_MODE;
+      sdata->letter_data = letter_data_create(sdata->tlength);
+    }
+
+    if (sdata->length > 0) {
+      pt_letter_data_t *ldt = &sdata->letter_data[sdata->count];
+      set_font_size(layout, font, 1024.);
+
+      ldt->colour.red = ldt->colour.blue = 0;
+      ldt->colour.green = 255;
+
+      sdata->fg_alpha = 255 - 5 * (sdata->length - sdata->count);
+      if (sdata->fg_alpha < 192) sdata->fg_alpha = 192;
+
+      ldt->xpos = sdata->dbl1;
+      ldt->ypos = sdata->dbl2;
+
+      // get pixel size of letter/word
+      getlsize(layout, &dwidth, &dheight);
+      if (char_equal(sdata, sdata->count, "\n")) {
+	  sdata->dbl1 = 0.;
+	  sdata->dbl2 += dheight + 20.;
+      }
+      else sdata->dbl1 += dwidth + 50.;
+    } else {
+      pango_layout_set_text(layout, "", -1);
+      sdata->dbl1 = 0.;
+      sdata->dbl2 = 0.;
+    }
+
+    if (sdata->alarm) {
+      // set values for next letter
       sdata->length++;
 
       if (sdata->length < sdata->tlength) pt_set_alarm(sdata, 400); // milliseconds
@@ -737,6 +793,7 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
       setxypos(dwidth, dheight, width / 2 + sin(sdata->count / 4. + (sdata->dbl3 - 1.) * 8.)*radX,
                height / 2 - cos(-sdata->count / 4. - (sdata->dbl3 - 1.) * 8.)*radY, &sdata->x_text, &sdata->y_text);
 
+    // check if word-token starts with space
     if (!strncmp(xtext, ".", 1)) sdata->int1++;
 
     if (sdata->alarm) {
@@ -1099,7 +1156,8 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *filter_class;
   PangoContext *ctx;
 
-  const char *modes[] = {"Spiral text", "Spinning letters", "Letter starfield", "Word coalesce", NULL};
+  const char *modes[] = {"Spiral text", "Spinning letters", "Letter starfield", "Word coalesce",
+			 "terminal", NULL};
   char *rfx_strings[] = {"special|fileread|0|"};
 
   char *deftextfile;

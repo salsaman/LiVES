@@ -11658,7 +11658,6 @@ static void _animate_multitrack(lives_mt * mt) {
   double tl_page;
 
   int offset, offset_old;
-
   int ebwidth = lives_widget_get_allocation_width(mt->timeline);
   mt_update_timecodes(mt, currtime);
 

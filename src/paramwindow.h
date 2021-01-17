@@ -7,6 +7,13 @@
 #ifndef HAS_LIVES_PARAMWINDOW_H
 #define HAS_LIVES_PARAMWINDOW_H
 
+enum {
+  LIVES_PARAM_WIDGET_UNKNOWN,
+  LIVES_PARAM_WIDGET_SPINBUTTON,
+  LIVES_PARAM_WIDGET_SLIDER,
+  LIVES_PARAM_WIDGET_KNOB
+};
+
 typedef struct {
   int usr_number;
   LiVESSList *rbgroup;
@@ -28,6 +35,8 @@ typedef struct {
 
 #define NOSLID_RANGE_LIM 1000000.
 #define NOSLID_VALUE_LIM 100.
+
+int get_param_widget_by_type(lives_param_t *, int wtype);
 
 void on_paramwindow_button_clicked(LiVESButton *, lives_rfx_t *);
 

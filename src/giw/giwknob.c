@@ -537,12 +537,13 @@ giw_knob_expose(GtkWidget      *widget,
       cairo_stroke(cairo);
 
       // Drawing the legends
-      if (knob->legends_digits != 0)
+      if (knob->legends_digits != 0) {
         gtk_render_layout(gtk_widget_get_style_context(widget),
                           cairo,
                           xc + (c * knob->legend_radius) - (knob->legend_width / 2),
                           yc - (s * knob->legend_radius) - (knob->legend_height / 2),
                           knob->legends[counter]);
+      }
       counter++;
     }
 
@@ -1131,7 +1132,7 @@ knob_calculate_sizes(GiwKnob *knob) {
   knob->minor_ticks_size = knob->radius / 16.0;
 
   // The legend will in the middle of the inside (plus the major_ticks_size) and outside circle
-  knob->legend_radius = ((knob->radius + knob->major_ticks_size + (knob->size / 2)) / 2);
+  knob->legend_radius = ((knob->radius + knob->major_ticks_size + (knob->size / 2)) / 2) * 2;
 }
 
 gdouble

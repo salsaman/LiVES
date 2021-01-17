@@ -403,6 +403,7 @@ enum {
 #define EXEC_FFPROBE "ffprobe"
 #define EXEC_FFMPEG "ffmpeg"
 #define EXEC_FILE "file"
+#define EXEC_MKTEMP "mktemp"
 #define EXEC_YOUTUBE_DL "youtube-dl"
 #define EXEC_YOUTUBE_DLC "youtube-dlc"
 #define EXEC_PIP "pip"
@@ -434,7 +435,7 @@ enum {
 #define EXEC_XDOTOOL "xdotool"
 #define EXEC_PLAY "play"
 #define EXEC_GIO "gio"
-#define EXEC_MKTEMP "mktemp"
+#define EXEC_NOTIFY_SEND "notify-send"
 #define EXEC_SNAP "snap"
 
 /// other executables
@@ -714,8 +715,11 @@ typedef struct {
   LiVESWidget *preview_button;
   LiVESWidget *cancel_button;
   LiVESWidget *scrolledwindow;
+  LiVESWidget *rte_off_cb;
+  LiVESWidget *notify_cb;
   frames_t progress_start, progress_end;
   frames_t frames_done;
+  char *text;
   double frac_done;
   boolean is_ready;
   int owner;

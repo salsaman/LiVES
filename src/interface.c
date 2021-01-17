@@ -610,8 +610,6 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     }
     show_playbar_labels(mainw->current_file);
   }
-  //lives_widget_queue_draw_if_visible(mainw->hruler);
-
 
   mainw->current_file = current_file;
   if (which == 0 || which == 1) lives_widget_queue_draw_if_visible(mainw->video_draw);
@@ -858,8 +856,9 @@ xprocess *create_processing(const char *text) {
 
   LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
 
-  xprocess *procw = (xprocess *)(lives_malloc(sizeof(xprocess)));
+  xprocess *procw = (xprocess *)(lives_calloc(sizeof(xprocess), 1));
 
+  char *tmp;
   char tmp_label[256];
   boolean markup = widget_opts.use_markup;
 
@@ -885,6 +884,8 @@ xprocess *create_processing(const char *text) {
   vbox3 = lives_vbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox2), vbox3, TRUE, TRUE, 0);
 
+  procw->text = lives_strdup(text);
+
   widget_opts.use_markup = markup;
   lives_snprintf(tmp_label, 256, "%s...\n", text);
   widget_opts.use_markup = FALSE;
@@ -904,9 +905,7 @@ xprocess *create_processing(const char *text) {
   }
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  if (mainw->internal_messaging && mainw->rte != 0 && !mainw->transrend_proc) {
-    procw->label2 = lives_standard_label_new(_("\n\nPlease Wait\n\nRemember to switch off effects (ctrl-0) afterwards !"));
-  } else procw->label2 = lives_standard_label_new(_("\nPlease Wait"));
+  procw->label2 = lives_standard_label_new("");
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   lives_box_pack_start(LIVES_BOX(vbox3), procw->label2, FALSE, FALSE, 0);
@@ -919,6 +918,24 @@ xprocess *create_processing(const char *text) {
   lives_box_pack_start(LIVES_BOX(vbox3), procw->label3, FALSE, FALSE, 0);
 #endif
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+
+  if (mainw->internal_messaging && mainw->rte != 0 && !mainw->transrend_proc) {
+    procw->rte_off_cb = lives_standard_check_button_new(_("Switch off real time effects when finished"),
+                        FALSE, LIVES_BOX(vbox3),
+                        (tmp = H_("Switch off all real time effects "
+                                  "after processing\nso that the "
+                                  "result can be viewed without them")));
+    lives_free(tmp);
+  }
+
+  procw->notify_cb = lives_standard_check_button_new(_("Notify when finished"),
+                     FALSE, LIVES_BOX(vbox3),
+                     (tmp = H_("Send a desktop notification\n"
+                               "when complete")));
+  lives_free(tmp);
+
+  lives_widget_set_opacity(lives_widget_get_parent(procw->notify_cb), 0.);
+  lives_widget_set_sensitive(procw->notify_cb, FALSE);
 
   widget_opts.expand = LIVES_EXPAND_EXTRA;
   hbox = lives_hbox_new(FALSE, widget_opts.filler_len * 8);
@@ -3695,8 +3712,6 @@ aud_dialog_t *create_audfade_dialog(int type) {
   hbox = lives_hbox_new(FALSE, TB_HEIGHT_AUD);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
-
-
   if (type == 0) {
     label_text = (_("Fade in over  "));
     label_text2 = (_("first"));
@@ -4185,14 +4200,12 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   }
 
   lives_signal_sync_connect(chooser, LIVES_WIDGET_CURRENT_FOLDER_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(chooser_check_dir), NULL);
-  //lives_widget_grab_focus(chooser);
   lives_window_center(LIVES_WINDOW(chooser));
   lives_window_set_modal(LIVES_WINDOW(chooser), TRUE);
   lives_memset(last_good_folder, 0, 1);
 
   //set this so we know when button is pressed, even if waiting for preview to finish
   mainw->fc_buttonresponse = LIVES_RESPONSE_NONE;
-  //lives_signal_sync_connect(chooser, LIVES_WIDGET_RESPONSE_SIGNAL, LIVES_GUI_CALLBACK(chooser_response), NULL);
 
   if (dir) {
     gtk_file_chooser_set_current_folder(LIVES_FILE_CHOOSER(chooser), dir);
@@ -4340,11 +4353,6 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
   return chooser;
 }
 
-/* LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char **const filt, int filesel_type) { */
-/*   return main_thread_execute((lives_funcptr_t)_choose_file_with_preview, WEED_SEED_STRING, */
-/*                              NULL, "ssvi", dir, title, filt, filesel_type); */
-/* } */
-
 
 LIVES_GLOBAL_INLINE LiVESWidget *make_autoreload_check(LiVESHBox * hbox, boolean is_active) {
   return lives_standard_check_button_new(_("_Autoreload next time"), is_active, LIVES_BOX(hbox), NULL);
@@ -4430,8 +4438,7 @@ _entryw *create_cds_dialog(int type) {
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(checkbutton), "cdsw", (livespointer)cdsw);
 
     lives_signal_sync_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                              LIVES_GUI_CALLBACK(toggle_sets_pref),
-                              (livespointer)PREF_AR_CLIPSET);
+                              LIVES_GUI_CALLBACK(toggle_sets_pref), (livespointer)PREF_AR_CLIPSET);
   }
 
   if (type == 0 && !(prefs->warning_mask & WARN_MASK_EXIT_MT)) {
@@ -4860,7 +4867,7 @@ autolives_window *autolives_pre_dialog(void) {
 
   LiVESWidget *trigframe;
   LiVESWidget *dialog_vbox;
-  LiVESWidget *label;
+  LiVESWidget *layout;
   LiVESWidget *vbox;
   LiVESWidget *hbox;
   LiVESWidget *radiobutton;
@@ -4888,7 +4895,7 @@ autolives_window *autolives_pre_dialog(void) {
   lives_box_pack_start(LIVES_BOX(vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
   alwindow->atrigger_button = lives_standard_radio_button_new((tmp = (_("Timed:"))),
                               &radiobutton1_group, LIVES_BOX(hbox),
-                              (tmp2 = (_("Trigger a change based on time"))));
+                              (tmp2 = (_("Trigger changes at regular intervals based on time"))));
 
   lives_free(tmp); lives_free(tmp2);
 
@@ -4899,7 +4906,11 @@ autolives_window *autolives_pre_dialog(void) {
   lives_box_pack_start(LIVES_BOX(vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
   radiobutton = lives_standard_radio_button_new((tmp = (_("OMC"))),
                 &radiobutton1_group, LIVES_BOX(hbox),
-                (tmp2 = (_("Trigger a change based on receiving an OSC message"))));
+                (tmp2 = (H_("Trigger changes based on receiving OSC messages\n"
+                            "using the OMC (Open Media Control) syntax.\n"
+                            "OMC triggers can be connected to output parameters of filters\n"
+                            "in the real time effect mapper window,\n"
+                            "as well as in the MIDI / joystick learner\n"))));
 
   lives_free(tmp); lives_free(tmp2);
 
@@ -4907,47 +4918,37 @@ autolives_window *autolives_pre_dialog(void) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), TRUE);
   }
 
-  vbox = lives_vbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(dialog_vbox), vbox, TRUE, FALSE, widget_opts.packing_height * 2.);
-
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-
-  label = lives_standard_label_new(_("Playback start:"));
-  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, TRUE, 0);
-
-  add_fill_to_box(LIVES_BOX(hbox));
-
-  hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
+  layout = lives_layout_new(LIVES_BOX(dialog_vbox));
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Playback start:"), TRUE);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   alwindow->apb_button = lives_standard_radio_button_new((tmp = (_("Automatic"))),
                          &radiobutton2_group, LIVES_BOX(hbox),
-                         (tmp2 = (_("Start playback automatically"))));
+                         (tmp2 = (H_("Start playback automatically"))));
 
   lives_free(tmp); lives_free(tmp2);
 
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   radiobutton = lives_standard_radio_button_new((tmp = (_("Manual"))),
                 &radiobutton2_group, LIVES_BOX(hbox),
-                (tmp2 = (_("Wait for the user to start playback"))));
+                (tmp2 = (H_("Wait for the user to start playback"))));
 
   lives_free(tmp); lives_free(tmp2);
 
-  hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, TRUE, TRUE, widget_opts.packing_height * 2);
+  lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
 
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   alwindow->mute_button = lives_standard_check_button_new
                           ((tmp = (_("Mute internal audio during playback"))), FALSE, LIVES_BOX(hbox),
-                           (tmp2 = (_("Mute the audio in LiVES during playback by setting the audio source to external."))));
-
+                           (tmp2 = (_("Mute the audio in LiVES during playback by setting the "
+                                      "audio source to external."))));
   lives_free(tmp); lives_free(tmp2);
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(alwindow->mute_button), TRUE);
 
-  add_hsep_to_box(LIVES_BOX(dialog_vbox));
+  lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   alwindow->debug_button = lives_standard_check_button_new
                            ((tmp = (_("Debug mode"))), FALSE, LIVES_BOX(hbox),
                             (tmp2 = (_("Show debug output on stderr."))));
@@ -5387,8 +5388,6 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 
   // TODO - add other options
 
-  //lives_widget_show_all(dialog);
-
   while (1) {
     response = lives_dialog_run(LIVES_DIALOG(dialog));
     if (response == LIVES_RESPONSE_CANCEL) {
@@ -5600,7 +5599,6 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
                      (LiVESAttachOptions)(0), 0, 0);
   lives_widget_set_halign(label, LIVES_ALIGN_CENTER);
   lives_widget_set_valign(label, LIVES_ALIGN_END);
-
 
   for (i = 1; i < numlines; i++) {
     npieces = get_token_count(lines[i], ' ');

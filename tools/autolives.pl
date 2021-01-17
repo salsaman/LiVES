@@ -337,7 +337,7 @@ while (1) {
 		#make flipping from backwards to forwards more likely
 		# so that we actually make some progress in the clip
 		$play_reversed = !$play_reversed;
-		&send_command("/video/play/reverse");
+		&send_command("/video/play/reverse/soft");
 	    }
 	}
 	else {

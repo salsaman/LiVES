@@ -233,6 +233,7 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer);
 weed_layer_t *weed_layer_free(weed_layer_t *);
 int weed_layer_unref(weed_layer_t *);
 int weed_layer_ref(weed_layer_t *);
+int weed_layer_count_refs(weed_layer_t *);
 
 // lives specific
 weed_layer_t *lives_layer_new_for_frame(int clip, frames_t frame);

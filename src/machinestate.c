@@ -2305,6 +2305,20 @@ char *get_worktmpfile(const char *prefix) {
 }
 
 
+boolean notify_user(const char *detail) {
+  if (check_for_executable(&capable->has_notify_send, EXEC_NOTIFY_SEND)) {
+    char *msg = lives_strdup_printf("\n\n%s-%s says '%s completed\n\n'",
+				    lives_get_application_name(), LiVES_VERSION, detail);
+    char *cmd = lives_strdup_printf("%s %s", EXEC_NOTIFY_SEND, msg);
+    boolean ret = mini_run(cmd);
+    lives_free(msg);
+    if (THREADVAR(com_failed)) THREADVAR(com_failed) = FALSE;
+    return ret;
+  }
+  return FALSE;
+}
+
+
 boolean check_snap(const char *prog) {
   // not working yet...
   if (!check_for_executable(&capable->has_snap, EXEC_SNAP)) return FALSE;

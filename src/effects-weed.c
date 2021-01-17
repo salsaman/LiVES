@@ -4150,7 +4150,8 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
   int num_elements, i;
   int naudins = 0, naudouts = 0;
   int filter_achans = 0;
-  int ctachans;
+  int ctachans = 1;
+
   //g_print("checking %s\n", weed_filter_get_name(filter));
   // TODO - check seed types
   if (!weed_plant_has_leaf(filter, WEED_LEAF_NAME)) return 1;
@@ -4201,7 +4202,7 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
             lives_free(msg);
           }
           lives_freep((void **)&array);
-          return 7;
+          return 70;
         }
       }
       is_audio = TRUE;
@@ -4263,20 +4264,22 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
 
     if (weed_chantmpl_is_audio(array[i]) == WEED_TRUE) {
       if (!weed_chantmpl_is_optional(array[i])) {
-        if (!cvary && (ctachans = min_audio_chans(array[i])) > 0)
+        if (!cvary && (ctachans = min_audio_chans(array[i])) > 0) {
           naudouts += ctachans;
-        else naudouts += filter_achans;
+        } else {
+          naudouts += filter_achans;
+        }
         if (naudouts > 2) {
           // currently we only handle mono and stereo audio filters
           lives_freep((void **)&array);
-          return 7;
+          return 71;
         }
       }
       is_audio = TRUE;
       if (naudins == 1 && naudouts == 2) {
         // converting mono to stereo cannot be done like that
         lives_freep((void **)&array);
-        return 7;
+        return 72;
       }
       is_audio = TRUE;
     }
@@ -6144,9 +6147,9 @@ LIVES_GLOBAL_INLINE int _weed_instance_unref(weed_plant_t *inst) {
   if (!inst) return -2;
 
   pthread_mutex_lock(&mainw->instance_ref_mutex);
-  nrefs = weed_get_int_value(inst, WEED_LEAF_HOST_REFS, NULL) - 1;
+  nrefs = weed_get_int_value(inst, WEED_LEAF_HOST_REFS, NULL);
 
-  if (nrefs < -1) {
+  if (--nrefs < -1) {
     char *msg;
     pthread_mutex_unlock(&mainw->instance_ref_mutex);
     if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_REFS)) {

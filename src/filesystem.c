@@ -527,18 +527,18 @@ int lives_open_buffered_writer(const char *pathname, int mode, boolean append) {
 #endif
 
 
-int lives_close_buffered(int fd) {
+ssize_t lives_close_buffered(int fd) {
   lives_file_buffer_t *fbuff;
+  ssize_t ret = 0;
   boolean should_close = TRUE;
-  int ret = 0;
 
-  if (IS_VALID_CLIP(mainw->scrap_file) && mainw->files[mainw->scrap_file]->ext_src &&
-      fd == LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src))
+  /* if (IS_VALID_CLIP(mainw->scrap_file) && mainw->files[mainw->scrap_file]->ext_src && */
+  /*     fd == LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src)); */
 
-    if (fd < 0) {
-      should_close = FALSE;
-      fd = -fd;
-    }
+  if (fd < 0) {
+    should_close = FALSE;
+    fd = -fd;
+  }
 
   fbuff = find_in_file_buffers(fd);
 

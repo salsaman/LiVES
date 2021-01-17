@@ -1705,7 +1705,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   if (*capable->wm_caps.panel)
     prefs->show_desktop_panel = get_x11_visible(capable->wm_caps.panel);
-  //prefs->show_desktop_panel = TRUE;
+  prefs->show_desktop_panel = TRUE;
 
   prefs->show_msgs_on_startup = get_boolean_prefd(PREF_MSG_START, TRUE);
 
@@ -7195,20 +7195,25 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
   // target_palette is also a hint
 
   // if we pull from a decoder plugin, then we may also deinterlace
-  weed_plant_t *vlayer;
+  weed_layer_t *vlayer, *xlayer = NULL;
   lives_clip_t *sfile = NULL;
-  int clip = lives_layer_get_clip(layer);
-  frames_t frame = lives_layer_get_frame(layer);
+  int clip;
+  frames_t frame;
   int clip_type;
 
   boolean is_thread = FALSE;
+
+  weed_layer_pixel_data_free(layer);
+  weed_layer_ref(layer);
+
+  clip = lives_layer_get_clip(layer);
+  frame = lives_layer_get_frame(layer);
 
   // the default unless overridden
   weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
 
   if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PTHREAD)) is_thread = TRUE;
 
-  weed_layer_pixel_data_free(layer);
   weed_leaf_delete(layer, WEED_LEAF_NATURAL_SIZE);
 
   mainw->osc_block = TRUE; // block OSC until we are done
@@ -7218,6 +7223,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
     sfile = mainw->files[clip];
     if (!sfile) {
       mainw->osc_block = FALSE;
+      weed_layer_unref(layer);
       return FALSE;
     }
     clip_type = sfile->clip_type;
@@ -7227,6 +7233,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
   case CLIP_TYPE_NULL_VIDEO:
     mainw->osc_block = FALSE;
     create_blank_layer(layer, image_ext, width, height, target_palette);
+    weed_layer_unref(layer);
     return TRUE;
   case CLIP_TYPE_DISK:
   case CLIP_TYPE_FILE:
@@ -7234,11 +7241,13 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
     if (frame == 0) {
       mainw->osc_block = FALSE;
       create_blank_layer(layer, image_ext, width, height, target_palette);
+      weed_layer_unref(layer);
       return TRUE;
     } else if (clip == mainw->scrap_file) {
       boolean res = load_from_scrap_file(layer, frame);
       if (!res) {
         create_blank_layer(layer, image_ext, width, height, target_palette);
+        weed_layer_unref(layer);
         return FALSE;
       }
       weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
@@ -7251,6 +7260,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
       // realign
       copy_pixel_data(layer, NULL, THREADVAR(rowstride_alignment));
       mainw->osc_block = FALSE;
+      weed_layer_unref(layer);
       return TRUE;
     } else {
       if (sfile->clip_type == CLIP_TYPE_FILE && sfile->frame_index && frame > 0 &&
@@ -7277,6 +7287,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
         }
         if (!dplug || !dplug->cdata) {
           create_blank_layer(layer, image_ext, width, height, target_palette);
+          weed_layer_unref(layer);
           return FALSE;
         }
         if (target_palette != dplug->cdata->current_palette) {
@@ -7337,6 +7348,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
           weed_leaf_clear_flagbits(layer, WEED_LEAF_ROWSTRIDES, LIVES_FLAG_MAINTAIN_VALUE);
 #endif
           create_blank_layer(layer, image_ext, width, height, target_palette);
+          weed_layer_unref(layer);
           return FALSE;
         }
 
@@ -7347,6 +7359,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
           LIVES_WARN(msg);
           lives_free(msg);
           create_blank_layer(layer, image_ext, width, height, target_palette);
+          weed_layer_unref(layer);
           return FALSE;
         }
 
@@ -7371,6 +7384,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
             weed_layer_pixel_data_free(layer);
             if (!create_empty_pixel_data(layer, TRUE, TRUE)) {
               create_blank_layer(layer, image_ext, width, height, target_palette);
+              weed_layer_unref(layer);
               return FALSE;
             }
           }
@@ -7412,6 +7426,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
           }
         }
         mainw->osc_block = FALSE;
+        weed_layer_unref(layer);
         return res;
       } else {
         // pull frame from decoded images
@@ -7438,6 +7453,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
         if (!ret) {
           break_me("bad frame load from file");
           create_blank_layer(layer, image_ext, width, height, target_palette);
+          weed_layer_unref(layer);
           return FALSE;
         }
         img_decode_time = (double)(lives_get_current_ticks() - timex) / TICKS_PER_SECOND_DBL;
@@ -7458,6 +7474,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
       } else weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
     }
     mainw->osc_block = FALSE;
+    weed_layer_unref(layer);
     return TRUE;
 #endif
 #ifdef HAVE_UNICAP
@@ -7469,11 +7486,13 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
       } else weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
     }
     mainw->osc_block = FALSE;
+    weed_layer_unref(layer);
     return TRUE;
 #endif
   case CLIP_TYPE_LIVES2LIVES:
     weed_layer_set_from_lives2lives(layer, clip, (lives_vstream_t *)sfile->ext_src);
     mainw->osc_block = FALSE;
+    weed_layer_unref(layer);
     return TRUE;
   case CLIP_TYPE_GENERATOR: {
     // special handling for clips where host controls size
@@ -7496,10 +7515,12 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
     }
     mainw->osc_block = FALSE;
   }
+  weed_layer_unref(layer);
   return TRUE;
   default:
     mainw->osc_block = FALSE;
     create_blank_layer(layer, image_ext, width, height, target_palette);
+    weed_layer_unref(layer);
     return FALSE;
   }
   mainw->osc_block = FALSE;
@@ -7508,10 +7529,13 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
     // render subtitles from file
     if (prefs->show_subtitles && sfile->subt && sfile->subt->tfile > 0) {
       double xtime = (double)(frame - 1) / sfile->fps;
-      layer = render_subs_from_file(sfile, xtime, layer);
+      xlayer = render_subs_from_file(sfile, xtime, layer);
+      if (xlayer == layer) xlayer = NULL;
     }
   }
 
+  weed_layer_unref(layer);
+  if (xlayer) layer = xlayer;
   return TRUE;
 }
 
@@ -8139,6 +8163,7 @@ void switch_to_file(int old_file, int new_file) {
         // switch while opening - come out of processing dialog
         if (mainw->proc_ptr) {
           lives_widget_destroy(mainw->proc_ptr->processing);
+          lives_freep((void **)&mainw->proc_ptr->text);
           lives_freep((void **)&mainw->proc_ptr);
 	    // *INDENT-OFF*
 	  }}}}

@@ -7822,7 +7822,6 @@ end:
 
 
   static void _on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-
     // ignore if audio only clip
     if (CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_HAS_VIDEO && LIVES_IS_PLAYING && !mainw->multitrack) return;
 
@@ -7955,7 +7954,11 @@ end:
           lives_widget_set_sensitive(mainw->dsize, TRUE);
 	// *INDENT-OFF*
       }}}
-  // *INDENT-ON*
+    // *INDENT-ON*
+    if (mainw->multitrack && mainw->fs && mainw->play_window && LIVES_IS_PLAYING) {
+      //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
+      lives_window_center(LIVES_WINDOW(mainw->play_window));
+    }
   }
 
 
@@ -8096,9 +8099,13 @@ end:
                     }
                     if (prefs->show_msg_area) lives_widget_show_all(mainw->message_box);
 		// *INDENT-OFF*
-                }}}}}
+		  }}}}}
 	// *INDENT-ON*
           else {
+            if (mainw->play_window && !(mainw->ext_playback && mainw->vpp->fheight > -1
+                                        && mainw->vpp->fwidth > -1)) {
+              resize_play_window();
+            }
             set_drawing_area_from_pixbuf(mainw->play_image, NULL, mainw->play_surface);
           }
           make_play_window();

@@ -494,6 +494,7 @@ typedef struct {
   lives_checkstatus_t has_wget;
   lives_checkstatus_t has_curl;
   lives_checkstatus_t has_mktemp;
+  lives_checkstatus_t has_notify_send;
   lives_checkstatus_t has_snap;
 
   /// home directory - default location for config file - locale encoding

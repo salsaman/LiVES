@@ -90,7 +90,7 @@ static weed_error_t tzoom_process(weed_plant_t *inst, weed_timecode_t timecode) 
   return WEED_SUCCESS;
 }
 
-  //weed_memcpy(&dst[r + x], &src[irowstride * dy + dx * psize], psize);
+//weed_memcpy(&dst[r + x], &src[irowstride * dy + dx * psize], psize);
 
 static weed_error_t tzoom_disp(weed_plant_t *inst, weed_plant_t *param, int inverse) {
   if (!weed_plant_has_leaf(param, WEED_LEAF_VALUE)) return WEED_ERROR_NOSUCH_LEAF;
@@ -99,8 +99,7 @@ static weed_error_t tzoom_disp(weed_plant_t *inst, weed_plant_t *param, int inve
     if (inverse == WEED_FALSE) {
       if (dval <= 0.) return WEED_ERROR_NOT_READY;
       dval = log(dval);
-    }
-    else dval = exp(dval);
+    } else dval = exp(dval);
     return weed_set_double_value(weed_param_get_gui(param), "display_value", dval);
   }
 }
@@ -114,11 +113,11 @@ WEED_SETUP_START(200, 200) {
 
   weed_plant_t *in_params[] = {weed_float_init("scale", "_Scale", 1., 1., exp(3)),
                                weed_float_init("xoffs", "_X center", 0.5, 0., 1.),
-			       weed_float_init("yoffs", "_Y center", 0.5, 0., 1.), NULL
+                               weed_float_init("yoffs", "_Y center", 0.5, 0., 1.), NULL
                               };
 
   weed_plant_t *filter_class = weed_filter_class_init("targeted zoom", "salsaman", 1,
-						      WEED_FILTER_HINT_MAY_THREAD, palette_list,
+                               WEED_FILTER_HINT_MAY_THREAD, palette_list,
                                NULL, tzoom_process, NULL,
                                in_chantmpls, out_chantmpls, in_params, NULL);
 

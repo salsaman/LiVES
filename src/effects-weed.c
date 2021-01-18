@@ -9452,11 +9452,9 @@ int rte_key_getmaxmode(int key) {
 
 weed_plant_t *rte_keymode_get_instance(int key, int mode) {
   weed_plant_t *inst;
-
-  key--;
-  if (!rte_keymode_valid(key + 1, mode, FALSE)) return NULL;
+  if (!rte_keymode_valid(key, mode, FALSE)) return NULL;
   mainw->osc_block = TRUE;
-  if ((inst = weed_instance_obtain(key, mode)) == NULL) {
+  if ((inst = weed_instance_obtain(--key, mode)) == NULL) {
     mainw->osc_block = FALSE;
     return NULL;
   }

@@ -1009,14 +1009,14 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       // playback from memory or file
       if (pulsed->playing_file > -1 && !mainw->multitrack) clip_vol = lives_vol_from_linear(afile->vol);
       if (future_prefs->volume * clip_vol != pulsed->volume_linear) {
-	// TODO: pa_threaded_mainloop_once_unlocked() (pa 13.0 +) ??
-	pa_operation *paop;
-	pavol = pa_sw_volume_from_linear(future_prefs->volume * clip_vol);
-	pa_cvolume_set(&pulsed->volume, pulsed->out_achans, pavol);
-	paop = pa_context_set_sink_input_volume(pulsed->con,
-						pa_stream_get_index(pulsed->pstream), &pulsed->volume, NULL, NULL);
-	pa_operation_unref(paop);
-	pulsed->volume_linear = future_prefs->volume * clip_vol;
+        // TODO: pa_threaded_mainloop_once_unlocked() (pa 13.0 +) ??
+        pa_operation *paop;
+        pavol = pa_sw_volume_from_linear(future_prefs->volume * clip_vol);
+        pa_cvolume_set(&pulsed->volume, pulsed->out_achans, pavol);
+        paop = pa_context_set_sink_input_volume(pulsed->con,
+                                                pa_stream_get_index(pulsed->pstream), &pulsed->volume, NULL, NULL);
+        pa_operation_unref(paop);
+        pulsed->volume_linear = future_prefs->volume * clip_vol;
       }
     }
 

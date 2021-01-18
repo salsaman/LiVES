@@ -50,15 +50,15 @@ static weed_error_t negate_process(weed_plant_t *inst, weed_timecode_t timestamp
   for (int j = 0; j < height; j++) {
     for (int i = 0; i < width; i += 3) {
       if (pal == WEED_PALETTE_ARGB32) {
-	dst[orowstride * j + i] = src[irowstride * j + i];
-	i++;
+        dst[orowstride * j + i] = src[irowstride * j + i];
+        i++;
       }
       dst[orowstride * j + i] = 0xFF - src[irowstride * j + i];
       dst[orowstride * j + i + 1] = 0xFF - src[irowstride * j + i + 1];
       dst[orowstride * j + i + 2] = 0xFF - src[irowstride * j + i + 2];
       if (pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32) {
-	dst[orowstride * j + i + 3] = src[irowstride * j + i + 3];
-	i++;
+        dst[orowstride * j + i + 3] = src[irowstride * j + i + 3];
+        i++;
       }
     }
   }

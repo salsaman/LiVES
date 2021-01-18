@@ -4187,7 +4187,7 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
           naudins += ctachans;
         else naudins += filter_achans;
         if (naudins > 2) {
-          if (!prefs->vj_mode) {
+          if (prefs->show_dev_opts && !prefs->vj_mode) {
             // currently we only handle mono and stereo audio filters
             char *filtname = weed_filter_get_name(filter);
             char *pkgstring = weed_filter_get_package_name(filter);

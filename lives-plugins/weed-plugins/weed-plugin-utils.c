@@ -760,12 +760,14 @@ static inline uint64_t fastrand(uint64_t oldval) {
     val = ((uint64_t)(lrand48() << 32) ^ (uint64_t)(lrand48())) + 1;
 #endif
   }
-  return (val = xorshift(val));
+  return (val = xorshift(xorshift(val) + xorshift(oldval)));
 }
 
 static inline double fastrand_dbl(double range) {
+  static uint64_t oldval = 1;
   static const double divd = (double)(0xFFFFFFFF);
-  double val = (double)fastrand(1) / divd;
+  oldval = fastrand(oldval);
+  double val = (double)oldval / divd;
   return val / divd * range;
 }
 

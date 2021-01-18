@@ -38,44 +38,28 @@ static weed_error_t negate_process(weed_plant_t *inst, weed_timecode_t timestamp
   int pal = weed_channel_get_palette(in_channel);
   int irowstride = weed_channel_get_stride(in_channel);
   int orowstride = weed_channel_get_stride(out_channel);
-  int psize = 4, start = 0;//, alpha = 3;
-
-  unsigned char *end = src + height * irowstride;
-
-  register int i;
-
-  if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) psize = 3;
-  if (pal == WEED_PALETTE_ARGB32) {
-    start = 1;
-    //alpha = -1;
-  }
+  int psize = pixel_size(pal);
   width *= psize;
 
   if (weed_is_threading(inst)) {
     int offset = weed_channel_get_offset(out_channel);
     src += offset * irowstride;
     dst += offset * orowstride;
-    end = src + height * irowstride;
   }
 
-  if (psize == 4) {
-    for (; src < end; src += irowstride) {
-      for (i = start; i < width; i += 4) {
-        dst[i] = 0xFF - src[i];
-        dst[i + 1] = 0xFF - src[i + 1];
-        dst[i + 2] = 0xFF - src[i + 2];
-        dst[i + 3] = src[i + 3];
+  for (int j = 0; j < height; j++) {
+    for (int i = 0; i < width; i += 3) {
+      if (pal == WEED_PALETTE_ARGB32) {
+	dst[orowstride * j + i] = src[irowstride * j + i];
+	i++;
       }
-      dst += orowstride;
-    }
-  } else {
-    for (; src < end; src += irowstride) {
-      for (i = start; i < width; i += 3) {
-        dst[i] = 0xFF - src[i];
-        dst[i + 1] = 0xFF - src[i + 1];
-        dst[i + 2] = 0xFF - src[i + 2];
+      dst[orowstride * j + i] = 0xFF - src[irowstride * j + i];
+      dst[orowstride * j + i + 1] = 0xFF - src[irowstride * j + i + 1];
+      dst[orowstride * j + i + 2] = 0xFF - src[irowstride * j + i + 2];
+      if (pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32) {
+	dst[orowstride * j + i + 3] = src[irowstride * j + i + 3];
+	i++;
       }
-      dst += orowstride;
     }
   }
   return WEED_SUCCESS;

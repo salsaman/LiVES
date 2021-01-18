@@ -898,7 +898,8 @@ void load_frame_image(frames_t frame) {
     if (size_ok) {
       // if frame size is OK we apply real time effects
       if ((mainw->rte != 0 || (mainw->is_rendering && !mainw->event_list))
-          && (mainw->current_file != mainw->scrap_file || mainw->multitrack)) {
+          && (mainw->current_file != mainw->scrap_file || mainw->multitrack)
+	  && !mainw->preview) {
         if (prefs->dev_show_timing)
           g_printerr("rte start @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
         mainw->frame_layer = on_rte_apply(mainw->frame_layer, lb_width, lb_height, (weed_timecode_t)mainw->currticks);

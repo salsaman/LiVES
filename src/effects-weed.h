@@ -41,6 +41,8 @@ typedef enum {
   FILTER_INFO_REDRAWN
 } lives_filter_error_t;
 
+#define FILTER_ERROR_IS_INFO(err) (err >= 512)
+
 typedef enum {
   FX_LIST_NAME, // just name
   FX_LIST_EXTENDED_NAME, // name + author (if dupe) + subcat + observations
@@ -77,6 +79,7 @@ typedef enum {
 #define WEED_LEAF_HOST_FILTER_LIST "host_filter_list" // host usable filters
 #define WEED_LEAF_HOST_NORECORD "host_norecord" // do not record parameter changes for this instance
 #define WEED_LEAF_DUPLICATE "host_duplicate"
+#define WEED_LEAF_VALUE_BACK "host_value_back"
 #define WEED_LEAF_HOST_REINITING "host_reiniting"
 #define WEED_LEAF_HOST_UNUSED "host_unused"
 

@@ -943,8 +943,10 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
   if (mainw->framedraw) fd_tweak(rfx);
 
   if (!mainw->ce_thumbs)
-    lives_widget_show_all(fx_dialog[didx]->dialog);
-
+    lives_widget_show_now(fx_dialog[didx]->dialog);
+  if (rfx->props & RFX_PROPS_MAY_RESIZE) {
+    framedraw_redraw(framedraw, NULL);
+  }
   if (retvals) {
     // now apply visually anything we got from onchange_init
     param_demarshall(rfx, retvals, TRUE, TRUE);
@@ -1482,8 +1484,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
 
   lives_box_pack_start(LIVES_BOX(top_vbox), scrolledwindow, TRUE, TRUE, 0);
   lives_widget_destroy(dummy_label);
-  if (has_param)
-    update_widget_vis(rfx, -1, -1);
+  if (has_param) update_widget_vis(rfx, -1, -1);
   return has_param;
 }
 
@@ -1675,8 +1676,9 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
     param->widgets[++wcount] = widget_opts.last_label;
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(param->widgets[0]), RFX_KEY, rfx);
 
+    spinbutton_adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(spinbutton));
+
     if (add_scalers) {
-      spinbutton_adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(spinbutton));
 #ifdef ENABLE_GIW
       if (prefs->lamp_buttons) {
         scale = giw_knob_new(LIVES_ADJUSTMENT(spinbutton_adj));
@@ -1698,7 +1700,6 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
 #endif
 
       if (add_slider && !param->wrap && (param->dp || param->transition)) {
-        spinbutton_adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(spinbutton));
         scale = lives_standard_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
         lives_widget_set_size_request(scale, DEF_SLIDER_WIDTH, -1);
         if (layout) {
@@ -1716,8 +1717,6 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
     }
 
     if (param->desc) lives_widget_set_tooltip_text(scale, param->desc);
-
-    after_param_value_changed(LIVES_SPIN_BUTTON(spinbutton), rfx);
     break;
 
   case LIVES_PARAM_COLRGB24:
@@ -1957,6 +1956,21 @@ boolean update_widget_vis(lives_rfx_t *rfx, int key, int mode) {
       for (int j = 0; j < RFX_MAX_NORM_WIDGETS; j++) {
         if (param->type == LIVES_PARAM_COLRGB24 && j == 3 && !param->widgets[j]) continue;
         if (!param->widgets[j]) break;
+        if (param->type == LIVES_PARAM_NUM) {
+          if (rfx->flags & RFX_FLAGS_UPD_FROM_GUI) {
+            set_value_from_dispval(lives_spin_button_get_adjustment
+                                   (LIVES_SPIN_BUTTON(param->widgets[0])), param);
+          } else {
+            lives_signal_handlers_block_by_func(param->widgets[0],
+                                                (livespointer)after_param_value_changed,
+                                                (livespointer)rfx);
+            set_dispval_from_value(lives_spin_button_get_adjustment
+                                   (LIVES_SPIN_BUTTON(param->widgets[0])), param, TRUE);
+            lives_signal_handlers_unblock_by_func(param->widgets[0],
+                                                  (livespointer)after_param_value_changed,
+                                                  (livespointer)rfx);
+          }
+        }
         if (param->hidden) {
           lives_widget_hide(param->widgets[j]);
           lives_widget_set_no_show_all(param->widgets[j], TRUE);
@@ -2139,191 +2153,212 @@ void after_boolean_param_toggled(LiVESToggleButton * togglebutton, lives_rfx_t *
   after_any_changed_2(rfx, param, needs_update);
 }
 
-typedef weed_error_t(*weed_disp_func_f)(weed_plant_t *, weed_plant_t *, int);
 
-void set_from_dispval(LiVESAdjustment * from, lives_param_t *param) {
-  LiVESWidget *widget = param->widgets[0];
-  lives_rfx_t *rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), RFX_KEY);
-  int param_number
-    = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
-                           PARAM_NUMBER_KEY));
-  weed_plant_t *inst = (weed_plant_t *)rfx->source;
-  if (inst && WEED_PLANT_IS_FILTER_INSTANCE(inst)) {
-    weed_plant_t *wparam = weed_inst_in_param(inst, param_number, FALSE, FALSE);
-    int stype = weed_leaf_seed_type(wparam, WEED_LEAF_VALUE);
-    if (stype == WEED_SEED_INVALID) return;
-    else {
-      weed_plant_t *ptmpl = weed_param_get_template(wparam);
-      weed_plant_t *gui = weed_paramtmpl_get_gui(ptmpl, FALSE);
-      double dval;
-      if (gui) {
-        weed_disp_func_f disp_func
-          = (weed_disp_func_f)weed_get_funcptr_value(gui, "display_func", NULL);
-        switch (stype) {
-        case WEED_SEED_INT: {
-          gui = weed_param_get_gui(wparam, FALSE);
-          if (gui) {
-            int oval = weed_param_get_value_int(wparam);
-            int ival = (int)(lives_adjustment_get_value(from) + .5);
-
-            //ival = weed_get_int_value(gui, "display_value", NULL);
-            weed_set_int_value(wparam, WEED_LEAF_VALUE, ival);
-            if ((*disp_func)(inst, wparam, WEED_TRUE) != WEED_SUCCESS) {
-              weed_set_int_value(wparam, WEED_LEAF_VALUE, oval);
-              return;
-            }
-            weed_set_int_value(wparam, WEED_LEAF_VALUE, oval);
-            ival = weed_get_int_value(gui, "display_value", NULL);
-            lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), (double)ival);
-            lives_spin_button_update(LIVES_SPIN_BUTTON(widget));
-          }
-          break;
-        }
-        default: {
-          gui = weed_param_get_gui(wparam, FALSE);
-          if (gui) {
-            double oval = weed_param_get_value_double(wparam);
-            dval = lives_adjustment_get_value(from);
-            weed_set_double_value(wparam, WEED_LEAF_VALUE, dval);
-            if ((*disp_func)(inst, wparam, WEED_TRUE) != WEED_SUCCESS) {
-              weed_set_double_value(wparam, WEED_LEAF_VALUE, oval);
-              return;
-            }
-            weed_set_double_value(wparam, WEED_LEAF_VALUE, oval);
-            dval = weed_get_double_value(gui, "display_value", NULL);
-            lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), dval);
-            lives_spin_button_update(LIVES_SPIN_BUTTON(widget));
-          }
-          break;
-          }
-	  // *INDENT-OFF*
-	}}}}
-  // *INDENT-ON*  `
+static weed_error_t run_disp_func(weed_display_value_f disp_func, weed_plant_t *inst,
+                                  weed_plant_t *wparam, int inverse) {
+  weed_error_t werr = (*disp_func)(inst, wparam, inverse);
+  if (werr == WEED_ERROR_REINIT_NEEDED) {
+    lives_filter_error_t filt_error;
+    weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+    filt_error = weed_reinit_effect(inst, TRUE);
+    /* if (filt_error == FILTER_SUCCESS || FILTER_ERROR_IS_INFO(filt_error)) */
+    /*   werr = WEED_SUCCESS; */
+  }
+  return werr;
 }
 
 
-static void set_display_vals(lives_param_t *param) {
-  lives_rfx_t *rfx
-    = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(param->widgets[0]), RFX_KEY);
+boolean set_value_from_dispval(LiVESAdjustment * from, lives_param_t *param) {
+  LiVESWidget *widget = param->widgets[0];
+  lives_rfx_t *rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), RFX_KEY);
   weed_plant_t *inst = (weed_plant_t *)rfx->source;
+  char *ttext = NULL;
+  boolean ret = FALSE;
   int param_number
-    = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(param->widgets[0]),
+    = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
                            PARAM_NUMBER_KEY));
-  weed_plant_t *wparam = weed_inst_in_param(inst, param_number, FALSE, FALSE);
-  weed_plant_t *ptmpl = weed_param_get_template(wparam);
-  weed_plant_t *gui = weed_paramtmpl_get_gui(ptmpl, FALSE);
-  weed_disp_func_f disp_func;
-  int stype = weed_leaf_seed_type(wparam, WEED_LEAF_VALUE);
 
-  if (gui) {
-    disp_func = (weed_disp_func_f)weed_get_funcptr_value(gui, "display_func", NULL);
-    if (disp_func) {
-      if ((*disp_func)(inst, wparam, WEED_FALSE) == WEED_SUCCESS) {
-        weed_plant_t *gui = weed_param_get_gui(wparam, TRUE);
-        switch (stype) {
-        case WEED_SEED_INT:
-        case WEED_SEED_DOUBLE: {
-          int pnum = get_param_widget_by_type(param, LIVES_PARAM_WIDGET_SPINBUTTON);
-          if (pnum >= 0) {
-            LiVESWidget *xwidget = param->widgets[pnum];
-            LiVESAdjustment *sp_adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(xwidget));
-            LiVESWidget *widget;
-            double dval, upper, lower;
-            if (stype == WEED_SEED_DOUBLE) {
-              double oval = weed_param_get_value_double(wparam);
-              dval = weed_get_double_value(gui, "display_value", NULL);
+  if (inst && WEED_PLANT_IS_FILTER_INSTANCE(inst)) {
+    weed_plant_t *wparam = weed_inst_in_param(inst, param_number, FALSE, FALSE);
+    int stype = weed_leaf_seed_type(wparam, WEED_LEAF_VALUE);
+    if (stype == WEED_SEED_INVALID) return FALSE;
+    else {
+      weed_plant_t *ptmpl = weed_param_get_template(wparam);
+      weed_plant_t *gui = weed_paramtmpl_get_gui(ptmpl, FALSE);
+      if (gui) {
+        weed_display_value_f disp_func
+          = (weed_display_value_f)weed_get_funcptr_value(gui, WEED_LEAF_DISPLAY_VALUE_FUNC, NULL);
+        if (disp_func) {
+          char *tmp;
+          int ival;
+          double dval;
+          gui = weed_param_get_gui(wparam, TRUE);
 
-              lower = weed_get_double_value(ptmpl, WEED_LEAF_MIN, NULL);
-              weed_set_double_value(wparam, WEED_LEAF_VALUE, lower);
-              if ((*disp_func)(inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
-                weed_set_double_value(wparam, WEED_LEAF_VALUE, oval);
-                return;
+          switch (stype) {
+          case WEED_SEED_INT:
+            ival = weed_param_get_value_int(wparam);
+            weed_set_int_value(wparam, WEED_LEAF_VALUE, (int)lives_adjustment_get_value(from));
+            weed_leaf_copy(wparam, WEED_LEAF_VALUE_BACK, wparam, WEED_LEAF_VALUE);
+            if (run_disp_func(disp_func, inst, wparam, WEED_TRUE) != WEED_SUCCESS) {
+              weed_set_int_value(wparam, WEED_LEAF_VALUE, ival);
+              return FALSE;
+            }
+            weed_set_int_value(wparam, WEED_LEAF_VALUE, ival);
+            ival = weed_get_int_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
+            set_int_param(param->value, ival);
+            ttext = lives_strdup_printf((tmp = _("Real value: %d")), ival);
+            lives_free(tmp);
+            ret = TRUE;
+            break;
+
+          default:
+            // double
+            dval = weed_param_get_value_double(wparam);
+            weed_set_double_value(wparam, WEED_LEAF_VALUE, lives_adjustment_get_value(from));
+            weed_leaf_copy(wparam, WEED_LEAF_VALUE_BACK, wparam, WEED_LEAF_VALUE);
+            if (run_disp_func(disp_func, inst, wparam, WEED_TRUE) != WEED_SUCCESS) {
+              weed_set_double_value(wparam, WEED_LEAF_VALUE, dval);
+              return FALSE;
+            }
+            weed_set_double_value(wparam, WEED_LEAF_VALUE, dval);
+            dval = weed_get_double_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
+            set_double_param(param->value, dval);
+            ttext = lives_strdup_printf((tmp = _("Real value: %*f")), param->dp, dval);
+            lives_free(tmp);
+            ret = TRUE;
+            break;
+	    // *INDENT-OFF*
+	  }}}}}
+  // *INDENT-ON*
+  if (ttext) {
+    int pnum;
+    lives_widget_set_tooltip_text(param->widgets[0], ttext);
+    pnum = get_param_widget_by_type(param, LIVES_PARAM_WIDGET_SLIDER);
+    if (pnum >= 0) lives_widget_set_tooltip_text(param->widgets[pnum], ttext);
+    pnum = get_param_widget_by_type(param, LIVES_PARAM_WIDGET_KNOB);
+    if (pnum >= 0) lives_widget_set_tooltip_text(param->widgets[pnum], ttext);
+    lives_free(ttext);
+  }
+  return ret;
+}
+
+
+boolean set_dispval_from_value(LiVESAdjustment * to, lives_param_t *param, boolean config) {
+  LiVESWidget *widget = param->widgets[0];
+  lives_rfx_t *rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), RFX_KEY);
+  weed_plant_t *inst = (weed_plant_t *)rfx->source;
+  char *ttext = NULL;
+  boolean ret = FALSE;
+  int param_number
+    = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
+                           PARAM_NUMBER_KEY));
+
+  if (inst && WEED_PLANT_IS_FILTER_INSTANCE(inst)) {
+    weed_plant_t *wparam = weed_inst_in_param(inst, param_number, FALSE, FALSE);
+    int stype = weed_leaf_seed_type(wparam, WEED_LEAF_VALUE);
+    if (stype == WEED_SEED_INVALID) return FALSE;
+    else {
+      weed_plant_t *ptmpl = weed_param_get_template(wparam);
+      weed_plant_t *gui = weed_paramtmpl_get_gui(ptmpl, FALSE);
+      if (gui) {
+        weed_display_value_f disp_func
+          = (weed_display_value_f)weed_get_funcptr_value(gui, WEED_LEAF_DISPLAY_VALUE_FUNC, NULL);
+        if (disp_func) {
+          char *tmp;
+          double dval, dmin = 0., dmax = 0.;
+          int ival, imin = 0, imax = 0;
+          gui = weed_param_get_gui(wparam, TRUE);
+          weed_leaf_copy(wparam, WEED_LEAF_VALUE_BACK, wparam, WEED_LEAF_VALUE);
+          switch (stype) {
+          case WEED_SEED_INT:
+            ival = weed_param_get_value_int(wparam);
+            if (config) {
+              imin = (int)param->min;
+              imax = (int)param->max;
+
+              weed_set_int_value(wparam, WEED_LEAF_VALUE, imin);
+              if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
+                return FALSE;
               }
-              lower = weed_get_double_value(gui, "display_value", NULL);
+              imin = weed_get_int_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
 
-              upper = weed_get_double_value(ptmpl, WEED_LEAF_MAX, NULL);
-              weed_set_double_value(wparam, WEED_LEAF_VALUE, upper);
-              if ((*disp_func)(inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
-                weed_set_double_value(wparam, WEED_LEAF_VALUE, oval);
-                return;
+              weed_set_int_value(wparam, WEED_LEAF_VALUE, imax);
+              if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
+                return FALSE;
               }
-              upper = weed_get_double_value(gui, "display_value", NULL);
-              weed_set_double_value(wparam, WEED_LEAF_VALUE, oval);
-            } else {
-              int iupper, ilower;
-              int oval = weed_param_get_value_int(wparam);
-              dval = (double)weed_get_int_value(gui, "display_value", NULL);
-
-              ilower = weed_get_int_value(wparam, WEED_LEAF_MIN, NULL);
-              weed_set_int_value(wparam, WEED_LEAF_VALUE, ilower);
-              if ((*disp_func)(inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
-                weed_set_int_value(wparam, WEED_LEAF_VALUE, oval);
-                return;
-              }
-              lower = (double)weed_get_int_value(gui, "display_value", NULL);
-
-              iupper = weed_get_int_value(wparam, WEED_LEAF_MAX, NULL);
-              weed_set_int_value(wparam, WEED_LEAF_VALUE, iupper);
-              if ((*disp_func)(inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
-                weed_set_int_value(wparam, WEED_LEAF_VALUE, oval);
-                return;
-              }
-              upper = (double)weed_get_int_value(gui, "display_value", NULL);
-              weed_set_int_value(wparam, WEED_LEAF_VALUE, oval);
+              imax = weed_get_int_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
+              weed_set_int_value(wparam, WEED_LEAF_VALUE, ival);
             }
 
-#ifdef ENABLE_GIW
-            pnum = get_param_widget_by_type(param, LIVES_PARAM_WIDGET_KNOB);
-            if (pnum >= 0) {
-              // give the widget its own adjustment, so the value is read indirectly
-              LiVESAdjustment *adj;
-              widget = param->widgets[pnum];
-              adj = giw_knob_get_adjustment(GIW_KNOB(widget));
-              if (adj == sp_adj) {
-                /* lives_widget_set_size_request(widget, GIW_KNOB_WIDTH * 2, GIW_KNOB_HEIGHT * 2); */
-                /* giw_knob_set_legends_digits(GIW_KNOB(widget), param->dp * 2); */
-                /* giw_knob_set_ticks_number(GIW_KNOB(widget), 6, 4); */
-                adj = lives_adjustment_copy(sp_adj);
-                giw_knob_set_adjustment(GIW_KNOB(widget), adj);
-                lives_signal_sync_connect(LIVES_GUI_OBJECT(adj), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                                          LIVES_GUI_CALLBACK(set_from_dispval), param);
-              }
-              lives_signal_handlers_block_by_func(adj, (livespointer)set_from_dispval,
-                                                  (livespointer)param);
-              lives_adjustment_set_upper(adj, upper);
-              lives_adjustment_set_lower(adj, lower);
-              lives_adjustment_set_value(adj, dval);
-              lives_signal_handlers_unblock_by_func(adj, (livespointer)set_from_dispval,
-                                                    (livespointer)param);
+            if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
+              return FALSE;
             }
-#endif
-            pnum = get_param_widget_by_type(param, LIVES_PARAM_WIDGET_SLIDER);
-            if (pnum >= 0) {
-              // give the widget its own adjustment, so the value is read indirectly
-              LiVESAdjustment *adj;
-              widget = param->widgets[pnum];
-              adj = lives_range_get_adjustment(LIVES_RANGE(widget));
-              if (adj == sp_adj) {
-                adj = lives_adjustment_copy(sp_adj);
-                lives_range_set_adjustment(LIVES_RANGE(widget), adj);
-                lives_signal_sync_connect(LIVES_GUI_OBJECT(adj), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                                          LIVES_GUI_CALLBACK(set_from_dispval), param);
-              }
-              lives_signal_handlers_block_by_func(adj, (livespointer)set_from_dispval,
-                                                  (livespointer)param);
-              lives_adjustment_set_upper(adj, upper);
-              lives_adjustment_set_lower(adj, lower);
-              lives_adjustment_set_value(adj, dval);
-              lives_signal_handlers_unblock_by_func(adj, (livespointer)set_from_dispval,
-                                                    (livespointer)param);
+            ttext = lives_strdup_printf((tmp = _("Real value: %d")), ival);
+            lives_free(tmp);
+            ival = weed_get_int_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
+
+            if (!config) lives_adjustment_set_value(to, (double)ival);
+            else {
+              size_t maxlen = calc_spin_button_width((double)imin, (double)imax, 0);
+              lives_entry_set_width_chars(LIVES_ENTRY(param->widgets[0]), maxlen);
+              lives_adjustment_configure_the_good_bits(to, (double)ival, (double)imin,
+                  (double)imax);
             }
-          }
-          break;
-        }
-        default: break;
-	  // *INDENT-OFF*
+            ret = TRUE;
+            break;
+
+          default:
+            // double
+            dval = weed_param_get_value_double(wparam);
+            if (config) {
+              dmin = param->min;
+              dmax = param->max;
+
+              weed_set_double_value(wparam, WEED_LEAF_VALUE, dmin);
+              if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
+                return FALSE;
+              }
+              dmin = weed_get_double_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
+
+              weed_set_double_value(wparam, WEED_LEAF_VALUE, dmax);
+              if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
+                return FALSE;
+              }
+              dmax = weed_get_double_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
+
+              weed_set_double_value(wparam, WEED_LEAF_VALUE, dval);
+            }
+
+            if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
+              return FALSE;
+            }
+            ttext = lives_strdup_printf((tmp = _("Real value: %*f")), param->dp, dval);
+            lives_free(tmp);
+            dval = weed_get_double_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
+
+            if (!config) lives_adjustment_set_value(to, dval);
+            else {
+              size_t maxlen = calc_spin_button_width(dmin, dmax, param->dp);
+              lives_entry_set_width_chars(LIVES_ENTRY(param->widgets[0]), maxlen);
+              lives_adjustment_configure_the_good_bits(to, dval, dmin, dmax);
+            }
+            ret = TRUE;
+            break;
+	    // *INDENT-OFF*
+	  }
+	  weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
 	}}}}
   // *INDENT-ON*
+  if (ttext) {
+    int pnum;
+    lives_widget_set_tooltip_text(param->widgets[0], ttext);
+    pnum = get_param_widget_by_type(param, LIVES_PARAM_WIDGET_SLIDER);
+    if (pnum >= 0) lives_widget_set_tooltip_text(param->widgets[pnum], ttext);
+    pnum = get_param_widget_by_type(param, LIVES_PARAM_WIDGET_KNOB);
+    if (pnum >= 0) lives_widget_set_tooltip_text(param->widgets[pnum], ttext);
+    lives_free(ttext);
+  }
+  return ret;
 }
 
 
@@ -2338,19 +2373,40 @@ void after_param_value_changed(LiVESSpinButton * spinbutton, lives_rfx_t *rfx) {
 
   lives_spin_button_update(LIVES_SPIN_BUTTON(spinbutton));
 
+  if (mainw->block_param_updates) {
+    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit |= param->reinit;
+    return; // updates are blocked until all params are ready
+  }
+
   if (param->dp > 0) {
     old_double = get_double_param(param->value);
     new_double = lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton));
+
+    if (rfx->status == RFX_STATUS_WEED) {
+      weed_plant_t *inst = (weed_plant_t *)rfx->source;
+      if (inst && WEED_PLANT_IS_FILTER_INSTANCE(inst)) {
+        LiVESAdjustment *adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(param->widgets[0]));
+        rfx->flags |= RFX_FLAGS_UPD_FROM_GUI;
+        if (set_value_from_dispval(adj, param)) new_double = get_double_param(param->value);
+        rfx->flags &= ~RFX_FLAGS_UPD_FROM_GUI;
+      }
+    }
     if (old_double == new_double) return;
   } else {
     old_int = get_int_param(param->value);
     new_int = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
-    if (old_int == new_int) return;
-  }
 
-  if (mainw->block_param_updates) {
-    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit |= param->reinit;
-    return; // updates are blocked until all params are ready
+    if (rfx->status == RFX_STATUS_WEED) {
+      weed_plant_t *inst = (weed_plant_t *)rfx->source;
+      if (inst && WEED_PLANT_IS_FILTER_INSTANCE(inst)) {
+        LiVESAdjustment *adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(param->widgets[0]));
+        rfx->flags |= RFX_FLAGS_UPD_FROM_GUI;
+        if (set_value_from_dispval(adj, param)) new_int = get_int_param(param->value);
+        rfx->flags &= ~RFX_FLAGS_UPD_FROM_GUI;
+      }
+    }
+
+    if (old_int == new_int) return;
   }
 
   ireinit++;
@@ -2430,8 +2486,6 @@ void after_param_value_changed(LiVESSpinButton * spinbutton, lives_rfx_t *rfx) {
         if (copyto != -1) needs_update = TRUE;
         lives_freep((void **)&valis);
       }
-
-      set_display_vals(param);
 
       if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
         // if we are recording, add this change to our event_list
@@ -3345,17 +3399,19 @@ int set_param_from_list(LiVESList * plist, lives_param_t *param, int pnum, boole
       if (upd) {
         if (param->widgets[0] && LIVES_IS_SPIN_BUTTON(param->widgets[0])) {
           lives_rfx_t *rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(param->widgets[0]), RFX_KEY);
+          LiVESAdjustment *adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(param->widgets[0]));
           lives_signal_handlers_block_by_func(param->widgets[0], (livespointer)after_param_value_changed, (livespointer)rfx);
-          lives_spin_button_set_range(LIVES_SPIN_BUTTON(param->widgets[0]), param->min, param->max);
-          lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
+          if (with_min_max) lives_adjustment_configure_the_good_bits(adj, double_val,
+                param->min, param->max);
+          rfx->flags |= RFX_FLAGS_UPD_FROM_VAL;
+          set_dispval_from_value(adj, param, with_min_max);
+          rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
           lives_signal_handlers_unblock_by_func(param->widgets[0], (livespointer)after_param_value_changed, (livespointer)rfx);
-          lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), double_val);
-          lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
         }
       } else set_double_param(param->def, double_val);
       if (upd && param->widgets[0] && LIVES_IS_SPIN_BUTTON(param->widgets[0])) {
-        set_double_param(param->value,
-                         lives_spin_button_get_value(LIVES_SPIN_BUTTON(param->widgets[0])));
+        LiVESAdjustment *adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(param->widgets[0]));
+        set_value_from_dispval(adj, param);
       } else set_double_param(param->value, double_val);
     } else {
       int int_value;
@@ -3387,17 +3443,19 @@ int set_param_from_list(LiVESList * plist, lives_param_t *param, int pnum, boole
       if (upd) {
         if (param->widgets[0] && LIVES_IS_SPIN_BUTTON(param->widgets[0])) {
           lives_rfx_t *rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(param->widgets[0]), RFX_KEY);
+          LiVESAdjustment *adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(param->widgets[0]));
           lives_signal_handlers_block_by_func(param->widgets[0], (livespointer)after_param_value_changed, (livespointer)rfx);
-          lives_spin_button_set_range(LIVES_SPIN_BUTTON(param->widgets[0]), param->min, param->max);
-          lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
-          lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), (double)int_value);
-          lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
+          if (with_min_max) lives_adjustment_configure_the_good_bits(adj, int_value,
+                param->min, param->max);
+          rfx->flags |= RFX_FLAGS_UPD_FROM_VAL;
+          set_dispval_from_value(adj, param, with_min_max);
+          rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
           lives_signal_handlers_unblock_by_func(param->widgets[0], (livespointer)after_param_value_changed, (livespointer)rfx);
         }
       } else set_int_param(param->def, int_value);
       if (upd && param->widgets[0] && LIVES_IS_SPIN_BUTTON(param->widgets[0])) {
-        set_int_param(param->value,
-                      lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(param->widgets[0])));
+        LiVESAdjustment *adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(param->widgets[0]));
+        set_value_from_dispval(adj, param);
       } else set_int_param(param->value, int_value);
     }
     break;

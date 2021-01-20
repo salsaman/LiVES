@@ -632,6 +632,8 @@ typedef struct {
   uint32_t flags; /// internal use
 #define RFX_FLAGS_NO_SLIDERS 	0x0001
 #define RFX_FLAGS_NO_RESET 	0x0002
+#define RFX_FLAGS_UPD_FROM_GUI 	0x0004
+#define RFX_FLAGS_UPD_FROM_VAL 	0x0008
 
   lives_param_t *params;
   lives_rfx_source_t source_type;

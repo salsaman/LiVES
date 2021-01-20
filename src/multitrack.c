@@ -16020,7 +16020,9 @@ static boolean check_can_resetp(lives_mt * mt) {
           mt->track_index = i;
           break;
 	  // *INDENT-OFF*
-	}}}}
+	}}
+      lives_free(in_tracks);
+    }}
   // *INDENT-ON*
 
   /// check for variance

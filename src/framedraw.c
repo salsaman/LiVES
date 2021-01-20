@@ -506,34 +506,34 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
   case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT:
   case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
     if (framedraw->xstart_param->dp == 0) {
-      xstartf = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
+      xstartf = (double)get_int_param(framedraw->xstart_param->value);
       xstartf = xstartf / (double)cfile->hsize * (double)width;
     } else {
-      xstartf = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
+      xstartf = get_double_param(framedraw->xstart_param->value);
       xstartf = xstartf * (double)width;
     }
 
     if (framedraw->xend_param->dp == 0) {
-      xendf = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]));
+      xendf = (double)get_int_param(framedraw->xend_param->value);
       xendf = xendf / (double)cfile->hsize * (double)width;
     } else {
-      xendf = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]));
+      xendf = get_double_param(framedraw->xend_param->value);
       xendf = xendf * (double)width;
     }
 
     if (framedraw->ystart_param->dp == 0) {
-      ystartf = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]));
+      ystartf = (double)get_int_param(framedraw->ystart_param->value);
       ystartf = ystartf / (double)cfile->vsize * (double)height;
     } else {
-      ystartf = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]));
+      ystartf = get_double_param(framedraw->ystart_param->value);
       ystartf = ystartf * (double)height;
     }
 
     if (framedraw->yend_param->dp == 0) {
-      yendf = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]));
+      yendf = (double)get_int_param(framedraw->yend_param->value);
       yendf = yendf / (double)cfile->vsize * (double)height;
     } else {
-      yendf = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]));
+      yendf = get_double_param(framedraw->yend_param->value);
       yendf = yendf * (double)height;
     }
 
@@ -564,18 +564,21 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
   case LIVES_PARAM_SPECIAL_TYPE_SCALEDPOINT:
     if (framedraw->type == LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT) {
       if (framedraw->xstart_param->dp == 0) {
-        xstartf = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
+        /* xstartf = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0])); */
+        xstartf = (double)get_int_param(framedraw->xstart_param->value);
         xstartf = xstartf / (double)cfile->hsize * (double)width;
       } else {
-        xstartf = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
+        //xstartf = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
+        xstartf = get_double_param(framedraw->xstart_param->value);
         xstartf *= (double)width;
       }
 
       if (framedraw->ystart_param->dp == 0) {
-        ystartf = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]));
+        /* ystartf = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0])); */
+        ystartf = (double)get_int_param(framedraw->ystart_param->value);
         ystartf = ystartf / (double)cfile->vsize * (double)height;
       } else {
-        ystartf = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]));
+        ystartf = get_double_param(framedraw->ystart_param->value);
         ystartf *= (double)height;
       }
     } else {
@@ -584,18 +587,19 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
         ystartf = ycurrent * (double)height;
       } else {
         double xpos, ypos;
-        double scale = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->scale_param->widgets[0]));
+        /* double scale = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->scale_param->widgets[0])); */
+        double scale = get_double_param(framedraw->scale_param->value);
         if (scale == 0.) break;
 
         if (framedraw->xstart_param->dp > 0)
-          xpos = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
+          xpos = get_double_param(framedraw->xstart_param->value);
         else
-          xpos = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]))
+          xpos = (double)get_int_param(framedraw->xstart_param->value)
                  / (double)cfile->hsize;
         if (framedraw->ystart_param->dp > 0)
-          ypos = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]));
+          ypos = get_double_param(framedraw->ystart_param->value);
         else
-          ypos = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]))
+          ypos = (double)get_int_param(framedraw->ystart_param->value)
                  / (double)cfile->vsize;
 
         xstartf = 0.5;
@@ -694,13 +698,6 @@ void load_rfx_preview(lives_rfx_t *rfx) {
 
   clear_mainw_msg();
   THREADVAR(write_failed) = FALSE;
-
-  /* if (cfile->clip_type == CLIP_TYPE_FILE && cfile->fx_frame_pump && !cfile->pumper) { */
-  /*   // pull frames in background */
-  /*   cfile->pumper = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)virtual_to_images, */
-  /*                   -1, "iiibV", mainw->current_file, */
-  /*                   cfile->undo_start, cfile->undo_end, FALSE, NULL); */
-  /* } */
 
   if (mainw->cancelled) {
     if (cfile->pumper) {
@@ -810,6 +807,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     if (mainw->fd_layer) weed_layer_free(mainw->fd_layer);
     mainw->fd_layer = weed_layer_copy(NULL, mainw->fd_layer_orig);
     redraw_framedraw_image(mainw->fd_layer);
+    if (!mainw->multitrack) lives_widget_queue_draw(mainw->framedraw);
   }
   mainw->current_file = current_file;
 }
@@ -925,27 +923,29 @@ boolean on_framedraw_mouse_start(LiVESWidget * widget, LiVESXEventButton * event
 
   noupdate = TRUE;
 
+  // TODO - disp values
+
   switch (framedraw->type) {
   case LIVES_PARAM_SPECIAL_TYPE_SCALEDPOINT: {
     // current center is xinit, yinit
     // ystart, xstart equal cursor (crosshair posn.)
 
     if (framedraw->xstart_param->dp > 0)
-      xinit = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
+      xinit = get_double_param(framedraw->xstart_param->value);
     else
-      xinit = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]))
+      xinit = (double)get_int_param(framedraw->xstart_param->value)
               / (double)cfile->hsize;
     if (framedraw->ystart_param->dp > 0)
-      yinit = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]));
+      yinit = get_double_param(framedraw->ystart_param->value);
     else
-      yinit = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]))
+      yinit = (double)get_int_param(framedraw->ystart_param->value)
               / (double)cfile->vsize;
   }
   break;
 
   case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT:
     xend = yend = 0.;
-
+  // TODO - dispvals
   case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
     if (framedraw->xstart_param->dp > 0)
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xstart);
@@ -1029,6 +1029,7 @@ boolean on_framedraw_mouse_update(LiVESWidget * widget, LiVESXEventMotion * even
     xscale = xcurrent - xstart;
     yscale = ycurrent - ystart;
 
+    // TODO - disp values
     if (xscale > 0.) {
       if (framedraw->xend_param->dp > 0)
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), xscale);
@@ -1047,6 +1048,7 @@ boolean on_framedraw_mouse_update(LiVESWidget * widget, LiVESXEventMotion * even
       }
     }
 
+    // TODO - disp values
     if (yscale > 0.) {
       if (framedraw->yend_param->dp > 0)
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), yscale);
@@ -1069,6 +1071,7 @@ boolean on_framedraw_mouse_update(LiVESWidget * widget, LiVESXEventMotion * even
 
   case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
     // end parameters provide the absolute point, in output channel ratio
+    // TODO - disp values
     if (xcurrent > xstart) {
       if (framedraw->xend_param->dp > 0)
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), xcurrent);
@@ -1087,6 +1090,7 @@ boolean on_framedraw_mouse_update(LiVESWidget * widget, LiVESXEventMotion * even
       }
     }
 
+    // TODO - disp values
     if (ycurrent > ystart) {
       if (framedraw->yend_param->dp > 0)
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), ycurrent);
@@ -1110,7 +1114,7 @@ boolean on_framedraw_mouse_update(LiVESWidget * widget, LiVESXEventMotion * even
     // current center is xinit, yinit
     // ystart, xstart equal cursor (crosshair posn.)
     double offs_x, offs_y;
-    double scale = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->scale_param->widgets[0]));
+    double scale = get_double_param(framedraw->scale_param->value);
     if (scale == 0.) break;
     offs_x = (xstart - xcurrent) / scale;
     offs_y = (ystart - ycurrent) / scale;
@@ -1120,6 +1124,7 @@ boolean on_framedraw_mouse_update(LiVESWidget * widget, LiVESXEventMotion * even
     if (yinit + offs_y < .5 / scale) offs_y = .5 / scale - yinit;
     if (yinit + offs_y > 1. - .5 / scale) offs_y = 1. - .5 / scale - yinit;
 
+    // TODO - disp values
     if (framedraw->xstart_param->dp > 0)
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xinit + offs_x);
     else
@@ -1199,18 +1204,18 @@ boolean on_framedraw_mouse_reset(LiVESWidget * widget, LiVESXEventButton * event
     double offs_x, offs_y, scale, xend, yend;
     if (noupdate) break;
 
-    scale = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->scale_param->widgets[0]));
+    scale = get_double_param(framedraw->scale_param->value);
     if (scale == 0.) break;
 
     if (framedraw->xstart_param->dp > 0)
-      xend = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
+      xend = get_double_param(framedraw->xstart_param->value);
     else
-      xend = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]))
+      xend = (double)get_int_param(framedraw->xstart_param->value)
              / (double)cfile->hsize;
     if (framedraw->ystart_param->dp > 0)
-      yend = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]));
+      yend = get_double_param(framedraw->ystart_param->value);
     else
-      yend = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]))
+      yend = (double)get_int_param(framedraw->ystart_param->value)
              / (double)cfile->vsize;
 
     if (xend == xinit && yend == yinit && xcurrent == xstart && ycurrent == ystart) {
@@ -1228,6 +1233,7 @@ boolean on_framedraw_mouse_reset(LiVESWidget * widget, LiVESXEventButton * event
       offs_y = (ycurrent - ystart) / scale;
 
       if (framedraw->xstart_param->dp > 0)
+        // TODO - disp values
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xend + offs_x);
       else
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), (int)((xend + offs_x)
@@ -1242,6 +1248,7 @@ boolean on_framedraw_mouse_reset(LiVESWidget * widget, LiVESXEventButton * event
   break;
 
   case LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT:
+    // TODO - disp values
     if (framedraw->xstart_param->dp > 0)
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xstart);
     else
@@ -1299,6 +1306,8 @@ void after_framedraw_widget_changed(LiVESWidget * widget, lives_special_framedra
 
 void on_framedraw_reset_clicked(LiVESButton * button, lives_special_framedraw_rect_t *framedraw) {
   // reset to defaults
+
+  // TODO - conv. to display values
   if (fx_dialog[0]) {
     if (fx_dialog[0]->okbutton) lives_widget_set_sensitive(fx_dialog[0]->okbutton, FALSE);
     if (fx_dialog[0]->cancelbutton) lives_widget_set_sensitive(fx_dialog[0]->cancelbutton, FALSE);
@@ -1342,9 +1351,6 @@ void on_framedraw_reset_clicked(LiVESButton * button, lives_special_framedraw_re
   if (mainw->framedraw_preview) {
     lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
   }
-
-  // update widgets now
-  //lives_widget_context_update();
 
   noupdate = FALSE;
 

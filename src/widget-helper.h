@@ -1220,6 +1220,12 @@ void lives_general_button_clicked(LiVESButton *, livespointer data_to_free);
 boolean lives_spin_button_configure(LiVESSpinButton *, double value, double lower, double upper,
                                     double step_increment, double page_increment);
 
+boolean lives_adjustment_configure(LiVESAdjustment *, double value, double lower, double upper,
+                                   double step_increment, double page_increment);
+
+boolean lives_adjustment_configure_the_good_bits(LiVESAdjustment *, double value,
+    double lower, double upper);
+
 size_t calc_spin_button_width(double min, double max, int dp);
 
 double lives_spin_button_get_snapval(LiVESSpinButton *, double val);

@@ -621,14 +621,6 @@ void load_frame_image(frames_t frame) {
           // do not apply fx, just pull frame
           mainw->frame_layer = lives_layer_new_for_frame(mainw->clip_index[0], mainw->frame_index[0]);
           pull_frame_threaded(mainw->frame_layer, NULL, (weed_timecode_t)mainw->currticks, 0, 0);
-          /* if (!pull_frame(mainw->frame_layer, get_image_ext_for_type(cfile->img_type), tc)) { */
-          /*   weed_plant_free(mainw->frame_layer); */
-          /*   mainw->frame_layer = NULL; */
-          /*   if (mainw->preview_rendering) { */
-          /*     mainw->cancelled = CANCEL_NO_MORE_PREVIEW; */
-          /*     goto lfi_done; */
-          /*   } */
-          /* } */
         } else {
           int oclip, nclip, i;
           weed_plant_t **layers = (weed_plant_t **)lives_calloc((mainw->num_tracks + 1), sizeof(weed_plant_t *));

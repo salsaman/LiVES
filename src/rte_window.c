@@ -2714,7 +2714,7 @@ resetdefs1:
 
   if (!LIVES_IS_WIDGET(fx_dialog[1]->dialog)) return;
   pbox = lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]->dialog));
-
+  special_cleanup(FALSE);
   // redraw the window
   child_list = lives_container_get_children(LIVES_CONTAINER(pbox));
   // remove focus from any widget we are ripping out

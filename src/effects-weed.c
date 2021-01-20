@@ -1169,15 +1169,16 @@ LIVES_GLOBAL_INLINE weed_plant_t *get_next_compound_inst(weed_plant_t *inst) {
 lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compound) {
   // call with filter_mutex unlocked
   weed_plant_t *filter, *orig_inst = inst;
-  lives_filter_error_t filter_error = FILTER_SUCCESS;
-  char *cwd;
+  lives_rfx_t *rfx = NULL;
   boolean deinit_first = FALSE;
   weed_error_t retval;
+  lives_filter_error_t filter_error = FILTER_SUCCESS;
   int key = -1;
 
   weed_instance_ref(inst);
 
-  if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
+  if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY))
+    key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
 
   if (key != -1) {
     weed_plant_t *gui;
@@ -1197,6 +1198,9 @@ lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compo
 
   mainw->blend_palette = WEED_PALETTE_END;
 
+  if (fx_dialog[1]) rfx = fx_dialog[1]->rfx;
+  else if (mainw->multitrack) rfx = mainw->multitrack->current_rfx;
+
 reinit:
 
   filter = weed_instance_get_filter(inst, FALSE);
@@ -1204,86 +1208,67 @@ reinit:
   if (weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, NULL) == WEED_TRUE) deinit_first = TRUE;
 
   if (deinit_first) {
-    weed_call_deinit_func(inst);
+    retval = weed_call_deinit_func(inst);
+    if (retval != WEED_SUCCESS) goto re_done;
   }
 
   if (weed_plant_has_leaf(filter, WEED_LEAF_INIT_FUNC)) {
-    weed_init_f init_func = (weed_init_f)weed_get_funcptr_value(filter, WEED_LEAF_INIT_FUNC, NULL);
-    cwd = cd_to_plugin_dir(filter);
-    if (init_func) {
-      lives_rfx_t *rfx;
-      retval = (*init_func)(inst);
-      if (fx_dialog[1]
-          || (mainw->multitrack &&  mainw->multitrack->current_rfx
-              && mainw->multitrack->poly_state == POLY_PARAMS)) {
-        // redraw GUI if necessary
-        if (fx_dialog[1]) rfx = fx_dialog[1]->rfx;
-        else rfx = mainw->multitrack->current_rfx;
-        if (rfx->source_type == LIVES_RFX_SOURCE_WEED && rfx->source == inst) {
-          // update any text params with focus
-          if (mainw->textwidget_focus && LIVES_IS_WIDGET_OBJECT(mainw->textwidget_focus)) {
-            // make sure text widgets are updated if they activate the default
-            LiVESWidget *textwidget =
-              (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus), TEXTWIDGET_KEY);
-            weed_set_boolean_value(inst, WEED_LEAF_HOST_REINITING, WEED_TRUE);
-            after_param_text_changed(textwidget, rfx);
-            weed_leaf_delete(inst, WEED_LEAF_HOST_REINITING);
-            mainw->textwidget_focus = NULL;
-          }
+    retval = weed_call_init_func(inst);
+    if (retval != WEED_SUCCESS) goto re_done;
 
-          // do updates from "gui"
-          //rfx_params_free(rfx);
-          //lives_freep((void **)&rfx->params);
-          if (rfx->num_params > 0 && !rfx->params)
-            rfx->params = weed_params_to_rfx(rfx->num_params, inst, FALSE);
-          if (fx_dialog[1]) {
-            int keyw = fx_dialog[1]->key;
-            int modew = fx_dialog[1]->mode;
-            update_widget_vis(NULL, keyw, modew);
-          } else update_widget_vis(rfx, -1, -1);
-          filter_error = FILTER_INFO_REDRAWN;
+    if (fx_dialog[1]
+        || (mainw->multitrack &&  mainw->multitrack->current_rfx
+            && mainw->multitrack->poly_state == POLY_PARAMS)) {
+      // redraw GUI if necessary
+      if (rfx->source_type == LIVES_RFX_SOURCE_WEED && rfx->source == inst) {
+        // update any text params with focus
+        if (mainw->textwidget_focus && LIVES_IS_WIDGET_OBJECT(mainw->textwidget_focus)) {
+          // make sure text widgets are updated if they activate the default
+          LiVESWidget *textwidget =
+            (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus), TEXTWIDGET_KEY);
+          weed_set_boolean_value(inst, WEED_LEAF_HOST_REINITING, WEED_TRUE);
+          after_param_text_changed(textwidget, rfx);
+          weed_leaf_delete(inst, WEED_LEAF_HOST_REINITING);
+          mainw->textwidget_focus = NULL;
         }
+
+        // do updates from "gui"
+        //rfx_params_free(rfx);
+        //lives_freep((void **)&rfx->params);
+        if (rfx->num_params > 0 && !rfx->params)
+          rfx->params = weed_params_to_rfx(rfx->num_params, inst, FALSE);
+        if (fx_dialog[1]) {
+          int keyw = fx_dialog[1]->key;
+          int modew = fx_dialog[1]->mode;
+          update_widget_vis(NULL, keyw, modew);
+        } else update_widget_vis(rfx, -1, -1);
+        filter_error = FILTER_INFO_REDRAWN;
       }
-
-      if (retval != WEED_SUCCESS) {
-        weed_instance_unref(orig_inst);
-        lives_chdir(cwd, FALSE);
-        lives_free(cwd);
-        if (key != -1) filter_mutex_unlock(key);
-        if (retval == WEED_ERROR_PLUGIN_INVALID) return FILTER_ERROR_INVALID_PLUGIN;
-        if (retval == WEED_ERROR_FILTER_INVALID) return FILTER_ERROR_INVALID_FILTER;
-        return FILTER_ERROR_COULD_NOT_REINIT;
-      }
-
-      // need to set this before calling deinit
-      weed_set_boolean_value(inst, WEED_LEAF_HOST_INITED, WEED_TRUE);
     }
-    if (!deinit_first) {
-      weed_call_deinit_func(inst);
-    }
-
-    lives_chdir(cwd, FALSE);
-    lives_free(cwd);
-    if (filter_error != FILTER_INFO_REDRAWN) filter_error = FILTER_INFO_REINITED;
   }
 
-  if (deinit_first) {
-    weed_set_boolean_value(inst, WEED_LEAF_HOST_INITED, WEED_TRUE);
-    weed_set_boolean_value(inst, WEED_LEAF_HOST_UNUSED, WEED_TRUE);
-  } else {
-    weed_set_boolean_value(inst, WEED_LEAF_HOST_INITED, WEED_FALSE);
-    weed_leaf_delete(inst, WEED_LEAF_HOST_UNUSED);
+  if (!deinit_first) {
+    if (!rfx || !(rfx->flags & (RFX_FLAGS_UPD_FROM_GUI | RFX_FLAGS_UPD_FROM_VAL)))
+      retval = weed_call_deinit_func(inst);
   }
+
+  if (retval != WEED_SUCCESS) goto re_done;
+
+  if (filter_error != FILTER_INFO_REDRAWN) filter_error = FILTER_INFO_REINITED;
 
   if (reinit_compound) {
     inst = get_next_compound_inst(inst);
     if (inst) goto reinit;
   }
 
-  if (key != -1) filter_mutex_unlock(key);
+re_done:
   weed_instance_unref(orig_inst);
+  if (key != -1) filter_mutex_unlock(key);
   mainw->blend_palette = WEED_PALETTE_END;
-  return filter_error;
+  if (retval == WEED_SUCCESS) return filter_error;
+  if (retval == WEED_ERROR_PLUGIN_INVALID) return FILTER_ERROR_INVALID_PLUGIN;
+  if (retval == WEED_ERROR_FILTER_INVALID) return FILTER_ERROR_INVALID_FILTER;
+  return FILTER_ERROR_COULD_NOT_REINIT;
 }
 
 
@@ -4698,12 +4683,12 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
                                     NULL
                                    };
 
-  char *pwd, *tmp, *msg, *filtname;
+  char *pwd, *tmp, *msg, *filtname = NULL;
   char *filter_name = NULL, *package_name = NULL;
   boolean blacklisted;
   boolean none_valid = TRUE;
 
-  register int i;
+  int i;
 
 #ifdef RTLD_DEEPBIND
   dlflags |= RTLD_DEEPBIND;
@@ -4868,6 +4853,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
       continue;
     }
 
+    if (filtname) lives_free(filtname);
     filtname = weed_filter_get_name(filter);
     blacklisted = FALSE;
 
@@ -4882,7 +4868,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
 
     if (!strcmp(package_name, "LADSPA: ")) {
       for (i = 0; ladspa_blacklist[i]; i++) {
-        if (!strcmp(filtname, ladspa_blacklist[i])) {
+        if (!lives_strcmp(filtname, ladspa_blacklist[i])) {
           blacklisted = TRUE;
           break;
 	  // *INDENT-OFF*
@@ -4900,6 +4886,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
 
     filter_name = lives_strdup_printf("%s%s:", package_name, filtname);
     lives_free(filtname);
+    filtname = NULL;
 
     // add value returned in host_info_cb
     if (host_info) weed_set_plantptr_value(filter, WEED_LEAF_HOST_INFO, host_info);
@@ -5634,7 +5621,6 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
               lives_strfreev(array);
               break;
             }
-
           }
           weed_set_boolean_array(ptmpl, WEED_LEAF_DEFAULT, ntok, ivals);
           lives_free(ivals);
@@ -7071,6 +7057,7 @@ weed_error_t weed_call_deinit_func(weed_plant_t *instance) {
     }
   }
   weed_set_boolean_value(instance, WEED_LEAF_HOST_INITED, WEED_FALSE);
+  weed_leaf_delete(instance, WEED_LEAF_HOST_UNUSED);
   weed_instance_unref(instance);
   return error;
 }
@@ -8991,9 +8978,8 @@ int set_copy_to(weed_plant_t *inst, int pnum, lives_rfx_t *rfx, boolean update) 
       weed_leaf_delete(paramtmpl2, "host_new_def_backup");
       lives_freep((void **)&ign_array);
     } else {
-      weed_leaf_copy(in_param2, WEED_LEAF_VALUE, in_param, WEED_LEAF_VALUE);
-      if (key != -1)
-        filter_mutex_unlock(key);
+      weed_leaf_dup(in_param2, in_param, WEED_LEAF_VALUE);
+      if (key != -1) filter_mutex_unlock(key);
     }
   }
   return copyto;

@@ -28,7 +28,7 @@
    Carlo Prelz - http://www2.fluido.as:8080/
 */
 
-/* (C) G. Finch, 2005 - 2019 */
+/* (C) G. Finch, 2005 - 2021 */
 
 #ifndef __WEED_EFFECTS_H__
 #define __WEED_EFFECTS_H__
@@ -40,9 +40,8 @@ extern "C"
 
 #include <inttypes.h>
 
-/* API version * 200 */
-#define WEED_FILTER_API_VERSION 200
-#define WEED_FILTER_API_VERSION 200
+/* API version * 201 */
+#define WEED_FILTER_API_VERSION 201
 
 /* plant types */
 #define WEED_PLANT_PLUGIN_INFO        		1
@@ -169,8 +168,9 @@ typedef weed_error_t (*weed_init_f)(weed_plant_t *filter_instance);
 typedef weed_error_t (*weed_deinit_f)(weed_plant_t *filter_instance);
 
 /* special plugin functions */
-typedef void (*weed_display_f)(weed_plant_t *parameter); // deprecated
-typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_t *out_value);
+typedef weed_error_t (*weed_display_value_f)(weed_plant_t *filter_instance, weed_plant_t *parameter,
+					     boolean inverse);
+
 
 // PLUGIN_INFO
 // mandatory:
@@ -181,6 +181,7 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 // optional
 #define WEED_LEAF_PACKAGE_NAME "package_name"
 #define WEED_LEAF_MAINTAINER "maintainer"
+#define WEED_LEAF_UNIQUE_ID "unique_id"
 #define WEED_LEAF_URL "url"
 #define WEED_LEAF_DESCRIPTION "description"
 #define WEED_LEAF_ERROR_NUMBER "error_number"
@@ -377,7 +378,9 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_CHOICES "choices"
 #define WEED_LEAF_CHOICES_LANGUAGES "choices_langs"
 #define WEED_LEAF_HIDDEN "hidden"
-#define WEED_LEAF_COPY_VALUE_TO "copy_value_to"
+
+  // API 201
+#define WEED_LEAF_DISPLAY_VALUE_FUNC "display_value_func"
 
 // PARAM
 // mandatory
@@ -385,6 +388,7 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 
 // PARAM_GUI
 #define WEED_LEAF_CHOICES_LANGUAGE "choices_lang"
+#define WEED_LEAF_DISPLAY_VALUE "display_value"
 
 #ifdef __cplusplus
 }

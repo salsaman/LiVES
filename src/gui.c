@@ -1543,7 +1543,7 @@ void create_LiVES(void) {
   mainw->toys_menu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mainw->toys_menu);
 
-  mainw->toy_none = lives_standard_check_menu_item_new_with_label(_("_None"), TRUE);
+  mainw->toy_none = lives_standard_check_menu_item_new_with_label(mainw->string_constants[LIVES_STRING_CONSTANT_NONE], TRUE);
   lives_container_add(LIVES_CONTAINER(mainw->toys_menu), mainw->toy_none);
 
   mainw->toy_random_frames = lives_standard_check_menu_item_new_with_label(_("_Mad Frames"), FALSE);

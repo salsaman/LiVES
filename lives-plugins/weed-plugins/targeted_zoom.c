@@ -132,7 +132,7 @@ WEED_SETUP_START(200, 200) {
 
   gui = weed_paramtmpl_get_gui(in_params[0]);
   weed_set_double_value(gui, WEED_LEAF_STEP_SIZE, 0.1);
-  weed_set_funcptr_value(gui, "display_func", (weed_funcptr_t)tzoom_disp);
+  weed_set_funcptr_value(gui, "display_value_func", (weed_funcptr_t)tzoom_disp);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

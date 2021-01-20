@@ -672,7 +672,8 @@ The host may confirm with the user in the case that the file already exists as t
 
 Special type "password" - 1 string parameter : the host may hide/obscure the input to this string. IT IS RECOMMENDED NOT TO IGNORE THIS HINT, FOR SECURITY CONSIDERATIONS.
 
-Special type "fontchooser" - 1 string parameter, one numerical.  The first parameter may be set to a font name, the second to a font (point) size.
+Special type "fontchooser" - 1 string parameter, one numerical (optional).
+  The first parameter may be set to a font name, the second (if defined) to a font (point) size.
 
 
 ================================== end interface section ================================

@@ -36,6 +36,13 @@ typedef struct {
 #define NOSLID_RANGE_LIM 1000000.
 #define NOSLID_VALUE_LIM 100.
 
+#if WEED_FILTER_API_VERSION < 201
+typedef weed_error_t (*weed_display_value_f)(weed_plant_t *filter_instance, weed_plant_t *parameter,
+    boolean inverse);
+#define WEED_LEAF_DISPLAY_VALUE_FUNC "display_value_func"
+#define WEED_LEAF_DISPLAY_VALUE "display_value"
+#endif
+
 int get_param_widget_by_type(lives_param_t *, int wtype);
 
 void on_paramwindow_button_clicked(LiVESButton *, lives_rfx_t *);
@@ -52,6 +59,9 @@ LiVESWidget *add_param_label_to_box(LiVESBox *, boolean do_trans, const char *te
 
 LiVESSList *add_usrgrp_to_livesgrp(LiVESSList *u2l, LiVESSList *rbgroup, int usr_number);
 lives_widget_group_t *livesgrp_from_usrgrp(LiVESSList *u2l, int usrgrp);
+
+boolean set_dispval_from_value(LiVESAdjustment *, lives_param_t *, boolean config);
+boolean set_value_from_dispval(LiVESAdjustment *, lives_param_t *);
 
 void after_boolean_param_toggled(LiVESToggleButton *, lives_rfx_t *);
 void after_param_value_changed(LiVESSpinButton *, lives_rfx_t *);

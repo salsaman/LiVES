@@ -62,7 +62,8 @@ void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
   } else if (!strcmp(array[0], "fontchooser")) {
 #if GTK_CHECK_VERSION(3, 2, 0)
     fchooser.font_param = &rfx->params[atoi(array[1])];
-    fchooser.size_param = &rfx->params[atoi(array[2])];
+    if (num_widgets > 1) fchooser.size_param = &rfx->params[atoi(array[2])];
+    else fchooser.size_param = NULL;
     if (!*((char *)fchooser.font_param->value))
       set_rfx_param_by_name_string(rfx, fchooser.font_param->name, widget_opts.font_name, TRUE);
 #endif
@@ -199,10 +200,11 @@ static void font_set_cb(LiVESFontButton * button, livespointer data) {
   after_param_text_changed(fchooser.font_param->widgets[0], rfx);
   lives_signal_handler_unblock(fchooser.font_param->widgets[0], fchooser.entry_func);
 
-  lives_signal_handler_block(fchooser.size_param->widgets[0], fchooser.size_paramfunc);
-  lives_spin_button_set_value(LIVES_SPIN_BUTTON(fchooser.size_param->widgets[0]), size / LINGO_SCALE);
-  lives_signal_handler_unblock(fchooser.size_param->widgets[0], fchooser.size_paramfunc);
-
+  if (fchooser.size_param) {
+    lives_signal_handler_block(fchooser.size_param->widgets[0], fchooser.size_paramfunc);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(fchooser.size_param->widgets[0]), size / LINGO_SCALE);
+    lives_signal_handler_unblock(fchooser.size_param->widgets[0], fchooser.size_paramfunc);
+  }
   lives_free(fname);
   lingo_font_description_free(lfd);
 }
@@ -219,7 +221,7 @@ static void text_size_cb(LiVESSpinButton * button, livespointer data) {
 static void font_entry_cb(LiVESEntry * entry, livespointer data) {
   LiVESFontButton *button = (LiVESFontButton *)fchooser.font_param->widgets[1];
   //lives_font_chooser_set_font(LIVES_FONT_CHOOSER(button), lives_entry_get_text(entry));
-  text_size_cb(LIVES_SPIN_BUTTON(fchooser.size_param->widgets[0]), data);
+  if (fchooser.size_param) text_size_cb(LIVES_SPIN_BUTTON(fchooser.size_param->widgets[0]), data);
   font_set_cb(button, data);
 }
 #endif

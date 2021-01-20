@@ -9442,6 +9442,15 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESAdjustment *lives_adjustment_copy(LiVESAdjustme
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE
+boolean lives_adjustment_configure_the_good_bits(LiVESAdjustment * adj,
+    double value, double lower, double upper) {
+  return lives_adjustment_configure(adj, value, lower, upper,
+                                    lives_adjustment_get_step_increment(adj),
+                                    lives_adjustment_get_page_increment(adj));
+}
+
+
 LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, double min,
     double max, double step, double page, int dp, LiVESBox * box,
     const char *tooltip) {
@@ -11818,10 +11827,10 @@ boolean set_submenu_colours(LiVESMenu * menu, LiVESWidgetColor * colf, LiVESWidg
 }
 
 
-boolean lives_spin_button_configure(LiVESSpinButton * spinbutton, double value, double lower,
-                                    double upper, double step_increment, double page_increment) {
-  LiVESAdjustment *adj = lives_spin_button_get_adjustment(spinbutton);
-
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_adjustment_configure(LiVESAdjustment * adj,
+    double value, double lower,
+    double upper, double step_increment,
+    double page_increment) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2, 14, 0)
   gtk_adjustment_configure(adj, value, lower, upper, step_increment, page_increment, 0.);
@@ -11837,6 +11846,15 @@ boolean lives_spin_button_configure(LiVESSpinButton * spinbutton, double value, 
 #endif
 #endif
   return FALSE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_spin_button_configure(LiVESSpinButton * spinbutton,
+    double value, double lower,
+    double upper, double step_increment,
+    double page_increment) {
+  LiVESAdjustment *adj = lives_spin_button_get_adjustment(spinbutton);
+  return lives_adjustment_configure(adj, value, lower, upper, step_increment, page_increment);
 }
 
 

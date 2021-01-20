@@ -13,6 +13,11 @@ static int package_version = 2; // version of this package
 
 #define NEED_RANDOM
 #define NEED_PALETTE_CONVERSIONS
+#define NEED_FONT_UTILS
+
+#include <pango/pango-font.h>
+
+#define NEED_PANGO_COMPAT
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
@@ -42,9 +47,13 @@ static int package_version = 2; // version of this package
 
 // defines for configure dialog elements
 enum DlgControls {
-  P_TEXT = 0,
+  P_FILE = 0,
   P_RAND,
   P_MODE,
+  P_SPEED,
+  P_FONT,
+  P_FONTSCALE,
+  P_TEXTBUF,
   P_END
 };
 
@@ -137,6 +146,8 @@ typedef struct {
   gboolean rndorder; // true to select random strings, otherwise they are selected in order
   gboolean allow_blanks; // TRUE to include blanks lines in text file / FALSE to ignore them
 
+  gboolean use_file;
+
   // offsets of text in layer (0,0) == top left
   int x_text;
   int y_text;
@@ -149,6 +160,9 @@ typedef struct {
   double fg_alpha;
 
   int mode;
+
+  double fontscale;
+  double velocity;
 
   // generic variables
   double dbl1, dbl2, dbl3;
@@ -172,18 +186,78 @@ typedef struct {
   size_t length;
 } pt_subst_t;
 
-static char **fonts_available = NULL;
+static int verbosity = WEED_VERBOSITY_ERROR;
+
+static const char **fonts_available = NULL;
 static int num_fonts_available = 0;
 
-#define set_font_size(sz) _set_font_size(layout, font, (sz), (double)width)
+#define set_font_size(sz) _set_font_size(sdata, layout, font, (sz), (double)width)
 #define set_font_family(ffam) _set_font_family(layout, font, ffam)
 #define set_text(text) pango_layout_set_text(layout, (text), -1)
 #define getlsize(w, h) _getlsize(layout, (w), (h))
 #define set_alarm(millis) pt_set_alarm(sdata, (millis))
 #define rotate_text(x, y, angle) _rotate_text(sdata, cairo, layout, (x), (y), (angle))
 #define do_reset(millis) _do_reset(sdata, (millis))
+#define getastring() _getastring(sdata)
+#define char_equal(idx, c) _char_equal(sdata, (idx), (c))
+#define letter_data_free() _letter_data_free(sdata)
 
 #define xtext (*ztext)
+
+static void configure_fonts(void) {
+  PangoContext *ctx;
+
+  num_fonts_available = 0;
+  fonts_available = NULL;
+
+  ctx = gdk_pango_context_get();
+  if (ctx) {
+    PangoFontMap *pfm = pango_context_get_font_map(ctx);
+    if (pfm) {
+      int num = 0;
+      PangoFontFamily **pff = NULL;
+      pango_font_map_list_families(pfm, &pff, &num);
+      if (num > 0) {
+        // we should reserve num+1 for a final NULL pointer
+        fonts_available = (const char **)weed_calloc((num + 1), sizeof(char *));
+        if (fonts_available) {
+          num_fonts_available = num;
+          for (int i = 0; i < num; ++i) {
+            fonts_available[i] = strdup(pango_font_family_get_name(pff[i]));
+          }
+          fonts_available[num] = NULL;
+        }
+      }
+      g_free(pff);
+    }
+    g_object_unref(ctx);
+  }
+}
+
+static void cleanup_fonts(void) {
+  if (num_fonts_available && fonts_available) {
+    for (int i = 0; i < num_fonts_available; ++i) {
+      weed_free((void *)fonts_available[i]);
+    }
+    weed_free((void *)fonts_available);
+  }
+  num_fonts_available = 0;
+  fonts_available = NULL;
+}
+
+static int font_compare(const void *s1, const void *s2) {
+  size_t sz1 = strlen(s1);
+  size_t sz2 = strlen(s2);
+  if (sz1 == sz2) {
+    char *u1 = g_utf8_casefold(s1, sz1);
+    char *u2 = g_utf8_casefold(s2, sz1);
+    int ret = strcmp(u1, u2);
+    g_free(u1); g_free(u2);
+    return ret;
+  }
+  return 1;
+}
+
 
 #define STD_STRFUNCS
 
@@ -215,13 +289,13 @@ static inline size_t utf8offs(const char *text, size_t xoffs) {
 }
 
 
-static inline gboolean char_equal(sdata_t *sdata, int idx, const char *c) {
+static inline gboolean _char_equal(sdata_t *sdata, int idx, const char *c) {
   if (sdata->text_type == TEXT_TYPE_ASCII) return (sdata->text[idx - 1] == *c);
   return !strncmp(&sdata->text[utf8offs(sdata->text, idx)], c, 1);
 }
 
 
-static size_t get_ascii_word_length(char *text) {
+static size_t get_ascii_word_length(const char *text) {
   // get length in words (non-spaces)
   size_t toffs = 0;
   int count = 0;
@@ -239,7 +313,7 @@ static size_t get_ascii_word_length(char *text) {
 }
 
 
-static size_t get_utf8_word_length(char *text) {
+static size_t get_utf8_word_length(const char *text) {
   // get length in words (non-spaces)
   size_t toffs = 0;
   int count = 0;
@@ -258,7 +332,7 @@ static size_t get_utf8_word_length(char *text) {
 }
 
 
-static void getastring(sdata_t *sdata) {
+static void _getastring(sdata_t *sdata) {
   if (!sdata->rndorder) {
     sdata->cstring++;
     if ((!sdata->allow_blanks && sdata->cstring >= sdata->nstrings)
@@ -272,6 +346,9 @@ static void getastring(sdata_t *sdata) {
 
   if (sdata->allow_blanks) sdata->text = sdata->xstrings[sdata->cstring];
   else sdata->text = sdata->strings[sdata->cstring];
+
+  sdata->curstring = sdata->cstring;
+  sdata->toffs = sdata->utoffs = 0;
 
   if (sdata->text_type == TEXT_TYPE_ASCII) {
     sdata->tlength = strlen(sdata->text);
@@ -290,39 +367,29 @@ static cairo_t *channel_to_cairo(sdata_t *sdata, weed_plant_t *channel) {
 
   // WEED_LEAF_WIDTH,WEED_LEAF_ROWSTRIDES and WEED_LEAF_CURRENT_PALETTE of channel may all change
 
-  int irowstride, orowstride;
-  int width, widthx;
-  int height;
-  int pal;
-
-  int i;
-
   guchar *src, *dst, *pixel_data;
 
   cairo_surface_t *surf;
   cairo_t *cairo;
   cairo_format_t cform = CAIRO_FORMAT_ARGB32;
 
-  width = weed_channel_get_width(channel);
-  height = weed_channel_get_height(channel);
-  pal = weed_channel_get_palette(channel);
-  irowstride = weed_channel_get_stride(channel);
-
-  widthx = width * 4;
-
-  orowstride = cairo_format_stride_for_width(cform, width);
+  int width = weed_channel_get_width(channel);
+  int height = weed_channel_get_height(channel);
+  int pal = weed_channel_get_palette(channel);
+  int irowstride = weed_channel_get_stride(channel);
+  int orowstride = cairo_format_stride_for_width(cform, width);
+  int widthx = width * 4;
 
   src = (guchar *)weed_channel_get_pixel_data(channel);
 
   sdata->pixel_data = pixel_data = (guchar *)weed_calloc(height, orowstride);
-
   if (!pixel_data) return NULL;
 
   if (irowstride == orowstride) {
     weed_memcpy((void *)pixel_data, (void *)src, irowstride * height);
   } else {
     dst = pixel_data;
-    for (i = 0; i < height; i++) {
+    for (int i = 0; i < height; i++) {
       weed_memcpy(&dst[orowstride * i], &src[irowstride * i], widthx);
       weed_memset(&dst[orowstride * i + widthx], 0, widthx - orowstride);
     }
@@ -335,6 +402,7 @@ static cairo_t *channel_to_cairo(sdata_t *sdata, weed_plant_t *channel) {
 
   if (!surf) {
     weed_free(pixel_data);
+    sdata->pixel_data = NULL;
     return NULL;
   }
 
@@ -467,36 +535,43 @@ static inline void setxypos(double dwidth, double dheight, double x, double y, i
 
 
 // set font size
-static inline void _set_font_size(PangoLayout *layout, PangoFontDescription *font,
+static inline void _set_font_size(sdata_t *sdata, PangoLayout *layout, PangoFontDescription *font,
                                   double font_size, int width) {
-  font_size = (int)((font_size * width + 1.) / 4.) * 4.;
-  pango_font_description_set_size(font, font_size);
-  if (layout) pango_layout_set_font_description(layout, font);
+  int fnt_size = (int)((font_size * sdata->fontscale * width + 2. * PANGO_SCALE) / (4. * PANGO_SCALE))
+                 * (4 * PANGO_SCALE);
+  pango_font_description_set_size(font, fnt_size);
+  if (layout) {
+    pango_layout_set_font_description(layout, font);
+    pango_layout_context_changed(layout);
+  }
 }
 
 
 static inline void _set_font_family(PangoLayout *layout, PangoFontDescription *font, const char *ffam) {
   pango_font_description_set_family(font, ffam);
-  if (layout) pango_layout_set_font_description(layout, font);
+  if (layout) {
+    pango_layout_set_font_description(layout, font);
+    pango_layout_context_changed(layout);
+  }
 }
 
 
-static void anim_letter(pt_letter_data_t *ldt) {
+static void anim_letter(sdata_t *sdata, pt_letter_data_t *ldt) {
   // update velocities and positions
 
-  ldt->xvel += ldt->xaccel;
-  ldt->yvel += ldt->yaccel;
-  ldt->zvel += ldt->zaccel;
-  ldt->rotvel += ldt->rotaccel;
+  ldt->xvel += ldt->xaccel * sdata->velocity;
+  ldt->yvel += ldt->yaccel * sdata->velocity;
+  ldt->zvel += ldt->zaccel * sdata->velocity;
+  ldt->rotvel += ldt->rotaccel * sdata->velocity;
 
-  ldt->xpos += ldt->xvel;
-  ldt->ypos += ldt->yvel;
-  ldt->zpos += ldt->zvel;
-  ldt->rot += ldt->rotvel;
+  ldt->xpos += ldt->xvel * sdata->velocity;
+  ldt->ypos += ldt->yvel * sdata->velocity;
+  ldt->zpos += ldt->zvel * sdata->velocity;
+  ldt->rot += ldt->rotvel * sdata->velocity;
 }
 
 
-static void colour_copy(rgb_t *col1, rgb_t *col2) {
+static inline void colour_copy(rgb_t *col1, rgb_t *col2) {
   // copy col2 to col1
   weed_memcpy(col1, col2, sizeof(rgb_t));
 }
@@ -508,18 +583,18 @@ static inline double rand_angle(void) {
 }
 
 
-static int getrandi(int min, int max) {
+static inline int getrandi(int min, int max) {
   return rand() % (max - min) + min;
 }
 
 
-static pt_letter_data_t *letter_data_create(int len) {
+static inline pt_letter_data_t *letter_data_create(int len) {
   pt_letter_data_t *ldt = (pt_letter_data_t *)weed_calloc(sizeof(pt_letter_data_t), len);
   return ldt;
 }
 
 
-static void letter_data_free(sdata_t *sdata) {
+static inline void _letter_data_free(sdata_t *sdata) {
   weed_free(sdata->letter_data);
   sdata->letter_data = NULL;
 }
@@ -528,12 +603,10 @@ static void letter_data_free(sdata_t *sdata) {
 static void _rotate_text(sdata_t *sdata, cairo_t *cairo, PangoLayout *layout, int x_center, int y_center, double radians) {
   cairo_translate(cairo, x_center, y_center);
   cairo_rotate(cairo, radians);
+  cairo_translate(cairo, -x_center, -y_center);
 
   /* Inform Pango to re-layout the text with the new transformation */
   pango_cairo_update_layout(cairo, layout);
-
-  // recenter at new origin (the axes will be different now)
-  sdata->x_text = sdata->y_text = 0;
 }
 
 
@@ -550,6 +623,9 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
   pt_letter_data_t *ldt = NULL;
   double dwidth, dheight;
   double radX, radY;
+
+  // this is called with sdata->count set to zero, then with increasing values of sdata->count
+  // until it reaches sdata->length
 
   // sdata->text contains the entire line of text
   // xtext contains the current letter / word / line
@@ -573,7 +649,7 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
   // (more accurate relative timings can be obtained from tc which is nominally 10 ^ -8 second units)
   // setting a negative value deactivates the alarm timer
 
-  // getastring(sdata)
+  // getastring()
   // causes the next string (line) to be retrieved from the text file
   // if sdata->rndorder is set non-zero then the order will be randomised, otherwise lines are
   // provided in the same sequence as the text file
@@ -584,10 +660,15 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
   // rotates (turns) the layout by angle radians around the point x, y
 
 
-  // setting the following affects the current layout:
+  // setting the following affects the current layout (the current letter or word)
 
-  // sdata->x_text, sdata->y_text,
-  // sdata->fg, sdata->fg_alpha
+  // sdata->x_text, sdata->y_text // position of centre of token
+  // setting it to 0. 0 places the top left of the token at the top left of the screen
+  // the screen goes from -width / 2, -height / 2 (top left) to width /2, height / 2 (bottom right)
+
+  // sdata->fg, sdata->fg_alpha set colour of the current token,
+  // r, g, b values range from 0 - 255, but alpha range is 0. (fully transparent)
+  // to 1. (fully opaque)
 
   // the process is additive, that is each increment of sdata->count adds to the existing layout
 
@@ -601,14 +682,16 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
     }
 
     if (sdata->start > -1) {
-      set_font_size(64);
+      set_font_size(128.);
 
       // get pixel size of word
       getlsize(&dwidth, &dheight);
+
+      // align center of word at center of screen
       setxypos(dwidth, dheight, width / 2, height / 2, &sdata->x_text, &sdata->y_text);
 
-      sdata->dbl1 -= sdata->dbl1 / 3.5 + .5; // blur shrink
-      sdata->dbl2 += .07;
+      sdata->dbl1 -= sdata->dbl1 / 4. * sdata->velocity + .5; // blur shrink
+      sdata->dbl2 += .07 * sdata->velocity;
       sdata->fg_alpha = sdata->dbl2;
     }
 
@@ -617,19 +700,11 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
       char nxlast;
 
       sdata->bool1 = !sdata->bool1;
-      sdata->dbl1 = 300.; // blur start
+      sdata->dbl1 = width / 2.; // blur start
       sdata->fg_alpha = sdata->dbl2 = 0.;
 
       if (sdata->length > 0) {
         sdata->start++;
-        if (sdata->start >= sdata->wlength) {
-          sdata->start = 0;
-          sdata->length = 0;
-          sdata->dbl1 = 0.;
-          if (!sdata->rndorder) getastring(sdata);
-          // time before next repeat
-          set_alarm(1000); // milliseconds
-        }
       } else {
         sdata->length = 1;
         sdata->bool1 = TRUE;
@@ -638,7 +713,8 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
       if (sdata->length > 0) {
         if (sdata->start == sdata->wlength - 1) {
           // time between each phrase
-          set_alarm(1000); // milliseconds
+          do_reset(1000); // milliseconds
+          getastring();
         } else {
           // peek at last char of next word
           if (sdata->text_type == TEXT_TYPE_ASCII) {
@@ -690,20 +766,22 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
       ldt = &sdata->letter_data[sdata->count];
       dist = ldt->zpos;
       if (dist > 1.) {
-        set_font_size(1024. / dist);
+        set_font_size(2048. / dist);
 
-        // get pixel size of letter/word
+        // get pixel size of letter
         getlsize(&dwidth, &dheight);
 
         sdata->x_text = ldt->xpos / dist + (double)width / 2.;
         sdata->y_text = ldt->ypos / dist + (double)height / 2.;
 
+        // position centre of letter
         setxypos(dwidth, dheight, sdata->x_text, sdata->y_text, &sdata->x_text, &sdata->y_text);
 
+        // letters fade out as they approach
         sdata->fg_alpha = dist / 100. + .5;
 
         // update positions and velocities
-        anim_letter(ldt);
+        anim_letter(sdata, ldt);
 
         colour_copy(&sdata->fg, &ldt->colour);
       } else set_text("");
@@ -719,13 +797,13 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
 
       if (ldt->zpos > 100.) ldt->zpos = 100.;
 
-      ldt->xvel = sin(angle) * 16.;
-      ldt->yvel = cos(angle) * 16.;
-      ldt->zvel = -2.;
+      ldt->xvel = sin(angle) * (double)width / 20.;
+      ldt->yvel = cos(angle) * (double)width / 20.;
+      ldt->zvel = -8.;
 
       ldt->xaccel = ldt->yaccel = ldt->zaccel = ldt->rotaccel = 0.;
 
-      if (sdata->length == 0 || char_equal(sdata, sdata->length, " ")) {
+      if (sdata->length == 0 || char_equal(sdata->length, " ")) {
         ldt->colour.red = getrandi(60, 255);
         ldt->colour.green = getrandi(60, 255);
         ldt->colour.blue = getrandi(60, 255);
@@ -736,7 +814,11 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
       sdata->length++;
 
       if (sdata->length < sdata->tlength) set_alarm(400); // milliseconds
-      else set_alarm(-1);
+      else {
+        // sets length back to zero
+        do_reset(2000);
+        getastring();
+      }
     }
 
     break;
@@ -760,15 +842,16 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
     }
 
     if (sdata->length > 0) {
-      set_font_size(32.);
+
+      set_font_size(10.);
       set_font_family("Monospace");
 
       sdata->fg.red = sdata->fg.blue = 0;
       sdata->fg.green = 255;
 
       // text fades as it moves away from cursor
-      sdata->fg_alpha = 255. - 10. * (sdata->length - sdata->count);
-      if (sdata->fg_alpha < 96.) sdata->fg_alpha = 96.;
+      sdata->fg_alpha = 255. - 8. * (sdata->length - sdata->count);
+      if (sdata->fg_alpha < 64.) sdata->fg_alpha = 64.;
       sdata->fg_alpha /= 255.;
 
       sdata->x_text = sdata->dbl1;
@@ -803,7 +886,7 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
           if (sdata->count == sdata->length - 1) {
             if (sdata->int1 == 1 && !sdata->bool1) {
               sdata->bool1 = TRUE;
-              set_alarm(400);
+              set_alarm(128);
               sdata->utoffs--;
               sdata->toffs--;
             }
@@ -849,7 +932,7 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
         }
       } else {
         //if (sdata->length > sdata->totulen - sdata->int3) sdata->length = 0;
-        if (sdata->length < sdata->totalen - sdata->int3) set_alarm(20);
+        if (sdata->length < sdata->totalen - sdata->int3) set_alarm(10);
         else if (sdata->length == sdata->totalen - sdata->int3) set_alarm(1000);
         else {
           sdata->count = -1;
@@ -859,8 +942,6 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
         }
       }
     }
-    //else if (!sdata->length) sdata->length = 1;
-
     break;
 
   case (PT_SPINNING_LETTERS):
@@ -869,17 +950,10 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
     // with sdata->count set to the current letter number
 
     if (sdata->timer == 0.) {
-      sdata->int1 = 0;
-
       // select all text in line right away
-      sdata->start = 0;
       sdata->length = sdata->tlength;
-
       sdata->tmode = PT_LETTER_MODE;
-      sdata->dbl3 = 0.;
       sdata->letter_data = letter_data_create(sdata->tlength);
-      ldt = &sdata->letter_data[0];
-      ldt->rot = 0.;
     }
 
     ldt = &sdata->letter_data[sdata->count];
@@ -888,32 +962,38 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
       sdata->dbl1 = 0.;
     }
 
-    set_font_size(64.);
+    set_font_size(128.);
 
-    // get pixel size of letter/word, note the pango layout is not rotated until we actually draw it
-    getlsize(&dwidth, &dheight);
+    if (sdata->length) {
+      // get pixel size of letter/word, note the pango layout is not rotated until we actually draw it
+      getlsize(&dwidth, &dheight);
 
-    if (ldt->rotvel == 0.) {
-      ldt->xpos = sdata->dbl1;
-      ldt->rotvel = .1;
-      sdata->dbl1 += dwidth + 50.;
+      if (ldt->rotvel == 0.) {
+        ldt->xpos = sdata->dbl1;
+        ldt->rotvel = .1;
+        ldt->xvel = -8.;
+        sdata->dbl1 += dwidth + 10.;
+      }
+
+      // update positions and velocities
+      anim_letter(sdata, ldt);
+
+      if (sdata->count >= sdata->tlength - 1 && ldt->xpos <= -width - dwidth) {
+        do_reset(1000);
+      } else {
+        sdata->x_text = width + ldt->xpos;
+        sdata->y_text = height / 2;
+        setxypos(0, dheight, sdata->x_text, sdata->y_text, &sdata->x_text, &sdata->y_text);
+        rotate_text(sdata->x_text, sdata->y_text, ldt->rot);
+      }
     }
 
-    // update positions and velocities
-    anim_letter(ldt);
-    ldt->xvel = 0.;
-
-    sdata->x_text = width + ldt->xpos;
-    sdata->y_text = height / 2;
-
-    rotate_text(sdata->x_text, sdata->y_text, ldt->rot);
-
-    setxypos(0, dheight, sdata->x_text, sdata->y_text, &sdata->x_text, &sdata->y_text);
-
     if (sdata->alarm) {
-      set_alarm(25); // milliseconds
-      // shift rate
-      ldt->xvel = -8.;
+      getastring();
+      letter_data_free();
+      // must reset after calling getastring
+      sdata->length = sdata->tlength;
+      sdata->letter_data = letter_data_create(sdata->tlength);
     }
     break;
 
@@ -930,41 +1010,44 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
 
     set_font_size(2560. / (sdata->count + 19.));
 
-    // get pixel size of letter/word
-    getlsize(&dwidth, &dheight);
+    if (sdata->length) {
+      // get pixel size of letter/word
+      getlsize(&dwidth, &dheight);
 
-    // expansion factor
-    if (sdata->int1 < 2) {
-      sdata->dbl3 = 1.;
-      sdata->bool1 = FALSE;
-    } else sdata->dbl3 += .0001;
+      // expansion factor
+      if (sdata->int1 < 2) {
+        sdata->dbl3 = 1.;
+        sdata->bool1 = FALSE;
+      } else sdata->dbl3 += .0001 * sdata->velocity;
 
-    // set x_text, y_text
-    if (!sdata->count) {
-      sdata->dbl1 = radX = width * .45 * sdata->dbl3;
-      sdata->dbl2 = radY = height * .45 * sdata->dbl3;
-    } else {
-      if (!sdata->bool1) {
-        sdata->dbl1 = radX = sdata->dbl1 * .98;
-        sdata->dbl2 = radY = sdata->dbl2 * .98;
+      // set x_text, y_text
+      if (!sdata->count) {
+        sdata->dbl1 = radX = width * .45 * sdata->dbl3;
+        sdata->dbl2 = radY = height * .45 * sdata->dbl3;
+        sdata->bool1 = FALSE;
       } else {
-        sdata->dbl1 = radX = sdata->dbl1 * .97;
-        sdata->dbl2 = radY = sdata->dbl2 * .97;
+        if (!sdata->bool1) {
+          sdata->dbl1 = radX = sdata->dbl1 * .98;
+          sdata->dbl2 = radY = sdata->dbl2 * .98;
+        } else {
+          sdata->dbl1 = radX = sdata->dbl1 * .97;
+          sdata->dbl2 = radY = sdata->dbl2 * .97;
+        }
       }
+
+      if (sdata->bool1)
+        setxypos(dwidth, dheight, width / 2 + sin(sdata->count / 2. + (sdata->dbl3 - 1.) * 16.) * radX,
+                 height / 2 - cos(-sdata->count / 4. - (sdata->dbl3 - 1.) * 8.)
+                 * radY, &sdata->x_text, &sdata->y_text);
+
+      else
+        setxypos(dwidth, dheight, width / 2 + sin(sdata->count / 4. + (sdata->dbl3 - 1.) * 8.) * radX,
+                 height / 2 - cos(-sdata->count / 4. - (sdata->dbl3 - 1.) * 8.)
+                 * radY, &sdata->x_text, &sdata->y_text);
+
+      // check if word-token starts with "."
+      if (*xtext == '.') sdata->int1++;
     }
-
-    if (sdata->bool1)
-      setxypos(dwidth, dheight, width / 2 + sin(sdata->count / 4. + (sdata->dbl3 - 1.) * 9.)*radX,
-               height / 2 - cos(-sdata->count / 4. - (sdata->dbl3 - 1.) * 8.)
-               * radY, &sdata->x_text, &sdata->y_text);
-
-    else
-      setxypos(dwidth, dheight, width / 2 + sin(sdata->count / 4. + (sdata->dbl3 - 1.) * 8.) * radX,
-               height / 2 - cos(-sdata->count / 4. - (sdata->dbl3 - 1.) * 8.)
-               * radY, &sdata->x_text, &sdata->y_text);
-
-    // check if word-token starts with "."
-    if (*xtext == '.') sdata->int1++;
 
     if (sdata->alarm) {
       set_alarm(80); // milliseconds to get next letter
@@ -973,21 +1056,25 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
         sdata->length++;
       } else {
         // no more letters...
-        // shrink from head to tail
-        sdata->length -= 2;
-        sdata->start += 2;
-        sdata->dbl3 -= .0002;
-
         sdata->dbl1 = sdata->dbl1 * .97;
         sdata->dbl2 = radY = sdata->dbl2 * .97;
+        sdata->dbl3 -= .0002;
 
-        // trip to lissajou (unused for now)
-        sdata->bool1 = TRUE;
+        if (!sdata->bool1) {
+          sdata->bool1 = TRUE;
+          set_alarm(20000);
+        } else {
+          // shrink from head to tail
+          sdata->length -= 2;
+          sdata->start += 2;
 
-        if (sdata->length <= 0) {
-          // all letters gone - restart cycle
-          do_reset(-1);
-        } else set_alarm(40); // milliseconds (string disappearing)
+          if (sdata->length <= 0) {
+            // all letters gone - restart cycle
+            do_reset(2000);
+            getastring();
+            sdata->bool1 = FALSE;
+          } else set_alarm(40); // milliseconds (string disappearing)
+        }
       }
     }
     break;
@@ -997,30 +1084,45 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
 
 static weed_error_t puretext_init(weed_plant_t *inst) {
   weed_plant_t **in_params = weed_get_in_params(inst, NULL);
+  weed_plant_t *gui;
   sdata_t *sdata;
-  char buff[65536];
-  char *textfile = weed_param_get_value_string(in_params[P_TEXT]);
+  char *buff;
+  char xbuff[65536];
+  char *textbuf = weed_param_get_value_string(in_params[P_TEXTBUF]);
   size_t b_read, ulen;
   gboolean erropen = FALSE;
+  gboolean use_file = TRUE;
   int i, ii = 0, j = 0;
   int fd, canstart = 0;
+  int mode;
 
-  weed_free(in_params);
+  if (*textbuf) use_file = FALSE;
 
   // open file and read in text
 
-  if ((fd = open(textfile, O_RDONLY)) == -1) {
-    erropen = TRUE;
-    fprintf(stderr, "Error opening file %s\n", textfile);
+  if (use_file) {
+    char *textfile = weed_param_get_value_string(in_params[P_FILE]);
+    weed_free(textbuf);
+    if ((fd = open(textfile, O_RDONLY)) == -1) {
+      erropen = TRUE;
+      if (verbosity >= WEED_VERBOSITY_CRITICAL)
+        fprintf(stderr, "Error opening file %s\n", textfile);
+      weed_free(textfile);
+      weed_free(in_params);
+      return WEED_ERROR_FILTER_INVALID;
+    }
     weed_free(textfile);
-    return WEED_ERROR_FILTER_INVALID;
-  }
-
-  weed_free(textfile);
+    buff = xbuff;
+  } else buff = textbuf;
 
   sdata = (sdata_t *)weed_calloc(sizeof(sdata_t), 1);
-  if (!sdata) return WEED_ERROR_MEMORY_ALLOCATION;
+  if (!sdata) {
+    if (!use_file) weed_free(textbuf);
+    weed_free(in_params);
+    return WEED_ERROR_MEMORY_ALLOCATION;
+  }
 
+  sdata->use_file = use_file;
   sdata->timer = -1;
   sdata->last_tc = 0;
   sdata->alarm_time = 0.;
@@ -1030,11 +1132,12 @@ static weed_error_t puretext_init(weed_plant_t *inst) {
 
   sdata->text_type = TEXT_TYPE_UTF8;
 
-  if (!erropen) {
+  if (use_file && !erropen) {
     b_read = read(fd, buff, 65535);
     weed_memset(buff + b_read, 0, 1);
     close(fd);
   }
+  if (!use_file) b_read = strlen(textbuf);
 
   sdata->xnstrings = 0;
   sdata->nstrings = 0;
@@ -1056,7 +1159,9 @@ static weed_error_t puretext_init(weed_plant_t *inst) {
   if (canstart == i) sdata->xnstrings++;
 
   if (sdata->nstrings == 0) {
-    fprintf(stderr, "No non-empty strings found in file.\n");
+    if (verbosity >= WEED_VERBOSITY_CRITICAL)
+      fprintf(stderr, "No non-empty strings found in file.\n");
+    weed_free(in_params);
     return WEED_ERROR_FILTER_INVALID;
   }
 
@@ -1105,6 +1210,8 @@ static weed_error_t puretext_init(weed_plant_t *inst) {
     }
   }
 
+  if (!use_file) weed_free(textbuf);
+
   sdata->start = sdata->length = 0;
   sdata->cstring = -1;
   sdata->text = NULL;
@@ -1116,10 +1223,16 @@ static weed_error_t puretext_init(weed_plant_t *inst) {
 
   sdata->letter_data = NULL;
 
-  sdata->mode = 1;
+  sdata->mode = weed_param_get_value_int(in_params[P_MODE]);
+
+  gui = weed_param_get_gui(in_params[P_RAND]);
+
+  if (mode == PT_TERMINAL) weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
+  else weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_FALSE);
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
+  weed_free(in_params);
   return WEED_SUCCESS;
 }
 
@@ -1129,7 +1242,7 @@ static weed_error_t puretext_deinit(weed_plant_t *inst) {
   sdata_t *sdata = (sdata_t *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
   if (sdata) {
-    if (sdata->letter_data) letter_data_free(sdata);
+    if (sdata->letter_data) letter_data_free();
     for (i = 0; i < sdata->xnstrings; i++) weed_free(sdata->xstrings[i]);
     weed_free(sdata->xstrings);
     weed_free(sdata->strings);
@@ -1144,6 +1257,7 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
   weed_plant_t *in_channel = weed_get_in_channel(inst, 0);
   weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
   weed_plant_t **in_params = weed_get_in_params(inst, NULL);
+  weed_plant_t *filter;
 
   sdata_t *sdata = (sdata_t *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
@@ -1155,21 +1269,33 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
 
   guchar *dst = (guchar *)weed_channel_get_pixel_data(out_channel);
 
-  int orowstride = weed_channel_get_stride(out_channel);
+  char *fontstr;
 
+  int orowstride = weed_channel_get_stride(out_channel);
   int width = weed_channel_get_width(out_channel);
   int height = weed_channel_get_height(out_channel);
   int pal = weed_channel_get_palette(out_channel);
-
   int mode = weed_param_get_value_int(in_params[P_MODE]);
-
+  int version;
   int i, j;
+
+  //xtext = text = weed_param_get_value_string(in_params[P_TEXT]);
+
+  sdata->fontscale = weed_param_get_value_double(in_params[P_FONTSCALE]);
+  sdata->velocity = weed_param_get_value_double(in_params[P_SPEED]);
+
+  filter = weed_instance_get_filter(inst);
+  version = weed_filter_get_version(filter);
+  if (!version) version = 1;
+
+  if (version == 1) fontstr = strdup("Monospace");
+  else fontstr = weed_param_get_value_string(in_params[P_FONT]);
 
   if (mode != sdata->mode) {
     sdata->timer = -1.;
     sdata->mode = mode;
     sdata->alarm_time = 0.;
-    if (sdata->letter_data) letter_data_free(sdata);
+    if (sdata->letter_data) letter_data_free();
   }
 
   if (mode == PT_TERMINAL) {
@@ -1201,7 +1327,7 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
     sdata->timer = 0.;
     sdata->length = 0;
   } else {
-    sdata->timer += (double)(tc - sdata->last_tc) / (double)WEED_TICKS_PER_SECOND;
+    sdata->timer += (double)(tc - sdata->last_tc) / (double)WEED_TICKS_PER_SECOND * sdata->velocity;
     sdata->alarm = FALSE;
   }
 
@@ -1226,11 +1352,14 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
   else
     cairo = channel_to_cairo(sdata, in_channel);
 
-  if (!sdata->text) getastring(sdata);
+  if (!sdata->text) getastring();
 
   if (cairo) {
     PangoLayout *layout = NULL;
     PangoFontDescription *font;
+    char *family;
+    int fontnum = 0;
+
     // initialize byte and utf8 offsets
     // (only useful for PT_LETTER_MODE)
     if (sdata->text_type == TEXT_TYPE_ASCII) {
@@ -1244,9 +1373,25 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
     sdata->fg.red = sdata->fg.green = sdata->fg.blue = 255.;
     sdata->fg_alpha = 1.;
 
-    // default font
+    weed_parse_font_string(fontstr, &family, NULL, NULL, NULL, NULL);
+    for (i = 0; i < num_fonts_available; ++i) {
+      if (!font_compare((const void *)fonts_available[i], (const void *)family)) {
+        fontnum = i;
+        break;
+      }
+    }
+
+    if (i == num_fonts_available) fontnum = -1;
+    weed_free(family);
+    weed_free(fontstr);
+
     font = pango_font_description_new();
-    pango_font_description_set_family(font, "Monospace");
+
+    if (num_fonts_available && fontnum >= 0 && fontnum < num_fonts_available
+        && fonts_available[fontnum]) {
+      pango_font_description_set_family(font, fonts_available[fontnum]);
+    } else pango_font_description_set_family(font, "Monospace");
+
     set_font_size(32.);
 
     // loop from start char to end char (note that the procedure can alter sdata->length
@@ -1262,7 +1407,7 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
 
         if (!sdata->text) {
           // get a line of text if we don't have any
-          getastring(sdata);
+          getastring();
           sdata->curstring = sdata->cstring;
         }
 
@@ -1403,34 +1548,36 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
 
 
 WEED_SETUP_START(200, 200) {
+  char rfxstring0[256], rfxstring1[256];
+  char *rfxstrings[] = {rfxstring0, rfxstring1};
+
   weed_plant_t *in_params[P_END + 1], *gui;
   weed_plant_t *filter_class;
-  PangoContext *ctx;
 
   const char *modes[] = {"Spiral text", "Spinning letters", "Letter starfield", "Word coalesce",
                          "Terminal", NULL
                         };
-  char *rfx_strings[] = {"special|fileread|0|"};
-
   char *deftextfile;
 
   int palette_list[3];
   weed_plant_t *in_chantmpls[2];
   weed_plant_t *out_chantmpls[2];
   weed_plant_t *host_info = weed_get_host_info(plugin_info);
-  int filter_flags = weed_host_supports_premultiplied_alpha(host_info) ? WEED_FILTER_PREF_PREMULTIPLIED_ALPHA : 0;
-  int flags;
+  int filter_flags = weed_host_supports_premultiplied_alpha(host_info)
+                     ? WEED_FILTER_PREF_PREMULTIPLIED_ALPHA : 0;
+
+  verbosity = weed_get_host_verbosity(host_info);
 
   if (is_big_endian()) {
     palette_list[0] = WEED_PALETTE_ARGB32;
-    palette_list[1] = WEED_PALETTE_END;
+    palette_list[1] = palette_list[2] = WEED_PALETTE_END;
   } else {
     palette_list[0] = WEED_PALETTE_RGBA32;
     palette_list[1] = WEED_PALETTE_BGRA32;
     palette_list[2] = WEED_PALETTE_END;
   }
 
-  in_chantmpls[0] = weed_channel_template_init("in channel 0", WEED_CHANNEL_NEEDS_NATURAL_SIZE);
+  in_chantmpls[0] = weed_channel_template_init("in channel 0", 0);
   in_chantmpls[1] = NULL;
 
   out_chantmpls[0] = weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE);
@@ -1438,66 +1585,51 @@ WEED_SETUP_START(200, 200) {
 
   init_unal();
 
-  // this section contains code
-  // for configure fonts available
-  num_fonts_available = 0;
-  fonts_available = NULL;
-
-  ctx = gdk_pango_context_get();
-  if (ctx) {
-    PangoFontMap *pfm = pango_context_get_font_map(ctx);
-    if (pfm) {
-      int num = 0;
-      PangoFontFamily **pff = NULL;
-      pango_font_map_list_families(pfm, &pff, &num);
-      if (num > 0) {
-        // we should reserve num+1 for a final NULL pointer
-        fonts_available = (char **)weed_malloc((num + 1) * sizeof(char *));
-        if (fonts_available) {
-          num_fonts_available = num;
-          for (int i = 0; i < num; ++i) {
-            fonts_available[i] = strdup(pango_font_family_get_name(pff[i]));
-          }
-          // don't forget this thing
-          fonts_available[num] = NULL;
-        }
-      }
-      g_free(pff);
-    }
-    g_object_unref(ctx);
-  }
+  configure_fonts();
 
   deftextfile = g_build_filename(g_get_home_dir(), "livestext.txt", NULL);
+  in_params[P_FILE] = weed_text_init("textfile", "_Text file", deftextfile);
+  g_free(deftextfile);
 
-  in_params[P_TEXT] = weed_text_init("textfile", "_Text file", deftextfile);
-  gui = weed_paramtmpl_get_gui(in_params[P_TEXT]);
+  gui = weed_paramtmpl_get_gui(in_params[P_FILE]);
   weed_set_int_value(gui, WEED_LEAF_MAXCHARS, 80); // for display only - fileread will override this
-  flags = 0;
-  if (weed_plant_has_leaf(in_params[P_TEXT], WEED_LEAF_FLAGS))
-    flags = weed_get_int_value(in_params[P_TEXT], WEED_LEAF_FLAGS, NULL);
-  flags |= WEED_PARAMETER_REINIT_ON_VALUE_CHANGE;
-  weed_set_int_value(in_params[P_TEXT], WEED_LEAF_FLAGS, flags);
+
+  weed_paramtmpl_set_flags(in_params[P_FILE], weed_paramtmpl_get_flags(in_params[P_FILE])
+                           | WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
 
   in_params[P_RAND] = weed_switch_init("rand", "Select text lines _randomly", WEED_TRUE);
 
   in_params[P_MODE] = weed_string_list_init("mode", "Effect _mode", 0, modes);
-  flags = 0;
-  if (weed_plant_has_leaf(in_params[P_MODE], WEED_LEAF_FLAGS))
-    flags = weed_get_int_value(in_params[P_MODE], WEED_LEAF_FLAGS, NULL);
-  flags |= WEED_PARAMETER_REINIT_ON_VALUE_CHANGE;
-  weed_set_int_value(in_params[P_MODE], WEED_LEAF_FLAGS, flags);
+
+  weed_paramtmpl_set_flags(in_params[P_MODE], weed_paramtmpl_get_flags(in_params[P_MODE])
+                           | WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
+
+  in_params[P_SPEED] = weed_float_init("velocity", "_Speed multiplier (higher is faster)", 1., .1, 10.);
+
+  in_params[P_FONT] = weed_text_init("fontname", "_Font Name", "");
+
+  in_params[P_FONTSCALE] = weed_float_init("fontscale", "_Font Scale", 1., .1, 10.);
+
+  in_params[P_TEXTBUF] = weed_text_init("textbuffer", "_Text buffer (overrides Text File)", "");
+
   in_params[P_END] = NULL;
 
-  g_free(deftextfile);
-
-  filter_class = weed_filter_class_init("puretext", "Salsaman & Aleksej Penkov", 1, filter_flags, palette_list,
+  filter_class = weed_filter_class_init("puretext", "Salsaman & Aleksej Penkov", 1,
+                                        filter_flags, palette_list,
                                         puretext_init, puretext_process, NULL,
                                         in_chantmpls, out_chantmpls, in_params, NULL);
+
+  // GUI section
+
+  snprintf(rfxstrings[0], 256, "special|fileread|%d|", P_FILE);
+  snprintf(rfxstrings[1], 256, "special|fontchooser|%d|", P_FONT);
 
   gui = weed_filter_get_gui(filter_class);
   weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, "RFX");
   weed_set_string_value(gui, "layout_rfx_delim", "|");
-  weed_set_string_array(gui, "layout_rfx_strings", 1, rfx_strings);
+  weed_set_string_array(gui, "layout_rfx_strings", 2, rfxstrings);
+
+  ////
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
@@ -1508,14 +1640,6 @@ WEED_SETUP_END;
 
 WEED_DESETUP_START {
   // clean up what we reserve for font family names
-  if (num_fonts_available && fonts_available) {
-    int i;
-    for (i = 0; i < num_fonts_available; ++i) {
-      weed_free((void *)fonts_available[i]);
-    }
-    weed_free((void *)fonts_available);
-  }
-  num_fonts_available = 0;
-  fonts_available = NULL;
+  cleanup_fonts();
 }
 WEED_DESETUP_END;

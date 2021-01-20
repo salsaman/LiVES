@@ -180,8 +180,18 @@ Moved typedef weed_timecode_t from weed.h
 Removed WEED_LEAF_READONLY_PLUGIN, WEED_LEAF_READONLY_HOST and WEED_ERROR_LEAF_READONLY.
 
 
+Version 2.1 (Jan 2021)
+Filter API additions:
 
-(C) Gabriel "Salsaman" Finch 2005 - 2020
+Added WEED_LEAF_DISPLAY_VALUE_FUNC, WEED_LEAF_DISPLAY_VALUE, WEED_LEAF_DISPLAY_VALUE_DESCRIPTION
+weed_display_value_f
+
+Added "copy_value_to" for boolean out_params, enabling push buttons to be used in interfaces.
+
+
+
+
+(C) Gabriel "Salsaman" Finch 2005 - 2021
 
 With contributions by: Niels Elburg, Dennis "Jaromil" Rojo, Andraz
 Tori, and Oyvind "Pippin" Kolas.
@@ -1265,7 +1275,7 @@ on the other hand:
 
 == WEED_FILTER_API_VERSION  ==
 
-This preprocessor symbol is defined as 200 for this version of the specification. This
+This preprocessor symbol is defined as 201 for this version of the specification. This
 number may be increased for future revisions of the spec.
 
 libweed-utils exports the following function:
@@ -1787,6 +1797,10 @@ versions of the spec.
 							    code followed a colon and a space, eg. "en_US: foo", "pt_BR.utf-8: bar"
 
 
+Added in API 201:
+ * "unique_id" : WEED_SEED_INT64 : an optional unique identifier for the package.
+ 				 Once defined, this should never be changed.
+
 The following may be set inside the weed_bootstrap() function from the values supplied by the plugin:
 
  * "min_weed_api_version"      : WEED_SEED_INT        :: min version of the Weed API that the plugin supports
@@ -1928,6 +1942,9 @@ Mandatory for filters with video channels
   ''type''' of the referenced plants MUST be  WEED_PLANT_PARAMETER_TEMPLATE.
 
 
+Added in API 201:
+ * "unique_id" : WEED_SEED_INT64 : an optional unique identifier for the filter.
+ 				 Once defined, this should never be changed.
 
  * "micro_version" : WEED_SEED_INT : an optional value which may be increased to denote minor
    		     		     updates which do not break backwards compatibility.

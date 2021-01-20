@@ -2483,23 +2483,16 @@ boolean create_event_space(int length) {
 }
 
 
-int lives_list_strcmp_index(LiVESList * list, livesconstpointer data, boolean case_sensitive) {
+LIVES_GLOBAL_INLINE int lives_list_strcmp_index(LiVESList * list,
+    livesconstpointer data, boolean case_sensitive) {
   // find data in list, using strcmp
-  int i;
-  int len;
-  if (!list) return -1;
-
-  len = lives_list_length(list);
-
   if (case_sensitive) {
-    for (i = 0; i < len; i++) {
-      if (!lives_strcmp((const char *)lives_list_nth_data(list, i), (const char *)data)) return i;
-      if (!lives_strcmp((const char *)lives_list_nth_data(list, i), (const char *)data)) return i;
+    for (int i = 0; list; list = list->next, i++) {
+      if (!lives_strcmp((const char *)list->data, (const char *)data)) return i;
     }
   } else {
-    for (i = 0; i < len; i++) {
-      if (!lives_utf8_strcasecmp((const char *)lives_list_nth_data(list, i), (const char *)data)) return i;
-      if (!lives_utf8_strcasecmp((const char *)lives_list_nth_data(list, i), (const char *)data)) return i;
+    for (int i = 0; list; list = list->next, i++) {
+      if (!lives_utf8_strcasecmp((const char *)list->data, (const char *)data)) return i;
     }
   }
   return -1;

@@ -61,6 +61,7 @@ typedef struct {
   int flags;
   int subspace;
   int iclamping, oclamp_hint;
+  boolean match;
 } swsctx_block;
 
 #define MAX_SWS_BLOCKS 8192
@@ -93,6 +94,7 @@ static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, 
           && height == block->height
           && opixfmt == block->opixfmt
           && flags == block->flags) {
+
         if (subspace == block->subspace
             && iclamping == block->iclamping
             && oclamp_hint == block->oclamp_hint
@@ -129,10 +131,11 @@ static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, 
 	}}}}}
   // *INDENT-ON*
 
-  if (minbnum < max) {
+  if (minbnum < max || mingnum < max) {
     bestblock = &bloxx[bestidx];
     bestblock->in_use = TRUE;
     pthread_mutex_unlock(&ctxcnt_mutex);
+    bestblock->match = TRUE;
     THREADVAR(last_sws_block) = bestidx;
   } else {
     int startctx = swctx_count, endctx = startctx + nreq;
@@ -169,6 +172,7 @@ static swsctx_block *sws_getblock(int nreq, int iwidth, int iheight, int *irow, 
       bestblock->irow[i] = irow[i];
       bestblock->orow[i] = orow[i];
     }
+    bestblock->match = FALSE;
   }
 
   //g_print("NCTX = %d\n", swctx_count);
@@ -12469,7 +12473,7 @@ boolean compact_rowstrides(weed_layer_t *layer) {
   int cxrow;
   int nplanes;
   boolean needs_change = FALSE;
-  register int i, j;
+  int i, j;
 
   pixel_data = weed_layer_get_pixel_data(layer, &nplanes);
 
@@ -12880,8 +12884,12 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     ctxblock = sws_getblock(1, iwidth, iheight, irw, ipixfmt, width, height, orw, opixfmt, flags,
                             subspace, iclamping, oclamp_hint);
     offset = ctxblock->offset;
-    swscale = swscalep[offset] = sws_getCachedContext(swscalep[offset], iwidth, iheight, ipixfmt,
-                                 width, height, opixfmt, flags, NULL, NULL, NULL);
+    if (!ctxblock->match)
+      swscale = swscalep[offset] = sws_getCachedContext(swscalep[offset], iwidth, iheight, ipixfmt,
+                                   width, height, opixfmt, flags,
+                                   NULL, NULL, NULL);
+    swparams[sl].swscale = swscalep[sl + offset];
+
     sws_setColorspaceDetails(swscale, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
                              ? SWS_CS_ITU709 : SWS_CS_ITU601), iclamping,
                              sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
@@ -12904,14 +12912,21 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     ctxblock = sws_getblock(nthrds, iwidth, iheight, irw, ipixfmt, width, height, orw, opixfmt, flags,
                             subspace, iclamping, oclamp_hint);
     offset = ctxblock->offset;
+
     for (int sl = 0; sl < nthrds; sl++) {
       swparams[sl].thread_id = sl;
       swparams[sl].iheight = iheight;
       swparams[sl].width = width;
       swparams[sl].file_gamma = 1.;
-      swparams[sl].swscale = swscalep[sl + offset] =
-                               sws_getCachedContext(swscalep[sl + offset], iwidth, iheight, ipixfmt, width,
-                                   height, opixfmt, flags, NULL, NULL, NULL);
+
+      /// swsfreeContext always seems to leak memory..
+      //sws_freeContext(swscalep[sl + offset]);
+      if (!ctxblock->match)
+        swparams[sl].swscale = swscalep[sl + offset] =
+                                 sws_getCachedContext(swscalep[sl + offset], iwidth, iheight, ipixfmt, width,
+                                     height, opixfmt, flags, NULL, NULL, NULL);
+      else
+        swparams[sl].swscale = swscalep[sl + offset];
 
       if (!swparams[sl].swscale) {
         LIVES_DEBUG("swscale is NULL !!");
@@ -12920,7 +12935,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
         swparams[sl].layer = layer;
         swparams[sl].file_gamma = weed_get_double_value(layer, "file_gamma", NULL);
         if (swparams[sl].file_gamma == 0.) swparams[sl].file_gamma = 1.;
-        //} else swparams[sl].layer = NULL;
+        else swparams[sl].layer = NULL;
         sws_setColorspaceDetails(swparams[sl].swscale,
                                  sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
                                      ? SWS_CS_ITU709 : SWS_CS_ITU601), iclamping,
@@ -12948,7 +12963,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
       }
     }
     iheight = height;
-    // height = 0;
+
     for (int sl = 0; sl < nthrds - 1; sl++) {
       if (swparams[sl].swscale) {
         lives_thread_join(threads[sl], NULL);
@@ -13462,7 +13477,6 @@ boolean consider_swapping(int *inpal, int *outpal) {
 }
 
 
-
 #ifdef GUI_GTK
 
 /**
@@ -13479,7 +13493,7 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
   int width, widthx;
   int height, pal;
 
-  register int i;
+  int i;
 
   if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_SURFACE_SRC)) {
     surf = (lives_painter_surface_t *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_SURFACE_SRC, NULL);

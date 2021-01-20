@@ -97,10 +97,10 @@ static weed_error_t ladspa_init(weed_plant_t *inst) {
   if (!(weed_instance_get_flags(inst) & WEED_INSTANCE_UPDATE_GUI_ONLY)) {
     lad_instantiate_f lad_instantiate_func =
       (lad_instantiate_f)weed_get_funcptr_value(filter, "plugin_lad_instantiate_func", NULL);
-    LADSPA_Descriptor *laddes = (LADSPA_Descriptor *)weed_get_voidptr_value(filter, "plugin_lad_descriptor", NULL);
+    LADSPA_Descriptor *laddes
+      = (LADSPA_Descriptor *)weed_get_voidptr_value(filter, "plugin_lad_descriptor", NULL);
     weed_plant_t *channel = NULL;
     unsigned long rate = 0;
-    int pinc, poutc;
 
     _sdata *sdata = (_sdata *)weed_malloc(sizeof(_sdata));
     if (!sdata) return WEED_ERROR_MEMORY_ALLOCATION;
@@ -112,11 +112,10 @@ static weed_error_t ladspa_init(weed_plant_t *inst) {
     if (channel) rate = (unsigned long)weed_get_int_value(channel, WEED_LEAF_AUDIO_RATE, NULL);
     if (!rate) rate = DEF_ARATE;
     sdata->inst_rate = rate;
-    pinc = weed_get_int_value(filter, "plugin_in_channels", NULL);
-    poutc = weed_get_int_value(filter, "plugin_out_channels", NULL);
     sdata->activated_l = sdata->activated_r = WEED_FALSE;
     sdata->handle_l = (*lad_instantiate_func)(laddes, rate);
-    if (pinc == 1 || poutc == 1) sdata->handle_r = (*lad_instantiate_func)(laddes, rate);
+    if (weed_get_boolean_value(filter, "plugin_dual", NULL) == WEED_TRUE)
+      sdata->handle_r = (*lad_instantiate_func)(laddes, rate);
     else sdata->handle_r = NULL;
   }
 
@@ -224,7 +223,7 @@ static weed_error_t ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp
     }
   }
 
-  if (rate != sdata->inst_rate)  goto procfunc_done;
+  if (rate != sdata->inst_rate) goto procfunc_done;
 
   pinc = weed_get_int_value(filter, "plugin_in_channels", NULL);
   poutc = weed_get_int_value(filter, "plugin_out_channels", NULL);
@@ -242,9 +241,7 @@ static weed_error_t ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp
 
   if (sdata->activated_l == WEED_FALSE) {
     lad_activate_f lad_activate_func = (lad_activate_f)weed_get_funcptr_value(filter, "plugin_lad_activate_func", NULL);
-    if (lad_activate_func) {
-      (*lad_activate_func)(sdata->handle_l);
-    }
+    if (lad_activate_func)(*lad_activate_func)(sdata->handle_l);
     sdata->activated_l = WEED_TRUE;
   }
 
@@ -426,7 +423,7 @@ static weed_error_t ladspa_disp(weed_plant_t *inst, weed_plant_t *param, int inv
         }
         if (is_srate) ival *= arate;
       } else {
-        if (is_srate) ival /= arate;
+        if (is_srate) ival = ((double)ival / (double)arate + .5);
         if (is_log) ival = (int)(expf((float)ival) + .5);
       }
       return weed_set_int_value(gui, "display_value", ival);
@@ -779,10 +776,10 @@ WEED_SETUP_START(200, 200) {
 
                 if (is_log || is_srate) {
                   gui = weed_paramtmpl_get_gui(in_params[cninps]);
-                  weed_set_funcptr_value(gui, "display_func", (weed_funcptr_t)ladspa_disp);
+                  weed_set_funcptr_value(gui, "display_value_func", (weed_funcptr_t)ladspa_disp);
                   if (dual == WEED_TRUE) {
                     gui = weed_paramtmpl_get_gui(in_params[cninps + oninps]);
-                    weed_set_funcptr_value(gui, "display_func", (weed_funcptr_t)ladspa_disp);
+                    weed_set_funcptr_value(gui, "display_value_func", (weed_funcptr_t)ladspa_disp);
                   }
                 }
               }
@@ -877,6 +874,8 @@ WEED_SETUP_START(200, 200) {
                                               NULL, ladspa_init, ladspa_process, ladspa_deinit,
                                               in_chantmpls, out_chantmpls, in_params, out_params);
 
+        weed_set_int64_value(filter_class, "unique_id", laddes->UniqueID);
+
         weed_set_string_value(filter_class, WEED_LEAF_EXTRA_AUTHORS, laddes->Maker);
         weed_set_string_value(filter_class, WEED_LEAF_LICENSE, laddes->Copyright);
 
@@ -930,7 +929,7 @@ WEED_SETUP_START(200, 200) {
     }
   }
 
-  if (num_filters == 0) {
+  if (!num_filters) {
     if (verbosity >= WEED_VERBOSITY_CRITICAL) {
       fprintf(stderr, "No LADSPA plugins found; if you have them installed please set the LADSPA_PATH"
               "environment variable to point to them.\n");

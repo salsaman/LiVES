@@ -582,7 +582,7 @@ void ce_thumbs_update_params(int key, int i, LiVESList * list) {
   if (pscrolls[key]) {
     rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[key]), RFX_KEY);
     mainw->block_param_updates = TRUE;
-    set_param_from_list(list, &rfx->params[key], 0, TRUE, TRUE);
+    set_param_from_list(list, &rfx->params[key], TRUE, TRUE);
     mainw->block_param_updates = FALSE;
   }
 }

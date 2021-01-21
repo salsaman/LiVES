@@ -62,9 +62,9 @@ void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
   } else if (!strcmp(array[0], "fontchooser")) {
 #if GTK_CHECK_VERSION(3, 2, 0)
     fchooser.font_param = &rfx->params[atoi(array[1])];
-    if (num_widgets > 1) fchooser.size_param = &rfx->params[atoi(array[2])];
+    if (num_widgets > 0 && *array[2]) fchooser.size_param = &rfx->params[atoi(array[2])];
     else fchooser.size_param = NULL;
-    if (!*((char *)fchooser.font_param->value))
+    if (!((char *)fchooser.font_param->value) || !*((char *)fchooser.font_param->value))
       set_rfx_param_by_name_string(rfx, fchooser.font_param->name, widget_opts.font_name, TRUE);
 #endif
   } else if (!strcmp(array[0], "mergealign")) {

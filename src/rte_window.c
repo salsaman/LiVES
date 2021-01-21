@@ -2510,7 +2510,7 @@ void update_pwindow(int key, int i, LiVESList * list) {
       weed_instance_unref(inst);
       rfx = fx_dialog[1]->rfx;
       mainw->block_param_updates = TRUE;
-      set_param_from_list(list, &rfx->params[i], 0, TRUE, TRUE);
+      list = set_param_from_list(list, &rfx->params[i], TRUE, TRUE);
       mainw->block_param_updates = FALSE;
     }
   }

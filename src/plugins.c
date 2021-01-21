@@ -78,7 +78,7 @@ LiVESList *plugin_request_common(const char *plugin_type, const char *plugin_nam
   char *com, *comfile;
 
   if (plugin_type) {
-    if (!plugin_name || !strlen(plugin_name)) {
+    if (!plugin_name || !*plugin_name) {
       return reslist;
     }
 
@@ -3135,7 +3135,7 @@ boolean set_rfx_param_by_name_string(lives_rfx_t *rfx, const char *name, const c
     char *tmp, *tmp2;
     list = lives_list_append(list, lives_strdup_printf("\"%s\"", (tmp = U82L(tmp2 = subst(value, "\"", "\\\"")))));
     lives_free(tmp); lives_free(tmp2);
-    set_param_from_list(list, param, 0, FALSE, TRUE);
+    set_param_from_list(list, param, FALSE, TRUE);
     lives_list_free_all(&list);
   }
   return TRUE;

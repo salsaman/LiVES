@@ -1838,6 +1838,7 @@ typedef struct {
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
   LiVESWidget *resetbutton;
+  LiVESWidget *savebutton;
   lives_rfx_t *rfx;
   int key;
   int mode;

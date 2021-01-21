@@ -75,10 +75,16 @@ void after_string_list_changed(LiVESWidget *, lives_rfx_t *);
 
 void on_pwcolsel(LiVESButton *, lives_rfx_t *);
 
+boolean lives_param_update_gui_num(lives_param_t *, double val);
+boolean lives_param_update_gui_double(lives_param_t *, double val);
+boolean lives_param_update_gui_int(lives_param_t *, int val);
+
+
 char *param_marshall(lives_rfx_t *, boolean with_min_max);
 char **param_marshall_to_argv(lives_rfx_t *);
 void param_demarshall(lives_rfx_t *, LiVESList *plist, boolean with_min_max, boolean update_widgets);
-int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolean with_min_max, boolean upd);
+LiVESList *set_param_from_list(LiVESList *plist, lives_param_t *param, boolean with_min_max,
+                               boolean upd);
 LiVESList *argv_to_marshalled_list(lives_rfx_t *, int argc, char **argv);
 
 /// object should have g_set_object_data "param_number" set to parameter number

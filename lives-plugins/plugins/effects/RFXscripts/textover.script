@@ -30,7 +30,7 @@ xoffs|_X offset|num0|0|-10000|10000|
 yoffs|_Y offset|num0|0|-10000|10000|
 fcol|_Fill colour|colRGB24|0|0|0|
 scol|_Stroke colour|colRGB24|0|0|0|
-psize|_Point size|num0|32|10|120|
+psize|_Point size|num0|128|8|1024|
 font|_Font|string||128|
 </params>
 

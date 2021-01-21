@@ -38,7 +38,7 @@ LiVESList *do_onchange_init(lives_rfx_t *rfx) {
   char **array;
   char *type;
 
-  register int i;
+  int i;
 
   if (rfx->status == RFX_STATUS_WEED) return NULL;
 
@@ -57,8 +57,8 @@ LiVESList *do_onchange_init(lives_rfx_t *rfx) {
     break;
   }
   if ((onchange = plugin_request_by_line(type, rfx->name, "get_onchange")) != NULL) {
-    for (i = 0; i < lives_list_length(onchange); i++) {
-      array = lives_strsplit((char *)lives_list_nth_data(onchange, i), rfx->delim, -1);
+    for (i = 0; onchange; i++, onchange = onchange->next) {
+      array = lives_strsplit((char *)onchange->data, rfx->delim, -1);
       if (!strcmp(array[0], "init")) {
         // onchange is init
         // create dummy object with data
@@ -864,6 +864,14 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
     }
 
     if (add_reset_ok) {
+      if (is_defaults) {
+        fx_dialog[didx]->savebutton = lives_dialog_add_button_from_stock
+                                      (LIVES_DIALOG(fx_dialog[didx]->dialog),
+                                       LIVES_STOCK_SAVE, _("Save all Defaults"), LIVES_RESPONSE_ACCEPT);
+        lives_dialog_make_widget_first(LIVES_DIALOG(fx_dialog[didx]->dialog),
+                                       fx_dialog[didx]->savebutton);
+      }
+
       fx_dialog[didx]->resetbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]->dialog),
                                      LIVES_STOCK_REVERT_TO_SAVED, _("Reset"), LIVES_RESPONSE_RESET);
       fx_dialog[didx]->okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]->dialog), LIVES_STOCK_APPLY,
@@ -943,10 +951,8 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
   if (mainw->framedraw) fd_tweak(rfx);
 
   if (!mainw->ce_thumbs)
-    lives_widget_show_now(fx_dialog[didx]->dialog);
-  if (rfx->props & RFX_PROPS_MAY_RESIZE) {
-    framedraw_redraw(framedraw, NULL);
-  }
+    lives_widget_show_all(fx_dialog[didx]->dialog);
+
   if (retvals) {
     // now apply visually anything we got from onchange_init
     param_demarshall(rfx, retvals, TRUE, TRUE);
@@ -2156,19 +2162,40 @@ void after_boolean_param_toggled(LiVESToggleButton * togglebutton, lives_rfx_t *
 
 static weed_error_t run_disp_func(weed_display_value_f disp_func, weed_plant_t *inst,
                                   weed_plant_t *wparam, int inverse) {
+  static boolean in_reinit = FALSE;
   weed_error_t werr = (*disp_func)(inst, wparam, inverse);
   if (werr == WEED_ERROR_REINIT_NEEDED) {
-    lives_filter_error_t filt_error;
+
+    if (in_reinit) {
+      return WEED_ERROR_FILTER_INVALID;
+    }
+
+    // restore original value
     weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
-    filt_error = weed_reinit_effect(inst, TRUE);
-    /* if (filt_error == FILTER_SUCCESS || FILTER_ERROR_IS_INFO(filt_error)) */
-    /*   werr = WEED_SUCCESS; */
+
+    // during reinit we will recursively call run_disp_func
+    // if, after a reinit the plugin still returns WEED_ERROR_REINIT_NEEDED,
+    // then the filter or host are broken, so we set in_reinit to TRUE
+    // and make sure that error code is not returned
+
+    in_reinit = TRUE;
+
+    weed_reinit_effect(inst, TRUE);
+
+    in_reinit = FALSE;
   }
   return werr;
 }
 
 
 boolean set_value_from_dispval(LiVESAdjustment * from, lives_param_t *param) {
+  // update the lives_param_t value of param using an optional "display_value_func"
+  // from a referenced Weed parameter
+  // coverts value from adjustment (inverse transform).
+  // If the plugin requests it, the instance will be inited / re-inited.
+  // The actual Weed parameter is not altered
+  // since this can be more complex (e.g. multivalued params, copy_value_to, reinits / gui updates
+  // - this is the Weed equivalent of "onchange" in RFX plugins.
   LiVESWidget *widget = param->widgets[0];
   lives_rfx_t *rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), RFX_KEY);
   weed_plant_t *inst = (weed_plant_t *)rfx->source;
@@ -2192,18 +2219,23 @@ boolean set_value_from_dispval(LiVESAdjustment * from, lives_param_t *param) {
           char *tmp;
           int ival;
           double dval;
+          boolean delback = FALSE;
           gui = weed_param_get_gui(wparam, TRUE);
-
+          if (!weed_plant_has_leaf(wparam, WEED_LEAF_VALUE_BACK)) {
+            weed_leaf_copy(wparam, WEED_LEAF_VALUE_BACK, wparam, WEED_LEAF_VALUE);
+            delback = TRUE;
+          }
           switch (stype) {
           case WEED_SEED_INT:
-            ival = weed_param_get_value_int(wparam);
             weed_set_int_value(wparam, WEED_LEAF_VALUE, (int)lives_adjustment_get_value(from));
-            weed_leaf_copy(wparam, WEED_LEAF_VALUE_BACK, wparam, WEED_LEAF_VALUE);
             if (run_disp_func(disp_func, inst, wparam, WEED_TRUE) != WEED_SUCCESS) {
-              weed_set_int_value(wparam, WEED_LEAF_VALUE, ival);
+              if (delback) {
+                // something went wrong...restore original value
+                weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+                weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
+              }
               return FALSE;
             }
-            weed_set_int_value(wparam, WEED_LEAF_VALUE, ival);
             ival = weed_get_int_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
             set_int_param(param->value, ival);
             ttext = lives_strdup_printf((tmp = _("Real value: %d")), ival);
@@ -2217,9 +2249,13 @@ boolean set_value_from_dispval(LiVESAdjustment * from, lives_param_t *param) {
             weed_set_double_value(wparam, WEED_LEAF_VALUE, lives_adjustment_get_value(from));
             weed_leaf_copy(wparam, WEED_LEAF_VALUE_BACK, wparam, WEED_LEAF_VALUE);
             if (run_disp_func(disp_func, inst, wparam, WEED_TRUE) != WEED_SUCCESS) {
-              weed_set_double_value(wparam, WEED_LEAF_VALUE, dval);
+              if (delback) {
+                weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+                weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
+              }
               return FALSE;
             }
+            weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
             weed_set_double_value(wparam, WEED_LEAF_VALUE, dval);
             dval = weed_get_double_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
             set_double_param(param->value, dval);
@@ -2227,8 +2263,13 @@ boolean set_value_from_dispval(LiVESAdjustment * from, lives_param_t *param) {
             lives_free(tmp);
             ret = TRUE;
             break;
-	    // *INDENT-OFF*
-	  }}}}}
+          }
+          if (delback) {
+            weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+            weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
+          }
+	  // *INDENT-OFF*
+	}}}}
   // *INDENT-ON*
   if (ttext) {
     int pnum;
@@ -2244,6 +2285,11 @@ boolean set_value_from_dispval(LiVESAdjustment * from, lives_param_t *param) {
 
 
 boolean set_dispval_from_value(LiVESAdjustment * to, lives_param_t *param, boolean config) {
+  // convert from internal values to display values using "display_value_func" for a
+  // referenced Weed param. Value is taken from the Weed part
+  // for convenience, if "config" is TRUE then min / max are also updated. These values
+  // are taken from the lives_param_t part
+
   LiVESWidget *widget = param->widgets[0];
   lives_rfx_t *rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), RFX_KEY);
   weed_plant_t *inst = (weed_plant_t *)rfx->source;
@@ -2264,38 +2310,51 @@ boolean set_dispval_from_value(LiVESAdjustment * to, lives_param_t *param, boole
         weed_display_value_f disp_func
           = (weed_display_value_f)weed_get_funcptr_value(gui, WEED_LEAF_DISPLAY_VALUE_FUNC, NULL);
         if (disp_func) {
-          char *tmp;
           double dval, dmin = 0., dmax = 0.;
           int ival, imin = 0, imax = 0;
+          boolean delback = FALSE;
           gui = weed_param_get_gui(wparam, TRUE);
-          weed_leaf_copy(wparam, WEED_LEAF_VALUE_BACK, wparam, WEED_LEAF_VALUE);
+          if (!weed_plant_has_leaf(wparam, WEED_LEAF_VALUE_BACK)) {
+            weed_leaf_copy(wparam, WEED_LEAF_VALUE_BACK, wparam, WEED_LEAF_VALUE);
+            delback = TRUE;
+          }
           switch (stype) {
           case WEED_SEED_INT:
-            ival = weed_param_get_value_int(wparam);
+            if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
+              if (delback) {
+                // something went wrong...restore original value
+                weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+                weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
+              }
+              return FALSE;
+            }
+            ival = weed_get_int_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
+
             if (config) {
               imin = (int)param->min;
               imax = (int)param->max;
-
               weed_set_int_value(wparam, WEED_LEAF_VALUE, imin);
               if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
+                if (delback) {
+                  // something went wrong...restore original value
+                  weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+                  weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
+                }
                 return FALSE;
               }
               imin = weed_get_int_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
 
               weed_set_int_value(wparam, WEED_LEAF_VALUE, imax);
               if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
+                if (delback) {
+                  // something went wrong...restore original value
+                  weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+                  weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
+                }
                 return FALSE;
               }
               imax = weed_get_int_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
-              weed_set_int_value(wparam, WEED_LEAF_VALUE, ival);
             }
-
-            if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
-              return FALSE;
-            }
-            ttext = lives_strdup_printf((tmp = _("Real value: %d")), ival);
-            lives_free(tmp);
-            ival = weed_get_int_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
 
             if (!config) lives_adjustment_set_value(to, (double)ival);
             else {
@@ -2305,35 +2364,53 @@ boolean set_dispval_from_value(LiVESAdjustment * to, lives_param_t *param, boole
                   (double)imax);
             }
             ret = TRUE;
+            if (delback) {
+              char *tmp;
+              ttext = lives_strdup_printf((tmp = _("Real value: %d")),
+                                          weed_param_get_value_int(wparam));
+              lives_free(tmp);
+            }
             break;
 
           default:
             // double
-            dval = weed_param_get_value_double(wparam);
+            if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
+              if (delback) {
+                // something went wrong...restore original value
+                weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+                weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
+              }
+              return FALSE;
+            }
+            dval = weed_get_double_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
+
             if (config) {
               dmin = param->min;
               dmax = param->max;
 
               weed_set_double_value(wparam, WEED_LEAF_VALUE, dmin);
               if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
+                if (delback) {
+                  // something went wrong...restore original value
+                  weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+                  weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
+                }
                 return FALSE;
               }
               dmin = weed_get_double_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
 
               weed_set_double_value(wparam, WEED_LEAF_VALUE, dmax);
               if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
+                if (delback) {
+                  // something went wrong...restore original value
+                  weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+                  weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
+                }
                 return FALSE;
               }
               dmax = weed_get_double_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
-
-              weed_set_double_value(wparam, WEED_LEAF_VALUE, dval);
             }
 
-            if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
-              return FALSE;
-            }
-            ttext = lives_strdup_printf((tmp = _("Real value: %*f")), param->dp, dval);
-            lives_free(tmp);
             dval = weed_get_double_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
 
             if (!config) lives_adjustment_set_value(to, dval);
@@ -2343,10 +2420,19 @@ boolean set_dispval_from_value(LiVESAdjustment * to, lives_param_t *param, boole
               lives_adjustment_configure_the_good_bits(to, dval, dmin, dmax);
             }
             ret = TRUE;
+            if (delback) {
+              char *tmp;
+              ttext = lives_strdup_printf((tmp = _("Real value: %*f")), param->dp,
+                                          weed_param_get_value_double(wparam));
+              lives_free(tmp);
+            }
             break;
-	    // *INDENT-OFF*
-	  }
-	  weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+          }
+          if (delback) {
+            weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+            weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
+          }
+	  // *INDENT-OFF*
 	}}}}
   // *INDENT-ON*
   if (ttext) {
@@ -3131,12 +3217,11 @@ char *param_marshall(lives_rfx_t *rfx, boolean with_min_max) {
   // in case of string parameters, these will be surrounded by " and all
   // quotes will be escaped \"
 
-  // the returned string should be lives_free()'ed after use
+  // the returned string should be free()'ed after use
   lives_colRGB48_t rgb;
 
   char *new_return = lives_strdup("");
   char *old_return = new_return;
-  char *return_pattern;
   char *tmp, *mysubst, *mysubst2;
 
   for (int i = 0; i < rfx->num_params; i++) {
@@ -3178,17 +3263,18 @@ char *param_marshall(lives_rfx_t *rfx, boolean with_min_max) {
 
     default:
       if (rfx->params[i].dp) {
-        return_pattern = lives_strdup_printf("%%s %%.%df", rfx->params[i].dp);
-        new_return = lives_strdup_printf(return_pattern, old_return, get_double_param(rfx->params[i].value));
+        new_return = lives_strdup_printf("%1$s %3$.*2$f", old_return, rfx->params[i].dp,
+                                         get_double_param(rfx->params[i].value));
         if (with_min_max) {
           lives_free(old_return);
           old_return = new_return;
-          new_return = lives_strdup_printf(return_pattern, old_return, rfx->params[i].min);
+          new_return = lives_strdup_printf("%1$s %3$.*2$f", old_return, rfx->params[i].dp,
+                                           rfx->params[i].min);
           lives_free(old_return);
           old_return = new_return;
-          new_return = lives_strdup_printf(return_pattern, old_return, rfx->params[i].max);
+          new_return = lives_strdup_printf("%1$s %3$.*2$f", old_return, rfx->params[i].dp,
+                                           rfx->params[i].max);
         }
-        lives_free(return_pattern);
       } else {
         new_return = lives_strdup_printf("%s %d", old_return, get_int_param(rfx->params[i].value));
         if (with_min_max && rfx->params[i].type != LIVES_PARAM_BOOL) {
@@ -3238,77 +3324,103 @@ char *param_marshall(lives_rfx_t *rfx, boolean with_min_max) {
     new_return = lives_strdup(old_return);
   }
   lives_free(old_return);
-
   return new_return;
 }
 
 
-char *reconstruct_string(LiVESList * plist, int start, int *offs) {
+LiVESList *reconstruct_string(LiVESList * plist, char **str) {
   // convert each piece from locale to utf8
   // concat list entries to get reconstruct
   // replace \" with "
-
+  LiVESList *xplist;
   char *word = NULL;
   char *ret = lives_strdup(""), *ret2;
-  char *tmp;
-
   boolean lastword = FALSE;
 
-  register int i;
+  if (str) *str = NULL;
 
-  word = L2U8((char *)lives_list_nth_data(plist, start));
+  if (!plist) return plist;
+
+  word = L2U8((char *)plist->data);
 
   if (!word || !*word || word[0] != '\"') {
     if (word) lives_free(word);
-    return 0;
+    return plist;
   }
 
   word++;
 
-  for (i = start; i < lives_list_length(plist); i++) {
+  for (xplist = plist; xplist; xplist = xplist->next) {
     size_t wl = lives_strlen(word);
-    if (wl > 0) {
+    if (wl) {
       if ((word[wl - 1] == '\"') && (wl == 1 || word[wl - 2] != '\\')) {
         lastword = TRUE;
         lives_memset(word + wl - 1, 0, 1);
       }
     }
 
-    ret2 = lives_strconcat(ret, (tmp = subst(word, "\\\"", "\"")), " ", NULL);
-    lives_free(tmp);
-    if (ret2 != ret) lives_free(ret);
+    if (!*ret) ret2 = subst(word, "\\\"", "\"");
+    else ret2 = lives_concat_sep(ret, " ", subst(word, "\\\"", "\""));
     ret = ret2;
 
-    if (i == start) word--;
+    if (xplist == plist) word--;
     lives_free(word);
 
     if (lastword) break;
 
-    if (i < lives_list_length(plist) - 1) word = L2U8((char *)lives_list_nth_data(plist, i + 1));
+    if (xplist->next) word = L2U8((char *)xplist->next->data);
   }
 
-  set_int_param(offs, i - start + 1);
-
-  // remove trailing space
-  lives_memset(ret + lives_strlen(ret) - 1, 0, 1);
-  return ret;
+  if (xplist) xplist = xplist->next;
+  if (str) *str = ret;
+  else lives_free(ret);
+  return xplist;
 }
 
 
-void param_demarshall(lives_rfx_t *rfx, LiVESList * plist, boolean with_min_max, boolean upd) {
-  int pnum = 0;
-  lives_param_t *param;
-
+LIVES_GLOBAL_INLINE void param_demarshall(lives_rfx_t *rfx, LiVESList * plist,
+    boolean with_min_max, boolean upd) {
   // here we take a LiVESList * of param values, set them in rfx, and if upd is TRUE we also update their visual appearance
 
   // param->widgets[n] are only valid if upd==TRUE
-
-  if (!plist) return;
-
-  for (int i = 0; i < rfx->num_params; i++) {
-    param = &rfx->params[i];
-    pnum = set_param_from_list(plist, param, pnum, with_min_max, upd);
+  for (int i = 0; plist && i < rfx->num_params; i++) {
+    plist = set_param_from_list(plist, &rfx->params[i], with_min_max, upd);
   }
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_param_update_gui_double(lives_param_t *param, double val) {
+  if (!param || param->type != LIVES_PARAM_NUM) return FALSE;
+  if (!param->dp) return FALSE;
+  else {
+    LiVESList *plist = NULL;
+    char *valx = lives_strdup_printf("%.*f", param->dp, val);
+    plist = lives_list_append(plist, valx);
+    set_param_from_list(plist, param, FALSE, TRUE);
+    lives_list_free_all(&plist);
+    return TRUE;
+  }
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_param_update_gui_int(lives_param_t *param, int val) {
+  if (!param || param->type != LIVES_PARAM_NUM) return FALSE;
+  if (param->dp) return FALSE;
+  else {
+    LiVESList *plist = NULL;
+    char *valx = lives_strdup_printf("%d", val);
+    plist = lives_list_append(plist, valx);
+    set_param_from_list(plist, param, FALSE, TRUE);
+    lives_list_free_all(&plist);
+    return TRUE;
+  }
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_param_update_gui_num(lives_param_t *param, double val) {
+  if (!param || param->type != LIVES_PARAM_NUM) return FALSE;
+  if (param->dp > 0) return lives_param_update_gui_double(param, val);
+  return lives_param_update_gui_int(param, (int)val);
 }
 
 
@@ -3317,7 +3429,7 @@ LiVESList *argv_to_marshalled_list(lives_rfx_t *rfx, int argc, char **argv) {
 
   char *tmp, *tmp2, *tmp3;
 
-  register int i;
+  int i;
 
   if (argc == 0) return plist;
 
@@ -3340,73 +3452,76 @@ LiVESList *argv_to_marshalled_list(lives_rfx_t *rfx, int argc, char **argv) {
   if upd is TRUE, the widgets for that param also are updated;
   otherwise, we do not update the widgets, but we do update the default
 
-  for LIVES_PARAM_NUM, setting pnum negative avoids having to send min,max
-  - deprecated, use with_min_max = FALSE
-  (other types dont have a min/max anyway)
+  plist should contain string representions of param value (param min, param max)
 
-  pnum here is not param number, but rather the offset of the element in plist
+  pointer to the next element in plist is returned
 */
-int set_param_from_list(LiVESList * plist, lives_param_t *param, int pnum, boolean with_min_max, boolean upd) {
-  char *tmp;
+LiVESList *set_param_from_list(LiVESList * plist, lives_param_t *param,
+                               boolean with_min_max, boolean upd) {
   char *strval;
   int red, green, blue;
-  int offs = 0;
-  int maxlen = lives_list_length(plist) - 1;
+  int bval;
 
-  if (ABS(pnum) > maxlen) return 0;
+  if (!plist) return NULL;
 
   switch (param->type) {
   case LIVES_PARAM_BOOL:
     if (param->change_blocked) {
-      pnum++;
+      plist = plist->next;
       break;
     }
-    tmp = lives_strdup((char *)lives_list_nth_data(plist, pnum++));
+    bval = !(!atoi((char *)plist->data));
+    plist = plist->next;
     if (upd) {
       if (param->widgets[0] && LIVES_IS_TOGGLE_BUTTON(param->widgets[0])) {
-        lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[0]), atoi(tmp));
-      }
-    } else set_bool_param(param->def, (atoi(tmp)));
-    if (upd && param->widgets[0] && LIVES_IS_TOGGLE_BUTTON(param->widgets[0])) {
-      set_bool_param(param->value,
-                     lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(param->widgets[0])));
-    } else set_bool_param(param->value, (atoi(tmp)));
-    lives_free(tmp);
+        lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[0]), bval);
+        set_bool_param(param->value,
+                       lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(param->widgets[0])));
+      } else set_bool_param(param->value, bval);
+    } else {
+      set_bool_param(param->def, bval);
+      set_bool_param(param->value, bval);
+    }
     break;
   case LIVES_PARAM_NUM:
     if (param->change_blocked) {
-      pnum++;
-      if (with_min_max) pnum += 2;
+      plist = plist->next;
+      if (with_min_max) {
+        if (plist) plist = plist->next;
+        if (plist) plist = plist->next;
+      }
       break;
     }
     if (param->dp) {
-      double double_val;
-      tmp = lives_strdup((char *)lives_list_nth_data(plist, pnum++));
-      double_val = lives_strtod(tmp, NULL);
-      lives_free(tmp);
+      double double_val = lives_strtod((char *)plist->data, NULL);
+      plist = plist->next;
       if (with_min_max) {
-        if (ABS(pnum) > maxlen) return 1;
-        tmp = lives_strdup((char *)lives_list_nth_data(plist, pnum++));
-        param->min = lives_strtod(tmp, NULL);
-        lives_free(tmp);
-        if (ABS(pnum) > maxlen) return 2;
-        tmp = lives_strdup((char *)lives_list_nth_data(plist, pnum++));
-        param->max = lives_strtod(tmp, NULL);
-        lives_free(tmp);
+        if (!plist) break;
+        param->min = lives_strtod((char *)plist->data, NULL);
+        plist = plist->next;
+        if (!plist) break;
+        param->max = lives_strtod((char *)plist->data, NULL);
+        plist = plist->next;
         if (double_val < param->min) double_val = param->min;
         if (double_val > param->max) double_val = param->max;
       }
       if (upd) {
         if (param->widgets[0] && LIVES_IS_SPIN_BUTTON(param->widgets[0])) {
-          lives_rfx_t *rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(param->widgets[0]), RFX_KEY);
+          lives_rfx_t *rfx
+            = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(param->widgets[0]),
+                RFX_KEY);
           LiVESAdjustment *adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(param->widgets[0]));
-          lives_signal_handlers_block_by_func(param->widgets[0], (livespointer)after_param_value_changed, (livespointer)rfx);
+          lives_signal_handlers_block_by_func(param->widgets[0],
+                                              (livespointer)after_param_value_changed,
+                                              (livespointer)rfx);
           if (with_min_max) lives_adjustment_configure_the_good_bits(adj, double_val,
                 param->min, param->max);
           rfx->flags |= RFX_FLAGS_UPD_FROM_VAL;
           set_dispval_from_value(adj, param, with_min_max);
           rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
-          lives_signal_handlers_unblock_by_func(param->widgets[0], (livespointer)after_param_value_changed, (livespointer)rfx);
+          lives_signal_handlers_unblock_by_func(param->widgets[0],
+                                                (livespointer)after_param_value_changed,
+                                                (livespointer)rfx);
         }
       } else set_double_param(param->def, double_val);
       if (upd && param->widgets[0] && LIVES_IS_SPIN_BUTTON(param->widgets[0])) {
@@ -3416,9 +3531,8 @@ int set_param_from_list(LiVESList * plist, lives_param_t *param, int pnum, boole
     } else {
       int int_value;
       int int_min, int_max;
-      tmp = lives_strdup((char *)lives_list_nth_data(plist, pnum++));
-      int_value = atoi(tmp);
-      lives_free(tmp);
+      int_value = atoi((char *)plist->data);
+      plist = plist->next;
       if (param->step_size > 1.)
         int_value = (int)((double)int_value / param->step_size + .5) * (int)param->step_size;
       int_min = (int)param->min;
@@ -3427,14 +3541,12 @@ int set_param_from_list(LiVESList * plist, lives_param_t *param, int pnum, boole
       if (int_value > int_max) int_value = int_max;
 
       if (with_min_max) {
-        if (ABS(pnum) > maxlen) return 1;
-        tmp = lives_strdup((char *)lives_list_nth_data(plist, pnum++));
-        int_min = atoi(tmp);
-        lives_free(tmp);
-        if (ABS(pnum) > maxlen) return 2;
-        tmp = lives_strdup((char *)lives_list_nth_data(plist, pnum++));
-        int_max = atoi(tmp);
-        lives_free(tmp);
+        if (!plist) break;
+        int_min = atoi((char *)plist->data);
+        plist = plist->next;
+        if (!plist) break;
+        int_max = atoi((char *)plist->data);
+        plist = plist->next;
         if (int_value < int_min) int_value = int_min;
         if (int_value > int_max) int_value = int_max;
         param->min = (double)int_min;
@@ -3442,15 +3554,21 @@ int set_param_from_list(LiVESList * plist, lives_param_t *param, int pnum, boole
       }
       if (upd) {
         if (param->widgets[0] && LIVES_IS_SPIN_BUTTON(param->widgets[0])) {
-          lives_rfx_t *rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(param->widgets[0]), RFX_KEY);
+          lives_rfx_t *rfx
+            = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(param->widgets[0]),
+                RFX_KEY);
           LiVESAdjustment *adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(param->widgets[0]));
-          lives_signal_handlers_block_by_func(param->widgets[0], (livespointer)after_param_value_changed, (livespointer)rfx);
+          lives_signal_handlers_block_by_func(param->widgets[0],
+                                              (livespointer)after_param_value_changed,
+                                              (livespointer)rfx);
           if (with_min_max) lives_adjustment_configure_the_good_bits(adj, int_value,
                 param->min, param->max);
           rfx->flags |= RFX_FLAGS_UPD_FROM_VAL;
           set_dispval_from_value(adj, param, with_min_max);
           rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
-          lives_signal_handlers_unblock_by_func(param->widgets[0], (livespointer)after_param_value_changed, (livespointer)rfx);
+          lives_signal_handlers_unblock_by_func(param->widgets[0],
+                                                (livespointer)after_param_value_changed,
+                                                (livespointer)rfx);
         }
       } else set_int_param(param->def, int_value);
       if (upd && param->widgets[0] && LIVES_IS_SPIN_BUTTON(param->widgets[0])) {
@@ -3460,17 +3578,14 @@ int set_param_from_list(LiVESList * plist, lives_param_t *param, int pnum, boole
     }
     break;
   case LIVES_PARAM_COLRGB24:
-    tmp = lives_strdup((char *)lives_list_nth_data(plist, pnum++));
-    red = atoi(tmp);
-    lives_free(tmp);
-    if (ABS(pnum) > maxlen) return 1;
-    tmp = lives_strdup((char *)lives_list_nth_data(plist, pnum++));
-    green = atoi(tmp);
-    lives_free(tmp);
-    if (ABS(pnum) > maxlen) return 2;
-    tmp = lives_strdup((char *)lives_list_nth_data(plist, pnum++));
-    blue = atoi(tmp);
-    lives_free(tmp);
+    red = atoi((char *)plist->data);
+    plist = plist->next;
+    if (!plist) break;
+    green = atoi((char *)plist->data);
+    plist = plist->next;
+    if (!plist) break;
+    blue = atoi((char *)plist->data);
+    plist = plist->next;
     if (param->change_blocked) break;
     if (upd) {
       if (param->widgets[0] && LIVES_IS_SPIN_BUTTON(param->widgets[0])) {
@@ -3493,8 +3608,7 @@ int set_param_from_list(LiVESList * plist, lives_param_t *param, int pnum, boole
     } else set_colRGB24_param(param->value, red, green, blue);
     break;
   case LIVES_PARAM_STRING:
-    strval = reconstruct_string(plist, pnum, &offs);
-    pnum += offs;
+    plist = reconstruct_string(plist, &strval);
     if (param->change_blocked) {
       lives_free(strval);
       break;
@@ -3505,7 +3619,6 @@ int set_param_from_list(LiVESList * plist, lives_param_t *param, int pnum, boole
           lives_text_view_set_text(LIVES_TEXT_VIEW(param->widgets[0]), strval, -1);
         } else {
           lives_entry_set_text(LIVES_ENTRY(param->widgets[0]), strval);
-
         }
       }
     } else {
@@ -3528,13 +3641,13 @@ int set_param_from_list(LiVESList * plist, lives_param_t *param, int pnum, boole
     }
     break;
   case LIVES_PARAM_STRING_LIST: {
-    int int_value;
-    tmp = lives_strdup((char *)lives_list_nth_data(plist, pnum++));
-    int_value = atoi(tmp);
-    lives_free(tmp);
+    int int_value = atoi((char *)plist->data);
+    plist = plist->next;
     if (param->change_blocked) break;
-    if (upd && param->widgets[0] && LIVES_IS_COMBO(param->widgets[0]) && int_value < lives_list_length(param->list))
-      lives_combo_set_active_string(LIVES_COMBO(param->widgets[0]), (char *)lives_list_nth_data(param->list, int_value));
+    if (upd && param->widgets[0] && LIVES_IS_COMBO(param->widgets[0])
+        && int_value < lives_list_length(param->list))
+      lives_combo_set_active_string(LIVES_COMBO(param->widgets[0]),
+                                    (char *)lives_list_nth_data(param->list, int_value));
     if (!upd) set_int_param(param->def, int_value);
     if (upd && param->widgets[0] && LIVES_IS_COMBO(param->widgets[0])) {
       const char *txt = lives_combo_get_active_text(LIVES_COMBO(param->widgets[0]));
@@ -3543,10 +3656,9 @@ int set_param_from_list(LiVESList * plist, lives_param_t *param, int pnum, boole
     } else set_int_param(param->value, int_value);
     break;
   }
-  default:
-    break;
+  default: break;
   }
-  return pnum;
+  return plist;
 }
 
 
@@ -3586,10 +3698,10 @@ LiVESList *do_onchange(LiVESWidgetObject * object, lives_rfx_t *rfx) {
       handle = cfile->handle;
     }
 
-    com = lives_strdup_printf("%s \"fxinit_%s\" \"%s\" \"%s\" %d %d %s", prefs->backend_sync, rfx->name, handle, plugdir,
+    com = lives_strdup_printf("%s \"fxinit_%s\" \"%s\" \"%s\" %d %d %s", prefs->backend_sync,
+                              rfx->name, handle, plugdir,
                               width, height, (tmp = param_marshall(rfx, TRUE)));
     retvals = plugin_request_by_space(NULL, NULL, com);
-
     lives_free(tmp);
     lives_free(plugdir);
   } else {
@@ -3727,7 +3839,7 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
         list = lives_list_append(list, lives_strdup_printf("%d", vali));
         list = lives_list_append(list, lives_strdup_printf("%d", mini));
         list = lives_list_append(list, lives_strdup_printf("%d", maxi));
-        set_param_from_list(list, &rfx->params[i], 0, TRUE, TRUE);
+        set_param_from_list(list, &rfx->params[i], TRUE, TRUE);
         lives_list_free_all(&list);
 
         break;
@@ -3756,7 +3868,7 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
 
         lives_free(pattern);
 
-        set_param_from_list(list, &rfx->params[i], 0, TRUE, TRUE);
+        set_param_from_list(list, &rfx->params[i], TRUE, TRUE);
         lives_list_free_all(&list);
 
         break;
@@ -3766,7 +3878,7 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
         lives_free(valis);
 
         list = lives_list_append(list, lives_strdup_printf("%d", vali));
-        set_param_from_list(list, &rfx->params[i], 0, FALSE, TRUE);
+        set_param_from_list(list, &rfx->params[i], FALSE, TRUE);
         lives_list_free_all(&list);
 
         break;
@@ -3776,7 +3888,7 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
         list = lives_list_append(list, lives_strdup_printf("\"%s\"", (tmp = U82L(tmp2 = subst(vals, "\"", "\\\"")))));
         lives_free(tmp);
         lives_free(tmp2);
-        set_param_from_list(list, &rfx->params[i], 0, FALSE, TRUE);
+        set_param_from_list(list, &rfx->params[i], FALSE, TRUE);
         for (j = 0; j < numvals; j++) {
           lives_free(valss[j]);
         }
@@ -3827,7 +3939,7 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
             list = lives_list_append(list, lives_strdup_printf("%d", colsi[1]));
             list = lives_list_append(list, lives_strdup_printf("%d", colsi[2]));
 
-            set_param_from_list(list, &rfx->params[i], 0, FALSE, TRUE);
+            set_param_from_list(list, &rfx->params[i], FALSE, TRUE);
 
             lives_list_free_all(&list);
             lives_free(colsis);
@@ -3866,7 +3978,7 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
             list = lives_list_append(list, lives_strdup_printf("%.2f", colsd[0]));
             list = lives_list_append(list, lives_strdup_printf("%.2f", colsd[1]));
             list = lives_list_append(list, lives_strdup_printf("%.2f", colsd[2]));
-            set_param_from_list(list, &rfx->params[i], 0, FALSE, TRUE);
+            set_param_from_list(list, &rfx->params[i], FALSE, TRUE);
 
             lives_list_free_all(&list);
             lives_free(colsds);

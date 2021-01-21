@@ -1194,7 +1194,7 @@ int check_for_bad_ffmpeg(void) {
 
 LIVES_GLOBAL_INLINE char *lives_concat_sep(char *st, const char *sep, char *x) {
   /// nb: lives strconcat
-  // uses realloc / memcpy, frees x
+  // uses realloc / memcpy, frees x; st becomes invalind
   char *tmp;
   if (st) {
     size_t s1 = lives_strlen(st), s2 = lives_strlen(x), s3 = lives_strlen(sep);
@@ -1208,7 +1208,7 @@ LIVES_GLOBAL_INLINE char *lives_concat_sep(char *st, const char *sep, char *x) {
 
 LIVES_GLOBAL_INLINE char *lives_concat(char *st, char *x) {
   /// nb: lives strconcat
-  // uses realloc / memcpy, frees x
+  // uses realloc / memcpy, frees x; st becomes invalid
   size_t s1 = lives_strlen(st), s2 = lives_strlen(x);
   char *tmp = (char *)lives_realloc(st, ++s2 + s1);
   lives_memcpy(tmp + s1, x, s2);

@@ -545,8 +545,8 @@ LIVES_GLOBAL_INLINE weed_plant_t *render_text_overlay(weed_layer_t *layer, const
   else {
     lives_colRGBA64_t col_white = lives_rgba_col_new(65535, 65535, 65535, 65535);
     lives_colRGBA64_t col_black_a = lives_rgba_col_new(0, 0, 0, SUB_OPACITY);
-    int size = weed_layer_get_width(layer) / 32;
-    const char *font = "Sans";
+    const char *font_name = widget_opts.font_name;
+    int font_size = weed_layer_get_width(layer) / 32;
     boolean fake_gamma = FALSE;
 
     if (prefs->apply_gamma) {
@@ -558,8 +558,9 @@ LIVES_GLOBAL_INLINE weed_plant_t *render_text_overlay(weed_layer_t *layer, const
       }
     }
 
-    layer =  render_text_to_layer(layer, text, font, size,
-                                  LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND, &col_white, &col_black_a, TRUE, FALSE, 0.1);
+    layer =  render_text_to_layer(layer, text, font_name, font_size,
+                                  LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,
+                                  &col_white, &col_black_a, TRUE, FALSE, 0.1);
     if (fake_gamma)
       weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
   }
@@ -568,13 +569,20 @@ LIVES_GLOBAL_INLINE weed_plant_t *render_text_overlay(weed_layer_t *layer, const
 
 
 weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const char *fontname,
-                                   double size, lives_text_mode_t mode, lives_colRGBA64_t *fg_col, lives_colRGBA64_t *bg_col,
+                                   double size, lives_text_mode_t mode, lives_colRGBA64_t *fg_col,
+                                   lives_colRGBA64_t *bg_col,
                                    boolean center, boolean rising, double top) {
   // render text to layer and return a new layer, which may have a new "rowstrides", "width" and/or "current_palette"
   // original layer pixel_data is freed in the process and should not be re-used
 
   lives_painter_t *cr = NULL;
   LingoLayout *layout;
+
+#ifdef LIVES_PAINTER_IS_CAIRO
+  cairo_antialias_t antialias;
+  cairo_font_options_t *ftopts = cairo_font_options_create();
+#endif
+
   weed_layer_t *test_layer, *layer_slice;
   uint8_t *src, *pd;
   int row = weed_layer_get_rowstride(layer);
@@ -650,7 +658,18 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
       }
 
       cr = layer_to_lives_painter(layer_slice);
-      layout = render_text_to_cr(NULL, cr, text, fontname, size, mode, fg_col, bg_col, center, FALSE, &ztop, &offsx, width, &height);
+
+#ifdef LIVES_PAINTER_IS_CAIRO
+      if (prefs->pb_quality == PB_QUALITY_LOW) antialias = CAIRO_ANTIALIAS_NONE;
+      else if (prefs->pb_quality == PB_QUALITY_MED) antialias = CAIRO_ANTIALIAS_FAST;
+      else antialias = CAIRO_ANTIALIAS_GOOD; // BEST is broken (?)t
+      cairo_get_font_options(cr, ftopts);
+      cairo_font_options_set_antialias(ftopts, antialias);
+      cairo_set_font_options(cr, ftopts);
+#endif
+
+      layout = render_text_to_cr(NULL, cr, text, fontname, size, mode, fg_col, bg_col, center,
+                                 FALSE, &ztop, &offsx, width, &height);
       if (layout && LINGO_IS_LAYOUT(layout)) {
         lingo_painter_show_layout(cr, layout);
         lives_widget_object_unref(layout);

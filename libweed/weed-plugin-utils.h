@@ -126,7 +126,7 @@ FN_DECL weed_plant_t *weed_out_param_integer_init_nominmax(const char *name, int
 FN_DECL weed_plant_t *weed_out_param_integer_init(const char *name, int def, int min, int max) ALLOW_UNUSED;
 
 // value setters
-FN_DECL void weed_plugin_set_package_version(weed_plant_t *pi, int v);
+FN_DECL weed_error_t weed_plugin_set_package_version(weed_plant_t *plugin_info, int version);
 FN_DECL void weed_filter_set_flags(weed_plant_t *filter, int flags);
 FN_DECL void weed_chantmpl_set_flags(weed_plant_t *chantmpl, int flags);
 FN_DECL void weed_paramtmpl_set_flags(weed_plant_t *paramtmpl, int flags);
@@ -134,8 +134,10 @@ FN_DECL void weed_gui_set_flags(weed_plant_t *gui, int flags);
 FN_DECL void weed_filter_set_name(weed_plant_t *filter, const char *name);
 FN_DECL void weed_chantmpl_set_name(weed_plant_t *chantmpl, const char *name);
 FN_DECL void weed_paramtmpl_set_name(weed_plant_t *paramtmpl, const char *name);
-FN_DECL void weed_paramtmpl_declare_transition(weed_plant_t *pt);
-//FN_DECL void weed_chantmpl_set_palette_list()
+FN_DECL weed_error_t weed_paramtmpl_set_hidden(weed_plant_t *paramtmpl, int hidden);
+FN_DECL weed_error_t weed_param_set_hidden(weed_plant_t *param, int hidden);
+FN_DECL weed_error_t weed_paramtmpl_declare_transition(weed_plant_t *paramtmpl);
+//FN_DECL weed_error_t weed_chantmpl_set_palette_list()
 
 // value getters
 
@@ -158,7 +160,7 @@ FN_DECL int weed_filter_get_version(weed_plant_t *filter);
 FN_DECL weed_plant_t *weed_filter_get_gui(weed_plant_t *filter) ALLOW_UNUSED;
 
 // param_tmpl
-FN_DECL weed_plant_t *weed_paramtmpl_get_gui(weed_plant_t *paramt) ALLOW_UNUSED;
+FN_DECL weed_plant_t *weed_paramtmpl_get_gui(weed_plant_t *paramtmpl) ALLOW_UNUSED;
 FN_DECL int weed_paramtmpl_get_flags(weed_plant_t *paramtmpl);
 
 // chan tmpl
@@ -186,7 +188,7 @@ FN_DECL weed_plant_t *weed_audio_channel_template_init(const char *name, int fla
 FN_DECL int weed_channel_get_audio_rate(weed_plant_t *channel);
 FN_DECL int weed_channel_get_naudchans(weed_plant_t *channel);
 FN_DECL int weed_channel_get_audio_length(weed_plant_t *channel);
-FN_DECL void weed_paramtmpl_declare_volume_master(weed_plant_t *pt);
+FN_DECL weed_error_t weed_paramtmpl_declare_volume_master(weed_plant_t *paramtmpl);
 #ifdef __WEED_UTILS_H__
 FN_DECL float **weed_channel_get_audio_data(weed_plant_t *channel, int *naudchans);
 #endif
@@ -197,6 +199,9 @@ FN_DECL int weed_channel_is_disabled(weed_plant_t *channel);
 // params
 FN_DECL weed_plant_t  *weed_param_get_template(weed_plant_t *param);
 FN_DECL weed_plant_t *weed_param_get_gui(weed_plant_t *param) ALLOW_UNUSED;
+
+
+FN_DECL int weed_gui_get_flags(weed_plant_t *gui);
 
 // param values
 FN_DECL int weed_param_get_value_int(weed_plant_t *param);

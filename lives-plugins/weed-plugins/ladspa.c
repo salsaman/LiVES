@@ -426,7 +426,7 @@ static weed_error_t ladspa_disp(weed_plant_t *inst, weed_plant_t *param, int inv
         if (is_srate) ival = ((double)ival / (double)arate + .5);
         if (is_log) ival = (int)(expf((float)ival) + .5);
       }
-      return weed_set_int_value(gui, "display_value", ival);
+      return weed_set_int_value(gui, WEED_LEAF_DISPLAY_VALUE, ival);
     }
     dval = weed_param_get_value_double(param);
     if (inverse == WEED_FALSE) {
@@ -439,7 +439,7 @@ static weed_error_t ladspa_disp(weed_plant_t *inst, weed_plant_t *param, int inv
       if (is_srate) dval /= (double)arate;
       if (is_log) dval = exp(dval);
     }
-    return weed_set_double_value(gui, "display_value", dval);
+    return weed_set_double_value(gui, WEED_LEAF_DISPLAY_VALUE, dval);
   }
 }
 
@@ -776,10 +776,12 @@ WEED_SETUP_START(200, 200) {
 
                 if (is_log || is_srate) {
                   gui = weed_paramtmpl_get_gui(in_params[cninps]);
-                  weed_set_funcptr_value(gui, "display_value_func", (weed_funcptr_t)ladspa_disp);
+                  weed_set_funcptr_value(gui, WEED_LEAF_DISPLAY_VALUE_FUNC,
+                                         (weed_funcptr_t)ladspa_disp);
                   if (dual == WEED_TRUE) {
                     gui = weed_paramtmpl_get_gui(in_params[cninps + oninps]);
-                    weed_set_funcptr_value(gui, "display_value_func", (weed_funcptr_t)ladspa_disp);
+                    weed_set_funcptr_value(gui, WEED_LEAF_DISPLAY_VALUE_FUNC,
+                                           (weed_funcptr_t)ladspa_disp);
                   }
                 }
               }

@@ -104,21 +104,31 @@ static inline void _weed_plant_set_name(weed_plant_t *p, const char *n) {
 static inline void weed_filter_set_name(weed_plant_t *f, const char *n) {_weed_plant_set_name(f, n);}
 static inline void weed_chantmpl_set_name(weed_plant_t *c, const char *n) {_weed_plant_set_name(c, n);}
 static inline void weed_paramtmpl_set_name(weed_plant_t *p, const char *n) {_weed_plant_set_name(p, n);}
-static inline void weed_paramtmpl_declare_transition(weed_plant_t *pt)
-{wls(pt, WEED_LEAF_IS_TRANSITION, WEED_SEED_BOOLEAN, 1, &wtrue);}
-static inline void weed_plugin_set_package_version(weed_plant_t *pi, int v)
-{wls(pi, WEED_LEAF_VERSION, WEED_SEED_INT, 1, &v);}
+static inline weed_error_t weed_paramtmpl_set_hidden(weed_plant_t *pt, int h) {
+  return wls(_weed_get_gui(pt), WEED_LEAF_HIDDEN, WEED_SEED_BOOLEAN, 1, &h);
+}
+static inline weed_error_t weed_param_set_hidden(weed_plant_t *p, int h) {
+  return wls(_weed_get_gui(p), WEED_LEAF_HIDDEN, WEED_SEED_BOOLEAN, 1, &h);
+}
+static inline weed_error_t weed_paramtmpl_declare_transition(weed_plant_t *pt) {
+  return wls(pt, WEED_LEAF_IS_TRANSITION, WEED_SEED_BOOLEAN, 1, &wtrue);
+}
+static inline weed_error_t weed_plugin_set_package_version(weed_plant_t *pi, int v) {
+  return  wls(pi, WEED_LEAF_VERSION, WEED_SEED_INT, 1, &v);
+}
 static inline weed_plant_t *weed_filter_get_gui(weed_plant_t *f) {return _weed_get_gui(f);}
 static inline weed_plant_t *weed_param_get_gui(weed_plant_t *p) {return _weed_get_gui(p);}
 static inline weed_plant_t *weed_paramtmpl_get_gui(weed_plant_t *pt) {return _weed_get_gui(pt);}
 static inline weed_plant_t *weed_instance_get_gui(weed_plant_t *i) {return _weed_get_gui(i);}
-static inline weed_plant_t *weed_get_host_info(weed_plant_t *pi)
-{weed_plant_t *hi; return *((weed_plant_t **)(gg(pi, WEED_LEAF_HOST_INFO, 0, (void *)&hi)));}
+static inline weed_plant_t *weed_get_host_info(weed_plant_t *pi) {
+  weed_plant_t *hi; return *((weed_plant_t **)(gg(pi, WEED_LEAF_HOST_INFO, 0, (void *)&hi)));
+}
 static inline int weed_get_host_verbosity(weed_plant_t *hi) {return gg_i(hi, WEED_LEAF_VERBOSITY);}
 static inline int _weed_plant_get_flags(weed_plant_t *p) {return gg_i(p, WEED_LEAF_FLAGS);}
 static inline int weed_host_get_flags(weed_plant_t *h) {return _weed_plant_get_flags(h);}
 static inline int weed_filter_get_flags(weed_plant_t *f) {return _weed_plant_get_flags(f);}
 static inline int weed_filter_get_version(weed_plant_t *f) {return gg_i(f, WEED_LEAF_VERSION);}
+static inline int weed_gui_get_flags(weed_plant_t *g) {return _weed_plant_get_flags(g);}
 static inline int weed_chantmpl_get_flags(weed_plant_t *c) {return _weed_plant_get_flags(c);}
 static inline int weed_paramtmpl_get_type(weed_plant_t *p) {return gg_i(p, WEED_LEAF_PARAM_TYPE);}
 static inline int weed_paramtmpl_get_flags(weed_plant_t *p) {return _weed_plant_get_flags(p);}
@@ -750,24 +760,22 @@ static inline double drand(double max)
 static inline uint64_t xorshift(uint64_t x) {x ^= x << 13; x ^= x >> 7; return x ^ (x << 17);}
 
 static inline uint64_t fastrand(uint64_t oldval) {
-  // pseudo-random number generator
+  // pseudo-random number generators
   static uint64_t val = 0;
   if (!val) {
 #if defined _WIN32 || defined __CYGWIN__ || defined IS_MINGW
     uint32_t rval, rval2; val++; rand_s(&rval); rand_s(&rval2); val = fastrand(((uint64_t)rval << 32) | (uint64_t)rval2) + 1;
 #else
     struct timeval t; gettimeofday(&t, NULL); srand48(t.tv_sec & 0xFFFFFFFFFFFF);
-    val = ((uint64_t)(lrand48() << 32) ^ (uint64_t)(lrand48())) + 1;
+    val = ((uint64_t)(lrand48() << 16) ^ (uint64_t)(lrand48())) + 1;
 #endif
   }
-  return (val = xorshift(xorshift(val) + xorshift(oldval)));
+  return (val = xorshift(val));
 }
 
 static inline double fastrand_dbl(double range) {
-  static uint64_t oldval = 1;
   static const double divd = (double)(0xFFFFFFFF);
-  oldval = fastrand(oldval);
-  double val = (double)oldval / divd;
+  double val = (double)fastrand(0.) / divd;
   return val / divd * range;
 }
 

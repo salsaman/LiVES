@@ -870,12 +870,18 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
                                        LIVES_STOCK_SAVE, _("Save all Defaults"), LIVES_RESPONSE_ACCEPT);
         lives_dialog_make_widget_first(LIVES_DIALOG(fx_dialog[didx]->dialog),
                                        fx_dialog[didx]->savebutton);
+        lives_signal_sync_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->savebutton),
+                                  LIVES_WIDGET_CLICKED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(on_save_rte_defs_activate), NULL);
       }
 
-      fx_dialog[didx]->resetbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]->dialog),
-                                     LIVES_STOCK_REVERT_TO_SAVED, _("Reset"), LIVES_RESPONSE_RESET);
-      fx_dialog[didx]->okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]->dialog), LIVES_STOCK_APPLY,
-                                  _("Set as default"), LIVES_RESPONSE_OK);
+      fx_dialog[didx]->resetbutton
+        = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]->dialog),
+                                             LIVES_STOCK_REVERT_TO_SAVED,
+                                             _("Reset"), LIVES_RESPONSE_RESET);
+      fx_dialog[didx]->okbutton
+        = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]->dialog), LIVES_STOCK_APPLY,
+                                             _("Set as default"), LIVES_RESPONSE_OK);
       if (!has_param) {
         lives_widget_set_sensitive(fx_dialog[didx]->resetbutton, FALSE);
         lives_widget_set_sensitive(fx_dialog[didx]->okbutton, FALSE);
@@ -1490,7 +1496,11 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
 
   lives_box_pack_start(LIVES_BOX(top_vbox), scrolledwindow, TRUE, TRUE, 0);
   lives_widget_destroy(dummy_label);
-  if (has_param) update_widget_vis(rfx, -1, -1);
+  if (has_param) {
+    rfx->flags |= RFX_FLAGS_UPD_FROM_VAL;
+    update_widget_vis(rfx, -1, -1);
+    rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
+  }
   return has_param;
 }
 
@@ -1966,7 +1976,7 @@ boolean update_widget_vis(lives_rfx_t *rfx, int key, int mode) {
           if (rfx->flags & RFX_FLAGS_UPD_FROM_GUI) {
             set_value_from_dispval(lives_spin_button_get_adjustment
                                    (LIVES_SPIN_BUTTON(param->widgets[0])), param);
-          } else {
+          } else if (rfx->flags & RFX_FLAGS_UPD_FROM_VAL) {
             lives_signal_handlers_block_by_func(param->widgets[0],
                                                 (livespointer)after_param_value_changed,
                                                 (livespointer)rfx);
@@ -2164,8 +2174,8 @@ static weed_error_t run_disp_func(weed_display_value_f disp_func, weed_plant_t *
                                   weed_plant_t *wparam, int inverse) {
   static boolean in_reinit = FALSE;
   weed_error_t werr = (*disp_func)(inst, wparam, inverse);
-  if (werr == WEED_ERROR_REINIT_NEEDED) {
 
+  if (werr == WEED_ERROR_REINIT_NEEDED) {
     if (in_reinit) {
       return WEED_ERROR_FILTER_INVALID;
     }
@@ -2238,16 +2248,19 @@ boolean set_value_from_dispval(LiVESAdjustment * from, lives_param_t *param) {
             }
             ival = weed_get_int_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
             set_int_param(param->value, ival);
-            ttext = lives_strdup_printf((tmp = _("Real value: %d")), ival);
-            lives_free(tmp);
             ret = TRUE;
+            if (delback) {
+              weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+              ttext = lives_strdup_printf((tmp = _("Real value: %d")), ival);
+              lives_free(tmp);
+              weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
+            }
             break;
 
           default:
             // double
-            dval = weed_param_get_value_double(wparam);
+            //dval = weed_param_get_value_double(wparam);
             weed_set_double_value(wparam, WEED_LEAF_VALUE, lives_adjustment_get_value(from));
-            weed_leaf_copy(wparam, WEED_LEAF_VALUE_BACK, wparam, WEED_LEAF_VALUE);
             if (run_disp_func(disp_func, inst, wparam, WEED_TRUE) != WEED_SUCCESS) {
               if (delback) {
                 weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
@@ -2255,18 +2268,16 @@ boolean set_value_from_dispval(LiVESAdjustment * from, lives_param_t *param) {
               }
               return FALSE;
             }
-            weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
-            weed_set_double_value(wparam, WEED_LEAF_VALUE, dval);
             dval = weed_get_double_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
             set_double_param(param->value, dval);
-            ttext = lives_strdup_printf((tmp = _("Real value: %*f")), param->dp, dval);
-            lives_free(tmp);
             ret = TRUE;
+            if (delback) {
+              weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
+              ttext = lives_strdup_printf((tmp = _("Real value: %*f")), param->dp, dval);
+              lives_free(tmp);
+              weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
+            }
             break;
-          }
-          if (delback) {
-            weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
-            weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
           }
 	  // *INDENT-OFF*
 	}}}}
@@ -2320,12 +2331,14 @@ boolean set_dispval_from_value(LiVESAdjustment * to, lives_param_t *param, boole
           }
           switch (stype) {
           case WEED_SEED_INT:
+            rfx->flags |= RFX_FLAGS_UPD_FROM_VAL;
             if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
               if (delback) {
                 // something went wrong...restore original value
                 weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
                 weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
               }
+              rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
               return FALSE;
             }
             ival = weed_get_int_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
@@ -2334,16 +2347,19 @@ boolean set_dispval_from_value(LiVESAdjustment * to, lives_param_t *param, boole
               imin = (int)param->min;
               imax = (int)param->max;
               weed_set_int_value(wparam, WEED_LEAF_VALUE, imin);
+              rfx->flags |= RFX_FLAGS_UPD_FROM_VAL;
               if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
                 if (delback) {
                   // something went wrong...restore original value
                   weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
                   weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
                 }
+                rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
                 return FALSE;
               }
               imin = weed_get_int_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
 
+              rfx->flags |= RFX_FLAGS_UPD_FROM_VAL;
               weed_set_int_value(wparam, WEED_LEAF_VALUE, imax);
               if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
                 if (delback) {
@@ -2351,10 +2367,12 @@ boolean set_dispval_from_value(LiVESAdjustment * to, lives_param_t *param, boole
                   weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
                   weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
                 }
+                rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
                 return FALSE;
               }
               imax = weed_get_int_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
             }
+            rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
 
             if (!config) lives_adjustment_set_value(to, (double)ival);
             else {
@@ -2374,12 +2392,14 @@ boolean set_dispval_from_value(LiVESAdjustment * to, lives_param_t *param, boole
 
           default:
             // double
+            rfx->flags |= RFX_FLAGS_UPD_FROM_VAL;
             if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
               if (delback) {
                 // something went wrong...restore original value
                 weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
                 weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
               }
+              rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
               return FALSE;
             }
             dval = weed_get_double_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
@@ -2389,29 +2409,32 @@ boolean set_dispval_from_value(LiVESAdjustment * to, lives_param_t *param, boole
               dmax = param->max;
 
               weed_set_double_value(wparam, WEED_LEAF_VALUE, dmin);
+              rfx->flags |= RFX_FLAGS_UPD_FROM_VAL;
               if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
                 if (delback) {
                   // something went wrong...restore original value
                   weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
                   weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
                 }
+                rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
                 return FALSE;
               }
               dmin = weed_get_double_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
 
               weed_set_double_value(wparam, WEED_LEAF_VALUE, dmax);
+              rfx->flags |= RFX_FLAGS_UPD_FROM_VAL;
               if (run_disp_func(disp_func, inst, wparam, WEED_FALSE) != WEED_SUCCESS) {
                 if (delback) {
                   // something went wrong...restore original value
                   weed_leaf_copy(wparam, WEED_LEAF_VALUE, wparam, WEED_LEAF_VALUE_BACK);
                   weed_leaf_delete(wparam, WEED_LEAF_VALUE_BACK);
                 }
+                rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
                 return FALSE;
               }
               dmax = weed_get_double_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
             }
-
-            dval = weed_get_double_value(gui, WEED_LEAF_DISPLAY_VALUE, NULL);
+            rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
 
             if (!config) lives_adjustment_set_value(to, dval);
             else {

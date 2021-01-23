@@ -1846,7 +1846,7 @@ static void on_params_clicked(LiVESButton * button, livespointer user_data) {
   fx_dialog[1]->key = key;
   fx_dialog[1]->mode = mode;
   fx_dialog[1]->rfx = rfx;
-  weed_instance_unref(inst);
+  //weed_instance_unref(inst);
 }
 
 

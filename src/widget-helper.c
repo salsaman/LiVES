@@ -1573,7 +1573,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_now(LiVESWidget *widget) {
 }
 
 
-LIVES_GLOBAL_INLINE boolean lives_widget_destroy(LiVESWidget *widget) {
+LIVES_LOCAL_INLINE boolean _lives_widget_destroy(LiVESWidget *widget) {
 #ifdef GUI_GTK
   if (GTK_IS_WIDGET(widget))
     gtk_widget_destroy(widget);
@@ -1583,10 +1583,12 @@ LIVES_GLOBAL_INLINE boolean lives_widget_destroy(LiVESWidget *widget) {
 }
 
 
-WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_destroy(LiVESWidget *widget) {
-  /* boolean ret; */
-  /* main_thread_execute((lives_funcptr_t)_lives_widget_destroy, WEED_SEED_BOOLEAN, &ret, "v", widget); */
-  /* return ret; */
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_destroy(LiVESWidget *widget) {
+  if (mainw && mainw->is_ready) {
+    boolean ret;
+    main_thread_execute((lives_funcptr_t)_lives_widget_destroy, WEED_SEED_BOOLEAN, &ret, "v", widget);
+    return ret;
+  }
   return lives_widget_destroy(widget);
 }
 

@@ -195,7 +195,7 @@ typedef int lives_pgid_t;
 #endif
 
 #define LIVES_DIR_SEP "/"
-#define LIVES_COPYRIGHT_YEARS "2002 - 2020"
+#define LIVES_COPYRIGHT_YEARS "2002 - 2021"
 
 #if defined (IS_DARWIN) || defined (IS_FREEBSD)
 #ifndef off64_t
@@ -258,7 +258,8 @@ typedef int lives_pgid_t;
 
 #define URL_MAX 2048
 
-#define strip_ext(fname) lives_strdup((char *)(fname ? strrchr(fname, '.') ? lives_memset(strrchr(fname, '.'), 0, 1) \
+#define strip_ext(fname) lives_strdup((char *)(fname ? strrchr(fname, '.') \
+					       ? lives_memset(strrchr(fname, '.'), 0, 1) \
 					       ? fname : fname : fname : NULL))
 #ifdef NEED_ENDIAN_TEST
 #undef NEED_ENDIAN_TEST
@@ -368,7 +369,7 @@ typedef struct {
 
 #define XCAPABLE(foo, EXE_FOO) ((capable->has_##foo->present == UNCHECKED \
 				 ? ((capable->has_##foo->present =	\
-							 (has_executable(EXE_FOO) ? PRESENT : MISSING))) : \
+				     (has_executable(EXE_FOO) ? PRESENT : MISSING))) : \
 				 capable->has_##foo->present) == PRESENT)
 #define GET_EXE(foo) QUOTEME(foo)
 #define PRESENT(foo) (XCAPABLE(foo, GET_EXE(foo)) == PRESENT)
@@ -1706,7 +1707,7 @@ void break_me(const char *dtl);
 #endif
 
 #endif
-//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #else

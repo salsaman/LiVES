@@ -169,7 +169,7 @@ typedef weed_error_t (*weed_deinit_f)(weed_plant_t *filter_instance);
 
 /* special plugin functions */
 typedef weed_error_t (*weed_display_value_f)(weed_plant_t *filter_instance, weed_plant_t *parameter,
-					     boolean inverse);
+					     int inverse);
 
 
 // PLUGIN_INFO
@@ -378,6 +378,7 @@ typedef weed_error_t (*weed_display_value_f)(weed_plant_t *filter_instance, weed
 #define WEED_LEAF_CHOICES "choices"
 #define WEED_LEAF_CHOICES_LANGUAGES "choices_langs"
 #define WEED_LEAF_HIDDEN "hidden"
+#define WEED_LEAF_COPY_VALUE_TO "copy_value_to"
 
   // API 201
 #define WEED_LEAF_DISPLAY_VALUE_FUNC "display_value_func"

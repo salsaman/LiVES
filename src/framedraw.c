@@ -1248,17 +1248,15 @@ boolean on_framedraw_mouse_reset(LiVESWidget * widget, LiVESXEventButton * event
   break;
 
   case LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT:
-    // TODO - disp values
     if (framedraw->xstart_param->dp > 0)
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xstart);
+      lives_param_update_gui_double(framedraw->xstart_param, xstart);
     else
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),
-                                  (int)(xstart * (double)cfile->hsize + .5));
-    if (framedraw->xstart_param->dp > 0)
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), ystart);
+      lives_param_update_gui_int(framedraw->xstart_param, (int)(xstart * (double)cfile->hsize + .5));
+
+    if (framedraw->ystart_param->dp > 0)
+      lives_param_update_gui_double(framedraw->ystart_param, ystart);
     else
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),
-                                  (int)(ystart * (double)cfile->vsize + .5));
+      lives_param_update_gui_int(framedraw->ystart_param, (int)(ystart * (double)cfile->vsize + .5));
     break;
 
   default:

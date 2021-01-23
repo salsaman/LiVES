@@ -3103,9 +3103,8 @@ A Plugin may optionally create and then update a GUI plant for any input paramet
 At other times the plugin must not alter any of the leaves, except for any private leaves with keys prefixed "plugin_"
 
 Any parameters which may trigger a change in the GUI when the value changes, (i.e hiding / showing parameters, and setting
-copy_value_to) should have the flag bit: WEED_GUI_REINIT_ON_VALUE_CHANGE set in the parameter template GUI when the
-plugin is setting up the templates in weed_setup(), (unless WEED_PARAMETER_REINIT_ON_VALUE_CHANGE is set, in which case
-it would be redundant).
+copy_value_to) should have the flag bit: WEED_GUI_REINIT_ON_VALUE_CHANGE set in the parameter template GUI when the plugin is setting up the templates in weed_setup()
+
 This is explained in more detail below, along with an explanation of the counterpart to this in the host.
 
 Exception: the "display_value" leaf has its own rules, see "display_func" leaf in the parameter
@@ -3859,7 +3858,7 @@ Flag bits >= 30 are free to use for custom flags.
 								   when its value is altered.
 
 								   In the case that the filter sets WEED_PARAMETER_REINIT_ON_VALUE_CHANGE,
-								   in the parameter template flags, this flag bit MUST still be set to indicate that the
+								   in the parameter template flags, this flag bit should still be set to indicate that the
 								   value change may ADDITIONALLY cause changes in the parameter GUI plants.
 
 								   This flag may be combined with the parameter template flag bit
@@ -3895,6 +3894,21 @@ Flag bits >= 30 are free to use for custom flags.
 								   with the current parameter values, or that the filter MAY update the GUI plants IN
 								   ADDITION to updating the state in the case that
 								   WEED_PARAMETER_REINIT_ON_VALUE_CHANGE is also set in the template.
+
+
+Thus when creating parameter templates for in_parameters, the following checklist may be applied:
+
+
+- does changing the VALUE of the parameter imply interface changes which need a reinit ?
+
+If YES, set the flag bit WEED_GUI_REINIT_ON_VALUE_CHANGE in the parameter template GUI flags.
+
+
+- does changing the VALUE of the parameter require the instance to be reinitialised for functional reasons ?
+
+If YES, set the flag bit WEED_PARAMETER_REINIT_ON_VALUE_CHANGE in the parameter template flags.
+
+If NO, set WEED_PARAMETER_VALUE_IRRELEVANT in parameter template flags.
 
 
 

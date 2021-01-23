@@ -1,6 +1,6 @@
 // targetted_zoom.c
 // weed plugin
-// (c) G. Finch (salsaman) 2005 - 2019
+// (c) G. Finch (salsaman) 2005 - 2021
 //
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
@@ -100,12 +100,12 @@ static weed_error_t tzoom_disp(weed_plant_t *inst, weed_plant_t *param, int inve
       if (dval <= 0.) return WEED_ERROR_NOT_READY;
       dval = log(dval);
     } else dval = exp(dval);
-    return weed_set_double_value(weed_param_get_gui(param), "display_value", dval);
+    return weed_set_double_value(weed_param_get_gui(param), WEED_LEAF_DISPLAY_VALUE, dval);
   }
 }
 
 
-WEED_SETUP_START(200, 200) {
+WEED_SETUP_START(200, 201) {
   int palette_list[] = ALL_PACKED_PALETTES;
 
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
@@ -132,7 +132,7 @@ WEED_SETUP_START(200, 200) {
 
   gui = weed_paramtmpl_get_gui(in_params[0]);
   weed_set_double_value(gui, WEED_LEAF_STEP_SIZE, 0.1);
-  weed_set_funcptr_value(gui, "display_value_func", (weed_funcptr_t)tzoom_disp);
+  weed_set_funcptr_value(gui, WEED_LEAF_DISPLAY_VALUE_FUNC, (weed_funcptr_t)tzoom_disp);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

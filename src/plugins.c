@@ -3573,7 +3573,7 @@ lives_rfx_t *weed_to_rfx(weed_plant_t *plant, boolean show_reinits) {
   char *string;
   lives_rfx_t *rfx = (lives_rfx_t *)lives_calloc(1, sizeof(lives_rfx_t));
   rfx->is_template = FALSE;
-  if (weed_get_int_value(plant, WEED_LEAF_TYPE, NULL) == WEED_PLANT_FILTER_INSTANCE) {
+  if (WEED_PLANT_IS_FILTER_INSTANCE(plant)) {
     filter = weed_instance_get_filter(plant, TRUE);
     inst = plant;
   } else {

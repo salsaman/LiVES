@@ -49,8 +49,9 @@ API updated to 123 to facilitate this change.
 16/10/2020
 Add optional "keep_aspect" for event_list. API version updated to 123.
 
+26/01/2021 added "random_seed" for filter_init. API unchanged.
 
-(C) Gabriel "Salsaman" Finch 2005 - 2020
+(C) Gabriel "Salsaman" Finch 2005 - 2021
 
 == WEED_EVENT_API_VERSION ==
 This is defined as 123 for this version of the specification. This
@@ -316,6 +317,13 @@ negative value.
 
  * "event_id" : WEED_SEED_INT64 : used to refer to this filter_init by filter_map, filter_deinit and param_change events.
    Must be unique in the event_list.
+
+
+Optional:
+
+ * "random_seed" : WEED_SEED_INT64 : may be used to store a random_seed to be passed to the filter
+ instance, so that it can generate a repeatable sequence of pseudo-random numbers.
+
 
 
 === WEED_EVENT_TYPE_FILTER_DEINIT ===

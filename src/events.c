@@ -2758,8 +2758,13 @@ weed_plant_t *append_filter_init_event(weed_plant_t *event_list, weed_timecode_t
 
   weed_set_int64_value(event, WEED_LEAF_TIMECODE, tc);
   weed_set_int_value(event, WEED_LEAF_EVENT_TYPE, WEED_EVENT_TYPE_FILTER_INIT);
-  weed_set_string_value(event, WEED_LEAF_FILTER, (tmp = make_weed_hashname(filter_idx, TRUE, FALSE, 0, FALSE)));
+  weed_set_string_value(event, WEED_LEAF_FILTER,
+                        (tmp = make_weed_hashname(filter_idx, TRUE, FALSE, 0, FALSE)));
   lives_free(tmp);
+
+  if (weed_plant_has_leaf(inst, "random_seed")) {
+    weed_set_int64_value(event, "random_seed", weed_get_int64_value(inst, "random_seed", NULL));
+  }
 
   filter = get_weed_filter(filter_idx);
 
@@ -3374,6 +3379,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
           botmpl[i] = weed_plant_copy(cotmpl[i]);
         }
       }
+      THREADVAR(random_seed) = weed_get_int64_value(next_event, "random_seed", NULL);
 
       weed_init_effect(key);
 
@@ -3430,20 +3436,7 @@ filterinit1:
 
         offset += num_params;
 
-        filter = weed_instance_get_filter(inst, FALSE);
-
-        if (weed_plant_has_leaf(filter, WEED_LEAF_INIT_FUNC)) {
-          weed_init_f init_func = (weed_init_f)weed_get_funcptr_value(filter, WEED_LEAF_INIT_FUNC, NULL);
-          if (init_func) {
-            char *cwd = cd_to_plugin_dir(filter);
-            (*init_func)(inst);
-            lives_chdir(cwd, FALSE);
-            lives_free(cwd);
-          }
-        }
-
-        weed_set_boolean_value(inst, WEED_LEAF_HOST_INITED, WEED_TRUE);
-        weed_set_boolean_value(inst, WEED_LEAF_HOST_UNUSED, WEED_TRUE);
+        weed_call_init_func(inst);
       }
 
       if (weed_plant_has_leaf(next_event, WEED_LEAF_HOST_KEY)) {
@@ -3479,6 +3472,7 @@ filterinit1:
       }
       weed_instance_unref(orig_inst);
     }
+    THREADVAR(random_seed) = 0;
     break;
 
   case WEED_EVENT_TYPE_FILTER_DEINIT:
@@ -4156,7 +4150,6 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
 
       do {
         retval = LIVES_RESPONSE_NONE;
-        xyzzy;
         lives_pixbuf_save(pixbuf, oname, cfile->img_type, 100 - prefs->ocp, cfile->hsize, cfile->vsize, NULL);
 
         if (error) {
@@ -4305,6 +4298,8 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
         }
       }
 
+      THREADVAR(random_seed) = weed_get_int64_value(event, "random_seed", NULL);
+
       weed_init_effect(key);
 
       // restore channel state / number from backup
@@ -4352,28 +4347,15 @@ filterinit2:
           in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &weed_error);
 
           for (i = 0; i < num_params; i++) {
-            if (source_params && source_params[i + offset] && is_init_pchange(event, source_params[i + offset]))
+            if (source_params && source_params[i + offset]
+                && is_init_pchange(event, source_params[i + offset]))
               weed_leaf_copy(in_params[i], WEED_LEAF_VALUE, source_params[i + offset], WEED_LEAF_VALUE);
           }
           lives_free(in_params);
         }
 
         offset += num_params;
-
-        filter = weed_instance_get_filter(inst, FALSE);
-
-        if (weed_plant_has_leaf(filter, WEED_LEAF_INIT_FUNC)) {
-          weed_init_f init_func = (weed_init_f)weed_get_funcptr_value(filter, WEED_LEAF_INIT_FUNC, NULL);
-          if (init_func) {
-            char *cwd = cd_to_plugin_dir(filter);
-            (*init_func)(inst);
-            lives_chdir(cwd, FALSE);
-            lives_free(cwd);
-          }
-        }
-
-        weed_set_boolean_value(inst, WEED_LEAF_HOST_INITED, WEED_TRUE);
-        weed_set_boolean_value(inst, WEED_LEAF_HOST_UNUSED, WEED_TRUE);
+        weed_call_init_func(inst);
       }
 
       if (weed_plant_has_leaf(event, WEED_LEAF_HOST_KEY)) {
@@ -4407,6 +4389,7 @@ filterinit2:
         goto filterinit2;
       }
       weed_instance_unref(orig_inst);
+      THREADVAR(random_seed) = 0;
 
       break;
     case WEED_EVENT_TYPE_FILTER_DEINIT:

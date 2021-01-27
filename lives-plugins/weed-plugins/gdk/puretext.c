@@ -236,7 +236,7 @@ static int num_fonts_available = 0;
 #define is_a_space_at(idx) _is_a_space_at(sdata, (idx))
 
 #define SET_FONT_FAMILY(ffam) _set_font_family(layout, font, (ffam))
-#define SET_FONT_SIZE(sz) _set_font_size(sdata, layout, font, (sz), (double)width)
+#define SET_FONT_SIZE(sz) _set_font_size(inst, sdata, layout, font, (sz), (double)width)
 #define SET_FONT_WEIGHT(weight) _set_font_weight(layout, font, PANGO_WEIGHT_##weight)
 #define SET_TEXT(txt) _set_text(layout, (txt), ztext)
 #define GETLSIZE(w, h) _getlsize(layout, (w), (h))
@@ -244,8 +244,8 @@ static int num_fonts_available = 0;
 #define SET_ALARM(millis) _set_alarm(sdata, (millis))
 
 #define DO_RESET() _do_reset(sdata, ztext, layout)
-#define GETASTRING() _getastring(sdata, FALSE, (sdata->init == 1))
-#define RESTART_AT_STRING(idx) _restart_at_string(sdata, (idx), ztext)
+#define GETASTRING() _getastring(inst, sdata, FALSE, (sdata->init == 1))
+#define RESTART_AT_STRING(idx) _restart_at_string(inst, sdata, (idx), ztext)
 
 #define CHAR_EQUAL(tok, c) _char_equal(sdata, (tok), (c))
 
@@ -259,8 +259,8 @@ static int num_fonts_available = 0;
 #define ROTATE_TEXT(x, y, angle) _rotate_text(sdata, cairo, layout, (x), (y), (angle))
 
 #define GET_LAST_CHAR(strg) (_get_last_char(sdata, (strg)))
-#define FIT_SIZE(max, width, tw, height, th) _fit_size(sdata, layout, font, (max), (width), (tw), \
-						       (height), (th), width)
+#define FIT_SIZE(max, width, tw, height, th) _fit_size(inst, sdata, layout, font, (max), (width), \
+						       (tw), (height), (th), width)
 
 #define IS_OFFSCREEN(x, y, dw, dh) (_is_offscreen((x), (y), (dw), (dh), width, height))
 #define IS_ALL_ONSCREEN(x, y, dw, dh) (_is_all_onscreen((x), (y), (dw), (dh), width, height))
@@ -271,6 +271,15 @@ static int num_fonts_available = 0;
 #define SET_RANDOM_ORDER(val) _set_random_order(sdata, (val))
 #define SET_MODE(mode) sdata->tmode = (mode)
 #define SET_ALLOW_BLANKS(mode) sdata->allow_blanks = (mode)
+
+#define FASTRAND_DBL(drange) (fastrand_dbl_re((drange), inst, "plugin_random_seed"))
+#define FASTRAND_INT(irange) (fastrand_int_re((irange), inst, "plugin_random_seed"))
+#define GETRANDI(min, max) (_getrandi(inst, (min), (max)))
+#define RAND_COL(ldt) _rand_col(inst, (ldt))
+#define RAND_ANGLE() _rand_angle(inst)
+
+#define ADJUST_RGBA(ldt, rmin, gmin, bmin, amin) _adjust_rgba(inst, sdata, ldt, (rmin), \
+							      (gmin), (bmin), (amin))
 
 #define xtext (*ztext)
 
@@ -447,7 +456,7 @@ static size_t get_utf8_word_length(const char *text) {
 }
 
 
-static void _getastring(sdata_t *sdata, gboolean sequential, gboolean reset) {
+static void _getastring(weed_plant_t *inst, sdata_t *sdata, gboolean sequential, gboolean reset) {
   if ((!sdata->allow_blanks && sdata->cstring >= sdata->nstrings)
       || (sdata->allow_blanks && sdata->cstring >= sdata->xnstrings)) sdata->cstring = 0;
 
@@ -459,9 +468,9 @@ static void _getastring(sdata_t *sdata, gboolean sequential, gboolean reset) {
     } else {
       if (sdata->rndorder) {
         if (!sdata->allow_blanks)
-          sdata->cstring = fastrand_int(sdata->nstrings - 1);
+          sdata->cstring = fastrand_int_re(sdata->nstrings - 1, inst, "plugin_random_seed");
         else
-          sdata->cstring = fastrand_int(sdata->xnstrings - 1);
+          sdata->cstring = fastrand_int_re(sdata->xnstrings - 1, inst, "plugin_eandom_seed");
       }
     }
   }
@@ -495,7 +504,7 @@ static void _set_random_order(sdata_t *sdata, gboolean val) {
 }
 
 
-static void _restart_at_string(sdata_t *sdata, int strnum, char **ztext) {
+static void _restart_at_string(weed_plant_t *inst, sdata_t *sdata, int strnum, char **ztext) {
   sdata->cstring = strnum;
   GETASTRING();
   xtext = strdup("");
@@ -560,15 +569,15 @@ static cairo_t *channel_to_cairo(sdata_t *sdata, weed_plant_t *channel) {
 }
 
 
-static inline double rand_angle(void) {
+static inline double _rand_angle(weed_plant_t *inst) {
   // return a random double between 0. and 2 * M_PI
-  return fastrand_dbl(TWO_PI);
+  return fastrand_dbl_re(TWO_PI, inst, "random_seed");
 }
 
 
 #define AUTO_TRG_DISSOLVE 15.
 
-static gboolean do_pixel_ops(sdata_t *sdata, int width, int height, int orowstride,
+static gboolean do_pixel_ops(weed_plant_t *inst, sdata_t *sdata, int width, int height, int orowstride,
                              int irowstride, int irowstride2, guchar *dst,
                              guchar *src, guchar *src2) {
   gboolean add = FALSE;
@@ -600,7 +609,7 @@ static gboolean do_pixel_ops(sdata_t *sdata, int width, int height, int orowstri
             src[irowstride * i + j + 1] != src2[irowstride2 * i + j + 1]
             || src[irowstride * i + j + 2] != src2[irowstride2 * i + j + 2]) {
           // move point by sdata->dissolve pixels
-          double angle = rand_angle();
+          double angle = RAND_ANGLE();
           int x = j / 4 + sin(angle) * dissolve;
           int y = i + cos(angle) * dissolve;
           if (x > 0 && x < width && y > 0 && y < height) {
@@ -618,7 +627,7 @@ static gboolean do_pixel_ops(sdata_t *sdata, int width, int height, int orowstri
 }
 
 
-static void cairo_to_channel(sdata_t *sdata, cairo_t *cairo, weed_plant_t *channel,
+static void cairo_to_channel(weed_plant_t *inst, sdata_t *sdata, cairo_t *cairo, weed_plant_t *channel,
                              weed_plant_t *in_channel) {
   // updates a weed_channel from a cairo_t
   cairo_surface_t *surface = cairo_get_target(cairo);
@@ -637,7 +646,7 @@ static void cairo_to_channel(sdata_t *sdata, cairo_t *cairo, weed_plant_t *chann
 
   irowstride = cairo_format_stride_for_width(cform, width);
 
-  if (!do_pixel_ops(sdata, width, height, orowstride, irowstride, irowstride2, dst, src, src2)) {
+  if (!do_pixel_ops(inst, sdata, width, height, orowstride, irowstride, irowstride2, dst, src, src2)) {
     if (irowstride == orowstride) {
       weed_memcpy((void *)dst, (void *)src, irowstride * height);
     } else {
@@ -807,10 +816,12 @@ static inline void _set_font_weight(PangoLayout *layout, PangoFontDescription *f
 
 
 // set font size (scaled for canvas width
-static inline void _set_font_size(sdata_t *sdata, PangoLayout *layout, PangoFontDescription *font,
+static inline void _set_font_size(weed_plant_t *inst, sdata_t *sdata, PangoLayout *layout,
+                                  PangoFontDescription *font,
                                   double font_size, int width) {
   int fnt_size;
-  if (sdata->trigger && sdata->autotrigger) fnt_size *= (fastrand_dbl(.1) + .95);
+  if (sdata->trigger && sdata->autotrigger)
+    fnt_size *= (fastrand_dbl_re(.1, inst, "plugin_random_seed") + .95);
   fnt_size = (int)((font_size * sdata->fontscale * width + 2. * PANGO_SCALE) / (4. * PANGO_SCALE) + .5)
              * (4 * PANGO_SCALE);
   pango_font_description_set_size(font, fnt_size);
@@ -877,8 +888,8 @@ static inline void COLOUR_COPY(rgb_t *col1, rgb_t *col2) {
 }
 
 
-static inline int getrandi(int min, int max) {
-  return fastrand_int(max - min) + min;
+static inline int _getrandi(weed_plant_t *inst, int min, int max) {
+  return fastrand_int_re(max - min, inst, "plugin_random_seed") + min;
 }
 
 
@@ -898,18 +909,19 @@ static inline void _set_antialias(sdata_t *sdata, const char *level) {
 				     : (val) < (min) ? ((min) + ((min) - (val)) % ((max) - (min))) \
 				     : (val))
 
-static inline void adjust_rgba(sdata_t *sdata, pt_letter_data_t *ldt, int rmin, int gmin,
-                               int bmin, double alphamin) {
-  double rndd = fastrand_dbl(1.1) - .05;
+static inline void _adjust_rgba(weed_plant_t *inst, sdata_t *sdata, pt_letter_data_t *ldt,
+                                int rmin, int gmin,
+                                int bmin, double alphamin) {
+  double rndd = FASTRAND_DBL(1.1) - .05;
   ldt->colour.red *= rndd;
   ldt->colour.red = CLAMP_BOUNCE(rmin, 255, ldt->colour.red);
-  rndd = fastrand_dbl(1.1) - .05;
+  rndd = FASTRAND_DBL(1.1) - .05;
   ldt->colour.green *= rndd;
   ldt->colour.green = CLAMP_BOUNCE(gmin, 255, ldt->colour.green);
-  rndd = fastrand_dbl(1.1) - .05;
+  rndd = FASTRAND_DBL(1.1) - .05;
   ldt->colour.blue *= rndd;
   ldt->colour.blue = CLAMP_BOUNCE(bmin, 255, ldt->colour.blue);
-  rndd = fastrand_dbl(1.01) - .005;
+  rndd = FASTRAND_DBL(1.01) - .005;
   ldt->alpha *= rndd * 1000;
   ldt->alpha = CLAMP_BOUNCE((int)(alphamin * 1000.), 1000, (int)ldt->alpha);
   ldt->alpha /= 1000.;
@@ -981,21 +993,22 @@ static const char *_get_last_char(sdata_t *sdata, const char *strg) {
 }
 
 
-static void RAND_COL(pt_letter_data_t *ldt) {
-  ldt->colour.red = getrandi(60, 255);
-  ldt->colour.green = getrandi(60, 255);
-  ldt->colour.blue = getrandi(60, 255);
+static void _rand_col(weed_plant_t *inst, pt_letter_data_t *ldt) {
+  ldt->colour.red = _getrandi(inst, 60, 255);
+  ldt->colour.green = _getrandi(inst, 60, 255);
+  ldt->colour.blue = _getrandi(inst, 60, 255);
 }
 
 
-static double _fit_size(sdata_t *sdata, PangoLayout *layout, PangoFontDescription *font,
+static double _fit_size(weed_plant_t *inst, sdata_t *sdata,
+                        PangoLayout *layout, PangoFontDescription *font,
                         double maxsize, double width,
                         double tol_w, double height, double tol_h, int scr_width) {
   double fontsize = maxsize;
   double txdif = maxsize / 2.;
   double dwidth, dheight;
   while (txdif >= 2.) {
-    _set_font_size(sdata, layout, font, fontsize, (double)scr_width);
+    _set_font_size(inst, sdata, layout, font, fontsize, (double)scr_width);
     // get pixel size of word
     GETLSIZE(&dwidth, &dheight);
     if (dwidth > width || dheight > height) fontsize -= txdif;
@@ -1010,7 +1023,8 @@ static double _fit_size(sdata_t *sdata, PangoLayout *layout, PangoFontDescriptio
 }
 
 
-static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *cairo, PangoLayout *layout,
+static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
+                     char *xtext, cairo_t *cairo, PangoLayout *layout,
                      PangoFontDescription *font, int width, int height) {
 
   pt_letter_data_t *ldt = NULL;
@@ -1280,7 +1294,7 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
     if (!ldt->setup) {
       // set defaults
       // pick a slide direction
-      ldt->group = getrandi(0, 3);
+      ldt->group = GETRANDI(0, 3);
       ldt->fontsize = 32;
       SET_FONT_SIZE(ldt->fontsize);
       RAND_COL(ldt);
@@ -1289,16 +1303,16 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
       case 0:
         // right to left
         if (ldt->height < height)
-          ldt->ypos = getrandi(0, height - 1. - ldt->height);
+          ldt->ypos = GETRANDI(0, height - 1. - ldt->height);
         ldt->xpos = width;
-        ldt->xvel = -10. - fastrand_dbl(10);
+        ldt->xvel = -10. - FASTRAND_DBL(10);
         break;
       case 1:
         // left to right
         if (ldt->height < height)
-          ldt->ypos = getrandi(0, height - 1. - ldt->height);
+          ldt->ypos = GETRANDI(0, height - 1. - ldt->height);
         ldt->xpos = -ldt->width;
-        ldt->xvel = 10. + fastrand_dbl(10.);
+        ldt->xvel = 10. + FASTRAND_DBL(10.);
         break;
       case 2:
         // top to bottom
@@ -1306,16 +1320,16 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
         // pango_matrix_rotate
         // pango_context_set_base_gravity
         if (ldt->width < width)
-          ldt->xpos = getrandi(0, width - 1. - ldt->width);
+          ldt->xpos = GETRANDI(0, width - 1. - ldt->width);
         ldt->ypos = -ldt->height;
-        ldt->yvel = 10. + fastrand_dbl(10.);
+        ldt->yvel = 10. + FASTRAND_DBL(10.);
         break;
       default:
         // bottom to top
         if (ldt->width < width)
-          ldt->xpos = getrandi(0, width - 1. - ldt->width);
+          ldt->xpos = GETRANDI(0, width - 1. - ldt->width);
         ldt->ypos = height;
-        ldt->yvel = -10. - fastrand_dbl(10.);
+        ldt->yvel = -10. - FASTRAND_DBL(10.);
         break;
       }
       ldt->setup = TRUE;
@@ -1370,7 +1384,7 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
       sdata->tmode = PT_LETTER_MODE;
       // init letter data
       LETTER_DATA_INIT(sdata->tlength);
-      sdata->variant = getrandi(0, 10);
+      sdata->variant = GETRANDI(0, 10);
       sdata->length = 1;
       SET_ALARM(0);
       break;
@@ -1392,13 +1406,13 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
 
       ldt = LETTER_DATA(length);
 
-      ldt->fontsize = 2048. * (.8 + fastrand_dbl(.4));
+      ldt->fontsize = 2048. * (.8 + FASTRAND_DBL(.4));
       ldt->orbit = ldt->orbitvel = ldt->orbitaccel = 0.;
 
       if (wordstart) {
-        sdata->variant = getrandi(0, 10);
-        ldt->orbitstart = rand_angle();
-        if (sdata->variant == 8) ldt->orbitvel = fastrand_dbl(.5) - .25;
+        sdata->variant = GETRANDI(0, 10);
+        ldt->orbitstart = RAND_ANGLE();
+        if (sdata->variant == 8) ldt->orbitvel = FASTRAND_DBL(.5) - .25;
       } else {
         if (sdata->variant == 6 && sdata->wlength) {
           ldt->orbitstart = old_ldt->orbitstart + TWO_PI / sdata->wlength;
@@ -1406,7 +1420,7 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
           ldt->orbitstart = old_ldt->orbitstart - TWO_PI / sdata->wlength;
         } else if (sdata->variant == 8) {
           ldt->orbitstart = old_ldt->orbitstart;
-        } else ldt->orbitstart = rand_angle();
+        } else ldt->orbitstart = RAND_ANGLE();
       }
 
       ldt->xpos = ldt->ypos = ldt->rot = ldt->rotvel = 0.;
@@ -1422,14 +1436,14 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
 
       if (wordstart) {
         if (sdata->variant == 2) {
-          ldt->rotvel = fastrand_dbl(.5);
+          ldt->rotvel = FASTRAND_DBL(.5);
         } else if (sdata->variant == 3) {
-          ldt->rotvel = -fastrand_dbl(.5);
+          ldt->rotvel = -FASTRAND_DBL(.5);
         }
         if (sdata->variant == 4) {
-          ldt->orbitvel = fastrand_dbl(.5);
+          ldt->orbitvel = FASTRAND_DBL(.5);
         } else if (sdata->variant == 5) {
-          ldt->orbitvel = -fastrand_dbl(.5);
+          ldt->orbitvel = -FASTRAND_DBL(.5);
         }
         RAND_COL(ldt);
       } else {
@@ -1570,14 +1584,14 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
     if (!ldt->width) GETLSIZE(&ldt->width, &ldt->height);
     if (ldt->height > sdata->dbl4) sdata->dbl4 = ldt->height;
 
-    sdata->fg.red = fastrand_int(32);
-    sdata->fg.blue = fastrand_int(64);
-    sdata->fg.green = 235 + fastrand_int(20);
+    sdata->fg.red = FASTRAND_INT(32);
+    sdata->fg.blue = FASTRAND_INT(64);
+    sdata->fg.green = 235 + FASTRAND_INT(20);
 
     //text fades as it moves away from cursor
     ldt->alpha = 255. - 8. * (sdata->length - sdata->count);
     if (ldt->alpha < 128.) ldt->alpha = 128.;
-    ldt->alpha -= fastrand_dbl(16.);
+    ldt->alpha -= FASTRAND_DBL(16.);
     ldt->alpha /= 255.;
 
     if (sdata->variant == 1) {
@@ -1729,7 +1743,7 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
         else {
           pt_letter_data_t *oldt = LETTER_DATA(sdata->count - 1);
           COLOUR_COPY(&ldt->colour, &oldt->colour);
-          adjust_rgba(sdata, ldt, 128, 64, 128, 1.);
+          ADJUST_RGBA(ldt, 128, 64, 128, 1.);
         }
         COLOUR_COPY(&sdata->fg, &ldt->colour);
         ldt->text = strdup(xtext);
@@ -1748,8 +1762,8 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
       /* if (sdata->count == sdata->length - 1 && ldt->xpos <= (-width - dwidth) / 2) { */
       /*   if (ldt->phase == 1) { */
       /* 	ldt->phase = 2; */
-      /* 	ldt->targetx = fastrand_dbl(width); */
-      /* 	ldt->targety = fastrand_dbl(height); */
+      /* 	ldt->targetx = FASTRAND_DBL(width); */
+      /* 	ldt->targety = FASTRAND_DBL(height); */
       /* 	ldt->targetmass = 10.; */
       /*   } */
       /* } */
@@ -1846,7 +1860,7 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
 
     ldt->fontsize = 2560. / (sdata->count + 19.);
     if (sdata->phase == 1) {
-      ldt->fontsize *= (fastrand_dbl(1.) + .5);
+      ldt->fontsize *= (FASTRAND_DBL(1.) + .5);
     }
 
     SET_FONT_SIZE(ldt->fontsize);
@@ -1861,10 +1875,10 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
       ldt->alpha = 1.;
     } else {
       if (!ldt->phase) {
-        ldt->rotaccel = fastrand_dbl(.02) - .01;
+        ldt->rotaccel = FASTRAND_DBL(.02) - .01;
         ldt->phase = 1;
       }
-      adjust_rgba(sdata, ldt, 128, 64, 128, .4);
+      ADJUST_RGBA(ldt, 128, 64, 128, .4);
       sdata->dbl3 -= .001 * sdata->velocity;
 
       sdata->dbl1 *= .99;
@@ -1908,7 +1922,8 @@ static weed_error_t puretext_init(weed_plant_t *inst) {
   int fd, canstart = 0;
   int mode;
 
-  fastrand(weed_get_int64_value(inst, "random_seed", NULL));
+  weed_set_int64_value(inst, "plugin_random_seed",
+                       weed_get_int64_value(inst, "random_seed", NULL));
 
   //if (*textbuf) use_file = FALSE;
 
@@ -2183,7 +2198,7 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
 
     SET_FONT_SIZE(32.);
 
-    _getastring(sdata, FALSE, TRUE);
+    _getastring(inst, sdata, FALSE, TRUE);
     offset = sdata->start;
 
     if (sdata->init == -1) sdata->init = 1;
@@ -2224,7 +2239,7 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
             sdata->cstring = sdata->curstring;
             while (offset >= sdata->tlength) {
               offset -= sdata->tlength;
-              _getastring(sdata, TRUE, FALSE);
+              _getastring(inst, sdata, TRUE, FALSE);
               if (sdata->curstring == xcstring && offset == xoffset) {
                 xtext = strdup("");
                 badstrings(WEED_VERBOSITY_WARN);
@@ -2274,7 +2289,7 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
             size_t xoffset = offset;
             while (offset >= sdata->wlength) {
               offset -= sdata->wlength;
-              _getastring(sdata, TRUE, FALSE);
+              _getastring(inst, sdata, TRUE, FALSE);
               if (sdata->curstring == xcstring && offset == xoffset) {
                 xtext = strdup("");
                 badstrings(WEED_VERBOSITY_WARN);
@@ -2312,7 +2327,7 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
 
       //fprintf(stderr, "set the text to %s\nline: %s\n", xtext, sdata->text);
       // call the procedure
-      proctext(sdata, tc, ztext, cairo, layout, xfont, width, height);
+      proctext(inst, sdata, tc, ztext, cairo, layout, xfont, width, height);
 
       //fprintf(stderr, "xtext is %s %f\n", xtext, sdata->dissolve);
 
@@ -2372,7 +2387,7 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
     }
 
     // now convert cairo surface to channel pixel_data
-    cairo_to_channel(sdata, cairo, out_channel, in_channel);
+    cairo_to_channel(inst, sdata, cairo, out_channel, in_channel);
     if (sdata->pixel_data) {
       weed_free(sdata->pixel_data);
       sdata->pixel_data = NULL;

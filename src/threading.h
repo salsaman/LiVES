@@ -23,6 +23,7 @@ typedef struct {
   int var_rowstride_alignment_hint;
   int var_last_sws_block;
   boolean var_no_gui;
+  uint64_t var_random_seed;
 } lives_threadvars_t;
 
 struct _lives_thread_data_t {

@@ -1497,7 +1497,7 @@ Timestamp is nominally in units of 10 ^ -8 (100 millionth) of a second (WEED_TIC
 'since playback started'.
 Normally it will increase monotonically for each frame but that is not guaranteed,
 although hosts should attempt to keep it so between calling init_func() and deinit_func(). In case the filter cannot handle
-non-monotonic timecodes, it may return WEED_ERROR_NEEDS_REINIT if such an event occurs.
+non-monotonic timecodes, it may return WEED_ERROR_REINIT_NEEDED if such an event occurs.
 
 The host must pass the same or an exact copy of, the instance passed to the plugin in the init_func()
 (if applicable). [There are a couple of exceptions to this rule for threading, as explained below].
@@ -2638,6 +2638,12 @@ The following is optional but recommended, particularly if the plugin set "prefe
 		       init_func() for the filter; the value may also be updated by the host between calls to process_func(), however
 		       it may not always be possible for a plugin to comply with such changes after the first init_func() has been called.
 
+As of API 201:
+* "random_seed" : WEED_SEED_INT64 : if this leaf exists, then the plugin should use this value to seed
+ any pseudo-random number generator, either in the init_func(), or if the filter has no init_func(),
+ during process_func(). The host should thus set this value before calling init_func(), and delete it
+ after calling process_func() for the first time.
+
 
 * "flags" : WEED_SEED_INT : a bitmap of flags informing the plugin it may perform certain updates (see below for definitions)
 
@@ -3510,12 +3516,29 @@ Defined in weed-effects.h
  *  WEED_ERROR_NOT_READY     (init_func() or process_func())   		[severity = MINOR]
     The plugin may return this error from process_func() if it was temporarily unable to process the data / produce output.
     For example ihe host may be playing too fast or the filter may be still initializing / buffering data.
-    It is up to the host how to handle this error; for example it could repeat the last data, if it still has it, show a blank frame,
-    or wait and call the process_func again.
-    The plugin may also return this from the init_func() in the case that for some reason the filter is not
+    It is up to the host how to handle this error; generally the input should be simply duplicated to
+    the output unchanged.
+
+    The plugin may also return this in the case that it has nothing to do; in this case it is not
+    an error condition, but it may save some processing
+    effort by avoiding unnecessary copying of input to output within the plugin.
+    This is only intended for simple filter types with a single input and single output channel
+
+    Data processing type plugins may also return this to indicate that the values set in out_parameters
+    are not relevant at that moment, and may be ignored by the host.
+
+
+    The plugin may return this from the init_func() in the case that for some reason the filter is not
     ready; perhaps the plugin has just been loaded or deinited and it is waiting for some hardware to become ready.
-    In this case the host need not call the deinit_func(), but may retry the init_func() at a later time. The host should not call
+    The plugin may also return this in the case that there is a problem in the init_func() due to
+    the current parameter and / or channel settings.
+    In this instance the host need not call the deinit_func(), but may retry the init_func() at a later time. The host should not call
     process_func() until it has received WEED_SUCCESS from the init_func.
+
+    It is possible that some element of user intervention may be required to resolve the situation
+    giving rise to this error condition.
+
+
 
 
 ==== host plugin flags ====
@@ -3881,7 +3904,7 @@ Flag bits >= 30 are free to use for custom flags.
 								   have WEED_PARAMETER_REINIT_ON_VALUE_CHANGE set. The plugin should still check
 								   anyway in case a WEED_PARAMETER_REINIT_ON_VALUE_CHANGE param was altered
 								   and the host overlooked this. In the latter case the filter should still only update the GUI,
-								   and should then return WEED_ERROR_NEEDS_REINIT to alert the host.
+								   and should then return WEED_ERROR_REINIT_NEEDED to alert the host.
 								   
 								   
 								   To recap:

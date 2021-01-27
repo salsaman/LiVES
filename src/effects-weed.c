@@ -844,7 +844,9 @@ weed_plant_t *add_filter_init_events(weed_plant_t *event_list, weed_timecode_t t
   for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if ((inst = weed_instance_obtain(i, key_modes[i])) != NULL) {
       if (enabled_in_channels(inst, FALSE) > 0) {
-        event_list = append_filter_init_event(event_list, tc, (fx_idx = key_to_fx[i][key_modes[i]]), -1, i, inst);
+        weed_set_int64_value(inst, "random_seed", gen_unique_id());
+        event_list = append_filter_init_event(event_list, tc,
+                                              (fx_idx = key_to_fx[i][key_modes[i]]), -1, i, inst);
         init_events[i] = get_last_event(event_list);
         ntracks = weed_leaf_num_elements(init_events[i], WEED_LEAF_IN_TRACKS);
         pchains[i] = filter_init_add_pchanges(event_list, inst, init_events[i], ntracks, 0);
@@ -1335,6 +1337,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
   weed_plant_t **out_channels = weed_get_plantptr_array_counted(inst, WEED_LEAF_OUT_CHANNELS, &nchannels);
   boolean plugin_invalid = FALSE;
   boolean filter_invalid = FALSE;
+  boolean filter_busy = FALSE;
   boolean needs_reinit = FALSE;
 
   int vstep = SLICE_ALIGN, minh;
@@ -1442,6 +1445,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
       retval = procvals[j].ret;
       if (retval == WEED_ERROR_PLUGIN_INVALID) plugin_invalid = TRUE;
       if (retval == WEED_ERROR_FILTER_INVALID) filter_invalid = TRUE;
+      if (retval == WEED_ERROR_NOT_READY) filter_busy = TRUE;
       if (retval == WEED_ERROR_REINIT_NEEDED) needs_reinit = TRUE;
     }
   }
@@ -1452,6 +1456,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
     retval = procvals[j].ret;
     if (retval == WEED_ERROR_PLUGIN_INVALID) plugin_invalid = TRUE;
     if (retval == WEED_ERROR_FILTER_INVALID) filter_invalid = TRUE;
+    if (retval == WEED_ERROR_NOT_READY) filter_busy = TRUE;
     if (retval == WEED_ERROR_REINIT_NEEDED) needs_reinit = TRUE;
 
     xchannels = weed_get_plantptr_array(xinst[j], WEED_LEAF_OUT_CHANNELS, NULL);
@@ -1478,6 +1483,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_timec
 
   if (plugin_invalid) return FILTER_ERROR_INVALID_PLUGIN;
   if (filter_invalid) return FILTER_ERROR_INVALID_FILTER;
+  if (filter_busy) return FILTER_ERROR_BUSY;
   if (needs_reinit) return FILTER_ERROR_NEEDS_REINIT; // TODO...
   return FILTER_SUCCESS;
 }
@@ -2623,7 +2629,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     goto done_video;
   }
 
-  if (retval == WEED_ERROR_REINIT_NEEDED) {
+  if (retval == FILTER_ERROR_NEEDS_REINIT) {
     needs_reinit = TRUE;
   }
 
@@ -2657,19 +2663,26 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       continue;
     }
 
-    // free any existing pixel_data, we will replace it with the channel data
-    weed_layer_pixel_data_free(layer);
-
-    if (!weed_layer_copy(layer, channel)) {
-      retval = FILTER_ERROR_COPYING_FAILED;
-      goto done_video;
+    if (retval == FILTER_ERROR_BUSY && num_in_tracks == 1 && num_out_tracks == 1) {
+      // filter busy, we will free out_channel data, set values from in_channel instead
+      weed_plant_t *in_channel = get_enabled_channel(inst, k, TRUE);
+      weed_layer_pixel_data_free(channel);
+      if (!weed_layer_copy(layer, in_channel)) {
+        retval = FILTER_ERROR_COPYING_FAILED;
+        goto done_video;
+      }
+    } else {
+      // free any existing pixel_data, we will replace it with the channel data
+      weed_layer_pixel_data_free(layer);
+      if (!weed_layer_copy(layer, channel)) {
+        retval = FILTER_ERROR_COPYING_FAILED;
+        goto done_video;
+      }
     }
     i++;
   }
 
-  if (needs_reinit) {
-    retval = FILTER_ERROR_NEEDS_REINIT;
-  }
+  if (needs_reinit) retval = FILTER_ERROR_NEEDS_REINIT;
 
   for (i = 0; i < num_inc + num_in_alpha; i++) {
     if (weed_get_boolean_value(in_channels[i], WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE) {
@@ -2813,9 +2826,12 @@ lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc
       weed_error_t ret = (*process_func)(instance, tc);
       if (key != -1) filter_mutex_unlock(key);
       if (ret == WEED_ERROR_PLUGIN_INVALID) retval = FILTER_ERROR_INVALID_PLUGIN;
+      if (ret == WEED_ERROR_FILTER_INVALID) retval = FILTER_ERROR_INVALID_FILTER;
+      if (ret == WEED_ERROR_NOT_READY) retval = FILTER_ERROR_BUSY;
     } else retval = FILTER_ERROR_INVALID_PLUGIN;
     weed_leaf_delete(instance, WEED_LEAF_HOST_UNUSED);
   }
+  weed_leaf_delete(instance, "random_seed");
   return retval;
 }
 
@@ -2947,10 +2963,8 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
   //...finally we are ready to apply the filter
   retval = run_process_func(inst, tc, key);
 
-  if (retval == FILTER_ERROR_INVALID_PLUGIN) {
-    retval = FILTER_ERROR_INVALID_PLUGIN;
+  if (retval == FILTER_ERROR_INVALID_PLUGIN || retval == FILTER_ERROR_INVALID_FILTER)
     goto done_audio;
-  }
 
   // TODO - handle process errors (e.g. WEED_ERROR_PLUGIN_INVALID)
 
@@ -2962,14 +2976,19 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
       /// free any old audio data in the layer, unless it's INPLACE
       if (weed_get_boolean_value(layer, WEED_LEAF_HOST_INPLACE, NULL) == WEED_FALSE
           && weed_get_boolean_value(layer, WEED_LEAF_HOST_KEEP_ADATA, NULL) == WEED_FALSE) {
-        adata = (float **)weed_get_voidptr_array_counted(layer, WEED_LEAF_AUDIO_DATA, &nchans);
+        if (retval == FILTER_ERROR_BUSY) {
+          adata = (float **)weed_get_voidptr_array_counted(channel, WEED_LEAF_AUDIO_DATA, &nchans);
+          channel = layer;
+          weed_set_boolean_value(layer, WEED_LEAF_HOST_INPLACE, WEED_TRUE);
+        } else adata = (float **)weed_get_voidptr_array_counted(layer, WEED_LEAF_AUDIO_DATA, &nchans);
         for (j = 0; j < nchans; j++) lives_freep((void **)&adata[j]);
         lives_freep((void **)&adata);
+        // shallow copy
+        weed_leaf_dup(layer, channel, WEED_LEAF_AUDIO_DATA);
       }
-      weed_leaf_copy(layer, WEED_LEAF_AUDIO_DATA, channel, WEED_LEAF_AUDIO_DATA);
-      /* g_print("setting 333dfff %d op layer for channel %p from chan %p, eg %f \n", in_tracks[i] + nbtracks, weed_get_voidptr_value(layer, "audio_data", NULL), weed_get_voidptr_value(channel, "audio_data", NULL), ((float *)(weed_get_voidptr_value(layer, "audio_data", NULL)))[0]); */
     }
   }
+
   for (i = 0; i < num_inc; i++) {
     if (weed_get_boolean_value(in_channels[i], WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE) {
       weed_set_boolean_value(in_channels[i], WEED_LEAF_HOST_TEMP_DISABLED, WEED_FALSE);
@@ -3033,7 +3052,7 @@ lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, weed_la
   int ntracks = 1;
   int numinchans = 0, numoutchans = 0, xnchans, xxnchans, xrate;
 
-  register int i;
+  int i;
 
   // caller passes an init_event from event list, or an instance (for realtime mode)
 
@@ -3240,25 +3259,14 @@ audinst1:
     if (key != -1) filter_mutex_unlock(key);
 
     // - init inst
-    if (weed_plant_has_leaf(filter, WEED_LEAF_INIT_FUNC)) {
-      weed_init_f init_func = (weed_init_f)weed_get_funcptr_value(filter, WEED_LEAF_INIT_FUNC, NULL);
-      if (init_func) {
-        char *cwd = cd_to_plugin_dir(filter);
-        if ((*init_func)(instance) != WEED_SUCCESS) {
-          key_to_instance[key][key_modes[key]] = NULL;
-          lives_chdir(cwd, FALSE);
-          lives_free(cwd);
-          lives_freep((void **)&in_channels);
-          lives_freep((void **)&out_channels);
-          retval = FILTER_ERROR_COULD_NOT_REINIT;
-          goto audret1;
-        }
-        lives_chdir(cwd, FALSE);
-        lives_free(cwd);
-      }
+    if (weed_call_init_func(instance) != WEED_SUCCESS) {
+      key_to_instance[key][key_modes[key]] = NULL;
+      lives_freep((void **)&in_channels);
+      lives_freep((void **)&out_channels);
+      retval = FILTER_ERROR_COULD_NOT_REINIT;
+      goto audret1;
     }
-    weed_set_boolean_value(instance, WEED_LEAF_HOST_INITED, WEED_TRUE);
-    weed_set_boolean_value(instance, WEED_LEAF_HOST_UNUSED, WEED_TRUE);
+
     retval = FILTER_INFO_REINITED;
   }
 
@@ -6777,64 +6785,49 @@ boolean weed_init_effect(int hotkey) {
     inst = new_instance;
 
 start1:
-
-    filter = weed_instance_get_filter(inst, FALSE);
-
-    if (weed_plant_has_leaf(filter, WEED_LEAF_INIT_FUNC)) {
-      weed_init_f init_func;
-      char *cwd = cd_to_plugin_dir(filter), *tmp;
-      init_func = (weed_init_f)weed_get_funcptr_value(filter, WEED_LEAF_INIT_FUNC, NULL);
-      if (init_func && (error = (*init_func)(inst)) != WEED_SUCCESS) {
-        char *filter_name;
-        filter = weed_filters[idx];
-        filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, NULL);
-        d_print(_("Failed to start instance %s, (%s)\n"), filter_name, (tmp = weed_error_to_text(error)));
-        lives_free(tmp);
-        lives_free(filter_name);
-        key_to_instance[hotkey][key_modes[hotkey]] = NULL;
+    if (weed_call_init_func(inst) != WEED_SUCCESS) {
+      char *filter_name, *tmp;
+      filter = weed_filters[idx];
+      filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, NULL);
+      d_print(_("Failed to start instance %s, (%s)\n"), filter_name, (tmp = weed_error_to_text(error)));
+      lives_free(tmp);
+      lives_free(filter_name);
+      key_to_instance[hotkey][key_modes[hotkey]] = NULL;
 
 deinit2:
 
-        if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE))
-          next_inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error);
-        else next_inst = NULL;
+      if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE))
+        next_inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error);
+      else next_inst = NULL;
 
-        weed_call_deinit_func(inst);
+      weed_call_deinit_func(inst);
 
-        if (next_inst && weed_get_boolean_value(next_inst, WEED_LEAF_HOST_INITED, &error) == WEED_TRUE) {
-          // handle compound fx
-          inst = next_inst;
-          goto deinit2;
-        }
-
-        inst = new_instance;
-
-        if (hotkey < FX_KEYS_MAX_VIRTUAL) {
-          if (is_trans) {
-            // TODO: - do we need this ? is_trans is always FALSE !
-            mainw->num_tr_applied--;
-            if (mainw->num_tr_applied == 0) {
-              if (mainw->ce_thumbs) ce_thumbs_liberate_clip_area_register(SCREEN_AREA_FOREGROUND);
-              if (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) {
-                mainw->active_sa_clips = SCREEN_AREA_FOREGROUND;
-		// *INDENT-OFF*
-              }}}}
-	  // *INDENT-ON*
-
-        weed_instance_unref(inst);
-        lives_chdir(cwd, FALSE);
-        lives_free(cwd);
-        if (is_audio_gen) mainw->agen_needs_reinit = FALSE;
-        mainw->error = TRUE;
-        filter_mutex_unlock(hotkey);
-        return FALSE;
+      if (next_inst && weed_get_boolean_value(next_inst, WEED_LEAF_HOST_INITED, &error) == WEED_TRUE) {
+        // handle compound fx
+        inst = next_inst;
+        goto deinit2;
       }
-      lives_chdir(cwd, FALSE);
-      lives_free(cwd);
-    }
 
-    weed_set_boolean_value(inst, WEED_LEAF_HOST_INITED, WEED_TRUE);
-    weed_set_boolean_value(inst, WEED_LEAF_HOST_UNUSED, WEED_TRUE);
+      inst = new_instance;
+
+      if (hotkey < FX_KEYS_MAX_VIRTUAL) {
+        if (is_trans) {
+          // TODO: - do we need this ? is_trans is always FALSE !
+          mainw->num_tr_applied--;
+          if (mainw->num_tr_applied == 0) {
+            if (mainw->ce_thumbs) ce_thumbs_liberate_clip_area_register(SCREEN_AREA_FOREGROUND);
+            if (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) {
+              mainw->active_sa_clips = SCREEN_AREA_FOREGROUND;
+	      // *INDENT-OFF*
+	    }}}}
+      // *INDENT-ON*
+
+      weed_instance_unref(inst);
+      if (is_audio_gen) mainw->agen_needs_reinit = FALSE;
+      mainw->error = TRUE;
+      filter_mutex_unlock(hotkey);
+      return FALSE;
+    }
 
     if ((inst = get_next_compound_inst(inst)) != NULL) goto start1;
 
@@ -7015,9 +7008,12 @@ deinit2:
 weed_error_t weed_call_init_func(weed_plant_t *inst) {
   weed_plant_t *filter;
   weed_error_t error = WEED_SUCCESS;
+  uint64_t rseed;
 
   weed_instance_ref(inst);
-
+  rseed = THREADVAR(random_seed);
+  if (!rseed) rseed = gen_unique_id();
+  weed_set_int64_value(inst, "random_seed", rseed);
   filter = weed_instance_get_filter(inst, FALSE);
   if (weed_plant_has_leaf(filter, WEED_LEAF_INIT_FUNC)) {
     weed_init_f init_func = (weed_init_f)weed_get_funcptr_value(filter, WEED_LEAF_INIT_FUNC, NULL);
@@ -7846,8 +7842,7 @@ procfunc1:
   if (!did_thread) {
     // normal single threaded version
     process_func = (weed_process_f)weed_get_funcptr_value(filter, WEED_LEAF_PROCESS_FUNC, NULL);
-    if (process_func)
-      ret = (*process_func)(inst, tc);
+    if (process_func) ret = (*process_func)(inst, tc);
   }
   lives_free(out_channels);
 
@@ -8352,18 +8347,7 @@ boolean weed_playback_gen_start(void) {
 
       if (inst) {
 geninit1:
-
-        filter = weed_instance_get_filter(inst, FALSE);
-        if (weed_plant_has_leaf(filter, WEED_LEAF_INIT_FUNC)) {
-          weed_init_f init_func = (weed_init_f)weed_get_funcptr_value(filter, WEED_LEAF_INIT_FUNC, NULL);
-          if (init_func) {
-            char *cwd = cd_to_plugin_dir(filter);
-            error = (*init_func)(inst);
-            lives_chdir(cwd, FALSE);
-            lives_free(cwd);
-          }
-        }
-
+        error = weed_call_init_func(inst);
         if (error != WEED_SUCCESS) {
           weed_plant_t *oldinst = inst;
           orig_inst = inst = weed_instance_obtain(fg_gen_to_start, key_modes[fg_gen_to_start]);
@@ -8386,7 +8370,7 @@ deinit4:
             if (next_inst) {
               // handle compound fx
               inst = next_inst;
-              if (weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, &error) == WEED_TRUE) goto deinit4;
+              if (weed_get_boolean_value(inst, WEED_LEAF_HOST_INITED, NULL) == WEED_TRUE) goto deinit4;
             }
           }
 
@@ -8402,20 +8386,18 @@ deinit4:
           return FALSE;
         }
 
-        weed_set_boolean_value(inst, WEED_LEAF_HOST_INITED, WEED_TRUE);
-        weed_set_boolean_value(inst, WEED_LEAF_HOST_UNUSED, WEED_TRUE);
-
         if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE)) {
-          inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error);
+          inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, NULL);
           goto geninit1;
         }
 
         inst = orig_inst;
+        filter = weed_instance_get_filter(inst, TRUE);
 
         if (weed_plant_has_leaf(filter, WEED_LEAF_PREFERRED_FPS)) {
           int current_file = mainw->current_file;
           mainw->current_file = fg_generator_clip;
-          cfile->fps = weed_get_double_value(filter, WEED_LEAF_PREFERRED_FPS, &error);
+          cfile->fps = weed_get_double_value(filter, WEED_LEAF_PREFERRED_FPS, NULL);
           set_main_title(cfile->file_name, 0);
           lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->fps);
           mainw->current_file = current_file;
@@ -8439,7 +8421,8 @@ deinit4:
 
     // check is still gen
     if (mainw->num_tr_applied > 0
-        && enabled_in_channels(weed_filters[key_to_fx[bg_gen_to_start][key_modes[bg_gen_to_start]]], FALSE) == 0) {
+        && enabled_in_channels(weed_filters[key_to_fx[bg_gen_to_start][key_modes[bg_gen_to_start]]],
+                               FALSE) == 0) {
       if ((inst = weed_instance_obtain(bg_gen_to_start, key_modes[bg_gen_to_start])) == NULL) {
         // restart bg generator
         if (!weed_init_effect(bg_gen_to_start)) {
@@ -8474,7 +8457,7 @@ genstart2:
 
           // handle compound fx
           if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE)) {
-            inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error);
+            inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, NULL);
             goto genstart2;
           }
         }
@@ -8489,16 +8472,14 @@ undoit:
           char *tmp;
           filter = weed_instance_get_filter(inst, TRUE);
           filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, NULL);
-          d_print(_("Failed to start generator %s, (%s)\n"), filter_name, (tmp = lives_strdup(weed_error_to_text(error))));
+          d_print(_("Failed to start generator %s, (%s)\n"), filter_name,
+                  (tmp = lives_strdup(weed_error_to_text(error))));
           lives_free(tmp);
           lives_free(filter_name);
 
 deinit5:
 
-          if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE))
-            next_inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE,
-                                                &error);
-          else next_inst = NULL;
+          next_inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, NULL);
 
           weed_call_deinit_func(inst);
           weed_instance_unref(inst);
@@ -8557,8 +8538,7 @@ deinit5:
 setgui1:
 
   // handle compound fx
-  if (inst && weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE)) {
-    inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error);
+  if ((inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, NULL)) != NULL) {
     goto setgui1;
   }
 

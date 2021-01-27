@@ -108,9 +108,11 @@ WEED_SETUP_START(200, 200) {
   snprintf(rfxstrings[0], 256, "layout|p%d|", N_ELEMS);
   snprintf(rfxstrings[1], 256, "layout|p%d|", N_ELEMS + 1);
 
+  gui = weed_filter_get_gui(filter_class);
+
   weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, "RFX");
   weed_set_string_value(gui, "layout_rfx_delim", "|");
-  weed_set_string_array(gui, "layout_rfx_strings", 3, (char **)rfxstrings);
+  weed_set_string_array(gui, "layout_rfx_strings", 2, (char **)rfxstrings);
 
   weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, desc);
   weed_plugin_info_add_filter_class(plugin_info, filter_class);

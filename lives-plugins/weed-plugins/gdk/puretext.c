@@ -961,6 +961,7 @@ static inline void _letter_data_free(sdata_t *sdata) {
 static void _rotate_text(sdata_t *sdata, cairo_t *cairo, PangoLayout *layout, int x_center, int y_center, double radians) {
   cairo_translate(cairo, x_center, y_center);
   cairo_rotate(cairo, radians);
+  cairo_translate(cairo, -x_center, -y_center);
 
   /* Inform Pango to re-layout the text with the new transformation */
   pango_cairo_update_layout(cairo, layout);
@@ -1794,10 +1795,11 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
     sdata->x_text = width + ldt->xpos;
     sdata->y_text = height / 2.;
 
+    ROTATE_TEXT(sdata->x_text, sdata->y_text, ldt->rot);
+
     SET_CENTER(ldt->width, ldt->height, sdata->x_text, sdata->y_text, &sdata->x_text, &sdata->y_text);
-    ROTATE_TEXT(sdata->x_text + ldt->width / 2., sdata->y_text + ldt->height / 2., ldt->rot);
-    sdata->x_text = -ldt->width / 2.;
-    sdata->y_text = -ldt->height / 2.;
+    /* sdata->x_text = -ldt->width / 2.; */
+    /* sdata->y_text = -ldt->height / 2.; */
     COLOUR_COPY(&sdata->fg, &ldt->colour);
 
     break;

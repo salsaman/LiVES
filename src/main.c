@@ -2985,7 +2985,8 @@ boolean set_palette_colours(boolean force_reload) {
   // TODO - run a bg thread until we create GUI
   if (!prefs->vj_mode) {
     /// create thread to pick custom colours
-    lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)pick_custom_colours, 0, "");
+    mainw->helper_procthreads[PT_CUSTOM_COLOURS]
+      = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)pick_custom_colours, -1, "");
   }
 #endif
   /// set global values
@@ -3947,6 +3948,7 @@ static boolean lives_startup2(livespointer data) {
   boolean layout_recovered = FALSE;
 
   if (prefs->crash_recovery && !no_recover) got_files = check_for_recovery_files(auto_recover);
+  else lives_proc_thread_dontcare(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
 
   if (!mainw->foreign && !got_files && prefs->ar_clipset) {
     d_print(lives_strdup_printf(_("Autoloading set %s..."), prefs->ar_clipset_name));

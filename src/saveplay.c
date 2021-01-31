@@ -5311,6 +5311,9 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
   }
 
   if (!auto_recover) {
+    if (mainw->helper_procthreads[PT_CUSTOM_COLOURS]) {
+      lives_proc_thread_join(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+    }
     lives_widget_show_all(LIVES_MAIN_WINDOW_WIDGET);
     lives_widget_context_update();
     if (!do_yesno_dialog
@@ -5319,6 +5322,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       goto recovery_done;
     }
   }
+  else lives_proc_thread_dontcare(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
 
   if (recovery_file) {
     do {
@@ -5810,11 +5814,15 @@ boolean check_for_recovery_files(boolean auto_recover) {
 
   if (THREADVAR(com_failed)) {
     THREADVAR(com_failed) = FALSE;
+    lives_proc_thread_dontcare(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
     return FALSE;
   }
 
   recpid = atoi(mainw->msg);
-  if (recpid == 0) return FALSE;
+  if (recpid == 0) {
+    lives_proc_thread_dontcare(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+    return FALSE;
+  }
 
   retval = recover_files((recovery_file = lives_strdup_printf("%s/recovery.%d.%d.%d", prefs->workdir, luid,
                                           lgid, recpid)), auto_recover);

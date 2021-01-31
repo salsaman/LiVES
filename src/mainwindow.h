@@ -690,6 +690,7 @@ typedef struct {
 #define N_HLP_PROCTHREADS 128
 #define PT_LAZY_RFX 16
 #define PT_LAZY_DSUSED 17
+#define PT_CUSTOM_COLOURS 18
 
 typedef struct {
   char *name;

@@ -608,7 +608,7 @@ static void *worker(void *data) {
         sd->busy = true;
         sd->cycadj = 0;
         for (int rr = 0; rr < 4; rr++) {
-          sd->program = fastrand_int(sd->nprs - 2);
+          sd->program = fastrnd_int(sd->nprs - 2);
 
           // mkae it 4 times more likely to select a known good program than an untested one
           // values can be: 0 - unchecked, 1 - known bad, 2 - known good, 3 - bad if silent

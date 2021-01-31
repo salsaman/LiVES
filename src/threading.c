@@ -379,15 +379,17 @@ boolean lives_proc_thread_dontcare(lives_proc_thread_t tinfo) {
   /// if thread is running, tell it we no longer care about return value, so it can free itself
   /// if finished we just call lives_proc_thread_join() to free it
   /// a mutex is used to ensure the proc_thread does not finish between setting the flag and checking if it has ifnished
-  pthread_mutex_t *dcmutex = weed_get_voidptr_value(tinfo, WEED_LEAF_DONTCARE_MUTEX, NULL);
-  if (dcmutex) {
-    pthread_mutex_lock(dcmutex);
-    if (!lives_proc_thread_check(tinfo)) {
-      weed_set_boolean_value(tinfo, WEED_LEAF_DONTCARE, WEED_TRUE);
-      pthread_mutex_unlock(dcmutex);
-    } else {
-      pthread_mutex_unlock(dcmutex);
-      lives_proc_thread_join(tinfo);
+  if (tinfo) {
+    pthread_mutex_t *dcmutex = weed_get_voidptr_value(tinfo, WEED_LEAF_DONTCARE_MUTEX, NULL);
+    if (dcmutex) {
+      pthread_mutex_lock(dcmutex);
+      if (!lives_proc_thread_check(tinfo)) {
+	weed_set_boolean_value(tinfo, WEED_LEAF_DONTCARE, WEED_TRUE);
+	pthread_mutex_unlock(dcmutex);
+      } else {
+	pthread_mutex_unlock(dcmutex);
+	lives_proc_thread_join(tinfo);
+      }
     }
   }
   return TRUE;

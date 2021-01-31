@@ -759,7 +759,7 @@ static inline double drand(double max)
 
 static inline uint64_t xorshift(uint64_t x) {x ^= x << 13; x ^= x >> 7; return x ^ (x << 17);}
 
-static uint64_t rndval = 0;
+static uint64_t _rndval = 0;
 
 static inline uint64_t fastrand(uint64_t oldval) {
   // pseudo-random number generators
@@ -771,17 +771,39 @@ static inline uint64_t fastrand(uint64_t oldval) {
     oldval = ((uint64_t)(lrand48() << 16) ^ (uint64_t)(lrand48())) + 1;
 #endif
   }
-  return (rndval = xorshift(oldval));
+  return (_rndval = xorshift(oldval));
 }
 
-static inline double fastrand_dbl(double range) {
+static inline uint64_t fastrnd_int64(void) {
+  return fastrand(_rndval);
+}
+
+static inline uint64_t fastrand_re(weed_plant_t *inst, const char *leaf) {
+  // re-entrant version
+  // leaf should be prefixed with "plugin_", e.g "plugin_random_seed"
+  uint64_t val = xorshift(weed_get_int64_value(inst, leaf, NULL));
+  weed_set_int64_value(inst, leaf, val);
+  return val;
+}
+
+static inline double fastrnd_dbl(double range) {
   static const double divd = (double)(0xFFFFFFFF);
-  double val = (double)fastrand(rndval) / divd;
+  double val = (double)fastrnd_int64() / divd;
   return val / divd * range;
 }
 
-static inline uint32_t fastrand_int(uint32_t range) {
-  return (uint32_t)(fastrand_dbl((double)(++range)));
+static inline double fastrand_dbl_re(double range, weed_plant_t *inst, const char *leaf) {
+  static const double divd = (double)(0xFFFFFFFF);
+  double val = (double)fastrand_re(inst, leaf) / divd;
+  return val / divd * range;
+}
+
+static inline uint32_t fastrnd_int(uint32_t range) {
+  return (uint32_t)fastrnd_dbl((double)(++range));
+}
+
+static inline uint32_t fastrand_int_re(uint32_t range, weed_plant_t *inst, const char *leaf) {
+  return (uint32_t)fastrand_dbl_re((double)(++range), inst, leaf);
 }
 
 #endif

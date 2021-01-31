@@ -241,10 +241,10 @@ FN_DECL int is_big_endian(void);
 #ifdef NEED_RANDOM
 FN_DECL uint64_t fastrnd_int64(void);
 FN_DECL double fastrnd_dbl(double range);
-FN_DECL uint32_t fastrand_int(uint32_t range);
+FN_DECL uint32_t fastrnd_int(uint32_t range);
 FN_DECL uint64_t fastrand(uint64_t seed);
 FN_DECL uint64_t fastrand_re(weed_plant_t *inst, const char *leaf);
-FN_DECL double fastrnd_dbl_re(double range, weed_plant_t *inst, const char *leaf);
+FN_DECL double fastrand_dbl_re(double range, weed_plant_t *inst, const char *leaf);
 FN_DECL uint32_t fastrand_int_re(uint32_t range, weed_plant_t *inst, const char *leaf);
 #endif
 

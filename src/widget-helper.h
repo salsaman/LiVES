@@ -389,7 +389,7 @@ boolean lives_label_set_selectable(LiVESLabel *, boolean setting);
 
 boolean lives_label_set_line_wrap(LiVESLabel *, boolean set);
 boolean lives_label_set_line_wrap_mode(LiVESLabel *, LingoWrapMode mode);
-boolean lives_label_seT_lines(LiVESLabel *, int nlines);
+boolean lives_label_set_lines(LiVESLabel *, int nlines);
 boolean lives_label_set_ellipsize(LiVESLabel *, LiVESEllipsizeMode mode);
 
 //////////

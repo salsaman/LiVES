@@ -111,7 +111,8 @@ void type_label_set_text(int key, int mode) {
   char *type = rte_keymode_get_type(key + 1, mode), *tmp;
 
   if (*type) {
-    lives_label_set_text(LIVES_LABEL(type_labels[idx]), (tmp = lives_strdup_printf(_("Type: %s"), type)));
+    lives_label_set_text(LIVES_LABEL(type_labels[idx]),
+                         (tmp = lives_strdup_printf(_("Type: %s"), type)));
     lives_free(tmp);
     lives_widget_set_sensitive(info_buttons[idx], TRUE);
     lives_widget_set_sensitive(clear_buttons[idx], TRUE);
@@ -2256,9 +2257,9 @@ LiVESWidget *create_rte_window(void) {
 
       hbox2 = lives_hbox_new(FALSE, 0);
 
-      lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, 0);
 
-      mode_radios[idx] = lives_standard_radio_button_new(_("Mode active"), &mode_group, LIVES_BOX(hbox2), NULL);
+      mode_radios[idx] = lives_standard_radio_button_new(_("Mode\nactive"), &mode_group, LIVES_BOX(hbox2), NULL);
 
       if (rte_key_getmode(i + 1) == j) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(mode_radios[idx]), TRUE);
 
@@ -2270,16 +2271,17 @@ LiVESWidget *create_rte_window(void) {
 
       lives_label_set_line_wrap(LIVES_LABEL(type_labels[idx]), TRUE);
       lives_label_set_line_wrap_mode(LIVES_LABEL(type_labels[idx]), LINGO_WRAP_WORD_CHAR);
-      lives_label_seT_lines(LIVES_LABEL(type_labels[idx]), 3);
+      lives_label_set_lines(LIVES_LABEL(type_labels[idx]), 3);
+      lives_label_set_width_chars(LIVES_LABEL(type_labels[idx]), 12);
       lives_label_set_ellipsize(LIVES_LABEL(type_labels[idx]), LIVES_ELLIPSIZE_END);
 
       info_buttons[idx] = lives_standard_button_new_with_label(_("Info"),
                           DEF_BUTTON_WIDTH / 3, DEF_BUTTON_HEIGHT);
       param_buttons[idx] = lives_standard_button_new_with_label(_("Set Parameters"),
-                           DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+                           DEF_BUTTON_WIDTH >> 1, DEF_BUTTON_HEIGHT);
       lives_widget_set_valign(param_buttons[idx], LIVES_ALIGN_CENTER);
       conx_buttons[idx] = lives_standard_button_new_with_label(_("Set Connections"),
-                          DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT);
+                          DEF_BUTTON_WIDTH >> 1, DEF_BUTTON_HEIGHT);
       lives_widget_set_valign(conx_buttons[idx], LIVES_ALIGN_CENTER);
       clear_buttons[idx] = lives_standard_button_new_with_label(_("Clear"),
                            DEF_BUTTON_WIDTH / 3, DEF_BUTTON_HEIGHT);
@@ -2312,6 +2314,7 @@ LiVESWidget *create_rte_window(void) {
 
       lives_entry_set_text(LIVES_ENTRY(combo_entries[idx]), (tmp = rte_keymode_get_filter_name(i + 1, j, FALSE)));
       lives_free(tmp);
+      lives_entry_set_width_chars(LIVES_ENTRY(combo_entries[idx]), SHORTER_ENTRY_WIDTH);
 
       lives_entry_set_editable(LIVES_ENTRY(combo_entries[idx]), FALSE);
 

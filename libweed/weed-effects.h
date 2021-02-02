@@ -292,9 +292,13 @@ typedef weed_error_t (*weed_display_value_f)(weed_plant_t *filter_instance, weed
 #define WEED_LEAF_OUT_PARAMETERS "out_parameters"
 #define WEED_LEAF_IN_CHANNELS "in_channels"
 #define WEED_LEAF_OUT_CHANNELS "out_channels"
-  // optional
+
+// optional
 #define WEED_LEAF_FPS "fps"
 #define WEED_LEAF_TARGET_FPS "target_fps"
+
+// API 201
+#define WEED_LEAF_RANDOM_SEED "random_seed"
 
 // instance GUI leaves
 #define WEED_LEAF_EASE_IN_FRAMES "ease_in_frames" // set by filter in init_func()

@@ -378,11 +378,13 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
     if (param == fchooser.font_param) {
       LiVESWidget *tbox = widget;
       int idx;
-      box = lives_widget_get_parent(widget);
-      while (box && !LIVES_IS_HBOX(box)) {
-        tbox = box;
-        box = lives_widget_get_parent(box);
-      }
+      if (!widget_opts.last_container) {
+        box = lives_widget_get_parent(widget);
+        while (box && !LIVES_IS_HBOX(box)) {
+          tbox = box;
+          box = lives_widget_get_parent(box);
+        }
+      } else box = widget_opts.last_container;
       if (!box) return;
       idx = get_box_child_index(LIVES_BOX(box), tbox);
       param->widgets[1] = buttond = lives_standard_font_chooser_new();
@@ -435,8 +437,8 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       char *labeltext = (_("Maintain _Aspect Ratio"));
 
       aspect.no_reset = TRUE;
-      aspect.lockbutton = lives_standard_lock_button_new(TRUE, ASPECT_BUTTON_WIDTH,
-                          ASPECT_BUTTON_HEIGHT, labeltext, NULL);
+      // width will expand to contain label text
+      aspect.lockbutton = lives_standard_lock_button_new(TRUE, 2, ASPECT_BUTTON_HEIGHT, labeltext, NULL);
       lives_free(labeltext);
 
       lives_signal_sync_connect(aspect.lockbutton, LIVES_WIDGET_CLICKED_SIGNAL,
@@ -457,7 +459,11 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
         lives_box_pack_start(LIVES_BOX(hbox), aspect.lockbutton, expand, FALSE, 0);
       }
 
-      if (expand) add_fill_to_box(LIVES_BOX(hbox));
+      if (expand) {
+        add_fill_to_box(LIVES_BOX(hbox));
+        lives_widget_set_hexpand(hbox, TRUE);
+        lives_widget_set_halign(hbox, LIVES_ALIGN_CENTER);
+      }
     }
   }
 
@@ -485,6 +491,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
           lives_free(def_dir);
           def_dir = lives_strdup(dirnamex);
         }
+        lives_entry_set_width_chars(LIVES_ENTRY(widget), LONG_ENTRY_WIDTH);
       }
 
       param->widgets[2] = buttond = lives_standard_file_button_new(FALSE, def_dir);
@@ -506,6 +513,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
           lives_label_set_mnemonic_widget(LIVES_LABEL(param->widgets[1]), buttond);
         lives_entry_set_max_length(LIVES_ENTRY(widget), PATH_MAX);
       }
+      lives_entry_set_width_chars(LIVES_ENTRY(widget), LONG_ENTRY_WIDTH);
     }
 
     slist = slist->next;

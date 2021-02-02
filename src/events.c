@@ -2762,8 +2762,9 @@ weed_plant_t *append_filter_init_event(weed_plant_t *event_list, weed_timecode_t
                         (tmp = make_weed_hashname(filter_idx, TRUE, FALSE, 0, FALSE)));
   lives_free(tmp);
 
-  if (weed_plant_has_leaf(inst, "random_seed")) {
-    weed_set_int64_value(event, "random_seed", weed_get_int64_value(inst, "random_seed", NULL));
+  if (weed_plant_has_leaf(inst, WEED_LEAF_RANDOM_SEED)) {
+    weed_set_int64_value(event, WEED_LEAF_RANDOM_SEED,
+                         weed_get_int64_value(inst, WEED_LEAF_RANDOM_SEED, NULL));
   }
 
   filter = get_weed_filter(filter_idx);
@@ -3379,7 +3380,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
           botmpl[i] = weed_plant_copy(cotmpl[i]);
         }
       }
-      THREADVAR(random_seed) = weed_get_int64_value(next_event, "random_seed", NULL);
+      THREADVAR(random_seed) = weed_get_int64_value(next_event, WEED_LEAF_RANDOM_SEED, NULL);
 
       weed_init_effect(key);
 
@@ -4298,7 +4299,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
         }
       }
 
-      THREADVAR(random_seed) = weed_get_int64_value(event, "random_seed", NULL);
+      THREADVAR(random_seed) = weed_get_int64_value(event, WEED_LEAF_RANDOM_SEED, NULL);
 
       weed_init_effect(key);
 

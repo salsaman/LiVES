@@ -169,7 +169,8 @@ WEED_GLOBAL_INLINE weed_plant_t *weed_param_get_gui(weed_plant_t *param, int cre
 
 WEED_GLOBAL_INLINE int weed_param_is_hidden(weed_plant_t *param, int temporary) {
   weed_plant_t *gui = weed_param_get_gui(param, WEED_FALSE);
-  if (!temporary || !gui) return weed_paramtmpl_hints_hidden(weed_param_get_template(param));
+  if (temporary == WEED_FALSE || !gui)
+    return weed_paramtmpl_hints_hidden(weed_param_get_template(param));
   return weed_get_boolean_value(gui, WEED_LEAF_HIDDEN, NULL);
 }
 
@@ -351,7 +352,7 @@ WEED_GLOBAL_INLINE int weed_paramtmpl_hints_string_choice(weed_plant_t *paramtmp
 WEED_GLOBAL_INLINE int weed_paramtmpl_hints_hidden(weed_plant_t *paramtmpl) {
   weed_plant_t *gui;
   if (WEED_PLANT_IS_PARAMETER_TEMPLATE(paramtmpl)
-      && (gui = weed_paramtmpl_get_gui(paramtmpl, WEED_FALSE))
+      && (gui = weed_paramtmpl_get_gui(paramtmpl, WEED_FALSE)) != NULL
       && weed_get_boolean_value(gui, WEED_LEAF_HIDDEN, NULL) == WEED_TRUE)
     return WEED_TRUE;
   return WEED_FALSE;

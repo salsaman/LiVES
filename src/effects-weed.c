@@ -844,7 +844,8 @@ weed_plant_t *add_filter_init_events(weed_plant_t *event_list, weed_timecode_t t
   for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if ((inst = weed_instance_obtain(i, key_modes[i])) != NULL) {
       if (enabled_in_channels(inst, FALSE) > 0) {
-        weed_set_int64_value(inst, "random_seed", gen_unique_id());
+        if (!weed_plant_has_leaf(inst, WEED_LEAF_RANDOM_SEED))
+          weed_set_int64_value(inst, WEED_LEAF_RANDOM_SEED, gen_unique_id());
         event_list = append_filter_init_event(event_list, tc,
                                               (fx_idx = key_to_fx[i][key_modes[i]]), -1, i, inst);
         init_events[i] = get_last_event(event_list);
@@ -2831,7 +2832,7 @@ lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc
     } else retval = FILTER_ERROR_INVALID_PLUGIN;
     weed_leaf_delete(instance, WEED_LEAF_HOST_UNUSED);
   }
-  weed_leaf_delete(instance, "random_seed");
+  weed_leaf_delete(instance, WEED_LEAF_RANDOM_SEED);
   return retval;
 }
 
@@ -7013,7 +7014,7 @@ weed_error_t weed_call_init_func(weed_plant_t *inst) {
   weed_instance_ref(inst);
   rseed = THREADVAR(random_seed);
   if (!rseed) rseed = gen_unique_id();
-  weed_set_int64_value(inst, "random_seed", rseed);
+  weed_set_int64_value(inst, WEED_LEAF_RANDOM_SEED, rseed);
   filter = weed_instance_get_filter(inst, FALSE);
   if (weed_plant_has_leaf(filter, WEED_LEAF_INIT_FUNC)) {
     weed_init_f init_func = (weed_init_f)weed_get_funcptr_value(filter, WEED_LEAF_INIT_FUNC, NULL);
@@ -8694,30 +8695,21 @@ boolean has_perchannel_multiw(weed_plant_t *filter) {
 weed_plant_t *weed_inst_in_param(weed_plant_t *inst, int param_num, boolean skip_hidden, boolean skip_internal) {
   weed_plant_t **in_params;
   weed_plant_t *param;
-  int error, num_params;
+  int num_params;
 
   do {
-    if (!weed_plant_has_leaf(inst, WEED_LEAF_IN_PARAMETERS)) continue; // has no in_parameters
-
-    num_params = weed_leaf_num_elements(inst, WEED_LEAF_IN_PARAMETERS);
-
+    in_params = weed_get_plantptr_array_counted(inst, WEED_LEAF_IN_PARAMETERS, &num_params);
+    if (!num_params) continue; // has no in_parameters
     if (!skip_hidden && !skip_internal) {
       if (num_params > param_num) {
-        in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
         param = in_params[param_num];
         lives_free(in_params);
         return param;
       }
       param_num -= num_params;
-    }
-
-    else {
+    } else {
       int count = 0;
-      register int i;
-
-      in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
-
-      for (i = 0; i < num_params; i++) {
+      for (int i = 0; i < num_params; i++) {
         param = in_params[i];
         if ((!skip_hidden || !is_hidden_param(inst, i)) && (!skip_internal
             || !weed_plant_has_leaf(param, WEED_LEAF_HOST_INTERNAL_CONNECTION))) {
@@ -8731,8 +8723,7 @@ weed_plant_t *weed_inst_in_param(weed_plant_t *inst, int param_num, boolean skip
       param_num -= count;
       lives_free(in_params);
     }
-  } while (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE) &&
-           (inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error)) != NULL);
+  } while ((inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, NULL)) != NULL);
 
   return NULL;
 }
@@ -8741,22 +8732,18 @@ weed_plant_t *weed_inst_in_param(weed_plant_t *inst, int param_num, boolean skip
 weed_plant_t *weed_inst_out_param(weed_plant_t *inst, int param_num) {
   weed_plant_t **out_params;
   weed_plant_t *param;
-  int error, num_params;
+  int num_params;
 
   do {
-    if (!weed_plant_has_leaf(inst, WEED_LEAF_OUT_PARAMETERS)) continue; // has no out_parameters
-
-    num_params = weed_leaf_num_elements(inst, WEED_LEAF_OUT_PARAMETERS);
-
+    out_params = weed_get_plantptr_array_counted(inst, WEED_LEAF_IN_PARAMETERS, &num_params);
+    if (!num_params) continue; // has no out_parameters
     if (num_params > param_num) {
-      out_params = weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, &error);
       param = out_params[param_num];
       lives_free(out_params);
       return param;
     }
     param_num -= num_params;
-  } while (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE) &&
-           (inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error)) != NULL);
+  } while ((inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, NULL)) != NULL);
 
   return NULL;
 }
@@ -8766,9 +8753,7 @@ weed_plant_t *weed_filter_in_paramtmpl(weed_plant_t *filter, int param_num, bool
   weed_plant_t **in_params;
   weed_plant_t *ptmpl;
   int num_params;
-
   int count = 0;
-  register int i;
 
   in_params = weed_get_plantptr_array_counted(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &num_params);
   if (num_params <= param_num) {
@@ -8782,7 +8767,7 @@ weed_plant_t *weed_filter_in_paramtmpl(weed_plant_t *filter, int param_num, bool
     return ptmpl;
   }
 
-  for (i = 0; i < num_params; i++) {
+  for (int i = 0; i < num_params; i++) {
     ptmpl = in_params[i];
     if (!weed_plant_has_leaf(ptmpl, WEED_LEAF_HOST_INTERNAL_CONNECTION)) {
       if (count == param_num) {
@@ -8801,15 +8786,13 @@ weed_plant_t *weed_filter_in_paramtmpl(weed_plant_t *filter, int param_num, bool
 weed_plant_t *weed_filter_out_paramtmpl(weed_plant_t *filter, int param_num) {
   weed_plant_t **out_params;
   weed_plant_t *ptmpl;
-  int error, num_params;
+  int num_params;
 
-  if (!weed_plant_has_leaf(filter, WEED_LEAF_OUT_PARAMETER_TEMPLATES)) return NULL; // has no out_parameters
-
-  num_params = weed_leaf_num_elements(filter, WEED_LEAF_OUT_PARAMETER_TEMPLATES);
-
-  if (num_params <= param_num) return NULL; // invalid parameter number
-
-  out_params = weed_get_plantptr_array(filter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, &error);
+  out_params = weed_get_plantptr_array_counted(filter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, &num_params);
+  if (num_params <= param_num) {
+    lives_freep((void **)&out_params);
+    return NULL; // invalid parameter number
+  }
 
   ptmpl = out_params[param_num];
   lives_free(out_params);

@@ -3700,7 +3700,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_line_wrap_mode(LiVESLabel *l
   return FALSE;
 }
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_seT_lines(LiVESLabel *label, int nlines) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_label_set_lines(LiVESLabel *label, int nlines) {
 #ifdef GUI_GTK
   gtk_label_set_lines(label, nlines);
   return TRUE;
@@ -7697,7 +7697,7 @@ LiVESWidget *lives_layout_expansion_row_new(LiVESLayout *layout, LiVESWidget *wi
     lives_widget_object_unref(LIVES_WIDGET_OBJECT(box));
   }
   lives_widget_set_halign(box, LIVES_ALIGN_FILL);
-  //lives_widget_set_halign(widget, LIVES_ALIGN_CENTER);
+  lives_widget_set_hexpand(box, TRUE);
   xwidgets = lives_list_prepend(xwidgets, box);
   lives_widget_object_set_data_list(LIVES_WIDGET_OBJECT(layout), EXP_LIST_KEY, xwidgets);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(box), LROW_KEY, LIVES_INT_TO_POINTER(rows) - 1);
@@ -8040,7 +8040,7 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
       (lives_painter_surface_t **)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
           SBUTT_SURFACE_KEY);
     state = lives_widget_get_state(sbutt); /// get updated state
-    if (!pbsurf || !(*pbsurf)) return;
+    if (!pbsurf || !*pbsurf) return;
     else {
       lives_painter_t *cr;
       lives_painter_surface_t *bsurf;
@@ -8060,7 +8060,7 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
       boolean focused = lives_widget_is_focus(sbutt);
       uint32_t acc;
       int themetype;
-      int width, height;
+      int width, height, minwidth;
       int lw = 0, lh = 0, x_pos, y_pos, w_, h_;
       int pbw = 0, pbh = 0;
 
@@ -8252,6 +8252,13 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
         lives_painter_paint(cr);
       }
       lives_painter_destroy(cr);
+      minwidth = lw + (pbw ? pbw + widget_opts.packing_width
+                       : 0) + widget_opts.border_width * 4;
+      width = lives_widget_get_allocation_width(sbutt);
+      height = lives_widget_get_allocation_height(sbutt);
+      if (width < minwidth) {
+        lives_widget_set_size_request(sbutt, minwidth, height);
+      }
       lives_widget_queue_draw(sbutt);
     }
   }
@@ -10126,7 +10133,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_font_chooser_new(void) {
   LiVESWidget *font_choo = NULL;
-  int width = DEF_BUTTON_WIDTH, height = DEF_BUTTON_HEIGHT;
+  int width = DEF_BUTTON_WIDTH, height = DEF_BUTTON_HEIGHT / 4;
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 2, 0)
   char *ttl;

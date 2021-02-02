@@ -985,8 +985,10 @@ static void check_hidden_gui(weed_plant_t *inst, lives_param_t *param, int idx) 
 
   if (wparam) {
     if (weed_param_is_hidden(wparam, WEED_FALSE) == WEED_FALSE) {
-      if (weed_param_is_hidden(wparam, WEED_TRUE)) param->hidden |= HIDDEN_GUI_TEMP;
-      else param->hidden &= ~HIDDEN_GUI_TEMP;
+      if (weed_param_is_hidden(wparam, WEED_TRUE)) {
+        break_me("phid");
+        param->hidden |= HIDDEN_GUI_TEMP;
+      } else param->hidden &= ~HIDDEN_GUI_TEMP;
     }
   }
 }
@@ -1263,7 +1265,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
       num_tok = get_token_count(line, (unsigned int)rfx->delim[0]);
       // ignore | inside strings
       array = lives_strsplit(line, rfx->delim, num_tok);
-      if (!*(array[num_tok - 1])) num_tok--;
+      if (!*array[num_tok - 1]) num_tok--;
 
       for (j = 0; j < num_tok; j++) {
         if (!strcmp(array[j], "nextfilter")) {
@@ -1320,7 +1322,15 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
               lives_widget_set_halign(last_label, LIVES_ALIGN_START);
             }
             if (layoutx) hbox = lives_layout_hbox_new(LIVES_LAYOUT(layoutx));
-            if (add_param_to_box(LIVES_BOX(hbox), rfx, pnum, (j == (num_tok - 1)) && !noslid)) noslid = TRUE;
+            if (add_param_to_box(LIVES_BOX(hbox), rfx, pnum, (j == (num_tok - 1)) && !noslid))
+              noslid = TRUE;
+            if (layoutx && num_tok == 1) {
+              if (param->type == LIVES_PARAM_STRING && LIVES_IS_ENTRY(param->widgets[0])) {
+                if (param->special_type != LIVES_PARAM_SPECIAL_TYPE_FONT_CHOOSER) {
+                  lives_layout_expansion_row_new(LIVES_LAYOUT(layoutx), widget_opts.last_container);
+                }
+              }
+            }
           }
         } else if (!strncmp(array[j], "fill", 4)) {
           //// fill //////////////////
@@ -1431,8 +1441,9 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
 
     // add any unused parameters
     for (i = 0; i < rfx->num_params; i++) {
+      param = &rfx->params[i];
       if (!chk_params && !(rfx->flags & RFX_FLAGS_NO_RESET)) {
-        rfx->params[i].changed = FALSE;
+        param->changed = FALSE;
         if (used[i]) continue;
       }
 
@@ -1456,8 +1467,8 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
       } else if (pass == 0) break;
 
       if (rfx->source_type == LIVES_RFX_SOURCE_WEED) {
-        check_hidden_gui((weed_plant_t *)rfx->source, &rfx->params[i], i);
-        if (rfx->params[i].hidden & HIDDEN_STRUCTURAL) continue;
+        check_hidden_gui((weed_plant_t *)rfx->source, param, i);
+        if (param->hidden & HIDDEN_STRUCTURAL) continue;
       }
 
       if (chk_params) return TRUE;
@@ -1465,10 +1476,15 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
       has_param = TRUE;
       if (pass == 0) {
         if ((fmtlen = lives_strlen((const char *)format)) < FMT_STRING_SIZE) format[fmtlen] =
-            (unsigned char)(rfx->params[i].type);
+            (unsigned char)(param->type);
       } else {
         if (layoutx) {
           add_param_to_box(LIVES_BOX(lives_layout_row_new(LIVES_LAYOUT(layoutx))), rfx, i, TRUE);
+          if (param->type == LIVES_PARAM_STRING && LIVES_IS_ENTRY(param->widgets[0])) {
+            if (param->special_type != LIVES_PARAM_SPECIAL_TYPE_FONT_CHOOSER) {
+              lives_layout_expansion_row_new(LIVES_LAYOUT(layoutx), widget_opts.last_container);
+            }
+          }
         } else add_param_to_box(LIVES_BOX(param_vbox), rfx, i, TRUE);
       }
       if (!layout_mode) layoutx = NULL;
@@ -1547,7 +1563,6 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
   LiVESWidget *entry = NULL;
   LiVESWidget *hbox;
   LiVESWidget *combo;
-  //LiVESWidget *dlabel = NULL;
   LiVESWidget *textview = NULL;
   LiVESWidget *scrolledwindow;
   LiVESWidget *layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(box),
@@ -1610,14 +1625,16 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
   case LIVES_PARAM_BOOL:
     if (!param->group) {
       widget_opts.mnemonic_label = use_mnemonic;
-      checkbutton = lives_standard_check_button_new(name, get_bool_param(param->value), (LiVESBox *)hbox, param->desc);
+      checkbutton = lives_standard_check_button_new(name, get_bool_param(param->value),
+                    LIVES_BOX(hbox), param->desc);
       lives_signal_sync_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                                       LIVES_GUI_CALLBACK(after_boolean_param_toggled),
                                       (livespointer)rfx);
       widget_opts.mnemonic_label = TRUE;
 
       // store parameter so we know whose trigger to use
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(checkbutton), PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(checkbutton), PARAM_NUMBER_KEY,
+                                   LIVES_INT_TO_POINTER(pnum));
       param->widgets[0] = checkbutton;
     } else {
       group = get_group(rfx, param);
@@ -1651,10 +1668,12 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), get_bool_param(param->value));
 
       lives_signal_sync_connect_after(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                      LIVES_GUI_CALLBACK(after_boolean_param_toggled), (livespointer)rfx);
+                                      LIVES_GUI_CALLBACK(after_boolean_param_toggled),
+                                      (livespointer)rfx);
 
       // store parameter so we know whose trigger to use
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(radiobutton), PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(radiobutton), PARAM_NUMBER_KEY,
+                                   LIVES_INT_TO_POINTER(pnum));
       param->widgets[0] = radiobutton;
     }
     param->widgets[1] = widget_opts.last_label;
@@ -1792,7 +1811,10 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
       lives_box_pack_start(LIVES_BOX(hbox), vbox, TRUE, TRUE, widget_opts.packing_width);
-      if (layout) lives_layout_expansion_row_new(LIVES_LAYOUT(layout), vbox);
+      if (layout) {
+        lives_layout_expansion_row_new(LIVES_LAYOUT(layout), vbox);
+        lives_widget_set_halign(layout, LIVES_ALIGN_FILL);
+      }
 
       lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, widget_opts.packing_height >> 1);
 
@@ -1828,16 +1850,18 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
 
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(textbuffer), "textview", textview);
     } else {
+      LiVESWidget *hbox2 = lives_hbox_new(FALSE, 0);
       if (use_mnemonic) label = lives_standard_label_new_with_mnemonic_widget(_(name), NULL);
       else label = lives_standard_label_new(_(name));
 
-      lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start(LIVES_BOX(hbox2), label, FALSE, FALSE, widget_opts.packing_width);
       param->widgets[0] = entry = lives_standard_entry_new(NULL, txt, (int)param->max,
-                                  (int)param->max, LIVES_BOX(hbox), param->desc);
+                                  (int)param->max, LIVES_BOX(hbox2), param->desc);
 
       if (rfx->status == RFX_STATUS_WEED && param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
         lives_signal_sync_connect_after(LIVES_WIDGET_OBJECT(entry), LIVES_WIDGET_CHANGED_SIGNAL,
                                         LIVES_GUI_CALLBACK(after_param_text_changed), (livespointer)rfx);
+        widget_opts.last_container = hbox;
       }
     }
     param->widgets[1] = widget_opts.last_label;
@@ -1870,7 +1894,8 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
 
     if (param->list) {
       lives_combo_set_active_string(LIVES_COMBO(combo),
-                                    (char *)lives_list_nth_data(param->list, get_int_param(param->value)));
+                                    (char *)lives_list_nth_data(param->list,
+                                        get_int_param(param->value)));
     }
 
     lives_signal_sync_connect_after(LIVES_WIDGET_OBJECT(combo), LIVES_WIDGET_CHANGED_SIGNAL,
@@ -1888,6 +1913,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
 
   // see if there were any 'special' hints
   if (!layout) {
+    widget_opts.last_container = NULL;
     check_for_special(rfx, param, LIVES_BOX(lives_widget_get_parent(LIVES_WIDGET(box))));
   } else {
     check_for_special(rfx, param, LIVES_BOX(lives_widget_get_parent(layout)));

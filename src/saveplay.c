@@ -5321,8 +5321,7 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       retb = FALSE;
       goto recovery_done;
     }
-  }
-  else lives_proc_thread_dontcare(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+  } else lives_proc_thread_dontcare(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
 
   if (recovery_file) {
     do {

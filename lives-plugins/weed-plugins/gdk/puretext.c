@@ -48,12 +48,13 @@ static int package_version = 3; // version of this package
 // defines for configure dialog elements
 enum DlgControls {
   P_FILE = 0,
-  P_RAND,
+  P_RANDLINES,
   P_MODE,
   P_SPEED,
   P_FONT,
   P_FONTSCALE,
   P_TEXTBUF,
+  P_RANDMODE,
   P_TRIGGER,
   P_END,
 };
@@ -143,6 +144,8 @@ typedef struct {
   double alarm_time; // pre-set alarm timecode [set with pt_SET_ALARM( this, delta) ]
   gboolean alarm; // event wake up
 
+  int randmode;
+
   pt_ttext_t text_type; // current charset
 
   char *textbuf; // holds additional text
@@ -212,6 +215,7 @@ typedef struct {
 
   int phase; // for sequencing
 
+  int funmode;
 } sdata_t;
 
 typedef struct {
@@ -228,6 +232,8 @@ static int num_fonts_available = 0;
 
 #define TWO_PI (M_PI * 2.)
 
+#define DEF_FONT "Monospace"
+
 // internal
 #define set_ptext(text) pango_layout_set_text(layout, (text), -1)
 
@@ -238,12 +244,13 @@ static int num_fonts_available = 0;
 #define SET_FONT_FAMILY(ffam) _set_font_family(layout, font, (ffam))
 #define SET_FONT_SIZE(sz) _set_font_size(inst, sdata, layout, font, (sz), (double)width)
 #define SET_FONT_WEIGHT(weight) _set_font_weight(layout, font, PANGO_WEIGHT_##weight)
+#define SET_OPERATOR(op) cairo_set_operator(cairo, CAIRO_OPERATOR_##op)
 #define SET_TEXT(txt) _set_text(layout, (txt), ztext)
 #define GETLSIZE(w, h) _getlsize(layout, (w), (h))
 
 #define SET_ALARM(millis) _set_alarm(sdata, (millis))
 
-#define DO_RESET() _do_reset(sdata, ztext, layout)
+#define DO_RESET() _do_reset(inst, sdata, ztext, layout)
 #define GETASTRING() _getastring(inst, sdata, FALSE, (sdata->init == 1))
 #define RESTART_AT_STRING(idx) _restart_at_string(inst, sdata, (idx), ztext)
 
@@ -272,8 +279,8 @@ static int num_fonts_available = 0;
 #define SET_MODE(mode) sdata->tmode = (mode)
 #define SET_ALLOW_BLANKS(mode) sdata->allow_blanks = (mode)
 
-#define FASTRAND_DBL(drange) (fastrand_dbl_re((drange), inst, "plugin_random_seed"))
-#define FASTRAND_INT(irange) (fastrand_int_re((irange), inst, "plugin_random_seed"))
+#define FASTRAND_DBL(drange) (fastrand_dbl_re((drange), inst, WEED_LEAF_PLUGIN_RANDOM_SEED))
+#define FASTRAND_INT(irange) (fastrand_int_re((irange), inst, WEED_LEAF_PLUGIN_RANDOM_SEED))
 #define GETRANDI(min, max) (_getrandi(inst, (min), (max)))
 #define RAND_COL(ldt) _rand_col(inst, (ldt))
 #define RAND_ANGLE() _rand_angle(inst)
@@ -468,9 +475,9 @@ static void _getastring(weed_plant_t *inst, sdata_t *sdata, gboolean sequential,
     } else {
       if (sdata->rndorder) {
         if (!sdata->allow_blanks)
-          sdata->cstring = fastrand_int_re(sdata->nstrings - 1, inst, "plugin_random_seed");
+          sdata->cstring = fastrand_int_re(sdata->nstrings - 1, inst, WEED_LEAF_PLUGIN_RANDOM_SEED);
         else
-          sdata->cstring = fastrand_int_re(sdata->xnstrings - 1, inst, "plugin_random_seed");
+          sdata->cstring = fastrand_int_re(sdata->xnstrings - 1, inst, WEED_LEAF_PLUGIN_RANDOM_SEED);
       }
     }
   }
@@ -571,7 +578,7 @@ static cairo_t *channel_to_cairo(sdata_t *sdata, weed_plant_t *channel) {
 
 static inline double _rand_angle(weed_plant_t *inst) {
   // return a random double between 0. and 2 * M_PI
-  return fastrand_dbl_re(TWO_PI, inst, "random_seed");
+  return fastrand_dbl_re(TWO_PI, inst, WEED_LEAF_PLUGIN_RANDOM_SEED);
 }
 
 
@@ -821,7 +828,7 @@ static inline void _set_font_size(weed_plant_t *inst, sdata_t *sdata, PangoLayou
                                   double font_size, int width) {
   int fnt_size;
   if (sdata->trigger && sdata->autotrigger)
-    fnt_size *= (fastrand_dbl_re(.1, inst, "plugin_random_seed") + .95);
+    fnt_size *= (fastrand_dbl_re(.1, inst, WEED_LEAF_PLUGIN_RANDOM_SEED) + .95);
   fnt_size = (int)((font_size * sdata->fontscale * width + 2. * PANGO_SCALE) / (4. * PANGO_SCALE) + .5)
              * (4 * PANGO_SCALE);
   pango_font_description_set_size(font, fnt_size);
@@ -889,7 +896,7 @@ static inline void COLOUR_COPY(rgb_t *col1, rgb_t *col2) {
 
 
 static inline int _getrandi(weed_plant_t *inst, int min, int max) {
-  return fastrand_int_re(max - min, inst, "plugin_random_seed") + min;
+  return fastrand_int_re(max - min, inst, WEED_LEAF_PLUGIN_RANDOM_SEED) + min;
 }
 
 
@@ -969,7 +976,7 @@ static void _rotate_text(sdata_t *sdata, cairo_t *cairo, PangoLayout *layout, in
 
 
 
-static inline void _do_reset(sdata_t *sdata, char **ztext,
+static inline void _do_reset(weed_plant_t *inst, sdata_t *sdata, char **ztext,
                              PangoLayout *layout) {
   sdata->start = 0;
   sdata->length = 1;
@@ -979,7 +986,12 @@ static inline void _do_reset(sdata_t *sdata, char **ztext,
   *sdata->string1 = *sdata->string2 = *sdata->string3 = *sdata->string4 = *sdata->string5 = 0;
   sdata->init = -1;
   sdata->phase = 0;
-  if (layout) SET_TEXT("");
+  if (layout && sdata->randmode) {
+    SET_TEXT("");
+    do {
+      sdata->funmode = FASTRAND_INT(5);
+    } while (sdata->funmode == PT_TERMINAL);
+  }
 }
 
 
@@ -1028,14 +1040,13 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
 
   pt_letter_data_t *ldt = NULL;
 
-  // this is called initally with a special condition *:
-  // sdata->count set to -1, sdata->start = 0, sdata->length = 0
+  // this is called initally with a special condition:
+  // sdata->count set to -1, sdata->start = 0, sdata->length = 1
   // sdata->init = 1
   //
-  // in the more general case, sdata->length >= 1 and in this situation
-  // the first call will be with sdata->count = 0
-  // then with increasing values of sdata->count until start + count reaches sdata->length - 1
-  // sdata->length,(LETTER mode) or count reaches length (WOED mode)
+  // in the more general case, the first call will be with sdata->count = sdata->start
+  // then with increasing values of sdata->count until count reaches sdata->length - 1
+  // (LETTER mode)
 
   /// sdata->start and sdata->length may be adjusted by the module at any time,
   // however only changes to length will have immediate effect
@@ -1049,7 +1060,8 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
   // this can be a 'WORD' (a sequence of glyphs) or a  LETTER' (single glyph) depending on the
   // mode of operation of the module
 
-  // the TEXT is derived from the CURRENT LINE, and has index: sdata->start + sdata->count
+  // the TEXT is derived from the CURRENT LINE (sdata->curstring),
+  // and has index: sdata->start + sdata->count
 
   // if start + count >= length (LETTER MODE) or if count >= length (WORD mode)
   // on return then control is relinquished and the module will be
@@ -1059,13 +1071,13 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
 
   // should start + count reach tlength or wlength (as appropriate), then the following happens
   // - the CURENT LINE is increased, and tlength / wlength are recalculated
-  // however this is only a temporary increase in CURRENT LINE
-  // to change CURRENT LINE permanently it is necessary to call GETASTRING()
+  // however this is only a temporary increase in CURRENT LINE (sdata->curstirng)
+  // to change CURRENT LINE permanently (sdata->cstring) it is necessary to call GETASTRING()
   // if the end of text is reached then CURRENT LINE will loop back to the beginning
 
   // by default, empty lines in the input are ignored as are newlines at the end of a line
 
-  // if sdata->allow_blank_lines is set to TRUE then empty lines are no onger ignored
+  // if SET_ALLOW_BLANKS(TRUE) is called then empty lines are no onger ignored
   // and a newline is counted as the last TOKEN of each line
 
   // start and length may be adjusted with caution, however count, tlength and wlength
@@ -1074,12 +1086,14 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
   // until it reaches tlength
   // for word based modules, normally length is set to 1 and start increased to wlength - 1
   // although this is left to the module
+  // - smoe modules may set sdata->length to sdata->tlength or sdata->wlength straight away
+
 
   // in addition, sdata->count only ever increases monotonically, changing the value of
   // start has no immediate effect on this
 
   /// thus we can consider the input text to be a string of infinite length, subdivided into
-  /// phrease
+  /// phrases with length tlength or wlength
 
   // it is important to relinquish control as soon as possible (by allowing start + count to
   // reach length). There is practically no limit to how high length can be set, however the
@@ -1092,14 +1106,12 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
   // If the alarm time is set again before it is tirggered then the time is simply updated.
   // Setting a negative time disables the alarm. Zero is also a valid value.
   //
-  // DO_RESET(millis) may be used instead of SET_ALARM(). It will reset all state variables,
-  // as well as setting sdata->init, length is reset to zero and xtext set to empty string.
-  // string and leter data are not reset however, this needs to be done by the module.
 
-  // initialization: the first itme this is called after an init, sdata->init is set to a non zero
-  // value, then reset automatically to zero. The same thing occurse after calling DO_RESET().
+  // initialization: the first itme this is called after an init, sdata->init is set to TRUE
+  // then reset automatically to FALSE. The same thing occurs after calling DO_RESET().
 
   // letter_data: a helper array that may be created to aid animation
+  // although it is called letter_data, the same array may be used for words in word mode.
   // calling ANIM_LETTER() will update the state of one element
 
   // state variables
@@ -1109,15 +1121,16 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
 
   // useful functions here include:
 
-  // void set_font_size(double size)
-  // size (points) is rounded to the nearest multiple of 4, and applied to the layout
+  // SET_FONT_SIZE(double size)
+  // size (points) is rounded to the nearest multiple of 4, scaled according to frame width,
+  // and applied to the layout
 
   // SET_TEXT(const char *text) : replaces the text to be displayed (xtext)
   // setting it to "" empty string will display nothing
 
-  // getlsize(double *width, double *height) : gets size in pixels of the current layout
+  // GETLSIZE(double *width, double *height) : gets size in pixels of the current layout
 
-  // void SET_CENTER(double dwidth, double dheight, double x, double y, int *x_text, int *y_text)
+  // SET_CENTER(double dwidth, double dheight, double x, double y, int *x_text, int *y_text)
   // calculates the top left position for test with pixel size dwidth X dheight centered at x, y
   // result is returned in x_text, y_text
 
@@ -1127,20 +1140,17 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
   // (more accurate relative timings can be obtained from sdata->tc
   // which is nominally 10 ^ -8 second units)
 
-  // DO_RESET(millis)
-  // similar to SET_ALARM() but also resets all state variables and sets sdata->init.
-  // In addition if millis > 0 the module will not be called until the elapsed has passed.
-  // Useful if you wanr a pause before restarting.
+  // DO_RESET()
+  // reset back to initial state, sets sdata->init. relinquish control
 
   // GETASTRING()
   // causes the next string (line) to be retrieved from the text file
   // if sdata->rndorder is set non-zero then the order will be randomised, otherwise lines are
   // provided in the same sequence as the text file
 
-  // getrandi(start, end) : returns a pseudo-random integer in the range start, end
+  // GETRANDI(start, end) : returns a pseudo-random integer in the range start, end (inclusive)
 
-  // ROTATE_TEXT(x, y, angle) : translates the origin x_pos, y_pos = (0, 0) to x, y and rotates the axes
-  // rotates (turns) the layout by angle radians around the point x, y
+  // ROTATE_TEXT(x, y, angle) : rotates layout about the point x,y with angle (radians)
 
 
   // setting the following affects the current layout (the current letter or word)
@@ -1252,6 +1262,7 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
         sdata->dbl1 -= .05 * sdata->velocity;
       }
     }
+    SET_OPERATOR(DIFFERENCE);
     break;
 
   case PT_WORD_SLIDE:
@@ -1394,8 +1405,8 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
       pt_letter_data_t *old_ldt;
 
       if (sdata->phase == 0) {
-	sdata->length--;
-	sdata->phase = 1;
+        sdata->length--;
+        sdata->phase = 1;
       }
 
       old_ldt = sdata->length > 0 ? LETTER_DATA(sdata->length - 1) : NULL;
@@ -1409,7 +1420,7 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
       if (sdata->length < sdata->tlength) sdata->length++;
       if (sdata->length < sdata->tlength) {
         if (sdata->variant == 1) SET_ALARM(0); // burst mode
-        else SET_ALARM(400); // milliseconds after letter
+        else SET_ALARM(800); // milliseconds after letter
       } else SET_ALARM(-1);
 
       ldt = LETTER_DATA(sdata->length - 1);
@@ -1753,9 +1764,9 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
       ldt->alpha = 1.;
       if (!sdata->count) RAND_COL(ldt);
       else {
-	pt_letter_data_t *oldt = LETTER_DATA(sdata->count - 1);
-	COLOUR_COPY(&ldt->colour, &oldt->colour);
-	ADJUST_RGBA(ldt, 128, 64, 128, 1.);
+        pt_letter_data_t *oldt = LETTER_DATA(sdata->count - 1);
+        COLOUR_COPY(&ldt->colour, &oldt->colour);
+        ADJUST_RGBA(ldt, 128, 64, 128, 1.);
       }
       COLOUR_COPY(&sdata->fg, &ldt->colour);
       ldt->text = strdup(xtext);
@@ -1796,10 +1807,8 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
     sdata->y_text = height / 2.;
 
     ROTATE_TEXT(sdata->x_text, sdata->y_text, ldt->rot);
-
     SET_CENTER(ldt->width, ldt->height, sdata->x_text, sdata->y_text, &sdata->x_text, &sdata->y_text);
-    /* sdata->x_text = -ldt->width / 2.; */
-    /* sdata->y_text = -ldt->height / 2.; */
+
     COLOUR_COPY(&sdata->fg, &ldt->colour);
 
     break;
@@ -1831,6 +1840,7 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
       sdata->dbl3 -= .0001 * sdata->velocity;
       sdata->dbl1 = width * .45 * (1. + sdata->dbl3);
       sdata->dbl2 = height * .45 * (1. + sdata->dbl3);
+      sdata->int2 = 0;
     }
 
     if (sdata->alarm) {
@@ -1849,11 +1859,11 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
           sdata->length--;
           sdata->start++;
 
-          if (sdata->length <= 0) {
+          if (sdata->start >= sdata->length) {
             // all letters gone - restart cycle
             DO_RESET();
             GETASTRING();
-            SET_ALARM(0);
+            break;
           }
 
           else SET_ALARM(80); // milliseconds (string disappearing)
@@ -1878,6 +1888,7 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
       sdata->dbl2 *= .97;
       ldt->colour.red = ldt->colour.green = ldt->colour.blue = 255;
       ldt->alpha = 1.;
+      SET_OPERATOR(DIFFERENCE);
     } else {
       if (!ldt->phase) {
         ldt->rotaccel = FASTRAND_DBL(.02) - .01;
@@ -1888,20 +1899,31 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
 
       sdata->dbl1 *= .99;
       sdata->dbl2 *= .99;
-
-      //sdata->dbl3 += .02;
-      SET_CENTER(ldt->width, ldt->height, width / 2 + sin(sdata->count / 4. - (1. - sdata->dbl3) * 8.)
-                 * sdata->dbl1,
-                 height / 2 - cos(-sdata->count / 4. - (1. - sdata->dbl3) * 8.)
-                 * sdata->dbl2, &sdata->x_text, &sdata->y_text);
-
-      if (sdata->phase > 0 && ldt->phase == 1) {
-        ANIM_LETTER(ldt);
-        ROTATE_TEXT(sdata->x_text, sdata->y_text, ldt->rot);
-      }
-      // check if word-token starts with "."
-      if (CHAR_EQUAL(xtext, ".")) sdata->int1++;
     }
+
+    //sdata->dbl3 += .02;
+    SET_CENTER(ldt->width, ldt->height, width / 2 + sin(sdata->count / 4. - (1. - sdata->dbl3) * 8.
+               + sdata->dbl4)
+               * sdata->dbl1,
+               height / 2 - cos(-sdata->count / 4. + (1. - sdata->dbl3) * 8.
+                                + sdata->dbl4)
+               * sdata->dbl2, &sdata->x_text, &sdata->y_text);
+
+    if (IS_OFFSCREEN(sdata->x_text, sdata->y_text, ldt->width, ldt->height)) {
+      sdata->int2++;
+      if (sdata->int2 == sdata->tlength - 1) {
+        DO_RESET();
+        GETASTRING();
+        break;
+      }
+    }
+
+    if (sdata->phase > 0 && ldt->phase == 1) {
+      ANIM_LETTER(ldt);
+      ROTATE_TEXT(sdata->x_text, sdata->y_text, ldt->rot);
+    }
+    // check if word-token starts with "."
+    if (CHAR_EQUAL(xtext, ".")) sdata->int1++;
 
     break;
   } // end switch
@@ -1927,8 +1949,9 @@ static weed_error_t puretext_init(weed_plant_t *inst) {
   int fd, canstart = 0;
   int mode;
 
-  weed_set_int64_value(inst, "plugin_random_seed",
-                       weed_get_int64_value(inst, "random_seed", NULL));
+  // enable repeatable randomness
+  weed_set_int64_value(inst, WEED_LEAF_PLUGIN_RANDOM_SEED,
+                       weed_get_int64_value(inst, WEED_LEAF_RANDOM_SEED, NULL));
 
   //if (*textbuf) use_file = FALSE;
 
@@ -2041,9 +2064,13 @@ static weed_error_t puretext_init(weed_plant_t *inst) {
   //else sdata->textbuf = textbuf;
 
   mode = weed_param_get_value_int(in_params[P_MODE]);
+  sdata->funmode = -1;
 
-  if (mode == PT_TERMINAL) weed_param_set_hidden(in_params[P_RAND], WEED_TRUE);
-  else weed_param_set_hidden(in_params[P_RAND], WEED_TRUE);
+  sdata->randmode = weed_param_get_value_boolean(in_params[P_RANDMODE]);
+
+  if (mode == PT_TERMINAL && !sdata->randmode)
+    weed_param_set_hidden(in_params[P_RANDLINES], WEED_TRUE);
+  else weed_param_set_hidden(in_params[P_RANDLINES], WEED_FALSE);
 
   sdata->mode = -1; // forec update
   sdata->timer = -1;
@@ -2095,19 +2122,23 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
   } else sdata->trigger = FALSE;
   sdata->last_trigger = (trigger == WEED_TRUE);
 
+  if (sdata->funmode != -1) mode = sdata->funmode;
+
   if (mode != sdata->mode) {
     //fastrand(42);
     sdata->mode = mode;
     sdata->tmode = PT_LETTER_MODE;
     sdata->timer = -1.;
-    sdata->cstring = 0;
+    if (sdata->funmode == -1) {
+      sdata->cstring = 0;
+    }
     sdata->autotrigger = TRUE;
     sdata->variant = 0;
     sdata->dissolve = 0;
     sdata->antialias = CAIRO_ANTIALIAS_FAST;
     sdata->allow_blanks = FALSE;
     sdata->rndorder_set = FALSE;
-    _do_reset(sdata, NULL,  NULL);
+    _do_reset(inst, sdata, NULL,  NULL);
   }
 
   // set timer data and alarm status
@@ -2119,7 +2150,7 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
   }
 
   if (!sdata->rndorder_set)
-    sdata->rndorder = (weed_param_get_value_boolean(in_params[P_RAND]) == WEED_TRUE);
+    sdata->rndorder = (weed_param_get_value_boolean(in_params[P_RANDLINES]) == WEED_TRUE);
 
   if (sdata->alarm_time >= 0. && sdata->timer > sdata->alarm_time) {
     sdata->alarm_time = -1.;
@@ -2137,7 +2168,7 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
   version = weed_filter_get_version(filter);
   if (!version) version = 1;
 
-  if (version == 1) fontstr = strdup("Monospace");
+  if (version == 1) fontstr = strdup(DEF_FONT);
   else fontstr = weed_param_get_value_string(in_params[P_FONT]);
 
   weed_free(in_params); // must weed free because we got an array
@@ -2199,7 +2230,7 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
     if (num_fonts_available && fontnum >= 0 && fontnum < num_fonts_available
         && fonts_available[fontnum]) {
       pango_font_description_set_family(font, fonts_available[fontnum]);
-    } else pango_font_description_set_family(font, "Monospace");
+    } else pango_font_description_set_family(font, DEF_FONT);
 
     SET_FONT_SIZE(32.);
 
@@ -2362,6 +2393,7 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
         cairo_restore(cairo);
       }
       cairo_identity_matrix(cairo);
+      cairo_set_operator(cairo, CAIRO_OPERATOR_OVER);
 
       if (xfont) {
         pango_font_description_free(xfont);
@@ -2403,10 +2435,10 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
   return WEED_SUCCESS;
 }
 
+#define N_RFX_STRINGS 7
 
-WEED_SETUP_START(200, 200) {
-  char rfxstring0[256], rfxstring1[256];
-  char *rfxstrings[] = {rfxstring0, rfxstring1};
+WEED_SETUP_START(200, 201) {
+  char *rfxstrings[N_RFX_STRINGS];
 
   weed_plant_t *in_params[P_END + 1], *gui;
   weed_plant_t *filter_class;
@@ -2422,6 +2454,7 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *host_info = weed_get_host_info(plugin_info);
   int filter_flags = weed_host_supports_premultiplied_alpha(host_info)
                      ? WEED_FILTER_PREF_PREMULTIPLIED_ALPHA : 0;
+  int i;
 
   verbosity = weed_get_host_verbosity(host_info);
 
@@ -2454,7 +2487,7 @@ WEED_SETUP_START(200, 200) {
   weed_paramtmpl_set_flags(in_params[P_FILE], weed_paramtmpl_get_flags(in_params[P_FILE])
                            | WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
 
-  in_params[P_RAND] = weed_switch_init("rand", "Select text lines _randomly", WEED_TRUE);
+  in_params[P_RANDLINES] = weed_switch_init("rand", "Select text lines _randomly", WEED_TRUE);
 
   in_params[P_MODE] = weed_string_list_init("mode", "Effect _mode", 0, modes);
 
@@ -2475,6 +2508,8 @@ WEED_SETUP_START(200, 200) {
   in_params[P_TRIGGER] = weed_switch_init("trigger", "Beat Trigger", WEED_FALSE);
   weed_paramtmpl_set_hidden(in_params[P_TRIGGER], WEED_TRUE);
 
+  in_params[P_RANDMODE] = weed_switch_init("randmode", "Randomised", WEED_FALSE);
+
   in_params[P_END] = NULL;
 
   filter_class = weed_filter_class_init("puretext", "Salsaman & Aleksej Penkov", 1,
@@ -2483,14 +2518,23 @@ WEED_SETUP_START(200, 200) {
                                         in_chantmpls, out_chantmpls, in_params, NULL);
 
   // GUI section
+  for (i = 0; i < N_RFX_STRINGS; i++) rfxstrings[i] = weed_malloc(256);
 
   snprintf(rfxstrings[0], 256, "special|fileread|%d|", P_FILE);
   snprintf(rfxstrings[1], 256, "special|fontchooser|%d|", P_FONT);
 
+  snprintf(rfxstrings[2], 256, "layout|p%d|p%d|", P_MODE, P_RANDMODE);
+  snprintf(rfxstrings[3], 256, "layout|p%d|p%d|", P_FONT, P_FONTSCALE);
+  snprintf(rfxstrings[4], 256, "layout|p%d|", P_FILE);
+  snprintf(rfxstrings[5], 256, "layout|p%d|", P_TEXTBUF);
+  snprintf(rfxstrings[6], 256, "layout|p%d|", P_RANDLINES);
+
   gui = weed_filter_get_gui(filter_class);
   weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, "RFX");
   weed_set_string_value(gui, "layout_rfx_delim", "|");
-  weed_set_string_array(gui, "layout_rfx_strings", 2, rfxstrings);
+  weed_set_string_array(gui, "layout_rfx_strings", N_RFX_STRINGS, rfxstrings);
+
+  for (i = 0; i < N_RFX_STRINGS; i++) weed_free(rfxstrings[i]);
 
   ////
 

@@ -3272,7 +3272,7 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
     rpar[i].value = NULL;
     rpar[i].def = NULL;
 
-    if (flags & WEED_PARAMETER_VARIABLE_SIZE && !(flags & WEED_PARAMETER_VALUE_PER_CHANNEL)) {
+    if ((flags & WEED_PARAMETER_VARIABLE_SIZE) && !(flags & WEED_PARAMETER_VALUE_PER_CHANNEL)) {
       rpar[i].hidden |= HIDDEN_MULTI;
       rpar[i].multi = PVAL_MULTI_ANY;
     } else if (flags & WEED_PARAMETER_VALUE_PER_CHANNEL) {

@@ -741,6 +741,9 @@ static int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list) 
 
 #if defined(NEED_RANDOM)
 
+// recommended key to use
+#define WEED_LEAF_PLUGIN_RANDOM_SEED "plugin_random_seed"
+
 #if defined _WIN32 || defined __CYGWIN__ || defined IS_MINGW
 #ifndef _CRT_RAND_S
 #define _CRT_RAND_S

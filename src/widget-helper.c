@@ -1997,7 +1997,7 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
       }
     }
 
-    if (!selector || !(*selector)) selstr = lives_strdup("");
+    if (!selector || !*selector || *selector == '-') selstr = lives_strdup("");
     else selstr = lives_strdup_printf(" %s", selector);
     if (widget) {
 #if GTK_CHECK_VERSION(3, 24, 0)
@@ -2080,6 +2080,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widge
   return retb;
 #else
   gtk_widget_override_background_color(widget, state, color);
+  gtk_widget_modify_base(widget, state, color);
 #endif
 #else
   gtk_widget_modify_bg(widget, state, color);
@@ -6264,7 +6265,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_entry_set_width_chars(LiVESEntry *entr
   // display length
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 12, 0)
-  gtk_entry_set_max_width_chars(entry, nchars);
+  if (LIVES_SHOULD_EXPAND_EXTRA_WIDTH)
+    gtk_entry_set_max_width_chars(entry, 65536);
+  else
+    gtk_entry_set_max_width_chars(entry, nchars);
 #endif
   gtk_entry_set_width_chars(entry, nchars);
   return TRUE;
@@ -10133,7 +10137,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_font_chooser_new(void) {
   LiVESWidget *font_choo = NULL;
-  int width = DEF_BUTTON_WIDTH, height = DEF_BUTTON_HEIGHT / 4;
+  int width = DEF_BUTTON_WIDTH, height = ((widget_opts.css_min_height * 3 + 3) >> 2) << 1;
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 2, 0)
   char *ttl;
@@ -10518,10 +10522,11 @@ LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer * tb
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir) {
   LiVESWidget *fbutton;
-  LiVESWidget *image = lives_image_new_from_stock(LIVES_STOCK_OPEN, LIVES_ICON_SIZE_BUTTON);
+  LiVESWidget *image = lives_image_new_from_stock(LIVES_STOCK_OPEN, LIVES_ICON_SIZE_LARGE_TOOLBAR);
 
   /// height X height is correct
-  fbutton = lives_standard_button_new(DEF_BUTTON_HEIGHT, DEF_BUTTON_HEIGHT);
+  int size = ((widget_opts.css_min_height * 3 + 3) >> 2) << 1;
+  fbutton = lives_standard_button_new(size, size);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fbutton), ISDIR_KEY, LIVES_INT_TO_POINTER(is_dir));
   if (def_dir) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fbutton), DEFDIR_KEY, (livespointer)def_dir);
   lives_standard_button_set_image(LIVES_BUTTON(fbutton), image);

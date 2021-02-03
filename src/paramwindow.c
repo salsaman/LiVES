@@ -440,7 +440,7 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
 
 static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, lives_rfx_t *rfx) {
   // add size settings for generators and resize effects
-  LiVESWidget *label, *hbox;
+  LiVESWidget *label, *hbox = NULL;
   LiVESWidget *spinbuttonh = NULL, *spinbuttonw = NULL;
   LiVESWidget *spinbuttonf;
   int num_chans = 0;
@@ -565,7 +565,12 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
     if (chk_params) return TRUE;
     added = TRUE;
     // add "aspectratio" widget
-    add_aspect_ratio_button(LIVES_SPIN_BUTTON(spinbuttonw), LIVES_SPIN_BUTTON(spinbuttonh), LIVES_BOX(vbox));
+    if (hbox)
+      add_aspect_ratio_button(LIVES_SPIN_BUTTON(spinbuttonw), LIVES_SPIN_BUTTON(spinbuttonh),
+                              LIVES_BOX(hbox));
+    else
+      add_aspect_ratio_button(LIVES_SPIN_BUTTON(spinbuttonw), LIVES_SPIN_BUTTON(spinbuttonh),
+                              LIVES_BOX(vbox));
   }
 
   if (added) {
@@ -791,7 +796,6 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
   if (!pbox) {
     char *title, *defstr;
 
-    // width works well with scale 0.7
     if (rfx->status == RFX_STATUS_WEED || no_process || (rfx->num_in_channels == 0 &&
         rfx->props & RFX_PROPS_BATCHG)) scrw = RFX_WINSIZE_H * 2. * widget_opts.scale;
     else scrw = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
@@ -814,7 +818,6 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
 
   if (rfx->status != RFX_STATUS_WEED && !no_process) {
     // rendered fx preview
-
     LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(top_dialog_vbox), hbox, TRUE, TRUE, 0);
 
@@ -985,10 +988,8 @@ static void check_hidden_gui(weed_plant_t *inst, lives_param_t *param, int idx) 
 
   if (wparam) {
     if (weed_param_is_hidden(wparam, WEED_FALSE) == WEED_FALSE) {
-      if (weed_param_is_hidden(wparam, WEED_TRUE)) {
-        break_me("phid");
-        param->hidden |= HIDDEN_GUI_TEMP;
-      } else param->hidden &= ~HIDDEN_GUI_TEMP;
+      if (weed_param_is_hidden(wparam, WEED_TRUE)) param->hidden |= HIDDEN_GUI_TEMP;
+      else param->hidden &= ~HIDDEN_GUI_TEMP;
     }
   }
 }
@@ -1846,11 +1847,21 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       else
         lives_widget_apply_theme2(textview, LIVES_WIDGET_STATE_NORMAL, TRUE);
 
+#if GTK_CHECK_VERSION(3, 16, 0)
+      if (prefs->extra_colours && mainw->pretty_colours) {
+        char *colref = gdk_rgba_to_string(&palette->nice1);
+        set_css_value_direct(textview, LIVES_WIDGET_STATE_NORMAL,
+                             "-", "background-color", colref);
+        lives_free(colref);
+      }
+#endif
       lives_box_pack_start(LIVES_BOX(hbox), scrolledwindow, TRUE, TRUE, 0);
 
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(textbuffer), "textview", textview);
     } else {
       LiVESWidget *hbox2 = lives_hbox_new(FALSE, 0);
+      lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, TRUE, 0);
+
       if (use_mnemonic) label = lives_standard_label_new_with_mnemonic_widget(_(name), NULL);
       else label = lives_standard_label_new(_(name));
 

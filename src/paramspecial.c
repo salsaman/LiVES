@@ -304,9 +304,14 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
   LiVESWidget *box;
   LiVESWidget *buttond;
   LiVESList *slist;
+  boolean will_add_preview = FALSE;
 
   // check if this parameter is part of a special window
   // as we are drawing the paramwindow
+
+  if (rfx && rfx->status != RFX_STATUS_WEED
+      && (rfx->num_in_channels > 0 || !(rfx->props & RFX_PROPS_BATCHG)))
+    will_add_preview = TRUE;
 
   if (param == framedraw.xstart_param) {
     param->special_type = framedraw.type;
@@ -393,6 +398,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       lives_box_pack_start(LIVES_BOX(box), buttond, TRUE, TRUE, 0);
       lives_box_reorder_child(LIVES_BOX(box), buttond, idx);
       if (lives_widget_is_visible(widget)) lives_widget_show_all(buttond);
+      lives_widget_set_valign(buttond, LIVES_ALIGN_CENTER);
 
       lives_widget_object_ref(tbox);
       lives_widget_unparent(tbox);
@@ -459,11 +465,10 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
         lives_box_pack_start(LIVES_BOX(hbox), aspect.lockbutton, expand, FALSE, 0);
       }
 
-      if (expand) {
-        add_fill_to_box(LIVES_BOX(hbox));
-        lives_widget_set_hexpand(hbox, TRUE);
-        lives_widget_set_halign(hbox, LIVES_ALIGN_CENTER);
-      }
+      if (expand) add_fill_to_box(LIVES_BOX(hbox));
+
+      lives_widget_set_hexpand(aspect.lockbutton, TRUE);
+      lives_widget_set_halign(aspect.lockbutton, LIVES_ALIGN_CENTER);
     }
   }
 
@@ -473,13 +478,10 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       char *def_dir;
       if (!widget) continue;
 
-      box = lives_widget_get_parent(widget);
-
-      while (box && !LIVES_IS_HBOX(box)) {
-        box = lives_widget_get_parent(box);
-      }
-
-      if (!box) return;
+      if (!widget_opts.last_container) {
+        box = lives_widget_get_parent(widget);
+      } else box = widget_opts.last_container;
+      if (!box) continue;
 
       def_dir = lives_get_current_dir();
 
@@ -491,7 +493,6 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
           lives_free(def_dir);
           def_dir = lives_strdup(dirnamex);
         }
-        lives_entry_set_width_chars(LIVES_ENTRY(widget), LONG_ENTRY_WIDTH);
       }
 
       param->widgets[2] = buttond = lives_standard_file_button_new(FALSE, def_dir);
@@ -506,32 +507,32 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       lives_widget_set_sensitive_with(widget, buttond);
 
       if (LIVES_IS_ENTRY(widget)) {
+        int woe = widget_opts.expand;
         lives_entry_set_editable(LIVES_ENTRY(widget), FALSE);
         if (param->widgets[1] &&
             LIVES_IS_LABEL(param->widgets[1]) &&
             lives_label_get_mnemonic_widget(LIVES_LABEL(param->widgets[1])) != NULL)
           lives_label_set_mnemonic_widget(LIVES_LABEL(param->widgets[1]), buttond);
         lives_entry_set_max_length(LIVES_ENTRY(widget), PATH_MAX);
-      }
-      lives_entry_set_width_chars(LIVES_ENTRY(widget), LONG_ENTRY_WIDTH);
-    }
 
+        widget_opts.expand |= LIVES_EXPAND_EXTRA_WIDTH;
+        if (!will_add_preview)
+          lives_entry_set_width_chars(LIVES_ENTRY(widget), LONG_ENTRY_WIDTH);
+        else
+          lives_entry_set_width_chars(LIVES_ENTRY(widget), MEDIUM_ENTRY_WIDTH);
+        widget_opts.expand = woe;
+      }
+    }
     slist = slist->next;
   }
 
   slist = filewrite;
   while (slist) {
     if (param == (lives_param_t *)(slist->data)) {
-
-      if (!widget) continue;
-
-      box = lives_widget_get_parent(widget);
-
-      while (box && !LIVES_IS_HBOX(box)) {
-        box = lives_widget_get_parent(box);
-      }
-
-      if (!box) return;
+      if (!widget_opts.last_container) {
+        box = lives_widget_get_parent(widget);
+      } else box = widget_opts.last_container;
+      if (!box) continue;
 
       param->widgets[2] = buttond = lives_standard_file_button_new(FALSE, NULL);
 
@@ -545,12 +546,19 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       lives_widget_set_sensitive_with(widget, buttond);
 
       if (LIVES_IS_ENTRY(widget)) {
+        int woe = widget_opts.expand;
         lives_entry_set_editable(LIVES_ENTRY(widget), TRUE);
         if (param->widgets[1] &&
             LIVES_IS_LABEL(param->widgets[1]) &&
             lives_label_get_mnemonic_widget(LIVES_LABEL(param->widgets[1])) != NULL)
           lives_label_set_mnemonic_widget(LIVES_LABEL(param->widgets[1]), buttond);
         lives_entry_set_max_length(LIVES_ENTRY(widget), PATH_MAX);
+        widget_opts.expand |= LIVES_EXPAND_EXTRA_WIDTH;
+        if (!will_add_preview)
+          lives_entry_set_width_chars(LIVES_ENTRY(widget), LONG_ENTRY_WIDTH);
+        else
+          lives_entry_set_width_chars(LIVES_ENTRY(widget), MEDIUM_ENTRY_WIDTH);
+        widget_opts.expand = woe;
       }
     }
 
@@ -565,12 +573,9 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
 
       lives_entry_set_visibility(LIVES_ENTRY(widget), FALSE);
 
-      box = lives_widget_get_parent(widget);
-
-      while (box && !LIVES_IS_BOX(box)) {
-        box = lives_widget_get_parent(box);
-      }
-
+      if (!widget_opts.last_container) {
+        box = lives_widget_get_parent(widget);
+      } else box = widget_opts.last_container;
       if (!box) continue;
 
       if (!LIVES_IS_HBOX(box)) {

@@ -4026,17 +4026,25 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                               LIVES_BOX(hbox), NULL);
   widget_opts.swap_label = FALSE;
 
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   lives_standard_check_button_new(_("More than"), TRUE, LIVES_BOX(hbox), NULL);
 
-  //hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   widget_opts.swap_label = TRUE;
+
   // xgettext:no-c-format
   lives_standard_spin_button_new(_("% of quota is used"), 90., 0., 100., 1., 5., 0,
                                  LIVES_BOX(hbox), NULL);
   widget_opts.swap_label = FALSE;
 
-  //lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   lives_standard_check_button_new(_("Disk space warning level is passed"), TRUE, LIVES_BOX(hbox), NULL);
@@ -4409,21 +4417,15 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
 
-  hbox = lives_hbox_new(FALSE, 0);
-
-  widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
-  widget_opts.packing_width = 0;
   prefsw->workdir_entry =
     lives_standard_entry_new(NULL, *future_prefs->workdir
                              ? future_prefs->workdir : prefs->workdir,
-                             -1, PATH_MAX, LIVES_BOX(hbox),
+                             -1, PATH_MAX, NULL,
                              (tmp2 = _("The default directory for saving encoded clips to")));
   lives_free(tmp2);
 
-  widget_opts.expand = LIVES_EXPAND_DEFAULT;
-  widget_opts.packing_width = wopw;
 
-  lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), hbox, 1, 2, 3, 4,
+  lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), prefsw->workdir_entry, 1, 2, 3, 4,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
 
@@ -4477,11 +4479,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   /// dirbuttons
 
-  /* dirbutton = lives_standard_file_button_new(TRUE, */
-  /* 					     g_filename_from_utf8(*future_prefs->workdir */
-  /* 								      ? future_prefs->workdir : prefs->workdir, */
-  /* 								 -1, NULL, NULL, NULL)); */
-
   dirbutton = lives_standard_file_button_new(TRUE, *future_prefs->workdir
               ? future_prefs->workdir : prefs->workdir);
 
@@ -4491,8 +4488,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dirbutton), FILESEL_TYPE_KEY,
                                (livespointer)LIVES_DIR_SELECTION_WORKDIR);
 
-  lives_signal_sync_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
-                            prefsw->workdir_entry);
+  lives_signal_sync_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(on_filesel_button_clicked), prefsw->workdir_entry);
 
   if (mainw->has_session_workdir) {
     show_warn_image(prefsw->workdir_entry, _("Value cannot be changed when workdir\nis set via commandline option"));
@@ -4622,6 +4619,11 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   label = lives_standard_label_new(_(" MB"));
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width >> 1);
+
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_warn_save_set = lives_standard_check_button_new(_("Show a warning before saving a se_t"),
@@ -5226,7 +5228,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  //add_fill_to_box(LIVES_BOX(hbox));
 
   prefsw->checkbutton_jack_tb_client = lives_standard_check_button_new(_("Jack transport timebase slave"),
                                        (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) ?

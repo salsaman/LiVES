@@ -1151,6 +1151,10 @@ void set_palette_prefs(boolean save);
 
 void toggle_sets_pref(LiVESWidget *widget, livespointer prefidx);
 
+#if 0
+void optimize(void);
+#endif
+
 // permissions
 
 #define LIVES_PERM_INVALID 0

@@ -6069,3 +6069,22 @@ boolean lives_ask_permission(char **argv, int argc, int offs) {
   return FALSE;
 }
 
+#if 0
+void optimize(void) {
+  // TODO
+  LiVESWidget *dialog = lives_standard_dialog_new(_("Optimisations"), TRUE, -1, -1);
+  LiVESWidget *vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+  LiVESWidget *vbox2 = lives_vbox_new(FALSE, 0);
+  int width = -1, height = -1;
+  LiVESWidget *scrolledwindow = lives_standard_scrolled_window_new(width, height, vbox2);
+  LiVESWidget *cb;
+  LiVESResponseType resp;
+
+  lives_box_pack_start(LIVES_BOX(vbox), scrolledwindow, TRUE, TRUE, 0);
+  cb = lives_standard_check_button_new(_("_Use openGL playback plugin"), mainw->vpp != NULL,
+                                       LIVES_BOX(vbox2), NULL);
+
+  resp = lives_dialog_run(LIVES_DIALOG(dialog));
+  if (resp == LIVES_RESPONSE_OK) lives_widget_destroy(dialog);
+}
+#endif

@@ -1141,6 +1141,7 @@ typedef struct {
   LiVESWidget *restore;
   LiVESWidget *save_selection;
   LiVESWidget *close;
+  LiVESWidget *optimize;
   LiVESWidget *import_proj;
   LiVESWidget *export_proj;
   LiVESWidget *import_theme;

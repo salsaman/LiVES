@@ -1357,6 +1357,13 @@ void create_LiVES(void) {
   mainw->advanced_menu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mainw->advanced_menu);
 
+  //mainw->optimize = lives_standard_menu_item_new_with_label(_("Check for Optimizations"));
+  //lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), mainw->optimize);
+  //lives_signal_sync_connect(LIVES_GUI_OBJECT(mainw->optimize), LIVES_WIDGET_ACTIVATE_SIGNAL,
+  //			    LIVES_GUI_CALLBACK(optimize), NULL);
+
+  //lives_menu_add_separator(LIVES_MENU(mainw->advanced_menu));
+
   rfx_submenu = lives_standard_menu_item_new_with_label(_("_RFX Effects/Tools/Utilities"));
   lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), rfx_submenu);
 

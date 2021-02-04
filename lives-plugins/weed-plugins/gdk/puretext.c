@@ -50,12 +50,13 @@ enum DlgControls {
   P_FILE = 0,
   P_RANDLINES,
   P_MODE,
+  P_TRIGGER,
   P_SPEED,
   P_FONT,
   P_FONTSCALE,
+  P_USEBUF,
   P_TEXTBUF,
   P_RANDMODE,
-  P_TRIGGER,
   P_END,
 };
 
@@ -1939,143 +1940,154 @@ static void badstrings(int v) {
 static weed_error_t puretext_init(weed_plant_t *inst) {
   weed_plant_t **in_params = weed_get_in_params(inst, NULL);
   sdata_t *sdata;
-  char *buff;
-  char xbuff[65536];
-  char *textbuf = weed_param_get_value_string(in_params[P_TEXTBUF]);
-  size_t b_read, ulen;
-  gboolean erropen = FALSE;
-  gboolean use_file = TRUE;
-  int i, ii = 0, j = 0;
-  int fd, canstart = 0;
   int mode;
+  int hidden = WEED_FALSE;
+  gboolean use_file = (weed_param_get_value_boolean(in_params[P_USEBUF]) == WEED_FALSE);
 
-  // enable repeatable randomness
-  weed_set_int64_value(inst, WEED_LEAF_PLUGIN_RANDOM_SEED,
-                       weed_get_int64_value(inst, WEED_LEAF_RANDOM_SEED, NULL));
+  if (!(weed_instance_get_flags(inst) & WEED_INSTANCE_UPDATE_GUI_ONLY)) {
+    char *buff;
+    char xbuff[65536];
+    size_t b_read, ulen;
+    gboolean erropen = FALSE;
+    int i, ii = 0, j = 0;
+    int fd, canstart = 0;
 
-  //if (*textbuf) use_file = FALSE;
+    // enable repeatable randomness
+    weed_set_int64_value(inst, WEED_LEAF_PLUGIN_RANDOM_SEED,
+                         weed_get_int64_value(inst, WEED_LEAF_RANDOM_SEED, NULL));
 
-  // open file and read in text
-
-  if (use_file) {
-    char *textfile = weed_param_get_value_string(in_params[P_FILE]);
-    //weed_free(textbuf);
-    if ((fd = open(textfile, O_RDONLY)) == -1) {
-      erropen = TRUE;
-      if (verbosity >= WEED_VERBOSITY_CRITICAL)
-        fprintf(stderr, "Error opening file %s\n", textfile);
+    // open file and read in text
+    if (use_file) {
+      char *textfile = weed_param_get_value_string(in_params[P_FILE]);
+      if ((fd = open(textfile, O_RDONLY)) == -1) {
+        erropen = TRUE;
+        if (verbosity >= WEED_VERBOSITY_CRITICAL)
+          fprintf(stderr, "Error opening file %s\n", textfile);
+        weed_free(textfile);
+        weed_free(in_params);
+        return WEED_ERROR_FILTER_INVALID;
+      }
       weed_free(textfile);
+      buff = xbuff;
+    }
+
+    sdata = (sdata_t *)weed_calloc(sizeof(sdata_t), 1);
+
+    if (!sdata) {
       weed_free(in_params);
-      return WEED_ERROR_FILTER_INVALID;
+      return WEED_ERROR_MEMORY_ALLOCATION;
     }
-    weed_free(textfile);
-    buff = xbuff;
-  } else buff = textbuf;
 
-  sdata = (sdata_t *)weed_calloc(sizeof(sdata_t), 1);
-  if (!sdata) {
-    //if (!use_file) weed_free(textbuf);
-    weed_free(in_params);
-    return WEED_ERROR_MEMORY_ALLOCATION;
-  }
+    sdata->use_file = use_file;
 
-  sdata->use_file = use_file;
+    if (!use_file) buff = sdata->textbuf = weed_param_get_value_string(in_params[P_TEXTBUF]);
 
-  sdata->textbuf = textbuf;
+    sdata->text_type = TEXT_TYPE_UTF8;
+    //sdata->text_type = TEXT_TYPE_ASCII;
 
-  sdata->text_type = TEXT_TYPE_UTF8;
-  //sdata->text_type = TEXT_TYPE_ASCII;
+    sdata->tmode = PT_LETTER_MODE;
 
-  sdata->tmode = PT_LETTER_MODE;
-
-  if (use_file && !erropen) {
-    b_read = read(fd, buff, 65535);
-    buff[b_read] = 0;
-    close(fd);
-  }
-  if (!use_file) b_read = strlen(textbuf);
-
-  // parse the text
-  for (i = 0; i < b_read; i++) {
-    if ((uint8_t)buff[i] == 0x0A || (uint8_t)buff[i] == 0x0D) {
-      sdata->xnstrings++;
-      if (canstart < i) sdata->nstrings++;
-      canstart = i + 1;
+    if (use_file && !erropen) {
+      b_read = read(fd, buff, 65535);
+      buff[b_read] = 0;
+      close(fd);
     }
-  }
-  if (canstart < i) {
-    sdata->nstrings++;
-    sdata->xnstrings++;
-  }
-  if (canstart == i) sdata->xnstrings++;
+    if (!use_file) b_read = strlen(buff);
 
-  if (sdata->nstrings == 0) {
-    badstrings(WEED_VERBOSITY_CRITICAL);
-    weed_free(in_params);
-    return WEED_ERROR_NOT_READY;
-  }
-
-  // only non-empty strings
-  sdata->strings = (char **)weed_calloc(sdata->nstrings, sizeof(char *));
-
-  // all including empty
-  sdata->xstrings = (char **)weed_calloc(sdata->xnstrings, sizeof(char *));
-
-  canstart = 0;
-
-  for (i = 0; i < sdata->xnstrings - 1; i++) {
     // parse the text
-    for (; j < b_read; j++) {
-      if ((uint8_t)buff[j] == 0x0A || (uint8_t)buff[i] == 0x0D) {
-        if (canstart == j) {
-          sdata->xstrings[i] = stringdup("", 0);
-          ulen = 1;
-        } else {
-          sdata->xstrings[i] = stringdup(&buff[canstart], j - canstart);
-          ulen = utf8len(sdata->xstrings[i]) + 1;
-        }
-        sdata->totulenwb += ulen;
-        sdata->totalenwb += j - canstart + 1;
-        if (canstart < j) {
-          sdata->strings[ii++] = sdata->xstrings[i];
-          sdata->totulennb += ulen;
-          sdata->totalennb += j - canstart + 1;
-        }
-        canstart = ++j;
-        break;
+    for (i = 0; i < b_read; i++) {
+      if ((uint8_t)buff[i] == 0x0A || (uint8_t)buff[i] == 0x0D) {
+        sdata->xnstrings++;
+        if (canstart < i) sdata->nstrings++;
+        canstart = i + 1;
       }
     }
-  }
-  if (canstart < j) {
-    sdata->xstrings[i] = stringdup(&buff[canstart], j - canstart);
-    sdata->strings[ii] = sdata->xstrings[i];
-    ulen = utf8len(sdata->xstrings[i]);
-    sdata->totulenwb += ulen;
-    sdata->totalenwb += j - canstart;
-    sdata->totulennb += ulen;
-    sdata->totalennb += j - canstart;
-  } else {
-    if (canstart == j) {
-      sdata->xstrings[i] = stringdup("", 0);
+    if (canstart < i) {
+      sdata->nstrings++;
+      sdata->xnstrings++;
     }
-  }
+    if (canstart == i) sdata->xnstrings++;
 
-  //if (!use_file) weed_free(textbuf);
-  //else sdata->textbuf = textbuf;
+    if (use_file && !sdata->nstrings) {
+      badstrings(WEED_VERBOSITY_CRITICAL);
+      weed_free(in_params);
+      return WEED_ERROR_NOT_READY;
+    }
 
-  mode = weed_param_get_value_int(in_params[P_MODE]);
-  sdata->funmode = -1;
+    if (sdata->nstrings) {
+      // only non-empty strings
+      sdata->strings = (char **)weed_calloc(sdata->nstrings, sizeof(char *));
+
+      // all including empty
+      sdata->xstrings = (char **)weed_calloc(sdata->xnstrings, sizeof(char *));
+
+      canstart = 0;
+
+      for (i = 0; i < sdata->xnstrings - 1; i++) {
+        // parse the text
+        for (; j < b_read; j++) {
+          if ((uint8_t)buff[j] == 0x0A || (uint8_t)buff[i] == 0x0D) {
+            if (canstart == j) {
+              sdata->xstrings[i] = stringdup("", 0);
+              ulen = 1;
+            } else {
+              sdata->xstrings[i] = stringdup(&buff[canstart], j - canstart);
+              ulen = utf8len(sdata->xstrings[i]) + 1;
+            }
+            sdata->totulenwb += ulen;
+            sdata->totalenwb += j - canstart + 1;
+            if (canstart < j) {
+              sdata->strings[ii++] = sdata->xstrings[i];
+              sdata->totulennb += ulen;
+              sdata->totalennb += j - canstart + 1;
+            }
+            canstart = ++j;
+            break;
+          }
+        }
+      }
+      if (canstart < j) {
+        sdata->xstrings[i] = stringdup(&buff[canstart], j - canstart);
+        sdata->strings[ii] = sdata->xstrings[i];
+        ulen = utf8len(sdata->xstrings[i]);
+        sdata->totulenwb += ulen;
+        sdata->totalenwb += j - canstart;
+        sdata->totulennb += ulen;
+        sdata->totalennb += j - canstart;
+      } else {
+        if (canstart == j) {
+          sdata->xstrings[i] = stringdup("", 0);
+        }
+      }
+    }
+
+    sdata->mode = -1; // force update
+    sdata->timer = -1;
+    sdata->funmode = -1;
+    weed_set_voidptr_value(inst, "plugin_internal", sdata);
+  } else sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
   sdata->randmode = weed_param_get_value_boolean(in_params[P_RANDMODE]);
+  if (sdata->randmode) {
+    weed_param_set_hidden(in_params[P_MODE], WEED_TRUE);
+  } else {
+    weed_param_set_hidden(in_params[P_MODE], WEED_FALSE);
+    mode = weed_param_get_value_int(in_params[P_MODE]);
+    if (mode == PT_TERMINAL) hidden = WEED_TRUE;
+  }
 
-  if (mode == PT_TERMINAL && !sdata->randmode)
-    weed_param_set_hidden(in_params[P_RANDLINES], WEED_TRUE);
-  else weed_param_set_hidden(in_params[P_RANDLINES], WEED_FALSE);
+  weed_param_set_hidden(in_params[P_FONT], hidden);
 
-  sdata->mode = -1; // forec update
-  sdata->timer = -1;
+  if (!sdata->use_file) {
+    hidden = TRUE;
+    weed_param_set_hidden(in_params[P_FILE], WEED_TRUE);
+    weed_param_set_hidden(in_params[P_TEXTBUF], WEED_FALSE);
+  } else {
+    weed_param_set_hidden(in_params[P_FILE], WEED_FALSE);
+    weed_param_set_hidden(in_params[P_TEXTBUF], WEED_TRUE);
+  }
 
-  weed_set_voidptr_value(inst, "plugin_internal", sdata);
+  weed_param_set_hidden(in_params[P_RANDLINES], hidden);
 
   weed_free(in_params);
   return WEED_SUCCESS;
@@ -2099,343 +2111,352 @@ static weed_error_t puretext_deinit(weed_plant_t *inst) {
 
 
 static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
-  weed_plant_t *in_channel = weed_get_in_channel(inst, 0);
-  weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
-  weed_plant_t **in_params = weed_get_in_params(inst, NULL);
-  weed_plant_t *filter;
-
-  pt_subst_t *xsubst;
-  cairo_t *cairo;
-  char *fontstr;
-
-  int width = weed_channel_get_width(out_channel);
-  int height = weed_channel_get_height(out_channel);
-  int pal = weed_channel_get_palette(out_channel);
-  int mode = weed_param_get_value_int(in_params[P_MODE]);
-  int version, i;
-
   sdata_t *sdata = (sdata_t *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
-
-  int trigger = weed_param_get_value_boolean(in_params[P_TRIGGER]);
-  if (trigger == WEED_TRUE && !sdata->last_trigger) {
-    sdata->trigger = TRUE;
-  } else sdata->trigger = FALSE;
-  sdata->last_trigger = (trigger == WEED_TRUE);
-
-  if (sdata->funmode != -1) mode = sdata->funmode;
-
-  if (mode != sdata->mode) {
-    //fastrand(42);
-    sdata->mode = mode;
-    sdata->tmode = PT_LETTER_MODE;
-    sdata->timer = -1.;
-    if (sdata->funmode == -1) {
-      sdata->cstring = 0;
+  if (!sdata->use_file) {
+    if ((sdata->allow_blanks && sdata->cstring >= sdata->xnstrings)
+        || (!sdata->allow_blanks && sdata->cstring >= sdata->nstrings)) {
+      //rescan_textbuffer(inst);
     }
-    sdata->autotrigger = TRUE;
-    sdata->variant = 0;
-    sdata->dissolve = 0;
-    sdata->antialias = CAIRO_ANTIALIAS_FAST;
-    sdata->allow_blanks = FALSE;
-    sdata->rndorder_set = FALSE;
-    _do_reset(inst, sdata, NULL,  NULL);
   }
+  if (!sdata->nstrings) return WEED_ERROR_NOT_READY;
+  else {
+    weed_plant_t *in_channel = weed_get_in_channel(inst, 0);
+    weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
+    weed_plant_t **in_params = weed_get_in_params(inst, NULL);
+    weed_plant_t *filter;
 
-  // set timer data and alarm status
-  if (sdata->timer == -1. || tc < sdata->last_tc) {
-    sdata->alarm_time = -1.;
-    sdata->timer = 0.;
-  } else {
-    sdata->timer += (double)(tc - sdata->last_tc) / (double)WEED_TICKS_PER_SECOND * sdata->velocity;
-  }
+    pt_subst_t *xsubst;
+    cairo_t *cairo;
+    char *fontstr;
 
-  if (!sdata->rndorder_set)
-    sdata->rndorder = (weed_param_get_value_boolean(in_params[P_RANDLINES]) == WEED_TRUE);
+    int width = weed_channel_get_width(out_channel);
+    int height = weed_channel_get_height(out_channel);
+    int pal = weed_channel_get_palette(out_channel);
+    int mode = weed_param_get_value_int(in_params[P_MODE]);
+    int trigger = weed_param_get_value_boolean(in_params[P_TRIGGER]);
+    int version, i;
 
-  if (sdata->alarm_time >= 0. && sdata->timer > sdata->alarm_time) {
-    sdata->alarm_time = -1.;
-    sdata->alarm = TRUE;
-  } else sdata->alarm = FALSE;
+    if (trigger == WEED_TRUE && !sdata->last_trigger) {
+      sdata->trigger = TRUE;
+    } else sdata->trigger = FALSE;
+    sdata->last_trigger = (trigger == WEED_TRUE);
 
-  sdata->last_tc = tc;
+    if (sdata->funmode != -1) mode = sdata->funmode;
 
-  //xtext = text = weed_param_get_value_string(in_params[P_TEXT]);
-
-  sdata->fontscale = weed_param_get_value_double(in_params[P_FONTSCALE]);
-  sdata->velocity = weed_param_get_value_double(in_params[P_SPEED]);
-
-  filter = weed_instance_get_filter(inst);
-  version = weed_filter_get_version(filter);
-  if (!version) version = 1;
-
-  if (version == 1) fontstr = strdup(DEF_FONT);
-  else fontstr = weed_param_get_value_string(in_params[P_FONT]);
-
-  weed_free(in_params); // must weed free because we got an array
-
-  if (!sdata->allow_blanks) {
-    sdata->totalen = sdata->totalennb;
-    sdata->totulen = sdata->totulennb;
-  } else {
-    sdata->totalen = sdata->totalenwb;
-    sdata->totulen = sdata->totulenwb;
-  }
-
-  sdata->curstring = sdata->cstring;
-
-  // convert channel pixel_data to a cairo surface
-  if ((!in_channel) || (in_channel == out_channel))
-    cairo = channel_to_cairo(sdata, out_channel);
-  else
-    cairo = channel_to_cairo(sdata, in_channel);
-
-  if (!sdata->text) GETASTRING();
-
-  if (cairo) {
-    PangoLayout *layout = NULL;
-    PangoFontDescription *font;
-    char *family;
-    size_t offset;
-    int fontnum = 0;
-
-    // initialize byte and utf8 offsets
-    // (only useful for PT_LETTER_MODE)
-    if (sdata->text_type == TEXT_TYPE_ASCII) {
-      sdata->totlen = sdata->totalen;
-      sdata->toffs = sdata->start;
-    } else {
-      sdata->totlen = sdata->totulen;
-      sdata->utoffs = sdata->start;
-    }
-
-    // default colour - opaque white
-    sdata->fg.red = sdata->fg.green = sdata->fg.blue = 255.;
-    sdata->fg_alpha = 1.;
-
-    weed_parse_font_string(fontstr, &family, NULL, NULL, NULL, NULL);
-
-    for (i = 0; i < num_fonts_available; ++i) {
-      if (!font_compare((const void *)fonts_available[i], (const void *)family)) {
-        fontnum = i;
-        break;
+    if (mode != sdata->mode) {
+      //fastrand(42);
+      sdata->mode = mode;
+      sdata->tmode = PT_LETTER_MODE;
+      sdata->timer = -1.;
+      if (sdata->funmode == -1) {
+        sdata->cstring = 0;
       }
+      sdata->autotrigger = TRUE;
+      sdata->variant = 0;
+      sdata->dissolve = 0;
+      sdata->antialias = CAIRO_ANTIALIAS_FAST;
+      sdata->allow_blanks = FALSE;
+      sdata->rndorder_set = FALSE;
+      _do_reset(inst, sdata, NULL,  NULL);
     }
 
-    if (i == num_fonts_available) fontnum = -1;
-    weed_free(family);
-    weed_free(fontstr);
+    // set timer data and alarm status
+    if (sdata->timer == -1. || tc < sdata->last_tc) {
+      sdata->alarm_time = -1.;
+      sdata->timer = 0.;
+    } else {
+      sdata->timer += (double)(tc - sdata->last_tc) / (double)WEED_TICKS_PER_SECOND * sdata->velocity;
+    }
 
-    font = pango_font_description_new();
+    if (!sdata->rndorder_set)
+      sdata->rndorder = (weed_param_get_value_boolean(in_params[P_RANDLINES]) == WEED_TRUE);
 
-    if (num_fonts_available && fontnum >= 0 && fontnum < num_fonts_available
-        && fonts_available[fontnum]) {
-      pango_font_description_set_family(font, fonts_available[fontnum]);
-    } else pango_font_description_set_family(font, DEF_FONT);
+    if (sdata->alarm_time >= 0. && sdata->timer > sdata->alarm_time) {
+      sdata->alarm_time = -1.;
+      sdata->alarm = TRUE;
+    } else sdata->alarm = FALSE;
 
-    SET_FONT_SIZE(32.);
+    sdata->last_tc = tc;
 
-    _getastring(inst, sdata, FALSE, TRUE);
-    offset = sdata->start;
+    //xtext = text = weed_param_get_value_string(in_params[P_TEXT]);
 
-    if (sdata->init == -1) sdata->init = 1;
-    if (sdata->init || sdata->length == 0) {
-      sdata->count = -1;
-    } else sdata->count = 0;
+    sdata->fontscale = weed_param_get_value_double(in_params[P_FONTSCALE]);
+    sdata->velocity = weed_param_get_value_double(in_params[P_SPEED]);
 
-    for (i = sdata->start;
-         (sdata->tmode == PT_LETTER_MODE && sdata->start + sdata->count < sdata->length)
-         || (sdata->tmode == PT_WORD_MODE && sdata->count < sdata->length)
-         ; i++) {
-      PangoFontDescription *xfont;
-      char *ztext[1], *otext;
-      xtext = NULL; // xtext #defined as *ztext
+    filter = weed_instance_get_filter(inst);
+    version = weed_filter_get_version(filter);
+    if (!version) version = 1;
 
-      // each letter or word gets its own layout which are combined
-      if (!layout) layout = pango_cairo_create_layout(cairo);
+    if (version == 1) fontstr = strdup(DEF_FONT);
+    else fontstr = weed_param_get_value_string(in_params[P_FONT]);
 
-      xfont = pango_font_description_copy(font);
-      pango_layout_set_font_description(layout, xfont);
+    weed_free(in_params); // must weed free because we got an array
 
-      if (sdata->count < 0 || sdata->length == 0) {
-        xtext = strdup("");
+    if (!sdata->allow_blanks) {
+      sdata->totalen = sdata->totalennb;
+      sdata->totulen = sdata->totulennb;
+    } else {
+      sdata->totalen = sdata->totalenwb;
+      sdata->totulen = sdata->totulenwb;
+    }
+
+    sdata->curstring = sdata->cstring;
+
+    // convert channel pixel_data to a cairo surface
+    if ((!in_channel) || (in_channel == out_channel))
+      cairo = channel_to_cairo(sdata, out_channel);
+    else
+      cairo = channel_to_cairo(sdata, in_channel);
+
+    if (!sdata->text) GETASTRING();
+
+    if (cairo) {
+      PangoLayout *layout = NULL;
+      PangoFontDescription *font;
+      char *family;
+      size_t offset;
+      int fontnum = 0;
+
+      // initialize byte and utf8 offsets
+      // (only useful for PT_LETTER_MODE)
+      if (sdata->text_type == TEXT_TYPE_ASCII) {
+        sdata->totlen = sdata->totalen;
+        sdata->toffs = sdata->start;
       } else {
-        if (!sdata->text) {
-          // get a line of text if we don't have any
-          GETASTRING();
+        sdata->totlen = sdata->totulen;
+        sdata->utoffs = sdata->start;
+      }
+
+      // default colour - opaque white
+      sdata->fg.red = sdata->fg.green = sdata->fg.blue = 255.;
+      sdata->fg_alpha = 1.;
+
+      weed_parse_font_string(fontstr, &family, NULL, NULL, NULL, NULL);
+
+      for (i = 0; i < num_fonts_available; ++i) {
+        if (!font_compare((const void *)fonts_available[i], (const void *)family)) {
+          fontnum = i;
+          break;
         }
+      }
 
-        switch (sdata->tmode) {
-        case PT_LETTER_MODE:
-          // letter mode; the pango layout will contain just a single char (ascii or utf8)
-          // we set this in xtext
+      if (i == num_fonts_available) fontnum = -1;
+      weed_free(family);
+      weed_free(fontstr);
 
-          if (sdata->count == 0 || offset >= sdata->tlength) {
-            int cstring = sdata->cstring, xcstring = sdata->curstring;
-            size_t xoffset = offset;
-            sdata->cstring = sdata->curstring;
-            while (offset >= sdata->tlength) {
-              offset -= sdata->tlength;
-              _getastring(inst, sdata, TRUE, FALSE);
-              if (sdata->curstring == xcstring && offset == xoffset) {
-                xtext = strdup("");
-                badstrings(WEED_VERBOSITY_WARN);
-                break;
-              }
-            }
-            sdata->cstring = cstring;
+      font = pango_font_description_new();
 
-            if (sdata->text_type == TEXT_TYPE_ASCII) {
-              sdata->toffs = offset;
-            } else {
-              sdata->utoffs = offset;
-              sdata->toffs = utf8offs(sdata->text, sdata->utoffs);
-            }
+      if (num_fonts_available && fontnum >= 0 && fontnum < num_fonts_available
+          && fonts_available[fontnum]) {
+        pango_font_description_set_family(font, fonts_available[fontnum]);
+      } else pango_font_description_set_family(font, DEF_FONT);
+
+      SET_FONT_SIZE(32.);
+
+      _getastring(inst, sdata, FALSE, TRUE);
+      offset = sdata->start;
+
+      if (sdata->init == -1) sdata->init = 1;
+      if (sdata->init || sdata->length == 0) {
+        sdata->count = -1;
+      } else sdata->count = 0;
+
+      for (i = sdata->start;
+           (sdata->tmode == PT_LETTER_MODE && sdata->start + sdata->count < sdata->length)
+           || (sdata->tmode == PT_WORD_MODE && sdata->count < sdata->length)
+           ; i++) {
+        PangoFontDescription *xfont;
+        char *ztext[1], *otext;
+        xtext = NULL; // xtext #defined as *ztext
+
+        // each letter or word gets its own layout which are combined
+        if (!layout) layout = pango_cairo_create_layout(cairo);
+
+        xfont = pango_font_description_copy(font);
+        pango_layout_set_font_description(layout, xfont);
+
+        if (sdata->count < 0 || sdata->length == 0) {
+          xtext = strdup("");
+        } else {
+          if (!sdata->text) {
+            // get a line of text if we don't have any
+            GETASTRING();
           }
 
-          if (sdata->allow_blanks && offset == sdata->tlength - 1) {
-            xtext = strdup("\n");
-            sdata->toffs++;
-            sdata->utoffs++;
+          switch (sdata->tmode) {
+          case PT_LETTER_MODE:
+            // letter mode; the pango layout will contain just a single char (ascii or utf8)
+            // we set this in xtext
+
+            if (sdata->count == 0 || offset >= sdata->tlength) {
+              int cstring = sdata->cstring, xcstring = sdata->curstring;
+              size_t xoffset = offset;
+              sdata->cstring = sdata->curstring;
+              while (offset >= sdata->tlength) {
+                offset -= sdata->tlength;
+                _getastring(inst, sdata, TRUE, FALSE);
+                if (sdata->curstring == xcstring && offset == xoffset) {
+                  xtext = strdup("");
+                  badstrings(WEED_VERBOSITY_WARN);
+                  break;
+                }
+              }
+              sdata->cstring = cstring;
+
+              if (sdata->text_type == TEXT_TYPE_ASCII) {
+                sdata->toffs = offset;
+              } else {
+                sdata->utoffs = offset;
+                sdata->toffs = utf8offs(sdata->text, sdata->utoffs);
+              }
+            }
+
+            if (sdata->allow_blanks && offset == sdata->tlength - 1) {
+              xtext = strdup("\n");
+              sdata->toffs++;
+              sdata->utoffs++;
+              offset++;
+              break;
+            }
+            if (sdata->text_type == TEXT_TYPE_ASCII) {
+              xtext = stringdup(&sdata->text[sdata->toffs], 1);
+              sdata->toffs++;
+            } else {
+              int xlen;
+              if (sdata->count == 0) {
+                sdata->toffs = utf8offs(sdata->text, sdata->start);
+              }
+              xlen = mbtowc(NULL, &sdata->text[sdata->toffs], 4);
+              if (xlen == -1) xlen = 1;
+              xtext = stringdup(&sdata->text[sdata->toffs], xlen);
+              //fprintf(stderr, "GOT STR (%c),  %s\n%s:%ld:%d:\n",
+              //	sdata->text[sdata->toffs], xtext, sdata->text, sdata->toffs, xlen);
+              sdata->toffs += xlen;
+              sdata->utoffs++;
+            }
             offset++;
             break;
-          }
-          if (sdata->text_type == TEXT_TYPE_ASCII) {
-            xtext = stringdup(&sdata->text[sdata->toffs], 1);
-            sdata->toffs++;
-          } else {
-            int xlen;
-            if (sdata->count == 0) {
-              sdata->toffs = utf8offs(sdata->text, sdata->start);
-            }
-            xlen = mbtowc(NULL, &sdata->text[sdata->toffs], 4);
-            if (xlen == -1) xlen = 1;
-            xtext = stringdup(&sdata->text[sdata->toffs], xlen);
-            //fprintf(stderr, "GOT STR (%c),  %s\n%s:%ld:%d:\n",
-            //	sdata->text[sdata->toffs], xtext, sdata->text, sdata->toffs, xlen);
-            sdata->toffs += xlen;
-            sdata->utoffs++;
-          }
-          offset++;
-          break;
 
-        case PT_WORD_MODE:
-          // word mode; herte we pass in a "word" at a time
-          if (sdata->count == 0 || offset >= sdata->wlength) {
-            int cstring = sdata->cstring, xcstring = sdata->curstring;
-            size_t xoffset = offset;
-            while (offset >= sdata->wlength) {
-              offset -= sdata->wlength;
-              _getastring(inst, sdata, TRUE, FALSE);
-              if (sdata->curstring == xcstring && offset == xoffset) {
-                xtext = strdup("");
-                badstrings(WEED_VERBOSITY_WARN);
-                break;
+          case PT_WORD_MODE:
+            // word mode; herte we pass in a "word" at a time
+            if (sdata->count == 0 || offset >= sdata->wlength) {
+              int cstring = sdata->cstring, xcstring = sdata->curstring;
+              size_t xoffset = offset;
+              while (offset >= sdata->wlength) {
+                offset -= sdata->wlength;
+                _getastring(inst, sdata, TRUE, FALSE);
+                if (sdata->curstring == xcstring && offset == xoffset) {
+                  xtext = strdup("");
+                  badstrings(WEED_VERBOSITY_WARN);
+                  break;
+                }
+              }
+              sdata->cstring = cstring;
+
+              if (sdata->text_type == TEXT_TYPE_ASCII) {
+                xsubst = get_nth_word_ascii(sdata, sdata->text, offset);
+              } else {
+                xsubst = get_nth_word_utf8(sdata, sdata->text, offset);
+                sdata->utoffs = xsubst->ustart + xsubst->ulength - 1;
+              }
+            } else {
+              if (sdata->text_type == TEXT_TYPE_ASCII) {
+                xsubst = get_nth_word_ascii(sdata, sdata->text, -1);
+              } else {
+                xsubst = get_nth_word_utf8(sdata, sdata->text, -1);
+                sdata->utoffs = xsubst->ustart + xsubst->ulength;
               }
             }
-            sdata->cstring = cstring;
-
-            if (sdata->text_type == TEXT_TYPE_ASCII) {
-              xsubst = get_nth_word_ascii(sdata, sdata->text, offset);
-            } else {
-              xsubst = get_nth_word_utf8(sdata, sdata->text, offset);
-              sdata->utoffs = xsubst->ustart + xsubst->ulength - 1;
-            }
-          } else {
-            if (sdata->text_type == TEXT_TYPE_ASCII) {
-              xsubst = get_nth_word_ascii(sdata, sdata->text, -1);
-            } else {
-              xsubst = get_nth_word_utf8(sdata, sdata->text, -1);
-              sdata->utoffs = xsubst->ustart + xsubst->ulength;
-            }
+            sdata->toffs = xsubst->start + xsubst->length;
+            xtext = stringdup(&sdata->text[xsubst->start], xsubst->length);
+            weed_free(xsubst);
+            break;
+          default:
+            // TODO - line mode and all mode
+            break;
           }
-          sdata->toffs = xsubst->start + xsubst->length;
-          xtext = stringdup(&sdata->text[xsubst->start], xsubst->length);
-          weed_free(xsubst);
-          break;
-        default:
-          // TODO - line mode and all mode
-          break;
         }
-      }
 
-      otext = xtext;
-      set_ptext(xtext);
+        otext = xtext;
+        set_ptext(xtext);
 
-      //fprintf(stderr, "set the text to %s\nline: %s\n", xtext, sdata->text);
-      // call the procedure
-      proctext(inst, sdata, tc, ztext, cairo, layout, xfont, width, height);
+        //fprintf(stderr, "set the text to %s\nline: %s\n", xtext, sdata->text);
+        // call the procedure
+        proctext(inst, sdata, tc, ztext, cairo, layout, xfont, width, height);
 
-      //fprintf(stderr, "xtext is %s %f\n", xtext, sdata->dissolve);
+        //fprintf(stderr, "xtext is %s %f\n", xtext, sdata->dissolve);
 
-      sdata->alarm = FALSE;
+        sdata->alarm = FALSE;
 
-      if (sdata->length < 0) sdata->length = 0;
-      if (sdata->init == 1) {
-        sdata->init = 0;
-        if (sdata->alarm_time == sdata->timer) sdata->alarm = TRUE;
-      }
-
-      if (xtext && *xtext && !sdata->init && i < sdata->start + (sdata->length == 0 ? 1 : sdata->length)
-          && !is_a_space(xtext) && *xtext != '\n') {
-        if (xtext != otext) set_ptext(xtext);
-        cairo_save(cairo);
-
-        cairo_move_to(cairo, sdata->x_text, sdata->y_text);
-
-        if (pal == WEED_PALETTE_RGBA32) {
-          cairo_set_source_rgba(cairo, sdata->fg.blue / 255.0, sdata->fg.green / 255.0,
-                                sdata->fg.red / 255.0, sdata->fg_alpha);
-        } else {
-          cairo_set_source_rgba(cairo, sdata->fg.red / 255.0, sdata->fg.green / 255.0,
-                                sdata->fg.blue / 255.0, sdata->fg_alpha);
+        if (sdata->length < 0) sdata->length = 0;
+        if (sdata->init == 1) {
+          sdata->init = 0;
+          if (sdata->alarm_time == sdata->timer) sdata->alarm = TRUE;
         }
-        pango_cairo_show_layout(cairo, layout);
-        cairo_restore(cairo);
-      }
-      cairo_identity_matrix(cairo);
-      cairo_set_operator(cairo, CAIRO_OPERATOR_OVER);
 
-      if (xfont) {
-        pango_font_description_free(xfont);
-        xfont = NULL;
-      }
+        if (xtext && *xtext && !sdata->init
+            && i < sdata->start + (sdata->length == 0 ? 1 : sdata->length)
+            && !is_a_space(xtext) && *xtext != '\n') {
+          if (xtext != otext) set_ptext(xtext);
+          cairo_save(cairo);
 
-      if (layout) {
-        g_object_unref(layout);
-        layout = NULL;
-      }
-      if (xtext) {
-        weed_free(xtext);
-        xtext = NULL;
-      }
-      i = sdata->start +
-          sdata->count++;
-      if (sdata->count == 0) {
-        if (sdata->length > 0) {
-          i = sdata->start - 1;
-          continue;
+          cairo_move_to(cairo, sdata->x_text, sdata->y_text);
+
+          if (pal == WEED_PALETTE_RGBA32) {
+            cairo_set_source_rgba(cairo, sdata->fg.blue / 255.0, sdata->fg.green / 255.0,
+                                  sdata->fg.red / 255.0, sdata->fg_alpha);
+          } else {
+            cairo_set_source_rgba(cairo, sdata->fg.red / 255.0, sdata->fg.green / 255.0,
+                                  sdata->fg.blue / 255.0, sdata->fg_alpha);
+          }
+          pango_cairo_show_layout(cairo, layout);
+          cairo_restore(cairo);
         }
-      }
-      if (sdata->init == -1) break;
-    } // end loop
+        cairo_identity_matrix(cairo);
+        cairo_set_operator(cairo, CAIRO_OPERATOR_OVER);
 
-    if (font) {
-      pango_font_description_free(font);
-      font = NULL;
+        if (xfont) {
+          pango_font_description_free(xfont);
+          xfont = NULL;
+        }
+
+        if (layout) {
+          g_object_unref(layout);
+          layout = NULL;
+        }
+        if (xtext) {
+          weed_free(xtext);
+          xtext = NULL;
+        }
+        i = sdata->start +
+            sdata->count++;
+        if (sdata->count == 0) {
+          if (sdata->length > 0) {
+            i = sdata->start - 1;
+            continue;
+          }
+        }
+        if (sdata->init == -1) break;
+      } // end loop
+
+      if (font) {
+        pango_font_description_free(font);
+        font = NULL;
+      }
+
+      // now convert cairo surface to channel pixel_data
+      cairo_to_channel(inst, sdata, cairo, out_channel, in_channel);
+      if (sdata->pixel_data) {
+        weed_free(sdata->pixel_data);
+        sdata->pixel_data = NULL;
+      }
+      cairo_destroy(cairo);
     }
-
-    // now convert cairo surface to channel pixel_data
-    cairo_to_channel(inst, sdata, cairo, out_channel, in_channel);
-    if (sdata->pixel_data) {
-      weed_free(sdata->pixel_data);
-      sdata->pixel_data = NULL;
-    }
-    cairo_destroy(cairo);
   }
   return WEED_SUCCESS;
 }
 
-#define N_RFX_STRINGS 7
+#define N_RFX_STRINGS 8
 
 WEED_SETUP_START(200, 201) {
   char *rfxstrings[N_RFX_STRINGS];
@@ -2489,6 +2510,10 @@ WEED_SETUP_START(200, 201) {
 
   in_params[P_RANDLINES] = weed_switch_init("rand", "Select text lines _randomly", WEED_TRUE);
 
+  in_params[P_USEBUF] = weed_switch_init("usebuff", "Use textbuffer instead of file", WEED_FALSE);
+  weed_paramtmpl_set_flags(in_params[P_USEBUF], weed_paramtmpl_get_flags(in_params[P_USEBUF])
+                           | WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
+
   in_params[P_MODE] = weed_string_list_init("mode", "Effect _mode", 0, modes);
 
   weed_paramtmpl_set_flags(in_params[P_MODE], weed_paramtmpl_get_flags(in_params[P_MODE])
@@ -2503,12 +2528,14 @@ WEED_SETUP_START(200, 201) {
 
   in_params[P_FONTSCALE] = weed_float_init("fontscale", "_Font Scale", 1., .1, 10.);
 
-  in_params[P_TEXTBUF] = weed_text_init("textbuffer", "_Text buffer (overrides Text File)", "");
+  in_params[P_TEXTBUF] = weed_text_init("textbuffer", "", "");
 
   in_params[P_TRIGGER] = weed_switch_init("trigger", "Beat Trigger", WEED_FALSE);
   weed_paramtmpl_set_hidden(in_params[P_TRIGGER], WEED_TRUE);
 
-  in_params[P_RANDMODE] = weed_switch_init("randmode", "Randomised", WEED_FALSE);
+  in_params[P_RANDMODE] = weed_switch_init("randmode", "Switch mode randomly", WEED_FALSE);
+  gui = weed_paramtmpl_get_gui(in_params[P_RANDMODE]);
+  weed_gui_set_flags(gui, weed_gui_get_flags(gui) | WEED_GUI_REINIT_ON_VALUE_CHANGE);
 
   in_params[P_END] = NULL;
 
@@ -2526,8 +2553,9 @@ WEED_SETUP_START(200, 201) {
   snprintf(rfxstrings[2], 256, "layout|p%d|p%d|", P_MODE, P_RANDMODE);
   snprintf(rfxstrings[3], 256, "layout|p%d|p%d|", P_FONT, P_FONTSCALE);
   snprintf(rfxstrings[4], 256, "layout|p%d|", P_FILE);
-  snprintf(rfxstrings[5], 256, "layout|p%d|", P_TEXTBUF);
-  snprintf(rfxstrings[6], 256, "layout|p%d|", P_RANDLINES);
+  snprintf(rfxstrings[5], 256, "layout|p%d|", P_RANDLINES);
+  snprintf(rfxstrings[6], 256, "layout|p%d|", P_USEBUF);
+  snprintf(rfxstrings[7], 256, "layout|p%d|", P_TEXTBUF);
 
   gui = weed_filter_get_gui(filter_class);
   weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, "RFX");

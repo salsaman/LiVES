@@ -1531,7 +1531,6 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
 
   LiVESWidget *dialog_vbox = NULL;
   LiVESWidget *vboxx;
-  LiVESWidget *frame;
   LiVESWidget *combo_entry2;
   LiVESWidget *combo_entry3;
   LiVESWidget *combo_entry1;
@@ -1632,12 +1631,12 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
   } else vboxx = top_vbox;
 
   if (type == 1) {
-    frame = lives_standard_frame_new(_("Current"), 0., FALSE);
+    resaudw->frame = lives_standard_frame_new(_("Current"), 0., FALSE);
 
-    lives_box_pack_start(LIVES_BOX(vboxx), frame, FALSE, TRUE, 0);
+    lives_box_pack_start(LIVES_BOX(vboxx), resaudw->frame, FALSE, TRUE, 0);
 
     hbox2 = lives_hbox_new(FALSE, 0);
-    lives_container_add(LIVES_CONTAINER(frame), hbox2);
+    lives_container_add(LIVES_CONTAINER(resaudw->frame), hbox2);
     //lives_container_set_border_width(LIVES_CONTAINER(hbox2), widget_opts.packing_width);
 
     tmp = lives_strdup_printf("%d", (int)mainw->fx1_val);
@@ -1722,14 +1721,14 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
     else if (type == 2) tmp = (_("New Audio Details"));
     else tmp = (_("New"));
 
-    frame = lives_standard_frame_new(tmp, 0., FALSE);
+    resaudw->frame = lives_standard_frame_new(tmp, 0., FALSE);
     lives_free(tmp);
 
-    if (type == 4) lives_box_pack_start(LIVES_BOX(vboxx), frame, FALSE, FALSE, widget_opts.packing_height);
-    else lives_box_pack_start(LIVES_BOX(vboxx), frame, FALSE, TRUE, 0);
+    if (type == 4) lives_box_pack_start(LIVES_BOX(vboxx), resaudw->frame, FALSE, FALSE, widget_opts.packing_height);
+    else lives_box_pack_start(LIVES_BOX(vboxx), resaudw->frame, FALSE, TRUE, 0);
 
     resaudw->vbox = lives_vbox_new(FALSE, 0);
-    lives_container_add(LIVES_CONTAINER(frame), resaudw->vbox);
+    lives_container_add(LIVES_CONTAINER(resaudw->frame), resaudw->vbox);
 
     if (type > 2 && type < 5 && !chans_fixed) {
       resaudw->aud_hbox = lives_hbox_new(FALSE, 0);
@@ -1906,11 +1905,11 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
   }
 
   if (type > 7 && type != 11) {
-    frame = lives_standard_frame_new(_("Video"), 0., FALSE);
-    lives_box_pack_start(LIVES_BOX(vboxx), frame, TRUE, TRUE, 0);
+    resaudw->vframe = lives_standard_frame_new(_("Video"), 0., FALSE);
+    lives_box_pack_start(LIVES_BOX(vboxx), resaudw->vframe, TRUE, TRUE, 0);
 
     hbox = lives_hbox_new(FALSE, 0);
-    lives_container_add(LIVES_CONTAINER(frame), hbox);
+    lives_container_add(LIVES_CONTAINER(resaudw->vframe), hbox);
     lives_container_set_border_width(LIVES_CONTAINER(hbox), widget_opts.border_width);
 
     resaudw->fps_spinbutton = lives_standard_spin_button_new(_("_Frames Per Second "),

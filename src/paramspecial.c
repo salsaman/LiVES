@@ -384,22 +384,20 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       LiVESWidget *tbox = widget;
       int idx;
       if (!widget_opts.last_container) {
-        box = lives_widget_get_parent(widget);
-        while (box && !LIVES_IS_HBOX(box)) {
-          tbox = box;
-          box = lives_widget_get_parent(box);
-        }
+        tbox = box = lives_widget_get_parent(widget);
       } else box = widget_opts.last_container;
       if (!box) return;
+
       idx = get_box_child_index(LIVES_BOX(box), tbox);
-      param->widgets[1] = buttond = lives_standard_font_chooser_new();
-      lives_font_chooser_set_font(LIVES_FONT_CHOOSER(param->widgets[1]), param->value);
+      param->widgets[2] = buttond = lives_standard_font_chooser_new();
+      lives_font_chooser_set_font(LIVES_FONT_CHOOSER(param->widgets[2]), param->value);
 
       lives_box_pack_start(LIVES_BOX(box), buttond, TRUE, TRUE, 0);
       lives_box_reorder_child(LIVES_BOX(box), buttond, idx);
       if (lives_widget_is_visible(widget)) lives_widget_show_all(buttond);
       lives_widget_set_valign(buttond, LIVES_ALIGN_CENTER);
 
+      lives_widget_show_all(tbox);
       lives_widget_object_ref(tbox);
       lives_widget_unparent(tbox);
 

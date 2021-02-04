@@ -17,6 +17,8 @@
 /// resample audio window
 typedef struct __resaudw {
   LiVESWidget *dialog;
+  LiVESWidget *frame;
+  LiVESWidget *vframe;
   LiVESWidget *entry_arate;
   LiVESWidget *entry_achans;
   LiVESWidget *entry_asamps;

@@ -7793,7 +7793,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_new(LiVESBox * box) {
     lives_table_set_row_spacings(LIVES_TABLE(layout), widget_opts.packing_height);
   if (LIVES_SHOULD_EXPAND_EXTRA_WIDTH)
     lives_table_set_col_spacings(LIVES_TABLE(layout), widget_opts.packing_width);
-  //lives_table_set_column_homogeneous(LIVES_TABLE(layout), FALSE);
   return layout;
 }
 
@@ -7820,6 +7819,15 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_hbox_new(LiVESLayout * lay
   if (widget_opts.apply_theme == 2) {
     lives_widget_apply_theme2(widget, LIVES_WIDGET_STATE_NORMAL, TRUE);
   }
+#if GTK_CHECK_VERSION(3, 0, 0)
+  lives_widget_set_valign(widget, LIVES_ALIGN_CENTER);
+  if (widget_opts.justify == LIVES_JUSTIFY_CENTER)
+    lives_widget_set_halign(widget, LIVES_ALIGN_CENTER);
+  else if (widget_opts.justify == LIVES_JUSTIFY_END)
+    lives_widget_set_halign(widget, LIVES_ALIGN_END);
+  else
+    lives_widget_set_halign(widget, LIVES_ALIGN_START);
+#endif
   return hbox;
 }
 
@@ -7888,6 +7896,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_add_fill(LiVESLayout * lay
     LiVESWidget *hbox = lives_layout_hbox_new(layout);
     widget = add_fill_to_box(LIVES_BOX(hbox));
     widget_opts.last_container = hbox;
+    lives_widget_set_hexpand(hbox, TRUE);
+    lives_table_set_column_homogeneous(LIVES_TABLE(layout), FALSE);
   } else {
     widget = lives_layout_add_label(layout, NULL, FALSE);
     lives_layout_expansion_row_new(layout, widget);
@@ -7979,6 +7989,7 @@ static LiVESWidget *make_inner_hbox(LiVESBox * box, boolean start) {
   } else {
     lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, LIVES_SHOULD_EXPAND_FOR(box)
                          ? widget_opts.packing_height : 0);
+    lives_widget_set_show_hide_parent(hbox);
     box = LIVES_BOX(hbox);
     hbox = lives_hbox_new(FALSE, 0);
     widget_opts.last_container = hbox;
@@ -7994,6 +8005,8 @@ static LiVESWidget *make_inner_hbox(LiVESBox * box, boolean start) {
   else
     lives_box_pack_end(LIVES_BOX(hbox), vbox, LIVES_SHOULD_EXPAND_EXTRA_WIDTH,
                        LIVES_SHOULD_EXPAND_EXTRA_WIDTH, 0);
+
+  lives_widget_set_show_hide_parent(hbox);
   lives_widget_set_show_hide_parent(vbox);
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -8949,6 +8962,7 @@ static void lives_widget_show_all_cb(LiVESWidget * other, livespointer user_data
   }
 }
 
+
 boolean lives_widget_set_show_hide_with(LiVESWidget * widget, LiVESWidget * other) {
   // show / hide the other widget when and only when the child is shown / hidden
   if (!widget || !other) return FALSE;
@@ -9024,7 +9038,6 @@ LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, Li
     }
 
     hbox = make_inner_hbox(LIVES_BOX(box), !widget_opts.swap_label);
-    lives_widget_set_show_hide_parent(swtch);
     container = widget_opts.last_container;
 
     expand = LIVES_SHOULD_EXPAND_EXTRA_FOR(hbox);
@@ -9039,6 +9052,7 @@ LiVESWidget *lives_standard_switch_new(const char *labeltext, boolean active, Li
                          !eventbox ? packing_width : 0);
 
     if (expand) add_fill_to_box(LIVES_BOX(hbox));
+    lives_widget_set_show_hide_parent(swtch);
 
     if (!widget_opts.swap_label && eventbox)
       lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, packing_width);
@@ -9129,7 +9143,6 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
     }
 
     hbox = make_inner_hbox(LIVES_BOX(box), !widget_opts.swap_label);
-    lives_widget_set_show_hide_parent(checkbutton);
     container = widget_opts.last_container;
 
     expand = LIVES_SHOULD_EXPAND_EXTRA_FOR(hbox);
@@ -9144,6 +9157,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
                          !eventbox ? packing_width : 0);
 
     if (expand) add_fill_to_box(LIVES_BOX(hbox));
+    lives_widget_set_show_hide_parent(checkbutton);
 
     if (!widget_opts.swap_label && eventbox)
       lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, packing_width);
@@ -9385,9 +9399,11 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, LiVESSList *
                            "background-image", tmp);
       lives_free(colref);
 
-      if (!(palette->style & STYLE_LIGHT))
+
+      if (!(palette->style & STYLE_LIGHT)) {
         colref = gdk_rgba_to_string(&palette->normal_fore);
-      else {
+        set_css_value_direct(radiobutton, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.5");
+      } else {
         set_css_value_direct(radiobutton, LIVES_WIDGET_STATE_INSENSITIVE, "", "opacity", "0.25");
         set_css_value_direct(radiobutton, LIVES_WIDGET_STATE_CHECKED, "", "opacity", "0.5");
         colref = gdk_rgba_to_string(&palette->nice3);
@@ -10421,7 +10437,6 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, LiVESBox * box, LiVE
     int packing_width = 0;
 
     hbox = make_inner_hbox(LIVES_BOX(box), TRUE);
-    lives_widget_set_show_hide_parent(expander);
     container = widget_opts.last_container;
 
     if (LIVES_SHOULD_EXPAND_WIDTH) packing_width = widget_opts.packing_width;
@@ -10435,6 +10450,7 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, LiVESBox * box, LiVE
     if (widget_opts.justify == LIVES_JUSTIFY_CENTER) lives_widget_set_halign(expander, LIVES_ALIGN_CENTER);
     lives_box_pack_start(LIVES_BOX(hbox), expander, TRUE, TRUE, packing_width);
     lives_widget_set_valign(expander, LIVES_ALIGN_CENTER);
+    lives_widget_set_show_hide_parent(expander);
 
     if (widget_opts.justify == LIVES_JUSTIFY_END) lives_widget_set_halign(expander, LIVES_ALIGN_END);
     if (widget_opts.justify != LIVES_JUSTIFY_START) add_fill_to_box(LIVES_BOX(hbox));

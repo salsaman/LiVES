@@ -2757,7 +2757,8 @@ void render_fx_get_params(lives_rfx_t *rfx, const char *plugin_name, short statu
 
     cparam = &rfx->params[param_idx];
     cparam->name = lives_strdup(param_array[0]);
-    cparam->label = lives_strdup(param_array[1]);
+    if (*param_array[1]) cparam->label = _(param_array[1]);
+    else cparam->label = lives_strdup("");
     cparam->desc = NULL;
     cparam->use_mnemonic = TRUE;
     cparam->hidden = 0;
@@ -3531,12 +3532,15 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
 
     string = weed_get_string_value(wtmpl, WEED_LEAF_NAME, NULL);
     rpar[i].name = string;
-    rpar[i].label = lives_strdup(string);
+    if (*string) rpar[i].label = _(string);
+    else rpar[i].label = lives_strdup("");
+    rpar[i].desc = NULL;
 
     if (weed_plant_has_leaf(wtmpl, WEED_LEAF_DESCRIPTION)) {
       string = weed_get_string_value(wtmpl, WEED_LEAF_DESCRIPTION, NULL);
-      rpar[i].desc = string;
-    } else rpar[i].desc = NULL;
+      if (*string) rpar[i].desc = _(string);
+      lives_free(string);
+    }
 
     if (is_hidden_param(inst, i)) rpar[i].hidden |= HIDDEN_GUI_PERM;
 
@@ -3546,7 +3550,9 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
       if (weed_plant_has_leaf(gui, WEED_LEAF_LABEL)) {
         string = weed_get_string_value(gui, WEED_LEAF_LABEL, NULL);
         lives_free(rpar[i].label);
-        rpar[i].label = string;
+        if (*string) rpar[i].label = _(string);
+        else rpar[i].label = lives_strdup("");
+        lives_free(string);
       }
       if (weed_plant_has_leaf(gui, WEED_LEAF_USE_MNEMONIC)) {
         rpar[i].use_mnemonic = weed_get_boolean_value(gui, WEED_LEAF_USE_MNEMONIC, NULL);

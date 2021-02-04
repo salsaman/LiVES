@@ -1243,7 +1243,9 @@ reinit:
         if (fx_dialog[1]) {
           int keyw = fx_dialog[1]->key;
           int modew = fx_dialog[1]->mode;
+          if (!deinit_first) weed_set_boolean_value(inst, WEED_LEAF_HOST_REINITING, WEED_TRUE);
           update_widget_vis(NULL, keyw, modew);
+          if (!deinit_first) weed_leaf_delete(inst, WEED_LEAF_HOST_REINITING);
         } else update_widget_vis(rfx, -1, -1);
         filter_error = FILTER_INFO_REDRAWN;
       }
@@ -5159,9 +5161,11 @@ void weed_load_all(void) {
 #endif
   threaded_dialog_spin(0.);
 
-  for (i = 0; i < numdirs; i++) {
+  for (i = numdirs - 1; i >= 0; i--) {
     // get list of all files
-    LiVESList *list = weed_plugin_list = get_plugin_list(PLUGIN_EFFECTS_WEED, TRUE, dirs[i], NULL);
+    LiVESList *list;
+    if (!lives_file_test(dirs[i], LIVES_FILE_TEST_IS_DIR)) continue;
+    list = weed_plugin_list = get_plugin_list(PLUGIN_EFFECTS_WEED, TRUE, dirs[i], NULL);
 
     // parse twice, first we get the plugins, then 1 level of subdirs
     while (list) {

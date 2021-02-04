@@ -3419,12 +3419,16 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   prefsw->checkbutton_render_prompt = lives_standard_check_button_new(_("Use these same _values for rendering a new clip"),
                                       !prefs->render_prompt, LIVES_BOX(hbox), NULL);
 
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(mt_enter_defs), prefsw->checkbutton_render_prompt, FALSE);
+
   frame = add_video_options(&prefsw->spinbutton_mt_def_width, mainw->multitrack == NULL ? prefs->mt_def_width : cfile->hsize,
                             &prefsw->spinbutton_mt_def_height,
                             mainw->multitrack == NULL ? prefs->mt_def_height : cfile->vsize, &prefsw->spinbutton_mt_def_fps,
                             mainw->multitrack == NULL ? prefs->mt_def_fps : cfile->fps, NULL, 0, FALSE, NULL);
 
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_multitrack), frame, FALSE, FALSE, widget_opts.packing_height);
+
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(mt_enter_defs), frame, FALSE);
 
   hbox = add_audio_options(&prefsw->backaudio_checkbutton, &prefsw->pertrack_checkbutton);
 
@@ -3434,6 +3438,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   // must be done after creating check buttons
   resaudw = create_resaudw(4, NULL, prefsw->vbox_right_multitrack);
 
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(mt_enter_defs), resaudw->frame, FALSE);
+
   // must be done after resaudw
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
@@ -3442,6 +3448,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   lives_widget_set_sensitive(prefsw->pertrack_checkbutton,
                              lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
+
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(mt_enter_defs), hbox, FALSE);
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_multitrack));
 
@@ -4321,15 +4329,19 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Changing these values will only take effect after a restart of LiVES:"), FALSE);
 
+  widget_opts.expand |= LIVES_EXPAND_EXTRA_WIDTH;
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->wpp_entry = lives_standard_direntry_new(_("Weed plugin path"), prefs->weed_plugin_path,
-                      LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
+                      MEDIUM_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
+                      (tmp = H_("Weed directories should be separated by ':',\n"
+                                "ordered from lowest to highest priority")));
+  lives_free(tmp);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->frei0r_entry = lives_standard_direntry_new(_("Frei0r plugin path"), prefs->frei0r_path,
-                         LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
-                         (tmp = H_("(Frei0r directories should be separated by ':',\n"
-                                   "ordered from lowest to highest priority)")));
+                         MEDIUM_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
+                         (tmp = H_("Frei0r directories should be separated by ':',\n"
+                                   "ordered from lowest to highest priority")));
   lives_free(tmp);
 
 #ifndef HAVE_FREI0R
@@ -4338,7 +4350,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 #endif
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  prefsw->ladspa_entry = lives_standard_direntry_new(_("LADSPA plugin path"), prefs->ladspa_path, LONG_ENTRY_WIDTH, PATH_MAX,
+  prefsw->ladspa_entry = lives_standard_direntry_new(_("LADSPA plugin path"), prefs->ladspa_path, MEDIUM_ENTRY_WIDTH, PATH_MAX,
                          LIVES_BOX(hbox), NULL);
 #ifndef HAVE_LADSPA
   lives_widget_set_sensitive(prefsw->ladspa_entry, FALSE);
@@ -4346,9 +4358,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 #endif
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  prefsw->libvis_entry = lives_standard_direntry_new(_("libvisual plugin path"), prefs->libvis_path, LONG_ENTRY_WIDTH, PATH_MAX,
+  prefsw->libvis_entry = lives_standard_direntry_new(_("libvisual plugin path"), prefs->libvis_path, MEDIUM_ENTRY_WIDTH, PATH_MAX,
                          LIVES_BOX(hbox), NULL);
 
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
   widget_opts.packing_height = woph;
 
 #ifndef HAVE_LIBVISUAL
@@ -4984,7 +4997,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   prefsw->frameblank_entry = lives_standard_fileentry_new(" ", mainw->frameblank_path,
-                             prefs->def_image_dir, MEDIUM_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
+                             prefs->def_image_dir, LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
                              (tmp2 = (_("The frame image which is shown when there is no clip loaded."))));
   lives_free(tmp2);
 
@@ -4999,7 +5012,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   prefsw->sepimg_entry = lives_standard_fileentry_new(" ", mainw->sepimg_path,
-                         prefs->def_image_dir, MEDIUM_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
+                         prefs->def_image_dir, LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
                          (tmp2 = (_("The image shown in the center of the interface."))));
   lives_free(tmp2);
 

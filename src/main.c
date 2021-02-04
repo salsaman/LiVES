@@ -2026,8 +2026,12 @@ static void lives_init(_ign_opts *ign_opts) {
     if (!*prefs->weed_plugin_path) {
       weed_plugin_path = getenv("WEED_PLUGIN_PATH");
       if (!weed_plugin_path) {
-        weed_plugin_path = lives_build_path(prefs->lib_dir, PLUGIN_EXEC_DIR,
-                                            PLUGIN_WEED_FX_BUILTIN, NULL);
+        char *ppath1 = lives_build_path(prefs->lib_dir, PLUGIN_EXEC_DIR,
+                                        PLUGIN_WEED_FX_BUILTIN, NULL);
+        char *ppath2 = lives_build_path(capable->home_dir, LOCAL_HOME_DIR, "lib", "lives", "plugins",
+                                        PLUGIN_WEED_FX_BUILTIN, NULL);
+        weed_plugin_path = lives_strdup_printf("%s:%s", ppath1, ppath2);
+        lives_free(ppath1); lives_free(ppath2);
         needs_free = TRUE;
       }
       lives_snprintf(prefs->weed_plugin_path, PATH_MAX, "%s", weed_plugin_path);

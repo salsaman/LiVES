@@ -1,6 +1,6 @@
 // paramwindow.c
 // LiVES
-// (c) G. Finch 2004 - 2018 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2021 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -963,6 +963,10 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
     lives_widget_show_all(fx_dialog[didx]->dialog);
 
   if (retvals) {
+    // call this again so we get updated values
+    lives_list_free_all(&retvals);
+    retvals = do_onchange_init(rfx);
+
     // now apply visually anything we got from onchange_init
     param_demarshall(rfx, retvals, TRUE, TRUE);
     lives_list_free_all(&retvals);

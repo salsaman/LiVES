@@ -1,6 +1,6 @@
 // paramspecial.h
 // LiVES
-// (c) G. Finch 2004 - 2020 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2021 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -55,9 +55,6 @@ typedef struct {
 
 ////////////////////////////////
 
-#define ASPECT_BUTTON_WIDTH ((int)(250. * widget_opts.scale))
-#define ASPECT_BUTTON_HEIGHT DEF_BUTTON_HEIGHT
-
 #define WEED_LEAF_HOST_VALUE_SPECIAL "host_valspec"
 #define LIVES_VALUE_LETTERBOX_OFFSX (1 << 0) // def val. == param_max * lb_offs_x / width
 #define LIVES_VALUE_LETTERBOX_OFFSY (1 << 1)
@@ -70,8 +67,8 @@ void init_special(void);
 
 void add_to_special(const char *special_string, lives_rfx_t *);
 
-void check_for_special(lives_rfx_t *, lives_param_t *param, LiVESBox *);
-void check_for_special_type(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox);
+void check_for_special(lives_rfx_t *, lives_param_t *, LiVESBox *);
+void check_for_special_type(lives_rfx_t *, lives_param_t *, LiVESBox *);
 
 void reset_framedraw_preview(void);
 
@@ -91,11 +88,11 @@ boolean special_cleanup(boolean is_ok);
 
 void setmergealign(void);
 
-void set_aspect_ratio_widgets(lives_param_t *w, lives_param_t *h);
+void set_aspect_ratio_widgets(lives_param_t *, lives_param_t *);
 
-boolean is_perchannel_multi(lives_rfx_t *rfx, int pnum);
+boolean is_perchannel_multi(lives_rfx_t *, int pnum);
 
-LiVESPixbuf *mt_framedraw(lives_mt *, weed_layer_t *layer);
+LiVESPixbuf *mt_framedraw(lives_mt *, weed_layer_t *);
 
 lives_special_mergealign_t mergealign;
 

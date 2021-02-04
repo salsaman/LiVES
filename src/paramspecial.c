@@ -1,6 +1,6 @@
 // paramspecial.c
 // LiVES
-// (c) G. Finch 2004 - 2019 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2021 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -318,6 +318,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
     param->special_type_index = 0;
     if (framedraw.type == LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), 0.);
+
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                                     LIVES_GUI_CALLBACK(after_framedraw_widget_changed), &framedraw);
   }
@@ -326,6 +327,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
     param->special_type_index = 1;
     if (framedraw.type == LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), 0.);
+
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                                     LIVES_GUI_CALLBACK(after_framedraw_widget_changed), &framedraw);
   }
@@ -335,6 +337,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       param->special_type_index = 2;
       if (framedraw.type == LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), (double)cfile->hsize);
+
       lives_signal_sync_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                                       LIVES_GUI_CALLBACK(after_framedraw_widget_changed), &framedraw);
     }
@@ -343,6 +346,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       param->special_type_index = 3;
       if (framedraw.type == LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), (double)cfile->vsize);
+
       lives_signal_sync_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                                       LIVES_GUI_CALLBACK(after_framedraw_widget_changed), &framedraw);
     }
@@ -366,14 +370,18 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
     }
 
     if (param == aspect.width_param) {
-      if (CURRENT_CLIP_HAS_VIDEO) lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), cfile->hsize);
+      if (CURRENT_CLIP_HAS_VIDEO)
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), cfile->hsize);
+
       aspect.width_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                           LIVES_GUI_CALLBACK(after_aspect_width_changed), NULL);
       aspect.nwidgets++;
     }
 
     if (param == aspect.height_param) {
-      if (CURRENT_CLIP_HAS_VIDEO) lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), cfile->vsize);
+      if (CURRENT_CLIP_HAS_VIDEO)
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(widget), cfile->vsize);
+
       aspect.height_func = lives_signal_sync_connect_after(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                            LIVES_GUI_CALLBACK(after_aspect_height_changed), NULL);
       aspect.nwidgets++;
@@ -381,16 +389,16 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
 
 #if GTK_CHECK_VERSION(3, 2, 0)
     if (param == fchooser.font_param) {
-      LiVESWidget *tbox = widget;
+      LiVESWidget *tbox = lives_widget_get_parent(widget);
       int idx;
       if (!widget_opts.last_container) {
-        tbox = box = lives_widget_get_parent(widget);
+        box = lives_widget_get_parent(tbox);
       } else box = widget_opts.last_container;
       if (!box) return;
 
       idx = get_box_child_index(LIVES_BOX(box), tbox);
       param->widgets[2] = buttond = lives_standard_font_chooser_new();
-      lives_font_chooser_set_font(LIVES_FONT_CHOOSER(param->widgets[2]), param->value);
+      lives_font_chooser_set_font(LIVES_FONT_CHOOSER(buttond), param->value);
 
       lives_box_pack_start(LIVES_BOX(box), buttond, TRUE, TRUE, 0);
       lives_box_reorder_child(LIVES_BOX(box), buttond, idx);
@@ -407,7 +415,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
 
       lives_widget_destroy_with(buttond, tbox);
 
-      lives_signal_sync_connect(LIVES_GUI_OBJECT(param->widgets[1]), LIVES_WIDGET_FONT_SET_SIGNAL,
+      lives_signal_sync_connect(LIVES_GUI_OBJECT(buttond), LIVES_WIDGET_FONT_SET_SIGNAL,
                                 LIVES_GUI_CALLBACK(font_set_cb), (livespointer)rfx);
 
       fchooser.entry_func = lives_signal_sync_connect(LIVES_GUI_OBJECT(widget),
@@ -429,7 +437,8 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
                                 LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                                 LIVES_GUI_CALLBACK(text_size_cb), (livespointer)rfx);
       if (fchooser.nwidgets == 1) {
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), get_double_param(param->value));
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]),
+                                    get_double_param(param->value));
         text_size_cb(LIVES_SPIN_BUTTON(fchooser.size_param->widgets[0]), (livespointer)rfx);
       }
       fchooser.nwidgets++;
@@ -442,7 +451,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
 
       aspect.no_reset = TRUE;
       // width will expand to contain label text
-      aspect.lockbutton = lives_standard_lock_button_new(TRUE, 2, ASPECT_BUTTON_HEIGHT, labeltext, NULL);
+      aspect.lockbutton = lives_standard_lock_button_new(TRUE, labeltext, NULL);
       lives_free(labeltext);
 
       lives_signal_sync_connect(aspect.lockbutton, LIVES_WIDGET_CLICKED_SIGNAL,

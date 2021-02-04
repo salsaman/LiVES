@@ -37,12 +37,12 @@ font|_Font|string||128|
 
 <param_window>
 layout|p1|p2|
+layout|p7|p5|
 layout|p0|
 layout|p3|
 layout|p4|
 layout|p6|
-layout|p7|p5|
-special|fontchooser|7|5|
+special|fontchooser|7|
 </param_window>
 
 <properties>

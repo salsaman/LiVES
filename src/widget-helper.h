@@ -465,7 +465,7 @@ boolean lives_widget_set_padding(LiVESWidget *, int padding);
 LiVESWidget *lives_dialog_get_content_area(LiVESDialog *);
 LiVESWidget *lives_dialog_get_action_area(LiVESDialog *);
 
-boolean lives_dialog_add_action_widget(LiVESDialog *, LiVESWidget *, int response_id);
+boolean lives_dialog_add_action_widget(LiVESDialog *, LiVESWidget *, LiVESResponseType response_id);
 
 LiVESWidget *lives_window_new(LiVESWindowType wintype);
 boolean lives_window_set_title(LiVESWindow *, const char *title);
@@ -1019,9 +1019,6 @@ boolean lives_button_ungrab_default_special(LiVESWidget *);
 
 #define BUTTON_DIM_VAL (0.4 * 65535.) // fg / bg ratio for dimmed buttons (BUTTON_DIM_VAL/65535) (lower is dimmer)
 
-#define LOCK_BUTTON_WIDTH 24 ///< sizes for the lock button
-#define LOCK_BUTTON_HEIGHT 24
-
 boolean show_warn_image(LiVESWidget *, const char *text);
 boolean hide_warn_image(LiVESWidget *);
 
@@ -1105,9 +1102,8 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
 LiVESWidget *lives_standard_direntry_new(const char *labeltext, const char *txt, int dispwidth, int maxchars, LiVESBox *,
     const char *tooltip);
 
-LiVESWidget *lives_standard_fileentry_new(const char *labeltext, const char *txt, const char *defdir, int dispwidth,
-    int maxchars,
-    LiVESBox *box, const char *tooltip);
+LiVESWidget *lives_standard_fileentry_new(const char *labeltext, const char *txt, const char *defdir,
+    int dispwidth, int maxchars, LiVESBox *, const char *tooltip);
 
 LiVESWidget *lives_standard_progress_bar_new(void);
 
@@ -1115,8 +1111,7 @@ LiVESWidget *lives_standard_font_chooser_new(void);
 
 LiVESToolItem *lives_menu_tool_button_new(LiVESWidget *icon, const char *label);
 
-LiVESWidget *lives_standard_lock_button_new(boolean is_locked, int width, int height,
-    const char *label, const char *tooltip);
+LiVESWidget *lives_standard_lock_button_new(boolean is_locked, const char *label, const char *tooltip);
 
 boolean lives_lock_button_get_locked(LiVESButton *);
 boolean lives_lock_button_toggle(LiVESButton *);
@@ -1125,7 +1120,8 @@ boolean lives_dialog_set_button_layout(LiVESDialog *, LiVESButtonBoxStyle bstyle
 
 LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_buttons, int width, int height);
 
-LiVESWidget *lives_dialog_add_button_from_stock(LiVESDialog *, const char *stock_id, const char *label, int response_id);
+LiVESWidget *lives_dialog_add_button_from_stock(LiVESDialog *, const char *stock_id,
+    const char *label, LiVESResponseType response_id);
 
 LiVESWidget *lives_standard_hruler_new(void);
 

@@ -2608,8 +2608,9 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_padding(LiVESWidget *widget
 }
 
 
-
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_add_action_widget(LiVESDialog *dialog, LiVESWidget *widget, int response) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_add_action_widget(LiVESDialog *dialog,
+    LiVESWidget *widget,
+    LiVESResponseType response) {
   // TODO: use lives_dialog_add_button, lives_dialog_add_button_from_stock
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -9975,8 +9976,8 @@ LiVESWidget *lives_standard_progress_bar_new(void) {
 }
 
 
-LiVESWidget *lives_dialog_add_button_from_stock(LiVESDialog * dialog, const char *stock_id, const char *label,
-    int response_id) {
+LiVESWidget *lives_dialog_add_button_from_stock(LiVESDialog * dialog, const char *stock_id,
+    const char *label, LiVESResponseType response_id) {
   int bwidth = LIVES_SHOULD_EXPAND_EXTRA_WIDTH ? DLG_BUTTON_WIDTH * 2 : DLG_BUTTON_WIDTH;
   LiVESWidget *button = lives_standard_button_new_from_stock(stock_id, label, bwidth,
                         DLG_BUTTON_HEIGHT);
@@ -10541,8 +10542,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_file_button_new(boolean 
   LiVESWidget *image = lives_image_new_from_stock(LIVES_STOCK_OPEN, LIVES_ICON_SIZE_LARGE_TOOLBAR);
 
   /// height X height is correct
-  int size = ((widget_opts.css_min_height * 3 + 3) >> 2) << 1;
-  fbutton = lives_standard_button_new(size, size);
+  int height = ((widget_opts.css_min_height * 3 + 3) >> 2) << 1;
+  fbutton = lives_standard_button_new(height, height);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fbutton), ISDIR_KEY, LIVES_INT_TO_POINTER(is_dir));
   if (def_dir) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fbutton), DEFDIR_KEY, (livespointer)def_dir);
   lives_standard_button_set_image(LIVES_BUTTON(fbutton), image);
@@ -10585,12 +10586,13 @@ boolean lives_lock_button_toggle(LiVESButton * button) {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_lock_button_new(boolean is_locked, int width,
-    int height,
-    const char *label,
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_lock_button_new(boolean is_locked, const char *label,
     const char *tooltip) {
   LiVESWidget *lockbutton;
-  lockbutton = lives_standard_button_new_with_label(label, width, height);
+  int height = ((widget_opts.css_min_height * 3 + 3) >> 2) << 1;
+
+  // setting width of 2 will force it to shrink to text / icon
+  lockbutton = lives_standard_button_new_with_label(label, 2, height);
   lives_button_set_focus_on_click(LIVES_BUTTON(lockbutton), FALSE);
   if (tooltip) lives_widget_set_tooltip_text(lockbutton, tooltip);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(lockbutton), ISLOCKED_KEY, LIVES_INT_TO_POINTER(!is_locked));

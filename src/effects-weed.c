@@ -6751,9 +6751,9 @@ boolean weed_init_effect(int hotkey) {
     // if it is a key effect, set key defaults
     if (hotkey < FX_KEYS_MAX_VIRTUAL && key_defaults[hotkey][key_modes[hotkey]]) {
       // TODO - handle compound fx
-      filter_mutex_unlock(hotkey);
-      weed_reinit_effect(new_instance, FALSE);
-      filter_mutex_lock(hotkey);
+      /* filter_mutex_unlock(hotkey); */
+      /* weed_reinit_effect(new_instance, FALSE); */
+      /* filter_mutex_lock(hotkey); */
       apply_key_defaults(new_instance, hotkey, key_modes[hotkey]);
       filter_mutex_unlock(hotkey);
       weed_reinit_effect(new_instance, FALSE);
@@ -8739,7 +8739,7 @@ weed_plant_t *weed_inst_out_param(weed_plant_t *inst, int param_num) {
   int num_params;
 
   do {
-    out_params = weed_get_plantptr_array_counted(inst, WEED_LEAF_IN_PARAMETERS, &num_params);
+    out_params = weed_get_plantptr_array_counted(inst, WEED_LEAF_OUT_PARAMETERS, &num_params);
     if (!num_params) continue; // has no out_parameters
     if (num_params > param_num) {
       param = out_params[param_num];

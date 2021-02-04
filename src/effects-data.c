@@ -58,17 +58,28 @@ static void dump_connections(void) {
 }
 #endif
 
-static char *get_param_name(weed_plant_t *param, int pnum, boolean is_in) {
-  char *name = weed_get_string_value(param, WEED_LEAF_NAME, NULL);
-  if (!*name) {
-    lives_free(name);
-    name = NULL;
+static char *get_param_label(weed_plant_t *param, int pnum, boolean is_in) {
+  char *label = NULL;
+  weed_plant_t *gui = weed_paramtmpl_get_gui(param, FALSE);
+  if (gui) {
+    label = weed_get_string_value(gui, WEED_LEAF_LABEL, NULL);
+    if (!*label) {
+      lives_free(label);
+      label = NULL;
+    }
   }
-  if (!name) {
-    if (is_in) name = lives_strdup_printf(_("In param %d"), pnum);
-    else name = lives_strdup_printf(_("Out param %d"), pnum);
+  if (!label) {
+    label = weed_get_string_value(param, WEED_LEAF_NAME, NULL);
+    if (!*label) {
+      lives_free(label);
+      label = NULL;
+    }
   }
-  return name;
+  if (!label) {
+    if (is_in) label = lives_strdup_printf(_("In param %d"), pnum);
+    else label = lives_strdup_printf(_("Out param %d"), pnum);
+  }
+  return label;
 }
 
 
@@ -812,6 +823,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
 
   nsvals = weed_leaf_num_elements(sparam, WEED_LEAF_VALUE);
   if (nsvals == 0) return FALSE;
+
   sptmpl = weed_param_get_template(sparam);
   stype = weed_leaf_seed_type(sparam, WEED_LEAF_VALUE);
 
@@ -1422,13 +1434,12 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
     if (rte_keymode_get_filter_idx(key + 1, mode) == -1) return FALSE;
   }
 
-
   for (i = start; i < nparams; i++) {
     //g_print("NOW at %d %d\n ", key, mode);
     if ((oparam = pconx_get_out_param(FALSE, key, mode, i, &okey, &omode, NULL, &autoscale))) {
-      //#define DEBUG_PCONX
+#define DEBUG_PCONX
 #ifdef DEBUG_PCONX
-      g_print("got pconx to %d %d %d\n", key, mode, i);
+      g_print("got pconx to %d %d %d from %d %d param %p\n", key, mode, i, okey, omode, oparam);
 #endif
       if (i == FX_DATA_PARAM_ACTIVE) {
         pthread_mutex_lock(&mainw->fxd_active_mutex);
@@ -3225,7 +3236,8 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
 
   LiVESList *plist = NULL;
 
-  char *paramname;
+  //char *paramname;
+  char *paramlabel;
 
   char *ptype, *range;
   char *array_type, *text;
@@ -3337,7 +3349,8 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
 
         if (weed_plant_has_leaf(param, WEED_LEAF_GROUP) && weed_get_int_value(param, WEED_LEAF_GROUP, NULL) != 0) continue;
 
-        paramname = get_param_name(param, j - 1, TRUE);
+        //paramname = get_param_name(param, j - 1, TRUE);
+        paramlabel = get_param_label(param, j - 1, TRUE);
 
         ptype = weed_seed_type_to_text((stype = weed_leaf_seed_type(param, WEED_LEAF_DEFAULT)));
 
@@ -3370,8 +3383,8 @@ static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
           }
         }
 
-        text = lives_strdup_printf("%s\n (%s%s) %s", paramname, ptype, array_type, range);
-        lives_free(paramname);
+        text = lives_strdup_printf("%s\n (%s%s) %s", paramlabel, ptype, array_type, range);
+        lives_free(paramlabel);
         lives_free(array_type);
         lives_free(range);
       }
@@ -3495,7 +3508,7 @@ static void dpp_changed(LiVESWidget * combo, livespointer user_data) {
 
   LiVESTreeIter iter;
 
-  char *paramname;
+  char *paramlabel;
 
   boolean hasone = FALSE;
   boolean setup = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "setup"));
@@ -3615,15 +3628,15 @@ static void dpp_changed(LiVESWidget * combo, livespointer user_data) {
   }
 
   if (iparam == active_dummy) {
-    if (key == FX_DATA_KEY_OMC_MACRO) paramname = (_("TRIGGER"));
-    else paramname = (_("ACTIVATE"));
-  } else paramname = get_param_name(iparam, idx - EXTRA_PARAMS_IN, TRUE);
+    if (key == FX_DATA_KEY_OMC_MACRO) paramlabel = _("TRIGGER");
+    else paramlabel = _("ACTIVATE");
+  } else paramlabel = get_param_label(iparam, idx - EXTRA_PARAMS_IN, TRUE);
 
   lives_signal_handler_block(combo, conxwp->dpp_func[ours]);
-  lives_combo_set_active_string(LIVES_COMBO(combo), paramname);
+  lives_combo_set_active_string(LIVES_COMBO(combo), paramlabel);
   lives_signal_handler_unblock(combo, conxwp->dpp_func[ours]);
 
-  lives_free(paramname);
+  lives_free(paramlabel);
 
   lives_widget_set_sensitive(conxwp->del_button[nchans + ours], TRUE);
 
@@ -4409,7 +4422,7 @@ static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
         if (isfirst) {
           param = oparams[i];
 
-          pname = get_param_name(param, i, FALSE);
+          pname = get_param_label(param, i, FALSE);
 
           ptype = weed_seed_type_to_text((stype = weed_leaf_seed_type(param, WEED_LEAF_DEFAULT)));
 
@@ -4907,7 +4920,7 @@ static boolean do_param_connected_query(lives_conx_w * conxwp, int key, int mode
   boolean resp = FALSE;
   if (pnum >= 0) {
     weed_plant_t *ptmpl = weed_filter_out_paramtmpl(filter, pnum);
-    pname = get_param_name(ptmpl, pnum, TRUE);
+    pname = get_param_label(ptmpl, pnum, TRUE);
   } else pname = (_("ACTIVATED"));
   widget_opts.transient = LIVES_WINDOW(conxwp->conx_dialog);
   msg = lives_strdup_printf(_("Input parameter is already connected from key %d, mode %d\n\n(%s:%s)\n\n"),

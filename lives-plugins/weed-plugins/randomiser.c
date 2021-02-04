@@ -41,71 +41,65 @@ typedef struct {
 } _sdata;
 
 
-static double getrand(double min, double max) {
-  return min + drand(max - min);
+static double getrand(double min, double max, weed_plant_t *inst) {
+  return min + fastrand_dbl_re(max - min, inst, WEED_LEAF_PLUGIN_RANDOM_SEED);
 }
 
 
 static weed_error_t randomiser_init(weed_plant_t *inst) {
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
-  weed_plant_t **out_params = weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, NULL);
+  weed_plant_t **in_params = weed_get_in_params(inst, NULL);
+  weed_plant_t **out_params = weed_get_out_params(inst, NULL);
 
-  _sdata *sdata = (_sdata *)weed_malloc(sizeof(_sdata));
+  _sdata *sdata = (_sdata *)weed_calloc(sizeof(_sdata), 1);
 
   double nrand, min, max;
 
-  register int i;
+  if (!sdata) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
+  // enable repeatable randomness
+  weed_set_int64_value(inst, WEED_LEAF_PLUGIN_RANDOM_SEED,
+                       weed_get_int64_value(inst, WEED_LEAF_RANDOM_SEED, NULL));
 
-  for (i = 0; i < NVALS; i++) {
-    sdata->vals[i] = weed_get_boolean_value(in_params[i], WEED_LEAF_VALUE, NULL);
+  for (int i = 0; i < NVALS; i++) {
+    sdata->vals[i] = weed_param_get_value_boolean(in_params[i]);
 
-    min = weed_get_double_value(in_params[NVALS + i * 4], WEED_LEAF_VALUE, NULL);
-    max = weed_get_double_value(in_params[NVALS + i * 4 + 1], WEED_LEAF_VALUE, NULL);
+    min = weed_param_get_value_double(in_params[NVALS + i * 4]);
+    max = weed_param_get_value_double(in_params[NVALS + i * 4 + 1]);
     nrand = min + (max - min) / 2.;
     weed_set_double_value(out_params[i], WEED_LEAF_VALUE, nrand);
   }
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
-
+  weed_free(in_params);
+  weed_free(out_params);
   return WEED_SUCCESS;
-
 }
 
 
 int randomiser_deinit(weed_plant_t *inst) {
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
-  if (sdata != NULL) {
-    weed_free(sdata);
-  }
+  if (sdata) weed_free(sdata);
   weed_set_voidptr_value(inst, "plugin_internal", NULL);
   return WEED_SUCCESS;
 }
 
 
 static weed_error_t randomiser_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
-  weed_plant_t **out_params = weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, NULL);
-
+  weed_plant_t **in_params = weed_get_in_params(inst, NULL);
+  weed_plant_t **out_params = weed_get_out_params(inst, NULL);
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
-
   double nrand, min, max;
-
   int iv, trigt, trigf;
 
-  register int i;
-
-  for (i = 0; i < NVALS; i++) {
-    iv = weed_get_boolean_value(in_params[i], WEED_LEAF_VALUE, NULL);
-
+  for (int i = 0; i < NVALS; i++) {
+    iv = weed_param_get_value_boolean(in_params[i]);
     if (iv != sdata->vals[i]) {
-      trigt = weed_get_boolean_value(in_params[NVALS + i * 4 + 2], WEED_LEAF_VALUE, NULL);
-      trigf = weed_get_boolean_value(in_params[NVALS + i * 4 + 3], WEED_LEAF_VALUE, NULL);
+      trigt = weed_param_get_value_boolean(in_params[NVALS + i * 4 + 2]);
+      trigf = weed_param_get_value_boolean(in_params[NVALS + i * 4 + 3]);
       if ((iv == WEED_TRUE && trigt == WEED_TRUE) || (iv == WEED_FALSE && trigf == WEED_FALSE)) {
-        min = weed_get_double_value(in_params[NVALS + i * 4], WEED_LEAF_VALUE, NULL);
-        max = weed_get_double_value(in_params[NVALS + i * 4 + 1], WEED_LEAF_VALUE, NULL);
-        nrand = getrand(min, max);
+        min = weed_param_get_value_double(in_params[NVALS + i * 4]);
+        max = weed_param_get_value_double(in_params[NVALS + i * 4 + 1]);
+        nrand = getrand(min, max, inst);
         weed_set_double_value(out_params[i], WEED_LEAF_VALUE, nrand);
       }
       sdata->vals[i] = iv;
@@ -125,9 +119,7 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *in_params[NVALS * 5 + 1];
   weed_plant_t *out_params[NVALS + 1];
 
-  int count = 0;
-
-  register int i;
+  int count = 0, i;
 
   char name[256];
   char label[256];
@@ -177,7 +169,7 @@ WEED_SETUP_START(200, 200) {
   weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, desc);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+  weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;
 

@@ -37,7 +37,7 @@ font|_Font|string||128|
 <param_window>
 layout|p1|p2|
 layout|p6|p5|
-special|fontchooser|6|5|
+special|fontchooser|6|
 </param_window>
 
 <properties>

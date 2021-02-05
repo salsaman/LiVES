@@ -884,8 +884,6 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
       } else {
         // add aspect ratio butto
         lives_special_aspect_t *aspect;
-        /* hbox = lives_hbox_new(FALSE, 0); */
-        /* lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height); */
         aspect = (lives_special_aspect_t *)add_aspect_ratio_button(LIVES_SPIN_BUTTON(vppa->spinbuttonw),
                  LIVES_SPIN_BUTTON(vppa->spinbuttonh), LIVES_BOX(hbox));
         // don't reset the aspect params when we make_param_box

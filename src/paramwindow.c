@@ -1084,6 +1084,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   int length;
   int poffset = 0, inum = 0;
   int wofl = widget_opts.filler_len;
+  int nhid = 0, nouts = 0;
 
   int num_tok;
 
@@ -1145,6 +1146,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   case RFX_STATUS_WEED:
     if (!mainw->multitrack && rfx->is_template) {
       weed_plant_t *filter = weed_instance_get_filter((weed_plant_t *)rfx->source, TRUE);
+      nouts = num_out_params(filter);
       if (enabled_in_channels(filter, FALSE) == 0 && enabled_out_channels(filter, FALSE) > 0
           && has_video_chans_out(filter, TRUE)) {
         // out channel size(s) and target_fps for generators
@@ -1300,7 +1302,10 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
           }
           if (rfx->source_type == LIVES_RFX_SOURCE_WEED) {
             check_hidden_gui((weed_plant_t *)rfx->source, param, pnum);
-            if (param->hidden & HIDDEN_STRUCTURAL) continue;
+            if (param->hidden & HIDDEN_STRUCTURAL) {
+              nhid++;
+              continue;
+            }
           }
 
           has_param = TRUE;
@@ -1474,7 +1479,10 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
 
       if (rfx->source_type == LIVES_RFX_SOURCE_WEED) {
         check_hidden_gui((weed_plant_t *)rfx->source, param, i);
-        if (param->hidden & HIDDEN_STRUCTURAL) continue;
+        if (param->hidden & HIDDEN_STRUCTURAL) {
+          nhid++;
+          continue;
+        }
       }
 
       if (chk_params) return TRUE;
@@ -1495,6 +1503,17 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
       }
       if (!layout_mode) layoutx = NULL;
     }
+  }
+
+  if (!chk_params && !rfx->num_in_channels && (nhid + nouts) > 0) {
+    LiVESWidget *label;
+    char *txt
+      = lives_big_and_bold(_("Filter has additional paramters which may be used for data connections"));
+    widget_opts.use_markup = TRUE;
+    label = lives_standard_label_new(txt);
+    widget_opts.use_markup = FALSE;
+    lives_box_pack_start(LIVES_BOX(top_vbox), label, FALSE, FALSE, 0);
+    lives_free(txt);
   }
 
   if (needs_sizes) has_param = add_sizes(chk_params ? NULL : LIVES_BOX(top_vbox), TRUE, has_param, rfx);
@@ -2018,7 +2037,9 @@ boolean update_widget_vis(lives_rfx_t *rfx, int key, int mode) {
     param = &rfx->params[i];
     if ((wparam = weed_inst_in_param(inst, i, FALSE, FALSE)) != NULL) {
       check_hidden_gui(inst, param, i);
-      if (param->hidden & HIDDEN_STRUCTURAL) continue;
+      if (param->hidden & HIDDEN_STRUCTURAL) {
+        continue;
+      }
       for (int j = 0; j < RFX_MAX_NORM_WIDGETS; j++) {
         if (param->type == LIVES_PARAM_COLRGB24 && j == 3 && !param->widgets[j]) continue;
         if (!param->widgets[j]) break;

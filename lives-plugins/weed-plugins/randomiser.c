@@ -1,6 +1,6 @@
-// dat_unpacker.c
+// randomiser.c
 // weed plugin
-// (c) G. Finch (salsaman) 2012
+// (c) G. Finch (salsaman) 2012 - 2021
 //
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details

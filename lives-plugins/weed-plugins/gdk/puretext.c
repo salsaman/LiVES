@@ -48,7 +48,7 @@ static int package_version = 3; // version of this package
 #define MAX_BUFFLEN 65536
 
 // defines for configure dialog elements
-enum DlgControls {
+enum {
   P_FILE = 0,
   P_RANDLINES,
   P_MODE,
@@ -474,7 +474,10 @@ static void _getastring(weed_plant_t *inst, sdata_t *sdata, gboolean sequential,
   if ((!sdata->allow_blanks && sdata->cstring >= sdata->nstrings)
       || (sdata->allow_blanks && sdata->cstring >= sdata->xnstrings)) {
     sdata->cstring = 0;
-    if (!sdata->use_file) sdata->refresh = TRUE;
+    if (!sdata->use_file) {
+      sdata->refresh = TRUE;
+      return;
+    }
   }
 
   if (!reset) {
@@ -483,7 +486,10 @@ static void _getastring(weed_plant_t *inst, sdata_t *sdata, gboolean sequential,
       if ((!sdata->allow_blanks && sdata->cstring >= sdata->nstrings)
           || (sdata->allow_blanks && sdata->cstring >= sdata->xnstrings)) {
         sdata->cstring = 0;
-        if (!sdata->use_file) sdata->refresh = TRUE;
+        if (!sdata->use_file) {
+          sdata->refresh = TRUE;
+          return;
+        }
       }
     } else {
       if (sdata->rndorder) {
@@ -1998,7 +2004,7 @@ static void reparse_text(sdata_t *sdata, const char *buff, size_t b_read) {
     sdata->xnstrings++;
     sdata->nstrings++;
   }
-  if (canstart == i) sdata->xnstrings++;
+  //if (canstart == i) sdata->xnstrings++;
 
   if (sdata->nstrings) {
     // only non-empty strings
@@ -2010,6 +2016,7 @@ static void reparse_text(sdata_t *sdata, const char *buff, size_t b_read) {
     canstart = 0;
 
     for (i = 0; i < sdata->xnstrings; i++) {
+      sdata->xstrings[i] = NULL;
       // parse the text
       for (; j < b_read; j++) {
         if ((uint8_t)buff[j] == 0x0A || (uint8_t)buff[i] == 0x0D) {
@@ -2045,6 +2052,8 @@ static void reparse_text(sdata_t *sdata, const char *buff, size_t b_read) {
         sdata->xstrings[i] = stringdup("", 0);
       }
     }
+  } else {
+    sdata->xnstrings = 0;
   }
 }
 
@@ -2159,7 +2168,7 @@ static weed_error_t puretext_deinit(weed_plant_t *inst) {
 
   if (sdata) {
     if (sdata->letter_data) _letter_data_free(sdata);
-    for (i = 0; i < sdata->xnstrings; i++) weed_free(sdata->xstrings[i]);
+    for (i = 0; i < sdata->xnstrings; i++) if (sdata->xstrings[i]) weed_free(sdata->xstrings[i]);
     if (sdata->xstrings) weed_free(sdata->xstrings);
     if (sdata->strings) weed_free(sdata->strings);
     weed_free(sdata);
@@ -2184,7 +2193,9 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
         size_t tblen = strlen(buff);
         if (!sdata->needsmore) {
           if (sdata->textbuf) weed_free(sdata->textbuf);
-          for (int i = 0; i < sdata->xnstrings; i++) weed_free(sdata->xstrings[i]);
+          fprintf(stderr, "xnst is %d\n", sdata->xnstrings);
+          for (int i = 0; i < sdata->xnstrings; i++)
+            if (sdata->xstrings[i]) weed_free(sdata->xstrings[i]);
           if (sdata->xstrings) weed_free(sdata->xstrings);
           if (sdata->strings) weed_free(sdata->strings);
           sdata->nstrings = sdata->xnstrings = 0;
@@ -2553,7 +2564,6 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
 
       if (sdata->needsmore || sdata->refresh) {
         // signal host for more text
-        fprintf(stderr, "PING\n");
         weed_set_boolean_value(out_params[0], WEED_LEAF_VALUE, WEED_TRUE);
       } else weed_set_boolean_value(out_params[0], WEED_LEAF_VALUE, WEED_FALSE);
 

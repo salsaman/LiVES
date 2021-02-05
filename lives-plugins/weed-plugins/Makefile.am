@@ -222,6 +222,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	simple_blend.la \
 	slide_over.la \
 	softlight.la \
+	system.la \
 	targeted_zoom.la \
 	textfun.la \
 	tone_gen.la \

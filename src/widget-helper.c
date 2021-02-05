@@ -36,6 +36,8 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
 
 #define NSLEEP_TIME 5000
 
+#define IS_GUI_THREAD (pthread_self() == capable->gui_thread)
+
 /// internal data keys
 #define STD_KEY "_wh_is_standard"
 #define BACCL_GROUP_KEY "_wh_baccl_group"
@@ -1549,7 +1551,7 @@ WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_show_all(LiVESWidget *widget) {
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_show_all(LiVESWidget *widget) {
 #ifdef GUI_GTK
-  if (!mainw || !mainw->is_ready) return _lives_widget_show_all(widget);
+  if (!mainw || !mainw->is_ready || IS_GUI_THREAD) return _lives_widget_show_all(widget);
   return lives_widget_show_all_from_bg(widget);
 #endif
   return FALSE;
@@ -1797,7 +1799,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_opacity(LiVESWidget *widget
 static LiVESResponseType _lives_dialog_run(LiVESDialog *dialog) {
 #ifdef GUI_GTK
   LiVESResponseType resp;
-  lives_widget_show_all(LIVES_WIDGET(dialog));
+  _lives_widget_show_all(LIVES_WIDGET(dialog));
   resp = gtk_dialog_run(dialog);
   return resp;
 #endif
@@ -1807,7 +1809,8 @@ static LiVESResponseType _lives_dialog_run(LiVESDialog *dialog) {
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dialog) {
   LiVESResponseType resp;
-  main_thread_execute((lives_funcptr_t)_lives_dialog_run, WEED_SEED_INT, &resp, "v", dialog);
+  if (IS_GUI_THREAD) return _lives_dialog_run(dialog);
+  else main_thread_execute((lives_funcptr_t)_lives_dialog_run, WEED_SEED_INT, &resp, "v", dialog);
   return resp;
 }
 
@@ -7990,7 +7993,7 @@ static LiVESWidget *make_inner_hbox(LiVESBox * box, boolean start) {
   } else {
     lives_box_pack_start(LIVES_BOX(box), hbox, FALSE, FALSE, LIVES_SHOULD_EXPAND_FOR(box)
                          ? widget_opts.packing_height : 0);
-    lives_widget_set_show_hide_parent(hbox);
+    //lives_widget_set_show_hide_parent(hbox);
     box = LIVES_BOX(hbox);
     hbox = lives_hbox_new(FALSE, 0);
     widget_opts.last_container = hbox;
@@ -8007,8 +8010,8 @@ static LiVESWidget *make_inner_hbox(LiVESBox * box, boolean start) {
     lives_box_pack_end(LIVES_BOX(hbox), vbox, LIVES_SHOULD_EXPAND_EXTRA_WIDTH,
                        LIVES_SHOULD_EXPAND_EXTRA_WIDTH, 0);
 
-  lives_widget_set_show_hide_parent(hbox);
-  lives_widget_set_show_hide_parent(vbox);
+  //lives_widget_set_show_hide_parent(hbox);
+  //lives_widget_set_show_hide_parent(vbox);
 
   hbox = lives_hbox_new(FALSE, 0);
 

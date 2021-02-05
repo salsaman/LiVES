@@ -172,7 +172,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t bu
       totlen = xtotlen;
     }
 
-    if (err != 0) {
+    if (err) {
       char *msg = NULL;
       THREADVAR(com_failed) = TRUE;
       if (!allow_error) {

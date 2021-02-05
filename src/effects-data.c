@@ -1437,7 +1437,7 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
   for (i = start; i < nparams; i++) {
     //g_print("NOW at %d %d\n ", key, mode);
     if ((oparam = pconx_get_out_param(FALSE, key, mode, i, &okey, &omode, NULL, &autoscale))) {
-#define DEBUG_PCONX
+      //#define DEBUG_PCONX
 #ifdef DEBUG_PCONX
       g_print("got pconx to %d %d %d from %d %d param %p\n", key, mode, i, okey, omode, oparam);
 #endif

@@ -283,7 +283,7 @@ LiVESPixbuf *lives_pixbuf_new_from_file_at_scale(const char *filename, int width
 LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int dest_width, int dest_height,
                                        LiVESInterpType interp_type);
 
-boolean lives_pixbuf_saturate_and_pixelate(const LiVESPixbuf *src, LiVESPixbuf *dest, float saturation, boolean pixilate);
+boolean lives_pixbuf_saturate_and_pixelate(const LiVESPixbuf *src, LiVESPixbuf *dest, float saturation, boolean pixelate);
 
 // basic widget fns
 
@@ -464,6 +464,7 @@ boolean lives_widget_set_padding(LiVESWidget *, int padding);
 
 LiVESWidget *lives_dialog_get_content_area(LiVESDialog *);
 LiVESWidget *lives_dialog_get_action_area(LiVESDialog *);
+LiVESWidget *lives_standard_dialog_get_action_area(LiVESDialog *);
 
 boolean lives_dialog_add_action_widget(LiVESDialog *, LiVESWidget *, LiVESResponseType response_id);
 

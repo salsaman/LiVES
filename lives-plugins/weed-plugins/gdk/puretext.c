@@ -89,6 +89,7 @@ typedef enum {
   PT_WORD_COALESCE,
   PT_TERMINAL,
   PT_WORD_SLIDE,
+  PT_BOUNCE,
 } pt_op_mode_t;
 
 typedef struct _letter_data_t pt_letter_data_t;
@@ -245,8 +246,8 @@ static int num_fonts_available = 0;
 #define set_ptext(text) pango_layout_set_text(layout, (text), -1)
 
 // module accessible functions
-#define is_a_space(c) _is_a_space(sdata, (c))
-#define is_a_space_at(idx) _is_a_space_at(sdata, (idx))
+#define IS_A_SPACE(c) _is_a_space(sdata, (c))
+#define IS_A_SPACE_AT(idx) _is_a_space_at(sdata, (idx))
 
 #define SET_FONT_FAMILY(ffam) _set_font_family(sdata, layout, font, (ffam))
 #define SET_FONT_SIZE(sz) _set_font_size(inst, sdata, layout, font, (sz), (double)width)
@@ -1423,6 +1424,109 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
     sdata->y_text = ldt->ypos;
     break;
 
+  case PT_BOUNCE:
+    // design features:
+    // LETTER MODE / multi / line based
+    // the phrase appears, then the letters start to fall one by one to the bottom of the screen where
+    // they bounce
+
+    // state variables:
+    // int1 - count of remaining letters
+    // int2 - count of spaces
+    // int3 - index of letter to drop next
+    // int4 current index of ramining letters
+    // bool1 - set when we have counted spaces
+
+    // dbl1 - horiz. posn
+    // dbl2 - fontsize
+
+    // phases:
+    // -1, get the correct text size, 0 - start, 1 - all letters dropping now
+
+    // trigger effects : default
+
+    if (sdata->init) {
+      SET_MODE(PT_WORD_MODE);
+      LETTER_DATA_INIT(sdata->tlength);
+      sdata->int1 = sdata->tlength;
+      sdata->int2 = 0;
+      sdata->int3 = -1;
+      sdata->phase = -1;
+      sdata->length = sdata->wlength;
+      break;
+    }
+
+    if (sdata->phase == -1) {
+      // sacrifice 1 rpund to get the text size
+      sdata->phase = 0;
+      sdata->dbl2 = FIT_SIZE(256., width, .9, height, .9);
+      SET_MODE(PT_LETTER_MODE);
+      // relinquish control so we can come back in letter mode
+      sdata->count = sdata->wlength;
+      break;
+    }
+
+    if (sdata->alarm) {
+      if (sdata->phase == 1) {
+        DO_RESET();
+        GETASTRING();
+        break;
+      }
+      // pick a letter to drop
+      sdata->int3 = GETRANDI(0, sdata->int1 - sdata->int2 - 1);
+    }
+
+    if (!sdata->count) {
+      sdata->int4 = 0;
+      sdata->dbl1 = 0.;
+    }
+
+    if (IS_A_SPACE(xtext)) {
+      // count spaces, or ignore
+      if (!sdata->bool1) {
+        sdata->int2++;
+        if (sdata->count == sdata->length - 1) sdata->bool1 = TRUE;
+      }
+      break;
+    }
+
+    if (sdata->count == sdata->length - 1) sdata->bool1 = TRUE;
+
+    SET_FONT_SIZE(sdata->dbl2);
+
+    // ACTION SECTION
+    ldt = LETTER_DATA(sdata->count);
+    if (sdata->int1) {
+      GETLSIZE(&ldt->width, &ldt->height);
+
+      if (!ldt->setup) {
+        ldt->xpos = sdata->dbl1;
+        ldt->ypos = (height - ldt->height) / 2.;
+      }
+
+      sdata->dbl1 += ldt->width;
+    }
+
+    if (!ldt->phase) {
+      if (sdata->int4++ == sdata->int3) {
+        // drop this one next
+        ldt->yaccel = .01;
+        ldt->phase = 1;
+        sdata->int3 = -1;
+        if (!--sdata->int1) {
+          // all dropping
+          sdata->phase = 1;
+          SET_ALARM(5000);
+        } else SET_ALARM(50);
+      }
+    }
+
+    ANIM_LETTER(ldt);
+    sdata->x_text = ldt->xpos;
+    sdata->y_text = ldt->ypos;
+
+    break;
+
   case PT_LETTER_STARFIELD:
     // LETTER_MODE:
     // this is called for each letter from sdata->start to sdata->start + sdata->length - 1
@@ -1461,7 +1565,7 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
       old_ldt = sdata->length > 0 ? LETTER_DATA(sdata->length - 1) : NULL;
       if (sdata->length == 0) wordstart = TRUE;
 
-      while (sdata->length < sdata->tlength - 1 && is_a_space_at(sdata->length)) {
+      while (sdata->length < sdata->tlength - 1 && IS_A_SPACE_AT(sdata->length)) {
         wordstart = TRUE;
         sdata->length++;
       }
@@ -2050,6 +2154,8 @@ static void reparse_text(sdata_t *sdata, const char *buff, size_t b_read) {
     } else {
       if (canstart == j) {
         sdata->xstrings[i] = stringdup("", 0);
+        sdata->totulenwb++;
+        sdata->totalenwb++;
       }
     }
   } else {
@@ -2510,7 +2616,7 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
 
           if (xtext && *xtext && !sdata->init
               && i < sdata->start + (sdata->length == 0 ? 1 : sdata->length)
-              && !is_a_space(xtext) && *xtext != '\n') {
+              && !IS_A_SPACE(xtext) && *xtext != '\n') {
             if (!sdata->ltext || strcmp(xtext, sdata->ltext)) set_ptext(xtext);
 
             cairo_save(cairo);
@@ -2596,7 +2702,7 @@ WEED_SETUP_START(200, 201) {
   weed_plant_t *filter_class;
 
   const char *modes[] = {"Spiral text", "Spinning letters", "Letter starfield", "Word coalesce",
-                         "Terminal", "Word Slide", NULL
+                         "Terminal", "Word slide", "Bouncing letters", NULL
                         };
   char *deftextfile;
 

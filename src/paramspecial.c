@@ -463,8 +463,6 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox * pbox) 
       lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
 
       if (!LIVES_IS_HBOX(pbox)) {
-        hbox = lives_hbox_new(FALSE, 0);
-        lives_widget_show(hbox);
         lives_box_pack_start(LIVES_BOX(LIVES_WIDGET(pbox)), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
         lives_box_pack_end(LIVES_BOX(hbox), aspect.lockbutton, expand, FALSE, 0);
       } else {

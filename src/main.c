@@ -157,8 +157,9 @@ void tr_msg(void) {
 
 
 void break_me(const char *brkstr) {
-  if (prefs && prefs->show_dev_opts)
-    g_print("BANG ! hit breakpoint %s\n", brkstr ? brkstr : "???");
+  if (prefs && prefs->show_dev_opts) {
+    g_printerr("BANG ! hit breakpoint %s\n", brkstr ? brkstr : "???");
+  }
   // breakpoint for gdb
 }
 

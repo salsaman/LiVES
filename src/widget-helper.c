@@ -70,6 +70,9 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
 #define SPALPHA_KEY "_wh_sp_alpha"
 #define THEME_KEY "_wh_theme"
 
+#define RESPONSE_KEY "_wh_response"
+#define ACTION_AREA_KEY "_wh_act_area"
+
 #define SBUTT_SURFACE_KEY "_sbutt_surf"
 #define SBUTT_TXT_KEY "_sbutt_txt"
 #define SBUTT_LAYOUT_KEY "_sbutt_layout"
@@ -1846,7 +1849,15 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_response(LiVESDialog *dialog, i
 
 WIDGET_HELPER_GLOBAL_INLINE int lives_dialog_get_response_for_widget(LiVESDialog *dialog, LiVESWidget *widget) {
 #ifdef GUI_GTK
-  return gtk_dialog_get_response_for_widget(dialog, widget);
+  if (is_standard_widget(LIVES_WIDGET(dialog))) {
+    LiVESWidget *action = lives_standard_dialog_get_action_area(dialog);
+    LiVESList *children = lives_container_get_children(LIVES_CONTAINER(action)), *list = children;
+    for (; list; list = list->next) {
+      LiVESWidget *w = (LiVESWidget *)list->data;
+      if (w == widget) return LIVES_POINTER_TO_INT(lives_widget_object_get_data
+                                (LIVES_WIDGET_OBJECT(w), RESPONSE_KEY));
+    }
+  } else return gtk_dialog_get_response_for_widget(dialog, widget);
 #endif
   return LIVES_RESPONSE_NONE;
 }
@@ -2511,8 +2522,14 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_dialog_get_content_area(LiVESDial
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_dialog_get_action_area(LiVESDialog *dialog) {
+  return lives_widget_object_get_data(LIVES_WIDGET_OBJECT(dialog), ACTION_AREA_KEY);
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_dialog_get_action_area(LiVESDialog *dialog) {
 #ifdef GUI_GTK
+  if (is_standard_widget(LIVES_WIDGET(dialog))) return lives_standard_dialog_get_action_area(dialog);
 #if GTK_CHECK_VERSION(2, 14, 0)
 #ifdef G_GNUC_BEGIN_IGNORE_DEPRECATIONS
   G_GNUC_BEGIN_IGNORE_DEPRECATIONS
@@ -2611,6 +2628,13 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_padding(LiVESWidget *widget
 }
 
 
+WIDGET_HELPER_LOCAL_INLINE void _dialog_resp(LiVESWidget *w, LiVESDialog *dlg) {
+  lives_dialog_response(dlg,
+                        LIVES_POINTER_TO_INT(lives_widget_object_get_data
+                            (LIVES_WIDGET_OBJECT(w), RESPONSE_KEY)));
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_add_action_widget(LiVESDialog *dialog,
     LiVESWidget *widget,
     LiVESResponseType response) {
@@ -2620,8 +2644,16 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_add_action_widget(LiVESDialog *
   lives_widget_set_margin_left(widget, widget_opts.packing_width / 2);
   lives_widget_set_margin_right(widget, widget_opts.packing_width / 2);
 #endif
-  gtk_dialog_add_action_widget(dialog, widget, response);
-  gtk_box_set_spacing(LIVES_BOX(lives_widget_get_parent(widget)), widget_opts.packing_width * 4);
+  if (is_standard_widget(LIVES_WIDGET(dialog))) {
+    LiVESWidget *action = lives_standard_dialog_get_action_area(dialog);
+    lives_box_pack_start(LIVES_BOX(action), widget, FALSE, FALSE, 0);
+
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), RESPONSE_KEY,
+                                 LIVES_INT_TO_POINTER(response));
+    lives_signal_sync_connect(widget, LIVES_WIDGET_CLICKED_SIGNAL,
+                              LIVES_GUI_CALLBACK(_dialog_resp), dialog);
+  } else gtk_dialog_add_action_widget(dialog, widget, response);
+  lives_box_set_spacing(LIVES_BOX(lives_widget_get_parent(widget)), widget_opts.packing_width * 4);
   return TRUE;
 #endif
   return FALSE;
@@ -3201,9 +3233,9 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPi
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_pixbuf_saturate_and_pixelate(const LiVESPixbuf *src, LiVESPixbuf *dest,
     float saturation,
-    boolean pixilate) {
+    boolean pixelate) {
 #ifdef GUI_GTK
-  gdk_pixbuf_saturate_and_pixelate(src, dest, saturation, pixilate);
+  gdk_pixbuf_saturate_and_pixelate(src, dest, saturation, pixelate);
   return TRUE;
 #endif
 #ifdef GUI_QT
@@ -7824,7 +7856,10 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_hbox_new(LiVESLayout * lay
     lives_widget_apply_theme2(widget, LIVES_WIDGET_STATE_NORMAL, TRUE);
   }
 #if GTK_CHECK_VERSION(3, 0, 0)
-  lives_widget_set_valign(widget, LIVES_ALIGN_CENTER);
+  if (LIVES_SHOULD_EXPAND_HEIGHT)
+    lives_widget_set_valign(widget, LIVES_ALIGN_FILL);
+  else
+    lives_widget_set_valign(widget, LIVES_ALIGN_CENTER);
   if (widget_opts.justify == LIVES_JUSTIFY_CENTER)
     lives_widget_set_halign(widget, LIVES_ALIGN_CENTER);
   else if (widget_opts.justify == LIVES_JUSTIFY_END)
@@ -10062,8 +10097,17 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   // in case of problems, try setting widget_opts.no_gui=TRUE
 
   LiVESWidget *dialog = NULL;
+  LiVESWidget *content = NULL;
+  LiVESWidget *fake_action = NULL;
 
   dialog = lives_dialog_new();
+  content = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+  set_standard_widget(dialog, TRUE);
+  fake_action = lives_hbutton_box_new();
+  // buttons can be at top too...
+  //lives_box_pack_start(LIVES_BOX(content), fake_action, FALSE, FALSE, 0);
+  lives_box_pack_end(LIVES_BOX(content), fake_action, FALSE, FALSE, 0);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dialog), ACTION_AREA_KEY, (livespointer)fake_action);
 
   if (width <= 0) width = 8;
   if (height <= 0) height = 8;
@@ -12155,7 +12199,6 @@ void funkify_dialog(LiVESWidget * dialog) {
     LiVESWidget *frame = lives_standard_frame_new(NULL, 0., FALSE);
     LiVESWidget *box = lives_vbox_new(FALSE, 0);
     LiVESWidget *content = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
-    LiVESWidget *action = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
 
     lives_container_set_border_width(LIVES_CONTAINER(dialog), 0);
     lives_container_set_border_width(LIVES_CONTAINER(frame), 0);
@@ -12168,7 +12211,7 @@ void funkify_dialog(LiVESWidget * dialog) {
 
     lives_box_pack_start(LIVES_BOX(box), content, TRUE, TRUE, 0);
 
-    lives_widget_set_margin_top(action, widget_opts.packing_height); // only works for gtk+ 3.x
+    lives_widget_set_margin_bottom(box, widget_opts.packing_height); // only works for gtk+ 3.x
 
     lives_widget_show_all(frame);
 
@@ -12592,7 +12635,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_dialog_make_widget_first(LiVESDialog *
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_center(LiVESWidget * button) {
   if (LIVES_SHOULD_EXPAND_WIDTH)
-    lives_widget_set_size_request(button, DEF_BUTTON_WIDTH * 4, DLG_BUTTON_HEIGHT);
+    lives_widget_set_size_request(button, DEF_BUTTON_WIDTH * 2, DLG_BUTTON_HEIGHT);
   lives_button_box_set_layout(LIVES_BUTTON_BOX(lives_widget_get_parent(button)),
                               LIVES_BUTTONBOX_CENTER);
   lives_widget_set_halign(lives_widget_get_parent(button), LIVES_ALIGN_CENTER);

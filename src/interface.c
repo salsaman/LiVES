@@ -5539,9 +5539,10 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
   lives_free(title);
 
   abox = lives_dialog_get_action_area(LIVES_DIALOG(dialog));
-  if (LIVES_IS_BOX(abox)) {
+  if (LIVES_IS_BUTTON_BOX(abox)) {
     label = lives_standard_label_new(_("Double click on a format to load it, or click Cancel to exit."));
     lives_box_pack_start(LIVES_BOX(abox), label, FALSE, TRUE, widget_opts.border_width);
+    lives_button_box_make_first(LIVES_BUTTON_BOX(abox), label);
 
     add_fill_to_box(LIVES_BOX(abox));
   }

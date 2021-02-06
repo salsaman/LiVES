@@ -12,6 +12,8 @@ typedef struct _lives_thread_data_t lives_thread_data_t;
 
 typedef weed_plantptr_t lives_proc_thread_t;
 
+typedef uint64_t funcsig_t;
+
 typedef struct {
   lives_proc_thread_t var_tinfo;
   lives_thread_data_t *var_mydata;
@@ -42,6 +44,14 @@ typedef struct {
   volatile boolean sync_ready;
 } thrd_work_t;
 
+typedef struct {
+  int category; // category type for function (0 for none)
+  lives_funcptr_t function; // pointer to a function
+  char *args_fmt; // definition of the params, e.g. "idV" (int, double, void *)
+  uint32_t rettype; // weed_seed type e.g. WEED_SEED_INT, a value of 0 implies a void *(fuunc)
+  void *data; // category specific data, may be NULL
+} lives_func_info_t;
+
 #define WEED_LEAF_NOTIFY "notify"
 #define WEED_LEAF_DONE "done"
 #define WEED_LEAF_THREADFUNC "tfunction"
@@ -51,6 +61,8 @@ typedef struct {
 #define WEED_LEAF_RETURN_VALUE "return_value"
 #define WEED_LEAF_DONTCARE "dontcare"  ///< tell proc_thread with return value that we n o longer need return val.
 #define WEED_LEAF_DONTCARE_MUTEX "dontcare_mutex" ///< ensures we can set dontcare without it finishing while doing so
+
+#define WEED_LEAF_FUNCSIG "funcsig"
 
 #define WEED_LEAF_SIGNALLED "signalled"
 #define WEED_LEAF_SIGNAL_DATA "signal_data"
@@ -83,8 +95,6 @@ uint64_t lives_thread_join(lives_thread_t work, void **retval);
 // lives_proc_thread_t //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define _RV_ WEED_LEAF_RETURN_VALUE
-
-typedef uint64_t funcsig_t;
 
 typedef int(*funcptr_int_t)();
 typedef double(*funcptr_dbl_t)();
@@ -136,6 +146,33 @@ typedef weed_plant_t(*funcptr_plantptr_t)();
 #define CALL_1(ret, t1) weed_set_##ret##_value(info, _RV_, (*thefunc->func##ret)(ARGS1(t1)))
 #define CALL_0(ret) weed_set_##ret##_value(info, _RV_, (*thefunc->func##ret)())
 
+#define FUNCSIG_VOID				       			0X00000000
+#define FUNCSIG_INT 			       				0X00000001
+#define FUNCSIG_DOUBLE 				       			0X00000002
+#define FUNCSIG_STRING 				       			0X00000004
+#define FUNCSIG_VOIDP 				       			0X0000000D
+#define FUNCSIG_PLANTP 				       			0X0000000E
+#define FUNCSIG_INT_INT64 			       			0X00000015
+#define FUNCSIG_STRING_INT 			      			0X00000041
+#define FUNCSIG_STRING_BOOL 			      			0X00000043
+#define FUNCSIG_VOIDP_VOIDP 				       		0X000000DD
+#define FUNCSIG_VOIDP_STRING 				       		0X000000D4
+#define FUNCSIG_VOIDP_DOUBLE 				       		0X000000D2
+#define FUNCSIG_PLANTP_BOOL 				       		0X000000E3
+// 3p
+#define FUNCSIG_VOIDP_DOUBLE_INT 		        		0X00000D21
+#define FUNCSIG_VOIDP_VOIDP_VOIDP 		        		0X00000DDD
+#define FUNCSIG_BOOL_BOOL_STRING 		        		0X00000334
+#define FUNCSIG_PLANTP_VOIDP_INT64 		        		0X00000ED5
+// 4p
+#define FUNCSIG_STRING_STRING_VOIDP_INT					0X000044D1
+#define FUNCSIG_INT_INT_BOOL_VOIDP					0X0000113D
+// 5p
+#define FUNCSIG_INT_INT_INT_BOOL_VOIDP					0X0001113D
+#define FUNCSIG_VOIDP_STRING_STRING_INT64_INT			       	0X000D4451
+// 6p
+#define FUNCSIG_STRING_STRING_VOIDP_INT_STRING_VOIDP		       	0X0044D14D
+
 typedef union {
   weed_funcptr_t func;
   funcptr_int_t funcint;
@@ -148,8 +185,14 @@ typedef union {
   funcptr_plantptr_t funcplantptr;
 } allfunc_t;
 
-lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t, lives_funcptr_t, int return_type, const char *args_fmt,
-    ...);
+lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t, lives_funcptr_t,
+    int return_type, const char *args_fmt, ...);
+
+lives_proc_thread_t lives_proc_thread_create_vargs(lives_thread_attr_t attr, lives_funcptr_t func,
+    int return_type, const char *args_fmt,
+    va_list xargs);
+
+void call_funcsig(lives_proc_thread_t info);
 
 void lives_proc_thread_free(lives_proc_thread_t lpt);
 

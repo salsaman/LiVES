@@ -1,6 +1,6 @@
 // widget-helper.h
 // LiVES
-// (c) G. Finch 2012 - 2018 <salsaman+lives@gmail.com>
+// (c) G. Finch 2012 - 2021 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -953,7 +953,8 @@ lives_display_t lives_widget_get_display_type(LiVESWidget *);
 uint64_t lives_widget_get_xwinid(LiVESWidget *, const char *failure_msg);
 LiVESWindow *lives_widget_get_window(LiVESWidget *);
 
-LiVESWidget *lives_scrolled_window_new(LiVESAdjustment *hadj, LiVESAdjustment *vadj);
+LiVESWidget *lives_scrolled_window_new(void);
+LiVESWidget *lives_scrolled_window_new_with_adj(LiVESAdjustment *hadj, LiVESAdjustment *vadj);
 LiVESAdjustment *lives_scrolled_window_get_hadjustment(LiVESScrolledWindow *);
 LiVESAdjustment *lives_scrolled_window_get_vadjustment(LiVESScrolledWindow *);
 
@@ -1500,6 +1501,92 @@ const widget_opts_t _def_widget_opts = {
 #define FILESEL_TYPE_KEY "filesel_type"
 #define PARAM_NUMBER_KEY "param_number"
 #define WH_LAYOUT_KEY "_wh_layout"
+
+// will be moved to separate header after testing
+#define WEED_WIDGETS
+#ifdef WEED_WIDGETS
+
+#include "main.h"
+#include "threading.h"
+
+#define KLASSES_PER_TOOLKIT 1024
+
+#define N_TOOLKITS 1
+
+typedef enum {
+  LIVES_TOOLKIT_ANY,
+  LIVES_TOOLKIT_GTK,
+} lives_toolkit_t;
+
+typedef weed_plant_t lives_widget_klass_t;
+typedef weed_plant_t lives_widget_instance_t;
+
+boolean widget_klasses_init(lives_toolkit_t);
+
+// return list of lives_widget_klass_t *
+const LiVESList *widget_toolkit_list_klasses(lives_toolkit_t);
+
+enum {
+  WIDGET_ROLE_UNKNOWN,
+  WIDGET_ROLE_WIDGET,
+  WIDGET_ROLE_INTERFACE, // funcs only, non-instantiable
+  WIDGET_ROLE_TK0, // toolkit specific roles
+  WIDGET_ROLE_TK1, //
+  WIDGET_ROLE_TK2, //
+  WIDGET_ROLE_TK3, //
+  WIDGET_ROLE_TK4, //
+  WIDGET_ROLE_TK5, //
+  WIDGET_ROLE_TK6, //
+  WIDGET_ROLE_TK7, //
+  WIDGET_ROLE_OTHER //
+};
+
+// wtype is a LIVES_PARAM_TYPE_* from paramwindow.h
+const lives_widget_klass_t *widget_klass_for_type(lives_toolkit_t, int wtype);
+lives_toolkit_t widget_klass_get_toolkit(const lives_widget_klass_t *);
+int widget_klass_get_role(const lives_widget_klass_t *);
+
+// list should be freed after use
+LiVESList *widget_klass_inherits_from(const lives_widget_klass_t *);
+
+enum {
+  LIVES_WIDGET_FUNC_INVALID,
+  LIVES_WIDGET_CREATE_FUNC,
+  LIVES_WIDGET_DESTROY_FUNC,
+  LIVES_WIDGET_REF_FUNC,
+  LIVES_WIDGET_UNREF_FUNC,
+  LIVES_WIDGET_GET_VALUE_FUNC,
+  LIVES_WIDGET_SET_VALUE_FUNC,
+  LIVES_WIDGET_N_FUNCS
+};
+
+// returns list of LIVES_WIDGET_FUNC_* using LIVES_INT_TO_POINTER
+// list all is TRUE, also lists inherited functions
+LiVESList *widget_klass_list_funcs(const lives_widget_klass_t *, boolean list_all);
+
+// defn. in threading.h, "data" points to inherited klass (NULL if not inherited)
+lives_func_info_t *get_widget_func_for_klass(const lives_widget_klass_t *, int functype);
+
+// calls LIVES_WIDGET_CREATE_FUNC
+lives_widget_instance_t *widget_instance_from_klass(const lives_widget_klass_t *, ...);
+const lives_widget_klass_t *widget_instance_get_klass(lives_widget_instance_t *);
+
+void *widget_instance_get_widget(lives_widget_instance_t *);
+
+// defn. in threading.h, "data" points to the klass (NULL if the function is overloaded for inst)
+lives_func_info_t *get_widget_func_info(lives_widget_instance_t *, int functype);
+
+void widget_func_void(lives_widget_instance_t *, int functype);
+int widget_func_int(lives_widget_instance_t *, int functype);
+double widget_func_double(lives_widget_instance_t *, int functype, ...);
+int widget_func_boolean(lives_widget_instance_t *, int functype, ...);
+char *widget_func_string(lives_widget_instance_t *, int functype);
+int64_t widget_func_int64(lives_widget_instance_t *, int functype);
+lives_funcptr_t widget_func_funcptr(lives_widget_instance_t *, int functype);
+void *widget_func_voidptr(lives_widget_instance_t *, int functype);
+weed_plantptr_t widget_func_plantptr(lives_widget_instance_t *, int functype);
+
+#endif
 
 #endif
 

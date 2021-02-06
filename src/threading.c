@@ -15,9 +15,11 @@
 
 typedef weed_plantptr_t lives_proc_thread_t;
 
+static funcsig_t make_funcsig(lives_proc_thread_t func_info);
+
 LIVES_GLOBAL_INLINE void lives_proc_thread_free(lives_proc_thread_t lpt) {weed_plant_free(lpt);}
 
-static lives_proc_thread_t _lives_proc_thread_create(lives_thread_attr_t attr, lives_funcptr_t func,
+lives_proc_thread_t lives_proc_thread_create_vargs(lives_thread_attr_t attr, lives_funcptr_t func,
     int return_type, const char *args_fmt, va_list xargs) {
   int p = 0;
   const char *c;
@@ -47,7 +49,7 @@ static lives_proc_thread_t _lives_proc_thread_create(lives_thread_attr_t attr, l
     }
     lives_free(pkey);
   }
-
+  weed_set_int64_value(thread_info, WEED_LEAF_FUNCSIG, make_funcsig(thread_info));
   if (!(attr & LIVES_THRDATTR_FG_THREAD)) {
     resubmit_proc_thread(thread_info, attr);
     if (!return_type) return NULL;
@@ -78,7 +80,7 @@ lives_proc_thread_t lives_proc_thread_create(lives_thread_attr_t attr, lives_fun
   lives_proc_thread_t lpt;
   va_list xargs;
   va_start(xargs, args_fmt);
-  lpt = _lives_proc_thread_create(attr, func, return_type, args_fmt, xargs);
+  lpt = lives_proc_thread_create_vargs(attr, func, return_type, args_fmt, xargs);
   va_end(xargs);
   return lpt;
 }
@@ -91,7 +93,7 @@ void *main_thread_execute(lives_funcptr_t func, int return_type, void *retval, c
   va_list xargs;
   void *ret;
   va_start(xargs, args_fmt);
-  lpt = _lives_proc_thread_create(LIVES_THRDATTR_FG_THREAD, func, return_type, args_fmt, xargs);
+  lpt = lives_proc_thread_create_vargs(LIVES_THRDATTR_FG_THREAD, func, return_type, args_fmt, xargs);
   dcmutex = weed_get_voidptr_value(lpt, WEED_LEAF_DONTCARE_MUTEX, NULL);
   if (dcmutex) lives_free(dcmutex);
   if (!ctx || ctx == lives_widget_context_default()) {
@@ -105,42 +107,17 @@ void *main_thread_execute(lives_funcptr_t func, int return_type, void *retval, c
 }
 
 
-static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
+void call_funcsig(lives_proc_thread_t info) {
   /// funcsigs define the signature of any function we may wish to call via lives_proc_thread
   /// however since there are almost 3 quadrillion possibilities (nargs < 16 * all return types)
   /// it is not feasible to add every one; new funcsigs can be added as needed; then the only remaining thing is to
   /// ensure the matching case is handled in the switch statement
   uint32_t ret_type = weed_leaf_seed_type(info, _RV_);
   allfunc_t *thefunc = (allfunc_t *)lives_malloc(sizeof(allfunc_t));
+  funcsig_t sig = weed_get_int64_value(info, WEED_LEAF_FUNCSIG, NULL);
   char *msg;
 
   thefunc->func = weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL);
-
-#define FUNCSIG_VOID				       			0X00000000
-#define FUNCSIG_INT 			       				0X00000001
-#define FUNCSIG_DOUBLE 				       			0X00000002
-#define FUNCSIG_STRING 				       			0X00000004
-#define FUNCSIG_VOIDP 				       			0X0000000D
-#define FUNCSIG_PLANTP 				       			0X0000000E
-#define FUNCSIG_INT_INT64 			       			0X00000015
-#define FUNCSIG_STRING_INT 			      			0X00000041
-#define FUNCSIG_STRING_BOOL 			      			0X00000043
-#define FUNCSIG_VOIDP_VOIDP 				       		0X000000DD
-#define FUNCSIG_VOIDP_STRING 				       		0X000000D4
-#define FUNCSIG_VOIDP_DOUBLE 				       		0X000000D2
-#define FUNCSIG_PLANTP_BOOL 				       		0X000000E3
-  // 3p
-#define FUNCSIG_VOIDP_VOIDP_VOIDP 		        		0X00000DDD
-#define FUNCSIG_BOOL_BOOL_STRING 		        		0X00000334
-#define FUNCSIG_PLANTP_VOIDP_INT64 		        		0X00000ED5
-  // 4p
-#define FUNCSIG_STRING_STRING_VOIDP_INT					0X000044D1
-#define FUNCSIG_INT_INT_BOOL_VOIDP					0X0000113D
-  // 5p
-#define FUNCSIG_INT_INT_INT_BOOL_VOIDP					0X0001113D
-#define FUNCSIG_VOIDP_STRING_STRING_INT64_INT			       	0X000D4451
-  // 6p
-#define FUNCSIG_STRING_STRING_VOIDP_INT_STRING_VOIDP		       	0X0044D14D
 
   // Note: C compilers don't care about the type / number of function args., (else it would be impossible to alias any function pointer)
   // just the type / number must be correct at runtime;
@@ -191,6 +168,7 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
     switch (ret_type) {
     case WEED_SEED_BOOLEAN: CALL_1(boolean, voidptr); break;
     case WEED_SEED_INT: CALL_1(int, voidptr); break;
+    case WEED_SEED_DOUBLE: CALL_1(double, voidptr); break;
     default: CALL_VOID_1(voidptr); break;
     }
     break;
@@ -229,6 +207,7 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
   case FUNCSIG_VOIDP_DOUBLE: {
     void *p0; double p1;
     switch (ret_type) {
+    case WEED_SEED_BOOLEAN: CALL_2(boolean, voidptr, double); break;
     default: CALL_VOID_2(voidptr, double); break;
     }
     break;
@@ -262,6 +241,14 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
     switch (ret_type) {
     case WEED_SEED_BOOLEAN: CALL_3(boolean, voidptr, voidptr, voidptr); break;
     default: CALL_VOID_3(voidptr, voidptr, voidptr); break;
+    }
+    break;
+  }
+  case FUNCSIG_VOIDP_DOUBLE_INT: {
+    void *p0; double p1; int p2;
+    switch (ret_type) {
+    case WEED_SEED_VOIDPTR: CALL_3(voidptr, voidptr, double, int); break;
+    default: CALL_VOID_3(voidptr, double, int); break;
     }
     break;
   }
@@ -324,7 +311,7 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
     break;
   }
   default:
-    msg = lives_strdup_printf("Unknown funcsig with tyte 0x%016lX called", sig);
+    msg = lives_strdup_printf("Unknown funcsig with type 0x%016lX called", sig);
     LIVES_FATAL(msg);
     lives_free(msg);
     break;
@@ -426,7 +413,7 @@ LIVES_GLOBAL_INLINE weed_plantptr_t lives_proc_thread_join_plantptr(lives_proc_t
 */
 static funcsig_t make_funcsig(lives_proc_thread_t func_info) {
   funcsig_t funcsig = 0;
-  for (register int nargs = 0; nargs < 16; nargs++) {
+  for (int nargs = 0; nargs < 16; nargs++) {
     char *lname = lives_strdup_printf("%s%d", WEED_LEAF_THREAD_PARAM, nargs);
     int st = weed_leaf_seed_type(func_info, lname);
     lives_free(lname);
@@ -448,10 +435,9 @@ static funcsig_t make_funcsig(lives_proc_thread_t func_info) {
 static void *_plant_thread_func(void *args) {
   lives_proc_thread_t info = (lives_proc_thread_t)args;
   uint32_t ret_type = weed_leaf_seed_type(info, _RV_);
-  funcsig_t sig = make_funcsig(info);
   THREADVAR(tinfo) = info;
   if (weed_get_boolean_value(info, "no_gui", NULL) == WEED_TRUE) THREADVAR(no_gui) = TRUE;
-  call_funcsig(sig, info);
+  call_funcsig(info);
 
   if (weed_get_boolean_value(info, WEED_LEAF_NOTIFY, NULL) == WEED_TRUE) {
     boolean dontcare;
@@ -471,9 +457,8 @@ static void *_plant_thread_func(void *args) {
 
 void *fg_run_func(lives_proc_thread_t lpt, void *retval) {
   uint32_t ret_type = weed_leaf_seed_type(lpt, _RV_);
-  funcsig_t sig = make_funcsig(lpt);
 
-  call_funcsig(sig, lpt);
+  call_funcsig(lpt);
 
   switch (ret_type) {
   case WEED_SEED_INT: {

@@ -3160,8 +3160,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   pref_init_list(prefsw->prefs_list);
 
   list_scroll =
-    lives_scrolled_window_new(lives_tree_view_get_hadjustment(LIVES_TREE_VIEW(prefsw->prefs_list)),
-                              NULL);
+    lives_scrolled_window_new_with_adj
+    (lives_tree_view_get_hadjustment(LIVES_TREE_VIEW(prefsw->prefs_list)), NULL);
   lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(list_scroll), LIVES_POLICY_AUTOMATIC,
                                    LIVES_POLICY_AUTOMATIC);
   lives_container_add(LIVES_CONTAINER(list_scroll), prefsw->prefs_list);

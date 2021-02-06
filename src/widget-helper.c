@@ -693,7 +693,11 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_image_surface
 WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t
 *lives_xwindow_create_similar_surface(LiVESXWindow *window, lives_painter_content_t cont,
                                       int width, int height) {
+#if GTK_CHECK_VERSION(4, 0, 0)
+  lives_painter_surface_t *surf = gdk_surface_create_similar_surface(window, cont, width, height);
+#else
   lives_painter_surface_t *surf = gdk_window_create_similar_surface(window, cont, width, height);
+#endif
   lives_painter_t *cr = lives_painter_create_from_surface(surf);
   lives_painter_set_source_rgb(cr, 0., 0., 0.);
   lives_painter_paint(cr);
@@ -1722,7 +1726,11 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget *wi
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_get_origin(LiVESXWindow *xwin, int *posx, int *posy) {
 #ifdef GUI_GTK
+#if GTK_CHECK_VERSION(4, 0, 0)
+  gdk_surface_get_origin(xwin, posx, posy);
+#else
   gdk_window_get_origin(xwin, posx, posy);
+#endif
   return TRUE;
 #endif
   return FALSE;
@@ -1741,8 +1749,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_get_frame_extents(LiVESXWindow
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_invalidate_rect(LiVESXWindow *window, lives_rect_t *rect,
     boolean inv_childs) {
 #ifdef GUI_GTK
+#if !GTK_CHECK_VERSION(4, 0, 0)
   gdk_window_invalidate_rect(window, (const GdkRectangle *)rect, inv_childs);
   return TRUE;
+#endif
 #endif
   return FALSE;
 }
@@ -4802,7 +4812,12 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_widget_get_parent(LiVESWidget *wi
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_widget_get_toplevel(LiVESWidget *widget) {
 #ifdef GUI_GTK
   if (!GTK_IS_WIDGET(widget)) return NULL;
+#if GTK_CHECK_VERSION(4, 0, 0)
+  GtkMenu, GtkMenuBar and GtkMenuItem are gone
+
+#else
   return gtk_widget_get_toplevel(widget);
+#endif
 #endif
   return NULL;
 }
@@ -4810,6 +4825,9 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_widget_get_toplevel(LiVESWidget *
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESXWindow *lives_widget_get_xwindow(LiVESWidget *widget) {
 #ifdef GUI_GTK
+#if GTK_CHECK_VERSION(4, 0, 0)
+  return gtk_native_get_surface(gtk_widget_get_native(widget));
+#endif
 #if GTK_CHECK_VERSION(2, 12, 0)
   return gtk_widget_get_window(widget);
 #else
@@ -4831,7 +4849,16 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWindow *lives_widget_get_window(LiVESWidget *wi
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_set_keep_above(LiVESXWindow *xwin, boolean setting) {
 #ifdef GUI_GTK
+#if GTK_CHECK_VERSION(4, 0, 0)
+  XWindowChanges changes;
+  unsigned int valueMask = CWStackMode;
+  changes.stack_mode = Above;
+  XConfigureWindow(GDK_DISPLAY_XDISPLAY(gtk_widget_get_display(widget)),
+                   gdk_x11_surface_get_xid(xwin),
+                   valueMask, &changes);
+#else
   gdk_window_set_keep_above(xwin, setting);
+#endif
   return TRUE;
 #endif
   return FALSE;
@@ -6313,11 +6340,25 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_entry_set_width_chars(LiVESEntry *entr
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_scrolled_window_new(LiVESAdjustment *hadj, LiVESAdjustment *vadj) {
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_scrolled_window_new(void) {
   LiVESWidget *swindow = NULL;
 #ifdef GUI_GTK
-  swindow = gtk_scrolled_window_new(hadj, vadj);
+#if GTK_CHECK_VERSION(4, 0, 0)
+  swindow = gtk_scrolled_window_new();
+#else
+  swindow = gtk_scrolled_window_new(NULL, NULL);
 #endif
+#endif
+  return swindow;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_scrolled_window_new_with_adj(LiVESAdjustment *hadj, LiVESAdjustment *vadj) {
+  LiVESWidget *swindow = lives_scrolled_window_new();
+  if (swindow) {
+    if (hadj) gtk_scrolled_window_set_hadjustment(GTK_SCROLLED_WINDOW(swindow), hadj);
+    if (vadj) gtk_scrolled_window_set_vadjustment(GTK_SCROLLED_WINDOW(swindow), vadj);
+  }
   return swindow;
 }
 
@@ -6400,12 +6441,21 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_raise(LiVESXWindow *xwin) {
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_set_cursor(LiVESXWindow *xwin, LiVESXCursor *cursor) {
 #ifdef GUI_GTK
+#if GTK_CHECK_VERSION(4, 0, 0)
+  if (GDK_IS_SURFACE(xwin)) {
+    if (!cursor || gdk_surface_get_display(xwin) == gdk_cursor_get_display(cursor)) {
+      gdk_surface_set_cursor(xwin, cursor);
+      return TRUE;
+    }
+  }
+#else
   if (GDK_IS_WINDOW(xwin)) {
     if (!cursor || gdk_window_get_display(xwin) == gdk_cursor_get_display(cursor)) {
       gdk_window_set_cursor(xwin, cursor);
       return TRUE;
     }
   }
+#endif
 #endif
   return FALSE;
 }
@@ -10390,7 +10440,7 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
   LiVESWidget *scrolledwindow = NULL;
   LiVESWidget *swchild;
 
-  scrolledwindow = lives_scrolled_window_new(NULL, NULL);
+  scrolledwindow = lives_scrolled_window_new();
   lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(scrolledwindow),
                                    LIVES_POLICY_AUTOMATIC, LIVES_POLICY_AUTOMATIC);
 
@@ -12784,3 +12834,237 @@ const char *lives_textsize_to_string(int val) {
     return LIVES_TEXT_SIZE_NORMAL;
   }
 }
+
+
+#ifdef WEED_WIDGETS
+
+#include "paramwindow.h"
+
+#define LIVES_LEAF_WIDGET_ROLE "widget_role"
+#define LIVES_LEAF_WIDGET_FUNC "widget_func_"
+#define LIVES_LEAF_WIDGET "widget"
+#define LIVES_LEAF_KLASS "klass"
+
+static lives_widget_klass_t *w_klasses[N_TOOLKITS][KLASSES_PER_TOOLKIT];
+
+WIDGET_HELPER_LOCAL_INLINE lives_widget_klass_t *lives_widget_klass_new(void) {
+  lives_widget_klass_t *k = weed_plant_new(WEED_PLANT_LIVES);
+  weed_set_int_value(k, WEED_LEAF_LIVES_SUBTYPE, LIVES_WEED_SUBTYPE_WIDGET);
+  return k;
+}
+
+WIDGET_HELPER_LOCAL_INLINE
+lives_widget_instance_t *lives_widget_instance_new(const lives_widget_klass_t *k) {
+  lives_widget_instance_t *winst = lives_widget_klass_new();
+  weed_set_voidptr_value(winst, LIVES_LEAF_KLASS, (void *)k);
+  return winst;
+}
+
+static lives_func_info_t *lives_func_info_new(int cat, lives_funcptr_t func,
+    uint32_t rettype, const char *args_fmt, void *data) {
+  lives_func_info_t *funcinf = (lives_func_info_t *)lives_malloc(sizeof(lives_func_info_t));
+  funcinf->category = cat;
+  funcinf->function = func;
+  funcinf->rettype = rettype;
+  funcinf->args_fmt = lives_strdup(args_fmt);
+  funcinf->data = data;
+  return funcinf;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE int widget_klass_get_role(const lives_widget_klass_t *k) {
+  return weed_get_int_value((weed_plant_t *)k, LIVES_LEAF_WIDGET_ROLE, NULL);
+}
+
+WIDGET_HELPER_LOCAL_INLINE void widget_klass_set_role(lives_widget_klass_t *k, int role) {
+  weed_set_int_value(k, LIVES_LEAF_WIDGET_ROLE, role);
+}
+
+boolean widget_klasses_init(lives_toolkit_t tk) {
+  if (tk == LIVES_TOOLKIT_GTK) {
+    tk--;
+    for (int i = 0; i < KLASSES_PER_TOOLKIT; i++) w_klasses[tk][i] = NULL;
+
+    // GtkSpinButton
+    lives_widget_klass_t *k = w_klasses[tk][LIVES_PARAM_WIDGET_SPINBUTTON] = lives_widget_klass_new();
+
+    // create_func
+    lives_func_info_t *func_info;
+    lives_func_info_t *afunc_info[8];
+    char *lname;
+
+    func_info
+      = lives_func_info_new(0, (lives_funcptr_t)lives_spin_button_new, WEED_SEED_VOIDPTR, "Vdi", NULL);
+    lname = lives_strdup_printf("%s%d", LIVES_LEAF_WIDGET_FUNC, LIVES_WIDGET_CREATE_FUNC);
+    weed_set_voidptr_value(k, lname, func_info);
+    lives_free(lname);
+
+    afunc_info[0]
+      = lives_func_info_new(0, (lives_funcptr_t)lives_spin_button_get_value,
+                            WEED_SEED_DOUBLE, "V", NULL);
+    afunc_info[1]
+      = lives_func_info_new(0, (lives_funcptr_t)lives_spin_button_get_value_as_int,
+                            WEED_SEED_INT, "V", NULL);
+
+    lname = lives_strdup_printf("%s%d", LIVES_LEAF_WIDGET_FUNC, LIVES_WIDGET_GET_VALUE_FUNC);
+    weed_set_voidptr_array(k, lname, 2, (void **)afunc_info);
+    lives_free(lname);
+
+    func_info
+      = lives_func_info_new(0, (lives_funcptr_t)lives_spin_button_set_value,
+                            WEED_SEED_BOOLEAN, "Vd", NULL);
+    lname = lives_strdup_printf("%s%d", LIVES_LEAF_WIDGET_FUNC, LIVES_WIDGET_SET_VALUE_FUNC);
+    weed_set_voidptr_value(k, lname, func_info);
+    lives_free(lname);
+
+    widget_klass_set_role(k, WIDGET_ROLE_WIDGET);
+    // etc.
+    return TRUE;
+  }
+  return FALSE;
+}
+
+
+const lives_widget_klass_t *widget_klass_for_type(lives_toolkit_t tk, int typex) {
+  if (tk == LIVES_TOOLKIT_GTK && typex >= 0 && typex < KLASSES_PER_TOOLKIT)
+    return w_klasses[--tk][typex];
+  return NULL;
+}
+
+
+lives_widget_instance_t *widget_instance_from_klass(const lives_widget_klass_t *k, ...) {
+  if (!k || widget_klass_get_role(k) != WIDGET_ROLE_WIDGET) return NULL;
+  else {
+    char *lname = lives_strdup_printf("%s%d", LIVES_LEAF_WIDGET_FUNC, LIVES_WIDGET_CREATE_FUNC);
+    lives_func_info_t *funcinf
+      = (lives_func_info_t *)weed_get_voidptr_value((weed_plant_t *)k, lname, NULL);
+    lives_free(lname);
+    if (!funcinf || funcinf->rettype != WEED_SEED_VOIDPTR) return NULL;
+    else {
+      // create fake proc_thread, which we will pass to run_funsig
+      // the return value will be in the _RV_ leaf
+      va_list xargs;
+      lives_proc_thread_t pth;
+      lives_widget_instance_t *winst = lives_widget_instance_new(k);
+      va_start(xargs, k);
+      pth = lives_proc_thread_create_vargs(LIVES_THRDATTR_FG_THREAD, funcinf->function,
+                                           funcinf->rettype, funcinf->args_fmt, xargs);
+      call_funcsig(pth);
+      va_end(xargs);
+      weed_set_voidptr_value(winst, LIVES_LEAF_WIDGET, lives_proc_thread_join_voidptr(pth));
+      weed_plant_free(pth);
+      return winst;
+    }
+  }
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE void *widget_instance_get_widget(lives_widget_instance_t *winst) {
+  if (winst) return weed_get_voidptr_value(winst, LIVES_LEAF_WIDGET, NULL);
+  return NULL;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE
+const lives_widget_klass_t *widget_instance_get_klass(lives_widget_instance_t *winst) {
+  if (winst) return weed_get_voidptr_value(winst, LIVES_LEAF_KLASS, NULL);
+  return NULL;
+}
+
+
+double widget_func_double(lives_widget_instance_t *winst, int functype, ...) {
+  if (!winst || !weed_get_voidptr_value(winst, LIVES_LEAF_WIDGET, NULL)) return 0.;
+  else {
+    int n_info;
+    char *lname = lives_strdup_printf("%s%d", LIVES_LEAF_WIDGET_FUNC, functype);
+    lives_func_info_t *funcinf = NULL;
+    lives_func_info_t **afuncinf
+      = (lives_func_info_t **)weed_get_voidptr_array_counted((weed_plant_t *)winst, lname, &n_info);
+    for (int i = 0; i < n_info; i++) {
+      if (afuncinf[i]->rettype == WEED_SEED_DOUBLE) {
+        funcinf = afuncinf[i];
+        break;
+      }
+    }
+    lives_freep((void **)&afuncinf);
+    if (!funcinf) {
+      const lives_widget_klass_t *k = widget_instance_get_klass(winst);
+      afuncinf
+        = (lives_func_info_t **)weed_get_voidptr_array_counted((weed_plant_t *)k, lname, &n_info);
+      for (int i = 0; i < n_info; i++) {
+        if (afuncinf[i]->rettype == WEED_SEED_DOUBLE) {
+          funcinf = afuncinf[i];
+          break;
+        }
+      }
+      lives_freep((void **)&afuncinf);
+    }
+    lives_free(lname);
+    if (!funcinf) return 0.;
+    else {
+      // create fake proc_thread, which we will pass to run_funsig
+      // the return value will be in the _RV_ leaf
+      lives_proc_thread_t pth;
+      va_list xargs;
+      double dval;
+      va_start(xargs, functype);
+      pth = lives_proc_thread_create_vargs(LIVES_THRDATTR_FG_THREAD, funcinf->function,
+                                           funcinf->rettype, funcinf->args_fmt, xargs);
+      call_funcsig(pth);
+      va_end(xargs);
+      dval = lives_proc_thread_join_double(pth);
+      weed_plant_free(pth);
+      return dval;
+    }
+  }
+}
+
+
+int widget_func_boolean(lives_widget_instance_t *winst, int functype, ...) {
+  if (!winst || !weed_get_voidptr_value(winst, LIVES_LEAF_WIDGET, NULL)) return 0.;
+  else {
+    int n_info;
+    char *lname = lives_strdup_printf("%s%d", LIVES_LEAF_WIDGET_FUNC, functype);
+    lives_func_info_t *funcinf = NULL;
+    lives_func_info_t **afuncinf
+      = (lives_func_info_t **)weed_get_voidptr_array_counted((weed_plant_t *)winst, lname, &n_info);
+    for (int i = 0; i < n_info; i++) {
+      if (afuncinf[i]->rettype == WEED_SEED_BOOLEAN) {
+        funcinf = afuncinf[i];
+        break;
+      }
+    }
+    lives_freep((void **)&afuncinf);
+    if (!funcinf) {
+      const lives_widget_klass_t *k = widget_instance_get_klass(winst);
+      afuncinf
+        = (lives_func_info_t **)weed_get_voidptr_array_counted((weed_plant_t *)k, lname, &n_info);
+      for (int i = 0; i < n_info; i++) {
+        if (afuncinf[i]->rettype == WEED_SEED_BOOLEAN) {
+          funcinf = afuncinf[i];
+          break;
+        }
+      }
+      lives_freep((void **)&afuncinf);
+    }
+    lives_free(lname);
+    if (!funcinf) return 0.;
+    else {
+      // create fake proc_thread, which we will pass to run_funsig
+      // the return value will be in the _RV_ leaf
+      lives_proc_thread_t pth;
+      va_list xargs;
+      int bval;
+      va_start(xargs, functype);
+      pth = lives_proc_thread_create_vargs(LIVES_THRDATTR_FG_THREAD, funcinf->function,
+                                           funcinf->rettype, funcinf->args_fmt, xargs);
+      call_funcsig(pth);
+      va_end(xargs);
+      bval = lives_proc_thread_join_boolean(pth);
+      weed_plant_free(pth);
+      return bval;
+    }
+  }
+}
+
+#endif

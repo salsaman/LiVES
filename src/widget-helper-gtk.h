@@ -329,17 +329,65 @@ typedef GdkDevice                         		LiVESXDevice;
 #define LIVES_SCROLL_DOWN GDK_SCROLL_DOWN
 
 #if GTK_CHECK_VERSION(3, 0, 0)
+#if !GTK_CHECK_VERSION(4, 0, 0)
 #undef LIVES_HAS_DEVICE_MANAGER
 #define LIVES_HAS_DEVICE_MANAGER 1
 typedef GdkDeviceManager                  LiVESXDeviceManager;
+#endif
 #endif
 
 #if GTK_CHECK_VERSION(3, 0, 0)
 #if GTK_CHECK_VERSION(4, 0, 0)
 // gtk+ 4
-#define EXPOSE_FN_DECL(fn, widget, user_data) \
-  boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, livespointer user_data) \
-  {LiVESXEventExpose *event = NULL; (void)event; // avoid compiler warnings
+/*         several updates will be needed in order to include gtk4 support, including:
+
+	   gtk_container methods will all need modifying (possible quick fix:
+	   change GTK_CONTAINER -> GTK_WIDGET, then modify gtk_container_* functions)
+
+	   gtk_bin no longer exusts (all widgets now can take multiple child widgets - may require some
+	   redesign - TBD)
+
+	   gtk_widget_destroy deprecated (quick fix: lives_widget_destroy can check the widget
+	   type and then call the apprpriate gtk 4 function. Longer term, introduce lives_widget_t
+
+	   GdkWindow -> GdkSurface (partially done, but untested), some functions moved to
+	   gdk_x11_*, some functions need implementing using xlib directly (e.g. keep_above)
+
+	   gtkaccelgroup -> shortcut (should be relatively easing using the wrapper functions)
+
+	   no more gtkeventbox (all widgets now receive all events. Possible quick fix, replace
+	   with GtkBox or similar widget, longer term, rewrite code to ignore the widget)
+
+	   no more gtkbuttonbox (seems conterproductive to remove a widget that does a useful job,
+	   will need replacing with GtkBox and impleentations of layout, homogenous, secondary)
+	   - related to this, GtkDialog action area no longer directly accessible; this is
+	   already taken care of by adding a button box to the content area. Longer term it needs to
+	   use the replicated buttonbox functions.
+
+	   GtkScrolledWindow - adjustments no longer appear as parameters in _new. Done.
+
+	   GtkCssProvider load functions have lost their GError argument - starightforward, as the
+	   value is ignored anyway
+
+	   gtk_widget_get_width - maybe better than allocation_width ?
+
+	   gtk_drawing_area_set_draw_func() - straightforwards, replaces expose function
+
+	   gdk_pixbuf -> texture (quick fix - convert gdkpixbuf to texture using provided function,
+	   longer term, use alias, conversion to / from layers will benefit
+
+	   GtkMenu, GtkMenuBar and GtkMenuItem are gone (will likely need a combination of aliasing
+	   and architectural changes - TBD)
+
+	   GtkToolbar has been removed - replace with GtkBox, no longer need now that buttons
+	   are drawn internally
+*/
+
+#define EXPOSE_FN_DECL(fn, widget, user_data)				\
+  // TODO: gtk_snaphot_append_cairo()
+boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, livespointer user_data) \
+{
+  LiVESXEventExpose *event = NULL; (void)event; // avoid compiler warnings
 
 #define EXPOSE_FN_PAINTER
 #define EXPOSE_FN_PROTOTYPE(fn) boolean fn(LiVESWidget *, lives_painter_t *, int, int, livespointer);
@@ -398,19 +446,19 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 #define NO_MEM_OVERRIDE g_mem_is_system_malloc()
 #endif
 
-typedef GMemVTable LiVESMemVTable;
-typedef GIOChannel LiVESIOChannel;
+  typedef GMemVTable LiVESMemVTable;
+  typedef GIOChannel LiVESIOChannel;
 
-typedef GtkTargetEntry LiVESTargetEntry;
+  typedef GtkTargetEntry LiVESTargetEntry;
 
-typedef GdkFilterReturn LiVESFilterReturn;
+  typedef GdkFilterReturn LiVESFilterReturn;
 
 #define LIVES_FILTER_REMOVE GDK_FILTER_REMOVE
 #define LIVES_FILTER_CONTINUE GDK_FILTER_CONTINUE
 
-typedef GtkIconTheme			  LiVESIconTheme;
+  typedef GtkIconTheme			  LiVESIconTheme;
 
-// events
+  // events
 #define LIVES_WIDGET_EVENT "event"
 #define LIVES_WIDGET_SCROLL_EVENT "scroll-event"
 #define LIVES_WIDGET_CONFIGURE_EVENT "configure-event"
@@ -425,7 +473,7 @@ typedef GtkIconTheme			  LiVESIconTheme;
 #define LIVES_WIDGET_KEY_PRESS_EVENT "key-press-event"
 #define LIVES_WIDGET_KEY_RELEASE_EVENT "key-release-event"
 
-// signals
+  // signals
 #define LIVES_WIDGET_DESTROY_SIGNAL "destroy"
 #define LIVES_WIDGET_CLICKED_SIGNAL "clicked"
 #define LIVES_WIDGET_TOGGLED_SIGNAL "toggled"
@@ -456,67 +504,67 @@ typedef GtkIconTheme			  LiVESIconTheme;
 
 #define LIVES_WIDGET_NOTIFY_SIGNAL "notify::"
 
-typedef GtkWidget                         LiVESWidget;
-typedef GtkWindow                         LiVESWindow;
-typedef GtkContainer                      LiVESContainer;
-typedef GtkBin                            LiVESBin;
-typedef GtkDialog                         LiVESDialog;
-typedef GtkBox                            LiVESBox;
-typedef GtkFrame                          LiVESFrame;
-typedef GtkComboBox                       LiVESCombo;
-typedef GtkComboBox                       LiVESComboBox;
-typedef GtkButton                         LiVESButton;
-typedef GtkButtonBox                      LiVESButtonBox;
+  typedef GtkWidget                         LiVESWidget;
+  typedef GtkWindow                         LiVESWindow;
+  typedef GtkContainer                      LiVESContainer;
+  typedef GtkBin                            LiVESBin;
+  typedef GtkDialog                         LiVESDialog;
+  typedef GtkBox                            LiVESBox;
+  typedef GtkFrame                          LiVESFrame;
+  typedef GtkComboBox                       LiVESCombo;
+  typedef GtkComboBox                       LiVESComboBox;
+  typedef GtkButton                         LiVESButton;
+  typedef GtkButtonBox                      LiVESButtonBox;
 
-typedef GtkTextView                       LiVESTextView;
-typedef GtkTextBuffer                     LiVESTextBuffer;
-typedef GtkTextMark                       LiVESTextMark;
-typedef GtkTextIter                       LiVESTextIter;
+  typedef GtkTextView                       LiVESTextView;
+  typedef GtkTextBuffer                     LiVESTextBuffer;
+  typedef GtkTextMark                       LiVESTextMark;
+  typedef GtkTextIter                       LiVESTextIter;
 
-typedef GtkEntry                          LiVESEntry;
-typedef GtkEntryCompletion                LiVESEntryCompletion;
-typedef GtkRadioButton                    LiVESRadioButton;
-typedef GtkSpinButton                     LiVESSpinButton;
-typedef GtkColorButton                    LiVESColorButton;
-typedef GtkToolButton                     LiVESToolButton;
-typedef GtkLabel                          LiVESLabel;
-typedef GtkImage                          LiVESImage;
-typedef GtkFileChooser                    LiVESFileChooser;
+  typedef GtkEntry                          LiVESEntry;
+  typedef GtkEntryCompletion                LiVESEntryCompletion;
+  typedef GtkRadioButton                    LiVESRadioButton;
+  typedef GtkSpinButton                     LiVESSpinButton;
+  typedef GtkColorButton                    LiVESColorButton;
+  typedef GtkToolButton                     LiVESToolButton;
+  typedef GtkLabel                          LiVESLabel;
+  typedef GtkImage                          LiVESImage;
+  typedef GtkFileChooser                    LiVESFileChooser;
 #if GTK_CHECK_VERSION(3,2,0)
-typedef GtkFontChooser                    LiVESFontChooser;
-typedef GtkFontButton                     LiVESFontButton;
+  typedef GtkFontChooser                    LiVESFontChooser;
+  typedef GtkFontButton                     LiVESFontButton;
 #endif
-typedef GtkAlignment                      LiVESAlignment;
-typedef GtkAllocation                     LiVESAllocation;
-typedef GtkMenu                           LiVESMenu;
-typedef GtkMenuShell                      LiVESMenuShell;
-typedef GtkMenuItem                       LiVESMenuItem;
-typedef GtkMenuToolButton                 LiVESMenuToolButton;
-typedef GtkToggleToolButton               LiVESToggleToolButton;
-typedef GtkCheckMenuItem                  LiVESCheckMenuItem;
-typedef GtkImageMenuItem                  LiVESImageMenuItem;
-typedef GtkRadioMenuItem                  LiVESRadioMenuItem;
+  typedef GtkAlignment                      LiVESAlignment;
+  typedef GtkAllocation                     LiVESAllocation;
+  typedef GtkMenu                           LiVESMenu;
+  typedef GtkMenuShell                      LiVESMenuShell;
+  typedef GtkMenuItem                       LiVESMenuItem;
+  typedef GtkMenuToolButton                 LiVESMenuToolButton;
+  typedef GtkToggleToolButton               LiVESToggleToolButton;
+  typedef GtkCheckMenuItem                  LiVESCheckMenuItem;
+  typedef GtkImageMenuItem                  LiVESImageMenuItem;
+  typedef GtkRadioMenuItem                  LiVESRadioMenuItem;
 
-typedef GtkNotebook                       LiVESNotebook;
+  typedef GtkNotebook                       LiVESNotebook;
 
-typedef GtkExpander                       LiVESExpander;
+  typedef GtkExpander                       LiVESExpander;
 
 #if GTK_CHECK_VERSION(2, 20, 0)
 #define LIVES_HAS_SPINNER_WIDGET 1
-typedef GtkSpinner        	          LiVESSpinner;
+  typedef GtkSpinner        	          LiVESSpinner;
 #else
-typedef GtkWidget        	          LiVESSpinner;
+  typedef GtkWidget        	          LiVESSpinner;
 #endif
 
 #ifdef PROGBAR_IS_ENTRY
-typedef GtkEntry 	                   LiVESProgressBar;
+  typedef GtkEntry 	                   LiVESProgressBar;
 #else
-typedef GtkProgressBar                    LiVESProgressBar;
+  typedef GtkProgressBar                    LiVESProgressBar;
 #endif
 
-typedef GtkAboutDialog                    LiVESAboutDialog;
+  typedef GtkAboutDialog                    LiVESAboutDialog;
 
-// values here are long unsigned int
+  // values here are long unsigned int
 #define LIVES_COL_TYPE_OBJECT G_TYPE_OBJECT
 #define LIVES_COL_TYPE_STRING G_TYPE_STRING
 #define LIVES_COL_TYPE_INT G_TYPE_INT
@@ -524,10 +572,10 @@ typedef GtkAboutDialog                    LiVESAboutDialog;
 #define LIVES_COL_TYPE_BOOLEAN G_TYPE_BOOLEAN
 #define LIVES_COL_TYPE_PIXBUF GDK_TYPE_PIXBUF
 
-typedef GtkTreeView                       LiVESTreeView;
-typedef GtkTreeViewColumn                 LiVESTreeViewColumn;
+  typedef GtkTreeView                       LiVESTreeView;
+  typedef GtkTreeViewColumn                 LiVESTreeViewColumn;
 
-typedef GtkTreeViewColumnSizing LiVESTreeViewColumnSizing;
+  typedef GtkTreeViewColumnSizing LiVESTreeViewColumnSizing;
 #define LIVES_TREE_VIEW_COLUMN_GROW_ONLY GTK_TREE_VIEW_COLUMN_GROW_ONLY
 #define LIVES_TREE_VIEW_COLUMN_AUTOSIZE GTK_TREE_VIEW_COLUMN_AUTOSIZE
 #define LIVES_TREE_VIEW_COLUMN_FIXED GTK_TREE_VIEW_COLUMN_FIXED
@@ -535,53 +583,53 @@ typedef GtkTreeViewColumnSizing LiVESTreeViewColumnSizing;
 #define LIVES_TREE_VIEW_COLUMN_TEXT "text"
 #define LIVES_TREE_VIEW_COLUMN_PIXBUF "pixbuf"
 
-typedef GtkCellRenderer                   LiVESCellRenderer;
-typedef GtkTreeModel                      LiVESTreeModel;
-typedef GtkTreeIter                       LiVESTreeIter;
-typedef GtkTreePath                       LiVESTreePath;
-typedef GtkTreeStore                      LiVESTreeStore;
-typedef GtkTreeSelection                  LiVESTreeSelection;
-typedef GtkListStore                      LiVESListStore;
+  typedef GtkCellRenderer                   LiVESCellRenderer;
+  typedef GtkTreeModel                      LiVESTreeModel;
+  typedef GtkTreeIter                       LiVESTreeIter;
+  typedef GtkTreePath                       LiVESTreePath;
+  typedef GtkTreeStore                      LiVESTreeStore;
+  typedef GtkTreeSelection                  LiVESTreeSelection;
+  typedef GtkListStore                      LiVESListStore;
 
-typedef GtkScrolledWindow                 LiVESScrolledWindow;
-typedef GtkScrollbar                      LiVESScrollbar;
-typedef GtkHScrollbar                     LiVESHScrollbar;
-typedef GtkToolbar                        LiVESToolbar;
-typedef GtkToolItem                       LiVESToolItem;
+  typedef GtkScrolledWindow                 LiVESScrolledWindow;
+  typedef GtkScrollbar                      LiVESScrollbar;
+  typedef GtkHScrollbar                     LiVESHScrollbar;
+  typedef GtkToolbar                        LiVESToolbar;
+  typedef GtkToolItem                       LiVESToolItem;
 
 #if GTK_CHECK_VERSION(2, 14, 0)
-typedef GtkScaleButton                    LiVESScaleButton;
+  typedef GtkScaleButton                    LiVESScaleButton;
 #else
-typedef GtkRange                          LiVESScaleButton;
+  typedef GtkRange                          LiVESScaleButton;
 #endif
 
 #if GTK_CHECK_VERSION(3, 2, 0)
-typedef GtkGrid                           LiVESGrid;
+  typedef GtkGrid                           LiVESGrid;
 #undef LIVES_HAS_GRID_WIDGET
 #define LIVES_HAS_GRID_WIDGET 1
 #else
-typedef LiVESWidget                       LiVESGrid;
+  typedef LiVESWidget                       LiVESGrid;
 #endif
 
 #if LIVES_TABLE_IS_GRID
-typedef GtkGrid                           LiVESTable;
+  typedef GtkGrid                           LiVESTable;
 #else
-typedef GtkTable                          LiVESTable;
+  typedef GtkTable                          LiVESTable;
 #endif
 
 #if GTK_CHECK_VERSION(3, 0, 0)
 #undef LIVES_HAS_SWITCH_WIDGET
 #define LIVES_HAS_SWITCH_WIDGET 1
-typedef GtkSwitch                         LiVESSwitch;
-typedef GtkWidget                         LiVESToggleButton;
+  typedef GtkSwitch                         LiVESSwitch;
+  typedef GtkWidget                         LiVESToggleButton;
 #else
-typedef LiVESWidget                       LiVESSwitch;
-typedef GtkToggleButton                   LiVESToggleButton;
+  typedef LiVESWidget                       LiVESSwitch;
+  typedef GtkToggleButton                   LiVESToggleButton;
 #endif
 
 #define LiVESLayout LiVESTable
 
-typedef GtkEditable                       LiVESEditable;
+  typedef GtkEditable                       LiVESEditable;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
 #define LIVES_WIDGET_COLOR_HAS_ALPHA (1)
@@ -589,9 +637,9 @@ typedef GtkEditable                       LiVESEditable;
 #define LIVES_WIDGET_COLOR_STRETCH(x) (x * 65535.) ///< macro to get 0. to 65535. from widget colour
 #define LIVES_WIDGET_COLOR_SCALE_65535(x) ((double)x / 65535.) ///< macro to convert from (0. - 65535.) to widget color
 #define LIVES_WIDGET_COLOR_SCALE_255(x) ((double)x / 255.) ///< macro to convert from (0. - 255.) to widget color
-typedef GdkRGBA                           LiVESWidgetColor; ///< component values are 0. to 1.
+  typedef GdkRGBA                           LiVESWidgetColor; ///< component values are 0. to 1.
 
-typedef GtkStateFlags LiVESWidgetState;
+  typedef GtkStateFlags LiVESWidgetState;
 
 #define LIVES_WIDGET_STATE_NORMAL         GTK_STATE_FLAG_NORMAL        // 0
 #define LIVES_WIDGET_STATE_ACTIVE         GTK_STATE_FLAG_ACTIVE       //  1
@@ -611,8 +659,8 @@ typedef GtkStateFlags LiVESWidgetState;
 #define LIVES_WIDGET_COLOR_STRETCH(x) (x)     ///< macro to get 0 to 65535 from widget color
 #define LIVES_WIDGET_COLOR_SCALE_65535(x) (x)     ///< macro to get 0 - 65535 to widget color
 #define LIVES_WIDGET_COLOR_SCALE_255(x) ((int)((double)x*256.+.5))     ///< macro to get 0 - 255 to widget color
-typedef GdkColor                          LiVESWidgetColor;  ///< component values are 0 to 65535
-typedef GtkStateType LiVESWidgetState;
+  typedef GdkColor                          LiVESWidgetColor;  ///< component values are 0 to 65535
+  typedef GtkStateType LiVESWidgetState;
 
 #define LIVES_WIDGET_STATE_NORMAL         GTK_STATE_NORMAL
 #define LIVES_WIDGET_STATE_ACTIVE         GTK_STATE_ACTIVE
@@ -625,7 +673,7 @@ typedef GtkStateType LiVESWidgetState;
 #define LIVES_WIDGET_STATE_BACKDROP       (GTK_STATE_INSENSITIVE+3)
 #endif
 
-typedef int LiVESResponseType;
+  typedef int LiVESResponseType;
 #define LIVES_RESPONSE_NONE GTK_RESPONSE_NONE
 #define LIVES_RESPONSE_OK GTK_RESPONSE_OK     // -6
 #define LIVES_RESPONSE_CANCEL GTK_RESPONSE_CANCEL  // -5
@@ -633,7 +681,7 @@ typedef int LiVESResponseType;
 #define LIVES_RESPONSE_YES GTK_RESPONSE_YES  // -8
 #define LIVES_RESPONSE_NO GTK_RESPONSE_NO  // -9
 
-// positive values for custom responses
+  // positive values for custom responses
 #define LIVES_RESPONSE_INVALID 0
 #define LIVES_RESPONSE_RETRY 1
 #define LIVES_RESPONSE_ABORT 2
@@ -641,32 +689,32 @@ typedef int LiVESResponseType;
 #define LIVES_RESPONSE_SHOW_DETAILS 4
 #define LIVES_RESPONSE_BROWSE 5
 
-typedef GtkAttachOptions LiVESAttachOptions;
+  typedef GtkAttachOptions LiVESAttachOptions;
 #define LIVES_EXPAND GTK_EXPAND
 #define LIVES_SHRINK GTK_SHRINK
 #define LIVES_FILL GTK_FILL
 
-typedef GtkPackType LiVESPackType;
+  typedef GtkPackType LiVESPackType;
 #define LIVES_PACK_START GTK_PACK_START
 #define LIVES_PACK_END GTK_PACK_END
 
-typedef GtkWindowType LiVESWindowType;
+  typedef GtkWindowType LiVESWindowType;
 #define LIVES_WINDOW_TOPLEVEL GTK_WINDOW_TOPLEVEL
 #define LIVES_WINDOW_POPUP GTK_WINDOW_POPUP
 
-typedef GtkDialogFlags LiVESDialogFlags;
+  typedef GtkDialogFlags LiVESDialogFlags;
 
-typedef GtkMessageType LiVESMessageType;
+  typedef GtkMessageType LiVESMessageType;
 #define LIVES_MESSAGE_INFO GTK_MESSAGE_INFO
 #define LIVES_MESSAGE_WARNING GTK_MESSAGE_WARNING
 #define LIVES_MESSAGE_QUESTION GTK_MESSAGE_QUESTION
 #define LIVES_MESSAGE_ERROR GTK_MESSAGE_ERROR
 #define LIVES_MESSAGE_OTHER GTK_MESSAGE_OTHER
 
-typedef GtkButtonsType LiVESButtonsType;
+  typedef GtkButtonsType LiVESButtonsType;
 #define LIVES_BUTTONS_NONE GTK_BUTTONS_NONE
 
-typedef GtkFileChooserAction LiVESFileChooserAction;
+  typedef GtkFileChooserAction LiVESFileChooserAction;
 #define LIVES_FILE_CHOOSER_ACTION_OPEN GTK_FILE_CHOOSER_ACTION_OPEN
 #define LIVES_FILE_CHOOSER_ACTION_SAVE GTK_FILE_CHOOSER_ACTION_SAVE
 #define LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER
@@ -674,7 +722,7 @@ typedef GtkFileChooserAction LiVESFileChooserAction;
 #define LIVES_FILE_CHOOSER_ACTION_SELECT_FILE ((GtkFileChooserAction)(GTK_FILE_CHOOSER_ACTION_CREATE_FOLDER + 1))
 #define LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE ((GtkFileChooserAction)(GTK_FILE_CHOOSER_ACTION_CREATE_FOLDER + 2))
 
-typedef GtkIconSize LiVESIconSize;
+  typedef GtkIconSize LiVESIconSize;
 #define LIVES_ICON_SIZE_INVALID GTK_ICON_SIZE_INVALID
 #define LIVES_ICON_SIZE_MENU GTK_ICON_SIZE_MENU // 16px
 #define LIVES_ICON_SIZE_SMALL_TOOLBAR GTK_ICON_SIZE_SMALL_TOOLBAR // 16px
@@ -684,19 +732,19 @@ typedef GtkIconSize LiVESIconSize;
 #define LIVES_ICON_SIZE_DIALOG GTK_ICON_SIZE_DIALOG // 48px
 #define LIVES_ICON_SIZE_CUSTOM 1024
 
-// scrolledwindow policies
-typedef GtkPolicyType LiVESPolicyType;
+  // scrolledwindow policies
+  typedef GtkPolicyType LiVESPolicyType;
 #define LIVES_POLICY_ALWAYS GTK_POLICY_ALWAYS
 #define LIVES_POLICY_AUTOMATIC GTK_POLICY_AUTOMATIC
 #define LIVES_POLICY_NEVER GTK_POLICY_NEVER
 
-typedef GtkPositionType LiVESPositionType;
+  typedef GtkPositionType LiVESPositionType;
 #define LIVES_POS_LEFT GTK_POS_LEFT
 #define LIVES_POS_RIGHT GTK_POS_RIGHT
 #define LIVES_POS_TOP GTK_POS_TOP
 #define LIVES_POS_BOTTOM GTK_POS_BOTTOM
 
-typedef GtkArrowType LiVESArrowType;
+  typedef GtkArrowType LiVESArrowType;
 #define LIVES_ARROW_UP GTK_ARROW_UP
 #define LIVES_ARROW_DOWN GTK_ARROW_DOWN
 #define LIVES_ARROW_LEFT GTK_ARROW_LEFT
@@ -704,13 +752,13 @@ typedef GtkArrowType LiVESArrowType;
 #define LIVES_ARROW_NONE GTK_ARROW_NONE
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-typedef GtkAlign LiVESAlign;
+  typedef GtkAlign LiVESAlign;
 #define LIVES_ALIGN_FILL GTK_ALIGN_FILL
 #define LIVES_ALIGN_START GTK_ALIGN_START
 #define LIVES_ALIGN_END GTK_ALIGN_END
 #define LIVES_ALIGN_CENTER GTK_ALIGN_CENTER
 #else
-typedef int LiVESAlign;
+  typedef int LiVESAlign;
 #define LIVES_ALIGN_FILL 0
 #define LIVES_ALIGN_START 1
 #define LIVES_ALIGN_END 2
@@ -722,30 +770,30 @@ typedef int LiVESAlign;
 #define LIVES_ALIGN_BASELINE GTK_ALIGN_BASELINE
 #endif
 
-typedef GtkWrapMode LiVESWrapMode;
+  typedef GtkWrapMode LiVESWrapMode;
 #define LIVES_WRAP_NONE GTK_WRAP_NONE
-//#define LIVES_WRAP_CHAR GTK_WRAP_CHAR
+  //#define LIVES_WRAP_CHAR GTK_WRAP_CHAR
 #define LIVES_WRAP_WORD GTK_WRAP_WORD
-//#define LIVES_WRAP_WORD_CHAR GTK_WRAP_WORD_CHAR
+  //#define LIVES_WRAP_WORD_CHAR GTK_WRAP_WORD_CHAR
 
-typedef GtkReliefStyle LiVESReliefStyle;
+  typedef GtkReliefStyle LiVESReliefStyle;
 #define LIVES_RELIEF_NORMAL GTK_RELIEF_NORMAL
 #define LIVES_RELIEF_HALF GTK_RELIEF_HALF
 #define LIVES_RELIEF_NONE GTK_RELIEF_NONE
 
 #define LIVES_ACCEL_VISIBLE GTK_ACCEL_VISIBLE
 
-typedef GtkToolbarStyle LiVESToolbarStyle;
+  typedef GtkToolbarStyle LiVESToolbarStyle;
 #define LIVES_TOOLBAR_ICONS GTK_TOOLBAR_ICONS
 #define LIVES_TOOLBAR_TEXT  GTK_TOOLBAR_TEXT
 
-typedef GtkSelectionMode LiVESSelectionMode;
+  typedef GtkSelectionMode LiVESSelectionMode;
 #define LIVES_SELECTION_NONE GTK_SELECTION_NONE
 #define LIVES_SELECTION_SINGLE GTK_SELECTION_SINGLE
-//#define LIVES_SELECTION_BROWSE GTK_SELECTION_BROWSE
+  //#define LIVES_SELECTION_BROWSE GTK_SELECTION_BROWSE
 #define LIVES_SELECTION_MULTIPLE GTK_SELECTION_MULTIPLE
 
-typedef GtkButtonBoxStyle LiVESButtonBoxStyle;
+  typedef GtkButtonBoxStyle LiVESButtonBoxStyle;
 #define LIVES_BUTTONBOX_DEFAULT_STYLE GTK_BUTTONBOX_DEFAULT_STYLE
 #define LIVES_BUTTONBOX_SPREAD GTK_BUTTONBOX_SPREAD
 #define LIVES_BUTTONBOX_EDGE GTK_BUTTONBOX_EDGE  // like SPREAD but buttons touch edges
@@ -758,7 +806,7 @@ typedef GtkButtonBoxStyle LiVESButtonBoxStyle;
 #define LIVES_BUTTONBOX_EXPAND 9999
 #endif
 
-typedef GdkEventMask LiVESEventMask;
+  typedef GdkEventMask LiVESEventMask;
 #define LIVES_EXPOSURE_MASK GDK_EXPOSURE_MASK
 #define LIVES_POINTER_MOTION_MASK GDK_POINTER_MOTION_MASK
 #define LIVES_POINTER_MOTION_HINT_MASK GDK_POINTER_MOTION_HINT_MASK
@@ -795,55 +843,59 @@ typedef GdkEventMask LiVESEventMask;
 
 #define LIVES_ALL_EVENTS_MASK GDK_ALL_EVENTS_MASK
 
-typedef GtkShadowType LiVESShadowType;
+  typedef GtkShadowType LiVESShadowType;
 #define LIVES_SHADOW_NONE GTK_SHADOW_NONE
 #define LIVES_SHADOW_IN GTK_SHADOW_IN
 #define LIVES_SHADOW_OUT GTK_SHADOW_OUT
 #define LIVES_SHADOW_ETCHED_IN GTK_SHADOW_ETCHED_IN
 #define LIVES_SHADOW_ETCHED_OUT GTK_SHADOW_ETCHED_OUT
 
-typedef GtkWindowPosition LiVESWindowPosition;
+  typedef GtkWindowPosition LiVESWindowPosition;
 #define LIVES_WIN_POS_NONE GTK_WIN_POS_NONE
 #define LIVES_WIN_POS_CENTER_ALWAYS GTK_WIN_POS_CENTER_ALWAYS
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-typedef GtkScale                          LiVESRuler;
-typedef GtkBox                            LiVESVBox;
-typedef GtkBox                            LiVESHBox;
+  typedef GtkScale                          LiVESRuler;
+  typedef GtkBox                            LiVESVBox;
+  typedef GtkBox                            LiVESHBox;
 #else
-typedef GtkWidget                         LiVESSwitch;
-typedef GtkRuler                          LiVESRuler;
-typedef GtkVBox                           LiVESVBox;
-typedef GtkHBox                           LiVESHBox;
+  typedef GtkWidget                         LiVESSwitch;
+  typedef GtkRuler                          LiVESRuler;
+  typedef GtkVBox                           LiVESVBox;
+  typedef GtkHBox                           LiVESHBox;
 #endif
 
-typedef GtkEventBox                       LiVESEventBox;
+  typedef GtkEventBox                       LiVESEventBox;
 
-typedef GtkRange                          LiVESRange;
+  typedef GtkRange                          LiVESRange;
 
-typedef GtkAdjustment                     LiVESAdjustment;
+  typedef GtkAdjustment                     LiVESAdjustment;
 
-typedef GdkPixbuf                         LiVESPixbuf;
+  typedef GdkPixbuf                         LiVESPixbuf;
 
-typedef GdkWindow                         LiVESXWindow;
+#if GTK_CHECK_VERSION(4, 0, 0)
+  typedef GdkSurface                        LiVESXWindow;
+#else
+  typedef GdkWindow                         LiVESXWindow;
+#endif
 
-typedef GdkCursor                         LiVESXCursor;
+  typedef GdkCursor                         LiVESXCursor;
 
-typedef GdkModifierType                   LiVESXModifierType;
+  typedef GdkModifierType                   LiVESXModifierType;
 
-typedef GtkAccelGroup                     LiVESAccelGroup;
-typedef GtkAccelFlags                     LiVESAccelFlags;
+  typedef GtkAccelGroup                     LiVESAccelGroup;
+  typedef GtkAccelFlags                     LiVESAccelFlags;
 
-typedef GtkRequisition                    LiVESRequisition;
+  typedef GtkRequisition                    LiVESRequisition;
 
-typedef GtkPaned                          LiVESPaned;
+  typedef GtkPaned                          LiVESPaned;
 
-typedef GtkScale                          LiVESScale;
+  typedef GtkScale                          LiVESScale;
 
-typedef GdkPixbufDestroyNotify            LiVESPixbufDestroyNotify;
-typedef GDestroyNotify            	  LiVESDestroyNotify;
+  typedef GdkPixbufDestroyNotify            LiVESPixbufDestroyNotify;
+  typedef GDestroyNotify            	  LiVESDestroyNotify;
 
-typedef GdkInterpType                     LiVESInterpType;
+  typedef GdkInterpType                     LiVESInterpType;
 
 #define LIVES_WIDGET(widget) GTK_WIDGET(widget)
 #define LIVES_PIXBUF(widget) GDK_PIXBUF(widget)
@@ -972,7 +1024,11 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_IS_WIDGET_OBJECT(object) G_IS_OBJECT(object)
 #define LIVES_IS_WIDGET(widget) GTK_IS_WIDGET(widget)
 #define LIVES_IS_WINDOW(widget) GTK_IS_WINDOW(widget)
+#if GTK_CHECK_VERSION(4, 0, 0)
+#define LIVES_IS_XWINDOW(widget) GDK_IS_SURFACE(widget)
+#else
 #define LIVES_IS_XWINDOW(widget) GDK_IS_WINDOW(widget)
+#endif
 #define LIVES_IS_PIXBUF(widget) GDK_IS_PIXBUF(widget)
 #define LIVES_IS_CONTAINER(widget) GTK_IS_CONTAINER(widget)
 #define LIVES_IS_BIN(widget) GTK_IS_BIN(widget)
@@ -1032,7 +1088,7 @@ typedef GdkInterpType                     LiVESInterpType;
 
 #define LIVES_IS_ADJUSTMENT(adj) GTK_IS_ADJUSTMENT(adj)
 
-// (image resize) interpolation types
+  // (image resize) interpolation types
 #define LIVES_INTERP_BEST   GDK_INTERP_HYPER
 #define LIVES_INTERP_NORMAL GDK_INTERP_BILINEAR
 #define LIVES_INTERP_FAST   GDK_INTERP_NEAREST
@@ -1158,8 +1214,8 @@ typedef GdkInterpType                     LiVESInterpType;
 
 #endif
 
-//#define LIVES_LIVES_STOCK_LOCKED "lives-locked"
-//#define LIVES_LIVES_STOCK_UNLOCKED "lives-unlocked"
+  //#define LIVES_LIVES_STOCK_LOCKED "lives-locked"
+  //#define LIVES_LIVES_STOCK_UNLOCKED "lives-unlocked"
 
 #if GTK_CHECK_VERSION(3, 2, 0)
 #define LIVES_LIVES_STOCK_LOCKED "changes-prevent"

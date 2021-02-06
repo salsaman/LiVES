@@ -1859,7 +1859,7 @@ static void populate_filter_box(int ninchans, lives_mt * mt, int pkgnum) {
   register int i, j;
 
   if (mt->fx_list_scroll) lives_widget_destroy(mt->fx_list_scroll);
-  mt->fx_list_scroll = lives_scrolled_window_new(NULL, NULL);
+  mt->fx_list_scroll = lives_scrolled_window_new();
   lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mt->fx_list_scroll),
                                    LIVES_POLICY_AUTOMATIC, LIVES_POLICY_AUTOMATIC);
   lives_box_pack_start(LIVES_BOX(mt->fx_list_box), mt->fx_list_scroll, TRUE, TRUE, 0);
@@ -6005,7 +6005,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_paned_pack(1, LIVES_PANED(mt->hpaned), mt->nb, FALSE, FALSE);
 
   // poly clip scroll
-  mt->clip_scroll = lives_scrolled_window_new(NULL, NULL);
+  mt->clip_scroll = lives_scrolled_window_new();
   lives_widget_object_ref(mt->clip_scroll);
   lives_widget_set_events(mt->clip_scroll, LIVES_SCROLL_MASK | LIVES_SMOOTH_SCROLL_MASK);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(mt->clip_scroll), LIVES_WIDGET_SCROLL_EVENT, LIVES_GUI_CALLBACK(on_mouse_scroll),
@@ -9260,7 +9260,7 @@ static void _clear_context(lives_mt * mt) {
     lives_widget_destroy(mt->context_scroll);
   }
 
-  mt->context_scroll = lives_scrolled_window_new(NULL, NULL);
+  mt->context_scroll = lives_scrolled_window_new();
   lives_widget_set_hexpand(mt->context_scroll, TRUE);
 
   lives_container_add(LIVES_CONTAINER(mt->context_frame), mt->context_scroll);
@@ -10745,7 +10745,7 @@ void polymorph(lives_mt * mt, lives_mt_poly_state_t poly) {
     lives_widget_apply_theme2(mt->fx_list_label, LIVES_WIDGET_STATE_NORMAL, TRUE);
     lives_box_pack_start(LIVES_BOX(mt->fx_list_box), mt->fx_list_label, FALSE, TRUE, widget_opts.packing_height);
 
-    mt->fx_list_scroll = lives_scrolled_window_new(NULL, NULL);
+    mt->fx_list_scroll = lives_scrolled_window_new();
     lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mt->fx_list_scroll), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_AUTOMATIC);
     lives_box_pack_start(LIVES_BOX(mt->fx_list_box), mt->fx_list_scroll, TRUE, TRUE, 0);
 

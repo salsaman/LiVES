@@ -82,6 +82,7 @@ typedef enum {
 #define WEED_LEAF_VALUE_BACK "host_value_back"
 #define WEED_LEAF_HOST_REINITING "host_reiniting"
 #define WEED_LEAF_HOST_UNUSED "host_unused"
+#define WEED_LEAF_HOST_CHKSTRG "host_chkstrchoices"
 
 #define WEED_LEAF_HOST_INSTANCE "host_instance" // special value for text widgets
 #define WEED_LEAF_HOST_IDX "host_idx" // special value for text widgets

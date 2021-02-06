@@ -1813,10 +1813,9 @@ static void on_params_clicked(LiVESButton * button, livespointer user_data) {
     weed_set_boolean_value(inst, WEED_LEAF_HOST_NORECORD, WEED_TRUE);
 
     // do some fiddly stuff to show the key defs.
-    filter_mutex_unlock(key);
-    weed_reinit_effect(inst, TRUE);
-    filter_mutex_lock(key);
-    check_string_choice_params(inst);
+    /* filter_mutex_unlock(key); */
+    /* weed_reinit_effect(inst, TRUE); */
+    /* filter_mutex_lock(key); */
     apply_key_defaults(inst, key, mode);
     filter_mutex_unlock(key);
     weed_reinit_effect(inst, TRUE);

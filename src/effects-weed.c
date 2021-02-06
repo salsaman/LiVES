@@ -6506,6 +6506,7 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
     if (i == 0) {
       weed_instance_ref(inst);
       pthread_mutex_unlock(&mainw->instance_ref_mutex);
+      weed_set_boolean_value(inst, WEED_LEAF_HOST_CHKSTRG, WEED_TRUE);
     }
 
     if (filters) weed_set_plantptr_value(inst, WEED_LEAF_HOST_COMPOUND_CLASS, ofilter);
@@ -6588,6 +6589,7 @@ boolean weed_init_effect(int hotkey) {
   boolean all_out_alpha;
   boolean is_gen = FALSE;
   boolean is_audio_gen = FALSE;
+  boolean inherited = FALSE;
 
   int num_tr_applied;
   int rte_keys = mainw->rte_keys;
@@ -6746,6 +6748,7 @@ boolean weed_init_effect(int hotkey) {
     // add a ref since we will remove one below, the param window should already have a ref
     weed_instance_ref(new_instance);
     update_widget_vis(NULL, hotkey, key_modes[hotkey]); // redraw our paramwindow
+    inherited = TRUE;
   } else {
     new_instance = weed_instance_from_filter(filter); //adds a ref
     // if it is a key effect, set key defaults
@@ -6947,7 +6950,7 @@ deinit2:
     pthread_mutex_unlock(&mainw->event_list_mutex);
   }
 
-  weed_instance_unref(inst); // release the ref we added earlier
+  if (!inherited) weed_instance_unref(inst); // release the ref we added earlier
 
   if (is_audio_gen) {
     mainw->agen_key = hotkey + 1;
@@ -7027,11 +7030,15 @@ weed_error_t weed_call_init_func(weed_plant_t *inst) {
       error = (*init_func)(inst);
       lives_chdir(cwd, FALSE);
       lives_free(cwd);
+      if (weed_get_boolean_value(inst, WEED_LEAF_HOST_CHKSTRG, NULL) == WEED_TRUE) {
+        check_string_choice_params(inst);
+        weed_leaf_delete(inst, WEED_LEAF_HOST_CHKSTRG);
+      }
     }
   }
   weed_set_boolean_value(inst, WEED_LEAF_HOST_INITED, WEED_TRUE);
   weed_set_boolean_value(inst, WEED_LEAF_HOST_UNUSED, WEED_TRUE);
-  weed_instance_unref(inst);
+  //weed_instance_unref(inst);
   return error;
 }
 
@@ -7059,6 +7066,7 @@ weed_error_t weed_call_deinit_func(weed_plant_t *instance) {
   }
   weed_set_boolean_value(instance, WEED_LEAF_HOST_INITED, WEED_FALSE);
   weed_leaf_delete(instance, WEED_LEAF_HOST_UNUSED);
+  weed_instance_unref(instance);
   weed_instance_unref(instance);
   return error;
 }
@@ -7258,8 +7266,8 @@ deinit3:
                                         &error);
   else next_inst = NULL;
 
-  weed_call_deinit_func(inst);
   weed_instance_unref(inst); // remove ref from weed_instance_obtain
+  weed_call_deinit_func(inst);
   weed_instance_unref(inst);  // free if no other refs
 
   if (next_inst) {

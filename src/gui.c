@@ -2358,7 +2358,7 @@ void create_LiVES(void) {
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Down,
-                            (LIVES_CONTROL_MASK | LIVES_ALT_MASK), (LiVESAccelFlags)0,
+                            (LIVES_ALT_MASK), (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(less_callback), NULL, NULL));
 
   //////////////////////////
@@ -2375,7 +2375,7 @@ void create_LiVES(void) {
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Up,
-                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK),
+                            (LiVESXModifierType)(LIVES_ALT_MASK),
                             (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(more_callback), NULL, NULL));
 
@@ -2456,23 +2456,42 @@ void create_LiVES(void) {
   if (FN_KEYS > 0) {
     lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F1, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                               lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback), LIVES_INT_TO_POINTER(1), NULL));
+    lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F1, (LiVESXModifierType)LIVES_SHIFT_MASK,
+                              (LiVESAccelFlags)0,
+                              lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback), LIVES_INT_TO_POINTER(1), NULL));
     if (FN_KEYS > 1) {
       lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F2, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                                 lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback), LIVES_INT_TO_POINTER(2), NULL));
+      lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F2, (LiVESXModifierType)LIVES_SHIFT_MASK,
+                                (LiVESAccelFlags)0,
+                                lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback), LIVES_INT_TO_POINTER(2), NULL));
       if (FN_KEYS > 2) {
         lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F3, (LiVESXModifierType)0, (LiVESAccelFlags)0,
+                                  lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback), LIVES_INT_TO_POINTER(3), NULL));
+        lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F3, (LiVESXModifierType)LIVES_SHIFT_MASK,
+                                  (LiVESAccelFlags)0,
                                   lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback), LIVES_INT_TO_POINTER(3), NULL));
         if (FN_KEYS > 3) {
           lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F4,
                                     (LiVESXModifierType)0, (LiVESAccelFlags)0,
                                     lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback), LIVES_INT_TO_POINTER(4), NULL));
+          lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F4,
+                                    (LiVESXModifierType)LIVES_SHIFT_MASK, (LiVESAccelFlags)0,
+                                    lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback), LIVES_INT_TO_POINTER(4), NULL));
           if (FN_KEYS > 4) {
             lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F5,
                                       (LiVESXModifierType)0, (LiVESAccelFlags)0,
                                       lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback), LIVES_INT_TO_POINTER(5), NULL));
+            lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F5,
+                                      (LiVESXModifierType)LIVES_SHIFT_MASK, (LiVESAccelFlags)0,
+                                      lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback), LIVES_INT_TO_POINTER(5), NULL));
             if (FN_KEYS > 5) {
               lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F6,
                                         (LiVESXModifierType)0, (LiVESAccelFlags)0,
+                                        lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback),
+                                            LIVES_INT_TO_POINTER(6), NULL));
+              lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F6,
+                                        (LiVESXModifierType)LIVES_SHIFT_MASK, (LiVESAccelFlags)0,
                                         lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback),
                                             LIVES_INT_TO_POINTER(6), NULL));
               if (FN_KEYS > 6) {
@@ -2480,9 +2499,17 @@ void create_LiVES(void) {
                                           (LiVESXModifierType)0, (LiVESAccelFlags)0,
                                           lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback),
                                               LIVES_INT_TO_POINTER(7), NULL));
+                lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F7,
+                                          (LiVESXModifierType)LIVES_SHIFT_MASK, (LiVESAccelFlags)0,
+                                          lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback),
+                                              LIVES_INT_TO_POINTER(7), NULL));
                 if (FN_KEYS > 7) {
                   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F8,
                                             (LiVESXModifierType)0, (LiVESAccelFlags)0,
+                                            lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback),
+                                                LIVES_INT_TO_POINTER(8), NULL));
+                  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F8,
+                                            (LiVESXModifierType)LIVES_SHIFT_MASK, (LiVESAccelFlags)0,
                                             lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback),
                                                 LIVES_INT_TO_POINTER(8), NULL));
                   if (FN_KEYS > 8) {
@@ -2490,9 +2517,17 @@ void create_LiVES(void) {
                                               (LiVESXModifierType)0, (LiVESAccelFlags)0,
                                               lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback),
                                                   LIVES_INT_TO_POINTER(9), NULL));
+                    lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F9,
+                                              (LiVESXModifierType)LIVES_SHIFT_MASK, (LiVESAccelFlags)0,
+                                              lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback),
+                                                  LIVES_INT_TO_POINTER(9), NULL));
                     if (FN_KEYS > 9) {
                       lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F10,
                                                 (LiVESXModifierType)0, (LiVESAccelFlags)0,
+                                                lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback),
+                                                    LIVES_INT_TO_POINTER(10), NULL));
+                      lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F10,
+                                                (LiVESXModifierType)LIVES_SHIFT_MASK, (LiVESAccelFlags)0,
                                                 lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback),
                                                     LIVES_INT_TO_POINTER(10), NULL));
                       if (FN_KEYS > 10) {
@@ -2500,9 +2535,17 @@ void create_LiVES(void) {
                                                   (LiVESXModifierType)0, (LiVESAccelFlags)0,
                                                   lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback),
                                                       LIVES_INT_TO_POINTER(11), NULL));
+                        lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F11,
+                                                  (LiVESXModifierType)LIVES_SHIFT_MASK, (LiVESAccelFlags)0,
+                                                  lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback),
+                                                      LIVES_INT_TO_POINTER(11), NULL));
                         if (FN_KEYS > 11) {
                           lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F12,
                                                     (LiVESXModifierType)0, (LiVESAccelFlags)0,
+                                                    lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback),
+                                                        LIVES_INT_TO_POINTER(12), NULL));
+                          lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F12,
+                                                    (LiVESXModifierType)LIVES_SHIFT_MASK, (LiVESAccelFlags)0,
                                                     lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback),
                                                         LIVES_INT_TO_POINTER(12), NULL));
                           // ad nauseum...

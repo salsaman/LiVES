@@ -701,6 +701,50 @@ char *weed_seed_type_to_text(uint32_t seed_type) {
   }
 }
 
+const char *weed_seed_type_to_short_text(uint32_t seed_type) {
+  switch (seed_type) {
+  case WEED_SEED_INT: return "int";
+  case WEED_SEED_INT64: return "int64";
+  case WEED_SEED_BOOLEAN: return "boolean";
+  case WEED_SEED_DOUBLE: return "double";
+  case WEED_SEED_STRING: return "string";
+  case WEED_SEED_FUNCPTR: return "funcptr";
+  case WEED_SEED_VOIDPTR: return "voidptr";
+  case WEED_SEED_PLANTPTR: return "plantptr";
+  default: return "void";
+  }
+}
+
+const char *weed_seed_to_ctype(uint32_t st, int add_space) {
+  const char *tp = NULL;
+  switch (st) {
+  case 0: tp = "void"; break;
+  case WEED_SEED_STRING: tp = "char *"; break;
+  case WEED_SEED_FUNCPTR: tp = "lives_func_t *"; break;
+  case WEED_SEED_VOIDPTR: tp = "void *"; break;
+  case WEED_SEED_PLANTPTR: tp = "weed_plant_t *"; break;
+  case WEED_SEED_INT: case WEED_SEED_BOOLEAN: case WEED_SEED_DOUBLE: case WEED_SEED_INT64:
+    if (add_space == WEED_TRUE) {
+      switch (st) {
+      case WEED_SEED_INT: tp = "int "; break;
+      case WEED_SEED_BOOLEAN: tp = "boolean "; break;
+      case WEED_SEED_DOUBLE: tp = "double "; break;
+      case WEED_SEED_INT64: tp = "int64_t "; break;
+      }
+    } else {
+      switch (st) {
+      case WEED_SEED_INT: tp = "int"; break;
+      case WEED_SEED_BOOLEAN: tp = "boolean"; break;
+      case WEED_SEED_DOUBLE: tp = "double"; break;
+      case WEED_SEED_INT64: tp = "int64_t"; break;
+      }
+    }
+    break;
+  default: tp = "void *"; break;
+  }
+  return tp;
+}
+
 const char *weed_palette_get_name(int pal) {
   switch (pal) {
   case WEED_PALETTE_RGB24:

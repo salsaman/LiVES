@@ -2579,16 +2579,15 @@ void rte_set_defs_ok(LiVESButton * button, lives_rfx_t *rfx) {
         weed_set_string_value(ptmpl, WEED_LEAF_HOST_DEFAULT, (char *)rfx->params[i].value);
         break;
       case LIVES_PARAM_STRING_LIST:
-        weed_set_int_array(ptmpl, WEED_LEAF_HOST_DEFAULT, 1, (int *)rfx->params[i].value);
+        weed_set_int_value(ptmpl, WEED_LEAF_HOST_DEFAULT, *(int *)rfx->params[i].value);
         break;
       case LIVES_PARAM_NUM:
         if (weed_leaf_seed_type(ptmpl, WEED_LEAF_DEFAULT) == WEED_SEED_DOUBLE)
-          weed_set_double_array(ptmpl, WEED_LEAF_HOST_DEFAULT, 1,
-                                (double *)rfx->params[i].value);
-        else weed_set_int_array(ptmpl, WEED_LEAF_HOST_DEFAULT, 1, (int *)rfx->params[i].value);
+          weed_set_double_value(ptmpl, WEED_LEAF_HOST_DEFAULT, *(double *)rfx->params[i].value);
+        else weed_set_int_value(ptmpl, WEED_LEAF_HOST_DEFAULT, *(int *)rfx->params[i].value);
         break;
       case LIVES_PARAM_BOOL:
-        weed_set_boolean_array(ptmpl, WEED_LEAF_HOST_DEFAULT, 1, (int *)rfx->params[i].value);
+        weed_set_boolean_value(ptmpl, WEED_LEAF_HOST_DEFAULT, *(int *)rfx->params[i].value);
         break;
       default:
         break;
@@ -2666,7 +2665,7 @@ resetdefs1:
     ninpar = num_in_params(filter, FALSE, FALSE);
     if (ninpar == 0) xinp = NULL;
 
-    xinp = (weed_plant_t **)lives_malloc((ninpar + 1) * sizeof(weed_plant_t *));
+    xinp = (weed_plant_t **)lives_calloc((ninpar + 1), sizeof(weed_plant_t *));
     x = 0;
     for (i = poffset; i < poffset + ninpar; i++) xinp[x++] = inp[i];
     xinp[x] = NULL;
@@ -2730,6 +2729,13 @@ resetdefs1:
   if (child_list) lives_list_free(child_list);
 
   make_param_box(LIVES_VBOX(pbox), rfx);
+
+  if (fx_dialog[1]->key >= 0) {
+    rfx->flags |= RFX_FLAGS_UPD_FROM_VAL;
+    update_widget_vis(rfx, fx_dialog[1]->key, fx_dialog[1]->mode);
+    rfx->flags &= ~RFX_FLAGS_UPD_FROM_VAL;
+  }
+
   lives_widget_show_all(pbox);
 
   lives_widget_queue_draw(fx_dialog[1]->dialog);

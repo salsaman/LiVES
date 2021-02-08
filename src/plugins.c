@@ -3006,7 +3006,6 @@ void rfx_free(lives_rfx_t *rfx) {
 
   if (rfx->source_type == LIVES_RFX_SOURCE_WEED && rfx->source) {
     weed_instance_unref((weed_plant_t *)rfx->source); // remove the ref we held
-    weed_instance_unref((weed_plant_t *)rfx->source); // remove the ref we held
   }
 }
 

@@ -1789,10 +1789,12 @@ typedef struct {
   boolean cs_manage;
 
   boolean dsu_valid;
+  int max_textsize;
+
   LiVESWidget *dsu_widget;
 
-  int max_textsize;
   lives_permmgr_t *permmgr;
+
   boolean pretty_colours;
 
   boolean suppress_layout_warnings;

@@ -225,6 +225,10 @@ typedef struct {
   int phase; // for sequencing
 
   int funmode;
+
+  // store the random seed at init time, then when we select a new mode we can
+  // repeat consistently
+  uint64_t orig_seed;
 } sdata_t;
 
 typedef struct {
@@ -726,7 +730,7 @@ static pt_subst_t *get_nth_word_utf8(sdata_t *sdata, char *text, int idx) {
     if (iswspace(pwc)) {
       if (idx == -1) {
         subst->length = toffs - subst->start;
-        subst->length = utoffs - subst->ustart;
+        subst->ulength = utoffs - subst->ustart;
         return subst;
       }
       isaspace = TRUE;
@@ -1034,15 +1038,19 @@ static inline void _do_reset(weed_plant_t *inst, sdata_t *sdata, char **ztext,
   *sdata->string1 = *sdata->string2 = *sdata->string3 = *sdata->string4 = *sdata->string5 = 0;
   sdata->init = -1;
   sdata->phase = 0;
-  if (layout && sdata->randmode) {
-    SET_TEXT("");
-    do {
-      sdata->funmode = FASTRAND_INT(PT_END - 1);
-    } while (sdata->funmode == PT_TERMINAL);
+  if (!ztext) {
+    if (sdata->randmode) {
+      do {
+        sdata->funmode = FASTRAND_INT(PT_END - 1);
+      } while (sdata->funmode == PT_TERMINAL);
+    }
+  } else {
     _getastring(inst, sdata, TRUE, !sdata->rndorder, FALSE);
+    if (sdata->randmode) {
+      sdata->funmode = sdata->mode;
+    }
   }
 }
-
 
 static const char *_get_last_char(sdata_t *sdata, const char *strg) {
   if (sdata->text_type != TEXT_TYPE_ASCII) {
@@ -1262,7 +1270,7 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
       switch (sdata->phase) {
       case -1:
         sdata->phase = 0;
-        GETASTRING(TRUE);
+        //GETASTRING(TRUE);
         sdata->length = 1;
         break;
       case 2:
@@ -1357,8 +1365,6 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
       if (sdata->phase == 1) {
         // reset and get a new string
         DO_RESET();
-        LETTER_DATA_FREE();
-        GETASTRING(TRUE);
         break;
       }
       // adding in phase
@@ -1483,7 +1489,6 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
     if (sdata->alarm) {
       if (sdata->phase == 1) {
         DO_RESET();
-        GETASTRING(TRUE);
         break;
       }
       // pick a letter to drop
@@ -1496,10 +1501,17 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
       sdata->int5 = 0;
     }
 
+    ldt = LETTER_DATA(sdata->count);
+    if (ldt->inactive) break;
+
     if (IS_A_SPACE(xtext)) {
       // count spaces, or ignore
       if (!sdata->bool1) {
+        SET_FONT_SIZE(sdata->dbl2);
+        GETLSIZE(&ldt->width, &ldt->height);
+        sdata->dbl1 += ldt->width;
         sdata->int2++;
+        ldt->inactive = TRUE;
         if (sdata->count == sdata->length - 1) {
           sdata->bool1 = TRUE;
           SET_ALARM(0);
@@ -1508,11 +1520,7 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
       break;
     }
 
-    SET_FONT_SIZE(sdata->dbl2);
-
     // ACTION SECTION
-    ldt = LETTER_DATA(sdata->count);
-
     if (!sdata->bool1) {
       GETLSIZE(&ldt->width, &ldt->height);
       ldt->xpos = sdata->dbl1;
@@ -1528,7 +1536,7 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
     if (!ldt->phase) {
       if (sdata->int4++ == sdata->int3) {
         // drop this one next
-        ldt->yaccel = .1;
+        ldt->yaccel = .2;
         ldt->phase = 1;
         sdata->int3 = -1;
         if (--sdata->int1 - sdata->int2 == 0) {
@@ -1541,7 +1549,7 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
     ANIM_LETTER(ldt);
 
     if (ldt->ypos + ldt->height >= height) {
-      if (fabs(ldt->yvel) <= ldt->yaccel * 4.) {
+      if (fabs(ldt->yvel) <= ldt->yaccel * 8.) {
         double dwidth, dheight;
         ldt->yaccel = ldt->yvel = 0.;
         if (ldt->rotvel != 0.) {
@@ -1573,13 +1581,13 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
           }
         }
       } else {
-        ldt->yvel = -fabs(ldt->yvel) * .8;
+        ldt->yvel = -fabs(ldt->yvel) * .6;
         ldt->rotvel += FASTRAND_DBL(.02) - .01;
       }
       if (sdata->phase == 1) {
         if (ldt->yvel == 0.) {
           if (++sdata->int5 == sdata->length - 1 - sdata->int2) {
-            GETASTRING(TRUE);
+            //GETASTRING(TRUE);
             SET_ALARM(0);
           }
         }
@@ -1725,9 +1733,6 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
         // sets start, length back to zero
         DO_RESET();
         // init next string
-        if (sdata->letter_data) LETTER_DATA_FREE();
-        GETASTRING(TRUE);
-        LETTER_DATA_INIT(sdata->tlength);
         SET_ALARM(0);
       }
     }
@@ -1768,7 +1773,7 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
       SET_MODE(PT_LETTER_MODE);
       SET_RANDOM_ORDER(FALSE);
       SET_ALLOW_BLANKS(TRUE);
-      GETASTRING(TRUE);
+      //GETASTRING(TRUE);
       LETTER_DATA_INIT(sdata->totlen);
       //sdata->variant = 1;
       if (HAS_FONT_FAMILY(FONTFAM1)) {
@@ -1798,7 +1803,7 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
       if (sdata->length <= sdata->totlen - sdata->int3) SET_ALARM(10);
       else if (sdata->length == sdata->totlen - sdata->int3 + 1) SET_ALARM(1000);
       else {
-        sdata->cstring = 0;
+        sdata->cstring = -1;
         DO_RESET();
         SET_ALARM(0);
       }
@@ -1998,7 +2003,6 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
 
     if (sdata->count == sdata->length - 1 && ldt->xpos + ldt->width + width < 0) {
       DO_RESET();
-      GETASTRING(FALSE);
       break;
     }
 
@@ -2086,7 +2090,6 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
           if (sdata->start >= sdata->length) {
             // all letters gone - restart cycle
             DO_RESET();
-            GETASTRING(TRUE);
             break;
           }
 
@@ -2137,7 +2140,6 @@ static void proctext(weed_plant_t *inst, sdata_t *sdata, weed_timecode_t tc,
       sdata->int2++;
       if (sdata->int2 == sdata->tlength - 1) {
         DO_RESET();
-        GETASTRING(TRUE);
         break;
       }
     }
@@ -2198,16 +2200,13 @@ static void reparse_text(sdata_t *sdata, const char *buff, size_t b_read) {
             sdata->xstrings[i] = stringdup("", 0);
             ulen = 1;
           } else {
-            sdata->xstrings[i] = stringdup(&buff[canstart], j - canstart);
-            ulen = utf8len(sdata->xstrings[i]) + 1;
-          }
-          sdata->totulenwb += ulen;
-          sdata->totalenwb += j - canstart + 1;
-          if (canstart < j) {
-            sdata->strings[ii++] = sdata->xstrings[i];
+            sdata->strings[ii++] = sdata->xstrings[i] = stringdup(&buff[canstart], j - canstart);
+            ulen = utf8len(sdata->xstrings[i]);
             sdata->totulennb += ulen;
-            sdata->totalennb += j - canstart + 1;
+            sdata->totalennb += j - canstart;
           }
+          sdata->totulenwb += ulen + 1;
+          sdata->totalenwb += j - canstart + 1;
           canstart = ++j;
           break;
         }
@@ -2217,10 +2216,10 @@ static void reparse_text(sdata_t *sdata, const char *buff, size_t b_read) {
       sdata->xstrings[--i] = stringdup(&buff[canstart], j - canstart);
       sdata->strings[ii] = sdata->xstrings[i];
       ulen = utf8len(sdata->xstrings[i]);
-      sdata->totulenwb += ulen;
-      sdata->totalenwb += j - canstart;
       sdata->totulennb += ulen;
       sdata->totalennb += j - canstart;
+      sdata->totulenwb += ulen + 1;
+      sdata->totalenwb += j - canstart + 1;
     }
   } else sdata->xnstrings = 0;
 }
@@ -2239,10 +2238,6 @@ static weed_error_t puretext_init(weed_plant_t *inst) {
     size_t b_read;
     gboolean erropen = FALSE;
     int fd;
-
-    // enable repeatable randomness
-    weed_set_int64_value(inst, WEED_LEAF_PLUGIN_RANDOM_SEED,
-                         weed_get_int64_value(inst, WEED_LEAF_RANDOM_SEED, NULL));
 
     // open file and read in text
     if (use_file) {
@@ -2265,6 +2260,10 @@ static weed_error_t puretext_init(weed_plant_t *inst) {
       weed_free(in_params);
       return WEED_ERROR_MEMORY_ALLOCATION;
     }
+
+    // enable repeatable randomness
+    sdata->orig_seed = weed_get_int64_value(inst, WEED_LEAF_RANDOM_SEED, NULL);
+    weed_set_int64_value(inst, WEED_LEAF_PLUGIN_RANDOM_SEED, sdata->orig_seed);
 
     sdata->use_file = use_file;
 
@@ -2411,16 +2410,16 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
     } else sdata->trigger = FALSE;
     sdata->last_trigger = (trigger == WEED_TRUE);
 
-    if (sdata->funmode != -1) mode = sdata->funmode;
+    if (sdata->randmode && sdata->mode != -1) mode = sdata->mode;
 
-    if (mode != sdata->mode) {
-      //fastrand(42);
-      sdata->mode = mode;
+    if (mode != sdata->mode || sdata->funmode != -1) {
+      // enable repeatable randomness
+      sdata->orig_seed = fastrand(sdata->orig_seed);
+      weed_set_int64_value(inst, WEED_LEAF_PLUGIN_RANDOM_SEED, sdata->orig_seed);
+
       sdata->tmode = PT_LETTER_MODE;
       sdata->timer = -1.;
-      if (sdata->funmode == -1) {
-        sdata->cstring = 0;
-      }
+      if (sdata->funmode == -1) sdata->cstring = 0;
       sdata->autotrigger = TRUE;
       sdata->variant = 0;
       sdata->dissolve = 0;
@@ -2428,6 +2427,11 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
       sdata->allow_blanks = FALSE;
       sdata->rndorder_set = FALSE;
       _do_reset(inst, sdata, NULL,  NULL);
+      if (sdata->funmode != -1) {
+        mode = sdata->funmode;
+        sdata->funmode = -1;
+      }
+      sdata->mode = mode;
     }
 
     // set timer data and alarm status
@@ -2773,6 +2777,24 @@ static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
   return WEED_SUCCESS;
 }
 
+
+
+static weed_error_t pt_disp(weed_plant_t *inst, weed_plant_t *param, int inverse) {
+  int stype = weed_leaf_seed_type(param, WEED_LEAF_VALUE);
+  if (stype == WEED_SEED_INVALID) return WEED_ERROR_NOSUCH_LEAF;
+  else {
+    weed_plant_t *gui;
+    double dval = weed_param_get_value_double(param);
+    if (inverse == WEED_TRUE) {
+      if (dval <= 0.) return WEED_ERROR_NOT_READY;
+      dval = log(dval) * 5.;
+    } else dval = exp(dval) / 5.;
+    gui = weed_param_get_gui(param);
+    return weed_set_double_value(gui, WEED_LEAF_DISPLAY_VALUE, dval);
+  }
+}
+
+
 #define N_RFX_STRINGS 8
 
 WEED_SETUP_START(200, 201) {
@@ -2840,7 +2862,9 @@ WEED_SETUP_START(200, 201) {
   gui = weed_paramtmpl_get_gui(in_params[P_MODE]);
   weed_gui_set_flags(gui, weed_gui_get_flags(gui) | WEED_GUI_REINIT_ON_VALUE_CHANGE);
 
-  in_params[P_SPEED] = weed_float_init("velocity", "_Speed multiplier (higher is faster)", 1., .1, 10.);
+  in_params[P_SPEED] = weed_float_init("velocity", "_Speed multiplier (higher is faster)", 1.61, .2, 4.);
+  gui = weed_paramtmpl_get_gui(in_params[P_SPEED]);
+  if (gui) weed_set_funcptr_value(gui, WEED_LEAF_DISPLAY_VALUE_FUNC, (weed_funcptr_t)pt_disp);
 
   in_params[P_FONT] = weed_text_init("fontname", "_Font Name", "");
 

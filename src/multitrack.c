@@ -2906,7 +2906,7 @@ void add_aparam_menuitems(lives_mt * mt) {
   LiVESWidget *menuitem;
   weed_plant_t *filter;
   lives_rfx_t *rfx;
-  register int i;
+  int i;
 
   lives_container_foreach(LIVES_CONTAINER(mt->aparam_submenu), destroy_widget, NULL);
 
@@ -16322,7 +16322,7 @@ void activate_mt_preview(lives_mt * mt) {
     if (mt->opts.fx_auto_preview) {
       mainw->no_interp = TRUE; // no interpolation - parameter is in an uncommitted state
       mt_show_current_frame(mt, FALSE);
-      mainw->no_interp = FALSE;
+      if (!mainw->unordered_blocks) mainw->no_interp = FALSE;
     }
     if (mt->apply_fx_button) {
       int nparams = mt->current_rfx->num_params;

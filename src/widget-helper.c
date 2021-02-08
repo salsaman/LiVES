@@ -12840,22 +12840,37 @@ const char *lives_textsize_to_string(int val) {
 
 #include "paramwindow.h"
 
-#define LIVES_LEAF_WIDGET_ROLE "widget_role"
+#define LIVES_LEAF_KLASS_ROLE "klass_role"
 #define LIVES_LEAF_WIDGET_FUNC "widget_func_"
 #define LIVES_LEAF_WIDGET "widget"
 #define LIVES_LEAF_KLASS "klass"
+#define LIVES_LEAF_KLASS_IDX "klass_idx"
 
 static lives_widget_klass_t *w_klasses[N_TOOLKITS][KLASSES_PER_TOOLKIT];
+static LiVESList *tk_list = NULL;
+static LiVESList *k_list[N_TOOLKITS];
 
-WIDGET_HELPER_LOCAL_INLINE lives_widget_klass_t *lives_widget_klass_new(void) {
+const LiVESList *lives_toolkits_available(void) {
+  return tk_list;
+}
+
+
+const LiVESList *widget_toolkit_klasses_list(lives_toolkit_t tk) {
+  if (tk < 1 || tk > N_TOOLKITS) return NULL;
+  return k_list[tk - 1];
+}
+
+
+WIDGET_HELPER_LOCAL_INLINE lives_widget_klass_t *lives_widget_klass_new(int idx) {
   lives_widget_klass_t *k = weed_plant_new(WEED_PLANT_LIVES);
   weed_set_int_value(k, WEED_LEAF_LIVES_SUBTYPE, LIVES_WEED_SUBTYPE_WIDGET);
+  if (idx >= 0) weed_set_int_value(k, LIVES_LEAF_KLASS_IDX, idx);
   return k;
 }
 
 WIDGET_HELPER_LOCAL_INLINE
 lives_widget_instance_t *lives_widget_instance_new(const lives_widget_klass_t *k) {
-  lives_widget_instance_t *winst = lives_widget_klass_new();
+  lives_widget_instance_t *winst = lives_widget_klass_new(-1);
   weed_set_voidptr_value(winst, LIVES_LEAF_KLASS, (void *)k);
   return winst;
 }
@@ -12871,54 +12886,101 @@ static lives_func_info_t *lives_func_info_new(int cat, lives_funcptr_t func,
   return funcinf;
 }
 
+WIDGET_HELPER_GLOBAL_INLINE int widget_klass_get_idx(const lives_widget_klass_t *k) {
+  return weed_get_int_value((weed_plant_t *)k, LIVES_LEAF_KLASS_IDX, NULL);
+}
 
 WIDGET_HELPER_GLOBAL_INLINE int widget_klass_get_role(const lives_widget_klass_t *k) {
-  return weed_get_int_value((weed_plant_t *)k, LIVES_LEAF_WIDGET_ROLE, NULL);
+  return weed_get_int_value((weed_plant_t *)k, LIVES_LEAF_KLASS_ROLE, NULL);
 }
 
 WIDGET_HELPER_LOCAL_INLINE void widget_klass_set_role(lives_widget_klass_t *k, int role) {
-  weed_set_int_value(k, LIVES_LEAF_WIDGET_ROLE, role);
+  weed_set_int_value(k, LIVES_LEAF_KLASS_ROLE, role);
 }
 
+
+static lives_func_info_t *get_func_with_rettype(lives_widget_instance_t *winst,
+    int functype, uint32_t rettype) {
+  int n_info;
+  char *lname = lives_strdup_printf("%s%d", LIVES_LEAF_WIDGET_FUNC, functype);
+  lives_func_info_t *funcinf = NULL;
+  lives_func_info_t **afuncinf
+    = (lives_func_info_t **)weed_get_voidptr_array_counted((weed_plant_t *)winst, lname, &n_info);
+  for (int i = 0; i < n_info; i++) {
+    if (afuncinf[i]->rettype == rettype) {
+      funcinf = afuncinf[i];
+      break;
+    }
+  }
+  lives_freep((void **)&afuncinf);
+  if (!funcinf) {
+    const lives_widget_klass_t *k = widget_instance_get_klass(winst);
+    if (k) {
+      afuncinf
+        = (lives_func_info_t **)weed_get_voidptr_array_counted((weed_plant_t *)k, lname, &n_info);
+      for (int i = 0; i < n_info; i++) {
+        if (afuncinf[i]->rettype == rettype) {
+          funcinf = afuncinf[i];
+          break;
+        }
+      }
+      lives_freep((void **)&afuncinf);
+    }
+  }
+  lives_free(lname);
+  return funcinf;
+}
+
+WIDGET_HELPER_LOCAL_INLINE
+void add_method(lives_widget_klass_t *k, int functype, lives_funcptr_t func, uint32_t rettype,
+                const char *fmt_args) {
+  lives_func_info_t *func_info = lives_func_info_new(0, func, rettype, fmt_args, k);
+  char *lname = lives_strdup_printf("%s%d", LIVES_LEAF_WIDGET_FUNC, functype);
+  weed_set_voidptr_value(k, lname, func_info);
+  lives_free(lname);
+}
+
+
 boolean widget_klasses_init(lives_toolkit_t tk) {
+  lives_widget_klass_t *k;
+  lives_func_info_t *afunc_info[8];
+  char *lname;
+  int i;
+
   if (tk == LIVES_TOOLKIT_GTK) {
-    tk--;
-    for (int i = 0; i < KLASSES_PER_TOOLKIT; i++) w_klasses[tk][i] = NULL;
+    tk_list = lives_list_append(tk_list, LIVES_INT_TO_POINTER(tk));
+    k_list[--tk] = NULL;
+
+    for (i = 0; i < KLASSES_PER_TOOLKIT; i++) w_klasses[tk][i] = NULL;
 
     // GtkSpinButton
-    lives_widget_klass_t *k = w_klasses[tk][LIVES_PARAM_WIDGET_SPINBUTTON] = lives_widget_klass_new();
+    k = w_klasses[tk][LIVES_PARAM_WIDGET_SPINBUTTON]
+        = lives_widget_klass_new(LIVES_PARAM_WIDGET_SPINBUTTON);
 
-    // create_func
-    lives_func_info_t *func_info;
-    lives_func_info_t *afunc_info[8];
-    char *lname;
+    // CREATE
+    add_method(k, LIVES_WIDGET_CREATE_FUNC, (lives_funcptr_t)lives_spin_button_new,
+               WEED_SEED_VOIDPTR, "Vdi");
 
-    func_info
-      = lives_func_info_new(0, (lives_funcptr_t)lives_spin_button_new, WEED_SEED_VOIDPTR, "Vdi", NULL);
-    lname = lives_strdup_printf("%s%d", LIVES_LEAF_WIDGET_FUNC, LIVES_WIDGET_CREATE_FUNC);
-    weed_set_voidptr_value(k, lname, func_info);
-    lives_free(lname);
-
+    // GET_VALUE - method with multiple return value types
     afunc_info[0]
       = lives_func_info_new(0, (lives_funcptr_t)lives_spin_button_get_value,
-                            WEED_SEED_DOUBLE, "V", NULL);
+                            WEED_SEED_DOUBLE, "V", (void *)k);
     afunc_info[1]
       = lives_func_info_new(0, (lives_funcptr_t)lives_spin_button_get_value_as_int,
-                            WEED_SEED_INT, "V", NULL);
+                            WEED_SEED_INT, "V", (void *)k);
 
     lname = lives_strdup_printf("%s%d", LIVES_LEAF_WIDGET_FUNC, LIVES_WIDGET_GET_VALUE_FUNC);
     weed_set_voidptr_array(k, lname, 2, (void **)afunc_info);
     lives_free(lname);
 
-    func_info
-      = lives_func_info_new(0, (lives_funcptr_t)lives_spin_button_set_value,
-                            WEED_SEED_BOOLEAN, "Vd", NULL);
-    lname = lives_strdup_printf("%s%d", LIVES_LEAF_WIDGET_FUNC, LIVES_WIDGET_SET_VALUE_FUNC);
-    weed_set_voidptr_value(k, lname, func_info);
-    lives_free(lname);
+    // SET_VALUE
+    add_method(k, LIVES_WIDGET_SET_VALUE_FUNC, (lives_funcptr_t)lives_spin_button_set_value,
+               WEED_SEED_BOOLEAN, "Vd");
 
-    widget_klass_set_role(k, WIDGET_ROLE_WIDGET);
-    // etc.
+    widget_klass_set_role(k, KLASS_ROLE_WIDGET);
+
+    while (i) if (w_klasses[tk][--i]) k_list[tk] = lives_list_prepend(k_list[tk], w_klasses[tk][i]);
+
     return TRUE;
   }
   return FALSE;
@@ -12933,13 +12995,12 @@ const lives_widget_klass_t *widget_klass_for_type(lives_toolkit_t tk, int typex)
 
 
 lives_widget_instance_t *widget_instance_from_klass(const lives_widget_klass_t *k, ...) {
-  if (!k || widget_klass_get_role(k) != WIDGET_ROLE_WIDGET) return NULL;
+  if (!k || widget_klass_get_role(k) != KLASS_ROLE_WIDGET) return NULL;
   else {
-    char *lname = lives_strdup_printf("%s%d", LIVES_LEAF_WIDGET_FUNC, LIVES_WIDGET_CREATE_FUNC);
     lives_func_info_t *funcinf
-      = (lives_func_info_t *)weed_get_voidptr_value((weed_plant_t *)k, lname, NULL);
-    lives_free(lname);
-    if (!funcinf || funcinf->rettype != WEED_SEED_VOIDPTR) return NULL;
+      = get_func_with_rettype((lives_widget_instance_t *)k,
+                              LIVES_WIDGET_CREATE_FUNC, WEED_SEED_VOIDPTR);
+    if (!funcinf) return NULL;
     else {
       // create fake proc_thread, which we will pass to run_funsig
       // the return value will be in the _RV_ leaf
@@ -12975,31 +13036,7 @@ const lives_widget_klass_t *widget_instance_get_klass(lives_widget_instance_t *w
 double widget_func_double(lives_widget_instance_t *winst, int functype, ...) {
   if (!winst || !weed_get_voidptr_value(winst, LIVES_LEAF_WIDGET, NULL)) return 0.;
   else {
-    int n_info;
-    char *lname = lives_strdup_printf("%s%d", LIVES_LEAF_WIDGET_FUNC, functype);
-    lives_func_info_t *funcinf = NULL;
-    lives_func_info_t **afuncinf
-      = (lives_func_info_t **)weed_get_voidptr_array_counted((weed_plant_t *)winst, lname, &n_info);
-    for (int i = 0; i < n_info; i++) {
-      if (afuncinf[i]->rettype == WEED_SEED_DOUBLE) {
-        funcinf = afuncinf[i];
-        break;
-      }
-    }
-    lives_freep((void **)&afuncinf);
-    if (!funcinf) {
-      const lives_widget_klass_t *k = widget_instance_get_klass(winst);
-      afuncinf
-        = (lives_func_info_t **)weed_get_voidptr_array_counted((weed_plant_t *)k, lname, &n_info);
-      for (int i = 0; i < n_info; i++) {
-        if (afuncinf[i]->rettype == WEED_SEED_DOUBLE) {
-          funcinf = afuncinf[i];
-          break;
-        }
-      }
-      lives_freep((void **)&afuncinf);
-    }
-    lives_free(lname);
+    lives_func_info_t *funcinf = get_func_with_rettype(winst, functype, WEED_SEED_DOUBLE);
     if (!funcinf) return 0.;
     else {
       // create fake proc_thread, which we will pass to run_funsig
@@ -13009,7 +13046,7 @@ double widget_func_double(lives_widget_instance_t *winst, int functype, ...) {
       double dval;
       va_start(xargs, functype);
       pth = lives_proc_thread_create_vargs(LIVES_THRDATTR_FG_THREAD, funcinf->function,
-                                           funcinf->rettype, funcinf->args_fmt, xargs);
+                                           WEED_SEED_DOUBLE, funcinf->args_fmt, xargs);
       call_funcsig(pth);
       va_end(xargs);
       dval = lives_proc_thread_join_double(pth);
@@ -13023,32 +13060,8 @@ double widget_func_double(lives_widget_instance_t *winst, int functype, ...) {
 int widget_func_boolean(lives_widget_instance_t *winst, int functype, ...) {
   if (!winst || !weed_get_voidptr_value(winst, LIVES_LEAF_WIDGET, NULL)) return 0.;
   else {
-    int n_info;
-    char *lname = lives_strdup_printf("%s%d", LIVES_LEAF_WIDGET_FUNC, functype);
-    lives_func_info_t *funcinf = NULL;
-    lives_func_info_t **afuncinf
-      = (lives_func_info_t **)weed_get_voidptr_array_counted((weed_plant_t *)winst, lname, &n_info);
-    for (int i = 0; i < n_info; i++) {
-      if (afuncinf[i]->rettype == WEED_SEED_BOOLEAN) {
-        funcinf = afuncinf[i];
-        break;
-      }
-    }
-    lives_freep((void **)&afuncinf);
-    if (!funcinf) {
-      const lives_widget_klass_t *k = widget_instance_get_klass(winst);
-      afuncinf
-        = (lives_func_info_t **)weed_get_voidptr_array_counted((weed_plant_t *)k, lname, &n_info);
-      for (int i = 0; i < n_info; i++) {
-        if (afuncinf[i]->rettype == WEED_SEED_BOOLEAN) {
-          funcinf = afuncinf[i];
-          break;
-        }
-      }
-      lives_freep((void **)&afuncinf);
-    }
-    lives_free(lname);
-    if (!funcinf) return 0.;
+    lives_func_info_t *funcinf = get_func_with_rettype(winst, functype, WEED_SEED_BOOLEAN);
+    if (!funcinf) return WEED_FALSE;
     else {
       // create fake proc_thread, which we will pass to run_funsig
       // the return value will be in the _RV_ leaf
@@ -13057,13 +13070,84 @@ int widget_func_boolean(lives_widget_instance_t *winst, int functype, ...) {
       int bval;
       va_start(xargs, functype);
       pth = lives_proc_thread_create_vargs(LIVES_THRDATTR_FG_THREAD, funcinf->function,
-                                           funcinf->rettype, funcinf->args_fmt, xargs);
+                                           WEED_SEED_BOOLEAN, funcinf->args_fmt, xargs);
       call_funcsig(pth);
       va_end(xargs);
       bval = lives_proc_thread_join_boolean(pth);
       weed_plant_free(pth);
       return bval;
     }
+  }
+}
+
+
+LiVESList *widget_klass_list_funcs(const lives_widget_klass_t *k, boolean list_all) {
+  // list_all ignored for now, until inheritance is implemented
+  LiVESList *funclist = NULL;
+  weed_size_t nleaves;
+  char **leaves = weed_plant_list_leaves((weed_plant_t *)k, &nleaves);
+  size_t fnlen = lives_strlen(LIVES_LEAF_WIDGET_FUNC);
+  while (nleaves) {
+    if (!lives_strncmp(leaves[--nleaves], LIVES_LEAF_WIDGET_FUNC, fnlen)) {
+      funclist = lives_list_prepend(funclist, LIVES_INT_TO_POINTER(atoi(leaves[nleaves] + fnlen)));
+    }
+    free(leaves[nleaves]);
+  }
+  free(leaves);
+  funclist = lives_list_reverse(funclist);
+  return funclist;
+}
+
+
+lives_func_info_t **get_widget_funcs_for_klass(const lives_widget_klass_t *k,
+    int functype, int *nfuncs) {
+  // TODO - when inheritance is implemented, check inherited klasses, and create
+  // unified set but avoiding duplicates with same return types
+  char *lname = lives_strdup_printf("%s%d", LIVES_LEAF_WIDGET_FUNC, functype);
+  lives_func_info_t **afuncinf
+    = (lives_func_info_t **)weed_get_voidptr_array_counted((weed_plant_t *)k, lname, nfuncs);
+  lives_free(lname);
+  return afuncinf;
+}
+
+
+const char *klass_idx_get_name(int klass_idx) {
+  switch (klass_idx) {
+  case LIVES_PARAM_WIDGET_SPINBUTTON: return "spin button";
+  case LIVES_PARAM_WIDGET_SLIDER: return "slider control";
+  case LIVES_PARAM_WIDGET_KNOB: return "knob control";
+  default: return "unknown";
+  }
+}
+
+const char *widget_toolkit_get_name(lives_toolkit_t tk) {
+  switch (tk) {
+  case LIVES_TOOLKIT_GTK: return "gtk+";
+  default: return "Unknown";
+  }
+}
+
+
+const char *klass_role_get_name(lives_toolkit_t tk, int role) {
+  switch (role) {
+  case KLASS_ROLE_WIDGET: return "widget";
+  case KLASS_ROLE_INTERFACE: return "interface";
+  case KLASS_ROLE_TK0: {
+    if (tk == LIVES_TOOLKIT_GTK) return "adjustment";
+  }
+  default: return "unknown";
+  }
+}
+
+const char *widget_functype_get_name(int func_type) {
+  switch (func_type) {
+  case LIVES_WIDGET_CREATE_FUNC: return "LIVES_WIDGET_CREATE_FUNC";
+  case LIVES_WIDGET_DESTROY_FUNC: return "LIVES_WIDGET_DESTROY_FUNC";
+  case LIVES_WIDGET_REF_FUNC: return "LIVES_WIDGET_REF_FUNC";
+  case LIVES_WIDGET_UNREF_FUNC: return "LIVES_WIDGET_UNREF_FUNC";
+  case LIVES_WIDGET_GET_VALUE_FUNC: return "LIVES_WIDGET_GET_VALUE_FUNC";
+  case LIVES_WIDGET_SET_VALUE_FUNC: return "LIVES_WIDGET_SET_VALUE_FUNC";
+  default: return "unknown";
   }
 }
 

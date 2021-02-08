@@ -4260,19 +4260,11 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   widget_helper_init();
 
-  //
-#if 0
+#ifdef WEED_WIDGETS
   widget_klasses_init(LIVES_TOOLKIT_GTK);
-  const lives_widget_klass_t *k
-    = widget_klass_for_type(LIVES_TOOLKIT_GTK, LIVES_PARAM_WIDGET_SPINBUTTON);
-  LiVESAdjustment *adj = lives_adjustment_new(2., 0., 10., 1., 1., 0.);
-  lives_widget_instance_t *winst = widget_instance_from_klass(k, adj, 1., 2);
-  int bbb = widget_func_boolean(winst, LIVES_WIDGET_SET_VALUE_FUNC,
-                                widget_instance_get_widget(winst), 8.);
-  double spval = widget_func_double(winst, LIVES_WIDGET_GET_VALUE_FUNC,
-                                    widget_instance_get_widget(winst));
-  g_print("val was %f\n", spval);
+  //show_widgets_info();
 #endif
+
   /* TRANSLATORS: localised name may be used here */
   lives_set_application_name(_("LiVES"));
   widget_opts.title_prefix = lives_strdup_printf("%s-%s: - ", lives_get_application_name(), LiVES_VERSION);

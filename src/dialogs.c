@@ -1219,7 +1219,7 @@ static void disp_fraction(double fraction_done, double timesofar, xprocess * pro
   remtime = timesofar / fraction_done - timesofar;
   remtstr = remtime_string(remtime);
   if (remtime > MIN_NOTIFY_TIME && mainw->proc_ptr->notify_cb) {
-    lives_widget_set_opacity(mainw->proc_ptr->notify_cb, 1.);
+    lives_widget_set_opacity(lives_widget_get_parent(procw->notify_cb), 1.);
     lives_widget_set_sensitive(mainw->proc_ptr->notify_cb, TRUE);
   }
   prog_label = lives_strdup_printf(_("\n%d%% done. %s\n"), (int)(fraction_done * 100.), remtstr);

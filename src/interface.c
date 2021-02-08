@@ -4765,8 +4765,9 @@ void do_keys_window(void) {
   ADD_KEYDEF(_("ctrl-down"), _("play slower"));
   ADD_KEYDEF(_("ctrl-shift-up"), _("background clip play faster"));
   ADD_KEYDEF(_("ctrl-shift-down"), _("background clip play slower"));
-  ADD_KEYDEF(_("ctrl-alt-up"), _("increase effect parameter for keygrabbed effect"));
-  ADD_KEYDEF(_("ctrl-alt-down"), _("decrease effect parameter for keybrabbed effect"));
+  ADD_KEYDEF(_("(The 'effect parameter' here is the first 'simple' numerical parameter)"), NULL);
+  ADD_KEYDEF(_("alt-up"), _("increase effect parameter for keygrabbed effect"));
+  ADD_KEYDEF(_("alt-down"), _("decrease effect parameter for keybrabbed effect"));
   ADD_KEYDEF(_("ctrl-enter"), _("reset frame rate / resync audio (foreground clip)"));
   ADD_KEYDEF(_("ctrl-shift-enter"), _("reset frame rate (background clip)"));
   ADD_KEYDEF(_("ctrl-space"), _("reverse direction (foreground clip)"));
@@ -4801,7 +4802,9 @@ void do_keys_window(void) {
   ADD_KEYDEF("t", _("enter text parameter (when effect has keyboard grab)"));
   ADD_KEYDEF(_("TAB"), _("leave text parameter (reverse of 't')"));
   ADD_KEYDEF(_("F1"), _("store/switch to bookmark 1 (first press stores clip and frame)"));
+  ADD_KEYDEF(_("shift + F1"), _("clear bookmark 1"));
   ADD_KEYDEF(_("F2"), _("store/switch to bookmark 2"));
+  ADD_KEYDEF(_("shift + F2"), _("clear bookmark 2"));
   ADD_KEYDEF(_("...etc..."), "");
   ADD_KEYDEF(_("F12"), _("clear function keys (bookmarks)"));
   ADD_KEYDEF("", "");

@@ -2728,9 +2728,9 @@ switch_point:
             mainw->frame_layer_preload = NULL;
             cleanup_preload = FALSE;
           }
-          if (mainw->frame_layer_preload) {
-            cleanup_preload = FALSE;
-          }
+          /* if (mainw->frame_layer_preload) { */
+          /*   cleanup_preload = FALSE; */
+          /* } */
         }
 
         if (mainw->frame_layer_preload && !cleanup_preload) {

@@ -94,7 +94,10 @@
 #define AUD_DIFF_MIN 0.05  ///< ignore audio seek differences < than this (seconds)
 #define AUD_DIFF_REVADJ 8. ///< allow longer seek differences when audio plauback direction reverses (multiplying factor)
 
+#ifndef HAS_EVENT_TYPEDEFS
 typedef weed_plant_t weed_event_t;
+typedef weed_plant_t weed_event_list_t;
+#endif
 
 /// various return conditions from rendering (multitrack or after recording)
 typedef enum {
@@ -135,6 +138,9 @@ void remove_frame_from_event(weed_event_t *event_list, weed_event_t *event, int 
 void remove_end_blank_frames(weed_event_t *event_list, boolean remove_filter_inits);
 void remove_filter_from_event_list(weed_event_t *event_list, weed_event_t *init_event);
 
+void rescale_param_changes(weed_event_list_t *, weed_event_t *init_event, weed_timecode_t new_init_tc,
+                           weed_event_t *deinit_event, weed_timecode_t new_deinit_tc, double fps);
+
 weed_event_t *process_events(weed_event_t *next_event, boolean process_audio, ticks_t curr_tc);  ///< RT playback
 void event_list_close_start_gap(weed_event_t *event_list);
 void event_list_add_track(weed_event_t *event_list, int layer);
@@ -147,7 +153,7 @@ void event_list_add_end_events(weed_event_t *event_list, boolean is_final);
 /// lib-ish stuff
 weed_event_t *lives_event_list_new(weed_event_t *elist, const char *cdate);
 int weed_event_get_type(weed_event_t *event);
-weed_timecode_t weed_event_set_timecode(weed_event_t *, weed_timecode_t tc);
+weed_error_t weed_event_set_timecode(weed_event_t *, weed_timecode_t tc);
 weed_timecode_t weed_event_get_timecode(weed_event_t *);
 
 int weed_frame_event_get_tracks(weed_event_t *event,  int **clips, int64_t **frames); // returns ntracks

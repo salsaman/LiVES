@@ -116,6 +116,7 @@ if (-f "blank$img_ext") {
 init|$p0_max=$p2_max=$width-1;$p2=$width-1;$p0=0;
 init|$p1_max=$p3_max=$height-1;$p3=$height-1;$p1=0;
 init|$p5=$width;$p6=$height;
+init|$p8=$p9=0;
 0|$p8_max=$p5-$p2+$p0-1;
 0|if ($p4) {$p2=$width-1-$p0;$p8=int(($p5-$p0_max)/2.+$p0);}
 0|if ($p0>$p2) {$p2=$p0;}

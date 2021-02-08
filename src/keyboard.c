@@ -141,6 +141,7 @@ boolean key_press_or_release(LiVESWidget *widget, LiVESXEventKey *event, livespo
 void handle_cached_keys(void) {
   // smooth out auto repeat for VJ scratch keys
   if (cfile->pb_fps == 0.) return;
+  //g_print("CACHED k %d mod %d\n", cached_key, cached_mod);
   if (cached_key != 0) {
     lives_accel_groups_activate(LIVES_WIDGET_OBJECT(LIVES_MAIN_WINDOW_WIDGET),
                                 (uint32_t)cached_key, (LiVESXModifierType)(cached_mod | LIVES_SPECIAL_MASK));
@@ -300,9 +301,12 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
 
   if (down && (unicode == LIVES_KEY_Left || unicode == LIVES_KEY_Right
                || unicode == LIVES_KEY_Up || unicode == LIVES_KEY_Down) &&
-      (keymod & LIVES_CONTROL_MASK)) {
+      (keymod & (LIVES_CONTROL_MASK | LIVES_ALT_MASK))) {
     cached_key = unicode;
-    cached_mod = LIVES_CONTROL_MASK;
+    cached_mod = 0;
+    if (keymod & LIVES_CONTROL_MASK) {
+      cached_mod = LIVES_CONTROL_MASK;
+    }
     if (keymod & LIVES_ALT_MASK) {
       cached_mod |= LIVES_ALT_MASK;
     }

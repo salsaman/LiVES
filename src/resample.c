@@ -312,11 +312,11 @@ void pre_analyse(weed_plant_t *elist) {
 
   weed_event_t *event = get_first_event(elist), *last = NULL, *xevent;
   weed_event_t *pframev = NULL, *ppframev = NULL;
-  int pclip = 0, ppclip = 0;
-  int pframe = 0, ppframe = 0;
-  weed_timecode_t stc = 0, etc, tc, ptc = 0, pptc = 0;
+  weed_timecode_t stc = 0, etc, tc, ptc = 0, pptc = 0, ntc = 0;
   lives_audio_track_state_t *ststate = NULL, *enstate;
   ticks_t offs = 0;
+  int pclip = 0, ppclip = 0;
+  int pframe = 0, ppframe = 0;
   int ev_api = 100;
   int ntracks;
 
@@ -375,15 +375,31 @@ void pre_analyse(weed_plant_t *elist) {
         double tpos = ststate[0].seek + ststate[0].vel * dtime;
         double ratio = fabs(enstate[0].seek - ststate[0].seek) / fabs(tpos - ststate[0].seek);
         double dtime;
-        weed_timecode_t otc = 0, ntc = 0;
+        weed_timecode_t otc = 0;
         // now have calculated the ratio, we can backtrack to start audio event, and adjust tcs
         // new_tc -> start_tc + diff * ratio
         for (xevent = last; xevent != event; xevent = get_next_event(xevent)) {
+          int etype = get_event_type(xevent);
           otc = get_event_timecode(xevent);
           dtime = (double)(otc - stc) / TICKS_PER_SECOND_DBL;
           dtime *= ratio;
           ntc = stc + offs + (ticks_t)(dtime * TICKS_PER_SECOND_DBL);
-          weed_event_set_timecode(xevent, ntc);
+          if (etype == WEED_EVENT_TYPE_FILTER_DEINIT) {
+            weed_timecode_t new_tc;
+            weed_plant_t *init_event
+              = (weed_plant_t *)weed_get_voidptr_value(xevent, WEED_LEAF_INIT_EVENT, NULL);
+            if (weed_plant_has_leaf(init_event, "new_tc"))
+              new_tc = weed_get_int64_value(init_event, "new_tc", NULL);
+            else
+              new_tc = weed_event_get_timecode(init_event);
+            rescale_param_changes(elist, init_event, new_tc, xevent, ntc, 0.);
+            weed_leaf_copy(init_event, WEED_LEAF_TIMECODE, init_event, "new_tc");
+            weed_leaf_delete(init_event, "new_tc");
+          }
+          if (etype == WEED_EVENT_TYPE_FILTER_INIT)
+            weed_set_int64_value(xevent, "new_tc", ntc);
+          else
+            weed_event_set_timecode(xevent, ntc);
         }
         offs += ntc - otc;
       }
@@ -399,11 +415,27 @@ void pre_analyse(weed_plant_t *elist) {
 
   // we hit the end, just add offs
   for (xevent = last; xevent; xevent = get_next_event(xevent)) {
+    int etype = get_event_type(xevent);
     tc = get_event_timecode(xevent);
-    weed_event_set_timecode(xevent, tc + offs);
+    ntc = tc + offs;
+    if (etype == WEED_EVENT_TYPE_FILTER_DEINIT) {
+      weed_timecode_t new_tc;
+      weed_plant_t *init_event
+        = (weed_plant_t *)weed_get_voidptr_value(xevent, WEED_LEAF_INIT_EVENT, NULL);
+      if (weed_plant_has_leaf(init_event, "new_tc"))
+        new_tc = weed_get_int64_value(init_event, "new_tc", NULL);
+      else
+        new_tc = weed_event_get_timecode(init_event);
+      rescale_param_changes(elist, init_event, new_tc, xevent, ntc, 0.);
+      weed_leaf_copy(init_event, WEED_LEAF_TIMECODE, init_event, "new_tc");
+      weed_leaf_delete(init_event, "new_tc");
+    }
+    if (etype == WEED_EVENT_TYPE_FILTER_INIT)
+      weed_set_int64_value(xevent, "new_tc", ntc);
+    else
+      weed_event_set_timecode(xevent, ntc);
   }
 }
-
 
 
 /**
@@ -676,7 +708,10 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
             }
           }
           if (!list) {
+            weed_timecode_t iitc, ddtc;
             weed_event_t *out_event = get_last_event(out_list);
+            weed_plant_t *oinit_event
+              = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT, NULL);
             init_event = weed_get_voidptr_value(out_event, WEED_LEAF_INIT_EVENT, NULL);
             weed_leaf_dup(out_event, init_event, WEED_LEAF_IN_PARAMETERS);
             if (!is_final) deinit_events = lives_list_prepend(deinit_events, event);
@@ -689,6 +724,15 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
               }
               out_list = xout_list;
             }
+            iitc = weed_event_get_timecode(init_event);
+            ddtc = weed_event_get_timecode(out_event);
+
+            weed_event_set_timecode(init_event, weed_event_get_timecode(oinit_event) - offset_tc);
+            weed_event_set_timecode(out_event, weed_event_get_timecode(event) - offset_tc);
+            rescale_param_changes(out_list, init_event, iitc, out_event, ddtc, qfps);
+
+            weed_event_set_timecode(init_event, iitc);
+            weed_event_set_timecode(out_event, ddtc);
           }
           break;
         case WEED_EVENT_TYPE_PARAM_CHANGE:
@@ -702,7 +746,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
             void **pchanges;
             weed_event_t *pch_event, *init_event, *pchange, *npchange;
             int nchanges, pnum;
-            if (!(xout_list = copy_with_check(event, out_list, in_tc - offset_tc, what, 0, &pch_event))) {
+            if (!(xout_list = copy_with_check(event, out_list, out_tc, what, 0, &pch_event))) {
               event_list_free(out_list);
               out_list = NULL;
               goto q_done;
@@ -842,6 +886,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           weed_leaf_dup(newframe, frame_event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET);
         }
         weed_leaf_dup(newframe, frame_event, WEED_LEAF_OVERLAY_TEXT);
+        weed_set_int64_value(newframe, "fake_tc", weed_event_get_timecode(frame_event) - offset_tc);
 
         lives_freep((void **)&frames);
         lives_freep((void **)&clips);

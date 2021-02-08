@@ -946,8 +946,6 @@ boolean on_framedraw_mouse_start(LiVESWidget * widget, LiVESXEventButton * event
   // TODO - dispvals
   case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
     if (framedraw->xstart_param->dp > 0)
-
-
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xstart);
     else
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),

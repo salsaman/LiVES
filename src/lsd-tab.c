@@ -231,19 +231,7 @@ char *weed_plant_to_header(weed_plant_t *plant, const char *tname) {
   for (int i = 0; leaves[i]; i++) {
     uint32_t st = weed_leaf_seed_type(plant, leaves[i]);
     weed_size_t ne = weed_leaf_num_elements(plant, leaves[i]);
-    char *tp;
-    switch (st) {
-    case WEED_SEED_INT: tp = "int "; break;
-    case WEED_SEED_BOOLEAN: tp = "boolean "; break;
-    case WEED_SEED_DOUBLE: tp = "double "; break;
-    case WEED_SEED_STRING: tp = "char *"; break;
-    case WEED_SEED_INT64: tp = "int64_t "; break;
-    case WEED_SEED_FUNCPTR: tp = "lives_func_t *"; break;
-    case WEED_SEED_VOIDPTR: tp = "void *"; break;
-    case WEED_SEED_PLANTPTR: tp = "weed_plant_t *"; break;
-    default: tp = "void *"; break;
-    }
-
+    const char *tp = weed_seed_to_ctype(st, WEED_TRUE);
     if (ne > 1) ar = lives_strdup_printf("[%d]", ne);
     line = lives_strdup_printf("\n  %s%s%s;", tp, leaves[i], ar ? ar : "");
     hdr = lives_concat(hdr, line);

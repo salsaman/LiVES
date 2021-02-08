@@ -83,6 +83,9 @@ LiVESList *do_onchange_init(lives_rfx_t *rfx) {
 static void on_paramwindow_button_clicked2(LiVESButton *button, lives_rfx_t *rfx) {
   // close from rte window
   on_paramwindow_button_clicked(button, rfx);
+  if (rfx->source_type == LIVES_RFX_SOURCE_WEED && rfx->source) {
+    weed_instance_unref((weed_plant_t *)rfx->source); // remove the ref we held
+  }
   lives_freep((void **)&fx_dialog[1]);
 }
 
@@ -1339,11 +1342,10 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
               if (param->type == LIVES_PARAM_STRING && LIVES_IS_ENTRY(param->widgets[0])) {
                 if (param->special_type != LIVES_PARAM_SPECIAL_TYPE_FONT_CHOOSER) {
                   lives_layout_expansion_row_new(LIVES_LAYOUT(layoutx), widget_opts.last_container);
-                }
-              }
-            }
-          }
-        } else if (!strncmp(array[j], "fill", 4)) {
+		  // *INDENT-OFF*
+                }}}}}
+	// *INDENT-ON*
+        else if (!strncmp(array[j], "fill", 4)) {
           //// fill //////////////////
           // (can be filln)
 
@@ -1571,7 +1573,7 @@ int get_param_widget_by_type(lives_param_t *param, int wtype) {
 }
 
 
-boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_slider) {
+boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add_slider) {
   // box here is vbox inside top_hbox inside top_dialog
 
   // add parameter pnum for rfx to box
@@ -1966,7 +1968,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
 }
 
 
-LiVESWidget *add_param_label_to_box(LiVESBox *box, boolean do_trans, const char *text) {
+LiVESWidget *add_param_label_to_box(LiVESBox * box, boolean do_trans, const char *text) {
   LiVESWidget *label;
 
   lives_box_set_homogeneous(LIVES_BOX(box), FALSE);
@@ -1994,7 +1996,7 @@ LiVESWidget *add_param_label_to_box(LiVESBox *box, boolean do_trans, const char 
 }
 
 
-LiVESSList *add_usrgrp_to_livesgrp(LiVESSList *u2l, LiVESSList *rbgroup, int usr_number) {
+LiVESSList *add_usrgrp_to_livesgrp(LiVESSList * u2l, LiVESSList * rbgroup, int usr_number) {
   lives_widget_group_t *wgroup = (lives_widget_group_t *)lives_malloc(sizeof(lives_widget_group_t));
   wgroup->usr_number = usr_number;
   wgroup->rbgroup = rbgroup;
@@ -2004,7 +2006,7 @@ LiVESSList *add_usrgrp_to_livesgrp(LiVESSList *u2l, LiVESSList *rbgroup, int usr
 }
 
 
-lives_widget_group_t *livesgrp_from_usrgrp(LiVESSList *u2l, int usrgrp) {
+lives_widget_group_t *livesgrp_from_usrgrp(LiVESSList * u2l, int usrgrp) {
   lives_widget_group_t *group;
   LiVESSList *list = u2l;
   for (; list; list = list->next) {
@@ -2361,6 +2363,14 @@ boolean set_value_from_dispval(LiVESAdjustment * from, lives_param_t *param) {
     pnum = get_param_widget_by_type(param, LIVES_PARAM_WIDGET_KNOB);
     if (pnum >= 0) lives_widget_set_tooltip_text(param->widgets[pnum], ttext);
     lives_free(ttext);
+  }
+  if (!ret) {
+    if (param->type == LIVES_PARAM_NUM) {
+      if (!param->dp)
+        set_int_param(param->value, (int)lives_adjustment_get_value(from));
+      else
+        set_double_param(param->value, lives_adjustment_get_value(from));
+    }
   }
   return ret;
 }

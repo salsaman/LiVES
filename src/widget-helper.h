@@ -1503,7 +1503,7 @@ const widget_opts_t _def_widget_opts = {
 #define WH_LAYOUT_KEY "_wh_layout"
 
 // will be moved to separate header after testing
-#define WEED_WIDGETS
+//#define WEED_WIDGETS
 #ifdef WEED_WIDGETS
 
 #include "main.h"
@@ -1518,36 +1518,52 @@ typedef enum {
   LIVES_TOOLKIT_GTK,
 } lives_toolkit_t;
 
+// must be called once only, before any other functions for the toolkit
+boolean widget_klasses_init(lives_toolkit_t);
+
+// return list of initialised toolkits (data is LIVES_IN_TO_POINTER(tk_idx))
+// list should not be freed
+const LiVESList *widget_toolkits_available(void);
+
+const char *widget_toolkit_get_name(lives_toolkit_t);
+
 typedef weed_plant_t lives_widget_klass_t;
 typedef weed_plant_t lives_widget_instance_t;
 
-boolean widget_klasses_init(lives_toolkit_t);
+// return read-only list of lives_widget_klass_t * : list must not be freed
+const LiVESList *widget_toolkit_klasses_list(lives_toolkit_t);
 
-// return list of lives_widget_klass_t *
-const LiVESList *widget_toolkit_list_klasses(lives_toolkit_t);
+// returns LIVES_PARAM_WIDGET_* value
+int widget_klass_get_idx(const lives_widget_klass_t *);
+
+// returns the human readable name for a klass_idx, e.g "spin button", "scale"
+const char *klass_idx_get_name(int klass_idx);
 
 enum {
-  WIDGET_ROLE_UNKNOWN,
-  WIDGET_ROLE_WIDGET,
-  WIDGET_ROLE_INTERFACE, // funcs only, non-instantiable
-  WIDGET_ROLE_TK0, // toolkit specific roles
-  WIDGET_ROLE_TK1, //
-  WIDGET_ROLE_TK2, //
-  WIDGET_ROLE_TK3, //
-  WIDGET_ROLE_TK4, //
-  WIDGET_ROLE_TK5, //
-  WIDGET_ROLE_TK6, //
-  WIDGET_ROLE_TK7, //
-  WIDGET_ROLE_OTHER //
+  KLASS_ROLE_UNKNOWN,
+  KLASS_ROLE_WIDGET,
+  KLASS_ROLE_INTERFACE, // funcs only, non-instantiable
+  KLASS_ROLE_TK0, // toolkit specific roles (GtkAdjustment for gtk+)
+  KLASS_ROLE_TK1, //
+  KLASS_ROLE_TK2, //
+  KLASS_ROLE_TK3, //
+  KLASS_ROLE_TK4, //
+  KLASS_ROLE_TK5, //
+  KLASS_ROLE_TK6, //
+  KLASS_ROLE_TK7, //
+  KLASS_ROLE_OTHER //
 };
 
 // wtype is a LIVES_PARAM_TYPE_* from paramwindow.h
 const lives_widget_klass_t *widget_klass_for_type(lives_toolkit_t, int wtype);
-lives_toolkit_t widget_klass_get_toolkit(const lives_widget_klass_t *);
+lives_toolkit_t widget_klass_get_toolkit(const lives_widget_klass_t *); // TODO
 int widget_klass_get_role(const lives_widget_klass_t *);
 
+// returns the human readable name, e.g "widget", "interface" or a toolkit specific value
+const char *klass_role_get_name(lives_toolkit_t, int role);
+
 // list should be freed after use
-LiVESList *widget_klass_inherits_from(const lives_widget_klass_t *);
+LiVESList *widget_klass_inherits_from(const lives_widget_klass_t *); // TODO
 
 enum {
   LIVES_WIDGET_FUNC_INVALID,
@@ -1562,10 +1578,18 @@ enum {
 
 // returns list of LIVES_WIDGET_FUNC_* using LIVES_INT_TO_POINTER
 // list all is TRUE, also lists inherited functions
+// free after use
 LiVESList *widget_klass_list_funcs(const lives_widget_klass_t *, boolean list_all);
 
-// defn. in threading.h, "data" points to inherited klass (NULL if not inherited)
-lives_func_info_t *get_widget_func_for_klass(const lives_widget_klass_t *, int functype);
+// returns human readable name of function, e.g "create", "destroy", "get value", "set value"
+const char *widget_functype_get_name(int func_type);
+
+// defn. in threading.h, "data" points to function source, either self or an inherited klass
+// functions are searched for in order: klass, inherited klasses
+// may return multiple values with differing return types, however there can only be one per type
+// nfuncs tells how many were found, if nfuncs is zero, the function was not found and NULL is returned
+// the returned array should be freed if non-NULL, but not the actual array elements
+lives_func_info_t **get_widget_funcs_for_klass(const lives_widget_klass_t *, int functype, int *nfuncs);
 
 // calls LIVES_WIDGET_CREATE_FUNC
 lives_widget_instance_t *widget_instance_from_klass(const lives_widget_klass_t *, ...);
@@ -1573,18 +1597,31 @@ const lives_widget_klass_t *widget_instance_get_klass(lives_widget_instance_t *)
 
 void *widget_instance_get_widget(lives_widget_instance_t *);
 
-// defn. in threading.h, "data" points to the klass (NULL if the function is overloaded for inst)
-lives_func_info_t *get_widget_func_info(lives_widget_instance_t *, int functype);
+// returns list of LIVES_WIDGET_FUNC_* using LIVES_INT_TO_POINTER
+// if inherited is TRUE, only list functions inherited from the klass
+// if inherited is FALSE, only list functions overriden for instance
+// free after use
+LiVESList *widget_instance_list_funcs(lives_widget_instance_t *, boolean inherited); // TODO
+
+// defn. in threading.h, "data" points to the function source, either a klass or the instance itself
+// functions are searched for in order: instance, parent klass, inherited klasses
+// may return multiple values with differing return types, however there can only be one per type
+// nfuncs tells how many were found, if nfuncs is zero, the function was not found and NULL is returned
+// the returned array should be freed if non-NULL, but not the actual array elements
+const lives_func_info_t **get_widget_funcs_for_instance(lives_widget_instance_t *,
+    int functype, int *nfuncs); // TODO
 
 void widget_func_void(lives_widget_instance_t *, int functype);
 int widget_func_int(lives_widget_instance_t *, int functype);
 double widget_func_double(lives_widget_instance_t *, int functype, ...);
 int widget_func_boolean(lives_widget_instance_t *, int functype, ...);
-char *widget_func_string(lives_widget_instance_t *, int functype);
 int64_t widget_func_int64(lives_widget_instance_t *, int functype);
+char *widget_func_string(lives_widget_instance_t *, int functype);
 lives_funcptr_t widget_func_funcptr(lives_widget_instance_t *, int functype);
 void *widget_func_voidptr(lives_widget_instance_t *, int functype);
 weed_plantptr_t widget_func_plantptr(lives_widget_instance_t *, int functype);
+
+boolean lives_widget_klass_show_info(const lives_widget_klass_t *);
 
 #endif
 

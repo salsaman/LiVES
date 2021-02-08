@@ -1081,4 +1081,67 @@ int test_palette_conversions(void) {
   return 0;
 }
 
+#ifdef WEED_WIDGETS
+void show_widgets_info(void) {
+  // list toolkits
+  const LiVESList *tklist = lives_toolkits_available();
+  LiVESList *list = (LiVESList *)tklist;
+  for (; list; list = list->next) {
+    int tk = LIVES_POINTER_TO_INT(list->data);
+    const char *tkname = widget_toolkit_get_name(tk);
+    const LiVESList *klist = widget_toolkit_klasses_list(tk);
+    LiVESList *list2 = (LiVESList *)klist;
+    g_print("\n - Showing details for toolkit '%s' - \n\n", tkname);
+    for (; list2; list2 = list2->next) {
+      LiVESList *fnlist, *list3;
+      const lives_widget_klass_t *k = (const lives_widget_klass_t *)list2->data;
+      int kidx = widget_klass_get_idx(k);
+      const char *kname = klass_idx_get_name(kidx);
+      const char *krole = klass_role_get_name(tk, widget_klass_get_role(k));
+      g_print("Klass type '%s' (%s) provides functions:\n", kname, krole);
+      list3 = fnlist = widget_klass_list_funcs(k, TRUE);
+      for (; list3; list3 = list3->next) {
+        lives_func_info_t **funcinfo;
+        int nfuncs, fnidx = LIVES_POINTER_TO_INT(list3->data);
+        const char *fname = widget_functype_get_name(fnidx);
+        g_print("%s:", fname);
+        funcinfo = get_widget_funcs_for_klass(k, fnidx, &nfuncs);
+        if (nfuncs > 1) g_print(" %d alternatives found\n", nfuncs);
+        else g_print("\n");
+        for (int j = 0; j < nfuncs; j++) {
+          g_print("\t%swidget_func_%s(winst, %s",
+                  weed_seed_to_ctype(funcinfo[j]->rettype, WEED_TRUE),
+                  weed_seed_type_to_short_text(funcinfo[j]->rettype), fname);
+          if (!*funcinfo[j]->args_fmt) g_print("void");
+          else {
+            int pc = 0;
+            char c = funcinfo[j]->args_fmt[pc];
+            while (c) {
+              int n = 0;
+              switch (c) {
+              case 'i' : n = 1; break;
+              case 'd' : n = 2; break;
+              case 'b' : n = 3; break;
+              case 'I' : n = 4; break;
+              case 's' : n = 5; break;
+              case 'f' : case 'F' : n = 64; break;
+              case 'v' : case 'V': n = 65; break;
+              case 'p' : case 'P': n = 66; break;
+              default: break;
+              }
+              g_print(", %s", weed_seed_to_ctype(n, WEED_FALSE));
+              c = funcinfo[j]->args_fmt[++pc];
+            }
+          }
+          g_print(");\n");
+        }
+        lives_free(funcinfo);
+        g_print("\n");
+      }
+      lives_list_free(fnlist);
+    }
+  }
+}
+#endif
+
 #endif

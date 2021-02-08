@@ -25,8 +25,12 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-#define WEED_EVENT_API_VERSION 123
-#define WEED_EVENT_API_VERSION_123
+#define WEED_EVENT_API_VERSION 124
+#define WEED_EVENT_API_VERSION_124
+
+#define HAS_EVENT_TYPEDEFS
+typedef weed_plant_t weed_event_t;
+typedef weed_plant_t weed_event_list_t;
 
 #define WEED_PLANT_EVENT 256
 #define WEED_PLANT_EVENT_LIST 257

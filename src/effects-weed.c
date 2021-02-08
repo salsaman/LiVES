@@ -3400,8 +3400,9 @@ static void weed_apply_filter_map(weed_plant_t **layers, weed_plant_t *filter_ma
           if ((idx = weed_get_idx_for_hashname(filter_hash, TRUE)) != -1) {
             weed_plant_t *filter = get_weed_filter(idx);
             if (has_video_chans_in(filter, FALSE) && has_video_chans_out(filter, FALSE)) {
-              int nintracks, *in_tracks = weed_get_int_array_counted(init_events[i], WEED_LEAF_IN_TRACKS, &nintracks);
-              for (register int j = 0; j < nintracks; j++) {
+              int nintracks, *in_tracks = weed_get_int_array_counted(init_events[i],
+                                          WEED_LEAF_IN_TRACKS, &nintracks);
+              for (int j = 0; j < nintracks; j++) {
                 if (j >= mainw->num_tracks) break;
                 if (mainw->active_track_list[in_tracks[j]] > 0) {
                   is_valid = TRUE;
@@ -3415,7 +3416,7 @@ static void weed_apply_filter_map(weed_plant_t **layers, weed_plant_t *filter_ma
           /// avoid applying to non-active tracks
           if (!is_valid) continue;
 
-          if (pchains && pchains[key]) {
+          if (mainw->multitrack && pchains && pchains[key]) {
             interpolate_params(instance, pchains[key], tc); // interpolate parameters during playback
           }
         }
@@ -8978,7 +8979,7 @@ void rec_param_change(weed_plant_t *inst, int pnum) {
   }
 
   // do not record changes for generators - those get recorded to scrap_file or ascrap_file
-  if (enabled_in_channels(inst, FALSE) == 0) {
+  if (!enabled_in_channels(inst, FALSE)) {
     weed_instance_unref(inst);
     return;
   }
@@ -9040,20 +9041,6 @@ void weed_set_blend_factor(int hotkey) {
 
   inc_count = enabled_in_channels(inst, FALSE);
 
-  /* filter_mutex_unlock(hotkey); */
-  /* // record old value */
-  /* //copyto = set_copy_to(inst, pnum, FALSE); */
-  /* filter_mutex_lock(hotkey); */
-
-  if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS) && inc_count > 0) {
-    //pthread_mutex_lock(&mainw->event_list_mutex);
-    rec_param_change(inst, pnum);
-    /* if (copyto > -1) { */
-    /*   rec_param_change(inst, copyto); */
-    /* } */
-    //pthread_mutex_unlock(&mainw->event_list_mutex);
-  }
-
   if (weed_param_does_wrap(in_param)) {
     if (mainw->blend_factor >= 256.) mainw->blend_factor -= 256.;
     else if (mainw->blend_factor <= -1.) mainw->blend_factor += 256.;
@@ -9086,7 +9073,8 @@ void weed_set_blend_factor(int hotkey) {
     mind = weed_get_double_value(paramtmpl, WEED_LEAF_MIN, NULL);
     maxd = weed_get_double_value(paramtmpl, WEED_LEAF_MAX, NULL);
 
-    weed_set_double_value(in_param, WEED_LEAF_VALUE, mind + (mainw->blend_factor / KEYSCALE * (maxd - mind)));
+    weed_set_double_value(in_param, WEED_LEAF_VALUE,
+                          mind + (mainw->blend_factor / KEYSCALE * (maxd - mind)));
     vald = weed_get_double_value(in_param, WEED_LEAF_VALUE, NULL);
 
     list = lives_list_append(list, lives_strdup_printf("%.4f", vald));
@@ -9113,17 +9101,9 @@ void weed_set_blend_factor(int hotkey) {
     break;
   }
 
-  /* filter_mutex_unlock(hotkey); */
-  /* set_copy_to(inst, pnum, TRUE); */
-  /* filter_mutex_lock(hotkey); */
-
-  if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS) && inc_count > 0) {
-    //pthread_mutex_lock(&mainw->event_list_mutex);
+  if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING
+      && (prefs->rec_opts & REC_EFFECTS) && inc_count > 0) {
     rec_param_change(inst, pnum);
-    /* if (copyto > -1) { */
-    /*   rec_param_change(inst, copyto); */
-    /* } */
-    //pthread_mutex_unlock(&mainw->event_list_mutex);
   }
   weed_instance_unref(inst);
   filter_mutex_unlock(hotkey);
@@ -10649,7 +10629,7 @@ boolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t t
   int num_params, offset = 0;
 
   do {
-    if (!pchains  || (in_params = weed_instance_get_in_params(inst, &num_params)) == NULL) continue;
+    if (!pchains || (in_params = weed_instance_get_in_params(inst, &num_params)) == NULL) continue;
     for (int i = offset; i < offset + num_params; i++) {
       if (!is_hidden_param(inst, i - offset)) {
         pchain = pchains[i];

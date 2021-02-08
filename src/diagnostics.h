@@ -25,4 +25,8 @@ void lives_struct_test(void);
 void benchmark(void);
 
 void hash_test(void);
+
+#ifdef WEED_WIDGETS
+void show_widgets_info(void);
+#endif
 #endif

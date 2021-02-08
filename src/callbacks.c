@@ -11323,7 +11323,7 @@ autolives_fail:
                              livespointer clip_number) {
     // ctrl-fn key will store a clip for higher switching
     int clip = LIVES_POINTER_TO_INT(clip_number) - 1;
-    register int i;
+    int i;
 
     if (!LIVES_IS_INTERACTIVE) return TRUE;
 
@@ -11335,6 +11335,11 @@ autolives_fail:
       for (i = 0; i < FN_KEYS - 1; i++) {
         mainw->clipstore[i][0] = -1;
       }
+      return TRUE;
+    }
+
+    if (mod == LIVES_SHIFT_MASK) {
+      mainw->clipstore[clip][0] = -1;
       return TRUE;
     }
 

@@ -125,7 +125,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t bu
   if (buflen <= 0) {
     tbuff = (LiVESTextBuffer *)buff;
     buflen = get_read_buff_size(BUFF_SIZE_READ_LARGE);
-    xbuff = (char *)lives_calloc(1, buflen);
+    xbuff = (char *)lives_calloc(buflen, 1);
   } else {
     xbuff = buff;
     lives_memset(xbuff, 0, 1);
@@ -152,7 +152,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t bu
       while (1) {
         strg = fgets(xbuff + totlen, tbuff ? buflen : buflen - totlen, fp);
         err = ferror(fp);
-        if (err != 0 || !strg || !(*strg)) break;
+        if (err || !strg || !*strg) break;
         slen = lives_strlen(xbuff);
         if (tbuff) {
           lives_text_buffer_get_end_iter(LIVES_TEXT_BUFFER(tbuff), &end_iter);
@@ -161,7 +161,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t bu
         } else {
           //lives_snprintf(buff + totlen, buflen - totlen, "%s", xbuff);
           totlen = slen;
-          if (slen >= buflen - 1) break;
+          if (totlen >= buflen - 1) break;
         }
       }
       pclose(fp);

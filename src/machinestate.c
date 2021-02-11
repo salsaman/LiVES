@@ -1912,12 +1912,14 @@ LiVESResponseType send_to_trash(const char *item) {
     char *mp1 = get_mountpount_for(item);
     char *mp2 = get_mountpount_for(capable->home_dir);
     if (!lives_strcmp(mp1, mp2)) {
-      char *localshare = lives_strdup(capable->xdg_data_home);
-      if (!*localshare) {
-	lives_free(localshare);
+      char *localshare;
+      if (!capable->xdg_data_home) capable->xdg_data_home = getenv("XDG_DATA_HOME");
+      if (!capable->xdg_data_home) capable->xdg_data_home = lives_strdup("");
+      if (!*capable->xdg_data_home)
 	localshare = lives_build_path(capable->home_dir, LOCAL_HOME_DIR, "share", NULL);
-      }
+      else localshare = lives_strdup(capable->xdg_data_home);
       trashdir = lives_build_path(localshare, "Trash", NULL);
+      lives_free(localshare);
       trashinfodir = lives_build_path(trashdir, "info", NULL);
       trashfilesdir = lives_build_path(trashdir, "files", NULL);
       umask = capable->umask;
@@ -2085,7 +2087,6 @@ boolean get_wm_caps(void) {
 #endif
 
   capable->wm_type = getenv(XDG_SESSION_TYPE);
-
   wmname = getenv(XDG_CURRENT_DESKTOP);
 
   if (!wmname) {

@@ -5085,6 +5085,7 @@ void sensitize_rfx(void) {
     if (mainw->resize_menuitem) {
       lives_widget_set_sensitive(mainw->resize_menuitem, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
     }
+    if (mainw->rfx_submenu) lives_widget_set_sensitive(mainw->rfx_submenu, TRUE);
   }
 }
 

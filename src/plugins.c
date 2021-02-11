@@ -2935,11 +2935,14 @@ void rfx_copy(lives_rfx_t *dest, lives_rfx_t *src, boolean full) {
   // Warning, does not copy all fields (full will do that)
   lives_memcpy(dest->delim, src->delim, 2);
   dest->source = src->source;
+
   if (!full) {
     // ref. assigned memory
     src->source = NULL;
     dest->name = src->name;
     src->name = NULL;
+    //dest->menuitem = src->menuitem;
+    //src->menuitem = NULL;
     dest->menu_text = src->menu_text;
     src->menu_text = NULL;
     dest->action_desc = src->action_desc;
@@ -2963,13 +2966,16 @@ void rfx_copy(lives_rfx_t *dest, lives_rfx_t *src, boolean full) {
   dest->source_type = src->source_type;
   dest->num_params = src->num_params;
   dest->is_template = src->is_template;
-  dest->menuitem = src->menuitem;
   dest->gui_strings = lives_list_copy(src->gui_strings);
   dest->onchange_strings = lives_list_copy(src->onchange_strings);
+
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(src->menuitem),
+                               LINKED_RFX_KEY, (livespointer)dest);
+  dest->menuitem = src->menuitem;
+  src->menuitem = NULL;
   if (!full) return;
 
   // TODO
-
 }
 
 

@@ -407,7 +407,7 @@ if (!$is_scrap) {
 	    print OUT "        while (! -s \$in) {\n";
 	    print OUT "            sleep 1;\n";
 	    print OUT "        }\n\n";
-	    print OUT "        `flock \$in true`;\n";
+	    print OUT "        `flock -s \$in true`;\n";
 	}
 
 	if ($in_channels > 1) {
@@ -415,7 +415,7 @@ if (!$is_scrap) {
 	    print OUT "        while (! -s \$in2) {\n";
 	    print OUT "            sleep 1;\n";
 	    print OUT "        }\n\n";
-	    print OUT "        `flock \$in2 true`;\n";
+	    print OUT "        `flock -s \$in2 true`;\n";
 	}
     }
 

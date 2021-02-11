@@ -12,7 +12,6 @@ my $smogcmd = "smogrify";
 my $home_dir_extra = "/.local/share/lives/plugins/effects/";
 my $dir_extra = "/lives/plugins/effects/";
 
-
 my $builder = "build-lives-rfx-plugin";
 
 my $type="builtin"; # default
@@ -50,45 +49,17 @@ if (defined $ARGV[3] && $ARGV[3] ne "") {
     $build_bindir = $ARGV[3];
 }
 
-if ($build_bindir eq "") {
-    print "Need build_bindir. Exiting.\n";
-    exit 3;    # check we have all
-}
-
 if ($type eq "builtin") {
     $scripts_dir .= $dir_extra;
     $indir = "$scripts_dir/RFXscripts/";
     unlink glob "$indir/*~";
     $exec_dir .= $dir_extra;
-    $outdir = "$exec_dir/rendered/";
-}
-
-elsif ($type eq "custom") {
-    $scripts_dir .= $home_dir_extra;
-    $indir = "$scripts_dir/RFXscripts/custom/";
-    unlink glob "$indir/*~";
-    $exec_dir .= $home_dir_extra;
-    $outdir = "$exec_dir/rendered/custom/";
-}
-
-elsif ($type eq "test") {
-    $scripts_dir .= $home_dir_extra;
-    $indir = "$scripts_dir/RFXscripts/test/";
-    unlink glob "$indir/*~";
-    $exec_dir .= $home_dir_extra;
-    $outdir = "$exec_dir/rendered/test/";
-}
-
-elsif ($type eq "builtinx") {
-    $indir = $scripts_dir;
-    $outdir = $exec_dir;
     unlink glob "$indir/*~";
 }
-
 else {
-    print "error: unknown RFX type\n";
-    exit 1;
+    $indir = $scripts_dir;
 }
+$outdir = $exec_dir;
 
 print "Deleting scripted plugins from $outdir\n";
 &remove_scripted_plugins($outdir);
@@ -98,14 +69,14 @@ print "Building all in $indir\n";
 if ($^O eq "MSWin32") {
     mkpath("$outdir");
 } else {
-    `/bin/mkdir -p $outdir`;
+    `mkdir -p $outdir`;
 }
 
 opendir DIR,$indir;
 while ($plugin = readdir(DIR)) {
     unless ($plugin =~ /^\./) {
 	print "building $indir$plugin \n";
-	if (defined $build_bindir) {
+	if ($build_bindir) {
 	    if ($^O eq "MSWin32") {
 		system("perl \"$build_bindir\\$builder\" \"$indir$plugin\" \"$outdir\"");
 	    } else {

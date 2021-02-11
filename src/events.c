@@ -3900,9 +3900,11 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
               weed_set_boolean_value(inst, WEED_LEAF_AUTO_EASING, WEED_TRUE);
             }
 
-            if (weed_plant_has_leaf(event, "fake_tc")) ztc = weed_get_int64_value(event, "fake_tc", NULL);
+            if (weed_plant_has_leaf(event, LIVES_LEAF_FAKE_TC))
+              ztc = weed_get_int64_value(event, LIVES_LEAF_FAKE_TC, NULL);
             else ztc = tc;
-            layer = weed_apply_effects(layers, mainw->filter_map, ztc, cfile->hsize, cfile->vsize, pchains);
+            layer = weed_apply_effects(layers, mainw->filter_map, ztc,
+                                       cfile->hsize, cfile->vsize, pchains);
 
             for (i = 0; layers[i]; i++) {
               if (layer != layers[i]) {

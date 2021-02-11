@@ -261,6 +261,8 @@ int get_window_stack_level(LiVESXWindow *, int *nwins);
 
 #define XDG_CURRENT_DESKTOP "XDG_CURRENT_DESKTOP"
 #define XDG_SESSION_TYPE "XDG_SESSION_TYPE"
+#define XDG_DATA_HOME "XDG_DATA_HOME"
+#define XDG_RUNTIME_DIR "XDG_RUNTIME_DIR"
 
 boolean get_wm_caps(void);
 boolean get_distro_dets(void);

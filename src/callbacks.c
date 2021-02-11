@@ -7680,6 +7680,7 @@ end:
 
     if (CURRENT_CLIP_IS_VALID && cfile->opening && mainw->effects_paused) {
       on_stop_clicked(NULL, NULL);
+      mainw->effects_paused = FALSE;
       return;
     }
 
@@ -7700,6 +7701,7 @@ end:
       // Cancel
       if (mainw->cancel_type == CANCEL_SOFT) {
         // cancel in record audio
+        mainw->effects_paused = FALSE;
         mainw->cancelled = CANCEL_USER;
         d_print_cancelled();
         return;
@@ -7726,6 +7728,7 @@ end:
       }
 
       mainw->cancelled = CANCEL_USER;
+      mainw->effects_paused = FALSE;
 
       if (mainw->is_rendering) {
         if (CURRENT_CLIP_IS_VALID) cfile->frames = 0;
@@ -7747,6 +7750,7 @@ end:
       // Keep
       if (mainw->cancel_type == CANCEL_SOFT) {
         mainw->cancelled = CANCEL_KEEP;
+        mainw->effects_paused = FALSE;
         return;
       }
       if (!mainw->is_rendering) {
@@ -7799,6 +7803,7 @@ end:
       }
     }
 
+    mainw->effects_paused = FALSE;
     lives_freep((void **)&com);
   }
 

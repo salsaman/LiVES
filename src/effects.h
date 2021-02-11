@@ -1,6 +1,6 @@
 // effects.h
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2012
+// (c) G. Finch 2003 - 2021
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -47,9 +47,7 @@ char *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) WARN_UNUSED;
 
 #include "effects-weed.h"
 
-boolean do_effect(lives_rfx_t *rfx, boolean is_preview); ///< defined as extern in paramwindow.c
-
-void on_render_fx_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx);
+boolean do_effect(lives_rfx_t *, boolean is_preview); ///< defined as extern in paramwindow.c
 
 ///////////////// real time effects
 
@@ -61,8 +59,8 @@ lives_render_error_t realfx_progress(boolean reset);
 
 // key callbacks
 
-boolean textparm_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
-                          livespointer user_data);
+boolean textparm_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval,
+                          LiVESXModifierType mod, livespointer user_data);
 
 boolean grabkeys_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType,
                           livespointer user_data);  ///< for accel groups

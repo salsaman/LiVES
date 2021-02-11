@@ -13,12 +13,12 @@ LIVES_GLOBAL_INLINE LiVESList *buff_to_list(const char *buffer, const char *deli
   boolean biglist = pieces >= BL_LIM;
   for (int i = 0; i < pieces; i++) {
     if (array[i]) {
-      if (strip) buf = lives_strstrip(array[i]);
-      else buf = array[i];
+      if (strip || i == pieces - 1) buf = lives_strdup(lives_strstrip(array[i]));
+      else buf = lives_strdup_printf("%s%s", array[i], delim);
       if (*buf || allow_blanks) {
-        if (biglist) list = lives_list_prepend(list, lives_strdup(buf));
-        else list = lives_list_append(list, lives_strdup(buf));
-      }
+        if (biglist) list = lives_list_prepend(list, buf);
+        else list = lives_list_append(list, buf);
+      } else lives_free(buf);
     }
   }
   lives_strfreev(array);

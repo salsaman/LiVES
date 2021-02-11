@@ -1364,13 +1364,14 @@ void create_LiVES(void) {
 
   //lives_menu_add_separator(LIVES_MENU(mainw->advanced_menu));
 
-  rfx_submenu = lives_standard_menu_item_new_with_label(_("_RFX Effects/Tools/Utilities"));
-  lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), rfx_submenu);
+  mainw->rfx_submenu = lives_standard_menu_item_new_with_label(_("_RFX Effects/Tools/Utilities"));
+  lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), mainw->rfx_submenu);
 
-  if (prefs->vj_mode) lives_widget_set_sensitive(rfx_submenu, FALSE);
+  if (prefs->vj_mode) lives_widget_set_sensitive(mainw->rfx_submenu, FALSE);
+  if (mainw->helper_procthreads[PT_LAZY_RFX]) lives_widget_set_sensitive(mainw->rfx_submenu, FALSE);
 
   rfx_menu = lives_menu_new();
-  lives_menu_item_set_submenu(LIVES_MENU_ITEM(rfx_submenu), rfx_menu);
+  lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->rfx_submenu), rfx_menu);
 
   new_test_rfx = lives_standard_menu_item_new_with_label(_("_New Test RFX Script..."));
   lives_container_add(LIVES_CONTAINER(rfx_menu), new_test_rfx);

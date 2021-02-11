@@ -90,6 +90,11 @@ static void on_paramwindow_button_clicked2(LiVESButton *button, lives_rfx_t *rfx
 }
 
 
+static void on_paramwindow_button_clicked_mi(LiVESButton *button, LiVESWidget *w) {
+  on_paramwindow_button_clicked(button,
+                                lives_widget_object_get_data(LIVES_WIDGET_OBJECT(w), LINKED_RFX_KEY));
+}
+
 void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
   LiVESWidget *dialog = NULL;
   boolean def_ok = FALSE;
@@ -203,7 +208,7 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
 
   if (def_ok) {
     if (rfx->status == RFX_STATUS_WEED) on_realfx_activate(NULL, rfx);
-    else on_render_fx_activate(NULL, rfx);
+    else on_render_fx_activate(LIVES_MENU_ITEM(rfx->menuitem), NULL);
   }
 
   if (mainw->multitrack) {
@@ -227,9 +232,10 @@ static lives_widget_group_t *get_group(lives_rfx_t *rfx, lives_param_t *param) {
 }
 
 
-void on_render_fx_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
+void on_render_fx_activate(LiVESMenuItem *menuitem, livespointer unused) {
   uint32_t chk_mask = 0;
-
+  lives_rfx_t *rfx
+    = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menuitem), LINKED_RFX_KEY);
   if (menuitem && rfx->num_in_channels > 0) {
     chk_mask = WARN_MASK_LAYOUT_ALTER_FRAMES;
     if (!check_for_layout_errors(NULL, mainw->current_file, cfile->start, cfile->end, &chk_mask)) {
@@ -666,11 +672,12 @@ static void add_genparams(LiVESWidget *vbox, lives_rfx_t *rfx) {
 }
 
 
-LIVES_GLOBAL_INLINE void on_render_fx_pre_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
+LIVES_GLOBAL_INLINE void on_render_fx_pre_activate(LiVESMenuItem *menuitem, livespointer unused) {
   _fx_dialog *fxdialog;
   uint32_t chk_mask;
   int start, end;
-
+  lives_rfx_t *rfx
+    = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menuitem), LINKED_RFX_KEY);
   if (!check_storage_space(mainw->current_file, FALSE)) return;
   if ((rfx->props & RFX_PROPS_MAY_RESIZE && rfx->num_in_channels == 1) || rfx->min_frames < 0) {
     start = 1;
@@ -693,7 +700,6 @@ LIVES_GLOBAL_INLINE void on_render_fx_pre_activate(LiVESMenuItem *menuitem, live
     /*   resp = lives_dialog_run(LIVES_DIALOG(fxdialog->dialog)); */
     /* } while (resp == LIVES_RESPONSE_RETRY); */
   }
-
 }
 
 
@@ -834,14 +840,15 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
     lives_widget_set_vexpand(pbox, TRUE);
 
     // add preview window
-    if (rfx->num_in_channels > 0 || !(rfx->props & RFX_PROPS_BATCHG)) {
+    if ((rfx->num_in_channels > 0 || !(rfx->props & RFX_PROPS_BATCHG))
+        && !(rfx->props & RFX_PROPS_NO_PREVIEWS)) {
       mainw->framedraw_frame = cfile->start;
       widget_add_framedraw(LIVES_VBOX(pbox), cfile->start, cfile->end, !(rfx->props & RFX_PROPS_MAY_RESIZE),
                            cfile->hsize, cfile->vsize, rfx);
       if (rfx->props & RFX_PROPS_MAY_RESIZE) mainw->fd_max_frame = cfile->end;
     }
 
-    if (!(rfx->props & RFX_PROPS_BATCHG)) {
+    if (!(rfx->props & RFX_PROPS_BATCHG) && !(rfx->props & RFX_PROPS_NO_PREVIEWS)) {
       // connect spinbutton to preview
       fd_connect_spinbutton(rfx);
     }
@@ -938,11 +945,11 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
       if (!is_defaults) {
         if (fx_dialog[didx]->okbutton)
           lives_signal_sync_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                                    LIVES_GUI_CALLBACK(on_paramwindow_button_clicked), (livespointer)rfx);
+                                    LIVES_GUI_CALLBACK(on_paramwindow_button_clicked_mi), (livespointer)rfx->menuitem);
         lives_signal_sync_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                                  LIVES_GUI_CALLBACK(on_paramwindow_button_clicked), (livespointer)rfx);
+                                  LIVES_GUI_CALLBACK(on_paramwindow_button_clicked_mi), (livespointer)rfx->menuitem);
         lives_signal_sync_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->dialog), LIVES_WIDGET_DELETE_EVENT,
-                                  LIVES_GUI_CALLBACK(on_paramwindow_button_clicked), (livespointer)rfx);
+                                  LIVES_GUI_CALLBACK(on_paramwindow_button_clicked_mi), (livespointer)rfx->menuitem);
       } else {
         if (fx_dialog[didx]->okbutton)
           lives_signal_sync_connect_after(LIVES_GUI_OBJECT(fx_dialog[didx]->okbutton), LIVES_WIDGET_CLICKED_SIGNAL,

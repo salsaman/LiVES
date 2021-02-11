@@ -1417,6 +1417,7 @@ typedef struct {
   // rendered effects
   LiVESWidget *utilities_menu;
   LiVESWidget *utilities_submenu;
+  LiVESWidget *rfx_submenu;
   LiVESWidget *gens_menu;
   LiVESWidget *gens_submenu;
   LiVESWidget *run_test_rfx_submenu;

@@ -318,6 +318,8 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
   /*   sfile->frames = maxframe; */
   /* } */
 
+  // TODO: write errors to textbuffer type log
+
   if (prefs->vj_mode) return TRUE;
 
   // check the image type

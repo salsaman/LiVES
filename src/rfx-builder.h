@@ -121,6 +121,7 @@ typedef struct {
   LiVESWidget *post_button;
   LiVESWidget *trigger_button;
   LiVESWidget *prop_slow;
+  LiVESWidget *prop_noprv;
   LiVESWidget *prop_batchg;
   LiVESWidget *hbox_batchg;
   LiVESWidget *min_frames_label;

@@ -619,8 +619,9 @@ typedef struct {
 
   uint32_t props;
 #define RFX_PROPS_SLOW        0x0001  ///< hint to GUI
-#define RFX_PROPS_MAY_RESIZE  0x0002 ///< is a tool
+#define RFX_PROPS_MAY_RESIZE  0x0002 ///< is a tool (can only be applied to entire clip)
 #define RFX_PROPS_BATCHG      0x0004 ///< is a batch generator
+#define RFX_PROPS_NO_PREVIEWS 0x0008 ///< no previews possible (e.g. effect has long prep. time)
 
 #define RFX_PROPS_RESERVED1   0x1000
 #define RFX_PROPS_RESERVED2   0x2000

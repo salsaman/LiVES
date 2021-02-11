@@ -1044,7 +1044,7 @@ if (1) {
 	    my $plugin = "";
 
 	    unless ($rest eq "") {
-		$plugin = "$plugdir$type/$rest";
+		$plugin = "$plugdir/$type/$rest";
 	    }
 
 	    &smog_chdir($curworkdir);
@@ -4583,18 +4583,10 @@ if (1) {
 		$out_prefix = $img_prefix;
 		&clean_old($handle);
 	    }
+
 	    &smog_chdir($curworkdir);
-	    if ($status == 0) {
-		$plugin_name = $command;
-	    }
-	    elsif ($status == 1) {
-		$plugin_dir = "$lives_config_dir/plugins/effects/rendered/custom";
-		$plugin_name = "$plugin_dir/$command";
-	    }
-	    else {
-		$plugin_dir = "$lives_config_dir/plugins/effects/rendered/test";
-		$plugin_name = "$plugin_dir/$command";
-	    }
+	    $plugin_name = $command;
+
 	    $smcom = "\"$plugin_name\" get_description";
 	    $fx_desc = &smog_system_direct($smcom);
 	    if ($?) {

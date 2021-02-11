@@ -1,6 +1,6 @@
 // paramwindow.h
 // LiVES
-// (c) G. Finch 2004 - 2019 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2021 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for licensing details
 
@@ -43,14 +43,16 @@ typedef weed_error_t (*weed_display_value_f)(weed_plant_t *filter_instance, weed
 #define WEED_LEAF_DISPLAY_VALUE "display_value"
 #endif
 
+#define LINKED_RFX_KEY "linked_rfx"
+
 int get_param_widget_by_type(lives_param_t *, int wtype);
 
 void on_paramwindow_button_clicked(LiVESButton *, lives_rfx_t *);
 
-void on_render_fx_pre_activate(LiVESMenuItem *, lives_rfx_t *);
-void on_render_fx_activate(LiVESMenuItem *, lives_rfx_t *);
+void on_render_fx_pre_activate(LiVESMenuItem *, livespointer unused);
+void on_render_fx_activate(LiVESMenuItem *, livespointer unused);
 
-_fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidget *pbox);
+_fx_dialog *on_fx_pre_activate(lives_rfx_t *, boolean is_realtime, LiVESWidget *pbox);
 
 boolean make_param_box(LiVESVBox *, lives_rfx_t *);
 

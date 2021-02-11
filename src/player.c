@@ -702,9 +702,11 @@ void load_frame_image(frames_t frame) {
         if (prefs->dev_show_timing)
           g_printerr("pull_frame @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
         // normal playback in the clip editor, or applying a non-realtime effect
-        if (cfile->clip_type != CLIP_TYPE_DISK
-            || !mainw->preview || lives_file_test(fname_next, LIVES_FILE_TEST_EXISTS)) {
+        if (!mainw->preview || lives_file_test(fname_next, LIVES_FILE_TEST_EXISTS)) {
+          // TODO: some types of preview with CLIP_TYPE_FILE may need to avoid this
+          // this section is intended only for rendered fx previews
           mainw->frame_layer = lives_layer_new_for_frame(mainw->current_file, mainw->actual_frame);
+
           if (!img_ext) img_ext = get_image_ext_for_type(cfile->img_type);
           if (mainw->preview && !mainw->frame_layer
               && (!mainw->event_list || cfile->opening)) {

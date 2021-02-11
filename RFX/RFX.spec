@@ -56,7 +56,7 @@ d1.6 Added string_list parameter type
 1.8.4 Add special|fontchooser
 
 - clarified the meaning of "min frames"
-
+- added properties bit 0x0008 (no previews), API version not changed
 
 
 TODO: 	- split into RFX layout and RFX plugin components (?)
@@ -691,6 +691,7 @@ some bits are defined already
 0x0001 == slow (hint to host)
 0x0002 == may resize
 0x0004 == batch mode generator
+0x0008 == no previews
  [NB. this is equivalent to a min frames | channels setting of 2|0 (see above)]
 
 If the "may resize" bit is set, _all_ frames in the processing block may be 
@@ -701,7 +702,14 @@ standard discovery methods.
 A "batch mode" generator is a plugin with 0 in channels, and which generates all frames in a single pass (i.e. the loop code is only to be run once).
 
 
+"no previews" should be set if the plugin cannot provide a quick preview, for example if the filter
+  needs to do some kind of time consuming preparation before it can start operating. If "batch mode"
+  is set then this bit is ASSUMED to be set implicitly.
 
+
+
+The following are resderved for custom use by applications. They are intended for informational
+puproses only.
 0x8000 == reserved, may be ignored / set / reset.
 0x4000 == reserved, may be ignored / set / reset.
 0x2000 == reserved, may be ignored / set / reset.

@@ -163,10 +163,24 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     char *pdefault;
     char *plugin_name;
 
-    if (rfx->status == RFX_STATUS_BUILTIN) plugin_name = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR,
-          PLUGIN_RENDERED_EFFECTS_BUILTIN, rfx->name, NULL);
-    else plugin_name = lives_strdup(rfx->name);
-
+    if (rfx->status == RFX_STATUS_BUILTIN)
+      plugin_name = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR,
+                                         PLUGIN_RENDERED_EFFECTS_BUILTIN, rfx->name, NULL);
+    else {
+      char *localshare;
+      if (!capable->xdg_data_home) capable->xdg_data_home = getenv("XDG_DATA_HOME");
+      if (!capable->xdg_data_home) capable->xdg_data_home = lives_strdup("");
+      if (!*capable->xdg_data_home)
+        localshare = lives_build_path(capable->home_dir, LOCAL_HOME_DIR, "share", NULL);
+      else localshare = lives_strdup(capable->xdg_data_home);
+      if (rfx->status == RFX_STATUS_CUSTOM)
+        plugin_name =
+          lives_build_filename(localshare, "lives", PLUGIN_RENDERED_EFFECTS_CUSTOM, rfx->name, NULL);
+      else
+        plugin_name =
+          lives_build_filename(localshare, "lives", PLUGIN_RENDERED_EFFECTS_CUSTOM, rfx->name, NULL);
+      lives_free(localshare);
+    }
     if (rfx->num_in_channels == 2) {
       // transition has a few extra bits
       pdefault = lives_strdup_printf("%s %d %d %d %d %d %s %f %s %d \"%s/%s\"", cfile->handle, rfx->status,

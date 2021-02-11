@@ -89,6 +89,8 @@
 
 #define WEED_LEAF_OVERLAY_TEXT "overlay_text"
 
+#define LIVES_LEAF_FAKE_TC "fake_tc"
+
 #define LIVES_TRACK_ANY -1000000
 
 #define AUD_DIFF_MIN 0.05  ///< ignore audio seek differences < than this (seconds)

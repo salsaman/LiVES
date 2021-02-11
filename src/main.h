@@ -481,6 +481,8 @@ typedef struct {
   lives_checkstatus_t has_xwininfo;
   lives_checkstatus_t has_gdb;
   lives_checkstatus_t has_gzip;
+  lives_checkstatus_t has_rfx_builder;
+  lives_checkstatus_t has_rfx_builder_multi;
   lives_checkstatus_t has_gconftool_2;
   lives_checkstatus_t has_xdg_screensaver;
   //lives_checkstatus_t has_xdg_open;
@@ -504,7 +506,6 @@ typedef struct {
   char backend_path[PATH_MAX];
 
   char *xdg_data_home; // e.g $HOME/.local/share
-  char *xdg_session_desktop; // e.g ubuntustudio
   char *xdg_current_desktop; // e.g XFCE
   char *xdg_runtime_dir; // e.g /run/user/$uid
 
@@ -1164,6 +1165,7 @@ boolean check_storage_space(int clipno, boolean is_processing);
 
 char *get_upd_msg(void);
 
+void do_exec_missing_error(const char *execname);
 boolean ask_permission_dialog(int what);
 boolean ask_permission_dialog_complex(int what, char **argv, int argc, int offs, const char *sudocom);
 boolean do_abort_check(void);
@@ -1707,7 +1709,7 @@ void break_me(const char *dtl);
 #endif
 
 #endif
-//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
+#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #else

@@ -886,7 +886,8 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           weed_leaf_dup(newframe, frame_event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET);
         }
         weed_leaf_dup(newframe, frame_event, WEED_LEAF_OVERLAY_TEXT);
-        weed_set_int64_value(newframe, "fake_tc", weed_event_get_timecode(frame_event) - offset_tc);
+        weed_set_int64_value(newframe, LIVES_LEAF_FAKE_TC,
+                             weed_event_get_timecode(frame_event) - offset_tc);
 
         lives_freep((void **)&frames);
         lives_freep((void **)&clips);

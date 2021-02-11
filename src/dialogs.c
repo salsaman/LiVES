@@ -1202,12 +1202,36 @@ static char *remtime_string(double timerem) {
 
 #define MIN_NOTIFY_TIME 300.
 
+static void progbar_display(const char *txt, boolean lunch) {
+  char *lbtext, *tmp, *rttxt;
+  if (lunch) rttxt = remtime_string(-1.);
+  else rttxt = lives_strdup("");
+#ifdef PROGBAR_IS_ENTRY
+  tmp = lives_strtrim(txt);
+  if (lunch) {
+    lbtext = lives_strdup_printf("%s - %s", tmp, rttxt);
+    lives_free(tmp);
+  } else lbtext = tmp;
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
+  lives_entry_set_text(LIVES_ENTRY(mainw->proc_ptr->label3), lbtext);
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+#else
+  if (LIVES_IS_LABEL(proc->label3)) {
+    if (lunch)
+      lbtext = lives_strdup_printf("%s - %s", txt, rttxt);
+    else
+      lbtext = lives_strdup(txt);
+    lives_label_set_text(LIVES_LABEL(proc->label3), lbtext);
+  }
+#endif
+  lives_free(rttxt);
+  lives_free(lbtext);
+}
+
+
 static void disp_fraction(double fraction_done, double timesofar, xprocess * proc) {
   // display fraction done and estimated time remaining
   double remtime;
-#ifdef PROGBAR_IS_ENTRY
-  char *tmp;
-#endif
   char *prog_label, *remtstr;
 
   if (fraction_done > 1.) fraction_done = 1.;
@@ -1219,20 +1243,12 @@ static void disp_fraction(double fraction_done, double timesofar, xprocess * pro
   remtime = timesofar / fraction_done - timesofar;
   remtstr = remtime_string(remtime);
   if (remtime > MIN_NOTIFY_TIME && mainw->proc_ptr->notify_cb) {
-    lives_widget_set_opacity(lives_widget_get_parent(procw->notify_cb), 1.);
+    lives_widget_set_opacity(lives_widget_get_parent(mainw->proc_ptr->notify_cb), 1.);
     lives_widget_set_sensitive(mainw->proc_ptr->notify_cb, TRUE);
   }
   prog_label = lives_strdup_printf(_("\n%d%% done. %s\n"), (int)(fraction_done * 100.), remtstr);
   lives_free(remtstr);
-#ifdef PROGBAR_IS_ENTRY
-  tmp = lives_strtrim(prog_label);
-  widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  lives_entry_set_text(LIVES_ENTRY(mainw->proc_ptr->label3), tmp);
-  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
-  lives_free(tmp);
-#else
-  if (LIVES_IS_LABEL(proc->label3)) lives_label_set_text(LIVES_LABEL(proc->label3), prog_label);
-#endif
+  progbar_display(prog_label, FALSE);
   lives_free(prog_label);
 
   disp_fraction_done = fraction_done;
@@ -1762,7 +1778,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
     // we got a message from the backend...
 
-    if (visible && mainw->proc_ptr && (!accelerators_swapped || cfile->opening) && cancellable
+    if (visible && *mainw->msg && *mainw->msg != '!' && mainw->proc_ptr
+        && (!accelerators_swapped || cfile->opening) && cancellable
         && (!cfile->nopreview || cfile->keep_without_preview)) {
       if (!cfile->nopreview && !(cfile->opening && mainw->multitrack)) {
         lives_widget_set_no_show_all(mainw->proc_ptr->preview_button, FALSE);
@@ -1777,6 +1794,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         if (mainw->proc_ptr->stop_button)
           lives_widget_show_all(mainw->proc_ptr->stop_button);
       } else {
+
+        // AHA !!
         lives_widget_show_all(mainw->proc_ptr->pause_button);
         if (mainw->proc_ptr->stop_button)
           lives_widget_hide(mainw->proc_ptr->stop_button);
@@ -1825,15 +1844,18 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
           lives_strfreev(array);
         } else {
           if (mainw->proc_ptr) {
-            if (*mainw->msg && mainw->msg[lives_strlen(mainw->msg) - 1] == '%')
-              mainw->proc_ptr->frac_done = atof(mainw->msg) / 100.;
-            else {
-              int frames_done = atoi(mainw->msg);
-              if (frames_done > 0 && mainw->proc_ptr) mainw->proc_ptr->frames_done = frames_done;
-            }
-          }
-        }
-      }
+            if (*mainw->msg) {
+              if (*mainw->msg == '!')
+                progbar_display(mainw->msg + 1, TRUE);
+              else {
+                if (mainw->msg[lives_strlen(mainw->msg) - 1] == '%')
+                  mainw->proc_ptr->frac_done = atof(mainw->msg) / 100.;
+                else {
+                  int frames_done = atoi(mainw->msg);
+                  if (frames_done > 0 && mainw->proc_ptr) mainw->proc_ptr->frames_done = frames_done;
+		  // *INDENT-OFF*
+		}}}}}}
+      // *INDENT-ON*
 
       // do a processing pass
       if (process_one(visible)) {
@@ -3624,6 +3646,14 @@ LIVES_GLOBAL_INLINE void do_no_autolives_error(void) {
   do_error_dialogf(_("\nYou must have %s installed and in your path to use this toy.\n"
                      "Consult your package distributor.\n"),
                    EXEC_AUTOLIVES_PL);
+}
+
+
+LIVES_GLOBAL_INLINE void do_exec_missing_error(const char *execname) {
+  do_error_dialogf(
+    _("\n\nLiVES was unable to find the program %s.\n"
+      "Please check this program is in your path and executable.\n"),
+    execname);
 }
 
 

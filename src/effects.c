@@ -167,19 +167,12 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
       plugin_name = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR,
                                          PLUGIN_RENDERED_EFFECTS_BUILTIN, rfx->name, NULL);
     else {
-      char *localshare;
-      if (!capable->xdg_data_home) capable->xdg_data_home = getenv("XDG_DATA_HOME");
-      if (!capable->xdg_data_home) capable->xdg_data_home = lives_strdup("");
-      if (!*capable->xdg_data_home)
-        localshare = lives_build_path(capable->home_dir, LOCAL_HOME_DIR, "share", NULL);
-      else localshare = lives_strdup(capable->xdg_data_home);
       if (rfx->status == RFX_STATUS_CUSTOM)
         plugin_name =
-          lives_build_filename(localshare, "lives", PLUGIN_RENDERED_EFFECTS_CUSTOM, rfx->name, NULL);
+          lives_build_filename(prefs->config_datadir, PLUGIN_RENDERED_EFFECTS_CUSTOM, rfx->name, NULL);
       else
         plugin_name =
-          lives_build_filename(localshare, "lives", PLUGIN_RENDERED_EFFECTS_CUSTOM, rfx->name, NULL);
-      lives_free(localshare);
+          lives_build_filename(prefs->config_datadir, PLUGIN_RENDERED_EFFECTS_TEST, rfx->name, NULL);
     }
     if (rfx->num_in_channels == 2) {
       // transition has a few extra bits
@@ -189,7 +182,8 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
                                      get_image_ext_for_type(clipboard->img_type),
                                      clipboard->start, prefs->workdir, clipboard->handle);
     } else {
-      pdefault = lives_strdup_printf("%s %d %d %d %d %d %s %f", cfile->handle, rfx->status, cfile->progress_start,
+      pdefault = lives_strdup_printf("%s %d %d %d %d %d %s %f",
+                                     cfile->handle, rfx->status, cfile->progress_start,
                                      cfile->progress_end, cfile->hsize, cfile->vsize,
                                      get_image_ext_for_type(cfile->img_type), cfile->fps);
     }
@@ -1145,13 +1139,13 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
   mainw->osc_block = FALSE;
 
   if (mainw->rendered_fx) {
-    if (mainw->rendered_fx[0].menuitem && LIVES_IS_WIDGET(mainw->rendered_fx[0].menuitem)) {
+    if (mainw->rendered_fx[0]->menuitem && LIVES_IS_WIDGET(mainw->rendered_fx[0]->menuitem)) {
       if (!LIVES_IS_PLAYING
           && mainw->current_file > 0 && ((has_video_filters(FALSE) && !has_video_filters(TRUE))
                                          || (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT
                                              && has_audio_filters(AF_TYPE_ANY)) || mainw->agen_key != 0)) {
-        lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, TRUE);
-      } else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, FALSE);
+        lives_widget_set_sensitive(mainw->rendered_fx[0]->menuitem, TRUE);
+      } else lives_widget_set_sensitive(mainw->rendered_fx[0]->menuitem, FALSE);
     }
   }
 

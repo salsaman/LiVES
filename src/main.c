@@ -3367,7 +3367,7 @@ void print_opthelp(void) {
   fprintf(stderr, _("\t\t\t\t\t(default is %s)\n"), tmp);
   lives_free(tmp);
 
-  tmp = lives_build_path(capable->home_dir, LOCAL_HOME_DIR, LIVES_DEF_CONFIG_DATADIR, NULL);
+  tmp = get_localsharedir(LIVES_DIR_LITERAL);
   fprintf(stderr, "%s", _("-configdatadir <dir>\t\t: override the default configuration data directory for the session\n"));
   fprintf(stderr, _("\t\t\t\t\t(default is %s\n"), tmp);
   lives_free(tmp);
@@ -4915,7 +4915,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   }
 
   if (!ign_opts.ign_config_datadir) {
-    tmp = lives_build_path(capable->home_dir, LOCAL_HOME_DIR, LIVES_DEF_CONFIG_DATADIR, NULL);
+    tmp = get_localsharedir(LIVES_DIR_LITERAL);
     lives_snprintf(prefs->config_datadir, PATH_MAX, "%s", tmp);
     lives_free(tmp);
   }
@@ -5050,42 +5050,46 @@ void set_main_title(const char *file, int untitled) {
 void sensitize_rfx(void) {
   if (!mainw->foreign) {
     if (mainw->rendered_fx) {
+      LiVESWidget *menuitem;
       for (int i = 1; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
-           mainw->num_rendered_effects_test; i++)
-        if (mainw->rendered_fx[i].menuitem && mainw->rendered_fx[i].min_frames >= 0)
-          lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
-      if (mainw->rendered_fx[0].menuitem && LIVES_IS_WIDGET(mainw->rendered_fx[0].menuitem)) {
-        if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID
-            && ((has_video_filters(FALSE) && !has_video_filters(TRUE)) ||
-                (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT
-                 && has_audio_filters(AF_TYPE_ANY))
-                || mainw->agen_key != 0)) {
-          lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, TRUE);
-        } else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem, FALSE);
-	// *INDENT-OFF*
-      }}
-    // *INDENT-ON*
+           mainw->num_rendered_effects_test; i++) {
+        menuitem = mainw->rendered_fx[i]->menuitem;
+        if (menuitem && LIVES_IS_WIDGET(menuitem)) {
+          if (mainw->rendered_fx[i]->min_frames >= 0)
+            lives_widget_set_sensitive(menuitem, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+        }
+      }
+      menuitem = mainw->rendered_fx[0]->menuitem;
+      if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID
+          && ((has_video_filters(FALSE) && !has_video_filters(TRUE)) ||
+              (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT
+               && has_audio_filters(AF_TYPE_ANY))
+              || mainw->agen_key != 0)) {
+        lives_widget_set_sensitive(menuitem, TRUE);
+      } else lives_widget_set_sensitive(menuitem, FALSE);
 
-    if (mainw->num_rendered_effects_test > 0) {
-      lives_widget_set_sensitive(mainw->run_test_rfx_submenu, TRUE);
-    }
+      if (mainw->num_rendered_effects_test > 0) {
+        lives_widget_set_sensitive(mainw->run_test_rfx_submenu, TRUE);
+      }
 
-    if (mainw->has_custom_gens) {
-      lives_widget_set_sensitive(mainw->custom_gens_submenu, TRUE);
-    }
+      if (mainw->has_custom_gens) {
+        lives_widget_set_sensitive(mainw->custom_gens_submenu, TRUE);
+      }
 
-    if (mainw->has_custom_tools) {
-      lives_widget_set_sensitive(mainw->custom_tools_submenu, TRUE);
-    }
+      if (mainw->has_custom_tools) {
+        lives_widget_set_sensitive(mainw->custom_tools_submenu, TRUE);
+      }
 
-    if (mainw->has_custom_effects) {
-      lives_widget_set_sensitive(mainw->custom_effects_submenu, TRUE);
-    }
+      if (mainw->has_custom_effects) {
+        lives_widget_set_sensitive(mainw->custom_effects_submenu, TRUE);
+      }
 
-    if (mainw->resize_menuitem) {
-      lives_widget_set_sensitive(mainw->resize_menuitem, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+      if (mainw->resize_menuitem) {
+        lives_widget_set_sensitive(mainw->resize_menuitem,
+                                   !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+      }
+      if (mainw->rfx_submenu) lives_widget_set_sensitive(mainw->rfx_submenu, TRUE);
     }
-    if (mainw->rfx_submenu) lives_widget_set_sensitive(mainw->rfx_submenu, TRUE);
   }
 }
 
@@ -5364,9 +5368,8 @@ void desensitize(void) {
       if (!mainw->foreign) {
         for (i = 0; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
              mainw->num_rendered_effects_test; i++)
-          if (mainw->rendered_fx[i].menuitem && mainw->rendered_fx[i].menuitem &&
-              mainw->rendered_fx[i].min_frames >= 0)
-            lives_widget_set_sensitive(mainw->rendered_fx[i].menuitem, FALSE);
+          if (mainw->rendered_fx[i]->menuitem && mainw->rendered_fx[i]->min_frames >= 0)
+            lives_widget_set_sensitive(mainw->rendered_fx[i]->menuitem, FALSE);
       }
     }
   }
@@ -5375,24 +5378,22 @@ void desensitize(void) {
     lives_widget_set_sensitive(mainw->resize_menuitem, FALSE);
   }
 
-  if (!prefs->vj_mode)
+  if (!prefs->vj_mode && !mainw->foreign) {
     if (mainw->num_rendered_effects_test > 0) {
       lives_widget_set_sensitive(mainw->run_test_rfx_submenu, FALSE);
     }
+    if (mainw->has_custom_gens) {
+      lives_widget_set_sensitive(mainw->custom_gens_submenu, FALSE);
+    }
 
+    if (mainw->has_custom_tools) {
+      lives_widget_set_sensitive(mainw->custom_tools_submenu, FALSE);
+    }
 
-  if (mainw->has_custom_gens) {
-    lives_widget_set_sensitive(mainw->custom_gens_submenu, FALSE);
-  }
-
-  if (mainw->has_custom_tools) {
-    lives_widget_set_sensitive(mainw->custom_tools_submenu, FALSE);
-  }
-
-  if (!mainw->foreign)
     if (mainw->has_custom_effects) {
       lives_widget_set_sensitive(mainw->custom_effects_submenu, FALSE);
     }
+  }
 
   lives_widget_set_sensitive(mainw->export_submenu, FALSE);
   lives_widget_set_sensitive(mainw->recaudio_submenu, FALSE);

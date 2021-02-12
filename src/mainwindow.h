@@ -596,12 +596,14 @@ enum {
 #define UNREC_LAYOUTS_DIR "unrecoverable_layouts"
 
 // directory names
-#define DATA_DIR "share/lives"
-#define LIVES_DEVICE_DIR "/dev/"
-#define LIVES_DEVNULL "/dev/null"
+#define SHARE_DIR "share"
+#define LIVES_DIR_LITERAL "lives"
+#define DATA_DIR SHARE_DIR "/" LIVES_DIR_LITERAL
+#define LIVES_DEVICE_DIR "/dev/" // TODO - remove last /
+#define LIVES_DEVNULL LIVES_DEVICE_DIR "/null"
 
 // system-wide defaults in prefs->prefix_dir
-#define THEME_DIR "/share/lives/themes/"
+#define THEME_DIR DATA_DIR "/themes/"
 #define PLUGIN_SCRIPTS_DIR "/share/lives/plugins/"
 #define PLUGIN_COMPOUND_DIR "/share/lives/plugins/"
 #define DOC_DIR "/share/doc/lives-"
@@ -611,7 +613,6 @@ enum {
 
 // per-user defaults
 #define LOCAL_HOME_DIR ".local"
-#define LIVES_DEF_CONFIG_DATADIR DATA_DIR ///
 
 #define LIVES_DEF_CONFIG_DIR ".config" ///< in $HOME : used once to set configfile, and then discarded
 #define LIVES_DEF_CONFIG_FILE "settings" ///< in LIVES_DEF_CONFIG_DIR unless overridden
@@ -858,7 +859,7 @@ typedef struct {
   boolean toy_go_wild; ///< some silliness
 
   /// rendered fx
-  lives_rfx_t *rendered_fx;
+  lives_rfx_t **rendered_fx;
   int num_rendered_effects_builtin;
   int num_rendered_effects_custom;
   int num_rendered_effects_test;
@@ -1614,6 +1615,7 @@ typedef struct {
   LiVESTextView *optextview;
 
   boolean has_custom_effects, has_custom_tools,  has_custom_gens, has_custom_utilities;
+  boolean has_test_effects;
 
   /// decoders
   boolean decoders_loaded;

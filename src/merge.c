@@ -1,6 +1,6 @@
 // merge.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2019 (salsaman+lives@gmail.com)
+// (c) G. Finch 2003 - 2021 (salsaman+lives@gmail.com)
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -38,14 +38,9 @@ void create_merge_dialog(void) {
 
   char *txt;
 
-  int idx = 0;
-
-  int width, height;
-
+  int idx = 0, width, height;
   int cb_frames = clipboard->frames;
   int defstart = 0;
-
-  int i;
 
   merge_opts = (_merge_opts *)(lives_malloc(sizeof(_merge_opts)));
   merge_opts->list_to_rfx_index = (int *)lives_malloc(sizint * (mainw->num_rendered_effects_builtin +
@@ -55,15 +50,21 @@ void create_merge_dialog(void) {
 
   merge_opts->spinbutton_loops = NULL;
 
-  for (i = 0; i < mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom + mainw->num_rendered_effects_test;
-       i++) {
-    if ((rfx = &mainw->rendered_fx[i])->num_in_channels == 2) {
+  for (int i = 0; i < mainw->num_rendered_effects_builtin
+       + mainw->num_rendered_effects_custom + mainw->num_rendered_effects_test; i++) {
+    if ((rfx = mainw->rendered_fx[i])->num_in_channels == 2) {
       if (i == mainw->last_transition_idx) defstart = idx;
       merge_opts->list_to_rfx_index[idx++] = i;
       if (rfx->status == RFX_STATUS_CUSTOM) {
-        merge_opts->trans_list = lives_list_append(merge_opts->trans_list, lives_strconcat(_(rfx->menu_text), " (custom)", NULL));
+        // TRANSLATORS: custom as in "customized"
+        merge_opts->trans_list = lives_list_append(merge_opts->trans_list,
+                                 lives_strconcat((rfx->menu_text),
+                                     _(" (custom)"), NULL));
       } else if (rfx->status == RFX_STATUS_TEST) {
-        merge_opts->trans_list = lives_list_append(merge_opts->trans_list, lives_strconcat(_(rfx->menu_text), " (test)", NULL));
+        // TRANSLATORS: test is adjective here, not verb
+        merge_opts->trans_list = lives_list_append(merge_opts->trans_list,
+                                 lives_strconcat(_(rfx->menu_text),
+                                     _(" (test)"), NULL));
       } else {
         merge_opts->trans_list = lives_list_append(merge_opts->trans_list, (_(rfx->menu_text)));
       }
@@ -81,7 +82,8 @@ void create_merge_dialog(void) {
   height = GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY;
 
   merge_opts->merge_dialog = lives_standard_dialog_new(_("Merge"), FALSE, width, height);
-  lives_signal_handlers_disconnect_by_func(merge_opts->merge_dialog, LIVES_GUI_CALLBACK(return_true), NULL);
+  lives_signal_handlers_disconnect_by_func(merge_opts->merge_dialog,
+      LIVES_GUI_CALLBACK(return_true), NULL);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(merge_opts->merge_dialog), accel_group);
@@ -94,14 +96,16 @@ void create_merge_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height * 2);
 
-  txt = lives_strdup_printf(_("Merge Clipboard [ %d Frames ]       With Selection [ %d Frames ]"), clipboard->frames,
-                            cfile->end - cfile->start + 1);
+  txt = lives_strdup_printf(_("Merge Clipboard [ %d Frames ]"
+                              "With Selection [ %d Frames ]"),
+                            clipboard->frames, cfile->end - cfile->start + 1);
   if (prefs->ins_resample && clipboard->fps != cfile->fps) {
     cb_frames = count_resampled_frames(clipboard->frames, clipboard->fps, cfile->fps);
     if (!(cb_frames == clipboard->frames)) {
       lives_free(txt);
-      txt = lives_strdup_printf(_("Merge Clipboard [ %d Frames (resampled) ]       With Selection [ %d Frames ]"), cb_frames,
-                                cfile->end - cfile->start + 1);
+      txt = lives_strdup_printf(_("Merge Clipboard [ %d Frames (resampled) ]"
+                                  "With Selection [ %d Frames ]"),
+                                cb_frames, cfile->end - cfile->start + 1);
     }
   }
 
@@ -112,13 +116,16 @@ void create_merge_dialog(void) {
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  align_start_button = lives_standard_radio_button_new(_("Align _Starts"), &radiobutton_align_group, LIVES_BOX(hbox), NULL);
+  align_start_button = lives_standard_radio_button_new(_("Align _Starts"),
+                       &radiobutton_align_group, LIVES_BOX(hbox), NULL);
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  align_end_button = lives_standard_radio_button_new(_("Align _Ends"), &radiobutton_align_group, LIVES_BOX(hbox), NULL);
+  align_end_button = lives_standard_radio_button_new(_("Align _Ends"),
+                     &radiobutton_align_group, LIVES_BOX(hbox), NULL);
 
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(align_end_button), !mainw->last_transition_align_start);
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(align_end_button),
+                                 !mainw->last_transition_align_start);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, widget_opts.packing_height * 2);
@@ -176,7 +183,7 @@ void create_merge_dialog(void) {
 
   lives_box_pack_start(LIVES_BOX(vbox), merge_opts->param_vbox, TRUE, TRUE, 0);
 
-  rfx = &mainw->rendered_fx[mainw->last_transition_idx];
+  rfx = mainw->rendered_fx[mainw->last_transition_idx];
   make_param_box(LIVES_VBOX(merge_opts->param_vbox), rfx);
   lives_widget_show_all(merge_opts->param_vbox);
 
@@ -219,31 +226,24 @@ void create_merge_dialog(void) {
 }
 
 
-static void bang(LiVESWidget *widget, livespointer null) {
-  lives_widget_destroy(widget);
-}
-
-
 void on_trans_method_changed(LiVESCombo *combo, livespointer user_data) {
   lives_rfx_t *rfx;
-
   LiVESList *retvals;
-
   const char *txt = lives_combo_get_active_text(combo);
-
   int idx;
 
   if (!*txt) return;
 
-  rfx = &mainw->rendered_fx[mainw->last_transition_idx];
+  rfx = mainw->rendered_fx[mainw->last_transition_idx];
 
-  lives_container_foreach(LIVES_CONTAINER(merge_opts->param_vbox), bang, NULL);
+  lives_container_foreach(LIVES_CONTAINER(merge_opts->param_vbox),
+                          (LiVESWidgetCallback)lives_widget_destroy, NULL);
   on_paramwindow_button_clicked(NULL, rfx);
 
   idx = lives_list_strcmp_index(merge_opts->trans_list, txt, TRUE);
 
   mainw->last_transition_idx = merge_opts->list_to_rfx_index[idx];
-  rfx = &mainw->rendered_fx[mainw->last_transition_idx];
+  rfx = mainw->rendered_fx[mainw->last_transition_idx];
 
   make_param_box(LIVES_VBOX(merge_opts->param_vbox), rfx);
   lives_widget_show_all(merge_opts->param_vbox);
@@ -308,7 +308,7 @@ void on_merge_ok_clicked(LiVESButton *button, livespointer user_data) {
   int cb_end, excess_frames;
   int times_to_loop = 1;
 
-  rfx = &mainw->rendered_fx[mainw->last_transition_idx];
+  rfx = mainw->rendered_fx[mainw->last_transition_idx];
 
   if (rfx && mainw->textwidget_focus) {
     // make sure text widgets are updated if they activate the default

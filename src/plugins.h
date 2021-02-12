@@ -653,11 +653,9 @@ void do_rfx_cleanup(lives_rfx_t *);
 
 void render_fx_get_params(lives_rfx_t *, const char *plugin_name, short status);
 
-void sort_rfx_array(lives_rfx_t *in_array, int num_elements);
+void sort_rfx_array(lives_rfx_t **in_array, int num_elements);
 
 int find_rfx_plugin_by_name(const char *name, short status);
-
-void rfx_copy(lives_rfx_t *dest, lives_rfx_t *src, boolean full);
 
 void rfx_params_free(lives_rfx_t *);
 

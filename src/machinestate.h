@@ -274,7 +274,7 @@ int64_t get_cpu_load(int cpun); ///< percent * 1 million
 char *get_systmp(const char *suff, boolean is_dir);
 char *get_worktmp(const char *prefix);
 char *get_worktmpfile(const char *prefix);
-
+char *get_localsharedir(const char *subdir);
 boolean notify_user(const char *detail);
 
 boolean check_snap(const char *prog);

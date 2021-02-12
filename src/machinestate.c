@@ -1912,12 +1912,7 @@ LiVESResponseType send_to_trash(const char *item) {
     char *mp1 = get_mountpount_for(item);
     char *mp2 = get_mountpount_for(capable->home_dir);
     if (!lives_strcmp(mp1, mp2)) {
-      char *localshare;
-      if (!capable->xdg_data_home) capable->xdg_data_home = getenv("XDG_DATA_HOME");
-      if (!capable->xdg_data_home) capable->xdg_data_home = lives_strdup("");
-      if (!*capable->xdg_data_home)
-	localshare = lives_build_path(capable->home_dir, LOCAL_HOME_DIR, "share", NULL);
-      else localshare = lives_strdup(capable->xdg_data_home);
+      char *localshare = get_localsharedir(NULL);
       trashdir = lives_build_path(localshare, "Trash", NULL);
       lives_free(localshare);
       trashinfodir = lives_build_path(trashdir, "info", NULL);
@@ -2281,7 +2276,7 @@ static char *get_systmp_inner(const char *suff, boolean is_dir, const char *pref
   return res;
 }
 
-char *get_systmp(const char *suff, boolean is_dir) {
+LIVES_GLOBAL_INLINE char *get_systmp(const char *suff, boolean is_dir) {
   return get_systmp_inner(suff, is_dir, NULL);
 }
 
@@ -2295,14 +2290,25 @@ static char *_get_worktmp(const char *prefix, boolean is_dir) {
   return dirname;
 }
 
-char *get_worktmp(const char *prefix) {
+LIVES_GLOBAL_INLINE char *get_worktmp(const char *prefix) {
   if (!prefix) return NULL;
   return _get_worktmp(prefix, TRUE);
 }
 
-char *get_worktmpfile(const char *prefix) {
+LIVES_GLOBAL_INLINE char *get_worktmpfile(const char *prefix) {
   if (!prefix) return NULL;
   return _get_worktmp(prefix, FALSE);
+}
+
+
+LIVES_GLOBAL_INLINE char *get_localsharedir(const char *subdir) {
+  char *localshare;
+  if (!capable->xdg_data_home) capable->xdg_data_home = getenv(XDG_DATA_HOME);
+  if (!capable->xdg_data_home) capable->xdg_data_home = lives_strdup("");
+  if (!*capable->xdg_data_home)
+    localshare = lives_build_path(capable->home_dir, LOCAL_HOME_DIR, SHARE_DIR, subdir, NULL);
+  else localshare = lives_build_path(capable->xdg_data_home, subdir, NULL);
+  return localshare;
 }
 
 
@@ -2423,7 +2429,7 @@ boolean get_machine_dets(void) {
 #define DISK_STATS_FILE "/proc/diskstats"
 
 double get_disk_load(const char *mp) {
-  if (!mp) return -1;
+  if (!mp) return -1.;
   else {
     static ticks_t lticks = 0;
     static uint64_t lval = 0;
@@ -2434,7 +2440,8 @@ double get_disk_load(const char *mp) {
       xmp = (char *)mp + 5;
     else
       xmp = mp;
-    com = lives_strdup_printf("%s -n $(%s %s %s)", capable->echo_cmd, capable->grep_cmd, xmp, DISK_STATS_FILE);
+    com = lives_strdup_printf("%s -n $(%s %s %s)", capable->echo_cmd,
+			      capable->grep_cmd, xmp, DISK_STATS_FILE);
     if ((res = mini_popen(com))) {
       int xbits = get_token_count(res, ' ');
       char **array = lives_strsplit(res, " ", xbits);
@@ -2444,8 +2451,8 @@ double get_disk_load(const char *mp) {
 	ticks_t clock_ticks;
 	if (LIVES_IS_PLAYING) clock_ticks = mainw->clock_ticks;
 	else clock_ticks = lives_get_current_ticks();
-	if (lticks > 0 && clock_ticks > lticks) ret = (double)(val - lval) / ((double)(clock_ticks - lticks)
-									      / TICKS_PER_SECOND_DBL);
+	if (lticks > 0 && clock_ticks > lticks)
+	  ret = (double)(val - lval) / ((double)(clock_ticks - lticks) / TICKS_PER_SECOND_DBL);
 	lticks = clock_ticks;
 	lval = val;
       }

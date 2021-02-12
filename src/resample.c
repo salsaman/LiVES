@@ -23,28 +23,24 @@ void reorder_leave_back_set(boolean val) {reorder_leave_back = val;}
 /////////////////////////////////////////////////////
 
 LIVES_GLOBAL_INLINE ticks_t q_gint64(ticks_t in, double fps) {
-  // quantise timecode to fps
-  if (in > (ticks_t)0) return ((((double)((ticks_t)((double)in / (double)TICKS_PER_SECOND_DBL * (double)fps + .5))) /
-                                  (double)fps)) * TICKS_PER_SECOND_DBL + .5; // quantise to frame timing
-
-  if (in < (ticks_t)0) return ((((double)((ticks_t)((double)in / (double)TICKS_PER_SECOND_DBL * (double)fps - .5))) /
-                                  (double)fps)) * TICKS_PER_SECOND_DBL - .5; // quantise to frame timing
-  return (ticks_t)0;
+  return in - remainder((double)in, fps);
 }
 
 LIVES_GLOBAL_INLINE ticks_t q_gint64_floor(ticks_t in, double fps) {
-  if (in != 0) return (double)((ticks_t)((double)in / TICKS_PER_SECOND_DBL * fps + .000001)) / fps *
-                        TICKS_PER_SECOND_DBL; // quantise to frame timing
-  return 0;
+  ldiv_t loodiv = ldiv((double)in, fps);
+  return (ticks_t)((double)loodiv.quot * fps);
 }
 
 LIVES_GLOBAL_INLINE ticks_t q_dbl(double in, double fps) {
   // quantise (double)in to fps
-  if (in > 0.) return ((ticks_t)((double)in * (double)fps + (double).5) / (double)fps) *
-                        (ticks_t)TICKS_PER_SECOND; // quantise to frame timing
-  if (in < 0.) return ((ticks_t)((double)in * (double)fps - (double).5) / (double)fps) *
-                        (ticks_t)TICKS_PER_SECOND; // quantise to frame timing
-  return (ticks_t)0;
+  ldiv_t loodiv = ldiv((double)in, fps);
+  if (in > 0.) {
+    if (loodiv.rem < .5) return loodiv.quot * fps;
+    else return (loodiv.quot + 1.) * fps;
+  }
+  if (loodiv.rem > -.5) return loodiv.quot * fps;
+  else return (loodiv.quot - 1.) * fps;
+  return 0.;
 }
 
 

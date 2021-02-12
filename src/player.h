@@ -12,6 +12,9 @@ struct timeval tv;
 
 void get_player_size(int *opwidth, int *opheight);
 
+void player_desensitize(void);
+void player_sensitize(void);
+
 void init_track_decoders(void);
 void free_track_decoders(void);
 

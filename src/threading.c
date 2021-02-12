@@ -328,8 +328,8 @@ LIVES_GLOBAL_INLINE void lives_proc_thread_sync_ready(lives_proc_thread_t tinfo)
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_check(lives_proc_thread_t tinfo) {
   /// returns FALSE while the thread is running, TRUE once it has finished
   if (!tinfo) return TRUE;
-  if (weed_plant_has_leaf(tinfo, WEED_LEAF_NOTIFY) && weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL)
-      == WEED_FALSE)
+  if (weed_plant_has_leaf(tinfo, WEED_LEAF_NOTIFY)
+      && weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL) == WEED_FALSE)
     return FALSE;
   return (weed_leaf_num_elements(tinfo, _RV_) > 0
           || weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL) == WEED_TRUE);
@@ -342,7 +342,8 @@ LIVES_GLOBAL_INLINE int lives_proc_thread_signalled(lives_proc_thread_t tinfo) {
 
 LIVES_GLOBAL_INLINE int64_t lives_proc_thread_signalled_idx(lives_proc_thread_t tinfo) {
   /// returns FALSE while the thread is running, TRUE once it has finished
-  lives_thread_data_t *tdata = (lives_thread_data_t *)weed_get_voidptr_value(tinfo, WEED_LEAF_SIGNAL_DATA, NULL);
+  lives_thread_data_t *tdata
+    = (lives_thread_data_t *)weed_get_voidptr_value(tinfo, WEED_LEAF_SIGNAL_DATA, NULL);
   if (tdata) return tdata->idx;
   return 0;
 }
@@ -441,15 +442,16 @@ static void *_plant_thread_func(void *args) {
 
   if (weed_get_boolean_value(info, WEED_LEAF_NOTIFY, NULL) == WEED_TRUE) {
     boolean dontcare;
-    pthread_mutex_t *dcmutex = (pthread_mutex_t *)weed_get_voidptr_value(info, WEED_LEAF_DONTCARE_MUTEX, NULL);
+    pthread_mutex_t *dcmutex
+      = (pthread_mutex_t *)weed_get_voidptr_value(info, WEED_LEAF_DONTCARE_MUTEX, NULL);
     pthread_mutex_lock(dcmutex);
     dontcare = weed_get_boolean_value(info, WEED_LEAF_DONTCARE, NULL);
     weed_set_boolean_value(info, WEED_LEAF_DONE, WEED_TRUE);
-    pthread_mutex_unlock(dcmutex);
     if (dontcare == WEED_TRUE) {
+      pthread_mutex_unlock(dcmutex);
       lives_free(dcmutex);
       weed_plant_free(info);
-    }
+    } else pthread_mutex_unlock(dcmutex);
   } else if (!ret_type) weed_plant_free(info);
   return NULL;
 }

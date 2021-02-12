@@ -50,6 +50,7 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
 #define WARN_IMAGE_KEY "_wh_warn_image"
 #define SHOWALL_OVERRIDE_KEY "_wh_lives_showall_override"
 #define SHOWHIDE_CONTROLLER_KEY "_wh_lives_showhide_controller"
+#define SUBMENU_INS_KEY "_wh_submenu_ins"
 #define ROWS_KEY "_wh_rows"
 #define COLS_KEY "_wh_cols"
 #define CDEF_KEY "_wh_current_default"
@@ -1462,30 +1463,63 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_grab_remove(LiVESWidget *widget) {
   return FALSE;
 }
 
+static boolean _lives_widget_set_sensitive(LiVESWidget *, boolean state);
 
 static void _lives_widget_set_sensitive_cb(LiVESWidget *w, void *pstate) {
   boolean state = (boolean)LIVES_POINTER_TO_INT(pstate);
-  lives_widget_set_sensitive(w, state);
+  // if setting insens, do it, but store current state
+  if (!state) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(w), SUBMENU_INS_KEY,
+        LIVES_INT_TO_POINTER(!lives_widget_get_sensitive(w)));
+  // otherwise, check stored state, if it was insens already skip it, plus child menus
+  else if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(w), SUBMENU_INS_KEY)))
+    return;
+  _lives_widget_set_sensitive(w, state);
+}
+
+
+WIDGET_HELPER_LOCAL_INLINE boolean _lives_widget_set_sensitive(LiVESWidget *widget, boolean state) {
+  if (!GTK_IS_WIDGET(widget)) break_me("non widget in set_sensitive");
+#ifdef GUI_GTK
+#ifdef GTK_SUBMENU_SENS_BUG
+  if (GTK_IS_MENU_ITEM(widget)) {
+    if (state != gtk_widget_get_sensitive(widget)) {
+      LiVESWidget *sub = lives_menu_item_get_submenu(LIVES_MENU_ITEM(widget));
+      if (sub) {
+        lives_container_foreach(LIVES_CONTAINER(sub), _lives_widget_set_sensitive_cb,
+                                LIVES_INT_TO_POINTER(state));
+        gtk_widget_set_sensitive(sub, state);
+      }
+    }
+  }
+#endif
+  gtk_widget_set_sensitive(widget, state);
+  return TRUE;
+#endif
+  return FALSE;
 }
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_sensitive(LiVESWidget *widget, boolean state) {
   if (!GTK_IS_WIDGET(widget)) break_me("non widget in set_sensitive");
-#ifdef GUI_GTK
-  gtk_widget_set_sensitive(widget, state);
+
 #ifdef GTK_SUBMENU_SENS_BUG
+  // for menuitems:
+  // if parent is insensitive, we update virtual state only
+  // with submenus:
+  // if we set it INSENSITIVE, then this is passed down recursively, but we store
+  // the child sensitivity state
+  // if we set it sensitive, this is passed down recursively, any widgets with a stored state
+  // sensitive are sensitized, and we continue recursing, the rest are left insensitive
   if (GTK_IS_MENU_ITEM(widget)) {
-    LiVESWidget *sub = lives_menu_item_get_submenu(LIVES_MENU_ITEM(widget));
-    if (sub) {
-      lives_container_foreach(LIVES_CONTAINER(sub), _lives_widget_set_sensitive_cb,
-                              LIVES_INT_TO_POINTER(state));
-      gtk_widget_set_sensitive(sub, state);
+    if (!lives_widget_get_sensitive(lives_widget_get_parent(widget))) {
+      // update virtual state only
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), SUBMENU_INS_KEY,
+                                   LIVES_INT_TO_POINTER(!state));
+      return TRUE;
     }
   }
 #endif
-  return TRUE;
-#endif
-  return FALSE;
+  return _lives_widget_set_sensitive(widget, state);
 }
 
 

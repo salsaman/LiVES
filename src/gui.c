@@ -383,7 +383,6 @@ void create_LiVES(void) {
   LiVESWidget *image;
 #endif
   LiVESWidget *rfx_menu;
-  LiVESWidget *rfx_submenu;
   LiVESWidget *midi_menu;
   LiVESWidget *midi_submenu;
   LiVESWidget *midi_load;
@@ -1412,6 +1411,7 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(rfx_menu), rebuild_rfx);
 
   mainw->open_lives2lives = lives_standard_menu_item_new_with_label(_("Receive _LiVES Stream from..."));
+  lives_widget_set_sensitive(mainw->open_lives2lives, FALSE); // buggy for now
 
   lives_menu_add_separator(LIVES_MENU(mainw->advanced_menu));
 

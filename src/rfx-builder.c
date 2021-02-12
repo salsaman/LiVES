@@ -1,6 +1,6 @@
 // rfx-builder.c
 // LiVES
-// (c) G. Finch 2004 - 2020 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2021 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -3649,34 +3649,28 @@ LiVESList *get_script_section(const char *section, const char *file, boolean str
 
 
 void on_rebuild_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  char *com, *rfx_script_dir, *rfx_exec_dir, *localshare;
+  char *com, *rfx_script_dir, *rfx_exec_dir;
   lives_rfx_status_t status = (lives_rfx_status_t)LIVES_POINTER_TO_INT(user_data);
 
   if (!check_builder_programs()) return;
 
   do_threaded_dialog(_("Rebuilding RFX scripts"), FALSE);
 
-  if (!capable->xdg_data_home) capable->xdg_data_home = getenv("XDG_DATA_HOME");
-  if (!capable->xdg_data_home) capable->xdg_data_home = lives_strdup("");
-  if (!*capable->xdg_data_home)
-    localshare = lives_build_path(capable->home_dir, LOCAL_HOME_DIR, "share", NULL);
-  else localshare = lives_strdup(capable->xdg_data_home);
-
   switch (status) {
   case RFX_STATUS_CUSTOM:
     d_print(_("Rebuilding custom RFX scripts..."));
-    rfx_exec_dir = lives_build_path(localshare, "lives", PLUGIN_RENDERED_EFFECTS_CUSTOM, NULL);
-    rfx_script_dir = lives_build_path(localshare, "lives",
+    rfx_exec_dir = lives_build_path(prefs->config_datadir, PLUGIN_RENDERED_EFFECTS_CUSTOM, NULL);
+    rfx_script_dir = lives_build_path(prefs->config_datadir,
 				      PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS, NULL);
-    com = lives_strdup_printf("%s build_rfx_plugins test \"%s\" \"%s\"", prefs->backend_sync,
+    com = lives_strdup_printf("%s build_rfx_plugins custom \"%s\" \"%s\"", prefs->backend_sync,
 			      rfx_script_dir, rfx_exec_dir);
     lives_system(com, FALSE);
     lives_free(com);
     break;
   case RFX_STATUS_TEST:
     d_print(_("Rebuilding test RFX scripts..."));
-    rfx_exec_dir = lives_build_path(localshare, "lives", PLUGIN_RENDERED_EFFECTS_TEST, NULL);
-    rfx_script_dir = lives_build_path(localshare, "lives", PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS, NULL);
+    rfx_exec_dir = lives_build_path(prefs->config_datadir, PLUGIN_RENDERED_EFFECTS_TEST, NULL);
+    rfx_script_dir = lives_build_path(prefs->config_datadir, PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS, NULL);
     com = lives_strdup_printf("%s build_rfx_plugins test \"%s\" \"%s\"", prefs->backend_sync,
 			      rfx_script_dir, rfx_exec_dir);
     lives_system(com, FALSE);
@@ -3687,7 +3681,6 @@ void on_rebuild_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   }
 
   lives_free(rfx_script_dir); lives_free(rfx_exec_dir);
-  lives_free(localshare);
 
   d_print(_("recreating dynamic menu entries..."));
   lives_widget_context_update();
@@ -3791,11 +3784,12 @@ void on_promote_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   if (!script_name) return; // user cancelled
 
-  if (strlen(script_name)) {
+  if (*script_name) {
     rfx_dir_from = lives_build_path(prefs->config_datadir, PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS, NULL);
     rfx_script_from = lives_build_filename(rfx_dir_from, script_name, NULL);
 
-    rfx_dir_to = lives_build_path(prefs->config_datadir, PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS, NULL);
+    rfx_dir_to = lives_build_path(prefs->config_datadir,  PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS, NULL);
+
     rfx_script_to = lives_build_filename(rfx_dir_to, script_name, NULL);
 
     if (lives_file_test(rfx_script_to, LIVES_FILE_TEST_EXISTS)) {
@@ -3816,7 +3810,7 @@ void on_promote_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
     if (!(ret = rename(rfx_script_from, rfx_script_to))) {
       d_print_done();
-      rfx_slot_count = -1;
+      // TODO - use RFX_STATUS_CUSTOM_AND_TEST
       on_rebuild_rfx_activate(NULL, LIVES_INT_TO_POINTER(RFX_STATUS_CUSTOM));
       on_rebuild_rfx_activate(NULL, LIVES_INT_TO_POINTER(RFX_STATUS_TEST));
       failed = FALSE;
@@ -3826,7 +3820,8 @@ void on_promote_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (failed) {
     lives_rmdir(rfx_dir_to, FALSE);
     d_print_failed();
-    msg = lives_strdup_printf(_("\n\nFailed to move the plugin script from\n%s to\n%s\nReturn code was %d (%s)\n"),
+    msg = lives_strdup_printf(_("\n\nFailed to move the plugin script from\n%s to\n"
+				"%s\nReturn code was %d (%s)\n"),
                               rfx_script_from, rfx_script_to, errno, strerror(errno));
     widget_opts.non_modal = TRUE;
     do_error_dialog(msg);
@@ -3852,13 +3847,13 @@ void on_export_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   if (!script_name || !*script_name) return; // user cancelled
 
-  filename = choose_file(NULL, script_name, NULL, LIVES_FILE_CHOOSER_ACTION_SAVE, _("Export Script"), NULL);
+  filename = choose_file(NULL, script_name, NULL, LIVES_FILE_CHOOSER_ACTION_SAVE,
+			 _("Export Script"), NULL);
 
   if (!filename) return;
 
   rfx_script_from = lives_build_filename(prefs->config_datadir,
                                          PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS, script_name, NULL);
-
   d_print(_("Copying %s to %s..."), rfx_script_from, filename);
 
   lives_cp((tmp = lives_filename_from_utf8(rfx_script_from, -1, NULL, NULL, NULL)),
@@ -3877,16 +3872,14 @@ void on_import_rfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   char *rfx_script_to, *rfx_dir_to;
   char *tmp, *tmp2;
   char basename[PATH_MAX];
-
-  char *filename = choose_file(NULL, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_OPEN, _("Import Script"), NULL);
+  char *filename
+    = choose_file(NULL, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_OPEN, _("Import Script"), NULL);
 
   if (!filename) return;
 
   lives_snprintf(basename, PATH_MAX, "%s", filename);
   get_basename(basename);
-
   THREADVAR(com_failed) = FALSE;
-
   switch (status) {
   case RFX_STATUS_TEST:
     rfx_dir_to = lives_build_path(prefs->config_datadir, PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS, NULL);
@@ -4194,18 +4187,33 @@ LiVESList *get_script_list(lives_rfx_status_t status) {
 
 void add_rfx_effects(lives_rfx_status_t status) {
   // scan render plugin directories, create a rfx array, and add each to the appropriate menu area
-  LiVESList *rfx_builtin_list = NULL, *rfx_custom_list = NULL, *rfx_test_list = NULL;
 
+  // 0) destroy menus / entries
+
+  // 1) scan each relevant direcotry to get updated number
+  // 2) copy mainw->rendered_fx -> rendered_fx (or create it)
+  // 3) append any new vals.
+  // 3) alpha sort rendered_fx
+  // 4) copy sorted list -> mainw->rendered_fx
+
+  // 5) recreate menus (add_rfx_effects2)
+
+  LiVESList *rfx_builtin_list = NULL, *rfx_custom_list = NULL, *rfx_test_list = NULL;
+  LiVESList *list;
   lives_rfx_t *rfx = NULL;
-  lives_rfx_t *rendered_fx;
+  lives_rfx_t **rendered_fx;
 
 #if LIVES_HAS_IMAGE_MENU_ITEM
   LiVESWidget *rfx_image;
 #endif
   int i, plugin_idx;
 
+  int llen;
   int rfx_builtin_list_length, rfx_custom_list_length, rfx_test_list_length;
   int rfx_list_length, old_list_length;
+
+  old_list_length = mainw->num_rendered_effects_builtin
+    + mainw->num_rendered_effects_custom + mainw->num_rendered_effects_test;
 
   // reset / reload values
   if (status == RFX_STATUS_ANY)
@@ -4219,23 +4227,9 @@ void add_rfx_effects(lives_rfx_status_t status) {
   rfx_custom_list_length = mainw->num_rendered_effects_custom;
   rfx_test_list_length = mainw->num_rendered_effects_test;
 
-  old_list_length = rfx_builtin_list_length + rfx_custom_list_length + rfx_test_list_length;
-
   if (status != RFX_STATUS_TEST) {
-    mainw->has_custom_effects = mainw->has_custom_tools = mainw->has_custom_gens = mainw->has_custom_utilities = FALSE;
-  }
-
-  if (status != RFX_STATUS_ANY) {
-    for (i = 1; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom
-         + mainw->num_rendered_effects_test; i++) {
-      if (mainw->rendered_fx[i].status == status) {
-        if (mainw->rendered_fx[i].menuitem) {
-          lives_widget_destroy(mainw->rendered_fx[i].menuitem);
-          mainw->rendered_fx[i].menuitem = NULL;
-        }
-      }
-    }
-    threaded_dialog_spin(0.);
+    mainw->has_custom_effects = mainw->has_custom_tools = mainw->has_custom_gens
+      = mainw->has_custom_utilities = FALSE;
   }
 
   if (status == RFX_STATUS_CUSTOM) {
@@ -4261,20 +4255,12 @@ void add_rfx_effects(lives_rfx_status_t status) {
 
   if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
-  // reset / reload values
-  if (status == RFX_STATUS_ANY)
-    mainw->num_rendered_effects_builtin = 0;
-  if (status != RFX_STATUS_TEST)
-    mainw->num_rendered_effects_custom = 0;
-  if (status != RFX_STATUS_CUSTOM)
-    mainw->num_rendered_effects_test = 0;
-
-  //if (status != RFX_STATUS_TEST) make_custom_submenus();
-
   if (status != RFX_STATUS_CUSTOM) {
-    //mainw->run_test_rfx_menu = lives_standard_menu_new();
+    mainw->run_test_rfx_menu = lives_standard_menu_new();
     rfx_test_list = get_plugin_list(PLUGIN_RENDERED_EFFECTS_TEST, FALSE, NULL, NULL);
     rfx_test_list_length = lives_list_length(rfx_test_list);
+    if (rfx_test_list_length > 0) mainw->has_test_effects = TRUE;
+    else mainw->has_test_effects = FALSE;
   }
 
   if (status != RFX_STATUS_TEST) {
@@ -4296,44 +4282,49 @@ void add_rfx_effects(lives_rfx_status_t status) {
 
   if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
-  rendered_fx = (lives_rfx_t *)lives_calloc((rfx_list_length + 1), sizeof(lives_rfx_t));
+  llen = rfx_list_length + 1;
+  rendered_fx = (lives_rfx_t **)lives_calloc(llen, sizeof(lives_rfx_t *));
 
   if (status != RFX_STATUS_ANY) {
-    boolean only_builtins = FALSE;
-    if (rfx_slot_count == -1) only_builtins = TRUE;
     rfx_slot_count = 0;
-    // add others to rendered_fx
+    // backup old values, except the ones we will recreate
     for (i = 0; i <= old_list_length; i++) {
-      if ((!only_builtins && mainw->rendered_fx[i].status != status)
-	  || (only_builtins &&  mainw->rendered_fx[i].status == RFX_STATUS_BUILTIN)) {
-        rfx_copy(&rendered_fx[rfx_slot_count++], &mainw->rendered_fx[i], FALSE);
+      if (mainw->rendered_fx[i]->status != status)
+	rendered_fx[rfx_slot_count++] = mainw->rendered_fx[i];
+      else {
+        if (mainw->rendered_fx[i]->menuitem)
+          lives_widget_destroy(mainw->rendered_fx[i]->menuitem);
+	rfx_free(mainw->rendered_fx[i]);
       }
+      threaded_dialog_spin(0.);
     }
     lives_free(mainw->rendered_fx);
     mainw->rendered_fx = NULL;
   } else {
-    rendered_fx[0].name = lives_strdup("realtime_fx");
-    rendered_fx[0].menu_text = (_("_Apply Real Time Effects to Selection"));
-    rendered_fx[0].action_desc = (_("Applying Current Real Time Effects to"));
+    rendered_fx[0] = (lives_rfx_t *)lives_calloc(1, sizeof(lives_rfx_t));
+    rendered_fx[0]->name = lives_strdup("realtime_fx");
+    rendered_fx[0]->menu_text = (_("_Apply Real Time Effects to Selection"));
+    rendered_fx[0]->action_desc = (_("Applying Current Real Time Effects to"));
 
-    rendered_fx[0].props = 0;
-    rendered_fx[0].rfx_version[0] = 0;
-    rendered_fx[0].num_params = 0;
-    rendered_fx[0].num_in_channels = 1;
-    rendered_fx[0].menuitem = NULL;
-    rendered_fx[0].params = NULL;
-    rendered_fx[0].flags = 0;
-    rendered_fx[0].gui_strings = NULL;
-    rendered_fx[0].onchange_strings = NULL;
-    rendered_fx[0].status = RFX_STATUS_WEED;
-    rendered_fx[0].is_template = FALSE;
-    rendered_fx[0].min_frames = 1;
-    rendered_fx[0].source = NULL;
-    rendered_fx[0].source_type = LIVES_RFX_SOURCE_RFX;
+    rendered_fx[0]->props = 0;
+    rendered_fx[0]->rfx_version[0] = 0;
+    rendered_fx[0]->num_params = 0;
+    rendered_fx[0]->num_in_channels = 1;
+    rendered_fx[0]->menuitem = NULL;
+    rendered_fx[0]->params = NULL;
+    rendered_fx[0]->flags = 0;
+    rendered_fx[0]->gui_strings = NULL;
+    rendered_fx[0]->onchange_strings = NULL;
+    rendered_fx[0]->status = RFX_STATUS_WEED;
+    rendered_fx[0]->is_template = FALSE;
+    rendered_fx[0]->min_frames = 1;
+    rendered_fx[0]->source = NULL;
+    rendered_fx[0]->source_type = LIVES_RFX_SOURCE_RFX;
     rfx_slot_count = 1;
   }
 
   if (rfx_list_length) {
+    // query and add updated segments
     LiVESList *define = NULL;
     LiVESList *description = NULL;
     LiVESList *props = NULL;
@@ -4341,45 +4332,54 @@ void add_rfx_effects(lives_rfx_status_t status) {
 
     lives_rfx_status_t xstatus = RFX_STATUS_BUILTIN;
 
-    char *type = lives_strdup(PLUGIN_RENDERED_EFFECTS_BUILTIN);
+    char *type = PLUGIN_RENDERED_EFFECTS_BUILTIN;
     char *plugin_name;
     char *def = NULL;
     char delim[2];
 
-    int offset = 0;
+    if (status == RFX_STATUS_CUSTOM) {
+      rfx_list = rfx_custom_list;
+      type = PLUGIN_RENDERED_EFFECTS_CUSTOM;
+      xstatus = RFX_STATUS_CUSTOM;
+    }
+    else if (status == RFX_STATUS_TEST) {
+      rfx_list = rfx_test_list;
+      type = PLUGIN_RENDERED_EFFECTS_TEST;
+      xstatus = RFX_STATUS_TEST;
+    }
 
-    for (plugin_idx = 0; plugin_idx < rfx_list_length; plugin_idx++) {
+    for (;; rfx_list = rfx_list->next) {
       if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 #ifndef BG_LOAD
       if (!mainw->splash_window) lives_widget_context_update();
 #endif
-      if (plugin_idx == rfx_builtin_list_length) {
-        lives_free(type);
-        type = lives_strdup(PLUGIN_RENDERED_EFFECTS_CUSTOM);
-        xstatus = RFX_STATUS_CUSTOM;
-        rfx_list = rfx_custom_list;
-        offset = rfx_builtin_list_length;
-      }
-      if (plugin_idx == rfx_builtin_list_length + rfx_custom_list_length) {
-        lives_free(type);
-        type = lives_strdup(PLUGIN_RENDERED_EFFECTS_TEST);
-        xstatus = RFX_STATUS_TEST;
-        rfx_list = rfx_test_list;
-        offset += rfx_custom_list_length;
+      if (!rfx_list) {
+	if (status != RFX_STATUS_ANY) break;
+
+	if (xstatus == RFX_STATUS_BUILTIN) {
+	  xstatus = RFX_STATUS_CUSTOM;
+	  rfx_list = rfx_custom_list;
+	  type = PLUGIN_RENDERED_EFFECTS_CUSTOM;
+	}
+	if (xstatus == RFX_STATUS_CUSTOM && !rfx_list) {
+	  rfx_list = rfx_test_list;
+	  xstatus = RFX_STATUS_TEST;
+	  type = PLUGIN_RENDERED_EFFECTS_TEST;
+	}
+	if (!rfx_list) break;
       }
 
-      if (status != RFX_STATUS_ANY && xstatus != status) continue;
-
-      plugin_name = lives_strdup((char *)lives_list_nth_data(rfx_list, plugin_idx - offset));
+      plugin_name = lives_strdup((char *)rfx_list->data);
 
 #ifndef BG_LOAD
       if (mainw->splash_window) {
-        splash_msg((tmp = lives_strdup_printf(_("Loading rendered effect %s..."), plugin_name)), SPLASH_LEVEL_LOAD_RFX);
+        splash_msg((tmp = lives_strdup_printf(_("Loading rendered effect %s..."), plugin_name)),
+		   SPLASH_LEVEL_LOAD_RFX);
         lives_free(tmp);
       }
 #endif
 
-#define DEBUG_RENDER_FX
+      //#define DEBUG_RENDER_FX
 #ifdef DEBUG_RENDER_FX
       g_print("Checking plugin %s\n", plugin_name);
 #endif
@@ -4389,12 +4389,11 @@ void add_rfx_effects(lives_rfx_status_t status) {
         g_print("No get_define in %s\n", plugin_name);
 #endif
         lives_free(plugin_name);
-	if (status == RFX_STATUS_TEST) mainw->num_rendered_effects_test--;
-	if (status == RFX_STATUS_CUSTOM) mainw->num_rendered_effects_custom--;
+	rfx_list_length--;
         continue;
       }
 
-      def = lives_strdup((char *)lives_list_nth_data(define, 0));
+      def = lives_strdup((char *)define->data);
       lives_list_free_all(&define);
 
       if (strlen(def) < 2) {
@@ -4403,8 +4402,7 @@ void add_rfx_effects(lives_rfx_status_t status) {
 #endif
         lives_free(plugin_name);
         lives_free(def);
-	if (status == RFX_STATUS_TEST) mainw->num_rendered_effects_test--;
-	if (status == RFX_STATUS_CUSTOM) mainw->num_rendered_effects_custom--;
+	rfx_list_length--;
         continue;
       }
       if (make_version_hash(def + 1) > make_version_hash(RFX_VERSION)) {
@@ -4413,41 +4411,43 @@ void add_rfx_effects(lives_rfx_status_t status) {
 #endif
         lives_free(plugin_name);
         lives_free(def);
-	if (status == RFX_STATUS_TEST) mainw->num_rendered_effects_test--;
-	if (status == RFX_STATUS_CUSTOM) mainw->num_rendered_effects_custom--;
+	rfx_list_length--;
         continue;
       }
 
       delim[0] = def[0];
       delim[1] = 0;
 
-      if (status == RFX_STATUS_ANY) {
-	if ((description = plugin_request_common(type, plugin_name, "get_description", delim, TRUE)) &&
-	    (props = plugin_request_common(type, plugin_name, "get_capabilities", delim, FALSE)) &&
-	    lives_list_length(description) > 3) {
-	  rfx = &rendered_fx[rfx_slot_count++];
-	  rfx->name = lives_strdup(plugin_name);
-	  lives_memcpy(rfx->delim, delim, 2);
-	  rfx->menu_text = lives_strdup((char *)lives_list_nth_data(description, 0));
-	  rfx->action_desc = lives_strdup((char *)lives_list_nth_data(description, 1));
-	  if (!(rfx->min_frames = atoi((char *)lives_list_nth_data(description, 2))))
-	    rfx->min_frames = 1;
-	  rfx->num_in_channels = atoi((char *)lives_list_nth_data(description, 3));
-	  rfx->status = xstatus;
-	  lives_snprintf(rfx->rfx_version, 64, "%s", def + 1);
-	  rfx->props = atoi((char *)lives_list_nth_data(props, 0));
-	  rfx->num_params = 0;
-	  rfx->is_template = FALSE;
-	  rfx->params = NULL;
-	  rfx->source = NULL;
-	  rfx->source_type = LIVES_RFX_SOURCE_RFX;
-	  rfx->flags = 0;
-	  rfx->gui_strings = NULL;
-	  rfx->onchange_strings = NULL;
-	  rfx->is_template = FALSE;
-	  if (!check_rfx_for_lives(rfx)) rfx_slot_count--;
-	}
+      if ((description = plugin_request_common(type, plugin_name, "get_description", delim, TRUE)) &&
+	  (props = plugin_request_common(type, plugin_name, "get_capabilities", delim, FALSE)) &&
+	  lives_list_length(description) > 3) {
+	rfx = rendered_fx[rfx_slot_count++] = (lives_rfx_t *)lives_calloc(1, sizeof(lives_rfx_t));
+	rfx->name = lives_strdup(plugin_name);
+	lives_memcpy(rfx->delim, delim, 2);
+	list = description;
+	rfx->menu_text = lives_strdup((char *)list->data);
+	list = list->next;
+	rfx->action_desc = lives_strdup((char *)list->data);
+	list = list->next;
+	if (!(rfx->min_frames = atoi((char *)list->data)))
+	  rfx->min_frames = 1;
+	list = list->next;
+	rfx->num_in_channels = atoi((char *)list->data);
+	rfx->status = xstatus;
+	lives_snprintf(rfx->rfx_version, 64, "%s", def + 1);
+	rfx->props = atoi((char *)props->data);
+	rfx->num_params = 0;
+	rfx->is_template = FALSE;
+	rfx->params = NULL;
+	rfx->source = NULL;
+	rfx->source_type = LIVES_RFX_SOURCE_RFX;
+	rfx->flags = 0;
+	rfx->gui_strings = NULL;
+	rfx->onchange_strings = NULL;
+	rfx->is_template = FALSE;
+	if (!check_rfx_for_lives(rfx)) rfx_slot_count--;
       }
+
       lives_free(plugin_name);
       if (props) {
         lives_list_free_all(&props);
@@ -4458,13 +4458,11 @@ void add_rfx_effects(lives_rfx_status_t status) {
         description = NULL;
       }
       lives_free(def);
-    }
+    } // loop end
 
     if (rfx_builtin_list) lives_list_free_all(&rfx_builtin_list);
     if (rfx_custom_list) lives_list_free_all(&rfx_custom_list);
     if (rfx_test_list) lives_list_free_all(&rfx_test_list);
-
-    lives_free(type);
   }
 
   lives_freep((void **)&mainw->rendered_fx);
@@ -4473,16 +4471,17 @@ void add_rfx_effects(lives_rfx_status_t status) {
 
   if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
-  // sort menu text by alpha order (apart from [0]) and create mainw->rendered_fx
-  sort_rfx_array(rendered_fx, rfx_slot_count); // each rendered_fx is copied and free()d
+  // sort menu text by alpha order (apart from [0]) and (re) create mainw->rendered_fx
+  sort_rfx_array(rendered_fx, rfx_slot_count);
   lives_free(rendered_fx);
 
   if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
   // now we need to add to the effects menu and set a callback
-  for (rfx = &mainw->rendered_fx[(plugin_idx = 1)]; plugin_idx <= rfx_slot_count; rfx = &mainw->rendered_fx[++plugin_idx]) {
-    if (status != RFX_STATUS_ANY && rfx->status != status) continue;
+  for (rfx = mainw->rendered_fx[(plugin_idx = 1)];
+       plugin_idx <= rfx_list_length; rfx = mainw->rendered_fx[++plugin_idx]) {
 
+    if (status != RFX_STATUS_ANY && rfx->status != status) continue;
     if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
     render_fx_get_params(rfx, rfx->name, rfx->status);
@@ -4504,13 +4503,16 @@ void add_rfx_effects(lives_rfx_status_t status) {
     }
   }
 
-  if (status != RFX_STATUS_ANY) {
-    if (mainw->num_rendered_effects_test) {
-      lives_widget_set_sensitive(mainw->run_test_rfx_submenu, TRUE);
-      lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->run_test_rfx_submenu), mainw->run_test_rfx_menu);
-      add_rfx_effects2(status);
-    }
-  }
+  /* if (status != RFX_STATUS_CUSTOM) { */
+  /*   if (mainw->num_rendered_effects_test) { */
+  /*     lives_widget_set_sensitive(mainw->run_test_rfx_submenu, TRUE); */
+  /*     lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->run_test_rfx_submenu), */
+  /* 				  mainw->run_test_rfx_menu); */
+  /*   } */
+  /*   else lives_widget_set_sensitive(mainw->run_test_rfx_submenu, FALSE); */
+  /* } */
+
+  if (status != RFX_STATUS_ANY) add_rfx_effects2(status);
 }
 
 
@@ -4522,7 +4524,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
 
   if (status == RFX_STATUS_ANY) {
     // recreate effects menu
-    LiVESWidget *menuitem = lives_standard_menu_item_new_with_label(mainw->rendered_fx[0].menu_text);
+    LiVESWidget *menuitem = lives_standard_menu_item_new_with_label(mainw->rendered_fx[0]->menu_text);
 
     lives_widget_set_sensitive(menuitem, FALSE);
     lives_widget_set_tooltip_text(menuitem, _("See: VJ - show VJ keys. Set the realtime effects, and then apply them here."));
@@ -4533,8 +4535,8 @@ void add_rfx_effects2(lives_rfx_status_t status) {
     lives_signal_sync_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
                          LIVES_GUI_CALLBACK(on_realfx_activate), &mainw->rendered_fx[0]);
 
-    mainw->rendered_fx[0].menuitem = menuitem;
-    mainw->rendered_fx[0].num_in_channels = 1;
+    mainw->rendered_fx[0]->menuitem = menuitem;
+    mainw->rendered_fx[0]->num_in_channels = 1;
 
     if (!LIVES_IS_PLAYING && mainw->current_file > 0 &&
         ((has_video_filters(TRUE) && !has_video_filters(FALSE)) ||
@@ -4548,6 +4550,7 @@ void add_rfx_effects2(lives_rfx_status_t status) {
     lives_widget_set_sensitive(mainw->run_test_rfx_submenu, TRUE);
     lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->run_test_rfx_submenu), mainw->run_test_rfx_menu);
   }
+  else lives_widget_set_sensitive(mainw->run_test_rfx_submenu, FALSE);
 
   if (status != RFX_STATUS_TEST) make_custom_submenus();
 
@@ -4564,8 +4567,8 @@ void add_rfx_effects2(lives_rfx_status_t status) {
     lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->custom_tools_submenu), mainw->custom_tools_menu);
   }
 
-  if (status == RFX_STATUS_ANY && mainw->rendered_fx[0].menuitem) {
-    lives_container_add(LIVES_CONTAINER(mainw->effects_menu), mainw->rendered_fx[0].menuitem);
+  if (status == RFX_STATUS_ANY && mainw->rendered_fx[0]->menuitem) {
+    lives_container_add(LIVES_CONTAINER(mainw->effects_menu), mainw->rendered_fx[0]->menuitem);
     mainw->rte_separator = lives_menu_add_separator(LIVES_MENU(mainw->effects_menu));
   }
 
@@ -4605,10 +4608,9 @@ void add_rfx_effects2(lives_rfx_status_t status) {
   }
 
   if (rfx_slot_count) {
-    for (rfx = &mainw->rendered_fx[(plugin_idx = 1)]; plugin_idx <= rfx_slot_count; rfx = &mainw->rendered_fx[++plugin_idx]) {
-      if (rfx->status == RFX_STATUS_TEST) {
-        if (status == RFX_STATUS_CUSTOM) continue;
-      } else if (status == RFX_STATUS_TEST) continue;
+    for (rfx = mainw->rendered_fx[(plugin_idx = 1)]; plugin_idx <= rfx_slot_count;
+	 rfx = mainw->rendered_fx[++plugin_idx]) {
+      if (status == RFX_STATUS_TEST && rfx->status == RFX_STATUS_BUILTIN) continue;
 
       if (status != RFX_STATUS_ANY) threaded_dialog_spin(0.);
 
@@ -4694,7 +4696,11 @@ void add_rfx_effects2(lives_rfx_status_t status) {
           lives_image_menu_item_set_image(LIVES_IMAGE_MENU_ITEM(menuitem), rfx_image);
 #endif
           if (rfx->num_in_channels == 1) {
-            lives_container_add(LIVES_CONTAINER(mainw->effects_menu), menuitem);
+	    if (rfx->status == RFX_STATUS_CUSTOM) {
+	      lives_container_add(LIVES_CONTAINER(mainw->custom_effects_menu), menuitem);
+	      mainw->has_custom_effects = TRUE;
+	    }
+	    else lives_container_add(LIVES_CONTAINER(mainw->effects_menu), menuitem);
           }
           if (!rfx->params) {
             lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -4775,12 +4781,15 @@ void update_rfx_menus(void) {
     lives_widget_show_all(mainw->run_test_rfx_submenu);
     lives_widget_set_sensitive(mainw->run_test_rfx_submenu, TRUE);
     lives_widget_set_sensitive(mainw->promote_test_rfx, TRUE);
+  } else {
+    lives_widget_set_sensitive(mainw->run_test_rfx_submenu, FALSE);
+    lives_widget_set_sensitive(mainw->promote_test_rfx, FALSE);
+  }
+  if (mainw->has_test_effects) {
     lives_widget_set_sensitive(mainw->delete_test_rfx, TRUE);
     lives_widget_set_sensitive(mainw->rename_test_rfx, TRUE);
     lives_widget_set_sensitive(mainw->edit_test_rfx, TRUE);
   } else {
-    lives_widget_set_sensitive(mainw->run_test_rfx_submenu, FALSE);
-    lives_widget_set_sensitive(mainw->promote_test_rfx, FALSE);
     lives_widget_set_sensitive(mainw->delete_test_rfx, FALSE);
     lives_widget_set_sensitive(mainw->rename_test_rfx, FALSE);
     lives_widget_set_sensitive(mainw->edit_test_rfx, FALSE);

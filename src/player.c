@@ -63,12 +63,6 @@ void get_player_size(int *opwidth, int *opheight) {
   /////////////////////////////////////////////////////////////////////////////////
   // multitrack: we ignore double size, and fullscreen unless playing in the separate window
   if (mainw->multitrack) {
-    // frame max sizes for multitrack
-    /* *opwidth = mainw->files[mainw->multitrack->render_file]->hsize; */
-    /* *opheight = mainw->files[mainw->multitrack->render_file]->vsize; */
-    /* if (!mainw->multitrack->is_rendering) { */
-    /*   calc_maxspect(mainw->multitrack->play_width, mainw->multitrack->play_height, opwidth, opheight); */
-    /* } */
     *opwidth = mainw->multitrack->play_width;
     *opheight = mainw->multitrack->play_height;
     goto align;
@@ -98,7 +92,6 @@ void get_player_size(int *opwidth, int *opheight) {
   } else {
     // try to get exact inner size of the main window
     lives_window_get_inner_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), opwidth, opheight);
-    //*opheight -= 2; // necessary, or screen expands too much (!?)
     if (prefs->show_tool) *opheight -= lives_widget_get_allocation_height(mainw->btoolbar);
   }
 
@@ -107,6 +100,24 @@ align:
   *opheight = (*opheight >> 2) << 2;
   mainw->pwidth = *opwidth;
   mainw->pheight = *opheight;
+}
+
+
+void player_desensitize(void) {
+  lives_widget_set_sensitive(mainw->rte_defs_menu, FALSE);
+  lives_widget_set_sensitive(mainw->utilities_submenu, FALSE);
+  lives_widget_set_sensitive(mainw->rfx_submenu, FALSE);
+  lives_widget_set_sensitive(mainw->import_theme, FALSE);
+  lives_widget_set_sensitive(mainw->export_theme, FALSE);
+}
+
+
+void player_sensitize(void) {
+  lives_widget_set_sensitive(mainw->rte_defs_menu, TRUE);
+  lives_widget_set_sensitive(mainw->utilities_submenu, TRUE);
+  lives_widget_set_sensitive(mainw->rfx_submenu, TRUE);
+  lives_widget_set_sensitive(mainw->import_theme, TRUE);
+  lives_widget_set_sensitive(mainw->export_theme, TRUE);
 }
 
 
@@ -169,7 +180,8 @@ static boolean check_for_overlay_text(weed_layer_t *layer) {
 
 
 static void do_cleanup(weed_layer_t *layer, int success) {
-  /// cleanup any resources after showing a frame. This run as a thread, so the main thread can return to the player
+  /// cleanup any resources after showing a frame. This run as a thread,
+  /// so the main thread can return to the player
   lives_clip_t *sfile = NULL;
   int clip = -1;
   double fps = DEF_FPS;
@@ -188,7 +200,8 @@ static void do_cleanup(weed_layer_t *layer, int success) {
     char *tmp;
     // format is now msg|timecode|fgclip|fgframe|fgfps|
     lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH, (const char *)
-                 (tmp = lives_strdup_printf("%.8f|%d|%d|%.3f|", (double)mainw->currticks / TICKS_PER_SECOND_DBL,
+                 (tmp = lives_strdup_printf("%.8f|%d|%d|%.3f|",
+                                            (double)mainw->currticks / TICKS_PER_SECOND_DBL,
                                             clip, frame, fps)));
     lives_free(tmp);
   }
@@ -507,8 +520,8 @@ void load_frame_image(frames_t frame) {
           if (mainw->toy_type == LIVES_TOY_MAD_FRAMES && !mainw->fs && CURRENT_CLIP_IS_NORMAL) {
             int current_file = mainw->current_file;
             if (mainw->toy_go_wild) {
-              int i, other_file;
-              for (i = 0; i < 11; i++) {
+              int other_file;
+              for (int i = 0; i < 11; i++) {
                 other_file = (1 + (int)((double)(mainw->clips_available) * rand() / (RAND_MAX + 1.0)));
                 other_file = LIVES_POINTER_TO_INT(lives_list_nth_data(mainw->cliplist, other_file));
                 if (mainw->files[other_file]) {
@@ -520,10 +533,9 @@ void load_frame_image(frames_t frame) {
             load_end_image(1 + (int)((double)cfile->frames * rand() / (RAND_MAX + 1.0)));
             load_start_image(1 + (int)((double)cfile->frames * rand() / (RAND_MAX + 1.0)));
             mainw->current_file = current_file;
-          }
-        }
-      }
-    }
+	    // *INDENT-OFF*
+          }}}}
+    // *INDENT-ON*
 
     if (was_preview) {
       // preview
@@ -549,8 +561,6 @@ void load_frame_image(frames_t frame) {
           } else {
             framecount = lives_strdup_printf("%9d", frame);
           }
-          /* lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount); */
-          /* lives_freep((void **)&framecount); */
         }
         if (mainw->toy_type != LIVES_TOY_NONE) {
           // TODO - move into toys.c

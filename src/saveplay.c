@@ -20,6 +20,7 @@ static boolean _start_playback(livespointer data) {
   int new_file, old_file;
   int play_type = LIVES_POINTER_TO_INT(data);
   if (play_type != 8 && mainw->noswitch) return TRUE;
+  player_desensitize();
   switch (play_type) {
   case 8: case 6: case 0:
     /// normal play
@@ -86,6 +87,7 @@ static boolean _start_playback(livespointer data) {
     break;
   default:
     /// do nothing
+    player_sensitize();
     break;
   }
   return FALSE;
@@ -2157,6 +2159,7 @@ static void post_playback(void) {
     redraw_timeline(mainw->current_file);
   }
 
+  player_sensitize();
   lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
 }
 
@@ -5321,8 +5324,12 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       retb = FALSE;
       goto recovery_done;
     }
-  } else lives_proc_thread_dontcare(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
-
+  } else {
+    if (mainw->helper_procthreads[PT_CUSTOM_COLOURS]) {
+      lives_proc_thread_dontcare(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+      mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;
+    }
+  }
   if (recovery_file) {
     do {
       resp = LIVES_RESPONSE_NONE;
@@ -5819,7 +5826,10 @@ boolean check_for_recovery_files(boolean auto_recover) {
 
   recpid = atoi(mainw->msg);
   if (recpid == 0) {
-    lives_proc_thread_dontcare(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+    if (mainw->helper_procthreads[PT_CUSTOM_COLOURS]) {
+      lives_proc_thread_dontcare(mainw->helper_procthreads[PT_CUSTOM_COLOURS]);
+      mainw->helper_procthreads[PT_CUSTOM_COLOURS] = NULL;
+    }
     return FALSE;
   }
 

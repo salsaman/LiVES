@@ -101,14 +101,17 @@ char *get_stats_msg(boolean calc_only) {
   fgpal = get_palette_name_for_clip(mainw->current_file);
 
   msg = lives_strdup_printf(_("%sFrame %d / %d, fps %.3f (target: %.3f)\n"
+                              "CPU0 load %.2f %% : Disk load: %f\n"
                               "Effort: %d / %d, quality: %d, %s (%s)\n%s\n"
                               "Fg clip: %d X %d, palette: %s\n%s"),
                             audmsg ? audmsg : "",
                             mainw->actual_frame, cfile->frames,
                             inst_fps * sig(cfile->pb_fps), cfile->pb_fps,
+                            get_cpu_load(0) / 10000., get_disk_load(capable->mountpoint),
                             mainw->effort, EFFORT_RANGE_MAX,
                             prefs->pb_quality,
-                            tmp = lives_strdup(prefs->pb_quality == 1 ? _("Low") : prefs->pb_quality == 2 ? _("Med") : _("High")),
+                            tmp = lives_strdup(prefs->pb_quality == 1 ? _("Low")
+                                  : prefs->pb_quality == 2 ? _("Med") : _("High")),
                             tmp2 = lives_strdup(prefs->pbq_adaptive ? _("adaptive") : _("fixed")),
                             get_cache_stats(),
                             cfile->hsize, cfile->vsize,

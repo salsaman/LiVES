@@ -83,7 +83,8 @@ LiVESList *plugin_request_common(const char *plugin_type, const char *plugin_nam
     }
 
     // some types live in the config directory...
-    if (!strcmp(plugin_type, PLUGIN_RENDERED_EFFECTS_CUSTOM) || !strcmp(plugin_type, PLUGIN_RENDERED_EFFECTS_TEST)) {
+    if (!lives_strcmp(plugin_type, PLUGIN_RENDERED_EFFECTS_CUSTOM)
+        || !lives_strcmp(plugin_type, PLUGIN_RENDERED_EFFECTS_TEST)) {
       comfile = lives_build_filename(prefs->config_datadir, plugin_type, plugin_name, NULL);
     } else if (!strcmp(plugin_type, PLUGIN_RFX_SCRAP)) {
       // scraps are in the workdir
@@ -104,7 +105,6 @@ LiVESList *plugin_request_common(const char *plugin_type, const char *plugin_nam
   list_plugins = FALSE;
   reslist = get_plugin_result(com, delim, allow_blanks, TRUE);
   lives_free(com);
-  //threaded_dialog_spin(0.);
   return reslist;
 }
 
@@ -128,35 +128,35 @@ LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const c
 
   const char *ext = (filter_ext == NULL) ? "" : filter_ext;
 
-  if (!strcmp(plugin_type, PLUGIN_THEMES)) {
+  if (!lives_strcmp(plugin_type, PLUGIN_THEMES)) {
     // must not allow_nonex, otherwise we get splash image etc (just want dirs)
     com = lives_strdup_printf("%s list_plugins 0 1 \"%s%s\" \"\"", prefs->backend_sync, prefs->prefix_dir, THEME_DIR);
-  } else if (!strcmp(plugin_type, PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS) ||
-             !strcmp(plugin_type, PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS) ||
-             !strcmp(plugin_type, PLUGIN_RENDERED_EFFECTS_CUSTOM) ||
-             !strcmp(plugin_type, PLUGIN_RENDERED_EFFECTS_TEST) ||
-             !strcmp(plugin_type, PLUGIN_COMPOUND_EFFECTS_CUSTOM)
+  } else if (!lives_strcmp(plugin_type, PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS) ||
+             !lives_strcmp(plugin_type, PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS) ||
+             !lives_strcmp(plugin_type, PLUGIN_RENDERED_EFFECTS_CUSTOM) ||
+             !lives_strcmp(plugin_type, PLUGIN_RENDERED_EFFECTS_TEST) ||
+             !lives_strcmp(plugin_type, PLUGIN_COMPOUND_EFFECTS_CUSTOM)
             ) {
     // look in home
     tmp = lives_build_path(prefs->config_datadir, plugin_type, NULL);
     com = lives_strdup_printf("%s list_plugins %d 0 \"%s\" \"%s\"", prefs->backend_sync, allow_nonex, tmp, ext);
     lives_free(tmp);
-  } else if (!strcmp(plugin_type, PLUGIN_THEMES_CUSTOM)) {
+  } else if (!lives_strcmp(plugin_type, PLUGIN_THEMES_CUSTOM)) {
     tmp = lives_build_path(prefs->config_datadir, PLUGIN_THEMES, NULL);
     com = lives_strdup_printf("%s list_plugins 0 1 \"%s\"", prefs->backend_sync, tmp);
     lives_free(tmp);
-  } else if (!strcmp(plugin_type, PLUGIN_EFFECTS_WEED)) {
+  } else if (!lives_strcmp(plugin_type, PLUGIN_EFFECTS_WEED)) {
     com = lives_strdup_printf("%s list_plugins 1 1 \"%s\" \"%s\"", prefs->backend_sync,
                               (tmp = lives_filename_from_utf8((char *)plugdir, -1, NULL, NULL, NULL)), ext);
     lives_free(tmp);
-  } else if (!strcmp(plugin_type, PLUGIN_DECODERS)) {
+  } else if (!lives_strcmp(plugin_type, PLUGIN_DECODERS)) {
     com = lives_strdup_printf("%s list_plugins 1 0 \"%s\" \"%s\"", prefs->backend_sync,
                               (tmp = lives_filename_from_utf8((char *)plugdir, -1, NULL, NULL, NULL)), ext);
     lives_free(tmp);
-  } else if (!strcmp(plugin_type, PLUGIN_RENDERED_EFFECTS_BUILTIN_SCRIPTS)) {
+  } else if (!lives_strcmp(plugin_type, PLUGIN_RENDERED_EFFECTS_BUILTIN_SCRIPTS)) {
     com = lives_strdup_printf("%s list_plugins %d 0 \"%s%s%s\" \"%s\"", prefs->backend_sync, allow_nonex, prefs->prefix_dir,
                               PLUGIN_SCRIPTS_DIR, plugin_type, ext);
-  } else if (!strcmp(plugin_type, PLUGIN_COMPOUND_EFFECTS_BUILTIN)) {
+  } else if (!lives_strcmp(plugin_type, PLUGIN_COMPOUND_EFFECTS_BUILTIN)) {
     com = lives_strdup_printf("%s list_plugins %d 0 \"%s%s%s\" \"%s\"", prefs->backend_sync, allow_nonex, prefs->prefix_dir,
                               PLUGIN_COMPOUND_DIR, plugin_type, ext);
   } else {
@@ -302,7 +302,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
         if (THREADVAR(read_failed)) break;
 
         // identifier string
-        if (strcmp(msg, buf)) {
+        if (lives_strcmp(msg, buf)) {
           lives_free(msg);
           d_print_file_error_failed();
           close(fd);
@@ -318,7 +318,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
 
         if (THREADVAR(read_failed)) break;
 
-        if (strcmp(buf, vpp->name)) {
+        if (lives_strcmp(buf, vpp->name)) {
           d_print_file_error_failed();
           close(fd);
           return;
@@ -334,7 +334,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
 
         lives_memset(buf + len, 0, 1);
 
-        if (strcmp(buf, version)) {
+        if (lives_strcmp(buf, version)) {
           msg = lives_strdup_printf(
                   _("\nThe %s video playback plugin has been updated.\nPlease check your settings in\n"
                     "Tools|Preferences|Playback|Playback Plugins Advanced\n\n"),
@@ -482,7 +482,7 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
         lives_memset(clamping + strlen(clamping) - 1, 0, 1);
         do {
           tmp = weed_yuv_clamping_get_name(i);
-          if (tmp && !strcmp(clamping, tmp)) {
+          if (tmp && !lives_strcmp(clamping, tmp)) {
             vpp->YUV_clamping = i;
             break;
           }
@@ -526,7 +526,7 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
     if (vppw->pal_entry) {
       if (vpp->get_palette_list && (pal_list = (*vpp->get_palette_list)())) {
         for (i = 0; pal_list[i] != WEED_PALETTE_END; i++) {
-          if (!strcmp(cur_pal, weed_palette_get_name(pal_list[i]))) {
+          if (!lives_strcmp(cur_pal, weed_palette_get_name(pal_list[i]))) {
             vpp->palette = pal_list[i];
             if (mainw->ext_playback) {
               pthread_mutex_lock(&mainw->vpp_stream_mutex);
@@ -635,7 +635,7 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
         lives_memset(clamping + strlen(clamping) - 1, 0, 1);
         do {
           tmp = weed_yuv_clamping_get_name(i);
-          if (tmp && !strcmp(clamping, tmp)) {
+          if (tmp && !lives_strcmp(clamping, tmp)) {
             future_prefs->vpp_YUV_clamping = i;
             break;
           }
@@ -665,7 +665,7 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
     if (cur_pal) {
       if (vpp->get_palette_list && (pal_list = (*vpp->get_palette_list)())) {
         for (i = 0; pal_list[i] != WEED_PALETTE_END; i++) {
-          if (!strcmp(cur_pal, weed_palette_get_name(pal_list[i]))) {
+          if (!lives_strcmp(cur_pal, weed_palette_get_name(pal_list[i]))) {
             future_prefs->vpp_palette = pal_list[i];
             break;
           }
@@ -823,7 +823,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
     nfps = get_token_count((char *)fps_list, '|');
     for (i = 0; i < nfps; i++) {
-      if (strlen(array[i]) && strcmp(array[i], "\n")) {
+      if (strlen(array[i]) && lives_strcmp(array[i], "\n")) {
         if (get_token_count(array[i], ':') == 0) {
           fps_list_strings = lives_list_append(fps_list_strings, remove_trailing_zeroes(lives_strtod(array[i], NULL)));
         } else fps_list_strings = lives_list_append(fps_list_strings, lives_strdup(array[i]));
@@ -1236,7 +1236,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
     vpp->palette = future_prefs->vpp_palette;
     vpp->YUV_clamping = future_prefs->vpp_YUV_clamping;
   } else {
-    if (!in_use && mainw->vpp && !(strcmp(name, mainw->vpp->name))) {
+    if (!in_use && mainw->vpp && !(lives_strcmp(name, mainw->vpp->name))) {
       vpp->palette = mainw->vpp->palette;
       vpp->YUV_clamping = mainw->vpp->YUV_clamping;
     } else {
@@ -1256,7 +1256,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   if (future_prefs->vpp_argv) {
     vpp->fwidth = future_prefs->vpp_fwidth;
     vpp->fheight = future_prefs->vpp_fheight;
-  } else if (!in_use && mainw->vpp && !(strcmp(name, mainw->vpp->name))) {
+  } else if (!in_use && mainw->vpp && !(lives_strcmp(name, mainw->vpp->name))) {
     vpp->fwidth = mainw->vpp->fwidth;
     vpp->fheight = mainw->vpp->fheight;
   }
@@ -1271,7 +1271,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
     vpp->fixed_fpsd = future_prefs->vpp_fixed_fpsd;
     vpp->fixed_fps_numer = future_prefs->vpp_fixed_fps_numer;
     vpp->fixed_fps_denom = future_prefs->vpp_fixed_fps_denom;
-  } else if (!in_use && mainw->vpp && !(strcmp(name, mainw->vpp->name))) {
+  } else if (!in_use && mainw->vpp && !(lives_strcmp(name, mainw->vpp->name))) {
     vpp->fixed_fpsd = mainw->vpp->fixed_fpsd;
     vpp->fixed_fps_numer = mainw->vpp->fixed_fps_numer;
     vpp->fixed_fps_denom = mainw->vpp->fixed_fps_denom;
@@ -1285,7 +1285,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
     vpp->extra_argv = (char **)lives_calloc((vpp->extra_argc + 1), (sizeof(char *)));
     for (register int i = 0; i <= vpp->extra_argc; i++) vpp->extra_argv[i] = lives_strdup(future_prefs->vpp_argv[i]);
   } else {
-    if (!in_use && mainw->vpp && !(strcmp(name, mainw->vpp->name))) {
+    if (!in_use && mainw->vpp && !(lives_strcmp(name, mainw->vpp->name))) {
       vpp->extra_argc = mainw->vpp->extra_argc;
       vpp->extra_argv = (char **)lives_calloc((mainw->vpp->extra_argc + 1), (sizeof(char *)));
       for (register int i = 0; i <= vpp->extra_argc; i++) vpp->extra_argv[i] = lives_strdup(mainw->vpp->extra_argv[i]);
@@ -1605,7 +1605,7 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
     for (i = 0; i < lives_list_length(ofmt_all); i++) {
       if ((numtok = get_token_count((char *)lives_list_nth_data(ofmt_all, i), '|')) > 2) {
         array = lives_strsplit((char *)lives_list_nth_data(ofmt_all, i), "|", -1);
-        if (!strcmp(array[0], prefs->encoder.of_name)) {
+        if (!lives_strcmp(array[0], prefs->encoder.of_name)) {
           if (numtok > 5) {
             lives_snprintf(prefs->encoder.ptext, 512, "%s", array[5]);
           } else {
@@ -1644,7 +1644,7 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
 
   if (user_audio && future_prefs->encoder.of_allowed_acodecs == 0) best_arate = -1;
 
-  if ((!*prefs->encoder.of_restrict || !strcmp(prefs->encoder.of_restrict, "none")) && best_arate > -1) {
+  if ((!*prefs->encoder.of_restrict || !lives_strcmp(prefs->encoder.of_restrict, "none")) && best_arate > -1) {
     return TRUE;
   }
 
@@ -1799,11 +1799,11 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
           prefs->encoder.audio_codec != AUDIO_CODEC_NONE
           && arate != 0 && achans != 0 && asampsize != 0) {
         array = lives_strsplit(checks[r], "=", 2);
-        if (!strcmp(array[1], "signed")) {
+        if (!lives_strcmp(array[1], "signed")) {
           asigned = 1;
         }
 
-        if (!strcmp(array[1], "unsigned")) {
+        if (!lives_strcmp(array[1], "unsigned")) {
           asigned = 2;
         }
 
@@ -2023,7 +2023,7 @@ LiVESList *filter_encoders_by_img_ext(LiVESList * encoders, const char *img_ext)
     listnext = list->next;
 
     while (blacklist[i]) {
-      if (!strcmp((const char *)list->data, blacklist[i])) {
+      if (!lives_strcmp((const char *)list->data, blacklist[i])) {
         // skip blacklisted encoders
         lives_free((livespointer)list->data);
         encoders = lives_list_delete_link(encoders, list);
@@ -2037,7 +2037,7 @@ LiVESList *filter_encoders_by_img_ext(LiVESList * encoders, const char *img_ext)
       continue;
     }
 
-    if (!strcmp(img_ext, LIVES_FILE_EXT_JPG)) {
+    if (!lives_strcmp(img_ext, LIVES_FILE_EXT_JPG)) {
       list = listnext;
       continue;
     }
@@ -2047,7 +2047,7 @@ LiVESList *filter_encoders_by_img_ext(LiVESList * encoders, const char *img_ext)
       encoders = lives_list_delete_link(encoders, list);
     } else {
       caps = atoi((char *)lives_list_nth_data(encoder_capabilities, 0));
-      if (!(caps & CAN_ENCODE_PNG) && !strcmp(img_ext, LIVES_FILE_EXT_PNG)) {
+      if (!(caps & CAN_ENCODE_PNG) && !lives_strcmp(img_ext, LIVES_FILE_EXT_PNG)) {
         lives_free((livespointer)list->data);
         encoders = lives_list_delete_link(encoders, list);
       }
@@ -2071,7 +2071,7 @@ boolean decoder_plugin_move_to_first(const char *name) {
   LiVESList *decoder_plugin, *last_decoder_plugin = NULL;
   decoder_plugin = mainw->decoder_list;
   while (decoder_plugin) {
-    if (!strcmp((const char *)(decoder_plugin->data), name)) {
+    if (!lives_strcmp((const char *)(decoder_plugin->data), name)) {
       if (last_decoder_plugin) {
         last_decoder_plugin->next = decoder_plugin->next;
         decoder_plugin->next = mainw->decoder_list;
@@ -2109,7 +2109,7 @@ LiVESList *load_decoders(void) {
     skip = FALSE;
     dplugname = (const char *)(decoder_plugins->data);
     for (i = 0; blacklist[i]; i++) {
-      if (!strcmp(dplugname, blacklist[i])) {
+      if (!lives_strcmp(dplugname, blacklist[i])) {
         // skip blacklisted decoders
         skip = TRUE;
         break;
@@ -2675,7 +2675,7 @@ void do_rfx_cleanup(lives_rfx_t *rfx) {
   char *dir = NULL;
 
   /// skip cleanup if menuentry is "apply current realtime effects"
-  if (rfx == &mainw->rendered_fx[0]) return;
+  if (rfx == mainw->rendered_fx[0]) return;
 
   switch (rfx->status) {
   case RFX_STATUS_BUILTIN:
@@ -2905,84 +2905,39 @@ LiVESList *array_to_string_list(char **array, int offset, int len) {
 
 
 static int cmp_menu_entries(livesconstpointer a, livesconstpointer b) {
-  return lives_utf8_strcmpfunc(((lives_rfx_t *)a)->menu_text, ((lives_rfx_t *)b)->menu_text, LIVES_INT_TO_POINTER(TRUE));
+  return lives_utf8_strcmpfunc(((lives_rfx_t *)a)->menu_text,
+                               ((lives_rfx_t *)b)->menu_text, LIVES_INT_TO_POINTER(TRUE));
 }
 
 
-void sort_rfx_array(lives_rfx_t *in, int num) {
+void sort_rfx_array(lives_rfx_t **in, int num) {
   // sort rfx array into UTF-8 order by menu entry
-  lives_rfx_t *rfx;
-  int sorted = 1;
-  register int i;
-
   LiVESList *rfx_list = NULL, *xrfx_list;
-  for (i = num; i > 0; i--) {
-    rfx_list = lives_list_prepend(rfx_list, (livespointer)&in[i]);
+  int sorted = 1;
+
+  if (!in || !*in) return;
+
+  mainw->rendered_fx = (lives_rfx_t **)lives_calloc((num + 1), sizeof(lives_rfx_t *));
+  mainw->rendered_fx[0] = in[0];
+
+  for (int i = num; i > 0; i--) {
+    rfx_list = lives_list_prepend(rfx_list, (livespointer)in[i]);
   }
   rfx_list = lives_list_sort(rfx_list, cmp_menu_entries);
-  rfx = mainw->rendered_fx = (lives_rfx_t *)lives_calloc((num + 1), sizeof(lives_rfx_t));
-  rfx_copy(rfx, in, FALSE);
   xrfx_list = rfx_list;
   while (xrfx_list) {
-    rfx_copy(&mainw->rendered_fx[sorted++], (lives_rfx_t *)(xrfx_list->data), FALSE);
+    mainw->rendered_fx[sorted++] = (lives_rfx_t *)(xrfx_list->data);
     xrfx_list = xrfx_list->next;
   }
   lives_list_free(rfx_list);
 }
 
 
-void rfx_copy(lives_rfx_t *dest, lives_rfx_t *src, boolean full) {
-  // Warning, does not copy all fields (full will do that)
-  lives_memcpy(dest->delim, src->delim, 2);
-  dest->source = src->source;
-
-  if (!full) {
-    // ref. assigned memory
-    src->source = NULL;
-    dest->name = src->name;
-    src->name = NULL;
-    //dest->menuitem = src->menuitem;
-    //src->menuitem = NULL;
-    dest->menu_text = src->menu_text;
-    src->menu_text = NULL;
-    dest->action_desc = src->action_desc;
-    src->action_desc = NULL;
-    dest->params = src->params;
-    src->params = NULL;
-  } else {
-    // deep copy
-    if (dest->source_type == LIVES_RFX_SOURCE_WEED && dest->source) weed_instance_ref(dest->source);
-    dest->name = lives_strdup(src->name);
-    dest->menu_text = lives_strdup(src->menu_text);
-    dest->action_desc = lives_strdup(src->action_desc);
-    // TODO - copy params
-  }
-
-  lives_snprintf(dest->rfx_version, 64, "%s", src->rfx_version);
-  dest->min_frames = src->min_frames;
-  dest->num_in_channels = src->num_in_channels;
-  dest->status = src->status;
-  dest->props = src->props;
-  dest->source_type = src->source_type;
-  dest->num_params = src->num_params;
-  dest->is_template = src->is_template;
-  dest->gui_strings = lives_list_copy(src->gui_strings);
-  dest->onchange_strings = lives_list_copy(src->onchange_strings);
-
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(src->menuitem),
-                               LINKED_RFX_KEY, (livespointer)dest);
-  dest->menuitem = src->menuitem;
-  src->menuitem = NULL;
-  if (!full) return;
-
-  // TODO
-}
-
-
 void rfx_params_free(lives_rfx_t *rfx) {
-  register int i;
-  for (i = 0; i < rfx->num_params; i++) {
-    if (rfx->params[i].type == LIVES_PARAM_UNDISPLAYABLE || rfx->params[i].type == LIVES_PARAM_UNKNOWN) continue;
+  if (!rfx) return;
+  for (int i = 0; i < rfx->num_params; i++) {
+    if (rfx->params[i].type == LIVES_PARAM_UNDISPLAYABLE
+        || rfx->params[i].type == LIVES_PARAM_UNKNOWN) continue;
     lives_free(rfx->params[i].name);
     lives_freep((void **)&rfx->params[i].def);
     lives_freep((void **)&rfx->params[i].value);
@@ -3017,10 +2972,9 @@ void rfx_free(lives_rfx_t *rfx) {
 
 
 void rfx_free_all(void) {
-  register int i;
-  for (i = 0; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom
+  for (int i = 0; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom
        + mainw->num_rendered_effects_test; i++) {
-    rfx_free(&mainw->rendered_fx[i]);
+    rfx_free(mainw->rendered_fx[i]);
   }
   lives_freep((void **)&mainw->rendered_fx);
 }
@@ -3184,12 +3138,10 @@ void set_colRGBA32_param(void *value, short red, short green, short blue, short 
 ///////////////////////////////////////////////////////////////
 
 int find_rfx_plugin_by_name(const char *name, short status) {
-  int i;
-  for (i = 1; i < mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
+  for (int i = 1; i < mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom +
        mainw->num_rendered_effects_test; i++) {
-    if (mainw->rendered_fx[i].name && !strcmp(mainw->rendered_fx[i].name, name)
-        && mainw->rendered_fx[i].status == status)
-      return (int)i;
+    if (mainw->rendered_fx[i]->name && !lives_strcmp(mainw->rendered_fx[i]->name, name)
+        && mainw->rendered_fx[i]->status == status) return i;
   }
   return -1;
 }
@@ -3199,7 +3151,7 @@ lives_param_t *find_rfx_param_by_name(lives_rfx_t *rfx, const char *name) {
   int i;
   if (!rfx) return NULL;
   for (i = 0; i < rfx->num_params; i++) {
-    if (!strcmp(name, rfx->params[i].name)) {
+    if (!lives_strcmp(name, rfx->params[i].name)) {
       return &rfx->params[i];
     }
   }
@@ -3658,7 +3610,7 @@ LiVESList *get_external_window_hints(lives_rfx_t *rfx) {
       if (!weed_plant_has_leaf(gui, WEED_LEAF_LAYOUT_SCHEME)) continue;
 
       string = weed_get_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, NULL);
-      if (strcmp(string, "RFX")) {
+      if (lives_strcmp(string, "RFX")) {
         lives_free(string);
         continue;
       }

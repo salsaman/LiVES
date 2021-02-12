@@ -98,8 +98,8 @@ static weed_error_t tzoom_disp(weed_plant_t *inst, weed_plant_t *param, int inve
     double dval = weed_param_get_value_double(param);
     if (inverse == WEED_FALSE) {
       if (dval <= 0.) return WEED_ERROR_NOT_READY;
-      dval = log(dval);
-    } else dval = exp(dval);
+      dval = log(dval) + 1.;
+    } else dval = exp(dval - 1.);
     return weed_set_double_value(weed_param_get_gui(param), WEED_LEAF_DISPLAY_VALUE, dval);
   }
 }

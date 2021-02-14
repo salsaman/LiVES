@@ -1160,6 +1160,7 @@ lives-plugins/themes/crayons/Makefile
 lives-plugins/themes/crayons-bright/Makefile
 lives-plugins/themes/Makefile
 lives-plugins/weed-plugins/Makefile
+lives-plugins/weed-plugins/scripts/Makefile
 lives-plugins/weed-plugins/gdk/Makefile
 lives-plugins/weed-plugins/cairo/Makefile
 lives-plugins/marcos-encoders/Makefile

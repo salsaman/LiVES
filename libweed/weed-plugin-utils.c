@@ -697,7 +697,7 @@ static weed_plant_t **weed_clone_plants(weed_plant_t **plants) {
   return ret;
 }
 
-#if defined (NEED_ALPHA_SORT) // for wrappers, use this to sort filters alphabetically
+#ifdef NEED_ALPHA_SORT // for wrappers, use this to sort filters alphabetically
 typedef struct dlink_list dlink_list_t;
 struct dlink_list {
   weed_plant_t *filter;
@@ -739,7 +739,7 @@ static int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list) 
 }
 #endif
 
-#if defined(NEED_RANDOM)
+#ifdef NEED_RANDOM
 
 // recommended key to use
 #define WEED_LEAF_PLUGIN_RANDOM_SEED "plugin_random_seed"
@@ -817,7 +817,7 @@ static inline int is_big_endian(void) {
   mm.num = 0x12345678; return (mm.chr[0] == 0x78) ? WEED_FALSE : WEED_TRUE;
 }
 
-#if defined(NEED_PALETTE_UTILS)
+#ifdef NEED_PALETTE_UTILS
 static inline int weed_palette_is_alpha(int pal) {return (pal >= 1024 && pal < 2048) ? WEED_TRUE : WEED_FALSE;}
 static inline int weed_palette_is_rgb(int pal) {return (pal < 512) ? WEED_TRUE : WEED_FALSE;}
 static inline int weed_palette_is_yuv(int pal) {return (pal >= 512 && pal < 1024) ? WEED_TRUE : WEED_FALSE;}
@@ -925,7 +925,7 @@ static void blank_frame(void **pdata, int width, int height, int *rs, int pal, i
 }
 #endif
 
-#if defined(NEED_PALETTE_CONVERSIONS)
+#ifdef NEED_PALETTE_CONVERSIONS
 
 #ifndef myround
 #define myround(n) ((n >= 0.) ? (int)(n + 0.5) : (int)(n - 0.5))

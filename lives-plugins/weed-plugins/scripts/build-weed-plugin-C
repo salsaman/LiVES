@@ -1,0 +1,915 @@
+#!/usr/bin/perl
+
+# build-weed-plugin-C - Copyright G. Finch (salsaman) 2021
+# Released under the LGPL 3 or later - see file COPYING.LGPL or www.gnu.org for details
+
+#usage : build-weed-plugin-C <script_file> <output_directory>
+# if <output_directory> is omitted, plugins will be generated in /tmp
+
+# if <script_file> == "-get" then the commandline parameters are interpreted as:
+# build-lives-rfx-plugin -get <section> <file>
+# and we then print the contents of section on stdout
+
+########################################################
+# this will auto-generate a Weed C plugin from the script info in $file
+
+my $USE_STRICT = 1;
+if ($USE_STRICT) {
+    use strict;
+}
+
+my $USE_WARNINGS = 1;
+if ($USE_WARNINGS) {
+    use warnings;
+}
+
+my $builder_version = "3.2.1-pre";
+my $rfx_version = "1.8.3";
+my ($section, $file);
+
+if ($ARGV[0] eq "-get") {
+    $section = $ARGV[1];
+    $file = $ARGV[2];
+    my @result = &rc_read($section, $file);
+    foreach (@result) {
+	print STDOUT "$_\n";
+    }
+    exit 0;
+}
+
+$file = $ARGV[0];
+
+my $define = (&rc_read("define", $file))[0];
+if ($define eq "") {
+    print STDERR "Error  - <define> section missing from script file.\n";
+    exit 5;
+}
+
+my $plversion = substr($define, 1);
+my $plhversion = &make_ver_hash($plversion);
+
+unless ($plhversion <= &make_ver_hash($rfx_version)) {
+    print STDERR "\n\nError:  - Invalid script RFX version $version, this builder supports up to $rfx_version\n";
+    exit 4;
+}
+
+my $delim = substr($define, 0, 1);
+my $delimit = $delim;
+if ($delim =~ /^[\^\$\.\*\+\?\|\(\)\[\]\{\}\\]+/) {
+    $delim = "\\" . $delim;
+}
+
+my $plugin_name = (&rc_read("name", $file))[0];
+my $author = (&rc_read("author", $file))[0];
+
+my $lang_code = (&rc_read("language_code", $file))[0];
+
+my $versions = (&rc_read("version", $file))[0];
+my @pieces = split(/$delim/, $versions);
+my $pver = @pieces[0];
+my $fver = @pieces[1];
+
+my @description = (&rc_read("description", $file))[0];
+my @requires=&rc_read("requires", $file);
+
+my @sdata = &rc_read("sdata", $file);
+
+my @filter_flags = &rc_read("filter_flags", $file);
+my $flagstr;
+
+my @pal_lists = &rc_read("palette_lists", $file);
+
+my @in_chans = &rc_read("in_chans", $file);
+my @out_chans = &rc_read("out_chans", $file);
+
+my @params = &rc_read("params", $file);
+my @oparams = &rc_read("out_params", $file);
+
+my @param_window = &rc_read("param_window", $file);
+
+my @init = &rc_read("init", $file);
+my @proc= &rc_read("process", $file);
+my @deinit = &rc_read("deinit", $file);
+
+my @disp = &rc_read("disp", $file);
+
+unless ($lang_code eq "192" || hex($lang_code) == 192) {
+    print STDERR "Error:  - Invalid language code for this builder !\n";
+    exit 3;
+}
+
+#########################################################
+
+# generate into /tmp
+# LiVES will call this to generate in plugins/effects/rendered/test
+
+if (!defined($ARGV[1])) {
+    if ($^O eq "MSWin32") {
+	$prefix_dir = "C:\\";
+    } else {
+	$prefix_dir = "/tmp";
+    }
+}
+else {
+    $prefix_dir = $ARGV[1];
+}
+
+if ($^O eq "MSWin32") {
+    $plugin_file = "$prefix_dir\\$plugin_name.c";
+}
+else {
+    $plugin_file = "$prefix_dir/$plugin_name.c";
+}
+
+if (defined($DEBUG)) {
+    print STDERR "Creating plugin file $plugin_file\n";
+}
+
+my $filter_ver = 1;
+my $num_inc = @in_chans;
+my $num_outc = @out_chans;
+my $num_params = @params;
+my $num_oparams = @oparams;
+my $incs = "NULL";
+if ($num_inc) {
+    $incs = "in_chantmpls";
+}
+my $outcs = "NULL";
+if ($num_outc) {
+    $outcs = "out_chantmpls";
+}
+my $inps = "NULL";
+if ($num_params) {
+    $inps = "in_paramtmpls";
+}
+my $outps = "NULL";
+if ($num_oparams) {
+    $outps = "out_paramtmpls";
+}
+
+my $use_sdata = 0;
+my $has_init = 0;
+my $has_deinit = 0;
+
+my $can_inplace = 0;
+my $init_func = "NULL";
+my $deinit_func = "NULL";
+
+my $proc_func = "$plugin_name" . "_process";
+
+if (@sdata) {
+    $use_sdata = 1;
+}
+
+if ($use_sdata || @init) {
+    $has_init = 1;
+    $init_func = "$plugin_name" . "_init";
+}
+
+if ($use_sdata || @deinit) {
+    $has_deinit = 1;
+    $deinit_func = "$plugin_name" . "_deinit";
+}
+
+my $pvary = 0;
+my $svary = 0;
+my $may_thread = 0;
+
+my $fflagstr = "";
+foreach (@filter_flags) {
+    if ($_ eq "may thread" || $_ eq "may_thread") {
+	$fflagstr .= " | WEED_FILTER_HINT_MAY_THREAD";
+	$may_thread = 1;
+    }
+    elsif ($_ eq "converter") {
+	$fflagstr .= " | WEED_FILTER_IS_CONVERTER";
+    }
+    elsif ($_ eq "sizes_vary") {
+	$fflagstr .= " | WEED_FILTER_CHANNEL_SIZES_MAY_VARY";
+	$svary = 1;
+    }
+    elsif ($_ eq "palettes_vary") {
+	$fflagstr .= " | WEED_FILTER_CHANNEL_PALETTES_MAY_VARY";
+	$pvary = 1;
+    }
+    elsif ($_ eq "stateless") {
+	$fflagstr .= " | WEED_FILTER_HINT_STATELESS";
+    }
+    elsif ($_ eq "process_last" || $_ eq "process last") {
+	$fflagstr .= " | WEED_FILTER_HINT_PROCESS_LAST";
+    }
+    elsif ($_ eq "linear_gamma" || $_ eq "linear gamma") {
+	$fflagstr .= " | WEED_FILTER_PREF_LINEAR_GAMMA";
+    }
+    elsif ($_ eq "premult_alpha" || $_ eq "premult alpha") {
+	$fflagstr .= " | WEED_FILTER_PREF_PREMULTIPLIED_ALPHA";
+    }
+    elsif ($_ eq "unstable") {
+	$fflagstr .= " | WEED_FILTER_HINT_MAYBE_UNSTABLE";
+    }
+}
+
+foreach (@out_chans) {
+    @pieces = split(/$delim/);
+    if (@pieces > 1) {
+	if (@pieces[1] =~ /inplace/) {
+	    $can_inplace = 1;
+	    last;
+	}
+    }
+}
+
+########################################################
+
+open OUT, ">", "$plugin_file";
+
+print OUT "/////////////////////////////////////////////////////////////////////////////\n";
+print OUT "// Weed $plugin_name plugin, version $plugin_version\n";
+print OUT "// Compiled with Builder version $builder_version\n";
+print OUT "// autogenerated from script by $author\n";
+print OUT "/////////////////////////////////////////////////////////////////////////////\n";
+
+print OUT "static int package_version = $pver; // version of this package\n\n";
+print OUT "/////////////////////////////////////////////////////////////////////////////\n";
+
+my $desclen = 0;
+if (@description) {
+    foreach (@description) {
+	$desclen += length($_) + 1;
+    }
+    if ($desclen > 128) {
+	$desclen = 512;
+    }
+    elsif ($desclen > 256) {
+	$desclen = 1024;
+    }
+    else {
+	$desclen = 256;
+    }
+}
+
+#add requirements
+my $need_putils = 0;
+my $need_pconv = 0;
+my $need_random = 0;
+my $need_fontutils = 0;
+my $need_pango_compat = 0;
+my $need_audio = 0;
+my $need_alpha_sort = 0;
+my $need_fourcc = 0;
+my $need_avstream = 0;
+my $av_chanfmts = 0;
+my $adv_palettes = 0;
+
+foreach (@requires) {
+    if ($_ eq "putils") {
+	$need_putils = 1;
+	next;
+    }
+    if ($_ eq "pconv") {
+	$need_pconv = 1;
+	next;
+    }
+    if ($_ eq "random") {
+	$need_random = 1;
+	next;
+    }
+    if ($_ eq "fontutils") {
+	$need_font_utils = 1;
+	next;
+    }
+    if ($_ eq "pango_compat") {
+	$need_pango_compat = 1;
+	next;
+    }
+    if ($_ eq "audio") {
+	$need_audio = 1;
+	next;
+    }
+    if ($_ eq "alpha_sort") {
+	$need_alpha_sort = 1;
+	next;
+    }
+    if ($_ eq "fourcc_compat") {
+	$need_fourcc_compat = 1;
+	next;
+    }
+    if ($_ eq "avstream_types") {
+	$need_avstrem_types = 1;
+	next;
+    }
+    if ($_ eq "av_chanfmts") {
+	$av_chanfmts = 1;
+	next;
+    }
+    if ($_ eq "adv_palettes") {
+	$av_s = 1;
+	next;
+    }
+}
+
+if ($need_putils) {
+    print OUT "#define NEED_PALETTE_UTILS\n";
+}
+
+if ($need_random) {
+    print OUT "#define NEED_RANDOM\n";
+}
+
+if ($need_pconv) {
+    print OUT "#define NEED_PALETTE_CONVERSIONS\n";
+}
+
+if ($need_fontutils) {
+    print OUT "#define NEED_FONT_UTILS\n";
+}
+
+if ($need_pango_compat) {
+    print OUT "#include <pango/pango-font.h>\n";
+    print OUT "#define NEED_PANGO_COMPAT\n";
+}
+
+if ($need_audio) {
+    print OUT "#define NEED_AUDIO\n";
+}
+
+if ($need_alpha_sort) {
+    print OUT "#define NEED_ALPHA_SORT\n";
+}
+
+if ($need_fourcc) {
+    print OUT "#define NEED_FOURCC_COMPAT\n";
+}
+
+if ($need_avstream) {
+    print OUT "#define NEED_AV_STREAM_TYPES\n";
+}
+
+if ($av_chanfmts) {
+    print OUT "#define USE_AVUTIL_CHANNEL_LAYOUTS\n";
+}
+
+if ($adv_palettes) {
+    print OUT "#define WEED_ADVANCED_PALETTES\n";
+}
+
+print OUT "\n#ifndef NEED_LOCAL_WEED_PLUGIN\n";
+print OUT "#include <weed/weed-plugin.h>\n";
+print OUT "#include <weed/weed-utils.h> // optional\n";
+print OUT "#include <weed/weed-plugin-utils.h> // optional\n";
+print OUT "#else\n";
+print OUT "#include \"../../libweed/weed-plugin.h\"\n";
+print OUT "#include \"../../libweed/weed-utils.h\" // optional\n";
+print OUT "#include \"../../libweed/weed-plugin-utils.h\" // optional\n";
+print OUT "#endif\n\n";
+
+print OUT "#include \"weed-plugin-utils.c\"\n";
+
+print OUT "//////////////////////////////////////////////////////////////////\n\n";
+
+## add includes
+my $inc_stdio = 0;
+
+foreach (@requires) {
+    if ($_ =~ /^\</ || $_ =~ /^"/) {
+	print OUT "#include $_\n";
+	if ($_ eq "<stdio.h>") {
+	    $inc_stdio = 1;
+	}
+    }
+}
+
+if ($desclen && !$inc_stdio) {
+    print OUT "#include <stdio.h>\n";
+}
+
+## add sdata struct
+if ($use_sdata) {
+    print OUT "\ntypedef struct {\n";
+    foreach (@sdata) {
+	print OUT "  $_;\n";
+    }
+    print OUT "} sdata_t;\n";
+}   
+
+print OUT "\nstatic int verbosity = WEED_VERBOSITY_ERROR;\n\n";
+
+# add static funcs
+
+print OUT "/////////////////////////////////////////////////////////////////////////////\n";
+
+# add init
+
+if ($has_init) {
+    print OUT "\nstatic weed_error_t $init_func(weed_plant_t *inst) {\n";
+    ## TODO - variable palettes, variable sizes
+    ## TODO - rows for planar palettes
+    ## TODO - singleton check
+
+    &add_start($use_sdata, $num_inc);
+
+    ## gui only reinit
+    print OUT "  if (!(weed_instance_get_flags(inst) & WEED_INSTANCE_UPDATE_GUI_ONLY)) {\n";
+    
+    if ($use_sdata) {
+	print OUT "    sdata = (sdata_t *)weed_calloc(1, sizeof(sdata_t));\n";
+	print OUT "    if (!sata) return WEED_ERROR_MEMORY_ALLOCATION;\n";
+	print OUT "    weed_set_voidptr_value(inst, \"plugin_internal\", sdata);\n";
+    }
+
+    if ($need_random) {
+	print OUT "\n    weed_set_int64_value(inst, WEED_LEAF_PLUGIN_RANDOM_SEED,\n" .
+	    "        weed_get_int64_value(inst, WEED_LEAF_RANDOM_SEED, NULL));\n";
+    }
+
+    if (@init) {
+	## add main init code
+	print OUT "\n    if (1) {\n";
+	&gen_array(6, @init);
+	print OUT "    }\n";
+    }
+
+    print OUT "  }\n";
+
+    if ($use_sdata) {
+	print OUT "  else sdata = weed_get_voidptr_value(inst, \"plugin_internal\", NULL);\n";
+    }
+
+    print OUT "\n";
+
+    ## add gui init code
+
+    print OUT "\n";
+
+    &add_end($use_sdata, $num_inc);
+
+    print OUT "\n  return WEED_SUCCESS;\n";
+    print OUT "}\n\n";
+}
+
+if ($has_deinit) {
+    print OUT "\nstatic weed_error_t $deinit_func(weed_plant_t *inst) {\n";
+
+    if ($use_sdata) {
+	print OUT "  sdata_t *sdata = (sdata_t *)weed_get_voidptr_value(inst, " .
+	    "\"plugin_internal\", NULL);\n";
+    }
+
+    print OUT "\n";
+    print OUT "\n";
+    
+    if ($use_sdata) {
+	print OUT "\n  if (sdata) weed_free(sdata);\n";
+	print OUT "  weed_set_voidptr_value(inst, \"plugin_internal\", NULL);\n";
+    }
+
+    print OUT "\n  return WEED_SUCCESS;\n";
+    print OUT "}\n\n";
+}
+
+print OUT "\nstatic weed_error_t $proc_func(weed_plant_t *inst, weed_timecode_t tc) {\n";
+
+&add_start($use_sdata, $num_inc);
+
+if ($num_inc > 0) {
+    if ($num_inc == 1) {
+	print OUT "  unsigned char *src = weed_channel_get_pixel_data(in_chan);\n";
+    }
+    else {
+	for ($i = 0; $i < $num_inc; $i++) {
+	    print OUT "  unsigned char *src$i = weed_channel_get_pixel_data(in_chans[$i]);\n";
+	}
+    }
+}
+
+if ($num_outc > 0) {
+    if ($num_outc == 1) {
+	print OUT "  unsigned char *dst = weed_channel_get_pixel_data(out_chan);\n";
+    }
+    else {
+	for ($i = 0; $i < $num_outc; $i++) {
+	    print OUT "  unsigned char *dst$i = weed_channel_get_pixel_data(out_chans[$i]);\n";
+	}
+    }
+}
+
+if ($can_inplace && $num_inc == 1 && $num_outc == 1) {
+    print OUT "  int inplace = (src == dst);\n";
+}
+
+## add threading
+if ($may_thread && $num_inc == 1 && $num_outc == 1) {
+    print OUT "\n  if (weed_is_threading(inst)) {\n";
+    print OUT "    int offset = weed_channel_get_offset(out_chan);\n";
+    print OUT "    src += offset * irow;\n";
+    print OUT "    dst += offset * orow;\n";
+    print OUT "  }\n";
+}
+
+print OUT "\n";
+
+print OUT "  if (1) {\n";
+&gen_array(4, @proc);
+print OUT "  }\n";
+
+&add_end($use_sdata, $num_inc);
+
+print OUT "\n  return WEED_SUCCESS;\n";
+print OUT "}\n\n";
+
+
+## add disp_func
+
+print OUT "\nWEED_SETUP_START(200, 200) {\n";
+print OUT "  weed_plant_t *host_info = weed_get_host_info(plugin_info);\n";
+print OUT "  weed_plant_t *filter_class;\n";
+
+## setup palette_list
+print OUT "  int palette_list[] = $pal_lists[0];\n";
+
+#setup in_chantmpls
+if ($num_inc) {
+    print OUT "  weed_plant_t *$incs" . "[] = {\n      ";
+    foreach (@in_chans) {
+	$flagstr = "";
+	@pieces = split(/$delim/);
+	my $chan_name = @pieces[0];
+	if (@pieces > 1) {
+	    if (@pieces[1] =~ /reinit_on_size_change/) {
+		$flagstr .= " | WEED_CHANNEL_REINIT_ON_SIZE_CHANGE";
+	    }
+	    if (@pieces[1] =~ /reinit_on_palette_change/) {
+		$flagstr .= " | WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE";
+	    }
+	    if (@pieces[1] =~ /reinit_on_rowstrides_change/) {
+		$flagstr .= " | WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE";
+	    }
+	    if (@pieces[1] =~ /optional/) {
+		$flagstr .= " | WEED_CHANNEL_OPTIONAL";
+	    }
+	    if (@pieces[1] =~ /needs_natural_size/) {
+		$flagstr .= " | WEED_CHANNEL_NEEDS_NATURAL_SIZE";
+	    }
+	}
+	print OUT "weed_channel_template_init(\"$chan_name\", ";
+	if ($flagstr) {
+	    print OUT substr($flagstr, 3);
+	}
+	else {
+	    print OUT "0";
+	}
+	print OUT "),\n      ";
+    }
+    print OUT"NULL\n  };\n";
+}
+
+#setup out_chantmpls
+if ($num_outc) {
+    print OUT "  weed_plant_t *$outcs" . "[] = {\n      ";
+    foreach (@out_chans) {
+	$flagstr = "";
+	@pieces = split(/$delim/);
+	my $chan_name = @pieces[0];
+	if (@pieces > 1) {
+	    if (@pieces[1] =~ /inplace/) {
+		$flagstr .= " | WEED_CHANNEL_CAN_DO_INPLACE";
+	    }
+	    if (@pieces[1] =~ /reinit_on_size_change/) {
+		$flagstr .= " | WEED_CHANNEL_REINIT_ON_SIZE_CHANGE";
+	    }
+	    if (@pieces[1] =~ /reinit_on_palette_change/) {
+		$flagstr .= " | WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE";
+	    }
+	    if (@pieces[1] =~ /reinit_on_rowstrides_change/) {
+		$flagstr .= " | WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE";
+	    }
+	    if (@pieces[1] =~ /optional/) {
+		$flagstr .= " | WEED_CHANNEL_OPTIONAL";
+	    }
+	}
+	print OUT "weed_channel_template_init(\"$chan_name\", ";
+	if ($flagstr) {
+	    print OUT substr($flagstr, 3);
+	}
+	else {
+	    print OUT "0";
+	}
+	print OUT "),\n      ";
+    }
+    print OUT"NULL\n  };\n";
+}
+
+#setup in_pramtmpls
+if ($num_params) {
+    print OUT "  weed_plant_t *$inps" . "[] = {\n      ";
+    foreach (@params) {
+	@pieces = split(/$delim/);
+	my $pname = @pieces[0];
+	my $plabel = @pieces[1];
+	my $type = @pieces[2];
+	if ($type =~ /^num/) {
+	    my $pdef = @pieces[3];
+	    my $pmin = @pieces[4];
+	    my $pmax = @pieces[5];
+	    my $dp = 0 + substr($type, 3);
+	    if (!$dp) {
+		print OUT "weed_integer_init(\"$pname\", \"$plabel\", $pdef, $pmin, $pmax)";
+	    }
+	    else {
+		print OUT "weed_float_init(\"$pname\", \"$plabel\", $pdef, $pmin, $pmax)";
+	    }
+	}
+	elsif ($type eq "bool") {
+	    if (@pieces > 4) {
+		print OUT "weed_radio_init(\"$pname\", \"$plabel\", ";
+	    }
+	    else {
+		print OUT "weed_switch_init(\"$pname\", \"$plabel\", ";
+	    }
+	    if (!@pieces[3]) {
+		print OUT "WEED_FALSE";
+	    }
+	    else {
+		print OUT "WEED_TRUE";
+	    }
+	    if (@pieces > 4) {
+		print OUT ", @pieces[4]";
+	    }
+	    print OUT ")";
+	}
+	elsif ($type eq "string") {
+	    my $pdef = @pieces[3];
+	    print OUT "weed_text_init(\"$pname\", \"$plabel\", $pdef)";
+	}
+	elsif ($type eq "string_list") {
+	    my $pdef = @pieces[3];
+	    print OUT "weed_string_list_init(\"$pname\", \"$plabel\", $pde, $listnamef)";
+	}
+	elsif ($type eq "colRGB24") {
+	    my $pred = @pieces[3];
+	    my $pgreen = @pieces[4];
+	    my $pblue = @pieces[5];
+	    if ($pred =~ /\./) {
+		print OUT "weed_colRGBd";
+	    }
+	    else {
+		print OUT "weed_colRGBi";
+	    }
+	    print OUT "_init(\"$pname\", \"$plabel\", $pred, $pgreen, $pblue)";
+	}
+	print OUT ",\n      ";
+    }
+    print OUT"NULL\n  };\n";
+}
+
+#setup out_pramtmpls
+if ($num_oparams) {
+    print OUT "  weed_plant_t *$outps" . "[] = {\n      ";
+    foreach (@oparams) {
+	@pieces = split(/$delim/);
+	my $pname = @pieces[0];
+	my $type = @pieces[1];
+	if ($type =~ /^num/) {
+	    my $pdef = @pieces[2];
+	    my $dp = 0 + substr($type, 3);
+	    if (!$dp) {
+		if (@pieces > 3) {
+		    my $pmin = @pieces[3];
+		    my $pmax = @pieces[4];
+		    print OUT "weed_out_param_integer_init(\"$pname\", $pdef, $pmin, $pmax)";
+		} else {
+		    print OUT "weed_out_param_integer_init_nominmax(\"$pname\", $pdef)";
+		}
+	    }
+	    else {
+		if (@pieces > 3) {
+		    my $pmin = @pieces[3];
+		    my $pmax = @pieces[4];
+		    print OUT "weed_out_param_float_init(\"$pname\", $pdef, $pmin, $pmax)";
+		} else {
+		    print OUT "weed_out_param_float_init_nominmax(\"$pname\", $pdef)";
+		}
+	    }
+	}
+	elsif ($type eq "bool") {
+	    print OUT "weed_out_param_switch_init(\"$pname\",  ";
+	    if (!@pieces[3]) {
+		print OUT "WEED_FALSE";
+	    }
+	    else {
+		print OUT "WEED_TRUE";
+	    }
+	    print OUT ")";
+	}
+	elsif ($type eq "string") {
+	    my $pdef = @pieces[2];
+	    print OUT "weed_out_param_text_init(\"$pname\", $pdef)";
+	}
+	elsif ($type eq "colRGB24") {
+	    my $pred = @pieces[2];
+	    my $pgreen = @pieces[3];
+	    my $pblue = @pieces[4];
+	    if ($pred =~ /\./) {
+		print OUT "weed_out_param_colRGBd";
+	    }
+	    else {
+		print OUT "weed_out_param_colRGBi";
+	    }
+	    print OUT "_init(\"$pname\", $pred, $pgreen, $pblue)";
+	}
+	print OUT ",\n      ";
+    }
+    print OUT"NULL\n  };\n";
+}
+
+#descn
+if ($desclen) {
+    print OUT "  char desc[$desclen];\n";
+}
+
+## setup flags
+print OUT "  int filter_flags = ";
+
+if ($fflagstr) {
+    print OUT substr($fflagstr, 3);
+}
+else {
+    print OUT "0";
+}
+print OUT ";\n";
+
+print OUT "\n";
+
+## set channel flags
+
+## set param flags
+
+print OUT "  verbosity = weed_get_host_verbosity(host_info);\n";
+print OUT "\n";
+
+## create filter
+print OUT "  filter_class = weed_filter_class_init(\"$plugin_name\", \"$author\", $fver, filter_flags, palette_list,\n    $init_func, $proc_func, $deinit_func, $incs, $outcs, $inps, $outps);\n";
+
+## set filter gui
+
+if ($desclen) {
+    print OUT "\n  snprintf(desc, $desclen, \"" . join ("\n", @description) . "\");\n";
+    print OUT "  weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, desc);\n\n";
+}
+
+## set layout
+
+print OUT "  weed_plugin_info_add_filter_class(plugin_info, filter_class);\n";
+print OUT "  weed_plugin_set_package_version(plugin_info, package_version);\n";
+print OUT "}\n";
+print OUT "WEED_SETUP_END;\n\n";
+
+## add desetup
+
+
+#######################################################3
+
+sub rc_read {
+    # return an array value from script file
+    my ($key, $scriptfile) = @_;
+    my $string = "";
+    my (@result, $part);
+
+    unless (defined(open IN, "$scriptfile")) {
+	print STDERR "Error:  - Unable to read values from script file,  $scriptfile\n";
+	exit 2;
+    }
+    $part = 0;
+    while (<IN>) {
+	if ($_ =~ /(.*)(<\/$key>)/) {
+	    return @result;
+	}
+	if ($part == 1 || $_ =~ /(<$key>)(.*)/) {
+	    if ($part == 1) {
+		chomp($_);
+		$string = $_;
+		@result = (@result, $string);
+	    }
+	    else {
+		$part = 1;
+	    }}}
+    return @result;
+}
+
+sub make_ver_hash {
+    # turn a version like
+    # a.b.c into an integer
+    # a * 1,000,000 plus b * 1,000 plus c
+    # eg. 1.4.6 becomes 10004006
+
+    my $string = shift;
+    if ($string eq "") {
+	return 0;
+    }
+    my ($ver_major, $ver_minor, $ver_micro) = split (/\./,  $string, 3);
+    my $version_hash = ($ver_major * 1000 + $ver_minor) * 1000;
+    $version_hash;
+}
+
+sub gen_array {
+    my ($nspaces, @array) = @_;
+    foreach (@array) {
+	print OUT " " x $nspaces . $_ . "\n";
+    }
+}
+
+sub add_start {
+    my ($use_sdata, $num_inc) = @_;
+
+    if ($use_sdata) {
+	print OUT "  sdata_t *sdata;\n";
+    }
+    if ($num_inc > 0) {
+	if ($num_inc == 1) {
+	    print OUT "  weed_plant_t *in_chan = weed_get_in_channel(inst, 0);\n";
+	}
+	else {
+	    print OUT "  int ninc;\n";
+	    print OUT "  weed_plant_t **in_chans = weed_get_in_channels(inst, &ninc);\n";
+	}
+    }
+
+    if ($num_outc > 0) {
+	if ($num_outc == 1) {
+	    print OUT "  weed_plant_t *out_chan = weed_get_out_channel(inst, 0);\n";
+	}
+	else {
+	    print OUT "  int noutc;\n";
+	    print OUT "  weed_plant_t **out_chans = weed_get_out_channels(inst, &noutc);\n";
+	}
+    }
+
+    if ($num_inc > 0) {
+	if ($num_inc == 1) {
+	    if (!$num_outc) {
+		print OUT "  int width = weed_channel_get_width(in_chan);\n";
+		print OUT "  int height = weed_channel_get_height(in_chan);\n";
+	    }
+	    print OUT "  int pal = weed_channel_get_palette(in_chan);\n";
+	    print OUT "  int irow = weed_channel_get_stride(in_chan);\n";
+	}
+	else {
+	    if (!$num_outc) {
+		print OUT "  int width = weed_channel_get_width(in_chans[0]);\n";
+		print OUT "  int height = weed_channel_get_height(in_chans[0]);\n";
+	    }
+	    print OUT "  int pal = weed_channel_get_palette(in_chans[0]);\n";
+	    for ($i = 0; $i < $num_inc; $i++) {
+		print OUT "  int irow$i = weed_channel_get_stride(in_chans[$i]);\n";
+	    }
+	}
+    }
+
+    if ($num_outc > 0) {
+	if ($num_outc == 1) {
+	    print OUT "  int width = weed_channel_get_width(out_chan);\n";
+	    print OUT "  int height = weed_channel_get_height(out_chan);\n";
+    	    print OUT "  int orow = weed_channel_get_stride(out_chan);\n";
+	    if (!$num_inc) {
+		print OUT "  int pal = weed_channel_get_palette(out_chan);\n";
+	    }
+	}
+	else {
+	    print OUT "  int width = weed_channel_get_width(out_chans[0]);\n";
+	    print OUT "  int height = weed_channel_get_height(out_chans[0]);\n";
+	    for ($i = 0; $i < $num_inc; $i++) {
+		print OUT "  int orow$i = weed_channel_get_stride(out_chans[$i]);\n";
+	    }
+	    if (!$num_inc) {
+		print OUT "  int pal = weed_channel_get_palette(out_chans[0]);\n";
+	    }
+	}
+    }
+    if ($need_putils && ($num_inc || $num_out)) {
+	print OUT "  int psize = pixel_size(pal);\n\n";
+    }
+
+    if ($num_params) {
+	print OUT "  weed_plant_t **in_params = weed_get_in_params(inst, NULL);\n";
+    }
+    if ($num_oparams) {
+	print OUT "  weed_plant_t **out_params = weed_get_out_params(inst, NULL);\n";
+    }
+}
+
+sub add_end {
+    my ($use_sdata, $num_inc) = @_;
+
+    if ($num_params) {
+	print OUT "  weed_free(in_params);\n";
+    }
+    if ($num_oparams) {
+	print OUT "  weed_free(out_params);\n";
+    }
+    if ($num_inc > 1) {
+	print OUT "  weed_free(in_chans);\n";
+    }
+    if ($num_outc > 1) {
+	print OUT "  weed_free(out_chans);\n";
+    }
+}

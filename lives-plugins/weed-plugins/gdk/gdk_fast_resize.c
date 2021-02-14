@@ -59,12 +59,12 @@ static GdkPixbuf *pl_gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alp
 
 static GdkPixbuf *pl_channel_to_pixbuf(weed_plant_t *channel) {
   GdkPixbuf *pixbuf;
-  int palette = weed_get_int_value(channel, WEED_LEAF_CURRENT_PALETTE, NULL);
-  int width = weed_get_int_value(channel, WEED_LEAF_WIDTH, NULL);
-  int height = weed_get_int_value(channel, WEED_LEAF_HEIGHT, NULL);
-  int irowstride = weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, NULL);
-  int rowstride, orowstride;
-  guchar *pixel_data = (guchar *)weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, NULL), *pixels, *end;
+  int palette = weed_channel_get_palette(channel);
+  int width = weed_channel_get_width(channel);
+  int height = weed_channel_get_height(channel);
+  int irowstride = weed_channel_get_stride(channel);
+  int rowstride, orowstride, xrowstride;
+  guchar *pixel_data = weed_channel_get_pixel_data(channel), *pixels;
   gboolean cheat = FALSE;
   gint n_channels;
 
@@ -96,47 +96,38 @@ static GdkPixbuf *pl_channel_to_pixbuf(weed_plant_t *channel) {
 
   if (irowstride > orowstride) rowstride = orowstride;
   else rowstride = irowstride;
-  end = pixels + orowstride * height;
+  xrowstride = rowstride;
 
   if (!cheat) {
-    gboolean done = FALSE;
-    for (; pixels < end && !done; pixels += orowstride) {
-      if (pixels + orowstride >= end) {
-        orowstride = rowstride = pl_gdk_last_rowstride_value(width, n_channels);
-        done = TRUE;
+    for (int i = 0; i < height; i++) {
+      if (i == height - 1) {
+        xrowstride = pl_gdk_last_rowstride_value(width, n_channels);
       }
-      weed_memcpy(pixels, pixel_data, rowstride);
-      if (rowstride < orowstride) weed_memset(pixels + rowstride, 0, orowstride - rowstride);
-      pixel_data += irowstride;
+      weed_memcpy(&pixels[orowstride * i], &pixel_data[rowstride * i], xrowstride);
     }
   }
   return pixbuf;
 }
 
 
-
 static gboolean pl_pixbuf_to_channel(weed_plant_t *channel, GdkPixbuf *pixbuf) {
   // return TRUE if we can use the original pixbuf pixels
-  int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+  int rowstride = gdk_pixbuf_get_rowstride(pixbuf), xrowstride = rowstride;
   int width = gdk_pixbuf_get_width(pixbuf);
   int height = gdk_pixbuf_get_height(pixbuf);
   int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
   guchar *in_pixel_data = (guchar *)gdk_pixbuf_get_pixels(pixbuf);
-  int out_rowstride = weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, NULL);
-  guchar *dst = weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, NULL);
-
-  register int i;
+  int out_rowstride = weed_channel_get_stride(channel);
+  guchar *dst = weed_channel_get_pixel_data(channel);
 
   if (rowstride == pl_gdk_last_rowstride_value(width, n_channels) && rowstride == out_rowstride) {
     weed_memcpy(dst, in_pixel_data, rowstride * height);
     return FALSE;
   }
 
-  for (i = 0; i < height; i++) {
-    if (i == height - 1) rowstride = pl_gdk_last_rowstride_value(width, n_channels);
-    weed_memcpy(dst, in_pixel_data, rowstride);
-    in_pixel_data += rowstride;
-    dst += out_rowstride;
+  for (int i = 0; i < height; i++) {
+    if (i == height - 1) xrowstride = pl_gdk_last_rowstride_value(width, n_channels);
+    weed_memcpy(&dst[out_rowstride * i], &in_pixel_data[rowstride * i], xrowstride);
   }
 
   return FALSE;
@@ -144,14 +135,14 @@ static gboolean pl_pixbuf_to_channel(weed_plant_t *channel, GdkPixbuf *pixbuf) {
 
 
 static weed_error_t resize_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL),
-                *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  weed_plant_t *in_channel = weed_get_in_channel(inst, 0),
+                *out_channel = weed_get_out_channel(inst, 0);
 
-  int inwidth = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
-  int inheight = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
+  int inwidth = weed_channel_get_width(in_channel);
+  int inheight = weed_channel_get_height(in_channel);
 
-  int outwidth = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, NULL);
-  int outheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL);
+  int outwidth = weed_channel_get_width(out_channel);
+  int outheight = weed_channel_get_height(out_channel);
 
   GdkPixbuf *in_pixbuf = pl_channel_to_pixbuf(in_channel);
   GdkPixbuf *out_pixbuf;
@@ -184,6 +175,6 @@ WEED_SETUP_START(200, 200) {
                                NULL, resize_process, NULL, in_chantmpls, out_chantmpls, NULL, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+  weed_plugin_set_package_version(plugin_info, package_version);
 }
 WEED_SETUP_END;

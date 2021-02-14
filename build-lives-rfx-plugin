@@ -115,8 +115,9 @@ my $min_frames = 0;
 my $in_channels = 0;
 
 if (!$is_scrap) {
-    $min_frames = (split(/$delim/, $description))[2];
-    $in_channels = (split(/$delim/, $description))[3];
+    @pieces = split(/$delim/, $description);
+    $min_frames = @pieces[2];
+    $in_channels = @pieces[3];
 
     if ($min_frames == -1) {
 	$is_util = 1;
@@ -530,7 +531,7 @@ sub gen_get_params {
     my (@bits, $type);
     foreach (@params) {
 	unless ($_ eq "") {
-	    @bits=split (/$delim/, $_);
+	    @bits = split (/$delim/);
 	    # note: ARGV[0] == "process"
 	    $def = ($bits[3]);
 	    if ($bits[2] eq "string") {

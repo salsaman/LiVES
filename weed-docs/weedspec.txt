@@ -3734,7 +3734,7 @@ Explanation of flag bit combinations:
     The exception to this rule is for channel templates which have "max_repeats" set. In that case the host may create up to
     n copies of the channel from the template (if n is 0, then a limitless number). If such a channel is also set optional, then
     the host may choose to make zero copies of it. In addition, the host may enable / disable channels created from such
-    a template without the need for a reinit, provided the number of copies rmains the same.
+    a template without the need for a reinit, provided the number of copies remains the same.
 
  *  WEED_CHANNEL_CAN_DO_INPLACE    [[BR]]
     The flag bit is only valid for OUT channels.

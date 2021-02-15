@@ -1215,10 +1215,10 @@ reinit:
     if (retval != WEED_SUCCESS) goto re_done;
   }
 
-  if (weed_plant_has_leaf(filter, WEED_LEAF_INIT_FUNC)) {
-    retval = weed_call_init_func(inst);
-    if (retval != WEED_SUCCESS) goto re_done;
+  retval = weed_call_init_func(inst);
+  if (retval != WEED_SUCCESS) goto re_done;
 
+  if (weed_plant_has_leaf(filter, WEED_LEAF_INIT_FUNC)) {
     if (fx_dialog[1]
         || (mainw->multitrack &&  mainw->multitrack->current_rfx
             && mainw->multitrack->poly_state == POLY_PARAMS)) {
@@ -7039,7 +7039,6 @@ weed_error_t weed_call_init_func(weed_plant_t *inst) {
   }
   weed_set_boolean_value(inst, WEED_LEAF_HOST_INITED, WEED_TRUE);
   weed_set_boolean_value(inst, WEED_LEAF_HOST_UNUSED, WEED_TRUE);
-  //weed_instance_unref(inst);
   return error;
 }
 
@@ -7052,17 +7051,20 @@ weed_error_t weed_call_deinit_func(weed_plant_t *instance) {
   weed_instance_ref(instance);
 
   filter = weed_instance_get_filter(instance, FALSE);
-  if (weed_get_boolean_value(instance, WEED_LEAF_HOST_INITED, NULL) == WEED_FALSE) {
-    weed_instance_unref(instance);
-    return 1;
-  }
+
   if (weed_plant_has_leaf(filter, WEED_LEAF_DEINIT_FUNC)) {
-    weed_deinit_f deinit_func = (weed_deinit_f)weed_get_funcptr_value(filter, WEED_LEAF_DEINIT_FUNC, NULL);
-    if (deinit_func) {
-      char *cwd = cd_to_plugin_dir(filter);
-      error = (*deinit_func)(instance);
-      lives_chdir(cwd, FALSE);
-      lives_free(cwd);
+    if (weed_get_boolean_value(instance, WEED_LEAF_HOST_INITED, NULL) == WEED_FALSE) {
+      weed_instance_unref(instance);
+      return WEED_SUCCESS;
+    } else {
+      weed_deinit_f deinit_func =
+        (weed_deinit_f)weed_get_funcptr_value(filter, WEED_LEAF_DEINIT_FUNC, NULL);
+      if (deinit_func) {
+        char *cwd = cd_to_plugin_dir(filter);
+        error = (*deinit_func)(instance);
+        lives_chdir(cwd, FALSE);
+        lives_free(cwd);
+      }
     }
   }
   weed_set_boolean_value(instance, WEED_LEAF_HOST_INITED, WEED_FALSE);

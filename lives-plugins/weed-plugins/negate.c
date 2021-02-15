@@ -21,7 +21,6 @@ static int package_version = 1; // version of this package
 #include "weed-plugin-utils.c"
 //////////////////////////////////////////////////////////////////
 
-#include <stdio.h>
 
 static int verbosity = WEED_VERBOSITY_ERROR;
 
@@ -82,17 +81,12 @@ WEED_SETUP_START(200, 200) {
     weed_channel_template_init("out_channel0", WEED_CHANNEL_CAN_DO_INPLACE),
     NULL
   };
-  char desc[256];
   int filter_flags = WEED_FILTER_HINT_MAY_THREAD;
 
   verbosity = weed_get_host_verbosity(host_info);
 
   filter_class = weed_filter_class_init("negate", "salsaman", 1, filter_flags, palette_list,
                                         NULL, negate_process, NULL, in_chantmpls, out_chantmpls, NULL, NULL);
-
-  snprintf(desc, 256, "Inverts the Red, Green and Blue values of each pixel.");
-  weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, desc);
-
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_plugin_set_package_version(plugin_info, package_version);
 }

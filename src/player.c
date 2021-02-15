@@ -709,6 +709,7 @@ void load_frame_image(frames_t frame) {
           }
         }
       } else {
+        mainw->disk_pressure = check_disk_pressure(mainw->disk_pressure);
         if (prefs->dev_show_timing)
           g_printerr("pull_frame @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
         // normal playback in the clip editor, or applying a non-realtime effect
@@ -776,6 +777,7 @@ void load_frame_image(frames_t frame) {
           }
         }
 
+        mainw->disk_pressure = check_disk_pressure(mainw->disk_pressure);
         if (prefs->dev_show_timing)
           g_printerr("pull_frame done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
         if ((!cfile->next_event && mainw->is_rendering && !mainw->switch_during_pb &&
@@ -1077,6 +1079,7 @@ void load_frame_image(frames_t frame) {
           return_layer = NULL;
         }
       } else success = TRUE;
+      mainw->disk_pressure = check_disk_pressure(mainw->disk_pressure);
       if (prefs->dev_show_timing)
         g_printerr("rend fr done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
       lives_free(pd_array);
@@ -1107,6 +1110,7 @@ void load_frame_image(frames_t frame) {
     }
 
     get_player_size(&mainw->pwidth, &mainw->pheight);
+
     if (prefs->dev_show_timing)
       g_printerr("ext start  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
@@ -1164,6 +1168,7 @@ void load_frame_image(frames_t frame) {
         if (!player_v2) THREADVAR(rowstride_alignment_hint) = -1;
         frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
       }
+      mainw->disk_pressure = check_disk_pressure(mainw->disk_pressure);
       if (prefs->dev_show_timing)
         g_printerr("copied  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
@@ -1344,6 +1349,7 @@ void load_frame_image(frames_t frame) {
         goto lfi_done;
       } else success = TRUE;
       lives_free(pd_array);
+      mainw->disk_pressure = check_disk_pressure(mainw->disk_pressure);
       if (prefs->dev_show_timing)
         g_printerr("rend done  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
@@ -1381,6 +1387,7 @@ void load_frame_image(frames_t frame) {
       g_printerr("clr @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     check_layer_ready(mainw->frame_layer); // wait for all threads to complete
     mainw->video_seek_ready = TRUE;
+    mainw->disk_pressure = check_disk_pressure(mainw->disk_pressure);
     if (prefs->dev_show_timing)
       g_printerr("clr end @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     if (weed_layer_get_width(mainw->frame_layer) == 0) return;
@@ -1468,6 +1475,7 @@ void load_frame_image(frames_t frame) {
 
     pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE, TRUE);
 
+    mainw->disk_pressure = check_disk_pressure(mainw->disk_pressure);
     if (prefs->dev_show_timing)
       g_printerr("l2p @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
@@ -2872,7 +2880,8 @@ switch_point:
         last_seek_pos = mainw->pulsed->seek_pos;
 #endif
 
-        load_frame_image(sfile->frameno);
+        if (mainw->disk_pressure == 0. || mainw->pred_clip != -1)
+          load_frame_image(sfile->frameno);
         mainw->inst_fps = get_inst_fps();
         if (prefs->show_player_stats) {
           mainw->fps_measure++;
@@ -2946,10 +2955,12 @@ switch_point:
     mainw->video_seek_ready = TRUE;
   } else {
     if (!mainw->multitrack && scratch == SCRATCH_NONE && IS_NORMAL_CLIP(mainw->playing_file) && mainw->playing_file > 0
-        && ((spare_cycles > 0ul && last_spare_cycles > 0ul) || (getahead > -1 && mainw->pred_frame != -getahead))) {
+        && ((mainw->disk_pressure > 0. || (spare_cycles > 0ul && last_spare_cycles > 0ul)) || (getahead > -1 &&
+            mainw->pred_frame != -getahead))) {
 #ifdef SHOW_CACHE_PREDICTIONS
       //g_print("PRELOADING (%d %d %lu %p):", sfile->frameno, dropped, spare_cycles, mainw->frame_layer_preload);
 #endif
+      mainw->disk_pressure = check_disk_pressure(0.);
 #ifdef ENABLE_PRECACHE
       if (!mainw->frame_layer_preload) {
         if (!mainw->preview) {

@@ -107,7 +107,7 @@ char *get_stats_msg(boolean calc_only) {
                             audmsg ? audmsg : "",
                             mainw->actual_frame, cfile->frames,
                             inst_fps * sig(cfile->pb_fps), cfile->pb_fps,
-                            get_cpu_load(0) / 10000., get_disk_load(capable->mountpoint),
+                            get_cpu_load(0) / 10000., mainw->disk_pressure,
                             mainw->effort, EFFORT_RANGE_MAX,
                             prefs->pb_quality,
                             tmp = lives_strdup(prefs->pb_quality == 1 ? _("Low")
@@ -119,10 +119,8 @@ char *get_stats_msg(boolean calc_only) {
 
   lives_freep((void **)&bgmsg); lives_freep((void **)&audmsg);
   lives_freep((void **)&tmp); lives_freep((void **)&tmp2);
-
   return msg;
 }
-
 
 #ifdef WEED_STARTUP_TESTS
 

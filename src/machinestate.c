@@ -2443,24 +2443,44 @@ double get_disk_load(const char *mp) {
     com = lives_strdup_printf("%s -n $(%s %s %s)", capable->echo_cmd,
 			      capable->grep_cmd, xmp, DISK_STATS_FILE);
     if ((res = mini_popen(com))) {
+      int p;
       int xbits = get_token_count(res, ' ');
       char **array = lives_strsplit(res, " ", xbits);
       lives_free(res);
-      if (xbits > 13) {
-	uint64_t val = atoll(array[13]);
+      for (p = 0; p < xbits; p++) if (!strcmp(array[p], xmp)) break;
+      p += 10;
+      if (xbits > p) {
+	uint64_t val = atoll(array[p]);
 	ticks_t clock_ticks;
 	if (LIVES_IS_PLAYING) clock_ticks = mainw->clock_ticks;
 	else clock_ticks = lives_get_current_ticks();
-	if (lticks > 0 && clock_ticks > lticks)
+	if (lticks > 0 && clock_ticks > lticks && val > lval) {
 	  ret = (double)(val - lval) / ((double)(clock_ticks - lticks) / TICKS_PER_SECOND_DBL);
-	lticks = clock_ticks;
-	lval = val;
+	  g_print("AND %f %f %f\n", ret, (double)(val - lval), ((double)(clock_ticks - lticks) / TICKS_PER_SECOND_DBL));
+	  lticks = clock_ticks;
+	  lval = val;
+	}
+	if (lval == 0 && val > 0) {
+	  lticks = clock_ticks;
+	  lval = val;
+	}
       }
       lives_strfreev(array);
     }
   return ret;
   }
   return -1.;
+}
+
+
+LIVES_GLOBAL_INLINE double check_disk_pressure(double current) {
+  /* double dload = get_disk_load(capable->mountpoint); */
+  /* if (dload == 0.) { */
+  /*   dload = (current + 1.) * ((double)get_cpu_load(0) / (double)80000000.); */
+  /*   if (dload < 1.) dload = 0.; */
+  /* } */
+  /* if (dload > current) current = dload; */
+  return current;
 }
 
 

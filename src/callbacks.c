@@ -5087,11 +5087,23 @@ close_done:
       if (mainw->loop_locked) {
         dirchange_callback(group, obj, keyval, LIVES_CONTROL_MASK, SCREEN_AREA_FOREGROUND);
       }
-
-      if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
-        resync_audio(((double)cfile->frameno));
-        /* + (double)(lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL) */
-        /* - mainw->startticks) / TICKS_PER_SECOND_DBL * cfile->pb_fps); */
+      if (!(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC)) {
+        boolean res_aud = FALSE;
+#ifdef ENABLE_JACK
+        if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_JACK
+            && mainw->jackd) {
+          if (mainw->jackd->playing_file == mainw->playing_file) res_aud = TRUE;
+        }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+        if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_PULSE
+            && mainw->pulsed) {
+          if (mainw->pulsed->playing_file == mainw->playing_file) res_aud = TRUE;
+        }
+#endif
+        if (res_aud) {
+          resync_audio(((double)cfile->frameno));
+        }
       }
 
       // change play direction

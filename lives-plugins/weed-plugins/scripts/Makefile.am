@@ -1,7 +1,12 @@
-fxpluginslibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
+SCRIPT_FILES = *.script
 
-all:
-	./build-weed-plugin-C negate.script ..
+all: generate
 
-install-exec-local:
-	rm -rf "$(DESTDIR)$(fxpluginslibdir)/"aaa*
+generate: $(SCRIPT_FILES)
+	for script in $^; do \
+		./build-weed-plugin-C $$script .. ;\
+		touch $$script ; \
+	done
+
+#.PHONY : all
+

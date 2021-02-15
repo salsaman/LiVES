@@ -232,22 +232,6 @@ print OUT "/////////////////////////////////////////////////////////////////////
 print OUT "static int package_version = $pver; // version of this package\n\n";
 print OUT "/////////////////////////////////////////////////////////////////////////////\n";
 
-my $desclen = 0;
-if (@description) {
-    foreach (@description) {
-	$desclen += length($_) + 1;
-    }
-    if ($desclen > 128) {
-	$desclen = 512;
-    }
-    elsif ($desclen > 256) {
-	$desclen = 1024;
-    }
-    else {
-	$desclen = 256;
-    }
-}
-
 #add requirements
 my $need_putils = 0;
 my $need_pconv = 0;
@@ -260,6 +244,11 @@ my $need_fourcc = 0;
 my $need_avstream = 0;
 my $av_chanfmts = 0;
 my $adv_palettes = 0;
+
+
+if ($pal_lists[0] =~ /^ALL/) {
+    $need_putils = 1;
+}
 
 foreach (@requires) {
     if ($_ eq "putils") {
@@ -377,10 +366,6 @@ foreach (@requires) {
 	    $inc_stdio = 1;
 	}
     }
-}
-
-if ($desclen && !$inc_stdio) {
-    print OUT "#include <stdio.h>\n";
 }
 
 ## add sdata struct
@@ -525,7 +510,14 @@ print OUT "  weed_plant_t *host_info = weed_get_host_info(plugin_info);\n";
 print OUT "  weed_plant_t *filter_class;\n";
 
 ## setup palette_list
-print OUT "  int palette_list[] = $pal_lists[0];\n";
+print OUT "  int palette_list[] = ";
+
+if ($pal_lists[0] =~ /^ALL/) {
+    print OUT "$pal_lists[0];\n";
+}
+else {
+    print OUT "{$pal_lists[0]};\n";
+}    
 
 #setup in_chantmpls
 if ($num_inc) {
@@ -722,11 +714,6 @@ if ($num_oparams) {
     print OUT"NULL\n  };\n";
 }
 
-#descn
-if ($desclen) {
-    print OUT "  char desc[$desclen];\n";
-}
-
 ## setup flags
 print OUT "  int filter_flags = ";
 
@@ -753,8 +740,7 @@ print OUT "  filter_class = weed_filter_class_init(\"$plugin_name\", \"$author\"
 ## set filter gui
 
 if ($desclen) {
-    print OUT "\n  snprintf(desc, $desclen, \"" . join ("\n", @description) . "\");\n";
-    print OUT "  weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, desc);\n\n";
+    print OUT "  weed_filter_set_description(filter_class, \"$description\");\n\n";
 }
 
 ## set layout

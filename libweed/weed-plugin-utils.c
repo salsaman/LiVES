@@ -102,6 +102,9 @@ static inline void _weed_plant_set_name(weed_plant_t *p, const char *n) {
   if (t == __WPFC__ || t == __WPPT__ || t == __WPCT__) wls(p, WEED_LEAF_NAME, WEED_SEED_STRING, 1, &n);
 }
 static inline void weed_filter_set_name(weed_plant_t *f, const char *n) {_weed_plant_set_name(f, n);}
+static inline void weed_filter_set_description(weed_plant_t *f, const char *d) {
+  wls(f, WEED_LEAF_DESCRIPTION, WEED_SEED_STRING, 1, &d);
+}
 static inline void weed_chantmpl_set_name(weed_plant_t *c, const char *n) {_weed_plant_set_name(c, n);}
 static inline void weed_paramtmpl_set_name(weed_plant_t *p, const char *n) {_weed_plant_set_name(p, n);}
 static inline weed_error_t weed_paramtmpl_set_hidden(weed_plant_t *pt, int h) {

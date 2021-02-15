@@ -561,7 +561,8 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
       // switch to none
       switch_aud_to_none(permanent);
 #if 0
-      if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) mainw->nullaudio_loop = AUDIO_LOOP_PINGPONG;
+      if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
+        mainw->nullaudio_loop = AUDIO_LOOP_PINGPONG;
       else mainw->nullaudio_loop = AUDIO_LOOP_FORWARD;
 #endif
       update_all_host_info(); // let fx plugins know about the change
@@ -609,7 +610,8 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
       } else {
         // success
         if (mainw->loop_cont) {
-          if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) mainw->jackd->loop = AUDIO_LOOP_PINGPONG;
+          if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
+            mainw->jackd->loop = AUDIO_LOOP_PINGPONG;
           else mainw->jackd->loop = AUDIO_LOOP_FORWARD;
         }
         update_all_host_info(); // let fx plugins know about the change
@@ -645,7 +647,8 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
         } else {
           // success
           if (mainw->loop_cont) {
-            if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) mainw->pulsed->loop = AUDIO_LOOP_PINGPONG;
+            if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
+              mainw->pulsed->loop = AUDIO_LOOP_PINGPONG;
             else mainw->pulsed->loop = AUDIO_LOOP_FORWARD;
           }
           update_all_host_info(); // let fx plugins know about the change
@@ -1256,6 +1259,10 @@ boolean pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval
         lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_aclips),
                                        (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) ? TRUE : FALSE);
       }
+      if (bitfield == AUDIO_OPTS_NO_RESYNC) {
+        lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_aresync),
+                                       (prefs->audio_opts & AUDIO_OPTS_NO_RESYNC) ? FALSE : TRUE);
+      }
     }
     goto success6;
   }
@@ -1530,7 +1537,10 @@ boolean apply_prefs(boolean skip_warn) {
 #ifdef RT_AUDIO
   boolean audio_follow_fps = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_afollow));
   boolean audio_follow_clips = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_aclips));
-  uint32_t audio_opts = (AUDIO_OPTS_FOLLOW_FPS * audio_follow_fps + AUDIO_OPTS_FOLLOW_CLIPS * audio_follow_clips);
+  boolean audio_resync = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_aresync));
+  uint32_t audio_opts = (AUDIO_OPTS_FOLLOW_FPS * audio_follow_fps
+                         + AUDIO_OPTS_FOLLOW_CLIPS * audio_follow_clips
+                         + AUDIO_OPTS_NO_RESYNC * !(audio_resync));
 #endif
 
 #ifdef ENABLE_OSC
@@ -2638,12 +2648,14 @@ static void on_audp_entry_changed(LiVESWidget *audp_combo, livespointer ptr) {
   if (!strcmp(audp, AUDIO_PLAYER_JACK) || !strcmp(audp, AUDIO_PLAYER_PULSE_AUDIO)) {
     lives_widget_set_sensitive(prefsw->checkbutton_aclips, TRUE);
     lives_widget_set_sensitive(prefsw->checkbutton_afollow, TRUE);
+    lives_widget_set_sensitive(prefsw->checkbutton_aresync, TRUE);
     lives_widget_set_sensitive(prefsw->raudio, TRUE);
     lives_widget_set_sensitive(prefsw->pa_gens, TRUE);
     lives_widget_set_sensitive(prefsw->rextaudio, TRUE);
   } else {
     lives_widget_set_sensitive(prefsw->checkbutton_aclips, FALSE);
     lives_widget_set_sensitive(prefsw->checkbutton_afollow, FALSE);
+    lives_widget_set_sensitive(prefsw->checkbutton_aresync, FALSE);
     lives_widget_set_sensitive(prefsw->raudio, FALSE);
     lives_widget_set_sensitive(prefsw->pa_gens, FALSE);
     lives_widget_set_sensitive(prefsw->rextaudio, FALSE);
@@ -3889,12 +3901,27 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   prefsw->checkbutton_afollow = lives_standard_check_button_new(_("Audio follows video _rate/direction"),
-                                (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) ? TRUE : FALSE, LIVES_BOX(hbox), NULL);
+                                (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) ? TRUE : FALSE,
+                                LIVES_BOX(hbox), NULL);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
   prefsw->checkbutton_aclips = lives_standard_check_button_new(_("Audio follows _clip switches"),
-                               (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) ? TRUE : FALSE, LIVES_BOX(hbox), NULL);
+                               (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) ? TRUE : FALSE,
+                               LIVES_BOX(hbox), NULL);
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  prefsw->checkbutton_aresync = lives_standard_check_button_new(_("Resync audio when fps is reset"),
+                                (prefs->audio_opts & AUDIO_OPTS_NO_RESYNC) ? FALSE : TRUE,
+                                LIVES_BOX(hbox),
+                                H_("Determines whether the audio "
+                                   "rate and position are\n"
+                                   "resynchronised with video"
+                                   "whenever the 'Reset FPS' key "
+                                   "is activated.\n"
+                                   "Only effective if video and "
+                                   "audio are playing the same clip."));
 
   add_hsep_to_box(LIVES_BOX(vbox));
 
@@ -3917,6 +3944,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), prefsw->checkbutton_aclips, TRUE);
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), prefsw->checkbutton_afollow, TRUE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), prefsw->checkbutton_aresync, TRUE);
 
   if (mainw->playing_file > 0 && mainw->record) {
     lives_widget_set_sensitive(prefsw->rextaudio, FALSE);
@@ -5617,6 +5645,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   ACTIVE(checkbutton_afollow, TOGGLED);
   ACTIVE(checkbutton_aclips, TOGGLED);
+  ACTIVE(checkbutton_aresync, TOGGLED);
 
   ACTIVE(rdesk_audio, TOGGLED);
 

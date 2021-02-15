@@ -2821,7 +2821,7 @@ LIVES_GLOBAL_INLINE void avsync_force(void) {
    and various other conditions are met.
 */
 boolean resync_audio(double frameno) {
-  if (!(prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) return FALSE;
+  if (prefs->audio_opts & AUDIO_OPTS_NO_RESYNC) return FALSE;
   // if recording external audio, we are intrinsically in sync
   if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT) return TRUE;
 

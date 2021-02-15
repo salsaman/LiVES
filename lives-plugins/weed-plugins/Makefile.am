@@ -19,7 +19,7 @@ shared_ldflags = -shared -fPIC -DPIC -module -avoid-version --tag=disable-static
 ## --whole-archive is supposed to work, but doesn't....
 #shared_cflags = -fPIC -DPIC -Wno-unused-function -Wl,--whole-archive $(libdir)/libweed-plugin-utils.a -Wl,--no-whole-archive
 
-shared_cflags = -fPIC -DPIC -Wno-unused-function
+shared_cflags = -fPIC -DPIC -Wno-unused-function -Wno-unused-variable
 endif
 
 if NEED_LOCAL_WEED
@@ -53,7 +53,6 @@ endif
 else
 HAVE_SDL_ANYVERSION = false
 endif
-
 
 AM_LDFLAGS = $(shared_ldflags)
 
@@ -234,6 +233,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 EXTRA_DIST=data icons scripts syna.h weed-plugin-utils.c
 
 install-data-localipt:
+	rm -rf "$(DESTDIR)$(fxpluginslibdir)"
 	$(MKDIR_P) "$(DESTDIR)$(fxpluginslibdir)"
 	cp -rf data "$(DESTDIR)$(fxpluginslibdir)" && chmod -Rf a+r "$(DESTDIR)$(fxpluginslibdir)/data"
 	cp -rf icons "$(DESTDIR)$(fxpluginslibdir)" && chmod -Rf a+r "$(DESTDIR)$(fxpluginslibdir)/icons"

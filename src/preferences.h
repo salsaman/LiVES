@@ -256,6 +256,7 @@ typedef struct {
   volatile uint32_t audio_opts;
 #define AUDIO_OPTS_FOLLOW_CLIPS		(1 << 0)
 #define AUDIO_OPTS_FOLLOW_FPS		(1 << 1)
+#define AUDIO_OPTS_NO_RESYNC       	(1 << 2)
 
   boolean event_window_show_frame_events;
   boolean crash_recovery; ///< TRUE==maintain mainw->recovery file
@@ -708,6 +709,7 @@ typedef struct {
   LiVESWidget *checkbutton_parestart;
   LiVESWidget *checkbutton_afollow;
   LiVESWidget *checkbutton_aclips;
+  LiVESWidget *checkbutton_aresync;
   LiVESWidget *spinbutton_ext_aud_thresh;
   LiVESWidget *spinbutton_mt_def_width;
   LiVESWidget *spinbutton_mt_def_height;

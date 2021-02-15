@@ -1857,9 +1857,9 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
     lives_alarm_clear(alarm_handle);
     if (timeout == 0) return -1;
   }
-  if (!CLIP_HAS_AUDIO(pulsed->playing_file) && !(LIVES_IS_PLAYING && pulsed->read_abuf > -1)) {
-    return -1;
-  }
+  /* if (!CLIP_HAS_AUDIO(pulsed->playing_file) && !(LIVES_IS_PLAYING && pulsed->read_abuf > -1)) { */
+  /*   return -1; */
+  /* } */
   while (pa_stream_get_time(pulsed->pstream, (pa_usec_t *)&usec) < 0) {
     lives_nanosleep(10000);
   }

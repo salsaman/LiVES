@@ -269,6 +269,8 @@ boolean get_distro_dets(void);
 boolean get_machine_dets(void);
 int get_num_cpus(void);
 double get_disk_load(const char *mp);
+double check_disk_pressure(double current);
+
 int64_t get_cpu_load(int cpun); ///< percent * 1 million
 
 char *get_systmp(const char *suff, boolean is_dir);

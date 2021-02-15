@@ -1775,6 +1775,7 @@ typedef struct {
 #define EFFORT_LIMIT_MED (EFFORT_RANGE_MAX >> 2)  ///< default 32
   int effort;
   boolean lockstats;
+  double disk_pressure;
 
   boolean memok; ///< set to FALSE if a segfault is received, ie. we should assume all memory is corrupted and exit ASAP
 

@@ -475,6 +475,7 @@ boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
       else if (fsize >= medbytes && bufsize >= smedbytes) bufsize = medbytes;
       else if (fsize >= smedbytes) bufsize = smedbytes;
       //g_printerr("slurp %d oof %ld %ld remain %lu  \n", fd, fbuff->offset, fsize, ofsize);
+      if (mainw->disk_pressure > 0.) mainw->disk_pressure = check_disk_pressure(0.);
     }
   }
   fbuff->eof = TRUE;

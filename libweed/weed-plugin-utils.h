@@ -132,6 +132,7 @@ FN_DECL void weed_chantmpl_set_flags(weed_plant_t *chantmpl, int flags);
 FN_DECL void weed_paramtmpl_set_flags(weed_plant_t *paramtmpl, int flags);
 FN_DECL void weed_gui_set_flags(weed_plant_t *gui, int flags);
 FN_DECL void weed_filter_set_name(weed_plant_t *filter, const char *name);
+FN_DECL void weed_filter_set_description(weed_plant_t *filter, const char *name);
 FN_DECL void weed_chantmpl_set_name(weed_plant_t *chantmpl, const char *name);
 FN_DECL void weed_paramtmpl_set_name(weed_plant_t *paramtmpl, const char *name);
 FN_DECL weed_error_t weed_paramtmpl_set_hidden(weed_plant_t *paramtmpl, int hidden);
@@ -200,6 +201,7 @@ FN_DECL int weed_channel_is_disabled(weed_plant_t *channel);
 FN_DECL weed_plant_t  *weed_param_get_template(weed_plant_t *param);
 FN_DECL weed_plant_t *weed_param_get_gui(weed_plant_t *param) ALLOW_UNUSED;
 
+
 FN_DECL int weed_gui_get_flags(weed_plant_t *gui);
 
 // param values
@@ -256,6 +258,8 @@ FN_DECL int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list)
 #ifdef NEED_PALETTE_UTILS
 #define ALL_RGB_PALETTES {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, \
       WEED_PALETTE_ARGB32, WEED_PALETTE_END}
+
+#define ALL_RGBX_PALETTES {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_END}
 
 #define ALL_24BIT_PALETTES {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_YUV888, WEED_PALETTE_END}
 
@@ -332,8 +336,8 @@ FN_DECL void alpha_premult(unsigned char *ptr, int width, int height, int rowstr
 #ifdef NEED_FONT_UTILS
 
 #include <wchar.h>
-  FN_DECL void weed_parse_font_string(const char *fontstr, char **family, char **fstretch, char **fweight,
-				    char **fstyle, int *size);
+FN_DECL void weed_parse_font_string(const char *fontstr, char **family, char **fstretch, char **fweight,
+                                    char **fstyle, int *size);
 #endif
 
 #ifdef __cplusplus

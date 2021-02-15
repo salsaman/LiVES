@@ -1,0 +1,64 @@
+<define>
+|1.8.3
+</define>
+
+<name>
+revTV
+</name>
+
+<version>
+1|1
+</version>
+
+<author>
+effecTV
+</author>
+
+<language_code>
+0xC0
+</language_code>
+
+<filter_flags>
+may_thread
+</filter_flags>
+
+<palette_lists>
+ALL_PACKED_PALETTES
+</palette_lists>
+
+<in_chans>
+in_channel0
+</in_chans>
+
+<out_chans>
+out_channel0
+</out_chans>
+
+<params>
+lspace|_Line spacing|num0|6|1|16|
+vscale|_Vertical scale factor|num2|2.|0.|4.|
+</params>
+
+<process>
+short val;
+int red = 0, green = 1, blue = 2, yoffset, yval;
+vscale /= 200.;
+if (pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_BGRA32) {
+  red = 2; blue = 0;
+}
+else if (pal == WEED_PALETTE_ARGB32) {
+  red = 1; green = 2; blue = 3;
+}
+width *= psize;
+for (int y = 0; y < height; y += lspace) {
+  for (int x = 0; x < width; x += psize) {
+    if (pal == WEED_PALETTE_YUV888 || pal == WEED_PALETTE_YUVA8888)
+      val = src[irow * y + x] * 7;
+    else val = (short)((src[irow * y + red] << 1) + (src[irow * y + green] << 2)
+          + src[irow * y + x + blue]);
+    yval = y - val * vscale;
+    if ((yoffset = yval * orow + x) >= 0) weed_memcpy(&dst[yoffset],
+          &src[irow * y + psize * x], psize);
+   }
+}
+</process>

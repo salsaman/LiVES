@@ -69,7 +69,7 @@ my @pieces = split(/$delim/, $versions);
 my $pver = @pieces[0];
 my $fver = @pieces[1];
 
-my @description = (&rc_read("description", $file))[0];
+my $description = (&rc_read("description", $file))[0];
 my @requires=&rc_read("requires", $file);
 
 my @sdata = &rc_read("sdata", $file);
@@ -368,6 +368,18 @@ foreach (@requires) {
     }
 }
 
+if ($num_params) {
+    print OUT "enum {\n";
+    
+    foreach (@params) {
+	@pieces = split(/$delim/);
+	my $pname = @pieces[0];
+	print OUT "  P_$pname,\n";
+    }
+
+    print OUT "};\n";
+}
+
 ## add sdata struct
 if ($use_sdata) {
     print OUT "\ntypedef struct {\n";
@@ -392,6 +404,10 @@ if ($has_init) {
     ## TODO - singleton check
 
     &add_start($use_sdata, $num_inc);
+
+    if ($num_params) {
+	&get_paramvals(@params);
+    }
 
     ## gui only reinit
     print OUT "  if (!(weed_instance_get_flags(inst) & WEED_INSTANCE_UPDATE_GUI_ONLY)) {\n";
@@ -423,6 +439,10 @@ if ($has_init) {
     print OUT "\n";
 
     ## add gui init code
+
+    if ($num_params) {
+	&clean_params(@params);
+    }
 
     print OUT "\n";
 
@@ -482,6 +502,10 @@ if ($can_inplace && $num_inc == 1 && $num_outc == 1) {
     print OUT "  int inplace = (src == dst);\n";
 }
 
+if ($num_params) {
+    &get_paramvals(@params);
+}
+
 ## add threading
 if ($may_thread && $num_inc == 1 && $num_outc == 1) {
     print OUT "\n  if (weed_is_threading(inst)) {\n";
@@ -496,6 +520,10 @@ print OUT "\n";
 print OUT "  if (1) {\n";
 &gen_array(4, @proc);
 print OUT "  }\n";
+
+if ($num_params) {
+    &clean_params(@params);
+}
 
 &add_end($use_sdata, $num_inc);
 
@@ -739,7 +767,7 @@ print OUT "  filter_class = weed_filter_class_init(\"$plugin_name\", \"$author\"
 
 ## set filter gui
 
-if ($desclen) {
+if ($description) {
     print OUT "  weed_filter_set_description(filter_class, \"$description\");\n\n";
 }
 
@@ -897,5 +925,48 @@ sub add_end {
     }
     if ($num_outc > 1) {
 	print OUT "  weed_free(out_chans);\n";
+    }
+}
+
+
+sub get_paramvals {
+    ## TODO - handle multi valued params
+    my @params = @_;
+    foreach (@params) {
+	@pieces = split(/$delim/);
+	my $pname = @pieces[0];
+	my $type = @pieces[2];
+	if ($type =~ /^num/) {
+	    my $dp = 0 + substr($type, 3);
+	    if (!$dp) {
+		print OUT "  int $pname = weed_param_get_value_int(in_params[P_$pname]);\n";
+	    }
+	    else {
+		print OUT "  double $pname = weed_param_get_value_double(in_params[P_$pname]);\n";
+	    }
+	}
+	elsif ($type eq /string_list/) {
+	    print OUT "  int $pname = weed_param_get_value_int(in_params[P_$pname]);\n";
+	}
+	elsif ($type eq /bool/) {
+	    print OUT "  int $pname = weed_param_get_value_boolean(in_params[P_$pname]);\n";
+	}
+	elsif ($type eq /string/) {
+	    print OUT "  int $pname = weed_param_get_value_string(in_params[P_$pname]);\n";
+	}
+    }
+}
+
+
+sub clean_params {
+    ## TODO - handle multi valued params
+    my @params = @_;
+    foreach (@params) {
+	@pieces = split(/$delim/);
+	my $pname = @pieces[0];
+	my $type = @pieces[2];
+	if ($type eq "string") {
+	    print OUT "  weed_free($pname);\n";
+	}
     }
 }

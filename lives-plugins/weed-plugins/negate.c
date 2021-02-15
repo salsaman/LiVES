@@ -87,6 +87,8 @@ WEED_SETUP_START(200, 200) {
 
   filter_class = weed_filter_class_init("negate", "salsaman", 1, filter_flags, palette_list,
                                         NULL, negate_process, NULL, in_chantmpls, out_chantmpls, NULL, NULL);
+  weed_filter_set_description(filter_class, "Inverts the Red, Green and Blue values of each pixel.");
+
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_plugin_set_package_version(plugin_info, package_version);
 }

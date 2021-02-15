@@ -1,0 +1,70 @@
+<define>
+|1.8.3
+</define>
+
+<name>
+posterise
+</name>
+
+<version>
+1|1
+</version>
+
+<author>
+salsaman
+</author>
+
+<description>
+A simple filter which reduces the number of colour levels in the images.
+</description>
+
+<requires>
+</requires>
+
+<language_code>
+0xC0
+</language_code>
+
+<filter_flags>
+may_thread
+</filter_flags>
+
+<palette_lists>
+ALL_RGBX_PALETTES
+</palette_lists>
+
+
+<in_chans>
+in_channel0
+</in_chans>
+
+<out_chans>
+out_channel0|inplace
+</out_chans>
+
+<params>
+levels|Colour _levels|num0|1|1|8|
+</params>
+
+<process>
+unsigned char levmask = 128;
+for (int i = 1; i < levels; i++) levmask += 128 >> i;
+width *= psize;
+if (psize == 3) {
+  for (int j = 0; j < height; j++) {
+    for (int i = 0; i < width; i++) {
+      dst[j * orow + i] = src[j * irow + i] & levmask;
+    }
+  }
+}
+else {
+  for (int j = 0; j < height; j++) {
+    for (int i = 0; i < width; i += 4) {
+      dst[j * orow + i] = src[j * irow + i] & levmask;
+      dst[j * orow + i + 1] = src[j * irow + i + 1] & levmask;
+      dst[j * orow + i + 2] = src[j * irow + i + 2] & levmask;
+      dst[j * orow + i + 3] = src[j * irow + i + 3];
+    }
+  }
+}
+</process>

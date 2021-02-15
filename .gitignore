@@ -96,6 +96,7 @@ dkms.conf
 
 
 # extras
+*~
 ABOUT-NLS
 Makefile
 Makefile.in

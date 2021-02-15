@@ -2,11 +2,13 @@ SCRIPT_FILES = *.script
 
 all: generate
 
-generate: $(SCRIPT_FILES)
+generate: build-weed-plugin-C $(SCRIPT_FILES)
+
+build-weed-plugin-C: $(SCRIPT_FILES)
 	for script in $^; do \
-		./build-weed-plugin-C $$script .. ;\
+		./$@ $$script .. ;\
 		touch $$script ; \
 	done
+	touch $@
 
-#.PHONY : all
-
+EXTRA_DIST = build-weed-plugin-C $(SCRIPT_FILES)

@@ -89,6 +89,8 @@ WEED_SETUP_START(200, 200) {
 
   filter_class = weed_filter_class_init("noise", "salsaman", 1, filter_flags, palette_list,
                                         NULL, noise_process, NULL, in_chantmpls, out_chantmpls, NULL, NULL);
+  weed_filter_set_description(filter_class, "A simple filter which overlays random noise on each frame.");
+
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_plugin_set_package_version(plugin_info, package_version);
 }

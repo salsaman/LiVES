@@ -43,6 +43,7 @@ static weed_error_t posterise_process(weed_plant_t *inst, weed_timecode_t tc) {
   unsigned char *src = weed_channel_get_pixel_data(in_chan);
   unsigned char *dst = weed_channel_get_pixel_data(out_chan);
   int inplace = (src == dst);
+
   int levels = weed_param_get_value_int(in_params[P_levels]);
 
   if (weed_is_threading(inst)) {

@@ -43,6 +43,7 @@ static weed_error_t revTV_process(weed_plant_t *inst, weed_timecode_t tc) {
   weed_plant_t **in_params = weed_get_in_params(inst, NULL);
   unsigned char *src = weed_channel_get_pixel_data(in_chan);
   unsigned char *dst = weed_channel_get_pixel_data(out_chan);
+
   int lspace = weed_param_get_value_int(in_params[P_lspace]);
   double vscale = weed_param_get_value_double(in_params[P_vscale]);
 
@@ -97,9 +98,13 @@ WEED_SETUP_START(200, 200) {
     weed_float_init("vscale", "_Vertical scale factor", 2., 0., 4.),
     NULL
   };
+  weed_plant_t *pgui;
   int filter_flags = WEED_FILTER_HINT_MAY_THREAD;
 
   verbosity = weed_get_host_verbosity(host_info);
+
+  pgui = weed_paramtmpl_get_gui(in_params[P_vscale]);
+  weed_set_int_value(pgui, WEED_LEAF_DECIMALS, 2);
 
   filter_class = weed_filter_class_init("revTV", "effecTV", 1, filter_flags, palette_list,
                                         NULL, revTV_process, NULL, in_chantmpls, out_chantmpls, in_paramtmpls, NULL);

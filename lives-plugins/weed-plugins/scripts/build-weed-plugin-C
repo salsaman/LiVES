@@ -742,6 +742,10 @@ if ($num_oparams) {
     print OUT"NULL\n  };\n";
 }
 
+if ($num_params) {
+    &add_pgui(1, @params);
+}
+
 ## setup flags
 print OUT "  int filter_flags = ";
 
@@ -761,6 +765,10 @@ print OUT "\n";
 
 print OUT "  verbosity = weed_get_host_verbosity(host_info);\n";
 print OUT "\n";
+
+if ($num_params) {
+    &add_pgui(0, @params);
+}
 
 ## create filter
 print OUT "  filter_class = weed_filter_class_init(\"$plugin_name\", \"$author\", $fver, filter_flags, palette_list,\n    $init_func, $proc_func, $deinit_func, $incs, $outcs, $inps, $outps);\n";
@@ -932,6 +940,7 @@ sub add_end {
 sub get_paramvals {
     ## TODO - handle multi valued params
     my @params = @_;
+    print OUT "\n";
     foreach (@params) {
 	@pieces = split(/$delim/);
 	my $pname = @pieces[0];
@@ -967,6 +976,41 @@ sub clean_params {
 	my $type = @pieces[2];
 	if ($type eq "string") {
 	    print OUT "  weed_free($pname);\n";
+	}
+    }
+}
+
+
+sub add_pgui {
+    my $checkonly = shift;
+    my @params = @_;
+    foreach (@params) {
+	@pieces = split(/$delim/);
+	my $pname = @pieces[0];
+	my $type = @pieces[2];
+	if ($type =~ /^num/) {
+	    my $pstep = 0;
+	    if (@pieces > 6) {
+		$pstep = @pieces[6];
+	    }
+	    my $dp = 0 + substr($type, 3);
+	    if ($dp || $pstep) {
+		if ($checkonly) {
+		    print OUT "  weed_plant_t *pgui;\n";
+		    return;
+		}
+		print OUT "  pgui = weed_paramtmpl_get_gui(in_params[P_$pname]);\n";
+	    }
+	    if ($dp) {
+		print OUT "  weed_set_int_value(pgui, WEED_LEAF_DECIMALS, $dp);\n";
+		if ($pstep) {
+		    print OUT "  weed_set_double_value(pgui, WEED_LEAF_STEP_SIZE, $pstep);\n";
+		}
+		print OUT "\n";
+	    }
+	    elsif ($pstep) {
+		print OUT "  weed_set_double_value(pgui, WEED_LEAF_STEP_SIZE, $pstep);\n\n";
+	    }
 	}
     }
 }

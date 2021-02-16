@@ -42,6 +42,18 @@ vscale|_Vertical scale factor|num2|2.|0.|4.|
 <process>
 short val;
 int red = 0, green = 1, blue = 2, yoffset, yval;
+
+// split threads horizontally instead of vertically
+int offset = weed_channel_get_offset(out_chan);
+int xst = (offset * width / iheight) * psize;
+int xend = ((offset + height - 1) * width / iheight) * psize;
+if (xend > width * psize) xend = width * psize;
+
+height = iheight;
+
+src -= irow * offset;
+dst -= orow * offset;
+
 vscale /= 200.;
 if (pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_BGRA32) {
   red = 2; blue = 0;
@@ -49,16 +61,17 @@ if (pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_BGRA32) {
 else if (pal == WEED_PALETTE_ARGB32) {
   red = 1; green = 2; blue = 3;
 }
-width *= psize;
+
 for (int y = 0; y < height; y += lspace) {
-  for (int x = 0; x < width; x += psize) {
+  for (int x = xst; x < xend; x += psize) {
     if (pal == WEED_PALETTE_YUV888 || pal == WEED_PALETTE_YUVA8888)
       val = src[irow * y + x] * 7;
-    else val = (short)((src[irow * y + red] << 1) + (src[irow * y + green] << 2)
+    else val = (short)((src[irow * y + x + red] << 1) + (src[irow * y + x + green] << 2)
           + src[irow * y + x + blue]);
     yval = y - val * vscale;
-    if ((yoffset = yval * orow + x) >= 0) weed_memcpy(&dst[yoffset],
-          &src[irow * y + psize * x], psize);
-   }
+    if (yval >= 0) {
+      weed_memcpy(&dst[orow * yval + x], &src[irow * y + x], psize);
+    }
+  }
 }
 </process>

@@ -1,0 +1,98 @@
+<define>
+|1.8.3
+</define>
+
+<name>
+xeffect|graphic novel
+</name>
+
+<version>
+1|1
+</version>
+
+<author>
+salsaman
+</author>
+
+<requires>
+pconv
+putils
+</requires>
+
+<language_code>
+0xC0
+</language_code>
+
+<sdata>
+uint8_t *|map|weed_free
+</sdata>
+
+<static>
+static inline void make_white(unsigned char *pixel) {
+  weed_memset(pixel, 255, 3);
+}
+
+static inline void nine_fill(unsigned char *new_data, int row, unsigned char *o) {
+  // fill nine pixels with the centre colour
+  new_data[-row - 3] = new_data[-row] = new_data[-row + 3] = new_data[-3] = new_data[0] =
+                                          new_data[3] = new_data[row - 3] = new_data[row] = new_data[row + 3] = o[0];
+  new_data[-row - 2] = new_data[-row + 1] = new_data[-row + 4] = new_data[-2] = new_data[1] =
+                         new_data[4] = new_data[row - 2] = new_data[row + 1] = new_data[row + 4] = o[1];
+  new_data[-row - 1] = new_data[-row + 2] = new_data[-row + 5] = new_data[-1] = new_data[2] =
+                         new_data[5] = new_data[row - 1] = new_data[row + 2] = new_data[row + 5] = o[2];
+}
+</static>
+
+<init>
+sdata->map = weed_malloc(width * height);
+if (!sdata->map) return WEED_ERROR_MEMORY_ALLOCATION;
+</init>
+
+<palette_lists>
+ALL_RGB_PALETTES
+</palette_lists>
+
+<in_chans>
+in_channel0|reinit_on_size_change
+</in_chans>
+
+<out_chans>
+out_channel0|inplace
+</out_chans>
+
+<process>
+int widthp = (width - 1) * psize, nbr;
+unsigned int myluma, threshold = 10000;
+if (!sdata->map) return WEED_ERROR_REINIT_NEEDED;
+
+for (int h = 0; h < height; h++) {
+  for (int i = 0; i < width; i ++) {
+    sdata->map[h * width + i] = calc_luma(&src[h * irow  + i * psize], pal, 0);
+  }
+}
+src += irow;
+dst += orow;
+for (int h = 1; h < height - 2; h++) {
+  for (int i = psize; i < widthp; i += psize) {
+    myluma = sdata->map[h * width + i / psize];
+    nbr = 0;
+    for (int j = h - 1; j <= h + 1; j++) {
+      for (int k = -1; k < 2; k++) {
+        if ((j != h || k != 0) &&
+            ABS(sdata->map[j * width + i / psize + k] - myluma) > threshold) nbr++;
+      }
+    }
+    if (nbr < 2 || nbr > 5) {
+      nine_fill(&dst[h * orow + i], orow, &src[h * irow + i]);
+    } else {
+      if (myluma < 12500) {
+        blank_pixel(&dst[h * orow + i], pal, 0, NULL);
+      } else {
+        if (myluma > 20000) {
+          make_white(&dst[h * orow + i]);
+        }
+      }
+    }
+  }
+}
+</process>

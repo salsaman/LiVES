@@ -79,9 +79,9 @@ static weed_error_t  avol_process(weed_plant_t *inst, weed_timecode_t timestamp)
   int ntracks = 0, chans = 0;
   weed_plant_t **in_channels = weed_get_in_channels(inst, &ntracks);
   weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
-  float **odst = weed_channel_get_audio_data(out_channel, &chans);
+
   float **dst = weed_channel_get_audio_data(out_channel, NULL);
-  float **src = weed_channel_get_audio_data(in_channels[0], NULL);
+  float **src = NULL;
   int nsamps = weed_channel_get_audio_length(out_channel), orig_nsamps = nsamps;
   weed_plant_t **in_params = weed_get_in_params(inst, NULL);
 
@@ -94,46 +94,20 @@ static weed_error_t  avol_process(weed_plant_t *inst, weed_timecode_t timestamp)
 
   double voll, volr;
   float tmp;
-  int i, j;
+
+  int j;
 
   weed_free(in_params);
-  voll = volr = vol[0];
 
-  if (chans == 2) {
-    if (pan[0] < 0.) volr *= (1. + pan[0]);
-    else voll *= (1. - pan[0]);
-    if (swapchans[0] == WEED_FALSE) {
-      for (j = 0; j < nsamps; j++) {
-        dst[0][j] = voll * src[0][j];
-        dst[1][j] = volr * src[1][j];
-      }
-    } else {
-      if (swappan[0]) {
-        tmp = voll; voll = volr; volr = tmp;
-      }
-      for (j = 0; j < nsamps; j++) {
-        tmp = volr * src[0][j]; // in case inplace, src[0] will become dst[0]
-        dst[0][j] = voll * src[1][j];
-        dst[1][j] = tmp;
-      }
-    }
-  } else if (chans == 1) {
-    for (j = 0; j < nsamps; j++) {
-      dst[0][j] = vol[0] * src[0][j];
-    }
-  }
-
-  for (i = 1; i < ntracks; i++) {
+  for (int i = 0; i < ntracks; i++) {
     if (!in_channels[i]) continue;
     if (weed_channel_is_disabled(in_channels[i])) continue;
     if (vol[i] == 0.) continue;
-    dst[0] = odst[0];
-    chans = weed_get_int_value(in_channels[i], WEED_LEAF_AUDIO_CHANNELS, NULL);
-    if (chans == 2) dst[1] = odst[1];
+    chans = weed_channel_get_naudchans(in_channels[i]);
 
-    nsamps = orig_nsamps = weed_get_int_value(in_channels[i], WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
-    if (src) weed_free(src);
-    src = (float **)weed_get_voidptr_array(in_channels[i], WEED_LEAF_AUDIO_DATA, NULL);
+    nsamps = orig_nsamps = weed_channel_get_audio_length(in_channels[i]);
+
+    src = (float **)weed_channel_get_audio_data(in_channels[i], &chans);
 
     voll = volr = vol[i];
 
@@ -141,32 +115,54 @@ static weed_error_t  avol_process(weed_plant_t *inst, weed_timecode_t timestamp)
       if (pan[i] < 0.) volr *= (1. + pan[i]);
       else voll *= (1. - pan[i]);
       if (swapchans[i] == WEED_FALSE) {
-        for (j = 0; j < nsamps; j++) {
-          dst[0][j] += voll * src[0][j];
-          dst[1][j] += volr * src[1][j];
-        }
+	if (i > 0) {
+	  for (int j = 0; j < nsamps; j++) {
+	    dst[0][j] += voll * src[0][j];
+	    dst[1][j] += volr * src[1][j];
+	  }
+	}
+	else {
+	  for (j = 0; j < nsamps; j++) {
+	    dst[0][j] = voll * src[0][j];
+	    dst[1][j] = volr * src[1][j];
+	  }
+	}
       } else {
         if (swappan[i]) {
           tmp = voll; voll = volr; volr = tmp;
         }
-        for (j = 0; j < nsamps; j++) {
-          tmp = volr * src[0][j]; // in case inplace, src[0] will become dst[0]
-          dst[0][j] += voll * src[1][j];
-          dst[1][j] += tmp;
-        }
+	if (i > 0) {
+	  for (j = 0; j < nsamps; j++) {
+	    tmp = volr * src[0][j]; // in case inplace, src[0] will become dst[0]
+	    dst[0][j] += voll * src[1][j];
+	    dst[1][j] += tmp;
+	  }
+	}
+	else {
+	  for (j = 0; j < nsamps; j++) {
+	    tmp = volr * src[0][j]; // in case inplace, src[0] will become dst[0]
+	    dst[0][j] = voll * src[1][j];
+	    dst[1][j] = tmp;
+	  }
+	}
       }
     } else if (chans == 1) {
-      for (j = 0; j < nsamps; j++) {
-        dst[0][j] += vol[0] * src[0][j];
+      if (i > 0) {
+	for (j = 0; j < nsamps; j++) dst[0][j] += vol[0] * src[0][j];
       }
+      else {
+	for (j = 0; j < nsamps; j++) dst[0][j] = vol[0] * src[0][j];
+      }
+    }
+    if (src) {
+      weed_free(src);
+      src = NULL;
     }
   }
 
-  if (odst) weed_free(odst);
   if (swapchans) weed_free(swapchans);
   if (swappan) weed_free(swappan);
   if (dst) weed_free(dst);
-  if (src) weed_free(src);
   if (vol) weed_free(vol);
   if (pan) weed_free(pan);
   if (in_channels) weed_free(in_channels);

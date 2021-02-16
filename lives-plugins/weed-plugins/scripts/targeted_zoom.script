@@ -1,0 +1,84 @@
+<define>
+|1.8.3
+</define>
+
+<name>
+targeted_zoom|targeted zoom
+</name>
+
+<version>
+2|1
+</version>
+
+<author>
+salsaman
+</author>
+
+<requires>
+<math.h>
+</requires>
+
+<language_code>
+0xC0
+</language_code>
+
+<filter_flags>
+may_thread
+</filter_flags>
+
+<palette_lists>
+ALL_PACKED_PALETTES
+</palette_lists>
+
+<in_chans>
+in_channel0
+</in_chans>
+
+<out_chans>
+out_channel0|inplace
+</out_chans>
+
+<params>
+scale|_Scale|num2|1.|1.|exp(3)|
+xoffs|_X center|num2|.5|0.|1.|
+yoffs|_Y center|num2|.5|0.|1.|
+</params>
+
+<param_window>
+special|framedraw|scaledpoint|1|2|0|
+special|display_val|log|0|
+</param_window>
+
+<process>
+float offsx = (float)xoffs, offsy = (float)yoffs, fscale = (float)scale, fscalex;
+int dx, dy, offset, widthx;
+
+if (fscale < 1.) fscale = 1.;
+if (offsx < 0.) offsx = 0.;
+if (offsx + 1. / fscale > 1.) offsx = 1. - 1. / fscale;
+if (offsy < 0.) offsy = 0.;
+if (offsy + 1. / fscale > 1.) offsy = 1. - 1. / fscale;
+
+offsx *= width;
+offsy *= iheight;
+
+widthx = width * psize;
+fscalex = fscale * psize;
+offset = weed_channel_get_offset(out_chan);
+height += offset;
+
+for (int y = offset; y < height; y++) {
+  dy = (int)(offsy + (float)y / fscale + .5);
+  for (int x = 0; x < widthx; x += psize) {
+    dx = (int)(offsx + (float)x / fscalex + .5);
+    weed_memcpy(&dst[(y - offset) * orow + x], &src[irow * dy + dx * psize], psize);
+  }
+}
+</process>
+
+<display_vals>
+log|double|val <= 0.||
+val = log(val) + 1.;
+~
+val = exp(val - 1.);
+</display_vals>

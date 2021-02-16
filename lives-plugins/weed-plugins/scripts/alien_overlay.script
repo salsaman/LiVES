@@ -1,0 +1,86 @@
+<define>
+|1.8.3
+</define>
+
+<name>
+alien_overlay|alien overlay
+</name>
+
+<version>
+1|1
+</version>
+
+<author>
+salsaman
+</author>
+
+<language_code>
+0xC0
+</language_code>
+
+<filter_flags>
+may_thread
+</filter_flags>
+
+<palette_lists>
+ALL_RGB_PALETTES
+</palette_lists>
+
+<in_chans>
+in_channel0|reinit_on_size_change
+</in_chans>
+
+<out_chans>
+out_channel0|inplace
+</out_chans>
+
+<sdata>
+uint8_t *|inited|weed_free
+unsigned char *|old_pixel_data|weed_free
+</sdata>
+
+<init>
+sdata->old_pixel_data = (unsigned char *)weed_malloc(height * width);
+if (!sdata->old_pixel_data) {
+  weed_free(sdata);
+  return WEED_ERROR_MEMORY_ALLOCATION;
+}
+
+sdata->inited = (uint8_t *)weed_calloc(height, 1);
+if (!sdata->inited) {
+  weed_free(sdata);
+  weed_free(sdata->old_pixel_data);
+  return WEED_ERROR_MEMORY_ALLOCATION;
+}
+</init>
+
+<process>
+/// the secret to this effect is that we deliberately cast the values to (char)
+/// rather than (unsigned char)
+/// when averaging the current frame with the prior one
+// - the overflow when converted back produces some interesting visuals
+int offset = weed_channel_get_offset(out_chan);
+int offs = rgb_offset(pal);
+int xwidth = width * psize;
+int row = offset;
+unsigned char *old_pixel_data = sdata->old_pixel_data + width / psize * 3 * offset, val;
+
+for (int i = 0; i < height; i++) {
+  for (int j = offs; j < xwidth; j += psize) {
+    for (int k = 0; k < 3; k++) {
+      if (sdata->inited[row]) {
+        if (!inplace) {
+          dst[orow * i + j + k] = ((char)(old_pixel_data[width * i + j + k])
+	      + (char)(src[irow * i + j + k])) >> 1;
+          old_pixel_data[width *i + j + k] = src[irow * i + j + k];
+        } else {
+          val = ((char)(old_pixel_data[width * i + j + k]) + (char)(src[irow * i + j + k])) >> 1;
+          old_pixel_data[width * i + j + k] = src[irow * i + j + k];
+          dst[orow * i + j + k] = val;
+        }
+      } else old_pixel_data[width * i + j + k] = dst[orow * i + j + k] = src[irow * i + j + k];
+    }
+  }
+  sdata->inited[row + i] = 1;
+}
+</process>

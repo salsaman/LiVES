@@ -1603,7 +1603,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_destroy(LiVESWidget *widget) {
     main_thread_execute((lives_funcptr_t)_lives_widget_destroy, WEED_SEED_BOOLEAN, &ret, "v", widget);
     return ret;
   }
-  return lives_widget_destroy(widget);
+  return _lives_widget_destroy(widget);
 }
 
 

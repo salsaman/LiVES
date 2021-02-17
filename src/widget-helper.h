@@ -1497,6 +1497,8 @@ const widget_opts_t _def_widget_opts = {
 #define FILTER_KEY "filter"
 #define DEFDIR_KEY "def_dir"
 #define RFX_KEY "rfx"
+#define KEEPABOVE_KEY "keep_above"
+#define ACTIVATE_KEY "activate"
 #define TEXTWIDGET_KEY "def_dir"
 #define FILESEL_TYPE_KEY "filesel_type"
 #define PARAM_NUMBER_KEY "param_number"

@@ -2988,7 +2988,7 @@ boolean set_palette_colours(boolean force_reload) {
   // still experimenting...some values may need tweaking
   // suggested uses for each colour in the process of being defined
   // TODO - run a bg thread until we create GUI
-  if (!prefs->vj_mode) {
+  if (!prefs->vj_mode && prefs->startup_phase == 0) {
     /// create thread to pick custom colours
     mainw->helper_procthreads[PT_CUSTOM_COLOURS]
       = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)pick_custom_colours, -1, "");

@@ -365,6 +365,13 @@ PKG_CHECK_EXISTS([gtk+-3.0 >= 3.0.0],[HAVE_GTK_VERSION3=true],[HAVE_GTK_VERSION3
 
 if test "x$HAVE_GTK_VERSION3" = "xfalse"; then
 echo "no"
+echo LiVES runs best with gtk+ 3.24, but the development libraries for gtk+ 3 were not found.
+echo Please consider installing this package before running configure again.
+echo
+echo gtk+ 4 support is in preparation, but not yet implemented. This is planned for a future release.
+echo
+echo LiVES also has limited support for gtk+ 2, which can be enabled by passing the --disable-gtk3 option to configure.
+echo However this is provided only as a legacy feature and is not actively maintained.
 else
 PKG_CHECK_MODULES(GTK, gtk+-3.0 >= 3.0.0)
 fi

@@ -234,6 +234,8 @@ int64_t lives_proc_thread_join_int64(lives_proc_thread_t);
 
 void resubmit_proc_thread(lives_proc_thread_t, lives_thread_attr_t);
 
+boolean is_fg_thread(void);
+
 void *fg_run_func(lives_proc_thread_t lpt, void *retval);
 void *main_thread_execute(lives_funcptr_t func, int return_type, void *retval, const char *args_fmt, ...);
 

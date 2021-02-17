@@ -727,6 +727,8 @@ AC_SUBST(GL_LIBS)
 
 AM_CONDITIONAL(HAVE_OPENGL, $HAVE_OPENGL)
 
+echo GL libs is $GL_LIBS
+
 dnl check for mjpegtools
 HAVE_MJPEGTOOLS=false
 AC_ARG_ENABLE(mjpegtools, [  --disable-mjpegtools    Disable mjpegtools (yuv4mpeg) support.] , disable_mjpegtools=yes)

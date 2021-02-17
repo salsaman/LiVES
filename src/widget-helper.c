@@ -1696,10 +1696,9 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_maximum_size(LiVESWidget *w
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_process_updates(LiVESWidget *widget) {
 #ifdef GUI_GTK
-  LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
   LiVESWindow *win, *modalold = modalw;
   boolean was_modal = TRUE;
-  if (!ctx || ctx == lives_widget_context_default()) return TRUE;
+  if (is_fg_thread()) return TRUE;
 
   if (LIVES_IS_WINDOW(widget)) win = (LiVESWindow *)widget;
   else if (LIVES_IS_WIDGET(widget))
@@ -1839,9 +1838,9 @@ void *lives_fg_run(lives_proc_thread_t lpt, void *retval) {
   lpt_retval = (volatile void *)retval;
   if (!gov_running) {
     lives_idle_add_simple(governor_loop, NULL);
-    while (!gov_running) {
-      lives_nanosleep(NSLEEP_TIME);
-    }
+    /* while (!gov_running) { */
+    /*   lives_nanosleep(NSLEEP_TIME); */
+    /* } */
   } else {
     waitgov = TRUE;
     mainw->clutch = FALSE;
@@ -11860,9 +11859,8 @@ boolean lives_widget_context_update(void) {
   if (mainw->no_context_update) return FALSE;
   if (pthread_mutex_trylock(&ctx_mutex)) return FALSE;
   else {
-    LiVESWidgetContext *ctx = lives_widget_context_get_thread_default();
     do_some_things();
-    if (ctx && ctx != lives_widget_context_default() && gov_running) {
+    if (!is_fg_thread() && gov_running) {
       clutch = mainw->clutch = FALSE;
       while (!clutch && !mainw->is_exiting) {
         lives_nanosleep(NSLEEP_TIME);

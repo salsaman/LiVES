@@ -5166,28 +5166,34 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   LiVESResponseType response;
   boolean only_free = TRUE;
   boolean debug = FALSE;
+  static boolean trylocal = FALSE;
   static boolean firsttime = TRUE;
 
-  if (!req || !req->do_update) {
+  if (!req || !req->do_update || trylocal) {
 #ifdef YTDL_URL
     gflags |= INSTALL_CANLOCAL;
 #endif
     if (!check_for_executable(&capable->has_youtube_dl, EXEC_YOUTUBE_DL) &&
         !check_for_executable(&capable->has_youtube_dlc, EXEC_YOUTUBE_DLC)
        ) {
-      if (!do_please_install_either(EXEC_YOUTUBE_DL, EXEC_YOUTUBE_DLC)) {
-        capable->has_youtube_dl = capable->has_youtube_dlc = UNCHECKED;
-        return NULL;
+      firsttime = trylocal = TRUE;
+      /* if (!do_please_install_either(EXEC_YOUTUBE_DL, EXEC_YOUTUBE_DLC)) { */
+      /*   capable->has_youtube_dl = capable->has_youtube_dlc = UNCHECKED; */
+      /*   return NULL; */
+      /* } */
+    } else {
+      if (capable->has_youtube_dl != LOCAL) {
+        /// local version not found, so try first with system version
+        firsttime = FALSE;
       }
     }
-    if (capable->has_youtube_dl != LOCAL) {
-      /// local version not found, so try first with system version
-      firsttime = FALSE;
-    }
-  } else if (firsttime) {
-    if (!check_for_executable(&capable->has_pip, EXEC_PIP)) {
+  }
+
+  if (firsttime) {
+    if (!check_for_executable(&capable->has_pip, EXEC_PIP) &&
+        !check_for_executable(&capable->has_pip, EXEC_PIP3)) {
       /// requirement is missing, if the user does set it checked, we will warn
-      firsttime = FALSE;
+      if (!trylocal) firsttime = FALSE;
     }
   }
 

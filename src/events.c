@@ -3767,6 +3767,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
       out_tc = (weed_timecode_t)((out_frame - 1) / cfile->fps
                                  * TICKS_PER_SECOND_DBL - rec_delta_tc); // calculate tc of next out frame */
       out_tc = q_gint64(out_tc, cfile->fps);
+      g_print("GOT frame in tc %ld out %ld\n", get_event_timecode(event), out_tc);
       next_out_tc = (weed_timecode_t)(out_frame / cfile->fps
                                       * TICKS_PER_SECOND_DBL - rec_delta_tc); // calculate tc of next out frame */
       next_out_tc = q_gint64(next_out_tc, cfile->fps);
@@ -4179,6 +4180,7 @@ lives_render_error_t render_events(boolean reset, boolean rend_video, boolean re
           saveargs->pixbuf = pixbuf;
           lives_thread_create(saver_thread, LIVES_THRDATTR_NONE, lives_pixbuf_save_threaded, saveargs);
         }
+        g_print("saved as %d\n", out_frame);
       }
 #endif
 
@@ -5676,7 +5678,8 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
 
   if (inistrlen == 0) inistrlen = lives_strlen(WEED_LEAF_INIT_EVENT);
 
-  if (prefs->event_window_show_frame_events) rows = count_events(event_list, TRUE, start_tc, end_tc);
+  if (prefs->event_window_show_frame_events || (prefs->show_dev_opts && !mainw->multitrack))
+    rows = count_events(event_list, TRUE, start_tc, end_tc);
   else rows = count_events(event_list, TRUE, start_tc, end_tc) - count_events(event_list, FALSE, start_tc, end_tc);
 
   //event = get_first_event(event_list);
@@ -5709,7 +5712,8 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
 
     etype = get_event_type(event);
 
-    if ((prefs->event_window_show_frame_events || !WEED_EVENT_IS_FRAME(event)) || WEED_EVENT_IS_AUDIO_FRAME(event)) {
+    if ((prefs->event_window_show_frame_events || (prefs->show_dev_opts && !mainw->multitrack)
+         || !WEED_EVENT_IS_FRAME(event)) || WEED_EVENT_IS_AUDIO_FRAME(event)) {
       if (!prefs->event_window_show_frame_events && WEED_EVENT_IS_FRAME(event)) {
         // TODO - opts should be all frames, only audio frames, no frames
         // or even better, filter for any event types
@@ -5927,7 +5931,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
       // timecode
       tc_secs = tc / TICKS_PER_SECOND;
       tc -= tc_secs * TICKS_PER_SECOND;
-      text = lives_strdup_printf(_("Timecode=%"PRId64".%"PRId64), tc_secs, tc);
+      text = lives_strdup_printf(_("Timecode=%"PRId64".%.08"PRId64), tc_secs, tc);
       label = lives_standard_label_new(text);
       lives_free(text);
       lives_widget_set_valign(label, LIVES_ALIGN_START);
@@ -6159,7 +6163,7 @@ LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget 
   }
 
   *spfps = lives_standard_spin_button_new
-           (_("_Frames per second"), deffps, 1., FPS_MAX, 1., 10., 0, LIVES_BOX(hbox), NULL);
+           (_("_Frames per second"), deffps, 1., FPS_MAX, 1., 10., 3, LIVES_BOX(hbox), NULL);
 
   if (extra) lives_box_pack_start(LIVES_BOX(vbox), extra, FALSE, FALSE, widget_opts.packing_height);
 

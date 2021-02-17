@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2021-02-17 03:44-0300\n"
+"POT-Creation-Date: 2021-02-17 05:32-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Finnish <fi@li.org>\n"
@@ -537,12 +537,12 @@ msgid ""
 "Checking OPTIONAL dependencies: "
 msgstr "Tarkistetaan valinnaiset riippuvuudet:"
 
-#: src/main.c:3257 src/main.c:4466
+#: src/main.c:3262 src/main.c:4471
 #, fuzzy
 msgid "working directory"
 msgstr "LiVESin työkansio."
 
-#: src/main.c:3354
+#: src/main.c:3359
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -552,194 +552,194 @@ msgstr ""
 "Käynnistyssyntaksi on: %s [valitsimet] [tiedostonimi [aloitusaika] "
 "[kehykset]]\n"
 
-#: src/main.c:3355
+#: src/main.c:3360
 #, fuzzy
 msgid "Where: filename is the name of a media file or backup file to import\n"
 msgstr ""
 "Missä: tiedostonimi on mediatiedoston tai varmuuskopiotiedoston nimi.\n"
 
-#: src/main.c:3356
+#: src/main.c:3361
 msgid "start_time : filename start time in seconds\n"
 msgstr "aloitusaika : tiedostonnimen aloitusaika sekunteina\n"
 
-#: src/main.c:3357
+#: src/main.c:3362
 msgid "frames : maximum number of frames to open\n"
 msgstr "kehykset : avattavien kehysten enimmäismäärä\n"
 
-#: src/main.c:3359
+#: src/main.c:3364
 #, fuzzy
 msgid "OPTS can be:\n"
 msgstr "valitsimia voivat olla:\n"
 
-#: src/main.c:3360
+#: src/main.c:3365
 #, fuzzy
 msgid "-help | --help \t\t\t: print this help text on stderr and exit\n"
 msgstr "-help            : näytä tämä ohjeteksti ja poistu\n"
 
-#: src/main.c:3361
+#: src/main.c:3366
 msgid "-version | --version\t\t: print the LiVES version on stderr and exit\n"
 msgstr ""
 
-#: src/main.c:3362
+#: src/main.c:3367
 msgid ""
 "-workdir <workdir>\t\t: specify the working directory for the session, "
 "overriding any value set in preferences\n"
 msgstr ""
 
-#: src/main.c:3364
+#: src/main.c:3369
 msgid "\t\t\t\t\t(disables any disk quota checking)"
 msgstr ""
 
-#: src/main.c:3365
+#: src/main.c:3370
 msgid ""
 "-configfile <path_to_file>\t: override the default configuration file for "
 "the session\n"
 msgstr ""
 
-#: src/main.c:3367
+#: src/main.c:3372
 #, c-format
 msgid "\t\t\t\t\t(default is %s)\n"
 msgstr ""
 
-#: src/main.c:3371
+#: src/main.c:3376
 msgid ""
 "-configdatadir <dir>\t\t: override the default configuration data directory "
 "for the session\n"
 msgstr ""
 
-#: src/main.c:3372
+#: src/main.c:3377
 #, c-format
 msgid "\t\t\t\t\t(default is %s\n"
 msgstr ""
 
-#: src/main.c:3375
+#: src/main.c:3380
 msgid ""
 "-dscrit <bytes>\t\t\t: temporarily sets the free disk space critical level "
 "for workdir to <bytes>\n"
 msgstr ""
 
-#: src/main.c:3376
+#: src/main.c:3381
 msgid ""
 "\t\t\t\t\t(intended to allow correction of erroneous values within the app; "
 "<= 0 disables checks)\n"
 msgstr ""
 
-#: src/main.c:3378
+#: src/main.c:3383
 #, fuzzy
 msgid "-set <setname>\t\t\t: autoload clip set <setname>\n"
 msgstr "-set <leikenimi> : lataa automaattisesti leikesarja leikenimi\n"
 
-#: src/main.c:3379
+#: src/main.c:3384
 #, fuzzy
 msgid ""
 "-noset\t\t\t\t: do not reload any clip set on startup (overrides -set)\n"
 msgstr "-noset           : älä lataa leikesarjoja käynnistäessä\n"
 
-#: src/main.c:3380
+#: src/main.c:3385
 msgid ""
 "-layout <layout_name>\t\t: autoload multitrack layout <layout_name> (if "
 "successful, overrides -startup-ce)\n"
 msgstr ""
 
-#: src/main.c:3382
+#: src/main.c:3387
 #, fuzzy
 msgid ""
 "-nolayout\t\t\t: do not reload any multitrack layout on startup (overrides -"
 "layout)\n"
 msgstr "-noset           : älä lataa leikesarjoja käynnistäessä\n"
 
-#: src/main.c:3383
+#: src/main.c:3388
 #, fuzzy
 msgid ""
 "-norecover\t\t\t: force non-loading of crash recovery files (overrides -"
 "recover / -autorecover)\n"
 msgstr "-recover : voimaan lastaus kaatua hyödyntämistä\n"
 
-#: src/main.c:3385
+#: src/main.c:3390
 msgid ""
 "-recover | -autorecover\t\t: force reloading of any crash recovery files "
 "(may override -noset and -nolayout)\n"
 msgstr ""
 
-#: src/main.c:3386
+#: src/main.c:3391
 #, fuzzy
 msgid ""
 "-nogui\t\t\t\t: do not show the gui (still shows the play window when "
 "active)\n"
 msgstr "-nogui           : käynnistä ilman käyttöliittymää\n"
 
-#: src/main.c:3387
+#: src/main.c:3392
 #, fuzzy
 msgid "-nosplash\t\t\t: do not show the splash window\n"
 msgstr "-nogui           : käynnistä ilman käyttöliittymää\n"
 
-#: src/main.c:3389
+#: src/main.c:3394
 #, fuzzy
 msgid ""
 "-noplaywin\t\t\t: do not show the play window (still shows the internal "
 "player; intended for remote streaming)\n"
 msgstr "-nogui           : käynnistä ilman käyttöliittymää\n"
 
-#: src/main.c:3391
+#: src/main.c:3396
 msgid ""
 "-noninteractive\t\t\t: disable menu interactivity (intended for scripting "
 "applications, e.g liblives)\n"
 msgstr ""
 
-#: src/main.c:3392
+#: src/main.c:3397
 #, fuzzy
 msgid "-startup-ce\t\t\t: start in clip editor mode (overrides -startup-mt)\n"
 msgstr "-startup-ce : alkaa clip editori-tilassa\n"
 
-#: src/main.c:3393
+#: src/main.c:3398
 #, fuzzy
 msgid "-startup-mt\t\t\t: start in multitrack mode\n"
 msgstr "-startum-mt : alkaa moniraitaäänityksen tilassa\n"
 
-#: src/main.c:3394
+#: src/main.c:3399
 msgid ""
 "-vjmode\t\t\t\t: start in VJ mode (implicitly sets -startup-ce -autorecover -"
 "nolayout -asource external)\n"
 msgstr ""
 
-#: src/main.c:3397
+#: src/main.c:3402
 msgid ""
 "-fxmodesmax <n>\t\t\t: allow <n> modes per effect key (overrides any value "
 "set in preferences; minimum is 1)\n"
 msgstr ""
 
-#: src/main.c:3399
+#: src/main.c:3404
 #, fuzzy, c-format
 msgid ""
 "-oscstart <port>\t\t: start OSC listener on UDP port <port> (default is %d)\n"
 msgstr "-oscstart <portti> : käynnistä OSC-kuuntelin UDP-portissa <portti>\n"
 
-#: src/main.c:3401
+#: src/main.c:3406
 #, fuzzy
 msgid ""
 "-nooscstart\t\t\t: do not start the OSC listener (the default, unless set in "
 "preferences)\n"
 msgstr "-nooscstart      : älä käynnistä OSC-kuuntelinta\n"
 
-#: src/main.c:3404
+#: src/main.c:3409
 msgid ""
 "-asource <source>\t\t: set the initial audio source (<source> can be "
 "'internal' or 'external')\n"
 msgstr ""
 
-#: src/main.c:3405
+#: src/main.c:3410
 #, fuzzy, c-format
 msgid "\t\t\t\t\t(only valid for %s and %s players)\n"
 msgstr "                                                            "
 
-#: src/main.c:3406
+#: src/main.c:3411
 #, fuzzy
 msgid ""
 "-aplayer <ap>\t\t\t: start with the selected audio player (<ap> can be: "
 msgstr ""
 "-aplayer <ap>    : käynnistä valitulla äänisoittimella. <ap> voi olla mplayer"
 
-#: src/main.c:3418
+#: src/main.c:3423
 msgid ""
 "-jackopts <opts>\t\t: opts is a bitmap of jackd startup / playback options "
 "(default is 16, unless set in Preferences)\n"
@@ -754,50 +754,50 @@ msgid ""
 "\t\t\t\t\t\t(only if audio player is jack)) \n"
 msgstr ""
 
-#: src/main.c:3433
+#: src/main.c:3438
 #, fuzzy, c-format
 msgid "'%s' or "
 msgstr " tai sox\n"
 
-#: src/main.c:3436
+#: src/main.c:3441
 #, fuzzy
 msgid " or "
 msgstr " tai sox\n"
 
-#: src/main.c:3440
+#: src/main.c:3445
 #, fuzzy
 msgid ""
 "-devicemap <mapname>\t\t: autoload devicemap <mapname> (for MIDI / joystick "
 "control)\n"
 msgstr "-devicemap <kartan nimi> : automaattisesti Kontti kartta\n"
 
-#: src/main.c:3441
+#: src/main.c:3446
 msgid ""
 "-vppdefaults <file>\t\t: load defaults for video playback plugin from "
 "<file>\n"
 "\t\t\t\t\t(Note: only affects the plugin settings, not the plugin type)\n"
 msgstr ""
 
-#: src/main.c:3444
+#: src/main.c:3449
 msgid "-yuvin <fifo>\t\t\t: autoplay yuv4mpeg from stream <fifo> on startup\n"
 msgstr ""
 
-#: src/main.c:3445
+#: src/main.c:3450
 msgid "\t\t\t\t\t(only valid in clip edit startup mode)\n"
 msgstr ""
 
-#: src/main.c:3447
+#: src/main.c:3452
 #, fuzzy
 msgid "-debug\t\t\t\t: try to debug crashes (requires 'gdb' to be installed)\n"
 msgstr ""
 "-debug            : yritä jäljittää kaatumisen aiheuttavaa vikaa (\"gdb\" "
 "oltava asennettuna)\n"
 
-#: src/main.c:3752 src/gui.c:1147
+#: src/main.c:3757 src/gui.c:1147
 msgid "Starting GUI..."
 msgstr "Käynnistetään graafinen käyttöliittymä..."
 
-#: src/main.c:3776
+#: src/main.c:3781
 #, c-format
 msgid ""
 "\n"
@@ -809,7 +809,7 @@ msgid ""
 "or you may be missing a custom theme.\n"
 msgstr ""
 
-#: src/main.c:3803
+#: src/main.c:3808
 #, fuzzy
 msgid ""
 "\n"
@@ -820,7 +820,7 @@ msgstr ""
 "LiVES ei löytänyt ohjelmaa \"mplayer\". Asenna mplayer jos haluat käyttää \n"
 "LiVESiä täysipainoisesti.\n"
 
-#: src/main.c:3809
+#: src/main.c:3814
 msgid ""
 "\n"
 "LiVES was unable to locate 'convert'. You should install convert and image-"
@@ -830,7 +830,7 @@ msgstr ""
 "LiVES ei löytänyt \"convert\"-ohjelmaa. Asenna convert ja image-magick jos "
 "haluat käyttää hahmonnettuja tehosteita.\n"
 
-#: src/main.c:3816
+#: src/main.c:3821
 msgid ""
 "\n"
 "LiVES was unable to locate 'composite'. You should install composite and "
@@ -840,7 +840,7 @@ msgstr ""
 "LiVES ei löytänyt \"composite\"-ohjelmaa. Asenna composite ja image-magick "
 "jos haluat käyttää yhdistä-toimintoa.\n"
 
-#: src/main.c:3823
+#: src/main.c:3828
 msgid ""
 "\n"
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
@@ -850,7 +850,7 @@ msgstr ""
 "LiVES ei löytänyt ohjelmaa 'sox'. Jotkin ääniominaisuudet eivät välttämättä "
 "toimi. Sinun tulisi asentaa 'sox'.\n"
 
-#: src/main.c:3829
+#: src/main.c:3834
 #, c-format
 msgid ""
 "\n"
@@ -861,16 +861,16 @@ msgid ""
 "You may need to change the value of <lib_dir> in %s\n"
 msgstr ""
 
-#: src/main.c:3855
+#: src/main.c:3860
 msgid "Loading rendered effect plugins..."
 msgstr "Ladataan hahmonnetut tehosteliitännäiset..."
 
-#: src/main.c:3959
+#: src/main.c:3964
 #, c-format
 msgid "Autoloading set %s..."
 msgstr "Ladataan automaattisesti leikesarja %s..."
 
-#: src/main.c:4014
+#: src/main.c:4019
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -880,79 +880,79 @@ msgstr ""
 "\n"
 
 #. TRANSLATORS: localised name may be used here
-#: src/main.c:4269
+#: src/main.c:4274
 msgid "LiVES"
 msgstr "LiVES"
 
-#: src/main.c:4444
+#: src/main.c:4449
 #, c-format
 msgid "Invalid option %s on commandline\n"
 msgstr ""
 
-#: src/main.c:4503
+#: src/main.c:4508
 #, fuzzy
 msgid "config data directory"
 msgstr "LiVESin työkansio."
 
-#: src/main.c:4526
+#: src/main.c:4531
 #, fuzzy
 msgid "configuration file"
 msgstr "LiVESin työkansio."
 
-#: src/main.c:4571
+#: src/main.c:4576
 msgid "Must have mjpegtools installed for -yuvin to work"
 msgstr ""
 
-#: src/main.c:4614
+#: src/main.c:4619
 msgid "Abort and retry or continue ?"
 msgstr ""
 
-#: src/main.c:4740
+#: src/main.c:4745
 #, fuzzy, c-format
 msgid "Invalid audio player %s"
 msgstr "Virheellinen musiikkisoitin %s\n"
 
-#: src/main.c:4759
+#: src/main.c:4764
 #, fuzzy
 msgid "external"
 msgstr "- sisäinen -"
 
-#: src/main.c:4762
+#: src/main.c:4767
 #, fuzzy
 msgid "internal"
 msgstr "- sisäinen -"
 
-#: src/main.c:4763
+#: src/main.c:4768
 #, fuzzy, c-format
 msgid "Invalid audio source %s\n"
 msgstr "Virheellinen musiikkisoitin %s\n"
 
-#: src/main.c:5025 src/main.c:5033
+#: src/main.c:5030 src/main.c:5038
 #, fuzzy, c-format
 msgid "<%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d kuvaa %d bpp %.3f fps"
 
-#: src/main.c:5030
+#: src/main.c:5035
 #, fuzzy, c-format
 msgid "<%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? kuvaa ??? bpp %.3f fps"
 
-#: src/main.c:5040
+#: src/main.c:5045
 #, fuzzy
 msgid "<No File>"
 msgstr "LiVES-%s: <Ei tiedostoa>"
 
-#: src/main.c:7874
+#: src/main.c:7879
 #, fuzzy, c-format
 msgid "Closed clip %s\n"
 msgstr "Tiedosto %s suljettiin\n"
 
-#: src/main.c:8084 src/gui.c:774 src/utils.c:2598 src/utils.c:2629
+#: src/main.c:8089 src/gui.c:774 src/utils.c:2598 src/utils.c:2629
 #: src/saveplay.c:3641 src/multitrack.c:2726 src/multitrack.c:4549
 msgid "_Undo"
 msgstr "Kum_oa"
 
-#: src/main.c:8085 src/gui.c:788 src/utils.c:2599 src/utils.c:2630
+#: src/main.c:8090 src/gui.c:788 src/utils.c:2599 src/utils.c:2630
 #: src/saveplay.c:3642 src/multitrack.c:2745 src/multitrack.c:4570
 msgid "_Redo"
 msgstr "_Tee uudestaan"
@@ -1090,7 +1090,7 @@ msgstr ""
 msgid "Directory name is too long !"
 msgstr "Kansion nimi on liian pitkä!"
 
-#: src/startup.c:526
+#: src/startup.c:525
 msgid ""
 "LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n"
 "\n"
@@ -1098,7 +1098,7 @@ msgstr ""
 "LiVES EI PYSTYNYT KÄYNNISTÄMÄÄN VALITSEMAASI ÄÄNISOITINTA!\n"
 "\n"
 
-#: src/startup.c:533
+#: src/startup.c:532
 msgid ""
 "Before starting LiVES, you need to choose an audio player.\n"
 "\n"
@@ -1108,7 +1108,7 @@ msgstr ""
 "\n"
 "PULSE AUDIO on suositeltava useimmille käyttäjille"
 
-#: src/startup.c:536
+#: src/startup.c:535
 msgid ""
 ", but this version of LiVES was not compiled with pulse audio support.\n"
 "\n"
@@ -1116,7 +1116,7 @@ msgstr ""
 ", mutta tätä LiVESin versiota ei ole käännetty pulse audio -tuella.\n"
 "\n"
 
-#: src/startup.c:540
+#: src/startup.c:539
 #, fuzzy
 msgid ""
 ", but you do not have pulseaudio installed on your system.\n"
@@ -1127,11 +1127,11 @@ msgstr ""
 " On suositeltavaa asentaa pulse audio ennen LiVESin käynnistystä.\n"
 "\n"
 
-#: src/startup.c:545
+#: src/startup.c:544
 msgid "JACK audio is recommended for pro users"
 msgstr "JACK audio on suositeltava edistyneemmille käyttäjille"
 
-#: src/startup.c:548
+#: src/startup.c:547
 msgid ""
 ", but this version of LiVES was not compiled with jack audio support.\n"
 "\n"
@@ -1139,7 +1139,7 @@ msgstr ""
 ", mutta tätä LiVESin versiota ei ole käännetty jack audio -tuella.\n"
 "\n"
 
-#: src/startup.c:551
+#: src/startup.c:550
 msgid ""
 ", but you do not have jackd installed. You may wish to install jackd first "
 "before running LiVES.\n"
@@ -1149,7 +1149,7 @@ msgstr ""
 "käynnistystä.\n"
 "\n"
 
-#: src/startup.c:554
+#: src/startup.c:553
 #, fuzzy
 msgid ""
 ", but may prevent LiVES from starting on some systems.\n"
@@ -1162,11 +1162,11 @@ msgstr ""
 "uudestaan ja kokeilla jotain muuta äänisoitinta.\n"
 "\n"
 
-#: src/startup.c:559
+#: src/startup.c:558
 msgid "SOX may be used if neither of the preceding players work, "
 msgstr "SOXia voi käyttää jos kumpikaan edellisistä soittimista ei toimi, "
 
-#: src/startup.c:562
+#: src/startup.c:561
 #, fuzzy
 msgid ""
 "but many audio features will be disabled.\n"
@@ -1175,7 +1175,7 @@ msgstr ""
 "mutta jotkut ääniominaisuudet eivät ole käytettävissä.\n"
 "\n"
 
-#: src/startup.c:564
+#: src/startup.c:563
 msgid ""
 "but you do not have sox installed.\n"
 "You are advised to install it before running LiVES.\n"
@@ -1185,92 +1185,92 @@ msgstr ""
 "On suositeltavaa asentaa se ennen LiVESin käynnistystä.\n"
 "\n"
 
-#: src/startup.c:573
+#: src/startup.c:572
 #, fuzzy
 msgid "Choose an audio player"
 msgstr "LiVES: - Valitse äänisoitin"
 
-#: src/startup.c:588
+#: src/startup.c:587
 #, fuzzy
 msgid "Use _pulseaudio player"
 msgstr "Käytä _pulse-äänisoitinta"
 
-#: src/startup.c:595
+#: src/startup.c:594
 msgid "Use _jack audio player"
 msgstr "Käytä _jack-äänisoitinta"
 
-#: src/startup.c:601
+#: src/startup.c:600
 msgid "Use _sox audio player"
 msgstr "Käytä _sox-äänisoitinta"
 
-#: src/startup.c:649 src/startup.c:842 src/interface.c:3033
+#: src/startup.c:648 src/startup.c:841 src/interface.c:3033
 msgid "_Next"
 msgstr "_Seuraava"
 
-#: src/startup.c:697 src/startup.c:763
+#: src/startup.c:696 src/startup.c:762
 msgid "Skipped"
 msgstr "Ohitettu"
 
-#: src/startup.c:712
+#: src/startup.c:711
 msgid "Passed"
 msgstr "Hyväksytty"
 
-#: src/startup.c:759
+#: src/startup.c:758
 msgid "Failed"
 msgstr "Epäonnistui"
 
-#: src/startup.c:818
+#: src/startup.c:817
 #, fuzzy
 msgid "Testing Configuration"
 msgstr "LiVES: - Testaus asetukset"
 
-#: src/startup.c:820
+#: src/startup.c:819
 #, fuzzy
 msgid "Troubleshoot"
 msgstr "LiVES: - Vianmääritys"
 
-#: src/startup.c:832
+#: src/startup.c:831
 msgid "LiVES will now run some basic configuration tests\n"
 msgstr ""
 
-#: src/startup.c:874
+#: src/startup.c:873
 msgid "Checking for \"sox\" presence"
 msgstr "Tarkistetaan löytyykö \"sox\""
 
-#: src/startup.c:877
+#: src/startup.c:876
 msgid ""
 "You should install sox to be able to use all the audio features in LiVES"
 msgstr ""
 
-#: src/startup.c:884
+#: src/startup.c:883
 msgid "Checking if sox can convert audio"
 msgstr "Tarkistetaan, voiko sox muuntaa ääntä"
 
-#: src/startup.c:908
+#: src/startup.c:907
 #, c-format
 msgid "Unable to allocate %d bytes memory."
 msgstr ""
 
-#: src/startup.c:919
+#: src/startup.c:918
 #, c-format
 msgid "Unable to write to: %s"
 msgstr "Kirjoittaminen ei onnistu: %s"
 
-#: src/startup.c:934 src/startup.c:1121
+#: src/startup.c:933 src/startup.c:1120
 #, c-format
 msgid "Command failed: %s"
 msgstr "Komento epäonnistui: %s"
 
-#: src/startup.c:956
+#: src/startup.c:955
 msgid "You should install sox_fmt_all or similar"
 msgstr ""
 
-#: src/startup.c:984
+#: src/startup.c:983
 #, fuzzy
 msgid "Checking for \"mplayer\", \"mplayer2\" or \"mpv\" presence"
 msgstr "Tarkistetaan löytyykö \"mplayer\""
 
-#: src/startup.c:988
+#: src/startup.c:987
 #, fuzzy
 msgid ""
 "You should install mplayer, mplayer2 or mpv to be able to use all the "
@@ -1280,73 +1280,73 @@ msgstr ""
 "\n"
 "Tämän tiedoston esikatselu onnistuu ainoastaan jos mplayer on asennettuna.\n"
 
-#: src/startup.c:1027
+#: src/startup.c:1026
 #, fuzzy, c-format
 msgid "Checking if %s can convert audio"
 msgstr "Tarkistetaan, voiko sox muuntaa ääntä"
 
-#: src/startup.c:1050
+#: src/startup.c:1049
 #, fuzzy
 msgid "You should install mplayer,mplayer2 or mpv with pcm/wav support"
 msgstr "Sinun pitäisi asentaa mplayer pcm/wav tuella"
 
-#: src/startup.c:1063
+#: src/startup.c:1062
 #, fuzzy, c-format
 msgid "Checking if %s can decode to png"
 msgstr "Tarkistetaan voiko mplayer purkaa jpegiä."
 
-#: src/startup.c:1065
+#: src/startup.c:1064
 #, fuzzy, c-format
 msgid "Checking if %s can decode to png/alpha"
 msgstr "Tarkistetaan voiko mplayer purkaa png/aplhaa"
 
-#: src/startup.c:1073
+#: src/startup.c:1072
 #, c-format
 msgid "Resource directory %s not found !"
 msgstr ""
 
-#: src/startup.c:1077
+#: src/startup.c:1076
 msgid "Checking less rigorously"
 msgstr ""
 
-#: src/startup.c:1141
+#: src/startup.c:1140
 #, fuzzy, c-format
 msgid "You may wish to upgrade %s to a newer version"
 msgstr "Voit halutessasi päivittää mplayerin uudempaan versioon"
 
-#: src/startup.c:1169
+#: src/startup.c:1168
 #, fuzzy, c-format
 msgid "Checking if %s can decode to jpeg"
 msgstr "Tarkistetaan voiko mplayer purkaa jpegiä."
 
-#: src/startup.c:1176
+#: src/startup.c:1175
 msgid "Already checked"
 msgstr ""
 
-#: src/startup.c:1209
+#: src/startup.c:1208
 #, fuzzy, c-format
 msgid "You should install %s with either png or jpeg support"
 msgstr "Sinun pitäisi asentaa mplayer pcm/wav tuella"
 
-#: src/startup.c:1211
+#: src/startup.c:1210
 #, fuzzy, c-format
 msgid "You should install %s with either png/alpha or jpeg support"
 msgstr "Sinun pitäisi asentaa mplayer pcm/wav tuella"
 
-#: src/startup.c:1216
+#: src/startup.c:1215
 #, c-format
 msgid "You may wish to add jpeg output support to %s"
 msgstr ""
 
-#: src/startup.c:1227
+#: src/startup.c:1226
 msgid "Checking for \"convert\" presence"
 msgstr "Tarkistetaan löytyykö \"convert\""
 
-#: src/startup.c:1230
+#: src/startup.c:1229
 msgid "Install imageMagick to be able to use all of the rendered effects"
 msgstr ""
 
-#: src/startup.c:1251
+#: src/startup.c:1250
 msgid ""
 "\n"
 "\n"
@@ -1354,7 +1354,7 @@ msgid ""
 "Preferences/Decoding.\t\n"
 msgstr ""
 
-#: src/startup.c:1257
+#: src/startup.c:1256
 #, fuzzy
 msgid ""
 "\n"
@@ -1367,59 +1367,59 @@ msgstr ""
 "    Napsauta Peru jos haluat lopettaa ja asentaa puuttuvat ohjelmat, tai "
 "Seuraava jatkaaksesi    \n"
 
-#: src/startup.c:1290
+#: src/startup.c:1289
 msgid ""
 "\n"
 "\n"
 "Finally, you can choose the default startup interface for LiVES.\n"
 msgstr ""
 
-#: src/startup.c:1291
+#: src/startup.c:1290
 msgid ""
 "\n"
 "\n"
 "LiVES has two main interfaces and you can start up with either of them.\n"
 msgstr ""
 
-#: src/startup.c:1292
+#: src/startup.c:1291
 msgid ""
 "\n"
 "\n"
 "The default can always be changed later from Preferences.\n"
 msgstr ""
 
-#: src/startup.c:1298
+#: src/startup.c:1297
 #, fuzzy
 msgid "Choose the Startup Interface"
 msgstr "LiVES: - Valitse käynnistettävä käyttöliittymä"
 
-#: src/startup.c:1309
+#: src/startup.c:1308
 msgid "Start in _Clip Edit mode"
 msgstr "Käynnistä _Leikemuokkaustilaan"
 
-#: src/startup.c:1311
+#: src/startup.c:1310
 msgid "This is the best choice for simple editing tasks and for VJs\n"
 msgstr ""
 
-#: src/startup.c:1317
+#: src/startup.c:1316
 msgid "Start in _Multitrack mode"
 msgstr "Käynnistä _Multitrack-tilaan"
 
-#: src/startup.c:1319
+#: src/startup.c:1318
 msgid ""
 "This is a better choice for complex editing tasks involving multiple clips.\n"
 msgstr ""
 
-#: src/startup.c:1331
+#: src/startup.c:1330
 msgid "Set Quota Limits (Optional)"
 msgstr ""
 
-#: src/startup.c:1335
+#: src/startup.c:1334
 #, fuzzy
 msgid "Finish"
 msgstr "_Valmis"
 
-#: src/startup.c:1370
+#: src/startup.c:1369
 #, c-format
 msgid ""
 "\t'%s' was not found on your system.\n"
@@ -1427,74 +1427,74 @@ msgid ""
 "\t- "
 msgstr ""
 
-#: src/startup.c:1372
+#: src/startup.c:1371
 msgid ""
 "Enables easier identification of file types,\n"
 "\n"
 msgstr ""
 
-#: src/startup.c:1373
+#: src/startup.c:1372
 msgid ""
 "Enables reduction in file size for some files,\n"
 "\n"
 msgstr ""
 
-#: src/startup.c:1374
+#: src/startup.c:1373
 msgid ""
 "Enables measuring of disk space used,\n"
 "\n"
 msgstr ""
 
-#: src/startup.c:1375
+#: src/startup.c:1374
 msgid ""
 "Assists in the identification of video clips\n"
 "\n"
 msgstr ""
 
-#: src/startup.c:1376
+#: src/startup.c:1375
 msgid ""
 "Assists in the identification of image files\n"
 "\n"
 msgstr ""
 
-#: src/startup.c:1377
+#: src/startup.c:1376
 msgid ""
 "Required for many rendered effects in the clip editor.\n"
 "\n"
 msgstr ""
 
-#: src/startup.c:1378
+#: src/startup.c:1377
 msgid ""
 "Enables clip merging in the clip editor.\n"
 "\n"
 msgstr ""
 
-#: src/startup.c:1379
+#: src/startup.c:1378
 msgid ""
 "Allows use of some additional encoder plugins\n"
 "\n"
 msgstr ""
 
-#: src/startup.c:1380
+#: src/startup.c:1379
 msgid ""
 "Allows checking for file changes, enabling additional files to be cached in "
 "memory.\n"
 "\n"
 msgstr ""
 
-#: src/startup.c:1382
+#: src/startup.c:1381
 msgid ""
 "Enables download and import of files from Youtube and other sites.\n"
 "\n"
 msgstr ""
 
-#: src/startup.c:1384
+#: src/startup.c:1383
 msgid ""
 "Enables identification of external windows so that they can be recorded.\n"
 "\n"
 msgstr ""
 
-#: src/startup.c:1388
+#: src/startup.c:1387
 #, c-format
 msgid ""
 "\t'%s' was not found on your system.\n"
@@ -1502,21 +1502,21 @@ msgid ""
 "\t- "
 msgstr ""
 
-#: src/startup.c:1390
+#: src/startup.c:1389
 msgid ""
 "Enables adjustment of windows within the desktop,\n"
 "\n"
 msgstr ""
 
-#: src/startup.c:1402
+#: src/startup.c:1401
 msgid "What is missing ?"
 msgstr ""
 
-#: src/startup.c:1419
+#: src/startup.c:1418
 msgid "All optional components located\n"
 msgstr ""
 
-#: src/startup.c:1422
+#: src/startup.c:1421
 msgid ""
 "\n"
 "\n"
@@ -1650,7 +1650,7 @@ msgstr "_Esikatselu"
 msgid "Multitrack Details"
 msgstr "_Multitrack-tiedot"
 
-#: src/interface.c:1121 src/interface.c:5631
+#: src/interface.c:1121 src/interface.c:5629
 msgid "Format"
 msgstr "Formaatti"
 
@@ -2311,12 +2311,12 @@ msgstr "LiVES: - Valitse työkansio"
 msgid "%sChoose a File"
 msgstr ""
 
-#: src/interface.c:4403
+#: src/interface.c:4401
 #, fuzzy
 msgid "_Autoreload next time"
 msgstr "Lataa _automaattisesti uudelleen seuraavalla kerralla"
 
-#: src/interface.c:4432
+#: src/interface.c:4430
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has not been saved.\n"
@@ -2326,7 +2326,7 @@ msgstr ""
 "Nykyistä asettelua ei ole tallennettu.\n"
 "Mitä haluat tehdä?\n"
 
-#: src/interface.c:4436
+#: src/interface.c:4434
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has been changed since the last save.\n"
@@ -2336,7 +2336,7 @@ msgstr ""
 "Nykyistä asettelua on muutettu viime tallennuksen jälkeen.\n"
 "Mitä haluat tehdä?\n"
 
-#: src/interface.c:4442
+#: src/interface.c:4440
 msgid ""
 "You are about to exit LiVES.\n"
 "The current clip set can be saved.\n"
@@ -2346,7 +2346,7 @@ msgstr ""
 "Nykyinen leikesarja voidaan tallentaa.\n"
 "Mitä haluat tehdä?\n"
 
-#: src/interface.c:4445
+#: src/interface.c:4443
 msgid ""
 "The current clip set has not been saved.\n"
 "What would you like to do ?\n"
@@ -2354,7 +2354,7 @@ msgstr ""
 "Nykyistä leikesarjaa ei ole tallennettu.\n"
 "Mitä haluat tehdä?\n"
 
-#: src/interface.c:4449
+#: src/interface.c:4447
 msgid ""
 "The current layout has not been saved.\n"
 "What would you like to do ?\n"
@@ -2362,7 +2362,7 @@ msgstr ""
 "Nykyistä asettelua ei ole tallennettu.\n"
 "Mitä haluat tehdä?\n"
 
-#: src/interface.c:4452
+#: src/interface.c:4450
 #, fuzzy
 msgid ""
 "The current layout has *NOT BEEN CHANGED* since it was last saved.\n"
@@ -2371,7 +2371,7 @@ msgstr ""
 "Nykyistä asettelua ei ole tallennettu.\n"
 "Mitä haluat tehdä?\n"
 
-#: src/interface.c:4457
+#: src/interface.c:4455
 #, fuzzy
 msgid ""
 "You are about to leave multitrack mode.\n"
@@ -2382,638 +2382,638 @@ msgstr ""
 "Nykyistä asettelua ei ole tallennettu.\n"
 "Mitä haluat tehdä?\n"
 
-#: src/interface.c:4462
+#: src/interface.c:4460
 msgid "Save or Delete Set"
 msgstr ""
 
-#: src/interface.c:4473
+#: src/interface.c:4471
 msgid "Clip set _name"
 msgstr "Leikesarjan _nimi"
 
-#: src/interface.c:4506 src/interface.c:4519
+#: src/interface.c:4504 src/interface.c:4517
 msgid "_Wipe layout"
 msgstr "_Poista asettelu"
 
-#: src/interface.c:4507
+#: src/interface.c:4505
 msgid "_Ignore changes"
 msgstr "_Hylkää muutokset"
 
-#: src/interface.c:4510
+#: src/interface.c:4508
 msgid "_Delete clip set"
 msgstr "_Poista leikesarja"
 
-#: src/interface.c:4512
+#: src/interface.c:4510
 msgid "_Discard all clips"
 msgstr ""
 
-#: src/interface.c:4513
+#: src/interface.c:4511
 msgid "_Delete layout"
 msgstr "_Poista asettelu"
 
-#: src/interface.c:4517
+#: src/interface.c:4515
 msgid "_Save layout"
 msgstr "_Tallenna asettelu"
 
-#: src/interface.c:4518
+#: src/interface.c:4516
 msgid "_Save clip set"
 msgstr "_Tallenna leikesarja"
 
-#: src/interface.c:4553
+#: src/interface.c:4551
 msgid "Disk Recovery Options"
 msgstr ""
 
-#: src/interface.c:4569
+#: src/interface.c:4567
 msgid "Check for Lost Clips"
 msgstr ""
 
-#: src/interface.c:4583
+#: src/interface.c:4581
 #, fuzzy
 msgid "Remove Empty Directories"
 msgstr "Kansiot"
 
-#: src/interface.c:4596
+#: src/interface.c:4594
 msgid "Delete _Orphaned Clips"
 msgstr ""
 
-#: src/interface.c:4610
+#: src/interface.c:4608
 msgid "Clear Useless  _Backup Files from Clips"
 msgstr ""
 
-#: src/interface.c:4620
+#: src/interface.c:4618
 msgid "Remove Sets which have _Layouts but no Clips"
 msgstr ""
 
-#: src/interface.c:4628
+#: src/interface.c:4626
 msgid "_Reset to Defaults"
 msgstr ""
 
-#: src/interface.c:4793
+#: src/interface.c:4791
 msgid "Show Keys"
 msgstr ""
 
-#: src/interface.c:4804
+#: src/interface.c:4802
 msgid "You can use the following keys during playback to control LiVES:-"
 msgstr ""
 
-#: src/interface.c:4806
+#: src/interface.c:4804
 msgid "Recordable keys (press 'r' before playback to make a recording)"
 msgstr ""
 
-#: src/interface.c:4807
+#: src/interface.c:4805
 msgid "ctrl-left"
 msgstr ""
 
-#: src/interface.c:4807
+#: src/interface.c:4805
 msgid ""
 "skip / scratch backwards (video only)\n"
 "When not playing moves the playback cursor"
 msgstr ""
 
-#: src/interface.c:4808
+#: src/interface.c:4806
 msgid "ctrl-right"
 msgstr ""
 
-#: src/interface.c:4808
+#: src/interface.c:4806
 msgid ""
 "skip / scratch forwards (video only)\n"
 "When not playing moves the playback cursor"
 msgstr ""
 
-#: src/interface.c:4809
+#: src/interface.c:4807
 msgid "ctrl-up"
 msgstr ""
 
-#: src/interface.c:4809
+#: src/interface.c:4807
 #, fuzzy
 msgid "play faster"
 msgstr "Toista videota nopeammin"
 
-#: src/interface.c:4810
+#: src/interface.c:4808
 #, fuzzy
 msgid "ctrl-down"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:4810
+#: src/interface.c:4808
 #, fuzzy
 msgid "play slower"
 msgstr "Toista videota hitaammin"
 
-#: src/interface.c:4811
+#: src/interface.c:4809
 #, fuzzy
 msgid "ctrl-shift-up"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:4811
+#: src/interface.c:4809
 msgid "background clip play faster"
 msgstr ""
 
-#: src/interface.c:4812
+#: src/interface.c:4810
 #, fuzzy
 msgid "ctrl-shift-down"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:4812
+#: src/interface.c:4810
 #, fuzzy
 msgid "background clip play slower"
 msgstr "T_austaväri"
 
-#: src/interface.c:4813
+#: src/interface.c:4811
 msgid "(The 'effect parameter' here is the first 'simple' numerical parameter)"
 msgstr ""
 
-#: src/interface.c:4814
+#: src/interface.c:4812
 msgid "alt-up"
 msgstr ""
 
-#: src/interface.c:4814
+#: src/interface.c:4812
 msgid "increase effect parameter for keygrabbed effect"
 msgstr ""
 
-#: src/interface.c:4815
+#: src/interface.c:4813
 #, fuzzy
 msgid "alt-down"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:4815
+#: src/interface.c:4813
 msgid "decrease effect parameter for keybrabbed effect"
 msgstr ""
 
-#: src/interface.c:4816
+#: src/interface.c:4814
 #, fuzzy
 msgid "ctrl-enter"
 msgstr "Muu ke_skipiste"
 
-#: src/interface.c:4816
+#: src/interface.c:4814
 #, fuzzy
 msgid "reset frame rate / resync audio (foreground clip)"
 msgstr "Käänteinen toistosuunta"
 
-#: src/interface.c:4817
+#: src/interface.c:4815
 #, fuzzy
 msgid "ctrl-shift-enter"
 msgstr "Muu ke_skipiste"
 
-#: src/interface.c:4817
+#: src/interface.c:4815
 #, fuzzy
 msgid "reset frame rate (background clip)"
 msgstr "Käänteinen toistosuunta"
 
-#: src/interface.c:4818 src/interface.c:4897
+#: src/interface.c:4816 src/interface.c:4895
 msgid "ctrl-space"
 msgstr ""
 
-#: src/interface.c:4818
+#: src/interface.c:4816
 #, fuzzy
 msgid "reverse direction (foreground clip)"
 msgstr "Käänteinen toistosuunta"
 
-#: src/interface.c:4819
+#: src/interface.c:4817
 msgid "ctrl-shift-space"
 msgstr ""
 
-#: src/interface.c:4819
+#: src/interface.c:4817
 #, fuzzy
 msgid "reverse direction (background clip)"
 msgstr "Käänteinen toistosuunta"
 
-#: src/interface.c:4820
+#: src/interface.c:4818
 msgid "ctrl-alt-space"
 msgstr ""
 
-#: src/interface.c:4821
+#: src/interface.c:4819
 msgid ""
 "Loop Lock\n"
 "(press once to mark IN point, then again to mark OUT point;\n"
 "ctrl-space, ctrl-enter, or switching clips clears)"
 msgstr ""
 
-#: src/interface.c:4823
+#: src/interface.c:4821
 msgid "ctrl-backspace"
 msgstr ""
 
-#: src/interface.c:4823
+#: src/interface.c:4821
 #, fuzzy
 msgid "freeze frame (foreground and background)"
 msgstr "Käänteinen toistosuunta"
 
-#: src/interface.c:4824
+#: src/interface.c:4822
 #, fuzzy
 msgid "ctrl-alt-backspace"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:4824
+#: src/interface.c:4822
 #, fuzzy
 msgid "freeze frame (background clip only)"
 msgstr "Käänteinen toistosuunta"
 
-#: src/interface.c:4826
+#: src/interface.c:4824
 msgid ""
 "audio lock ON: lock audio to the current foreground clip;\n"
 "ignore video clip switches and rate / direction changes"
 msgstr ""
 
-#: src/interface.c:4827
+#: src/interface.c:4825
 msgid ""
 "audio lock OFF; audio follows the foreground video clip\n"
 "(unless overridden in Preferences)"
 msgstr ""
 
-#: src/interface.c:4828
+#: src/interface.c:4826
 msgid "nervous mode"
 msgstr ""
 
-#: src/interface.c:4829 src/interface.c:4895
+#: src/interface.c:4827 src/interface.c:4893
 msgid "ctrl-page-up"
 msgstr ""
 
-#: src/interface.c:4829
+#: src/interface.c:4827
 msgid "previous clip"
 msgstr ""
 
-#: src/interface.c:4830 src/interface.c:4896
+#: src/interface.c:4828 src/interface.c:4894
 msgid "ctrl-page-down"
 msgstr ""
 
-#: src/interface.c:4830
+#: src/interface.c:4828
 #, fuzzy
 msgid "next clip"
 msgstr "L_isää valittu leike"
 
-#: src/interface.c:4832
+#: src/interface.c:4830
 #, fuzzy
 msgid "ctrl-1"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:4832
+#: src/interface.c:4830
 #, fuzzy
 msgid "toggle real-time effect 1"
 msgstr "_Tosiaikaiset tehosteet"
 
-#: src/interface.c:4833
+#: src/interface.c:4831
 #, fuzzy
 msgid "ctrl-2"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:4833
+#: src/interface.c:4831
 #, fuzzy
 msgid "toggle real-time effect 2"
 msgstr "_Tosiaikaiset tehosteet"
 
-#: src/interface.c:4834 src/interface.c:4846 src/interface.c:4853
+#: src/interface.c:4832 src/interface.c:4844 src/interface.c:4851
 msgid "...etc..."
 msgstr ""
 
-#: src/interface.c:4835
+#: src/interface.c:4833
 #, fuzzy
 msgid "ctrl-9"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:4835
+#: src/interface.c:4833
 #, fuzzy
 msgid "toggle real-time effect 9"
 msgstr "_Tosiaikaiset tehosteet"
 
-#: src/interface.c:4836
+#: src/interface.c:4834
 #, fuzzy
 msgid "ctrl-0"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:4836
+#: src/interface.c:4834
 #, fuzzy
 msgid "real-time effects (1 - 9) OFF"
 msgstr "_Tosiaikaiset tehosteet"
 
-#: src/interface.c:4837 src/interface.c:4899
+#: src/interface.c:4835 src/interface.c:4897
 msgid "ctrl-minus"
 msgstr ""
 
-#: src/interface.c:4837
+#: src/interface.c:4835
 #, fuzzy
 msgid "toggle real-time effect 10 (unaffected by ctrl-0)"
 msgstr "_Tosiaikaiset tehosteet"
 
-#: src/interface.c:4838
+#: src/interface.c:4836
 #, fuzzy
 msgid "ctrl-equals"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:4838
+#: src/interface.c:4836
 #, fuzzy
 msgid "toggle real-time effect 11 (unaffected by ctrl-0)"
 msgstr "_Tosiaikaiset tehosteet"
 
-#: src/interface.c:4839
+#: src/interface.c:4837
 msgid "swap background / foreground clips"
 msgstr ""
 
-#: src/interface.c:4841
+#: src/interface.c:4839
 msgid ""
 "grab keyboard for last activated effect key\n"
 "(affects m, M, t, tab and ctrl-alt-up, ctrl-alt-down keys)"
 msgstr ""
 
-#: src/interface.c:4842
+#: src/interface.c:4840
 msgid "next effect mode (for whichever key has keyboard grab)"
 msgstr ""
 
-#: src/interface.c:4843
+#: src/interface.c:4841
 msgid "previous effect mode (for whichever key has keyboard grab)"
 msgstr ""
 
-#: src/interface.c:4844
+#: src/interface.c:4842
 #, fuzzy
 msgid "ctrl-alt-1"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:4844
+#: src/interface.c:4842
 msgid "grab keyboard for effect key 1 (similar to k key)"
 msgstr ""
 
-#: src/interface.c:4845
+#: src/interface.c:4843
 #, fuzzy
 msgid "ctrl-alt-2"
 msgstr "Ctrl-%d"
 
-#: src/interface.c:4845
+#: src/interface.c:4843
 msgid "grab keyboard for effect key 2"
 msgstr ""
 
-#: src/interface.c:4847
+#: src/interface.c:4845
 msgid "enter text parameter (when effect has keyboard grab)"
 msgstr ""
 
-#: src/interface.c:4848
+#: src/interface.c:4846
 msgid "TAB"
 msgstr ""
 
-#: src/interface.c:4848
+#: src/interface.c:4846
 msgid "leave text parameter (reverse of 't')"
 msgstr ""
 
-#: src/interface.c:4849
+#: src/interface.c:4847
 msgid "F1"
 msgstr ""
 
-#: src/interface.c:4849
+#: src/interface.c:4847
 msgid "store/switch to bookmark 1 (first press stores clip and frame)"
 msgstr ""
 
-#: src/interface.c:4850
+#: src/interface.c:4848
 msgid "shift + F1"
 msgstr ""
 
-#: src/interface.c:4850
+#: src/interface.c:4848
 msgid "clear bookmark 1"
 msgstr ""
 
-#: src/interface.c:4851
+#: src/interface.c:4849
 msgid "F2"
 msgstr ""
 
-#: src/interface.c:4851
+#: src/interface.c:4849
 msgid "store/switch to bookmark 2"
 msgstr ""
 
-#: src/interface.c:4852
+#: src/interface.c:4850
 msgid "shift + F2"
 msgstr ""
 
-#: src/interface.c:4852
+#: src/interface.c:4850
 msgid "clear bookmark 2"
 msgstr ""
 
-#: src/interface.c:4854
+#: src/interface.c:4852
 msgid "F12"
 msgstr ""
 
-#: src/interface.c:4854
+#: src/interface.c:4852
 msgid "clear function keys (bookmarks)"
 msgstr ""
 
-#: src/interface.c:4856
+#: src/interface.c:4854
 #, fuzzy
 msgid "Other playback keys"
 msgstr "Pysäytä toisto (q)"
 
-#: src/interface.c:4857
+#: src/interface.c:4855
 #, fuzzy
 msgid "play all"
 msgstr "Toista kaikki"
 
-#: src/interface.c:4858
+#: src/interface.c:4856
 #, fuzzy
 msgid "play selection"
 msgstr "Toista valinta"
 
-#: src/interface.c:4859
+#: src/interface.c:4857
 msgid "stop"
 msgstr ""
 
-#: src/interface.c:4860
+#: src/interface.c:4858
 #, fuzzy
 msgid "fullscreen"
 msgstr "K_okoruutu"
 
-#: src/interface.c:4861
+#: src/interface.c:4859
 #, fuzzy
 msgid "separate window"
 msgstr "Toista erillisessä ikkunassa (s)"
 
-#: src/interface.c:4862
+#: src/interface.c:4860
 msgid "double sized playarea (only in clip edit mode)"
 msgstr ""
 
-#: src/interface.c:4863
+#: src/interface.c:4861
 msgid "toggle recording mode (clip edit mode only)"
 msgstr ""
 
-#: src/interface.c:4864
+#: src/interface.c:4862
 msgid "blank / unblank the interface background (clip editor only)"
 msgstr ""
 
-#: src/interface.c:4865
+#: src/interface.c:4863
 msgid "activate / deactivate continuous looping"
 msgstr ""
 
-#: src/interface.c:4866
+#: src/interface.c:4864
 msgid "enable / disable ping pong looping"
 msgstr ""
 
-#: src/interface.c:4867
+#: src/interface.c:4865
 msgid ""
 "enable / disable stop on audio end\n"
 "(ignored if continuous loop is active)"
 msgstr ""
 
-#: src/interface.c:4868
+#: src/interface.c:4866
 msgid "lower the volume of current audio clip"
 msgstr ""
 
-#: src/interface.c:4869
+#: src/interface.c:4867
 msgid "increase the volume of current audio clip"
 msgstr ""
 
-#: src/interface.c:4870
+#: src/interface.c:4868
 msgid "display a/v sync status (developer mode)"
 msgstr ""
 
-#: src/interface.c:4877
+#: src/interface.c:4875
 msgid "Multitrack Keys"
 msgstr "Multitrack-näppäimet"
 
-#: src/interface.c:4887
+#: src/interface.c:4885
 msgid "You can use the following keys to control the multitrack window:"
 msgstr ""
 
-#: src/interface.c:4889
+#: src/interface.c:4887
 msgid "ctrl-left-arrow"
 msgstr ""
 
-#: src/interface.c:4889
+#: src/interface.c:4887
 msgid "move timeline cursor left 1 second"
 msgstr ""
 
-#: src/interface.c:4890
+#: src/interface.c:4888
 msgid "ctrl-right-arrow"
 msgstr ""
 
-#: src/interface.c:4890
+#: src/interface.c:4888
 msgid "move timeline cursor right 1 second"
 msgstr ""
 
-#: src/interface.c:4891
+#: src/interface.c:4889
 msgid "shift-left-arrow"
 msgstr ""
 
-#: src/interface.c:4891
+#: src/interface.c:4889
 msgid "move timeline cursor left 1 frame"
 msgstr ""
 
-#: src/interface.c:4892
+#: src/interface.c:4890
 msgid "shift-right-arrow"
 msgstr ""
 
-#: src/interface.c:4892
+#: src/interface.c:4890
 msgid "move timeline cursor right 1 frame"
 msgstr ""
 
-#: src/interface.c:4893
+#: src/interface.c:4891
 msgid "ctrl-up-arrow"
 msgstr ""
 
-#: src/interface.c:4893
+#: src/interface.c:4891
 msgid "move current track up"
 msgstr ""
 
-#: src/interface.c:4894
+#: src/interface.c:4892
 msgid "ctrl-down-arrow"
 msgstr ""
 
-#: src/interface.c:4894
+#: src/interface.c:4892
 msgid "move current track down"
 msgstr ""
 
-#: src/interface.c:4895
+#: src/interface.c:4893
 #, fuzzy
 msgid "select previous clip"
 msgstr "L_isää valittu leike"
 
-#: src/interface.c:4896
+#: src/interface.c:4894
 #, fuzzy
 msgid "select next clip"
 msgstr "L_isää valittu leike"
 
-#: src/interface.c:4897
+#: src/interface.c:4895
 msgid "select/deselect current track"
 msgstr ""
 
-#: src/interface.c:4898
+#: src/interface.c:4896
 msgid "ctrl-plus"
 msgstr ""
 
-#: src/interface.c:4898
+#: src/interface.c:4896
 #, fuzzy
 msgid "zoom in"
 msgstr "L_ähennä"
 
-#: src/interface.c:4899
+#: src/interface.c:4897
 #, fuzzy
 msgid "zoom out"
 msgstr "L_oitonna"
 
-#: src/interface.c:4900
+#: src/interface.c:4898
 #, fuzzy
 msgid "make a mark on the timeline (during playback)"
 msgstr "tehdäksesi merkin aikajanalle"
 
-#: src/interface.c:4901
+#: src/interface.c:4899
 #, fuzzy
 msgid "rewind to play start."
 msgstr "Palaa alkuun (w)"
 
-#: src/interface.c:4903
+#: src/interface.c:4901
 msgid "For other keys, see the menus.\n"
 msgstr ""
 
-#: src/interface.c:4930
+#: src/interface.c:4928
 #, fuzzy
 msgid "Autolives Options"
 msgstr "Pakkaus"
 
-#: src/interface.c:4934
+#: src/interface.c:4932
 msgid "Trigger"
 msgstr ""
 
-#: src/interface.c:4944
+#: src/interface.c:4942
 msgid "Timed:"
 msgstr ""
 
-#: src/interface.c:4946
+#: src/interface.c:4944
 msgid "Trigger changes at regular intervals based on time"
 msgstr ""
 
-#: src/interface.c:4950
+#: src/interface.c:4948
 #, fuzzy
 msgid "change time (seconds)"
 msgstr "_Aika (sekunteja)"
 
-#: src/interface.c:4955
+#: src/interface.c:4953
 msgid "OMC"
 msgstr ""
 
-#: src/interface.c:4970
+#: src/interface.c:4968
 #, fuzzy
 msgid "Playback start:"
 msgstr "Toisto"
 
-#: src/interface.c:4973
+#: src/interface.c:4971
 msgid "Automatic"
 msgstr ""
 
-#: src/interface.c:4980
+#: src/interface.c:4978
 msgid "Manual"
 msgstr ""
 
-#: src/interface.c:4990
+#: src/interface.c:4988
 #, fuzzy
 msgid "Mute internal audio during playback"
 msgstr "Paina toiston aikana \"m\""
 
-#: src/interface.c:4991
+#: src/interface.c:4989
 msgid ""
 "Mute the audio in LiVES during playback by setting the audio source to "
 "external."
 msgstr ""
 
-#: src/interface.c:5001
+#: src/interface.c:4999
 msgid "Debug mode"
 msgstr ""
 
-#: src/interface.c:5002
+#: src/interface.c:5000
 msgid "Show debug output on stderr."
 msgstr ""
 
-#: src/interface.c:5110
+#: src/interface.c:5108
 #, c-format
 msgid ""
 "LiVES will only update %s if you have a local user copy installed.\n"
@@ -3024,197 +3024,197 @@ msgid ""
 "After this it can be updated without needing root privileges.\n"
 msgstr ""
 
-#: src/interface.c:5202
+#: src/interface.c:5200
 msgid "Open Online Clip"
 msgstr ""
 
-#: src/interface.c:5212
+#: src/interface.c:5210
 #, c-format
 msgid ""
 "To open a clip from Youtube or another video site, LiVES will first download "
 "it with %s.\n"
 msgstr ""
 
-#: src/interface.c:5224
+#: src/interface.c:5222
 #, c-format
 msgid "<--- Install or Update local copy of %s ?"
 msgstr ""
 
-#: src/interface.c:5234 src/gui.c:1301
+#: src/interface.c:5232 src/gui.c:1301
 msgid "_Info"
 msgstr "T_iedot"
 
-#: src/interface.c:5242
+#: src/interface.c:5240
 msgid ""
 "Enter the URL of the clip below.\n"
 "E.g: http://www.youtube.com/watch?v=WCR6f6WzjP8"
 msgstr ""
 
-#: src/interface.c:5251
+#: src/interface.c:5249
 #, fuzzy
 msgid "Clip URL : "
 msgstr "URL : "
 
-#: src/interface.c:5263
+#: src/interface.c:5261
 #, fuzzy
 msgid "Format selection:"
 msgstr "valinta"
 
-#: src/interface.c:5268
+#: src/interface.c:5266
 msgid "_Free (eg. vp9 / opus / webm)"
 msgstr ""
 
-#: src/interface.c:5269
+#: src/interface.c:5267
 msgid "Download clip using Free codecs and support the community"
 msgstr ""
 
-#: src/interface.c:5276
+#: src/interface.c:5274
 #, fuzzy
 msgid "_File Name : "
 msgstr "Otsikko/Nimi : "
 
-#: src/interface.c:5292
+#: src/interface.c:5290
 msgid "_Non-free (eg. h264 / aac / mp4)"
 msgstr ""
 
-#: src/interface.c:5294
+#: src/interface.c:5292
 msgid "Download clip using non-free codecs and support commercial interests"
 msgstr ""
 
-#: src/interface.c:5310
+#: src/interface.c:5308
 #, fuzzy
 msgid "_Directory to save to: "
 msgstr "Kansion nimi on liian pitkä!"
 
-#: src/interface.c:5327
+#: src/interface.c:5325
 #, fuzzy
 msgid "Desired frame size:"
 msgstr "Kuvakoko"
 
-#: src/interface.c:5333
+#: src/interface.c:5331
 msgid "- Approximately:"
 msgstr ""
 
-#: src/interface.c:5335
+#: src/interface.c:5333
 msgid "Download the closest to this size"
 msgstr ""
 
-#: src/interface.c:5342
+#: src/interface.c:5340
 msgid "- At _least"
 msgstr ""
 
-#: src/interface.c:5344
+#: src/interface.c:5342
 msgid "Frame size should be at least this size"
 msgstr ""
 
-#: src/interface.c:5350
+#: src/interface.c:5348
 msgid "- At _most:"
 msgstr ""
 
-#: src/interface.c:5352
+#: src/interface.c:5350
 msgid "Frame size should be at most this size"
 msgstr ""
 
-#: src/interface.c:5362 src/paramwindow.c:540 src/plugins.c:868
+#: src/interface.c:5360 src/paramwindow.c:540 src/plugins.c:868
 msgid "_Width"
 msgstr "_Leveys"
 
-#: src/interface.c:5369
+#: src/interface.c:5367
 #, fuzzy
 msgid "X\t_Height"
 msgstr "_Korkeus"
 
-#: src/interface.c:5376
+#: src/interface.c:5374
 msgid "\tpixels"
 msgstr ""
 
-#: src/interface.c:5388
+#: src/interface.c:5386
 msgid " or:"
 msgstr ""
 
-#: src/interface.c:5394
+#: src/interface.c:5392
 msgid "- The _smallest"
 msgstr ""
 
-#: src/interface.c:5396
+#: src/interface.c:5394
 msgid "Download the lowest resolution available"
 msgstr ""
 
-#: src/interface.c:5403
+#: src/interface.c:5401
 msgid "- The _largest"
 msgstr ""
 
-#: src/interface.c:5405
+#: src/interface.c:5403
 msgid "Download the highest resolution available"
 msgstr ""
 
-#: src/interface.c:5415
+#: src/interface.c:5413
 msgid "- Let me choose..."
 msgstr ""
 
-#: src/interface.c:5417
+#: src/interface.c:5415
 msgid "Choose the resolution from a list (opens in new window)"
 msgstr ""
 
-#: src/interface.c:5432
+#: src/interface.c:5430
 msgid "_Other options (e.g audio, subtitles)..."
 msgstr ""
 
-#: src/interface.c:5449
+#: src/interface.c:5447
 msgid "Please enter the name of the file to save the downloaded clip as.\n"
 msgstr ""
 
-#: src/interface.c:5457
+#: src/interface.c:5455
 msgid "Please enter a valid URL for the download.\n"
 msgstr ""
 
-#: src/interface.c:5493
+#: src/interface.c:5491
 #, c-format
 msgid "Downloading %s to %s..."
 msgstr ""
 
-#: src/interface.c:5585
+#: src/interface.c:5583
 msgid "Select Video Format to Download"
 msgstr ""
 
-#: src/interface.c:5591
+#: src/interface.c:5589
 #, fuzzy
 msgid "Double click on a format to load it, or click Cancel to exit."
 msgstr ""
 "Kaksoisnapsauta tehostetta\n"
 "muokataksesi sitä."
 
-#: src/interface.c:5624
+#: src/interface.c:5622
 msgid "ID"
 msgstr ""
 
-#: src/interface.c:5638
+#: src/interface.c:5636
 #, fuzzy
 msgid "Resolution"
 msgstr "valinta"
 
-#: src/interface.c:5645
+#: src/interface.c:5643
 msgid "Notes"
 msgstr ""
 
-#: src/interface.c:5786
+#: src/interface.c:5784
 #, fuzzy
 msgid ""
 "\n"
 "Directory was not changed\n"
 msgstr "Kansion nimi on liian pitkä!"
 
-#: src/interface.c:5820
+#: src/interface.c:5818
 #, fuzzy
 msgid "current set"
 msgstr "Nykyinen"
 
-#: src/interface.c:5822
+#: src/interface.c:5820
 #, fuzzy, c-format
 msgid "set %s"
 msgstr "Tallennetaan leikesarja %s"
 
-#: src/interface.c:5824
+#: src/interface.c:5822
 #, fuzzy, c-format
 msgid ""
 "The %s will be permanently deleted from the disk.\n"
@@ -3225,21 +3225,21 @@ msgstr ""
 "Leikesarja poistetaan levyltä.\n"
 "Haluatko varmasti tehdä tämän?\n"
 
-#: src/interface.c:5838
+#: src/interface.c:5836
 #, fuzzy
 msgid "All Sets have been erased from the disk"
 msgstr "Leikesarja %s poistettiin lopullisesti levyltä.\n"
 
-#: src/interface.c:5859
+#: src/interface.c:5857
 #, c-format
 msgid "The set %s is already loaded !"
 msgstr ""
 
-#: src/interface.c:5863
+#: src/interface.c:5861
 msgid "The current clips must be saved before reloading another set"
 msgstr ""
 
-#: src/interface.c:5869
+#: src/interface.c:5867
 msgid ""
 "After reloading the Set you can inspect it and use it as normal.\n"
 "Should you decide to delete it or re-save it, click on\n"
@@ -3248,15 +3248,15 @@ msgid ""
 "where you may choose to continue this process further\n"
 msgstr ""
 
-#: src/interface.c:5911
+#: src/interface.c:5909
 msgid "_Reload"
 msgstr ""
 
-#: src/interface.c:5928
+#: src/interface.c:5926
 msgid " including the current set."
 msgstr ""
 
-#: src/interface.c:5931
+#: src/interface.c:5929
 #, c-format
 msgid ""
 "<b>The current working directory contains %d Clip Sets%s</b>\n"
@@ -3269,287 +3269,287 @@ msgid ""
 "Please select an option below\n"
 msgstr ""
 
-#: src/interface.c:5942
+#: src/interface.c:5940
 #, fuzzy
 msgid "Manage Clipsets"
 msgstr "LiVES: - Ulkoisen leikkeen asetukset"
 
-#: src/interface.c:5947
+#: src/interface.c:5945
 msgid "Go back"
 msgstr ""
 
-#: src/interface.c:5952 src/dialogs.c:2821
+#: src/interface.c:5950 src/dialogs.c:2821
 msgid "Continue"
 msgstr ""
 
-#: src/interface.c:6065
+#: src/interface.c:6063
 #, c-format
 msgid ""
 "<b>ALERT ! FREE SPACE IN %s IS BELOW THE CRITICAL LEVEL OF %s\n"
 "YOU SHOULD EXIT LIVES IMMEDIATELY TO AVOID POSSIBLE DATA LOSS</b>"
 msgstr ""
 
-#: src/interface.c:6087
+#: src/interface.c:6085
 #, c-format
 msgid ""
 "WARNING ! Free space in %s is below the warning level of %s\n"
 "Action should be taken to remedy this"
 msgstr ""
 
-#: src/interface.c:6095
+#: src/interface.c:6093
 #, c-format
 msgid "WARNING ! LiVES has exceeded its quota by %s"
 msgstr ""
 
-#: src/interface.c:6099
+#: src/interface.c:6097
 #, c-format
 msgid "ATTENTION: LiVES is currently using over %d%% of its assigned quota"
 msgstr ""
 
-#: src/interface.c:6101
+#: src/interface.c:6099
 msgid ""
 "ATTENTION ! There is insufficient free space on the disk for LiVES' current "
 "quota"
 msgstr ""
 
-#: src/interface.c:6106
+#: src/interface.c:6104
 msgid "LiVES can help limit the amount of diskspace used by projects (sets)."
 msgstr ""
 
-#: src/interface.c:6113
+#: src/interface.c:6111
 #, fuzzy
 msgid "Value not set"
 msgstr "Nykyinen"
 
-#: src/interface.c:6114
+#: src/interface.c:6112
 #, fuzzy
 msgid "Calculating...."
 msgstr "_Laske"
 
-#: src/interface.c:6198
+#: src/interface.c:6196
 #, fuzzy, c-format
 msgid "%.2f%% used"
 msgstr "%.2f s"
 
-#: src/interface.c:6200
+#: src/interface.c:6198
 #, c-format
 msgid "<b>%.2f%% used !!</b>"
 msgstr ""
 
-#: src/interface.c:6207 src/interface.c:6409
+#: src/interface.c:6205 src/interface.c:6407
 #, c-format
 msgid "LiVES is currently using over %d%% of its available quota"
 msgstr ""
 
-#: src/interface.c:6213
+#: src/interface.c:6211
 #, fuzzy, c-format
 msgid "Calculating %% used"
 msgstr "_Laske"
 
-#: src/interface.c:6293
+#: src/interface.c:6291
 #, fuzzy
 msgid "<b>Full _Details</b>"
 msgstr "Näytä _tiedot"
 
-#: src/interface.c:6299
+#: src/interface.c:6297
 #, fuzzy
 msgid "<b>Hide _Details</b>"
 msgstr "Näytä _tiedot"
 
-#: src/interface.c:6305
+#: src/interface.c:6303
 #, fuzzy
 msgid "Working directory"
 msgstr "LiVESin työkansio."
 
-#: src/interface.c:6309
+#: src/interface.c:6307
 msgid "Mount point"
 msgstr ""
 
-#: src/interface.c:6314
+#: src/interface.c:6312
 #, fuzzy
 msgid "Total size"
 msgstr "Kokonaisaika"
 
-#: src/interface.c:6322
+#: src/interface.c:6320
 msgid "Disk space free"
 msgstr ""
 
-#: src/interface.c:6332
+#: src/interface.c:6330
 msgid "Free diskspace is below the critical level"
 msgstr ""
 
-#: src/interface.c:6334
+#: src/interface.c:6332
 msgid "Free diskspace is below the warning level"
 msgstr ""
 
-#: src/interface.c:6338
+#: src/interface.c:6336
 #, fuzzy
 msgid "Used by other applications"
 msgstr "Kokeile sulkea muita ohjelmia\n"
 
-#: src/interface.c:6349 src/interface.c:6640
+#: src/interface.c:6347 src/interface.c:6638
 msgid "Used by LiVES"
 msgstr ""
 
-#: src/interface.c:6359
+#: src/interface.c:6357
 msgid "Sets on disk"
 msgstr ""
 
-#: src/interface.c:6365
+#: src/interface.c:6363
 msgid "Currently opened clips"
 msgstr ""
 
-#: src/interface.c:6371
+#: src/interface.c:6369
 msgid "Disk quota"
 msgstr ""
 
-#: src/interface.c:6393
+#: src/interface.c:6391
 #, c-format
 msgid "Quota is reduced by %s due to free disk space limitations"
 msgstr ""
 
-#: src/interface.c:6404
+#: src/interface.c:6402
 msgid "Unused quota"
 msgstr ""
 
-#: src/interface.c:6415
+#: src/interface.c:6413
 #, fuzzy
 msgid "Disk warning level"
 msgstr "_Häivytystaso"
 
-#: src/interface.c:6425
+#: src/interface.c:6423
 msgid "Disk critical level"
 msgstr ""
 
-#: src/interface.c:6441
+#: src/interface.c:6439
 msgid "Still calculating...please wait and try again..."
 msgstr ""
 
-#: src/interface.c:6448
+#: src/interface.c:6446
 msgid ""
 "<b>Change the quota by clicking in the free space area in the disk map "
 "above,\n"
 "or by dragging the slider below</b>"
 msgstr ""
 
-#: src/interface.c:6456
+#: src/interface.c:6454
 msgid "APPLY _QUOTA"
 msgstr ""
 
-#: src/interface.c:6465
+#: src/interface.c:6463
 msgid "<b>Updated !</b>"
 msgstr ""
 
-#: src/interface.c:6533
+#: src/interface.c:6531
 msgid "Disk Space Quota"
 msgstr ""
 
-#: src/interface.c:6557
+#: src/interface.c:6555
 #, fuzzy
 msgid "Current working directory"
 msgstr "LiVESin työkansio."
 
-#: src/interface.c:6568
+#: src/interface.c:6566
 #, fuzzy
 msgid "Change Directory"
 msgstr "LiVES: - Valitse työkansio"
 
-#: src/interface.c:6582
+#: src/interface.c:6580
 msgid "<b>Disk space used by LiVES:</b>"
 msgstr ""
 
-#: src/interface.c:6589
+#: src/interface.c:6587
 #, c-format
 msgid "in %s"
 msgstr ""
 
-#: src/interface.c:6632
+#: src/interface.c:6630
 msgid "Used by other apps"
 msgstr ""
 
-#: src/interface.c:6648
+#: src/interface.c:6646
 msgid "Quota"
 msgstr ""
 
-#: src/interface.c:6656
+#: src/interface.c:6654
 msgid "Free space"
 msgstr ""
 
-#: src/interface.c:6664
+#: src/interface.c:6662
 #, fuzzy
 msgid "Warn level"
 msgstr "_Häivytystaso"
 
-#: src/interface.c:6672
+#: src/interface.c:6670
 msgid "Critical level"
 msgstr ""
 
-#: src/interface.c:6701
+#: src/interface.c:6699
 msgid ""
 "Note: LiVES cannot <b>guarantee</b> not to exceed its quota\n"
 "but it can warn you if this is detected."
 msgstr ""
 
-#: src/interface.c:6705
+#: src/interface.c:6703
 msgid ""
 "<b>Quota checking is disabled when workdir\n"
 "is set via commandline option.</b>"
 msgstr ""
 
-#: src/interface.c:6711 src/paramwindow.c:894
+#: src/interface.c:6709 src/paramwindow.c:894
 msgid "Reset"
 msgstr ""
 
-#: src/interface.c:6726
+#: src/interface.c:6724
 msgid "Change _Quota"
 msgstr ""
 
-#: src/interface.c:6741
+#: src/interface.c:6739
 msgid "Quota:"
 msgstr ""
 
-#: src/interface.c:6745 src/resample.c:1982
+#: src/interface.c:6743 src/resample.c:1982
 msgid "Unlimited"
 msgstr "Rajoittamaton nauhoitus"
 
-#: src/interface.c:6754
+#: src/interface.c:6752
 #, fuzzy
 msgid "Value:"
 msgstr "arvo"
 
-#: src/interface.c:6784
+#: src/interface.c:6782
 #, fuzzy
 msgid "Diskspace Management Options"
 msgstr "Siivoa lev_ytila"
 
-#: src/interface.c:6792
+#: src/interface.c:6790
 #, fuzzy
 msgid "Clean Up Diskspace"
 msgstr "Siivoa lev_ytila"
 
-#: src/interface.c:6803
+#: src/interface.c:6801
 #, fuzzy
 msgid "Manage Clip Sets"
 msgstr "LiVES: - Ulkoisen leikkeen asetukset"
 
-#: src/interface.c:6825
+#: src/interface.c:6823
 #, fuzzy
 msgid "Close Current Clips"
 msgstr "_Sulje tämä leike"
 
-#: src/interface.c:6845
+#: src/interface.c:6843
 msgid "Show this dialog on startup"
 msgstr ""
 
-#: src/interface.c:6855
+#: src/interface.c:6853
 msgid "Abort"
 msgstr ""
 
-#: src/interface.c:6866
+#: src/interface.c:6864
 msgid "FINISH"
 msgstr ""
 
-#: src/interface.c:6869
+#: src/interface.c:6867
 msgid "Continue with current values"
 msgstr ""
 

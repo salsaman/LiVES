@@ -39,11 +39,11 @@ static boolean suspect = FALSE;
 static char *fxname;
 static int ncbcalls = 0;
 
-static int thcount = 0;
-static int nthcount = 0;
-static int64_t totth = 0;
-static int64_t totnth = 0;
-static boolean thrdit = TRUE;
+/* static int thcount = 0; */
+/* static int nthcount = 0; */
+/* static int64_t totth = 0; */
+/* static int64_t totnth = 0; */
+/* static boolean thrdit = TRUE; */
 
 static boolean fx_inited = FALSE;
 
@@ -2816,18 +2816,18 @@ lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc
   lives_filter_error_t retval = FILTER_SUCCESS;
   boolean did_thread = FALSE;
   int filter_flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, NULL);
-  int64_t timex = lives_get_current_ticks();
+  //int64_t timex = lives_get_current_ticks();
 
   // see if we can multithread
   if ((prefs->nfx_threads = future_prefs->nfx_threads) > 1 &&
-      (filter_flags & WEED_FILTER_HINT_MAY_THREAD) && thrdit) {
+      (filter_flags & WEED_FILTER_HINT_MAY_THREAD)) {
     weed_plant_t **out_channels = weed_instance_get_out_channels(instance, NULL);
     if (key == -1 || !filter_mutex_trylock(key)) {
       retval = process_func_threaded(instance, tc);
       if (key != -1) filter_mutex_unlock(key);
     } else retval = FILTER_ERROR_INVALID_PLUGIN;
-    totth += (lives_get_current_ticks() - timex);
-    thcount++;
+    /* totth += (lives_get_current_ticks() - timex); */
+    /* thcount++; */
     lives_free(out_channels);
     if (retval != FILTER_ERROR_DONT_THREAD) did_thread = TRUE;
   }
@@ -2837,8 +2837,8 @@ lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc
     if (process_func && (key == -1 || !filter_mutex_trylock(key))) {
       weed_error_t ret = (*process_func)(instance, tc);
       if (key != -1) filter_mutex_unlock(key);
-      totnth += (lives_get_current_ticks() - timex);
-      nthcount++;
+      /* totnth += (lives_get_current_ticks() - timex); */
+      /* nthcount++; */
       if (ret == WEED_ERROR_PLUGIN_INVALID) retval = FILTER_ERROR_INVALID_PLUGIN;
       if (ret == WEED_ERROR_FILTER_INVALID) retval = FILTER_ERROR_INVALID_FILTER;
       if (ret == WEED_ERROR_NOT_READY) retval = FILTER_ERROR_BUSY;
@@ -2846,7 +2846,7 @@ lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc
     weed_leaf_delete(instance, WEED_LEAF_HOST_UNUSED);
   }
   weed_leaf_delete(instance, WEED_LEAF_RANDOM_SEED);
-  thrdit = !thrdit;
+  //  thrdit = !thrdit;
   return retval;
 }
 
@@ -7060,7 +7060,7 @@ weed_error_t weed_call_deinit_func(weed_plant_t *instance) {
   weed_plant_t *filter;
   weed_error_t error = WEED_SUCCESS;
 
-  g_print("TMINGS: %d %ld and %d %ld nth\n", thcount, totth, nthcount, totnth);
+  //g_print("TMINGS: %d %ld and %d %ld nth\n", thcount, totth, nthcount, totnth);
 
   weed_instance_ref(instance);
 

@@ -62,6 +62,7 @@ static boolean npot;
 
 //#include <GL/glu.h>
 
+
 typedef struct {
   unsigned long flags;
   unsigned long functions;
@@ -755,6 +756,7 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
     XWindowAttributes attr;
 
     xWin = (Window) window_id;
+
     XGetWindowAttributes(dpy, xWin, &attr);
     glxWin = xWin;
 

@@ -530,6 +530,7 @@ typedef struct {
   lives_checkstatus_t has_encoder_plugins;
 
   lives_checkstatus_t has_python;
+  lives_checkstatus_t has_python3;
   uint64_t python_version;
 
   int ncpus;
@@ -571,6 +572,8 @@ typedef struct {
   char *os_name;
   char *os_release;
   char *os_hardware;
+
+#define DISTRO_UBUNTU "Ubuntu"
 
   char *distro_name;
   char *distro_ver;
@@ -1509,7 +1512,7 @@ void cached_list_free(LiVESList **list);
 
 void get_location(const char *exe, char *val, int maxlen);
 boolean check_for_executable(lives_checkstatus_t *cap, const char *exec);
-boolean do_please_install(const char *exec, uint64_t guidance_flags);
+boolean do_please_install(const char *more, const char *exec, uint64_t guidance_flags);
 boolean do_please_install_either(const char *exec, const char *exec2);
 
 /// lives_image_type can be a string, lives_img_type_t is an enumeration

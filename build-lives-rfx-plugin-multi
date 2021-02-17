@@ -10,7 +10,8 @@ my $smogcmd = "smogrify";
 ## TODO - should be passed as args
 #my $home_dir_extra = "/.lives-dir/plugins/effects/";
 my $home_dir_extra = "/.local/share/lives/plugins/effects/";
-my $dir_extra = "/lives/plugins/effects/";
+
+my $dir_extra = "/lives/plugins/effects";
 
 my $builder = "build-lives-rfx-plugin";
 
@@ -53,7 +54,7 @@ if ($type eq "builtin") {
     $scripts_dir .= $dir_extra;
     $indir = "$scripts_dir/RFXscripts/";
     unlink glob "$indir/*~";
-    $exec_dir .= $dir_extra;
+    $exec_dir .= "$dir_extra/rendered/";
     unlink glob "$indir/*~";
 }
 else {

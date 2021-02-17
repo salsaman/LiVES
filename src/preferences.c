@@ -3047,7 +3047,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
 #ifdef ENABLE_OSC
 #ifdef OMC_MIDI_IMPL
+#ifdef ALSA_MIDI
   LiVESWidget *raw_midi_button;
+#endif
 #endif
 #endif
 
@@ -3061,7 +3063,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
 #ifdef ENABLE_OSC
 #ifdef OMC_MIDI_IMPL
+#ifdef ALSA_MIDI
   LiVESSList *alsa_midi_group = NULL;
+#endif
   LiVESList *mchanlist = NULL;
 #endif
 #endif
@@ -5430,8 +5434,10 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   hbox = lives_hbox_new(FALSE, 0);
 
+#ifdef ALSA_MIDI
   raw_midi_button = lives_standard_radio_button_new((tmp = (_("Use _raw MIDI"))), &alsa_midi_group,
                     LIVES_BOX(hbox), (tmp2 = (_("Read directly from the MIDI device"))));
+#endif
 
   lives_free(tmp); lives_free(tmp2);
 

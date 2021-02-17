@@ -897,9 +897,9 @@ static weed_layer_t *get_blend_layer_inner(weed_timecode_t tc) {
       if (dplug) dpsys = (lives_decoder_sys_t *)dplug->decoder;
     }
 
-    if (is_virtual_frame(mainw->blend_file, blend_file->frameno)) {
+    if (is_virtual_frame(mainw->blend_file, frameno)) {
       if (dpsys && dpsys->estimate_delay)
-        est_time = (*dpsys->estimate_delay)(dplug->cdata, get_indexed_frame(mainw->blend_file, blend_file->frameno));
+        est_time = (*dpsys->estimate_delay)(dplug->cdata, get_indexed_frame(mainw->blend_file, frameno));
     } else {
       // img timings
       est_time = blend_file->img_decode_time;

@@ -184,8 +184,9 @@ typedef struct {
 
 #define LIVES_DIR_SELECTION_CREATE_FOLDER 1024
 #define LIVES_DIR_SELECTION_SELECT_FOLDER 1025
-#define LIVES_DIR_SELECTION_WORKDIR 1026
-#define LIVES_DIR_SELECTION_DEVICES 1027
+#define LIVES_DIR_SELECTION_WORKDIR 2048
+#define LIVES_DIR_SELECTION_WORKDIR_INIT 2049
+#define LIVES_DIR_SELECTION_DEVICES 4096
 
 aud_dialog_t *create_audfade_dialog(int type);
 LiVESWidget *create_combo_dialog(int type, LiVESList *list);

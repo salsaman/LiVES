@@ -2799,16 +2799,26 @@ LIVES_GLOBAL_INLINE void do_lb_convert_error(void) {
 }
 
 
-LIVES_GLOBAL_INLINE boolean do_please_install(const char *exec, uint64_t gflags) {
+LIVES_GLOBAL_INLINE boolean do_please_install(const char *info, const char *exec, uint64_t gflags) {
   char *extra = lives_strdup(""), *msg;
   if (gflags & INSTALL_CANLOCAL) {
     lives_free(extra);
     extra = lives_strdup(_("\n\nAlternately, LiVES may be able to install\na local user copy "
                            "of the program.\n"));
+  } else {
+    if (capable->distro_name && *capable->distro_name) {
+      char *icmd = get_install_cmd(capable->distro_name, exec);
+      if (icmd) {
+        lives_free(extra);
+        extra = lives_strdup_printf(_("\n\nTry '%s' or from a terminal window,\n"
+                                      "or use your software package manager to install that package\n"), icmd);
+        lives_free(icmd);
+      }
+    }
   }
 
-  msg = lives_strdup_printf(_("'%s' is necessary for this feature to work.\n"
-                              "If possible, kindly install it before continuing.%s"), exec, extra);
+  msg = lives_strdup_printf(_("%s'%s' is necessary for this feature to work.\n"
+                              "If possible, kindly install %s before continuing.%s"), info, exec, exec, extra);
 
   if (gflags & INSTALL_CANLOCAL) {
     LiVESWidget *dlg = create_question_dialog(NULL, msg);
@@ -3379,7 +3389,6 @@ LiVESResponseType  do_file_perm_error(const char *file_name, boolean allow_cance
   msg = lives_strdup_printf(_("\nLiVES was unable to write to the file:\n%s\n"
                               "Please check the file permissions and try again."
                               "%sor click Abort to exit from LiVES"), file_name, can_cancel);
-  resp = do_abort_retry_dialog(msg);
   if (!allow_cancel)
     resp = do_abort_retry_dialog(msg);
   else
@@ -3802,7 +3811,7 @@ boolean ask_permission_dialog_complex(int what, char **argv, int argc, int offs,
         verb = _("download");
         action = _("by downloading");
       } else {
-        verb = _("copying");
+        verb = _("local installation");
         action = lives_strdup(_("by creating"));
       }
 

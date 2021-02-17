@@ -279,6 +279,8 @@ char *get_worktmpfile(const char *prefix);
 char *get_localsharedir(const char *subdir);
 boolean notify_user(const char *detail);
 
+char *get_install_cmd(const char *distro, const char *exe);
+
 boolean check_snap(const char *prog);
 
 #endif

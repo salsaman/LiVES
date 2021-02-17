@@ -2961,6 +2961,7 @@ _entryw *create_rename_dialog(int type) {
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dirbutton), FILESEL_TYPE_KEY,
                                    LIVES_INT_TO_POINTER(LIVES_DIR_SELECTION_WORKDIR));
 
+
       lives_free(tmp);
       lives_free(workdir);
     } else {
@@ -3993,6 +3994,12 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
     }
   }
 
+  if (!mainw->is_ready) {
+    LiVESWindow *dialog;
+    if ((dialog = (LiVESWindow *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), KEEPABOVE_KEY)) != NULL)
+      lives_window_set_keep_above(dialog, FALSE);
+  }
+
   /// can this be removed ?
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
@@ -4016,10 +4023,13 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
   case LIVES_DIR_SELECTION_SELECT_FOLDER:
     dirname = choose_file(fname, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER, NULL, NULL);
     break;
+  case LIVES_DIR_SELECTION_WORKDIR_INIT:
+    dirname = choose_file(NULL, fname, NULL, LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER, NULL, NULL);
+    break;
   case LIVES_DIR_SELECTION_WORKDIR:
-    dirname = choose_file(fname, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER, NULL, NULL);
+    dirname = choose_file(NULL, fname, NULL, LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER, NULL, NULL);
 
-    if (strcmp(dirname, fname)) {
+    if (lives_strcmp(dirname, fname)) {
       /// apply extra validity checks (check writeable, warn if set to home dir, etc)
       if (check_workdir_valid(&dirname, LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))),
                               FALSE) == LIVES_RESPONSE_RETRY) {
@@ -4076,6 +4086,17 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
   }
   }
 
+  if (!mainw->is_ready) {
+    LiVESWindow *dialog;
+    if ((dialog = (LiVESWindow *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), KEEPABOVE_KEY)) != NULL)
+      lives_window_set_keep_above(dialog, TRUE);
+    else {
+      char *wid;
+      if ((wid = (char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), ACTIVATE_KEY)) != NULL)
+        activate_x11_window(wid);
+    }
+  }
+
   if (fname && fname != def_dir) lives_free(fname);
   if (free_def_dir) lives_free(def_dir);
 
@@ -4088,14 +4109,23 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
   else lives_text_view_set_text(LIVES_TEXT_VIEW(tentry), (tmp = lives_filename_to_utf8(dirname, -1, NULL, NULL, NULL)), -1);
   lives_free(tmp); lives_free(dirname);
 
-  if ((rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tentry), "rfx")) != NULL) {
+  if ((rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tentry), RFX_KEY)) != NULL) {
     /// if running inside a parameter window, reflect update in related parameter values
-    int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tentry), "param_number"));
+    int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tentry), PARAM_NUMBER_KEY));
     after_param_text_changed(tentry, rfx);
 
     /// set to FALSE since no unapplied edits have been made
     rfx->params[param_number].edited = FALSE;
   }
+}
+
+
+static void fc_sel_changed(LiVESFileChooser * chooser, livespointer user_data) {
+  char *tmp;
+  char *fname = lives_filename_to_utf8((tmp = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser))),
+                                       -1, NULL, NULL, NULL);
+  lives_free(tmp);
+  gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), fname);
 }
 
 
@@ -4116,7 +4146,7 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
     if (act == LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE) {
       mytitle = lives_strdup_printf(_("%sChoose a Device"), widget_opts.title_prefix);
       act = LIVES_FILE_CHOOSER_ACTION_OPEN;
-    } else if (act == LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER) {
+    } else if (act == LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER || act == LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER) {
       mytitle = lives_strdup_printf(_("%sChoose a Directory"), widget_opts.title_prefix);
     } else {
       mytitle = lives_strdup_printf(_("%sChoose a File"), widget_opts.title_prefix);
@@ -4160,11 +4190,24 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 
   if (fname) {
     if (act == LIVES_FILE_CHOOSER_ACTION_SAVE || act == LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER) { // prevent assertion in gtk+
-      gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), fname); // utf-8
-      if (fname && dir) {
-        char *ffname = lives_build_filename(dir, fname, NULL);
-        gtk_file_chooser_select_filename(LIVES_FILE_CHOOSER(chooser), ffname); // must be dir and file
-        lives_free(ffname);
+      if (fname) {
+        if (dir) {
+          char *ffname = lives_build_filename(dir, fname, NULL);
+          gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), fname); // utf-8
+          gtk_file_chooser_select_filename(LIVES_FILE_CHOOSER(chooser), ffname); // must be dir and file
+          lives_free(ffname);
+        } else {
+          if (!lives_file_test(fname, LIVES_FILE_TEST_IS_DIR)) {
+            gtk_file_chooser_set_filename(LIVES_FILE_CHOOSER(chooser), fname);
+            gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), fname);
+          } else {
+            gtk_file_chooser_select_filename(LIVES_FILE_CHOOSER(chooser), fname);
+            gtk_file_chooser_set_filename(LIVES_FILE_CHOOSER(chooser), fname);
+          }
+        }
+        lives_signal_sync_connect(LIVES_GUI_OBJECT(chooser), LIVES_WIDGET_SELECTION_CHANGED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(fc_sel_changed), NULL);
+
       }
     }
   }
@@ -5123,28 +5166,34 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   LiVESResponseType response;
   boolean only_free = TRUE;
   boolean debug = FALSE;
+  static boolean trylocal = FALSE;
   static boolean firsttime = TRUE;
 
-  if (!req || !req->do_update) {
+  if (!req || !req->do_update || trylocal) {
 #ifdef YTDL_URL
     gflags |= INSTALL_CANLOCAL;
 #endif
     if (!check_for_executable(&capable->has_youtube_dl, EXEC_YOUTUBE_DL) &&
         !check_for_executable(&capable->has_youtube_dlc, EXEC_YOUTUBE_DLC)
        ) {
-      if (!do_please_install_either(EXEC_YOUTUBE_DL, EXEC_YOUTUBE_DLC)) {
-        capable->has_youtube_dl = capable->has_youtube_dlc = UNCHECKED;
-        return NULL;
+      firsttime = trylocal = TRUE;
+      /* if (!do_please_install_either(EXEC_YOUTUBE_DL, EXEC_YOUTUBE_DLC)) { */
+      /*   capable->has_youtube_dl = capable->has_youtube_dlc = UNCHECKED; */
+      /*   return NULL; */
+      /* } */
+    } else {
+      if (capable->has_youtube_dl != LOCAL) {
+        /// local version not found, so try first with system version
+        firsttime = FALSE;
       }
     }
-    if (capable->has_youtube_dl != LOCAL) {
-      /// local version not found, so try first with system version
-      firsttime = FALSE;
-    }
-  } else if (firsttime) {
-    if (!check_for_executable(&capable->has_pip, EXEC_PIP)) {
+  }
+
+  if (firsttime) {
+    if (!check_for_executable(&capable->has_pip, EXEC_PIP) &&
+        !check_for_executable(&capable->has_pip, EXEC_PIP3)) {
       /// requirement is missing, if the user does set it checked, we will warn
-      firsttime = FALSE;
+      if (!trylocal) firsttime = FALSE;
     }
   }
 

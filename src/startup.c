@@ -419,7 +419,7 @@ boolean do_workdir_query(void) {
   /// override FILESEL_TYPE_KEY, in case it was set to WORKDIR; we will do our own checking here
   dirbutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dirbutton), FILESEL_TYPE_KEY,
-                               LIVES_INT_TO_POINTER(LIVES_DIR_SELECTION_CREATE_FOLDER));
+                               LIVES_INT_TO_POINTER(LIVES_DIR_SELECTION_WORKDIR_INIT));
 
   if (mainw->splash_window) {
     char *wid;
@@ -428,7 +428,10 @@ boolean do_workdir_query(void) {
     lives_widget_show_now(wizard->dialog);
     gtk_window_set_urgency_hint(LIVES_WINDOW(wizard->dialog), TRUE); // dont know if this actually does anything...
     wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(wizard->dialog)));
-    if (!wid || !activate_x11_window(wid)) lives_window_set_keep_above(LIVES_WINDOW(wizard->dialog), TRUE);
+    if (!wid || !activate_x11_window(wid)) {
+      lives_window_set_keep_above(LIVES_WINDOW(wizard->dialog), TRUE);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dirbutton), KEEPABOVE_KEY, wizard->dialog);
+    } else lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(dirbutton), ACTIVATE_KEY, lives_strdup(wid));
   }
 
   do {

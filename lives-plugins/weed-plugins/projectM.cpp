@@ -81,6 +81,8 @@ static int texheight;
 
 static bool rerand = true;
 
+static void finalise(void);
+
 // class myProjectM : public projectM {
 
 // public:
@@ -719,6 +721,17 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
 
     copies++;
 
+    if (inited) {
+      sd = statsd;
+      weed_set_voidptr_value(inst, "plugin_internal", sd);
+      if (texwidth != width || texheight != height) {
+        projectM_deinit(inst);
+        finalise();
+        copies++;
+        //return WEED_ERROR_FILTER_INVALID;
+      }
+    }
+
     if (!inited) {
       int rc = 0;
       sd = (_sdata *)weed_calloc(1, sizeof(_sdata));
@@ -785,13 +798,6 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
 
       statsd = sd;
       inited = 1;
-    } else {
-      sd = statsd;
-      weed_set_voidptr_value(inst, "plugin_internal", sd);
-      if (texwidth != width || texheight != height) {
-        projectM_deinit(inst);
-        return WEED_ERROR_FILTER_INVALID;
-      }
     }
 
     sd->rendering = false;
@@ -1064,7 +1070,7 @@ WEED_SETUP_START(200, 200) {
 WEED_SETUP_END;
 
 
-WEED_DESETUP_START {
+static void finalise(void) {
   if (inited && statsd) {
     statsd->die = true;
     if (!statsd->rendering) {
@@ -1088,6 +1094,11 @@ WEED_DESETUP_START {
     statsd = NULL;
   }
   inited = 0;
+}
+
+
+WEED_DESETUP_START {
+  finalise();
 }
 WEED_DESETUP_END;
 

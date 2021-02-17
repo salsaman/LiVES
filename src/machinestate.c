@@ -2337,8 +2337,35 @@ boolean check_snap(const char *prog) {
 }
 
 
+#define APT_INSTALL "sudo apt install %s"
+
+char *get_install_cmd(const char *distro, const char *exe) {
+  char *cmd = NULL, *pkgname = NULL;
+
+  if (!lives_strcmp(exe, EXEC_PIP)) {
+    if (!lives_strcmp(distro, DISTRO_UBUNTU)) {
+      if (check_for_executable(&capable->has_python3, EXEC_PYTHON3) == PRESENT) {
+	pkgname = "python-pip3";
+      }
+      else if (check_for_executable(&capable->has_python, EXEC_PYTHON) == PRESENT) {
+	pkgname = "python-pip";
+      }
+      else pkgname = "python3 python-pip3";
+    }
+  }
+
+  if (!pkgname) return NULL;
+
+  // TODO - add more, eg. pacman, dpkg
+  if (!lives_strcmp(distro, DISTRO_UBUNTU)) {
+    cmd = lives_strdup_printf(APT_INSTALL, pkgname);
+  }
+  return cmd;
+}
+
+
 boolean get_distro_dets(void) {
-#ifndef IS_LINUX
+#ifndef IS_LINUX_GNU
   capable->distro_name = lives_strdup(capable->os_name);
   capable->distro_ver = lives_strdup(capable->os_release);
 #else

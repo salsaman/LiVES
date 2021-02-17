@@ -2598,6 +2598,27 @@ static void set_toolkit_theme(int prefer) {
 
 
 #ifndef VALGRIND_ON
+static void set_extra_colours(void) {
+  if (prefs->extra_colours && mainw->pretty_colours) {
+    char *colref, *tmp;
+    colref = gdk_rgba_to_string(&palette->nice1);
+    set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "combobox window menu menuitem", "border-color", colref);
+
+    tmp = lives_strdup_printf("0 -3px %s inset", colref);
+    set_css_value_direct(NULL, LIVES_WIDGET_STATE_CHECKED, "notebook header tabs *", "box-shadow", tmp);
+    set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "menuitem", "box-shadow", tmp);
+    set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "menu menuitem", "box-shadow", "none");
+    lives_free(tmp);
+
+    set_css_value_direct(NULL, LIVES_WIDGET_STATE_ACTIVE, "scrollbar slider", "background-color", colref);
+    tmp = lives_strdup_printf("0 0 0 4px %s inset", colref);
+    set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "combobox window menu menuitem", "box-shadow", tmp);
+    lives_free(tmp);
+    lives_free(colref);
+  }
+}
+
+
 static void pick_custom_colours(void) {
   double lmin, lmax;
   uint8_t ncr, ncg, ncb;
@@ -2644,24 +2665,8 @@ static void pick_custom_colours(void) {
       palette->nice3.green = LIVES_WIDGET_COLOR_SCALE_255(ncg);
       palette->nice3.blue = LIVES_WIDGET_COLOR_SCALE_255(ncb);
       palette->nice3.alpha = 1.;
+      main_thread_execute((lives_funcptr_t)set_extra_colours, 0, NULL, "");
     }
-  }
-  if (prefs->extra_colours && mainw->pretty_colours) {
-    char *colref, *tmp;
-    colref = gdk_rgba_to_string(&palette->nice1);
-    set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "combobox window menu menuitem", "border-color", colref);
-
-    tmp = lives_strdup_printf("0 -3px %s inset", colref);
-    set_css_value_direct(NULL, LIVES_WIDGET_STATE_CHECKED, "notebook header tabs *", "box-shadow", tmp);
-    set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "menuitem", "box-shadow", tmp);
-    set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "menu menuitem", "box-shadow", "none");
-    lives_free(tmp);
-
-    set_css_value_direct(NULL, LIVES_WIDGET_STATE_ACTIVE, "scrollbar slider", "background-color", colref);
-    tmp = lives_strdup_printf("0 0 0 4px %s inset", colref);
-    set_css_value_direct(NULL, LIVES_WIDGET_STATE_PRELIGHT, "combobox window menu menuitem", "box-shadow", tmp);
-    lives_free(tmp);
-    lives_free(colref);
   }
 }
 #endif
@@ -2988,7 +2993,7 @@ boolean set_palette_colours(boolean force_reload) {
   // still experimenting...some values may need tweaking
   // suggested uses for each colour in the process of being defined
   // TODO - run a bg thread until we create GUI
-  if (!prefs->vj_mode) {
+  if (!prefs->vj_mode && prefs->startup_phase == 0) {
     /// create thread to pick custom colours
     mainw->helper_procthreads[PT_CUSTOM_COLOURS]
       = lives_proc_thread_create(LIVES_THRDATTR_NONE, (lives_funcptr_t)pick_custom_colours, -1, "");
@@ -3328,8 +3333,12 @@ retry_configfile:
   check_for_executable(&capable->has_jackd, EXEC_JACKD);
   check_for_executable(&capable->has_pulse_audio, EXEC_PULSEAUDIO);
 
-  if (check_for_executable(&capable->has_python, EXEC_PYTHON)) {
-    capable->python_version = get_version_hash(EXEC_PYTHON " -V 2>&1", " ", 1);
+  if (check_for_executable(&capable->has_python3, EXEC_PYTHON3) == PRESENT) {
+    capable->python_version = get_version_hash(EXEC_PYTHON3 " -V 2>&1", " ", 1);
+  } else {
+    if (check_for_executable(&capable->has_python, EXEC_PYTHON) == PRESENT) {
+      capable->python_version = get_version_hash(EXEC_PYTHON " -V 2>&1", " ", 1);
+    }
   }
 
   check_for_executable(&capable->has_xwininfo, EXEC_XWININFO);
@@ -6877,6 +6886,7 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
 }
 
 
+#if 0
 static void png_write_func(png_structp png_ptr, png_bytep data, png_size_t length) {
   int fd = LIVES_POINTER_TO_INT(png_get_io_ptr(png_ptr));
   if (lives_write_buffered(fd, (const char *)data, length, TRUE) < length) {
@@ -6890,8 +6900,9 @@ static void png_flush_func(png_structp png_ptr) {
     png_error(png_ptr, "flush_fn error");
   }
 }
+#endif
 
-static boolean save_to_png_inner(int fd, weed_layer_t *layer, int comp) {
+static boolean save_to_png_inner(FILE * fp, weed_layer_t *layer, int comp) {
   // comp is 0 (none) - 9 (full)
   png_structp png_ptr;
   png_infop info_ptr;
@@ -6924,11 +6935,15 @@ static boolean save_to_png_inner(int fd, weed_layer_t *layer, int comp) {
     // libpng will longjump to here on error
     if (info_ptr) png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
     png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
-    THREADVAR(write_failed) = fd + 1;
+    THREADVAR(write_failed) = fileno(fp) + 1;
     return FALSE;
   }
 
-  png_set_write_fn(png_ptr, LIVES_INT_TO_POINTER(fd), png_write_func, png_flush_func);
+  //png_set_write_fn(png_ptr, LIVES_INT_TO_POINTER(fd), png_write_func, png_flush_func);
+
+  //FILE *fp = fdopen(fd, "wb");
+
+  png_init_io(png_ptr, fp);
 
   width = weed_layer_get_width(layer);
   height = weed_layer_get_height(layer);
@@ -7003,9 +7018,11 @@ static boolean save_to_png_inner(int fd, weed_layer_t *layer, int comp) {
 }
 
 boolean save_to_png(weed_layer_t *layer, const char *fname, int comp) {
-  int fd = lives_create_buffered(fname, DEF_FILE_PERMS);
-  boolean ret = save_to_png_inner(fd, layer, comp);
-  lives_close_buffered(fd);
+  //int fd = lives_create_buffered(fname, DEF_FILE_PERMS);
+  FILE *fp = fopen(fname, "wb");
+  boolean ret = save_to_png_inner(fp, layer, comp);
+  //lives_close_buffered(fd);
+  fclose(fp);
   return ret;
 }
 

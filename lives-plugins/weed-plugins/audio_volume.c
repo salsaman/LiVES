@@ -115,43 +115,40 @@ static weed_error_t  avol_process(weed_plant_t *inst, weed_timecode_t timestamp)
       if (pan[i] < 0.) volr *= (1. + pan[i]);
       else voll *= (1. - pan[i]);
       if (swapchans[i] == WEED_FALSE) {
-	if (i > 0) {
-	  for (int j = 0; j < nsamps; j++) {
-	    dst[0][j] += voll * src[0][j];
-	    dst[1][j] += volr * src[1][j];
-	  }
-	}
-	else {
-	  for (j = 0; j < nsamps; j++) {
-	    dst[0][j] = voll * src[0][j];
-	    dst[1][j] = volr * src[1][j];
-	  }
-	}
+        if (i > 0) {
+          for (int j = 0; j < nsamps; j++) {
+            dst[0][j] += voll * src[0][j];
+            dst[1][j] += volr * src[1][j];
+          }
+        } else {
+          for (j = 0; j < nsamps; j++) {
+            dst[0][j] = voll * src[0][j];
+            dst[1][j] = volr * src[1][j];
+          }
+        }
       } else {
         if (swappan[i]) {
           tmp = voll; voll = volr; volr = tmp;
         }
-	if (i > 0) {
-	  for (j = 0; j < nsamps; j++) {
-	    tmp = volr * src[0][j]; // in case inplace, src[0] will become dst[0]
-	    dst[0][j] += voll * src[1][j];
-	    dst[1][j] += tmp;
-	  }
-	}
-	else {
-	  for (j = 0; j < nsamps; j++) {
-	    tmp = volr * src[0][j]; // in case inplace, src[0] will become dst[0]
-	    dst[0][j] = voll * src[1][j];
-	    dst[1][j] = tmp;
-	  }
-	}
+        if (i > 0) {
+          for (j = 0; j < nsamps; j++) {
+            tmp = volr * src[0][j]; // in case inplace, src[0] will become dst[0]
+            dst[0][j] += voll * src[1][j];
+            dst[1][j] += tmp;
+          }
+        } else {
+          for (j = 0; j < nsamps; j++) {
+            tmp = volr * src[0][j]; // in case inplace, src[0] will become dst[0]
+            dst[0][j] = voll * src[1][j];
+            dst[1][j] = tmp;
+          }
+        }
       }
     } else if (chans == 1) {
       if (i > 0) {
-	for (j = 0; j < nsamps; j++) dst[0][j] += vol[0] * src[0][j];
-      }
-      else {
-	for (j = 0; j < nsamps; j++) dst[0][j] = vol[0] * src[0][j];
+        for (j = 0; j < nsamps; j++) dst[0][j] += vol[0] * src[0][j];
+      } else {
+        for (j = 0; j < nsamps; j++) dst[0][j] = vol[0] * src[0][j];
       }
     }
     if (src) {

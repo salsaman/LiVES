@@ -407,6 +407,7 @@ enum {
 #define EXEC_YOUTUBE_DL "youtube-dl"
 #define EXEC_YOUTUBE_DLC "youtube-dlc"
 #define EXEC_PIP "pip"
+#define EXEC_PIP3 "pip3"
 #ifdef IS_FREEBSD
 #define EXEC_MD5SUM "md5"
 #else
@@ -419,6 +420,7 @@ enum {
 
 // optional
 #define EXEC_PYTHON "python"
+#define EXEC_PYTHON3 "python3"
 #define EXEC_AUTOLIVES_PL "autolives.pl" ///< shipped
 #define EXEC_MIDISTART "lives-midistart" ///< shipped
 #define EXEC_MIDISTOP "lives-midistop" ///< shipped

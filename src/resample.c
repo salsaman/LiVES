@@ -562,7 +562,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   end_tc = q_gint64(end_tc + tl, qfps);
 
   // tl >>2 - make sure we don't round down
-  for (; out_tc < end_tc || event; out_tc = q_gint64(out_tc + tl + (tl >> 2), qfps)) {
+  for (; out_tc < end_tc || event; out_tc = q_gint64(out_tc + tl, qfps)) {
     weed_timecode_t stop_tc = out_tc + offset_tc;
     if (out_tc > end_tc) out_tc = end_tc;
     while (1) {

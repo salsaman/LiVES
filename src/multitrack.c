@@ -6534,7 +6534,11 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mt->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(mt_prevclip), mt, NULL));
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mt->accel_group), LIVES_KEY_KP_Page_Up, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(mt_prevclip), mt, NULL));
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mt->accel_group), LIVES_KEY_Page_Down, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(mt_nextclip), mt, NULL));
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mt->accel_group), LIVES_KEY_KP_Page_Down, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(mt_nextclip), mt, NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mt->accel_group), LIVES_KEY_Left, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,

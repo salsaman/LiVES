@@ -3840,35 +3840,47 @@ if (1) {
 	    my $smerr;
 
 	    my $home = $ENV {"HOME"};
-	    my $local_bindir = "$home/.local/bin";
+	    my $local_dir = "$home/.local";
+	    my $local_bindir = "$local_dir/bin";
 	    my $prog = "$local_bindir/$youtube_dl";
 	    my $localprog = $prog;
+	    my $pip = "";
 
-	    if (0 && $ARGV[14] eq "forceddownload") {
+	    if ($ARGV[14] eq "forceddownload") {
 		## user chose to install local copy
-		## this is no longer run
 		$islocal = 1;
-		if (! -d $local_bindir) {
-		    make_path $local_bindir;
+		if (! -d $local_dir) {
+		    make_path $local_dir;
 		}
 		if ($debug) {
 		    print STDERR "commencing install of binary $youtube_dl\n";
 		}
-		$com = "pip install --upgrade '$youtube_dl'";
+		if (!$pip) {
+		    $pip = &location("pip");
+		    if ($pip eq "") {
+			$pip = &location("pip3");
+		    }
+		    if ($pip eq "") {
+			$pip = "pip";
+		    }
+		}
+		$com = "$pip install --upgrade '$youtube_dl' -t \"$local_dir\"";
 		$smerr = &smog_system($com);
 		if ($debug) {
 		    print STDERR "ran command: $com\nresult was $smerr\n";
 		}
-		if ($smerr || ! -f $prog) {
-		    &sig_system_error("Installing $youtube_dl using pip",
+		if ($smerr) {
+		    &sig_system_error("Installing $youtube_dl using $pip",
 				      $smerr);
 		    exit 1;
 		}
-		$com = "chmod u+x '$prog'";
-		$smerr = &smog_system($com);
-		if ($smerr || ! -x $prog) {
-		    &sig_system_error("Changing permissions for $prog", $smerr);
-		    exit 1;
+		if (-f $prog) {
+		    $com = "chmod u+x '$prog'";
+		    $smerr = &smog_system($com);
+		    if ($smerr || ! -x $prog) {
+			&sig_system_error("Changing permissions for $prog", $smerr);
+			exit 1;
+		    }
 		}
 		$com = "hash -d $youtube_dl";
 		&smog_system($com);
@@ -3906,14 +3918,23 @@ if (1) {
 			    $line = "Unknown error";
 			}
 		    }
-		    my $cmd1 = "";
-		    if (!$islocal) {
-			$cmd1 = "cp $prog $local_prog\n";
+		    my $cmd1 = "\n";
+		    #if (!$islocal) {
+		#	$cmd1 = "cp $prog $local_prog\n";
+		 #   }
+		    if (!$pip) {
+			$pip = &location("pip");
+			if ($pip eq "") {
+			    $pip = &location("pip3");
+			}
+			if ($pip eq "") {
+			    $pip = "pip";
+			}
 		    }
 		    &sig_system_error(
 			$com, $line, "_ASKPERM_|COPYLOCAL|youtube-dl|" .
 			"14|forceddownload|" . $cmd1 .
-			"pip install --upgrade $youtube_dl");
+			"$pip install --upgrade $youtube_dl -t \"$local_dir\"");
 		    exit 1;
 		}
 	    }
@@ -3921,7 +3942,16 @@ if (1) {
 	    ## first of all deal with update
 
 	    if ($do_update && $islocal) {
-		$com = "pip install --upgrade '$youtube_dl'";
+		if (!$pip) {
+		    $pip = &location("pip");
+		    if ($pip eq "") {
+			$pip = &location("pip3");
+		    }
+		    if ($pip eq "") {
+			$pip = "pip";
+		    }
+		}
+		$com = "$pip install --upgrade '$youtube_dl'";
 		#$com = "'$prog' -U";
 		if ($debug) {
 		    print STDERR "\n\nUPDATING $prog WITH $com\n";
@@ -4156,12 +4186,21 @@ if (1) {
 			}
 		    }
 		    if (!$islocal) {
-		    my $cmd1 = "cp $prog $localprog\n";
-
+		    #my $cmd1 = "cp $prog $localprog\n";
+		    my $cmd1 = "\n";
+		    if (!$pip) {
+			$pip = &location("pip");
+			if ($pip eq "") {
+			    $pip = &location("pip3");
+			}
+			if ($pip eq "") {
+			    $pip = "pip";
+			}
+		    }
 		    &sig_system_error(
 			$com, $line, "_ASKPERM_|COPYLOCAL|youtube-dl|" .
 			"14|forceddownload|" . $cmd1 .
-			"pip install --upgrade $youtube_dl");
+			"$pip install --upgrade $youtube_dl -t \"$local_dir\"");
 		    }
 		    else {
 			&sig_system_error($com, $line);

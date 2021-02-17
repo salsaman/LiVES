@@ -33,7 +33,7 @@ LIVES_GLOBAL_INLINE ticks_t q_gint64_floor(ticks_t in, double fps) {
 
 LIVES_GLOBAL_INLINE ticks_t q_dbl(double in, double fps) {
   // quantise (double)in to fps
-  ldiv_t loodiv = ldiv((double)in, fps);
+  ldiv_t loodiv = ldiv(in, fps);
   if (in > 0.) {
     if (loodiv.rem < .5) return loodiv.quot * fps;
     else return (loodiv.quot + 1.) * fps;

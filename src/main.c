@@ -6886,6 +6886,7 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
 }
 
 
+#if 0
 static void png_write_func(png_structp png_ptr, png_bytep data, png_size_t length) {
   int fd = LIVES_POINTER_TO_INT(png_get_io_ptr(png_ptr));
   if (lives_write_buffered(fd, (const char *)data, length, TRUE) < length) {
@@ -6899,6 +6900,7 @@ static void png_flush_func(png_structp png_ptr) {
     png_error(png_ptr, "flush_fn error");
   }
 }
+#endif
 
 static boolean save_to_png_inner(FILE * fp, weed_layer_t *layer, int comp) {
   // comp is 0 (none) - 9 (full)

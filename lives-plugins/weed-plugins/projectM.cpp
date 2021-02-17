@@ -798,8 +798,6 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
 
       statsd = sd;
       inited = 1;
-    } else {
-
     }
 
     sd->rendering = false;

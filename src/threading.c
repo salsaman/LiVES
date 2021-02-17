@@ -394,18 +394,25 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancelled(lives_proc_thread_t tinf
          ? TRUE : FALSE;
 }
 
-#define _join(stype) lives_nanosleep_until_nonzero(weed_leaf_num_elements(tinfo, _RV_)); \
+#define _join(stype) if (is_fg_thread()) {while (weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL) == WEED_FALSE) { \
+      lives_widget_context_update(); lives_nanosleep(10000);}}		\
+  else lives_nanosleep_until_nonzero(weed_leaf_num_elements(tinfo, _RV_)); \
   return weed_get_##stype##_value(tinfo, _RV_, NULL);
 
 LIVES_GLOBAL_INLINE void lives_proc_thread_join(lives_proc_thread_t tinfo) {
   // WARNING !! version without a return value will free tinfo !
   void *dcmutex;
-
-  lives_nanosleep_until_nonzero((weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL) == WEED_TRUE));
+  if (is_fg_thread()) {
+    while (weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL) == WEED_FALSE) {
+      lives_widget_context_update();
+      lives_nanosleep(10000);
+    }
+  } else lives_nanosleep_until_nonzero((weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL) == WEED_TRUE));
   dcmutex = weed_get_voidptr_value(tinfo, WEED_LEAF_DONTCARE_MUTEX, NULL);
   if (dcmutex) lives_free(dcmutex);
   weed_plant_free(tinfo);
 }
+
 LIVES_GLOBAL_INLINE int lives_proc_thread_join_int(lives_proc_thread_t tinfo) { _join(int);}
 LIVES_GLOBAL_INLINE double lives_proc_thread_join_double(lives_proc_thread_t tinfo) {_join(double);}
 LIVES_GLOBAL_INLINE int lives_proc_thread_join_boolean(lives_proc_thread_t tinfo) { _join(boolean);}

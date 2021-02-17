@@ -1315,6 +1315,8 @@ boolean fn(LiVESWidget *widget, \lives_painter_t *cairo, int width, int height, 
 
 #define LIVES_KEY_Page_Up GDK_KEY_Page_Up
 #define LIVES_KEY_Page_Down GDK_KEY_Page_Down
+#define LIVES_KEY_KP_Page_Up GDK_KEY_KP_Page_Up
+#define LIVES_KEY_KP_Page_Down GDK_KEY_KP_Page_Down
 
 #define LIVES_KEY_Escape GDK_KEY_Escape
 

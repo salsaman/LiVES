@@ -159,6 +159,8 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
 
   // down is a press, up is a release
 
+  //g_print("KEYVALS %d and %d\n", unicode, keymod);
+
   keymod = keymod & ~(LIVES_NUMLOCK_MASK);
 
   if (!down) {

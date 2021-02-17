@@ -133,7 +133,4 @@ else nplanes = 3;
 for (int i = 1; i < nplanes; i++) {
   cp_chroma(dstp[i], srcp[i], irows[i], orows[i], width, height);
 }
-
-weed_free(srcp);
-weed_free(dstp);
 </process>

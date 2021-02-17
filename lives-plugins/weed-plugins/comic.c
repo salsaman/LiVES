@@ -139,10 +139,9 @@ static weed_error_t comic_process(weed_plant_t *inst, weed_timecode_t tc) {
     for (int i = 1; i < nplanes; i++) {
       cp_chroma(dstp[i], srcp[i], irows[i], orows[i], width, height);
     }
-    
-    weed_free(srcp);
-    weed_free(dstp);
   }
+  weed_free(srcp);
+  weed_free(dstp);
 
   return WEED_SUCCESS;
 }

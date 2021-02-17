@@ -47,7 +47,7 @@ static weed_error_t alien_overlay_init(weed_plant_t *inst) {
     weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
     if (1) {
-      sdata->old_pixel_data = (unsigned char *)weed_malloc(height * width);
+      sdata->old_pixel_data = (unsigned char *)weed_malloc(height * width * 3);
       if (!sdata->old_pixel_data) {
         weed_free(sdata);
         return WEED_ERROR_MEMORY_ALLOCATION;
@@ -112,7 +112,9 @@ static weed_error_t alien_overlay_process(weed_plant_t *inst, weed_timecode_t tc
     int offs = rgb_offset(pal);
     int xwidth = width * psize;
     int row = offset;
-    unsigned char *old_pixel_data = sdata->old_pixel_data + width / psize * 3 * offset, val;
+    unsigned char *old_pixel_data, val;
+    width *= 3;
+    old_pixel_data = sdata->old_pixel_data + width * offset;
     
     for (int i = 0; i < height; i++) {
       for (int j = offs; j < xwidth; j += psize) {
@@ -121,7 +123,7 @@ static weed_error_t alien_overlay_process(weed_plant_t *inst, weed_timecode_t tc
             if (!inplace) {
               dst[orow * i + j + k] = ((char)(old_pixel_data[width * i + j + k])
     	      + (char)(src[irow * i + j + k])) >> 1;
-              old_pixel_data[width *i + j + k] = src[irow * i + j + k];
+              old_pixel_data[width * i + j + k] = src[irow * i + j + k];
             } else {
               val = ((char)(old_pixel_data[width * i + j + k]) + (char)(src[irow * i + j + k])) >> 1;
               old_pixel_data[width * i + j + k] = src[irow * i + j + k];

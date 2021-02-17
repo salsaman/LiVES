@@ -480,7 +480,7 @@ if ($has_init) {
 	&clean_params;
     }
 
-    &add_end;
+    &add_end(0);
 
     print OUT "\n  return WEED_SUCCESS;\n";
     print OUT "}\n\n";
@@ -550,7 +550,7 @@ if ($num_params) {
     &clean_params;
 }
 
-&add_end;
+&add_end(1);
 
 print OUT "\n  return WEED_SUCCESS;\n";
 print OUT "}\n\n";
@@ -1104,6 +1104,29 @@ sub add_start {
 }
 
 sub add_end {
+    my $is_procfunc = shift;
+    if ($is_procfunc) {
+	if (@in_planar) {
+	    if (@in_planar == 1) {
+		print OUT "  weed_free(srcp);\n";
+	    }
+	    else {
+		foreach (@in_planar) {
+		    print OUT "  weed_free(srcp$_);\n";
+		}
+	    }
+	}
+	if (@out_planar) {
+	    if (@out_planar == 1) {
+		print OUT "  weed_free(dstp);\n";
+	    }
+	    else {
+		foreach (@in_planar) {
+		    print OUT "  weed_free(dstp$_);\n";
+		}
+	    }
+	}
+    }
     if ($num_oparams) {
 	print OUT "  weed_free(out_params);\n";
     }

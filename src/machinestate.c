@@ -2337,20 +2337,22 @@ boolean check_snap(const char *prog) {
 }
 
 
-#define APT_INSTALL "sudo apt install %s"
+#define SUDO_APT_INSTALL "sudo apt install %s"
+#define SU_PKG_INSTALL "su pkg install %s"
 
 char *get_install_cmd(const char *distro, const char *exe) {
   char *cmd = NULL, *pkgname = NULL;
 
   if (!lives_strcmp(exe, EXEC_PIP)) {
     if (!lives_strcmp(distro, DISTRO_UBUNTU)) {
-      if (check_for_executable(&capable->has_python3, EXEC_PYTHON3) == PRESENT) {
-	pkgname = "python-pip3";
-      }
-      else if (check_for_executable(&capable->has_python, EXEC_PYTHON) == PRESENT) {
-	pkgname = "python-pip";
-      }
-      else pkgname = "python3 python-pip3";
+      if (capable->python_version >= 3000000) pkgname = "python3-pip";
+      else if (capable->python_version >= 2000000) pkgname = "python-pip";
+      else pkgname = "python3 python3-pip";
+    }
+    if (!lives_strcmp(distro, DISTRO_FREEBSD)) {
+      if (capable->python_version >= 3000000) pkgname = "py3-pip";
+      else if (capable->python_version >= 2000000) pkgname = "py2-pip";
+      else pkgname = "python py3-pip";
     }
   }
 
@@ -2358,7 +2360,10 @@ char *get_install_cmd(const char *distro, const char *exe) {
 
   // TODO - add more, eg. pacman, dpkg
   if (!lives_strcmp(distro, DISTRO_UBUNTU)) {
-    cmd = lives_strdup_printf(APT_INSTALL, pkgname);
+    cmd = lives_strdup_printf(SUDO_APT_INSTALL, pkgname);
+  }
+  if (!lives_strcmp(distro, DISTRO_FREEBSD)) {
+    cmd = lives_strdup_printf(SU_PKG_INSTALL, pkgname);
   }
   return cmd;
 }

@@ -574,6 +574,7 @@ typedef struct {
   char *os_hardware;
 
 #define DISTRO_UBUNTU "Ubuntu"
+#define DISTRO_FREEBSD "FreeBSD"
 
   char *distro_name;
   char *distro_ver;
@@ -1257,7 +1258,7 @@ boolean do_existing_subs_warning(void);
 void do_invalid_subs_error(void);
 boolean do_erase_subs_warning(void);
 boolean do_sub_type_warning(const char *ext, const char *type_ext);
-boolean do_move_workdir_dialog(void);
+int do_move_workdir_dialog(void);
 boolean do_set_locked_warning(const char *setname);
 void do_no_in_vdevs_error(void);
 void do_locked_in_vdevs_error(void);

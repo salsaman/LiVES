@@ -22,10 +22,6 @@ void reorder_leave_back_set(boolean val) {reorder_leave_back = val;}
 
 /////////////////////////////////////////////////////
 
-LIVES_GLOBAL_INLINE ticks_t q_gint64(ticks_t in, double fps) {
-  return in - remainder((double)in, fps);
-}
-
 LIVES_GLOBAL_INLINE ticks_t q_gint64_floor(ticks_t in, double fps) {
   ldiv_t loodiv = ldiv((double)in, fps);
   return (ticks_t)((double)loodiv.quot * fps);

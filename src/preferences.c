@@ -2409,7 +2409,7 @@ void save_future_prefs(void) {
 
   // show_recent is a special case, future prefs has our original value
   if (!prefs->show_recent && future_prefs->show_recent) {
-    for (register int i = 1; i < + N_RECENT_FILES; i++)  {
+    for (int i = 1; i < + N_RECENT_FILES; i++)  {
       char *prefname = lives_strdup_printf("%s%d", PREF_RECENT, i);
       set_string_pref(prefname, "");
       lives_free(prefname);
@@ -2420,7 +2420,7 @@ void save_future_prefs(void) {
     set_boolean_pref(PREF_PREF_TRASH, prefs->pref_trash);
   }
 
-  if ((*future_prefs->workdir)) {
+  if (*future_prefs->workdir) {
     set_string_pref_priority(PREF_WORKING_DIR, future_prefs->workdir);
     set_string_pref(PREF_WORKING_DIR_OLD, future_prefs->workdir);
   }

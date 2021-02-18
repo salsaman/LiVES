@@ -1292,7 +1292,9 @@ boolean lives_widget_get_mod_mask(LiVESWidget *, LiVESXModifierType *modmask);
 boolean lives_widget_nullify_with(LiVESWidget *, void **);
 boolean lives_widget_destroy_with(LiVESWidget *, LiVESWidget *dieplease);
 
-void *lives_fg_run(weed_plant_t *lpt, void *retval);
+typedef weed_plantptr_t lives_proc_thread_t;
+void *lives_fg_run(lives_proc_thread_t lpt, void *retval);
+volatile lives_proc_thread_t get_lpttorun(void);
 
 #define LIVES_JUSTIFY_DEFAULT (def_widget_opts.justify)
 
@@ -1497,6 +1499,7 @@ const widget_opts_t _def_widget_opts = {
 #define FILTER_KEY "filter"
 #define DEFDIR_KEY "def_dir"
 #define RFX_KEY "rfx"
+#define DISP_LABEL_KEY "disp_label"
 #define KEEPABOVE_KEY "keep_above"
 #define ACTIVATE_KEY "activate"
 #define TEXTWIDGET_KEY "def_dir"

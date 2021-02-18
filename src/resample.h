@@ -39,7 +39,8 @@ typedef struct __resaudw {
 
 _resaudw *resaudw;
 
-ticks_t q_gint64(ticks_t in, double fps);
+#define q_gint64(in, fps) ((in) - remainder((double)(in), (fps)))
+
 ticks_t q_gint64_floor(ticks_t in, double fps);
 ticks_t q_dbl(double in, double fps);
 

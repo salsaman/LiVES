@@ -3465,7 +3465,7 @@ boolean get_temp_handle(int index) {
     }
 
     if (*mainw->set_name) {
-      char *setclipdir = SET_CLIPDIR(cfile->handle);
+      char *setclipdir = SET_CLIPDIR(mainw->files[index]->handle);
       if (lives_file_test(setclipdir, LIVES_FILE_TEST_IS_DIR)) is_unique = FALSE;
       lives_free(setclipdir);
     }
@@ -5064,6 +5064,47 @@ void recover_layout_map(int numclips) {
 }
 
 
+static LiVESResponseType manual_locate(const char *orig_filename, lives_clip_t *sfile) {
+  LiVESResponseType response = do_file_notfound_dialog(_("The original file"), orig_filename);
+  if (response == LIVES_RESPONSE_RETRY) {
+    return response;
+  }
+
+  if (response == LIVES_RESPONSE_BROWSE) {
+    LiVESWidget *chooser;
+    char fname[PATH_MAX], dirname[PATH_MAX], *newname;
+
+    lives_snprintf(dirname, PATH_MAX, "%s", orig_filename);
+    lives_snprintf(fname, PATH_MAX, "%s", orig_filename);
+
+    get_dirname(dirname);
+    get_basename(fname);
+
+    chooser = choose_file_with_preview(dirname, fname, NULL, LIVES_FILE_SELECTION_VIDEO_AUDIO);
+
+    response = lives_dialog_run(LIVES_DIALOG(chooser));
+
+    end_fs_preview();
+
+    if (response == LIVES_RESPONSE_ACCEPT) {
+      newname = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
+      //lives_widget_destroy(LIVES_WIDGET(chooser));
+
+      if (newname && *newname) {
+        char *tmp;
+        lives_snprintf(sfile->file_name, PATH_MAX, "%s",
+                       (tmp = lives_filename_to_utf8(newname, -1, NULL, NULL, NULL)));
+        lives_free(tmp);
+        lives_free(newname);
+      }
+    }
+    // cancelled from filechooser
+    lives_widget_destroy(LIVES_WIDGET(chooser));
+  }
+  return response;
+}
+
+
 boolean reload_clip(int fileno, int maxframe) {
   // reload clip -- for CLIP_TYPE_FILE
   // cd to clip directory - so decoder plugins can write temp files
@@ -5084,6 +5125,18 @@ boolean reload_clip(int fileno, int maxframe) {
   boolean was_renamed = FALSE, retb = FALSE;
   int current_file;
 
+  while (!lives_file_test(sfile->file_name, LIVES_FILE_TEST_EXISTS)) {
+    response = manual_locate(orig_filename, sfile);
+    if (response == LIVES_RESPONSE_RETRY) continue;
+    else if (response == LIVES_RESPONSE_ACCEPT) {
+      //re-scan for this
+      sfile->fps = 0.;
+      maxframe = 0;
+      was_renamed = TRUE;
+      break;
+    } else return FALSE;
+  }
+
   fake_cdata = (lives_clip_data_t *)struct_from_template(LIVES_STRUCT_CLIP_DATA_T);
 
   if (!mainw->decoders_loaded) {
@@ -5091,7 +5144,8 @@ boolean reload_clip(int fileno, int maxframe) {
     mainw->decoders_loaded = TRUE;
   }
 
-  odeclist = lives_list_copy(mainw->decoder_list);  ///< retain original order to restore for freshly opened clips
+  ///< retain original order to restore for freshly opened clips
+  odeclist = lives_list_copy(mainw->decoder_list);
   retb = get_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, decoder_name, PATH_MAX);
   if (retb && *decoder_name) {
     decoder_plugin_move_to_first(decoder_name);
@@ -5109,60 +5163,26 @@ boolean reload_clip(int fileno, int maxframe) {
 
     response = LIVES_RESPONSE_NONE;
 
-    if ((cdata = get_decoder_cdata(fileno, prefs->disabled_decoders, fake_cdata->fps != 0. ? fake_cdata : NULL)) == NULL) {
-      if (mainw->error) {
+    if ((cdata = get_decoder_cdata(fileno, prefs->disabled_decoders,
+                                   fake_cdata->fps != 0. ? fake_cdata : NULL)) == NULL) {
+
 manual_locate:
-        response = do_file_notfound_dialog(_("The original file"), orig_filename);
+      if (mainw->error || was_renamed) {
+        mainw->error = FALSE;
+        response = manual_locate(orig_filename, sfile);
         if (response == LIVES_RESPONSE_RETRY) {
+          lives_freep((void **)fake_cdata->URI);
+          continue;
+        } else if (response == LIVES_RESPONSE_ACCEPT) {
           lives_freep((void **)&fake_cdata->URI);
+          //re-scan for this
+          sfile->fps = 0.;
+          maxframe = 0;
+          was_renamed = TRUE;
           continue;
         }
-        if (response == LIVES_RESPONSE_BROWSE) {
-          int resp;
-          char fname[PATH_MAX], dirname[PATH_MAX], *newname;
-          LiVESWidget *chooser;
-
-          lives_snprintf(dirname, PATH_MAX, "%s", orig_filename);
-          lives_snprintf(fname, PATH_MAX, "%s", orig_filename);
-
-          get_dirname(dirname);
-          get_basename(fname);
-
-          chooser = choose_file_with_preview(dirname, fname, NULL, LIVES_FILE_SELECTION_VIDEO_AUDIO);
-
-          resp = lives_dialog_run(LIVES_DIALOG(chooser));
-
-          end_fs_preview();
-
-          if (resp == LIVES_RESPONSE_ACCEPT) {
-            newname = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
-            lives_widget_destroy(LIVES_WIDGET(chooser));
-
-            if (newname && *newname) {
-              char *tmp;
-              lives_snprintf(sfile->file_name, PATH_MAX, "%s", (tmp = lives_filename_to_utf8(newname, -1, NULL, NULL, NULL)));
-              lives_free(tmp);
-              lives_free(newname);
-            }
-
-            lives_freep((void **)&fake_cdata->URI);
-
-            //re-scan for these
-            sfile->fps = 0.;
-            maxframe = 0;
-
-            was_renamed = TRUE;
-            // try again with the new file
-            continue;
-          }
-          // cancelled from filechooser
-          lives_widget_destroy(LIVES_WIDGET(chooser));
-          goto manual_locate;
-        }
-        // cancelled
       } else {
         // unopenable
-        if (was_renamed) goto manual_locate;
         do_no_decoder_error(sfile->file_name);
       }
 

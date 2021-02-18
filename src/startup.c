@@ -1369,6 +1369,7 @@ static char *explain_missing(const char *exe) {
   char *pt2, *pt1 = lives_strdup_printf(_("\t'%s' was not found on your system.\n"
                                           "Installation is recommended as it provides the following features\n\t- "), exe);
   if (!lives_strcmp(exe, EXEC_FILE)) pt2 = (_("Enables easier identification of file types,\n\n"));
+  else if (!lives_strcmp(exe, EXEC_DU)) pt2 = (_("Enables measuring of disk space used,\n\n"));
   else if (!lives_strcmp(exe, EXEC_GZIP)) pt2 = (_("Enables reduction in file size for some files,\n\n"));
   else if (!lives_strcmp(exe, EXEC_DU)) pt2 = (_("Enables measuring of disk space used,\n\n"));
   else if (!lives_strcmp(exe, EXEC_FFPROBE)) pt2 = (_("Assists in the identification of video clips\n\n"));
@@ -1402,14 +1403,18 @@ void explain_missing_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 
   check_for_executable(&capable->has_file, EXEC_FILE);
 
+  ADD_TO_TEXT(sox_sox, EXEC_SOX);
   ADD_TO_TEXT(file, EXEC_FILE);
-  ADD_TO_TEXT(du,  EXEC_DU);
+  ADD_TO_TEXT(du, EXEC_DU);
   ADD_TO_TEXT(identify, EXEC_IDENTIFY);
   ADD_TO_TEXT(md5sum, EXEC_MD5SUM);
   ADD_TO_TEXT(ffprobe, EXEC_FFPROBE);
   ADD_TO_TEXT(convert, EXEC_CONVERT);
   ADD_TO_TEXT(composite, EXEC_COMPOSITE);
-  ADD_TO_TEXT(python, EXEC_PYTHON);
+  if (check_for_executable(&capable->has_python, EXEC_PYTHON) != PRESENT
+      && check_for_executable(&capable->has_python3, EXEC_PYTHON3) != PRESENT) {
+    ADD_TO_TEXT(python, EXEC_PYTHON);
+  }
   ADD_TO_TEXT(gzip, EXEC_GZIP);
   ADD_TO_TEXT(youtube_dl, EXEC_YOUTUBE_DL);
   ADD_TO_TEXT(xwininfo, EXEC_XWININFO);

@@ -26,8 +26,7 @@
 
 extern void reset_frame_and_clip_index(void);
 
-#define ANIM_LIMIT 0
-
+static void *extra_cb_data = NULL;
 static int extra_cb_key = 0;
 static int del_cb_key = 0;
 
@@ -210,7 +209,10 @@ static void extra_cb(LiVESWidget *dialog, int key) {
   case 2:
     trash_rb(LIVES_BUTTON_BOX(bbox));
     break;
-  default: break;
+  default:
+    if (extra_cb_data)
+      lives_box_pack_start(LIVES_BOX(dialog_vbox), (LiVESWidget *)extra_cb_data, FALSE, TRUE, 0);
+    break;
   }
 }
 
@@ -364,9 +366,9 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
         okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
                    LIVES_RESPONSE_OK);
       }
-    } else {
-      okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH,
-                 _("_Retry"), LIVES_RESPONSE_RETRY);
+      if (diat == LIVES_DIALOG_RETRY_CANCEL || diat == LIVES_DIALOG_ABORT_RETRY)
+        okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH,
+                   _("_Retry"), LIVES_RESPONSE_RETRY);
     }
     if (diat == LIVES_DIALOG_RETRY_CANCEL) {
       cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
@@ -891,6 +893,8 @@ LiVESResponseType do_memory_error_dialog(char *op, size_t bytes) {
   return response;
 }
 
+
+/// TODO - move the follwoing fns into processing.c
 
 LiVESResponseType handle_backend_errors(boolean can_retry) {
   /// handle error conditions returned from the back end
@@ -2081,7 +2085,7 @@ boolean do_auto_dialog(const char *text, int type) {
           ticks_t tl;
           while ((tl = lives_alarm_check(alarm_handle)) > 0 && !mainw->cancelled) {
             lives_progress_bar_pulse(LIVES_PROGRESS_BAR(mainw->proc_ptr->progressbar));
-            lives_widget_process_updates(mainw->proc_ptr->processing);
+            //lives_widget_process_updates(mainw->proc_ptr->processing);
             lives_usleep(prefs->sleep_time);
           }
           lives_alarm_clear(alarm_handle);
@@ -2113,7 +2117,7 @@ boolean do_auto_dialog(const char *text, int type) {
 }
 
 
-///// TODO: split warnings etc into separate file   ///
+///// TODO: end processing.c /////
 
 boolean do_save_clipset_warn(void) {
   char *extra;
@@ -3502,9 +3506,25 @@ boolean do_sub_type_warning(const char *ext, const char *type_ext) {
 }
 
 
-LIVES_GLOBAL_INLINE boolean do_move_workdir_dialog(void) {
-  return do_yesno_dialog(_("\nDo you wish to move the current clip sets to the new directory ?\n("
-                           "If unsure, click Yes)\n"));
+LIVES_GLOBAL_INLINE int do_move_workdir_dialog(void) {
+  LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
+  LiVESWidget *cln_cb = lives_standard_check_button_new(_("Clean and check old work directory"),
+                        TRUE, LIVES_BOX(hbox), NULL);
+  boolean cleanup = TRUE;
+  int bitmap = 0;
+
+  add_fill_to_box(LIVES_BOX(hbox));
+
+  extra_cb_key = 3;
+  extra_cb_data = hbox;
+  toggle_toggles_var(LIVES_TOGGLE_BUTTON(cln_cb), &cleanup, FALSE);
+
+  if (do_yesno_dialog(_("\nDo you wish to move the contents of the old working directory "
+                        "to the new directory ?\n"
+                        "(If unsure, click Yes)\n\nIn either case it is advisable to clean up\n"
+                        "the old working directory before proceeding."))) bitmap = 1;
+  if (cleanup) bitmap |= 2;
+  return bitmap;
 }
 
 

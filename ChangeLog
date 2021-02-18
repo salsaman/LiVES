@@ -5,12 +5,13 @@ Fix possible dataloss bug in undo delete audio.
 Sensitize GUI after "paste as new"
 Minor optimisations / fixes for mkv_decoder and avformat_decoder.
 Fix a few issues with record / playback of generators.
-Further optimise pre-caching ussing timing data from decoders (in progress).
+Further optimise pre-caching usmaiing timing data from decoders (in progress).
 Patch to allow use of jack1 (as well as jack2).
 Fix bug with wrapped frei0r parameter types (regression).
 Fix some refcounting issues when deiniting real time effects.
 Fix bug with timecode position in multitrack (regression).
 Fix handling issue for opening invalid media files.
+Allow parameters to have a "display" value and a "real" value.
 Prevent possible crashes with setting gtkentry in background threads.
 Improved progress dialog, also now shows progress when downloading an online clip.
 Clip durations now shown as hours / mins / secs. rather than jst seconds.

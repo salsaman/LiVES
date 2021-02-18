@@ -1,4 +1,3 @@
-
 // callbacks.c
 // LiVES
 // (c) G. Finch 2003 - 2020 <salsaman+lives@gmail.com>
@@ -45,6 +44,8 @@
 #endif
 
 static char file_name[PATH_MAX];
+
+static LiVESResponseType prompt_for_set_save(void);
 
 boolean on_LiVES_delete_event(LiVESWidget *widget, LiVESXEventDelete *event, livespointer user_data) {
   if (!LIVES_IS_INTERACTIVE) return TRUE;
@@ -117,10 +118,6 @@ void lives_exit(int signum) {
     mainw->is_exiting = TRUE;
 
     // unlock all mutexes to prevent deadlocks
-#ifdef HAVE_PULSE_AUDIO
-    /* if (mainw->pulsed || mainw->pulsed_read) */
-    /*   pa_mloop_unlock(); */
-#endif
 
     // recursive
     while (!pthread_mutex_unlock(&mainw->instance_ref_mutex));
@@ -259,11 +256,26 @@ void lives_exit(int signum) {
         threaded_dialog_spin(0.);
       }
 
-      if (*(future_prefs->workdir) && lives_strcmp(future_prefs->workdir, prefs->workdir)) {
-        // if we changed the workdir, remove everything but sets from the old dir
+      if (!signum && *future_prefs->workdir
+          && lives_strcmp(future_prefs->workdir, prefs->workdir)) {
+        // if we are changing the workdir, remove everything but sets from the old dir
         // create the new directory, and then move any sets over
+        int ret;
         end_threaded_dialog();
-        if (do_move_workdir_dialog()) {
+        ret = do_move_workdir_dialog();
+        if (ret & 2) {
+          mainw->is_exiting = FALSE;
+          on_cleardisk_activate(NULL, NULL);
+          mainw->is_exiting = TRUE;
+          // we may have recovered additional clips in this process
+          if (mainw->clips_available) {
+            if (prompt_for_set_save() == LIVES_RESPONSE_CANCEL) {
+              *future_prefs->workdir = 0;
+              return;
+            }
+          }
+        }
+        if (ret & 1) {
           do_do_not_close_d();
           lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
@@ -307,7 +319,8 @@ void lives_exit(int signum) {
           }
           if (mainw->drawsrc == mainw->current_file) mainw->drawsrc = -1;
 
-          if (IS_NORMAL_CLIP(i) && mainw->files[i]->ext_src && mainw->files[i]->ext_src_type == LIVES_EXT_SRC_DECODER) {
+          if (IS_NORMAL_CLIP(i) && mainw->files[i]->ext_src
+              && mainw->files[i]->ext_src_type == LIVES_EXT_SRC_DECODER) {
             // must do this before we move it
             close_clip_decoder(i);
             threaded_dialog_spin(0.);
@@ -965,7 +978,7 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
 retry:
     lives_rm(cfile->info_file);
     if (req->do_update) {
-      if (!check_for_executable(&capable->has_pip, EXEC_PIP)
+      if (1 || !check_for_executable(&capable->has_pip, EXEC_PIP)
           && !check_for_executable(&capable->has_pip, EXEC_PIP3)
          ) {
         /// check we can update locally
@@ -2105,9 +2118,79 @@ void del_current_set(boolean exit_after) {
 }
 
 
-void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  char *tmp;
+static LiVESResponseType prompt_for_set_save(void) {
+  _entryw *cdsw = create_cds_dialog(1);
+  char *set_name, *tmp;
+  LiVESResponseType resp;
   boolean legal_set_name;
+
+  do {
+    legal_set_name = TRUE;
+    lives_widget_show_all(cdsw->dialog);
+    resp = lives_dialog_run(LIVES_DIALOG(cdsw->dialog));
+
+    if (resp == LIVES_RESPONSE_RETRY) continue;
+
+    if (resp == LIVES_RESPONSE_CANCEL) {
+      lives_widget_destroy(cdsw->dialog);
+      lives_free(cdsw);
+      return resp;
+    }
+    if (resp == LIVES_RESPONSE_ACCEPT) {
+      // save set
+      if ((legal_set_name =
+             is_legal_set_name((set_name = U82F(lives_entry_get_text(LIVES_ENTRY(cdsw->entry)))),
+                               TRUE, FALSE))) {
+        lives_widget_destroy(cdsw->dialog);
+        lives_free(cdsw);
+
+        if (prefs->ar_clipset) set_string_pref(PREF_AR_CLIPSET, set_name);
+        else set_string_pref(PREF_AR_CLIPSET, "");
+
+        mainw->leave_recovery = FALSE;
+
+        on_save_set_activate(NULL, (tmp = U82F(set_name)));
+        lives_free(tmp);
+        lives_free(set_name);
+
+        return resp;
+      }
+      resp = LIVES_RESPONSE_RETRY;
+      lives_widget_hide(cdsw->dialog);
+      lives_free(set_name);
+    }
+    if (resp == LIVES_RESPONSE_RESET) {
+      char *what, *expl;
+      // TODO
+      //if (check_for_executable(&capable->has_gio, EXEC_GIO)) mainw->add_trash_rb = TRUE;
+      if (mainw->was_set) {
+        what = lives_strdup_printf(_("Set '%s'"), mainw->set_name);
+        expl = lives_strdup("");
+      } else {
+        what = (_("All currently open clips"));
+        expl = (_("<b>(Note: original source material will NOT be affected !)</b>"));
+        widget_opts.use_markup = TRUE;
+      }
+      if (!do_warning_dialogf(_("\n\n%s will be permanently deleted from the disk.\n"
+                                "Are you sure ?\n\n%s"), what, expl)) {
+        resp = LIVES_RESPONSE_ABORT;
+      }
+      widget_opts.use_markup = FALSE;
+      lives_free(what); lives_free(expl);
+      //mainw->add_trash_rb = FALSE;
+    }
+  } while (resp == LIVES_RESPONSE_ABORT || resp == LIVES_RESPONSE_RETRY);
+
+  lives_widget_destroy(cdsw->dialog);
+  lives_free(cdsw);
+
+  // discard clipset
+  del_current_set(!mainw->only_close);
+  return resp;
+}
+
+
+void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   mainw->mt_needs_idlefunc = FALSE;
 
@@ -2159,87 +2242,20 @@ void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   /// do not popup warning if set name is changed
   mainw->suppress_layout_warnings = TRUE;
 
-  if (!mainw->clips_available || (future_prefs->vj_mode && !mainw->no_exit)) {
+  if ((!mainw->clips_available || (future_prefs->vj_mode && !mainw->no_exit))
+      && !(*future_prefs->workdir
+           && lives_strcmp(future_prefs->workdir, prefs->workdir))) {
     lives_exit(0);
   } else {
-    char *set_name;
-    _entryw *cdsw = create_cds_dialog(1);
-    LiVESResponseType resp;
-    do {
-      legal_set_name = TRUE;
-      lives_widget_show_all(cdsw->dialog);
-      resp = lives_dialog_run(LIVES_DIALOG(cdsw->dialog));
+    if (prompt_for_set_save() != LIVES_RESPONSE_CANCEL && !mainw->no_exit) lives_exit(0);
 
-      if (resp == LIVES_RESPONSE_RETRY) continue;
-
-      if (resp == LIVES_RESPONSE_CANCEL) {
-        lives_widget_destroy(cdsw->dialog);
-        lives_free(cdsw);
-        mainw->only_close = mainw->is_exiting = FALSE;
-        if (mainw->multitrack) {
-          mt_sensitise(mainw->multitrack);
-          maybe_add_mt_idlefunc();
-        }
-        mainw->only_close = mainw->is_exiting = FALSE;
-        return;
-      }
-      if (resp == LIVES_RESPONSE_ACCEPT) {
-        // save set
-        if ((legal_set_name = is_legal_set_name((set_name = U82F(lives_entry_get_text(LIVES_ENTRY(cdsw->entry)))),
-                                                TRUE, FALSE))) {
-          lives_widget_destroy(cdsw->dialog);
-          lives_free(cdsw);
-
-          if (prefs->ar_clipset) set_string_pref(PREF_AR_CLIPSET, set_name);
-          else set_string_pref(PREF_AR_CLIPSET, "");
-
-          mainw->leave_recovery = FALSE;
-
-          on_save_set_activate(NULL, (tmp = U82F(set_name)));
-          lives_free(tmp);
-          lives_free(set_name);
-
-          if (!mainw->no_exit) lives_exit(0);
-
-          if (mainw->multitrack) {
-            mt_sensitise(mainw->multitrack);
-            maybe_add_mt_idlefunc();
-          }
-          mainw->only_close = mainw->is_exiting = FALSE;
-          if (mainw->cs_manage) lives_idle_add_simple(run_diskspace_dialog_idle, NULL);
-          end_threaded_dialog();
-          return;
-        }
-        resp = LIVES_RESPONSE_RETRY;
-        lives_widget_hide(cdsw->dialog);
-        lives_free(set_name);
-      }
-      if (resp == LIVES_RESPONSE_RESET) {
-        char *what, *expl;
-        // TODO
-        //if (check_for_executable(&capable->has_gio, EXEC_GIO)) mainw->add_trash_rb = TRUE;
-        if (mainw->was_set) {
-          what = lives_strdup_printf(_("Set '%s'"), mainw->set_name);
-          expl = lives_strdup("");
-        } else {
-          what = (_("All currently open clips"));
-          expl = (_("<b>(Note: original source material will NOT be affected !)</b>"));
-          widget_opts.use_markup = TRUE;
-        }
-        if (!do_warning_dialogf(_("\n\n%s will be permanently deleted from the disk.\nAre you sure ?\n\n%s"), what, expl)) {
-          resp = LIVES_RESPONSE_ABORT;
-        }
-        widget_opts.use_markup = FALSE;
-        lives_free(what); lives_free(expl);
-        //mainw->add_trash_rb = FALSE;
-      }
-    } while (resp == LIVES_RESPONSE_ABORT || resp == LIVES_RESPONSE_RETRY);
-
-    lives_widget_destroy(cdsw->dialog);
-    lives_free(cdsw);
-
-    // discard clipset
-    del_current_set(!mainw->only_close);
+    if (mainw->multitrack) {
+      mt_sensitise(mainw->multitrack);
+      maybe_add_mt_idlefunc();
+    }
+    mainw->only_close = mainw->is_exiting = FALSE;
+    if (mainw->cs_manage) lives_idle_add_simple(run_diskspace_dialog_idle, NULL);
+    end_threaded_dialog();
   }
 
   mainw->leave_recovery = TRUE;
@@ -6044,7 +6060,7 @@ static void recover_lost_clips(LiVESList * reclist) {
     }
     switch_to_file(-1, start_file);
   }
-  do_info_dialogf(P_("$d clip was recovered", "%d clips were recovered\n",
+  do_info_dialogf(P_("%d clip was recovered", "%d clips were recovered\n",
                      mainw->clips_available), mainw->clips_available);
 }
 

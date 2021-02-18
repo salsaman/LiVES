@@ -969,6 +969,10 @@ static volatile lives_proc_thread_t lpttorun = NULL;
 static volatile void *lpt_result = NULL;
 static volatile void *lpt_retval = NULL;
 
+volatile lives_proc_thread_t get_lpttorun(void) {
+  return lpttorun;
+}
+
 static void sigdata_free(livespointer data, LiVESWidgetClosure *cl) {
   lives_sigdata_t *sigdata = (lives_sigdata_t *)data;
   if (cl) active_sigdets = lives_list_remove(active_sigdets, sigdata);

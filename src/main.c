@@ -3266,7 +3266,9 @@ retry_configfile:
 
         if (!lives_make_writeable_dir(dir)) {
           do_dir_perm_error(dir, FALSE);
-          dir_valid = FALSE;
+          if (!lives_make_writeable_dir(dir)) {
+            dir_valid = FALSE;
+          }
         }
       }
 
@@ -3282,7 +3284,7 @@ retry_configfile:
         set_string_pref(PREF_WORKING_DIR_OLD, prefs->workdir);
       } else {
         needs_workdir = TRUE;
-        prefs->startup_phase = -1;
+        //prefs->startup_phase = -1;
       }
     } else {
       if (prefs->startup_phase != -1) {
@@ -3670,8 +3672,10 @@ static boolean lives_startup(livespointer data) {
     if (!do_workdir_query()) {
       lives_exit(0);
     }
-    prefs->startup_phase = 2;
-    set_int_pref(PREF_STARTUP_PHASE, 2);
+    if (prefs->startup_phase == 1) {
+      prefs->startup_phase = 2;
+      set_int_pref(PREF_STARTUP_PHASE, 2);
+    }
   }
   if (prefs->startup_phase > 0 && prefs->startup_phase < 3) {
     if (!do_startup_tests(FALSE)) {

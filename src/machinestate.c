@@ -2521,9 +2521,11 @@ LIVES_GLOBAL_INLINE double check_disk_pressure(double current) {
 int64_t get_cpu_load(int cpun) {
   /// return reported load for CPU cpun (% * 1 million)
   /// as a bonus, if cpun == -1, returns boot time
+  // returns -1 if the value cannot be read
   static uint64_t lidle = 0, lsum = 0;
   int64_t ret = -1;
   char *res, *target, *com;
+  if (!lives_file_test(CPU_STATS_FILE, LIVES_FILE_TEST_EXISTS)) return -1;
   if (cpun > 0) target = lives_strdup_printf("cpu%d", --cpun);
   else if (cpun == 0) target = lives_strdup_printf("cpu");
   else target = lives_strdup_printf("btime");

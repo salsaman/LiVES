@@ -2200,7 +2200,7 @@ lives_decoder_t *clone_decoder(int fileno) {
 }
 
 
-static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList * disabled, const lives_clip_data_t *fake_cdata) {
+static lives_decoder_t *try_decoder_plugins(char *xfile_name, LiVESList * disabled, const lives_clip_data_t *fake_cdata) {
   // here we test each decoder in turn to see if it can open "file_name"
 
   // if we are reopening a clip, then fake cdata is a partially initialised cdata, but with only the frame count and fps set
@@ -2214,15 +2214,13 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList * disable
 
   lives_decoder_t *dplug = (lives_decoder_t *)lives_calloc(1, sizeof(lives_decoder_t));
   LiVESList *decoder_plugin = mainw->decoder_list;
-  //LiVESList *last_decoder_plugin = NULL;
+  char *file_name = xfile_name;
 
   dplug->refs = 1;
 
   if (fake_cdata) {
     set_cdata_memfuncs((lives_clip_data_t *)fake_cdata);
-    //if (prefs->vj_mode) {
     ((lives_clip_data_t *)fake_cdata)->seek_flag = LIVES_SEEK_FAST;
-    //}
   }
 
   while (decoder_plugin) {
@@ -2241,7 +2239,10 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList * disable
     dplug->cdata = (dpsys->get_clip_data)(file_name, fake_cdata);
 
     // use fake_cdata only on first (reloaded)
-    fake_cdata = NULL;
+    if (fake_cdata) {
+      file_name = lives_strdup(fake_cdata->URI);
+      fake_cdata = NULL;
+    }
 
     if (dplug->cdata) {
       // check for sanity
@@ -2274,6 +2275,8 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList * disable
     decoder_plugin = decoder_plugin->next;
   }
 
+  if (file_name && file_name != xfile_name) lives_free(file_name);
+
   if (!decoder_plugin) {
     lives_freep((void **)&dplug);
   } else {
@@ -2284,7 +2287,8 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList * disable
 }
 
 
-const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList * disabled, const lives_clip_data_t *fake_cdata) {
+const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList * disabled,
+    const lives_clip_data_t *fake_cdata) {
   // pass file to each decoder (demuxer) plugin in turn, until we find one that can parse
   // the file
   // NULL is returned if no decoder plugin recognises the file - then we

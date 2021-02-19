@@ -2877,7 +2877,10 @@ switch_point:
                 lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs), mainw->pulsed->seek_pos);
 #endif
 #ifdef HAVE_PULSE_AUDIO
-        last_seek_pos = mainw->pulsed->seek_pos;
+        if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) last_seek_pos = mainw->pulsed->seek_pos;
+#endif
+#ifdef ENABLE_JACK
+        if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd) last_seek_pos = mainw->jackd->seek_pos;
 #endif
 
         if (mainw->disk_pressure == 0. || mainw->pred_clip != -1)

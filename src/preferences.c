@@ -1507,7 +1507,6 @@ boolean apply_prefs(boolean skip_warn) {
   boolean autoclean = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->cb_autoclean));
 
 #ifdef ENABLE_JACK_TRANSPORT
-  boolean jack_tstart = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_start_tjack));
   boolean jack_master = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_master));
   boolean jack_client = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_client));
   boolean jack_tb_start = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start));
@@ -1524,11 +1523,10 @@ boolean apply_prefs(boolean skip_warn) {
 #endif
 
 #ifdef ENABLE_JACK
-  boolean jack_astart = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack));
   boolean jack_pwp = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_pwp));
   boolean jack_read_autocon = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_read_autocon));
   uint32_t jack_opts = (JACK_OPTS_TRANSPORT_CLIENT * jack_client + JACK_OPTS_TRANSPORT_MASTER * jack_master +
-                        JACK_OPTS_START_TSERVER * jack_tstart + JACK_OPTS_START_ASERVER * jack_astart +
+                        //JACK_OPTS_START_TSERVER * jack_tstart + JACK_OPTS_START_ASERVER * jack_astart +
                         JACK_OPTS_NOPLAY_WHEN_PAUSED * !jack_pwp + JACK_OPTS_TIMEBASE_START * jack_tb_start +
                         JACK_OPTS_TIMEBASE_LSTART * jack_mtb_start +
                         JACK_OPTS_TIMEBASE_CLIENT * jack_tb_client + JACK_OPTS_NO_READ_AUTOCON * !jack_read_autocon);
@@ -2665,12 +2663,10 @@ static void on_audp_entry_changed(LiVESWidget *audp_combo, livespointer ptr) {
   if (!strcmp(audp, AUDIO_PLAYER_JACK)) {
     lives_widget_set_sensitive(prefsw->checkbutton_jack_pwp, TRUE);
     lives_widget_set_sensitive(prefsw->checkbutton_jack_read_autocon, TRUE);
-    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack), TRUE);
     lives_widget_show(prefsw->jack_int_label);
   } else {
     lives_widget_set_sensitive(prefsw->checkbutton_jack_pwp, FALSE);
     lives_widget_set_sensitive(prefsw->checkbutton_jack_read_autocon, FALSE);
-    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack), FALSE);
     lives_widget_hide(prefsw->jack_int_label);
   }
 #endif
@@ -3069,7 +3065,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   LiVESList *mchanlist = NULL;
 #endif
 #endif
-
+  LiVESList *stmodes = NULL;
   LiVESSList *autoback_group = NULL;
   LiVESSList *st_interface_group = NULL;
 
@@ -3844,7 +3840,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_layout_add_row(LIVES_LAYOUT(layout));
 
   prefsw->jack_int_label =
-    lives_layout_add_label(LIVES_LAYOUT(layout), _("(See also the Jack Integration tab for jack startup options)"), TRUE);
+    lives_layout_add_label(LIVES_LAYOUT(layout),
+			   _("(See also the Jack Integration tab for jack startup options)"), TRUE);
   lives_widget_set_no_show_all(prefsw->jack_int_label, TRUE);
 
   prefsw->audp_name = NULL;
@@ -5210,37 +5207,69 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_container_set_border_width(LIVES_CONTAINER(prefsw->vbox_right_jack), widget_opts.border_width * 2);
 
   prefsw->scrollw_right_jack = lives_standard_scrolled_window_new(0, 0, prefsw->vbox_right_jack);
+ 
+  prefsw->jack_tvbox = lives_vbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), prefsw->jack_tvbox,
+		       FALSE, FALSE, widget_opts.packing_height);
 
-  label = lives_standard_label_new(_("Jack transport"));
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(prefsw->jack_tvbox), hbox,
+		       FALSE, FALSE, widget_opts.packing_height);
+
+  tmp = lives_big_and_bold(_("Jack Transport"));
+  widget_opts.use_markup = TRUE;
+  label = lives_standard_label_new_with_tooltips(tmp, LIVES_BOX(hbox), NULL);
+  widget_opts.use_markup = FALSE;
+  lives_free(tmp);
 
 #ifndef ENABLE_JACK_TRANSPORT
-  label = lives_standard_label_new(
-            _("LiVES must be compiled with jack/transport.h and jack/jack.h present to use jack transport"));
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
+  show_warn_label(_("LiVES must be compiled with jack/transport.h and jack/jack.h\n"
+		    "present to use jack transport"));
 #else
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->jack_tserver_entry = lives_standard_entry_new(_("Jack _transport config file"), prefs->jack_tserver, -1, PATH_MAX,
-                               LIVES_BOX(hbox), NULL);
-
-  lives_widget_set_sensitive(prefsw->jack_tserver_entry, FALSE); // unused for now
-
-  prefsw->checkbutton_start_tjack = lives_standard_check_button_new(_("Start _server on LiVES startup"),
-                                    (future_prefs->jack_opts & JACK_OPTS_START_TSERVER) ? TRUE : FALSE,
-                                    LIVES_BOX(hbox), NULL);
+  prefsw->jack_trans =
+    lives_standard_check_button_new(_("ENABLED"), !(prefs->jack_opts & JACK_OPTS_DISABLE_TCLIENT),
+				    LIVES_BOX(hbox),
+				    H_("Allows LiVES playback to be synchronised with other\n"
+				       "jack transport capable applications.\n"
+				       "Can be configured independantly of the jack audio player"));
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->jack_trans), prefsw->jack_tvbox, FALSE);
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(prefsw->jack_tvbox), hbox,
+		       FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->checkbutton_jack_master = lives_standard_check_button_new(_("Jack transport _master (start and stop)"),
-                                    (future_prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER) ? TRUE : FALSE,
-                                    LIVES_BOX(hbox), NULL);
+  stmodes = lives_list_append(stmodes, _("AUTO"));
+  stmodes = lives_list_append(stmodes, _("Start server only"));
+  stmodes = lives_list_append(stmodes, _("Connect only"));
+
+  prefsw->jack_tstart_combo =
+    lives_standard_combo_new(_("Server connection mode"), stmodes, LIVES_BOX(hbox),
+			     H_("Start server only :: start and shutdown the server when LiVES\n"
+				"is started and shut down.\nWill fail if server is already started.\n\n"
+				"Connect only :: on startup, tries to connect to a running server.\n"
+				"Will fail if the server is not running.\n\n"
+				"AUTO :: will either connect to a running server or start one\n"
+				"if that fails\nA combination of the other two options."));
+
+  advbutton =
+    lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES,
+					      _("Server and Driver _Configuration"),
+					      DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT,
+					      LIVES_BOX(hbox), TRUE, NULL);
+
+  layout = lives_layout_new(LIVES_BOX(prefsw->jack_tvbox));
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  prefsw->checkbutton_jack_master =
+    lives_standard_check_button_new(_("Jack transport _master (start and stop)  ---->"),
+                                    (future_prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER)
+				    ? TRUE : FALSE, LIVES_BOX(hbox), NULL);
 
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_master), LIVES_WIDGET_TOGGLED_SIGNAL,
                                   LIVES_GUI_CALLBACK(after_jack_master_toggled), NULL);
 
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_jack_mtb_start = lives_standard_check_button_new(_("LiVES can set start position"),
                                        (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_LSTART) ?
                                        (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_master)))
@@ -5249,17 +5278,17 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_widget_set_sensitive(prefsw->checkbutton_jack_mtb_start,
                              lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_master)));
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->checkbutton_jack_client = lives_standard_check_button_new(_("Jack transport _client (start and stop)"),
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  prefsw->checkbutton_jack_client = lives_standard_check_button_new(_("Jack transport _client (start and stop)  ---->"),
                                     (future_prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT) ? TRUE : FALSE,
                                     LIVES_BOX(hbox), NULL);
 
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_client), LIVES_WIDGET_TOGGLED_SIGNAL,
                                   LIVES_GUI_CALLBACK(after_jack_client_toggled), NULL);
 
-  prefsw->checkbutton_jack_tb_start = lives_standard_check_button_new(_("Jack transport can set start position"),
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  prefsw->checkbutton_jack_tb_start = lives_standard_check_button_new(_("Jack transport can set start position  ---->"),
                                       (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_START) ?
                                       (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_client)))
                                       : FALSE, LIVES_BOX(hbox), NULL);
@@ -5270,10 +5299,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(prefsw->checkbutton_jack_tb_start), LIVES_WIDGET_TOGGLED_SIGNAL,
                                   LIVES_GUI_CALLBACK(after_jack_tb_start_toggled), NULL);
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_jack_tb_client = lives_standard_check_button_new(_("Jack transport timebase slave"),
                                        (future_prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) ?
                                        (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start)))
@@ -5286,37 +5313,55 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   lives_widget_set_sensitive(prefsw->checkbutton_jack_tb_client,
                              lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start)));
 
-  label = lives_standard_label_new(_("(See also Playback -> Audio follows video rate/direction)\n\n\n\n"));
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
+  tmp = lives_big_and_bold(_("\n(See also Playback -> Audio follows video rate/direction)"));
+  widget_opts.use_markup = TRUE;
+  label = lives_standard_label_new(tmp);
+  widget_opts.use_markup = FALSE;
+  lives_free(tmp);
+  lives_box_pack_start(LIVES_BOX(prefsw->jack_tvbox), label,
+		       FALSE, FALSE, widget_opts.packing_height);
 
 #endif
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_jack));
 
-  label = lives_standard_label_new(_("Jack audio"));
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
+  tmp = lives_big_and_bold(_("Jack Audio"));
+  widget_opts.use_markup = TRUE;
+  label = lives_standard_label_new_with_tooltips(tmp, LIVES_BOX(prefsw->vbox_right_jack), NULL);
+  widget_opts.use_markup = FALSE;
+  lives_free(tmp);
 
 #ifndef ENABLE_JACK
-  label = lives_standard_label_new(_("LiVES must be compiled with jack/jack.h present to use jack audio"));
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
+  show_warn_image(label, _("LiVES must be compiled with jack/jack.h present to use jack audio"));
 #else
-  label = lives_standard_label_new(_("You MUST set the audio player to \"jack\" in the Playback tab to use jack audio"));
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
+  if (prefs->audio_player != AUD_PLAYER_JACK)
+    show_warn_image(label, _("You MUST set the audio player to \"jack\""
+			     "in the Playback tab to use jack audio"));
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox,
+		       FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->jack_aserver_entry = lives_standard_entry_new(_("Jack _audio server config file"), prefs->jack_aserver, -1,
-                               PATH_MAX, LIVES_BOX(hbox), NULL);
+  prefsw->jack_astart_combo =
+    lives_standard_combo_new(_("Server connection mode"), stmodes, LIVES_BOX(hbox),
+			     H_("Start server only :: start and shutdown the server when LiVES\n"
+				"is started and shut down.\nWill fail if server is already started.\n\n"
+				"Connect only :: on startup, tries to connect to a running server.\n"
+				"Will fail if the server is not running.\n\n"
+				"AUTO :: will either connect to a running server or start one\n"
+				"if that fails\nA combination of the other two options."));
 
-  lives_widget_set_sensitive(prefsw->jack_aserver_entry, FALSE);
+  lives_list_free_all(&stmodes);
 
-  prefsw->checkbutton_start_ajack = lives_standard_check_button_new(_("Start _server on LiVES startup"),
-                                    (future_prefs->jack_opts & JACK_OPTS_START_ASERVER) ? TRUE : FALSE,
-                                    LIVES_BOX(hbox), NULL);
+  advbutton =
+    lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES,
+					      _("Server and Driver _Configuration"),
+					      DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT,
+					      LIVES_BOX(hbox), TRUE, NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_jack), hbox,
+		       FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->checkbutton_jack_pwp = lives_standard_check_button_new(_("Play audio even when transport is _paused"),
                                  (future_prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED) ? FALSE : TRUE,
@@ -5739,7 +5784,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
 #ifdef ENABLE_JACK_TRANSPORT
   ACTIVE(jack_tserver_entry, CHANGED);
-  ACTIVE(checkbutton_start_tjack, TOGGLED);
   ACTIVE(checkbutton_jack_master, TOGGLED);
   ACTIVE(checkbutton_jack_client, TOGGLED);
   ACTIVE(checkbutton_jack_tb_start, TOGGLED);
@@ -5749,7 +5793,6 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
 #ifdef ENABLE_JACK
   ACTIVE(jack_aserver_entry, CHANGED);
-  ACTIVE(checkbutton_start_ajack, TOGGLED);
   ACTIVE(checkbutton_jack_pwp, TOGGLED);
   ACTIVE(checkbutton_jack_read_autocon, TOGGLED);
 #endif

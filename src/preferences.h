@@ -235,16 +235,27 @@ typedef struct {
 #define JACK_OPTS_TRANSPORT_CLIENT	(1 << 0)   ///< jack can start/stop
 #define JACK_OPTS_TRANSPORT_MASTER	(1 << 1)  ///< transport master
 #define JACK_OPTS_START_TSERVER		(1 << 2)     ///< start transport server
-#define JACK_OPTS_NOPLAY_WHEN_PAUSED	(1 << 3) ///< play audio even when transport paused
+#define JACK_OPTS_NOPLAY_WHEN_PAUSED	(1 << 3) ///< do not play audio when transport is paused
 #define JACK_OPTS_START_ASERVER		(1 << 4)     ///< start audio server
+
 #define JACK_OPTS_TIMEBASE_START	(1 << 5)    ///< jack sets play start position
 #define JACK_OPTS_TIMEBASE_CLIENT	(1 << 6)    ///< full timebase client
 #define JACK_OPTS_TIMEBASE_MASTER	(1 << 7)   ///< timebase master (not implemented yet)
 #define JACK_OPTS_NO_READ_AUTOCON	(1 << 8)   ///< do not auto con. rd clients when playing ext aud
 #define JACK_OPTS_TIMEBASE_LSTART	(1 << 9)    ///< LiVES sets play start position
 
+#define JACK_OPTS_AUTO_ASERVER      	(1 << 10)     ///< connect or start audio server (bit 4 ignored)
+#define JACK_OPTS_AUTO_TSERVER      	(1 << 11)     ///< connect to transport server (bit 2 ignored)
+#define JACK_OPTS_DISABLE_TCLIENT      	(1 << 12)     ///< disable transport client (ignore bits 11 & 2)
+
   char jack_tserver[PATH_MAX];
   char jack_aserver[PATH_MAX];
+
+  char jack_aserver_sname[1024];
+  char jack_tserver_sname[1024];
+
+  char jack_aserver_cname[1024];
+  char jack_tserver_cname[1024];
 
   char *fxdefsfile;
   char *fxsizesfile;
@@ -695,8 +706,13 @@ typedef struct {
   LiVESWidget *spinbutton_nfx_threads;
   LiVESWidget *enable_OSC;
   LiVESWidget *enable_OSC_start;
+  LiVESWidget *jack_tvbox;
+  LiVESWidget *jack_avbox;
   LiVESWidget *jack_tserver_entry;
   LiVESWidget *jack_aserver_entry;
+  LiVESWidget *jack_tstart_combo;
+  LiVESWidget *jack_astart_combo;
+  LiVESWidget *jack_trans;
   LiVESWidget *checkbutton_jack_master;
   LiVESWidget *checkbutton_jack_client;
   LiVESWidget *checkbutton_jack_tb_start;
@@ -704,8 +720,6 @@ typedef struct {
   LiVESWidget *checkbutton_jack_tb_client;
   LiVESWidget *checkbutton_jack_pwp;
   LiVESWidget *checkbutton_jack_read_autocon;
-  LiVESWidget *checkbutton_start_tjack;
-  LiVESWidget *checkbutton_start_ajack;
   LiVESWidget *checkbutton_parestart;
   LiVESWidget *checkbutton_afollow;
   LiVESWidget *checkbutton_aclips;

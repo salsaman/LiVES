@@ -479,6 +479,131 @@ boolean do_workdir_query(void) {
 }
 
 
+#ifdef ENABLE_JACK
+static boolean do_jack_config(void) {
+  LiVESList *stmodes = NULL;
+  LiVESSList *st_src_group = NULL;
+  LiVESAccelGroup *accel_group;
+  LiVESWidget *dialog, *dialog_vbox, *layout, *combo, *hbox, *rb;
+  LiVESWidget *okbutton, *cancelbutton, *filebutton;
+  LiVESResponseType response;
+  char *show_hid[2] = {".", NULL};
+  char *wid;
+  int mode;
+
+  lives_snprintf(prefs->jack_aserver_sname, 1024, "%s", JACK_DEFAULT_SERVER_NAME);
+  lives_snprintf(prefs->jack_aserver_cname, 1024, "%s", JACK_DEFAULT_SERVER_NAME);
+  
+ pickmode:
+  dialog = lives_standard_dialog_new(_("Initial configuration for jack audio"), FALSE, -1, -1);
+
+  accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
+  lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
+
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+
+  layout = lives_layout_new(LIVES_BOX(dialog_vbox));
+  
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Please use the options below to define the "
+						 "initial settings for jackd.\n"
+						 "Once LiVES starts up, you can adjust the settings "
+						 "in Tools / Preferences / Jack integration"), FALSE);
+  lives_layout_add_row(LIVES_LAYOUT(layout));
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Initial startup mode"), FALSE);
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Please choose one of the follwing:"), TRUE);
+  lives_layout_add_row(LIVES_LAYOUT(layout));
+
+  stmodes = lives_list_append(stmodes, _("AUTO"));
+  stmodes = lives_list_append(stmodes, _("Start server only"));
+  stmodes = lives_list_append(stmodes, _("Connect only"));
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  combo = lives_standard_combo_new(NULL, stmodes, LIVES_BOX(hbox), NULL);
+  lives_list_free_all(&stmodes);
+
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Start server only:"), FALSE);
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  lives_standard_radio_button_new(_("_Use settings in config file"), &st_src_group, LIVES_BOX(hbox), NULL);
+  //hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  lives_standard_fileentry_new(_("Config file"), prefs->jack_aserver, capable->home_dir, MEDIUM_ENTRY_WIDTH,
+			       PATH_MAX, LIVES_BOX(hbox), NULL);
+  filebutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(filebutton), FILTER_KEY, show_hid);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  rb = lives_standard_radio_button_new(_("_Use settings  from LiVES"), &st_src_group, LIVES_BOX(hbox), NULL);
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(rb), TRUE);
+  //hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  lives_standard_entry_new(_("Server name to start"), prefs->jack_aserver_sname, -1, 1024, LIVES_BOX(hbox), NULL);
+
+  lives_layout_add_row(LIVES_LAYOUT(layout));
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("LiVES will start and stop the jack server automatically."
+						 "The jackd server should not be running when LiVES is started"), TRUE);
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Connect only:"), FALSE);
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  lives_standard_entry_new(_("Server name to sconnect to"), prefs->jack_aserver_cname, -1, 1024, LIVES_BOX(hbox), NULL);
+  lives_layout_add_row(LIVES_LAYOUT(layout));
+
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("LiVES will only connect to an existing jack server "
+						 "The server needs to be started before running LiVES"), TRUE);
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("AUTO:"), FALSE);
+  lives_layout_add_row(LIVES_LAYOUT(layout));
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("If the server is running when LiVES starts, LiVES will connect to it,"
+						 "otherwise LiVES will start the server and stop it when exiting"), TRUE);
+  lives_layout_add_row(LIVES_LAYOUT(layout));
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("(behaves like a combination of the previous two modes)"), TRUE);
+
+  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
+                 LIVES_RESPONSE_CANCEL);
+
+  lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+
+  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD, _("_Next"),
+             LIVES_RESPONSE_OK);
+
+  lives_widget_show_all(dialog);
+  lives_button_grab_default_special(okbutton);
+
+  lives_widget_show_now(dialog);
+  lives_widget_grab_focus(okbutton);
+  //lives_widget_process_updates(dialog);
+  lives_widget_context_update();
+
+  wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
+  if (!wid || !activate_x11_window(wid)) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
+
+  response = lives_dialog_run(LIVES_DIALOG(dialog));
+  mode = lives_combo_get_active_index(LIVES_COMBO(combo));
+
+  lives_widget_destroy(dialog);
+
+  if (response == LIVES_RESPONSE_OK) {
+    if (!mode)
+      future_prefs->jack_opts = prefs->jack_opts = JACK_OPTS_AUTO_ASERVER | JACK_OPTS_AUTO_TSERVER;
+    else if (mode == 1)
+      future_prefs->jack_opts = prefs->jack_opts = JACK_OPTS_START_ASERVER | JACK_OPTS_START_TSERVER;
+    else {
+      future_prefs->jack_opts = prefs->jack_opts = 0;
+      if (!do_warning_dialog(_("Please ensure that jack server 'default' "
+			       "is running before clicking OK\n"
+			       "otherwise, click Cancel to select a different option\n"))) {
+	st_src_group = NULL;
+	goto pickmode;
+      }
+    }
+    lives_snprintf(prefs->jack_tserver_sname, 1024, "%s", prefs->jack_aserver_sname);
+    lives_snprintf(prefs->jack_tserver_cname, 1024, "%s", prefs->jack_aserver_cname);
+    set_int_pref(PREF_JACK_OPTS, prefs->jack_opts);
+    return TRUE;
+  }
+  return FALSE;
+}
+#endif
+
+
 static void on_init_aplayer_toggled(LiVESToggleButton * tbutton, livespointer user_data) {
   int audp = LIVES_POINTER_TO_INT(user_data);
 
@@ -518,6 +643,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   LiVESSList *radiobutton_group = NULL;
 
   char *txt0, *txt1, *txt2, *txt3, *txt4, *txt5, *txt6, *msg, *wid;
+  char *tmp, *recstr;
 
   LiVESResponseType response;
 
@@ -528,6 +654,8 @@ boolean do_audio_choice_dialog(short startup_phase) {
     txt0 = lives_strdup("");
   }
 
+ reloop:
+  
   txt1 = lives_strdup(
            _("Before starting LiVES, you need to choose an audio player.\n\nPULSE AUDIO is recommended for most users"));
 
@@ -537,7 +665,8 @@ boolean do_audio_choice_dialog(short startup_phase) {
   if (!capable->has_pulse_audio) {
     txt2 = lives_strdup(
              _(", but you do not have pulseaudio installed on your system.\n "
-               "You are advised to install pulseaudio first before running LiVES.\n\n"));
+               "If you wish to use pulseaudio, you should Cancel and install that first\n"
+	       "before running LiVES.\n\n"));
   } else txt2 = lives_strdup(".\n\n");
 #endif
 
@@ -547,7 +676,8 @@ boolean do_audio_choice_dialog(short startup_phase) {
   txt4 = (_(", but this version of LiVES was not compiled with jack audio support.\n\n"));
 #else
   if (!capable->has_jackd) {
-    txt4 = (_(", but you do not have jackd installed. You may wish to install jackd first before running LiVES.\n\n"));
+    txt4 = (_(", but you do not have jackd installed.\n"
+	      "If you wish to use jack you should Cancel and install jackd first before running LiVES.\n\n"));
   } else {
     txt4 = lives_strdup(
              _(", but may prevent LiVES from starting on some systems.\nIf LiVES will not start with jack,"
@@ -560,7 +690,8 @@ boolean do_audio_choice_dialog(short startup_phase) {
   if (capable->has_sox_play) {
     txt6 = (_("but many audio features will be disabled.\n\n"));
   } else {
-    txt6 = (_("but you do not have sox installed.\nYou are advised to install it before running LiVES.\n\n"));
+    txt6 = (_("but you do not have sox installed.\n"
+	      "If you wish to use sox, you should Cancel and install it before running LiVES.\n\n"));
   }
 
   msg = lives_strdup_printf("%s%s%s%s%s%s%s", txt0, txt1, txt2, txt3, txt4, txt5, txt6);
@@ -581,25 +712,42 @@ boolean do_audio_choice_dialog(short startup_phase) {
   lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
   lives_free(msg);
 
+  recstr = lives_strdup_printf(" (%s)", mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]);
+  
 #ifdef HAVE_PULSE_AUDIO
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-  radiobutton0 = lives_standard_radio_button_new(_("Use _pulseaudio player"), &radiobutton_group, LIVES_BOX(hbox), NULL);
-  if (prefs->audio_player == -1) prefs->audio_player = AUD_PLAYER_PULSE;
+  radiobutton0 =
+    lives_standard_radio_button_new((tmp = lives_strdup_printf(_("Use _pulseaudio player%s"),
+							       capable->has_pulse_audio ?
+							       recstr : "")),
+				    &radiobutton_group, LIVES_BOX(hbox), NULL);
+  lives_free(tmp);
+  if (!capable->has_pulse_audio) lives_widget_set_sensitive(radiobutton0, FALSE);
+  else if (prefs->audio_player == -1) prefs->audio_player = AUD_PLAYER_PULSE;
 #endif
 
 #ifdef ENABLE_JACK
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-  radiobutton1 = lives_standard_radio_button_new(_("Use _jack audio player"), &radiobutton_group, LIVES_BOX(hbox), NULL);
+  radiobutton1 =
+    lives_standard_radio_button_new((tmp = lives_strdup_printf(_("Use _jack audio player%s"),
+							       capable->has_jackd
+							       && !capable->has_pulse_audio
+							       ? recstr : "")),
+				    &radiobutton_group, LIVES_BOX(hbox), NULL);
+  lives_free(tmp);
+  if (!capable->has_jackd) lives_widget_set_sensitive(radiobutton1, FALSE);
 #endif
 
+  lives_free(recstr);
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  radiobutton2 = lives_standard_radio_button_new(_("Use _sox audio player"), &radiobutton_group, LIVES_BOX(hbox), NULL);
   if (capable->has_sox_play) {
-    hbox = lives_hbox_new(FALSE, 0);
-    lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-    radiobutton2 = lives_standard_radio_button_new(_("Use _sox audio player"), &radiobutton_group, LIVES_BOX(hbox), NULL);
     if (prefs->audio_player == -1) prefs->audio_player = AUD_PLAYER_SOX;
   }
+  else lives_widget_set_sensitive(radiobutton2, FALSE);
 
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE || (!capable->has_pulse_audio && prefs->audio_player == -1)) {
@@ -662,6 +810,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   if (mainw->splash_window) {
     lives_widget_hide(mainw->splash_window);
   }
+  lives_widget_context_update();
 
   wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
   if (!wid || !activate_x11_window(wid)) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
@@ -669,6 +818,16 @@ boolean do_audio_choice_dialog(short startup_phase) {
   response = lives_dialog_run(LIVES_DIALOG(dialog));
 
   lives_widget_destroy(dialog);
+
+#ifdef ENABLE_JACK
+  if (prefs->audio_player == AUD_PLAYER_JACK) {
+    if (!do_jack_config()) {
+      txt0 = lives_strdup("");
+      radiobutton_group = NULL;
+      goto reloop;
+    }
+  }
+#endif
 
   if (mainw->splash_window) {
     lives_widget_show(mainw->splash_window);

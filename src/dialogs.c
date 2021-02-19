@@ -2814,7 +2814,7 @@ LIVES_GLOBAL_INLINE boolean do_please_install(const char *info, const char *exec
       char *icmd = get_install_cmd(capable->distro_name, exec);
       if (icmd) {
         lives_free(extra);
-        extra = lives_strdup_printf(_("\n\nTry '%s' or from a terminal window,\n"
+        extra = lives_strdup_printf(_("\n\nTry '%s' from a terminal window,\n"
                                       "or use your software package manager to install that package\n"), icmd);
         lives_free(icmd);
       }

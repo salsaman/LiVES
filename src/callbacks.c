@@ -978,7 +978,7 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req, c
 retry:
     lives_rm(cfile->info_file);
     if (req->do_update) {
-      if (1 || !check_for_executable(&capable->has_pip, EXEC_PIP)
+      if (!check_for_executable(&capable->has_pip, EXEC_PIP)
           && !check_for_executable(&capable->has_pip, EXEC_PIP3)
          ) {
         /// check we can update locally

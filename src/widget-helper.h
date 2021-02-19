@@ -424,6 +424,7 @@ LiVESWidget *lives_radio_button_new(LiVESSList *group);
 
 LiVESWidget *lives_spin_button_new(LiVESAdjustment *, double climb_rate, uint32_t digits);
 
+LiVESWidget *lives_dialog_new(void);
 LiVESResponseType lives_dialog_run(LiVESDialog *);
 boolean lives_dialog_response(LiVESDialog *, int response);
 int lives_dialog_get_response_for_widget(LiVESDialog *, LiVESWidget *);
@@ -755,6 +756,9 @@ LiVESToolItem *lives_separator_tool_item_new(void);
 boolean lives_tool_button_set_icon_widget(LiVESToolButton *, LiVESWidget *icon);
 boolean lives_tool_button_set_label_widget(LiVESToolButton *, LiVESWidget *label);
 boolean lives_tool_button_set_use_underline(LiVESToolButton *, boolean use_underline);
+
+LiVESWidget *lives_tool_button_get_icon_widget(LiVESToolButton *);
+LiVESWidget *lives_tool_button_get_label_widget(LiVESToolButton *);
 
 LiVESWidget *lives_message_dialog_new(LiVESWindow *parent, LiVESDialogFlags flags, LiVESMessageType type,
                                       LiVESButtonsType buttons,

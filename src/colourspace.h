@@ -225,6 +225,7 @@ double get_luma16(uint16_t r, uint16_t g, uint16_t b);
 
 // create / destroy / copy layers
 weed_layer_t *weed_layer_new(int layer_type);
+int weed_layer_get_type(weed_layer_t *);
 weed_layer_t *create_blank_layer(weed_layer_t *, const char *image_ext, int width, int height, int target_palette);
 weed_layer_t *weed_layer_create(int width, int height, int *rowstrides, int current_palette);
 weed_layer_t *weed_layer_create_full(int width, int height, int *rowstrides, int current_palette,

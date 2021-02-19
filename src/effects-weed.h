@@ -132,6 +132,8 @@ weed_plant_t *weed_instance_get_filter(weed_plant_t *inst, boolean get_compound_
 #define PLUGIN_COMPOUND_EFFECTS_BUILTIN "effects/compound/"
 #define PLUGIN_COMPOUND_EFFECTS_CUSTOM "plugins/effects/compound/"
 
+weed_plant_t *get_next_compound_inst(weed_plant_t *inst);
+
 int num_compound_fx(weed_plant_t
                     *plant); ///< return number of filters in a compound fx (1 if it is not compound) - works for filter or inst
 

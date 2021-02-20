@@ -566,7 +566,16 @@ typedef struct {
   double max; ///< for string this is max characters
 
   void *def; ///< default values
-  LiVESList *list; ///< for string list (choices)
+  LiVESList *list; ///< for string list (choices), displayed values (const char *)
+
+  ///< for string list, the actual (not display) values
+  /// if they differ from idx value, otherwise NULL
+  // if this points to list, then vlist_type is LIVES_PARAM_STRING, and vlist_dp is 0
+  LiVESList *vlist;
+
+  // type and decimals of vlist items
+  lives_param_type_t vlist_type;
+  int vlist_dp;
 
   /// multivalue type - single value, multi value, or per channel
   short multi;

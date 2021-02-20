@@ -1125,6 +1125,7 @@ boolean do_yesno_dialog(const char *text);
 boolean do_yesno_dialogf(const char *fmt, ...);
 boolean do_yesno_dialog_with_check(const char *text, uint64_t warn_mask_number);
 
+void maybe_abort(boolean do_check);
 void do_abort_dialog(const char *text);
 LiVESResponseType do_abort_ok_dialog(const char *text);
 LiVESResponseType do_abort_retry_dialog(const char *text);
@@ -1241,9 +1242,9 @@ LiVESResponseType do_file_notfound_dialog(const char *detail, const char *dirnam
 LiVESResponseType do_dir_notfound_dialog(const char *detail, const char *dirname);
 void do_no_decoder_error(const char *fname);
 void do_no_loadfile_error(const char *fname);
-void do_jack_noopen_warn(void);
+void do_jack_noopen_warn(boolean is_trans);
 void do_jack_noopen_warn2(void);
-void do_jack_noopen_warn3(void);
+void do_jack_noopen_warn3(boolean is_trans);
 void do_jack_noopen_warn4(void);
 LiVESResponseType do_file_perm_error(const char *file_name, boolean allow_cancel);
 LiVESResponseType do_dir_perm_error(const char *dir_name, boolean allow_cancel);

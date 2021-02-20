@@ -16,7 +16,7 @@
 #include <jack/transport.h>
 #include <jack/control.h>
 
-boolean lives_jack_init(void);  /** start up server on LiVES init */
+boolean lives_jack_init(boolean is_trans);  /** start up server on LiVES init */
 boolean lives_jack_poll(void); /** poll function to check transport state */
 void lives_jack_end(void);
 
@@ -50,8 +50,6 @@ void jack_pb_stop(void);  /** pause playback transport master */
 #define JACK_DEFAULT_SERVER_NAME "default"
 
 typedef jack_nframes_t nframes_t;
-
-#define USE_JACKCTL 1
 
 // let's hope these are well above the standard jack transport states...
 #define JackTClosed 1024

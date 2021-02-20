@@ -233,21 +233,26 @@ typedef struct {
 
   uint32_t jack_opts;
 #define JACK_OPTS_TRANSPORT_CLIENT	(1 << 0)   ///< jack can start/stop
-#define JACK_OPTS_TRANSPORT_MASTER	(1 << 1)  ///< transport master
-#define JACK_OPTS_START_TSERVER		(1 << 2)     ///< start transport server
+#define JACK_OPTS_TRANSPORT_MASTER	(1 << 1)  ///< transport master (start and stop)
+#define JACK_OPTS_START_TSERVER		(1 << 2)     ///< start transport server if necessary
 #define JACK_OPTS_NOPLAY_WHEN_PAUSED	(1 << 3) ///< do not play audio when transport is paused
-#define JACK_OPTS_START_ASERVER		(1 << 4)     ///< start audio server
+#define JACK_OPTS_START_ASERVER		(1 << 4)     ///< start audio server if necessary
 
 #define JACK_OPTS_TIMEBASE_START	(1 << 5)    ///< jack sets play start position
-#define JACK_OPTS_TIMEBASE_CLIENT	(1 << 6)    ///< full timebase client
+#define JACK_OPTS_TIMEBASE_CLIENT	(1 << 6)    ///< full timebase client (position updates)
 #define JACK_OPTS_TIMEBASE_MASTER	(1 << 7)   ///< timebase master (not implemented yet)
 #define JACK_OPTS_NO_READ_AUTOCON	(1 << 8)   ///< do not auto con. rd clients when playing ext aud
 #define JACK_OPTS_TIMEBASE_LSTART	(1 << 9)    ///< LiVES sets play start position
 
-#define JACK_OPTS_AUTO_ASERVER      	(1 << 10)     ///< connect or start audio server (bit 4 ignored)
-#define JACK_OPTS_AUTO_TSERVER      	(1 << 11)     ///< connect to transport server (bit 2 ignored)
-#define JACK_OPTS_DISABLE_TCLIENT      	(1 << 12)     ///< disable transport client (ignore bits 11 & 2)
+#define JACK_OPTS_ENABLE_TCLIENT      	(1 << 10)     ///< enable transport client
 
+  // sever is only killed if LiVES started it
+#define JACK_OPTS_NOKILL_TSERVER      	(1 << 11)     ///< leave transport running even if we started it
+#define JACK_OPTS_NOKILL_ASERVER      	(1 << 12)     ///< leave audio srvr running even if we started
+
+
+#ifdef ENABLE_JACK
+  // config files to use instead of using internal settings
   char jack_tserver[PATH_MAX];
   char jack_aserver[PATH_MAX];
 
@@ -256,6 +261,9 @@ typedef struct {
 
   char jack_aserver_cname[1024];
   char jack_tserver_cname[1024];
+  jackctl_driver_t *jack_tdriver, *jack_adriver;
+  LiVESList *jack_tslaves, *jack_aslaves;
+#endif
 
   char *fxdefsfile;
   char *fxsizesfile;
@@ -706,13 +714,14 @@ typedef struct {
   LiVESWidget *spinbutton_nfx_threads;
   LiVESWidget *enable_OSC;
   LiVESWidget *enable_OSC_start;
-  LiVESWidget *jack_tvbox;
-  LiVESWidget *jack_avbox;
   LiVESWidget *jack_tserver_entry;
   LiVESWidget *jack_aserver_entry;
-  LiVESWidget *jack_tstart_combo;
-  LiVESWidget *jack_astart_combo;
+  LiVESWidget *jack_tstart;
+  LiVESWidget *jack_astart;
+  LiVESWidget *jack_tstop;
+  LiVESWidget *jack_astop;
   LiVESWidget *jack_trans;
+  LiVESWidget *jack_aplabel;
   LiVESWidget *checkbutton_jack_master;
   LiVESWidget *checkbutton_jack_client;
   LiVESWidget *checkbutton_jack_tb_start;

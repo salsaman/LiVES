@@ -7840,7 +7840,7 @@ static LiVESWidget *add_warn_image(LiVESWidget * widget, LiVESWidget * hbox) {
 WIDGET_HELPER_GLOBAL_INLINE boolean show_warn_image(LiVESWidget * widget, const char *text) {
   LiVESWidget *warn_image;
   if (!(warn_image = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), WARN_IMAGE_KEY))) return FALSE;
-  lives_widget_set_tooltip_text(warn_image, text);
+  if (text) lives_widget_set_tooltip_text(warn_image, text);
   lives_widget_set_no_show_all(warn_image, FALSE);
   lives_widget_show_all(warn_image);
   lives_widget_set_sensitive(warn_image, TRUE);
@@ -7850,7 +7850,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean show_warn_image(LiVESWidget * widget, const 
 WIDGET_HELPER_GLOBAL_INLINE boolean hide_warn_image(LiVESWidget * widget) {
   LiVESWidget *warn_image;
   if (!(warn_image = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), WARN_IMAGE_KEY))) return FALSE;
-  lives_widget_set_no_show_all(warn_image, FALSE);
+  lives_widget_set_no_show_all(warn_image, TRUE);
   lives_widget_hide(warn_image);
   return TRUE;
 }

@@ -4183,13 +4183,12 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   if (filt) {
     if (filt[0] && !strcmp(filt[0], ".") && !filt[1]) {
       gtk_file_chooser_set_show_hidden(LIVES_FILE_CHOOSER(chooser), TRUE);
-    }
-    else {
+    } else {
       GtkFileFilter *filter = gtk_file_filter_new();
       for (i = 0; filt[i]; i++) gtk_file_filter_add_pattern(filter, filt[i]);
       gtk_file_chooser_set_filter(LIVES_FILE_CHOOSER(chooser), filter);
       if (i == 1 && act == LIVES_FILE_CHOOSER_ACTION_SAVE)
-	gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), filt[0]); //utf-8
+        gtk_file_chooser_set_current_name(LIVES_FILE_CHOOSER(chooser), filt[0]); //utf-8
     }
   }
 

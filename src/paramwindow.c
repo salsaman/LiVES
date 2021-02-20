@@ -2040,7 +2040,24 @@ boolean update_widget_vis(lives_rfx_t *rfx, int key, int mode) {
     }
   }
 
-  if ((!fx_dialog[1] && !mainw->multitrack) || !rfx || rfx->status != RFX_STATUS_WEED) return FALSE;
+  if ((!fx_dialog[1] && !mainw->multitrack) || !rfx || rfx->status != RFX_STATUS_WEED) {
+    for (int i = 0; i < rfx->num_params; i++) {
+      param = &rfx->params[i];
+      for (int j = 0; j < RFX_MAX_NORM_WIDGETS; j++) {
+        if (param->type == LIVES_PARAM_COLRGB24 && j == 3 && !param->widgets[j]) continue;
+        if (!param->widgets[j]) break;
+        if (param->hidden) {
+          lives_widget_hide(param->widgets[j]);
+          lives_widget_set_no_show_all(param->widgets[j], TRUE);
+        } else {
+          lives_widget_set_no_show_all(param->widgets[j], FALSE);
+          lives_widget_show_all(param->widgets[j]);
+        }
+      }
+    }
+    return FALSE;
+  }
+
   inst = (weed_plant_t *)rfx->source;
   for (int i = 0; i < rfx->num_params; i++) {
     param = &rfx->params[i];

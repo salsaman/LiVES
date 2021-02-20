@@ -8835,8 +8835,9 @@ sub config_set {
 	    &startup_error(4, "config_set_new", "write_new_header0", "$newconfigfile:\@:");
 	}
 	$configfilesize += $addsize;
-	$addsize = &printlen(OUT, "# You are STRONGLY advised to change the values only through the GUI ($GUI_NAME) ",
-			     "unless otherwise directed.\n");
+	$addsize = &printlen(OUT, "# You are STRONGLY advised to change the values only " .
+			     "through the GUI ($GUI_NAME) " .
+			     "unless directed otherwise.\n");
 	if ($addsize == -1) {
 	    close OUT;
 	    unlink $newconfigfile;

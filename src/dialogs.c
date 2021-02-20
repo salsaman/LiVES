@@ -641,6 +641,22 @@ boolean do_yesno_dialog(const char *text) {
 }
 
 
+void maybe_abort(boolean do_check) {
+  if (!do_check || do_abort_check()) {
+    if (CURRENT_CLIP_IS_VALID) {
+      if (*cfile->handle) {
+        // stop any processing
+        lives_kill_subprocesses(cfile->handle, TRUE);
+      }
+    }
+    if (mainw->abort_hook_func)(*mainw->abort_hook_func)(NULL);
+    LIVES_FATAL("Aborted");
+    lives_notify(LIVES_OSC_NOTIFY_QUIT, "Aborted");
+    exit(1);
+  }
+}
+
+
 static LiVESResponseType _do_abort_cancel_retry_dialog(const char *mytext, lives_dialog_t dtype) {
   LiVESResponseType response;
   LiVESWidget *warning;
@@ -653,25 +669,7 @@ static LiVESResponseType _do_abort_cancel_retry_dialog(const char *mytext, lives
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
     if (response == LIVES_RESPONSE_ABORT) {
-      if (mainw->is_ready) {
-        if (dtype == LIVES_DIALOG_ABORT || do_abort_check()) {
-          if (CURRENT_CLIP_IS_VALID) {
-            if (*cfile->handle) {
-              // stop any processing
-              lives_kill_subprocesses(cfile->handle, TRUE);
-            }
-          }
-          if (mainw->abort_hook_func)(*mainw->abort_hook_func)(NULL);
-          LIVES_FATAL("Aborted");
-          lives_notify(LIVES_OSC_NOTIFY_QUIT, mytext);
-          exit(1);
-        }
-      } else {
-        if (mainw->abort_hook_func)(*mainw->abort_hook_func)(NULL);
-        LIVES_FATAL("Aborted");
-        lives_notify(LIVES_OSC_NOTIFY_QUIT, mytext);
-        exit(0);
-      }
+      maybe_abort(mainw->is_ready && dtype != LIVES_DIALOG_ABORT);
     }
   } while (response == LIVES_RESPONSE_ABORT);
 
@@ -2676,17 +2674,20 @@ LIVES_GLOBAL_INLINE void do_no_loadfile_error(const char *fname) {
 
 
 #ifdef ENABLE_JACK
-LIVES_GLOBAL_INLINE void do_jack_noopen_warn(void) {
+LIVES_GLOBAL_INLINE void do_jack_noopen_warn(boolean is_trans) {
   do_error_dialogf(_("\nUnable to start up jack. "
                      "Please ensure that %s is set up correctly on your machine\n"
                      "and also that the soundcard is not in use by another program\n"
                      "Automatic jack startup will be disabled now.\n"),
-                   JACK_DRIVER_NAME);
+                   is_trans ? jackctl_driver_get_name(prefs->jack_tdriver)
+                   : jackctl_driver_get_name(prefs->jack_adriver));
 }
 
-LIVES_GLOBAL_INLINE void do_jack_noopen_warn3(void) {
-  do_error_dialog(_("\nUnable to connect to jack server. "
-                    "Please start jack before starting LiVES\n"));
+LIVES_GLOBAL_INLINE void do_jack_noopen_warn3(boolean is_trans) {
+  do_error_dialogf(_("\nUnable to connect to jack server %s. "
+                     "Please start jack before starting LiVES\n"),
+                   is_trans ? prefs->jack_tserver_cname
+                   : prefs->jack_aserver_cname);
 }
 
 LIVES_GLOBAL_INLINE void do_jack_noopen_warn4(void) {

@@ -271,12 +271,12 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
 
 
 #ifdef ENABLE_JACK
-LIVES_LOCAL_INLINE void jack_warn() {
-  do_jack_noopen_warn3();
-  if (prefs->startup_phase == 4) {
-    do_jack_noopen_warn2();
-  } else do_jack_noopen_warn4();
-}
+/* LIVES_LOCAL_INLINE void jack_warn() { */
+/*   do_jack_noopen_warn3(); */
+/*   if (prefs->startup_phase == 4) { */
+/*     do_jack_noopen_warn2(); */
+/*   } else do_jack_noopen_warn4(); */
+/* } */
 #endif
 
 
@@ -979,9 +979,18 @@ static boolean pre_init(void) {
 
   prefs->warning_mask = (uint64_t)get_int64_prefd(PREF_LIVES_WARNING_MASK, DEF_WARNING_MASK);
 
+#ifdef ENABLE_JACK
   if (!ign_opts.ign_jackopts) {
     prefs->jack_opts = future_prefs->jack_opts = get_int_prefd(PREF_JACK_OPTS, 16);
   }
+
+#ifndef HAVE_JACK_TRANSPORT
+  prefs->jack_opts &= ~(JACK_OPTS_TRANSPORT_CLIENT | JACK_OPTS_TRANSPORT_MASTER
+                        | JACK_OPTS_START_TSERVER | JACK_OPTS_TIMEBASE_START
+                        | JACK_OPTS_TIMEBASE_CLIENT | JACK_OPTS_TIMEBASE_MASTER
+                        | JACK_OPTS_TIMEBASE_LSTART | JACK_OPTS_ENABLE_TCLIENT);
+#endif
+#endif
 
 #ifdef GUI_GTK
   if (!has_pref(PREF_SHOW_TOOLTIPS)) {
@@ -2142,7 +2151,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
       splash_end();
       if (!do_audio_choice_dialog(prefs->startup_phase)) {
-	lives_exit(0);
+        lives_exit(0);
       }
 
       prefs->startup_phase = 4;
@@ -2151,30 +2160,35 @@ static void lives_init(_ign_opts *ign_opts) {
 
     // audio startup
 #ifdef ENABLE_JACK
-    if (prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER
-	|| prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT ||
-	prefs->jack_opts & JACK_OPTS_START_ASERVER || prefs->jack_opts & JACK_OPTS_AUTO_ASERVER ||
-	prefs->jack_opts & JACK_OPTS_START_TSERVER || prefs->jack_opts & JACK_OPTS_AUTO_TSERVER) {
-      // start jack transport polling
-      if (prefs->jack_opts & JACK_OPTS_START_ASERVER) splash_msg(_("Starting jack audio server..."),
-								 SPLASH_LEVEL_LOAD_APLAYER);
-      else {
-	if (prefs->jack_opts & JACK_OPTS_START_TSERVER) splash_msg(_("Starting jack transport server..."),
-								   SPLASH_LEVEL_LOAD_APLAYER);
-	else splash_msg(_("Connecting to jack server..."), SPLASH_LEVEL_LOAD_APLAYER);
+    // start jack transport polling
+    if (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT) {
+      splash_msg(_("Starting or connecting to jack transport server..."),
+                 SPLASH_LEVEL_LOAD_APLAYER);
+      if (!lives_jack_init(TRUE)) {
+        if (prefs->jack_opts & JACK_OPTS_START_TSERVER)
+          do_jack_noopen_warn(TRUE);
+        else do_jack_noopen_warn3(TRUE);
+        if (prefs->startup_phase == 4) {
+          do_jack_noopen_warn2();
+        }
+        future_prefs->jack_opts = 0; // jack is causing hassle, disable it for now
+        set_int_pref(PREF_JACK_OPTS, 0);
+        lives_exit(0);
       }
-
-      if (!lives_jack_init()) {
-	if ((prefs->jack_opts & JACK_OPTS_START_ASERVER)
-	    || (prefs->jack_opts & JACK_OPTS_START_TSERVER))
-	  do_jack_noopen_warn();
-	else do_jack_noopen_warn3();
-	if (prefs->startup_phase == 4) {
-	  do_jack_noopen_warn2();
-	}
-	future_prefs->jack_opts = 0; // jack is causing hassle, get rid of it
-	set_int_pref(PREF_JACK_OPTS, 0);
-	lives_exit(0);
+    }
+    if (prefs->audio_player == AUD_PLAYER_JACK) {
+      splash_msg(_("Starting or connecting to jack audio server..."),
+                 SPLASH_LEVEL_LOAD_APLAYER);
+      if (!lives_jack_init(FALSE)) {
+        if (prefs->jack_opts & JACK_OPTS_START_ASERVER)
+          do_jack_noopen_warn(FALSE);
+        else do_jack_noopen_warn3(FALSE);
+        if (prefs->startup_phase == 4) {
+          do_jack_noopen_warn2();
+        }
+        future_prefs->jack_opts = 0; // jack is causing hassle, disable it for now
+        set_int_pref(PREF_JACK_OPTS, 0);
+        lives_exit(0);
       }
     }
 
@@ -2183,46 +2197,46 @@ static void lives_init(_ign_opts *ign_opts) {
       jack_audio_read_init();
       mainw->jackd = jack_get_driver(0, TRUE);
       if (mainw->jackd) {
-	if (!jack_create_client_writer(mainw->jackd)) mainw->jackd = NULL;
+        if (!jack_create_client_writer(mainw->jackd)) mainw->jackd = NULL;
 
-	if (!mainw->jackd && prefs->startup_phase == 0) {
+        if (!mainw->jackd && prefs->startup_phase == 0) {
 #ifdef HAVE_PULSE_AUDIO
-	  char *otherbit = lives_strdup("\"lives -aplayer pulse\".");
+          char *otherbit = lives_strdup("\"lives -aplayer pulse\".");
 #else
-	  char *otherbit = lives_strdup("\"lives -aplayer sox\".");
+          char *otherbit = lives_strdup("\"lives -aplayer sox\".");
 #endif
-	  char *tmp;
+          char *tmp;
 
-	  char *msg = lives_strdup_printf(
-					  _("\n\nManual start of jackd required. Please make sure jackd is running, \n"
-					    "or else change the value of <jack_opts> in %s to 16\nand restart LiVES.\n\n"
-					    "Alternatively, try to start lives with either \"lives -jackopts 16\", or "),
-					  (tmp = lives_filename_to_utf8(prefs->configfile, -1, NULL, NULL, NULL)));
-	  fprintf(stderr, "%s%s\n\n", msg, otherbit);
-	  lives_free(msg);
-	  lives_free(tmp);
-	  lives_free(otherbit);
-	}
+          char *msg = lives_strdup_printf(
+                        _("\n\nManual start of jackd required. Please make sure jackd is running, \n"
+                          "or else change the value of <jack_opts> in %s to 2048\nand restart LiVES.\n\n"
+                          "Alternatively, try to start lives with either \"lives -jackopts 2048\", or "),
+                        (tmp = lives_filename_to_utf8(prefs->configfile, -1, NULL, NULL, NULL)));
+          fprintf(stderr, "%s%s\n\n", msg, otherbit);
+          lives_free(msg);
+          lives_free(tmp);
+          lives_free(otherbit);
+        }
 
-	if (!mainw->jackd) {
-	  do_jack_noopen_warn3();
-	  if (prefs->startup_phase == 4) {
-	    do_jack_noopen_warn2();
-	  } else do_jack_noopen_warn4();
-	  lives_exit(0);
-	}
+        if (!mainw->jackd) {
+          do_jack_noopen_warn3(FALSE);
+          if (prefs->startup_phase == 4) {
+            do_jack_noopen_warn2();
+          } else do_jack_noopen_warn4();
+          lives_exit(0);
+        }
 
-	mainw->jackd->whentostop = &mainw->whentostop;
-	mainw->jackd->cancelled = &mainw->cancelled;
-	mainw->jackd->in_use = FALSE;
-	mainw->jackd->play_when_stopped = (prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED)
-	  ? FALSE : TRUE;
+        mainw->jackd->whentostop = &mainw->whentostop;
+        mainw->jackd->cancelled = &mainw->cancelled;
+        mainw->jackd->in_use = FALSE;
+        mainw->jackd->play_when_stopped = (prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED)
+                                          ? FALSE : TRUE;
 
-	jack_write_driver_activate(mainw->jackd);
+        jack_write_driver_activate(mainw->jackd);
 
-	if (prefs->perm_audio_reader) {
-	  // create reader connection now, if permanent
-	  jack_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
+        if (prefs->perm_audio_reader) {
+          // create reader connection now, if permanent
+          jack_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
 	  // *INDENT-OFF*
 	}}
     // *INDENT-ON*
@@ -2234,8 +2248,8 @@ static void lives_init(_ign_opts *ign_opts) {
       splash_msg(_("Starting pulseaudio server..."), SPLASH_LEVEL_LOAD_APLAYER);
 
       if (!mainw->foreign) {
-	if (prefs->pa_restart && !prefs->vj_mode) {
-	  char *com = lives_strdup_printf("%s -k %s", EXEC_PULSEAUDIO, prefs->pa_start_opts);
+        if (prefs->pa_restart && !prefs->vj_mode) {
+          char *com = lives_strdup_printf("%s -k %s", EXEC_PULSEAUDIO, prefs->pa_start_opts);
           lives_system(com, TRUE);
           lives_free(com);
         }
@@ -2262,9 +2276,9 @@ static void lives_init(_ign_opts *ign_opts) {
         }}}
     // *INDENT-ON*
 #endif
-}
+  }
 
-if (prefs->startup_phase != 0) {
+  if (prefs->startup_phase != 0) {
     splash_end();
     set_int_pref(PREF_STARTUP_PHASE, 5);
     prefs->startup_phase = 5;
@@ -3424,18 +3438,17 @@ void print_opthelp(void) {
   fprintf(stderr, "%s",
           _("-jackopts <opts>\t\t: opts is a bitmap of jackd startup / playback options (default is 16, "
             "unless set in Preferences)\n"
-            "\t\t\t\t\t 1 = LiVES is a jack transport slave, \n"
-            "\t\t\t\t\t 2 = LiVES is a jack transport master, \n"
-            "\t\t\t\t\t 4 = start/stop jack transport server on LiVES playback start / stop\n"
-            "\t\t\t\t\t\t(must be transport master), \n"
-            "\t\t\t\t\t 8 = pause jack transport when video paused\n"
-            "\t\t\t\t\t\t(must be transport master),\n"
-            "\t\t\t\t\t16 = start/stop jack audio server on LiVES startup / shutdown\n"
-            "\t\t\t\t\t1024 = start/stop audio server or connect to a running one (AUTO)\n"
-            "\t\t\t\t\t\t(overrides 16),\n"
-            "\t\t\t\t\t2048 = start/stop transport server or connect to a running one (AUTO)\n"
-            "\t\t\t\t\t\t(overrides 4),\n"
-            "\t\t\t\t\t\t(only if audio player is jack)) \n"));
+            "Main options are: \n"
+            "\t\t\t\t\t 1 = LiVES is jack transport slave, \n"
+            "\t\t\t\t\t 2 = LiVES is jack transport master, \n"
+            "\t\t\t\t\t 4 = create jack transport server on startup (if needed)\n"
+            "\t\t\t\t\t 8 = pause jack transport when video paused (and vice-versa)\n"
+            "\t\t\t\t\t\t(must be transport master / slave),\n"
+            "\t\t\t\t\t16 = create jack audio server on startup (if needed)\n"
+            "\t\t\t\t\t\t(only if audio player is jack)) \n"
+            "\t\t\t\t\t1024 = create / connect jack transport client\n"
+            "\t\t\t\t\t\t(must be set to use all other transport functions)) \n"
+           ));
 #else // no jack
   if (capable->has_sox_play) {
 #ifdef HAVE_PULSE_AUDIO
@@ -3898,7 +3911,7 @@ static boolean lives_startup(livespointer data) {
 
 #ifdef ENABLE_JACK
     if (prefs->audio_player == AUD_PLAYER_JACK && capable->has_jackd && mainw->rec_achans > 0) {
-      lives_jack_init();
+      lives_jack_init(FALSE);
       jack_audio_read_init();
     }
 #endif

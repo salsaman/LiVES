@@ -11204,7 +11204,8 @@ boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32
   if (prefs->audio_src == AUDIO_SRC_INT) {
 #ifdef ENABLE_JACK
     if (mainw->jackd && prefs->audio_player == AUD_PLAYER_JACK
-        && mainw->jackd->playing_file == mainw->playing_file && (prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED ||
+        && mainw->jackd->playing_file == mainw->playing_file
+        && (prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED ||
             prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
       mainw->jackd->is_paused = cfile->play_paused;
       if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 &&

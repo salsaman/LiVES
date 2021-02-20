@@ -2947,6 +2947,8 @@ void rfx_params_free(lives_rfx_t *rfx) {
     lives_freep((void **)&rfx->params[i].value);
     lives_freep((void **)&rfx->params[i].label);
     lives_freep((void **)&rfx->params[i].desc);
+    if (rfx->params[i].vlist && rfx->params[i].vlist != rfx->params[i].list)
+      lives_list_free_all(&rfx->params[i].vlist);
     lives_list_free_all(&rfx->params[i].list);
   }
 }
@@ -3026,6 +3028,14 @@ void param_copy(lives_param_t *dest, lives_param_t *src, boolean full) {
     dest->def = lives_malloc(sizint);
     set_int_param(dest->def, get_int_param(src->def));
     if (src->list) dest->list = lives_list_copy(src->list);
+    if (src->vlist) {
+      if (src->vlist == src->list) dest->vlist = dest->list;
+      else {
+        dest->vlist = lives_list_copy(src->vlist);
+        dest->vlist_type = src->vlist_type;
+        dest->vlist_dp = src->vlist_dp;
+      }
+    }
     break;
   default:
     break;
@@ -3168,7 +3178,6 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
   lives_param_t *rpar = (lives_param_t *)lives_calloc(npar, sizeof(lives_param_t));
   int param_type;
   char **list;
-  LiVESList *gtk_list = NULL;
   char *string;
   int vali;
   double vald;
@@ -3252,7 +3261,7 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
     rpar[i].dp = 0;
     rpar[i].min = 0.;
     rpar[i].max = 0.;
-    rpar[i].list = NULL;
+    rpar[i].list = rpar[i].vlist = NULL;
 
     rpar[i].reinit = 0;
     if (flags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE)
@@ -3306,12 +3315,9 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
           listlen = weed_leaf_num_elements(gui, WEED_LEAF_CHOICES);
           list = weed_get_string_array(gui, WEED_LEAF_CHOICES, NULL);
           for (j = 0; j < listlen; j++) {
-            gtk_list = lives_list_append(gtk_list, list[j]);
+            rpar[i].list = lives_list_append(rpar[i].list, list[j]);
           }
           lives_free(list);
-          rpar[i].list = lives_list_copy(gtk_list);
-          lives_list_free(gtk_list);
-          gtk_list = NULL;
           rpar[i].type = LIVES_PARAM_STRING_LIST;
           rpar[i].max = listlen;
         } else if (weed_plant_has_leaf(gui, WEED_LEAF_STEP_SIZE))

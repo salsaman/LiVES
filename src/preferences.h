@@ -261,7 +261,7 @@ typedef struct {
 
   char jack_aserver_cname[1024];
   char jack_tserver_cname[1024];
-  jackctl_driver_t *jack_tdriver, *jack_adriver;
+  const char *jack_tdriver, *jack_adriver;
   LiVESList *jack_tslaves, *jack_aslaves;
 #endif
 

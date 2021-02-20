@@ -271,22 +271,46 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
 
 
 #ifdef ENABLE_JACK
-/* LIVES_LOCAL_INLINE void jack_warn() { */
-/*   do_jack_noopen_warn3(); */
-/*   if (prefs->startup_phase == 4) { */
-/*     do_jack_noopen_warn2(); */
-/*   } else do_jack_noopen_warn4(); */
-/* } */
+LIVES_LOCAL_INLINE void jack_warn(boolean is_trans) {
+  do_jack_noopen_warn(is_trans);
+  if (prefs->startup_phase == 4) {
+    do_jack_noopen_warn2();
+  } else do_jack_noopen_warn4();
+  set_int_pref(PREF_JACK_OPTS, 0);
+}
 #endif
 
 
 void defer_sigint(int signum) {
+  sigset_t smask;
+  struct sigaction sact;
+  static boolean norecurse = FALSE;
+
+  if (norecurse) return;
+
+  sigemptyset(&smask);
+
   mainw->signal_caught = signum;
+
+  sigaddset(&smask, signum);
+
+  sact.sa_handler = SIG_IGN;
+  sact.sa_flags = 0;
+  sact.sa_mask = smask;
+
+  sigaction(signum, &sact, NULL);
+
   switch (mainw->crash_possible) {
   case 1:
-    // crash in jack_client_open()
-    //jack_warn();
-    break;
+    // crash in jack_client_open() - transport
+    jack_warn(TRUE);
+    norecurse = TRUE; /// otherwise abort is trapped !
+    abort();
+  case 2:
+    // crash in jack_client_open() - audio
+    jack_warn(FALSE);
+    norecurse = TRUE;
+    abort();
   default:
     break;
   }
@@ -329,10 +353,11 @@ void catch_sigint(int signum) {
       if (mainw->multitrack) mainw->multitrack->idlefunc = 0;
       mainw->fatal = TRUE;
 
-      if (signum == LIVES_SIGABRT || signum == LIVES_SIGSEGV) {
+      if (signum == LIVES_SIGABRT || signum == LIVES_SIGSEGV || signum == LIVES_SIGFPE) {
         mainw->memok = FALSE;
         signal(LIVES_SIGSEGV, SIG_DFL);
         signal(LIVES_SIGABRT, SIG_DFL);
+        signal(LIVES_SIGFPE, SIG_DFL);
         fprintf(stderr, _("\nUnfortunately LiVES crashed.\nPlease report this bug at %s\n"
                           "Thanks. Recovery should be possible if you restart LiVES.\n"), LIVES_BUG_URL);
         fprintf(stderr, _("\n\nWhen reporting crashes, please include details of your operating system, "
@@ -4125,6 +4150,7 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
 
   sigaddset(&smask, LIVES_SIGSEGV);
   sigaddset(&smask, LIVES_SIGABRT);
+  sigaddset(&smask, LIVES_SIGFPE);
 
   sact.sa_handler = sigfunc;
   sact.sa_flags = 0;
@@ -4134,6 +4160,7 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
   sigaction(LIVES_SIGTERM, &sact, NULL);
   sigaction(LIVES_SIGSEGV, &sact, NULL);
   sigaction(LIVES_SIGABRT, &sact, NULL);
+  sigaction(LIVES_SIGFPE, &sact, NULL);
 
   if (mainw) {
     if (sigfunc == defer_sigint) mainw->signals_deferred = TRUE;

@@ -497,10 +497,12 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, int wa
     lives_window_set_modal(LIVES_WINDOW(dialog), TRUE);
 
   if (!transient) {
-    char *wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
+    char *wid =
+      lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
 
     /// MUST check if execs are MISSING, else we can get stuck in a loop of warning dialogs !!!
-    if (!wid || (capable->has_xdotool == MISSING && capable->has_wmctrl == MISSING) || !activate_x11_window(wid))
+    if (!wid || (capable->has_xdotool == MISSING && capable->has_wmctrl == MISSING)
+        || !activate_x11_window(wid) || 1)
       lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
   }
   if (cb_key) extra_cb(dialog, cb_key);
@@ -2679,25 +2681,36 @@ LIVES_GLOBAL_INLINE void do_jack_noopen_warn(boolean is_trans) {
                      "Please ensure that %s is set up correctly on your machine\n"
                      "and also that the soundcard is not in use by another program\n"
                      "Automatic jack startup will be disabled now.\n"),
-                   is_trans ? jackctl_driver_get_name(prefs->jack_tdriver)
-                   : jackctl_driver_get_name(prefs->jack_adriver));
+                   is_trans ? prefs->jack_tdriver : prefs->jack_adriver);
 }
 
 LIVES_GLOBAL_INLINE void do_jack_noopen_warn3(boolean is_trans) {
-  do_error_dialogf(_("\nUnable to connect to jack server %s. "
-                     "Please start jack before starting LiVES\n"),
-                   is_trans ? prefs->jack_tserver_cname
-                   : prefs->jack_aserver_cname);
+  char *extra = "";
+  if (is_trans) {
+    if (prefs->jack_tdriver && *prefs->jack_tdriver)
+      extra = lives_strdup_printf(_("\nThere may be a problem with the '%s' driver..\n"),
+                                  prefs->jack_tdriver);
+  } else {
+    if (prefs->jack_tdriver && *prefs->jack_tdriver)
+      extra = lives_strdup_printf(_("\nThere may be a problem with the '%s' driver..\n"),
+                                  prefs->jack_adriver);
+  }
+  do_error_dialogf(_("\nUnable to establish a connection to jack server '%s'. %s"
+                     "Please start jack before restarting LiVES\n"),
+                   is_trans ? prefs->jack_tserver_sname
+                   : prefs->jack_aserver_sname, extra);
+  if (*extra) lives_free(extra);
 }
 
 LIVES_GLOBAL_INLINE void do_jack_noopen_warn4(void) {
+  const char *otherbit;
 #ifdef HAVE_PULSE_AUDIO
-  const char *otherbit = "\"lives -aplayer pulse\"";
-#else
-  const char *otherbit = "\"lives -aplayer sox\"";
+  if (capable->has_pulse_audio == PRESENT) otherbit = "\"lives -aplayer pulse\"";
+  else
 #endif
-  do_info_dialogf(_("\nAlternatively, try to start lives with either:\n\n"
-                    "\"lives -jackopts 16\", or\n\n%s\n"), otherbit);
+    otherbit = "\"lives -aplayer none\"";
+  do_info_dialogf(_("\nAlternatively, try to start lives with commandline option:\n\n%s\n"),
+                  otherbit);
 }
 
 LIVES_GLOBAL_INLINE void do_jack_noopen_warn2(void) {

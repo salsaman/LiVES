@@ -562,12 +562,11 @@ set_config:
 
   response = lives_dialog_run(LIVES_DIALOG(dialog));
 
-  lives_widget_destroy(dialog);
-
   if (response == LIVES_RESPONSE_OK) {
     if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(cb1)))
       future_prefs->jack_opts = prefs->jack_opts = JACK_OPTS_START_ASERVER;
     else {
+      lives_widget_destroy(dialog);
       future_prefs->jack_opts = prefs->jack_opts = 0;
       if (!do_warning_dialogf(_("Please ensure that jack server '%s' "
                                 "is running before clicking OK\n"
@@ -576,11 +575,13 @@ set_config:
         goto set_config;
       }
     }
+    lives_widget_destroy(dialog);
     lives_snprintf(prefs->jack_tserver_sname, 1024, "%s", prefs->jack_aserver_sname);
     lives_snprintf(prefs->jack_tserver_cname, 1024, "%s", prefs->jack_aserver_cname);
     set_int_pref(PREF_JACK_OPTS, prefs->jack_opts);
     return TRUE;
   }
+  lives_widget_destroy(dialog);
   return FALSE;
 }
 #endif

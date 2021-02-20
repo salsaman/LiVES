@@ -1245,7 +1245,7 @@ void do_no_loadfile_error(const char *fname);
 void do_jack_noopen_warn(boolean is_trans);
 void do_jack_noopen_warn2(void);
 void do_jack_noopen_warn3(boolean is_trans);
-void do_jack_noopen_warn4(void);
+void do_jack_noopen_warn4(int suggest_opts);
 LiVESResponseType do_file_perm_error(const char *file_name, boolean allow_cancel);
 LiVESResponseType do_dir_perm_error(const char *dir_name, boolean allow_cancel);
 void do_dir_perm_access_error(const char *dir_name);

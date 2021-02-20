@@ -277,6 +277,7 @@ static void set_def_driver(LiVESWidget *rb, jackctl_driver_t *driver) {
   defdriver = driver;
 }
 
+#ifndef JACK_V2
 static void onif1(LiVESToggleButton *tb, LiVESWidget *bt) {
   int actv = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(bt), "actv"));
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(tb))) actv++;
@@ -285,6 +286,7 @@ static void onif1(LiVESToggleButton *tb, LiVESWidget *bt) {
   else lives_widget_set_sensitive(bt, TRUE);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(bt), "actv", LIVES_INT_TO_POINTER(actv));
 }
+#endif
 
 static void add_slave_driver(LiVESWidget *rb, jackctl_driver_t *driver) {
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(rb))) {
@@ -618,6 +620,7 @@ retry_connect:
         prefs->jack_tslaves = prefs->jack_aslaves;
       }
     }
+
     if (is_trans) {
       driver_name = prefs->jack_tdriver;
       slave_list = prefs->jack_tslaves;
@@ -736,9 +739,15 @@ do_connect:
     }
   }
 
+  // force both types of clienr to use same driver, until server spearation is implemented fully
+  if (is_trans) {
+    if (prefs->jack_srv_dup)
+      set_string_pref(PREF_JACK_ADRIVER, prefs->jack_tdriver);
+    else
+      set_string_pref(PREF_JACK_TDRIVER, prefs->jack_tdriver);
+  } else set_string_pref(PREF_JACK_ADRIVER, prefs->jack_adriver);
 
 connect_done:
-
   if (!is_trans && ts_started && twins) {
     // if ts_started and driver is wrong then we can change it
     //jackctl_server_switch_master(server, driver);

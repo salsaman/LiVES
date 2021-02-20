@@ -1245,6 +1245,7 @@ boolean set_submenu_colours(LiVESMenu *, LiVESWidgetColor *colf, LiVESWidgetColo
 boolean toggle_sets_sensitive(LiVESToggleButton *, LiVESWidget *, boolean invert);
 boolean toggle_toolbutton_sets_sensitive(LiVESToggleToolButton *, LiVESWidget *, boolean invert);
 boolean menu_sets_sensitive(LiVESCheckMenuItem *, LiVESWidget *,  boolean invert);
+boolean toggle_sets_active(LiVESToggleButton *, LiVESToggleButton *, boolean invert);
 boolean toggle_sets_visible(LiVESToggleButton *, LiVESWidget *, boolean invert);
 boolean toggle_toolbutton_sets_visible(LiVESToggleToolButton *, LiVESWidget *, boolean invert);
 boolean menu_sets_visible(LiVESCheckMenuItem *, LiVESWidget *,  boolean invert);

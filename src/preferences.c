@@ -2680,10 +2680,16 @@ static void on_audp_entry_changed(LiVESWidget *audp_combo, livespointer ptr) {
   if (!strcmp(audp, AUDIO_PLAYER_JACK)) {
     lives_widget_set_sensitive(prefsw->checkbutton_jack_read_autocon, TRUE);
     lives_widget_set_sensitive(prefsw->checkbutton_jack_pwp, TRUE);
+    lives_widget_set_sensitive(prefsw->jack_astart, TRUE);
+    lives_widget_set_sensitive(prefsw->jack_astop, TRUE);
+    //lives_widget_set_sensitive(prefsw->ajack_config_button, TRUE);
     hide_warn_image(prefsw->jack_aplabel);
   } else {
     lives_widget_set_sensitive(prefsw->checkbutton_jack_read_autocon, FALSE);
     lives_widget_set_sensitive(prefsw->checkbutton_jack_pwp, FALSE);
+    lives_widget_set_sensitive(prefsw->jack_astart, FALSE);
+    lives_widget_set_sensitive(prefsw->jack_astop, FALSE);
+    lives_widget_set_sensitive(prefsw->ajack_config_button, FALSE);
     show_warn_image(prefsw->jack_aplabel, NULL);
   }
 #endif
@@ -5261,17 +5267,16 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                        FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->jack_tstart = lives_standard_check_button_new(_("Create transport server if needed"),
-                        (future_prefs->jack_opts
-                         & JACK_OPTS_START_TSERVER),
-                        LIVES_BOX(hbox), NULL);
+                        (future_prefs->jack_opts & JACK_OPTS_START_TSERVER), LIVES_BOX(hbox), NULL);
 
   prefsw->jack_tstop = lives_standard_check_button_new(_("Shut down transport server when not needed"),
-                       (future_prefs->jack_opts
-                        & JACK_OPTS_NOKILL_TSERVER) ? FALSE : TRUE,
+                       (future_prefs->jack_opts & JACK_OPTS_NOKILL_TSERVER) ? FALSE : TRUE,
                        LIVES_BOX(hbox), NULL);
 
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(prefsw->jack_tstart), LIVES_WIDGET_TOGGLED_SIGNAL,
                                   LIVES_GUI_CALLBACK(widget_act_toggle), prefsw->jack_tstop);
+
+  toggle_sets_active(LIVES_TOGGLE_BUTTON(prefsw->jack_tstart), prefsw->jack_tstop, FALSE);
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->jack_tstart), prefsw->jack_tstop, FALSE);
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -5280,9 +5285,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 
   advbutton =
     lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES,
-        _("Server and Driver _Configuration"),
-        DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT,
+        _("Server and Driver _Configuration"), DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT,
         LIVES_BOX(hbox), TRUE, NULL);
+  lives_widget_set_sensitive(advbutton, FALSE);
 
   layout = lives_layout_new(LIVES_BOX(vbox));
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
@@ -5374,28 +5379,31 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                        FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->jack_astart = lives_standard_check_button_new(_("Create jack audio server if needed"),
-                        (future_prefs->jack_opts
-                         & JACK_OPTS_START_ASERVER),
+                        (future_prefs->jack_opts & JACK_OPTS_START_ASERVER),
                         LIVES_BOX(hbox), NULL);
 
   prefsw->jack_astop = lives_standard_check_button_new(_("Shut down jack audio server when not needed"),
-                       (future_prefs->jack_opts
-                        & JACK_OPTS_NOKILL_ASERVER) ? FALSE : TRUE,
+                       (future_prefs->jack_opts & JACK_OPTS_NOKILL_ASERVER) ? FALSE : TRUE,
                        LIVES_BOX(hbox), NULL);
 
-  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->jack_astart), LIVES_WIDGET_TOGGLED_SIGNAL,
-                            LIVES_GUI_CALLBACK(widget_act_toggle), prefsw->jack_astop);
+  toggle_sets_active(LIVES_TOGGLE_BUTTON(prefsw->jack_astart), prefsw->jack_astop, FALSE);
+  toggle_sets_active(LIVES_TOGGLE_BUTTON(prefsw->jack_astart), prefsw->jack_tstart, FALSE);
   toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->jack_astart), prefsw->jack_astop, FALSE);
+  toggle_sets_active(LIVES_TOGGLE_BUTTON(prefsw->jack_astop), prefsw->jack_tstop, FALSE);
+
+  toggle_sets_active(LIVES_TOGGLE_BUTTON(prefsw->jack_tstart), prefsw->jack_astart, FALSE);
+  toggle_sets_active(LIVES_TOGGLE_BUTTON(prefsw->jack_tstop), prefsw->jack_astop, FALSE);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox,
                        FALSE, FALSE, widget_opts.packing_height);
 
-  advbutton =
+  prefsw->ajack_config_button =
     lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES,
         _("Server and Driver _Configuration"),
         DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT,
         LIVES_BOX(hbox), TRUE, NULL);
+  lives_widget_set_sensitive(prefsw->ajack_config_button, FALSE);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox,

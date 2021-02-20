@@ -263,6 +263,8 @@ typedef struct {
   char jack_tserver_cname[1024];
   const char *jack_tdriver, *jack_adriver;
   LiVESList *jack_tslaves, *jack_aslaves;
+
+  boolean jack_srv_dup;
 #endif
 
   char *fxdefsfile;
@@ -721,6 +723,7 @@ typedef struct {
   LiVESWidget *jack_tstop;
   LiVESWidget *jack_astop;
   LiVESWidget *jack_trans;
+  LiVESWidget *ajack_config_button;
   LiVESWidget *jack_aplabel;
   LiVESWidget *checkbutton_jack_master;
   LiVESWidget *checkbutton_jack_client;
@@ -966,6 +969,9 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_PASTARTOPTS "pa_start_opts"
 
 #define PREF_DEF_AUTHOR "default_author_name"
+
+#define PREF_JACK_TDRIVER "jack_transport_driver"
+#define PREF_JACK_ADRIVER "jack_audio_driver"
 
 ////////////////////// utf8 values
 

@@ -2702,15 +2702,20 @@ LIVES_GLOBAL_INLINE void do_jack_noopen_warn3(boolean is_trans) {
   if (*extra) lives_free(extra);
 }
 
-LIVES_GLOBAL_INLINE void do_jack_noopen_warn4(void) {
+LIVES_GLOBAL_INLINE void do_jack_noopen_warn4(int suggest_opts) {
   const char *otherbit;
+  char *firstbit;
+  if (suggest_opts != -1) {
+    firstbit = lives_strdup_printf("lives -jackopts %d\nor\n", suggest_opts);
+  } else firstbit = "";
 #ifdef HAVE_PULSE_AUDIO
   if (capable->has_pulse_audio == PRESENT) otherbit = "\"lives -aplayer pulse\"";
   else
 #endif
     otherbit = "\"lives -aplayer none\"";
-  do_info_dialogf(_("\nAlternatively, try to start lives with commandline option:\n\n%s\n"),
-                  otherbit);
+  do_info_dialogf(_("\nAlternatively, try to start lives with commandline option:\n\n%s%s\n"),
+                  firstbit, otherbit);
+  if (*firstbit) lives_free(firstbit);
 }
 
 LIVES_GLOBAL_INLINE void do_jack_noopen_warn2(void) {

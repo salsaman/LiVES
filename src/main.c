@@ -275,7 +275,7 @@ LIVES_LOCAL_INLINE void jack_warn(boolean is_trans) {
   do_jack_noopen_warn(is_trans);
   if (prefs->startup_phase == 4) {
     do_jack_noopen_warn2();
-  } else do_jack_noopen_warn4();
+  } else do_jack_noopen_warn4(-1);
   set_int_pref(PREF_JACK_OPTS, 0);
 }
 #endif
@@ -895,6 +895,19 @@ static boolean pre_init(void) {
     prefs->audio_player = AUD_PLAYER_SOX;
     lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_SOX);
   }
+
+#ifdef ENABLE_JACK
+  prefs->jack_srv_dup = TRUE;
+  get_string_pref(PREF_JACK_ADRIVER, buff, MIN(256, JACK_PARAM_STRING_MAX));
+  if (*buff) {
+    prefs->jack_adriver = lives_strdup(buff);
+#ifdef ENABLE_JACK_TRANSPORT
+    if (prefs->jack_srv_dup) {
+      prefs->jack_tdriver = lives_strdup(buff);
+    }
+#endif
+  }
+#endif
 
   prefs->open_decorated = TRUE;
 
@@ -2185,6 +2198,20 @@ static void lives_init(_ign_opts *ign_opts) {
 
     // audio startup
 #ifdef ENABLE_JACK
+
+#ifdef ENABLE_JACK_TRANSPORT
+    if (prefs->jack_srv_dup) {
+      if (prefs->jack_opts & JACK_OPTS_START_ASERVER)
+        prefs->jack_opts |= JACK_OPTS_START_TSERVER;
+      else
+        prefs->jack_opts &= ~JACK_OPTS_START_TSERVER;
+      if (prefs->jack_opts & JACK_OPTS_NOKILL_ASERVER)
+        prefs->jack_opts |= JACK_OPTS_NOKILL_TSERVER;
+      else
+        prefs->jack_opts &= ~JACK_OPTS_NOKILL_TSERVER;
+      future_prefs->jack_opts = prefs->jack_opts;
+    }
+
     // start jack transport polling
     if (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT) {
       splash_msg(_("Starting or connecting to jack transport server..."),
@@ -2200,14 +2227,22 @@ static void lives_init(_ign_opts *ign_opts) {
         set_int_pref(PREF_JACK_OPTS, 0);
         lives_exit(0);
       }
+      if (ign_opts->ign_jackopts) set_int_pref(PREF_JACK_OPTS, prefs->jack_opts);
     }
+#endif
+
     if (prefs->audio_player == AUD_PLAYER_JACK) {
       splash_msg(_("Starting or connecting to jack audio server..."),
                  SPLASH_LEVEL_LOAD_APLAYER);
+
+      // TODO - this actually will be called from jack_create_client_writer / reader
       if (!lives_jack_init(FALSE)) {
         if (prefs->jack_opts & JACK_OPTS_START_ASERVER)
           do_jack_noopen_warn(FALSE);
-        else do_jack_noopen_warn3(FALSE);
+        else {
+          do_jack_noopen_warn3(FALSE);
+          do_jack_noopen_warn4(prefs->jack_opts == 0 ? JACK_OPTS_START_ASERVER : -1);
+        }
         if (prefs->startup_phase == 4) {
           do_jack_noopen_warn2();
         }
@@ -2247,9 +2282,11 @@ static void lives_init(_ign_opts *ign_opts) {
           do_jack_noopen_warn3(FALSE);
           if (prefs->startup_phase == 4) {
             do_jack_noopen_warn2();
-          } else do_jack_noopen_warn4();
+          } else do_jack_noopen_warn4(-1);
           lives_exit(0);
         }
+
+        if (ign_opts->ign_jackopts) set_int_pref(PREF_JACK_OPTS, prefs->jack_opts);
 
         mainw->jackd->whentostop = &mainw->whentostop;
         mainw->jackd->cancelled = &mainw->cancelled;

@@ -11285,6 +11285,8 @@ static void _toggle_if_condmet(LiVESWidget * tbut, livespointer widget, boolean 
   lives_free(keyval);
   if (!strcmp(type, "sens"))
     lives_widget_set_sensitive(LIVES_WIDGET(widget), cond);
+  else if (!strcmp(type, "act"))
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(widget), cond);
   else if (!strcmp(type, "visi")) {
     if (cond) lives_widget_show(LIVES_WIDGET(widget));
     else lives_widget_hide(LIVES_WIDGET(widget));
@@ -11292,6 +11294,7 @@ static void _toggle_if_condmet(LiVESWidget * tbut, livespointer widget, boolean 
 }
 
 static void toggle_set_sensitive(LiVESWidget * tbut, livespointer widget) {
+  if (!lives_widget_is_sensitive(LIVES_WIDGET(tbut))) return;
   if (LIVES_IS_TOGGLE_BUTTON(tbut))
     _toggle_if_condmet(tbut, widget, lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(tbut)), "sens");
   else if (LIVES_IS_TOGGLE_TOOL_BUTTON(tbut))
@@ -11335,6 +11338,29 @@ static void toggle_set_invisible(LiVESWidget * tbut, livespointer widget) {
   else if (LIVES_IS_CHECK_MENU_ITEM(tbut))
     _toggle_if_condmet(tbut, widget, !lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(tbut)),
                        "visi");
+}
+
+static void toggle_set_active(LiVESWidget * tbut, livespointer widget) {
+  if (LIVES_IS_TOGGLE_BUTTON(tbut))
+    _toggle_if_condmet(tbut, widget, lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(tbut)), "act");
+  else if (LIVES_IS_TOGGLE_TOOL_BUTTON(tbut))
+    _toggle_if_condmet(tbut, widget, lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(tbut)),
+                       "act");
+  else if (LIVES_IS_CHECK_MENU_ITEM(tbut))
+    _toggle_if_condmet(tbut, widget, lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(tbut)),
+                       "act");
+}
+
+static void toggle_set_inactive(LiVESWidget * tbut, livespointer widget) {
+  if (LIVES_IS_TOGGLE_BUTTON(tbut))
+    _toggle_if_condmet(tbut, widget, !lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(tbut)),
+                       "act");
+  else if (LIVES_IS_TOGGLE_TOOL_BUTTON(tbut))
+    _toggle_if_condmet(tbut, widget, !lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(tbut)),
+                       "act");
+  else if (LIVES_IS_CHECK_MENU_ITEM(tbut))
+    _toggle_if_condmet(tbut, widget, !lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(tbut)),
+                       "act");
 }
 
 // togglebutton functions
@@ -11396,6 +11422,35 @@ boolean toggle_sets_visible_cond(LiVESWidget * tb, LiVESWidget * widget,
 }
 
 
+static boolean toggle_sets_active_cond(LiVESWidget * tb, LiVESWidget * widget,
+                                       livespointer condact, livespointer condinact, boolean invert) {
+  if (condact) {
+    /// set sensitive only if *condsens > 0
+    char *keyval = lives_strdup_printf("%p_act_cond", widget);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(tb), keyval, condact);
+  }
+
+  if (condinact) {
+    /// set insensitive only if *condinsens == 0
+    char *keyval = lives_strdup_printf("%p_inact_cond", widget);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(tb), keyval, condinact);
+  }
+
+  if (!invert) {
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(tb), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(toggle_set_active),
+                                    (livespointer)widget);
+    toggle_set_active(tb, (livespointer)widget);
+  } else {
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(tb), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(toggle_set_inactive),
+                                    (livespointer)widget);
+    toggle_set_inactive(tb, (livespointer)widget);
+  }
+  return TRUE;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean toggle_sets_sensitive(LiVESToggleButton * tb, LiVESWidget * widget,
     boolean invert) {
   return toggle_sets_sensitive_cond(LIVES_WIDGET(tb), widget, NULL, NULL, invert);
@@ -11422,6 +11477,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean menu_sets_visible(LiVESCheckMenuItem * mi, L
   return toggle_sets_visible_cond(LIVES_WIDGET(mi), widget, NULL, NULL, invert);
 }
 
+WIDGET_HELPER_GLOBAL_INLINE boolean toggle_sets_active(LiVESToggleButton * tb, LiVESToggleButton * widget,
+    boolean invert) {
+  return toggle_sets_active_cond(LIVES_WIDGET(tb), widget, NULL, NULL, invert);
+}
 
 // widget callback sets togglebutton active
 boolean widget_act_toggle(LiVESWidget * widget, LiVESWidget * togglebutton) {

@@ -963,7 +963,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_stop_emission_by_name(livespoin
 
 
 static volatile boolean gov_running = FALSE;
-static volatile LiVESResponseType dlgresp = LIVES_RESPONSE_NONE;
+//static volatile LiVESResponseType dlgresp = LIVES_RESPONSE_NONE;
 static volatile boolean was_dest = FALSE;
 static volatile lives_proc_thread_t lpttorun = NULL;
 static volatile void *lpt_result = NULL;

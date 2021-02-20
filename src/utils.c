@@ -1624,7 +1624,7 @@ void set_start_end_spins(int clipno) {
 boolean switch_aud_to_jack(boolean set_in_prefs) {
 #ifdef ENABLE_JACK
   if (mainw->is_ready) {
-    if (!mainw->jack_inited) lives_jack_init(FALSE);
+    if (1) lives_jack_init(FALSE);
     if (!mainw->jackd) {
       jack_audio_init();
       jack_audio_read_init();

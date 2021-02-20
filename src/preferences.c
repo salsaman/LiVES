@@ -1541,7 +1541,7 @@ boolean apply_prefs(boolean skip_warn) {
     + JACK_OPTS_NOPLAY_WHEN_PAUSED * !jack_pwp + JACK_OPTS_TIMEBASE_START * jack_tb_start +
     JACK_OPTS_TIMEBASE_LSTART * jack_mtb_start + JACK_OPTS_TIMEBASE_CLIENT * jack_tb_client
     + JACK_OPTS_NO_READ_AUTOCON * !jack_read_autocon;
-#ifndef HAVE_JACK_TRANSPORT
+#ifndef ENABLE_JACK_TRANSPORT
   jack_opts &= ~(JACK_OPTS_TRANSPORT_CLIENT | JACK_OPTS_TRANSPORT_MASTER
                  | JACK_OPTS_START_TSERVER | JACK_OPTS_TIMEBASE_START
                  | JACK_OPTS_TIMEBASE_CLIENT | JACK_OPTS_TIMEBASE_MASTER

@@ -984,7 +984,7 @@ static boolean pre_init(void) {
     prefs->jack_opts = future_prefs->jack_opts = get_int_prefd(PREF_JACK_OPTS, 16);
   }
 
-#ifndef HAVE_JACK_TRANSPORT
+#ifndef ENABLE_JACK_TRANSPORT
   prefs->jack_opts &= ~(JACK_OPTS_TRANSPORT_CLIENT | JACK_OPTS_TRANSPORT_MASTER
                         | JACK_OPTS_START_TSERVER | JACK_OPTS_TIMEBASE_START
                         | JACK_OPTS_TIMEBASE_CLIENT | JACK_OPTS_TIMEBASE_MASTER

@@ -253,6 +253,7 @@ static boolean jack_params_to_rfx(const JSList *dparams) {
   pbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
   make_param_box(LIVES_VBOX(pbox), rfx);
   resp = lives_dialog_run(LIVES_DIALOG(dialog));
+  if (resp == LIVES_RESPONSE_OK) lives_widget_destroy(dialog);
   rfx_free(rfx);
   lives_free(rfx);
   return (resp == LIVES_RESPONSE_OK);
@@ -271,12 +272,26 @@ static boolean server_params_to_rfx(jackctl_server_t *server) {
 static jackctl_driver_t *defdriver;
 static LiVESList *new_slave_list = NULL;
 
+
 static void set_def_driver(LiVESWidget *rb, jackctl_driver_t *driver) {
   defdriver = driver;
 }
 
+static void onif1(LiVESToggleButton *tb, LiVESWidget *bt) {
+  int actv = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(bt), "actv"));
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(tb))) actv++;
+  else actv--;
+  if (!actv) lives_widget_set_sensitive(bt, FALSE);
+  else lives_widget_set_sensitive(bt, TRUE);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(bt), "actv", LIVES_INT_TO_POINTER(actv));
+}
+
 static void add_slave_driver(LiVESWidget *rb, jackctl_driver_t *driver) {
-  new_slave_list = lives_list_append(new_slave_list, driver);
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(rb))) {
+    new_slave_list = lives_list_append(new_slave_list, driver);
+  } else {
+    new_slave_list = lives_list_remove(new_slave_list, driver);
+  }
 }
 
 static void config_driver(LiVESWidget *b, jackctl_driver_t *driver) {
@@ -291,26 +306,35 @@ jackctl_driver_t *get_def_drivers(jackctl_server_t *server, LiVESList *mlist,
                                   LiVESList **slist, boolean is_trans) {
   char *title = lives_strdup_printf(_("Driver selection for LiVES %s server"), is_trans ? _("transport") : _("audio"));
   LiVESList *list;
-  LiVESSList *rb_group = NULL;
   LiVESWidget *dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
   LiVESWidget *dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
-  LiVESWidget *vbox = lives_vbox_new(FALSE, 0), *hbox, *rb, *button;
+  LiVESWidget *vbox = lives_vbox_new(FALSE, 0), *hbox, *rb, *cb, *button;
   LiVESWidget *layout = lives_layout_new(LIVES_BOX(vbox));
   LiVESWidget *scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V, vbox);
+  LiVESSList *rb_group = NULL;
   char *wid;
+  char *jack1warn =
+#ifdef JACK_V2
+    lives_strdup("");
+#else
+    lives_strdup(_("\nJACK *1* DOES NOT PROVIDE INFORMATION ABOUT WHICH DRIVERS "
+                   "ARE MASTER\nAND WHICH ARE SLAVES !\n"
+                   "PLEASE TAKE CARE THAT EXACTLY ONE MASTER DRIVER IS SELECTED "
+                   "FROM THE LIST BELOW\n"));
+#endif
   char *msg = lives_strdup_printf(_("LiVES needs to start a jackd server (%s) for the %s client.\n"
                                     "Since this is the first time connecting, you are required to "
                                     "select the driver to use for the server.\n\n"
                                     "Please select one of the 'Master' drivers, and optionally "
-                                    "any number of 'Slave' drivers\n\n"
+                                    "any number of 'Slave' drivers\n%s\n"
                                     "If you prefer, you may start the jack server manually "
                                     "and then click 'Retry Connection'\n"
                                     "or you may click 'Abort' to exit immediately from LiVES\n"
                                     "These options can be refined later from "
                                     "Tools / Preferences / Jack Integration"),
                                   is_trans ? prefs->jack_tserver_sname : prefs->jack_aserver_sname,
-                                  is_trans ? _("transport") : _("audio"));
-
+                                  is_trans ? _("transport") : _("audio"), jack1warn);
+  lives_free(jack1warn);
   lives_layout_add_label(LIVES_LAYOUT(layout), msg, FALSE);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
   lives_free(msg);
@@ -324,6 +348,7 @@ jackctl_driver_t *get_def_drivers(jackctl_server_t *server, LiVESList *mlist,
     lives_signal_sync_connect(LIVES_GUI_OBJECT(button), LIVES_WIDGET_CLICKED_SIGNAL,
                               LIVES_GUI_CALLBACK(config_server), server);
   }
+#ifdef JACK_V2
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Master driver:"), FALSE);
   if (mlist) defdriver = mlist->data;
   else defdriver = NULL;
@@ -345,15 +370,22 @@ jackctl_driver_t *get_def_drivers(jackctl_server_t *server, LiVESList *mlist,
   }
 
   add_hsep_to_box(LIVES_BOX(vbox));
-
   layout = lives_layout_new(LIVES_BOX(vbox));
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Slave drivers:"), FALSE);
+#else
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Available drivers:"), FALSE);
+#endif
 
   for (list = *slist; list; list = list->next) {
     const char *dname = jackctl_driver_get_name((jackctl_driver_t *)list->data);
     hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
     add_fill_to_box(LIVES_BOX(hbox));
-    rb = lives_standard_check_button_new(dname, FALSE, LIVES_BOX(hbox), NULL);
+#ifndef JACK_V2
+    rb = lives_standard_radio_button_new(_("Master"), &rb_group, LIVES_BOX(hbox), NULL);
+    lives_signal_sync_connect(LIVES_GUI_OBJECT(rb), LIVES_WIDGET_TOGGLED_SIGNAL,
+                              LIVES_GUI_CALLBACK(set_def_driver), list->data);
+#endif
+    cb = lives_standard_check_button_new(dname, FALSE, LIVES_BOX(hbox), NULL);
     button = lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES,
              _("Configure"), -1, DEF_BUTTON_HEIGHT >> 1,
              LIVES_BOX(hbox), TRUE, NULL);
@@ -361,9 +393,18 @@ jackctl_driver_t *get_def_drivers(jackctl_server_t *server, LiVESList *mlist,
                               LIVES_GUI_CALLBACK(config_driver), list->data);
     hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
     lives_box_pack_start(LIVES_BOX(hbox), button, TRUE, FALSE, 0);
-    lives_signal_sync_connect(LIVES_GUI_OBJECT(rb), LIVES_WIDGET_TOGGLED_SIGNAL,
-                              LIVES_GUI_CALLBACK(add_slave_driver), list->data);
-    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(rb), button, FALSE);
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(cb), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(add_slave_driver), list->data);
+#ifdef JACK_V2
+    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(cb), button, FALSE);
+#else
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(cb), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(onif1), button);
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(rb), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(onif1), button);
+    if (list != *slist) lives_widget_set_sensitive(button, FALSE);
+    else lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), "actv", LIVES_INT_TO_POINTER(1));
+#endif
   }
   if (*slist) lives_list_free(*slist);
   *slist = new_slave_list;
@@ -374,9 +415,8 @@ jackctl_driver_t *get_def_drivers(jackctl_server_t *server, LiVESList *mlist,
 
   lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH, _("_Retry Connection"),
                                      LIVES_RESPONSE_RETRY);
-
-  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
-                                     LIVES_STOCK_OK, _("_Start Server"), LIVES_RESPONSE_OK);
+  lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, _("_Start Server"),
+                                     LIVES_RESPONSE_OK);
 
   lives_widget_show_all(dialog);
   lives_widget_show_now(dialog);
@@ -387,24 +427,25 @@ jackctl_driver_t *get_def_drivers(jackctl_server_t *server, LiVESList *mlist,
 
   while (1) {
     LiVESResponseType response = lives_dialog_run(LIVES_DIALOG(dialog));
-    if (response == LIVES_RESPONSE_RETRY) {
-      lives_widget_destroy(dialog);
-      if (new_slave_list) {
-        lives_list_free(new_slave_list);
-        new_slave_list = NULL;
-        *slist = NULL;
-      }
-      return NULL;
-    }
-    if (response == LIVES_RESPONSE_OK) {
-      lives_widget_destroy(dialog);
-      return defdriver;
-    }
     if (response == LIVES_RESPONSE_ABORT) {
       maybe_abort(TRUE);
+      continue;
     }
+    lives_widget_destroy(dialog);
+    if (response == LIVES_RESPONSE_RETRY) {
+      if (*slist) {
+        lives_list_free(*slist);
+        *slist = NULL;
+      }
+      defdriver = NULL;
+    } else {
+#ifndef JACK_V2
+      if (*slist) *slist = lives_list_remove(*slist, defdriver);
+#endif
+    }
+    break;
   }
-  return NULL;
+  return defdriver;
 }
 
 
@@ -417,6 +458,7 @@ boolean lives_jack_init(boolean is_trans) {
   char *server_name;
 
 #ifndef PRODUCTION
+  jackserver = NULL;
   lives_snprintf(prefs->jack_tserver_cname, 1024, "%s", JACK_DEFAULT_SERVER_NAME);
   lives_snprintf(prefs->jack_tserver_sname, 1024, "%s", JACK_DEFAULT_SERVER_NAME);
   lives_snprintf(prefs->jack_aserver_cname, 1024, "%s", JACK_DEFAULT_SERVER_NAME);
@@ -492,14 +534,16 @@ retry_connect:
       twins = FALSE;
     }
 
-    // start the server
-    jackserver = jackctl_server_create(NULL, NULL);
     if (!jackserver) {
-      char *msg = lives_strdup_printf("Could not create jackd %s server %s", is_trans ?
-                                      "transport" : "audio", server_name);
-      LIVES_ERROR(msg);
-      lives_free(server_name);
-      return FALSE;
+      // start the server
+      jackserver = jackctl_server_create(NULL, NULL);
+      if (!jackserver) {
+        char *msg = lives_strdup_printf("Could not create jackd %s server %s", is_trans ?
+                                        "transport" : "audio", server_name);
+        LIVES_ERROR(msg);
+        lives_free(server_name);
+        return FALSE;
+      }
     }
 
 #ifdef JACK_SYNC_MODE
@@ -527,11 +571,15 @@ retry_connect:
       const JSList *xdrivers = drivers;
       while (xdrivers) {
         driver = (jackctl_driver_t *)xdrivers->data;
+#ifdef JACK_V2
         if (jackctl_driver_get_type(driver) == JackMaster) {
           mlist = lives_list_append(mlist, driver);
         } else {
           slist = lives_list_append(slist, driver);
         }
+#else
+        slist = lives_list_append(slist, driver);
+#endif
         xdrivers = jack_slist_next(xdrivers);
       }
       if (!lives_strcmp(prefs->jack_aserver_sname, prefs->jack_aserver_cname)

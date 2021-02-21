@@ -5048,6 +5048,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_spin_button_set_digits(LiVESSpinButton
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE uint32_t lives_spin_button_get_digits(LiVESSpinButton *button) {
+#ifdef GUI_GTK
+  return gtk_spin_button_get_digits(button);
+#endif
+  return 0;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_spin_button_update(LiVESSpinButton *button) {
 #ifdef GUI_GTK
   gtk_spin_button_update(button);
@@ -9397,6 +9405,8 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
   int maxlen;
   widget_opts.last_label = NULL;
 
+  if (step == 0.) step = 1. / (double)lives_10pow(dp);
+  if (page == 0.) page = step;
   adj = lives_adjustment_new(val, min, max, step, page, 0.);
   spinbutton = lives_spin_button_new(adj, 1, dp);
 
@@ -11582,23 +11592,26 @@ WIDGET_HELPER_GLOBAL_INLINE boolean set_tooltips_state(LiVESWidget * widget, boo
 
 
 WIDGET_HELPER_GLOBAL_INLINE double lives_spin_button_get_snapval(LiVESSpinButton * button, double val) {
-  double stepval, min, max, nval, stepfix;
+  double stepval, min, max, nval;
   int digs = gtk_spin_button_get_digits(button);
   boolean wrap = gtk_spin_button_get_wrap(button);
   double tenpow = (double)lives_10pow(digs);
   gtk_spin_button_get_increments(button, &stepval, NULL);
   gtk_spin_button_get_range(button, &min, &max);
-  stepfix = tenpow / stepval;
-  if (val >= 0.)
-    nval = (double)((int64_t)(val * stepfix + .5)) / stepfix;
-  else
-    nval = (double)((int64_t)(val * stepfix  - .5)) / stepfix;
+  if (val >= 0.) {
+    nval = (double)((int64_t)(val * tenpow + .5)) / tenpow;
+    if (stepval > 0.) nval = (double)((int64_t)((nval + stepval / 2.) / stepval)) * stepval;
+  } else {
+    nval = (double)((int64_t)(val * tenpow  - .5)) / tenpow;
+    if (stepval > 0.) nval = (double)((int64_t)((nval - stepval / 2.) / stepval)) * stepval;
+  }
+
   if (nval < min) {
-    if (wrap) while (nval < min) nval += (max - min);
+    if (wrap && max > min) while (nval < min) nval += (max - min);
     else nval = min;
   }
   if (nval > max) {
-    if (wrap) while (nval > max) nval -= (max - min);
+    if (wrap && max > min) while (nval > max) nval -= (max - min);
     else nval = max;
   }
   return nval;

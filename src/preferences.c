@@ -188,7 +188,7 @@ LIVES_GLOBAL_INLINE double get_double_pref(const char *key) {
   char buffer[64];
   get_string_pref(key, buffer, 64);
   if (!(*buffer)) return 0.;
-  return strtod(buffer, NULL);
+  return lives_strtod(buffer);
 }
 
 
@@ -196,7 +196,7 @@ LIVES_GLOBAL_INLINE double get_double_prefd(const char *key, double defval) {
   char buffer[64];
   get_string_pref(key, buffer, 64);
   if (!(*buffer)) return defval;
-  return strtod(buffer, NULL);
+  return lives_strtod(buffer);
 }
 
 
@@ -1527,16 +1527,16 @@ boolean apply_prefs(boolean skip_warn) {
   boolean jack_read_autocon = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_read_autocon));
 
   boolean jack_tstart = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->jack_tstart));
-  boolean jack_notstop = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->jack_tstop));
+  boolean jack_ttemp = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->jack_ttemp));
   boolean jack_astart = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->jack_astart));
-  boolean jack_noastop = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->jack_tstop));
+  boolean jack_atemp = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->jack_atemp));
 
   boolean jack_trans = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->jack_trans));
 
   uint32_t jack_opts =
     JACK_OPTS_TRANSPORT_CLIENT * jack_client + JACK_OPTS_TRANSPORT_MASTER * jack_master +
     JACK_OPTS_START_TSERVER * jack_tstart + JACK_OPTS_START_ASERVER
-    * jack_astart + JACK_OPTS_NOKILL_ASERVER * jack_noastop + JACK_OPTS_NOKILL_TSERVER * jack_notstop
+    * jack_astart + JACK_OPTS_PERM_ASERVER * !jack_atemp + JACK_OPTS_PERM_TSERVER * !jack_ttemp
     + JACK_OPTS_ENABLE_TCLIENT * jack_trans
     + JACK_OPTS_NOPLAY_WHEN_PAUSED * !jack_pwp + JACK_OPTS_TIMEBASE_START * jack_tb_start +
     JACK_OPTS_TIMEBASE_LSTART * jack_mtb_start + JACK_OPTS_TIMEBASE_CLIENT * jack_tb_client
@@ -2681,14 +2681,14 @@ static void on_audp_entry_changed(LiVESWidget *audp_combo, livespointer ptr) {
     lives_widget_set_sensitive(prefsw->checkbutton_jack_read_autocon, TRUE);
     lives_widget_set_sensitive(prefsw->checkbutton_jack_pwp, TRUE);
     lives_widget_set_sensitive(prefsw->jack_astart, TRUE);
-    lives_widget_set_sensitive(prefsw->jack_astop, TRUE);
+    lives_widget_set_sensitive(prefsw->jack_atemp, TRUE);
     //lives_widget_set_sensitive(prefsw->ajack_config_button, TRUE);
     hide_warn_image(prefsw->jack_aplabel);
   } else {
     lives_widget_set_sensitive(prefsw->checkbutton_jack_read_autocon, FALSE);
     lives_widget_set_sensitive(prefsw->checkbutton_jack_pwp, FALSE);
     lives_widget_set_sensitive(prefsw->jack_astart, FALSE);
-    lives_widget_set_sensitive(prefsw->jack_astop, FALSE);
+    lives_widget_set_sensitive(prefsw->jack_atemp, FALSE);
     lives_widget_set_sensitive(prefsw->ajack_config_button, FALSE);
     show_warn_image(prefsw->jack_aplabel, NULL);
   }
@@ -4148,7 +4148,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   ACTIVE(rr_crash, TOGGLED);
 
   if (!prefs->crash_recovery)
-    show_warn_image(prefsw->rr_crash, _("Crash recovery also needs to be enabled for this feature to function."));
+    show_warn_image(prefsw->rr_crash,
+                    _("Crash recovery also needs to be enabled for this feature to function."));
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
@@ -4802,6 +4803,12 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   prefsw->checkbutton_warn_after_crash = lives_standard_check_button_new
                                          (_("Show a warning advising cleaning of disk space after a crash."),
                                           !(prefs->warning_mask & WARN_MASK_CLEAN_AFTER_CRASH), LIVES_BOX(hbox), NULL);
+  if (prefs->vj_mode)
+    show_warn_image(prefsw->checkbutton_warn_after_crash,
+                    _("Warning is never show in VJ startup mode."));
+  else if (prefs->show_dev_opts)
+    show_warn_image(prefsw->checkbutton_warn_after_crash,
+                    _("Warning is never show in developer mode."));
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_warn_no_pulse = lives_standard_check_button_new
@@ -5267,17 +5274,31 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                        FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->jack_tstart = lives_standard_check_button_new(_("Create transport server if needed"),
-                        (future_prefs->jack_opts & JACK_OPTS_START_TSERVER), LIVES_BOX(hbox), NULL);
+                        (future_prefs->jack_opts & JACK_OPTS_START_TSERVER), LIVES_BOX(hbox),
+                        H_("Checking this will cause LiVES to "
+                           "start up a jackd server if it is\n"
+                           "unable to connect to a running "
+                           "instance.\n"));
 
-  prefsw->jack_tstop = lives_standard_check_button_new(_("Shut down transport server when not needed"),
-                       (future_prefs->jack_opts & JACK_OPTS_NOKILL_TSERVER) ? FALSE : TRUE,
-                       LIVES_BOX(hbox), NULL);
+  prefsw->jack_ttemp = lives_standard_check_button_new(_("Create a temporary server"),
+                       !(future_prefs->jack_opts
+                         & JACK_OPTS_PERM_TSERVER),
+                       LIVES_BOX(hbox), H_("Checking this will "
+                           "make any jackd servers "
+                           "started by LiVES\n"
+                           "shut down when there are "
+                           "no more clients connected "
+                           "to them.\n(This option only"
+                           " applies to servers created"
+                           " by LiVES\nvia means other "
+                           "than using a config "
+                           "file)\n"));
 
   lives_signal_sync_connect_after(LIVES_GUI_OBJECT(prefsw->jack_tstart), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                  LIVES_GUI_CALLBACK(widget_act_toggle), prefsw->jack_tstop);
+                                  LIVES_GUI_CALLBACK(widget_act_toggle), prefsw->jack_ttemp);
 
-  toggle_sets_active(LIVES_TOGGLE_BUTTON(prefsw->jack_tstart), prefsw->jack_tstop, FALSE);
-  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->jack_tstart), prefsw->jack_tstop, FALSE);
+  toggle_sets_active(LIVES_TOGGLE_BUTTON(prefsw->jack_tstart), prefsw->jack_ttemp, FALSE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->jack_tstart), prefsw->jack_ttemp, FALSE);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox,
@@ -5379,20 +5400,34 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
                        FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->jack_astart = lives_standard_check_button_new(_("Create jack audio server if needed"),
-                        (future_prefs->jack_opts & JACK_OPTS_START_ASERVER),
-                        LIVES_BOX(hbox), NULL);
+                        (future_prefs->jack_opts &
+                         JACK_OPTS_START_ASERVER), LIVES_BOX(hbox),
+                        H_("Checking this will cause LiVES to "
+                           "start up a jackd server if it is\n"
+                           "unable to connect to a running "
+                           "instance.\n"));
 
-  prefsw->jack_astop = lives_standard_check_button_new(_("Shut down jack audio server when not needed"),
-                       (future_prefs->jack_opts & JACK_OPTS_NOKILL_ASERVER) ? FALSE : TRUE,
-                       LIVES_BOX(hbox), NULL);
+  prefsw->jack_atemp = lives_standard_check_button_new(_("Create a temporary server"),
+                       !(future_prefs->jack_opts
+                         & JACK_OPTS_PERM_ASERVER),
+                       LIVES_BOX(hbox), H_("Checking this will "
+                           "make any jackd servers "
+                           "started by LiVES\n"
+                           "shut down when there are "
+                           "no more clients connected "
+                           "to them.\n(This option only"
+                           " applies to servers created"
+                           " by LiVES\nvia means other "
+                           "than using a config "
+                           "file)\n"));
 
-  toggle_sets_active(LIVES_TOGGLE_BUTTON(prefsw->jack_astart), prefsw->jack_astop, FALSE);
+  toggle_sets_active(LIVES_TOGGLE_BUTTON(prefsw->jack_astart), prefsw->jack_atemp, FALSE);
   toggle_sets_active(LIVES_TOGGLE_BUTTON(prefsw->jack_astart), prefsw->jack_tstart, FALSE);
-  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->jack_astart), prefsw->jack_astop, FALSE);
-  toggle_sets_active(LIVES_TOGGLE_BUTTON(prefsw->jack_astop), prefsw->jack_tstop, FALSE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->jack_astart), prefsw->jack_atemp, FALSE);
+  toggle_sets_active(LIVES_TOGGLE_BUTTON(prefsw->jack_atemp), prefsw->jack_ttemp, FALSE);
 
   toggle_sets_active(LIVES_TOGGLE_BUTTON(prefsw->jack_tstart), prefsw->jack_astart, FALSE);
-  toggle_sets_active(LIVES_TOGGLE_BUTTON(prefsw->jack_tstop), prefsw->jack_astop, FALSE);
+  toggle_sets_active(LIVES_TOGGLE_BUTTON(prefsw->jack_ttemp), prefsw->jack_atemp, FALSE);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox,
@@ -5842,7 +5877,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 #ifdef ENABLE_JACK_TRANSPORT
   ACTIVE(jack_trans, TOGGLED);
   ACTIVE(jack_tstart, TOGGLED);
-  ACTIVE(jack_tstop, TOGGLED);
+  ACTIVE(jack_ttemp, TOGGLED);
   //ACTIVE(jack_tserver_entry, CHANGED);
   ACTIVE(checkbutton_jack_master, TOGGLED);
   ACTIVE(checkbutton_jack_client, TOGGLED);
@@ -5854,7 +5889,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 #ifdef ENABLE_JACK
   //ACTIVE(jack_aserver_entry, CHANGED);
   ACTIVE(jack_astart, TOGGLED);
-  ACTIVE(jack_astop, TOGGLED);
+  ACTIVE(jack_atemp, TOGGLED);
   ACTIVE(checkbutton_jack_pwp, TOGGLED);
   ACTIVE(checkbutton_jack_read_autocon, TOGGLED);
 #endif

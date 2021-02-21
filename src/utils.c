@@ -594,7 +594,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
     lmap = (LiVESList *)user_data;
     while (lmap) {
       array = lives_strsplit((char *)lmap->data, "|", -1);
-      orig_fps = strtod(array[3], NULL);
+      orig_fps = lives_strtod(array[3]);
       resampled_frame = count_resampled_frames(frameno, orig_fps, mainw->files[clipno]->fps);
       if (resampled_frame <= atoi(array[2])) {
         text = lives_strdup_printf("%s\n", array[0]);
@@ -623,7 +623,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
     lmap = (LiVESList *)user_data;
     while (lmap) {
       array = lives_strsplit((char *)lmap->data, "|", -1);
-      max_time = strtod(array[4], NULL);
+      max_time = lives_strtod(array[4]);
       if (max_time > 0. && atime <= max_time) {
         text = lives_strdup_printf("%s\n", array[0]);
         lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer), &end_iter, text, -1);
@@ -2880,7 +2880,7 @@ double get_ratio_fps(const char *string) {
   lives_strfreev(array);
   fps = (double)num / (double)denom;
   fps_string = lives_strdup_printf("%.8f", fps);
-  fps = lives_strtod(fps_string, NULL);
+  fps = lives_strtod(fps_string);
   lives_free(fps_string);
   return fps;
 }

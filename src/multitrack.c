@@ -1075,7 +1075,7 @@ static void rerenumber_clips(const char *lfile, weed_plant_t *event_list) {
           renumbered_clips[rnc] = i;
 
           // original fps
-          lfps[i] = strtod(array[3], NULL);
+          lfps[i] = lives_strtod(array[3]);
           threaded_dialog_spin(0.);
           lives_strfreev(array);
           threaded_dialog_spin(0.);
@@ -3632,7 +3632,7 @@ static boolean timecode_string_validate(LiVESEntry * entry, lives_mt * mt) {
   hrs = atoi(array[0]);
   mins = atoi(array[1]);
   if (mins > 59) mins = 59;
-  secs = lives_strtod(array[2], NULL);
+  secs = lives_strtod(array[2]);
 
   lives_strfreev(array);
 
@@ -13492,7 +13492,7 @@ static void mt_jumpto_mark(lives_mt * mt, lives_direction_t dir) {
   double ptr_time = q_dbl(mt->ptr_time, mt->fps) / TICKS_PER_SECOND_DBL;
 
   while (tl_marks) {
-    time = q_dbl(strtod((char *)tl_marks->data, NULL), mt->fps) / TICKS_PER_SECOND_DBL;
+    time = q_dbl(lives_strtod((char *)tl_marks->data), mt->fps) / TICKS_PER_SECOND_DBL;
     if (time > ptr_time) break;
     if (marktime == time) continue;
     marktime = time;
@@ -15359,7 +15359,7 @@ static EXPOSE_FN_DECL(expose_timeline_reg_event, timeline, user_data) {
   lives_painter_set_source_rgb_from_lives_rgba(cairo, &palette->mt_mark);
 
   while (tl_marks) {
-    time = strtod((char *)tl_marks->data, NULL);
+    time = lives_strtod((char *)tl_marks->data);
     ebwidth = lives_widget_get_allocation_width(mt->timeline);
     offset = (time - mt->tl_min) / (mt->tl_max - mt->tl_min) * (double)ebwidth;
 
@@ -19193,7 +19193,7 @@ LiVESList *layout_frame_is_affected(int clipno, int start, int end, LiVESList * 
   while (lmap) {
     array = lives_strsplit((char *)lmap->data, "|", -1);
     if (atoi(array[2]) != 0) {
-      orig_fps = strtod(array[3], NULL);
+      orig_fps = lives_strtod(array[3]);
       resampled_frame = count_resampled_frames(atoi(array[2]), orig_fps, mainw->files[clipno]->fps);
       if (array[2] == 0) resampled_frame = 0;
       if (start <= resampled_frame && (end == 0 || end >= resampled_frame))
@@ -19228,7 +19228,7 @@ LiVESList *layout_audio_is_affected(int clipno, double stime, double etime, LiVE
   while (lmap) {
     if (get_token_count((char *)lmap->data, '|') < 5) continue;
     array = lives_strsplit((char *)lmap->data, "|", -1);
-    max_time = strtod(array[4], NULL);
+    max_time = lives_strtod(array[4]);
     if (max_time > 0. && stime <= max_time && (etime == 0. || etime <= mainw->files[clipno]->stored_layout_audio)) {
       xlays = lives_list_append_unique(xlays, array[0]);
     }

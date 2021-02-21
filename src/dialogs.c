@@ -1045,7 +1045,7 @@ void pump_io_chan(LiVESIOChannel *iochan) {
             cptr++;
           }
           if (!linebrk) {
-            if (ispct) mainw->proc_ptr->frames_done = (int)(strtod(cptr, NULL)
+            if (ispct) mainw->proc_ptr->frames_done = (int)(lives_strtod(cptr)
                   * (mainw->proc_ptr->progress_end - mainw->proc_ptr->progress_start + 1.) / 100.);
             else mainw->proc_ptr->frames_done = atoi(cptr);
           }
@@ -1841,7 +1841,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
             cfile->frames = cfile->end = cfile->undo_end = atoi(array[0]);
             cfile->hsize = atoi(array[1]);
             cfile->vsize = atoi(array[2]);
-            cfile->fps = cfile->pb_fps = strtod(array[3], NULL);
+            cfile->fps = cfile->pb_fps = lives_strtod(array[3]);
             if (cfile->fps == 0.) cfile->fps = cfile->pb_fps = prefs->default_fps;
             cfile->progress_end = atoi(array[4]);
           }
@@ -2916,6 +2916,7 @@ LIVES_GLOBAL_INLINE void do_vpp_fps_error(void) {
 
 
 LIVES_GLOBAL_INLINE void do_after_crash_warning(void) {
+  if (prefs->vj_mode || prefs->show_dev_opts) return;
   do_error_dialog_with_check(_("After a crash, it is advisable to clean up the disk with\nFile|Clean up disk space\n"),
                              WARN_MASK_CLEAN_AFTER_CRASH);
 }

@@ -247,8 +247,8 @@ typedef struct {
 #define JACK_OPTS_ENABLE_TCLIENT      	(1 << 10)     ///< enable transport client
 
   // sever is only killed if LiVES started it
-#define JACK_OPTS_NOKILL_TSERVER      	(1 << 11)     ///< leave transport running even if we started it
-#define JACK_OPTS_NOKILL_ASERVER      	(1 << 12)     ///< leave audio srvr running even if we started
+#define JACK_OPTS_PERM_TSERVER      	(1 << 11)     ///< leave transport running even if we started it
+#define JACK_OPTS_PERM_ASERVER      	(1 << 12)     ///< leave audio srvr running even if we started
 
 
 #ifdef ENABLE_JACK
@@ -720,8 +720,8 @@ typedef struct {
   LiVESWidget *jack_aserver_entry;
   LiVESWidget *jack_tstart;
   LiVESWidget *jack_astart;
-  LiVESWidget *jack_tstop;
-  LiVESWidget *jack_astop;
+  LiVESWidget *jack_ttemp;
+  LiVESWidget *jack_atemp;
   LiVESWidget *jack_trans;
   LiVESWidget *ajack_config_button;
   LiVESWidget *jack_aplabel;

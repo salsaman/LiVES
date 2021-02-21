@@ -96,7 +96,8 @@ static boolean jack_params_to_rfx(const JSList *dparams) {
     jackctl_parameter_t *jparam = (jackctl_parameter_t *)zdparams->data;
     jackctl_param_type_t jtype = jackctl_parameter_get_type(jparam);
     param->name = lives_strdup(jackctl_parameter_get_name(jparam));
-    param->label = lives_strdup(jackctl_parameter_get_short_description(jparam));
+    param->label = lives_strdup_printf("%s [--%s]", jackctl_parameter_get_short_description(jparam),
+                                       param->name);
     param->desc = lives_strdup(jackctl_parameter_get_long_description(jparam));
     def = jackctl_parameter_get_default_value(jparam);
     val = jackctl_parameter_get_value(jparam);
@@ -118,6 +119,9 @@ static boolean jack_params_to_rfx(const JSList *dparams) {
           param->max = (double)max.i;
         }
       }
+#ifdef DEBUG_JACK_PARAMS
+      else g_print("%s range undefined, %d\n", param->name, def.i);
+#endif
       param->value = lives_malloc(sizint);
       param->def = lives_malloc(sizint);
       if (param->dp == 1) {
@@ -134,22 +138,11 @@ static boolean jack_params_to_rfx(const JSList *dparams) {
         set_int_param(param->def, def.i);
       }
       param->dp = 0;
-      if (jackctl_parameter_has_enum_constraint(jparam)) {
-        uint32_t nstr = jackctl_parameter_get_enum_constraints_count(jparam);
-        param->type = LIVES_PARAM_STRING_LIST;
-        param->max = nstr;
-        for (int j = 0; j < nstr; j++) {
-          param->list =
-            lives_list_append(param->list,
-                              lives_strdup(jackctl_parameter_get_enum_constraint_description
-                                           (jparam, j)));
-        }
-      }
       break;
     case JackParamString:
       param->type = LIVES_PARAM_STRING;
-      // real max is JACK_PARAM_STRING_MAX
-      param->max = MIN(RFX_TEXT_MAGIC, JACK_PARAM_STRING_MAX);
+      param->max = JACK_PARAM_STRING_MAX;
+      param->min = -MIN(RFX_TEXT_MAGIC, JACK_PARAM_STRING_MAX);
       if (jackctl_parameter_is_set(jparam))
         param->value = lives_strdup(val.str);
       else
@@ -179,6 +172,9 @@ static boolean jack_params_to_rfx(const JSList *dparams) {
     }
     if (jackctl_parameter_has_enum_constraint(jparam)) {
       uint32_t nvals = jackctl_parameter_get_enum_constraints_count(jparam);
+#ifdef DEBUG_JACK_PARAMS
+      g_print("nvals is %d for %s\n", nvals, param->name);
+#endif
       param->vlist_type = param->type;
       param->type = LIVES_PARAM_STRING_LIST;
       param->max = (double)nvals;
@@ -243,9 +239,6 @@ static boolean jack_params_to_rfx(const JSList *dparams) {
         param->vlist = lives_list_append(param->vlist, vlval);
       }
     }
-    if ((param->type == LIVES_PARAM_NUM || param->type == LIVES_PARAM_STRING_LIST)
-        && param->max == param->min) param->hidden = HIDDEN_GUI_PERM;
-
     pcount++;
   }
 
@@ -466,6 +459,8 @@ boolean lives_jack_init(boolean is_trans) {
   LiVESList *slave_list;
   char *server_name;
   const char *driver_name;
+  boolean set_server_sync = FALSE;
+  boolean set_server_temp = FALSE;
 #ifndef JACK_V2
   boolean needs_sigs = FALSE;
 #endif
@@ -522,9 +517,6 @@ retry_connect:
   if ((is_trans && (prefs->jack_opts & JACK_OPTS_START_TSERVER))
       || (!is_trans && (prefs->jack_opts & JACK_OPTS_START_ASERVER))) {
     const JSList *drivers;
-#ifdef JACK_SYNC_MODE
-    const JSList *params;
-#endif
 
     lives_free(server_name);
 
@@ -559,21 +551,38 @@ retry_connect:
         return FALSE;
       }
     }
+    server_params_to_rfx(jackserver);
 
 #ifdef JACK_SYNC_MODE
-    // list server parameters
-    params = jackctl_server_get_parameters(jackserver);
-    while (params) {
-      jackctl_parameter_t *parameter = (jackctl_parameter_t *)params->data;
-      if (!strcmp(jackctl_parameter_get_name(parameter), "sync")) {
-        union jackctl_parameter_value value;
-        value.b = TRUE;
-        jackctl_parameter_set_value(parameter, &value);
-        break;
-      }
-      params = jack_slist_next(params);
-    }
+    set_server_sync = TRUE;
 #endif
+    if ((is_trans && !(prefs->jack_opts & JACK_OPTS_PERM_TSERVER)))
+      set_server_temp = TRUE;
+
+    if (set_server_sync || set_server_temp) {
+      // list server parameters
+      const JSList *params = jackctl_server_get_parameters(jackserver);
+      while (params) {
+        jackctl_parameter_t *parameter = (jackctl_parameter_t *)params->data;
+        if (set_server_sync) {
+          if (!strcmp(jackctl_parameter_get_name(parameter), "sync")) {
+            union jackctl_parameter_value value;
+            value.b = TRUE;
+            jackctl_parameter_set_value(parameter, &value);
+            if (!set_server_temp) break;
+          }
+        }
+        if (set_server_temp) {
+          if (!strcmp(jackctl_parameter_get_name(parameter), "temporary")) {
+            union jackctl_parameter_value value;
+            value.b = TRUE;
+            jackctl_parameter_set_value(parameter, &value);
+            if (!set_server_sync) break;
+          }
+        }
+        params = jack_slist_next(params);
+      }
+    }
 
     drivers = jackctl_server_get_drivers_list(jackserver);
     if ((is_trans && !prefs->jack_tdriver) || (!is_trans && !prefs->jack_adriver)) {

@@ -397,7 +397,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
           cfile->vsize = atoi(array[6]);
         }
         if (rfx->num_in_channels == 0) {
-          cfile->fps = cfile->pb_fps = strtod(array[3], NULL);
+          cfile->fps = cfile->pb_fps = lives_strtod(array[3]);
           if (cfile->fps == 0.) cfile->fps = cfile->pb_fps = prefs->default_fps;
           cfile->end = cfile->frames = atoi(array[4]);
           cfile->bpp = cfile->img_type == IMG_TYPE_JPEG ? 24 : 32;

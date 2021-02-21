@@ -758,7 +758,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
         mainw->fd_max_frame = atoi(array[0]);
         cfile->hsize = atoi(array[1]);
         cfile->vsize = atoi(array[2]);
-        cfile->fps = cfile->pb_fps = strtod(array[3], NULL);
+        cfile->fps = cfile->pb_fps = lives_strtod(array[3]);
         if (cfile->fps == 0) cfile->fps = cfile->pb_fps = prefs->default_fps;
         tot_frames = atoi(array[4]);
         lives_strfreev(array);

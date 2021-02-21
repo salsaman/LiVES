@@ -255,7 +255,7 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 
 #define lives_mkdir_with_parents(a, b) g_mkdir_with_parents(a, b)
 
-#define lives_strtod(a, b) g_strtod(a, b)
+#define lives_strtod(a) g_strtod(a, NULL)
 
 #define lives_path_get_basename(a) g_path_get_basename(a)
 

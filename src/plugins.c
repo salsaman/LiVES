@@ -505,7 +505,7 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
           lives_strfreev(array);
           mainw->vpp->fixed_fpsd = get_ratio_fps((char *)fixed_fps);
         } else {
-          mainw->vpp->fixed_fpsd = lives_strtod(fixed_fps, NULL);
+          mainw->vpp->fixed_fpsd = lives_strtod(fixed_fps);
           mainw->vpp->fixed_fps_numer = 0;
         }
       }
@@ -654,7 +654,7 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
         lives_strfreev(array);
         future_prefs->vpp_fixed_fpsd = get_ratio_fps((char *)fixed_fps);
       } else {
-        future_prefs->vpp_fixed_fpsd = lives_strtod(fixed_fps, NULL);
+        future_prefs->vpp_fixed_fpsd = lives_strtod(fixed_fps);
         future_prefs->vpp_fixed_fps_numer = 0;
       }
     } else {
@@ -825,7 +825,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     for (i = 0; i < nfps; i++) {
       if (strlen(array[i]) && lives_strcmp(array[i], "\n")) {
         if (get_token_count(array[i], ':') == 0) {
-          fps_list_strings = lives_list_append(fps_list_strings, remove_trailing_zeroes(lives_strtod(array[i], NULL)));
+          fps_list_strings = lives_list_append(fps_list_strings, remove_trailing_zeroes(lives_strtod(array[i])));
         } else fps_list_strings = lives_list_append(fps_list_strings, lives_strdup(array[i]));
       }
     }
@@ -1309,7 +1309,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
         lives_strfreev(array2);
         vpp->fixed_fpsd = get_ratio_fps(array[0]);
       } else {
-        vpp->fixed_fpsd = lives_strtod(array[0], NULL);
+        vpp->fixed_fpsd = lives_strtod(array[0]);
         vpp->fixed_fps_numer = 0;
       }
       lives_strfreev(array);
@@ -1697,7 +1697,7 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
             lives_strfreev(array3);
             if (mbest_denom == 0) continue;
             allowed_fps = (mbest_num * 1.) / (mbest_denom * 1.);
-          } else allowed_fps = lives_strtod(array2[i], NULL);
+          } else allowed_fps = lives_strtod(array2[i]);
 
           // convert to 8dp
           fixer = lives_strdup_printf("%.8f %.8f", allowed_fps, fps);
@@ -1901,7 +1901,7 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
 
       for (i = 0; i < numtok; i++) {
         array3 = lives_strsplit(array2[i], ":", 2);
-        allowed_aspect = lives_strtod(array3[0], NULL) / lives_strtod(array3[1], NULL);
+        allowed_aspect = lives_strtod(array3[0]) / lives_strtod(array3[1]);
         lives_strfreev(array3);
         minimise_aspect_delta(allowed_aspect, hblock, vblock, xwidth, xheight, &width, &height);
       }
@@ -2804,15 +2804,15 @@ void render_fx_get_params(lives_rfx_t *rfx, const char *plugin_name, short statu
     if (cparam->dp) {
       double val;
       if (len < 6) continue;
-      val = lives_strtod(param_array[3], NULL);
+      val = lives_strtod(param_array[3]);
       cparam->value = lives_malloc(sizdbl);
       cparam->def = lives_malloc(sizdbl);
       set_double_param(cparam->def, val);
       set_double_param(cparam->value, val);
-      cparam->min = lives_strtod(param_array[4], NULL);
-      cparam->max = lives_strtod(param_array[5], NULL);
+      cparam->min = lives_strtod(param_array[4]);
+      cparam->max = lives_strtod(param_array[5]);
       if (len > 6) {
-        cparam->step_size = lives_strtod(param_array[6], NULL);
+        cparam->step_size = lives_strtod(param_array[6]);
         if (cparam->step_size == 0.) cparam->step_size = 1. / (double)lives_10pow(cparam->dp);
         else if (cparam->step_size < 0.) {
           cparam->step_size = -cparam->step_size;

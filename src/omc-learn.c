@@ -670,7 +670,7 @@ static void cell1_edited_callback(LiVESCellRenderer *spinbutton, const char *pat
     mnode->fvali[row] = vali;
     break;
   case OMC_PARAM_DOUBLE:
-    vald = lives_strtod(new_text, NULL);
+    vald = lives_strtod(new_text);
     mnode->fvald[row] = vald;
     break;
   }
@@ -944,7 +944,7 @@ static void cell_edited_callback(LiVESCellRenderer *spinbutton, const char *path
     mnode->offs1[row] = vali;
     break;
   case SCALE_COLUMN:
-    vald = lives_strtod(new_text, NULL);
+    vald = lives_strtod(new_text);
     mnode->scale[row] = vald;
     break;
   }

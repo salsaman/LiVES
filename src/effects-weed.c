@@ -5625,7 +5625,7 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
         case WEED_SEED_DOUBLE:
           dvals = (double *)lives_malloc(ntok * sizdbl);
           for (i = 0; i < ntok; i++) {
-            dvals[i] = strtod(array[i + 2], NULL);
+            dvals[i] = lives_strtod(array[i + 2]);
           }
           weed_set_double_array(ptmpl, WEED_LEAF_DEFAULT, ntok, dvals);
           lives_free(dvals);

@@ -397,7 +397,7 @@ static boolean l2l_parse_packet_header(lives_vstream_t *lstream, int strtype, in
 
     lstream->hsize = atoi(array[5]);
     lstream->vsize = atoi(array[6]);
-    lstream->fps = lives_strtod(array[7], NULL);
+    lstream->fps = lives_strtod(array[7]);
     lstream->palette = atoi(array[8]);
     lstream->YUV_sampling = atoi(array[9]);
     lstream->YUV_clamping = atoi(array[10]);

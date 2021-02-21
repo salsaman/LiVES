@@ -628,6 +628,33 @@ static void add_gen_to(LiVESBox *vbox, lives_rfx_t *rfx) {
 }
 
 
+static void update_entry_dbl(LiVESSpinButton *spinbutton, LiVESEntry *entry) {
+  int dp = lives_spin_button_get_digits(spinbutton);
+  char *dstr = lives_strdup_printf("%.*f", dp, lives_spin_button_get_value(spinbutton));
+  lives_entry_set_text(entry, dstr);
+  lives_free(dstr);
+}
+
+static void update_entry_int(LiVESSpinButton *spinbutton, LiVESEntry *entry) {
+  char *istr = lives_strdup_printf("%d", lives_spin_button_get_value_as_int(spinbutton));
+  lives_entry_set_text(entry, istr);
+  lives_free(istr);
+}
+
+static void update_spin_dbl(LiVESEntry *entry, LiVESSpinButton *spinbutton) {
+  double dval = lives_strtod(lives_entry_get_text(entry));
+  lives_spin_button_set_value(spinbutton, dval);
+  lives_spin_button_update(spinbutton);
+  update_entry_dbl(spinbutton, entry);
+}
+
+static void update_spin_int(LiVESEntry *entry, LiVESSpinButton *spinbutton) {
+  int ival = atoi(lives_entry_get_text(entry));
+  lives_spin_button_set_value(spinbutton, (double)ival);
+  lives_spin_button_update(spinbutton);
+  update_entry_int(spinbutton, entry);
+}
+
 static void xspinw_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
   cfile->ohsize = cfile->hsize = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
   reset_framedraw_preview();
@@ -1115,7 +1142,6 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     chk_params = TRUE;
   } else {
     dummy_label = lives_label_new(NULL);
-    lives_widget_object_ref_sink(LIVES_WIDGET_OBJECT(dummy_label));
 
     mainw->textwidget_focus = NULL;
 
@@ -1718,19 +1744,54 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
 
     widget_opts.mnemonic_label = use_mnemonic;
     if (param->dp) {
-      spinbutton = lives_standard_spin_button_new(name, (pval = get_double_param(param->value)),
-                   param->min, param->max, param->step_size,
-                   param->step_size, param->dp,
-                   (LiVESBox *)hbox, param->desc);
+      if (param->max > param->min) {
+        spinbutton = lives_standard_spin_button_new(name, (pval = get_double_param(param->value)),
+                     param->min, param->max, param->step_size,
+                     param->step_size, param->dp,
+                     (LiVESBox *)hbox, param->desc);
+      } else {
+        size_t len = calc_spin_button_width(-DBL_MAX, DBL_MAX, param->dp);
+        char *ntxt = lives_strdup_printf("%.*f", param->dp, (pval = get_double_param(param->value)));
+        param->widgets[1]
+          = lives_standard_entry_new(name, ntxt, len, len, (LiVESBox *)hbox, param->desc);
+        spinbutton = lives_standard_spin_button_new(NULL, (pval = get_double_param(param->value)),
+                     -DBL_MAX, DBL_MAX, 0., 0., param->dp, NULL, NULL);
+        lives_widget_destroy_with(param->widgets[1], spinbutton);
+        lives_widget_set_show_hide_with(spinbutton, hbox);
+        lives_widget_set_sensitive_with(spinbutton, param->widgets[1]);
+        lives_signal_sync_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                        LIVES_GUI_CALLBACK(update_entry_dbl), param->widgets[1]);
+        lives_signal_sync_connect_after(LIVES_WIDGET_OBJECT(param->widgets[1]),
+                                        LIVES_WIDGET_CHANGED_SIGNAL,
+                                        LIVES_GUI_CALLBACK(update_spin_dbl), spinbutton);
+      }
     } else {
-      spinbutton = lives_standard_spin_button_new(name, (pval = (double)get_int_param(param->value)),
-                   param->min, param->max, param->step_size,
-                   param->step_size, param->dp,
-                   (LiVESBox *)hbox, param->desc);
+      if (param->max > param->min) {
+        spinbutton = lives_standard_spin_button_new(name, (pval = (double)get_int_param(param->value)),
+                     param->min, param->max, param->step_size,
+                     param->step_size, param->dp,
+                     (LiVESBox *)hbox, param->desc);
+      } else {
+        size_t len = calc_spin_button_width(-INT_MAX, INT_MAX, 0);
+        char *ntxt = lives_strdup_printf("%d", (int)(pval = (double)get_int_param(param->value)));
+        param->widgets[1]
+          = lives_standard_entry_new(name, ntxt, len, len, (LiVESBox *)hbox, param->desc);
+        spinbutton = lives_standard_spin_button_new(NULL, (pval = (double)get_int_param(param->value)),
+                     -INT_MAX, INT_MAX, 0., 0., param->dp, NULL, NULL);
+        lives_widget_destroy_with(param->widgets[1], spinbutton);
+        lives_widget_set_show_hide_with(spinbutton, param->widgets[1]);
+        lives_widget_set_sensitive_with(spinbutton, param->widgets[1]);
+        lives_signal_sync_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                                        LIVES_GUI_CALLBACK(update_entry_int), param->widgets[1]);
+        lives_signal_sync_connect_after(LIVES_WIDGET_OBJECT(param->widgets[1]),
+                                        LIVES_WIDGET_CHANGED_SIGNAL,
+                                        LIVES_GUI_CALLBACK(update_spin_int), spinbutton);
+      }
     }
     widget_opts.mnemonic_label = TRUE;
 
-    if (param->max - param->min >= NOSLID_RANGE_LIM && fabs(pval) <= NOSLID_VALUE_LIM) {
+    if ((param->max == param->min)
+        || (param->max - param->min >= NOSLID_RANGE_LIM && fabs(pval) <= NOSLID_VALUE_LIM)) {
       add_scalers = add_slider = FALSE;
     }
 
@@ -1740,14 +1801,14 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
                                     LIVES_GUI_CALLBACK(after_param_value_changed), (livespointer)rfx);
 
     // store parameter so we know whose trigger to use
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton), PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton),
+                                 PARAM_NUMBER_KEY, LIVES_INT_TO_POINTER(pnum));
     param->widgets[0] = spinbutton;
     param->widgets[++wcount] = widget_opts.last_label;
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(param->widgets[0]), RFX_KEY, rfx);
 
-    spinbutton_adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(spinbutton));
-
     if (add_scalers) {
+      spinbutton_adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(spinbutton));
 #ifdef ENABLE_GIW
       if (prefs->lamp_buttons) {
         scale = giw_knob_new(LIVES_ADJUSTMENT(spinbutton_adj));
@@ -1830,10 +1891,11 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
 
   case LIVES_PARAM_STRING:
     if (param->max == 0.) txt = lives_strdup((char *)param->value);
-    else txt = lives_strndup((char *)param->value, (int)param->max);
-
-    if (((int)param->max > RFX_TEXT_MAGIC || param->max == 0.) &&
-        param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEREAD
+    else if (param->min >= 0.) txt = lives_strndup((char *)param->value, (int)param->max);
+    else txt = lives_strndup((char *)param->value, -(int)param->min);
+    if (((param->min >= 0. && ((int)param->max > RFX_TEXT_MAGIC || param->max == 0.))
+         || -(int)param->min > RFX_TEXT_MAGIC)
+        && param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEREAD
         && param->special_type != LIVES_PARAM_SPECIAL_TYPE_FONT_CHOOSER
         && param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEWRITE) {
       LiVESWidget *vbox = lives_vbox_new(FALSE, 0);
@@ -1906,7 +1968,8 @@ boolean add_param_to_box(LiVESBox * box, lives_rfx_t *rfx, int pnum, boolean add
 
         lives_box_pack_start(LIVES_BOX(hbox2), label, FALSE, FALSE, widget_opts.packing_width);
       }
-      param->widgets[0] = entry = lives_standard_entry_new(NULL, txt, (int)param->max,
+      param->widgets[0] = entry = lives_standard_entry_new(NULL, txt, param->min >= 0 ? (int)param->max
+                                  : -(int)param->min,
                                   (int)param->max, LIVES_BOX(hbox2), param->desc);
 
       if (rfx->status == RFX_STATUS_WEED && param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
@@ -3621,14 +3684,14 @@ LiVESList *set_param_from_list(LiVESList * plist, lives_param_t *param,
       break;
     }
     if (param->dp) {
-      double double_val = lives_strtod((char *)plist->data, NULL);
+      double double_val = lives_strtod((char *)plist->data);
       plist = plist->next;
       if (with_min_max) {
         if (!plist) break;
-        param->min = lives_strtod((char *)plist->data, NULL);
+        param->min = lives_strtod((char *)plist->data);
         plist = plist->next;
         if (!plist) break;
-        param->max = lives_strtod((char *)plist->data, NULL);
+        param->max = lives_strtod((char *)plist->data);
         plist = plist->next;
         if (double_val < param->min) double_val = param->min;
         if (double_val > param->max) double_val = param->max;

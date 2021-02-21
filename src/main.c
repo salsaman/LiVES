@@ -2205,10 +2205,10 @@ static void lives_init(_ign_opts *ign_opts) {
         prefs->jack_opts |= JACK_OPTS_START_TSERVER;
       else
         prefs->jack_opts &= ~JACK_OPTS_START_TSERVER;
-      if (prefs->jack_opts & JACK_OPTS_NOKILL_ASERVER)
-        prefs->jack_opts |= JACK_OPTS_NOKILL_TSERVER;
+      if (prefs->jack_opts & JACK_OPTS_PERM_ASERVER)
+        prefs->jack_opts |= JACK_OPTS_PERM_TSERVER;
       else
-        prefs->jack_opts &= ~JACK_OPTS_NOKILL_TSERVER;
+        prefs->jack_opts &= ~JACK_OPTS_PERM_TSERVER;
       future_prefs->jack_opts = prefs->jack_opts;
     }
 
@@ -3957,7 +3957,7 @@ static boolean lives_startup(livespointer data) {
     lives_snprintf(prefs->image_type, 16, "%s", image_ext_to_lives_image_type(prefs->image_ext));
     mainw->foreign_bpp = atoi(zargv[7]);
     mainw->rec_vid_frames = atoi(zargv[8]);
-    mainw->rec_fps = strtod(zargv[9], NULL);
+    mainw->rec_fps = lives_strtod(zargv[9]);
     mainw->rec_arate = atoi(zargv[10]);
     mainw->rec_asamps = atoi(zargv[11]);
     mainw->rec_achans = atoi(zargv[12]);
@@ -4983,10 +4983,10 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         // remaining opts are filename [start_time] [end_frame]
         char *dir;
         lives_snprintf(start_file, PATH_MAX, "%s", argv[optind++]); // filename
-        if (optind < argc) start = lives_strtod(argv[optind++], NULL); // start time (seconds)
+        if (optind < argc) start = lives_strtod(argv[optind++]); // start time (seconds)
         if (optind < argc) end = atoi(argv[optind++]); // number of frames
 
-        if (lives_strrstr(start_file, "://") == NULL) {
+        if (!lives_strrstr(start_file, "://")) {
           // prepend current directory if needed (unless file contains :// - eg. dvd:// or http://)
           dir = get_dir(start_file);
           get_basename(start_file);

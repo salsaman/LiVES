@@ -679,7 +679,7 @@ void on_open_sel_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
     array = lives_strsplit(mainw->msg, "|", npieces);
     frames = atoi(array[2]);
-    fps = lives_strtod(array[7], NULL);
+    fps = lives_strtod(array[7]);
     lives_strfreev(array);
 
     if (frames == 0) {
@@ -848,7 +848,7 @@ void on_recent_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (get_token_count(file, '|') > 2) {
     char **array = lives_strsplit(file, "|", 3);
     lives_snprintf(file, PATH_MAX, "%s", array[0]);
-    start = lives_strtod(array[1], NULL);
+    start = lives_strtod(array[1]);
     end = atoi(array[2]);
     lives_strfreev(array);
   }

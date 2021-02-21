@@ -739,6 +739,7 @@ boolean lives_spin_button_set_snap_to_ticks(LiVESSpinButton *, boolean snap);
 boolean lives_spin_button_set_snap_to_multiples(LiVESSpinButton *, double mult);
 
 boolean lives_spin_button_set_digits(LiVESSpinButton *, uint32_t digits);
+uint32_t lives_spin_button_get_digits(LiVESSpinButton *);
 
 boolean lives_spin_button_update(LiVESSpinButton *);
 

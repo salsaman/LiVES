@@ -3830,7 +3830,7 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
       cfile->hsize = atoi(array[4]);
       cfile->vsize = atoi(array[5]);
       cfile->bpp = atoi(array[6]);
-      cfile->pb_fps = cfile->fps = lives_strtod(array[7], NULL);
+      cfile->pb_fps = cfile->fps = lives_strtod(array[7]);
       cfile->f_size = strtol(array[8], NULL, 10);
 
       if (npieces > 15 && array[15]) {

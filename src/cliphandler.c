@@ -165,11 +165,11 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     *(int *)retval = atoi(val);
     break;
   case CLIP_DETAILS_FPS:
-    *(double *)retval = strtod(val, NULL);
+    *(double *)retval = lives_strtod(val);
     if (*(double *)retval == 0.) *(double *)retval = prefs->default_fps;
     break;
   case CLIP_DETAILS_PB_FPS:
-    *(double *)retval = strtod(val, NULL);
+    *(double *)retval = lives_strtod(val);
     if (*(double *)retval == 0.) *(double *)retval = sfile->fps;
     break;
   case CLIP_DETAILS_UNIQUE_ID:

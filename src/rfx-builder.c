@@ -3457,15 +3457,15 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
         rfxbuilder->params[i].type = LIVES_PARAM_NUM;
         if (rfxbuilder->params[i].dp) {
           rfxbuilder->params[i].def = lives_malloc(sizint);
-          set_double_param(rfxbuilder->params[i].def, lives_strtod(array[3], NULL));
+          set_double_param(rfxbuilder->params[i].def, lives_strtod(array[3]));
         } else {
           rfxbuilder->params[i].def = lives_malloc(sizint);
           set_int_param(rfxbuilder->params[i].def, atoi(array[3]));
         }
-        rfxbuilder->params[i].min = lives_strtod(array[4], NULL);
-        rfxbuilder->params[i].max = lives_strtod(array[5], NULL);
+        rfxbuilder->params[i].min = lives_strtod(array[4]);
+        rfxbuilder->params[i].max = lives_strtod(array[5]);
         if (len > 6) {
-          rfxbuilder->params[i].step_size = lives_strtod(array[6], NULL);
+          rfxbuilder->params[i].step_size = lives_strtod(array[6]);
           if (rfxbuilder->params[i].step_size == 0.) rfxbuilder->params[i].step_size = 1.;
           else if (rfxbuilder->params[i].step_size < 0.) {
             rfxbuilder->params[i].step_size = -rfxbuilder->params[i].step_size;

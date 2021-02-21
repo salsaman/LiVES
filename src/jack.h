@@ -16,7 +16,23 @@
 #include <jack/transport.h>
 #include <jack/control.h>
 
-boolean lives_jack_init(boolean is_trans);  /** start up server on LiVES init */
+typedef enum {
+  JACK_CLIENT_TYPE_INVALID,
+  JACK_CLIENT_TYPE_TRANSPORT,
+  JACK_CLIENT_TYPE_AUDIO_WRITER,
+  JACK_CLIENT_TYPE_AUDIO_READER,
+  JACK_CLIENT_TYPE_MIDI,
+  JACK_CLIENT_TYPE_SLAVE,
+  JACK_CLIENT_TYPE_OTHER
+} lives_jack_client_t;
+
+typedef struct _lives_jack_driver_t jack_driver_t;
+
+// GUI functions
+void jack_srv_config(LiVESWidget *b, livespointer type_data);
+
+// connect client or start server
+boolean lives_jack_init(lives_jack_client_t client_type, jack_driver_t *jackd);
 boolean lives_jack_poll(void); /** poll function to check transport state */
 void lives_jack_end(void);
 
@@ -56,7 +72,7 @@ typedef jack_nframes_t nframes_t;
 #define JackTReset 1025
 #define JackTStopped 1026
 
-typedef struct {
+typedef struct _lives_jack_driver_t {
   int      dev_idx;                      /**< id of this device ??? */
   int     sample_out_rate;                   /**< samples(frames) per second */
   volatile int     sample_in_rate;                   /**< samples(frames) per second */

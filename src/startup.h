@@ -15,6 +15,11 @@ boolean build_init_config(const char *config_datadir, boolean prompt);
 
 boolean do_workdir_query(void);
 LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog *, boolean full);
+
+#ifdef ENABLE_JACK
+boolean do_jack_config(boolean is_setup);
+#endif
+
 boolean do_audio_choice_dialog(short startup_phase);
 boolean do_startup_tests(boolean tshoot);
 void do_startup_interface_query(void);

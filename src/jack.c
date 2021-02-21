@@ -14,6 +14,7 @@
 #include "effects.h"
 #include "effects-weed.h"
 #include "paramwindow.h"
+#include "startup.h"
 
 #define afile mainw->files[jackd->playing_file]
 
@@ -297,8 +298,19 @@ static void config_server(LiVESWidget *b, jackctl_server_t *server) {
   server_params_to_rfx(server);
 }
 
-jackctl_driver_t *get_def_drivers(jackctl_server_t *server, LiVESList *mlist,
-                                  LiVESList **slist, boolean is_trans) {
+
+void jack_srv_config(LiVESWidget *b, livespointer type_data) {
+  //boolean is_trans = LIVES_POINTER_TO_INT(type_data);
+
+  // show the same config window as during setup, but with some extra options
+  do_jack_config(FALSE);
+
+  //server_params_to_rfx(jackserver);
+}
+
+
+static jackctl_driver_t *get_def_drivers(jackctl_server_t *server, LiVESList *mlist,
+    LiVESList **slist, boolean is_trans) {
   char *title = lives_strdup_printf(_("Driver selection for LiVES %s server"), is_trans ? _("transport") : _("audio"));
   LiVESList *list;
   LiVESWidget *dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
@@ -446,24 +458,62 @@ jackctl_driver_t *get_def_drivers(jackctl_server_t *server, LiVESList *mlist,
 }
 
 
+#ifndef JACK_V2
 static void jack_error_func(const char *desc) {
   lives_printerr("Jack audio error %s\n", desc);
 }
+#endif
 
 
-boolean lives_jack_init(boolean is_trans) {
-  char *jt_client = NULL;
+static const char *get_type_name(lives_jack_client_t type) {
+  if (type == JACK_CLIENT_TYPE_TRANSPORT) return "transport";
+  if (type == JACK_CLIENT_TYPE_AUDIO_WRITER) return "audio writer";
+  if (type == JACK_CLIENT_TYPE_AUDIO_READER) return "audio reader";
+  return "??";
+}
+
+
+// connect to or (optionally) start a jack server
+// for audio clients this should be called with is_trans = FALSE, and then followed with
+// jack_create_client_writer and / or jack_create_client_reader
+// function should be called at startup iff JACK_OPTS_ENABLE_TCLIENT is set (for transport client)
+// and whenever this is enabled in Prefs.
+// for audio clients, should be called at startup if prefs->audio_player == AUD_PLAYER_JACK
+// and whenever the audio player is set to this value in Prefs.
+// error conditions:
+// - connection fails and option to startup not set
+// -- resolutions: allow user to start sever manually and retry connection,
+//                 let user change settings so server startup can be tried
+//                 abort from LiVES
+//
+// - server startup fails, no backup config
+// -- resolutions: on fatal error, disable auto startup, abort
+// --              on less sever errors, allow user to disable auto start, and start server manually
+// --              allow user to try with alternate server / driver config
+//
+// - server startup fails, backup config available
+// -- resolutions: on fatal error, restore previous (working). abort
+// --              on less sever errors, allow choice of reverting settings or altering current ones
+boolean lives_jack_init(lives_jack_client_t client_type, jack_driver_t *jackd) {
   jack_options_t options = JackServerName | JackUseExactName;
   jack_status_t status;
   jackctl_driver_t *driver = NULL;
   LiVESList *slave_list;
   char *server_name;
+  char *client_name;
   const char *driver_name;
+  const char *type_name = get_type_name(client_type);
   boolean set_server_sync = FALSE;
   boolean set_server_temp = FALSE;
+  boolean is_trans = FALSE;
+  boolean is_reader = FALSE;
+  boolean was_started = FALSE;
 #ifndef JACK_V2
   boolean needs_sigs = FALSE;
 #endif
+
+  if (client_type == JACK_CLIENT_TYPE_TRANSPORT) is_trans = TRUE;
+  else if (client_type == JACK_CLIENT_TYPE_AUDIO_READER) is_reader = TRUE;
 
 #ifndef PRODUCTION
   jackserver = NULL;
@@ -477,8 +527,10 @@ boolean lives_jack_init(boolean is_trans) {
     if (jack_transport_client) {
       if (ts_running) return TRUE;
     }
-    jt_client = lives_strdup_printf("LiVES-transport-%d", capable->mainpid);
+    client_name = lives_strdup_printf("LiVES-transport-%d", capable->mainpid);
     server_name = lives_strdup(prefs->jack_tserver_cname);
+    // if we know for sure that the audio client is connected to the target server
+    // then we will just connect
     if (as_running && !lives_strcmp(as_running, server_name)) {
       ts_running = server_name;
       ts_started = as_started;
@@ -487,14 +539,20 @@ boolean lives_jack_init(boolean is_trans) {
     }
     twins = FALSE;
   } else {
-    if (as_running) return TRUE;
+    if (is_reader)
+      client_name = lives_strdup_printf("LiVES-audio-in-%d", capable->mainpid);
+    else
+      client_name = lives_strdup_printf("LiVES-audio-out-%d", capable->mainpid);
+    if (as_running) was_started = TRUE;
     server_name = lives_strdup(prefs->jack_aserver_cname);
-    if (ts_running && !lives_strcmp(ts_running, server_name)) {
-      as_running = server_name;
-      as_started = ts_started;
-      twins = TRUE;
-      goto do_connect;
+    if (!as_running) {
+      if (ts_running && !lives_strcmp(ts_running, server_name)) {
+        as_running = server_name;
+        as_started = ts_started;
+        twins = TRUE;
+      }
     }
+    if (as_running) goto do_connect;
     twins = FALSE;
   }
 
@@ -504,251 +562,260 @@ retry_connect:
     // try to connect, then if we fail, start the server
     // if server name is NULL, then use 'default' or $JACK_DEFAULT_SERVER
     jack_options_t xoptions = (jack_options_t)((int)options | (int)JackNoStartServer);
-    jack_transport_client = jack_client_open(jt_client, xoptions, &status, server_name);
-    lives_free(jt_client);
+    jack_transport_client = jack_client_open(client_name, xoptions, &status, server_name);
+    lives_free(client_name);
     if (jack_transport_client) {
       ts_running = server_name;
       goto connect_done;
     }
+  } else {
+    // try to connect, then if we fail, start the server
+    // if server name is NULL, then use 'default' or $JACK_DEFAULT_SERVER
+    jack_options_t xoptions = (jack_options_t)((int)options | (int)JackNoStartServer);
+    jackd->client = jack_client_open(client_name, xoptions, &status, server_name);
+    lives_free(client_name);
+    if (jackd->client) {
+      as_running = server_name;
+      goto connect_done;
+    }
+  }
+
+  if ((is_trans && !(prefs->jack_opts & JACK_OPTS_START_TSERVER))
+      || (!is_trans && !(prefs->jack_opts & JACK_OPTS_START_ASERVER))) {
+    // could not connect and we were not allowed to start a server
+    char *msg = lives_strdup_printf("Could not connect to jack server %s for %s client",
+                                    server_name, type_name);
+    LIVES_ERROR(msg);
+    lives_free(msg);
+    return FALSE;
   }
 
   // try to connect audio
 
-  if ((is_trans && (prefs->jack_opts & JACK_OPTS_START_TSERVER))
-      || (!is_trans && (prefs->jack_opts & JACK_OPTS_START_ASERVER))) {
-    const JSList *drivers;
 
-    lives_free(server_name);
+  const JSList *drivers;
 
-    if (is_trans) {
-      server_name = lives_strdup(prefs->jack_tserver_sname);
-      if (as_running && !lives_strcmp(as_running, server_name)) {
-        ts_running = server_name;
-        ts_started = as_started;
-        twins = TRUE;
-        goto do_connect;
-      }
-      twins = FALSE;
-    } else {
-      server_name = lives_strdup(prefs->jack_aserver_sname);
-      if (ts_running && !lives_strcmp(ts_running, server_name)) {
-        as_running = server_name;
-        as_started = ts_started;
-        twins = TRUE;
-        goto do_connect;
-      }
-      twins = FALSE;
+  lives_free(server_name);
+
+  if (is_trans) {
+    server_name = lives_strdup(prefs->jack_tserver_sname);
+    if (as_running && !lives_strcmp(as_running, server_name)) {
+      ts_running = server_name;
+      ts_started = as_started;
+      twins = TRUE;
+      goto do_connect;
     }
+    twins = FALSE;
+  } else {
+    server_name = lives_strdup(prefs->jack_aserver_sname);
+    if (ts_running && !lives_strcmp(ts_running, server_name)) {
+      as_running = server_name;
+      as_started = ts_started;
+      twins = TRUE;
+      goto do_connect;
+    }
+    twins = FALSE;
+  }
 
+  if (!jackserver) {
+    // start the server
+    jackserver = jackctl_server_create(NULL, NULL);
     if (!jackserver) {
-      // start the server
-      jackserver = jackctl_server_create(NULL, NULL);
-      if (!jackserver) {
-        char *msg = lives_strdup_printf("Could not create jackd %s server %s", is_trans ?
-                                        "transport" : "audio", server_name);
-        LIVES_ERROR(msg);
-        lives_free(server_name);
-        return FALSE;
-      }
+      char *msg = lives_strdup_printf("Could not create jackd %s server %s", type_name, server_name);
+      LIVES_ERROR(msg);
+      lives_free(server_name);
+      return FALSE;
     }
-    server_params_to_rfx(jackserver);
+  }
 
 #ifdef JACK_SYNC_MODE
-    set_server_sync = TRUE;
+  set_server_sync = TRUE;
 #endif
-    if ((is_trans && !(prefs->jack_opts & JACK_OPTS_PERM_TSERVER)))
-      set_server_temp = TRUE;
+  if ((is_trans && !(prefs->jack_opts & JACK_OPTS_PERM_TSERVER)))
+    set_server_temp = TRUE;
 
-    if (set_server_sync || set_server_temp) {
-      // list server parameters
-      const JSList *params = jackctl_server_get_parameters(jackserver);
-      while (params) {
-        jackctl_parameter_t *parameter = (jackctl_parameter_t *)params->data;
-        if (set_server_sync) {
-          if (!strcmp(jackctl_parameter_get_name(parameter), "sync")) {
-            union jackctl_parameter_value value;
-            value.b = TRUE;
-            jackctl_parameter_set_value(parameter, &value);
-            if (!set_server_temp) break;
-          }
+  if (set_server_sync || set_server_temp) {
+    // list server parameters
+    const JSList *params = jackctl_server_get_parameters(jackserver);
+    while (params) {
+      jackctl_parameter_t *parameter = (jackctl_parameter_t *)params->data;
+      if (set_server_sync) {
+        if (!strcmp(jackctl_parameter_get_name(parameter), "sync")) {
+          union jackctl_parameter_value value;
+          value.b = TRUE;
+          jackctl_parameter_set_value(parameter, &value);
+          if (!set_server_temp) break;
         }
-        if (set_server_temp) {
-          if (!strcmp(jackctl_parameter_get_name(parameter), "temporary")) {
-            union jackctl_parameter_value value;
-            value.b = TRUE;
-            jackctl_parameter_set_value(parameter, &value);
-            if (!set_server_sync) break;
-          }
-        }
-        params = jack_slist_next(params);
       }
+      if (set_server_temp) {
+        if (!strcmp(jackctl_parameter_get_name(parameter), "temporary")) {
+          union jackctl_parameter_value value;
+          value.b = TRUE;
+          jackctl_parameter_set_value(parameter, &value);
+          if (!set_server_sync) break;
+        }
+      }
+      params = jack_slist_next(params);
     }
+  }
 
-    drivers = jackctl_server_get_drivers_list(jackserver);
-    if ((is_trans && !prefs->jack_tdriver) || (!is_trans && !prefs->jack_adriver)) {
-      // prompt user for driver
-      LiVESList *mlist = NULL;
-      LiVESList *slist = NULL;
-      boolean all_equal = FALSE;
-      jackctl_driver_t *new_driver;
-      const JSList *xdrivers = drivers;
-      while (xdrivers) {
-        driver = (jackctl_driver_t *)xdrivers->data;
+  drivers = jackctl_server_get_drivers_list(jackserver);
+  if ((is_trans && !prefs->jack_tdriver) || (!is_trans && !prefs->jack_adriver)) {
+    // prompt user for driver
+    LiVESList *mlist = NULL;
+    LiVESList *slist = NULL;
+    boolean all_equal = FALSE;
+    jackctl_driver_t *new_driver;
+    const JSList *xdrivers = drivers;
+    while (xdrivers) {
+      driver = (jackctl_driver_t *)xdrivers->data;
 #ifdef JACK_V2
-        if (jackctl_driver_get_type(driver) == JackMaster) {
-          mlist = lives_list_append(mlist, driver);
-        } else {
-          slist = lives_list_append(slist, driver);
-        }
-#else
-        slist = lives_list_append(slist, driver);
-#endif
-        xdrivers = jack_slist_next(xdrivers);
-      }
-      if (!lives_strcmp(prefs->jack_aserver_sname, prefs->jack_aserver_cname)
-          && !(lives_strcmp(prefs->jack_aserver_cname, prefs->jack_tserver_cname)
-               && !(lives_strcmp(prefs->jack_tserver_cname, prefs->jack_tserver_sname))))
-        all_equal = TRUE;
-      if (is_trans && !all_equal) {
-        new_driver = get_def_drivers(jackserver, mlist, &slist, TRUE);
-        if (!new_driver) goto retry_connect;
-        prefs->jack_tdriver = jackctl_driver_get_name(new_driver);
-        if (prefs->jack_tslaves && prefs->jack_tslaves != prefs->jack_aslaves)
-          lives_list_free(prefs->jack_tslaves);
-        prefs->jack_tslaves = slist;
+      if (jackctl_driver_get_type(driver) == JackMaster) {
+        mlist = lives_list_append(mlist, driver);
       } else {
-        new_driver = get_def_drivers(jackserver, mlist, &slist, FALSE);
-        if (!new_driver) goto retry_connect;
-        prefs->jack_adriver = jackctl_driver_get_name(new_driver);
-        if (prefs->jack_aslaves && prefs->jack_aslaves != prefs->jack_tslaves)
-          lives_list_free(prefs->jack_aslaves);
-        prefs->jack_aslaves = slist;
+        slist = lives_list_append(slist, driver);
       }
-      if (all_equal) {
-        prefs->jack_tdriver = prefs->jack_adriver;
-        prefs->jack_tslaves = prefs->jack_aslaves;
-      }
+#else
+      slist = lives_list_append(slist, driver);
+#endif
+      xdrivers = jack_slist_next(xdrivers);
     }
-
-    if (is_trans) {
-      driver_name = prefs->jack_tdriver;
-      slave_list = prefs->jack_tslaves;
+    if (!lives_strcmp(prefs->jack_aserver_sname, prefs->jack_aserver_cname)
+        && !(lives_strcmp(prefs->jack_aserver_cname, prefs->jack_tserver_cname)
+             && !(lives_strcmp(prefs->jack_tserver_cname, prefs->jack_tserver_sname))))
+      all_equal = TRUE;
+    if (is_trans && !all_equal) {
+      new_driver = get_def_drivers(jackserver, mlist, &slist, TRUE);
+      if (!new_driver) goto retry_connect;
+      prefs->jack_tdriver = jackctl_driver_get_name(new_driver);
+      if (prefs->jack_tslaves && prefs->jack_tslaves != prefs->jack_aslaves)
+        lives_list_free(prefs->jack_tslaves);
+      prefs->jack_tslaves = slist;
     } else {
-      driver_name = prefs->jack_adriver;
-      slave_list = prefs->jack_aslaves;
+      new_driver = get_def_drivers(jackserver, mlist, &slist, FALSE);
+      if (!new_driver) goto retry_connect;
+      prefs->jack_adriver = jackctl_driver_get_name(new_driver);
+      if (prefs->jack_aslaves && prefs->jack_aslaves != prefs->jack_tslaves)
+        lives_list_free(prefs->jack_aslaves);
+      prefs->jack_aslaves = slist;
     }
+    if (all_equal) {
+      prefs->jack_tdriver = prefs->jack_adriver;
+      prefs->jack_tslaves = prefs->jack_aslaves;
+    }
+  }
 
-    while (drivers) {
-      driver = (jackctl_driver_t *)drivers->data;
-      if (!lives_strcmp(driver_name, jackctl_driver_get_name(driver))) {
-        break;
-      }
-      drivers = jack_slist_next(drivers);
+  if (is_trans) {
+    driver_name = prefs->jack_tdriver;
+    slave_list = prefs->jack_tslaves;
+  } else {
+    driver_name = prefs->jack_adriver;
+    slave_list = prefs->jack_aslaves;
+  }
+
+  while (drivers) {
+    driver = (jackctl_driver_t *)drivers->data;
+    if (!lives_strcmp(driver_name, jackctl_driver_get_name(driver))) {
+      break;
     }
-    if (!driver) {
-      char *msg = lives_strdup_printf("Could not find driver %s for jack %s client in server %s",
-                                      driver_name, is_trans ? "transport" : "audio", server_name);
-      LIVES_ERROR(msg);
-      lives_free(msg);
-      return FALSE;
-    }
+    drivers = jack_slist_next(drivers);
+  }
+  if (!driver) {
+    char *msg = lives_strdup_printf("Could not find driver %s for jack %s client in server %s",
+                                    driver_name, type_name, server_name);
+    LIVES_ERROR(msg);
+    lives_free(msg);
+    return FALSE;
+  }
 
 #ifdef JACK_V2
-    if (!jackctl_server_open(jackserver, driver)) {
-      char *msg = lives_strdup_printf("Could not open jack2 server %s with driver %s for %s client",
-                                      server_name, is_trans ? "transport" : "audio", driver_name);
-      LIVES_ERROR(msg);
-      lives_free(msg);
-      return FALSE;
-    }
+  if (!jackctl_server_open(jackserver, driver)) {
+    char *msg = lives_strdup_printf("Could not open jack2 server %s with driver %s for %s client",
+                                    server_name, type_name, driver_name);
+    LIVES_ERROR(msg);
+    lives_free(msg);
+    return FALSE;
+  }
 
-    if (!jackctl_server_start(jackserver)) {
-      char *msg = lives_strdup_printf("Could not start jack2 server %s for %s client",
-                                      server_name, is_trans ? "transport" : "audio");
-      LIVES_ERROR(msg);
-      lives_free(msg);
-      return FALSE;
-    }
+  if (!jackctl_server_start(jackserver)) {
+    char *msg = lives_strdup_printf("Could not start jack2 server %s for %s client",
+                                    server_name, type_name);
+    LIVES_ERROR(msg);
+    lives_free(msg);
+    return FALSE;
+  }
 #else
-    /* set up an error handler */
-    jack_set_error_function(jack_error_func);
+  /* set up an error handler */
+  jack_set_error_function(jack_error_func);
 
-    if (!mainw->signals_deferred) {
-      // try to handle crashes in jack_client_open()
-      set_signal_handlers((SignalHandlerPointer)defer_sigint);
-      needs_sigs = TRUE;
-      if (is_trans) {
-        mainw->crash_possible = 1;
-      }
-
-      else {
-        mainw->crash_possible = 2;
-      }
+  if (!mainw->signals_deferred) {
+    // try to handle crashes in jack_client_open()
+    set_signal_handlers((SignalHandlerPointer)defer_sigint);
+    needs_sigs = TRUE;
+    if (is_trans) {
+      mainw->crash_possible = 1;
     }
 
-    if (!jackctl_server_start(jackserver, driver)) {
-      char *msg;
-
-      if (needs_sigs) {
-        set_signal_handlers((SignalHandlerPointer)catch_sigint);
-        mainw->crash_possible = 0;
-      }
-
-      msg = lives_strdup_printf("Could not start jack1 server %s with driver %s for %s client",
-                                server_name, driver_name,
-                                is_trans ? "transport" : "audio");
-      LIVES_ERROR(msg);
-      lives_free(msg);
-      return FALSE;
+    else {
+      mainw->crash_possible = 2;
     }
+  }
+
+  if (!jackctl_server_start(jackserver, driver)) {
+    char *msg;
 
     if (needs_sigs) {
       set_signal_handlers((SignalHandlerPointer)catch_sigint);
       mainw->crash_possible = 0;
     }
 
-
-#endif
-    if (is_trans) {
-      ts_started = TRUE;
-      ts_running = server_name;
-    } else {
-      as_started = TRUE;
-      ts_running = server_name;
-    }
-  } else {
-    // could not connect and we were not allowed to start a server
-    char *msg = lives_strdup_printf("Could not connect to jack server %s for %s client",
-                                    server_name, is_trans ? "transport" : "audio");
+    msg = lives_strdup_printf("Could not start jack1 server %s with driver %s for %s client",
+                              server_name, driver_name, type_name);
     LIVES_ERROR(msg);
     lives_free(msg);
     return FALSE;
   }
 
-  mainw->jack_inited = TRUE;
+  if (needs_sigs) {
+    set_signal_handlers((SignalHandlerPointer)catch_sigint);
+    mainw->crash_possible = 0;
+  }
+
+#endif
+  if (is_trans) {
+    ts_started = TRUE;
+    ts_running = server_name;
+  } else {
+    as_started = TRUE;
+    ts_running = server_name;
+  }
+
   options = (jack_options_t)((int)options | (int)JackNoStartServer);
 
   if (status & JackServerStarted) {
     d_print(_("JACK server %s started for %s client using driver %s\n"),
-            server_name, is_trans ? "transport" : "audio", jackctl_driver_get_name(driver));
+            server_name, type_name, jackctl_driver_get_name(driver));
   }
 
   // startup the transport client now; we will open another later for audio
 do_connect:
   if (is_trans) {
-    jack_transport_client = jack_client_open(jt_client, options, &status, server_name);
-    lives_free(jt_client);
-
-    if (!jack_transport_client) {
-      return FALSE;
-    }
-    if (status & JackServerStarted) {
-      d_print(_("JACK %s client connected to server %s\n"),
-              is_trans ? "transport" : "audio", server_name);
-    }
+    jack_transport_client = jack_client_open(client_name, options, &status, server_name);
+    lives_free(client_name);
+    if (!jack_transport_client) return FALSE;
+  } else {
+    jackd->client = jack_client_open(client_name, options, &status, server_name);
+    lives_free(client_name);
+    if (!jackd->client) return FALSE;
   }
 
-  // force both types of clienr to use same driver, until server spearation is implemented fully
+  if (status & JackServerStarted) {
+    d_print(_("JACK %s client connected to server %s\n"), type_name, server_name);
+  }
+
+  if (was_started) return TRUE;
+
+  // force both types of client to use same driver, until server spearation is implemented fully
   if (is_trans) {
     if (prefs->jack_srv_dup)
       set_string_pref(PREF_JACK_ADRIVER, prefs->jack_tdriver);
@@ -1916,59 +1983,16 @@ void jack_close_device(jack_driver_t *jackd) {
 
 // create a new client but don't connect the ports yet
 boolean jack_create_client_writer(jack_driver_t *jackd) {
-  const char *client_name = "LiVES_audio_out";
-  const char *server_name = JACK_DEFAULT_SERVER_NAME;
-  jack_options_t options = (jack_options_t)((int)JackServerName | (int)JackNoStartServer);
-  jack_status_t status;
-  boolean needs_sigs = FALSE;
-  lives_alarm_t alarm_handle;
-  int i;
-
   if (mainw->aplayer_broken) return FALSE;
 
   jackd->is_active = FALSE;
 
-  /* set up an error handler */
-  jack_set_error_function(jack_error_func);
-  jackd->client = NULL;
-
-  if (!mainw->signals_deferred) {
-    // try to handle crashes in jack_client_open()
-    set_signal_handlers((SignalHandlerPointer)defer_sigint);
-    needs_sigs = TRUE;
-    mainw->crash_possible = 1;
-  }
-
-  alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
-  while (!jackd->client && lives_alarm_check(alarm_handle) > 0) {
-    jackd->client = jack_client_open(client_name, options, &status, server_name);
-    lives_usleep(prefs->sleep_time);
-  }
-  lives_alarm_clear(alarm_handle);
-
-  if (needs_sigs) {
-    set_signal_handlers((SignalHandlerPointer)catch_sigint);
-    mainw->crash_possible = 0;
-  }
-
-  if (!jackd->client) {
-    lives_printerr("jack_client_open() failed, status = 0x%2.0x\n", status);
-    if (status & JackServerFailed) {
-      d_print(_("Unable to connect to JACK server\n"));
-    }
-    return FALSE;
-  }
-
-  if (status & JackNameNotUnique) {
-    client_name = jack_get_client_name(jackd->client);
-    lives_printerr("unique name `%s' assigned\n", client_name);
-  }
+  if (!lives_jack_init(JACK_CLIENT_TYPE_AUDIO_WRITER, jackd)) return FALSE;
 
   jackd->sample_out_rate = jackd->sample_in_rate = jack_get_sample_rate(jackd->client);
-
   //lives_printerr (lives_strdup_printf("engine sample rate: %ld\n",jackd->sample_rate));
 
-  for (i = 0; i < jackd->num_output_channels; i++) {
+  for (int i = 0; i < jackd->num_output_channels; i++) {
     char portname[32];
     lives_snprintf(portname, 32, "out_%d", i);
 
@@ -1976,10 +2000,9 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
     lives_printerr("output port %d is named '%s'\n", i, portname);
 #endif
 
-    jackd->output_port[i] = jack_port_register(jackd->client, portname,
-                            JACK_DEFAULT_AUDIO_TYPE,
-                            JackPortIsOutput | JackPortIsTerminal,
-                            0);
+    jackd->output_port[i] =
+      jack_port_register(jackd->client, portname, JACK_DEFAULT_AUDIO_TYPE,
+                         JackPortIsOutput | JackPortIsTerminal, 0);
 
     if (!jackd->output_port[i]) {
       lives_printerr("nay more JACK output ports available\n");
@@ -2005,51 +2028,27 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
 
 boolean jack_create_client_reader(jack_driver_t *jackd) {
   // open a device to read audio from jack
-  const char *client_name = "LiVES_audio_in";
-  const char *server_name = JACK_DEFAULT_SERVER_NAME;
-  jack_options_t options = (jack_options_t)((int)JackServerName | (int)JackNoStartServer);
-  jack_status_t status;
-  int i;
+  if (mainw->aplayer_broken) return FALSE;
 
   jackd->is_active = FALSE;
 
-  /* set up an error handler */
-  jack_set_error_function(jack_error_func);
-  jackd->client = NULL;
-
   // create a client and attach it to the server
-  while (!jackd->client)
-    jackd->client = jack_client_open(client_name, options, &status, server_name);
-
-  if (!jackd->client) {
-    lives_printerr("jack_client_open() failed, status = 0x%2.0x\n", status);
-    if (status & JackServerFailed) {
-      d_print(_("Unable to connect to JACK server\n"));
-    }
-    return FALSE;
-  }
-
-  if (status & JackNameNotUnique) {
-    client_name = jack_get_client_name(jackd->client);
-    lives_printerr("unique name `%s' assigned\n", client_name);
-  }
+  if (!lives_jack_init(JACK_CLIENT_TYPE_AUDIO_READER, jackd)) return FALSE;
 
   jackd->sample_in_rate = jackd->sample_out_rate = jack_get_sample_rate(jackd->client);
-
   //lives_printerr (lives_strdup_printf("engine sample rate: %ld\n",jackd->sample_rate));
 
   // create ports for the client (left and right channels)
-  for (i = 0; i < jackd->num_input_channels; i++) {
+  for (int i = 0; i < jackd->num_input_channels; i++) {
     char portname[32];
     lives_snprintf(portname, 32, "in_%d", i);
 
 #ifdef DEBUG_JACK_PORTS
     lives_printerr("input port %d is named '%s'\n", i, portname);
 #endif
-    jackd->input_port[i] = jack_port_register(jackd->client, portname,
-                           JACK_DEFAULT_AUDIO_TYPE,
-                           JackPortIsInput | JackPortIsTerminal,
-                           0);
+    jackd->input_port[i] =
+      jack_port_register(jackd->client, portname, JACK_DEFAULT_AUDIO_TYPE,
+                         JackPortIsInput | JackPortIsTerminal, 0);
     if (!jackd->input_port[i]) {
       lives_printerr("ne more JACK input ports available\n");
       return FALSE;

@@ -2035,7 +2035,7 @@ void jack_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t rec
       mainw->jackd_read->reverse_endian = FALSE;
       mainw->jackd_read->frames_written = 0;
 
-      // start jack "recording"
+      // connect the client and activate it
       jack_create_client_reader(mainw->jackd_read);
       jack_read_driver_activate(mainw->jackd_read, FALSE);
     }

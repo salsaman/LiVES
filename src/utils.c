@@ -1624,7 +1624,6 @@ void set_start_end_spins(int clipno) {
 boolean switch_aud_to_jack(boolean set_in_prefs) {
 #ifdef ENABLE_JACK
   if (mainw->is_ready) {
-    if (1) lives_jack_init(FALSE);
     if (!mainw->jackd) {
       jack_audio_init();
       jack_audio_read_init();
@@ -1636,7 +1635,7 @@ boolean switch_aud_to_jack(boolean set_in_prefs) {
       mainw->jackd->whentostop = &mainw->whentostop;
       mainw->jackd->cancelled = &mainw->cancelled;
       mainw->jackd->in_use = FALSE;
-      mainw->jackd->play_when_stopped = (prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED) ? FALSE : TRUE;
+      mainw->jackd->play_when_stopped = !(prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED);
       jack_write_driver_activate(mainw->jackd);
     }
 
@@ -1669,9 +1668,9 @@ boolean switch_aud_to_jack(boolean set_in_prefs) {
   if (mainw->is_ready && mainw->vpp && mainw->vpp->get_audio_fmts)
     mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
 
-  if (prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT) {
+  if (prefs->perm_audio_reader) {
+    // reset and connect to server
     jack_rec_audio_to_clip(-1, -1, RECA_MONITOR);
-    mainw->jackd_read->in_use = FALSE;
   }
 
   lives_widget_set_sensitive(mainw->int_audio_checkbutton, TRUE);

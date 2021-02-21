@@ -1458,7 +1458,6 @@ typedef struct {
   boolean jack_trans_poll;
   jack_driver_t *jackd; ///< jack audio playback device
   jack_driver_t *jackd_read; ///< jack audio recorder device
-  boolean jack_inited;
 #define RT_AUDIO
 #else
   void *jackd;  ///< dummy

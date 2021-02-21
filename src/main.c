@@ -1544,7 +1544,6 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->close_keep_frames = FALSE;
 
 #ifdef ENABLE_JACK
-  mainw->jack_inited = FALSE;
   mainw->jack_trans_poll = FALSE;
 #endif
 
@@ -1870,7 +1869,8 @@ static void lives_init(_ign_opts *ign_opts) {
     lives_memset(prefs->encoder.of_name, 0, 1);
     lives_memset(prefs->encoder.of_desc, 0, 1);
 
-    if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_encoder_plugins && capable->has_python) {
+    if ((prefs->startup_phase == 1 || prefs->startup_phase == -1)
+        && capable->has_encoder_plugins && capable->has_python) {
       LiVESList *ofmt_all = NULL;
       char **array;
       if (check_for_executable(&capable->has_ffmpeg, EXEC_FFMPEG)) {
@@ -2212,11 +2212,11 @@ static void lives_init(_ign_opts *ign_opts) {
       future_prefs->jack_opts = prefs->jack_opts;
     }
 
-    // start jack transport polling
     if (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT) {
-      splash_msg(_("Starting or connecting to jack transport server..."),
+      // start jack transport polling
+      splash_msg(_("Connecting to jack transport server..."),
                  SPLASH_LEVEL_LOAD_APLAYER);
-      if (!lives_jack_init(TRUE)) {
+      if (!lives_jack_init(JACK_CLIENT_TYPE_TRANSPORT, NULL)) {
         if (prefs->jack_opts & JACK_OPTS_START_TSERVER)
           do_jack_noopen_warn(TRUE);
         else do_jack_noopen_warn3(TRUE);
@@ -2232,57 +2232,32 @@ static void lives_init(_ign_opts *ign_opts) {
 #endif
 
     if (prefs->audio_player == AUD_PLAYER_JACK) {
-      splash_msg(_("Starting or connecting to jack audio server..."),
+      splash_msg(_("Connecting to jack audio server..."),
                  SPLASH_LEVEL_LOAD_APLAYER);
 
-      // TODO - this actually will be called from jack_create_client_writer / reader
-      if (!lives_jack_init(FALSE)) {
-        if (prefs->jack_opts & JACK_OPTS_START_ASERVER)
-          do_jack_noopen_warn(FALSE);
-        else {
-          do_jack_noopen_warn3(FALSE);
-          do_jack_noopen_warn4(prefs->jack_opts == 0 ? JACK_OPTS_START_ASERVER : -1);
-        }
-        if (prefs->startup_phase == 4) {
-          do_jack_noopen_warn2();
-        }
-        future_prefs->jack_opts = 0; // jack is causing hassle, disable it for now
-        set_int_pref(PREF_JACK_OPTS, 0);
-        lives_exit(0);
-      }
-    }
-
-    if (prefs->audio_player == AUD_PLAYER_JACK) {
+      // set config for (LiVES) clients
       jack_audio_init();
       jack_audio_read_init();
+
+      // get first OUTPUT driver
       mainw->jackd = jack_get_driver(0, TRUE);
+
       if (mainw->jackd) {
+        /// try to connect, and possibly start a server
         if (!jack_create_client_writer(mainw->jackd)) mainw->jackd = NULL;
 
-        if (!mainw->jackd && prefs->startup_phase == 0) {
-#ifdef HAVE_PULSE_AUDIO
-          char *otherbit = lives_strdup("\"lives -aplayer pulse\".");
-#else
-          char *otherbit = lives_strdup("\"lives -aplayer sox\".");
-#endif
-          char *tmp;
-
-          char *msg = lives_strdup_printf(
-                        _("\n\nManual start of jackd required. Please make sure jackd is running, \n"
-                          "or else change the value of <jack_opts> in %s to 2048\nand restart LiVES.\n\n"
-                          "Alternatively, try to start lives with either \"lives -jackopts 2048\", or "),
-                        (tmp = lives_filename_to_utf8(prefs->configfile, -1, NULL, NULL, NULL)));
-          fprintf(stderr, "%s%s\n\n", msg, otherbit);
-          lives_free(msg);
-          lives_free(tmp);
-          lives_free(otherbit);
-        }
-
         if (!mainw->jackd) {
-          do_jack_noopen_warn3(FALSE);
+          if (prefs->jack_opts & JACK_OPTS_START_ASERVER)
+            do_jack_noopen_warn(FALSE);
+          else {
+            do_jack_noopen_warn3(FALSE);
+            do_jack_noopen_warn4(prefs->jack_opts == 0 ? JACK_OPTS_START_ASERVER : -1);
+          }
           if (prefs->startup_phase == 4) {
             do_jack_noopen_warn2();
-          } else do_jack_noopen_warn4(-1);
+          }
+          future_prefs->jack_opts = 0; // jack is causing hassle, disable it for now
+          set_int_pref(PREF_JACK_OPTS, 0);
           lives_exit(0);
         }
 
@@ -2294,11 +2269,16 @@ static void lives_init(_ign_opts *ign_opts) {
         mainw->jackd->play_when_stopped = (prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED)
                                           ? FALSE : TRUE;
 
+        // activate the writer and connect ports
         jack_write_driver_activate(mainw->jackd);
 
         if (prefs->perm_audio_reader) {
-          // create reader connection now, if permanent
-          jack_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
+          // will also attempt to connect, and possibly start server
+          // however the server should always be running since we already connected the writer client
+          // also activates the cliebt, but since the reader is not attatched to any clip
+          // (first param is -1), we do not actually prepare for recording yet
+          // however we do connect the ports (unless JACK_OPTS_NO_READ_AUTOCON is set)
+          jack_rec_audio_to_clip(-1, -1, RECA_MONITOR);
 	  // *INDENT-OFF*
 	}}
     // *INDENT-ON*
@@ -3973,8 +3953,8 @@ static boolean lives_startup(livespointer data) {
 
 #ifdef ENABLE_JACK
     if (prefs->audio_player == AUD_PLAYER_JACK && capable->has_jackd && mainw->rec_achans > 0) {
-      lives_jack_init(FALSE);
       jack_audio_read_init();
+      //jack_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
     }
 #endif
 #ifdef HAVE_PULSE_AUDIO

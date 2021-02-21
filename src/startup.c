@@ -481,7 +481,7 @@ boolean do_workdir_query(void) {
 
 
 #ifdef ENABLE_JACK
-static boolean do_jack_config(void) {
+boolean do_jack_config(boolean is_setup) {
   LiVESSList *st_src_group = NULL;
   LiVESAccelGroup *accel_group;
   LiVESWidget *dialog, *dialog_vbox, *layout, *hbox, *rb, *entry, *cb1;
@@ -804,7 +804,7 @@ reloop:
 
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK) {
-    if (!do_jack_config()) {
+    if (!do_jack_config(TRUE)) {
       txt0 = lives_strdup("");
       radiobutton_group = NULL;
       goto reloop;

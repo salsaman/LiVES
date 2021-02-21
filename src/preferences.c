@@ -5310,6 +5310,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
         LIVES_BOX(hbox), TRUE, NULL);
   lives_widget_set_sensitive(advbutton, FALSE);
 
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(jack_srv_config), LIVES_INT_TO_POINTER(TRUE));
+
   layout = lives_layout_new(LIVES_BOX(vbox));
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
@@ -5438,7 +5441,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
         _("Server and Driver _Configuration"),
         DEF_BUTTON_WIDTH, DEF_BUTTON_HEIGHT,
         LIVES_BOX(hbox), TRUE, NULL);
-  lives_widget_set_sensitive(prefsw->ajack_config_button, FALSE);
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->ajack_config_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                            LIVES_GUI_CALLBACK(jack_srv_config), LIVES_INT_TO_POINTER(FALSE));
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox,

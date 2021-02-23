@@ -1716,7 +1716,7 @@ boolean switch_aud_to_pulse(boolean set_in_prefs) {
 
 #ifdef ENABLE_JACK
     if (mainw->jackd_read) {
-      jack_close_device(mainw->jackd_read);
+      //jack_close_device(mainw->jackd_read);
       mainw->jackd_read = NULL;
     }
 

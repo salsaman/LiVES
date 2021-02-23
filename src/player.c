@@ -1918,9 +1918,9 @@ frames_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   // nframe is our new frame; convert dtc to seconds, and multiply by the frame rate, then add or subtract from current frame number
   // the small constant is just to account for rounding errors
   if (fps >= 0.)
-    nframe = cframe + (frames_t)((double)dtc / TICKS_PER_SECOND_DBL * fps + .00001);
+    nframe = cframe + (frames_t)((double)dtc / TICKS_PER_SECOND_DBL * fps + .5);
   else
-    nframe = cframe + (frames_t)((double)dtc / TICKS_PER_SECOND_DBL * fps - .00001);
+    nframe = cframe + (frames_t)((double)dtc / TICKS_PER_SECOND_DBL * fps - .5);
 
   if (nframe != cframe) {
     if (!IS_NORMAL_CLIP(fileno)) {
@@ -2183,6 +2183,7 @@ const char *get_cache_stats(void) {
 int process_one(boolean visible) {
   // INTERNAL PLAYER
   static frames_t last_req_frame = 0;
+  static frames_t real_requested_frame = 0;
 #ifdef HAVE_PULSE_AUDIO
   static int64_t last_seek_pos = 0;
 #endif
@@ -2241,6 +2242,7 @@ int process_one(boolean visible) {
     mainw->actual_frame = sfile->frameno;
     mainw->offsetticks -= mainw->currticks;
     last_anim_ticks = mainw->currticks;
+    real_requested_frame = 0;
   }
 
   /* if (mainw->wall_ticks > last_cpuload_ticks + 10 * TICKS_PER_SECOND_DBL) { */
@@ -2485,7 +2487,13 @@ switch_point:
     // which will be <= the current time
     // and requested_frame is set to the frame to show. By default this is the frame we show, but we may vary
     // this depending on the cached frame
-    requested_frame = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);
+    frames_t oframe = sfile->last_frameno;
+    if (real_requested_frame > 0) sfile->last_frameno = real_requested_frame;
+    //g_print("PRE: %ld %ld  %d %f\n", mainw->startticks, new_ticks, sfile->last_frameno, (new_ticks - mainw->startticks) / TICKS_PER_SECOND_DBL * sfile->pb_fps);
+    real_requested_frame = requested_frame
+                           = calc_new_playback_position(mainw->playing_file, mainw->startticks, &new_ticks);
+    //g_print("POST: %ld %ld %d\n", mainw->startticks, new_ticks, requested_frame);
+    sfile->last_frameno = oframe;
     if (mainw->foreign) {
       if (requested_frame > sfile->frameno) {
         load_frame_image(sfile->frameno++);
@@ -2500,7 +2508,7 @@ switch_point:
 
     if (mainw->scratch != SCRATCH_NONE) scratch  = mainw->scratch;
     mainw->scratch = SCRATCH_NONE;
-
+#define SHOW_CACHE_PREDICTIONS
 #ifdef ENABLE_PRECACHE
     if (scratch != SCRATCH_NONE) {
       getahead = test_getahead = -1;
@@ -2544,14 +2552,14 @@ switch_point:
           /// - useful values would be the frame decode time, keyframe positions, seek time to keyframe, keyframe decode time.
           int dir = sig(sfile->pb_fps);
           delta = (test_getahead - requested_frame) * dir;
-#ifdef SHOW_CACHE_PREDICTIONS
-          g_print("gah (%d) %d, act %d %d, bungle %d, shouldabeen %d %s", mainw->effort, test_getahead,
-                  sfile->frameno, requested_frame,
-                  bungle_frames, bungle_frames - delta, getahead == -1 ? "(calibrating)" : "");
-          if (delta < 0) g_print(" !!!!!\n");
-          if (delta == 0) g_print(" EXACT\n");
-          if (delta > 0) g_print(" >>>>\n");
-#endif
+          if (prefs->dev_show_caching) {
+            g_print("gah (%d) %d, act %d %d, bungle %d, shouldabeen %d %s", mainw->effort, test_getahead,
+                    sfile->frameno, requested_frame,
+                    bungle_frames, bungle_frames - delta, getahead == -1 ? "(calibrating)" : "");
+            if (delta < 0) g_print(" !!!!!\n");
+            if (delta == 0) g_print(" EXACT\n");
+            if (delta > 0) g_print(" >>>>\n");
+          }
           if (delta == 0)  bungle_frames++;
           if (delta > 0 && delta < 3 && bungle_frames > 1) bungle_frames--;
           else bungle_frames += (requested_frame - test_getahead) * dir;
@@ -2643,25 +2651,26 @@ switch_point:
               && dropped > 0 && ((sfile->pb_fps < 0. && !clip_can_reverse(mainw->playing_file))
                                  || abs(sfile->frameno - sfile->last_vframe_played) >= JUMPFRAME_TRIGGER
                                  || dropped >= MIN(TEST_TRIGGER, DROPFRAME_TRIGGER))) {
-#ifdef SHOW_CACHE_PREDICTIONS
-            if (abs(sfile->frameno - sfile->last_vframe_played) >= JUMPFRAME_TRIGGER) {
-              lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->ext_src)->cdata;
-              if (cdata) {
-                g_print("decoder: seek flags = %d, jump_limit = %ld, max_fps = %.4f\n", cdata->seek_flag,
-                        cdata->jump_limit, cdata->max_decode_fps);
-                g_print("vframe jump will be %d\n", requested_frame - sfile->last_vframe_played);
+            if (prefs->dev_show_caching) {
+              if (abs(sfile->frameno - sfile->last_vframe_played) >= JUMPFRAME_TRIGGER) {
+                lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->ext_src)->cdata;
+                if (cdata) {
+                  g_print("decoder: seek flags = %d, jump_limit = %ld, max_fps = %.4f\n",
+                          cdata->seek_flag,
+                          cdata->jump_limit, cdata->max_decode_fps);
+                  g_print("vframe jump will be %d\n", requested_frame - sfile->last_vframe_played);
+                }
               }
             }
-#endif
             dir = LIVES_DIRECTION_SIG(sfile->pb_fps);
             if (bungle_frames <= -dir || bungle_frames == 0) bungle_frames = dir;
             //bungle_frames += requested_frame - mainw->actual_frame - dir;
             test_getahead = requested_frame + bungle_frames * dir;
             if (test_getahead < 1 || test_getahead > sfile->frames) test_getahead = -1;
             else {
-#ifdef SHOW_CACHE_PREDICTIONS
-              g_print("getahead jumping to %d\n", test_getahead);
-#endif
+              if (prefs->dev_show_caching) {
+                g_print("getahead jumping to %d\n", test_getahead);
+              }
               recalc_bungle_frames = TRUE;
               if (dropped > 0 && delta <= 0 && ((sfile->pb_fps < 0. && (!clip_can_reverse(mainw->current_file)))
                                                 || (abs(sfile->frameno - sfile->last_vframe_played) >= JUMPFRAME_TRIGGER)
@@ -2760,7 +2769,8 @@ switch_point:
                   (pframe <= requested_frame || is_virtual_frame(mainw->playing_file, sfile->frameno))) ||
                  (sfile->pb_fps < 0. && pframe <= mainw->actual_frame &&
                   (pframe >= requested_frame || is_virtual_frame(mainw->playing_file, sfile->frameno))))
-                && ((getahead > -1 || pframe == requested_frame || is_layer_ready(mainw->frame_layer_preload)))) {
+                && ((getahead > -1 || pframe == requested_frame
+                     || is_layer_ready(mainw->frame_layer_preload)))) {
               sfile->frameno = pframe;
             }
             if (pframe == sfile->frameno) cache_hits++;
@@ -2769,15 +2779,14 @@ switch_point:
                   || (sfile->pb_fps < 0. && pframe >= mainw->actual_frame)) {
                 cleanup_preload = TRUE;
                 if (pframe != mainw->actual_frame) {
-#ifdef SHOW_CACHE_PREDICTIONS
-                  g_print("WASTED cache frame %ld !!!! range was %d to %d or was not ready\n",
-                          mainw->pred_frame, mainw->actual_frame,
-                          sfile->frameno);
-#endif
-                  cache_misses++;
-                }
+                  if (prefs->dev_show_caching) {
+                    g_print("WASTED cache frame %ld !!!! range was %d to %d or was not ready\n",
+                            mainw->pred_frame, mainw->actual_frame,
+                            sfile->frameno);
+                    cache_misses++;
+                  }
 		  // *INDENT-OFF*
-		}}}}
+		}}}}}
 	  // *INDENT-ON*
 
         if (sfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->playing_file, sfile->frameno))
@@ -2793,6 +2802,8 @@ switch_point:
         }
       }
 
+      if (new_ticks > mainw->startticks) mainw->startticks = new_ticks;
+
       if (getahead < 0) {
         /// this is where we rebase the time for the next frame calculation
         /// if getahead >= 0 then we want to keep the base at the last "played" frame,
@@ -2800,7 +2811,6 @@ switch_point:
         /// but we did update last_start_ticks
         sfile->last_frameno = requested_frame;
         // set
-        if (new_ticks > mainw->startticks) mainw->startticks = new_ticks;
         if (scratch != SCRATCH_NONE) {
           mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->orignsecs, NULL);
           mainw->startticks = mainw->currticks;
@@ -2868,14 +2878,14 @@ switch_point:
 #endif
 
         // load and display the new frame
-#ifdef SHOW_CACHE_PREDICTIONS
-        g_print("playing frame %d / %d at %ld (%ld : %ld) %.2f %ld %ld\n", sfile->frameno, requested_frame, mainw->currticks,
-                mainw->startticks, new_ticks, (mainw->pulsed->in_use && IS_VALID_CLIP(mainw->pulsed->playing_file)
-                                               && mainw->files[mainw->pulsed->playing_file]->arate != 0)
-                ? (double)mainw->pulsed->seek_pos
-                / (double)mainw->files[mainw->pulsed->playing_file]->arate / 4. * sfile->fps + 1. : 0. * sfile->fps + 1,
-                lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs), mainw->pulsed->seek_pos);
-#endif
+        if (prefs->dev_show_caching) {
+          g_print("playing frame %d / %d at %ld (%ld : %ld) %.2f %ld %ld\n", sfile->frameno, requested_frame, mainw->currticks,
+                  mainw->startticks, new_ticks, (mainw->pulsed->in_use && IS_VALID_CLIP(mainw->pulsed->playing_file)
+                                                 && mainw->files[mainw->pulsed->playing_file]->arate != 0)
+                  ? (double)mainw->pulsed->seek_pos
+                  / (double)mainw->files[mainw->pulsed->playing_file]->arate / 4. * sfile->fps + 1. : 0. * sfile->fps + 1,
+                  lives_get_relative_ticks(mainw->origsecs, mainw->orignsecs), mainw->pulsed->seek_pos);
+        }
 #ifdef HAVE_PULSE_AUDIO
         if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed) last_seek_pos = mainw->pulsed->seek_pos;
 #endif
@@ -3023,7 +3033,8 @@ switch_point:
               // if the target is a clip-frame we have to decode it now, since we cannot simply decode 2 frames simultaneously
               // (although it could be possible in the future to have 2 clone decoders and have them leapfrog...)
               // NOTE: change to labs when frames_t updated
-              mainw->frame_layer_preload = lives_layer_new_for_frame(mainw->pred_clip, mainw->pred_frame);
+              mainw->frame_layer_preload =
+                lives_layer_new_for_frame(mainw->pred_clip, mainw->pred_frame);
               if (!pull_frame_at_size(mainw->frame_layer_preload, img_ext,
                                       (weed_timecode_t)mainw->currticks,
                                       sfile->hsize, sfile->vsize, WEED_PALETTE_END)) {
@@ -3032,15 +3043,15 @@ switch_point:
                   mainw->frame_layer_preload = NULL;
                   mainw->pred_clip = -1;
                 }
-#ifdef SHOW_CACHE_PREDICTIONS
-                g_print("failed to load frame %ld\n", mainw->pred_frame);
-#endif
+                if (prefs->dev_show_caching) {
+                  g_print("failed to load frame %ld\n", mainw->pred_frame);
+                }
               }
             }
             if (mainw->pred_clip != -1) {
-#ifdef SHOW_CACHE_PREDICTIONS
-              g_print("cached frame %ld\n", mainw->pred_frame);
-#endif
+              if (prefs->dev_show_caching) {
+                g_print("cached frame %ld\n", mainw->pred_frame);
+              }
               if (getahead > 0) {
                 mainw->pred_frame = -getahead;
                 mainw->force_show = TRUE;

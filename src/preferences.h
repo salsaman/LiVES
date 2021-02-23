@@ -505,6 +505,7 @@ typedef struct {
   boolean show_dev_opts;
   boolean dev_show_dabg;
   boolean dev_show_timing;
+  boolean dev_show_caching;
 
   boolean msgs_pbdis;
 
@@ -1016,6 +1017,10 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_JACK_ACSERVER "jack_audio_connect_server"
 #define PREF_JACK_ASSERVER "jack_audio_startup_server"
 #define PREF_JACK_ACONFIG "jack_audio_config_file"
+
+#define PREF_JACK_TCSERVER "jack_trans_connect_server"
+#define PREF_JACK_TSSERVER "jack_trans_startup_server"
+#define PREF_JACK_TCONFIG "jack_trans_config_file"
 #endif
 ////////////////////// utf8 values
 

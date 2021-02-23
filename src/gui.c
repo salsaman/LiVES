@@ -1596,7 +1596,8 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(mainw->help_menu));
 
-  mainw->show_devopts = lives_standard_check_menu_item_new_with_label(_("Enable Developer Options"), prefs->show_dev_opts);
+  mainw->show_devopts = lives_standard_check_menu_item_new_with_label(_("Enable Developer Options"),
+                        prefs->show_dev_opts);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->show_devopts),  prefs->show_dev_opts);
 
   lives_container_add(LIVES_CONTAINER(mainw->help_menu), mainw->show_devopts);
@@ -1612,6 +1613,11 @@ void create_LiVES(void) {
                       &prefs->dev_show_timing, FALSE);
   lives_container_add(LIVES_CONTAINER(mainw->help_menu), mainw->dev_timing);
   menu_sets_visible(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), mainw->dev_timing, FALSE);
+
+  mainw->dev_caching = lives_standard_check_menu_item_new_for_var(_("Show cache predictions on console"),
+                       &prefs->dev_show_caching, FALSE);
+  lives_container_add(LIVES_CONTAINER(mainw->help_menu), mainw->dev_caching);
+  menu_sets_visible(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), mainw->dev_caching, FALSE);
 
   lives_menu_add_separator(LIVES_MENU(mainw->help_menu));
 
@@ -1968,7 +1974,7 @@ void create_LiVES(void) {
   lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->vps_label, FALSE, FALSE, widget_opts.packing_width);
 
   widget_opts.expand = LIVES_EXPAND_NONE;
-  mainw->spinbutton_pb_fps = lives_standard_spin_button_new(NULL, 0., -FPS_MAX, FPS_MAX, 0.1, 1., 3,
+  mainw->spinbutton_pb_fps = lives_standard_spin_button_new(NULL, 0., -FPS_MAX, FPS_MAX, 0.0001, 1., 3,
                              LIVES_BOX(mainw->framebar), _("Vary the video speed"));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 

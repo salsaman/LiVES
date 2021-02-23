@@ -729,7 +729,6 @@ static boolean pre_init(void) {
   mainw->prefs_cache = cache_file_contents(prefs->configfile);
 
   prefs->show_dev_opts = get_boolean_prefd(PREF_SHOW_DEVOPTS, FALSE);
-  prefs->dev_show_dabg = prefs->dev_show_timing = FALSE;
 
   prefs->back_compat = get_boolean_prefd(PREF_BACK_COMPAT, TRUE);
 
@@ -899,27 +898,6 @@ static boolean pre_init(void) {
     lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_SOX);
   }
 
-#ifdef ENABLE_JACK
-  prefs->jack_srv_dup = TRUE;
-
-  /*
-    lives_snprintf(prefs->jack_tserver_cname, JACK_PARAM_STRING_MAX, "%s", JACK_DEFAULT_SERVER_NAME);
-    lives_snprintf(prefs->jack_tserver_sname, JACK_PARAM_STRING_MAX, "%s", JACK_DEFAULT_SERVER_NAME);
-    lives_snprintf(prefs->jack_aserver_cname, JACK_PARAM_STRING_MAX, "%s", JACK_DEFAULT_SERVER_NAME);
-    lives_snprintf(prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX, "%s", JACK_DEFAULT_SERVER_NAME);
-  */
-
-  get_string_pref(PREF_JACK_ADRIVER, buff, MIN(256, JACK_PARAM_STRING_MAX));
-  if (*buff) {
-    prefs->jack_adriver = lives_strdup(buff);
-#ifdef ENABLE_JACK_TRANSPORT
-    if (prefs->jack_srv_dup) {
-      prefs->jack_tdriver = lives_strdup(buff);
-    }
-#endif
-  }
-#endif
-
   prefs->open_decorated = TRUE;
 
 #ifdef ENABLE_GIW
@@ -1033,12 +1011,31 @@ static boolean pre_init(void) {
     prefs->jack_opts = future_prefs->jack_opts = get_int_prefd(PREF_JACK_OPTS, 16);
   }
 
+  prefs->jack_srv_dup = TRUE;
+
+  get_string_pref(PREF_JACK_ADRIVER, buff, MIN(256, JACK_PARAM_STRING_MAX));
+  if (*buff) {
+    prefs->jack_adriver = lives_strdup(buff);
+#ifdef ENABLE_JACK_TRANSPORT
+    if (prefs->jack_srv_dup) {
+      prefs->jack_tdriver = lives_strdup(buff);
+    }
+#endif
+  }
+#endif
+
+  get_string_pref(PREF_JACK_ACONFIG, prefs->jack_aserver_cfg, PATH_MAX);
+  lives_snprintf(future_prefs->jack_aserver_cfg, PATH_MAX, "%s", prefs->jack_aserver_cfg);
+  get_string_pref(PREF_JACK_ACSERVER, prefs->jack_aserver_cname, JACK_PARAM_STRING_MAX);
+  lives_snprintf(future_prefs->jack_aserver_cname, PATH_MAX, "%s", prefs->jack_aserver_cname);
+  get_string_pref(PREF_JACK_ASSERVER, prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX);
+  lives_snprintf(future_prefs->jack_aserver_sname, PATH_MAX, "%s", prefs->jack_aserver_sname);
+
 #ifndef ENABLE_JACK_TRANSPORT
   prefs->jack_opts &= ~(JACK_OPTS_TRANSPORT_CLIENT | JACK_OPTS_TRANSPORT_MASTER
                         | JACK_OPTS_START_TSERVER | JACK_OPTS_TIMEBASE_START
                         | JACK_OPTS_TIMEBASE_CLIENT | JACK_OPTS_TIMEBASE_MASTER
                         | JACK_OPTS_TIMEBASE_LSTART | JACK_OPTS_ENABLE_TCLIENT);
-#endif
 #endif
 
 #ifdef GUI_GTK
@@ -7495,7 +7492,8 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
                                               sfile->frame_index[frame - 1]);
           // if get_frame fails, return a black frame
           if (!is_thread) {
-            weed_layer_pixel_data_free(layer);
+            if (layer != mainw->en_fcache || layer != mainw->st_fcache || layer != mainw->pr_fcache)
+              weed_layer_pixel_data_free(layer);
             if (!create_empty_pixel_data(layer, TRUE, TRUE)) {
               create_blank_layer(layer, image_ext, width, height, target_palette);
               weed_layer_unref(layer);

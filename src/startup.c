@@ -815,8 +815,12 @@ set_config:
 
   widget_opts.packing_height = woph;
 
-  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK,
-                 _("Back"), LIVES_RESPONSE_CANCEL);
+  if (is_setup)
+    cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK,
+                   _("Back"), LIVES_RESPONSE_CANCEL);
+  else
+    cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL,
+                   NULL, LIVES_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
@@ -847,7 +851,6 @@ retry:
   response = lives_dialog_run(LIVES_DIALOG(dialog));
 
   if (response == LIVES_RESPONSE_OK) {
-    char *old_sname = NULL;
     boolean ignore = FALSE;
     if (is_setup) {
       future_prefs->jack_opts = 0;
@@ -887,11 +890,6 @@ retry:
         } else {
           *future_prefs->jack_tserver_cfg = 0;
         }
-      }
-      if (!is_trans) {
-        old_sname = lives_strdup(future_prefs->jack_aserver_sname);
-      } else {
-        old_sname = lives_strdup(future_prefs->jack_tserver_sname);
       }
     }
     if (is_setup) {
@@ -988,10 +986,13 @@ retry:
       set_string_pref(PREF_JACK_ACONFIG, prefs->jack_aserver_cfg);
     } else {
       if (future_prefs->jack_opts != old_fprefs
-          || (is_trans && lives_strcmp(old_sname, future_prefs->jack_tserver_sname))
-          || (!is_trans && lives_strcmp(old_sname, future_prefs->jack_aserver_sname)))
+          || (is_trans
+              && (lives_strcmp(future_prefs->jack_tserver_sname, prefs->jack_tserver_sname)
+                  || lives_strcmp(future_prefs->jack_tserver_cfg, prefs->jack_tserver_cfg)))
+          || (!is_trans
+              && (lives_strcmp(future_prefs->jack_aserver_sname, prefs->jack_aserver_sname)
+                  || lives_strcmp(future_prefs->jack_aserver_sname, prefs->jack_aserver_sname))))
         apply_button_set_enabled(NULL, NULL);
-      lives_free(old_sname);
     }
     return TRUE;
   }

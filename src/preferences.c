@@ -477,7 +477,8 @@ void set_vpp(boolean set_in_prefs) {
   // Video Playback Plugin
 
   if (*future_prefs->vpp_name) {
-    if (!lives_utf8_strcasecmp(future_prefs->vpp_name, mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
+    if (!lives_utf8_strcasecmp(future_prefs->vpp_name,
+                               mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
       if (mainw->vpp) {
         if (mainw->ext_playback) vid_playback_plugin_exit();
         close_vid_playback_plugin(mainw->vpp);
@@ -491,7 +492,8 @@ void set_vpp(boolean set_in_prefs) {
         if (set_in_prefs) {
           set_string_pref(PREF_VID_PLAYBACK_PLUGIN, mainw->vpp->name);
           if (!mainw->ext_playback)
-            do_error_dialog(_("\n\nVideo playback plugins are only activated in\nfull screen, separate window (fs) mode\n"));
+            do_error_dialog(_("\n\nVideo playback plugins are only activated in\n"
+                              "full screen, separate window (fs) mode\n"));
         }
       }
     }
@@ -622,7 +624,8 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-    if ((!lives_strcmp(audio_player, AUDIO_PLAYER_PULSE) || !lives_strcmp(audio_player, AUDIO_PLAYER_PULSE_AUDIO)) &&
+    if ((!lives_strcmp(audio_player, AUDIO_PLAYER_PULSE)
+         || !lives_strcmp(audio_player, AUDIO_PLAYER_PULSE_AUDIO)) &&
         prefs->audio_player != AUD_PLAYER_PULSE) {
       // switch to pulseaudio
       if (!capable->has_pulse_audio) {
@@ -662,9 +665,41 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
 
 #ifdef HAVE_PULSE_AUDIO
   if (!lives_strcmp(prefidx, PREF_PASTARTOPTS)) {
-    if (lives_strcmp(newval, prefs->pa_start_opts)) {
+    if (lives_strncmp(newval, prefs->pa_start_opts, 255)) {
       lives_snprintf(prefs->pa_start_opts, 255, "%s", newval);
-      if (permanent) set_string_pref(PREF_PASTARTOPTS, newval);
+      if (permanent) set_string_pref(PREF_PASTARTOPTS, prefs->pa_start_opts);
+      goto success1;
+    }
+    goto fail1;
+  }
+#endif
+
+#ifdef ENABLE_JACK
+  if (!lives_strcmp(prefidx, PREF_JACK_ACONFIG)) {
+    if (lives_strncmp(newval, prefs->jack_aserver_cfg, PATH_MAX)) {
+      lives_snprintf(prefs->jack_aserver_cfg, PATH_MAX, "%s", newval);
+      lives_snprintf(future_prefs->jack_aserver_cfg, PATH_MAX, "%s", newval);
+      if (permanent) set_string_pref(PREF_JACK_ACONFIG, prefs->jack_aserver_cfg);
+      goto success1;
+    }
+    goto fail1;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_JACK_ACSERVER)) {
+    if (lives_strncmp(newval, prefs->jack_aserver_cname, JACK_PARAM_STRING_MAX)) {
+      lives_snprintf(prefs->jack_aserver_cname, JACK_PARAM_STRING_MAX, "%s", newval);
+      lives_snprintf(future_prefs->jack_aserver_cname, JACK_PARAM_STRING_MAX, "%s", newval);
+      if (permanent) set_string_pref(PREF_JACK_ACSERVER, prefs->jack_aserver_cname);
+      goto success1;
+    }
+    goto fail1;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_JACK_ASSERVER)) {
+    if (lives_strncmp(newval, prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX)) {
+      lives_snprintf(prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX, "%s", newval);
+      lives_snprintf(future_prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX, "%s", newval);
+      if (permanent) set_string_pref(PREF_JACK_ASSERVER, prefs->jack_aserver_sname);
       goto success1;
     }
     goto fail1;
@@ -672,18 +707,18 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
 #endif
 
   if (!lives_strcmp(prefidx, PREF_OMC_JS_FNAME)) {
-    if (lives_strcmp(newval, prefs->omc_js_fname)) {
+    if (lives_strncmp(newval, prefs->omc_js_fname, PATH_MAX)) {
       lives_snprintf(prefs->omc_js_fname, PATH_MAX, "%s", newval);
-      if (permanent) set_utf8_pref(PREF_OMC_JS_FNAME, newval);
+      if (permanent) set_utf8_pref(PREF_OMC_JS_FNAME, prefs->omc_js_fname);
       goto success1;
     }
     goto fail1;
   }
 
   if (!lives_strcmp(prefidx, PREF_OMC_MIDI_FNAME)) {
-    if (lives_strcmp(newval, prefs->omc_midi_fname)) {
+    if (lives_strncmp(newval, prefs->omc_midi_fname, PATH_MAX)) {
       lives_snprintf(prefs->omc_midi_fname, PATH_MAX, "%s", newval);
-      if (permanent) set_utf8_pref(PREF_OMC_MIDI_FNAME, newval);
+      if (permanent) set_utf8_pref(PREF_OMC_MIDI_FNAME, prefs->omc_midi_fname);
       goto success1;
     }
     goto fail1;
@@ -2241,6 +2276,9 @@ boolean apply_prefs(boolean skip_warn) {
     set_int_pref(PREF_JACK_OPTS, jack_opts);
     future_prefs->jack_opts = prefs->jack_opts = jack_opts;
   }
+  pref_factory_string(PREF_JACK_ACONFIG, future_prefs->jack_aserver_cfg, TRUE);
+  pref_factory_string(PREF_JACK_ACSERVER, future_prefs->jack_aserver_cname, TRUE);
+  pref_factory_string(PREF_JACK_ASSERVER, future_prefs->jack_aserver_sname, TRUE);
 #endif
 
 #ifdef ENABLE_OSC

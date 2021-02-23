@@ -552,6 +552,7 @@ boolean lives_jack_init(lives_jack_client_t client_type, jack_driver_t *jackd) {
   char *server_name;
   char *client_name;
   char *defservname = getenv(JACK_DEFAULT_SERVER);
+  char *com = NULL;
   const char *driver_name;
   const char *type_name = get_type_name(client_type);
   boolean set_server_sync = FALSE;
@@ -612,9 +613,9 @@ retry_connect:
     // if server name is NULL, then use 'default' or $JACK_DEFAULT_SERVER
     jack_options_t xoptions = (jack_options_t)((int)options | (int)JackNoStartServer);
     jack_transport_client = jack_client_open(client_name, xoptions, &status, server_name);
-    lives_free(client_name);
     if (jack_transport_client) {
       ts_running = server_name;
+      lives_free(client_name);
       goto connect_done;
     }
   } else {
@@ -622,9 +623,9 @@ retry_connect:
     // if server name is NULL, then use 'default' or $JACK_DEFAULT_SERVER
     jack_options_t xoptions = (jack_options_t)((int)options | (int)JackNoStartServer);
     jackd->client = jack_client_open(client_name, xoptions, &status, server_name);
-    lives_free(client_name);
     if (jackd->client) {
       as_running = server_name;
+      lives_free(client_name);
       goto connect_done;
     }
   }
@@ -663,6 +664,23 @@ retry_connect:
     }
     twins = FALSE;
   }
+
+  // connect failed, try with script if we have one
+  // TODO: parse script and find -n xxxx -d yyyy
+  // assume defservname for now
+
+  if (is_trans) {
+    if (*prefs->jack_tserver_cfg) com = prefs->jack_tserver_cfg;
+  } else {
+    if (*prefs->jack_aserver_cfg) com = prefs->jack_aserver_cfg;
+  }
+  if (com) {
+    lives_fork(com);
+    server_name = lives_strdup(defservname);
+    goto retry_connect;
+  }
+
+  lives_free(client_name);
 
   if (!jackserver) {
     // start the server
@@ -2396,7 +2414,6 @@ ticks_t lives_jack_get_time(jack_driver_t *jackd) {
     retframes += jackd->frames_written;
   } else jackd->frames_written = 0;
   last_frames = frames;
-
   return (ticks_t)((frames - jackd->nframes_start) * (1000000. / jack_get_sample_rate(
                      jackd->client)) * USEC_TO_TICKS);
 }

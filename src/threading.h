@@ -6,7 +6,9 @@
 #ifndef _THREADING_H_
 #define _THREADING_H_
 
-typedef void *(*lives_funcptr_t)(void *);
+typedef void (*lives_funcptr_t)();
+
+typedef void *(*lives_thread_func_t)(void *);
 
 typedef struct _lives_thread_data_t lives_thread_data_t;
 
@@ -35,7 +37,7 @@ struct _lives_thread_data_t {
 };
 
 typedef struct {
-  lives_funcptr_t func;
+  lives_thread_func_t func;
   void *arg;
   uint64_t flags;
   volatile uint64_t busy;
@@ -89,7 +91,7 @@ typedef uint64_t lives_thread_attr_t;
 
 void lives_threadpool_init(void);
 void lives_threadpool_finish(void);
-int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr, lives_funcptr_t func, void *arg);
+int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr, lives_thread_func_t func, void *arg);
 uint64_t lives_thread_join(lives_thread_t work, void **retval);
 
 // lives_proc_thread_t //////////////////////////////////////////////////////////////////////////////////////////////////////////

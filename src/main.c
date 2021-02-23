@@ -275,7 +275,10 @@ LIVES_LOCAL_INLINE void jack_warn(boolean is_trans) {
   do_jack_noopen_warn(is_trans);
   if (prefs->startup_phase == 4) {
     do_jack_noopen_warn2();
-  } else do_jack_noopen_warn4(-1);
+  } else {
+    do_jack_noopen_warn4(-1);
+    // if we have backup config, restore from it
+  }
   set_int_pref(PREF_JACK_OPTS, 0);
 }
 #endif
@@ -790,7 +793,7 @@ static boolean pre_init(void) {
 
   if (!prefs->vj_mode) {
     /// start a bg thread to get diskspace used
-    if (!needs_workdir && prefs->disk_quota && !needs_workdir && initial_startup_phase == 0)
+    if (!needs_workdir && prefs->disk_quota && initial_startup_phase == 0)
       mainw->helper_procthreads[PT_LAZY_DSUSED] = disk_monitor_start(prefs->workdir);
 
     if (!needs_workdir && mainw->next_ds_warn_level > 0) {
@@ -898,6 +901,14 @@ static boolean pre_init(void) {
 
 #ifdef ENABLE_JACK
   prefs->jack_srv_dup = TRUE;
+
+  /*
+    lives_snprintf(prefs->jack_tserver_cname, JACK_PARAM_STRING_MAX, "%s", JACK_DEFAULT_SERVER_NAME);
+    lives_snprintf(prefs->jack_tserver_sname, JACK_PARAM_STRING_MAX, "%s", JACK_DEFAULT_SERVER_NAME);
+    lives_snprintf(prefs->jack_aserver_cname, JACK_PARAM_STRING_MAX, "%s", JACK_DEFAULT_SERVER_NAME);
+    lives_snprintf(prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX, "%s", JACK_DEFAULT_SERVER_NAME);
+  */
+
   get_string_pref(PREF_JACK_ADRIVER, buff, MIN(256, JACK_PARAM_STRING_MAX));
   if (*buff) {
     prefs->jack_adriver = lives_strdup(buff);
@@ -2146,11 +2157,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
     future_prefs->audio_opts = prefs->audio_opts = get_int_prefd(PREF_AUDIO_OPTS, 3);
 
-#ifdef ENABLE_JACK
-    lives_snprintf(prefs->jack_aserver, PATH_MAX, "%s/.jackdrc", capable->home_dir);
-    lives_snprintf(prefs->jack_tserver, PATH_MAX, "%s/.jackdrc", capable->home_dir);
-#endif
-
     array = lives_strsplit(DEF_AUTOTRANS, "|", 3);
     mainw->def_trans_idx = weed_filter_highest_version(array[0], array[1], array[2], NULL);
     if (mainw->def_trans_idx == - 1) {
@@ -2188,8 +2194,12 @@ static void lives_init(_ign_opts *ign_opts) {
       /* if (capable->has_sox_play) naudp++; */
 
       splash_end();
-      if (!do_audio_choice_dialog(prefs->startup_phase)) {
-        lives_exit(0);
+      while (!do_audio_choice_dialog(prefs->startup_phase)) {
+        prefs->startup_phase = 1;
+        if (!do_workdir_query()) {
+          lives_exit(0);
+        }
+        prefs->startup_phase = 3;
       }
 
       prefs->startup_phase = 4;
@@ -2217,9 +2227,15 @@ static void lives_init(_ign_opts *ign_opts) {
       splash_msg(_("Connecting to jack transport server..."),
                  SPLASH_LEVEL_LOAD_APLAYER);
       if (!lives_jack_init(JACK_CLIENT_TYPE_TRANSPORT, NULL)) {
-        if (prefs->jack_opts & JACK_OPTS_START_TSERVER)
+        if (prefs->jack_opts & JACK_OPTS_START_TSERVER) {
+          // TODO - allow disable auto start and + manual start
+          // or reconfig
+          // if we have backup config, allow restore
           do_jack_noopen_warn(TRUE);
-        else do_jack_noopen_warn3(TRUE);
+        } else {
+          // TODO - allow retry connection, change srevr name / config
+          do_jack_noopen_warn3(TRUE);
+        }
         if (prefs->startup_phase == 4) {
           do_jack_noopen_warn2();
         }
@@ -2248,8 +2264,12 @@ static void lives_init(_ign_opts *ign_opts) {
 
         if (!mainw->jackd) {
           if (prefs->jack_opts & JACK_OPTS_START_ASERVER)
+            // TODO - allow disable auto start and + manual start
+            // or reconfig
+            // if we have backup config, allow restore
             do_jack_noopen_warn(FALSE);
           else {
+            // TODO - allow retry connection, change serevr name / config
             do_jack_noopen_warn3(FALSE);
             do_jack_noopen_warn4(prefs->jack_opts == 0 ? JACK_OPTS_START_ASERVER : -1);
           }
@@ -3986,7 +4006,6 @@ static boolean lives_startup(livespointer data) {
     if (upgrade_error) {
       do_upgrade_error_dialog();
     }
-    prefs->startup_phase = 0;
   }
 
   // splash_end() will start up multitrack if in STARTUP_MT mode
@@ -4058,6 +4077,8 @@ static boolean lives_startup2(livespointer data) {
 #ifdef HAVE_YUV4MPEG
   if (*prefs->yuvin) lives_idle_add_simple(open_yuv4m_startup, NULL);
 #endif
+
+  if (prefs->startup_phase == 100) prefs->startup_phase = 0;
 
   mainw->no_switch_dprint = TRUE;
   if (mainw->current_file > -1 && !mainw->multitrack) {

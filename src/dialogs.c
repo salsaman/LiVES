@@ -2676,8 +2676,34 @@ LIVES_GLOBAL_INLINE void do_no_loadfile_error(const char *fname) {
 
 
 #ifdef ENABLE_JACK
+
+LIVES_GLOBAL_INLINE boolean do_jack_nonex_warn(const char *server_cfg) {
+  if (!lives_file_test(server_cfg, LIVES_FILE_TEST_EXISTS))
+    return do_yesno_dialogf(_("The script file selected for server startup does not exist.\n"
+                              "(%s)\nAre you sure you wish to continue with these settings ?\n"),
+                            server_cfg);
+  else
+    return do_yesno_dialogf(_("The script file selected for server startup is not executable.\n"
+                              "(%s)\nAre you sure you wish to continue with these settings ?\n"),
+                            server_cfg);
+}
+
+
+LIVES_GLOBAL_INLINE boolean do_jack_scripts_warn(const char *scrptx) {
+  char *err =
+    lives_strdup_printf(_("\nMultiple jack clients (audio and transport) are set to use the same "
+                          "startup script file\n"
+                          "%s\nIf one client starts the server, then the other will fail.\n"
+                          "Are you sure you wish to continue with the current settings ?"),
+                        scrptx);
+  boolean ret = do_yesno_dialog_with_check(err, WARN_MASK_JACK_SCRPT);
+  lives_free(err);
+  return ret;
+}
+
+
 LIVES_GLOBAL_INLINE void do_jack_noopen_warn(boolean is_trans) {
-  do_error_dialogf(_("\nUnable to start up jack. "
+  do_error_dialogf(_("\nLiVES was unable to start up jack. "
                      "Please ensure that %s is set up correctly on your machine\n"
                      "and also that the soundcard is not in use by another program\n"
                      "Automatic jack startup will be disabled now.\n"),
@@ -2685,20 +2711,27 @@ LIVES_GLOBAL_INLINE void do_jack_noopen_warn(boolean is_trans) {
 }
 
 LIVES_GLOBAL_INLINE void do_jack_noopen_warn3(boolean is_trans) {
-  char *extra = "";
-  if (is_trans) {
-    if (prefs->jack_tdriver && *prefs->jack_tdriver)
-      extra = lives_strdup_printf(_("\nThere may be a problem with the '%s' driver..\n"),
-                                  prefs->jack_tdriver);
-  } else {
-    if (prefs->jack_tdriver && *prefs->jack_tdriver)
-      extra = lives_strdup_printf(_("\nThere may be a problem with the '%s' driver..\n"),
-                                  prefs->jack_adriver);
+  char *extra = "", *tmp;
+  if (is_trans && (prefs->jack_opts & JACK_OPTS_START_TSERVER)) {
+    if (prefs->jack_tdriver && *prefs->jack_tdriver) {
+      extra = lives_strdup_printf(_("\nThere may be a problem with the <b>'%s'</b> driver"),
+                                  (tmp = lives_markup_escape_text(prefs->jack_tdriver, -1)));
+      lives_free(tmp);
+    }
+  } else if (prefs->jack_opts & JACK_OPTS_START_ASERVER) {
+    if (prefs->jack_adriver && *prefs->jack_adriver) {
+      extra = lives_strdup_printf(_("\nThere may be a problem with the <b>'%s'</b> driver."),
+                                  (tmp = lives_markup_escape_text(prefs->jack_adriver, -1)));
+      lives_free(tmp);
+    }
   }
-  do_error_dialogf(_("\nUnable to establish a connection to jack server '%s'. %s"
-                     "Please start jack before restarting LiVES\n"),
-                   is_trans ? prefs->jack_tserver_sname
-                   : prefs->jack_aserver_sname, extra);
+  widget_opts.use_markup = TRUE;
+  do_error_dialogf(_("\nLiVES was unable to establish a connection to jack server <b>'%s'</b>.%s"
+                     "\nPlease start jack before restarting LiVES\n"),
+                   (tmp = lives_markup_escape_text(is_trans ? prefs->jack_tserver_sname
+                          : prefs->jack_aserver_sname, -1)), extra);
+  lives_free(tmp);
+  widget_opts.use_markup = FALSE;
   if (*extra) lives_free(extra);
 }
 
@@ -2706,14 +2739,16 @@ LIVES_GLOBAL_INLINE void do_jack_noopen_warn4(int suggest_opts) {
   const char *otherbit;
   char *firstbit;
   if (suggest_opts != -1) {
-    firstbit = lives_strdup_printf("lives -jackopts %d\nor\n", suggest_opts);
+    firstbit = lives_strdup_printf("lives -jackopts %d\nwhich will let LiVES start the server itself, "
+                                   "or\n", suggest_opts);
   } else firstbit = "";
 #ifdef HAVE_PULSE_AUDIO
-  if (capable->has_pulse_audio == PRESENT) otherbit = "\"lives -aplayer pulse\"";
+  if (capable->has_pulse_audio == PRESENT) otherbit = "lives -aplayer pulse";
   else
 #endif
-    otherbit = "\"lives -aplayer none\"";
-  do_info_dialogf(_("\nAlternatively, try to start lives with commandline option:\n\n%s%s\n"),
+    otherbit = "lives -aplayer none";
+  do_info_dialogf(_("\nAlternatively, you may start lives with commandline option:\n\n"
+                    "%s%s\nto avoid use of jack audio altogether"),
                   firstbit, otherbit);
   if (*firstbit) lives_free(firstbit);
 }

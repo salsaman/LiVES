@@ -128,9 +128,9 @@ typedef struct {
 #define WARN_MASK_VJMODE_ENTER 					(1ull << 28)
 #define WARN_MASK_CLEAN_INVALID 		       		(1ull << 29)
 #define WARN_MASK_LAYOUT_LB	 		       		(1ull << 30)
+#define WARN_MASK_JACK_SCRPT		       			(1ull << 31)
 
   // reserved (on / unset by default)
-#define WARN_MASK_RSVD_16					(1ull << 31)
 #define WARN_MASK_RSVD_15					(1ull << 32)
 #define WARN_MASK_RSVD_14					(1ull << 33)
 #define WARN_MASK_RSVD_13					(1ull << 34)
@@ -234,9 +234,9 @@ typedef struct {
   uint32_t jack_opts;
 #define JACK_OPTS_TRANSPORT_CLIENT	(1 << 0)   ///< jack can start/stop
 #define JACK_OPTS_TRANSPORT_MASTER	(1 << 1)  ///< transport master (start and stop)
-#define JACK_OPTS_START_TSERVER		(1 << 2)     ///< start transport server if necessary
+#define JACK_OPTS_START_TSERVER		(1 << 2)     ///< start transport server if unable to connect
 #define JACK_OPTS_NOPLAY_WHEN_PAUSED	(1 << 3) ///< do not play audio when transport is paused
-#define JACK_OPTS_START_ASERVER		(1 << 4)     ///< start audio server if necessary
+#define JACK_OPTS_START_ASERVER		(1 << 4)     ///< start audio server if unable to connect
 
 #define JACK_OPTS_TIMEBASE_START	(1 << 5)    ///< jack sets play start position
 #define JACK_OPTS_TIMEBASE_CLIENT	(1 << 6)    ///< full timebase client (position updates)
@@ -244,25 +244,43 @@ typedef struct {
 #define JACK_OPTS_NO_READ_AUTOCON	(1 << 8)   ///< do not auto con. rd clients when playing ext aud
 #define JACK_OPTS_TIMEBASE_LSTART	(1 << 9)    ///< LiVES sets play start position
 
-#define JACK_OPTS_ENABLE_TCLIENT      	(1 << 10)     ///< enable transport client
+#define JACK_OPTS_ENABLE_TCLIENT      	(1 << 10)     ///< enable transport client (global setting)
 
   // sever is only killed if LiVES started it
-#define JACK_OPTS_PERM_TSERVER      	(1 << 11)     ///< leave transport running even if we started it
-#define JACK_OPTS_PERM_ASERVER      	(1 << 12)     ///< leave audio srvr running even if we started
+  // conflicts if both clients want to start same server and vals differ
+#define JACK_OPTS_PERM_ASERVER      	(1 << 11)     ///< leave audio srvr running even if we started
+#define JACK_OPTS_PERM_TSERVER      	(1 << 12)     ///< leave transport running even if we started it
 
+  // only one or other should be set...
+#define JACK_OPTS_SETENV_ASERVER      	(1 << 13)     ///< setenv $JACK_DEFAULT_SERVER to aserver_sname
+#define JACK_OPTS_SETENV_TSERVER      	(1 << 14)     ///< setenv $JACK_DEFAULT_SERVER to tserver_sname
 
 #ifdef ENABLE_JACK
   // config files to use instead of using internal settings
-  char jack_tserver[PATH_MAX];
-  char jack_aserver[PATH_MAX];
+  char jack_tserver_cfg[PATH_MAX];
+  char jack_aserver_cfg[PATH_MAX];
 
-  char jack_aserver_sname[1024];
-  char jack_tserver_sname[1024];
+  // server names to connect to, if not set, use default
+  char jack_aserver_cname[JACK_PARAM_STRING_MAX];
+  char jack_tserver_cname[JACK_PARAM_STRING_MAX];
 
-  char jack_aserver_cname[1024];
-  char jack_tserver_cname[1024];
+  // server names to start, if not set, use default
+  char jack_aserver_sname[JACK_PARAM_STRING_MAX];
+
+  // may cause problems if equal to aserver_cname and drivers differ
+  char jack_tserver_sname[JACK_PARAM_STRING_MAX];
+
   const char *jack_tdriver, *jack_adriver;
   LiVESList *jack_tslaves, *jack_aslaves;
+
+  // may be invalid after client open
+  jackctl_server_t *jack_aserver, *jack_tserver;
+
+  // only valid for startup
+  lives_rfx_t *jack_asparams, *jack_tsparams;
+
+  // always valid
+  const JSList *jack_adrivers, *jack_tdrivers;
 
   boolean jack_srv_dup;
 #endif
@@ -674,6 +692,9 @@ typedef struct {
   LiVESWidget *checkbutton_warn_mt_backup_space;
   LiVESWidget *checkbutton_warn_after_crash;
   LiVESWidget *checkbutton_warn_invalid_clip;
+#ifdef ENABLE_JACK
+  LiVESWidget *checkbutton_warn_jack_scrpts;
+#endif
   LiVESWidget *spinbutton_warn_fsize;
   LiVESWidget *spinbutton_bwidth;
   LiVESWidget *theme_combo;
@@ -717,21 +738,27 @@ typedef struct {
   LiVESWidget *enable_OSC;
   LiVESWidget *enable_OSC_start;
   LiVESWidget *jack_tserver_entry;
-  LiVESWidget *jack_aserver_entry;
   LiVESWidget *jack_tstart;
-  LiVESWidget *jack_astart;
-  LiVESWidget *jack_ttemp;
-  LiVESWidget *jack_atemp;
-  LiVESWidget *jack_trans;
-  LiVESWidget *ajack_config_button;
+  // jack audio
+  LiVESWidget *jack_acdef;
+  LiVESWidget *jack_acname;
+  LiVESWidget *jack_acerror;
   LiVESWidget *jack_aplabel;
+  LiVESWidget *jack_aplayout;
+  LiVESWidget *checkbutton_jack_read_autocon;
+  // jack transport
+  LiVESWidget *jack_trans;
+  LiVESWidget *jack_srv_dup;
+  LiVESWidget *jack_tcdef;
+  LiVESWidget *jack_tcname;
+  LiVESWidget *jack_tcerror;
   LiVESWidget *checkbutton_jack_master;
   LiVESWidget *checkbutton_jack_client;
   LiVESWidget *checkbutton_jack_tb_start;
   LiVESWidget *checkbutton_jack_mtb_start;
   LiVESWidget *checkbutton_jack_tb_client;
   LiVESWidget *checkbutton_jack_pwp;
-  LiVESWidget *checkbutton_jack_read_autocon;
+  //
   LiVESWidget *checkbutton_parestart;
   LiVESWidget *checkbutton_afollow;
   LiVESWidget *checkbutton_aclips;
@@ -855,6 +882,18 @@ typedef struct {
   int startup_interface;
 
   uint32_t jack_opts;
+
+#ifdef ENABLE_JACK
+  // actual vals
+  char jack_tserver_cfg[PATH_MAX];
+  char jack_aserver_cfg[PATH_MAX];
+
+  char jack_aserver_cname[JACK_PARAM_STRING_MAX];
+  char jack_tserver_cname[JACK_PARAM_STRING_MAX];
+  char jack_aserver_sname[JACK_PARAM_STRING_MAX];
+  char jack_tserver_sname[JACK_PARAM_STRING_MAX];
+#endif
+
   int audio_src;
 
   uint32_t audio_opts;
@@ -970,9 +1009,14 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 #define PREF_DEF_AUTHOR "default_author_name"
 
+#ifdef ENABLE_JACK
 #define PREF_JACK_TDRIVER "jack_transport_driver"
 #define PREF_JACK_ADRIVER "jack_audio_driver"
 
+#define PREF_JACK_ACSERVER "jack_audio_connect_server"
+#define PREF_JACK_ASSERVER "jack_audio_startup_server"
+#define PREF_JACK_ACONFIG "jack_audio_config_file"
+#endif
 ////////////////////// utf8 values
 
 #define PREF_OMC_MIDI_FNAME "omc_midi_fname"

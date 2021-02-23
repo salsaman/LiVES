@@ -499,7 +499,8 @@ typedef enum {
 typedef enum {
   LIVES_RFX_SOURCE_RFX = 0,
   LIVES_RFX_SOURCE_WEED,
-  LIVES_RFX_SOURCE_NEWCLIP
+  LIVES_RFX_SOURCE_NEWCLIP,
+  LIVES_RFX_SOURCE_EXTERNAL
 } lives_rfx_source_t;
 
 typedef enum {
@@ -605,13 +606,14 @@ typedef struct {
 } lives_param_t;
 
 typedef enum {
-  RFX_STATUS_BUILTIN = 0, ///< factory presets
-  RFX_STATUS_CUSTOM = 1, ///< custom effects in the custom menu
-  RFX_STATUS_TEST = 2, ///< test effects in the advanced menu
-  RFX_STATUS_ANY = 3, ///< indicates free choice of statuses
-  RFX_STATUS_WEED = 4, ///< indicates an internal RFX, created from a weed instance
-  RFX_STATUS_SCRAP = 5, ///< used for parsing RFX scraps from external apps
-  RFX_STATUS_INTERNAL = 6, ///< used for parsing RFX scraps generated internally (will possiblky replace SCRAP)
+  RFX_STATUS_BUILTIN, ///< factory presets
+  RFX_STATUS_CUSTOM, ///< custom effects in the custom menu
+  RFX_STATUS_TEST, ///< test effects in the advanced menu
+  RFX_STATUS_ANY, ///< indicates free choice of statuses (e.g. during plugin loading)
+  RFX_STATUS_WEED, ///< indicates an internal RFX, created from a weed instance
+  RFX_STATUS_SCRAP, ///< used for parsing RFX scraps from external apps
+  RFX_STATUS_INTERNAL, ///< used for parsing RFX scraps generated internally (will possiblky replace SCRAP)
+  RFX_STATUS_INTERFACE, /// indicates a "dumb" interface, used just to display and collect param values
 
   // these are only used when prompting for a name
   RFX_STATUS_COPY = 128, ///< indicates a copy operation to test
@@ -650,8 +652,8 @@ typedef struct {
   void *source;  ///< points to the source (e.g. a weed_plant_t)
   char delim[2];
   char rfx_version[64];
-  LiVESList *gui_strings;  ///< rfxscript for constructing the params, param window and onchange triggers
-  LiVESList *onchange_strings;  ///< rfxscript for constructing the params, param window and onchange triggers
+  LiVESList *gui_strings;  ///< rfxscript hints for constructing the param window
+  LiVESList *onchange_strings;  ///< rfxscript for constructing onchange triggers
   boolean is_template;
   int needs_reinit;
 } lives_rfx_t;

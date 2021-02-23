@@ -17,7 +17,7 @@ boolean do_workdir_query(void);
 LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog *, boolean full);
 
 #ifdef ENABLE_JACK
-boolean do_jack_config(boolean is_setup);
+boolean do_jack_config(boolean is_setup, boolean is_trans);
 #endif
 
 boolean do_audio_choice_dialog(short startup_phase);

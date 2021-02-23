@@ -3492,6 +3492,7 @@ void unfade_background(void) {
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 }
 
+#define SCRN_BRDR 2.
 
 void fullscreen_internal(void) {
   // resize for full screen, internal player, no separate window

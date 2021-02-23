@@ -22,7 +22,7 @@
 #define MSG_AREA_VMARGIN 0
 #define LAYOUT_SIZE_MIN 0
 
-#define SCRN_BRDR 2.
+void restore_wm_stackpos(LiVESButton *button);
 
 boolean update_dsu(void *lab);
 

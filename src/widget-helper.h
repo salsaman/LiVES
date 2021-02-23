@@ -255,6 +255,10 @@ boolean lives_widget_object_ref_sink(livespointer);
 // set string data and free it later
 void lives_widget_object_set_data_auto(LiVESWidgetObject *, const char *key, livespointer data);
 
+// set plantptr data and weed_plant_free it later
+void lives_widget_object_set_data_plantptr(LiVESWidgetObject *obj, const char *key,
+    weed_plantptr_t plant);
+
 // set list and free it later (but not the list data)
 void lives_widget_object_set_data_list(LiVESWidgetObject *, const char *key, LiVESList *list);
 
@@ -674,6 +678,7 @@ LiVESWidget *lives_drawing_area_new(void);
 int lives_event_get_time(LiVESXEvent *);
 
 boolean lives_toggle_button_get_active(LiVESToggleButton *);
+boolean lives_toggle_button_get_inactive(LiVESToggleButton *);
 boolean lives_toggle_button_set_active(LiVESToggleButton *, boolean active);
 boolean lives_toggle_button_set_mode(LiVESToggleButton *, boolean drawind);
 boolean lives_toggle_button_toggle(LiVESToggleButton *);
@@ -1242,6 +1247,8 @@ boolean lives_container_child_set_shrinkable(LiVESContainer *, LiVESWidget *chil
 
 boolean set_submenu_colours(LiVESMenu *, LiVESWidgetColor *colf, LiVESWidgetColor *colb);
 
+typedef int (*condfuncptr_t)(void *);
+
 /// set callbacks
 boolean toggle_sets_sensitive(LiVESToggleButton *, LiVESWidget *, boolean invert);
 boolean toggle_toolbutton_sets_sensitive(LiVESToggleToolButton *, LiVESWidget *, boolean invert);
@@ -1250,9 +1257,22 @@ boolean toggle_sets_active(LiVESToggleButton *, LiVESToggleButton *, boolean inv
 boolean toggle_sets_visible(LiVESToggleButton *, LiVESWidget *, boolean invert);
 boolean toggle_toolbutton_sets_visible(LiVESToggleToolButton *, LiVESWidget *, boolean invert);
 boolean menu_sets_visible(LiVESCheckMenuItem *, LiVESWidget *,  boolean invert);
-boolean toggle_sets_sensitive_cond(LiVESToggleButton *, LiVESWidget *,
-                                   livespointer condsens, livespointer condinsens, boolean invert);
 boolean toggle_toggles_var(LiVESToggleButton *, boolean *var, boolean invert);
+
+boolean toggle_sets_sensitive_cond(LiVESWidget *tb, LiVESWidget *widget,
+                                   condfuncptr_t condsens_f, void *condsens_data,
+                                   condfuncptr_t condinsens_f, void *condinsens_data,
+                                   boolean invert);
+
+boolean toggle_sets_visible_cond(LiVESWidget *tb, LiVESWidget *widget,
+                                 condfuncptr_t condvisi_f, void *condvisi_data,
+                                 condfuncptr_t condinvisi_f, void *condinvisi_data,
+                                 boolean invert);
+
+boolean toggle_sets_active_cond(LiVESWidget *tb, LiVESWidget *widget,
+                                condfuncptr_t condact_f, void *condact_data,
+                                condfuncptr_t condinact_f, void *condinact_data,
+                                boolean invert);
 
 // callbacks
 boolean label_act_toggle(LiVESWidget *, LiVESXEventButton *, LiVESWidget *);

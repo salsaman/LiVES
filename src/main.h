@@ -1082,14 +1082,15 @@ typedef struct {
 #define USE_MPV (!capable->has_mplayer && !capable->has_mplayer2 && capable->has_mpv)
 #define HAS_EXTERNAL_PLAYER (capable->has_mplayer || capable->has_mplayer2 || capable->has_mpv)
 
+// common defs for mainwindow (retain this order)
+#include "plugins.h"
+
 #ifdef ENABLE_JACK
 #include "jack.h"
 #endif
 
 #define USE_16BIT_PCONV
 
-// common defs for mainwindow (retain this order)
-#include "plugins.h"
 #include "paramspecial.h"
 #include "multitrack.h"
 #include "events.h"
@@ -1242,10 +1243,14 @@ LiVESResponseType do_file_notfound_dialog(const char *detail, const char *dirnam
 LiVESResponseType do_dir_notfound_dialog(const char *detail, const char *dirname);
 void do_no_decoder_error(const char *fname);
 void do_no_loadfile_error(const char *fname);
+#ifdef ENABLE_JACK
+boolean do_jack_scripts_warn(const char *scrptx);
+boolean do_jack_nonex_warn(const char *server_config_file);
 void do_jack_noopen_warn(boolean is_trans);
 void do_jack_noopen_warn2(void);
 void do_jack_noopen_warn3(boolean is_trans);
 void do_jack_noopen_warn4(int suggest_opts);
+#endif
 LiVESResponseType do_file_perm_error(const char *file_name, boolean allow_cancel);
 LiVESResponseType do_dir_perm_error(const char *dir_name, boolean allow_cancel);
 void do_dir_perm_access_error(const char *dir_name);

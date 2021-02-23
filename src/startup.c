@@ -410,11 +410,17 @@ LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog * dialog, boo
 }
 
 
+LIVES_LOCAL_INLINE boolean confirm_exit(void) {
+  return do_yesno_dialog(_("Are you sure you want to quit from LiVES setup ?"));
+}
+
+
 boolean do_workdir_query(void) {
   LiVESWidget *dirbutton;
-  LiVESResponseType response;
-  char *dirname = NULL, *mp;
   _entryw *wizard = create_rename_dialog(6);
+  char *dirname = NULL, *mp;
+  LiVESResponseType response;
+  boolean activated = FALSE;
 
   /// override FILESEL_TYPE_KEY, in case it was set to WORKDIR; we will do our own checking here
   dirbutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
@@ -428,22 +434,35 @@ boolean do_workdir_query(void) {
     lives_widget_show_now(wizard->dialog);
     gtk_window_set_urgency_hint(LIVES_WINDOW(wizard->dialog), TRUE); // dont know if this actually does anything...
     wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(wizard->dialog)));
-    if (!wid || !activate_x11_window(wid)) {
+    if (!wid || (activated = !activate_x11_window(wid)) || 1) {
       lives_window_set_keep_above(LIVES_WINDOW(wizard->dialog), TRUE);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dirbutton), KEEPABOVE_KEY, wizard->dialog);
-    } else lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(dirbutton), ACTIVATE_KEY, lives_strdup(wid));
+    }
+    if (activated)
+      lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(dirbutton),
+                                        ACTIVATE_KEY, lives_strdup(wid));
     if (wid) lives_free(wid);
   }
 
   do {
     lives_freep((void **)&dirname);
     response = lives_dialog_run(LIVES_DIALOG(wizard->dialog));
-    if (response == LIVES_RESPONSE_CANCEL) return FALSE;
-
+    if (response == LIVES_RESPONSE_CANCEL) {
+      lives_widget_hide(wizard->dialog);
+      if (confirm_exit()) {
+        lives_widget_destroy(wizard->dialog);
+        return FALSE;
+      }
+      lives_widget_show(wizard->dialog);
+      if (!mainw->is_ready) restore_wm_stackpos(LIVES_BUTTON(dirbutton));
+    }
     // TODO: should we convert to locale encoding ??
     dirname = lives_strdup(lives_entry_get_text(LIVES_ENTRY(wizard->entry)));
-  } while (lives_strcmp(dirname, prefs->workdir) &&
-           check_workdir_valid(&dirname, LIVES_DIALOG(wizard->dialog), TRUE) == LIVES_RESPONSE_RETRY);
+  } while (response == LIVES_RESPONSE_CANCEL
+           || (lives_strcmp(dirname, prefs->workdir) &&
+               check_workdir_valid(&dirname, LIVES_DIALOG(wizard->dialog), TRUE)
+               == LIVES_RESPONSE_RETRY));
+  lives_widget_destroy(wizard->dialog);
 
   mp = get_mountpoint_for(dirname);
   if (lives_strcmp(mp, capable->mountpoint) || !strcmp(mp, "??????")) {
@@ -480,21 +499,80 @@ boolean do_workdir_query(void) {
 }
 
 
+static void chk_setenv_conf(LiVESToggleButton * b, livespointer data) {
+  // warn if setting this for audio client and is already set for trans client, and trans
+  // client is enabled, and !jack_srv_dup
+  if (prefs->jack_srv_dup) return;
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(b))) {
+    boolean is_trans = LIVES_POINTER_TO_INT(data);
+    if (!is_trans) {
+      if (future_prefs->jack_opts & (JACK_OPTS_SETENV_TSERVER | JACK_OPTS_ENABLE_TCLIENT))
+        show_warn_image(LIVES_WIDGET(b), NULL);
+    } else {
+      if (future_prefs->jack_opts & JACK_OPTS_SETENV_ASERVER) {
+        show_warn_image(LIVES_WIDGET(b), NULL);
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
+}
+
+void chk_jack_cfgx(LiVESWidget * e, livespointer data) {
+  const char *server_cfgx = lives_entry_get_text(LIVES_ENTRY(e));
+  if (lives_file_test(server_cfgx, LIVES_FILE_TEST_IS_EXECUTABLE)) {
+    hide_warn_image(e);
+    return;
+  }
+  if (!lives_file_test(server_cfgx, LIVES_FILE_TEST_EXISTS)) {
+    show_warn_image(e, _("The specified file does not exist"));
+    return;
+  }
+  show_warn_image(e, _("The specified file should be executable"));
+}
+
 #ifdef ENABLE_JACK
-boolean do_jack_config(boolean is_setup) {
-  LiVESSList *st_src_group = NULL;
+boolean do_jack_config(boolean is_setup, boolean is_trans) {
+  LiVESSList *rb_group = NULL;
   LiVESAccelGroup *accel_group;
-  LiVESWidget *dialog, *dialog_vbox, *layout, *hbox, *rb, *entry, *cb1;
+  LiVESWidget *dialog, *dialog_vbox, *layout, *hbox, *rb, *cb2 = NULL, *cb3;
+  LiVESWidget *acdef, *acname, *astart;
+  LiVESWidget *asdef, *asname;
   LiVESWidget *okbutton, *cancelbutton, *filebutton;
+  LiVESWidget *scrpt_rb, *cfg_entry;
   LiVESResponseType response;
   char *show_hid[2] = {".", NULL};
+  char *title, *text;
   char *wid;
+  char *server_cfgx;
+  int woph = widget_opts.packing_height;
+  int old_fprefs = future_prefs->jack_opts;
+  boolean cfg_exists = FALSE;
 
-  lives_snprintf(prefs->jack_aserver_sname, 1024, "%s", JACK_DEFAULT_SERVER_NAME);
-  lives_snprintf(prefs->jack_aserver_cname, 1024, "%s", JACK_DEFAULT_SERVER_NAME);
+  if (is_trans) server_cfgx = lives_strdup(prefs->jack_tserver_cfg);
+  else server_cfgx = lives_strdup(prefs->jack_tserver_cfg);
+  if (!*server_cfgx) {
+    lives_free(server_cfgx);
+    server_cfgx = lives_build_filename(capable->home_dir, ".jackdrc", NULL);
+    if (!lives_file_test(server_cfgx, LIVES_FILE_TEST_EXISTS)) {
+      char *server_cfgx2 = lives_build_filename("etc", "jackdrc", NULL);
+      if (lives_file_test(server_cfgx2, LIVES_FILE_TEST_EXISTS)) {
+        lives_free(server_cfgx);
+        server_cfgx = server_cfgx2;
+        cfg_exists = TRUE;
+      } else lives_free(server_cfgx2);
+    } else cfg_exists = TRUE;
+  } else {
+    if (!lives_file_test(server_cfgx, LIVES_FILE_TEST_EXISTS))
+      cfg_exists = TRUE;
+  }
+
+  widget_opts.packing_height <<= 1;
 
 set_config:
-  dialog = lives_standard_dialog_new(_("Initial configuration for jack audio"), FALSE, -1, -1);
+  if (is_setup) title = _("Initial configuration for jack audio");
+  else title = lives_strdup_printf(_("Server and driver configuration for %s"),
+                                     is_trans ? _("jack transport") : _("jack audio"));
+  dialog = lives_standard_dialog_new(title, FALSE, -1, -1);
+  lives_free(title);
 
   accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
   lives_window_add_accel_group(LIVES_WINDOW(dialog), accel_group);
@@ -503,85 +581,423 @@ set_config:
 
   layout = lives_layout_new(LIVES_BOX(dialog_vbox));
 
-  lives_layout_add_label(LIVES_LAYOUT(layout), _("Please use the options below to define the "
-                         "initial settings for jackd.\n"
-                         "Once LiVES starts up, you can adjust the settings "
-                         "in Tools / Preferences / Jack integration"), FALSE);
+  if (is_setup) {
+    widget_opts.use_markup = TRUE;
+    lives_layout_add_label(LIVES_LAYOUT(layout), _("Please use the options below to define the "
+                           "initial settings for jackd.\n"
+                           "<b>Once LiVES starts up, you can adjust the settings "
+                           "in Tools / Preferences / Jack Integration</b>"), TRUE);
+    widget_opts.use_markup = FALSE;
 
+    hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+    acdef =
+      lives_standard_check_button_new(_("Connect using _default server name"),
+                                      TRUE, LIVES_BOX(hbox),
+                                      H_("The server name will be taken from the environment "
+                                         "variable\n$JACK_DEFAULT_SERVER.\nIf that variable is not "
+                                         "set, then the name 'default' will be used instead"));
+
+    hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), WH_LAYOUT_KEY, NULL);
+
+    acname = lives_standard_entry_new(_("Use _custom server name"), *prefs->jack_aserver_cname
+                                      ? prefs->jack_aserver_cname : JACK_DEFAULT_SERVER_NAME,
+                                      -1, JACK_PARAM_STRING_MAX, LIVES_BOX(hbox), NULL);
+
+    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(acdef), acname, TRUE);
+
+    lives_layout_add_row(LIVES_LAYOUT(layout));
+
+    lives_layout_add_label(LIVES_LAYOUT(layout), _("If connection fails..."), TRUE);
+
+    hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+    lives_standard_radio_button_new(_("Produce an _error"), &rb_group, LIVES_BOX(hbox), NULL);
+
+    hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+    astart = lives_standard_radio_button_new(_("_Start a jack server"), &rb_group, LIVES_BOX(hbox),
+             H_("Checking this will cause LiVES to "
+                "start up a jackd server if it is\n"
+                "unable to connect to a running "
+                "instance.\n"));
+
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(astart), TRUE);
+  } else {
+    lives_layout_add_label(LIVES_LAYOUT(layout), _("NOTE: if server start up fails, "
+                           "LiVES will ALWAYS produce an error."), FALSE);
+
+    text = lives_strdup_printf(_("Consider: if LiVES fails to connect to %s, then it will try to start "
+                                 "a new server using the settings below.\n"
+                                 "Should the new server already be running, then LiVES will be unable "
+                                 "to start it, "
+                                 "and this will generate an error condition which will require manual "
+                                 "intervention to resolve.\n"), (is_trans && *prefs->jack_tserver_cname)
+                               ? prefs->jack_tserver_cname : (!is_trans && *prefs->jack_aserver_cname)
+                               ? prefs->jack_aserver_cname : _("the default server"));
+
+    lives_layout_add_label(LIVES_LAYOUT(layout), text, FALSE);
+    lives_free(text);
+  }
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
-  cb1 = lives_standard_check_button_new(_("Create jack audio server if needed"),
-                                        TRUE, LIVES_BOX(hbox),
-                                        H_("If the jack audio server is not running\n"
-                                            "LiVES will attempt to start it up iself\n"
-                                            "You will be able to select the driver "
-                                            "to use at that time\n"));
+  rb_group = NULL;
 
-  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  scrpt_rb = lives_standard_radio_button_new(_("_Use settings in config file"),
+             &rb_group, LIVES_BOX(hbox), NULL);
 
-  rb = lives_standard_radio_button_new(_("_Use settings in config file"), &st_src_group, LIVES_BOX(hbox), NULL);
-  lives_widget_set_sensitive(rb, FALSE);
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
-  entry = lives_standard_fileentry_new(_("Config file"), prefs->jack_aserver, capable->home_dir,
-                                       MEDIUM_ENTRY_WIDTH,
-                                       PATH_MAX, LIVES_BOX(hbox), NULL);
+  cfg_entry = lives_standard_fileentry_new(NULL, server_cfgx, capable->home_dir,
+              MEDIUM_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
   filebutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(filebutton), FILTER_KEY, show_hid);
-  lives_widget_set_sensitive(entry, FALSE);
+
+  if (!cfg_exists) show_warn_image(cfg_entry, _("The specified file does not exist"));
+  else {
+    if (!lives_file_test(server_cfgx, LIVES_FILE_TEST_IS_EXECUTABLE)) {
+      show_warn_image(cfg_entry, _("The specified file should be executable"));
+    }
+  }
+
+  lives_signal_sync_connect(LIVES_GUI_OBJECT(cfg_entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                            LIVES_GUI_CALLBACK(chk_jack_cfgx), NULL);
+
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(scrpt_rb), cfg_entry, FALSE);
+
+  lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
+
+  if (is_setup) {
+    lives_standard_expander_new(_("_More Settings"), LIVES_BOX(dialog_vbox),
+                                (layout = lives_layout_new(NULL)));
+  }
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
-  rb = lives_standard_radio_button_new(_("_Use settings from LiVES"), &st_src_group, LIVES_BOX(hbox), NULL);
+  rb = lives_standard_radio_button_new(_("Use settings from _LiVES"),
+                                       &rb_group, LIVES_BOX(hbox), NULL);
 
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(rb), TRUE);
-  lives_widget_set_sensitive(rb, FALSE);
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
 
-  entry = lives_standard_entry_new(_("Server name to start"), prefs->jack_aserver_sname, -1, 1024, LIVES_BOX(hbox), NULL);
-  lives_widget_set_sensitive(entry, FALSE);
+  asdef = lives_standard_check_button_new(_("Use _default server name"),
+                                          (is_setup
+                                              || (!is_setup
+                                                  && ((is_trans && !*future_prefs->jack_tserver_sname)
+                                                      || (!is_trans
+                                                          && !*future_prefs->jack_aserver_sname)))),
+                                          LIVES_BOX(hbox),
+                                          H_("The server name will be taken from the environment "
+                                              "variable\n$JACK_DEFAULT_SERVER.\nIf that variable is not "
+                                              "set, then 'default' will be used instead"));
 
-  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
-                 LIVES_RESPONSE_CANCEL);
+  lives_layout_add_row(LIVES_LAYOUT(layout));
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), WH_LAYOUT_KEY, NULL);
+  asname = lives_standard_entry_new(_("Use _custom server name"),
+                                    (is_trans && *future_prefs->jack_tserver_sname)
+                                    ? future_prefs->jack_tserver_sname :
+                                    (!is_trans && *future_prefs->jack_aserver_sname)
+                                    ? future_prefs->jack_aserver_sname :
+                                    JACK_DEFAULT_SERVER_NAME, -1, JACK_PARAM_STRING_MAX,
+                                    LIVES_BOX(hbox), NULL);
+
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(rb), asdef, FALSE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(asdef), asname, TRUE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(rb), hbox, FALSE);
+
+  if (!is_setup) {
+    if ((!is_trans && !*future_prefs->jack_aserver_cfg)
+        || (is_trans && !*future_prefs->jack_tserver_cfg)) {
+      lives_toggle_button_set_active(rb, TRUE);
+    }
+  }
+
+  if (!is_setup) {
+    // warn if setting this for audio client and is already set for trans client, and trans
+    // client is enabled, and !jack_srv_dup
+    cb2 = lives_standard_check_button_new(_("Set as _user default"),
+                                          (is_trans && (future_prefs->jack_opts
+                                              & JACK_OPTS_SETENV_TSERVER))
+                                          || (!is_trans && (future_prefs->jack_opts
+                                              & JACK_OPTS_SETENV_ASERVER))
+                                          ? TRUE : FALSE, LIVES_BOX(hbox),
+                                          H_("If checked, the specified server name will be exported "
+                                              "as\n$JACK_DEFAULT_SERVER, which will cause other jack "
+                                              "clients to also use the same value as their "
+                                              "default server name"));
+    text = lives_strdup_printf(_("WARNING: this option is already enabled for the %s client\n"
+                                 "Enabling this value as well may cause undesired results\n"),
+                               is_trans ? _("audio") : ("transport"));
+    show_warn_image(cb2, text);
+    lives_free(text);
+    hide_warn_image(cb2);
+    lives_signal_sync_connect_after(LIVES_GUI_OBJECT(cb2), LIVES_WIDGET_TOGGLED_SIGNAL,
+                                    LIVES_GUI_CALLBACK(chk_setenv_conf),
+                                    LIVES_INT_TO_POINTER(is_trans));
+    chk_setenv_conf(cb2, LIVES_INT_TO_POINTER(is_trans));
+  }
+
+  lives_layout_add_row(LIVES_LAYOUT(layout));
+  lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+
+  cb3 = lives_standard_check_button_new(_("Create as temporary server"),
+                                        is_trans ? !(future_prefs->jack_opts & JACK_OPTS_PERM_TSERVER) :
+                                        !(future_prefs->jack_opts & JACK_OPTS_PERM_ASERVER),
+                                        LIVES_BOX(hbox), H_("Checking this will "
+                                            "make any jackd servers "
+                                            "started by LiVES\n"
+                                            "shut down when there are "
+                                            "no more clients connected "
+                                            "to them.\n(This option only"
+                                            " applies to servers created"
+                                            " by LiVES\nvia means other "
+                                            "than using a config "
+                                            "file)\n"));
+
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(rb), hbox, FALSE);
+
+  if (!is_setup) {
+    LiVESWidget *advbutton;
+
+    lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);
+
+    hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), WH_LAYOUT_KEY, NULL);
+    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(rb), hbox, FALSE);
+
+    advbutton =
+      lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES,
+          _("Server Configuration (EXPERTS ONLY)"), -1, -1, LIVES_BOX(hbox), TRUE, NULL);
+
+    if (is_trans) {
+      if (prefs->jack_tsparams)
+        lives_signal_sync_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(jack_server_config),
+                                  (livespointer)prefs->jack_tsparams);
+      else lives_widget_set_sensitive(advbutton, FALSE);
+    } else {
+      if (prefs->jack_asparams)
+        lives_signal_sync_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(jack_server_config),
+                                  (livespointer)prefs->jack_asparams);
+      else lives_widget_set_sensitive(advbutton, FALSE);
+    }
+
+    hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), WH_LAYOUT_KEY, NULL);
+    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(rb), hbox, FALSE);
+
+    advbutton =
+      lives_standard_button_new_from_stock_full(LIVES_STOCK_PREFERENCES,
+          _("Driver Configuration (EXPERTS ONLY)"), -1, -1, LIVES_BOX(hbox), TRUE, NULL);
+
+    if (is_trans) {
+      if (prefs->jack_tdrivers)
+        lives_signal_sync_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(jack_drivers_config),
+                                  (livespointer)prefs->jack_tdrivers);
+      else lives_widget_set_sensitive(advbutton, FALSE);
+    } else {
+      if (prefs->jack_adrivers)
+        lives_signal_sync_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                                  LIVES_GUI_CALLBACK(jack_drivers_config),
+                                  (livespointer)prefs->jack_adrivers);
+      else lives_widget_set_sensitive(advbutton, FALSE);
+    }
+
+    lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
+  }
+
+  widget_opts.packing_height = woph;
+
+  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK,
+                 _("Back"), LIVES_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,
-             _("_Next"), LIVES_RESPONSE_OK);
+  if (is_setup)
+    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD,
+               _("_Next"), LIVES_RESPONSE_OK);
+  else
+    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK,
+               NULL, LIVES_RESPONSE_OK);
 
   lives_widget_show_all(dialog);
   lives_button_grab_default_special(okbutton);
 
-  lives_widget_show_now(dialog);
-  lives_widget_grab_focus(okbutton);
-  lives_widget_context_update();
+  if (is_setup) {
+    lives_widget_show_now(dialog);
+    lives_widget_grab_focus(okbutton);
+    lives_widget_context_update();
 
-  wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
-  if (!wid || !activate_x11_window(wid)) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
-  if (wid) lives_free(wid);
+    wid = lives_strdup_printf("0x%08lx", (uint64_t)LIVES_XWINDOW_XID(lives_widget_get_xwindow(dialog)));
+    if (!wid || !activate_x11_window(wid)) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
+    if (wid) lives_free(wid);
+  }
 
+  lives_free(server_cfgx);
+
+retry:
   response = lives_dialog_run(LIVES_DIALOG(dialog));
 
   if (response == LIVES_RESPONSE_OK) {
-    if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(cb1)))
-      future_prefs->jack_opts = prefs->jack_opts = JACK_OPTS_START_ASERVER;
-    else {
-      lives_widget_destroy(dialog);
-      future_prefs->jack_opts = prefs->jack_opts = 0;
-      if (!do_warning_dialogf(_("Please ensure that jack server '%s' "
-                                "is running before clicking OK\n"
-                                "otherwise, click Cancel to select a different option\n"),
-                              prefs->jack_aserver_cname)) {
-        goto set_config;
+    char *old_sname = NULL;
+    boolean ignore = FALSE;
+    if (is_setup) {
+      future_prefs->jack_opts = 0;
+      if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(astart))) {
+        future_prefs->jack_opts |= JACK_OPTS_START_ASERVER;
+        if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(scrpt_rb))) {
+          const char *server_cfg = lives_entry_get_text(LIVES_ENTRY(cfg_entry));
+          if (!lives_file_test(server_cfg, LIVES_FILE_TEST_IS_EXECUTABLE)) {
+            if (!do_jack_nonex_warn(server_cfg)) {
+              goto retry;
+            }
+          }
+          lives_snprintf(prefs->jack_aserver_cfg, PATH_MAX, "%s", server_cfg);
+        }
+      } else ignore = TRUE;
+    } else {
+      if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(scrpt_rb))) {
+        boolean scrpt_conflict = FALSE;
+        const char *server_cfg = lives_entry_get_text(LIVES_ENTRY(cfg_entry));
+        if (is_trans) {
+          if (!prefs->jack_srv_dup && !lives_strcmp(server_cfg, prefs->jack_aserver_cfg))
+            scrpt_conflict = TRUE;
+          else lives_snprintf(future_prefs->jack_tserver_cfg, PATH_MAX, "%s", server_cfg);
+        } else {
+          if (!prefs->jack_srv_dup && !lives_strcmp(server_cfg, prefs->jack_tserver_cfg))
+            scrpt_conflict = TRUE;
+          else lives_snprintf(future_prefs->jack_aserver_cfg, PATH_MAX, "%s", server_cfg);
+        }
+        if (scrpt_conflict) {
+          if (do_jack_scripts_warn(server_cfg)) {
+            goto retry;
+          }
+        }
+      } else {
+        if (!is_trans) {
+          *future_prefs->jack_aserver_cfg = 0;
+        } else {
+          *future_prefs->jack_tserver_cfg = 0;
+        }
+      }
+      if (!is_trans) {
+        old_sname = lives_strdup(future_prefs->jack_aserver_sname);
+      } else {
+        old_sname = lives_strdup(future_prefs->jack_tserver_sname);
+      }
+    }
+    if (is_setup) {
+      if (ignore || lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(acdef))) {
+        *prefs->jack_aserver_cname = 0;
+      } else {
+        lives_snprintf(prefs->jack_aserver_cname, JACK_PARAM_STRING_MAX,
+                       "%s", lives_entry_get_text(LIVES_ENTRY(acname)));
+      }
+    }
+    if (ignore || lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(asdef))) {
+      if (is_setup) *prefs->jack_aserver_sname = 0;
+      else {
+        if (!is_trans) *future_prefs->jack_tserver_sname = 0;
+        else *future_prefs->jack_tserver_sname = 0;
+      }
+    } else {
+      if (is_setup) lives_snprintf(prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX,
+                                     "%s", lives_entry_get_text(LIVES_ENTRY(asname)));
+      else {
+        if (!is_trans)
+          lives_snprintf(future_prefs->jack_aserver_sname, JACK_PARAM_STRING_MAX,
+                         "%s", lives_entry_get_text(LIVES_ENTRY(asname)));
+
+        else
+          lives_snprintf(future_prefs->jack_tserver_sname, JACK_PARAM_STRING_MAX,
+                         "%s", lives_entry_get_text(LIVES_ENTRY(asname)));
+      }
+    }
+    if (!ignore) {
+      if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(cb3))) {
+        if (!is_trans) future_prefs->jack_opts &= ~JACK_OPTS_PERM_ASERVER;
+        else future_prefs->jack_opts &= ~JACK_OPTS_PERM_TSERVER;
+      } else {
+        if (!is_trans) future_prefs->jack_opts |= JACK_OPTS_PERM_ASERVER;
+        else future_prefs->jack_opts |= JACK_OPTS_PERM_TSERVER;
+      }
+      if (cb2) {
+        if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(cb2))) {
+          if (!is_trans) future_prefs->jack_opts |= JACK_OPTS_SETENV_ASERVER;
+          else future_prefs->jack_opts |= JACK_OPTS_SETENV_TSERVER;
+        } else {
+          if (!is_trans) future_prefs->jack_opts &= ~JACK_OPTS_SETENV_ASERVER;
+          else future_prefs->jack_opts &= ~JACK_OPTS_SETENV_TSERVER;
+        }
+      }
+      if (!is_trans && prefs->jack_srv_dup) {
+        if (is_setup) {
+          lives_snprintf(prefs->jack_tserver_cname, JACK_PARAM_STRING_MAX,
+                         "%s", prefs->jack_aserver_cname);
+          lives_snprintf(prefs->jack_tserver_sname, JACK_PARAM_STRING_MAX,
+                         "%s", prefs->jack_aserver_sname);
+        } else {
+          lives_snprintf(future_prefs->jack_tserver_sname, JACK_PARAM_STRING_MAX,
+                         "%s", future_prefs->jack_aserver_sname);
+        }
+        if (future_prefs->jack_opts & JACK_OPTS_START_ASERVER)
+          future_prefs->jack_opts |= JACK_OPTS_START_TSERVER;
+        else
+          future_prefs->jack_opts &= ~JACK_OPTS_START_TSERVER;
+        if (future_prefs->jack_opts & JACK_OPTS_PERM_ASERVER)
+          future_prefs->jack_opts |= JACK_OPTS_PERM_TSERVER;
+        else
+          future_prefs->jack_opts &= ~JACK_OPTS_PERM_TSERVER;
+        if (future_prefs->jack_opts & JACK_OPTS_SETENV_ASERVER)
+          future_prefs->jack_opts |= JACK_OPTS_SETENV_TSERVER;
+        else
+          future_prefs->jack_opts &= ~JACK_OPTS_SETENV_TSERVER;
       }
     }
     lives_widget_destroy(dialog);
-    lives_snprintf(prefs->jack_tserver_sname, 1024, "%s", prefs->jack_aserver_sname);
-    lives_snprintf(prefs->jack_tserver_cname, 1024, "%s", prefs->jack_aserver_cname);
-    set_int_pref(PREF_JACK_OPTS, prefs->jack_opts);
+    if (is_setup) {
+      prefs->jack_opts = future_prefs->jack_opts;
+      if (!(prefs->jack_opts & JACK_OPTS_START_ASERVER)) {
+        char *srvname;
+        future_prefs->jack_opts = prefs->jack_opts = 0;
+        if (*prefs->jack_aserver_cname)
+          srvname = lives_strdup_printf(_("jack server '%s'"), prefs->jack_aserver_cname);
+        else
+          srvname = _("the default server");
+        if (!do_warning_dialogf(_("Please ensure that %s "
+                                  "is running before clicking OK\n"
+                                  "Otherwise, click Cancel to select a different option\n"),
+                                srvname)) {
+          lives_free(srvname);
+          goto set_config;
+        }
+        lives_free(srvname);
+        future_prefs->jack_opts = prefs->jack_opts = 0;
+      }
+      set_int_pref(PREF_JACK_OPTS, prefs->jack_opts);
+      set_string_pref(PREF_JACK_ACSERVER, prefs->jack_aserver_cname);
+      set_string_pref(PREF_JACK_ASSERVER, prefs->jack_aserver_sname);
+      set_string_pref(PREF_JACK_ACONFIG, prefs->jack_aserver_cfg);
+    } else {
+      if (future_prefs->jack_opts != old_fprefs
+          || (is_trans && lives_strcmp(old_sname, future_prefs->jack_tserver_sname))
+          || (!is_trans && lives_strcmp(old_sname, future_prefs->jack_aserver_sname)))
+        apply_button_set_enabled(NULL, NULL);
+      lives_free(old_sname);
+    }
     return TRUE;
   }
   lives_widget_destroy(dialog);
+  if (is_setup) prefs->jack_opts = 0;
+  else future_prefs->jack_opts = old_fprefs;
   return FALSE;
 }
 #endif
@@ -769,13 +1185,14 @@ reloop:
                               LIVES_GUI_CALLBACK(on_init_aplayer_toggled),
                               LIVES_INT_TO_POINTER(AUD_PLAYER_SOX));
   }
-  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
-                 LIVES_RESPONSE_CANCEL);
+  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_BACK,
+                 _("Back"), LIVES_RESPONSE_CANCEL);
 
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_GO_FORWARD, _("_Next"),
+  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog),
+             LIVES_STOCK_GO_FORWARD, _("_Next"),
              LIVES_RESPONSE_OK);
 
   lives_widget_show_all(dialog);
@@ -803,11 +1220,13 @@ reloop:
   lives_widget_destroy(dialog);
 
 #ifdef ENABLE_JACK
-  if (prefs->audio_player == AUD_PLAYER_JACK) {
-    if (!do_jack_config(TRUE)) {
-      txt0 = lives_strdup("");
-      radiobutton_group = NULL;
-      goto reloop;
+  if (response == LIVES_RESPONSE_OK) {
+    if (prefs->audio_player == AUD_PLAYER_JACK) {
+      if (!do_jack_config(TRUE, FALSE)) {
+        txt0 = lives_strdup("");
+        radiobutton_group = NULL;
+        goto reloop;
+      }
     }
   }
 #endif
@@ -1413,6 +1832,10 @@ jpgdone:
   if (mainw->multitrack) {
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
+  }
+
+  if (response != LIVES_RESPONSE_OK) {
+    if (!confirm_exit()) return TRUE;
   }
 
   return (response == LIVES_RESPONSE_OK);

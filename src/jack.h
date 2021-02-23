@@ -29,7 +29,11 @@ typedef enum {
 typedef struct _lives_jack_driver_t jack_driver_t;
 
 // GUI functions
-void jack_srv_config(LiVESWidget *b, livespointer type_data);
+void jack_srv_startup_config(LiVESWidget *b, livespointer type_data);
+
+void jack_drivers_config(LiVESWidget *b, const JSList *drivers);
+
+void jack_server_config(LiVESWidget *b, lives_rfx_t *rfx);
 
 // connect client or start server
 boolean lives_jack_init(lives_jack_client_t client_type, jack_driver_t *jackd);
@@ -63,6 +67,7 @@ void jack_pb_stop(void);  /** pause playback transport master */
 
 #define ERR_PORT_NOT_FOUND 10
 
+#define JACK_DEFAULT_SERVER "JACK_DEFAULT_SERVER"
 #define JACK_DEFAULT_SERVER_NAME "default"
 
 typedef jack_nframes_t nframes_t;

@@ -70,6 +70,7 @@ boolean set_css_value_direct(LiVESWidget *, LiVESWidgetState state, const char *
 #define SPBLUE_KEY "_wh_sp_blue"
 #define SPALPHA_KEY "_wh_sp_alpha"
 #define THEME_KEY "_wh_theme"
+#define COND_PLANT_KEY "_wh_cond_plant"
 
 #define RESPONSE_KEY "_wh_response"
 #define ACTION_AREA_KEY "_wh_act_area"
@@ -290,6 +291,14 @@ static boolean widget_state_cb(LiVESWidgetObject *object, livespointer pspec, li
 
 WIDGET_HELPER_GLOBAL_INLINE void lives_widget_object_set_data_auto(LiVESWidgetObject *obj, const char *key, livespointer data) {
   lives_widget_object_set_data_full(obj, key, data, lives_free);
+}
+
+static void weed_plant_free_cb(livespointer plant) {weed_plant_free((weed_plant_t *)plant);}
+
+WIDGET_HELPER_GLOBAL_INLINE
+void lives_widget_object_set_data_plantptr(LiVESWidgetObject *obj,
+    const char *key, weed_plantptr_t plant) {
+  lives_widget_object_set_data_full(obj, key, plant, weed_plant_free_cb);
 }
 
 /// needed because lives_list_free() is a macro
@@ -4374,6 +4383,16 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_toggle_button_get_active(LiVESToggleBu
   return FALSE;
 }
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_toggle_button_get_inactive(LiVESToggleButton *button) {
+#ifdef GUI_GTK
+#if LIVES_HAS_SWITCH_WIDGET
+  if (LIVES_IS_SWITCH(button)) return !gtk_switch_get_active(LIVES_SWITCH(button));
+#endif
+  return !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(button));
+#endif
+  return FALSE;
+}
+
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_toggle_button_set_active(LiVESToggleButton *button, boolean active) {
 #ifdef GUI_GTK
@@ -7764,7 +7783,8 @@ WIDGET_HELPER_GLOBAL_INLINE void lives_layout_label_set_text(LiVESLabel * label,
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_add_label(LiVESLayout * layout, const char *text, boolean horizontal) {
+WIDGET_HELPER_GLOBAL_INLINE
+LiVESWidget *lives_layout_add_label(LiVESLayout * layout, const char *text, boolean horizontal) {
   if (horizontal) {
     LiVESWidget *hbox = lives_layout_hbox_new(layout);
     LiVESWidget *label = lives_standard_label_new_with_tooltips(text, LIVES_BOX(hbox), NULL);
@@ -7852,6 +7872,18 @@ WIDGET_HELPER_GLOBAL_INLINE boolean show_warn_image(LiVESWidget * widget, const 
   lives_widget_set_no_show_all(warn_image, FALSE);
   lives_widget_show_all(warn_image);
   lives_widget_set_sensitive(warn_image, TRUE);
+  if (is_standard_widget(widget)) {
+    if (LIVES_IS_ENTRY(widget) || LIVES_IS_SPIN_BUTTON(widget) || LIVES_IS_COMBO(widget)) {
+      char *colref = gdk_rgba_to_string(&palette->dark_red);
+      if (LIVES_IS_COMBO(widget))
+        widget = lives_combo_get_entry(LIVES_COMBO(widget));
+      set_css_value_direct(widget, LIVES_WIDGET_STATE_NORMAL, "", "border-color", colref);
+      set_css_value_direct(widget, LIVES_WIDGET_STATE_FOCUSED, "", "border-color", colref);
+      set_css_value_direct(widget, LIVES_WIDGET_STATE_NORMAL, "", "border-width", "4px");
+      set_css_value_direct(widget, LIVES_WIDGET_STATE_FOCUSED, "", "border-width", "4px");
+      lives_free(colref);
+    }
+  }
   return TRUE;
 }
 
@@ -7860,6 +7892,23 @@ WIDGET_HELPER_GLOBAL_INLINE boolean hide_warn_image(LiVESWidget * widget) {
   if (!(warn_image = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), WARN_IMAGE_KEY))) return FALSE;
   lives_widget_set_no_show_all(warn_image, TRUE);
   lives_widget_hide(warn_image);
+  if (is_standard_widget(widget)) {
+    if (LIVES_IS_ENTRY(widget) || LIVES_IS_SPIN_BUTTON(widget) || LIVES_IS_COMBO(widget)) {
+      if (prefs->extra_colours && mainw->pretty_colours) {
+        char *colref = gdk_rgba_to_string(&palette->nice1);
+        if (LIVES_IS_COMBO(widget))
+          widget = lives_combo_get_entry(LIVES_COMBO(widget));
+        set_css_value_direct(widget, LIVES_WIDGET_STATE_NORMAL, "", "border-color", colref);
+        set_css_value_direct(widget, LIVES_WIDGET_STATE_FOCUSED, "", "border-color", colref);
+        set_css_value_direct(widget, LIVES_WIDGET_STATE_NORMAL, "", "border-width", "2px");
+        set_css_value_direct(widget, LIVES_WIDGET_STATE_FOCUSED, "", "border-width", "2px");
+        lives_free(colref);
+      } else {
+        set_css_value_direct(widget, LIVES_WIDGET_STATE_NORMAL, "", "border-width", "0px");
+        set_css_value_direct(widget, LIVES_WIDGET_STATE_FOCUSED, "", "border-width", "0px");
+      }
+    }
+  }
   return TRUE;
 }
 
@@ -7917,7 +7966,7 @@ static LiVESWidget *make_inner_hbox(LiVESBox * box, boolean start) {
   hbox = lives_hbox_new(FALSE, 0);
 
   if (!LIVES_SHOULD_EXPAND_EXTRA_FOR(vbox)) lives_widget_set_valign(hbox, LIVES_ALIGN_CENTER);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, LIVES_SHOULD_EXPAND_FOR(vbox) ? widget_opts.packing_height / 2 : 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, TRUE, FALSE, LIVES_SHOULD_EXPAND_FOR(vbox) ? widget_opts.packing_height / 2 : 0);
   lives_widget_set_show_hide_parent(hbox);
   return hbox;
 }
@@ -7982,7 +8031,7 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
       boolean focused = lives_widget_is_focus(sbutt);
       uint32_t acc;
       int themetype;
-      int width, height, minwidth;
+      int width, height, minwidth, minheight;
       int lw = 0, lh = 0, x_pos, y_pos, w_, h_;
       int pbw = 0, pbh = 0;
 
@@ -8176,10 +8225,14 @@ void sbutt_render(LiVESWidget * sbutt, LiVESWidgetState state, livespointer user
       lives_painter_destroy(cr);
       minwidth = lw + (pbw ? pbw + widget_opts.packing_width
                        : 0) + widget_opts.border_width * 4;
+      minheight = lh + widget_opts.border_width * 2;
       width = lives_widget_get_allocation_width(sbutt);
       height = lives_widget_get_allocation_height(sbutt);
-      if (width < minwidth) {
-        lives_widget_set_size_request(sbutt, minwidth, height);
+
+      if (width < minwidth || height < minheight) {
+        if (width < minwidth) width = minwidth;
+        if (height < minheight) height = minheight;
+        lives_widget_set_size_request(sbutt, width, height);
       }
       lives_widget_queue_draw(sbutt);
     }
@@ -9502,6 +9555,8 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
       char *tmp;
       colref = gdk_rgba_to_string(&palette->nice1);
       set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_NORMAL, "", "border-color", colref);
+      set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_NORMAL, "", "border-width", "2px");
+      set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_FOCUSED, "", "border-width", "2px");
       tmp = lives_strdup_printf("0 0 0 1px %s inset", colref);
       set_css_value_direct(spinbutton, LIVES_WIDGET_STATE_FOCUSED, "", "box-shadow", tmp);
       lives_free(tmp);
@@ -9648,6 +9703,8 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList * list, L
       char *tmp;
       char *colref = gdk_rgba_to_string(&palette->nice1);
       set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, "", "border-color", colref);
+      set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, "", "border-width", "2px");
+      set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_FOCUSED, "", "border-width", "2px");
       tmp = lives_strdup_printf("0 0 0 1px %s inset", colref);
       set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_FOCUSED, "", "box-shadow", tmp);
       lives_free(tmp);
@@ -9783,6 +9840,8 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
       char *colref = gdk_rgba_to_string(&palette->nice1);
       set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, "", "border-color", colref);
       set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_FOCUSED, "", "border-color", colref);
+      set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_NORMAL, "", "border-width", "2px");
+      set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_FOCUSED, "", "border-width", "2px");
       tmp = lives_strdup_printf("0 0 0 2px %s inset", colref);
       set_css_value_direct(LIVES_WIDGET(entry), LIVES_WIDGET_STATE_FOCUSED, "", "box-shadow", tmp);
       lives_free(tmp);
@@ -10144,6 +10203,8 @@ static LiVESWidget *lives_standard_dfentry_new(const char *labeltext, const char
                             (livespointer)direntry);
   lives_widget_set_sensitive_with(buttond, direntry);
   lives_widget_set_show_hide_with(buttond, direntry);
+  lives_widget_set_sensitive_with(direntry, buttond);
+  lives_widget_set_show_hide_with(direntry, buttond);
   return direntry;
 }
 
@@ -11280,19 +11341,76 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_unparent(LiVESWidget * widget) 
 
 
 static void _toggle_if_condmet(LiVESWidget * tbut, livespointer widget, boolean cond, const char *type) {
-  char *keyval;
-  int *condx;
+  // cond_func points to a function. int (*cond)(void *user_data)
 
-  if (!cond) {
-    keyval = lives_strdup_printf("%p_in%s_cond", widget, type);
-    condx = (int *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tbut), keyval);
-    if (condx && *condx != 0) cond = TRUE;
-  } else {
-    keyval = lives_strdup_printf("%p_%s_cond", widget, type);
-    condx = (int *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tbut), keyval);
-    if (condx && *condx <= 0) cond = FALSE;
+  /// IF cond is TRUE, then this is the pointer stored in a key like
+  // "<pwidget>_visi_cond_f" and "<pwidget>_visi_cond_data",
+  // where <pwidget> is a pointer to widget (the target of the condition) converted to a number
+  //    (<pwidget>_sens_cond_f, <pwidget>_act_cond_f, etc)
+  // these keys are created indirectly in the toggle button, when the relationship is set up
+  // (e.g by calling toggle_sets_visible(toggle, widget, inverted)
+  //
+  // if cond is FALSE then <pwidget>_invisi_cond_f and <pwidget>_invisi_cond_data
+  // would eb used instead
+  //
+  // if the value return calling func is 0 (FALSE) then no change is made
+
+  // e.g to make widget invisible then cond must be FALSE, thus the value returned from
+  // <pwidget>_invis_cond_f(<pwidget>_invis_cond_data) must be non-zero (e.g. TRUE)
+  // otherwise there would be no effect
+  //
+  // then for example, when toggle_sets_visible(toggle, widget, invert) is called,
+  // callbacks are added such that this function is called when the active state of toggle changes,
+  // if invert is FALSE, condx is derived from the active state of toggle
+  // if invert is TRUE then cond is the inverted state
+  // so  e.g if invert is FALSE and active is TRUE, then we check if the positive variable is TRUE
+  // however, in this case the function does not set any conditions, so the match is automatic.
+  //
+  // the more useful case is when  we want to check for alternate conditions than just the active state
+  // instead of calling toggle_sets_visible, we can call toggle_sets_visible_cond,
+  // and provide pointer(s) to functions whose return value determines if the target is made visible
+  // when the toggle goes on (active), and if it is made invisible when the toggle goes off
+  // either condition may be NULL, and then the action happens automatically
+  //
+  // toggle_sets_invisible_cond is similar but inverts the state of toggle
+  // however, the condition checks are still the same, the positive condition function must still
+  // return non-zero to make the target visible when the toggle goes inactive
+  // and the negative must be non zero to make the target invisible when toggle goes active
+  //
+  /// eg:  toggle_sets_sensitive_cond(toggle, radiobutton, ret_int, &cfile->frames, NULL, NULL, FALSE);
+  // assuming ret_int is a funciton that casts its data to (int *) and returns the value pointed to,
+  // - the effect of this is that when toggle becomes active, radiobutton is set sensitive,
+  // but only if cfile->frames is non-zero. In any other case radiobutton is left inactive
+
+  weed_plant_t *cond_plant;
+
+  if ((cond_plant = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tbut), COND_PLANT_KEY))) {
+    condfuncptr_t func;
+    void *data;
+    char *keyvalf, *keyvald;
+    boolean condx = TRUE;
+
+    if (!cond) {
+      keyvalf = lives_strdup_printf("%p_in%s_cond_f", widget, type);
+      keyvald = lives_strdup_printf("%p_in%s_cond_data", widget, type);
+      func = (condfuncptr_t)weed_get_funcptr_value(cond_plant, keyvalf, NULL);
+      if (func) {
+        data = weed_get_voidptr_value(cond_plant, keyvald, NULL);
+        condx = (*func)(data);
+      }
+    } else {
+      keyvalf = lives_strdup_printf("%p_%s_cond_f", widget, type);
+      keyvald = lives_strdup_printf("%p_%s_cond_data", widget, type);
+      func = (condfuncptr_t)weed_get_funcptr_value(cond_plant, keyvalf, NULL);
+      if (func) {
+        data = weed_get_voidptr_value(cond_plant, keyvald, NULL);
+        condx = (*func)(data);
+      }
+    }
+    lives_free(keyvalf);
+    lives_free(keyvald);
+    if (!condx) return;
   }
-  lives_free(keyval);
   if (!strcmp(type, "sens"))
     lives_widget_set_sensitive(LIVES_WIDGET(widget), cond);
   else if (!strcmp(type, "act"))
@@ -11376,17 +11494,35 @@ static void toggle_set_inactive(LiVESWidget * tbut, livespointer widget) {
 // togglebutton functions
 
 boolean toggle_sets_sensitive_cond(LiVESWidget * tb, LiVESWidget * widget,
-                                   livespointer condsens, livespointer condinsens, boolean invert) {
-  if (condsens) {
-    /// set sensitive only if *condsens > 0
-    char *keyval = lives_strdup_printf("%p_sens_cond", widget);
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(tb), keyval, condsens);
-  }
-
-  if (condinsens) {
-    /// set insensitive only if *condinsens == 0
-    char *keyval = lives_strdup_printf("%p_insens_cond", widget);
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(tb), keyval, condinsens);
+                                   condfuncptr_t condsens_f, void *condsens_data,
+                                   condfuncptr_t condinsens_f, void *condinsens_data,
+                                   boolean invert) {
+  if (condsens_f || condinsens_f) {
+    weed_plant_t *cond_plant =
+      lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tb), COND_PLANT_KEY);
+    if (!cond_plant) {
+      cond_plant = lives_plant_new(LIVES_WEED_SUBTYPE_BAG_OF_HOLDING);
+      lives_widget_object_set_data_plantptr(LIVES_WIDGET_OBJECT(tb), COND_PLANT_KEY,
+                                            cond_plant);
+    }
+    if (condsens_f) {
+      /// set sensitive only if *condsens > 0
+      char *keyvalf = lives_strdup_printf("%p_sens_cond_f", widget);
+      char *keyvald = lives_strdup_printf("%p_sens_cond_data", widget);
+      weed_set_funcptr_value(cond_plant, keyvalf, condsens_f);
+      weed_set_voidptr_value(cond_plant, keyvald, condsens_data);
+      lives_free(keyvalf);
+      lives_free(keyvald);
+    }
+    if (condinsens_f) {
+      /// set sensitive only if *condsens > 0
+      char *keyvalf = lives_strdup_printf("%p_insens_cond_f", widget);
+      char *keyvald = lives_strdup_printf("%p_insens_cond_data", widget);
+      weed_set_funcptr_value(cond_plant, keyvalf, condinsens_f);
+      weed_set_voidptr_value(cond_plant, keyvald, condinsens_data);
+      lives_free(keyvalf);
+      lives_free(keyvald);
+    }
   }
 
   if (!invert) {
@@ -11404,53 +11540,88 @@ boolean toggle_sets_sensitive_cond(LiVESWidget * tb, LiVESWidget * widget,
 }
 
 boolean toggle_sets_visible_cond(LiVESWidget * tb, LiVESWidget * widget,
-                                 livespointer condsens, livespointer condinsens, boolean invert) {
-  if (condsens) {
-    /// set sensitive only if *condsens > 0
-    char *keyval = lives_strdup_printf("%p_visi_cond", widget);
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(tb), keyval, condsens);
-  }
-
-  if (condinsens) {
-    /// set insensitive only if *condinsens == 0
-    char *keyval = lives_strdup_printf("%p_invisi_cond", widget);
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(tb), keyval, condinsens);
+                                 condfuncptr_t condvisi_f, void *condvisi_data,
+                                 condfuncptr_t condinvisi_f, void *condinvisi_data,
+                                 boolean invert) {
+  if (condvisi_f || condinvisi_f) {
+    weed_plant_t *cond_plant =
+      lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tb), COND_PLANT_KEY);
+    if (!cond_plant) {
+      cond_plant = lives_plant_new(LIVES_WEED_SUBTYPE_BAG_OF_HOLDING);
+      lives_widget_object_set_data_plantptr(LIVES_WIDGET_OBJECT(tb), COND_PLANT_KEY,
+                                            cond_plant);
+    }
+    if (condvisi_f) {
+      /// set sensitive only if *condsens > 0
+      char *keyvalf = lives_strdup_printf("%p_visi_cond_f", widget);
+      char *keyvald = lives_strdup_printf("%p_visi_cond_data", widget);
+      weed_set_funcptr_value(cond_plant, keyvalf, condvisi_f);
+      weed_set_voidptr_value(cond_plant, keyvald, condvisi_data);
+      lives_free(keyvalf);
+      lives_free(keyvald);
+    }
+    if (condinvisi_f) {
+      /// set sensitive only if *condsens > 0
+      char *keyvalf = lives_strdup_printf("%p_invisi_cond_f", widget);
+      char *keyvald = lives_strdup_printf("%p_invisi_cond_data", widget);
+      weed_set_funcptr_value(cond_plant, keyvalf, condinvisi_f);
+      weed_set_voidptr_value(cond_plant, keyvald, condinvisi_data);
+      lives_free(keyvalf);
+      lives_free(keyvald);
+    }
   }
 
   if (!invert) {
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(tb), LIVES_WIDGET_TOGGLED_SIGNAL,
                                     LIVES_GUI_CALLBACK(toggle_set_visible),
                                     (livespointer)widget);
-    toggle_set_sensitive(tb, (livespointer)widget);
+    toggle_set_visible(LIVES_WIDGET(tb), (livespointer)widget);
   } else {
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(tb), LIVES_WIDGET_TOGGLED_SIGNAL,
                                     LIVES_GUI_CALLBACK(toggle_set_invisible),
                                     (livespointer)widget);
-    toggle_set_insensitive(tb, (livespointer)widget);
+    toggle_set_invisible(tb, (livespointer)widget);
   }
   return TRUE;
 }
 
-
-static boolean toggle_sets_active_cond(LiVESWidget * tb, LiVESWidget * widget,
-                                       livespointer condact, livespointer condinact, boolean invert) {
-  if (condact) {
-    /// set sensitive only if *condsens > 0
-    char *keyval = lives_strdup_printf("%p_act_cond", widget);
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(tb), keyval, condact);
-  }
-
-  if (condinact) {
-    /// set insensitive only if *condinsens == 0
-    char *keyval = lives_strdup_printf("%p_inact_cond", widget);
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(tb), keyval, condinact);
+boolean toggle_sets_active_cond(LiVESWidget * tb, LiVESWidget * widget,
+                                condfuncptr_t condact_f, void *condact_data,
+                                condfuncptr_t condinact_f, void *condinact_data,
+                                boolean invert) {
+  if (condact_f || condinact_f) {
+    weed_plant_t *cond_plant =
+      lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tb), COND_PLANT_KEY);
+    if (!cond_plant) {
+      cond_plant = lives_plant_new(LIVES_WEED_SUBTYPE_BAG_OF_HOLDING);
+      lives_widget_object_set_data_plantptr(LIVES_WIDGET_OBJECT(tb), COND_PLANT_KEY,
+                                            cond_plant);
+    }
+    if (condact_f) {
+      /// set sensitive only if *condsens > 0
+      char *keyvalf = lives_strdup_printf("%p_act_cond_f", widget);
+      char *keyvald = lives_strdup_printf("%p_act_cond_data", widget);
+      weed_set_funcptr_value(cond_plant, keyvalf, condact_f);
+      weed_set_voidptr_value(cond_plant, keyvald, condact_data);
+      lives_free(keyvalf);
+      lives_free(keyvald);
+    }
+    if (condinact_f) {
+      /// set sensitive only if *condsens > 0
+      char *keyvalf = lives_strdup_printf("%p_inact_cond_f", widget);
+      char *keyvald = lives_strdup_printf("%p_inact_cond_data", widget);
+      weed_set_funcptr_value(cond_plant, keyvalf, condinact_f);
+      weed_set_voidptr_value(cond_plant, keyvald, condinact_data);
+      lives_free(keyvalf);
+      lives_free(keyvald);
+    }
   }
 
   if (!invert) {
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(tb), LIVES_WIDGET_TOGGLED_SIGNAL,
                                     LIVES_GUI_CALLBACK(toggle_set_active),
                                     (livespointer)widget);
-    toggle_set_active(tb, (livespointer)widget);
+    toggle_set_active(LIVES_WIDGET(tb), (livespointer)widget);
   } else {
     lives_signal_sync_connect_after(LIVES_GUI_OBJECT(tb), LIVES_WIDGET_TOGGLED_SIGNAL,
                                     LIVES_GUI_CALLBACK(toggle_set_inactive),
@@ -11460,36 +11631,35 @@ static boolean toggle_sets_active_cond(LiVESWidget * tb, LiVESWidget * widget,
   return TRUE;
 }
 
-
 WIDGET_HELPER_GLOBAL_INLINE boolean toggle_sets_sensitive(LiVESToggleButton * tb, LiVESWidget * widget,
     boolean invert) {
-  return toggle_sets_sensitive_cond(LIVES_WIDGET(tb), widget, NULL, NULL, invert);
+  return toggle_sets_sensitive_cond(LIVES_WIDGET(tb), widget, NULL, NULL, NULL, NULL, invert);
 }
 WIDGET_HELPER_GLOBAL_INLINE boolean toggle_toolbutton_sets_sensitive(LiVESToggleToolButton * ttb, LiVESWidget * widget,
     boolean invert) {
-  return toggle_sets_sensitive_cond(LIVES_WIDGET(ttb), widget, NULL, NULL, invert);
+  return toggle_sets_sensitive_cond(LIVES_WIDGET(ttb), widget, NULL, NULL, NULL, NULL, invert);
 }
 WIDGET_HELPER_GLOBAL_INLINE boolean menu_sets_sensitive(LiVESCheckMenuItem * mi, LiVESWidget * widget,
     boolean invert) {
-  return toggle_sets_sensitive_cond(LIVES_WIDGET(mi), widget, NULL, NULL, invert);
+  return toggle_sets_sensitive_cond(LIVES_WIDGET(mi), widget, NULL, NULL, NULL, NULL, invert);
 }
 
 WIDGET_HELPER_GLOBAL_INLINE boolean toggle_sets_visible(LiVESToggleButton * tb, LiVESWidget * widget,
     boolean invert) {
-  return toggle_sets_visible_cond(LIVES_WIDGET(tb), widget, NULL, NULL, invert);
+  return toggle_sets_visible_cond(LIVES_WIDGET(tb), widget, NULL, NULL, NULL, NULL, invert);
 }
 WIDGET_HELPER_GLOBAL_INLINE boolean toggle_toolbutton_sets_visible(LiVESToggleToolButton * ttb, LiVESWidget * widget,
     boolean invert) {
-  return toggle_sets_visible_cond(LIVES_WIDGET(ttb), widget, NULL, NULL, invert);
+  return toggle_sets_visible_cond(LIVES_WIDGET(ttb), widget, NULL, NULL, NULL, NULL, invert);
 }
 WIDGET_HELPER_GLOBAL_INLINE boolean menu_sets_visible(LiVESCheckMenuItem * mi, LiVESWidget * widget,
     boolean invert) {
-  return toggle_sets_visible_cond(LIVES_WIDGET(mi), widget, NULL, NULL, invert);
+  return toggle_sets_visible_cond(LIVES_WIDGET(mi), widget, NULL, NULL, NULL, NULL, invert);
 }
 
 WIDGET_HELPER_GLOBAL_INLINE boolean toggle_sets_active(LiVESToggleButton * tb, LiVESToggleButton * widget,
     boolean invert) {
-  return toggle_sets_active_cond(LIVES_WIDGET(tb), widget, NULL, NULL, invert);
+  return toggle_sets_active_cond(LIVES_WIDGET(tb), widget, NULL, NULL, NULL, NULL, invert);
 }
 
 // widget callback sets togglebutton active
@@ -11576,7 +11746,6 @@ static void _set_tooltips_state(LiVESWidget * widget, livespointer state) {
   }
 #endif
 #endif
-
 }
 
 

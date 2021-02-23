@@ -40,7 +40,7 @@ LiVESList *do_onchange_init(lives_rfx_t *rfx) {
 
   int i;
 
-  if (rfx->status == RFX_STATUS_WEED) return NULL;
+  if (rfx->status == RFX_STATUS_WEED || rfx->status == RFX_STATUS_INTERFACE) return NULL;
 
   switch (rfx->status) {
   case RFX_STATUS_SCRAP:
@@ -126,7 +126,8 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
 
   mainw->textwidget_focus = NULL;
 
-  if (def_ok && rfx && rfx->status != RFX_STATUS_SCRAP) mainw->keep_pre = mainw->did_rfx_preview;
+  if (def_ok && rfx && rfx->status != RFX_STATUS_SCRAP
+      && rfx->status != RFX_STATUS_INTERFACE) mainw->keep_pre = mainw->did_rfx_preview;
 
   mainw->block_param_updates = TRUE;
 
@@ -195,14 +196,16 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
 
   mainw->block_param_updates = FALSE;
 
-  if (def_ok && rfx && rfx->status == RFX_STATUS_SCRAP) return;
-
-  if (button)
+  if (button) {
     if (dialog) {
       // prevent a gtk+ crash by removing the focus before destroying the dialog
+      // (textwidget_focus ???)
       LiVESWidget *content_area = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
       lives_container_set_focus_child(LIVES_CONTAINER(content_area), NULL);
     }
+  }
+
+  if (rfx->status == RFX_STATUS_INTERFACE || (def_ok && rfx && rfx->status == RFX_STATUS_SCRAP)) return;
 
   lives_general_button_clicked(button, NULL);
 
@@ -1196,9 +1199,10 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     }
     internal = TRUE;
     break;
-  default:
+  case RFX_STATUS_TEST:
     if (!chk_params) type = lives_strdup(PLUGIN_RENDERED_EFFECTS_TEST);
     break;
+  default: break;
   }
 
   if (internal) {
@@ -1214,34 +1218,38 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     }
     if (!chk_params) hints = get_external_window_hints(rfx);
   } else {
-    if (rfx->status != RFX_STATUS_SCRAP && rfx->num_in_channels == 0 && rfx->min_frames > -1) {
-      if (!mainw->multitrack) {
-        if (chk_params) return TRUE;
-        add_gen_to(LIVES_BOX(param_vbox), rfx);
-      } else mainw->gen_to_clipboard = FALSE;
-      /// add nframes, fps, width, height
-      add_genparams(param_vbox, rfx);
-      has_param = TRUE;
-    }
-
-    if (!chk_params) {
-      // do onchange|init
-      if ((onchange = plugin_request_by_line(type, rfx->name, "get_onchange"))) {
-        for (i = 0; i < lives_list_length(onchange); i++) {
-          array = lives_strsplit((char *)lives_list_nth_data(onchange, i), rfx->delim, -1);
-          if (strcmp(array[0], "init")) {
-            // note other onchanges so we don't have to keep parsing the list
-            int which = atoi(array[0]);
-            if (which >= 0 && which < rfx->num_params) {
-              rfx->params[which].onchange = TRUE;
-            }
-          }
-          lives_strfreev(array);
-        }
-        lives_list_free_all(&onchange);
+    if (!type) {
+      hints = rfx->gui_strings;
+    } else {
+      if (rfx->status != RFX_STATUS_SCRAP && rfx->num_in_channels == 0 && rfx->min_frames > -1) {
+        if (!mainw->multitrack) {
+          if (chk_params) return TRUE;
+          add_gen_to(LIVES_BOX(param_vbox), rfx);
+        } else mainw->gen_to_clipboard = FALSE;
+        /// add nframes, fps, width, height
+        add_genparams(param_vbox, rfx);
+        has_param = TRUE;
       }
-      hints = plugin_request_by_line(type, rfx->name, "get_param_window");
-      lives_free(type);
+
+      if (!chk_params) {
+        // do onchange|init
+        if ((onchange = plugin_request_by_line(type, rfx->name, "get_onchange"))) {
+          for (i = 0; i < lives_list_length(onchange); i++) {
+            array = lives_strsplit((char *)lives_list_nth_data(onchange, i), rfx->delim, -1);
+            if (strcmp(array[0], "init")) {
+              // note other onchanges so we don't have to keep parsing the list
+              int which = atoi(array[0]);
+              if (which >= 0 && which < rfx->num_params) {
+                rfx->params[which].onchange = TRUE;
+              }
+            }
+            lives_strfreev(array);
+          }
+          lives_list_free_all(&onchange);
+        }
+        hints = plugin_request_by_line(type, rfx->name, "get_param_window");
+        lives_free(type);
+      }
     }
   }
 
@@ -1261,7 +1269,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
         add_to_special(line + 8, rfx); // add any special actions to the framedraw preview
       }
     }
-    lives_list_free_all(&hints);
+    if (hints != rfx->gui_strings) lives_list_free_all(&hints);
     lives_free(lstring);
     lives_free(sstring);
     lives_free(istring);

@@ -1477,6 +1477,10 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
   return textwindow;
 }
 
+static int ret_int(void *data) {
+  if (data) return *(int *)data;
+  return 0;
+}
 
 _insertw *create_insert_dialog(void) {
   LiVESWidget *dialog_vbox;
@@ -1552,7 +1556,8 @@ _insertw *create_insert_dialog(void) {
 
   if (cfile->frames == 0) lives_widget_set_sensitive(radiobutton, FALSE);
 
-  toggle_sets_sensitive_cond(LIVES_TOGGLE_BUTTON(insertw->fit_checkbutton), radiobutton, &cfile->frames, NULL, TRUE);
+  toggle_sets_sensitive_cond(LIVES_TOGGLE_BUTTON(insertw->fit_checkbutton), radiobutton, ret_int, &cfile->frames, NULL, NULL,
+                             TRUE);
 
   hbox = lives_hbox_new(FALSE, 0);
 
@@ -3037,7 +3042,7 @@ _entryw *create_rename_dialog(int type) {
 
   lives_button_grab_default_special(renamew->okbutton);
 
-  if (type != 3 && renamew->cancelbutton) {
+  if (type != 3 && type != 6 && renamew->cancelbutton) {
     lives_signal_sync_connect(LIVES_GUI_OBJECT(renamew->cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                               LIVES_GUI_CALLBACK(lives_general_button_clicked), renamew);
   }
@@ -3940,6 +3945,18 @@ static void chooser_check_dir(LiVESFileChooser * chooser, livespointer user_data
   lives_free(cwd);
 }
 
+void restore_wm_stackpos(LiVESButton * button) {
+  LiVESWindow *dialog;
+  char *wid;
+  if ((wid = (char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button),
+             ACTIVATE_KEY)) != NULL)
+    activate_x11_window(wid);
+
+  if ((dialog = (LiVESWindow *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button),
+                KEEPABOVE_KEY)) != NULL)
+    lives_window_set_keep_above(dialog, TRUE);
+}
+
 
 /**
    @brief callback for lives_standard filesel button
@@ -4086,16 +4103,7 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
   }
   }
 
-  if (!mainw->is_ready) {
-    LiVESWindow *dialog;
-    if ((dialog = (LiVESWindow *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), KEEPABOVE_KEY)) != NULL)
-      lives_window_set_keep_above(dialog, TRUE);
-    else {
-      char *wid;
-      if ((wid = (char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), ACTIVATE_KEY)) != NULL)
-        activate_x11_window(wid);
-    }
-  }
+  if (!mainw->is_ready) restore_wm_stackpos(button);
 
   if (fname && fname != def_dir) lives_free(fname);
   if (free_def_dir) lives_free(def_dir);
@@ -4106,7 +4114,8 @@ void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
   /// update text widget
   if (LIVES_IS_ENTRY(tentry)) lives_entry_set_text(LIVES_ENTRY(tentry),
         (tmp = lives_filename_to_utf8(dirname, -1, NULL, NULL, NULL)));
-  else lives_text_view_set_text(LIVES_TEXT_VIEW(tentry), (tmp = lives_filename_to_utf8(dirname, -1, NULL, NULL, NULL)), -1);
+  else lives_text_view_set_text(LIVES_TEXT_VIEW(tentry)
+                                  , (tmp = lives_filename_to_utf8(dirname, -1, NULL, NULL, NULL)), -1);
   lives_free(tmp); lives_free(dirname);
 
   if ((rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tentry), RFX_KEY)) != NULL) {

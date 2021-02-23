@@ -732,7 +732,8 @@ void lives_threadpool_finish(void) {
 }
 
 
-int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr, lives_funcptr_t func, void *arg) {
+int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t attr,
+                        lives_thread_func_t func, void *arg) {
   LiVESList *list = (LiVESList *)thread;
   thrd_work_t *work = (thrd_work_t *)lives_calloc(1, sizeof(thrd_work_t));
   if (!thread) list = (LiVESList *)lives_calloc(1, sizeof(LiVESList));

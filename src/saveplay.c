@@ -5991,9 +5991,10 @@ boolean check_for_recovery_files(boolean auto_recover) {
   mainw->abort_hook_func = NULL;
 
   if (!mainw->recoverable_layout && !mainw->recording_recovered) {
-    if (mainw->invalid_clips && (prefs->warning_mask ^ (WARN_MASK_CLEAN_AFTER_CRASH | WARN_MASK_CLEAN_INVALID))
+    if (mainw->invalid_clips
+        && (prefs->warning_mask ^ (WARN_MASK_CLEAN_AFTER_CRASH | WARN_MASK_CLEAN_INVALID))
         == WARN_MASK_CLEAN_INVALID) do_after_invalid_warning();
-    else do_after_crash_warning();
+    else if (prefs->startup_phase != 100) do_after_crash_warning();
     mainw->invalid_clips = FALSE;
   }
   return retval;

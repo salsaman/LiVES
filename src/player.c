@@ -2377,6 +2377,8 @@ switch_point:
     sfile = mainw->files[mainw->playing_file];
     sfile->last_frameno = sfile->frameno;
 
+    real_requested_frame = 0;
+
     /* if (sfile->arate) */
     /*   g_print("HIB2 %d %d %d %d %d %ld %f %f %ld %ld %d %f\n", mainw->actual_frame, sfile->frameno, last_req_frame, */
     /* 	      mainw->playing_file, aplay_file, sfile->aseek_pos, */

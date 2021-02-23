@@ -23,20 +23,18 @@ void reorder_leave_back_set(boolean val) {reorder_leave_back = val;}
 /////////////////////////////////////////////////////
 
 LIVES_GLOBAL_INLINE ticks_t q_gint64_floor(ticks_t in, double fps) {
-  ldiv_t loodiv = ldiv((double)in, fps);
-  return (ticks_t)((double)loodiv.quot * fps);
+  double sec = (double)in / TICKS_PER_SECOND_DBL;
+  double rem = remainder(sec, 1. / fps);
+  double xsec = sec - rem;
+  if (xsec > sec) xsec -= 1. / fps;
+  return xsec * TICKS_PER_SECOND_DBL;
 }
 
 LIVES_GLOBAL_INLINE ticks_t q_dbl(double in, double fps) {
   // quantise (double)in to fps
-  ldiv_t loodiv = ldiv(in, fps);
-  if (in > 0.) {
-    if (loodiv.rem < .5) return loodiv.quot * fps;
-    else return (loodiv.quot + 1.) * fps;
-  }
-  if (loodiv.rem > -.5) return loodiv.quot * fps;
-  else return (loodiv.quot - 1.) * fps;
-  return 0.;
+  double rem = remainder((double)in / TICKS_PER_SECOND_DBL, 1. / fps);
+  in -= rem * TICKS_PER_SECOND_DBL;
+  return in;
 }
 
 
@@ -629,7 +627,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
               if (weed_event_get_timecode(nframe_event) > stop_tc) stop_tc = -1; // force insertion now
             }
           }
-          /* // interpolate unadded audio */
+          // interpolate unadded audio
           if (natracks > 0) {
             // advance the seek value, so when we do add the audio vals, the seek is to the right time
             // we use const. accel calculated when picked up

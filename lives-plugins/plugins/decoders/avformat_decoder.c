@@ -1025,6 +1025,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   int bleft = cdata->offs_x, bright = cdata->frame_width - cdata->width - bleft;
   int ret;
   int64_t jump_limit = cdata->jump_limit;
+  int64_t xframe;
   int rowstride, xrowstride;
   int p, i;
 
@@ -1094,7 +1095,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 #endif
 
   // same frame -> reuse priv-pFrame if we have it
-  if (tframe == priv->last_frame && priv->pFrame) {
+  if (tframe == priv->last_frame && priv->pFrame && priv->pFrame->data[0]) {
     xtimex = get_current_ticks();
     goto framedone;
   }
@@ -1194,7 +1195,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
           fprintf(stderr, "ret was %d for tframe %ld\n", ret, tframe);
 #endif
           if (ret < 0) {
-            priv->last_frame = tframe;
+            xframe = (int64_t)((double)MyPts / (double)AV_TIME_BASE * cdata->fps - .5);
+            priv->last_frame = xframe;
             goto cleanup;
           }
         } while (priv->packet.stream_index != priv->vstream);
@@ -1202,7 +1204,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       }
 
       if (MyPts == -1) {
-        int64_t xframe;
         index_entry *idx;
         MyPts = priv->packet.pts;
         MyPts = av_rescale_q(MyPts, s->time_base, AV_TIME_BASE_Q) - priv->ic->start_time;
@@ -1326,7 +1327,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
     // otherwise discard this frame
     if (cdata->fps) MyPts += (double)AV_TIME_BASE / cdata->fps;
-
     //#ifndef TEST_CACHING
     //av_frame_unref(priv->pFrame);
     //#endif

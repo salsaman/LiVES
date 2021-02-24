@@ -341,17 +341,18 @@ static jackctl_driver_t *get_def_drivers(const JSList *drivers, LiVESList **slvl
                    "and the check buttons to select additional Slaves."));
 #endif
   if (is_setup) {
-    msg = lives_strdup_printf(_("LiVES needs to start a jackd server (%s) for the %s client.\n"
+    msg = lives_strdup_printf(_("LiVES needs to start a %s server (%s) for the %s client.\n"
                                 "Since this is the first time connecting, you are required to "
                                 "select the driver to use for the server.\n\n"
                                 "Please select one of the 'Master' drivers, and optionally "
                                 "any number of 'Slave' drivers\n%s\n"
-                                "If you prefer, you may start the jack server manually "
+                                "If you prefer, you may start the jackd server manually "
                                 "and then click 'Retry Connection'\n"
                                 "or you may click 'Abort' to exit immediately from LiVES\n"
                                 "These options can be refined later from "
                                 "Tools / Preferences / Jack Integration"),
-                              is_trans ? prefs->jack_tserver_sname : prefs->jack_aserver_sname,
+                              EXEC_JACKD, is_trans ? prefs->jack_tserver_sname
+                              : prefs->jack_aserver_sname,
                               is_trans ? _("transport") : _("audio"), jack1warn);
   } else msg = lives_strdup_printf("%s%s",
                                      _("WARNING: Supplying incorrect driver settings may "
@@ -521,7 +522,62 @@ static const char *get_type_name(lives_jack_client_t type) {
 }
 
 
-// connect to or (optionally) start a jack server
+#define SCRIPT_BUFFSIZE 8192
+static char *parse_script(const char *fname) {
+  char buff[SCRIPT_BUFFSIZE];
+  int i;
+  lives_fread_string(buff, SCRIPT_BUFFSIZE,  fname);
+  for (i = 0; buff[i] && buff[i + 1]; i++) if (buff[i] ==  '-') {
+      if (buff[i + 1] == 'd' || buff[i + 1] == 'n'
+          || (buff[i + 1] == '-' && (buff[i + 2] == 'n'
+                                     || buff[i + 2] == 'd'))) break;
+      i++;
+    }
+  if (!buff[i]) return NULL;
+  for (; buff[i]; i++) {
+    if (buff[i] != '-') continue;
+    //i++;
+    if (buff[++i] == 'd') break;
+    if (!lives_strncmp(&buff[i], "-driver", 7)
+        && (buff[i + 7] == ' ' || buff[i + 7] == '=')) break;
+    if (buff[i] == 'n' || (!lives_strncmp(&buff[i], "-name", 5)
+                           && (buff[i + 5] == ' ' || buff[i + 5] == '='))) {
+      int start = -1, end = -1, done = 0;
+      char quote = 0;
+      if (buff[i] == '-') i += 5;
+      for (i++; buff[i] && !done; i++) {
+        switch (buff[i]) {
+        case ' ': if (start != -1 && !quote) done = 1; break;
+        case '\'': case '"':
+          if (!quote || quote == buff[i]) {
+            quote = buff[i] - quote;
+            break;
+          }
+        default:
+          if (start == -1) start = i;
+          end = i;
+          break;
+        }
+      }
+      return end <= start || start == -1 ? NULL :
+             lives_strndup(&buff[start], end - start + 1);
+    }
+  }
+  return NULL;
+}
+
+
+void jack_test(const char *snm) {
+  char *sn = parse_script(snm);
+  if (sn) {
+    g_print("name is '%s'\n", sn);
+    lives_free(sn);
+  }
+  g_print("no name found\n");
+}
+
+
+// connect to, or (optionally) start a jack server
 // for audio clients this should be called with is_trans = FALSE, and then followed with
 // jack_create_client_writer and / or jack_create_client_reader
 // function should be called at startup iff JACK_OPTS_ENABLE_TCLIENT is set (for transport client)
@@ -633,8 +689,8 @@ retry_connect:
   if ((is_trans && !(prefs->jack_opts & JACK_OPTS_START_TSERVER))
       || (!is_trans && !(prefs->jack_opts & JACK_OPTS_START_ASERVER))) {
     // could not connect and we were not allowed to start a server
-    char *msg = lives_strdup_printf("Could not connect to jack server %s for %s client",
-                                    server_name, type_name);
+    char *msg = lives_strdup_printf("Could not connect to %s server %s for %s client",
+                                    EXEC_JACKD, server_name, type_name);
     LIVES_ERROR(msg);
     lives_free(msg);
     return FALSE;
@@ -675,8 +731,9 @@ retry_connect:
     if (*prefs->jack_aserver_cfg) com = prefs->jack_aserver_cfg;
   }
   if (com) {
+    server_name = parse_script(com);
+    if (!server_name) server_name = lives_strdup(defservname);
     lives_fork(com);
-    server_name = lives_strdup(defservname);
     goto retry_connect;
   }
 
@@ -686,7 +743,8 @@ retry_connect:
     // start the server
     jackserver = jackctl_server_create(NULL, NULL);
     if (!jackserver) {
-      char *msg = lives_strdup_printf("Could not create jackd %s server %s", type_name, server_name);
+      char *msg = lives_strdup_printf("Could not create %s %s server %s", EXEC_JACKD,
+                                      type_name, server_name);
       LIVES_ERROR(msg);
       lives_free(server_name);
       return FALSE;
@@ -786,8 +844,8 @@ retry_connect:
     drivers = jack_slist_next(drivers);
   }
   if (!driver) {
-    char *msg = lives_strdup_printf("Could not find driver %s for jack %s client in server %s",
-                                    driver_name, type_name, server_name);
+    char *msg = lives_strdup_printf("Could not find driver %s for %s %s client in server %s",
+                                    driver_name, EXEC_JACKD, type_name, server_name);
     LIVES_ERROR(msg);
     lives_free(msg);
     return FALSE;
@@ -1045,9 +1103,11 @@ static jack_driver_t indev[JACK_MAX_INDEVICES];
 void jack_get_rec_avals(jack_driver_t *jackd) {
   mainw->rec_aclip = jackd->playing_file;
   if (mainw->rec_aclip != -1) {
-    mainw->rec_aseek = fabs((double)fwd_seek_pos / (double)(afile->achans * afile->asampsize / 8) / (double)afile->arps)
+    mainw->rec_aseek = fabs((double)fwd_seek_pos
+                            / (double)(afile->achans * afile->asampsize / 8) / (double)afile->arps)
                        + (double)(mainw->startticks - mainw->currticks) / TICKS_PER_SECOND_DBL;
-    mainw->rec_avel = fabs((double)jackd->sample_in_rate / (double)afile->arps) * (double)afile->adirection;
+    mainw->rec_avel = fabs((double)jackd->sample_in_rate
+                           / (double)afile->arps) * (double)afile->adirection;
   }
 }
 
@@ -1076,7 +1136,8 @@ static void push_cache_buffer(lives_audio_buf_t *cache_buffer, jack_driver_t *ja
   qnt = afile->achans * (afile->asampsize >> 3);
   jackd->seek_pos = align_ceilng(jackd->seek_pos, qnt);
 
-  if (mainw->ascrap_file > -1 && jackd->playing_file == mainw->ascrap_file) cache_buffer->sequential = TRUE;
+  if (mainw->ascrap_file > -1 && jackd->playing_file == mainw->ascrap_file)
+    cache_buffer->sequential = TRUE;
   else cache_buffer->sequential = FALSE;
 
   cache_buffer->fileno = jackd->playing_file;
@@ -1904,7 +1965,8 @@ static int audio_read(nframes_t nframes, void *arg) {
   // this is the jack callback for when we are recording audio
 
   // for AUDIO_SRC_EXT, jackd->playing_file is actually the file we write audio to
-  // which can be either the ascrap file (for playback recording), or a normal file (for voiceovers), or -1 (just listening)
+  // which can be either the ascrap file (for playback recording),
+  // or a normal file (for voiceovers), or -1 (just listening)
 
   // TODO - get abs_maxvol_heard
 
@@ -2069,7 +2131,7 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
                          JackPortIsOutput | JackPortIsTerminal, 0);
 
     if (!jackd->output_port[i]) {
-      lives_printerr("nay more JACK output ports available\n");
+      lives_printerr("no more JACK output ports available\n");
       return FALSE;
     }
     jackd->out_chans_available++;
@@ -2114,7 +2176,7 @@ boolean jack_create_client_reader(jack_driver_t *jackd) {
       jack_port_register(jackd->client, portname, JACK_DEFAULT_AUDIO_TYPE,
                          JackPortIsInput | JackPortIsTerminal, 0);
     if (!jackd->input_port[i]) {
-      lives_printerr("ne more JACK input ports available\n");
+      lives_printerr("no more JACK input ports available\n");
       return FALSE;
     }
   }
@@ -2169,7 +2231,8 @@ boolean jack_write_driver_activate(jack_driver_t *jackd) {
 
   if (jackd->in_chans_available < jackd->num_output_channels) {
 #ifdef DEBUG_JACK_PORTS
-    lives_printerr("ERR: jack_get_ports() failed to find enough ports with jack port flags of 0x%lX'\n", jackd->jack_port_flags);
+    lives_printerr("ERR: jack_get_ports() failed to find enough ports with jack port flags of "
+                   "0x%lX'\n", jackd->jack_port_flags);
 #endif
     free(ports);
     LIVES_ERROR("Not enough jack input ports available !");
@@ -2179,7 +2242,8 @@ boolean jack_write_driver_activate(jack_driver_t *jackd) {
      the client is activated (this may change in the future). */
   for (i = 0; i < jackd->num_output_channels; i++) {
 #ifdef DEBUG_JACK_PORTS
-    lives_printerr("jack_connect() %s to port %d('%s')\n", jack_port_name(jackd->output_port[i]), i, ports[i]);
+    lives_printerr("jack_connect() %s to port %d('%s')\n",
+                   jack_port_name(jackd->output_port[i]), i, ports[i]);
 #endif
     if (jack_connect(jackd->client, jack_port_name(jackd->output_port[i]), ports[i])) {
 #ifdef DEBUG_JACK_PORTS
@@ -2247,7 +2311,8 @@ boolean jack_read_driver_activate(jack_driver_t *jackd, boolean autocon) {
 
   if (jackd->out_chans_available < jackd->num_input_channels) {
 #ifdef DEBUG_JACK_PORTS
-    lives_printerr("ERR: jack_get_ports() failed to find enough ports with jack port flags of 0x%lX'\n", jackd->jack_port_flags);
+    lives_printerr("ERR: jack_get_ports() failed to find enough ports with jack port flags of "
+                   "0x%lX'\n", jackd->jack_port_flags);
 #endif
     free(ports);
     LIVES_ERROR("Not enough jack output ports available !");
@@ -2256,7 +2321,8 @@ boolean jack_read_driver_activate(jack_driver_t *jackd, boolean autocon) {
 
   for (i = 0; i < jackd->num_input_channels; i++) {
 #ifdef DEBUG_JACK_PORTS
-    lives_printerr("jack_connect() %s to port name %d('%s')\n", jack_port_name(jackd->input_port[i]), i, ports[i]);
+    lives_printerr("jack_connect() %s to port name %d('%s')\n",
+                   jack_port_name(jackd->input_port[i]), i, ports[i]);
 #endif
     if (jack_connect(jackd->client, ports[i], jack_port_name(jackd->input_port[i]))) {
 #ifdef DEBUG_JACK_PORTS

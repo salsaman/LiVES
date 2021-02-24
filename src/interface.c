@@ -1806,7 +1806,10 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
     widget_opts.packing_height = 0;
     cb = lives_standard_check_button_new(_("All"), type != 2, LIVES_BOX(hbox), NULL);
     widget_opts.packing_height = woph;
-    lives_widget_set_margin(cb, widget_opts.border_width >> 1);
+    lives_widget_set_margin_left(cb, widget_opts.border_width >> 1);
+    lives_widget_set_margin_right(cb, widget_opts.border_width);
+    lives_widget_set_margin_top(cb, widget_opts.border_width >> 1);
+    lives_widget_set_margin_bottom(cb, widget_opts.border_width >> 1);
     lives_box_set_child_packing(LIVES_BOX(hbox), cb, FALSE, FALSE, widget_opts.packing_width >> 1,
                                 LIVES_PACK_START);
 
@@ -1820,16 +1823,16 @@ static boolean fill_filt_section(LiVESList **listp, int pass, int type, LiVESWid
       widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
     }
 
+    widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
     lives_layout_add_label(LIVES_LAYOUT(layout), _("Name"), TRUE);
     lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
     lives_layout_add_label(LIVES_LAYOUT(layout), _("Size"), TRUE);
     lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
     lives_layout_add_label(LIVES_LAYOUT(layout), _("Modified Date"), TRUE);
     lives_layout_add_fill(LIVES_LAYOUT(layout), TRUE);
-    widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
-    widget_opts.justify = LIVES_JUSTIFY_CENTER;
+    //widget_opts.justify = LIVES_JUSTIFY_CENTER;
     lives_layout_add_label(LIVES_LAYOUT(layout), _("Details"), TRUE);
-    widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+    //widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
     widget_opts.apply_theme = woat;
     lives_layout_add_separator(LIVES_LAYOUT(layout), FALSE);

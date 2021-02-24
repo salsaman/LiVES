@@ -274,6 +274,8 @@ boolean gamma_convert_sub_layer(int gamma_type, double fileg, weed_layer_t *, in
 boolean convert_layer_palette(weed_layer_t *, int outpl, int op_clamping);
 boolean convert_layer_palette_with_sampling(weed_layer_t *, int outpl, int out_sampling);
 boolean convert_layer_palette_full(weed_layer_t *, int outpl, int oclamping, int osampling, int osubspace, int tgamma);
+boolean weed_layer_clear_pixel_data(weed_layer_t *);
+
 void lives_layer_set_opaque(weed_layer_t *);
 boolean consider_swapping(int *inpal, int *outpal);
 

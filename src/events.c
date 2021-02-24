@@ -131,7 +131,7 @@ boolean has_frame_event_at(weed_plant_t *event_list, weed_timecode_t tc, weed_pl
   if (!shortcut || !*shortcut) event = get_first_frame_event(event_list);
   else event = *shortcut;
 
-  while ((ev_tc = get_event_timecode(event)) <= tc) {
+  while (event && (ev_tc = get_event_timecode(event)) <= tc) {
     if (ev_tc == tc && WEED_EVENT_IS_FRAME(event)) {
       *shortcut = event;
       return TRUE;
@@ -145,7 +145,7 @@ boolean has_frame_event_at(weed_plant_t *event_list, weed_timecode_t tc, weed_pl
 int get_audio_frame_clip(weed_plant_t *event, int track) {
   int numaclips, aclipnum = -1;
   int *aclips;
-  register int i;
+  int i;
 
   if (!WEED_EVENT_IS_AUDIO_FRAME(event)) return -2;
   aclips = weed_get_int_array_counted(event, WEED_LEAF_AUDIO_CLIPS, &numaclips);
@@ -170,7 +170,7 @@ double get_audio_frame_vel(weed_plant_t *event, int track) {
   if (!WEED_EVENT_IS_AUDIO_FRAME(event)) return -2;
   aclips = weed_get_int_array_counted(event, WEED_LEAF_AUDIO_CLIPS, &numaclips);
   aseeks = weed_get_double_array(event, WEED_LEAF_AUDIO_SEEKS, NULL);
-  for (register int i = 0; i < numaclips; i += 2) {
+  for (int i = 0; i < numaclips; i += 2) {
     if (aclips[i] == track) {
       avel = aseeks[i + 1];
       break;
@@ -192,7 +192,7 @@ double get_audio_frame_seek(weed_plant_t *event, int track) {
   numaclips = weed_leaf_num_elements(event, WEED_LEAF_AUDIO_CLIPS);
   aclips = weed_get_int_array_counted(event, WEED_LEAF_AUDIO_CLIPS, &numaclips);
   aseeks = weed_get_double_array(event, WEED_LEAF_AUDIO_SEEKS, NULL);
-  for (register int i = 0; i < numaclips; i += 2) {
+  for (int i = 0; i < numaclips; i += 2) {
     if (aclips[i] == track) {
       aseek = aseeks[i];
       break;

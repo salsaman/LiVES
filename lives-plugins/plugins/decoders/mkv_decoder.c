@@ -2675,7 +2675,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     //priv->ctx->skip_frame=AVDISCARD_NONREF;
 
     //fprintf(stderr, "SET lf to %ld\n", tframe);
-    priv->last_frame = tframe;
     if (!priv->picture) priv->picture = av_frame_alloc();
 
 #ifdef HAVE_AVCODEC_SEND_PACKET
@@ -2750,6 +2749,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
         if (got_picture) break;
       }
 
+      priv->last_frame = nextframe;
       nextframe++;
       if (nextframe > cdata->nframes) goto cleanup;
 

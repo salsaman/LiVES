@@ -24,45 +24,20 @@ void reorder_leave_back_set(boolean val) {reorder_leave_back = val;}
 
 LIVES_GLOBAL_INLINE ticks_t q_gint64_floor(ticks_t in, double fps) {
   double sec = (double)in / TICKS_PER_SECOND_DBL;
-  double rem = remainder(sec, 1. / fps);
-  double xsec = sec - rem;
+  double xsec = sec - remainder(sec, 1. / fps);
   if (xsec > sec) xsec -= 1. / fps;
   return xsec * TICKS_PER_SECOND_DBL;
 }
 
-LIVES_GLOBAL_INLINE ticks_t q_dbl(double in, double fps) {
-  // quantise (double)in to fps
-  double rem = remainder((double)in / TICKS_PER_SECOND_DBL, 1. / fps);
-  in -= rem * TICKS_PER_SECOND_DBL;
-  return in;
-}
 
-
-/// convert seek time to an integer number of samples
-LIVES_GLOBAL_INLINE size_t quant_asamps(double seek, int arate) {
-  size_t samps = (seek <= 0. || arate <= 0) ? 0 : (size_t)(seek * (double)arate + .99999);
-  return samps;
-}
-
-/// convert seek time (secs) to an (almost) integer number of samples
-LIVES_GLOBAL_INLINE double quant_aseek(double seek, int arate) {
-  if (arate <= 0) return 0.;
-  else {
-    size_t samps = quant_asamps(seek, arate);
-    return (double)samps / (double)arate;
-  }
-}
-
-LIVES_GLOBAL_INLINE off_t quant_abytes(double seek, int arate, int achans, int asampsize) {
-  size_t samps = quant_asamps(seek, arate);
-  return samps * (size_t)(achans * asampsize);
-}
-
-
-LIVES_GLOBAL_INLINE int count_resampled_frames(int in_frames, double orig_fps, double resampled_fps) {
-  int res_frames;
-  if (resampled_fps < orig_fps) return ((res_frames = (int)((double)in_frames / orig_fps * resampled_fps)) < 1) ? 1 : res_frames;
-  else return ((res_frames = (int)((double)in_frames / orig_fps * resampled_fps + .49999)) < 1) ? 1 : res_frames;
+LIVES_GLOBAL_INLINE frames_t count_resampled_frames(frames_t in_frames, double orig_fps,
+    double resampled_fps) {
+  frames_t res_frames;
+  if (resampled_fps < orig_fps)
+    return ((res_frames = (frames_t)((double)in_frames / orig_fps
+                                     * resampled_fps)) < 1) ? 1 : res_frames;
+  else return ((res_frames = (frames_t)((double)in_frames / orig_fps
+                                          * resampled_fps + .49999)) < 1) ? 1 : res_frames;
 }
 
 /////////////////////////////////////////////////////
@@ -586,7 +561,8 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           int marker_type = weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, NULL);
           if (marker_type == EVENT_MARKER_BLOCK_START || marker_type == EVENT_MARKER_BLOCK_UNORDERED
               || marker_type == EVENT_MARKER_RECORD_START) {
-            // if event_list started as a recording then this will have been set for previews, but we now need to discard it
+            // if event_list started as a recording then this will have been set for
+            // previews, but we now need to discard it
             interpolate = FALSE;
             lives_freep((void **)&xaclips);
             lives_freep((void **)&xaseeks);
@@ -727,7 +703,8 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           break;
         case WEED_EVENT_TYPE_PARAM_CHANGE:
           if (is_final) break;
-          /// param changes just get inserted at whatever timcode, as long as their init_event isn't in the "to be added" list
+          /// param changes just get inserted at whatever timcode,
+          // as long as their init_event isn't in the "to be added" list
           init_event = weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT, NULL);
           for (list = init_events; list; list = list->next) {
             if (list->data == init_event) break;
@@ -800,7 +777,8 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
             init_event = xinit_event;
             for (i = 0; i < nchanges; i++) {
               weed_event_t *pchange = (weed_event_t *)pchanges[i];
-              if (!(xout_list = copy_with_check(pchange, out_list, out_tc, what, 0, (weed_event_t **)&pchanges[i]))) {
+              if (!(xout_list = copy_with_check(pchange, out_list, out_tc, what,
+                                                0, (weed_event_t **)&pchanges[i]))) {
                 event_list_free(out_list);
                 out_list = NULL;
                 lives_list_free(init_events);
@@ -837,7 +815,8 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
         nx_tc = get_event_timecode(nframe_event);
 
         if (nframe_event) {
-          if (mainw->scrap_file != -1 && (nclips[0] == mainw->scrap_file || clips[0] == mainw->scrap_file)) {
+          if (mainw->scrap_file != -1 && (nclips[0] == mainw->scrap_file
+                                          || clips[0] == mainw->scrap_file)) {
             if (nx_tc - (out_tc + offset_tc) < out_tc + offset_tc - frame_tc) {
               // scrap file
               frame_event = nframe_event;
@@ -864,9 +843,12 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
         }
 
         /// now we insert the frame
-        //g_print("frame with %d tracks %d %ld  going in at %ld\n", tracks, clips[0], frames[0], out_tc);
         out_list = append_frame_event(out_list, out_tc, tracks, clips, frames);
         newframe = get_last_event(out_list);
+        /* g_print("frame (%p) with %d tracks %d %ld  going in at %ld\n", newframe, */
+        /* 	tracks, clips[0], frames[0], out_tc); */
+        /* g_print("frame tc is %ld\n", weed_event_get_timecode(newframe)); */
+        if (out_tc == 0) mainw->debug_ptr = newframe;
         if (response == LIVES_RESPONSE_CANCEL) {
           event_list_free(out_list);
           lives_free(what);
@@ -1564,6 +1546,7 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
   // type 9 == grab external, no audio
   // type 10 == change inside multitrack / render to clip (embedded) [resets to 3]
   // type 11 == rte audio gen as rfx
+  // type 12 == load damaged audio
 
   LiVESWidget *dialog_vbox = NULL;
   LiVESWidget *vboxx;
@@ -1648,7 +1631,7 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
       title = (_("Insert Silence"));
     } else if (type == 5 || type == 11 || type == 6 || type == 7) {
       title = (_("New Clip Audio"));
-    } else if (type == 9 || type == 8) {
+    } else if (type == 12 || type == 9 || type == 8) {
       title = (_("External Clip Settings"));
     }
 
@@ -1673,7 +1656,6 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
 
     hbox2 = lives_hbox_new(FALSE, 0);
     lives_container_add(LIVES_CONTAINER(resaudw->frame), hbox2);
-    //lives_container_set_border_width(LIVES_CONTAINER(hbox2), widget_opts.packing_width);
 
     tmp = lives_strdup_printf("%d", (int)mainw->fx1_val);
 
@@ -1733,7 +1715,8 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    radiobutton_l1 = lives_standard_radio_button_new(_("Little Endian"), &e1_group, LIVES_BOX(hbox), NULL);
+    radiobutton_l1 = lives_standard_radio_button_new(_("Little Endian"),
+                     &e1_group, LIVES_BOX(hbox), NULL);
 
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -1752,15 +1735,16 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
 
   resaudw->aud_checkbutton = NULL;
 
-  if (type < 9 || type == 11) {
-    if (type >= 3 && type != 11) tmp = (_("Audio"));
-    else if (type == 2) tmp = (_("New Audio Details"));
+  if (type != 10) {
+    if (type >= 3 && type < 11) tmp = (_("Audio"));
+    else if (type == 2 || type == 12) tmp = (_("New Audio Details"));
     else tmp = (_("New"));
 
     resaudw->frame = lives_standard_frame_new(tmp, 0., FALSE);
     lives_free(tmp);
 
-    if (type == 4) lives_box_pack_start(LIVES_BOX(vboxx), resaudw->frame, FALSE, FALSE, widget_opts.packing_height);
+    if (type == 4) lives_box_pack_start(LIVES_BOX(vboxx), resaudw->frame,
+                                          FALSE, FALSE, widget_opts.packing_height);
     else lives_box_pack_start(LIVES_BOX(vboxx), resaudw->frame, FALSE, TRUE, 0);
 
     resaudw->vbox = lives_vbox_new(FALSE, 0);
@@ -1770,13 +1754,17 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
       resaudw->aud_hbox = lives_hbox_new(FALSE, 0);
       lives_box_pack_start(LIVES_BOX(resaudw->vbox), resaudw->aud_hbox, FALSE, FALSE, 0);
 
-      resaudw->aud_checkbutton = lives_standard_check_button_new(_("_Enable audio"), FALSE, LIVES_BOX(resaudw->aud_hbox), NULL);
+      resaudw->aud_checkbutton =
+        lives_standard_check_button_new(_("_Enable audio"), FALSE, LIVES_BOX(resaudw->aud_hbox), NULL);
 
-      if (rdet) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton), rdet->achans > 0);
+      if (rdet) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton),
+            rdet->achans > 0);
       else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton),
-                                            !mainw->multitrack ? prefs->mt_def_achans > 0 : cfile->achans > 0);
+                                            !mainw->multitrack ? prefs->mt_def_achans > 0
+                                            : cfile->achans > 0);
       if (type == 4) {
-        lives_signal_sync_connect(LIVES_GUI_OBJECT(resaudw->aud_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+        lives_signal_sync_connect(LIVES_GUI_OBJECT(resaudw->aud_checkbutton),
+                                  LIVES_WIDGET_TOGGLED_SIGNAL,
                                   LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
       }
     }
@@ -1799,11 +1787,13 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
     lives_entry_set_width_chars(LIVES_ENTRY(resaudw->entry_arate), 12);
     if (type == 7) lives_widget_set_sensitive(combo4, FALSE);
 
-    if (type < 3 || (type > 4 && type < 8) || type == 11) tmp = lives_strdup_printf("%d", (int)mainw->fx1_val);
+    if (type < 3 || (type > 4 && type < 8) || type > 10)
+      tmp = lives_strdup_printf("%d", (int)mainw->fx1_val);
     else if (type == 8) tmp = lives_strdup_printf("%d", DEFAULT_AUDIO_RATE);
     else if (type == 3) tmp = lives_strdup_printf("%d", rdet->arate);
     else tmp = (!mainw->multitrack || cfile->achans == 0)
-                 ? lives_strdup_printf("%d", prefs->mt_def_arate) : lives_strdup_printf("%d", cfile->arate);
+                 ? lives_strdup_printf("%d", prefs->mt_def_arate)
+                 : lives_strdup_printf("%d", cfile->arate);
     lives_entry_set_text(LIVES_ENTRY(resaudw->entry_arate), tmp);
     lives_free(tmp);
 
@@ -1820,7 +1810,8 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
     resaudw->entry_achans = lives_combo_get_entry(LIVES_COMBO(combo5));
     lives_entry_set_width_chars(LIVES_ENTRY(resaudw->entry_achans), 8);
 
-    if (type < 3 || (type > 4 && type < 8) || type == 11) tmp = lives_strdup_printf("%d", (int)mainw->fx2_val);
+    if (type < 3 || (type > 4 && type < 8) || type > 10)
+      tmp = lives_strdup_printf("%d", (int)mainw->fx2_val);
     else if (type == 8) tmp = lives_strdup_printf("%d", DEFAULT_AUDIO_CHANS);
     else if (type == 3) tmp = lives_strdup_printf("%d", rdet->achans);
     else tmp = lives_strdup_printf("%d", (!mainw->multitrack || cfile->achans == 0)
@@ -1839,8 +1830,8 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
                                 LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
     }
 
-    combo6 = lives_standard_combo_new((type >= 3 && type != 11 ? (_("_Sample Size")) : (_("Sample Size"))),
-                                      sampsize, LIVES_BOX(hbox), NULL);
+    combo6 = lives_standard_combo_new((type >= 3 && type != 11 ? (_("_Sample Size"))
+                                       : (_("Sample Size"))), sampsize, LIVES_BOX(hbox), NULL);
 
     if (type == 7) lives_widget_set_sensitive(combo6, FALSE);
 
@@ -1849,10 +1840,12 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
     lives_editable_set_editable(LIVES_EDITABLE(resaudw->entry_asamps), FALSE);
     lives_entry_set_width_chars(LIVES_ENTRY(resaudw->entry_asamps), 8);
 
-    if (type < 3 || (type > 4 && type < 8) || type == 11) tmp = lives_strdup_printf("%d", (int)mainw->fx3_val);
+    if (type < 3 || (type > 4 && type < 8) || type > 10)
+      tmp = lives_strdup_printf("%d", (int)mainw->fx3_val);
     else if (type == 8) tmp = lives_strdup_printf("%d", DEFAULT_AUDIO_SAMPS);
     else if (type == 3) tmp = lives_strdup_printf("%d", rdet->asamps);
-    else tmp = lives_strdup_printf("%d", (!mainw->multitrack || cfile->achans == 0) ? prefs->mt_def_asamps : cfile->asampsize);
+    else tmp = lives_strdup_printf("%d", (!mainw->multitrack || !cfile->achans)
+                                     ? prefs->mt_def_asamps : cfile->asampsize);
     lives_entry_set_text(LIVES_ENTRY(resaudw->entry_asamps), tmp);
 
     if (!strcmp(tmp, "8")) is_8bit = TRUE;
@@ -1879,14 +1872,17 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    resaudw->rb_unsigned = lives_standard_radio_button_new(_("Unsigned"), &s2_group, LIVES_BOX(hbox), NULL);
+    resaudw->rb_unsigned = lives_standard_radio_button_new(_("Unsigned"),
+                           &s2_group, LIVES_BOX(hbox), NULL);
 
     if (type == 7 || !is_8bit) lives_widget_set_sensitive(resaudw->rb_unsigned, FALSE);
 
-    if (type < 3 || (type > 4 && type < 8) || type == 11) aendian = mainw->fx4_val;
-    else if (type == 8) aendian = DEFAULT_AUDIO_SIGNED16 | ((capable->byte_order == LIVES_BIG_ENDIAN) ? AFORM_BIG_ENDIAN : 0);
+    if (type < 3 || (type > 4 && type < 8) || type > 10) aendian = mainw->fx4_val;
+    else if (type == 8) aendian = DEFAULT_AUDIO_SIGNED16
+                                    | ((capable->byte_order == LIVES_BIG_ENDIAN) ? AFORM_BIG_ENDIAN : 0);
     else if (type == 3) aendian = rdet->aendian;
-    else aendian = (!mainw->multitrack || cfile->achans == 0) ? prefs->mt_def_signed_endian : cfile->signed_endian;
+    else aendian = (!mainw->multitrack || !cfile->achans)
+                     ? prefs->mt_def_signed_endian : cfile->signed_endian;
 
     if (aendian & AFORM_UNSIGNED) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned), TRUE);
@@ -1907,14 +1903,16 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    resaudw->rb_littleend = lives_standard_radio_button_new(_("Little Endian"), &e2_group, LIVES_BOX(hbox), NULL);
+    resaudw->rb_littleend = lives_standard_radio_button_new(_("Little Endian"),
+                            &e2_group, LIVES_BOX(hbox), NULL);
 
     if (type == 7) lives_widget_set_sensitive(resaudw->rb_littleend, FALSE);
 
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    resaudw->rb_bigend = lives_standard_radio_button_new(_("Big Endian"), &e2_group, LIVES_BOX(hbox), NULL);
+    resaudw->rb_bigend = lives_standard_radio_button_new(_("Big Endian"),
+                         &e2_group, LIVES_BOX(hbox), NULL);
 
     if (type == 7) lives_widget_set_sensitive(resaudw->rb_bigend, FALSE);
 
@@ -1940,7 +1938,7 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
                               LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   }
 
-  if (type > 7 && type != 11) {
+  if (type > 7 && type <= 10) {
     resaudw->vframe = lives_standard_frame_new(_("Video"), 0., FALSE);
     lives_box_pack_start(LIVES_BOX(vboxx), resaudw->vframe, TRUE, TRUE, 0);
 
@@ -1952,14 +1950,15 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
                               prefs->default_fps, 1., FPS_MAX, 1., 1., 3, LIVES_BOX(hbox), NULL);
   }
 
-  if (type > 4 && type != 11) {
+  if (type > 4 && type <= 10) {
     lives_box_set_spacing(LIVES_BOX(dialog_vbox), widget_opts.packing_height * 3);
 
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
     if (type != 6 && type != 7) {
-      radiobutton = lives_standard_radio_button_new(_("Record for maximum:  "), &rbgroup, LIVES_BOX(hbox), NULL);
+      radiobutton = lives_standard_radio_button_new(_("Record for maximum:  "),
+                    &rbgroup, LIVES_BOX(hbox), NULL);
 
       resaudw->hour_spinbutton = lives_standard_spin_button_new(_(" hours  "), hours,
                                  0., hours > 23 ? hours : 23, 1., 1., 0, LIVES_BOX(hbox), NULL);
@@ -1973,14 +1972,14 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
       hbox = lives_hbox_new(FALSE, 0);
       lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
-      resaudw->unlim_radiobutton = lives_standard_radio_button_new(_("Unlimited"), &rbgroup, LIVES_BOX(hbox), NULL);
+      resaudw->unlim_radiobutton = lives_standard_radio_button_new(_("Unlimited"),
+                                   &rbgroup, LIVES_BOX(hbox), NULL);
 
       lives_signal_sync_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                LIVES_GUI_CALLBACK(on_rb_audrec_time_toggled),
-                                (livespointer)resaudw);
+                                LIVES_GUI_CALLBACK(on_rb_audrec_time_toggled), (livespointer)resaudw);
 
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->unlim_radiobutton), (type == 5 || type > 7) && type != 11);
-
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->unlim_radiobutton),
+                                     (type == 5 || type > 7) && type != 11);
     }
 
     if (type < 8 || type == 11) {
@@ -1994,12 +1993,14 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
   }
 
   if (type < 3 || type > 4) {
-    cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(resaudw->dialog), LIVES_STOCK_CANCEL, NULL,
+    cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(resaudw->dialog),
+                   LIVES_STOCK_CANCEL, NULL,
                    LIVES_RESPONSE_CANCEL);
 
-    if (accel_group) lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
-          LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
-
+    if (accel_group) lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL,
+          accel_group,
+          LIVES_KEY_Escape, (LiVESXModifierType)0,
+          (LiVESAccelFlags)0);
 
     okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(resaudw->dialog), LIVES_STOCK_OK, NULL,
                LIVES_RESPONSE_OK);
@@ -2009,13 +2010,12 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
     if (type < 8 || type == 11) {
       lives_signal_sync_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                                 LIVES_GUI_CALLBACK(lives_general_button_clicked), resaudw);
-
       if (type == 1) {
         lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                                   LIVES_GUI_CALLBACK(on_resaudio_ok_clicked), NULL);
       } else if (type == 2 || type == 11) {
         lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                                  LIVES_GUI_CALLBACK(on_ins_silence_details_clicked), NULL);
+                                  LIVES_GUI_CALLBACK(audio_details_clicked), NULL);
       } else if (type == 5) {
         lives_signal_sync_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                                   LIVES_GUI_CALLBACK(on_recaudclip_ok_clicked),
@@ -2025,14 +2025,15 @@ _resaudw *create_resaudw(short type, render_details * rdet, LiVESWidget * top_vb
                                   LIVES_GUI_CALLBACK(on_recaudclip_ok_clicked),
                                   LIVES_INT_TO_POINTER(1));
       }
-
     }
 
     lives_widget_show_all(resaudw->dialog);
   } else {
     if (resaudw->aud_checkbutton) {
-      lives_signal_sync_connect_after(LIVES_GUI_OBJECT(resaudw->aud_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                                      LIVES_GUI_CALLBACK(on_resaudw_achans_changed), (livespointer)resaudw);
+      lives_signal_sync_connect_after(LIVES_GUI_OBJECT(resaudw->aud_checkbutton),
+                                      LIVES_WIDGET_TOGGLED_SIGNAL,
+                                      LIVES_GUI_CALLBACK(on_resaudw_achans_changed),
+                                      (livespointer)resaudw);
       on_resaudw_achans_changed(resaudw->aud_checkbutton, (livespointer)resaudw);
     }
   }

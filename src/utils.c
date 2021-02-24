@@ -57,17 +57,27 @@ LIVES_GLOBAL_INLINE boolean lives_unsetenv(const char *name) {
 int lives_system(const char *com, boolean allow_error) {
   LiVESResponseType response;
   int retval;
+  static boolean shortcut = FALSE;
   boolean cnorm = FALSE;
 
   //g_print("doing: %s\n",com);
+
+  // lets us remove cfile->info_file witgh lives_rm
+  if (shortcut) return system(com);
 
   if (mainw && mainw->is_ready && !mainw->is_exiting &&
       ((!mainw->multitrack && mainw->cursor_style == LIVES_CURSOR_NORMAL) ||
        (mainw->multitrack && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL))) {
     cnorm = TRUE;
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-    /*   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET); */
   }
+
+  if (CURRENT_CLIP_IS_VALID) {
+    shortcut = TRUE;
+    lives_rm(cfile->info_file);
+  }
+  mainw->error = FALSE;
+  mainw->cancelled = CANCEL_NONE;
 
   do {
     THREADVAR(com_failed) = FALSE;
@@ -137,7 +147,6 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, ssize_t bu
        (mainw->multitrack && mainw->multitrack->cursor_style == LIVES_CURSOR_NORMAL))) {
     cnorm = TRUE;
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-    //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
   }
 
   do {

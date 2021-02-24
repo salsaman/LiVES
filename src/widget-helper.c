@@ -7723,9 +7723,10 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_hbox_new(LiVESLayout * lay
 #if GTK_CHECK_VERSION(3, 0, 0)
   LiVESWidget *widget = hbox;
 #else
-  LiVESWidget *alignment = lives_alignment_new(widget_opts.justify == LIVES_JUSTIFY_CENTER ? 0.5 : widget_opts.justify ==
-                           LIVES_JUSTIFY_END
-                           ? 1. : 0., .5, 0., 0.);
+  LiVESWidget *alignment =
+    lives_alignment_new(widget_opts.justify == LIVES_JUSTIFY_CENTER ? 0.5 : widget_opts.justify ==
+                        LIVES_JUSTIFY_END
+                        ? 1. : 0., .5, 0., 0.);
   LiVESWidget *widget = alignment;
   lives_container_add(LIVES_CONTAINER(alignment), hbox);
 #endif
@@ -7795,6 +7796,22 @@ LiVESWidget *lives_layout_add_label(LiVESLayout * layout, const char *text, bool
     lives_layout_pack(LIVES_HBOX(hbox), conter);
     lives_widget_object_unref(conter);
     widget_opts.last_container = hbox;
+
+#if GTK_CHECK_VERSION(3, 0, 0)
+    if (LIVES_SHOULD_EXPAND_HEIGHT)
+      lives_widget_set_valign(label, LIVES_ALIGN_FILL);
+    else
+      lives_widget_set_valign(label, LIVES_ALIGN_CENTER);
+    if (widget_opts.justify == LIVES_JUSTIFY_CENTER)
+      lives_widget_set_halign(label, LIVES_ALIGN_CENTER);
+    else if (widget_opts.justify == LIVES_JUSTIFY_END)
+      lives_widget_set_halign(label, LIVES_ALIGN_END);
+    else
+      lives_widget_set_halign(label, LIVES_ALIGN_START);
+    if (LIVES_SHOULD_EXPAND_WIDTH)
+      lives_widget_set_halign(hbox, LIVES_ALIGN_FILL);
+#endif
+
     if (widget_opts.apply_theme == 2) set_child_alt_colour(hbox, TRUE);
     return label;
   } else {
@@ -7823,6 +7840,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_add_fill(LiVESLayout * lay
     widget_opts.last_container = hbox;
     lives_widget_set_hexpand(hbox, TRUE);
     lives_table_set_column_homogeneous(LIVES_TABLE(layout), FALSE);
+    if (LIVES_SHOULD_EXPAND_WIDTH)
+      lives_widget_set_halign(hbox, LIVES_ALIGN_FILL);
   } else {
     widget = lives_layout_add_label(layout, NULL, FALSE);
     lives_layout_expansion_row_new(layout, widget);

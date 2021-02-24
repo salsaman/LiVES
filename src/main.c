@@ -4315,7 +4315,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   mainw = (mainwindow *)(lives_calloc(1, sizeof(mainwindow)));
   init_random();
-
 #ifdef ENABLE_DIAGNOSTICS
   run_weed_startup_tests();
   check_random();
@@ -6209,7 +6208,8 @@ check_encache:
 
     if (!layer && !end_pixbuf) {
       layer = lives_layer_new_for_frame(mainw->current_file, frame);
-      if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, width, height, WEED_PALETTE_RGB24)) {
+      if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type),
+                             tc, width, height, WEED_PALETTE_RGB24)) {
         check_layer_ready(layer);
         interp = get_interp_value(prefs->pb_quality, TRUE);
         if (!resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0) ||
@@ -7488,17 +7488,16 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
 #ifdef USE_REC_RS
           if (dplug->cdata->rec_rowstrides) lives_memset(dplug->cdata->rec_rowstrides, 0, nplanes * sizint);
 #endif
-          if (prefs->show_dev_opts) g_print("Error loading frame %d (index value %d)\n", frame,
-                                              sfile->frame_index[frame - 1]);
+          if (prefs->show_dev_opts) {
+            g_print("Error loading frame %d (index value %d)\n", frame,
+                    sfile->frame_index[frame - 1]);
+            break_me("load error");
+          }
           // if get_frame fails, return a black frame
           if (!is_thread) {
-            if (layer != mainw->en_fcache || layer != mainw->st_fcache || layer != mainw->pr_fcache)
-              weed_layer_pixel_data_free(layer);
-            if (!create_empty_pixel_data(layer, TRUE, TRUE)) {
-              create_blank_layer(layer, image_ext, width, height, target_palette);
-              weed_layer_unref(layer);
-              return FALSE;
-            }
+            weed_layer_clear_pixel_data(layer);
+            weed_layer_unref(layer);
+            return FALSE;
           }
           res = FALSE;
         }
@@ -7563,8 +7562,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
         lives_free(fname);
         mainw->osc_block = FALSE;
         if (!ret) {
-          break_me("bad frame load from file");
-          create_blank_layer(layer, image_ext, width, height, target_palette);
+          weed_layer_clear_pixel_data(layer);
           weed_layer_unref(layer);
           return FALSE;
         }

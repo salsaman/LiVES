@@ -414,8 +414,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
                                     mainw->file_open_params);
 
           lives_free(tmp);
-
-          lives_rm(cfile->info_file);
           lives_system(com, FALSE);
           lives_free(com);
 
@@ -642,11 +640,9 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
                                 (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)), withsound,
                                 prefs->image_ext, get_image_ext_for_type(IMG_TYPE_BEST), start, frames, cfile->achans,
                                 mainw->file_open_params);
-
-      lives_rm(cfile->info_file);
+      lives_free(tmp);
       lives_system(com, FALSE);
       lives_free(com);
-      lives_free(tmp);
 
       if (mainw->toy_type == LIVES_TOY_TV) {
         // for LiVES TV we do an auto-preview
@@ -890,6 +886,33 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     d_print(_("Loaded subtitle file: %s\n"), isubfname);
     lives_free(isubfname);
   }
+  if (mainw->save_with_sound && !cfile->achans && probed_achans) {
+    char *afname = get_audio_file_name(mainw->current_file, FALSE);
+    if (lives_file_test(afname, LIVES_FILE_TEST_EXISTS)) {
+      off_t fsize = sget_file_size(afname);
+      if (fsize > 0) {
+        LiVESResponseType resp;
+        if (do_yesno_dialog_with_check(_("This clip may have damaged audio.\n"
+                                         "Should I attempt to load it anyway ?\n"),
+                                       WARN_MASK_DMGD_AUDIO));
+        mainw->fx3_val = cfile->asampsize ? cfile->asampsize : DEFAULT_AUDIO_SAMPS;
+        if (!cfile->achans && !cfile->signed_endian) {
+          mainw->fx4_val = (mainw->fx3_val == 8) ? DEFAULT_AUDIO_SIGNED8 :
+                           DEFAULT_AUDIO_SIGNED16 | ((capable->byte_order == LIVES_BIG_ENDIAN)
+                               ? AFORM_BIG_ENDIAN : 0);
+        }
+        mainw->fx2_val = cfile->achans ? cfile->achans : DEFAULT_AUDIO_CHANS;
+        mainw->fx1_val = cfile->arate ? cfile->arate : DEFAULT_AUDIO_RATE;
+        resaudw = create_resaudw(12, NULL, NULL);
+        resp = lives_dialog_run(LIVES_DIALOG(resaudw->dialog));
+        if (resp == LIVES_RESPONSE_OK) {
+          audio_details_clicked(NULL, LIVES_INT_TO_POINTER(mainw->current_file));
+          redraw_timeline(mainw->current_file);
+        }
+        lives_freep((void **)&resaudw);
+      }
+    }
+  }
 
 img_load:
   current_file = mainw->current_file;
@@ -934,11 +957,6 @@ img_load:
                                 mainw->files[mainw->img_concat_clip]->hsize, mainw->files[mainw->img_concat_clip]->vsize);
 
       mainw->current_file = mainw->img_concat_clip;
-
-      lives_rm(cfile->info_file);
-
-      mainw->cancelled = CANCEL_NONE;
-      mainw->error = FALSE;
       lives_system(com, FALSE);
       lives_free(com);
 
@@ -1513,7 +1531,6 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
                               start, end, aud_start, aud_end, sfile->arate, sfile->achans, sfile->asampsize,
                               !(sfile->signed_endian & AFORM_UNSIGNED), !(sfile->signed_endian & AFORM_BIG_ENDIAN));
 
-    lives_rm(sfile->info_file);
     lives_system(com, FALSE);
     lives_free(com);
 
@@ -1867,7 +1884,8 @@ void save_file(int clip, frames_t start, frames_t end, const char *filename) {
         int iheight = sfile->ovsize;
         boolean bad_header = FALSE;
 
-        com = lives_strdup_printf("%s mv_mgk \"%s\" %d %d \"%s\" 1", prefs->backend, sfile->handle, 1, sfile->frames,
+        com = lives_strdup_printf("%s mv_mgk \"%s\" %d %d \"%s\" 1", prefs->backend,
+                                  sfile->handle, 1, sfile->frames,
                                   get_image_ext_for_type(sfile->img_type));
 
         lives_rm(sfile->info_file);
@@ -3757,9 +3775,6 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
     }
 
     // commit audio
-    mainw->cancelled = CANCEL_NONE;
-    lives_rm(cfile->info_file);
-
     com = lives_strdup_printf("%s commit_audio \"%s\" 1", prefs->backend, cfile->handle);
     lives_system(com, TRUE);
     lives_free(com);
@@ -4414,9 +4429,8 @@ ulong restore_file(const char *file_name) {
   com = lives_strdup_printf("%s restore %s %s", prefs->backend, cfile->handle,
                             (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)));
 
-  lives_rm(cfile->info_file);
-  lives_system(com, FALSE);
   lives_free(tmp);
+  lives_system(com, FALSE);
   lives_free(com);
 
   if (THREADVAR(com_failed)) {

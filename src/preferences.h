@@ -129,9 +129,9 @@ typedef struct {
 #define WARN_MASK_CLEAN_INVALID 		       		(1ull << 29)
 #define WARN_MASK_LAYOUT_LB	 		       		(1ull << 30)
 #define WARN_MASK_JACK_SCRPT		       			(1ull << 31)
+#define WARN_MASK_DMGD_AUDIO					(1ull << 32)
 
   // reserved (on / unset by default)
-#define WARN_MASK_RSVD_15					(1ull << 32)
 #define WARN_MASK_RSVD_14					(1ull << 33)
 #define WARN_MASK_RSVD_13					(1ull << 34)
 #define WARN_MASK_RSVD_12					(1ull << 35)
@@ -687,6 +687,7 @@ typedef struct {
   LiVESWidget *checkbutton_warn_vjmode_enter;
   LiVESWidget *checkbutton_show_stats;
   LiVESWidget *checkbutton_warn_fsize;
+  LiVESWidget *checkbutton_warn_dmgd_audio;
   LiVESWidget *checkbutton_warn_mt_achans;
   LiVESWidget *checkbutton_warn_mt_no_jack;
   LiVESWidget *checkbutton_warn_yuv4m_open;
@@ -746,6 +747,7 @@ typedef struct {
   LiVESWidget *jack_acerror;
   LiVESWidget *jack_aplabel;
   LiVESWidget *jack_aplayout;
+  LiVESWidget *jack_aplayout2;
   LiVESWidget *checkbutton_jack_read_autocon;
   // jack transport
   LiVESWidget *jack_trans;

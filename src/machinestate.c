@@ -752,16 +752,16 @@ off_t sget_file_size(const char *name) {
 }
 
 
-void reget_afilesize(int fileno) {
+size_t reget_afilesize(int fileno) {
   // re-get the audio file size
   lives_clip_t *sfile = mainw->files[fileno];
   boolean bad_header = FALSE;
+  off_t res = reget_afilesize_inner(fileno);
+  if (res > 0) sfile->afilesize = res;
+  else sfile->afilesize = 0;
+  if (mainw->multitrack) return sfile->afilesize;
 
-  if (mainw->multitrack) return; // otherwise achans gets set to 0...
-
-  sfile->afilesize = reget_afilesize_inner(fileno);
-
-  if (sfile->afilesize == 0l) {
+  if (!sfile->afilesize) {
     if (!sfile->opening && fileno != mainw->ascrap_file && fileno != mainw->scrap_file) {
       if (sfile->arate != 0 || sfile->achans != 0 || sfile->asampsize != 0 || sfile->arps != 0) {
         sfile->arate = sfile->achans = sfile->asampsize = sfile->arps = 0;
@@ -778,6 +778,7 @@ void reget_afilesize(int fileno) {
     // force a redraw
     update_play_times();
   }
+  return sfile->afilesize;
 }
 
 

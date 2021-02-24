@@ -420,7 +420,7 @@ boolean on_del_audio_activate(LiVESMenuItem *, livespointer);
 
 boolean on_ins_silence_activate(LiVESMenuItem *, livespointer);
 
-void on_ins_silence_details_clicked(LiVESButton *, livespointer);
+void audio_details_clicked(LiVESButton *, livespointer clipno);
 
 void on_lerrors_close_clicked(LiVESButton *, livespointer);
 

@@ -28,6 +28,8 @@ typedef enum {
 
 typedef struct _lives_jack_driver_t jack_driver_t;
 
+void jack_test(const char *snm);
+
 // GUI functions
 void jack_srv_startup_config(LiVESWidget *b, livespointer type_data);
 

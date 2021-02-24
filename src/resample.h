@@ -36,29 +36,41 @@ typedef struct __resaudw {
   LiVESWidget *vbox;
 } _resaudw;
 
-
 _resaudw *resaudw;
 
-#define q_gint64(in, fps) ((in) - (ticks_t)(remainder((double)(in) / TICKS_PER_SECOND_DBL, 1. / (fps)) \
-					    * TICKS_PER_SECOND_DBL))
+/// convert (int64_t)timecodes to multiples of (double)fps
+#define q_gint64(in, fps) ((in) - (ticks_t)(remainder((double)(in) / TICKS_PER_SECOND_DBL, \
+						      1. / (fps)) * TICKS_PER_SECOND_DBL + .5))
+
+/// convert (double)seconds to multiples of (double)fps
+#define q_dbl(in, fps) ((in) - remainder((in) / TICKS_PER_SECOND_DBL, 1. / (fps)) \
+			* TICKS_PER_SECOND_DBL)
+
+/// convert (double)seek_time to an integer number of audio samples
+#define quant_asamps(seek, arate) (((seek) <= 0. || (arate) <= 0) ? (size_t)0 \
+				   : (size_t)((seek) - remainder((seek), 1. / (arate))))
+
+/// quantise (double) seek_time to the nearest audio sample
+#define quant_aseek(seek, arate) (((arate) <= 0) ? 0. : (double)quant_asamps((seek), (arate)) \
+				  / (double)(arate))
+
+// quantise (double)seek to byte accurate offset: asampsize is in bytes
+#define quant_abytes(seek, arate, achans, asampsize) ((off_t)((quant_asamps((seek), (arate)) * \
+							       (off_t)((achans) * (asampsize)))))
 
 ticks_t q_gint64_floor(ticks_t in, double fps);
-ticks_t q_dbl(double in, double fps);
 
 void reorder_leave_back_set(boolean val);
-
-size_t quant_asamps(double seek, int arate);
-double quant_aseek(double seek, int arate);
-off_t quant_abytes(double seek, int arate, int achans, int asampsize);
 
 #define SKJUMP_THRESH_RATIO 1.025 /// if fabs(recorded_vel / predicted_vel) < 1.0 +- SKJUMP_THRESH_RATIO then smooth the velocity
 #define SKJUMP_THRESH_SECS 0.25 /// if fabs(rec_seek - predicted_seek) < SKJUMP_THRESH_SECS then smooth the seek time
 
-weed_plant_t *quantise_events(weed_plant_t *in_list, double new_fps,
-                              boolean allow_gap) WARN_UNUSED;  ///< quantise frame events for a single clip
+///< quantise frame events for a single clip
+weed_event_list_t *quantise_events(weed_event_list_t *in_list, double new_fps,
+                                   boolean allow_gap) WARN_UNUSED;
 
 ///////////////////////////////////////////////////////
-int count_resampled_frames(int in_frames, double orig_fps, double resampled_fps);
+int count_resampled_frames(frames_t in_frames, double orig_fps, double resampled_fps);
 
 /////////////////////////////////////////
 
@@ -76,7 +88,7 @@ void on_change_speed_ok_clicked(LiVESButton *, livespointer);
 boolean auto_resample_resize(int width, int height, double fps, int fps_num,
                              int fps_denom, int arate, int asigned, boolean swap_endian);
 int reorder_frames(int rwidth, int rheight);
-int deorder_frames(int old_framecount, boolean leave_bak); ///< leave_bak is a special mode for the clipboard
+int deorder_frames(frames_t old_framecount, boolean leave_bak); ///< leave_bak is a special mode for the clipboard
 
 boolean resample_clipboard(double new_fps); ///< call this to resample clipboard video
 

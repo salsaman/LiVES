@@ -12851,33 +12851,46 @@ boolean on_ins_silence_activate(LiVESMenuItem * menuitem, livespointer user_data
 }
 
 
-void on_ins_silence_details_clicked(LiVESButton * button, livespointer user_data) {
+void audio_details_clicked(LiVESButton * button, livespointer user_data) {
+  lives_clip_t *sfile;
+  int clipno;
   int asigned = 1, aendian = 1;
   boolean bad_header = FALSE;
+  if (user_data) {
+    clipno = LIVES_POINTER_TO_INT(user_data);
+  } else clipno = mainw->current_file;
 
-  cfile->arps = cfile->arate = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_arate)));
-  cfile->achans = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_achans)));
-  cfile->asampsize = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps)));
+  if (!IS_VALID_CLIP(clipno)) return;
+  sfile = mainw->files[clipno];
+
+  sfile->arps = sfile->arate = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_arate)));
+  sfile->achans = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_achans)));
+  sfile->asampsize = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps)));
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
     asigned = 0;
   }
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend))) {
     aendian = 0;
   }
-  cfile->signed_endian = get_signed_endian(asigned, aendian);
+  sfile->signed_endian = get_signed_endian(asigned, aendian);
   lives_widget_destroy(resaudw->dialog);
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET);
 
-  lives_freep((void **)&resaudw);
-  if (cfile->arate <= 0) {
-    do_audrate_error_dialog();
-    cfile->achans = cfile->arate = cfile->arps = cfile->asampsize = 0;
-    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ARATE, &cfile->arps)) bad_header = TRUE;
-    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_PB_ARATE, &cfile->arate)) bad_header = TRUE;
-    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ACHANS, &cfile->achans)) bad_header = TRUE;
-    if (!save_clip_value(mainw->current_file, CLIP_DETAILS_ASAMPS, &cfile->asampsize)) bad_header = TRUE;
+  if (user_data) {
+    if (!reget_afilesize(clipno)) return;
+  }
 
-    if (bad_header) do_header_write_error(mainw->current_file);
+  lives_freep((void **)&resaudw);
+  if (sfile->arate <= 0) {
+    do_audrate_error_dialog();
+    sfile->achans = sfile->arate = sfile->arps = sfile->asampsize = 0;
+    if (!save_clip_value(clipno, CLIP_DETAILS_ARATE, &sfile->arps)) bad_header = TRUE;
+    if (!save_clip_value(clipno, CLIP_DETAILS_PB_ARATE, &sfile->arate)) bad_header = TRUE;
+    if (!save_clip_value(clipno, CLIP_DETAILS_ACHANS, &sfile->achans)) bad_header = TRUE;
+    if (!save_clip_value(clipno, CLIP_DETAILS_ASAMPS, &sfile->asampsize))
+      bad_header = TRUE;
+
+    if (bad_header) do_header_write_error(clipno);
     mainw->error = TRUE;
     return;
   }

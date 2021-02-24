@@ -9083,6 +9083,129 @@ LIVES_INLINE void fill_plane(uint8_t *ptr, int psize, int width, int height, int
   }
 }
 
+
+static size_t blank_pixel(uint8_t *dst, int pal, int yuv_clamping, uint8_t *src) {
+  // set src to non-null to preserve the alpha channel (if applicable)
+  // yuv_clamping
+  // only valid for non-planar (packed) palettes
+  uint8_t y_black = yuv_clamping == WEED_YUV_CLAMPING_UNCLAMPED ? 0 : 16;
+  switch (pal) {
+  case WEED_PALETTE_RGB24:
+  case WEED_PALETTE_BGR24:
+    dst[0] = dst[1] = dst[2] = 0;
+    return 3;
+  case WEED_PALETTE_RGBA32:
+  case WEED_PALETTE_BGRA32:
+    dst[0] = dst[1] = dst[2] = 0;
+    dst[3] = src ? src[3] : 255;
+    return 4;
+  case WEED_PALETTE_ARGB32:
+    dst[0] = src ? src[0] : 255;
+    dst[1] = dst[2] = dst[3] = 0;
+    return 4;
+  case WEED_PALETTE_UYVY8888:
+    dst[1] = dst[3] = y_black;
+    dst[0] = dst[2] = 128;
+    return 4;
+  case WEED_PALETTE_YUYV8888:
+    dst[0] = dst[2] = y_black;
+    dst[1] = dst[3] = 128;
+    dst += 4;
+    break;
+  case WEED_PALETTE_YUV888:
+    dst[0] = y_black;
+    dst[1] = dst[2] = 128;
+    return 3;
+  case WEED_PALETTE_YUVA8888:
+    dst[0] = y_black;
+    dst[1] = dst[2] = 128;
+    dst[3] = src ? src[3] : 255;
+    return 4;
+  case WEED_PALETTE_YUV411:
+    dst[0] = dst[3] = 128;
+    dst[1] = dst[2] = dst[4] = dst[5] = y_black;
+    return 6;
+  default: break;
+  }
+  return 0;
+}
+
+static void blank_row(uint8_t **pdst, int width, int pal, int nplanes,
+                      int yuv_clamping, int uvcopy, uint8_t **psrc) {
+  // for YUV420 and YVU420, only set uvcopy for even rows,
+  //and increment pdst[1], pdst[2] on the odd rows
+  int p;
+  uint8_t *dst = *pdst, *src = NULL, black[3];
+  if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
+    lives_memset(dst, 0, width * 3);
+    return;
+  }
+  if (!uvcopy && (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P)) nplanes = 1;
+  black[0] = yuv_clamping == WEED_YUV_CLAMPING_UNCLAMPED ? 0 : 16;
+  black[1] = black[2] = 128;
+  for (p = 0; p < nplanes; p++) {
+    dst = pdst[p];
+    if (psrc) src = psrc[p];
+    if (p == 3) {
+      if (!src) lives_memset(dst, 255, width);
+      else lives_memcpy(dst, src, width);
+      break;
+    }
+    if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P
+        || pal == WEED_PALETTE_YUV444P || pal == WEED_PALETTE_YUVA4444P)
+      lives_memset(dst, black[p], width);
+    else {
+      // RGBA, BGRA, ARGB, YUV888, YUVA8888, UYVY, YUYV, YUV411
+      size_t offs = 0;
+      if (src) {
+        for (int i = 0; i < width; i++) {
+          offs += blank_pixel(&dst[offs], pal, yuv_clamping, &src[offs]);
+        }
+      } else {
+        for (int i = 0; i < width; i++) {
+          offs += blank_pixel(&dst[offs], pal, yuv_clamping, NULL);
+        }
+      }
+      break;
+    }
+    if (p == 0 && (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P
+                   || pal == WEED_PALETTE_YUV422P))
+      width >>= 1;
+  }
+}
+
+static void blank_frame(void **pdata, int width, int height, int *rs,
+                        int pal, int nplanes, int yuv_clamping) {
+  uint8_t *pd2[4];
+  boolean is_420 = (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P), even = TRUE;
+  for (int j = 0; j < nplanes; j++) pd2[j] = (uint8_t *)pdata[j];
+  for (int i = 0; i < height; i++) {
+    blank_row(pd2, width, pal, nplanes, yuv_clamping, even, NULL);
+    even = !even;
+    for (int j = 0; j < nplanes; j++) {
+      pd2[j] += rs[j];
+      if (is_420 && even) break;
+    }
+  }
+}
+
+
+boolean weed_layer_clear_pixel_data(weed_layer_t *layer) {
+  void **pd;
+  int *rs;
+  int pal, clamping, nplanes;
+  if (!layer) return FALSE;
+  pd = weed_layer_get_pixel_data(layer, &nplanes);
+  if (!pd || !*pd || !nplanes) return FALSE;
+  pal = weed_layer_get_palette_yuv(layer, &clamping, NULL, NULL);
+  rs = weed_layer_get_rowstrides(layer, NULL);
+  blank_frame(pd, weed_layer_get_width(layer), weed_layer_get_height(layer), rs,
+              pal, nplanes, clamping);
+  lives_free(rs);
+  return TRUE;
+}
+
+
 #define SHIFTVAL sbits
 #define ALIGN_SIZE (1 << SHIFTVAL)
 

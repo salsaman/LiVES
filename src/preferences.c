@@ -584,14 +584,13 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
     if (!(lives_strcmp(audio_player, AUDIO_PLAYER_JACK)) && prefs->audio_player != AUD_PLAYER_JACK) {
       // switch to jack
       if (!capable->has_jackd) {
-        do_error_dialogf(_("\nUnable to switch audio players to %s\n%s must be installed first.\nSee %s\n"),
-                         AUDIO_PLAYER_JACK,
-                         EXEC_JACKD,
-                         JACK_URL);
+        do_error_dialogf(_("\nUnable to switch audio players to %s\n%s must be installed first.\n"
+                           "See %s\n"), AUDIO_PLAYER_JACK, EXEC_JACKD, JACK_URL);
         goto fail1;
       } else {
         if (prefs->audio_player == AUD_PLAYER_JACK && lives_strcmp(audio_player, AUDIO_PLAYER_JACK)) {
-          do_error_dialogf(_("\nSwitching audio players requires restart (%s must not be running)\n"), EXEC_JACKD);
+          do_error_dialogf(_("\nSwitching audio players requires restart "
+                             "(%s must not be running)\n"), EXEC_JACKD);
           // revert text
           if (prefsw) {
             lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
@@ -1473,6 +1472,7 @@ boolean apply_prefs(boolean skip_warn) {
 #ifdef ENABLE_JACK
   boolean warn_jack_scrpts = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_jack_scrpts));
 #endif
+  boolean warn_dmgd_audio = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_dmgd_audio));
   boolean midisynch = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->check_midi));
   boolean instant_open = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_instant_open));
   boolean auto_deint = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_auto_deint));
@@ -1776,7 +1776,7 @@ boolean apply_prefs(boolean skip_warn) {
               + !warn_no_pulse * WARN_MASK_NO_PULSE_CONNECT
               + !warn_layout_wipe * WARN_MASK_LAYOUT_WIPE + !warn_layout_gamma * WARN_MASK_LAYOUT_GAMMA + !warn_layout_lb *
               WARN_MASK_LAYOUT_LB + !warn_vjmode_enter *
-              WARN_MASK_VJMODE_ENTER;
+              WARN_MASK_VJMODE_ENTER + !warn_dmgd_audio * WARN_MASK_DMGD_AUDIO;
 
 #ifdef ENABLE_JACK
   warn_mask += !WARN_MASK_JACK_SCRPT * warn_jack_scrpts;
@@ -2724,9 +2724,11 @@ static void on_audp_entry_changed(LiVESWidget *audp_combo, livespointer ptr) {
 #ifdef ENABLE_JACK
   if (!strcmp(audp, AUDIO_PLAYER_JACK)) {
     lives_widget_set_sensitive(prefsw->jack_aplayout, TRUE);
+    lives_widget_set_sensitive(prefsw->jack_aplayout2, TRUE);
     hide_warn_image(prefsw->jack_aplabel);
   } else {
     lives_widget_set_sensitive(prefsw->jack_aplayout, FALSE);
+    lives_widget_set_sensitive(prefsw->jack_aplayout2, FALSE);
     show_warn_image(prefsw->jack_aplabel, NULL);
   }
 #endif
@@ -4882,9 +4884,19 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 #ifdef ENABLE_JACK
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->checkbutton_warn_jack_scrpts = lives_standard_check_button_new
-                                         (_("Show if multiple jack clients are set to start a server using the same script file."),
-                                          !(prefs->warning_mask & WARN_MASK_JACK_SCRPT), LIVES_BOX(hbox), NULL);
+                                         (_("Show if multiple jack clients are set to "
+                                             "start a server using the same script file."),
+                                          !(prefs->warning_mask & WARN_MASK_JACK_SCRPT),
+                                          LIVES_BOX(hbox), NULL);
 #endif
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  prefsw->checkbutton_warn_dmgd_audio = lives_standard_check_button_new
+                                        (_("Show a warning after opening a clip with damaged audio "
+                                            "and allow attempted recovery."),
+                                         !(prefs->warning_mask & WARN_MASK_DMGD_AUDIO),
+                                         LIVES_BOX(hbox), NULL);
+
   pixbuf_warnings = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_WARNING,
                     LIVES_ICON_SIZE_CUSTOM, -1, -1);
 
@@ -5351,7 +5363,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   if (future_prefs->jack_opts & JACK_OPTS_START_ASERVER)
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(widget), TRUE);
 
-  layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_jack));
+  layout = prefsw->jack_aplayout2 = lives_layout_new(LIVES_BOX(prefsw->vbox_right_jack));
   lives_layout_add_label(LIVES_LAYOUT(layout), _("Audio Options"), FALSE);
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
@@ -5360,6 +5372,8 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
     lives_standard_check_button_new
     (_("Automatically connect to System Out ports when 'playing' External Audio"),
      (future_prefs->jack_opts & JACK_OPTS_NO_READ_AUTOCON) ? FALSE : TRUE, LIVES_BOX(hbox), NULL);
+
+  if (prefs->audio_player != AUD_PLAYER_JACK) lives_widget_set_sensitive(prefsw->jack_aplayout2, FALSE);
 
   // jack transport
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_jack));
@@ -5978,6 +5992,7 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
 #ifdef ENABLE_JACK
   ACTIVE(checkbutton_warn_jack_scrpts, TOGGLED);
 #endif
+  ACTIVE(checkbutton_warn_dmgd_audio, TOGGLED);
   ACTIVE(checkbutton_warn_mt_backup_space, TOGGLED);
   ACTIVE(checkbutton_warn_vjmode_enter, TOGGLED);
 

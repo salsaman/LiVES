@@ -737,8 +737,6 @@ retry_connect:
     goto retry_connect;
   }
 
-  lives_free(client_name);
-
   if (!jackserver) {
     // start the server
     jackserver = jackctl_server_create(NULL, NULL);
@@ -2146,8 +2144,6 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
      just decides to stop calling us. */
   jack_on_shutdown(jackd->client, jack_shutdown, jackd);
 
-  jack_set_process_callback((jack_client_t *)jackd->client, audio_process, jackd);
-
   return TRUE;
 }
 
@@ -2191,8 +2187,6 @@ boolean jack_create_client_reader(jack_driver_t *jackd) {
   jack_on_shutdown(jackd->client, jack_shutdown, jackd);
 
   jrb = 0;
-  // set process callback and start
-  jack_set_process_callback(jackd->client, audio_read, jackd);
 
   return 0;
 }
@@ -2205,6 +2199,8 @@ boolean jack_write_driver_activate(jack_driver_t *jackd) {
   boolean failed = FALSE;
 
   if (jackd->is_active) return TRUE; // already running
+
+  jack_set_process_callback(jackd->client, audio_process, jackd);
 
   /* tell the JACK server that we are ready to roll */
   if (jack_activate(jackd->client)) {
@@ -2284,6 +2280,10 @@ boolean jack_read_driver_activate(jack_driver_t *jackd, boolean autocon) {
   int i;
 
   if (!jackd->is_active) {
+
+    // set process callback and start
+    jack_set_process_callback(jackd->client, audio_read, jackd);
+
     if (jack_activate(jackd->client)) {
       LIVES_ERROR("Cannot activate jack reader client");
       return FALSE;
